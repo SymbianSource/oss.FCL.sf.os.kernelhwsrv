@@ -1,0 +1,3 @@
+EXPORTS
+	?FurtiveC@@YAXAAV?$TBuf@$0BAA@@@@Z @ 1 NONAME ; void __cdecl FurtiveC(class TBuf<256> &)
+

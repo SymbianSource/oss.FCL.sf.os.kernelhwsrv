@@ -1,0 +1,82 @@
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32utils\profiler\sampler.cia
+// 
+//
+
+#include <platform.h>
+
+#include "sampler.h"
+#include <kernel/kern_priv.h>		//temporary
+
+
+#if defined(__GCC32__)
+// CIA symbol macros for Gcc98r2
+#define CSM__ZN5NKern14CurrentContextEv " CurrentContext__5NKern"
+#elif defined(__ARMCC__)
+// CIA symbol macros for RVCT
+#define CSM__ZN5NKern14CurrentContextEv " __cpp(NKern::CurrentContext)"
+#else
+// CIA symbol macros for EABI assemblers
+#define CSM__ZN5NKern14CurrentContextEv " _ZN5NKern14CurrentContextEv"
+#endif
+
+
+__NAKED__ TUint IntStackPtr()
+	{
+	asm("mrs r1, cpsr ");
+	asm("bic r3, r1, #0x1f ");
+//#ifdef __MISA__
+//	asm("orr r3, r3, #0xd1 ");		// mode_fiq, all interrupts off
+//#else
+	asm("orr r3, r3, #0xd2 ");		// mode_irq, all interrupts off
+//#endif
+	asm("msr cpsr, r3 ");
+	asm("mov r0, sp ");				// r0=sp_irq or sp_fiq
+	asm("msr cpsr, r1 ");			// restore interrupts
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 SPSR()
+	{
+	asm("mrs r0, spsr ");
+	__JUMP(,lr);
+	}
+
+
+// This will return 1 if it was iDFC interrupted (0 otherwise).
+// As there is no Kernel interface for that, we have to 'fake' Kernel by
+// setting SVC mode before calling NKern::CurrentContext.
+// Without that, CurrentContext would always return EInterrupt.
+__NAKED__ TUint IDFCRunning()
+	{
+	asm("stmfd sp!, {r4-r5} ");	
+
+	asm("mrs r5, cpsr");							// r5 = cpsr_irq
+	asm("bic r4, r5, #0xdf ");						// clear interrupt mask & CPU mode
+	asm("orr r4, r4, #0xd3 ");						// disable all interrupts and set SVC mode
+
+	asm("msr CPSR_cf, r4");   						// switch to SVC, (dissable FIQ, IRQ)
+	
+	// NKern::CurrentContext does not use sp (only r0,r1,r2)
+	// It is just lr in svc mode we need to preserve.
+	asm("mov r4, lr");             					// r4 = lr_svc
+	asm("bl " CSM__ZN5NKern14CurrentContextEv ); 	// r0 = 1 if iDFC was running, 0 if a thread was running
+	asm("mov lr, r4");								// lr_svc is back to original state
+
+	asm("msr CPSR_cf, r5");							// return to IRQ mode
+	
+	asm("ldmfd sp!, {r4-r5} ");
+	__JUMP(,lr);
+	}

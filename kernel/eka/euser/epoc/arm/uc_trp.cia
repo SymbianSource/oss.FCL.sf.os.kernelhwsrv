@@ -1,0 +1,109 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_trp.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+#include <e32panic.h>
+#include <u32exec.h>
+#include "uc_std.h"
+
+//  With -fvtable-thunks
+const TInt KVTableTrapOffset=8;
+const TInt KVTableLeaveOffset=16;
+
+//  Without -fvtable-thunks
+//  const TInt KVTableTrapOffset=12;
+//  const TInt KVTableLeaveOffset=28;
+
+
+#ifndef __LEAVE_EQUALS_THROW__
+
+EXPORT_C __NAKED__ TInt TTrap::Trap(TInt & /*aResult*/)
+//
+// Save the enter frame state and return 0.
+//
+	{
+
+	asm("mov r2, #0 ");						// aResult==KErrNone
+	asm("str r2, [r1, #0] ");				// iResult=(&aResult)
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TTrap,iResult));
+	asm("stmia r0, {r4-r11, sp, lr} ");		// Save the context
+	asm("stmfd sp!, {r4,lr} ");
+	asm("bl  " CSM_ZN4Exec13PushTrapFrameEP5TTrap);
+	asm("cmp r0, #0 ");						// == NULL
+	asm("ldrne r3, [r0, #%a0]" : : "i" (_TTRAPHANDLER_VPTR_OFFSET_));
+	asm("beq ttrap_trap_no_trap_handler ");
+#ifdef __SUPPORT_THUMB_INTERWORKING
+	asm("ldr r3, [r3, #%a0]" : : "i" (_TTRAPHANDLER_TRAP_OFFSET_));
+	asm("adr lr, __ttrap_trap_return ");	// iHandler->Trap()
+	asm("bx r3 ");
+#else
+	asm("adr lr, __ttrap_trap_return ");	// iHandler->Trap()
+	asm("ldr pc, [r3, #%a0]" : : "i" (_TTRAPHANDLER_TRAP_OFFSET_));
+#endif
+	asm("__ttrap_trap_return: ");
+	asm("mov r0, #0							");
+	asm("ttrap_trap_no_trap_handler: ");
+	__POPRET("r4,");
+	}
+
+extern void PanicNoTrapFrame();
+
+
+
+EXPORT_C __NAKED__ void User::Leave(TInt /*aReason*/)
+/**
+Leaves the currently executing function, unwinds the call stack, and returns
+from the most recently entered trap harness.
+
+@param aReason The value returned from the most recent call to TRAP or TRAPD.
+               This is known as the reason code and, typically, it gives the
+               reason for the environment or user error causing this leave
+               to occur.
+              
+@see TRAP
+@see TRAPD              
+*/
+	{
+
+	asm("mov r4, r0 ");						// Save aReason
+	asm("bl  " CSM_ZN4Exec12PopTrapFrameEv);			// Returns the current TTrap
+    asm("cmp r0, #0 ");
+    asm("bleq  " CSM_Z16PanicNoTrapFramev);
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(TTrap,iResult));
+	asm("mov r5, r0 ");						// Save it for later
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TTrap,iHandler));
+	asm("str r4, [r1, #0] ");				// *(pT->iResult)=aReason
+	asm("cmp r0, #0 ");
+	asm("ldrne r2, [r0, #%a0]" : : "i" (_TTRAPHANDLER_VPTR_OFFSET_));
+	asm("beq user_leave_no_trap_handler ");	// No trap handler
+	asm("mov r1, r4 ");						// Pass aReason
+#ifdef __SUPPORT_THUMB_INTERWORKING
+	asm("ldr r3, [r2, #%a0]" : : "i" (_TTRAPHANDLER_LEAVE_OFFSET_));
+	asm("adr lr, user_leave_no_trap_handler ");	// iHandler->Leave(aReason)
+	asm("bx r3 ");
+#else
+	asm("adr lr, user_leave_no_trap_handler ");	// iHandler->Leave(aReason)
+	asm("ldr pc, [r2, #%a0]" : : "i" (_TTRAPHANDLER_LEAVE_OFFSET_));
+#endif
+	asm("user_leave_no_trap_handler: ");
+	asm("ldmia	r5, {r4-r11, sp, lr} ");	// Restore the context
+	asm("mov	r0, #1 ");					// return(1)
+	__JUMP(,lr);							// return
+	}
+
+#endif // !__LEAVE_EQUALS_THROW__

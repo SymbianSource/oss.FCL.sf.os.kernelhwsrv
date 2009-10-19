@@ -1,0 +1,12 @@
+The distribution of the SD Card PIL and PSL Software Source Code 
+and Documentation is subject to the relevant party entering into 
+the necessary agreement(s) with SD-3C LLC and/or 4C LLC.
+
+PIL Software Source Code for Symbian OS is distributed in the
+sdcard3c and sdcard4c subdirectories of this directory. 
+PSL source code for special SD card hardware fitted to an
+ARM Integrator development board is distributed in sdcard3c
+and sdcard4c subdirectories within the Integrator component. 
+If you have not received this source code, then you can obtain
+it from Symbian after proving that you have made the appropriate
+agreement(s).

@@ -1,0 +1,31 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef __T_BASE_F32_FAT32_IBY__
+#define __T_BASE_F32_FAT32_IBY__
+
+#include <testexecute.iby>
+
+data=EPOCROOT##epoc32\data\Z\base\conformance\f32\fat32\f32-fat32-conformance.script 			base\conformance\f32\fat32\f32-fat32-conformance.script		 	
+data=EPOCROOT##epoc32\data\Z\base\conformance\f32\fat32\f32-fat32-conformance.ini 			base\conformance\f32\fat32\f32-fat32-conformance.ini 
+
+#if (!defined EKA2)
+file=ABI_DIR\BUILD_DIR\t_fat32server.exe		system\libs\t_fat32server.exe	
+#else
+file=ABI_DIR\BUILD_DIR\t_fat32server.exe	 	system\bin\t_fat32server.exe	
+#endif
+
+#endif

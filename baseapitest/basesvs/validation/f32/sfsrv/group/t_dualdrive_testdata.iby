@@ -1,0 +1,33 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+#if (!defined __T_DUALDRIVE_TESTDATA_IBY__)
+#define __T_DUALDRIVE_TESTDATA_IBY__
+
+data=EPOCROOT##epoc32\data\z\base\pbase-f32-dual-drive-publicapi-ram.script			base\pbase-f32-dual-drive-publicapi-ram.script
+data=EPOCROOT##epoc32\data\z\base\setup-pbase-f32-dual-drive-publicapi-ram.script	base\setup-pbase-f32-dual-drive-publicapi-ram.script
+data=EPOCROOT##epoc32\data\z\base\pbase-f32-dual-drive-publicapi-ram.ini			base\pbase-f32-dual-drive-publicapi-ram.ini
+data=EPOCROOT##epoc32\data\z\base\armv5\dual_drive_env.ini							base\dual_drive_env.ini
+
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\test.txt									base\t_sfsrv\test.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\Test1.txt									base\t_sfsrv\Test1.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\Test2.txt									base\t_sfsrv\Test2.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\Test3.txt									base\t_sfsrv\Test3.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\USBLOAD.ZIP								base\t_sfsrv\USBLOAD.ZIP
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\big.txt									base\t_sfsrv\big.txt
+
+#endif

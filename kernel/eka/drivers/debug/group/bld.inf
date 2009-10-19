@@ -1,0 +1,70 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/debug/bld.inf
+// Run mode debugger
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_EXPORTS
+
+../../../debug/crashMonitor/inc/scmonitor.h 				
+../../../debug/crashMonitor/inc/scmdatatypes.h			
+../../../debug/crashMonitor/inc/scmbytestreamutil.h		
+../../../debug/crashMonitor/inc/scmbytestreamutil.inl	
+../../../debug/crashMonitor/inc/crashlogwalker.h			
+../../../debug/crashMonitor/inc/scmconfig.h				
+../../../debug/crashMonitor/inc/scmconfigitem.h			
+../../../debug/crashmonitor/inc/scmdatasave.h			
+../../../debug/crashmonitor/inc/scmtrace.h				
+
+PRJ_MMPFILES
+
+../../../debug/trkdummyapp/group/trkdummyapp
+../../../debug/trkdummyapp/group/trkdummyapp2
+../../../debug/trkdummyapp/group/trkdummyapp200159D8
+../../../debug/trkdummyapp/group/trkdummyapp200170BC
+
+#ifndef GCCXML
+
+#if defined(GENERIC_MARM) || defined(WINS) || defined(GENERIC_X86)
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+
+#if defined(MARM_ARMV5) || defined(MARM_ARMV4)
+
+
+rm_debug_kerneldriver
+rm_debug_kerneldriver_ext
+../../../debug/securityServer/group/rm_debug_svr
+
+#if defined(GENERIC_MARM) 
+../../../debug/crashMonitor/group/scmusr_lib
+../../../debug/crashMonitor/group/scmkern_lib
+#endif
+
+#endif
+
+#endif
+#endif
+
+
+#endif //#ifndef GCCXML

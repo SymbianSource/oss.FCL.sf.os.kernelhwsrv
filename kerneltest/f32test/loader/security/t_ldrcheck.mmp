@@ -1,0 +1,46 @@
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// /f32test/loader/t_ldrcheck.mmp
+// 
+//
+
+target			t_ldrcheck.exe
+targettype			exe
+sourcepath			.
+source			t_ldrcheck.cpp  t_sfhash.cpp
+library			efsrv.lib  euser.lib 
+
+//capability			TCB
+capability		ALL
+
+USERINCLUDE		../../../../userlibandfileserver/fileserver/inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude			.
+nostrictdef
+epocstacksize		0x4000
+
+#ifdef WINS
+library			emulator.lib //hal.lib efile.lib
+#endif
+
+start wins
+WIN32_LIBRARY		kernel32.lib 
+#ifndef WINSCW
+WIN32_LIBRARY		chkstk.obj
+#endif
+end
+
+VENDORID 0x70000001
+
+SMPSAFE

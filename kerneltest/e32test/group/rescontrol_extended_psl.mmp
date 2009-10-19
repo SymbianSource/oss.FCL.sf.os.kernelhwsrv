@@ -1,0 +1,50 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/extendedrescontrol_psl.mmp
+// 
+//
+
+#include <kernel/kern_ext.mmh>
+
+target		resourcecontrollerextended.pdd
+targettype	pdd
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+macro		BTRACE_RESOURCE_MANAGER
+macro		RESOURCE_MANAGER_SIMULATED_PSL
+macro		PRM_INSTRUMENTATION_MACRO
+macro		PRM_ENABLE_EXTENDED_VERSION
+
+// all exported APIs
+sourcepath	../../../kernel/eka/drivers/resourceman
+source		resourceman.cpp resource.cpp resource_extend.cpp rescontrol_export.cpp 
+source		resourcecontrol.cpp resourcecontrol_extended.cpp
+
+sourcepath	../resourceman/resourceman_psl/
+source		rescontrol_psl.cpp rescontrol_extended_psl.cpp
+
+
+deffile			../~/resourcecontroller_extended.def
+nostrictdef
+
+
+epocallowdlldata
+
+uid			0x100039d0 0x10285812
+capability 	all
+
+start wins
+win32_headers
+end

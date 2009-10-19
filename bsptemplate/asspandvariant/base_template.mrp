@@ -1,0 +1,16 @@
+# component name "Template Variant"
+
+component	base_template
+source	\sf\os\kernelhwsrv\bsptemplate\asspandvariant\template_assp
+source	\sf\os\kernelhwsrv\bsptemplate\asspandvariant\template_variant
+source	\sf\os\kernelhwsrv\bsptemplate\asspandvariant\base_template.mrp
+source	\sf\os\kernelhwsrv\bsptemplate\asspandvariant\base_template.history.xml
+source	\sf\os\kernelhwsrv\bsptemplate\asspandvariant\distribution.policy.s60
+
+binary	\sf\os\kernelhwsrv\bsptemplate\asspandvariant\template_variant all
+exports	\sf\os\kernelhwsrv\bsptemplate\asspandvariant\template_variant
+
+notes_source	\component_defs\release.src
+
+ipr E 
+ipr T \sf\os\kernelhwsrv\bsptemplate\asspandvariant\template_variant\test

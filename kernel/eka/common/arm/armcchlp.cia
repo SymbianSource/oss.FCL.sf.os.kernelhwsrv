@@ -1,0 +1,121 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nklib\arm\armcchelp.cpp
+// 
+//
+
+#include "nkern.h"
+
+extern "C" {
+
+// This function is simple a way to get these EXPORT statements into
+// the .in file. These symbols will therefore be referenced from
+// the export table and so **forced** into the DLL
+__asm void __rt_exporter_dummy(void)
+{
+	AREA |.directive|, READONLY, NOALLOC
+
+	PRESERVE8
+
+	DCB "#<SYMEDIT>#\n"
+	// Long long functions
+	DCB "EXPORT __aeabi_lmul\n"
+	DCB "EXPORT __aeabi_ldivmod\n"
+	DCB "EXPORT __aeabi_uldivmod\n"
+	DCB "EXPORT __aeabi_llsl\n"
+	DCB "EXPORT __aeabi_llsr\n"
+	DCB "EXPORT __aeabi_lasr\n"
+	DCB "EXPORT __aeabi_lcmp\n"
+	DCB "EXPORT __aeabi_ulcmp\n"
+
+	// Integer (32/32 . 32) division functions
+	DCB "EXPORT __aeabi_idivmod\n"
+	DCB "EXPORT __aeabi_uidivmod\n"
+
+	// Division by Zero
+	// SIGFPE not supported on SymbianOS
+	// Implemented in rtdiv0.cpp
+	DCB "EXPORT __aeabi_idiv0\n"
+	DCB "EXPORT __aeabi_ldiv0\n"
+
+	// Unaligned memory access
+	DCB "EXPORT __aeabi_uread4\n"
+	DCB "EXPORT __aeabi_uwrite4\n"
+	DCB "EXPORT __aeabi_uread8\n"
+	DCB "EXPORT __aeabi_uwrite8\n"
+
+	// Memory copying, clearing, and setting
+	// we may want to override the toolchain supplied versions of these (or not)
+	DCB "EXPORT __aeabi_memcpy8\n"
+	DCB "EXPORT __aeabi_memcpy4\n"
+	DCB "EXPORT __aeabi_memcpy\n"
+	DCB "EXPORT __aeabi_memmove8\n"
+	DCB "EXPORT __aeabi_memmove4\n"
+	DCB "EXPORT __aeabi_memmove\n"
+
+	DCB "EXPORT __aeabi_memset8\n"
+	DCB "EXPORT __aeabi_memset4\n"
+	DCB "EXPORT __aeabi_memset\n"
+	DCB "EXPORT __aeabi_memclr8\n"
+	DCB "EXPORT __aeabi_memclr4\n"
+	DCB "EXPORT __aeabi_memclr\n"
+
+
+	// C++ helper functions
+
+	// Pure virtual call
+	DCB "EXPORT __cxa_pure_virtual\n"
+
+	// One-time construction API
+	DCB "EXPORT __cxa_guard_acquire\n"
+	DCB "EXPORT __cxa_guard_release\n"
+	DCB "EXPORT __cxa_guard_abort\n"
+
+	// Construction and destruction of arrays
+
+	// Helper functions defined by the generic C++ ABI
+	DCB "EXPORT __cxa_vec_new\n"
+	DCB "EXPORT __cxa_vec_new2\n"
+	DCB "EXPORT __cxa_vec_new3\n"
+	DCB "EXPORT __cxa_vec_ctor\n"
+	DCB "EXPORT __cxa_vec_dtor\n"
+	DCB "EXPORT __cxa_vec_cleanup\n"
+	DCB "EXPORT __cxa_vec_delete\n"
+	DCB "EXPORT __cxa_vec_delete2\n"
+	DCB "EXPORT __cxa_vec_delete3\n"
+	DCB "EXPORT __cxa_vec_cctor\n"
+
+	// Helper functions defined by the C++ ABI for the ARM Architecture
+	DCB "EXPORT __aeabi_vec_ctor_nocookie_nodtor\n"
+	DCB "EXPORT __aeabi_vec_ctor_cookie_nodtor\n"
+	DCB "EXPORT __aeabi_vec_cctor_nocookie_nodtor\n"
+	DCB "EXPORT __aeabi_vec_new_cookie_noctor\n"
+	DCB "EXPORT __aeabi_vec_new_nocookie\n"
+	DCB "EXPORT __aeabi_vec_new_cookie_nodtor\n"
+	DCB "EXPORT __aeabi_vec_new_cookie\n"
+	DCB "EXPORT __aeabi_vec_dtor\n"
+	DCB "EXPORT __aeabi_vec_dtor_cookie\n"
+	DCB "EXPORT __aeabi_vec_delete\n"
+	DCB "EXPORT __aeabi_vec_delete3\n"
+	DCB "EXPORT __aeabi_vec_delete3_nodtor\n"
+
+
+	DCB "EXPORT _ZTVN10__cxxabiv117__class_type_infoE\n"		
+	DCB "EXPORT _ZTVN10__cxxabiv120__si_class_type_infoE\n"		
+	DCB "EXPORT _ZTVN10__cxxabiv121__vmi_class_type_infoE\n"	
+
+}
+
+}
+

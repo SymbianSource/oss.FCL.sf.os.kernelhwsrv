@@ -1,0 +1,69 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_mstim.mmp
+// 
+//
+
+#include		<variant_test.mmh>
+#include		"kernel/kern_ext.mmh"
+
+TARGET			VariantTarget(d_mstim,ldd)
+TARGETTYPE		ldd
+ROMTARGET		d_mstim.ldd
+
+SOURCEPATH		../system
+SOURCE			d_mstim.cpp
+SOURCE			d_mstim.cia
+
+#if defined(CL7211)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cl7211)
+LIBRARY			VariantTarget(kaeiger,lib)
+#elif defined(WINDERMERE)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/windermere)
+LIBRARY			VariantTarget(kawind,lib)
+#elif defined(SA1100)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/sa1100)
+LIBRARY			VariantTarget(kasa1100,lib)
+#elif defined(COTULLA)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cotulla)
+LIBRARY			VariantTarget(kacotulla,lib)
+#elif defined(OMAP1510_ASSP)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/omap1510)
+LIBRARY			VariantTarget(kaomap,lib)
+#elif defined(OMAP1610_ASSP)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/omap1610)
+LIBRARY			VariantTarget(kaomap,lib)
+#elif defined(INTEGRATORAP)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/integratorap/inc)
+SYMBIAN_BASE_SYSTEMINCLUDE(integrator/core/cm920)
+LIBRARY			kaintap.lib
+#elif defined(RVEMUBOARD)
+LIBRARY			karvemuboard.lib
+#elif defined(NE1_TB)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/naviengine)
+#endif
+
+epocallowdlldata
+
+UID		0x100000af
+VENDORID 0x70000001
+
+START WINS
+Win32_Library		kernel32.lib
+#if defined(VC32)
+Win32_Library		msvcrt.lib
+#endif
+END
+
+capability		all

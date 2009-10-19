@@ -1,0 +1,30 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_hashtab.mmp
+// 
+//
+
+target			t_hashtab.exe
+targettype		exe
+sourcepath		../buffer
+source			t_hashtab.cpp
+library			euser.lib hal.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+capability		all
+vendorid		0x70000001
+epocheapsize	0x1000 0x200000
+epocstacksize	0x4000
+
+unpageddata	// todo: otherwise this test's memory use causes it to take a very long time and timeout
+SMPSAFE

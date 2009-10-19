@@ -1,0 +1,158 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe061.exe sys\bin\dpexe061.exe
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe062.exe sys\bin\dpexe062.exe
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe063.exe sys\bin\dpexe063.exe
+
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpexe064.exe sys\bin\dpexe064.exe
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpexe065.exe sys\bin\dpexe065.exe
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpexe066.exe sys\bin\dpexe066.exe
+
+REM filecompressinflate=\epoc32\release\##MAIN##\##BUILD##\dpexe067.exe sys\bin\dpexe067.exe
+REM filecompressinflate=\epoc32\release\##MAIN##\##BUILD##\dpexe068.exe sys\bin\dpexe068.exe
+REM filecompressinflate=\epoc32\release\##MAIN##\##BUILD##\dpexe069.exe sys\bin\dpexe069.exe
+
+REM filecompressbytepair=\epoc32\release\##MAIN##\##BUILD##\dpexe070.exe sys\bin\dpexe070.exe
+REM filecompressbytepair=\epoc32\release\##MAIN##\##BUILD##\dpexe071.exe sys\bin\dpexe071.exe
+REM filecompressbytepair=\epoc32\release\##MAIN##\##BUILD##\dpexe072.exe sys\bin\dpexe072.exe
+
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpexe073.exe sys\bin\dpexe073.exe
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpexe074.exe sys\bin\dpexe074.exe
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpexe075.exe sys\bin\dpexe075.exe
+
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe076.exe sys\bin\dpexe076.exe
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe077.exe sys\bin\dpexe077.exe
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe078.exe sys\bin\dpexe078.exe
+
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe079.exe sys\bin\dpexe079.exe paged
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe080.exe sys\bin\dpexe080.exe paged
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe081.exe sys\bin\dpexe081.exe paged
+
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe082.exe sys\bin\dpexe082.exe unpaged
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe083.exe sys\bin\dpexe083.exe unpaged
+file=\epoc32\release\##MAIN##\##BUILD##\dpexe084.exe sys\bin\dpexe084.exe unpaged
+
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe085.exe sys\bin\dpexe085.exe paged
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe086.exe sys\bin\dpexe086.exe paged
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe087.exe sys\bin\dpexe087.exe paged
+
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe088.exe sys\bin\dpexe088.exe unpaged
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe089.exe sys\bin\dpexe089.exe unpaged
+data=\epoc32\release\##MAIN##\##BUILD##\dpexe090.exe sys\bin\dpexe090.exe unpaged
+
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll061.dll sys\bin\dpdll061.dll
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll062.dll sys\bin\dpdll062.dll
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll063.dll sys\bin\dpdll063.dll
+
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpdll064.dll sys\bin\dpdll064.dll
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpdll065.dll sys\bin\dpdll065.dll
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpdll066.dll sys\bin\dpdll066.dll
+
+REM filecompressinflate=\epoc32\release\##MAIN##\##BUILD##\dpdll067.dll sys\bin\dpdll067.dll
+REM filecompressinflate=\epoc32\release\##MAIN##\##BUILD##\dpdll068.dll sys\bin\dpdll068.dll
+REM filecompressinflate=\epoc32\release\##MAIN##\##BUILD##\dpdll069.dll sys\bin\dpdll069.dll
+
+REM filecompressbytepair=\epoc32\release\##MAIN##\##BUILD##\dpdll070.dll sys\bin\dpdll070.dll
+REM filecompressbytepair=\epoc32\release\##MAIN##\##BUILD##\dpdll071.dll sys\bin\dpdll071.dll
+REM filecompressbytepair=\epoc32\release\##MAIN##\##BUILD##\dpdll072.dll sys\bin\dpdll072.dll
+
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpdll073.dll sys\bin\dpdll073.dll
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpdll074.dll sys\bin\dpdll074.dll
+REM filecompressnone=\epoc32\release\##MAIN##\##BUILD##\dpdll075.dll sys\bin\dpdll075.dll
+
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll076.dll sys\bin\dpdll076.dll
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll077.dll sys\bin\dpdll077.dll
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll078.dll sys\bin\dpdll078.dll
+
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll079.dll sys\bin\dpdll079.dll paged
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll080.dll sys\bin\dpdll080.dll paged
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll081.dll sys\bin\dpdll081.dll paged
+
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll082.dll sys\bin\dpdll082.dll unpaged
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll083.dll sys\bin\dpdll083.dll unpaged
+file=\epoc32\release\##MAIN##\##BUILD##\dpdll084.dll sys\bin\dpdll084.dll unpaged
+
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll085.dll sys\bin\dpdll085.dll paged
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll086.dll sys\bin\dpdll086.dll paged
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll087.dll sys\bin\dpdll087.dll paged
+
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll088.dll sys\bin\dpdll088.dll unpaged
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll089.dll sys\bin\dpdll089.dll unpaged
+data=\epoc32\release\##MAIN##\##BUILD##\dpdll090.dll sys\bin\dpdll090.dll unpaged
+
+alias sys\bin\dpexe061.exe sys\bin\dpexe091.exe 
+alias sys\bin\dpexe062.exe sys\bin\dpexe092.exe 
+alias sys\bin\dpexe063.exe sys\bin\dpexe093.exe 
+REM alias sys\bin\dpexe064.exe sys\bin\dpexe094.exe 
+REM alias sys\bin\dpexe065.exe sys\bin\dpexe095.exe 
+REM alias sys\bin\dpexe066.exe sys\bin\dpexe096.exe 
+REM alias sys\bin\dpexe067.exe sys\bin\dpexe097.exe 
+REM alias sys\bin\dpexe068.exe sys\bin\dpexe098.exe 
+REM alias sys\bin\dpexe069.exe sys\bin\dpexe099.exe 
+REM alias sys\bin\dpexe070.exe sys\bin\dpexe100.exe 
+REM alias sys\bin\dpexe071.exe sys\bin\dpexe101.exe 
+REM alias sys\bin\dpexe072.exe sys\bin\dpexe102.exe 
+REM alias sys\bin\dpexe073.exe sys\bin\dpexe103.exe 
+REM alias sys\bin\dpexe074.exe sys\bin\dpexe104.exe 
+REM alias sys\bin\dpexe075.exe sys\bin\dpexe105.exe 
+alias sys\bin\dpexe076.exe sys\bin\dpexe106.exe 
+alias sys\bin\dpexe077.exe sys\bin\dpexe107.exe 
+alias sys\bin\dpexe078.exe sys\bin\dpexe108.exe 
+alias sys\bin\dpexe079.exe sys\bin\dpexe109.exe 
+alias sys\bin\dpexe080.exe sys\bin\dpexe110.exe 
+alias sys\bin\dpexe081.exe sys\bin\dpexe111.exe 
+alias sys\bin\dpexe082.exe sys\bin\dpexe112.exe 
+alias sys\bin\dpexe083.exe sys\bin\dpexe113.exe 
+alias sys\bin\dpexe084.exe sys\bin\dpexe114.exe 
+alias sys\bin\dpexe085.exe sys\bin\dpexe115.exe 
+alias sys\bin\dpexe086.exe sys\bin\dpexe116.exe 
+alias sys\bin\dpexe087.exe sys\bin\dpexe117.exe 
+alias sys\bin\dpexe088.exe sys\bin\dpexe118.exe 
+alias sys\bin\dpexe089.exe sys\bin\dpexe119.exe 
+alias sys\bin\dpexe090.exe sys\bin\dpexe120.exe 
+
+alias sys\bin\dpdll061.dll sys\bin\dpdll091.dll 
+alias sys\bin\dpdll062.dll sys\bin\dpdll092.dll 
+alias sys\bin\dpdll063.dll sys\bin\dpdll093.dll 
+REM alias sys\bin\dpdll064.dll sys\bin\dpdll094.dll 
+REM alias sys\bin\dpdll065.dll sys\bin\dpdll095.dll 
+REM alias sys\bin\dpdll066.dll sys\bin\dpdll096.dll 
+REM alias sys\bin\dpdll067.dll sys\bin\dpdll097.dll 
+REM alias sys\bin\dpdll068.dll sys\bin\dpdll098.dll 
+REM alias sys\bin\dpdll069.dll sys\bin\dpdll099.dll 
+REM alias sys\bin\dpdll070.dll sys\bin\dpdll100.dll 
+REM alias sys\bin\dpdll071.dll sys\bin\dpdll101.dll 
+REM alias sys\bin\dpdll072.dll sys\bin\dpdll102.dll 
+REM alias sys\bin\dpdll073.dll sys\bin\dpdll103.dll 
+REM alias sys\bin\dpdll074.dll sys\bin\dpdll104.dll 
+REM alias sys\bin\dpdll075.dll sys\bin\dpdll105.dll 
+alias sys\bin\dpdll076.dll sys\bin\dpdll106.dll 
+alias sys\bin\dpdll077.dll sys\bin\dpdll107.dll 
+alias sys\bin\dpdll078.dll sys\bin\dpdll108.dll 
+alias sys\bin\dpdll079.dll sys\bin\dpdll109.dll 
+alias sys\bin\dpdll080.dll sys\bin\dpdll110.dll 
+alias sys\bin\dpdll081.dll sys\bin\dpdll111.dll 
+alias sys\bin\dpdll082.dll sys\bin\dpdll112.dll 
+alias sys\bin\dpdll083.dll sys\bin\dpdll113.dll 
+alias sys\bin\dpdll084.dll sys\bin\dpdll114.dll 
+alias sys\bin\dpdll085.dll sys\bin\dpdll115.dll 
+alias sys\bin\dpdll086.dll sys\bin\dpdll116.dll 
+alias sys\bin\dpdll087.dll sys\bin\dpdll117.dll 
+alias sys\bin\dpdll088.dll sys\bin\dpdll118.dll 
+alias sys\bin\dpdll089.dll sys\bin\dpdll119.dll 
+alias sys\bin\dpdll090.dll sys\bin\dpdll120.dll 

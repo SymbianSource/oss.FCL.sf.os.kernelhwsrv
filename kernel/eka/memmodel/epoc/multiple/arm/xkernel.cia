@@ -1,0 +1,65 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\multiple\arm\xkernel.cia
+// 
+//
+
+#include <arm_mem.h>
+
+
+__NAKED__ TBool Exc::IsMagic(TLinAddr /*anAddress*/)
+//
+// Return TRUE if anAddress is a 'magic' exception handling instruction
+//
+	{
+	asm("adr r1, __magic_addresses ");		// r1 points to list of magic addresses
+	asm("is_magic_1: ");
+	asm("ldr r2, [r1], #4 ");				// r2=next magic address to check
+	asm("cmp r2, r0 ");						// is r0=magic address?
+	asm("cmpne r2, #0 ");					// if not, have we reached end of list?
+	asm("bne is_magic_1 ");					// if neither, check next address
+	asm("movs r0, r2 ");					// r0=0 if not magic, r0 unchanged if magic
+	__JUMP(,lr);
+
+	asm("__magic_addresses: ");
+	asm(".word __magic_address_kusaferead ");
+	asm(".word __magic_address_saferead ");
+	asm(".word __magic_address_kusafewrite ");
+	asm(".word __magic_address_safewrite ");
+	asm(".word __magic_address_msg_lookup_1 ");			// in preprocess handler
+	asm(".word __magic_address_readdesheader1 ");
+	asm(".word __magic_address_readdesheader2 ");
+	asm(".word __magic_address_readdesheader3 ");
+#ifdef __MESSAGE_MACHINE_CODED_2__
+	asm(".word __magic_address_msg_lookup_2 ");
+#endif
+#ifdef __CLIENT_REQUEST_MACHINE_CODED__
+	asm(".word __magic_address_client_request_callback");
+	asm(".word __magic_address_svr_accept_1 ");
+	asm(".word __magic_address_svr_accept_2 ");
+	asm(".word __magic_address_svr_accept_3 ");
+	asm(".word __magic_address_svr_accept_4 ");
+	asm(".word __magic_address_svr_accept_5 ");
+	asm(".word __magic_address_svr_accept_6 ");
+	asm(".word __magic_address_svr_accept_7 ");
+	asm(".word __magic_address_svr_accept_8 ");
+#endif
+#ifdef __REQUEST_COMPLETE_MACHINE_CODED__
+	asm(".word __magic_address_reqc ");
+	asm(".word __magic_address_kern_request_complete ");
+#endif
+	// list terminator
+	asm(".word 0 ");
+	}
+

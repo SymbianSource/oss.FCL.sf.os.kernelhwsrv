@@ -1,0 +1,112 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! 	@file
+//! 	@SYMTestSuiteName		pbase-f32-sfsrv-publicapi-ram
+//!	@SYMScriptTestEnvironment	This test script requires a basic ROM.
+//! 	@SYMScriptAuthor 		Alvar Udras, Runno Sgirka
+//! 	@SYMScriptDescription		The test script contains API tests for the following functions of RFormat class:
+//!	TInt Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount);
+//!	void Close();
+
+LOAD_SUITE	t_sfsrv
+DELAY 5000
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-1004
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-1004
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Function Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) test. Call Open() with invalid
+//!				drive letter value.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   "InvalidDriveLetter", EQuickFormat, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call returns error -28 (KErrBadName).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND			rfs1	new
+		COMMAND			rfs1	Connect
+		COMMAND			format1	new
+		COMMAND	!Error=-28	format1	Open		PBASE-F32-Format-PublicApi-1004-001-Open_command05
+		COMMAND			format1	Close
+		COMMAND			format1	~
+		COMMAND			rfs1	Close
+		COMMAND			rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-1004
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-1006
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-1006
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Function Close() test. Call Close() without calling Open() first.
+//!				Uses API elements: Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Close() to close the RFormat instance.
+//!				4. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Close() method call will complete without errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-1006
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-1011
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-1011
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Function Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) test. Call Open() with
+//!				not mounted drive letter value.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   "NotMountedDriveChar", EQuickFormat, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call returns error -18 (KErrNotReady).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND			rfs1	new
+		COMMAND			rfs1	Connect
+		COMMAND			format1	new
+		COMMAND	!Error=-18	format1	Open		PBASE-F32-Format-PublicApi-1011-001-Open_command05
+		COMMAND			format1	Close
+		COMMAND			format1	~
+		COMMAND			rfs1	Close
+		COMMAND			rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-1011

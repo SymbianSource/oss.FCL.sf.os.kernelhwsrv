@@ -1,0 +1,16 @@
+T_SERIAL	OK
+T_SOUND		OK except for FreeLogicalDevice bits
+T_ATADRV	OK
+T_IDRV		OK
+T_PCCD1		Not yet implemented
+T_PCCD2		Not yet implemented
+T_PCCD3		Not yet implemented
+T_POWR		OK
+T_HAL		OK
+T_INF		OK
+T_PTNOS		Not yet implemented
+T_RESET
+T_PS		OK
+T_COLOUR	OK
+T_WWINS		OK
+

@@ -1,0 +1,5 @@
+EXPORTS
+	SomeExport @ 1 NONAME
+	RemovedExport @ 2 NONAME ABSENT
+	AnotherExport @ 3 NONAME
+

@@ -1,0 +1,39 @@
+// @SYMTestCaseID           PBASE-USB-MULTIF1-0799
+// @SYMTestCaseDesc         Testing multiple pipes on a multiple interfaces (part 1)
+// @SYMTestActions
+//    1. Loop Compare using 1 IN and 1 OUT (interface 1)
+//    2. Loop Compare using 1 IN and 1 OUT (interface 2)
+//    3. Loop Compare using 4 IN and 4 OUT (interface 0, 1 & 2)
+//    4. Stream using 5 IN (interface 0, 1 & 2)
+//    5. Stream using 4 OUT (interface 0, 1 & 2)
+//    6. Loop Compare using 3 IN and 3 OUT (alternate settings on interface 0 & 1)
+// @SYMTestExpectedResults
+//    No error reported
+// @SYMTestPriority         High
+//
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+WaitConnect
+Compare		50	150	1000	1	0	2	1	1000	100	
+Wait
+Compare		50	150	1000	2	0	2	1	1000	100	
+Wait
+Compare		50	150	1000	0	0	4	1	1000	100	
+Compare		60	250	2000	0	0	2	3	1000	100	
+Compare		50	350	3000	1	0	2	1	1000	100	
+Compare		60	450	4000	2	0	2	1	1000	100	
+Wait
+Stream			150	1000	0	0	99	1	1000	100	
+Stream			250	1000	0	0	99	5	1000	100	
+Stream			350	1000	0	0	99	3	1000	100	
+Stream			50	1000	1	0	99	1	1000	100	
+Stream			250	1000	2	0	99	1	1000	100	
+Wait
+Stream			250	1000	0	0	4	99	1000	100	
+Stream			150	1000	0	0	2	99	1000	100	
+Stream			350	1000	1	0	2	99	1000	100	
+Stream			50	1000	2	0	2	99	1000	100	
+Wait
+Compare		50	150	1000	0	1	2	1	1000	100	
+Compare		60	250	2000	0	1	5	3	1000	100	
+Compare		50	350	3000	1	1	1	2	1000	100	
+Wait

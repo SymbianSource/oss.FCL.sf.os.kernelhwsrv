@@ -1,0 +1,3 @@
+EXPORTS
+	_Z8FurtiveAR4TBufILi256EE @ 1 NONAME ; FurtiveA(TBuf<256>&)
+

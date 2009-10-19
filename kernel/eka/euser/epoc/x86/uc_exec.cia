@@ -1,0 +1,138 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\x86\uc_exec.cia
+// 
+//
+
+#define __GEN_USER_EXEC_CODE__
+
+#include <e32svr.h>
+#include <u32exec.h>
+
+
+/******************************************************************************
+* Slow executive calls with preprocessing or extra arguments
+******************************************************************************/
+__NAKED__ TInt Exec::SessionSend(TInt /*aHandle*/, TInt /*aFunction*/, TAny* /*aPtr*/, TRequestStatus* /*aStatus*/)
+//
+// Send a blind message to the server.
+//
+	{
+	SLOW_EXEC4(EExecSessionSend);
+	}
+
+__NAKED__ TInt Exec::SessionSendSync(TInt /*aHandle*/, TInt /*aFunction*/, TAny* /*aPtr*/, TRequestStatus* /*aStatus*/)
+//
+// Send a blind message to the server using thread's dedicated message slot.
+//
+	{
+	SLOW_EXEC4(EExecSessionSendSync);
+	}
+
+__NAKED__ TInt Exec::MessageIpcCopy(TInt /*aHandle*/, TInt /*aParam*/, SIpcCopyInfo& /*aInfo*/, TInt /*anOffset*/)
+//
+// IPC transfer using message handle
+//
+	{
+	SLOW_EXEC4(EExecMessageIpcCopy);
+	}
+
+__NAKED__ TInt Exec::BTraceOut(TUint32 /*a0*/, TUint32 /*a1*/, const BTrace::SExecExtension& /*aExtension*/, TInt /*aDataSize*/)
+	{
+	SLOW_EXEC4(EExecBTraceOut);
+	}
+
+__NAKED__ TInt Exec::BTraceOutBig(TUint32 /*a0*/, TUint32 /*a1*/, const BTrace::SExecExtension& /*aExtension*/, TInt /*aDataSize*/)
+	{
+	SLOW_EXEC4(EExecBTraceOutBig);
+	}
+
+__NAKED__ TInt Exec::UTraceOut(TUint32 /*a0*/, TUint32 /*a1*/, const BTrace::SExecExtension& /*aExtension*/, TInt /*aDataSize*/)
+	{
+	SLOW_EXEC4(EExecUTraceOut);
+	}
+
+__NAKED__ void ExitCurrentThread(TExitType /*aType*/, TInt /*aReason*/, const TDesC8* /*aCategory*/)
+	{
+	asm("mov eax, %0": : "i"(EExecThreadKill));
+	asm("push ebx");		// push these anyway for debug
+	asm("push esi");
+	asm("mov ecx, %0": : "i"(0xffff8001)); // gcc/gas doesnt like KCurrentThreadHandle
+	asm("mov edx, [esp+12]");
+	asm("mov ebx, [esp+16]");
+	asm("mov esi, [esp+20]");
+	asm("int 0x21");
+	// doesn't return
+	}
+
+EXPORT_C __NAKED__ void RThread::RequestComplete(TRequestStatus*& aStatus, TInt aReason) const
+/**
+Signals this thread that an asynchronous request originating from this thread,
+is complete.
+
+The request is associated with the specified request status object supplied
+by this thread.
+
+Typically, the caller of this function is the service provider responsible
+for satisfying the request made by this thread.
+
+The request is completed with the completion code passed in aReason. This
+value is copied into this thread's request status, *aStatus, before signalling
+this thread's request semaphore.
+
+The meaning of the completion code is a matter of convention to be decided
+between the service provider and this thread.
+
+In a client-server situation, completion of a request takes place in the context
+of the server thread, but the pointer is interpreted in the address space
+of the client.
+
+It is often the case in client-server situations that the client and the server
+are in the same address space (i.e. the same process).
+
+Setting the pointer to the request status to NULL is a convenience, not all
+servers need it.
+
+@param aStatus A reference to a pointer to the request status originally
+supplied by this thread. This is a pointer into this thread's
+address space, which may be different to the thread currently
+executing (this code). On return, the pointer to the request
+status is set to NULL.
+
+@param aReason The completion code of this request.
+*/
+//
+// Signal a request completion.
+// NOTE: __thiscall convention - we must remove parameters
+//
+	{
+	THISCALL_PROLOG2()
+	asm("push ebx");
+	asm("mov ecx, [ecx]");
+	asm("mov eax, [esp+8]");
+	asm("mov ebx, [esp+12]");
+	asm("xor edx, edx");
+	asm("lock xchg edx, [eax]");
+	asm("cmp edx, 0");
+	asm("je ExecRequestComplete_ret");
+	asm("mov [edx], ebx");   // write to request status
+	asm("mov eax, %0": : "i"(EExecThreadRequestSignal));
+	asm("int 0x21");
+	asm("ExecRequestComplete_ret:");
+	asm("pop ebx");
+	THISCALL_EPILOG2()
+	}
+
+
+

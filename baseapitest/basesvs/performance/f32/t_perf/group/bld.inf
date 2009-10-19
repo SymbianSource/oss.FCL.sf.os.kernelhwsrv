@@ -1,0 +1,66 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRJ_TESTEXPORTS
+
+// to pkg
+../pkg/t_perf.pkg						/epoc32/pkg/t_perf.pkg
+../pkg/tperf.bat						/epoc32/pkg/tperf.bat
+
+../scripts/pbase-f32-rfs-performance-small.script  		z:/base/performance/f32/pbase-f32-rfs-performance-small.script
+../scripts/pbase-f32-rfs-performance-medium.script 		z:/base/performance/f32/pbase-f32-rfs-performance-medium.script
+../scripts/pbase-f32-rfs-performance-large.script		z:/base/performance/f32/pbase-f32-rfs-performance-large.script
+../scripts/pbase-f32-rfile-performance-small.script		z:/base/performance/f32/pbase-f32-rfile-performance-small.script
+../scripts/pbase-f32-rfile-performance-medium.script		z:/base/performance/f32/pbase-f32-rfile-performance-medium.script
+../scripts/pbase-f32-rfile-performance-large.script  		z:/base/performance/f32/pbase-f32-rfile-performance-large.script
+
+../testdata/pbase-f32-rfile-performance-small.ini		z:/base/performance/f32/pbase-f32-rfile-performance-small.ini
+../testdata/pbase-f32-rfile-performance-medium.ini		z:/base/performance/f32/pbase-f32-rfile-performance-medium.ini
+../testdata/pbase-f32-rfile-performance-large.ini		z:/base/performance/f32/pbase-f32-rfile-performance-large.ini
+../testdata/pbase-f32-rfile-performance-utils.ini		z:/base/performance/f32/pbase-f32-rfile-performance-utils.ini
+../testdata/pbase-f32-rfs-performance-small.ini			z:/base/performance/f32/pbase-f32-rfs-performance-small.ini
+../testdata/pbase-f32-rfs-performance-medium.ini		z:/base/performance/f32/pbase-f32-rfs-performance-medium.ini
+../testdata/pbase-f32-rfs-performance-large.ini			z:/base/performance/f32/pbase-f32-rfs-performance-large.ini
+
+../testdata/winscw/base_perf_f32_env.ini			z:/base/performance/f32/base_perf_f32_env.ini
+../testdata/winscw/base_perf_f32_env.ini			z:/base/performance/f32/winscw/base_perf_f32_env.ini
+../testdata/armv5/base_perf_f32_env.ini				z:/base/performance/f32/armv5/base_perf_f32_env.ini
+
+//pkg
+
+../scripts/pbase-f32-rfs-performance-small.script  		/epoc32/pkg/performance/f32/pbase-f32-rfs-performance-small.script
+../scripts/pbase-f32-rfs-performance-medium.script 		/epoc32/pkg/performance/f32/pbase-f32-rfs-performance-medium.script
+../scripts/pbase-f32-rfs-performance-large.script		/epoc32/pkg/performance/f32/pbase-f32-rfs-performance-large.script
+../scripts/pbase-f32-rfile-performance-small.script		/epoc32/pkg/performance/f32/pbase-f32-rfile-performance-small.script
+../scripts/pbase-f32-rfile-performance-medium.script		/epoc32/pkg/performance/f32/pbase-f32-rfile-performance-medium.script
+../scripts/pbase-f32-rfile-performance-large.script  		/epoc32/pkg/performance/f32/pbase-f32-rfile-performance-large.script
+
+../testdata/pbase-f32-rfile-performance-small.ini		/epoc32/pkg/performance/f32/pbase-f32-rfile-performance-small.ini
+../testdata/pbase-f32-rfile-performance-medium.ini		/epoc32/pkg/performance/f32/pbase-f32-rfile-performance-medium.ini
+../testdata/pbase-f32-rfile-performance-large.ini		/epoc32/pkg/performance/f32/pbase-f32-rfile-performance-large.ini
+../testdata/pbase-f32-rfile-performance-utils.ini		/epoc32/pkg/performance/f32/pbase-f32-rfile-performance-utils.ini
+../testdata/pbase-f32-rfs-performance-small.ini			/epoc32/pkg/performance/f32/pbase-f32-rfs-performance-small.ini
+../testdata/pbase-f32-rfs-performance-medium.ini		/epoc32/pkg/performance/f32/pbase-f32-rfs-performance-medium.ini
+../testdata/pbase-f32-rfs-performance-large.ini			/epoc32/pkg/performance/f32/pbase-f32-rfs-performance-large.ini
+
+//SIS file is to run on an armv5 platform only.
+../testdata/armv5/base_perf_f32_env.ini			/epoc32/pkg/performance/f32/base_perf_f32_env.ini
+
+
+./t_base_f32_perf.iby								/epoc32/rom/include/t_base_f32_perf.iby
+
+PRJ_TESTMMPFILES
+t_perf.mmp

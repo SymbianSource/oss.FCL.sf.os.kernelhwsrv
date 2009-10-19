@@ -1,0 +1,25 @@
+EXPORTS
+	_Z11DmaTestInfov @ 1 NONAME ; DmaTestInfo()
+	_ZN11DDmaRequest11FreeDesListEv @ 2 NONAME ; DDmaRequest::FreeDesList()
+	_ZN11DDmaRequest13ExpandDesListEi @ 3 NONAME ; DDmaRequest::ExpandDesList(int)
+	_ZN11DDmaRequest5QueueEv @ 4 NONAME ; DDmaRequest::Queue()
+	_ZN11DDmaRequest8FragmentEmmijm @ 5 NONAME ; DDmaRequest::Fragment(unsigned long, unsigned long, int, unsigned int, unsigned long)
+	_ZN11DDmaRequestC1ER11TDmaChannelPFvNS_7TResultEPvES3_i @ 6 NONAME ; DDmaRequest::DDmaRequest(TDmaChannel&, void (*)(DDmaRequest::TResult, void*), void*, int)
+	_ZN11DDmaRequestC2ER11TDmaChannelPFvNS_7TResultEPvES3_i @ 7 NONAME ; DDmaRequest::DDmaRequest(TDmaChannel&, void (*)(DDmaRequest::TResult, void*), void*, int)
+	_ZN11DDmaRequestD0Ev @ 8 NONAME ; DDmaRequest::~DDmaRequest()
+	_ZN11DDmaRequestD1Ev @ 9 NONAME ; DDmaRequest::~DDmaRequest()
+	_ZN11DDmaRequestD2Ev @ 10 NONAME ; DDmaRequest::~DDmaRequest()
+	_ZN11TDmaChannel15StaticExtensionEiPv @ 11 NONAME ; TDmaChannel::StaticExtension(int, void*)
+	_ZN11TDmaChannel4OpenERKNS_11SCreateInfoERPS_ @ 12 NONAME ; TDmaChannel::Open(TDmaChannel::SCreateInfo const&, TDmaChannel*&)
+	_ZN11TDmaChannel5CloseEv @ 13 NONAME ; TDmaChannel::Close()
+	_ZN11TDmaChannel9CancelAllEv @ 14 NONAME ; TDmaChannel::CancelAll()
+	_ZTI11DDmaRequest @ 15 NONAME ; #<TI>#
+	_ZTI13TDmaDbChannel @ 16 NONAME ; #<TI>#
+	_ZTI13TDmaSbChannel @ 17 NONAME ; #<TI>#
+	_ZTI13TDmaSgChannel @ 18 NONAME ; #<TI>#
+	_ZTI5TDmac @ 19 NONAME ; #<TI>#
+	_ZTV11DDmaRequest @ 20 NONAME ; #<VT>#
+	_ZTV13TDmaDbChannel @ 21 NONAME ; #<VT>#
+	_ZTV13TDmaSbChannel @ 22 NONAME ; #<VT>#
+	_ZTV13TDmaSgChannel @ 23 NONAME ; #<VT>#
+	_ZTV5TDmac @ 24 NONAME ; #<VT>#

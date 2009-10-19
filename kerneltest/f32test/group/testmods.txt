@@ -1,0 +1,46 @@
+
+/******************************************************************************
+ * TESTS MODIFIED
+ ******************************************************************************/
+
+T_ALERT
+	Changed the way media change is forced - use RLocalDrive::ForceMediaChange()
+	instead of UserPcCardCntrl::PwrDown().
+
+T_FIND
+	Now tests for full names instead of short names for threads - previously
+	this was testing a bug in EKA1.
+	Logical channels are always thread-relative (full names are different).
+	User::FreeLogicalDevice and User::FreePhysicalDevice not yet implemented.
+
+T_FMAN
+	Don't test for archive attribute on a file copied from Z: to C:.
+
+T_FORMAT
+	Changed the way media change is forced - use RLocalDrive::ForceMediaChange()
+	instead of UserPcCardCntrl::PwrDown().
+
+T_FSYS
+	AddFileSystem with filename ETEST instead of Z:\TEST\ETEST - abld romfile
+	puts FSYs in \SYSTEM\LIBS.
+
+T_NOTIFY
+	Changed the way media change is forced - use RLocalDrive::ForceMediaChange()
+	instead of UserPcCardCntrl::PwrDown().
+
+/******************************************************************************
+ * NEW TESTS ADDED
+ ******************************************************************************/
+
+None
+
+/******************************************************************************
+ * TESTS REMOVED OR NOT YET PORTED TO E32RT.
+ ******************************************************************************/
+
+T_WARM
+	Doesn't work yet since machine doesn't restart on a kernel fault - it goes
+	into the crash debugger.
+
+T_DLOCL
+	Changing locale not yet implemented in E32RT.

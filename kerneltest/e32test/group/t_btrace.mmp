@@ -1,0 +1,31 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_btrace.mmp
+// 
+//
+
+target         	t_btrace.exe
+targettype     	exe
+sourcepath	../debug
+
+source        	t_btrace.cpp 
+firstlib 	eexe_instrumented_heap.lib
+library		euser.lib btracec.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+vendorid	0x70000001
+capability	readdevicedata writedevicedata protserv
+
+
+SMPSAFE

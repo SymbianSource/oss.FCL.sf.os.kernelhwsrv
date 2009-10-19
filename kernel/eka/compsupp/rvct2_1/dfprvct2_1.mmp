@@ -1,0 +1,46 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+target 			dfprvct2_1.dll
+
+targettype		dll
+
+sourcepath		.
+source			dfprvct2_1.cpp
+
+// yuk
+library 		euser.lib
+
+library			drtrvct2_1.lib
+
+option armcc --no_exceptions --no_exceptions_unwind
+
+start armcc
+armrt
+
+// we want the 'pure' versions to go with softvfp
+#ifdef MARM_ARMV5
+armlibs			f_t_p.l c_t__un.l
+#else //!MARM_ARMV5
+armlibs			f_a_p.l c_a__un.l
+#endif //MARM_ARMV5
+
+end // armcc
+
+capability		all
+
+vendorid		0x70000001
+
+SMPSAFE

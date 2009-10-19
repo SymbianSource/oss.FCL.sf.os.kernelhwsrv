@@ -1,0 +1,37 @@
+EXPORTS
+	_Z11DmaTestInfov @ 1 NONAME ; DmaTestInfo()
+	_Z19CreateLogicalDevicev @ 2 NONAME ; CreateLogicalDevice()
+	_ZN11DDmaRequest11FreeDesListEv @ 3 NONAME ; DDmaRequest::FreeDesList()
+	_ZN11DDmaRequest13ExpandDesListEi @ 4 NONAME ; DDmaRequest::ExpandDesList(int)
+	_ZN11DDmaRequest5QueueEv @ 5 NONAME ; DDmaRequest::Queue()
+	_ZN11DDmaRequest8FragmentEmmijm @ 6 NONAME ; DDmaRequest::Fragment(unsigned long, unsigned long, int, unsigned int, unsigned long)
+	_ZN11DDmaRequestC1ER11TDmaChannelPFvNS_7TResultEPvES3_i @ 7 NONAME ; DDmaRequest::DDmaRequest(TDmaChannel&, void (*)(DDmaRequest::TResult, void*), void*, int)
+	_ZN11DDmaRequestC2ER11TDmaChannelPFvNS_7TResultEPvES3_i @ 8 NONAME ; DDmaRequest::DDmaRequest(TDmaChannel&, void (*)(DDmaRequest::TResult, void*), void*, int)
+	_ZN11DDmaRequestD0Ev @ 9 NONAME ; DDmaRequest::~DDmaRequest()
+	_ZN11DDmaRequestD1Ev @ 10 NONAME ; DDmaRequest::~DDmaRequest()
+	_ZN11DDmaRequestD2Ev @ 11 NONAME ; DDmaRequest::~DDmaRequest()
+	_ZN11TDmaChannel15StaticExtensionEiPv @ 12 NONAME ; TDmaChannel::StaticExtension(int, void*)
+	_ZN11TDmaChannel4OpenERKNS_11SCreateInfoERPS_ @ 13 NONAME ; TDmaChannel::Open(TDmaChannel::SCreateInfo const&, TDmaChannel*&)
+	_ZN11TDmaChannel5CloseEv @ 14 NONAME ; TDmaChannel::Close()
+	_ZN11TDmaChannel9CancelAllEv @ 15 NONAME ; TDmaChannel::CancelAll()
+	_ZTI11DDmaRequest @ 16 NONAME ; typeinfo for DDmaRequest
+	_ZTV11DDmaRequest @ 17 NONAME ; vtable for DDmaRequest
+	_ZTI13TDmaDbChannel @ 18 NONAME ; typeinfo for TDmaDbChannel
+	_ZTI13TDmaSbChannel @ 19 NONAME ; typeinfo for TDmaSbChannel
+	_ZTI13TDmaSgChannel @ 20 NONAME ; typeinfo for TDmaSgChannel
+	_ZTI16DSimDbController @ 21 NONAME ; typeinfo for DSimDbController
+	_ZTI16DSimSbController @ 22 NONAME ; typeinfo for DSimSbController
+	_ZTI16DSimSgController @ 23 NONAME ; typeinfo for DSimSgController
+	_ZTI5TDmac @ 24 NONAME ; typeinfo for TDmac
+	_ZTI9DDummyLdd @ 25 NONAME ; typeinfo for DDummyLdd
+	_ZTV13TDmaDbChannel @ 26 NONAME ; vtable for TDmaDbChannel
+	_ZTV13TDmaSbChannel @ 27 NONAME ; vtable for TDmaSbChannel
+	_ZTV13TDmaSgChannel @ 28 NONAME ; vtable for TDmaSgChannel
+	_ZTV16DSimDbController @ 29 NONAME ; vtable for DSimDbController
+	_ZTV16DSimSbController @ 30 NONAME ; vtable for DSimSbController
+	_ZTV16DSimSgController @ 31 NONAME ; vtable for DSimSgController
+	_ZTV5TDmac @ 32 NONAME ; vtable for TDmac
+	_ZTV9DDummyLdd @ 33 NONAME ; vtable for DDummyLdd
+	_ZTI11TDmaChannel @ 34 NONAME ; #<TI>#
+	_ZTV11TDmaChannel @ 35 NONAME ; #<VT>#
+

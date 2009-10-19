@@ -1,0 +1,7 @@
+EXPORTS
+	CacheSize__6DPTestRUiN21 @ 1 NONAME R3UNUSED ; DPTest::CacheSize(unsigned int &, unsigned int &, unsigned int &)
+	EventInfo__6DPTestR5TDes8 @ 2 NONAME R3UNUSED ; DPTest::EventInfo(TDes8 &)
+	FlushCache__6DPTest @ 3 NONAME R3UNUSED ; DPTest::FlushCache(void)
+	SetCacheSize__6DPTestUiUi @ 4 NONAME R3UNUSED ; DPTest::SetCacheSize(unsigned int, unsigned int)
+	Attributes__6DPTest @ 5 NONAME R3UNUSED ; DPTest::Attributes(void)
+

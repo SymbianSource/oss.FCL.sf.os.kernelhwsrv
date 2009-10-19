@@ -1,0 +1,97 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\debug\d_eventtracker.cia
+// 
+//
+
+#include <arm.h>
+#include "d_eventtracker.h"
+
+//////////////////////////////////////////////////////////////////////////////
+
+// CIA symbol macros for Gcc98r2
+#if defined(__GCC32__)
+
+#define CSM_ZN13DEventTracker11HandleEventE12TKernelEventPvS1 " HandleEvent__13DEventTracker12TKernelEventPvT2"
+
+// CIA symbol macros for RVCT
+#elif defined(__ARMCC__)
+
+#define CSM_ZN13DEventTracker11HandleEventE12TKernelEventPvS1 " __cpp(DEventTracker::HandleEvent)"
+
+// CIA symbol macros for EABI assemblers
+#else
+
+#define CSM_ZN13DEventTracker11HandleEventE12TKernelEventPvS1 " _ZN13DEventTracker11HandleEventE12TKernelEventPvS1_"
+
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+
+__NAKED__ void DEventTracker::BranchToEventHandler()
+//
+// Breakpoint to call our event handler
+//
+	{
+	asm("breakstart: ");													// start of breakpoint.
+	asm("mov r3, r2");														// set up regs for call to our handler...
+	asm("mov r2, r1");														//
+	asm("mov r1, r0");														//
+	asm("ldr r0, __TheEventTracker ");										// fiddle this pointer
+	asm("ldr r0, [r0] ");													// load from TheEventTracker
+	asm("ldr pc, [pc, #-4]" );												// do an absolute jump...
+	asm(".word " CSM_ZN13DEventTracker11HandleEventE12TKernelEventPvS1 );	//  to DEventTracker::HandleEvent
+	asm("__TheEventTracker: ");												// address of global variable:
+	asm(".word %a0" : : "i" (&TheEventTracker));							//  TheEventTracker
+	asm("breakend: ");														// end of breakpoint.
+	}
+
+__NAKED__ TUint DEventTracker::BreakPointSize()
+//
+// Size of breakpoint
+//
+	{
+	asm("ldr r0, = breakend - breakstart");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint DEventTracker::DummyHandler(TKernelEvent /*aEvent*/, TAny* /*a1*/, TAny* /*a2*/)
+//
+// Debugger breakpoint-able callback.  Will be copied into RAM
+//
+	{
+	//
+	// r0=aEvent, r1=a1, r2=a2
+	//
+	asm("dummystart: ");											// start of fn.
+	asm("nop");														// breakpoint-able instruction for the debugger to replace
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("mov r0, #%a0" : : "i" (DKernelEventHandler::ERunNext));	// return value
+	__JUMP(,lr);													// return
+	asm("dummyend:");												// end of fn.
+	}
+
+__NAKED__ TUint DEventTracker::DummyHandlerSize()
+//
+// Size of debugger breakpoint-able callback.
+//
+	{
+	asm("ldr r0, = dummyend - dummystart");
+	__JUMP(,lr);
+	}

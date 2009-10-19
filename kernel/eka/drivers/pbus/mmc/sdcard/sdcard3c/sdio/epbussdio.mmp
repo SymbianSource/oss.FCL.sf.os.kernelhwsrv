@@ -1,0 +1,58 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/pbus/mmc/sdcard/sdcard3c/sdio/epbussdio.mmp
+// 
+//
+
+#include			"../../../epbusm.mmh"
+
+target				epbussdio.dll
+targettype			kext
+
+USERINCLUDE			..
+
+sourcepath			..
+source				sdcard.cpp
+
+sourcepath			.
+source				sdioinit.cpp
+source				sdiocard.cpp
+source				sdiosocket.cpp
+source				sdiosession.cpp
+source				sdiostack.cpp
+source				sdiopsu.cpp
+source				regifc.cpp
+source				function.cpp
+source				interrupt.cpp
+source				callback.cpp
+source				cisreader.cpp
+source				dummyexp.cpp 
+source				trace.cpp
+USERINCLUDE			.
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+MACRO 	_DISABLE_HIGH_SPEED_MODE_
+
+#if defined(GCC32)
+deffile 			../../bmarm/sdcard3c/sdio/epbusm.def
+#elif defined(WINS)
+deffile 			../../bwins/sdcard3c/sdio/epbusm.def
+#elif defined(X86)
+deffile 			../../bx86/sdcard3c/sdio/epbusm.def
+#else
+deffile 			../../eabi/sdcard3c/sdio/epbusm.def
+#endif
+
+VENDORID 0x70000001

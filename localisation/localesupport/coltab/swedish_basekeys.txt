@@ -1,0 +1,4 @@
+00E6 [.08E8.0020.0002.00E6] % small ae
+00C6 [.08E8.0020.0008.00C6] % capital AE
+00FE [.08EC.0020.0002.00FE] % small thorn
+00DE [.08EC.0020.0008.00DE] % capital thorn

@@ -1,0 +1,130 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+
+#ifdef _DEBUG
+#define ASM_KILL_LINK(rp,rs)	asm("mov "#rs", #0xdf ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #8 ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #16 ");\
+								asm("str "#rs", ["#rp"] ");\
+								asm("str "#rs", ["#rp", #4] ");
+#else
+#define ASM_KILL_LINK(rp,rs)
+#endif
+
+
+__NAKED__ TInt ThreadDoReadAndParseDesHeader(DThread* aThread, const TAny* aSrc, TUint32* aDest)
+	{
+	asm("stmdb sp!, {r4-r7, lr} ");	// stack unaligned, but we only call assembler
+
+#ifdef __SMP__
+	GET_RWNO_TID(,r6);														// r6->TSubScheduler - can't migrate since we hold system lock
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));		// r3->target process
+	asm("ldr r4, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));	// r4->current process
+	asm("ldr r5, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));	// r5->current NThread
+#else
+	asm("ldr r6, __TheScheduler ");											// r6->TheScheduler
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));		// r3->target process
+	asm("ldr r4, [r6, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));		// r4->current process
+	asm("ldr r5, [r6, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));		// r5->current NThread
+#endif
+	
+	// set TheCurrentThread->iIpcClient to this thread
+#ifdef _DEBUG
+	asm("ldr r12, [r5, #%a0] " : : "i" (_FOFF(DThread, iIpcClient) - _FOFF(DThread, iNThread)));
+	asm("teq r12, #0 ");
+	asm("bne __FaultIpcClientNotNull ");
+#endif
+	asm("str r0, [r5, #%a0] " : : "i" (_FOFF(DThread, iIpcClient) - _FOFF(DThread, iNThread)));
+
+	// switch address space to process r3...
+	asm("mrc p15, 0, r7, c2, c0, 0 ");		// r7 = original TTBR0
+	asm("ldr r0, [r3, #%a0]" : : "i" _FOFF(DMemModelProcess,iLocalPageDir));	// r0->target process page directory
+	asm("ldr r12, [r3, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));			// r12 = target ASID
+#ifdef __SMP__
+	__ASM_CLI();
+#else
+	CPSIDIF;								// disable all interrupts
+#endif
+	asm("mcr p15, 0, r12, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+	asm("and lr, r7, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));	// lr = TTBR0 extra bits
+	asm("orr lr, lr, r0 ");					// target process page directory + extra bits
+	UPDATE_PW_CACHING_ATTRIBUTES(,lr);		// ERRATUM 1136_317041
+	asm("mcr p15, 0, lr, c2, c0, 0 ");		// change TTBR0
+	asm("mcr p15, 0, r12, c13, c0, 1 ");	// change ASID
+
+#if defined(__CPU_ARM11MP__)
+	// On other platforms, tha ASID change above has already flushed the branch prediction buffers 
+	asm("mcr p15, 0, r12, c7, c5, 6 ");		// flush BTAC
+#endif
+
+#ifdef __SMP__
+	asm("str r3, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("str r3, [r6, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("str r3, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+#ifdef __SMP__
+	__ASM_STI();
+#else
+	CPSIEIF;								// enable all interrupts
+#endif
+	// read and parse the descriptor header
+	asm("bl read_and_parse_des_header_local");	// defined in e32/kernel/arm/cipc.cia
+		
+	// restore address space to process r4...
+	asm("ldr r12, [r4, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r12 = current process ASID
+#ifdef __SMP__
+	__ASM_CLI();
+#else
+	CPSIDIF;								// disable all interrupts
+#endif
+	asm("mcr p15, 0, r12, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+	UPDATE_PW_CACHING_ATTRIBUTES(,r7);		// ERRATUM 1136_317041
+	asm("mcr p15, 0, r7, c2, c0, 0 ");		// restore TTBR0
+	asm("mcr p15, 0, r12, c13, c0, 1 ");	// restore ASID
+
+#if defined(__CPU_ARM11MP__)
+	// On other platforms, the ASID change above has already flushed the branch prediction buffers 
+	asm("mcr p15, 0, r12, c7, c5, 6 ");		// flush BTAC
+#endif
+
+#ifdef __SMP__
+	asm("str r4, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("str r4, [r6, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("str r4, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+#ifdef __SMP__
+	__ASM_STI();
+#else
+	CPSIEIF;								// enable all interrupts
+#endif
+
+	// set TheCurrentThread->iIpcClient to NULL again
+	asm("mov r12, #0 ");
+	asm("str r12, [r5, #%a0] " : : "i" (_FOFF(DThread, iIpcClient) - _FOFF(DThread, iNThread)));
+	
+	// finished...
+	__POPRET("r4-r7,");
+
+#ifndef __SMP__
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+#endif
+	}
+

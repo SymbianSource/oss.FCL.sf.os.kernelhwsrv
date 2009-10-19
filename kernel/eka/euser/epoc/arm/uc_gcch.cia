@@ -1,0 +1,40 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_gcch.cia
+// This file contains general gcc helper functions
+// 
+//
+
+#include <u32std.h>
+
+extern "C" {
+
+#ifdef __MARM_THUMB__
+__NAKED__ void _call_via_r0()	{ asm("	bx	r0"); }
+__NAKED__ void _call_via_r1()	{ asm("	bx	r1"); }
+__NAKED__ void _call_via_r2()	{ asm("	bx	r2"); }
+__NAKED__ void _call_via_r3()	{ asm("	bx	r3"); }
+__NAKED__ void _call_via_r4()	{ asm("	bx	r4"); }
+__NAKED__ void _call_via_r5()	{ asm("	bx	r5"); }
+__NAKED__ void _call_via_r6()	{ asm("	bx	r6"); }
+__NAKED__ void _call_via_r7()	{ asm("	bx	r7"); }
+__NAKED__ void _call_via_r8()	{ asm("	bx	r8"); }
+__NAKED__ void _call_via_r9()	{ asm("	bx	r9"); }
+__NAKED__ void _call_via_sl()	{ asm("	bx	sl"); }
+__NAKED__ void _call_via_fp()	{ asm("	bx	fp"); }
+__NAKED__ void _call_via_ip()	{ asm("	bx	ip"); }
+__NAKED__ void _call_via_lr()	{ asm("	bx	lr"); }
+#endif
+
+}

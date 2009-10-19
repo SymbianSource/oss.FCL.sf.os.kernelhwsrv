@@ -1,0 +1,443 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\x86\csched.cia
+// 
+//
+
+#include <x86_mem.h>
+#ifdef __SMP__
+#include <apic.h>
+#endif
+
+
+EXPORT_C __NAKED__ TAny* Kern::KUSafeRead(const TAny* /*aSrc*/, TAny* /*aDest*/, TInt /*aSize*/)
+//
+// Copy word-aligned data with immunity from exceptions on reads. Returns NULL if copy succeeded,
+// else returns address at which exception occurred. aSize must be a non-zero multiple of 4.
+// Reads done with user permissions if appropriate.
+//
+	{
+	asm("push edi");
+#ifdef __SMP__
+	asm("cli");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24");
+	asm("mov eax, [eax*4+%0]": :"i"(&SubSchedulerLookupTable));
+	asm("mov edi, [eax+%0]": :"i"_FOFF(TSubScheduler,iCurrentThread));
+	asm("sti");
+#else
+	asm("mov edi, [%a0]" : : "i"(&TheScheduler.iCurrentThread));
+#endif
+	asm("xor eax, eax");
+	asm("lea eax, [eax+%0]" : : "i"_FOFF(DThread,iNThread));
+	asm("sub edi, eax");
+	asm("lea eax, ku_safe_read_magic_handler");
+	asm("mov [edi+%0], eax" : : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("push esi");
+	asm("mov esi, [esp+12]");
+	asm("mov edx, [esp+16]");
+	asm("mov ecx, [esp+20]");
+
+	asm("ku_safe_read_loop:");
+	asm("magic:");
+	asm("mov eax, gs:[esi]");
+	asm("add esi, 4");
+	asm("mov [edx], eax");
+	asm("add edx, 4");
+	asm("sub ecx, 4");
+	asm("jnz ku_safe_read_loop");
+	asm("xor eax, eax");
+	asm("mov [edi+%0], eax" : : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+
+	asm("ku_safe_read_magic_handler_2:");
+	asm("xor eax, eax");
+	asm("mov [edi+%0], eax" : : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("mov eax, esi");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+
+	asm("ku_safe_read_magic_handler:");
+	// ECX points to TX86ExcInfo
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("lea edx, magic");
+	asm("sub eax, edx");		// check exception occurred at magic instruction
+	asm("jne ku_safe_read_unexpected_exc");
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iExcId));
+	asm("sub eax, 13");			// check for GPF
+	asm("je ku_safe_read_expected_exc");
+	asm("dec eax");				// or page fault
+	asm("jne ku_safe_read_unexpected_exc");
+	asm("ku_safe_read_expected_exc:");
+	asm("lea eax, ku_safe_read_magic_handler_2");
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("xor eax, eax");
+	asm("ku_safe_read_unexpected_exc:");
+	asm("ret");
+	}
+
+__NAKED__ TAny* K::USafeRead(const TAny* /*aSrc*/, TAny* /*aDest*/, TInt /*aSize*/)
+//
+// Copy word-aligned data with immunity from exceptions on reads. Returns NULL if copy succeeded,
+// else returns address at which exception occurred. aSize must be a non-zero multiple of 4.
+// Reads done with user permissions.
+//
+	{
+	asm("push edi");
+#ifdef __SMP__
+	asm("cli");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24");
+	asm("mov eax, [eax*4+%0]": :"i"(&SubSchedulerLookupTable));
+	asm("mov edi, [eax+%0]": :"i"_FOFF(TSubScheduler,iCurrentThread));
+	asm("sti");
+#else
+	asm("mov edi, [%a0]" : : "i"(&TheScheduler.iCurrentThread));
+#endif
+	asm("xor eax, eax");
+	asm("lea eax, [eax+%0]" : : "i"_FOFF(DThread,iNThread));
+	asm("sub edi, eax");
+	asm("lea eax, u_safe_read_magic_handler");
+	asm("mov [edi+%0], eax" : : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("push esi");
+	asm("mov esi, [esp+12]");
+	asm("mov edx, [esp+16]");
+	asm("mov ecx, [esp+20]");
+	asm("push gs");	
+	asm("mov eax, %0": : "i"(RING3_DS));
+	asm("mov gs, ax");
+
+	asm("u_safe_read_loop:");
+	asm("u_safe_read_magic:");
+	asm("mov eax, gs:[esi]");
+	asm("add esi, 4");
+	asm("mov [edx], eax");
+	asm("add edx, 4");
+	asm("sub ecx, 4");
+	asm("jnz u_safe_read_loop");
+	asm("xor eax, eax");
+	asm("mov [edi+%0], eax" : : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("pop gs");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+
+	asm("u_safe_read_magic_handler_2:");
+	asm("xor eax, eax");
+	asm("mov [edi+%0], eax" : : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("mov eax, esi");
+	asm("pop gs");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+
+	asm("u_safe_read_magic_handler:");
+	// ECX points to TX86ExcInfo
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("lea edx, u_safe_read_magic");
+	asm("sub eax, edx");		// check exception occurred at magic instruction
+	asm("jne u_safe_read_unexpected_exc");
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iExcId));
+	asm("sub eax, 13");			// check for GPF
+	asm("je u_safe_read_expected_exc");
+	asm("dec eax");				// or page fault
+	asm("jne u_safe_read_unexpected_exc");
+	asm("u_safe_read_expected_exc:");
+	asm("lea eax, u_safe_read_magic_handler_2");
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("xor eax, eax");
+	asm("u_safe_read_unexpected_exc:");
+	asm("ret");
+	}
+
+EXPORT_C __NAKED__ TAny* Kern::SafeRead(const TAny* /*aSrc*/, TAny* /*aDest*/, TInt /*aSize*/)
+//
+// Copy word-aligned data with immunity from exceptions on reads. Returns NULL if copy succeeded,
+// else returns address at which exception occurred. aSize must be a non-zero multiple of 4.
+//
+	{
+	asm("push edi");
+#ifdef __SMP__
+	asm("cli");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24");
+	asm("mov eax, [eax*4+%0]": :"i"(&SubSchedulerLookupTable));
+	asm("mov edi, [eax+%0]": :"i"_FOFF(TSubScheduler,iCurrentThread));
+	asm("sti");
+#else
+	asm("mov edi, [%a0]" : : "i"(&TheScheduler.iCurrentThread));
+#endif
+	asm("xor eax, eax");
+	asm("lea eax, [eax+%0]": : "i"_FOFF(DThread,iNThread));
+	asm("sub edi, eax");
+	asm("lea eax, safe_read_magic_handler");
+	asm("mov [edi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("push esi");
+	asm("mov esi, [esp+12]");
+	asm("mov edx, [esp+16]");
+	asm("mov ecx, [esp+20]");
+
+	asm("safe_read_loop:");
+	asm("safe_read_magic:"); 
+	asm("mov eax, [esi]");
+	asm("add esi, 4");
+	asm("mov [edx], eax");
+	asm("add edx, 4");
+	asm("sub ecx, 4");
+	asm("jnz safe_read_loop");
+	asm("xor eax, eax");
+	asm("mov [edi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+
+	asm("safe_read_magic_handler_2:");
+	asm("xor eax, eax");
+	asm("mov [edi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("mov eax, esi");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+
+	asm("safe_read_magic_handler:");
+	// ECX points to TX86ExcInfo
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("lea edx, safe_read_magic");
+	asm("sub eax, edx");		// check exception occurred at magic instruction
+	asm("jne safe_read_unexpected_exc");
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iExcId));
+	asm("sub eax, 13");			// check for GPF
+	asm("je safe_read_expected_exc");
+	asm("dec eax");				// or page fault
+	asm("jne safe_read_unexpected_exc");
+	asm("safe_read_expected_exc:");
+	asm("lea eax, safe_read_magic_handler_2");
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("xor eax, eax");
+	asm("safe_read_unexpected_exc:");
+	asm("ret");
+	}
+
+
+EXPORT_C __NAKED__ TAny* Kern::KUSafeWrite(TAny* /*aDest*/, const TAny* /*aSrc*/, TInt /*aSize*/)
+//
+// Copy word-aligned data with immunity from exceptions on writes. Returns NULL if copy succeeded,
+// else returns address at which exception occurred. aSize must be a non-zero multiple of 4.
+// Writes done with user permissions if appropriate.
+//
+	{
+	asm("push esi");
+#ifdef __SMP__
+	asm("cli");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24");
+	asm("mov eax, [eax*4+%0]": :"i"(&SubSchedulerLookupTable));
+	asm("mov esi, [eax+%0]": :"i"_FOFF(TSubScheduler,iCurrentThread));
+	asm("sti");
+#else
+	asm("mov esi, [%a0]" : : "i"(&TheScheduler.iCurrentThread));
+#endif
+	asm("xor eax, eax");
+	asm("lea eax, [eax+%0]": : "i"_FOFF(DThread,iNThread));
+	asm("sub esi, eax");
+	asm("lea eax, ku_safe_write_magic_handler");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("push edi");
+	asm("mov edi, [esp+12]");
+	asm("mov edx, [esp+16]");
+	asm("mov ecx, [esp+20]");
+	asm("ku_safe_write_loop:");
+	asm("mov eax, [edx]");
+	asm("add edx, 4");
+	asm("ku_safe_write_magic:");
+	asm("mov gs:[edi], eax");
+	asm("add edi, 4");
+	asm("sub ecx, 4");
+	asm("jnz ku_safe_write_loop");
+	asm("xor eax, eax");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+
+	asm("ku_safe_write_magic_handler_2:");
+	asm("xor eax, eax");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("mov eax, edi");
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+
+	asm("ku_safe_write_magic_handler:");
+	// ECX points to TX86ExcInfo
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("lea edx, ku_safe_write_magic");
+	asm("sub eax, edx");		// check exception occurred at magic instruction
+	asm("jne ku_safe_write_unexpected_exc");
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iExcId));
+	asm("sub eax, 13");			// check for GPF
+	asm("je ku_safe_write_expected_exc");
+	asm("dec eax");				// or page fault
+	asm("jne ku_safe_write_unexpected_exc");
+	asm("ku_safe_write_expected_exc:");
+	asm("lea eax, ku_safe_write_magic_handler_2");
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("xor eax, eax");
+	asm("ku_safe_write_unexpected_exc:");
+	asm("ret");
+	}
+
+__NAKED__ TAny* K::USafeWrite(TAny* /*aDest*/, const TAny* /*aSrc*/, TInt /*aSize*/)
+//
+// Copy word-aligned data with immunity from exceptions on writes. Returns NULL if copy succeeded,
+// else returns address at which exception occurred. aSize must be a non-zero multiple of 4.
+// Writes done with user permissions.
+//
+	{
+	asm("push esi");
+#ifdef __SMP__
+	asm("cli");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24");
+	asm("mov eax, [eax*4+%0]": :"i"(&SubSchedulerLookupTable));
+	asm("mov esi, [eax+%0]": :"i"_FOFF(TSubScheduler,iCurrentThread));
+	asm("sti");
+#else
+	asm("mov esi, [%a0]" : : "i"(&TheScheduler.iCurrentThread));
+#endif
+	asm("xor eax, eax");
+	asm("lea eax, [eax+%0]": : "i"_FOFF(DThread,iNThread));
+	asm("sub esi, eax");
+	asm("lea eax, u_safe_write_magic_handler");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("push edi");
+	asm("mov edi, [esp+12]");
+	asm("mov edx, [esp+16]");
+	asm("mov ecx, [esp+20]");
+	asm("push gs");
+	asm("mov eax, %0": : "i"(RING3_DS));
+	asm("mov gs, ax");
+	
+	asm("u_safe_write_loop:");
+	asm("mov eax, [edx]");
+	asm("add edx, 4");
+	asm("u_safe_write_magic:");
+	asm("mov gs:[edi], eax");
+	asm("add edi, 4");
+	asm("sub ecx, 4");
+	asm("jnz u_safe_write_loop");
+	asm("xor eax, eax");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("pop gs");
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+
+	asm("u_safe_write_magic_handler_2:");
+	asm("xor eax, eax");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("mov eax, edi");
+	asm("pop gs");
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+
+	asm("u_safe_write_magic_handler:");
+	// ECX points to TX86ExcInfo
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("lea edx, u_safe_write_magic");
+	asm("sub eax, edx");		// check exception occurred at magic instruction
+	asm("jne u_safe_write_unexpected_exc");
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iExcId));
+	asm("sub eax, 13");			// check for GPF
+	asm("je u_safe_write_expected_exc");
+	asm("dec eax");				// or page fault
+	asm("jne u_safe_write_unexpected_exc");
+	asm("u_safe_write_expected_exc:");
+	asm("lea eax, u_safe_write_magic_handler_2");
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("xor eax, eax");
+	asm("u_safe_write_unexpected_exc:");
+	asm("ret");
+	}
+
+EXPORT_C __NAKED__ TAny* Kern::SafeWrite(TAny* /*aDest*/, const TAny* /*aSrc*/, TInt /*aSize*/)
+//
+// Copy word-aligned data with immunity from exceptions on writes. Returns NULL if copy succeeded,
+// else returns address at which exception occurred. aSize must be a non-zero multiple of 4.
+//
+{
+	asm("push esi");
+	#ifdef __SMP__
+	asm("cli");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24");
+	asm("mov eax, [eax*4+%0]": :"i"(&SubSchedulerLookupTable));
+	asm("mov esi, [eax+%0]": :"i"_FOFF(TSubScheduler,iCurrentThread));
+	asm("sti");
+	#else
+	asm("mov esi, [%a0]" : : "i"(&TheScheduler.iCurrentThread));
+	#endif
+	asm("xor eax, eax");
+	asm("lea eax, [eax+%0]": : "i"_FOFF(DThread,iNThread));
+	asm("sub esi, eax");
+	asm("lea eax, safe_write_magic_handler");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("push edi");
+	asm("mov edi, [esp+12]");
+	asm("mov edx, [esp+16]");
+	asm("mov ecx, [esp+20]");
+	asm("safe_write_loop:");
+	asm("mov eax, [edx]");
+	asm("add edx, 4");
+	asm("safe_write_magic:");
+	asm("mov [edi], eax");
+	asm("add edi, 4");
+	asm("sub ecx, 4");
+	asm("jnz safe_write_loop");
+	asm("xor eax, eax");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+
+	asm("safe_write_magic_handler_2:");
+	asm("xor eax, eax");
+	asm("mov [esi+%0], eax": : "i"_FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("mov eax, edi");
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+
+	asm("safe_write_magic_handler:");
+	// ECX points to TX86ExcInfo
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("lea edx, safe_write_magic");
+	asm("sub eax, edx");		// check exception occurred at magic instruction
+	asm("jne safe_write_unexpected_exc");
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TX86ExcInfo,iExcId));
+	asm("sub eax, 13");			// check for GPF
+	asm("je safe_write_expected_exc");
+	asm("dec eax");				// or page fault
+	asm("jne safe_write_unexpected_exc");
+	asm("safe_write_expected_exc:");
+	asm("lea eax, safe_write_magic_handler_2");
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("xor eax, eax");
+	asm("safe_write_unexpected_exc:");
+	asm("ret");
+	}

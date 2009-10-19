@@ -1,0 +1,2233 @@
+EXPORTS
+	memset @ 1 NONAME ; (null)
+	memcpy @ 2 NONAME ; (null)
+	wordmove @ 3 NONAME R3UNUSED ; (null)
+	ASin__4MathRdRCd @ 4 NONAME R3UNUSED ; Math::ASin(double &, double const &)
+	ATan__4MathRdRCd @ 5 NONAME R3UNUSED ; Math::ATan(double &, double const &)
+	ATan__4MathRdRCdT2 @ 6 NONAME R3UNUSED ; Math::ATan(double &, double const &, double const &)
+	AddBefore__15TDblQueLinkBaseP15TDblQueLinkBase @ 7 NONAME R3UNUSED ; TDblQueLinkBase::AddBefore(TDblQueLinkBase *)
+	AddCapability__14TCapabilitySet11TCapability @ 8 NONAME R3UNUSED ; TCapabilitySet::AddCapability(TCapability)
+	AddEq__6TRealXRC6TRealX @ 9 NONAME R3UNUSED ; TRealX::AddEq(TRealX const &)
+	AddEvent__7UserSvrRC9TRawEvent @ 10 NONAME R3UNUSED ; UserSvr::AddEvent(TRawEvent const &)
+	AddL__10CObjectConP7CObject @ 11 NONAME R3UNUSED ; CObjectCon::AddL(CObject *)
+	AddL__9CObjectIxP7CObject @ 12 NONAME R3UNUSED ; CObjectIx::AddL(CObject *)
+	AddRect__7TRegionRC5TRect @ 13 NONAME R3UNUSED ; TRegion::AddRect(TRect const &)
+	Add__16CActiveSchedulerP7CActive @ 14 NONAME R3UNUSED ; CActiveScheduler::Add(CActive *)
+	Add__C6TRealXR6TRealXRC6TRealX @ 15 NONAME R3UNUSED ; TRealX::Add(TRealX &, TRealX const &) const
+	AdjustDoubleEnded__C6RChunkii @ 16 NONAME R3UNUSED ; RChunk::AdjustDoubleEnded(int, int) const
+	Adjust__C6RChunki @ 17 NONAME R3UNUSED ; RChunk::Adjust(int) const
+	AfterHighRes__4UserG27TTimeIntervalMicroSeconds32 @ 18 NONAME R3UNUSED ; User::AfterHighRes(TTimeIntervalMicroSeconds32)
+	AfterTicks__6RTimerR14TRequestStatusi @ 19 NONAME R3UNUSED ; RTimer::AfterTicks(TRequestStatus &, int)
+	After__4UserG27TTimeIntervalMicroSeconds32 @ 20 NONAME R3UNUSED ; User::After(TTimeIntervalMicroSeconds32)
+	After__6CTimerG27TTimeIntervalMicroSeconds32 @ 21 NONAME R3UNUSED ; CTimer::After(TTimeIntervalMicroSeconds32)
+	After__6RTimerR14TRequestStatusG27TTimeIntervalMicroSeconds32 @ 22 NONAME R3UNUSED ; RTimer::After(TRequestStatus &, TTimeIntervalMicroSeconds32)
+	AllocAlignedBlock__16CBitMapAllocatori @ 23 NONAME R3UNUSED ; CBitMapAllocator::AllocAlignedBlock(int)
+	AllocAligned__16CBitMapAllocatori @ 24 NONAME R3UNUSED ; CBitMapAllocator::AllocAligned(int)
+	AllocAt__16CBitMapAllocatori @ 25 NONAME R3UNUSED ; CBitMapAllocator::AllocAt(int)
+	AllocAt__16CBitMapAllocatorii @ 26 NONAME R3UNUSED ; CBitMapAllocator::AllocAt(int, int)
+	AllocFromTopFrom__16CBitMapAllocatori @ 27 NONAME R3UNUSED ; CBitMapAllocator::AllocFromTopFrom(int)
+	AllocFromTop__16CBitMapAllocator @ 28 NONAME R3UNUSED ; CBitMapAllocator::AllocFromTop(void)
+	AllocFrom__16CBitMapAllocatori @ 29 NONAME R3UNUSED ; CBitMapAllocator::AllocFrom(int)
+	AllocLC__10RAllocatori @ 30 NONAME R3UNUSED ; RAllocator::AllocLC(int)
+	AllocLC__4Useri @ 31 NONAME R3UNUSED ; User::AllocLC(int)
+	AllocLC__C6TDesC8 @ 32 NONAME R3UNUSED ; TDesC8::AllocLC(void) const
+	AllocLC__C7TDesC16 @ 33 NONAME R3UNUSED ; TDesC16::AllocLC(void) const
+	AllocL__10RAllocatori @ 34 NONAME R3UNUSED ; RAllocator::AllocL(int)
+	AllocL__4Useri @ 35 NONAME R3UNUSED ; User::AllocL(int)
+	AllocL__C6TDesC8 @ 36 NONAME R3UNUSED ; TDesC8::AllocL(void) const
+	AllocL__C7TDesC16 @ 37 NONAME R3UNUSED ; TDesC16::AllocL(void) const
+	AllocLen__4UserPCv @ 38 NONAME R3UNUSED ; User::AllocLen(void const *)
+	AllocLen__C5RHeapPCv @ 39 NONAME R3UNUSED ; RHeap::AllocLen(void const *) const
+	AllocSize__4UserRi @ 40 NONAME R3UNUSED ; User::AllocSize(int &)
+	AllocSize__C5RHeapRi @ 41 NONAME R3UNUSED ; RHeap::AllocSize(int &) const
+	AllocZL__10RAllocatori @ 42 NONAME R3UNUSED ; RAllocator::AllocZL(int)
+	AllocZL__4Useri @ 43 NONAME R3UNUSED ; User::AllocZL(int)
+	AllocZ__10RAllocatori @ 44 NONAME R3UNUSED ; RAllocator::AllocZ(int)
+	AllocZ__4Useri @ 45 NONAME R3UNUSED ; User::AllocZ(int)
+	Alloc__16CBitMapAllocator @ 46 NONAME R3UNUSED ; CBitMapAllocator::Alloc(void)
+	Alloc__16CBitMapAllocatoriRi @ 47 NONAME R3UNUSED ; CBitMapAllocator::Alloc(int, int &)
+	Alloc__4Useri @ 48 NONAME R3UNUSED ; User::Alloc(int)
+	Alloc__5RHeapi @ 49 NONAME R3UNUSED ; RHeap::Alloc(int)
+	Alloc__C6TDesC8 @ 50 NONAME R3UNUSED ; TDesC8::Alloc(void) const
+	Alloc__C7TDesC16 @ 51 NONAME R3UNUSED ; TDesC16::Alloc(void) const
+	Allocate__C6RChunki @ 52 NONAME R3UNUSED ; RChunk::Allocate(int) const
+	Allocator__4User @ 53 NONAME R3UNUSED ; User::Allocator(void)
+	AppendFill__5TDes8G5TChari @ 54 NONAME R3UNUSED ; TDes8::AppendFill(TChar, int)
+	AppendFill__6TDes16G5TChari @ 55 NONAME R3UNUSED ; TDes16::AppendFill(TChar, int)
+	AppendFormatList__5TDes8RC6TDesC8PPScP13TDes8Overflow @ 56 NONAME ; TDes8::AppendFormatList(TDesC8 const &, signed char **, TDes8Overflow *)
+	AppendFormatList__6TDes16RC7TDesC16PPScP14TDes16Overflow @ 57 NONAME ; TDes16::AppendFormatList(TDesC16 const &, signed char **, TDes16Overflow *)
+	AppendFormat__5TDes8Gt11TRefByValue1ZC6TDesC8P13TDes8Overflowe @ 58 NONAME ; TDes8::AppendFormat(TRefByValue<TDesC8 const>, TDes8Overflow *,...)
+	AppendFormat__5TDes8Gt11TRefByValue1ZC6TDesC8e @ 59 NONAME ; TDes8::AppendFormat(TRefByValue<TDesC8 const>,...)
+	AppendFormat__6TDes16Gt11TRefByValue1ZC7TDesC16P14TDes16Overflowe @ 60 NONAME ; TDes16::AppendFormat(TRefByValue<TDesC16 const>, TDes16Overflow *,...)
+	AppendFormat__6TDes16Gt11TRefByValue1ZC7TDesC16e @ 61 NONAME ; TDes16::AppendFormat(TRefByValue<TDesC16 const>,...)
+	AppendJustify__5TDes8PCUci6TAlignG5TChar @ 62 NONAME ; TDes8::AppendJustify(unsigned char const *, int, TAlign, TChar)
+	AppendJustify__5TDes8PCUcii6TAlignG5TChar @ 63 NONAME ; TDes8::AppendJustify(unsigned char const *, int, int, TAlign, TChar)
+	AppendJustify__5TDes8RC6TDesC8i6TAlignG5TChar @ 64 NONAME ; TDes8::AppendJustify(TDesC8 const &, int, TAlign, TChar)
+	AppendJustify__5TDes8RC6TDesC8ii6TAlignG5TChar @ 65 NONAME ; TDes8::AppendJustify(TDesC8 const &, int, int, TAlign, TChar)
+	AppendJustify__6TDes16PCUsi6TAlignG5TChar @ 66 NONAME ; TDes16::AppendJustify(unsigned short const *, int, TAlign, TChar)
+	AppendJustify__6TDes16PCUsii6TAlignG5TChar @ 67 NONAME ; TDes16::AppendJustify(unsigned short const *, int, int, TAlign, TChar)
+	AppendJustify__6TDes16RC7TDesC16i6TAlignG5TChar @ 68 NONAME ; TDes16::AppendJustify(TDesC16 const &, int, TAlign, TChar)
+	AppendJustify__6TDes16RC7TDesC16ii6TAlignG5TChar @ 69 NONAME ; TDes16::AppendJustify(TDesC16 const &, int, int, TAlign, TChar)
+	AppendNumFixedWidthUC__5TDes8Ui6TRadixi @ 70 NONAME ; TDes8::AppendNumFixedWidthUC(unsigned int, TRadix, int)
+	AppendNumFixedWidthUC__6TDes16Ui6TRadixi @ 71 NONAME ; TDes16::AppendNumFixedWidthUC(unsigned int, TRadix, int)
+	AppendNumFixedWidth__5TDes8Ui6TRadixi @ 72 NONAME ; TDes8::AppendNumFixedWidth(unsigned int, TRadix, int)
+	AppendNumFixedWidth__6TDes16Ui6TRadixi @ 73 NONAME ; TDes16::AppendNumFixedWidth(unsigned int, TRadix, int)
+	AppendNumUC__5TDes8Ux6TRadix @ 74 NONAME ; TDes8::AppendNumUC(unsigned long long, TRadix)
+	AppendNumUC__6TDes16Ux6TRadix @ 75 NONAME ; TDes16::AppendNumUC(unsigned long long, TRadix)
+	AppendNum__5TDes8Ux6TRadix @ 76 NONAME ; TDes8::AppendNum(unsigned long long, TRadix)
+	AppendNum__5TDes8dRC11TRealFormat @ 77 NONAME ; TDes8::AppendNum(double, TRealFormat const &)
+	AppendNum__5TDes8x @ 78 NONAME ; TDes8::AppendNum(long long)
+	AppendNum__6TDes16Ux6TRadix @ 79 NONAME ; TDes16::AppendNum(unsigned long long, TRadix)
+	AppendNum__6TDes16dRC11TRealFormat @ 80 NONAME ; TDes16::AppendNum(double, TRealFormat const &)
+	AppendNum__6TDes16x @ 81 NONAME ; TDes16::AppendNum(long long)
+	Append__10RArrayBasePCv @ 82 NONAME R3UNUSED ; RArrayBase::Append(void const *)
+	Append__17RPointerArrayBasePCv @ 83 NONAME R3UNUSED ; RPointerArrayBase::Append(void const *)
+	Append__5TDes8G5TChar @ 84 NONAME R3UNUSED ; TDes8::Append(TChar)
+	Append__5TDes8PCUci @ 85 NONAME R3UNUSED ; TDes8::Append(unsigned char const *, int)
+	Append__5TDes8RC6TDesC8 @ 86 NONAME R3UNUSED ; TDes8::Append(TDesC8 const &)
+	Append__5TDes8RC7TDesC16 @ 87 NONAME R3UNUSED ; TDes8::Append(TDesC16 const &)
+	Append__6TDes16G5TChar @ 88 NONAME R3UNUSED ; TDes16::Append(TChar)
+	Append__6TDes16PCUsi @ 89 NONAME R3UNUSED ; TDes16::Append(unsigned short const *, int)
+	Append__6TDes16RC7TDesC16 @ 90 NONAME R3UNUSED ; TDes16::Append(TDesC16 const &)
+	AsPoint__C5TSize @ 91 NONAME R3UNUSED ; TSize::AsPoint(void) const
+	AsSize__C6TPoint @ 92 NONAME R3UNUSED ; TPoint::AsSize(void) const
+	Assign__5RBuf8P6HBufC8 @ 93 NONAME R3UNUSED ; RBuf8::Assign(HBufC8 *)
+	Assign__5RBuf8PUci @ 94 NONAME R3UNUSED ; RBuf8::Assign(unsigned char *, int)
+	Assign__5RBuf8PUcii @ 95 NONAME ; RBuf8::Assign(unsigned char *, int, int)
+	Assign__5RBuf8RC5RBuf8 @ 96 NONAME R3UNUSED ; RBuf8::Assign(RBuf8 const &)
+	Assign__5TLex8PCUc @ 97 NONAME R3UNUSED ; TLex8::Assign(unsigned char const *)
+	Assign__5TLex8RC6TDesC8 @ 98 NONAME R3UNUSED ; TLex8::Assign(TDesC8 const &)
+	Assign__6RBuf16P7HBufC16 @ 99 NONAME R3UNUSED ; RBuf16::Assign(HBufC16 *)
+	Assign__6RBuf16PUsi @ 100 NONAME R3UNUSED ; RBuf16::Assign(unsigned short *, int)
+	Assign__6RBuf16PUsii @ 101 NONAME ; RBuf16::Assign(unsigned short *, int, int)
+	Assign__6RBuf16RC6RBuf16 @ 102 NONAME R3UNUSED ; RBuf16::Assign(RBuf16 const &)
+	Assign__6TLex16PCUs @ 103 NONAME R3UNUSED ; TLex16::Assign(unsigned short const *)
+	Assign__6TLex16RC7TDesC16 @ 104 NONAME R3UNUSED ; TLex16::Assign(TDesC16 const &)
+	AsyncStop__20CActiveSchedulerWait @ 105 NONAME R3UNUSED ; CActiveSchedulerWait::AsyncStop(void)
+	AsyncStop__20CActiveSchedulerWaitRC9TCallBack @ 106 NONAME R3UNUSED ; CActiveSchedulerWait::AsyncStop(TCallBack const &)
+	AtC__C6TDesC8i @ 107 NONAME R3UNUSED ; TDesC8::AtC(int) const
+	AtC__C7TDesC16i @ 108 NONAME R3UNUSED ; TDesC16::AtC(int) const
+	AtL__9CObjectIxi @ 109 NONAME R3UNUSED ; CObjectIx::AtL(int)
+	AtL__9CObjectIxii @ 110 NONAME R3UNUSED ; CObjectIx::AtL(int, int)
+	AtL__C10CObjectConi @ 111 NONAME R3UNUSED ; CObjectCon::AtL(int) const
+	AtR__13CArrayFixBasePC5CBasei @ 112 NONAME R3UNUSED ; CArrayFixBase::AtR(CBase const *, int)
+	AtR__13CArrayPakBasePC5CBasei @ 113 NONAME R3UNUSED ; CArrayPakBase::AtR(CBase const *, int)
+	AtR__13CArrayVarBasePC5CBasei @ 114 NONAME R3UNUSED ; CArrayVarBase::AtR(CBase const *, int)
+	AtUTC__6CTimerRC5TTime @ 115 NONAME R3UNUSED ; CTimer::AtUTC(TTime const &)
+	AtUTC__6RTimerR14TRequestStatusRC5TTime @ 116 NONAME R3UNUSED ; RTimer::AtUTC(TRequestStatus &, TTime const &)
+	At__4UserRC5TTime @ 117 NONAME R3UNUSED ; User::At(TTime const &)
+	At__6CTimerRC5TTime @ 118 NONAME R3UNUSED ; CTimer::At(TTime const &)
+	At__6RTimerR14TRequestStatusRC5TTime @ 119 NONAME R3UNUSED ; RTimer::At(TRequestStatus &, TTime const &)
+	At__9CObjectIxi @ 120 NONAME R3UNUSED ; CObjectIx::At(int)
+	At__9CObjectIxii @ 121 NONAME R3UNUSED ; CObjectIx::At(int, int)
+	At__C10CObjectConi @ 122 NONAME R3UNUSED ; CObjectCon::At(int) const
+	At__C10RArrayBasei @ 123 NONAME R3UNUSED ; RArrayBase::At(int) const
+	At__C12TKeyArrayFixi @ 124 NONAME R3UNUSED ; TKeyArrayFix::At(int) const
+	At__C12TKeyArrayPaki @ 125 NONAME R3UNUSED ; TKeyArrayPak::At(int) const
+	At__C12TKeyArrayVari @ 126 NONAME R3UNUSED ; TKeyArrayVar::At(int) const
+	At__C13CArrayFixBasei @ 127 NONAME R3UNUSED ; CArrayFixBase::At(int) const
+	At__C13CArrayPakBasei @ 128 NONAME R3UNUSED ; CArrayPakBase::At(int) const
+	At__C13CArrayVarBasei @ 129 NONAME R3UNUSED ; CArrayVarBase::At(int) const
+	At__C17RPointerArrayBasei @ 130 NONAME R3UNUSED ; RPointerArrayBase::At(int) const
+	At__C4TKeyi @ 131 NONAME R3UNUSED ; TKey::At(int) const
+	At__C9CObjectIxPC7CObject @ 132 NONAME R3UNUSED ; CObjectIx::At(CObject const *) const
+	Attach__9RPropertyG4TUidUi10TOwnerType @ 133 NONAME ; RProperty::Attach(TUid, unsigned int, TOwnerType)
+	Attributes__C11RHandleBase @ 134 NONAME R3UNUSED ; RHandleBase::Attributes(void) const
+	Avail__16CBitMapAllocator @ 135 NONAME R3UNUSED ; CBitMapAllocator::Avail(void)
+	Available__4UserRi @ 136 NONAME R3UNUSED ; User::Available(int &)
+	Available__C5RHeapRi @ 137 NONAME R3UNUSED ; RHeap::Available(int &) const
+	BackPtr__7CBufSegi @ 138 NONAME R3UNUSED ; CBufSeg::BackPtr(int)
+	BackPtr__8CBufFlati @ 139 NONAME R3UNUSED ; CBufFlat::BackPtr(int)
+	Back__C13CArrayFixBasei @ 140 NONAME R3UNUSED ; CArrayFixBase::Back(int) const
+	Base__C6RChunk @ 141 NONAME R3UNUSED ; RChunk::Base(void) const
+	Beep__4UseriG27TTimeIntervalMicroSeconds32 @ 142 NONAME R3UNUSED ; User::Beep(int, TTimeIntervalMicroSeconds32)
+	BinarySearchSigned__C10RArrayBasePCvRi @ 143 NONAME R3UNUSED ; RArrayBase::BinarySearchSigned(void const *, int &) const
+	BinarySearchSigned__C10RArrayBasePCvRii @ 144 NONAME ; RArrayBase::BinarySearchSigned(void const *, int &, int) const
+	BinarySearchSigned__C17RPointerArrayBaseiRi @ 145 NONAME R3UNUSED ; RPointerArrayBase::BinarySearchSigned(int, int &) const
+	BinarySearchSigned__C17RPointerArrayBaseiRii @ 146 NONAME ; RPointerArrayBase::BinarySearchSigned(int, int &, int) const
+	BinarySearchUnsigned__C10RArrayBasePCvRi @ 147 NONAME R3UNUSED ; RArrayBase::BinarySearchUnsigned(void const *, int &) const
+	BinarySearchUnsigned__C10RArrayBasePCvRii @ 148 NONAME ; RArrayBase::BinarySearchUnsigned(void const *, int &, int) const
+	BinarySearchUnsigned__C17RPointerArrayBaseUiRi @ 149 NONAME R3UNUSED ; RPointerArrayBase::BinarySearchUnsigned(unsigned int, int &) const
+	BinarySearchUnsigned__C17RPointerArrayBaseUiRii @ 150 NONAME ; RPointerArrayBase::BinarySearchUnsigned(unsigned int, int &, int) const
+	BinarySearch__4UseriRC4TKeyRi @ 151 NONAME R3UNUSED ; User::BinarySearch(int, TKey const &, int &)
+	BinarySearch__C10RArrayBasePCvRiPFPCvPCv_i @ 152 NONAME ; RArrayBase::BinarySearch(void const *, int &, int (*)(void const *, void const *)) const
+	BinarySearch__C10RArrayBasePCvRiPFPCvPCv_ii @ 153 NONAME ; RArrayBase::BinarySearch(void const *, int &, int (*)(void const *, void const *), int) const
+	BinarySearch__C17RPointerArrayBasePCvRiPFPCvPCv_i @ 154 NONAME ; RPointerArrayBase::BinarySearch(void const *, int &, int (*)(void const *, void const *)) const
+	BinarySearch__C17RPointerArrayBasePCvRiPFPCvPCv_ii @ 155 NONAME ; RPointerArrayBase::BinarySearch(void const *, int &, int (*)(void const *, void const *), int) const
+	Bottom__C6RChunk @ 156 NONAME R3UNUSED ; RChunk::Bottom(void) const
+	BoundedVal__5TLex8RUl6TRadixUi @ 157 NONAME ; TLex8::BoundedVal(unsigned long &, TRadix, unsigned int)
+	BoundedVal__5TLex8Rli @ 158 NONAME R3UNUSED ; TLex8::BoundedVal(long &, int)
+	BoundedVal__5TLex8Rx6TRadixRCx @ 159 NONAME ; TLex8::BoundedVal(long long &, TRadix, long long const &)
+	BoundedVal__5TLex8RxRCx @ 160 NONAME R3UNUSED ; TLex8::BoundedVal(long long &, long long const &)
+	BoundedVal__6TLex16RUl6TRadixUi @ 161 NONAME ; TLex16::BoundedVal(unsigned long &, TRadix, unsigned int)
+	BoundedVal__6TLex16Rli @ 162 NONAME R3UNUSED ; TLex16::BoundedVal(long &, int)
+	BoundedVal__6TLex16Rx6TRadixRCx @ 163 NONAME ; TLex16::BoundedVal(long long &, TRadix, long long const &)
+	BoundedVal__6TLex16RxRCx @ 164 NONAME R3UNUSED ; TLex16::BoundedVal(long long &, long long const &)
+	BoundingRect__5TRectRC5TRect @ 165 NONAME R3UNUSED ; TRect::BoundingRect(TRect const &)
+	BoundingRect__C7TRegion @ 166 NONAME R3UNUSED ; TRegion::BoundingRect(void) const
+	Broadcast__8RCondVar @ 167 NONAME R3UNUSED ; RCondVar::Broadcast(void)
+	BuildVarArrayL__13CArrayPakBaseRPt13CArrayVarFlat1Zv @ 168 NONAME R3UNUSED ; CArrayPakBase::BuildVarArrayL(CArrayVarFlat<void> *&)
+	CalibrationPoints__7UserHalR21TDigitizerCalibration @ 169 NONAME R3UNUSED ; UserHal::CalibrationPoints(TDigitizerCalibration &)
+	CallBack__14CAsyncCallBack @ 170 NONAME R3UNUSED ; CAsyncCallBack::CallBack(void)
+	Call__13CAsyncOneShot @ 171 NONAME R3UNUSED ; CAsyncOneShot::Call(void)
+	CanStopNow__C20CActiveSchedulerWait @ 172 NONAME R3UNUSED ; CActiveSchedulerWait::CanStopNow(void) const
+	CancelDataAvailable__13RMsgQueueBase @ 173 NONAME R3UNUSED ; RMsgQueueBase::CancelDataAvailable(void)
+	CancelNotifier__9RNotifierG4TUid @ 174 NONAME R3UNUSED ; RNotifier::CancelNotifier(TUid)
+	CancelSpaceAvailable__13RMsgQueueBase @ 175 NONAME R3UNUSED ; RMsgQueueBase::CancelSpaceAvailable(void)
+	CancelWakeupEventNotification__5Power @ 176 NONAME R3UNUSED ; Power::CancelWakeupEventNotification(void)
+	Cancel__6RTimer @ 177 NONAME R3UNUSED ; RTimer::Cancel(void)
+	Cancel__7CActive @ 178 NONAME R3UNUSED ; CActive::Cancel(void)
+	Cancel__8RServer2 @ 179 NONAME R3UNUSED ; RServer2::Cancel(void)
+	Cancel__9RProperty @ 180 NONAME R3UNUSED ; RProperty::Cancel(void)
+	Capitalize__5TDes8 @ 181 NONAME R3UNUSED ; TDes8::Capitalize(void)
+	Capitalize__6TDes16 @ 182 NONAME R3UNUSED ; TDes16::Capitalize(void)
+	Caps__14TBusLocalDriveR5TDes8 @ 183 NONAME R3UNUSED ; TBusLocalDrive::Caps(TDes8 &)
+	CaptureEventHook__7UserSvr @ 184 NONAME R3UNUSED ; UserSvr::CaptureEventHook(void)
+	Center__C5TRect @ 185 NONAME R3UNUSED ; TRect::Center(void) const
+	ChangeLocale__7UserSvrRC7TDesC16 @ 186 NONAME R3UNUSED ; UserSvr::ChangeLocale(TDesC16 const &)
+	CheckClientState__9E32Loaderi @ 187 NONAME R3UNUSED ; E32Loader::CheckClientState(int)
+	CheckFailedL__13CPolicyServerRC9RMessage2iRC13TSecurityInfo @ 188 NONAME ; CPolicyServer::CheckFailedL(RMessage2 const &, int, TSecurityInfo const &)
+	CheckUniqueFullName__C10CObjectConPC7CObject @ 189 NONAME R3UNUSED ; CObjectCon::CheckUniqueFullName(CObject const *) const
+	CheckUniqueFullName__C10CObjectConPC7CObjectRC7TDesC16 @ 190 NONAME R3UNUSED ; CObjectCon::CheckUniqueFullName(CObject const *, TDesC16 const &) const
+	Check__12CleanupStackPv @ 191 NONAME R3UNUSED ; CleanupStack::Check(void *)
+	Check__4User @ 192 NONAME R3UNUSED ; User::Check(void)
+	Check__8CCleanupPv @ 193 NONAME R3UNUSED ; CCleanup::Check(void *)
+	Check__C10RAllocator @ 194 NONAME R3UNUSED ; RAllocator::Check(void) const
+	Check__C11TCheckedUid @ 195 NONAME R3UNUSED ; TCheckedUid::Check(void) const
+	ChunkHeap__8UserHeapG6RChunkiiiiiUl @ 196 NONAME ; UserHeap::ChunkHeap(RChunk, int, int, int, int, int, unsigned long)
+	ChunkHeap__8UserHeapPC7TDesC16iiiii @ 197 NONAME ; UserHeap::ChunkHeap(TDesC16 const *, int, int, int, int, int)
+	CleanupClosePushL__5RBuf8 @ 198 NONAME R3UNUSED ; RBuf8::CleanupClosePushL(void)
+	CleanupClosePushL__6RBuf16 @ 199 NONAME R3UNUSED ; RBuf16::CleanupClosePushL(void)
+	Clear__14TBusLocalDriveRC6TDesC8 @ 200 NONAME R3UNUSED ; TBusLocalDrive::Clear(TDesC8 const &)
+	Clear__7TRegion @ 201 NONAME R3UNUSED ; TRegion::Clear(void)
+	ClientProcessFlags__C12RMessagePtr2 @ 202 NONAME R3UNUSED ; RMessagePtr2::ClientProcessFlags(void) const
+	Client__C12RMessagePtr2R7RThread10TOwnerType @ 203 NONAME R3UNUSED ; RMessagePtr2::Client(RThread &, TOwnerType) const
+	ClipRect__7TRegionRC5TRect @ 204 NONAME R3UNUSED ; TRegion::ClipRect(TRect const &)
+	CloseSubSession__15RSubSessionBasei @ 205 NONAME R3UNUSED ; RSubSessionBase::CloseSubSession(int)
+	Close__10RAllocator @ 206 NONAME R3UNUSED ; RAllocator::Close(void)
+	Close__10RArrayBase @ 207 NONAME R3UNUSED ; RArrayBase::Close(void)
+	Close__11RHandleBase @ 208 NONAME R3UNUSED ; RHandleBase::Close(void)
+	Close__16RCriticalSection @ 209 NONAME R3UNUSED ; RCriticalSection::Close(void)
+	Close__17RPointerArrayBase @ 210 NONAME R3UNUSED ; RPointerArrayBase::Close(void)
+	Close__5RBuf8 @ 211 NONAME R3UNUSED ; RBuf8::Close(void)
+	Close__5RTest @ 212 NONAME R3UNUSED ; RTest::Close(void)
+	Close__6RBuf16 @ 213 NONAME R3UNUSED ; RBuf16::Close(void)
+	Close__7CObject @ 214 NONAME R3UNUSED ; CObject::Close(void)
+	Close__7RRegion @ 215 NONAME R3UNUSED ; RRegion::Close(void)
+	Close__8RLibrary @ 216 NONAME R3UNUSED ; RLibrary::Close(void)
+	Close__9RNotifier @ 217 NONAME R3UNUSED ; RNotifier::Close(void)
+	CodeSegAddDependency__9E32LoaderPvT1 @ 218 NONAME R3UNUSED ; E32Loader::CodeSegAddDependency(void *, void *)
+	CodeSegClose__9E32LoaderPv @ 219 NONAME R3UNUSED ; E32Loader::CodeSegClose(void *)
+	CodeSegCreate__9E32LoaderR18TCodeSegCreateInfo @ 220 NONAME R3UNUSED ; E32Loader::CodeSegCreate(TCodeSegCreateInfo &)
+	CodeSegDeferDeletes__9E32Loader @ 221 NONAME R3UNUSED ; E32Loader::CodeSegDeferDeletes(void)
+	CodeSegEndDeferDeletes__9E32Loader @ 222 NONAME R3UNUSED ; E32Loader::CodeSegEndDeferDeletes(void)
+	CodeSegInfo__9E32LoaderPvR18TCodeSegCreateInfo @ 223 NONAME R3UNUSED ; E32Loader::CodeSegInfo(void *, TCodeSegCreateInfo &)
+	CodeSegLoaded__9E32LoaderR18TCodeSegCreateInfo @ 224 NONAME R3UNUSED ; E32Loader::CodeSegLoaded(TCodeSegCreateInfo &)
+	CodeSegNext__9E32LoaderRPvRC12TFindCodeSeg @ 225 NONAME R3UNUSED ; E32Loader::CodeSegNext(void *&, TFindCodeSeg const &)
+	CodeSegOpen__9E32LoaderPvi @ 226 NONAME R3UNUSED ; E32Loader::CodeSegOpen(void *, int)
+	Collapse__5TDes8 @ 227 NONAME R3UNUSED ; TDes8::Collapse(void)
+	Collapse__6TDes16 @ 228 NONAME R3UNUSED ; TDes16::Collapse(void)
+	Collate__4UserUi @ 229 NONAME R3UNUSED ; User::Collate(unsigned int)
+	Collate__5TDes8 @ 230 NONAME R3UNUSED ; TDes8::Collate(void)
+	Collate__6TDes16 @ 231 NONAME R3UNUSED ; TDes16::Collate(void)
+	CollationMethodById__3MemUi @ 232 NONAME R3UNUSED ; Mem::CollationMethodById(unsigned int)
+	CollationMethodByIndex__3Memi @ 233 NONAME R3UNUSED ; Mem::CollationMethodByIndex(int)
+	CollationMethodId__3Memi @ 234 NONAME R3UNUSED ; Mem::CollationMethodId(int)
+	CollationMethods__3Mem @ 235 NONAME R3UNUSED ; Mem::CollationMethods(void)
+	CommandLineLength__4User @ 236 NONAME R3UNUSED ; User::CommandLineLength(void)
+	CommandLine__4UserR6TDes16 @ 237 NONAME R3UNUSED ; User::CommandLine(TDes16 &)
+	Commit__C6RChunkii @ 238 NONAME R3UNUSED ; RChunk::Commit(int, int) const
+	CompareC__3MemPCUciT1i @ 239 NONAME ; Mem::CompareC(unsigned char const *, int, unsigned char const *, int)
+	CompareC__3MemPCUsiT1i @ 240 NONAME ; Mem::CompareC(unsigned short const *, int, unsigned short const *, int)
+	CompareC__3MemPCUsiT1iiPC16TCollationMethod @ 241 NONAME ; Mem::CompareC(unsigned short const *, int, unsigned short const *, int, int, TCollationMethod const *)
+	CompareC__C6TDesC8RC6TDesC8 @ 242 NONAME R3UNUSED ; TDesC8::CompareC(TDesC8 const &) const
+	CompareC__C7TDesC16RC7TDesC16 @ 243 NONAME R3UNUSED ; TDesC16::CompareC(TDesC16 const &) const
+	CompareC__C7TDesC16RC7TDesC16iPC16TCollationMethod @ 244 NONAME ; TDesC16::CompareC(TDesC16 const &, int, TCollationMethod const *) const
+	CompareF__3MemPCUciT1i @ 245 NONAME ; Mem::CompareF(unsigned char const *, int, unsigned char const *, int)
+	CompareF__3MemPCUsiT1i @ 246 NONAME ; Mem::CompareF(unsigned short const *, int, unsigned short const *, int)
+	CompareF__C6TDesC8RC6TDesC8 @ 247 NONAME R3UNUSED ; TDesC8::CompareF(TDesC8 const &) const
+	CompareF__C7TDesC16RC7TDesC16 @ 248 NONAME R3UNUSED ; TDesC16::CompareF(TDesC16 const &) const
+	Compare__3MemPCUciT1i @ 249 NONAME ; Mem::Compare(unsigned char const *, int, unsigned char const *, int)
+	Compare__3MemPCUsiT1i @ 250 NONAME ; Mem::Compare(unsigned short const *, int, unsigned short const *, int)
+	Compare__C4TKeyii @ 251 NONAME R3UNUSED ; TKey::Compare(int, int) const
+	Compare__C6TDesC8RC6TDesC8 @ 252 NONAME R3UNUSED ; TDesC8::Compare(TDesC8 const &) const
+	Compare__C6TRealXRC6TRealX @ 253 NONAME R3UNUSED ; TRealX::Compare(TRealX const &) const
+	Compare__C7TDesC16RC7TDesC16 @ 254 NONAME R3UNUSED ; TDesC16::Compare(TDesC16 const &) const
+	Complete__C12RMessagePtr2G11RHandleBase @ 255 NONAME ; RMessagePtr2::Complete(RHandleBase) const
+	Complete__C12RMessagePtr2i @ 256 NONAME R3UNUSED ; RMessagePtr2::Complete(int) const
+	Compose__5TCharRUiRC7TDesC16 @ 257 NONAME R3UNUSED ; TChar::Compose(unsigned int &, TDesC16 const &)
+	CompressAllHeaps__4User @ 258 NONAME R3UNUSED ; User::CompressAllHeaps(void)
+	Compress__10RArrayBase @ 259 NONAME R3UNUSED ; RArrayBase::Compress(void)
+	Compress__13CArrayFixBase @ 260 NONAME R3UNUSED ; CArrayFixBase::Compress(void)
+	Compress__13CArrayPakBase @ 261 NONAME R3UNUSED ; CArrayPakBase::Compress(void)
+	Compress__13CArrayVarBase @ 262 NONAME R3UNUSED ; CArrayVarBase::Compress(void)
+	Compress__17RPointerArrayBase @ 263 NONAME R3UNUSED ; RPointerArrayBase::Compress(void)
+	Compress__5RHeap @ 264 NONAME R3UNUSED ; RHeap::Compress(void)
+	Compress__7CBufSeg @ 265 NONAME R3UNUSED ; CBufSeg::Compress(void)
+	Compress__8CBufFlat @ 266 NONAME R3UNUSED ; CBufFlat::Compress(void)
+	ConfigSetting__7PlatSecQ27PlatSec14TConfigSetting @ 267 NONAME R3UNUSED ; PlatSec::ConfigSetting(PlatSec::TConfigSetting)
+	Connect__14TBusLocalDriveiRi @ 268 NONAME R3UNUSED ; TBusLocalDrive::Connect(int, int &)
+	Connect__7RLoader @ 269 NONAME R3UNUSED ; RLoader::Connect(void)
+	Connect__9RNotifier @ 270 NONAME R3UNUSED ; RNotifier::Connect(void)
+	ConstructL__6CTimer @ 271 NONAME R3UNUSED ; CTimer::ConstructL(void)
+	Contains__C5TRectRC6TPoint @ 272 NONAME R3UNUSED ; TRect::Contains(TPoint const &) const
+	Contains__C7TRegionRC6TPoint @ 273 NONAME R3UNUSED ; TRegion::Contains(TPoint const &) const
+	Context__C7RThreadR5TDes8 @ 274 NONAME R3UNUSED ; RThread::Context(TDes8 &) const
+	ControlIO__14TBusLocalDriveiPvT2 @ 275 NONAME ; TBusLocalDrive::ControlIO(int, void *, void *)
+	CopyCP__5TDes8RC6TDesC8 @ 276 NONAME R3UNUSED ; TDes8::CopyCP(TDesC8 const &)
+	CopyCP__6TDes16RC7TDesC16 @ 277 NONAME R3UNUSED ; TDes16::CopyCP(TDesC16 const &)
+	CopyC__5TDes8RC6TDesC8 @ 278 NONAME R3UNUSED ; TDes8::CopyC(TDesC8 const &)
+	CopyC__6TDes16RC7TDesC16 @ 279 NONAME R3UNUSED ; TDes16::CopyC(TDesC16 const &)
+	CopyF__5TDes8RC6TDesC8 @ 280 NONAME R3UNUSED ; TDes8::CopyF(TDesC8 const &)
+	CopyF__6TDes16RC7TDesC16 @ 281 NONAME R3UNUSED ; TDes16::CopyF(TDesC16 const &)
+	CopyLC__5TDes8RC6TDesC8 @ 282 NONAME R3UNUSED ; TDes8::CopyLC(TDesC8 const &)
+	CopyLC__6TDes16RC7TDesC16 @ 283 NONAME R3UNUSED ; TDes16::CopyLC(TDesC16 const &)
+	CopyUC__5TDes8RC6TDesC8 @ 284 NONAME R3UNUSED ; TDes8::CopyUC(TDesC8 const &)
+	CopyUC__6TDes16RC7TDesC16 @ 285 NONAME R3UNUSED ; TDes16::CopyUC(TDesC16 const &)
+	Copy__10TBufCBase8PCUci @ 286 NONAME R3UNUSED ; TBufCBase8::Copy(unsigned char const *, int)
+	Copy__10TBufCBase8RC6TDesC8i @ 287 NONAME R3UNUSED ; TBufCBase8::Copy(TDesC8 const &, int)
+	Copy__11TBufCBase16PCUsi @ 288 NONAME R3UNUSED ; TBufCBase16::Copy(unsigned short const *, int)
+	Copy__11TBufCBase16RC7TDesC16i @ 289 NONAME R3UNUSED ; TBufCBase16::Copy(TDesC16 const &, int)
+	Copy__4Mem1PvPCvi @ 290 NONAME R3UNUSED ; Mem1::Copy(void *, void const *, int)
+	Copy__5TDes8PCUc @ 291 NONAME R3UNUSED ; TDes8::Copy(unsigned char const *)
+	Copy__5TDes8PCUci @ 292 NONAME R3UNUSED ; TDes8::Copy(unsigned char const *, int)
+	Copy__5TDes8RC6TDesC8 @ 293 NONAME R3UNUSED ; TDes8::Copy(TDesC8 const &)
+	Copy__5TDes8RC7TDesC16 @ 294 NONAME R3UNUSED ; TDes8::Copy(TDesC16 const &)
+	Copy__6TDes16PCUs @ 295 NONAME R3UNUSED ; TDes16::Copy(unsigned short const *)
+	Copy__6TDes16PCUsi @ 296 NONAME R3UNUSED ; TDes16::Copy(unsigned short const *, int)
+	Copy__6TDes16RC6TDesC8 @ 297 NONAME R3UNUSED ; TDes16::Copy(TDesC8 const &)
+	Copy__6TDes16RC7TDesC16 @ 298 NONAME R3UNUSED ; TDes16::Copy(TDesC16 const &)
+	Copy__7TRegionRC7TRegion @ 299 NONAME R3UNUSED ; TRegion::Copy(TRegion const &)
+	Copy__8RRefBaseRC8RRefBase @ 300 NONAME R3UNUSED ; RRefBase::Copy(RRefBase const &)
+	Cos__4MathRdRCd @ 301 NONAME R3UNUSED ; Math::Cos(double &, double const &)
+	CountAllocCells__4User @ 302 NONAME R3UNUSED ; User::CountAllocCells(void)
+	CountAllocCells__4UserRi @ 303 NONAME R3UNUSED ; User::CountAllocCells(int &)
+	CountDown__13TDeltaQueBase @ 304 NONAME R3UNUSED ; TDeltaQueBase::CountDown(void)
+	CountDown__13TDeltaQueBasei @ 305 NONAME R3UNUSED ; TDeltaQueBase::CountDown(int)
+	CountR__13CArrayFixBasePC5CBase @ 306 NONAME R3UNUSED ; CArrayFixBase::CountR(CBase const *)
+	CountR__13CArrayPakBasePC5CBase @ 307 NONAME R3UNUSED ; CArrayPakBase::CountR(CBase const *)
+	CountR__13CArrayVarBasePC5CBase @ 308 NONAME R3UNUSED ; CArrayVarBase::CountR(CBase const *)
+	CountResources__9CSession2 @ 309 NONAME R3UNUSED ; CSession2::CountResources(void)
+	Count__C10RAllocator @ 310 NONAME R3UNUSED ; RAllocator::Count(void) const
+	Count__C10RAllocatorRi @ 311 NONAME R3UNUSED ; RAllocator::Count(int &) const
+	Count__C10RArrayBase @ 312 NONAME R3UNUSED ; RArrayBase::Count(void) const
+	Count__C17RPointerArrayBase @ 313 NONAME R3UNUSED ; RPointerArrayBase::Count(void) const
+	Count__C9CObjectIxP7CObject @ 314 NONAME R3UNUSED ; CObjectIx::Count(CObject *) const
+	Crc32__3MemRUlPCvi @ 315 NONAME R3UNUSED ; Mem::Crc32(unsigned long &, void const *, int)
+	Crc__3MemRUsPCvi @ 316 NONAME R3UNUSED ; Mem::Crc(unsigned short &, void const *, int)
+	CreateAutoCloseSubSession__15RSubSessionBaseR12RSessionBaseiRC8TIpcArgs @ 317 NONAME ; RSubSessionBase::CreateAutoCloseSubSession(RSessionBase &, int, TIpcArgs const &)
+	CreateContainerL__12CObjectConIxRP10CObjectCon @ 318 NONAME R3UNUSED ; CObjectConIx::CreateContainerL(CObjectCon *&)
+	CreateDisconnectedGlobal__6RChunkRC7TDesC16iii10TOwnerType @ 319 NONAME ; RChunk::CreateDisconnectedGlobal(TDesC16 const &, int, int, int, TOwnerType)
+	CreateDisconnectedLocal__6RChunkiii10TOwnerType @ 320 NONAME ; RChunk::CreateDisconnectedLocal(int, int, int, TOwnerType)
+	CreateDoubleEndedGlobal__6RChunkRC7TDesC16iii10TOwnerType @ 321 NONAME ; RChunk::CreateDoubleEndedGlobal(TDesC16 const &, int, int, int, TOwnerType)
+	CreateDoubleEndedLocal__6RChunkiii10TOwnerType @ 322 NONAME ; RChunk::CreateDoubleEndedLocal(int, int, int, TOwnerType)
+	CreateGlobal__10RSemaphoreRC7TDesC16i10TOwnerType @ 323 NONAME ; RSemaphore::CreateGlobal(TDesC16 const &, int, TOwnerType)
+	CreateGlobal__13RMsgQueueBaseRC7TDesC16ii10TOwnerType @ 324 NONAME ; RMsgQueueBase::CreateGlobal(TDesC16 const &, int, int, TOwnerType)
+	CreateGlobal__6RChunkRC7TDesC16ii10TOwnerType @ 325 NONAME ; RChunk::CreateGlobal(TDesC16 const &, int, int, TOwnerType)
+	CreateGlobal__6RMutexRC7TDesC1610TOwnerType @ 326 NONAME R3UNUSED ; RMutex::CreateGlobal(TDesC16 const &, TOwnerType)
+	CreateGlobal__8RCondVarRC7TDesC1610TOwnerType @ 327 NONAME R3UNUSED ; RCondVar::CreateGlobal(TDesC16 const &, TOwnerType)
+	CreateGlobal__8RServer2RC7TDesC16 @ 328 NONAME R3UNUSED ; RServer2::CreateGlobal(TDesC16 const &)
+	CreateGlobal__8RServer2RC7TDesC16i @ 329 NONAME R3UNUSED ; RServer2::CreateGlobal(TDesC16 const &, int)
+	CreateL__12CObjectConIx @ 330 NONAME R3UNUSED ; CObjectConIx::CreateL(void)
+	CreateL__5RBuf8RC6TDesC8 @ 331 NONAME R3UNUSED ; RBuf8::CreateL(TDesC8 const &)
+	CreateL__5RBuf8RC6TDesC8i @ 332 NONAME R3UNUSED ; RBuf8::CreateL(TDesC8 const &, int)
+	CreateL__5RBuf8i @ 333 NONAME R3UNUSED ; RBuf8::CreateL(int)
+	CreateL__6RBuf16RC7TDesC16 @ 334 NONAME R3UNUSED ; RBuf16::CreateL(TDesC16 const &)
+	CreateL__6RBuf16RC7TDesC16i @ 335 NONAME R3UNUSED ; RBuf16::CreateL(TDesC16 const &, int)
+	CreateL__6RBuf16i @ 336 NONAME R3UNUSED ; RBuf16::CreateL(int)
+	CreateL__9CSession2 @ 337 NONAME R3UNUSED ; CSession2::CreateL(void)
+	CreateLocalCode__6RChunkii10TOwnerType @ 338 NONAME ; RChunk::CreateLocalCode(int, int, TOwnerType)
+	CreateLocal__10RSemaphorei10TOwnerType @ 339 NONAME R3UNUSED ; RSemaphore::CreateLocal(int, TOwnerType)
+	CreateLocal__13RMsgQueueBaseii10TOwnerType @ 340 NONAME ; RMsgQueueBase::CreateLocal(int, int, TOwnerType)
+	CreateLocal__16RCriticalSection10TOwnerType @ 341 NONAME R3UNUSED ; RCriticalSection::CreateLocal(TOwnerType)
+	CreateLocal__6RChunkii10TOwnerType @ 342 NONAME ; RChunk::CreateLocal(int, int, TOwnerType)
+	CreateLocal__6RMutex10TOwnerType @ 343 NONAME R3UNUSED ; RMutex::CreateLocal(TOwnerType)
+	CreateLocal__6RTimer @ 344 NONAME R3UNUSED ; RTimer::CreateLocal(void)
+	CreateLocal__8RCondVar10TOwnerType @ 345 NONAME R3UNUSED ; RCondVar::CreateLocal(TOwnerType)
+	CreateLocal__9RFastLock10TOwnerType @ 346 NONAME R3UNUSED ; RFastLock::CreateLocal(TOwnerType)
+	CreateMaxL__5RBuf8i @ 347 NONAME R3UNUSED ; RBuf8::CreateMaxL(int)
+	CreateMaxL__6RBuf16i @ 348 NONAME R3UNUSED ; RBuf16::CreateMaxL(int)
+	CreateMax__5RBuf8i @ 349 NONAME R3UNUSED ; RBuf8::CreateMax(int)
+	CreateMax__6RBuf16i @ 350 NONAME R3UNUSED ; RBuf16::CreateMax(int)
+	CreateSession__12RSessionBaseG8RServer2RC8TVersioni @ 351 NONAME ; RSessionBase::CreateSession(RServer2, TVersion const &, int)
+	CreateSession__12RSessionBaseG8RServer2RC8TVersioni15TIpcSessionTypePC15TSecurityPolicyP14TRequestStatus @ 352 NONAME ; RSessionBase::CreateSession(RServer2, TVersion const &, int, TIpcSessionType, TSecurityPolicy const *, TRequestStatus *)
+	CreateSession__12RSessionBaseRC7TDesC16RC8TVersioni @ 353 NONAME ; RSessionBase::CreateSession(TDesC16 const &, TVersion const &, int)
+	CreateSession__12RSessionBaseRC7TDesC16RC8TVersioni15TIpcSessionTypePC15TSecurityPolicyP14TRequestStatus @ 354 NONAME ; RSessionBase::CreateSession(TDesC16 const &, TVersion const &, int, TIpcSessionType, TSecurityPolicy const *, TRequestStatus *)
+	CreateThreadHeap__8UserHeapR24SStdEpocThreadCreateInfoRP5RHeapii @ 355 NONAME ; UserHeap::CreateThreadHeap(SStdEpocThreadCreateInfo &, RHeap *&, int, int)
+	Create__11RUndertaker @ 356 NONAME R3UNUSED ; RUndertaker::Create(void)
+	Create__15RChangeNotifier @ 357 NONAME R3UNUSED ; RChangeNotifier::Create(void)
+	Create__5RBuf8RC6TDesC8 @ 358 NONAME R3UNUSED ; RBuf8::Create(TDesC8 const &)
+	Create__5RBuf8RC6TDesC8i @ 359 NONAME R3UNUSED ; RBuf8::Create(TDesC8 const &, int)
+	Create__5RBuf8i @ 360 NONAME R3UNUSED ; RBuf8::Create(int)
+	Create__6RBuf16RC7TDesC16 @ 361 NONAME R3UNUSED ; RBuf16::Create(TDesC16 const &)
+	Create__6RBuf16RC7TDesC16i @ 362 NONAME R3UNUSED ; RBuf16::Create(TDesC16 const &, int)
+	Create__6RBuf16i @ 363 NONAME R3UNUSED ; RBuf16::Create(int)
+	Create__6RChunkUiiiiPC7TDesC1610TOwnerType @ 364 NONAME ABSENT ; RChunk::Create(unsigned int, int, int, int, TDesC16 const *, TOwnerType)
+	Create__7RThreadRC7TDesC16PFPv_iiP10RAllocatorPv10TOwnerType @ 365 NONAME ; RThread::Create(TDesC16 const &, int (*)(void *), int, RAllocator *, void *, TOwnerType)
+	Create__7RThreadRC7TDesC16PFPv_iiiiPv10TOwnerType @ 366 NONAME ; RThread::Create(TDesC16 const &, int (*)(void *), int, int, int, void *, TOwnerType)
+	Create__8RProcessRC7TDesC16T110TOwnerType @ 367 NONAME ; RProcess::Create(TDesC16 const &, TDesC16 const &, TOwnerType)
+	Create__8RProcessRC7TDesC16T1RC8TUidType10TOwnerType @ 368 NONAME ; RProcess::Create(TDesC16 const &, TDesC16 const &, TUidType const &, TOwnerType)
+	CreatorSecureId__4User @ 369 NONAME R3UNUSED ; User::CreatorSecureId(void)
+	CreatorVendorId__4User @ 370 NONAME R3UNUSED ; User::CreatorVendorId(void)
+	Critical__4User @ 371 NONAME R3UNUSED ; User::Critical(void)
+	Current__16CActiveScheduler @ 372 NONAME R3UNUSED ; CActiveScheduler::Current(void)
+	CustomFailureActionL__13CPolicyServerRC9RMessage2iRC13TSecurityInfo @ 373 NONAME ; CPolicyServer::CustomFailureActionL(RMessage2 const &, int, TSecurityInfo const &)
+	CustomSecurityCheckL__13CPolicyServerRC9RMessage2RiR13TSecurityInfo @ 374 NONAME ; CPolicyServer::CustomSecurityCheckL(RMessage2 const &, int &, TSecurityInfo &)
+	DataCaging__8RProcessi @ 375 NONAME R3UNUSED ; RProcess::DataCaging(int)
+	DateTime__C5TTime @ 376 NONAME R3UNUSED ; TTime::DateTime(void) const
+	DayNoInMonth__C5TTime @ 377 NONAME R3UNUSED ; TTime::DayNoInMonth(void) const
+	DayNoInWeek__C5TTime @ 378 NONAME R3UNUSED ; TTime::DayNoInWeek(void) const
+	DayNoInYear__C5TTime @ 379 NONAME R3UNUSED ; TTime::DayNoInYear(void) const
+	DayNoInYear__C5TTimeG5TTime @ 380 NONAME ; TTime::DayNoInYear(TTime) const
+	DaysFrom__C5TTimeG5TTime @ 381 NONAME ; TTime::DaysFrom(TTime) const
+	DaysInMonth__4Timei6TMonth @ 382 NONAME R3UNUSED ; Time::DaysInMonth(int, TMonth)
+	DaysInMonth__C5TTime @ 383 NONAME R3UNUSED ; TTime::DaysInMonth(void) const
+	DebugFunction__5RHeapiPvT2 @ 384 NONAME ; RHeap::DebugFunction(int, void *, void *)
+	DebugFunction__7RLoaderiiii @ 385 NONAME ; RLoader::DebugFunction(int, int, int, int)
+	DebugMask__7UserSvr @ 386 NONAME R3UNUSED ; UserSvr::DebugMask(void)
+	DebugMask__7UserSvrUi @ 387 NONAME R3UNUSED ; UserSvr::DebugMask(unsigned int)
+	Decoding__7HuffmanPCUliPUli @ 388 NONAME ; Huffman::Decoding(unsigned long const *, int, unsigned long *, int)
+	Decommit__C6RChunkii @ 389 NONAME R3UNUSED ; RChunk::Decommit(int, int) const
+	Decompose__C5TCharR7TPtrC16 @ 390 NONAME R3UNUSED ; TChar::Decompose(TPtrC16 &) const
+	Define__9RPropertyG4TUidUiiRC15TSecurityPolicyT4i @ 391 NONAME ; RProperty::Define(TUid, unsigned int, int, TSecurityPolicy const &, TSecurityPolicy const &, int)
+	Define__9RPropertyG4TUidUiii @ 392 NONAME ; RProperty::Define(TUid, unsigned int, int, int)
+	DeleteNotify__14TBusLocalDrivexi @ 393 NONAME ; TBusLocalDrive::DeleteNotify(long long, int)
+	Delete__13CArrayFixBasei @ 394 NONAME R3UNUSED ; CArrayFixBase::Delete(int)
+	Delete__13CArrayFixBaseii @ 395 NONAME R3UNUSED ; CArrayFixBase::Delete(int, int)
+	Delete__13CArrayPakBasei @ 396 NONAME R3UNUSED ; CArrayPakBase::Delete(int)
+	Delete__13CArrayPakBaseii @ 397 NONAME R3UNUSED ; CArrayPakBase::Delete(int, int)
+	Delete__13CArrayVarBasei @ 398 NONAME R3UNUSED ; CArrayVarBase::Delete(int)
+	Delete__13CArrayVarBaseii @ 399 NONAME R3UNUSED ; CArrayVarBase::Delete(int, int)
+	Delete__5CBaseP5CBase @ 400 NONAME R3UNUSED ; CBase::Delete(CBase *)
+	Delete__5TDes8ii @ 401 NONAME R3UNUSED ; TDes8::Delete(int, int)
+	Delete__6TDes16ii @ 402 NONAME R3UNUSED ; TDes16::Delete(int, int)
+	Delete__7CBufSegii @ 403 NONAME R3UNUSED ; CBufSeg::Delete(int, int)
+	Delete__8CBufFlatii @ 404 NONAME R3UNUSED ; CBufFlat::Delete(int, int)
+	Delete__9RPropertyG4TUidUi @ 405 NONAME R3UNUSED ; RProperty::Delete(TUid, unsigned int)
+	Deque__11TDblQueLink @ 406 NONAME R3UNUSED ; TDblQueLink::Deque(void)
+	Deque__7CActive @ 407 NONAME R3UNUSED ; CActive::Deque(void)
+	Des__6HBufC8 @ 408 NONAME R3UNUSED ; HBufC8::Des(void)
+	Des__7HBufC16 @ 409 NONAME R3UNUSED ; HBufC16::Des(void)
+	Des__C11TCheckedUid @ 410 NONAME R3UNUSED ; TCheckedUid::Des(void) const
+	Destroy__7RRegion @ 411 NONAME R3UNUSED ; RRegion::Destroy(void)
+	DeviceLoad__9E32LoaderPvi @ 412 NONAME R3UNUSED ; E32Loader::DeviceLoad(void *, int)
+	DisableWakeupEvents__5Power @ 413 NONAME R3UNUSED ; Power::DisableWakeupEvents(void)
+	Disconnect__14TBusLocalDrive @ 414 NONAME R3UNUSED ; TBusLocalDrive::Disconnect(void)
+	Disconnect__9CSession2RC9RMessage2 @ 415 NONAME R3UNUSED ; CSession2::Disconnect(RMessage2 const &)
+	DivEq__6TRealXRC6TRealX @ 416 NONAME R3UNUSED ; TRealX::DivEq(TRealX const &)
+	DivMod64__4MathxxRx @ 417 NONAME ; Math::DivMod64(long long, long long, long long &)
+	Div__C6TRealXR6TRealXRC6TRealX @ 418 NONAME R3UNUSED ; TRealX::Div(TRealX &, TRealX const &) const
+	DllFileName__7UserSvriR6TDes16 @ 419 NONAME R3UNUSED ; UserSvr::DllFileName(int, TDes16 &)
+	DllFreeTls__7UserSvri @ 420 NONAME R3UNUSED ; UserSvr::DllFreeTls(int)
+	DllSetTls__7UserSvriPv @ 421 NONAME R3UNUSED ; UserSvr::DllSetTls(int, void *)
+	DllTls__7UserSvri @ 422 NONAME R3UNUSED ; UserSvr::DllTls(int)
+	DoAddDelta__13TDeltaQueBasePvi @ 423 NONAME R3UNUSED ; TDeltaQueBase::DoAddDelta(void *, int)
+	DoAddFirst__11TDblQueBasePv @ 424 NONAME R3UNUSED ; TDblQueBase::DoAddFirst(void *)
+	DoAddFirst__11TSglQueBasePv @ 425 NONAME R3UNUSED ; TSglQueBase::DoAddFirst(void *)
+	DoAddLast__11TDblQueBasePv @ 426 NONAME R3UNUSED ; TDblQueBase::DoAddLast(void *)
+	DoAddLast__11TSglQueBasePv @ 427 NONAME R3UNUSED ; TSglQueBase::DoAddLast(void *)
+	DoAddPriority__11TDblQueBasePv @ 428 NONAME R3UNUSED ; TDblQueBase::DoAddPriority(void *)
+	DoAdd__11CCirBufBasePCUc @ 429 NONAME R3UNUSED ; CCirBufBase::DoAdd(unsigned char const *)
+	DoAdd__11CCirBufBasePCUci @ 430 NONAME R3UNUSED ; CCirBufBase::DoAdd(unsigned char const *, int)
+	DoAllocL__8RRefBasePCvi @ 431 NONAME R3UNUSED ; RRefBase::DoAllocL(void const *, int)
+	DoAlloc__8RRefBasePCvi @ 432 NONAME R3UNUSED ; RRefBase::DoAlloc(void const *, int)
+	DoCancel__13CAsyncOneShot @ 433 NONAME R3UNUSED ; CAsyncOneShot::DoCancel(void)
+	DoCancel__18RBusLogicalChannelUi @ 434 NONAME R3UNUSED ; RBusLogicalChannel::DoCancel(unsigned int)
+	DoCancel__5CIdle @ 435 NONAME R3UNUSED ; CIdle::DoCancel(void)
+	DoCancel__6CTimer @ 436 NONAME R3UNUSED ; CTimer::DoCancel(void)
+	DoCancel__8CServer2 @ 437 NONAME R3UNUSED ; CServer2::DoCancel(void)
+	DoCheckPolicy__C15TSecurityPolicyG12RMessagePtr2 @ 438 NONAME R3UNUSED ; TSecurityPolicy::DoCheckPolicy(RMessagePtr2) const
+	DoCheckPolicy__C15TSecurityPolicyG12RMessagePtr2PCc @ 439 NONAME R3UNUSED ; TSecurityPolicy::DoCheckPolicy(RMessagePtr2, char const *) const
+	DoCheckPolicy__C15TSecurityPolicyG7RThread @ 440 NONAME ; TSecurityPolicy::DoCheckPolicy(RThread) const
+	DoCheckPolicy__C15TSecurityPolicyG7RThreadPCc @ 441 NONAME ; TSecurityPolicy::DoCheckPolicy(RThread, char const *) const
+	DoCheckPolicy__C15TSecurityPolicyG8RProcess @ 442 NONAME ; TSecurityPolicy::DoCheckPolicy(RProcess) const
+	DoCheckPolicy__C15TSecurityPolicyG8RProcessPCc @ 443 NONAME ; TSecurityPolicy::DoCheckPolicy(RProcess, char const *) const
+	DoClose__10RAllocator @ 444 NONAME R3UNUSED ; RAllocator::DoClose(void)
+	DoConnect__8CServer2RC9RMessage2 @ 445 NONAME R3UNUSED ; CServer2::DoConnect(RMessage2 const &)
+	DoControl__18RBusLogicalChanneli @ 446 NONAME R3UNUSED ; RBusLogicalChannel::DoControl(int)
+	DoControl__18RBusLogicalChanneliPv @ 447 NONAME R3UNUSED ; RBusLogicalChannel::DoControl(int, void *)
+	DoControl__18RBusLogicalChanneliPvT2 @ 448 NONAME ; RBusLogicalChannel::DoControl(int, void *, void *)
+	DoCreateSubSession__15RSubSessionBaseRC12RSessionBaseiPC8TIpcArgs @ 449 NONAME ; RSubSessionBase::DoCreateSubSession(RSessionBase const &, int, TIpcArgs const *)
+	DoCreate__18RBusLogicalChannelRC7TDesC16RC8TVersioniPC7TDesC16PC6TDesC8i @ 450 NONAME ; RBusLogicalChannel::DoCreate(TDesC16 const &, TVersion const &, int, TDesC16 const *, TDesC8 const *, int)
+	DoCreatorHasCapability__4User11TCapability @ 451 NONAME R3UNUSED ; User::DoCreatorHasCapability(TCapability)
+	DoCreatorHasCapability__4User11TCapabilityPCc @ 452 NONAME R3UNUSED ; User::DoCreatorHasCapability(TCapability, char const *)
+	DoCreatorHasCapability__4User11TCapabilityT1 @ 453 NONAME R3UNUSED ; User::DoCreatorHasCapability(TCapability, TCapability)
+	DoCreatorHasCapability__4User11TCapabilityT1PCc @ 454 NONAME R3UNUSED ; User::DoCreatorHasCapability(TCapability, TCapability, char const *)
+	DoCurrent__15TDblQueIterBase @ 455 NONAME R3UNUSED ; TDblQueIterBase::DoCurrent(void)
+	DoCurrent__15TSglQueIterBase @ 456 NONAME R3UNUSED ; TSglQueIterBase::DoCurrent(void)
+	DoHasCapability__C12RMessagePtr211TCapability @ 457 NONAME R3UNUSED ; RMessagePtr2::DoHasCapability(TCapability) const
+	DoHasCapability__C12RMessagePtr211TCapabilityPCc @ 458 NONAME R3UNUSED ; RMessagePtr2::DoHasCapability(TCapability, char const *) const
+	DoHasCapability__C12RMessagePtr211TCapabilityT1 @ 459 NONAME R3UNUSED ; RMessagePtr2::DoHasCapability(TCapability, TCapability) const
+	DoHasCapability__C12RMessagePtr211TCapabilityT1PCc @ 460 NONAME ; RMessagePtr2::DoHasCapability(TCapability, TCapability, char const *) const
+	DoHasCapability__C7RThread11TCapability @ 461 NONAME R3UNUSED ; RThread::DoHasCapability(TCapability) const
+	DoHasCapability__C7RThread11TCapabilityPCc @ 462 NONAME R3UNUSED ; RThread::DoHasCapability(TCapability, char const *) const
+	DoHasCapability__C7RThread11TCapabilityT1 @ 463 NONAME R3UNUSED ; RThread::DoHasCapability(TCapability, TCapability) const
+	DoHasCapability__C7RThread11TCapabilityT1PCc @ 464 NONAME ; RThread::DoHasCapability(TCapability, TCapability, char const *) const
+	DoHasCapability__C8RProcess11TCapability @ 465 NONAME R3UNUSED ; RProcess::DoHasCapability(TCapability) const
+	DoHasCapability__C8RProcess11TCapabilityPCc @ 466 NONAME R3UNUSED ; RProcess::DoHasCapability(TCapability, char const *) const
+	DoHasCapability__C8RProcess11TCapabilityT1 @ 467 NONAME R3UNUSED ; RProcess::DoHasCapability(TCapability, TCapability) const
+	DoHasCapability__C8RProcess11TCapabilityT1PCc @ 468 NONAME ; RProcess::DoHasCapability(TCapability, TCapability, char const *) const
+	DoInsertL__7CBufSegiPCvi @ 469 NONAME ; CBufSeg::DoInsertL(int, void const *, int)
+	DoInsertL__8CBufFlatiPCvi @ 470 NONAME ; CBufFlat::DoInsertL(int, void const *, int)
+	DoPopAll__8CCleanupi @ 471 NONAME R3UNUSED ; CCleanup::DoPopAll(int)
+	DoPop__8CCleanupii @ 472 NONAME R3UNUSED ; CCleanup::DoPop(int, int)
+	DoPostDec__15TDblQueIterBase @ 473 NONAME R3UNUSED ; TDblQueIterBase::DoPostDec(void)
+	DoPostInc__15TDblQueIterBase @ 474 NONAME R3UNUSED ; TDblQueIterBase::DoPostInc(void)
+	DoPostInc__15TSglQueIterBase @ 475 NONAME R3UNUSED ; TSglQueIterBase::DoPostInc(void)
+	DoRemoveFirst__13TDeltaQueBase @ 476 NONAME R3UNUSED ; TDeltaQueBase::DoRemoveFirst(void)
+	DoRemove__11CCirBufBasePUc @ 477 NONAME R3UNUSED ; CCirBufBase::DoRemove(unsigned char *)
+	DoRemove__11CCirBufBasePUci @ 478 NONAME R3UNUSED ; CCirBufBase::DoRemove(unsigned char *, int)
+	DoRemove__11TSglQueBasePv @ 479 NONAME R3UNUSED ; TSglQueBase::DoRemove(void *)
+	DoRemove__13TDeltaQueBasePv @ 480 NONAME R3UNUSED ; TDeltaQueBase::DoRemove(void *)
+	DoRequest__18RBusLogicalChanneliR14TRequestStatus @ 481 NONAME R3UNUSED ; RBusLogicalChannel::DoRequest(int, TRequestStatus &)
+	DoRequest__18RBusLogicalChanneliR14TRequestStatusPv @ 482 NONAME ; RBusLogicalChannel::DoRequest(int, TRequestStatus &, void *)
+	DoRequest__18RBusLogicalChanneliR14TRequestStatusPvT3 @ 483 NONAME ; RBusLogicalChannel::DoRequest(int, TRequestStatus &, void *, void *)
+	DoSendReceive__C12RSessionBaseiPC8TIpcArgs @ 484 NONAME R3UNUSED ; RSessionBase::DoSendReceive(int, TIpcArgs const *) const
+	DoSendReceive__C12RSessionBaseiPC8TIpcArgsR14TRequestStatus @ 485 NONAME ; RSessionBase::DoSendReceive(int, TIpcArgs const *, TRequestStatus &) const
+	DoSendReceive__C15RSubSessionBaseiPC8TIpcArgs @ 486 NONAME R3UNUSED ; RSubSessionBase::DoSendReceive(int, TIpcArgs const *) const
+	DoSendReceive__C15RSubSessionBaseiPC8TIpcArgsR14TRequestStatus @ 487 NONAME ; RSubSessionBase::DoSendReceive(int, TIpcArgs const *, TRequestStatus &) const
+	DoSend__C12RSessionBaseiPC8TIpcArgs @ 488 NONAME R3UNUSED ; RSessionBase::DoSend(int, TIpcArgs const *) const
+	DoSend__C15RSubSessionBaseiPC8TIpcArgs @ 489 NONAME R3UNUSED ; RSubSessionBase::DoSend(int, TIpcArgs const *) const
+	DoSet__15TDblQueIterBasePv @ 490 NONAME R3UNUSED ; TDblQueIterBase::DoSet(void *)
+	DoSet__15TSglQueIterBasePv @ 491 NONAME R3UNUSED ; TSglQueIterBase::DoSet(void *)
+	DoShare__12RSessionBasei @ 492 NONAME R3UNUSED ; RSessionBase::DoShare(int)
+	DriveInfo__7UserHalR5TDes8 @ 493 NONAME R3UNUSED ; UserHal::DriveInfo(TDes8 &)
+	Duplicate__11RHandleBaseRC7RThread10TOwnerType @ 494 NONAME R3UNUSED ; RHandleBase::Duplicate(RThread const &, TOwnerType)
+	EmitDiagnostic__7PlatSec @ 495 NONAME R3UNUSED ; PlatSec::EmitDiagnostic(void)
+	EmitDiagnostic__7PlatSecR18TPlatSecDiagnosticPCc @ 496 NONAME R3UNUSED ; PlatSec::EmitDiagnostic(TPlatSecDiagnostic &, char const *)
+	EnableWakeupEvents__5Power11TPowerState @ 497 NONAME R3UNUSED ; Power::EnableWakeupEvents(TPowerState)
+	Encoding__7HuffmanPCUliPUl @ 498 NONAME R3UNUSED ; Huffman::Encoding(unsigned long const *, int, unsigned long *)
+	End__5RTest @ 499 NONAME R3UNUSED ; RTest::End(void)
+	End__C13CArrayFixBasei @ 500 NONAME R3UNUSED ; CArrayFixBase::End(int) const
+	Enlarge__14TBusLocalDrivei @ 501 NONAME R3UNUSED ; TBusLocalDrive::Enlarge(int)
+	Enque__11TSglQueLinkP11TSglQueLink @ 502 NONAME R3UNUSED ; TSglQueLink::Enque(TSglQueLink *)
+	Enque__15TDblQueLinkBaseP15TDblQueLinkBase @ 503 NONAME R3UNUSED ; TDblQueLinkBase::Enque(TDblQueLinkBase *)
+	ErasePassword__14TBusLocalDrive @ 504 NONAME R3UNUSED ; TBusLocalDrive::ErasePassword(void)
+	Error__C16CActiveScheduleri @ 505 NONAME R3UNUSED ; CActiveScheduler::Error(int) const
+	ExceptionDescriptor__7UserSvrUl @ 506 NONAME R3UNUSED ; UserSvr::ExceptionDescriptor(unsigned long)
+	ExceptionHandler__4User @ 507 NONAME R3UNUSED ; User::ExceptionHandler(void)
+	ExceptionId__7UserHalRi @ 508 NONAME R3UNUSED ; UserHal::ExceptionId(int &)
+	ExceptionInfo__7UserHalR8TExcInfo @ 509 NONAME R3UNUSED ; UserHal::ExceptionInfo(TExcInfo &)
+	ExecuteInSupervisorMode__7UserSvrPFPv_iPv @ 510 NONAME R3UNUSED ; UserSvr::ExecuteInSupervisorMode(int (*)(void *), void *)
+	ExitCategory__C7RThread @ 511 NONAME R3UNUSED ; RThread::ExitCategory(void) const
+	ExitCategory__C8RProcess @ 512 NONAME R3UNUSED ; RProcess::ExitCategory(void) const
+	ExitReason__C7RThread @ 513 NONAME R3UNUSED ; RThread::ExitReason(void) const
+	ExitReason__C8RProcess @ 514 NONAME R3UNUSED ; RProcess::ExitReason(void) const
+	ExitType__C7RThread @ 515 NONAME R3UNUSED ; RThread::ExitType(void) const
+	ExitType__C8RProcess @ 516 NONAME R3UNUSED ; RProcess::ExitType(void) const
+	Exit__4Useri @ 517 NONAME R3UNUSED ; User::Exit(int)
+	Exp__4MathRdRCd @ 518 NONAME R3UNUSED ; Math::Exp(double &, double const &)
+	ExpandL__13CArrayFixBasei @ 519 NONAME R3UNUSED ; CArrayFixBase::ExpandL(int)
+	ExpandL__13CArrayPakBaseii @ 520 NONAME R3UNUSED ; CArrayPakBase::ExpandL(int, int)
+	ExpandL__13CArrayVarBaseii @ 521 NONAME R3UNUSED ; CArrayVarBase::ExpandL(int, int)
+	ExpandL__8CBufBaseii @ 522 NONAME R3UNUSED ; CBufBase::ExpandL(int, int)
+	Expand__5TDes8 @ 523 NONAME R3UNUSED ; TDes8::Expand(void)
+	Extension___12CConsoleBaseUiRPvPv @ 524 NONAME ; CConsoleBase::Extension_(unsigned int, void *&, void *)
+	Extension___13CPolicyServerUiRPvPv @ 525 NONAME ; CPolicyServer::Extension_(unsigned int, void *&, void *)
+	Extension___16CActiveSchedulerUiRPvPv @ 526 NONAME ; CActiveScheduler::Extension_(unsigned int, void *&, void *)
+	Extension___17CColorConsoleBaseUiRPvPv @ 527 NONAME ; CColorConsoleBase::Extension_(unsigned int, void *&, void *)
+	Extension___5CBaseUiRPvPv @ 528 NONAME ; CBase::Extension_(unsigned int, void *&, void *)
+	Extension___5RHeapUiRPvPv @ 529 NONAME ; RHeap::Extension_(unsigned int, void *&, void *)
+	Extension___7CActiveUiRPvPv @ 530 NONAME ; CActive::Extension_(unsigned int, void *&, void *)
+	Extension___7CObjectUiRPvPv @ 531 NONAME ; CObject::Extension_(unsigned int, void *&, void *)
+	Extension___8CServer2UiRPvPv @ 532 NONAME ; CServer2::Extension_(unsigned int, void *&, void *)
+	Extension___9CSession2UiRPvPv @ 533 NONAME ; CSession2::Extension_(unsigned int, void *&, void *)
+	ExternalizeL__7HuffmanR10TBitOutputPCUli @ 534 NONAME R3UNUSED ; Huffman::ExternalizeL(TBitOutput &, unsigned long const *, int)
+	ExtractRamPages__16CBitMapAllocatoriRi @ 535 NONAME R3UNUSED ; CBitMapAllocator::ExtractRamPages(int, int &)
+	FRand__4MathRx @ 536 NONAME R3UNUSED ; Math::FRand(long long &)
+	FastCounter__4User @ 537 NONAME R3UNUSED ; User::FastCounter(void)
+	ACos__4MathRdRCd @ 538 NONAME R3UNUSED ; Math::ACos(double &, double const &)
+	FaultReason__7UserHalRi @ 539 NONAME R3UNUSED ; UserHal::FaultReason(int &)
+	FileName__C8RLibrary @ 540 NONAME R3UNUSED ; RLibrary::FileName(void) const
+	FileName__C8RProcess @ 541 NONAME R3UNUSED ; RProcess::FileName(void) const
+	FillZ__5TDes8 @ 542 NONAME R3UNUSED ; TDes8::FillZ(void)
+	FillZ__5TDes8i @ 543 NONAME R3UNUSED ; TDes8::FillZ(int)
+	FillZ__6TDes16 @ 544 NONAME R3UNUSED ; TDes16::FillZ(void)
+	FillZ__6TDes16i @ 545 NONAME R3UNUSED ; TDes16::FillZ(int)
+	Fill__4Mem1PviG5TChar @ 546 NONAME R3UNUSED ; Mem1::Fill(void *, int, TChar)
+	Fill__5TDes8G5TChar @ 547 NONAME R3UNUSED ; TDes8::Fill(TChar)
+	Fill__5TDes8G5TChari @ 548 NONAME R3UNUSED ; TDes8::Fill(TChar, int)
+	Fill__6TDes16G5TChar @ 549 NONAME R3UNUSED ; TDes16::Fill(TChar)
+	Fill__6TDes16G5TChari @ 550 NONAME R3UNUSED ; TDes16::Fill(TChar, int)
+	FindByFullName__C10CObjectConRiRC7TDesC16Rt4TBuf1i256 @ 551 NONAME ; CObjectCon::FindByFullName(int &, TDesC16 const &, TBuf<256> &) const
+	FindByName__C10CObjectConRiRC7TDesC16Rt4TBuf1i128 @ 552 NONAME ; CObjectCon::FindByName(int &, TDesC16 const &, TBuf<128> &) const
+	FindC__C6TDesC8PCUci @ 553 NONAME R3UNUSED ; TDesC8::FindC(unsigned char const *, int) const
+	FindC__C6TDesC8RC6TDesC8 @ 554 NONAME R3UNUSED ; TDesC8::FindC(TDesC8 const &) const
+	FindC__C7TDesC16PCUsi @ 555 NONAME R3UNUSED ; TDesC16::FindC(unsigned short const *, int) const
+	FindC__C7TDesC16PCUsii @ 556 NONAME ; TDesC16::FindC(unsigned short const *, int, int) const
+	FindC__C7TDesC16RC7TDesC16 @ 557 NONAME R3UNUSED ; TDesC16::FindC(TDesC16 const &) const
+	FindF__C6TDesC8PCUci @ 558 NONAME R3UNUSED ; TDesC8::FindF(unsigned char const *, int) const
+	FindF__C6TDesC8RC6TDesC8 @ 559 NONAME R3UNUSED ; TDesC8::FindF(TDesC8 const &) const
+	FindF__C7TDesC16PCUsi @ 560 NONAME R3UNUSED ; TDesC16::FindF(unsigned short const *, int) const
+	FindF__C7TDesC16RC7TDesC16 @ 561 NONAME R3UNUSED ; TDesC16::FindF(TDesC16 const &) const
+	FindIsqSigned__C10RArrayBasePCv @ 562 NONAME R3UNUSED ; RArrayBase::FindIsqSigned(void const *) const
+	FindIsqSigned__C10RArrayBasePCvi @ 563 NONAME R3UNUSED ; RArrayBase::FindIsqSigned(void const *, int) const
+	FindIsqSigned__C17RPointerArrayBasei @ 564 NONAME R3UNUSED ; RPointerArrayBase::FindIsqSigned(int) const
+	FindIsqSigned__C17RPointerArrayBaseii @ 565 NONAME R3UNUSED ; RPointerArrayBase::FindIsqSigned(int, int) const
+	FindIsqUnsigned__C10RArrayBasePCv @ 566 NONAME R3UNUSED ; RArrayBase::FindIsqUnsigned(void const *) const
+	FindIsqUnsigned__C10RArrayBasePCvi @ 567 NONAME R3UNUSED ; RArrayBase::FindIsqUnsigned(void const *, int) const
+	FindIsqUnsigned__C17RPointerArrayBaseUi @ 568 NONAME R3UNUSED ; RPointerArrayBase::FindIsqUnsigned(unsigned int) const
+	FindIsqUnsigned__C17RPointerArrayBaseUii @ 569 NONAME R3UNUSED ; RPointerArrayBase::FindIsqUnsigned(unsigned int, int) const
+	FindIsq__C10RArrayBasePCvPFPCvPCv_i @ 570 NONAME R3UNUSED ; RArrayBase::FindIsq(void const *, int (*)(void const *, void const *)) const
+	FindIsq__C10RArrayBasePCvPFPCvPCv_ii @ 571 NONAME ; RArrayBase::FindIsq(void const *, int (*)(void const *, void const *), int) const
+	FindIsq__C13CArrayFixBasePCvR12TKeyArrayFixRi @ 572 NONAME ; CArrayFixBase::FindIsq(void const *, TKeyArrayFix &, int &) const
+	FindIsq__C13CArrayPakBasePCvR12TKeyArrayPakRi @ 573 NONAME ; CArrayPakBase::FindIsq(void const *, TKeyArrayPak &, int &) const
+	FindIsq__C13CArrayVarBasePCvR12TKeyArrayVarRi @ 574 NONAME ; CArrayVarBase::FindIsq(void const *, TKeyArrayVar &, int &) const
+	FindIsq__C17RPointerArrayBasePCvPFPCvPCv_i @ 575 NONAME R3UNUSED ; RPointerArrayBase::FindIsq(void const *, int (*)(void const *, void const *)) const
+	FindIsq__C17RPointerArrayBasePCvPFPCvPCv_ii @ 576 NONAME ; RPointerArrayBase::FindIsq(void const *, int (*)(void const *, void const *), int) const
+	Find__15TFindHandleBaseRC7TDesC16 @ 577 NONAME R3UNUSED ; TFindHandleBase::Find(TDesC16 const &)
+	Find__C10RArrayBasePCv @ 578 NONAME R3UNUSED ; RArrayBase::Find(void const *) const
+	Find__C10RArrayBasePCvPFPCvPCv_i @ 579 NONAME R3UNUSED ; RArrayBase::Find(void const *, int (*)(void const *, void const *)) const
+	Find__C13CArrayFixBasePCvR12TKeyArrayFixRi @ 580 NONAME ; CArrayFixBase::Find(void const *, TKeyArrayFix &, int &) const
+	Find__C13CArrayPakBasePCvR12TKeyArrayPakRi @ 581 NONAME ; CArrayPakBase::Find(void const *, TKeyArrayPak &, int &) const
+	Find__C13CArrayVarBasePCvR12TKeyArrayVarRi @ 582 NONAME ; CArrayVarBase::Find(void const *, TKeyArrayVar &, int &) const
+	Find__C17RPointerArrayBasePCv @ 583 NONAME R3UNUSED ; RPointerArrayBase::Find(void const *) const
+	Find__C17RPointerArrayBasePCvPFPCvPCv_i @ 584 NONAME R3UNUSED ; RPointerArrayBase::Find(void const *, int (*)(void const *, void const *)) const
+	Find__C6TDesC8PCUci @ 585 NONAME R3UNUSED ; TDesC8::Find(unsigned char const *, int) const
+	Find__C6TDesC8RC6TDesC8 @ 586 NONAME R3UNUSED ; TDesC8::Find(TDesC8 const &) const
+	Find__C7TDesC16PCUsi @ 587 NONAME R3UNUSED ; TDesC16::Find(unsigned short const *, int) const
+	Find__C7TDesC16RC7TDesC16 @ 588 NONAME R3UNUSED ; TDesC16::Find(TDesC16 const &) const
+	FirstDelta__13TDeltaQueBaseRi @ 589 NONAME R3UNUSED ; TDeltaQueBase::FirstDelta(int &)
+	FixedHeap__8UserHeapPviii @ 590 NONAME ; UserHeap::FixedHeap(void *, int, int, int)
+	Fold__4UserUi @ 591 NONAME R3UNUSED ; User::Fold(unsigned int)
+	Fold__4UserUii @ 592 NONAME R3UNUSED ; User::Fold(unsigned int, int)
+	Fold__5TDes8 @ 593 NONAME R3UNUSED ; TDes8::Fold(void)
+	Fold__6TDes16 @ 594 NONAME R3UNUSED ; TDes16::Fold(void)
+	Fold__C8TUnicodeiPC15TUnicodeDataSet @ 595 NONAME R3UNUSED ; TUnicode::Fold(int, TUnicodeDataSet const *) const
+	ForceError__7TRegion @ 596 NONAME R3UNUSED ; TRegion::ForceError(void)
+	ForceRemount__14TBusLocalDriveUi @ 597 NONAME R3UNUSED ; TBusLocalDrive::ForceRemount(unsigned int)
+	FormatCurrency__7TLocaleR6TDes16R14TDes16Overflowi @ 598 NONAME ; TLocale::FormatCurrency(TDes16 &, TDes16Overflow &, int)
+	FormatCurrency__7TLocaleR6TDes16R14TDes16Overflowx @ 599 NONAME ; TLocale::FormatCurrency(TDes16 &, TDes16Overflow &, long long)
+	FormatCurrency__7TLocaleR6TDes16i @ 600 NONAME R3UNUSED ; TLocale::FormatCurrency(TDes16 &, int)
+	FormatCurrency__7TLocaleR6TDes16x @ 601 NONAME ; TLocale::FormatCurrency(TDes16 &, long long)
+	FormatL__C5TTimeR6TDes16RC7TDesC16 @ 602 NONAME R3UNUSED ; TTime::FormatL(TDes16 &, TDesC16 const &) const
+	FormatList__5TDes8RC6TDesC8PPSc @ 603 NONAME R3UNUSED ; TDes8::FormatList(TDesC8 const &, signed char **)
+	FormatList__6TDes16RC7TDesC16PPSc @ 604 NONAME R3UNUSED ; TDes16::FormatList(TDesC16 const &, signed char **)
+	Format__14TBusLocalDriveR11TFormatInfo @ 605 NONAME R3UNUSED ; TBusLocalDrive::Format(TFormatInfo &)
+	Format__14TBusLocalDrivexi @ 606 NONAME ; TBusLocalDrive::Format(long long, int)
+	Format__5TDes8Gt11TRefByValue1ZC6TDesC8e @ 607 NONAME ; TDes8::Format(TRefByValue<TDesC8 const>,...)
+	Format__6TDes16Gt11TRefByValue1ZC7TDesC16e @ 608 NONAME ; TDes16::Format(TRefByValue<TDesC16 const>,...)
+	Frac__4MathRdRCd @ 609 NONAME R3UNUSED ; Math::Frac(double &, double const &)
+	FreeLogicalDevice__4UserRC7TDesC16 @ 610 NONAME R3UNUSED ; User::FreeLogicalDevice(TDesC16 const &)
+	FreePhysicalDevice__4UserRC7TDesC16 @ 611 NONAME R3UNUSED ; User::FreePhysicalDevice(TDesC16 const &)
+	FreeZ__10RAllocatorRPv @ 612 NONAME R3UNUSED ; RAllocator::FreeZ(void *&)
+	FreeZ__4UserRPv @ 613 NONAME R3UNUSED ; User::FreeZ(void *&)
+	Free__16CBitMapAllocatori @ 614 NONAME R3UNUSED ; CBitMapAllocator::Free(int)
+	Free__16CBitMapAllocatorii @ 615 NONAME R3UNUSED ; CBitMapAllocator::Free(int, int)
+	Free__4UserPv @ 616 NONAME R3UNUSED ; User::Free(void *)
+	Free__5RHeapPv @ 617 NONAME R3UNUSED ; RHeap::Free(void *)
+	Free__8RRefBase @ 618 NONAME R3UNUSED ; RRefBase::Free(void)
+	FsRegisterThread__7UserSvr @ 619 NONAME R3UNUSED ; UserSvr::FsRegisterThread(void)
+	FullName__C11RHandleBase @ 620 NONAME R3UNUSED ; RHandleBase::FullName(void) const
+	FullName__C7CObject @ 621 NONAME R3UNUSED ; CObject::FullName(void) const
+	GetAddress__C5RHeapPCv @ 622 NONAME R3UNUSED ; RHeap::GetAddress(void const *) const
+	GetBdCategory__C5TChar @ 623 NONAME R3UNUSED ; TChar::GetBdCategory(void) const
+	GetCaps__C7RDeviceR5TDes8 @ 624 NONAME R3UNUSED ; RDevice::GetCaps(TDes8 &) const
+	GetCategory__C5TChar @ 625 NONAME R3UNUSED ; TChar::GetCategory(void) const
+	GetCategory__C8TUnicodePC15TUnicodeDataSet @ 626 NONAME R3UNUSED ; TUnicode::GetCategory(TUnicodeDataSet const *) const
+	GetCjkWidth__C5TChar @ 627 NONAME R3UNUSED ; TChar::GetCjkWidth(void) const
+	GetCombiningClass__C5TChar @ 628 NONAME R3UNUSED ; TChar::GetCombiningClass(void) const
+	GetCount__10RArrayBasePC5CBase @ 629 NONAME R3UNUSED ; RArrayBase::GetCount(CBase const *)
+	GetCount__17RPointerArrayBasePC5CBase @ 630 NONAME R3UNUSED ; RPointerArrayBase::GetCount(CBase const *)
+	GetCpuTime__C7RThreadR25TTimeIntervalMicroSeconds @ 631 NONAME R3UNUSED ; RThread::GetCpuTime(TTimeIntervalMicroSeconds &) const
+	GetDefaultMatchingTable__3Mem @ 632 NONAME R3UNUSED ; Mem::GetDefaultMatchingTable(void)
+	GetDesLengthL__C12RMessagePtr2i @ 633 NONAME R3UNUSED ; RMessagePtr2::GetDesLengthL(int) const
+	GetDesLength__C12RMessagePtr2i @ 634 NONAME R3UNUSED ; RMessagePtr2::GetDesLength(int) const
+	GetDesMaxLengthL__C12RMessagePtr2i @ 635 NONAME R3UNUSED ; RMessagePtr2::GetDesMaxLengthL(int) const
+	GetDesMaxLength__C12RMessagePtr2i @ 636 NONAME R3UNUSED ; RMessagePtr2::GetDesMaxLength(int) const
+	GetDesParameter__4UseriR5TDes8 @ 637 NONAME R3UNUSED ; User::GetDesParameter(int, TDes8 &)
+	GetDesParameter__4UseriR6TDes16 @ 638 NONAME R3UNUSED ; User::GetDesParameter(int, TDes16 &)
+	GetElementPtr__10RArrayBasePC5CBasei @ 639 NONAME R3UNUSED ; RArrayBase::GetElementPtr(CBase const *, int)
+	GetElementPtr__17RPointerArrayBasePC5CBasei @ 640 NONAME R3UNUSED ; RPointerArrayBase::GetElementPtr(CBase const *, int)
+	GetInfoFromHeader__8RLibraryRC6TDesC8R5TDes8 @ 641 NONAME R3UNUSED ; RLibrary::GetInfoFromHeader(TDesC8 const &, TDes8 &)
+	GetInfo__7RLoaderRC7TDesC16R5TDes8 @ 642 NONAME R3UNUSED ; RLoader::GetInfo(TDesC16 const &, TDes8 &)
+	GetInfo__8RLibraryRC7TDesC16R5TDes8 @ 643 NONAME R3UNUSED ; RLibrary::GetInfo(TDesC16 const &, TDes8 &)
+	GetInfo__C5TCharRQ25TChar9TCharInfo @ 644 NONAME R3UNUSED ; TChar::GetInfo(TChar::TCharInfo &) const
+	GetLocaleDllName__15TExtendedLocale13TLocaleAspectR6TDes16 @ 645 NONAME R3UNUSED ; TExtendedLocale::GetLocaleDllName(TLocaleAspect, TDes16 &)
+	GetLowerCase__C5TChar @ 646 NONAME R3UNUSED ; TChar::GetLowerCase(void) const
+	GetLowerCase__C8TUnicodePC15TUnicodeDataSet @ 647 NONAME R3UNUSED ; TUnicode::GetLowerCase(TUnicodeDataSet const *) const
+	GetMemoryInfo__C8RProcessR18TProcessMemoryInfo @ 648 NONAME R3UNUSED ; RProcess::GetMemoryInfo(TProcessMemoryInfo &) const
+	GetNumericValue__C5TChar @ 649 NONAME R3UNUSED ; TChar::GetNumericValue(void) const
+	GetOffset__C13CArrayPakBasei @ 650 NONAME R3UNUSED ; CArrayPakBase::GetOffset(int) const
+	GetPreferredCollationMethod__15TExtendedLocalei @ 651 NONAME R3UNUSED ; TExtendedLocale::GetPreferredCollationMethod(int)
+	GetRamSizes__8RLibraryRiT1 @ 652 NONAME R3UNUSED ; RLibrary::GetRamSizes(int &, int &)
+	GetReason__C15XLeaveException @ 653 NONAME R3UNUSED ; XLeaveException::GetReason(void) const
+	GetTIntParameter__4UseriRi @ 654 NONAME R3UNUSED ; User::GetTIntParameter(int, int &)
+	GetTReal__C6TRealXRd @ 655 NONAME R3UNUSED ; TRealX::GetTReal(double &) const
+	GetTReal__C6TRealXRf @ 656 NONAME R3UNUSED ; TRealX::GetTReal(float &) const
+	GetTitleCase__C5TChar @ 657 NONAME R3UNUSED ; TChar::GetTitleCase(void) const
+	GetUpperCase__C5TChar @ 658 NONAME R3UNUSED ; TChar::GetUpperCase(void) const
+	GetUpperCase__C8TUnicodePC15TUnicodeDataSet @ 659 NONAME R3UNUSED ; TUnicode::GetUpperCase(TUnicodeDataSet const *) const
+	GetV7StubAddresses__9E32LoaderRUlT1 @ 660 NONAME R3UNUSED ; E32Loader::GetV7StubAddresses(unsigned long &, unsigned long &)
+	Get__10CCirBuffer @ 661 NONAME R3UNUSED ; CCirBuffer::Get(void)
+	Get__5TLex8 @ 662 NONAME R3UNUSED ; TLex8::Get(void)
+	Get__6TLex16 @ 663 NONAME R3UNUSED ; TLex16::Get(void)
+	Get__9RPropertyG4TUidUiR5TDes8 @ 664 NONAME R3UNUSED ; RProperty::Get(TUid, unsigned int, TDes8 &)
+	Get__9RPropertyG4TUidUiR6TDes16 @ 665 NONAME R3UNUSED ; RProperty::Get(TUid, unsigned int, TDes16 &)
+	Get__9RPropertyG4TUidUiRi @ 666 NONAME R3UNUSED ; RProperty::Get(TUid, unsigned int, int &)
+	Get__9RPropertyR5TDes8 @ 667 NONAME R3UNUSED ; RProperty::Get(TDes8 &)
+	Get__9RPropertyR6TDes16 @ 668 NONAME R3UNUSED ; RProperty::Get(TDes16 &)
+	Get__9RPropertyRi @ 669 NONAME R3UNUSED ; RProperty::Get(int &)
+	Getch__12CConsoleBase @ 670 NONAME R3UNUSED ; CConsoleBase::Getch(void)
+	Getch__5RTest @ 671 NONAME R3UNUSED ; RTest::Getch(void)
+	GranularCompress__10RArrayBase @ 672 NONAME R3UNUSED ; RArrayBase::GranularCompress(void)
+	GranularCompress__17RPointerArrayBase @ 673 NONAME R3UNUSED ; RPointerArrayBase::GranularCompress(void)
+	Grow__5TRectRC5TSize @ 674 NONAME R3UNUSED ; TRect::Grow(TSize const &)
+	Grow__5TRectii @ 675 NONAME R3UNUSED ; TRect::Grow(int, int)
+	HalFunction__7UserSvriiPvT3 @ 676 NONAME ; UserSvr::HalFunction(int, int, void *, void *)
+	HalFunction__7UserSvriiPvT3i @ 677 NONAME ; UserSvr::HalFunction(int, int, void *, void *, int)
+	HalGet__7UserSvriPv @ 678 NONAME R3UNUSED ; UserSvr::HalGet(int, void *)
+	HalSet__7UserSvriPv @ 679 NONAME R3UNUSED ; UserSvr::HalSet(int, void *)
+	Halt__C16CActiveScheduleri @ 680 NONAME R3UNUSED ; CActiveScheduler::Halt(int) const
+	HandleCount__C7RThreadRiT1 @ 681 NONAME R3UNUSED ; RThread::HandleCount(int &, int &) const
+	HandleException__4UserPv @ 682 NONAME R3UNUSED ; User::HandleException(void *)
+	HandleInfo__11RHandleBaseP11THandleInfo @ 683 NONAME R3UNUSED ; RHandleBase::HandleInfo(THandleInfo *)
+	HasCapabilities__C14TCapabilitySetRC14TCapabilitySet @ 684 NONAME R3UNUSED ; TCapabilitySet::HasCapabilities(TCapabilitySet const &) const
+	HasCapability__C14TCapabilitySet11TCapability @ 685 NONAME R3UNUSED ; TCapabilitySet::HasCapability(TCapability) const
+	HasPrefixC__C7TDesC16RC7TDesC16iPC16TCollationMethod @ 686 NONAME ; TDesC16::HasPrefixC(TDesC16 const &, int, TCollationMethod const *) const
+	HeapSortSigned__10RArrayBase @ 687 NONAME R3UNUSED ; RArrayBase::HeapSortSigned(void)
+	HeapSortSigned__17RPointerArrayBase @ 688 NONAME R3UNUSED ; RPointerArrayBase::HeapSortSigned(void)
+	HeapSortUnsigned__10RArrayBase @ 689 NONAME R3UNUSED ; RArrayBase::HeapSortUnsigned(void)
+	HeapSortUnsigned__17RPointerArrayBase @ 690 NONAME R3UNUSED ; RPointerArrayBase::HeapSortUnsigned(void)
+	HeapSort__10RArrayBasePFPCvPCv_i @ 691 NONAME R3UNUSED ; RArrayBase::HeapSort(int (*)(void const *, void const *))
+	HeapSort__17RPointerArrayBasePFPCvPCv_i @ 692 NONAME R3UNUSED ; RPointerArrayBase::HeapSort(int (*)(void const *, void const *))
+	Height__C5TRect @ 693 NONAME R3UNUSED ; TRect::Height(void) const
+	HighRes__6CTimerG27TTimeIntervalMicroSeconds32 @ 694 NONAME R3UNUSED ; CTimer::HighRes(TTimeIntervalMicroSeconds32)
+	HighRes__6RTimerR14TRequestStatusG27TTimeIntervalMicroSeconds32 @ 695 NONAME R3UNUSED ; RTimer::HighRes(TRequestStatus &, TTimeIntervalMicroSeconds32)
+	HomeTime__5TTime @ 696 NONAME R3UNUSED ; TTime::HomeTime(void)
+	HoursFrom__C5TTimeG5TTimeR18TTimeIntervalHours @ 697 NONAME ; TTime::HoursFrom(TTime, TTimeIntervalHours &) const
+	HuffmanL__10TBitOutputUi @ 698 NONAME R3UNUSED ; TBitOutput::HuffmanL(unsigned int)
+	HuffmanL__7HuffmanPCUliPUl @ 699 NONAME R3UNUSED ; Huffman::HuffmanL(unsigned long const *, int, unsigned long *)
+	HuffmanL__9TBitInputPCUl @ 700 NONAME R3UNUSED ; TBitInput::HuffmanL(unsigned long const *)
+	IMB_Range__4UserPvT1 @ 701 NONAME R3UNUSED ; User::IMB_Range(void *, void *)
+	Id__C7RThread @ 702 NONAME R3UNUSED ; RThread::Id(void) const
+	Id__C8RProcess @ 703 NONAME R3UNUSED ; RProcess::Id(void) const
+	InactivityTime__4User @ 704 NONAME R3UNUSED ; User::InactivityTime(void)
+	Inactivity__6CTimerG20TTimeIntervalSeconds @ 705 NONAME R3UNUSED ; CTimer::Inactivity(TTimeIntervalSeconds)
+	Inactivity__6RTimerR14TRequestStatusG20TTimeIntervalSeconds @ 706 NONAME R3UNUSED ; RTimer::Inactivity(TRequestStatus &, TTimeIntervalSeconds)
+	Inc__5TLex8 @ 707 NONAME R3UNUSED ; TLex8::Inc(void)
+	Inc__5TLex8i @ 708 NONAME R3UNUSED ; TLex8::Inc(int)
+	Inc__6TLex16 @ 709 NONAME R3UNUSED ; TLex16::Inc(void)
+	Inc__6TLex16i @ 710 NONAME R3UNUSED ; TLex16::Inc(int)
+	InfoPrint__4UserRC7TDesC16 @ 711 NONAME R3UNUSED ; User::InfoPrint(TDesC16 const &)
+	InfoPrint__9RNotifierRC7TDesC16 @ 712 NONAME R3UNUSED ; RNotifier::InfoPrint(TDesC16 const &)
+	InitProcess__4User @ 713 NONAME R3UNUSED ; User::InitProcess(void)
+	Init__8RLibrary @ 714 NONAME R3UNUSED ; RLibrary::Init(void)
+	InsertIsqAllowDuplicatesL__13CArrayFixBasePCvR12TKeyArrayFix @ 715 NONAME R3UNUSED ; CArrayFixBase::InsertIsqAllowDuplicatesL(void const *, TKeyArrayFix &)
+	InsertIsqAllowDuplicatesL__13CArrayPakBasePCviR12TKeyArrayPak @ 716 NONAME ; CArrayPakBase::InsertIsqAllowDuplicatesL(void const *, int, TKeyArrayPak &)
+	InsertIsqAllowDuplicatesL__13CArrayVarBasePCviR12TKeyArrayVar @ 717 NONAME ; CArrayVarBase::InsertIsqAllowDuplicatesL(void const *, int, TKeyArrayVar &)
+	InsertIsqL__13CArrayFixBasePCvR12TKeyArrayFix @ 718 NONAME R3UNUSED ; CArrayFixBase::InsertIsqL(void const *, TKeyArrayFix &)
+	InsertIsqL__13CArrayPakBasePCviR12TKeyArrayPak @ 719 NONAME ; CArrayPakBase::InsertIsqL(void const *, int, TKeyArrayPak &)
+	InsertIsqL__13CArrayVarBasePCviR12TKeyArrayVar @ 720 NONAME ; CArrayVarBase::InsertIsqL(void const *, int, TKeyArrayVar &)
+	InsertIsqSigned__10RArrayBasePCvi @ 721 NONAME R3UNUSED ; RArrayBase::InsertIsqSigned(void const *, int)
+	InsertIsqSigned__17RPointerArrayBaseii @ 722 NONAME R3UNUSED ; RPointerArrayBase::InsertIsqSigned(int, int)
+	InsertIsqUnsigned__10RArrayBasePCvi @ 723 NONAME R3UNUSED ; RArrayBase::InsertIsqUnsigned(void const *, int)
+	InsertIsqUnsigned__17RPointerArrayBaseUii @ 724 NONAME R3UNUSED ; RPointerArrayBase::InsertIsqUnsigned(unsigned int, int)
+	InsertIsq__10RArrayBasePCvPFPCvPCv_ii @ 725 NONAME ; RArrayBase::InsertIsq(void const *, int (*)(void const *, void const *), int)
+	InsertIsq__17RPointerArrayBasePCvPFPCvPCv_ii @ 726 NONAME ; RPointerArrayBase::InsertIsq(void const *, int (*)(void const *, void const *), int)
+	InsertL__13CArrayFixBaseiPCv @ 727 NONAME R3UNUSED ; CArrayFixBase::InsertL(int, void const *)
+	InsertL__13CArrayFixBaseiPCvi @ 728 NONAME ; CArrayFixBase::InsertL(int, void const *, int)
+	InsertL__13CArrayPakBaseiPCvi @ 729 NONAME ; CArrayPakBase::InsertL(int, void const *, int)
+	InsertL__13CArrayVarBaseiPCvi @ 730 NONAME ; CArrayVarBase::InsertL(int, void const *, int)
+	InsertL__8CBufBaseiPCvi @ 731 NONAME ; CBufBase::InsertL(int, void const *, int)
+	InsertL__8CBufBaseiRC6TDesC8 @ 732 NONAME R3UNUSED ; CBufBase::InsertL(int, TDesC8 const &)
+	InsertL__8CBufBaseiRC6TDesC8i @ 733 NONAME ; CBufBase::InsertL(int, TDesC8 const &, int)
+	InsertRepL__13CArrayFixBaseiPCvi @ 734 NONAME ; CArrayFixBase::InsertRepL(int, void const *, int)
+	Insert__10RArrayBasePCvi @ 735 NONAME R3UNUSED ; RArrayBase::Insert(void const *, int)
+	Insert__17RPointerArrayBasePCvi @ 736 NONAME R3UNUSED ; RPointerArrayBase::Insert(void const *, int)
+	Insert__5TDes8iRC6TDesC8 @ 737 NONAME R3UNUSED ; TDes8::Insert(int, TDesC8 const &)
+	Insert__6TDes16iRC7TDesC16 @ 738 NONAME R3UNUSED ; TDes16::Insert(int, TDesC16 const &)
+	Install__16CActiveSchedulerP16CActiveScheduler @ 739 NONAME R3UNUSED ; CActiveScheduler::Install(CActiveScheduler *)
+	Int__4MathRdRCd @ 740 NONAME R3UNUSED ; Math::Int(double &, double const &)
+	Int__4MathRlRCd @ 741 NONAME R3UNUSED ; Math::Int(long &, double const &)
+	Int__4MathRsRCd @ 742 NONAME R3UNUSED ; Math::Int(short &, double const &)
+	InternalizeL__7HuffmanR9TBitInputPUli @ 743 NONAME R3UNUSED ; Huffman::InternalizeL(TBitInput &, unsigned long *, int)
+	Intersect__7TRegionRC7TRegion @ 744 NONAME R3UNUSED ; TRegion::Intersect(TRegion const &)
+	Intersection__14TCapabilitySetRC14TCapabilitySet @ 745 NONAME R3UNUSED ; TCapabilitySet::Intersection(TCapabilitySet const &)
+	Intersection__5TRectRC5TRect @ 746 NONAME R3UNUSED ; TRect::Intersection(TRect const &)
+	Intersection__7TRegionRC7TRegionT1 @ 747 NONAME R3UNUSED ; TRegion::Intersection(TRegion const &, TRegion const &)
+	Intersects__C5TRectRC5TRect @ 748 NONAME R3UNUSED ; TRect::Intersects(TRect const &) const
+	Invariant__4User @ 749 NONAME R3UNUSED ; User::Invariant(void)
+	IpcV1Available__7UserSvr @ 750 NONAME R3UNUSED ; UserSvr::IpcV1Available(void)
+	IsAlphaDigit__C5TChar @ 751 NONAME R3UNUSED ; TChar::IsAlphaDigit(void) const
+	IsAlpha__C5TChar @ 752 NONAME R3UNUSED ; TChar::IsAlpha(void) const
+	IsAssigned__C5TChar @ 753 NONAME R3UNUSED ; TChar::IsAssigned(void) const
+	IsAvailable__C7RDeviceiPC7TDesC16PC6TDesC8 @ 754 NONAME ; RDevice::IsAvailable(int, TDesC16 const *, TDesC8 const *) const
+	IsCapabilityEnforced__7PlatSec11TCapability @ 755 NONAME R3UNUSED ; PlatSec::IsCapabilityEnforced(TCapability)
+	IsContainedBy__C7TRegionRC5TRect @ 756 NONAME R3UNUSED ; TRegion::IsContainedBy(TRect const &) const
+	IsControl__C5TChar @ 757 NONAME R3UNUSED ; TChar::IsControl(void) const
+	IsDigit__C5TChar @ 758 NONAME R3UNUSED ; TChar::IsDigit(void) const
+	IsEmpty__C11TDblQueBase @ 759 NONAME R3UNUSED ; TDblQueBase::IsEmpty(void) const
+	IsEmpty__C11TSglQueBase @ 760 NONAME R3UNUSED ; TSglQueBase::IsEmpty(void) const
+	IsEmpty__C5TRect @ 761 NONAME R3UNUSED ; TRect::IsEmpty(void) const
+	IsEmpty__C7TRegion @ 762 NONAME R3UNUSED ; TRegion::IsEmpty(void) const
+	IsExceptionHandled__4User8TExcType @ 763 NONAME R3UNUSED ; User::IsExceptionHandled(TExcType)
+	IsFinite__4MathRCd @ 764 NONAME R3UNUSED ; Math::IsFinite(double const &)
+	IsFinite__C6TRealX @ 765 NONAME R3UNUSED ; TRealX::IsFinite(void) const
+	IsFree__16CBitMapAllocatori @ 766 NONAME R3UNUSED ; CBitMapAllocator::IsFree(int)
+	IsFree__16CBitMapAllocatorii @ 767 NONAME R3UNUSED ; CBitMapAllocator::IsFree(int, int)
+	IsGraph__C5TChar @ 768 NONAME R3UNUSED ; TChar::IsGraph(void) const
+	IsHeld__6RMutex @ 769 NONAME R3UNUSED ; RMutex::IsHeld(void)
+	IsHexDigit__C5TChar @ 770 NONAME R3UNUSED ; TChar::IsHexDigit(void) const
+	IsInfinite__4MathRCd @ 771 NONAME R3UNUSED ; Math::IsInfinite(double const &)
+	IsInfinite__C6TRealX @ 772 NONAME R3UNUSED ; TRealX::IsInfinite(void) const
+	IsLeapYear__4Timei @ 773 NONAME R3UNUSED ; Time::IsLeapYear(int)
+	IsLower__C5TChar @ 774 NONAME R3UNUSED ; TChar::IsLower(void) const
+	IsMirrored__C5TChar @ 775 NONAME R3UNUSED ; TChar::IsMirrored(void) const
+	IsNaN__4MathRCd @ 776 NONAME R3UNUSED ; Math::IsNaN(double const &)
+	IsNaN__C6TRealX @ 777 NONAME R3UNUSED ; TRealX::IsNaN(void) const
+	IsNormalized__C5TRect @ 778 NONAME R3UNUSED ; TRect::IsNormalized(void) const
+	IsPresent__C8TUidTypeG4TUid @ 779 NONAME R3UNUSED ; TUidType::IsPresent(TUid) const
+	IsPrint__C5TChar @ 780 NONAME R3UNUSED ; TChar::IsPrint(void) const
+	IsPunctuation__C5TChar @ 781 NONAME R3UNUSED ; TChar::IsPunctuation(void) const
+	IsRomAddress__4UserRiPv @ 782 NONAME R3UNUSED ; User::IsRomAddress(int &, void *)
+	IsSpace__C5TChar @ 783 NONAME R3UNUSED ; TChar::IsSpace(void) const
+	IsTitle__C5TChar @ 784 NONAME R3UNUSED ; TChar::IsTitle(void) const
+	IsUpper__C5TChar @ 785 NONAME R3UNUSED ; TChar::IsUpper(void) const
+	IsValid__7HuffmanPCUli @ 786 NONAME R3UNUSED ; Huffman::IsValid(unsigned long const *, int)
+	IsValid__C8TUidType @ 787 NONAME R3UNUSED ; TUidType::IsValid(void) const
+	IsZero__4MathRCd @ 788 NONAME R3UNUSED ; Math::IsZero(double const &)
+	IsZero__C6TRealX @ 789 NONAME R3UNUSED ; TRealX::IsZero(void) const
+	JustInTime__4User @ 790 NONAME R3UNUSED ; User::JustInTime(void)
+	JustInTime__C8RProcess @ 791 NONAME R3UNUSED ; RProcess::JustInTime(void) const
+	Justify__5TDes8RC6TDesC8i6TAlignG5TChar @ 792 NONAME ; TDes8::Justify(TDesC8 const &, int, TAlign, TChar)
+	Justify__6TDes16RC7TDesC16i6TAlignG5TChar @ 793 NONAME ; TDes16::Justify(TDesC16 const &, int, TAlign, TChar)
+	Kill__7RThreadi @ 794 NONAME R3UNUSED ; RThread::Kill(int)
+	Kill__8RProcessi @ 795 NONAME R3UNUSED ; RProcess::Kill(int)
+	Kill__C12RMessagePtr2i @ 796 NONAME R3UNUSED ; RMessagePtr2::Kill(int) const
+	Language__4User @ 797 NONAME R3UNUSED ; User::Language(void)
+	LeapYearsUpTo__4Timei @ 798 NONAME R3UNUSED ; Time::LeapYearsUpTo(int)
+	LeaveIfError__4Useri @ 799 NONAME R3UNUSED ; User::LeaveIfError(int)
+	LeaveIfNull__4UserPv @ 800 NONAME R3UNUSED ; User::LeaveIfNull(void *)
+	LeaveNoMemory__4User @ 801 NONAME R3UNUSED ; User::LeaveNoMemory(void)
+	Leave__4Useri @ 802 NONAME R3UNUSED ; User::Leave(int)
+	LeftTPtr__C5TDes8i @ 803 NONAME R3UNUSED ; TDes8::LeftTPtr(int) const
+	LeftTPtr__C6TDes16i @ 804 NONAME R3UNUSED ; TDes16::LeftTPtr(int) const
+	Left__C6TDesC8i @ 805 NONAME R3UNUSED ; TDesC8::Left(int) const
+	Left__C7TDesC16i @ 806 NONAME R3UNUSED ; TDesC16::Left(int) const
+	Length__C13CArrayPakBasei @ 807 NONAME R3UNUSED ; CArrayPakBase::Length(int) const
+	Length__C13CArrayVarBasei @ 808 NONAME R3UNUSED ; CArrayVarBase::Length(int) const
+	LibraryCreate__9E32LoaderR18TLibraryCreateInfo @ 809 NONAME R3UNUSED ; E32Loader::LibraryCreate(TLibraryCreateInfo &)
+	Ln__4MathRdRCd @ 810 NONAME R3UNUSED ; Math::Ln(double &, double const &)
+	LoadLibrary__7RLoaderRiRC7TDesC16T2RC8TUidTypeUl @ 811 NONAME ; RLoader::LoadLibrary(int &, TDesC16 const &, TDesC16 const &, TUidType const &, unsigned long)
+	LoadLocaleAspect__15TExtendedLocaleUiRC7TDesC16 @ 812 NONAME R3UNUSED ; TExtendedLocale::LoadLocaleAspect(unsigned int, TDesC16 const &)
+	LoadLocale__15TExtendedLocaleRC7TDesC16 @ 813 NONAME R3UNUSED ; TExtendedLocale::LoadLocale(TDesC16 const &)
+	LoadLogicalDevice__4UserRC7TDesC16 @ 814 NONAME R3UNUSED ; User::LoadLogicalDevice(TDesC16 const &)
+	LoadNotifiers__9RNotifierG4TUid @ 815 NONAME R3UNUSED ; RNotifier::LoadNotifiers(TUid)
+	LoadPhysicalDevice__4UserRC7TDesC16 @ 816 NONAME R3UNUSED ; User::LoadPhysicalDevice(TDesC16 const &)
+	LoadRomLibrary__8RLibraryRC7TDesC16T1 @ 817 NONAME R3UNUSED ; RLibrary::LoadRomLibrary(TDesC16 const &, TDesC16 const &)
+	LoadSystemSettings__15TExtendedLocale @ 818 NONAME R3UNUSED ; TExtendedLocale::LoadSystemSettings(void)
+	Load__8RLibraryRC7TDesC16RC8TUidType @ 819 NONAME R3UNUSED ; RLibrary::Load(TDesC16 const &, TUidType const &)
+	Load__8RLibraryRC7TDesC16T1 @ 820 NONAME R3UNUSED ; RLibrary::Load(TDesC16 const &, TDesC16 const &)
+	Load__8RLibraryRC7TDesC16T1RC8TUidType @ 821 NONAME ; RLibrary::Load(TDesC16 const &, TDesC16 const &, TUidType const &)
+	Load__8RLibraryRC7TDesC16T1RC8TUidTypeUl @ 822 NONAME ; RLibrary::Load(TDesC16 const &, TDesC16 const &, TUidType const &, unsigned long)
+	LocaleExports__9E32LoaderPvPPFv_i @ 823 NONAME R3UNUSED ; E32Loader::LocaleExports(void *, int (**)(void))
+	LocalePropertiesSetDefaults__7UserSvr @ 824 NONAME R3UNUSED ; UserSvr::LocalePropertiesSetDefaults(void)
+	LocateF__C6TDesC8G5TChar @ 825 NONAME R3UNUSED ; TDesC8::LocateF(TChar) const
+	LocateF__C7TDesC16G5TChar @ 826 NONAME R3UNUSED ; TDesC16::LocateF(TChar) const
+	LocateReverseF__C6TDesC8G5TChar @ 827 NONAME R3UNUSED ; TDesC8::LocateReverseF(TChar) const
+	LocateReverseF__C7TDesC16G5TChar @ 828 NONAME R3UNUSED ; TDesC16::LocateReverseF(TChar) const
+	LocateReverse__C6TDesC8G5TChar @ 829 NONAME R3UNUSED ; TDesC8::LocateReverse(TChar) const
+	LocateReverse__C7TDesC16G5TChar @ 830 NONAME R3UNUSED ; TDesC16::LocateReverse(TChar) const
+	Locate__C6TDesC8G5TChar @ 831 NONAME R3UNUSED ; TDesC8::Locate(TChar) const
+	Locate__C7TDesC16G5TChar @ 832 NONAME R3UNUSED ; TDesC16::Locate(TChar) const
+	LockPeriod__4User @ 833 NONAME R3UNUSED ; User::LockPeriod(void)
+	LockRamDrive__7UserSvr @ 834 NONAME R3UNUSED ; UserSvr::LockRamDrive(void)
+	Lock__6CTimer14TTimerLockSpec @ 835 NONAME R3UNUSED ; CTimer::Lock(TTimerLockSpec)
+	Lock__6RTimerR14TRequestStatus14TTimerLockSpec @ 836 NONAME R3UNUSED ; RTimer::Lock(TRequestStatus &, TTimerLockSpec)
+	LockedDec__4UserRi @ 837 NONAME R3UNUSED ; User::LockedDec(int &)
+	LockedInc__4UserRi @ 838 NONAME R3UNUSED ; User::LockedInc(int &)
+	Log__4MathRdRCd @ 839 NONAME R3UNUSED ; Math::Log(double &, double const &)
+	LogonCancel__C11RUndertaker @ 840 NONAME R3UNUSED ; RUndertaker::LogonCancel(void) const
+	LogonCancel__C15RChangeNotifier @ 841 NONAME R3UNUSED ; RChangeNotifier::LogonCancel(void) const
+	LogonCancel__C7RThreadR14TRequestStatus @ 842 NONAME R3UNUSED ; RThread::LogonCancel(TRequestStatus &) const
+	LogonCancel__C8RProcessR14TRequestStatus @ 843 NONAME R3UNUSED ; RProcess::LogonCancel(TRequestStatus &) const
+	Logon__C11RUndertakerR14TRequestStatusRi @ 844 NONAME R3UNUSED ; RUndertaker::Logon(TRequestStatus &, int &) const
+	Logon__C15RChangeNotifierR14TRequestStatus @ 845 NONAME R3UNUSED ; RChangeNotifier::Logon(TRequestStatus &) const
+	Logon__C7RThreadR14TRequestStatus @ 846 NONAME R3UNUSED ; RThread::Logon(TRequestStatus &) const
+	Logon__C8RProcessR14TRequestStatus @ 847 NONAME R3UNUSED ; RProcess::Logon(TRequestStatus &) const
+	Lookup__C12CObjectConIxi @ 848 NONAME R3UNUSED ; CObjectConIx::Lookup(int) const
+	Lookup__C8RLibraryi @ 849 NONAME R3UNUSED ; RLibrary::Lookup(int) const
+	LowerCase__4UserUi @ 850 NONAME R3UNUSED ; User::LowerCase(unsigned int)
+	LowerCase__5TDes8 @ 851 NONAME R3UNUSED ; TDes8::LowerCase(void)
+	LowerCase__6TDes16 @ 852 NONAME R3UNUSED ; TDes16::LowerCase(void)
+	MachineConfiguration__4UserR5TDes8Ri @ 853 NONAME R3UNUSED ; User::MachineConfiguration(TDes8 &, int &)
+	MachineInfo__7UserHalR5TDes8 @ 854 NONAME R3UNUSED ; UserHal::MachineInfo(TDes8 &)
+	MarkCleanupStack__4User @ 855 NONAME R3UNUSED ; User::MarkCleanupStack(void)
+	MarkedOffset__C5TLex8G9TLexMark8 @ 856 NONAME R3UNUSED ; TLex8::MarkedOffset(TLexMark8) const
+	MarkedOffset__C6TLex16G10TLexMark16 @ 857 NONAME R3UNUSED ; TLex16::MarkedOffset(TLexMark16) const
+	MarkedToken__C5TLex8 @ 858 NONAME R3UNUSED ; TLex8::MarkedToken(void) const
+	MarkedToken__C5TLex8G9TLexMark8 @ 859 NONAME R3UNUSED ; TLex8::MarkedToken(TLexMark8) const
+	MarkedToken__C6TLex16 @ 860 NONAME R3UNUSED ; TLex16::MarkedToken(void) const
+	MarkedToken__C6TLex16G10TLexMark16 @ 861 NONAME R3UNUSED ; TLex16::MarkedToken(TLexMark16) const
+	MatchC__C6TDesC8RC6TDesC8 @ 862 NONAME R3UNUSED ; TDesC8::MatchC(TDesC8 const &) const
+	MatchC__C7TDesC16RC7TDesC16 @ 863 NONAME R3UNUSED ; TDesC16::MatchC(TDesC16 const &) const
+	MatchF__C6TDesC8RC6TDesC8 @ 864 NONAME R3UNUSED ; TDesC8::MatchF(TDesC8 const &) const
+	MatchF__C7TDesC16RC7TDesC16 @ 865 NONAME R3UNUSED ; TDesC16::MatchF(TDesC16 const &) const
+	Match__C6TDesC8RC6TDesC8 @ 866 NONAME R3UNUSED ; TDesC8::Match(TDesC8 const &) const
+	Match__C7TDesC16RC7TDesC16 @ 867 NONAME R3UNUSED ; TDesC16::Match(TDesC16 const &) const
+	MaxSize__C6RChunk @ 868 NONAME R3UNUSED ; RChunk::MaxSize(void) const
+	MaxTTime__4Time @ 869 NONAME R3UNUSED ; Time::MaxTTime(void)
+	MemoryInfo__7UserHalR5TDes8 @ 870 NONAME R3UNUSED ; UserHal::MemoryInfo(TDes8 &)
+	MessageSize__13RMsgQueueBase @ 871 NONAME R3UNUSED ; RMsgQueueBase::MessageSize(void)
+	MicroSecondsFrom__C5TTimeG5TTime @ 872 NONAME ; TTime::MicroSecondsFrom(TTime) const
+	MidTPtr__C5TDes8i @ 873 NONAME R3UNUSED ; TDes8::MidTPtr(int) const
+	MidTPtr__C5TDes8ii @ 874 NONAME ; TDes8::MidTPtr(int, int) const
+	MidTPtr__C6TDes16i @ 875 NONAME R3UNUSED ; TDes16::MidTPtr(int) const
+	MidTPtr__C6TDes16ii @ 876 NONAME ; TDes16::MidTPtr(int, int) const
+	Mid__C6TDesC8i @ 877 NONAME R3UNUSED ; TDesC8::Mid(int) const
+	Mid__C6TDesC8ii @ 878 NONAME R3UNUSED ; TDesC8::Mid(int, int) const
+	Mid__C7TDesC16i @ 879 NONAME R3UNUSED ; TDesC16::Mid(int) const
+	Mid__C7TDesC16ii @ 880 NONAME R3UNUSED ; TDesC16::Mid(int, int) const
+	MinTTime__4Time @ 881 NONAME R3UNUSED ; Time::MinTTime(void)
+	MinutesFrom__C5TTimeG5TTimeR20TTimeIntervalMinutes @ 882 NONAME ; TTime::MinutesFrom(TTime, TTimeIntervalMinutes &) const
+	ModEq__6TRealXRC6TRealX @ 883 NONAME R3UNUSED ; TRealX::ModEq(TRealX const &)
+	Mod__4MathRdRCdT2 @ 884 NONAME R3UNUSED ; Math::Mod(double &, double const &, double const &)
+	Mod__C6TRealXR6TRealXRC6TRealX @ 885 NONAME R3UNUSED ; TRealX::Mod(TRealX &, TRealX const &) const
+	Modifiers__C9TRawEvent @ 886 NONAME R3UNUSED ; TRawEvent::Modifiers(void) const
+	ModifyExceptionMask__4UserUlUl @ 887 NONAME R3UNUSED ; User::ModifyExceptionMask(unsigned long, unsigned long)
+	MonthsFrom__C5TTimeG5TTime @ 888 NONAME ; TTime::MonthsFrom(TTime) const
+	MostDerived__C8TUidType @ 889 NONAME R3UNUSED ; TUidType::MostDerived(void) const
+	Move__4Mem1PvPCvi @ 890 NONAME R3UNUSED ; Mem1::Move(void *, void const *, int)
+	Move__5TRectRC6TPoint @ 891 NONAME R3UNUSED ; TRect::Move(TPoint const &)
+	Move__5TRectii @ 892 NONAME R3UNUSED ; TRect::Move(int, int)
+	Mul64__4MathxxRxRUx @ 893 NONAME ; Math::Mul64(long long, long long, long long &, unsigned long long &)
+	MultEq__6TRealXRC6TRealX @ 894 NONAME R3UNUSED ; TRealX::MultEq(TRealX const &)
+	Mult__C6TRealXR6TRealXRC6TRealX @ 895 NONAME R3UNUSED ; TRealX::Mult(TRealX &, TRealX const &) const
+	NTickCount__4User @ 896 NONAME R3UNUSED ; User::NTickCount(void)
+	Name__C11RHandleBase @ 897 NONAME R3UNUSED ; RHandleBase::Name(void) const
+	Name__C4TUid @ 898 NONAME R3UNUSED ; TUid::Name(void) const
+	Name__C7CObject @ 899 NONAME R3UNUSED ; CObject::Name(void) const
+	Name__C8TVersion @ 900 NONAME R3UNUSED ; TVersion::Name(void) const
+	NewLC__6HBufC8i @ 901 NONAME R3UNUSED ; HBufC8::NewLC(int)
+	NewLC__7HBufC16i @ 902 NONAME R3UNUSED ; HBufC16::NewLC(int)
+	NewL__10CHeartbeati @ 903 NONAME R3UNUSED ; CHeartbeat::NewL(int)
+	NewL__10CObjectCon @ 904 NONAME R3UNUSED ; CObjectCon::NewL(void)
+	NewL__11CDeltaTimeri @ 905 NONAME R3UNUSED ; CDeltaTimer::NewL(int)
+	NewL__11CDeltaTimeriG27TTimeIntervalMicroSeconds32 @ 906 NONAME R3UNUSED ; CDeltaTimer::NewL(int, TTimeIntervalMicroSeconds32)
+	NewL__12CObjectConIx @ 907 NONAME R3UNUSED ; CObjectConIx::NewL(void)
+	NewL__16CBitMapAllocatori @ 908 NONAME R3UNUSED ; CBitMapAllocator::NewL(int)
+	NewL__5CIdlei @ 909 NONAME R3UNUSED ; CIdle::NewL(int)
+	NewL__6HBufC8i @ 910 NONAME R3UNUSED ; HBufC8::NewL(int)
+	NewL__7CBufSegi @ 911 NONAME R3UNUSED ; CBufSeg::NewL(int)
+	NewL__7ConsoleRC7TDesC16G5TSize @ 912 NONAME ; Console::NewL(TDesC16 const &, TSize)
+	NewL__7HBufC16i @ 913 NONAME R3UNUSED ; HBufC16::NewL(int)
+	NewL__8CBufFlati @ 914 NONAME R3UNUSED ; CBufFlat::NewL(int)
+	NewL__8CCleanup @ 915 NONAME R3UNUSED ; CCleanup::NewL(void)
+	NewL__9CObjectIx @ 916 NONAME R3UNUSED ; CObjectIx::NewL(void)
+	NewL__9CPeriodici @ 917 NONAME R3UNUSED ; CPeriodic::NewL(int)
+	NewMaxLC__6HBufC8i @ 918 NONAME R3UNUSED ; HBufC8::NewMaxLC(int)
+	NewMaxLC__7HBufC16i @ 919 NONAME R3UNUSED ; HBufC16::NewMaxLC(int)
+	NewMaxL__6HBufC8i @ 920 NONAME R3UNUSED ; HBufC8::NewMaxL(int)
+	NewMaxL__7HBufC16i @ 921 NONAME R3UNUSED ; HBufC16::NewMaxL(int)
+	NewMax__6HBufC8i @ 922 NONAME R3UNUSED ; HBufC8::NewMax(int)
+	NewMax__7HBufC16i @ 923 NONAME R3UNUSED ; HBufC16::NewMax(int)
+	New__10CHeartbeati @ 924 NONAME R3UNUSED ; CHeartbeat::New(int)
+	New__12CTrapCleanup @ 925 NONAME R3UNUSED ; CTrapCleanup::New(void)
+	New__16CBitMapAllocatori @ 926 NONAME R3UNUSED ; CBitMapAllocator::New(int)
+	New__5CIdlei @ 927 NONAME R3UNUSED ; CIdle::New(int)
+	New__6HBufC8i @ 928 NONAME R3UNUSED ; HBufC8::New(int)
+	New__7HBufC16i @ 929 NONAME R3UNUSED ; HBufC16::New(int)
+	New__8CCleanup @ 930 NONAME R3UNUSED ; CCleanup::New(void)
+	New__9CPeriodici @ 931 NONAME R3UNUSED ; CPeriodic::New(int)
+	NextLevel__8CCleanup @ 932 NONAME R3UNUSED ; CCleanup::NextLevel(void)
+	NextToken__5TLex8 @ 933 NONAME R3UNUSED ; TLex8::NextToken(void)
+	NextToken__6TLex16 @ 934 NONAME R3UNUSED ; TLex16::NextToken(void)
+	Next__10TFindChunkRt4TBuf1i256 @ 935 NONAME R3UNUSED ; TFindChunk::Next(TBuf<256> &)
+	Next__10TFindMutexRt4TBuf1i256 @ 936 NONAME R3UNUSED ; TFindMutex::Next(TBuf<256> &)
+	Next__11TFindServerRt4TBuf1i256 @ 937 NONAME R3UNUSED ; TFindServer::Next(TBuf<256> &)
+	Next__11TFindThreadRt4TBuf1i256 @ 938 NONAME R3UNUSED ; TFindThread::Next(TBuf<256> &)
+	Next__12TFindLibraryRt4TBuf1i256 @ 939 NONAME R3UNUSED ; TFindLibrary::Next(TBuf<256> &)
+	Next__12TFindProcessRt4TBuf1i256 @ 940 NONAME R3UNUSED ; TFindProcess::Next(TBuf<256> &)
+	Next__14TFindSemaphoreRt4TBuf1i256 @ 941 NONAME R3UNUSED ; TFindSemaphore::Next(TBuf<256> &)
+	Next__18TFindLogicalDeviceRt4TBuf1i256 @ 942 NONAME R3UNUSED ; TFindLogicalDevice::Next(TBuf<256> &)
+	Next__19TFindPhysicalDeviceRt4TBuf1i256 @ 943 NONAME R3UNUSED ; TFindPhysicalDevice::Next(TBuf<256> &)
+	Next__5RTestRC7TDesC16 @ 944 NONAME R3UNUSED ; RTest::Next(TDesC16 const &)
+	Normalize__5TRect @ 945 NONAME R3UNUSED ; TRect::Normalize(void)
+	NotifyCancel__9RNotifier @ 946 NONAME R3UNUSED ; RNotifier::NotifyCancel(void)
+	NotifyDataAvailable__13RMsgQueueBaseR14TRequestStatus @ 947 NONAME R3UNUSED ; RMsgQueueBase::NotifyDataAvailable(TRequestStatus &)
+	NotifySpaceAvailable__13RMsgQueueBaseR14TRequestStatus @ 948 NONAME R3UNUSED ; RMsgQueueBase::NotifySpaceAvailable(TRequestStatus &)
+	Notify__9RNotifierRC7TDesC16N31RiR14TRequestStatus @ 949 NONAME ; RNotifier::Notify(TDesC16 const &, TDesC16 const &, TDesC16 const &, TDesC16 const &, int &, TRequestStatus &)
+	NullTTime__4Time @ 950 NONAME R3UNUSED ; Time::NullTTime(void)
+	NumFixedWidthUC__5TDes8Ui6TRadixi @ 951 NONAME ; TDes8::NumFixedWidthUC(unsigned int, TRadix, int)
+	NumFixedWidthUC__6TDes16Ui6TRadixi @ 952 NONAME ; TDes16::NumFixedWidthUC(unsigned int, TRadix, int)
+	NumFixedWidth__5TDes8Ui6TRadixi @ 953 NONAME ; TDes8::NumFixedWidth(unsigned int, TRadix, int)
+	NumFixedWidth__6TDes16Ui6TRadixi @ 954 NONAME ; TDes16::NumFixedWidth(unsigned int, TRadix, int)
+	NumUC__5TDes8Ux6TRadix @ 955 NONAME ; TDes8::NumUC(unsigned long long, TRadix)
+	NumUC__6TDes16Ux6TRadix @ 956 NONAME ; TDes16::NumUC(unsigned long long, TRadix)
+	Num__5TDes8Ux6TRadix @ 957 NONAME ; TDes8::Num(unsigned long long, TRadix)
+	Num__5TDes8dRC11TRealFormat @ 958 NONAME ; TDes8::Num(double, TRealFormat const &)
+	Num__5TDes8x @ 959 NONAME ; TDes8::Num(long long)
+	Num__6TDes16Ux6TRadix @ 960 NONAME ; TDes16::Num(unsigned long long, TRadix)
+	Num__6TDes16dRC11TRealFormat @ 961 NONAME ; TDes16::Num(double, TRealFormat const &)
+	Num__6TDes16x @ 962 NONAME ; TDes16::Num(long long)
+	Offset__7TRegionRC6TPoint @ 963 NONAME R3UNUSED ; TRegion::Offset(TPoint const &)
+	Offset__7TRegionii @ 964 NONAME R3UNUSED ; TRegion::Offset(int, int)
+	Offset__C5TLex8 @ 965 NONAME R3UNUSED ; TLex8::Offset(void) const
+	Offset__C6TLex16 @ 966 NONAME R3UNUSED ; TLex16::Offset(void) const
+	OnStarting__16CActiveScheduler @ 967 NONAME R3UNUSED ; CActiveScheduler::OnStarting(void)
+	OnStopping__16CActiveScheduler @ 968 NONAME R3UNUSED ; CActiveScheduler::OnStopping(void)
+	OpenGlobal__10RSemaphoreRC7TDesC1610TOwnerType @ 969 NONAME R3UNUSED ; RSemaphore::OpenGlobal(TDesC16 const &, TOwnerType)
+	OpenGlobal__13RMsgQueueBaseRC7TDesC1610TOwnerType @ 970 NONAME R3UNUSED ; RMsgQueueBase::OpenGlobal(TDesC16 const &, TOwnerType)
+	OpenGlobal__6RChunkRC7TDesC16i10TOwnerType @ 971 NONAME ; RChunk::OpenGlobal(TDesC16 const &, int, TOwnerType)
+	OpenGlobal__6RMutexRC7TDesC1610TOwnerType @ 972 NONAME R3UNUSED ; RMutex::OpenGlobal(TDesC16 const &, TOwnerType)
+	OpenGlobal__8RCondVarRC7TDesC1610TOwnerType @ 973 NONAME R3UNUSED ; RCondVar::OpenGlobal(TDesC16 const &, TOwnerType)
+	Open__10RAllocator @ 974 NONAME R3UNUSED ; RAllocator::Open(void)
+	Open__10RSemaphoreG12RMessagePtr2i10TOwnerType @ 975 NONAME ; RSemaphore::Open(RMessagePtr2, int, TOwnerType)
+	Open__10RSemaphorei10TOwnerType @ 976 NONAME R3UNUSED ; RSemaphore::Open(int, TOwnerType)
+	Open__11RHandleBaseRC15TFindHandleBase10TOwnerType @ 977 NONAME R3UNUSED ; RHandleBase::Open(TFindHandleBase const &, TOwnerType)
+	Open__12RSessionBaseG12RMessagePtr2i10TOwnerType @ 978 NONAME ; RSessionBase::Open(RMessagePtr2, int, TOwnerType)
+	Open__12RSessionBasei10TOwnerType @ 979 NONAME R3UNUSED ; RSessionBase::Open(int, TOwnerType)
+	Open__13RMsgQueueBaseG12RMessagePtr2i10TOwnerType @ 980 NONAME ; RMsgQueueBase::Open(RMessagePtr2, int, TOwnerType)
+	Open__13RMsgQueueBasei10TOwnerType @ 981 NONAME R3UNUSED ; RMsgQueueBase::Open(int, TOwnerType)
+	Open__18RBusLogicalChannelG12RMessagePtr2i10TOwnerType @ 982 NONAME ; RBusLogicalChannel::Open(RMessagePtr2, int, TOwnerType)
+	Open__18RBusLogicalChanneli10TOwnerType @ 983 NONAME R3UNUSED ; RBusLogicalChannel::Open(int, TOwnerType)
+	Open__6RChunkG12RMessagePtr2ii10TOwnerType @ 984 NONAME ; RChunk::Open(RMessagePtr2, int, int, TOwnerType)
+	Open__6RChunki10TOwnerType @ 985 NONAME R3UNUSED ; RChunk::Open(int, TOwnerType)
+	Open__6RMutexG12RMessagePtr2i10TOwnerType @ 986 NONAME ; RMutex::Open(RMessagePtr2, int, TOwnerType)
+	Open__6RMutexi10TOwnerType @ 987 NONAME R3UNUSED ; RMutex::Open(int, TOwnerType)
+	Open__7CObject @ 988 NONAME R3UNUSED ; CObject::Open(void)
+	Open__7RDeviceRC7TDesC1610TOwnerType @ 989 NONAME R3UNUSED ; RDevice::Open(TDesC16 const &, TOwnerType)
+	Open__7RThreadG9TThreadId10TOwnerType @ 990 NONAME ; RThread::Open(TThreadId, TOwnerType)
+	Open__7RThreadRC7TDesC1610TOwnerType @ 991 NONAME R3UNUSED ; RThread::Open(TDesC16 const &, TOwnerType)
+	Open__8RCondVarG12RMessagePtr2i10TOwnerType @ 992 NONAME ; RCondVar::Open(RMessagePtr2, int, TOwnerType)
+	Open__8RCondVari10TOwnerType @ 993 NONAME R3UNUSED ; RCondVar::Open(int, TOwnerType)
+	Open__8RProcessG10TProcessId10TOwnerType @ 994 NONAME ; RProcess::Open(TProcessId, TOwnerType)
+	Open__8RProcessRC7TDesC1610TOwnerType @ 995 NONAME R3UNUSED ; RProcess::Open(TDesC16 const &, TOwnerType)
+	Package__C15TSecurityPolicy @ 996 NONAME R3UNUSED ; TSecurityPolicy::Package(void) const
+	PadL__10TBitOutputUi @ 997 NONAME R3UNUSED ; TBitOutput::PadL(unsigned int)
+	PageSizeInBytes__7UserHalRi @ 998 NONAME R3UNUSED ; UserHal::PageSizeInBytes(int &)
+	PanicTFixedArray__Fv @ 999 NONAME R3UNUSED ; PanicTFixedArray(void)
+	PanicUnexpectedLeave__4User @ 1000 NONAME R3UNUSED ; User::PanicUnexpectedLeave(void)
+	Panic__4UserRC7TDesC16i @ 1001 NONAME R3UNUSED ; User::Panic(TDesC16 const &, int)
+	Panic__5RTestGt11TRefByValue1ZC7TDesC16e @ 1002 NONAME ; RTest::Panic(TRefByValue<TDesC16 const>,...)
+	Panic__5RTestiGt11TRefByValue1ZC7TDesC16e @ 1003 NONAME ; RTest::Panic(int, TRefByValue<TDesC16 const>,...)
+	Panic__7RThreadRC7TDesC16i @ 1004 NONAME R3UNUSED ; RThread::Panic(TDesC16 const &, int)
+	Panic__8RProcessRC7TDesC16i @ 1005 NONAME R3UNUSED ; RProcess::Panic(TDesC16 const &, int)
+	Panic__C12RMessagePtr2RC7TDesC16i @ 1006 NONAME R3UNUSED ; RMessagePtr2::Panic(TDesC16 const &, int) const
+	ParameterLength__4Useri @ 1007 NONAME R3UNUSED ; User::ParameterLength(int)
+	Parse__5TTimeRC7TDesC16i @ 1008 NONAME R3UNUSED ; TTime::Parse(TDesC16 const &, int)
+	PasswordStoreLengthInBytes__14TBusLocalDrive @ 1009 NONAME R3UNUSED ; TBusLocalDrive::PasswordStoreLengthInBytes(void)
+	Peek__C5TLex8 @ 1010 NONAME R3UNUSED ; TLex8::Peek(void) const
+	Peek__C6TLex16 @ 1011 NONAME R3UNUSED ; TLex16::Peek(void) const
+	PolyX__4MathR6TRealXRC6TRealXiPC6TRealX @ 1012 NONAME ; Math::PolyX(TRealX &, TRealX const &, int, TRealX const *)
+	Poly__4MathdPC5SPoly @ 1013 NONAME ; Math::Poly(double, SPoly const *)
+	PopAll__8CCleanup @ 1014 NONAME R3UNUSED ; CCleanup::PopAll(void)
+	PopAndDestroyAll__8CCleanup @ 1015 NONAME R3UNUSED ; CCleanup::PopAndDestroyAll(void)
+	PopAndDestroy__12CleanupStack @ 1016 NONAME R3UNUSED ; CleanupStack::PopAndDestroy(void)
+	PopAndDestroy__12CleanupStacki @ 1017 NONAME R3UNUSED ; CleanupStack::PopAndDestroy(int)
+	PopAndDestroy__8CCleanup @ 1018 NONAME R3UNUSED ; CCleanup::PopAndDestroy(void)
+	PopAndDestroy__8CCleanupi @ 1019 NONAME R3UNUSED ; CCleanup::PopAndDestroy(int)
+	Pop__12CleanupStack @ 1020 NONAME R3UNUSED ; CleanupStack::Pop(void)
+	Pop__12CleanupStacki @ 1021 NONAME R3UNUSED ; CleanupStack::Pop(int)
+	Pop__8CCleanup @ 1022 NONAME R3UNUSED ; CCleanup::Pop(void)
+	Pop__8CCleanupi @ 1023 NONAME R3UNUSED ; CCleanup::Pop(int)
+	Pos3D__C9TRawEvent @ 1024 NONAME R3UNUSED ; TRawEvent::Pos3D(void) const
+	Pos__C9TRawEvent @ 1025 NONAME R3UNUSED ; TRawEvent::Pos(void) const
+	Pow10__4MathRdi @ 1026 NONAME R3UNUSED ; Math::Pow10(double &, int)
+	Pow__4MathRdRCdT2 @ 1027 NONAME R3UNUSED ; Math::Pow(double &, double const &, double const &)
+	PowerDown__5Power @ 1028 NONAME R3UNUSED ; Power::PowerDown(void)
+	PreviousLevel__8CCleanup @ 1029 NONAME R3UNUSED ; CCleanup::PreviousLevel(void)
+	Print__6RDebugGt11TRefByValue1ZC7TDesC16e @ 1030 NONAME ; RDebug::Print(TRefByValue<TDesC16 const>,...)
+	Printf__12CConsoleBaseGt11TRefByValue1ZC7TDesC16e @ 1031 NONAME ; CConsoleBase::Printf(TRefByValue<TDesC16 const>,...)
+	Printf__5RTestGt11TRefByValue1ZC7TDesC16e @ 1032 NONAME ; RTest::Printf(TRefByValue<TDesC16 const>,...)
+	Printf__6RDebugPCce @ 1033 NONAME ; RDebug::Printf(char const *,...)
+	PriorityControl__4User @ 1034 NONAME R3UNUSED ; User::PriorityControl(void)
+	Priority__C7RThread @ 1035 NONAME R3UNUSED ; RThread::Priority(void) const
+	Priority__C8RProcess @ 1036 NONAME R3UNUSED ; RProcess::Priority(void) const
+	ProcessCreate__9E32LoaderR18TProcessCreateInfoPC6TDesC8 @ 1037 NONAME R3UNUSED ; E32Loader::ProcessCreate(TProcessCreateInfo &, TDesC8 const *)
+	ProcessCritical__4User @ 1038 NONAME R3UNUSED ; User::ProcessCritical(void)
+	ProcessError__13CPolicyServerRC9RMessage2i @ 1039 NONAME R3UNUSED ; CPolicyServer::ProcessError(RMessage2 const &, int)
+	ProcessL__13CPolicyServerRC9RMessage2 @ 1040 NONAME R3UNUSED ; CPolicyServer::ProcessL(RMessage2 const &)
+	ProcessLoaded__9E32LoaderR18TProcessCreateInfo @ 1041 NONAME R3UNUSED ; E32Loader::ProcessLoaded(TProcessCreateInfo &)
+	ProcessPriority__C7RThread @ 1042 NONAME R3UNUSED ; RThread::ProcessPriority(void) const
+	Process__C7RThreadR8RProcess @ 1043 NONAME R3UNUSED ; RThread::Process(RProcess &) const
+	PtrZ__5TDes8 @ 1044 NONAME R3UNUSED ; TDes8::PtrZ(void)
+	PtrZ__6TDes16 @ 1045 NONAME R3UNUSED ; TDes16::PtrZ(void)
+	Ptr__7CBufSegi @ 1046 NONAME R3UNUSED ; CBufSeg::Ptr(int)
+	Ptr__8CBufFlati @ 1047 NONAME R3UNUSED ; CBufFlat::Ptr(int)
+	Ptr__C6TDesC8 @ 1048 NONAME R3UNUSED ; TDesC8::Ptr(void) const
+	Ptr__C7TDesC16 @ 1049 NONAME R3UNUSED ; TDesC16::Ptr(void) const
+	PushL__12CleanupStackG12TCleanupItem @ 1050 NONAME ; CleanupStack::PushL(TCleanupItem)
+	PushL__12CleanupStackP5CBase @ 1051 NONAME R3UNUSED ; CleanupStack::PushL(CBase *)
+	PushL__12CleanupStackPv @ 1052 NONAME R3UNUSED ; CleanupStack::PushL(void *)
+	PushL__8CCleanupG12TCleanupItem @ 1053 NONAME ; CCleanup::PushL(TCleanupItem)
+	PushL__8CCleanupP5CBase @ 1054 NONAME R3UNUSED ; CCleanup::PushL(CBase *)
+	PushL__8CCleanupPv @ 1055 NONAME R3UNUSED ; CCleanup::PushL(void *)
+	Put__10CCirBufferi @ 1056 NONAME R3UNUSED ; CCirBuffer::Put(int)
+	QueryVersionSupported__4UserRC8TVersionT1 @ 1057 NONAME R3UNUSED ; User::QueryVersionSupported(TVersion const &, TVersion const &)
+	QueryVersionSupported__C7RDeviceRC8TVersion @ 1058 NONAME R3UNUSED ; RDevice::QueryVersionSupported(TVersion const &) const
+	QueueLong__11CDeltaTimerG25TTimeIntervalMicroSecondsR16TDeltaTimerEntry @ 1059 NONAME ; CDeltaTimer::QueueLong(TTimeIntervalMicroSeconds, TDeltaTimerEntry &)
+	Queue__11CDeltaTimerG27TTimeIntervalMicroSeconds32R16TDeltaTimerEntry @ 1060 NONAME R3UNUSED ; CDeltaTimer::Queue(TTimeIntervalMicroSeconds32, TDeltaTimerEntry &)
+	QuickSort__4UseriRC4TKeyRC5TSwap @ 1061 NONAME R3UNUSED ; User::QuickSort(int, TKey const &, TSwap const &)
+	RaiseException__4User8TExcType @ 1062 NONAME R3UNUSED ; User::RaiseException(TExcType)
+	Rand__4MathRx @ 1063 NONAME R3UNUSED ; Math::Rand(long long &)
+	Random__4Math @ 1064 NONAME R3UNUSED ; Math::Random(void)
+	RawPrint__6RDebugRC7TDesC16 @ 1065 NONAME R3UNUSED ; RDebug::RawPrint(TDesC16 const &)
+	ReAllocL__10RAllocatorPvii @ 1066 NONAME ; RAllocator::ReAllocL(void *, int, int)
+	ReAllocL__4UserPvii @ 1067 NONAME R3UNUSED ; User::ReAllocL(void *, int, int)
+	ReAllocL__5RBuf8i @ 1068 NONAME R3UNUSED ; RBuf8::ReAllocL(int)
+	ReAllocL__6HBufC8i @ 1069 NONAME R3UNUSED ; HBufC8::ReAllocL(int)
+	ReAllocL__6RBuf16i @ 1070 NONAME R3UNUSED ; RBuf16::ReAllocL(int)
+	ReAllocL__7HBufC16i @ 1071 NONAME R3UNUSED ; HBufC16::ReAllocL(int)
+	ReAlloc__4UserPvii @ 1072 NONAME R3UNUSED ; User::ReAlloc(void *, int, int)
+	ReAlloc__5RBuf8i @ 1073 NONAME R3UNUSED ; RBuf8::ReAlloc(int)
+	ReAlloc__5RHeapPvii @ 1074 NONAME ; RHeap::ReAlloc(void *, int, int)
+	ReAlloc__6HBufC8i @ 1075 NONAME R3UNUSED ; HBufC8::ReAlloc(int)
+	ReAlloc__6RBuf16i @ 1076 NONAME R3UNUSED ; RBuf16::ReAlloc(int)
+	ReAlloc__7HBufC16i @ 1077 NONAME R3UNUSED ; HBufC16::ReAlloc(int)
+	ReStart__8CServer2 @ 1078 NONAME R3UNUSED ; CServer2::ReStart(void)
+	ReadExportDir__9E32LoaderPvPUl @ 1079 NONAME R3UNUSED ; E32Loader::ReadExportDir(void *, unsigned long *)
+	ReadL__9TBitInput @ 1080 NONAME R3UNUSED ; TBitInput::ReadL(void)
+	ReadL__9TBitInputi @ 1081 NONAME R3UNUSED ; TBitInput::ReadL(int)
+	ReadL__C12RMessagePtr2iR5TDes8i @ 1082 NONAME ; RMessagePtr2::ReadL(int, TDes8 &, int) const
+	ReadL__C12RMessagePtr2iR6TDes16i @ 1083 NONAME ; RMessagePtr2::ReadL(int, TDes16 &, int) const
+	ReadPasswordData__14TBusLocalDriveR5TDes8 @ 1084 NONAME R3UNUSED ; TBusLocalDrive::ReadPasswordData(TDes8 &)
+	Read__14TBusLocalDrivexiPCvii @ 1085 NONAME ; TBusLocalDrive::Read(long long, int, void const *, int, int)
+	Read__14TBusLocalDrivexiPCviii @ 1086 NONAME ; TBusLocalDrive::Read(long long, int, void const *, int, int, int)
+	Read__14TBusLocalDrivexiR5TDes8 @ 1087 NONAME ; TBusLocalDrive::Read(long long, int, TDes8 &)
+	Read__C12RMessagePtr2iR5TDes8i @ 1088 NONAME ; RMessagePtr2::Read(int, TDes8 &, int) const
+	Read__C12RMessagePtr2iR6TDes16i @ 1089 NONAME ; RMessagePtr2::Read(int, TDes16 &, int) const
+	Read__C8CBufBaseiPvi @ 1090 NONAME ; CBufBase::Read(int, void *, int) const
+	Read__C8CBufBaseiR5TDes8 @ 1091 NONAME R3UNUSED ; CBufBase::Read(int, TDes8 &) const
+	Read__C8CBufBaseiR5TDes8i @ 1092 NONAME ; CBufBase::Read(int, TDes8 &, int) const
+	ReceiveBlocking__13RMsgQueueBasePvi @ 1093 NONAME R3UNUSED ; RMsgQueueBase::ReceiveBlocking(void *, int)
+	Receive__13RMsgQueueBasePvi @ 1094 NONAME R3UNUSED ; RMsgQueueBase::Receive(void *, int)
+	Receive__8RServer2R9RMessage2 @ 1095 NONAME R3UNUSED ; RServer2::Receive(RMessage2 &)
+	Receive__8RServer2R9RMessage2R14TRequestStatus @ 1096 NONAME R3UNUSED ; RServer2::Receive(RMessage2 &, TRequestStatus &)
+	RectangleListW__7TRegion @ 1097 NONAME R3UNUSED ; TRegion::RectangleListW(void)
+	ReduceSize__14TBusLocalDriveii @ 1098 NONAME R3UNUSED ; TBusLocalDrive::ReduceSize(int, int)
+	Refresh__7TLocale @ 1099 NONAME R3UNUSED ; TLocale::Refresh(void)
+	ReleaseEventHook__7UserSvr @ 1100 NONAME R3UNUSED ; UserSvr::ReleaseEventHook(void)
+	RemainderFromMark__C5TLex8 @ 1101 NONAME R3UNUSED ; TLex8::RemainderFromMark(void) const
+	RemainderFromMark__C5TLex8G9TLexMark8 @ 1102 NONAME R3UNUSED ; TLex8::RemainderFromMark(TLexMark8) const
+	RemainderFromMark__C6TLex16 @ 1103 NONAME R3UNUSED ; TLex16::RemainderFromMark(void) const
+	RemainderFromMark__C6TLex16G10TLexMark16 @ 1104 NONAME R3UNUSED ; TLex16::RemainderFromMark(TLexMark16) const
+	Remainder__C5TLex8 @ 1105 NONAME R3UNUSED ; TLex8::Remainder(void) const
+	Remainder__C6TLex16 @ 1106 NONAME R3UNUSED ; TLex16::Remainder(void) const
+	RemoveCapability__14TCapabilitySet11TCapability @ 1107 NONAME R3UNUSED ; TCapabilitySet::RemoveCapability(TCapability)
+	Remove__10CObjectConP7CObject @ 1108 NONAME R3UNUSED ; CObjectCon::Remove(CObject *)
+	Remove__10RArrayBasei @ 1109 NONAME R3UNUSED ; RArrayBase::Remove(int)
+	Remove__11CDeltaTimerR16TDeltaTimerEntry @ 1110 NONAME R3UNUSED ; CDeltaTimer::Remove(TDeltaTimerEntry &)
+	Remove__12CObjectConIxP10CObjectCon @ 1111 NONAME R3UNUSED ; CObjectConIx::Remove(CObjectCon *)
+	Remove__14TCapabilitySetRC14TCapabilitySet @ 1112 NONAME R3UNUSED ; TCapabilitySet::Remove(TCapabilitySet const &)
+	Remove__17RPointerArrayBasei @ 1113 NONAME R3UNUSED ; RPointerArrayBase::Remove(int)
+	Remove__9CObjectIxi @ 1114 NONAME R3UNUSED ; CObjectIx::Remove(int)
+	RenameProcess__4UserRC7TDesC16 @ 1115 NONAME R3UNUSED ; User::RenameProcess(TDesC16 const &)
+	RenameThread__4UserRC7TDesC16 @ 1116 NONAME R3UNUSED ; User::RenameThread(TDesC16 const &)
+	RendezvousCancel__C7RThreadR14TRequestStatus @ 1117 NONAME R3UNUSED ; RThread::RendezvousCancel(TRequestStatus &) const
+	RendezvousCancel__C8RProcessR14TRequestStatus @ 1118 NONAME R3UNUSED ; RProcess::RendezvousCancel(TRequestStatus &) const
+	Rendezvous__7RThreadi @ 1119 NONAME R3UNUSED ; RThread::Rendezvous(int)
+	Rendezvous__8RProcessi @ 1120 NONAME R3UNUSED ; RProcess::Rendezvous(int)
+	Rendezvous__C7RThreadR14TRequestStatus @ 1121 NONAME R3UNUSED ; RThread::Rendezvous(TRequestStatus &) const
+	Rendezvous__C8RProcessR14TRequestStatus @ 1122 NONAME R3UNUSED ; RProcess::Rendezvous(TRequestStatus &) const
+	Repeat__5TDes8PCUci @ 1123 NONAME R3UNUSED ; TDes8::Repeat(unsigned char const *, int)
+	Repeat__5TDes8RC6TDesC8 @ 1124 NONAME R3UNUSED ; TDes8::Repeat(TDesC8 const &)
+	Repeat__6TDes16PCUsi @ 1125 NONAME R3UNUSED ; TDes16::Repeat(unsigned short const *, int)
+	Repeat__6TDes16RC7TDesC16 @ 1126 NONAME R3UNUSED ; TDes16::Repeat(TDesC16 const &)
+	Replace__16CActiveSchedulerP16CActiveScheduler @ 1127 NONAME R3UNUSED ; CActiveScheduler::Replace(CActiveScheduler *)
+	Replace__5TDes8iiRC6TDesC8 @ 1128 NONAME ; TDes8::Replace(int, int, TDesC8 const &)
+	Replace__6TDes16iiRC7TDesC16 @ 1129 NONAME ; TDes16::Replace(int, int, TDesC16 const &)
+	RequestComplete__4UserRP14TRequestStatusi @ 1130 NONAME R3UNUSED ; User::RequestComplete(TRequestStatus *&, int)
+	RequestComplete__C7RThreadRP14TRequestStatusi @ 1131 NONAME R3UNUSED ; RThread::RequestComplete(TRequestStatus *&, int) const
+	RequestCount__C7RThread @ 1132 NONAME R3UNUSED ; RThread::RequestCount(void) const
+	RequestEventCancel__7UserSvr @ 1133 NONAME R3UNUSED ; UserSvr::RequestEventCancel(void)
+	RequestEvent__7UserSvrR12TRawEventBufR14TRequestStatus @ 1134 NONAME R3UNUSED ; UserSvr::RequestEvent(TRawEventBuf &, TRequestStatus &)
+	RequestSignal__C7RThread @ 1135 NONAME R3UNUSED ; RThread::RequestSignal(void) const
+	RequestWakeupEventNotification__5PowerR14TRequestStatus @ 1136 NONAME R3UNUSED ; Power::RequestWakeupEventNotification(TRequestStatus &)
+	Reserved_1__16CActiveScheduler @ 1137 NONAME R3UNUSED ; CActiveScheduler::Reserved_1(void)
+	Reserved_2__16CActiveScheduler @ 1138 NONAME R3UNUSED ; CActiveScheduler::Reserved_2(void)
+	ResetInactivityTime__4User @ 1139 NONAME R3UNUSED ; User::ResetInactivityTime(void)
+	ResetMachine__7UserSvr19TMachineStartupType @ 1140 NONAME R3UNUSED ; UserSvr::ResetMachine(TMachineStartupType)
+	Reset__10RArrayBase @ 1141 NONAME R3UNUSED ; RArrayBase::Reset(void)
+	Reset__11CCirBufBase @ 1142 NONAME R3UNUSED ; CCirBufBase::Reset(void)
+	Reset__11TDblQueBase @ 1143 NONAME R3UNUSED ; TDblQueBase::Reset(void)
+	Reset__11TSglQueBase @ 1144 NONAME R3UNUSED ; TSglQueBase::Reset(void)
+	Reset__13CArrayFixBase @ 1145 NONAME R3UNUSED ; CArrayFixBase::Reset(void)
+	Reset__13CArrayPakBase @ 1146 NONAME R3UNUSED ; CArrayPakBase::Reset(void)
+	Reset__13CArrayVarBase @ 1147 NONAME R3UNUSED ; CArrayVarBase::Reset(void)
+	Reset__13TDeltaQueBase @ 1148 NONAME R3UNUSED ; TDeltaQueBase::Reset(void)
+	Reset__17RPointerArrayBase @ 1149 NONAME R3UNUSED ; RPointerArrayBase::Reset(void)
+	Reset__5RHeap @ 1150 NONAME R3UNUSED ; RHeap::Reset(void)
+	Reset__8CBufBase @ 1151 NONAME R3UNUSED ; CBufBase::Reset(void)
+	ResizeL__13CArrayFixBaseiPCv @ 1152 NONAME R3UNUSED ; CArrayFixBase::ResizeL(int, void const *)
+	ResizeL__8CBufBasei @ 1153 NONAME R3UNUSED ; CBufBase::ResizeL(int)
+	Resize__5TRectRC5TSize @ 1154 NONAME R3UNUSED ; TRect::Resize(TSize const &)
+	Resize__5TRectii @ 1155 NONAME R3UNUSED ; TRect::Resize(int, int)
+	ResourceCountMarkEnd__9CSession2RC9RMessage2 @ 1156 NONAME R3UNUSED ; CSession2::ResourceCountMarkEnd(RMessage2 const &)
+	ResourceCountMarkStart__9CSession2 @ 1157 NONAME R3UNUSED ; CSession2::ResourceCountMarkStart(void)
+	RestoreXYInputCalibration__7UserHal25TDigitizerCalibrationType @ 1158 NONAME R3UNUSED ; UserHal::RestoreXYInputCalibration(TDigitizerCalibrationType)
+	Resume__8RProcess @ 1159 NONAME R3UNUSED ; RProcess::Resume(void)
+	Resume__C7RThread @ 1160 NONAME R3UNUSED ; RThread::Resume(void) const
+	RightTPtr__C5TDes8i @ 1161 NONAME R3UNUSED ; TDes8::RightTPtr(int) const
+	RightTPtr__C6TDes16i @ 1162 NONAME R3UNUSED ; TDes16::RightTPtr(int) const
+	Right__C6TDesC8i @ 1163 NONAME R3UNUSED ; TDesC8::Right(int) const
+	Right__C7TDesC16i @ 1164 NONAME R3UNUSED ; TDesC16::Right(int) const
+	RomHeaderAddress__7UserSvr @ 1165 NONAME R3UNUSED ; UserSvr::RomHeaderAddress(void)
+	RomInfo__7UserHalR5TDes8 @ 1166 NONAME R3UNUSED ; UserHal::RomInfo(TDes8 &)
+	RomRootDirectoryAddress__7UserSvr @ 1167 NONAME R3UNUSED ; UserSvr::RomRootDirectoryAddress(void)
+	RootName__C18TCodeSegCreateInfo @ 1168 NONAME R3UNUSED ; TCodeSegCreateInfo::RootName(void) const
+	Rotation__C9TRawEvent @ 1169 NONAME R3UNUSED ; TRawEvent::Rotation(void) const
+	RoundUpToNextMinute__5TTime @ 1170 NONAME R3UNUSED ; TTime::RoundUpToNextMinute(void)
+	Round__4MathRdRCdi @ 1171 NONAME R3UNUSED ; Math::Round(double &, double const &, int)
+	RunError__13CPolicyServeri @ 1172 NONAME R3UNUSED ; CPolicyServer::RunError(int)
+	RunError__7CActivei @ 1173 NONAME R3UNUSED ; CActive::RunError(int)
+	RunError__8CServer2i @ 1174 NONAME R3UNUSED ; CServer2::RunError(int)
+	RunIfReady__16CActiveSchedulerRii @ 1175 NONAME R3UNUSED ; CActiveScheduler::RunIfReady(int &, int)
+	RunL__10CHeartbeat @ 1176 NONAME R3UNUSED ; CHeartbeat::RunL(void)
+	RunL__13CPolicyServer @ 1177 NONAME R3UNUSED ; CPolicyServer::RunL(void)
+	RunL__5CIdle @ 1178 NONAME R3UNUSED ; CIdle::RunL(void)
+	RunL__8CServer2 @ 1179 NONAME R3UNUSED ; CServer2::RunL(void)
+	RunL__9CPeriodic @ 1180 NONAME R3UNUSED ; CPeriodic::RunL(void)
+	SafeDec__4UserRi @ 1181 NONAME R3UNUSED ; User::SafeDec(int &)
+	SafeInc__4UserRi @ 1182 NONAME R3UNUSED ; User::SafeInc(int &)
+	SaveSystemSettings__15TExtendedLocale @ 1183 NONAME R3UNUSED ; TExtendedLocale::SaveSystemSettings(void)
+	SaveXYInputCalibration__7UserHal @ 1184 NONAME R3UNUSED ; UserHal::SaveXYInputCalibration(void)
+	ScanCode__C9TRawEvent @ 1185 NONAME R3UNUSED ; TRawEvent::ScanCode(void) const
+	ScreenInfo__7UserSvrR5TDes8 @ 1186 NONAME R3UNUSED ; UserSvr::ScreenInfo(TDes8 &)
+	SecondsFrom__C5TTimeG5TTimeR20TTimeIntervalSeconds @ 1187 NONAME ; TTime::SecondsFrom(TTime, TTimeIntervalSeconds &) const
+	SecureApi__8RProcessi @ 1188 NONAME R3UNUSED ; RProcess::SecureApi(int)
+	SecureId__C12RMessagePtr2 @ 1189 NONAME R3UNUSED ; RMessagePtr2::SecureId(void) const
+	SecureId__C7RThread @ 1190 NONAME R3UNUSED ; RThread::SecureId(void) const
+	SecureId__C8RProcess @ 1191 NONAME R3UNUSED ; RProcess::SecureId(void) const
+	SendBlocking__13RMsgQueueBasePCvi @ 1192 NONAME R3UNUSED ; RMsgQueueBase::SendBlocking(void const *, int)
+	Send__13RMsgQueueBasePCvi @ 1193 NONAME R3UNUSED ; RMsgQueueBase::Send(void const *, int)
+	ServiceError__9CSession2RC9RMessage2i @ 1194 NONAME R3UNUSED ; CSession2::ServiceError(RMessage2 const &, int)
+	Session__C15RSubSessionBase @ 1195 NONAME R3UNUSED ; RSubSessionBase::Session(void) const
+	SetActive__7CActive @ 1196 NONAME R3UNUSED ; CActive::SetActive(void)
+	SetAllSupported__14TCapabilitySet @ 1197 NONAME R3UNUSED ; TCapabilitySet::SetAllSupported(void)
+	SetCritical__4UserQ24User9TCritical @ 1198 NONAME R3UNUSED ; User::SetCritical(User::TCritical)
+	SetCurrencySymbol__15TExtendedLocaleRC7TDesC16 @ 1199 NONAME R3UNUSED ; TExtendedLocale::SetCurrencySymbol(TDesC16 const &)
+	SetCurrencySymbol__4UserRC7TDesC16 @ 1200 NONAME R3UNUSED ; User::SetCurrencySymbol(TDesC16 const &)
+	SetDay__9TDateTimei @ 1201 NONAME R3UNUSED ; TDateTime::SetDay(int)
+	SetDebugMask__4UserUl @ 1202 NONAME R3UNUSED ; User::SetDebugMask(unsigned long)
+	SetDebugMask__4UserUlUi @ 1203 NONAME R3UNUSED ; User::SetDebugMask(unsigned long, unsigned int)
+	SetDisabled__14TCapabilitySet @ 1204 NONAME R3UNUSED ; TCapabilitySet::SetDisabled(void)
+	SetEmpty__14TCapabilitySet @ 1205 NONAME R3UNUSED ; TCapabilitySet::SetEmpty(void)
+	SetExceptionHandler__4UserPF8TExcType_vUl @ 1206 NONAME R3UNUSED ; User::SetExceptionHandler(void (*)(TExcType), unsigned long)
+	SetHandleNC__11RHandleBasei @ 1207 NONAME R3UNUSED ; RHandleBase::SetHandleNC(int)
+	SetHeight__5TRecti @ 1208 NONAME R3UNUSED ; TRect::SetHeight(int)
+	SetHomeTime__4UserRC5TTime @ 1209 NONAME R3UNUSED ; User::SetHomeTime(TTime const &)
+	SetHour__9TDateTimei @ 1210 NONAME R3UNUSED ; TDateTime::SetHour(int)
+	SetInfinite__4MathRdi @ 1211 NONAME R3UNUSED ; Math::SetInfinite(double &, int)
+	SetInfinite__6TRealXi @ 1212 NONAME R3UNUSED ; TRealX::SetInfinite(int)
+	SetJustInTime__4Useri @ 1213 NONAME R3UNUSED ; User::SetJustInTime(int)
+	SetJustInTime__C8RProcessi @ 1214 NONAME R3UNUSED ; RProcess::SetJustInTime(int) const
+	SetKey__C13CArrayFixBaseR12TKeyArrayFix @ 1215 NONAME R3UNUSED ; CArrayFixBase::SetKey(TKeyArrayFix &) const
+	SetKey__C13CArrayPakBaseR12TKeyArrayPak @ 1216 NONAME R3UNUSED ; CArrayPakBase::SetKey(TKeyArrayPak &) const
+	SetKey__C13CArrayVarBaseR12TKeyArrayVar @ 1217 NONAME R3UNUSED ; CArrayVarBase::SetKey(TKeyArrayVar &) const
+	SetLengthL__11CCirBufBasei @ 1218 NONAME R3UNUSED ; CCirBufBase::SetLengthL(int)
+	SetLength__5TDes8i @ 1219 NONAME R3UNUSED ; TDes8::SetLength(int)
+	SetLength__6TDes16i @ 1220 NONAME R3UNUSED ; TDes16::SetLength(int)
+	SetMachineConfiguration__4UserRC6TDesC8 @ 1221 NONAME R3UNUSED ; User::SetMachineConfiguration(TDesC8 const &)
+	SetMax__5TDes8 @ 1222 NONAME R3UNUSED ; TDes8::SetMax(void)
+	SetMax__6TDes16 @ 1223 NONAME R3UNUSED ; TDes16::SetMax(void)
+	SetMemoryThresholds__7UserSvrii @ 1224 NONAME R3UNUSED ; UserSvr::SetMemoryThresholds(int, int)
+	SetMicroSecond__9TDateTimei @ 1225 NONAME R3UNUSED ; TDateTime::SetMicroSecond(int)
+	SetMinute__9TDateTimei @ 1226 NONAME R3UNUSED ; TDateTime::SetMinute(int)
+	SetMonth__9TDateTime6TMonth @ 1227 NONAME R3UNUSED ; TDateTime::SetMonth(TMonth)
+	SetMountInfo__14TBusLocalDrivePC6TDesC8i @ 1228 NONAME R3UNUSED ; TBusLocalDrive::SetMountInfo(TDesC8 const *, int)
+	SetNaN__4MathRd @ 1229 NONAME R3UNUSED ; Math::SetNaN(double &)
+	SetNaN__6TRealX @ 1230 NONAME R3UNUSED ; TRealX::SetNaN(void)
+	SetNameL__7CObjectPC7TDesC16 @ 1231 NONAME R3UNUSED ; CObject::SetNameL(TDesC16 const *)
+	SetName__7CObjectPC7TDesC16 @ 1232 NONAME R3UNUSED ; CObject::SetName(TDesC16 const *)
+	SetOffset__11TDblQueBasei @ 1233 NONAME R3UNUSED ; TDblQueBase::SetOffset(int)
+	SetOffset__11TSglQueBasei @ 1234 NONAME R3UNUSED ; TSglQueBase::SetOffset(int)
+	SetParameter__8RProcessiG11RHandleBase @ 1235 NONAME ; RProcess::SetParameter(int, RHandleBase)
+	SetParameter__8RProcessiRC15RSubSessionBase @ 1236 NONAME R3UNUSED ; RProcess::SetParameter(int, RSubSessionBase const &)
+	SetParameter__8RProcessiRC6TDesC8 @ 1237 NONAME R3UNUSED ; RProcess::SetParameter(int, TDesC8 const &)
+	SetParameter__8RProcessiRC7TDesC16 @ 1238 NONAME R3UNUSED ; RProcess::SetParameter(int, TDesC16 const &)
+	SetParameter__8RProcessii @ 1239 NONAME R3UNUSED ; RProcess::SetParameter(int, int)
+	SetPassword__14TBusLocalDriveRC6TDesC8T1i @ 1240 NONAME ; TBusLocalDrive::SetPassword(TDesC8 const &, TDesC8 const &, int)
+	SetPos__12CConsoleBasei @ 1241 NONAME R3UNUSED ; CConsoleBase::SetPos(int)
+	SetPos__12CConsoleBaseii @ 1242 NONAME R3UNUSED ; CConsoleBase::SetPos(int, int)
+	SetPriorityControl__4Useri @ 1243 NONAME R3UNUSED ; User::SetPriorityControl(int)
+	SetPriority__7CActivei @ 1244 NONAME R3UNUSED ; CActive::SetPriority(int)
+	SetPriority__C7RThread15TThreadPriority @ 1245 NONAME R3UNUSED ; RThread::SetPriority(TThreadPriority) const
+	SetPriority__C8RProcess16TProcessPriority @ 1246 NONAME R3UNUSED ; RProcess::SetPriority(TProcessPriority) const
+	SetProcessCritical__4UserQ24User9TCritical @ 1247 NONAME R3UNUSED ; User::SetProcessCritical(User::TCritical)
+	SetProcessPriority__C12RMessagePtr216TProcessPriority @ 1248 NONAME R3UNUSED ; RMessagePtr2::SetProcessPriority(TProcessPriority) const
+	SetProcessPriority__C7RThread16TProcessPriority @ 1249 NONAME R3UNUSED ; RThread::SetProcessPriority(TProcessPriority) const
+	SetRect__5TRectRC6TPointRC5TSize @ 1250 NONAME R3UNUSED ; TRect::SetRect(TPoint const &, TSize const &)
+	SetRect__5TRectRC6TPointT1 @ 1251 NONAME R3UNUSED ; TRect::SetRect(TPoint const &, TPoint const &)
+	SetRect__5TRectiiii @ 1252 NONAME ; TRect::SetRect(int, int, int, int)
+	SetReserveFlatL__13CArrayFixBasei @ 1253 NONAME R3UNUSED ; CArrayFixBase::SetReserveFlatL(int)
+	SetReserveL__8CBufFlati @ 1254 NONAME R3UNUSED ; CBufFlat::SetReserveL(int)
+	SetRestrictions__6RChunkUi @ 1255 NONAME R3UNUSED ; RChunk::SetRestrictions(unsigned int)
+	SetRotation__9TRawEventQ29TRawEvent5TTypei @ 1256 NONAME R3UNUSED ; TRawEvent::SetRotation(TRawEvent::TType, int)
+	SetSecond__9TDateTimei @ 1257 NONAME R3UNUSED ; TDateTime::SetSecond(int)
+	SetSize__5TRectRC5TSize @ 1258 NONAME R3UNUSED ; TRect::SetSize(TSize const &)
+	SetSize__5TSizeii @ 1259 NONAME R3UNUSED ; TSize::SetSize(int, int)
+	SetTilt__9TRawEventQ29TRawEvent5TTypeii @ 1260 NONAME ; TRawEvent::SetTilt(TRawEvent::TType, int, int)
+	SetToCreatorInfo__13TSecurityInfo @ 1261 NONAME R3UNUSED ; TSecurityInfo::SetToCreatorInfo(void)
+	SetToFirst__15TDblQueIterBase @ 1262 NONAME R3UNUSED ; TDblQueIterBase::SetToFirst(void)
+	SetToFirst__15TSglQueIterBase @ 1263 NONAME R3UNUSED ; TSglQueIterBase::SetToFirst(void)
+	SetToLast__15TDblQueIterBase @ 1264 NONAME R3UNUSED ; TDblQueIterBase::SetToLast(void)
+	SetTrapHandler__4UserP12TTrapHandler @ 1265 NONAME R3UNUSED ; User::SetTrapHandler(TTrapHandler *)
+	SetUTCOffset__4UserG20TTimeIntervalSeconds @ 1266 NONAME R3UNUSED ; User::SetUTCOffset(TTimeIntervalSeconds)
+	SetUTCTimeAndOffset__4UserRC5TTimeG20TTimeIntervalSeconds @ 1267 NONAME R3UNUSED ; User::SetUTCTimeAndOffset(TTime const &, TTimeIntervalSeconds)
+	SetUTCTime__4UserRC5TTime @ 1268 NONAME R3UNUSED ; User::SetUTCTime(TTime const &)
+	SetWidth__5TRecti @ 1269 NONAME R3UNUSED ; TRect::SetWidth(int)
+	SetXYInputCalibration__7UserHalRC21TDigitizerCalibration @ 1270 NONAME R3UNUSED ; UserHal::SetXYInputCalibration(TDigitizerCalibration const &)
+	SetXY__6TPointii @ 1271 NONAME R3UNUSED ; TPoint::SetXY(int, int)
+	SetYearLeapCheck__9TDateTimei @ 1272 NONAME R3UNUSED ; TDateTime::SetYearLeapCheck(int)
+	SetYear__9TDateTimei @ 1273 NONAME R3UNUSED ; TDateTime::SetYear(int)
+	SetZero__4MathRdi @ 1274 NONAME R3UNUSED ; Math::SetZero(double &, int)
+	SetZero__6TRealXi @ 1275 NONAME R3UNUSED ; TRealX::SetZero(int)
+	Set__10TMonthName6TMonth @ 1276 NONAME R3UNUSED ; TMonthName::Set(TMonth)
+	Set__11TCheckedUidRC6TDesC8 @ 1277 NONAME R3UNUSED ; TCheckedUid::Set(TDesC8 const &)
+	Set__11TCheckedUidRC8TUidType @ 1278 NONAME R3UNUSED ; TCheckedUid::Set(TUidType const &)
+	Set__11TDateSuffixi @ 1279 NONAME R3UNUSED ; TDateSuffix::Set(int)
+	Set__11TDayNameAbb4TDay @ 1280 NONAME R3UNUSED ; TDayNameAbb::Set(TDay)
+	Set__12TKeyArrayFixP8CBufBasei @ 1281 NONAME R3UNUSED ; TKeyArrayFix::Set(CBufBase *, int)
+	Set__12TKeyArrayPakP8CBufBase @ 1282 NONAME R3UNUSED ; TKeyArrayPak::Set(CBufBase *)
+	Set__12TKeyArrayVarP8CBufBase @ 1283 NONAME R3UNUSED ; TKeyArrayVar::Set(CBufBase *)
+	Set__13TMonthNameAbb6TMonth @ 1284 NONAME R3UNUSED ; TMonthNameAbb::Set(TMonth)
+	Set__14CAsyncCallBackRC9TCallBack @ 1285 NONAME R3UNUSED ; CAsyncCallBack::Set(TCallBack const &)
+	Set__15TCurrencySymbol @ 1286 NONAME R3UNUSED ; TCurrencySymbol::Set(void)
+	Set__15TSecurityPolicyRC6TDesC8 @ 1287 NONAME R3UNUSED ; TSecurityPolicy::Set(TDesC8 const &)
+	Set__15TTimeFormatSpec @ 1288 NONAME R3UNUSED ; TTimeFormatSpec::Set(void)
+	Set__18TLocaleMessageText14TLocaleMessage @ 1289 NONAME R3UNUSED ; TLocaleMessageText::Set(TLocaleMessage)
+	Set__19TLongDateFormatSpec @ 1290 NONAME R3UNUSED ; TLongDateFormatSpec::Set(void)
+	Set__20TShortDateFormatSpec @ 1291 NONAME R3UNUSED ; TShortDateFormatSpec::Set(void)
+	Set__5TTimeRC7TDesC16 @ 1292 NONAME R3UNUSED ; TTime::Set(TDesC16 const &)
+	Set__6TRealXRCx @ 1293 NONAME R3UNUSED ; TRealX::Set(long long const &)
+	Set__6TRealXUi @ 1294 NONAME R3UNUSED ; TRealX::Set(unsigned int)
+	Set__6TRealXd @ 1295 NONAME ; TRealX::Set(double)
+	Set__6TRealXf @ 1296 NONAME ; TRealX::Set(float)
+	Set__6TRealXi @ 1297 NONAME R3UNUSED ; TRealX::Set(int)
+	Set__8TDayName4TDay @ 1298 NONAME R3UNUSED ; TDayName::Set(TDay)
+	Set__9RPropertyG4TUidUiRC6TDesC8 @ 1299 NONAME R3UNUSED ; RProperty::Set(TUid, unsigned int, TDesC8 const &)
+	Set__9RPropertyG4TUidUiRC7TDesC16 @ 1300 NONAME R3UNUSED ; RProperty::Set(TUid, unsigned int, TDesC16 const &)
+	Set__9RPropertyG4TUidUii @ 1301 NONAME R3UNUSED ; RProperty::Set(TUid, unsigned int, int)
+	Set__9RPropertyRC6TDesC8 @ 1302 NONAME R3UNUSED ; RProperty::Set(TDesC8 const &)
+	Set__9RPropertyRC7TDesC16 @ 1303 NONAME R3UNUSED ; RProperty::Set(TDesC16 const &)
+	Set__9RPropertyi @ 1304 NONAME R3UNUSED ; RProperty::Set(int)
+	Set__9TAmPmName5TAmPm @ 1305 NONAME R3UNUSED ; TAmPmName::Set(TAmPm)
+	Set__9TBitInputPCUcii @ 1306 NONAME ; TBitInput::Set(unsigned char const *, int, int)
+	Set__9TDateTimei6TMonthiiiii @ 1307 NONAME ; TDateTime::Set(int, TMonth, int, int, int, int, int)
+	Set__9TRawEventQ29TRawEvent5TType @ 1308 NONAME R3UNUSED ; TRawEvent::Set(TRawEvent::TType)
+	Set__9TRawEventQ29TRawEvent5TTypei @ 1309 NONAME R3UNUSED ; TRawEvent::Set(TRawEvent::TType, int)
+	Set__9TRawEventQ29TRawEvent5TTypeii @ 1310 NONAME ; TRawEvent::Set(TRawEvent::TType, int, int)
+	Set__9TRawEventQ29TRawEvent5TTypeiii @ 1311 NONAME ; TRawEvent::Set(TRawEvent::TType, int, int, int)
+	Set__9TRawEventQ29TRawEvent5TTypeiiiiii @ 1312 NONAME ; TRawEvent::Set(TRawEvent::TType, int, int, int, int, int, int)
+	Set__C7TLocale @ 1313 NONAME R3UNUSED ; TLocale::Set(void) const
+	SetupThreadHeap__8UserHeapiR24SStdEpocThreadCreateInfo @ 1314 NONAME R3UNUSED ; UserHeap::SetupThreadHeap(int, SStdEpocThreadCreateInfo &)
+	Shrink__5TRectRC5TSize @ 1315 NONAME R3UNUSED ; TRect::Shrink(TSize const &)
+	Shrink__5TRectii @ 1316 NONAME R3UNUSED ; TRect::Shrink(int, int)
+	Signal__10RSemaphore @ 1317 NONAME R3UNUSED ; RSemaphore::Signal(void)
+	Signal__10RSemaphorei @ 1318 NONAME R3UNUSED ; RSemaphore::Signal(int)
+	Signal__16RCriticalSection @ 1319 NONAME R3UNUSED ; RCriticalSection::Signal(void)
+	Signal__6RMutex @ 1320 NONAME R3UNUSED ; RMutex::Signal(void)
+	Signal__8RCondVar @ 1321 NONAME R3UNUSED ; RCondVar::Signal(void)
+	Signal__9RFastLock @ 1322 NONAME R3UNUSED ; RFastLock::Signal(void)
+	Sin__4MathRdRCd @ 1323 NONAME R3UNUSED ; Math::Sin(double &, double const &)
+	Size__16CBitMapAllocator @ 1324 NONAME R3UNUSED ; CBitMapAllocator::Size(void)
+	Size__C5TRect @ 1325 NONAME R3UNUSED ; TRect::Size(void) const
+	Size__C6RChunk @ 1326 NONAME R3UNUSED ; RChunk::Size(void) const
+	SkipAndMark__5TLex8iR9TLexMark8 @ 1327 NONAME R3UNUSED ; TLex8::SkipAndMark(int, TLexMark8 &)
+	SkipAndMark__6TLex16iR10TLexMark16 @ 1328 NONAME R3UNUSED ; TLex16::SkipAndMark(int, TLexMark16 &)
+	SkipCharacters__5TLex8 @ 1329 NONAME R3UNUSED ; TLex8::SkipCharacters(void)
+	SkipCharacters__6TLex16 @ 1330 NONAME R3UNUSED ; TLex16::SkipCharacters(void)
+	SkipSpaceAndMark__5TLex8R9TLexMark8 @ 1331 NONAME R3UNUSED ; TLex8::SkipSpaceAndMark(TLexMark8 &)
+	SkipSpaceAndMark__6TLex16R10TLexMark16 @ 1332 NONAME R3UNUSED ; TLex16::SkipSpaceAndMark(TLexMark16 &)
+	SkipSpace__5TLex8 @ 1333 NONAME R3UNUSED ; TLex8::SkipSpace(void)
+	SkipSpace__6TLex16 @ 1334 NONAME R3UNUSED ; TLex16::SkipSpace(void)
+	SortL__13CArrayPakBaseR12TKeyArrayVar @ 1335 NONAME R3UNUSED ; CArrayPakBase::SortL(TKeyArrayVar &)
+	Sort__13CArrayFixBaseR12TKeyArrayFix @ 1336 NONAME R3UNUSED ; CArrayFixBase::Sort(TKeyArrayFix &)
+	Sort__13CArrayVarBaseR12TKeyArrayVar @ 1337 NONAME R3UNUSED ; CArrayVarBase::Sort(TKeyArrayVar &)
+	Sort__7TRegion @ 1338 NONAME R3UNUSED ; TRegion::Sort(void)
+	Sort__7TRegionRC6TPoint @ 1339 NONAME R3UNUSED ; TRegion::Sort(TPoint const &)
+	Sqrt__4MathRdRCd @ 1340 NONAME R3UNUSED ; Math::Sqrt(double &, double const &)
+	StackDepth__C16CActiveScheduler @ 1341 NONAME R3UNUSED ; CActiveScheduler::StackDepth(void) const
+	StackInfo__C7RThreadR16TThreadStackInfo @ 1342 NONAME R3UNUSED ; RThread::StackInfo(TThreadStackInfo &) const
+	StartL__8CServer2RC7TDesC16 @ 1343 NONAME R3UNUSED ; CServer2::StartL(TDesC16 const &)
+	StartNotifierAndGetResponse__9RNotifierR14TRequestStatusG4TUidRC6TDesC8R5TDes8 @ 1344 NONAME ; RNotifier::StartNotifierAndGetResponse(TRequestStatus &, TUid, TDesC8 const &, TDes8 &)
+	StartNotifierAndGetResponse__9RNotifierR14TRequestStatusG4TUidT2RC6TDesC8R5TDes8 @ 1345 NONAME ; RNotifier::StartNotifierAndGetResponse(TRequestStatus &, TUid, TUid, TDesC8 const &, TDes8 &)
+	StartNotifier__9RNotifierG4TUidRC6TDesC8 @ 1346 NONAME R3UNUSED ; RNotifier::StartNotifier(TUid, TDesC8 const &)
+	StartNotifier__9RNotifierG4TUidRC6TDesC8R5TDes8 @ 1347 NONAME ; RNotifier::StartNotifier(TUid, TDesC8 const &, TDes8 &)
+	StartNotifier__9RNotifierG4TUidT1RC6TDesC8R5TDes8 @ 1348 NONAME ; RNotifier::StartNotifier(TUid, TUid, TDesC8 const &, TDes8 &)
+	Start__10CHeartbeat14TTimerLockSpecP8MBeating @ 1349 NONAME R3UNUSED ; CHeartbeat::Start(TTimerLockSpec, MBeating *)
+	Start__16CActiveScheduler @ 1350 NONAME R3UNUSED ; CActiveScheduler::Start(void)
+	Start__20CActiveSchedulerWait @ 1351 NONAME R3UNUSED ; CActiveSchedulerWait::Start(void)
+	Start__5CIdleG9TCallBack @ 1352 NONAME ; CIdle::Start(TCallBack)
+	Start__5RTestRC7TDesC16 @ 1353 NONAME R3UNUSED ; RTest::Start(TDesC16 const &)
+	Start__8CServer2RC7TDesC16 @ 1354 NONAME R3UNUSED ; CServer2::Start(TDesC16 const &)
+	Start__9CPeriodicG27TTimeIntervalMicroSeconds32T1G9TCallBack @ 1355 NONAME ; CPeriodic::Start(TTimeIntervalMicroSeconds32, TTimeIntervalMicroSeconds32, TCallBack)
+	StartupReason__7UserHalR19TMachineStartupType @ 1356 NONAME R3UNUSED ; UserHal::StartupReason(TMachineStartupType &)
+	Stop__16CActiveScheduler @ 1357 NONAME R3UNUSED ; CActiveScheduler::Stop(void)
+	StringLength__4UserPCUc @ 1358 NONAME R3UNUSED ; User::StringLength(unsigned char const *)
+	StringLength__4UserPCUs @ 1359 NONAME R3UNUSED ; User::StringLength(unsigned short const *)
+	SubEq__6TRealXRC6TRealX @ 1360 NONAME R3UNUSED ; TRealX::SubEq(TRealX const &)
+	SubRect__7TRegionRC5TRectP7TRegion @ 1361 NONAME R3UNUSED ; TRegion::SubRect(TRect const &, TRegion *)
+	SubRegion__7TRegionRC7TRegionP7TRegion @ 1362 NONAME R3UNUSED ; TRegion::SubRegion(TRegion const &, TRegion *)
+	Sub__C6TRealXR6TRealXRC6TRealX @ 1363 NONAME R3UNUSED ; TRealX::Sub(TRealX &, TRealX const &) const
+	Subscribe__9RPropertyR14TRequestStatus @ 1364 NONAME R3UNUSED ; RProperty::Subscribe(TRequestStatus &)
+	Suspend__C7RThread @ 1365 NONAME R3UNUSED ; RThread::Suspend(void) const
+	Swap__3MemPvT1i @ 1366 NONAME R3UNUSED ; Mem::Swap(void *, void *, int)
+	Swap__5RBuf8R5RBuf8 @ 1367 NONAME R3UNUSED ; RBuf8::Swap(RBuf8 &)
+	Swap__5TDes8R5TDes8 @ 1368 NONAME R3UNUSED ; TDes8::Swap(TDes8 &)
+	Swap__6RBuf16R6RBuf16 @ 1369 NONAME R3UNUSED ; RBuf16::Swap(RBuf16 &)
+	Swap__6TDes16R6TDes16 @ 1370 NONAME R3UNUSED ; TDes16::Swap(TDes16 &)
+	Swap__C5TSwapii @ 1371 NONAME R3UNUSED ; TSwap::Swap(int, int) const
+	SwitchAllocator__4UserP10RAllocator @ 1372 NONAME R3UNUSED ; User::SwitchAllocator(RAllocator *)
+	SwitchOff__7UserHal @ 1373 NONAME R3UNUSED ; UserHal::SwitchOff(void)
+	Tan__4MathRdRCd @ 1374 NONAME R3UNUSED ; Math::Tan(double &, double const &)
+	Terminate__7RThreadi @ 1375 NONAME R3UNUSED ; RThread::Terminate(int)
+	Terminate__8RProcessi @ 1376 NONAME R3UNUSED ; RProcess::Terminate(int)
+	Terminate__C12RMessagePtr2i @ 1377 NONAME R3UNUSED ; RMessagePtr2::Terminate(int) const
+	TestBootSequence__7UserSvr @ 1378 NONAME R3UNUSED ; UserSvr::TestBootSequence(void)
+	ThreadProcessCodeSeg__9E32Loaderi @ 1379 NONAME R3UNUSED ; E32Loader::ThreadProcessCodeSeg(int)
+	TickCount__4User @ 1380 NONAME R3UNUSED ; User::TickCount(void)
+	TickPeriod__7UserHalR27TTimeIntervalMicroSeconds32 @ 1381 NONAME R3UNUSED ; UserHal::TickPeriod(TTimeIntervalMicroSeconds32 &)
+	Tidy__7TRegion @ 1382 NONAME R3UNUSED ; TRegion::Tidy(void)
+	Tilt__C9TRawEvent @ 1383 NONAME R3UNUSED ; TRawEvent::Tilt(void) const
+	TimedWait__8RCondVarR6RMutexi @ 1384 NONAME R3UNUSED ; RCondVar::TimedWait(RMutex &, int)
+	TitleCase__4UserUi @ 1385 NONAME R3UNUSED ; User::TitleCase(unsigned int)
+	Title__5RTest @ 1386 NONAME R3UNUSED ; RTest::Title(void)
+	TokenLength__C5TLex8G9TLexMark8 @ 1387 NONAME R3UNUSED ; TLex8::TokenLength(TLexMark8) const
+	TokenLength__C6TLex16G10TLexMark16 @ 1388 NONAME R3UNUSED ; TLex16::TokenLength(TLexMark16) const
+	Top__C6RChunk @ 1389 NONAME R3UNUSED ; RChunk::Top(void) const
+	TrapHandler__4User @ 1390 NONAME R3UNUSED ; User::TrapHandler(void)
+	Trap__5TTrapRi @ 1391 NONAME R3UNUSED ; TTrap::Trap(int &)
+	TrimAll__5TDes8 @ 1392 NONAME R3UNUSED ; TDes8::TrimAll(void)
+	TrimAll__6TDes16 @ 1393 NONAME R3UNUSED ; TDes16::TrimAll(void)
+	TrimLeft__5TDes8 @ 1394 NONAME R3UNUSED ; TDes8::TrimLeft(void)
+	TrimLeft__6TDes16 @ 1395 NONAME R3UNUSED ; TDes16::TrimLeft(void)
+	TrimRight__5TDes8 @ 1396 NONAME R3UNUSED ; TDes8::TrimRight(void)
+	TrimRight__6TDes16 @ 1397 NONAME R3UNUSED ; TDes16::TrimRight(void)
+	Trim__5TDes8 @ 1398 NONAME R3UNUSED ; TDes8::Trim(void)
+	Trim__6TDes16 @ 1399 NONAME R3UNUSED ; TDes16::Trim(void)
+	Type__C8RLibrary @ 1400 NONAME R3UNUSED ; RLibrary::Type(void) const
+	Type__C8RProcess @ 1401 NONAME R3UNUSED ; RProcess::Type(void) const
+	UDivMod64__4MathUxUxRUx @ 1402 NONAME ; Math::UDivMod64(unsigned long long, unsigned long long, unsigned long long &)
+	UMul64__4MathUxUxRUxT3 @ 1403 NONAME ; Math::UMul64(unsigned long long, unsigned long long, unsigned long long &, unsigned long long &)
+	UTCOffset__4User @ 1404 NONAME R3UNUSED ; User::UTCOffset(void)
+	UnGetToMark__5TLex8G9TLexMark8 @ 1405 NONAME R3UNUSED ; TLex8::UnGetToMark(TLexMark8)
+	UnGetToMark__6TLex16G10TLexMark16 @ 1406 NONAME R3UNUSED ; TLex16::UnGetToMark(TLexMark16)
+	UnGet__5TLex8 @ 1407 NONAME R3UNUSED ; TLex8::UnGet(void)
+	UnGet__6TLex16 @ 1408 NONAME R3UNUSED ; TLex16::UnGet(void)
+	UnMarkCleanupStack__4UserP12TTrapHandler @ 1409 NONAME R3UNUSED ; User::UnMarkCleanupStack(TTrapHandler *)
+	UnTrap__5TTrap @ 1410 NONAME R3UNUSED ; TTrap::UnTrap(void)
+	Union__14TCapabilitySetRC14TCapabilitySet @ 1411 NONAME R3UNUSED ; TCapabilitySet::Union(TCapabilitySet const &)
+	Union__7TRegionRC7TRegion @ 1412 NONAME R3UNUSED ; TRegion::Union(TRegion const &)
+	UniversalTime__5TTime @ 1413 NONAME R3UNUSED ; TTime::UniversalTime(void)
+	UnloadNotifiers__9RNotifierG4TUid @ 1414 NONAME R3UNUSED ; RNotifier::UnloadNotifiers(TUid)
+	UnlockRamDrive__7UserSvr @ 1415 NONAME R3UNUSED ; UserSvr::UnlockRamDrive(void)
+	Unlock__14TBusLocalDriveRC6TDesC8i @ 1416 NONAME R3UNUSED ; TBusLocalDrive::Unlock(TDesC8 const &, int)
+	UpdateNotifierAndGetResponse__9RNotifierR14TRequestStatusG4TUidRC6TDesC8R5TDes8 @ 1417 NONAME ; RNotifier::UpdateNotifierAndGetResponse(TRequestStatus &, TUid, TDesC8 const &, TDes8 &)
+	UpdateNotifier__9RNotifierG4TUidRC6TDesC8R5TDes8 @ 1418 NONAME ; RNotifier::UpdateNotifier(TUid, TDesC8 const &, TDes8 &)
+	UpperCase__4UserUi @ 1419 NONAME R3UNUSED ; User::UpperCase(unsigned int)
+	UpperCase__5TDes8 @ 1420 NONAME R3UNUSED ; TDes8::UpperCase(void)
+	UpperCase__6TDes16 @ 1421 NONAME R3UNUSED ; TDes16::UpperCase(void)
+	Val__5TLex8RSc @ 1422 NONAME R3UNUSED ; TLex8::Val(signed char &)
+	Val__5TLex8RUc6TRadix @ 1423 NONAME R3UNUSED ; TLex8::Val(unsigned char &, TRadix)
+	Val__5TLex8RUl6TRadix @ 1424 NONAME R3UNUSED ; TLex8::Val(unsigned long &, TRadix)
+	Val__5TLex8RUs6TRadix @ 1425 NONAME R3UNUSED ; TLex8::Val(unsigned short &, TRadix)
+	Val__5TLex8Rd @ 1426 NONAME R3UNUSED ; TLex8::Val(double &)
+	Val__5TLex8RdG5TChar @ 1427 NONAME R3UNUSED ; TLex8::Val(double &, TChar)
+	Val__5TLex8Rf @ 1428 NONAME R3UNUSED ; TLex8::Val(float &)
+	Val__5TLex8RfG5TChar @ 1429 NONAME R3UNUSED ; TLex8::Val(float &, TChar)
+	Val__5TLex8Rl @ 1430 NONAME R3UNUSED ; TLex8::Val(long &)
+	Val__5TLex8Rs @ 1431 NONAME R3UNUSED ; TLex8::Val(short &)
+	Val__5TLex8Rx @ 1432 NONAME R3UNUSED ; TLex8::Val(long long &)
+	Val__5TLex8Rx6TRadix @ 1433 NONAME R3UNUSED ; TLex8::Val(long long &, TRadix)
+	Val__6TLex16RSc @ 1434 NONAME R3UNUSED ; TLex16::Val(signed char &)
+	Val__6TLex16RUc6TRadix @ 1435 NONAME R3UNUSED ; TLex16::Val(unsigned char &, TRadix)
+	Val__6TLex16RUl6TRadix @ 1436 NONAME R3UNUSED ; TLex16::Val(unsigned long &, TRadix)
+	Val__6TLex16RUs6TRadix @ 1437 NONAME R3UNUSED ; TLex16::Val(unsigned short &, TRadix)
+	Val__6TLex16Rd @ 1438 NONAME R3UNUSED ; TLex16::Val(double &)
+	Val__6TLex16RdG5TChar @ 1439 NONAME R3UNUSED ; TLex16::Val(double &, TChar)
+	Val__6TLex16Rf @ 1440 NONAME R3UNUSED ; TLex16::Val(float &)
+	Val__6TLex16RfG5TChar @ 1441 NONAME R3UNUSED ; TLex16::Val(float &, TChar)
+	Val__6TLex16Rl @ 1442 NONAME R3UNUSED ; TLex16::Val(long &)
+	Val__6TLex16Rs @ 1443 NONAME R3UNUSED ; TLex16::Val(short &)
+	Val__6TLex16Rx @ 1444 NONAME R3UNUSED ; TLex16::Val(long long &)
+	Val__6TLex16Rx6TRadix @ 1445 NONAME R3UNUSED ; TLex16::Val(long long &, TRadix)
+	ValidateName__4UserRC7TDesC16 @ 1446 NONAME R3UNUSED ; User::ValidateName(TDesC16 const &)
+	VendorId__C12RMessagePtr2 @ 1447 NONAME R3UNUSED ; RMessagePtr2::VendorId(void) const
+	VendorId__C7RThread @ 1448 NONAME R3UNUSED ; RThread::VendorId(void) const
+	VendorId__C8RProcess @ 1449 NONAME R3UNUSED ; RProcess::VendorId(void) const
+	Version__4User @ 1450 NONAME R3UNUSED ; User::Version(void)
+	WaitForAnyRequest__16CActiveScheduler @ 1451 NONAME R3UNUSED ; CActiveScheduler::WaitForAnyRequest(void)
+	WaitForAnyRequest__4User @ 1452 NONAME R3UNUSED ; User::WaitForAnyRequest(void)
+	WaitForRequest__4UserR14TRequestStatus @ 1453 NONAME R3UNUSED ; User::WaitForRequest(TRequestStatus &)
+	WaitForRequest__4UserR14TRequestStatusT1 @ 1454 NONAME R3UNUSED ; User::WaitForRequest(TRequestStatus &, TRequestStatus &)
+	Wait__10RSemaphore @ 1455 NONAME R3UNUSED ; RSemaphore::Wait(void)
+	Wait__10RSemaphorei @ 1456 NONAME R3UNUSED ; RSemaphore::Wait(int)
+	Wait__16RCriticalSection @ 1457 NONAME R3UNUSED ; RCriticalSection::Wait(void)
+	Wait__6RMutex @ 1458 NONAME R3UNUSED ; RMutex::Wait(void)
+	Wait__8RCondVarR6RMutex @ 1459 NONAME R3UNUSED ; RCondVar::Wait(RMutex &)
+	Wait__9RFastLock @ 1460 NONAME R3UNUSED ; RFastLock::Wait(void)
+	WeekNoInYear__C5TTime @ 1461 NONAME R3UNUSED ; TTime::WeekNoInYear(void) const
+	WeekNoInYear__C5TTime14TFirstWeekRule @ 1462 NONAME R3UNUSED ; TTime::WeekNoInYear(TFirstWeekRule) const
+	WeekNoInYear__C5TTimeG5TTime @ 1463 NONAME ; TTime::WeekNoInYear(TTime) const
+	WeekNoInYear__C5TTimeG5TTime14TFirstWeekRule @ 1464 NONAME ; TTime::WeekNoInYear(TTime, TFirstWeekRule) const
+	WhereX__C12CConsoleBase @ 1465 NONAME R3UNUSED ; CConsoleBase::WhereX(void) const
+	WhereY__C12CConsoleBase @ 1466 NONAME R3UNUSED ; CConsoleBase::WhereY(void) const
+	Width__C5TRect @ 1467 NONAME R3UNUSED ; TRect::Width(void) const
+	WriteL__10TBitOutputUii @ 1468 NONAME R3UNUSED ; TBitOutput::WriteL(unsigned int, int)
+	WriteL__C12RMessagePtr2iRC6TDesC8i @ 1469 NONAME ; RMessagePtr2::WriteL(int, TDesC8 const &, int) const
+	WriteL__C12RMessagePtr2iRC7TDesC16i @ 1470 NONAME ; RMessagePtr2::WriteL(int, TDesC16 const &, int) const
+	WritePasswordData__14TBusLocalDriveRC6TDesC8 @ 1471 NONAME R3UNUSED ; TBusLocalDrive::WritePasswordData(TDesC8 const &)
+	Write__14TBusLocalDrivexRC6TDesC8 @ 1472 NONAME ; TBusLocalDrive::Write(long long, TDesC8 const &)
+	Write__14TBusLocalDrivexiPCvii @ 1473 NONAME ; TBusLocalDrive::Write(long long, int, void const *, int, int)
+	Write__14TBusLocalDrivexiPCviii @ 1474 NONAME ; TBusLocalDrive::Write(long long, int, void const *, int, int, int)
+	Write__8CBufBaseiPCvi @ 1475 NONAME ; CBufBase::Write(int, void const *, int)
+	Write__8CBufBaseiRC6TDesC8 @ 1476 NONAME R3UNUSED ; CBufBase::Write(int, TDesC8 const &)
+	Write__8CBufBaseiRC6TDesC8i @ 1477 NONAME ; CBufBase::Write(int, TDesC8 const &, int)
+	Write__C12RMessagePtr2iRC6TDesC8i @ 1478 NONAME ; RMessagePtr2::Write(int, TDesC8 const &, int) const
+	Write__C12RMessagePtr2iRC7TDesC16i @ 1479 NONAME ; RMessagePtr2::Write(int, TDesC16 const &, int) const
+	WsRegisterSwitchOnScreenHandling__7UserSvri @ 1480 NONAME R3UNUSED ; UserSvr::WsRegisterSwitchOnScreenHandling(int)
+	WsRegisterThread__7UserSvr @ 1481 NONAME R3UNUSED ; UserSvr::WsRegisterThread(void)
+	WsSwitchOnScreen__7UserSvr @ 1482 NONAME R3UNUSED ; UserSvr::WsSwitchOnScreen(void)
+	YearsFrom__C5TTimeG5TTime @ 1483 NONAME ; TTime::YearsFrom(TTime) const
+	ZeroTerminate__5TDes8 @ 1484 NONAME R3UNUSED ; TDes8::ZeroTerminate(void)
+	ZeroTerminate__6TDes16 @ 1485 NONAME R3UNUSED ; TDes16::ZeroTerminate(void)
+	Zero__5TDes8 @ 1486 NONAME R3UNUSED ; TDes8::Zero(void)
+	Zero__6TDes16 @ 1487 NONAME R3UNUSED ; TDes16::Zero(void)
+	"_._10CCirBuffer" @ 1488 NONAME R3UNUSED ; CCirBuffer::~CCirBuffer(void)
+	"_._10CHeartbeat" @ 1489 NONAME R3UNUSED ; CHeartbeat::~CHeartbeat(void)
+	"_._10CObjectCon" @ 1490 NONAME R3UNUSED ; CObjectCon::~CObjectCon(void)
+	"_._11CCirBufBase" @ 1491 NONAME R3UNUSED ; CCirBufBase::~CCirBufBase(void)
+	"_._12CConsoleBase" @ 1492 NONAME R3UNUSED ; CConsoleBase::~CConsoleBase(void)
+	"_._12CObjectConIx" @ 1493 NONAME R3UNUSED ; CObjectConIx::~CObjectConIx(void)
+	"_._12CTrapCleanup" @ 1494 NONAME R3UNUSED ; CTrapCleanup::~CTrapCleanup(void)
+	"_._13CArrayFixBase" @ 1495 NONAME R3UNUSED ; CArrayFixBase::~CArrayFixBase(void)
+	"_._13CArrayPakBase" @ 1496 NONAME R3UNUSED ; CArrayPakBase::~CArrayPakBase(void)
+	"_._13CArrayVarBase" @ 1497 NONAME R3UNUSED ; CArrayVarBase::~CArrayVarBase(void)
+	"_._13CAsyncOneShot" @ 1498 NONAME R3UNUSED ; CAsyncOneShot::~CAsyncOneShot(void)
+	"_._14CAsyncCallBack" @ 1499 NONAME R3UNUSED ; CAsyncCallBack::~CAsyncCallBack(void)
+	"_._16CActiveScheduler" @ 1500 NONAME R3UNUSED ; CActiveScheduler::~CActiveScheduler(void)
+	"_._16CBitMapAllocator" @ 1501 NONAME R3UNUSED ; CBitMapAllocator::~CBitMapAllocator(void)
+	"_._20CActiveSchedulerWait" @ 1502 NONAME R3UNUSED ; CActiveSchedulerWait::~CActiveSchedulerWait(void)
+	"_._5CBase" @ 1503 NONAME R3UNUSED ; CBase::~CBase(void)
+	"_._5CIdle" @ 1504 NONAME R3UNUSED ; CIdle::~CIdle(void)
+	"_._6CTimer" @ 1505 NONAME R3UNUSED ; CTimer::~CTimer(void)
+	"_._7CActive" @ 1506 NONAME R3UNUSED ; CActive::~CActive(void)
+	"_._7CBufSeg" @ 1507 NONAME R3UNUSED ; CBufSeg::~CBufSeg(void)
+	"_._7CObject" @ 1508 NONAME R3UNUSED ; CObject::~CObject(void)
+	"_._8CBufBase" @ 1509 NONAME R3UNUSED ; CBufBase::~CBufBase(void)
+	"_._8CBufFlat" @ 1510 NONAME R3UNUSED ; CBufFlat::~CBufFlat(void)
+	"_._8CCleanup" @ 1511 NONAME R3UNUSED ; CCleanup::~CCleanup(void)
+	"_._8CServer2" @ 1512 NONAME R3UNUSED ; CServer2::~CServer2(void)
+	"_._9CObjectIx" @ 1513 NONAME R3UNUSED ; CObjectIx::~CObjectIx(void)
+	"_._9CPeriodic" @ 1514 NONAME R3UNUSED ; CPeriodic::~CPeriodic(void)
+	"_._9CSession2" @ 1515 NONAME R3UNUSED ; CSession2::~CSession2(void)
+	"_._t13CArrayFixFlat1Z4TUid" @ 1516 NONAME R3UNUSED ; CArrayFixFlat<TUid>::~CArrayFixFlat(void)
+	"_._t13CArrayFixFlat1Zi" @ 1517 NONAME R3UNUSED ; CArrayFixFlat<int>::~CArrayFixFlat(void)
+	__10CCirBuffer @ 1518 NONAME R3UNUSED ; CCirBuffer::CCirBuffer(void)
+	__10CHeartbeati @ 1519 NONAME R3UNUSED ; CHeartbeat::CHeartbeat(int)
+	__10CObjectConi @ 1520 NONAME R3UNUSED ; CObjectCon::CObjectCon(int)
+	__10RArrayBasei @ 1521 NONAME R3UNUSED ; RArrayBase::RArrayBase(int)
+	__10RArrayBaseiPvi @ 1522 NONAME ; RArrayBase::RArrayBase(int, void *, int)
+	__10RArrayBaseii @ 1523 NONAME R3UNUSED ; RArrayBase::RArrayBase(int, int)
+	__10RArrayBaseiii @ 1524 NONAME ; RArrayBase::RArrayBase(int, int, int)
+	__10RArrayBaseiiii @ 1525 NONAME ; RArrayBase::RArrayBase(int, int, int, int)
+	__10TBitOutput @ 1526 NONAME R3UNUSED ; TBitOutput::TBitOutput(void)
+	__10TBitOutputPUci @ 1527 NONAME R3UNUSED ; TBitOutput::TBitOutput(unsigned char *, int)
+	__10TBufBase16PCUsi @ 1528 NONAME R3UNUSED ; TBufBase16::TBufBase16(unsigned short const *, int)
+	__10TBufBase16RC7TDesC16i @ 1529 NONAME R3UNUSED ; TBufBase16::TBufBase16(TDesC16 const &, int)
+	__10TBufBase16i @ 1530 NONAME R3UNUSED ; TBufBase16::TBufBase16(int)
+	__10TBufBase16ii @ 1531 NONAME R3UNUSED ; TBufBase16::TBufBase16(int, int)
+	__10TBufCBase8 @ 1532 NONAME R3UNUSED ; TBufCBase8::TBufCBase8(void)
+	__10TBufCBase8PCUci @ 1533 NONAME R3UNUSED ; TBufCBase8::TBufCBase8(unsigned char const *, int)
+	__10TBufCBase8RC6TDesC8i @ 1534 NONAME R3UNUSED ; TBufCBase8::TBufCBase8(TDesC8 const &, int)
+	__10TMonthName @ 1535 NONAME R3UNUSED ; TMonthName::TMonthName(void)
+	__10TMonthName6TMonth @ 1536 NONAME R3UNUSED ; TMonthName::TMonthName(TMonth)
+	__11CCirBufBasei @ 1537 NONAME R3UNUSED ; CCirBufBase::CCirBufBase(int)
+	__11TBufCBase16 @ 1538 NONAME R3UNUSED ; TBufCBase16::TBufCBase16(void)
+	__11TBufCBase16PCUsi @ 1539 NONAME R3UNUSED ; TBufCBase16::TBufCBase16(unsigned short const *, int)
+	__11TBufCBase16RC7TDesC16i @ 1540 NONAME R3UNUSED ; TBufCBase16::TBufCBase16(TDesC16 const &, int)
+	__11TCheckedUid @ 1541 NONAME R3UNUSED ; TCheckedUid::TCheckedUid(void)
+	__11TCheckedUidRC6TDesC8 @ 1542 NONAME R3UNUSED ; TCheckedUid::TCheckedUid(TDesC8 const &)
+	__11TCheckedUidRC8TUidType @ 1543 NONAME R3UNUSED ; TCheckedUid::TCheckedUid(TUidType const &)
+	__11TDateSuffix @ 1544 NONAME R3UNUSED ; TDateSuffix::TDateSuffix(void)
+	__11TDateSuffixi @ 1545 NONAME R3UNUSED ; TDateSuffix::TDateSuffix(int)
+	__11TDayNameAbb @ 1546 NONAME R3UNUSED ; TDayNameAbb::TDayNameAbb(void)
+	__11TDayNameAbb4TDay @ 1547 NONAME R3UNUSED ; TDayNameAbb::TDayNameAbb(TDay)
+	__11TDblQueBase @ 1548 NONAME R3UNUSED ; TDblQueBase::TDblQueBase(void)
+	__11TDblQueBasei @ 1549 NONAME R3UNUSED ; TDblQueBase::TDblQueBase(int)
+	__11TFormatInfo @ 1550 NONAME R3UNUSED ; TFormatInfo::TFormatInfo(void)
+	__11TRealFormat @ 1551 NONAME R3UNUSED ; TRealFormat::TRealFormat(void)
+	__11TRealFormati @ 1552 NONAME R3UNUSED ; TRealFormat::TRealFormat(int)
+	__11TRealFormatii @ 1553 NONAME R3UNUSED ; TRealFormat::TRealFormat(int, int)
+	__11TSglQueBase @ 1554 NONAME R3UNUSED ; TSglQueBase::TSglQueBase(void)
+	__11TSglQueBasei @ 1555 NONAME R3UNUSED ; TSglQueBase::TSglQueBase(int)
+	__12CConsoleBase @ 1556 NONAME R3UNUSED ; CConsoleBase::CConsoleBase(void)
+	__12CObjectConIx @ 1557 NONAME R3UNUSED ; CObjectConIx::CObjectConIx(void)
+	__12CTrapCleanup @ 1558 NONAME R3UNUSED ; CTrapCleanup::CTrapCleanup(void)
+	__12TKeyArrayFixi11TKeyCmpText @ 1559 NONAME R3UNUSED ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpText)
+	__12TKeyArrayFixi11TKeyCmpTexti @ 1560 NONAME ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpText, int)
+	__12TKeyArrayFixi14TKeyCmpNumeric @ 1561 NONAME R3UNUSED ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpNumeric)
+	__12TKeyArrayPaki11TKeyCmpText @ 1562 NONAME R3UNUSED ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpText)
+	__12TKeyArrayPaki11TKeyCmpTexti @ 1563 NONAME ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpText, int)
+	__12TKeyArrayPaki14TKeyCmpNumeric @ 1564 NONAME R3UNUSED ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpNumeric)
+	__12TKeyArrayVari11TKeyCmpText @ 1565 NONAME R3UNUSED ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpText)
+	__12TKeyArrayVari11TKeyCmpTexti @ 1566 NONAME ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpText, int)
+	__12TKeyArrayVari14TKeyCmpNumeric @ 1567 NONAME R3UNUSED ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpNumeric)
+	__12TTrapHandler @ 1568 NONAME R3UNUSED ; TTrapHandler::TTrapHandler(void)
+	__13CArrayFixBasePFi_P8CBufBaseii @ 1569 NONAME ; CArrayFixBase::CArrayFixBase(CBufBase *(*)(int), int, int)
+	__13CArrayPakBasePFi_P8CBufBasei @ 1570 NONAME R3UNUSED ; CArrayPakBase::CArrayPakBase(CBufBase *(*)(int), int)
+	__13CArrayVarBasePFi_P8CBufBasei @ 1571 NONAME R3UNUSED ; CArrayVarBase::CArrayVarBase(CBufBase *(*)(int), int)
+	__13CAsyncOneShoti @ 1572 NONAME R3UNUSED ; CAsyncOneShot::CAsyncOneShot(int)
+	__13CPolicyServeriRCQ213CPolicyServer7TPolicyQ28CServer211TServerType @ 1573 NONAME ; CPolicyServer::CPolicyServer(int, CPolicyServer::TPolicy const &, CServer2::TServerType)
+	__13TDeltaQueBase @ 1574 NONAME R3UNUSED ; TDeltaQueBase::TDeltaQueBase(void)
+	__13TDeltaQueBasei @ 1575 NONAME R3UNUSED ; TDeltaQueBase::TDeltaQueBase(int)
+	__13TMonthNameAbb @ 1576 NONAME R3UNUSED ; TMonthNameAbb::TMonthNameAbb(void)
+	__13TMonthNameAbb6TMonth @ 1577 NONAME R3UNUSED ; TMonthNameAbb::TMonthNameAbb(TMonth)
+	__13TSecurityInfoG12RMessagePtr2 @ 1578 NONAME R3UNUSED ; TSecurityInfo::TSecurityInfo(RMessagePtr2)
+	__13TSecurityInfoG7RThread @ 1579 NONAME ; TSecurityInfo::TSecurityInfo(RThread)
+	__13TSecurityInfoG8RProcess @ 1580 NONAME ; TSecurityInfo::TSecurityInfo(RProcess)
+	__14CAsyncCallBackRC9TCallBacki @ 1581 NONAME R3UNUSED ; CAsyncCallBack::CAsyncCallBack(TCallBack const &, int)
+	__14CAsyncCallBacki @ 1582 NONAME R3UNUSED ; CAsyncCallBack::CAsyncCallBack(int)
+	__14TBusLocalDrive @ 1583 NONAME R3UNUSED ; TBusLocalDrive::TBusLocalDrive(void)
+	__14TCapabilitySet11TCapabilityT1 @ 1584 NONAME R3UNUSED ; TCapabilitySet::TCapabilitySet(TCapability, TCapability)
+	__15TCurrencySymbol @ 1585 NONAME R3UNUSED ; TCurrencySymbol::TCurrencySymbol(void)
+	__15TDblQueIterBaseR11TDblQueBase @ 1586 NONAME R3UNUSED ; TDblQueIterBase::TDblQueIterBase(TDblQueBase &)
+	__15TExtendedLocale @ 1587 NONAME R3UNUSED ; TExtendedLocale::TExtendedLocale(void)
+	__15TFindHandleBase @ 1588 NONAME R3UNUSED ; TFindHandleBase::TFindHandleBase(void)
+	__15TFindHandleBaseRC7TDesC16 @ 1589 NONAME R3UNUSED ; TFindHandleBase::TFindHandleBase(TDesC16 const &)
+	__15TLocalDriveCaps @ 1590 NONAME R3UNUSED ; TLocalDriveCaps::TLocalDriveCaps(void)
+	__15TSecurityPolicy11TCapabilityN21 @ 1591 NONAME ; TSecurityPolicy::TSecurityPolicy(TCapability, TCapability, TCapability)
+	__15TSecurityPolicy11TCapabilityN61 @ 1592 NONAME ; TSecurityPolicy::TSecurityPolicy(TCapability, TCapability, TCapability, TCapability, TCapability, TCapability, TCapability)
+	__15TSecurityPolicyG9TSecureId11TCapabilityN22 @ 1593 NONAME ; TSecurityPolicy::TSecurityPolicy(TSecureId, TCapability, TCapability, TCapability)
+	__15TSecurityPolicyG9TVendorId11TCapabilityN22 @ 1594 NONAME ; TSecurityPolicy::TSecurityPolicy(TVendorId, TCapability, TCapability, TCapability)
+	__15TSecurityPolicyQ215TSecurityPolicy14TSecPolicyType @ 1595 NONAME R3UNUSED ; TSecurityPolicy::TSecurityPolicy(TSecurityPolicy::TSecPolicyType)
+	__15TSglQueIterBaseR11TSglQueBase @ 1596 NONAME R3UNUSED ; TSglQueIterBase::TSglQueIterBase(TSglQueBase &)
+	__15TTimeFormatSpec @ 1597 NONAME R3UNUSED ; TTimeFormatSpec::TTimeFormatSpec(void)
+	__16CActiveScheduler @ 1598 NONAME R3UNUSED ; CActiveScheduler::CActiveScheduler(void)
+	__16CBitMapAllocatorii @ 1599 NONAME R3UNUSED ; CBitMapAllocator::CBitMapAllocator(int, int)
+	__16RCriticalSection @ 1600 NONAME R3UNUSED ; RCriticalSection::RCriticalSection(void)
+	__17RPointerArrayBase @ 1601 NONAME R3UNUSED ; RPointerArrayBase::RPointerArrayBase(void)
+	__17RPointerArrayBasePPvi @ 1602 NONAME R3UNUSED ; RPointerArrayBase::RPointerArrayBase(void **, int)
+	__17RPointerArrayBasei @ 1603 NONAME R3UNUSED ; RPointerArrayBase::RPointerArrayBase(int)
+	__17RPointerArrayBaseii @ 1604 NONAME R3UNUSED ; RPointerArrayBase::RPointerArrayBase(int, int)
+	__18TLocaleMessageText @ 1605 NONAME R3UNUSED ; TLocaleMessageText::TLocaleMessageText(void)
+	__18TLocaleMessageText14TLocaleMessage @ 1606 NONAME R3UNUSED ; TLocaleMessageText::TLocaleMessageText(TLocaleMessage)
+	__19TLongDateFormatSpec @ 1607 NONAME R3UNUSED ; TLongDateFormatSpec::TLongDateFormatSpec(void)
+	__20CActiveSchedulerWait @ 1608 NONAME R3UNUSED ; CActiveSchedulerWait::CActiveSchedulerWait(void)
+	__20TShortDateFormatSpec @ 1609 NONAME R3UNUSED ; TShortDateFormatSpec::TShortDateFormatSpec(void)
+	__4TKey @ 1610 NONAME R3UNUSED ; TKey::TKey(void)
+	__4TKeyi11TKeyCmpText @ 1611 NONAME R3UNUSED ; TKey::TKey(int, TKeyCmpText)
+	__4TKeyi11TKeyCmpTexti @ 1612 NONAME ; TKey::TKey(int, TKeyCmpText, int)
+	__4TKeyi14TKeyCmpNumeric @ 1613 NONAME R3UNUSED ; TKey::TKey(int, TKeyCmpNumeric)
+	__5CIdlei @ 1614 NONAME R3UNUSED ; CIdle::CIdle(int)
+	__5RBuf8 @ 1615 NONAME R3UNUSED ; RBuf8::RBuf8(void)
+	__5RBuf8P6HBufC8 @ 1616 NONAME R3UNUSED ; RBuf8::RBuf8(HBufC8 *)
+	__5RBuf8iii @ 1617 NONAME ; RBuf8::RBuf8(int, int, int)
+	__5RHeapiii @ 1618 NONAME ; RHeap::RHeap(int, int, int)
+	__5RHeapiiiiiii @ 1619 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
+	__5RTestRC7TDesC16 @ 1620 NONAME R3UNUSED ; RTest::RTest(TDesC16 const &)
+	__5RTestRC7TDesC16i @ 1621 NONAME R3UNUSED ; RTest::RTest(TDesC16 const &, int)
+	__5RTestRC7TDesC16iPCUs @ 1622 NONAME ; RTest::RTest(TDesC16 const &, int, unsigned short const *)
+	__5TLex8 @ 1623 NONAME R3UNUSED ; TLex8::TLex8(void)
+	__5TPtr8PUci @ 1624 NONAME R3UNUSED ; TPtr8::TPtr8(unsigned char *, int)
+	__5TPtr8PUcii @ 1625 NONAME ; TPtr8::TPtr8(unsigned char *, int, int)
+	__5TPtr8R10TBufCBase8i @ 1626 NONAME R3UNUSED ; TPtr8::TPtr8(TBufCBase8 &, int)
+	__5TRect @ 1627 NONAME R3UNUSED ; TRect::TRect(void)
+	__5TRectRC5TSize @ 1628 NONAME R3UNUSED ; TRect::TRect(TSize const &)
+	__5TRectRC6TPointRC5TSize @ 1629 NONAME R3UNUSED ; TRect::TRect(TPoint const &, TSize const &)
+	__5TRectRC6TPointT1 @ 1630 NONAME R3UNUSED ; TRect::TRect(TPoint const &, TPoint const &)
+	__5TRectiiii @ 1631 NONAME ; TRect::TRect(int, int, int, int)
+	__5TSwap @ 1632 NONAME R3UNUSED ; TSwap::TSwap(void)
+	__5TTimeRC7TDesC16 @ 1633 NONAME R3UNUSED ; TTime::TTime(TDesC16 const &)
+	__5TTimeRC9TDateTime @ 1634 NONAME R3UNUSED ; TTime::TTime(TDateTime const &)
+	__6CTimeri @ 1635 NONAME R3UNUSED ; CTimer::CTimer(int)
+	__6RBuf16 @ 1636 NONAME R3UNUSED ; RBuf16::RBuf16(void)
+	__6RBuf16P7HBufC16 @ 1637 NONAME R3UNUSED ; RBuf16::RBuf16(HBufC16 *)
+	__6RBuf16iii @ 1638 NONAME ; RBuf16::RBuf16(int, int, int)
+	__6TLex16 @ 1639 NONAME R3UNUSED ; TLex16::TLex16(void)
+	__6TPtr16PUsi @ 1640 NONAME R3UNUSED ; TPtr16::TPtr16(unsigned short *, int)
+	__6TPtr16PUsii @ 1641 NONAME ; TPtr16::TPtr16(unsigned short *, int, int)
+	__6TPtr16R11TBufCBase16i @ 1642 NONAME R3UNUSED ; TPtr16::TPtr16(TBufCBase16 &, int)
+	__6TPtrC8 @ 1643 NONAME R3UNUSED ; TPtrC8::TPtrC8(void)
+	__6TPtrC8PCUc @ 1644 NONAME R3UNUSED ; TPtrC8::TPtrC8(unsigned char const *)
+	__6TPtrC8PCUci @ 1645 NONAME R3UNUSED ; TPtrC8::TPtrC8(unsigned char const *, int)
+	__6TPtrC8RC6TDesC8 @ 1646 NONAME R3UNUSED ; TPtrC8::TPtrC8(TDesC8 const &)
+	__6TRealX @ 1647 NONAME R3UNUSED ; TRealX::TRealX(void)
+	__6TRealXRCx @ 1648 NONAME R3UNUSED ; TRealX::TRealX(long long const &)
+	__6TRealXUi @ 1649 NONAME R3UNUSED ; TRealX::TRealX(unsigned int)
+	__6TRealXUiUiUi @ 1650 NONAME ; TRealX::TRealX(unsigned int, unsigned int, unsigned int)
+	__6TRealXd @ 1651 NONAME ; TRealX::TRealX(double)
+	__6TRealXf @ 1652 NONAME ; TRealX::TRealX(float)
+	__6TRealXi @ 1653 NONAME R3UNUSED ; TRealX::TRealX(int)
+	__7CActivei @ 1654 NONAME R3UNUSED ; CActive::CActive(int)
+	__7CBufSegi @ 1655 NONAME R3UNUSED ; CBufSeg::CBufSeg(int)
+	__7CObject @ 1656 NONAME R3UNUSED ; CObject::CObject(void)
+	__7RRegion @ 1657 NONAME R3UNUSED ; RRegion::RRegion(void)
+	__7RRegionRC5TRecti @ 1658 NONAME R3UNUSED ; RRegion::RRegion(TRect const &, int)
+	__7RRegionRC7RRegion @ 1659 NONAME R3UNUSED ; RRegion::RRegion(RRegion const &)
+	__7RRegioni @ 1660 NONAME R3UNUSED ; RRegion::RRegion(int)
+	__7RRegioniP5TRecti @ 1661 NONAME ; RRegion::RRegion(int, TRect *, int)
+	__7RRegionii @ 1662 NONAME R3UNUSED ; RRegion::RRegion(int, int)
+	__7TLocale @ 1663 NONAME R3UNUSED ; TLocale::TLocale(void)
+	__7TPtrC16 @ 1664 NONAME R3UNUSED ; TPtrC16::TPtrC16(void)
+	__7TPtrC16PCUs @ 1665 NONAME R3UNUSED ; TPtrC16::TPtrC16(unsigned short const *)
+	__7TPtrC16PCUsi @ 1666 NONAME R3UNUSED ; TPtrC16::TPtrC16(unsigned short const *, int)
+	__7TPtrC16RC7TDesC16 @ 1667 NONAME R3UNUSED ; TPtrC16::TPtrC16(TDesC16 const &)
+	__7TRegioni @ 1668 NONAME R3UNUSED ; TRegion::TRegion(int)
+	__8CBufBasei @ 1669 NONAME R3UNUSED ; CBufBase::CBufBase(int)
+	__8CBufFlati @ 1670 NONAME R3UNUSED ; CBufFlat::CBufFlat(int)
+	__8CCleanup @ 1671 NONAME R3UNUSED ; CCleanup::CCleanup(void)
+	__8CServer2iQ28CServer211TServerType @ 1672 NONAME R3UNUSED ; CServer2::CServer2(int, CServer2::TServerType)
+	__8TDayName @ 1673 NONAME R3UNUSED ; TDayName::TDayName(void)
+	__8TDayName4TDay @ 1674 NONAME R3UNUSED ; TDayName::TDayName(TDay)
+	__8TLdrInfo @ 1675 NONAME R3UNUSED ; TLdrInfo::TLdrInfo(void)
+	__8TUidType @ 1676 NONAME R3UNUSED ; TUidType::TUidType(void)
+	__8TUidTypeG4TUid @ 1677 NONAME R3UNUSED ; TUidType::TUidType(TUid)
+	__8TUidTypeG4TUidN21 @ 1678 NONAME ; TUidType::TUidType(TUid, TUid, TUid)
+	__8TUidTypeG4TUidT1 @ 1679 NONAME R3UNUSED ; TUidType::TUidType(TUid, TUid)
+	__8TVersion @ 1680 NONAME R3UNUSED ; TVersion::TVersion(void)
+	__8TVersioniii @ 1681 NONAME ; TVersion::TVersion(int, int, int)
+	__9CObjectIx @ 1682 NONAME R3UNUSED ; CObjectIx::CObjectIx(void)
+	__9CPeriodici @ 1683 NONAME R3UNUSED ; CPeriodic::CPeriodic(int)
+	__9CSession2 @ 1684 NONAME R3UNUSED ; CSession2::CSession2(void)
+	__9RMessage2RC12RMessagePtr2 @ 1685 NONAME R3UNUSED ; RMessage2::RMessage2(RMessagePtr2 const &)
+	__9RNotifier @ 1686 NONAME R3UNUSED ; RNotifier::RNotifier(void)
+	__9TAmPmName @ 1687 NONAME R3UNUSED ; TAmPmName::TAmPmName(void)
+	__9TAmPmName5TAmPm @ 1688 NONAME R3UNUSED ; TAmPmName::TAmPmName(TAmPm)
+	__9TBitInput @ 1689 NONAME R3UNUSED ; TBitInput::TBitInput(void)
+	__9TBitInputPCUcii @ 1690 NONAME ; TBitInput::TBitInput(unsigned char const *, int, int)
+	__9TBufBase8PCUci @ 1691 NONAME R3UNUSED ; TBufBase8::TBufBase8(unsigned char const *, int)
+	__9TBufBase8RC6TDesC8i @ 1692 NONAME R3UNUSED ; TBufBase8::TBufBase8(TDesC8 const &, int)
+	__9TBufBase8i @ 1693 NONAME R3UNUSED ; TBufBase8::TBufBase8(int)
+	__9TBufBase8ii @ 1694 NONAME R3UNUSED ; TBufBase8::TBufBase8(int, int)
+	__9TDateTimei6TMonthiiiii @ 1695 NONAME ; TDateTime::TDateTime(int, TMonth, int, int, int, int, int)
+	__DbgMarkCheck__10RAllocatoriiRC6TDesC8i @ 1696 NONAME ; RAllocator::__DbgMarkCheck(int, int, TDesC8 const &, int)
+	__DbgMarkCheck__4UseriiiPCUci @ 1697 NONAME ; User::__DbgMarkCheck(int, int, int, unsigned char const *, int)
+	__DbgMarkEnd__10RAllocatori @ 1698 NONAME R3UNUSED ; RAllocator::__DbgMarkEnd(int)
+	__DbgMarkEnd__4Userii @ 1699 NONAME R3UNUSED ; User::__DbgMarkEnd(int, int)
+	__DbgMarkStart__10RAllocator @ 1700 NONAME R3UNUSED ; RAllocator::__DbgMarkStart(void)
+	__DbgMarkStart__4Useri @ 1701 NONAME R3UNUSED ; User::__DbgMarkStart(int)
+	__DbgSetAllocFail__10RAllocatorQ210RAllocator10TAllocFaili @ 1702 NONAME R3UNUSED ; RAllocator::__DbgSetAllocFail(RAllocator::TAllocFail, int)
+	__DbgSetAllocFail__4UseriQ210RAllocator10TAllocFaili @ 1703 NONAME R3UNUSED ; User::__DbgSetAllocFail(int, RAllocator::TAllocFail, int)
+	__DbgTestEmpty__C11TDblQueBase @ 1704 NONAME R3UNUSED ; TDblQueBase::__DbgTestEmpty(void) const
+	__DbgTestInvariant__C5RBuf8 @ 1705 NONAME R3UNUSED ; RBuf8::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C5TDes8 @ 1706 NONAME R3UNUSED ; TDes8::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C5TPtr8 @ 1707 NONAME R3UNUSED ; TPtr8::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C6HBufC8 @ 1708 NONAME R3UNUSED ; HBufC8::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C6RBuf16 @ 1709 NONAME R3UNUSED ; RBuf16::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C6TDes16 @ 1710 NONAME R3UNUSED ; TDes16::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C6TDesC8 @ 1711 NONAME R3UNUSED ; TDesC8::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C6TPtr16 @ 1712 NONAME R3UNUSED ; TPtr16::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C6TPtrC8 @ 1713 NONAME R3UNUSED ; TPtrC8::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C7HBufC16 @ 1714 NONAME R3UNUSED ; HBufC16::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C7TDesC16 @ 1715 NONAME R3UNUSED ; TDesC16::__DbgTestInvariant(void) const
+	__DbgTestInvariant__C7TPtrC16 @ 1716 NONAME R3UNUSED ; TPtrC16::__DbgTestInvariant(void) const
+	__adddf3 @ 1717 NONAME ; (null)
+	__addsf3 @ 1718 NONAME ; (null)
+	__adv__6TRealXRC6TRealX @ 1719 NONAME R3UNUSED ; TRealX::operator/=(TRealX const &)
+	__amd__6TRealXRC6TRealX @ 1720 NONAME R3UNUSED ; TRealX::operator%=(TRealX const &)
+	__ami__5TSizeRC5TSize @ 1721 NONAME R3UNUSED ; TSize::operator-=(TSize const &)
+	__ami__5TSizeRC6TPoint @ 1722 NONAME R3UNUSED ; TSize::operator-=(TPoint const &)
+	__ami__5TTimeG17TTimeIntervalDays @ 1723 NONAME R3UNUSED ; TTime::operator-=(TTimeIntervalDays)
+	__ami__5TTimeG18TTimeIntervalHours @ 1724 NONAME R3UNUSED ; TTime::operator-=(TTimeIntervalHours)
+	__ami__5TTimeG18TTimeIntervalYears @ 1725 NONAME R3UNUSED ; TTime::operator-=(TTimeIntervalYears)
+	__ami__5TTimeG19TTimeIntervalMonths @ 1726 NONAME R3UNUSED ; TTime::operator-=(TTimeIntervalMonths)
+	__ami__5TTimeG20TTimeIntervalMinutes @ 1727 NONAME R3UNUSED ; TTime::operator-=(TTimeIntervalMinutes)
+	__ami__5TTimeG20TTimeIntervalSeconds @ 1728 NONAME R3UNUSED ; TTime::operator-=(TTimeIntervalSeconds)
+	__ami__5TTimeG25TTimeIntervalMicroSeconds @ 1729 NONAME ; TTime::operator-=(TTimeIntervalMicroSeconds)
+	__ami__5TTimeG27TTimeIntervalMicroSeconds32 @ 1730 NONAME R3UNUSED ; TTime::operator-=(TTimeIntervalMicroSeconds32)
+	__ami__6TPointRC5TSize @ 1731 NONAME R3UNUSED ; TPoint::operator-=(TSize const &)
+	__ami__6TPointRC6TPoint @ 1732 NONAME R3UNUSED ; TPoint::operator-=(TPoint const &)
+	__ami__6TRealXRC6TRealX @ 1733 NONAME R3UNUSED ; TRealX::operator-=(TRealX const &)
+	__aml__6TRealXRC6TRealX @ 1734 NONAME R3UNUSED ; TRealX::operator*=(TRealX const &)
+	__apl__5TSizeRC5TSize @ 1735 NONAME R3UNUSED ; TSize::operator+=(TSize const &)
+	__apl__5TSizeRC6TPoint @ 1736 NONAME R3UNUSED ; TSize::operator+=(TPoint const &)
+	__apl__5TTimeG17TTimeIntervalDays @ 1737 NONAME R3UNUSED ; TTime::operator+=(TTimeIntervalDays)
+	__apl__5TTimeG18TTimeIntervalHours @ 1738 NONAME R3UNUSED ; TTime::operator+=(TTimeIntervalHours)
+	__apl__5TTimeG18TTimeIntervalYears @ 1739 NONAME R3UNUSED ; TTime::operator+=(TTimeIntervalYears)
+	__apl__5TTimeG19TTimeIntervalMonths @ 1740 NONAME R3UNUSED ; TTime::operator+=(TTimeIntervalMonths)
+	__apl__5TTimeG20TTimeIntervalMinutes @ 1741 NONAME R3UNUSED ; TTime::operator+=(TTimeIntervalMinutes)
+	__apl__5TTimeG20TTimeIntervalSeconds @ 1742 NONAME R3UNUSED ; TTime::operator+=(TTimeIntervalSeconds)
+	__apl__5TTimeG25TTimeIntervalMicroSeconds @ 1743 NONAME ; TTime::operator+=(TTimeIntervalMicroSeconds)
+	__apl__5TTimeG27TTimeIntervalMicroSeconds32 @ 1744 NONAME R3UNUSED ; TTime::operator+=(TTimeIntervalMicroSeconds32)
+	__apl__6TPointRC5TSize @ 1745 NONAME R3UNUSED ; TPoint::operator+=(TSize const &)
+	__apl__6TPointRC6TPoint @ 1746 NONAME R3UNUSED ; TPoint::operator+=(TPoint const &)
+	__apl__6TRealXRC6TRealX @ 1747 NONAME R3UNUSED ; TRealX::operator+=(TRealX const &)
+	__as__5TTimeRC9TDateTime @ 1748 NONAME R3UNUSED ; TTime::operator=(TDateTime const &)
+	__as__6HBufC8PCUc @ 1749 NONAME R3UNUSED ; HBufC8::operator=(unsigned char const *)
+	__as__6HBufC8RC6TDesC8 @ 1750 NONAME R3UNUSED ; HBufC8::operator=(TDesC8 const &)
+	__as__6TRealXRCx @ 1751 NONAME R3UNUSED ; TRealX::operator=(long long const &)
+	__as__6TRealXUi @ 1752 NONAME R3UNUSED ; TRealX::operator=(unsigned int)
+	__as__6TRealXd @ 1753 NONAME ; TRealX::operator=(double)
+	__as__6TRealXf @ 1754 NONAME ; TRealX::operator=(float)
+	__as__6TRealXi @ 1755 NONAME R3UNUSED ; TRealX::operator=(int)
+	__as__7HBufC16PCUs @ 1756 NONAME R3UNUSED ; HBufC16::operator=(unsigned short const *)
+	__as__7HBufC16RC7TDesC16 @ 1757 NONAME R3UNUSED ; HBufC16::operator=(TDesC16 const &)
+	__ashldi3 @ 1758 NONAME ; (null)
+	__ashrdi3 @ 1759 NONAME ; (null)
+	__builtin_delete @ 1760 NONAME R3UNUSED ; (null)
+	__builtin_new @ 1761 NONAME R3UNUSED ; (null)
+	__builtin_vec_delete @ 1762 NONAME R3UNUSED ; (null)
+	__builtin_vec_new @ 1763 NONAME R3UNUSED ; (null)
+	__cl__5RTesti @ 1764 NONAME R3UNUSED ; RTest::operator()(int)
+	__cl__5RTestii @ 1765 NONAME R3UNUSED ; RTest::operator()(int, int)
+	__cl__5RTestiiPCUs @ 1766 NONAME ; RTest::operator()(int, int, unsigned short const *)
+	__cmpdf3 @ 1767 NONAME ; (null)
+	__cmpdi2 @ 1768 NONAME ; (null)
+	__cmpsf3 @ 1769 NONAME ; (null)
+	__divdf3 @ 1770 NONAME ; (null)
+	__divdi3 @ 1771 NONAME ; (null)
+	__divsf3 @ 1772 NONAME ; (null)
+	__divsi3 @ 1773 NONAME R3UNUSED ; (null)
+	__dv__C6TRealXRC6TRealX @ 1774 NONAME R3UNUSED ; TRealX::operator/(TRealX const &) const
+	__eq__C4TUidRC4TUid @ 1775 NONAME R3UNUSED ; TUid::operator==(TUid const &) const
+	__eq__C5TRectRC5TRect @ 1776 NONAME R3UNUSED ; TRect::operator==(TRect const &) const
+	__eq__C5TSizeRC5TSize @ 1777 NONAME R3UNUSED ; TSize::operator==(TSize const &) const
+	__eq__C6TPointRC6TPoint @ 1778 NONAME R3UNUSED ; TPoint::operator==(TPoint const &) const
+	__eq__C8TUidTypeRC8TUidType @ 1779 NONAME R3UNUSED ; TUidType::operator==(TUidType const &) const
+	__eqdf2 @ 1780 NONAME ; (null)
+	__eqsf2 @ 1781 NONAME ; (null)
+	__extendsfdf2 @ 1782 NONAME ; (null)
+	__fixdfdi @ 1783 NONAME ; (null)
+	__fixdfsi @ 1784 NONAME ; (null)
+	__fixsfdi @ 1785 NONAME ; (null)
+	__fixsfsi @ 1786 NONAME ; (null)
+	__floatdidf @ 1787 NONAME ; (null)
+	__floatsidf @ 1788 NONAME R3UNUSED ; (null)
+	__floatsisf @ 1789 NONAME R3UNUSED ; (null)
+	__gedf2 @ 1790 NONAME ; (null)
+	__gesf2 @ 1791 NONAME ; (null)
+	__gtdf2 @ 1792 NONAME ; (null)
+	__gtsf2 @ 1793 NONAME ; (null)
+	__ledf2 @ 1794 NONAME ; (null)
+	__lesf2 @ 1795 NONAME ; (null)
+	__lshrdi3 @ 1796 NONAME ; (null)
+	__ltdf2 @ 1797 NONAME ; (null)
+	__ltsf2 @ 1798 NONAME ; (null)
+	__md__C6TRealXRC6TRealX @ 1799 NONAME R3UNUSED ; TRealX::operator%(TRealX const &) const
+	__mi__C5TSize @ 1800 NONAME R3UNUSED ; TSize::operator-(void) const
+	__mi__C5TSizeRC5TSize @ 1801 NONAME R3UNUSED ; TSize::operator-(TSize const &) const
+	__mi__C5TSizeRC6TPoint @ 1802 NONAME R3UNUSED ; TSize::operator-(TPoint const &) const
+	__mi__C5TTimeG17TTimeIntervalDays @ 1803 NONAME R3UNUSED ; TTime::operator-(TTimeIntervalDays) const
+	__mi__C5TTimeG18TTimeIntervalHours @ 1804 NONAME R3UNUSED ; TTime::operator-(TTimeIntervalHours) const
+	__mi__C5TTimeG18TTimeIntervalYears @ 1805 NONAME R3UNUSED ; TTime::operator-(TTimeIntervalYears) const
+	__mi__C5TTimeG19TTimeIntervalMonths @ 1806 NONAME R3UNUSED ; TTime::operator-(TTimeIntervalMonths) const
+	__mi__C5TTimeG20TTimeIntervalMinutes @ 1807 NONAME R3UNUSED ; TTime::operator-(TTimeIntervalMinutes) const
+	__mi__C5TTimeG20TTimeIntervalSeconds @ 1808 NONAME R3UNUSED ; TTime::operator-(TTimeIntervalSeconds) const
+	__mi__C5TTimeG25TTimeIntervalMicroSeconds @ 1809 NONAME ; TTime::operator-(TTimeIntervalMicroSeconds) const
+	__mi__C5TTimeG27TTimeIntervalMicroSeconds32 @ 1810 NONAME R3UNUSED ; TTime::operator-(TTimeIntervalMicroSeconds32) const
+	__mi__C6TPoint @ 1811 NONAME R3UNUSED ; TPoint::operator-(void) const
+	__mi__C6TPointRC5TSize @ 1812 NONAME R3UNUSED ; TPoint::operator-(TSize const &) const
+	__mi__C6TPointRC6TPoint @ 1813 NONAME R3UNUSED ; TPoint::operator-(TPoint const &) const
+	__mi__C6TRealX @ 1814 NONAME R3UNUSED ; TRealX::operator-(void) const
+	__mi__C6TRealXRC6TRealX @ 1815 NONAME R3UNUSED ; TRealX::operator-(TRealX const &) const
+	__ml__C6TRealXRC6TRealX @ 1816 NONAME R3UNUSED ; TRealX::operator*(TRealX const &) const
+	__mm__6TRealX @ 1817 NONAME R3UNUSED ; TRealX::operator--(void)
+	__mm__6TRealXi @ 1818 NONAME R3UNUSED ; TRealX::operator--(int)
+	__moddi3 @ 1819 NONAME ; (null)
+	__modsi3 @ 1820 NONAME R3UNUSED ; (null)
+	__muldf3 @ 1821 NONAME ; (null)
+	__muldi3 @ 1822 NONAME ; (null)
+	__mulsf3 @ 1823 NONAME ; (null)
+	__ne__C4TUidRC4TUid @ 1824 NONAME R3UNUSED ; TUid::operator!=(TUid const &) const
+	__ne__C5TRectRC5TRect @ 1825 NONAME R3UNUSED ; TRect::operator!=(TRect const &) const
+	__ne__C5TSizeRC5TSize @ 1826 NONAME R3UNUSED ; TSize::operator!=(TSize const &) const
+	__ne__C6TPointRC6TPoint @ 1827 NONAME R3UNUSED ; TPoint::operator!=(TPoint const &) const
+	__ne__C8TUidTypeRC8TUidType @ 1828 NONAME R3UNUSED ; TUidType::operator!=(TUidType const &) const
+	__nedf2 @ 1829 NONAME ; (null)
+	__negdf2 @ 1830 NONAME ; (null)
+	__negdi2 @ 1831 NONAME ; (null)
+	__negsf2 @ 1832 NONAME ; (null)
+	__nesf2 @ 1833 NONAME ; (null)
+	__nw__5RHeapUiPv @ 1834 NONAME R3UNUSED ; RHeap::operator new(unsigned int, void *)
+	__nw__FUiUi @ 1835 NONAME R3UNUSED ; operator new(unsigned int, unsigned int)
+	__opUi__C6TRealX @ 1836 NONAME R3UNUSED ; TRealX::operator unsigned int(void) const
+	__opd__C6TRealX @ 1837 NONAME R3UNUSED ; TRealX::operator double(void) const
+	__opf__C6TRealX @ 1838 NONAME R3UNUSED ; TRealX::operator float(void) const
+	__opi__C6TRealX @ 1839 NONAME R3UNUSED ; TRealX::operator int(void) const
+	__opx__C6TRealX @ 1840 NONAME R3UNUSED ; TRealX::operator long long(void) const
+	__pl__C5TSizeRC5TSize @ 1841 NONAME R3UNUSED ; TSize::operator+(TSize const &) const
+	__pl__C5TSizeRC6TPoint @ 1842 NONAME R3UNUSED ; TSize::operator+(TPoint const &) const
+	__pl__C5TTimeG17TTimeIntervalDays @ 1843 NONAME R3UNUSED ; TTime::operator+(TTimeIntervalDays) const
+	__pl__C5TTimeG18TTimeIntervalHours @ 1844 NONAME R3UNUSED ; TTime::operator+(TTimeIntervalHours) const
+	__pl__C5TTimeG18TTimeIntervalYears @ 1845 NONAME R3UNUSED ; TTime::operator+(TTimeIntervalYears) const
+	__pl__C5TTimeG19TTimeIntervalMonths @ 1846 NONAME R3UNUSED ; TTime::operator+(TTimeIntervalMonths) const
+	__pl__C5TTimeG20TTimeIntervalMinutes @ 1847 NONAME R3UNUSED ; TTime::operator+(TTimeIntervalMinutes) const
+	__pl__C5TTimeG20TTimeIntervalSeconds @ 1848 NONAME R3UNUSED ; TTime::operator+(TTimeIntervalSeconds) const
+	__pl__C5TTimeG25TTimeIntervalMicroSeconds @ 1849 NONAME ; TTime::operator+(TTimeIntervalMicroSeconds) const
+	__pl__C5TTimeG27TTimeIntervalMicroSeconds32 @ 1850 NONAME R3UNUSED ; TTime::operator+(TTimeIntervalMicroSeconds32) const
+	__pl__C6TPointRC5TSize @ 1851 NONAME R3UNUSED ; TPoint::operator+(TSize const &) const
+	__pl__C6TPointRC6TPoint @ 1852 NONAME R3UNUSED ; TPoint::operator+(TPoint const &) const
+	__pl__C6TRealX @ 1853 NONAME R3UNUSED ; TRealX::operator+(void) const
+	__pl__C6TRealXRC6TRealX @ 1854 NONAME R3UNUSED ; TRealX::operator+(TRealX const &) const
+	__pp__6TRealX @ 1855 NONAME R3UNUSED ; TRealX::operator++(void)
+	__pp__6TRealXi @ 1856 NONAME R3UNUSED ; TRealX::operator++(int)
+	__pure_virtual @ 1857 NONAME R3UNUSED ; (null)
+	__subdf3 @ 1858 NONAME ; (null)
+	__subsf3 @ 1859 NONAME ; (null)
+	__t13CArrayFixFlat1Z4TUidi @ 1860 NONAME R3UNUSED ; CArrayFixFlat<TUid>::CArrayFixFlat(int)
+	__t13CArrayFixFlat1Zii @ 1861 NONAME R3UNUSED ; CArrayFixFlat<int>::CArrayFixFlat(int)
+	__truncdfsf2 @ 1862 NONAME ; (null)
+	__ucmpdi2 @ 1863 NONAME ; (null)
+	__udivdi3 @ 1864 NONAME ; (null)
+	__udivmoddi4 @ 1865 NONAME ; (null)
+	__udivsi3 @ 1866 NONAME R3UNUSED ; (null)
+	__umoddi3 @ 1867 NONAME ; (null)
+	__umodsi3 @ 1868 NONAME R3UNUSED ; (null)
+	__vc__10CObjectConi @ 1869 NONAME R3UNUSED ; CObjectCon::operator[](int)
+	__vc__9CObjectIxi @ 1870 NONAME R3UNUSED ; CObjectIx::operator[](int)
+	__vc__C7TRegioni @ 1871 NONAME R3UNUSED ; TRegion::operator[](int) const
+	__vc__C8TUidTypei @ 1872 NONAME R3UNUSED ; TUidType::operator[](int) const
+	memclr @ 1873 NONAME R3UNUSED ; (null)
+	memcompare @ 1874 NONAME ; (null)
+	memmove @ 1875 NONAME R3UNUSED ; (null)
+	Define__9RPropertyUiiRC15TSecurityPolicyT3i @ 1876 NONAME ; RProperty::Define(unsigned int, int, TSecurityPolicy const &, TSecurityPolicy const &, int)
+	Extension___10RAllocatorUiRPvPv @ 1877 NONAME ; RAllocator::Extension_(unsigned int, void *&, void *)
+	GetLastErrorInfo__14TBusLocalDriveR5TDes8 @ 1878 NONAME R3UNUSED ; TBusLocalDrive::GetLastErrorInfo(TDes8 &)
+	Open__12RSessionBaseG12RMessagePtr2iRC15TSecurityPolicy10TOwnerType @ 1879 NONAME ; RSessionBase::Open(RMessagePtr2, int, TSecurityPolicy const &, TOwnerType)
+	Open__12RSessionBaseiRC15TSecurityPolicy10TOwnerType @ 1880 NONAME ; RSessionBase::Open(int, TSecurityPolicy const &, TOwnerType)
+	SetReturnedHandle__12RSessionBaseiRC15TSecurityPolicy @ 1881 NONAME R3UNUSED ; RSessionBase::SetReturnedHandle(int, TSecurityPolicy const &)
+	Delete__9RPropertyUi @ 1882 NONAME R3UNUSED ; RProperty::Delete(unsigned int)
+	ConsistencyCheck__14RHashTableBasePUlT1UlT1 @ 1883 NONAME ; RHashTableBase::ConsistencyCheck(unsigned long *, unsigned long *, unsigned long, unsigned long *)
+	Count__C14RHashTableBase @ 1884 NONAME R3UNUSED ; RHashTableBase::Count(void) const
+	Current__C18THashTableIterBasei @ 1885 NONAME R3UNUSED ; THashTableIterBase::Current(int) const
+	Des16__11DefaultHashRC7TDesC16 @ 1886 NONAME R3UNUSED ; DefaultHash::Des16(TDesC16 const &)
+	Des16__15DefaultIdentityRC7TDesC16T1 @ 1887 NONAME R3UNUSED ; DefaultIdentity::Des16(TDesC16 const &, TDesC16 const &)
+	Des8__11DefaultHashRC6TDesC8 @ 1888 NONAME R3UNUSED ; DefaultHash::Des8(TDesC8 const &)
+	Des8__15DefaultIdentityRC6TDesC8T1 @ 1889 NONAME R3UNUSED ; DefaultIdentity::Des8(TDesC8 const &, TDesC8 const &)
+	Find__C14RHashTableBasePCvi @ 1890 NONAME R3UNUSED ; RHashTableBase::Find(void const *, int) const
+	Close__14RHashTableBase @ 1891 NONAME R3UNUSED ; RHashTableBase::Close(void)
+	Integer__11DefaultHashRCi @ 1892 NONAME R3UNUSED ; DefaultHash::Integer(int const &)
+	Integer__15DefaultIdentityRCiT1 @ 1893 NONAME R3UNUSED ; DefaultIdentity::Integer(int const &, int const &)
+	Next__18THashTableIterBasei @ 1894 NONAME R3UNUSED ; THashTableIterBase::Next(int)
+	PtrInsert__14RHashTableBasePCvT1 @ 1895 NONAME R3UNUSED ; RHashTableBase::PtrInsert(void const *, void const *)
+	Remove__14RHashTableBasePCv @ 1896 NONAME R3UNUSED ; RHashTableBase::Remove(void const *)
+	Reset__18THashTableIterBase @ 1897 NONAME R3UNUSED ; THashTableIterBase::Reset(void)
+	ValueInsert__14RHashTableBasePCviT1ii @ 1898 NONAME ; RHashTableBase::ValueInsert(void const *, int, void const *, int, int)
+	__14RHashTableBasePFPCv_UlPFPCvPCv_iii @ 1899 NONAME ; RHashTableBase::RHashTableBase(unsigned long (*)(void const *), int (*)(void const *, void const *), int, int)
+	__18THashTableIterBaseRC14RHashTableBase @ 1900 NONAME R3UNUSED ; THashTableIterBase::THashTableIterBase(RHashTableBase const &)
+	FindL__C14RHashTableBasePCvi @ 1901 NONAME R3UNUSED ; RHashTableBase::FindL(void const *, int) const
+	PtrInsertL__14RHashTableBasePCvT1 @ 1902 NONAME R3UNUSED ; RHashTableBase::PtrInsertL(void const *, void const *)
+	ValueInsertL__14RHashTableBasePCviT1ii @ 1903 NONAME ; RHashTableBase::ValueInsertL(void const *, int, void const *, int, int)
+	ReserveL__14RHashTableBasei @ 1904 NONAME R3UNUSED ; RHashTableBase::ReserveL(int)
+	Reserve__14RHashTableBasei @ 1905 NONAME R3UNUSED ; RHashTableBase::Reserve(int)
+	DoCheckPolicyCreator__C15TSecurityPolicy @ 1906 NONAME R3UNUSED ; TSecurityPolicy::DoCheckPolicyCreator(void) const
+	DoCheckPolicyCreator__C15TSecurityPolicyPCc @ 1907 NONAME R3UNUSED ; TSecurityPolicy::DoCheckPolicyCreator(char const *) const
+	ClientStatus__C12RMessagePtr2 @ 1908 NONAME R3UNUSED ; RMessagePtr2::ClientStatus(void) const
+	RemoveCurrent__18THashTableIterBase @ 1909 NONAME R3UNUSED ; THashTableIterBase::RemoveCurrent(void)
+	DoReserve__10RArrayBasei @ 1910 NONAME R3UNUSED ; RArrayBase::DoReserve(int)
+	DoReserve__17RPointerArrayBasei @ 1911 NONAME R3UNUSED ; RPointerArrayBase::DoReserve(int)
+	SetFloatingPointMode__4User18TFloatingPointMode26TFloatingPointRoundingMode @ 1912 NONAME R3UNUSED ; User::SetFloatingPointMode(TFloatingPointMode, TFloatingPointRoundingMode)
+	FindReverse__C10RArrayBasePCv @ 1913 NONAME R3UNUSED ; RArrayBase::FindReverse(void const *) const
+	FindReverse__C10RArrayBasePCvPFPCvPCv_i @ 1914 NONAME R3UNUSED ; RArrayBase::FindReverse(void const *, int (*)(void const *, void const *)) const
+	FindReverse__C17RPointerArrayBasePCv @ 1915 NONAME R3UNUSED ; RPointerArrayBase::FindReverse(void const *) const
+	FindReverse__C17RPointerArrayBasePCvPFPCvPCv_i @ 1916 NONAME R3UNUSED ; RPointerArrayBase::FindReverse(void const *, int (*)(void const *, void const *)) const
+	DllSetTls__7UserSvriiPv @ 1917 NONAME R3UNUSED ; UserSvr::DllSetTls(int, int, void *)
+	DllTls__7UserSvrii @ 1918 NONAME R3UNUSED ; UserSvr::DllTls(int, int)
+	OutNX__6BTraceUlUlUlPCvi @ 1919 NONAME ; BTrace::OutNX(unsigned long, unsigned long, unsigned long, void const *, int)
+	OutN__6BTraceUlUlUlPCvi @ 1920 NONAME ; BTrace::OutN(unsigned long, unsigned long, unsigned long, void const *, int)
+	OutX__6BTraceUlUlUlUl @ 1921 NONAME ; BTrace::OutX(unsigned long, unsigned long, unsigned long, unsigned long)
+	Out__6BTraceUlUlUlUl @ 1922 NONAME ; BTrace::Out(unsigned long, unsigned long, unsigned long, unsigned long)
+	Critical__4UserG7RThread @ 1923 NONAME R3UNUSED ; User::Critical(RThread)
+	ProcessCritical__4UserG8RProcess @ 1924 NONAME R3UNUSED ; User::ProcessCritical(RProcess)
+	CancelLazyDllUnload__7RLoader @ 1925 NONAME R3UNUSED ; RLoader::CancelLazyDllUnload(void)
+	RawPrint__6RDebugRC6TDesC8 @ 1926 NONAME R3UNUSED ; RDebug::RawPrint(TDesC8 const &)
+	SetRealtimeState__4UserQ24User14TRealtimeState @ 1927 NONAME R3UNUSED ; User::SetRealtimeState(User::TRealtimeState)
+	Des16Ptr__11DefaultHashRCP7TDesC16 @ 1928 NONAME R3UNUSED ; DefaultHash::Des16Ptr(TDesC16 *const &)
+	Des16Ptr__15DefaultIdentityRCP7TDesC16T1 @ 1929 NONAME R3UNUSED ; DefaultIdentity::Des16Ptr(TDesC16 *const &, TDesC16 *const &)
+	Des8Ptr__11DefaultHashRCP6TDesC8 @ 1930 NONAME R3UNUSED ; DefaultHash::Des8Ptr(TDesC8 *const &)
+	Des8Ptr__15DefaultIdentityRCP6TDesC8T1 @ 1931 NONAME R3UNUSED ; DefaultIdentity::Des8Ptr(TDesC8 *const &, TDesC8 *const &)
+	IntegerPtr__11DefaultHashRCPi @ 1932 NONAME R3UNUSED ; DefaultHash::IntegerPtr(int *const &)
+	IntegerPtr__15DefaultIdentityRCPiT1 @ 1933 NONAME R3UNUSED ; DefaultIdentity::IntegerPtr(int *const &, int *const &)
+	OffsetChunkHeap__8UserHeapG6RChunkiiiiiiUl @ 1934 NONAME ; UserHeap::OffsetChunkHeap(RChunk, int, int, int, int, int, int, unsigned long)
+	KHeapMinCellSize @ 1935 NONAME ; (null)
+	Intersects__C7TRegionRC5TRect @ 1936 NONAME R3UNUSED ; TRegion::Intersects(TRect const &) const
+	KHeapShrinkHysRatio @ 1937 NONAME ; (null)
+	GetCollationKeysL__C7TDesC16iPC16TCollationMethod @ 1938 NONAME R3UNUSED ; TDesC16::GetCollationKeysL(int, TCollationMethod const *) const
+	GetFoldedDecomposedFormL__C7TDesC16 @ 1939 NONAME R3UNUSED ; TDesC16::GetFoldedDecomposedFormL(void) const
+	GetNormalizedDecomposedFormL__C7TDesC16 @ 1940 NONAME R3UNUSED ; TDesC16::GetNormalizedDecomposedFormL(void) const
+	MatchC__C7TDesC16RC7TDesC16iiiiPC16TCollationMethod @ 1941 NONAME ; TDesC16::MatchC(TDesC16 const &, int, int, int, int, TCollationMethod const *) const
+	Delete__7RLoaderRC7TDesC16 @ 1942 NONAME R3UNUSED ; RLoader::Delete(TDesC16 const &)
+	FullName__C11RHandleBaseR6TDes16 @ 1943 NONAME R3UNUSED ; RHandleBase::FullName(TDes16 &) const
+	OutFilteredBig__6BTraceUlUlPCvi @ 1944 NONAME ; BTrace::OutFilteredBig(unsigned long, unsigned long, void const *, int)
+	OutFilteredNX__6BTraceUlUlUlPCvi @ 1945 NONAME ; BTrace::OutFilteredNX(unsigned long, unsigned long, unsigned long, void const *, int)
+	OutFilteredN__6BTraceUlUlUlPCvi @ 1946 NONAME ; BTrace::OutFilteredN(unsigned long, unsigned long, unsigned long, void const *, int)
+	OutFilteredX__6BTraceUlUlUlUl @ 1947 NONAME ; BTrace::OutFilteredX(unsigned long, unsigned long, unsigned long, unsigned long)
+	OutFiltered__6BTraceUlUlUlUl @ 1948 NONAME ; BTrace::OutFiltered(unsigned long, unsigned long, unsigned long, unsigned long)
+	CheckFilter2__6BTraceUlUl @ 1949 NONAME R3UNUSED ; BTrace::CheckFilter2(unsigned long, unsigned long)
+	CheckFilter__6BTraceUl @ 1950 NONAME R3UNUSED ; BTrace::CheckFilter(unsigned long)
+	OutBig__6BTraceUlUlPCvi @ 1951 NONAME ; BTrace::OutBig(unsigned long, unsigned long, void const *, int)
+	CheckLibraryHash__7RLoaderRC7TDesC16i @ 1952 NONAME R3UNUSED ; RLoader::CheckLibraryHash(TDesC16 const &, int)
+	WaitForNRequest__4UserPP14TRequestStatusi @ 1953 NONAME R3UNUSED ; User::WaitForNRequest(TRequestStatus **, int)
+	GetCurrencySymbol__15TExtendedLocale @ 1954 NONAME R3UNUSED ; TExtendedLocale::GetCurrencySymbol(void)
+	GetLongDateFormatSpec__15TExtendedLocale @ 1955 NONAME R3UNUSED ; TExtendedLocale::GetLongDateFormatSpec(void)
+	GetShortDateFormatSpec__15TExtendedLocale @ 1956 NONAME R3UNUSED ; TExtendedLocale::GetShortDateFormatSpec(void)
+	GetTimeFormatSpec__15TExtendedLocale @ 1957 NONAME R3UNUSED ; TExtendedLocale::GetTimeFormatSpec(void)
+	CreateWithStackOverride__8RProcessRC7TDesC16T1RC8TUidTypei10TOwnerType @ 1958 NONAME ; RProcess::CreateWithStackOverride(TDesC16 const &, TDesC16 const &, TUidType const &, int, TOwnerType)
+	ExeExportData__8RProcess @ 1959 NONAME R3UNUSED ; RProcess::ExeExportData(void)
+	MatchC__C7TDesC16RC7TDesC16PC16TCollationMethodiiii @ 1960 NONAME ; TDesC16::MatchC(TDesC16 const &, TCollationMethod const *, int, int, int, int) const
+	PagingPolicy__9E32Loader @ 1961 NONAME R3UNUSED ; E32Loader::PagingPolicy(void)
+	GetDestroyedCodeSegInfo__9E32LoaderR20TCodeSegLoaderCookie @ 1962 NONAME R3UNUSED ; E32Loader::GetDestroyedCodeSegInfo(TCodeSegLoaderCookie &)
+	NotifyIfCodeSegDestroyed__9E32LoaderR14TRequestStatus @ 1963 NONAME R3UNUSED ; E32Loader::NotifyIfCodeSegDestroyed(TRequestStatus &)
+	Lock__6RChunkii @ 1964 NONAME R3UNUSED ; RChunk::Lock(int, int)
+	Unlock__6RChunkii @ 1965 NONAME R3UNUSED ; RChunk::Unlock(int, int)
+	FormatL__C5TTimeR6TDes16RC7TDesC16RC7TLocale @ 1966 NONAME ; TTime::FormatL(TDes16 &, TDesC16 const &, TLocale const &) const
+	FindC__C7TDesC16RC7TDesC16RiRC16TCollationMethodi @ 1967 NONAME ; TDesC16::FindC(TDesC16 const &, int &, TCollationMethod const &, int) const
+	HomeTimeSecure__5TTime @ 1968 NONAME R3UNUSED ; TTime::HomeTimeSecure(void)
+	SetHomeTimeSecure__4UserRC5TTime @ 1969 NONAME R3UNUSED ; User::SetHomeTimeSecure(TTime const &)
+	SetUTCTimeSecure__4UserRC5TTime @ 1970 NONAME R3UNUSED ; User::SetUTCTimeSecure(TTime const &)
+	UniversalTimeSecure__5TTime @ 1971 NONAME R3UNUSED ; TTime::UniversalTimeSecure(void)
+	SetWin32RuntimeHook__4ExecPv @ 1972 NONAME R3UNUSED ; Exec::SetWin32RuntimeHook(void *)
+	BTraceId__C11RHandleBase @ 1973 NONAME R3UNUSED ; RHandleBase::BTraceId(void) const
+	CancelMiscNotifier__4UserR14TRequestStatus @ 1974 NONAME R3UNUSED ; User::CancelMiscNotifier(TRequestStatus &)
+	CloseHandleAndWaitForDestruction__5RTestR11RHandleBase @ 1975 NONAME R3UNUSED ; RTest::CloseHandleAndWaitForDestruction(RHandleBase &)
+	NotifyDestruction__11RHandleBaseR14TRequestStatus @ 1976 NONAME R3UNUSED ; RHandleBase::NotifyDestruction(TRequestStatus &)
+	NotifyOnIdle__4UserR14TRequestStatus @ 1977 NONAME R3UNUSED ; User::NotifyOnIdle(TRequestStatus &)
+	__DbgCheckFailure__10RAllocator @ 1978 NONAME R3UNUSED ; RAllocator::__DbgCheckFailure(void)
+	__DbgCheckFailure__4Useri @ 1979 NONAME R3UNUSED ; User::__DbgCheckFailure(int)
+	__DbgSetBurstAllocFail__10RAllocatorQ210RAllocator10TAllocFailUiUi @ 1980 NONAME ; RAllocator::__DbgSetBurstAllocFail(RAllocator::TAllocFail, unsigned int, unsigned int)
+	__DbgSetBurstAllocFail__4UseriQ210RAllocator10TAllocFailUiUi @ 1981 NONAME ; User::__DbgSetBurstAllocFail(int, RAllocator::TAllocFail, unsigned int, unsigned int)
+	Overflow__19TDes8IgnoreOverflowR5TDes8 @ 1982 NONAME R3UNUSED ; TDes8IgnoreOverflow::Overflow(TDes8 &)
+	Overflow__20TDes16IgnoreOverflowR6TDes16 @ 1983 NONAME R3UNUSED ; TDes16IgnoreOverflow::Overflow(TDes16 &)
+	RegisterTrustedChunk__7UserSvri @ 1984 NONAME R3UNUSED ; UserSvr::RegisterTrustedChunk(int)
+	Create__6RChunkR16TChunkCreateInfo @ 1985 NONAME R3UNUSED ; RChunk::Create(TChunkCreateInfo &)
+	SetClearByte__16TChunkCreateInfoUc @ 1986 NONAME R3UNUSED ; TChunkCreateInfo::SetClearByte(unsigned char)
+	SetCode__16TChunkCreateInfoii @ 1987 NONAME R3UNUSED ; TChunkCreateInfo::SetCode(int, int)
+	SetDisconnected__16TChunkCreateInfoiii @ 1988 NONAME ; TChunkCreateInfo::SetDisconnected(int, int, int)
+	SetDoubleEnded__16TChunkCreateInfoiii @ 1989 NONAME ; TChunkCreateInfo::SetDoubleEnded(int, int, int)
+	SetGlobal__16TChunkCreateInfoRC7TDesC16 @ 1990 NONAME R3UNUSED ; TChunkCreateInfo::SetGlobal(TDesC16 const &)
+	SetNormal__16TChunkCreateInfoii @ 1991 NONAME R3UNUSED ; TChunkCreateInfo::SetNormal(int, int)
+	SetOwner__16TChunkCreateInfo10TOwnerType @ 1992 NONAME R3UNUSED ; TChunkCreateInfo::SetOwner(TOwnerType)
+	__16TChunkCreateInfo @ 1993 NONAME R3UNUSED ; TChunkCreateInfo::TChunkCreateInfo(void)
+	Set__9TRawEventQ29TRawEvent5TTypeiiiUc @ 1994 NONAME ; TRawEvent::Set(TRawEvent::TType, int, int, int, unsigned char)
+	AsPoint__C8TPoint3D @ 1995 NONAME R3UNUSED ; TPoint3D::AsPoint(void) const
+	SetPoint__8TPoint3DRC6TPoint @ 1996 NONAME R3UNUSED ; TPoint3D::SetPoint(TPoint const &)
+	SetXYZ__8TPoint3Diii @ 1997 NONAME ; TPoint3D::SetXYZ(int, int, int)
+	__ami__8TPoint3DRC6TPoint @ 1998 NONAME R3UNUSED ; TPoint3D::operator-=(TPoint const &)
+	__ami__8TPoint3DRC8TPoint3D @ 1999 NONAME R3UNUSED ; TPoint3D::operator-=(TPoint3D const &)
+	__apl__8TPoint3DRC6TPoint @ 2000 NONAME R3UNUSED ; TPoint3D::operator+=(TPoint const &)
+	__apl__8TPoint3DRC8TPoint3D @ 2001 NONAME R3UNUSED ; TPoint3D::operator+=(TPoint3D const &)
+	__eq__C8TPoint3DRC8TPoint3D @ 2002 NONAME R3UNUSED ; TPoint3D::operator==(TPoint3D const &) const
+	__mi__C8TPoint3D @ 2003 NONAME R3UNUSED ; TPoint3D::operator-(void) const
+	__mi__C8TPoint3DRC6TPoint @ 2004 NONAME R3UNUSED ; TPoint3D::operator-(TPoint const &) const
+	__mi__C8TPoint3DRC8TPoint3D @ 2005 NONAME R3UNUSED ; TPoint3D::operator-(TPoint3D const &) const
+	__ne__C8TPoint3DRC8TPoint3D @ 2006 NONAME R3UNUSED ; TPoint3D::operator!=(TPoint3D const &) const
+	__pl__C8TPoint3DRC6TPoint @ 2007 NONAME R3UNUSED ; TPoint3D::operator+(TPoint const &) const
+	__pl__C8TPoint3DRC8TPoint3D @ 2008 NONAME R3UNUSED ; TPoint3D::operator+(TPoint3D const &) const
+	__e32_atomic_add_acq16 @ 2009 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_acq32 @ 2010 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_acq64 @ 2011 NONAME ; (null)
+	__e32_atomic_add_acq8 @ 2012 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_ord16 @ 2013 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_ord32 @ 2014 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_ord64 @ 2015 NONAME ; (null)
+	__e32_atomic_add_ord8 @ 2016 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_rel16 @ 2017 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_rel32 @ 2018 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_rel64 @ 2019 NONAME ; (null)
+	__e32_atomic_add_rel8 @ 2020 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_rlx16 @ 2021 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_rlx32 @ 2022 NONAME R3UNUSED ; (null)
+	__e32_atomic_add_rlx64 @ 2023 NONAME ; (null)
+	__e32_atomic_add_rlx8 @ 2024 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_acq16 @ 2025 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_acq32 @ 2026 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_acq64 @ 2027 NONAME ; (null)
+	__e32_atomic_and_acq8 @ 2028 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_ord16 @ 2029 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_ord32 @ 2030 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_ord64 @ 2031 NONAME ; (null)
+	__e32_atomic_and_ord8 @ 2032 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_rel16 @ 2033 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_rel32 @ 2034 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_rel64 @ 2035 NONAME ; (null)
+	__e32_atomic_and_rel8 @ 2036 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_rlx16 @ 2037 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_rlx32 @ 2038 NONAME R3UNUSED ; (null)
+	__e32_atomic_and_rlx64 @ 2039 NONAME ; (null)
+	__e32_atomic_and_rlx8 @ 2040 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_acq16 @ 2041 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_acq32 @ 2042 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_acq64 @ 2043 NONAME ; (null)
+	__e32_atomic_axo_acq8 @ 2044 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_ord16 @ 2045 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_ord32 @ 2046 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_ord64 @ 2047 NONAME ; (null)
+	__e32_atomic_axo_ord8 @ 2048 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_rel16 @ 2049 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_rel32 @ 2050 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_rel64 @ 2051 NONAME ; (null)
+	__e32_atomic_axo_rel8 @ 2052 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_rlx16 @ 2053 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_rlx32 @ 2054 NONAME R3UNUSED ; (null)
+	__e32_atomic_axo_rlx64 @ 2055 NONAME ; (null)
+	__e32_atomic_axo_rlx8 @ 2056 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_acq16 @ 2057 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_acq32 @ 2058 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_acq64 @ 2059 NONAME ; (null)
+	__e32_atomic_cas_acq8 @ 2060 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_ord16 @ 2061 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_ord32 @ 2062 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_ord64 @ 2063 NONAME ; (null)
+	__e32_atomic_cas_ord8 @ 2064 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_rel16 @ 2065 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_rel32 @ 2066 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_rel64 @ 2067 NONAME ; (null)
+	__e32_atomic_cas_rel8 @ 2068 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_rlx16 @ 2069 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_rlx32 @ 2070 NONAME R3UNUSED ; (null)
+	__e32_atomic_cas_rlx64 @ 2071 NONAME ; (null)
+	__e32_atomic_cas_rlx8 @ 2072 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_acq16 @ 2073 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_acq32 @ 2074 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_acq64 @ 2075 NONAME ; (null)
+	__e32_atomic_ior_acq8 @ 2076 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_ord16 @ 2077 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_ord32 @ 2078 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_ord64 @ 2079 NONAME ; (null)
+	__e32_atomic_ior_ord8 @ 2080 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_rel16 @ 2081 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_rel32 @ 2082 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_rel64 @ 2083 NONAME ; (null)
+	__e32_atomic_ior_rel8 @ 2084 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_rlx16 @ 2085 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_rlx32 @ 2086 NONAME R3UNUSED ; (null)
+	__e32_atomic_ior_rlx64 @ 2087 NONAME ; (null)
+	__e32_atomic_ior_rlx8 @ 2088 NONAME R3UNUSED ; (null)
+	__e32_atomic_load_acq16 @ 2089 NONAME R3UNUSED ; (null)
+	__e32_atomic_load_acq32 @ 2090 NONAME R3UNUSED ; (null)
+	__e32_atomic_load_acq64 @ 2091 NONAME R3UNUSED ; (null)
+	__e32_atomic_load_acq8 @ 2092 NONAME R3UNUSED ; (null)
+	__e32_atomic_store_ord16 @ 2093 NONAME R3UNUSED ; (null)
+	__e32_atomic_store_ord32 @ 2094 NONAME R3UNUSED ; (null)
+	__e32_atomic_store_ord64 @ 2095 NONAME ; (null)
+	__e32_atomic_store_ord8 @ 2096 NONAME R3UNUSED ; (null)
+	__e32_atomic_store_rel16 @ 2097 NONAME R3UNUSED ; (null)
+	__e32_atomic_store_rel32 @ 2098 NONAME R3UNUSED ; (null)
+	__e32_atomic_store_rel64 @ 2099 NONAME ; (null)
+	__e32_atomic_store_rel8 @ 2100 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_acq16 @ 2101 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_acq32 @ 2102 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_acq64 @ 2103 NONAME ; (null)
+	__e32_atomic_swp_acq8 @ 2104 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_ord16 @ 2105 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_ord32 @ 2106 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_ord64 @ 2107 NONAME ; (null)
+	__e32_atomic_swp_ord8 @ 2108 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_rel16 @ 2109 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_rel32 @ 2110 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_rel64 @ 2111 NONAME ; (null)
+	__e32_atomic_swp_rel8 @ 2112 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_rlx16 @ 2113 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_rlx32 @ 2114 NONAME R3UNUSED ; (null)
+	__e32_atomic_swp_rlx64 @ 2115 NONAME ; (null)
+	__e32_atomic_swp_rlx8 @ 2116 NONAME R3UNUSED ; (null)
+	__e32_atomic_tas_acq16 @ 2117 NONAME ; (null)
+	__e32_atomic_tas_acq32 @ 2118 NONAME ; (null)
+	__e32_atomic_tas_acq64 @ 2119 NONAME ; (null)
+	__e32_atomic_tas_acq8 @ 2120 NONAME ; (null)
+	__e32_atomic_tas_ord16 @ 2121 NONAME ; (null)
+	__e32_atomic_tas_ord32 @ 2122 NONAME ; (null)
+	__e32_atomic_tas_ord64 @ 2123 NONAME ; (null)
+	__e32_atomic_tas_ord8 @ 2124 NONAME ; (null)
+	__e32_atomic_tas_rel16 @ 2125 NONAME ; (null)
+	__e32_atomic_tas_rel32 @ 2126 NONAME ; (null)
+	__e32_atomic_tas_rel64 @ 2127 NONAME ; (null)
+	__e32_atomic_tas_rel8 @ 2128 NONAME ; (null)
+	__e32_atomic_tas_rlx16 @ 2129 NONAME ; (null)
+	__e32_atomic_tas_rlx32 @ 2130 NONAME ; (null)
+	__e32_atomic_tas_rlx64 @ 2131 NONAME ; (null)
+	__e32_atomic_tas_rlx8 @ 2132 NONAME ; (null)
+	__e32_atomic_tau_acq16 @ 2133 NONAME ; (null)
+	__e32_atomic_tau_acq32 @ 2134 NONAME ; (null)
+	__e32_atomic_tau_acq64 @ 2135 NONAME ; (null)
+	__e32_atomic_tau_acq8 @ 2136 NONAME ; (null)
+	__e32_atomic_tau_ord16 @ 2137 NONAME ; (null)
+	__e32_atomic_tau_ord32 @ 2138 NONAME ; (null)
+	__e32_atomic_tau_ord64 @ 2139 NONAME ; (null)
+	__e32_atomic_tau_ord8 @ 2140 NONAME ; (null)
+	__e32_atomic_tau_rel16 @ 2141 NONAME ; (null)
+	__e32_atomic_tau_rel32 @ 2142 NONAME ; (null)
+	__e32_atomic_tau_rel64 @ 2143 NONAME ; (null)
+	__e32_atomic_tau_rel8 @ 2144 NONAME ; (null)
+	__e32_atomic_tau_rlx16 @ 2145 NONAME ; (null)
+	__e32_atomic_tau_rlx32 @ 2146 NONAME ; (null)
+	__e32_atomic_tau_rlx64 @ 2147 NONAME ; (null)
+	__e32_atomic_tau_rlx8 @ 2148 NONAME ; (null)
+	__e32_atomic_xor_acq16 @ 2149 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_acq32 @ 2150 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_acq64 @ 2151 NONAME ; (null)
+	__e32_atomic_xor_acq8 @ 2152 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_ord16 @ 2153 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_ord32 @ 2154 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_ord64 @ 2155 NONAME ; (null)
+	__e32_atomic_xor_ord8 @ 2156 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_rel16 @ 2157 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_rel32 @ 2158 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_rel64 @ 2159 NONAME ; (null)
+	__e32_atomic_xor_rel8 @ 2160 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_rlx16 @ 2161 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_rlx32 @ 2162 NONAME R3UNUSED ; (null)
+	__e32_atomic_xor_rlx64 @ 2163 NONAME ; (null)
+	__e32_atomic_xor_rlx8 @ 2164 NONAME R3UNUSED ; (null)
+	__e32_bit_count_32 @ 2165 NONAME
+	__e32_bit_count_64 @ 2166 NONAME
+	__e32_find_ls1_32 @ 2167 NONAME
+	__e32_find_ls1_64 @ 2168 NONAME
+	__e32_find_ms1_32 @ 2169 NONAME
+	__e32_find_ms1_64 @ 2170 NONAME
+	__e32_io_completion_barrier @ 2171 NONAME
+	__e32_memory_barrier @ 2172 NONAME R3UNUSED ; (null)
+	ChunkHeap__8UserHeapRC20TChunkHeapCreateInfo @ 2173 NONAME R3UNUSED ; UserHeap::ChunkHeap(TChunkHeapCreateInfo const &)
+	ControlIO__14TBusLocalDriveiR5TDes8i @ 2174 NONAME ; TBusLocalDrive::ControlIO(int, TDes8 &, int)
+	ControlIO__14TBusLocalDriveiR6TDesC8i @ 2175 NONAME ; TBusLocalDrive::ControlIO(int, TDesC8 &, int)
+	ControlIO__14TBusLocalDriveiii @ 2176 NONAME ; TBusLocalDrive::ControlIO(int, int, int)
+	Create__7RThreadRC17TThreadCreateInfo @ 2177 NONAME R3UNUSED ; RThread::Create(TThreadCreateInfo const &)
+	DefaultDataPaged__C8RProcess @ 2178 NONAME R3UNUSED ; RProcess::DefaultDataPaged(void) const
+	IsPaged__C6RChunk @ 2179 NONAME R3UNUSED ; RChunk::IsPaged(void) const
+	QueryDevice__14TBusLocalDriveQ211RLocalDrive12TQueryDeviceR5TDes8 @ 2180 NONAME R3UNUSED ; TBusLocalDrive::QueryDevice(RLocalDrive::TQueryDevice, TDes8 &)
+	SetCreateChunk__20TChunkHeapCreateInfoPC7TDesC16 @ 2181 NONAME R3UNUSED ; TChunkHeapCreateInfo::SetCreateChunk(TDesC16 const *)
+	SetCreateHeap__17TThreadCreateInfoii @ 2182 NONAME R3UNUSED ; TThreadCreateInfo::SetCreateHeap(int, int)
+	SetOwner__17TThreadCreateInfo10TOwnerType @ 2183 NONAME R3UNUSED ; TThreadCreateInfo::SetOwner(TOwnerType)
+	SetPaging__16TChunkCreateInfoQ216TChunkCreateInfo15TChunkPagingAtt @ 2184 NONAME R3UNUSED ; TChunkCreateInfo::SetPaging(TChunkCreateInfo::TChunkPagingAtt)
+	SetPaging__17TThreadCreateInfoQ217TThreadCreateInfo16TThreadPagingAtt @ 2185 NONAME R3UNUSED ; TThreadCreateInfo::SetPaging(TThreadCreateInfo::TThreadPagingAtt)
+	SetPinClientDescriptors__8CServer2i @ 2186 NONAME R3UNUSED ; CServer2::SetPinClientDescriptors(int)
+	SetUseChunk__20TChunkHeapCreateInfoG6RChunk @ 2187 NONAME R3UNUSED ; TChunkHeapCreateInfo::SetUseChunk(RChunk)
+	SetUseHeap__17TThreadCreateInfoPC10RAllocator @ 2188 NONAME R3UNUSED ; TThreadCreateInfo::SetUseHeap(RAllocator const *)
+	__17TThreadCreateInfoRC7TDesC16PFPv_iiPv @ 2189 NONAME ; TThreadCreateInfo::TThreadCreateInfo(TDesC16 const &, int (*)(void *), int, void *)
+	__20TChunkHeapCreateInfoii @ 2190 NONAME R3UNUSED ; TChunkHeapCreateInfo::TChunkHeapCreateInfo(int, int)
+	SetCache__16TChunkCreateInfoi @ 2191 NONAME R3UNUSED ; TChunkCreateInfo::SetCache(int)
+	OutFilteredPcFormatBig__6BTraceUlUlUlUsPCvi @ 2192 NONAME ; BTrace::OutFilteredPcFormatBig(unsigned long, unsigned long, unsigned long, unsigned short, void const *, int)
+	ClientIsRealtime__C12RMessagePtr2 @ 2193 NONAME R3UNUSED ; RMessagePtr2::ClientIsRealtime(void) const
+	CreateGlobal__8RServer2RC7TDesC16iii @ 2194 NONAME R3UNUSED ; RServer2::CreateGlobal(TDesC16 const &, int)
+	SetMaster__8CServer2PC8CServer2 @ 2195 NONAME R3UNUSED ; CServer2::SetMaster(CServer2 const *)
+	SetServer__9CSession2PC8CServer2 @ 2196 NONAME R3UNUSED ; CSession2::SetServer(CServer2 const *)
+	Alloc__6RShBufR7RShPoolUi @ 2197 NONAME R3UNUSED ; RShBuf::Alloc(RShPool &, unsigned int)
+	CancelLowSpaceNotification__7RShPoolR14TRequestStatus @ 2198 NONAME R3UNUSED ; RShPool::CancelLowSpaceNotification(TRequestStatus &)
+	Close__6RShBuf @ 2199 NONAME R3UNUSED ; RShBuf::Close(void)
+	Create__7RShPoolRC17TShPoolCreateInfoUi @ 2200 NONAME R3UNUSED ; RShPool::Create(TShPoolCreateInfo const &, unsigned int)
+	FreeCount__C7RShPool @ 2201 NONAME R3UNUSED ; RShPool::FreeCount(void) const
+	GetInfo__C7RShPoolR11TShPoolInfo @ 2202 NONAME R3UNUSED ; RShPool::GetInfo(TShPoolInfo &) const
+	Map__6RShBufi @ 2203 NONAME R3UNUSED ; RShBuf::Map(int)
+	Ptr__6RShBuf @ 2204 NONAME R3UNUSED ; RShBuf::Ptr(void)
+	RequestLowSpaceNotification__7RShPoolUiR14TRequestStatus @ 2205 NONAME R3UNUSED ; RShPool::RequestLowSpaceNotification(unsigned int, TRequestStatus &)
+	SetBufferWindow__7RShPoolii @ 2206 NONAME R3UNUSED ; RShPool::SetBufferWindow(int, int)
+	SetExclusive__17TShPoolCreateInfo @ 2207 NONAME R3UNUSED ; TShPoolCreateInfo::SetExclusive(void)
+	SetGuardPages__17TShPoolCreateInfo @ 2208 NONAME R3UNUSED ; TShPoolCreateInfo::SetGuardPages(void)
+	SetSizingAttributes__17TShPoolCreateInfoUiUiUiUi @ 2209 NONAME ; TShPoolCreateInfo::SetSizingAttributes(unsigned int, unsigned int, unsigned int, unsigned int)
+	Size__6RShBuf @ 2210 NONAME R3UNUSED ; RShBuf::Size(void)
+	UnMap__6RShBuf @ 2211 NONAME R3UNUSED ; RShBuf::UnMap(void)
+	__11TShPoolInfo @ 2212 NONAME R3UNUSED ; TShPoolInfo::TShPoolInfo(void)
+	__17TShPoolCreateInfoQ217TShPoolCreateInfo25TShPoolPageAlignedBuffersUiUi @ 2213 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(TShPoolCreateInfo::TShPoolPageAlignedBuffers, unsigned int, unsigned int)
+	__17TShPoolCreateInfoQ217TShPoolCreateInfo28TShPoolNonPageAlignedBuffersUiUiUi @ 2214 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(TShPoolCreateInfo::TShPoolNonPageAlignedBuffers, unsigned int, unsigned int, unsigned int)
+	__7RShPool @ 2215 NONAME R3UNUSED ; RShPool::RShPool(void)
+	RequestFreeSpaceNotification__7RShPoolUiR14TRequestStatus @ 2216  NONAME R3UNUSED ; RShPool::RequestFreeSpaceNotification(unsigned int, TRequestStatus &)
+	CancelFreeSpaceNotification__7RShPoolR14TRequestStatus @ 2217  NONAME R3UNUSED ; RShPool::CancelFreeSpaceNotification(TRequestStatus &)
+	Close__14RReadWriteLock @ 2218 NONAME R3UNUSED ; RReadWriteLock::Close(void)
+	CreateLocal__14RReadWriteLockQ214RReadWriteLock22TReadWriteLockPriority @ 2219 NONAME R3UNUSED ; RReadWriteLock::CreateLocal(RReadWriteLock::TReadWriteLockPriority)
+	DowngradeWriteLock__14RReadWriteLock @ 2220 NONAME R3UNUSED ; RReadWriteLock::DowngradeWriteLock(void)
+	ReadLock__14RReadWriteLock @ 2221 NONAME R3UNUSED ; RReadWriteLock::ReadLock(void)
+	TryReadLock__14RReadWriteLock @ 2222 NONAME R3UNUSED ; RReadWriteLock::TryReadLock(void)
+	TryUpgradeReadLock__14RReadWriteLock @ 2223 NONAME R3UNUSED ; RReadWriteLock::TryUpgradeReadLock(void)
+	TryWriteLock__14RReadWriteLock @ 2224 NONAME R3UNUSED ; RReadWriteLock::TryWriteLock(void)
+	Unlock__14RReadWriteLock @ 2225 NONAME R3UNUSED ; RReadWriteLock::Unlock(void)
+	WriteLock__14RReadWriteLock @ 2226 NONAME R3UNUSED ; RReadWriteLock::WriteLock(void)
+	Repeats__C9TRawEvent @ 2227 NONAME R3UNUSED ; TRawEvent::Repeats(void) const
+	SetRepeat__9TRawEventQ29TRawEvent5TTypeii @ 2228 NONAME ; TRawEvent::SetRepeat(TRawEvent::TType, int, int)
+	LoadLocaleAspect__15TExtendedLocaleRC7TDesC16 @ 2229 NONAME R3UNUSED ; TExtendedLocale::LoadLocaleAspect(TDesC16 const &)
+	LoadLocale__15TExtendedLocaleRC7TDesC16N21 @ 2230 NONAME ; TExtendedLocale::LoadLocale(TDesC16 const &, TDesC16 const &, TDesC16 const &)
+	RegionCode__4User @ 2231 NONAME R3UNUSED ; User::RegionCode(void)
+

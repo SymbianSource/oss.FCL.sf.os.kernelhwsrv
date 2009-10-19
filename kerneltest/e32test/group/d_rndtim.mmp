@@ -1,0 +1,52 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_rndtim.mmp
+// 
+//
+
+#include		<variant_test.mmh>
+#include		"kernel/kern_ext.mmh"
+
+target			VariantTarget(d_rndtim,ldd)
+targettype		ldd
+romtarget		d_rndtim.ldd
+
+sourcepath		../misc
+source			d_rndtim.cpp
+
+
+#if defined(CL7211)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cl7211)
+library			VariantTarget(kaeiger,lib)
+#elif defined(WINDERMERE)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/windermere)
+library			VariantTarget(kawind,lib)
+#elif defined(SA1100)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/sa1100)
+library			VariantTarget(kasa1100,lib)
+#elif defined(COTULLA)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cotulla)
+library			VariantTarget(kacotulla,lib)
+#elif defined(INTEGRATORAP)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/integratorap/inc)
+SYMBIAN_BASE_SYSTEMINCLUDE(integrator/core/cm920)
+library			kaintap.lib
+#endif
+
+epocallowdlldata
+
+UID		0x100000af
+VENDORID 0x70000001
+
+capability		all

@@ -1,0 +1,9 @@
+
+SECTION_COMMANDS
+
+oneoff \os\kernelhwsrv\kerneltest\f32test\loader bldmake bldfiles
+oneoff \os\kernelhwsrv\kerneltest\f32test\loader abld test makefile
+oneoff \os\kernelhwsrv\kerneltest\f32test\loader abld test library
+oneoff \os\kernelhwsrv\kerneltest\f32test\loader abld -k test target
+
+

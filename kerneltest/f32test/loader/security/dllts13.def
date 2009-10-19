@@ -1,0 +1,7 @@
+EXPORTS
+	Init13 @ 1 NONAME
+	ChkC13 @ 2 NONAME
+	BlkI13 @ 3 NONAME
+	GetGeneration @ 4 NONAME
+	RBlkI13 @ 5 NONAME
+	SetCloseLib @ 6 NONAME

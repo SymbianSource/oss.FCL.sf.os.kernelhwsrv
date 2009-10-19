@@ -1,0 +1,178 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\byte_pair.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+
+__NAKED__ TInt BytePairDecompress(TUint8* /*dst*/, TInt /*dstSize*/, TUint8* /*src*/, TInt /*srcSize*/, TUint8*& /*srcNext*/)
+	{
+	asm("stmdb	sp!, {r0, r4-r9, lr}");
+											// r0 = dst
+	asm("add	r1, r0, r1");				// r1 = dstEnd
+											// r2 = src
+	asm("add	r3, r2, r3");				// r3 = srcEnd
+
+	asm("sub	r4, sp, #0x200");			// r4 = LUT0 and stackStart
+	asm("sub	sp, sp, #0x300");			// sp = stack
+	asm("add	r5, r4, #0x100");			// r5 = LUT1
+
+	asm("mov	r6, r4");
+	asm("mov	r7, #0x100");
+	asm("mov	r8, #0x4");
+	asm("add	r7, r7, #0x20000");
+	asm("add	r8, r8, r8, lsl #8");
+	asm("add	r7, r7, #0x3000000");
+	asm("add	r8, r8, r8, lsl #16");
+	asm("init_LUT:");
+	asm("str	r7, [r6], #4");
+	asm("adds	r7, r7, r8");
+	asm("bcc	init_LUT");
+
+	asm("cmp	r2, r3");
+	asm("bhs	error");
+	asm("ldrb	r6, [r2], #1");
+	asm("mov	r12, #-1"); 				// r12 = marker
+	asm("cmp	r6, #0");
+	asm("beq	tokens_done");
+	asm("cmp	r2, r3");
+	asm("bhs	error");
+	asm("ldrb	r12, [r2], #1");
+	asm("mvn	r8, r12");
+	asm("strb	r8, [r4, r12]");
+
+	asm("cmp	r6, #32");
+	asm("bhs	tokens_bitmask");
+
+	asm("add	r7, r2, r6");
+	asm("add	r7, r7, r6, asl #1");
+	asm("cmp	r7, r3");
+	asm("bhs	error");
+	asm("token_loop:");
+	asm("ldrb	r7, [r2], #1");
+	asm("ldrb	r8, [r2], #1");
+	asm("ldrb	r9, [r2], #1");
+	asm("subs	r6, r6, #1");
+	asm("strb	r8, [r4, r7]");
+	asm("strb	r9, [r5, r7]");
+	asm("bne	token_loop");
+	asm("b		tokens_done");
+
+	asm("tokens_bitmask:");
+	asm("mov	r6, r2");					// r6 = bitMask
+	asm("add	r2, r2, #32");
+	asm("cmp	r2, r3");
+	asm("bhi	error");
+	asm("mov	r7, #0");
+	asm("ldrb	lr, [r6], #1");
+	asm("b		bit_loop_start");
+
+	asm("do_bit:");
+	asm("cmp	r2, r3");
+	asm("ldrlob	r8, [r2], #1");
+	asm("cmplo	r2, r3");
+	asm("ldrlob	r9, [r2], #1");
+	asm("bhs	error");
+	asm("strb	r8, [r4, r7]");
+	asm("strb	r9, [r5, r7]");
+	asm("cmp	lr, #0");
+	asm("beq	byte_loop");
+
+	asm("bit_loop:");
+	asm("add	r7, r7, #1");
+	asm("bit_loop_start:");
+	asm("movs	lr, lr, lsr #1");
+	asm("bcs	do_bit");
+	asm("bne	bit_loop");
+
+	asm("byte_loop:");
+	asm("orr	r7, r7, #7");
+	asm("cmp	r7, #255");
+	asm("ldrneb	lr, [r6], #1");
+	asm("bne	bit_loop");
+
+	asm("tokens_done:");
+	asm("mov	r6, r4");					// r6 = sp
+
+	asm("cmp	r2, r3");
+	asm("ldrlob	r7, [r2], #1"); 			// r7 = b
+	asm("cmplo	r0, r1");
+	asm("bhs	error");
+	asm("ldrb	r8, [r4, r7]");				// r8 = p1
+	asm("cmp	r7, r8");
+	asm("bne	not_single");
+
+	asm("next:");
+	asm("cmp	r2, r3");
+	asm("ldrlob	r7, [r2], #1"); 			// r7 = b
+	asm("strb	r8, [r0], #1");
+	asm("bhs	done");
+	asm("ldrb	r8, [r4, r7]");				// r8 = p1
+	asm("cmp	r0, r1");
+	asm("bhs	done_d");
+	asm("cmp	r7, r8");
+	asm("beq	next");
+
+	asm("not_single:");
+	asm("cmp	r7, r12");
+	asm("beq	do_marker");
+
+	asm("do_pair:");
+	asm("ldrb	r9, [r5, r7]");			 	// r9 = p2
+	asm("mov	r7, r8");
+	asm("ldrb	r8, [r4, r8]");				// r8 = p1
+	asm("cmp	r6, sp");
+	asm("bls	error");
+	asm("strb	r9, [r6, #-1]!");
+
+	asm("recurse:");
+	asm("cmp	r7, r8");
+	asm("bne	do_pair");
+	asm("cmp	r6, r4");
+	asm("beq	next");
+	asm("ldrb	r7, [r6], #1");
+	asm("strb	r8, [r0], #1");
+	asm("ldrb	r8, [r4, r7]");				// r8 = p1
+	asm("cmp	r0, r1");
+	asm("blo	recurse");
+	asm("b		error");
+
+	asm("do_marker:");
+	asm("cmp	r2, r3");
+	asm("ldrlob	r8, [r2], #1");
+	asm("blo	next");
+	asm("b		error");
+
+	asm("done_d:");
+	asm("sub	r2, r2, #1");
+
+	asm("done:");
+	asm("add	sp, sp, #0x300");
+	asm("ldr	r3, [sp, #32]");
+	asm("ldr	r1, [sp],#4");
+	asm("str	r2, [r3]");
+	asm("sub	r0, r0, r1");
+	asm("ldmia	sp!, {r4-r9, pc}");
+
+	asm("error:");
+	asm("add	sp, sp, #0x300");
+	asm("ldr	r3, [sp, #32]");
+	asm("mov	r2, #0");
+	asm("str	r2, [r3]");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrCorrupt));
+	asm("ldmia	sp!, {r1,r4-r9, pc}");
+	}
+

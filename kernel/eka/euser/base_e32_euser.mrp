@@ -1,0 +1,20 @@
+# component name "User Library"
+
+component	base_e32_euser
+
+source	\sf\os\kernelhwsrv\kernel\eka\common
+source	\sf\os\kernelhwsrv\kernel\eka\euser
+
+binary	\sf\os\kernelhwsrv\kernel\eka\euser all
+exports	\sf\os\kernelhwsrv\kernel\eka\euser
+
+notes_source	\component_defs\release.src
+
+
+ipr A
+ipr D \sf\os\kernelhwsrv\kernel\eka\euser\cbase
+ipr D \sf\os\kernelhwsrv\kernel\eka\euser\epoc
+ipr D \sf\os\kernelhwsrv\kernel\eka\euser\unicode
+ipr D \sf\os\kernelhwsrv\kernel\eka\euser\v7_0
+ipr D \sf\os\kernelhwsrv\kernel\eka\common
+

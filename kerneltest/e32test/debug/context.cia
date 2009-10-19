@@ -1,0 +1,321 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\debug\context.cia
+// 
+//
+
+#ifndef __KERNEL_MODE__
+#include "context.h"
+#include <u32exec.h>
+
+__NAKED__ void SetRegs()
+	{
+	asm("SetRegs:");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR0));
+	asm("add r1, r1, #1 ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR1));
+	asm("add r2, r1, #1 ");
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR2));
+	asm("add r3, r2, #1 ");
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR3));
+	asm("add r4, r3, #1 ");
+	asm("str r4, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR4));
+	asm("add r5, r4, #1 ");
+	asm("str r5, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR5));
+	asm("add r6, r5, #1 ");
+	asm("str r6, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR6));
+	asm("add r7, r6, #1 ");
+	asm("str r7, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR7));
+	asm("add r8, r7, #1 ");
+	asm("str r8, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR8));
+	asm("add r9, r8, #1 ");
+	asm("str r9, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR9));
+	asm("add r10, r9, #1 ");
+	asm("str r10, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR10));
+	asm("add r11, r10, #1 ");
+	asm("str r11, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR11));
+	asm("add r12, r11, #1 ");
+	asm("str r12, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR12));
+	asm("str r13, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR13));
+	asm("str r14, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR14));
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,iR0));
+	__JUMP(,lr);
+	}
+
+#define CHECK_REGA(reg,val)											\
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,reg));		\
+	asm("ldr r3, ="#val);											\
+	asm("cmp r2, r3");												\
+	asm("movne r0, #0");											\
+	__JUMP(ne,lr);
+
+#define CHECK_REG(reg)												\
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TArmRegSet,reg));		\
+	asm("ldr r3, [r1, #%a0]" : : "i" _FOFF(TArmRegSet,reg));		\
+	asm("cmp r2, r3");												\
+	asm("movne r0, #0");											\
+	__JUMP(ne,lr);
+
+
+
+__NAKED__ TInt ThreadContextHwExc(TAny*)
+	{
+	asm("stmdb sp!, {r4-r11,lr} ");
+	asm("mov r1, #0x80000000");
+	asm("bl SetRegs");
+	asm("ldr r0,[r13, #1]");   // Cause alignment fault
+	asm("ThreadContextHwExc_pc:");
+	asm("mov r0, #0 ");
+	asm("ldmia sp!, {r4-r11,pc} ");
+	}
+
+__NAKED__ TInt CheckContextHwExc(TArmRegSet* aContext,TArmRegSet* aSavedData)
+	{
+	CHECK_REG(iR0);
+	CHECK_REG(iR1);
+	CHECK_REG(iR2);
+	CHECK_REG(iR3);
+	CHECK_REG(iR4);
+	CHECK_REG(iR5);
+	CHECK_REG(iR6);
+	CHECK_REG(iR7);
+	CHECK_REG(iR8);
+	CHECK_REG(iR9);
+	CHECK_REG(iR10);
+	CHECK_REG(iR11);
+	CHECK_REG(iR12);
+	CHECK_REG(iR13);
+	CHECK_REG(iR14);
+	CHECK_REGA(iR15,ThreadContextHwExc_pc)
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+
+
+__NAKED__ TInt ThreadContextUserInt(TAny*)
+	{
+	asm("mov r1, #0x70000000");
+	asm("bl SetRegs");
+	asm("ThreadContextUserInt_pc:");
+	asm("b ThreadContextUserInt_pc");
+	}
+
+__NAKED__ TInt CheckContextUserInt(TArmRegSet*,TArmRegSet*)
+	{
+	CHECK_REG(iR0);
+	CHECK_REG(iR1);
+	CHECK_REG(iR2);
+	CHECK_REG(iR3);
+	CHECK_REG(iR4);
+	CHECK_REG(iR5);
+	CHECK_REG(iR6);
+	CHECK_REG(iR7);
+	CHECK_REG(iR8);
+	CHECK_REG(iR9);
+	CHECK_REG(iR10);
+	CHECK_REG(iR11);
+	CHECK_REG(iR12);
+	CHECK_REG(iR13);
+	CHECK_REG(iR14);
+	CHECK_REGA(iR15,ThreadContextUserInt_pc)
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt CheckContextUserIntDied(TArmRegSet*,TArmRegSet*)
+	{
+	CHECK_REG(iR0);
+	CHECK_REG(iR1);
+	CHECK_REG(iR2);
+	CHECK_REG(iR3);
+	CHECK_REG(iR12);
+	CHECK_REG(iR13);
+	CHECK_REG(iR14);
+	CHECK_REGA(iR15,ThreadContextUserInt_pc)
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ TInt ThreadContextWFAR(TAny*)
+	{
+	asm("stmdb sp!, {r4-r11,lr} ");
+	asm("mov r1, #0x60000000");
+	asm("bl SetRegs");
+	asm("adr lr, ThreadContextWFAR_return");
+	FAST_EXEC0(EFastExecWaitForAnyRequest);
+	asm("ThreadContextWFAR_return:");
+	asm("mov r0, #0 ");
+	asm("ldmia sp!, {r4-r11,pc} ");
+	}
+
+__NAKED__ TInt CheckContextWFAR(TArmRegSet*,TArmRegSet*)
+	{
+	CHECK_REG(iR4);
+	CHECK_REG(iR5);
+	CHECK_REG(iR6);
+	CHECK_REG(iR7);
+	CHECK_REG(iR8);
+	CHECK_REG(iR9);
+	CHECK_REG(iR10);
+	CHECK_REG(iR11);
+	CHECK_REG(iR13);
+	CHECK_REGA(iR14,ThreadContextWFAR_return)
+	CHECK_REGA(iR15,ThreadContextWFAR_return - 4)
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt CheckContextWFARDied(TArmRegSet*,TArmRegSet*)
+	{
+	CHECK_REG(iR13);
+	CHECK_REGA(iR14,ThreadContextWFAR_return)
+	CHECK_REGA(iR15,ThreadContextWFAR_return - 4)
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+
+
+__NAKED__ TInt ThreadContextExecCall(TAny*)
+	{
+	asm("stmdb sp!, {r4-r11,lr} ");
+	asm("mov r1, #0x50000000");
+	asm("bl SetRegs");
+	asm("adr lr, ThreadContextExecCall_return");
+	asm("ldr r0, current_thread_handle ");
+	SLOW_EXEC1(EExecThreadSuspend);
+	asm("ThreadContextExecCall_return:");
+	asm("mov r0, #0 ");
+	asm("ldmia sp!, {r4-r11,pc} ");
+	asm("current_thread_handle: ");
+	asm(".word 0xffff8001 ");
+	}
+
+__NAKED__ TInt CheckContextExecCall(TArmRegSet*,TArmRegSet*)
+	{
+	CHECK_REG(iR4);
+	CHECK_REG(iR5);
+	CHECK_REG(iR6);
+	CHECK_REG(iR7);
+	CHECK_REG(iR8);
+	CHECK_REG(iR9);
+	CHECK_REG(iR10);
+	CHECK_REG(iR11);
+	CHECK_REG(iR13);
+	CHECK_REGA(iR14,ThreadContextExecCall_return)
+	CHECK_REGA(iR15,ThreadContextExecCall_return - 4)
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+//
+// Simulate a software exception by invoking first the exec call which 
+// triggers kernel-side handlers and on return panicking the current
+// thread.
+//
+
+__NAKED__ TInt ThreadContextSwExc(TAny*)
+	{
+	asm("stmdb sp!, {r4-r11,lr} ");
+	asm("mov r1, #0x50000000");
+	asm("bl SetRegs");
+	asm("adr lr, ThreadContextSwExc_return");
+	asm("ldr r0, current_thread_handle ");
+	asm("mov r2, #1");
+	SLOW_EXEC3(EExecIsExceptionHandled);
+	asm("ThreadContextSwExc_return:");
+	asm("ldr r0, current_thread_handle ");
+	asm("ldr r3, null_descriptor");
+	asm("mov r1, #%a0 " : : "i" ((TInt)EExitPanic));
+	asm("mov r2, #0");
+	SLOW_EXEC4(EExecThreadKill);
+	asm("ldmia sp!, {r4-r11,pc} ");
+	asm("null_descriptor:");
+	asm(".word 0x00000000");
+	asm(".word 0x00000000");
+	}
+
+__NAKED__ TInt CheckContextSwExc(TArmRegSet*,TArmRegSet*)
+	{
+	CHECK_REG(iR4);
+	CHECK_REG(iR5);
+	CHECK_REG(iR6);
+	CHECK_REG(iR7);
+	CHECK_REG(iR8);
+	CHECK_REG(iR9);
+	CHECK_REG(iR10);
+	CHECK_REG(iR11);
+	CHECK_REG(iR13);
+	CHECK_REGA(iR14,ThreadContextSwExc_return)
+	CHECK_REGA(iR15,ThreadContextSwExc_return - 4)
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt CheckContextKernel(TArmRegSet*,TArmRegSet*)
+	{
+	CHECK_REG(iR4);
+	CHECK_REG(iR5);
+	CHECK_REG(iR6);
+	CHECK_REG(iR7);
+	CHECK_REG(iR8);
+	CHECK_REG(iR9);
+	CHECK_REG(iR10);
+	CHECK_REG(iR11);
+	// can't test r13 because we don't know how much the irq vector pushes onto the stack
+	// CHECK_REG(iR13);
+	// can't really test r15 because pc is somewhere in the irq
+	// vector and we don't export that address
+	asm("mov r0,#1");
+	__JUMP(,lr);
+	}
+
+#else
+
+#include <e32def.h>
+#include <cpudefs.h>
+
+__NAKED__ TUint32 SpinInKernel(TBool)
+	{
+	asm("cmp r0, #0 ");
+#ifdef __SMP__
+	asm("mov r0, sp ");
+#else
+	asm("mov r0, sp");
+//	asm("sub r0, sp, #32 "); // IRQ mode pushes 8 extra registers <--- NOT TRUE
+#endif
+	asm("beq exit ");
+	asm("mov r0, #0xa0000000 ");
+	asm("add r1, r0, #1 ");
+	asm("add r2, r1, #1 ");
+	asm("add r3, r2, #1 ");
+	asm("add r4, r3, #1 ");
+	asm("add r5, r4, #1 ");
+	asm("add r6, r5, #1 ");
+	asm("add r7, r6, #1 ");
+	asm("add r8, r7, #1 ");
+	asm("add r9, r8, #1 ");
+	asm("add r10, r9, #1 ");
+	asm("add r11, r10, #1 ");
+	asm("add r12, r11, #1 ");
+	asm("add r14, r12, #2 ");
+	asm("loopforever: ");
+	asm("b loopforever ");
+	asm("exit: ");
+	__JUMP(,lr);
+	}
+
+#endif

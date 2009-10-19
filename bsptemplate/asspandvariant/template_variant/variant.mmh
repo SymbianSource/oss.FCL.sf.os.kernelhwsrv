@@ -1,0 +1,153 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template/template_variant/variant.mmh
+// TO DO: (mandatory)
+// Add here a definition for your CPU (list in CONFIG.INC)
+// 
+//
+
+macro __CPU_ARM1176__
+
+// TO DO: (mandatory)
+//
+// Add here a definition for your Memory Model
+//
+#define MM_MULTIPLE
+
+// TO DO: (mandatory)
+//
+// Macro which generates the names for the binaries for this platform
+//
+#define VariantTarget(name,ext) _template_##name##.##ext
+#define VariantMediaDefIncludePath SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(template)
+
+//Include debug support. Some e32 tests require debug support
+macro __DEBUGGER_SUPPORT__
+
+//
+// TO DO: 
+//
+// If euser is built from the variant, uncomment the following line to build it
+// as ARM rather than Thumb
+// 
+// #define __BUILD_VARIANT_EUSER_AS_ARM__
+
+// TO DO: (optional)
+//
+// To replace some of the generic utility functions with variant specific
+// versions (eg to replace memcpy with a version optimised for the hardware),
+// uncomment the two lines below and edit the files in the replacementUtils
+// directory.
+//
+// #define REPLACE_GENERIC_UTILS
+// #define VariantReplacementUtilsPath template/template_variant/replacement_utils
+
+// TO DO: (optional)
+//
+// Enable BTrace support in release versions of the kernel by adding
+// the following BTRACE macro declarations
+//
+// macro BTRACE_KERNEL_ALL
+
+// TO DO:
+//
+// Uncomment the following line if using the r1p0 release or later of the ARM1136 processor.
+// 
+// macro __CPU_ARM1136_IS_R1__
+
+// TO DO:
+//
+// Include the following line if default memory mapping should use shared memory.
+// Should be on for multicore (SMP) devices.
+//
+// macro	__CPU_USE_SHARED_MEMORY
+//
+
+// TO DO:
+//
+// Uncomment the next line if using the ARM1136 processor and ARM1136 Erratum 406973
+// "CLREX instruction might be ignored during data cache line fill"
+// is fixed on this hardware.
+// 
+// macro __CPU_ARM1136_ERRATUM_406973_FIXED
+
+// Uncomment next line if:
+//	1) using the ARM1136 processor and ARM1136 Erratum 408022 "Cancelled write to CONTEXTID register might update ASID" 
+//	   is fixed on this hardware, or
+//	2) using the ARM1176 processor and ARM1176 Erratum 415047 "Cancelled write to CONTEXTID register might update ASID" 
+//	   is fixed on this hardware.
+//
+// macro __CPU_ARM1136_ERRATUM_408022_FIXED
+
+// Uncomment if:
+//	1)	using ARM1136 processor and ARM1136 Erratum 411920: "Invalidate Entire Instruction Cache
+//	  	operation might fail to invalidate some lines if coincident with linefill"
+//  	  	is fixed on this hardware, or
+//	2)	using ARM1176 processor and ARM1176 Erratum 415045: "Invalidate Entire Instruction Cache
+// 	  	operation might fail to invalidate some lines if coincident with linefill
+//	  	is fixed on this hardware.
+// Workaround:
+//	1)	Disables the use of of prefetch range cache operations by setting RV bit in Auxiliary Ctrl Reg.
+//	2)	Replaces Invalidate ICache operation with the sequence defined in the errata document.
+// If this macro is enabled, it should be accompanied by:
+// 	"GBLL CFG_CPU_ARM1136_ERRATUM_411920_FIXED" in variant.mmh
+//
+// macro __CPU_ARM1136_ERRATUM_411920_FIXED
+
+// TO DO:
+//
+// Uncomment the next line if using the ARM1136 processor with L210/L220 cache and ARM1136
+// Erratum 317041:"TTBR0/TTBR1 bits[4:3] do not read back correctly"
+// is fixed on this hardware.
+// 
+// macro __CPU_ARM1136_ERRATUM_317041_FIXED
+
+// Uncomment the following line if Page Tables/Dirs have to be updated in main memory.
+// Standard platforms shouldn't have this feature switched on.
+// This must be accompanied by __ARM_L210_CACHE__ or __ARM_L220_CACHE__ macro.
+// Omission::  The solution doesn't update temporary mappings 
+// of inter-process communication (IPC) - aka aliasing.
+//
+// macro __FLUSH_PT_INTO_RAM__
+
+// Uncomment the following line if Symbian OS is running in TrustZone non-secure state and the
+// secure state has prevented code executing in non-secure state from being able to mask FIQs by
+// setting the SCR.FW bit in the secure configuration register.
+//
+// macro __FIQ_RESERVED_FOR_SECURE_STATE__
+
+// Various PlatSec configuration options cannot be disabled even by clearing the appropriate
+// bits in the kernel configuration flags - they are enforced at compile time.  Uncomment the
+// following to allow the clearing of bits in the kernel config flags to disable the relevant
+// options at run time.
+//
+//macro __PLATSEC_UNLOCKED__
+
+// If this macro is enabled then EMapAttrBufferedNC memory will be remapped as EMapAttrFullyBlocking
+//macro FAULTY_NONSHARED_DEVICE_MEMORY
+
+// Uncomment the following line if L210/20 cache is running in forced-WT mode.
+// (Forced_WT bit set in Debug Control Register of L210/20 cache controller.)
+// macro __ARM_L2_CACHE_WT_MODE
+
+// For the status of errata of L210 & L220 cache, see the header of source file:
+// e32\kernel\arm\cachel2.cpp
+
+#if defined(__USING_USING_ASSP_REGISTER_API__) || defined(__USING_INTERRUPT_API__) || defined(__USING_ASSP_REGISTER_API__)
+library	VariantTarget(katemplate,lib)
+#endif
+
+// Uncomment the following if IIC Controller is required
+library		iic.lib
+

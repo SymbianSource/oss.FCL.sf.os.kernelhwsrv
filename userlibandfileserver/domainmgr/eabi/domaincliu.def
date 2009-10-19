@@ -1,0 +1,57 @@
+EXPORTS
+	_ZN16RDmDomainManager14SystemShutdownEv @ 1 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN16RDmDomainManager16CancelTransitionEv @ 2 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN16RDmDomainManager21WaitForInitializationEv @ 3 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN16RDmDomainManager23RequestDomainTransitionEt11TPowerStateR14TRequestStatus @ 4 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN16RDmDomainManager23RequestSystemTransitionE11TPowerStateR14TRequestStatus @ 5 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN16RDmDomainManager5CloseEv @ 6 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN16RDmDomainManager7ConnectEv @ 7 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN9RDmDomain13GetPowerStateEv @ 8 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN9RDmDomain20AcknowledgeLastStateEv @ 9 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN9RDmDomain28CancelTransitionNotificationEv @ 10 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN9RDmDomain29RequestTransitionNotificationER14TRequestStatus @ 11 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN9RDmDomain5CloseEv @ 12 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN9RDmDomain7ConnectEt @ 13 NONAME ; extracted from ..\..\EPOC32\BUILD\domain\group\DMCLI\ARMV4\UREL\DMCLI.in
+	_ZN16CDmDomainManager10ConstructLEv @ 14 NONAME
+	_ZN16CDmDomainManager18AddDomainHierarchyEh @ 15 NONAME
+	_ZN16CDmDomainManager21GetTransitionFailuresER6RArrayIK18TTransitionFailureE @ 16 NONAME
+	_ZN16CDmDomainManager23RequestDomainTransitionEtj20TDmTraverseDirection @ 17 NONAME
+	_ZN16CDmDomainManager23RequestSystemTransitionEj20TDmTraverseDirection @ 18 NONAME
+	_ZN16CDmDomainManager25GetTransitionFailureCountEv @ 19 NONAME
+	_ZN16CDmDomainManager8DoCancelEv @ 20 NONAME
+	_ZN16CDmDomainManagerC2Eh @ 21 NONAME
+	_ZN16CDmDomainManagerD0Ev @ 22 NONAME
+	_ZN16CDmDomainManagerD1Ev @ 23 NONAME
+	_ZN16CDmDomainManagerD2Ev @ 24 NONAME
+	_ZN16RDmDomainManager18AddDomainHierarchyEh @ 25 NONAME
+	_ZN16RDmDomainManager21GetTransitionFailuresER6RArrayIK18TTransitionFailureE @ 26 NONAME
+	_ZN16RDmDomainManager23RequestDomainTransitionEtj20TDmTraverseDirectionR14TRequestStatus @ 27 NONAME
+	_ZN16RDmDomainManager23RequestSystemTransitionEj20TDmTraverseDirectionR14TRequestStatus @ 28 NONAME
+	_ZN16RDmDomainManager25GetTransitionFailureCountEv @ 29 NONAME
+	_ZN16RDmDomainManager7ConnectEh @ 30 NONAME
+	_ZN18CHierarchyObserver12StopObserverEv @ 31 NONAME
+	_ZN18CHierarchyObserver13StartObserverEt13TDmNotifyType @ 32 NONAME
+	_ZN18CHierarchyObserver19ObserverDomainCountEv @ 33 NONAME
+	_ZN18CHierarchyObserver4NewLER18MHierarchyObserverh @ 34 NONAME
+	_ZN18CHierarchyObserverD0Ev @ 35 NONAME
+	_ZN18CHierarchyObserverD1Ev @ 36 NONAME
+	_ZN18CHierarchyObserverD2Ev @ 37 NONAME
+	_ZN9CDmDomain10ConstructLEv @ 38 NONAME
+	_ZN9CDmDomain20AcknowledgeLastStateEi @ 39 NONAME
+	_ZN9CDmDomain29RequestTransitionNotificationEv @ 40 NONAME
+	_ZN9CDmDomain8DoCancelEv @ 41 NONAME
+	_ZN9CDmDomain8GetStateEv @ 42 NONAME
+	_ZN9CDmDomainC2Eht @ 43 NONAME
+	_ZN9CDmDomainD0Ev @ 44 NONAME
+	_ZN9CDmDomainD1Ev @ 45 NONAME
+	_ZN9CDmDomainD2Ev @ 46 NONAME
+	_ZN9RDmDomain20AcknowledgeLastStateEi @ 47 NONAME
+	_ZN9RDmDomain7ConnectEht @ 48 NONAME
+	_ZN9RDmDomain8GetStateEv @ 49 NONAME
+	_ZTI16CDmDomainManager @ 50 NONAME ; #<TI>#
+	_ZTI18CHierarchyObserver @ 51 NONAME ; #<TI>#
+	_ZTI9CDmDomain @ 52 NONAME ; #<TI>#
+	_ZTV16CDmDomainManager @ 53 NONAME ; #<VT>#
+	_ZTV18CHierarchyObserver @ 54 NONAME ; #<VT>#
+	_ZTV9CDmDomain @ 55 NONAME ; #<VT>#
+

@@ -1,0 +1,119 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/exmoncommon.mmp
+// 
+//
+
+#ifdef EPOC32
+
+#include <variant.mmh>
+
+#define INCLUDE_EKERN_LIB
+#include "kern_int.mmh"
+
+targettype			kext
+
+//required for crashflash.h which is included by CrashLogGzip.h included by monitor.h
+USERINCLUDE		../include/drivers
+
+sourcepath			../kernel
+source				smonitor.cpp
+
+#if defined(MARM)
+#ifdef SMP
+sourcepath			../nkernsmp/arm
+#else
+sourcepath			../nkern/arm
+#endif
+source				ncmonitor.cpp ncmonitor.cia
+
+sourcepath			../kernel/arm
+source				cmonitor.cpp cmonitor.cia
+
+#elif defined(X86)
+#ifdef SMP
+sourcepath			../nkernsmp/x86
+#else
+sourcepath			../nkern/x86
+#endif
+source				ncmonitor.cia
+source				ncmonitor.cpp
+
+sourcepath			../kernel/x86
+source				cmonitor.cpp
+source				cmonitor.cia
+#endif
+
+#ifdef MM_MOVING
+sourcepath			../memmodel/epoc/moving
+source				mmonitor.cpp
+#if defined(MARM)
+sourcepath			../memmodel/epoc/moving/arm
+source				xmonitor.cia
+#endif // MARM
+source				xmonitor.cpp
+#endif // MM_MOVING
+
+#ifdef MM_MULTIPLE
+sourcepath			../memmodel/epoc/multiple
+source				mmonitor.cpp
+#if defined(MARM)
+sourcepath			../memmodel/epoc/multiple/arm
+source				xmonitor.cia
+#elif defined(X86)
+sourcepath			../memmodel/epoc/multiple/x86
+source				xmonitor.cia
+#endif // MARM
+source				xmonitor.cpp
+#endif // MM_MULTIPLE
+
+#ifdef MM_FLEXIBLE
+sourcepath			../memmodel/epoc/flexible
+source				mmonitor.cpp
+#if defined(MARM)
+sourcepath			../memmodel/epoc/flexible/arm
+source				xmonitor.cia
+#elif defined(X86)
+sourcepath			../memmodel/epoc/flexible/x86
+source				xmonitor.cia
+#endif // MARM
+source				xmonitor.cpp
+#endif // MM_FLEXIBLE
+
+#ifdef MM_DIRECT
+sourcepath			../memmodel/epoc/direct
+source				mmonitor.cpp
+#if defined(MARM)
+sourcepath			../memmodel/epoc/direct/arm
+#elif defined(X86)
+sourcepath			../memmodel/epoc/direct/x86
+#endif // MARM
+source				xmonitor.cpp
+#endif // MM_DIRECT
+
+
+epocallowdlldata
+
+noexportlibrary
+linkas				exmoncommon.dll
+
+target				VariantTarget(exmoncommon,dll)
+
+deffile				exmoncommon.def
+
+capability			all
+
+#endif
+
+VENDORID 0x70000001

@@ -1,0 +1,128 @@
+EXPORTS
+	_ZN10DMMCSocket5PanicENS_9TMMCPanicE @ 1 NONAME ; DMMCSocket::Panic(DMMCSocket::TMMCPanic)
+	_ZN10DMMCSocketC1EiP17TMMCPasswordStore @ 2 NONAME ; DMMCSocket::DMMCSocket(int, TMMCPasswordStore*)
+	_ZN10DMMCSocketC2EiP17TMMCPasswordStore @ 3 NONAME ; DMMCSocket::DMMCSocket(int, TMMCPasswordStore*)
+	_ZN11DMMCSession12SetupCommandE15TMMCCommandEnum12TMMCArgument @ 4 NONAME ; DMMCSession::SetupCommand(TMMCCommandEnum, TMMCArgument)
+	_ZN11DMMCSession14SetupCIMReadIOEhmPh @ 5 NONAME ; DMMCSession::SetupCIMReadIO(unsigned char, unsigned long, unsigned char*)
+	_ZN11DMMCSession14SetupDTCommandE15TMMCCommandEnum12TMMCArgumentmPhmi14TMMCCmdDirEnumm @ 6 NONAME ; DMMCSession::SetupDTCommand(TMMCCommandEnum, TMMCArgument, unsigned long, unsigned char*, unsigned long, int, TMMCCmdDirEnum, unsigned long)
+	_ZN11DMMCSession14SetupRSCommandE15TMMCCommandEnum12TMMCArgumentm19TMMCCommandTypeEnum20TMMCResponseTypeEnumm @ 7 NONAME ; DMMCSession::SetupRSCommand(TMMCCommandEnum, TMMCArgument, unsigned long, TMMCCommandTypeEnum, TMMCResponseTypeEnum, unsigned long)
+	_ZN11DMMCSession15FillCommandArgsE12TMMCArgumentmPhm @ 8 NONAME ; DMMCSession::FillCommandArgs(TMMCArgument, unsigned long, unsigned char*, unsigned long)
+	_ZN11DMMCSession15FillCommandDescE15TMMCCommandEnum @ 9 NONAME ; DMMCSession::FillCommandDesc(TMMCCommandEnum)
+	_ZN11DMMCSession15FillCommandDescE15TMMCCommandEnum12TMMCArgument @ 10 NONAME ; DMMCSession::FillCommandDesc(TMMCCommandEnum, TMMCArgument)
+	_ZN11DMMCSession15FillCommandDescEv @ 11 NONAME ; DMMCSession::FillCommandDesc()
+	_ZN11DMMCSession15SetupCIMWriteIOEhmPh @ 12 NONAME ; DMMCSession::SetupCIMWriteIO(unsigned char, unsigned long, unsigned char*)
+	_ZN11DMMCSession17SetupCIMReadBlockE12TMMCArgumentmPh @ 13 NONAME ; DMMCSession::SetupCIMReadBlock(TMMCArgument, unsigned long, unsigned char*)
+	_ZN11DMMCSession18SetupCIMEraseGroupE12TMMCArgumentm @ 14 NONAME ; DMMCSession::SetupCIMEraseGroup(TMMCArgument, unsigned long)
+	_ZN11DMMCSession18SetupCIMLockUnlockEmPh @ 15 NONAME ; DMMCSession::SetupCIMLockUnlock(unsigned long, unsigned char*)
+	_ZN11DMMCSession18SetupCIMReadMBlockE12TMMCArgumentmPhm @ 16 NONAME ; DMMCSession::SetupCIMReadMBlock(TMMCArgument, unsigned long, unsigned char*, unsigned long)
+	_ZN11DMMCSession18SetupCIMWriteBlockE12TMMCArgumentmPh @ 17 NONAME ; DMMCSession::SetupCIMWriteBlock(TMMCArgument, unsigned long, unsigned char*)
+	_ZN11DMMCSession19SetupCIMEraseSectorE12TMMCArgumentm @ 18 NONAME ; DMMCSession::SetupCIMEraseSector(TMMCArgument, unsigned long)
+	_ZN11DMMCSession19SetupCIMWriteMBlockE12TMMCArgumentmPhm @ 19 NONAME ; DMMCSession::SetupCIMWriteMBlock(TMMCArgument, unsigned long, unsigned char*, unsigned long)
+	_ZN11DMMCSession6EngageEv @ 20 NONAME ; DMMCSession::Engage()
+	_ZN11DMMCSession7CardRCAEv @ 21 NONAME ; DMMCSession::CardRCA()
+	_ZN11DMMCSession7SetCardEP7TMMCard @ 22 NONAME ; DMMCSession::SetCard(TMMCard*)
+	_ZN11DMMCSessionC1ERK12TMMCCallBack @ 23 NONAME ; DMMCSession::DMMCSession(TMMCCallBack const&)
+	_ZN11DMMCSessionC2ERK12TMMCCallBack @ 24 NONAME ; DMMCSession::DMMCSession(TMMCCallBack const&)
+	_ZN11DMMCSessionD0Ev @ 25 NONAME ; DMMCSession::~DMMCSession()
+	_ZN11DMMCSessionD1Ev @ 26 NONAME ; DMMCSession::~DMMCSession()
+	_ZN11DMMCSessionD2Ev @ 27 NONAME ; DMMCSession::~DMMCSession()
+	_ZN11DPBusSocket10InCriticalEv @ 28 NONAME ; DPBusSocket::InCritical()
+	_ZN11DPBusSocket12SocketFromIdEi @ 29 NONAME ; DPBusSocket::SocketFromId(int)
+	_ZN11DPBusSocket13EndInCriticalEv @ 30 NONAME ; DPBusSocket::EndInCritical()
+	_ZN11DPBusSocket16ForceMediaChangeEv @ 31 NONAME ; DPBusSocket::ForceMediaChange()
+	_ZN11DPBusSocket17PowerDownCompleteEv @ 32 NONAME ; DPBusSocket::PowerDownComplete()
+	_ZN11DPBusSocket21RequestAsyncPowerDownEv @ 33 NONAME ; DPBusSocket::RequestAsyncPowerDown()
+	_ZN11DPBusSocket23DeltaCurrentConsumptionEi @ 34 NONAME ; DPBusSocket::DeltaCurrentConsumption(int)
+	_ZN11DPBusSocket23PowerUpSequenceCompleteEi @ 35 NONAME ; DPBusSocket::PowerUpSequenceComplete(int)
+	_ZN11DPBusSocket3AddEP13TPBusCallBack @ 36 NONAME ; DPBusSocket::Add(TPBusCallBack*)
+	_ZN11DPBusSocket5PanicENS_6TPanicE @ 37 NONAME ; DPBusSocket::Panic(DPBusSocket::TPanic)
+	_ZN11DPBusSocket7PowerUpEv @ 38 NONAME ; DPBusSocket::PowerUp()
+	_ZN12DPBusPsuBase13DoTickServiceEv @ 39 NONAME ; DPBusPsuBase::DoTickService()
+	_ZN12DPBusPsuBase25ReceiveVoltageCheckResultEi @ 40 NONAME ; DPBusPsuBase::ReceiveVoltageCheckResult(int)
+	_ZN12DPBusPsuBase8DoCreateEv @ 41 NONAME ; DPBusPsuBase::DoCreate()
+	_ZN12DPBusPsuBase8IsLockedEv @ 42 NONAME ; DPBusPsuBase::IsLocked()
+	_ZN12DPBusPsuBase8SetStateE13TPBusPsuState @ 43 NONAME ; DPBusPsuBase::SetState(TPBusPsuState)
+	_ZN12TMMCardArray10AddNewCardEPKhP4TRCA @ 44 NONAME ; TMMCardArray::AddNewCard(unsigned char const*, TRCA*)
+	_ZN12TMMCardArray10AllocCardsEv @ 45 NONAME ; TMMCardArray::AllocCards()
+	_ZN12TMMCardArray17DeclareCardAsGoneEj @ 46 NONAME ; TMMCardArray::DeclareCardAsGone(unsigned int)
+	_ZN13TPBusCallBack6RemoveEv @ 47 NONAME ; TPBusCallBack::Remove()
+	_ZN13TPBusCallBack9SetSocketEi @ 48 NONAME ; TPBusCallBack::SetSocket(int)
+	_ZN13TPBusCallBackC1EPFvPviES0_j @ 49 NONAME ; TPBusCallBack::TPBusCallBack(void (*)(void*, int), void*, unsigned int)
+	_ZN13TPBusCallBackC1EPFvPviS0_S0_ES0_ @ 50 NONAME ; TPBusCallBack::TPBusCallBack(void (*)(void*, int, void*, void*), void*)
+	_ZN13TPBusCallBackC1Ev @ 51 NONAME ; TPBusCallBack::TPBusCallBack()
+	_ZN13TPBusCallBackC2EPFvPviES0_j @ 52 NONAME ; TPBusCallBack::TPBusCallBack(void (*)(void*, int), void*, unsigned int)
+	_ZN13TPBusCallBackC2EPFvPviS0_S0_ES0_ @ 53 NONAME ; TPBusCallBack::TPBusCallBack(void (*)(void*, int, void*, void*), void*)
+	_ZN13TPBusCallBackC2Ev @ 54 NONAME ; TPBusCallBack::TPBusCallBack()
+	_ZN15DMMCMediaChange6CreateEv @ 55 NONAME ; DMMCMediaChange::Create()
+	_ZN15DMMCMediaChangeC2Ei @ 56 NONAME ; DMMCMediaChange::DMMCMediaChange(int)
+	_ZN16DMediaChangeBase15DoorOpenServiceEv @ 57 NONAME ; DMediaChangeBase::DoorOpenService()
+	_ZN16DMediaChangeBase17DoorClosedServiceEv @ 58 NONAME ; DMediaChangeBase::DoorClosedService()
+	_ZN16DMediaChangeBase6CreateEv @ 59 NONAME ; DMediaChangeBase::Create()
+	_ZN16DMediaChangeBaseC2Ei @ 60 NONAME ; DMediaChangeBase::DMediaChangeBase(int)
+	_ZN16TMMCStateMachine4JumpEPFmPvEi @ 61 NONAME ; TMMCStateMachine::Jump(unsigned long (*)(void*), int)
+	_ZN16TMMCStateMachine4PushEPFmPvEi @ 62 NONAME ; TMMCStateMachine::Push(unsigned long (*)(void*), int)
+	_ZN16TMMCStateMachine5ResetEv @ 63 NONAME ; TMMCStateMachine::Reset()
+	_ZN16TMMCStateMachine8DispatchEv @ 64 NONAME ; TMMCStateMachine::Dispatch()
+	_ZN17TMMCPasswordStore18IsMappingIncorrectERK4TCIDRK5TBuf8ILi16EE @ 65 NONAME ; TMMCPasswordStore::IsMappingIncorrect(TCID const&, TBuf8<16> const&)
+	_ZN26TMMCardControllerInterface20RegisterMediaDevicesEi @ 66 NONAME ; TMMCardControllerInterface::RegisterMediaDevices(int)
+	_ZN26TMMCardControllerInterface6CreateEv @ 67 NONAME ; TMMCardControllerInterface::Create()
+	_ZN7DMMCPsu8DoCreateEv @ 68 NONAME ; DMMCPsu::DoCreate()
+	_ZN7DMMCPsuC2Eii @ 69 NONAME ; DMMCPsu::DMMCPsu(int, int)
+	_ZN9DMMCStack10CardDetectEj @ 70 NONAME ; DMMCStack::CardDetect(unsigned int)
+	_ZN9DMMCStack12PowerUpStackEv @ 71 NONAME ; DMMCStack::PowerUpStack()
+	_ZN9DMMCStack14AcquireStackSMEv @ 72 NONAME ; DMMCStack::AcquireStackSM()
+	_ZN9DMMCStack14EffectiveModesERK15TMMCStackConfig @ 73 NONAME ; DMMCStack::EffectiveModes(TMMCStackConfig const&)
+	_ZN9DMMCStack14PowerDownStackEv @ 74 NONAME ; DMMCStack::PowerDownStack()
+	_ZN9DMMCStack14WriteProtectedEj @ 75 NONAME ; DMMCStack::WriteProtected(unsigned int)
+	_ZN9DMMCStack19IssueMMCCommandSMSTEPv @ 76 NONAME ; DMMCStack::IssueMMCCommandSMST(void*)
+	_ZN9DMMCStack20CIMReadWriteBlocksSMEv @ 77 NONAME ; DMMCStack::CIMReadWriteBlocksSM()
+	_ZN9DMMCStack22CIMReadWriteBlocksSMSTEPv @ 78 NONAME ; DMMCStack::CIMReadWriteBlocksSMST(void*)
+	_ZN9DMMCStack22InitStackAfterUnlockSMEv @ 79 NONAME ; DMMCStack::InitStackAfterUnlockSM()
+	_ZN9DMMCStack4InitEv @ 80 NONAME ; DMMCStack::Init()
+	_ZN9DMMCStack4StopEP7TMMCard @ 81 NONAME ; DMMCStack::Stop(TMMCard*)
+	_ZN9DMMCStack5BlockEP11DMMCSessionm @ 82 NONAME ; DMMCStack::Block(DMMCSession*, unsigned long)
+	_ZN9DMMCStack7UnBlockEP11DMMCSessionmm @ 83 NONAME ; DMMCStack::UnBlock(DMMCSession*, unsigned long, unsigned long)
+	_ZN9DMMCStackC2EiP10DMMCSocket @ 84 NONAME ; DMMCStack::DMMCStack(int, DMMCSocket*)
+	_ZNK11DMMCSession13EpocErrorCodeEv @ 85 NONAME ; DMMCSession::EpocErrorCode() const
+	_ZNK11DMMCSession8GetMacroEi @ 86 NONAME ; DMMCSession::GetMacro(int) const
+	_ZNK15TMMCCommandDesc9DirectionEv @ 87 NONAME ; TMMCCommandDesc::Direction() const
+	_ZNK4TCSD10DeviceSizeEv @ 88 NONAME ; TCSD::DeviceSize() const
+	_ZNK4TCSD14EraseGroupSizeEv @ 89 NONAME ; TCSD::EraseGroupSize() const
+	_ZNK4TCSD15EraseSectorSizeEv @ 90 NONAME ; TCSD::EraseSectorSize() const
+	_ZNK4TCSD15ReadBlockLengthEv @ 91 NONAME ; TCSD::ReadBlockLength() const
+	_ZNK4TCSD16WriteBlockLengthEv @ 92 NONAME ; TCSD::WriteBlockLength() const
+	_ZNK4TCSD23MaxTranSpeedInKilohertzEv @ 93 NONAME ; TCSD::MaxTranSpeedInKilohertz() const
+	_ZNK4TCSD25MaxReadCurrentInMilliampsEv @ 94 NONAME ; TCSD::MaxReadCurrentInMilliamps() const
+	_ZNK4TCSD25MinReadCurrentInMilliampsEv @ 95 NONAME ; TCSD::MinReadCurrentInMilliamps() const
+	_ZNK4TCSD26MaxWriteCurrentInMilliampsEv @ 96 NONAME ; TCSD::MaxWriteCurrentInMilliamps() const
+	_ZNK4TCSD26MinWriteCurrentInMilliampsEv @ 97 NONAME ; TCSD::MinWriteCurrentInMilliamps() const
+	_ZNK4TCSD8CSDFieldERKjS1_ @ 98 NONAME ; TCSD::CSDField(unsigned int const&, unsigned int const&) const
+	_ZNK4TCSD9MediaTypeEv @ 99 NONAME ; TCSD::MediaType() const
+	_ZNK7TMMCard7IsReadyEv @ 100 NONAME ; TMMCard::IsReady() const
+	_ZNK7TMMCard8IsLockedEv @ 101 NONAME ; TMMCard::IsLocked() const
+	_ZNK9DMMCStack12AllocSessionERK12TMMCCallBack @ 102 NONAME ; DMMCStack::AllocSession(TMMCCallBack const&) const
+	_ZTI10DMMCSocket @ 103 NONAME ; typeinfo for DMMCSocket
+	_ZTI11DMMCSession @ 104 NONAME ; typeinfo for DMMCSession
+	_ZTI12DPBusPsuBase @ 105 NONAME ; typeinfo for DPBusPsuBase
+	_ZTI12TMMCardArray @ 106 NONAME ; typeinfo for TMMCardArray
+	_ZTI15DMMCMediaChange @ 107 NONAME ; typeinfo for DMMCMediaChange
+	_ZTI16DMediaChangeBase @ 108 NONAME ; typeinfo for DMediaChangeBase
+	_ZTI26TMMCardControllerInterface @ 109 NONAME ; typeinfo for TMMCardControllerInterface
+	_ZTI7DMMCPsu @ 110 NONAME ; typeinfo for DMMCPsu
+	_ZTI9DMMCStack @ 111 NONAME ; typeinfo for DMMCStack
+	_ZTV10DMMCSocket @ 112 NONAME ; vtable for DMMCSocket
+	_ZTV11DMMCSession @ 113 NONAME ; vtable for DMMCSession
+	_ZTV12DPBusPsuBase @ 114 NONAME ; vtable for DPBusPsuBase
+	_ZTV12TMMCardArray @ 115 NONAME ; vtable for TMMCardArray
+	_ZTV15DMMCMediaChange @ 116 NONAME ; vtable for DMMCMediaChange
+	_ZTV16DMediaChangeBase @ 117 NONAME ; vtable for DMediaChangeBase
+	_ZTV26TMMCardControllerInterface @ 118 NONAME ; vtable for TMMCardControllerInterface
+	_ZTV7DMMCPsu @ 119 NONAME ; vtable for DMMCPsu
+	_ZTV9DMMCStack @ 120 NONAME ; vtable for DMMCStack
+	_ZN9DMMCStack22ModifyCardCapabilitySMEv @ 121 NONAME ; DMMCStack::ModifyCardCapabilitySM()
+	_ZN9DMMCStack6Dummy1Ev @ 122 NONAME
+	_ZN9DMMCStack12GetInterfaceENS_12TInterfaceIdERPNS_10MInterfaceE @ 123 NONAME
+	_ZN9DMMCStack11MachineInfoER5TDes8 @ 124 NONAME
+	_ZN9DMMCStack11SetBusWidthEm @ 125 NONAME
+	_ZN11DPBusSocket9ControlIOEiPvS0_ @ 126 NONAME
+

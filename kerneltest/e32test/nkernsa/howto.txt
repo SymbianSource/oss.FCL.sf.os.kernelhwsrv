@@ -1,0 +1,27 @@
+How to run the standalone nanokernel tests
+==========================================
+
+The standalone nanokernel tests run in a very restricted environment, compiled
+directly into a minimal version of the nanokernel. Only the single memory model
+is supported, and armv5 roms cannot be built due to an issue with RVCT's
+runtime libraries.
+
+No display driver is included in this environment, the only output is via
+bootstrap debug support. For this to work you must either boot the rom via
+serial download, so that the bootloader initialises the serial port, or
+uncomment "GBLL	CFG_InitDebugPort" in ne1_tb\single\config.inc before building
+the bootstrap.
+
+To build this for NaviEngine SMP:
+
+cd \bsp\hwip_nec_naviengine\ne1_tb\single
+abld build arm4smp nkern_sa
+abld test build arm4smp nktest_lib
+abld test build arm4smp nktest
+cd \e32\rombuild
+rom -v sne1_tb -i arm4smp -x arm4smp -t nktest
+
+Either udeb or urel may be used depending if you want to use the benchmarks.
+
+The resulting rom will run all the nanokernel standalone tests, which takes
+quite a while: you may wish to comment some of them out in main.cpp here.

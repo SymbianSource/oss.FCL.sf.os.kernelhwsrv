@@ -1,0 +1,50 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/ekll.mmp
+// 
+//
+
+target			ekll.lib
+targettype		klib
+
+#if defined(GCC32)
+ALWAYS_BUILD_AS_ARM
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE	../include
+
+#if defined(X86)
+sourcepath		x86
+source			l_entry.cpp
+source			l_entry.cia
+#elif defined(MARM)
+sourcepath		arm
+source			l_entry.cia
+#else
+sourcepath		win32
+source			l_entry.cpp
+#ifdef CW32
+start wins
+win32_headers
+end
+#endif
+#endif
+
+
+capability		all
+
+VENDORID 0x70000001
+
+SMPSAFE

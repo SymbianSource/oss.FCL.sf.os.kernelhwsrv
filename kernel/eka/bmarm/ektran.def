@@ -1,0 +1,13 @@
+EXPORTS
+	__12CCaptureKeys @ 1 NONAME ; CCaptureKeys::CCaptureKeys(void)
+	CancelAllCaptureKeys__12CCaptureKeysUl @ 2 NONAME ; CCaptureKeys::CancelAllCaptureKeys(unsigned long)
+	CancelCaptureKey__12CCaptureKeysUl @ 3 NONAME ; CCaptureKeys::CancelCaptureKey(unsigned long)
+	Construct__12CCaptureKeys @ 4 NONAME ; CCaptureKeys::Construct(void)
+	New__14CKeyTranslator @ 5 NONAME ; CKeyTranslator::New(void)
+	ProcessCaptureKeys__C12CCaptureKeysR8TKeyData @ 6 NONAME ; CCaptureKeys::ProcessCaptureKeys(TKeyData &) const
+	SetCaptureKey__12CCaptureKeysUlRC11TCaptureKey @ 7 NONAME ; CCaptureKeys::SetCaptureKey(unsigned long, TCaptureKey const &)
+	"_._12CCaptureKeys" @ 8 NONAME ; CCaptureKeys::~CCaptureKeys(void)
+	AddCaptureKeyL__12CCaptureKeysRC11TCaptureKey @ 9 NONAME ; CCaptureKeys::AddCaptureKeyL(TCaptureKey const &)
+	AddCaptureKeyL__12CCaptureKeysRC11TCaptureKeyUc @ 10 NONAME ; CCaptureKeys::AddCaptureKeyL(TCaptureKey const &, unsigned char)
+	SetCaptureKey__12CCaptureKeysUlRC11TCaptureKeyUc @ 11 NONAME ; CCaptureKeys::SetCaptureKey(unsigned long, TCaptureKey const &, unsigned char)
+

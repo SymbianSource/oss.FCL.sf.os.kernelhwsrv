@@ -1,0 +1,65 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32/group/eshell.mmp
+// eshell.exe Text shell
+// 
+//
+
+/**
+ @file
+*/
+
+
+TARGET			eshell.exe
+CAPABILITY DiskAdmin AllFiles
+
+TARGETTYPE		exe
+
+
+SOURCEPATH	../etshell
+SOURCE			 ts_com.cpp ts_data.cpp ts_edshl.cpp
+SOURCE			 ts_main.cpp ts_utl.cpp ts_deps.cpp
+SOURCE			 ts_clicomp.cpp
+
+SOURCEPATH	../sfile
+SOURCE			 sf_inflate.cpp sf_decomp.cpp
+
+SOURCEPATH	.
+DOCUMENT		 ../group/release.txt
+
+USERINCLUDE	../inc
+USERINCLUDE	../sfile
+USERINCLUDE	../../../kernel/eka/include
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY			 euser.lib efsrv.lib hal.lib
+
+START WINS
+BASEADDRESS		0x64000000
+END
+
+EPOCSTACKSIZE	0x8000
+
+//There is currently a defect in UIKON that prevents 
+//applications with UID != 0 being started from the UI in 8.1b
+//The defect is DEF51127
+
+// When changing capability, please update /f32/rom/f32.iby
+
+UID				0x00000000 0x101F7AE7
+
+VENDORID 0x70000001
+
+#include "../group/f32.mmh"  	// Generic definitions for the whole f32 component
+SMPSAFE

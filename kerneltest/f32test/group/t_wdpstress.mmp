@@ -1,0 +1,31 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_wdpstress.mmp
+// 
+//
+
+target			t_wdpstress.exe
+targettype		exe
+sourcepath		../demandpaging
+source			loader/t_pageldrtstdll.cia t_wdpstress.cpp 
+library			euser.lib efsrv.lib hal.lib dptest.lib
+capability		all
+macro			DEF_T_PAGESTRESS
+userinclude		../demandpaging/loader
+vendorid		0x70000001
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude		../demandpaging
+userinclude		../../e32test/demandpaging
+
+smpsafe

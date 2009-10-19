@@ -1,0 +1,54 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/examples/examples.inf
+// 
+//
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+
+PRJ_TESTMMPFILES
+
+/******************************************************************************
+ Put all device drivers here. These build both SMP and non-SMP variants.
+ User side code builds a single variant for both.
+ ******************************************************************************/
+
+driver1/driver1_ldd		support
+driver1/driver1_pdd		support
+camera1/camera1_ldd		support
+convert1/convert1_ldd	support
+
+/******************************************************************************
+ User side code here - builds a single variant for both SMP and non-SMP.
+ ******************************************************************************/
+#ifndef SMP
+
+driver1/driver1_test
+camera1/camera1_test
+convert1/convert1_test
+
+#endif	// SMP
+
+
+// Reference defragmentation driver and test application.
+#ifndef WINS
+defrag/t_defrag_ref
+defrag/d_defrag_ref support
+#endif
+
+// tutorial reference driver
+#include "exdriver/exdriver.inf"

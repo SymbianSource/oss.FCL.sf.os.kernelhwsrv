@@ -1,0 +1,43 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\multiple\arm\xmonitor.cia
+// Kernel crash debugger - ARM specific portion
+// 
+//
+
+#include <kernel/monitor.h>
+#include "memmodel.h"
+#include <mmboot.h>
+
+__NAKED__ TInt MapProcess(DMemModelProcess* aProcess, TBool)
+	{	
+	asm("mrc p15, 0, r3, c2, c0, 0 ");		// get TTBR0
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess, iLocalPageDir));
+	asm("and r3, r3, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));	// r3 = page table cache attributes
+	asm("mcr p15, 0, r2, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+	asm("orr r2, r2, r3 ");					// r2 = new TTBR0 value
+	UPDATE_PW_CACHING_ATTRIBUTES(,r2);		// ERRATUM 1136_317041
+	asm("mcr p15, 0, r2, c2, c0, 0 ");		// set TTBR0 - no TLB flush required due to ASID
+
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess, iOsAsid));
+	asm("mcr p15, 0, r0, c13, c0, 1 ");		// set ASID
+
+#if defined(__CPU_ARM11MP__)
+	// On other platforms, tha ASID change above has already flushed the branch prediction buffers 
+	asm("mcr p15, 0, r0, c7, c5, 6 ");	// flush BTAC
+#endif
+	
+	asm("mov r0, #0");
+	__JUMP(,lr);
+	}

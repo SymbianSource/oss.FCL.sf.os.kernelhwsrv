@@ -1,0 +1,11 @@
+component		base_integration_test
+
+source			\sf\os\kernelhwsrv\baseintegtests\baseintegrationtest
+exports			\sf\os\kernelhwsrv\baseintegtests\baseintegrationtest\group
+binary			\sf\os\kernelhwsrv\baseintegtests\baseintegrationtest\group all
+
+notes_source	\component_defs\release.src
+
+
+ipr T 
+

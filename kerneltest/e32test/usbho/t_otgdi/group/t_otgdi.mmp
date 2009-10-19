@@ -1,0 +1,86 @@
+// t_otgdi.mmp
+//
+
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// using relative paths for sourcepath and user includes
+// 
+//
+
+TARGET        t_otgdi.exe
+TARGETTYPE    exe
+
+capability		CommDD
+// same UID as USBMAN
+uid				0		0x101fe1db
+//uid 0 0x10282B48
+
+epocheapsize    0x1000  0x4000000
+
+SOURCEPATH    ../src
+
+// main module
+SOURCE        t_otgdi.cpp
+// test engine core
+SOURCE        testcasefactory.cpp
+SOURCE        testengine.cpp
+SOURCE        testcasecontroller.cpp
+SOURCE        testpolicy.cpp
+SOURCE        testcaseroot.cpp
+SOURCE        testcasewd.cpp
+SOURCE 		  b2bwatchers.cpp 
+SOURCE        otgroot.cpp 
+
+// test cases (PREQ1782) (456..471)
+SOURCE        testcase0456.cpp
+SOURCE        testcase0457.cpp
+SOURCE        testcase0458.cpp
+SOURCE        testcase0459.cpp
+SOURCE        testcase0460.cpp
+SOURCE        testcase0461.cpp
+SOURCE        testcase0462.cpp
+SOURCE        testcase0463.cpp
+SOURCE        testcase0464.cpp
+SOURCE        testcase0465.cpp
+SOURCE        testcase0466.cpp
+SOURCE        testcase0467.cpp
+SOURCE        testcase0468.cpp
+SOURCE        testcase0469.cpp
+// test cases (OPT Exerciser) 
+SOURCE        testcase0670.cpp 
+SOURCE        testcase0671.cpp
+
+// test cases (PREQ1305) (675..684)
+SOURCE        testcase0675.cpp 
+SOURCE        testcase0676.cpp 
+SOURCE        testcase0677.cpp 
+SOURCE        testcase0678.cpp 
+SOURCE        testcase0679.cpp
+SOURCE        testcase0680.cpp 
+SOURCE        testcase0681.cpp 
+SOURCE        testcase0682.cpp
+SOURCE        testcase0683.cpp
+SOURCE        testcase0684.cpp
+
+// test cases (extra) (1231..1238 (shared with T_USBDI))
+SOURCE        testcase1233.cpp
+
+// include files
+USERINCLUDE     ../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+
+LIBRARY       euser.lib
+
+SMPSAFE

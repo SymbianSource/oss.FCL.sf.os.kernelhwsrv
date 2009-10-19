@@ -1,0 +1,7 @@
+EXPORTS
+	?CacheSize@DPTest@@SAHAAI00@Z @ 1 NONAME ; public: static int __cdecl DPTest::CacheSize(unsigned int &,unsigned int &,unsigned int &)
+	?EventInfo@DPTest@@SAHAAVTDes8@@@Z @ 2 NONAME ; public: static int __cdecl DPTest::EventInfo(class TDes8 &)
+	?FlushCache@DPTest@@SAHXZ @ 3 NONAME ; public: static int __cdecl DPTest::FlushCache(void)
+	?SetCacheSize@DPTest@@SAHII@Z @ 4 NONAME ; public: static int __cdecl DPTest::SetCacheSize(unsigned int,unsigned int)
+	?Attributes@DPTest@@SAKXZ @ 5 NONAME ; public: static unsigned long __cdecl DPTest::Attributes(void)
+

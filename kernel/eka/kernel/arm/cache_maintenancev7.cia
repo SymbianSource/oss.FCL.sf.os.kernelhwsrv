@@ -1,0 +1,423 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Cache maintenance primitives on ARMv7 (and later) platforms.
+// eka\kernel\arm\cachev7.cia
+//
+
+#include <e32cia.h>
+#include <arm.h>
+#include "cache_maintenance.h"
+
+#if defined(__CPU_ARMV7)
+
+// These constant defines LoC & LoU position in Cache Level ID Register
+const TInt KLoCMask = 0x07000000;   // LoC field in CLIDR
+const TInt KLoCShift = 24;
+#if  defined(__SMP__)
+// LoUIS seems to be not implemented on cortex_a9.
+//const TInt KLoUMask = 0x00e00000;   // LoUIS field in CLIDR
+//const TInt KLoUShift = 21;
+const TInt KLoUMask = 0x38000000;   // LoUU field in CLIDR
+const TInt KLoUShift = 27;
+#else
+const TInt KLoUMask = 0x38000000;   // LoUU field in CLIDR
+const TInt KLoUShift = 27;
+#endif
+
+// These constant defines max values in Cache Size Id Register
+const TInt KAssocMax = 0x3ff;		//Max value of associativity (10 bits reserved for this)
+const TInt KNumSetMax = 0x7fff;		//MaxValue for Set Number (15 bits resrved for this)
+
+
+__NAKED__ TUint32 InternalCache::TypeRegister()
+	{
+	asm("mrc p15, 0, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 InternalCache::LevelIDRegister()
+	{
+	asm("mrc p15, 1, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 InternalCache::SizeIdRegister(TUint32 /*aType*/, TUint32 /*aLevel*/)
+	{
+	asm("orr r0, r1, lsl #1");  		// r0 = entry for Cache Size Selection Reg.
+	asm("mcr p15, 2, r0, c0, c0, 0 ");  // set Cache Size Selection Register
+	asm("mov r1, #0");
+	ARM_ISBSY;							// prefetchFlush to sync the change to the CacheSizeID reg
+    asm("mrc p15, 1, r0, c0, c0, 0 ");  // read Cache Size Id Register
+    __JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::DrainBuffers()
+	{
+	// Drain write buffer is rather archaic vocabulary from ARMv5.
+	// On ARMv7, data & instruction sync barriers apply.
+	asm("mov r0, #0 ");
+	ARM_DSBSY;
+	ARM_ISBSY;
+	__JUMP(,lr);
+
+	asm("__DCacheInfoPoU: ");
+	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoD_PoU]));
+	asm("__DCacheInfoPoC: ");
+	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoD]));
+	asm("__ICacheInfo: ");
+	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoI]));
+	}
+
+__NAKED__ void InternalCache::IMB_CacheLine(TLinAddr /*aAddr*/)
+	{
+	asm("mov r1, #0 "); //will need zero reg for coprocessor instructions
+//--Round the address down to the start of line--//
+	asm("ldr r2, __DCacheInfoPoU ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("bic r0, r0, ip ");		// r0 = cache line base
+
+	DCCMVAU(r0);				// Clean DCache line to Point-of-Unification
+	ARM_DSBSY;
+	ICIMVAU(r0);
+	BPIMVA(r0);
+	ARM_DSBSH;
+	ARM_ISBSY;
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Invalidate_ICache_Region(TLinAddr /*aBase*/, TUint /*aSize*/)
+	{
+	asm("ldr r2, __ICacheInfo ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+	asm("bcc 2f ");
+	ICIMVAU(r0);
+	asm("2: ");
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+#ifdef __SMP__                  // }
+    BPIALLIS;                   // } flush branch predictor
+#else                           // }
+    BPIALL;                     // }
+#endif
+    ARM_DSBSH;
+    ARM_ISBSY;
+    __JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Invalidate_ICache_All()
+	{
+#ifdef __SMP__
+	ICIALLUIS;
+	//  BPIALLIS;   NOT NEEDED SINCE IT IS INCORPORATED IN ICIALLUIS	
+	ARM_DSBSH;
+#else
+	ICIALLU;
+	//  BPIALL;     NOT NEEDED SINCE IT IS INCORPORATED IN ICIALLU
+	ARM_DSBSY;
+#endif
+	ARM_ISBSY;
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Invalidate_DCache_Region(TLinAddr /*aBase*/, TUint /*aSize*/)
+	{
+	asm("ldr r2, __DCacheInfoPoC ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+	asm("bcc 2f ");
+	DCIMVAC(r0);
+	asm("2: ");
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+	ARM_DSBSY;
+	ARM_ISBSY;
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Clean_DCache_Region(TLinAddr /*aBase*/, TUint /*aSize*/)
+	{
+	asm("ldr r2, __DCacheInfoPoC ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+	asm("bcc 2f ");
+	DCCMVAC(r0);
+#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571771_FIXED)
+	DCCMVAC(r13);				// ARM Cortex-A9 MPCore erratum 571771 workaround
+								// Execute additional cache clean to enforce barrier on other CPUs
+#endif
+	asm("2: ");
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+	ARM_DSBSY;
+	ARM_ISBSY;
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Clean_PoU_DCache_Region(TLinAddr /*aBase*/, TUint /*aSize*/)
+	{
+	asm("ldr r2, __DCacheInfoPoU ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");			// ip=mask for offset within line
+	asm("and ip, ip, r0 ");			// ip=offset of start address within line
+	asm("add r1, r1, ip ");			// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");			// round base address down to start of line
+	asm("add r1, r1, ip ");			// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");		// decrement size by line length
+	asm("bcc 2f ");
+	DCCMVAU(r0);
+	asm("2: ");
+	asm("add r0, r0, r3 ");			// step address on
+	asm("bhi 1b ");					// loop if more lines
+	ARM_DSBSH;
+	ARM_ISBSY;
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::CleanAndInvalidate_DCache_Region(TLinAddr, TUint)
+	{
+	asm("ldr r2, __DCacheInfoPoC ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+	asm("bcc 2f ");
+	DCCIMVAC(r0);
+#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571771_FIXED)
+	DCCIMVAC(r13);				// ARM Cortex-A9 MPCore erratum 571771 workaround
+								// Execute additional cache clean to enforce barrier on other CPUs
+#endif
+	asm("2: ");
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+	ARM_DSBSY;
+	ARM_ISBSY;
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Clean_DCache_All()
+	{
+	//NOTE: ON SMP THIS ONLY CLEANS THE CURRENT CPU CACHE, NOT OTHER CPU CACHES
+	asm("stmfd sp!, {r4-r5,r7,r9-r11} ");
+	asm("mrc p15, 1, r0, c0, c0, 1"); 		// Read CLIDR
+	asm("ands r3, r0, #%a0" : : "i" ((TInt)KLoCMask));
+	asm("mov r3, r3, lsr #%a0" : : "i" ((TInt)(KLoCShift-1)));	// r3 = LoC << 1
+	asm("beq 5f");							// ... and finish if LoC is zero
+	asm("mov r10, #0");						// r10  = 0 (the current cache level)
+	
+	asm("1:");
+	asm("add r2, r10, r10, lsr #1"); 		// Work out 3xcachelevel
+	asm("mov r1, r0, LSR r2"); 				// bottom 3 bits are the Ctype for this level
+	asm("and r1, r1, #7"); 					// get those 3 bits alone
+	asm("cmp r1, #2");
+	asm("blt 4f"); 							// no cache or only instruction cache at this level
+
+	asm("mrs r4, cpsr");                    // Disable interrupts while accessing CS Selection Reg & 
+	CPSIDAIF;                               // CS ID Reg.
+    
+	asm("mcr p15, 2, r10, c0, c0, 0");		// write the Cache Size selection register
+	asm("mov r1, #0");
+	ARM_ISBSY;								// ISB to sync the change to the CacheSizeID reg
+	asm("mrc p15, 1, r1, c0, c0, 0"); 		// reads current Cache Size ID register
+	
+	asm("msr cpsr_c, r4");                 // Restore interrupts
+	
+	asm("and r2, r1, #7"); 					// extract the line length field
+	asm("add r2, r2, #4"); 					// add 4 for the line length offset (log2 16 bytes)
+	asm("ldr r4, =%a0" : : "i" ((TInt)KAssocMax));
+	asm("ands r4, r4, r1, lsr #3"); 		// R4 is the max number on the way size (right aligned)
+	CLZ(5,4);								// R5 is the bit position of the way size increment
+	asm("ldr r7, =%a0" : : "i" ((TInt)KNumSetMax));
+	asm("ands r7, r7, r1, lsr #13"); 		// R7 is the max number of the index size (right aligned)
+	
+	asm("2:");
+	asm("mov r9, r4"); 						// R9 working copy of the max way size (right aligned)
+	
+	asm("3:");
+	asm("orr r11, r10, r9, lsl r5"); 		// factor in the way number and cache number into R11
+	asm("orr r11, r11, r7, lsl r2"); 		// factor in the index number
+	DCCSW(r11);								// clean by set/way
+	asm("subs r9, r9, #1"); 				// decrement the way number
+	asm("bge 3b");
+	asm("subs r7, r7, #1"); 				// decrement the index
+	asm("bge 2b");
+	
+	asm("4:");								// SKIP
+	asm("add r10, r10, #2"); 				// increment the cache number
+	asm("cmp r3, r10");
+	asm("bgt 1b");
+	ARM_DSBSY;
+	ARM_ISBSY;
+	
+	asm("5:");								// FINISHED
+	asm("ldmfd sp!, {r4-r5,r7,r9-r11} ");	// restore registers
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::CleanAndInvalidate_DCache_All()
+	{
+	//NOTE: ON SMP THIS ONLY CLEANS AND INVALIDATES THE CURRENT CPU CACHE, NOT OTHER CPU CACHES
+	asm("stmfd sp!, {r4-r5,r7,r9-r11} ");
+	asm("mrc p15, 1, r0, c0, c0, 1"); 		// Read CLIDR
+	asm("ands r3, r0, #%a0" : : "i" ((TInt)KLoCMask));
+	asm("mov r3, r3, lsr #%a0" : : "i" ((TInt)(KLoCShift-1)));	// r3 = LoC << 1
+	asm("beq 5f");							// ... and finish if LoC is zero
+	asm("mov r10, #0");						// r10  = 0 (the current cache level)
+	
+	asm("1:");
+	asm("add r2, r10, r10, lsr #1"); 		// Work out 3xcachelevel
+	asm("mov r1, r0, LSR r2"); 				// bottom 3 bits are the Ctype for this level
+	asm("and r1, r1, #7"); 					// get those 3 bits alone
+	asm("cmp r1, #2");
+	asm("blt 4f"); 							// no cache or only instruction cache at this level
+
+    asm("mrs r4, cpsr");                    // Disable interrupts while accessing CS Selection Reg & 
+    CPSIDAIF;                               // CS ID Reg.
+	
+	asm("mcr p15, 2, r10, c0, c0, 0");		// write the Cache Size selection register
+	asm("mov r1, #0");
+	ARM_ISBSY;								// ISB to sync the change to the CacheSizeID reg
+	asm("mrc p15, 1, r1, c0, c0, 0"); 		// reads current Cache Size ID register
+
+    asm("msr cpsr_c, r4");                  // Restore interrupts
+	
+	asm("and r2, r1, #7"); 					// extract the line length field
+	asm("add r2, r2, #4"); 					// add 4 for the line length offset (log2 16 bytes)
+	asm("ldr r4, =%a0" : : "i" ((TInt)KAssocMax));
+	asm("ands r4, r4, r1, lsr #3"); 		// R4 is the max number on the way size (right aligned)
+	CLZ(5,4);								// R5 is the bit position of the way size increment
+	asm("ldr r7, =%a0" : : "i" ((TInt)KNumSetMax));
+	asm("ands r7, r7, r1, lsr #13"); 		// R7 is the max number of the index size (right aligned)
+	
+	asm("2:");
+	asm("mov r9, r4"); 						// R9 working copy of the max way size (right aligned)
+	
+	asm("3:");
+	asm("orr r11, r10, r9, lsl r5"); 		// factor in the way number and cache number into R11
+	asm("orr r11, r11, r7, lsl r2"); 		// factor in the index number
+	DCCISW(r11);							// clean and invalidate by set/way
+	asm("subs r9, r9, #1"); 				// decrement the way number
+	asm("bge 3b");
+	asm("subs r7, r7, #1"); 				// decrement the index
+	asm("bge 2b");
+	
+	asm("4:");								// SKIP
+	asm("add r10, r10, #2"); 				// increment the cache number
+	asm("cmp r3, r10");
+	asm("bgt 1b");
+	ARM_DSBSY;
+	ARM_ISBSY;
+	
+	asm("5:");								// FINISHED
+	asm("ldmfd sp!, {r4-r5,r7,r9-r11} ");	// restore registers
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Clean_PoU_DCache_All()
+	{
+	// NOTE: ON SMP THIS ONLY CLEANS THE CURRENT CPU CACHE, NOT OTHER CPU CACHES
+	asm("stmfd sp!, {r4-r5,r7,r9-r11} ");
+	asm("mrc p15, 1, r0, c0, c0, 1"); 		// Read CLIDR
+	asm("ands r3, r0, #%a0" : : "i" ((TInt)KLoUMask));
+	asm("mov r3, r3, lsr #%a0" : : "i" ((TInt)(KLoUShift-1)));	// r3 = LoU << 1
+	asm("beq 5f");							// ... and finish if LoU is zero
+	asm("mov r10, #0");						// r10  = 0 (the current cache level)
+	
+	asm("1:");
+	asm("add r2, r10, r10, lsr #1"); 		// Work out 3xcachelevel
+	asm("mov r1, r0, LSR r2"); 				// bottom 3 bits are the Ctype for this level
+	asm("and r1, r1, #7"); 					// get those 3 bits alone
+	asm("cmp r1, #2");
+	asm("blt 4f"); 							// no cache or only instruction cache at this level
+	
+    asm("mrs r4, cpsr");                    // Disable interrupts while accessing CS Selection Reg & 
+    CPSIDAIF;                               // CS ID Reg.
+	
+	asm("mcr p15, 2, r10, c0, c0, 0");		// write the Cache Size selection register
+	asm("mov r1, #0");
+	ARM_ISBSY;								// ISB to sync the change to the CacheSizeID reg
+	asm("mrc p15, 1, r1, c0, c0, 0"); 		// reads current Cache Size ID register
+
+    asm("msr cpsr_c, r4");                  // Restore interrupts
+
+	asm("and r2, r1, #7"); 					// extract the line length field
+	asm("add r2, r2, #4"); 					// add 4 for the line length offset (log2 16 bytes)
+	asm("ldr r4, =%a0" : : "i" ((TInt)KAssocMax));
+	asm("ands r4, r4, r1, lsr #3"); 		// R4 is the max number on the way size (right aligned)
+	CLZ(5,4);								// R5 is the bit position of the way size increment
+	asm("ldr r7, =%a0" : : "i" ((TInt)KNumSetMax));
+	asm("ands r7, r7, r1, lsr #13"); 		// R7 is the max number of the index size (right aligned)
+	
+	asm("2:");
+	asm("mov r9, r4"); 						// R9 working copy of the max way size (right aligned)
+	
+	asm("3:");
+	asm("orr r11, r10, r9, lsl r5"); 		// factor in the way number and cache number into R11
+	asm("orr r11, r11, r7, lsl r2"); 		// factor in the index number
+	DCCSW(r11);								// clean by set/way
+	asm("subs r9, r9, #1"); 				// decrement the way number
+	asm("bge 3b");
+	asm("subs r7, r7, #1"); 				// decrement the index
+	asm("bge 2b");
+	
+	asm("4:");								// SKIP
+	asm("add r10, r10, #2"); 				// increment the cache number
+	asm("cmp r3, r10");
+	asm("bgt 1b");
+	ARM_DSBSY;
+	ARM_ISBSY;
+	
+	asm("5:");								// FINISHED
+	asm("ldmfd sp!, {r4-r5,r7,r9-r11} ");	// restore registers
+	__JUMP(,lr);
+	}
+
+#if  defined(__BROADCAST_ISB)
+__NAKED__ void T_ISB_IPI::ISBIsr(TGenericIPI* /*aPtr*/)
+    {
+    ARM_ISBSY;
+    __JUMP(,lr);
+    }
+#endif //defined(__BROADCAST_ISB)
+
+#endif //#if defined(__CPU_ARMV7)

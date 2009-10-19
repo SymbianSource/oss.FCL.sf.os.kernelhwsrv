@@ -1,0 +1,214 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//!	@file
+//!	@SYMTestSuiteName		pbase-f32-sfsrv-publicapi-any
+//!	@SYMScriptTestEnvironment	This test script requires a basic ROM.
+//!	@SYMScriptAuthor 		Dmitri Trofimov, Sergei Tveritin.
+//!	@SYMCreationDate		11/11/2007 
+//!	@SYMScriptDescription		The test script contains API tests for the following functions of TParsePtrC class:
+//!	TParsePtrC(TDes &aName);
+//!	TDes &NameBuf();
+//!	const TDesC &NameBufC() const;
+
+
+LOAD_SUITE	T_SfSrv
+//DELAY		5000
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0047
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0047
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() test.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing a reference to a TDes file name as a parameter.
+//!				2. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function does not leave nor panic.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0001command1new
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0047
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0048
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0048
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() test, where name passed in constructor are NUUL.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "0" as parameter.
+//!				2. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function does not leave nor panic.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0002command1new
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0048
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0049
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0049
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() negative test, where name passed in constructor contain illegal path construction.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "c::\file.ext" as parameter.
+//!				2. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function return panic code FSCLIENT=24.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0003command1new
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK	!PanicCode=24 !PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0049
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0050
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0050
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() test, where name passed in constructor contain wildcards.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "c:\file?.*" as parameter.
+//!				2. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function does not leave nor panic.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0004command1new
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0050
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0051
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0051
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() negative test, where calls the function of base class  AddDir().
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "c:\file.txt" as parameter.
+//!				2. Call AddDir() and passsing "dir" as name of directory to be added.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function return FSCLIENT panic Code = 26.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0005command1new
+			COMMAND		TParsePtrC1	AddDir		PBASE-F32-ParsePtrC-PublicApi-0005command2AddDir
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK	!PanicCode=26 !PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0051
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0052
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0052
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() negative test, where calls the function of base class  AddDir() and pass empty parameter.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "c:\file.txt" as parameter.
+//!				2. Call AddDir() and passsing empty string as name of directory to be added.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function does not leave nor panic.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0006command1new
+			COMMAND		TParsePtrC1	AddDir		PBASE-F32-ParsePtrC-PublicApi-0006command2AddDir
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0052
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0053
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0053
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() negative test, where calls the function of base class  AddDir() and pass illegal characters.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "c:\file.txt" as parameter.
+//!				2. Call AddDir() and passsing "$%#" as name of directory to be added.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function return FSCLIENT panic Code = 26. 
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0007command1new
+			COMMAND		TParsePtrC1	AddDir		PBASE-F32-ParsePtrC-PublicApi-0007command2AddDir
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK	!PanicCode=26 !PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0053
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0054
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0054
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() negative test, where calls the function of base class  PopDir(), where filename contains only root directory.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "c:\file.txt" as parameter.
+//!				2. Call PopDir().
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function PopDir() return error code KErrGeneral.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT		TParsePtrC	TParsePtrC1	
+			COMMAND			TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0008command1new
+			COMMAND	!Error=-2	TParsePtrC1	PopDir		
+			COMMAND			TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0054
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0055
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0055
+//! @SYMAPI			TParsePtrC
+//! @SYMTestCaseDesc		TParsePtrC() negative test, where calls the function of base class  PopDir(), where filename contains subdirectory.
+//!				Uses API elements: TParsePtrC()
+//! @SYMTestActions		1. Create TParsePtrC object passing "c:\base\file.txt" as parameter.
+//!				2. Call PopDir().
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function PopDir() FSCLIENT panic Code = 26.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParsePtrC-PublicApi.ini
+			CREATE_OBJECT		TParsePtrC	TParsePtrC1	
+			COMMAND			TParsePtrC1	new		PBASE-F32-ParsePtrC-PublicApi-0009command1new
+			COMMAND			TParsePtrC1	PopDir		
+			COMMAND			TParsePtrC1	~		
+	END_TEST_BLOCK !PanicCode=26 !PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0055

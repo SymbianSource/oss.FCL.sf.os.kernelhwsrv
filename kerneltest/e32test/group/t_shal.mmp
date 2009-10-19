@@ -1,0 +1,31 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_shal.mmp
+// 
+//
+
+target			t_shal.exe
+targettype		exe
+sourcepath		../secure
+source			t_shal.cpp
+library			euser.lib hal.lib
+ROMTARGET
+RAMTARGET 	    \sys\bin\	//
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+capability		all
+
+
+VENDORID 0x70000001
+
+SMPSAFE

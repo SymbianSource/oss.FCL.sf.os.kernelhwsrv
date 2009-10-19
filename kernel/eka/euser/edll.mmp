@@ -1,0 +1,58 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/euser/edll.mmp
+// 
+//
+
+target			edll.lib
+
+targettype		lib
+
+ALWAYS_BUILD_AS_ARM
+
+#if defined(WINS)
+sourcepath		epoc/win32
+source			uc_dll.cpp uc_atx.cpp
+#ifdef CW32
+source			uc_cwhelp.cpp
+start wins
+win32_headers
+end
+#endif
+sourcepath		epoc
+source			up_dll_tls.cpp up_dll_file.cpp
+#endif
+
+#if defined(MARM)
+option ARMCC	--no_exceptions --no_exceptions_unwind
+
+sourcepath		epoc/arm
+source			uc_dll.cpp uc_dll.cia
+#endif
+
+#if defined(X86)
+sourcepath		epoc/x86
+source			uc_dll.cia
+source			uc_dll.cpp uc_atx.cpp
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE	../include
+
+
+capability		all
+
+VENDORID 0x70000001
+
+SMPSAFE

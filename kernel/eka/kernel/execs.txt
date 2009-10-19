@@ -1,0 +1,2463 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\execs.txt
+
+/*
+
+Description file declaring all executive calls
+
+Syntax:
+
+<TYPE>	{
+	keyword1 [= argument1]
+	keyword2 [= argument2]
+	...
+}
+
+where <TYPE> is either fast or slow and indicates the type of executive call
+and the keywords describe the executive call. Keywords may take a single argument
+(shown in square brackets above.)
+
+In the following table, the first line specifies the keyword name and any synonyms,
+applicability to fast or slow executive calls and whether an argument is required,
+is optional or is not used. For example
+
+KEYWORD(SYNONYM) FAST SLOW ARG	KEYWORD applies to fast and slow and always takes
+								an argument. SYNONYM is a synonym for KEYWORD.
+KEYWORD SLOW					KEYWORD applies only to slow and never takes an
+								argument.
+KEYWORD SLOW OPTIONAL			KEYWORD applies only to slow and may or may not
+								take an argument.
+
+Note that any unambiguous abbreviation of a keyword is also acceptable.
+
+The following keywords are supported:
+
+name	FAST SLOW ARG
+	Specifies generic name for the executive call
+	Unless overridden by other options:
+		enumerator name is EExec<name> or EFastExec<name>
+		user function name is Exec::<name>
+		kernel function name is ExecHandler::<name>
+
+	The class definitions for Exec:: and ExecHandler:: classes are generated.
+	No other function declarations are generated.
+
+number	FAST SLOW ARG
+	Specify that a particular dispatch number should be used for this call
+
+user	FAST SLOW ARG
+	Override the name of the user-side executive function
+	Usable in the following ways:
+
+	user=CLASS			Function name is CLASS::<name>
+	user=::FUNC			Function name is FUNC
+	user=CLASS::FUNC	Function name is CLASS::FUNC
+	user=special		Don't generate either a declaration or a definition
+						for the user side function.
+
+specialuser	FAST SLOW
+	Generate a declaration for the user side function if it's in the Exec::
+	class but don't generate a definition.
+
+kernel	FAST SLOW ARG
+	Override the name of the kernel-side executive function
+	Usable in the following ways:
+
+	kernel=CLASS		Function name is CLASS::<name>
+	kernel=::FUNC		Function name is FUNC
+	kernel=CLASS::FUNC	Function name is CLASS::FUNC
+	kernel=special		Don't generate either a declaration or a definition
+						for the kernel side function. Only applicable to fast
+						executive call number 0.
+
+specialkernel	FAST SLOW ARG
+	Override the function name in the kernel dispatch table but leave the
+	declaration in class ExecHandler:: unchanged.
+
+export	FAST SLOW
+	Export the user side executive function.
+
+return	FAST SLOW ARG
+	Set the return type. If this keyword is not present, defaults to void.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+arg1	FAST SLOW ARG
+	Specify the type of argument 1. If handle lookup is being used this can be
+	omitted and will be defaulted to TInt.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+arg2	SLOW ARG
+	Specify the type of argument 2.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+arg3	SLOW ARG
+	Specify the type of argument 3.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+arg4	SLOW ARG
+	Specify the type of argument 4.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+karg1	FAST SLOW ARG
+	Override the type of argument 1 on the kernel side. By default is the same
+	as arg1. If handle lookup is being used this can be omitted and will be
+	defaulted to Dxxxx* as appropriate to the type of handle.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+karg2	SLOW ARG
+	Override the type of argument 2 on the kernel side. By default is the same
+	as arg2.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+karg3	SLOW ARG
+	Override the type of argument 3 on the kernel side. By default is the same
+	as arg3.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+karg4	SLOW ARG
+	Override the type of argument 4 on the kernel side. By default is the same
+	as arg4.
+	NOTE:	Only simple types (i.e. 32 bit integers, pointers and references)
+			are permitted.
+
+unprotected	SLOW
+	Specify that no locking or unlocking or handle lookup should be done in the
+	executive call dispatcher. May be omitted since it is the default option.
+
+lock	SLOW
+	Specify that the system lock should be held on the way in to the executive
+	call and should be released on the way out.
+
+norelease (nr)	SLOW
+	This is used in conjunction with the lock or handle keywords to specify that
+	the system lock should not be released on exit from the kernel function.
+	The system lock will still be acquired on entry.
+
+handle	SLOW ARG
+	Specify that the first argument is a handle which should be translated into
+	a pointer to a DObject-derived class on the way in to the executive call.
+	This keyword automatically enables the lock keyword. It also automatically
+	sets the type of the first argument on both user and kernel side.
+	The argument specifies the type of object referred to by the handle. The
+	following values are accepted (synonyms in brackets):
+
+		thread
+		process
+		chunk
+		library
+		semaphore
+		mutex
+		timer
+		server
+		session
+		logicaldevice		(ldevice)
+		physicaldevice		(pdevice)
+		logicalchannel		(channel)
+		changenotifier		(chnotifier)
+		undertaker
+		msgqueue
+		property
+		condvar
+		shpool
+		shbuf
+		any
+
+	As with keywords, any unambiguous abbreviation will be accepted.
+
+	The following keywords indicate IPC handle lookups:
+
+		ipcmessaged
+		ipcmessage
+		ipcclient
+
+asm		FAST SLOW OPTIONAL
+	Specifies that the kernel side function is implemented in assembler and
+	that an assembler label should be called rather than a C++ function.
+	The assembler label used is always _asm_exec_<name> where <name> is the
+	argument of the name keyword. It is not overridden by the kernel or
+	specialkernel keywords.
+	If an argument is supplied to the asm keyword it specifies a preprocessor
+	macro name which is used to conditionally enable the use of assembler,
+	for example:
+
+	asm = __MESSAGE_MACHINE_CODED__
+
+	will give rise to
+
+	#ifdef __MESSAGE_MACHINE_CODED__
+	DECLARE_ASM_FUNC(<assembler label>, <C++ name>)
+	#else
+	DECLARE_FUNC(<C++ name>)
+	#endif
+
+	Note that the C++ name is still supplied to the assembler declaration macro
+	so that targets which don't support the use of assembler labels can revert
+	to the C++ name.
+
+ifdef	FAST SLOW ARG
+	Specifies that this executive call only exists if ARG is defined at compile
+	time. Can be specified multiple times with different arguments - in that
+	case the executive call is valid only if all the ARGs are defined.
+
+ifndef	FAST SLOW ARG
+	Specifies that this executive call only exists if ARG is not defined at
+	compile	time. Can be specified multiple times with different arguments - in
+	that case the executive call is valid only if none of the ARGs are defined.
+	Can also be used in conjunction with the ifdef keyword. The executive call
+	is then valid only if all the ifdef arguments and none of the ifndef
+	arguments are defined.
+
+hw (noemulator)	FAST SLOW
+	Specifies that this executive call is only valid on hardware targets, not
+	emulator targets. Will be treated as an invalid executive call on emulator
+	targets. Equivalent to ifdef = __EPOC32__.
+
+emulator	FAST SLOW
+	Specifies that this executive call is only valid on emulator targets, not
+	hardware targets. Will be treated as an invalid executive call on hardware
+	targets. Equivalent to ifndef = __EPOC32__.
+
+extended	SLOW ARG
+	Specifies that this executive call uses the extended argument passing
+	mechanism. The argument to this keyword specifies the number of extended
+	arguments and must be between 2 and 8 inclusive.
+	There must be at least 3 normal arguments to use this keyword.
+
+
+*/
+
+
+/******************************************************************************
+ * Fast executive calls
+ ******************************************************************************/
+fast {
+	name = WaitForAnyRequest
+	return = void
+	number = 0
+	kernel = special
+}
+
+fast {
+	name = Heap
+	return = RAllocator*
+}
+
+fast {
+	name = HeapSwitch
+	return = RAllocator*
+	arg1 = RAllocator*
+}
+
+fast {
+	name = PushTrapFrame
+	return = TTrapHandler*
+	arg1 = TTrap*
+}
+
+fast {
+	name = PopTrapFrame
+	return = TTrap*
+}
+
+fast {
+	name = ActiveScheduler
+	return = CActiveScheduler*
+}
+
+fast {
+	name = SetActiveScheduler
+	arg1 = CActiveScheduler*
+}
+
+fast {
+	name = LockPeriod
+	return = TTimerLockSpec
+}
+
+fast {
+	name = TrapHandler
+	return = TTrapHandler*
+}
+
+fast {
+	name = SetTrapHandler
+	return = TTrapHandler*
+	arg1 = TTrapHandler*
+}
+
+fast {
+	name = DebugMask
+	return = TUint32
+}
+
+fast {
+	name = DebugMaskIndex
+	return = TUint32
+	arg1 = TUint
+}
+
+fast {
+	name = SetDebugMask
+   	arg1 = TUint32
+}
+
+fast {
+	name = FastCounter
+	return = TUint32
+	kernel = NKern::FastCounter
+}
+
+fast {
+	name = NTickCount
+	return = TUint32
+	kernel = NKern::TickCount
+}
+
+fast {
+	name = LockRamDrive
+	user = UserSvr
+	kernel = TInternalRamDrive::Lock
+	export
+}
+
+fast {
+	name = UnlockRamDrive
+	user = UserSvr
+	export
+}
+
+fast {
+	name = RomHeaderAddress
+	user = UserSvr
+	export
+	return = TLinAddr
+	hw
+}
+
+fast {
+	name = RomRootDirectoryAddress
+	user = UserSvr
+	export
+	return = TLinAddr
+	hw
+}
+
+fast {
+	name = SetReentryPoint
+	arg1 = TLinAddr
+}
+
+fast {
+	name = KernelConfigFlags
+	kernel = K::KernelConfigFlags
+	return = TUint32
+}
+
+fast {
+	name = UTCOffset
+	return = TInt
+}
+
+fast {
+	name = GetGlobalUserData
+	arg1 = TInt
+	return = TInt
+}
+
+fast {
+	name = CheckFilter
+	user = BTrace
+	kernel = BTrace::CheckFilter
+	arg1 = TUint32
+	return = TBool
+	export
+}
+
+fast {
+	name = FastAtomicAxo64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicCas64
+	arg1 = SAtomicOpInfo64*
+	return = TBool
+	ifdef = __ATOMIC64_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicAdd64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTau64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTas64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicAxo32
+	arg1 = SAtomicOpInfo32*
+	return = TUint32
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicAdd32
+	arg1 = SAtomicOpInfo32*
+	return = TUint32
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicCas32
+	arg1 = SAtomicOpInfo32*
+	return = TBool
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTau32
+	arg1 = SAtomicOpInfo32*
+	return = TUint32
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTas32
+	arg1 = SAtomicOpInfo32*
+	return = TInt32
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicAxo16
+	arg1 = SAtomicOpInfo32*
+	return = TUint16
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicAdd16
+	arg1 = SAtomicOpInfo32*
+	return = TUint16
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicCas16
+	arg1 = SAtomicOpInfo32*
+	return = TBool
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTau16
+	arg1 = SAtomicOpInfo32*
+	return = TUint16
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTas16
+	arg1 = SAtomicOpInfo32*
+	return = TInt16
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicAxo8
+	arg1 = SAtomicOpInfo32*
+	return = TUint8
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicAdd8
+	arg1 = SAtomicOpInfo32*
+	return = TUint8
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicCas8
+	arg1 = SAtomicOpInfo32*
+	return = TBool
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTau8
+	arg1 = SAtomicOpInfo32*
+	return = TUint8
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+fast {
+	name = FastAtomicTas8
+	arg1 = SAtomicOpInfo32*
+	return = TInt8
+	ifdef = __ATOMIC_USE_FAST_EXEC__
+	user = special
+}
+
+
+/******************************************************************************
+ * Slow executive calls
+ ******************************************************************************/
+slow {
+	name = ObjectNext
+	return = TInt
+	arg1 = TObjectType
+	arg2 = TBuf8<KMaxFullName>&
+	arg3 = TFindHandle&
+	unp
+}
+
+slow {
+	name = ChunkBase
+	return = TUint8*
+	handle = chunk
+}
+
+slow {
+	name = ChunkSize
+	return = TInt
+	handle = chunk
+}
+
+slow {
+	name = ChunkMaxSize
+	return = TInt
+	handle = chunk
+}
+
+slow {
+	name = HandleAttributes
+	return = TUint
+	arg1 = TInt
+}
+
+slow {
+	name = TickCount
+	kernel = Kern::TickCount
+	return = TUint
+}
+
+slow {
+	name = LogicalDeviceGetCaps
+	arg2 = TDes8&
+	handle = ldev
+	norelease
+}
+
+slow {
+	name = LogicalDeviceQueryVersionSupported
+	return = TBool
+	arg2 = const TVersion&
+	handle = ldev
+	norelease
+}
+
+slow {
+	name = LogicalDeviceIsAvailable
+	return = TBool
+	arg2 = TInt
+	arg3 = const TDesC8*
+	arg4 = const TDesC8*
+	handle = ldev
+	norelease
+}
+
+slow {
+  	name = LocaleExports
+  	user = E32Loader
+  	export
+  	return = TInt
+ 	arg1 = TAny*
+	arg2 = TLibraryFunction*
+}
+
+slow {
+	name = ChannelRequest
+	return = TInt
+	arg2 = TInt
+	arg3 = TAny*
+	arg4 = TAny*
+	handle = channel
+	norelease
+}
+
+slow {
+	name = MathRandom
+	return = TUint32
+	kernel = Kern::Random
+	lock
+}
+
+slow {
+	name = IMBRange
+	user = Exec::IMB_Range
+	arg1 = TAny*
+	arg2 = TUint
+}
+
+slow {
+	name = ResetMachine
+	return = TInt
+	arg1 = TMachineStartupType
+}
+
+slow {
+	name = LibraryLookup
+	return = TLibraryFunction
+	arg1 = TInt
+	arg2 = TInt
+}
+
+slow {
+	name = LibraryFileName
+	arg2 = TDes8&
+	handle = library
+	norelease
+}
+
+slow {
+	name = ExecuteInSupervisorMode
+	user = UserSvr
+	export
+	return = TInt
+	arg1 = TSupervisorFunction
+	arg2 = TAny*
+}
+
+slow {
+	name = MutexWait
+	handle = mutex
+}
+
+slow {
+	name = MutexSignal
+	handle = mutex
+	norelease
+}
+
+slow {
+	name = ProcessId
+	return = TInt
+	handle = process
+}
+
+slow {
+	name = DllFileName
+	arg1 = TInt
+	arg2 = TDes8&
+}
+
+slow {
+	name = ProcessResume
+	handle = process
+}
+
+slow {
+	name = ProcessFileName
+	arg2 = TDes8&
+	handle = process
+	norelease
+}
+
+slow {
+	name = ProcessCommandLine
+	arg2 = TDes8&
+	handle = process
+	norelease
+}
+
+slow {
+	name = ProcessExitType
+	return = TExitType
+	handle = process
+}
+
+slow {
+	name = ProcessExitReason
+	return = TInt
+	handle = process
+}
+
+slow {
+	name = ProcessExitCategory
+	arg2 = TDes8&
+	handle = process
+	norelease
+}
+
+slow {
+	name = ProcessPriority
+	return = TProcessPriority
+	handle = process
+}
+
+slow {
+	name = ProcessSetPriority
+	return = TInt
+	arg2 = TProcessPriority
+	handle = process
+	norelease
+}
+
+slow {
+	name = ProcessFlags
+	return = TUint
+	handle = process
+}
+
+slow {
+	name = ProcessSetFlags
+	arg2 = TUint
+	arg3 = TUint
+	handle = process
+}
+
+slow {
+	name = SemaphoreWait
+	return = TInt
+	arg2 = TInt
+	handle = sem
+	norelease
+}
+
+slow {
+	name = SemaphoreSignal1
+	handle = sem
+	norelease
+}
+
+slow {
+	name = SemaphoreSignalN
+	arg2 = TInt
+	handle = sem
+	norelease
+}
+
+slow {
+	name = ServerReceive
+	arg2 = TRequestStatus&
+	arg3 = TAny*
+	handle = server
+	asm = __MESSAGE_MACHINE_CODED__
+}
+
+slow {
+	name = ServerCancel
+	handle = server
+}
+
+slow {
+	name = SetSessionPtr
+	arg2 = const TAny*
+	handle = ipcmessage
+	norelease
+}
+
+slow {
+	name = SessionSend
+	specialuser
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt
+	arg3 = TAny*
+	arg4 = TRequestStatus*
+	extended = 5
+}
+
+slow {
+	name = ThreadId
+	return = TInt
+	handle = thread
+}
+
+slow {
+	name = SessionShare
+	return = TInt
+	arg1 = TInt&
+	arg2 = TInt
+}
+
+slow {
+	name = ThreadResume
+	handle = thread
+}
+
+slow {
+	name = ThreadSuspend
+	handle = thread
+}
+
+slow {
+	name = ThreadPriority
+	return = TThreadPriority
+	handle = thread
+}
+
+slow {
+	name = ThreadSetPriority
+	arg2 = TThreadPriority
+	handle = thread
+}
+
+slow {
+	name = ThreadProcessPriority
+	return = TProcessPriority
+	handle = thread
+}
+
+slow {
+	name = ThreadSetProcessPriority
+	arg2 = TProcessPriority
+	handle = thread
+	norelease
+}
+
+slow {
+	name = ThreadFlags
+	return = TUint
+	handle = thread
+}
+
+slow {
+	name = ThreadSetFlags
+	arg2 = TUint
+	arg3 = TUint
+	handle = thread
+}
+
+slow {
+	name = ThreadRequestCount
+	return = TInt
+	handle = thread
+}
+
+slow {
+	name = ThreadExitType
+	return = TExitType
+	handle = thread
+}
+
+slow {
+	name = ThreadExitReason
+	return = TInt
+	handle = thread
+}
+
+slow {
+	name = ThreadExitCategory
+	arg2 = TDes8&
+	handle = thread
+	norelease
+}
+
+slow {
+	name = TimerCancel
+	handle = timer
+}
+
+slow {
+	name = TimerAfter
+	arg2 = TRequestStatus&
+	arg3 = TInt
+	handle = timer
+}
+
+slow {
+	name = TimerAt
+	arg2 = TRequestStatus&
+	arg3 = TUint32
+	arg4 = TUint32
+	handle = timer
+}
+
+slow {
+	name = TimerLock
+	arg2 = TRequestStatus&
+	arg3 = TTimerLockSpec
+	handle = timer
+}
+
+slow {
+	name = ChangeNotifierLogon
+	return = TInt
+	arg2 = TRequestStatus&
+	handle = chnot
+	norelease
+}
+
+slow {
+	name = ChangeNotifierLogoff
+	return = TInt
+	handle = chnot
+	norelease
+}
+
+slow {
+	name = RequestSignal
+	arg1 = TInt
+}
+
+slow {
+	name = HandleName
+	arg1 = TInt
+	arg2 = TDes8&
+}
+
+slow {
+	name = HandleFullName
+	arg1 = TInt
+	arg2 = TDes8&
+}
+
+slow {
+	name = HandleInfo
+	arg1 = TInt
+	arg2 = THandleInfo*
+}
+
+slow {
+	name = HandleCount
+	arg2 = TInt&
+	arg3 = TInt&
+	handle = thread
+	norelease
+}
+
+slow {
+	name = After
+	arg1 = TInt
+	arg2 = TRequestStatus&
+}
+
+slow {
+	name = At
+	arg1 = const EXEC_TIME&
+	arg2 = TRequestStatus&
+}
+
+slow {
+	name = MessageComplete
+	arg2 = TInt
+	handle = ipcmessaged
+	asm = __MESSAGE_MACHINE_CODED__
+}
+
+slow {
+	name = MessageCompleteWithHandle
+	arg2 = TInt
+	handle = ipcmessage
+}
+
+slow {
+	name = TransferSession
+	arg2 = TInt
+	handle = ipcmessage
+}
+
+slow {
+	name = TimeNow
+	return = TInt
+	arg1 = EXEC_TIME&
+	arg2 = TInt&
+}
+
+slow {
+	name = TimeNowSecure
+	return = TInt
+	arg1 = EXEC_TIME&
+	arg2 = TInt&
+}
+
+slow {
+	name = SetUTCTimeAndOffset
+	return = TInt
+	arg1 = const EXEC_TIME&
+	arg2 = TInt
+	arg3 = TUint
+	arg4 = TUint
+}
+
+slow {
+	name = SetMachineConfiguration
+	return = TInt
+	arg1 = const TDesC8&
+}
+
+slow {
+	name = CaptureEventHook
+}
+
+slow {
+	name = ReleaseEventHook
+}
+
+slow {
+	name = RequestEvent
+	arg1 = TRawEventBuf&
+	arg2 = TRequestStatus&
+}
+
+slow {
+	name = RequestEventCancel
+}
+
+slow {
+	name = AddEvent
+	return = TInt
+	arg1 = const TRawEvent&
+}
+
+slow {
+	name = SessionSendSync
+	specialuser
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt
+	arg3 = TAny*
+	arg4 = TRequestStatus*
+	extended = 5
+}
+
+slow {
+	name = DllTls
+	return = TAny*
+	arg1 = TInt 
+	arg2 = TInt
+}
+
+slow {
+	name = HalFunction
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt
+	arg3 = TAny*
+	arg4 = TAny*
+}
+
+slow {
+	name = WsRegisterThread
+	lock
+}
+
+slow {
+	name = FsRegisterThread
+	lock
+}
+
+slow {
+	name = ProcessCommandLineLength
+	return = TInt
+	handle = process
+}
+
+slow {
+	name = TimerInactivity
+	arg2 = TRequestStatus&
+	arg3 = TInt
+	handle = timer
+}
+
+slow {
+	name = UserInactivityTime
+	return = TInt
+}
+
+slow {
+	name = ResetInactivityTime
+}
+
+slow {
+	name = DebugPrint
+	arg1 = TAny*
+	arg2 = TInt
+}
+
+slow {
+	name = BreakPoint
+	return = TInt
+	lock
+}
+
+slow {
+	name = ProfileStart
+	return = TInt
+	arg1 = TInt
+	lock
+}
+
+slow {
+	name = ProfileEnd
+	return = TInt
+	arg1 = TInt
+	lock
+}
+
+slow {
+	name = ExceptionHandler
+	return = TExceptionHandler
+	handle = thread
+}
+
+slow {
+	name = SetExceptionHandler
+	return = TInt
+	arg2 = TExceptionHandler
+	arg3 = TUint32
+	handle = thread
+}
+
+slow {
+	name = ModifyExceptionMask
+	arg2 = TUint32
+	arg3 = TUint32
+	handle = thread
+}
+
+slow {
+	name = RaiseException
+	return = TInt
+	arg2 = TExcType
+	handle = thread
+}
+
+slow {
+	name = IsExceptionHandled
+	return = TInt
+	arg2 = TExcType
+	arg3 = TBool
+	handle = thread
+	norelease
+}
+
+slow {
+	name = ProcessGetMemoryInfo
+	return = TInt
+	arg1 = TInt
+	arg2 = TModuleMemoryInfo&
+}
+
+slow {
+	name = LibraryGetMemoryInfo
+	return = TInt
+	arg1 = TInt
+	arg2 = TModuleMemoryInfo&
+}
+
+slow {
+	name = MachineConfiguration
+	return = TInt
+	arg1 = TDes8&
+	arg2 = TInt&
+}
+
+slow {
+	name = SetMemoryThresholds
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt
+	lock
+}
+
+slow {
+	name = LibraryType
+	arg2 = TUidType&
+	handle = library
+	norelease
+}
+
+slow {
+	name = ProcessType
+	arg2 = TUidType&
+	handle = process
+	norelease
+}
+
+slow {
+	name = ChunkBottom
+	return = TInt
+	handle = chunk
+}
+
+slow {
+	name = ChunkTop
+	return = TInt
+	handle = chunk
+}
+
+slow {
+	name = ThreadContext
+	arg2 = TDes8&
+	handle = thread
+	norelease
+}
+
+slow {
+	name = ThreadCreate
+	return = TInt
+	arg1 = const TDesC8&
+	arg2 = TOwnerType
+	arg3 = SThreadCreateInfo8&
+}
+
+slow {
+	name = FindHandleOpen
+	return = TInt
+	arg1 = TOwnerType
+	arg2 = const TFindHandle&
+}
+
+slow {
+	name = HandleClose
+	return = TInt
+	arg1 = TInt
+}
+
+slow {
+	name = ChunkCreate
+	return = TInt
+	arg1 = TOwnerType
+	arg2 = const TDesC8*
+	arg3 = TChunkCreate&
+}
+
+slow {
+	name = ChunkAdjust
+	return = TInt
+	arg2 = TInt
+	arg3 = TInt
+	arg4 = TInt
+	handle = chunk
+	norelease
+}
+
+slow {
+	name = OpenObject
+	return = TInt
+	arg1 = TObjectType
+	arg2 = const TDesC8&
+	arg3 = TOwnerType
+}
+
+slow {
+	name = HandleDuplicate
+	return = TInt
+	arg1 = TInt
+	arg2 = TOwnerType
+	arg3 = TInt&
+}
+
+slow {
+	name = MutexCreate
+	return = TInt
+	arg1 = const TDesC8*
+	arg2 = TOwnerType
+}
+
+slow {
+	name = SemaphoreCreate
+	return = TInt
+	arg1 = const TDesC8*
+	arg2 = TInt
+	arg3 = TOwnerType
+}
+
+slow {
+	name = ThreadOpenById
+	return = TInt
+	arg1 = TUint
+	arg2 = TOwnerType
+}
+
+slow {
+	name = ProcessOpenById
+	return = TInt
+	arg1 = TUint
+	arg2 = TOwnerType
+}
+
+slow {
+	name = ThreadKill
+	arg1 = TInt
+	arg2 = TExitType
+	arg3 = TInt
+	arg4 = const TDesC8*
+}
+
+slow {
+	name = ThreadLogon
+	arg2 = TRequestStatus*
+	arg3 = TBool
+	handle = thread
+	norelease
+}
+
+slow {
+	name = ThreadLogonCancel
+	return = TInt
+	arg2 = TRequestStatus*
+	arg3 = TBool
+	handle = thread
+	norelease
+}
+
+slow {
+	name = DllSetTls
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt
+	arg3 = TAny*
+}
+
+slow {
+	name = DllFreeTls
+	arg1 = TInt
+}
+
+slow {
+	name = ThreadRename
+	return = TInt
+	arg1 = TInt
+	arg2 = const TDesC8&
+}
+
+slow {
+	name = ProcessRename
+	return = TInt
+	arg1 = TInt
+	arg2 = const TDesC8&
+}
+
+slow {
+	name = ProcessKill
+	arg1 = TInt
+	arg2 = TExitType
+	arg3 = TInt
+	arg4 = const TDesC8*
+}
+
+slow {
+	name = ProcessLogon
+	arg2 = TRequestStatus*
+	arg3 = TBool
+	handle = process
+	norelease
+}
+
+slow {
+	name = ProcessLogonCancel
+	return = TInt
+	arg2 = TRequestStatus*
+	arg3 = TBool
+	handle = process
+	norelease
+}
+
+slow {
+	name = ThreadProcess
+	return = TInt
+	handle = thread
+	norelease
+}
+
+slow {
+	name = ServerCreate
+	return = TInt
+	arg1 = const TDesC8*
+	arg2 = TInt
+}
+
+slow {
+	name = ServerCreateWithOptions
+	return = TInt
+	arg1 = const TDesC8*
+	arg2 = TInt
+	arg3 = TInt
+	arg4 = TInt
+}
+
+slow {
+	name = SessionCreate
+	return = TInt
+	arg1 = const TDesC8&
+	arg2 = TInt
+	arg3 = const TSecurityPolicy*
+	arg4 = TInt
+}
+
+slow {
+	name = SessionCreateFromHandle
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt
+	arg3 = const TSecurityPolicy*
+	arg4 = TInt
+}
+
+slow {
+	name = DeviceLoad
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TAny*
+	arg2 = TInt
+}
+
+slow {
+	name = DeviceFree
+	return = TInt
+	arg1 = const TDesC8&
+	arg2 = TInt
+}
+
+slow {
+	name = ChannelCreate
+	return = TInt
+	arg1 = const TDesC8&
+	arg2 = TChannelCreateInfo8&
+	arg3 = TInt
+}
+
+slow {
+	name = TimerCreate
+	return = TInt
+}
+
+slow {
+	name = TimerHighRes
+	arg2 = TRequestStatus&
+	arg3 = TInt
+	handle = timer
+}
+
+slow {
+	name = AfterHighRes
+	arg1 = TInt
+	arg2 = TRequestStatus&
+	lock
+}
+
+slow {
+	name = ChangeNotifierCreate
+	return = TInt
+	arg1 = TOwnerType
+}
+
+slow {
+	name = UndertakerCreate
+	return = TInt
+	arg1 = TOwnerType
+}
+
+slow {
+	name = UndertakerLogon
+	return = TInt
+	arg2 = TRequestStatus&
+	arg3 = TInt&
+	karg3 = TInt*
+	handle = undertaker
+}
+
+slow {
+	name = UndertakerLogonCancel
+	return = TInt
+	handle = undertaker
+	norelease
+}
+
+slow {
+	name = KernelHeapDebug
+	arg1 = TInt
+	arg2 = TInt
+	arg3 = TAny*
+}
+
+slow {
+	name = ThreadGetCpuTime
+	return = TInt
+	arg2 = EXEC_INT64&
+	handle = thread
+	norelease
+}
+
+slow {
+	name = CodeSegCreate
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TCodeSegCreateInfo&
+}
+
+slow {
+	name = CodeSegLoaded
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TCodeSegCreateInfo&
+}
+
+slow {
+	name = LibraryCreate
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TLibraryCreateInfo&
+}
+
+slow {
+	name = CodeSegOpen
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TAny*
+	arg2 = TInt
+}
+
+slow {
+	name = CodeSegClose
+	user = E32Loader
+	export
+	arg1 = TAny*
+}
+
+slow {
+	name = CodeSegNext
+	user = E32Loader
+	export
+	arg1 = TAny*&
+	arg2 = const TFindCodeSeg&
+}
+
+slow {
+	name = CodeSegInfo
+	user = E32Loader
+	export
+	arg1 = TAny*
+	arg2 = TCodeSegCreateInfo&
+}
+
+slow {
+	name = CodeSegAddDependency
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TAny*
+	arg2 = TAny*
+}
+
+slow {
+	name = CodeSegDeferDeletes
+	user = E32Loader
+	export
+}
+
+slow {
+	name = CodeSegEndDeferDeletes
+	user = E32Loader
+	export
+}
+
+slow {
+	name = ProcessCreate
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TProcessCreateInfo&
+	arg2 = const TDesC8*
+}
+
+slow {
+	name = ProcessLoaded
+	user = E32Loader
+	export
+	return = TInt
+	arg1 = TProcessCreateInfo&
+}
+
+slow {
+	name = CheckLoaderClientState
+	user = E32Loader::CheckClientState
+	export
+	return = TInt
+	handle = ipcclient
+}
+
+slow {
+	name = ThreadProcessCodeSeg
+	user = E32Loader
+	export
+	return = TAny*
+	handle = thread
+}
+
+slow {
+	name = CodeSegReadExportDir
+	user = E32Loader::ReadExportDir
+	export
+	arg1 = TAny*
+	arg2 = TLinAddr*
+}
+
+slow {
+	name = WaitDllLock
+	user = E32Loader
+	return = TInt
+}
+
+slow {
+	name = ReleaseDllLock
+	user = E32Loader
+	return = TInt
+}
+
+slow {
+	name = LibraryAttach
+	user = E32Loader
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt&
+	arg3 = TLinAddr*
+}
+
+slow {
+	name = LibraryAttached
+	user = E32Loader
+	return = TInt
+	arg1 = TInt
+}
+
+slow {
+	name = StaticCallList
+	user = E32Loader
+	return = TInt
+	arg1 = TInt&
+	arg2 = TLinAddr*
+}
+
+slow {
+	name = LibraryDetach
+	user = E32Loader
+	return = TInt
+	arg1 = TInt&
+	arg2 = TLinAddr*
+}
+
+slow {
+	name = LibraryDetached
+	user = E32Loader
+	return = TInt
+}
+
+slow {
+	name = LastThreadHandle
+	return = TInt
+}
+
+slow {
+	name = ThreadRendezvous
+	arg1 = TInt
+}
+
+slow {
+	name = ProcessRendezvous
+	arg1 = TInt
+}
+
+slow {
+	name = MessageGetDesLength
+	return = TInt
+	arg2 = TInt
+	handle = ipcmessage
+}
+
+slow {
+	name = MessageGetDesMaxLength
+	return = TInt
+	arg2 = TInt
+	handle = ipcmessage
+}
+
+slow {
+	name = MessageIpcCopy
+	specialuser
+	return = TInt
+	arg2 = TInt
+	arg3 = SIpcCopyInfo&
+	arg4 = TInt
+	handle = ipcmessage
+	extended = 3
+}
+
+slow {
+	name = MessageClient
+	return = TInt
+	arg2 = TOwnerType
+	handle = ipcclient
+	norelease
+}
+
+slow {
+	name = MessageSetProcessPriority
+	return = TInt
+	arg2 = TProcessPriority
+	handle = ipcclient
+	norelease
+}
+
+slow {
+	name = MessageConstructFromPtr
+	arg2 = TAny*
+	handle = ipcmessaged
+	norelease
+}
+
+slow {
+	name = MessageKill
+	arg1 = TInt
+	arg2 = TExitType
+	arg3 = TInt
+	arg4 = const TDesC8*
+}
+
+slow {
+	name = MessageOpenObject
+	return = TInt
+	arg2 = TObjectType
+	arg3 = TInt
+	arg4 = TOwnerType
+	handle = ipcmessage
+	norelease
+}
+
+slow {
+	name = ProcessSecurityInfo
+	arg2 = SSecurityInfo&
+	handle = process
+	norelease
+}
+
+slow {
+	name = ThreadSecurityInfo
+	arg2 = SSecurityInfo&
+	handle = thread
+	norelease
+}
+
+slow {
+	name = MessageSecurityInfo
+	arg2 = SSecurityInfo&
+	handle = ipcclient
+	norelease
+}
+
+slow {
+	name = CreatorSecurityInfo
+	arg1 = SSecurityInfo&
+}
+
+slow {
+	name = DisabledCapabilities
+	arg1 = SCapabilitySet&
+}
+
+slow {
+	name = ChunkSetRestrictions
+	return = TInt
+	arg2 = TUint
+	handle = chunk
+}
+
+slow {
+	name = MsgQueueCreate
+	return = TInt
+	arg1 = const TDesC8*
+	arg2 = TInt
+	arg3 = TInt
+	arg4 = TOwnerType
+}
+
+slow {
+	name = MsgQueueSend
+	return = TInt
+	arg1 = TInt
+	arg2 = const TAny*
+	arg3 = TInt
+}
+
+slow {
+	name = MsgQueueReceive
+	return = TInt
+	arg2 = TAny*
+	arg3 = TInt
+	handle = msgqueue
+	norelease
+}
+
+slow {
+	name = MsgQueueNotifySpaceAvailable
+	arg2 = TRequestStatus&
+	handle = msgqueue
+	norelease
+}
+
+slow {
+	name = MsgQueueCancelSpaceAvailable
+	handle = msgqueue
+	norelease
+}
+
+slow {
+	name = MsgQueueNotifyDataAvailable
+	arg2 = TRequestStatus&
+	handle = msgqueue
+	norelease
+}
+
+slow {
+	name = MsgQueueCancelDataAvailable
+	handle = msgqueue
+	norelease
+}
+
+slow {
+	name = MsgQueueSize
+	handle = msgqueue
+	return = TInt
+}
+
+slow {
+	name = PropertyDefine
+	return = TInt
+	arg1 = TUint
+	arg2 = TUint
+	arg3 = TPropertyInfo*
+	}
+
+slow {
+	name = PropertyDelete
+	return = TInt
+	arg1 = TUint
+	arg2 = TUint
+}
+
+slow {
+	name = PropertyAttach
+	return = TInt
+	arg1 = TUint
+	arg2 = TUint
+	arg3 = TOwnerType
+}
+
+slow {
+	name = PropertySubscribe
+	arg2 = TRequestStatus*
+	handle = property
+	norelease
+}
+
+slow {
+	name = PropertyCancel
+	handle = property
+	norelease
+}
+
+slow {
+	name = PropertyGetI
+	return = TInt
+	arg2 = TInt*
+	handle = property
+	norelease
+}
+
+slow {
+	name = PropertyGetB
+	return = TInt
+	arg2 = TUint8*
+	arg3 = TInt
+	handle = property
+	norelease
+}
+
+slow {
+	name = PropertySetI
+	return = TInt
+	arg2 = TInt
+	handle = property
+	norelease
+}
+
+slow {
+	name = PropertySetB
+	return = TInt
+	arg1 = TInt
+	arg2 = const TUint8*
+	arg3 = TInt
+}
+
+slow {
+	name = PropertyFindGetI
+	return = TInt
+	arg1 = TUint
+	arg2 = TUint
+	arg3 = TInt*
+}
+
+slow {
+	name = PropertyFindGetB
+	return = TInt
+	arg1 = TUint
+	arg2 = TUint
+	arg3 = TUint8*
+	arg4 = TInt
+}
+
+slow {
+	name = PropertyFindSetI
+	return = TInt
+	arg1 = TUint
+	arg2 = TUint
+	arg3 = TInt
+}
+
+slow {
+	name = PropertyFindSetB
+	return = TInt
+	arg1 = TUint
+	arg2 = TUint
+	arg3 = TUint8*
+	arg4 = TInt
+}
+
+slow {
+	name = PowerEnableWakeupEvents
+	arg1 = TPowerState
+	return = TInt
+}
+
+slow {
+	name = PowerDisableWakeupEvents
+}
+
+slow {
+	name = PowerRequestWakeupEventNotification
+	arg1 = TRequestStatus*
+}
+
+slow {
+	name = PowerCancelWakeupEventNotification
+}
+
+slow {
+	name = PowerDown
+	return = TInt
+}
+
+slow {
+	name = ProcessSetHandleParameter
+	return = TInt
+	handle = process
+	arg2 = TInt
+	arg3 = TInt
+}
+
+slow {
+	name = ProcessSetDataParameter
+	return = TInt
+	arg1 = TInt
+	arg2 = TInt
+	arg3 = const TUint8*
+	arg4 = TInt
+
+}
+
+slow {
+	name = ProcessGetHandleParameter
+	return = TInt
+	arg1 = TInt
+	arg2 = TObjectType
+	arg3 = TOwnerType
+	lock
+}
+
+slow {
+	name = ProcessGetDataParameter
+	return = TInt
+	arg1 = TInt
+	arg2 = TUint8*
+	arg3 = TInt
+	lock
+}
+
+slow {
+	name = ProcessDataParameterLength
+	return = TInt
+	arg1 = TInt
+	lock
+}
+
+slow {
+	name = MessageClientProcessFlags
+	kernel = ExecHandler::ThreadProcessFlags
+	return = TUint
+	handle = ipcclient
+}
+
+slow {
+	name = ThreadStackInfo
+	return = TInt
+	arg2 = TThreadStackInfo&
+	handle = thread
+	norelease
+}
+
+slow {
+	name = ThreadGetHeap
+	return = RAllocator*
+	handle = thread
+}
+
+slow {
+	name = ThreadAsProcess
+	arg2 = TInt
+	return = TInt
+	handle = thread
+	norelease
+}
+
+slow {
+	name = CondVarCreate
+	return = TInt
+	arg1 = const TDesC8*
+	arg2 = TOwnerType
+}
+
+slow {
+	name = CondVarWait
+	return = TInt
+	arg2 = TInt
+	arg3 = TInt
+	handle = condvar
+	norelease
+}
+
+slow {
+	name = CondVarSignal
+	handle = condvar
+	norelease
+}
+
+slow {
+	name = CondVarBroadcast
+	handle = condvar
+	norelease
+}
+
+slow {
+	name = PlatSecDiagnostic
+	return = TInt
+	arg1 = TPlatSecDiagnostic*
+}
+
+slow {
+	name = ExceptionDescriptor
+	arg1 = TLinAddr
+	return = TLinAddr
+}
+
+slow {
+	name = ThreadRequestSignal
+	handle = thread
+	norelease
+	asm
+}
+
+slow {
+	name = MutexIsHeld
+	return = TBool
+	handle = mutex
+}
+
+slow {
+	name = LeaveStart
+	return = TTrapHandler*
+}
+
+slow {
+	name = LeaveEnd
+}
+
+slow {
+	name = SetDebugMaskIndex
+	arg1 = TUint32
+	arg2 = TUint
+}
+
+slow {
+ 	name = GetModuleNameFromAddress
+ 	arg1 = TAny*
+ 	arg2 = TDes8&
+ 	return = TInt
+}
+
+slow {
+	name = NotifyChanges
+	arg1 = TUint
+}
+
+slow {
+	name = SetGlobalUserData
+	arg1 = TInt
+	arg2 = TInt
+	return = TInt
+}
+
+slow {
+	name = SessionSecurityInfo
+	arg1 = TInt
+	arg2 = SSecurityInfo&
+	return = TInt
+}
+
+slow {
+	name = MessageClientStatus
+	return = const TRequestStatus*
+	handle = ipcmessage
+}
+
+slow {
+	name = SetFloatingPointMode
+	arg1 = TFloatingPointMode
+	arg2 = TFloatingPointRoundingMode
+	return = TInt
+}
+
+slow {
+	name = BTraceOut
+	specialuser
+	kernel = ExecHandler::BTraceOut
+	return = TBool
+	arg1 = TUint32
+	arg2 = TUint32
+	arg3 = const BTrace::SExecExtension&
+	arg4 = TInt
+	extended = 3
+}
+
+slow {
+	name = BTraceOutBig
+	specialuser
+	kernel = ExecHandler::BTraceOutBig
+	return = TBool
+	arg1 = TUint32
+	arg2 = TUint32
+	arg3 = const BTrace::SExecExtension&
+	arg4 = TInt
+	extended = 3
+}
+
+slow {
+	name = UTraceOut
+	specialuser
+	kernel = ExecHandler::UTraceOut
+	return = TBool
+	arg1 = TUint32
+	arg2 = TUint32
+	arg3 = const BTrace::SExecExtension&
+	arg4 = TInt
+	extended = 3
+}
+
+slow {
+	name = CheckFilter2
+	user = BTrace
+	kernel = BTrace::CheckFilter2
+	return = TBool
+	arg1 = TUint32
+	arg2 = TUint32
+	export
+}
+
+slow {
+	name = ProcessExeExportData
+	return = TAny*
+}
+
+slow {
+	name = NotifyIfCodeSegDestroyed
+	user = E32Loader
+	return = TInt
+	arg1	= TRequestStatus&
+	export
+	lock
+}
+
+slow {
+	name = GetDestroyedCodeSegInfo
+	user = E32Loader
+	return = TInt
+	arg1 = TCodeSegLoaderCookie&
+	export
+}
+
+slow {
+	name = SetWin32RuntimeHook
+	arg1 = TAny*
+	return = TInt
+	emulator
+	export
+}
+
+slow {
+	name = GetBTraceId
+	return = TInt
+	handle = any
+}
+
+slow {
+	name = NotifyOnIdle
+	arg1 = TRequestStatus*
+}
+
+slow {
+	name = CancelMiscNotifier
+	arg1 = TRequestStatus*
+}
+
+slow {
+	name = NotifyObjectDestruction
+	arg1 = TInt
+	arg2 = TRequestStatus*
+}
+
+slow {
+	name = RegisterTrustedChunk
+	handle = chunk
+}
+
+slow {
+	name = UserThreadExiting
+	arg1 = TInt
+	return = TBool
+}
+
+slow {
+	name = SlowAtomicAxo64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_SLOW_EXEC__
+	user = special
+}
+
+slow {
+	name = SlowAtomicCas64
+	arg1 = SAtomicOpInfo64*
+	return = TBool
+	ifdef = __ATOMIC64_USE_SLOW_EXEC__
+	user = special
+}
+
+slow {
+	name = SlowAtomicAdd64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_SLOW_EXEC__
+	user = special
+}
+
+slow {
+	name = SlowAtomicTau64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_SLOW_EXEC__
+	user = special
+}
+
+slow {
+	name = SlowAtomicTas64
+	arg1 = SAtomicOpInfo64*
+	ifdef = __ATOMIC64_USE_SLOW_EXEC__
+	user = special
+}
+
+slow {
+	name = ChunkIsPaged
+	handle = chunk
+	return = TBool
+}
+
+slow {
+	name = ProcessDefaultDataPaged
+	handle = process
+	return = TBool
+}
+
+slow {
+	name = MessageClientThreadFlags
+	specialkernel = ExecHandler::ThreadFlags
+	return = TUint
+	handle = ipcclient
+}
+
+slow {
+	name = ShPoolCreate
+	return = TInt
+	arg1 = const TShPoolInfo&
+	arg2 = TUint
+}
+
+slow {
+	name = ShPoolAlloc
+	return = TInt
+	arg1 = TInt
+	arg2 = TUint
+	arg3 = SShBufBaseAndSize&
+}
+
+slow {
+	name = ShPoolGetInfo
+	return = void
+	arg2 = TShPoolInfo&
+	handle = shpool
+	norelease
+}
+
+slow {
+	name = ShPoolFreeCount
+	return = TUint
+	handle = shpool
+}
+
+
+slow {
+	name = ShPoolNotification
+	return = TInt
+	arg2 = TShPoolNotifyType
+	arg3 = TUint
+	arg4 = TRequestStatus&
+	handle = shpool
+	norelease
+}
+
+slow {
+	name = ShPoolNotificationCancel
+	return = TInt
+	arg2 = TShPoolNotifyType
+	arg3 = TRequestStatus&
+	handle = shpool
+	norelease
+}
+
+slow {
+	name = ShPoolBufferWindow
+	return = TInt
+	arg2 = TInt
+	arg3 = TBool
+	handle = shpool
+	norelease
+}
+
+slow {
+	name = ShBufMap
+	return = TInt
+	arg2 = TBool
+	arg3 = SShBufBaseAndSize&
+	handle = shbuf
+	norelease
+}
+
+slow {
+	name = ShBufUnMap
+	return = TInt
+	handle = shbuf
+	norelease
+}
+
+slow {
+	name = ShBufBaseAndSize
+	return = TInt
+	arg2 = SShBufBaseAndSize&
+	handle = shbuf
+	norelease
+}
+
+/******************************************************************************
+ * End of normal executive functions
+ ******************************************************************************/
+
+// Test functions
+
+slow {
+	name = KernMsgTest
+	user = special
+	kernel = ::KernMsgTest
+	hw
+}
+
+slow {
+	name = GetLatencyValues
+	user = special
+	kernel = ::GetLatencyValues
+	arg1 = TInt
+	arg2 = TInt&
+	arg3 = TInt*
+	hw
+}
+
+slow {
+	name = CalcKernelHeapUsed
+	user = special
+	kernel = ::CalcKernelHeapUsed
+	return = TInt
+}
+

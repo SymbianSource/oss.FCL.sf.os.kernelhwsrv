@@ -1,0 +1,4 @@
+EXPORTS
+	?CreateLogicalDevice@@YAPAVDLogicalDevice@@XZ @ 1 NONAME ; class DLogicalDevice * __cdecl CreateLogicalDevice(void)
+	?ExportMultiplyFunction@@YAHII@Z @ 2 NONAME ; int __cdecl ExportMultiplyFunction(unsigned int,unsigned int)
+

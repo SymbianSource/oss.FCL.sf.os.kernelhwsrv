@@ -1,0 +1,100 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include <x86_mem.h>
+
+#if defined(KMMU)
+extern "C" void __DebugMsgFlushTLB();
+extern "C" void __DebugMsgLocalFlushTLB();
+extern "C" void __DebugMsgTotalFlushTLB();
+extern "C" void __DebugMsgINVLPG(int a);
+#endif
+
+
+__NAKED__ void __fastcall DoInvalidateTLBForPage(TLinAddr /*aLinAddr*/)
+//
+// Flush a specified virtual address from the TLB.
+//
+	{
+	ASM_DEBUG1(INVLPG,ecx)
+	asm("invlpg [ecx]");
+	asm("ret");
+	}
+
+// On 486 and Pentium this invalidates all TLB entries.
+// On P6 and later CPUs it only invalidates non-global TLB entries.
+__NAKED__ void DoLocalInvalidateTLB()
+	{
+	ASM_DEBUG0(LocalFlushTLB)
+	asm("mov eax, cr3");
+	asm("mov cr3, eax");
+	asm("ret");
+	}
+
+// Invalidate all TLB entries regardless of CPU type.
+__NAKED__ void DoInvalidateTLB()
+	{
+	ASM_DEBUG0(FlushTLB)
+	asm("mov edx, [%a0]": : "i"(&X86_UseGlobalPTEs));
+	asm("mov eax, cr3");
+	asm("cmp edx, 0");
+	asm("jz no_global_pages");
+	MOV_ECX_CR4;
+	asm("mov edx, ecx");
+	asm("and dl, 0x7f");
+	asm("pushfd");
+	asm("cli");
+	MOV_CR4_EDX;
+	asm("mov cr3, eax");
+	MOV_CR4_ECX;
+	asm("popfd");
+	asm("ret");
+	asm("no_global_pages:");
+	asm("mov cr3, eax");
+	asm("ret");
+	}
+
+__NAKED__ void __fastcall UserWriteFault(TLinAddr /*aAddr*/)
+	{
+	// must use ES for writes because IpcExcHandler expects this...
+	asm("push es");
+	asm("mov eax, %0" : : "i"(RING3_DS));
+	asm("mov es, ax");
+	asm("mov es:[ecx], ecx");
+	asm("pop es");
+	asm("ret");
+	}
+
+__NAKED__ void __fastcall UserReadFault(TLinAddr /*aAddr*/)
+	{	
+	// must use DS for reads because IpcExcHandler expects this...
+	asm("push ds");
+	asm("mov eax, %0" : : "i"(RING3_DS));
+	asm("mov ds, ax");
+	asm("mov eax, [ecx]");
+	asm("pop ds");
+	asm("ret");
+	}
+
+#ifdef __SMP__
+extern "C" __NAKED__ void __e32_instruction_barrier()
+	{
+	asm("push ebx ");
+	asm("cpuid ");		// fully serializing instruction
+	asm("pop ebx ");
+	asm("ret ");
+	}
+#endif
+

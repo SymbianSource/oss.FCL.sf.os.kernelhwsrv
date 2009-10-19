@@ -1,0 +1,32 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_warm.mmp
+// 
+//
+
+TARGET         T_WARM.EXE        
+TARGETTYPE     EXE
+SOURCEPATH	../MANAGER
+SOURCE         T_WARM.CPP
+LIBRARY        EUSER.LIB
+#if !defined(WINS)
+LIBRARY		   EFSRV.LIB
+#endif
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+RAMTARGET	+
+
+CAPABILITY		TCB DISKADMIN ALLFILES
+VENDORID 0x70000001
+
+SMPSAFE

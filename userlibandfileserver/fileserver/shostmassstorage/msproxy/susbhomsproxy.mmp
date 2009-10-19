@@ -1,0 +1,47 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32/shostmassstorage/msproxy/susbhomsproxy.mmp
+// 
+//
+
+TARGET			usbhostms.pxy
+TARGETTYPE		fsy
+
+USERINCLUDE	.
+USERINCLUDE ../client
+
+SOURCEPATH		.
+SOURCE			hostusbmsfactory.cpp
+SOURCE			hostusbmsproxy.cpp
+SOURCE			tmsmemmap.cpp
+SOURCE			debug.cpp
+
+// Function tracing
+//SOURCEPATH		../server/shared
+//SOURCE			msdebug.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY			euser.lib efile.lib usbhostmsclient.lib
+
+UID		0x100039df 0x10000CEE
+VENDORID 0x70000001
+
+//MACRO _HOST_DEBUG_PRINT_
+//MACRO _PROXY_DEBUG_PRINT_
+//MACRO _MSFN_DEBUG_PRINT_
+
+CAPABILITY TCB ProtServ DiskAdmin AllFiles PowerMgmt CommDD
+
+SMPSAFE

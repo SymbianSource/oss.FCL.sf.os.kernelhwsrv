@@ -1,0 +1,377 @@
+
+/******************************************************************************
+ * TESTS MODIFIED
+ ******************************************************************************/
+
+T_MESSGE.CPP
+	Use CreateFixedPoolSession() instead of CreateSession() so that testing the
+	number of available message slots works.
+
+T_PROC1.CPP
+	Name lengths reduced to reflect 64 character maximum
+	Added various Close() statements to get memory leak checking to work
+	Removed dodgy __KHEAP_CHECK(n) statements with various strange values of n -
+	changing kernel implementation is very likely to invalidate these.
+	Reinstated MurderProcess() test.
+	Look for $HEAP chunk instead of $STK; also don't add stack size to base to
+	get heap address.
+	Changed KERN-SVR panic to KERN-EXEC.
+	Removed test that attempts to resume an invalid process handle.
+	Added overall kernel heap checking covering the whole test.
+	Changed filenames so that test will run from any drive not just Z. T_PROC2
+	should be in the same directory as T_PROC1.
+	Speed test runs server thread at higher priority than client.
+
+T_SVR.CPP
+	Changed panic code from KErrArgument to ECausedException.
+	Added some more rogue thread tests to check what happens when an invalid
+	message pointer is used in RMessage::Complete.
+	Speed test runs server thread at higher priority than client.
+
+T_SVR2.CPP
+	Removed granularity expansion stuff.
+	Reinstated kernel heap checking.
+
+D_LDD.CPP
+	Modified to work with different kernel interface.
+
+T_SERIAL.CPP
+	100ms delay between powering up and checking serial port signal lines.
+	Use RDevComm instead of RBusDevComm.
+
+T_SOUND.CPP
+	Replaced with completely new code which tests the 6.x sound drivers which
+	have the new functionality for the MediaServer.
+	Removed all tests which require User::FreeLogicalDevice or
+	User::FreePhysicalDevice.
+	Don't test that Prepare() allocates memory - it doesn't.
+	Changed panic from KERN-SVR to KERN-EXEC.
+	Removed tests which issue a request from wrong thread (handle is now
+	thread relative).
+	Change filename used for process creation so that test runs from any drive.
+
+T_TLDD.CPP
+	Removed all tests which require User::FreeLogicalDevice or
+	User::FreePhysicalDevice, e.g. testing that .data/.bss are reinitialised
+	when the device driver is reloaded.
+
+T_START1.CPP, T_START2.CPP, T_START3.CPP
+	Print the file name so that these three DLLs end up with different code
+	chunks - otherwise loader gets confused when running from RAM.
+
+T_TDLL12.CPP
+	Removed __KHEAP_CHECK(n) tests.
+
+T_TDLLA.CPP
+	Added another DLL (T_DLLA2) which statically links to T_TDLLA.EXE. However
+	this test is currently commented out since the loader cannot handle DLLs
+	which link to an already-loaded RAM-based EXE (it attempts to load the .EXE
+	again as a DLL). The idea was to test that the .EXE entry point is not
+	called again.
+	Static data address for T_DLLA3 changed from 0x30300000 to 0x30010000.
+	
+T_TLS.CPP
+	Reinstated kernel heap checking, but removed __KHEAP_CHECK(n) tests.
+
+T_HEAP.CPP
+	Close the heap after each test to prevent chunks accumulating and exceeding
+	the 8 chunk limit.
+	Modified heap sharing test to account for the fact that a thread does not
+	create its heap until it runs.
+	Added overall kernel heap checking.
+
+T_KHEAP.CPP
+	Use shared heaps for the multitudinous threads involved so we don't exceed
+	the 8 chunk limit. Test thread creation with shared heaps and with separate
+	heaps.
+	Change filename used for process creation so that test runs from any drive.
+
+T_MLDR.CPP
+	Check test is running from Z: - it doesn't do anything if running from any
+	other drive.
+
+D_SHADOW.CPP
+	Modified to work with different kernel interface.
+	Dynamic binding of exception handlers not yet done in E32RT.
+	Call Mmu::FlushShadow() after modifying shadow page to ensure that it is
+	written out of a write-back cache.
+
+T_CHUNK.CPP
+	Reduced number of chunks created from 10 to 3.
+	Removed granularity expansion stuff.
+	Reinstated kernel heap checking.
+	Look for this process' $HEAP chunk rather than any chunk *Main::$STK - this
+	was picking up F32's stack/heap chunk.
+
+T_MWAIT.CPP
+	Use different priority values.
+
+T_ATADRV.CPP
+	Use TBusLocalDrive::ForceMediaChange() instead of UserPcCardCntrl::PwrDown().
+	Added kernel heap checking on media change.
+
+T_ATDRV2.CPP
+	Use TBusLocalDrive::ForceMediaChange() instead of UserPcCardCntrl::PwrDown().
+
+T_PCCDSK.CPP
+	Use TBusLocalDrive::ForceMediaChange() instead of UserSvr::ForceRemountMedia.
+
+D_POWR.CPP
+	Modified to work with different kernel/power manager interface.
+
+T_POWR.CPP
+	5 second alarm test does not use LDD to check that no switch off occurred.
+	This is because the system does prepare to power down but then changes its
+	mind at the last minute - this is necessary since power down and power up
+	are completely asynchronous operations.
+	Change filename used for process creation so that test runs from any drive.
+	Kill the extra processes we create - don't leave them there forever.
+
+T_EXC.CPP
+	Added more tests of RThread::Context(). Test context of preempted thread,
+	waiting thread and suspended thread.
+
+T_PROT.CPP
+	Panic a dead thread rather than a bad handle.
+	Added an extra test to check that kernel doesn't die if a bad pointer is
+	passed to DThread::RequestComplete().
+
+T_REG.CPP
+	Reinstated kernel heap checking.
+
+T_THREAD.CPP
+	Modified heap sharing test to account for the fact that a thread does not
+	create its heap until it runs.
+	Remove test which attempted to resume an invalid thread handle.
+	Added short delay between killing thread and checking that a mutex has
+	been released.
+	Removed Busy flag tests - not yet implemented in E32RT.
+	Removed undertaker order test, Bill's bug test and any other tests which
+	use thread-relative threads. Thread-relative threads are not supported.
+
+
+/******************************************************************************
+ * NEW TESTS ADDED
+ ******************************************************************************/
+
+T_CTXSW1, T_CTXSW2
+	Test raw inter-process context switch speed (without message passing).
+
+T_IPCBM
+	Benchmark IPC copying for various data sizes.
+
+T_KERNBM
+	Benchmark timer creation, thread suspend and synchronous kernel-side
+	messages.
+
+T_SVR3
+	Stress test for IPC using non-shared sessions.
+
+T_SVR5
+	Similar to T_SVR but tests IPC with shared sessions.
+
+T_SVR6
+	Stress test for IPC using shared sessions.
+
+T_MEMCPY
+	Tests Mem::Copy for all alignments and various data sizes.
+
+T_TBMA
+	Tests TBitMapAllocator class used in the kernel.
+
+CPUMETER
+	Gives a rough estimate of what percentage of the CPU time is currently
+	being used.
+
+CRASH
+	Causes a kernel fault.
+
+FREEMEM
+	Displays the amount of free RAM remaining.
+
+T_ABT
+	Repeatedly does an IPC copy which causes an exception. Left running in the
+	background for latency measurements.
+
+T_ALIVE
+	Prints to the debug serial port periodically based on both a tick and a
+	millisecond timer. Used to check timers are running.
+
+T_BUSY
+	Runs every millisecond on a millisecond timer. Prints a . every 1024ms.
+	Used to cause lots of rescheduling to a moving user process.
+
+T_CMPRES
+	Tests heap compression.
+
+T_DABT
+	Causes a data abort.
+
+T_PABT
+	Causes a prefetch abort.
+
+T_UNDEF
+	Causes an undefined instruction exception.
+
+T_DEATH
+	Displays exit information for any threads which die.
+
+T_DEATH2
+	Like T_DEATH but writes the information to a file.
+
+T_EMPTY
+	Does absolutely nothing! Has no imports.
+
+T_KILL
+	Exits with a write to a file in progress.
+
+T_RAMUSE
+	Displays total kernel heap used.
+
+T_RECORD
+	Deleted because sound driver changes completely break it.
+	Continuously records sound.
+
+T_REPMD
+	Loads a replacement ATA media driver MEDATA2.PDD.
+
+T_STRES1
+	General stress test - create/close kernel objects, heap alloc/dealloc,
+	heap compression, killing threads.
+
+THRDLIST
+	Writes a list of all threads in the system with register values to a file.
+
+T_CHUNK3
+	Repeated chunk resizing.
+
+T_CHUNK4
+	Tests disconnected chunks.
+
+T_MMUBM
+	Benchmark test for memory allocation/deallocation.
+
+T_WBC
+	Tests unmapping memory works on systems with write back caches.
+
+T_ATADR3
+	Stress test of CF card. Multiple threads reading/writing card with media
+	changes, power downs and threads exiting in the middle of operations.
+
+T_MEDIA
+	Test of ATA media driver. Tests reading and writing of various lengths
+	from 256 bytes to 16.5K, both aligned to sector boundary and with
+	beginning or end of region or both unaligned.
+
+T_BATTP
+	Deleted because sound driver changes break code and kernel reorg has 
+	probably broke the rest.
+	Monitors battery voltage over an extended period with alarms playing and
+	backlight in use.
+
+T_LATNCY
+	Measures interrupt and kernel thread latency using a special build of the
+	kernel.
+
+T_LAT2
+	Measures interrupt, kernel thread and user thread latency using a periodic
+	millisecond timer (interrupt every 1ms).
+
+D_LATNCY
+	Device driver for T_LAT2. This runs the millisecond timer and the kernel
+	thread. The user thread is part of T_LAT2.
+
+T_WRITE
+	Does repeated 64K IPC copies. Run in the background during latency
+	measurements.
+
+T_FRAG
+	Does repeated chunk resizing using multiple threads. Run in the background
+	during latency measurements.
+
+T_PROT2, T_PROT2A
+	Test that user threads cannot corrupt the code/data chunk of a process while
+	it is being loaded.
+
+T_PWRDN
+	Repeatedly powers the machine on and off.
+
+
+/******************************************************************************
+ * TESTS REMOVED OR NOT YET PORTED TO E32RT.
+ ******************************************************************************/
+
+T_RTIM
+	This tests super-threads, which never worked anyway. This has been superceded
+	by T_LATNCY and T_LAT2.
+
+D_RTIM
+	Device driver for T_RTIM.
+
+T_PTNOS
+	Tests partner OS hooks - E32RT doesn't have these.
+
+D_PTNOS
+	Device driver for T_PTNOS.
+
+T_MSTIM
+	Millisecond timer test - this doesn't really test anything anyway.
+
+D_MSTIM
+	Device driver for T_MSTIM.
+
+T_PROF
+	CPU-time per thread profiling. Not yet implemented in E32RT. Requires special
+	build of kernel.
+
+D_PROF
+	Device driver for profiling - not yet implemented in E32RT.
+
+D_PATCH1, D_PATCH2, D_PATCH3
+	Test patches - test loading of patches at boot time. These have not yet been
+	ported.
+
+T_PCCD1, T_PCCD2, T_PCCD3
+	These require D_PCCDIF and/or D_DRVIF, which have not yet been ported.
+
+D_PCCDIF, D_DRVIF
+	Test device drivers for testing PC card controller/local media system. Not
+	yet ported to E32RT.
+
+T_MEDDRV
+	Tests multiple simultaneous requests on a media driver. Uses device drivers
+	D_MEDT1, D_MEDT2 which have not yet been ported to E32RT. Test program
+	T_ATADR3 does a similar thing by having multiple threads all accessing a
+	drive at the same time.
+
+T_BEXFIQ, T_EXTFIQ, T_MEDCH
+	Use device drivers which have not been ported. First two of these are only
+	usable on a specially modified rack D.
+
+D_BEXFIQ, D_EXTFIQ, D_MEDCH
+	Not ported to E32RT. First two of these are only usable on a specially
+	modified rack D.
+
+T_DBG, T_BREAK
+	No debug support in E32RT yet.
+
+T_RESET
+	Not yet ported - it uses RDebug to read the super page, needs D_PATCHn
+	drivers. Also doesn't work with the crash debugger. Snowdrop E32RT doesn't
+	reboot properly after kernel fault (if the crash debugger is not there)
+	since it needs some variant information to do so.
+
+E32SOUND, E32SDRV
+	Sound drivers are still part of E32.
+
+T_MODEM1
+	PC card serial driver not yet implemented.
+
+T_PROM
+	EEPROM driver not implemented.
+
+T_CRMDRV, T_CRRDRV
+	Compact ROM media driver not ported.
+
+T_DEBUG
+	What is this supposed to test?

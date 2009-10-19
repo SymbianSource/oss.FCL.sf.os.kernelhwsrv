@@ -1,0 +1,532 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\klib\x86\cumem.cia
+// 
+//
+
+#include <x86.h>
+
+extern "C" {
+
+__NAKED__ void CopyInterSeg()
+//
+// Copy ECX bytes from DS:ESI to ES:EDI
+// Modifies EAX, EBX, ECX, EDX, ESI, EDI
+//
+	{
+	asm("pushfd");
+	asm("cld");				// assume forward copy initially
+	asm("test ecx,ecx");	//
+	asm("jz short memcopy0");// if length=0, nothing to do
+	asm("xor edx,edx");		//
+	asm("cmp edi,esi");		// compare source and dest addresses
+	asm("jc short memcopy1");// if dest<source, must go forwards
+	asm("std");				// else go backwards
+	asm("add esi,ecx");		// and start at end of block
+	asm("add edi,ecx");		//
+	asm("inc edx");			// edx=1 if backwards, 0 if forwards
+	asm("memcopy1:");
+	asm("cmp ecx,16");		// if length<16 don't bother with alignment check
+	asm("jc short memcopy2");//
+	asm("mov ebx,edi");		// ebx = destination address
+	asm("and ebx,3");		// ebx bottom 2 bits = alignment of destination wrt hardware bus
+	asm("jz short memcopy3");// if aligned, proceed with block move
+	asm("or edx,edx");		// check direction of move
+	asm("jnz short memcopy4");// if backwards, ebx = number of byte moves to align destination
+	asm("neg ebx");			// else number of byte moves = 4-ebx
+	asm("add ebx,4");		//
+	asm("memcopy4:");
+	asm("sub ecx,ebx");		// subtract number of bytes from length
+	asm("xchg ecx,ebx");	// temporarily put length in ebx
+	asm("sub edi,edx");		// adjust if backwards move
+	asm("sub esi,edx");		//
+	asm("rep movsb");		// move bytes to align destination
+	asm("add edi,edx");		// adjust if backwards move
+	asm("add esi,edx");		//
+	asm("mov ecx,ebx");		// length back into ecx
+	asm("memcopy3:");
+	asm("mov ebx,ecx");		// save length in ebx
+	asm("shl edx,2");		// adjustment 4 for backwards move
+	asm("shr ecx,2");		// number of dwords to move into ecx
+	asm("sub edi,edx");		// adjust if backwards move
+	asm("sub esi,edx");		//
+	asm("rep movsd");		// perform DWORD block move
+	asm("add edi,edx");		// adjust if backwards move
+	asm("add esi,edx");		//
+	asm("mov ecx,ebx");		// length back into ecx
+	asm("and ecx,3");		// number of remaining bytes to move
+	asm("jz short memcopy0");// if zero, we are finished
+	asm("shr edx,2");		// adjustment 1 for backwards move
+	asm("memcopy2:");		// *** come here for small move
+	asm("sub edi,edx");		// adjust if backwards move
+	asm("sub esi,edx");		//
+	asm("rep movsb");		// move remaining bytes
+	asm("memcopy0:");
+	asm("popfd");
+	asm("ret");				// finished - return value in EAX
+	}
+
+__NAKED__ void CopyInterSeg32()
+//
+// Copy ECX bytes from DS:ESI to ES:EDI
+// ECX, ESI and EDI are all multiples of 4
+// Modifies EAX, EBX, ECX, EDX, ESI, EDI
+//
+	{
+	asm("pushfd");
+	asm("cld");				//
+	asm("test ecx,ecx");	//
+	asm("jz short memmove0");// if length=0, nothing to do
+	asm("cmp edi,esi");		// compare source and dest addresses
+	asm("jc short memmove1");// if dest<source, must go forwards
+	asm("std");				// else go backwards
+	asm("lea esi,[esi+ecx-4]");	// and start at end of block - 4
+	asm("lea edi,[edi+ecx-4]");	//
+	asm("memmove1:");
+	asm("shr ecx,2");		// ecx now contains number of dwords to move
+	asm("rep movsd");		// do dword block move
+	asm("memmove0:");
+	asm("popfd");
+	asm("ret");				// finished - return value in EAX
+	}
+
+__NAKED__ void FillInterSeg()
+//
+// Fill ECX bytes at ES:EDI with AL
+// Modifies EAX, ECX, EDX, EDI
+//
+	{
+	asm("pushfd");
+	asm("cld");				// go forwards through array
+	asm("test ecx,ecx");	//
+	asm("jz short memfill0");// if length zero, nothing to do
+	asm("cmp ecx,8");			// if array very small, just do byte fills
+	asm("jb short memfill1");
+
+	asm("mov ah,al");		// repeat al in all bytes of eax
+	asm("movzx edx,ax");	//
+	asm("shl eax,16");		//
+	asm("or eax,edx");		//
+	asm("mov edx,ecx");		// length into edx
+	// ecx = number of byte fills to align = 4-(edi mod 4)
+	asm("mov ecx,4");		
+	asm("sub ecx,edi");		//
+	asm("and ecx,3");		//
+	asm("jz short memfill2");// if already aligned, proceed to dword fill
+	asm("sub edx,ecx");		// subtract alignment bytes from length
+	asm("rep stosb");		// do byte fills to align
+	asm("memfill2:");
+	asm("mov ecx,edx");		// length remaining into ecx
+	asm("shr ecx,2");		// number of dwords to fill into ecx
+	asm("rep stosd");		// perform dword fill
+	asm("mov ecx,edx");		// calculate number of leftover bytes
+	asm("and ecx,3");		// in ecx
+	asm("jz short memfill0");// if none left, exit
+	asm("memfill1:");
+	asm("rep stosb");		// do byte fills to make up correct length
+	asm("memfill0:");
+	asm("popfd");
+	asm("ret");
+	}
+
+
+/**	Reads the current thread's memory space with appropriate permissions.
+
+Performs a memcpy(aKernAddr, aAddr, aLength).
+The reads are performed	using requestor privilege level from GS, ie equal
+to the privilege level of the caller of the Exec:: function.
+Note that source and destination areas may not overlap.
+
+@param	aKernAddr	Destination address in kernel memory.
+@param	aAddr		Source address in kernel or user memory.
+@param	aLength		Number of bytes to copy.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void kumemget(TAny* /*aKernAddr*/, const TAny* /*aAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ds");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov ax, gs");
+	asm("mov ds, ax");
+	asm("call %a0": : "i"(&CopyInterSeg));
+	asm("pop ds");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Reads the current thread's memory space with user permissions.
+
+Performs a memcpy(aKernAddr, aUserAddr, aLength).
+The reads are performed with ring 3 RPL.
+Note that source and destination areas may not overlap.
+
+@param	aKernAddr	Destination address in kernel memory.
+@param	aUserAddr	Source address in user memory.
+@param	aLength		Number of bytes to copy.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void umemget(TAny* /*aKernAddr*/, const TAny* /*aUserAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ds");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov eax, %0": : "i"(RING3_DS));
+	asm("mov ds, ax");
+	asm("call %a0": : "i"(&CopyInterSeg));
+	asm("pop ds");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Does a word-aligned read of the current thread's memory space with appropriate permissions.
+
+Performs a memcpy(aKernAddr, aAddr, aLength).
+The reads are performed	using requestor privilege level from GS, ie equal
+to the privilege level of the caller of the Exec:: function.
+Note that source and destination areas may not overlap.
+
+@param	aKernAddr	Destination address in kernel memory, must be 4-byte aligned.
+@param	aAddr		Source address in kernel or user memory, must be 4-byte aligned.
+@param	aLength		Number of bytes to copy, must be a multiple of 4.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void kumemget32(TAny* /*aKernAddr*/, const TAny* /*aAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ds");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov ax, gs");
+	asm("mov ds, ax");
+	asm("call %a0": : "i"(&CopyInterSeg32));
+	asm("pop ds");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Does a word-aligned read of the current thread's memory space with user permissions.
+
+Performs a memcpy(aKernAddr, aUserAddr, aLength).
+The reads are performed with ring 3 RPL.
+Note that source and destination areas may not overlap.
+
+@param	aKernAddr	Destination address in kernel memory, must be 4-byte aligned.
+@param	aUserAddr	Source address in user memory, must be 4-byte aligned.
+@param	aLength		Number of bytes to copy, must be a multiple of 4.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void umemget32(TAny* /*aKernAddr*/, const TAny* /*aUserAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ds");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov eax, %0": : "i"(RING3_DS));
+	asm("mov ds, ax");
+	asm("call %a0": : "i"(&CopyInterSeg32));
+	asm("pop ds");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Writes to the current thread's memory space with appropriate permissions.
+
+Performs a memcpy(aAddr, aKernAddr, aLength).
+The writes are performed using requestor privilege level from GS, ie equal
+to the privilege level of the caller of the Exec:: function.
+Note that source and destination areas may not overlap.
+
+@param	aAddr		Destination address in kernel or user memory.
+@param	aKernAddr	Source address in kernel memory.
+@param	aLength		Number of bytes to copy.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void kumemput(TAny* /*aAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push es");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov ax, gs");
+	asm("mov es, ax");
+	asm("call %a0": : "i"(&CopyInterSeg));
+	asm("pop es");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Writes to the current thread's memory space with user permissions.
+
+Performs a memcpy(aAddr, aKernAddr, aLength).
+The writes are performed with ring 3 RPL.
+Note that source and destination areas may not overlap.
+
+@param	aUserAddr	Destination address in user memory.
+@param	aKernAddr	Source address in kernel memory.
+@param	aLength		Number of bytes to copy.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void umemput(TAny* /*aUserAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push es");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov eax, %0": : "i"(RING3_DS));
+	asm("mov es, ax");
+	asm("call %a0": : "i"(&CopyInterSeg));
+	asm("pop es");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Does a word-aligned write to the current thread's memory space with appropriate permissions.
+
+Performs a memcpy(aAddr, aKernAddr, aLength).
+The writes are performed using requestor privilege level from GS, ie equal
+to the privilege level of the caller of the Exec:: function.
+Note that source and destination areas may not overlap.
+
+@param	aAddr		Destination address in kernel or user memory, must be 4-byte aligned.
+@param	aKernAddr	Source address in kernel memory, must be 4-byte aligned.
+@param	aLength		Number of bytes to copy, must be a multiple of 4.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void kumemput32(TAny* /*aAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push es");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov ax, gs");
+	asm("mov es, ax");
+	asm("call %a0": : "i"(&CopyInterSeg32));
+	asm("pop es");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Does a word-aligned write to the current thread's memory space with user permissions.
+
+Performs a memcpy(aAddr, aKernAddr, aLength).
+The writes are performed with ring 3 RPL.
+Note that source and destination areas may not overlap.
+
+@param	aUserAddr	Destination address in user memory, must be 4-byte aligned.
+@param	aKernAddr	Source address in kernel memory, must be 4-byte aligned.
+@param	aLength		Number of bytes to copy, must be a multiple of 4.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void umemput32(TAny* /*aUserAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push es");
+	asm("mov edi, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("mov ecx, [esp+28]");
+	asm("mov eax, %0": : "i"(RING3_DS));
+	asm("mov es, ax");
+	asm("call %a0": : "i"(&CopyInterSeg32));
+	asm("pop es");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Fills the current thread's memory space with appropriate permissions.
+
+Performs a memset(aAddr, aValue, aLength).
+The writes are performed using requestor privilege level from GS, ie equal
+to the privilege level of the caller of the Exec:: function.
+
+@param	aAddr		Destination address in kernel or user memory.
+@param	aValue		Value to write to each byte.
+@param	aLength		Number of bytes to fill.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void kumemset(TAny* /*aAddr*/, const TUint8 /*aValue*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push es");
+	asm("mov edi, [esp+12]");
+	asm("mov eax, [esp+16]");
+	asm("mov ecx, [esp+20]");
+	asm("mov dx, gs");
+	asm("mov es, dx");
+	asm("call %a0": :"i"(&FillInterSeg));
+	asm("pop es");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+/**	Fills the current thread's memory space with user permissions.
+
+Performs a memset(aUserAddr, aValue, aLength).
+The writes are performed with ring 3 RPL.
+
+@param	aUserAddr	Destination address in user memory.
+@param	aValue		Value to write to each byte.
+@param	aLength		Number of bytes to fill.
+
+@pre    Call in a thread context.
+@pre    Kernel must be unlocked.
+@pre	Must be called under an XTRAP harness, or calling thread must not be
+in a critical section.
+*/
+EXPORT_C __NAKED__ void umemset(TAny* /*aUserAddr*/, const TUint8 /*aValue*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push es");
+	asm("mov edi, [esp+12]");
+	asm("mov eax, [esp+16]");
+	asm("mov ecx, [esp+20]");
+	asm("mov edx, %0": : "i"(RING3_DS));
+	asm("mov es, dx");
+	asm("call %a0": :"i"(&FillInterSeg));
+	asm("pop es");
+	asm("pop edi");
+	asm("ret");
+	}
+
+__NAKED__ void uumemcpy32(TAny* /*aUserDst*/, const TAny* /*aUserSrc*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ds");
+	asm("push es");
+	asm("mov edi, [esp+24]");
+	asm("mov esi, [esp+28]");
+	asm("mov ecx, [esp+32]");
+	asm("mov ax, gs");
+	asm("mov ds, ax");
+	asm("mov es, ax");
+	asm("call %a0": : "i"(&CopyInterSeg32));
+	asm("pop es");
+	asm("pop ds");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+__NAKED__ void uumemcpy(TAny* /*aUserDst*/, const TAny* /*aUserSrc*/, TInt /*aLength*/)
+	{
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ds");
+	asm("push es");
+	asm("mov edi, [esp+24]");
+	asm("mov esi, [esp+28]");
+	asm("mov ecx, [esp+32]");
+	asm("mov ax, gs");
+	asm("mov ds, ax");
+	asm("mov es, ax");
+	asm("call %a0": : "i"(&CopyInterSeg));
+	asm("pop es");
+	asm("pop ds");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+}

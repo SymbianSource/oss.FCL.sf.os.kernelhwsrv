@@ -1,0 +1,256 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\misc\cpumeter.cia
+// 
+//
+
+#include <e32test.h>
+#include <e32hal.h>
+#include <u32std.h>
+
+extern TUint32 NopCount;
+extern TUint MaxCycles;
+
+#if defined(__CPU_ARM)
+__NAKED__ TInt CountNops(TAny*)
+	{
+	__SWITCH_TO_ARM;
+	asm("ldr r0, __NopCount ");
+	asm("mov r1, #0 ");
+
+	asm("loop: ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("mov r0, r0 ");
+	asm("add r1, r1, #71 ");
+	asm("str r1, [r0] ");
+	asm("b loop ");
+
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+
+	asm("__NopCount: ");
+	asm(".word NopCount ");
+	__END_ARM;
+	}
+#elif defined(__CPU_X86)
+__NAKED__ TInt CountNops(TAny*)
+	{
+#ifdef __WINS__
+	__asm lea edx, NopCount
+	__asm mov eax, 0
+noploop:
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm inc eax
+	__asm add eax, 3
+	__asm mov [edx], eax
+	__asm jmp noploop
+#else
+	asm("mov edx, %a0": : "i"(&NopCount));
+	asm("mov eax, 0");
+	asm("noploop:");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("inc eax");
+	asm("add eax, 3");
+	asm("mov [edx], eax");
+	asm("jmp noploop");
+#endif
+	}
+#endif
+

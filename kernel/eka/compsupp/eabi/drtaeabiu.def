@@ -1,0 +1,227 @@
+EXPORTS
+	_ZN10__cxxabiv116__enum_type_infoD0Ev @ 1 NONAME ; __cxxabiv1::__enum_type_info::~__enum_type_info()
+	_ZN10__cxxabiv116__enum_type_infoD1Ev @ 2 NONAME ; __cxxabiv1::__enum_type_info::~__enum_type_info()
+	_ZN10__cxxabiv116__enum_type_infoD2Ev @ 3 NONAME ; __cxxabiv1::__enum_type_info::~__enum_type_info()
+	_ZN10__cxxabiv117__array_type_infoD0Ev @ 4 NONAME ; __cxxabiv1::__array_type_info::~__array_type_info()
+	_ZN10__cxxabiv117__array_type_infoD1Ev @ 5 NONAME ; __cxxabiv1::__array_type_info::~__array_type_info()
+	_ZN10__cxxabiv117__array_type_infoD2Ev @ 6 NONAME ; __cxxabiv1::__array_type_info::~__array_type_info()
+	_ZN10__cxxabiv117__class_type_infoD0Ev @ 7 NONAME ; __cxxabiv1::__class_type_info::~__class_type_info()
+	_ZN10__cxxabiv117__class_type_infoD1Ev @ 8 NONAME ; __cxxabiv1::__class_type_info::~__class_type_info()
+	_ZN10__cxxabiv117__class_type_infoD2Ev @ 9 NONAME ; __cxxabiv1::__class_type_info::~__class_type_info()
+	_ZN10__cxxabiv117__pbase_type_infoD0Ev @ 10 NONAME ; __cxxabiv1::__pbase_type_info::~__pbase_type_info()
+	_ZN10__cxxabiv117__pbase_type_infoD1Ev @ 11 NONAME ; __cxxabiv1::__pbase_type_info::~__pbase_type_info()
+	_ZN10__cxxabiv117__pbase_type_infoD2Ev @ 12 NONAME ; __cxxabiv1::__pbase_type_info::~__pbase_type_info()
+	_ZN10__cxxabiv119__pointer_type_infoD0Ev @ 13 NONAME ; __cxxabiv1::__pointer_type_info::~__pointer_type_info()
+	_ZN10__cxxabiv119__pointer_type_infoD1Ev @ 14 NONAME ; __cxxabiv1::__pointer_type_info::~__pointer_type_info()
+	_ZN10__cxxabiv119__pointer_type_infoD2Ev @ 15 NONAME ; __cxxabiv1::__pointer_type_info::~__pointer_type_info()
+	_ZN10__cxxabiv120__function_type_infoD0Ev @ 16 NONAME ; __cxxabiv1::__function_type_info::~__function_type_info()
+	_ZN10__cxxabiv120__function_type_infoD1Ev @ 17 NONAME ; __cxxabiv1::__function_type_info::~__function_type_info()
+	_ZN10__cxxabiv120__function_type_infoD2Ev @ 18 NONAME ; __cxxabiv1::__function_type_info::~__function_type_info()
+	_ZN10__cxxabiv120__si_class_type_infoD0Ev @ 19 NONAME ; __cxxabiv1::__si_class_type_info::~__si_class_type_info()
+	_ZN10__cxxabiv120__si_class_type_infoD1Ev @ 20 NONAME ; __cxxabiv1::__si_class_type_info::~__si_class_type_info()
+	_ZN10__cxxabiv120__si_class_type_infoD2Ev @ 21 NONAME ; __cxxabiv1::__si_class_type_info::~__si_class_type_info()
+	_ZN10__cxxabiv121__vmi_class_type_infoD0Ev @ 22 NONAME ; __cxxabiv1::__vmi_class_type_info::~__vmi_class_type_info()
+	_ZN10__cxxabiv121__vmi_class_type_infoD1Ev @ 23 NONAME ; __cxxabiv1::__vmi_class_type_info::~__vmi_class_type_info()
+	_ZN10__cxxabiv121__vmi_class_type_infoD2Ev @ 24 NONAME ; __cxxabiv1::__vmi_class_type_info::~__vmi_class_type_info()
+	_ZN10__cxxabiv123__fundamental_type_infoD0Ev @ 25 NONAME ; __cxxabiv1::__fundamental_type_info::~__fundamental_type_info()
+	_ZN10__cxxabiv123__fundamental_type_infoD1Ev @ 26 NONAME ; __cxxabiv1::__fundamental_type_info::~__fundamental_type_info()
+	_ZN10__cxxabiv123__fundamental_type_infoD2Ev @ 27 NONAME ; __cxxabiv1::__fundamental_type_info::~__fundamental_type_info()
+	_ZN10__cxxabiv129__pointer_to_member_type_infoD0Ev @ 28 NONAME ; __cxxabiv1::__pointer_to_member_type_info::~__pointer_to_member_type_info()
+	_ZN10__cxxabiv129__pointer_to_member_type_infoD1Ev @ 29 NONAME ; __cxxabiv1::__pointer_to_member_type_info::~__pointer_to_member_type_info()
+	_ZN10__cxxabiv129__pointer_to_member_type_infoD2Ev @ 30 NONAME ; __cxxabiv1::__pointer_to_member_type_info::~__pointer_to_member_type_info()
+	_ZNKSt10bad_typeid4whatEv @ 31 NONAME ; std::bad_typeid::what() const
+	_ZNKSt8bad_cast4whatEv @ 32 NONAME ; std::bad_cast::what() const
+	_ZNKSt9type_info4nameEv @ 33 NONAME ; std::type_info::name() const
+	_ZNKSt9type_info6beforeERKS_ @ 34 NONAME ; std::type_info::before(std::type_info const&) const
+	_ZNKSt9type_infoeqERKS_ @ 35 NONAME ; std::type_info::operator==(std::type_info const&) const
+	_ZNKSt9type_infoneERKS_ @ 36 NONAME ; std::type_info::operator!=(std::type_info const&) const
+	_ZNSt10bad_typeidC1ERKS_ @ 37 NONAME ; std::bad_typeid::bad_typeid(std::bad_typeid const&)
+	_ZNSt10bad_typeidC1Ev @ 38 NONAME ; std::bad_typeid::bad_typeid()
+	_ZNSt10bad_typeidC2ERKS_ @ 39 NONAME ; std::bad_typeid::bad_typeid(std::bad_typeid const&)
+	_ZNSt10bad_typeidC2Ev @ 40 NONAME ; std::bad_typeid::bad_typeid()
+	_ZNSt10bad_typeidD0Ev @ 41 NONAME ; std::bad_typeid::~bad_typeid()
+	_ZNSt10bad_typeidD1Ev @ 42 NONAME ; std::bad_typeid::~bad_typeid()
+	_ZNSt10bad_typeidD2Ev @ 43 NONAME ; std::bad_typeid::~bad_typeid()
+	_ZNSt10bad_typeidaSERKS_ @ 44 NONAME ; std::bad_typeid::operator=(std::bad_typeid const&)
+	_ZNSt8bad_castC1ERKS_ @ 45 NONAME ; std::bad_cast::bad_cast(std::bad_cast const&)
+	_ZNSt8bad_castC1Ev @ 46 NONAME ; std::bad_cast::bad_cast()
+	_ZNSt8bad_castC2ERKS_ @ 47 NONAME ; std::bad_cast::bad_cast(std::bad_cast const&)
+	_ZNSt8bad_castC2Ev @ 48 NONAME ; std::bad_cast::bad_cast()
+	_ZNSt8bad_castD0Ev @ 49 NONAME ; std::bad_cast::~bad_cast()
+	_ZNSt8bad_castD1Ev @ 50 NONAME ; std::bad_cast::~bad_cast()
+	_ZNSt8bad_castD2Ev @ 51 NONAME ; std::bad_cast::~bad_cast()
+	_ZNSt8bad_castaSERKS_ @ 52 NONAME ; std::bad_cast::operator=(std::bad_cast const&)
+	_ZNSt9type_infoD0Ev @ 53 NONAME ; std::type_info::~type_info()
+	_ZNSt9type_infoD1Ev @ 54 NONAME ; std::type_info::~type_info()
+	_ZNSt9type_infoD2Ev @ 55 NONAME ; std::type_info::~type_info()
+	_ZSt21__gen_dummy_typeinfosv @ 56 NONAME ; std::__gen_dummy_typeinfos()
+	_ZTIN10__cxxabiv116__enum_type_infoE @ 57 NONAME ; typeinfo for __cxxabiv1::__enum_type_info
+	_ZTIN10__cxxabiv117__array_type_infoE @ 58 NONAME ; typeinfo for __cxxabiv1::__array_type_info
+	_ZTIN10__cxxabiv117__class_type_infoE @ 59 NONAME ; typeinfo for __cxxabiv1::__class_type_info
+	_ZTIN10__cxxabiv117__pbase_type_infoE @ 60 NONAME ; typeinfo for __cxxabiv1::__pbase_type_info
+	_ZTIN10__cxxabiv119__pointer_type_infoE @ 61 NONAME ; typeinfo for __cxxabiv1::__pointer_type_info
+	_ZTIN10__cxxabiv120__function_type_infoE @ 62 NONAME ; typeinfo for __cxxabiv1::__function_type_info
+	_ZTIN10__cxxabiv120__si_class_type_infoE @ 63 NONAME ; typeinfo for __cxxabiv1::__si_class_type_info
+	_ZTIN10__cxxabiv121__vmi_class_type_infoE @ 64 NONAME ; typeinfo for __cxxabiv1::__vmi_class_type_info
+	_ZTIN10__cxxabiv123__fundamental_type_infoE @ 65 NONAME ; typeinfo for __cxxabiv1::__fundamental_type_info
+	_ZTIN10__cxxabiv129__pointer_to_member_type_infoE @ 66 NONAME ; typeinfo for __cxxabiv1::__pointer_to_member_type_info
+	_ZTIPKa @ 67 NONAME ; typeinfo for signed char const*
+	_ZTIPKb @ 68 NONAME ; typeinfo for bool const*
+	_ZTIPKc @ 69 NONAME ; typeinfo for char const*
+	_ZTIPKd @ 70 NONAME ; typeinfo for double const*
+	_ZTIPKe @ 71 NONAME ; typeinfo for long double const*
+	_ZTIPKf @ 72 NONAME ; typeinfo for float const*
+	_ZTIPKh @ 73 NONAME ; typeinfo for unsigned char const*
+	_ZTIPKi @ 74 NONAME ; typeinfo for int const*
+	_ZTIPKj @ 75 NONAME ; typeinfo for unsigned int const*
+	_ZTIPKl @ 76 NONAME ; typeinfo for long const*
+	_ZTIPKm @ 77 NONAME ; typeinfo for unsigned long const*
+	_ZTIPKs @ 78 NONAME ; typeinfo for short const*
+	_ZTIPKt @ 79 NONAME ; typeinfo for unsigned short const*
+	_ZTIPKv @ 80 NONAME ; typeinfo for void const*
+	_ZTIPKw @ 81 NONAME ; typeinfo for wchar_t const*
+	_ZTIPKx @ 82 NONAME ; typeinfo for long long const*
+	_ZTIPKy @ 83 NONAME ; typeinfo for unsigned long long const*
+	_ZTIPa @ 84 NONAME ; typeinfo for signed char*
+	_ZTIPb @ 85 NONAME ; typeinfo for bool*
+	_ZTIPc @ 86 NONAME ; typeinfo for char*
+	_ZTIPd @ 87 NONAME ; typeinfo for double*
+	_ZTIPe @ 88 NONAME ; typeinfo for long double*
+	_ZTIPf @ 89 NONAME ; typeinfo for float*
+	_ZTIPh @ 90 NONAME ; typeinfo for unsigned char*
+	_ZTIPi @ 91 NONAME ; typeinfo for int*
+	_ZTIPj @ 92 NONAME ; typeinfo for unsigned int*
+	_ZTIPl @ 93 NONAME ; typeinfo for long*
+	_ZTIPm @ 94 NONAME ; typeinfo for unsigned long*
+	_ZTIPs @ 95 NONAME ; typeinfo for short*
+	_ZTIPt @ 96 NONAME ; typeinfo for unsigned short*
+	_ZTIPv @ 97 NONAME ; typeinfo for void*
+	_ZTIPw @ 98 NONAME ; typeinfo for wchar_t*
+	_ZTIPx @ 99 NONAME ; typeinfo for long long*
+	_ZTIPy @ 100 NONAME ; typeinfo for unsigned long long*
+	_ZTISt10bad_typeid @ 101 NONAME ; typeinfo for std::bad_typeid
+	_ZTISt8bad_cast @ 102 NONAME ; typeinfo for std::bad_cast
+	_ZTISt9type_info @ 103 NONAME ; typeinfo for std::type_info
+	_ZTIa @ 104 NONAME ; typeinfo for signed char
+	_ZTIb @ 105 NONAME ; typeinfo for bool
+	_ZTIc @ 106 NONAME ; typeinfo for char
+	_ZTId @ 107 NONAME ; typeinfo for double
+	_ZTIe @ 108 NONAME ; typeinfo for long double
+	_ZTIf @ 109 NONAME ; typeinfo for float
+	_ZTIh @ 110 NONAME ; typeinfo for unsigned char
+	_ZTIi @ 111 NONAME ; typeinfo for int
+	_ZTIj @ 112 NONAME ; typeinfo for unsigned int
+	_ZTIl @ 113 NONAME ; typeinfo for long
+	_ZTIm @ 114 NONAME ; typeinfo for unsigned long
+	_ZTIs @ 115 NONAME ; typeinfo for short
+	_ZTIt @ 116 NONAME ; typeinfo for unsigned short
+	_ZTIv @ 117 NONAME ; typeinfo for void
+	_ZTIw @ 118 NONAME ; typeinfo for wchar_t
+	_ZTIx @ 119 NONAME ; typeinfo for long long
+	_ZTIy @ 120 NONAME ; typeinfo for unsigned long long
+	_ZTVN10__cxxabiv116__enum_type_infoE @ 121 NONAME ; vtable for __cxxabiv1::__enum_type_info
+	_ZTVN10__cxxabiv117__array_type_infoE @ 122 NONAME ; vtable for __cxxabiv1::__array_type_info
+	_ZTVN10__cxxabiv117__class_type_infoE @ 123 NONAME ; vtable for __cxxabiv1::__class_type_info
+	_ZTVN10__cxxabiv117__pbase_type_infoE @ 124 NONAME ; vtable for __cxxabiv1::__pbase_type_info
+	_ZTVN10__cxxabiv119__pointer_type_infoE @ 125 NONAME ; vtable for __cxxabiv1::__pointer_type_info
+	_ZTVN10__cxxabiv120__function_type_infoE @ 126 NONAME ; vtable for __cxxabiv1::__function_type_info
+	_ZTVN10__cxxabiv120__si_class_type_infoE @ 127 NONAME ; vtable for __cxxabiv1::__si_class_type_info
+	_ZTVN10__cxxabiv121__vmi_class_type_infoE @ 128 NONAME ; vtable for __cxxabiv1::__vmi_class_type_info
+	_ZTVN10__cxxabiv123__fundamental_type_infoE @ 129 NONAME ; vtable for __cxxabiv1::__fundamental_type_info
+	_ZTVN10__cxxabiv129__pointer_to_member_type_infoE @ 130 NONAME ; vtable for __cxxabiv1::__pointer_to_member_type_info
+	_ZTVSt10bad_typeid @ 131 NONAME ; vtable for std::bad_typeid
+	_ZTVSt8bad_cast @ 132 NONAME ; vtable for std::bad_cast
+	_ZTVSt9type_info @ 133 NONAME ; vtable for std::type_info
+	__aeabi_idiv0 @ 134 NONAME ; __aeabi_idiv0
+	__aeabi_idivmod @ 135 NONAME ; __aeabi_idivmod
+	__aeabi_lasr @ 136 NONAME ; __aeabi_lasr
+	__aeabi_lcmp @ 137 NONAME ; __aeabi_lcmp
+	__aeabi_ldiv0 @ 138 NONAME ; __aeabi_ldiv0
+	__aeabi_ldivmod @ 139 NONAME ; __aeabi_ldivmod
+	__aeabi_llsl @ 140 NONAME ; __aeabi_llsl
+	__aeabi_llsr @ 141 NONAME ; __aeabi_llsr
+	__aeabi_lmul @ 142 NONAME ; __aeabi_lmul
+	__aeabi_memclr @ 143 NONAME ; __aeabi_memclr
+	__aeabi_memclr4 @ 144 NONAME ; __aeabi_memclr4
+	__aeabi_memclr8 @ 145 NONAME ; __aeabi_memclr8
+	__aeabi_memcpy @ 146 NONAME ; __aeabi_memcpy
+	__aeabi_memcpy4 @ 147 NONAME ; __aeabi_memcpy4
+	__aeabi_memcpy8 @ 148 NONAME ; __aeabi_memcpy8
+	__aeabi_memmove @ 149 NONAME ; __aeabi_memmove
+	__aeabi_memmove4 @ 150 NONAME ; __aeabi_memmove4
+	__aeabi_memmove8 @ 151 NONAME ; __aeabi_memmove8
+	__aeabi_memset @ 152 NONAME ; __aeabi_memset
+	__aeabi_memset4 @ 153 NONAME ; __aeabi_memset4
+	__aeabi_memset8 @ 154 NONAME ; __aeabi_memset8
+	__aeabi_uidivmod @ 155 NONAME ; __aeabi_uidivmod
+	__aeabi_ulcmp @ 156 NONAME ; __aeabi_ulcmp
+	__aeabi_uldivmod @ 157 NONAME ; __aeabi_uldivmod
+	__aeabi_unwind_cpp_pr0 @ 158 NONAME ; __aeabi_unwind_cpp_pr0
+	__aeabi_unwind_cpp_pr1 @ 159 NONAME ; __aeabi_unwind_cpp_pr1
+	__aeabi_unwind_cpp_pr2 @ 160 NONAME ; __aeabi_unwind_cpp_pr2
+	__aeabi_uread4 @ 161 NONAME ; __aeabi_uread4
+	__aeabi_uread8 @ 162 NONAME ; __aeabi_uread8
+	__aeabi_uwrite4 @ 163 NONAME ; __aeabi_uwrite4
+	__aeabi_uwrite8 @ 164 NONAME ; __aeabi_uwrite8
+	__aeabi_vec_cctor_nocookie_nodtor @ 165 NONAME ; __aeabi_vec_cctor_nocookie_nodtor
+	__aeabi_vec_ctor_cookie_nodtor @ 166 NONAME ; __aeabi_vec_ctor_cookie_nodtor
+	__aeabi_vec_ctor_nocookie_nodtor @ 167 NONAME ; __aeabi_vec_ctor_nocookie_nodtor
+	__aeabi_vec_delete @ 168 NONAME ; __aeabi_vec_delete
+	__aeabi_vec_delete3 @ 169 NONAME ; __aeabi_vec_delete3
+	__aeabi_vec_delete3_nodtor @ 170 NONAME ; __aeabi_vec_delete3_nodtor
+	__aeabi_vec_dtor @ 171 NONAME ; __aeabi_vec_dtor
+	__aeabi_vec_dtor_cookie @ 172 NONAME ; __aeabi_vec_dtor_cookie
+	__aeabi_vec_new_cookie @ 173 NONAME ; __aeabi_vec_new_cookie
+	__aeabi_vec_new_cookie_noctor @ 174 NONAME ; __aeabi_vec_new_cookie_noctor
+	__aeabi_vec_new_cookie_nodtor @ 175 NONAME ; __aeabi_vec_new_cookie_nodtor
+	__aeabi_vec_new_nocookie @ 176 NONAME ; __aeabi_vec_new_nocookie
+	__cxa_allocate_exception @ 177 NONAME ; __cxa_allocate_exception
+	__cxa_bad_cast @ 178 NONAME ; __cxa_bad_cast
+	__cxa_bad_typeid @ 179 NONAME ; __cxa_bad_typeid
+	__cxa_begin_catch @ 180 NONAME ; __cxa_begin_catch
+	__cxa_begin_cleanup @ 181 NONAME ; __cxa_begin_cleanup
+	__cxa_call_unexpected @ 182 NONAME ; __cxa_call_unexpected
+	__cxa_end_catch @ 183 NONAME ; __cxa_end_catch
+	__cxa_end_cleanup @ 184 NONAME ; __cxa_end_cleanup
+	__cxa_free_exception @ 185 NONAME ; __cxa_free_exception
+	__cxa_guard_abort @ 186 NONAME ; __cxa_guard_abort
+	__cxa_guard_acquire @ 187 NONAME ; __cxa_guard_acquire
+	__cxa_guard_release @ 188 NONAME ; __cxa_guard_release
+	__cxa_pure_virtual @ 189 NONAME ; __cxa_pure_virtual
+	__cxa_rethrow @ 190 NONAME ; __cxa_rethrow
+	__cxa_throw @ 191 NONAME ; __cxa_throw
+	__cxa_vec_cctor @ 192 NONAME ; __cxa_vec_cctor
+	__cxa_vec_cleanup @ 193 NONAME ; __cxa_vec_cleanup
+	__cxa_vec_ctor @ 194 NONAME ; __cxa_vec_ctor
+	__cxa_vec_delete @ 195 NONAME ; __cxa_vec_delete
+	__cxa_vec_delete2 @ 196 NONAME ; __cxa_vec_delete2
+	__cxa_vec_delete3 @ 197 NONAME ; __cxa_vec_delete3
+	__cxa_vec_dtor @ 198 NONAME ; __cxa_vec_dtor
+	__cxa_vec_new @ 199 NONAME ; __cxa_vec_new
+	__cxa_vec_new2 @ 200 NONAME ; __cxa_vec_new2
+	__cxa_vec_new3 @ 201 NONAME ; __cxa_vec_new3
+	__dynamic_cast @ 202 NONAME ; __dynamic_cast
+	__get_typeid @ 203 NONAME ; __get_typeid
+	_ZN23TCppRTExceptionsGlobalsC1Ev @ 204 NONAME ; TCppRTExceptionsGlobals::TCppRTExceptionsGlobals()
+	_ZN23TCppRTExceptionsGlobalsC2Ev @ 205 NONAME ; TCppRTExceptionsGlobals::TCppRTExceptionsGlobals()
+	_ZTI15XLeaveException @ 206 NONAME ; Typeinfo for XLeaveException
+	_ZTV15XLeaveException @ 207 NONAME ; vtable for XLeaveException
+	_ZN15XLeaveException16ForceKeyFunctionEv @ 208 NONAME ; the key function for XLeaveException
+	_ZSt10unexpectedv @ 209 NONAME ; std::unexpected()
+	_ZSt13set_terminatePFvvE @ 210 NONAME ; std::set_terminate(void (*)())
+	_ZSt14set_unexpectedPFvvE @ 211 NONAME ; std::set_unexpected(void (*)())
+	_ZSt18uncaught_exceptionv @ 212 NONAME ; std::uncaught_exception()
+	_ZSt9terminatev @ 213 NONAME ; std::terminate()
+	__cxa_call_terminate @ 214 NONAME
+	__cxa_current_exception_type @ 215 NONAME
+	__cxa_get_globals @ 216 NONAME
+	__cxa_type_match @ 217 NONAME
+	_Unwind_VRS_Get @ 218 NONAME
+	_Unwind_VRS_Pop @ 219 NONAME
+	_Unwind_VRS_Set @ 220 NONAME
+	abort @ 221 NONAME
+	__aeabi_idiv @ 222 NONAME
+	__aeabi_uidiv @ 223 NONAME
+	__ARM_get_typeid @ 224 NONAME
+	__cxa_get_exception_ptr @ 225 NONAME
+

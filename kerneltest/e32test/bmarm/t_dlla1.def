@@ -1,0 +1,5 @@
+EXPORTS
+	AFunction__Fv @ 1 NONAME
+	Inc__Fv @ 2 NONAME
+	GetProcessName__Fv @ 3 NONAME
+	GetThreadName__Fv @ 4 NONAME

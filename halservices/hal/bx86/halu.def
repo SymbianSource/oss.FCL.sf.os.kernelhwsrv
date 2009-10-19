@@ -1,0 +1,8 @@
+EXPORTS
+	?Get@HAL@@SAHW4TAttribute@HALData@@AAH@Z @ 1 NONAME ; public: static int __cdecl HAL::Get(enum HALData::TAttribute,int &)
+	?GetAll@HAL@@SAHAAHAAPAUSEntry@1@@Z @ 2 NONAME ; public: static int __cdecl HAL::GetAll(int &,struct HAL::SEntry * &)
+	?Set@HAL@@SAHW4TAttribute@HALData@@H@Z @ 3 NONAME ; public: static int __cdecl HAL::Set(enum HALData::TAttribute,int)
+	?Get@HAL@@SAHHW4TAttribute@HALData@@AAH@Z @ 4 NONAME ; public: static int __cdecl HAL::Get(int,enum HALData::TAttribute,int &)
+	?Set@HAL@@SAHHW4TAttribute@HALData@@H@Z @ 5 NONAME ; public: static int __cdecl HAL::Set(int,enum HALData::TAttribute,int)
+	?InitialValue@HalInternal@@2QBHB @ 6 NONAME ; public: static int const * const HalInternal::InitialValue
+

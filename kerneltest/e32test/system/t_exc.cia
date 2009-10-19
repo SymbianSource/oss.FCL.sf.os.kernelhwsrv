@@ -1,0 +1,199 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\system\t_exc.cpp
+// 
+//
+
+
+#include <e32test.h>
+#include <e32svr.h>
+#include <u32std.h>
+#include <exec_enum.h>
+
+#if defined(__CPU_ARM)
+__NAKED__ void UndefinedInstruction()
+	{
+	asm("mcr p15, 0, r0, c3, c0 ");
+	}
+
+__NAKED__ TInt ContextThread0(TAny *)
+	{
+	asm("cmp r0, #0x80000000 ");
+	asm("beq 1f ");
+	asm("mov r0, #0xa0000000 ");
+	asm("msr cpsr_flg, r0 ");
+	asm("mov r0, #0x00");
+	asm("mov r1, #0x11");
+	asm("mov r2, #0x22");
+	asm("mov r3, #0x33");
+	asm("mov r4, #0x44");
+	asm("mov r5, #0x55");
+	asm("mov r6, #0x66");
+	asm("mov r7, #0x77");
+	asm("mov r8, #0x88");
+	asm("mov r9, #0x99");
+	asm("mov r10, #0xaa");
+	asm("mov r11, #0xbb");
+	asm("mov r12, #0xcc");
+	asm("mov r13, #0xdd");
+	asm("mov r14, #0xee");
+
+	asm("context_thread0_loop: ");
+	asm("b context_thread0_loop ");
+	asm("1: ");
+	asm("adr r0, context_thread0_loop ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt ContextThread1(TAny *)
+	{
+	asm("cmp r0, #0x80000000 ");
+	asm("beq 1f ");
+	asm("mov r0, #0xa0000000 ");
+	asm("msr cpsr_flg, r0 ");
+	asm("mov r0, #0x00");
+	asm("mov r1, #0x11");
+	asm("mov r2, #0x22");
+	asm("mov r3, #0x33");
+	asm("mov r4, #0x44");
+	asm("mov r5, #0x55");
+	asm("mov r6, #0x66");
+	asm("mov r7, #0x77");
+	asm("mov r8, #0x88");
+	asm("mov r9, #0x99");
+	asm("mov r10, #0xaa");
+	asm("mov r11, #0xbb");
+	asm("mov r12, #0xcc");
+	asm("mov r13, #0xdd");
+	asm("mov r14, #0xee");
+
+	asm("swi 0x800000"); //	WaitForAnyRequest");
+
+	asm("context_thread1_pc: ");
+	asm("b context_thread1_pc ");
+	asm("1: ");
+	asm("adr r0, context_thread1_pc ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt ContextThread2(TAny *)
+	{
+	asm("cmp r0, #0x80000000 ");
+	asm("beq 1f ");
+	asm("ldr r0, __current_thread_handle ");
+	asm("mov r1, #0xa0000000 ");
+	asm("msr cpsr_flg, r1 ");
+	asm("mov r1, #0x11");
+	asm("mov r2, #0x22");
+	asm("mov r3, #0x33");
+	asm("mov r4, #0x44");
+	asm("mov r5, #0x55");
+	asm("mov r6, #0x66");
+	asm("mov r7, #0x77");
+	asm("mov r8, #0x88");
+	asm("mov r9, #0x99");
+	asm("mov r10, #0xaa");
+	asm("mov r11, #0xbb");
+	asm("mov r12, #0xcc");
+	asm("mov r13, #0xdd");
+	asm("mov r14, #0xee");
+
+	asm("swi %a0" : : "i" (EExecThreadSuspend)); //	RThread::Suspend");
+
+	asm("context_thread2_pc: ");
+	asm("b context_thread2_pc ");
+	asm("1: ");
+	asm("adr r0, context_thread2_pc ");
+	__JUMP(,lr);
+
+	asm("__current_thread_handle: ");
+	asm(".word 0xffff8001 ");
+	}
+#endif
+
+#if defined(__CPU_X86)
+__NAKED__ TInt ContextThread0(TAny *)
+	{
+	asm("mov eax, [esp+4] ");
+	asm("cmp eax, 0x80000000 ");
+	asm("jz short c0_get_eip_addr ");
+	asm("mov eax, 0xaaaaaaaa ");
+	asm("mov ebx, 0xbbbbbbbb ");
+	asm("mov ecx, 0xcccccccc ");
+	asm("mov edx, 0xdddddddd ");
+	asm("mov ebp, 0xeb0eb0eb ");
+	asm("mov esi, 0xe51e51e5 ");
+	asm("mov edi, 0xed1ed1ed ");
+	asm("pushfd ");
+	asm("or dword ptr [esp], 0xcd5 ");	// set OF DF SF ZF AF PF CF
+	asm("popfd ");
+	asm("mov esp, 0xe50e50e5 ");
+	asm("c0_loop: ");
+	asm("jmp short c0_loop ");
+	asm("c0_get_eip_addr: ");
+	asm("lea eax, c0_loop ");
+	asm("ret ");
+	}
+
+__NAKED__ TInt ContextThread1(TAny *)
+	{
+	asm("mov eax, [esp+4] ");
+	asm("cmp eax, 0x80000000 ");
+	asm("jz short c1_get_eip_addr ");
+	asm("mov eax, 0xaaaaaaaa ");
+	asm("mov ebx, 0xbbbbbbbb ");
+	asm("mov ecx, 0xcccccccc ");
+	asm("mov edx, 0xdddddddd ");
+	asm("mov ebp, 0xeb0eb0eb ");
+	asm("mov esi, 0xe51e51e5 ");
+	asm("mov edi, 0xed1ed1ed ");
+	asm("pushfd ");
+	asm("or dword ptr [esp], 0xcd5 ");	// set OF DF SF ZF AF PF CF
+	asm("popfd ");
+	asm("mov esp, 0xe50e50e5 ");
+	asm("mov eax, %0" : : "i" (EFastExecWaitForAnyRequest));
+	asm("int 0x20 ");
+	asm("c1_eip: ");
+	asm("c1_get_eip_addr: ");
+	asm("lea eax, c1_eip ");
+	asm("ret ");
+	}
+
+__NAKED__ TInt ContextThread2(TAny *)
+	{
+	asm("mov eax, [esp+4] ");
+	asm("cmp eax, 0x80000000 ");
+	asm("jz short c2_get_eip_addr ");
+	asm("mov eax, 0xaaaaaaaa ");
+	asm("mov ebx, 0xbbbbbbbb ");
+	asm("mov ecx, 0xcccccccc ");
+	asm("mov edx, 0xdddddddd ");
+	asm("mov ebp, 0xeb0eb0eb ");
+	asm("mov esi, 0xe51e51e5 ");
+	asm("mov edi, 0xed1ed1ed ");
+	asm("pushfd ");
+	asm("or dword ptr [esp], 0xcd5 ");	// set OF DF SF ZF AF PF CF
+	asm("popfd ");
+	asm("mov esp, 0xe50e50e5 ");
+	asm("mov eax, %0" : : "i" (EExecThreadSuspend));
+	asm("mov ecx, 0xffff8001 ");
+	asm("int 0x21 ");
+	asm("c2_eip: ");
+	asm("c2_get_eip_addr: ");
+	asm("lea eax, c2_eip ");
+	asm("ret ");
+	}
+
+#endif
+

@@ -1,0 +1,103 @@
+# f32test/loader/ldrtst.mke
+#
+# Copyright (c) 2000 Symbian Ltd.  All rights reserved.
+#
+
+ifeq "$(OS)" "Windows_NT"
+ERASE := @erase 2>>nul
+else
+ERASE := @erase
+endif
+
+SDIR := ..\loader
+GDIR := ..\loader\gen
+
+MAKMAKE : MAKEGENERATED
+
+FREEZE :
+
+LIB : LIBGENERATED
+
+CLEANLIB :
+
+RESOURCE :
+
+FINAL :
+
+BLD SAVESPACE : BLDGENERATED
+
+RELEASABLES :
+
+ROMFILE :
+
+CLEAN :
+
+$(GDIR)\dlltree.inf :	$(SDIR)\dlltree.pl $(SDIR)\dllt.h $(SDIR)\dllt.cpp $(SDIR)\dllt.cia				\
+					$(SDIR)\dlltifc.h $(SDIR)\exet.cpp $(SDIR)\exetifc.h $(SDIR)\dlltree.txt
+				perl $(SDIR)\dlltree.pl $(SDIR)\dlltree.txt $(GDIR)
+
+$(GDIR)\ldrtest.iby :	$(SDIR)\dlltree.pl $(SDIR)\dllt.h $(SDIR)\dllt.cpp $(SDIR)\dllt.cia			\
+						$(SDIR)\dlltifc.h $(SDIR)\exet.cpp $(SDIR)\exetifc.h $(SDIR)\dlltree.txt
+				perl $(SDIR)\dlltree.pl $(SDIR)\dlltree.txt $(GDIR)
+
+$(GDIR)\dlltree.h :	$(SDIR)\dlltree.pl $(SDIR)\dllt.h $(SDIR)\dllt.cpp $(SDIR)\dllt.cia				\
+					$(SDIR)\dlltifc.h $(SDIR)\exet.cpp $(SDIR)\exetifc.h $(SDIR)\dlltree.txt
+				perl $(SDIR)\dlltree.pl $(SDIR)\dlltree.txt $(GDIR)
+
+$(GDIR)\dllt.h :	$(SDIR)\dllt.h
+				copy $(SDIR)\dllt.h $(GDIR)\dllt.h
+
+$(GDIR)\dllt.cpp :	$(SDIR)\dllt.cpp
+				copy $(SDIR)\dllt.cpp $(GDIR)\dllt.cpp
+
+$(GDIR)\dllt.cia :	$(SDIR)\dllt.cia
+				copy $(SDIR)\dllt.cia $(GDIR)\dllt.cia
+
+$(GDIR)\dlltifc.h :	$(SDIR)\dlltifc.h
+				copy $(SDIR)\dlltifc.h $(GDIR)\dlltifc.h
+
+$(GDIR)\exet.cpp :	$(SDIR)\exet.cpp
+				copy $(SDIR)\exet.cpp $(GDIR)\exet.cpp
+
+$(GDIR)\exetifc.h :	$(SDIR)\exetifc.h
+				copy $(SDIR)\exetifc.h $(GDIR)\exetifc.h
+
+$(GDIR)\exetifc.cpp :	$(SDIR)\exetifc.cpp
+				copy $(SDIR)\exetifc.cpp $(GDIR)\exetifc.cpp
+
+$(GDIR)\t_ldrtst.h :	$(SDIR)\t_ldrtst.h
+				copy $(SDIR)\t_ldrtst.h $(GDIR)\t_ldrtst.h
+
+$(GDIR)\t_ldrtst.cpp :	$(SDIR)\t_ldrtst.cpp
+				copy $(SDIR)\t_ldrtst.cpp $(GDIR)\t_ldrtst.cpp
+
+$(GDIR)\t_ldrtst2.cpp :	$(SDIR)\t_ldrtst2.cpp
+				copy $(SDIR)\t_ldrtst2.cpp $(GDIR)\t_ldrtst2.cpp
+
+$(GDIR)\t_ldrtst.mmp :	$(SDIR)\t_ldrtst.mmp
+				copy $(SDIR)\t_ldrtst.mmp $(GDIR)\t_ldrtst.mmp
+
+$(GDIR)\t_sfhash.cpp :	$(SDIR)\t_sfhash.cpp
+				copy $(SDIR)\t_sfhash.cpp $(GDIR)\t_sfhash.cpp
+
+$(GDIR)\t_hash.h :	$(SDIR)\t_hash.h
+				copy $(SDIR)\t_hash.h $(GDIR)\t_hash.h
+
+GENERATED :			$(GDIR)\dlltree.inf $(GDIR)\ldrtest.iby $(GDIR)\dlltree.h						\
+					$(GDIR)\dllt.h $(GDIR)\dllt.cpp $(GDIR)\dllt.cia $(GDIR)\dlltifc.h				\
+					$(GDIR)\exet.cpp $(GDIR)\exetifc.h $(GDIR)\exetifc.cpp							\
+					$(GDIR)\t_ldrtst.cpp $(GDIR)\t_ldrtst2.cpp $(GDIR)\t_ldrtst.h					\
+					$(GDIR)\t_ldrtst.mmp $(GDIR)\t_sfhash.cpp $(GDIR)\t_hash.h
+				cd $(GDIR) && call bldmake -f dlltree.inf bldfiles
+				cd $(GDIR) && call bldmake -f dlltree.inf bldfiles $(PLATFORM)
+
+MAKEGENERATED : GENERATED
+			cd $(GDIR) && call abld test makefile $(PLATFORM)
+
+LIBGENERATED : GENERATED
+			cd $(GDIR) && call abld test library $(PLATFORM)
+
+BLDGENERATED : GENERATED
+			cd $(GDIR) && call abld test target $(PLATFORM) $(CFG)
+
+

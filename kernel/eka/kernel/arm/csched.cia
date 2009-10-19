@@ -1,0 +1,163 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\csched.cpp
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+
+
+/**	Copy word-aligned data with immunity from exceptions on reads.
+
+	Data is read using user mode privileges if the current thread is a user thread.
+	(I.e. if the mode in spsr_svc is 'User'.)
+
+	@param aSrc Source address. (Must be word aligned.)
+	@param aDest Destination address. (Must be word aligned.)
+	@param aSize Number of bytes to copy. (Must be a non-zero multiple of 4)
+	@return NULL if copy succeeded, else address at which exception occurred.
+*/
+EXPORT_C __NAKED__ TAny* Kern::KUSafeRead(const TAny* /*aSrc*/, TAny* /*aDest*/, TInt /*aSize*/)
+	{
+	ASM_ASSERT_DATA_PAGING_SAFE;			// todo: should be ASM_ASSERT_PAGING_SAFE but this is a break
+	asm("mrs r12, spsr ");
+	asm("tst r12, #0x0f ");
+	asm("bne  " CSM_ZN4Kern8SafeReadEPKvPvi);
+	// fall through to K::USafeRead
+	}
+
+/**	Copy word-aligned data with immunity from exceptions on reads.
+
+	Data is read using user mode privileges.
+
+	@param aSrc Source address. (Must be word aligned.)
+	@param aDest Destination address. (Must be word aligned.)
+	@param aSize Number of bytes to copy. (Must be a non-zero multiple of 4)
+	@return NULL if copy succeeded, else address at which exception occurred.
+*/
+__NAKED__ TAny* K::USafeRead(const TAny* /*aSrc*/, TAny* /*aDest*/, TInt /*aSize*/)
+	{
+	asm("movs r12, r2 ");					// clear zero flag, set r12=size
+
+	asm("1: ");
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm(".global __magic_address_kusaferead ");
+	asm("__magic_address_kusaferead: ");	// this instruction is magically immune from exceptions
+	asm("ldrt r3, [r0], #4 ");				// read word with user privilege
+	USER_MEMORY_GUARD_ON(,r2,r2);
+
+	asm("subnes r12, r12, #4 ");			// if read OK, decrement size by 4
+	asm("strne r3, [r1], #4 ");				// if not finished, copy word
+	asm("bne 1b	");							// if not finished, continue
+	asm("movs r0, r12 ");					// r12=0 if all OK, otherwise fault address
+	asm("streq r3, [r1] ");					// if OK, copy last word
+	__JUMP(,lr);
+	}
+
+/**	Copy word-aligned data with immunity from exceptions on reads.
+
+	@param aSrc Source address. (Must be word aligned.)
+	@param aDest Destination address. (Must be word aligned.)
+	@param aSize Number of bytes to copy. (Must be a non-zero multiple of 4)
+	@return NULL if copy succeeded, else address at which exception occurred.
+*/
+EXPORT_C __NAKED__ TAny* Kern::SafeRead(const TAny* /*aSrc*/, TAny* /*aDest*/, TInt /*aSize*/)
+	{
+	asm("movs r12, r2 ");					// clear zero flag, set r12=size
+
+ 	asm("1: ");
+	asm(".global __magic_address_saferead ");
+	asm("__magic_address_saferead: ");		// this instruction is magically immune from exceptions
+	asm("ldr r3, [r0], #4 ");				// read word	
+
+	asm("subnes r12, r12, #4 ");			// if read OK, decrement size by 4
+	asm("strne r3, [r1], #4 ");				// if not finished, copy word
+	asm("bne 1b	");							// if not finished, continue
+	asm("movs r0, r12 ");					// r12=0 if all OK, otherwise fault address
+	asm("streq r3, [r1] ");					// if OK, copy last word
+	__JUMP(,lr);
+	}
+
+/**	Copy word-aligned data with immunity from exceptions on writes.
+
+	Data is written using user mode privileges if the current thread is a user thread.
+	(I.e. if the mode in spsr_svc is 'User'.)
+
+	@param aDest Destination address. (Must be word aligned.)
+	@param aSrc Source address. (Must be word aligned.)
+	@param aSize Number of bytes to copy. (Must be a non-zero multiple of 4)
+	@return NULL if copy succeeded, else address at which exception occurred.
+*/
+EXPORT_C __NAKED__ TAny* Kern::KUSafeWrite(TAny* /*aDest*/, const TAny* /*aSrc*/, TInt /*aSize*/)
+	{
+	ASM_ASSERT_DATA_PAGING_SAFE;
+	asm("mrs r12, spsr ");
+	asm("tst r12, #0x0f ");
+	asm("bne  " CSM_ZN4Kern9SafeWriteEPvPKvi);
+	// fall through to K::USafeWrite
+	}
+
+/**	Copy word-aligned data with immunity from exceptions on writes.
+
+	Data is written using user mode privileges.
+
+	@param aDest Destination address. (Must be word aligned.)
+	@param aSrc Source address. (Must be word aligned.)
+	@param aSize Number of bytes to copy. (Must be a non-zero multiple of 4)
+	@return NULL if copy succeeded, else address at which exception occurred.
+*/
+__NAKED__ TAny* K::USafeWrite(TAny* /*aDest*/, const TAny* /*aSrc*/, TInt /*aSize*/)
+	{
+	asm("movs r12, r2 ");					// clear zero flag, set r12=size
+
+	asm("1: ");
+	asm("ldr r3, [r1], #4 ");				// read word
+	asm("subs r12, r12, #4 ");				// decrement size by 4
+
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm(".global __magic_address_kusafewrite ");
+	asm("__magic_address_kusafewrite: ");	// this instruction is magically immune from exceptions
+	asm("strt r3, [r0], #4 ");				// copy word
+	USER_MEMORY_GUARD_ON(,r2,r2);
+
+	asm("bne 1b ");							// if write OK and not finished, continue
+	asm("mov r0, r12 ");					// r12=0 if all OK, otherwise fault address
+	__JUMP(,lr);
+	}
+
+/**	Copy word-aligned data with immunity from exceptions on writes.
+
+	@param aDest Destination address. (Must be word aligned.)
+	@param aSrc Source address. (Must be word aligned.)
+	@param aSize Number of bytes to copy. (Must be a non-zero multiple of 4)
+	@return NULL if copy succeeded, else address at which exception occurred.
+*/
+EXPORT_C __NAKED__ TAny* Kern::SafeWrite(TAny* /*aDest*/, const TAny* /*aSrc*/, TInt /*aSize*/)
+	{
+	asm("movs r12, r2 ");					// clear zero flag, set r12=size
+
+	asm("1: ");
+	asm("ldr r3, [r1], #4 ");				// read word
+	asm("subnes r12, r12, #4 ");				// decrement size by 4
+
+	asm(".global __magic_address_safewrite ");
+	asm("__magic_address_safewrite: ");		// this instruction is magically immune from exceptions
+	asm("str r3, [r0], #4 ");				// copy word
+
+	asm("bne 1b ");							// if write OK and not finished, continue
+	asm("mov r0, r12 ");					// r12=0 if all OK, otherwise fault address
+	__JUMP(,lr);
+	}
+

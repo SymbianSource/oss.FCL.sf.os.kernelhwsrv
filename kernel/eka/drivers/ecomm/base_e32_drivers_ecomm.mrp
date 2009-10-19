@@ -1,0 +1,14 @@
+# component name "Serial Port Driver"
+
+component	base_e32_drivers_ecomm
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\ecomm
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\ecomm all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\ecomm
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+

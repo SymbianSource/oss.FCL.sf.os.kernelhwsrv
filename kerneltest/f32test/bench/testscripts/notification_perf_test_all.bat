@@ -1,0 +1,22 @@
+rem
+rem Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+rem All rights reserved.
+rem This component and the accompanying materials are made available
+rem under the terms of the License "Eclipse Public License v1.0"
+rem which accompanies this distribution, and is available
+rem at the URL "http://www.eclipse.org/legal/epl-v10.html".
+rem
+rem Initial Contributors:
+rem Nokia Corporation - initial contribution.
+rem
+rem Contributors:
+rem
+rem Description:
+rem
+
+t_notify_perf d -s -p 100
+t_notify_perf d -m 100
+t_notify_perf d -s -p 1000
+t_notify_perf d -m 1000
+t_notify_perf d -s -p 5000
+t_notify_perf d -o -p

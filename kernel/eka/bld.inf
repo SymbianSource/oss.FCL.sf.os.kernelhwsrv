@@ -1,0 +1,442 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/bld.inf
+// Kernel
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+#include "generic.inf"
+
+// Doxygen specific MMP files that are built as part of this component
+// This is necessary because this component defines the implementation (i.e. exports header files)
+// while other components supply the implementation (i.e. provide the source) and Doxygen will only 
+// scan for in-line documentation for components that export files from their BLD.INF file(s). 
+#if defined(__DOXYGEN__)
+#include "drivers/bsp/bld.inf"
+#include "drivers/debug/bld.inf"
+#include "drivers/ecomm/bld.inf"
+#include "drivers/soundsc/bld.inf"
+#include "drivers/ethernet/bld.inf"
+#include "drivers/locmedia/bld.inf"
+#include "drivers/media/bld.inf"
+#include "drivers/trace/bld.inf"
+#include "drivers/usbc/bld.inf"
+#include "drivers/camerasc/bld.inf"
+#include "drivers/display/bld.inf"
+#include "euser/bld.inf"
+#include "ewsrv/bld.inf"
+#endif
+
+PRJ_EXPORTS
+
+include/gcc.h									SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(gcc.h)
+
+// Kernel interface
+include/collate.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(collate.h)
+include/k32keys.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(k32keys.h)
+include/k32keys.inl								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(k32keys.inl)
+include/u32std.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(u32std.h)
+include/u32hal.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(u32hal.h)
+include/u32property.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(u32property.h)
+include/u32exec.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(u32exec.h)
+include/cpudefs.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(cpudefs.h)
+include/e32cia.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32cia.h)
+include/arm_vfp.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(arm_vfp.h)
+include/kernperflogger.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernperflogger.h)
+:zip include/dummy_genexec.zip
+
+include/nkern/dfcs.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+include/nkern/nkern.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+include/nkern/nklib.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+include/nkern/nk_priv.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+include/nkern/nk_trace.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+include/nkern/nk_cpu.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+
+include/nkern/arm/nk_plat.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/arm/)
+include/nkern/win32/nk_plat.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/win32/)
+include/nkern/x86/nk_plat.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/x86/)
+
+nkern/nkern_ext.mmh								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+
+
+include/nkernsmp/dfcs.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+include/nkernsmp/nkern.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+include/nkern/nklib.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+include/nkernsmp/nk_event.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+include/nkernsmp/nk_priv.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+include/nkern/nk_trace.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+include/nkern/nk_cpu.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+include/nkernsmp/nk_irq.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+
+include/nkernsmp/arm/ncern.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/arm/)
+include/nkernsmp/arm/nk_plat.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/arm/)
+include/nkernsmp/arm/arm_gic.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/arm/)
+include/nkernsmp/arm/arm_scu.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/arm/)
+include/nkernsmp/arm/arm_tmr.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/arm/)
+include/nkernsmp/x86/ncern.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/x86/)
+include/nkernsmp/x86/nk_plat.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/x86/)
+include/nkernsmp/x86/apic.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/x86/)
+
+nkernsmp/nkern_ext.mmh							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+
+
+include/kernel/debug.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/klib.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kdebug.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kernel.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kern_priv.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/localise.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kpower.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/sproperty.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kernboot.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kbma.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+
+// Export a stub localisation header under the old name. This just inclides "localise.h" ...
+include/kernel/ls_std.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+
+include/kernel/monitor.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/cache.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/emi.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/nkern/emievents.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+
+
+include/nkernsmp/emievents.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+
+include/memmodel/epoc/platform.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/)
+include/memmodel/epoc/plat_priv.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/)
+include/memmodel/epoc/mmubase/mmubase.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/mmubase/)
+include/memmodel/epoc/mmubase/kblockmap.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/mmubase/)
+include/memmodel/epoc/multiple/memmodel.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/multiple/)
+include/memmodel/epoc/moving/memmodel.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/moving/)
+include/memmodel/epoc/direct/memmodel.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/direct/)
+
+include/memmodel/emul/platform.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/emul/)
+include/memmodel/emul/plat_priv.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/emul/)
+include/memmodel/emul/win32/memmodel.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/emul/win32/)
+
+include/kernel/arm/arm.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+include/kernel/arm/arm_types.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+include/kernel/arm/assp.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+include/kernel/arm/bootcpu.inc					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+include/kernel/arm/bootdefs.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+include/kernel/arm/bootmacro.inc				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+include/kernel/arm/bootstrap.lnk				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+include/kernel/arm/vfpsupport.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm/)
+
+include/kernel/x86/x86.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/x86/)
+include/kernel/x86/x86boot.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/x86/)
+include/kernel/x86/assp.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/x86/)
+include/kernel/x86/bootdefs.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/x86/)
+include/kernel/x86/bootcpu.inc					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/x86/)
+include/kernel/x86/bootmacr.inc					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/x86/)
+
+include/kernel/win32/win32.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/win32/)
+include/kernel/win32/assp.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/win32/)
+include/kernel/win32/property.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/win32/)
+
+include/kernel/sshbuf.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/smap.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+
+include/memmodel/epoc/moving/arm/arm_mem.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/moving/arm/)
+include/memmodel/epoc/moving/arm/mmboot.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/moving/arm/)
+include/memmodel/epoc/direct/arm/arm_mem.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/direct/arm/)
+include/memmodel/epoc/multiple/arm/arm_mem.h	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/multiple/arm/)
+include/memmodel/epoc/multiple/arm/mmboot.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/multiple/arm/)
+include/memmodel/epoc/direct/x86/x86_mem.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/direct/x86/)
+include/memmodel/epoc/multiple/x86/x86_mem.h	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/multiple/x86/)
+include/memmodel/epoc/multiple/x86/mmboot.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/multiple/x86/)
+include/memmodel/epoc/flexible/arm/mmboot.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/flexible/arm/)
+include/memmodel/epoc/flexible/x86/mmboot.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/flexible/x86/)
+
+
+kernel/kern_ext.mmh								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+
+include/partitions.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(partitions.h)
+
+
+include/drivers/comm.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/comm.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/locmedia.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/flash_media.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/nanddevice.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pbus.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pbus.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pbusmedia.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pccard.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pccard.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/soundsc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/soundsc.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/xyin.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/binpower.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pccd_chunk.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pccd_ifc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pccd_socket.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pccd_medchg.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/pccd_vcc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/ethernet.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/ethernet.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic_channel.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic_channel.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic_trace.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic_transaction.h				drivers/						//
+include/drivers/iic_transaction.inl				drivers/
+
+include/drivers/gpio.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/mmccd_ifc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/mmc.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/mmc.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/sdcard.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/sdcard.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/emmcptn.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
+include/drivers/usbcshared.h					drivers/						//
+include/drivers/usbcshared.inl					drivers/						//
+
+include/drivers/usbc.h							drivers/						//
+include/drivers/usbc.inl						drivers/						//
+
+include/drivers/usbcsc.h						drivers/						//
+include/drivers/usbcsc.inl						drivers/						//
+
+
+include/drivers/usbcque.h						drivers/						//
+include/drivers/usbcdesc.h						drivers/						//
+
+include/drivers/usbdi_hub.h                     drivers/						//
+include/drivers/usbdi_channel.h                 drivers/						//
+
+include/drivers/camerasc.h						drivers/						//
+include/drivers/camerasc.inl					drivers/						//
+
+include/drivers/otgdi.h                         drivers/
+
+include/drivers/crashflash.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/crashflashnor.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/crashflashnand.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
+include/rm_debug_api.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rm_debug_api.h)
+include/sm_debug_api.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(sm_debug_api.h)
+
+include/drivers/resourceman.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourceman.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourcecontrol.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourcecontrol.inl				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resource.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourcecontrol_trace.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resource_category.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resource_extend.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
+// Power Resource Manager User-Side API
+include/drivers/resmanus_trace.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
+include/drivers/i2s.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+						//
+include/drivers/display.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+
+// Example RTOS personality layer
+personality/example/personality.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(personality/example/)
+personality/example/personality_int.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(personality/example/)
+
+// Console .DEF files
+bmarm/econs.def		/epoc32/release/marm/ //
+eabi/econs.def		/epoc32/release/eabi/ //
+
+// Locale .DEF files
+bwins/eloclu.def	/epoc32/release/wins/ //
+bmarm/eloclu.def	/epoc32/release/marm/ //
+eabi/eloclu.def		/epoc32/include/def/eabi/ //
+
+// User interface
+include/e32atomics.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32atomics.h)
+include/e32base.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32base.h)
+include/e32base_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32base_private.h)
+include/e32base.inl								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32base.inl)
+include/e32capability.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32capability.h)
+include/e32cons.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32cons.h)
+include/e32const.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32const.h)
+include/e32const_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32const_private.h)
+include/e32cmn.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32cmn.h)
+include/e32cmn_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32cmn_private.h)
+include/e32cmn.inl								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32cmn.inl)
+include/e32def.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32def.h)
+include/e32def_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32def_private.h)
+include/e32des16.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32des16.h)
+include/e32des16_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32des16_private.h)
+include/e32des8.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32des8.h)
+include/e32des8_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32des8_private.h)
+include/e32err.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32err.h)
+include/e32hal.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32hal.h)
+include/e32hashtab.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32hashtab.h)
+include/e32keys.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32keys.h)
+include/e32lang.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32lang.h)
+include/e32reg.h 								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32reg.h)
+include/e32math.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32math.h)
+include/e32math.inl								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32math.inl)
+include/e32panic.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32panic.h)
+include/e32power.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32power.h)
+include/e32property.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32property.h)
+include/e32kpan.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32kpan.h)
+include/e32rom.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32rom.h)
+include/e32std.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32std.h)
+include/e32std_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32std_private.h)
+include/e32std.inl								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32std.inl)
+include/e32svr.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32svr.h)
+include/e32notif.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32notif.h)
+include/e32ktran.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32ktran.h)
+include/e32debug.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32debug.h)
+include/e32lmsg.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32lmsg.h)
+include/e32event.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32event.h)
+include/e32event_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32event_private.h)
+include/e32ldr.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32ldr.h)
+include/e32test.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32test.h)
+include/e32uid.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32uid.h)
+include/e32ver.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32ver.h)
+include/e32wins.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32wins.h)
+
+include/winsdef.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(winsdef.h)
+include/emulator.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(emulator.h)
+include/d32comm.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32comm.h)
+include/d32comm.inl								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32comm.inl)
+include/d32fir.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32fir.h)
+include/d32locd.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32locd.h)
+include/d32locd.inl								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32locd.inl)
+include/unicode.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(unicode.h)
+include/e32twin.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32twin.h)
+include/twintnotifier.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(twintnotifier.h)
+include/videodriver.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(videodriver.h)
+include/d32ethernet.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32ethernet.h)
+include/d32ethernet.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32ethernet.inl)
+include/d32soundsc.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32soundsc.h)
+include/d32soundsc.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32soundsc.inl)
+include/e32msgqueue.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32msgqueue.h)
+include/e32msgqueue.inl							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32msgqueue.inl)
+include/d32usbcshared.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbcshared.h)
+include/d32usbcshared.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbcshared.inl)
+include/d32usbcsc.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbcsc.h)
+include/d32usbcsc.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbcsc.inl)
+include/d32usbc.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbc.h)
+include/d32usbc.inl								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbc.inl)
+include/usb.h									SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(usb.h)
+include/d32usbdi.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi.h)
+include/d32usbdi.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi.inl)
+include/d32usbdi_errors.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi_errors.h)
+include/d32usbdi_hubdriver.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi_hubdriver.h)
+include/d32usbdi_hubdriver.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi_hubdriver.inl)
+include/d32usbtransfers.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbtransfers.h)
+include/d32usbdescriptors.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdescriptors.h)
+include/d32camerasc.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32camerasc.h)
+include/d32camerasc.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32camerasc.inl)
+include/d32otgdi.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi.h)
+include/d32otgdi.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi.inl)
+include/d32otgdi_errors.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi_errors.h)
+include/d32btrace.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32btrace.h)
+include/e32btrace.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32btrace.h)
+include/rpipe.h									SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rpipe.h)
+include/e32modes.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32modes.h)
+include/pixelformats.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(pixelformats.h)
+include/dispchannel.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(dispchannel.h)
+include/dispchannel.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(dispchannel.inl)
+
+include/d32resmanus.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32resmanus.h)
+include/d32resmanus.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32resmanus.inl)
+
+//Unified Trace Framework API
+include/e32utf.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utf.h)
+include/e32utrace.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace.inl)
+include/e32utrace_basic_types.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace_basic_types.h)
+include/e32utrace.mmh							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace.mmh)
+
+//Open System Trace API
+include/opensystemtrace.h					/epoc32/include/platform/
+include/opensystemtrace.inl					/epoc32/include/platform/
+include/opensystemtrace_types.h					/epoc32/include/platform/
+include/opensystemtrace.mmh					/epoc32/include/platform/
+
+// ROM building scripts
+rombuild/base.iby								/epoc32/rom/include/			//
+rombuild/PlatSecEnforcement.oby					/epoc32/rom/include/			//
+rombuild/PlatSecDiagnostics.oby					/epoc32/rom/include/			//
+rombuild/btrace.iby								/epoc32/rom/include/			//
+rombuild/kernel.hby								/epoc32/rom/include/
+rombuild/rm_debug_svr.iby						/epoc32/rom/include/			// Run mode debug driver
+rombuild/utrace.iby								/epoc32/rom/include/			//utrace
+rombuild/ost.iby								/epoc32/rom/include/			//ost
+
+// Byte pair compressor
+include/byte_pair_compress.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(byte_pair_compress.h)
+
+// shareable data buffers
+include/e32shbuf.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32shbuf.h)
+include/e32shbufcmn.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32shbufcmn.h)
+include/e32shbuf_priv.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32shbuf_priv.h)
+
+
+PRJ_MMPFILES
+
+#if defined(GENERIC_MARM) || defined(WINS) || defined(GENERIC_X86)
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+
+kernel/eext
+kernel/evar
+kernel/edev
+kernel/ekern_lib
+
+kernel/exstart
+#if defined(ARMCC)
+kernel/evfp
+#endif
+
+#if !defined(WINS)
+kernel/exmoncommon_lib
+drivers/paging/emulated/emulated_rom_paging
+drivers/paging/emulated/emulated_data_paging
+#endif
+
+drivers/pipe/pipe
+#if defined(GENERIC_MARM)
+#ifndef SMP
+// NO DEBUG ON SMP YET
+kernel/kdebug
+kernel/kdebugv6
+#endif
+#endif
+
+#ifndef SMP	// NOT ON SMP YET
+// Example RTOS personality layer
+personality/example/example_personality
+#endif
+
+//UTrace user side
+debug/utrace/group/e32utraceuser
+debug/utrace/group/e32utraceuserstubbed
+
+//OST user side
+debug/ost/group/ostuser
+debug/ost/group/ostuserstubbed
+
+#endif
+#endif

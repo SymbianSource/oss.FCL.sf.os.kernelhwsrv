@@ -1,0 +1,3 @@
+EXPORTS
+	?GetStartTime1@@YAKXZ @ 1 NONAME ; unsigned long __cdecl GetStartTime1(void)
+

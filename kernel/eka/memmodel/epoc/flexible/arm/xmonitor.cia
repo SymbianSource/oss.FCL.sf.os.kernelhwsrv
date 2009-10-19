@@ -1,0 +1,36 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Kernel crash debugger - ARM specific portion
+// 
+//
+#define INCLUDED_FROM_ASM
+
+#include <kernel/monitor.h>
+#include "memmodel.h"
+#include <mmboot.h>
+#include "xdefs.h"
+
+__NAKED__ TInt MapProcess(DMemModelProcess* aProcess, TBool)
+	{
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess, iPageDir));
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess, iOsAsid));
+
+	asm("mrc p15, 0, r3, c2, c0, 0 ");
+	asm("and r3, r3, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));
+	asm("orr r2, r2, r3 ");
+	__ASM_SET_ADDRESS_SPACE(r0,r2,r3);
+
+	asm("mov r0, #0");
+	__JUMP(,lr);
+	}

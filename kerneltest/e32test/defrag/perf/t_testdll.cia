@@ -1,0 +1,2661 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32tests/defrag/perf/t_testdll.cia 
+// Used to create t_defragdll0.dll
+// 
+//
+
+#include <u32std.h>
+#include "t_testdll.h"
+
+
+#ifdef __VC32__
+#pragma warning(disable:4706)
+#endif
+
+//#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+
+#ifdef __ARMCC__
+__NAKED__ TInt TestAlignment0(TInt aParam1, TInt aParam2)
+    {
+
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment1(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment2(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment3(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment4(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment5(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment6(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment7(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment8(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment9(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment10(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment11(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment12(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment13(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment14(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment15(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment16(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment17(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment18(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment19(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment20(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment21(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment22(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment23(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment24(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment25(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment26(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment27(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment28(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment29(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment30(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment31(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment32(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment33(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment34(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment35(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment36(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment37(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment38(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment39(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment40(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment41(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment42(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment43(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment44(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment45(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment46(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment47(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment48(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment49(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment50(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment51(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment52(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment53(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment54(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment55(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment56(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment57(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment58(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment59(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment60(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+
+__NAKED__ TInt TestAlignment61(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+
+__NAKED__ TInt TestAlignment62(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment63(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+#ifdef T_PAGESTRESS_LARGE_ARRAY
+__NAKED__ TInt TestAlignment64(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment65(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment66(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment67(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment68(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment69(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment70(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment71(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment72(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment73(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment74(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment75(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment76(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment77(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment78(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment79(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment80(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment81(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment82(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment83(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment84(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment85(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment86(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment87(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment88(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment89(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment90(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment91(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment92(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment93(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment94(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment95(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment96(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment97(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment98(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment99(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment100(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment101(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment102(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment103(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment104(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment105(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment106(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment107(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment108(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment109(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment110(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment111(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment112(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment113(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment114(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment115(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment116(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment117(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment118(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment119(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment120(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment121(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment122(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment123(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment124(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment125(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment126(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment127(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment128(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment129(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment130(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment131(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment132(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment133(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment134(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment135(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment136(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment137(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment138(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment139(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment140(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment141(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment142(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment143(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment144(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment145(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment146(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment147(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment148(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment149(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment150(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment151(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment152(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment153(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment154(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment155(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment156(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment157(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment158(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment159(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment160(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment161(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment162(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment163(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment164(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment165(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment166(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment167(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment168(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment169(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment170(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment171(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment172(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment173(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment174(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment175(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment176(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment177(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment178(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment179(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment180(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment181(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment182(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment183(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment184(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment185(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment186(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment187(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment188(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment189(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment190(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment191(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment192(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment193(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment194(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment195(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment196(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment197(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment198(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment199(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment200(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment201(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment202(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment203(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment204(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment205(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment206(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment207(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment208(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment209(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment210(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment211(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment212(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment213(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment214(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment215(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment216(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment217(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment218(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment219(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment220(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment221(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment222(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment223(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment224(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment225(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment226(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment227(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment228(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment229(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment230(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment231(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment232(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment233(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment234(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment235(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment236(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment237(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment238(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment239(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment240(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment241(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment242(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment243(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment244(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment245(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment246(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment247(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment248(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment249(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment250(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment251(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment252(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment253(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment254(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+__NAKED__ TInt TestAlignment255(TInt aParam1, TInt aParam2)
+    {
+    asm("movs		r2,r0");
+    asm("adds		r0,r2,r1");
+    asm("bx			lr");
+	asm(".space     4084");
+    }
+
+#define DUMMY_ARRAY_SIZE		4096
+TInt dummyArray[DUMMY_ARRAY_SIZE]; // 4 pages, probably spanning 5 pages?
+
+__NAKED__ TInt DoLdmia(TInt *aAddress)
+    {
+    asm("ldmia	r0, {r0,r1}");
+    asm("bx			lr");
+    }
+
+__NAKED__ TInt TestAlignmentxXXx(TInt aParam1)
+    {
+    space    4096
+    BX       lr
+    ENDP
+    }
+
+TInt *CheckLdmiaInstr(void)
+	{
+	TInt *pIntArray;
+	TInt  offset = ((TInt)dummyArray) % 4096;
+
+	if (offset == 0)
+		{
+		pIntArray = (TInt *)(((TInt)dummyArray) + 4092);
+		}
+	else
+		{
+		pIntArray = (TInt *)(((TInt)dummyArray) + (4092 - offset));
+		}
+	DoLdmia(pIntArray);
+	return pIntArray;
+	}
+
+#endif //T_PAGESTRESS_LARGE_ARRAY
+
+#else
+#define TPS_DECLARE(_num) \
+TInt TestAlignment##_num(TInt aParam1, TInt aParam2)\
+	{\
+	return aParam1 + aParam2;\
+	}
+
+		TPS_DECLARE(0)
+		TPS_DECLARE(1)
+		TPS_DECLARE(2)
+		TPS_DECLARE(3)
+		TPS_DECLARE(4)
+		TPS_DECLARE(5)
+		TPS_DECLARE(6)
+		TPS_DECLARE(7)
+		TPS_DECLARE(8)
+		TPS_DECLARE(9)
+		TPS_DECLARE(10)
+		TPS_DECLARE(11)
+		TPS_DECLARE(12)
+		TPS_DECLARE(13)
+		TPS_DECLARE(14)
+		TPS_DECLARE(15)
+		TPS_DECLARE(16)
+		TPS_DECLARE(17)
+		TPS_DECLARE(18)
+		TPS_DECLARE(19)
+		TPS_DECLARE(20)
+		TPS_DECLARE(21)
+		TPS_DECLARE(22)
+		TPS_DECLARE(23)
+		TPS_DECLARE(24)
+		TPS_DECLARE(25)
+		TPS_DECLARE(26)
+		TPS_DECLARE(27)
+		TPS_DECLARE(28)
+		TPS_DECLARE(29)
+		TPS_DECLARE(30)
+		TPS_DECLARE(31)
+		TPS_DECLARE(32)
+		TPS_DECLARE(33)
+		TPS_DECLARE(34)
+		TPS_DECLARE(35)
+		TPS_DECLARE(36)
+		TPS_DECLARE(37)
+		TPS_DECLARE(38)
+		TPS_DECLARE(39)
+		TPS_DECLARE(40)
+		TPS_DECLARE(41)
+		TPS_DECLARE(42)
+		TPS_DECLARE(43)
+		TPS_DECLARE(44)
+		TPS_DECLARE(45)
+		TPS_DECLARE(46)
+		TPS_DECLARE(47)
+		TPS_DECLARE(48)
+		TPS_DECLARE(49)
+		TPS_DECLARE(50)
+		TPS_DECLARE(51)
+		TPS_DECLARE(52)
+		TPS_DECLARE(53)
+		TPS_DECLARE(54)
+		TPS_DECLARE(55)
+		TPS_DECLARE(56)
+		TPS_DECLARE(57)
+		TPS_DECLARE(58)
+		TPS_DECLARE(59)
+		TPS_DECLARE(60)
+		TPS_DECLARE(61)
+		TPS_DECLARE(62)
+		TPS_DECLARE(63)
+#ifdef T_PAGESTRESS_LARGE_ARRAY
+		TPS_DECLARE(64)
+		TPS_DECLARE(65)
+		TPS_DECLARE(66)
+		TPS_DECLARE(67)
+		TPS_DECLARE(68)
+		TPS_DECLARE(69)
+		TPS_DECLARE(70)
+		TPS_DECLARE(71)
+		TPS_DECLARE(72)
+		TPS_DECLARE(73)
+		TPS_DECLARE(74)
+		TPS_DECLARE(75)
+		TPS_DECLARE(76)
+		TPS_DECLARE(77)
+		TPS_DECLARE(78)
+		TPS_DECLARE(79)
+		TPS_DECLARE(80)
+		TPS_DECLARE(81)
+		TPS_DECLARE(82)
+		TPS_DECLARE(83)
+		TPS_DECLARE(84)
+		TPS_DECLARE(85)
+		TPS_DECLARE(86)
+		TPS_DECLARE(87)
+		TPS_DECLARE(88)
+		TPS_DECLARE(89)
+		TPS_DECLARE(90)
+		TPS_DECLARE(91)
+		TPS_DECLARE(92)
+		TPS_DECLARE(93)
+		TPS_DECLARE(94)
+		TPS_DECLARE(95)
+		TPS_DECLARE(96)
+		TPS_DECLARE(97)
+		TPS_DECLARE(98)
+		TPS_DECLARE(99)
+		TPS_DECLARE(100)
+		TPS_DECLARE(101)
+		TPS_DECLARE(102)
+		TPS_DECLARE(103)
+		TPS_DECLARE(104)
+		TPS_DECLARE(105)
+		TPS_DECLARE(106)
+		TPS_DECLARE(107)
+		TPS_DECLARE(108)
+		TPS_DECLARE(109)
+		TPS_DECLARE(110)
+		TPS_DECLARE(111)
+		TPS_DECLARE(112)
+		TPS_DECLARE(113)
+		TPS_DECLARE(114)
+		TPS_DECLARE(115)
+		TPS_DECLARE(116)
+		TPS_DECLARE(117)
+		TPS_DECLARE(118)
+		TPS_DECLARE(119)
+		TPS_DECLARE(120)
+		TPS_DECLARE(121)
+		TPS_DECLARE(122)
+		TPS_DECLARE(123)
+		TPS_DECLARE(124)
+		TPS_DECLARE(125)
+		TPS_DECLARE(126)
+		TPS_DECLARE(127)
+		TPS_DECLARE(128)
+		TPS_DECLARE(129)
+		TPS_DECLARE(130)
+		TPS_DECLARE(131)
+		TPS_DECLARE(132)
+		TPS_DECLARE(133)
+		TPS_DECLARE(134)
+		TPS_DECLARE(135)
+		TPS_DECLARE(136)
+		TPS_DECLARE(137)
+		TPS_DECLARE(138)
+		TPS_DECLARE(139)
+		TPS_DECLARE(140)
+		TPS_DECLARE(141)
+		TPS_DECLARE(142)
+		TPS_DECLARE(143)
+		TPS_DECLARE(144)
+		TPS_DECLARE(145)
+		TPS_DECLARE(146)
+		TPS_DECLARE(147)
+		TPS_DECLARE(148)
+		TPS_DECLARE(149)
+		TPS_DECLARE(150)
+		TPS_DECLARE(151)
+		TPS_DECLARE(152)
+		TPS_DECLARE(153)
+		TPS_DECLARE(154)
+		TPS_DECLARE(155)
+		TPS_DECLARE(156)
+		TPS_DECLARE(157)
+		TPS_DECLARE(158)
+		TPS_DECLARE(159)
+		TPS_DECLARE(160)
+		TPS_DECLARE(161)
+		TPS_DECLARE(162)
+		TPS_DECLARE(163)
+		TPS_DECLARE(164)
+		TPS_DECLARE(165)
+		TPS_DECLARE(166)
+		TPS_DECLARE(167)
+		TPS_DECLARE(168)
+		TPS_DECLARE(169)
+		TPS_DECLARE(170)
+		TPS_DECLARE(171)
+		TPS_DECLARE(172)
+		TPS_DECLARE(173)
+		TPS_DECLARE(174)
+		TPS_DECLARE(175)
+		TPS_DECLARE(176)
+		TPS_DECLARE(177)
+		TPS_DECLARE(178)
+		TPS_DECLARE(179)
+		TPS_DECLARE(180)
+		TPS_DECLARE(181)
+		TPS_DECLARE(182)
+		TPS_DECLARE(183)
+		TPS_DECLARE(184)
+		TPS_DECLARE(185)
+		TPS_DECLARE(186)
+		TPS_DECLARE(187)
+		TPS_DECLARE(188)
+		TPS_DECLARE(189)
+		TPS_DECLARE(190)
+		TPS_DECLARE(191)
+		TPS_DECLARE(192)
+		TPS_DECLARE(193)
+		TPS_DECLARE(194)
+		TPS_DECLARE(195)
+		TPS_DECLARE(196)
+		TPS_DECLARE(197)
+		TPS_DECLARE(198)
+		TPS_DECLARE(199)
+		TPS_DECLARE(200)
+		TPS_DECLARE(201)
+		TPS_DECLARE(202)
+		TPS_DECLARE(203)
+		TPS_DECLARE(204)
+		TPS_DECLARE(205)
+		TPS_DECLARE(206)
+		TPS_DECLARE(207)
+		TPS_DECLARE(208)
+		TPS_DECLARE(209)
+		TPS_DECLARE(210)
+		TPS_DECLARE(211)
+		TPS_DECLARE(212)
+		TPS_DECLARE(213)
+		TPS_DECLARE(214)
+		TPS_DECLARE(215)
+		TPS_DECLARE(216)
+		TPS_DECLARE(217)
+		TPS_DECLARE(218)
+		TPS_DECLARE(219)
+		TPS_DECLARE(220)
+		TPS_DECLARE(221)
+		TPS_DECLARE(222)
+		TPS_DECLARE(223)
+		TPS_DECLARE(224)
+		TPS_DECLARE(225)
+		TPS_DECLARE(226)
+		TPS_DECLARE(227)
+		TPS_DECLARE(228)
+		TPS_DECLARE(229)
+		TPS_DECLARE(230)
+		TPS_DECLARE(231)
+		TPS_DECLARE(232)
+		TPS_DECLARE(233)
+		TPS_DECLARE(234)
+		TPS_DECLARE(235)
+		TPS_DECLARE(236)
+		TPS_DECLARE(237)
+		TPS_DECLARE(238)
+		TPS_DECLARE(239)
+		TPS_DECLARE(240)
+		TPS_DECLARE(241)
+		TPS_DECLARE(242)
+		TPS_DECLARE(243)
+		TPS_DECLARE(244)
+		TPS_DECLARE(245)
+		TPS_DECLARE(246)
+		TPS_DECLARE(247)
+		TPS_DECLARE(248)
+		TPS_DECLARE(249)
+		TPS_DECLARE(250)
+		TPS_DECLARE(251)
+		TPS_DECLARE(252)
+		TPS_DECLARE(253)
+		TPS_DECLARE(254)
+		TPS_DECLARE(255)
+#endif //T_PAGESTRESS_LARGE_ARRAY
+
+TInt *CheckLdmiaInstr(void)
+	{
+	return NULL;
+	}
+
+
+#endif // __ARMCC__
+
+TInt CallTestFunc(TInt aParam1, TInt aParam2, TInt aIndex)
+	{
+#define CALLFUNC(_num) case _num: return TestAlignment##_num(aParam1, aParam2);
+
+	switch (aIndex)
+		{
+		CALLFUNC(0)
+		CALLFUNC(1)
+		CALLFUNC(2)
+		CALLFUNC(3)
+		CALLFUNC(4)
+		CALLFUNC(5)
+		CALLFUNC(6)
+		CALLFUNC(7)
+		CALLFUNC(8)
+		CALLFUNC(9)
+		CALLFUNC(10)
+		CALLFUNC(11)
+		CALLFUNC(12)
+		CALLFUNC(13)
+		CALLFUNC(14)
+		CALLFUNC(15)
+		CALLFUNC(16)
+		CALLFUNC(17)
+		CALLFUNC(18)
+		CALLFUNC(19)
+		CALLFUNC(20)
+		CALLFUNC(21)
+		CALLFUNC(22)
+		CALLFUNC(23)
+		CALLFUNC(24)
+		CALLFUNC(25)
+		CALLFUNC(26)
+		CALLFUNC(27)
+		CALLFUNC(28)
+		CALLFUNC(29)
+		CALLFUNC(30)
+		CALLFUNC(31)
+		CALLFUNC(32)
+		CALLFUNC(33)
+		CALLFUNC(34)
+		CALLFUNC(35)
+		CALLFUNC(36)
+		CALLFUNC(37)
+		CALLFUNC(38)
+		CALLFUNC(39)
+		CALLFUNC(40)
+		CALLFUNC(41)
+		CALLFUNC(42)
+		CALLFUNC(43)
+		CALLFUNC(44)
+		CALLFUNC(45)
+		CALLFUNC(46)
+		CALLFUNC(47)
+		CALLFUNC(48)
+		CALLFUNC(49)
+		CALLFUNC(50)
+		CALLFUNC(51)
+		CALLFUNC(52)
+		CALLFUNC(53)
+		CALLFUNC(54)
+		CALLFUNC(55)
+		CALLFUNC(56)
+		CALLFUNC(57)
+		CALLFUNC(58)
+		CALLFUNC(59)
+		CALLFUNC(60)
+		CALLFUNC(61)
+		CALLFUNC(62)
+		CALLFUNC(63)
+#ifdef T_PAGESTRESS_LARGE_ARRAY
+		CALLFUNC(64)
+		CALLFUNC(65)
+		CALLFUNC(66)
+		CALLFUNC(67)
+		CALLFUNC(68)
+		CALLFUNC(69)
+		CALLFUNC(70)
+		CALLFUNC(71)
+		CALLFUNC(72)
+		CALLFUNC(73)
+		CALLFUNC(74)
+		CALLFUNC(75)
+		CALLFUNC(76)
+		CALLFUNC(77)
+		CALLFUNC(78)
+		CALLFUNC(79)
+		CALLFUNC(80)
+		CALLFUNC(81)
+		CALLFUNC(82)
+		CALLFUNC(83)
+		CALLFUNC(84)
+		CALLFUNC(85)
+		CALLFUNC(86)
+		CALLFUNC(87)
+		CALLFUNC(88)
+		CALLFUNC(89)
+		CALLFUNC(90)
+		CALLFUNC(91)
+		CALLFUNC(92)
+		CALLFUNC(93)
+		CALLFUNC(94)
+		CALLFUNC(95)
+		CALLFUNC(96)
+		CALLFUNC(97)
+		CALLFUNC(98)
+		CALLFUNC(99)
+		CALLFUNC(100)
+		CALLFUNC(101)
+		CALLFUNC(102)
+		CALLFUNC(103)
+		CALLFUNC(104)
+		CALLFUNC(105)
+		CALLFUNC(106)
+		CALLFUNC(107)
+		CALLFUNC(108)
+		CALLFUNC(109)
+		CALLFUNC(110)
+		CALLFUNC(111)
+		CALLFUNC(112)
+		CALLFUNC(113)
+		CALLFUNC(114)
+		CALLFUNC(115)
+		CALLFUNC(116)
+		CALLFUNC(117)
+		CALLFUNC(118)
+		CALLFUNC(119)
+		CALLFUNC(120)
+		CALLFUNC(121)
+		CALLFUNC(122)
+		CALLFUNC(123)
+		CALLFUNC(124)
+		CALLFUNC(125)
+		CALLFUNC(126)
+		CALLFUNC(127)
+		CALLFUNC(128)
+		CALLFUNC(129)
+		CALLFUNC(130)
+		CALLFUNC(131)
+		CALLFUNC(132)
+		CALLFUNC(133)
+		CALLFUNC(134)
+		CALLFUNC(135)
+		CALLFUNC(136)
+		CALLFUNC(137)
+		CALLFUNC(138)
+		CALLFUNC(139)
+		CALLFUNC(140)
+		CALLFUNC(141)
+		CALLFUNC(142)
+		CALLFUNC(143)
+		CALLFUNC(144)
+		CALLFUNC(145)
+		CALLFUNC(146)
+		CALLFUNC(147)
+		CALLFUNC(148)
+		CALLFUNC(149)
+		CALLFUNC(150)
+		CALLFUNC(151)
+		CALLFUNC(152)
+		CALLFUNC(153)
+		CALLFUNC(154)
+		CALLFUNC(155)
+		CALLFUNC(156)
+		CALLFUNC(157)
+		CALLFUNC(158)
+		CALLFUNC(159)
+		CALLFUNC(160)
+		CALLFUNC(161)
+		CALLFUNC(162)
+		CALLFUNC(163)
+		CALLFUNC(164)
+		CALLFUNC(165)
+		CALLFUNC(166)
+		CALLFUNC(167)
+		CALLFUNC(168)
+		CALLFUNC(169)
+		CALLFUNC(170)
+		CALLFUNC(171)
+		CALLFUNC(172)
+		CALLFUNC(173)
+		CALLFUNC(174)
+		CALLFUNC(175)
+		CALLFUNC(176)
+		CALLFUNC(177)
+		CALLFUNC(178)
+		CALLFUNC(179)
+		CALLFUNC(180)
+		CALLFUNC(181)
+		CALLFUNC(182)
+		CALLFUNC(183)
+		CALLFUNC(184)
+		CALLFUNC(185)
+		CALLFUNC(186)
+		CALLFUNC(187)
+		CALLFUNC(188)
+		CALLFUNC(189)
+		CALLFUNC(190)
+		CALLFUNC(191)
+		CALLFUNC(192)
+		CALLFUNC(193)
+		CALLFUNC(194)
+		CALLFUNC(195)
+		CALLFUNC(196)
+		CALLFUNC(197)
+		CALLFUNC(198)
+		CALLFUNC(199)
+		CALLFUNC(200)
+		CALLFUNC(201)
+		CALLFUNC(202)
+		CALLFUNC(203)
+		CALLFUNC(204)
+		CALLFUNC(205)
+		CALLFUNC(206)
+		CALLFUNC(207)
+		CALLFUNC(208)
+		CALLFUNC(209)
+		CALLFUNC(210)
+		CALLFUNC(211)
+		CALLFUNC(212)
+		CALLFUNC(213)
+		CALLFUNC(214)
+		CALLFUNC(215)
+		CALLFUNC(216)
+		CALLFUNC(217)
+		CALLFUNC(218)
+		CALLFUNC(219)
+		CALLFUNC(220)
+		CALLFUNC(221)
+		CALLFUNC(222)
+		CALLFUNC(223)
+		CALLFUNC(224)
+		CALLFUNC(225)
+		CALLFUNC(226)
+		CALLFUNC(227)
+		CALLFUNC(228)
+		CALLFUNC(229)
+		CALLFUNC(230)
+		CALLFUNC(231)
+		CALLFUNC(232)
+		CALLFUNC(233)
+		CALLFUNC(234)
+		CALLFUNC(235)
+		CALLFUNC(236)
+		CALLFUNC(237)
+		CALLFUNC(238)
+		CALLFUNC(239)
+		CALLFUNC(240)
+		CALLFUNC(241)
+		CALLFUNC(242)
+		CALLFUNC(243)
+		CALLFUNC(244)
+		CALLFUNC(245)
+		CALLFUNC(246)
+		CALLFUNC(247)
+		CALLFUNC(248)
+		CALLFUNC(249)
+		CALLFUNC(250)
+		CALLFUNC(251)
+		CALLFUNC(252)
+		CALLFUNC(253)
+		CALLFUNC(254)
+		CALLFUNC(255)
+#endif //T_PAGESTRESS_LARGE_ARRAY
+		default: break;
+		}
+	return 0;
+	}
+
+//#endif // defined(_DEBUG) || defined(_DEBUG_RELEASE)
+

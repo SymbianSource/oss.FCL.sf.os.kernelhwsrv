@@ -1,0 +1,40 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/plugins/version_2/crypto_encryption/group/t_encplugin.mmp
+// 
+//
+
+TARGET         t_encplugin.exe
+TARGETTYPE     EXE
+SOURCEPATH     ../src
+SOURCE         t_encrypt.cpp
+SOURCEPATH     ../../../../server
+SOURCE         t_main.cpp
+SOURCEPATH     ../../../../fileutils/src
+SOURCE         t_chlffs.cpp 
+
+LIBRARY        euser.lib efsrv.lib hal.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE    ../../../../server
+USERINCLUDE    ../../../../fileutils/inc
+
+CAPABILITY		DiskAdmin AllFiles TCB
+
+VENDORID		0x70000001
+MACRO		__SECURE_API__
+MACRO		__DATA_CAGING__not_done
+
+EPOCSTACKSIZE 10000
+
+SMPSAFE

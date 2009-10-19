@@ -1,0 +1,44 @@
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// /f32test/demandpaging/loader/t_pageldrtst.mmp
+// 
+//
+
+macro TEST_AUTOTEST
+macro TEST_RUN_DEFRAGTEST
+
+target				t_pageldrtst_defrag.exe
+targettype			exe
+sourcepath			../loader/
+source				t_sfhash.cpp
+sourcepath			../../e32test/mmu
+source				paging_info.cpp
+sourcepath			../demandpaging/loader 
+source				t_pageldrtst.cpp 
+library				euser.lib efsrv.lib hal.lib btracec.lib 
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude			../demandpaging/loader/
+userinclude			../demandpaging/
+userinclude			../../e32test/mmu
+userinclude			../../e32test/demandpaging
+userinclude			../loader/
+nostrictdef
+capability		all
+vendorid		0x70000001
+
+epocstacksize		0x4000
+pagedcode 
+unpageddata
+
+SMPSAFE

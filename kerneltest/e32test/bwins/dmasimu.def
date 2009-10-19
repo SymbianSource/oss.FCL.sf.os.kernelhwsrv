@@ -1,0 +1,14 @@
+EXPORTS
+	?CreateLogicalDevice@@YAPAVDLogicalDevice@@XZ @ 1 NONAME
+	??0DDmaRequest@@QAE@AAVTDmaChannel@@P6AXW4TResult@0@PAX@Z2H@Z @ 2 NONAME ; public: __thiscall DDmaRequest::DDmaRequest(class TDmaChannel &,void (__cdecl*)(enum DDmaRequest::TResult,void *),void *,int)
+	?CancelAll@TDmaChannel@@QAEXXZ @ 3 NONAME ; public: void __thiscall TDmaChannel::CancelAll(void)
+	?Close@TDmaChannel@@QAEXXZ @ 4 NONAME ; public: void __thiscall TDmaChannel::Close(void)
+	?DmaTestInfo@@YAABUTDmaTestInfo@@XZ @ 5 NONAME ; struct TDmaTestInfo const & __cdecl DmaTestInfo(void)
+	?ExpandDesList@DDmaRequest@@QAEHH@Z @ 6 NONAME ; public: int __thiscall DDmaRequest::ExpandDesList(int)
+	?Fragment@DDmaRequest@@QAEHKKHIK@Z @ 7 NONAME ; public: int __thiscall DDmaRequest::Fragment(unsigned long,unsigned long,int,unsigned int,unsigned long)
+	?FreeDesList@DDmaRequest@@QAEXXZ @ 8 NONAME ; public: void __thiscall DDmaRequest::FreeDesList(void)
+	?Open@TDmaChannel@@SAHABUSCreateInfo@1@AAPAV1@@Z @ 9 NONAME ; public: static int __cdecl TDmaChannel::Open(struct TDmaChannel::SCreateInfo const &,class TDmaChannel * &)
+	?Queue@DDmaRequest@@QAEXXZ @ 10 NONAME ; public: void __thiscall DDmaRequest::Queue(void)
+	??1DDmaRequest@@UAE@XZ @ 11 NONAME ; public: virtual __thiscall DDmaRequest::~DDmaRequest(void)
+	?StaticExtension@TDmaChannel@@QAEHHPAX@Z @ 12 NONAME ; public: int __thiscall TDmaChannel::StaticExtension(int,void *)
+

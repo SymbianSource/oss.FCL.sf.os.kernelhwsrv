@@ -1,0 +1,79 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/rofs/bld.inf
+// Test code for rofs file system
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_PLATFORMS
+
+BASEUSERDEFAULT
+
+PRJ_TESTEXPORTS
+
+testfiles/hello8.txt					/epoc32/rom/rofstest/			//
+testfiles/ONE.RSC					/epoc32/rom/rofstest/			//
+testfiles/TWO.RSC					/epoc32/rom/rofstest/			//
+testfiles/THREE.RSC					/epoc32/rom/rofstest/			//
+testfiles/FOUR.RSC					/epoc32/rom/rofstest/			//
+testfiles/FIVE.RSC					/epoc32/rom/rofstest/			//
+testfiles/SIX.RSC					/epoc32/rom/rofstest/			//
+testfiles/SEVEN.RSC					/epoc32/rom/rofstest/			//
+testfiles/EIGHT.RSC					/epoc32/rom/rofstest/			//
+testfiles/NINE.RSC					/epoc32/rom/rofstest/			//
+testfiles/TEN.RSC					/epoc32/rom/rofstest/			//
+testfiles/me.rsc					/epoc32/rom/rofstest/			//
+testfiles/tf1.bin					/epoc32/rom/rofstest/			//
+testfiles/tf2.bin					/epoc32/rom/rofstest/			//
+testfiles/tf3.bin					/epoc32/rom/rofstest/			//
+testfiles/tf4.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5a.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5b.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5c.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5d.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5e.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5f.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5g.bin					/epoc32/rom/rofstest/			//
+testfiles/tf5h.bin					/epoc32/rom/rofstest/			//
+testfiles/tf6.bin					/epoc32/rom/rofstest/			//
+testfiles/tf7.bin					/epoc32/rom/rofstest/			//
+testfiles/tf9.bin					/epoc32/rom/rofstest/			//
+testfiles/tf10.bin					/epoc32/rom/rofstest/			//
+testfiles/tf11.bin					/epoc32/rom/rofstest/			//
+testfiles/tf12.bin					/epoc32/rom/rofstest/			//
+testfiles/tf13.bin					/epoc32/rom/rofstest/			//
+testfiles/tf16.bin					/epoc32/rom/rofstest/			//
+testfiles/mrofs1.txt					/epoc32/rom/rofstest/			//
+testfiles/mrofs2.txt					/epoc32/rom/rofstest/			//
+testfiles/mrofs3.txt					/epoc32/rom/rofstest/			//
+testfiles/fatimage.bin					/epoc32/rom/rofstest/			//
+oby/dir.oby						/epoc32/rom/rofstest/			//
+oby/rofs1.oby						/epoc32/rom/rofstest/			//
+oby/rofs2.oby						/epoc32/rom/rofstest/			//
+oby/rofs3.oby						/epoc32/rom/rofstest/			//
+oby/extension.oby					/epoc32/rom/rofstest/			//
+../demandpaging/t_pagestress_rofs.iby	/epoc32/rom/rofstest/			//
+../demandpaging/t_pagestress_ext.iby	/epoc32/rom/rofstest/			//
+
+PRJ_TESTMMPFILES
+../group/t_rofsattrib
+../group/t_rofsdir
+../group/t_rofsfile
+../group/t_rofssoak	support
+../group/t_rofstime
+../group/t_rofsmultiple

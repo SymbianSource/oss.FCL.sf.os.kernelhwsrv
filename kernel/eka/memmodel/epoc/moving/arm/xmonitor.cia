@@ -1,0 +1,28 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\moving\arm\xmonitor.cia
+// Kernel crash debugger - ARM specific portion
+// 
+//
+
+#include <kernel/monitor.h>
+#include <arm_mem.h>
+
+__NAKED__ void AccessAllAreas()
+	{
+	asm("mvn r0, #0 ");
+	asm("mcr p15, 0, r0, c3, c0 ");
+	__JUMP(,lr);
+	}
+

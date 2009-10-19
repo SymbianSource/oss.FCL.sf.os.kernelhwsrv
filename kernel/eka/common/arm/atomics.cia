@@ -1,0 +1,540 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\common\arm\atomics.cia
+// 
+//
+
+
+#include <cpudefs.h>
+#include <e32def.h>
+//#include <e32atomics.h>
+
+#if defined(__KERNEL_MODE__)
+#include "nk_cpu.h"
+#elif defined(__ATOMIC_USE_FAST_EXEC__) || defined(__ATOMIC64_USE_FAST_EXEC__) || defined(__ATOMIC64_USE_SLOW_EXEC__)
+#include <u32exec.h>
+#endif
+
+#define	__concat__(a,b)	a##b
+#define	__concat3__(a,b,c)	a##b##c
+#define	__concat5__(a,b,c,d,e)	a##b##c##d##e
+#define	__fname__(type,order,size)	__concat5__(__e32_atomic_,type,_,order,size)
+//	__e32_atomic_##type##_##order##size
+
+#undef	__BARRIERS_NEEDED__
+#undef	__AVOID_READ_SIDE_EFFECTS__
+#ifdef __SMP__
+#define	__BARRIERS_NEEDED__
+#else
+#ifdef __KERNEL_MODE__
+// On non-SMP use interrupt disabling even on V6 and V6K just in case someone
+// has used the atomic operations on I/O addresses.
+#define __AVOID_READ_SIDE_EFFECTS__
+#endif
+#endif
+
+#ifdef	__BARRIERS_NEEDED__
+#define	__LOCAL_DATA_MEMORY_BARRIER__(reg)		__DATA_MEMORY_BARRIER__(reg)
+#define	__LOCAL_DATA_MEMORY_BARRIER_Z__(reg)	__DATA_MEMORY_BARRIER_Z__(reg)
+#define	__LOCAL_DATA_SYNC_BARRIER__(reg)		__DATA_SYNC_BARRIER__(reg)
+#define	__LOCAL_DATA_SYNC_BARRIER_Z__(reg)		__DATA_SYNC_BARRIER_Z__(reg)
+#define	__LOCAL_INST_SYNC_BARRIER__(reg)		__INST_SYNC_BARRIER__(reg)
+#define	__LOCAL_INST_SYNC_BARRIER_Z__(reg)		__INST_SYNC_BARRIER_Z__(reg)
+#else	// __BARRIERS_NEEDED__
+#define	__LOCAL_DATA_MEMORY_BARRIER__(reg)
+#define	__LOCAL_DATA_MEMORY_BARRIER_Z__(reg)
+#define	__LOCAL_DATA_SYNC_BARRIER__(reg)
+#define	__LOCAL_DATA_SYNC_BARRIER_Z__(reg)
+#define	__LOCAL_INST_SYNC_BARRIER__(reg)
+#define	__LOCAL_INST_SYNC_BARRIER_Z__(reg)
+#endif	// __BARRIERS_NEEDED__
+
+#ifdef	__CPU_ARM_HAS_CPS
+#define	__DISABLE_INTERRUPTS__(keep,temp)	asm("mrs "#keep ", cpsr"); CPSIDAIF
+#define	__RESTORE_INTERRUPTS__(keep)		asm("msr cpsr_c, "#keep )	// flags preserved
+#else
+#define	__DISABLE_INTERRUPTS__(keep,temp)	asm("mrs "#keep ", cpsr"); asm("orr "#temp ", "#keep ", #0xc0" ); asm("msr cpsr, "#temp )
+#define	__RESTORE_INTERRUPTS__(keep)		asm("msr cpsr_c, "#keep )	// flags preserved
+#endif
+
+/******************************************************************************
+ * Barriers
+ ******************************************************************************/
+
+extern "C" EXPORT_C __NAKED__ void __e32_memory_barrier()
+	{
+	__LOCAL_DATA_MEMORY_BARRIER_Z__(r0);
+	__JUMP(,lr);
+	}
+
+/** Barrier guaranteeing completion as well as ordering
+
+*/
+#if defined(__KERNEL_MODE__) || defined(__CPU_ARM_SUPPORTS_USER_MODE_BARRIERS)
+extern "C" EXPORT_C __NAKED__ void __e32_io_completion_barrier()
+	{
+	__DATA_SYNC_BARRIER_Z__(r0);
+	__JUMP(,lr);
+	}
+#else
+extern "C" EXPORT_C __NAKED__ void __e32_io_completion_barrier()
+	{
+	asm("mov	r0, sp ");
+	asm("mov	r1, #0 ");
+	SLOW_EXEC2(EExecIMBRange);
+	}
+#endif
+
+
+/******************************************************************************
+ * Miscellaneous utility functions
+ ******************************************************************************/
+
+/** Find the most significant 1 in a 32 bit word
+
+	@param	v	The word to be scanned
+	@return		The bit number of the most significant 1 if v != 0
+				-1 if v == 0
+*/
+extern "C" EXPORT_C __NAKED__ TInt __e32_find_ms1_32(TUint32 /*v*/)
+	{
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(		1,0);						// r1=31-MSB(r0), 32 if r0=0
+	asm("rsb	r0, r1, #31 ");				// r0=MSB(r0), -1 if r0=0
+#else
+	asm("movs	r1, r0 ");
+	asm("beq	0f ");
+	asm("mov	r0, #31 ");
+	asm("cmp	r1, #0x00010000 ");
+	asm("movcc	r1, r1, lsl #16 ");
+	asm("subcc	r0, r0, #16 ");
+	asm("cmp	r1, #0x01000000 ");
+	asm("movcc	r1, r1, lsl #8 ");
+	asm("subcc	r0, r0, #8 ");
+	asm("cmp	r1, #0x10000000 ");
+	asm("movcc	r1, r1, lsl #4 ");
+	asm("subcc	r0, r0, #4 ");
+	asm("cmp	r1, #0x40000000 ");
+	asm("movcc	r1, r1, lsl #2 ");
+	asm("subcc	r0, r0, #2 ");
+	asm("cmp	r1, #0x80000000 ");
+	asm("subcc	r0, r0, #1 ");
+	__JUMP(,	lr);
+	asm("0: ");
+	asm("mvn	r0, #0 ");					// if input zero, return -1
+#endif
+	__JUMP(,	lr);
+	}
+
+
+/** Find the least significant 1 in a 32 bit word
+
+	@param	v	The word to be scanned
+	@return		The bit number of the least significant 1 if v != 0
+				-1 if v == 0
+*/
+extern "C" EXPORT_C __NAKED__ TInt __e32_find_ls1_32(TUint32 /*v*/)
+	{
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("subs	r1, r0, #1 ");				// r1 = arg - 1
+	asm("eorcs	r0, r0, r1 ");				// if arg=0, leave alone else mask upper bits
+	CLZ(		1,0);						// r1=31-MSB(r0), 32 if r0=0
+	asm("rsb	r0, r1, #31 ");				// r0=MSB(r0), -1 if r0=0
+#else
+	asm("movs	r1, r0 ");
+	asm("beq	0f ");
+	asm("mov	r0, #0 ");
+	asm("movs	r2, r1, lsl #16 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #16 ");
+	asm("movs	r2, r1, lsl #8 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #8 ");
+	asm("movs	r2, r1, lsl #4 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #4 ");
+	asm("movs	r2, r1, lsl #2 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #2 ");
+	asm("movs	r2, r1, lsl #1 ");
+	asm("addeq	r0, r0, #1 ");
+	__JUMP(,	lr);
+	asm("0: ");
+	asm("mvn	r0, #0 ");					// if input zero, return -1
+#endif
+	__JUMP(,	lr);
+	}
+
+
+/** Count the number of 1's in a 32 bit word
+
+	@param	v	The word to be scanned
+	@return		The number of 1's
+*/
+extern "C" EXPORT_C __NAKED__ TInt __e32_bit_count_32(TUint32 /*v*/)
+	{
+	asm("mov	r2, #0x0f ");				// r2=0x0000000f
+	asm("orr	r2, r2, r2, lsl #8 ");		// r2=0x00000f0f
+	asm("orr	r2, r2, r2, lsl #16 ");		// r2=0x0f0f0f0f
+	asm("eor	r3, r2, r2, lsl #2 ");		// r3=0x33333333
+	asm("eor	ip, r3, r3, lsl #1 ");		// ip=0x55555555
+	asm("bic	r1, r0, ip ");				// r1=odd bits of input
+	asm("and	r0, r0, ip ");				// r0=even bits of input
+	asm("add	r0, r0, r1, lsr #1 ");		// r0[2n:2n+1] = in[2n]+in[2n+1], 0<=n<=15
+	asm("bic	r1, r0, r3 ");				// r1 = r0[4n+2:4n+3] for 0<=n<=7, other bits 0
+	asm("and	r0, r0, r3 ");				// r0 = r0[4n:4n+1] for 0<=n<=7, other bits 0
+	asm("add	r0, r0, r1, lsr #2 ");		// r0 bits 4n:4n+3 = in[4n]+in[4n+1]+in[4n+2]+in[4n+3], 0<=n<=7
+	asm("add	r0, r0, r0, lsr #4 ");		// r0[8n:8n+3]=in[8n]+in[8n+1]+...+in[8n+7], 0<=n<=3
+	asm("and	r0, r0, r2 ");				// make sure other bits of r0 are zero
+	asm("add	r0, r0, r0, lsr #8 ");		// r0[16n:16n+7]=in[16n]+in[16n+1]+...+in[16n+15], n=0,1
+	asm("add	r0, r0, r0, lsr #16 ");		// r0[0:7]=SUM{ in[n] : 0<=n<=31 }
+	asm("and	r0, r0, #0xff ");			// mask other unwanted bits
+	__JUMP(,	lr);
+	}
+
+
+/** Find the most significant 1 in a 64 bit word
+
+	@param	v	The word to be scanned
+	@return		The bit number of the most significant 1 if v != 0
+				-1 if v == 0
+*/
+extern "C" EXPORT_C __NAKED__ TInt __e32_find_ms1_64(TUint64 /*v*/)
+	{
+	/* On entry argument in R1:R0 */
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(		2,1);						// r2=31-MSB(r1), 32 if r1=0
+	asm("subs	r2, r2, #32 ");				// r2=-1-MSB(r1), 0 if r1=0
+	CLZcc(CC_EQ,2,0);						// if r1=0, r2=31-MSB(r0), 32 if r0=0
+	asm("rsb	r0, r2, #31 ");				// if r1!=0, r0=32+MSB(r1) else if r0!=0 r0=MSB(r0) else r0=-1
+#else
+	asm("cmp	r1, #1 ");					// r1>=1 ?
+	asm("movcs	r0, #63 ");					// if so r0=63
+	asm("movccs	r1, r0 ");					// else r1=r0, test for zero (C unaffected)
+	asm("beq	0f ");
+	asm("movcc	r0, #31 ");					// if r1=0 and r0!=0, r1=original r0 and r0=31
+	asm("cmp	r1, #0x00010000 ");
+	asm("movcc	r1, r1, lsl #16 ");
+	asm("subcc	r0, r0, #16 ");
+	asm("cmp	r1, #0x01000000 ");
+	asm("movcc	r1, r1, lsl #8 ");
+	asm("subcc	r0, r0, #8 ");
+	asm("cmp	r1, #0x10000000 ");
+	asm("movcc	r1, r1, lsl #4 ");
+	asm("subcc	r0, r0, #4 ");
+	asm("cmp	r1, #0x40000000 ");
+	asm("movcc	r1, r1, lsl #2 ");
+	asm("subcc	r0, r0, #2 ");
+	asm("cmp	r1, #0x80000000 ");
+	asm("subcc	r0, r0, #1 ");
+	__JUMP(,	lr);
+	asm("0: ");
+	asm("mvn	r0, #0 ");					// if input zero, return -1
+#endif
+	__JUMP(,	lr);
+	}
+
+
+/** Find the least significant 1 in a 64 bit word
+
+	@param	v	The word to be scanned
+	@return		The bit number of the least significant 1 if v != 0
+				-1 if v == 0
+*/
+extern "C" EXPORT_C __NAKED__ TInt __e32_find_ls1_64(TUint64 /*v*/)
+	{
+	/* On entry argument in R1:R0 */
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("subs	r2, r0, #1 ");
+	asm("sbcs	r3, r1, #0 ");				// r3:r2 = arg - 1
+	asm("eorcs	r0, r0, r2 ");				// if arg=0 leave alone else mask upper bits
+	asm("eorcs	r1, r1, r3 ");
+	CLZ(		2,1);						// r2=31-MSB(r1), 32 if r1=0
+	asm("subs	r2, r2, #32 ");				// r2=-1-MSB(r1), 0 if r1=0
+	CLZcc(CC_EQ,2,0);						// if r1=0, r2=31-MSB(r0), 32 if r0=0
+	asm("rsb	r0, r2, #31 ");				// if r1!=0, r0=32+MSB(r1) else if r0!=0 r0=MSB(r0) else r0=-1
+#else
+	asm("cmp	r0, #1 ");					// LSW(arg) >= 1?
+	asm("movcs	r1, r0 ");					// if so r1=r0
+	asm("movcs	r0, #32 ");					// and r0=32
+	asm("movcc	r0, #0 ");					// else r0=0
+	asm("cmpcc	r1, #1 ");					// and test if MSW(arg) >= 1
+	asm("bcc	0f ");						// if not, return -1
+	asm("movs	r2, r1, lsl #16 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #16 ");
+	asm("movs	r2, r1, lsl #8 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #8 ");
+	asm("movs	r2, r1, lsl #4 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #4 ");
+	asm("movs	r2, r1, lsl #2 ");
+	asm("movne	r1, r2 ");
+	asm("addeq	r0, r0, #2 ");
+	asm("movs	r2, r1, lsl #1 ");
+	asm("addeq	r0, r0, #1 ");
+	__JUMP(,	lr);
+	asm("0: ");
+	asm("mvn	r0, #0 ");					// if input zero, return -1
+#endif
+	__JUMP(,	lr);
+	}
+
+
+/** Count the number of 1's in a 64 bit word
+
+	@param	v	The word to be scanned
+	@return		The number of 1's
+*/
+extern "C" EXPORT_C __NAKED__ TInt __e32_bit_count_64(TUint64 /*v*/)
+	{
+	/* On entry argument in R1:R0 */
+	asm("str	r4, [sp, #-4]! ");
+	asm("mov	r2, #0x0f ");				// r2=0x0000000f
+	asm("orr	r2, r2, r2, lsl #8 ");		// r2=0x00000f0f
+	asm("orr	r2, r2, r2, lsl #16 ");		// r2=0x0f0f0f0f
+	asm("eor	r3, r2, r2, lsl #2 ");		// r3=0x33333333
+	asm("eor	ip, r3, r3, lsl #1 ");		// ip=0x55555555
+
+	asm("bic	r4, r0, ip ");				// r4=odd bits of input LSW
+	asm("and	r0, r0, ip ");				// r0=even bits of input LSW
+	asm("add	r0, r0, r4, lsr #1 ");		// r0[2n:2n+1] = in[2n]+in[2n+1], 0<=n<=15
+	asm("bic	r4, r0, r3 ");				// r4 = r0[4n+2:4n+3] for 0<=n<=7, other bits 0
+	asm("and	r0, r0, r3 ");				// r0 = r0[4n:4n+1] for 0<=n<=7, other bits 0
+	asm("add	r0, r0, r4, lsr #2 ");		// r0 bits 4n:4n+3 = in[4n]+in[4n+1]+in[4n+2]+in[4n+3], 0<=n<=7
+
+	asm("bic	r4, r1, ip ");				// r4=odd bits of input MSW
+	asm("and	r1, r1, ip ");				// r1=even bits of input MSW
+	asm("add	r1, r1, r4, lsr #1 ");		// r1[2n:2n+1] = in[2n+32]+in[2n+33], 0<=n<=15
+	asm("bic	r4, r1, r3 ");				// r4 = r1[4n+34:4n+35] for 0<=n<=7, other bits 0
+	asm("and	r1, r1, r3 ");				// r1 = r1[4n+32:4n+33] for 0<=n<=7, other bits 0
+	asm("add	r1, r1, r4, lsr #2 ");		// r1 bits 4n:4n+3 = in[4n+32]+in[4n+33]+in[4n+34]+in[4n+35], 0<=n<=7
+	asm("ldr	r4, [sp], #4 ");
+
+	asm("add	r0, r0, r1 ");				// r0 bits 4n:4n+3 = in[4n]+in[4n+1]+in[4n+2]+in[4n+3]+in[4n+32]+in[4n+33]+in[4n+34]+in[4n+35], 0<=n<=7
+	asm("bic	r1, r0, r2 ");				// odd nibbles only
+	asm("and	r0, r0, r2 ");				// even nibbles only
+	asm("add	r0, r0, r1, lsr #4 ");		// r0[8n:8n+7]=bit count of byte n of MSW + bit count of byte n of LSW
+	asm("add	r0, r0, r0, lsr #8 ");		// r0[16n:16n+7]=bit count of hword n of MSW + bit count of hword n of LSW
+	asm("add	r0, r0, r0, lsr #16 ");		// r0[0:7]=total bit count
+	asm("and	r0, r0, #0xff ");			// mask other unwanted bits
+	__JUMP(,	lr);
+	}
+
+
+
+/******************************************************************************
+ * 64 bit operations
+ ******************************************************************************/
+#define	__DATA_SIZE__ 64
+#if defined(__CPU_ARM_HAS_LDREX_STREX_V6K) && !defined(__AVOID_READ_SIDE_EFFECTS__)
+
+// Include LDREXD/STREXD-based 64 bit operations
+#define	__OP_LOAD__
+#include "atomic_64_v6k.h"
+#define	__OP_STORE__
+#include "atomic_64_v6k.h"
+#define	__OP_SWP__
+#include "atomic_64_v6k.h"
+#define	__OP_CAS__
+#include "atomic_64_v6k.h"
+#define	__OP_ADD__
+#include "atomic_64_v6k.h"
+#define	__OP_AND__
+#include "atomic_64_v6k.h"
+#define	__OP_IOR__
+#include "atomic_64_v6k.h"
+#define	__OP_XOR__
+#include "atomic_64_v6k.h"
+#define	__OP_AXO__
+#include "atomic_64_v6k.h"
+#define	__OP_TAU__
+#include "atomic_64_v6k.h"
+#define	__OP_TAS__
+#include "atomic_64_v6k.h"
+
+#else
+#ifdef __KERNEL_MODE__
+
+// Include interrupt-disabling 64 bit operations
+#define	__OP_LOAD__
+#include "atomic_64_v6_v5.h"
+#define	__OP_STORE__
+#include "atomic_64_v6_v5.h"
+#define	__OP_SWP__
+#include "atomic_64_v6_v5.h"
+#define	__OP_CAS__
+#include "atomic_64_v6_v5.h"
+#define	__OP_ADD__
+#include "atomic_64_v6_v5.h"
+#define	__OP_AND__
+#include "atomic_64_v6_v5.h"
+#define	__OP_IOR__
+#include "atomic_64_v6_v5.h"
+#define	__OP_XOR__
+#include "atomic_64_v6_v5.h"
+#define	__OP_AXO__
+#include "atomic_64_v6_v5.h"
+#define	__OP_TAU__
+#include "atomic_64_v6_v5.h"
+#define	__OP_TAS__
+#include "atomic_64_v6_v5.h"
+
+#else
+
+// Include 64 bit operations using Exec calls
+#define	__OP_LOAD__
+#include "atomic_64_v6_v5.h"
+#define	__OP_STORE__
+#include "atomic_64_v6_v5.h"
+#define	__OP_SWP__
+#include "atomic_64_exec.h"
+#define	__OP_CAS__
+#include "atomic_64_exec.h"
+#define	__OP_ADD__
+#include "atomic_64_exec.h"
+#define	__OP_AND__
+#include "atomic_64_exec.h"
+#define	__OP_IOR__
+#include "atomic_64_exec.h"
+#define	__OP_XOR__
+#include "atomic_64_exec.h"
+#define	__OP_AXO__
+#include "atomic_64_exec.h"
+#define	__OP_TAU__
+#include "atomic_64_exec.h"
+#define	__OP_TAS__
+#include "atomic_64_exec.h"
+
+#endif
+#endif
+#undef	__DATA_SIZE__
+
+/******************************************************************************
+ * 8,16,32 bit load/store operations
+ ******************************************************************************/
+
+#define	__DATA_SIZE__ 8
+#define	__OP_LOAD__
+#include "atomic_32_v6.h"
+#define	__OP_STORE__
+#include "atomic_32_v6.h"
+#undef	__DATA_SIZE__
+
+#define	__DATA_SIZE__ 16
+#define	__OP_LOAD__
+#include "atomic_32_v6.h"
+#define	__OP_STORE__
+#include "atomic_32_v6.h"
+#undef	__DATA_SIZE__
+
+#define	__DATA_SIZE__ 32
+#define	__OP_LOAD__
+#include "atomic_32_v6.h"
+#define	__OP_STORE__
+#include "atomic_32_v6.h"
+#undef	__DATA_SIZE__
+
+/******************************************************************************
+ * 8,16,32 bit RMW operations
+ ******************************************************************************/
+
+#if defined(__CPU_ARM_HAS_LDREX_STREX_V6K) && !defined(__AVOID_READ_SIDE_EFFECTS__)
+// V6K - Use variants of LDREX/STREX for everything
+#define	__ATOMIC_8_IMPL__	"atomic_32_v6.h"
+#define	__ATOMIC_16_IMPL__	"atomic_32_v6.h"
+#define	__ATOMIC_32_IMPL__	"atomic_32_v6.h"
+#elif defined(__CPU_ARM_HAS_LDREX_STREX) && !defined(__AVOID_READ_SIDE_EFFECTS__)
+// V6 - Use LDREX/STREX for 32 bit operations
+//		Use LDREX/STREX with shifts/rotates for 8/16 bit operations
+#define	__ATOMIC_8_IMPL__	"atomic_8_16_v6.h"
+#define	__ATOMIC_16_IMPL__	"atomic_8_16_v6.h"
+#define	__ATOMIC_32_IMPL__	"atomic_32_v6.h"
+#else
+// V5 - Use interrupt disabling kernel side, Exec calls user side
+#ifdef __KERNEL_MODE__
+#define	__ATOMIC_8_IMPL__	"atomic_8_16_32_irq.h"
+#define	__ATOMIC_16_IMPL__	"atomic_8_16_32_irq.h"
+#define	__ATOMIC_32_IMPL__	"atomic_8_16_32_irq.h"
+#else
+#define	__ATOMIC_8_IMPL__	"atomic_8_16_32_exec.h"
+#define	__ATOMIC_16_IMPL__	"atomic_8_16_32_exec.h"
+#define	__ATOMIC_32_IMPL__	"atomic_8_16_32_exec.h"
+#endif
+#endif
+
+#define	__DATA_SIZE__ 8
+#define	__OP_SWP__
+#include __ATOMIC_8_IMPL__
+#define	__OP_CAS__
+#include __ATOMIC_8_IMPL__
+#define	__OP_ADD__
+#include __ATOMIC_8_IMPL__
+#define	__OP_AND__
+#include __ATOMIC_8_IMPL__
+#define	__OP_IOR__
+#include __ATOMIC_8_IMPL__
+#define	__OP_XOR__
+#include __ATOMIC_8_IMPL__
+#define	__OP_AXO__
+#include __ATOMIC_8_IMPL__
+#define	__OP_TAU__
+#include __ATOMIC_8_IMPL__
+#define	__OP_TAS__
+#include __ATOMIC_8_IMPL__
+#undef	__DATA_SIZE__
+
+#define	__DATA_SIZE__ 16
+#define	__OP_SWP__
+#include __ATOMIC_16_IMPL__
+#define	__OP_CAS__
+#include __ATOMIC_16_IMPL__
+#define	__OP_ADD__
+#include __ATOMIC_16_IMPL__
+#define	__OP_AND__
+#include __ATOMIC_16_IMPL__
+#define	__OP_IOR__
+#include __ATOMIC_16_IMPL__
+#define	__OP_XOR__
+#include __ATOMIC_16_IMPL__
+#define	__OP_AXO__
+#include __ATOMIC_16_IMPL__
+#define	__OP_TAU__
+#include __ATOMIC_16_IMPL__
+#define	__OP_TAS__
+#include __ATOMIC_16_IMPL__
+#undef	__DATA_SIZE__
+
+#define	__DATA_SIZE__ 32
+#define	__OP_SWP__
+#include __ATOMIC_32_IMPL__
+#define	__OP_CAS__
+#include __ATOMIC_32_IMPL__
+#define	__OP_ADD__
+#include __ATOMIC_32_IMPL__
+#define	__OP_AND__
+#include __ATOMIC_32_IMPL__
+#define	__OP_IOR__
+#include __ATOMIC_32_IMPL__
+#define	__OP_XOR__
+#include __ATOMIC_32_IMPL__
+#define	__OP_AXO__
+#include __ATOMIC_32_IMPL__
+#define	__OP_TAU__
+#include __ATOMIC_32_IMPL__
+#define	__OP_TAS__
+#include __ATOMIC_32_IMPL__
+#undef	__DATA_SIZE__
+

@@ -1,0 +1,356 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\moving\arm\xkernel.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+
+__NAKED__ void DArmPlatChunk::MoveHomePdes(TLinAddr /*aOldAddr*/, TLinAddr /*aNewAddr*/)
+	{
+	asm("mov r2, r2, lsr #20 ");			// r2=pde index for new addr
+	asm("subs r2, r2, r1, lsr #20 ");		// subtract pde index for old addr
+	__JUMP(eq,lr);							// if zero, nothing to do
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iNumPdes));
+	asm("cmp r1, #0 ");
+	__JUMP(eq,lr);							// if chunk empty, nothing to do
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomePdes));
+	asm("add r1, r1, r2, asl #2 ");			// move home pde address
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomePdes));
+	__JUMP(,lr);
+	}
+
+__NAKED__ void DArmPlatChunk::MoveCurrentPdes(TLinAddr /*aOldAddr*/, TLinAddr /*aNewAddr*/)
+	{
+	asm("mov r2, r2, lsr #20 ");			// r2=pde index for new addr
+	asm("subs r2, r2, r1, lsr #20 ");		// subtract pde index for old addr
+	__JUMP(eq,lr);							// if zero, nothing to do
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iNumPdes));
+	asm("cmp r1, #0 ");
+	__JUMP(eq,lr);							// if chunk empty, nothing to do
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	asm("add r1, r1, r2, asl #2 ");			// move current pde address
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	__JUMP(,lr);
+	}
+
+__NAKED__ void DArmPlatChunk::AddPde(TInt /*aOffset*/)
+	{
+	asm("mov r1, r1, lsr #20 ");			// r1=pde number
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iMaxSize));
+	asm("cmp r2, #0x02000000 ");
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdeBitMap));
+	asm("bhi add_pde_large ");
+	asm("mov ip, #1 ");
+	asm("orr r3, r3, ip, lsl r1 ");			// set bit in bitmap
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdeBitMap));
+	asm("b scan_small_bitmap ");
+
+	asm("add_pde_large: ");
+	asm("stmfd sp!, {r4,lr} ");
+	asm("mov lr, r1, lsr #5 ");				// lr=word number in bitmap
+	asm("and r1, r1, #31 ");				// r1=bit number in word
+	asm("ldr r4, [r3, lr, lsl #2] ");
+	asm("mov ip, #1 ");
+	asm("orr r4, r4, ip, lsl r1 ");
+	asm("str r4, [r3, lr, lsl #2] ");		// set bit in bitmap
+	asm("b scan_large_bitmap ");
+	}
+
+__NAKED__ void DArmPlatChunk::RemovePde(TInt /*anOffset*/)
+	{
+	asm("mov r1, r1, lsr #20 ");			// r1=pde number
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iMaxSize));
+	asm("cmp r2, #0x02000000 ");
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdeBitMap));
+	asm("bhi rem_pde_large ");
+	asm("mov ip, #1 ");
+	asm("bics r3, r3, ip, lsl r1 ");		// clear bit in bitmap
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdeBitMap));
+	asm("beq empty_chunk ");				// if chunk empty, skip rest
+
+	asm("scan_small_bitmap: ");				// r3 contains nonzero bitmap
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("sub r2, r3, #1 ");					// ip will hold index of first pde
+	asm("eor r2, r2, r3 ");
+	CLZ(12,2);
+	asm("rsb r12, r12, #31 ");
+	asm("mov r3, r3, lsr r12 ");			// shift bitmap so bit 0 set
+	CLZ(1, 3);
+	asm("rsb r1, r1, #32 ");				// r1 will be 1+most significant 1 in r3	
+#else
+	asm("mov ip, #0 ");						// ip will hold index of first pde
+	asm("movs r2, r3, lsl #16 ");			// test if bottom 16 bits zero
+	asm("moveq r3, r3, lsr #16 ");			// if bottom 16 zero, shift right by 16
+	asm("addeq ip, ip, #16 ");				// and add 16 to lsb index
+	asm("tst r3, #0xff ");
+	asm("moveq r3, r3, lsr #8 ");
+	asm("addeq ip, ip, #8 ");
+	asm("tst r3, #0x0f ");
+	asm("moveq r3, r3, lsr #4 ");
+	asm("addeq ip, ip, #4 ");
+	asm("tst r3, #0x03 ");
+	asm("moveq r3, r3, lsr #2 ");
+	asm("addeq ip, ip, #2 ");
+	asm("tst r3, #0x01 ");
+	asm("moveq r3, r3, lsr #1 ");
+	asm("addeq ip, ip, #1 ");				// ip=number of right shifts applied, r3 bit 0 set
+	asm("mov r1, #32 ");					// r1 will be 1+most significant 1 in r3
+	asm("cmp r3, #0x00010000 ");
+	asm("movcc r3, r3, lsl #16 ");
+	asm("subcc r1, r1, #16 ");
+	asm("cmp r3, #0x01000000 ");
+	asm("movcc r3, r3, lsl #8 ");
+	asm("subcc r1, r1, #8 ");
+	asm("cmp r3, #0x10000000 ");
+	asm("movcc r3, r3, lsl #4 ");
+	asm("subcc r1, r1, #4 ");
+	asm("cmp r3, #0x40000000 ");
+	asm("movcc r3, r3, lsl #2 ");
+	asm("subcc r1, r1, #2 ");
+	asm("cmp r3, #0x80000000 ");
+	asm("movcc r3, r3, lsl #1 ");
+	asm("subcc r1, r1, #1 ");
+#endif
+
+	asm("scan_bitmap_end: ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iNumPdes));	// r1 gives number of PDEs in range
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iBase));
+	asm("add r2, ip, r2, lsr #20 ");		// r2=pde index of first current pde
+	asm("mov r2, r2, lsl #2 ");
+	asm("add r2, r2, #%a0" : : "i" ((TInt)KPageDirectoryBase));			// r2->first current pde
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomeBase));
+	asm("add r2, ip, r2, lsr #20 ");		// r2=pde index of first home pde
+	asm("mov r2, r2, lsl #2 ");
+	asm("add r2, r2, #%a0" : : "i" ((TInt)KPageDirectoryBase));			// r2->first home pde
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomePdes));
+	__JUMP(,lr);
+
+	asm("empty_chunk: ");
+	asm("mov r1, #0 ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iNumPdes));
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomePdes));
+	__JUMP(,lr);
+
+	asm("rem_pde_large: ");
+	asm("stmfd sp!, {r4,lr} ");
+	asm("mov lr, r1, lsr #5 ");				// lr=word number in bitmap
+	asm("and r1, r1, #31 ");				// r1=bit number in word
+	asm("ldr r4, [r3, lr, lsl #2] ");
+	asm("mov ip, #1 ");
+	asm("bic r4, r4, ip, lsl r1 ");
+	asm("str r4, [r3, lr, lsl #2] ");		// set bit in bitmap
+
+	asm("scan_large_bitmap: ");
+	// r0=this, r2=max size, r3->pde bit map
+	asm("add r2, r2, #0x1f00000 ");
+	asm("mov r2, r2, lsr #25 ");			// r2=number of words in bitmap
+	asm("add r2, r3, r2, lsl #2 ");			// r2=bitmap end address
+	asm("mov r4, r3 ");						// save bitmap start address
+
+	asm("scan_large_1: ");
+	asm("ldr ip, [r3], #4 ");
+	asm("cmp ip, #0 ");
+	asm("bne scan_large_2 ");				// found non-empty word
+	asm("cmp r3, r2 ");
+	asm("bne scan_large_1 ");				// if not reached end, do next word
+	asm("ldmfd sp!, {r4,lr} ");
+	asm("b empty_chunk ");					// branch if no bits set
+
+	asm("scan_large_2: ");
+	asm("sub r1, r3, r4 ");
+	asm("sub r1, r1, #4 ");
+	asm("mov r1, r1, lsl #3 ");				// r1=bit number of lsb of this word
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("sub lr, ip, #1 ");					// ip will hold index of first pde
+	asm("eor ip, lr, ip ");
+	CLZ(12, 12);
+	asm("rsb ip, ip, #31 ");
+	asm("add r1, r1, ip ");					// r1 now = first occupied pde offset
+#else
+	asm("movs lr, ip, lsl #16 ");
+	asm("moveq ip, ip, lsr #16 ");
+	asm("addeq r1, r1, #16 ");
+	asm("tst ip, #0xff ");
+	asm("moveq ip, ip, lsr #8 ");
+	asm("addeq r1, r1, #8 ");
+	asm("tst ip, #0x0f ");
+	asm("moveq ip, ip, lsr #4 ");
+	asm("addeq r1, r1, #4 ");
+	asm("tst ip, #0x03 ");
+	asm("moveq ip, ip, lsr #2 ");
+	asm("addeq r1, r1, #2 ");
+	asm("tst ip, #0x01 ");
+	asm("moveq ip, ip, lsr #1 ");
+	asm("addeq r1, r1, #1 ");				// r1 now = first occupied pde offset
+#endif
+	
+	asm("scan_large_3: ");
+	asm("ldr ip, [r2, #-4]! ");				// fetch words from end of bitmap
+	asm("cmp ip, #0 ");
+	asm("beq scan_large_3 ");				// we know there is at least one non-zero word
+	asm("sub r2, r2, r4 ");
+	asm("mov r2, r2, lsl #3 ");				// r2=bit number of lsb of this word
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12, 12);
+	asm("rsb ip, ip, #31 ");
+	asm("add r2, r2, ip ");					// r2 now = last occupied pde offset
+#else
+	asm("movs lr, ip, lsr #16 ");
+	asm("movne ip, lr ");
+	asm("addne r2, r2, #16 ");
+	asm("movs lr, ip, lsr #8 ");
+	asm("movne ip, lr ");
+	asm("addne r2, r2, #8 ");
+	asm("movs lr, ip, lsr #4 ");
+	asm("movne ip, lr ");
+	asm("addne r2, r2, #4 ");
+	asm("movs lr, ip, lsr #2 ");
+	asm("movne ip, lr ");
+	asm("addne r2, r2, #2 ");
+	asm("movs lr, ip, lsr #1 ");
+	asm("movne ip, lr ");
+	asm("addne r2, r2, #1 ");				// r2 now = last occupied pde offset
+#endif
+	asm("sub r3, r2, r1 ");					// r3=last-first
+	asm("mov ip, r1 ");						// ip=first
+	asm("add r1, r3, #1 ");					// r1 = number of pdes in range
+	asm("ldmfd sp!, {r4,lr} ");
+	asm("b scan_bitmap_end ");				// go back to set pde info
+	}
+
+__NAKED__ TBool Exc::IsMagic(TLinAddr /*anAddress*/)
+//
+// Return TRUE if anAddress is a 'magic' exception handling instruction
+//
+	{
+	asm("adr r1, __magic_addresses ");		// r1 points to list of magic addresses
+	asm("is_magic_1: ");
+	asm("ldr r2, [r1], #4 ");				// r2=next magic address to check
+	asm("cmp r2, r0 ");						// is r0=magic address?
+	asm("cmpne r2, #0 ");					// if not, have we reached end of list?
+	asm("bne is_magic_1 ");					// if neither, check next address
+	asm("movs r0, r2 ");					// r0=0 if not magic, r0 unchanged if magic
+	__JUMP(,lr);
+
+	asm("__magic_addresses: ");
+	asm(".word __magic_address_kusaferead ");
+	asm(".word __magic_address_saferead ");
+	asm(".word __magic_address_kusafewrite ");
+	asm(".word __magic_address_safewrite ");
+	asm(".word __magic_address_msg_lookup_1 ");			// in preprocess handler
+	asm(".word __magic_address_readdesheader1 ");
+	asm(".word __magic_address_readdesheader2 ");
+	asm(".word __magic_address_readdesheader3 ");
+#ifdef __MESSAGE_MACHINE_CODED_2__
+	asm(".word __magic_address_msg_lookup_2 ");
+#endif
+#ifdef __CLIENT_REQUEST_MACHINE_CODED__
+	asm(".word __magic_address_client_request_callback");
+	asm(".word __magic_address_svr_accept_1 ");
+	asm(".word __magic_address_svr_accept_2 ");
+	asm(".word __magic_address_svr_accept_3 ");
+	asm(".word __magic_address_svr_accept_4 ");
+	asm(".word __magic_address_svr_accept_5 ");
+	asm(".word __magic_address_svr_accept_6 ");
+	asm(".word __magic_address_svr_accept_7 ");
+	asm(".word __magic_address_svr_accept_8 ");
+#endif
+#ifdef __REQUEST_COMPLETE_MACHINE_CODED__
+	asm(".word __magic_address_reqc ");
+	asm(".word __magic_address_kern_request_complete ");
+#endif
+	// list terminator
+	asm(".word 0 ");
+	}
+
+__NAKED__ TAny* MM::CurrentAddress(DThread* /*aThread*/, const TAny* /*aPtr*/, TInt /*aSize*/, TBool /*aWrite*/)
+//
+// Return the current base address corresponding to run address region
+// aPtr to aPtr+aBase-1 in the context of aThread.
+// aWrite indicates whether the address is intended for writing (aWrite=TRUE) or reading (aWrite=FALSE).
+// Return NULL if the address range is not all accessible to aThread for access type specified by aWrite.
+// aWrite=FALSE allows access to the ROM and RAM-loaded code chunks whereas aWrite=TRUE disallows these.
+// NOTE THIS FUNCTION CONTAINS KNOWLEDGE OF FIXED LINEAR ADDRESSES (the RAM drive and HIVECS area).
+//
+// ALLERT! the ip register returns a pointer to the chunk which contains the addresses (null if none)
+//
+	{
+	asm("CurrentAddress:");
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DThread, iOwningProcess));
+	asm("stmfd sp!, {r4,r5,lr} ");
+	asm("eor r4, r1, #0x40000000 ");		// r4<0x20000000u for RAM drive
+	asm("cmp r4, #0x20000000 ");			// Check for RAM drive - ASSUMES RAM DRIVE IS AT 40000000-5FFFFFFF
+	asm("ldr lr, [r0, #%a0]!" : : "i" _FOFF(DMemModelProcess, iNumChunks));		// step r0 on to iChunks[0]
+	asm("bcc lookup_chunk_3 ");				// branch if RAM drive
+	asm("subs lr, lr, #1 ");
+	asm("bcc lookup_chunk_2 ");				// no chunks so do read check
+	asm("lookup_chunk_1: ");
+	asm("ldmib r0!, {r4,ip} ");				// r4=data section base, ip=chunk ptr
+	asm("add r0, r0, #4 ");					// move to next entry
+	asm("subs r4, r1, r4 ");				// r4=offset
+	asm("ldrcs r5, [ip, #%a0]" : : "i" _FOFF(DChunk,iMaxSize));	// if offset>=0, r5=chunk max size
+	asm("cmpcs r4, r5 ");					// and compare offset to max size
+	asm("subcss lr, lr, #1 ");				// if offset>=max size, decrement counter
+	asm("bcs lookup_chunk_1 ");				// loop if more chunks to check
+	asm("cmp lr, #0 ");						// did we find chunk?
+	asm("ldrge r0, [ip, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomeRegionOffset));
+	asm("ldrge r5, [ip, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomeRegionSize));
+	asm("ldrge lr, [ip, #%a0]" : : "i" _FOFF(DChunk,iBase));
+	asm("cmpge r4, r0 ");					// if chunk not found or offset<iHomeRegionOffset, do read check
+	asm("blt lookup_chunk_2 ");
+	asm("add r0, r0, r5 ");					// r0=home region offset+home region size
+	asm("add r5, r4, r2 ");					// r5=offset after end of block
+	asm("cmp r5, r0 ");						// check if offset after end<=iHomeRegionOffset+iHomeRegionSize
+	asm("addle r0, lr, r4 ");				// if so, r0=current chunk base + offset
+	asm("ldmlefd sp!, {r4,r5,pc} ");		// and we are done
+
+	asm("lookup_chunk_2: ");				// come here if address not found in a chunk
+	asm("mov ip, #0");						// ip = 0 to indicate chunk not found
+	asm("ldr r4, __code_limit ");
+	asm("mov r0, #0 ");
+	asm("cmn r1, #0x00100000 ");			// address in hivecs area?
+	asm("ldr r4, [r4] ");					// r4 = lowest legitimate code address
+	asm("ldmcsfd sp!, {r4,r5,pc} ");		// if in hivecs, return NULL
+	asm("cmp r3, #0 ");						// is this address intended for writing?
+	asm("ldmnefd sp!, {r4,r5,pc} ");		// if it is, return NULL
+	asm("cmp r1, r4 ");						// check if address is in RAM-loaded code or ROM
+	asm("ldmccfd sp!, {r4,r5,pc} ");		// if not, return NULL
+	asm("adds r4, r1, r2 ");				// r4 = end address of requested region
+	asm("ldmcsfd sp!, {r4,r5,pc} ");		// if it wrapped, return NULL
+	asm("cmn r4, #0x100000 ");				// if it didn't wrap, check if it reaches into hivecs area
+	asm("movls r0, r1 ");					// if not, addr is OK for reading
+	asm("ldmfd sp!, {r4,r5,pc} ");
+
+	asm("lookup_chunk_3: ");				// come here if address in RAM drive
+	asm("mov ip, #0");						// ip = 0 to indicate chunk not found
+	asm("ldr r3, __f32 ");					// r3=&K::TheFileServerProcess
+	asm("sub r4, r0, #%a0" : : "i" _FOFF(DMemModelProcess, iNumChunks));	// r4=aThread->iOwningProcess
+	asm("mov r0, #0 ");
+	asm("ldr r3, [r3] ");					// r3=K::TheFileServerProcess
+	asm("add r5, r1, r2 ");					// r5=end address of requested region + 1
+	asm("cmp r5, #0x60000000 ");			// is this past the end of the RAM drive? ASSUMES ADDRESS OF RAM DRIVE
+	asm("cmpls r3, r4 ");					// if not, is aThread part of F32?
+	asm("moveq r0, r1 ");					// if it is, allow the access and return the address unaltered
+	asm("ldmfd sp!, {r4,r5,pc} ");			// else return NULL
+
+	asm("__f32: ");
+	asm(".word  " CSM_ZN1K20TheFileServerProcessE );
+	asm("__code_limit: ");
+	asm(".word %a0" : : "i" ((TInt)&::TheMmu.iUserCodeBase) );
+	}
+

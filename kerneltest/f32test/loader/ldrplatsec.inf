@@ -1,0 +1,57 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/loader/ldrplatsec.inf
+// 
+//
+
+PRJ_PLATFORMS
+
+BASEUSERDEFAULT
+
+PRJ_TESTMMPFILES
+
+security/dllts0		support
+security/dllts1		support
+security/dllts2		support
+security/dllts3		support
+security/dllts4		support
+security/dllts5		support
+security/dllts6		support
+security/dllts7		support
+security/dllts8		support
+security/dllts9		support
+security/dllts10	support	
+security/dllts11	support
+security/dllts12	support
+security/dllts13	support
+
+security/exets14	support	
+security/exets15	support
+
+
+security/t_ldrcheck
+
+#ifdef EPOC32
+security/fuzzlib	support
+security/fuzzv1		support
+security/fuzzv1d	support
+security/fuzzv2		support
+security/fuzzv2d	support
+security/fuzzv3		support
+security/fuzzv3d	support
+security/fuzzv4		support
+security/fuzzv4d	support
+security/fuzzv5		support
+security/t_fuzzldr	manual
+#endif

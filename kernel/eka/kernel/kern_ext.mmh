@@ -1,0 +1,65 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/kern_ext.mmh
+// 
+//
+
+#if defined(MM_WIN32)
+macro			__MEMMODEL_EMUL_SINGLE_HOST_PROCESS__
+#elif defined(MM_DIRECT)
+macro			__MEMMODEL_DIRECT__
+#elif defined(MM_MULTIPLE)
+macro			__MEMMODEL_MULTIPLE__
+#elif defined(MM_FLEXIBLE)
+macro			__MEMMODEL_FLEXIBLE__
+#elif defined(MM_MOVING)
+macro			__MEMMODEL_MOVING__
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel)
+
+#if defined(MARM)
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel/arm)
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/epoc)
+#elif defined(X86)
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel/x86)
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/epoc)
+#elif defined(WINS)
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel/win32)
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/emul)
+#endif
+
+#ifdef SMP
+
+// Don't build export libraries for SMP since, with the exception of the kernel,
+// they would be identical to the non-SMP ones.
+noexportlibrary
+
+#include "../nkernsmp/nkern_ext.mmh"
+
+#ifndef NO_EKERN_LIB
+library	ekernsmp.lib
+#endif
+
+#else
+#include "../nkern/nkern_ext.mmh"
+
+#ifndef NO_EKERN_LIB
+library	ekern.lib
+#endif
+
+#endif
+
+macro SEPARATE_USB_DFC_QUEUE

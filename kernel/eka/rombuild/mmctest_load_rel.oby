@@ -1,0 +1,45 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+//#NAME: autotest MMC, MmmcLoader component
+// loads images from drive d: into "internal" mmc on E: and then boots from MMC
+
+#define BASE_ROM
+#define REBOOT_DRIVER
+
+#include <rom\##VARIANT##\header.iby>
+
+#undef WITH_EXTENSION
+#undef WITH_ROFS
+#undef WITH_COMP
+#undef MMC_DUAL_SLOT
+#undef USE_SDIO_SD_MMC
+#undef _NAND2
+
+// enable slot 2, so we can write to "internal" MMC...
+#define MMC_DUAL_SLOT
+#define USE_SDIO_SD_MMC
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+data=\epoc32\rom\##VARIANT##\mmctest_load_rel_autoexec.bat	\autoexec.bat
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\MMCLOADER.EXE		\sys\bin\MMCLOADER.EXE

@@ -1,0 +1,12 @@
+EXPORTS
+	?CreateLogicalDevice@@YAPAVDLogicalDevice@@XZ @ 1 NONAME ; class DLogicalDevice * CreateLogicalDevice(void)
+	?LinkedTest8@@YAXK@Z @ 2 NONAME ; void LinkedTest8(unsigned long)
+	?LinkedTest6@@YAHH@Z @ 3 NONAME ; int LinkedTest6(int)
+	?LinkedTest5@@YAHXZ @ 4 NONAME ; int LinkedTest5(void)
+	?LinkedTest3@@YAHXZ @ 5 NONAME ; int LinkedTest3(void)
+	?LinkedTest1@@YAHXZ @ 6 NONAME ; int LinkedTest1(void)
+	?LinkedTest9@@YAHXZ @ 7 NONAME ; int LinkedTest9(void)
+	?LinkedTest2@@YAHXZ @ 8 NONAME ; int LinkedTest2(void)
+	?LinkedTest4@@YAHXZ @ 9 NONAME ; int LinkedTest4(void)
+	?LinkedTest7@@YAKXZ @ 10 NONAME ; unsigned long LinkedTest7(void)
+

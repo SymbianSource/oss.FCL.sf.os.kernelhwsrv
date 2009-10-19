@@ -1,0 +1,1115 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\common\arm\cdes16.cia
+// 
+//
+
+#include <e32cia.h>
+#include "../common.h"
+
+#if defined(__DES16_MACHINE_CODED__) || defined(__EABI__)
+
+GLREF_C void Des16PanicBadDesType();
+GLREF_C void Des16PanicPosOutOfRange();
+
+#endif
+
+#ifdef __DES16_MACHINE_CODED__
+
+GLREF_C void Des16PanicLengthNegative();
+GLREF_C void Des16PanicMaxLengthNegative();
+GLREF_C void Des16PanicLengthOutOfRange();
+GLREF_C void Des16PanicDesOverflow();
+GLREF_C void Des16PanicDesIndexOutOfRange();
+
+__NAKED__ EXPORT_C const TUint16 *TDesC16::Ptr() const
+//
+// Return a pointer to the buffer.
+//
+	{
+	asm("ldr r1, [r0], #4 ");
+	asm("cmp r1, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r1, r1, r1, lsr #1 ");
+	asm("msr cpsr_flg, r1 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");
+	__JUMP(,lr);
+	}
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TPtrC16::TPtrC16()
+//
+// Default constructor
+//
+	{
+	asm("mov r1, #0x10000000 ");	// type=EPtrC, length=0
+	asm("mov r2, #0 ");				// ptr=NULL
+	asm("stmia r0, {r1,r2} ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtrC16::TPtrC16(const TDesC16& /*aDes*/)
+//
+// Constructor
+//
+	{
+	asm("ldr r2, [r1], #4 ");		// r2 = type/length
+	asm("bic r3, r2, #0xF0000000");	// r3 = length
+	asm("orr r3, r3, #0x10000000");	// r3 = EPtrC + length
+	asm("cmp r2, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");		// r1 = aDes.Ptr()
+	asm("str r3, [r0] ");
+	asm("str r1, [r0, #4] ");
+	__JUMP(,lr);
+	}
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+__NAKED__ EXPORT_C TPtrC16::TPtrC16(const TUint16* /*aString*/)
+//
+// Constructor
+//
+	{
+	asm("mov r2, r1 ");				// save aString address
+	asm("1: ");
+	asm("ldrh r3, [r1], #2 ");
+	asm("cmp r3, #0 ");
+	asm("bne 1b ");					// loop until we reach zero terminator
+	asm("rsb r1, r2, r1 ");			// r1 = 2*length + 2
+	asm("sub r1, r1, #2 ");			// r1 = 2*length
+	asm("mov r1, r1, lsr #1 ");		// r1 = length
+	asm("orr r1, r1, #0x10000000 ");	// r1=EPtrC + length
+	asm("stmia r0, {r1, r2} ");		// store type/length and ptr fields
+	__JUMP(,lr);
+	}
+#endif
+
+__NAKED__ EXPORT_C TPtrC16::TPtrC16(const TUint16* /*aBuf*/,TInt /*aLength*/)
+//
+// Constructor
+//
+	{
+	asm("orrs r2, r2, #0x10000000 ");
+	asm("strpl r2, [r0] ");
+	asm("strpl r1, [r0, #4] ");
+	__JUMP(pl,lr);
+	asm("b  " CSM_Z24Des16PanicLengthNegativev);
+	}
+
+__NAKED__ EXPORT_C TPtr16::TPtr16(TUint16* /*aBuf*/,TInt /*aMaxLength*/)
+//
+// Constructor
+//
+	{
+	asm("cmp r2, #0 ");
+	asm("movpl r3, r1 ");
+	asm("movpl r1, #0x20000000 ");	// length=0, EPtr
+	asm("stmplia r0, {r1,r2,r3} ");
+	__JUMP(pl,lr);
+	asm("b  " CSM_Z27Des16PanicMaxLengthNegativev);
+	}
+
+__NAKED__ EXPORT_C TPtr16::TPtr16(TUint16* /*aBuf*/,TInt /*aLength*/,TInt /*aMaxLength*/)
+//
+// Constructor
+//
+	{
+	asm("cmp r2, #0 ");				// check length>=0
+	asm("cmpge r3, r2 ");			// if so, check maxlength>=length
+	asm("movge r12, r1 ");
+	asm("orrge r2, r2, #0x20000000 ");	// r2 = length + EPtr
+	asm("stmgeia r0, {r2,r3,r12} ");
+	__JUMP(ge,lr);
+	asm("cmp r2, #0 ");
+	asm("bmi  " CSM_Z24Des16PanicLengthNegativev);
+	asm("cmp r3, #0 ");
+	asm("bmi  " CSM_Z27Des16PanicMaxLengthNegativev);
+	asm("b  " CSM_Z26Des16PanicLengthOutOfRangev);
+	}
+
+__NAKED__ EXPORT_C TPtr16::TPtr16(TBufCBase16& /*aLcb*/,TInt /*aMaxLength*/)
+//
+// Constructor
+//
+	{
+	asm("mov r3, r1 ");
+	asm("ldr r1, [r3] ");
+	asm("bic r1, r1, #0xF0000000 ");		// r1=aLcb.Length()
+	asm("cmp r1, r2 ");						// check against maxlength
+	asm("orrle r1, r1, #0x40000000 ");		// r1=aLcb.Length() + EBufCPtr
+	asm("stmleia r0, {r1,r2,r3} ");
+	__JUMP(le,lr);
+	asm("b  " CSM_Z26Des16PanicLengthOutOfRangev);
+	}
+
+__NAKED__ EXPORT_C TBufCBase16::TBufCBase16()
+//
+// Constructor
+//
+	{
+	asm("mov r1, #0 ");
+	asm("str r1, [r0] ");
+	__JUMP(,lr);
+	}
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+__NAKED__ EXPORT_C TBufCBase16::TBufCBase16(const TUint16* /*aString*/,TInt /*aMaxLength*/)
+//
+// Constructor
+//
+	{
+	asm("sub r3, r1, #2 ");				// r3=aString address-2
+	asm("1: ");
+	asm("ldrh r12, [r3, #2]! ");
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");						// loop until we reach zero terminator
+	asm("sub r3, r3, r1 ");				// r3 = 2*length
+	asm("mov r3, r3, lsr #1 ");			// r3 = length (+EBufC)
+	asm("cmp r3, r2 ");					// check against max length
+	asm("bgt Des16PanicLengthOutOfRange__Fv ");
+	asm("stmfd sp!, {r0,lr} ");			// save registers for function call
+	asm("str r3, [r0], #4 ");			// save length/type field, r0->buffer
+	asm("add r2, r3, r3 ");				// size=2*length into r2 for function call
+	asm("bl memmove ");					// call memmove
+	__POPRET("r0,");
+	}
+#endif
+
+__NAKED__ EXPORT_C TBufCBase16::TBufCBase16(const TDesC16& /*aDes*/,TInt /*aMaxLength*/)
+//
+// Constructor
+//
+	{
+	asm("ldr r3, [r1], #4 ");			// r3 = type/length
+	asm("bic r12, r3, #0xF0000000");	// r12 = length
+	asm("cmp r12, r2 ");				// compare with maxlength
+	asm("bgt  " CSM_Z26Des16PanicLengthOutOfRangev);
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");			// r1 = aDes.Ptr()
+	asm("stmfd sp!, {r0,lr} ");			// save registers for function call
+	asm("str r12, [r0], #4 ");			// store length/type, r0->buffer
+	asm("add r2, r12, r12 ");			// size=2*length into r2 for function call
+	asm("bl memmove ");					// call memmove
+	__POPRET("r0,");
+	}
+#endif
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+__NAKED__ EXPORT_C void TBufCBase16::Copy(const TUint16* /*aString*/,TInt /*aMaxLength*/)
+//
+// Copy from a string.
+//
+	{
+	asm("sub r3, r1, #2 ");				// r3=aString address-2
+	asm("1: ");
+	asm("ldrh r12, [r3, #2]! ");
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");						// loop until we reach zero terminator
+	asm("sub r3, r3, r1 ");				// r3 = 2*length
+	asm("mov r3, r3, lsr #1 ");			// r3 = length (+EBufC)
+	asm("cmp r3, r2 ");					// check against max length
+	asm("bgt Des16PanicLengthOutOfRange__Fv ");
+	asm("str r3, [r0], #4 ");			// save length/type field, r0->buffer
+	asm("add r2, r3, r3 ");				// size=2*length into r2 for function call
+	asm("b memmove ");					// call memmove
+	}
+#endif
+
+__NAKED__ EXPORT_C void TBufCBase16::Copy(const TDesC16& /*aDes*/,TInt /*aMaxLength*/)
+//
+// Copy from a descriptor.
+//
+	{
+	asm("ldr r3, [r1], #4 ");			// r3 = type/length
+	asm("bic r12, r3, #0xF0000000");	// r12 = length
+	asm("cmp r12, r2 ");				// compare with maxlength
+	asm("bgt  " CSM_Z21Des16PanicDesOverflowv);
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");			// r1 = aDes.Ptr()
+	asm("str r12, [r0], #4 ");			// store length/type, r0->buffer
+	asm("add r2, r12, r12 ");			// size=2*length into r2 for function call
+	asm("b memmove ");					// call memmove
+	}
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TBufBase16::TBufBase16(TInt /*aMaxLength*/)
+	{
+	asm("mov r2, #0x30000000 ");		// EBuf + zero length
+	asm("str r2, [r0] ");
+	asm("str r1, [r0, #4] ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TBufBase16::TBufBase16(TInt /*aLength*/, TInt /*aMaxLength*/)
+	{
+	asm("cmp r1, #0 ");					// check length>=0
+	asm("cmpge r2, r1 ");				// if so, check maxlength>=length
+	asm("orrge r1, r1, #0x30000000 ");	// r1=length + EBuf
+	asm("stmgeia r0, {r1,r2} ");		// store length/type and maxlength fields
+	__JUMP(ge,lr);
+	asm("cmp r2, #0 ");
+	asm("bmi  " CSM_Z27Des16PanicMaxLengthNegativev);
+	asm("b  " CSM_Z26Des16PanicLengthOutOfRangev);
+	}
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+__NAKED__ EXPORT_C TBufBase16::TBufBase16(const TUint16* /*aString*/, TInt /*aMaxLength*/)
+	{
+	asm("mov r12, r1, lsr #1 ");		// save aString pointer (lose bottom bit which should be 0)
+	asm("1: ");
+	asm("ldrh r3, [r1], #2 ");
+	asm("cmp r3, #0 ");
+	asm("bne 1b ");						// loop until we reach zero terminator
+	asm("rsb r3, r12, r1, lsr #1 ");	// r3 = length + 1
+	asm("sub r3, r3, #1 ");				// r3 = length
+	asm("cmp r3, r2 ");					// compare to max length
+	asm("bgt Des16PanicLengthOutOfRange__Fv ");	// length too big, so panic
+	asm("orr r1, r3, #0x30000000 ");	// if length<=max, r1=EBuf + length
+	asm("stmfd sp!, {r0, lr} ");		// save registers for function call
+	asm("stmia r0!, {r1, r2} ");		// store type/length and max length fields, r0->buffer
+	asm("mov r2, r3, lsl #1 ");			// r2=Size()
+	asm("mov r1, r12, lsl #1 ");		// r1=aString
+	asm("bl memmove ");					// call memmove
+	__POPRET("r0,");
+	}
+#endif
+
+__NAKED__ EXPORT_C TBufBase16::TBufBase16(const TDesC16& /*aDes*/, TInt /*aMaxLength*/)
+	{
+	asm("ldr r3, [r1], #4 ");			// r3 = type/length
+	asm("bic r12, r3, #0xF0000000");	// r12 = length
+	asm("cmp r12, r2 ");				// compare with maxlength
+	asm("bgt  " CSM_Z26Des16PanicLengthOutOfRangev);
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");			// r1 = aDes.Ptr()
+	asm("stmfd sp!, {r0,lr} ");			// save registers for function call
+	asm("orr r3, r12, #0x30000000 ");	// add EBuf type field
+	asm("str r3, [r0], #4 ");			// store length/type, r0->max length
+	asm("str r2, [r0], #4 ");			// store max length, r0->buffer
+	asm("mov r2, r12, lsl #1 ");		// Size() into r2 for function call
+	asm("bl memmove ");					// call memmove
+	__POPRET("r0,");
+	}
+#endif
+
+__NAKED__ EXPORT_C void TDes16::SetLength(TInt /*aLength*/)
+//
+// Set the length of the descriptor, checking the length is O.K.
+//
+	{
+	asm("ldmia r0, {r2,r3} ");			// r2=length/type, r3=maxlength
+	asm("cmp r1, r3 ");					// check aLength against maxlength and for -ve values
+	asm("bhi  " CSM_Z21Des16PanicDesOverflowv);
+	asm("and r2, r2, #0xF0000000 ");	// r2=type field
+	asm("cmp r2, #0x40000000 ");		// check for EBufCPtr
+	asm("orr r2, r2, r1 ");				// r2=type + new length
+	asm("str r2, [r0] ");				// store new length
+	__JUMP(ne,lr);
+	asm("ldr r2, [r0, #8] ");			// r2=pointer to TBufCBase
+	asm("str r1, [r2] ");				// update length of TBufCBase
+	__JUMP(,lr);
+  	}
+
+__NAKED__ EXPORT_C void TDes16::SetMax()
+//
+// Set the length to MaxLength().
+//
+	{
+	asm("ldmia r0, {r1,r2} ");			// r1=length/type, r2=maxlength
+	asm("and r1, r1, #0xF0000000 ");	// r1=type field
+	asm("cmp r1, #0x40000000 ");		// check for EBufCPtr
+	asm("orr r1, r1, r2 ");				// r1=type field + maxlength
+	asm("str r1, [r0] ");				// store new length
+	__JUMP(ne,lr);
+	asm("ldr r1, [r0, #8] ");			// r1 = pointer to TBufCBase
+	asm("str r2, [r1] ");				// update length of TBufCBase
+	__JUMP(,lr);
+	}
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+__NAKED__ EXPORT_C void TDes16::Copy(const TUint16* /*aString*/)
+//
+// Copy a string to this descriptor.
+//
+	{
+	asm("sub r2, r1, #2 ");				// r2=aString-2
+	asm("1: ");
+	asm("ldrh r3, [r2, #2]! ");
+	asm("cmp r3, #0 ");
+	asm("bne 1b ");						// loop until zero terminator reached
+	asm("sub r2, r2, r1 ");				// r2=2*length of string
+	asm("mov r2, r2, lsr #1 ");			// r2=length of string
+	asm("ldmia r0, {r3,r12} ");			// r3=type/length of this, r12=maxlength
+	asm("cmp r2, r12 ");				// compare new length against maxlength
+	asm("bgt Des16PanicDesOverflow__Fv ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("and r3, r3, #0xF0000000 ");	// r3=type of this
+	asm("orr r3, r3, r2 ");				// r3=new type/length
+	asm("str r3, [r0], #4 ");			// store it
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("streq r2, [r0], #4 ");			// if EBufCPtr, update length of TBufCBase, r0=Ptr()
+	asm("add r2, r2, r2 ");				// r2=size=2*length
+	asm("b memmove ");					// call memmove
+	}
+#endif
+
+__NAKED__ EXPORT_C void TDes16::Copy(const TUint16* /*aBuf*/,TInt /*aLength*/)
+//
+// Copy the aLength characters to the descriptor.
+//
+	{
+	asm("ldmia r0, {r3,r12} ");			// r3=type/length of this, r12=maxlength
+	asm("cmp r2, r12 ");				// compare new length against maxlength
+	asm("bhi  " CSM_Z21Des16PanicDesOverflowv);	// Des16Panic if >MaxLength or -ve
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("and r3, r3, #0xF0000000 ");	// r3=type of this
+	asm("orr r3, r3, r2 ");				// r3=new type/length
+	asm("str r3, [r0], #4 ");			// store it
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("streq r2, [r0], #4 ");			// if EBufCPtr, update length of TBufCBase, r0=Ptr()
+	asm("add r2, r2, r2 ");				// r2=size=2*length
+	asm("b memmove ");					// call memmove
+	}
+
+__NAKED__ EXPORT_C void TDes16::Copy(const TDesC16& /*aDes*/)
+//
+// Copy a descriptor to this descriptor.
+//
+	{
+	asm("ldr r3, [r1], #4 ");			// r3 = type/length of aDes
+	asm("bic r12, r3, #0xF0000000");	// r12 = aDes.length
+	asm("ldr r2, [r0, #4] ");			// r2=this.maxlength
+	asm("cmp r12, r2 ");				// compare with maxlength
+	asm("bgt  " CSM_Z21Des16PanicDesOverflowv);
+	asm("ldr r2, [r0] ");				// get type of this
+	asm("cmp r2, #0x50000000 ");		// check both descriptor types
+	asm("cmpcc r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("and r2, r2, #0xF0000000 ");
+	asm("orr r2, r12, r2 ");			// r2=new type/length of this
+	asm("str r2, [r0], #4 ");			// store it
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");			// r1 = aDes.Ptr()
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("streq r12, [r0], #4 ");		// if EBufCPtr, update length of TBufCBase, r0=Ptr()
+	asm("add r2, r12, r12 ");			// size=2*length into r2 for function call
+	asm("b memmove ");					// call memmove
+	}
+
+__NAKED__ EXPORT_C TPtr16 TDes16::LeftTPtr(TInt /*aLength*/) const
+//
+// Extract the left portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aLength
+	// Return TPtr8 ([r0]=length/type,[r0,#4]=maxLength,[r0,#8]=Ptr)
+	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
+	asm("cmp r2, #0 ");						// check aLength>=0
+	asm("blt Des16PanicPosOutOfRange__Fv ");	// if not, panic
+	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
+	asm("cmp r2, r12 ");					// else limit aLength to Length()
+	asm("movgt r2, r12 ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");				// r1=this.Ptr()
+	asm("mov r3, r1 ");						// r3=this.Ptr()
+	asm("orr r1, r2, #0x20000000 ");		// r1=aLength + EPtr
+	asm("stmia r0, {r1-r3} ");				
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtr16 TDes16::RightTPtr(TInt /*aLength*/) const
+//
+// Extract the right portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aLength
+	// Return TPtr8 ([r0]=length/type,[r0,#4]=maxLength,[r0,#8]=Ptr)
+	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
+	asm("cmp r2, #0 ");						// check aLength>=0
+	asm("blt Des16PanicPosOutOfRange__Fv ");	// if not, panic
+	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
+	asm("cmp r2, r12 ");					// else limit aLength to Length()
+	asm("movgt r2, r12 ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");				// r0=this.Ptr()
+	asm("add r3, r1, r12, lsl #1 ");		// r3=this.Ptr()+len*2
+	asm("orr r1, r2, #0x20000000 ");		// r1=aLength + EPtr
+	asm("sub r3, r3, r2, lsl #1 ");			// r2=Ptr()+len*2-aLength*2
+	asm("stmia r0, {r1-r3} ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtr16 TDes16::MidTPtr(TInt /*aPos*/) const
+//
+// Extract the middle portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aPos
+	// Return TPtr8 ([r0]=length/type,[r0,#4]=maxLength,[r0,#8]=Ptr)
+	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
+	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
+	asm("cmp r2, #0 ");						// check aPos>=0
+	asm("cmpge r12, r2 ");					// if so check Length()>=aPos
+	asm("blt Des16PanicPosOutOfRange__Fv ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");				// r0=this.Ptr()
+	asm("add r3, r1, r2, lsl #1 ");			// r3=this.Ptr()+aPos*2
+	asm("sub r2, r12, r2 ");				// r2=len-aPos (=newMaxLen)
+	asm("orr r1, r2, #0x20000000 ");		// r1=len-aPos + EPtr (=newLen/Type)
+	asm("stmia r0, {r1-r3} ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtr16 TDes16::MidTPtr(TInt /*aPos*/,TInt /*aLength*/) const
+//
+// Extract the middle portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aPos, r3=aLength
+	// Return TPtr8 ([r0]=length/type,[r0,#4]=maxLength,[r0,#8]=Ptr)
+	asm("str r4, [sp, #-4]! ");				// save r4
+	asm("ldr r12, [r1], #4 ");				// r12=this.length/type
+	asm("mov r4, r1 ");
+	asm("cmp r12, #0x50000000 ");			// check valid descriptor type
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r12, r12, r12, lsr #1 ");
+	asm("msr cpsr_flg, r12 ");
+	asm("ldr r12, [r1, #-4] ");
+	asm("addcs r4, r4, #4 ");
+	asm("ldrle r4, [r4] ");
+	asm("bic r12, r12, #0xF0000000 ");		// r12=Length()
+	asm("addeq r4, r4, #4 ");				// r4=this.Ptr()
+	asm("cmp r2, #0 ");						// check aPos>=0
+	asm("subge r12, r12, r2 ");				// if so, r12=Length()-aPos
+	asm("cmpge r12, r3 ");					// and check Length()-aPos>=aLength
+	asm("orrge r1, r3, #0x20000000 ");		// if so, r0 = aLength + EPtr
+	asm("addge r3, r4, r2, lsl #1 ");		// and r2=this.Ptr()+aPos*2 
+	asm("bicge r2, r1, #0xF0000000 ");		// and r1=aLength
+	asm("stmgeia r0, {r1-r3} ");
+	asm("ldrge r4, [sp], #4 ");
+	__JUMP(ge,lr);
+	asm("b Des16PanicPosOutOfRange__Fv ");
+	}
+
+__NAKED__ EXPORT_C const TUint16& TDesC16::AtC(TInt /*anIndex*/) const
+//
+// Return a reference to the character in the buffer.
+//
+	{
+	asm("ldr r2, [r0], #4 ");			// r2=length/type
+	asm("bic r3, r2, #0xF0000000 ");	// r3=length
+	asm("cmp r2, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=this.Ptr()
+	asm("cmp r1, #0 ");					// check index>=0
+	asm("cmpge r3, r1 ");				// if so, check Length()>index
+	asm("addgt r0, r0, r1, lsl #1 ");		// return value = this.Ptr()+index*2
+	__JUMP(gt,lr);
+	asm("b  " CSM_Z28Des16PanicDesIndexOutOfRangev);
+	}
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+__NAKED__ EXPORT_C TInt TDesC16::Locate(TChar /*aChar*/) const
+//
+// Locate character aChar in the descriptor.
+//
+	{
+	asm("ldr r2, [r0], #4 ");			// r2=length/type
+	asm("cmp r2, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("bics r3, r2, #0xF0000000 ");	// r3=length
+	asm("mvneq r0, #0 ");				// if length=0, not found
+	__JUMP(eq,lr);
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=this.Ptr()
+	asm("add r3, r0, r3, lsl #1 ");		// r3=ptr+length*2 (end of string pointer)
+	asm("add r12, r0, #2 ");			// r12=ptr+2
+	asm("1: ");
+	asm("ldrh r2, [r0], #2 ");			// r2=*r0++
+	asm("cmp r1, r2 ");					// is r1=match char?
+	asm("cmpne r0, r3 ");				// if not, is r0=r3 (end pointer)
+	asm("bne 1b ");
+	asm("cmp r1, r2 ");					// did we find char?
+	asm("subeq r0, r0, r12 ");			// if we did, return value = r0-ptr-2
+	asm("moveq r0, r0, lsr #1 ");		// divide by 2 to get index
+	asm("mvnne r0, #0 ");				// else return value =-1
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TInt TDesC16::LocateReverse(TChar /*aChar*/) const
+//
+// Locate character aChar in the descriptor in reverse.
+//
+	{
+	asm("ldr r2, [r0], #4 ");			// r2=length/type
+	asm("cmp r2, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("bics r3, r2, #0xF0000000 ");	// r3=length
+	asm("mvneq r0, #0 ");				// if length=0, not found
+	__JUMP(eq,lr);
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=this.Ptr()
+	asm("add r3, r0, r3, lsl #1 ");		// r3=Ptr()+Length()
+	asm("1: ");
+	asm("ldrh r2, [r3, #-2]! ");		// r2=*--r3
+	asm("cmp r1, r2 ");					// is r1=match char?
+	asm("cmpne r3, r0 ");				// if not, have we reached beginning of string?
+	asm("bne 1b ");						// loop if neither
+	asm("cmp r1, r2 ");					// did we find match char?
+	asm("subeq r0, r3, r0 ");			// if we did, return value = (r3-r0)/2
+	asm("moveq r0, r0, lsr #1 ");
+	asm("mvnne r0, #0 ");				// else return value =-1
+	__JUMP(,lr);
+	}
+#endif
+
+#ifndef __KERNEL_MODE__
+__NAKED__ EXPORT_C TInt TDesC16::CompareF(const TDesC16& /*aDes*/) const
+//
+// Compare a descriptor to this descriptor folded.
+//
+	{
+	asm("ldr r12, 1f ");
+	asm("b comparebody ");
+	asm("1: ");
+	asm(".word  " CSM_ZN3Mem8CompareFEPKtiS0_i);
+	}
+
+__NAKED__ EXPORT_C TInt TDesC16::CompareC(const TDesC16& /*aDes*/) const
+//
+// Compare a descriptor to this descriptor collated.
+//
+	{
+	asm("ldr r12, 1f ");
+	asm("b comparebody ");
+	asm("1: ");
+	asm(".word  " CSM_ZN3Mem8CompareCEPKtiS0_i);
+	}
+#endif
+
+__NAKED__ EXPORT_C TInt TDesC16::Compare(const TDesC16& /*aDes*/) const
+//
+// Compare a descriptor to this descriptor.
+//
+	{
+	asm("ldr r12, 1f ");
+	asm("comparebody: ");
+	asm("mov r2, r1 ");						// r2=&aDes
+	asm("ldr r3, [r0], #4 ");				// r3=this.length/type
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("bic r1, r3, #0xF0000000 ");		// r1=this.Length()
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");				// r0=this.Ptr()
+	asm("ldr r3, [r2], #4 ");				// r3=aDes.length/type
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("ldr r3, [r2, #-4] ");
+	asm("bic r3, r3, #0xF0000000 ");		// r3=aDes.Length()
+	asm("addcs r2, r2, #4 ");
+	asm("ldrle r2, [r2] ");
+	asm("addeq r2, r2, #4 ");				// r2=aDes.Ptr()
+#ifdef __KERNEL_MODE__
+	asm("add r1, r1, r1 ");
+	asm("add r3, r3, r3 ");
+#endif
+	__JUMP(,r12);
+	
+	asm("1: ");
+#ifdef __KERNEL_MODE__
+	asm(".word memcompare ");
+#else
+	asm(".word  " CSM_ZN3Mem7CompareEPKtiS0_i);
+#endif
+	}
+#endif // __DES16_MACHINE_CODED__
+
+
+#if defined(__DES16_MACHINE_CODED__) && !defined(__EABI__)
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Left(TInt /*aLength*/) const
+//
+// Extract the left portion of the descriptor.
+//
+	{
+	// On entry r0=this, r1=aLength
+	// Return TPtrC16 in r0,r1
+	asm("ldr r3, [r0], #4 ");				// r3=this.length/type
+	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
+	asm("cmp r1, #0 ");						// check aLength>=0
+	asm("blt  " CSM_Z23Des16PanicPosOutOfRangev);	// if not, panic
+	asm("cmp r1, r12 ");					// else limit aLength to Length()
+	asm("movgt r1, r12 ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");				// r0=this.Ptr()
+	asm("orr r2, r1, #0x10000000 ");		// r2=aLength + EPtrC
+	asm("mov r1, r0 ");						// r1=result ptr
+	asm("mov r0, r2 ");						// r0=result type/length
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Right(TInt /*aLength*/) const
+//
+// Extract the right portion of the descriptor.
+//
+	{
+	// On entry r0=this, r1=aLength
+	// Return TPtrC16 in r0,r1
+	asm("ldr r3, [r0], #4 ");				// r3=this.length/type
+	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
+	asm("cmp r1, #0 ");						// check aLength>=0
+	asm("blt  " CSM_Z23Des16PanicPosOutOfRangev);	// if not, panic
+	asm("cmp r1, r12 ");					// else limit aLength to Length()
+	asm("movgt r1, r12 ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");				// r0=this.Ptr()
+	asm("add r3, r0, r12, lsl #1 ");		// r3=this.Ptr()+len*2
+	asm("orr r0, r1, #0x10000000 ");		// r0=aLength + EPtrC
+	asm("sub r1, r3, r1, lsl #1 ");			// r1=Ptr()+len*2-aLength*2
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Mid(TInt /*aPos*/) const
+//
+// Extract the middle portion of the descriptor.
+//
+	{
+	// On entry r0=this, r1=aPos
+	// Return TPtrC16 in r0,r1
+	asm("ldr r3, [r0], #4 ");				// r3=this.length/type
+	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
+	asm("cmp r1, #0 ");						// check aPos>=0
+	asm("cmpge r12, r1 ");					// if so check Length()>=aPos
+	asm("blt  " CSM_Z23Des16PanicPosOutOfRangev);
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");				// r0=this.Ptr()
+	asm("sub r2, r12, r1 ");				// r2=len-aPos
+	asm("add r1, r0, r1, lsl #1 ");			// r1=this.Ptr()+aPos*2
+	asm("orr r0, r2, #0x10000000 ");		// r0=result length + EPtrC
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Mid(TInt /*aPos*/,TInt /*aLength*/) const
+//
+// Extract the middle portion of the descriptor.
+//
+	{
+	// On entry r0=this, r1=aPos, r2=aLength
+	// Return TPtrC16 in r0,r1
+	asm("ldr r12, [r0], #4 ");				// r12=this.length/type
+	asm("cmp r12, #0x50000000 ");			// check valid descriptor type
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("eor r12, r12, r12, lsr #1 ");
+	asm("msr cpsr_flg, r12 ");
+	asm("ldr r12, [r0, #-4] ");
+	asm("bic r12, r12, #0xF0000000 ");		// r12=Length()
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");				// r0=this.Ptr()
+	asm("cmp r1, #0 ");						// check aPos>=0
+	asm("subge r12, r12, r1 ");				// if so, r12=Length()-aPos
+	asm("cmpge r12, r2 ");					// and check Length()-aPos>=aLength
+	asm("addge r1, r0, r1, lsl #1 ");		// if so, r1=Ptr()+aPos*2
+	asm("orrge r0, r2, #0x10000000 ");		// and r0 = aLength + EPtrC
+	__JUMP(ge,lr);
+	asm("b  " CSM_Z23Des16PanicPosOutOfRangev);
+	}
+#endif // defined(__DES16_MACHINE_CODED__) && !defined(__EABI__)
+
+
+#ifdef __DES16_MACHINE_CODED__
+
+// Here are the __EABI__ compliant versions of the above
+#ifdef __EABI__
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Left(TInt /*aLength*/) const
+//
+// Extract the left portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aLength
+	// Return TPtr16 ([r0]=length/type,[r0,#4]=Ptr)
+	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
+	asm("cmp r2, #0 ");					// check aLength>=0
+	asm("blt Des16PanicPosOutOfRange__Fv ");		// if not, panic
+	asm("bic r12, r3, #0xF0000000 ");			// r12=this.Length()
+	asm("cmp r2, r12 ");					// else limit aLength to Length()
+	asm("movgt r2, r12 ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");				// r1=this.Ptr()
+	asm("mov r3, r1");					// r3=this.Ptr()
+	asm("orr r1, r2, #0x10000000 ");			// r1=aLength + EPtrC
+	asm("stmia r0, {r1,r3} ");				
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Right(TInt /*aLength*/) const
+//
+// Extract the right portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aLength
+	// Return TPtr16 ([r0]=length/type,[r0,#4]=Ptr)
+	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
+	asm("cmp r2, #0 ");					// check aLength>=0
+	asm("blt Des16PanicPosOutOfRange__Fv ");		// if not, panic
+	asm("bic r12, r3, #0xF0000000 ");			// r12=this.Length()
+	asm("cmp r2, r12 ");					// else limit aLength to Length()
+	asm("movgt r2, r12 ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");				// r1=this.Ptr()
+	asm("add r3, r1, r12, lsl #1 ");			// r3=this.Ptr()+len*2
+	asm("orr r1, r2, #0x10000000 ");			// r1=aLength + EPtrC
+	asm("sub r3, r3, r2, lsl #1 ");				// r2=Ptr()+len*2-aLength*2
+	asm("stmia r0, {r1,r3} ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Mid(TInt /*aPos*/) const
+//
+// Extract the middle portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aPos
+	// Return TPtr16 ([r0]=length/type,[r0,#4]=Ptr)
+	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
+	asm("bic r12, r3, #0xF0000000 ");			// r12=this.Length()
+	asm("cmp r2, #0 ");					// check aPos>=0
+	asm("cmpge r12, r2 ");					// if so check Length()>=aPos
+	asm("blt Des16PanicPosOutOfRange__Fv ");
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");				// r3=this.Ptr()
+	asm("add r3, r1, r2, lsl #1 ");				// r3=this.Ptr()+aPos*2
+	asm("sub r2, r12, r2 ");				// r2=len-aPos (=newMaxLen)
+	asm("orr r1, r2, #0x10000000 ");			// r1=len-aPos + EPtrC (=newLen/Type)
+	asm("stmia r0, {r1,r3} ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TPtrC16 TDesC16::Mid(TInt /*aPos*/,TInt /*aLength*/) const
+//
+// Extract the middle portion of the descriptor.
+//
+	{
+	// On entry r0=return store ptr, r1=this, r2=aPos, r3=aLength
+	// Return TPtr16 ([r0]=length/type,[r0,#4]=Ptr)
+	asm("ldr r12, [r1], #4 ");				// r12=this.length/type
+	asm("cmp r12, #0x50000000 ");				// check valid descriptor type
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r12, r12, r12, lsr #1 ");
+	asm("msr cpsr_flg, r12 ");
+	asm("ldr r12, [r1, #-4] ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("bic r12, r12, #0xF0000000 ");			// r12=Length()
+	asm("addeq r1, r1, #4 ");				// r1=this.Ptr()
+	asm("cmp r2, #0 ");					// check aPos>=0
+	asm("subge r12, r12, r2 ");				// if so, r12=Length()-aPos
+	asm("cmpge r12, r3 ");					// and check Length()-aPos>=aLength
+	asm("addge r2, r1, r2, lsl #1 ");			// if so r2=this.Ptr()+aPos*2 
+	asm("orrge r1, r3, #0x10000000 ");			// and r1 = aLength + EPtrC
+	asm("stmgeia r0, {r1,r2} ");
+	__JUMP(ge,lr);
+	asm("b Des16PanicPosOutOfRange__Fv ");
+	}
+#endif // __EABI__
+
+
+__NAKED__ EXPORT_C void TDes16::Zero()
+//
+// Zero the buffer.
+//
+	{
+	asm("ldr r1, [r0] ");				// r1=length/type
+	asm("and r1, r1, #0xF0000000 ");	// r1=type field, zero length
+	asm("cmp r1, #0x40000000 ");		// check for EBufCPtr
+	asm("str r1, [r0] ");				// store zero length
+	__JUMP(ne,lr);
+	asm("ldr r2, [r0, #8] ");			// r2 = pointer to TBufCBase
+	asm("mov r1, #0 ");
+	asm("str r1, [r2] ");				// update length of TBufCBase
+	__JUMP(,lr);
+	}
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+#ifndef __KERNEL_MODE__
+__NAKED__ EXPORT_C void TDes16::ZeroTerminate()
+//
+// Zero terminate at Length().
+//
+	{
+	// Fall though to PtrZ below...
+	}
+
+__NAKED__ EXPORT_C const TUint16* TDes16::PtrZ()
+//
+// Return a pointer to a 0 terminated string.
+//
+	{
+	asm("ldmia r0, {r1,r2} ");			// r1=length/type, r2=maxlength
+	asm("bic r3, r1, #0xF0000000 ");	// r3=Length();
+	asm("cmp r3, r2 ");					// check Length()<MaxLength()
+	asm("bge Des16PanicDesOverflow__Fv ");
+	asm("cmp r1, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("eor r1, r1, r1, lsr #1 ");
+	asm("msr cpsr_flg, r1 ");
+	asm("add r0, r0, #4 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=Ptr()
+	asm("add r1, r0, r3, lsl #1 ");		// r1=Ptr()+Length()
+	asm("mov r2, #0 ");
+	asm("strh r2, [r1] ");				// Ptr()[Length()]=0;
+	__JUMP(,lr);
+	}
+#endif	// __KERNEL_MODE__
+
+__NAKED__ EXPORT_C void TDes16::Append(TChar /*aChar*/)
+//
+// Add a character at the end of the string.
+//
+	{
+	asm("ldmia r0, {r2,r3} ");			// r2=length/type, r3=maxlength
+	asm("bic r12, r2, #0xF0000000 ");	// r12=Length();
+	asm("cmp r12, r3 ");				// check Length()<MaxLength()
+	asm("bge Des16PanicDesOverflow__Fv ");
+	asm("cmp r2, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("add r2, r2, #1 ");				// increment length by 1
+	asm("str r2, [r0] ");				// store new length
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("add r2, r0, #4 ");				// r2=this+4
+	asm("addcs r2, r2, #4 ");
+	asm("ldrle r2, [r2] ");
+	asm("addeq r3, r12, #1 ");			// if EBufCPtr, r3=Length()+1
+	asm("streq r3, [r2], #4 ");			// and update length of TBufCBase, r2=Ptr()
+	asm("add r2, r2, r12, lsl #1 ");	// r2=Ptr()+Length()
+	asm("strh r1, [r2] ");				// Ptr()[Length()]=aChar;
+	__JUMP(,lr);
+	}
+#endif
+
+__NAKED__ EXPORT_C void TDes16::Append(const TDesC16& /*aDes*/)
+//
+// Append a descriptor to this descriptor.
+//
+	{
+	asm("ldr r3, [r1], #4 ");			// r3=aDes.length/type
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("bics r2, r3, #0xF0000000 ");	// r2=aDes.Length()
+	__JUMP(eq,lr);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("addcs r1, r1, #4 ");
+	asm("ldrle r1, [r1] ");
+	asm("addeq r1, r1, #4 ");			// r1=aDes.Ptr()
+	asm("b appendbody ");				// use following routine for rest of job
+	}
+
+__NAKED__ EXPORT_C void TDes16::Append(const TUint16* /*aBuf*/,TInt /*aLength*/)
+//
+// Append aLength from aBuf characters to the descriptor.
+//
+	{
+	asm("cmp r2, #0 ");					// check aLength>=0
+	__JUMP(eq,lr);
+	asm("blt  " CSM_Z24Des16PanicLengthNegativev);
+	asm("appendbody: ");
+	asm("ldmia r0, {r3,r12} ");			// r3=type/length, r12=maxlength
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("bic r3, r3, #0xF0000000 ");	// r3=Length()
+	asm("sub r12, r12, r3 ");			// r12=MaxLength-Length
+	asm("cmp r2, r12 ");				// check aLength<=(MaxLength-Length)
+	asm("bgt  " CSM_Z21Des16PanicDesOverflowv);
+	asm("ldr r12, [r0] ");
+	asm("add r12, r12, r2 ");			// new length/type field
+	asm("str r12, [r0], #4 ");			// store it
+	asm("eor r12, r12, r12, lsr #1 ");
+	asm("msr cpsr_flg, r12 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("ldreq r12, [r0] ");			// fetch length from TBufCBase
+	asm("addeq r12, r12, r2 ");			// add aLength
+	asm("streq r12, [r0], #4 ");		// update length of TBufCBase, r0=Ptr()
+	asm("add r0, r0, r3, lsl #1 ");		// r0=Ptr()+Length()*2
+	asm("add r2, r2, r2 ");				// r2=aLength*2
+	asm("b memmove ");					// call memmove
+	}
+
+__NAKED__ EXPORT_C void TDes16::FillZ()
+//
+// Fill the descriptor with 0.
+//
+	{
+	asm("ldr r2, [r0] ");				// r2=length/type
+	asm("cmp r2, #0x50000000 ");
+	asm("bcs  " CSM_Z20Des16PanicBadDesTypev);
+	asm("bic r1, r2, #0xF0000000 ");	// r1=Length()
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("add r0, r0, #4 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=Ptr()
+	asm("add r1, r1, r1 ");				// r1=2*Length()
+	asm("b memclr ");					// call memclr
+	}
+
+#ifdef __DES16_MACHINE_CODED_HWORD__
+__NAKED__ EXPORT_C void TDes16::Fill(TChar /*aChar*/)
+//
+// Fill the descriptor with aChar.
+//
+	{
+	// on entry r0=this, r1=fill char
+	asm("ldr r3, [r0] ");				// r3=length/type
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs Des16PanicBadDesType__Fv ");
+	asm("bics r2, r3, #0xF0000000 ");	// r2=Length()
+	__JUMP(eq,lr);						// if length is zero, finished
+	asm("stmfd sp!, {r0,lr} ");			// save registers for function call
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("add r0, r0, #4 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=Ptr()
+	asm("tst r0, #2 ");					// check alignment of Ptr()
+	asm("strneh r1, [r0], #2 ");		// if not aligned, fill first location
+	asm("subne r2, r2, #1 ");			// and decrement length
+	asm("mov r1, r1, lsl #16 ");
+	asm("orr r1, r1, r1, lsr #16 ");	// r1=fill char repeated
+	asm("mov r3, r1 ");
+	asm("mov r12, r1 ");
+	asm("mov r14, r1 ");				// r1=r3=r12=r14=fill char repeated
+	asm("b 2f ");						// branch to check for 16-char blocks
+	asm("1: ");
+	asm("stmia r0!, {r1,r3,r12,r14} ");	// fill a block of 16 bytes
+	asm("stmia r0!, {r1,r3,r12,r14} ");	// fill a block of 16 bytes
+	asm("2: ");
+	asm("subs r2, r2, #16 ");			// check for more blocks of 16
+	asm("bge 1b ");						// loop if more
+	asm("add r2, r2, #16 ");			// now r1=number of chars remaining, 0<=r1<16
+	asm("mov r2, r2, lsl #28 ");		// move into bits 28-31
+	asm("msr cpsr_flg, r2 ");			// and into NZCV flags
+	asm("stmmiia r0!, {r1,r3,r12,r14} ");	// fill a block of 16 bytes if needed
+	asm("stmeqia r0!, {r1,r3} ");		// fill a block of 8 bytes if needed
+	asm("stmcsia r0!, {r1} ");			// fill a block of 4 bytes if needed
+	asm("strvsh r1, [r0], #2 ");		// fill last char if needed
+	__POPRET("r0,");
+	}
+#endif
+
+#endif // __DES16_MACHINE_CODED__
+
+
+
+

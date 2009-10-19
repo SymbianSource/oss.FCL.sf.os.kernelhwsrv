@@ -1,0 +1,145 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+#ifdef EPOC32
+dplargedll support
+t_dpattr
+t_dpfunc
+t_dpmem
+t_dpbench
+
+dpexe001 support
+dpexe002 support
+dpexe003 support
+dpexe004 support
+dpexe005 support
+dpexe006 support
+dpexe007 support
+dpexe008 support
+dpexe009 support
+dpexe010 support
+dpexe011 support
+dpexe012 support
+dpexe013 support
+dpexe014 support
+dpexe015 support
+dpexe016 support
+dpexe017 support
+dpexe018 support
+dpexe019 support
+dpexe020 support
+dpexe021 support
+dpexe022 support
+dpexe023 support
+dpexe024 support
+dpexe025 support
+dpexe026 support
+dpexe027 support
+dpexe028 support
+dpexe029 support
+dpexe030 support
+dpexe061 support
+dpexe062 support
+dpexe063 support
+dpexe064 support
+dpexe065 support
+dpexe066 support
+dpexe067 support
+dpexe068 support
+dpexe069 support
+dpexe070 support
+dpexe071 support
+dpexe072 support
+dpexe073 support
+dpexe074 support
+dpexe075 support
+dpexe076 support
+dpexe077 support
+dpexe078 support
+dpexe079 support
+dpexe080 support
+dpexe081 support
+dpexe082 support
+dpexe083 support
+dpexe084 support
+dpexe085 support
+dpexe086 support
+dpexe087 support
+dpexe088 support
+dpexe089 support
+dpexe090 support
+dpdll001 support
+dpdll002 support
+dpdll003 support
+dpdll004 support
+dpdll005 support
+dpdll006 support
+dpdll007 support
+dpdll008 support
+dpdll009 support
+dpdll010 support
+dpdll011 support
+dpdll012 support
+dpdll013 support
+dpdll014 support
+dpdll015 support
+dpdll016 support
+dpdll017 support
+dpdll018 support
+dpdll019 support
+dpdll020 support
+dpdll021 support
+dpdll022 support
+dpdll023 support
+dpdll024 support
+dpdll025 support
+dpdll026 support
+dpdll027 support
+dpdll028 support
+dpdll029 support
+dpdll030 support
+dpdll061 support
+dpdll062 support
+dpdll063 support
+dpdll064 support
+dpdll065 support
+dpdll066 support
+dpdll067 support
+dpdll068 support
+dpdll069 support
+dpdll070 support
+dpdll071 support
+dpdll072 support
+dpdll073 support
+dpdll074 support
+dpdll075 support
+dpdll076 support
+dpdll077 support
+dpdll078 support
+dpdll079 support
+dpdll080 support
+dpdll081 support
+dpdll082 support
+dpdll083 support
+dpdll084 support
+dpdll085 support
+dpdll086 support
+dpdll087 support
+dpdll088 support
+dpdll089 support
+dpdll090 support
+
+#endif //EPOC32

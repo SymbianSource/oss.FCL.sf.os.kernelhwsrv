@@ -1,0 +1,57 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/iic/iic_testclient.mmp
+//
+
+// Select the mode to build
+// For Master-Slave mode, uncomment both of the two lines that follow
+macro MASTER_MODE
+macro SLAVE_MODE
+
+
+#include <kernel/kern_ext.mmh>
+
+target				iic_testpsl.pdd
+targettype			pdd
+linkas				iic_testpsl.pdd
+
+sourcepath			../../../../kernel/eka/drivers/iic
+source				iic.cpp iic_transaction.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE		../../../../kernel/eka/drivers/iic
+
+// un-comment the following if BTRACE output is required
+macro IIC_INSTRUMENTATION_MACRO
+
+macro IIC_SIMULATED_PSL
+
+//noexportlibrary
+
+// Separate def file from iic since the test psl version exists as a PDD and has an additional item at ordinal 1
+deffile				../../~/iic_testpsl.def
+
+epocallowdlldata
+
+uid			0x100039d0 0x10286b4f
+VENDORID 0x70000001
+
+capability		all
+
+start wins
+win32_headers
+end
+
+SMPSAFE
+

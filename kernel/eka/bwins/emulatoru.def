@@ -1,0 +1,39 @@
+EXPORTS
+	?CopyFileW@Emulator@@SAHPBG0H@Z @ 1 NONAME ; public: static int __cdecl Emulator::CopyFileW(unsigned short const *,unsigned short const *,int)
+	?CreateDirectoryW@Emulator@@SAHPBGPAU_SECURITY_ATTRIBUTES@@@Z @ 2 NONAME ; public: static int __cdecl Emulator::CreateDirectoryW(unsigned short const *,struct _SECURITY_ATTRIBUTES *)
+	?CreateFileW@Emulator@@SAPAXPBGKKPAU_SECURITY_ATTRIBUTES@@KKPAX@Z @ 3 NONAME ; public: static void * __cdecl Emulator::CreateFileW(unsigned short const *,unsigned long,unsigned long,struct _SECURITY_ATTRIBUTES *,unsigned long,unsigned long,void *)
+	?DeleteFileW@Emulator@@SAHPBG@Z @ 4 NONAME ; public: static int __cdecl Emulator::DeleteFileW(unsigned short const *)
+	?FindFirstFileW@Emulator@@SAPAXPBGPAU_WIN32_FIND_DATAW@@@Z @ 5 NONAME ; public: static void * __cdecl Emulator::FindFirstFileW(unsigned short const *,struct _WIN32_FIND_DATAW *)
+	?FindNextFileW@Emulator@@SAHPAXPAU_WIN32_FIND_DATAW@@@Z @ 6 NONAME ; public: static int __cdecl Emulator::FindNextFileW(void *,struct _WIN32_FIND_DATAW *)
+	?GetDiskFreeSpaceW@Emulator@@SAHPBGPAK111@Z @ 7 NONAME ; public: static int __cdecl Emulator::GetDiskFreeSpaceW(unsigned short const *,unsigned long *,unsigned long *,unsigned long *,unsigned long *)
+	?GetFileAttributesW@Emulator@@SAKPBG@Z @ 8 NONAME ; public: static unsigned long __cdecl Emulator::GetFileAttributesW(unsigned short const *)
+	?GetModuleHandleW@Emulator@@SAPAUHINSTANCE__@@PBG@Z @ 9 NONAME ; public: static struct HINSTANCE__ * __cdecl Emulator::GetModuleHandleW(unsigned short const *)
+	?GetTempPathW@Emulator@@SAKKPAG@Z @ 10 NONAME ; public: static unsigned long __cdecl Emulator::GetTempPathW(unsigned long,unsigned short *)
+	?GetVolumeInformationW@Emulator@@SAHPBGPAGKPAK221K@Z @ 11 NONAME ; public: static int __cdecl Emulator::GetVolumeInformationW(unsigned short const *,unsigned short *,unsigned long,unsigned long *,unsigned long *,unsigned long *,unsigned short *,unsigned long)
+	?Init@Emulator@@SAXABUSInit@1@@Z @ 12 NONAME ; public: static void __cdecl Emulator::Init(struct Emulator::SInit const &)
+	?LoadLibraryW@Emulator@@SAPAUHINSTANCE__@@PBG@Z @ 13 NONAME ; public: static struct HINSTANCE__ * __cdecl Emulator::LoadLibraryW(unsigned short const *)
+	?MoveFileW@Emulator@@SAHPBG0@Z @ 14 NONAME ; public: static int __cdecl Emulator::MoveFileW(unsigned short const *,unsigned short const *)
+	?OutputDebugStringW@Emulator@@SAXPBG@Z @ 15 NONAME ; public: static void __cdecl Emulator::OutputDebugStringW(unsigned short const *)
+	?RemoveDirectoryW@Emulator@@SAHPBG@Z @ 16 NONAME ; public: static int __cdecl Emulator::RemoveDirectoryW(unsigned short const *)
+	?SetFileAttributesW@Emulator@@SAHPBGK@Z @ 17 NONAME ; public: static int __cdecl Emulator::SetFileAttributesW(unsigned short const *,unsigned long)
+	?SetVolumeLabelW@Emulator@@SAHPBG0@Z @ 18 NONAME ; public: static int __cdecl Emulator::SetVolumeLabelW(unsigned short const *,unsigned short const *)
+	?Close@RImageFile@Emulator@@QAEXXZ @ 19 NONAME ; public: void __thiscall Emulator::RImageFile::Close(void)
+	??0TModule@Emulator@@QAE@PBD@Z @ 20 NONAME ; public: __thiscall Emulator::TModule::TModule(char const *)
+	?CreateAllDirectories@Emulator@@SAHPBD@Z @ 21 NONAME ; public: static int __cdecl Emulator::CreateAllDirectories(char const *)
+	?GetCurrentDirectoryW@Emulator@@SAKKPAG@Z @ 22 NONAME ; public: static unsigned long __cdecl Emulator::GetCurrentDirectoryW(unsigned long,unsigned short *)
+	?GetInfo@TModule@Emulator@@QBEXAAVTProcessCreateInfo@@@Z @ 23 NONAME ; public: void __thiscall Emulator::TModule::GetInfo(class TProcessCreateInfo &)const 
+	?GetUids@TModule@Emulator@@QBEXAAVTUidType@@@Z @ 24 NONAME ; public: void __thiscall Emulator::TModule::GetUids(class TUidType &)const 
+	?LastError@Emulator@@SAHXZ @ 25 NONAME ; public: static int __cdecl Emulator::LastError(void)
+	?Open@RImageFile@Emulator@@QAEHPBG@Z @ 26 NONAME ; public: int __thiscall Emulator::RImageFile::Open(unsigned short const *)
+	?Imports@TModule@Emulator@@QBEPBU_IMAGE_IMPORT_DESCRIPTOR@@XZ @ 27 NONAME ; public: struct _IMAGE_IMPORT_DESCRIPTOR const * __thiscall Emulator::TModule::Imports(void)const 
+	?Section@TModule@Emulator@@QBEPBXQBE@Z @ 28 NONAME ; public: void const * __thiscall Emulator::TModule::Section(unsigned char const * const)const 
+	?GetModuleFileNameW@Emulator@@SAKPAUHINSTANCE__@@PAG@Z @ 29 NONAME ; public: static unsigned long __cdecl Emulator::GetModuleFileNameW(struct HINSTANCE__ *,unsigned short *)
+	?SectionHeader@TModule@Emulator@@QBEPBU_IMAGE_SECTION_HEADER@@QBE@Z @ 30 NONAME ; public: struct _IMAGE_SECTION_HEADER const * __thiscall Emulator::TModule::SectionHeader(unsigned char const * const)const 
+	?NtHeader@TModule@Emulator@@QBEPBU_IMAGE_NT_HEADERS@@XZ @ 31 NONAME ; public: struct _IMAGE_NT_HEADERS const * __thiscall Emulator::TModule::NtHeader(void)const 
+	?Lock@Emulator@@SAXXZ @ 32 NONAME ; void Emulator::Lock(void)
+	?Unlock@Emulator@@SAXXZ @ 33 NONAME ; void Emulator::Unlock(void)
+	?FreeLibrary@Emulator@@SAHPAUHINSTANCE__@@@Z @ 34 NONAME ; public: static int __cdecl Emulator::FreeLibrary(struct HINSTANCE__ *)
+	?GetProcAddress@Emulator@@SAP6GHXZPAUHINSTANCE__@@PBD@Z @ 35 NONAME ; public: static int (__stdcall*__cdecl Emulator::GetProcAddress(struct HINSTANCE__ *,char const *))(void)
+	?Escape@Emulator@@SAXXZ @ 36 NONAME ; public: static void __cdecl Emulator::Escape(void)
+	?Reenter@Emulator@@SAXXZ @ 37 NONAME ; public: static void __cdecl Emulator::Reenter(void)
+	?Win32SEHException@Emulator@@SAKPAU_EXCEPTION_RECORD@@PAU_CONTEXT@@@Z @ 38 NONAME ; public: static unsigned long __cdecl Emulator::Win32SEHException(struct _EXCEPTION_RECORD *,struct _CONTEXT *)

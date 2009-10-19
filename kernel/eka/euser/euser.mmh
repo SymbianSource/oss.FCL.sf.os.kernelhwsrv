@@ -1,0 +1,179 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\euser.mmh
+// Included from euser.mmp and variant_euser.mmp
+// 
+//
+
+targettype		dll
+
+#if defined(GCC32)
+ALWAYS_BUILD_AS_ARM
+#endif
+
+#if defined(USE_VFP_MATH) && defined(ARMCC)
+macro __USE_VFP_MATH
+#endif
+
+sourcepath		cbase
+source			 ub_act.cpp ub_array.cpp ub_bma.cpp ub_buf.cpp
+source			 ub_circ.cpp ub_cln.cpp ub_cons.cpp ub_dtim.cpp
+source			 ub_obj.cpp ub_svr.cpp ub_polsvr.cpp
+source			 ub_tim.cpp ub_utl.cpp ub_tque.cpp
+
+sourcepath		.
+source			 us_evnt.cpp locmapping.cpp us_exec.cpp us_func.cpp us_graph.cpp
+source			 us_hand.cpp us_ksvr.cpp us_des.cpp
+source			 us_lex16.cpp us_lex8.cpp us_loc.cpp us_mes.cpp
+source			 us_parse.cpp us_power.cpp us_property.cpp us_que.cpp us_ref.cpp
+source			 us_regn.cpp us_test.cpp us_time.cpp us_trp.cpp
+source			 us_utl.cpp us_mqueue.cpp us_encode.cpp us_decode.cpp
+source			 us_secure.cpp us_htab.cpp us_rwlock.cpp
+source			 us_shbuf.cpp
+
+#ifdef GCC32
+source			us_gcc.cpp
+#endif
+
+sourcepath		../common
+source			array.cpp des8.cpp des16.cpp alloc.cpp heap.cpp
+source			mem.cpp secure.cpp
+macro			__EXPORT_MEMCPY__
+#ifdef GCC32
+source			gcchelp.cpp
+#endif
+
+#ifdef WINS
+sourcepath		../common/win32
+source			seh.cpp atomics.cpp
+#endif //WINS
+
+sourcepath		maths
+source			 um_asin.cpp um_atan.cpp um_dtor.cpp um_exp.cpp
+source			 um_frac.cpp um_int.cpp um_ln.cpp um_log.cpp
+source			 um_mod.cpp um_pow.cpp um_pow10.cpp
+source			 um_rand.cpp um_rtod.cpp um_sin.cpp um_spec.cpp
+source			 um_sqrt.cpp um_tan.cpp um_utl.cpp
+
+sourcepath		epoc
+source			up_lib.cpp up_utl.cpp
+
+#if defined(WINS)
+sourcepath		epoc/win32
+source			 uc_i64.cpp uc_realx.cpp
+source			 uc_trp.cpp uc_utl.cpp uc_exec.cpp
+#elif defined(MARM)
+sourcepath		epoc/arm
+#if defined(GCC32)
+source			 uc_gcc.cia
+#endif
+source			 uc_i64.cia uc_realx.cpp uc_realx.cia uc_huffman.cia
+source			 uc_trp.cpp uc_trp.cia uc_utl.cia uc_exec.cia uc_data.cpp
+sourcepath		../common/arm
+source			carray.cia cdes8.cia cdes16.cia cheap.cia cmem.cia atomics.cia
+#if defined(GCC32)
+source			cgcchelp.cpp cgcchelp.cia
+#endif
+
+#if defined(REPLACE_GENERIC_UTILS)
+macro			__REPLACE_GENERIC_UTILS
+USERINCLUDE	..\..\..\..\unref\orphan\cedgen\base\VariantReplacementUtilsPath
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude	..\..\..\..\unref\orphan\cedgen\base\VariantReplacementUtilsPath
+#endif
+sourcepath		..\..\..\..\unref\orphan\cedgen\base\VariantReplacementUtilsPath
+source			common.cia
+#endif
+
+#elif defined(X86)
+sourcepath		epoc/x86
+source			uc_exec.cia
+source			uc_i64.cia
+source			uc_realx.cia
+source			uc_trp.cia 
+source			uc_utl.cia
+source			uc_exec.cpp
+source			uc_i64.cpp 
+source			uc_realx.cpp 
+source			uc_trp.cpp
+source			uc_utl.cpp 
+source			uc_seh.cpp
+sourcepath		../common/x86
+userinclude     ../common
+source			cmem.cia
+#if defined(GCC32)
+sourcepath				../common/x86
+source					atomics.cia
+#elif defined(VC32)
+sourcepath				../common/win32
+source					atomics.cpp
+#endif
+
+#endif
+
+sourcepath		unicode
+source			 collate.cpp unicode.cpp unitable.cpp
+SOURCE			Compare.cpp
+
+USERINCLUDE	../include
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude	../include
+#endif
+USERINCLUDE		../euser
+USERINCLUDE		../euser/unicode
+
+noexportlibrary
+linkas			euser.dll
+
+#if defined(WINS)
+library			emulator.lib
+#endif
+
+START ARMCC
+#ifdef USE_VFP_MATH
+
+#ifdef MARM_ARMV5
+#ifdef ARMCC_2
+armlibs			m_tvpu.l
+#else
+armlibs			m_5v.l
+armlibs			fj_5v.l
+#endif
+
+#else //!MARM_ARMV5
+#ifdef ARMCC_2
+armlibs			m_avpu.l
+#else
+armlibs			m_4v.l
+armlibs			fj_4v.l
+#endif
+#endif
+
+#endif
+END // armcc
+
+START WINS
+baseaddress		0x60000000
+win32_library	kernel32.lib
+
+END // wins
+
+uid				0x1000008d 0x100039e5
+VENDORID 0x70000001
+capability		all
+
+unpaged
+
+SMPSAFE

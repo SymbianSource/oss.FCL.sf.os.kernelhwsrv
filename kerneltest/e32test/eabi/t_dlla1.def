@@ -1,0 +1,6 @@
+EXPORTS
+	_Z9AFunctionv @ 1 NONAME ; AFunction()
+	_Z3Incv @ 2 NONAME ; Inc()
+	_Z14GetProcessNamev @ 3 NONAME ; GetProcessName()
+	_Z13GetThreadNamev @ 4 NONAME ; GetThreadName()
+

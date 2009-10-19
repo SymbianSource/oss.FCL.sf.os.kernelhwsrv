@@ -1,0 +1,158 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/kern_int.mmh
+// 
+//
+
+#if defined(WINS)
+#define MM_WIN32
+#elif defined(MM_DIRECT)
+#elif defined(MM_MULTIPLE)
+#elif defined(MM_FLEXIBLE)
+#else
+#define MM_MOVING
+#endif
+
+#ifdef SMP
+
+// Don't build export libraries for SMP since, with the exception of the kernel,
+// they would be identical to the non-SMP ones.
+noexportlibrary
+#endif
+
+#ifdef SMP
+#include "../nkernsmp/nkern_int.mmh"
+#else
+#include "../nkern/nkern_int.mmh"
+#endif
+
+#if defined(MM_WIN32)
+macro			__MEMMODEL_EMUL_SINGLE_HOST_PROCESS__
+#elif defined(MM_DIRECT)
+macro			__MEMMODEL_DIRECT__
+#elif defined(MM_MULTIPLE)
+macro			__MEMMODEL_MULTIPLE__
+#elif defined(MM_FLEXIBLE)
+macro			__MEMMODEL_FLEXIBLE__
+#elif defined(MM_MOVING)
+macro			__MEMMODEL_MOVING__
+#endif
+
+#if defined(MM_FLEXIBLE)
+#define DEMAND_PAGING
+#elif defined(MM_MULTIPLE) && defined(MARM)
+#define DEMAND_PAGING
+#elif defined(MM_MOVING) && defined(MARM)
+#define DEMAND_PAGING
+#endif
+
+#if defined(DEMAND_PAGING) && defined(DEMAND_PAGING_EMULATION)
+macro __SUPPORT_DEMAND_PAGING_EMULATION__
+#endif
+
+#if defined(DEMAND_PAGING) && defined(DEMAND_PAGING_BENCHMARKS)
+macro __DEMAND_PAGING_BENCHMARKS__
+#endif
+
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include/kernel
+#endif
+USERINCLUDE		../include/kernel
+
+#if defined(MARM)
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include/kernel/arm
+#endif
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel/arm)
+#elif defined(X86)
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include/kernel/x86
+#endif
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel/x86)
+#elif defined(WINS)
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include/kernel/win32
+#endif
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel/win32)
+userinclude			../include/kernel/win32
+#endif
+
+
+#if defined(MM_MOVING)
+SYSTEMINCLUDE		../include/memmodel/epoc
+SYSTEMINCLUDE		../include/memmodel/epoc/mmubase
+SYSTEMINCLUDE		../include/memmodel/epoc/moving
+
+#ifdef MARM
+SYSTEMINCLUDE		../include/memmodel/epoc/moving/arm
+#endif
+
+#elif defined(MM_DIRECT)
+SYSTEMINCLUDE		../include/memmodel/epoc
+SYSTEMINCLUDE		../include/memmodel/epoc/direct
+
+#ifdef MARM
+SYSTEMINCLUDE		../include/memmodel/epoc/direct/arm
+#endif
+#ifdef X86
+SYSTEMINCLUDE		../include/memmodel/epoc/direct/x86
+#endif
+
+#elif defined(MM_MULTIPLE)
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/epoc/multiple)
+SYSTEMINCLUDE		../include/memmodel/epoc
+SYSTEMINCLUDE		../include/memmodel/epoc/mmubase
+SYSTEMINCLUDE		../include/memmodel/epoc/multiple
+
+#ifdef MARM
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/epoc/multiple/arm)
+SYSTEMINCLUDE		../include/memmodel/epoc/multiple/arm
+#endif
+#ifdef X86
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/epoc/multiple/x86)
+SYSTEMINCLUDE		../include/memmodel/epoc/multiple/x86
+#endif
+
+#elif defined(MM_FLEXIBLE)
+macro __KERNEL_APIS_CONTEXT_CHECKS_FAULT__
+
+SYSTEMINCLUDE		../include/memmodel/epoc
+SYSTEMINCLUDE		../include/memmodel/epoc/mmubase
+SYSTEMINCLUDE		../include/memmodel/epoc/flexible
+
+#ifdef MARM
+SYSTEMINCLUDE		../include/memmodel/epoc/flexible/arm
+#endif
+#ifdef X86
+SYSTEMINCLUDE		../include/memmodel/epoc/flexible/x86
+#endif
+
+#elif defined(MM_WIN32)
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/emul)
+SYSTEMINCLUDE		../include/memmodel/emul
+SYSTEMINCLUDE		../include/memmodel/emul/win32
+#endif
+
+#ifdef INCLUDE_EKERN_LIB
+#ifdef SMP
+library ekernsmp.lib
+#else
+library ekern.lib
+#endif
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+macro __KERNEL_APIS_CONTEXT_CHECKS_WARNING__
+//macro __KERNEL_APIS_CONTEXT_CHECKS_FAULT__

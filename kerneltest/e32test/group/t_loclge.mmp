@@ -1,0 +1,44 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_loclge.mmp
+// Localisation DLL for Germany
+// 
+//
+
+TARGET			T_LOCLGE.DLL
+
+TARGETTYPE		dll
+
+
+SOURCEPATH	../locl
+SOURCE			 t_cyge.cpp t_lnger.cpp t_msger.cpp
+SOURCE			 t_lat1.cpp t_table.cpp t_unic.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+
+DEFFILE			../../../kernel/eka/~/elocl.def
+
+LIBRARY			euser.lib
+
+UID		0x100039e6 0x100065ba
+VENDORID 0x70000001
+ROMTARGET +
+
+// Locale dlls shouldn't be paged.
+UNPAGED
+
+CAPABILITY		all
+
+SMPSAFE

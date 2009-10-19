@@ -1,0 +1,13 @@
+EXPORTS
+	?Test2@TestDll1@@SAIXZ @ 1 NONAME ; public: static unsigned int __cdecl TestDll1::Test2(void)
+	?Data@TestDll1@@SAHXZ @ 2 NONAME ; public: static int __cdecl TestDll1::Data(void)
+	?GlobalAlloc@TestDll1@@SAHH@Z @ 3 NONAME ; public: static int __cdecl TestDll1::GlobalAlloc(int)
+	?GlobalAllocated@TestDll1@@SAHXZ @ 4 NONAME ; public: static int __cdecl TestDll1::GlobalAllocated(void)
+	?GlobalRead@TestDll1@@SAHHAAVTDes8@@@Z @ 5 NONAME ; public: static int __cdecl TestDll1::GlobalRead(int,class TDes8 &)
+	?GlobalWrite@TestDll1@@SAHHABVTDesC8@@@Z @ 6 NONAME ; public: static int __cdecl TestDll1::GlobalWrite(int,class TDesC8 const &)
+	?Sem@TestDll1@@SA?AVRSemaphore@@XZ @ 7 NONAME ; public: static class RSemaphore  __cdecl TestDll1::Sem(void)
+	?Server@TestDll1@@SAIXZ @ 8 NONAME ; public: static unsigned int __cdecl TestDll1::Server(void)
+	?SetData@TestDll1@@SAXH@Z @ 9 NONAME ; public: static void __cdecl TestDll1::SetData(int)
+	?Test1@TestDll1@@SAIXZ @ 10 NONAME ; public: static unsigned int __cdecl TestDll1::Test1(void)
+	?Attach@TestDll1@@SAHH@Z @ 11 NONAME ; public: static int __cdecl TestDll1::Attach(int)
+

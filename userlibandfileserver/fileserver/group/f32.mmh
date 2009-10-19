@@ -1,0 +1,40 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// \f32\group\f32.mmh
+// Generic header file that is included to every *.mmp file within f32 component
+// The SYMBIAN_TRACE_SYSTEM_INCLUDE macro is used to switch between functional and 
+// stubbed out trace points
+// The SYMBIAN_TRACE_SYSTEM_INCLUDE macro flag is intended to be setup in the 
+// variant .HRH to determine the whether trace points are stubbed out across the 
+// system by default or not. 
+// The definition of system wide inclusion or exclusion of tracing
+// is done here for now, but once the project is released on MCL the official variability
+// procedures will be put in place.
+// 
+//
+
+#define SYMBIAN_TRACE_SYSTEM_INCLUDE
+
+
+
+
+
+
+
+
+
+
+
+
+

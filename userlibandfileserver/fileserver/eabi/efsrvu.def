@@ -1,0 +1,413 @@
+EXPORTS
+	_Z18FileNamesIdenticalRK7TDesC16S1_ @ 1 NONAME ; FileNamesIdentical(TDesC16 const&, TDesC16 const&)
+	_ZN10TDriveUnitC1ERK7TDesC16 @ 2 NONAME ; TDriveUnit::TDriveUnit(TDesC16 const&)
+	_ZN10TDriveUnitC1Ei @ 3 NONAME ; TDriveUnit::TDriveUnit(int)
+	_ZN10TDriveUnitC2ERK7TDesC16 @ 4 NONAME ; TDriveUnit::TDriveUnit(TDesC16 const&)
+	_ZN10TDriveUnitC2Ei @ 5 NONAME ; TDriveUnit::TDriveUnit(int)
+	_ZN10TDriveUnitaSERK7TDesC16 @ 6 NONAME ; TDriveUnit::operator=(TDesC16 const&)
+	_ZN10TDriveUnitaSEi @ 7 NONAME ; TDriveUnit::operator=(int)
+	_ZN10TParseBase6AddDirERK7TDesC16 @ 8 NONAME ; TParseBase::AddDir(TDesC16 const&)
+	_ZN10TParseBase6PopDirEv @ 9 NONAME ; TParseBase::PopDir()
+	_ZN10TParseBaseC2Ev @ 10 NONAME ; TParseBase::TParseBase()
+	_ZN10TParsePtrC7NameBufEv @ 11 NONAME ; TParsePtrC::NameBuf()
+	_ZN10TParsePtrCC1ERK7TDesC16 @ 12 NONAME ; TParsePtrC::TParsePtrC(TDesC16 const&)
+	_ZN10TParsePtrCC2ERK7TDesC16 @ 13 NONAME ; TParsePtrC::TParsePtrC(TDesC16 const&)
+	_ZN11TEntryArrayC1Ev @ 14 NONAME ; TEntryArray::TEntryArray()
+	_ZN11TEntryArrayC2Ev @ 15 NONAME ; TEntryArray::TEntryArray()
+	_ZN11TVolumeInfoC1Ev @ 16 NONAME ; TVolumeInfo::TVolumeInfo()
+	_ZN11TVolumeInfoC2Ev @ 17 NONAME ; TVolumeInfo::TVolumeInfo()
+	_ZN13TOpenFileScan5NextLERP4CDir @ 18 NONAME ; TOpenFileScan::NextL(CDir*&)
+	_ZN13TOpenFileScanC1ER3RFs @ 19 NONAME ; TOpenFileScan::TOpenFileScan(RFs&)
+	_ZN13TOpenFileScanC2ER3RFs @ 20 NONAME ; TOpenFileScan::TOpenFileScan(RFs&)
+	_ZN16MFileManObserver18NotifyFileManEndedEv @ 21 NONAME ; MFileManObserver::NotifyFileManEnded()
+	_ZN16MFileManObserver20NotifyFileManStartedEv @ 22 NONAME ; MFileManObserver::NotifyFileManStarted()
+	_ZN16MFileManObserver22NotifyFileManOperationEv @ 23 NONAME ; MFileManObserver::NotifyFileManOperation()
+	_ZN3RFs11CharToDriveE5TCharRi @ 24 NONAME ; RFs::CharToDrive(TChar, int&)
+	_ZN3RFs11DebugNotifyEijR14TRequestStatus @ 25 NONAME ; RFs::DebugNotify(int, unsigned int, TRequestStatus&)
+	_ZN3RFs11DriveToCharEiR5TChar @ 26 NONAME ; RFs::DriveToChar(int, TChar&)
+	_ZN3RFs11PrivatePathER6TDes16 @ 27 NONAME ; RFs::PrivatePath(TDes16&)
+	_ZN3RFs11SetModifiedERK7TDesC16RK5TTime @ 28 NONAME ; RFs::SetModified(TDesC16 const&, TTime const&)
+	_ZN3RFs11UnlockDriveEiRK5TBuf8ILi16EEi @ 29 NONAME ; RFs::UnlockDrive(int, TBuf8<16> const&, int)
+	_ZN3RFs12AddExtensionERK7TDesC16 @ 30 NONAME ; RFs::AddExtension(TDesC16 const&)
+	_ZN3RFs12IsRomAddressEPv @ 31 NONAME ; RFs::IsRomAddress(void*)
+	_ZN3RFs12IsValidDriveEi @ 32 NONAME ; RFs::IsValidDrive(int)
+	_ZN3RFs12NotifyChangeE11TNotifyTypeR14TRequestStatus @ 33 NONAME ; RFs::NotifyChange(TNotifyType, TRequestStatus&)
+	_ZN3RFs12NotifyChangeE11TNotifyTypeR14TRequestStatusRK7TDesC16 @ 34 NONAME ; RFs::NotifyChange(TNotifyType, TRequestStatus&, TDesC16 const&)
+	_ZN3RFs12RemountDriveEiPK6TDesC8j @ 35 NONAME ; RFs::RemountDrive(int, TDesC8 const*, unsigned int)
+	_ZN3RFs12SetDriveNameEiRK7TDesC16 @ 36 NONAME ; RFs::SetDriveName(int, TDesC16 const&)
+	_ZN3RFs13ClearPasswordEiRK5TBuf8ILi16EE @ 37 NONAME ; RFs::ClearPassword(int, TBuf8<16> const&)
+	_ZN3RFs13ExtensionNameER6TDes16ii @ 38 NONAME ; RFs::ExtensionName(TDes16&, int, int)
+	_ZN3RFs13GetNotifyUserEv @ 39 NONAME ; RFs::GetNotifyUser()
+	_ZN3RFs13SetNotifyUserEi @ 40 NONAME ; RFs::SetNotifyUser(int)
+	_ZN3RFs14FinaliseDrivesEv @ 41 NONAME ; RFs::FinaliseDrives()
+	_ZN3RFs14MountExtensionERK7TDesC16i @ 42 NONAME ; RFs::MountExtension(TDesC16 const&, int)
+	_ZN3RFs14SetDefaultPathERK7TDesC16 @ 43 NONAME ; RFs::SetDefaultPath(TDesC16 const&)
+	_ZN3RFs14SetSessionPathERK7TDesC16 @ 44 NONAME ; RFs::SetSessionPath(TDesC16 const&)
+	_ZN3RFs14SetVolumeLabelERK7TDesC16i @ 45 NONAME ; RFs::SetVolumeLabel(TDesC16 const&, int)
+	_ZN3RFs15MountFileSystemERK7TDesC16S2_i @ 46 NONAME ; RFs::MountFileSystem(TDesC16 const&, TDesC16 const&, int)
+	_ZN3RFs15MountFileSystemERK7TDesC16S2_ii @ 47 NONAME ; RFs::MountFileSystem(TDesC16 const&, TDesC16 const&, int, int)
+	_ZN3RFs15NotifyDiskSpaceExiR14TRequestStatus @ 48 NONAME ; RFs::NotifyDiskSpace(long long, int, TRequestStatus&)
+	_ZN3RFs15RemoveExtensionERK7TDesC16 @ 49 NONAME ; RFs::RemoveExtension(TDesC16 const&)
+	_ZN3RFs15SetAllocFailureEi @ 50 NONAME ; RFs::SetAllocFailure(int)
+	_ZN3RFs16SetDebugRegisterEi @ 51 NONAME ; RFs::SetDebugRegister(int)
+	_ZN3RFs17CreatePrivatePathEi @ 52 NONAME ; RFs::CreatePrivatePath(int)
+	_ZN3RFs17DismountExtensionERK7TDesC16i @ 53 NONAME ; RFs::DismountExtension(TDesC16 const&, int)
+	_ZN3RFs17SetErrorConditionEii @ 54 NONAME ; RFs::SetErrorCondition(int, int)
+	_ZN3RFs18LoaderHeapFunctionEiPvS0_ @ 55 NONAME ; RFs::LoaderHeapFunction(int, void*, void*)
+	_ZN3RFs18NotifyChangeCancelER14TRequestStatus @ 56 NONAME ; RFs::NotifyChangeCancel(TRequestStatus&)
+	_ZN3RFs18NotifyChangeCancelEv @ 57 NONAME ; RFs::NotifyChangeCancel()
+	_ZN3RFs19SetSessionToPrivateEi @ 58 NONAME ; RFs::SetSessionToPrivate(int)
+	_ZN3RFs19StartupInitCompleteER14TRequestStatus @ 59 NONAME ; RFs::StartupInitComplete(TRequestStatus&)
+	_ZN3RFs20SetLocalDriveMappingERK6TDesC8 @ 60 NONAME ; RFs::SetLocalDriveMapping(TDesC8 const&)
+	_ZN3RFs21NotifyDiskSpaceCancelER14TRequestStatus @ 61 NONAME ; RFs::NotifyDiskSpaceCancel(TRequestStatus&)
+	_ZN3RFs21NotifyDiskSpaceCancelEv @ 62 NONAME ; RFs::NotifyDiskSpaceCancel()
+	_ZN3RFs5MkDirERK7TDesC16 @ 63 NONAME ; RFs::MkDir(TDesC16 const&)
+	_ZN3RFs5RmDirERK7TDesC16 @ 64 NONAME ; RFs::RmDir(TDesC16 const&)
+	_ZN3RFs6DeleteERK7TDesC16 @ 65 NONAME ; RFs::Delete(TDesC16 const&)
+	_ZN3RFs6RenameERK7TDesC16S2_ @ 66 NONAME ; RFs::Rename(TDesC16 const&, TDesC16 const&)
+	_ZN3RFs6SetAttERK7TDesC16jj @ 67 NONAME ; RFs::SetAtt(TDesC16 const&, unsigned int, unsigned int)
+	_ZN3RFs7ConnectEi @ 68 NONAME ; RFs::Connect(int)
+	_ZN3RFs7ReplaceERK7TDesC16S2_ @ 69 NONAME ; RFs::Replace(TDesC16 const&, TDesC16 const&)
+	_ZN3RFs8MkDirAllERK7TDesC16 @ 70 NONAME ; RFs::MkDirAll(TDesC16 const&)
+	_ZN3RFs8SetEntryERK7TDesC16RK5TTimejj @ 71 NONAME ; RFs::SetEntry(TDesC16 const&, TTime const&, unsigned int, unsigned int)
+	_ZN3RFs8SetSubstERK7TDesC16i @ 72 NONAME ; RFs::SetSubst(TDesC16 const&, int)
+	_ZN3RFs9ControlIoEii @ 73 NONAME ; RFs::ControlIo(int, int)
+	_ZN3RFs9ControlIoEiiPvS0_ @ 74 NONAME ; RFs::ControlIo(int, int, void*, void*)
+	_ZN3RFs9ControlIoEiiR5TDes8 @ 75 NONAME ; RFs::ControlIo(int, int, TDes8&)
+	_ZN3RFs9ControlIoEiiR5TDes8S1_ @ 76 NONAME ; RFs::ControlIo(int, int, TDes8&, TDes8&)
+	_ZN3RFs9LockDriveEiRK5TBuf8ILi16EES3_i @ 77 NONAME ; RFs::LockDrive(int, TBuf8<16> const&, TBuf8<16> const&, int)
+	_ZN4CDir4AddLERK6TEntry @ 78 NONAME ; CDir::AddL(TEntry const&)
+	_ZN4CDir4NewLEv @ 79 NONAME ; CDir::NewL()
+	_ZN4CDir4SortEj @ 80 NONAME ; CDir::Sort(unsigned int)
+	_ZN4CDir8CompressEv @ 81 NONAME ; CDir::Compress()
+	_ZN4CDir8ExtractLEiRPS_ @ 82 NONAME ; CDir::ExtractL(int, CDir*&)
+	_ZN4CDirC1Ev @ 83 NONAME ; CDir::CDir()
+	_ZN4CDirC2Ev @ 84 NONAME ; CDir::CDir()
+	_ZN4CDirD0Ev @ 85 NONAME ; CDir::~CDir()
+	_ZN4CDirD1Ev @ 86 NONAME ; CDir::~CDir()
+	_ZN4CDirD2Ev @ 87 NONAME ; CDir::~CDir()
+	_ZN4RDir4OpenER3RFsRK7TDesC16RK8TUidType @ 88 NONAME ; RDir::Open(RFs&, TDesC16 const&, TUidType const&)
+	_ZN4RDir4OpenER3RFsRK7TDesC16j @ 89 NONAME ; RDir::Open(RFs&, TDesC16 const&, unsigned int)
+	_ZN5RFile10ChangeModeE9TFileMode @ 90 NONAME ; RFile::ChangeMode(TFileMode)
+	_ZN5RFile11SetModifiedERK5TTime @ 91 NONAME ; RFile::SetModified(TTime const&)
+	_ZN5RFile3SetERK5TTimejj @ 92 NONAME ; RFile::Set(TTime const&, unsigned int, unsigned int)
+	_ZN5RFile4OpenER3RFsRK7TDesC16j @ 93 NONAME ; RFile::Open(RFs&, TDesC16 const&, unsigned int)
+	_ZN5RFile4TempER3RFsRK7TDesC16R4TBufILi256EEj @ 94 NONAME ; RFile::Temp(RFs&, TDesC16 const&, TBuf<256>&, unsigned int)
+	_ZN5RFile5AdoptER3RFsi @ 95 NONAME ; RFile::Adopt(RFs&, int)
+	_ZN5RFile5FlushEv @ 96 NONAME ; RFile::Flush()
+	_ZN5RFile5WriteERK6TDesC8 @ 97 NONAME ; RFile::Write(TDesC8 const&)
+	_ZN5RFile5WriteERK6TDesC8R14TRequestStatus @ 98 NONAME ; RFile::Write(TDesC8 const&, TRequestStatus&)
+	_ZN5RFile5WriteERK6TDesC8i @ 99 NONAME ; RFile::Write(TDesC8 const&, int)
+	_ZN5RFile5WriteERK6TDesC8iR14TRequestStatus @ 100 NONAME ; RFile::Write(TDesC8 const&, int, TRequestStatus&)
+	_ZN5RFile5WriteEiRK6TDesC8 @ 101 NONAME ; RFile::Write(int, TDesC8 const&)
+	_ZN5RFile5WriteEiRK6TDesC8R14TRequestStatus @ 102 NONAME ; RFile::Write(int, TDesC8 const&, TRequestStatus&)
+	_ZN5RFile5WriteEiRK6TDesC8i @ 103 NONAME ; RFile::Write(int, TDesC8 const&, int)
+	_ZN5RFile5WriteEiRK6TDesC8iR14TRequestStatus @ 104 NONAME ; RFile::Write(int, TDesC8 const&, int, TRequestStatus&)
+	_ZN5RFile6CreateER3RFsRK7TDesC16j @ 105 NONAME ; RFile::Create(RFs&, TDesC16 const&, unsigned int)
+	_ZN5RFile6RenameERK7TDesC16 @ 106 NONAME ; RFile::Rename(TDesC16 const&)
+	_ZN5RFile6SetAttEjj @ 107 NONAME ; RFile::SetAtt(unsigned int, unsigned int)
+	_ZN5RFile7ReplaceER3RFsRK7TDesC16j @ 108 NONAME ; RFile::Replace(RFs&, TDesC16 const&, unsigned int)
+	_ZN5RFile7SetSizeEi @ 109 NONAME ; RFile::SetSize(int)
+	_ZN6TEntryC1ERKS_ @ 110 NONAME ; TEntry::TEntry(TEntry const&)
+	_ZN6TEntryC1Ev @ 111 NONAME ; TEntry::TEntry()
+	_ZN6TEntryC2ERKS_ @ 112 NONAME ; TEntry::TEntry(TEntry const&)
+	_ZN6TEntryC2Ev @ 113 NONAME ; TEntry::TEntry()
+	_ZN6TEntryaSERKS_ @ 114 NONAME ; TEntry::operator=(TEntry const&)
+	_ZN6TParse3SetERK7TDesC16PS1_S3_ @ 115 NONAME ; TParse::Set(TDesC16 const&, TDesC16 const*, TDesC16 const*)
+	_ZN6TParse7NameBufEv @ 116 NONAME ; TParse::NameBuf()
+	_ZN6TParse9SetNoWildERK7TDesC16PS1_S3_ @ 117 NONAME ; TParse::SetNoWild(TDesC16 const&, TDesC16 const*, TDesC16 const*)
+	_ZN6TParseC1Ev @ 118 NONAME ; TParse::TParse()
+	_ZN6TParseC2Ev @ 119 NONAME ; TParse::TParse()
+	_ZN7RFormat4NextER8TPckgBufIiER14TRequestStatus @ 120 NONAME ; RFormat::Next(TPckgBuf<int>&, TRequestStatus&)
+	_ZN7RFormat4NextERi @ 121 NONAME ; RFormat::Next(int&)
+	_ZN7RFormat4OpenER3RFsRK7TDesC16jRi @ 122 NONAME ; RFormat::Open(RFs&, TDesC16 const&, unsigned int, int&)
+	_ZN5RFile9DuplicateERKS_10TOwnerType @ 123 NONAME ; RFile::Duplicate(RFile const&, TOwnerType)
+	_ZN8CDirScan12SetScanDataLERK7TDesC16jjNS_14TScanDirectionE @ 124 NONAME ; CDirScan::SetScanDataL(TDesC16 const&, unsigned int, unsigned int, CDirScan::TScanDirection)
+	_ZN8CDirScan15AbbreviatedPathEv @ 125 NONAME ; CDirScan::AbbreviatedPath()
+	_ZN8CDirScan4NewLER3RFs @ 126 NONAME ; CDirScan::NewL(RFs&)
+	_ZN8CDirScan5NewLCER3RFs @ 127 NONAME ; CDirScan::NewLC(RFs&)
+	_ZN8CDirScan5NextLERP4CDir @ 128 NONAME ; CDirScan::NextL(CDir*&)
+	_ZN8CDirScan8FullPathEv @ 129 NONAME ; CDirScan::FullPath()
+	_ZN8CDirScanD0Ev @ 130 NONAME ; CDirScan::~CDirScan()
+	_ZN8CDirScanD1Ev @ 131 NONAME ; CDirScan::~CDirScan()
+	_ZN8CDirScanD2Ev @ 132 NONAME ; CDirScan::~CDirScan()
+	_ZN8CFileMan13CurrentActionEv @ 133 NONAME ; CFileMan::CurrentAction()
+	_ZN8CFileMan16GetCurrentSourceER4TBufILi256EE @ 134 NONAME ; CFileMan::GetCurrentSource(TBuf<256>&)
+	_ZN8CFileMan16GetCurrentTargetER4TBufILi256EE @ 135 NONAME ; CFileMan::GetCurrentTarget(TBuf<256>&)
+	_ZN8CFileMan26BytesTransferredByCopyStepEv @ 136 NONAME ; CFileMan::BytesTransferredByCopyStep()
+	_ZN8CFileMan4CopyERK7TDesC16S2_j @ 137 NONAME ; CFileMan::Copy(TDesC16 const&, TDesC16 const&, unsigned int)
+	_ZN8CFileMan4CopyERK7TDesC16S2_jR14TRequestStatus @ 138 NONAME ; CFileMan::Copy(TDesC16 const&, TDesC16 const&, unsigned int, TRequestStatus&)
+	_ZN8CFileMan4MoveERK7TDesC16S2_j @ 139 NONAME ; CFileMan::Move(TDesC16 const&, TDesC16 const&, unsigned int)
+	_ZN8CFileMan4MoveERK7TDesC16S2_jR14TRequestStatus @ 140 NONAME ; CFileMan::Move(TDesC16 const&, TDesC16 const&, unsigned int, TRequestStatus&)
+	_ZN8CFileMan4NewLER3RFs @ 141 NONAME ; CFileMan::NewL(RFs&)
+	_ZN8CFileMan4NewLER3RFsP16MFileManObserver @ 142 NONAME ; CFileMan::NewL(RFs&, MFileManObserver*)
+	_ZN8CFileMan5RmDirERK7TDesC16 @ 143 NONAME ; CFileMan::RmDir(TDesC16 const&)
+	_ZN8CFileMan5RmDirERK7TDesC16R14TRequestStatus @ 144 NONAME ; CFileMan::RmDir(TDesC16 const&, TRequestStatus&)
+	_ZN8CFileMan6DeleteERK7TDesC16j @ 145 NONAME ; CFileMan::Delete(TDesC16 const&, unsigned int)
+	_ZN8CFileMan6DeleteERK7TDesC16jR14TRequestStatus @ 146 NONAME ; CFileMan::Delete(TDesC16 const&, unsigned int, TRequestStatus&)
+	_ZN8CFileMan6RenameERK7TDesC16S2_j @ 147 NONAME ; CFileMan::Rename(TDesC16 const&, TDesC16 const&, unsigned int)
+	_ZN8CFileMan6RenameERK7TDesC16S2_jR14TRequestStatus @ 148 NONAME ; CFileMan::Rename(TDesC16 const&, TDesC16 const&, unsigned int, TRequestStatus&)
+	_ZN8CFileMan7AttribsERK7TDesC16jjRK5TTimej @ 149 NONAME ; CFileMan::Attribs(TDesC16 const&, unsigned int, unsigned int, TTime const&, unsigned int)
+	_ZN8CFileMan7AttribsERK7TDesC16jjRK5TTimejR14TRequestStatus @ 150 NONAME ; CFileMan::Attribs(TDesC16 const&, unsigned int, unsigned int, TTime const&, unsigned int, TRequestStatus&)
+	_ZN8RRawDisk4OpenER3RFsi @ 151 NONAME ; RRawDisk::Open(RFs&, int)
+	_ZN8RRawDisk4ReadExR5TDes8 @ 152 NONAME ; RRawDisk::Read(long long, TDes8&)
+	_ZN9_RRawDisk4ReadEiR5TDes8 @ 153 NONAME ; _RRawDisk::Read(int, TDes8&)
+	_ZN8RRawDisk5CloseEv @ 154 NONAME ; RRawDisk::Close()
+	_ZN8RRawDisk5WriteExR6TDesC8 @ 155 NONAME ; RRawDisk::Write(long long, TDesC8&)
+	_ZN9_RRawDisk5WriteEiR6TDesC8 @ 156 NONAME ; _RRawDisk::Write(int, TDesC8&)
+	_ZN9CFileBase10ConstructLEv @ 157 NONAME ; CFileBase::ConstructL()
+	_ZN9CFileBase11SetObserverEP16MFileManObserver @ 158 NONAME ; CFileBase::SetObserver(MFileManObserver*)
+	_ZN9CFileBase12CurrentEntryEv @ 159 NONAME ; CFileBase::CurrentEntry()
+	_ZN9CFileBase12GetLastErrorEv @ 160 NONAME ; CFileBase::GetLastError()
+	_ZN9CFileBase15AbbreviatedPathEv @ 161 NONAME ; CFileBase::AbbreviatedPath()
+	_ZN9CFileBase20RunInSeparateThreadLEPFiPvE @ 162 NONAME ; CFileBase::RunInSeparateThreadL(int (*)(void*))
+	_ZN9CFileBase21GetMoreInfoAboutErrorEv @ 163 NONAME ; CFileBase::GetMoreInfoAboutError()
+	_ZN9CFileBase4RunLEv @ 164 NONAME ; CFileBase::RunL()
+	_ZN9CFileBase8FullPathEv @ 165 NONAME ; CFileBase::FullPath()
+	_ZN9CFileBaseC2ER3RFs @ 166 NONAME ; CFileBase::CFileBase(RFs&)
+	_ZN9CFileBaseD0Ev @ 167 NONAME ; CFileBase::~CFileBase()
+	_ZN9CFileBaseD1Ev @ 168 NONAME ; CFileBase::~CFileBase()
+	_ZN9CFileBaseD2Ev @ 169 NONAME ; CFileBase::~CFileBase()
+	_ZN9TFileText3SetER5RFile @ 170 NONAME ; TFileText::Set(RFile&)
+	_ZN9TFileText4ReadER6TDes16 @ 171 NONAME ; TFileText::Read(TDes16&)
+	_ZN9TFileText4SeekE5TSeek @ 172 NONAME ; TFileText::Seek(TSeek)
+	_ZN9TFileText5WriteERK7TDesC16 @ 173 NONAME ; TFileText::Write(TDesC16 const&)
+	_ZN9TFileTextC1Ev @ 174 NONAME ; TFileText::TFileText()
+	_ZN9TFileTextC2Ev @ 175 NONAME ; TFileText::TFileText()
+	_ZN9TFindFile10FindByPathERK7TDesC16PS1_ @ 176 NONAME ; TFindFile::FindByPath(TDesC16 const&, TDesC16 const*)
+	_ZN9TFindFile13FindWildByDirERK7TDesC16S2_RP4CDir @ 177 NONAME ; TFindFile::FindWildByDir(TDesC16 const&, TDesC16 const&, CDir*&)
+	_ZN9TFindFile14FindWildByPathERK7TDesC16PS1_RP4CDir @ 178 NONAME ; TFindFile::FindWildByPath(TDesC16 const&, TDesC16 const*, CDir*&)
+	_ZN9TFindFile4FindEv @ 179 NONAME ; TFindFile::Find()
+	_ZN9TFindFile8FindWildERP4CDir @ 180 NONAME ; TFindFile::FindWild(CDir*&)
+	_ZN9TFindFile9FindByDirERK7TDesC16S2_ @ 181 NONAME ; TFindFile::FindByDir(TDesC16 const&, TDesC16 const&)
+	_ZN9TFindFileC1ER3RFs @ 182 NONAME ; TFindFile::TFindFile(RFs&)
+	_ZN9TFindFileC2ER3RFs @ 183 NONAME ; TFindFile::TFindFile(RFs&)
+	_ZN9TParsePtr7NameBufEv @ 184 NONAME ; TParsePtr::NameBuf()
+	_ZN9TParsePtrC1ER6TDes16 @ 185 NONAME ; TParsePtr::TParsePtr(TDes16&)
+	_ZN9TParsePtrC2ER6TDes16 @ 186 NONAME ; TParsePtr::TParsePtr(TDes16&)
+	_ZNK10TDriveUnit4NameEv @ 187 NONAME ; TDriveUnit::Name() const
+	_ZNK10TParseBase10ExtPresentEv @ 188 NONAME ; TParseBase::ExtPresent() const
+	_ZNK10TParseBase10IsNameWildEv @ 189 NONAME ; TParseBase::IsNameWild() const
+	_ZNK10TParseBase10NameAndExtEv @ 190 NONAME ; TParseBase::NameAndExt() const
+	_ZNK10TParseBase11IsKMatchAnyEv @ 191 NONAME ; TParseBase::IsKMatchAny() const
+	_ZNK10TParseBase11IsKMatchOneEv @ 192 NONAME ; TParseBase::IsKMatchOne() const
+	_ZNK10TParseBase11NamePresentEv @ 193 NONAME ; TParseBase::NamePresent() const
+	_ZNK10TParseBase11PathPresentEv @ 194 NONAME ; TParseBase::PathPresent() const
+	_ZNK10TParseBase12DriveAndPathEv @ 195 NONAME ; TParseBase::DriveAndPath() const
+	_ZNK10TParseBase12DrivePresentEv @ 196 NONAME ; TParseBase::DrivePresent() const
+	_ZNK10TParseBase16NameOrExtPresentEv @ 197 NONAME ; TParseBase::NameOrExtPresent() const
+	_ZNK10TParseBase3ExtEv @ 198 NONAME ; TParseBase::Ext() const
+	_ZNK10TParseBase4NameEv @ 199 NONAME ; TParseBase::Name() const
+	_ZNK10TParseBase4PathEv @ 200 NONAME ; TParseBase::Path() const
+	_ZNK10TParseBase5DriveEv @ 201 NONAME ; TParseBase::Drive() const
+	_ZNK10TParseBase6IsRootEv @ 202 NONAME ; TParseBase::IsRoot() const
+	_ZNK10TParseBase6IsWildEv @ 203 NONAME ; TParseBase::IsWild() const
+	_ZNK10TParseBase8FullNameEv @ 204 NONAME ; TParseBase::FullName() const
+	_ZNK10TParseBase9IsExtWildEv @ 205 NONAME ; TParseBase::IsExtWild() const
+	_ZNK10TParsePtrC8NameBufCEv @ 206 NONAME ; TParsePtrC::NameBufC() const
+	_ZNK11TEntryArray5CountEv @ 207 NONAME ; TEntryArray::Count() const
+	_ZNK11TEntryArrayixEi @ 208 NONAME ; TEntryArray::operator[](int) const
+	_ZNK13TOpenFileScan8ThreadIdEv @ 209 NONAME ; TOpenFileScan::ThreadId() const
+	_ZNK3RFs10IsFileOpenERK7TDesC16Ri @ 210 NONAME ; RFs::IsFileOpen(TDesC16 const&, int&) const
+	_ZNK3RFs11DefaultPathER6TDes16 @ 211 NONAME ; RFs::DefaultPath(TDes16&) const
+	_ZNK3RFs11GetLongNameERK7TDesC16R6TDes16 @ 212 NONAME ; RFs::GetLongName(TDesC16 const&, TDes16&) const
+	_ZNK3RFs11IsFileInRomERK7TDesC16 @ 213 NONAME ; RFs::IsFileInRom(TDesC16 const&) const
+	_ZNK3RFs11IsValidNameERK7TDesC16 @ 214 NONAME ; RFs::IsValidName(TDesC16 const&) const
+	_ZNK3RFs11IsValidNameERK7TDesC16Rt @ 215 NONAME ; RFs::IsValidName(TDesC16 const&, unsigned short&) const
+	_ZNK3RFs11SessionPathER6TDes16 @ 216 NONAME ; RFs::SessionPath(TDes16&) const
+	_ZNK3RFs12GetDriveNameEiR6TDes16 @ 217 NONAME ; RFs::GetDriveName(int, TDes16&) const
+	_ZNK3RFs12GetShortNameERK7TDesC16R6TDes16 @ 218 NONAME ; RFs::GetShortName(TDesC16 const&, TDes16&) const
+	_ZNK3RFs13AddFileSystemERK7TDesC16 @ 219 NONAME ; RFs::AddFileSystem(TDesC16 const&) const
+	_ZNK3RFs13ResourceCountEv @ 220 NONAME ; RFs::ResourceCount() const
+	_ZNK3RFs14FileSystemNameER6TDes16i @ 221 NONAME ; RFs::FileSystemName(TDes16&, int) const
+	_ZNK3RFs14SwapFileSystemERK7TDesC16S2_i @ 222 NONAME ; RFs::SwapFileSystem(TDesC16 const&, TDesC16 const&, int) const
+	_ZNK3RFs15MountFileSystemERK7TDesC16i @ 223 NONAME ; RFs::MountFileSystem(TDesC16 const&, int) const
+	_ZNK3RFs15MountFileSystemERK7TDesC16ii @ 224 NONAME ; RFs::MountFileSystem(TDesC16 const&, int, int) const
+	_ZNK3RFs24ReadFileSection_RESERVEDERK7TDesC16iR5TDes8i @ 225 NONAME ; RFs::ReadFileSection_RESERVED(TDesC16 const&, int, TDes8&, int) const
+	_ZNK3RFs16RemoveFileSystemERK7TDesC16 @ 226 NONAME ; RFs::RemoveFileSystem(TDesC16 const&) const
+	_ZNK3RFs18DismountFileSystemERK7TDesC16i @ 227 NONAME ; RFs::DismountFileSystem(TDesC16 const&, int) const
+	_ZNK3RFs20ResourceCountMarkEndEv @ 228 NONAME ; RFs::ResourceCountMarkEnd() const
+	_ZNK3RFs22MountFileSystemAndScanERK7TDesC16iRi @ 229 NONAME ; RFs::MountFileSystemAndScan(TDesC16 const&, int, int&) const
+	_ZNK3RFs22ResourceCountMarkStartEv @ 230 NONAME ; RFs::ResourceCountMarkStart() const
+	_ZNK3RFs3AttERK7TDesC16Rj @ 231 NONAME ; RFs::Att(TDesC16 const&, unsigned int&) const
+	_ZNK3RFs5DriveER10TDriveInfoi @ 232 NONAME ; RFs::Drive(TDriveInfo&, int) const
+	_ZNK3RFs5EntryERK7TDesC16R6TEntry @ 233 NONAME ; RFs::Entry(TDesC16 const&, TEntry&) const
+	_ZNK3RFs5ParseERK7TDesC16R6TParse @ 234 NONAME ; RFs::Parse(TDesC16 const&, TParse&) const
+	_ZNK3RFs5ParseERK7TDesC16S2_R6TParse @ 235 NONAME ; RFs::Parse(TDesC16 const&, TDesC16 const&, TParse&) const
+	_ZNK3RFs5SubstER6TDes16i @ 236 NONAME ; RFs::Subst(TDes16&, int) const
+	_ZNK3RFs6GetDirERK7TDesC16RK8TUidTypejRP4CDir @ 237 NONAME ; RFs::GetDir(TDesC16 const&, TUidType const&, unsigned int, CDir*&) const
+	_ZNK3RFs6GetDirERK7TDesC16jjRP4CDir @ 238 NONAME ; RFs::GetDir(TDesC16 const&, unsigned int, unsigned int, CDir*&) const
+	_ZNK3RFs6GetDirERK7TDesC16jjRP4CDirS5_ @ 239 NONAME ; RFs::GetDir(TDesC16 const&, unsigned int, unsigned int, CDir*&, CDir*&) const
+	_ZNK3RFs6VolumeER11TVolumeInfoi @ 240 NONAME ; RFs::Volume(TVolumeInfo&, int) const
+	_ZNK3RFs7VersionEv @ 241 NONAME ; RFs::Version() const
+	_ZNK3RFs8ModifiedERK7TDesC16R5TTime @ 242 NONAME ; RFs::Modified(TDesC16 const&, TTime&) const
+	_ZNK3RFs8RealNameERK7TDesC16R6TDes16 @ 243 NONAME ; RFs::RealName(TDesC16 const&, TDes16&) const
+	_ZNK3RFs9CheckDiskERK7TDesC16 @ 244 NONAME ; RFs::CheckDisk(TDesC16 const&) const
+	_ZNK3RFs9DriveListER5TBuf8ILi26EE @ 245 NONAME ; RFs::DriveList(TBuf8<26>&) const
+	_ZNK3RFs9ScanDriveERK7TDesC16 @ 246 NONAME ; RFs::ScanDrive(TDesC16 const&) const
+	_ZNK4CDir5CountEv @ 247 NONAME ; CDir::Count() const
+	_ZNK4CDirixEi @ 248 NONAME ; CDir::operator[](int) const
+	_ZNK4RDir4ReadER11TEntryArray @ 249 NONAME ; RDir::Read(TEntryArray&) const
+	_ZNK4RDir4ReadER11TEntryArrayR14TRequestStatus @ 250 NONAME ; RDir::Read(TEntryArray&, TRequestStatus&) const
+	_ZNK4RDir4ReadER5TPckgI6TEntryER14TRequestStatus @ 251 NONAME ; RDir::Read(TPckg<TEntry>&, TRequestStatus&) const
+	_ZNK4RDir4ReadER6TEntry @ 252 NONAME ; RDir::Read(TEntry&) const
+	_ZNK5RFile3AttERj @ 253 NONAME ; RFile::Att(unsigned int&) const
+	_ZNK5RFile4LockEii @ 254 NONAME ; RFile::Lock(int, int) const
+	_ZNK5RFile4ReadER5TDes8 @ 255 NONAME ; RFile::Read(TDes8&) const
+	_ZNK5RFile4ReadER5TDes8R14TRequestStatus @ 256 NONAME ; RFile::Read(TDes8&, TRequestStatus&) const
+	_ZNK5RFile4ReadER5TDes8i @ 257 NONAME ; RFile::Read(TDes8&, int) const
+	_ZNK5RFile4ReadER5TDes8iR14TRequestStatus @ 258 NONAME ; RFile::Read(TDes8&, int, TRequestStatus&) const
+	_ZNK5RFile4ReadEiR5TDes8 @ 259 NONAME ; RFile::Read(int, TDes8&) const
+	_ZNK5RFile4ReadEiR5TDes8R14TRequestStatus @ 260 NONAME ; RFile::Read(int, TDes8&, TRequestStatus&) const
+	_ZNK5RFile4ReadEiR5TDes8i @ 261 NONAME ; RFile::Read(int, TDes8&, int) const
+	_ZNK5RFile4ReadEiR5TDes8iR14TRequestStatus @ 262 NONAME ; RFile::Read(int, TDes8&, int, TRequestStatus&) const
+	_ZNK5RFile4SeekE5TSeekRi @ 263 NONAME ; RFile::Seek(TSeek, int&) const
+	_ZNK5RFile4SizeERi @ 264 NONAME ; RFile::Size(int&) const
+	_ZNK5RFile5DriveERiR10TDriveInfo @ 265 NONAME ; RFile::Drive(int&, TDriveInfo&) const
+	_ZNK5RFile6UnLockEii @ 266 NONAME ; RFile::UnLock(int, int) const
+	_ZNK5RFile8ModifiedER5TTime @ 267 NONAME ; RFile::Modified(TTime&) const
+	_ZNK6TEntry10IsReadOnlyEv @ 268 NONAME ; TEntry::IsReadOnly() const
+	_ZNK6TEntry5IsDirEv @ 269 NONAME ; TEntry::IsDir() const
+	_ZNK6TEntry8IsHiddenEv @ 270 NONAME ; TEntry::IsHidden() const
+	_ZNK6TEntry8IsSystemEv @ 271 NONAME ; TEntry::IsSystem() const
+	_ZNK6TEntry9IsArchiveEv @ 272 NONAME ; TEntry::IsArchive() const
+	_ZNK6TParse8NameBufCEv @ 273 NONAME ; TParse::NameBufC() const
+	_ZNK9TParsePtr8NameBufCEv @ 274 NONAME ; TParsePtr::NameBufC() const
+	_ZTI10TParseBase @ 275 NONAME ABSENT ; typeinfo for TParseBase
+	_ZTI10TParsePtrC @ 276 NONAME ; typeinfo for TParsePtrC
+	_ZTI16MFileManObserver @ 277 NONAME ; typeinfo for MFileManObserver
+	_ZTI4CDir @ 278 NONAME ; typeinfo for CDir
+	_ZTI6TParse @ 279 NONAME ; typeinfo for TParse
+	_ZTI9CFileBase @ 280 NONAME ; typeinfo for CFileBase
+	_ZTI9TParsePtr @ 281 NONAME ; typeinfo for TParsePtr
+	_ZTV10TParsePtrC @ 282 NONAME ; vtable for TParsePtrC
+	_ZTV16MFileManObserver @ 283 NONAME ; vtable for MFileManObserver
+	_ZTV4CDir @ 284 NONAME ; vtable for CDir
+	_ZTV6TParse @ 285 NONAME ; vtable for TParse
+	_ZTV9CFileBase @ 286 NONAME ; vtable for CFileBase
+	_ZTV9TParsePtr @ 287 NONAME ; vtable for TParsePtr
+	_ZN3RFs13ErasePasswordEi @ 288 NONAME ; RFs::ErasePassword(int)
+	_ZN3RFs16GetReserveAccessEi @ 289 NONAME ; RFs::GetReserveAccess(int)
+	_ZN3RFs17ReserveDriveSpaceEii @ 290 NONAME ; RFs::ReserveDriveSpace(int, int)
+	_ZN3RFs20ReleaseReserveAccessEi @ 291 NONAME ; RFs::ReleaseReserveAccess(int)
+	_ZN5RFile15AdoptFromClientERK9RMessage2ii @ 292 NONAME ; RFile::AdoptFromClient(RMessage2 const&, int, int)
+	_ZN5RFile16AdoptFromCreatorEii @ 293 NONAME ; RFile::AdoptFromCreator(int, int)
+	_ZN5RFile15AdoptFromServerEii @ 294 NONAME ; RFile::AdoptFromServer(int, int)
+	_ZNK5RFile16TransferToClientERK9RMessage2i @ 295 NONAME ; RFile::TransferToClient(RMessage2 const&, int) const
+	_ZNK5RFile16TransferToServerER8TIpcArgsii @ 296 NONAME ; RFile::TransferToServer(TIpcArgs&, int, int) const
+	_ZNK5RFile17TransferToProcessER8RProcessii @ 297 NONAME ; RFile::TransferToProcess(RProcess&, int, int) const
+	_ZNK5RFile4NameER6TDes16 @ 298 NONAME ; RFile::Name(TDes16&) const
+	_ZN4RDir5CloseEv @ 299 NONAME
+	_ZN5RFile5CloseEv @ 300 NONAME
+	_ZN7RFormat5CloseEv @ 301 NONAME
+	_ZN3RFs20GetMediaSerialNumberER5TBuf8ILi64EEi @ 302 NONAME
+	_ZN8CFileMan4CopyERK5RFileRK7TDesC16j @ 303 NONAME
+	_ZN8CFileMan4CopyERK5RFileRK7TDesC16jR14TRequestStatus @ 304 NONAME
+	_ZNK5RFile8FullNameER6TDes16 @ 305 NONAME
+	_ZN3RFs10PluginNameER6TDes16ii @ 306 NONAME
+	_ZN7RPlugin4OpenER3RFsi @ 307 NONAME
+	_ZN7RPlugin5CloseEv @ 308 NONAME
+	_ZNK3RFs11MountPluginERK7TDesC16 @ 309 NONAME
+	_ZNK3RFs11MountPluginERK7TDesC16i @ 310 NONAME
+	_ZNK3RFs11MountPluginERK7TDesC16ii @ 311 NONAME
+	_ZNK3RFs12RemovePluginERK7TDesC16 @ 312 NONAME
+	_ZNK3RFs14DismountPluginERK7TDesC16 @ 313 NONAME
+	_ZNK3RFs14DismountPluginERK7TDesC16i @ 314 NONAME
+	_ZNK3RFs14DismountPluginERK7TDesC16ii @ 315 NONAME
+	_ZNK3RFs9AddPluginERK7TDesC16 @ 316 NONAME
+	_ZNK7RPlugin8DoCancelEj @ 317 NONAME
+	_ZNK7RPlugin9DoControlEi @ 318 NONAME
+	_ZNK7RPlugin9DoControlEiR5TDes8 @ 319 NONAME
+	_ZNK7RPlugin9DoControlEiR5TDes8S1_ @ 320 NONAME
+	_ZNK7RPlugin9DoRequestEiR14TRequestStatus @ 321 NONAME
+	_ZNK7RPlugin9DoRequestEiR14TRequestStatusR5TDes8 @ 322 NONAME
+	_ZNK7RPlugin9DoRequestEiR14TRequestStatusR5TDes8S3_ @ 323 NONAME
+	_ZNK3RFs13AllowDismountEi @ 324 NONAME
+	_ZNK3RFs14NotifyDismountEiR14TRequestStatus19TNotifyDismountMode @ 325 NONAME
+	_ZNK3RFs20NotifyDismountCancelER14TRequestStatus @ 326 NONAME
+	_ZNK3RFs20NotifyDismountCancelEv @ 327 NONAME
+	_ZN7RFormat4OpenER3RFsRK7TDesC16jRiRK6TDesC8 @ 328 NONAME
+	_ZNK3RFs23SetStartupConfigurationEiPvS0_ @ 329 NONAME
+	_ZNK5RFile10ReadCancelER14TRequestStatus @ 330 NONAME
+	_ZNK5RFile10ReadCancelEv @ 331 NONAME
+	_ZNK3RFs22MountFileSystemAndScanERK7TDesC16S2_iRi @ 332 NONAME
+	_ZN3RFs15SetNotifyChangeEi @ 333 NONAME
+	_ZNK3RFs17AddCompositeMountERK7TDesC16iii @ 334 NONAME
+	_ZN5RFile5FlushER14TRequestStatus @ 335 NONAME
+	_ZN3RFs14GetSystemDriveEv @ 336 NONAME
+	_ZN14TBlockMapEntry13SetStartBlockEj @ 337 NONAME
+	_ZN14TBlockMapEntry17SetNumberOfBlocksEj @ 338 NONAME
+	_ZN14TBlockMapEntryC1Ev @ 339 NONAME
+	_ZN14TBlockMapEntryC2Ev @ 340 NONAME
+	_ZNK5RFile8BlockMapER13SBlockMapInfoRxxi @ 341 NONAME
+	_ZN10RFileClamp5ClampER5RFile @ 342 NONAME
+	_ZN10RFileClamp5CloseER3RFs @ 343 NONAME
+	_ZNK3RFs13VolumeIOParamEiR18TVolumeIOParamInfo @ 344 NONAME
+	_ZNK3RFs17FileSystemSubTypeEiR6TDes16 @ 345 NONAME
+	_ZNK3RFs18QueryVolumeInfoExtEi22TQueryVolumeInfoExtCmdR5TDes8 @ 346 NONAME
+	_ZNK3RFs24InitialisePropertiesFileERK6TPtrC8 @ 347 NONAME
+	_ZN3RFs14SetSystemDriveE12TDriveNumber @ 348 NONAME
+	_ZN3RFs18GetSystemDriveCharEv @ 349 NONAME
+	_ZN9TFindFile11SetFindMaskEj @ 350 NONAME
+	_ZNK3RFs9DriveListER5TBuf8ILi26EEj @ 351 NONAME
+	_ZNK3RFs13FinaliseDriveEiNS_16TFinaliseDrvModeE @ 352 NONAME
+	_ZNK3RFs6VolumeER11TVolumeInfoiR14TRequestStatus @ 353 NONAME
+	_ZN3RFs13AddProxyDriveERK7TDesC16 @ 354 NONAME
+	_ZN3RFs16RemoveProxyDriveERK7TDesC16 @ 355 NONAME
+	_ZN3RFs17DoMountProxyDriveERK8TIpcArgs @ 356 NONAME
+	_ZN3RFs18DismountProxyDriveEj @ 357 NONAME
+	_ZN8RRawDisk4CapsER5TDes8 @ 358 NONAME ABSENT
+	_ZNK3RFs15ReadFileSectionERK7TDesC16xR5TDes8i @ 359 NONAME
+	_ZN7RFile6415AdoptFromClientERK9RMessage2ii @ 360 NONAME
+	_ZN7RFile6415AdoptFromServerEii @ 361 NONAME
+	_ZN7RFile6416AdoptFromCreatorEii @ 362 NONAME
+	_ZN7RFile644OpenER3RFsRK7TDesC16j @ 363 NONAME
+	_ZN7RFile644TempER3RFsRK7TDesC16R4TBufILi256EEj @ 364 NONAME
+	_ZN7RFile645WriteEjRK6TDesC8 @ 365 NONAME
+	_ZN7RFile645WriteEjRK6TDesC8R14TRequestStatus @ 366 NONAME
+	_ZN7RFile645WriteEjRK6TDesC8i @ 367 NONAME
+	_ZN7RFile645WriteEjRK6TDesC8iR14TRequestStatus @ 368 NONAME
+	_ZN7RFile645WriteExRK6TDesC8 @ 369 NONAME
+	_ZN7RFile645WriteExRK6TDesC8R14TRequestStatus @ 370 NONAME
+	_ZN7RFile645WriteExRK6TDesC8i @ 371 NONAME
+	_ZN7RFile645WriteExRK6TDesC8iR14TRequestStatus @ 372 NONAME
+	_ZN7RFile646CreateER3RFsRK7TDesC16j @ 373 NONAME
+	_ZN7RFile647ReplaceER3RFsRK7TDesC16j @ 374 NONAME
+	_ZN7RFile647SetSizeEx @ 375 NONAME
+	_ZNK6TEntry8FileSizeEv @ 376 NONAME
+	_ZNK7RFile644LockExx @ 377 NONAME
+	_ZNK7RFile644ReadEjR5TDes8 @ 378 NONAME
+	_ZNK7RFile644ReadEjR5TDes8R14TRequestStatus @ 379 NONAME
+	_ZNK7RFile644ReadEjR5TDes8i @ 380 NONAME
+	_ZNK7RFile644ReadEjR5TDes8iR14TRequestStatus @ 381 NONAME
+	_ZNK7RFile644ReadExR5TDes8 @ 382 NONAME
+	_ZNK7RFile644ReadExR5TDes8R14TRequestStatus @ 383 NONAME
+	_ZNK7RFile644ReadExR5TDes8i @ 384 NONAME
+	_ZNK7RFile644ReadExR5TDes8iR14TRequestStatus @ 385 NONAME
+	_ZNK7RFile644SeekE5TSeekRx @ 386 NONAME
+	_ZNK7RFile644SizeERx @ 387 NONAME
+	_ZNK7RFile646UnLockExx @ 388 NONAME
+	_ZN3RFs11IsValidNameERK7TDesC16RNS_15TNameValidParamE @ 389 NONAME
+	_ZN3RFs5CloseEv @ 390 NONAME
+	_ZN9CFsNotify15AddNotificationEjRK7TDesC16S2_ @ 391 NONAME
+	_ZN9CFsNotify16NextNotificationEv @ 392 NONAME
+	_ZN9CFsNotify19CancelNotificationsER14TRequestStatus @ 393 NONAME
+	_ZN9CFsNotify19RemoveNotificationsEv @ 394 NONAME
+	_ZN9CFsNotify20RequestNotificationsER14TRequestStatus @ 395 NONAME
+	_ZN9CFsNotify4NewLER3RFsi @ 396 NONAME
+	_ZN9CFsNotifyD0Ev @ 397 NONAME
+	_ZN9CFsNotifyD1Ev @ 398 NONAME
+	_ZN9CFsNotifyD2Ev @ 399 NONAME
+	_ZNK15TFsNotification10AttributesERjS0_ @ 400 NONAME
+	_ZNK15TFsNotification16NotificationTypeEv @ 401 NONAME
+	_ZNK15TFsNotification4PathER7TPtrC16 @ 402 NONAME
+	_ZNK15TFsNotification7NewNameER7TPtrC16 @ 403 NONAME
+	_ZNK15TFsNotification8FileSizeERx @ 404 NONAME
+	_ZTI13CFsNotifyBody @ 405 NONAME
+	_ZTI19CFsNotificationList @ 406 NONAME
+	_ZTI9CFsNotify @ 407 NONAME
+	_ZTV13CFsNotifyBody @ 408 NONAME
+	_ZTV19CFsNotificationList @ 409 NONAME
+	_ZTV9CFsNotify @ 410 NONAME
+	_ZNK3RFs23SupportedFileSystemNameER6TDes16ii @ 411 NONAME
+

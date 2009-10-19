@@ -1,0 +1,21 @@
+@
+cuid: 0x00000001
+eid: 2
+type: Int32
+flags: 0x0000
+intval: 0
+.
+@
+cuid: 0x00000001
+eid: 1
+type: Int32
+flags: 0x0000
+intval: 0
+.
+@
+cuid: 0x00000001
+eid: 3
+type: Int32
+flags: 0x0000
+intval: 0
+.

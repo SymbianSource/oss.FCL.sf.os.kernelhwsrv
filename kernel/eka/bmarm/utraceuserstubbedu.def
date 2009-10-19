@@ -1,0 +1,21 @@
+EXPORTS
+	WouldBeTracedNow__3UTFRCQ23UTF13TTraceContext @ 1 NONAME R3UNUSED ; UTF::WouldBeTracedNow(UTF::TTraceContext const &)
+	DefaultModuleUid__Q23UTF13TTraceContext @ 2 NONAME R3UNUSED ; UTF::TTraceContext::DefaultModuleUid(void)
+	HasProgramCounter__CQ23UTF13TTraceContext @ 3 NONAME R3UNUSED ; UTF::TTraceContext::HasProgramCounter(void) const
+	HasThreadIdentification__CQ23UTF13TTraceContext @ 4 NONAME R3UNUSED ; UTF::TTraceContext::HasThreadIdentification(void) const
+	ModuleUid__CQ23UTF13TTraceContext @ 5 NONAME R3UNUSED ; UTF::TTraceContext::ModuleUid(void) const
+	Print__3UTFRCQ23UTF13TTraceContextRC6TDesC8 @ 6 NONAME R3UNUSED ; UTF::Print(UTF::TTraceContext const &, TDesC8 const &)
+	Print___3UTFRCQ23UTF13TTraceContextRC7TDesC16 @ 7 NONAME R3UNUSED ; UTF::Print_(UTF::TTraceContext const &, TDesC16 const &)
+	Printf__3UTFRCQ23UTF13TTraceContextPCce @ 8 NONAME ; UTF::Printf(UTF::TTraceContext const &, char const *,...)
+	Printf___3UTFRCQ23UTF13TTraceContextGt11TRefByValue1ZC6TDesC8e @ 9 NONAME ; UTF::Printf_(UTF::TTraceContext const &, TRefByValue<TDesC8 const>,...)
+	Printf___3UTFRCQ23UTF13TTraceContextGt11TRefByValue1ZC7TDesC16e @ 10 NONAME ; UTF::Printf_(UTF::TTraceContext const &, TRefByValue<TDesC16 const>,...)
+	Trace__3UTFRCQ23UTF13TTraceContextUsRC6TDesC8 @ 11 NONAME R3UNUSED ; UTF::Trace(UTF::TTraceContext const &, unsigned short, TDesC8 const &)
+	Trace__3UTFRCQ23UTF13TTraceContextUsUc @ 12 NONAME R3UNUSED ; UTF::Trace(UTF::TTraceContext const &, unsigned short, unsigned char)
+	Trace__3UTFRCQ23UTF13TTraceContextUsUl @ 13 NONAME R3UNUSED ; UTF::Trace(UTF::TTraceContext const &, unsigned short, unsigned long)
+	Trace__3UTFRCQ23UTF13TTraceContextUsUlUl @ 14 NONAME ; UTF::Trace(UTF::TTraceContext const &, unsigned short, unsigned long, unsigned long)
+	Trace__3UTFRCQ23UTF13TTraceContextUsUs @ 15 NONAME R3UNUSED ; UTF::Trace(UTF::TTraceContext const &, unsigned short, unsigned short)
+	Trace___3UTFRCQ23UTF13TTraceContextUs @ 16 NONAME R3UNUSED ; UTF::Trace_(UTF::TTraceContext const &, unsigned short)
+	Trace___3UTFRCQ23UTF13TTraceContextUsPCvi @ 17 NONAME ; UTF::Trace_(UTF::TTraceContext const &, unsigned short, void const *, int)
+	Trace___3UTFRCQ23UTF13TTraceContextUsRC7TDesC16 @ 18 NONAME R3UNUSED ; UTF::Trace_(UTF::TTraceContext const &, unsigned short, TDesC16 const &)
+	Classification__CQ23UTF13TTraceContext @ 19 NONAME R3UNUSED ; UTF::TTraceContext::Classification(void) const
+

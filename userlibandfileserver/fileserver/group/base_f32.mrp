@@ -1,0 +1,28 @@
+# component name "File Server"
+
+component	base_f32
+
+
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\inc
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\group
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\bmarm
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\bwins
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\bx86
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\ddesign
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\eabi
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\rom
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\runtests
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfile
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfsrv
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\ftrace
+
+binary	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\group all
+exports	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\group
+notes_source	\component_defs\release.src
+
+
+ipr D
+ipr T \sf\os\kernelhwsrv\userlibandfileserver\fileserver\runtests
+ipr A \sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfile
+ipr A \sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfsrv
+

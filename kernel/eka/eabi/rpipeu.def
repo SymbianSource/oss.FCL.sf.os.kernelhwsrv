@@ -1,0 +1,27 @@
+EXPORTS
+	_ZN5RPipe10CancelWaitEv @ 1 NONAME
+	_ZN5RPipe12ReadBlockingER5TDes8i @ 2 NONAME
+	_ZN5RPipe13WriteBlockingERK6TDesC8i @ 3 NONAME
+	_ZN5RPipe19CancelDataAvailableEv @ 4 NONAME
+	_ZN5RPipe19NotifyDataAvailableER14TRequestStatus @ 5 NONAME
+	_ZN5RPipe20CancelSpaceAvailableEv @ 6 NONAME
+	_ZN5RPipe20NotifySpaceAvailableEiR14TRequestStatus @ 7 NONAME
+	_ZN5RPipe4InitEv @ 8 NONAME
+	_ZN5RPipe4OpenE12RMessagePtr2i10TOwnerType @ 9 NONAME
+	_ZN5RPipe4OpenERK7TDesC16NS_5TModeE @ 10 NONAME
+	_ZN5RPipe4OpenEi10TOwnerType @ 11 NONAME
+	_ZN5RPipe4ReadER5TDes8i @ 12 NONAME
+	_ZN5RPipe4SizeEv @ 13 NONAME
+	_ZN5RPipe4WaitERK7TDesC16R14TRequestStatus @ 14 NONAME
+	_ZN5RPipe5CloseEv @ 15 NONAME
+	_ZN5RPipe5FlushEv @ 16 NONAME
+	_ZN5RPipe5WriteERK6TDesC8i @ 17 NONAME
+	_ZN5RPipe6CreateEiRS_S0_10TOwnerTypeS1_ @ 18 NONAME
+	_ZN5RPipe6DefineERK7TDesC16i @ 19 NONAME
+	_ZN5RPipe6DefineERK7TDesC16iRK15TSecurityPolicy @ 20 NONAME
+	_ZN5RPipe7DestroyERK7TDesC16 @ 21 NONAME
+	_ZN5RPipe7MaxSizeEv @ 22 NONAME
+	_ZNK5RPipe10HandleTypeEv @ 23 NONAME
+	_ZN5RPipe13WaitForReaderERK7TDesC16R14TRequestStatus @ 24 NONAME
+	_ZN5RPipe13WaitForWriterERK7TDesC16R14TRequestStatus @ 25 NONAME
+

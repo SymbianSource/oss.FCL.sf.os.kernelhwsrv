@@ -1,0 +1,56 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/scmonitor.mmp
+// 
+//
+
+#ifdef EPOC32
+
+#define INCLUDE_EKERN_LIB 
+#include "../../../kernel/kern_int.mmh" 
+
+
+targettype			kext
+
+#ifndef SMP
+ 
+//userinclude		../../../include/drivers
+//userinclude 		../../../kernel
+//userinclude 		../inc
+
+
+sourcepath 			../src/arm
+source 				cscmdatasave.cpp
+
+sourcepath			../src
+source				scmdatasave.cpp
+source 				scmonitor.cpp	
+
+library 			exmoncommon.lib
+staticlibrary 		scmkern_lib.lib
+
+
+epocallowdlldata
+
+noexportlibrary
+
+linkas				scmonitor.dll
+
+#endif 	//SMP endif
+
+#endif  //EPOC32 endif
+
+
+//#define SCM_COMM_OUTPUT	 // use this define for writing debug data to comm port
+

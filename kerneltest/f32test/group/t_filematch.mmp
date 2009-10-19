@@ -1,0 +1,37 @@
+// Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_filematch.mmp
+// Test that various exotic file names behave as we expect.
+//
+//
+
+TARGET		t_filematch.exe
+TARGETTYPE	exe
+SOURCEPATH      ../server
+SOURCE          t_main.cpp 
+SOURCEPATH      ../fileutils/src
+SOURCE          f32_test_utils.cpp
+SOURCE          t_chlffs.cpp
+SOURCEPATH	../locl
+SOURCE		t_filematch.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE     ../server
+USERINCLUDE     ../fileutils/inc
+LIBRARY		euser.lib efsrv.lib hal.lib
+
+CAPABILITY		TCB DISKADMIN ALLFILES
+VENDORID 0x70000001
+
+SMPSAFE

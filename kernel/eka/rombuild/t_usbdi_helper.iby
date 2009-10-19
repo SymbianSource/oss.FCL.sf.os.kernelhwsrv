@@ -1,0 +1,122 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+// 'Helper' Batch Files for Client Side of H4-H4 Back-to-Back Link	
+
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uca.bat								\scripts\uca.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uca2.bat							\scripts\uca2.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uca3.bat							\scripts\uca3.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\ucnb.bat							\scripts\ucnb.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\ucb.bat								\scripts\ucb.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\ucd.bat								\scripts\ucd.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct472.bat      					\scripts\uct472.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct473.bat      					\scripts\uct473.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct474.bat      					\scripts\uct474.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct477.bat      					\scripts\uct477.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct478.bat      					\scripts\uct478.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct479.bat      					\scripts\uct479.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct480.bat      					\scripts\uct480.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct481.bat      					\scripts\uct481.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct483.bat      					\scripts\uct483.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct484.bat      					\scripts\uct484.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct485.bat      					\scripts\uct485.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct486.bat      					\scripts\uct486.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct487.bat      					\scripts\uct487.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct488.bat      					\scripts\uct488.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct489.bat      					\scripts\uct489.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct490.bat      					\scripts\uct490.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct491.bat      					\scripts\uct491.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct492.bat      					\scripts\uct492.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct493.bat      					\scripts\uct493.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct494.bat      					\scripts\uct494.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct495.bat      					\scripts\uct495.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct496.bat      					\scripts\uct496.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct497.bat      					\scripts\uct497.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct498.bat      					\scripts\uct498.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct499.bat      					\scripts\uct499.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct500.bat      					\scripts\uct500.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct1229.bat      					\scripts\uct1229.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct1230.bat      					\scripts\uct1230.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct1231.bat      					\scripts\uct1231.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct1234.bat      					\scripts\uct1234.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct1235.bat      					\scripts\uct1235.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uct1236.bat      					\scripts\uct1236.bat
+
+// 'Helper' Batch Files for Host Side of H4-H4 Back-to-Back Link	
+
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uha.bat								\scripts\uha.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uha2.bat							\scripts\uha2.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uha3.bat							\scripts\uha3.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uhnb.bat							\scripts\uhnb.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uhb.bat								\scripts\uhb.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uhd.bat								\scripts\uhd.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht472.bat      					\scripts\uht472.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht473.bat      					\scripts\uht473.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht474.bat      					\scripts\uht474.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht475.bat      					\scripts\uht475.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht476.bat      					\scripts\uht476.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht477.bat      					\scripts\uht477.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht478.bat      					\scripts\uht478.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht479.bat      					\scripts\uht479.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht480.bat      					\scripts\uht480.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht481.bat      					\scripts\uht481.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht482.bat      					\scripts\uht482.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht483.bat      					\scripts\uht483.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht484.bat     	 					\scripts\uht484.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht485.bat      					\scripts\uht485.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht486.bat      					\scripts\uht486.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht487.bat      					\scripts\uht487.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht488.bat      					\scripts\uht488.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht489.bat     	 					\scripts\uht489.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht490.bat      					\scripts\uht490.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht491.bat      					\scripts\uht491.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht492.bat      					\scripts\uht492.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht493.bat      					\scripts\uht493.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht494.bat      					\scripts\uht494.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht495.bat      					\scripts\uht495.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht496.bat      					\scripts\uht496.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht497.bat      					\scripts\uht497.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht498.bat      					\scripts\uht498.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht499.bat      					\scripts\uht499.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht500.bat      					\scripts\uht500.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht1229.bat      					\scripts\uht1229.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht1230.bat      					\scripts\uht1230.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht1231.bat      					\scripts\uht1231.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht1234.bat      					\scripts\uht1234.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht1235.bat      					\scripts\uht1235.bat
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\uht1236.bat      					\scripts\uht1236.bat
+
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\RDeviceA.txt						\scripts\RDeviceA.txt	
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\RDeviceB.txt						\scripts\RDeviceB.txt
+
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\RLogitechHeadset.txt				\scripts\RLogitechHeadset.txt 
+
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0475_3.txt			\scripts\PBASE-T_USBDI-0475_3.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_1.txt			\scripts\PBASE-T_USBDI-0476_1.txt      
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_2.txt			\scripts\PBASE-T_USBDI-0476_2.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_3.txt			\scripts\PBASE-T_USBDI-0476_3.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_5.txt			\scripts\PBASE-T_USBDI-0476_5.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_6.txt			\scripts\PBASE-T_USBDI-0476_6.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_7.txt			\scripts\PBASE-T_USBDI-0476_7.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_8.txt			\scripts\PBASE-T_USBDI-0476_8.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_9.txt			\scripts\PBASE-T_USBDI-0476_9.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_10.txt			\scripts\PBASE-T_USBDI-0476_10.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_11.txt			\scripts\PBASE-T_USBDI-0476_11.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_12.txt			\scripts\PBASE-T_USBDI-0476_12.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_13.txt			\scripts\PBASE-T_USBDI-0476_13.txt
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\PBASE-T_USBDI-0476_14.txt			\scripts\PBASE-T_USBDI-0476_14.txt
+

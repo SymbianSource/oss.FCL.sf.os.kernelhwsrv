@@ -1,0 +1,48 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\kdebug.cia
+// 
+//
+
+#include "kdebug_priv.h"
+
+__NAKED__ TUint DEventHandler::DummyHandler(TKernelEvent /*aEvent*/, TAny* /*a1*/, TAny* /*a2*/)
+//
+// Debugger breakpoint-able callback.  Will be copied into RAM
+//
+	{
+	//
+	// r0=aEvent, r1=a1, r2=a2
+	//
+	asm("dummystart: ");											// start of fn.
+	asm("nop");														// breakpoint-able instruction for the debugger to replace
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("nop");														// landing zone
+	asm("mov r0, #%a0" : : "i" (DKernelEventHandler::ERunNext));	// return value
+	__JUMP(,lr);													// return
+	asm("dummyend:");												// end of fn.
+	}
+
+__NAKED__ TUint DEventHandler::DummyHandlerSize()
+//
+// Size of debugger breakpoint-able callback.
+//
+	{
+	asm("ldr r0, = dummyend - dummystart");
+	__JUMP(,lr);
+	}

@@ -1,0 +1,36 @@
+# Makefile for generating .IBY stuff needed for rombuilding
+
+CLEAN :
+
+FINAL :
+
+FREEZE :
+
+LIB :
+
+MAKMAKE :
+
+RESOURCE :
+
+BLD : 
+
+SAVESPACE :
+
+RELEASABLES :
+
+ROMFILE :
+	@echo file=\epoc32\release\##MAIN##\##BUILD##\setcap.exe    \sys\bin\setcap.exe
+	@echo data=\epoc32\data\z\test\UnicodeData.txt    test\UnicodeData.txt
+	@echo #if defined(INST_ARMV5)
+	@echo data=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oedll.dll         sys\bin\t_oedll.dll attrib=r
+	@echo data=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oedll1.dll        sys\bin\t_oedll1.dll attrib=r
+	@echo data=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oeexport.exe      sys\bin\t_oeexport.exe attrib=r
+	@echo data=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oeexport1.exe     sys\bin\t_oeexport1.exe attrib=r
+	@echo #endif
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\corrupt1.dat      sys\data\corrupt1.dat	unpaged paging_unmovable
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\corrupt2.dat      sys\data\corrupt2.dat	unpaged paging_unmovable
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\empty.dat         sys\data\empty.dat		unpaged paging_unmovable
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat     sys\data\filerepos.dat	unpaged paging_unmovable
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\nandrepos.dat     sys\data\nandrepos.dat	unpaged paging_unmovable
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat     sys\data\hcr.dat		unpaged paging_unmovable
+#endif

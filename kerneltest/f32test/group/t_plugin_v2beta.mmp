@@ -1,0 +1,57 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_plugin_v2beta.mmp
+//
+//
+
+TARGET			t_plugin_v2beta.exe
+TARGETTYPE		exe
+
+
+SOURCEPATH		../plugins/version_2beta/
+SOURCE			t_plugin_v2beta.cpp
+
+SOURCEPATH		../plugins/version_2beta/encrypt
+SOURCE			encrypt.cpp
+
+SOURCEPATH		../plugins/version_2beta/hex
+SOURCE			hex.cpp
+
+SOURCEPATH		../server
+SOURCE			t_main.cpp
+SOURCEPATH		../fileutils/src
+SOURCE          t_chlffs.cpp
+
+SOURCEPATH		../fileutils/src
+SOURCE			f32_test_utils.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+USERINCLUDE     ../plugins/version_2beta/encrypt
+USERINCLUDE     ../plugins/version_2beta/hex
+USERINCLUDE     ../plugins/version_2beta/trace
+USERINCLUDE		../server
+USERINCLUDE     ../fileutils/inc
+
+LIBRARY			euser.lib efile.lib efsrv.lib hal.lib
+
+UID			0x100039df 0x10000CEE
+MACRO			__DATA_CAGING__not_done
+
+epocallowdlldata
+
+#include "../../../userlibandfileserver/fileserver/group/f32caps.mmh"  // Capabilities of File Server process
+
+
+SMPSAFE

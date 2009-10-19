@@ -1,0 +1,22 @@
+EXPORTS
+	?HasProgramCounter@TTraceContext@@QBE?AW4THasProgramCounter@@XZ @ 1 NONAME ; enum THasProgramCounter TTraceContext::HasProgramCounter(void) const
+	?OstTrace@@YAHABVTTraceContext@@GE@Z @ 2 NONAME ; int OstTrace(class TTraceContext const &, unsigned short, unsigned char)
+	?OstTrace@@YAHABVTTraceContext@@G@Z @ 3 NONAME ; int OstTrace(class TTraceContext const &, unsigned short)
+	?OstTrace@@YAHABVTTraceContext@@GPBXH@Z @ 4 NONAME ; int OstTrace(class TTraceContext const &, unsigned short, void const *, int)
+	?DefaultComponentId@TTraceContext@@SAKXZ @ 5 NONAME ; unsigned long TTraceContext::DefaultComponentId(void)
+	?HasThreadIdentification@TTraceContext@@QBE?AW4THasThreadIdentification@@XZ @ 6 NONAME ; enum THasThreadIdentification TTraceContext::HasThreadIdentification(void) const
+	?OstTrace@@YAHABVTTraceContext@@GG@Z @ 7 NONAME ; int OstTrace(class TTraceContext const &, unsigned short, unsigned short)
+	?OstTrace@@YAHABVTTraceContext@@GABVTDesC16@@@Z @ 8 NONAME ; int OstTrace(class TTraceContext const &, unsigned short, class TDesC16 const &)
+	?OstPrint@@YAHABVTTraceContext@@ABVTDesC8@@@Z @ 9 NONAME ; int OstPrint(class TTraceContext const &, class TDesC8 const &)
+	?OstTrace@@YAHABVTTraceContext@@GKK@Z @ 10 NONAME ; int OstTrace(class TTraceContext const &, unsigned short, unsigned long, unsigned long)
+	?IsTraceActive@@YAHABVTTraceContext@@@Z @ 11 NONAME ; int IsTraceActive(class TTraceContext const &)
+	?OstTrace@@YAHABVTTraceContext@@GABVTDesC8@@@Z @ 12 NONAME ; int OstTrace(class TTraceContext const &, unsigned short, class TDesC8 const &)
+	?OstTrace@@YAHABVTTraceContext@@GK@Z @ 13 NONAME ; int OstTrace(class TTraceContext const &, unsigned short, unsigned long)
+	?OstPrint@@YAHABVTTraceContext@@ABVTDesC16@@@Z @ 14 NONAME ; int OstPrint(class TTraceContext const &, class TDesC16 const &)
+	?OstPrintf@@YAHABVTTraceContext@@V?$TRefByValue@$$CBVTDesC16@@@@ZZ @ 15 NONAME ; int OstPrintf(class TTraceContext const &, class TRefByValue<class TDesC16 const >, ...)
+	?ComponentId@TTraceContext@@QBEKXZ @ 16 NONAME ; unsigned long TTraceContext::ComponentId(void) const
+	?Classification@TTraceContext@@QBEEXZ @ 17 NONAME ; unsigned char TTraceContext::Classification(void) const
+	?OstPrintf@@YAHABVTTraceContext@@V?$TRefByValue@$$CBVTDesC8@@@@ZZ @ 18 NONAME ; int OstPrintf(class TTraceContext const &, class TRefByValue<class TDesC8 const >, ...)
+	?OstPrintf@@YAHABVTTraceContext@@PBDZZ @ 19 NONAME ; int OstPrintf(class TTraceContext const &, char const *, ...)
+	?GroupId@TTraceContext@@QBEEXZ @ 20 NONAME ; unsigned char TTraceContext::GroupId(void) const
+

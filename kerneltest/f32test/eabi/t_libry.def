@@ -1,0 +1,4 @@
+EXPORTS
+	_Z11Return11111v @ 1 NONAME ; Return11111()
+	_Z11Return22222v @ 2 NONAME ; Return22222()
+

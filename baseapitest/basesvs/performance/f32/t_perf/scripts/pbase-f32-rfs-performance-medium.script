@@ -1,0 +1,53 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		pbase-f32-rfs-performance-medium
+//! @SYMScriptDescription	The test script contains performance tests for the following API of the
+//!				RFs class:
+//!				TInt Entry(const TDesC &aName, TEntry &anEntry) const;
+//! @SYMScriptTestEnvironment	This test script requires a NAND or NOR configuration ROM image
+//!				when running this suite with test driver ensure STAT is built into the ROM
+//! @SYMScriptAutomation	Test Execute Framework and Test Driver
+//! @SYMScriptAuthor 		Rehana Anwar
+//! @SYMScriptCreationDate	10/05/2007
+
+LOAD_SUITE t_perf
+
+
+START_TESTCASE			pbase-f32-rfs-performance-medium-entry-0001
+//! @SYMTestCaseID		pbase-f32-rfs-performance-medium-entry-0001
+//! @SYMAPI			RFs::Entry
+//! @SYMTestCaseDesc		Entry  test:Tests the performance of TInt Entry(const TDesC &aName, TEntry &anEntry)
+//!				by calculating the time taken to make 500 calls to get the entry details of all sub directories
+//!				from directory x to directory y.
+//! @SYMTestActions		1. Create a directory tree N directories deep on the chosen test drive. Where N is read in as dirTreeDepth
+//!				2. Create number of files requested and set the file size
+//!				3. Fill in each file with file data.
+//!				5. Start the clock
+//!				6. Retrieve entry details of a directory for a file ( this entry alternates for each api call).
+//!				7. Repeat step 6, X times each ( where x is the number of function calls specified, an the entry requested alternates).
+//!				8. Stop the clock
+//!				9. Record the elapsed time t
+//!				10. Calculate and print the time taken per call i.e. t/X ( where x is the number of function calls),
+//!				and print time t total time for all function calls
+//!				11. Delete the directory structure created.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The average time taken per call and the total time taken for all calls is displayed
+RUN_TEST_STEP			960	t_perf	SetupStep	\base\performance\f32\pbase-f32-rfs-performance-medium.ini	pbase-f32-rfs-performance-medium-entry-0001
+RUN_TEST_STEP			500	t_perf	EntryStep	\base\performance\f32\pbase-f32-rfs-performance-medium.ini	pbase-f32-rfs-performance-medium-entry-0001
+RUN_TEST_STEP			960	t_perf	CleanupStep	\base\performance\f32\pbase-f32-rfs-performance-medium.ini	pbase-f32-rfs-performance-medium-entry-0001
+END_TESTCASE			pbase-f32-rfs-performance-medium-entry-0001

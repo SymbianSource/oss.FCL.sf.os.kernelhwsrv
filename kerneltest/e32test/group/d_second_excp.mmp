@@ -1,0 +1,44 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_second_excp.mmp
+// 
+//
+
+TARGET         	d_second_excp.dll
+TARGETTYPE     	DLL
+SOURCEPATH	../cppexceptions
+SOURCE         	second_excp.cpp
+
+LIBRARY        	euser.lib t_drtaeabi.lib 
+
+#if defined ARMCC_2_1
+LIBRARY DRTRVCT2_1.LIB
+#elif defined ARMCC_2_2
+LIBRARY drtrvct2_2.lib
+#elif defined ARMCC_3_1
+LIBRARY drtrvct3_1.lib
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+START ARMCC
+ARMRT
+ARMINC
+END
+
+capability		all
+vendorid		0x70000001
+
+
+SMPSAFE

@@ -1,0 +1,479 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\mmu\t_imb.cia
+// 
+//
+
+#include <e32test.h>
+#include <u32std.h>
+#include <e32math.h>
+
+#ifdef __CPU_ARM
+__NAKED__ TInt Sqrt(TReal& /*aDest*/, const TReal& /*aSrc*/)
+	{
+	// r0=address of aDest, r1=address of aSrc
+	asm("stmfd sp!, {r4-r10,lr} ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r1, {r3,r4} ");			// low mant into r4, sign:exp:high mant into r3
+#else
+	asm("ldr r3, [r1, #4] ");
+	asm("ldr r4, [r1, #0] ");
+#endif
+	asm("bic r5, r3, #0xFF000000 ");
+	asm("bic r5, r5, #0x00F00000 ");	// high word of mantissa into r5
+	asm("mov r2, r3, lsr #20 ");
+	asm("bics r2, r2, #0x800 ");		// exponent now in r2
+	asm("beq fastsqrt1 ");				// branch if exponent zero (zero or denormal)
+	asm("mov r6, #0xFF ");
+	asm("orr r6, r6, #0x700 ");
+	asm("cmp r2, r6 ");					// check for infinity or NaN
+	asm("beq fastsqrt2 ");				// branch if infinity or NaN
+	asm("movs r3, r3 ");				// test sign
+	asm("bmi fastsqrtn ");				// branch if negative
+	asm("sub r2, r2, #0xFF ");			// unbias the exponent
+	asm("sub r2, r2, #0x300 ");			//
+	asm("fastsqrtd1: ");
+	asm("mov r1, #0x40000000 ");		// value for comparison
+	asm("mov r3, #27 ");				// loop counter (number of bits/2)
+	asm("movs r2, r2, asr #1 ");		// divide exponent by 2, LSB into CF
+	asm("movcs r7, r5, lsl #11 ");		// mantissa into r6,r7 with MSB in MSB of r7
+	asm("orrcs r7, r7, r4, lsr #21 ");
+	asm("movcs r6, r4, lsl #11 ");
+	asm("movcs r4, #0 ");				// r4, r5 will hold result mantissa
+	asm("orrcs r7, r7, #0x80000000 ");	// if exponent odd, restore MSB of mantissa
+	asm("movcc r7, r5, lsl #12 ");		// mantissa into r6,r7 with MSB in MSB of r7
+	asm("orrcc r7, r7, r4, lsr #20 ");	// if exponent even, shift mantissa left an extra
+	asm("movcc r6, r4, lsl #12 ");		// place, lose top bit, and
+	asm("movcc r4, #1 ");				// set MSB of result, and
+	asm("mov r5, #0 ");					// r4, r5 will hold result mantissa
+	asm("mov r8, #0 ");					// r8, r9 will be comparison accumulator
+	asm("mov r9, #0 ");
+	asm("bcc fastsqrt4 ");				// if exponent even, calculate one less bit
+										// as result MSB already known
+
+	// Main mantissa square-root loop
+	asm("fastsqrt3: ");					// START OF MAIN LOOP
+	asm("subs r10, r7, r1 ");			// subtract result:01 from acc:mant
+	asm("sbcs r12, r8, r4 ");			// result into r14:r12:r10
+	asm("sbcs r14, r9, r5 ");
+	asm("movcs r7, r10 ");				// if no borrow replace accumulator with result
+	asm("movcs r8, r12 ");
+	asm("movcs r9, r14 ");
+	asm("adcs r4, r4, r4 ");			// shift result left one, putting in next bit
+	asm("adcs r5, r5, r5 ");
+	asm("mov r9, r9, lsl #2 ");			// shift acc:mant left by 2 bits
+	asm("orr r9, r9, r8, lsr #30 ");
+	asm("mov r8, r8, lsl #2 ");
+	asm("orr r8, r8, r7, lsr #30 ");
+	asm("mov r7, r7, lsl #2 ");
+	asm("orr r7, r7, r6, lsr #30 ");
+	asm("mov r6, r6, lsl #2 ");
+	asm("fastsqrt4: ");					// Come in here if we need to do one less iteration
+	asm("subs r10, r7, r1 ");			// subtract result:01 from acc:mant
+	asm("sbcs r12, r8, r4 ");			// result into r14:r12:r10
+	asm("sbcs r14, r9, r5 ");
+	asm("movcs r7, r10 ");				// if no borrow replace accumulator with result
+	asm("movcs r8, r12 ");
+	asm("movcs r9, r14 ");
+	asm("adcs r4, r4, r4 ");			// shift result left one, putting in next bit
+	asm("adcs r5, r5, r5 ");
+	asm("mov r9, r9, lsl #2 ");			// shift acc:mant left by 2 bits
+	asm("orr r9, r9, r8, lsr #30 ");
+	asm("mov r8, r8, lsl #2 ");
+	asm("orr r8, r8, r7, lsr #30 ");
+	asm("mov r7, r7, lsl #2 ");
+	asm("orr r7, r7, r6, lsr #30 ");
+	asm("mov r6, r6, lsl #2 ");
+	asm("subs r3, r3, #1 ");			// decrement loop counter
+	asm("bne fastsqrt3 ");				// do necessary number of iterations
+
+	asm("movs r4, r4, lsr #1 ");		// shift result mantissa right 1 place
+	asm("orr r4, r4, r5, lsl #31 ");	// LSB (=rounding bit) into carry
+	asm("mov r5, r5, lsr #1 ");
+	asm("adcs r4, r4, #0 ");			// round the mantissa to 53 bits
+	asm("adcs r5, r5, #0 ");
+	asm("cmp r5, #0x00200000 ");		// check for mantissa overflow
+	asm("addeq r2, r2, #1 ");			// if so, increment exponent - can never overflow
+	asm("bic r5, r5, #0x00300000 ");	// remove top bit of mantissa - it is implicit
+	asm("add r2, r2, #0xFF ");			// re-bias the exponent
+	asm("add r3, r2, #0x300 ");			// and move into r3
+	asm("orr r3, r5, r3, lsl #20 ");	// r3 now contains exponent + top of mantissa
+	asm("fastsqrt_ok: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r3,r4} ");			// store the result
+#else
+	asm("str r3, [r0, #4] ");
+	asm("str r4, [r0, #0] ");
+#endif
+	asm("mov r0, #0 ");					// error code KErrNone
+	__POPRET("r4-r10,");
+
+	asm("fastsqrt1: ");
+	asm("orrs r6, r5, r4 ");			// exponent zero - test mantissa
+	asm("beq fastsqrt_ok ");			// if zero, return 0
+
+	asm("movs r3, r3 ");				// denormal - test sign
+	asm("bmi fastsqrtn ");				// branch out if negative
+	asm("sub r2, r2, #0xFE ");			// unbias the exponent
+	asm("sub r2, r2, #0x300 ");			//
+	asm("fastsqrtd: ");
+	asm("adds r4, r4, r4 ");			// shift mantissa left
+	asm("adcs r5, r5, r5 ");
+	asm("sub r2, r2, #1 ");				// and decrement exponent
+	asm("tst r5, #0x00100000 ");		// test if normalised
+	asm("beq fastsqrtd ");				// loop until normalised
+	asm("b fastsqrtd1 ");				// now treat as a normalised number
+	asm("fastsqrt2: ");					// get here if infinity or NaN
+	asm("orrs r6, r5, r4 ");			// if mantissa zero, infinity
+	asm("bne fastsqrtnan ");			// branch if not - must be NaN
+	asm("movs r3, r3 ");				// test sign of infinity
+	asm("bmi fastsqrtn ");				// branch if -ve
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r3,r4} ");			// store the result
+#else
+	asm("str r3, [r0, #4] ");
+	asm("str r4, [r0, #0] ");
+#endif
+	asm("mov r0, #-9 ");				// return KErrOverflow
+	asm("b fastsqrt_end ");
+
+	asm("fastsqrtn: ");					// get here if negative or QNaN operand
+	asm("mov r3, #0xFF000000 ");		// generate "real indefinite" QNaN
+	asm("orr r3, r3, #0x00F80000 ");	// sign=1, exp=7FF, mantissa = 1000...0
+	asm("mov r4, #0 ");
+	asm("fastsqrtxa: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r3,r4} ");			// store the result
+#else
+	asm("str r3, [r0, #4] ");
+	asm("str r4, [r0, #0] ");
+#endif
+	asm("mov r0, #-6 ");				// return KErrArgument
+	asm("fastsqrt_end: ");
+	__POPRET("r4-r10,");
+
+	asm("fastsqrtnan: ");				// operand is a NaN
+	asm("tst r5, #0x00080000 ");		// test MSB of mantissa
+	asm("bne fastsqrtn ");				// if set it is a QNaN - so return "real indefinite"
+	asm("bic r3, r3, #0x00080000 ");	// else convert SNaN to QNaN
+	asm("b fastsqrtxa ");				// and return KErrArgument
+
+	asm("Sqrt__FRdRCd_end: ");
+
+	}
+
+__NAKED__ TUint Sqrt_Length()
+	{
+	asm("adr r0, Sqrt__FRdRCd_end ");
+	asm("adr r1, Sqrt__FRdRCd ");
+	asm("sub r0, r0, r1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt Divide(TRealX& /*aDividend*/, const TRealX& /*aDivisor*/)
+	{
+	asm("stmfd sp!, {r0,r4-r9,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXDivide ");
+	asm("ldmfd sp!, {r0,r4-r9,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, r12 ");
+	__JUMP(,lr);
+
+	// TRealX division r1,r2,r3 / r4,r5,r6 result in r1,r2,r3
+	// Error code returned in r12
+	// Registers r0-r9,r12 modified
+	// NB This function is purely internal to EUSER and therefore IS ONLY EVER CALLED IN ARM MODE.
+	asm("TRealXDivide: ");
+	asm("mov r12, #0 ");					// initialise return value to KErrNone
+	asm("bic r3, r3, #0x300 ");				// clear rounding flags
+	asm("tst r6, #1 ");
+	asm("eorne r3, r3, #1 ");				// Exclusive-OR signs
+	asm("cmn r3, #0x10000 ");				// check if dividend is NaN or infinity
+	asm("bcs TRealXDivide1 ");				// branch if it is
+	asm("cmn r6, #0x10000 ");				// check if divisor is NaN or infinity
+	asm("bcs TRealXDivide2 ");				// branch if it is
+	asm("cmp r6, #0x10000 ");				// check if divisor zero
+	asm("bcc TRealXDivide3 ");				// branch if it is
+	asm("cmp r3, #0x10000 ");				// check if dividend zero
+	__JUMP(cc,lr);					// if zero, exit
+	asm("tst r3, #1 ");
+	asm("orrne lr, lr, #1 ");				// save sign in bottom bit of lr
+
+	// calculate result exponent
+	asm("mov r0, r3, lsr #16 ");			// r0=dividend exponent
+	asm("sub r0, r0, r6, lsr #16 ");		// r0=dividend exponent - divisor exponent
+	asm("add r0, r0, #0x7F00 ");
+	asm("add r0, r0, #0x00FF ");			// r0 now contains result exponent
+	asm("mov r6, r1 ");						// move dividend into r6,r7,r8
+	asm("mov r7, r2 ");
+	asm("mov r8, #0 ");						// use r8 to hold extra bit shifted up
+											// r2:r1 will hold result mantissa
+	asm("mov r2, #1 ");						// we will make sure first bit is 1
+	asm("cmp r7, r5 ");						// compare dividend mantissa to divisor mantissa
+	asm("cmpeq r6, r4 ");
+	asm("bcs TRealXDivide4 ");				// branch if dividend >= divisor
+	asm("adds r6, r6, r6 ");				// else shift dividend left one
+	asm("adcs r7, r7, r7 ");				// ignore carry here
+	asm("sub r0, r0, #1 ");					// decrement result exponent by one
+	asm("TRealXDivide4: ");
+	asm("subs r6, r6, r4 ");				// subtract divisor from dividend
+	asm("sbcs r7, r7, r5 ");
+
+	// Main mantissa division code
+	// First calculate the top 32 bits of the result
+	// Top bit is 1, do 10 lots of 3 bits the one more bit
+	asm("mov r12, #10 ");
+	asm("TRealXDivide5: ");
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit
+	asm("subs r12, r12, #1 ");
+	asm("bne TRealXDivide5 ");				// iterate the loop
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit - now have 32 bits
+
+	// Now calculate the bottom 32 bits of the result
+	// Do 8 lots of 4 bits
+	asm("mov r12, #8 ");
+	asm("TRealXDivide5a: ");
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("subs r12, r12, #1 ");
+	asm("bne TRealXDivide5a ");				// iterate the loop
+
+	// r2:r1 now contains a 64-bit normalised mantissa
+	// need to do rounding now
+	asm("and r3, lr, #1 ");					// result sign back into r3
+	asm("orrs r9, r6, r7 ");				// check if accumulator zero
+	asm("beq TRealXDivide6 ");				// if it is, result is exact, else generate next bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r6, r6, r4 ");				// subtract divisor from accumulator
+	asm("sbcs r7, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("orrcc r3, r3, #0x100 ");			// if borrow, round down and set round-down flag
+	asm("bcc TRealXDivide6 ");
+	asm("orrs r9, r6, r7 ");				// if no borrow, check if exactly half-way
+	asm("moveqs r9, r1, lsr #1 ");			// if exactly half-way, round to even
+	asm("orrcc r3, r3, #0x100 ");			// if C=0, round result down and set round-down flag
+	asm("bcc TRealXDivide6 ");
+	asm("orr r3, r3, #0x200 ");				// else set round-up flag
+	asm("adds r1, r1, #1 ");				// and round mantissa up
+	asm("adcs r2, r2, #0 ");
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa = 80000000 00000000
+	asm("addcs r0, r0, #1 ");				// and increment exponent
+
+	// check for overflow or underflow and assemble final result
+	asm("TRealXDivide6: ");
+	asm("add r4, r0, #1 ");					// need to add 1 to get usable threshold
+	asm("cmp r4, #0x10000 ");				// check if exponent >= 0xFFFF
+	asm("bge TRealXMultiply6 ");			// if so, overflow
+	asm("cmp r0, #0 ");						// check for underflow
+	asm("orrgt r3, r3, r0, lsl #16 ");		// if no underflow, result exponent into r3, ...
+	asm("movgt r12, #0 ");					// ... return KErrNone ...
+	__JUMP(gt,lr);
+
+	// underflow
+	asm("and r3, r3, #1 ");					// set exponent=0, keep sign
+	asm("mvn r12, #9 ");					// return KErrUnderflow
+	__JUMP(,lr);
+
+	// come here if divisor is zero, dividend finite
+	asm("TRealXDivide3: ");
+	asm("cmp r3, #0x10000 ");				// check if dividend also zero
+	asm("bcc TRealXRealIndefinite ");		// if so, return 'real indefinite'
+	asm("orr r3, r3, #0xFF000000 ");		// else return infinity with xor sign
+	asm("orr r3, r3, #0x00FF0000 ");
+	asm("mov r2, #0x80000000 ");
+	asm("mov r1, #0 ");
+	asm("mvn r12, #40 ");					// return KErrDivideByZero
+	__JUMP(,lr);
+
+	// Dividend is NaN or infinity
+	asm("TRealXDivide1: ");
+	asm("cmp r2, #0x80000000 ");			// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("cmn r6, #0x10000 ");				// check 2nd operand for NaN/infinity
+	asm("mvncc r12, #8 ");					// if not, return KErrOverflow
+	__JUMP(cc,lr);
+
+	// Dividend=infinity, divisor=NaN or infinity
+	asm("cmp r5, #0x80000000 ");			// check 2nd operand for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("b TRealXRealIndefinite ");			// else return 'real indefinite'
+
+	// Divisor is NaN or infinity, dividend finite
+	asm("TRealXDivide2: ");
+	asm("cmp r5, #0x80000000 ");			// check for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("and r3, r3, #1 ");					// else return zero with xor sign
+	__JUMP(,lr);
+
+	asm("TRealXBinOpNan: ");				// generic routine to process NaNs in binary
+											// operations
+	asm("cmn r3, #0x10000 ");				// check if first operand is NaN
+	asm("movcc r0, r1 ");					// if not, swap the operands
+	asm("movcc r1, r4 ");
+	asm("movcc r4, r0 ");
+	asm("movcc r0, r2 ");
+	asm("movcc r2, r5 ");
+	asm("movcc r5, r0 ");
+	asm("movcc r0, r3 ");
+	asm("movcc r3, r6 ");
+	asm("movcc r6, r0 ");
+	asm("cmn r6, #0x10000 ");				// both operands NaNs?
+	asm("bcc TRealXBinOpNan1 ");			// skip if not
+	asm("cmp r2, r5 ");						// if so, compare the significands
+	asm("cmpeq r1, r4 ");
+	asm("movcc r1, r4 ");					// r1,r2,r3 will get NaN with larger significand
+	asm("movcc r2, r5 ");
+	asm("movcc r3, r6 ");
+	asm("TRealXBinOpNan1: ");
+	asm("orr r2, r2, #0x40000000 ");		// convert an SNaN to a QNaN
+	asm("mvn r12, #5 ");					// return KErrArgument
+	__JUMP(,lr);
+
+	// Return 'real indefinite'
+	asm("TRealXRealIndefinite: ");
+	asm("ldr r3, __RealIndefiniteExponent ");
+	asm("mov r2, #0xC0000000 ");
+	asm("mov r1, #0 ");
+	asm("mvn r12, #5 ");					// return KErrArgument
+	__JUMP(,lr);
+
+	// overflow
+	asm("TRealXMultiply6: ");
+	asm("bic r3, r3, #0x0000FF00 ");		// clear rounding flags
+	asm("orr r3, r3, #0xFF000000 ");		// make exponent FFFF for infinity
+	asm("orr r3, r3, #0x00FF0000 ");
+	asm("mov r2, #0x80000000 ");			// mantissa = 80000000 00000000
+	asm("mov r1, #0 ");
+	asm("mvn r12, #8 ");					// return KErrOverflow
+	__JUMP(,lr);
+
+	asm("__RealIndefiniteExponent: ");
+	asm(".word 0xFFFF0001 ");
+
+	asm("Divide__FR6TRealXRC6TRealX_end: ");
+	}
+
+__NAKED__ TUint Divide_Length()
+	{
+	asm("adr r0, Divide__FR6TRealXRC6TRealX_end ");
+	asm("adr r1, Divide__FR6TRealXRC6TRealX ");
+	asm("sub r0, r0, r1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt SDummy(TInt)
+	{
+	__JUMP(,lr);
+	asm("SDummy__Fi_end: ");
+	}
+
+__NAKED__ TUint SDummy_Length()
+	{
+	asm("adr r0, SDummy__Fi_end ");
+	asm("adr r1, SDummy__Fi ");
+	asm("sub r0, r0, r1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt Increment(TInt)
+	{
+	asm("add r0, r0, #1 ");
+	__JUMP(,lr);
+	asm("Increment__Fi_end: ");
+	}
+
+__NAKED__ TUint Increment_Length()
+	{
+	asm("adr r0, Increment__Fi_end ");
+	asm("adr r1, Increment__Fi ");
+	asm("sub r0, r0, r1 ");
+	__JUMP(,lr);
+	}
+
+#endif

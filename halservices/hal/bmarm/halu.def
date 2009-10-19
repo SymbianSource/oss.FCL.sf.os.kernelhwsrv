@@ -1,0 +1,8 @@
+EXPORTS
+	Get__3HALQ27HALData10TAttributeRi @ 1 NONAME ; HAL::Get(HALData::TAttribute, int &)
+	Set__3HALQ27HALData10TAttributei @ 2 NONAME ; HAL::Set(HALData::TAttribute, int)
+	GetAll__3HALRiRPQ23HAL6SEntry @ 3 NONAME ; HAL::GetAll(int &, HAL::SEntry *&)
+	Get__3HALiQ27HALData10TAttributeRi @ 4 NONAME R3UNUSED ; HAL::Get(int, HALData::TAttribute, int &)
+	Set__3HALiQ27HALData10TAttributei @ 5 NONAME R3UNUSED ; HAL::Set(int, HALData::TAttribute, int)
+	"_11HalInternal.InitialValue" @ 6 NONAME ; HalInternal::InitialValue
+

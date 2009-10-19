@@ -1,0 +1,5 @@
+EXPORTS
+	SessionCreate__FRC6TDesC8iPC15TSecurityPolicyi @ 1 NONAME ; SessionCreate(TDesC8 const &, int, TSecurityPolicy const *, int)
+	SessionSendSync__FiiPvP14TRequestStatus @ 2 NONAME ; SessionSendSync(int, int, void *, TRequestStatus *)
+	SessionSend__FiiPvP14TRequestStatus @ 3 NONAME ; SessionSend(int, int, void *, TRequestStatus *)
+	SetSessionPtr__FiPCv @ 4 NONAME R3UNUSED ; SetSessionPtr(int, void const *)

@@ -1,0 +1,75 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Compiler runtime support.
+// 
+//
+
+PRJ_PLATFORMS
+
+ARMV4 ARMV5 ARMV5SMP ARMV7
+
+
+PRJ_EXPORTS
+
+rvct.h                      rvct/
+gcce/gcce.h                 gcce/
+
+symcpp/symcpp.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(symcpp.h)
+
+compsupp.iby                /epoc32/rom/include/
+
+// Unzip runtimes not being built
+
+#if !defined(ARMCC_2_2)
+:zip rt_2_2_export.zip
+#endif
+
+#if !defined(ARMCC_3_1)
+:zip rt_3_1_export.zip
+#endif
+
+#if !defined(ARMCC_4_0)
+:zip rt_4_0_export.zip
+#endif
+
+
+PRJ_MMPFILES
+
+#ifndef GCCXML
+
+    symcpp/scppnwdl.mmp
+    rvct/dfprvct-thunk.mmp
+    rvct/usrt.mmp
+    rvct/ksrt.mmp
+
+    #ifndef SMP // Only static libraries build for SMP.
+
+    rvct/drtaeabi.mmp
+
+    rvct/dfpaeabi.mmp
+    rvct/dfpaeabi_vfpv2.mmp
+
+    #if defined(ARMCC_2_2) || defined(ARMCC_3_1)
+
+        rvct/drtrvct.mmp
+        rvct/drtrvct_vfpv2.mmp
+
+        rvct/dfprvct.mmp
+        rvct/dfprvct_vfpv2.mmp
+    #endif
+
+    #endif
+
+#endif
+

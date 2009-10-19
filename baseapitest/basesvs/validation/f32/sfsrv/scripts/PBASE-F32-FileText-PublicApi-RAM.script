@@ -1,0 +1,621 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName			pbase-f32-sfsrv-publicapi-ram
+//! @SYMScriptTestEnvironment		This test script requires a basic ROM.
+//! @SYMScriptAuthor 			Dmitri Trofimov, Anton Grober, Segei Tveritin
+//! @SYMScriptDescription		The test script contains API tests for the following functions of TFileText class
+//! @SYMScriptCreationDate		08/12/2006
+//! TFileText();
+//! void Set(RFile &aFile);
+//! TInt Read(TDes &aDes);
+//! TInt Write(const TDesC &aDes);
+//! TInt Seek(TSeek aMode);
+
+LOAD_SUITE	T_SfSrv
+DELAY		5000
+
+START_TESTCASE				SETUP_FILES
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	CFileMan	CFileMan1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFs1		MkDirAll	test_dir
+			COMMAND		CFileMan1	NewL	fileman_fs
+			COMMAND		CFileMan1	Copy	test_file1
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file2
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file3
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file4
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file5
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file6
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file7
+			COMMAND		CFileMan1	~
+			COMMAND		RFs1	~
+	END_TEST_BLOCK
+END_TESTCASE				SETUP_FILES
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0001
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0001
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			TFileText() test.
+//!						Uses API elements: TFileText()
+//! @SYMTestActions			1. Create TFileText object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Function does not leave nor panic.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0001
+
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0002
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0002
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			Set() test. This tests for successful Set() call.
+//!						Uses API elements: Set()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'filetext_read.txt' string as the second parameter, and EFileRead as the third
+//!					parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing a reference to RFile object as a parameter.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Function does not leave nor panic.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1
+			CREATE_OBJECT	RFile		RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0002command5Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0002command8Set
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0002
+
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0004
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0004
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Read() passing a reference to a TDes descriptor with sufficient length to fit the first line of text file.
+//!						Uses API elements: Set(), Read()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'filetext_read.txt' string as the second parameter, and EFileRead as the third
+//!					 parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing a reference to RFile object as a parameter.
+//!					7. Call Read(). Expecting string 'Symbian rocks my world!'. Buffer length is 64
+//!					8. Delete TFiletext object.
+//!					9. Call Close() on RFile object.
+//!					10. Delete RFile object.
+//!					11. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority		        Critical
+//! @SYMTestExpectedResults	        Read() returns KErrNone. The string read is the same as expected.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1
+			CREATE_OBJECT	RFile		RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0004command5Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0004command8Set
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0004command9Read
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0004
+
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0005
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0005
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Write() passing a reference to a TDesC descriptor containing a line of text.
+//!						Uses API elements: Set(), Write(), Read()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'filetext_read.txt' string as the second parameter, and EFileWrite as the third 
+//!					parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing a reference to RFile object as a parameter.
+//!					7. Call Write() passing a TDesC string reference as a parameter. String contains 'Symbian is the
+//!					 best!!11ONEONE'.
+//!					8. Call Seek() on TFileText passing ESeekStart as a parameter.
+//!					9. Call Read() on TFileText. Expecting string 'Symbian is the best!!11ONEONE'. Buffer length is 64
+//!					10. Delete TFileText object.
+//!					11. Call Close() on RFile object.
+//!					12. Delete RFile object.
+//!					13. Call Delete() on RFs passing a reference to TDesC file name that has been created during the test.
+//!					14. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Write() returns KErrNone. Read() returns KErrNone. The string read is the same as expected.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	RFile	RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0005command6Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0005command8Set
+			COMMAND		TFileText1	Write		PBASE-F32-FileText-PublicApi-0005command9Write
+			COMMAND		TFileText1	Seek		PBASE-F32-FileText-PublicApi-0005command10Seek
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0005command11Read
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFile1		~
+			COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0005
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0006
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0006
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Seek() passing a ESeekStart as a parameter.
+//!							Uses API elements: Set(), Seek(), Read().
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'filetext_read.txt' string as the second parameter, and EFileWrite as the third 
+//!					parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing a reference to RFile object as a parameter.
+//!					7. Call Seek() on TFileText passing ESeekStart as a parameter.
+//!					8. Call Read() on TFileText. Expecting string 'Symbian rocks my world!'.
+//!					9. Delete TFiletext object.
+//!					10. Call Close() on RFile object.
+//!					11. Delete RFile object.
+//!					12. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Seek() returns KErrNone. Read() returns KErrNone, the string read is the same as expected.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	RFile	RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0006command5Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0006command8Set
+			COMMAND		TFileText1	Seek		PBASE-F32-FileText-PublicApi-0006command9Seek
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0006command10Read
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0006
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0007
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0007
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Seek() passing a ESeekEnd as a parameter.
+//!						Uses API elements: Set(), Seek(), Read()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'filetext_read.txt' string as the second parameter, and EFileWrite as the third
+//!					parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing a reference to RFile object as a parameter.
+//!					7. Call Seek() on TFileText passing ESeekEnd as a parameter.
+//!					8. Call Read() on TFileText. No string expected. Just to get KErrEof. Buffer length is 64.
+//!					9. Delete TFiletext object.
+//!					10. Call Close() on RFile object.
+//!					11. Delete RFile object.
+//!					12. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Seek() returns KErrNone. Read() returns KErrEof.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1
+			CREATE_OBJECT		RFile		RFile1
+			CREATE_OBJECT		TFileText	TFileText1
+			COMMAND			RFs1		new
+			COMMAND			RFs1		Connect
+			COMMAND			RFile1		new
+			COMMAND			RFile1		Open		PBASE-F32-FileText-PublicApi-0007command5Open
+			COMMAND			TFileText1	new
+			COMMAND			TFileText1	Set		PBASE-F32-FileText-PublicApi-0007command8Set
+			COMMAND			TFileText1	Seek		PBASE-F32-FileText-PublicApi-0007command9Seek
+			COMMAND	!Error=-25	TFileText1	Read
+			COMMAND			TFileText1	~
+			COMMAND			RFile1		Close
+			COMMAND			RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0007
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0008
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0008
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Write() trying to write in file opened in read-mode.
+//!						Uses API elements: Set(), Write()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'new_file.txt' string as the second parameter, and EFileRead as the third parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing RFile object instance as parameter.
+//!					7. Call Write() on TFileText. Passing string 'Writing in read-mode' as TDesC parameter.
+//!					8. Delete TFiletext object.
+//!					9. Call Close() on RFile object.
+//!					10. Delete RFile object.
+//!					11. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Write() returns KErrAccessDenied.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1
+			CREATE_OBJECT		RFile		RFile1
+			CREATE_OBJECT		TFileText	TFileText1
+			COMMAND			RFs1		new
+			COMMAND			RFs1		Connect
+			COMMAND			RFile1		new
+			COMMAND			RFile1		Open		PBASE-F32-FileText-PublicApi-0008command5Open
+			COMMAND			TFileText1	new
+			COMMAND			TFileText1	Set		PBASE-F32-FileText-PublicApi-0008command8Set
+			COMMAND	!Error=-21	TFileText1	Write		PBASE-F32-FileText-PublicApi-0008command9Write
+			COMMAND			TFileText1	~
+			COMMAND			RFile1		Close
+			COMMAND			RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0008
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0009
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0009
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Read() returns KErrNone reading string more than 256 symbols in length .
+//!						Uses API elements: Set(), Read()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'big_line.txt' string as the second parameter, and EFileRead as the third parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing RFile object instance as parameter.
+//!					7. Call Read(). String in file has more than 256 symbols.
+//!					8. Delete TFiletext object.
+//!					9. Call Close() on RFile object.
+//!					10. Delete RFile object.
+//!					11. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Read() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	RFile	RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0009command5Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0009command8Set
+			COMMAND		TFileText1	Read		big_buffer
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFile1		~
+			COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0009
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0010
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0010
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Read() returns KErrTooBig error because of too small buffer.
+//!						Uses API elements: Set(), Read()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'big_line.txt' string as the second parameter, and EFileRead as the third parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing RFile object instance as parameter.
+//!					7. Call Read(). String in file has more than 256 symbols. Buffer is 32.
+//!					8. Delete TFiletext object.
+//!					9. Call Close() on RFile object.
+//!					10. Delete RFile object.
+//!					11. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Read() returns KErrTooBig.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1
+			CREATE_OBJECT		RFile		RFile1
+			CREATE_OBJECT		TFileText	TFileText1
+			COMMAND			RFs1		new
+			COMMAND			RFs1		Connect
+			COMMAND			RFile1		new
+			COMMAND			RFile1		Open		PBASE-F32-FileText-PublicApi-0010command5Open
+			COMMAND			TFileText1	new
+			COMMAND			TFileText1	Set		PBASE-F32-FileText-PublicApi-0010command8Set
+			COMMAND	!Error=-40	TFileText1	Read		PBASE-F32-FileText-PublicApi-0010command9Read
+			COMMAND			TFileText1	~
+			COMMAND			RFile1		Close
+			COMMAND			RFile1		~
+			COMMAND			RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0010
+
+
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0011
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0011
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Read() returns KErrTooBig error because of too small buffer.
+//!						Uses API elements: Set(), Read(), Write()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Replace() on RFile object passing a reference to RFs object as the first parameter, a TDesC
+//!					 containing path to file  'multiline.txt' string as the second parameter, and EFileWrite as the
+//!					 third parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing RFile object instance as parameter.
+//!					7. Call Write(). String parameter is is 'First string'. Buffer is 64.
+//!					8. Call Write(). String parameter is is 'Second string'. Buffer is 64.
+//!					9. Call Write(). String parameter is is 'Third string'. Buffer is 64.
+//!					10. Delete TFiletext object.
+//!					11. Call Close() on RFile object.
+//!					12. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC file name 
+//!					reference as the second parameter, and EFileRead as the third parameter. The file opened named
+//!					 'multiline.txt' and contains three lines of text.
+//!					13. Create TFileText object.
+//!					14. Call Set() passing RFile object instance as parameter.
+//!					15. Call Read(). String in file expected as  'First string'. Buffer is 64.
+//!					16. Call Read(). String in file expected as 'Second string'. Buffer is 64.
+//!					15. Call Read(). String in file expected as 'Third string'. Buffer is 64.
+//!					17. Delete TFiletext object.
+//!					18. Call Close() on RFile object.
+//!					19. Delete RFile object.
+//!					20. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Write() returns KErrNone. Read() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1
+			CREATE_OBJECT	RFile		RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Replace		PBASE-F32-FileText-PublicApi-0011command5Replace
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0011command8Set
+			COMMAND		TFileText1	Write		PBASE-F32-FileText-PublicApi-0011command9Write
+			COMMAND		TFileText1	Write		PBASE-F32-FileText-PublicApi-0011command10Write
+			COMMAND		TFileText1	Write		PBASE-F32-FileText-PublicApi-0011command11Write
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0011command15Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0011command18Set
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0011command19Read
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0011command20Read
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0011command21Read
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0011
+
+
+
+
+
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0012
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0012
+//! @SYMCreationDate			08/08/2007
+//! @SYMTestCaseDesc			Write() appending a string. Read() checking if it is added to the end of file.
+//!						Uses API elements: Set(), Read(), Write()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					path to file  'oneliner.txt' string as the second parameter, and EFileWrite as the third
+//!					parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing RFile object instance as parameter.
+//!					7. Call Write(). String parameter is is 'Appended string'. Buffer is 64.
+//!					8. Call Close() on RFile object.
+//!					9. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC containing
+//!					 path to file  'oneliner.txt' string as the second parameter, and EFileRead as the third parameter.
+//!					10. Create TFileText object. And set the position to the beginning of file using Seek().
+//!					11. Call Set() passing RFile object instance as parameter.
+//!					12. Call Read(). String in file expected as  'First string'. Buffer is 64. (File contained this string
+//!					before any modifications. So it's have to be first one.)
+//!					13. Call Read(). String in file expected as  'Appended string'. Buffer is 64.
+//!					14. Delete TFiletext object.
+//!					15. Call Close() on RFile object.
+//!					16. Delete RFile object.
+//!					17. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Write() returns KErrNone. Read() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	RFile	RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0012command5Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0012command8Set
+			COMMAND		TFileText1	Write		PBASE-F32-FileText-PublicApi-0012command9Write
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0012command13Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0012command16Set
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0012command18Read
+			COMMAND		TFileText1	Read		PBASE-F32-FileText-PublicApi-0012command19Read
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0012
+
+
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0013
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0013
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Seek() passing a ESeekAddress as a parameter.
+//!						Uses API elements: Set(), Seek().
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC file name
+//!					reference as the second parameter, and EFileWrite as the third parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing a reference to RFile object as a parameter.
+//!					7. Call Seek() on TFileText passing ESeekAddress as a parameter.
+//!					8. Delete TFiletext object.
+//!					9. Call Close() on RFile object.
+//!					10. Delete RFile object.
+//!					11. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Seek() panics with code FSCLIENT-5.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	RFile	RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0013command5Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0013command8Set
+			COMMAND		TFileText1	Seek		PBASE-F32-FileText-PublicApi-0013command9Seek
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFs1		~
+	END_TEST_BLOCK	!PanicCode=5	!PanicString="FSCLIENT panic"
+
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0013
+
+START_TESTCASE 				PBASE-F32-FileText-PublicApi-0014
+//! @SYMTestCaseID			PBASE-F32-FileText-PublicApi-0014
+//! @SYMAPI				TFileText
+//! @SYMTestCaseDesc			Seek() passing a ESeekCurrent as a parameter.
+//!							Uses API elements: Set(), Seek().
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create RFile object.
+//!					4. Call Open() on RFile object passing a reference to RFs object as the first parameter, a TDesC file name
+//!					 reference as the second parameter, and EFileWrite as the third parameter.
+//!					5. Create TFileText object.
+//!					6. Call Set() passing a reference to RFile object as a parameter.
+//!					7. Call Seek() on TFileText passing ESeekCurrent as a parameter.
+//!					8. Delete TFiletext object.
+//!					9. Call Close() on RFile object.
+//!					10. Delete RFile object.
+//!					11. Delete RFs object.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Seek() panics with code FSCLIENT-5.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1
+			CREATE_OBJECT	RFile		RFile1
+			CREATE_OBJECT	TFileText	TFileText1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFile1		new
+			COMMAND		RFile1		Open		PBASE-F32-FileText-PublicApi-0014command5Open
+			COMMAND		TFileText1	new
+			COMMAND		TFileText1	Set		PBASE-F32-FileText-PublicApi-0014command8Set
+			COMMAND		TFileText1	Seek		PBASE-F32-FileText-PublicApi-0014command9Seek
+			COMMAND		TFileText1	~
+			COMMAND		RFile1		Close
+			COMMAND		RFs1		~
+	END_TEST_BLOCK	!PanicCode=5	!PanicString="FSCLIENT panic"
+END_TESTCASE				PBASE-F32-FileText-PublicApi-0014
+
+
+START_TESTCASE				REMOVE_FILES
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FileText-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	CFileMan	CFileMan1
+			COMMAND		RFs1	new
+			COMMAND		RFs1	Connect
+			COMMAND		CFileMan1	NewL	fileman_fs
+			COMMAND		CFileMan1	Delete	all_test_files
+			COMMAND		RFs1		RmDir	test_dir
+			COMMAND		CFileMan1	new
+			COMMAND		CFileMan1	~
+			COMMAND		RFs1	~
+	END_TEST_BLOCK
+END_TESTCASE				REMOVE_FILES

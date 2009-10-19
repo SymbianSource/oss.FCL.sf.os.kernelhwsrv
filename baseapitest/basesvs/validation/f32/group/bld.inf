@@ -1,0 +1,43 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include "../sfsrv/group/bld.inf"
+
+PRJ_TESTEXPORTS
+
+// to pkg
+
+../testdata/armv5/base_f32_env.ini								/epoc32/pkg/base_f32_env.ini
+
+// to z-drive
+
+../testdata/winscw/base_f32_env.ini								z:/base/base_f32_env.ini
+../testdata/winscw/base_f32_env.ini								z:/base/winscw/base_f32_env.ini
+../testdata/gcce/base_f32_env.ini								z:/base/gcce/base_f32_env.ini
+../testdata/armv5/base_f32_env.ini								z:/base/armv5/base_f32_env.ini 
+
+
+
+// to pkg
+
+../testdata/armv5/dual_drive_env.ini								/epoc32/pkg/dual_drive_env.ini
+
+// to z-drive
+
+../testdata/winscw/dual_drive_env.ini								z:/base/dual_drive_env.ini
+../testdata/winscw/dual_drive_env.ini								z:/base/winscw/dual_drive_env.ini
+../testdata/gcce/dual_drive_env.ini								z:/base/gcce/dual_drive_env.ini
+../testdata/armv5/dual_drive_env.ini								z:/base/armv5/dual_drive_env.ini 

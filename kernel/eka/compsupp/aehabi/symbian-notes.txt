@@ -1,0 +1,35 @@
+
+
+The directory containing this files contains ARM's example
+implementation of the EHABI which is part of 'The Base Standard ABI
+for the ARM architecture'. All parts of this specification including
+the code contained here can be obtained via the link
+[http://www.armdevzone.com/EABI/HomePage.html]. Symbian's
+implementation of exception handling is derived from this code. This
+file will document the amendments made to each file to integrate the
+code with SymbianOS.
+
+Implementation Notes.
+
+* The Symbian implementation does not support nested exceptions. This
+  is not required by C++ and there is no extant requirement to support
+  language which does require nested exceptions.  However this means
+  that the Symbian implementation is not fully BSABI compliant. 
+
+EH v1.0 changes
+
+UNWINDER.C
+/*
+ * RCS $Revision: 1.16 $
+ * Checkin $Date: 2003/10/23 13:57:39 $
+ * Revising $Author: agrant $
+ */
+
+* Remove the source region unwinder_c and replace unwind_activity_c with _DEBUG.
+* Replace inclusion of stddef.h with e32def.h
+* Add typedef for size_t (as a consequence of replacement of stddef.h).
+* Add declaration for abort().
+* Add declaration for bsearch().
+* Replace use and declaration of printf() with DebugPrintf().
+* Conditionalize nested exception handling with SUPPORT_NEST_EXCEPTIONS and abort if found.
+* Remove __ARM_ETInfo from __UnwindRaiseException. 

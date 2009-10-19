@@ -1,0 +1,72 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_latncy.mmp
+// 
+//
+
+#include		<variant_test.mmh>
+#include		"kernel/kern_ext.mmh"
+
+TARGET			VariantTarget(d_latncy,ldd)
+TARGETTYPE		ldd
+ROMTARGET		d_latncy.ldd
+
+SOURCEPATH		../realtime
+SOURCE			d_latncy.cpp d_latncy.cia
+
+
+#if defined(CL7211)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cl7211)
+LIBRARY			VariantTarget(kaeiger,lib)
+#elif defined(WINDERMERE)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/windermere)
+LIBRARY			VariantTarget(kawind,lib)
+#elif defined(SA1100)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/sa1100)
+LIBRARY			VariantTarget(kasa1100,lib)
+#elif defined(COTULLA)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cotulla)
+LIBRARY		VariantTarget(kacotulla,lib)
+#elif defined(INTEGRATORAP)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/integratorap/inc)
+LIBRARY			kaintap.lib
+#elif defined(OMAP1610_ASSP)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/omap1610)
+LIBRARY			VariantTarget(kaomap,lib)
+#elif defined(OMAP24XX_ASSP)
+SYMBIAN_BASE_SYSTEMINCLUDE(omap_hrp/assp/omap24xx)
+SYMBIAN_BASE_SYSTEMINCLUDE(omap_hrp/assp/shared)
+LIBRARY			VariantTarget(kaomap,lib)
+LIBRARY			VariantTarget(power,lib)
+#elif defined(OMAP34XX_ASSP)
+SYMBIAN_BASE_SYSTEMINCLUDE(tiomap3/assp/34xx)
+SYMBIAN_BASE_SYSTEMINCLUDE(tiomap3/assp/common)
+SYMBIAN_BASE_SYSTEMINCLUDE(tiomap3/variant/34xx_sdp)
+LIBRARY			VariantTarget(kaomap,lib)
+LIBRARY			VariantTarget(power,lib)
+LIBRARY			VariantTarget(resourcemanager,lib)
+#elif defined(X86PC)
+SYMBIAN_BASE_SYSTEMINCLUDE(x86pc/specific)
+library			VariantTarget(ecust,lib)
+#elif defined(RVEMUBOARD)
+LIBRARY			karvemuboard.lib
+#elif defined(NE1_TB)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/naviengine)
+#endif
+EPOCALLOWDLLDATA
+
+UID		0x100000af 0x100000c9
+VENDORID 0x70000001
+
+capability		all

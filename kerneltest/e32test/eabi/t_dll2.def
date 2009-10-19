@@ -1,0 +1,13 @@
+EXPORTS
+	_ZN8TestDll210GlobalReadEiR5TDes8 @ 1 NONAME ; TestDll2::GlobalRead(int, TDes8&)
+	_ZN8TestDll211GlobalAllocEi @ 2 NONAME ; TestDll2::GlobalAlloc(int)
+	_ZN8TestDll211GlobalWriteEiRK6TDesC8 @ 3 NONAME ; TestDll2::GlobalWrite(int, TDesC8 const&)
+	_ZN8TestDll215GlobalAllocatedEv @ 4 NONAME ; TestDll2::GlobalAllocated()
+	_ZN8TestDll23SemEv @ 5 NONAME ; TestDll2::Sem()
+	_ZN8TestDll24DataEv @ 6 NONAME ; TestDll2::Data()
+	_ZN8TestDll25Test1Ev @ 7 NONAME ; TestDll2::Test1()
+	_ZN8TestDll25Test2Ev @ 8 NONAME ; TestDll2::Test2()
+	_ZN8TestDll26AttachEi @ 9 NONAME ; TestDll2::Attach(int)
+	_ZN8TestDll26ServerEv @ 10 NONAME ; TestDll2::Server()
+	_ZN8TestDll27SetDataEi @ 11 NONAME ; TestDll2::SetData(int)
+

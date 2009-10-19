@@ -1,0 +1,391 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\x86\ncsched.cia
+// 
+//
+
+#include <x86.h>
+
+#if defined(KSCHED)
+extern "C" void __DebugMsgWaitForAnyRequest();
+extern "C" void __DebugMsgResched(int a);
+extern "C" void __DebugMsgInitSelection(int a);
+extern "C" void __DebugMsgRR(int a);
+extern "C" void __DebugMsgBlockedFM(int a);
+extern "C" void __DebugMsgImpSysHeld(int a);
+#endif
+
+const TLinAddr TScheduler_Reschedule = (TLinAddr)&TScheduler::Reschedule;
+const TLinAddr TheScheduler_iRescheduleNeededFlag = (TLinAddr)&TheScheduler.iRescheduleNeededFlag;
+const TLinAddr NKern_FastCounter = (TLinAddr)&NKern::FastCounter;
+
+__NAKED__ void TScheduler::YieldTo(NThreadBase*)
+	{
+	//
+	// Enter with kernel locked, interrupts can be on or off
+	// Exit with kernel unlocked, interrupts off
+	//
+	asm("mov byte ptr [%a0], 1" : : "i"(&TheScheduler.iRescheduleNeededFlag));
+	asm("call %a0" : : "i"(TScheduler_Reschedule));
+	asm("ret");
+	}
+
+const TUint32 new_thread_trace_header = ((8<<BTrace::ESizeIndex) + (BTrace::EContextIdPresent<<BTrace::EFlagsIndex*8) + (BTrace::ECpuUsage<<BTrace::ECategoryIndex*8) + (BTrace::ENewThreadContext<<BTrace::ESubCategoryIndex*8));
+
+
+
+/***************************************************************************
+* Reschedule
+* Enter with:
+*		Kernel locked, interrupts enabled or disabled
+* Return with:
+*		Kernel unlocked, interrupts disabled
+*		EAX=0 if no reschedule occurred, 1 if it did
+***************************************************************************/
+__NAKED__ void TScheduler::Reschedule()
+	{
+	asm("push 0");
+	asm("cli");
+	asm("start_resched:");
+	asm("cmp byte ptr [%a0], 0" : : "i"(&TheScheduler.iDfcPendingFlag));
+	asm("jz resched_no_dfcs");
+
+	asm("mov ecx, %0": :"i"(&TheScheduler)); 
+#ifdef __GCC32__
+	asm("push ecx");
+	asm("call __ZN10TScheduler9QueueDfcsEv");
+	asm("add esp,4"); 
+#else
+	TheScheduler.QueueDfcs();
+#endif
+	asm("resched_no_dfcs:");
+	asm("cmp byte ptr [%a0], 0" : : "i"(&TheScheduler.iRescheduleNeededFlag));
+	asm("jz resched_not_needed");
+	asm("mov byte ptr [esp], 1");
+	asm("sti");
+	asm("push fs");
+	asm("push gs");
+	asm("push ebp");
+	asm("push edi");
+	asm("lea edi, %a0": : "i"(&TheScheduler));
+	asm("push esi");
+	asm("push ebx");
+	asm("mov eax, cr0");
+	asm("push eax");
+
+	asm("mov eax, [edi+4]");
+	asm("test eax, eax");
+	asm("jz resched_pri_lt_32");
+	asm("bsr ecx, eax");
+	asm("add cl, 32");
+	asm("jmp resched_1");
+	asm("resched_pri_lt_32:");
+	asm("mov eax, [edi]");
+	asm("bsr ecx, eax");
+	asm("resched_1:");						// ecx=highest ready priority
+	asm("mov byte ptr [edi+%0], 0" : : "i"_FOFF(TScheduler,iRescheduleNeededFlag)); // mov byte ptr [edi]TScheduler.iRescheduleNeededFlag, 0
+	asm("lea esi, [edi+ecx*4+8]");			// esi points to corresponding queue
+	asm("mov ebx, [esi]");					// ebx points to highest priority thread
+	ASM_DEBUG1(InitSelection,ebx)
+	asm("cmp dword ptr [ebx+%0], 0" : :"i"_FOFF(NThreadBase,iTime));	// check if timeslice expired
+	asm("jnz no_other");					// skip if not
+	asm("cmp ebx, [ebx]");					// else check for other threads at this priority
+	asm("jnz round_robin");					// branch if there are
+	asm("no_other:");
+	asm("mov eax, [ebx+%0]" : : "i"_FOFF(NThreadBase,iHeldFastMutex));
+	asm("test eax, eax");					// does this thread hold a fast mutex?
+	asm("jnz holds_fast_mutex");			// branch if it does
+	asm("mov eax, [ebx+%0]" : : "i"_FOFF(NThreadBase,iWaitFastMutex));
+	asm("test eax, eax");					// is thread blocked on a fast mutex?
+	asm("jnz resched_blocked");				// branch if it is
+
+	asm("resched_not_blocked:");
+	asm("test byte ptr [ebx+10], 1");		// test for implicit system lock
+	asm("jz resched_no_imp_sys");
+#ifdef __GCC32__
+	asm("mov eax, [edi+%0]" : : "i"(_FOFF(TScheduler,iLock) + _FOFF(NFastMutex,iHoldingThread)));
+#else
+	_asm mov eax, [edi]TheScheduler.iLock.iHoldingThread
+#endif
+	asm("test eax, eax");
+	asm("jz resched_imp_sys_ok");
+	asm("mov ebx, eax");					// system lock held so switch to holding thread
+#ifdef __GCC32__
+	asm("mov eax,1");
+	asm("mov [edi+%0],eax" : : "i"(_FOFF(TScheduler, iLock) + _FOFF(NFastMutex,iWaiting)));
+#else
+	_asm mov [edi]TheScheduler.iLock.iWaiting, 1
+#endif
+	ASM_DEBUG1(ImpSysHeld,ebx)
+
+	asm("resched_no_imp_sys:");
+	asm("resched_imp_sys_ok:");
+	asm("resched_do_thread_switch:");
+	// EBX->new thread, EDI->TheScheduler
+	ASM_DEBUG1(Resched,ebx)
+
+#ifdef MONITOR_THREAD_CPU_TIME
+	asm("call %a0" : :"i"(NKern_FastCounter));
+	asm("mov ecx, [edi+%0]" : : "i"_FOFF(TScheduler,iCurrentThread));
+	asm("mov edx, [ecx+%0]" : : "i"_FOFF(NThreadBase,iLastStartTime));
+	asm("mov [ebx+%0], eax" : : "i"_FOFF(NThreadBase,iLastStartTime));
+	asm("sub eax, edx");
+	asm("add dword ptr ([ecx+%0]), eax" : : "i"_FOFF(NThreadBase,iTotalCpuTime));
+	asm("adc dword ptr ([ecx+4+%0]), 0" : : "i"_FOFF(NThreadBase,iTotalCpuTime));
+#endif
+#ifdef BTRACE_CPU_USAGE
+	asm("cmp byte ptr [%a0], 0": : "i"(&TheScheduler.iCpuUsageFilter));
+	asm("jz no_trace");
+	asm("push [%a0]": : "i"(&TheScheduler.iCurrentThread));
+	asm("push 0");
+	asm("push %0": : "i"(new_thread_trace_header));
+	asm("call dword ptr [%a0]": : "i"(&TheScheduler.iBTraceHandler));
+	asm("pop eax");
+	asm("pop eax");
+	asm("pop eax");
+	asm("no_trace:");
+#endif
+
+	asm("mov esi, [edi+%0]": :"i"_FOFF(TScheduler,iCurrentThread)); // ESI -> original thread
+	asm("mov [esi+%0], esp": :"i"_FOFF(NThreadBase,iSavedSP));		// Save original thread stack pointer
+	asm("mov [edi+%0], ebx": :"i"_FOFF(TScheduler,iCurrentThread));	// EBX -> new thread, update current thread
+	asm("cmp ebx, esi");
+	asm("je same_thread");
+	asm("test byte ptr [esp], 8");									// test thread's TS flag
+	asm("jnz no_fpu");												// if set, thread did not use FPU
+	asm("clts");
+	asm("fnsave [esi+%0]": :"i"_FOFF(NThread,iCoprocessorState));	// else thread did use FPU - save its state
+	asm("or byte ptr [esp], 8");									// set TS flag so thread aborts next time it uses FPU
+	asm("fwait");
+
+	asm("no_fpu:");
+	asm("same_thread:");
+
+	asm("mov esp, [ebx+%0]": :"i"_FOFF(NThreadBase,iSavedSP));		// Load new thread stack pointer
+	asm("mov eax, [ebx+%0]": :"i"_FOFF(NThreadBase,iStackBase));
+	asm("add eax, [ebx+%0]": :"i"_FOFF(NThreadBase,iStackSize));
+	asm("mov ecx, dword ptr [%a0]": :"i"(&X86_TSS_Ptr));
+	asm("mov [ecx+%0], eax": :"i"_FOFF(TX86Tss,iEsp0));				// set ESP0 to top of new thread supervisor stack
+
+	asm("test byte ptr [ebx+%0], 2": :"i"_FOFF(TPriListLink,iSpare2)); // test for address space switch
+	asm("jz resched_no_as_switch");
+	asm("call [edi+%0]": :"i"_FOFF(TScheduler,iProcessHandler));	// call handler with
+																	// EBX=pointer to new thread, EDI->scheduler, preserves ESI, EDI
+	asm("resched_no_as_switch:");
+	asm("pop eax");
+	asm("mov cr0, eax");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("pop ebp");
+	asm("pop gs");
+	asm("pop fs");
+	asm("cli");
+	asm("lea eax, %a0": : "i"(&TheScheduler.iRescheduleNeededFlag));
+	asm("cmp dword ptr [eax], 0");
+	asm("jnz start_resched");
+	asm("mov eax,0");
+	asm("mov [%a0], eax": : "i"(&TheScheduler.iKernCSLocked));
+	asm("pop eax");
+	asm("ret");
+
+	asm("round_robin:");
+	asm("mov eax, [ebx+%0]": : "i"_FOFF(NThreadBase,iHeldFastMutex));
+	asm("test eax, eax");					// does this thread hold a fast mutex?
+	asm("jnz rr_holds_fast_mutex");			// branch if it does
+	asm("mov eax, [ebx+%0]": : "i"_FOFF(NThreadBase,iTimeslice));
+	asm("mov [ebx+%0], eax": : "i"_FOFF(NThreadBase,iTime)); // else new timeslice for this thread next time
+	asm("mov ebx, [ebx]");					// candidate thread = next thread in round-robin order
+	asm("mov [esi], ebx");					// the latter is now the first at this priority
+	ASM_DEBUG1(RR,ebx);
+	asm("jmp no_other");
+
+	asm("resched_blocked:");
+	ASM_DEBUG1(BlockedFM,eax)
+	asm("mov edx, [eax+%0]": : "i"_FOFF(NFastMutex,iHoldingThread));
+	asm("test edx, edx");
+	asm("jz resched_not_blocked");
+	asm("mov ebx, edx");
+	asm("jmp resched_do_thread_switch");
+
+	asm("holds_fast_mutex:");
+#ifdef __GCC32__
+	asm("lea ecx, [edi+%0]": : "i"_FOFF(TScheduler,iLock));
+#else
+	_asm lea ecx, [edi]TheScheduler.iLock
+#endif
+	asm("cmp eax, ecx");
+	asm("je resched_do_thread_switch");
+	asm("test byte ptr [ebx+10], 1");		// test for implicit system lock
+	asm("jz resched_do_thread_switch");
+#ifdef __GCC32__
+	asm("cmp dword ptr [edi+%0], 0": : "i"(_FOFF(TScheduler,iLock) + _FOFF(NFastMutex,iHoldingThread)));
+#else
+	_asm cmp [edi]TheScheduler.iLock.iHoldingThread, 0
+#endif
+	asm("jz resched_do_thread_switch");
+
+
+	asm("rr_holds_fast_mutex:");
+#ifdef __GCC32__
+	asm("push edx");		// storing an immediate value to an C-offset address appears to be 
+	asm("mov edx,1");		// impossible in GCC, so we use edx instead
+	asm("mov [eax+%0], edx": : "i"_FOFF(NFastMutex,iWaiting));
+	asm("pop edx");
+#else
+	_asm mov [eax]NFastMutex.iWaiting, 1
+#endif
+	asm("jmp resched_do_thread_switch");
+
+	asm("resched_not_needed:");
+	asm("xor eax, eax");
+	asm("mov [%a0], eax": : "i"(&TheScheduler.iKernCSLocked));
+	asm("pop eax");
+	asm("ret");
+	}
+
+
+/** Disable interrupts to the specified level
+
+If aLevel = 0 does not affect interrupt state
+If aLevel <>0 disables all maskable interrupts.
+
+@param	aLevel level to which to disable
+@return	Cookie to pass into RestoreInterrupts()
+*/
+EXPORT_C __NAKED__ TInt NKern::DisableInterrupts(TInt /*aLevel*/)
+	{
+	asm("pushfd");
+	asm("mov ecx, [esp+4]");
+	asm("pop eax");
+	asm("and eax, 0x200");
+	asm("test ecx, ecx");
+	asm("jz disable_ints_0");
+	asm("cli");
+	asm("disable_ints_0:");
+	asm("ret");
+	}
+
+
+/** Disable all maskable interrupts
+
+@return	Cookie to pass into RestoreInterrupts()
+*/
+EXPORT_C __NAKED__ TInt NKern::DisableAllInterrupts()
+	{
+	asm("pushfd");
+	asm("pop eax");
+	asm("and eax, 0x200");
+	asm("cli");
+	asm("ret");
+	}
+
+
+/** Restore interrupt mask to state preceding a DisableInterrupts() call
+
+@param	aLevel Cookie returned by Disable(All)Interrupts()
+*/
+EXPORT_C __NAKED__ void NKern::RestoreInterrupts(TInt aLevel)
+	{
+	asm("test byte ptr [esp+5], 2");	// test saved I flag
+	asm("jz restore_irq_off");			// jump if clear
+	asm("sti");							// else reenable interrupts
+	asm("ret");
+	asm("restore_irq_off:");
+	asm("cli");
+	asm("ret");
+	}
+
+
+/** Enable all maskable interrupts
+
+@internalComponent
+*/
+EXPORT_C __NAKED__ void NKern::EnableAllInterrupts()
+	{
+	asm("sti");
+	asm("ret");
+	}
+
+
+/**	Unlocks the kernel
+Decrements iKernCSLocked; if it becomes zero and IDFCs or a reschedule are
+pending, calls the scheduler to process them.
+
+@pre	Thread or IDFC context. Don't call from ISRs.
+*/
+EXPORT_C __NAKED__ void NKern::Unlock()
+	{
+	asm("xor eax, eax");
+	asm("dec dword ptr [%a0]": : "i"(&TheScheduler.iKernCSLocked));
+	asm("lea edx, %a0": : "i"(&TheScheduler.iRescheduleNeededFlag));
+	asm("jnz unlock_no_resched");
+	asm("cmp eax, [edx]");
+	asm("jz unlock_no_resched");
+	asm("inc eax");
+	asm("mov dword ptr [%a0], eax": : "i"(&TheScheduler.iKernCSLocked));
+	asm("call %a0" : : "i"(TScheduler_Reschedule));
+	asm("sti");
+	asm("unlock_no_resched:");
+	asm("ret");
+	}
+
+
+/**	Locks the kernel
+Increments iKernCSLocked, thereby deferring IDFCs and preemption.
+
+@pre	Thread or IDFC context. Don't call from ISRs.
+*/
+EXPORT_C __NAKED__ void NKern::Lock()
+	{
+	asm("inc dword ptr [%a0]": : "i"(&TheScheduler.iKernCSLocked));
+	asm("ret");
+	}
+
+
+/**	Locks the kernel and returns a pointer to the current thread
+Increments iKernCSLocked, thereby deferring IDFCs and preemption.
+
+@pre	Thread or IDFC context. Don't call from ISRs.
+*/
+EXPORT_C __NAKED__ NThread* NKern::LockC()
+	{
+	asm("inc dword ptr [%a0]": :"i"(&TheScheduler.iKernCSLocked));
+	asm("mov eax, [%a0]": :"i"(&TheScheduler.iCurrentThread));
+	asm("ret");
+	}
+
+
+/**	Allows IDFCs and rescheduling if they are pending.
+If IDFCs or a reschedule are pending and iKernCSLocked is exactly equal to 1
+calls the scheduler to process the IDFCs and possibly reschedule.
+
+@return	Nonzero if a reschedule actually occurred, zero if not.
+@pre	Thread or IDFC context. Don't call from ISRs.
+*/
+EXPORT_C __NAKED__ TInt NKern::PreemptionPoint()
+	{
+	asm("mov ecx, %0": : "i"(TheScheduler_iRescheduleNeededFlag));
+	asm("xor eax, eax");
+	asm("cmp eax, [ecx]");
+	asm("jz preemption_point_no_resched");
+	asm("cmp dword ptr [%a0], 1": : "i"(&TheScheduler.iKernCSLocked));
+	asm("jne preemption_point_no_resched");
+	asm("call %a0" : : "i"(TScheduler_Reschedule));
+	asm("mov dword ptr [%a0], 1": : "i"(&TheScheduler.iKernCSLocked));
+	asm("sti");
+
+	asm("preemption_point_no_resched:");
+	asm("ret");
+	}

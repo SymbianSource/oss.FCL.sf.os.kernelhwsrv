@@ -1,0 +1,35 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+#if (!defined __T_SFSRV_BINARIES_IBY__)
+#define __T_SFSRV_BINARIES_IBY__
+
+#include <testexecute.iby>
+
+#if (!defined EKA2)
+file=ABI_DIR\BUILD_DIR\t_sfsrv.exe	system\libs\t_sfsrv.exe
+file=ABI_DIR\BUILD_DIR\t_prompt.exe	system\libs\t_prompt.exe
+file=ABI_DIR\BUILD_DIR\T_TESTFSY1.fsy system\libs\T_TESTFSY1.fsy
+file=ABI_DIR\BUILD_DIR\T_TestFXT.fxt system\libs\T_TestFXT.fxt
+#else
+file=ABI_DIR\BUILD_DIR\t_sfsrv.exe system\bin\t_sfsrv.exe
+file=ABI_DIR\BUILD_DIR\t_prompt.exe system\bin\t_prompt.exe
+file=ABI_DIR\BUILD_DIR\T_TESTFSY1.fsy system\bin\T_TESTFSY1.fsy
+file=ABI_DIR\BUILD_DIR\T_TestFXT.fxt system\bin\T_TestFXT.fxt
+#endif
+
+#endif

@@ -1,0 +1,77 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\drivers\trace\arm\btracex.cia
+// 
+//
+
+#include <e32cia.h>
+#include <kernel/kern_priv.h>
+#include "drivers/btrace.h"
+#ifndef __SMP__
+#include "highrestimer.h"
+#endif
+
+#ifdef BTRACE_DRIVER_MACHINE_CODED
+
+#ifndef HAS_HIGH_RES_TIMER
+//#undef BTRACE_INCLUDE_TIMESTAMPS
+#endif
+
+__NAKED__ TBool TBTraceBufferK::TraceWithTimestamp2(TUint32 aHeader,TUint32 aHeader2,TUint32 aContext,TUint32 a1,TUint32 a2,TUint32 a3,TUint32 aExtra,TUint32 aPc)
+	{
+#ifdef BTRACE_INCLUDE_TIMESTAMPS
+#define USE_TIMESTAMP2 
+#include "btracex_impl.cia"
+#undef USE_TIMESTAMP2
+#endif // If compiling without timestamp support this function falls through to the normal Trace()...
+	}
+
+__NAKED__ TBool TBTraceBufferK::Trace(TUint32 aHeader,TUint32 aHeader2,TUint32 aContext,TUint32 a1,TUint32 a2,TUint32 a3,TUint32 aExtra,TUint32 aPc)
+	{
+#include "btracex_impl.cia"
+
+	asm("trace_dropped: ");		// get here with r5 = &user_buffer
+	asm("mov	r0, #0 ");
+	asm("str	r0, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iRequestDataSize));
+
+	asm("trace_off:");			// get here with r5 = &user_buffer
+	asm("ldr	r7, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iGeneration));
+	asm("str	r10, [r10,#%a0]" : : "i" _FOFF(TBTraceBufferK,iDropped));	// flag we dropped a trace
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER_Z__(r8);		// make sure head pointer update seen before generation update
+#endif
+	asm("add	r7, r7, #1 ");
+	asm("str	r7, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iGeneration));	// make sure iGeneration doesn't go out of sync
+
+	asm("done:");
+	asm("add	sp, sp, #16 ");			// drop args
+	asm("ldmfd	sp!, {r4-r12,lr} ");
+	asm("mov	r0, #1 ");				// return TRUE
+#ifndef __SMP__
+	asm("msr	cpsr_c, r12 ");			// restore interrupts
+#endif
+	__JUMP(,lr);
+
+	asm("__Buffer: ");
+	asm(".word Buffer ");
+	asm("__03020100: ");
+	asm(".word 0x03020100 ");
+	asm("__04040404: ");
+	asm(".word 0x04040404 ");
+	}
+
+
+
+
+#endif // BTRACE_DRIVER_MACHINE_CODED

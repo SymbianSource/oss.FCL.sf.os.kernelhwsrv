@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SystemDefinition schema="3.0.0">
+  <package id="kernelhwsrv" name="Kernel and Hardware Services" levels="hw-if adaptation framework test">
+    <collection id="baseintegtests" name="Base Integration Testing" level="test">
+      <component id="baseintegrationtest" name="Base Integration Test" introduced="9.3" purpose="development">
+        <unit bldFile="baseintegtests/baseintegrationtest/group" mrp="baseintegtests/baseintegrationtest/group/base_integration_test.mrp"/>
+      </component>
+    </collection>
+    <collection id="brdbootldr" name="Board Boot Loader" level="hw-if">
+      <component id="ubootldr" name="Boot Loader" introduced="9.2" purpose="optional">
+        <unit mrp="brdbootldr/ubootldr/base_ubootldr.mrp"/>
+      </component>
+    </collection>
+    <collection id="bsptemplate" name="Board Support Package Template" level="hw-if">
+      <component id="asspandvariant" name="Template ASSP and Variant" introduced="6.0" purpose="development">
+        <unit bldFile="bsptemplate/asspandvariant/template_variant" mrp="bsptemplate/asspandvariant/base_template.mrp"/>
+      </component>
+    </collection>
+    <collection id="kernel" name="Kernel Architecture" level="adaptation">
+      <component id="eka" name="Kernel Architecture" introduced="8.0" purpose="mandatory">
+        <unit bldFile="kernel/eka" mrp="kernel/eka/base_e32.mrp"/>
+      </component>
+    </collection>
+    <collection id="kerneltest" name="Kernel Test" level="hw-if">
+      <component id="e32utils" name="E32 Utilities" purpose="development">
+      <unit bldFile="kerneltest/e32utils/group" mrp="kerneltest/e32utils/group/base_e32utils.mrp"/>
+      </component>
+      <component id="e32test" name="E32 Tests" purpose="development">
+        <unit bldFile="kerneltest/e32test/group" mrp="kerneltest/e32test/group/base_e32test.mrp"/>
+      </component>
+      <component id="f32test" name="File Server Tests" purpose="development">
+        <unit bldFile="kerneltest/f32test/group" mrp="kerneltest/f32test/group/base_f32test.mrp"/>
+      </component>
+    </collection>
+    <collection id="ldds" name="Logical Device Drivers" level="adaptation">
+      <component id="ethernetldd" name="Ethernet Drivers" purpose="optional">
+        <unit bldFile="kernel/eka/drivers/ethernet" mrp="kernel/eka/drivers/ethernet/base_e32_drivers_ethernet.mrp"/>
+      </component>
+      <component id="audioldd" name="Audio Drivers" introduced="8.1b" purpose="optional">     
+        <unit bldFile="kernel/eka/drivers/soundsc" mrp="kernel/eka/drivers/soundsc/base_e32_drivers_sound.mrp"/>       
+      </component>
+      <component id="serialldd" name="Serial Port Drivers" purpose="optional">
+        <unit bldFile="kernel/eka/drivers/ecomm" mrp="kernel/eka/drivers/ecomm/base_e32_drivers_ecomm.mrp"/>
+      </component>
+      <component id="legacydrivers" name="Legacy Drivers" purpose="optional">
+        <unit mrp="kernel/eka/drivers/adc/base_e32_drivers_adc.mrp"/>
+      </component>
+      <component id="locmedia" name="Local Media Subsystem" introduced="8.1b" purpose="mandatory">
+        <!-- these are LDDs for storage media-->
+        <unit bldFile="kernel/eka/drivers/locmedia" mrp="kernel/eka/drivers/locmedia/base_e32_drivers_locmedia.mrp"/>
+      </component>
+      <component id="runmodedebugger" name="Run Mode Debugger" purpose="mandatory">
+		<unit bldFile="kernel/eka/drivers/debug/group" mrp="kernel/eka/drivers/debug/group/base_e32_drivers_debug.mrp"/>	    
+      </component>
+      <component id="btrace" name="Kernel Trace Tool" purpose="mandatory">
+        <unit bldFile="kernel/eka/drivers/trace" mrp="kernel/eka/drivers/trace/base_e32_drivers_trace.mrp"/>
+      </component>
+      <component id="cameraldd" name="Camera Drivers" introduced="tb92" purpose="optional">
+        <unit bldFile="kernel/eka/drivers/camerasc" mrp="kernel/eka/drivers/camerasc/base_drivers_camerasc.mrp"/>
+      </component>
+      <component id="displayldd" name="Display Drivers" introduced="tb92" purpose="optional">
+        <!-- owned and maintained by graphics package. To be moved there as soon as technical limitations are resolved -->
+        <unit bldFile="kernel/eka/drivers/display" mrp="kernel/eka/drivers/display/base_e32_drivers_display.mrp"/>
+      </component>
+      <component id="usbclientdrivers" name="USB Client Drivers" introduced="8.1b" purpose="optional">
+        <!-- owned and maintained by usb package. To be moved there as soon as technical limitations are resolved -->
+        <unit bldFile="kernel/eka/drivers/usbc" mrp="kernel/eka/drivers/usbc/base_e32_drivers_usbcli.mrp"/>
+      </component>
+    </collection>
+    <collection id="driversupport" name="Generic Driver Support" level="hw-if">
+      <component id="mediadrivers" name="Media Drivers" purpose="optional">
+        <!-- these are for storage media-->
+        <unit bldFile="kernel/eka/drivers/media" mrp="kernel/eka/drivers/media/base_e32_drivers_media.mrp"/>
+      </component>
+      <component id="genericboardsupport" name="Generic Board Support" purpose="optional">
+        <unit bldFile="kernel/eka/drivers/bsp" mrp="kernel/eka/drivers/bsp/base_e32_drivers_bsp.mrp"/>
+      </component>
+    </collection>
+    <collection id="userlibandfileserver" name="User Library and File Server" level="framework">
+      <component id="euser" name="User Library" purpose="mandatory">
+        <unit bldFile="kernel/eka/euser" mrp="kernel/eka/euser/base_e32_euser.mrp"/>
+      </component>
+      <component id="compsupp" name="Compiler Runtime Support" filter="gt" purpose="mandatory">
+        <unit bldFile="kernel/eka/compsupp" mrp="kernel/eka/compsupp/base_e32_compsupp.mrp"/>
+      </component>
+      <component id="fileserver" name="File Server" filter="gt" purpose="mandatory">
+        <unit bldFile="userlibandfileserver/fileserver/group" mrp="userlibandfileserver/fileserver/group/base_f32.mrp"/>
+      </component>
+      <component id="estart" name="Base Starter" filter="gt" purpose="optional">
+        <unit bldFile="userlibandfileserver/fileserver/estart" mrp="userlibandfileserver/fileserver/estart/base_f32_estart.mrp"/>
+      </component>
+      <component id="domainmgr" name="Domain Manager" introduced="8.1b" purpose="mandatory">
+        <unit bldFile="userlibandfileserver/domainmgr/group" mrp="userlibandfileserver/domainmgr/group/base_domain.mrp"/>
+      </component>
+    </collection>
+    <collection id="filesystems" name="File Systems" level="framework">
+      <component id="romfs" name="ROM File System" filter="gt" purpose="optional" class="plugin">
+        <unit mrp="userlibandfileserver/fileserver/srom/base_f32_srom.mrp"/>
+      </component>
+      <component id="rofs" name="ROFS" filter="gt" purpose="optional" class="plugin">
+        <unit bldFile="userlibandfileserver/fileserver/srofs" mrp="userlibandfileserver/fileserver/srofs/base_f32_srofs.mrp"/>
+      </component>
+      <component id="usbmsfs" name="USB Mass Storage File System" filter="gt" purpose="optional" class="plugin">
+        <unit bldFile="userlibandfileserver/fileserver/smassstorage" mrp="userlibandfileserver/fileserver/smassstorage/base_f32_smassstorage.mrp"/>
+      </component>
+      <component id="usbhostmssrv" name="USB Host Mass Storage Server" filter="gt" introduced="tb92" purpose="optional" class="plugin">
+        <unit bldFile="userlibandfileserver/fileserver/shostmassstorage" mrp="userlibandfileserver/fileserver/shostmassstorage/base_f32_shostmassstorage.mrp"/>
+      </component>
+      <component id="fat32fs" name="FAT32 File System" filter="gt" purpose="optional" class="plugin">
+        <unit bldFile="userlibandfileserver/fileserver/sfat32" mrp="userlibandfileserver/fileserver/sfat32/base_f32_sfat32.mrp"/>
+      </component>
+      <component id="fatfs" name="FAT File System" filter="gt" purpose="optional" class="plugin">
+        <unit bldFile="userlibandfileserver/fileserver/sfat" mrp="userlibandfileserver/fileserver/sfat/base_f32_sfat.mrp"/>
+      </component>
+      <component id="compfs" name="Composite File System" filter="gt" purpose="optional" class="plugin">
+        <unit bldFile="userlibandfileserver/fileserver/scomp" mrp="userlibandfileserver/fileserver/scomp/base_f32_scomp.mrp"/>
+      </component>
+    </collection>
+    <collection id="halservices" name="HAL Services" level="framework">
+      <component id="hal" name="User-Side Hardware Abstraction" introduced="6.0" purpose="optional">
+        <unit bldFile="halservices/hal" mrp="halservices/hal/base_hal.mrp"/>
+      </component>
+    </collection>
+    <collection id="textmodeshell" name="Text Mode Shell" level="test">
+      <component id="e32wsrv" name="Text Window Server" purpose="optional">
+        <unit bldFile="kernel/eka/ewsrv" mrp="kernel/eka/ewsrv/base_e32_ewsrv.mrp"/>
+      </component>
+      <component id="textshell" name="Text Shell" filter="gt" purpose="development">
+        <unit bldFile="userlibandfileserver/fileserver/etshell" mrp="userlibandfileserver/fileserver/etshell/base_f32_eshell.mrp"/>
+      </component>
+    </collection>
+    <collection id="baseapitest" name="Base API Tests" level="test">
+      <component id="basesvs" name="Base Verification Suite" introduced="tb91" purpose="development">
+        <unit mrp="baseapitest/basesvs/group/basesvs.mrp"/>
+      </component>
+    </collection>
+    <collection id="kernelhwsrv_info" name="Kernel and Hardware Services Info" level="test">
+      <component id="kernelhwsrv_metadata" name="Kernel and Hardware Services Metadata" class="config" introduced="tb91" purpose="development" target="desktop">
+        <unit mrp="kernelhwsrv_info/kernelhwsrv_metadata/kernelhwsrv_metadata.mrp"/>
+      </component>
+    </collection>
+  </package>
+</SystemDefinition>

@@ -1,0 +1,37 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+#define BASE_ROM
+#define NAND_ACCEPTANCE_TESTS_ROM
+#include <rom\##VARIANT##\header.iby>
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xferbm.exe			sys\bin\t_xferbm.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_freespace.exe		sys\bin\t_freespace.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_nanddrv.exe			sys\bin\t_nanddrv.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_nandmisc.exe			sys\bin\t_nandmisc.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_npfail.exe			sys\bin\t_npfail.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_wearlvl.exe			sys\bin\t_wearlvl.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_blockrep.exe			sys\bin\t_blockrep.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_readdist.exe			sys\bin\t_readdist.exe
+

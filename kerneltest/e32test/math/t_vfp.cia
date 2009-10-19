@@ -1,0 +1,1148 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\math\t_vfp.cia
+// 
+//
+
+#include "t_vfp.h"
+#include <u32std.h>
+
+#define __TEST_VFPV3
+
+#define _DIE(x)	asm(".word %a0" : : "i" ((TInt)( 0xe7f000f0|((x)&0x0f)|(((x)&0xfff0)<<4) )));
+#define DIE		_DIE(__LINE__);
+
+/******************************************************************************
+ * Control registers
+ ******************************************************************************/
+__NAKED__ TUint32 Vfp::Fpscr()
+	{
+	VFP_FMRX(,0,VFP_XREG_FPSCR);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SetFpscr(TUint32 /*aVal*/)
+	{
+	VFP_FMXR(,VFP_XREG_FPSCR,0);
+	__JUMP(,lr);
+	}
+
+/******************************************************************************
+ * Single precision operations
+ ******************************************************************************/
+__NAKED__ TInt32 Vfp::SRegInt(TInt /*aReg*/)
+	{
+	// fall through
+	}
+
+__NAKED__ TReal32 Vfp::SReg(TInt /*aReg*/)
+	{
+	asm("cmp r0, #31 ");
+	asm("addls pc, pc, r0, lsl #3 ");
+	DIE;
+	VFP_FMRS(CC_AL,0,0);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,1);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,2);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,3);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,4);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,5);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,6);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,7);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,8);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,9);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,10);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,11);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,12);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,13);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,14);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,15);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,16);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,17);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,18);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,19);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,20);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,21);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,22);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,23);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,24);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,25);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,26);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,27);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,28);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,29);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,30);
+	__JUMP(,lr);
+	VFP_FMRS(CC_AL,0,31);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SetSReg(TInt32 /*aVal*/, TInt /*aReg*/)
+	{
+	// fall through
+	}
+
+__NAKED__ void Vfp::SetSReg(TReal32 /*aVal*/, TInt /*aReg*/)
+	{
+	asm("cmp r1, #31 ");
+	asm("addls pc, pc, r1, lsl #3 ");
+	DIE;
+	VFP_FMSR(CC_AL,0,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,1,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,2,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,3,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,4,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,5,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,6,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,7,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,8,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,9,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,10,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,11,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,12,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,13,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,14,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,15,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,16,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,17,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,18,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,19,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,20,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,21,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,22,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,23,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,24,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,25,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,26,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,27,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,28,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,29,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,30,0);
+	__JUMP(,lr);
+	VFP_FMSR(CC_AL,31,0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::AbsS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FABSS(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::AddS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FADDS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpS()
+	{
+	VFP_FCMPS(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpES()
+	{
+	VFP_FCMPES(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpEZS()
+	{
+	VFP_FCMPEZS(CC_AL,0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpZS()
+	{
+	VFP_FCMPZS(CC_AL,0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::Cpy0S(TInt /*aReg*/)
+	{
+	asm("cmp r0, #31 ");
+	asm("addls pc, pc, r0, lsl #3 ");
+	DIE;
+	VFP_FCPYS(CC_AL,0,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,1);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,2);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,3);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,4);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,5);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,6);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,7);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,8);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,9);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,10);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,11);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,12);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,13);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,14);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,15);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,16);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,17);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,18);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,19);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,20);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,21);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,22);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,23);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,24);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,25);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,26);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,27);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,28);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,29);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,30);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,0,31);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CpyS0(TInt /*aReg*/)
+	{
+	asm("cmp r0, #31 ");
+	asm("addls pc, pc, r0, lsl #3 ");
+	DIE;
+	VFP_FCPYS(CC_AL,0,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,1,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,2,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,3,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,4,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,5,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,6,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,7,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,8,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,9,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,10,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,11,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,12,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,13,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,14,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,15,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,16,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,17,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,18,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,19,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,20,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,21,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,22,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,23,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,24,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,25,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,26,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,27,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,28,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,29,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,30,0);
+	__JUMP(,lr);
+	VFP_FCPYS(CC_AL,31,0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::DivS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FDIVS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::MacS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FMACS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::MscS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FMSCS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::MulS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FMULS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NegS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FNEGS(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NMacS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FNMACS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NMscS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FNMSCS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NMulS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FNMULS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SqrtS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FSQRTS(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SubS()
+	{
+	asm("nop ");			// so that RVCT doesn't complain about branches to non-code symbols
+	VFP_FSUBS(CC_AL,0,1,2);
+	__JUMP(,lr);
+	}
+
+
+
+
+/******************************************************************************
+ * Double precision operations
+ ******************************************************************************/
+__NAKED__ TInt64 Vfp::DRegInt(TInt /*aReg*/)
+	{
+	// fall through
+	}
+
+__NAKED__ TReal64 Vfp::DReg(TInt /*aReg*/)
+	{
+#ifdef __TEST_VFPV3
+	asm("cmp r0, #31 ");
+#else 
+	asm("cmp r0, #15 ");
+#endif 
+	asm("addls r0, r0, r0, lsl #1 ");
+	asm("addls pc, pc, r0, lsl #2 ");
+	DIE;
+
+	// test 
+	// VFP_FLDD(CC_AL,4,5,0); 
+
+	VFP_FMRDL(CC_AL,0,0);
+	VFP_FMRDH(CC_AL,1,0);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,1);
+	VFP_FMRDH(CC_AL,1,1);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,2);
+	VFP_FMRDH(CC_AL,1,2);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,3);
+	VFP_FMRDH(CC_AL,1,3);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,4);
+	VFP_FMRDH(CC_AL,1,4);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,5);
+	VFP_FMRDH(CC_AL,1,5);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,6);
+	VFP_FMRDH(CC_AL,1,6);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,7);
+	VFP_FMRDH(CC_AL,1,7);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,8);
+	VFP_FMRDH(CC_AL,1,8);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,9);
+	VFP_FMRDH(CC_AL,1,9);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,10);
+	VFP_FMRDH(CC_AL,1,10);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,11);
+	VFP_FMRDH(CC_AL,1,11);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,12);
+	VFP_FMRDH(CC_AL,1,12);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,13);
+	VFP_FMRDH(CC_AL,1,13);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,14);
+	VFP_FMRDH(CC_AL,1,14);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,15);
+	VFP_FMRDH(CC_AL,1,15);
+	asm("b 0f ");
+
+#ifdef __TEST_VFPV3
+	VFP_FMRDL(CC_AL,0,16);
+	VFP_FMRDH(CC_AL,1,16);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,17);
+	VFP_FMRDH(CC_AL,1,17);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,18);
+	VFP_FMRDH(CC_AL,1,18);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,19);
+	VFP_FMRDH(CC_AL,1,19);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,20);
+	VFP_FMRDH(CC_AL,1,20);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,21);
+	VFP_FMRDH(CC_AL,1,21);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,22);
+	VFP_FMRDH(CC_AL,1,22);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,23);
+	VFP_FMRDH(CC_AL,1,23);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,24);
+	VFP_FMRDH(CC_AL,1,24);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,25);
+	VFP_FMRDH(CC_AL,1,25);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,26);
+	VFP_FMRDH(CC_AL,1,26);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,27);
+	VFP_FMRDH(CC_AL,1,27);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,28);
+	VFP_FMRDH(CC_AL,1,28);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,29);
+	VFP_FMRDH(CC_AL,1,29);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,30);
+	VFP_FMRDH(CC_AL,1,30);
+	asm("b 0f ");
+	VFP_FMRDL(CC_AL,0,31);
+	VFP_FMRDH(CC_AL,1,31);
+#endif // __TEST_VFPV3
+
+	asm("0: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r2, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r2 ");
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SetDReg(TInt64 /*aVal*/, TInt /*aReg*/)
+	{
+	// fall through
+	}
+
+__NAKED__ void Vfp::SetDReg(TReal64 /*aVal*/, TInt /*aReg*/)
+	{
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r3, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r3 ");
+#endif
+#ifdef __TEST_VFPV3
+	asm("cmp r2, #31 ");
+#else 
+	asm("cmp r2, #15 ");
+#endif 
+	asm("addls r2, r2, r2, lsl #1 ");
+	asm("addls pc, pc, r2, lsl #2 ");
+	DIE;
+	VFP_FMDLR(CC_AL,0,0);
+	VFP_FMDHR(CC_AL,0,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,1,0);
+	VFP_FMDHR(CC_AL,1,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,2,0);
+	VFP_FMDHR(CC_AL,2,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,3,0);
+	VFP_FMDHR(CC_AL,3,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,4,0);
+	VFP_FMDHR(CC_AL,4,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,5,0);
+	VFP_FMDHR(CC_AL,5,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,6,0);
+	VFP_FMDHR(CC_AL,6,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,7,0);
+	VFP_FMDHR(CC_AL,7,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,8,0);
+	VFP_FMDHR(CC_AL,8,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,9,0);
+	VFP_FMDHR(CC_AL,9,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,10,0);
+	VFP_FMDHR(CC_AL,10,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,11,0);
+	VFP_FMDHR(CC_AL,11,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,12,0);
+	VFP_FMDHR(CC_AL,12,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,13,0);
+	VFP_FMDHR(CC_AL,13,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,14,0);
+	VFP_FMDHR(CC_AL,14,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,15,0);
+	VFP_FMDHR(CC_AL,15,1);
+	__JUMP(,lr);
+#ifdef __TEST_VFPV3
+	VFP_FMDLR(CC_AL,16,0);
+	VFP_FMDHR(CC_AL,16,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,17,0);
+	VFP_FMDHR(CC_AL,17,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,18,0);
+	VFP_FMDHR(CC_AL,18,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,19,0);
+	VFP_FMDHR(CC_AL,19,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,20,0);
+	VFP_FMDHR(CC_AL,20,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,21,0);
+	VFP_FMDHR(CC_AL,21,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,22,0);
+	VFP_FMDHR(CC_AL,22,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,23,0);
+	VFP_FMDHR(CC_AL,23,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,24,0);
+	VFP_FMDHR(CC_AL,24,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,25,0);
+	VFP_FMDHR(CC_AL,25,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,26,0);
+	VFP_FMDHR(CC_AL,26,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,27,0);
+	VFP_FMDHR(CC_AL,27,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,28,0);
+	VFP_FMDHR(CC_AL,28,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,29,0);
+	VFP_FMDHR(CC_AL,29,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,30,0);
+	VFP_FMDHR(CC_AL,30,1);
+	__JUMP(,lr);
+	VFP_FMDLR(CC_AL,31,0);
+	VFP_FMDHR(CC_AL,31,1);
+	__JUMP(,lr);
+#endif // __TEST_VFPV3
+	}
+
+__NAKED__ void Vfp::AbsD()
+	{
+	VFP_FABSD(,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::AddD()
+	{
+	VFP_FADDD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpD()
+	{
+	VFP_FCMPD(,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpED()
+	{
+	VFP_FCMPED(,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpEZD()
+	{
+	VFP_FCMPEZD(,0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CmpZD()
+	{
+	VFP_FCMPZD(,0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::Cpy0D(TInt /*aReg*/)
+	{
+	asm("cmp r0, #15 ");
+	asm("addls pc, pc, r0, lsl #3 ");
+	DIE;
+	VFP_FCPYD(,0,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,1);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,2);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,3);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,4);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,5);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,6);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,7);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,8);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,9);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,10);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,11);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,12);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,13);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,14);
+	__JUMP(,lr);
+	VFP_FCPYD(,0,15);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CpyD0(TInt /*aReg*/)
+	{
+	asm("cmp r0, #15 ");
+	asm("addls pc, pc, r0, lsl #3 ");
+	DIE;
+	VFP_FCPYD(,0,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,1,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,2,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,3,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,4,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,5,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,6,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,7,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,8,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,9,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,10,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,11,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,12,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,13,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,14,0);
+	__JUMP(,lr);
+	VFP_FCPYD(,15,0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::DivD()
+	{
+	VFP_FDIVD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::MacD()
+	{
+	VFP_FMACD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::MscD()
+	{
+	VFP_FMSCD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::MulD()
+	{
+	VFP_FMULD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NegD()
+	{
+	VFP_FNEGD(,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NMacD()
+	{
+	VFP_FNMACD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NMscD()
+	{
+	VFP_FNMSCD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::NMulD()
+	{
+	VFP_FNMULD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SqrtD()
+	{
+	VFP_FSQRTD(,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SubD()
+	{
+	VFP_FSUBD(,0,1,2);
+	__JUMP(,lr);
+	}
+
+
+/******************************************************************************
+ * Conversion operations
+ ******************************************************************************/
+__NAKED__ void Vfp::CvtDS()
+	{
+	VFP_FCVTDS(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::CvtSD()
+	{
+	VFP_FCVTSD(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SitoD()
+	{
+	VFP_FSITOD(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::SitoS()
+	{
+	VFP_FSITOS(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TosiD()
+	{
+	VFP_FTOSID(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TosiZD()
+	{
+	VFP_FTOSIZD(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TosiS()
+	{
+	VFP_FTOSIS(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TosiZS()
+	{
+	VFP_FTOSIZS(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::UitoD()
+	{
+	VFP_FUITOD(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::UitoS()
+	{
+	VFP_FUITOS(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TouiD()
+	{
+	VFP_FTOUID(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TouiZD()
+	{
+	VFP_FTOUIZD(CC_AL,0,1);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TouiS()
+	{
+	VFP_FTOUIS(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::TouiZS()
+	{
+	VFP_FTOUIZS(CC_AL,0,2);
+	__JUMP(,lr);
+	}
+
+#ifdef __TEST_VFPV3
+__NAKED__ void Vfp::ToFixedS(TInt /*aBits*/)
+	{
+	asm("cmp r0, #15 ");
+	asm("addls pc, pc, r0, lsl #3 ");
+	DIE;
+	VFP_VCT_S32_F32(CC_AL,0,0);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,1);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,2);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,3);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,4);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,5);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,6);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,7);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,8);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,9);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,10);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,11);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,12);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,13);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,14);
+	__JUMP(,lr);
+	VFP_VCT_S32_F32(CC_AL,0,15);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Vfp::FromFixedS(TInt /*aBits*/)
+	{
+	asm("cmp r0, #15 ");
+	asm("addls pc, pc, r0, lsl #3 ");
+	DIE;
+	VFP_VCT_F32_S32(CC_AL,0,0);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,1);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,2);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,3);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,4);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,5);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,6);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,7);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,8);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,9);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,10);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,11);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,12);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,13);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,14);
+	__JUMP(,lr);
+	VFP_VCT_F32_S32(CC_AL,0,15);
+	__JUMP(,lr);
+	}
+
+
+// S0=2
+__NAKED__ void Vfp::TconstS2()
+	{
+	asm("nop "); 
+	VFP_VMOV_IMM(CC_AL,0,0,0);
+	__JUMP(,lr);
+	} 
+
+// D0=2
+__NAKED__ void Vfp::TconstD2()
+	{ 
+	asm("nop ");
+	VFP_VMOV_IMM(CC_AL,1,0,0);
+	__JUMP(,lr);
+	} 
+
+// S0=2.875
+__NAKED__ void Vfp::TconstS2_8()
+	{ 
+	asm("nop ");
+	VFP_VMOV_IMM(CC_AL,0,0,0x7);
+	__JUMP(,lr);
+	} 
+
+// D0=2.875
+__NAKED__ void Vfp::TconstD2_8()
+	{ 
+	asm("nop ");
+	VFP_VMOV_IMM(CC_AL,1,0,0x7);
+	__JUMP(,lr);
+	} 
+
+
+
+// Neon test instructions
+
+__NAKED__ TInt NeonWithF2(TAny*)
+	{
+	asm("nop ");
+	// VEXT.8 D0, D1, D2, #3
+	asm(".word 0xF2B10302 ");
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt NeonWithF3(TAny*)
+	{
+	asm("nop ");
+	// VDUP.8 D0, D1[2]
+	asm(".word 0xF3B50C01 ");
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt NeonWithF4x(TAny*)
+	{
+	asm("adr r2, 1f ");
+	// VLD1.8 {D0[1]}, r2
+	asm(".word 0xF4E2002F ");
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+	asm("1: ");
+	asm(".word 0x12345678" );
+	}
+
+__NAKED__ TInt ThumbMode(TAny*)
+	{
+#if defined(__SUPPORT_THUMB_INTERWORKING)
+	asm("adr r2, 1f "); // Store a test value address
+
+	asm("mov r1, #1 "); // r1 = 1
+	asm("add r1, r0, lsl #3 "); // Add the arg * 8 to r1
+
+	asm("mov r0, #0 "); // Store a return value of KErrNone
+
+	asm("add r1, pc, r1 "); // Add pc to get jump destination
+	asm("bx r1 "); // Switch to thumb mode
+
+	asm(".code 16 ");
+	// Thumb mode so halfwords reversed
+	asm(".word 0x0A10EC41 "); // VMOV S0, S1, r0, r1
+	asm("bx lr ");
+	asm("nop ");
+	asm(".word 0x0B00ED12 "); // VLDR D0, [r2]
+	asm("bx lr ");
+	asm("nop ");
+	asm(".word 0x8A00EE30 "); // VADD.32 S0, S0, S0
+	asm("bx lr ");
+	asm("nop ");
+	asm(".word 0x0302EFB1 "); // VEXT.8 D0, D1, D2, #3
+	asm("bx lr ");
+	asm("nop ");
+	asm(".word 0x002FF9E2 "); // VLD1.8 {D0[1]}, r2
+	asm("bx lr ");
+	asm("nop ");
+	asm(".word 0x0C01FFB5 "); // VDUP.8 D0, D1[2]
+	asm("bx lr ");
+	asm("nop ");
+#endif
+	asm("mov r0, #1 "); // Change ret to "done"
+	__JUMP(,lr);
+
+	asm(".code 32 ");
+	asm("1: ");
+	asm(".word 0x12345678" );
+	}
+
+#endif // __TEST_VFPV3  

@@ -1,0 +1,36 @@
+# component name "E32 Utilities"
+
+component	base_e32utils
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\bmarm
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\bwins
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\bx86
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\eabi
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\analyse
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\crashread
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\d_exc
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\demandpaging
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\group
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\netcards
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\profiler
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\setcap
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\testusbcldd
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\trace
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\usbmsapp
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\sdpartition	
+	
+#MattD: Reltools 2.67 don't understand 'cwtools' are the CW equivelent of 'tools' and try to do '-what cwtools udeb' instead of '-what cwtools deb'.
+#binary	\sf\os\kernelhwsrv\kerneltest\e32utils\group cwtools
+binary	\sf\os\kernelhwsrv\kerneltest\e32utils\group all
+exports	\sf\os\kernelhwsrv\kerneltest\e32utils\group
+
+binary	\epoc32\release\tools\rel\analyse.exe
+binary	\epoc32\release\tools\rel\netcards.exe
+
+-export_file	\sf\os\kernelhwsrv\kerneltest\e32utils\analyse\profiler.rtf	\epoc32\engdoc\profiler\Profiler.rtf
+notes_source	\component_defs\release.src
+
+
+ipr T 
+ipr E \sf\os\kernelhwsrv\kerneltest\e32utils\demandpaging
+ipr E \sf\os\kernelhwsrv\kerneltest\e32utils\usbmsapp
+

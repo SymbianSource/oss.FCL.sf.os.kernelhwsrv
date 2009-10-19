@@ -1,0 +1,62 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template\template_variant\replacement_utils\common.cia
+// 
+//
+
+#include <replacement_utils.h>
+#include <e32cmn.h>
+#include <cpudefs.h>
+#include <e32cia.h>
+
+#if defined(__MEM_MACHINE_CODED__)
+
+#ifdef USE_REPLACEMENT_MEMSET
+
+extern "C" EXPORT_C __NAKED__ TAny* memclr(TAny* /*aTrg*/, unsigned int /*aLength*/)
+	{
+	KMEMCLRHOOK
+	// TO DO (optional): Implement replacement memclr
+	}
+
+extern "C" EXPORT_C __NAKED__ TAny* memset(TAny* /*aTrg*/, TInt /*aValue*/, unsigned int /*aLength*/)
+    {
+    KMEMSETHOOK
+	// TO DO (optional): Implement replacement memset
+    }
+
+#endif  // USE_REPLACEMENT_MEMSET
+
+#ifdef USE_REPLACEMENT_MEMCPY
+
+extern "C" EXPORT_C __NAKED__ TAny* wordmove(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+    {
+	// TO DO (optional): Implement replacement wordmove
+	}
+
+extern "C" EXPORT_C __NAKED__ TAny* memmove(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+	{
+	KMEMMOVEHOOK
+	// TO DO (optional): Implement replacement memmove
+	}
+
+extern "C" EXPORT_C __NAKED__ TAny* memcpy(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+    {
+    KMEMCPYHOOK
+	// TO DO (optional): Implement replacement memcpy
+	}
+
+#endif  // USE_REPLACEMENT_MEMCPY
+
+#endif  // __MEM_MACHINE_CODED__

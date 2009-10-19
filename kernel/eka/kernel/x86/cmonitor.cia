@@ -1,0 +1,141 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\x86\cmonitor.cia
+// Kernel crash debugger - X86 (GCC) specific portion
+// 
+//
+
+#include <kernel/monitor.h>
+#include <x86_mem.h>
+
+
+GLDEF_D TUint32 MonitorStack[1024];
+
+void MonitorInit(TAny* fc, TInt fr);
+
+
+__NAKED__ TInt TTrapM::Trap(TInt& /*aResult*/)
+//
+// Save the enter frame state and return 0.
+//
+	{
+	THISCALL_PROLOG1()
+	// ecx->TTrapM, [esp+4]=&aResult	
+	asm("mov eax, [esp+4]");		// initialize aResult
+	asm("mov dword ptr [eax], 0");	// to zero.
+#ifdef __GCC32__					// Store &aResult in this->iResult
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TTrapM,iResult));
+#else
+	_asm mov [ecx]this.iResult, eax
+#endif
+	asm("pop edx");					// EDX = retaddr
+	asm("mov [ecx+0], edx");		// store retaddr in iState[0]
+	asm("mov [ecx+4], ebx");
+	asm("mov [ecx+8], ebp");
+	asm("mov [ecx+12], esp");		// store ESP as if we'd returned from this function
+	asm("mov [ecx+16], esi");
+	asm("mov [ecx+20], edi");
+	asm("mov [ecx+24], ds");
+	asm("mov [ecx+28], es");
+	asm("mov [ecx+32], fs");
+	asm("mov [ecx+36], gs");
+	asm("push edx");
+	asm("mov eax, [%a0]": :"i"(&TheMonitorPtr));
+	asm("mov eax, [eax+%0]": : "i"_FOFF(Monitor,iFrame));
+#ifdef __GCC32__
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TTrapM,iNext));
+#else
+	_asm mov [ecx]this.iNext, eax
+#endif
+	asm("mov eax, [%a0]": :"i"(&TheMonitorPtr));
+	asm("mov [eax+%0], ecx" : : "i"_FOFF(Monitor,iFrame));
+	asm("xor eax, eax");
+	THISCALL_EPILOG1()
+	}
+
+
+
+extern "C" __NAKED__ void Monitor_Leave()
+//
+// Leave to the current control region.
+//
+	{
+	// [esp+4]=aReason
+	asm("mov edx, [%a0]": : "i"(&TheMonitorPtr));
+#ifdef __GCC32__					// ECX = TTrapM*
+	asm("mov ecx, [edx+%0]": : "i"_FOFF(Monitor,iFrame));
+#else
+	_asm mov ecx, [edx]Monitor.iFrame
+#endif
+	asm("lea edx, [ecx+%0]": : "i"_FOFF(TTrapM,iResult));
+	asm("mov eax, [esp+4]");		// EAX = leave reason
+	asm("mov [edx], eax");			// TTrapM->iResult = leave reason
+	asm("mov edx, [ecx+0]");		// EDX = trap point
+	asm("mov eax, [ecx+%0]": : "i"_FOFF(TTrapM,iNext)); // unlink the trap
+	asm("mov [ecx+0], eax");
+	asm("mov ebx, [ecx+4]");
+	asm("mov ebp, [ecx+8]");
+	asm("mov esp, [ecx+12]");
+	//asm("sub esp, 4"); // GCC-specific thing
+	asm("mov esi, [ecx+16]");
+	asm("mov edi, [ecx+20]");
+	asm("mov ds, [ecx+24]");
+	asm("mov es, [ecx+28]");
+	asm("mov fs, [ecx+32]");
+	asm("mov gs, [ecx+36]");
+	asm("push edx");
+	asm("mov eax, 1");
+	asm("ret");
+	}
+
+__NAKED__ void Monitor::Leave(TInt /*aReason*/)
+//
+// Leave to the current control region.
+//
+	{
+	asm("jmp %a0": :"i"(Monitor_Leave));
+	}
+
+extern "C" __NAKED__ void Monitor_Entry()
+//
+// Monitor entry point
+// Pointer to saved registers is at [esp+4]
+// Fault category and fault reason are included with saved registers.
+//
+	{
+	asm("cli");
+	asm("cld");
+	asm("mov edx, [esp+4]");
+	asm("lea esp, %a0": : "i"(MonitorStack));
+	asm("add esp, 0x1000");					// make sure we have a valid stack
+	asm("mov eax, dword ptr [%a0]": : "i"(&TheMonitorPtr));
+#ifndef __SMP__
+	asm("mov [eax+%0], edx": : "i"_FOFF(Monitor,iRegs));
+#endif
+	asm("lea eax, [eax+%0]": : "i"_FOFF(Monitor,iPageSize));
+	asm("mov dword ptr [eax], 0x1000");
+	asm("push dword ptr [edx+%0]": : "i"_FOFF(SFullX86RegSet,iFaultReason));
+	asm("push dword ptr [edx+%0]": : "i"_FOFF(SFullX86RegSet,iFaultCategory));
+	asm("call %a0": :"i"(&MonitorInit));
+	}
+
+__NAKED__ void Monitor::Entry(TAny* /*aRegs*/)
+//
+// Monitor entry point
+// Pointer to saved registers is at [esp+4]
+// Fault category and fault reason are included with saved registers.
+//
+	{
+	asm("jmp %a0": :"i"(Monitor_Entry));
+	}

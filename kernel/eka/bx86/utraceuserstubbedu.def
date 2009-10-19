@@ -1,0 +1,21 @@
+EXPORTS
+	?Classification@TTraceContext@UTF@@QBEEXZ @ 1 NONAME ; public: unsigned char __thiscall UTF::TTraceContext::Classification(void)const 
+	?DefaultModuleUid@TTraceContext@UTF@@SAKXZ @ 2 NONAME ; public: static unsigned long __cdecl UTF::TTraceContext::DefaultModuleUid(void)
+	?HasProgramCounter@TTraceContext@UTF@@QBE?AW4THasProgramCounter@2@XZ @ 3 NONAME ; public: enum UTF::THasProgramCounter __thiscall UTF::TTraceContext::HasProgramCounter(void)const 
+	?HasThreadIdentification@TTraceContext@UTF@@QBE?AW4THasThreadIdentification@2@XZ @ 4 NONAME ; public: enum UTF::THasThreadIdentification __thiscall UTF::TTraceContext::HasThreadIdentification(void)const 
+	?ModuleUid@TTraceContext@UTF@@QBEKXZ @ 5 NONAME ; public: unsigned long __thiscall UTF::TTraceContext::ModuleUid(void)const 
+	?Print@UTF@@YAHABVTTraceContext@1@ABVTDesC16@@@Z @ 6 NONAME ; int __cdecl UTF::Print(class UTF::TTraceContext const &,class TDesC16 const &)
+	?Print@UTF@@YAHABVTTraceContext@1@ABVTDesC8@@@Z @ 7 NONAME ; int __cdecl UTF::Print(class UTF::TTraceContext const &,class TDesC8 const &)
+	?Printf@UTF@@YAHABVTTraceContext@1@PBDZZ @ 8 NONAME ; int __cdecl UTF::Printf(class UTF::TTraceContext const &,char const *,...)
+	?Printf@UTF@@YAHABVTTraceContext@1@V?$TRefByValue@$$CBVTDesC16@@@@ZZ @ 9 NONAME ; int __cdecl UTF::Printf(class UTF::TTraceContext const &,class TRefByValue<class TDesC16 const >,...)
+	?Printf@UTF@@YAHABVTTraceContext@1@V?$TRefByValue@$$CBVTDesC8@@@@ZZ @ 10 NONAME ; int __cdecl UTF::Printf(class UTF::TTraceContext const &,class TRefByValue<class TDesC8 const >,...)
+	?Trace@UTF@@YAHABVTTraceContext@1@G@Z @ 11 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short)
+	?Trace@UTF@@YAHABVTTraceContext@1@GABVTDesC16@@@Z @ 12 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short,class TDesC16 const &)
+	?Trace@UTF@@YAHABVTTraceContext@1@GABVTDesC8@@@Z @ 13 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short,class TDesC8 const &)
+	?Trace@UTF@@YAHABVTTraceContext@1@GE@Z @ 14 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short,unsigned char)
+	?Trace@UTF@@YAHABVTTraceContext@1@GG@Z @ 15 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short,unsigned short)
+	?Trace@UTF@@YAHABVTTraceContext@1@GK@Z @ 16 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short,unsigned long)
+	?Trace@UTF@@YAHABVTTraceContext@1@GKK@Z @ 17 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short,unsigned long,unsigned long)
+	?Trace@UTF@@YAHABVTTraceContext@1@GPBXH@Z @ 18 NONAME ; int __cdecl UTF::Trace(class UTF::TTraceContext const &,unsigned short,void const *,int)
+	?WouldBeTracedNow@UTF@@YAHABVTTraceContext@1@@Z @ 19 NONAME ; int __cdecl UTF::WouldBeTracedNow(class UTF::TTraceContext const &)
+

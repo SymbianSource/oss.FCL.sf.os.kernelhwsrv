@@ -1,0 +1,60 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#define BASE_ROM
+#include <rom\##VARIANT##\header.iby>
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+// And now the tests
+
+#include "..\..\..\kerneltest\f32test\loader\gen\ldrtest.iby"
+
+
+device[MAGIC]=EPOCROOT##epoc32\release\##KMAIN##\##BUILD##\d_ldrtst.ldd			sys\bin\d_ldrtst.ldd
+device[MAGIC]=EPOCROOT##epoc32\release\##KMAIN##\##BUILD##\d_memorytest.ldd		sys\bin\d_memorytest.ldd
+//file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe					sys\bin\t_ldrtst.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe					sys\bin\t_ldrtst.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ymodem.exe					sys\bin\t_ymodem.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\loadlffs.exe					sys\bin\loadlffs.exe
+
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ver2{1.0}.dll				img\t_ver2{1.0}.dll
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ver2{1.1}.dll				img\t_ver2{1.1}.dll
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ver2{2.0}.dll				img\t_ver2{2.0}.dll
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ver2.dll						img\t_ver2.dll
+
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2a.exe					img\t_xver2a.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2b.exe					img\t_xver2b.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2c.exe					img\t_xver2c.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2d.exe					img\t_xver2d.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2e.exe					img\t_xver2e.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2f.exe					img\t_xver2f.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2g.exe					img\t_xver2g.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2h.exe					img\t_xver2h.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2i.exe					img\t_xver2i.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2j.exe					img\t_xver2j.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2k.exe					img\t_xver2k.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2l.exe					img\t_xver2l.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2m.exe					img\t_xver2m.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2n.exe					img\t_xver2n.exe
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xver2o.exe					img\t_xver2o.exe
+
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_xxver2.exe					sys\bin\t_xxver2.exe

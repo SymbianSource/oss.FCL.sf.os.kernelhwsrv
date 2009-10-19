@@ -1,0 +1,3 @@
+EXPORTS
+	?DoNothingD@@YAXXZ @ 1 NONAME ; void __cdecl DoNothingD(void)
+

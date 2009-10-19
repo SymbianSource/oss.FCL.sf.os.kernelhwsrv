@@ -1,0 +1,3 @@
+EXPORTS
+	GetAddressOfData__FRi @ 1 NONAME R3UNUSED ; GetAddressOfData(int &)
+

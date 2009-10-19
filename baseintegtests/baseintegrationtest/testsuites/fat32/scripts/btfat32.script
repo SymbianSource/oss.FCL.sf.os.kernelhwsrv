@@ -1,0 +1,738 @@
+//@file btfat32.script
+//! @SYMTestSuiteName PBASE-FAT32
+//! @SYMScriptTestEnvironment base
+
+LOAD_SUITE basetestfat32server
+
+START_TESTCASE                 PBASE-BPB-FATSz32-0278
+//! @SYMTestCaseID               PBASE-BPB-FATSz32-0278
+//! @SYMTestCaseDesc             Verify that the field containing the FAT32 32-bit count of sectors occupied by one FAT is zero.
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Calculate the 32-bit count of sectors occupied by one FAT
+//!                              2. Read the field containing the FAT32 32-bit count of sectors occupied by one FAT
+//!                              3. Compare the value calculated and the value obtained
+//! @SYMTestExpectedResults      The calclulated value and the obtained value are equal
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_FATSz32
+RUN_TEST_STEP -1 basetestfat32server Calculate \basetest\basetestfat32config.ini BPB_FATSz32
+END_TESTCASE PBASE-BPB-FATSz32-0278
+
+
+START_TESTCASE                 PBASE-BPB-ExtFlags-0279
+//! @SYMTestCaseID               PBASE-BPB-ExtFlags-0279
+//! @SYMTestCaseDesc             Verify that the extension flags contain the correct values
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Format the drive and read the BPB_ExtFlags field
+//!                              2. Read Bits 4-6
+//!                              3. Read Bits 8-15
+//! @SYMTestExpectedResults      These are as follows:
+//!                              1. If bit 7 is zero, then bits 0-3 are zero. If bit 7 is 1,
+//!                              then bits 0-3 contain a zerobased number of the active FAT
+//!                              2. Bits 4-6 are reserved and are therefore zero
+//!                              3. Bits 8-15 are reserved and are therefore zero
+//! @SYMTestType                 CIT
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_ExtFlags_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_ExtFlags_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_ExtFlags_4
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_ExtFlags_6
+END_TESTCASE PBASE-BPB-ExtFlags-0279
+
+
+START_TESTCASE                 PBASE-Bit-CInShutBitMask-0280
+//! @SYMTestCaseID               PBASE-Bit-CInShutBitMask-0280
+//! @SYMTestCaseDesc             Verify the bits of the first reserved cluster FAT[0]
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Dismount the files system correctly and read the first reserved cluster bit.
+//! @SYMTestExpectedResults      1. The first reserved cluster bit, FAT[0],  is 1
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini Bit_CInShutBitMask
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini Bit_CInShutBitMask
+END_TESTCASE PBASE-Bit-CInShutBitMask-0280
+
+
+START_TESTCASE                 PBASE-Bit-CHrdErrBitMask-0281
+//! @SYMTestCaseID               PBASE-Bit-CHrdErrBitMask-0281
+//! @SYMTestCaseDesc             Verify the bits of the second reserved cluster FAT[0]
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Read the second reserved cluster, FAT[1], in the FAT table
+//! @SYMTestExpectedResults      FAT table cluster contains the EOF mark.
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini Bit_CHrdErrBitMask
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini Bit_CHrdErrBitMask
+END_TESTCASE PBASE-Bit-CHrdErrBitMask-0281
+
+
+START_TESTCASE                 PBASE-BPB-FSVer-0282
+//! @SYMTestCaseID               PBASE-BPB-FSVer-0282
+//! @SYMTestCaseDesc             Verifying that disk utilities respect the version number
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Read the version number.
+//!                              2. Set the major version number to a value higher that already set only in the boot sector and 
+//!									then attempt to mount the volume
+//!	 							 3. Set the major version number to a value higher that already set in both the boot sector and 
+//!									the backup boot sector and then attempt to mount the volume
+//!                              4. Set the minor version number to a value higher that already set only in the boot sector and 
+//!									then attempt to operate on volumes
+//!								 5. Set the minor version number to a value higher that already set in both the boot sector and 
+//!									the backup boot sector and then attempt to operate on volumes
+//!                              	with a higher minor version number
+//!                              6. Attempt to mount volume when it contains a version number that was defined at the time that the driver
+//!                              was written.
+//! @SYMTestExpectedResults      With respect to the actions, they are as follows:
+//!								 1. The version number is 0.0
+//!								 2. The mount is successful as the backup boot sector is used
+//!								 3. The mount is unsuccessful
+//!								 4. The mount is successful as the backup boot sector is used
+//!								 5. The mount is unsuccessful
+//!								 6. The mount is successful 
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_FSVer
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_FSVer
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_FSVer
+RUN_TEST_STEP -1 basetestfat32server Mount \basetest\basetestfat32config.ini BPB_FSVer
+
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_FSVer
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_FSVer
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_FSVer_2b
+RUN_TEST_STEP -1 basetestfat32server Mount \basetest\basetestfat32config.ini BPB_FSVer_2b
+
+
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_FSVer_3
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_FSVer_3
+RUN_TEST_STEP -1 basetestfat32server Mount \basetest\basetestfat32config.ini BPB_FSVer_3
+
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_FSVer_3b
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_FSVer_3
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_FSVer_3b
+RUN_TEST_STEP -1 basetestfat32server Mount \basetest\basetestfat32config.ini BPB_FSVer_3b
+
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_FSVer_4
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_FSVer_4
+RUN_TEST_STEP -1 basetestfat32server Mount \basetest\basetestfat32config.ini BPB_FSVer_4
+END_TESTCASE PBASE-BPB-FSVer-0282
+
+
+START_TESTCASE                 PBASE-BPB-RootClus-0283
+//! @SYMTestCaseID               PBASE-BPB-RootClus-0283
+//! @SYMTestCaseDesc             Verify that disk repair utilities can easily find the root directory if the root cluster field gets zeroed
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Read the cluster number of the first cluster
+//!                              2. Format the volume and mark cluster 2 asbad. Perform a quick format so that the bad cluster chains are kept and read the cluster number of the forst cluster.
+//!                              3. Read the value of the cluster following the cluster ,marked as bad in the FAT table.
+//! @SYMTestExpectedResults      These are as follows:
+//!                              1. The cluster number of the first cluster is 2
+//!                              2. Cluster number of the first cluster is 3.
+//!                              3. Cluster contains the EOF mark (0x0FFFFFFF)
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_RootClus_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_RootClus_1
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_RootClus_2
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_RootClus_2
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_RootClus_2
+END_TESTCASE PBASE-BPB-RootClus-0283
+
+
+START_TESTCASE                 PBASE-BPB-FSInfo-0284
+//! @SYMTestCaseID               PBASE-BPB-FSInfo-0284
+//! @SYMTestCaseDesc             Verify that the sector number of the FSINFO structure in the reserved area of the FAT32 volume is 1
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Read the sector number of the FSINFO structure in the reserved area of the FAT32 volume
+//! @SYMTestExpectedResults      Sector number is 1
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_FSInfo
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_FSInfo
+END_TESTCASE PBASE-BPB-FSInfo-0284
+
+
+START_TESTCASE                 PBASE-BPB_BkBootSec-0285
+//! @SYMTestCaseID               PBASE-BPB_BkBootSec-0285
+//! @SYMTestCaseDesc             Verify that the field points to the correct sector if a back-up boot sector exists.
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Read the field that indicates the sector number in the reserved area of the volume of a copy of the boot record.
+//!                              2. Check to see if there is a copy of the boot record
+//! @SYMTestExpectedResults      If the value obtained in action 1 is zero then there is no copy of the boot record
+//!                              and sector 6 is zero. If the value obtained in action 1 is not zero then it is 6 and there is a copy of the boot
+//!                              record in sector 6.
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_BkBootSec
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_BkBootSec
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_BkBootSec_i
+END_TESTCASE PBASE-BPB_BkBootSec-0285
+
+
+START_TESTCASE                 PBASE-BPB-Reserved-0286
+//! @SYMTestCaseID               PBASE-BPB-Reserved-0286
+//! @SYMTestCaseDesc             Verify that the formatting of a FAT32 volumes sets the field that is reserved for future expansion to zero.
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Perform a format of a FAT32 volume and read the field that is reserved for future expansion.
+//!                              2. Perform a format of a FAT32 volume and, using raw disk access,  set the field that is reserved for
+//!                              future expansion at offset 52 of the boot sector to 1. Following this check the integrity of the disk by
+//!                              calling RFs::CheckDisk().
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. Field that is reserved for future expansion to is set to zero.
+//!                              2. KErrCorrupt is returned
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_Reserved
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_Reserved
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_Reserved_2
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini BPB_Reserved_2
+END_TESTCASE PBASE-BPB-Reserved-0286
+
+
+START_TESTCASE                 PBASE-BPB-RootEntCnt-0287
+//! @SYMTestCaseID               PBASE-BPB-RootEntCnt-0287
+//! @SYMTestCaseDesc             Verify general characteristics of a FAT data structure.
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Read the first data cluster and note the cluster number by formatting the disk and creating a file
+//!                              2. Read the BPB_RootEntCnt field at offset 17 of the boot sector and
+//!                              3. Set the field BPB_RootEntCnt to a value other than zero and determine the integrity of the disk by calling RFs::CheckDisk().
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. Cluster number is cluster 2
+//!                              2. Value is 0
+//!                              3. KErrUnknown
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BPB_RootEntCnt_2
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini BPB_RootEntCnt_2
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_RootEntCnt_3
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BPB_RootEntCnt_3i
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini BPB_RootEntCnt_3
+END_TESTCASE PBASE-BPB-RootEntCnt-0287
+
+
+START_TESTCASE                 PBASE-FAT32Cluster-0288
+//! @SYMTestCaseID               PBASE-FAT32Cluster-0288
+//! @SYMTestCaseDesc             Verify general cluster characteristics of a FAT32 file system
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Calculate the number of clusters that the FAT32 volume has
+//!                              2. On a formatted volume, mark cluster 4 as bad. Following this create a file that is three clusters long.
+//!                              Using raw disk access, read the values of clusters 3 till 6 in the FAT table.
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. Cluster number is cluster 2
+//!                              2. Value is 0
+//!                              3. KErrUnknown
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FAT32Cluster_1
+RUN_TEST_STEP -1 basetestfat32server Calculate \basetest\basetestfat32config.ini FAT32Cluster_1
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini FAT32Cluster_2a
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FAT32Cluster_2a
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini FAT32Cluster_2a
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini FAT32Cluster_2a
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini FAT32Cluster_2b
+END_TESTCASE PBASE-FAT32Cluster-0288
+
+
+START_TESTCASE                 PBASE-FSINFOSTRUC-1-0289
+//! @SYMTestCaseID               PBASE-FSINFOSTRUC-1-0289
+//! @SYMTestCaseDesc             Validate FAT32 FSInfo Sector Structure and Backup Boot Sector Parameters
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Read the lead signature, FSI_LeadSig at offset 0 of the FSInfo sector
+//!                              2. Read the tail signature, FSI_LeadSig at offset 0 of the FSInfo sector
+//!                              3. Read the FSI_StrucSig field at offset 484 of the FSInfo Sector,
+//!                              4. Perform the following for the field that contains the last known cluster count on the volume
+//!                              a. Read the FSI_Free_Count field at offset 488 of the FSInfo sector
+//!                              b. Write a file of 3 clusters long. Following this use raw disk access to read the FSI_Free_Count field.
+//!                              c. Set the FSI_Free_count field to 0xFFFFFFFF and check the integrity of the disk.
+//!                              d. Set the field to a value greater than the cluster count and check the integrity of the disk by calling RFs::CheckDisk();
+//!                              5. Perform the following for the field that indicates the cluster number at which the driver should start looking for a free cluster
+//!                              a. Read the FSI_Nxt_Free field at offset 492 of the FSInfo sector.
+//!                              b. Mark cluster 3 as bad with the value 0x0FFFFFF7. Perform a quick format and read the FSI_Nxt_Free field.
+//!                              c. Write a file that is 3 clusters long. Following this read the FSI_Nxt_Free field.
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. Lead signature is 0x41615252
+//!                              2. Tail signature is 0xAA550000
+//!                              3. Field contains the value 0x61417272
+//!                              4. The expected results from these actions are
+//!                              a. Either contains the cluster count or the value 0xFFFFFFFF
+//!                              b. Contains the cluster count minus 3
+//!                              c. Disk is not reported as corrupt
+//!                              d. Disk is reported as corrupt
+//!                              5. The expected results for these actions are
+//!                              a. Driver starts looking at cluster 2
+//!                              b. Driver starts looking at cluster 4
+//!                              c. Driver starts looking at cluster 6
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FSINFOSTRUC_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini FSINFOSTRUC_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini FSINFOSTRUC_2
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini FSINFOSTRUC_3
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini FSINFOSTRUC_4b
+RUN_TEST_STEP -1 basetestfat32server Calculate \basetest\basetestfat32config.ini FSINFOSTRUC_4b
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FSINFOSTRUC_4c
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini FSINFOSTRUC_4c
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini FSINFOSTRUC_4c
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FSINFOSTRUC_4d
+RUN_TEST_STEP -1 basetestfat32server Calculate \basetest\basetestfat32config.ini FSINFOSTRUC_4d
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini FSINFOSTRUC_4d
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini FSINFOSTRUC_5b
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FSINFOSTRUC_5b
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini FSINFOSTRUC_5b
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FSINFOSTRUC_5c
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini FSINFOSTRUC_5c
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini FSINFOSTRUC_5c
+END_TESTCASE PBASE-FSINFOSTRUC-1-0289
+
+
+START_TESTCASE                 PBASE-DIR-Name-0290
+//! @SYMTestCaseID               PBASE-DIR-Name-0290
+//! @SYMTestCaseDesc             Validate the values for the first byte of the short name field
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Write a file. Delete the file created and read the first byte of the sort name field.
+//!                              2. Read the first byte of the short name field of an emty entry.
+//!                              3. Write a file. Set the first byte of the short name field to a value less than 0x20 and attempt to open the file.
+//!                              4. Write a file. Set the first byte of the short name field to 0x05 and attempt to open the file.
+//!                              5. Write a file. Set the first byte of the shorname field to the values stated below and following this attempt to open the file.
+//!                              0x22, 0x2A, 0x2B, 0x2C, 0x2E, 0x2F, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x5B, 0x5C, 0x5D, 0x7C.
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. The first byte of the short name field is set to 0xE5
+//!                              2. The first byte of the short name field is set to 0x00
+//!                              3. File is reported as corrupt
+//!                              4. File is opened
+//!                              5. File is reported as corrupt in all cases
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Name_1
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Name_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini DIR_Name_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini DIR_Name_2
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Name_3
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Name_3
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Name_3
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Name_3
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Name_5i
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Name_5i
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Name_5i
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Name_5i
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Name_5ii
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Name_5ii
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Name_5ii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Name_5ii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Name_5iii
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Name_5iii
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Name_5iii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Name_5iii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Name_5iv
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Name_5iv
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Name_5iv
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Name_5iv
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Name_5v
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Name_5v
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Name_5v
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Name_5v
+END_TESTCASE PBASE-DIR-Name-0290
+
+
+START_TESTCASE                 PBASE-DIR-Attr-0291
+//! @SYMTestCaseID               PBASE-DIR-Attr-0291
+//! @SYMTestCaseDesc             Verify the parameters for the field that specifies the attributes of the file
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Create a test file, set the KEntryAttReadOnly attribute to the file and attempt to write to the file.
+//!                              2. Create a test file, set the attribute KEntryAttHidden and perform a CDir listing excluding the KEntryAttHidden mask.
+//!                              3. Create a test file, set the attribute KEntryAttSyste and check that the attributes have been changed
+//!                              4. Create a test file, set the attribute KEntryAttDir and check that the attributes have been changed.
+//!                              5. Create a test directory and check the attributes of the entry.
+//!                              6. Set a file system label "X:TestLabel". Following this perform a raw read to look for the entry and read the attribute.
+//!                              7. Attempt to create another entry with ATTR_VOLUME_ID set
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. Write access is denied
+//!                              2. The file does not appear in the listing
+//!                              3. Attributes of the test file have been changed
+//!                              4. Attributes of the test file are not changed
+//!                              5. The attribute is specified as ATTR_DIRECTORY.
+//!                              6. The attribute is specified as ATTR_VOLUME_ID.
+//!                              7. Permission is denied to have more than one file specified with the attribute ATTR_VOLUME_ID.
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Attr_1
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Attr_1
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Attr_2
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Attr_2
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Attr_3
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Attr_3
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Attr_4
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Attr_4
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Attr_5
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Attr_5
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Attr_6
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Attr_6
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Attr_7
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Attr_7
+END_TESTCASE PBASE-DIR-Attr-0291
+
+
+START_TESTCASE                 PBASE-DIRSPECIALENT-0292
+//! @SYMTestCaseID               PBASE-DIRSPECIALENT-0292
+//! @SYMTestCaseDesc             Verify that if the directory is not in the root directory, 2 special entries are created in the first two
+//!                              32-byte directory entries of the directory
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Perform a full format and create a directory. Using raw disk access read
+//!                              a. the first byte of the entry
+//!                              b. the 32nd byte of the entry
+//!                              2. Attempt to create a file, using RFile::Write() with the following names
+//!                              a. "."
+//!                              b. ".."
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. Two special entries are created in the first two 32-byte directory entries of the directory
+//!                              a. First directory has the name set to "."
+//!                              b. Second directory has the name set to ".."
+//!                              2.
+//!                              a. File cannot be created, KErrBadName is returned
+//!                              b. File cannot be created, KErrBadName is returned
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIRSPECIALENT_1
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIRSPECIALENT_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini DIRSPECIALENT_1a
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini DIRSPECIALENT_1b
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIRSPECIALENT_2a
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIRSPECIALENT_2b
+END_TESTCASE PBASE-DIRSPECIALENT-0292
+
+
+START_TESTCASE                 PBASE-DIR-Date-0293
+//! @SYMTestCaseID               PBASE-DIR-Date-0293
+//! @SYMTestCaseDesc             Validating the date format
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Create a file and using raw disk access, change the created date field and the modified date
+//!                              field in the entry various correct and incorrectvalues. Following this call the function RFs::Modified().
+//! @SYMTestExpectedResults      These are as follows
+//!                              a. All correct values return the date written to the disk
+//!                              b. All incorrect values return the default vlaue 01/01/0000
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_1ai
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_1aii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_1aii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_1bi
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_1bii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_1bii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_1ci
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_1cii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_1cii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2ai
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2aii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_2aii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2bi
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2bii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_2bii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2ci
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2cii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_2cii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2di
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_2dii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_2dii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_3ai
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_3aii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_3aii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Date
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_3bi
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Date_3bii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Date_3bii
+END_TESTCASE PBASE-DIR-Date-0293
+
+
+START_TESTCASE                 PBASE-DIR-Time-0294
+//! @SYMTestCaseID               PBASE-DIR-Time-0294
+//! @SYMTestCaseDesc             Validating the time format
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Create a file and using raw disk access, change the created time field and the modified time
+//!                              field in the entry various correct and incorrectvalues. Following this call the function RFs::Modified().
+//! @SYMTestExpectedResults      These are as follows
+//!                              a. All correct values return the time written to the disk
+//!                              b. All incorrect values return the default vlaue 00:00:00
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_1ai
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_1aii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_1aii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_1bi
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_1bii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_1bii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_1ci
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_1cii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_1cii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_2ai
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_2aii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_2aii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_2bi
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_2bii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_2bii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_2ci
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_2cii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_2cii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_3ai
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_3aii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_3aii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_3bi
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_3bii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_3bii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini DIR_Time
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_3bi
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini DIR_Time_3bii
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini DIR_Time_3bii
+END_TESTCASE PBASE-DIR-Time-0294
+
+
+START_TESTCASE                 PBASE-LDIR-0295
+//! @SYMTestCaseID               PBASE-LDIR-0295
+//! @SYMTestCaseDesc             Validate values for the long name field.
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Create a file that takes up 3 long directory entries. Read the first byte of the last long directory name.
+//!                              2. Create a file that taked up 2 long directory entries. Delete the file and Read the fist byte of each long entry
+//!                              3. Create a file that takes up 6long directory entries. Read the first byte of the last long entry and the first byte of the first
+//!                              long entry to check the range.
+//!                              4. Create a file and read the attributes of the long directory entry at position 11 of the entry
+//!                              5. Create a file and perform the following
+//!                              a) Read the field LDIR_FstClusLO at position 26 of the long directory entry
+//!                              b) Use raw disk access to write a value other than zero to the LDIR_FstClusLO field and
+//!                              following this check the integrity of the disk by calling RFs::CheckDisk().
+//! @SYMTestExpectedResults      These are as follows
+//!                              1. The value is masked witih 0x40 and is therefore 0x43
+//!                              2. The first byte of each long entry is set to 0xE5
+//!                              3. The first byte of the last long entry is 0x46 and the first byte of the first long entry is 0x01, indicating that the range is 1-6
+//!                              4. The attribute is set to ATTR_LONG_NAME (0x0F)
+//!                              5. The following is expected form the actions
+//!                              a. Value is 0x00
+//!                              b. Disk errors are reported
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini LDIR_1
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini LDIR_1
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_1
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini LDIR_2a
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini LDIR_2a
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_2a
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_2ai
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini LDIR_2b
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini LDIR_2b
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_2b
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_2bi
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini LDIR_3
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini LDIR_3
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_3
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_3i
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini LDIR_4
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini LDIR_4
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_4
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini LDIR_5
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini LDIR_5
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini LDIR_5
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini LDIR_5i
+RUN_TEST_STEP -1 basetestfat32server ReadFile \basetest\basetestfat32config.ini LDIR_5i
+END_TESTCASE PBASE-LDIR-0295
+
+
+START_TESTCASE                 PBASE-HighFourRes-0296
+//! @SYMTestCaseID               PBASE-HighFourRes-0296
+//! @SYMTestCaseDesc             Ensuring that the first 4 bytes from offset 36 cannot be any value other than zero
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Format the volume and using raw disk access change the third cluster value in the FAT table to 0xFFFFFFFF.
+//!                              Following this perform a quick format and using raw disk access, read the third cluster value.
+//! @SYMTestExpectedResults      Third cluster contains the value 0x0FFFFFFF
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini HighFourRes_a
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini HighFourRes_a
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini HighFourRes_a
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini HighFourRes_b
+RUN_TEST_STEP -1 basetestfat32server ReadRaw \basetest\basetestfat32config.ini HighFourRes_b
+END_TESTCASE PBASE-HighFourRes-0296
+
+
+START_TESTCASE                 PBASE-CorruptFatTable-0297
+//! @SYMTestCaseID               PBASE-CorruptFatTable-0297
+//! @SYMTestCaseDesc             Purposely corrupting file systems to ensure they are handled gracefully
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              These are as follows:
+//!                              1. Purposely producing an incomplete FAT table and determine the integrity of the disk
+//!                              2. Introducing 'garbage' material into the fat table and calling RFs::Checkdisk to determine the integrity of the disk
+//!                              3. Purposely allowing the FAT table to point to positions that do not exist and  determine the integrity of the disk
+//!                              4. Marking blocks that are bad as good without performing a full low-level scan of the media and  determine the integrity of the disk
+//! @SYMTestExpectedResults      The disk is reported as corrupt in all cases
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini CorruptFatTable_1i
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini CorruptFatTable_1i
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini CorruptFatTable_1ii
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini CorruptFatTable_1ii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini CorruptFatTable_2i
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini CorruptFatTable_2i
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini CorruptFatTable_2ii
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini CorruptFatTable_2iii
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini CorruptFatTable_2iii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini CorruptFatTable_3i
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini CorruptFatTable_3i
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini CorruptFatTable_3ii
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini CorruptFatTable_3ii
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini CorruptFatTable_4i
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini CorruptFatTable_4i
+RUN_TEST_STEP -1 basetestfat32server WriteFile \basetest\basetestfat32config.ini CorruptFatTable_4ii
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini CorruptFatTable_4ii
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini CorruptFatTable_4iii
+END_TESTCASE PBASE-CorruptFatTable-0297
+
+START_TESTCASE                 PBASE-BadMedia-0298
+//! @SYMTestCaseID               PBASE-BadMedia-0298
+//! @SYMTestCaseDesc             Using unreadable or unusable media to ensure they are handled gracefully
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Attempting to mount a file system on unreadable media
+//! @SYMTestExpectedResults      The media is reported as unkown
+//! @SYMTestType                 CIT
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini BadMedia
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BadMedia
+RUN_TEST_STEP -1 basetestfat32server WriteRaw \basetest\basetestfat32config.ini BadMedia_i
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini BadMedia
+RUN_TEST_STEP -1 basetestfat32server Mount \basetest\basetestfat32config.ini BadMedia
+END_TESTCASE PBASE-BadMedia-0298
+
+
+START_TESTCASE                 PBASE-Larger512-0299
+//! @SYMTestCaseID               PBASE-Larger512-0299
+//! @SYMTestCaseDesc             Ensuring FAT32 is only used when necessary
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Mounting the file system on various size media
+//! @SYMTestExpectedResults      The media is reported as unkown
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini Larger512
+RUN_TEST_STEP -1 basetestfat32server Larger512 \basetest\basetestfat32config.ini Larger512
+END_TESTCASE PBASE-Larger512-0299
+
+
+START_TESTCASE                 PBASE-FillDisk-0300
+//! @SYMTestCaseID               PBASE-FillDisk-0300
+//! @SYMTestCaseDesc             Ensuring that the disk can be filled to its maximum capacity
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Perform the following actions on FAT32 media
+//!                              a. Filling the drive with one big file
+//!                              b. Check the size of the file
+//! @SYMTestExpectedResults      These are as follows:
+//!                              a. The disk is full
+//!                              b. Size of the file is equal to the free space available on the disk before it has been filled
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FillDisk
+RUN_TEST_STEP -1 basetestfat32server FillDisk \basetest\basetestfat32config.ini FillDisk
+RUN_TEST_STEP -1 basetestfat32server ClusterBound \basetest\basetestfat32config.ini ClusterBound_1
+END_TESTCASE PBASE-FillDisk-0300
+
+
+START_TESTCASE                 PBASE-ClusterBound-0301
+//! @SYMTestCaseID               PBASE-ClusterBound-0301
+//! @SYMTestCaseDesc             Testing the cluster boundary values
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Perform the following actions on FAT32 media
+//!                              1. Create one big file to fill the disk. Following this, create another file and attempt to write to this new file.
+//!                              2. Create one big file to fill the disk then fill the root directory by creating many empty files. Following this attempt to create another file.
+//! @SYMTestExpectedResults      The disk is full
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FillDisk
+RUN_TEST_STEP -1 basetestfat32server FillDisk \basetest\basetestfat32config.ini FillDisk
+RUN_TEST_STEP -1 basetestfat32server ClusterBound \basetest\basetestfat32config.ini ClusterBound_1
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini FillDisk
+RUN_TEST_STEP -1 basetestfat32server FillDisk \basetest\basetestfat32config.ini FillDisk
+RUN_TEST_STEP -1 basetestfat32server ClusterBound \basetest\basetestfat32config.ini ClusterBound_2
+END_TESTCASE PBASE-ClusterBound-0301
+
+
+START_TESTCASE                 PBASE-RemoveMedia-0302
+//! @SYMTestCaseID               PBASE-RemoveMedia-0302
+//! @SYMTestCaseDesc             Sudden removal of removable media cards
+//! @SYMREQ                      REQ0000
+//! @SYMTestPriority             High
+//! @SYMTestActions              Perform the following actions on FAT32 media
+//!                              1. Simulating the removal of a media card whilst operations are taking place
+//! @SYMTestExpectedResults      The disk should not be corrupt
+//! @SYMTestType                 CIT
+//! @SYMTestStatus               Implemented
+RUN_TEST_STEP -1 basetestfat32server Format \basetest\basetestfat32config.ini RemoveMedia
+Print DURING THIS TEST PLEASE REMOVE THE CARD
+RUN_TEST_STEP -1 basetestfat32server ReadWrite \basetest\basetestfat32config.ini RemoveMedia
+Print PLEASE INSERT THE CARD
+DELAY 3000
+RUN_TEST_STEP -1 basetestfat32server CheckDisk \basetest\basetestfat32config.ini RemoveMedia
+END_TESTCASE PBASE-RemoveMedia-0302
+
+

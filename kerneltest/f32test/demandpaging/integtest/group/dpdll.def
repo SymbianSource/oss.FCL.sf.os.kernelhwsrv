@@ -1,0 +1,4 @@
+EXPORTS
+	ExportedFunction1 @ 1 NONAME
+	ExportedFunction2 @ 2 NONAME
+	ExportedFunction3 @ 3 NONAME

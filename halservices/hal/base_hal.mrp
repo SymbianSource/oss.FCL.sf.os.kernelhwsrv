@@ -1,0 +1,12 @@
+# component name "User Side Hardware Abstraction"
+
+component	base_hal
+source	\sf\os\kernelhwsrv\halservices\hal
+binary	\sf\os\kernelhwsrv\halservices\hal all
+exports	\sf\os\kernelhwsrv\halservices\hal
+notes_source	\component_defs\release.src
+
+
+ipr D 
+ipr T \sf\os\kernelhwsrv\halservices\hal\tsrc
+

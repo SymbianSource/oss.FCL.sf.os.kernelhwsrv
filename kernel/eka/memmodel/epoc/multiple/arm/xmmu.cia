@@ -1,0 +1,310 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\multiple\arm\xmmu.cia
+// 
+//
+
+#include <arm_mem.h>
+#include "execs.h"
+#include <nk_cpu.h>
+
+#if defined(__CPU_ARM1136__) && !defined(__CPU_ARM1136_ERRATUM_353494_FIXED)
+// This will also invalidate TLB entry if the third argument (asid) is specified (>=0).
+// If asid is < 0, the caller is expected to deal with TLB invalidation.
+__NAKED__ void remove_and_invalidate_page(TPte*, TLinAddr, TInt)
+	{
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("mov r6, r2 ");			//r6 = asid
+	asm("mov r4, r0 ");
+	asm("mov r5, #1 ");			//by default, one cache line to clean
+	
+	asm("ldr r3, [r0] ");		// r0 = original PTE
+	asm("cmp r2, #0 ");
+	asm("bicpl r1, r1, #0xff ");
+	asm("orrpl r1, r1, r2 ");	// if ASID supplied, combine with VA
+	asm("mrs r12, cpsr ");
+	asm("mov r2, #0 ");
+	CPSIDAIF;					// interrupts off
+	asm("str r2, [r0], #4 ");	// clear PTE
+	asm("tst r3, #3 ");			// PTE present?
+	asm("beq 0f ");				// if not, done
+	asm("tst r3, #2 ");			// small page?
+	asm("bne 1f ");				// skip if small
+	
+	asm("mov r5, #2 ");			// there will be 2 cache lines to clean
+	asm("mov r3, #0 ");
+	asm("str r2, [r0], #4 ");
+	asm("stmia r0!, {r2,r3} ");	// clear 16 consecutive PTEs
+	asm("stmia r0!, {r2,r3} ");
+	asm("stmia r0!, {r2,r3} ");
+	asm("stmia r0!, {r2,r3} ");
+	asm("stmia r0!, {r2,r3} ");
+	asm("stmia r0!, {r2,r3} ");
+	asm("stmia r0!, {r2,r3} ");
+	
+	asm("1: ");
+#if defined(__CPU_PAGE_TABLES_FULLY_CACHED)
+	// Clean the changed page table entries from the cache.
+	// On ARM1136, cache line is always 32 bytes. 
+	// For small page, a single cache line has to be cached.
+	// For large page, 16 page table entries always fits into two cache lines
+	CLEAN_DCACHE_LINE(,r4);		
+	asm("subs r5, r5, #1");
+	asm("addhi r4, r4, #32");// Clean the next cache line as well. Executes ...
+	CLEAN_DCACHE_LINE(hi,r4);// ... only in case of large page table.
+#endif
+	
+	asm("mcr p15, 0, r1, c7, c10, 4 ");	// drain write buffer
+	asm("cmp r6, #0");				//is asid valid?
+
+	FLUSH_DTLB_ENTRY(pl,r1);		// remove stale TLB entry if asid >= 0
+	FLUSH_ITLB_ENTRY(pl,r1);
+
+	asm("0: ");
+	asm("msr cpsr, r12 ");
+	asm("ldmfd sp!, {r4-r6,pc} ");		// if successful, exit
+	}
+
+// This will also invalidate TLB entry. (The third argument (asid) is assumed to be valid (>=0).)
+__NAKED__ void remove_and_invalidate_section(TPde*, TLinAddr, TInt)
+	{
+	asm("ldr r3, [r0] ");		// r0 = original PDE
+	asm("cmp r2, #0 ");
+	asm("bicpl r1, r1, #0xff ");
+	asm("orrpl r1, r1, r2 ");	// if ASID supplied, combine with VA
+	asm("mrs r12, cpsr ");
+	asm("mov r2, #0 ");
+	CPSIDAIF;					// interrupts off
+	asm("tst r3, #3 ");			// PDE present?
+	asm("beq 0f ");				// if not, done
+	asm("str r2, [r0] ");		// clear PDE
+#if defined(__CPU_PAGE_TABLES_FULLY_CACHED)
+	CLEAN_DCACHE_LINE(,r0);		
+#endif
+	asm("mcr p15, 0, r1, c7, c10, 4 ");	// drain write buffer
+	FLUSH_DTLB_ENTRY(,r1);		// remove stale TLB entry
+	FLUSH_ITLB_ENTRY(,r1);
+	asm("0: ");
+	asm("msr cpsr, r12 ");
+	__JUMP(,lr);
+	}
+#endif
+
+
+__NAKED__ void MakeGlobalPTEInaccessible(TPte* aPtePtr, TPte aNewPte, TLinAddr aLinAddr)
+	{
+	asm("mov r3,#0 ");
+	// fall through
+	}
+
+__NAKED__ void MakePTEInaccessible(TPte* aPtePtr, TPte aNewPte, TLinAddr aLinAddr, TInt aAsid)
+	{
+	asm("bic r2, r2, #0xff ");
+	asm("orr r2, r2, r3 ");
+#if defined(__CPU_ARM1136__) && !defined(__CPU_ARM1136_ERRATUM_353494_FIXED)
+	CPSIDIF;					// interrupts off
+	asm("str r1,[r0]");
+	#if defined(__CPU_PAGE_TABLES_FULLY_CACHED)
+	CLEAN_DCACHE_LINE(,r0);		
+	#endif
+	DRAIN_WRITE_BUFFER(,r1,r1);
+	FLUSH_DTLB_ENTRY(,r2);		// remove stale TLB entries
+	FLUSH_ITLB_ENTRY(,r2);
+	asm("mov r1, #0");
+	FLUSH_BTB(,r1);
+	CPSIEIF;					// interrupts on
+#else
+	asm("str r1,[r0]");
+#if defined(__CPU_PAGE_TABLES_FULLY_CACHED)
+#ifdef __CPU_ARMV7
+	DCCMVAU(r0);
+	ARM_DSBSH;
+#else
+	CLEAN_DCACHE_LINE(,r0);
+	DRAIN_WRITE_BUFFER(,r1,r1);
+#endif
+#endif
+#ifdef __CPU_ARMV7
+	UTLBIMVA(r2);
+	ARM_DSBSH;
+	ARM_ISBSY;
+#else
+	FLUSH_DTLB_ENTRY(,r2);		// remove stale TLB entries
+	FLUSH_ITLB_ENTRY(,r2);
+#endif
+#endif
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void InvalidateTLBForPage(TLinAddr /*aLinAddr*/, TInt /*aAsid*/)
+//
+// Flush a specified virtual address from the TLB.
+// If aAsid>0, flush is restricted to ASID=aAsid for non-global entries.
+// If aAsid=0, Kernel asid is specified - will flush global entry or the entry belonging to local Kernel space.
+// If aAsid<0, no ASID is specified - will flush all TLB entries with matching VA regardles of ASID (or whether they are
+//									  local or global). In the absence of such MMU command, flush-entire-TLB will apply here.
+	{
+	asm("cmp r1, #0 ");
+	asm("bmi 1f ");
+	asm("bic r0, r0, #0xff ");		// if aAsid > 0, orr it with linear address in r0.
+	asm("orr r0, r0, r1 ");
+#ifdef __CPU_ARMV7
+	UTLBIMVA(r0);
+	ARM_DSBSH;
+	ARM_ISBSY;
+#else
+	FLUSH_DTLB_ENTRY(,r0);
+	FLUSH_ITLB_ENTRY(,r0);
+#endif
+	__JUMP(,lr);
+
+	asm("1: ");
+#ifdef __CPU_ARMV7
+	UTLBIALL;
+	ARM_DSBSH;
+	ARM_ISBSY;
+#else
+	asm("mov r0, #0 ");
+	FLUSH_IDTLB(,r0);				// aAsid < 0. There is no coprocessor instruction that will flush all ...
+									// ... entries matching Linear address. Flush entire TLB instead and exit.
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void FlushTLBs()
+	{
+#ifdef __CPU_ARMV7
+	UTLBIALL;
+	ARM_DSBSH;
+	ARM_ISBSY;
+#else
+	asm("mov r0, #0 ");
+	FLUSH_IDTLB(,r0);
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 TTCR()
+	{
+	asm("mrc p15, 0, r0, c2, c0, 2 ");
+	asm("and r0, r0, #7 ");	// only bottom 3 bits are defined
+	__JUMP(,lr);
+	}
+
+GLDEF_C __NAKED__ void __FlushBtb()
+	{
+#ifdef __CPU_ARMV7
+#ifdef __SMP__
+	BPIALLIS;
+#else 	//def __SMP__
+	BPIALL;
+#endif 	// else __SMP__
+    ARM_DSBSH;
+	ARM_ISBSY;
+#else	//def __CPU_ARMV7
+	asm("mov r1, #0");
+	FLUSH_BTB(,r1);
+#endif	//else __CPU_ARMV7
+	__JUMP(,lr);
+	}
+
+// Generic cache/TLB flush function.
+// Which things are flushed is determined by aMask.
+__NAKED__ void ArmMmu::GenericFlush(TUint32 /*aMask*/)
+	{
+#ifdef __CPU_ARMV7
+	asm("tst r1, #%a0" : : "i" (EFlushDTLB) );
+	asm("tsteq r1, #%a0" : : "i" (EFlushDPermChg) );
+	asm("tsteq r1, #%a0" : : "i" (EFlushITLB) );
+	asm("tsteq r1, #%a0" : : "i" (EFlushIPermChg) );
+	asm("beq 1f ");
+	UTLBIALL;
+	ARM_DSBSH;
+	ARM_ISBSY;
+	asm("1: ");
+#else
+	asm("mov r2, #0 ");
+	asm("tst r1, #%a0" : : "i" (EFlushDTLB) );
+	asm("tsteq r1, #%a0" : : "i" (EFlushDPermChg) );
+	FLUSH_DTLB(ne,r2);
+	asm("tst r1, #%a0" : : "i" (EFlushITLB) );
+	asm("tsteq r1, #%a0" : : "i" (EFlushIPermChg) );
+	FLUSH_ITLB(ne,r2);
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::UnlockRamDrive()
+	{
+	asm("ldr r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DProcess,iS.iCaps));
+// __KERNEL_CAPABILITY_CHECK
+	asm("tst r0, #%a0 " : : "i" ((TInt)(1<<ECapabilityTCB)));
+	__JUMP(eq,lr);	   // don't unlock the RAM drive if don't have MediaDD capability
+
+	// fall through to unlock
+	}
+
+EXPORT_C __NAKED__ void TInternalRamDrive::Unlock()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("bic r0, r0, #0x0c ");
+	asm("orr r0, r0, #0x04 ");			// RAM drive in domain 1
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ void TInternalRamDrive::Lock()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("bic r0, r0, #0x0c ");			// RAM drive in domain 1
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ArmMmu::UnlockAlias()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("orr r0, r0, #0x10 ");			// Alias memory in domain 2
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ArmMmu::LockAlias()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("bic r0, r0, #0x30 ");			// Alias memory in domain 2
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void M::LockUserMemory()
+	{
+	USER_MEMORY_GUARD_ON(,r0,r0);
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void M::UnlockUserMemory()
+	{
+	USER_MEMORY_GUARD_OFF(,r0,r0);
+	__JUMP(,lr);
+	}
+

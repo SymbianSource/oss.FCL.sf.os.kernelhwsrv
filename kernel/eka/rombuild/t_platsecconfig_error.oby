@@ -1,0 +1,33 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+#define BASE_ROM
+#include <rom\##VARIANT##\header.iby>
+
+PlatSecEnforcement ON
+PlatSecDiagnostics ON
+PlatSecDisabledCaps -TCB+CommDD-PowerMgmt+MultimediaDD-ReadDeviceData+WriteDeviceData-DRM+TrustedUI-ProtServ+DiskAdmin-NetworkControl+AllFiles-SwEvent+NetworkServices-LocalServices+ReadUserData-WriteUserData+Location
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+file=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_psc_static.exe    \sys\bin\t_psc_static.exe attrib=r
+file=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_psc_dll.dll       \sys\bin\t_psc_dll.dll attrib=r

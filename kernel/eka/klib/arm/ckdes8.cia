@@ -1,0 +1,239 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\klib\arm\ckdes8.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm.h>
+#include <kernel/kernel.h>
+
+#ifdef __DES8_MACHINE_CODED__
+
+GLREF_C void KUDesInfoPanicBadDesType();
+GLREF_C void KUDesSetLengthPanicBadDesType();
+GLREF_C void KUDesSetLengthPanicOverflow();
+GLREF_C void Des8PanicBadDesType();
+
+/**
+Gets information about the specified descriptor.
+
+If the current thread is a user thread, i.e. if the mode in spsr_svc is 'User',
+then the descriptor is read using user mode privileges.
+
+@param aSrc The descriptor for which information is to be fetched.
+@param aLength On return, set to the length of the descriptor.
+@param aMaxLength On return, set to the maximum length of the descriptor,
+                  or 1 if the descriptor is not writable.
+
+@return Address of first byte in descriptor.
+
+@panic KERN-EXEC 33, if aSrc is not a valid descriptor type.
+
+@pre  Do not call from User thread if in a critical section.
+@pre  Interrupts must be enabled.
+@pre  Kernel must be unlocked.
+@pre  No fast mutex can be held.
+@pre  Call in a thread context.
+@pre  Can be used in a device driver.
+*/
+EXPORT_C __NAKED__ const TUint8* Kern::KUDesInfo(const TDesC8& /*aSrc*/, TInt& /*aLength*/, TInt& /*aMaxLength*/)
+//
+// Get information about a user descriptor
+//
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NO_CRITICAL_IF_USER|MASK_INTERRUPTS_ENABLED|MASK_KERNEL_UNLOCKED|MASK_NOT_ISR|MASK_NOT_IDFC|MASK_NO_FAST_MUTEX);
+	ASM_ASSERT_DATA_PAGING_SAFE		// todo: should this be ASM_ASSERT_PAGING_SAFE?
+
+	asm("mrs ip, spsr ");
+	asm("tst ip, #0x0f ");			// test for user or supervisor
+	USER_MEMORY_GUARD_OFF(eq,r12,r12);
+	asm("ldreqt r3, [r0], #4 ");	// if user r3=type/len
+	USER_MEMORY_GUARD_ON(eq,r12,r12);
+	asm("bne 1f ");					// branch if supervisor
+	asm("bic ip, r3, #0xf0000000 ");	// ip=length
+	asm("str ip, [r1] ");			// store length
+	asm("mvn ip, #0 ");				// ip=max length=-1 if not writeable
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z24KUDesInfoPanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	USER_MEMORY_GUARD_OFF(,r1,r1);
+	asm("ldrcst ip, [r0], #4 ");	// if writeable ip=max length and r0+=4
+	asm("mov r1, r0 ");				// NB can't use ldrlet r0, [r0] - see ARM ARM
+	asm("ldrlet r0, [r1] ");		// if pointer, r0=pointer field
+	USER_MEMORY_GUARD_ON(,r1,r1);
+
+	asm("2: ");
+	asm("str ip, [r2] ");			// store max length
+	asm("addeq r0, r0, #4 ");		// if BufCPtr, step r0 past TBufC length
+	__JUMP(,lr);
+
+	asm("1: ");
+	asm("ldr r3, [r0], #4 ");		// r3=type/len
+	asm("bic ip, r3, #0xf0000000 ");	// ip=length
+	asm("str ip, [r1] ");			// store length
+	asm("mvn ip, #0 ");				// ip=max length=-1 if not writeable
+	asm("cmp r3, #0x50000000 ");
+	asm("bcs  " CSM_Z24KUDesInfoPanicBadDesTypev);
+	asm("eor r3, r3, r3, lsr #1 ");
+	asm("msr cpsr_flg, r3 ");
+	asm("ldrcs ip, [r0], #4 ");		// if writeable ip=max length and r0+=4
+	asm("ldrle r0, [r0] ");			// if pointer, r0=pointer field
+	asm("b 2b ");
+	}
+
+
+/**
+Sets the length of the specified descriptor.
+
+If the current thread is a user thread, i.e. if the mode in spsr_svc is 'User',
+then the length is written using user mode privileges.
+
+@param aDes The descriptor.
+@param aLength The new descriptor length.
+
+@panic KERN-EXEC 34, if aDes is not a modifiable descriptor type.
+@panic KERN-EXEC 35, if aLength is longer that the maximum length of aDes.
+
+@pre  Do not call from User thread if in a critical section.
+@pre  Interrupts must be enabled.
+@pre  Kernel must be unlocked.
+@pre  No fast mutex can be held.
+@pre  Call in a thread context.
+@pre  Can be used in a device driver.
+
+@post The length of aDes is equal to aLength.
+@post If aDes is a TPtr type then its maximum length is equal its new length.
+*/
+EXPORT_C __NAKED__ void Kern::KUDesSetLength(TDes8& /*aDes*/, TInt /*aLength*/)
+//
+// Set the length of a user descriptor, checking the length is O.K.
+//
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NO_CRITICAL_IF_USER|MASK_INTERRUPTS_ENABLED|MASK_KERNEL_UNLOCKED|MASK_NOT_ISR|MASK_NOT_IDFC|MASK_NO_FAST_MUTEX);
+	ASM_ASSERT_DATA_PAGING_SAFE
+
+	asm("mrs ip, spsr ");
+	asm("tst ip, #0x0f ");
+	asm("bne  " CSM_ZN5TDes89SetLengthEi);
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r2, [r0], #4 ");			// r2=length/type, r0->maxlength
+	asm("ldrt r3, [r0], #-4 ");			// r3=maxlength, r0->length/type
+	asm("and r2, r2, #0xf0000000 ");	// r2=type field
+	asm("cmp r2, #0x20000000 ");		// check for writeable descriptor
+	USER_MEMORY_GUARD_ON(cc,r12,r12);
+	asm("bcc  " CSM_Z29KUDesSetLengthPanicBadDesTypev);
+	asm("cmp r1, r3 ");					// check length
+	USER_MEMORY_GUARD_ON(hi,r12,r12);
+	asm("bhi  " CSM_Z27KUDesSetLengthPanicOverflowv);
+	asm("cmp r2, #0x40000000 ");		// check for EBufCPtr
+	asm("orr r2, r2, r1 ");				// r2=type + new length
+	asm("strt r2, [r0], #8 ");			// store new length, r0->ptr if EBufCPtr
+	USER_MEMORY_GUARD_ON(ne,r12,r12);
+	__JUMP(ne,lr);						// if not EBufCPtr finished
+	asm("ldrt r2, [r0] ");				// r2=pointer to TBufCBase
+	asm("strt r1, [r2] ");				// update length of TBufCBase
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+  	}
+
+
+/**
+Checks whether the specified name is a valid Kernel-side object name.
+
+A name is invalid, if it contains non-ascii characters, or any of
+the three characters: "*", "?", ":".
+
+@param  aName The name to be checked.
+
+@return KErrNone, if the name is valid; KErrBadName, if the name is invalid.
+
+@pre Calling thread can be either in a critical section or not.
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+*/
+#ifndef __KERNEL_MODE__
+#error "TDesC is not 8-bit as __KERNEL_MODE__ is not defined (see e32cmn.h)"
+#endif
+__NAKED__ EXPORT_C TInt Kern::ValidateName(const TDesC& /*aName*/)
+//
+// Check for : * or ? in descriptor, return KErrBadName if found
+//
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_UNLOCKED|MASK_NOT_ISR|MASK_NOT_IDFC|MASK_NO_FAST_MUTEX);
+
+	asm("ldr r2, [r0], #4 ");			// r2=length/type
+	asm("cmp r2, #0x50000000 ");
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev );
+	asm("bics r3, r2, #0xF0000000 ");	// r3=length
+	asm("moveq r0, #0 ");				// if length=0, return KErrNone
+	__JUMP(eq,lr);
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=this.Ptr()
+	asm("1: ");
+	asm("ldrb r1, [r0], #1 ");			// r1=*r0++
+	asm("cmp r1, #0x20 ");				// is it < 0x20 ?
+	asm("rsbhss r2, r1, #0x7f ");		// if not, compare 0x7f with char
+	asm("bls 2f ");						// if char < 0x20 or 0x7f <= char, error
+	asm("cmp r1, #'*' ");				// is it *
+	asm("cmpne r1, #':' ");				// if not, is it :
+	asm("cmpne r1, #'?' ");				// if not, is it ?
+	asm("subnes r3, r3, #1 ");			// if none of these, decrement length
+	asm("bne 1b ");
+	asm("2: ");
+	asm("cmp r3, #0 ");					// reached end of string?
+	asm("moveq r0, #0 ");				// if we did, return KErrNone
+	asm("mvnne r0, #%a0" : : "i" (~KErrBadName));	// else return KErrBadName
+	__JUMP(,lr);
+	}
+
+extern "C" EXPORT_C __NAKED__ TInt memicmp(const TAny* /*aLeft*/, const TAny* /*aRight*/, TUint /*aLength*/)
+    {
+	// r0 = aLeft, r1 = aRight, r2 = aLength
+	asm("str r4, [sp, #-4]! ");
+	asm("add r2, r2, #1 ");
+
+	asm("1: ");
+	asm("subs r2, r2, #1 ");
+	asm("ldrneb r3, [r0], #1 ");
+	asm("beq 0f ");
+	asm("ldrb r4, [r1], #1 ");
+	asm("orr ip, r3, #0x20 ");
+	asm("cmp ip, #0x61 ");
+	asm("rsbcss ip, ip, #0x7a ");
+	asm("eors ip, r3, r4 ");
+	asm("andcss ip, ip, #0xdf ");
+	asm("beq 1b ");
+	asm("orrcs r3, r3, #0x20 ");
+	asm("cmp r4, #0x41 ");
+	asm("rsbcss ip, r4, #0x5a ");
+	asm("orrcs r4, r4, #0x20 ");
+	asm("subs r0, r3, r4 ");
+	asm("0: ");
+	asm("moveq r0, #0 ");
+	asm("ldr r4, [sp], #4 ");
+	__JUMP(,lr);
+	}
+#endif
+
+
+
+

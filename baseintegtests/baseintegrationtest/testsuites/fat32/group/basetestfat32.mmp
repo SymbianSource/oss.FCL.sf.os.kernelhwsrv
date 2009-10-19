@@ -1,0 +1,53 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+TARGET      	basetestfat32server.exe
+TARGETTYPE  	exe
+UID             0x1000007A 0x10281824
+VENDORID 		0x70000001
+EPOCHEAPSIZE	0x1000 0x02000000
+EPOCSTACKSIZE 	0x8000
+
+
+CAPABILITY		ALL
+
+SOURCEPATH  	../src
+SOURCE			basetestfat32server.cpp 
+SOURCE			basetestfat32base.cpp
+SOURCE			basetestfat32format.cpp
+SOURCE			basetestfat32mount.cpp
+SOURCE			basetestfat32readraw.cpp
+SOURCE			basetestfat32writeraw.cpp
+SOURCE			basetestfat32readfile.cpp
+SOURCE			basetestfat32writefile.cpp
+SOURCE			basetestfat32checkdisk.cpp
+SOURCE			basetestfat32calculate.cpp
+SOURCE			basetestfat32filldisk.cpp
+SOURCE			basetestfat32clusterbound.cpp
+SOURCE			basetestfat32readwrite.cpp
+SOURCE			basetestfat32larger512.cpp
+
+USERINCLUDE   	../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+//SYSTEMINCLUDE 	/epoc32/include/basetest
+
+LIBRARY     	euser.lib
+LIBRARY			efsrv.lib
+LIBRARY			testexecuteutils.lib
+LIBRARY			testexecutelogclient.lib
+LIBRARY			hal.lib
+
+

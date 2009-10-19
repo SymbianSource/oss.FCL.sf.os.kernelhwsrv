@@ -1,0 +1,601 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\ckernel.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+#include <kernel/emi.h>
+
+#define iMState		iWaitLink.iSpare1
+#define iExiting	iWaitLink.iSpare2
+
+/********************************************
+ * Thread
+ ********************************************/
+
+__NAKED__ void DThread::EpocThreadFunction(TAny*)
+//
+// Called when an EPOC thread starts running
+// Enter with R0->creation info, R4->current NThread, SP = R0
+// R11 points to top of supervisor stack (i.e. should set SP=R11 before
+//	entering user mode)
+//
+	{
+	asm("sub r4, r4, #%a0" : : "i" _FOFF(DThread,iNThread));	// r4->DThread
+#ifdef __DEBUGGER_SUPPORT__
+	asm("mov r0, #%a0" : : "i" ((TInt)EEventStartThread));
+	asm("mov r1, r4");
+	asm("bl	Dispatch__19DKernelEventHandler12TKernelEventPvT2");
+#endif
+#ifdef __EMI_SUPPORT__
+	asm("mov r0,r4");                                   // a1=DThread;
+	asm("bl " CSM_ZN3EMI16CallStartHandlerEP7DThread);  // Call EMI::CallStartHandler
+#endif
+	asm("ldr r9, [sp, #%a0]" : : "i" _FOFF(SThreadCreateInfo,iTotalSize));	// parameter block size
+	asm("ldrb r1, [r4, #%a0]" : : "i" _FOFF(DThread,iThreadType));
+	asm("cmp r1, #%a0" : : "i" ((TInt)EThreadUser));				// user thread?
+	asm("beq 1f ");													// branch if it is
+	asm("ldr ip, [sp, #%a0]" : : "i" _FOFF(SThreadCreateInfo,iFunction));
+	asm("ldr r0, [sp, #%a0]" : : "i" _FOFF(SThreadCreateInfo,iPtr));	// r0=EPOC thread initial parameter
+#ifdef __SMP__
+	asm("mov sp, r11 ");
+#else
+	asm("add sp, sp, r9 ");				// restore supervisor stack balance
+#endif
+	asm("adr lr, 3f ");
+	__JUMP(,ip);
+	asm("1: ");
+	asm("ldr r5, [r4, #%a0]" : : "i" _FOFF(DThread,iUserStackRunAddress));
+	asm("ldr r6, [r4, #%a0]" : : "i" _FOFF(DThread,iUserStackSize));
+	asm("ldr r7, [r4, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));
+	asm("ldr r8, [r4, #%a0]" : : "i" _FOFF(DThread,iFlags));
+	asm("add r1, r5, r6 ");				// r1->top of user stack
+	asm("ldr r10, [r7, #%a0]" : : "i" _FOFF(DProcess,iCodeSeg));
+#ifndef __MEMMODEL_FLEXIBLE__
+	// the thread's memory object is wiped by the flexible memory model
+	asm("mov r3, #0x29 ");				// fill value
+	asm("orr r3, r3, r3, lsl #8 ");
+	asm("orr r3, r3, r3, lsl #16 ");	// r3=0x29292929
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm("bic r2, r6, #0x0f ");			// r2=stack size rounded down to multiple of 16
+	asm("4: ");
+	asm("strt r3, [r5], #4 ");			// fill user stack with 0x29
+	asm("strt r3, [r5], #4 ");			// fill user stack with 0x29
+	asm("strt r3, [r5], #4 ");			// fill user stack with 0x29
+	asm("strt r3, [r5], #4 ");			// fill user stack with 0x29
+	asm("subs r2, r2, #16 ");
+	asm("bgt 4b ");
+	USER_MEMORY_GUARD_ON(,r3,r3);
+#endif
+#ifdef  __USERSIDE_THREAD_DATA__
+	// reserve space for TLocalThreadData at very top of stack
+	asm("sub r0, r1, #%a0 " : : "i" ((TInt)KLocalThreadDataSize));
+	SET_RWRW_TID(,r0);
+	asm("mov r3, #0 ");
+	asm("1: ");
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm("strt r3, [r0], #4 ");
+	asm("strt r3, [r0], #4 ");
+	USER_MEMORY_GUARD_ON(,r2,r2);
+	asm("teq r0, r1 ");
+	asm("bne 1b ");
+	asm("sub r1, r1, #%a0 " : : "i" (KLocalThreadDataSize + 4));
+	asm("orr r8, r8, #%a0 " : : "i" ((TInt)KThreadFlagLocalThreadDataValid));
+	asm("str r8, [r4, #%a0]" : : "i" _FOFF(DThread, iFlags));
+#else
+	asm("sub r1, r1, #4 ");
+#endif
+	asm("add r2, r9, sp ");
+	asm("2: ");
+	asm("ldr r3, [r2, #-4]! ");
+	USER_MEMORY_GUARD_OFF(,r0,r0);
+	asm("strt r3, [r1], #-4 ");
+	USER_MEMORY_GUARD_ON(,r0,r0);
+	asm("cmp r2, sp ");
+	asm("bhi 2b ");
+	asm("mov r0, #%a0" : : "i" ((TInt)DThread::EUserThreadRunning));
+	asm("str r0, [r4, #%a0]" : : "i" _FOFF(DThread, iUserThreadState));
+	asm("add r1, r1, #4 ");			// r1->creation info now on user stack
+	asm("str r1, [r2, #0] ");		// store on stack (r2=sp here)
+	asm("ldmia r2, {r13}^ ");		// initialise user stack pointer
+	asm("mov r3, #0x10 ");
+	asm("msr spsr, r3 ");			// spsr_svc = mode_usr
+	asm("tst r8, #%a0" : : "i" ((TInt)KThreadFlagOriginal) );	// is this first thread in process?
+	asm("ldreq r7, [r7, #%a0]" : : "i" _FOFF(DProcess,iReentryPoint));		// no, r7 -> process reentry point
+	asm("ldrne r7, [r10, #%a0]" : : "i" _FOFF(DCodeSeg,iEntryPtVeneer));	// yes, r7 -> process original entry point veneer
+	asm("moveq r4, #%a0" : : "i" ((TInt)KModuleEntryReasonThreadInit) );	// no, call with thread init
+	asm("movne r4, #%a0" : : "i" ((TInt)KModuleEntryReasonProcessInit) );	// yes, call with process init
+#ifdef __SMP__
+	asm("mov sp, r11 ");
+#else
+	asm("add sp, sp, r9 ");			// restore supervisor stack balance
+#endif
+	USER_MEMORY_GUARD_OFF(,r9,r9);	// about to enter user mode
+	ERRATUM_353494_MODE_CHANGE(,r9);
+	asm("movs pc, r7 ");			// jump to process entry point in user mode, r4=entry reason, r13_usr->thread creation info
+
+	asm("3: ");
+	asm("b  " CSM_ZN4Kern4ExitEi);
+	}
+
+__NAKED__ void GetUndefinedInstruction(TArmExcInfo* /*aContext*/)
+	{
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(TArmExcInfo,iCpsr));		// r1=CPSR before exception
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TArmExcInfo,iR15));		// r2=address of undefined instruction
+#ifdef __SUPPORT_THUMB_INTERWORKING
+	asm("tst r1, #%a0" : : "i" ((TInt)ECpuThumb));					// test for thumb
+	asm("bne 1f ");													// branch if thumb
+#endif
+	asm("tst r1, #0x0f ");											// test for user or supervisor mode
+	asm("ldrne r3, [r2] ");											// if supervisor, get undefined instruction
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldreqt r3, [r2] ");										// if user, get undefined instruction with user perm.
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(TArmExcInfo,iFaultAddress));	// iFaultAddress=instruction opcode
+	__JUMP(,lr);
+#ifdef __SUPPORT_THUMB_INTERWORKING
+	asm("1: ");
+	asm("tst r1, #0x0f ");							// test for user or supervisor mode
+	asm("ldrneh r3, [r2] ");						// if supervisor, get undefined instruction
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldreqbt r3, [r2], #1 ");					// if user get LS byte of opcode with user permissions ...
+	asm("ldreqbt ip, [r2] ");						// ... get MS byte of opcode with user permissions
+	asm("orreq r3, r3, ip, lsl #8 ");				// r3=opcode
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(TArmExcInfo,iFaultAddress));	// iFaultAddress=instruction opcode
+	__JUMP(,lr);
+#endif
+	}
+
+#define	PUSH(x)	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(TArmExcInfo,x)); asm("strt r3, [r2], #-4 ")
+__NAKED__ void PushExcInfoOnUserStack(TArmExcInfo*, TInt)
+ 	{
+	// Save registers on user stack (low to high addr)
+	// ExcType, iExcCode, iFaultAddress, iFaultStatus, iCpsr, iR0-iR15
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TArmExcInfo,iR13));
+	asm("sub r2, r2, #4 ");
+	USER_MEMORY_GUARD_OFF(,r3,r3);
+	PUSH(iR15);
+	PUSH(iR14);
+	PUSH(iR13);
+	PUSH(iR12);
+	PUSH(iR11);
+	PUSH(iR10);
+	PUSH(iR9);
+	PUSH(iR8);
+	PUSH(iR7);
+	PUSH(iR6);
+	PUSH(iR5);
+	PUSH(iR4);
+	PUSH(iR3);
+	PUSH(iR2);
+	PUSH(iR1);
+	PUSH(iR0);
+	PUSH(iCpsr);
+	PUSH(iFaultStatus);
+	PUSH(iFaultAddress);
+	PUSH(iExcCode);
+	asm("strt r1, [r2] ");
+	USER_MEMORY_GUARD_ON(,r3,r3);
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(TArmExcInfo,iR13));
+	__JUMP(,lr);
+	}
+
+#ifdef _DEBUG
+extern "C" void __FaultIpcClientNotNull();
+#endif
+
+
+__NAKED__ TBool TIpcExcTrap::IsTIpcExcTrap()
+	{
+	asm("ldr r1, __IpcExcHandler ");
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TExcTrap,iHandler));
+	asm("cmp r1, r2");
+	asm("moveq r0, #1");
+	asm("movne r0, #0");
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ TInt TIpcExcTrap::Trap(DThread*)
+	{
+#ifdef __SMP__
+	__ASM_CLI();
+	GET_RWNO_TID(,r2);
+	asm("ldr	r2, [r2, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	__ASM_STI();
+	asm("ldr r3, __IpcExcHandler ");
+#else
+	asm("ldr r2, __TheScheduler ");
+	asm("ldr r3, __IpcExcHandler ");
+	asm("ldr r2, [r2, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r2=&TheCurrentThread->iNThread
+#endif
+
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(TExcTrap,iHandler));
+#ifdef _DEBUG
+	asm("ldr r12, [r2, #%a0]" : : "i" (_FOFF(DThread,iIpcClient) - _FOFF(DThread,iNThread)));
+	asm("teq r12, #0 ");
+	asm("blne __FaultIpcClientNotNull ");
+#endif
+	asm("str r1, [r2, #%a0]" : : "i" (_FOFF(DThread,iIpcClient) - _FOFF(DThread,iNThread)));
+
+	asm("stmia r0, {r4-r11,sp,lr} ");
+	asm("sub r2, r2, #%a0" : : "i" _FOFF(DThread,iNThread));	// r2=TheCurrentThread
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(TExcTrap,iThread));
+	asm("str r0, [r2, #%a0]" : : "i" _FOFF(DThread,iExcTrap));
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ TInt TExcTrap::Trap()
+	{
+	asm("adr r1, __default_exc_trap_handler ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt TExcTrap::Trap(TExcTrapHandler /*aHandler*/)
+	{
+#ifdef __SMP__
+	__ASM_CLI();
+	GET_RWNO_TID(,r2);
+	asm("ldr	r2, [r2, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	__ASM_STI();
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TExcTrap,iHandler));
+#else
+	asm("ldr r2, __TheScheduler ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TExcTrap,iHandler));
+	asm("ldr r2, [r2, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r2=&TheCurrentThread->iNThread
+#endif
+	asm("stmia r0, {r4-r11,sp,lr} ");
+	asm("sub r2, r2, #%a0" : : "i" _FOFF(DThread,iNThread));	// r2=TheCurrentThread
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(TExcTrap,iThread));
+	asm("str r0, [r2, #%a0]" : : "i" _FOFF(DThread,iExcTrap));
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+
+#ifndef __SMP__
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+#endif
+	asm("__IpcExcHandler: ");
+	asm(".word %a0" : : "i" ((TInt)DThread::IpcExcHandler));
+	asm("__default_exc_trap_handler: ");
+	asm("mov r1, #%a0" : : "i" ((TInt)KErrBadDescriptor));	// r0 already contains pointer to TExcTrap
+	// fall through
+	}
+
+EXPORT_C __NAKED__ void TExcTrap::Exception(TInt /*aResult*/)
+	{
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TExcTrap,iThread));
+	asm("ldmia r0, {r4-r11,sp,lr} ");
+	asm("mov r3, #0 ");
+	asm("str r3, [r2, #%a0]" : : "i" _FOFF(DThread,iExcTrap));
+	asm("str r3, [r2, #%a0]" : : "i" _FOFF(DThread,iPagingExcTrap));
+	asm("mov r0, r1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt TPagingExcTrap::Trap()
+	{
+#ifdef __SMP__
+	__ASM_CLI();
+	GET_RWNO_TID(,r2);
+	asm("ldr	r2, [r2, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	__ASM_STI();
+#else
+	asm("ldr r2, __TheScheduler ");
+	asm("ldr r2, [r2, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r2=&TheCurrentThread->iNThread
+#endif
+	asm("stmia r0, {r4-r11,sp,lr} ");
+	asm("sub r2, r2, #%a0" : : "i" _FOFF(DThread,iNThread));	// r2=TheCurrentThread
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(TPagingExcTrap,iThread));
+	asm("str r0, [r2, #%a0]" : : "i" _FOFF(DThread,iPagingExcTrap));
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void TPagingExcTrap::Exception(TInt /*aResult*/)
+	{
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TPagingExcTrap,iThread));
+	asm("ldmia r0, {r4-r11,sp,lr} ");
+	asm("mov r3, #0 ");
+	asm("str r3, [r2, #%a0]" : : "i" _FOFF(DThread,iPagingExcTrap));
+	asm("mov r0, r1 ");
+	__JUMP(,lr);
+	}
+
+#ifdef __CPU_HAS_VFP
+__NAKED__ void DoInitVFP()
+	{
+	asm("ldr r0, =%a0" : : "i" ((TInt)VFP_FPEXC_INIT));
+	VFP_FMXR(,VFP_XREG_FPEXC,0);
+#ifdef __VFP_V3
+	asm("ldr r0, =%a0" : : "i" ((TInt)VFP_FPSCR_IEEE_NO_EXC));
+#else
+	asm("ldr r0, =%a0" : : "i" ((TInt)VFP_FPSCR_RUNFAST));
+#endif
+	VFP_FMXR(,VFP_XREG_FPSCR,0);
+
+	__JUMP(,lr);
+	}
+
+#ifndef __SMP__
+// r0 points to context save area
+// Save order:		FPSCR
+// VFPv2 ONLY:		FPINST FPINST2
+//					D0-D15 
+// VFPv3 with NEON:	D16-D31
+__NAKED__ void DoSaveVFP(void*)
+	{
+	VFP_FMRX(,1,VFP_XREG_FPSCR);
+	asm("stmia r0!, {r1} ");
+
+#ifndef __VFP_V3
+	VFP_FMRX(,1,VFP_XREG_FPINST);
+	VFP_FMRX(,2,VFP_XREG_FPINST2);
+	asm("stmia r0!, {r1-r2} ");
+#endif
+
+	VFP_FSTMIADW(CC_AL,0,0,16);
+
+#ifdef __VFP_V3
+	VFP_FMRX(,1,VFP_XREG_MVFR0);
+	asm("tst r1, #%a0" : : "i" ((TInt)VFP_MVFR0_ASIMD32));	// Check to see if all 32 Advanced SIMD registers are present
+	__JUMP(eq,lr);											// Not present
+	GET_CAR(,r1);
+	asm("tst r1, #%a0" : : "i" ((TInt)VFP_CPACR_D32DIS));	// Check to see if access to the upper 16 registers is disabled
+	VFP_FSTMIADW(CC_EQ,0,16,16);
+#endif 
+
+	__JUMP(,lr);
+	}
+#endif // !__SMP__
+
+// r0 points to context restore area
+__NAKED__ void DoRestoreVFP(const void*)
+	{
+	asm("ldmia r0!, {r1} ");	
+	VFP_FMXR(,VFP_XREG_FPSCR,1);
+
+#ifndef __VFP_V3
+	asm("ldmia r0!, {r1,r2} ");	
+	VFP_FMXR(,VFP_XREG_FPINST,1);
+	VFP_FMXR(,VFP_XREG_FPINST2,2);
+#endif
+
+	VFP_FLDMIADW(CC_AL,0,0,16);
+
+#ifdef __VFP_V3
+	VFP_FMRX(,1,VFP_XREG_MVFR0);
+	asm("tst r1, #%a0" : : "i" ((TInt)VFP_MVFR0_ASIMD32));	// Check to see if all 32 Advanced SIMD registers are present
+	__JUMP(eq,lr);											// Not present
+	GET_CAR(,r1);
+	asm("tst r1, #%a0" : : "i" ((TInt)VFP_CPACR_D32DIS));	// Check to see if access to the upper 16 registers is disabled
+	VFP_FLDMIADW(CC_EQ,0,16,16);
+#endif 
+
+	__JUMP(,lr);
+	}
+#endif	// __CPU_HAS_VFP
+
+
+#ifdef __PRI_LIST_MACHINE_CODED__
+__NAKED__ DThread* TThreadWaitList::First() const
+	{
+	asm("ldr r0, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));
+	asm("tst r0, #1 ");
+	asm("beq 0f ");
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("ldr r2, [r0, #3]! ");				// r2=iPresent MSW
+	asm("ldr r1, [r0, #-4] ");				// r1=iPresent LSW, r0=&iQueue[-1]
+	CLZ(3,2);								// r3=31-MSB(r2)
+	asm("subs r3, r3, #32 ");				// r3=-1-MSB(r2), 0 if r2=0
+	CLZcc(CC_EQ,3,1);						// if r2=0, r3=31-MSB(r1)
+	asm("rsbs r3, r3, #32 ");				// r3=highest priority+1
+	asm("ldr r0, [r0, r3, lsl #2] ");		// we know list is nonempty, r0->first entry
+#else
+	asm("stmfd sp!, {r4,lr} ");
+	asm("bic r0, r0, #1 ");
+	asm("bl " CSM_ZN12TPriListBase5FirstEv);
+	asm("ldmfd sp!, {r4,lr} ");
+#endif
+	asm("sub r0, r0, #%a0" : : "i" _FOFF(DThread,iWaitLink));	// adjust from iWaitLink back to DThread
+	asm("0: ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt TThreadWaitList::HighestPriority() const
+	{
+	asm("ldr r1, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));
+	asm("subs r0, r0, r0 ");		// V=0
+	asm("mvn r0, #0 ");				// R0=-1, V=0
+	asm("movs r2, r1, ror #1 ");	// N=bit 0 of iWaitPtr, Z=1 if iWaitPtr=0
+	asm("ldrgtb r0, [r1, #%a0]" : : "i" _FOFF(DThread,iWaitLink.iPriority));	// if iWaitPtr && !(iWaitPtr&1)
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("bpl 0f ");					// if !(iWaitPtr&1)
+	asm("ldr r3, [r1, #3] ");		// r3=iPresent MSW
+	asm("ldr r2, [r1, #-1] ");		// r2=iPresent LSW
+	CLZ(0,3);						// r0=31-MSB(r3)
+	asm("subs r0, r0, #32 ");		// r0=-1-MSB(r3), 0 if r2=0
+	CLZcc(CC_EQ,0,2);				// if r3=0, r0=31-MSB(r2)
+	asm("rsb r0, r0, #31 ");		// r0=highest priority
+#else
+	asm("bicmi r0, r1, #1 ");
+	asm("bmi " CSM_ZN12TPriListBase15HighestPriorityEv);
+#endif
+	asm("0: ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void TThreadWaitList::Add(DThread* aThread)
+	{
+	asm("ldr r2, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));
+	asm("cmp r2, #0 ");
+	asm("bne 1f ");
+	asm("str r1, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));
+	__JUMP(,lr);
+	asm("1: ");
+	asm("tst r2, #1 ");				// pointer to thread or list?
+	asm("ldreq r3, __FirstFree ");	// if thread, r3=&FirstFree
+	asm("bicne r0, r2, #1 ");		// if list r0 points to list ...
+	asm("add r1, r1, #%a0" : : "i" _FOFF(DThread,iWaitLink));	// r1 points to iWaitLink of thread to be added
+	asm("ldreq r12, [r3] ");			// if thread, r12=l=FirstFree
+	asm("bne " CSM_ZN12TPriListBase3AddEP12TPriListLink);	// if list, do the addition
+	asm("orr r12, r12, #1 ");
+	asm("str r12, [r0] ");			// iWaitPtr = TLinAddr(l)|1
+	asm("bic r0, r12, #1 ");		// r0 = l
+	asm("ldr r12, [r0] ");			// r12 = l->Next()
+	asm("add r2, r2, #%a0" : : "i" _FOFF(DThread,iWaitLink));	// r2 points to iWaitLink of original thread (t0)
+	asm("str r12, [r3] ");			// FirstFree = l->Next()
+	asm("ldrb r12, [r2, #8] ");		// r12 = priority of original thread
+	asm("mov r3, #0 ");
+	asm("str r3, [r0], #8 ");		// zero LSW of present mask, r0->iQueue[0]
+	asm("str r2, [r2, #0] ");		// t0->iWaitLink->iNext = &t0->iWaitLink
+	asm("str r2, [r2, #4] ");		// t0->iWaitLink->iPrev = &t0->iWaitLink
+	asm("str r2, [r0, r12, lsl #2] ");	// l->iQueue[t0->iPri] = &t0->iWaitLink
+	asm("cmp r12, #32 ");
+	asm("and r12, r12, #31 ");		// r12 = bit number in word
+	asm("sub r0, r0, #8 ");			// R0=l, R1=&aThread->iWaitLink
+	asm("mov r3, #1 ");
+	asm("mov r3, r3, lsl r12 ");	// 1 in correct position
+	asm("strhs r3, [r0, #4] ");		// if priority>=32, write to upper word
+	asm("strlo r3, [r0, #0] ");		// if priority<32 write to lower word
+	asm("b " CSM_ZN12TPriListBase3AddEP12TPriListLink);	// add aThread to l
+	}
+
+__NAKED__ void TThreadWaitList::Remove(DThread* aThread)
+	{
+	asm("ldr r3, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));
+	asm("mov r2, #0 ");
+	asm("tst r3, #1 ");
+	asm("bne 1f ");
+#ifdef _DEBUG
+	asm("cmp r3, #0 ");
+	asm("beq 0f ");
+	asm("cmp r3, r1 ");
+	asm("bne 0f ");
+#endif
+	asm("str r2, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));
+	__JUMP(,lr);
+#ifdef _DEBUG
+	asm("0: ");
+	__ASM_CRASH();
+#endif
+	asm("1: ");
+	asm("stmfd sp!, {r0,r3,r4,lr} ");	// r0=&iWaitPtr r3=wait list|1
+	asm("bic r4, r3, #1 ");				// r4->wait list
+	asm("add r1, r1, #%a0" : : "i" _FOFF(DThread,iWaitLink));	// r1 points to iWaitLink of thread to be changed
+	asm("mov r0, r4 ");
+	asm("bl " CSM_ZN12TPriListBase6RemoveEP12TPriListLink );	// remove aThread from list
+	asm("ldmia r4!, {r0-r1} ");			// present mask after removal
+	asm("subs r2, r0, #1 ");			// C=0 if LSW zero
+	asm("sbc r3, r1, #0 ");
+	asm("ands r2, r2, r0 ");			// C not affected
+	asm("andeqs r3, r3, r1 ");			// r3:r2 = (r1:r0-1)&(r1:r0) = 0 iff only one bit set, C not affected
+	asm("bne 9f ");						// if more than one bit set, finished
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZcc(CC_CC,3,1);					// if C=0 LSW=0 so r3=31-MSB(r1)
+	CLZcc(CC_CS,3,0);					// if C=1 LSW!=0 so r3=31-MSB(r0)
+	asm("rsbcc r3, r3, #63 ");
+	asm("rsbcs r3, r3, #31 ");			// r3 = bit number of only set bit
+#else
+	asm("movcc r3, #32 ");				// if C=0 begin at 32
+	asm("movcs r1, r0 ");				// else r1=low word
+	asm("cmp r1, #0x00010000 ");
+	asm("movcc r1, r1, lsl #16 ");
+	asm("addcs r3, r3, #16 ");			// if mask>=0x00010000, add 16 to bit number
+	asm("cmp r1, #0x01000000 ");
+	asm("movcc r1, r1, lsl #8 ");
+	asm("addcs r3, r3, #8 ");			// if mask>=0x01000000, add 8 to bit number
+	asm("tst r1, #0xf0000000 ");
+	asm("addne r3, r3, #4 ");
+	asm("tst r1, #0xcc000000 ");
+	asm("addne r3, r3, #2 ");
+	asm("tst r1, #0xaa000000 ");
+	asm("addne r3, r3, #1 ");			// r3 = bit number of only set bit
+#endif
+	asm("ldr r12, [r4, r3, lsl #2] ");	// r12 = l->First()
+	asm("ldr r1, __FirstFree ");		// r1=&FirstFree
+	asm("ldr lr, [r12] ");				// lr = l->First()->iNext
+	asm("ldr r0, [r1] ");				// r0=FirstFree
+	asm("teq lr, r12 ");				// only one? (C not affected)
+	asm("bne 9f ");						// if not, finished
+	asm("str r2, [r4, r3, lsl #2] ");	// clear l->iQueue[pri]
+	asm("stmdb r4!, {r0,r2} ");			// l->first word = FirstFree, l->second word = 0
+	asm("str r4, [r1] ");				// FirstFree=l
+
+	asm("9: ");
+	asm("ldmfd sp!, {r0,r3,r4,lr} ");
+	asm("subeq r12, r12, #%a0" : : "i" _FOFF(DThread,iWaitLink));	// r12 points to single thread on list
+	asm("streq r12, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));	// iWaitPtr -> single thread on list
+	__JUMP(,lr);
+
+	asm("__FirstFree: ");
+	asm(".word %a0" : : "i" ((TInt)&FirstFree));
+	}
+
+__NAKED__ void TThreadWaitList::ChangePriority(DThread* aThread, TInt aNewPriority)
+	{
+	asm("ldr r3, [r0, #%a0] " : : "i" _FOFF(TThreadWaitList,iWaitPtr));
+	asm("add r1, r1, #%a0" : : "i" _FOFF(DThread,iWaitLink));	// r1 points to iWaitLink of thread to be changed
+	asm("tst r3, #1 ");
+	asm("bicne r0, r3, #1 ");		// if list already in place, operate on that
+	asm("bne " CSM_ZN12TPriListBase14ChangePriorityEP12TPriListLinki );
+#ifdef _DEBUG
+	asm("cmp r3, #0 ");
+	asm("beq 0f ");					// if iWaitPtr==0, die
+	asm("add r3, r3, #%a0" : : "i" _FOFF(DThread,iWaitLink));
+	asm("cmp r3, r1 ");				// if iWaitPtr!=aThread, die
+	asm("beq 1f ");
+	asm("0: ");
+	__ASM_CRASH();
+	asm("1: ");
+#endif
+	asm("strb r2, [r1, #8] ");		// else just set the thread priority
+	__JUMP(,lr);
+	}
+#endif
+
+
+#ifdef __ATOMIC64_USE_SLOW_EXEC__
+__NAKED__ TBool Exc::IsMagicAtomic64(TLinAddr /*aAddress*/)
+//
+// Return TRUE if aAddress is a 'magic' atomic exception handling instruction.
+//
+	{
+	asm("adr r1, __magic_atomic_addresses ");	// r1 points to list of magic addresses
+	asm("is_magic_atomic: ");
+	asm("ldr r2, [r1], #4 ");				// r2=next magic address to check
+	asm("cmp r2, r0 ");						// is r0=magic address?
+	asm("cmpne r2, #0 ");					// if not, have we reached end of list?
+	asm("bne is_magic_atomic ");			// if neither, check next address
+	asm("movs r0, r2 ");					// r0=0 if not magic, r0 unchanged if magic
+	__JUMP(,lr);
+
+	asm("__magic_atomic_addresses: ");
+	asm(".word magic_atomic64_ldrt_axo ");
+	asm(".word magic_atomic64_strt_axo ");
+	asm(".word magic_atomic64_ldrt_cas ");
+	asm(".word magic_atomic64_strt_cas ");
+	asm(".word magic_atomic64_ldrt_add ");
+	asm(".word magic_atomic64_strt_add ");
+	asm(".word magic_atomic64_ldrt_tau ");
+	asm(".word magic_atomic64_strt_tau ");
+	asm(".word magic_atomic64_ldrt_tas ");
+	asm(".word magic_atomic64_strt_tas ");
+	asm(".word 0 ");
+	}
+#endif //__ATOMIC64_USE_SLOW_EXEC__

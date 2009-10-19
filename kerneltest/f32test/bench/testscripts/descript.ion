@@ -1,0 +1,4 @@
+f32_perf_test_H2.bat default set of tests for H2
+f32_perf_test_H4.bat default set of tests for H4
+f32_perf_test_H2_5000files.bat special set of tests for H2, uses 5000 files only (faster)
+f32_perf_test_H4_5000files.bat special set of tests for H4, uses 5000 files only (faster)

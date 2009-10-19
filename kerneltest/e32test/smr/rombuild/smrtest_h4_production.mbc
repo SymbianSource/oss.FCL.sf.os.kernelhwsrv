@@ -1,0 +1,31 @@
+// Meta Build (metabld) script to build the SMR test roms for the H4 variant.
+// Manual UDEB Debug ROMs only for SMR disabled smoke tests.
+//
+// Example usage:
+//	metabld smrtest_h4_production.mbc > \logs\h4p.log 2>&1
+
+
+
+SECTION_COMMANDS
+
+
+// Multiple Memory Model - unicore - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL-D.IMG        --type=tshell
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR-D.IMG       --type=ubootldr
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND2-D.IMG    --type=tshell -D _NAND2
+
+// Flexible Memory model - unicore - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL-D.IMG   --type=tshell
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL_NAND2-D.IMG    --type=tshell -D _NAND2
+
+
+SECTION_DIRS
+

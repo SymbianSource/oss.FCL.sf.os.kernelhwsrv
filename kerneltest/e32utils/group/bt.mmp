@@ -1,0 +1,30 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32utils/group/ft.mmp
+// 
+//
+
+target			ft.exe
+targettype		exe
+
+sourcepath		../trace
+source			ft.cpp
+
+library			euser.lib efsrv.lib btracec.lib
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+capability		ReadDeviceData WriteDeviceData
+
+VENDORID 0x70000001

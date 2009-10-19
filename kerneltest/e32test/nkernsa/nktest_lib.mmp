@@ -1,0 +1,79 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/nkernsa/nktest_lib.mmp
+// 
+//
+
+#define STANDALONE_NANOKERNEL
+macro __STANDALONE_NANOKERNEL__
+
+#include <variant.mmh>
+
+target					VariantTarget(nktest_lib,lib)
+targettype				klib
+
+USERINCLUDE		../../../kernel/eka/include/kernel
+
+#ifdef SMP
+#include <nkernsmp/nkern_ext.mmh>
+#else
+#include <nkern/nkern_ext.mmh>
+#endif
+
+#if defined(MARM)
+sourcepath				arm
+source					armutils.cpp
+source					armutils.cia
+
+sourcepath				../../../kernel/eka/common/arm
+userinclude				../../../kernel/eka/common
+source					cmem.cia
+#if defined(GCC32)
+source 					cgcchelp.cpp cgcchelp.cia
+#elif defined(ARMCC)
+source					armcchlp.cpp
+#ifndef SBSV2
+source					armcchlp.cia
+#endif
+#endif
+
+#elif defined(X86)
+sourcepath				x86
+source					x86utils.cpp
+source					x86utils.cia
+
+sourcepath				../../../kernel/eka/common/x86
+userinclude				../../../kernel/eka/common
+source					cmem.cia
+
+#elif defined(WINS)
+#error Not yet implemented on WINS
+#endif
+
+sourcepath				.
+source					init.cpp kprintf.cpp tlsf.cpp nkutils.cpp
+source					diag.cpp
+source					main.cpp
+source					testutils.cpp
+source					threadbasic.cpp
+source					fastsem.cpp
+source					fastmutex.cpp
+source					debug.cpp
+source					testipi.cpp
+source					testdfc.cpp
+source					fastbuf.cpp
+source					benchmark.cpp
+source					rwspinlock.cpp
+source					tiedevents.cpp
+SMPSAFE

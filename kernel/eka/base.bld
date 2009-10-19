@@ -1,0 +1,13 @@
+
+!COMPULSORY
+!INCREMENTAL
+
+<option keepgoing>
+<option tools>
+<option epoconly>
+
+e32tools	e32tools\group
+e32			e32
+compsupp	e32\compsupp
+f32			f32\group
+hal			hal

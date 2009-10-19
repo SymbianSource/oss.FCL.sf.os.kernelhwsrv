@@ -1,0 +1,14 @@
+# component name "ROFS File System"
+
+component	base_f32_srofs
+
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\srofs
+
+binary	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\srofs all
+exports	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\srofs
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+

@@ -1,0 +1,59 @@
+// @SYMTestCaseID           PBASE-USB-STREAMBM-0801
+// @SYMTestCaseDesc         
+// @SYMTestActions
+//   Small Transfer Size:
+//    1. Stream using 1 IN
+//    2. Stream using 1 OUT
+//    3. Stream using 2 IN
+//    4. Stream using 2 OUT
+//    5. Stream using 1 IN and 1 OUT
+//    6. Stream using 2 IN and 2 OUT
+//   Large Transfer Size:
+//    7. Stream using 1 IN
+//    8. Stream using 1 OUT
+//    9. Stream using 2 IN
+//    10. Stream using 2 OUT
+//    11. Stream using 1 IN and 1 OUT
+//    12. Stream using 2 IN and 2 OUT
+// @SYMTestExpectedResults
+//    No error reported
+// @SYMTestPriority			Medium
+//
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+WaitConnect
+Stream			1000	1000	0	0	99	1	10000	2000
+Wait
+Stream			1000	1000	0	0	2	99	10000	2000
+Wait
+Stream			1000	1000	0	0	99	1	10000	2000
+Stream			1000	1000	0	0	99	3	10000	2000
+Wait
+Stream			1000	1000	0	0	2	99	10000	2000
+Stream			1000	1000	0	0	4	99	10000	2000
+Wait
+Stream			1000	1000	0	0	2	99	10000	2000
+Stream			1000	1000	0	0	99	1	10000	2000
+Wait
+Stream			1000	1000	0	0	99	1	10000	2000
+Stream			1000	1000	0	0	2	99	10000	2000
+Stream			1000	1000	0	0	99	3	10000	2000
+Stream			1000	1000	0	0	4	99	10000	2000
+Wait
+Stream			100000	100000	0	0	99	1	100	100
+Wait
+Stream			100000	100000	0	0	2	99	100	100
+Wait
+Stream			100000	100000	0	0	99	1	100	100
+Stream			100000	100000	0	0	99	3	100	100
+Wait
+Stream			100000	100000	0	0	2	99	100	100
+Stream			100000	100000	0	0	4	99	100	100
+Wait
+Stream			100000	100000	0	0	99	1	100	100
+Stream			100000	100000	0	0	2	99	100	100
+Wait
+Stream			100000	100000	0	0	99	1	100	100
+Stream			100000	100000	0	0	2	99	100	100
+Stream			100000	100000	0	0	99	3	100	100
+Stream			100000	100000	0	0	4	99	100	100
+Wait

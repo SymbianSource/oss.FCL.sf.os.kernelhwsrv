@@ -1,0 +1,81 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\x86\ncthrd.cia
+// 
+//
+
+#include <x86.h>
+
+const TLinAddr NKern_Exit = (TLinAddr)NKern::Exit;
+const TLinAddr NKern_Lock = (TLinAddr)NKern::Lock;
+
+// Called by a thread when it first runs
+__NAKED__ void __StartThread()
+	{
+	// On entry edi=entry point, esi=parameter block
+	asm("sti");
+	asm("mov ax, ss");
+	asm("mov ds, ax");
+	asm("mov es, ax");
+	asm("push esi");
+	asm("call edi");
+	asm("add esp, 4");
+	asm("call %a0" : : "i"(NKern_Exit));
+	}
+
+
+// Called by a thread which has been forced to exit
+// Interrupts off here, kernel unlocked
+__NAKED__ void __DoForcedExit()
+	{
+	asm("sti");
+	asm("call %a0" : : "i"(NKern_Lock));
+	asm("mov ecx, [%a0]" : : "i"(&TheScheduler.iCurrentThread));
+	asm("mov dword ptr [ecx+%0], 0" : : "i"_FOFF(NThreadBase,iCsCount));
+#ifdef __GCC32__
+	asm("push ecx");
+	asm("call __ZN11NThreadBase4ExitEv"); 
+	asm("pop ecx");
+#else
+	TheScheduler.iCurrentThread->Exit();
+#endif
+	}
+
+
+
+__NAKED__ TUint32 X86::GetCR0()
+	{
+	asm("mov eax, cr0");
+	asm("ret");
+	}
+
+__NAKED__ void X86::SetCR0(TUint32)
+	{
+	asm("mov eax, [esp+4]");
+	asm("mov cr0, eax");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 X86::ModifyCR0(TUint32 /*clear*/, TUint32 /*set*/)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("mov edx, [esp+8]");
+	asm("mov eax, cr0");
+	asm("not ecx");
+	asm("and ecx, eax");
+	asm("or ecx, edx");
+	asm("mov cr0, ecx");
+	asm("ret");
+	}
+

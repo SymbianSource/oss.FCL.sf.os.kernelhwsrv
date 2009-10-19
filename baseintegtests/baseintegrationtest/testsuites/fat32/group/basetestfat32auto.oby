@@ -1,0 +1,13 @@
+#define BASE_ROM
+#include <rom\##VARIANT##\header.iby>
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+#include <rom\basetest\basetestfat32server.iby>
+
+// Include autoexec script
+data=\epoc32\rom\basetest\autoexec_fat32.bat				\autoexec.bat

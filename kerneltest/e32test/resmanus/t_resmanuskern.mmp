@@ -1,0 +1,35 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+target  T_ResManUsKern.exe
+targettype      exe
+
+// Need simulated PSL to support this test
+macro RESOURCE_MANAGER_SIMULATED_PSL 
+macro PRM_ENABLE_EXTENDED_VERSION
+macro RESMANUS_KERN
+
+sourcepath      ../resmanus
+source  	t_resmanus.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+library 	euser.lib hal.lib
+
+capability		PowerMgmt ReadDeviceData
+
+vendorid 0x70000001
+
+SMPSAFE

@@ -1,0 +1,251 @@
+# Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the License "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+# \f32test\loader\dlltree.txt
+# Description file for trees of DLLs and EXEs used for loader testing.
+# Tree with no data
+# 
+#
+
+Tree0				:	Tree1 Tree2
+Tree1				:	Tree3 Tree4
+Tree2				:	Tree5 Tree6
+Tree3
+Tree4
+Tree5
+Tree6
+
+# Tree with data
+
+DTree0		D		:	DTree1 DTree2
+DTree1		D		:	DTree3 DTree4
+DTree2		D		:	DTree5 DTree6
+DTree3		D
+DTree4		D
+DTree5		D
+DTree6		D
+
+# Tree with some data
+
+PDTree0				:	Tree2 DTree2
+
+
+# Lattice with no data
+
+Lat0				:	Lat1 Lat2
+Lat1				:	Lat3
+Lat2				:	Lat3
+Lat3
+
+# Lattice with data
+
+DLat0		D		:	DLat1 DLat2
+DLat1		D		:	DLat3
+DLat2		D		:	DLat3
+DLat3		D
+
+# Lattice with some data
+
+PDLat0				:	PDLat1 Lat2
+PDLat1		D		:	Lat3
+
+
+# Cycle with no data
+
+Cyc0				:	Cyc1
+Cyc1				:	Cyc2
+Cyc2				:	Cyc0
+
+# Cycle with data
+
+DCyc0		D		:	DCyc1
+DCyc1		D		:	DCyc2
+DCyc2		D		:	DCyc0
+
+# Cycle with some data
+
+PDCyc0				:	PDCyc1
+PDCyc1		D		:	PDCyc2
+PDCyc2				:	PDCyc0
+
+
+# Cycle with spurs, no data
+
+CycS0				:	CycS1
+CycS1				:	CycS2 Lat0
+CycS2				:	CycS0
+
+# Cycle with spurs, data
+
+DCycS0		D		:	DCycS1
+DCycS1		D		:	DCycS2 DLat0
+DCycS2		D		:	DCycS0
+
+# Cycle with spurs, some data
+
+PDCycS0				:	PDCycS1
+PDCycS1				:	PDCycS2 PDLat0
+PDCycS2		D		:	PDCycS0
+
+# EXEs
+
+Exe0		X
+Exe1		X F
+Exe2		X R
+Exe3		X R F
+Exe4		X D
+Exe5		X F D
+Exe6		X R D
+Exe7		X R F D
+
+# EXE with link to DLL
+
+Exe8		X		: PDLat0
+Exe9		X F		: PDLat0
+Exe10		X R		: X10Dep0
+Exe11		X R F	: X11Dep0
+Exe12		X		: Rom6
+
+X10Dep0		R,Exe10 D
+X11Dep0		R,Exe11 D
+
+# ROM XIP DLLs
+
+Rom5		R D		: Rom6 Rom3
+Rom7		R D
+Rom6		R D		: Rom7 Rom8
+Rom8		R D
+Rom0		R
+Rom1		R D
+Rom2		R D		: Rom1
+Rom3		R D		: Rom1 Rom2
+Rom4		R		: Rom1
+RomCyc0		R D		: RomCyc1
+RomCyc1		R D		: RomCyc2
+RomCyc2		R D		: RomCyc0
+RomCycS0	R 		: RomCycS1
+RomCycS1	R 		: RomCycS2 Rom3
+RomCycS2	R D		: RomCycS0
+
+# RAM linking to ROM
+
+RamRom0				: Rom1
+RamRom1				: Lx5
+RamRom2				: Lx3
+RamRom3				: Lx4
+
+# Link to EXE
+
+Lx0					: Exe8
+Lx1					: Exe10
+Lx2					: Exe11
+Lx3			R		: Exe10
+Lx4			R		: Exe11
+Lx5			R		: Exe7
+
+# ---- Code paging tests ----
+
+# paged binaries must be copied to removable media because the block map API
+# does not support paging from ROM.
+
+# bytepair with paged, unpaged subsets
+
+GTreeA		I		: GBTree1 GBNTree2 GBPTree3
+GBTree1		I B
+GBNTree2	I B N
+GBPTree3	I B P
+
+# uncompressed with paged, unpaged subsets
+# GUPNITree4 must be copied to writable media because toolchain should not set both flags
+
+GTreeB		I 		: GUTree1 GUNTree2 GUPTree3
+GUTree1		I U
+GUNTree2	I U N
+GUPTree3	I U P
+
+# deflate compressed with non-empty paged, unpaged subsets
+# must copy to writable media because toolchain only supports paging flags with bytepair or uncompressed
+
+GTreeC		I		: GTree1 GNTree2 GPTree3
+GTree1		I
+GNTree2		I N
+GPTree3		I P
+
+# paged and unpaged together are corrupt if they have to be acted on
+
+GBPNITree	B P N I
+GUPNITree	U P N I
+GPNITree	P N I
+
+# paged but loaded from nonpageable media
+
+GBPVTree	B P V
+
+# mixed paged / unpaged lattice
+
+GLat0		B P I T		: DTree1
+GLat1		B P I D	T	: Tree2
+GLat2		N T			: GLat1 GLat0
+GLat3		N T			: GLat1 GLat0 GLat2
+GLat4		B P I D	T	: GLat1 GLat2 GLat3
+
+# paged / unpaged executables
+
+GBPExe		X B P I T		:	GLat4
+GBPDExe		X B P I D T		:	GLat4
+GBPFExe		X B P I F T		:	GLat4
+GBPDFExe	X B P I D F T	:	GLat4
+GBNExe		X B N I	T		:	GLat4
+GBNFExe		X B N I F T		:	GLat4
+
+# ---- Data paging tests ----
+
+# just add some data paged executables so loading gets OOM tested
+
+DataPagedExe1	X PD T
+DataPagedExe2	X PD D T
+
+!TESTCASES
+
+ExeLoad:	Tree0		DTree0		PDTree0		\
+			Lat0		DLat0		PDLat0		\
+			Cyc0		DCyc0		PDCyc0		\
+			CycS0		DCycS0		PDCycS0		\
+			Rom4		RomCyc0		RomCycS0	\
+			RamRom1		GTreeA		GTreeB		\
+			GTreeC		GLat4
+
+DllOOM:		Tree0		DTree0		PDTree0		\
+			Lat0		DLat0		PDLat0		\
+			Cyc0		DCyc0		PDCyc0		\
+			CycS0		DCycS0		PDCycS0		\
+			Rom4		RomCyc0		RomCycS0	\
+			RamRom1		GTreeA		GTreeB		\
+			GTreeC		GLat4		GBPVTree
+
+MultLoad:														\
+			Exe0		RomCyc0		Tree0		Tree0			\
+			Exe2		RomCyc0		Tree0		Tree0			\
+			Exe3		RomCyc0		Tree0		Tree0			\
+			Exe3		DCycS0		Tree0		Tree0			\
+			Exe8		PDCycS0		Tree0		Tree0			\
+			Exe3		DCycS0		Tree0		Tree0			\
+			Exe8		DCycS0		Exe8		PDCycS0			\
+			Exe7		DCycS0		Exe3		DCycS0			\
+			Exe3		DLat0		Exe8		DCycS0			\
+			Tree0		Tree0		Exe3		DCycS0			\
+			Tree0		Tree0		Exe3		DLat0
+
+MultLoadTargetOnly:												\
+			GBPExe		GLat2		GBPExe		GLat4			\
+			GBPExe		GLat4		GLat3		GLat2

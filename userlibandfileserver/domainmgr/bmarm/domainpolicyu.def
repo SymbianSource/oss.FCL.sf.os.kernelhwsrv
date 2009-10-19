@@ -1,0 +1,4 @@
+EXPORTS
+	GetDomainSpecs__8DmPolicy @ 1 NONAME ; DmPolicy::GetDomainSpecs(void)
+	Release__8DmPolicyPC13TDmDomainSpec @ 2 NONAME R3UNUSED ; DmPolicy::Release(TDmDomainSpec const *)
+	GetPolicy__8DmPolicyR18TDmHierarchyPolicy @ 3 NONAME R3UNUSED ; DmPolicy::GetPolicy(TDmHierarchyPolicy &)

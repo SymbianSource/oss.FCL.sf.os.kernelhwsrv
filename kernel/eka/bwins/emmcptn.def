@@ -1,0 +1,3 @@
+EXPORTS
+	?CreateEmmcPartitionInfo@@YAPAVDEMMCPartitionInfo@@XZ @ 1 NONAME ; class DEMMCPartitionInfo * CreateEmmcPartitionInfo(void)
+

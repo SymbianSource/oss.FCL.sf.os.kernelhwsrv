@@ -1,0 +1,117 @@
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Development and test tools (e.g. gdbstub)
+// 
+//
+
+/**
+ @file
+*/
+
+
+
+PRJ_PLATFORMS
+
+TOOLS
+TOOLS2
+BASEDEFAULT
+
+
+PRJ_EXPORTS
+
+
+
+
+../profiler/profiler.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(profiler.h)
+
+../analyse/profiler.rtf	/epoc32/engdoc/profiler/profiler.rtf
+
+../d_exc/printstk.pl /epoc32/rom/tools/printstk.pl
+../d_exc/printsym.pl /epoc32/rom/tools/printsym.pl
+
+../setcap/setcap.iby  /epoc32/rom/include/setcap.iby
+
+../demandpaging/dptest.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(dptest.h)
+../demandpaging/dptestcons.oby /epoc32/rom/include/dptestcons.oby
+
+PRJ_TESTEXPORTS
+../trace/btracevw.pl /epoc32/tools/btracevw.pl
+
+PRJ_TESTMMPFILES
+#if defined(TOOLS2)
+btrace_host
+#endif
+
+PRJ_MMPFILES
+
+#if defined(TOOLS2)
+
+// nothing to do
+
+#elif defined(TOOLS)
+
+analyse
+../netcards/netcards.mmp
+
+#else	// !TOOLS
+
+#if defined(GENERIC_MARM)
+#ifndef SMP
+profiler
+crashread.mmp
+sampler
+#endif
+#endif
+
+//APPRVATA
+#ifndef SMP
+
+#if !defined(GCCXML) && defined(MARM_ARMV5)
+#if defined(GENERIC_MARM) || !defined(WINS) || defined(GENERIC_X86)
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+
+#if !defined(WINS) 
+#if !defined(X86)
+usbmsapp
+#if defined(SYMBIAN_ENABLE_USB_OTG_HOST)
+otgusbmsapp
+
+#endif
+#endif
+#endif	//!defined(WINS) 
+
+#endif
+#endif
+#endif //GCCXML
+
+#endif	//SMP
+
+#ifndef SMP
+../d_exc/d_exc
+../sdpartition/sdpartition
+#endif
+
+../d_exc/minkda
+
+#ifndef SMP
+setcap
+btrace
+dptest
+dptestcons
+#endif
+
+#include "../testusbcldd/group/testusbcldd.inf"
+
+#endif //	!TOOLS
+

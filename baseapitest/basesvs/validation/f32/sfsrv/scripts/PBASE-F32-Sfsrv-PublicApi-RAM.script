@@ -1,0 +1,45 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		PBASE-F32-Sfsrv-PublicApi-RAM
+//! @SYMScriptTestEnvironment	This test script requires a basic RAM.
+/////////////////////////////////////////////////////////////////////
+// PBASE-F32-Sfsrv-PublicApi-RAM.script
+//
+// Tests all public elements of the SfSrv class
+// as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll APIs for SfSrv.
+// Negative testing is performed to confirm that correct errors are returned when incorrect parameters are given.
+// The tests are fully automated.
+/////////////////////////////////////////////////////////////////////
+
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-Dir-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-DirScan-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-Entry-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-EntryArray-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-RDir-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-File-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-FileMan-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-FileText-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-Format-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-OpenFileScan-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\PBASE-F32-RawDisk-PublicApi-RAM.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-rfs-drives-publicapi-ram.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-rfs-files-publicapi-ram.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-rfs-misc-publicapi-ram.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-rfs-mounts-publicapi-ram.script

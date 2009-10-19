@@ -1,0 +1,3 @@
+EXPORTS
+	?WinsMain@@YAHXZ @ 1 NONAME ; int WinsMain(void)
+

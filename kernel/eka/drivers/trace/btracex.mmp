@@ -1,0 +1,51 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/trace/btrace.mmp
+// 
+//
+
+#include <variant.mmh>
+
+#include "../../kernel/kern_ext.mmh"
+
+USERINCLUDE		../../include
+
+#ifndef SMP
+USERINCLUDE		../../include/nkern
+#else
+//SMP version of nk_priv.h is included through kern_ext.mmh
+#endif
+
+target			VariantTarget(btracex,ldd)
+linkas			btracex.ldd
+targettype		ldd
+
+sourcepath		.
+source			btracex.cpp
+
+#ifdef MARM
+sourcepath		arm
+source			btracex.cia
+#endif
+
+noexportlibrary
+
+epocallowdlldata
+
+start wins
+win32_headers
+end
+
+vendorid		0x70000001
+capability		all

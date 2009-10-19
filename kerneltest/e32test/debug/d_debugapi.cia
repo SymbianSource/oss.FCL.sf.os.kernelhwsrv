@@ -1,0 +1,67 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\debug\d_debugapi.cia
+// 
+//
+
+#include <arm.h>
+#include "d_debugapi.h"
+
+__NAKED__ TInt DDebugAPIChecker::ReadFromOtherProcessArmv6()
+	{	
+
+	//Save regs.
+    asm("stmfd    sp!,{r4-r7,lr}");
+
+	//Copy all data we need into regs. We can not access the memory of ...
+	//...the current process once we start changing MMU content.
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DDebugAPIChecker, iOtherProcess_OsAsid));
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DDebugAPIChecker, iOtherProcess_LocalPageDir));
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(DDebugAPIChecker, iCurrentProcess_OsAsid));
+	asm("ldr r4, [r0, #%a0]" : : "i" _FOFF(DDebugAPIChecker, iCurrentProcess_LocalPageDir));
+	asm("ldr r5, [r0, #%a0]" : : "i" _FOFF(DDebugAPIChecker, iAddress));
+
+	asm("mrc p15, 0, r6, c2, c0, 0 ");
+	asm("and r6, r6, #0x7f ");			// r6 = page table cache/sharing attributes
+	asm("orr r2, r2, r6 ");				// add in to other process page directory address
+	asm("orr r4, r4, r6 ");				// add in to this process page directory address
+	asm("mov r6, #0 ");
+
+	//Disable interrupts
+	asm("mov r7, #0xd3 ");
+	asm("msr cpsr, r7 ");
+
+	//Switch MMU to the-other-process
+	asm("mcr p15, 0, r6, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+//!	asm("orr r2, r2 #0x18"); //Uncomment this line on 1136 (r0p2) with L2 cache due to Erratum 317041.	
+	asm("mcr p15, 0, r2, c2, c0, 0 ");		// set TTBR0 - no TLB flush required due to ASID
+	asm("mcr p15, 0, r1, c13, c0, 1 ");		// set ASID
+
+	//Read the memory from the-other-process
+	asm("ldr r0, [r5]");
+
+	//Switch MMU back to the-current-process
+	asm("mcr p15, 0, r6, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+//!	asm("orr r4, r4 #0x18"); //Uncomment this line on 1136 (r0p2) with L2 cache due to Erratum 317041.	
+	asm("mcr p15, 0, r4, c2, c0, 0 ");		// set TTBR0 - no TLB flush required due to ASID
+	asm("mcr p15, 0, r3, c13, c0, 1 ");		// set ASID
+
+
+	//Re-enable interrupts
+	asm("mov r7, #0x13 ");
+	asm("msr cpsr, r7 ");
+	
+	//Return
+    asm("ldmfd    sp!,{r4-r7,pc}");
+	}

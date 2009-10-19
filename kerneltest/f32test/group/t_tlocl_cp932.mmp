@@ -1,0 +1,38 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_tlocl_cp932.mmp
+// A dummy localisation DLL for FATCharsetConv integration test.
+// 
+//
+
+TARGET			t_tlocl_cp932.dll
+
+TARGETTYPE		dll
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+USERINCLUDE		../locl/localeutils/elocl32_japan/inc
+
+SOURCEPATH		../locl/localeutils/elocl32_japan/src
+SOURCE			t_tlocl32_CP932.cpp t_tlocl32_cyjapan.cpp t_tlocl32_lat1.cpp t_tlocl32_lnjapan.cpp
+SOURCE			t_tlocl32_msjapan.cpp t_tlocl32_table.cpp t_tlocl32_unic_japanese.cpp t_tlocl32_unicodeconv.cpp
+DEFFILE			../../../kernel/eka/~/elocl.def
+
+LIBRARY			euser.lib
+
+UID		0x100039e6 0x102858de
+VENDORID 0x70000001
+
+CAPABILITY		all
+SMPSAFE

@@ -1,0 +1,213 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_i64.cia
+// 
+//
+
+#include <u32std.h>
+#include <e32math.h>
+
+#if defined(__GCC32__)
+extern "C" void __division_by_zero();
+#define DIV_BY_ZERO " __division_by_zero "
+#elif defined(__ARMCC__)
+extern "C" void __rt_div0 (void);
+#define DIV_BY_ZERO " __cpp(__rt_div0) "
+#endif
+
+
+
+
+EXPORT_C __NAKED__ void Math::Mul64(Int64 /*aX*/, Int64 /*aY*/, Int64& /*aOutH*/, Uint64& /*aOutL*/)
+/**
+Multiply aX by aY to generate a 128 bit result.
+
+The high order 64 bits of this calculation are stored in aOutH,
+and the low order 64 bits are stored in aOutL.
+
+@param aX     The first 64-bit operand.
+@param aY     The second 64-bit operand.
+@param aOutH  The high order 64 bits of the result.
+@param aOutL  The low order  64 bits of the result.
+*/
+	{
+	// Enter with r1:r0=aX, r3:r2=aY, [sp]=&aOutH, [sp+4]=&aOutL
+	asm("stmfd sp!, {r4-r5,lr} ");
+	asm("umull r4, r5, r0, r2 ");	// r5:r4 = x0 * y0
+	asm("mov r12, #0 ");			// clear r12 initially
+	asm("umlal r5, r12, r0, r3 ");	// r12:r5:r4 = x0 * y
+	asm("mov r14, #0 ");			// clear r14 initially
+	asm("smlal r12, r14, r1, r3 ");	// r14:r12:r5:r4 = x0 * y + (x1*y1)<<64
+	asm("and r3, r0, r3, asr #32 ");	// if aY<0, r3=x0 else r3=0
+	asm("and r0, r2, r1, asr #32 ");	// if aX<0, r0=y0 else r0=0
+	asm("subs r12, r12, r3 ");
+	asm("sbcs r14, r14, #0 ");
+	asm("subs r12, r12, r0 ");
+	asm("sbcs r14, r14, #0 ");
+	asm("umull r0, r3, r1, r2 ");	// r3:r0 = x1 * y0
+	asm("ldr r1, [sp, #12] ");		// r1=&aOutH
+	asm("ldr r2, [sp, #16] ");		// r1=&aOutL
+	asm("adds r5, r5, r0 ");		// shift left by 32 and add to give final result
+	asm("adcs r12, r12, r3 ");
+	asm("adcs r14, r14, #0 ");		// final result now in r14:r12:r5:r4
+	asm("stmia r2, {r4,r5} ");		// store low 64
+	asm("stmia r1, {r12,r14} ");	// store high 64
+	__POPRET("r4-r5,");
+	}
+
+
+
+
+EXPORT_C __NAKED__ void Math::UMul64(Uint64 /*aX*/, Uint64 /*aY*/, Uint64& /*aOutH*/, Uint64& /*aOutL*/)
+/**
+Multiply aX by aY to generate a 128 bit result.
+
+The high order 64 bits of this calculation are stored in aOutH,
+and the low order 64 bits are stored in aOutL.
+
+@param aX     The first 64-bit operand.
+@param aY     The second 64-bit operand.
+@param aOutH  The high order 64 bits of the result.
+@param aOutL  The low order  64 bits of the result.
+*/
+	{
+	// Enter with r1:r0=aX, r3:r2=aY, [sp]=&aOutH, [sp+4]=&aOutL
+	asm("stmfd sp!, {r4-r5,lr} ");
+	asm("umull r4, r5, r0, r2 ");	// r5:r4 = x0 * y0
+	asm("mov r12, #0 ");			// clear r12 initially
+	asm("umlal r5, r12, r0, r3 ");	// r12:r5:r4 = x0 * y
+	asm("mov r14, #0 ");			// clear r14 initially
+	asm("umlal r12, r14, r1, r3 ");	// r14:r12:r5:r4 = x0 * y + (x1*y1)<<64
+									// r0, r3 no longer required
+	asm("umull r0, r3, r1, r2 ");	// r3:r0 = x1 * y0
+	asm("ldr r1, [sp, #12] ");		// r1=&aOutH
+	asm("ldr r2, [sp, #16] ");		// r1=&aOutL
+	asm("adds r5, r5, r0 ");		// shift left by 32 and add to give final result
+	asm("adcs r12, r12, r3 ");
+	asm("adcs r14, r14, #0 ");		// final result now in r14:r12:r5:r4
+	asm("stmia r2, {r4,r5} ");		// store low 64
+	asm("stmia r1, {r12,r14} ");	// store high 64
+	__POPRET("r4-r5,");
+	}
+
+
+
+
+EXPORT_C __NAKED__ Int64 Math::DivMod64(Int64 /*aDividend*/, Int64 /*aDivisor*/, Int64& /*aRemainder*/)
+/**
+Divides aDividend by aDivisor.
+
+The quotient is returned, and the remainder is stored in aRemainder.
+The remainder has same sign as the dividend.
+
+@param aDividend The 64-bit dividend.
+@param aDivisor  The 64-bit divisor.
+@param aRemainder The 64-bit remainder.
+
+@return The 64-bit quotient.
+*/
+	{
+	// Enter with: r1:r0=dividend, r3:r2=divisor, [sp]=&aRemainder
+	// Return quotient in r1:r0
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+	asm("mov r8, r1, asr #1 ");		// r8 bit 31 =  r8 bit 30 = dividend sign
+	asm("eor r8, r8, r3, lsr #1 ");	// r8 bit 31 = dividend sign, r8 bit 30 = quotient sign
+	asm("cmp r1, #0 ");
+	asm("bpl 1f ");
+	asm("rsbs r0, r0, #0 ");		// r1:r0=ABS(dividend)
+	asm("rscs r1, r1, #0 ");
+	asm("1: ");
+	asm("cmp r3, #0 ");
+	asm("bpl 2f ");
+	asm("rsbs r2, r2, #0 ");		// r3:r2=ABS(divisor)
+	asm("rscs r3, r3, #0 ");
+	asm("2: ");
+#ifndef __EABI__
+	asm(".extern UDiv01 ");
+	asm("bl UDiv01 ");				// do division, quotient->r5:r4, rem->r6:r3
+	asm("mov r2, r3");				// move to make regs same as EABI function
+	asm("mov r0, r4");
+	asm("mov r1, r5");
+	asm("mov r3, r6");
+#else //__EABI__
+	asm(".extern __aeabi_uldivmod ");
+	asm("bl __aeabi_uldivmod ");	// do division, quotient->r1:r0, rem->r3:r2
+#endif //__EABI__
+	asm("add ip, r8, r8 ");			// ip bit 31 = quotient sign
+	asm("ldr r6, [sp, #24] ");		// r6 = &aRemainder
+	asm("eors r4, r0, ip, asr #32 ");	// quotient into r5:r4, inverted if quotient -ve
+	asm("eors r5, r1, ip, asr #32 ");
+	asm("adcs r0, r4, #0 ");		// if quotient -ve, add 1 whilst moving back to r1:r0
+	asm("adcs r1, r5, #0 ");
+	asm("cmp r8, #0 ");
+	asm("bpl 3f ");
+	asm("rsbs r2, r2, #0 ");		// if dividend -ve, negate remainder
+	asm("rscs r3, r3, #0 ");
+	asm("3: ");
+	asm("stmia r6, {r2,r3} ");		// store remainder
+	__POPRET("r4-r8,");
+	}
+
+
+
+
+EXPORT_C __NAKED__ Uint64 Math::UDivMod64(Uint64 /*aDividend*/, Uint64 /*aDivisor*/, Uint64& /*aRemainder*/)
+/**
+Divides aDividend by aDivisor.
+
+The quotient is returned, and the remainder is stored in aRemainder.
+
+@param aDividend The 64-bit dividend.
+@param aDivisor  The 64-bit divisor.
+@param aRemainder The 64-bit remainder.
+
+@return The 64-bit quotient.
+*/
+	{
+	// Enter with: r1:r0=dividend, r3:r2=divisor, [sp]=&aRemainder
+	// Return quotient in r1:r0
+#ifdef __EABI__
+	// need to keep sp 8-byte aligned
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+#else
+	asm("stmfd sp!, {r4-r7,lr} ");
+#endif
+
+#ifndef __EABI__
+	asm(".extern UDiv01 ");
+	asm("bl UDiv01 ");				// do division, quotient->r5:r4, rem->r6:r3
+	asm("mov r2, r3");				// move to make regs same as EABI function
+	asm("mov r0, r4");
+	asm("mov r1, r5");
+	asm("mov r3, r6");
+#else //__EABI__
+	asm("bl __aeabi_uldivmod ");	// do division, quotient->r1:r0, rem->r3:r2
+#endif //__EABI__
+
+#ifdef __EABI__
+	asm("ldr r6, [sp, #24] ");		// r6 = &aRemainder
+#else 
+	asm("ldr r6, [sp, #20] ");		// r6 = &aRemainder
+#endif 
+
+	asm("stmia r6, {r2,r3} ");		// store remainder
+
+#ifdef __EABI__
+	__POPRET("r4-r8,");
+#else
+	__POPRET("r4-r7,");
+#endif
+	}

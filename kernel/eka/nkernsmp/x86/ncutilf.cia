@@ -1,0 +1,1178 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\x86\ncutilf.cia
+// 
+//
+
+#include <x86.h>
+#include <apic.h>
+
+#if defined(__VC32__)
+#define	__ASM_CALL(func)	_asm call func
+#elif defined(__GCC32__)
+#define	__ASM_CALL(func)	asm("call _" #func);
+#else
+#error Unknown x86 compiler
+#endif
+
+#if defined(__INCLUDE_SPIN_LOCK_CHECKS__)
+#define	SPIN_LOCK_ENTRY_CHECK()			__ASM_CALL(spin_lock_entry_check)
+#define	SPIN_LOCK_MARK_ACQ()			__ASM_CALL(spin_lock_mark_acq)
+#define	SPIN_UNLOCK_ENTRY_CHECK()		__ASM_CALL(spin_unlock_entry_check)
+
+#define	RWSPIN_RLOCK_ENTRY_CHECK()		__ASM_CALL(rwspin_rlock_entry_check)
+#define	RWSPIN_RLOCK_MARK_ACQ()			__ASM_CALL(rwspin_rlock_mark_acq)
+#define	RWSPIN_RUNLOCK_ENTRY_CHECK()	__ASM_CALL(rwspin_runlock_entry_check)
+
+#define	RWSPIN_WLOCK_ENTRY_CHECK()		__ASM_CALL(rwspin_wlock_entry_check)
+#define	RWSPIN_WLOCK_MARK_ACQ()			__ASM_CALL(rwspin_wlock_mark_acq)
+#define	RWSPIN_WUNLOCK_ENTRY_CHECK()	__ASM_CALL(rwspin_wunlock_entry_check)
+
+#else
+#define	SPIN_LOCK_ENTRY_CHECK()
+#define	SPIN_LOCK_MARK_ACQ()
+#define	SPIN_UNLOCK_ENTRY_CHECK()
+
+#define	RWSPIN_RLOCK_ENTRY_CHECK()
+#define	RWSPIN_RLOCK_MARK_ACQ()
+#define	RWSPIN_RUNLOCK_ENTRY_CHECK()
+
+#define	RWSPIN_WLOCK_ENTRY_CHECK()
+#define	RWSPIN_WLOCK_MARK_ACQ()
+#define	RWSPIN_WUNLOCK_ENTRY_CHECK()
+
+#endif
+
+
+/******************************************************************************
+ * Timestamp
+ ******************************************************************************/
+
+/** Returns a timestamp value which is consistent across CPUs.
+
+*/
+EXPORT_C __NAKED__ TUint64 NKern::Timestamp()
+	{
+	asm("pushfd ");
+	asm("cli ");		// stop thread migration between reading APIC ID and thread pointer
+	asm("mov ecx, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr ecx, 24 ");
+	asm("mov ecx, [ecx*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("cmp ecx, 0 ");
+	asm("jz short use_tsc_only ");
+	asm("test cl, 3 ");
+	asm("jnz short use_tsc_only ");
+	asm("rdtsc ");
+	asm("add eax, [ecx+80+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
+	asm("adc edx, [ecx+84+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
+	asm("popfd ");
+	asm("ret ");
+
+	asm("use_tsc_only: ");
+	asm("rdtsc ");
+	asm("popfd ");
+	asm("ret ");
+	}
+
+/** Get the current value of the CPU timestamp counter
+
+*/
+EXPORT_C __NAKED__ TUint64 X86::Timestamp()
+	{
+	asm("rdtsc ");
+	asm("ret ");
+	}
+
+
+
+/******************************************************************************
+ * Spin locks
+ *
+ * [this+0]		in count (byte)
+ * [this+1]		out count (byte)
+ * [this+6]		order (byte)
+ * [this+7]		holding CPU (byte)
+ ******************************************************************************/
+
+#if defined(__INCLUDE_SPIN_LOCK_CHECKS__)
+extern "C" __NAKED__ void spin_lock_entry_check()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short slec_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short slec_ok ");
+	asm("movzx ecx, word ptr [ecx+6] ");	/* CL = order, CH = holding CPU */
+	asm("cmp cl, 0x20 ");
+	asm("jae short slec_preemption ");		/* This lock requires preemption to be disabled */
+
+	/* check interrupts disabled */
+	asm("test dword ptr [esp], 0x200 ");	/* Interrupts enabled? */
+	asm("jz short slec_1 ");				/* No - OK */
+	asm("int 0xff ");						/* Yes - die */
+
+	asm("slec_preemption: ");
+	asm("cmp cl, 0xff ");
+	asm("je short slec_1 ");			/* EOrderNone - don't check interrupts or preemption */
+	asm("cmp dword ptr [edx+52+%0], 0" : : "i"_FOFF(TSubScheduler, iExtras));
+	asm("jge short slec_preemption_die ");	/* If called from ISR, die */
+	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short slec_1 ");			/* Preemption disabled - OK */
+	asm("slec_preemption_die: ");
+	asm("int 0xff ");					/* Preemption enabled - die */
+
+	asm("slec_1: ");
+	asm("lea eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));
+	asm("cmp ch, [eax] ");
+	asm("jnz short slec_2 ");			/* Not already held by this CPU - OK */
+	asm("int 0xff ");					/* Already held by this CPU - die */
+
+	asm("slec_2: ");
+	asm("lea edx, [edx+%0]" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+	asm("bsf eax, [edx] ");				/* find LSB of low dword */
+	asm("jnz short slec_3 ");			/* skip if low dword nonzero */
+	asm("bsf eax, [edx+4] ");			/* else find LSB of high dword */
+	asm("lea eax, [eax+32] ");			/* add 32 to eax without changing flags */
+	asm("jnz short slec_3 ");			/* skip if high dword nonzero */
+	asm("mov eax, 0x7f ");				/* else set EAX = 0x7F */
+
+	asm("slec_3: ");
+	asm("cmp cl, al ");					/* check order of this lock against lowest currently held order */
+	asm("jl short slec_ok ");			/* if this lock has lower order, OK - signed comparison so EOrderNone always works */
+	asm("int 0xff ");					/* ordering violation - die */
+
+	asm("slec_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+
+extern "C" __NAKED__ void spin_lock_mark_acq()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short slma_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short slma_ok ");
+	asm("mov eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));
+	asm("mov [ecx+7], al ");				/* set byte 7 to holding CPU number */
+	asm("movzx ecx, byte ptr [ecx+6] ");	/* CL = order */
+	asm("cmp ecx, 0x40 ");
+	asm("jae short slma_ok ");				/* if EOrderNone, done */
+	asm("bts [edx+%0], ecx" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+
+	asm("slma_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+
+extern "C" __NAKED__ void spin_unlock_entry_check()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short suec_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short suec_ok ");
+	asm("mov eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));		/* eax = current CPU number */
+	asm("shl eax, 8 ");						/* AL = 0, AH = current CPU number */
+	asm("xor ax, [ecx+6] ");				/* AL = order, AH = holding CPU ^ current CPU number */
+	asm("cmp al, 0x20 ");
+	asm("jae short suec_preemption ");		/* This lock requires preemption to be disabled */
+
+	/* check interrupts disabled */
+	asm("test dword ptr [esp], 0x200 ");	/* Interrupts enabled? */
+	asm("jz short suec_1 ");				/* No - OK */
+	asm("int 0xff ");						/* Yes - die */
+
+	asm("suec_preemption: ");
+	asm("cmp al, 0xff ");
+	asm("je short suec_1 ");			/* EOrderNone - don't check interrupts or preemption */
+	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short suec_1 ");			/* Preemption disabled - OK */
+	asm("int 0xff ");					/* Preemption enabled - die */
+
+	asm("suec_1: ");
+	asm("cmp ah, 0 ");					/* Check if holding CPU ^ current CPU number == 0 */
+	asm("jz short suec_2 ");			/* Already held by this CPU - OK */
+	asm("int 0xff ");					/* We don't hold lock - die */
+
+	asm("suec_2: ");
+	asm("mov byte ptr [ecx+7], 0xff ");	/* reset holding CPU */
+	asm("cmp eax, 0x40 ");				/* EAX = lock order */
+	asm("jae short suec_ok ");			/* if EOrderNone, done */
+	asm("btr [edx+%0], eax" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+	asm("jc short suec_ok ");			/* bit should have been set originally */
+	asm("int 0xff ");					/* if not, die - something must have got corrupted */
+
+	asm("suec_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+#endif
+
+
+/******************************************************************************
+ * Plain old spin lock
+ *
+ * Fundamental algorithm:
+ *	lock()		{ old_in = in++; while(out!=old_in) __chill(); }
+ *	unlock()	{ ++out; }
+ *
+ * [this+0]		in count (byte)
+ * [this+1]		out count (byte)
+ * [this+6]		order value
+ * [this+7]		holding CPU number, 0xFF if none
+ *
+ ******************************************************************************/
+__NAKED__ EXPORT_C void TSpinLock::LockIrq()
+	{
+	THISCALL_PROLOG0()
+	asm("cli ");
+	SPIN_LOCK_ENTRY_CHECK()
+	asm("mov al, 1 ");
+	asm("lock xadd [ecx], al ");			/* al = in++ */
+	asm("sl_lockirq_loop: ");
+	asm("cmp al, [ecx+1] ");				/* compare al to out */
+	asm("jnz short sl_lockirq_loop2 ");
+	SPIN_LOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	THISCALL_EPILOG0()
+
+	asm("sl_lockirq_loop2: ");
+	X86_PAUSE
+	asm("jmp short sl_lockirq_loop ");
+	}
+
+__NAKED__ EXPORT_C void TSpinLock::UnlockIrq()
+	{
+	THISCALL_PROLOG0()
+	SPIN_UNLOCK_ENTRY_CHECK()
+	asm("lock inc byte ptr [ecx+1] ");		/* ++out */
+	asm("sti ");
+	THISCALL_EPILOG0()
+	}
+
+extern "C" TBool __fastcall spin_lock_flash_irq(TSpinLock* a)
+	{
+	a->UnlockIrq();
+	a->LockIrq();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TSpinLock::FlashIrq()
+	{
+	THISCALL_PROLOG0()
+	asm("mov ax, [ecx] ");
+	asm("inc ah ");
+	asm("xor al, ah ");
+	asm("and eax, 0xff ");
+	asm("jne %a0" : : "i" (&spin_lock_flash_irq));
+	THISCALL_EPILOG0()
+	}
+
+__NAKED__ EXPORT_C void TSpinLock::LockOnly()
+	{
+	THISCALL_PROLOG0()
+	SPIN_LOCK_ENTRY_CHECK()
+	asm("mov al, 1 ");
+	asm("lock xadd [ecx], al ");			/* al = in++ */
+	asm("sl_lockonly_loop: ");
+	asm("cmp al, [ecx+1] ");				/* compare al to out */
+	asm("jnz short sl_lockonly_loop2 ");
+	SPIN_LOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	THISCALL_EPILOG0()
+
+	asm("sl_lockonly_loop2: ");
+	X86_PAUSE
+	asm("jmp short sl_lockonly_loop ");
+	}
+
+__NAKED__ EXPORT_C void TSpinLock::UnlockOnly()
+	{
+	THISCALL_PROLOG0()
+	SPIN_UNLOCK_ENTRY_CHECK()
+	asm("lock inc byte ptr [ecx+1] ");		/* ++out */
+	THISCALL_EPILOG0()
+	}
+
+extern "C" TBool __fastcall spin_lock_flash_only(TSpinLock* a)
+	{
+	a->UnlockOnly();
+	a->LockOnly();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TSpinLock::FlashOnly()
+	{
+	THISCALL_PROLOG0()
+	asm("mov ax, [ecx] ");
+	asm("inc ah ");
+	asm("xor al, ah ");
+	asm("and eax, 0xff ");
+	asm("jne %a0" : : "i" (&spin_lock_flash_only));
+	THISCALL_EPILOG0()
+	}
+
+__NAKED__ EXPORT_C TInt TSpinLock::LockIrqSave()
+	{
+	THISCALL_PROLOG0()
+	asm("pushfd ");
+	asm("cli ");
+	SPIN_LOCK_ENTRY_CHECK()
+	asm("mov al, 1 ");
+	asm("lock xadd [ecx], al ");			/* al = in++ */
+	asm("sl_lockirqs_loop: ");
+	asm("cmp al, [ecx+1] ");				/* compare al to out */
+	asm("jnz short sl_lockirqs_loop2 ");
+	SPIN_LOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	asm("pop eax ");						/* retrieve saved EFLAGS */
+	asm("and eax, 0x200 ");					/* return just interrupt mask bit */
+	THISCALL_EPILOG0()
+
+	asm("sl_lockirqs_loop2: ");
+	X86_PAUSE
+	asm("jmp short sl_lockirqs_loop ");
+	}
+
+__NAKED__ EXPORT_C void TSpinLock::UnlockIrqRestore(TInt)
+	{
+	THISCALL_PROLOG1()
+	SPIN_UNLOCK_ENTRY_CHECK()
+	asm("lock inc byte ptr [ecx+1] ");		/* ++out */
+	asm("test dword ptr [esp+4], 0x200 ");
+	asm("jz short sl_unlockirqr_1 ");
+	asm("sti ");
+	asm("sl_unlockirqr_1: ");
+	THISCALL_EPILOG1()
+	}
+
+__NAKED__ EXPORT_C TBool TSpinLock::FlashIrqRestore(TInt)
+	{
+	/* don't mess with stacked args, yet */
+	THISCALL_PROLOG0()
+	asm("mov ax, [ecx] ");
+	asm("inc ah ");
+	asm("xor al, ah ");
+	asm("and eax, 0xff ");
+	asm("jne short sl_flashirqr_1 ");
+
+	/* now we can remove stacked arg since we don't need it */
+	THISCALL_EPILOG1()
+
+	asm("sl_flashirqr_1: ");
+	THISCALL_PROLOG1()
+	asm("test dword ptr [esp+4], 0x200 ");
+	asm("jnz short sl_flashirqr_2 ");
+	asm("call %a0" : : "i" (&spin_lock_flash_only));
+	asm("jmp short sl_flashirqr_3 ");
+	asm("sl_flashirqr_2: ");
+	asm("call %a0" : : "i" (&spin_lock_flash_irq));
+	asm("sl_flashirqr_3: ");
+	THISCALL_EPILOG1()
+	}
+
+extern "C" TBool __fastcall spin_lock_flash_preempt(TSpinLock* a)
+	{
+	a->UnlockOnly();
+	NKern::PreemptionPoint();
+	a->LockOnly();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TSpinLock::FlashPreempt()
+	{
+	THISCALL_PROLOG0()
+	asm("mov ax, [ecx] ");
+	asm("inc ah ");
+	asm("xor al, ah ");
+	asm("and eax, 0xff ");
+	asm("jne %a0" : : "i" (&spin_lock_flash_preempt));
+	THISCALL_EPILOG0()
+	}
+
+
+/******************************************************************************
+ * Read/Write Spin lock
+ *
+ * Structure ( (in.r,in.w) , (out.r,out.w) )
+ * Fundamental algorithm:
+ *	lockr()		{ old_in = (in.r++,in.w); while(out.w!=old_in.w) __chill(); }
+ *	unlockr()	{ ++out.r; }
+ *	lockw()		{ old_in = (in.r,in.w++); while(out!=old_in) __chill(); }
+ *	unlockw()	{ ++out.w; }
+ *
+ * [this+0]		in.w
+ * [this+1]		in.r
+ * [this+2]		out.w
+ * [this+3]		out.r
+ * [this+4]		Bit mask of CPUs which hold read locks
+ * [this+6]		order value
+ * [this+7]		CPU number which holds write lock, 0xFF if none
+ *
+ ******************************************************************************/
+
+#if defined(__INCLUDE_SPIN_LOCK_CHECKS__)
+extern "C" __NAKED__ void rwspin_rlock_entry_check()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short rwrlec_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short rwrlec_ok ");
+	asm("movzx ecx, word ptr [ecx+6] ");	/* CL = order, CH = holding CPU for write lock */
+	asm("cmp cl, 0x20 ");
+	asm("jae short rwrlec_preemption ");		/* This lock requires preemption to be disabled */
+
+	/* check interrupts disabled */
+	asm("test dword ptr [esp], 0x200 ");	/* Interrupts enabled? */
+	asm("jz short rwrlec_1 ");				/* No - OK */
+	asm("int 0xff ");						/* Yes - die */
+
+	asm("rwrlec_preemption: ");
+	asm("cmp cl, 0xff ");
+	asm("je short rwrlec_1 ");			/* EOrderNone - don't check interrupts or preemption */
+	asm("cmp dword ptr [edx+52+%0], 0" : : "i"_FOFF(TSubScheduler, iExtras));
+	asm("jge short rwrlec_preemption_die ");	/* If called from ISR, die */
+	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short rwrlec_1 ");			/* Preemption disabled - OK */
+	asm("rwrlec_preemption_die: ");
+	asm("int 0xff ");					/* Preemption enabled - die */
+
+	asm("rwrlec_1: ");
+	asm("lea eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));
+	asm("cmp ch, [eax] ");
+	asm("jnz short rwrlec_2 ");			/* Not already held by this CPU for write - OK */
+	asm("int 0xff ");					/* Already held by this CPU for write - die */
+
+	asm("rwrlec_2: ");
+	asm("mov eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
+	asm("test al, [ecx+4] ");			/* Test if already held by this CPU for read */
+	asm("jz short rwrlec_3 ");
+	asm("int 0xff ");					/* if so, die */
+
+	asm("rwrlec_3: ");
+	asm("lea edx, [edx+%0]" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+	asm("bsf eax, [edx] ");				/* find LSB of low dword */
+	asm("jnz short rwrlec_3 ");			/* skip if low dword nonzero */
+	asm("bsf eax, [edx+4] ");			/* else find LSB of high dword */
+	asm("lea eax, [eax+32] ");			/* add 32 to eax without changing flags */
+	asm("jnz short rwrlec_4 ");			/* skip if high dword nonzero */
+	asm("mov eax, 0x7f ");				/* else set EAX = 0x7F */
+
+	asm("rwrlec_4: ");
+	asm("cmp cl, al ");					/* check order of this lock against lowest currently held order */
+	asm("jl short rwrlec_ok ");			/* if this lock has lower order, OK - signed comparison so EOrderNone always works */
+	asm("int 0xff ");					/* ordering violation - die */
+
+	asm("rwrlec_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+
+extern "C" __NAKED__ void rwspin_rlock_mark_acq()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short rwrlma_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short rwrlma_ok ");
+	asm("mov eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
+	asm("lock or [ecx+4], al ");			/* set bit in byte 4 corresponding to this CPU */
+	asm("movzx ecx, byte ptr [ecx+6] ");	/* CL = order */
+	asm("cmp ecx, 0x40 ");
+	asm("jae short rwrlma_ok ");			/* if EOrderNone, done */
+	asm("bts [edx+%0], ecx" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+
+	asm("rwrlma_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+
+extern "C" __NAKED__ void rwspin_runlock_entry_check()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ebx ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short rwruec_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short rwruec_ok ");
+	asm("mov eax, [ecx+4] ");				/* AL = R-mask, EAX byte 2 = order */
+	asm("and eax, 0x00ffffff ");			/* mask out W CPU */
+	asm("cmp eax, 0x00200000 ");
+	asm("jae short rwruec_preemption ");	/* This lock requires preemption to be disabled */
+
+	/* check interrupts disabled */
+	asm("test dword ptr [esp], 0x200 ");	/* Interrupts enabled? */
+	asm("jz short rwruec_1 ");				/* No - OK */
+	asm("int 0xff ");						/* Yes - die */
+
+	asm("rwruec_preemption: ");
+	asm("cmp eax, 0x00ff0000 ");
+	asm("jae short rwruec_1 ");			/* EOrderNone - don't check interrupts or preemption */
+	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short rwruec_1 ");			/* Preemption disabled - OK */
+	asm("int 0xff ");					/* Preemption enabled - die */
+
+	asm("rwruec_1: ");
+	asm("mov ebx, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
+	asm("test al, bl ");				/* Check if current CPU holds read lock */
+	asm("jnz short rwruec_2 ");			/* Already held by this CPU - OK */
+	asm("int 0xff ");					/* We don't hold lock - die */
+
+	asm("rwruec_2: ");
+	asm("not bl ");
+	asm("lock and [ecx+4], bl ");		/* clear bit in R-holding CPU mask */
+	asm("shr eax, 16 ");				/* EAX = lock order */
+	asm("cmp eax, 0x40 ");
+	asm("jae short rwruec_ok ");		/* if EOrderNone, done */
+	asm("btr [edx+%0], eax" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+	asm("jc short rwruec_ok ");			/* bit should have been set originally */
+	asm("int 0xff ");					/* if not, die - something must have got corrupted */
+
+	asm("rwruec_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop ebx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+
+
+extern "C" __NAKED__ void rwspin_wlock_entry_check()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short rwwlec_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short rwwlec_ok ");
+	asm("movzx ecx, word ptr [ecx+6] ");	/* CL = order, CH = write lock holding CPU */
+	asm("cmp cl, 0x20 ");
+	asm("jae short rwwlec_preemption ");	/* This lock requires preemption to be disabled */
+
+	/* check interrupts disabled */
+	asm("test dword ptr [esp], 0x200 ");	/* Interrupts enabled? */
+	asm("jz short rwwlec_1 ");				/* No - OK */
+	asm("int 0xff ");						/* Yes - die */
+
+	asm("rwwlec_preemption: ");
+	asm("cmp cl, 0xff ");
+	asm("je short rwwlec_1 ");			/* EOrderNone - don't check interrupts or preemption */
+	asm("cmp dword ptr [edx+52+%0], 0" : : "i"_FOFF(TSubScheduler, iExtras));
+	asm("jge short rwwlec_preemption_die ");	/* If called from ISR, die */
+	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short rwwlec_1 ");			/* Preemption disabled - OK */
+	asm("rwwlec_preemption_die: ");
+	asm("int 0xff ");					/* Preemption enabled - die */
+
+	asm("rwwlec_1: ");
+	asm("lea eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));
+	asm("cmp ch, [eax] ");
+	asm("jnz short rwwlec_2 ");			/* Not already held by this CPU for write - OK */
+	asm("int 0xff ");					/* Already held by this CPU for write - die */
+
+	asm("rwwlec_2: ");
+	asm("mov eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
+	asm("test al, [ecx+4] ");			/* Test if already held by this CPU for read */
+	asm("jz short rwwlec_3 ");
+	asm("int 0xff ");					/* if so, die */
+
+	asm("rwwlec_3: ");
+	asm("lea edx, [edx+%0]" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+	asm("bsf eax, [edx] ");				/* find LSB of low dword */
+	asm("jnz short rwwlec_4 ");			/* skip if low dword nonzero */
+	asm("bsf eax, [edx+4] ");			/* else find LSB of high dword */
+	asm("lea eax, [eax+32] ");			/* add 32 to eax without changing flags */
+	asm("jnz short rwwlec_4 ");			/* skip if high dword nonzero */
+	asm("mov eax, 0x7f ");				/* else set EAX = 0x7F */
+
+	asm("rwwlec_4: ");
+	asm("cmp cl, al ");					/* check order of this lock against lowest currently held order */
+	asm("jl short rwwlec_ok ");			/* if this lock has lower order, OK - signed comparison so EOrderNone always works */
+	asm("int 0xff ");					/* ordering violation - die */
+
+	asm("rwwlec_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+
+extern "C" __NAKED__ void rwspin_wlock_mark_acq()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short rwwlma_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short rwwlma_ok ");
+	asm("mov eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));
+	asm("mov [ecx+7], al ");				/* set byte 7 to holding CPU number */
+	asm("movzx ecx, byte ptr [ecx+6] ");	/* CL = order */
+	asm("cmp ecx, 0x40 ");
+	asm("jae short rwwlma_ok ");				/* if EOrderNone, done */
+	asm("bts [edx+%0], ecx" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+
+	asm("rwwlma_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+
+extern "C" __NAKED__ void rwspin_wunlock_entry_check()
+	{
+	/* ecx points to lock */
+	asm("push eax ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("pushfd ");
+	asm("cli ");
+	asm("mov edx, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24");
+	asm("mov edx, [edx*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("cmp edx, 0 ");						/* Skip checks if subschedulers not yet initialised */
+	asm("je short rwwuec_ok ");
+	asm("test edx, 3 ");					/* Skip checks if subscheduler for this CPU not yet initialised */
+	asm("jnz short rwwuec_ok ");
+	asm("mov eax, [edx+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));		/* eax = current CPU number */
+	asm("shl eax, 8 ");						/* AL = 0, AH = current CPU number */
+	asm("xor ax, [ecx+6] ");				/* AL = order, AH = holding CPU ^ current CPU number */
+	asm("cmp al, 0x20 ");
+	asm("jae short rwwuec_preemption ");		/* This lock requires preemption to be disabled */
+
+	/* check interrupts disabled */
+	asm("test dword ptr [esp], 0x200 ");	/* Interrupts enabled? */
+	asm("jz short rwwuec_1 ");				/* No - OK */
+	asm("int 0xff ");						/* Yes - die */
+
+	asm("rwwuec_preemption: ");
+	asm("cmp al, 0xff ");
+	asm("je short rwwuec_1 ");			/* EOrderNone - don't check interrupts or preemption */
+	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short rwwuec_1 ");			/* Preemption disabled - OK */
+	asm("int 0xff ");					/* Preemption enabled - die */
+
+	asm("rwwuec_1: ");
+	asm("cmp ah, 0 ");					/* Check if holding CPU ^ current CPU number == 0 */
+	asm("jz short rwwuec_2 ");			/* Already held by this CPU - OK */
+	asm("int 0xff ");					/* We don't hold lock - die */
+
+	asm("rwwuec_2: ");
+	asm("mov byte ptr [ecx+7], 0xff ");	/* reset holding CPU */
+	asm("cmp eax, 0x40 ");				/* EAX = lock order */
+	asm("jae short rwwuec_ok ");			/* if EOrderNone, done */
+	asm("btr [edx+%0], eax" : : "i" _FOFF(TSubScheduler, iSpinLockOrderCheck));
+	asm("jc short rwwuec_ok ");			/* bit should have been set originally */
+	asm("int 0xff ");					/* if not, die - something must have got corrupted */
+
+	asm("rwwuec_ok: ");
+	asm("popfd ");
+	asm("pop edx ");
+	asm("pop ecx ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+#endif
+
+
+/*-----------------------------------------------------------------------------
+ - Read locks disabling IRQ
+ -----------------------------------------------------------------------------*/
+__NAKED__ EXPORT_C void TRWSpinLock::LockIrqR()
+	{
+	THISCALL_PROLOG0()
+	asm("cli ");
+	RWSPIN_RLOCK_ENTRY_CHECK()
+	asm("mov ax, 0x100 ");
+	asm("lock xadd [ecx], ax ");			/* ah = in.r++, al = in.w */
+	asm("rwl_rlockirq_loop: ");
+	asm("cmp al, [ecx+2] ");				/* compare al to out.w */
+	asm("jnz short rwl_rlockirq_loop2 ");
+	RWSPIN_RLOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	THISCALL_EPILOG0()
+
+	asm("rwl_rlockirq_loop2: ");
+	X86_PAUSE
+	asm("jmp short rwl_rlockirq_loop ");
+	}
+
+__NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqR()
+	{
+	THISCALL_PROLOG0()
+	RWSPIN_RUNLOCK_ENTRY_CHECK()
+	asm("lock add word ptr [ecx+2], 0x100 ");	/* ++out.r */
+	asm("sti ");
+	THISCALL_EPILOG0()
+	}
+
+extern "C" TBool __fastcall rwspin_rlock_flash_irq(TRWSpinLock* a)
+	{
+	a->UnlockIrqR();
+	a->LockIrqR();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqR()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w */
+	asm("xor eax, edx ");		/* al = in.w ^ out.w = 0 if no writers waiting */
+	asm("and eax, 0xff ");
+	asm("jne %a0" : : "i" (&rwspin_rlock_flash_irq));
+	THISCALL_EPILOG0()
+	}
+
+
+/*-----------------------------------------------------------------------------
+ - Write locks disabling IRQ
+ -----------------------------------------------------------------------------*/
+__NAKED__ EXPORT_C void TRWSpinLock::LockIrqW()
+	{
+	THISCALL_PROLOG0()
+	asm("cli ");
+	RWSPIN_WLOCK_ENTRY_CHECK()
+	asm("mov ax, [ecx] ");					/* ah = in.r, al = in.w */
+	asm("rwl_wlockirq_loop3: ");
+	asm("mov edx, eax ");
+	asm("inc dl ");							/* dh = in.r, dl = in.w+1 */
+	asm("lock cmpxchg [ecx], dx ");			/* attempt to update in.w */
+	asm("jne short rwl_wlockirq_loop3 ");	/* loop if failed */
+	asm("rwl_wlockirq_loop: ");
+	asm("cmp ax, [ecx+2] ");				/* compare ax to (out.w,out.r) */
+	asm("jnz short rwl_wlockirq_loop2 ");
+	RWSPIN_WLOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	THISCALL_EPILOG0()
+
+	asm("rwl_wlockirq_loop2: ");
+	X86_PAUSE
+	asm("jmp short rwl_wlockirq_loop ");
+	}
+
+__NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqW()
+	{
+	THISCALL_PROLOG0()
+	RWSPIN_WUNLOCK_ENTRY_CHECK()
+	asm("mov ax, [ecx+2] ");				/* ah = out.r, al = out.w */
+	asm("rwl_wunlockirq_loop: ");
+	asm("mov edx, eax ");
+	asm("inc dl ");							/* dh = out.r, dl = out.w+1 */
+	asm("lock cmpxchg [ecx+2], dx ");		/* attempt to update out.w */
+	asm("jne short rwl_wunlockirq_loop ");	/* loop if failed */
+	asm("sti ");
+	THISCALL_EPILOG0()
+	}
+
+extern "C" TBool __fastcall rwspin_wlock_flash_irq(TRWSpinLock* a)
+	{
+	a->UnlockIrqW();
+	a->LockIrqW();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqW()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w, dh=out.r */
+	asm("inc dl ");				/* dx==ax now means no-one else is waiting for lock */
+	asm("xor eax, edx ");
+	asm("and eax, 0xffff ");
+	asm("jne %a0" : : "i" (&rwspin_wlock_flash_irq));
+	THISCALL_EPILOG0()
+	}
+
+
+
+/*-----------------------------------------------------------------------------
+ - Read locks leaving IRQ alone
+ -----------------------------------------------------------------------------*/
+__NAKED__ EXPORT_C void TRWSpinLock::LockOnlyR()
+	{
+	THISCALL_PROLOG0()
+	RWSPIN_RLOCK_ENTRY_CHECK()
+	asm("mov ax, 0x100 ");
+	asm("lock xadd [ecx], ax ");			/* ah = in.r++, al = in.w */
+	asm("rwl_rlockonly_loop: ");
+	asm("cmp al, [ecx+2] ");				/* compare al to out.w */
+	asm("jnz short rwl_rlockonly_loop2 ");
+	RWSPIN_RLOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	THISCALL_EPILOG0()
+
+	asm("rwl_rlockonly_loop2: ");
+	X86_PAUSE
+	asm("jmp short rwl_rlockonly_loop ");
+	}
+
+__NAKED__ EXPORT_C void TRWSpinLock::UnlockOnlyR()
+	{
+	THISCALL_PROLOG0()
+	RWSPIN_RUNLOCK_ENTRY_CHECK()
+	asm("lock add word ptr [ecx+2], 0x100 ");	/* ++out.r */
+	THISCALL_EPILOG0()
+	}
+
+extern "C" TBool __fastcall rwspin_rlock_flash_only(TRWSpinLock* a)
+	{
+	a->UnlockOnlyR();
+	a->LockOnlyR();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashOnlyR()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w */
+	asm("xor eax, edx ");		/* al = in.w ^ out.w = 0 if no writers waiting */
+	asm("and eax, 0xff ");
+	asm("jne %a0" : : "i" (&rwspin_rlock_flash_only));
+	THISCALL_EPILOG0()
+	}
+
+
+/*-----------------------------------------------------------------------------
+ - Write locks leaving IRQ alone
+ -----------------------------------------------------------------------------*/
+__NAKED__ EXPORT_C void TRWSpinLock::LockOnlyW()
+	{
+	THISCALL_PROLOG0()
+	RWSPIN_WLOCK_ENTRY_CHECK()
+	asm("mov ax, [ecx] ");					/* ah = in.r, al = in.w */
+	asm("rwl_wlockonly_loop3: ");
+	asm("mov edx, eax ");
+	asm("inc dl ");							/* dh = in.r, dl = in.w+1 */
+	asm("lock cmpxchg [ecx], dx ");			/* attempt to update in.w */
+	asm("jne short rwl_wlockonly_loop3 ");	/* loop if failed */
+	asm("rwl_wlockonly_loop: ");
+	asm("cmp ax, [ecx+2] ");				/* compare ax to (out.w,out.r) */
+	asm("jnz short rwl_wlockonly_loop2 ");
+	RWSPIN_WLOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	THISCALL_EPILOG0()
+
+	asm("rwl_wlockonly_loop2: ");
+	X86_PAUSE
+	asm("jmp short rwl_wlockonly_loop ");
+	}
+
+__NAKED__ EXPORT_C void TRWSpinLock::UnlockOnlyW()
+	{
+	THISCALL_PROLOG0()
+	RWSPIN_WUNLOCK_ENTRY_CHECK()
+	asm("mov ax, [ecx+2] ");				/* ah = out.r, al = out.w */
+	asm("rwl_wunlockonly_loop: ");
+	asm("mov edx, eax ");
+	asm("inc dl ");							/* dh = out.r, dl = out.w+1 */
+	asm("lock cmpxchg [ecx+2], dx ");		/* attempt to update out.w */
+	asm("jne short rwl_wunlockonly_loop ");	/* loop if failed */
+	THISCALL_EPILOG0()
+	}
+
+extern "C" TBool __fastcall rwspin_wlock_flash_only(TRWSpinLock* a)
+	{
+	a->UnlockOnlyW();
+	a->LockOnlyW();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashOnlyW()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w, dh=out.r */
+	asm("inc dl ");				/* dx==ax now means no-one else is waiting for lock */
+	asm("xor eax, edx ");
+	asm("and eax, 0xffff ");
+	asm("jne %a0" : : "i" (&rwspin_wlock_flash_only));
+	THISCALL_EPILOG0()
+	}
+
+
+
+/*-----------------------------------------------------------------------------
+ - Read locks disabling IRQ with save/restore IRQ state
+ -----------------------------------------------------------------------------*/
+__NAKED__ EXPORT_C TInt TRWSpinLock::LockIrqSaveR()
+	{
+	THISCALL_PROLOG0()
+	asm("pushfd ");
+	asm("cli ");
+	RWSPIN_RLOCK_ENTRY_CHECK()
+	asm("mov ax, 0x100 ");
+	asm("lock xadd [ecx], ax ");			/* ah = in.r++, al = in.w */
+	asm("rwl_rlockirqs_loop: ");
+	asm("cmp al, [ecx+2] ");				/* compare al to out.w */
+	asm("jnz short rwl_rlockirqs_loop2 ");
+	RWSPIN_RLOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	asm("pop eax ");						/* retrieve saved EFLAGS */
+	asm("and eax, 0x200 ");					/* return just interrupt mask bit */
+	THISCALL_EPILOG0()
+
+	asm("rwl_rlockirqs_loop2: ");
+	X86_PAUSE
+	asm("jmp short rwl_rlockirqs_loop ");
+	}
+
+__NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqRestoreR(TInt)
+	{
+	THISCALL_PROLOG1()
+	RWSPIN_RUNLOCK_ENTRY_CHECK()
+	asm("lock add word ptr [ecx+2], 0x100 ");	/* ++out.r */
+	asm("test dword ptr [esp+4], 0x200 ");
+	asm("jz short rwl_runlockirqr_1 ");
+	asm("sti ");
+	asm("rwl_runlockirqr_1: ");
+	THISCALL_EPILOG1()
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqRestoreR(TInt)
+	{
+	/* don't mess with stacked args, yet */
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w */
+	asm("xor eax, edx ");		/* al = in.w ^ out.w = 0 if no writers waiting */
+	asm("and eax, 0xff ");
+	asm("jne short rwl_rflashirqr_1 ");
+
+	/* now we can remove stacked arg since we don't need it */
+	THISCALL_EPILOG1()
+
+	asm("rwl_rflashirqr_1: ");
+	THISCALL_PROLOG1()
+	asm("test dword ptr [esp+4], 0x200 ");
+	asm("jnz short rwl_rflashirqr_2 ");
+	asm("call %a0" : : "i" (&rwspin_rlock_flash_only));
+	asm("jmp short rwl_rflashirqr_3 ");
+	asm("rwl_rflashirqr_2: ");
+	asm("call %a0" : : "i" (&rwspin_rlock_flash_irq));
+	asm("rwl_rflashirqr_3: ");
+	THISCALL_EPILOG1()
+	}
+
+
+/*-----------------------------------------------------------------------------
+ - Write locks disabling IRQ with save/restore IRQ state
+ -----------------------------------------------------------------------------*/
+__NAKED__ EXPORT_C TInt TRWSpinLock::LockIrqSaveW()
+	{
+	THISCALL_PROLOG0()
+	asm("pushfd ");
+	asm("cli ");
+	RWSPIN_WLOCK_ENTRY_CHECK()
+	asm("mov ax, [ecx] ");					/* ah = in.r, al = in.w */
+	asm("rwl_wlockirqs_loop3: ");
+	asm("mov edx, eax ");
+	asm("inc dl ");							/* dh = in.r, dl = in.w+1 */
+	asm("lock cmpxchg [ecx], dx ");			/* attempt to update in.w */
+	asm("jne short rwl_wlockirqs_loop3 ");	/* loop if failed */
+	asm("rwl_wlockirqs_loop: ");
+	asm("cmp ax, [ecx+2] ");				/* compare ax to (out.w,out.r) */
+	asm("jnz short rwl_wlockirqs_loop2 ");
+	RWSPIN_WLOCK_MARK_ACQ()
+	asm("lock add dword ptr [esp], 0 ");	/* make sure subsequent accesses don't happen until lock acquired */
+	asm("pop eax ");						/* retrieve saved EFLAGS */
+	asm("and eax, 0x200 ");					/* return just interrupt mask bit */
+	THISCALL_EPILOG0()
+
+	asm("rwl_wlockirqs_loop2: ");
+	X86_PAUSE
+	asm("jmp short rwl_wlockirqs_loop ");
+	}
+
+__NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqRestoreW(TInt)
+	{
+	THISCALL_PROLOG1()
+	RWSPIN_WUNLOCK_ENTRY_CHECK()
+	asm("mov ax, [ecx+2] ");				/* ah = out.r, al = out.w */
+	asm("rwl_wunlockirqr_loop: ");
+	asm("mov edx, eax ");
+	asm("inc dl ");							/* dh = out.r, dl = out.w+1 */
+	asm("lock cmpxchg [ecx+2], dx ");		/* attempt to update out.w */
+	asm("jne short rwl_wunlockirqr_loop ");	/* loop if failed */
+	asm("test dword ptr [esp+4], 0x200 ");
+	asm("jz short rwl_wunlockirqr_1 ");
+	asm("sti ");
+	asm("rwl_wunlockirqr_1: ");
+	THISCALL_EPILOG1()
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqRestoreW(TInt)
+	{
+	/* don't mess with stacked args, yet */
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w, dh=out.r */
+	asm("inc dl ");				/* dx==ax now means no-one else is waiting for lock */
+	asm("xor eax, edx ");
+	asm("and eax, 0xffff ");
+	asm("jne short rwl_wflashirqr_1 ");
+
+	/* now we can remove stacked arg since we don't need it */
+	THISCALL_EPILOG1()
+
+	asm("rwl_wflashirqr_1: ");
+	THISCALL_PROLOG1()
+	asm("test dword ptr [esp+4], 0x200 ");
+	asm("jnz short rwl_wflashirqr_2 ");
+	asm("call %a0" : : "i" (&rwspin_wlock_flash_only));
+	asm("jmp short rwl_wflashirqr_3 ");
+	asm("rwl_wflashirqr_2: ");
+	asm("call %a0" : : "i" (&rwspin_wlock_flash_irq));
+	asm("rwl_wflashirqr_3: ");
+	THISCALL_EPILOG1()
+	}
+
+
+/*-----------------------------------------------------------------------------
+ - Read lock flash allowing preemption
+ -----------------------------------------------------------------------------*/
+extern "C" TBool __fastcall rwspin_rlock_flash_preempt(TRWSpinLock* a)
+	{
+	a->UnlockOnlyR();
+	NKern::PreemptionPoint();
+	a->LockOnlyR();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashPreemptR()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w */
+	asm("xor eax, edx ");		/* al = in.w ^ out.w = 0 if no writers waiting */
+	asm("and eax, 0xff ");
+	asm("jne %a0" : : "i" (&rwspin_rlock_flash_preempt));
+	THISCALL_EPILOG0()
+	}
+
+
+/*-----------------------------------------------------------------------------
+ - Write lock flash allowing preemption
+ -----------------------------------------------------------------------------*/
+extern "C" TBool __fastcall rwspin_wlock_flash_preempt(TRWSpinLock* a)
+	{
+	a->UnlockOnlyW();
+	NKern::PreemptionPoint();
+	a->LockOnlyW();
+	return TRUE;
+	}
+
+__NAKED__ EXPORT_C TBool TRWSpinLock::FlashPreemptW()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx] ");		/* al=in.w, ah=in.r, byte2=out.w, byte3=out.r */
+	asm("mov edx, eax ");
+	asm("shr edx, 16 ");		/* dl=out.w, dh=out.r */
+	asm("inc dl ");				/* dx==ax now means no-one else is waiting for lock */
+	asm("xor eax, edx ");
+	asm("and eax, 0xffff ");
+	asm("jne %a0" : : "i" (&rwspin_wlock_flash_preempt));
+	THISCALL_EPILOG0()
+	}
+

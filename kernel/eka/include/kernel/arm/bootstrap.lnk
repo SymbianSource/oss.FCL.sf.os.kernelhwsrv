@@ -1,0 +1,12 @@
+SECTIONS
+	{
+	. = 0x00000000;
+	.text ALIGN(0x40) : { 
+				*(.text) *(.rdata)
+			}
+	/DISCARD/ : { *(.data) *(.bss) *(.idata) *(.edata) *(.rsrc) }
+	}
+
+ENTRY (ResetEntry)
+
+OUTPUT_FORMAT( epoc-pei-arm-little )

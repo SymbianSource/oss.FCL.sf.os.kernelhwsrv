@@ -1,0 +1,8 @@
+EXPORTS
+	??0UncaughtTester@@QAE@AAH@Z @ 1 NONAME ; public: __thiscall UncaughtTester::UncaughtTester(int &)
+	??1UncaughtTester@@QAE@XZ @ 2 NONAME ; public: __thiscall UncaughtTester::~UncaughtTester(void)
+	?thrower2@@YAHH@Z @ 3 NONAME ; int __cdecl thrower2(int)
+	?thrower3@@YAHH@Z @ 4 NONAME ; int __cdecl thrower3(int)
+	?thrower4@@YAHH@Z @ 5 NONAME ; int __cdecl thrower4(int)
+	?thrower5@@YAHH@Z @ 6 NONAME ; int __cdecl thrower5(int)
+

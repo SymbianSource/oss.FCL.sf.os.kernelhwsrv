@@ -1,0 +1,4386 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_realx.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+#include <e32math.h>
+#ifdef __USE_VFP_MATH
+#include <arm_vfp.h>
+#endif
+
+#if defined(__USE_VFP_MATH) && !defined(__CPU_HAS_VFP)
+#error	__USE_VFP_MATH was defined but not __CPU_HAS_VFP - impossible combination, check variant.mmh 
+#endif	
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TRealX::TRealX()
+/**
+Constructs a default extended precision object.
+
+This sets the value to zero.
+*/
+	{
+	asm("mov r1, #0 ");
+	asm("str r1, [r0] ");
+	asm("str r1, [r0, #4] ");
+	asm("str r1, [r0, #8] ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealX(TUint /*anExp*/, TUint /*aMantHi*/, TUint /*aMantLo*/)
+/**
+Constructs an extended precision object from an explicit exponent and
+a 64 bit mantissa.
+
+@param anExp   The exponent 
+@param aMantHi The high order 32 bits of the 64 bit mantissa 
+@param aMantLo The low order 32 bits of the 64 bit mantissa 
+*/
+	{
+	asm("str r1, [r0, #8] ");
+	asm("str r2, [r0, #4] ");
+	asm("str r3, [r0, #0] ");
+	__JUMP(,lr);
+	}
+#endif
+
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TInt /*anInt*/)
+/**
+Gives this extended precision object a new value taken
+from a signed integer.
+
+@param anInt The signed integer value.
+
+@return KErrNone, always.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("mov r2, r1 ");
+	asm("bl ConvertIntToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, #0 ");				// return KErrNone
+	__POPRET("");
+	}
+
+
+
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TRealX::TRealX(TInt /*anInt*/)
+/**
+Constructs an extended precision object from a signed integer value.
+
+@param anInt The signed integer value.
+*/
+	{
+	// fall through
+	}
+#endif
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TInt /*anInt*/)
+/**
+Assigns the specified signed integer value to this extended precision object.
+
+@param anInt The signed integer value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("mov r2, r1 ");
+	asm("bl ConvertIntToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__POPRET("");
+
+	asm("ConvertIntToTRealX: ");
+	asm("cmp r2, #0 ");
+	asm("movpl r3, #0 ");				// if int>0, r3=0
+	asm("beq ConvertIntToTRealX0 ");	// if int=0, return 0
+	asm("movmi r3, #1 ");				// if int<0, r3=1
+	asm("rsbmi r2, r2, #0 ");			// if int -ve, negate it
+	asm("orr r3, r3, #0x001E0000 ");
+	asm("orr r3, r3, #0x80000000 ");	// r3=exponent 801E + sign bit
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12,2);
+	asm("mov r2, r2, lsl r12 ");
+	asm("sub r3, r3, r12, lsl #16 ");
+#else
+	asm("cmp r2, #0x10000 ");			// normalise mantissa, decrementing exponent as needed
+	asm("movcc r2, r2, lsl #16 ");
+	asm("subcc r3, r3, #0x100000 ");
+	asm("cmp r2, #0x1000000 ");
+	asm("movcc r2, r2, lsl #8 ");
+	asm("subcc r3, r3, #0x080000 ");
+	asm("cmp r2, #0x10000000 ");
+	asm("movcc r2, r2, lsl #4 ");
+	asm("subcc r3, r3, #0x040000 ");
+	asm("cmp r2, #0x40000000 ");
+	asm("movcc r2, r2, lsl #2 ");
+	asm("subcc r3, r3, #0x020000 ");
+	asm("cmp r2, #0x80000000 ");
+	asm("movcc r2, r2, lsl #1 ");
+	asm("subcc r3, r3, #0x010000 ");
+#endif
+	asm("ConvertIntToTRealX0: ");
+	asm("mov r1, #0 ");					// low order word of mantissa = 0
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(const TInt64& /*anInt*/)
+/**
+Gives this extended precision object a new value taken from
+a 64 bit integer.
+
+@param anInt The 64 bit integer value.
+
+@return KErrNone, always.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("ldmia r1, {r1,r2} ");
+	asm("bl ConvertInt64ToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, #0 ");					// return KErrNone
+	__POPRET("");
+	}
+
+
+
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TRealX::TRealX(const TInt64& /*anInt*/)
+/**
+Constructs an extended precision object from a 64 bit integer.
+
+@param anInt A reference to a 64 bit integer. 
+*/
+	{
+	// fall through
+	}
+#endif
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(const TInt64& /*anInt*/)
+/**
+Assigns the specified 64 bit integer value to this extended precision object.
+
+@param anInt A reference to a 64 bit integer. 
+
+@return A reference to this extended precision object.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("ldmia r1, {r1,r2} ");
+	asm("bl ConvertInt64ToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__POPRET("");
+
+	asm("ConvertInt64ToTRealX: ");
+	asm("movs r3, r2, lsr #31 ");		// sign bit into r3 bit 0
+	asm("beq ConvertInt64ToTRealX1 ");	// skip if plus
+	asm("rsbs r1, r1, #0 ");			// take absolute value
+	asm("rsc r2, r2, #0 ");
+	asm("ConvertInt64ToTRealX1: ");
+	asm("cmp r2, #0 ");					// does it fit into 32 bits?
+	asm("moveq r2, r1 ");				// if it does, do 32 bit conversion
+	asm("beq ConvertUintToTRealX1 ");
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12,2);
+	asm("mov r2, r2, lsl r12 ");
+	asm("rsb r12, r12, #32 ");
+	asm("orr r2, r2, r1, lsr r12 ");
+	asm("rsb r12, r12, #32 ");
+#else
+	asm("mov r12, #32 ");				// 32-number of left-shifts needed to normalise
+	asm("cmp r2, #0x10000 ");			// calculate number required
+	asm("movcc r2, r2, lsl #16 ");
+	asm("subcc r12, r12, #16 ");
+	asm("cmp r2, #0x1000000 ");
+	asm("movcc r2, r2, lsl #8 ");
+	asm("subcc r12, r12, #8 ");
+	asm("cmp r2, #0x10000000 ");
+	asm("movcc r2, r2, lsl #4 ");
+	asm("subcc r12, r12, #4 ");
+	asm("cmp r2, #0x40000000 ");
+	asm("movcc r2, r2, lsl #2 ");
+	asm("subcc r12, r12, #2 ");
+	asm("cmp r2, #0x80000000 ");
+	asm("movcc r2, r2, lsl #1 ");
+	asm("subcc r12, r12, #1 ");			// r2 is now normalised
+	asm("orr r2, r2, r1, lsr r12 ");	// shift r1 left into r2
+	asm("rsb r12, r12, #32 ");
+#endif
+	asm("mov r1, r1, lsl r12 ");
+	asm("add r3, r3, #0x80000000 ");	// exponent = 803E-r12
+	asm("add r3, r3, #0x003E0000 ");
+	asm("sub r3, r3, r12, lsl #16 ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TUint /*anInt*/)
+/**
+Gives this extended precision object a new value taken from
+an unsigned integer.
+
+@param The unsigned integer value.
+
+@return KErrNone, always.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("mov r2, r1 ");
+	asm("bl ConvertUintToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, #0 ");				// return KErrNone
+	__POPRET("");
+	}
+
+
+
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TRealX::TRealX(TUint /*anInt*/)
+/**
+Constructs an extended precision object from an unsigned integer value.
+
+@param anInt The unsigned integer value.
+*/
+	{
+	// fall through
+	}
+#endif
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TUint /*anInt*/)
+/**
+Assigns the specified unsigned integer value to this extended precision object.
+
+@param anInt The unsigned integer value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("mov r2, r1 ");
+	asm("bl ConvertUintToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__POPRET("");
+
+	asm("ConvertUintToTRealX: ");
+	asm("mov r3, #0 ");
+	asm("ConvertUintToTRealX1: ");
+	asm("cmp r2, #0 ");					// check for zero
+	asm("beq ConvertUintToTRealX0 ");
+	asm("orr r3, r3, #0x001E0000 ");
+	asm("orr r3, r3, #0x80000000 ");	// r3=exponent 801E
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12,2);
+	asm("mov r2, r2, lsl r12 ");
+	asm("sub r3, r3, r12, lsl #16 ");
+#else
+	asm("cmp r2, #0x10000 ");			// normalise mantissa, decrementing exponent as needed
+	asm("movcc r2, r2, lsl #16 ");
+	asm("subcc r3, r3, #0x100000 ");
+	asm("cmp r2, #0x1000000 ");
+	asm("movcc r2, r2, lsl #8 ");
+	asm("subcc r3, r3, #0x080000 ");
+	asm("cmp r2, #0x10000000 ");
+	asm("movcc r2, r2, lsl #4 ");
+	asm("subcc r3, r3, #0x040000 ");
+	asm("cmp r2, #0x40000000 ");
+	asm("movcc r2, r2, lsl #2 ");
+	asm("subcc r3, r3, #0x020000 ");
+	asm("cmp r2, #0x80000000 ");
+	asm("movcc r2, r2, lsl #1 ");
+	asm("subcc r3, r3, #0x010000 ");
+#endif
+	asm("ConvertUintToTRealX0: ");
+	asm("mov r1, #0 ");					// low order word of mantissa = 0
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRealX::SetZero(TBool /*aNegative*/)
+/**
+Sets the value of this extended precision object to zero.
+
+@param aNegative ETrue, the value is a negative zero;
+                 EFalse, the value is a positive zero, this is the default.
+*/
+	{
+	asm("mov r3, #0 ");
+	asm("cmp r1, #0 ");
+	asm("movne r3, #1 ");
+	asm("mov r2, #0 ");
+	asm("mov r1, #0 ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRealX::SetNaN()
+/**
+Sets the value of this extended precision object to 'not a number'.
+*/
+	{
+	asm("ldr r3, [pc, #__RealIndefiniteExponent-.-8] ");
+	asm("mov r2, #0xC0000000 ");
+	asm("mov r1, #0 ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__JUMP(,lr);
+	asm("__RealIndefiniteExponent: ");
+	asm(".word 0xFFFF0001 ");
+	}
+
+
+
+
+
+__NAKED__ EXPORT_C void TRealX::SetInfinite(TBool /*aNegative*/)
+/**
+Sets the value of this extended precision object to infinity.
+
+@param aNegative ETrue, the value is a negative zero;
+                 EFalse, the value is a positive zero.
+*/
+	{
+	asm("ldr r3, [pc, #__InfiniteExponent-.-8] ");
+	asm("cmp r1, #0 ");
+	asm("orrne r3, r3, #1 ");
+	asm("mov r2, #0x80000000 ");
+	asm("mov r1, #0 ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__JUMP(,lr);
+	asm("__InfiniteExponent: ");
+	asm(".word 0xFFFF0000 ");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsZero() const
+/**
+Determines whether the extended precision value is zero.
+
+@return True, if the extended precision value is zero, false, otherwise.
+*/
+	{
+	asm("ldr r1, [r0, #8] ");	// get exponent word
+	asm("mov r0, #0 ");			// default return value is 0
+	asm("cmp r1, #0x10000 ");	// is exponent=0 ?
+	asm("movcc r0, #1 ");		// if so return 1
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsNaN() const
+/**
+Determines whether the extended precision value is 'not a number'.
+
+@return True, if the extended precision value is 'not a number',
+        false, otherwise.
+*/
+	{
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("mov r0, #0 ");					// default return value is 0
+	asm("cmn r3, #0x10000 ");			// check for exponent 65535
+	asm("bcc 1f ");						// branch if not
+	asm("cmp r2, #0x80000000 ");		// check if infinity
+	asm("cmpeq r1, #0 ");
+	asm("movne r0, #1 ");				// if not, return 1
+	asm("1: ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsInfinite() const
+/**
+Determines whether the extended precision value has a finite value.
+
+@return True, if the extended precision value is finite,
+        false, if the value is 'not a number' or is infinite,
+*/
+	{
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("mov r0, #0 ");						// default return value is 0
+	asm("cmn r3, #0x10000 ");				// check for exponent 65535
+	asm("bcc 1f ");							// branch if not
+	asm("cmp r2, #0x80000000 ");			// check if infinity
+	asm("cmpeq r1, #0 ");
+	asm("moveq r0, #1 ");					// if it is, return 1
+	asm("1: ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsFinite() const
+/**
+Determines whether the extended precision value has a finite value.
+
+@return True, if the extended precision value is finite,
+        false, if the value is 'not a number' or is infinite,
+*/
+	{
+	asm("ldr r1, [r0, #8] ");	// get exponent word
+	asm("mov r0, #0 ");			// default return value is 0
+	asm("cmn r1, #0x10000 ");	// is exponent=65535 (infinity or NaN) ?
+	asm("movcc r0, #1 ");		// if not return 1
+	__JUMP(,lr);
+	}
+
+
+
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TRealX::TRealX(TReal32 /*aReal*/) __SOFTFP
+/**
+Constructs an extended precision object from
+a single precision floating point number.
+
+@param aReal The single precision floating point value.
+*/
+	{
+	// fall through
+	}
+#endif
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TReal32 /*aReal*/) __SOFTFP
+/**
+Assigns the specified single precision floating point number to
+this extended precision object.
+
+@param aReal The single precision floating point value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("bl ConvertTReal32ToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__POPRET("");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TReal32 /*aReal*/) __SOFTFP
+/**
+Gives this extended precision object a new value taken from
+a single precision floating point number.
+
+@param aReal The single precision floating point value. 
+
+@return KErrNone, if a valid number;
+        KErrOverflow, if the number is infinite;
+        KErrArgument, if not a number.
+*/
+	{
+	// aReal is in r1 on entry
+	// sign in bit 31, exponent in 30-23, mantissa (non-integer bits) in 22-0
+	asm("stmfd sp!, {lr} ");
+	asm("bl ConvertTReal32ToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmn r3, #0x10000 ");			// check for infinity or NaN
+	asm("movcc r0, #0 ");				// if neither, return KErrNone
+	asm("bcc trealx_set_treal32_0 ");
+	asm("cmp r2, #0x80000000 ");		// check for infinity
+	asm("mvneq r0, #8 ");				// if so, return KErrOverflow
+	asm("mvnne r0, #5 ");				// else return KErrArgument
+	asm("trealx_set_treal32_0: ");
+	__POPRET("");
+
+	// Convert 32-bit real in r1 to TRealX in r1,r2,r3
+	// r0 unmodified, r1,r2,r3,r12 modified
+	asm("ConvertTReal32ToTRealX: ");
+	asm("mov r3, r1, lsr #7 ");			// r3 bits 16-31 = TReal32 exponent
+	asm("ands r3, r3, #0x00FF0000 ");
+	asm("mov r2, r1, lsl #8 ");			// r2 = TReal32 mantissa << 8, bit 31 not yet in
+	asm("orrne r2, r2, #0x80000000 ");	// if not zero/denormal, put in implied integer bit
+	asm("orr r3, r3, r1, lsr #31 ");	// r3 bit 0 = sign bit
+	asm("mov r1, #0 ");					// low word of mantissa = 0
+	asm("beq ConvertTReal32ToTRealX0 ");	// branch if zero/denormal
+	asm("cmp r3, #0x00FF0000 ");		// check for infinity or NaN
+	asm("orrcs r3, r3, #0xFF000000 ");	// if infinity or NaN, exponent = FFFF
+	asm("addcc r3, r3, #0x7F000000 ");	// else exponent = TReal32 exponent + 7F80
+	asm("addcc r3, r3, #0x00800000 ");
+	__JUMP(,lr);
+	asm("ConvertTReal32ToTRealX0: ");	// come here if zero or denormal
+	asm("adds r2, r2, r2 ");			// shift mantissa left one more and check if zero
+	__JUMP(eq,lr);
+	asm("add r3, r3, #0x7F000000 ");	// else exponent = 7F80 (highest denormal exponent)
+	asm("add r3, r3, #0x00800000 ");
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12,2);
+	asm("mov r2, r2, lsl r12 ");
+	asm("sub r3, r3, r12, lsl #16 ");
+#else
+	asm("cmp r2, #0x10000 ");			// normalise mantissa, decrementing exponent as needed
+	asm("movcc r2, r2, lsl #16 ");
+	asm("subcc r3, r3, #0x100000 ");
+	asm("cmp r2, #0x1000000 ");
+	asm("movcc r2, r2, lsl #8 ");
+	asm("subcc r3, r3, #0x080000 ");
+	asm("cmp r2, #0x10000000 ");
+	asm("movcc r2, r2, lsl #4 ");
+	asm("subcc r3, r3, #0x040000 ");
+	asm("cmp r2, #0x40000000 ");
+	asm("movcc r2, r2, lsl #2 ");
+	asm("subcc r3, r3, #0x020000 ");
+	asm("cmp r2, #0x80000000 ");
+	asm("movcc r2, r2, lsl #1 ");
+	asm("subcc r3, r3, #0x010000 ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+
+#ifndef __EABI_CTORS__
+__NAKED__ EXPORT_C TRealX::TRealX(TReal64 /*aReal*/) __SOFTFP
+/**
+Constructs an extended precision object from
+a double precision floating point number.
+
+@param aReal The double precision floating point value.
+*/
+	{
+	// fall through
+	}
+#endif
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TReal64 /*aReal*/) __SOFTFP
+/**
+Assigns the specified double precision floating point number to
+this extended precision object.
+
+@param aReal The double precision floating point value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("bl ConvertTReal64ToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	__POPRET("");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TReal64 /*aReal*/) __SOFTFP
+/**
+Gives this extended precision object a new value taken from
+a double precision floating point number.
+
+@param aReal The double precision floating point value. 
+
+@return KErrNone, if a valid number;
+        KErrOverflow, if the number is infinite;
+        KErrArgument, if not a number.
+*/
+	{
+	// aReal is in r1,r2 on entry
+	// sign in bit 31 of r1, exponent in 30-20 of r1
+	// mantissa (non-integer bits) in 19-0 of r1 (high) and r2 (low)
+	asm("stmfd sp!, {lr} ");
+	asm("bl ConvertTReal64ToTRealX ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmn r3, #0x10000 ");			// check for infinity or NaN
+	asm("movcc r0, #0 ");				// if neither, return KErrNone
+	asm("bcc trealx_set_treal64_0 ");
+	asm("cmp r2, #0x80000000 ");		// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("mvneq r0, #8 ");				// if so, return KErrOverflow
+	asm("mvnne r0, #5 ");				// else return KErrArgument
+	asm("trealx_set_treal64_0: ");
+	__POPRET("");
+
+	// convert TReal64 in r1,r2 in GCC and r2 and r3 in RVCT
+	// if __DOUBLE_WORDS_SWAPPED__ r1=sign,exp,high mant, r2=low mant
+	// else r1 unused , r2=low mant, r3=sign,exp,high mant (as a result of EABI alignment reqs)
+	// into TRealX in r1,r2,r3 (r2,r1=mant high,low r3=exp,flag,sign)
+	// r0 unmodified, r1,r2,r3,r12 modified
+	asm("ConvertTReal64ToTRealX: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r12, r2 ");				// ls word of mantissa into r12
+#else
+	asm("mov r12, r2 ");				// ls word of mantissa into r12
+	asm("mov r1, r3 ");
+#endif
+	asm("mov r3, r1, lsr #20 ");		// sign and exp into bottom 12 bits of r3
+	asm("mov r2, r1, lsl #11 ");		// left justify mantissa in r2,r1
+	asm("mov r3, r3, lsl #16 ");		// and into bits 16-27
+	asm("bics r3, r3, #0x08000000 ");	// remove sign, leaving exponent in bits 16-26
+	asm("orr r2, r2, r12, lsr #21 ");
+	asm("orrne r2, r2, #0x80000000 ");	// if not zero/denormal, put in implied integer bit
+	asm("orr r3, r3, r1, lsr #31 ");	// sign bit into bit 0 of r3
+	asm("mov r1, r12, lsl #11 ");
+	asm("beq ConvertTReal64ToTRealX0 ");	// branch if zero or denormal
+	asm("mov r12, r3, lsl #5 ");		// exponent into bits 21-31 of r12
+	asm("cmn r12, #0x00200000 ");		// check if exponent=7FF (infinity or NaN)
+	asm("addcs r3, r3, #0xF8000000 ");	// if so, result exponent=FFFF
+	asm("addcc r3, r3, #0x7C000000 ");	// else result exponent = TReal64 exponent + 7C00
+	__JUMP(,lr);
+	asm("ConvertTReal64ToTRealX0: ");	// come here if zero or denormal
+	asm("adds r1, r1, r1 ");			// shift mantissa left one more bit
+	asm("adcs r2, r2, r2 ");
+	asm("cmpeq r1, #0 ");				// and test for zero
+	__JUMP(eq,lr);
+	asm("add r3, r3, #0x7C000000 ");	// else exponent=7C00 (highest denormal exponent)
+	asm("cmp r2, #0 ");					// normalise - first check if r2=0
+	asm("moveq r2, r1 ");				// if so, shift up by 32
+	asm("moveq r1, #0 ");
+	asm("subeq r3, r3, #0x200000 ");	// and subtract 32 from exponent
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12,2);
+	asm("mov r2, r2, lsl r12 ");
+	asm("rsb r12, r12, #32 ");
+	asm("orr r2, r2, r1, lsr r12 ");
+	asm("rsb r12, r12, #32 ");
+#else
+	asm("mov r12, #32 ");				// 32-number of left-shifts needed to normalise
+	asm("cmp r2, #0x10000 ");			// calculate number required
+	asm("movcc r2, r2, lsl #16 ");
+	asm("subcc r12, r12, #16 ");
+	asm("cmp r2, #0x1000000 ");
+	asm("movcc r2, r2, lsl #8 ");
+	asm("subcc r12, r12, #8 ");
+	asm("cmp r2, #0x10000000 ");
+	asm("movcc r2, r2, lsl #4 ");
+	asm("subcc r12, r12, #4 ");
+	asm("cmp r2, #0x40000000 ");
+	asm("movcc r2, r2, lsl #2 ");
+	asm("subcc r12, r12, #2 ");
+	asm("cmp r2, #0x80000000 ");
+	asm("movcc r2, r2, lsl #1 ");
+	asm("subcc r12, r12, #1 ");			// r2 is now normalised
+	asm("orr r2, r2, r1, lsr r12 ");	// shift r1 left into r2
+	asm("rsb r12, r12, #32 ");
+#endif
+	asm("mov r1, r1, lsl r12 ");
+	asm("sub r3, r3, r12, lsl #16 ");	// exponent -= number of left shifts
+	__JUMP(,lr);
+	}
+
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TInt() const
+/**
+Gets the extended precision value as a signed integer value.
+
+The operator returns:
+
+1. zero , if the extended precision value is not a number
+
+2. 0x7FFFFFFF, if the value is positive and too big to fit into a TInt.
+
+3. 0x80000000, if the value is negative and too big to fit into a TInt.
+*/
+	{
+	asm("ldmia r0, {r1,r2,r3} ");		// get value into r1,r2,r3
+
+	asm("ConvertTRealXToInt: ");
+	asm("mov r12, #0x8000 ");			// r12=0x801E
+	asm("orr r12, r12, #0x001E ");
+	asm("subs r12, r12, r3, lsr #16 ");	// r12=801E-exponent
+	asm("bls ConvertTRealXToInt1 ");	// branch if exponent>=801E
+	asm("cmp r12, #31 ");				// test if exponent<7FFF
+	asm("movhi r0, #0 ");				// if so, underflow result to zero
+	__JUMP(hi,lr);
+	asm("mov r0, r2, lsr r12 ");		// shift mantissa right to form integer
+	asm("tst r3, #1 ");					// check sign bit
+	asm("rsbne r0, r0, #0 ");			// if negative, r0=-r0
+	__JUMP(,lr);
+	asm("ConvertTRealXToInt1: ");
+	asm("cmn r3, #0x10000 ");			// check for infinity or NaN
+	asm("bcc ConvertTRealXToInt2 ");	// branch if neither
+	asm("cmp r2, #0x80000000 ");		// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("movne r0, #0 ");				// if NaN, return 0
+	__JUMP(ne,lr);
+	asm("ConvertTRealXToInt2: ");
+	asm("mov r0, #0x80000000 ");		// return 0x80000000 if -ve overflow, 0x7FFFFFFF if +ve
+	asm("movs r3, r3, lsr #1 ");
+	asm("sbc r0, r0, #0 ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TUint() const
+/**
+Returns the extended precision value as an unsigned signed integer value.
+
+The operator returns:
+
+1. zero, if the extended precision value is not a number
+
+2. 0xFFFFFFFF, if the value is positive and too big to fit into a TUint.
+
+3. zero, if the value is negative and too big to fit into a TUint.
+*/
+	{
+	asm("ldmia r0, {r1,r2,r3} ");		// get value into r1,r2,r3
+
+	asm("ConvertTRealXToUint: ");
+	asm("mov r12, #0x8000 ");			// r12=0x801E
+	asm("orr r12, r12, #0x001E ");
+	asm("subs r12, r12, r3, lsr #16 ");	// r12=801E-exponent
+	asm("bcc ConvertTRealXToUint1 ");	// branch if exponent>801E
+	asm("cmp r12, #31 ");				// test if exponent<7FFF
+	asm("movhi r0, #0 ");				// if so, underflow result to zero
+	__JUMP(hi,lr);
+	asm("tst r3, #1 ");					// check sign bit
+	asm("moveq r0, r2, lsr r12 ");		// if +ve, shift mantissa right to form integer
+	asm("movne r0, #0 ");				// if negative, r0=0
+	__JUMP(,lr);
+	asm("ConvertTRealXToUint1: ");
+	asm("mov r0, #0 ");					// r0=0 initially
+	asm("cmn r3, #0x10000 ");			// check for infinity or NaN
+	asm("bcc ConvertTRealXToUint2 ");	// branch if neither
+	asm("cmp r2, #0x80000000 ");		// check for infinity
+	asm("cmpeq r1, #0 ");
+	__JUMP(ne,lr);
+	asm("ConvertTRealXToUint2: ");
+	asm("movs r3, r3, lsr #1 ");		// sign bit into carry
+	asm("sbc r0, r0, #0 ");				// r0=0 if -ve, 0xFFFFFFFF if +ve
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TInt64() const
+/**
+Returns the extended precision value as a 64 bit integer value.
+
+The operator returns:
+
+1. zero, if the extended precision value is not a number
+
+2. 0x7FFFFFFF FFFFFFFF, if the value is positive and too big to fit
+   into a TInt64
+
+3. 0x80000000 00000000, if the value is negative and too big to fit
+   into a TInt.
+*/
+	{
+	// r0 = this, result in r1:r0
+	asm("ldmia r0, {r0,r1,r2} ");		// get value into r0,r1,r2
+	asm("ConvertTRealXToInt64: ");
+	asm("mov r3, #0x8000 ");			// r3=0x803E
+	asm("orr r3, r3, #0x003E ");
+	asm("subs r3, r3, r2, lsr #16 ");	// r3=803E-exponent
+	asm("bls ConvertTRealXToInt64a ");	// branch if exponent>=803E
+	asm("cmp r3, #63 ");				// test if exponent<7FFF
+	asm("movhi r1, #0 ");				// if so, underflow result to zero
+	asm("movhi r0, #0 ");
+	__JUMP(hi,lr);
+	asm("cmp r3, #32 ");				// >=32 shifts required?
+	asm("subcs r3, r3, #32 ");			// if so, r3-=32
+	asm("movcs r0, r1, lsr r3 ");		// r1:r0 >>= (r3+32)
+	asm("movcs r1, #0 ");
+	asm("movcc r0, r0, lsr r3 ");		// else r1:r0>>=r3
+	asm("rsbcc r3, r3, #32 ");
+	asm("orrcc r0, r0, r1, lsl r3 ");
+	asm("rsbcc r3, r3, #32 ");
+	asm("movcc r1, r1, lsr r3 ");		// r1:r0 = absolute integer
+	asm("tst r2, #1 ");					// check sign bit
+	__JUMP(eq,lr);
+	asm("rsbs r0, r0, #0 ");			// else negate answer
+	asm("rsc r1, r1, #0 ");
+	__JUMP(,lr);
+	asm("ConvertTRealXToInt64a: ");
+	asm("cmn r2, #0x10000 ");			// check for infinity or NaN
+	asm("bcc ConvertTRealXToInt64b ");	// branch if neither
+	asm("cmp r1, #0x80000000 ");		// check for infinity
+	asm("cmpeq r0, #0 ");
+	asm("movne r1, #0 ");				// if NaN, return 0
+	asm("movne r0, #0 ");
+	__JUMP(ne,lr);
+	asm("ConvertTRealXToInt64b: ");
+	asm("mov r1, #0x80000000 ");		// return KMaxTInt64/KMinTInt64 depending on sign
+	asm("mov r0, #0 ");
+	asm("movs r2, r2, lsr #1 ");
+	asm("sbcs r0, r0, #0 ");
+	asm("sbc r1, r1, #0 ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TReal32() const __SOFTFP
+/**
+Returns the extended precision value as
+a single precision floating point value.
+*/
+	{
+	asm("ldmia r0, {r1,r2,r3} ");			// r1,r2,r3=input value
+
+	// Convert TRealX in r1,r2,r3 to TReal32 in r0
+	asm("ConvertTRealXToTReal32: ");
+	asm("mov r12, #0x8000 ");
+	asm("orr r12, r12, #0x007F ");			// r12=0x807F
+	asm("cmp r3, r12, lsl #16 ");			// check if exponent>=807F
+	asm("bcs ConvertTRealXToTReal32a ");	// branch if it is
+	asm("sub r12, r12, #0x00FF ");			// r12=0x7F80
+	asm("rsbs r12, r12, r3, lsr #16 ");		// r12=exp in - 7F80 = result exponent if in range
+	asm("bgt ConvertTRealXToTReal32b ");	// branch if normalised result
+	asm("cmn r12, #23 ");					// check for total underflow or zero
+	asm("movlt r0, r3, lsl #31 ");			// in this case, return zero with appropriate sign
+	__JUMP(lt,lr);
+	asm("add r12, r12, #31 ");				// r12=32-mantissa shift required = 32-(1-r12)
+	asm("movs r0, r1, lsl r12 ");			// r0=lost bits when r2:r1 is shifted
+	asm("bicne r3, r3, #0x300 ");			// if these are not zero, set rounded down flag
+	asm("orrne r3, r3, #0x100 ");
+	asm("rsb r0, r12, #32 ");
+	asm("mov r1, r1, lsr r0 ");
+	asm("orr r1, r1, r2, lsl r12 ");
+	asm("mov r2, r2, lsr r0 ");				// r2 top 24 bits now give unrounded result mantissa
+	asm("mov r12, #0 ");					// result exponent will be zero
+	asm("ConvertTRealXToTReal32b: ");
+	asm("movs r0, r2, lsl #24 ");			// top 8 truncated bits into top byte of r0
+	asm("bpl ConvertTRealXToTReal32c ");	// if top bit clear, truncate
+	asm("cmp r0, #0x80000000 ");
+	asm("cmpeq r1, #0 ");					// compare rounding bits to 1000...
+	asm("bhi ConvertTRealXToTReal32d ");	// if >, round up
+	asm("movs r0, r3, lsl #23 ");			// round up flag into C, round down flag into N
+	asm("bcs ConvertTRealXToTReal32c ");	// if rounded up, truncate
+	asm("bmi ConvertTRealXToTReal32d ");	// if rounded down, round up
+	asm("tst r2, #0x100 ");					// else round to even - test LSB of result mantissa
+	asm("beq ConvertTRealXToTReal32c ");	// if zero, truncate, else round up
+	asm("ConvertTRealXToTReal32d: ");		// come here to round up
+	asm("adds r2, r2, #0x100 ");			// increment the mantissa
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa=800000
+	asm("addcs r12, r12, #1 ");				// and increment exponent
+	asm("cmpmi r12, #1 ");					// if mantissa normalised, check exponent>0
+	asm("movmi r12, #1 ");					// if normalised and exponent=0, set exponent to 1
+	asm("ConvertTRealXToTReal32c: ");		// come here to truncate
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, r12, lsl #23 ");		// exponent into r0 bits 23-30
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("orr r0, r0, r2, lsr #8 ");			// non-integer mantissa bits into r0 bits 0-22
+	__JUMP(,lr);
+	asm("ConvertTRealXToTReal32a: ");		// come here if overflow, infinity or NaN
+	asm("cmn r3, #0x10000 ");				// check for infinity or NaN
+	asm("movcc r2, #0 ");					// if not, set mantissa to 0 for infinity result
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, #0x7F000000 ");		// r0 bits 23-30 = FF = exponent
+	asm("orr r0, r0, #0x00800000 ");
+	asm("orr r0, r0, r2, lsr #8 ");			// r0 bits 0-22 = result mantissa
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TReal64() const __SOFTFP
+/**
+Returns the extended precision value as
+a double precision floating point value.
+*/
+	{
+	asm("ldmia r0, {r1,r2,r3} ");			// r1,r2,r3=input value
+
+	// Convert TRealX in r1,r2,r3 to TReal64 in r0,r1
+	// if __DOUBLE_WORDS_SWAPPED__ r0=sign,exp,high mant, r1=low mant
+	// else r0, r1 reversed
+	asm("ConvertTRealXToTReal64: ");
+	asm("mov r12, #0x8300 ");
+	asm("orr r12, r12, #0x00FF ");			// r12=0x83FF
+	asm("cmp r3, r12, lsl #16 ");			// check if exponent>=83FF
+	asm("bcs ConvertTRealXToTReal64a ");	// branch if it is
+	asm("mov r12, #0x7C00 ");
+	asm("rsbs r12, r12, r3, lsr #16 ");		// r12=exp in - 7C00 = result exponent if in range
+	asm("bgt ConvertTRealXToTReal64b ");	// branch if normalised result
+	asm("cmn r12, #52 ");					// check for total underflow or zero
+	asm("movlt r0, r3, lsl #31 ");			// in this case, return zero with appropriate sign
+	asm("movlt r1, #0 ");
+	asm("blt ConvertTRealXToTReal64_end ");
+
+	asm("adds r12, r12, #31 ");				// check if >=32 shifts needed, r12=32-shift count
+	asm("ble ConvertTRealXToTReal64e ");	// branch if >=32 shifts needed
+	asm("movs r0, r1, lsl r12 ");			// r0=lost bits when r2:r1 is shifted
+	asm("bicne r3, r3, #0x300 ");			// if these are not zero, set rounded down flag
+	asm("orrne r3, r3, #0x100 ");
+	asm("rsb r0, r12, #32 ");				// r0=shift count
+	asm("mov r1, r1, lsr r0 ");
+	asm("orr r1, r1, r2, lsl r12 ");
+	asm("mov r2, r2, lsr r0 ");				// r2:r1 top 53 bits = unrounded result mantissa
+	asm("b ConvertTRealXToTReal64f ");
+	asm("ConvertTRealXToTReal64e: ");
+	asm("add r12, r12, #32 ");				// r12=64-shift count
+	asm("cmp r1, #0 ");						// r1 bits are all lost - test them
+	asm("moveqs r0, r2, lsl r12 ");			// if zero, test lost bits from r2
+	asm("bicne r3, r3, #0x300 ");			// if lost bits not all zero, set rounded down flag
+	asm("orrne r3, r3, #0x100 ");
+	asm("rsb r0, r12, #32 ");				// r0=shift count-32
+	asm("mov r1, r2, lsr r0 ");				// shift r2:r1 right
+	asm("mov r2, #0 ");
+	asm("ConvertTRealXToTReal64f: ");
+	asm("mov r12, #0 ");					// result exponent will be zero for denormals
+	asm("ConvertTRealXToTReal64b: ");
+	asm("movs r0, r1, lsl #21 ");			// 11 rounding bits to top of r0
+	asm("bpl ConvertTRealXToTReal64c ");	// if top bit clear, truncate
+	asm("cmp r0, #0x80000000 ");			// compare rounding bits to 10000000000
+	asm("bhi ConvertTRealXToTReal64d ");	// if >, round up
+	asm("movs r0, r3, lsl #23 ");			// round up flag into C, round down flag into N
+	asm("bcs ConvertTRealXToTReal64c ");	// if rounded up, truncate
+	asm("bmi ConvertTRealXToTReal64d ");	// if rounded down, round up
+	asm("tst r1, #0x800 ");					// else round to even - test LSB of result mantissa
+	asm("beq ConvertTRealXToTReal64c ");	// if zero, truncate, else round up
+	asm("ConvertTRealXToTReal64d: ");		// come here to round up
+	asm("adds r1, r1, #0x800 ");			// increment the mantissa
+	asm("adcs r2, r2, #0 ");
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa=10000...0
+	asm("addcs r12, r12, #1 ");				// and increment exponent
+	asm("cmpmi r12, #1 ");					// if mantissa normalised, check exponent>0
+	asm("movmi r12, #1 ");					// if normalised and exponent=0, set exponent to 1
+	asm("ConvertTRealXToTReal64c: ");		// come here to truncate
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, r12, lsl #20 ");		// exponent into r0 bits 20-30
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("orr r0, r0, r2, lsr #11 ");		// non-integer mantissa bits into r0 bits 0-19
+	asm("mov r1, r1, lsr #11 ");			// and r1
+	asm("orr r1, r1, r2, lsl #21 ");
+	asm("b ConvertTRealXToTReal64_end ");
+
+	asm("ConvertTRealXToTReal64a: ");		// come here if overflow, infinity or NaN
+	asm("cmn r3, #0x10000 ");				// check for infinity or NaN
+	asm("movcc r2, #0 ");					// if not, set mantissa to 0 for infinity result
+	asm("movcc r1, #0 ");
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, #0x7F000000 ");		// r0 bits 20-30 = 7FF = exponent
+	asm("orr r0, r0, #0x00F00000 ");
+	asm("orr r0, r0, r2, lsr #11 ");		// r0 bits 0-19 = result mantissa high bits
+	asm("mov r1, r1, lsr #11 ");			// and r1=result mantissa low bits
+	asm("orr r1, r1, r2, lsl #21 ");
+	asm("ConvertTRealXToTReal64_end: ");
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r2, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r2 ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::GetTReal(TReal32& /*aVal*/) const
+/**
+Extracts the extended precision value as
+a single precision floating point value.
+
+@param aVal A reference to a single precision object which contains
+            the result of the operation.
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r4,lr} ");
+	asm("mov r4, r1 ");
+	asm("ldmia r0, {r1,r2,r3} ");			// r1,r2,r3=input value
+	asm("bl TRealXGetTReal32 ");
+	asm("str r0, [r4] ");					// store converted TReal32
+	asm("mov r0, r12 ");					// return value into r0
+	__POPRET("r4,");
+
+	// Convert TRealX in r1,r2,r3 to TReal32 in r0
+	// Return error code in r12
+	// r0-r3, r12 modified
+	asm("TRealXGetTReal32: ");
+	asm("mov r12, #0x8000 ");
+	asm("orr r12, r12, #0x007F ");			// r12=0x807F
+	asm("cmp r3, r12, lsl #16 ");			// check if exponent>=807F
+	asm("bcs TRealXGetTReal32a ");			// branch if it is
+	asm("sub r12, r12, #0x00FF ");			// r12=0x7F80
+	asm("rsbs r12, r12, r3, lsr #16 ");		// r12=exp in - 7F80 = result exponent if in range
+	asm("bgt TRealXGetTReal32b ");			// branch if normalised result
+	asm("cmn r12, #23 ");					// check for total underflow or zero
+	asm("bge TRealXGetTReal32e ");			// skip if not
+	asm("mov r0, r3, lsl #31 ");			// else return zero with appropriate sign
+	asm("mov r1, #0 ");
+	asm("cmp r3, #0x10000 ");				// check for zero
+	asm("movcc r12, #0 ");					// if zero return KErrNone
+	asm("mvncs r12, #9 ");					// else return KErrUnderflow
+	__JUMP(,lr);
+	asm("TRealXGetTReal32e: ");
+	asm("add r12, r12, #31 ");				// r12=32-mantissa shift required = 32-(1-r12)
+	asm("movs r0, r1, lsl r12 ");			// r0=lost bits when r2:r1 is shifted
+	asm("bicne r3, r3, #0x300 ");			// if these are not zero, set rounded down flag
+	asm("orrne r3, r3, #0x100 ");
+	asm("rsb r0, r12, #32 ");
+	asm("mov r1, r1, lsr r0 ");
+	asm("orr r1, r1, r2, lsl r12 ");
+	asm("mov r2, r2, lsr r0 ");				// r2 top 24 bits now give unrounded result mantissa
+	asm("mov r12, #0 ");					// result exponent will be zero
+	asm("TRealXGetTReal32b: ");
+	asm("movs r0, r2, lsl #24 ");			// top 8 truncated bits into top byte of r0
+	asm("bpl TRealXGetTReal32c ");			// if top bit clear, truncate
+	asm("cmp r0, #0x80000000 ");
+	asm("cmpeq r1, #0 ");					// compare rounding bits to 1000...
+	asm("bhi TRealXGetTReal32d ");			// if >, round up
+	asm("movs r0, r3, lsl #23 ");			// round up flag into C, round down flag into N
+	asm("bcs TRealXGetTReal32c ");			// if rounded up, truncate
+	asm("bmi TRealXGetTReal32d ");			// if rounded down, round up
+	asm("tst r2, #0x100 ");					// else round to even - test LSB of result mantissa
+	asm("beq TRealXGetTReal32c ");			// if zero, truncate, else round up
+	asm("TRealXGetTReal32d: ");				// come here to round up
+	asm("adds r2, r2, #0x100 ");			// increment the mantissa
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa=800000
+	asm("addcs r12, r12, #1 ");				// and increment exponent
+	asm("cmpmi r12, #1 ");					// if mantissa normalised, check exponent>0
+	asm("movmi r12, #1 ");					// if normalised and exponent=0, set exponent to 1
+	asm("TRealXGetTReal32c: ");				// come here to truncate
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, r12, lsl #23 ");		// exponent into r0 bits 23-30
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("orr r0, r0, r2, lsr #8 ");			// non-integer mantissa bits into r0 bits 0-22
+	asm("cmp r12, #0xFF ");					// check for overflow
+	asm("mvneq r12, #8 ");					// if overflow, return KErrOverflow
+	__JUMP(eq,lr);
+	asm("bics r1, r0, #0x80000000 ");		// check for underflow
+	asm("mvneq r12, #9 ");					// if underflow return KErrUnderflow
+	asm("movne r12, #0 ");					// else return KErrNone
+	__JUMP(,lr);
+	asm("TRealXGetTReal32a: ");				// come here if overflow, infinity or NaN
+	asm("cmn r3, #0x10000 ");				// check for infinity or NaN
+	asm("movcc r2, #0 ");					// if not, set mantissa to 0 for infinity result
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, #0x7F000000 ");		// r0 bits 23-30 = FF = exponent
+	asm("orr r0, r0, #0x00800000 ");
+	asm("orr r0, r0, r2, lsr #8 ");			// r0 bits 0-22 = result mantissa
+	asm("movs r12, r0, lsl #9 ");			// check if result is infinity or NaN
+	asm("mvneq r12, #8 ");					// if infinity return KErrOverflow
+	asm("mvnne r12, #5 ");					// else return KErrArgument
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::GetTReal(TReal64& /*aVal*/) const
+/**
+Extracts the extended precision value as
+a double precision floating point value.
+
+@param aVal A reference to a double precision object which
+            contains the result of the operation.
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r4,lr} ");
+	asm("mov r4, r1 ");
+	asm("ldmia r0, {r1,r2,r3} ");			// r1,r2,r3=input value
+	asm("bl TRealXGetTReal64 ");
+	asm("stmia r4, {r0,r1} ");				// store converted TReal64
+	asm("mov r0, r12 ");					// return value into r0
+	__POPRET("r4,");
+
+	// Convert TRealX in r1,r2,r3 to TReal64 in r0,r1
+	// Return error code in r12
+	// r0-r3, r12 modified
+	asm("TRealXGetTReal64: ");
+	asm("mov r12, #0x8300 ");
+	asm("orr r12, r12, #0x00FF ");			// r12=0x83FF
+	asm("cmp r3, r12, lsl #16 ");			// check if exponent>=83FF
+	asm("bcs TRealXGetTReal64a ");			// branch if it is
+	asm("mov r12, #0x7C00 ");
+	asm("rsbs r12, r12, r3, lsr #16 ");		// r12=exp in - 7C00 = result exponent if in range
+	asm("bgt TRealXGetTReal64b ");			// branch if normalised result
+	asm("cmn r12, #52 ");					// check for total underflow or zero
+	asm("bge TRealXGetTReal64g ");			// skip if not
+	asm("mov r0, r3, lsl #31 ");			// else return zero with appropriate sign
+	asm("mov r1, #0 ");
+	asm("cmp r3, #0x10000 ");				// check for zero
+	asm("movcc r12, #0 ");					// if zero return KErrNone
+	asm("mvncs r12, #9 ");					// else return KErrUnderflow
+	asm("b TRealXGetTReal64_end ");
+
+	asm("TRealXGetTReal64g: ");
+	asm("adds r12, r12, #31 ");				// check if >=32 shifts needed, r12=32-shift count
+	asm("ble TRealXGetTReal64e ");			// branch if >=32 shifts needed
+	asm("movs r0, r1, lsl r12 ");			// r0=lost bits when r2:r1 is shifted
+	asm("bicne r3, r3, #0x300 ");			// if these are not zero, set rounded down flag
+	asm("orrne r3, r3, #0x100 ");
+	asm("rsb r0, r12, #32 ");				// r0=shift count
+	asm("mov r1, r1, lsr r0 ");
+	asm("orr r1, r1, r2, lsl r12 ");
+	asm("mov r2, r2, lsr r0 ");				// r2:r1 top 53 bits = unrounded result mantissa
+	asm("b TRealXGetTReal64f ");
+	asm("TRealXGetTReal64e: ");
+	asm("add r12, r12, #32 ");				// r12=64-shift count
+	asm("cmp r1, #0 ");						// r1 bits are all lost - test them
+	asm("moveqs r0, r2, lsl r12 ");			// if zero, test lost bits from r2
+	asm("bicne r3, r3, #0x300 ");			// if lost bits not all zero, set rounded down flag
+	asm("orrne r3, r3, #0x100 ");
+	asm("rsb r0, r12, #32 ");				// r0=shift count-32
+	asm("mov r1, r2, lsr r0 ");				// shift r2:r1 right
+	asm("mov r2, #0 ");
+	asm("TRealXGetTReal64f: ");
+	asm("mov r12, #0 ");					// result exponent will be zero for denormals
+	asm("TRealXGetTReal64b: ");
+	asm("movs r0, r1, lsl #21 ");			// 11 rounding bits to top of r0
+	asm("bpl TRealXGetTReal64c ");			// if top bit clear, truncate
+	asm("cmp r0, #0x80000000 ");			// compare rounding bits to 10000000000
+	asm("bhi TRealXGetTReal64d ");			// if >, round up
+	asm("movs r0, r3, lsl #23 ");			// round up flag into C, round down flag into N
+	asm("bcs TRealXGetTReal64c ");			// if rounded up, truncate
+	asm("bmi TRealXGetTReal64d ");			// if rounded down, round up
+	asm("tst r1, #0x800 ");					// else round to even - test LSB of result mantissa
+	asm("beq TRealXGetTReal64c ");			// if zero, truncate, else round up
+	asm("TRealXGetTReal64d: ");				// come here to round up
+	asm("adds r1, r1, #0x800 ");			// increment the mantissa
+	asm("adcs r2, r2, #0 ");
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa=10000...0
+	asm("addcs r12, r12, #1 ");				// and increment exponent
+	asm("cmpmi r12, #1 ");					// if mantissa normalised, check exponent>0
+	asm("movmi r12, #1 ");					// if normalised and exponent=0, set exponent to 1
+	asm("TRealXGetTReal64c: ");				// come here to truncate
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, r12, lsl #20 ");		// exponent into r0 bits 20-30
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("orr r0, r0, r2, lsr #11 ");		// non-integer mantissa bits into r0 bits 0-19
+	asm("mov r1, r1, lsr #11 ");			// and r1
+	asm("orr r1, r1, r2, lsl #21 ");
+	asm("add r12, r12, #1 ");
+	asm("cmp r12, #0x800 ");				// check for overflow
+	asm("mvneq r12, #8 ");					// if overflow, return KErrOverflow
+	asm("beq TRealXGetTReal64_end ");
+
+	asm("bics r12, r0, #0x80000000 ");		// check for underflow
+	asm("cmpeq r1, #0 ");
+	asm("mvneq r12, #9 ");					// if underflow return KErrUnderflow
+	asm("movne r12, #0 ");					// else return KErrNone
+	asm("b TRealXGetTReal64_end ");
+
+	asm("TRealXGetTReal64a: ");				// come here if overflow, infinity or NaN
+	asm("cmn r3, #0x10000 ");				// check for infinity or NaN
+	asm("movcc r2, #0 ");					// if not, set mantissa to 0 for infinity result
+	asm("movcc r1, #0 ");
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("mov r0, r3, lsl #31 ");			// r0 bit 31 = sign bit
+	asm("orr r0, r0, #0x7F000000 ");		// r0 bits 20-30 = 7FF = exponent
+	asm("orr r0, r0, #0x00F00000 ");
+	asm("orr r0, r0, r2, lsr #11 ");		// r0 bits 0-19 = result mantissa high bits
+	asm("mov r1, r1, lsr #11 ");			// and r1=result mantissa low bits
+	asm("orr r1, r1, r2, lsl #21 ");
+	asm("movs r12, r0, lsl #12 ");			// check if result is infinity or NaN
+	asm("cmpeq r1, #0 ");
+	asm("mvneq r12, #8 ");					// if infinity return KErrOverflow
+	asm("mvnne r12, #5 ");					// else return KErrArgument
+	asm("TRealXGetTReal64_end: ");
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r2, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r2 ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator+() const
+/**
+Returns this extended precision number unchanged.
+
+Note that this may also be referred to as a unary plus operator. 
+
+@return The extended precision number.
+*/
+	{
+	asm("ldmia r1, {r2,r3,r12} ");
+	asm("stmia r0, {r2,r3,r12} ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator-() const
+/**
+Negates this extended precision number.
+
+This may also be referred to as a unary minus operator.
+
+@return The negative of the extended precision number.
+*/
+	{
+	asm("ldmia r1, {r2,r3,r12} ");
+	asm("eor r12, r12, #1 ");			// unary - changes sign bit
+	asm("stmia r0, {r2,r3,r12} ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealXOrder TRealX::Compare(const TRealX& /*aVal*/) const
+/**
+*/
+	{
+	asm("stmfd sp!, {r4,r5,r6,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXCompare ");
+	__POPRET("r4-r6,");
+
+	// Compare TRealX in r1,r2,r3 to TRealX in r4,r5,r6
+	// Return TRealXOrder result in r0
+	asm("TRealXCompare: ");
+	asm("cmn r3, #0x10000 ");				// check for NaNs/infinity
+	asm("bcs TRealXCompare1 ");
+	asm("TRealXCompare6: ");				// will come back here if infinity
+	asm("cmn r6, #0x10000 ");
+	asm("bcs TRealXCompare2 ");
+	asm("TRealXCompare7: ");				// will come back here if infinity
+	asm("cmp r3, #0x10000 ");				// check for zeros
+	asm("bcc TRealXCompare3 ");
+	asm("cmp r6, #0x10000 ");
+	asm("bcc TRealXCompare4 ");
+	asm("mov r12, r6, lsl #31 ");
+	asm("cmp r12, r3, lsl #31 ");			// compare signs
+	asm("movne r0, #4 ");
+	asm("bne TRealXCompare5 ");				// branch if signs different
+	asm("mov r12, r3, lsr #16 ");			// r12=first exponent
+	asm("cmp r12, r6, lsr #16 ");			// compare exponents
+	asm("cmpeq r2, r5 ");					// if equal compare high words of mantissa
+	asm("cmpeq r1, r4 ");					// if equal compare low words of mantissa
+	asm("moveq r0, #2 ");					// if equal return 2
+	__JUMP(eq,lr);
+	asm("movhi r0, #4 ");					// r0=4 if first exp bigger
+	asm("movcc r0, #1 ");					// else r0=1
+	asm("TRealXCompare5: ");
+	asm("tst r3, #1 ");						// if signs negative
+	asm("eorne r0, r0, #5 ");				// then switch 1 and 4
+	__JUMP(,lr);
+	asm("TRealXCompare3: ");				// first operand zero
+	asm("cmp r6, #0x10000 ");				// check if second also zero
+	asm("movcc r0, #2 ");					// if so, return 2
+	__JUMP(cc,lr);
+	asm("tst r6, #1 ");						// else check sign of operand 2
+	asm("moveq r0, #1 ");					// if +, return 1
+	asm("movne r0, #4 ");					// else return 4
+	__JUMP(,lr);
+	asm("TRealXCompare4: ");				// second operand zero, first nonzero
+	asm("tst r3, #1 ");						// check sign of operand 1
+	asm("moveq r0, #4 ");					// if +, return 4
+	asm("movne r0, #1 ");					// else return 1
+	__JUMP(,lr);
+	asm("TRealXCompare1: ");				// first operand NaN or infinity
+	asm("cmp r2, #0x80000000 ");			// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("beq TRealXCompare6 ");				// if infinity, can handle normally
+	asm("mov r0, #8 ");						// if NaN, return 8 (unordered)
+	__JUMP(,lr);
+	asm("TRealXCompare2: ");				// second operand NaN or infinity
+	asm("cmp r5, #0x80000000 ");			// check for infinity
+	asm("cmpeq r4, #0 ");
+	asm("beq TRealXCompare7 ");				// if infinity, can handle normally
+	asm("mov r0, #8 ");						// if NaN, return 8 (unordered)
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::SubEq(const TRealX& /*aVal*/)
+/**
+Subtracts an extended precision value from this extended precision number.
+
+@param aVal The extended precision value to be subtracted.
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXSubtract ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, r12 ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::AddEq(const TRealX& /*aVal*/)
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aVal The extended precision value to be added.
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow,if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow. 
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXAdd ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, r12 ");
+	__JUMP(,lr);
+
+	// TRealX subtraction r1,r2,r3 - r4,r5,r6 result in r1,r2,r3
+	// Error code returned in r12
+	// Registers r0-r8,r12 modified
+	// NB This function is purely internal to EUSER and therefore IS ONLY EVER CALLED IN ARM MODE.
+	asm("TRealXSubtract: ");
+	asm("eor r6, r6, #1 ");					// negate second operand and add
+
+	// TRealX addition r1,r2,r3 + r4,r5,r6 result in r1,r2,r3
+	// Error code returned in r12
+	// Registers r0-r8,r12 modified
+	// NB This function is purely internal to EUSER and therefore IS ONLY EVER CALLED IN ARM MODE.
+	// Note:	+0 + +0 = +0, -0 + -0 = -0, +0 + -0 = -0 + +0 = +0,
+	//			+/-0 + X = X + +/-0 = X, X + -X = -X + X = +0
+	asm("TRealXAdd: ");
+	asm("mov r12, #0 ");					// initialise return value to KErrNone
+	asm("bic r3, r3, #0x300 ");				// clear rounding flags
+	asm("bic r6, r6, #0x300 ");				// clear rounding flags
+	asm("cmn r3, #0x10000 ");				// check if first operand is NaN or infinity
+	asm("bcs TRealXAdd1 ");					// branch if it is
+	asm("cmn r6, #0x10000 ");				// check if second operand is NaN or infinity
+	asm("bcs TRealXAdd2 ");					// branch if it is
+	asm("cmp r6, #0x10000 ");				// check if second operand zero
+	asm("bcc TRealXAdd3a ");				// branch if it is
+	asm("cmp r3, #0x10000 ");				// check if first operand zero
+	asm("bcc TRealXAdd3 ");					// branch if it is
+	asm("mov r7, #0 ");						// r7 will be rounding word
+	asm("mov r0, r3, lsr #16 ");			// r0 = first operand exponent
+	asm("subs r0, r0, r6, lsr #16 ");		// r0 = first exponent - second exponent
+	asm("beq TRealXAdd8 ");					// if equal, no mantissa shifting needed
+	asm("bhi TRealXAdd4 ");					// skip if first exponent bigger
+	asm("rsb r0, r0, #0 ");					// need to shift first mantissa right by r0 to align
+	asm("mov r8, r1 ");						// swap the numbers to the one to be shifted is 2nd
+	asm("mov r1, r4 ");
+	asm("mov r4, r8 ");
+	asm("mov r8, r2 ");
+	asm("mov r2, r5 ");
+	asm("mov r5, r8 ");
+	asm("mov r8, r3 ");
+	asm("mov r3, r6 ");
+	asm("mov r6, r8 ");
+	asm("TRealXAdd4: ");					// need to shift 2nd mantissa right by r0 to align
+	asm("cmp r0, #64 ");					// more than 64 shifts needed?
+	asm("bhi TRealXAdd6 ");					// if so, smaller number cannot affect larger
+	asm("cmp r0, #32 ");
+	asm("bhi TRealXAdd7 ");					// branch if shift count>32
+	asm("rsb r8, r0, #32 ");
+	asm("mov r7, r4, lsl r8 ");				// shift r5:r4 right into r7
+	asm("mov r4, r4, lsr r0 ");
+	asm("orr r4, r4, r5, lsl r8 ");
+	asm("mov r5, r5, lsr r0 ");
+	asm("b TRealXAdd8 ");
+	asm("TRealXAdd7: ");					// 64 >= shift count > 32
+	asm("sub r0, r0, #32 ");
+	asm("rsb r8, r0, #32 ");
+	asm("movs r7, r4, lsl r8 ");			// test bits lost in shift
+	asm("orrne r6, r6, #0x100 ");			// if not all zero, flag 2nd mantissa rounded down
+	asm("mov r7, r4, lsr r0 ");				// shift r5:r4 right into r7 by 32+r0
+	asm("orr r7, r7, r5, lsl r8 ");
+	asm("mov r4, r5, lsr r0 ");
+	asm("mov r5, #0 ");
+	asm("TRealXAdd8: ");					// mantissas are now aligned
+	asm("mov r8, r3, lsl #31 ");			// r8=sign of first operand
+	asm("cmp r8, r6, lsl #31 ");			// compare signs
+	asm("bne TRealXSub1 ");					// if different, need to do a subtraction
+	asm("adds r1, r1, r4 ");				// signs the same - add mantissas
+	asm("adcs r2, r2, r5 ");
+	asm("bcc TRealXAdd9 ");					// skip if no carry
+	asm(".word 0xE1B02062 ");				// movs r2, r2, rrx shift carry into mantissa
+	asm(".word 0xE1B01061 ");				// movs r1, r1, rrx
+	asm(".word 0xE1B07067 ");				// movs r7, r7, rrx
+	asm("orrcs r6, r6, #0x100 ");			// if 1 shifted out, flag 2nd mantissa rounded down
+	asm("add r3, r3, #0x10000 ");			// increment exponent
+	asm("TRealXAdd9: ");
+	asm("cmp r7, #0x80000000 ");			// check rounding word
+	asm("bcc TRealXAdd10 ");				// if <0x80000000 round down
+	asm("bhi TRealXAdd11 ");				// if >0x80000000 round up
+	asm("tst r6, #0x100 ");					// if =0x80000000 check if 2nd mantissa rounded down
+	asm("bne TRealXAdd11 ");				// if so, round up
+	asm("tst r6, #0x200 ");					// if =0x80000000 check if 2nd mantissa rounded up
+	asm("bne TRealXAdd10 ");				// if so, round down
+	asm("tst r1, #1 ");						// else round to even - check LSB
+	asm("beq TRealXAdd10 ");				// if zero, round down
+	asm("TRealXAdd11: ");					// come here to round up
+	asm("adds r1, r1, #1 ");				// increment mantissa
+	asm("adcs r2, r2, #0 ");
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa = 80000000 00000000
+	asm("addcs r3, r3, #0x10000 ");			// and increment exponent
+	asm("cmn r3, #0x10000 ");				// check overflow
+	asm("orrcc r3, r3, #0x200 ");			// if no overflow, set rounded-up flag ...
+	__JUMP(cc,lr);
+	asm("b TRealXAdd12 ");					// if overflow, return infinity
+	asm("TRealXAdd10: ");					// come here to round down
+	asm("cmn r3, #0x10000 ");				// check overflow
+	asm("bcs TRealXAdd12 ");				// if overflow, return infinity
+	asm("cmp r7, #0 ");						// if no overflow check if rounding word is zero
+	asm("orrne r3, r3, #0x100 ");			// if not, set rounded-down flag ...
+	__JUMP(ne,lr);
+	asm("and r6, r6, #0x300 ");				// else transfer 2nd mantissa rounding flags
+	asm("orr r3, r3, r6 ");					// to result
+	__JUMP(,lr);
+
+	asm("TRealXAdd12: ");					// come here if overflow - return infinity
+	asm("mov r2, #0x80000000 ");
+	asm("mov r1, #0 ");
+	asm("mvn r12, #8 ");					// and return KErrOverflow
+	__JUMP(,lr);
+
+	asm("TRealXSub1: ");					// come here if operand signs differ
+	asm("tst r6, #0x300 ");					// check if 2nd mantissa rounded
+	asm("eorne r6, r6, #0x300 ");			// if so, change rounding
+	asm("rsbs r7, r7, #0 ");				// subtract mantissas r2:r1:0 -= r5:r4:r7
+	asm("sbcs r1, r1, r4 ");
+	asm("sbcs r2, r2, r5 ");
+	asm("bcs TRealXSub2 ");					// skip if no borrow
+	asm("tst r6, #0x300 ");					// check if 2nd mantissa rounded
+	asm("eorne r6, r6, #0x300 ");			// if so, change rounding
+	asm("rsbs r7, r7, #0 ");				// negate result
+	asm("rscs r1, r1, #0 ");
+	asm("rscs r2, r2, #0 ");
+	asm("eor r3, r3, #1 ");					// and change result sign
+	asm("TRealXSub2: ");
+	asm("bne TRealXSub3 ");					// skip if mantissa top word is not zero
+	asm("movs r2, r1 ");					// else shift up by 32
+	asm("mov r1, r7 ");
+	asm("mov r7, #0 ");
+	asm("bne TRealXSub3a ");				// skip if mantissa top word is not zero now
+	asm("movs r2, r1 ");					// else shift up by 32 again
+	asm("mov r1, #0 ");
+	asm("moveq r3, #0 ");					// if r2 still zero, result is zero - return +0
+	__JUMP(eq,lr);
+	asm("subs r3, r3, #0x00400000 ");		// else, decrement exponent by 64
+	asm("bcs TRealXSub3 ");					// if no borrow, proceed
+	asm("b TRealXSub4 ");					// if borrow, underflow
+	asm("TRealXSub3a: ");					// needed one 32-bit shift
+	asm("subs r3, r3, #0x00200000 ");		// so decrement exponent by 32
+	asm("bcc TRealXSub4 ");					// if borrow, underflow
+	asm("TRealXSub3: ");					// r2 is now non-zero; still may need up to 31 shifts
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(0,2);
+	asm("mov r2, r2, lsl r0 ");
+#else
+	asm("mov r0, #0 ");						// r0 will be shift count
+	asm("cmp r2, #0x00010000 ");
+	asm("movcc r2, r2, lsl #16 ");
+	asm("addcc r0, r0, #16 ");
+	asm("cmp r2, #0x01000000 ");
+	asm("movcc r2, r2, lsl #8 ");
+	asm("addcc r0, r0, #8 ");
+	asm("cmp r2, #0x10000000 ");
+	asm("movcc r2, r2, lsl #4 ");
+	asm("addcc r0, r0, #4 ");
+	asm("cmp r2, #0x40000000 ");
+	asm("movcc r2, r2, lsl #2 ");
+	asm("addcc r0, r0, #2 ");
+	asm("cmp r2, #0x80000000 ");
+	asm("movcc r2, r2, lsl #1 ");
+	asm("addcc r0, r0, #1 ");
+#endif
+	asm("rsb r8, r0, #32 ");
+	asm("subs r3, r3, r0, lsl #16 ");		// subtract shift count from exponent
+	asm("bcc TRealXSub4 ");					// if borrow, underflow
+	asm("orr r2, r2, r1, lsr r8 ");			// else shift mantissa up
+	asm("mov r1, r1, lsl r0 ");
+	asm("orr r1, r1, r7, lsr r8 ");
+	asm("mov r7, r7, lsl r0 ");
+	asm("cmp r3, #0x10000 ");				// check for underflow
+	asm("bcs TRealXAdd9 ");					// if no underflow, branch to round result
+
+	asm("TRealXSub4: ");					// come here if underflow
+	asm("and r3, r3, #1 ");					// set exponent to zero, leave sign
+	asm("mov r2, #0 ");
+	asm("mov r1, #0 ");
+	asm("mvn r12, #9 ");					// return KErrUnderflow
+	__JUMP(,lr);
+
+	asm("TRealXAdd6: ");					// come here if exponents differ by more than 64
+	asm("mov r8, r3, lsl #31 ");			// r8=sign of first operand
+	asm("cmp r8, r6, lsl #31 ");			// compare signs
+	asm("orreq r3, r3, #0x100 ");			// if same, result has been rounded down
+	asm("orrne r3, r3, #0x200 ");			// else result has been rounded up
+	__JUMP(,lr);
+
+	asm("TRealXAdd3a: ");					// come here if second operand zero
+	asm("cmp r3, #0x10000 ");				// check if first operand also zero
+	asm("andcc r3, r3, r6 ");				// if so, result is negative iff both zeros negative
+	asm("andcc r3, r3, #1 ");
+	__JUMP(,lr);
+
+	asm("TRealXAdd3: ");					// come here if first operand zero, second nonzero
+	asm("mov r1, r4 ");						// return second operand unchanged
+	asm("mov r2, r5 ");
+	asm("mov r3, r6 ");
+	__JUMP(,lr);
+
+	asm("TRealXAdd1: ");					// come here if first operand NaN or infinity
+	asm("cmp r2, #0x80000000 ");			// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("cmn r6, #0x10000 ");				// check 2nd operand for NaN/infinity
+	asm("mvncc r12, #8 ");					// if neither, return KErrOverflow
+	__JUMP(cc,lr);
+	asm("cmp r5, #0x80000000 ");			// check 2nd operand for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("mov r0, r3, lsl #31 ");			// both operands are infinity - check signs
+	asm("cmp r0, r6, lsl #31 ");
+	asm("mvneq r12, #8 ");					// if same, return KErrOverflow
+	__JUMP(eq,lr);
+
+	// Return 'real indefinite'
+	asm("TRealXRealIndefinite: ");
+	asm("ldr r3, [pc, #__RealIndefiniteExponent-.-8] ");
+	asm("mov r2, #0xC0000000 ");
+	asm("mov r1, #0 ");
+	asm("mvn r12, #5 ");					// return KErrArgument
+	__JUMP(,lr);
+
+	asm("TRealXAdd2: ");					// come here if 2nd operand NaN/infinity, first finite
+	asm("cmp r5, #0x80000000 ");			// check for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("mov r1, r4 ");						// else return 2nd operand (infinity)
+	asm("mov r2, r5 ");
+	asm("mov r3, r6 ");
+	asm("mvn r12, #8 ");					// return KErrOverflow
+	__JUMP(,lr);
+
+	asm("TRealXBinOpNan: ");				// generic routine to process NaNs in binary
+											// operations
+	asm("cmn r3, #0x10000 ");				// check if first operand is NaN
+	asm("movcc r0, r1 ");					// if not, swap the operands
+	asm("movcc r1, r4 ");
+	asm("movcc r4, r0 ");
+	asm("movcc r0, r2 ");
+	asm("movcc r2, r5 ");
+	asm("movcc r5, r0 ");
+	asm("movcc r0, r3 ");
+	asm("movcc r3, r6 ");
+	asm("movcc r6, r0 ");
+	asm("cmn r6, #0x10000 ");				// both operands NaNs?
+	asm("bcc TRealXBinOpNan1 ");			// skip if not
+	asm("cmp r2, r5 ");						// if so, compare the significands
+	asm("cmpeq r1, r4 ");
+	asm("movcc r1, r4 ");					// r1,r2,r3 will get NaN with larger significand
+	asm("movcc r2, r5 ");
+	asm("movcc r3, r6 ");
+	asm("TRealXBinOpNan1: ");
+	asm("orr r2, r2, #0x40000000 ");		// convert an SNaN to a QNaN
+	asm("mvn r12, #5 ");					// return KErrArgument
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::MultEq(const TRealX& /*aVal*/)
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the multiplier.
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow
+*/
+	{
+	// Version for ARM 3M or later
+	// Uses umull/umlal
+	asm("stmfd sp!, {r0,r4-r7,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXMultiply ");
+	asm("ldmfd sp!, {r0,r4-r7,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, r12 ");
+	__JUMP(,lr);
+
+	// TRealX multiplication r1,r2,r3 * r4,r5,r6 result in r1,r2,r3
+	// Error code returned in r12
+	// Registers r0-r7,r12 modified
+	// NB This function is purely internal to EUSER and therefore IS ONLY EVER CALLED IN ARM MODE.
+	asm("TRealXMultiply: ");
+	asm("mov r12, #0 ");					// initialise return value to KErrNone
+	asm("bic r3, r3, #0x300 ");				// clear rounding flags
+	asm("tst r6, #1 ");
+	asm("eorne r3, r3, #1 ");				// Exclusive-OR signs
+	asm("cmn r3, #0x10000 ");				// check if first operand is NaN or infinity
+	asm("bcs TRealXMultiply1 ");			// branch if it is
+	asm("cmn r6, #0x10000 ");				// check if second operand is NaN or infinity
+	asm("bcs TRealXMultiply2 ");			// branch if it is
+	asm("cmp r3, #0x10000 ");				// check if first operand zero
+	__JUMP(cc,lr);							// if so, exit
+
+	// Multiply mantissas in r2:r1 and r5:r4, result in r2:r1:r12:r7
+	asm("umull r7, r12, r1, r4 ");			// r7:r12=m1.low*m2.low
+	asm("movs r0, r6, lsr #16 ");			// r0=2nd operand exponent
+	asm("beq TRealXMultiply3 ");			// if zero, return zero
+	asm("mov r6, #0 ");						// clear r6 initially
+	asm("umlal r12, r6, r1, r5 ");			// r6:r12:r7=m1.low*m2, r1 no longer needed
+	asm("add r0, r0, r3, lsr #16 ");		// r0=sum of exponents
+	asm("tst r3, #1 ");
+	asm("mov r3, #0 ");						// clear r3 initially
+	asm("umlal r6, r3, r2, r5 ");			// r3:r6:r12:r7=m2.low*m1+m2.high*m1.high<<64
+											// r1,r5 no longer required
+	asm("orrne lr, lr, #1 ");				// save sign in bottom bit of lr
+	asm("sub r0, r0, #0x7F00 ");
+	asm("sub r0, r0, #0x00FE ");			// r0 now contains result exponent
+	asm("umull r1, r5, r2, r4 ");			// r5:r1=m2.high*m1.low
+	asm("adds r12, r12, r1 ");				// shift left by 32 and add to give final result
+	asm("adcs r1, r6, r5 ");
+	asm("adcs r2, r3, #0 ");				// final result now in r2:r1:r12:r7
+											// set flags on final value of r2 (ms word of result)
+
+	// normalise the result mantissa
+	asm("bmi TRealXMultiply4 ");			// skip if already normalised
+	asm("adds r7, r7, r7 ");				// else shift left (will only ever need one shift)
+	asm("adcs r12, r12, r12 ");
+	asm("adcs r1, r1, r1 ");
+	asm("adcs r2, r2, r2 ");
+	asm("sub r0, r0, #1 ");					// and decrement exponent by one
+
+	// round the result mantissa
+	asm("TRealXMultiply4: ");
+	asm("and r3, lr, #1 ");					// result sign bit back into r3
+	asm("orrs r4, r7, r12 ");				// check for exact result
+	asm("beq TRealXMultiply5 ");			// skip if exact
+	asm("cmp r12, #0x80000000 ");			// compare bottom 64 bits to 80000000 00000000
+	asm("cmpeq r7, #0 ");
+	asm("moveqs r4, r1, lsr #1 ");			// if exactly equal, set carry=lsb of result
+											// so we round up if lsb=1
+	asm("orrcc r3, r3, #0x100 ");			// if rounding down, set rounded-down flag
+	asm("orrcs r3, r3, #0x200 ");			// if rounding up, set rounded-up flag
+	asm("adcs r1, r1, #0 ");				// increment mantissa if necessary
+	asm("adcs r2, r2, #0 ");
+	asm("movcs r2, #0x80000000 ");			// if carry, set mantissa to 80000000 00000000
+	asm("addcs r0, r0, #1 ");				// and increment result exponent
+
+	// check for overflow or underflow and assemble final result
+	asm("TRealXMultiply5: ");
+	asm("add r4, r0, #1 ");					// need to add 1 to get usable threshold
+	asm("cmp r4, #0x10000 ");				// check if exponent >= 0xFFFF
+	asm("bge TRealXMultiply6 ");			// if so, overflow
+	asm("cmp r0, #0 ");						// check for underflow
+	asm("orrgt r3, r3, r0, lsl #16 ");		// if no underflow, result exponent into r3, ...
+	asm("movgt r12, #0 ");					// ... return KErrNone ...
+	asm("bicgt pc, lr, #3 ");
+
+	// underflow
+	asm("mvn r12, #9 ");					// return KErrUnderflow
+	asm("bic pc, lr, #3 ");
+
+	// overflow
+	asm("TRealXMultiply6: ");
+	asm("bic r3, r3, #0x0000FF00 ");		// clear rounding flags
+	asm("orr r3, r3, #0xFF000000 ");		// make exponent FFFF for infinity
+	asm("orr r3, r3, #0x00FF0000 ");
+	asm("mov r2, #0x80000000 ");			// mantissa = 80000000 00000000
+	asm("mov r1, #0 ");
+	asm("mvn r12, #8 ");					// return KErrOverflow
+	asm("bic pc, lr, #3 ");
+
+	// come here if second operand zero
+	asm("TRealXMultiply3: ");
+	asm("mov r1, #0 ");
+	asm("mov r2, #0 ");
+	asm("and r3, r3, #1 ");					// zero exponent, keep xor sign
+	asm("mov r12, #0 ");					// return KErrNone
+	asm("bic pc, lr, #3 ");
+
+	// First operand NaN or infinity
+	asm("TRealXMultiply1: ");
+	asm("cmp r2, #0x80000000 ");			// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("cmn r6, #0x10000 ");				// check 2nd operand for NaN/infinity
+	asm("bcs TRealXMultiply1a ");			// branch if it is
+	asm("cmp r6, #0x10000 ");				// else check if second operand zero
+	asm("mvncs r12, #8 ");					// if not, return infinity and KErrOverflow
+	asm("biccs pc, lr, #3 ");
+	asm("b TRealXRealIndefinite ");			// else return 'real indefinite'
+
+	asm("TRealXMultiply1a: ");
+	asm("cmp r5, #0x80000000 ");			// check 2nd operand for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("mvn r12, #8 ");					// else (infinity), return KErrOverflow
+	asm("bic pc, lr, #3 ");
+
+	// Second operand NaN or infinity, first operand finite
+	asm("TRealXMultiply2: ");
+	asm("cmp r5, #0x80000000 ");			// check for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("cmp r3, #0x10000 ");				// if infinity, check if first operand zero
+	asm("bcc TRealXRealIndefinite ");		// if it is, return 'real indefinite'
+	asm("orr r3, r3, #0xFF000000 ");		// else return infinity with xor sign
+	asm("orr r3, r3, #0x00FF0000 ");
+	asm("mov r2, #0x80000000 ");
+	asm("mov r1, #0 ");
+	asm("mvn r12, #8 ");					// return KErrOverflow
+	asm("bic pc, lr, #3 ");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::DivEq(const TRealX& /*aVal*/)
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor.
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow;
+        KErrDivideByZero, if the divisor is zero. 
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r9,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXDivide ");
+	asm("ldmfd sp!, {r0,r4-r9,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, r12 ");
+	__JUMP(,lr);
+
+	// TRealX division r1,r2,r3 / r4,r5,r6 result in r1,r2,r3
+	// Error code returned in r12
+	// Registers r0-r9,r12 modified
+	// NB This function is purely internal to EUSER and therefore IS ONLY EVER CALLED IN ARM MODE.
+	asm("TRealXDivide: ");
+	asm("mov r12, #0 ");					// initialise return value to KErrNone
+	asm("bic r3, r3, #0x300 ");				// clear rounding flags
+	asm("tst r6, #1 ");
+	asm("eorne r3, r3, #1 ");				// Exclusive-OR signs
+	asm("cmn r3, #0x10000 ");				// check if dividend is NaN or infinity
+	asm("bcs TRealXDivide1 ");				// branch if it is
+	asm("cmn r6, #0x10000 ");				// check if divisor is NaN or infinity
+	asm("bcs TRealXDivide2 ");				// branch if it is
+	asm("cmp r6, #0x10000 ");				// check if divisor zero
+	asm("bcc TRealXDivide3 ");				// branch if it is
+	asm("cmp r3, #0x10000 ");				// check if dividend zero
+	__JUMP(cc,lr);							// if zero, exit
+	asm("tst r3, #1 ");
+	asm("orrne lr, lr, #1 ");				// save sign in bottom bit of lr
+
+	// calculate result exponent
+	asm("mov r0, r3, lsr #16 ");			// r0=dividend exponent
+	asm("sub r0, r0, r6, lsr #16 ");		// r0=dividend exponent - divisor exponent
+	asm("add r0, r0, #0x7F00 ");
+	asm("add r0, r0, #0x00FF ");			// r0 now contains result exponent
+	asm("mov r6, r1 ");						// move dividend into r6,r7,r8
+	asm("mov r7, r2 ");
+	asm("mov r8, #0 ");						// use r8 to hold extra bit shifted up
+											// r2:r1 will hold result mantissa
+	asm("mov r2, #1 ");						// we will make sure first bit is 1
+	asm("cmp r7, r5 ");						// compare dividend mantissa to divisor mantissa
+	asm("cmpeq r6, r4 ");
+	asm("bcs TRealXDivide4 ");				// branch if dividend >= divisor
+	asm("adds r6, r6, r6 ");				// else shift dividend left one
+	asm("adcs r7, r7, r7 ");				// ignore carry here
+	asm("sub r0, r0, #1 ");					// decrement result exponent by one
+	asm("TRealXDivide4: ");
+	asm("subs r6, r6, r4 ");				// subtract divisor from dividend
+	asm("sbcs r7, r7, r5 ");
+
+	// Main mantissa division code
+	// First calculate the top 32 bits of the result
+	// Top bit is 1, do 10 lots of 3 bits the one more bit
+	asm("mov r12, #10 ");
+	asm("TRealXDivide5: ");
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit
+	asm("subs r12, r12, #1 ");
+	asm("bne TRealXDivide5 ");				// iterate the loop
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r2, r2, r2 ");				// shift in new result bit - now have 32 bits
+
+	// Now calculate the bottom 32 bits of the result
+	// Do 8 lots of 4 bits
+	asm("mov r12, #8 ");
+	asm("TRealXDivide5a: ");
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r9, r6, r4 ");				// subtract divisor from accumulator, result in r9,r3
+	asm("sbcs r3, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("movcs r6, r9 ");					// if no borrow, replace accumulator with result
+	asm("movcs r7, r3 ");
+	asm("adcs r1, r1, r1 ");				// shift in new result bit
+	asm("subs r12, r12, #1 ");
+	asm("bne TRealXDivide5a ");				// iterate the loop
+
+	// r2:r1 now contains a 64-bit normalised mantissa
+	// need to do rounding now
+	asm("and r3, lr, #1 ");					// result sign back into r3
+	asm("orrs r9, r6, r7 ");				// check if accumulator zero
+	asm("beq TRealXDivide6 ");				// if it is, result is exact, else generate next bit
+	asm("adds r6, r6, r6 ");				// shift accumulator left by one
+	asm("adcs r7, r7, r7 ");
+	asm("adcs r8, r8, r8 ");
+	asm("subs r6, r6, r4 ");				// subtract divisor from accumulator
+	asm("sbcs r7, r7, r5 ");
+	asm("movccs r8, r8, lsr #1 ");			// if borrow, check for carry from shift
+	asm("orrcc r3, r3, #0x100 ");			// if borrow, round down and set round-down flag
+	asm("bcc TRealXDivide6 ");
+	asm("orrs r9, r6, r7 ");				// if no borrow, check if exactly half-way
+	asm("moveqs r9, r1, lsr #1 ");			// if exactly half-way, round to even
+	asm("orrcc r3, r3, #0x100 ");			// if C=0, round result down and set round-down flag
+	asm("bcc TRealXDivide6 ");
+	asm("orr r3, r3, #0x200 ");				// else set round-up flag
+	asm("adds r1, r1, #1 ");				// and round mantissa up
+	asm("adcs r2, r2, #0 ");
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa = 80000000 00000000
+	asm("addcs r0, r0, #1 ");				// and increment exponent
+
+	// check for overflow or underflow and assemble final result
+	asm("TRealXDivide6: ");
+	asm("add r4, r0, #1 ");					// need to add 1 to get usable threshold
+	asm("cmp r4, #0x10000 ");				// check if exponent >= 0xFFFF
+	asm("bge TRealXMultiply6 ");			// if so, overflow
+	asm("cmp r0, #0 ");						// check for underflow
+	asm("orrgt r3, r3, r0, lsl #16 ");		// if no underflow, result exponent into r3, ...
+	asm("movgt r12, #0 ");					// ... return KErrNone ...
+	asm("bicgt pc, lr, #3 ");
+
+	// underflow
+	asm("and r3, r3, #1 ");					// set exponent=0, keep sign
+	asm("mvn r12, #9 ");					// return KErrUnderflow
+	asm("bic pc, lr, #3 ");
+
+	// come here if divisor is zero, dividend finite
+	asm("TRealXDivide3: ");
+	asm("cmp r3, #0x10000 ");				// check if dividend also zero
+	asm("bcc TRealXRealIndefinite ");		// if so, return 'real indefinite'
+	asm("orr r3, r3, #0xFF000000 ");		// else return infinity with xor sign
+	asm("orr r3, r3, #0x00FF0000 ");
+	asm("mov r2, #0x80000000 ");
+	asm("mov r1, #0 ");
+	asm("mvn r12, #40 ");					// return KErrDivideByZero
+	asm("bic pc, lr, #3 ");
+
+	// Dividend is NaN or infinity
+	asm("TRealXDivide1: ");
+	asm("cmp r2, #0x80000000 ");			// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("cmn r6, #0x10000 ");				// check 2nd operand for NaN/infinity
+	asm("mvncc r12, #8 ");					// if not, return KErrOverflow
+	asm("biccc pc, lr, #3 ");
+
+	// Dividend=infinity, divisor=NaN or infinity
+	asm("cmp r5, #0x80000000 ");			// check 2nd operand for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("b TRealXRealIndefinite ");			// else return 'real indefinite'
+
+	// Divisor is NaN or infinity, dividend finite
+	asm("TRealXDivide2: ");
+	asm("cmp r5, #0x80000000 ");			// check for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("and r3, r3, #1 ");					// else return zero with xor sign
+	asm("bic pc, lr, #3 ");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::ModEq(const TRealX& /*aVal*/)
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor. 
+
+@return KErrNone, if the operation is successful;
+        KErrTotalLossOfPrecision, if precision is lost;
+        KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r7,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXModulo ");
+	asm("ldmfd sp!, {r0,r4-r7,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("mov r0, r12 ");
+	__JUMP(,lr);
+
+	// TRealX remainder r1,r2,r3 % r4,r5,r6 result in r1,r2,r3
+	// Error code returned in r12
+	// Registers r0-r7,r12 modified
+	// NB This function is purely internal to EUSER and therefore IS ONLY EVER CALLED IN ARM MODE.
+	asm("TRealXModulo: ");
+	asm("mov r12, #0 ");					// initialise return value to KErrNone
+	asm("cmn r3, #0x10000 ");				// check if dividend is NaN or infinity
+	asm("bcs TRealXModulo1 ");				// branch if it is
+	asm("cmn r6, #0x10000 ");				// check if divisor is NaN or infinity
+	asm("bcs TRealXModulo2 ");				// branch if it is
+	asm("cmp r6, #0x10000 ");				// check if divisor zero
+	asm("bcc TRealXRealIndefinite ");		// if it is, return 'real indefinite'
+	asm("mov r0, r3, lsr #16 ");			// r0=dividend exponent
+	asm("subs r0, r0, r6, lsr #16 ");		// r0=dividend exponent-divisor exponent
+	__JUMP(lt,lr);
+	asm("cmp r0, #64 ");					// check if difference >= 64 bits
+	asm("bcs TRealXModuloLp ");				// if so, underflow
+	asm("b TRealXModulo4 ");				// skip left shift on first iteration
+
+	asm("TRealXModulo3: ");
+	asm("adds r1, r1, r1 ");				// shift dividend mantissa left one bit
+	asm("adcs r2, r2, r2 ");
+	asm("bcs TRealXModulo5 ");				// if one shifted out, override comparison
+	asm("TRealXModulo4: ");
+	asm("cmp r2, r5 ");						// compare dividend to divisor
+	asm("cmpeq r1, r4 ");
+	asm("bcc TRealXModulo6 ");				// if dividend<divisor, skip
+	asm("TRealXModulo5: ");
+	asm("subs r1, r1, r4 ");				// if dividend>=divisor, dividend-=divisor
+	asm("sbcs r2, r2, r5 ");
+	asm("TRealXModulo6: ");
+	asm("subs r0, r0, #1 ");				// decrement loop count
+	asm("bpl TRealXModulo3 ");				// if more bits to do, loop
+
+	asm("orrs r0, r1, r2 ");				// test for exact zero result
+	asm("andeq r3, r3, #1 ");				// if so, return zero with same sign as dividend
+	__JUMP(eq,lr);
+	asm("and r7, r3, #1 ");					// dividend sign bit into r7
+	asm("mov r3, r6, lsr #16 ");			// r3 lower 16 bits=result exponent=divisor exponent
+	asm("cmp r2, #0 ");						// test if upper 32 bits zero
+	asm("moveq r2, r1 ");					// if so, shift left by 32
+	asm("moveq r1, #0 ");
+	asm("subeqs r3, r3, #32 ");				// and subtract 32 from exponent
+	asm("bls TRealXModuloUnderflow ");		// if borrow from exponent or exponent 0, underflow
+	asm("mov r0, #32 ");					// r0 will hold 32-number of shifts to normalise
+	asm("cmp r2, #0x00010000 ");			// normalise
+	asm("movcc r2, r2, lsl #16 ");
+	asm("subcc r0, r0, #16 ");
+	asm("cmp r2, #0x01000000 ");
+	asm("movcc r2, r2, lsl #8 ");
+	asm("subcc r0, r0, #8 ");
+	asm("cmp r2, #0x10000000 ");
+	asm("movcc r2, r2, lsl #4 ");
+	asm("subcc r0, r0, #4 ");
+	asm("cmp r2, #0x40000000 ");
+	asm("movcc r2, r2, lsl #2 ");
+	asm("subcc r0, r0, #2 ");
+	asm("cmp r2, #0x80000000 ");
+	asm("movcc r2, r2, lsl #1 ");			// top bit of r2 is now set
+	asm("subcc r0, r0, #1 ");
+	asm("orr r2, r2, r1, lsr r0 ");			// top bits of r1 into bottom bits of r2
+	asm("rsb r0, r0, #32 ");				// r0=number of shifts to normalise
+	asm("mov r1, r1, lsl r0 ");				// shift r1 left - mantissa now normalised
+	asm("subs r3, r3, r0 ");				// subtract r0 from exponent
+	asm("bls TRealXModuloUnderflow ");		// if borrow from exponent or exponent 0, underflow
+	asm("orr r3, r7, r3, lsl #16 ");		// else r3=result exponent and sign
+	__JUMP(,lr);
+
+	// dividend=NaN or infinity
+	asm("TRealXModulo1: ");
+	asm("cmp r2, #0x80000000 ");			// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("cmn r6, #0x10000 ");				// check 2nd operand for NaN/infinity
+	asm("bcc TRealXRealIndefinite ");		// infinity%finite - return 'real indefinite'
+	asm("cmp r5, #0x80000000 ");			// check if divisor=infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	asm("b TRealXRealIndefinite ");			// else infinity%infinity - return 'real indefinite'
+
+	// divisor=NaN or infinity, dividend finite
+	asm("TRealXModulo2: ");
+	asm("cmp r5, #0x80000000 ");			// check for infinity
+	asm("cmpeq r4, #0 ");
+	asm("bne TRealXBinOpNan ");				// branch if NaN
+	__JUMP(,lr);
+
+	asm("TRealXModuloLp: ");
+	asm("mvn r12, #%a0" : : "i" ((TInt)~KErrTotalLossOfPrecision));
+	asm("mov r1, #0 ");
+	asm("mov r2, #0 ");
+	asm("and r3, r3, #1 ");
+	__JUMP(,lr);
+
+	asm("TRealXModuloUnderflow: ");
+	asm("mvn r12, #%a0" : : "i" ((TInt)~KErrUnderflow));
+	asm("mov r1, #0 ");
+	asm("mov r2, #0 ");
+	asm("and r3, r3, #1 ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Add(TRealX& /*aResult*/,const TRealX& /*aVal*/) const
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aResult On return, a reference to an extended precision object
+               containing the result of the operation.
+@param aVal    The extended precision value to be added. 
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow. 
+*/
+	{
+	// r0=this, r1=&aResult, r2=&aVal
+	asm("stmfd sp!, {r1,r4-r8,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXAdd ");
+	asm("ldmfd sp!, {lr} ");				// lr=&aResult
+	asm("stmia lr, {r1,r2,r3} ");
+	asm("mov r0, r12 ");					// return value into r0
+	__POPRET("r4-r8,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Sub(TRealX& /*aResult*/,const TRealX& /*aVal*/) const
+/**
+Subtracts an extended precision value from this extended precision number.
+
+@param aResult On return, a reference to an extended precision object
+               containing the result of the operation.
+@param aVal    The extended precision value to be subtracted. 
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow. 
+*/
+	{
+	// r0=this, r1=&aResult, r2=&aVal
+	asm("stmfd sp!, {r1,r4-r8,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXSubtract ");
+	asm("ldmfd sp!, {lr} ");				// lr=&aResult
+	asm("stmia lr, {r1,r2,r3} ");
+	asm("mov r0, r12 ");					// return value into r0
+	__POPRET("r4-r8,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Mult(TRealX& /*aResult*/,const TRealX& /*aVal*/) const
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aResult On return, a reference to an extended precision object
+               containing the result of the operation.
+@param aVal    The extended precision value to be used as the multiplier. 
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow. 
+*/
+	{
+	// r0=this, r1=&aResult, r2=&aVal
+	asm("stmfd sp!, {r1,r4-r7,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXMultiply ");
+	asm("ldmfd sp!, {lr} ");				// lr=&aResult
+	asm("stmia lr, {r1,r2,r3} ");
+	asm("mov r0, r12 ");					// return value into r0
+	__POPRET("r4-r7,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Div(TRealX& /*aResult*/,const TRealX& /*aVal*/) const
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aResult On return, a reference to an extended precision object
+               containing the result of the operation.
+@param aVal    The extended precision value to be used as the divisor.
+
+@return KErrNone, if the operation is successful;
+        KErrOverflow, if the operation results in overflow;
+        KErrUnderflow, if the operation results in underflow;
+        KErrDivideByZero, if the divisor is zero.
+*/
+	{
+	// r0=this, r1=&aResult, r2=&aVal
+	asm("stmfd sp!, {r1,r4-r9,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXDivide ");
+	asm("ldmfd sp!, {lr} ");				// lr=&aResult
+	asm("stmia lr, {r1,r2,r3} ");
+	asm("mov r0, r12 ");					// return value into r0
+	__POPRET("r4-r9,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Mod(TRealX& /*aResult*/,const TRealX& /*aVal*/) const
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aResult On return, a reference to an extended precision object
+               containing the result of the operation.
+
+@param aVal    The extended precision value to be used as the divisor. 
+
+@return KErrNone, if the operation is successful;
+        KErrTotalLossOfPrecision, if precision is lost;
+        KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// r0=this, r1=&aResult, r2=&aVal
+	asm("stmfd sp!, {r1,r4-r7,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXModulo ");
+	asm("ldmfd sp!, {lr} ");				// lr=&aResult
+	asm("stmia lr, {r1,r2,r3} ");
+	asm("mov r0, r12 ");					// return value into r0
+	__POPRET("r4-r7,");
+	}
+
+extern void PanicOverUnderflowDividebyZero(const TInt aErr);
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator+=(const TRealX& /*aVal*/)
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aVal The extended precision value to be added.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXAdd ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator-=(const TRealX& /*aVal*/)
+/**
+Subtracts an extended precision value from this extended precision number. 
+
+@param aVal The extended precision value to be subtracted.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXSubtract ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator*=(const TRealX& /*aVal*/)
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be subtracted.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r7,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXMultiply ");
+	asm("ldmfd sp!, {r0,r4-r7,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator/=(const TRealX& /*aVal*/)
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor. 
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+@panic MATHX KErrDivideByZero if the divisor is zero.
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r9,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXDivide ");
+	asm("ldmfd sp!, {r0,r4-r9,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator%=(const TRealX& /*aVal*/)
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor. 
+
+@return A reference to this object.
+
+@panic MATHX KErrTotalLossOfPrecision panic if precision is lost.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	asm("stmfd sp!, {r0,r4-r7,lr} ");
+	asm("ldmia r1, {r4,r5,r6} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("bl TRealXModulo ");
+	asm("ldmfd sp!, {r0,r4-r7,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	asm("cmpne r12, #%a0" : : "i" ((TInt)KErrTotalLossOfPrecision));
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator++()
+/**
+Increments this extended precision number by one,
+and then returns a reference to it.
+
+This is also referred to as a prefix operator. 
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// pre-increment
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("add r4, pc, #__TRealXOne-.-8 ");
+	asm("ldmia r4, {r4,r5,r6} ");			// r4,r5,r6=1.0
+	asm("bl TRealXAdd ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+
+	asm("__TRealXOne: ");
+	asm(".word 0x00000000 ");
+	asm(".word 0x80000000 ");
+	asm(".word 0x7FFF0000 ");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator++(TInt)
+/**
+Returns this extended precision number before incrementing it by one.
+
+This is also referred to as a postfix operator. 
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// post-increment
+	// r0=address of return value, r1=this
+	asm("stmfd sp!, {r0,r1,r4-r8,lr} ");
+	asm("ldmia r1, {r1,r2,r3} ");
+	asm("stmia r0, {r1,r2,r3} ");			// store old value
+	asm("add r4, pc, #__TRealXOne-.-8 ");
+	asm("ldmia r4, {r4,r5,r6} ");			// r4,r5,r6=1.0
+	asm("bl TRealXAdd ");
+	asm("ldmfd sp!, {r0,lr} ");				// restore r0, lr=this
+	asm("stmia lr, {r1,r2,r3} ");			// store incremented value
+	asm("ldmfd sp!, {r4-r8,lr} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator--()
+/**
+Decrements this extended precision number by one,
+and then returns a reference to it.
+
+This is also referred to as a prefix operator. 
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// pre-decrement
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r0, {r1,r2,r3} ");
+	asm("add r4, pc, #__TRealXOne-.-8 ");
+	asm("ldmia r4, {r4,r5,r6} ");			// r4,r5,r6=1.0
+	asm("bl TRealXSubtract ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator--(TInt)
+/**
+Returns this extended precision number before decrementing it by one.
+
+This is also referred to as a postfix operator. 
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// post-decrement
+	// r0=address of return value, r1=this
+	asm("stmfd sp!, {r0,r1,r4-r8,lr} ");
+	asm("ldmia r1, {r1,r2,r3} ");
+	asm("stmia r0, {r1,r2,r3} ");			// store old value
+	asm("add r4, pc, #__TRealXOne-.-8 ");
+	asm("ldmia r4, {r4,r5,r6} ");			// r4,r5,r6=1.0
+	asm("bl TRealXSubtract ");
+	asm("ldmfd sp!, {r0,lr} ");				// restore r0, lr=this
+	asm("stmia lr, {r1,r2,r3} ");			// store decremented value
+	asm("ldmfd sp!, {r4-r8,lr} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator+(const TRealX& /*aVal*/) const
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aVal The extended precision value to be added. 
+
+@return An extended precision object containing the result.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// r0=address of return value, r1=this, r2=&aVal
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r1, {r1,r2,r3} ");
+	asm("bl TRealXAdd ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator-(const TRealX& /*aVal*/) const
+/**
+Subtracts an extended precision value from this extended precision number. 
+
+@param aVal The extended precision value to be subtracted. 
+
+@return An extended precision object containing the result. 
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// r0=address of return value, r1=this, r2=&aVal
+	asm("stmfd sp!, {r0,r4-r8,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r1, {r1,r2,r3} ");
+	asm("bl TRealXSubtract ");
+	asm("ldmfd sp!, {r0,r4-r8,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator*(const TRealX& /*aVal*/) const
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the multiplier. 
+
+@return An extended precision object containing the result. 
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// r0=address of return value, r1=this, r2=&aVal
+	asm("stmfd sp!, {r0,r4-r7,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r1, {r1,r2,r3} ");
+	asm("bl TRealXMultiply ");
+	asm("ldmfd sp!, {r0,r4-r7,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator/(const TRealX& /*aVal*/) const
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor. 
+
+@return An extended precision object containing the result. 
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+@panic MATHX KErrDivideByZero if the divisor is zero.
+*/
+	{
+	// r0=address of return value, r1=this, r2=&aVal
+	asm("stmfd sp!, {r0,r4-r9,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r1, {r1,r2,r3} ");
+	asm("bl TRealXDivide ");
+	asm("ldmfd sp!, {r0,r4-r9,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator%(const TRealX& /*aVal*/) const
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor. 
+
+@return An extended precision object containing the result. 
+
+@panic MATHX KErrTotalLossOfPrecision if precision is lost.
+@panic MATHX KErrUnderflow if the operation results in underflow.
+*/
+	{
+	// r0=address of return value, r1=this, r2=&aVal
+	asm("stmfd sp!, {r0,r4-r7,lr} ");
+	asm("ldmia r2, {r4,r5,r6} ");
+	asm("ldmia r1, {r1,r2,r3} ");
+	asm("bl TRealXModulo ");
+	asm("ldmfd sp!, {r0,r4-r7,lr} ");
+	asm("stmia r0, {r1,r2,r3} ");
+	asm("cmp r12, #0 ");					// check the error code
+	asm("cmpne r12, #%a0" : : "i" ((TInt)KErrTotalLossOfPrecision));
+	__JUMP(eq,lr);
+	asm("mov r0, r12 ");
+	asm("b  " CSM_Z30PanicOverUnderflowDividebyZeroi);	// else panic
+	}
+
+
+
+
+#ifdef __REALS_MACHINE_CODED__
+__NAKED__ EXPORT_C TInt Math::Sqrt( TReal &/*aDest*/, const TReal &/*aSrc*/ )
+/**
+Calculates the square root of a number.
+
+@param aDest A reference containing the result. 
+@param aSrc  The number whose square-root is required.
+
+@return KErrNone if successful, otherwise another of
+        the system-wide error codes. 
+*/
+	{
+	// r0=address of aDest, r1=address of aSrc
+
+
+#ifdef __USE_VFP_MATH
+	VFP_FLDD(CC_AL,0,1,0);
+	VFP_FSQRTD(,0,0);
+	VFP_FMRRD(CC_AL,3,2,0);
+	asm("bic r1, r2, #0x80000000 ");	// remove sign bit
+	asm("cmn r1, #0x00100000 ");		// check if exp=7FF
+	asm("movpl r1, #0 ");				// if not return KErrNone
+	asm("bpl donesqrt ");
+	asm("movs r1, r1, lsl #12 ");		// if exp=7FF, check mantissa
+	asm("cmpeq r3, #0 ");
+	asm("moveq r1, #-9 ");				// if exp=7FF, mant=0, return KErrOverflow
+	asm("mvnne r2, #0x80000000 ");		// else set NaN
+	asm("mvnne r3, #0 ");
+	asm("movne r1, #-6 ");				// and return KErrArgument
+	asm("donesqrt: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r2,r3} ");			// store the result
+#else
+	asm("str r2, [r0, #4] ");
+	asm("str r3, [r0, #0] ");
+#endif
+	asm("mov r0, r1 ");
+	__JUMP(,lr);
+#else // __USE_VFP_MATH
+	asm("stmfd sp!, {r4-r10,lr} ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r1, {r3,r4} ");			// low mant into r4, sign:exp:high mant into r3
+#else
+	asm("ldr r3, [r1, #4] ");
+	asm("ldr r4, [r1, #0] ");
+#endif
+	asm("bic r5, r3, #0xFF000000 ");
+	asm("bic r5, r5, #0x00F00000 ");	// high word of mantissa into r5
+	asm("mov r2, r3, lsr #20 ");
+	asm("bics r2, r2, #0x800 ");		// exponent now in r2
+	asm("beq fastsqrt1 ");				// branch if exponent zero (zero or denormal)
+	asm("mov r6, #0xFF ");
+	asm("orr r6, r6, #0x700 ");
+	asm("cmp r2, r6 ");					// check for infinity or NaN
+	asm("beq fastsqrt2 ");				// branch if infinity or NaN
+	asm("movs r3, r3 ");				// test sign
+	asm("bmi fastsqrtn ");				// branch if negative
+	asm("sub r2, r2, #0xFF ");			// unbias the exponent
+	asm("sub r2, r2, #0x300 ");			//
+	asm("fastsqrtd1: ");
+	asm("mov r1, #0x40000000 ");		// value for comparison
+	asm("mov r3, #27 ");				// loop counter (number of bits/2)
+	asm("movs r2, r2, asr #1 ");		// divide exponent by 2, LSB into CF
+	asm("movcs r7, r5, lsl #11 ");		// mantissa into r6,r7 with MSB in MSB of r7
+	asm("orrcs r7, r7, r4, lsr #21 ");
+	asm("movcs r6, r4, lsl #11 ");
+	asm("movcs r4, #0 ");				// r4, r5 will hold result mantissa
+	asm("orrcs r7, r7, #0x80000000 ");	// if exponent odd, restore MSB of mantissa
+	asm("movcc r7, r5, lsl #12 ");		// mantissa into r6,r7 with MSB in MSB of r7
+	asm("orrcc r7, r7, r4, lsr #20 ");	// if exponent even, shift mantissa left an extra
+	asm("movcc r6, r4, lsl #12 ");		// place, lose top bit, and
+	asm("movcc r4, #1 ");				// set MSB of result, and
+	asm("mov r5, #0 ");					// r4, r5 will hold result mantissa
+	asm("mov r8, #0 ");					// r8, r9 will be comparison accumulator
+	asm("mov r9, #0 ");
+	asm("bcc fastsqrt4 ");				// if exponent even, calculate one less bit
+										// as result MSB already known
+
+	// Main mantissa square-root loop
+	asm("fastsqrt3: ");					// START OF MAIN LOOP
+	asm("subs r10, r7, r1 ");			// subtract result:01 from acc:mant
+	asm("sbcs r12, r8, r4 ");			// result into r14:r12:r10
+	asm("sbcs r14, r9, r5 ");
+	asm("movcs r7, r10 ");				// if no borrow replace accumulator with result
+	asm("movcs r8, r12 ");
+	asm("movcs r9, r14 ");
+	asm("adcs r4, r4, r4 ");			// shift result left one, putting in next bit
+	asm("adcs r5, r5, r5 ");
+	asm("mov r9, r9, lsl #2 ");			// shift acc:mant left by 2 bits
+	asm("orr r9, r9, r8, lsr #30 ");
+	asm("mov r8, r8, lsl #2 ");
+	asm("orr r8, r8, r7, lsr #30 ");
+	asm("mov r7, r7, lsl #2 ");
+	asm("orr r7, r7, r6, lsr #30 ");
+	asm("mov r6, r6, lsl #2 ");
+	asm("fastsqrt4: ");					// Come in here if we need to do one less iteration
+	asm("subs r10, r7, r1 ");			// subtract result:01 from acc:mant
+	asm("sbcs r12, r8, r4 ");			// result into r14:r12:r10
+	asm("sbcs r14, r9, r5 ");
+	asm("movcs r7, r10 ");				// if no borrow replace accumulator with result
+	asm("movcs r8, r12 ");
+	asm("movcs r9, r14 ");
+	asm("adcs r4, r4, r4 ");			// shift result left one, putting in next bit
+	asm("adcs r5, r5, r5 ");
+	asm("mov r9, r9, lsl #2 ");			// shift acc:mant left by 2 bits
+	asm("orr r9, r9, r8, lsr #30 ");
+	asm("mov r8, r8, lsl #2 ");
+	asm("orr r8, r8, r7, lsr #30 ");
+	asm("mov r7, r7, lsl #2 ");
+	asm("orr r7, r7, r6, lsr #30 ");
+	asm("mov r6, r6, lsl #2 ");
+	asm("subs r3, r3, #1 ");			// decrement loop counter
+	asm("bne fastsqrt3 ");				// do necessary number of iterations
+
+	asm("movs r4, r4, lsr #1 ");		// shift result mantissa right 1 place
+	asm("orr r4, r4, r5, lsl #31 ");	// LSB (=rounding bit) into carry
+	asm("mov r5, r5, lsr #1 ");
+	asm("adcs r4, r4, #0 ");			// round the mantissa to 53 bits
+	asm("adcs r5, r5, #0 ");
+	asm("cmp r5, #0x00200000 ");		// check for mantissa overflow
+	asm("addeq r2, r2, #1 ");			// if so, increment exponent - can never overflow
+	asm("bic r5, r5, #0x00300000 ");	// remove top bit of mantissa - it is implicit
+	asm("add r2, r2, #0xFF ");			// re-bias the exponent
+	asm("add r3, r2, #0x300 ");			// and move into r3
+	asm("orr r3, r5, r3, lsl #20 ");	// r3 now contains exponent + top of mantissa
+	asm("fastsqrt_ok: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r3,r4} ");			// store the result
+#else
+	asm("str r3, [r0, #4] ");
+	asm("str r4, [r0, #0] ");
+#endif
+	asm("mov r0, #0 ");					// error code KErrNone
+	__POPRET("r4-r10,");
+
+	asm("fastsqrt1: ");
+	asm("orrs r6, r5, r4 ");			// exponent zero - test mantissa
+	asm("beq fastsqrt_ok ");			// if zero, return 0
+
+	asm("movs r3, r3 ");				// denormal - test sign
+	asm("bmi fastsqrtn ");				// branch out if negative
+	asm("sub r2, r2, #0xFE ");			// unbias the exponent
+	asm("sub r2, r2, #0x300 ");			//
+	asm("fastsqrtd: ");
+	asm("adds r4, r4, r4 ");			// shift mantissa left
+	asm("adcs r5, r5, r5 ");
+	asm("sub r2, r2, #1 ");				// and decrement exponent
+	asm("tst r5, #0x00100000 ");		// test if normalised
+	asm("beq fastsqrtd ");				// loop until normalised
+	asm("b fastsqrtd1 ");				// now treat as a normalised number
+	asm("fastsqrt2: ");					// get here if infinity or NaN
+	asm("orrs r6, r5, r4 ");			// if mantissa zero, infinity
+	asm("bne fastsqrtnan ");			// branch if not - must be NaN
+	asm("movs r3, r3 ");				// test sign of infinity
+	asm("bmi fastsqrtn ");				// branch if -ve
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r3,r4} ");			// store the result
+#else
+	asm("str r3, [r0, #4] ");
+	asm("str r4, [r0, #0] ");
+#endif
+	asm("mov r0, #-9 ");				// return KErrOverflow
+	asm("b fastsqrt_end ");
+
+	asm("fastsqrtn: ");					// get here if negative or QNaN operand
+	asm("mov r3, #0xFF000000 ");		// generate "real indefinite" QNaN
+	asm("orr r3, r3, #0x00F80000 ");	// sign=1, exp=7FF, mantissa = 1000...0
+	asm("mov r4, #0 ");
+	asm("fastsqrtxa: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r3,r4} ");			// store the result
+#else
+	asm("str r3, [r0, #4] ");
+	asm("str r4, [r0, #0] ");
+#endif
+	asm("mov r0, #-6 ");				// return KErrArgument
+	asm("fastsqrt_end: ");
+	__POPRET("r4-r10,");
+
+	asm("fastsqrtnan: ");				// operand is a NaN
+	asm("tst r5, #0x00080000 ");		// test MSB of mantissa
+	asm("bne fastsqrtn ");				// if set it is a QNaN - so return "real indefinite"
+	asm("bic r3, r3, #0x00080000 ");	// else convert SNaN to QNaN
+	asm("b fastsqrtxa ");				// and return KErrArgument
+#endif // __USE_VFP_MATH
+	}
+
+
+
+
+__NAKED__ EXPORT_C TReal Math::Poly(TReal /*aX*/,const SPoly* /*aPoly*/) __SOFTFP
+/**
+Evaluates the polynomial:
+{a[n]X^n + a[n-1]X^(n-1) + ... + a[2]X^2 + a[1]X^1 + a[0]}.
+
+
+@param aX    The value of the x-variable 
+@param aPoly A pointer to the structure containing the set of coefficients
+             in the order: a[0], a[1], ..., a[n-1], a[n].
+
+@return The result of the evaluation.
+*/
+//
+// Evaluate a power series in x for a P_POLY coefficient table.
+// Changed to use TRealX throughout the calculation
+//
+	{
+	// On entry r0,r1=aX, r2=aPoly
+	asm("stmfd sp!, {r4-r11,lr} ");
+	asm("mov r11, r2 ");
+	asm("ldr r10, [r11], #4 ");			// r10=number of coefficients, r11=first coeff addr
+	asm("add r11, r11, r10, lsl #3 ");	// r11=address of last coefficient+8
+	asm("mov r2, r1 ");					// aX into r1,r2
+	asm("mov r1, r0 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("ldmdb r11!, {r1,r2} ");		// last coefficient into r1,r2
+	asm("bl ConvertTReal64ToTRealX ");	// convert to TRealX in r1,r2,r3
+	asm("subs r10, r10, #1 ");
+	asm("beq polynomial0 ");			// if no more coefficients, exit
+
+	asm("polynomial1: ");
+	asm("stmfd sp!, {r4,r5,r6} ");		// save value of aX
+	asm("bl TRealXMultiply ");			// r *= aX
+	asm("mov r4, r1 ");					// move result into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("ldmdb r11!, {r1,r2} ");		// next coefficient into r1,r2
+	asm("bl ConvertTReal64ToTRealX ");	// convert to TRealX in r1,r2,r3
+	asm("bl TRealXAdd ");				// r += *--pR
+	asm("ldmfd sp!, {r4,r5,r6} ");		// aX back into r4,r5,r6
+	asm("subs r10, r10, #1 ");			// iterate until all coefficients processed
+	asm("bne polynomial1 ");
+
+	asm("polynomial0: ");				// result now in r1,r2,r3
+	asm("bl ConvertTRealXToTReal64 ");	// convert back to TReal64
+	__POPRET("r4-r11,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C void Math::PolyX(TRealX& /*aY*/,const TRealX& /*aX*/,TInt /*aDeg*/,const TRealX* /*aCoef*/)
+/**
+Evaluates the polynomial:
+{a[n]X^n + a[n-1]X^(n-1) + ... + a[2]X^2 + a[1]X^1 + a[0]}.
+
+@param aY      A reference containing the result. 
+@param aX      The value of the x-variable. 
+@param aDeg    The degree of the polynomial (the highest power of x
+               which is present).
+@param aCoef   A pointer to a contiguous set of TRealX values containing
+               the coefficients.
+               They must be in the order: a[0], a[1], ..., a[n-1], a[n].
+*/
+//
+// Evaluate a polynomial with TRealX argument, coefficients and result
+//
+	{
+	// On entry r0=&aY, r1=&aX, r2=aDeg, r3=aCoef
+	asm("stmfd sp!, {r0,r4-r11,lr} ");
+	asm("add r11, r3, r2, lsl #3 ");	// r11=address of last coefficient
+	asm("add r11, r11, r2, lsl #2 ");
+	asm("mov r9, r1 ");					// r9=address of argument
+	asm("movs r10, r2 ");				// r10=number of coefficients-1
+	asm("ldmia r11, {r1,r2,r3} ");		// last coefficient into r1,r2,r3
+	asm("beq polyx0 ");					// if no more coefficients, exit
+
+	asm("polyx1: ");
+	asm("ldmia r9, {r4,r5,r6} ");		// aX into r4,r5,r6
+	asm("bl TRealXMultiply ");			// result *= aX
+	asm("ldmdb r11!, {r4,r5,r6} ");		// next coefficient into r4,r5,r6
+	asm("bl TRealXAdd ");				// result += next coeff
+	asm("subs r10, r10, #1 ");			// iterate until all coefficients processed
+	asm("bne polyx1 ");
+
+	asm("polyx0: ");					// result now in r1,r2,r3
+	asm("ldmfd sp!, {r0,r4-r11,lr} ");	// restore registers, including destination address in r0
+	asm("stmia r0, {r1,r2,r3} ");		// store result
+	__JUMP(,lr);
+	}
+
+
+
+
+#ifndef __USE_VFP_MATH
+__NAKED__ EXPORT_C TInt Math::Int(TReal& /*aTrg*/, const TReal& /*aSrc*/)
+/**
+Calculates the integer part of a number.
+
+The integer part is that before a decimal point.
+Truncation is toward zero, so that
+int(2.4)=2, int(2)=2, int(-1)=-1, int(-1.4)=-1, int(-1.999)=-1.
+
+
+@param aTrg A reference containing the result. 
+@param aSrc The number whose integer part is required. 
+
+@return KErrNone if successful, otherwise another of
+        the system-wide error codes. 
+*/
+//
+// Write the integer part of aSrc to the TReal at aTrg
+// Negative numbers are rounded towards zero.
+//
+	{
+	// r0=&aTrg, r1=&aSrc, return value in r0
+	asm("stmfd sp!, {lr} ");
+	asm("mov r12, r0 ");				// r12=&aTrg
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r1, {r0,r1} ");			// input value into r0,r1
+#else
+	asm("ldr r0, [r1, #4] ");
+	asm("ldr r1, [r1, #0] ");
+#endif
+	asm("bl TReal64Int ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r12, {r0,r1} ");			// store result
+#else
+	asm("str r0, [r12, #4] ");
+	asm("str r1, [r12, #0] ");
+#endif
+	asm("bic r0, r0, #0x80000000 ");	// remove sign bit
+	asm("cmn r0, #0x00100000 ");		// check for NaN or infinity
+	asm("movpl r0, #0 ");				// if neither, return KErrNone
+	asm("bpl math_int_0 ");
+	asm("movs r0, r0, lsl #12 ");		// check for infinity
+	asm("cmpeq r1, #0 ");
+	asm("mvneq r0, #8 ");				// if infinity return KErrOverflow
+	asm("mvnne r0, #5 ");				// else return KErrArgument
+	asm("math_int_0: ");
+	__POPRET("");
+
+	// Take integer part of TReal64 in r0,r1
+	// Infinity and NaNs are unaffected
+	// r0-r3 modified
+	asm("TReal64Int: ");
+	asm("mov r2, r0, lsr #20 ");
+	asm("bic r2, r2, #0x800 ");			// r2=exponent
+	asm("mov r3, #0x300 ");
+	asm("orr r3, r3, #0xFF ");			// r3=0x3FF
+	asm("subs r2, r2, r3 ");			// r2=exponent-3FF=number of integer bits-1
+	asm("ble TReal64Int1 ");			// branch if <=1 integer bits
+	asm("cmp r2, #52 ");
+	__JUMP(ge,lr);
+	asm("cmp r2, #20 ");
+	asm("bgt TReal64Int2 ");			// jump if >21 integer bits (r0 will be unaffected)
+	asm("rsb r2, r2, #20 ");			// r2=number of bits to clear at bottom end of r0
+	asm("mov r0, r0, lsr r2 ");			// clear them
+	asm("mov r0, r0, lsl r2 ");
+	asm("mov r1, #0 ");					// clear r1
+	__JUMP(,lr);
+	asm("TReal64Int2: ");
+	asm("rsb r2, r2, #52 ");			// r2=number of bits to clear at bottom end of r1
+	asm("mov r1, r1, lsr r2 ");			// clear them
+	asm("mov r1, r1, lsl r2 ");
+	__JUMP(,lr);
+	asm("TReal64Int1: ");				// result is either 0 or 1
+	asm("mov r1, #0 ");					// lower mantissa bits of result will be zero
+	asm("moveq r0, r0, lsr #20 ");		// if result is 1, clear mantissa but leave exponent
+	asm("moveq r0, r0, lsl #20 ");
+	asm("andlt r0, r0, #0x80000000 ");	// if result is 0, clear mantissa and exponent
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt Math::Int(TInt16& /*aTrg*/, const TReal& /*aSrc*/)
+/**
+Calculates the integer part of a number.
+
+The integer part is that before a decimal point.
+Truncation is toward zero, so that:
+int(2.4)=2, int(2)=2, int(-1)=-1, int(-1.4)=-1, int(-1.999)=-1.
+
+This function is suitable when the result is known to be small enough
+for a 16-bit signed integer.
+
+@param aTrg A reference containing the result. 
+@param aSrc The number whose integer part is required. 
+
+@return KErrNone if successful, otherwise another of
+        the system-wide error codes. 
+*/
+//
+// If the integer part of aSrc is in the range -32768 to +32767
+// inclusive, write the integer part to the TInt16 at aTrg
+// Negative numbers are rounded towards zero.
+// If an overflow or underflow occurs, aTrg is set to the max/min value
+//
+	{
+	// r0=&aTrg, r1=&aSrc
+	asm("stmfd sp!, {lr} ");
+	asm("mov r3, r0 ");					// r3=&aTrg
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r1, {r0,r1} ");			// input value into r0,r1
+#else
+	asm("ldr r0, [r1, #4] ");
+	asm("ldr r1, [r1, #0] ");
+#endif
+	asm("bl TReal64GetTInt ");			// do the conversion
+	asm("cmp r0, #0x8000 ");			// limit answer to TInt16 range
+	asm("movge r0, #0x7F00 ");
+	asm("orrge r0, r0, #0xFF ");
+	asm("mvnge r12, #8 ");				// set error code if limiting occurred
+	asm("cmn r0, #0x8000 ");
+	asm("movlt r0, #0x8000 ");
+	asm("mvnlt r12, #9 ");				// set error code if limiting occurred
+	asm("mov r1, r0, lsr #8 ");			// top byte of answer into r1
+	asm("strb r0, [r3] ");				// store result in aTrg
+	asm("strb r1, [r3, #1] ");
+	asm("mov r0, r12 ");				// return error code in r0
+	__POPRET("");
+	} 
+
+
+
+__NAKED__ EXPORT_C TInt Math::Int(TInt32& /*aTrg*/, const TReal& /*aSrc*/)
+/**
+Calculates the integer part of a number.
+
+The integer part is that before a decimal point.
+Truncation is toward zero, so that
+int(2.4)=2, int(2)=2, int(-1)=-1, int(-1.4)=-1, int(-1.999)=-1.
+
+This function is suitable when the result is known to be small enough
+for a 32-bit signed integer.
+
+@param aTrg A reference containing the result. 
+@param aSrc The number whose integer part is required.
+
+@return KErrNone if successful, otherwise another of
+        the system-wide error codes.
+*/
+//													 
+// If the integer part of the float is in the range -2147483648 to +2147483647
+// inclusive, write the integer part to the TInt32 at aTrg
+// Negative numbers are rounded towards zero.
+// If an overflow or underflow occurs, aTrg is set to the max/min value
+//
+	{
+	// r0=&aTrg, r1=&aSrc
+	asm("stmfd sp!, {lr} ");
+	asm("mov r3, r0 ");					// r3=&aTrg
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r1, {r0,r1} ");			// input value into r0,r1
+#else
+	asm("ldr r0, [r1, #4] ");
+	asm("ldr r1, [r1, #0] ");
+#endif
+	asm("bl TReal64GetTInt ");			// do the conversion
+	asm("str r0, [r3] ");				// store result in aTrg
+	asm("mov r0, r12 ");				// return error code in r0
+	__POPRET("");
+
+	//  Convert double in r0,r1 to int in r0
+	//	Return error code in r12
+	//	Registers r0,r1,r2,r12 modified
+	asm("TReal64GetTInt: ");
+	asm("mov r2, r0, lsr #20 ");
+	asm("bic r2, r2, #0x800 ");			// r1=exponent
+	asm("add r12, r2, #1 ");
+	asm("cmp r12, #0x800 ");			// check for NaN
+	asm("bne TReal64GetTInt1 ");
+	asm("movs r12, r0, lsl #12 ");		// exponent=FF, check mantissa
+	asm("cmpeq r1, #0 ");
+	asm("movne r0, #0 ");				// if non-zero, input is a NaN so return 0
+	asm("mvnne r12, #5 ");				// and return KErrArgument
+	__JUMP(ne,lr);
+	asm("TReal64GetTInt1: ");
+	asm("mov r12, #0x400 ");
+	asm("orr r12, r12, #0x1E ");		// r12=0x41E (exponent of 2^31)
+	asm("subs r2, r12, r2 ");			// r2=number of shifts to produce integer
+	asm("mov r12, #0 ");				// set return code to KErrNone
+	asm("ble TReal64GetTInt2 ");		// if <=0, saturate result
+	asm("cmp r2, #31 ");				// check if more than 31 shifts needed
+	asm("movhi r0, #0 ");				// if so, underflow result to 0
+	__JUMP(hi,lr);
+	asm("cmp r0, #0 ");					// check sign bit
+	asm("orr r0, r0, #0x00100000 ");	// set implicit integer bit
+	asm("mov r0, r0, lsl #11 ");		// shift mantissa up so MSB is in MSB of r0
+	asm("orr r0, r0, r1, lsr #21 ");	// put in bits from r1
+	asm("mov r0, r0, lsr r2 ");			// r0=absolute integer
+	asm("rsbmi r0, r0, #0 ");			// if negative, negate
+	__JUMP(,lr);
+	asm("TReal64GetTInt2: ");
+	asm("blt TReal64GetTInt3 ");		// if exponent>0x41E, definitely an overflow
+	asm("cmp r0, #0 ");					// check sign bit
+	asm("bpl TReal64GetTInt3 ");		// if positive, definitely an overflow
+	asm("orr r0, r0, #0x00100000 ");	// set implicit integer bit
+	asm("mov r0, r0, lsl #11 ");		// shift mantissa up so MSB is in MSB of r0
+	asm("orr r0, r0, r1, lsr #21 ");	// put in bits from r1
+	asm("cmp r0, #0x80000000 ");		// check if value is = -2^31
+	__JUMP(eq,lr);
+	asm("TReal64GetTInt3: ");
+	asm("cmp r0, #0 ");					// check sign
+	asm("mov r0, #0x80000000 ");
+	asm("subpl r0, r0, #1 ");			// if -ve return 80000000, if +ve return 7FFFFFFF
+	asm("mvnpl r12, #8 ");				// if +ve return KErrOverflow
+	asm("mvnmi r12, #9 ");				// if -ve return KErrUnderflow
+	__JUMP(,lr);
+	}
+#endif // __USE_VFP_MATH
+
+
+
+
+__NAKED__ EXPORT_C TBool Math::IsZero(const TReal& /*aVal*/)
+/**
+Determines whether a value is zero.
+
+@param aVal A reference to the value to be checked. 
+
+@return True, if aVal is zero; false, otherwise.
+*/
+	{
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r0, {r1,r2} ");			// input value into r0,r1
+#else
+	asm("ldr r2, [r0, #0] ");
+	asm("ldr r1, [r0, #4] ");
+#endif
+	asm("TReal64IsZero: ");
+	asm("mov r0, #0 ");					// default return value is 0
+	asm("bics r1, r1, #0x80000000 ");	// remove sign bit
+	asm("cmpeq r2, #0 ");				// and check both exponent and mantissa are zero
+	asm("moveq r0, #1 ");				// return 1 if zero
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool Math::IsNaN(const TReal& /*aVal*/)
+/**
+Determines whether a value is not a number.
+
+@param aVal A reference to the value to be checked. 
+
+@return True, if aVal is not a number; false, otherwise.
+*/
+	{
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r0, {r1,r2} ");			// input value into r0,r1
+#else
+	asm("ldr r2, [r0, #0] ");
+	asm("ldr r1, [r0, #4] ");
+#endif
+	asm("TReal64IsNaN: ");
+	asm("mov r0, #0 ");					// default return value is 0
+	asm("bic r1, r1, #0x80000000 ");	// remove sign bit
+	asm("cmn r1, #0x00100000 ");		// check if exponent=7FF
+	__JUMP(pl,lr);
+	asm("movs r1, r1, lsl #12 ");		// exponent=7FF, check mantissa
+	asm("cmpeq r2, #0 ");
+	asm("movne r0, #1 ");				// if mantissa nonzero, return 1
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool Math::IsInfinite(const TReal& /*aVal*/)
+/**
+Determines whether a value is infinite.
+
+@param aVal A reference to the value to be checked.
+
+@return True, if aVal is infinite; false, otherwise.
+*/
+	{
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r0, {r1,r2} ");			// input value into r0,r1
+#else
+	asm("ldr r2, [r0, #0] ");
+	asm("ldr r1, [r0, #4] ");
+#endif
+	asm("TReal64IsInfinite: ");
+	asm("mov r0, #0 ");					// default return value is 0
+	asm("mov r3, #0x00200000 ");		// r3 == - (0x7ff00000 << 1)
+	asm("cmp r2, #0 ");
+	asm("cmneq r3, r1, lsl #1 ");		// check exp=7FF && mant=0
+	asm("moveq r0, #1 ");				// if so, return 1
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool Math::IsFinite(const TReal& /*aVal*/)
+/**
+Determines whether a value is finite.
+
+In this context, a value is finite if it is a valid number and
+is not infinite.
+
+@param aVal A reference to the value to be checked.
+
+@return True, if aVal is finite; false, otherwise.
+*/
+	{
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldr r1, [r0, #0] ");			// only need exponent - get it into r0
+#else
+	asm("ldr r1, [r0, #4] ");			// only need exponent - get it into r0
+#endif
+	asm("TReal64IsFinite: ");
+	asm("mov r0, #0 ");					// default return value is 0
+	asm("bic r1, r1, #0x80000000 ");	// remove sign bit
+	asm("cmn r1, #0x00100000 ");		// check if exponent=7FF
+	asm("movpl r0, #1 ");				// else return 1
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C void Math::SetZero(TReal& /*aVal*/, TInt /*aSign*/)
+//
+// Constructs zeros, assuming default sign is positive
+//
+	{
+	asm("cmp r1, #0 ");					// test aSign
+	asm("movne r1, #0x80000000 ");		// if nonzero, set sign bit
+	asm("mov r2, #0 ");					// mantissa=0
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r1,r2} ");
+#else
+	asm("str r2, [r0, #0] ");
+	asm("str r1, [r0, #4] ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C void Math::SetNaN(TReal& /*aVal*/)
+//
+// Constructs NaN (+ve sign for Java)
+//
+	{
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("mvn r1, #0x80000000 ");		// r1=7FFFFFFF
+	asm("mvn r2, #0 ");					// r2=FFFFFFFF
+#else
+	asm("mvn r2, #0x80000000 ");		// r2=7FFFFFFF
+	asm("mvn r1, #0 ");					// r1=FFFFFFFF
+#endif
+	asm("stmia r0, {r1,r2} ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C void Math::SetInfinite(TReal& /*aVal*/, TInt /*aSign*/)
+//
+// Constructs infinities
+//
+	{
+	asm("cmp r1, #0 ");					// test aSign
+	asm("movne r1, #0x80000000 ");		// if nonzero, set sign bit
+	asm("orr r1, r1, #0x70000000 ");	// set exponent to 7FF
+	asm("orr r1, r1, #0x0FF00000 ");
+	asm("mov r2, #0 ");					// mantissa=0
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r1,r2} ");
+#else
+	asm("str r2, [r0, #0] ");
+	asm("str r1, [r0, #4] ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+#ifndef __USE_VFP_MATH
+__NAKED__ EXPORT_C TInt Math::Frac(TReal& /*aTrg*/, const TReal& /*aSrc*/)
+/**
+Calculates the fractional part of a number.
+
+The fractional part is that after a decimal point.
+Truncation is toward zero, so that
+Frac(2.4)=0.4, Frac(2)=0, Frac(-1)=0, Frac(-1.4)=0.4.
+
+@param aTrg A reference containing the result.
+@param aSrc The number whose fractional part is required. 
+
+@return KErrNone if successful, otherwise another of
+        the system-wide error codes.
+*/
+	{
+	// on entry r0=aTrg, r1=&Src
+	// on exit r0=return code
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("ldmia r1, {r1,r2} ");		// r1,r2=aSrc
+#else
+	asm("ldr r2, [r1, #0] ");
+	asm("ldr r1, [r1, #4] ");
+#endif
+	asm("and r3, r1, #0x80000000 ");
+	asm("str r3, [sp, #-4]! ");		// save sign
+	asm("mov r3, r1, lsr #20 ");
+	asm("bic r3, r3, #0x800 ");		// r3=exponent of aSrc
+	asm("mov r12, #0x300 ");
+	asm("orr r12, r12, #0xFE ");	// r12=0x3FE
+	asm("subs r3, r3, r12 ");		// r3=exponent of aSrc-0x3FE=number of integer bits
+	asm("ble MathFrac0 ");			// if <=0, return aSrc unaltered
+	asm("cmp r3, #53 ");
+	asm("bge MathFrac1 ");			// if >=53 integer bits, there is no fractional part
+	asm("mov r1, r1, lsl #11 ");	// left-justify mantissa in r1,r2
+	asm("orr r1, r1, r2, lsr #21 ");
+	asm("mov r2, r2, lsl #11 ");
+	asm("cmp r3, #32 ");			// check for >=32 integer bits
+	asm("bge MathFrac2 ");
+	asm("rsb r12, r3, #32 ");
+	asm("mov r1, r1, lsl r3 ");		// shift mantissa left by number of integer bits
+	asm("orrs r1, r1, r2, lsr r12 ");
+	asm("mov r2, r2, lsl r3 ");
+	asm("mov r3, #0x300 ");			// r3 holds exponent = 0x3FE initially
+	asm("orr r3, r3, #0xFE ");
+	asm("beq MathFrac3 ");			// branch if >=32 shifts to normalise
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12,1);
+	asm("mov r1, r1, lsl r12 ");
+	asm("rsb r12, r12, #32 ");
+	asm("orr r1, r1, r2, lsr r12 ");
+	asm("rsb r12, r12, #32 ");
+#else
+	asm("mov r12, #32 ");			// else r12=32-number of shifts needed
+	asm("cmp r1, #0x10000 ");		// calculate shift count
+	asm("movcc r1, r1, lsl #16 ");
+	asm("subcc r12, r12, #16 ");
+	asm("cmp r1, #0x1000000 ");
+	asm("movcc r1, r1, lsl #8 ");
+	asm("subcc r12, r12, #8 ");
+	asm("cmp r1, #0x10000000 ");
+	asm("movcc r1, r1, lsl #4 ");
+	asm("subcc r12, r12, #4 ");
+	asm("cmp r1, #0x40000000 ");
+	asm("movcc r1, r1, lsl #2 ");
+	asm("subcc r12, r12, #2 ");
+	asm("cmp r1, #0x80000000 ");
+	asm("movcc r1, r1, lsl #1 ");
+	asm("subcc r12, r12, #1 ");
+	asm("orr r1, r1, r2, lsr r12 ");	// normalise
+	asm("rsb r12, r12, #32 ");			// r12=shift count
+#endif
+	asm("mov r2, r2, lsl r12 ");
+	asm("sub r3, r3, r12 ");			// exponent-=shift count
+	asm("b MathFrac4 ");				// branch to assemble and store result
+
+	// come here if >=32 shifts to normalise
+	asm("MathFrac3: ");
+	asm("sub r3, r3, #32 ");		// decrement exponent by 32
+	asm("movs r1, r2 ");			// shift left by 32, set Z if result zero
+	asm("mov r2, #0 ");
+	asm("bne MathFrac6 ");			// if result nonzero, normalise
+	asm("beq MathFrac5 ");			// branch if result zero
+
+	// come here if >=32 integer bits
+	asm("MathFrac2: ");
+	asm("sub r3, r3, #32 ");
+	asm("movs r1, r2, lsl r3 ");	// shift left by number of integer bits, set Z if result zero
+	asm("mov r2, #0 ");
+	asm("mov r3, #0x300 ");			// r3 holds exponent = 0x3FE initially
+	asm("orr r3, r3, #0xFE ");
+	asm("beq MathFrac5 ");			// branch if result zero
+	asm("MathFrac6: ");
+	asm("cmp r1, #0x10000 ");		// else normalise
+	asm("movcc r1, r1, lsl #16 ");
+	asm("subcc r3, r3, #16 ");
+	asm("cmp r1, #0x1000000 ");
+	asm("movcc r1, r1, lsl #8 ");
+	asm("subcc r3, r3, #8 ");
+	asm("cmp r1, #0x10000000 ");
+	asm("movcc r1, r1, lsl #4 ");
+	asm("subcc r3, r3, #4 ");
+	asm("cmp r1, #0x40000000 ");
+	asm("movcc r1, r1, lsl #2 ");
+	asm("subcc r3, r3, #2 ");
+	asm("cmp r1, #0x80000000 ");
+	asm("movcc r1, r1, lsl #1 ");
+	asm("subcc r3, r3, #1 ");
+
+	// come here to assemble and store result
+	asm("MathFrac4: ");
+	asm("bic r1, r1, #0x80000000 ");	// remove integer bit
+	asm("mov r2, r2, lsr #11 ");		// shift mantissa right by 11
+	asm("orr r2, r2, r1, lsl #21 ");
+	asm("mov r1, r1, lsr #11 ");
+	asm("ldr r12, [sp] ");
+	asm("orr r1, r1, r3, lsl #20 ");	// exponent into r1 bits 20-30
+	asm("orr r1, r1, r12 ");			// sign bit into r1 bit 31
+
+	// come here to return source unaltered
+	asm("MathFrac0: ");
+	asm("add sp, sp, #4 ");
+	asm("MathFrac_ok: ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r1,r2} ");			// store result
+#else
+	asm("str r2, [r0, #0] ");
+	asm("str r1, [r0, #4] ");
+#endif
+	asm("mov r0, #0 ");					// return KErrNone
+	__JUMP(,lr);
+
+	// come here if infinity, NaN or >=53 integer bits
+	asm("MathFrac1: ");
+	asm("cmp r3, #0x400 ");				// check for infinity/NaN
+	asm("bhi MathFrac7 ");				// branch if so
+
+	// come here to return zero
+	asm("MathFrac5: ");
+	asm("ldr r1, [sp], #4 ");			// r1 bit 31=sign, rest zero
+	asm("mov r2, #0 ");
+	asm("b MathFrac_ok ");
+
+	// come here if infinity/NaN
+	asm("MathFrac7: ");
+	asm("movs r12, r1, lsl #12 ");		// check for infinity
+	asm("cmpeq r2, #0 ");
+	asm("bne MathFrac8 ");				// branch if NaN
+	asm("ldr r1, [sp], #4 ");			// r1 bit 31=sign, rest zero
+	asm("mov r2, #0 ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r1,r2} ");			// store zero result
+#else
+	asm("str r2, [r0, #0] ");
+	asm("str r1, [r0, #4] ");
+#endif
+	asm("mvn r0, #8 ");					// return KErrOverflow
+	__JUMP(,lr);
+	asm("MathFrac8: ");					// NaN
+	asm("add sp, sp, #4 ");
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("stmia r0, {r1,r2} ");			// store NaN unchanged
+#else
+	asm("str r2, [r0, #0] ");
+	asm("str r1, [r0, #4] ");
+#endif
+	asm("mvn r0, #5 ");					// return KErrArgument
+	__JUMP(,lr);
+	}
+#endif // __USE_VFP_MATH
+#endif
+
+#ifdef __REALS_MACHINE_CODED__
+#ifndef __ARMCC__
+extern "C" {
+
+extern "C" void __math_exception(TInt aErrType);
+__NAKED__ EXPORT_C TReal32 __addsf3(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Add two floats
+//
+    {
+	// a1 is in r0, a2 in r1 on entry; return with answer in r0
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("bl ConvertTReal32ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r0 ");					// a1 into r1
+	asm("bl ConvertTReal32ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("bl TRealXAdd ");				// add a1+a2, result in r1,r2,r3
+	asm("bl TRealXGetTReal32 ");		// convert result to TReal32 in r0, error code in r12
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r8,");
+	asm("stmfd sp!, {r0} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r4-r8,");
+    }
+
+__NAKED__ EXPORT_C TReal64 __adddf3(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Add two doubles
+//
+    {
+	// a1 is in r0,r1 a2 in r2,r3 on entry; return with answer in r0,r1
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("mov r7, r2 ");					// save a2
+	asm("mov r8, r3 ");
+	asm("mov r2, r1 ");					// a1 into r1,r2
+	asm("mov r1, r0 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r7 ");					// a2 into r1,r2
+	asm("mov r2, r8 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("bl TRealXAdd ");				// add a1+a2, result in r1,r2,r3
+	asm("bl TRealXGetTReal64 ");		// convert result to TReal64 in r0,r1 error code in r12
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r8,");
+	asm("stmfd sp!, {r0,r1} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r1,r4-r8,");
+    }
+
+__NAKED__ EXPORT_C TReal32 __subsf3(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Subtract two floats
+//
+    {
+	// a1 is in r0, a2 in r1 on entry; return with answer in r0
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("bl ConvertTReal32ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r0 ");					// a1 into r1
+	asm("bl ConvertTReal32ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("bl TRealXSubtract ");			// subtract a1-a2, result in r1,r2,r3
+	asm("bl TRealXGetTReal32 ");		// convert result to TReal32 in r0, error code in r12
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r8,");
+	asm("stmfd sp!, {r0} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r4-r8,");
+	}
+
+__NAKED__ EXPORT_C TReal64 __subdf3(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Subtract two doubles
+//
+    {
+	// a1 is in r0,r1 a2 in r2,r3 on entry; return with answer in r0,r1
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("mov r7, r0 ");					// save a1
+	asm("mov r8, r1 ");
+	asm("mov r1, r2 ");					// a2 into r1,r2
+	asm("mov r2, r3 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r7 ");					// a1 into r1,r2
+	asm("mov r2, r8 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("bl TRealXSubtract ");			// subtract a1-a2, result in r1,r2,r3
+	asm("bl TRealXGetTReal64 ");		// convert result to TReal64 in r0,r1 error code in r12
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r8,");
+	asm("stmfd sp!, {r0,r1} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r1,r4-r8,");
+    }
+
+__NAKED__ EXPORT_C TInt __cmpsf3(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Compare two floats
+//
+    {
+	// a1 in r0, a2 in r1 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal32 ");			// compare the two numbers
+	asm("mov r0, r0, lsl #28 ");
+	asm("msr cpsr_flg, r0 ");			// N=unordered, Z=(a1>a2), C=(a1=a2), V=(a1<a2)
+	asm("mov r0, #0 ");
+	asm("mvnvs r0, #0 ");				// if a1<a2 r0=-1
+	asm("moveq r0, #1 ");				// if a1>a2 r0=+1
+	__POPRET("");
+
+	// Compare two TReal32s in r0, r1.
+	// Return 1 if r0<r1, 2 if r0=r1, 4 if r0>r1, 8 if unordered
+	// Registers r0,r1,r12 modified
+	asm("CompareTReal32: ");
+	asm("mov r12, r0, lsr #23 ");
+	asm("and r12, r12, #0xFF ");		// r12=r0 exponent
+	asm("cmp r12, #0xFF ");				// check if r0 is a NaN
+	asm("bne CompareTReal32a ");
+	asm("movs r12, r0, lsl #9 ");		// exponent=FF, check mantissa
+	asm("movne r0, #8 ");				// if not zero, r0 is a NaN so result is unordered
+	__JUMP(ne,lr);
+	asm("CompareTReal32a: ");
+	asm("mov r12, r1, lsr #23 ");
+	asm("and r12, r12, #0xFF ");		// r12=r1 exponent
+	asm("cmp r12, #0xFF ");				// check if r1 is a NaN
+	asm("bne CompareTReal32b ");
+	asm("movs r12, r1, lsl #9 ");		// exponent=FF, check mantissa
+	asm("movne r0, #8 ");				// if not zero, r1 is a NaN so result is unordered
+	__JUMP(ne,lr);
+	asm("CompareTReal32b: ");
+	asm("bics r12, r0, #0x80000000 ");	// check if r0=0 (can be +0 or -0)
+	asm("moveq r0, #0 ");				// if it is, make it +0
+	asm("bics r12, r1, #0x80000000 ");	// check if r1=0 (can be +0 or -0)
+	asm("moveq r1, #0 ");				// if it is, make it +0
+	asm("teq r0, r1 ");					// test if signs different
+	asm("bmi CompareTReal32c ");		// branch if different
+	asm("cmp r0, r1 ");					// if same, check exponents + mantissas
+	asm("moveq r0, #2 ");				// if equal, return 2
+	__JUMP(eq,lr);
+	asm("movhi r0, #4 ");				// if r0>r1, r0=4
+	asm("movcc r0, #1 ");				// if r0<r1, r0=1
+	asm("cmp r1, #0 ");					// check signs
+	asm("eormi r0, r0, #5 ");			// if negative, switch 1 and 4
+	__JUMP(,lr);
+	asm("CompareTReal32c: ");			// come here if signs different
+	asm("cmp r0, #0 ");					// check sign of r0
+	asm("movpl r0, #4 ");				// if r0 nonnegative, then r0 is greater so return 4
+	asm("movmi r0, #1 ");				// if r0 negative, return 1
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TInt __cmpdf3(TReal64 /*a1*/,TReal64 /*a2*/)
+//
+// Compare two doubles
+//
+    {
+	// a1 in r0,r1, a2 in r2,r3 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal64 ");			// compare the two numbers
+	asm("mov r0, r0, lsl #28 ");
+	asm("msr cpsr_flg, r0 ");			// N=unordered, Z=(a1>a2), C=(a1=a2), V=(a1<a2)
+	asm("mov r0, #0 ");
+	asm("mvnvs r0, #0 ");				// if a1<a2 r0=-1
+	asm("moveq r0, #1 ");				// if a1>a2 r0=+1
+	__POPRET("");
+
+	// Compare two TReal64s in r0,r1 and r2,r3.
+	// Return 1 if r0,r1<r2,r3
+	// Return 2 if r0,r1=r2,r3
+	// Return 4 if r0,r1>r2,r3
+	// Return 8 if unordered
+	// Registers r0,r1,r12 modified
+	asm("CompareTReal64: ");
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r12, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r12 ");
+	asm("mov r12, r2 ");
+	asm("mov r2, r3 ");
+	asm("mov r3, r12 ");
+#endif
+	asm("mov r12, r0, lsr #20 ");
+	asm("bic r12, r12, #0x800 ");		// r12=first operand exponent
+	asm("add r12, r12, #1 ");			// add 1 to get usable compare value
+	asm("cmp r12, #0x800 ");			// check if first operand is a NaN
+	asm("bne CompareTReal64a ");
+	asm("movs r12, r0, lsl #12 ");		// exponent=7FF, check mantissa
+	asm("cmpeq r1, #0 ");
+	asm("movne r0, #8 ");				// if not zero, 1st op is a NaN so result is unordered
+	__JUMP(ne,lr);
+	asm("CompareTReal64a: ");
+	asm("mov r12, r2, lsr #20 ");
+	asm("bic r12, r12, #0x800 ");		// r12=second operand exponent
+	asm("add r12, r12, #1 ");			// add 1 to get usable compare value
+	asm("cmp r12, #0x800 ");			// check if second operand is a NaN
+	asm("bne CompareTReal64b ");
+	asm("movs r12, r2, lsl #12 ");		// exponent=7FF, check mantissa
+	asm("cmpeq r3, #0 ");
+	asm("movne r0, #8 ");				// if not zero, 2nd op is a NaN so result is unordered
+	__JUMP(ne,lr);
+	asm("CompareTReal64b: ");
+	asm("bics r12, r0, #0x80000000 ");	// check if first operand is zero (can be +0 or -0)
+	asm("cmpeq r1, #0 ");
+	asm("moveq r0, #0 ");				// if it is, make it +0
+	asm("bics r12, r2, #0x80000000 ");	// check if second operand is zero (can be +0 or -0)
+	asm("cmpeq r3, #0 ");
+	asm("moveq r2, #0 ");				// if it is, make it +0
+	asm("teq r0, r2 ");					// test if signs different
+	asm("bmi CompareTReal64c ");		// branch if different
+	asm("cmp r0, r2 ");					// if same, check exponents + mantissas
+	asm("cmpeq r1, r3 ");
+	asm("moveq r0, #2 ");				// if equal, return 2
+	__JUMP(eq,lr);
+	asm("movhi r0, #4 ");				// if 1st operand > 2nd operand, r0=4
+	asm("movcc r0, #1 ");				// if 1st operand < 2nd operand, r0=1
+	asm("cmp r2, #0 ");					// check signs
+	asm("eormi r0, r0, #5 ");			// if negative, switch 1 and 4
+	__JUMP(,lr);
+	asm("CompareTReal64c: ");			// come here if signs different
+	asm("cmp r0, #0 ");					// check sign of r0
+	asm("movpl r0, #4 ");				// if first operand nonnegative, return 4
+	asm("movmi r0, #1 ");				// if first operand negative, return 1
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TInt __eqsf2(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Compare if two floats are equal
+//
+    {
+	// a1 in r0, a2 in r1 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal32 ");			// compare the two numbers
+	asm("tst r0, #2 ");
+	asm("movne r0, #0 ");				// if ordered and equal return 0
+	asm("moveq r0, #1 ");				// else return 1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __eqdf2(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Compare if two doubles are equal
+//
+    {
+	// a1 in r0,r1, a2 in r2,r3 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal64 ");			// compare the two numbers
+	asm("tst r0, #2 ");
+	asm("movne r0, #0 ");				// if ordered and equal return 0
+	asm("moveq r0, #1 ");				// else return 1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __nesf2(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Compare if two floats are not equal
+//
+    {
+	// a1 in r0, a2 in r1 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal32 ");			// compare the two numbers
+	asm("tst r0, #5 ");					// test if ordered and unequal
+	asm("moveq r0, #0 ");				// if equal or unordered return 0
+	asm("movne r0, #1 ");				// if ordered and unequal return 1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __nedf2(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Compare if two doubles are not equal
+//
+    {
+	// a1 in r0,r1, a2 in r2,r3 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal64 ");			// compare the two numbers
+	asm("tst r0, #5 ");					// test if ordered and unequal
+	asm("moveq r0, #0 ");				// if equal or unordered return 0
+	asm("movne r0, #1 ");				// if ordered and unequal return 1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __gtsf2(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Compare if one float is greater than another
+//
+    {
+	// a1 in r0, a2 in r1 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal32 ");			// compare the two numbers
+	asm("tst r0, #4 ");					// test if ordered and a1>a2
+	asm("movne r0, #1 ");				// if ordered and a1>a2 return +1
+	asm("mvneq r0, #0 ");				// else return -1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __gtdf2(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Compare if one double is greater than another
+//
+    {
+	// a1 in r0,r1, a2 in r2,r3 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal64 ");			// compare the two numbers
+	asm("tst r0, #4 ");					// test if ordered and a1>a2
+	asm("movne r0, #1 ");				// if ordered and a1>a2 return +1
+	asm("mvneq r0, #0 ");				// else return -1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __gesf2(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Compare if one float is greater than or equal to another
+//
+    {
+	// a1 in r0, a2 in r1 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal32 ");			// compare the two numbers
+	asm("tst r0, #6 ");					// test if ordered and a1>=a2
+	asm("movne r0, #1 ");				// if ordered and a1>=a2 return +1
+	asm("mvneq r0, #0 ");				// else return -1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __gedf2(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Compare if one double is greater than or equal to another
+//
+    {
+	// a1 in r0,r1, a2 in r2,r3 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal64 ");			// compare the two numbers
+	asm("tst r0, #6 ");					// test if ordered and a1>=a2
+	asm("movne r0, #1 ");				// if ordered and a1>=a2 return +1
+	asm("mvneq r0, #0 ");				// else return -1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __ltsf2(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Compare if one float is less than another
+//
+    {
+	// a1 in r0, a2 in r1 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal32 ");			// compare the two numbers
+	asm("tst r0, #1 ");					// test if ordered and a1<a2
+	asm("mvnne r0, #0 ");				// if ordered and a1<a2 return -1
+	asm("moveq r0, #1 ");				// else return +1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __ltdf2(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Compare if one double is less than another
+//
+    {
+	// a1 in r0,r1, a2 in r2,r3 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal64 ");			// compare the two numbers
+	asm("tst r0, #1 ");					// test if ordered and a1<a2
+	asm("mvnne r0, #0 ");				// if ordered and a1<a2 return -1
+	asm("moveq r0, #1 ");				// else return +1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __lesf2(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Compare if one float is less than or equal to another
+//
+    {
+	// a1 in r0, a2 in r1 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal32 ");			// compare the two numbers
+	asm("tst r0, #3 ");					// test if ordered and a1<=a2
+	asm("mvnne r0, #0 ");				// if ordered and a1<=a2 return -1
+	asm("moveq r0, #1 ");				// else return +1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TInt __ledf2(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Compare if one double is less than or equal to another
+//
+    {
+	// a1 in r0,r1, a2 in r2,r3 on entry
+	asm("stmfd sp!, {lr} ");
+	asm("bl CompareTReal64 ");			// compare the two numbers
+	asm("tst r0, #3 ");					// test if ordered and a1<=a2
+	asm("mvnne r0, #0 ");				// if ordered and a1<=a2 return -1
+	asm("moveq r0, #1 ");				// else return +1
+	__POPRET("");
+    }
+
+__NAKED__ EXPORT_C TReal32 __mulsf3(TReal32 /*a1*/,TReal32 /*a2*/)
+//
+// Multiply two floats
+//
+    {
+	// a1 is in r0, a2 in r1 on entry; return with answer in r0
+	asm("stmfd sp!, {r4-r7,lr} ");
+	asm("bl ConvertTReal32ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r0 ");					// a1 into r1
+	asm("bl ConvertTReal32ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("bl TRealXMultiply ");			// multiply a1*a2, result in r1,r2,r3
+	asm("bl TRealXGetTReal32 ");		// convert result to TReal32 in r0, error code in r12
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r7,");
+	asm("stmfd sp!, {r0} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r4-r7,");
+    }
+
+__NAKED__ EXPORT_C TReal64 __muldf3(TReal64 /*a1*/, TReal64 /*a2*/)
+//
+// Multiply two doubles
+//
+    {
+	// a1 is in r0,r1 a2 in r2,r3 on entry; return with answer in r0,r1
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("mov r7, r2 ");					// save a2
+	asm("mov r8, r3 ");
+	asm("mov r2, r1 ");					// a1 into r1,r2
+	asm("mov r1, r0 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r7 ");					// a2 into r1,r2
+	asm("mov r2, r8 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("bl TRealXMultiply ");			// multiply a1*a2, result in r1,r2,r3
+	asm("bl TRealXGetTReal64 ");		// convert result to TReal64 in r0,r1 error code in r12
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r8,");
+	asm("stmfd sp!, {r0,r1} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r1,r4-r8,");
+    }
+
+__NAKED__ EXPORT_C TReal32 __divsf3(TReal32 /*a1*/, TReal32 /*a2*/)
+//
+// Divide two floats
+//
+    {
+	// a1 is in r0, a2 in r1 on entry; return with answer in r0
+	asm("stmfd sp!, {r4-r9,lr} ");
+	asm("bl ConvertTReal32ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r0 ");					// a1 into r1
+	asm("bl ConvertTReal32ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("bl TRealXDivide ");			// divide a1/a2, result in r1,r2,r3 error code in r12
+	asm("mov r9, r12 ");				// save error code in case it's division by zero
+	asm("bl TRealXGetTReal32 ");		// convert result to TReal32 in r0, error code in r12
+	asm("cmn r9, #41 ");				// check for KErrDivideByZero
+	asm("moveq r12, r9 ");
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r9,");
+	asm("stmfd sp!, {r0} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r4-r9,");
+    }
+
+__NAKED__ EXPORT_C TReal64 __divdf3(TReal64 /*a1*/, TReal64 /*a2*/)
+	//
+	// Divide two doubles
+	//
+	{
+	// a1 is in r0,r1 a2 in r2,r3 on entry; return with answer in r0,r1
+	asm("stmfd sp!, {r4-r9,lr} ");
+	asm("mov r7, r0 ");					// save a1
+	asm("mov r8, r1 ");
+	asm("mov r1, r2 ");					// a2 into r1,r2
+	asm("mov r2, r3 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a2 to TRealX in r1,r2,r3
+	asm("mov r4, r1 ");					// move into r4,r5,r6
+	asm("mov r5, r2 ");
+	asm("mov r6, r3 ");
+	asm("mov r1, r7 ");					// a1 into r1,r2
+	asm("mov r2, r8 ");
+	asm("bl ConvertTReal64ToTRealX ");	// convert a1 to TRealX in r1,r2,r3
+	asm("bl TRealXDivide ");			// divide a1/a2, result in r1,r2,r3
+	asm("mov r9, r12 ");				// save error code in case it's division by zero
+	asm("bl TRealXGetTReal64 ");		// convert result to TReal64 in r0,r1 error code in r12
+	asm("cmn r9, #41 ");				// check for KErrDivideByZero
+	asm("moveq r12, r9 ");
+	asm("cmp r12, #0 ");				// check error code
+	__CPOPRET(eq,"r4-r9,");
+	asm("stmfd sp!, {r0,r1} ");			// save result
+	asm("mov r0, r12 ");				// error code into r0
+	asm("bl __math_exception ");		// raise exception
+	__POPRET("r0,r1,r4-r9,");
+	}
+
+__NAKED__ EXPORT_C TReal32 __negsf2(TReal32 /*a1*/)
+//
+// Negate a float
+//
+    {
+	// a1 in r0 on entry, return value in r0
+	asm("eor r0, r0, #0x80000000 ");	// change sign bit
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TReal64 __negdf2(TReal64 /*a1*/)
+//
+// Negate a double
+//
+    {
+	// a1 in r0,r1 on entry, return value in r0,r1
+	asm("eor r0, r0, #0x80000000 ");	// change sign bit
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TReal32 __floatsisf(TInt /*a1*/)
+//
+// Convert int to float
+//
+    {
+	// a1 in r0 on entry, return value in r0
+	asm("cmp r0, #0 ");					// test for zero or negative
+	__JUMP(eq,lr);
+	asm("and ip, r0, #0x80000000 ");	// ip=bit 31 of r0 (sign bit)
+	asm("rsbmi r0, r0, #0 ");			// if negative, negate it
+	asm("mov r2, #0x9E ");				// r2=0x9E=exponent of 2^31
+	asm("cmp r0, #0x00010000 ");		// normalise integer, adjusting exponent
+	asm("movcc r0, r0, lsl #16 ");
+	asm("subcc r2, r2, #16 ");
+	asm("cmp r0, #0x01000000 ");
+	asm("movcc r0, r0, lsl #8 ");
+	asm("subcc r2, r2, #8 ");
+	asm("cmp r0, #0x10000000 ");
+	asm("movcc r0, r0, lsl #4 ");
+	asm("subcc r2, r2, #4 ");
+	asm("cmp r0, #0x40000000 ");
+	asm("movcc r0, r0, lsl #2 ");
+	asm("subcc r2, r2, #2 ");
+	asm("cmp r0, #0x80000000 ");
+	asm("movcc r0, r0, lsl #1 ");
+	asm("subcc r2, r2, #1 ");
+	asm("and r1, r0, #0xFF ");			// r1=bottom 8 bits=rounding bits
+	asm("cmp r1, #0x80 ");				// check if we need to round up (carry=1 if we do)
+	asm("moveqs r1, r0, lsr #9 ");		// if bottom 8 bits=0x80, set carry=LSB of mantissa
+	asm("addcss r0, r0, #0x100 ");		// round up if necessary
+	asm("addcs r2, r2, #1 ");			// if carry, increment exponent
+	asm("bic r0, r0, #0x80000000 ");	// remove top bit (integer bit of mantissa implicit)
+	asm("mov r0, r0, lsr #8 ");			// mantissa into r0 bits 0-22
+	asm("orr r0, r0, r2, lsl #23 ");	// exponent into r0 bits 23-30
+	asm("orr r0, r0, ip ");				// sign bit into r0 bit 31
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TReal64 __floatsidf(TInt /*a1*/)
+//
+// Convert int to double
+//
+    {
+	// a1 in r0 on entry, return value in r0,r1
+	asm("cmp r0, #0 ");					// test for zero or negative
+	asm("moveq r1, #0 ");				// if zero, return 0
+	__JUMP(eq,lr);
+	asm("and ip, r0, #0x80000000 ");	// ip=bit 31 of r0 (sign bit)
+	asm("rsbmi r0, r0, #0 ");			// if negative, negate it
+	asm("mov r2, #0x400 ");				// r2=0x41E=exponent of 2^31
+	asm("orr r2, r2, #0x1E ");
+	asm("cmp r0, #0x00010000 ");		// normalise integer, adjusting exponent
+	asm("movcc r0, r0, lsl #16 ");
+	asm("subcc r2, r2, #16 ");
+	asm("cmp r0, #0x01000000 ");
+	asm("movcc r0, r0, lsl #8 ");
+	asm("subcc r2, r2, #8 ");
+	asm("cmp r0, #0x10000000 ");
+	asm("movcc r0, r0, lsl #4 ");
+	asm("subcc r2, r2, #4 ");
+	asm("cmp r0, #0x40000000 ");
+	asm("movcc r0, r0, lsl #2 ");
+	asm("subcc r2, r2, #2 ");
+	asm("cmp r0, #0x80000000 ");
+	asm("movcc r0, r0, lsl #1 ");
+	asm("subcc r2, r2, #1 ");
+	asm("bic r0, r0, #0x80000000 ");	// remove top bit (integer bit of mantissa implicit)
+	asm("mov r1, r0, lsl #21 ");		// low 11 bits of mantissa into r1
+	asm("mov r0, r0, lsr #11 ");		// high 20 bits of mantissa into r0 bits 0-19
+	asm("orr r0, r0, r2, lsl #20 ");	// exponent into r0 bits 20-30
+	asm("orr r0, r0, ip ");				// sign bit into r0 bit 31
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov ip, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, ip ");
+#endif
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TInt __fixsfsi(TReal32 /*a1*/)
+//
+// Convert float to int
+//
+    {
+	// a1 in r0 on entry, return value in r0
+	asm("mov r1, r0, lsr #23 ");
+	asm("and r1, r1, #0xFF ");			// r1=exponent of a1
+	asm("cmp r1, #0xFF ");				// check for NaN
+	asm("bne fixsfsi1 ");
+	asm("movs r2, r0, lsl #9 ");		// exponent=FF, check mantissa
+	asm("movne r0, #0 ");				// if non-zero, a1 is a NaN so return 0
+	__JUMP(ne,lr);
+	asm("fixsfsi1: ");
+	asm("rsbs r1, r1, #0x9E ");			// r1=number of shifts to produce integer
+	asm("ble fixsfsi2 ");				// if <=0, saturate result
+	asm("cmp r0, #0 ");					// check sign bit
+	asm("orr r0, r0, #0x00800000 ");	// set implicit integer bit
+	asm("mov r0, r0, lsl #8 ");			// shift mantissa up so MSB is in MSB of r0
+	asm("mov r0, r0, lsr r1 ");			// r0=absolute integer
+	asm("rsbmi r0, r0, #0 ");			// if negative, negate
+	__JUMP(,lr);
+	asm("fixsfsi2: ");
+	asm("cmp r0, #0 ");					// check sign
+	asm("mov r0, #0x80000000 ");
+	asm("subpl r0, r0, #1 ");			// if -ve return 80000000, if +ve return 7FFFFFFF
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TInt __fixdfsi(TReal64 /*a1*/)
+//
+// Convert double to int
+//
+    {
+	// a1 in r0,r1 on entry, return value in r0
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r2, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r2 ");
+#endif
+	asm("mov r2, r0, lsr #20 ");
+	asm("bic r2, r2, #0x800 ");			// r1=exponent of a1
+	asm("add r3, r2, #1 ");
+	asm("cmp r3, #0x800 ");				// check for NaN
+	asm("bne fixdfsi1 ");
+	asm("movs r3, r0, lsl #12 ");		// exponent=FF, check mantissa
+	asm("cmpeq r1, #0 ");
+	asm("movne r0, #0 ");				// if non-zero, a1 is a NaN so return 0
+	__JUMP(ne,lr);
+	asm("fixdfsi1: ");
+	asm("mov r3, #0x400 ");
+	asm("orr r3, r3, #0x1E ");			// r3=0x41E (exponent of 2^31)
+	asm("subs r2, r3, r2 ");			// r2=number of shifts to produce integer
+	asm("ble fixdfsi2 ");				// if <=0, saturate result
+	asm("cmp r2, #31 ");				// check if more than 31 shifts needed
+	asm("movhi r0, #0 ");				// if so, underflow result to 0
+	__JUMP(hi,lr);
+	asm("cmp r0, #0 ");					// check sign bit
+	asm("orr r0, r0, #0x00100000 ");	// set implicit integer bit
+	asm("mov r0, r0, lsl #11 ");		// shift mantissa up so MSB is in MSB of r0
+	asm("orr r0, r0, r1, lsr #21 ");	// put in bits from r1
+	asm("mov r0, r0, lsr r2 ");			// r0=absolute integer
+	asm("rsbmi r0, r0, #0 ");			// if negative, negate
+	__JUMP(,lr);
+	asm("fixdfsi2: ");
+	asm("cmp r0, #0 ");					// check sign
+	asm("mov r0, #0x80000000 ");
+	asm("subpl r0, r0, #1 ");			// if -ve return 80000000, if +ve return 7FFFFFFF
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TReal64 __extendsfdf2(TReal32 /*a1*/)
+//
+// Convert a float to a double
+//
+    {
+	// a1 in r0, return in r0,r1
+	asm("mov r3, r0, lsr #3 ");
+	asm("ands r3, r3, #0x0FF00000 ");	// r3 bits 20-27 hold exponent, Z=1 if zero/denormal
+	asm("mov r1, r0, lsl #9 ");			// r1 = TReal32 mantissa << 9
+	asm("and r0, r0, #0x80000000 ");	// leave only sign bit in r0
+	asm("beq extendsfdf2a ");			// branch if zero/denormal
+	asm("cmp r3, #0x0FF00000 ");		// check for infinity or NaN
+	asm("orrcs r3, r3, #0x70000000 ");	// if infinity or NaN, exponent = 7FF
+	asm("addcc r3, r3, #0x38000000 ");	// else exponent = TReal32 exponent + 380
+	asm("orr r0, r0, r1, lsr #12 ");	// top 20 mantissa bits into r0 bits 0-19
+	asm("mov r1, r1, lsl #20 ");		// remaining mantissa bits in r1 bits 29-31
+	asm("orr r0, r0, r3 ");				// exponent into r0 bits 20-30
+	asm("b 0f ");
+	asm("extendsfdf2a: ");				// come here if zero or denormal
+	asm("cmp r1, #0 ");					// check for zero
+	asm("beq 0f ");
+	asm("mov r3, #0x38000000 ");		// else exponent = 380 (highest denormal exponent)
+	asm("cmp r1, #0x10000 ");			// normalise mantissa, decrementing exponent as needed
+	asm("movcc r1, r1, lsl #16 ");
+	asm("subcc r3, r3, #0x01000000 ");
+	asm("cmp r1, #0x1000000 ");
+	asm("movcc r1, r1, lsl #8 ");
+	asm("subcc r3, r3, #0x00800000 ");
+	asm("cmp r1, #0x10000000 ");
+	asm("movcc r1, r1, lsl #4 ");
+	asm("subcc r3, r3, #0x00400000 ");
+	asm("cmp r1, #0x40000000 ");
+	asm("movcc r1, r1, lsl #2 ");
+	asm("subcc r3, r3, #0x00200000 ");
+	asm("cmp r1, #0x80000000 ");
+	asm("movcc r1, r1, lsl #1 ");
+	asm("subcc r3, r3, #0x00100000 ");
+	asm("add r1, r1, r1 ");				// shift mantissa left one more to remove integer bit
+	asm("orr r0, r0, r1, lsr #12 ");	// top 20 mantissa bits into r0 bits 0-19
+	asm("mov r1, r1, lsl #20 ");		// remaining mantissa bits in r1 bits 29-31
+	asm("orr r0, r0, r3 ");				// exponent into r0 bits 20-30
+	asm("0: ");
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r3, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r3 ");
+#endif
+	__JUMP(,lr);
+    }
+
+__NAKED__ EXPORT_C TReal32 __truncdfsf2(TReal64 /*a1*/)
+//
+// Convert a double to a float
+// Raises an exception if conversion results in an error
+//
+    {
+	asm("stmfd sp!, {lr} ");
+	asm("bl TReal64GetTReal32 ");			// do the conversion
+	asm("cmp r12, #0 ");					// check error code
+	__CPOPRET(eq,"");
+	asm("stmfd sp!, {r0} ");				// else save result
+	asm("mov r0, r12 ");					// error code into r0
+	asm("bl __math_exception ");			// raise exception
+	__POPRET("r0,");
+
+	// Convert TReal64 in r0,r1 to TReal32 in r0
+	// Return error code in r12
+	// r0-r3, r12 modified
+	// NB This function is purely internal to EUSER and therefore IS ONLY EVER CALLED IN ARM MODE.
+	asm("TReal64GetTReal32: ");
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r2, r0 ");
+	asm("mov r0, r1 ");
+	asm("mov r1, r2 ");
+#endif
+	asm("mov r12, r0, lsr #20 ");
+	asm("bic r12, r12, #0x800 ");			// r12=a1 exponent
+	asm("sub r12, r12, #0x380 ");			// r12=exp in - 380 = result exponent if in range
+	asm("cmp r12, #0xFF ");					// check if input exponent too big for TReal32
+	asm("bge TReal64GetTReal32a ");			// branch if it is
+	asm("mov r2, r0, lsl #11 ");			// left justify mantissa in r2:r1
+	asm("orr r2, r2, r1, lsr #21 ");
+	asm("mov r1, r1, lsl #11 ");
+	asm("orr r2, r2, #0x80000000 ");		// set implied integer bit in mantissa
+	asm("cmp r12, #0 ");
+	asm("bgt TReal64GetTReal32b ");			// branch if normalised result
+	asm("cmn r12, #23 ");					// check for total underflow or zero
+	asm("bge TReal64GetTReal32e ");			// skip if not
+	asm("bics r2, r0, #0x80000000 ");		// check if input value zero
+	asm("cmpeq r1, #0 ");
+	asm("moveq r12, #0 ");					// if zero return KErrNone
+	asm("mvnne r12, #9 ");					// else return KErrUnderflow
+	asm("and r0, r0, #0x80000000 ");		// return zero of appropriate sign
+	asm("mov r1, #0 ");
+	__JUMP(,lr);
+	asm("TReal64GetTReal32e: ");			// result will be a denormal
+	asm("add r12, r12, #31 ");				// r12=32-mantissa shift required = 32-(1-r12)
+	asm("movs r3, r1, lsl r12 ");			// r3=lost bits when r2:r1 is shifted
+	asm("orrne lr, lr, #1 ");				// if these are not zero, set rounded down flag
+	asm("rsb r3, r12, #32 ");
+	asm("mov r1, r1, lsr r3 ");
+	asm("orr r1, r1, r2, lsl r12 ");
+	asm("mov r2, r2, lsr r3 ");				// r2 top 24 bits now give unrounded result mantissa
+	asm("mov r12, #0 ");					// result exponent will be zero
+	asm("TReal64GetTReal32b: ");
+	asm("movs r3, r2, lsl #24 ");			// top 8 truncated bits into top byte of r3
+	asm("bpl TReal64GetTReal32c ");			// if top bit clear, truncate
+	asm("cmp r3, #0x80000000 ");
+	asm("cmpeq r1, #0 ");					// compare rounding bits to 1000...
+	asm("bhi TReal64GetTReal32d ");			// if >, round up
+	asm("tst lr, #1 ");						// check rounded-down flag
+	asm("bne TReal64GetTReal32d ");			// if rounded down, round up
+	asm("tst r2, #0x100 ");					// else round to even - test LSB of result mantissa
+	asm("beq TReal64GetTReal32c ");			// if zero, truncate, else round up
+	asm("TReal64GetTReal32d: ");			// come here to round up
+	asm("adds r2, r2, #0x100 ");			// increment the mantissa
+	asm("movcs r2, #0x80000000 ");			// if carry, mantissa=800000
+	asm("addcs r12, r12, #1 ");				// and increment exponent
+	asm("cmpmi r12, #1 ");					// if mantissa normalised, check exponent>0
+	asm("movmi r12, #1 ");					// if normalised and exponent=0, set exponent to 1
+	asm("TReal64GetTReal32c: ");			// come here to truncate
+	asm("and r0, r0, #0x80000000 ");		// leave only sign bit in r0
+	asm("orr r0, r0, r12, lsl #23 ");		// exponent into r0 bits 23-30
+	asm("bic r2, r2, #0x80000000 ");		// remove integer bit from mantissa
+	asm("orr r0, r0, r2, lsr #8 ");			// non-integer mantissa bits into r0 bits 0-22
+	asm("cmp r12, #0xFF ");					// check for overflow
+	asm("mvneq r12, #8 ");					// if overflow, return KErrOverflow
+	asm("biceq pc, lr, #3 ");
+	asm("bics r1, r0, #0x80000000 ");		// check for underflow
+	asm("mvneq r12, #9 ");					// if underflow return KErrUnderflow
+	asm("movne r12, #0 ");					// else return KErrNone
+	asm("bic pc, lr, #3 ");
+	asm("TReal64GetTReal32a: ");			// come here if overflow, infinity or NaN
+	asm("add r3, r12, #1 ");
+	asm("cmp r3, #0x480 ");					// check for infinity or NaN
+	asm("movne r1, #0 ");					// if not, set mantissa to 0 for infinity result
+	asm("movne r0, r0, lsr #20 ");
+	asm("movne r0, r0, lsl #20 ");
+	asm("mov r1, r1, lsr #29 ");			// assemble 23 bit mantissa in r1
+	asm("orr r1, r1, r0, lsl #3 ");
+	asm("bic r1, r1, #0xFF000000 ");
+	asm("and r0, r0, #0x80000000 ");		// leave only sign in r0
+	asm("orr r0, r0, #0x7F000000 ");		// r0 bits 23-30 = FF = exponent
+	asm("orr r0, r0, #0x00800000 ");
+	asm("orr r0, r0, r1 ");					// r0 bits 0-22 = result mantissa
+	asm("movs r12, r0, lsl #9 ");			// check if result is infinity or NaN
+	asm("mvneq r12, #8 ");					// if infinity return KErrOverflow
+	asm("mvnne r12, #5 ");					// else return KErrArgument
+	asm("bic pc, lr, #3 ");
+    }
+}	// end of extern "C" declaration
+#endif
+#endif
+

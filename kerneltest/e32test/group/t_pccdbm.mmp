@@ -1,0 +1,31 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_pccdbm.mmp
+// 
+//
+
+TARGET         t_pccdbm.exe        
+TARGETTYPE     EXE
+SOURCEPATH	../pccd
+SOURCE         t_pccdbm.cpp
+LIBRARY        euser.lib hal.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+EPOCSTACKSIZE  0x8000
+EPOCHEAPSIZE   0x00001000 0x00800000	// Set max heap size to 8Mb
+
+capability		all
+
+VENDORID 0x70000001
+
+SMPSAFE

@@ -1,0 +1,37 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef __T_BASE_F32_PERF_IBY__
+#define __T_BASE_F32_PERF_IBY__
+
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfs-performance-small.script  	base\performance\f32\pbase-f32-rfs-performance-small.script
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfs-performance-medium.script 	base\performance\f32\pbase-f32-rfs-performance-medium.script
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfs-performance-large.script		base\performance\f32\pbase-f32-rfs-performance-large.script
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfile-performance-small.script	base\performance\f32\pbase-f32-rfile-performance-small.script
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfile-performance-medium.script	base\performance\f32\pbase-f32-rfile-performance-medium.script
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfile-performance-large.script  	base\performance\f32\pbase-f32-rfile-performance-large.script
+
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfile-performance-small.ini		base\performance\f32\pbase-f32-rfile-performance-small.ini
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfile-performance-medium.ini		base\performance\f32\pbase-f32-rfile-performance-medium.ini
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfile-performance-large.ini		base\performance\f32\pbase-f32-rfile-performance-large.ini
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfile-performance-utils.ini		base\performance\f32\pbase-f32-rfile-performance-utils.ini
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfs-performance-small.ini		base\performance\f32\pbase-f32-rfs-performance-small.ini
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfs-performance-medium.ini		base\performance\f32\pbase-f32-rfs-performance-medium.ini
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\pbase-f32-rfs-performance-large.ini		base\performance\f32\pbase-f32-rfs-performance-large.ini
+
+data=EPOCROOT##epoc32\data\Z\base\performance\f32\armv5\base_perf_f32_env.ini				base\performance\f32\base_perf_f32_env.ini
+
+#endif

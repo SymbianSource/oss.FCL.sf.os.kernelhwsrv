@@ -1,0 +1,129 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\arm\nk_entry.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm.h>
+#include "nk_priv.h"
+
+#include "entry.h"
+
+#ifndef	EKA2_ENTRY_POINT_VERSION_IDENTIFIER
+#define	EKA2_ENTRY_POINT_VERSION_IDENTIFIER	\
+	asm("tst pc, #%a0" : : "i" ((TInt)0) )
+#endif
+
+extern "C" {
+
+extern void HwInit0();
+extern void KernelMain();
+extern TLinAddr RomHeaderAddress;
+extern TLinAddr SuperPageAddress;
+
+
+/*
+ * The main startup program
+ * aRomHeader is address of ROM header passed in by bootstrap
+ * aSuperPage is address of super page passed in by bootstrap
+ *
+ * *** NOTE ***
+ * This is written in assembler in order that nk_exe.lib can be built entirely
+ * from one source file. This is necessary to ensure that the vector table above
+ * appears at the very beginning of the ekern.exe code section.
+ * ************
+ */
+#if defined(__GCC32__)
+GLDEF_C __NAKED__ void _E32Startup(TLinAddr /*aRomHeader*/, TLinAddr /*aSuperPage*/)
+	{
+	EKA2_ENTRY_POINT_VERSION_IDENTIFIER;	// DUMMY INSTRUCTION TO INDICATE EKA2 ENTRY POINT
+	asm("ldr r2, __RomHeaderAddress ");
+	asm("b 1f ");				// branch over space for unique ID
+
+	asm(".word 0 ");			// loader will replace with code seg unique ID
+								// for RAM-loaded code segment
+								// MUST BE AT OFFSET 12 FROM ENTRY POINT
+
+	asm("1: ");
+	asm("ldr r3, __SuperPage ");
+	asm("str r0, [r2] ");
+	asm("str r1, [r3] ");
+
+	asm("bl HwInit0 ");
+
+	asm("ldr r4, __CtorList ");
+	
+	asm("1: ");
+	asm("ldr r0, [r4, #4]! ");
+	asm("adr lr, 1b ");
+	asm("cmp r0, #0 ");
+	__JUMP(ne,r0);
+
+	asm("b KernelMain ");
+
+	asm("__RomHeaderAddress: ");
+	asm(".word RomHeaderAddress ");
+	asm("__SuperPage: ");
+	asm(".word SuperPageAddress ");
+	asm("__CtorList: ");
+	asm(".word __CTOR_LIST__ ");
+	}
+#elif defined(__ARMCC__)
+void __DLL_Export_Table__(void);
+void __cpp_initialize__aeabi_();
+  
+// The compiler generates calls to this when it reckons a top-level construction
+// needs destruction. But the kernel never will need this so, define it as a nop
+void __record_needed_destruction (void * d){}
+// 2.1 calls __aeabi_atexit passing __dso_handle. This can be a dummy (i.e. just a label)
+
+__asm void __dso_handle(void) {}
+void __aeabi_atexit(void *object, void (*dtor)(void *), void *handle){}
+
+void _E32Startup_Body(TLinAddr aRomHeader, TLinAddr aSuperPage);
+
+__NAKED__ void _E32Startup(TLinAddr aRomHeader, TLinAddr aSuperPage)
+	{
+	EKA2_ENTRY_POINT_VERSION_IDENTIFIER;	// DUMMY INSTRUCTION TO INDICATE EKA2 ENTRY POINT
+	asm("b _E32Startup_Body ");
+	asm(".word 0 ");			// padding
+
+	asm(".word 0 ");			// loader will replace with code seg unique ID
+								// for RAM-loaded code segment
+								// MUST BE AT OFFSET 12 FROM ENTRY POINT
+	}
+
+GLDEF_C void _E32Startup_Body(TLinAddr aRomHeader, TLinAddr aSuperPage)
+	{
+	RomHeaderAddress = aRomHeader;
+	SuperPageAddress = aSuperPage;
+	HwInit0();
+
+	// RVCT specific initialization
+
+	// Make sure we get an export table
+	__DLL_Export_Table__();
+
+	// Initialise static data
+	__cpp_initialize__aeabi_();
+
+	KernelMain();
+	}
+#else
+#error Not supported
+#endif
+
+}
+

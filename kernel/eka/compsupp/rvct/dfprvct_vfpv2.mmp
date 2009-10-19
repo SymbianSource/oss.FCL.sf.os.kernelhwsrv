@@ -1,0 +1,42 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include "dfprvct_common.mmh"
+
+
+#if defined(ARMCC_2_2)
+target          dfprvct2_2_vfpv2.dll
+linkas          dfprvct2_2.dll
+#elif defined(ARMCC_3_1)
+target          dfprvct3_1_vfpv2.dll
+linkas          dfprvct3_1.dll
+#endif
+
+noexportlibrary
+
+start armcc
+    #if defined(ARMCC_3_1)
+    armlibs     fj_5v.l
+
+    #elif defined(ARMCC_2_2)
+    #ifdef MARM_ARMV5
+    armlibs		f_tvp.l g_tvp.l
+    #else
+    armlibs		f_avp.l g_avp.l
+    #endif
+
+    #endif
+end
+SMPSAFE

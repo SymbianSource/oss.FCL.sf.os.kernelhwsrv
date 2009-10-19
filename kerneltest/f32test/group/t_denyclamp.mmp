@@ -1,0 +1,30 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_denyclamp.mmp
+// 
+//
+
+TARGET			t_denyclamp.exe
+TARGETTYPE		EXE
+SOURCEPATH		../demandpaging
+SOURCE			t_denyclamp.cpp
+LIBRARY			euser.lib efsrv.lib
+CAPABILITY		DISKADMIN TCB ALLFILES
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+// Second value must not be File Server SID (KFileServerUidValue)
+// UID				0x00000001 0x100039e 
+UID				0x00000001 0x100039d 
+
+SMPSAFE

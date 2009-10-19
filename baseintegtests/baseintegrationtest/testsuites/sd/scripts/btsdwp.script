@@ -1,0 +1,81 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Test system behaviour when Write Protect switch is on
+// 
+//
+
+//! @file btsdwp.script
+//! @SYMTestSuiteName basetestsd
+//! @SYMScriptTestEnvironment base
+
+LOAD_SUITE basetestsd
+
+PRINT ATTENTION: This is a manual test
+PRINT User will be prompted several times to change the SD card's Write Protect switch position
+
+START_TESTCASE PBASE-WRITEPROTECTREAD-0207
+//!  @SYMTestCaseID PBASE-WRITEPROTECTREAD-0207
+//!  @SYMTestCaseDesc Read a write-protected SD card
+//!  @SYMREQ REQ0000
+//!  @SYMTestActions
+//!      1. User turns Write Protect switch off
+//!      2. Format card
+//!      3. Create a number of files and directories on the card
+//!      4. User turns Write Protect switch on
+//!      5. Read files and directories
+//!      6. Check file system for consistency
+//!  @SYMTestExpectedResults
+//!      All operations complete with no error
+//!  @SYMTestPriority Medium
+//!  @SYMTestStatus Implemented
+//!  @SYMTestType CIT
+RUN_TEST_STEP -1   basetestsd DialogBox       \basetest\btsd.ini WRITEPROTECT_SETWPOFF
+RUN_TEST_STEP 500  basetestsd Format          \basetest\btsd.ini FullFormat
+RUN_TEST_STEP 500  basetestsd FileOperations1 \basetest\btsd.ini WRITEPROTECT_READ
+RUN_TEST_STEP -1   basetestsd DialogBox       \basetest\btsd.ini WRITEPROTECT_SETWPON
+RUN_TEST_STEP 500  basetestsd ReadFiles1      \basetest\btsd.ini WRITEPROTECT_READ
+RUN_TEST_STEP 500  basetestsd CheckDisk       \basetest\btsd.ini
+END_TESTCASE PBASE-WRITEPROTECTREAD-0207
+
+START_TESTCASE PBASE-WRITEPROTECTWRITE-0208
+//!  @SYMTestCaseID PBASE-WRITEPROTECTWRITE-0208
+//!  @SYMTestCaseDesc Write on a write-protected SD card
+//!  @SYMREQ REQ0000
+//!  @SYMTestActions
+//!      1. User turns Write Protect switch off
+//!      2. Format card
+//!      3. Create a number of files and directories on the card
+//!      4. User turns Write Protect switch on
+//!      5. Delete and create some files and directories on the card.
+//!      6. Read files and directories
+//!      7. Check file system for consistency
+//!  @SYMTestExpectedResults
+//!      1. The Write Protect switch is off
+//!      2. No error
+//!      3. No error
+//!      4. Card is now locked
+//!      5. All operations fail
+//!      6. Card contents have not been altered by action 5.
+//!      7. No error
+//!  @SYMTestPriority Medium
+//!  @SYMTestStatus Implemented
+//!  @SYMTestType CIT
+RUN_TEST_STEP -1   basetestsd DialogBox       \basetest\btsd.ini WRITEPROTECT_SETWPOFF
+RUN_TEST_STEP 500  basetestsd Format          \basetest\btsd.ini FullFormat
+RUN_TEST_STEP 500  basetestsd FileOperations1 \basetest\btsd.ini WRITEPROTECT_READ
+RUN_TEST_STEP -1   basetestsd DialogBox       \basetest\btsd.ini WRITEPROTECT_SETWPON
+RUN_TEST_STEP 500  basetestsd FileOperations2 \basetest\btsd.ini WRITEPROTECT_WRITE
+RUN_TEST_STEP 500  basetestsd ReadFiles1      \basetest\btsd.ini WRITEPROTECT_READ
+RUN_TEST_STEP 500  basetestsd CheckDisk       \basetest\btsd.ini
+END_TESTCASE PBASE-WRITEPROTECTWRITE-0208

@@ -1,0 +1,39 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// t_usbotg/bld.inf
+// Test code for usb OTG component
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_PLATFORMS
+armv5
+
+PRJ_TESTEXPORTS
+scripts/b2bm.bat     				/epoc32/rom/e32test/usbho/t_otgdi/b2bm.bat
+scripts/b2bs.bat     				/epoc32/rom/e32test/usbho/t_otgdi/b2bs.bat
+scripts/oet.bat     				/epoc32/rom/e32test/usbho/t_otgdi/oet.bat
+scripts/opta.bat     				/epoc32/rom/e32test/usbho/t_otgdi/opta.bat
+scripts/optb.bat     				/epoc32/rom/e32test/usbho/t_otgdi/optb.bat
+
+PRJ_MMPFILES
+
+PRJ_TESTMMPFILES
+#if defined(SYMBIAN_ENABLE_USB_OTG_HOST)
+group/t_otgdi.mmp
+group/t_otgdi_fdfactor.mmp
+#endif

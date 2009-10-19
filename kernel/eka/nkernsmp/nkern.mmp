@@ -1,0 +1,57 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/nkernsmp/nkern.mmp
+// 
+//
+
+sourcepath				../nkernsmp
+source					nkern.cpp nkerns.cpp sched.cpp dfcs.cpp nk_timer.cpp nk_irq.cpp
+
+#ifdef MARM
+sourcepath				../common/arm
+source					atomics.cia
+sourcepath				../nkernsmp/arm
+source					vectors.cia ncsched.cpp ncsched.cia nctimer.cia ncutilf.cia ncirq.cpp ncirq.cia ncthrd.cia
+source					ncutils.cia ncutils.cpp ncthrd.cpp ncglob.cpp nccpu.cpp nccpu.cia
+
+
+#elif defined(X86)
+#if defined(GCC32)
+sourcepath				../common/x86
+source					atomics.cia
+#elif defined(VC32)
+sourcepath				../common/win32
+source					atomics.cpp
+#endif
+sourcepath				../nkernsmp/x86
+source					ncsched.cpp ncsched.cia ncthrd.cpp ncthrd.cia vectors.cpp vectors.cia
+source					ncutilf.cpp ncutilf.cia ncutils.cpp ncutils.cia nccpu.cpp nccpu.cia
+source					ncirq.cpp ncirq.cia ncglob.cpp
+
+#elif defined(WINS)
+#error	No SMP on WINS
+#endif
+
+START ARMCC
+ARMRT
+#ifdef ARMCC_2
+ARMLIBS					c_a__un.l cpprt_a__u.l
+#ifndef ARMCC_2_1
+ARMLIBS					h_a__un.l 
+#endif
+#else
+ARMLIBS					c_4.l     h_4.l     cpprt_4.l
+#endif
+END
+

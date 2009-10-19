@@ -1,0 +1,50 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/medmmc/medmmc.mmp
+// 
+//
+
+#include "../../kernel/kern_ext.mmh"
+#include "drivers/elocd.mmh"
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE	../../include/drivers
+
+target			medmmc.pdd
+targettype		pdd
+
+//Define this macro to create an MBR when formatting low-capacity MMC cards :
+//macro			SYMBIAN_CREATE_MBR_ON_LOW_CAPACITY_MMC
+
+source			medmmc.cpp
+source			mmcptn.cpp
+
+library			epbusmmc.lib
+library			elocd.lib
+library			emmcptn.lib
+
+linkas			medmmc.pdd
+
+start wins
+win32_headers
+end
+
+epocallowdlldata
+
+UID			0x100039d0 0x100000d9
+VENDORID 0x70000001
+
+capability		all
+
+SMPSAFE

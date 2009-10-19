@@ -1,0 +1,3 @@
+EXPORTS
+	_ZN13CScreenDriver3NewEv @ 1 NONAME ; CScreenDriver::New()
+

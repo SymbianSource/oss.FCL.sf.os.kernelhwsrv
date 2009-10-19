@@ -1,0 +1,58 @@
+// @SYMTestCaseID           PBASE-USB-SINGLEIF1-0797
+// @SYMTestCaseDesc			Testing multiple pipes on a single interface (part 1)
+// @SYMTestActions
+//    Default settings used unless otherwise specified
+//    1. Loop using 1 IN and 1 OUT
+//    2. Loop using 2 IN and 2 OUT
+//    3. Loop Compare using 2 IN and 2 OUT
+//    4. Loop Compare using 2 IN and 2 OUT on first alternate settings
+//    5. Stream using 1 IN
+//    6. Stream using 1 OUT
+//    7. Stream using 3 IN
+//    8. Stream using 2 IN on first alternate settings
+//    9. Stream using 2 IN on second alternate settings
+//    10. Stream using 2 OUT
+//    11. Stream using 3 OUT on first alternate settings
+//    12. Stream using 3 OUT on second alternate settings
+// @SYMTestExpectedResults
+//    No error reported
+// @SYMTestPriority         High
+//
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+WaitConnect
+Loop		50	150	1000	0	0	2	1	1000	100	
+Wait
+Loop		50	150	1000	0	0	2	3	1000	100	
+Loop		50	150	1000	0	0	4	5	1000	100	
+Wait
+Compare		50	150	1000	0	0	2	1	1000	100	
+Compare		50	150	1000	0	0	4	3	1000	100	
+Wait
+Compare		50	750	1000	0	1	2	3	1000	100	
+Compare		90	750	1000	0	1	4	1	1000	100	
+Wait
+Stream			550	1000	0	0	99	1	1000	100
+Wait
+Stream			1500	1000	0	0	4	99	1000	100
+Wait
+Stream			50	1000	0	0	99	1	1000	100
+Stream			150	1000	0	0	99	3	1000	100
+Stream			250	1000	0	0	99	5	1000	100
+Wait
+Stream			50	1000	0	1	99	1	1000	100
+Stream			150	1000	0	1	99	3	1000	100
+Wait
+Stream			50	1000	0	2	99	1	1000	100
+Stream			150	1000	0	2	99	4	1000	100
+Wait
+Stream			50	1000	0	0	4	99	1000	100
+Stream			150	1000	0	0	2	99	1000	100
+Wait
+Stream			250	1000	0	1	2	99	1000	100
+Stream			450	1000	0	1	4	99	1000	100
+//Stream			250	1000	0	1	5	99	1000	100
+Wait
+Stream			250	1000	0	2	2	99	1000	100
+Stream			350	1000	0	2	3	99	1000	100
+//Stream			250	1000	0	1	5	99	1000	100
+Wait

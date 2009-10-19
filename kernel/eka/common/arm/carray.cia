@@ -1,0 +1,1209 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\common\arm\carray.cia
+// Machine coded arrays for ARM
+// 
+//
+
+#include <e32cia.h>
+#include "../common.h"
+
+#ifdef __ARRAY_MACHINE_CODED__
+extern "C" void PanicBadArrayFindMode();
+
+EXPORT_C __NAKED__ TAny*& RPointerArrayBase::At(TInt /*anIndex*/) const
+	{
+	asm("ldmia r0, {r2,r3} ");			// r2=iCount, r3=iEntries
+	asm("cmp r1, #0 ");					// check anIndex>=0
+	asm("cmpge r2, r1 ");				// if so, check iCount>anIndex
+	asm("addgt r0, r3, r1, lsl #2 ");	// address of entry = iEntries+4*anIndex
+#ifdef __CPU_ARMV6
+	asm("ble 1f ");						// avoid conditional return on ARMv6
+ 	__JUMP(,lr);
+#else
+ 	__JUMP(gt,lr);
+#endif
+	asm("1: ");
+	asm("b  " CSM_Z18PanicBadArrayIndexv);
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::Append(const TAny* /*anEntry*/)
+	{
+	asm("ldmia r0, {r2,r3,r12} ");		// r2=iCount, r3=iEntries, r12=iAllocated
+	asm("cmp r2, r12 ");
+	asm("beq ptr_append_1 ");
+	asm("ptr_append_0: ");
+	asm("str r1, [r3, r2, lsl #2] ");
+	asm("add r2, r2, #1 ");
+	asm("str r2, [r0] ");
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+	asm("ptr_append_1: ");
+	asm("stmfd sp!, {r0,r1,r2,lr} ");
+	asm("bl  " CSM_ZN17RPointerArrayBase4GrowEv);
+	asm("cmp r0, #0 ");
+	asm("bne ptr_append_2 ");
+	asm("ldmfd sp!, {r0,r1,r2,lr} ");
+	asm("ldmia r0, {r2, r3} ");
+	asm("b ptr_append_0 ");
+	asm("ptr_append_2: ");				// error enlarging array
+	asm("add sp, sp, #12 ");
+	__POPRET("");
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::Find(const TAny* /*anEntry*/) const
+	{
+	asm("ldmia r0, {r2,r3} ");			// r2=iCount, r3=iEntries
+	asm("mov r0, #0 ");					// r0=0 (will be index+1)
+	asm("subs r2, r2, #1 ");			// r2=iCount-1
+	asm("blt 0f ");
+	asm("1: ");
+	asm("ldr r12, [r3], #4 ");			// r12=iEntries[r0]
+	asm("add r0, r0, #1 ");				// r0 = index+1
+	asm("cmp r2, r0 ");					// C=1 iff iCount-1>=index+1 iff index<=iCount-2 iff this isn't last entry
+	asm("teq r12, r1 ");				// check for equality, doesn't affect C
+	asm("bhi 1b ");						// loop if C=1 & Z=0, i.e. if no match and this isn't last entry
+	asm("0: ");
+	asm("movne r0, #0 ");				// if no match set r0=0
+	asm("sub r0, r0, #1 ");				// r0 was index+1, return index
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::Find(const TAny* /*anEntry*/, TGeneralIdentityRelation /*anIdentity*/) const
+	{
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+	asm("ldmia r0, {r4,r5} ");			// r4=iCount, r5=iEntries
+	asm("mvn r6, #0 ");
+	asm("mov r7, r1 ");
+	asm("mov r8, r2 ");
+	asm("subs r4, r4, #1 ");			// r4=iCount-1
+	asm("bmi ptr_find2_return ");		// if count=0, return -1
+	asm("ptr_find2_loop: ");
+	asm("ldr r1, [r5], #4 ");			// r1=pointer to entry r6
+	asm("add r6, r6, #1 ");
+	asm("mov r0, r7 ");					// r0=anEntry
+	__JUMPL(8);
+	asm("cmp r0, #0 ");
+	asm("bne ptr_find2_return ");		// if equal, return r6
+	asm("cmp r6, r4 ");
+	asm("blt ptr_find2_loop ");
+	asm("mvn r6, #0 ");
+	asm("ptr_find2_return: ");			// return r6
+	asm("mov r0, r6 ");
+	__POPRET("r4-r8,");
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::BinarySearchSigned(TInt /*anEntry*/, TInt& /*anIndex*/) const
+	{
+	asm("mov r3, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::BinarySearchSigned(TInt /*anEntry*/, TInt& /*anIndex*/, TInt /*aMode*/) const
+	{
+	asm("stmfd sp!, {r4-r6,lr} ");
+	__EH_FRAME_PUSH2(r4-r6,lr)
+	asm("mov r6, r2 ");					// r6=&anIndex
+	asm("ldmia r0, {r2,r4} ");			// r2=count, r4=iEntries
+	asm("bl BinarySearchSigned ");
+	asm("str r2, [r6] ");				// store index
+	__POPRET("r4-r6,");
+
+// Binary search list of signed integers
+// Match value in r1
+// List address in r4
+// Count in r2
+// Match mode in r3
+// Return with: r0=0 if match found, r0=-1 otherwise
+//				Z flag set if match found, clear if not
+//				r2=index of match or next higher
+// r5 modified
+	asm("BinarySearchSigned: ");
+#ifdef _DEBUG
+	asm("cmp r3, #%a0" : : "i" ((TInt)EArrayFindMode_Limit) );
+	asm("bhs PanicBadArrayFindMode ");
+#endif
+	asm("mov r3, r3, lsl #30 ");		// match mode -> bits 30,31 (00000000=any, 40000000=first, 80000000=last)
+	asm("orr r3, r3, #1 ");				// set NOT FOUND flag
+	asm("cmp r2, #0 ");					// r2 will be right index
+	asm("beq 0f ");
+	asm("mov r5, #0 ");					// r5 = left index
+	asm("1: ");
+	asm("add r12, r2, r5 ");
+	asm("mov r12, r12, lsr #1 ");		// r12 = mid index
+	asm("ldr r0, [r4, r12, lsl #2] ");	// r0 = entry[mid]
+	asm("subs r0, r0, r1 ");			// r0 = entry[mid] - match
+	asm("beq 2f ");						// if match branch out
+	asm("3: ");
+	asm("addlt r5, r12, #1 ");			// else if entry<match left=mid+1
+	asm("movgt r2, r12 ");				// else if entry>match right=mid
+	asm("subs r0, r2, r5 ");			// right > left ?
+	asm("bgt 1b ");						// r0 = 0 when loop terminates
+	asm("0: ");
+	asm("tst r3, #1 ");					// test not found flag
+	asm("mvnnes r0, #0 ");				// if set r0=-1 = KErrNotFound
+	__JUMP(,lr);
+	asm("2: ");
+	asm("bics r3, r3, #1 ");			// clear NOT FOUND flag, test for find mode ANY (Z set if so)
+	asm("bne 3b ");						// if not, V=0 (left from subs), N=1 for last, 0 for first, Z=0 => LAST->LT FIRST->GT
+	asm("mov r2, r12 ");				// if so, r2 = mid
+	__JUMP(,lr);						// and return with r0 = 0
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::BinarySearchUnsigned(TUint /*anEntry*/, TInt& /*anIndex*/) const
+	{
+	asm("mov r3, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::BinarySearchUnsigned(TUint /*anEntry*/, TInt& /*anIndex*/, TInt /*aMode*/) const
+	{
+	asm("stmfd sp!, {r4-r6,lr} ");
+	__EH_FRAME_PUSH2(r4-r6,lr)
+	asm("mov r6, r2 ");					// r6=&anIndex
+	asm("ldmia r0, {r2,r4} ");			// r2=count, r4=iEntries
+	asm("bl BinarySearchUnsigned ");
+	asm("str r2, [r6] ");				// store index
+	__POPRET("r4-r6,");
+
+// Binary search list of unsigned integers
+// Match value in r1
+// List address in r4
+// Count in r2
+// Match mode in r3
+// Return with: r0=0 if match found, r0=-1 otherwise
+//				Z flag set if match found, clear if not
+//				r2=index of match or next higher
+// r5 modified
+	asm("BinarySearchUnsigned: ");
+#ifdef _DEBUG
+	asm("cmp r3, #%a0" : : "i" ((TInt)EArrayFindMode_Limit) );
+	asm("bhs PanicBadArrayFindMode ");
+#endif
+	asm("mov r3, r3, lsl #30 ");		// match mode -> bits 30,31 (00000000=any, 40000000=first, 80000000=last)
+	asm("orr r3, r3, #1 ");				// set NOT FOUND flag
+	asm("cmp r2, #0 ");					// r2 will be right index
+	asm("beq 0f ");
+	asm("mov r5, #0 ");					// r5 = left index
+	asm("1: ");
+	asm("add r12, r2, r5 ");
+	asm("mov r12, r12, lsr #1 ");		// r12 = mid index
+	asm("ldr r0, [r4, r12, lsl #2] ");	// r0 = entry[mid]
+	asm("subs r0, r1, r0 ");			// r0 = match - entry[mid]
+	asm("beq 2f ");						// if match branch out
+	asm("3: ");
+	asm("addhi r5, r12, #1 ");			// else if entry<match left=mid+1	HI = C &~ Z
+	asm("movlo r2, r12 ");				// else if entry>match right=mid	LO = ~C
+	asm("subs r0, r2, r5 ");			// right > left ?
+	asm("bgt 1b ");						// r0 = 0 when loop terminates
+	asm("0: ");
+	asm("tst r3, #1 ");					// test not found flag
+	asm("mvnnes r0, #0 ");				// if set r0=-1 = KErrNotFound
+	__JUMP(,lr);
+	asm("2: ");							// N=0 Z=1 C=1 V=0 r0=0 here
+	asm("bics r3, r3, #1 ");			// clear NOT FOUND flag, test for find mode ANY (Z set if so)
+	asm("cmpne r3, #0x60000000 ");		// HI if LAST, LO if FIRST
+	asm("bne 3b ");						// if not ANY, branch back
+	asm("mov r2, r12 ");				// if ANY, r2 = mid
+	__JUMP(,lr);						// and return with r0 = 0
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::BinarySearch(const TAny* /*anEntry*/, TInt& /*anIndex*/, TGeneralLinearOrder /*anOrder*/, TInt /*aMode*/) const
+	{
+	asm("stmfd sp!, {r2,r4-r11,lr} ");	// store &anIndex, r4-r11, lr
+	__EH_FRAME_ADDRESS(sp,4)
+	__EH_FRAME_PUSH2(r4-r11,lr)
+	asm("ldmia r0, {r5,r6} ");			// r5=count, r6=iEntries
+	asm("ldr r11, [sp, #40] ");			// r11 = aMode
+	asm("mov r7, r3 ");					// r7=anOrder
+	asm("mov r4, r1 ");					// r1=anEntry
+	asm("bl BinarySearchPointers ");	// r0=KErrNone if match, KErrNotFound if not
+	asm("ldmfd sp!, {r2,r4} ");			// r2=&anIndex, restore r4
+	// Dont need to FRAME RESTORE here since there's no barrier here
+	asm("str r5, [r2] ");				// store index
+	__POPRET("r5-r11,");				// restore r5-r11 and return
+
+// Binary search list of pointers
+// Pointer to match value in r4
+// List address in r6
+// Count in r5
+// Pointer to ordering function in r7
+// r11 = find mode
+// Return with: r0=0 if match found, r0=-1 otherwise
+//				Z flag set if match found, clear otherwise
+//				r5=index of match or next higher
+// r9,r10,r11 modified
+	asm("BinarySearchPointers: ");
+#ifdef _DEBUG
+	asm("cmp r11, #%a0" : : "i" ((TInt)EArrayFindMode_Limit) );
+	asm("bhs PanicBadArrayFindMode ");
+#endif
+	asm("movs r11, r11, lsl #30 ");		// match mode -> bits 30,31 (00000000=any, 40000000=first, 80000000=last)
+	asm("eorne r11, r11, #0xC0000000 ");	// match mode -> bits 30,31 (00000000=any, 80000000=first, 40000000=last)
+	asm("orr r11, r11, #1 ");			// set NOT FOUND flag
+	asm("mov r9, lr ");
+	asm("cmp r5, #0 ");					// r5 will be right index
+	asm("beq 0f ");
+	asm("mov r10, #0 ");				// r10 = left index
+	asm("1: ");
+	asm("add r8, r5, r10 ");
+	asm("mov r8, r8, lsr #1 ");			// r8 = mid index
+
+/** the latency of the indirect call should mask the latency of the ldr
+	arm1136 requires base register to be valid one cycle early
+*/
+	asm("mov r0, r4 ");					// r0 points to match value
+	asm("ldr r1, [r6, r8, lsl #2] ");	// r1 points to entry[mid]
+	__JUMPL(7);							// call ordering function (match, entry)
+	asm("cmp r0, #0 ");
+	asm("biceq r11, r11, #1 ");			// if match clear NOT FOUND flag
+	asm("addeqs r0, r0, r11 ");			// and add match mode to r0 (>0 if LAST, <0 if FIRST, 0 if ANY)
+	asm("beq 2f ");						// branch out if match and ANY
+	asm("addgt r10, r8, #1 ");			// else if match > entry, left = mid + 1
+	asm("movlt r5, r8 ");				// else if match < entry, right = mid
+	asm("subs r0, r5, r10 ");			// loop if right > left
+	asm("bgt 1b ");						// finish loop with r0 = 0
+	asm("0: ");
+	asm("tst r11, #1 ");				// test not found flag
+	asm("mvnnes r0, #0 ");				// if set r0=-1 = KErrNotFound
+	__JUMP(,r9);
+	asm("2: ");
+	asm("mov r5, r8 ");					// if ANY, r8 = mid
+	__JUMP(,r9);						// and return with r0 = 0, Z=1
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::FindIsqSigned(TInt /*anEntry*/) const
+	{
+	asm("mov r2, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::FindIsqSigned(TInt /*anEntry*/, TInt /*aMode*/) const
+	{
+#ifdef __EABI__
+	// sp needs correct alignment
+	asm("stmfd sp!, {r4-r6,lr} ");
+	__EH_FRAME_PUSH2(r4-r6,lr)
+#else
+	asm("stmfd sp!, {r4,r5,lr} ");
+#endif
+	asm("mov r3, r2 ");					// r3 = match mode
+	asm("ldmia r0, {r2,r4} ");			// r2=count, r4=iEntries
+	asm("bl BinarySearchSigned ");
+	asm("moveq r0, r2 ");				// if match r0=match index; if no match, r0=KErrNotFound
+#ifdef __EABI__
+	__POPRET("r4-r6,");
+#else
+	__POPRET("r4,r5,");
+#endif
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::FindIsqUnsigned(TUint /*anEntry*/) const
+	{
+	asm("mov r2, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::FindIsqUnsigned(TUint /*anEntry*/, TInt /*aMode*/) const
+	{
+#ifdef __EABI__
+	// sp needs correct alignment
+	asm("stmfd sp!, {r4-r6,lr} ");
+	__EH_FRAME_PUSH2(r4-r6,lr)
+#else
+	asm("stmfd sp!, {r4,r5,lr} ");
+#endif
+	asm("mov r3, r2 ");					// r3 = match mode
+	asm("ldmia r0, {r2,r4} ");			// r2=count, r4=iEntries
+	asm("bl BinarySearchUnsigned ");
+	asm("moveq r0, r2 ");				// if match r0=match index; if no match, r0=KErrNotFound
+#ifdef __EABI__
+	__POPRET("r4-r6,");
+#else
+	__POPRET("r4,r5,");
+#endif
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::FindIsq(const TAny* /*anEntry*/, TGeneralLinearOrder /*anOrder*/) const
+	{
+	asm("mov r3, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RPointerArrayBase::FindIsq(const TAny* /*anEntry*/, TGeneralLinearOrder /*anOrder*/, TInt /*aMode*/) const
+	{
+
+	asm("stmfd sp!, {r3-r11,lr} ");
+	__EH_FRAME_PUSH2(r4-r6,lr)
+	asm("ldmia r0, {r5,r6} ");			// r5=count, r6=iEntries
+	asm("mov r11, r3 ");				// r11 = aMode
+	asm("mov r7, r2 ");					// r7=anOrder
+	asm("mov r4, r1 ");					// r1=anEntry
+	asm("bl BinarySearchPointers ");
+	asm("moveq r0, r5 ");				// if match, r0=match index
+	__POPRET("r3-r11,");
+	}
+
+#ifndef __KERNEL_MODE__
+EXPORT_C __NAKED__ void RPointerArrayBase::HeapSortSigned()
+	{
+#ifdef __EABI__
+	asm("stmfd sp!, {r4-r10,lr} ");
+	__EH_FRAME_PUSH2(r4-r10,lr)
+#else
+	asm("stmfd sp!, {r4-r9,lr} ");
+#endif
+	asm("ldmia r0, {r4,r5} ");			// r4=iCount, r5=iEntries
+	asm("bl HeapSortSigned ");
+#ifdef __EABI__
+	__POPRET("r4-r10,");
+#else
+	__POPRET("r4-r9,");
+#endif
+	// Heap sort list of signed integers
+	// List address in r5, count in r4
+	// r4=ss, r6=sh, r7=si
+	// r8,r9 modified
+	asm("HeapSortSigned: ");
+	asm("cmp r4, #1 ");
+	__JUMP(le,lr);
+	asm("mov r6, r4, lsr #1 ");
+	asm("hss_loop_start1: ");
+	asm("sub r6, r6, #1 ");
+	asm("ldr r7, [r5, r6, lsl #2] ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("b hss_loop_start2 ");
+	asm("hss_loop_inner: ");
+	asm("ldr r0, [r5, r8, lsl #2] ");
+	asm("str r0, [r5, r9, lsl #2] ");
+	asm("mov r9, r8 ");
+	asm("hss_loop_start2: ");
+	asm("add r8, r8, #1 ");
+	asm("add r8, r8, r8 ");
+	asm("cmp r8, r4 ");
+	asm("bgt hss_loop_inner_end ");
+	asm("add r0, r5, r8, lsl #2 ");
+	asm("ldmneda r0, {r1,r2} ");
+	asm("ldreq r1, [r0, #-4] ");
+	asm("subeq r8, r8, #1 ");
+	asm("beq hss_loop_inner2 ");
+	asm("cmp r1, r2 ");
+	asm("subgt r8, r8, #1 ");
+	asm("movle r1, r2 ");
+	asm("hss_loop_inner2: ");
+	asm("cmp r1, r7 ");
+	asm("bgt hss_loop_inner ");
+	asm("hss_loop_inner_end: ");
+	asm("str r7, [r5, r9, lsl #2] ");
+	asm("cmp r6, #0 ");
+	asm("bne hss_loop_start1 ");
+	asm("sub r4, r4, #1 ");
+	asm("ldr r7, [r5, r4, lsl #2] ");
+	asm("ldr r0, [r5, #0] ");
+	asm("str r0, [r5, r4, lsl #2] ");
+	asm("cmp r4, #1 ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("bgt hss_loop_start2 ");
+	asm("str r7, [r5, #0] ");
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ void RPointerArrayBase::HeapSortUnsigned()
+	{
+	asm("stmfd sp!, {r4-r9,lr} ");
+	asm("ldmia r0, {r4,r5} ");			// r4=iCount, r5=iEntries
+	asm("bl HeapSortUnsigned ");
+	__POPRET("r4-r9,");
+	}
+#endif  // !__KERNEL_MODE__
+
+__NAKED__ void HeapSortUnsigned(TUint* aEntries,TInt aCount)
+	{
+	asm("stmfd sp!, {r4-r9,lr} ");
+	asm("mov r4,r1");			// r4=iCount
+	asm("mov r5,r0");			// r5=iEntries
+	asm("bl HeapSortUnsigned ");
+	__POPRET("r4-r9,");
+
+	// Heap sort list of unsigned integers
+	// List address in r5, count in r4
+	// r4=ss, r6=sh, r7=si
+	// r8,r9 modified
+	asm("HeapSortUnsigned: ");
+	asm("cmp r4, #1 ");
+	__JUMP(le,lr);
+	asm("mov r6, r4, lsr #1 ");
+	asm("hsu_loop_start1: ");
+	asm("sub r6, r6, #1 ");
+	asm("ldr r7, [r5, r6, lsl #2] ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("b hsu_loop_start2 ");
+	asm("hsu_loop_inner: ");
+	asm("ldr r0, [r5, r8, lsl #2] ");
+	asm("str r0, [r5, r9, lsl #2] ");
+	asm("mov r9, r8 ");
+	asm("hsu_loop_start2: ");
+	asm("add r8, r8, #1 ");
+	asm("add r8, r8, r8 ");
+	asm("cmp r8, r4 ");
+	asm("bgt hsu_loop_inner_end ");
+	asm("add r0, r5, r8, lsl #2 ");
+	asm("ldmneda r0, {r1,r2} ");
+	asm("ldreq r1, [r0, #-4] ");
+	asm("subeq r8, r8, #1 ");
+	asm("beq hsu_loop_inner2 ");
+	asm("cmp r1, r2 ");
+	asm("subhi r8, r8, #1 ");
+	asm("movls r1, r2 ");
+	asm("hsu_loop_inner2: ");
+	asm("cmp r1, r7 ");
+	asm("bhi hsu_loop_inner ");
+	asm("hsu_loop_inner_end: ");
+	asm("str r7, [r5, r9, lsl #2] ");
+	asm("cmp r6, #0 ");
+	asm("bne hsu_loop_start1 ");
+	asm("sub r4, r4, #1 ");
+	asm("ldr r7, [r5, r4, lsl #2] ");
+	asm("ldr r0, [r5, #0] ");
+	asm("str r0, [r5, r4, lsl #2] ");
+	asm("cmp r4, #1 ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("bgt hsu_loop_start2 ");
+	asm("str r7, [r5, #0] ");
+	__JUMP(,lr);
+	}
+
+#ifndef __KERNEL_MODE__
+EXPORT_C __NAKED__ void RPointerArrayBase::HeapSort(TGeneralLinearOrder /*anOrder*/)
+	{
+	asm("stmfd sp!, {r3-r11,lr} ");
+	// r3 is caller save
+	__EH_FRAME_ADDRESS(sp,4)
+	// we can push the callee save regs
+	__EH_FRAME_PUSH2(r4-r11,lr)
+	asm("ldmia r0, {r4,r5} ");			// r4=iCount, r5=iEntries
+	asm("mov r10, r1 ");				// r10=anOrder
+	asm("bl HeapSortPointers ");
+	__POPRET("r3-r11,");
+
+	// Heap sort list of pointers
+	// List address in r5, count in r4, r10 points to ordering function
+	// r4=ss, r6=sh, r7=si
+	// r8,r9,r11 modified
+	asm("HeapSortPointers: ");
+	asm("cmp r4, #1 ");
+	__JUMP(le,lr);
+	asm("mov r11, lr ");
+	asm("mov r6, r4, lsr #1 ");
+	asm("hsp_loop_start1: ");
+	asm("sub r6, r6, #1 ");
+	asm("ldr r7, [r5, r6, lsl #2] ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("b hsp_loop_start2 ");
+	asm("hsp_loop_inner: ");
+	asm("ldr r0, [r5, r8, lsl #2] ");
+	asm("str r0, [r5, r9, lsl #2] ");
+	asm("mov r9, r8 ");
+	asm("hsp_loop_start2: ");
+	asm("add r8, r8, #1 ");
+	asm("add r8, r8, r8 ");
+	asm("cmp r8, r4 ");
+	asm("bgt hsp_loop_inner_end ");
+	asm("subeq r8, r8, #1 ");
+	asm("beq hsp_loop_inner2 ");
+	asm("add r0, r5, r8, lsl #2 ");
+	asm("ldmda r0, {r0,r1} ");
+	__JUMPL(10);
+	asm("cmp r0, #0 ");
+	asm("subgt r8, r8, #1 ");
+	asm("hsp_loop_inner2: ");
+	asm("ldr r0, [r5, r8, lsl #2] ");
+	asm("mov r1, r7 ");
+	__JUMPL(10);
+	asm("cmp r0, #0 ");
+	asm("bgt hsp_loop_inner ");
+	asm("hsp_loop_inner_end: ");
+	asm("str r7, [r5, r9, lsl #2] ");
+	asm("cmp r6, #0 ");
+	asm("bne hsp_loop_start1 ");
+	asm("sub r4, r4, #1 ");
+	asm("ldr r7, [r5, r4, lsl #2] ");
+	asm("ldr r0, [r5, #0] ");
+	asm("str r0, [r5, r4, lsl #2] ");
+	asm("cmp r4, #1 ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("bgt hsp_loop_start2 ");
+	asm("str r7, [r5, #0] ");
+	__JUMP(,r11);
+	}
+#endif	// __KERNEL_MODE__
+
+EXPORT_C __NAKED__ TAny* RArrayBase::At(TInt /*anIndex*/) const
+	{
+	asm("ldmia r0, {r2,r3,r12} ");		// r2=iCount, r3=iEntries, r12=iEntrySize
+	asm("cmp r1, #0 ");					// check anIndex>=0
+	asm("cmpge r2, r1 ");				// if so, check iCount>anIndex
+	asm("mlagt r0, r1, r12, r3 ");		// if ok, r0=anIndex*iEntrySize+iEntries
+#ifdef __CPU_ARMV6
+	asm("ble 1f ");
+	__JUMP(,lr);
+#else
+	__JUMP(gt,lr);
+#endif
+	asm("1: ");
+	asm("b  " CSM_Z18PanicBadArrayIndexv);
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::Append(const TAny* /*anEntry*/)
+	{
+	asm("stmfd sp!, {lr} ");
+	asm("ldmia r0, {r3,r12} ");			// r3=iCount, r12=iEntries
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(RArrayBase,iAllocated));
+	asm("cmp r3, r2 ");
+	asm("beq simple_append_1 ");
+	asm("simple_append_0: ");
+	asm("add r2, r3, #1 ");
+	asm("str r2, [r0] ");				// iCount++
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(RArrayBase,iEntrySize));
+	asm("mla r0, r2, r3, r12 ");		// r0=iEntries+iEntrySize*iCount
+	asm("bl wordmove ");				// r1=anEntry, r2=iEntrySize, do copy
+	asm("mov r0, #0 ");					// return KErrNone;
+	__POPRET("");
+
+	asm("simple_append_1: ");
+	asm("stmfd sp!, {r0,r1,r2} ");
+	asm("bl  " CSM_ZN10RArrayBase4GrowEv);
+	asm("cmp r0, #0 ");
+	asm("bne simple_append_2 ");
+	asm("ldmfd sp!, {r0,r1,r2} ");
+	asm("ldmia r0, {r3, r12} ");
+	asm("b simple_append_0 ");
+	asm("simple_append_2: ");			// error enlarging array
+	asm("add sp, sp, #12 ");
+	__POPRET("");
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::Find(const TAny* /*anEntry*/) const
+	{
+	asm("ldmia r0, {r0,r2,r3,r12} ");	// r0=count, r2=iEntries, r3=iEntrySize, r12=iKeyOffset
+	asm("stmfd sp!, {r4,lr} ");			// save r4,lr
+	asm("subs r0, r0, #1 ");			// r0 = count-1
+	asm("blt 0f ");						// skip if count was zero
+	asm("ldr r1, [r1, r12] ");			// r1=key of match entry
+	asm("sub r4, r0, #1 ");				// r4 = iCount-2
+	asm("1: ");
+	asm("ldr lr, [r2, r12] ");			// lr=key of current entry
+	asm("add r2, r2, r3 ");				// step r2 to next entry
+	asm("subs r0, r0, #1 ");			// C=1 iff this isn't last entry
+	asm("teq lr, r1 ");					// check for match - C unaffected
+	asm("bhi 1b ");						// loop if C=1 & Z=0, i.e. if no match and this isn't last entry
+	asm("0: ");
+	asm("mvnne r0, #0 ");				// if no match, return -1
+	asm("subeq r0, r4, r0 ");			// if match, index = (iCount-2)-r0
+	__POPRET("r4,");
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::Find(const TAny* /*anEntry*/, TGeneralIdentityRelation /*anIdentity*/) const
+	{
+	asm("stmfd sp!, {r4-r10,lr} ");		// save r4-r10,lr
+	__EH_FRAME_PUSH2(r4-r10,lr)
+	asm("ldmia r0, {r4,r5,r6} ");		// r4=count, r5=iEntries, r6=iEntrySize
+	asm("mov r8, r1 ");					// r8=anEntry
+	asm("mov r9, r2 ");					// r9=anIdentity
+	asm("sub r7, r4, #1 ");				// r7=iCount-1
+	asm("b simple_find2_start ");
+	asm("simple_find2_loop: ");
+	asm("mov r1, r5 ");					// r1->current entry
+	asm("mov r0, r8 ");					// r0=anEntry
+	__JUMPL(9);
+	asm("cmp r0, #0 ");
+	asm("bne simple_find2_return ");
+	asm("add r5, r5, r6 ");				// else step to next entry
+	asm("simple_find2_start: ");
+	asm("subs r4, r4, #1 ");
+	asm("bpl simple_find2_loop ");
+	asm("add r4, r7, #1 ");				// no match, arrange to return -1
+	asm("simple_find2_return: ");
+	asm("sub r0, r7, r4 ");				// index=count-r4
+	__POPRET("r4-r10,");
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::BinarySearchSigned(const TAny* /*anEntry*/, TInt& /*anIndex*/) const
+	{
+	asm("mov r3, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::BinarySearchSigned(const TAny* /*anEntry*/, TInt& /*anIndex*/, TInt /*aMode*/) const
+	{
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+	asm("mov r8, r2 ");					// r8=&anIndex
+	asm("ldmia r0, {r2,r4,r5,r6} ");	// r2=count, r3=iEntries, r5=entry size, r6=key offset
+	asm("cmp r5, #4 ");					// check for 4 byte entries
+	asm("ldr r1, [r1, r6] ");			// r1=match key
+	asm("beq 1f ");						// if 4 byte entries, call simpler routine
+	asm("bl BinarySearchSignedKey ");	// if not, call general routine
+	asm("b 2f ");
+	asm("1: ");
+	asm("bl BinarySearchSigned ");		// use simpler routine for 4 byte entries
+	asm("2: ");
+	asm("str r2, [r8] ");
+	__POPRET("r4-r8,");
+
+// Binary search list of signed integers
+// Match key in r1
+// List address in r4
+// Count in r2
+// Match mode in r3
+// EntrySize in r5, KeyOffset in r6
+// Return with: r0=0 if match found, r0 nonzero otherwise
+//				r2=index of match or next higher
+// r7 modified
+	asm("BinarySearchSignedKey: ");
+#ifdef _DEBUG
+	asm("cmp r3, #%a0" : : "i" ((TInt)EArrayFindMode_Limit) );
+	asm("bhs PanicBadArrayFindMode ");
+#endif
+	asm("mov r3, r3, lsl #30 ");		// match mode -> bits 30,31 (00000000=any, 40000000=first, 80000000=last)
+	asm("orr r3, r3, #1 ");				// set NOT FOUND flag
+	asm("cmp r2, #0 ");					// r2 will be right index
+	asm("beq 0f ");
+	asm("mov r7, #0 ");					// r7 will be left index
+	asm("1: ");
+	asm("add r12, r2, r7 ");
+	asm("mov r12, r12, lsr #1 ");		// r12 = mid index
+	asm("mla r0, r12, r5, r6 ");		// r0 = key offset + entry size * mid index
+	asm("ldr r0, [r4, r0] ");			// r0 = key[mid]
+	asm("subs r0, r0, r1 ");			// r0 = entry[mid] - match
+	asm("beq 2f ");						// if match branch out
+	asm("3: ");
+	asm("addlt r7, r12, #1 ");			// else if entry<match left=mid+1
+	asm("movgt r2, r12 ");				// else if entry>match right=mid
+	asm("subs r0, r2, r7 ");			// right > left ?
+	asm("bgt 1b ");						// r0 = 0 when loop terminates
+	asm("0: ");
+	asm("tst r3, #1 ");					// test not found flag
+	asm("mvnnes r0, #0 ");				// if set r0=-1 = KErrNotFound
+	__JUMP(,lr);
+	asm("2: ");
+	asm("bics r3, r3, #1 ");			// clear NOT FOUND flag, test for find mode ANY (Z set if so)
+	asm("bne 3b ");						// if not, V=0 (left from subs), N=1 for last, 0 for first, Z=0 => LAST->LT FIRST->GT
+	asm("mov r2, r12 ");				// if so, r2 = mid
+	__JUMP(,lr);						// and return with r0 = 0
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::BinarySearchUnsigned(const TAny* /*anEntry*/, TInt& /*anIndex*/) const
+	{
+	asm("mov r3, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::BinarySearchUnsigned(const TAny* /*anEntry*/, TInt& /*anIndex*/, TInt /*aMode*/) const
+	{
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+	asm("mov r8, r2 ");					// r8=&anIndex
+	asm("ldmia r0, {r2,r4,r5,r6} ");	// r2=count, r4=iEntries, r5=entry size, r6=key offset
+	asm("cmp r5, #4 ");					// check for 4 byte entries
+	asm("ldr r1, [r1, r6] ");			// r1=match key
+	asm("beq 1f ");						// if 4 byte entries, call simpler routine
+	asm("bl BinarySearchUnsignedKey ");	// if not, call general routine
+	asm("b 2f ");
+	asm("1: ");
+	asm("bl BinarySearchUnsigned ");	// use simpler routine for 4 byte entries
+	asm("2: ");
+	asm("str r2, [r8] ");
+	__POPRET("r4-r8,");
+
+// Binary search list of unsigned integers
+// Match key in r1
+// List address in r4
+// Count in r2
+// Match mode in r3
+// EntrySize in r5, KeyOffset in r6
+// Return with: r0=0 if match found, r0 nonzero otherwise
+//				r2=index of match or next higher
+// r7 modified
+	asm("BinarySearchUnsignedKey: ");
+#ifdef _DEBUG
+	asm("cmp r3, #%a0" : : "i" ((TInt)EArrayFindMode_Limit) );
+	asm("bhs PanicBadArrayFindMode ");
+#endif
+	asm("mov r3, r3, lsl #30 ");		// match mode -> bits 30,31 (00000000=any, 40000000=first, 80000000=last)
+	asm("orr r3, r3, #1 ");				// set NOT FOUND flag
+	asm("cmp r2, #0 ");					// r2 will be right index
+	asm("beq 0f ");
+	asm("mov r7, #0 ");					// r7 will be left index
+	asm("1: ");
+	asm("add r12, r2, r7 ");
+	asm("mov r12, r12, lsr #1 ");		// r12 = mid index
+	asm("mla r0, r12, r5, r6 ");		// r0 = key offset + entry size * mid index
+	asm("ldr r0, [r4, r0] ");			// r0 = key[mid]
+	asm("subs r0, r1, r0 ");			// r0 = match - entry[mid]
+	asm("beq 2f ");						// if match branch out
+	asm("3: ");
+	asm("addhi r7, r12, #1 ");			// else if entry<match left=mid+1	HI = C &~ Z
+	asm("movlo r2, r12 ");				// else if entry>match right=mid	LO = ~C
+	asm("subs r0, r2, r7 ");			// right > left ?
+	asm("bgt 1b ");						// r0 = 0 when loop terminates
+	asm("0: ");
+	asm("tst r3, #1 ");					// test not found flag
+	asm("mvnnes r0, #0 ");				// if set r0=-1 = KErrNotFound
+	__JUMP(,lr);
+	asm("2: ");							// N=0 Z=1 C=1 V=0 r0=0 here
+	asm("bics r3, r3, #1 ");			// clear NOT FOUND flag, test for find mode ANY (Z set if so)
+	asm("cmpne r3, #0x60000000 ");		// HI if LAST, LO if FIRST
+	asm("bne 3b ");						// if not ANY, branch back
+	asm("mov r2, r12 ");				// if ANY, r2 = mid
+	__JUMP(,lr);						// and return with r0 = 0
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::BinarySearch(const TAny* /*anEntry*/, TInt& /*anIndex*/, TGeneralLinearOrder /*anOrder*/, TInt /*aMode*/) const
+	{
+	asm("stmfd sp!, {r3-r11,lr} ");
+	// r3 is caller save
+	__EH_FRAME_ADDRESS(sp,4)
+	// we can push the callee save regs
+	__EH_FRAME_PUSH2(r4-r11,lr)
+	asm("ldmia r0, {r5,r6,r11} ");		// r5=count, r6=iEntries, r11=entry size
+	asm("ldr r9, [sp, #40] ");			// r9 = aMode
+	asm("mov r4, r1 ");					// r4=anEntry
+	asm("mov r7, r3 ");					// r7=anOrder
+	asm("bl BinarySearchEntries ");
+	asm("str r5, [r2] ");				// store index
+	__POPRET("r3-r11,");
+
+	// Binary search list of general entries
+	// Pointer to match value in r4
+	// List address in r6
+	// Count in r5
+	// Match mode in r9
+	// Pointer to ordering function in r7
+	// Entry size in r11
+	// Return with: r0=0 if match found, r0 nonzero otherwise
+	//				r5=index of match or next higher
+	// r9,r10 modified
+	// r2 preserved
+	asm("BinarySearchEntries: ");
+#ifdef _DEBUG
+	asm("cmp r9, #%a0" : : "i" ((TInt)EArrayFindMode_Limit) );
+	asm("bhs PanicBadArrayFindMode ");
+#endif
+	asm("stmfd sp!, {r2,lr} ");
+	asm("movs r9, r9, lsl #30 ");		// match mode -> bits 30,31 (00000000=any, 40000000=first, 80000000=last)
+	asm("eorne r9, r9, #0xC0000000 ");	// match mode -> bits 30,31 (00000000=any, 80000000=first, 40000000=last)
+	asm("orr r9, r9, #1 ");				// set NOT FOUND flag
+	asm("cmp r5, #0 ");					// r5 will be right index
+	asm("beq 0f ");
+	asm("mov r10, #0 ");				// r10 will be left index
+	asm("1: ");
+	asm("add r8, r5, r10 ");
+	asm("mov r8, r8, lsr #1 ");			// r8 = mid index
+	asm("mla r1, r8, r11, r6 ");		// r1 = r8*entry size + list address = &entry[mid]
+	asm("mov r0, r4 ");					// r0 points to match value
+	__JUMPL(7);							// call ordering function (match, entry)
+	asm("cmp r0, #0 ");
+	asm("biceq r9, r9, #1 ");			// if match clear NOT FOUND flag
+	asm("addeqs r0, r0, r9 ");			// and add match mode to r0 (>0 if LAST, <0 if FIRST, 0 if ANY)
+	asm("beq 2f ");						// branch out if match and ANY
+	asm("addgt r10, r8, #1 ");			// else if match > entry, left = mid + 1
+	asm("movlt r5, r8 ");				// else if match < entry, right = mid
+	asm("subs r0, r5, r10 ");			// loop if right > left
+	asm("bgt 1b ");						// finish loop with r0 = 0
+	asm("0: ");
+	asm("tst r9, #1 ");					// test not found flag
+	asm("mvnnes r0, #0 ");				// if set r0=-1 = KErrNotFound
+	__POPRET("r2,");
+	asm("2: ");
+	asm("mov r5, r8 ");					// if ANY, r8 = mid
+	__POPRET("r2,");					// and return with r0 = 0, Z=1
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::FindIsqSigned(const TAny* /*anEntry*/) const
+	{
+	asm("mov r2, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::FindIsqSigned(const TAny* /*anEntry*/, TInt /*aMode*/) const
+	{
+#ifdef __EABI__
+	// sp needs to be aligned correctly
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+#else
+	asm("stmfd sp!, {r4-r7,lr} ");
+#endif
+	asm("mov r3, r2 ");					// r3 = match mode
+	asm("ldmia r0, {r2,r4,r5,r6} ");	// r2=count, r4=iEntries, r5=entry size, r6=key offset
+	asm("cmp r5, #4 ");					// check for 4 byte entries
+	asm("ldr r1, [r1, r6] ");			// r1=match key
+	asm("beq 1f ");						// use simpler routine for 4 byte entries
+	asm("bl BinarySearchSignedKey ");	// else call general routine
+	asm("b 2f ");
+	asm("1: ");
+	asm("bl BinarySearchSigned ");
+	asm("2: ");
+	asm("moveq r0, r2 ");				// if match r0=index else r0=KErrNotFound
+#ifdef __EABI__
+	__POPRET("r4-r8,");
+#else
+	__POPRET("r4-r7,");
+#endif
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::FindIsqUnsigned(const TAny* /*anEntry*/) const
+	{
+	asm("mov r2, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::FindIsqUnsigned(const TAny* /*anEntry*/, TInt /*aMode*/) const
+	{
+#ifdef __EABI__
+	// sp needs to be aligned correctly
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+#else
+	asm("stmfd sp!, {r4-r7,lr} ");
+#endif
+	asm("mov r3, r2 ");					// r3 = match mode
+	asm("ldmia r0, {r2,r4,r5,r6} ");	// r2=count, r4=iEntries, r5=entry size, r6=key offset
+	asm("cmp r5, #4 ");					// check for 4 byte entries
+	asm("ldr r1, [r1, r6] ");			// r1=match key
+	asm("beq 1f ");						// use simpler routine for 4 byte entries
+	asm("bl BinarySearchUnsignedKey ");	// else call general routine
+	asm("b 2f ");
+	asm("1: ");
+	asm("bl BinarySearchUnsigned ");
+	asm("2: ");
+	asm("moveq r0, r2 ");				// if match r0=index else r0=KErrNotFound
+#ifdef __EABI__
+	__POPRET("r4-r8,");
+#else
+	__POPRET("r4-r7,");
+#endif
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::FindIsq(const TAny* /*anEntry*/, TGeneralLinearOrder /*anOrder*/) const
+	{
+	asm("mov r3, #0 ");
+	// fall through
+	}
+
+EXPORT_C __NAKED__ TInt RArrayBase::FindIsq(const TAny* /*anEntry*/, TGeneralLinearOrder /*anOrder*/, TInt /*aMode*/) const
+	{
+	asm("stmfd sp!, {r3-r11,lr} ");
+	// r3 is caller save
+	__EH_FRAME_ADDRESS(sp,4)
+	// we can push the callee save regs
+	__EH_FRAME_PUSH2(r4-r11,lr)
+	asm("ldmia r0, {r5,r6,r11} ");		// r5=count, r6=iEntries, r11=entry size
+	asm("mov r4, r1 ");					// r4=anEntry
+	asm("mov r7, r2 ");					// r7=anOrder
+	asm("mov r9, r3 ");					// r9 = aMode
+	asm("bl BinarySearchEntries ");
+	asm("moveq r0, r5 ");				// if match r0=index
+	__POPRET("r3-r11,");
+	}
+
+#ifndef __KERNEL_MODE__
+EXPORT_C __NAKED__ void RArrayBase::HeapSortSigned()
+	{
+#ifdef __EABI__
+	// need sp aligned correctly
+	asm("stmfd sp!, {r3-r11,lr} ");
+	__EH_FRAME_ADDRESS(sp,4)
+	__EH_FRAME_PUSH2(r4-r11,lr)
+#else
+	asm("stmfd sp!, {r4-r11,lr} ");
+#endif
+	asm("ldmia r0, {r4,r5,r10,r11} ");	// r4=iCount, r5=iEntries, r10=entry size, r11=key offset
+	asm("cmp r10, #4 ");
+	asm("bleq HeapSortSigned ");
+	asm("cmp r10, #4 ");
+	asm("blne HeapSortSignedKey ");
+#ifdef __EABI__
+	__POPRET("r3-r11,");
+#else
+	__POPRET("r4-r11,");
+#endif
+
+	// Heap sort list of entries by signed key
+	// List address in r5, count in r4, entry size in r10, key offset in r11
+	// r4=ss, r6=sh
+	// r8,r9 modified
+	asm("HeapSortSignedKey: ");
+	asm("cmp r4, #1 ");
+	__JUMP(le,lr);
+	asm("mov r7, lr ");					// save lr in r7
+	asm("sub sp, sp, r10 ");			// get some temporary space on the stack
+	asm("mov r6, r4, lsr #1 ");
+	asm("hssk_loop_start1: ");
+	asm("sub r6, r6, #1 ");
+	asm("mla r1, r6, r10, r5 ");		// [sp]=entry[r6]
+	asm("mov r0, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("b hssk_loop_start2 ");
+	asm("hssk_loop_inner: ");
+	asm("mla r0, r9, r10, r5 ");		// r0=&entry[r9]
+	asm("mla r1, r8, r10, r5 ");		// r1=&entry[r8]
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[r9]=entry[r8]
+	asm("mov r9, r8 ");
+	asm("hssk_loop_start2: ");
+	asm("add r8, r8, #1 ");
+	asm("add r8, r8, r8 ");
+	asm("cmp r8, r4 ");
+	asm("bgt hssk_loop_inner_end ");
+	asm("mla r0, r8, r10, r5 ");
+	asm("ldrne r2, [r0, r11]! ");		// r2=key[r8]
+	asm("addeq r0, r0, r11 ");
+	asm("ldr r1, [r0, -r10] ");			// r1=key[r8-1]
+	asm("subeq r8, r8, #1 ");
+	asm("beq hssk_loop_inner2 ");
+	asm("cmp r1, r2 ");
+	asm("subgt r8, r8, #1 ");
+	asm("movle r1, r2 ");
+	asm("hssk_loop_inner2: ");
+	asm("ldr r2, [sp, r11] ");			// r2=key[sp]
+	asm("cmp r1, r2 ");
+	asm("bgt hssk_loop_inner ");
+	asm("hssk_loop_inner_end: ");
+	asm("mla r0, r9, r10, r5 ");		// r0=&entry[r9]
+	asm("mov r1, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[r9]=[sp]
+	asm("cmp r6, #0 ");
+	asm("bne hssk_loop_start1 ");
+	asm("sub r4, r4, #1 ");
+	asm("mla r1, r4, r10, r5 ");		// r1=&entry[r4]
+	asm("mov r0, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// [sp]=entry[r4]
+	asm("mla r0, r4, r10, r5 ");		// r0=&entry[r4]
+	asm("mov r1, r5 ");					// r1=&entry[0]
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[0]=entry[r4]
+	asm("cmp r4, #1 ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("bgt hssk_loop_start2 ");
+	asm("mov r0, r5 ");					// r0=&entry[0]
+	asm("mov r1, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[0]=[sp]
+	asm("add sp, sp, r10 ");			// free temporary stack space
+	__JUMP(,r7);
+	}
+
+EXPORT_C __NAKED__ void RArrayBase::HeapSortUnsigned()
+	{
+#ifdef __EABI__
+	// need sp aligned correctly
+	asm("stmfd sp!, {r3-r11,lr} ");
+	__EH_FRAME_ADDRESS(sp,4)
+	__EH_FRAME_PUSH2(r4-r11,lr)
+#else
+	asm("stmfd sp!, {r4-r11,lr} ");
+#endif
+	asm("ldmia r0, {r4,r5,r10,r11} ");	// r4=iCount, r5=iEntries, r10=entry size, r11=key offset
+	asm("cmp r10, #4 ");
+	asm("bleq HeapSortUnsigned ");
+	asm("cmp r10, #4 ");
+	asm("blne HeapSortUnsignedKey ");
+#ifdef __EABI__
+	__POPRET("r3-r11,");
+#else
+	__POPRET("r4-r11,");
+#endif
+
+	// Heap sort list of entries by unsigned key
+	// List address in r5, count in r4, entry size in r10, key offset in r11
+	// r4=ss, r6=sh
+	// r8,r9 modified
+	asm("HeapSortUnsignedKey: ");
+	asm("cmp r4, #1 ");
+	__JUMP(le,lr);
+	asm("mov r7, lr ");					// save lr in r7
+	asm("sub sp, sp, r10 ");			// get some temporary space on the stack
+	asm("mov r6, r4, lsr #1 ");
+	asm("hsuk_loop_start1: ");
+	asm("sub r6, r6, #1 ");
+	asm("mla r1, r6, r10, r5 ");		// [sp]=entry[r6]
+	asm("mov r0, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("b hsuk_loop_start2 ");
+	asm("hsuk_loop_inner: ");
+	asm("mla r0, r9, r10, r5 ");		// r0=&entry[r9]
+	asm("mla r1, r8, r10, r5 ");		// r1=&entry[r8]
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[r9]=entry[r8]
+	asm("mov r9, r8 ");
+	asm("hsuk_loop_start2: ");
+	asm("add r8, r8, #1 ");
+	asm("add r8, r8, r8 ");
+	asm("cmp r8, r4 ");
+	asm("bgt hsuk_loop_inner_end ");
+	asm("mla r0, r8, r10, r5 ");
+	asm("ldrne r2, [r0, r11]! ");		// r2=key[r8]
+	asm("addeq r0, r0, r11 ");
+	asm("ldr r1, [r0, -r10] ");			// r1=key[r8-1]
+	asm("subeq r8, r8, #1 ");
+	asm("beq hsuk_loop_inner2 ");
+	asm("cmp r1, r2 ");
+	asm("subhi r8, r8, #1 ");
+	asm("movls r1, r2 ");
+	asm("hsuk_loop_inner2: ");
+	asm("ldr r2, [sp, r11] ");			// r2=key[sp]
+	asm("cmp r1, r2 ");
+	asm("bhi hsuk_loop_inner ");
+	asm("hsuk_loop_inner_end: ");
+	asm("mla r0, r9, r10, r5 ");		// r0=&entry[r9]
+	asm("mov r1, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[r9]=[sp]
+	asm("cmp r6, #0 ");
+	asm("bne hsuk_loop_start1 ");
+	asm("sub r4, r4, #1 ");
+	asm("mla r1, r4, r10, r5 ");		// r1=&entry[r4]
+	asm("mov r0, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// [sp]=entry[r4]
+	asm("mla r0, r4, r10, r5 ");		// r0=&entry[r4]
+	asm("mov r1, r5 ");					// r1=&entry[0]
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[0]=entry[r4]
+	asm("cmp r4, #1 ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("bgt hsuk_loop_start2 ");
+	asm("mov r0, r5 ");					// r0=&entry[0]
+	asm("mov r1, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[0]=[sp]
+	asm("add sp, sp, r10 ");			// free temporary stack space
+	__JUMP(,r7);
+	}
+
+EXPORT_C __NAKED__ void RArrayBase::HeapSort(TGeneralLinearOrder anOrder)
+	{
+#ifdef __EABI__
+	// need sp aligned correctly
+	asm("stmfd sp!, {r3-r11,lr} ");
+	__EH_FRAME_ADDRESS(sp,4)
+	__EH_FRAME_PUSH2(r4-r11,lr)
+#else
+	asm("stmfd sp!, {r4-r11,lr} ");
+#endif
+	asm("ldmia r0, {r4,r5,r10,r11} ");
+	asm("mov r7, r1 ");
+	asm("bl HeapSortEntries ");
+#ifdef __EABI__
+	__POPRET("r3-r11,");
+#else
+	__POPRET("r4-r11,");
+#endif
+
+	// Heap sort list of entries
+	// List address in r5, count in r4, entry size in r10, key offset in r11
+	// Address of ordering function in r7
+	// r4=ss, r6=sh
+	// r8,r9 modified
+	asm("HeapSortEntries: ");
+	asm("cmp r4, #1 ");
+	__JUMP(le,lr);
+	asm("str lr, [sp, #-4]! ");
+	asm("mov r8, sp ");					// original SP
+	asm("sub sp, sp, r10 ");			// get some temporary space on the stack
+	asm("sub sp, sp, #4 ");				// make room for original SP
+	asm("bic sp, sp, #4 ");				// align stack to 8 byte boundary
+	asm("str r8, [sp, r10] ");			// save original SP
+	asm("mov r6, r4, lsr #1 ");
+	asm("hse_loop_start1: ");
+	asm("sub r6, r6, #1 ");
+	asm("mla r1, r6, r10, r5 ");		// [sp]=entry[r6]
+	asm("mov r0, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("b hse_loop_start2 ");
+	asm("hse_loop_inner: ");
+	asm("mla r0, r9, r10, r5 ");		// r0=&entry[r9]
+	asm("mla r1, r8, r10, r5 ");		// r1=&entry[r8]
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[r9]=entry[r8]
+	asm("mov r9, r8 ");
+	asm("hse_loop_start2: ");
+	asm("add r8, r8, #1 ");
+	asm("add r8, r8, r8 ");
+	asm("cmp r8, r4 ");
+	asm("bgt hse_loop_inner_end ");
+	asm("subeq r8, r8, #1 ");
+	asm("beq hse_loop_inner2 ");
+	asm("mla r1, r8, r10, r5 ");		// r1=&entry[r8]
+	asm("sub r0, r1, r10 ");			// r0=&entry[r8-1]
+	__JUMPL(7);
+	asm("cmp r0, #0 ");					// compare entry[r8-1] with entry[r8]
+	asm("subgt r8, r8, #1 ");
+	asm("hse_loop_inner2: ");
+	asm("mla r0, r8, r10, r5 ");		// r0=&entry[r8]
+	asm("mov r1, sp ");
+	__JUMPL(7);
+	asm("cmp r0, #0 ");					// compare entry[r8] with [sp]
+	asm("bgt hse_loop_inner ");
+	asm("hse_loop_inner_end: ");
+	asm("mla r0, r9, r10, r5 ");		// r0=&entry[r9]
+	asm("mov r1, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[r9]=[sp]
+	asm("cmp r6, #0 ");
+	asm("bne hse_loop_start1 ");
+	asm("sub r4, r4, #1 ");
+	asm("mla r1, r4, r10, r5 ");		// r1=&entry[r4]
+	asm("mov r0, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// [sp]=entry[r4]
+	asm("mla r0, r4, r10, r5 ");		// r0=&entry[r4]
+	asm("mov r1, r5 ");					// r1=&entry[0]
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[0]=entry[r4]
+	asm("cmp r4, #1 ");
+	asm("mov r8, r6 ");
+	asm("mov r9, r6 ");
+	asm("bgt hse_loop_start2 ");
+	asm("mov r0, r5 ");					// r0=&entry[0]
+	asm("mov r1, sp ");
+	asm("mov r2, r10 ");
+	asm("bl wordmove ");				// entry[0]=[sp]
+	asm("ldr sp, [sp, r10] ");			// restore stack pointer, freeing temporary stack space
+	__POPRET("");
+	}
+#endif	// __KERNEL_MODE__
+#endif	// __ARRAY_MACHINE_CODED__

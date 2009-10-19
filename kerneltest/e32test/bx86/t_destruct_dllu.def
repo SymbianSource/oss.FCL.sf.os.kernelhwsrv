@@ -1,0 +1,2 @@
+EXPORTS
+	?StaticMain@@YAXXZ @ 1 NONAME ; void __cdecl StaticMain(void)

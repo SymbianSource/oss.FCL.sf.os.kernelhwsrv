@@ -1,0 +1,98 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+secondary=\Epoc32\Release\##MAIN##\##BUILD##\efile.exe  sys\bin\efile.exe  FIXED HEAPMAX(0x80000)
+file=\Epoc32\Release\##MAIN##\##BUILD##\efsrv.dll       sys\bin\efsrv.dll
+
+device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\d_ftrace.ldd          sys\bin\d_ftrace.ldd
+
+#ifdef WITH_EXFAT
+file=\Epoc32\Release\##MAIN##\##BUILD##\exfat.fsy       sys\bin\exfat.fsy
+#endif
+
+#ifdef WITH_AUTOMOUNTER
+file=\Epoc32\Release\##MAIN##\##BUILD##\automounter.fsy sys\bin\automounter.fsy
+#endif
+
+
+#ifndef CUSTOM_ELOCAL
+file=\Epoc32\Release\##MAIN##\##BUILD##\efat32.fsy      sys\bin\elocal.fsy
+#endif
+
+// PREQ2540: Prepare "LFFS" NOR Flash File System TPIP for Symbian Foundation
+// This PREQ removes the LFFS File System component from the rlease codeline.
+// Only define WITH_ELLFS_FSY macro on development branches where the component
+// has been retained.
+#ifdef WITH_ELFFS_FSY
+file=\Epoc32\Release\##MAIN##\##BUILD##\elffs.fsy       sys\bin\elffs.fsy
+#endif
+
+
+#ifdef WITH_ISO9660
+file=\epoc32\release\##MAIN##\##BUILD##\iso9660.fsy     sys\bin\iso9660.fsy
+#endif
+
+#ifdef WITH_NTFS
+file=\epoc32\release\##MAIN##\##BUILD##\ntfs.fsy        sys\bin\ntfs.fsy
+#endif
+
+#ifndef SYMBIAN_EXCLUDE_ESHELL
+// Give Root capability to eshell in addition to DiskAdmin to ease debugging (we can't
+// do that in full ROMs because it prevents eshell from being started from eikon)
+file=\Epoc32\Release\##MAIN##\##BUILD##\eshell.exe      sys\bin\eshell.exe HEAPMAX(0x20000) capability tcb+diskadmin+allfiles+ProtServ
+#endif
+
+#ifndef CUSTOM_ESTART
+#ifdef BASE_ROM
+file=\Epoc32\Release\##MAIN##\##BUILD##\e32strt.exe     sys\bin\estart.exe HEAPMAX(0x2000)
+#else
+file=\Epoc32\Release\##MAIN##\##BUILD##\estart.exe      sys\bin\estart.exe HEAPMAX(0x10000)
+#endif
+#endif
+#ifndef SYMBIAN_EXCLUDE_RUNTESTS    
+file=\epoc32\release\##MAIN##\##BUILD##\RUNTESTS.EXE    sys\bin\RUNTESTS.EXE HEAPMAX(0x10000)
+#endif
+
+#ifdef WITH_EXTENSION
+//Add File System extension here if any present, use the line below as an
+//example
+//file=\epoc32\release\##MAIN##\##BUILD##\example.fxt   sys\bin\example.fxt
+#endif
+
+#ifdef WITH_COMP
+file=\Epoc32\Release\##SMAIN##\##BUILD##\ecomp.fsy  sys\bin\ecomp.fsy
+#endif
+
+#if defined(WITH_ROFS) || defined(WITH_COMP)
+file=\Epoc32\Release\##SMAIN##\##BUILD##\erofs.fsy  sys\bin\erofs.fsy
+#endif
+
+#ifdef SYMBIAN_EXCLUDE_USB
+REM Feature USB is not included in this ROM
+#else
+#ifdef WITH_MASS_STORAGE
+#ifdef USE_MSCDB
+file=\Epoc32\Release\##MAIN##\##BUILD##\msfs_db.fsy                 sys\bin\msfs.fsy
+#else
+file=\Epoc32\Release\##MAIN##\##BUILD##\msfs.fsy                    sys\bin\msfs.fsy
+#endif
+#ifdef SYMBIAN_INCLUDE_USB_OTG_HOST
+file=\epoc32\release\##MAIN##\##BUILD##\usbhostms.pxy   sys\bin\usbhostms.pxy
+file=\epoc32\release\##MAIN##\##BUILD##\usbhostmsclient.dll     sys\bin\usbhostmsclient.dll
+file=\epoc32\release\##MAIN##\##BUILD##\usbhostmssrv.exe    sys\bin\usbhostmssrv.exe
+#endif //SYMBIAN_INCLUDE_USB_OTG_HOST
+#endif //WITH_MASS_STORAGE
+#endif //SYMBIAN_EXCLUDE_USB

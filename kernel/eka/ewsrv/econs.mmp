@@ -1,0 +1,47 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/ewsrv/econs.mmp
+// econs.dll Client side library for text shell window server
+// 
+//
+
+/**
+ @file
+*/
+
+
+target			econs.dll
+
+targettype		dll
+
+sourcepath		.
+source			 co_twin.cpp co_cli.cpp co_utl.cpp
+
+USERINCLUDE	../include
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+nostrictdef
+
+library			 euser.lib
+
+start WINS
+baseaddress		0x54000000
+end
+
+uid				0x1000008d 0x100039e7
+VENDORID 0x70000001
+
+capability		all
+unpagedcode
+SMPSAFE

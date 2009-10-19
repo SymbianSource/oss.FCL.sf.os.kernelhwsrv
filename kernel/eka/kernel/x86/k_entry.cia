@@ -1,0 +1,46 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\x86\k_entry.cia
+// 
+//
+
+#include <kernel/kernel.h>
+#include "x86hlp.inl"
+
+extern "C" {
+
+void _E32Startup_Body(TLinAddr aRomHeader, TLinAddr aSuperPage);
+
+__NAKED__ void _E32Startup(TLinAddr, TLinAddr)
+	{
+	BYTE(0xeb)			// JMP .+16
+	BYTE(0x0e)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)			// need zero word at offset 12 from entry point
+	BYTE(0x00)
+	BYTE(0x00)
+	BYTE(0x00)
+	asm("jmp %a0": : "i"(&_E32Startup_Body));
+	}
+
+}

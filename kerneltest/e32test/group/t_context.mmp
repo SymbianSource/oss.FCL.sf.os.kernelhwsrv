@@ -1,0 +1,38 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_context.mmp
+// 
+//
+
+target         	t_context.exe
+targettype     	exe
+
+#if defined(GCC32)
+ALWAYS_BUILD_AS_ARM
+#endif
+
+sourcepath	   	../debug
+
+source        	t_context.cpp 
+library			euser.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYMBIAN_BASE_SYSTEMINCLUDE(nkern)
+
+source        	context.cia
+
+capability	none
+
+VENDORID 0x70000001
+
+SMPSAFE

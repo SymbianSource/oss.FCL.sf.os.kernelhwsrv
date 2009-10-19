@@ -1,0 +1,41 @@
+EXPORTS
+	_ZN6TTrapM4TrapERi @ 1 NONAME ; TTrapM::Trap(int&)
+	_ZN6TTrapM6UnTrapEv @ 2 NONAME ; TTrapM::UnTrap()
+	_ZN7Monitor10ObjectDumpEj @ 3 NONAME ; Monitor::ObjectDump(unsigned int)
+	_ZN7Monitor12ProcessErrorEi @ 4 NONAME ; Monitor::ProcessError(int)
+	_ZN7Monitor13DoMemoryDumpLEji @ 5 NONAME ; Monitor::DoMemoryDumpL(unsigned int, int)
+	_ZN7Monitor14ObjectFullDumpEj @ 6 NONAME ; Monitor::ObjectFullDump(unsigned int)
+	_ZN7Monitor15HandleExceptionEv @ 7 NONAME ; Monitor::HandleException()
+	_ZN7Monitor16DisplayFaultInfoEv @ 8 NONAME ; Monitor::DisplayFaultInfo()
+	_ZN7Monitor16DumpCpuRegistersEv @ 9 NONAME ; Monitor::DumpCpuRegisters()
+	_ZN7Monitor17DumpCpuThreadDataEP7DThread @ 10 NONAME ; Monitor::DumpCpuThreadData(DThread*)
+	_ZN7Monitor18ProcessInfoCommandERK6TDesC8Ri @ 11 NONAME ; Monitor::ProcessInfoCommand(TDesC8 const&, int&)
+	_ZN7Monitor19DisplayCpuFaultInfoEv @ 12 NONAME ; Monitor::DisplayCpuFaultInfo()
+	_ZN7Monitor19DumpObjectContainerEji @ 13 NONAME ; Monitor::DumpObjectContainer(unsigned int, int)
+	_ZN7Monitor19RegisterMonitorImplEPS_ @ 14 NONAME ; Monitor::RegisterMonitorImpl(Monitor*)
+	_ZN7Monitor26DoDiscontiguousMemoryDumpLEji @ 15 NONAME ; Monitor::DoDiscontiguousMemoryDumpL(unsigned int, int)
+	_ZN7Monitor5EntryEPv @ 16 NONAME ; Monitor::Entry(void*)
+	_ZN7Monitor5LeaveEi @ 17 NONAME ; Monitor::Leave(int)
+	_ZN7Monitor5PauseEi @ 18 NONAME ; Monitor::Pause(int)
+	_ZN7Monitor5PrintEPKc @ 19 NONAME ; Monitor::Print(char const*)
+	_ZN7Monitor6PrintfEPKcz @ 20 NONAME ; Monitor::Printf(char const*, ...)
+	_ZN7Monitor7CpuInitEv @ 21 NONAME ; Monitor::CpuInit()
+	_ZN7Monitor7NewLineEv @ 22 NONAME ; Monitor::NewLine()
+	_ZN7Monitor9PrintLineEPKc @ 23 NONAME ; Monitor::PrintLine(char const*)
+	_ZN7Monitor9PrintLineERK6TDesC8 @ 24 NONAME ; Monitor::PrintLine(TDesC8 const&)
+	_ZN7MonitorC2Ev @ 25 NONAME ; Monitor::Monitor()
+	_ZTI7Monitor @ 26 NONAME ; typeinfo for Monitor
+	_ZTV7Monitor @ 27 NONAME ; vtable for Monitor
+	_ZN7Monitor16DumpThreadStacksEi @ 28 NONAME
+	_ZN7Monitor15DumpThreadStackEP7DThread @ 29 NONAME
+	_ZN7Monitor14DisplayCodeSegEP8DCodeSegi @ 30 NONAME
+	_ZN7Monitor14DisplayCodeSegEi @ 31 NONAME
+	_ZN7Monitor13DoMemoryDumpLEjij @ 32 NONAME ; Monitor::DoMemoryDumpL(unsigned int, int ,unsigned int)
+	_ZN7Monitor26DoDiscontiguousMemoryDumpLEjij @ 33 NONAME ; Monitor::DoDiscontiguousMemoryDumpL(unsigned int, int ,unsigned int)
+	_ZN7Monitor19DumpExceptionStacksEv @ 34 NONAME
+	_ZN7Monitor18SwitchAddressSpaceEP8DProcessi @ 35 NONAME ; Monitor::SwitchAddressSpace(DProcess*, int)
+	_Z9CrashTimev @ 36 NONAME
+	_ZN7Monitor18DisplayNThreadInfoEP7NThread @ 37 NONAME
+	_ZN7Monitor16GetStackPointersEP7NThreadRjS2_ @ 38 NONAME
+	_ZN7Monitor21MapAndLocateUserStackEP7DThread @ 39 NONAME 
+

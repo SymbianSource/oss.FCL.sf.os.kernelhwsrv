@@ -1,0 +1,1808 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\arm\ncthrd.cia
+// 
+//
+
+#define __INCLUDE_NTHREADBASE_DEFINES__
+
+#include <arm.h>
+#include <e32cia.h>
+
+#undef	iDfcState
+#define	iDfcState		i8816.iHState16
+
+extern "C" void send_accumulated_resched_ipis();
+
+/******************************************************************************
+ * Thread
+ ******************************************************************************/
+extern "C" __NAKED__ void __StartThread()
+	{
+	// On entry:
+	//		R0->TSubScheduler, R1=0, R2=1, R3->current thread
+	//		R12=resched IPIs
+	// Interrupts disabled
+
+	// need to send any outstanding reschedule IPIs
+	asm("cmp	r12, #0 ");
+	asm("blne " CSM_CFUNC(send_accumulated_resched_ipis));
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("ldr	r0, [sp, #%a0]" : : "i" _FOFF(SThreadExcStack, iCPSR));
+	asm("tst	r0, #0x0f ");
+	asm("bne	2f ");
+	USER_MEMORY_GUARD_OFF(,r0,r0);
+	asm("2:		");
+#endif
+	asm("ldmia	sp, {r0-r14}^ ");			// load initial values for R0-R12, R13_usr, R14_usr
+	asm("nop	");							// don't access banked register immediately after
+	asm("add	sp, sp, #64 ");				// point to saved PC, CPSR (skip iExcCode)
+	asm("adr	lr, 1f ");					// set lr_svc in case thread returns
+	RFEIAW(13);								// restore PC and CPSR - jump to thread entry point
+
+	asm("1:		");
+	asm("b "	CSM_ZN5NKern4ExitEv);		// if control returns, call NKern::Exit()
+	}
+
+
+extern "C" __NAKED__ TInt get_kernel_context_type(TLinAddr /*aReschedReturn*/)
+	{
+	asm("adr	r1, 9f ");
+	asm("mov	r3, r0 ");
+	asm("mvn	r0, #0 ");
+	asm("1:		");
+	asm("ldr	r2, [r1], #4 ");
+	asm("add	r0, r0, #1 ");
+	asm("cmp	r2, r3 ");
+	asm("beq	2f ");
+	asm("cmp	r2, #0 ");
+	asm("bne	1b ");
+	asm("mvn	r0, #0 ");
+	asm("2:		");
+	__JUMP(,	lr);
+
+	asm("9:		");
+	asm(".word " CSM_CFUNC(__StartThread));
+	asm(".word	nkern_unlock_resched_return ");
+	asm(".word	nkern_preemption_point_resched_return ");
+	asm(".word	nkern_wfar_resched_return ");
+	asm(".word	irq_resched_return ");
+	asm(".word	exec_wfar_resched_return ");
+	asm(".word	0 ");
+	}
+
+
+/**	Mark the beginning of an event handler tied to a thread or thread group
+
+	Return the number of the CPU on which the event handler should run
+*/
+__NAKED__ TInt NSchedulable::BeginTiedEvent()
+	{
+	asm("add r1, r0, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("1: ");
+	LDREX(0,1);						// r0 = original value of iEventState
+	asm("add r2, r0, #%a0" : : "i" ((TInt)EEventCountInc));
+	STREX(3,2,1);
+	asm("cmp r3, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r3);
+	asm("tst r0, #%a0" : : "i" ((TInt)EEventParent));
+	asm("ldrne r2, [r1, #%a0]" : : "i" (_FOFF(NSchedulable,iParent) - _FOFF(NSchedulable,iEventState)));
+	asm("beq bte0 ");				// EEventParent not set so don't look at group
+	asm("cmp r2, #0 ");
+	asm("addne r2, r2, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("beq bte_bad ");
+	asm("cmp r2, r1 ");
+	asm("beq bte2 ");				// parent not yet updated, use iNewParent
+	asm("bte1: ");
+	LDREX(0,2);						// r0 = original value of iEventState
+	asm("add r3, r0, #%a0" : : "i" ((TInt)EEventCountInc));
+	STREX(12,3,2);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("bte0: ");
+	asm("and r0, r0, #%a0" : : "i" ((TInt)EEventCpuMask));
+	__JUMP(,lr);					// return event CPU
+
+	asm("bte2: ");
+	__DATA_MEMORY_BARRIER__(r3);	// make sure iNewParent is read after iParent
+	asm("ldr r2, [r1, #%a0]" : : "i" (_FOFF(NThreadBase,iNewParent) - _FOFF(NSchedulable,iEventState)));
+	asm("cmp r2, #0 ");
+	asm("addne r2, r2, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("bne bte1 ");				// iNewParent set so OK
+	__DATA_MEMORY_BARRIER__(r3);	// make sure iParent is read after iNewParent
+	asm("ldr r2, [r1, #%a0]" : : "i" (_FOFF(NSchedulable,iParent) - _FOFF(NSchedulable,iEventState)));
+	asm("cmp r2, #0 ");
+	asm("addne r2, r2, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("cmp r2, r1 ");
+	asm("bne bte1 ");				// iParent now set so OK, otherwise something is wrong
+
+	asm("bte_bad: ");
+	__ASM_CRASH();
+	}
+
+
+/**	Mark the end of an event handler tied to a thread or thread group
+
+*/
+__NAKED__ void NSchedulable::EndTiedEvent()
+	{
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("ldr r1, [r0, #%a0]!" : : "i" _FOFF(NSchedulable, iEventState));
+	asm("tst r1, #%a0" : : "i" ((TInt)EEventParent));
+	asm("bne etep0 ");				// branch out if EEventParent set
+
+	// r0->NSchedulable::iEventState
+	asm("ete1: ");
+	LDREX(1,0);
+	asm("sub r1, r1, #%a0" : : "i" ((TInt)EEventCountInc));	// decrement event count
+	asm("cmp r1, #%a0" : : "i" ((TInt)EEventCountInc));		// check if now zero
+	asm("biccc r1, r1, #0xFF ");	// if so, mask event CPU ...
+	asm("andcc r2, r1, #0x1F00 ");	// ... and r2 = thread CPU << 8 ...
+	asm("orrcc r1, r1, r2, lsr #8 ");	// ... and event CPU = thread CPU
+	STREX(12,1,0);
+	asm("teq r12, #0 ");			// test for success, leave carry alone
+	asm("bne ete1 ");				// retry if STREX failed
+	asm("bcs ete2 ");				// if not last tied event, finish
+	asm("tst r1, #%a0" : : "i" ((TInt)EDeferredReady));
+	asm("addne r0, r0, #%a0" : : "i" (_FOFF(NSchedulable,i_IDfcMem) - _FOFF(NSchedulable,iEventState)));
+	asm("bne " CSM_ZN4TDfc3AddEv );	// if deferred ready, add IDFC to action it
+	asm("ete2: ");					// ready not deferred so finish
+	__JUMP(,lr);
+
+	asm("etep0: ");
+	__DATA_MEMORY_BARRIER__(r12);	// make sure iParent is read after seeing parent flag set
+	asm("ldr r3, [r0, #%a0]" : : "i" (_FOFF(NSchedulable,iParent) - _FOFF(NSchedulable,iEventState)));
+	asm("cmp r3, #0 ");
+	asm("addne r3, r3, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("beq ete_bad ");			// no parent - shouldn't happen
+	asm("cmp r3, r0 ");				// parent == this ?
+	asm("beq etep1 ");				// if so, parent not yet updated so use iNewParent
+
+	asm("etep2: ");
+	asm("stmfd sp!, {r0,lr} ");		// save this and return address
+	asm("mov r0, r3 ");				// operate on parent
+	asm("bl ete1 ");				// update parent state
+	asm("ldmfd sp!, {r0,lr} ");
+	asm("1: ");
+	LDREX(1,0);
+	asm("sub r1, r1, #%a0" : : "i" ((TInt)EEventCountInc));	// decrement event count
+	STREX(12,1,0);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__JUMP(,lr);
+
+	asm("etep1: ");
+	__DATA_MEMORY_BARRIER__(r12);	// make sure iNewParent is read after iParent
+	asm("ldr r3, [r0, #%a0]" : : "i" (_FOFF(NThreadBase,iNewParent) - _FOFF(NSchedulable,iEventState)));
+	asm("cmp r3, #0 ");
+	asm("addne r3, r3, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("bne etep2 ");				// iNewParent set so OK
+	__DATA_MEMORY_BARRIER__(r12);	// make sure iParent is read after iNewParent
+	asm("ldr r3, [r0, #%a0]" : : "i" (_FOFF(NSchedulable,iParent) - _FOFF(NSchedulable,iEventState)));
+	asm("cmp r3, #0 ");
+	asm("addne r3, r3, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("cmp r3, r0 ");
+	asm("bne etep2 ");				// iParent now set so OK, otherwise something is wrong
+
+	asm("ete_bad: ");
+	__ASM_CRASH();
+	}
+
+
+/**	Check for concurrent tied events when a thread/group becomes ready
+
+	This is only ever called on a lone thread or a group, not on a thread
+	which is part of a group.
+
+	Update the thread CPU field in iEventState
+	If thread CPU != event CPU and event count nonzero, atomically
+	set the ready deferred flag and return TRUE, else return FALSE.
+	If event count zero, set event CPU = thread CPU atomically.
+
+	@param aCpu the CPU on which the thread/group is to become ready
+	@return	TRUE if the ready must be deferred.
+*/
+__NAKED__ TBool NSchedulable::TiedEventReadyInterlock(TInt /*aCpu*/)
+	{
+	asm("add r0, r0, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("1: ");
+	LDREX(2,0);						// r2 = original iEventState
+	asm("bic r3, r2, #0x1F00 ");	// r3 = original iEventState with thread CPU zeroed out
+	asm("orr r3, r3, r1, lsl #8 ");	// set thread CPU field = aCpu
+	asm("cmp r3, #%a0" : : "i" ((TInt)EEventCountInc));
+	asm("bhs 2f ");					// branch if event count nonzero
+	asm("bic r3, r3, #0xFF ");		// else mask event CPU ...
+	asm("orr r3, r3, r1 ");			// ... and set event CPU = thread CPU = aCpu
+	asm("3: ");
+	STREX(12,3,0);
+	asm("teq r12, #0 ");
+	asm("bne 1b ");
+	asm("eor r0, r2, r3 ");			// r0 = old event state ^ new event state
+	asm("and r0, r0, #%a0" : : "i" ((TInt)EDeferredReady));
+	__JUMP(,lr);					// return TRUE if we just set EDeferredReady
+
+	// event count is nonzero
+	asm("2: ");
+	asm("eor r12, r3, r3, lsr #8 ");	// r12 bottom 5 bits = thread CPU ^ event CPU
+	asm("tst r12, #0x1F ");				// thread CPU == event CPU?
+	asm("orrne r3, r3, #%a0" : : "i" ((TInt)EDeferredReady));	// if not, set EDeferredReady
+	asm("b 3b ");
+	}
+
+
+/**	Check for concurrent tied events when a thread leaves a group
+
+	If event count zero, atomically	set the event and thread CPUs to the
+	current CPU, clear the parent flag and return TRUE, else return FALSE.
+
+	@return	TRUE if the parent flag has been cleared
+	@pre	Preemption disabled
+*/
+__NAKED__ TBool NThreadBase::TiedEventLeaveInterlock()
+	{
+	GET_RWNO_TID(, r1);					// R1->SubScheduler
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iCpuNum));
+	asm("add r0, r0, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("orr r1, r1, r1, lsl #8 ");		// event CPU = thread CPU = this CPU, EDeferredReady, EEventParent clear
+	asm("1: ");
+	LDREX(2,0);
+	asm("cmp r2, #%a0" : : "i" ((TInt)EEventCountInc));		// check if event count zero
+	asm("bhs 0f ");						// if not, finish and return FALSE
+	STREX(3,1,0);						// else update CPUs and clear parent flag
+								// NOTE: Deferred ready flag must have been clear since thread is running
+	asm("cmp r3, #0 ");
+	asm("bne 1b ");
+	__JUMP(,lr);				// return TRUE (assumes this!=0)
+	asm("0:");
+	asm("mov r0, #0 ");
+	__JUMP(,lr);				// return FALSE
+	}
+
+
+/**	Check for concurrent tied events when a thread joins a group
+
+	If event count zero, atomically	set the parent flag and return TRUE,
+	else return FALSE.
+
+	@return	TRUE if the parent flag has been set
+	@pre	Preemption disabled
+*/
+__NAKED__ TBool NThreadBase::TiedEventJoinInterlock()
+	{
+	asm("add r0, r0, #%a0" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("1: ");
+	LDREX(1,0);
+	asm("cmp r1, #%a0" : : "i" ((TInt)EEventCountInc));		// check if event count zero
+	asm("bhs 0f ");						// if not, finish and return FALSE
+	asm("orr r2, r1, #%a0" : : "i" ((TInt)EEventParent));	// else set parent flag
+	STREX(3,2,0);
+	asm("cmp r3, #0 ");
+	asm("bne 1b ");
+	__JUMP(,lr);				// return TRUE (assumes this!=0)
+	asm("0:");
+	asm("mov r0, #0 ");
+	__JUMP(,lr);				// return FALSE
+	}
+
+
+#ifdef __FAST_SEM_MACHINE_CODED__
+/******************************************************************************
+ * Fast semaphore
+ ******************************************************************************/
+
+/** Waits on a fast semaphore.
+
+    Decrements the signal count for the semaphore and
+	removes the calling thread from the ready-list if the semaphore becomes
+	unsignalled. Only the thread that owns a fast semaphore can wait on it.
+	
+	Note that this function does not block, it merely updates the NThread state,
+	rescheduling will only occur when the kernel is unlocked. Generally threads
+	would use NKern::FSWait() which manipulates the kernel lock for you.
+
+	@pre The calling thread must own the semaphore.
+	@pre No fast mutex can be held.
+	@pre Kernel must be locked.
+	
+	@post Kernel is locked.
+	
+	@see NFastSemaphore::Signal()
+	@see NKern::FSWait()
+	@see NKern::Unlock()
+ */
+EXPORT_C __NAKED__ void NFastSemaphore::Wait()
+	{
+	ASM_DEBUG1(FSWait,r0);
+
+	GET_RWNO_TID(,r1);
+	asm("stmfd	sp!, {r4-r7} ");
+	asm("ldr	r6, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("mov	r3, r0 ");
+	asm("mov	r2, #%a0" : : "i" ((TInt)NThreadBase::EWaitFastSemaphore << 8));
+	asm("add	r7, r6, #%a0" : : "i" _FOFF(NThreadBase, iWaitState));
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)NThreadWaitState::EWtStWaitPending));
+	asm("1:		");
+	LDREXD(		4,7);
+	STREXD(		12,2,7);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("str	r12, [r7, #%a0]" : : "i" _FOFF(NThreadWaitState, iTimer.iTriggerTime));
+	asm("cmp	r4, #0 ");
+	asm("bne	0f ");
+
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("1:		");
+	LDREX(		2,0);					// count
+	asm("mov	r5, r6, lsr #2 ");		// thread>>2
+	asm("orr	r5, r5, #0x80000000 ");
+	asm("subs	r4, r2, #1 ");
+	asm("movlt	r4, r5 ");				// if --count<0, r4=(thread>>2)|0x80000000
+	STREX(		12,4,0);
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+
+	asm("cmp	r2, #0 ");				// original count zero ?
+	asm("bne	2f ");					// if yes, don't need to wait
+	asm("mov	r2, #1 ");
+	asm("strb	r2, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iRescheduleNeededFlag));	// else we need to reschedule
+	asm("ldmfd	sp!, {r4-r7} ");
+	__JUMP(,	lr);
+
+	asm("2:		");
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("1:		");
+	LDREXD(		4,7);
+	STREXD(		12,2,7);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("tst	r4, #%a0" : : "i" ((TInt)(NThreadWaitState::EWtStDead|NThreadWaitState::EWtStWaitActive)));
+	asm("bne	0f ");
+	asm("ldmfd	sp!, {r4-r7} ");
+	__JUMP(,	lr);
+
+	asm("0:		");
+	__ASM_CRASH();
+	}
+
+
+/** Waits on a fast semaphore.
+
+    Decrements the signal count for the semaphore
+	and waits for a signal if the semaphore becomes unsignalled. Only the
+	thread that owns a fast	semaphore can wait on it.
+
+	@param aSem The semaphore to wait on.
+	
+	@pre The calling thread must own the semaphore.
+	@pre No fast mutex can be held.
+	
+	@see NFastSemaphore::Wait()
+*/
+EXPORT_C __NAKED__ void NKern::FSWait(NFastSemaphore* /*aSem*/)
+	{
+	ASM_DEBUG1(NKFSWait,r0);
+
+	__ASM_CLI();							// all interrupts off
+	GET_RWNO_TID(,r1);
+	asm("stmfd	sp!, {r4,r5,r11,lr} ");
+	asm("ldr	r11, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("mov	r2, #%a0" : : "i" ((TInt)NThreadBase::EWaitFastSemaphore << 8));
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)NThreadWaitState::EWtStWaitPending));
+	asm("mov	r3, r0 ");
+	asm("add	r0, r11, #%a0" : : "i" _FOFF(NThreadBase, iWaitState));
+	asm("b		nkfswait1 ");
+	}
+
+
+/** Waits for a signal on the current thread's I/O semaphore.
+
+	@pre No fast mutex can be held.
+	@pre Call in a thread context.
+	@pre Kernel must be unlocked
+	@pre interrupts enabled
+ */
+EXPORT_C __NAKED__ void NKern::WaitForAnyRequest()
+	{
+	ASM_DEBUG0(WFAR);
+
+	__ASM_CLI();							// all interrupts off
+	GET_RWNO_TID(,r1);
+	asm("stmfd	sp!, {r4,r5,r11,lr} ");
+	asm("ldr	r11, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("mov	r2, #%a0" : : "i" ((TInt)NThreadBase::EWaitFastSemaphore << 8));
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)NThreadWaitState::EWtStWaitPending));
+	asm("add	r0, r11, #%a0" : : "i" _FOFF(NThreadBase, iWaitState));
+	asm("add	r3, r11, #%a0" : : "i" _FOFF(NThreadBase, iRequestSemaphore));
+
+	asm("nkfswait1: ");
+	asm("1:		");
+	LDREXD(		4,0);
+	STREXD(		12,2,0);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(NThreadWaitState, iTimer.iTriggerTime));
+	asm("cmp	r4, #0 ");
+	asm("bne	0f ");
+
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("1:		");
+	LDREX(		2,3);					// count
+	asm("mov	r5, r11, lsr #2 ");		// thread>>2
+	asm("orr	r5, r5, #0x80000000 ");
+	asm("subs	r4, r2, #1 ");
+	asm("movlt	r4, r5 ");				// if --count<0, r4=(thread>>2)|0x80000000
+	STREX(		12,4,3);
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+
+	asm("cmp	r2, #0 ");				// original count zero ?
+	asm("beq	2f ");					// if so we must wait
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("1:		");
+	LDREXD(		4,0);
+	STREXD(		12,2,0);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("tst	r4, #%a0" : : "i" ((TInt)(NThreadWaitState::EWtStDead|NThreadWaitState::EWtStWaitActive)));
+	asm("bne	0f ");
+	__ASM_STI();
+	__POPRET("r4,r5,r11,");
+
+	asm("0:		");
+	__ASM_CRASH();
+
+	asm("2:		");
+	asm("ldmfd	sp!, {r4-r5} ");
+	asm("mov	r2, #1 ");
+	asm("str	r2, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));			// else lock the kernel
+	__ASM_STI();
+	asm("strb	r2, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iRescheduleNeededFlag));	// and set the reschedule flag
+	asm("stmfd	sp!, {r0,r4-r10} ");
+	asm("bl "	CSM_ZN10TScheduler10RescheduleEv );	// reschedule
+	asm(".global nkern_wfar_resched_return ");
+	asm("nkern_wfar_resched_return: ");
+
+	// need to send any outstanding reschedule IPIs
+	asm("cmp	r12, #0 ");
+	asm("blne " CSM_CFUNC(send_accumulated_resched_ipis));
+	__ASM_STI();
+	__POPRET("r0,r4-r11,");
+
+	asm(".global wait_for_any_request ");
+	asm("wait_for_any_request: ");
+	asm("add	r3, r9, #%a0" : : "i" _FOFF(NThreadBase,iRequestSemaphore));
+	asm("mov	r2, #%a0" : : "i" ((TInt)NThreadBase::EWaitFastSemaphore << 8));
+	asm("add	r7, r9, #%a0" : : "i" _FOFF(NThreadBase, iWaitState));
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)NThreadWaitState::EWtStWaitPending));
+	asm("1:		");
+	LDREXD(		4,7);
+	STREXD(		12,2,7);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("str	r12, [r7, #%a0]" : : "i" _FOFF(NThreadWaitState, iTimer.iTriggerTime));
+	asm("cmp	r4, #0 ");
+	asm("bne	0b ");
+
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("1:		");
+	LDREX(		0,3);					// count
+	asm("mov	r5, r9, lsr #2 ");		// thread>>2
+	asm("orr	r5, r5, #0x80000000 ");
+	asm("subs	r4, r0, #1 ");
+	asm("movlt	r4, r5 ");				// if --count<0, r4=(thread>>2)|0x80000000
+	STREX(		12,4,3);
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+#ifdef __RECORD_STATE__
+	asm("str	r0, [r9, #%a0]" : : "i" _FOFF(NThreadBase,iNThreadBaseSpare6));
+#endif
+
+	asm("cmp	r0, #0 ");				// original count zero ?
+	asm("beq	exec_wfar_wait ");		// yes - must wait
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("1:		");
+	LDREXD(		4,7);
+	STREXD(		12,2,7);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("tst	r4, #%a0" : : "i" ((TInt)(NThreadWaitState::EWtStDead|NThreadWaitState::EWtStWaitActive)));
+	asm("ldreq	r4, [r9, #%a0]" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));	// check for callbacks
+	asm("beq	exec_wfar_finish ");
+	asm("b		0b ");
+	}
+
+
+/** Signals a fast semaphore.
+
+    Increments the signal count of a fast semaphore by
+	one and releases any waiting thread if the semphore becomes signalled.
+	
+	Note that a reschedule will not occur before this function returns, this will
+	only take place when the kernel is unlocked. Generally threads
+	would use NKern::FSSignal() which manipulates the kernel lock for you.
+	
+	@pre Kernel must be locked.
+	@pre Call either in a thread or an IDFC context.
+	
+	@post Kernel is locked.
+	
+	@see NFastSemaphore::Wait()
+	@see NKern::FSSignal()
+	@see NKern::Unlock()
+ */
+EXPORT_C __NAKED__ void NFastSemaphore::Signal()
+	{
+	ASM_DEBUG1(FSSignal,r0);
+
+	asm("mov	r1, #1 ");
+	asm("fssignal1: ");
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("1:		");
+	LDREX(		2,0);				// count
+	asm("cmp	r2, #0 ");
+	asm("sublt	r3, r1, #1 ");		// if count<0, replace with aCount-1
+	asm("addges	r3, r2, r1 ");		// if count>=0, add aCount
+	asm("bvs	0f ");				// if overflow, leave alone
+	STREX(		12,3,0);
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	asm("cmp	r2, #0 ");
+	asm("movlt	r1, r2, lsl #2 ");	// if original count<0 r1 = original count<<2 = thread
+	asm("blt	fs_signal_wake ");
+	asm("0:		");
+	__JUMP(,	lr);				// else finished
+
+	asm("fs_signal_wake: ");
+	asm("stmfd	sp!, {r4-r6,lr} ");
+	asm("mov	r4, r0 ");
+	asm("mov	r5, r1 ");
+	asm("mov	r0, r1 ");
+	asm("bl		AcqSLock__12NSchedulable ");
+	asm("add	r0, r5, #%a0" : : "i" _FOFF(NThreadBase, iWaitState));
+	asm("mov	r1, #%a0" : : "i" ((TInt)NThreadBase::EWaitFastSemaphore));
+	asm("mov	r2, r4 ");
+	asm("mov	r3, #0 ");
+	asm("bl		UnBlockT__16NThreadWaitStateUiPvi ");
+	asm("mov	r0, r5 ");
+	asm("ldmfd	sp!, {r4-r6,lr} ");
+	asm("b		RelSLock__12NSchedulable ");
+	}
+
+
+/** Signals a fast semaphore multiple times.
+
+	@pre Kernel must be locked.
+	@pre Call either in a thread or an IDFC context.
+	
+	@post Kernel is locked.
+
+	@internalComponent	
+ */
+EXPORT_C __NAKED__ void NFastSemaphore::SignalN(TInt /*aCount*/)
+	{
+	ASM_DEBUG2(FSSignalN,r0,r1);
+
+	asm("cmp	r1, #0 ");
+	asm("bgt	fssignal1 ");
+	__JUMP(,	lr);
+	}
+
+
+/** Signals the request semaphore of a nanothread several times.
+
+	This function is intended to be used by the EPOC layer and personality
+	layers.  Device drivers should use Kern::RequestComplete instead.
+
+	@param aThread Nanothread to signal.  If NULL, the current thread is signaled.
+	@param aCount Number of times the request semaphore must be signaled.
+	
+	@pre aCount >= 0
+
+	@see Kern::RequestComplete()
+ */
+EXPORT_C __NAKED__ void NKern::ThreadRequestSignal(NThread* /*aThread*/, TInt /*aCount*/)
+	{
+	ASM_DEBUG2(NKThreadRequestSignalN,r0,r1);
+
+	asm("cmp	r1, #0 ");
+	asm("ble	0f ");
+	asm("cmp	r0, #0 ");
+	asm("addne	r0, r0, #%a0" : : "i" _FOFF(NThreadBase,iRequestSemaphore));
+	asm("bne	nkfssignal1 ");
+	__ASM_CLI();
+	GET_RWNO_TID(,r0);
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("add	r0, r0, #%a0" : : "i" _FOFF(NThreadBase,iRequestSemaphore));
+	asm("b		nkfssignal2 ");
+
+	asm("0:		");
+	__JUMP(eq,	lr);
+	__ASM_CRASH();
+	}
+
+
+/** Signals the request semaphore of a nanothread.
+
+	This function is intended to be used by the EPOC layer and personality
+	layers.  Device drivers should use Kern::RequestComplete instead.
+
+	@param aThread Nanothread to signal. Must be non NULL.
+
+	@see Kern::RequestComplete()
+
+	@pre Interrupts must be enabled.
+	@pre Do not call from an ISR
+ */
+EXPORT_C __NAKED__ void NKern::ThreadRequestSignal(NThread* /*aThread*/)
+	{
+	ASM_DEBUG1(NKThreadRequestSignal,r0);
+	asm("add	r0, r0, #%a0" : : "i" _FOFF(NThreadBase,iRequestSemaphore));
+
+	/* fall through to FSSignal() ... */
+	}
+
+
+/** Signals a fast semaphore.
+
+    Increments the signal count of a fast semaphore
+	by one and releases any	waiting thread if the semaphore becomes signalled.
+	
+	@param aSem The semaphore to signal.
+
+	@see NKern::FSWait()
+
+	@pre Interrupts must be enabled.
+	@pre Do not call from an ISR
+ */
+EXPORT_C __NAKED__ void NKern::FSSignal(NFastSemaphore* /*aSem*/)
+	{
+	ASM_DEBUG1(NKFSSignal,r0);
+
+	asm("mov	r1, #1 ");
+	asm("nkfssignal1: ");
+	__ASM_CLI();
+	asm("nkfssignal2: ");
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("1:		");
+	LDREX(		2,0);				// count
+	asm("cmp	r2, #0 ");
+	asm("sublt	r3, r1, #1 ");		// if count<0, replace with aCount-1
+	asm("addges	r3, r2, r1 ");		// if count>=0, add aCount
+	asm("bvs	0f ");				// if overflow, leave alone
+	STREX(		12,3,0);
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	asm("cmp	r2, #0 ");
+	asm("blt	2f ");
+	asm("0:		");
+	__ASM_STI();
+	__JUMP(,	lr);				// else finished
+
+	asm("2:		");
+	GET_RWNO_TID(,r3);
+	asm("mov	r1, r2, lsl #2 ");	// if original count<0 r1 = original count<<2 = thread
+	asm("ldr	r12, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("stmfd	sp!, {r4,lr} ");
+	asm("add	r12, r12, #1 ");			// lock the kernel
+	asm("str	r12, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	__ASM_STI();
+	asm("bl		fs_signal_wake ");			// wake up the thread
+	asm("ldmfd	sp!, {r4,lr} ");
+	asm("b		Unlock__5NKern ");
+	}
+
+
+/** Signals a fast semaphore multiple times.
+
+    Increments the signal count of a
+	fast semaphore by aCount and releases any waiting thread if the semphore
+	becomes signalled.
+	
+	@param aSem The semaphore to signal.
+	@param aCount The number of times to signal the semaphore.
+
+	@see NKern::FSWait()
+
+	@pre Interrupts must be enabled.
+	@pre Do not call from an ISR
+ */
+EXPORT_C __NAKED__ void NKern::FSSignalN(NFastSemaphore* /*aSem*/, TInt /*aCount*/)
+	{
+	ASM_DEBUG2(NKFSSignalN,r0,r1);
+
+	asm("cmp	r1, #0 ");
+	asm("bgt	nkfssignal1 ");
+	__JUMP(,	lr);
+	}
+
+
+/** Cancels a wait on a fast semaphore.
+
+	@pre Kernel must be locked.
+	@pre Call either in a thread or an IDFC context.
+	
+	@post Kernel is locked.
+
+	@internalComponent	
+ */
+__NAKED__ void NFastSemaphore::WaitCancel()
+	{
+	asm("mov	r1, #1 ");
+	/* Fall through ... */
+	}
+
+/* Fall through ... */
+#endif
+/* Fall through ... */
+
+/**	Increment a fast semaphore count
+
+	Do memory barrier
+	If iCount >= 0, increment by aCount and return 0
+	If iCount < 0, set count equal to aCount-1 and return (original count << 2)
+
+	Release semantics
+*/
+__NAKED__ NThreadBase* NFastSemaphore::Inc(TInt /*aCount*/)
+	{
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("1: ");
+	LDREX(2,0);					// count
+	asm("cmp r2, #0 ");
+	asm("sublt r3, r1, #1 ");	// if count<0, replace with aCount-1
+	asm("addges r3, r2, r1 ");	// if count>=0, add aCount
+	asm("bvs 0f ");				// if overflow leave alone
+	STREX(12,3,0);
+	asm("teq r12, #0 ");
+	asm("bne 1b ");
+	asm("0: ");
+	asm("cmp r2, #0 ");
+	asm("movlt r0, r2, lsl #2 ");	// if original count<0, return count<<2
+	asm("movge r0, #0 ");			// else return 0
+	__JUMP(,lr);
+	}
+
+
+/**	Decrement a fast semaphore count
+
+	If count > 0, decrement
+	If count = 0, set equal to (thread>>2)|0x80000000
+	Return original count
+	Full barrier semantics
+*/
+__NAKED__ TInt NFastSemaphore::Dec(NThreadBase*)
+	{
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("1: ");
+	LDREX(2,0);					// count
+	asm("subs r3, r2, #1 ");
+	asm("movlt r3, #0x80000000 ");
+	asm("orrlt r3, r3, r1, lsr #2 ");	// if --count<0, r3=(thread>>2)|0x80000000
+	STREX(12,3,0);
+	asm("teq r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("mov r0, r2 ");			// return original count
+	__JUMP(,lr);
+	}
+
+/**	Reset a fast semaphore count
+
+	Do memory barrier
+	If iCount >= 0, set iCount=0 and return 0
+	If iCount < 0, set iCount=0 and return (original count << 2)
+
+	Release semantics
+*/
+__NAKED__ NThreadBase* NFastSemaphore::DoReset()
+	{
+	__DATA_MEMORY_BARRIER_Z__(r3);
+	asm("1: ");
+	LDREX(2,0);					// count
+	STREX(12,3,0);				// zero count
+	asm("teq r12, #0 ");
+	asm("bne 1b ");
+	asm("cmp r2, #0 ");
+	asm("movlt r0, r2, lsl #2 ");	// if original count<0, return count<<2
+	asm("movge r0, #0 ");			// else return 0
+	__JUMP(,lr);
+	}
+
+
+#ifdef __NTHREAD_WAITSTATE_MACHINE_CODED__
+/******************************************************************************
+ * Thread wait state
+ ******************************************************************************/
+
+__NAKED__ void NThreadWaitState::SetUpWait(TUint /*aType*/, TUint /*aFlags*/, TAny* /*aWaitObj*/)
+	{
+	asm("stmfd	sp!, {r4-r5} ");
+	asm("and	r2, r2, #%a0" : : "i" ((TInt)EWtStObstructed));
+	asm("and	r1, r1, #0xff ");
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)EWtStWaitPending));
+	asm("orr	r2, r2, r1, lsl #8 ");
+	asm("1:		");
+	LDREXD(		4,0);
+	STREXD(		12,2,0);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("cmp	r4, #0 ");
+	asm("bne	0f ");
+	asm("ldmfd	sp!, {r4-r5} ");
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(NThreadWaitState, iTimer.iTriggerTime));
+	__JUMP(,	lr);
+
+	asm("0:		");
+	__ASM_CRASH();
+	}
+
+__NAKED__ void NThreadWaitState::SetUpWait(TUint /*aType*/, TUint /*aFlags*/, TAny* /*aWaitObj*/, TUint32 /*aTimeout*/)
+	{
+	asm("stmfd	sp!, {r4-r5} ");
+	asm("and	r2, r2, #%a0" : : "i" ((TInt)EWtStObstructed));
+	asm("and	r1, r1, #0xff ");
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)EWtStWaitPending));
+	asm("orr	r2, r2, r1, lsl #8 ");
+	asm("1:		");
+	LDREXD(		4,0);
+	STREXD(		12,2,0);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("ldr	r12, [sp, #8] ");
+	asm("cmp	r4, #0 ");
+	asm("bne	0f ");
+	asm("ldmfd	sp!, {r4-r5} ");
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(NThreadWaitState, iTimer.iTriggerTime));
+	__JUMP(,	lr);
+
+	asm("0:		");
+	__ASM_CRASH();
+	}
+
+__NAKED__ void NThreadWaitState::CancelWait()
+	{
+	asm("mov	r12, r0 ");
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("1:		");
+	LDREXD(		0,12);
+	STREXD(		1,2,12);
+	asm("cmp	r1, #0 ");
+	asm("bne	1b ");
+	asm("tst	r0, #%a0" : : "i" ((TInt)(EWtStDead|EWtStWaitActive)));
+	asm("bne	0f ");
+	__JUMP(,	lr);
+
+	asm("0:		");
+	__ASM_CRASH();
+	}
+
+__NAKED__ TInt NThreadWaitState::DoWait()
+	{
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(NThreadWaitState,iTimer.iTriggerTime));
+	asm("1:		");
+	LDREXD(		2,0);
+	asm("cmp	r1, #0 ");
+	asm("orrne	r2, r2, #%a0" : : "i" ((TInt)EWtStTimeout));
+	asm("tst	r2, #%a0" : : "i" ((TInt)EWtStDead));
+	asm("bne	0f ");
+	asm("tst	r2, #%a0" : : "i" ((TInt)EWtStWaitPending));
+	asm("beq	9f ");
+	asm("bic	r2, r2, #%a0" : : "i" ((TInt)EWtStWaitPending));
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)EWtStWaitActive));
+	STREXD(		12,2,0);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("cmp	r1, #0 ");
+	asm("bne	2f ");
+	asm("mov	r0, r2, lsr #8 ");
+	__JUMP(,	lr);
+
+	asm("2:		");
+	asm("stmfd	sp!, {r2-r4,lr} ");
+	asm("mov	r4, r0 ");
+	asm("add	r0, r0, #%a0" : : "i" _FOFF(NThreadWaitState,iTimer));
+	asm("mov	r2, #1 ");
+	asm("bl	"	CSM_ZN6NTimer7OneShotEii );
+	asm("ldr	r1, [r4, #%a0]" : : "i" _FOFF(NThreadWaitState,iTimer.iNTimerSpare1));
+	asm("cmp	r0, #0 ");
+	asm("bne	8f ");
+	asm("add	r1, r1, #1 ");
+	asm("str	r1, [r4, #%a0]" : : "i" _FOFF(NThreadWaitState,iTimer.iNTimerSpare1));
+	asm("ldmfd	sp!, {r2-r4,lr} ");
+	asm("mov	r0, r2, lsr #8 ");
+	__JUMP(,	lr);
+
+	asm("0:		");
+	asm("mvn	r0, #%a0" : : "i" (~KErrDied));
+	__JUMP(,	lr);
+	asm("9:		");
+	asm("mvn	r0, #%a0" : : "i" (~KErrGeneral));
+	__JUMP(,	lr);
+	asm("8:		");
+	__ASM_CRASH();
+	}
+
+__NAKED__ TInt NThreadWaitState::UnBlockT(TUint /*aType*/, TAny* /*aWaitObj*/, TInt /*aReturnValue*/)
+	{
+	asm("stmfd	sp!, {r4-r6,lr} ");
+	asm("mov	r6, r2 ");					// r6 = aWaitObj
+	asm("mov	r2, #0 ");
+	__DATA_MEMORY_BARRIER__(r2);
+	asm("1:		");
+	LDREXD(		4,0);						// r5:r4 = oldws64
+	asm("cmp	r5, r6 ");					// does iWaitObj match?
+	asm("bne	2f ");						// no
+	asm("eor	r12, r4, r1, lsl #8 ");		// does wait type match?
+	asm("cmp	r12, #%a0" : : "i" ((TInt)EWtStDead));
+	asm("bhs	2f ");						// no
+	STREXD(		12,2,0);					// yes - wait matches - try to write return value
+	asm("cmp	r12, #0 ");					// success?
+	asm("bne	1b ");						// no - retry
+	asm("mov	r6, r0 ");
+	asm("tst	r4, #%a0" : : "i" ((TInt)EWtStTimeout));
+	asm("blne	CancelTimerT__16NThreadWaitState ");
+	asm("tst	r4, #%a0" : : "i" ((TInt)EWtStWaitActive));
+	asm("beq	0f ");
+	asm("ldr	r1, [r6, #%a0]" : : "i" (_FOFF(NThreadBase,iPauseCount)-_FOFF(NThreadBase,iWaitState)));
+	asm("sub	r0, r6, #%a0" : : "i" _FOFF(NThreadBase,iWaitState));	// r0 = Thread()
+	asm("movs	r1, r1, lsl #16 ");				// check if iPauseCount=iSuspendCount=0
+	asm("bleq	ReadyT__12NSchedulableUi ");	// if so, make thread ready
+	asm("0:		");
+	asm("mov	r0, #0 ");
+	__POPRET("	r4-r6,");					// return KErrNone
+
+	asm("2:		");
+	STREXD(		12,4,0);					// no matching wait - write back to check atomicity
+	asm("cmp	r12, #0 ");					// success?
+	asm("bne	1b ");						// no - retry
+	asm("mvn	r0, #%a0" : : "i" (~KErrGeneral));
+	__POPRET("	r4-r6,");					// no matching wait - return KErrGeneral
+	}
+
+__NAKED__ TUint32 NThreadWaitState::ReleaseT(TAny*& /*aWaitObj*/, TInt /*aReturnValue*/)
+	{
+	asm("stmfd	sp!, {r4-r5} ");
+	asm("mov	r3, r2 ");
+	asm("mov	r2, #0 ");
+	__DATA_MEMORY_BARRIER__(r2);
+	asm("1:		");
+	LDREXD(		4,0);
+	asm("and	r2, r4, #%a0" : : "i" ((TInt)EWtStDead));
+	STREXD(		12,2,0);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("str	r5, [r1] ");
+	asm("tst	r4, #%a0" : : "i" ((TInt)EWtStTimeout));
+	asm("bne	2f ");
+	asm("mov	r0, r4 ");
+	asm("ldmfd	sp!, {r4-r5} ");
+	__JUMP(,	lr);
+
+	asm("2:		");
+	asm("mov	r5, lr ");
+	asm("bl		CancelTimerT__16NThreadWaitState ");
+	asm("mov	r0, r4 ");
+	asm("mov	lr, r5 ");
+	asm("ldmfd	sp!, {r4-r5} ");
+	__JUMP(,	lr);
+	}
+#endif
+
+
+#ifdef __FAST_MUTEX_MACHINE_CODED__
+/******************************************************************************
+ * Fast mutex
+ ******************************************************************************/
+
+/** Releases a previously acquired fast mutex.
+	
+	Generally, threads would use NKern::FMSignal() which manipulates the kernel lock
+	for you.
+	
+	@pre The calling thread holds the mutex.
+	@pre Kernel must be locked.
+	
+	@post Kernel is locked.
+	
+	@see NFastMutex::Wait()
+	@see NKern::FMSignal()
+*/
+EXPORT_C __NAKED__ void NFastMutex::Signal()
+	{
+	ASM_DEBUG1(FMSignal,r0);
+#ifdef BTRACE_FAST_MUTEX
+//	BTraceContext4(BTrace::EFastMutex, BTrace::EFastMutexSignal, this);
+	asm("stmfd	sp!, {r0,lr} ");
+	asm("mov	r1, r0 ");
+	asm("ldr	r0, btrace_hdr_fmsignal ");
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("bl		OutX__6BTraceUlUlUlUl ");
+	asm("ldmfd	sp!, {r0,lr} ");
+#endif
+	GET_RWNO_TID(,r3);
+	asm("mov	r12, #0 ");
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("ldr	r1, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	__ASM_CLI();
+	asm("1:		");
+	LDREX(		2,0);				// r2=aMutex->iHoldingThread
+	asm("cmp	r2, r1 ");			// anyone else waiting?
+	asm("mov	r2, #0 ");
+	asm("bne	2f ");				// branch out if someone else waiting
+	STREX(		12,2,0);			// else try to clear the holding thread
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	asm("str	r12, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	__ASM_STI();
+	__JUMP(,lr);					// mutex released without contention
+
+#ifdef BTRACE_FAST_MUTEX
+	asm("btrace_hdr_fmsignal: ");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(8,BTrace::EFastMutex,BTrace::EFastMutexSignal)));
+#endif
+
+	// there is contention
+	asm("2:		");
+	asm("orr	r12, r0, #1 ");
+	asm("str	r12, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	__ASM_STI();
+	asm("b		DoSignalL__10NFastMutex ");
+	}
+
+
+/** Acquires the System Lock.
+
+    This will block until the mutex is available, and causes
+	the thread to enter an implicit critical section until the mutex is released.
+
+	@post System lock is held.
+
+	@see NKern::UnlockSystem()
+	@see NKern::FMWait()
+
+	@pre No fast mutex can be held.
+	@pre Call in a thread context.
+	@pre Kernel must be unlocked
+	@pre interrupts enabled
+
+*/
+EXPORT_C __NAKED__ void NKern::LockSystem()
+	{
+	asm("ldr	r0, __SystemLock ");
+
+	/* fall through to FMWait() ... */
+	}
+
+/** Acquires a fast mutex.
+
+    This will block until the mutex is available, and causes
+	the thread to enter an implicit critical section until the mutex is released.
+
+	@param aMutex The fast mutex to acquire.
+	
+	@post The calling thread holds the mutex.
+	
+	@see NFastMutex::Wait()
+	@see NKern::FMSignal()
+
+	@pre No fast mutex can be held.
+	@pre Call in a thread context.
+	@pre Kernel must be unlocked
+	@pre interrupts enabled
+
+*/
+EXPORT_C __NAKED__ void NKern::FMWait(NFastMutex* /*aMutex*/)
+	{
+	ASM_DEBUG1(NKFMWait,r0);
+
+	__ASM_CLI();
+	GET_RWNO_TID(,r3);
+	asm("ldr	r1, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("1:		");
+	LDREX(		2,0);				// r2=aMutex->iHoldingThread
+	asm("cmp	r2, #0 ");			//
+	asm("bne	2f ");				// branch out if mutex held
+	STREX(		12,1,0);			// else try to set us as holding thread
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	asm("str	r0, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	__DATA_MEMORY_BARRIER__(r12);
+	__ASM_STI();
+#ifdef BTRACE_FAST_MUTEX
+//	BTraceContext4(BTrace::EFastMutex, BTrace::EFastMutexWait, aMutex);
+	asm("mov	r1, r0 ");
+	asm("ldr	r0, btrace_hdr_fmwait ");
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("b		OutX__6BTraceUlUlUlUl ");
+#endif
+	__JUMP(,lr);					// mutex acquired without contention
+
+	// there is contention
+	asm("2:		");
+	asm("mov	r2, #1 ");
+	asm("str	r0, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	asm("str	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	__ASM_STI();
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("stmfd	sp!, {r4,lr} ");
+	asm("bl		DoWaitL__10NFastMutex ");
+	asm("ldmfd	sp!, {r4,lr} ");
+	asm("b		Unlock__5NKern ");
+
+	asm("__SystemLock: ");
+	asm(".word	%a0" : : "i" ((TInt)&TheScheduler.iLock));
+#ifdef BTRACE_FAST_MUTEX
+	asm("btrace_hdr_fmwait: ");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(8,BTrace::EFastMutex,BTrace::EFastMutexWait)));
+#endif
+	}
+
+
+/** Releases the System Lock.
+
+	@pre System lock must be held.
+
+	@see NKern::LockSystem()
+	@see NKern::FMSignal()
+*/
+EXPORT_C __NAKED__ void NKern::UnlockSystem()
+	{
+	asm("ldr	r0, __SystemLock ");
+
+	/* fall through to FMSignal() ... */
+	}
+
+/** Releases a previously acquired fast mutex.
+	
+	@param aMutex The fast mutex to release.
+	
+	@pre The calling thread holds the mutex.
+	
+	@see NFastMutex::Signal()
+	@see NKern::FMWait()
+*/
+EXPORT_C __NAKED__ void NKern::FMSignal(NFastMutex* /*aMutex*/)
+	{
+	ASM_DEBUG1(NKFMSignal,r0);
+#ifdef BTRACE_FAST_MUTEX
+//	BTraceContext4(BTrace::EFastMutex, BTrace::EFastMutexSignal, this);
+	asm("stmfd	sp!, {r0,lr} ");
+	asm("mov	r1, r0 ");
+	asm("ldr	r0, btrace_hdr_fmsignal ");
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("bl		OutX__6BTraceUlUlUlUl ");
+	asm("ldmfd	sp!, {r0,lr} ");
+#endif
+	__ASM_CLI();
+	GET_RWNO_TID(,r3);
+	asm("mov	r12, #0 ");
+	__DATA_MEMORY_BARRIER__(r12);
+	asm("ldr	r1, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("1:		");
+	LDREX(		12,0);				// r12=aMutex->iHoldingThread
+	asm("mov	r2, #0 ");
+	asm("cmp	r12, r1 ");			// anyone else waiting?
+	asm("bne	2f ");				// branch out if someone else waiting
+	STREX(		12,2,0);			// else try to clear the holding thread
+	asm("teq	r12, #0 ");
+	asm("bne	1b ");
+	asm("str	r12, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	__ASM_STI();
+	__JUMP(,lr);					// mutex released without contention
+
+	// there is contention
+	asm("2:		");
+	asm("stmfd	sp!, {r4,lr} ");
+	asm("mov	r12, #1 ");
+	asm("orr	r4, r0, #1 ");
+	asm("str	r12, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("str	r4, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	__ASM_STI();
+	asm("bl		DoSignalL__10NFastMutex ");
+	asm("ldmfd	sp!, {r4,lr} ");
+	asm("b		Unlock__5NKern ");
+	}
+
+
+/** Temporarily releases the System Lock if there is contention.
+
+    If there
+	is another thread attempting to acquire the System lock, the calling
+	thread releases the mutex and then acquires it again.
+	
+	This is more efficient than the equivalent code:
+	
+	@code
+	NKern::UnlockSystem();
+	NKern::LockSystem();
+	@endcode
+
+	Note that this can only allow higher priority threads to use the System
+	lock as lower priority cannot cause contention on a fast mutex.
+
+	@return	TRUE if the system lock was relinquished, FALSE if not.
+
+	@pre	System lock must be held.
+
+	@post	System lock is held.
+
+	@see NKern::LockSystem()
+	@see NKern::UnlockSystem()
+*/
+EXPORT_C __NAKED__ TBool NKern::FlashSystem()
+	{
+//	CHECK_PRECONDITIONS(MASK_SYSTEM_LOCKED,"NKern::FlashSystem");
+	asm("ldr	r0, __SystemLock ");
+
+	/* fall through to FMFlash() ... */
+	}
+
+/** Temporarily releases a fast mutex if there is contention.
+
+    If there is another thread attempting to acquire the mutex, the calling
+	thread releases the mutex and then acquires it again.
+	
+	This is more efficient than the equivalent code:
+	
+	@code
+	NKern::FMSignal();
+	NKern::FMWait();
+	@endcode
+
+	@return	TRUE if the mutex was relinquished, FALSE if not.
+
+	@pre	The mutex must be held.
+
+	@post	The mutex is held.
+*/
+EXPORT_C __NAKED__ TBool NKern::FMFlash(NFastMutex* /*aM*/)
+	{
+	ASM_DEBUG1(NKFMFlash,r0);
+	__ASM_CLI();
+	GET_RWNO_TID(,r3);
+	asm("ldr	r1, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("ldrb	r2, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iMutexPri));
+	asm("ldrb	r12, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iBasePri));
+	asm("cmp	r2, r12 ");
+	asm("bhs	1f ");							// a thread of greater or equal priority is waiting
+	__ASM_STI();
+#ifdef BTRACE_FAST_MUTEX
+//	BTraceContext4(BTrace::EFastMutex, BTrace::EFastMutexFlash, aM);
+	asm("mov	r1, r0 ");
+	asm("ldr	r0, btrace_hdr_fmsignal ");
+	asm("stmfd	sp!, {r4,lr} ");
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("bl		OutX__6BTraceUlUlUlUl ");
+	asm("ldmfd	sp!, {r4,lr} ");
+#endif
+	asm("mov	r0, #0 ");
+	__JUMP(,lr);								// return FALSE
+
+#ifdef BTRACE_FAST_MUTEX
+	asm("btrace_hdr_fmflash: ");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(8,BTrace::EFastMutex,BTrace::EFastMutexFlash)));
+#endif
+
+	asm("1:		");
+	asm("mov	r12, #1 ");
+	asm("str	r12, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	__ASM_STI();
+	asm("stmfd	sp!, {r4,lr} ");
+	asm("mov	r4, r0 ");
+	asm("bl		Signal__10NFastMutex ");
+	asm("bl		PreemptionPoint__5NKern ");
+	asm("mov	r0, r4 ");
+	asm("bl		Wait__10NFastMutex ");
+	asm("bl		Unlock__5NKern ");
+	asm("ldmfd	sp!, {r4,lr} ");
+	asm("mov	r0, #1 ");
+	__JUMP(,lr);								// return TRUE
+	}
+#endif
+
+
+
+/** Check whether a thread holds a fast mutex.
+	If so set the mutex contention flag and return TRUE, else return FALSE.
+
+	Called with kernel lock held
+
+	@internalComponent
+ */
+__NAKED__ TBool NThreadBase::CheckFastMutexDefer()
+	{
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	asm("bics r2, r1, #3 ");		// r2 = pointer to mutex if any, r1 bit 0 = flag
+	asm("bne 1f ");
+	asm("mov r0, #0 ");				// no mutex - return FALSE
+	__JUMP(,lr);
+
+	// iHeldFastMutex points to a mutex
+	asm("1: ");
+	asm("tst r1, #1 ");				// test flag
+	asm("beq 2f ");					// branch if not being released
+
+	// mutex being released
+	asm("3: ");
+	LDREX(3,2);						// r3 = m->iHoldingThread
+	asm("sub r3, r3, r0 ");			// m->iHoldingThread - this
+	asm("cmp r3, #1 ");
+	asm("bhi 4f ");					// if m->iHoldingThread != this or this+1, skip
+	asm("orr r3, r0, #1 ");			// if m->iHoldingThread = this or this+1, set m->iHoldingThread = this+1
+	STREX(12,3,2);
+	asm("teq r12, #0 ");
+	asm("bne 3b ");
+	asm("mov r0, #1 ");				// return TRUE
+	__JUMP(,lr);
+
+	asm("4: ");
+	asm("mov r3, #0 ");				// already released, so set iHeldFastMutex=0
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	asm("0: ");
+	asm("mov r0, #0 ");				// no mutex - return FALSE
+	__JUMP(,lr);
+
+	// mutex being acquired or has been acquired
+	// if it has been acquired set the contention flag and return TRUE, else return FALSE
+	asm("2: ");
+	LDREX(3,2);						// r3 = m->iHoldingThread
+	asm("sub r3, r3, r0 ");			// m->iHoldingThread - this
+	asm("cmp r3, #1 ");
+	asm("bhi 0b ");					// if m->iHoldingThread != this or this+1, finish and return FALSE
+	asm("orr r3, r0, #1 ");			// if m->iHoldingThread = this or this+1, set m->iHoldingThread = this+1
+	STREX(12,3,2);
+	asm("teq r12, #0 ");
+	asm("bne 2b ");
+	asm("mov r0, #1 ");				// return TRUE
+	__JUMP(,lr);
+
+	asm("4: ");
+	asm("mov r3, #0 ");				// already released, so set iHeldFastMutex=0
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
+	asm("mov r0, #0 ");				// no mutex - return FALSE
+	__JUMP(,lr);
+	}
+
+
+/******************************************************************************
+ * IDFC/DFC
+ ******************************************************************************/
+
+/**	Transition the state of an IDFC or DFC when Add() is called
+
+	0000->008n, 00Cn->00En, all other states unchanged
+	Return original state.
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::AddStateChange()
+	{
+	GET_RWNO_TID(, r1);				// r1->SubScheduler
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));	// r1 = current CPU number
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("1: ");
+	LDREXH(0,3);
+	asm("cmp r0, #0 ");				// original state 0000 ?
+	asm("orreq r2, r1, #0x0080 ");	// yes -> 008n
+	asm("movne r2, r0 ");			// no -> R2=original state ...
+	asm("eorne r12, r0, #0x00C0 ");	// ... and R12=original state^00C0 ...
+	asm("cmpne r12, #0x0020 ");		// ... and check if result < 0020 (i.e. original==00C0..00DF)
+	asm("addlo r2, r2, #0x0020 ");	// 00Cn->00En otherwise leave R2 alone
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	__JUMP(,lr);
+	}
+
+/**	Transition the state of an IDFC just before running it.
+
+	002g->00Cn, 008n->00Cn, 00An->00Cn, XXYY->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::RunIDFCStateChange()
+	{
+	GET_RWNO_TID(, r1);				// r1->SubScheduler
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));	// r1 = current CPU number
+	__DATA_MEMORY_BARRIER_Z__(r12);
+#ifdef _DEBUG
+	asm("str r4, [sp, #-4]! ");
+	asm("ldr r4, __IdleGeneration ");
+	asm("ldrb r4, [r4] ");			// r4 = TheScheduler.iIdleGeneration
+	asm("eor r4, r4, #0x0021 ");	// r4 = expected state of idle IDFCs
+#endif
+	asm("1: ");
+	LDREXH(0,3);
+	asm("eor r2, r0, #0x0080 ");
+	asm("cmp r2, #0x0040 ");
+	asm("bhs 2f ");					// branch out unless 008n or 00An
+#ifdef _DEBUG
+	asm("and r2, r0, #0x001F ");
+	asm("cmp r2, r1 ");
+	asm("bne 0f ");					// if n!=current CPU number, die
+#endif
+	asm("orr r2, r1, #0x00C0 ");	// 008n->00Cn, 00An->00Cn
+	asm("3: ");
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+#ifdef _DEBUG
+	asm("ldr r4, [sp], #4 ");
+#endif
+	__JUMP(,lr);
+
+	asm("2: ");
+	asm("bic r2, r0, #1 ");
+	asm("cmp r2, #0x0020 ");
+	asm("orreq r2, r1, #0x00C0 ");	// 002g->00Cn
+#ifdef _DEBUG
+	asm("bne 4f ");
+	asm("cmp r0, r4 ");
+	asm("bne 0f ");					// wrong idle state
+	asm("4: ");
+#endif
+	asm("beq 3b ");
+	asm("cmp r0, #0x0100 ");		// C=1 if XXYY or XX00, C=0 if bad state
+	asm("bic r2, r0, #0x00FF ");	// XXYY->XX00, C unchanged
+	asm("tst r0, #0x00FF ");		// C unchanged
+	asm("moveq r2, #0 ");			// XX00->0000, C unchanged
+	asm("bcs 3b ");					// branch to STREX if valid state
+
+	asm("0: ");
+	__ASM_CRASH();					// bad state
+
+	asm("__IdleGeneration: ");
+	asm(".word %a0 " : : "i" ((TInt)&TheScheduler.iIdleGeneration));
+	}
+
+/**	Transition the state of an IDFC just after running it.
+
+	First swap aS->iCurrentIDFC with 0
+	If original value != this, return 0xFFFFFFFF and don't touch *this
+	Else 00Cn->0000, 00En->008n, 006n->006n, XXCn->XX00, XXEn->XX00, XX6n->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::EndIDFCStateChange(TSubScheduler* /*aS*/)
+	{
+	asm("add r1, r1, #%a0" : : "i" _FOFF(TSubScheduler,iCurrentIDFC));
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("1: ");
+	LDREX(2,1);
+	asm("subs r2, r2, r0 ");		// aS->iCurrentIDFC == this?
+	asm("bne 9f ");					// no - bail out immediately
+	STREX(12,2,1);					// yes - set aS->iCurrentIDFC=0
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	__DATA_MEMORY_BARRIER__(r12);
+#ifdef _DEBUG
+	asm("str r4, [sp, #-4]! ");
+	GET_RWNO_TID(, r4);				// r4->SubScheduler
+	asm("ldr r4, [r4, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));	// r4 = current CPU number
+#endif
+	asm("2: ");
+	LDREXH(0,3);					// r0 = original DFC state
+	asm("mov r2, #0 ");				// r2 = 0 to begin with
+#ifdef _DEBUG
+	asm("tst r0, #0x00FF ");
+	asm("beq 5f ");
+	asm("eor r12, r0, r4 ");		// original state ^ CPU number, should be xxC0, xxE0 or xx60
+	asm("and r12, r12, #0x00E0 ");
+	asm("cmp r12, #0x00E0 ");
+	asm("cmpne r12, #0x00C0 ");
+	asm("cmpne r12, #0x0060 ");
+	asm("beq 5f ");
+	__ASM_CRASH();					// bad state
+	asm("5: ");
+#endif
+	asm("bic r12, r0, #0x001F ");
+	asm("cmp r12, #0x00E0 ");
+	asm("bhi 4f ");					// branch out if XXYY or XX00
+	asm("subeq r2, r0, #0x0060 ");	// 00En->008n
+	asm("cmp r12, #0x0060 ");
+	asm("moveq r2, r0 ");			// 006n->006n, else R2=0
+	asm("3: ");
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 2b ");
+	__DATA_MEMORY_BARRIER__(r12);
+#ifdef _DEBUG
+	asm("ldr r4, [sp], #4 ");
+#endif
+	__JUMP(,lr);
+
+	asm("4: ");
+	asm("tst r0, #0x00FF ");
+	asm("bicne r2, r0, #0x00FF ");	// XXYY->XX00, XX00->0000
+	asm("b 3b ");
+
+	asm("9: ");
+	asm("mvn r0, #0 ");				// return 0xFFFFFFFF
+	__JUMP(,lr);
+	}
+
+/**	Transition the state of an IDFC just after running it.
+
+	006n->002g where g = TheScheduler.iIdleGeneration
+	XX6n->XX00
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::EndIDFCStateChange2()
+	{
+	asm("ldr r12, __IdleGeneration ");
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+#ifdef _DEBUG
+	asm("str r4, [sp, #-4]! ");
+	GET_RWNO_TID(, r4);				// r4->SubScheduler
+	asm("ldr r4, [r4, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));	// r4 = current CPU number
+#endif
+	asm("ldrb r1, [r12] ");			// r1 = TheScheduler.iIdleGeneration
+	asm("1: ");
+	LDREXH(0,3);
+#ifdef _DEBUG
+	asm("eor r12, r0, r4 ");
+	asm("and r12, r12, #0x00FF ");
+	asm("cmp r12, #0x0060 ");		// should be 006n or XX6n
+	asm("beq 2f ");
+	__ASM_CRASH();					// if not, die
+	asm("2: ");
+#endif
+	asm("tst r0, #0xFF00 ");		// XX6n or 006n ?
+	asm("orreq r2, r1, #0x0020 ");	// 006n->002g
+	asm("bicne r2, r0, #0x00FF ");	// XX6n->XX00
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+#ifdef _DEBUG
+	asm("ldr r4, [sp], #4 ");
+#endif
+	__JUMP(,lr);
+	}
+
+/**	Transition the state of a DFC just before moving it from the IDFC queue to
+	its final queue.
+
+	002g->0001, 008n->0001, XX2g->XX00, XX8n->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+*/
+__NAKED__ TUint32 TDfc::MoveToFinalQStateChange()
+	{
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	__DATA_MEMORY_BARRIER_Z__(r12);
+#ifdef _DEBUG
+	asm("str r4, [sp, #-4]! ");
+	asm("ldr r4, __IdleGeneration ");
+	GET_RWNO_TID(, r1);				// r1->SubScheduler
+	asm("ldrb r4, [r4] ");			// r4 = TheScheduler.iIdleGeneration
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));	// r1 = current CPU number
+	asm("eor r4, r4, #0x0021 ");	// r4 = expected state of idle IDFCs
+	asm("orr r1, r1, #0x0080 ");
+#endif
+	asm("1: ");
+	LDREXH(0,3);
+#ifdef _DEBUG
+	asm("cmp r0, #0 ");
+	asm("beq 0f ");					// 0000 -> die
+	asm("ands r2, r0, #0x00FF ");
+	asm("beq 3f ");					// XX00 -> OK
+	asm("cmp r2, r4 ");				// 002g ?
+	asm("beq 3f ");					// yes -> OK
+	asm("cmp r2, r1 ");				// 008n ?
+	asm("beq 3f ");					// yes -> OK
+	asm("0: ");
+	__ASM_CRASH();					// otherwise die
+	asm("3: ");
+#endif
+	asm("bics r2, r0, #0x00FF ");	// XXYY->XX00
+	asm("moveq r2, #0x0001 ");		// 002g,008n->0001
+	asm("beq 2f ");
+	asm("tst r0, #0x00FF ");
+	asm("moveq r2, #0 ");			// XX00->0000
+	asm("2: ");
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+#ifdef _DEBUG
+	asm("ldr r4, [sp], #4 ");
+#endif
+	__JUMP(,lr);
+	}
+
+/**	Transition the state of an IDFC when transferring it to another CPU
+
+	002g->00Am, 008n->00Am, XXYY->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled and target CPU's ExIDfcLock held.
+*/
+__NAKED__ TUint32 TDfc::TransferIDFCStateChange(TInt /*aCpu*/)
+	{
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	__DATA_MEMORY_BARRIER_Z__(r12);
+#ifdef _DEBUG
+	asm("stmfd sp!, {r4-r5} ");
+	asm("ldr r4, __IdleGeneration ");
+	GET_RWNO_TID(, r5);				// r5->SubScheduler
+	asm("ldrb r4, [r4] ");			// r4 = TheScheduler.iIdleGeneration
+	asm("ldr r5, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));	// r5 = current CPU number
+	asm("eor r4, r4, #0x0021 ");	// r4 = expected state of idle IDFCs
+	asm("orr r5, r5, #0x0080 ");
+#endif
+	asm("1: ");
+	LDREXH(0,3);
+#ifdef _DEBUG
+	asm("cmp r0, #0 ");
+	asm("beq 0f ");					// 0000 -> die
+	asm("ands r2, r0, #0x00FF ");
+	asm("beq 3f ");					// XX00 -> OK
+	asm("cmp r2, r4 ");				// 002g ?
+	asm("beq 3f ");					// yes -> OK
+	asm("cmp r2, r5 ");				// 008n ?
+	asm("beq 3f ");					// yes -> OK
+	asm("0: ");
+	__ASM_CRASH();					// otherwise die
+	asm("3: ");
+#endif
+	asm("bics r2, r0, #0x00FF ");	// XXYY->XX00
+	asm("orreq r2, r1, #0x00A0 ");	// 002g,008n->00Am
+	asm("beq 2f ");
+	asm("tst r0, #0x00FF ");
+	asm("moveq r2, #0 ");			// XX00->0000
+	asm("2: ");
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+#ifdef _DEBUG
+	asm("ldmfd sp!, {r4-r5} ");
+#endif
+	__JUMP(,lr);
+	}
+
+/**	Transition the state of an IDFC/DFC just before cancelling it.
+
+	0000->0000, XX00->ZZ00, xxYY->zzYY
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::CancelInitialStateChange()
+	{
+	GET_RWNO_TID(,r1);
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuMask));	// r1 = mask of current CPU number
+
+	asm("1: ");
+	LDREXH(0,3);
+	asm("cmp r0, #0 ");
+	asm("beq 2f ");				// if original state 0000 leave alone
+	asm("orr r2, r0, r1, lsl #8 ");	// else set bit 8-15 corresponding to CPU number
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	asm("2: ");
+	__DATA_MEMORY_BARRIER__(r12);
+	__JUMP(,lr);
+	}
+
+/**	Transition the state of an IDFC/DFC at the end of a cancel operation
+
+	XXYY->XX00, XX00->0000
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::CancelFinalStateChange()
+	{
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	__DATA_MEMORY_BARRIER_Z__(r12);
+
+	asm("1: ");
+	LDREXH(0,3);
+	asm("tst r0, #0x00FF ");
+	asm("bicne r2, r0, #0x00FF ");	// XXYY->XX00
+	asm("moveq r2, #0 ");			// xx00->0000
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	__JUMP(,lr);
+	}
+
+/**	Transition the state of an IDFC or DFC when QueueOnIdle() is called
+
+	0000->002g where g = TheScheduler.iIdleGeneration,
+	00Cn->006n, all other states unchanged
+	Return original state.
+
+	Enter and return with interrupts disabled and IdleSpinLock held.
+*/
+__NAKED__ TUint32 TDfc::QueueOnIdleStateChange()
+	{
+	asm("ldr r12, __IdleGeneration ");
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	asm("ldrb r1, [r12] ");			// r1 = TheScheduler.iIdleGeneration
+	__DATA_MEMORY_BARRIER_Z__(r12);
+	asm("1: ");
+	LDREXH(0,3);
+	asm("cmp r0, #0 ");				// original state 0000 ?
+	asm("orreq r2, r1, #0x0020 ");	// yes -> 002g
+	asm("movne r2, r0 ");			// no -> R2=original state ...
+	asm("eorne r12, r0, #0x00C0 ");	// ... and R12=original state^00C0 ...
+	asm("cmpne r12, #0x0020 ");		// ... and check if result < 0020 (i.e. original==00C0..00DF)
+	asm("sublo r2, r2, #0x0060 ");	// 00Cn->006n otherwise leave R2 alone
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void TDfc::ResetState()
+	{
+	asm("add r3, r0, #%a0" : : "i" _FOFF(TDfc,iDfcState));
+	__DATA_MEMORY_BARRIER_Z__(r2);
+#ifdef _DEBUG
+	asm("1: ");
+	LDREXH(0,3);
+	asm("cmp r0, #0 ");
+	asm("beq 0f ");				// if state already zero, die
+	STREXH(12,2,3);
+	asm("cmp r12, #0 ");
+	asm("bne 1b ");
+#else
+	asm("strh r2, [r3] ");		// __e32_atomic_store_rel16(&iDfcState, 0)
+#endif
+	__JUMP(,lr);
+#ifdef _DEBUG
+	asm("0: ");
+	__ASM_CRASH();
+#endif
+	}
+
+
+

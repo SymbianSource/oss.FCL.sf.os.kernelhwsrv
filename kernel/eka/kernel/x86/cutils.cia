@@ -1,0 +1,172 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\x86\cutils.cia
+// 
+//
+
+
+
+#include <x86_mem.h>
+#include <kernel/cache.h>
+#ifdef __SMP__
+#include <apic.h>
+#endif
+
+const TLinAddr PP_MonitorEntryPoint = (TLinAddr)&PP::MonitorEntryPoint;
+const TLinAddr addressof_CrashState = (TLinAddr)(&CrashState);
+
+
+__NAKED__ void DebugOutputChar(TUint)
+//
+// Early debug print code - must hack this for the particular platform.
+// We assume bootstrap trace has already initialised the port.
+//
+	{
+	asm("check_for_xoff:");
+	asm("mov edx, 0x3fd");
+	asm("in al, dx");
+	asm("test al, 1");			// RX Ready
+	asm("jz ok_to_tx");			// no char received
+	asm("mov edx, 0x3f8");
+	asm("in al, dx");
+	asm("cmp al, 0x13");		// check for XOFF
+	asm("jne check_for_xoff");	// not XOFF
+	asm("wait_for_xon:");
+	asm("mov edx, 0x3fd");
+	asm("in al, dx");
+	asm("test al, 1");			// RX Ready
+	asm("jz wait_for_xon");
+	asm("mov edx, 0x3f8");
+	asm("in al, dx");
+	asm("cmp al, 0x11");		// check for XON
+	asm("jne wait_for_xon");	// not XON
+
+	asm("ok_to_tx:");
+	asm("wait_for_thre:");
+	asm("mov edx, 0x3fd");
+	asm("in al, dx");
+	asm("test al, 0x20");		// TX holding register empty
+	asm("jz wait_for_thre");
+	asm("mov edx, 0x3f8");
+	asm("mov eax, [esp+4]");	// get character
+	asm("out dx, al");			// output it
+	asm("ret");
+	}
+
+
+const TLinAddr KernPrintfAddr = (TLinAddr)&Kern::Printf;
+__NAKED__ void KPrintf(const char*, ...)
+	{
+	asm("mov eax, [%a0]": : "i"(&KernPrintfAddr));
+	asm("jmp eax");
+	}
+
+__NAKED__ TInt A::CallSupervisorFunction(TSupervisorFunction, TAny*)
+//
+// Execute an F32 function in supervisor mode
+//
+	{
+	asm("mov eax, [esp+8]");
+	asm("mov ecx, [esp+4]");
+	asm("push eax");
+	asm("call ecx");
+	asm("add esp, 4");
+	asm("ret");
+	}
+
+/**
+Default implementation for Kern::NanoWait, which waits for the specified time.
+
+@param anInterval The time to wait in nanoseconds.
+*/
+__NAKED__ void K::DoNanoWait(TUint32 /*anInterval*/)
+	{
+	asm("mov eax, [esp+4]");
+	asm("mov ecx, 1000");
+	asm("mul ecx");
+	asm("mov ecx, [%a0]": : "i"(&X86_NanoWaitCal));
+	asm("nanowait_loop:");
+	asm("sub eax, ecx");
+	asm("sbb edx, 0");
+	asm("jnc nanowait_loop");
+	asm("ret");
+	}
+
+/**	Increments atomically a counter that's initially positive
+
+It checks the previous CPU mode and if it's User, it only applies user permissions when accessing aValue.
+It doesn't increment if aValue is negative or zero.
+
+@param aValue Reference to the counter to increment
+@return Previous value of counter
+*/
+EXPORT_C __NAKED__ TInt Kern::KUSafeInc(TInt& /*aValue*/)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("mov eax, gs:[ecx]");
+	asm("ku_safe_inc_loop:");
+	asm("cmp eax, 0");
+	asm("jle ku_safe_inc0");
+	asm("mov edx, eax");
+	asm("inc edx");
+	asm("lock cmpxchg gs:[ecx], edx");
+	asm("jne ku_safe_inc_loop");
+	asm("ku_safe_inc0:");
+	asm("ret");
+	}
+
+/**	Decrements atomically a counter that's initially positive
+
+It checks the previous CPU mode and if it's User, it only applies user permissions when accessing aValue.
+It doesn't decrement if aValue is negative or zero.
+
+@param aValue Reference to the counter to decrement
+@return Previous value of counter
+*/
+EXPORT_C __NAKED__ TInt Kern::KUSafeDec(TInt& /*aValue*/)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("mov eax, gs:[ecx]");
+	asm("ku_safe_dec_loop:");
+	asm("cmp eax, 0");
+	asm("jle ku_safe_dec0");
+	asm("mov edx, eax");
+	asm("dec edx");
+	asm("lock cmpxchg gs:[ecx], edx");
+	asm("jne ku_safe_dec_loop");
+	asm("ku_safe_dec0:");
+	asm("ret");
+	}
+
+
+/**	Returns the current state of interrupts
+
+@param	aRequest indicates which state of interrupts should be returned
+
+@return if aRequest is ETrue, function returns ETrue if interrupts are enabled and EFalse otherwise
+if aRequest is EFalse, function returns ETrue if interrupts are disabled and EFalse otherwise
+*/
+__NAKED__ TBool InterruptsStatus(TBool aRequest)
+	{
+	asm("pushfd");
+	asm("pop eax");
+	asm("shr eax, 9");
+	asm("and eax, 1");			// eax = 1 if ints enabled, 0 if not
+	asm("mov ecx, [esp+4]");
+	asm("test ecx, ecx");
+	asm("jnz return_point");	// if checking enabled, done
+	asm("xor al, 1");			// otherwise flip result
+	asm("return_point:");
+	asm("ret");
+	}

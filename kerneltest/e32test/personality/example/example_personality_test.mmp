@@ -1,0 +1,64 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include		<variant_test.mmh>
+#include		"kernel/kern_ext.mmh"
+
+TARGET			VariantTarget(expers,ldd)
+
+#ifdef EPOC32
+targettype	kext			// so it goes into rom as extension
+uid 0x100000af 0x00000000
+VENDORID 0x70000001
+nostrictdef
+deffile ../../~/example_personality_test.def
+#else
+targettype	ldd
+#endif
+romtarget	expers.ldd
+
+sourcepath		.
+source			init.cpp main.cpp isr.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+staticlibrary	example_personality.lib
+
+#if defined(CL7211)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cl7211)
+LIBRARY			VariantTarget(kaeiger,lib)
+#elif defined(WINDERMERE)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/windermere)
+LIBRARY			VariantTarget(kawind,lib)
+#elif defined(SA1100)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/sa1100)
+LIBRARY			VariantTarget(kasa1100,lib)
+#elif defined(COTULLA)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/cotulla)
+LIBRARY		VariantTarget(kacotulla,lib)
+#elif defined(INTEGRATORAP)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/integratorap/inc)
+SYMBIAN_BASE_SYSTEMINCLUDE(integrator/core/cm920)
+LIBRARY			kaintap.lib
+#endif
+
+epocallowdlldata
+
+start wins
+win32_headers
+end
+
+capability	all
+

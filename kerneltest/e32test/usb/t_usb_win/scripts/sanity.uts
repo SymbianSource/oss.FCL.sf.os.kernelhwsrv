@@ -1,0 +1,23 @@
+// @SYMTestCaseID           PBASE-USB-SANITY-0796
+// @SYMTestCaseDesc         USB Sanity Test Suite
+// @SYMTestActions
+//    Perform each of the following tests once:
+//      API
+//      Loop
+//      Loop with Compare
+//      Stream IN
+//      Stream OUT
+// @SYMTestExpectedResults
+//    No errors reported 
+// @SYMTestPriority         Critical
+//
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+WaitConnect
+Loop		50	150	1000	0	0	2	1	100	100	
+Wait
+COMPARE		50	150	1000	0	0	2	1	100	100
+Wait
+STREAM			250	1000	0	0	2	99	100	100
+Wait
+STREAM			1500	1000	0	0	99	1	100	100
+Wait

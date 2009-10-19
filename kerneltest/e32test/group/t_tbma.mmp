@@ -1,0 +1,46 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_tbma.mmp
+// 
+//
+
+target			t_tbma.exe
+targettype		exe
+
+#if defined(GCC32)
+ALWAYS_BUILD_AS_ARM
+#endif
+
+macro			TBMA_TEST_CODE
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+sourcepath		../buffer
+source			t_tbma.cpp
+
+sourcepath		../../../kernel/eka/klib
+source			bma.cpp
+
+#ifdef MARM
+sourcepath		../../../kernel/eka/klib/arm
+source			cbma.cia
+#endif
+
+library			euser.lib
+
+capability		all
+
+vendorid		0x70000001
+
+SMPSAFE

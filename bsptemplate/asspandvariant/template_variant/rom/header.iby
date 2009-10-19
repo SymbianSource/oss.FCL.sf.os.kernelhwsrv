@@ -1,0 +1,87 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+//
+// TO DO: (mandatory)
+//
+// This file provides the ROM header information for your variant
+//
+#define HEAPMAX(x)
+
+// Relative variant path from base
+#define VARIANT_PATH template\template_variant
+
+//
+// The Variant ID
+//
+#define VARID		0x09080001
+#define MAGIC		0x09080001
+#define ALL			0x09080001
+
+#define FIXED
+// Define FIXED as below for moving memory model:
+// #define FIXED		fixed
+
+// Enable all Kernel logging
+kerneltrace 0xffffffff
+
+// Comment out the following line for moving memory model:
+memmodel multiple 0x100000
+
+trace 0x10
+collapse arm gcc 0
+multikernel
+
+nowrapper
+
+// Bootrom and Kernel debug should send log to this serial port:
+debugport 0
+
+version=0.01
+bootbinary=\Epoc32\Release\##MAIN##\_template_bootrom.bin
+
+// These values in super page are for multiple memory model:
+romsize=0x2000000
+romlinearbase=0x80000000
+romalign=0x10
+kerneldataaddress=0xC8000000
+kernelheapmin=0x1000			// calculated at boot time
+kernelheapmax=0x00FFF000
+
+// These values in super page are for moving memory model:
+// romsize=0x01000000
+// romlinearbase=0xf8000000
+// romalign=0x10
+// kerneldataaddress=0x64000000
+// kernelheapmin=0x08000
+// kernelheapmax=0x00FFC000
+
+dataaddress=0x400000
+defaultstackreserve=0x200000
+romchecksum=0x12345678
+
+//#define WITH_LFFS
+//#define WITH_EXTENSION
+//#define WITH_ROFS
+//#define WITH_COMP
+
+//MMC/SD not used, exclude MMC partition Library
+#define USE_CUSTOM_MMC_PARTITION
+
+#ifdef UNICODE
+unicode
+#endif
+

@@ -1,0 +1,808 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\arm\vectors.cia
+// 
+//
+
+#define __INCLUDE_NTHREADBASE_DEFINES__
+#include <e32cia.h>
+#include <arm.h>
+
+void FastMutexNestAttempt();
+void FastMutexSignalError();
+extern "C" void ExcFault(TAny*);
+
+#ifdef __CPU_HAS_MMU
+#define __USE_CP15_FAULT_INFO__
+#endif
+
+#ifdef _DEBUG
+#define __CHECK_LOCK_STATE__
+#endif
+
+//#define __FAULT_ON_FIQ__
+
+#ifdef __CHECK_LOCK_STATE__
+// Check that the kernel is unlocked, no fast mutexes are held and that the thread is not in a
+// critical section.  Called when returning to user mode
+__NAKED__ void CheckLockState()
+	{
+	asm("stmfd sp!, {r14}");
+	asm("ldr r12, __TheScheduler ");
+	asm("ldr r14, [r12, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("cmp r14, #0 ");
+	asm("movne r12, #0xdd000000 ");
+	asm("strne r12, [r12, #1] ");
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("ldr r14, [r12, #%a0]" : : "i" _FOFF(NThread,iHeldFastMutex));
+	asm("cmp r14, #0 ");
+	__CPOPRET(eq, "");
+	asm("badLockState: ");
+	asm("mov r12, #0xd7 ");
+	asm("msr cpsr, r12 ");
+	asm("mov r12, #0xdd000000 ");
+	asm("str r12, [r12, #3] ");
+	}
+#endif
+
+__ASSERT_COMPILE(EUserModeCallbackRun == 0);
+
+__NAKED__ void CallUserModeCallbacks()
+	{
+	// called with interrupts disabled
+	// preserves r0 and r1 in additional to usual registers
+	// leaves current thread in r2
+	// the vast majority of times this is called with zero or one callback pending
+
+	asm(".global callUserModeCallbacks ");
+	asm("callUserModeCallbacks: ");
+	
+	asm("ldr ip, __TheScheduler ");
+	asm("ldr r2, [ip, #%a0]" : : "i" _FOFF(TScheduler, iCurrentThread));
+
+	asm("callUserModeCallbacks2: ");
+
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("mrc p15, 0, r12, c3, c0, 0 ");
+	asm("tst r12, #0xc0000000 ");
+	asm("cdpne p15, 0, c0, c0, c0, 0 ");
+#endif
+#ifdef __CHECK_LOCK_STATE__
+	asm("ldr ip, [r2, #%a0]" : : "i" _FOFF(NThread,iCsCount));
+	asm("cmp ip, #0 ");
+	asm("bne badLockState ");
+#endif
+		
+	asm("ldr ip, [r2, #%a0]" : : "i" _FOFF(NThread, iUserModeCallbacks));
+	asm("teq ip, #0");
+	asm("bne 1f");
+	__JUMP(,lr);
+
+	asm("1: ");
+	asm("stmfd sp!, {r0-r2, r4-r11, lr}");
+	asm("movs r4, r3");
+	// if r3 != 0 it is the user context type to set the thread to
+	asm("strneb r3, [r2, #%a0]" : : "i" _FOFF(NThread, iUserContextType));
+	
+	// Remove first callback and enter critical section - we can just set iCsCount to 1 as we are
+	// guaranteed not be be in a critical section already
+	asm("ldmia ip, {r1, r3} ");		// HARDCODED: TUserModeCallback layout
+    asm("mov r0, #1");
+	asm("str r0, [r2, #%a0]" : : "i" _FOFF(NThread, iCsCount));
+	asm("str r1, [r2, #%a0]" : : "i" _FOFF(NThread,iUserModeCallbacks));
+	
+	// Re-enable interrupts and call callback
+	SET_MODE(r0, MODE_SVC, INTS_ALL_ON);
+	asm("mov r1, #%a0 " : : "i" ((TInt)KUserModeCallbackUnqueued));
+	asm("str r1, [ip, #%a0]" : : "i" _FOFF(TUserModeCallback, iNext));
+	asm("mov r0, ip");
+	asm("mov r1, #0 ");				// 0 == EUserModeCallbackRun
+	__JUMPL(3);
+
+	SET_MODE(r0, MODE_SVC, INTS_ALL_OFF);
+
+	asm("movs r3, r4");
+	// Leave critical section, avoid calling NKern::ThreadLeaveCS unless we have to
+	asm("ldmfd sp!, {r0-r2, r4-r11, lr}");
+	// reset user context type to undefined if r3 != 0
+	asm("mov ip, #%a0" : : "i" (NThread::EContextUndefined));
+	asm("strneb ip, [r2, #%a0]" : : "i" _FOFF(NThread, iUserContextType));
+	asm("ldr ip, [r2, #%a0]" : : "i" _FOFF(NThread, iCsFunction));
+	asm("teq ip, #0");
+	asm("streq ip, [r2, #%a0]" : : "i" _FOFF(NThread, iCsCount));
+	asm("beq callUserModeCallbacks2 ");
+
+	asm("leaveCS:");
+	asm("sub sp, sp, #48 ");
+	SET_MODE(r0, MODE_SVC, INTS_ALL_ON);
+	asm("bl " CSM_ZN5NKern13ThreadLeaveCSEv);
+	SET_MODE(r0, MODE_SVC, INTS_ALL_OFF);
+	asm("ldmfd sp!, {r0-r2, r4-r11, lr}");
+	asm("b callUserModeCallbacks2 ");
+	}
+
+/***************************************************************************
+ * SWI Handler
+ ***************************************************************************/
+
+extern "C" __NAKED__ void __ArmVectorSwi()
+	{
+	// IRQs disabled, FIQs enabled here
+	asm("ldr r12, [lr, #-4] ");				// get SWI opcode
+	asm("stmfd sp!, {r11, lr} ");			// save return address, r11 for 8 byte align
+	USER_MEMORY_GUARD_ON_IF_MODE_USR(r11);
+	asm("ldr r11, __TheScheduler ");	
+	asm("adr lr, fast_swi_exit ");
+	asm("movs r12, r12, lsl #9 ");			// 512*SWI number into r12
+	asm("bcc slow_swi ");					// bit 23=0 for slow/unprot
+	asm("ldr r1, [r11, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("beq wait_for_any_request ");		// special case for Exec::WaitForAnyRequest
+#ifdef __CPU_ARM_HAS_CPS
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(NThread,iFastExecTable));
+	CPSIDIF;								// all interrupts off
+	asm("ldr r3, [r2], r12, lsr #7 ");		// r3=limit, r2->dispatch table entry
+	asm("ldr r2, [r2] ");					// r2->kernel function
+	asm("cmp r3, r12, lsr #9 ");			// r3-SWI number
+	__JUMP(hi, r2);							// if SWI number valid, call kernel function
+#else
+	SET_INTS(r2, MODE_SVC, INTS_ALL_OFF);
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(NThread,iFastExecTable));
+	asm("ldr r3, [r2], r12, lsr #7 ");		// r3=limit, r2->dispatch table entry
+	asm("cmp r3, r12, lsr #9 ");			// r3-SWI number
+	asm("ldrhi pc, [r2] ");					// if SWI number valid, call kernel function
+#endif
+	asm("mvn r12, #0 ");					// put invalid SWI number into r12
+	asm("b slow_swi ");						// go through slow SWI routine to call invalid SWI handler
+
+	asm("fast_swi_exit: ");
+#ifdef __CHECK_LOCK_STATE__
+	asm("mrs r12, spsr ");
+	asm("tst r12, #0x0f ");
+	asm("bleq  " CSM_Z14CheckLockStatev);
+#endif
+	USER_MEMORY_GUARD_OFF_IF_MODE_USR(r11);
+	ERRATUM_353494_MODE_CHANGE(,r11);
+	asm("ldmfd sp!, {r11, pc}^ ");			// return and restore cpsr
+	
+	asm("slow_swi: ");						// IRQs off, FIQs on here
+	asm("stmfd sp!, {r3-r10} ");			// save nonvolatile registers, r3 for 8 byte align
+	asm("ldr r9, [r11, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r9->current thread
+	SET_INTS(lr, MODE_SVC, INTS_ALL_ON);	// all interrupts on
+	asm("mov r10, r11 ");					// r10->scheduler
+	asm("ldr r4, [r9, #%a0]" : : "i" _FOFF(NThread,iSlowExecTable));
+	asm("mrs r11, spsr ");					// spsr_svc into r11
+	asm("adr lr, slow_swi_exit ");
+	asm("add r6, r4, r12, lsr #6 ");		// r6->dispatch table entry
+	asm("ldr r5, [r4, #-12] ");				// r5=limit
+	SET_INTS_1(r7, MODE_SVC, INTS_ALL_OFF);
+	asm("cmp r5, r12, lsr #9 ");			// r5-SWI number
+	asm("ldmhiia r6, {r5,r6} ");			// if SWI number OK, flags into r5, function addr into r6
+	asm("ldrls pc, [r4, #-8] ");			// if SWI number invalid, call invalid handler
+	asm("tst r5, #%a0" : : "i" ((TInt)KExecFlagExtraArgMask));	// extra arguments needed?
+	asm("addne r2, sp, #4 ");				// if so, point r2 at saved registers on stack
+	asm("tst r5, #%a0" : : "i" ((TInt)KExecFlagClaim));			// claim system lock?
+	asm("beq slow_swi_no_wait ");			// skip if not
+
+	SET_INTS_2(r7, MODE_SVC, INTS_ALL_OFF);	// interrupts off
+#ifdef _DEBUG
+	asm("ldr r12, [r9, #%a0]" : : "i" _FOFF(NThread,iHeldFastMutex));
+	asm("cmp r12, #0 ");
+	asm("bne  " CSM_Z20FastMutexNestAttemptv);	// debug check that current thread doesn't already hold a fast mutex
+#endif
+	asm("ldr r12, [r10, #%a0]!" : : "i" _FOFF(TScheduler,iLock.iHoldingThread));	// r12=iLock.iHoldingThread
+	SET_INTS_1(r7, MODE_SVC, INTS_ALL_ON);
+	asm("cmp r12, #0 ");					// is system lock already held?
+	asm("bne ss_fast_mutex_held ");			// branch if it is
+	asm("ss_fast_mutex_obtained: ");
+	asm("str r10, [r9, #%a0]" : : "i" _FOFF(NThread,iHeldFastMutex));	// current thread->iHeldFastMutex=&iLock
+	asm("str r9, [r10], #-%a0" : : "i" _FOFF(TScheduler,iLock));		// iLock.iHoldingThread=current thread, r10->scheduler
+#ifdef BTRACE_FAST_MUTEX
+	asm("ldrb r12, [r10,#%a0]" : : "i" (_FOFF(TScheduler,iFastMutexFilter)));
+	asm("cmp r12, #0");
+	asm("bne syslock_trace_wait");
+	asm("syslock_trace_wait_done:");
+#endif
+	SET_INTS_2(r7, MODE_SVC, INTS_ALL_ON);	// all interrupts on
+
+	asm("slow_swi_no_wait: ");
+	asm("tst r5, #%a0" : : "i" ((TInt)KExecFlagPreprocess));	// preprocess (handle lookup)? can use r4, r7, r8, r12, r0
+	asm("mov lr, pc ");
+	asm("ldrne pc, [r4, #-4] ");			// call preprocess handler if required
+	asm("mov lr, pc ");
+	__JUMP(,r6);							// call exec function, preserve r5,r11 if release syslock not required
+											// preserve r5,r9,r10,r11 if release required
+	asm("tst r5, #%a0" : : "i" ((TInt)KExecFlagRelease));		// release system lock?
+	asm("beq slow_swi_exit ");				// skip if not
+
+	SET_INTS(r12, MODE_SVC, INTS_ALL_OFF);	// disable interrupts
+#ifdef _DEBUG
+	asm("add r8, r10, #%a0" : : "i" _FOFF(TScheduler,iLock));
+	asm("ldr r12, [r9, #%a0]" : : "i" _FOFF(NThread,iHeldFastMutex));
+	asm("cmp r12, r8 ");
+	asm("bne  " CSM_Z20FastMutexSignalErrorv);	// debug check that current thread holds system lock
+#endif
+#ifdef BTRACE_FAST_MUTEX
+	asm("ldrb r12, [r10,#%a0]" : : "i" (_FOFF(TScheduler,iFastMutexFilter)));
+	asm("cmp r12, #0");
+	asm("bne syslock_trace_signal");
+	asm("syslock_trace_signal_done:");
+#endif
+	asm("mov r12, #0 ");
+	asm("str r12, [r10, #%a0]" : : "i" _FOFF(TScheduler,iLock.iHoldingThread));	// iLock.iHoldingThread=NULL
+	asm("str r12, [r9, #%a0]" : : "i" _FOFF(NThread,iHeldFastMutex));			// current thread->iHeldFastMutex=NULL
+	asm("ldr r3, [r10, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));		// r3=iLock.iWaiting
+	asm("str r12, [r10, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));		// iLock.iWaiting=0
+	SET_INTS_1(r8, MODE_SVC, INTS_ALL_ON);
+	asm("cmp r3, #0 ");						// check waiting flag
+	asm("bne ss_signal_check ");			// branch if set
+	asm("ss_signal_done: ");
+	SET_INTS_2(r8, MODE_SVC, INTS_ALL_ON);	// otherwise reenable interrupts
+	
+	asm("slow_swi_exit: ");
+#ifdef __CHECK_LOCK_STATE__
+	asm("tst r11, #0x0f ");
+	asm("bleq  " CSM_Z14CheckLockStatev);
+#endif
+	SET_INTS(r12, MODE_SVC, INTS_ALL_OFF);	// disable interrupts
+	asm("msr spsr, r11 ");					// restore spsr_svc
+	asm("tst r11, #0x0f ");
+	asm("mov r3, #0 ");
+#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
+	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
+											// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
+#endif
+	asm("bleq callUserModeCallbacks ");		// call user-mode callbacks	
+	USER_MEMORY_GUARD_OFF_IF_MODE_USR(r11);
+	ERRATUM_353494_MODE_CHANGE(,r11);
+	asm("ldmfd sp!, {r3-r11,pc}^ ");		// return from EXEC function
+
+	// Come here if we need to wait for the system lock
+	// r9->current thread, r10=&iLock, r12=iLock.iHoldingThread
+	asm("ss_fast_mutex_held: ");
+	asm("mov r8, #1 ");
+	asm("str r8, [r10, #%a0]" : : "i" (_FOFF(TScheduler,iKernCSLocked)-_FOFF(TScheduler,iLock)));	// lock the kernel
+	SET_INTS_2(r7, MODE_SVC, INTS_ALL_ON);	// enable interrupts
+	asm("str r8, [r10, #4] ");				// iWaiting=1
+	asm("str r10, [r9, #%a0]" : : "i" _FOFF(NThread,iWaitFastMutex));	// current thread->iWaitFastMutex=&iLock
+	asm("stmfd sp!, {r0-r3} ");				// save exec call arguments
+	asm("mov r0, r12 ");					// parameter for YieldTo
+	ASM_DEBUG1(NKFMWaitYield,r0);
+	asm("bl  " CSM_ZN10TScheduler7YieldToEP11NThreadBase);		// yield to the mutex holding thread
+	// will not return until the mutex is free
+	// on return r0=Scheduler,r1=0,r2!=0,r3=current thread, kernel unlocked, interrupts disabled
+	asm("str r1, [r9, #%a0]" : : "i" _FOFF(NThread,iWaitFastMutex));	// iWaitFastMutex=NULL
+	asm("ldmfd sp!, {r0-r3} ");				// retrieve exec call arguments
+	asm("b ss_fast_mutex_obtained ");		// branch back to main code path
+
+	// Come here if we need to reschedule after releasing the system lock
+	// kernel unlocked, interrupts enabled, r0 contains return value from Exec call
+	// r9->current thread, r10=&TheScheduler, r3=1, r8=0x13
+	asm("ss_signal_check: ");
+	asm("str r3, [r10, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));	// lock the kernel (assumes iWaiting always 0 or 1)
+	SET_INTS_2(r8, MODE_SVC, INTS_ALL_ON);	// reenable interrupts
+	asm("strb r3, [r10, #%a0]" : : "i" _FOFF(TScheduler,iRescheduleNeededFlag));
+	asm("ldr r3, [r9, #%a0]" : : "i" _FOFF(NThread,iCsFunction));	// r3=current thread->iCsFunction
+	asm("ldr r2, [r9, #%a0]" : : "i" _FOFF(NThread,iCsCount));		// r2=current thread->iCsCount
+	asm("mov r4, r0 ");						// save return value
+	asm("cmp r3, #0 ");						// outstanding CS function?
+	asm("beq 2f ");							// branch if not
+	asm("cmp r2, #0 ");						// iCsCount!=0 ?
+	asm("moveq r0, r9 ");					// if iCsCount=0, DoCsFunction()
+	asm("bleq  " CSM_ZN11NThreadBase12DoCsFunctionEv);
+	asm("2: ");
+	asm("bl  " CSM_ZN10TScheduler10RescheduleEv);	// reschedule to allow waiting thread in
+	asm("mov r0, r4 ");						// recover return value
+	asm("b ss_signal_done ");				// branch back to main code path
+
+#ifdef BTRACE_FAST_MUTEX
+	asm("syslock_trace_wait:");
+	asm("ldr r12, [sp,#9*4]"); // r12 = return address from SWI
+	asm("mov r8, r3"); // save r3
+	asm("stmdb sp!,{r0-r2,r12}"); // 4th item on stack is PC value for trace
+	asm("ldr r0, fmwait_trace_header");
+	asm("mov r2, r9"); // current thread
+	asm("add r3, r10, #%a0" : : "i" _FOFF(TScheduler,iLock));
+	asm("mov lr, pc");
+	asm("ldr pc, [r10, #%a0]" : : "i" _FOFF(TScheduler,iBTraceHandler));	
+	asm("ldmia sp!,{r0-r2,r12}");
+	asm("mov r3, r8"); // restore r3
+	asm("b syslock_trace_wait_done");
+
+	asm("syslock_trace_signal:");
+	asm("ldr r12, [sp,#9*4]"); // r12 = return address from SWI
+	asm("stmdb sp!,{r0-r2,r12}"); // 4th item on stack is PC value for trace
+	asm("ldr r0, fmsignal_trace_header");
+	asm("mov r2, r9"); // current thread
+	asm("add r3, r10, #%a0" : : "i" _FOFF(TScheduler,iLock));
+	asm("mov lr, pc");
+	asm("ldr pc, [r10, #%a0]" : : "i" _FOFF(TScheduler,iBTraceHandler));	
+	asm("ldmia sp!,{r0-r2,r12}");
+	asm("b syslock_trace_signal_done");
+
+	asm("fmsignal_trace_header:");
+	asm(".word %a0" : : "i" ((TInt)(16<<BTrace::ESizeIndex) + ((BTrace::EContextIdPresent|BTrace::EPcPresent) << BTrace::EFlagsIndex*8) + (BTrace::EFastMutex<< BTrace::ECategoryIndex*8) + (BTrace::EFastMutexSignal << BTrace::ESubCategoryIndex*8)) );
+	
+	asm("fmwait_trace_header:");
+	asm(".word %a0" : : "i" ((TInt)(16<<BTrace::ESizeIndex) + ((BTrace::EContextIdPresent|BTrace::EPcPresent) << BTrace::EFlagsIndex*8) + (BTrace::EFastMutex << BTrace::ECategoryIndex*8) + (BTrace::EFastMutexWait << BTrace::ESubCategoryIndex*8)) );
+#endif
+
+	}
+
+/***************************************************************************
+ * IRQ Postamble
+ * This routine is called after the IRQ has been dispatched
+ * spsr_irq, r4-r11 are unmodified
+ * spsr_irq,r0-r3,r12,return address are on the top of the IRQ stack
+ ***************************************************************************/
+
+extern "C" __NAKED__ void __ArmVectorIrq()
+	{
+	// FIQs enabled here but not IRQs
+	asm("ldr r1, __TheScheduler ");
+	asm("mrs r0, spsr ");					// check interrupted mode
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("add r12, sp, #32 ");				// r12=sp_irq+8 words
+#else
+	asm("add r12, sp, #24 ");				// r12=sp_irq+6 words
+#endif
+	asm("and r2, r0, #0x1f ");
+	asm("ldr r3, [r1, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));	// r3=KernCSLocked
+	asm("cmp r2, #0x10 ");					// check for mode_usr
+	asm("cmpne r2, #0x13 ");				// or mode_svc
+	asm("cmpeq r3, #0 ");					// and then check if kernel locked
+	asm("bne IrqExit0 ");					// if wrong mode or locked, return immediately
+	SET_INTS(r2, MODE_IRQ, INTS_ALL_OFF);	// disable FIQs before we check for reschedule
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(TScheduler,iRescheduleNeededFlag));	// r2=DfcPendingFlag/RescheduleNeededFlag
+	asm("add r3, r3, #1 ");
+	SET_MODE_1(lr, MODE_SVC, INTS_ALL_ON);
+	asm("cmp r2, #0 ");						// check if reschedule needed
+	asm("beq IrqExit0 ");					// if not, return immediately
+	asm("str r3, [r1, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));	// lock the kernel
+	SET_MODE_2(lr, MODE_SVC, INTS_ALL_ON);	// mode_svc, interrupts back on
+
+	asm("ldmdb r12!, {r1-r3} ");			// move saved registers (r0-r3,r12,pc) over to mode_svc stack
+	asm("stmfd sp!, {r1-r3} ");
+	asm("ldmdb r12!, {r1-r3} ");
+	asm("stmfd sp!, {r1-r3} ");
+	asm("stmfd sp!, {r0,lr} ");				// store lr_svc and interrupted cpsr on current mode_svc stack
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("ldmdb r12, {r1-r2} ");
+	asm("stmfd sp!, {r1-r2} ");				// move user guard over to mode_svc stack
+#endif
+
+	SET_MODE_1(r2, MODE_SVC, INTS_ALL_ON);
+	SET_MODE(lr, MODE_IRQ, INTS_IRQ_OFF);	// mode_irq, IRQs off
+	asm("add sp, r12, #24 ");				// restore mode_irq stack balance
+	SET_MODE_2(r2, MODE_SVC, INTS_ALL_ON);	// back to mode_svc, IRQs on
+
+	// reschedule - this also switches context if necessary
+	// enter this function in mode_svc, interrupts on, kernel locked
+	// exit this function in mode_svc, all interrupts off, kernel unlocked
+	asm("irq_do_resched: ");
+	asm("bl  " CSM_ZN10TScheduler10RescheduleEv);
+	asm(".global irq_resched_return ");
+	asm("irq_resched_return: ");
+
+	SET_MODE(r2, MODE_SVC, INTS_ALL_OFF);	// all interrupts off
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("ldr r1, [sp, #8] "	);				// get interrupted cpsr, don't unbalance stack
+#else
+	asm("ldr r1, [sp] "	);					// get interrupted cpsr, don't unbalance stack
+#endif
+#ifdef __CHECK_LOCK_STATE__
+	asm("mov r2, r12 ");
+	asm("tst r1, #0x0f ");
+	asm("bleq  " CSM_Z14CheckLockStatev);
+	asm("mov r12, r2 ");
+#endif
+	asm("tst r1, #0x0f ");
+	asm("mov r3, #%a0 " : : "i" (NThread::EContextUserIntrCallback));
+	asm("bleq callUserModeCallbacks ");		// call user-mode callbacks		
+	
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("ldr r1, [sp], #8 ");
+	USER_MEMORY_GUARD_RESTORE(r1,lr);
+#endif
+	asm("ldmfd sp!, {r1, lr} ");			// restore lr_svc
+	asm("add sp, sp, #24 ");				// restore mode_svc stack balance
+	asm("mov r12, sp ");					// r12=address of remaining saved registers
+
+	SET_MODE(r2, MODE_IRQ, INTS_ALL_OFF);	// back into mode_irq, all interrupts off
+	
+	asm("msr spsr, r1 ");					// interrupted cpsr into spsr_irq
+	ERRATUM_353494_MODE_CHANGE(,r12);
+	asm("ldmdb r12, {r0-r3,r12,pc}^ ");		// return from interrupt
+
+	asm("IrqExit0: ");
+#ifdef __CHECK_LOCK_STATE__
+	asm("tst r0, #0x0f ");
+	asm("bleq  " CSM_Z14CheckLockStatev);
+#endif
+	asm("IrqExit1: ");						// entry point for __ArmVectorIrqPostambleNoResched()
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("ldr lr, [sp], #8 ");
+	USER_MEMORY_GUARD_RESTORE(lr,r12);
+#endif
+#ifdef BTRACE_CPU_USAGE
+	asm("ldrb r2, [r1,#%a0]" : : "i" _FOFF(TScheduler,iCpuUsageFilter));
+	asm("mov r0, #%a0" : : "i" ((TInt)4 ) );
+	asm("add r0, r0, #%a0" : : "i" ((TInt)(BTrace::ECpuUsage<<BTrace::ECategoryIndex*8)+(BTrace::EIrqEnd<<BTrace::ESubCategoryIndex*8)) );
+	asm("cmp r2, #0");
+	asm("movne lr, pc");
+	asm("ldrne pc, [r1,#%a0]" : : "i" _FOFF(TScheduler,iBTraceHandler));
+#endif
+	ERRATUM_353494_MODE_CHANGE(,r12);
+	asm("ldmfd sp!, {r0-r3,r12,pc}^ ");		// return from interrupt
+	}
+
+/***************************************************************************
+ * IRQ Postamble which will not reschedule (can be returned to by co-resident OS).
+ * This routine is called after the IRQ has been dispatched
+ * spsr_irq, r4-r11 are unmodified
+ * spsr_irq,r0-r3,r12,return address are on the top of the IRQ stack
+ ***************************************************************************/
+
+extern "C" EXPORT_C __NAKED__ void __ArmVectorIrqPostambleNoResched()
+	{
+	// FIQs enabled here but not IRQs
+	asm("ldr r1, __TheScheduler ");
+	asm("b IrqExit1 ");
+	}
+
+
+/***************************************************************************
+ * FIQ Postamble
+ * This routine is called after the FIQ has been dispatched
+ * spsr_fiq, r0-r3 are unmodified
+ * Return address is on the top of the FIQ stack
+ ***************************************************************************/
+
+extern "C" __NAKED__ void __ArmVectorFiq()
+	{
+#ifdef __FAULT_ON_FIQ__
+	asm(".word 0xe7f10f10 ");
+#endif
+	// IRQs and FIQs disabled here
+	// r0-r7 are unaltered from when FIQ occurred
+	asm("ldr r9, __TheScheduler ");
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("ldr r12, [sp], #4 ");
+#endif
+	asm("mrs r8, spsr ");					// check interrupted mode
+	asm("and r10, r8, #0x1f ");
+	asm("cmp r10, #0x10 ");					// check for mode_usr
+	asm("ldr r11, [r9, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("cmpne r10, #0x13 ");				// or mode_svc
+	asm("ldreq r10, [r9, #%a0]" : : "i" _FOFF(TScheduler,iRescheduleNeededFlag));
+	asm("cmpeq r11, #0 ");					// and check if kernel locked
+	asm("bne FiqExit0 ");					// if wrong mode or kernel locked, return immediately
+	asm("cmp r10, #0 ");					// check if reschedule needed
+	asm("beq FiqExit0 ");					// if not, return from interrupt
+	// we interrupted mode_usr or mode_svc, kernel unlocked, reschedule needed
+	asm("add r11, r11, #1 ");
+	asm("str r11, [r9, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));	// lock the kernel
+	asm("stmfd sp!, {r1-r3} ");				// save interrupted r1-r3 on FIQ stack
+	asm("mov r1, r8 ");						// r1=interrupted cpsr
+	asm("mov r3, sp ");						// r3 points to saved registers
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("mov r2, r12 ");					// saved DACR into R2
+#endif
+	SET_MODE(lr, MODE_SVC, INTS_ALL_ON);	// switch to mode_svc, IRQs and FIQs back on
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("str r2, [sp, #-40]! ");			// save DACR and leave room for spare, cpsr, lr_svc, r0-r3, r12, pc
+	asm("ldr r2, [r3, #12] ");				// r2=return address
+	asm("str r12, [sp, #32] ");				// save r12 on mode_svc stack
+	asm("str r2, [sp, #36] ");				// save return address on mode_svc stack
+	asm("add r12, sp, #8 ");
+#else
+	asm("ldr r2, [r3, #12] ");				// r2=return address
+	asm("sub sp, sp, #32 ");				// make room for saved registers on mode_svc stack
+	asm("str r12, [sp, #24] ");				// save r12 on mode_svc stack
+	asm("str r2, [sp, #28] ");				// save return address on mode_svc stack
+	asm("mov r12, sp ");
+#endif
+	asm("stmia r12!, {r1,lr} ");			// save interrupted cpsr and lr_svc
+	asm("ldmia r3, {r1,r2,lr} ");			// retrieve original r1-r3 from mode_fiq stack
+	asm("stmia r12, {r0-r2,lr} ");			// save original r0-r3 - saved register order is now cpsr,lr_svc,r0-r3,r12,pc
+	SET_MODE_1(r2, MODE_SVC, INTS_ALL_ON);
+	SET_MODE(lr, MODE_FIQ, INTS_ALL_OFF);	// mode_fiq, IRQs and FIQs off
+	asm("add sp, r3, #16 ");				// restore mode_fiq stack balance
+	SET_MODE_2(r2, MODE_SVC, INTS_ALL_ON);	// back to mode_svc, IRQs on
+	asm("adr lr, irq_resched_return ");
+	asm("b  " CSM_ZN10TScheduler10RescheduleEv);		// do reschedule and return to irq_resched_return
+
+	asm("FiqExit0:");						// also entry point for __ArmVectorFiqPostambleNoResched()
+	USER_MEMORY_GUARD_RESTORE(r12,lr);
+#ifndef BTRACE_CPU_USAGE
+	ERRATUM_353494_MODE_CHANGE(,r11);
+	asm("ldmfd sp!, {pc}^ ");				// return from interrupt
+#else
+	asm("ldrb r8, [r9,#%a0]" : : "i" _FOFF(TScheduler,iCpuUsageFilter));
+	asm("mov r10, #%a0" : : "i" ((TInt)(BTrace::ECpuUsage<<BTrace::ECategoryIndex*8)+(BTrace::EFiqEnd<<BTrace::ESubCategoryIndex*8)) );
+	asm("adr lr, FiqTraceExit0");
+	asm("cmp r8, #0");
+	ERRATUM_353494_MODE_CHANGE(eq,r8);
+	asm("ldmeqfd sp!, {pc}^ ");				// return from interrupt if trace not enabled
+	asm("stmfd sp!, {r0-r3} ");
+	asm("add r0, r10, #%a0" : : "i" ((TInt)4 ) );
+	asm("ldr pc, [r9,#%a0]" : : "i" _FOFF(TScheduler,iBTraceHandler));
+	asm("FiqTraceExit0:");
+	ERRATUM_353494_MODE_CHANGE(,r3);
+	asm("ldmfd sp!, {r0-r3,pc}^ ");			// return from interrupt
+#endif
+
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	}
+
+/***************************************************************************
+ * FIQ Postamble which will not reschedule (can be returned to by co-resident OS).
+ * This routine is called after the FIQ has been dispatched
+ * spsr_fiq, r0-r3 are unmodified
+ * Return address is on the top of the FIQ stack
+ ***************************************************************************/
+
+extern "C" EXPORT_C __NAKED__ void __ArmVectorFiqPostambleNoResched()
+	{
+#ifdef __FAULT_ON_FIQ__
+	asm(".word 0xe7f10f10 ");
+#endif
+	// IRQs and FIQs disabled here
+	// r0-r7 are unaltered from when FIQ occurred
+	asm("ldr r9, __TheScheduler ");
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("ldr r12, [sp], #4 ");
+#endif
+	asm("b FiqExit0 ");
+	}
+
+
+extern "C" __NAKED__ void __ArmVectorAbortData()
+//
+// Data abort
+//
+	{
+#if defined(__CPU_CORTEX_A8__) && (!defined(__CPU_ARM_A8_ERRATUM_447862_FIXED) || !defined(__CPU_ARM_A8_ERRATUM_451027_FIXED))
+	ARM_DMBSH;								// ARM Cortex-A8 erratum 447862/451027 workaround
+#endif
+	asm("sub lr, lr, #8");					// lr now points to aborted instruction
+	asm("stmfd	sp!, {r0-r4,r12,lr}");		// save it along with r0-r4,r12
+#if defined(__CPU_ARM_HAS_WORKING_CLREX)
+	CLREX									// reset exclusive monitor 	
+#elif defined(__CPU_ARM_HAS_LDREX_STREX)
+	STREX(12,0,13);							// dummy STREX to reset exclusivity monitor
+#endif
+	asm("mov r1, #%a0 " : : "i" ((TInt)EArmExceptionDataAbort));
+	// generic exception handler
+	// come here with r1=exception code, lr points to aborted instruction, r0-r4,r12,lr saved
+	asm("handle_exception: ");
+	asm("mrs r0, spsr ");					// r0=value of cpsr when abort occurred
+
+	asm("handle_exception2: ");
+	asm("mrs r12, cpsr ");
+	asm("and r3, r0, #0x1f ");				// r3=processor mode when abort occurred
+	asm("bic r12, r12, #0xc0 ");
+	asm("cmp r3, #0x10 ");					// aborted in user mode?
+	asm("cmpne r3, #0x13 ");				// if not, aborted in mode_svc?
+	asm("bne fatal_exception_mode ");		// if neither, fault
+	asm("msr cpsr, r12 ");					// reenable interrupts - rescheduling disabled by mode_abt/mode_und
+	asm("ldr r2, __TheScheduler ");
+	asm("mov r3, sp ");						// r3 points to saved registers
+	asm("ldr r4, [r2, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("cmp r4, #0 ");						// exception with kernel locked?
+	asm("bne fatal_exception_mode ");		// if so, fault
+	asm("add r4, r4, #1 ");					// lock the kernel
+	asm("str r4, [r2, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("mov r4, #0x13 ");
+	asm("msr cpsr, r4 ");					// mode_svc, interrupts on, kernel locked
+
+	asm("ldr r4, [r2, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("tst r0, #0x0f ");					// check if exception in mode_usr
+	asm("mov r2, #%a0 " : : "i" ((TInt)NThread::EContextException));
+ 	asm("streqb r2, [r4, #%a0]" : : "i" _FOFF(NThread,iSpare3));	// if so, set iUserContextType = EContextException
+	asm("add r4, r4, #%a0" : : "i" _FOFF(NThread,iStackBase));
+	asm("ldmia r4, {r2,r4} ");				// r2=supervisor stack area base, r4=size
+	asm("subs r2, sp, r2 ");				// r2=amount of mode_svc stack remaining
+	asm("blo fatal_exception_stack ");		// if stack pointer invalid, fault
+	asm("cmp r2, r4 ");
+	asm("bhi fatal_exception_stack ");
+	asm("cmp r2, #128 ");					// check enough stack to handle exception
+	asm("blo fatal_exception_stack ");		// if not, fault
+
+	// At this point we are in mode_svc with interrupts enabled and the kernel locked.
+	// We know the supervisor stack is valid and has enough free space to store the exception info.
+	// Registers: R0=aborted cpsr, R1=exception type, R2,R4 scratch, R3 points to saved registers
+	// on mode_abt or mode_und stack, R12 holds mode of exception (mode_abt or mode_und).
+
+	asm("ldr r4, [r3, #16] ");				// restore original r4
+	asm("mov r2, sp ");						// r2=sp_svc when abort occurred
+	asm("sub sp, sp, #92 ");				// push 23 words onto mode_svc stack
+	asm("stmia sp, {r0-r2,r4-r11,lr} ");	// save cpsr, exc id, sp_svc, r4-r11, lr_svc
+	asm("ldmia r3!, {r4-r10} ");			// get registers from mode_abt or mode_und stack
+	asm("stmdb r2!, {r4-r7,r9,r10} ");		// transfer saved registers from exception stack except r4
+	asm("stmdb r2, {r13,r14}^ ");			// save sp_usr and lr_usr
+	asm("sub r2, r2, #20 ");
+
+// Set r0 = fault address and r1 = fault status.
+// For prefetch aborts use IFAR if it exists otherwise use the return address.
+#ifdef __USE_CP15_FAULT_INFO__
+	asm("cmp r1, #%a0 " : : "i" ((TInt)EArmExceptionPrefetchAbort));
+#ifdef __CPU_ARM_HAS_SPLIT_FSR
+	asm("mrcne p15, 0, r1, c5, c0, 0");		// r1 = data fault status
+	asm("mrcne p15, 0, r0, c6, c0, 0");		// r0 = DFAR fault address
+	asm("mrceq p15, 0, r1, c5, c0, 1");		// r1 = instruction fault status
+#ifdef __CPU_ARM_HAS_CP15_IFAR
+	asm("mrceq p15, 0, r0, c6, c0, 2");		// r0 = IFAR fault address
+#else 
+	asm("moveq r0, r10");					// r0 = return address.
+#endif // __CPU_ARM_HAS_CP15_IFAR
+#else
+	asm("mrcne p15, 0, r0, c6, c0");		// r0 = fault address
+	asm("moveq r0, r10");					// r0 = return address.
+	asm("mrc p15, 0, r1, c5, c0");			// r1 = fault status
+#endif // __CPU_ARM_HAS_SPLIT_FSR
+#endif // __USE_CP15_FAULT_INFO__
+
+	asm("mrs r3, spsr ");					// r3=spsr_svc
+	asm("stmia r2, {r0,r1,r3} ");			// save these
+	asm("msr cpsr, r12 ");					// back into exception mode
+	asm("add sp, sp, #28 ");				// restore exception stack balance
+	asm("mov r5, #0x13 ");
+	asm("msr cpsr, r5 ");					// back into mode_svc
+
+	// Now we can unlock the kernel and process the exception
+	asm("bl  " CSM_ZN10TScheduler10RescheduleEv);
+	asm("msr cpsr, r5 ");					// enable interrupts
+
+	// call the exception dispatcher, r3 is the current thread
+	asm("ldr r12, [r3, #%a0]" : : "i" _FOFF(NThread,iHandlers));
+	asm("mov r1, r3 "); 
+	asm("mov r0, sp ");						// r0 points to saved exception information
+	asm("sub sp, sp, #4 ");					// make room for r0
+	asm("bic sp, sp, #4 ");					// align stack to 8 byte boundary
+	asm("str r0, [sp] ");					// save original stack pointer
+
+	USER_MEMORY_GUARD_ON(,r11,lr);
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(SNThreadHandlers,iExceptionHandler));
+	asm("mov lr, pc ");
+	__JUMP(,r12);							// call exception handler
+	USER_MEMORY_GUARD_RESTORE(r11,lr);
+	asm("ldr sp, [sp, #0] ");				// restore stack pointer
+
+	// return from exception
+	asm("ldr r0, __TheScheduler ");
+	asm("mov r3, sp ");
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("ldr r0, [r3], #12 ");				// r0=cpsr, skip exc id and sp_svc
+	asm("ldmfd r3!, {r4-r11,lr} ");			// restore r4-r11 and lr_svc
+	asm("ldr r12, [r3, #8]! ");				// skip fault address and fault status, r12=spsr_svc
+	asm("ldmib r3, {r13,r14}^ ");			// restore sp_usr and lr_usr
+	asm("add r1, r3, #12 ");				// r3 points to saved r0-r3,r12,pc
+	asm("mov r3, #0xd3 ");
+	asm("msr cpsr, r3 ");					// mode_svc, all interrupts off
+	asm("msr spsr, r12 ");					// restore spsr_svc
+#ifdef __CHECK_LOCK_STATE__
+	asm("tst r0, #0x0f ");
+#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
+	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
+	asm("nop ");							// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
+#endif
+	asm("bleq  " CSM_Z14CheckLockStatev);
+#endif
+	asm("tst r0, #0x0f ");					// check if exception in mode_usr
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
+	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
+	asm("nop ");							// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
+#endif
+	asm("bne 1f ");
+	USER_MEMORY_GUARD_ON(,lr,r12);
+	asm("tst lr, #0xc0000000 ");			// user memory enabled?
+	asm("adrne lr, 2f ");					// yes - enable it after callbacks
+	asm("adreq lr, 1f ");					// no - leave it disabled after callbacks
+	asm("mov r3, #0 ");
+	asm("b callUserModeCallbacks2 ");		// call user-mode callbacks
+	asm("2: ");
+	USER_MEMORY_GUARD_OFF(,lr,lr);
+	asm("1: ");
+#else
+	asm("mov r3, #0 ");
+#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
+	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
+											// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
+#endif
+	asm("bleq callUserModeCallbacks2 ");	// call user-mode callbacks
+#endif
+	asm("tst r0, #0x0f ");					// check if exception in mode_usr
+	asm("mov r3, #%a0 " : : "i" ((TInt)NThread::EContextUndefined));
+	asm("streqb r3, [r2, #%a0]" : : "i" _FOFF(NThread,iSpare3)); // if so, set iUserContextType = EContextUndefined
+	asm("add sp, r1, #24 ");				// restore mode_svc stack balance
+	asm("mov r2, #0xd7 ");
+	asm("msr cpsr, r2 ");					// mode_abt, all interrupts off
+	asm("msr spsr, r0 ");					// spsr_abt=aborted cpsr
+	ERRATUM_353494_MODE_CHANGE(,r12);
+	asm("ldmia r1, {r0-r3,r12,pc}^ ");		// restore r0-r3,r12 and return from exception
+
+	// get here if exception occurred in mode other than usr or svc
+	// we are in mode_abt or mode_und with IRQs disabled
+	asm("fatal_exception_mode: ");
+	asm("ldr r2, __TheScheduler ");
+	asm("ldr lr, [r2, #%a0]" : : "i" _FOFF(TScheduler,iMonitorExceptionHandler));
+	asm("cmp lr, #0 ");
+	__JUMP(ne,lr);							// if crash debugger running, let it handle exception
+
+	// get here if mode_svc stack has overflowed
+	// we are in mode_svc with interrupts enabled and the kernel locked
+	// R0=original CPSR R1=exc code R12=mode of exception
+	asm("fatal_exception_stack: ");
+	asm("orr r3, r12, #0xC0 ");
+	asm("msr cpsr, r3 ");		// back to exception mode, all interrupts off
+	asm("mov r2, r0 ");
+	asm("ldr r0, __TheScheduler ");
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,i_Regs));	// pass in address of stored registers
+	asm("bl "	CSM_ZN3Arm9SaveStateER14SFullArmRegSet );
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iExcCode));
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iFlags));
+	asm("ldmia sp!, {r3-r7} ");	// get original R0-R4
+	asm("stmia r0, {r1-r5} ");	// save original R0-R4
+	asm("ldmia sp!, {r6,r7} ");	// get original R12 and aborted instruction address
+	asm("str r6, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR12));
+	asm("str r7, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR15));
+	asm("mov r1, #13 ");		// r1 = regnum
+	asm("mrs r2, cpsr ");		// r2 = mode
+	asm("mov r4, r0 ");
+	asm("bl " CSM_ZN3Arm3RegER14SFullArmRegSetim );	// r0 = pointer to exception mode R13
+	asm("str sp, [r0] ");		// save correct original value for exception mode R13
+
+	// call the exception fault dispatcher
+	asm("mov r0, #0 ");
+	asm("b ExcFault ");
+	}
+
+extern "C" __NAKED__ void __ArmVectorAbortPrefetch()
+//
+// Prefetch abort
+//
+	{
+	asm("sub lr, lr, #4");					// lr now points to instruction whose prefetch was aborted
+	asm("stmfd	sp!, {r0-r4,r12,lr}");		// save it along with r0-r4,r12
+#if defined(__CPU_ARM_HAS_WORKING_CLREX)
+	CLREX									// reset exclusive monitor 	
+#elif defined(__CPU_ARM_HAS_LDREX_STREX)
+	STREX(12,0,13);							// dummy STREX to reset exclusivity monitor
+#endif
+	asm("mov r1, #%a0 " : : "i" ((TInt)EArmExceptionPrefetchAbort));
+	asm("b handle_exception ");
+	}
+
+extern "C" __NAKED__ void __ArmVectorUndef()
+//
+// Undefined instruction exception
+//
+	{
+	asm("sub lr, lr, #4");					// lr now points to undefined instruction
+	asm("stmfd	sp!, {r0-r4,r12,lr}");		// save it along with r0-r4,r12
+#if defined(__CPU_ARM_HAS_WORKING_CLREX)
+	CLREX									// reset exclusive monitor 	
+#elif defined(__CPU_ARM_HAS_LDREX_STREX)
+	STREX(12,0,13);							// dummy STREX to reset exclusivity monitor
+#endif
+	asm("mrs r0, spsr ");					// r0=CPSR at time of exception
+	asm("mov r1, #%a0 " : : "i" ((TInt)EArmExceptionUndefinedOpcode));
+	asm("tst r0, #0x20 ");					// exception in THUMB mode?
+	asm("addne lr, lr, #2 ");				// if so, correct saved return address
+	asm("strne lr, [sp, #24] ");
+	asm("b handle_exception2 ");
+	}
+

@@ -1,0 +1,13 @@
+EXPORTS
+	??0CCaptureKeys@@QAE@XZ @ 1 NONAME ; public: __thiscall CCaptureKeys::CCaptureKeys(void)
+	??1CCaptureKeys@@UAE@XZ @ 2 NONAME ; public: virtual __thiscall CCaptureKeys::~CCaptureKeys(void)
+	?AddCaptureKeyL@CCaptureKeys@@QAEXABVTCaptureKey@@@Z @ 3 NONAME ; public: void __thiscall CCaptureKeys::AddCaptureKeyL(class TCaptureKey const &)
+	?CancelAllCaptureKeys@CCaptureKeys@@QAEXK@Z @ 4 NONAME ; public: void __thiscall CCaptureKeys::CancelAllCaptureKeys(unsigned long)
+	?CancelCaptureKey@CCaptureKeys@@QAEXK@Z @ 5 NONAME ; public: void __thiscall CCaptureKeys::CancelCaptureKey(unsigned long)
+	?Construct@CCaptureKeys@@QAEXXZ @ 6 NONAME ; public: void __thiscall CCaptureKeys::Construct(void)
+	?New@CKeyTranslator@@SAPAV1@XZ @ 7 NONAME ; public: static class CKeyTranslator * __cdecl CKeyTranslator::New(void)
+	?ProcessCaptureKeys@CCaptureKeys@@QBEXAAVTKeyData@@@Z @ 8 NONAME ; public: void __thiscall CCaptureKeys::ProcessCaptureKeys(class TKeyData &)const 
+	?SetCaptureKey@CCaptureKeys@@QAEXKABVTCaptureKey@@@Z @ 9 NONAME ; public: void __thiscall CCaptureKeys::SetCaptureKey(unsigned long,class TCaptureKey const &)
+	?AddCaptureKeyL@CCaptureKeys@@QAEXABVTCaptureKey@@E@Z @ 10 NONAME ; public: void __thiscall CCaptureKeys::AddCaptureKeyL(class TCaptureKey const &,unsigned char)
+	?SetCaptureKey@CCaptureKeys@@QAEXKABVTCaptureKey@@E@Z @ 11 NONAME ; public: void __thiscall CCaptureKeys::SetCaptureKey(unsigned long,class TCaptureKey const &,unsigned char)
+

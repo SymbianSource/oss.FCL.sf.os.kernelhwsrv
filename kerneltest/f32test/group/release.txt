@@ -1,0 +1,1308 @@
+THIS RELEASE NOTE NO LONGER IN USE
+
+See \F32\GROUP\RELEASE.TXT for changes to F32TEST
+
+
+Version 2.00.520
+================
+(Made by MichaelP, 27/08/2004)
+
+1)	JonathanM
+	1)	Removed WINS specific test from T_DIRS. (Testing for exact contents
+		of z:\sys\bin\ is too fragile and serves no real purpose.)
+
+
+Version 2.00.519
+================
+(Made by DjordjeK, 18/08/2004)
+
+1)	Pete
+	1) 	MINOR_CHANGE Fixed a problem in WINTEST which meant that the ESTART map 
+		file for WINS wasn't always copied to the correct place.
+
+2)	Kamran
+	1) 	fixed problems in t_falsespace
+
+3)	AndrewJ
+	1)	Edited loader security test so that it only tests hashing in the loader. Made it 
+		take a command line parameter to specify the removable drive that the test will 
+		use. If the drive specified (by run test) is not removable the test will exit
+		without running test cases.
+	2)	Added the all the security tests to the /f32test/group/bld.inf file by inlcuding
+		the renamed version of the /f32test/loader/bld.inf. So all security loader tests
+		run from f32test script. Made required changes to the mmp files.
+
+Version 2.00.518
+================
+(Made by KamranN, 04/08/2004)
+
+1)	KamranN
+	1)	Addition of t_falseSpace test for purpose of testing submission of PREQ133
+		(Out of disk space handling by the file server)
+
+2)	MiguelB
+	1)	Added t_cfsperform for concurrent file system performance testing
+
+Version 2.00.517
+================
+(Made by AndrewH, 06/07/2004)
+
+1)	KamranN
+	1) 	Defect fix for DEF046212 - B_OPEN assumes C: is a RAM drive and will fail if 
+		C: is bigger than system RAM
+
+2)      AndrewHi
+	1)	MS3.7.2 Sierra Nevada PREQ 729 (part 2 of 2) and PREQ 537 (part 2 of 2) 
+		Updated F32 data caging tests to reflect modified Platform Security capability
+		requirements
+
+Version 2.00.516
+================
+(Made by MichaelP, 17/06/2004)
+
+1)	KamranN
+	1) 	Fixed defect DEF045171  T_DIRS test isn't reliable
+
+Version 2.00.515
+================
+(Made by JonathanM, 26/05/2004)
+
+1)	KamranN
+	1) 	Fixed defect- DEF045298 T_DSPACE fails on emulator 
+	2)	Fixed defect- DEF044620 T_NOTIFY doesn't do ForceMediaChange correctly 
+
+Version 2.00.514
+================
+(Made by CarlosF, 14/04/2004)
+1)      AndrewHi
+	1)	MS3.7.1 and MS3.8 Sierra Nevada PREQ537 (partial implementation) 
+		- updated F32 data caging tests to replace root with tcb and to add
+		extra string-checking
+
+Version 2.00.513
+================
+(Made by StefanW, 09/01/2004)
+1)      StephanGu
+        1)      Fixed defect - DEF040848 - T_DSPACE fails on drive K:. Test
+                code was incorrect.
+        2)      Fixed defect - DEF040850 - T_NOTIFY.EXE fails.  Test code was
+                incorrect.
+
+Version 2.00.512
+================
+(Made by JonathanM, 05/12/2003)
+
+1)	ChrisCr
+	1)	DEF001193 - (Propagated) Files with scandic letters in the name might
+		be deleted during boot.
+	2)	MINOR_CHANGE - B_FAT and B_FAT32 tests are not valid on ramdrive, cause
+		them to exit if run on ramdrive.
+	3)	DEF015608 - CDirScan::NextL leaves when trying to scan \private and
+		\system directory.
+
+2)	JonathanM
+	1)	Made T_SCNDR1 and T_SCNDR2 manual tests to avoid duplication of testing
+		(T_SCN32DR1 and T_SCN32DR2 perform the same testing.)
+
+Version 2.00.511
+================
+(Made by AndrewJ, 06/10/2003)
+
+3)	ChrisC	
+	1)	Added fat32 versions of the scan drive tests, these tests are not specific to a given
+		number of sectors per cluster. 
+	
+	2)	Added fat32 version B_fat test to support Fat32, named b_fat32
+
+4)	AndrewJ	
+	1)	Add fat32 version of test t_compat, named t_compat32
+	2)	changed T_dirs so that there is a limit to the root directory filling entry creation
+		to 1000 so that it will fill the root dir for all versions fat except fat32.
+	3)	Changed the default format type in f32tests to quick format so that full format
+		must be specified if required such as in specifi format test t_format. 
+
+
+Version 2.00.510
+================
+(Made by JonathanM, 24/09/2003)
+
+1.	AndrewJ
+	1.	Added test cases to test t_rcount to test defect "DEF002614  File crashes 
+		when passed a broken subsession handle" is fixed in new file server
+
+2.	StephanGu
+	1.	Changed capability tests, t_fsys and t_ext1 to not run on the NAND
+		user area, as they do not handle primary extensions.  
+		NAND flash support added as per PREQ12 (REQ1752) NandFlash on EKA2.
+
+Version 2.00.509
+================
+(Made by JonathanM, 05/08/2003)
+
+1)	Raja Shekar Reddy
+	1)	CR CANY-5JQFM3 "Enable e32/f32 test suite to be used from a CustKit or DevKit 
+		installation". For Typhoon most of the changes were winc specific files.
+
+2)	Dennis
+	1)	Changed T_DLOCL to use UserSvr::ChangeLocale(_L("")) to restore the default
+		settings rather than loading ELOCL_BASE, which no longer exists.
+
+
+
+Version 2.00.508
+================
+(Made by JonathanM, 19/05/2003)
+
+1)	JonathanM and ChrisM
+	1)	Changes resulting from making E32 compatible with with
+		Symbian OS version 7.0
+2)	ChrisCr
+	1)	DEF015967 - Cannot format disk with DiskAdmin capability (modify DC tests
+		to check added DiskAdmin capability on Format/FormatNext)
+
+
+Version 2.00.507
+================
+(Made by ChrisM, 17/03/2003)
+1)	AndrewJ
+	1)	Added 5 tests specifically for rofs, they only run on J and V: (and are not 
+		t_main.cpp based) for rofs on wins and hardware respectively. The test do not
+		run as part of the automatic test set. but are included in an F32test rom. Note 
+		you need to copy a rofs image to the correct partition to run the tests.
+2)	JonathanM
+	1)	Modified T_TLIBRY and T_TLINK to not run when Data Caging is enabled.
+		(Because they try and test non Data Caging complient behaviour.)
+
+3)	Nicolas
+	1)	Fixed bugs in T_LDRCHECK, T_FILE and T_NOTIFY: test assertions
+		using '=' instead of '=='.
+4)	Markdo
+	1)	Modified T_FMAN so that when testing max length filenames codewarrior uses
+		a path length of two characters less (\epoc32\winscw\c vs \epoc32\wins\c).
+		
+5)	PeteS
+	1)	Changed T_NOTIFY to use RLocalDrive::IsRemovable() rather than
+		RLocalDrive::MediaDevice() to determine socket number.
+
+Version 2.00.506
+================
+(Made by JonathanM, 14/01/2003)
+
+1)	Markdo
+	1) 	Updated tests due to various failures.
+	2) 	Reduced the number of iterations performed by T_SESS.
+
+2)	ChrisCr
+	1)	Updated tests T_LFFS, LFFSINFO and T_DSPACE to use the 'symbianised'
+		LFFS to the coding standards (names of classes and member variables
+		using ControlIo).  Removed duplicate copy of lffs_controlio.h (and use
+		the one in the LFFS code, specified with a relative path).
+
+3)	Nicolas
+	1)	Removed RDebug test code as there is no generic user-side debug 
+		API in EKA2.
+
+
+Version 2.00.505
+================
+(Made by AndrewT, 29/10/2002)
+
+1)	JonathanM
+	1)	Removed all usage of RProcess::SecureApi and User::RemoveCapabilities.
+
+
+Version 2.00.504
+================
+(Made by JonathanM, 21/10/2002)
+
+1)	StefanW
+	1)	Fix for DEF000143 - t_soak1 doesn't log errors 
+	2)	Fix for DEF000369 - should be able to disable the "remount" in t_soak 
+	3)	Modified tests to use T_MAIN (T_SCNDR1, T_SCNDR2, T_SCNDR3, T_SOAK1).
+	4)	Modified ControlIO to enforce use of TDes8 parameters as required by the secure kernel (This affected the 
+		tests LFFSINFO, T_SOAK, T_DSPACE, T_HUNGFS).
+2)	CiprianM
+	1)	Modified T_NMBS to take into account fix for defect EXT-5AKDAM 
+		"RFs: Folders with trailing dots cause big problems in the Flash
+		File system and applications that use the file system".
+	2)	Modified T_MISC to test for fix to defect EXT-57KH9K "RFs file server
+ 		session crashes with null pointer access with IsValidName() method!".
+	3)	Modified T_MMC due to changes from f32 defect fix DON-585E4C "Memory
+ 		card password file shown in dialogs".
+	4)	Modified T_FMAN to test fix for defect EXT-5BMC53 "CFileMan::Copy() reports wrong
+		for error for non-existent matching names".
+	5)	Modified T_NOTIFY to test fix for defect EXT-5BMC53 "CFileMan::Copy() reports wrong
+		for error for non-existent matching names".
+	6)	Fixed defect FOD-5CKDV6 "Checkdisk failure during autotests required user
+ 		feedback".
+
+3)	Andrewj
+	1)	Changed all data caging tests to (start t_dc*) to have correct capabilities and use a helper exe for 
+		test setup and cleanup.
+	2)	Added exe clean_prepdc.exe to setup and tidyup after datacaging tests
+	3) 	Changed the position of t_prel in the ROM to system bin
+
+4)	ChrisCr
+	1)	Fix for defect DEF000006: (Propagated) App can kill F32 by attempting
+		to mount filesystem on unsupported drive.  Added test for the defect,
+		which does not actually exist now in Jet Stream.
+
+2)	AndrewJ
+	1)	Added tests for new file server functionality to allow the sharing of open files between a 
+		client and server. (test files are included in \f32test\fileshare\...)
+		
+Version 2.00.503
+================
+(Made by JonathanM, 20/09/2002)
+
+1)	AndrewT
+	1)	Removed T_RDFAT from the test suite. This is a legacy test that is no longer required
+		and wastes 3 hours of test time for the emulators.
+
+Version 2.00.502
+================
+(Made by Nicolas, 16-09-2002)
+
+1)	Nicolas
+	1)	Fixed DEF000090 - E32TEST MMP files should not specify
+		chkstk.obj for WINSCW builds.
+
+Version 2.00.501
+================
+(Made by Dennis, 16-08-2002)
+1)	StephanGu
+	1)	F32 test re-org. Deleted T_MAIN.CPP in \lffs and \fsstress as they were unused.
+	2)	F32 test re-org. Changed tests to be T_MAIN based for consistency.  The following tests were affected:
+		B_MTST, B_OSFIL, B_RAND, B_REP, T_APPINS, T_CHKUID, T_CLOBBR, T_DLOCL, T_FSRVBM, T_FSY2K, T_FSYBM, T_GEN,
+		T_GEN32, T_LOCK, T_OOM, T_PARSE, T_PROC, T_RCOUNT, T_RDFAT, T_RDSECT, T_RENAME, T_SESS, T_TLIBRY, T_TLINK,
+		T_ROMG, T_FILEMATCH, T_WHET.
+
+Version 2.00.500
+================
+(Made by AndrewT, 23/05/2002)
+
+First release of EKA2 into Symbian OS mainline.
+
+
+Version 0.01.091
+================
+(Made by CarlosF, 12/03/2002)
+
+1)	Markdo
+	1)	Modified T_FILE to test f32 defect DON-582CPM "GetLongName() doesn't
+		give KErrNotFound on deleted file".
+	2)	Modified T_MMC due to changes from f32 defect fix DON-585JBS "Memory
+		card password file shown in dialogs".
+	3)	Modified T_FMAN so that when testing max length filenames codewarrior uses
+		a path length of two characters less (\epoc32\winscw\c vs \epoc32\wins\c).
+
+2)	MarkCa
+	1)	Updated on-screen instructions in T_MMC to ask user to press F4 twice if
+		using card 1.  This change is necessary because of E32 CR PHAR-54RJMT.
+
+Version 0.01.090
+================
+(Made by ChrisM, 06/03/2002)
+
+1)	AndrewJ
+	1)	Amended T_Notify as it was checking wrong TRequestStatus
+
+2)	Markdo
+	1)	Fixed defect FID-572FMM "T_SOAK has garbage value for default drive".
+	2)	Modified T_MMC to account for changes made to f32 by change request
+		MDON-57HLDW "RFs::LockDrive() should not allow user to not store
+		password"
+
+
+
+Version 0.01.089
+================
+(Made by RobertJ, 11/02/2002)
+
+1)	MarkCa
+	1)	Disabled T_SCNDR(1|2), B_FAT and T_FSYS from running on
+		Cirrus.
+
+Version 0.01.088
+================
+(Made by PeterS,  04/02/2002)
+
+1)	MarkCa
+	1)	Extended T_FSYS to check fix FID-562G4V (App can kill F32 by attempting
+		to mount filesystem on unsupported drive.)
+	2)	Fixed FID-556JEX (T_PROC tries to use drive D:)  T_PROC now uses the
+		default drive.
+
+2)	Markdo
+	1)	Modified T_NOTIFY to test fix for defect BEN-4YRGKV "Ecom not recognising
+		plugins once unplugged and replugged".
+
+Version 0.01.087
+================
+(Made by AndrewJ,  12/12/2001)
+
+1)	Nicolas
+	1)	Modified T_DLLSTATIC test so that it works on WINC and
+		is not wrongly reported as failed when run from
+		eruntest.
+
+2)	Markdo
+	1)	Added the test T_WRITEP which checks that all operations that cause a
+		write to disk fail with KErrAccessDenied when the media driver is write
+		protected. Added to check the fix for the defect DON-4ZKD9H "File server
+		does not fully support	write-protected media".
+
+3)	Andrew
+	1)	Modified T_RAW to take into account new behaviour of RFormat and 
+		RRawDisk from fixing defect JON-53BMJZ "RRawDisk de-references a null
+		pointer when used on a corrupt drive (due to forced a mount)".
+
+4)	MarkCa
+	1)	Updated T_OOM to test fix DON-4V7BUZ (KErrNoMemory cannot be
+		returned on c:)
+
+Version 0.01.086
+================
+(Made by MichaelP, 20/11/2001)
+
+1)	MarkCa
+	1)	Fixed MET-53LG56 (Minor inconsistancies in T_TSCAN.CPP.)  Changed
+		CleanDirectory() and ExpandDirectory() to add integer number of
+		clusters to directories.		
+
+2)	RobertJ
+	1)	Added t_bcache to benchmark loader improvements resulting from caching.
+		Should be run from a refui image, not from a text shell. The timings are
+		given as untranslated fastcount ticks. To see what the timings would be
+		without the cache, comment out "#define __USE_LOADER_CACHE_"
+		in \f32\sfile\sf_ldr.cpp and rebuild.
+
+	2)	Added t_cache to test that the cache is delivering the correct file name
+		to the loader. Various strategies are employed to test that the cache
+		is maintaining coherency. Also tested is load from rom run from ram.
+		The test is classified as manual because all media slots should be
+		populated before test begins.
+
+3)	Markdo
+	1)	Fixed defect ROS-53FLTJ "F32TEST T_LDLL doesn't build for WINSCW". Fixed
+		using the current MODULE_HANDLE definitions from EUSER. Fix allows 
+		additional test to be carried out in T_TLIBRY on WINS which had previously
+		been excluded using #if defined (__EPOC32__).
+	2)	Modified WINTEST.BAT to take into account WINSCW.
+
+
+Version 0.01.085
+================
+(Made by Dennis,  26/10/2001)
+
+1)	MarkCa
+	1)	Moved definitions from P32MMC.H into T_MMC.CPP because it can only be
+		included in ASSP-specific builds.  See \e32\release.txt.
+
+2)	Nicolas
+	1)	Added T_DLLSTATIC and support files to test static
+		data in DLLs.
+	2)	Added SERVER\FILECOPY.CPP containing a function
+		(CopyFile()) to copy files from Z:\ to C:\.  Updated
+		T_DEBUGGER to use that function.
+
+
+Version 0.01.084
+================
+Made by ChrisM, 05/10/2001
+
+1)	MarkCa
+	1)	Added t_mvdr to test fix DON-4ZKDKK (Moving a directory leads to
+		incorrect parent directory cluster number.)  This is a manual test that
+		creates and moves / renames a set of directories.  Run on a formatted
+		card and then check the card with a disk verification utility.
+	2)	Changed t_chlffs to recognize Integrator LFFS on K: instead of D:.
+
+2)	Markdo
+	1)	Fixed defect MAY-4ZMMZY "F32Tests for LFFS require Cat-A code to build"
+		and MAY-4ZMMXC "F32test server\t_dspace cannot be built by
+		licencee". Necessary header file copied from f32 to f32test.
+
+
+Version 0.01.083
+================
+Made by AndrewT, 31/08/2001
+
+1)	MarkCa
+	1)	Modified T_CHLFFS to mount LFFS on drive d for Integrator.
+
+2)	CarlosF
+	1)	Changed the t_chlffs.cpp to allow tests to run on Assabet when FAT is
+		mounted on drive C:\
+
+
+Version 0.01.082
+================
+Made by Pete, 06/08/2001
+
+1)	Markdo
+	1)	Fixed defect BLT-4Y6MBB "B_FAT fails for 16MB mmc card". Modifications
+		to ensure that test behaves correctly when sectors/cluster > 1. 
+
+2)	WillR
+	1)	Correct reinterpret_cast to remove CodeWarrior warning
+
+3)	TimBa
+	1)	Added new test project T_FileMatch (.mpp and .cpp) to test some real
+		examples of filenames in various languages. Wanted by Linda
+		Enhancements.
+
+4)	MarkCa
+	1)	Moved T_PWSTR from f32test to e32test.  F32 API tested by T_MMC.
+
+5)	Nicolas
+	1)	Updated debugger tests as part of fixing MAY-4V4E5V
+	  	(Breakpoints don't work on ARM architecture 5
+	  	processors).
+
+6)	Pete
+	1) 	Removed \f32test\group\mnt.bat which was redundant.
+	2) 	Modification to T_FSYS.EXE to add an additional test for the
+		function RFs::RemountDrive().
+
+Version 0.01.081
+================
+Made by Michael, 21/06/2001
+
+1)	MarkDo
+	1)	Increased the stack size of T_SCNDR2 to 0x4000.
+	2)	Modified T_MAIN-based tests to test with a hung file server. T_MAIN
+		now takes command-line arguments:
+
+		HANG - run tests with a non-critical password notifier up for 
+		duration of the test.
+		
+		REPEAT - Runs only on d: for epoc platforms and x: for WINS. Every file 
+		server request causes the non-critical password notifier to come up
+		and complete in a random time with a specified	password. This
+		should be used simultaneosly with WITHREPEAT, each being called from
+		a separate RUNTESTS process.
+
+		WITHREPEAT - To be used in conjunction with REPEAT. Default path should
+		not be a removable media.
+	3)	Introduced T_HUNGFS to test critical and non-critical notifiers. This
+		test is only to be run on non-removable media and requires input from
+		the user.
+	4)	Added batch file \F32TEST\SERVER\F32TEST_REPEAT.BAT to be used as
+		RUNTESTS batch file when using REPEAT and WITHREPEAT command-line
+		arguments(see above).
+
+2)	MarkCa
+	1)	Modified t_fsrv, t_mmc and t_pwstr to handle e32 fixes EDNHLJT-4WZGTD
+		and EDNHAAO-4WZFYR.
+	2)	Implemented CR PSCE-4VMP3K to set hard limit for RAM drive.  T_OOM
+		extended to fill up ram drive when limit set.
+
+3)	Nicolas
+	1)	Fixed thumb bug in t_debuggee_1 (least significant bit
+	  	of text base address passed to t_debugger was not
+	  	cleared).
+
+Version 0.01.080
+================
+Made by Carlos, 31/05/2001
+
+1)	Markdo
+	1)	Modified T_FILE to take account for changes made in DON-4VWCWG
+		"Windows does not like the way we make some dos entry names".
+		Modified some expected dos entries created on directory entry	
+		creation.
+
+Version 0.01.079
+================
+Made by Pete, 10/05/2001
+
+1)	Michael
+	1)	Fixed existing problems in, and added some new tests to, HWA test program
+		(\f32test\DEVICE\t_hwa.cpp).
+
+Version 0.01.078
+================
+Made by Nicolas, 04/05/2001
+
+2)	Nicolas
+	1)	Merged 6.1 release branch back into the mainline.
+
+Version 0.01.077
+================
+Made by Dennis, 20/04/2001
+
+1)	Markdo
+	1)	Fixed defect FID-4USCEU "Change test for LFFS drive". Lffs
+		is now tested from t_main on any drive the lffs is loaded on.
+	2)	Fixed defect FID-4USFQB "Loading LFFS fails when FSY&PDD
+		renamed". See above for details.
+	3)	Replaced calls to UserHal::MachineInfo with 
+		HAL::Get(HAL::EMachineUid,...)
+2)	Pete 
+	1)	Fixed FID-4TXL4C "Can we have LFFSINFO and T_SOAK in F32TEST"
+
+Version 0.01.076
+================
+Made by RobertJ, 26/03/2001
+
+1)	MarkCa
+	1)	Updated t_pwstr and t_mmc in fix for CAN-4UNE8D.
+	2)	Increase WINS remount delay for t_pwstr.cpp.
+	3)	Modified t_rcount to test defect EDNJHAS-4KFR5G (File
+		handle mis-management crashes the kernel)
+
+2)	Dennis
+	1)	Modified tests which require a D: drive not to run the relevant part
+		on IQ80310 (similar to checks for Cogent already there).
+
+3)	Pete
+	1) 	Added HWA API test T_HWA.
+
+Version 0.01.075
+================
+Made by Carlos, 20/02/2001
+
+1)	Markdo
+	1) 	T_DSPACE no longer built for WINC.
+	2)	Modified T_DSPACE so that in release builds
+		RFs::ControlIo no longer called.
+
+Version 0.01.69
+===============
+Made by Morgan, 11/04/01
+
+1)	Markdo
+	1)	Fixed defect FID-4USCEU "Change test for LFFS drive". Lffs
+		is now tested from t_main on any drive the lffs is loaded on.
+	2)	Fixed defect FID-4USFQB "Loading LFFS fails when FSY&PDD
+		renamed". See above for details.
+
+Version 0.01.068
+================
+Made by MarkCa, 20/03/2001
+
+1)	MarkCa
+	1)	Updated t_pwstr and t_mmc in fix for CAN-4UNE8D.
+
+2)	Andrew
+	1)	Fixed SCE-4TVQ78 Allows T_ldr to be run more than 
+		once with out failing
+
+3)	Pete 
+	1)	Fixed FID-4TXL4C "Can we have LFFSINFO and T_SOAK in F32TEST"
+
+Version 0.01.067
+================
+Made by Markdo, 07/02/2001
+
+1)	MarkCa
+	1)	Increase WINS remount delay for t_pwstr.cpp.
+	2)	Modified t_rcount to test defect EDNJHAS-4KFR5G (File
+		handle mis-management crashes the kernel)
+
+Version 0.01.066
+================
+Made by Markdo, 07/02/2001
+
+1)	Markdo
+	1) 	T_DSPACE no longer built for WINC.
+	2)	Modified T_DSPACE so that in release builds
+		RFs::ControlIo no longer called.
+
+Version 0.01.065
+================
+Made by RobertJ, 13/12/2000
+
+1)	Morgan
+	1)	Added T_FNAME.EXE
+
+2)	Markdo
+	1)	Modified B_FAT to test correctly drives>4MB.
+	2)	Modifed T_NOTIFY to test notification on max length
+		file names. Also tidied the test up a bit.
+	3)	Added T_DSPACE to test disk space notification.
+
+3) 	RichardF
+	1)	Modified T_DSPACE to work with LFFS drives.
+
+
+Version 0.01.064
+================
+Made by MarkCa, 29/09/2000
+
+1)	Jonathan
+	1)	Removed Eiger-specific tests from t_dbg.
+	2)	Removed bogus unused MMP files from \f32test\appdbg.
+
+
+Version 0.01.063
+================
+Made by Dennis, 13/09/2000
+
+1)	Dennis
+	1)	Don't build T_DEBUG* for MCORE
+	2)	Build T_LOCLGE and T_LOCLUS for MCORE as well as ARM
+
+
+Version 0.01.062
+================
+Made by Morgan, 5/7/2000
+
+1) Markdo
+	1)	Modified T_GDIR and T_LOCATE to account for slight change in
+		sorting in CDir class (from modification to TKeyDir::Compare).
+
+2) Pete
+	1) Modified T_TERM so that it is possible to open
+	a channel on Com4 for Brutus.
+
+
+Version 0.01.061
+================
+(Made by Dennis, 22-06-2000)
+
+1) Morgan
+	1)	Added a No-Rx mode to T_TERM
+
+
+Version 0.01.060
+================
+(Made by Markdo, 07.06.2000)
+
+1)	Markdo
+	1)	Modified T_ALERT to ensure hung file server is created.
+
+2)	MarkCa
+	1)	Added T_RESIZE test to test bug fix EDNMDON-4J2EWK.
+		edit: group\bld.inf; add: group\t_resize.mmp server\t_resize.cpp
+		Test program classified as manual because takes long time to run
+		(creates 10Mb file) and needs FAT disk with at least 10Mb free.
+
+Version 0.01.059
+================
+(Made by MarkCa, 16/05/00)
+
+1)	Markdo
+	1)	Removed compiler warnings.
+	2)	Changes to T_TLINK to compensate for loss of registry.
+
+2)	MarkCa
+	1)	Modified Brutus but non-LFFS tests to cleanly abort when running
+		on LFFS drive.  Some T_MAIN based tests (exc T_LOADER.CPP) did this
+		anyway but an extra "CallTestsL: Skipped: test does not run on LFFS.\n"
+		msg was added (B_FAT.CPP, T_LOADER.CPP, T_RAW.CPP, T_COMPAT.CPP).
+		For tests not based on T_MAIN, an extra function IsDefaultDriveLFFS()
+		was added to T_CHLFFS.CPP, with its prototype in T_CHLFFS.H.
+		An additional function IsNamedDriveLFFS() was added for T_FSRV, which
+		is T_MAIN based and needs to perofrm extra checking volume name.
+		If the E32Main routine discovers it is running on an LFFS drive then
+		it prints "E32Main: Skipped: test does not run on LFFS.\n" and returns.
+		(T_APPINS.CPP, T_DLOCL.CPP, T_FIND.CPP, T_GEN.CPP, T_GEN32.CPP,
+		T_LDR.CPP, T_PARSE.CPP, T_PROC.CPP, T_RDSECT.CPP, T_RCOUNT.CPP,
+		T_SCNDR1.CPP, T_SCNDR2.CPP, T_SESS.CPP, T_TLIBRY.CPP, T_TLINK.CPP)
+		In T_ROMG, code was reordered in CMemDir::LoadDirL() to avoid a
+		NULL dereference.
+
+Version 0.01.058
+================
+(Made by Morgan, 7/4/2000)
+
+1)    Nicolas
+      1)	Added T_DEBUGGER and its support files (application
+		debugging tests).  These tests are no more in E32TEST
+		because F32 is needed to copy the suppport
+		files to the RAM-disk. 
+
+2)	MarkCa
+	1)	\F32TEST\GROUP\BLD.INF
+		\F32TEST\GROUP\T_PWSTR.MMP
+		\F32TEST\SERVER\T_PWSTR.CPP
+		Manual test program to test password store (WINS only).
+
+3)	Pete
+	1)	Changes to support F32 tests on LFFS drives. This involves changes to
+		most files.
+	2) 	Added T_DNOTIF to test F32 debug notifiers.
+
+Version 0.01.057
+================
+(Made by MarkDo, 30.03.200)
+
+1)	MarkDo
+	1)	Added T_MMC to test locking of a device.
+
+
+Version 0.01.056
+================
+(Made by ???, ???)
+
+1)	Pete
+	1) 	Removed calls of UserPcCardCntrl::PwrDown();
+	2) 	Modified serial test so that it is possible to
+		overide the default serial port designated to be used
+		by that test by supplying a serial port number on the
+		command line:-
+			- T_TERM p1
+
+
+Version 0.01.055
+================
+(Made by Alastair, 10.3.2000)
+
+1)	MarkDo
+	1)	Modified T_FSRV and T_SESS so that battery state of EBatNotSupported
+		is a valid.
+
+Version 0.01.054
+================
+(Made by MarkCa 03-03-00)
+
+1)	Morgan
+	1)	Removed use of the registry from T_TLIBRY in anticipation
+		of the the registry being deleted.
+
+Version 0.01.053
+================
+(Made by Pete, 24/02/00)
+
+
+1)	Pete
+	1) 	Modified T_TERM to work with MAWD and MISA CF card modem driver.
+
+
+Version 0.01.052
+================
+(Made by Dennis, 14-02-2000)
+
+1)	Dennis
+	1)	Replaced most UserHal:: calls with corresponding HAL:: calls (if they
+		exist).
+
+2)	Mark
+	1)	Added SCNDRV\T_SCNDR1-2-3 tests. T_SCNDR1 tests that the scandrive
+		utility fixes specific errros in the fat/metadata. T_SCNDR2 and
+		T_SCNDR3 test that the rugged fat file system prevents the fat/
+		metadata from being corrupted in the event of a power failure. Both
+		simulate power failure by failing writes in the TDriver class. In
+		T_SCNDR2 an error value is returned on failure whilst in T_SCNDR3
+		the machine is reset.
+	2)	Minor change to T_FIND since ESHELL.EXE is not fixed process.
+	3)	Cleaned up PRELOAD.LST since T_PREL.DLL was not being preloaded.
+
+
+Version 0.01.051
+================
+(Made by Dennis, 19/01/99)
+
+1)	Alastair
+	1)	Removed ARM3 and MARM targets from BLD.INF
+
+2)	Pete
+	1)	Changes due to the removal in E32 of the classes
+		TLocalDrive and RDevComm.
+
+3)	Mark
+	1)	Slight adjustment to T_FSRV to correct test nesting.
+
+
+Version 0.01.050
+================
+(Made by Morgan 3/12/99)
+
+1)	Mark
+	1)	Made minor changes to T_FMAN, T_TFSYS and T_FSYS.
+	2)	Switched T_REMOTE to a manual test.
+	3)	Change to T_FSRV to correctly test for unicode volume names.
+	4)	Change to T_RDSECT to more accurately test CRomMountCB::ReadSectionL.
+	5)	Added test\t_tlibry.exe to romtarget in T_TLIBRY.MMP so this test
+		is included in rom.
+
+2)	Dennis
+	1)	Removed calls to EUSER functions which no longer exist.
+
+
+Version 0.01.017
+================
+(Made by Morgan, 26/8/99)
+
+1)	Pete
+	1)	Changes to T_NOTIFY to now test media change notification on multiple
+		PC Card sockets.
+	2)	Fixed up T_FIND - find channel test to work with Brutus serial drivers.
+
+2)	Dennis
+	1)	Fix to T_SESFS.CPP - don't logon to a thread if we failed to create it!
+	2)	Removed various redundant copies of files in \F32TEST\FSSTRESS from
+		\F32TEST\SERVER.
+	3)	Fixed operator precedence errors in T_FMAN.CPP.
+
+3)	Alastair
+	1)	Added new keywords to various .MMP files so that .IBY files can be
+		generated by ABLD TEST ROMFILE, also added extension makefile
+		GROUP\ROMSTUFF.MKE.
+
+
+Version 0.01.016
+================
+(Made by Alastair, 2.8.1999)
+
+1)	Mark
+	1)	Added two new support dlls t_loclus and t_loclge for t_dlocl. These replace
+		the original localisation dlls locl.us and locl.ge. Changes made to t_dlocl
+		to reflect this. Uncommented localisation tests in t_dlocl.
+	2)	Modified t_nofify to take into account unicode handling of volume names.
+	3)	Moved t_alert to manual.bat.
+	4)	Converted Preload.lst used for t_libry to unicode.
+	5)	Converted t_warm to manual.bat
+	6)	Modified b_open so that when creating a large file the memory left free is
+		dependent on the size of the ram.
+
+2)	Alastair
+	1)	Added ARMI, ARM4 and THUMB platforms to BLD.INF file.
+
+
+Version 0.01.015
+================
+(Made by Dennis 13.7.1999)
+
+1)	Alastair
+	1)	Added dopcvs.pl and lock.pl to GROUP directory for use with MNT.BAT.
+
+2)	Mark
+	1)	Modified t_fsrv so that RFs::SetVolumeName is tested under unicode
+		(see ER5 bug EDNWROS-45WGVY).
+	2)	Modified b_fat to test that an ascii directory entry is read in
+		unicode builds (see ER5 bug EDN028229).
+	3)	Added \epoc32\include\kernel to SYSTEMINCLUDE in t_warm.mmp.
+
+
+Version 0.01.14
+===============
+(Made by Alastair, 9.6.99)
+
+1)	Mark	
+	1)	Added test program t_fsys to test the new functions FileSystemName(..)
+		and DismountFileSystem(..) in class RFs.
+	2)	Added a dummy file system t_testfsys to be used by t_fsys on epoc platforms.
+
+2)	Pete
+	1)	Added T_LFFS for testing the LFFS file system.
+	2)	Added F32 soak test program T_SOAK1.
+
+3)	Alastair
+	1)	Changed zips of releasables put onto the network. There is now one zip
+		file for each platform containing full \Epoc32 paths to each item.
+		There is also a zip file for exported header files.  Hence, the contents
+		of S:\f32test\zip includes wins.<ver>, marm.<ver> and winc.<ver>.
+		The files within these zip file now also have full pathnames so ensure
+		you unzip them into the root of your EPOC drive with any flags required
+		to recreate the directory structure.
+		Added new command, MNT CHECKREL, to check that all releasables are
+		present before doing an MNT PUTREL.
+		Before doing MNT CHECKREL or MNT PUTREL call BLDMAKE -v RELFILES to
+		create the lists of releasables.
+	1)	Replaced all B[plat].PRJ files for use with BLDMAKE with BLDMAKE.PRJ in
+		accordance with ER5u bldmake changes.
+	2)	Removed all superseded RUN.BAT files.
+	3)	Removed the batch files used for running tests.  These batch files are
+		now created by BLDMAKE in \Epoc32\Bldmake\E32test\[platform]\, and are
+		now called AUTO.BAT and MANUAL.BAT.
+	4)	Removed all *.REL files from GROUP directory and changed MNT.BAT so that
+		MNT PUTREL looks for .REL files generated by BLDMAKE instead.  Updated
+		BLDMAKE.PRJ accordingly.
+	5)	Updated MNT GETBLD to fetch the SDMODELS component which replaces the
+		SWINS component that E32 used to release.
+	6)	Added the following .DEF files:-
+			BWINS\
+				T_LIBRY.DEF, T_LDLL.DEF, T_PREL.DEF.
+			BMARM\
+				T_LIBRY.DEF, T_LDLL.DEF, T_PREL.DEF, T_LINKD.DEF, T_LINKC.DEF,
+				T_LINKB.DEF, T_LINKA.DEF, T_LINKDF.DEF, T_LINKCF.DEF,
+				T_LINKBF.DEF, T_LINKAF.DEF, T_LINKE.DEF, T_MUTC.DEF, T_DUPD.DEF,
+				T_LOOPB.DEF, T_LOOPC.DEF, T_LOOPD.DEF.
+	7)	Renamed t_testfsys.mmp t_tfsys.mmp for 8.3 filename compliance.
+
+
+
+
+
+Version 0.01.13
+===============
+(Made by Jonathan, 23rd February 1999)
+
+0)	Everyone
+	1)	Boilerplated source.
+
+1)	Morgan
+	1)	Added "load device driver from RAM", and "ignore old Device driver
+		in RAM" tests to T_TLIBRY.
+	2)	Added test to T_TLINK to test that Dlls that have been previously
+		loaded from Rom can be sucessfully fixed-up to Dlls loaded from Ram.
+
+2)	Mark
+	1)	Modified T_APPINS and T_NOTIFY to take account of the change to
+		RFs::NotifyChange() in F32-131.
+
+
+Version 0.01.12
+===============
+(Made by Morgan, 27th January 1999)
+
+1)	Jo
+	1) Modified t_ramstr to test diagnostic debug checking
+	
+
+Version 0.01.11
+===============
+(Made by Jo, 19th January 1999)
+
+1)	Jo
+	1)	Additional testing in T_NOTIFY to test new functionality added to fileserver notification
+
+	2)	Additional test, T_APPINS also tests new fileserver notification requests
+
+2)	Morgan
+	1)	Additional test in T_TLIBRY
+
+
+Version 0.01.10
+===============
+(Made by Jo, 13th January 1999)
+
+1) Alastair
+	1)	Removed BLD.BAT, CLEAN.BAT and PREPARE.BAT from Group\Li.prj.
+
+2) Jo
+	1)	Added a new test T_RENAME to directory \SERVER\
+		Tests the bug fix in F32 126 ("Rename creates duplicate file").
+
+	2)	Created a new directory \FSSTRESS\ in which all file-server stress
+	  	tests have been placed. These are currently T_REMOTE, T_SESS and a
+	  	new test, T_RAMSTR, which stress tests the RAM drive by creating,
+	  	renaming, replacing and deleting multiple files.
+
+	A new set of batch files, AMARMSTR.bat etc have been created so the
+	stress tests can be run separately (since they all run for a
+	deliberately extended period). The tests t_remote and t_sess have not
+	been removed from the standard test batch files however, since they
+	should be run prior to each F32 release. T_RAMSTR has been created to
+	help simulate the conditions in which an F32 bug is suspected to arise
+	and is not currently part of the standard F32 test suite.
+
+3)	Morgan
+	1)	Extended T_TLINK to test different link trees. New dll's for this
+		are T_LOOP[B|C|D].DLL, TMUTC.DLL, TDUPD.DLL
+
+
+Version 0.01.09
+================
+(Made by Jo, December 8th 1998)
+
+1) Jo
+	1)	Added an extra test to \bench\t_fsysbm to benchmark multiple file deletes
+	2)	Modified t_notify in the light of a change to the file notification code
+
+2) Morgan
+	1) Extended T_TLIBRY to do LDD RAM-load tests
+
+
+Version 0.01.08
+================
+(Made by Jo, December 1st 1998)
+
+1) Morgan
+	1)	Added Load by uid tests and updated T_LIBRY.DLL to have Uids
+	2)	Added T_TLINK.EXE and supporting dlls T_LINK<A|B|C|D>[f].DLL
+		to test loader re-tries.  This test is for __EPOC32__ only.
+	3)	Fiddled with T_TLIBRY.CPP to re-instigate some commented out
+		tests.
+	4)	Killed SARMBE
+
+2)	Alastair
+	1)	Moved T_LDLL into F32TEST from E32TEST, since F32TEST's T_TLIBRY seems
+		to be the only test which requires it, and F32TEST shouldn't be dependent upon
+		releasables from E32TEST.
+	2)	Minor modifications to MNT.BAT.
+
+3)	Jo
+	1)	Minor modification to T_DIRS to re-incorporate filetime testing
+
+
+Version 0.01.07
+================
+(Made by Jonathan, 27th October 1998)
+
+1)	Alastair
+	1)	Updated .MMP files so that UNICODE builds are available in line with 
+		UNICODE changes to E32TOOLP 095.
+	2)	Changed T_CHKUID.EXE so that it checks for and has 0x1000007a rather 
+		than 1 as its first UID.
+	3)	Changed T_FIND.EXE so that it checks for UNICODE versions of
+		KConsoleDllUidValue and KLocaleDllUidValue in UNICODE builds.
+
+
+Version 0.01.06
+================
+(Made by Morgan, 21st October 1998)
+
+1)	Alastair
+	1)	Fixed T_LOCATE so that it runs under WINC.
+	2)	Changed T_SESS so that it's less biased towards a particular
+		PC configuration.
+	3)	Added \F32TEST\GROUP\WINTEST2.BAT which sets up test files so
+		that F32's tests can test the emulator when it's not run from
+		a traditional \epoc32\release\win... directory.
+
+2)	Jo
+	1)	Added extra tests within T_FMAN to test the F32 changes to cope with
+	extra long pathnames.
+
+	2)	Minor change to B_FAT to allow for the change to the number of directory 
+	entries F32 allocates when the VFAT name is an exact multiple of 13
+	characters.
+
+	3)	Minor change to T_RDSECT for UNICODE MARM builds
+
+Version 0.01.05
+================
+(Made by Jo, 18th September 1998)
+
+Requires F32 >= 120
+
+1) Jo
+
+	1) Added test \SERVER\T_RDSECT to test new RFs function ReadFileSection()
+
+	2) Additional tests added to \SERVER\T_NOTIFY to test new overloads to the RFs
+	functions RFs::NotifyChange and RFs::NotifyChangeCancel().
+	
+	3) Extra test added to \SERVER\T_MISC to test new RFs function overload
+	RFs::IsValidName().
+
+	4) Additional test in \SERVER\T_FILE to check EPOC software problem SW1-123
+	("WINS Local file system doesn't handle shared read and write access").
+	T_FILE calls TestShortNameAccessorFunctions() successfully in UNICODE builds now the
+	RFs functions GetShortName() and GetLongName() are implemented for UNICODE (see F32
+	release notes).
+	
+	5) Additional testing in \SERVER\T_FSRV to test fix to RFs::SetVolumeLabel() and
+	fix of bluebell defect SW1-728 (see below).
+	
+	6) Additional testing in \SERVER\T_NMBS to check fix of EPOC software problem
+	SW1-56 ("File can be turned into a directory").
+
+	7) Addition to (and modification of) \SERVER\B_GEN to check fix of bluebell
+	defect SW1-728 ("'Name Disk' allows characters which are illegal under windows").
+	B_GEN now passes in UNICODE builds due to fix to RFs::SetVolumeLabel() - See F32
+	release notes	
+
+	8) Changes to \SERVER\B_FAT to get it working in UNICODE builds.  The test was
+	making a number of assumptions about the number of TFatDirEntrys created per
+	file that were false for UNICODE. 
+
+	Additional test (TestClusterAllocation()) to fix to Series 5 problem SW1-764
+	"F32 over-allocates clusters"
+	
+	Modified testRoot() to test fix to Series 5 problem SW1-770
+	"Can't handle the last root directory entry"
+	
+	9) \SERVER\T_FMAN now works in UNICODE builds due to fix to size of KEntryArraySize
+	(see F32 release notes) 
+
+	Extra testing to check fix to Series 5 problems SW1-230 (" F32 allows names of
+	>256 chars and then panics with them"), SW1-351 ("Shell hangs forever trying to
+	delete files/folders with impossibly long names") and SW1-821 ("Invalid file
+	names stop CDirScan")
+	
+	10) Additional testing in \SERVER\T_DIRS to check fix of EPOC software problem
+	SW1-29 ("Local/System filetime confusion"). This has been partially removed for
+	this release because the fix hasn't been released in F32 - awaiting verification.
+
+	11) Minor modifications/additions to T_RDFAT, B_MTST, T_CHKUID, T_FORMAT, T_SCAN
+	and T_VFAT (in general, to improve the clarity of the tests).
+
+
+Version 0.01.04
+================
+(Made by Jo, 15th July 1998)
+
+Requires F32 >= 110
+
+1)  Alastair
+	
+	1) Changed MNT.BAT to retrieve E32TOOLS 091 and E32TOOLP 091.
+    2) Minor change to T_WARM to remedy WINS/WINC compilation warning.
+	3) Commented out localisation data tests in T_DLOCL since we don't
+	   release the localisation dlls anymore; added commands to
+	   F32TEST\GROUP\WINTEST.BAT to create dummy localisation dlls.
+	4) Fixed MNT GETSRC so that it handles version numbers correctly.
+	5) Removed some tests from the WINC versions of T_CHKUID and
+	   T_ROMG programs where these tests relied upon some sort of emulated
+	   directory structure which doesn't really make sense under WINC.
+	6) Changed B_FAT,T_COMPAT, T_DIRS, T_FILE, T_FMAN, T_FORMAT,
+	   T_FSRV, T_RAW and T_MAIN under WINC in line with changes
+	   to F32 111 causing the WINC default directory to be taken
+	   from the current directory.
+	7) Changed WINC versions of T_DIRS T_FSRV in line with changes 
+	   to F32 111 allowing WINC programs write access to Z: drive.
+	8) Removed WINC test from T_FSRV which assumes D: is a CDROM drive.
+	9) Removed WINC tests from T_FSRV (testVolumeInfo())and 
+	   T_MISC (Test 13) which expects all drives A-Z to
+	   be available for WINC.  These tests should be reinstated once
+	   the WINC fileserver is more honest about the list of drives it
+	   provides.
+	10)Removed WINC test (Test2) from T_LOCATE which relies upon an
+	   assumption that the session path will always be a root directory.
+	   If the session path is a root directory, F32's FindFilePath() will not 
+	   search the session path for a file if no pathlist is specified
+	   as an argument to the function.  F32 changes may be required
+	   here, and the test should subsequently be reinstated.
+	11)Changed WINC versions of T_OOM, T_GEN, T_CHKUID and T_LOCK so that
+	   they create their test directories on the current drive rather than C:.
+	12)Changed T_GEN so that is uses \F32-TST as it's test directory
+	   (like other F32 tests do) rather than using it's own \E32-MATH.
+	13)Released \F32test\Group\WININFO.txt, containing information
+	   about which directories and files need to be present for each
+	   WINS/WINC test to succeed.
+
+2)  Morgan
+    1) Added tests to T_LOCATE
+	2) Added some SUBST tests to T_FSRV
+
+3)	Matthew
+	1)	Added test to T_DLOCL to check that locale changes cause notification.
+
+4)	Jo
+	1)	Added new test T_SESS to test that multiple fileserver sessions can 
+		be run concurrently, and that when fileserver sessions are closed, those 																remaining are unaffected.  Tests the fix for the F32 bug reported 												variously as SW1-363, 376, 413, 414, 417, 453 etc.  
+		Needs F32 release>=112
+	
+	2)	Added new test T_REMOTE to test multiple fileserver sessions, including
+		a remote filesystem (dummy implementation T_REMFSY.fsy).  
+		Stress tests the fileserver by connecting multiple drives (each with
+		20 fileserver sessions).  Additionally tests bug fixes SW1-587, 620
+		
+	3)	Minor changes to T_COMPAT for UNICODE build testing
+
+	4)	Added a test for year 2000 compliance (\SERVER\T_FSY2K)
+
+Version 0.01.03
+================
+(Made by Jonathan, 8th May 1998)
+
+(1) Jo
+
+	F32 failed the following tests:
+
+	(1) T_COMPAT (Fails WINS UNICODE tests)
+
+	Fails test1() [line111]
+	RFile::Create() creates a unicode filename but when the test checks the 
+	name using TFatDirEntry::Name() the name returned is not the ascii equivalent 
+	of the unicode filename.  To be fixed.
+
+	(2) T_FMAN (Fails WINS UNICODE tests)
+
+	Fails testLongNames() [line 1055]
+	Problem with scanning the directory list for long filenames in UNICODE.  
+	To be fixed.
+
+	(3) B_GEN (Fails WINS UNICODE tests)
+
+	testVolumeName() [line550] fails.  
+	This is because SetVolumeName() takes a unicode name but converts it to an 
+	ascii name, doubling the length as it does so 
+	(see SFAT\SL_MNT line 322 CFatMountCB::SetVolumeL() for the conversion 
+	function).  To be fixed.
+
+	(4) B_FAT (Fails WINS UNICODE tests)
+	
+	Fails testDirEntry() [line 558]
+	The test creates a corrupt file then tests that KErrCorrupt is returned 
+	upon attempting to read/write to the file.  In ascii this test detects 
+	correctly that the file is corrupt but in unicode it does not detect a 
+	problem.  The problem appears to be due to RFile::Create() noted in (1).
+
+	(5) T_NOTIFY (Fails WINC tests)
+
+	Fails test6() [line 260]
+	Tests a media change notification which in WINC is not valid.  
+	At present the test fails ungracefully with a Plat fault 46.  
+	This will be changed when PccdCntrlInterface is replaced.
+
+
+	Fixes to f32 tests for WINC defects:
+
+	(1) Different values are (necessarily) returned in WINC and WINS on 
+	trying to access a non existent device.  The code in several F32 tests 
+	has been altered to check for either return value.
+
+	(2) Excluded WINC from attempting to mount FAT filesystem on X or Y in 
+	tests where it was previously attempting to do so in T_MAIN.
+
+	(3) Added extra path information for WINC to successfully locate Z 
+	drive in T_MAIN and a number of other tests.
+
+	(4) Changes to T_FSRV to accommodate diffferences in file and 
+	volume attributes between WINS and WINC. 
+
+
+	Other fixes and improvements:
+
+	(5) Added a trap handler to T_ROMG to get the test working.
+
+	(6) Disabled autoswitchoff behaviour in B_RAND, T_FSYSBM and T_VFAT.
+
+	(7) Added additional test to T_FIND.
+
+	(8) Fixed of several UNICODE bugs in B_GEN.
+
+	(9) Alteration to T_TLIBRY to test against correct values in several tests.
+
+
+(2) Petteri
+
+	(1) Minor changes to t_gen.cpp, t_gen32.cpp, t_parse.cpp and t_vfat.cpp so
+	that they compile without warnings.
+
+	(2) t_term.cpp: F1 changed to = in the help text.
+
+	(3) Minor canges to t_proc.cpp and t_tlibry.cpp so that the tests don't fail
+	in ARM ascii build.
+
+
+Version 0.01.02
+================
+(Made by Jonathan, 10th January 1998)
+
+1)	Jonathan
+	1)	T_WARM - does nothing on WINS.
+	2)	B_OPEN - No longer tries to test disk full on WINS emaulated drive C:
+		used to fill the C drive with a huge file but this can fail because
+		F32 can only handle files <= 1/2G.
+	3)	T_VFAT - Fixed typo leading to files not being deleted. Prevented
+		generation of three-letter filenames to avoid WIN32 special files like
+		'AUX' and 'PRN'. Fixed confusion when replacing an existing file.
+		Still fails on WINS X drive.
+	4)	T_FIND - Tweaked the string used to match the kernel's process name.
+
+
+Version 0.01.01
+================
+(Made by Alastair, 26th January 1998)
+
+F32TEST contains those test programs which used to be a part of F32
+
+1)  Some test renaming:
+     benchmrk -> t_fsysbm, t_bench -> t_fsrvbm, t_comsoak1 -> t_commsk,
+     t_bench -> t_fbsrvbm and more
+
+2)  Minor bug fixes for t_vfat, t_fbsrvbm.
+
+3)  Known problems - t_fsrvbm doesn't compile for WINS, and t_locdrv is out of date
+    and won't compile for any platform
+    t_libry and t_dlocl fail but that's because the foreign localisation dlls
+	are't there anymore
+ 
+

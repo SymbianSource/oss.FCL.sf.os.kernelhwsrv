@@ -1,0 +1,35 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test\loader\security\uc_exe.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+
+extern "C" {
+
+// Minimal entry point which won't cause any code relocations to be included
+__NAKED__ TInt _E32Startup()
+	{
+	EKA2_ENTRY_POINT_VERSION_IDENTIFIER;	// DUMMY INSTRUCTION TO INDICATE EKA2 ENTRY POINT
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+
+	asm(".word 0 ");			// loader will replace with code seg unique ID
+								// for RAM-loaded code segment
+								// MUST BE AT OFFSET 12 FROM ENTRY POINT
+	}
+}
+

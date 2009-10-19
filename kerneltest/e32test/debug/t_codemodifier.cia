@@ -1,0 +1,73 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\debug\t_codemodifier.cia
+// See e32test\debug\t_codemodifier.cpp for details
+// 
+//
+
+#include <u32std.h>
+
+#ifdef __CPU_ARM
+const TUint32 KArmBreakPoint = 0xE7F123F4;
+
+
+#define BRK_4()	\
+	asm(".word %a0" : : "i" ((TInt)KArmBreakPoint)); \
+	asm(".word %a0" : : "i" ((TInt)KArmBreakPoint)); \
+	asm(".word %a0" : : "i" ((TInt)KArmBreakPoint)); \
+	asm(".word %a0" : : "i" ((TInt)KArmBreakPoint)); \
+
+#define BRK_16()	\
+	BRK_4()	\
+	BRK_4()	\
+	BRK_4()	\
+	BRK_4()	\
+
+#define BRK_64()	\
+	BRK_16()	\
+	BRK_16()	\
+	BRK_16()	\
+	BRK_16()	\
+
+#define BRK_256()	\
+	BRK_64()	\
+	BRK_64()	\
+	BRK_64()	\
+	BRK_64()	\
+
+#define BRK_1024()	\
+	BRK_256()	\
+	BRK_256()	\
+	BRK_256()	\
+	BRK_256()	\
+
+__NAKED__ void CodeArea()
+	{
+	//These 1025 breakpoints will go accross page boundaries.
+	asm(".word %a0" : : "i" ((TInt)KArmBreakPoint)); \
+	BRK_1024();
+	__JUMP(,lr);
+	}
+
+/**
+The function will run in the server and is coded to cause panic.
+However, it will be altered remotely by the client before it runs.
+*/
+__NAKED__ void TestFunc()
+	{
+	asm(".word %a0" : : "i" ((TInt)KArmBreakPoint)); //This would panic but it will be replaced by NOP
+	asm("nop");
+	__JUMP(,lr);
+	}
+#endif

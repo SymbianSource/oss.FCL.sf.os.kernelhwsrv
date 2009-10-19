@@ -1,0 +1,4 @@
+EXPORTS
+	?Ordinal1L@@YAXXZ @ 1 NONAME ; void Ordinal1L(void)
+	?Ordinal2@@YAHXZ @ 2 NONAME ; int __cdecl Ordinal2(void)
+

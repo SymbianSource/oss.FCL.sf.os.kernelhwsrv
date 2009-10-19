@@ -1,0 +1,52 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+
+REM should be able to just reference the "core" os image by using
+REM 
+coreimage = dir.rofs
+
+extensionrofs = extension.rofs
+
+rofssize = 0x80000
+time = 14/06/2005 20:12:20
+
+REM Round the size up/down to the nearest block size
+REM This will enable any ROFS extensions to be found
+REM BlockSize is typically 16K for most small-block NAND chips
+REM BlockSize is typically 128K for most large-block NAND chips
+REM autosize = 0x4000
+REM autosize = 0x20000
+
+REM create new files
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		ext.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\ext.txt
+
+REM hide existing file
+rem data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		root.txt
+hide= root.txt
+
+REM rename existing file
+rem data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\level1.txt
+rename= Dir1\level1.txt Dir1\level1_ext.txt
+
+#ifndef EXCLUDE_TESTS
+
+REM demand paging stress tests
+#include "t_pagestress_ext.iby"
+
+#endif // #ifndef EXCLUDE_TESTS

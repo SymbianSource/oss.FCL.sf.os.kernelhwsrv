@@ -1,0 +1,229 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\x86\uc_i64.cia
+// 
+//
+
+#include "u32std.h"
+#include <e32math.h>
+
+extern "C" void UDiv64();
+
+EXPORT_C __NAKED__ void Math::Mul64(Int64 /*aX*/, Int64 /*aY*/, Int64& /*aOutH*/, Uint64& /*aOutL*/)
+/**
+Multiply aX by aY to generate a 128 bit result.
+
+The high order 64 bits of this calculation are stored in aOutH,
+and the low order 64 bits are stored in aOutL.
+
+@param aX     The first 64-bit operand.
+@param aY     The second 64-bit operand.
+@param aOutH  The high order 64 bits of the result.
+@param aOutL  The low order  64 bits of the result.
+*/
+	{
+	asm("mov eax, [esp+4]");
+	asm("mul dword ptr [esp+12]");	// edx:eax = x0*y0
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");				// [esp+16]=&aX, [esp+24]=&aY, [esp+32]=&aOutH, [esp+36]=&aOutL
+	asm("mov ecx, eax");
+	asm("mov ebx, edx");			// ebx:ecx = x0*y0
+	asm("mov eax, [esp+16]");
+	asm("mul dword ptr [esp+28]");	// edx:eax = x0*y1
+	asm("xor esi, esi");
+	asm("add ebx, eax");
+	asm("adc esi, edx");			// esi:ebx:ecx = x0*y
+	asm("mov eax, [esp+20]");		// eax=x1
+	asm("imul dword ptr [esp+28]");	// edx:eax = x1*y1
+	asm("mov edi, edx");
+	asm("add esi, eax");
+	asm("adc edi, 0");				// partial result in edi:esi:ebx:ecx
+	asm("cmp dword ptr [esp+28],0");// y<0 ?
+	asm("jns mul64_ypos");
+	asm("sub esi, [esp+16]");		// if so, subtract x0<<64
+	asm("sbb edi, 0");
+	asm("mul64_ypos:");
+	asm("mov eax, [esp+20]");		// eax=x1
+	asm("cmp eax, 0");				// x<0 ?
+	asm("jns mul64_xpos");
+	asm("sub esi, [esp+24]");		// if so, subtract y0<<64
+	asm("sbb edi, 0");
+	asm("mul64_xpos:");
+	asm("mul dword ptr [esp+24]");	// edx:eax = x1*y0
+	asm("add ebx, eax");
+	asm("mov eax, [esp+32]");		// eax=&aOutH
+	asm("adc esi, edx");
+	asm("mov edx, [esp+36]");		// edx=&aOutL
+	asm("adc edi, 0");				// full result now in edi:esi:ebx:ecx
+	asm("mov [eax], esi");
+	asm("mov [eax+4], edi");		// store high 64
+	asm("mov [edx], ecx");
+	asm("mov [edx+4], ebx");		// store low 64
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+
+
+EXPORT_C __NAKED__ void Math::UMul64(Uint64 /*aX*/, Uint64 /*aY*/, Uint64& /*aOutH*/, Uint64& /*aOutL*/)
+/**
+Multiply aX by aY to generate a 128 bit result.
+
+The high order 64 bits of this calculation are stored in aOutH,
+and the low order 64 bits are stored in aOutL.
+
+@param aX     The first 64-bit operand.
+@param aY     The second 64-bit operand.
+@param aOutH  The high order 64 bits of the result.
+@param aOutL  The low order  64 bits of the result.
+*/
+	{
+	asm("mov eax, [esp+4]");
+	asm("mul dword ptr [esp+12]");	// edx:eax = x0*y0
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");				// [esp+16]=&aX, [esp+24]=&aY, [esp+32]=&aOutH, [esp+36]=&aOutL
+	asm("mov ecx, eax");
+	asm("mov ebx, edx");			// ebx:ecx = x0*y0
+	asm("mov eax, [esp+16]");
+	asm("mul dword ptr [esp+28]");	// edx:eax = x0*y1
+	asm("xor esi, esi");
+	asm("add ebx, eax");
+	asm("adc esi, edx");			// esi:ebx:ecx = x0*y
+	asm("mov eax, [esp+20]");		// eax=x1
+	asm("mul dword ptr [esp+28]");	// edx:eax = x1*y1
+	asm("mov edi, edx");
+	asm("add esi, eax");
+	asm("adc edi, 0");				// partial result in edi:esi:ebx:ecx
+	asm("mov eax, [esp+20]");
+	asm("mul dword ptr [esp+24]");	// edx:eax = x1*y0
+	asm("add ebx, eax");
+	asm("mov eax, [esp+32]");		// eax=&aOutH
+	asm("adc esi, edx");
+	asm("mov edx, [esp+36]");		// edx=&aOutL
+	asm("adc edi, 0");				// full result now in edi:esi:ebx:ecx
+	asm("mov [eax], esi");
+	asm("mov [eax+4], edi");		// store high 64
+	asm("mov [edx], ecx");
+	asm("mov [edx+4], ebx");		// store low 64
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+
+
+EXPORT_C __NAKED__ Int64 Math::DivMod64(Int64 /*aDividend*/, Int64 /*aDivisor*/, Int64& /*aRemainder*/)
+/**
+Divides aDividend by aDivisor.
+
+The quotient is returned, and the remainder is stored in aRemainder.
+The remainder has same sign as the dividend.
+
+@param aDividend The 64-bit dividend.
+@param aDivisor  The 64-bit divisor.
+@param aRemainder The 64-bit remainder.
+
+@return The 64-bit quotient.
+*/
+	{
+	asm("mov eax, [esp+4]");
+	asm("mov edx, [esp+8]");		// edx:eax = dividend
+	asm("cmp edx, 0");
+	asm("jns divmod64_0");
+	asm("neg edx");
+	asm("neg eax");
+	asm("sbb edx, 0");
+	asm("divmod64_0:");				// edx:eax = ABS{dividend}
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ebp");
+	asm("mov esi, [esp+28]");
+	asm("mov edi, [esp+32]");		// edi:esi = dividend
+	asm("cmp edi, 0");
+	asm("jns divmod64_1");
+	asm("neg edi");
+	asm("neg esi");
+	asm("sbb edi, 0");				// edi:esi = ABS{dividend}
+	asm("divmod64_1:");	
+	asm("call %a0": : "i"(&UDiv64));	// do division, quotient in ebx:eax remainder in edi:edx
+	asm("xchg ebx, edx");			// quotient in edx:eax, remainder in edi:ebx
+	asm("mov ecx, [esp+24]");		// ecx=dividend high
+	asm("xor ecx, [esp+32]");		// ecx=dividend high ^ divisor high
+	asm("jns divmod64_2");
+	asm("neg edx");
+	asm("neg eax");
+	asm("sbb edx, 0");
+	asm("divmod64_2:");				// edx:eax = quotient with correct sign
+	asm("cmp dword ptr [esp+24], 0");
+	asm("jns divmod64_3");
+	asm("neg edi");
+	asm("neg ebx");
+	asm("sbb edi, 0");
+	asm("divmod64_3:");				// edi:ebx = remainder with correct sign
+	asm("mov ecx, [esp+36]");		// ecx=&aRemainder
+	asm("mov [ecx], ebx");
+	asm("mov [ecx+4], edi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+
+
+EXPORT_C __NAKED__ Uint64 Math::UDivMod64(Uint64 /*aDividend*/, Uint64 /*aDivisor*/, Uint64& /*aRemainder*/)
+/**
+Divides aDividend by aDivisor.
+
+The quotient is returned, and the remainder is stored in aRemainder.
+
+@param aDividend The 64-bit dividend.
+@param aDivisor  The 64-bit divisor.
+@param aRemainder The 64-bit remainder.
+
+@return The 64-bit quotient.
+*/
+	{
+	asm("mov eax, [esp+4]");
+	asm("mov edx, [esp+8]");		// edx:eax = dividend
+	asm("push edi");
+	asm("push esi");
+	asm("push ebx");
+	asm("push ebp");
+	asm("mov esi, [esp+28]");
+	asm("mov edi, [esp+32]");		// edi:esi = dividend
+	asm("call %a0": : "i"(&UDiv64));	// do division, quotient in ebx:eax remainder in edi:edx
+	asm("xchg ebx, edx");			// quotient in edx:eax, remainder in edi:ebx
+	asm("mov ecx, [esp+36]");		// ecx=&aRemainder
+	asm("mov [ecx], ebx");
+	asm("mov [ecx+4], edi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop esi");
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+

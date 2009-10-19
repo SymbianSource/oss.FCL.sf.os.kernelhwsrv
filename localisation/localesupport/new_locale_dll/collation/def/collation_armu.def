@@ -1,0 +1,8 @@
+EXPORTS
+	_ZN13LoclCollation7CharSetEv @ 1 NONAME
+	_ZN13LoclCollation9CollTableEv @ 2 NONAME
+	_ZN13LoclCollation9FoldTableEv @ 3 NONAME
+	_ZN13LoclCollation10LowerTableEv @ 4 NONAME
+	_ZN13LoclCollation9TypeTableEv @ 5 NONAME
+	_ZN13LoclCollation7UniCodeEv @ 6 NONAME
+	_ZN13LoclCollation10UpperTableEv @ 7 NONAME

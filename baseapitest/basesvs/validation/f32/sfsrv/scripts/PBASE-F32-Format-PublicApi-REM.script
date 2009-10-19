@@ -1,0 +1,445 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! 	@file
+//! 	@SYMTestSuiteName		pbase-f32-sfsrv-publicapi-rem
+//!	@SYMScriptTestEnvironment	This test script requires a basic ROM.
+//! 	@SYMScriptAuthor 		Alvar Udras, Runno Sgirka
+//! 	@SYMScriptDescription		The test script contains API tests for the following functions of RFormat class:
+//!	TInt Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount);
+//!	TInt Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount, const TDesC8 &anInfo);
+//!	void Close();
+//!	TInt Next(TInt &aStep);
+//!	void Next(TPckgBuf< TInt > &aStep, TRequestStatus &aStatus);
+
+LOAD_SUITE	t_sfsrv
+DELAY 5000
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0001
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0001
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Functions Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) and Close() test. Open a removable device
+//!				using EQuickFormat as format mode and close it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EQuickFormat, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0001-001-Open_command05
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0001
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0002
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0002
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Functions Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) and Close() test. Open a removable device
+//!				using EHighDensity as format mode and close it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EHighDensity, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0002-001-Open_command05
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0002
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0003
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0003
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Functions Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) and Close() test. Open a removable device
+//!				using ELowDensity as format mode and close it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, ELowDensity, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0003-001-Open_command05
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0003
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0004
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0004
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Functions Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) and Close() test. Open a removable device
+//!				using EFullFormat as format mode and close it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EFullFormat, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0004-001-Open_command05
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0004
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0005
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0005
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Functions Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) and Close() test. Open a removable device
+//!				using ESpecialFormat as format mode and close it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, ESpecialFormat, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	So we are getting -21(access denied ) for formatting a disk with invalid parameter.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND			rfs1	new
+		COMMAND			rfs1	Connect
+		COMMAND			format1	new
+		COMMAND			format1	Open		PBASE-F32-Format-PublicApi-1005-001-Open_command05
+		COMMAND	!AsyncError=-21	format1	Next		PBASE-F32-Format-PublicApi-1005-001-Next_command06
+		OUTSTANDING
+		COMMAND			format1	Close
+		COMMAND			format1	~
+		COMMAND			rfs1	Close
+		COMMAND			rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0005
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0006
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0006
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Function Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount, const TDesC8 &anInfo) test. Open
+//!				a device and close it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount, const TDesC8 &anInfo) method,
+//!				   passing the RFs session, removable drive letter, EQuickFormat, aCount, special format information s as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0006-001-Open_command05
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0006
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0007
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0007
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Function Next(TInt &aStep) test. Open a removable device, execute the next format steps and close the device.
+//!				Uses API elements: Open(), Next(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EHighDensity, aCount as parameters.
+//!				4. Call Next(TInt &aStep) method, passing aCount as parameter and loop it until aCount reaches 0.
+//!				5. Call Close() to close the RFormat instance.
+//!				6. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Next() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0007-001-Open_command05
+		COMMAND		format1	Next
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0007
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0008
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0008
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Function Next(TPckgBuf< TInt > &aStep, TRequestStatus &aStatus) test. Open a removable device, execute the next format
+//!				steps and close the device.
+//!				Uses API elements: Open(), Next(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EHighDensity, aCount as parameters.
+//!				4. Call Next(TPckgBuf< TInt > &aStep, TRequestStatus &aStatus) method, passing aCount,
+//!				   activeListener -> iStatus as parameters and loop it until aCount reaches 0.
+//!				5. Call Close() to close the RFormat instance.
+//!				6. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Next() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0008-001-Open_command05
+		COMMAND		format1	Next		PBASE-F32-Format-PublicApi-0008-001-Next_command06
+		OUTSTANDING	
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0008
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-0009
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-0009
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Functions Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) and Close() test. Open a removable device
+//!				using EForceErase as format mode and close it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EForceErase, aCount as parameters.
+//!				4. Call Close() to close the RFormat instance.
+//!				5. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call is completed returning KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND		rfs1	new
+		COMMAND		rfs1	Connect
+		COMMAND		format1	new
+		COMMAND		format1	Open		PBASE-F32-Format-PublicApi-0009-001-Open_command05
+		COMMAND		format1	Close
+		COMMAND		format1	~
+		COMMAND		rfs1	Close
+		COMMAND		rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-0009
+
+
+// 	************************
+//	***  NEGATIVE TESTS  ***
+// 	************************
+
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-1005
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-1005
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Function Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) test. Call Open() with invalid
+//!				format mode value.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, -1, aCount as parameters.
+//!				4. Call Next(TPckgBuf< TInt > &aStep, TRequestStatus &aStatus) method, passing aCount,
+//!				   activeListener -> iStatus as parameters and loop it until aCount reaches 0.
+//!				5. Call Close() to close the RFormat instance.
+//!				6. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call returns error -21 (Access denied).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		COMMAND			rfs1	new
+		COMMAND			rfs1	Connect
+		COMMAND			format1	new
+		COMMAND			format1	Open		PBASE-F32-Format-PublicApi-1005-001-Open_command05
+		COMMAND	!AsyncError=-21	format1	Next		PBASE-F32-Format-PublicApi-1005-001-Next_command06
+		OUTSTANDING
+		COMMAND			format1	Close
+		COMMAND			format1	~
+		COMMAND			rfs1	Close
+		COMMAND			rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-1005
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-1009
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-1009
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		Functions Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) test. Open a removable device
+//!				using EQuickFormat as format mode after opening a file on it.
+//!				Uses API elements: Open(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Create an RFile instance.
+//!				4. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EQuickFormat, aCount as parameters.
+//!				5. Call Close() to close the RFormat instance.
+//!				6. Close RFile instance.
+//!				7. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call returns error -14 (KErrInUse).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFormat	format1
+		COMMAND			rfs1	new
+		COMMAND			rfs1	Connect
+		COMMAND			file	new
+		COMMAND			file	Create		PBASE-F32-Format-PublicApi-1009-001-Create_command05
+		COMMAND			format1	new
+		COMMAND	!Error=-14	format1	Open		PBASE-F32-Format-PublicApi-1009-001-Open_command08
+		COMMAND			format1	Close
+		COMMAND			format1	~
+		COMMAND			file	Close
+		COMMAND			file	~
+		COMMAND			rfs1	Close
+		COMMAND			rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-1009
+
+
+START_TESTCASE 			PBASE-F32-Format-PublicApi-1010
+//! @SYMTestCaseID		PBASE-F32-Format-PublicApi-1010
+//! @SYMAPI			RFormat
+//! @SYMTestCaseDesc		A test which stops the format in the middle and tries to create a RFs instance after that.
+//!				Uses API elements: Open(), Next(), Close().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Connect the RFs session.
+//!				3. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method, passing the RFs session,
+//!				   removable drive letter, EHighDensity, aCount as parameters.
+//!				4. Call Next(TPckgBuf< TInt > &aStep, TRequestStatus &aStatus) method, passing aCount,
+//!				   activeListener -> iStatus as parameters and loop it.
+//!				5. Call Close() to close the RFormat instance, without calling outstanding first.
+//!				6. Create an RFile instance.
+//!				7. Close RFile instance.
+//!				8. Call Open(RFs &aFs, const TDesC &aName, TUint aFormatMode, TInt &aCount) method to format the disk for future
+//!				   usage, passing the RFs session, removable drive letter, EHighDensity, aCount as parameters.
+//!				9. Call Next(TInt &aStep) method, passing aCount as parameter and loop it until aCount reaches 0.
+//!				10. Call Close() to close the RFormat instance.
+//!				11. Close RFs session.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The RFs create method call will return error -20 (KErrCorrupt).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-Format-PublicApi.ini 
+		CREATE_OBJECT	RFs	rfs1
+		CREATE_OBJECT	RFormat	format1
+		CREATE_OBJECT	RFile	file
+		COMMAND			rfs1	new
+		COMMAND			rfs1	Connect
+		COMMAND			format1	new
+		COMMAND			format1	Open		PBASE-F32-Format-PublicApi-1010-001-Open_command05
+		COMMAND			format1	Next		PBASE-F32-Format-PublicApi-1010-001-Next_command06
+		ASYNC_DELAY 10
+		COMMAND			format1	Close
+		COMMAND			format1	~
+		COMMAND			file	new
+		COMMAND	!Error=-20	file	Create		PBASE-F32-Format-PublicApi-1010-001-Create_command10
+		COMMAND			file	Close
+		COMMAND			file	~
+		COMMAND			format1	new
+		COMMAND			format1	Open		PBASE-F32-Format-PublicApi-1010-001-Open_command14
+		COMMAND			format1	Next
+		COMMAND			format1	Close
+		COMMAND			format1	~
+		COMMAND			rfs1	Close
+		COMMAND			rfs1	~
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-Format-PublicApi-1010
+
+

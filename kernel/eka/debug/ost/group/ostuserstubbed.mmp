@@ -1,0 +1,46 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// ostuserstubbed.dll OSTv2 API, stubbed user side trace dll
+//
+
+
+
+/**
+*
+ @deprecated
+ @file 
+*/
+
+TARGET			ostuserstubbed.dll //user side disabled
+TARGETTYPE		dll
+UID			0x1000008d 0x1028722D
+
+deffile 		../../../~/ostuserstubbed.def
+
+USERINCLUDE		../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+SOURCEPATH		../src
+SOURCE			ost.cpp
+
+LIBRARY			euser.lib
+
+CAPABILITY		All
+
+unpaged
+always_build_as_arm
+
+OPTION ARMCC --interleave
+
+SMPSAFE

@@ -1,0 +1,148 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#define BASE_ROM
+#define	E32TESTS_INCLUDED
+
+
+#undef _NANDTEST2
+#undef _NAND2
+#undef _NAND
+#undef _NANDTEST
+
+#define _INTERNAL_MMC
+
+
+#include <rom\##VARIANT##\header.iby>
+
+files=
+
+#ifdef PAGED_ROM
+data=gentestpaged.txt			Test\test_paged.cpp paging_unmovable
+#endif
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+#ifndef EXCLUDE_TESTS
+
+// tests
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\e32test\group\##MAIN##test.iby>
+#if defined(SYMBIAN_INCLUDE_USB_OTG_HOST)
+#include "t_usbdi_helper.iby"
+#include "t_otgdi_helper.iby"
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\e32test\usbho\t_otgdi\##MAIN##test.iby>
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\e32test\usbho\t_usbdi\##MAIN##test.iby>
+#endif
+
+#ifndef VARIANT_PATH
+#include <rom##E32PATH##\##VARIANT##\test\##MAIN##test.iby>
+#else
+#define inc(a,b,c) <a\\b\\c>
+#include inc(rom##E32PATH##,VARIANT_PATH,\test\##MAIN##test.iby)
+#endif
+
+#include "..\..\..\kerneltest\f32test\loader\gen\ldrtest.iby"
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe			sys\bin\t_ldrtst.exe
+
+#endif // #ifndef EXCLUDE_TESTS
+
+data=gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
+
+// scripts
+#if !defined(MANUALROM)
+
+#if defined(RAMSTRESS)
+data=ramstress_autoexec.bat	\autoexec.bat
+#define RAMSTRESS_SUFFFIX	_ramstress
+#else
+#define RAMSTRESS_SUFFFIX	
+#endif
+
+#ifdef PAGED_DATA		// run all tests if data paging enabled
+data=EPOCROOT##epoc32\rom\##VARIANT##\mmctest_test_autoexec.bat			\autoexec##RAMSTRESS_SUFFFIX##.bat
+#else					// otherwise only run a subset of the tests
+data=EPOCROOT##epoc32\rom\##VARIANT##\mmcdemandpaging_test_autoexec.bat	\autoexec.bat
+#endif
+
+#endif	// #if !defined(MANUALROM)
+
+data=EPOCROOT##epoc32\rom\##VARIANT##\mmcdemandpaginge32tests.bat		\test\mmcdemandpaginge32tests.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\mmcdemandpagingf32tests.bat		\test\mmcdemandpagingf32tests.bat
+
+#ifndef EXCLUDE_TESTS
+#ifdef PAGED_ROM
+#ifdef INST_ARMV5
+#include "..\..\..\kerneltest\f32test\demandpaging\t_pagestress_rom.iby"
+#endif
+#endif
+#endif // #ifndef EXCLUDE_TESTS
+
+#ifdef WITH_COMP
+#ifdef PAGED_ROM
+data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+#endif
+
+#ifdef MULTIPLEROFS
+rofsname = tests.rofs
+#else
+rofsname = dir.rofs
+#endif	//MULTIPLEROFS
+
+rofssize = 0x700000
+autosize = 0x4000
+
+#ifdef PAGED_ROM
+PAGINGOVERRIDE DEFAULTPAGED
+#endif
+
+#endif  //WITH_COMP
+
+#ifndef EXCLUDE_TESTS
+
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\f32test\group\##MAIN##test.iby>
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\f32test\rofs\##MAIN##test.iby>
+
+#endif // #ifndef EXCLUDE_TESTS
+
+data=EPOCROOT##epoc32\Release\##MAIN##\##BUILD##\d_exc.exe			\sys\bin\d_exc.exe
+data=EPOCROOT##epoc32\Release\##KMAIN##\##BUILD##\minkda.ldd			\sys\bin\minkda.ldd
+
+
+#ifndef WITH_COMP
+#ifdef PAGED_ROM
+data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+#endif
+#endif
+
+// rom.pl will put this in a rofs image
+#include <rom\rofstest\dir.oby>
+
+// rom.pl will put this in a rofs extension image
+#include <rom\rofstest\extension.oby>
+
+#ifdef MULTIPLEROFS
+// rom.pl will put this in a rofs image
+#include <rom\rofstest\rofs1.oby>
+
+// rom.pl will put this in a rofs image
+#include <rom\rofstest\rofs2.oby>
+
+// rom.pl will put this in a rofs image
+#include <rom\rofstest\rofs3.oby>
+#endif // MULTIPLEROFS

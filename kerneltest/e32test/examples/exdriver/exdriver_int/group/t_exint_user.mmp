@@ -1,0 +1,42 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Example reference driver test application - PhaseII (Interrupts&DFC)
+// 
+//
+ 
+// target that will be built 
+target			t_exint.exe        
+// type of the target       
+targettype		exe
+
+// source path
+sourcepath		../src
+// source files
+source			t_exint_user.cpp
+
+// system include path, files here can be included using <>
+USERINCLUDE	../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+// libraries to be linked
+library			euser.lib hal.lib
+
+// capabilities required by the application. This should be
+// minimum required to use the driver
+capability		CommDD
+
+//
+// End of t_exint_user.mmp
+
+SMPSAFE

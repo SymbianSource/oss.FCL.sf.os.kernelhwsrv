@@ -1,0 +1,49 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template/template_assp/i2s.mmp
+// 
+//
+
+#define __USING_ASSP_REGISTER_API__
+#define __USING_ASSP_INTERRUPT_API__
+
+#include			<variant.mmh>
+#include			"kernel/kern_ext.mmh"
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/template_assp)
+SYMBIAN_BASE_SYSTEMINCLUDE(template)
+SYMBIAN_BASE_SYSTEMINCLUDE(template/specific)
+
+sourcepath			../template_assp
+source				i2spsl.cpp 
+
+target				VariantTarget(i2s,dll)
+targettype			kext
+linkas				i2s.dll
+
+library				VariantTarget(ecust,lib)
+
+deffile				../template_assp/~/i2s.def
+nostrictdef
+
+capability			all
+
+romtarget			i2s.dll
+
+//noexportlibrary
+
+uid					0x1000008d 0x100039e8
+VENDORID            0x70000001
+

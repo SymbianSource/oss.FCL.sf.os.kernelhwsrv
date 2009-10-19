@@ -1,0 +1,48 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Example tutorial driver LDD project file - Phase-III(DMA)
+// The header file kern_ext.mmh hides memory model specific information
+// based on the memory model as defined in the correct variant.mmh. 
+// This ensures that the correct paths to header files are set up by the
+// build system for memory model
+// 
+//
+
+#include "kernel/kern_ext.mmh"
+
+// target file to be built
+target			d_exdma_ldd.ldd
+// type of the target
+targettype		ldd
+
+// Path of the source files to be built
+sourcepath		../src
+source			d_exdma_ldd.cpp
+
+// System include path for header files
+USERINCLUDE	../inc
+
+
+// uid of the binary
+uid				0x100000af
+
+// Platform security capabilities
+capability		all
+
+// Disable this macro to disable displaying debug messages 
+// under KDBG in source
+//macro			_EXDRIVER_DEBUG_
+
+//
+// End of d_exdma_ldd.mmp

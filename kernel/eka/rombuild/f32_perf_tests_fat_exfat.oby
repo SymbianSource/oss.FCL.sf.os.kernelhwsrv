@@ -1,0 +1,99 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+/*==================================================================================================
+    This oby file is used to build ROM for f32 performance tests automatically. 
+    Includes standard F32 tests + specific files for the performance tests. 
+    Specific "autoexec.bat" file defines what will be run on startup.
+        
+    These performance tests will be run on the MMC/SD drive.
+    First they will be run on FAT filesystem, then they will be run on ExFAT filesystem
+    See the corresponding "autoexec.bat" file   
+
+
+==================================================================================================*/
+
+//------------ this is a standard F32 tests part ---------------------------------------------------
+
+#define BASE_ROM
+#define E32TESTS_INCLUDED
+
+#include <rom\##VARIANT##\header.iby>
+
+files=
+
+#ifdef PAGED_ROM
+data=gentestpaged.txt           Test\test_paged.cpp
+#endif
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+// Include e32 and f32 tests
+
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\e32test\group\##MAIN##test.iby>
+#ifndef VARIANT_PATH
+#include <rom##E32PATH##\##VARIANT##\test\##MAIN##test.iby>
+#else
+#define inc(a,b,c) <a\\b\\c>
+#include inc(rom##E32PATH##,VARIANT_PATH,\test\##MAIN##test.iby)
+#endif
+
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\f32test\group\##MAIN##test.iby>
+#include <rom##E32PATH##\kernelhwsrv\kerneltest\f32test\rofs\##MAIN##test.iby>
+
+#ifdef PAGED_ROM
+data=gentestnonpaged.txt            Test\test_unpaged.cpp   unpaged
+#endif
+
+//-------------------------------------------------------------------------------------------------
+//------------ this is the performance tests specific part ----------------------------------------
+//-------------------------------------------------------------------------------------------------
+
+
+//-- this autoexec.bat will run automatically the f32 performance tests
+data=EPOCROOT##epoc32\rom\f32_perf_test_autoexec_fat_exfat.bat \autoexec.bat
+
+data=EPOCROOT##epoc32\rom\##VARIANT##\f32_perf_test.bat             Test\f32_perf_test.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test.bat             Test\fat_perf_test.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\f32_perf_test_5000files.bat   Test\f32_perf_test_5000files.bat
+
+
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test_dircache_setup.bat Test\fat_perf_test_dircache_setup.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test_dircache_fully_cached_file_creation.bat Test\fat_perf_test_dircache_fully_cached_file_creation.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test_dircache_fully_cached_file_open_linear.bat Test\fat_perf_test_dircache_fully_cached_file_open_linear.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test_dircache_fully_cached_file_open_random.bat Test\fat_perf_test_dircache_fully_cached_file_open_random.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test_dircache_partially_cached_1.7MB_data.bat Test\fat_perf_test_dircache_partially_cached_1.7MB_data.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test_dircache_partially_cached_5.1MB_data.bat Test\fat_perf_test_dircache_partially_cached_5.1MB_data.bat
+data=EPOCROOT##epoc32\rom\##VARIANT##\fat_perf_test_dircache_partially_cached_6.8MB_data.bat Test\fat_perf_test_dircache_partially_cached_6.8MB_data.bat
+
+
+//-------------------------------------------------------------------------------------------------
+// this hack allows to force including exfat.fsy into ROM if it is built without "WITH_EXFAT" option.
+//-------------------------------------------------------------------------------------------------
+#ifndef WITH_EXFAT
+file=\Epoc32\Release\##MAIN##\##BUILD##\exfat.fsy       sys\bin\exfat.fsy
+#endif
+
+
+
+
+
+
+
+

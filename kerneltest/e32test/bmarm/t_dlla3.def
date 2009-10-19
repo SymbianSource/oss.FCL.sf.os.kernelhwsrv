@@ -1,0 +1,5 @@
+EXPORTS
+	Function3__Fv @ 1 NONAME
+	Function4__Fv @ 2 NONAME
+	GetDll3Data__Fv @ 3 NONAME
+	SetDll3Data__Fi @ 4 NONAME

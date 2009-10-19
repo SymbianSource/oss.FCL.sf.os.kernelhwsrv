@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<relnotes name="File Server">
+  <purpose>
+    Generic filesystem server which includes an embedded ROM filesystem. Runs user-side and provides shared filesystem access, client-side APIs, and a plugin framework for loading filesystem extension FSYs which implement supported filesystem types.
+  </purpose>
+</relnotes>

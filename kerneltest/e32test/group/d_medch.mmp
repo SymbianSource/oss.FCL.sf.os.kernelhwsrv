@@ -1,0 +1,51 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_medch.mmp
+// 
+//
+
+#include "kernel/kern_ext.mmh"
+
+#ifdef	VariantMMCImportLib
+target		VariantTarget(d_medch,ldd)
+#else
+target		d_medch.ldd
+#endif
+
+targettype	ldd
+
+sourcepath	../pccd
+source		d_medch.cpp
+
+#ifdef	VariantMMCImportLib
+library		VariantMMCImportLib
+#else
+library		epbusmmc.lib
+#endif
+
+uid			0x100000af
+vendorid	0x70000001
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+start wins
+win32_headers
+end
+
+capability	   all
+macro		   __SECURE_API__
+
+// Don't put this in ROM here since it would stop ROMs building on platforms
+// without MMC support.
+romtarget

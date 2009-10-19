@@ -1,0 +1,15 @@
+EXPORTS
+	?CreatePhysicalDevice@@YAPAVDPhysicalDevice@@XZ @ 1 NONAME ; class DPhysicalDevice * CreatePhysicalDevice(void)
+	?CaptureChannel@IicBus@@SAHHPAVTDes8@@PAVTIicBusSlaveCallback@@AAHH@Z @ 2 NONAME ; int IicBus::CaptureChannel(int, class TDes8 *, class TIicBusSlaveCallback *, int &, int)
+	?ReleaseChannel@IicBus@@SAHH@Z @ 3 NONAME ; int IicBus::ReleaseChannel(int)
+	?RegisterTxBuffer@IicBus@@SAHHVTPtr8@@CCC@Z @ 4 NONAME ; int IicBus::RegisterTxBuffer(int, class TPtr8, signed char, signed char, signed char)
+	?CancelTransaction@IicBus@@SAHHPAVTIicBusTransaction@@@Z @ 5 NONAME ; int IicBus::CancelTransaction(int, class TIicBusTransaction *)
+	?RegisterChannels@DIicBusController@@SAHPAPAVDIicBusChannel@@H@Z @ 6 NONAME ; int DIicBusController::RegisterChannels(class DIicBusChannel * *, int)
+	?StaticExtension@IicBus@@SAHIIPAX0@Z @ 7 NONAME ; int IicBus::StaticExtension(unsigned int, unsigned int, void *, void *)
+	?QueueTransaction@IicBus@@SAHHPAVTIicBusTransaction@@PAVTIicBusCallback@@@Z @ 8 NONAME ; int IicBus::QueueTransaction(int, class TIicBusTransaction *, class TIicBusCallback *)
+	?SetNotificationTrigger@IicBus@@SAHHH@Z @ 9 NONAME ; int IicBus::SetNotificationTrigger(int, int)
+	?QueueTransaction@IicBus@@SAHHPAVTIicBusTransaction@@@Z @ 10 NONAME ; int IicBus::QueueTransaction(int, class TIicBusTransaction *)
+	?DeRegisterChannel@DIicBusController@@SAHPAVDIicBusChannel@@@Z @ 11 NONAME ; int DIicBusController::DeRegisterChannel(class DIicBusChannel *)
+	?RegisterRxBuffer@IicBus@@SAHHVTPtr8@@CCC@Z @ 12 NONAME ; int IicBus::RegisterRxBuffer(int, class TPtr8, signed char, signed char, signed char)
+	?DfcFunc@TIicBusSlaveCallback@@CAXPAX@Z @ 13 NONAME ; void TIicBusSlaveCallback::DfcFunc(void *)
+

@@ -1,0 +1,40 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_lat2.mmp
+// 
+//
+
+TARGET         bm_suite.exe
+TARGETTYPE     EXE
+SOURCEPATH	../benchmark
+SOURCE       bm_main.cpp rt_latency.cpp overhead.cpp sync.cpp ipc.cpp thread.cpp property.cpp
+// SOURCE       BM_MAIN.CPP RT_LATENCY.CPP
+LIBRARY        euser.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+CAPABILITY PowerMgmt
+
+start wins
+
+#if defined(VC32)
+win32_library		msvcrt.lib
+#endif // VC32
+
+end
+VENDORID 0x70000001
+uid		0x00000000 0x101f75b7
+
+unpagedcode
+unpageddata
+SMPSAFE

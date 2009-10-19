@@ -1,0 +1,22 @@
+EXPORTS
+	_Z19CreateLogicalDevicev @ 1 NONAME
+	_ZN5Debug7GetListEPKNS_9TListItemEi @ 2 NONAME
+	_ZTI11DDebugAgent @ 3 NONAME
+	_ZTI12DRMDStepping @ 4 NONAME
+	_ZTI14DBufferManager @ 5 NONAME
+	_ZTI14DTargetProcess @ 6 NONAME
+	_ZTI15DProcessTracker @ 7 NONAME
+	_ZTI16DRM_DebugChannel @ 8 NONAME
+	_ZTI17D_RMD_Breakpoints @ 9 NONAME
+	_ZTI21DRM_DebugEventHandler @ 10 NONAME
+	_ZTI22DRM_DebugDriverFactory @ 11 NONAME
+	_ZTV11DDebugAgent @ 12 NONAME
+	_ZTV12DRMDStepping @ 13 NONAME
+	_ZTV14DBufferManager @ 14 NONAME
+	_ZTV14DTargetProcess @ 15 NONAME
+	_ZTV15DProcessTracker @ 16 NONAME
+	_ZTV16DRM_DebugChannel @ 17 NONAME
+	_ZTV17D_RMD_Breakpoints @ 18 NONAME
+	_ZTV21DRM_DebugEventHandler @ 19 NONAME
+	_ZTV22DRM_DebugDriverFactory @ 20 NONAME
+

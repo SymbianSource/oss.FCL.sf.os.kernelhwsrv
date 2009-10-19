@@ -1,0 +1,158 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+REM Test ROFS image
+
+#ifdef MULTIPLEROFS
+rofsname = dir.rofs
+rofssize = 0x80000
+
+time = 23/11/2001 6:44:07
+
+REM Round the size up/down to the nearest block size
+REM This will enable any ROFS extensions to be found
+REM BlockSize is typically 16K for most small-block NAND chips
+REM BlockSize is typically 128K for most large-block NAND chips
+#if defined SMALL_BLOCK
+autosize = 0x4000
+#elif defined(LARGE_BLOCK)
+autosize = 0x20000
+#endif
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Multiple\multirofs.txt
+#else
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Multiple\nomultirofs.txt
+#endif // MULTIPLEROFS
+
+REM Directory level traversal
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		root.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\level1.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\Dir2\level2.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\Dir2\Dir3\level3.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\Dir2\Dir3\Dir4\level4.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\Dir2\Dir3\Dir4\Dir5\level5.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\Dir2\Dir3\Dir4\Dir5\Dir6\level6.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Dir1\Dir2\Dir3\Dir4\Dir5\Dir6\Dir7\level7.txt
+
+REM resource testing files
+data=EPOCROOT##epoc32\rom\rofstest\one.rsc		resource\one.rsc
+data=EPOCROOT##epoc32\rom\rofstest\two.rsc		resource\two.rsc
+data=EPOCROOT##epoc32\rom\rofstest\three.rsc		resource\three.rsc
+data=EPOCROOT##epoc32\rom\rofstest\four.rsc		resource\four.rsc	
+data=EPOCROOT##epoc32\rom\rofstest\five.rsc		resource\five.rsc
+data=EPOCROOT##epoc32\rom\rofstest\six.rsc		resource\six.rsc
+data=EPOCROOT##epoc32\rom\rofstest\seven.rsc		resource\seven.rsc
+data=EPOCROOT##epoc32\rom\rofstest\eight.rsc		resource\eight.rsc
+data=EPOCROOT##epoc32\rom\rofstest\nine.rsc		resource\nine.rsc
+data=EPOCROOT##epoc32\rom\rofstest\ten.rsc		resource\ten.rsc
+data=EPOCROOT##epoc32\rom\rofstest\me.rsc		resource\me.rsc
+
+REM Deep directory level
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		DeepDir1\DeepDir2\DeepDir3\DeepDir4\DeepDir5\DeepDir6\DeepDir7\DeepDir8\DeepDir9\DeepDir10\DeepDir11\DeepDir12\DeepDir13\DeepDir14\file.txt
+
+
+REM Multiple subdirectories
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\parfile.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1A\subfileA.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1B\subfileB.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1C\subfileC.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1D\subfileD.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1E\subfileE.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1F\SubSubA\subsub_a.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1F\SubSubB\subsub_b.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1F\SubSubC\subsub_c.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Parent\SubDir1F\SubSubD\subsub_d.txt
+
+REM mixed files and subdirectories in same directory
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par1.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir1\sub1.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir2\sub2.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir3\sub3.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir4\sub4.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir5\sub5.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir6\sub6.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir7\sub7.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\SubDir8\sub8.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par2.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par3.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par4.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par5.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par6.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par7.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Mixed\par8.txt
+
+REM different files in same directory
+data=EPOCROOT##epoc32\rom\rofstest\TF1.BIN		ReadTest\A\file1
+data=EPOCROOT##epoc32\rom\rofstest\TF2.BIN		ReadTest\A\file2
+data=EPOCROOT##epoc32\rom\rofstest\TF3.BIN		ReadTest\A\file3
+data=EPOCROOT##epoc32\rom\rofstest\TF4.BIN		ReadTest\A\file4
+
+REM same name, different content, different directory
+data=EPOCROOT##epoc32\rom\rofstest\TF5E.BIN		ReadTest\B\B1\testfile
+data=EPOCROOT##epoc32\rom\rofstest\TF10.BIN		ReadTest\B\B2\testfile
+data=EPOCROOT##epoc32\rom\rofstest\TF11.BIN		ReadTest\B\B3\testfile
+data=EPOCROOT##epoc32\rom\rofstest\TF16.BIN		ReadTest\B\B4\testfile
+
+REM seek test
+data=EPOCROOT##epoc32\rom\rofstest\TF5H.BIN		ReadTest\C\seektest
+
+REM EOF test
+data=EPOCROOT##epoc32\rom\rofstest\TF5A.BIN		ReadTest\D\eoftest1
+data=EPOCROOT##epoc32\rom\rofstest\TF5B.BIN		ReadTest\D\eoftest2
+data=EPOCROOT##epoc32\rom\rofstest\TF5C.BIN		ReadTest\D\eoftest3
+data=EPOCROOT##epoc32\rom\rofstest\TF9.BIN		ReadTest\D\eoftest4
+data=EPOCROOT##epoc32\rom\rofstest\TF12.BIN		ReadTest\D\eoftest5
+data=EPOCROOT##epoc32\rom\rofstest\TF13.BIN		ReadTest\D\eoftest6
+
+REM stream read test
+data=EPOCROOT##epoc32\rom\rofstest\TF5D.BIN		ReadTest\E\stream1
+data=EPOCROOT##epoc32\rom\rofstest\TF5G.BIN		ReadTest\E\stream2
+data=EPOCROOT##epoc32\rom\rofstest\TF5F.BIN		ReadTest\E\stream3
+data=EPOCROOT##epoc32\rom\rofstest\TF5H.BIN		ReadTest\E\stream4
+
+REM attrib test
+data=EPOCROOT##epoc32\rom\rofstest\TF6.BIN		Attrib\rsh	attrib=RSH
+data=EPOCROOT##epoc32\rom\rofstest\TF6.BIN		Attrib\rs	attrib=RSh
+data=EPOCROOT##epoc32\rom\rofstest\TF6.BIN		Attrib\rh	attrib=RsH
+data=EPOCROOT##epoc32\rom\rofstest\TF6.BIN		Attrib\sh	attrib=rSH
+data=EPOCROOT##epoc32\rom\rofstest\TF6.BIN		Attrib\s	attrib=rSh
+data=EPOCROOT##epoc32\rom\rofstest\TF6.BIN		Attrib\h	attrib=rsH
+data=EPOCROOT##epoc32\rom\rofstest\TF6.BIN		Attrib\r	attrib=Rsh
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\r2	attrib=Rsh
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\r3	attrib=Rsh
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\s2	attrib=rSh
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\s3	attrib=rSh
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\h2	attrib=rsH
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\h3	attrib=rsH
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\rs2	attrib=RSh
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\rs3	attrib=RSh
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\rh2	attrib=RsH
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\rh3	attrib=RsH
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\rsh2	attrib=RSH
+data=EPOCROOT##epoc32\rom\rofstest\TF7.BIN		Attrib\rsh3	attrib=RSH
+
+REM exattrib test
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Exattrib\test1.txt		exattrib=U
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Exattrib\test2.txt		exattrib=U
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Exattrib\test3-1.txt	exattrib=U
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Exattrib\test3-2.txt	exattrib=U
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		Exattrib\test4-1.txt	exattrib=U
+
+#ifndef EXCLUDE_TESTS
+
+REM demand paging stress tests
+#include "t_pagestress_rofs.iby"
+
+#endif // #ifndef EXCLUDE_TESTS

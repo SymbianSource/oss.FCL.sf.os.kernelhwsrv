@@ -1,0 +1,34 @@
+// @SYMTestCaseID           PBASE-USB-USBCV-0803
+// @SYMTestCaseDesc         Run the USBCV compliance tool
+// @SYMTestActions
+//    Run the USBCV compliance test tool as described in
+//    http://www.usb.org/developers/tools/
+// @SYMTestExpectedResults
+//    No error reported
+// @SYMTestPriority         High
+//
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+WaitConnect	""	"H4Device"
+Loop		50	150	1000	0	0	2	1	1000	100	
+Wait
+//MStore		0x110F
+//WaitDrive		F
+//WaitConnect	""	"H2Device"
+//Loop		50	150	1000	0	0	2	1	1000	100	
+//Wait
+//MStore		0x110F
+//WaitDrive		G
+usbcv
+//WaitDrive		G
+//Perl		massstorage\formatdrive.pl --drive=G
+//Eject		H
+//WaitDrive		F
+//Perl		massstorage\formatdrive.pl --drive=F
+//Eject		F
+//WaitConnect	""	"H2Device"
+//Loop		50	150	1000	0	0	2	1	1000	100	
+//Wait
+//Disconnect
+WaitConnect	""	"H4Device"
+Loop		50	150	1000	0	0	2	1	1000	100	
+Wait

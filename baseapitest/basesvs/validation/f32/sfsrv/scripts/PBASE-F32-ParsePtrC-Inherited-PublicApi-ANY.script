@@ -1,0 +1,1029 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//!	@file
+//!	@SYMTestSuiteName			pbase-f32-sfsrv-publicapi-any
+//!	@SYMScriptTestEnvironment		This test script requires a basic ROM.
+//!	@SYMScriptAuthor 			Dmitri Trofimov, Sergei Tveritin
+//!	@SYMCreationDate			11/12/2006
+//!	@SYMScriptDescription			The test script contains API tests for the following functions of T_ParsePtrC class:
+//!	T_ParsePtrC();
+//!	TInt PopDir();
+//!	TInt AddDir(const TDesC &aName);
+//!	const TDesC &FullName() const;
+//!	TPtrC Drive() const;
+//!	TPtrC Path() const;
+//!	TPtrC DriveAndPath() const;
+//!	TPtrC Name() const;
+//!	TPtrC Ext() const;
+//!	TPtrC NameAndExt() const;
+//!	TBool DrivePresent() const;
+//!	TBool PathPresent() const;
+//!	TBool NamePresent() const;
+//!	TBool ExtPresent() const;
+//!	TBool NameOrExtPresent() const;
+//!	TBool IsRoot() const;
+//!	TBool IsWild() const;
+//!	TBool IsKMatchOne() const;
+//!	TBool IsKMatchAny() const;
+//!	TBool IsNameWild() const;
+//!	TBool IsExtWild() const;
+
+
+LOAD_SUITE	T_SfSrv
+//DELAY		5000
+
+
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0001
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0001
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		FullName() test. 
+//!				Uses API elements:  FullName()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call FullName(). Expecting 'c:\dir1\dir2\filename.ext'
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The value returned by FullName() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0001command2Set
+			COMMAND		TParsePtrC1	FullName	PBASE-F32-ParseBase-PublicApi-0001command3FullName
+			COMMAND		TParsePtrC1	~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0001
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0002
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0002
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Drive() test where drive is present.
+//!				Uses API elements:  Drive()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call Drive(). Expecting 'c:' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Drive() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0002command2Set
+			COMMAND		TParsePtrC1	Drive		PBASE-F32-ParseBase-PublicApi-0002command3Drive
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0002
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0003
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0003
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Drive() test where drive is not present.
+//!				Uses API elements:  Drive()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'filename.ext'.
+//!				2. Call Drive(). Expecting empty string.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Drive() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0003command2Set
+			COMMAND		TParsePtrC1	Drive		PBASE-F32-ParseBase-PublicApi-0003command3Drive
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0003
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0005
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0005
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Path() test where path is present.
+//!				Uses API elements: {USE_SET} Path()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call Path(). Expecting '\dir1\dir2\' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Path() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0005command2Set
+			COMMAND		TParsePtrC1	Path		PBASE-F32-ParseBase-PublicApi-0005command3Path
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0005
+
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0006
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0006
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Path() test where path is not present.
+//!				Uses API elements:  Path()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'filename.ext'.
+//!				2. Call Path(). Expecting ''(empty string) on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Path() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0006command2Set
+			COMMAND		TParsePtrC1	Path		PBASE-F32-ParseBase-PublicApi-0006command3Path
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0006
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0007
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0007
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		DriveAndPath() test where passing full path with drive and filename.
+//!							Uses API elements:  DriveAndPath()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call DriveAndPath(). Expecting 'c:\dir1\dir2\' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by DriveAndPath() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0007command2Set
+			COMMAND		TParsePtrC1	DriveAndPath	PBASE-F32-ParseBase-PublicApi-0007command3DriveAndPath
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0007
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0008
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0008
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		DriveAndPath() test with passing only filename.
+//!					Uses API elements:  DriveAndPath()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'filename.ext'.
+//!				2. Call DriveAndPath(). Expecting empty string.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by DriveAndPath() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0008command2Set
+			COMMAND		TParsePtrC1	DriveAndPath	PBASE-F32-ParseBase-PublicApi-0008command3DriveAndPath
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0008
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0009
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0009
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		DriveAndPath() test with passing  path and filename, but without drive letter.
+//!					Uses API elements:  DriveAndPath()
+//! @SYMTestActions		1. Create TParsePtrC object  passing '\dir1\filename.ext'.
+//!				2. Call DriveAndPath(). Expecting '\dir1\' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by DriveAndPath() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0009command2Set
+			COMMAND		TParsePtrC1	DriveAndPath	PBASE-F32-ParseBase-PublicApi-0009command3DriveAndPath
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0009
+
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0010
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0010
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Name() test passing complete path with filename and drive letter.
+//!				Uses API elements:  Name()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call Name(). Expecting 'filename' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Name() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0010command2Set
+			COMMAND		TParsePtrC1	Name		PBASE-F32-ParseBase-PublicApi-0010command3Name
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0010
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0011
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0011
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Name() test on path without filename.
+//!				Uses API elements:  Name()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\'.
+//!				2. Call Name(). Expecting ''(empty string) on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Name() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0011command2Set
+			COMMAND		TParsePtrC1	Name		PBASE-F32-ParseBase-PublicApi-0011command3Name
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0011
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0012
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0012
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Ext() test passing complete path with filename with extension and drive letter.
+//!				Uses API elements:  Ext()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call Ext(). Expecting '.ext' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Ext() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0012command2Set
+			COMMAND		TParsePtrC1	Ext		PBASE-F32-ParseBase-PublicApi-0012command3Ext
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0012
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0013
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0013
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Ext() test passing complete path with filename without extension.
+//!				Uses API elements:  Ext()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename'.
+//!				2. Call Ext(). Expecting '' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Ext() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0013command2Set
+			COMMAND		TParsePtrC1	Ext		PBASE-F32-ParseBase-PublicApi-0013command3Ext
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0013
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0014
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0014
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		Ext() test passing complete path without filename and extension.
+//!				Uses API elements:  Ext()
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\'.
+//!				2. Call Ext(). Expecting '' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by Ext() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0014command2Set
+			COMMAND		TParsePtrC1	Ext		PBASE-F32-ParseBase-PublicApi-0014command3Ext
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0014
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0015
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0015
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameAndExt() test where name and extension is present.
+//!				Uses API elements:  NameAndExt().
+//! @SYMTestActions		1. Create TParsePtrC object   passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call NameAndExt(). Expecting 'filename.ext' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameAndExt() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0015command2Set
+			COMMAND		TParsePtrC1	NameAndExt	PBASE-F32-ParseBase-PublicApi-0015command3NameAndExt
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0015
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0016
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0016
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameAndExt() test where name and extension is not present.
+//!				Uses API elements:  NameAndExt().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\'.
+//!				2. Call NameAndExt(). Expecting ''(empty string) on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameAndExt() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0016command2Set
+			COMMAND		TParsePtrC1	NameAndExt	PBASE-F32-ParseBase-PublicApi-0016command3NameAndExt
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0016
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0017
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0017
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameAndExt() test with full path and filename, but without extension
+//!				Uses API elements:  NameAndExt().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename'.
+//!				2. Call NameAndExt(). Expecting 'filename' on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameAndExt() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0017command2Set
+			COMMAND		TParsePtrC1	NameAndExt	PBASE-F32-ParseBase-PublicApi-0017command3NameAndExt
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0017
+
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0018
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0018
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		DrivePresent() test where drive is present.
+//!				Uses API elements:  DrivePresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call DrivePresent(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by DrivePresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0018command2Set
+			COMMAND		TParsePtrC1	DrivePresent	PBASE-F32-ParseBase-PublicApi-0018command3DrivePresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0018
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0019
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0019
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		DrivePresent() test, where drive is not present.
+//!				Uses API elements: DrivePresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing '\dir1\dir2\filename.ext'.
+//!				2. Call DrivePresent(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by DrivePresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0019command2Set
+			COMMAND		TParsePtrC1	DrivePresent	PBASE-F32-ParseBase-PublicApi-0019command3DrivePresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0019
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0020
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0020
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		PathPresent() test, where path is present.
+//!				Uses API elements:  PathPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call PathPresent(). Expecting TRUE on return .
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by PathPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0020command2Set
+			COMMAND		TParsePtrC1	PathPresent	PBASE-F32-ParseBase-PublicApi-0020command3PathPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0020
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0021
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0021
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		PathPresent() test, where path is not present.
+//!				Uses API elements: PathPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'filename.ext'.
+//!				2. Call PathPresent(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by PathPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0021command2Set
+			COMMAND		TParsePtrC1	PathPresent	PBASE-F32-ParseBase-PublicApi-0021command2PathPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0021
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0022
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0022
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		PathPresent() test with wildcard as path
+//!				Uses API elements:  PathPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing '*\filename.ext'.
+//!				2. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by PathPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT		TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new	PBASE-F32-ParseBase-PublicApi-0022command2Set
+			COMMAND			TParsePtrC1	~		
+	END_TEST_BLOCK	!PanicCode=24 !PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0022
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0023
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0023
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NamePresent() test, where name is present.
+//!				Uses API elements:  NamePresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'.
+//!				2. Call NamePresent(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NamePresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0023command2Set
+			COMMAND		TParsePtrC1	NamePresent	PBASE-F32-ParseBase-PublicApi-0023command3NamePresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0023
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0024
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0024
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NamePresent() test, where name is not present.
+//!				Uses API elements: NamePresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\'
+//!				2. Call NamePresent(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NamePresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0024command2Set
+			COMMAND		TParsePtrC1	NamePresent	PBASE-F32-ParseBase-PublicApi-0024command2NamePresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0024
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0025
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0025
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NamePresent() test with wildcards in name.
+//!				Uses API elements:  NamePresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\*.ext'.
+//!				2. Call NamePresent(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NamePresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0025command2Set
+			COMMAND		TParsePtrC1	NamePresent	PBASE-F32-ParseBase-PublicApi-0025command3NamePresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0025
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0026
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0026
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		ExtPresent() test, where extension is present.
+//!				Uses API elements:  ExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'
+//!				2. Call ExtPresent(). Expecting TRUE on return.
+//!				3 Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by ExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0026command2Set
+			COMMAND		TParsePtrC1	ExtPresent	PBASE-F32-ParseBase-PublicApi-0026command3ExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0026
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0027
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0027
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		ExtPresent() test where extension is not present.
+//!					Uses API elements: ExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename'
+//!				2. Call ExtPresent(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by ExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0027command2Set
+			COMMAND		TParsePtrC1	ExtPresent	PBASE-F32-ParseBase-PublicApi-0027command2ExtPresent
+			COMMAND		TParsePtrC1	~	
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0027
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0028
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0028
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		ExtPresent() test with wildcards in name.
+//!					Uses API elements: ExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\*.ext'
+//!				2. Call ExtPresent(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by ExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0028command2Set
+			COMMAND		TParsePtrC1	ExtPresent	PBASE-F32-ParseBase-PublicApi-0028command3ExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0028
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0029
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0029
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		ExtPresent() test with wildcards in extension.
+//!					Uses API elements: ExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.*'
+//!				2. Call ExtPresent(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by ExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0029command2Set
+			COMMAND		TParsePtrC1	ExtPresent	PBASE-F32-ParseBase-PublicApi-0029command3ExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0029
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0030
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0030
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameOrExtPresent() test where name and extension present.
+//!					Uses API elements:  NameOrExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'
+//!				2. Call NameOrExtPresent(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameOrExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new			PBASE-F32-ParseBase-PublicApi-0030command2Set
+			COMMAND		TParsePtrC1	NameOrExtPresent	PBASE-F32-ParseBase-PublicApi-0030command3NameOrExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0030
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0031
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0031
+//! @SYMAPI			T_ParsePtrC
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameOrExtPresent() test where name and extension is not present.
+//!				Uses API elements:  NameOrExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\'
+//!				2. Call NameOrExtPresent(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameOrExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new			PBASE-F32-ParseBase-PublicApi-0031command2Set
+			COMMAND		TParsePtrC1	NameOrExtPresent	PBASE-F32-ParseBase-PublicApi-0031command2NameOrExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0031
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0032
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0032
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameOrExtPresent() test with wildcards in name.
+//!				Uses API elements:  NameOrExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\*.ext'
+//!				2. Call NameOrExtPresent(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameOrExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new			PBASE-F32-ParseBase-PublicApi-0032command2Set
+			COMMAND		TParsePtrC1	NameOrExtPresent	PBASE-F32-ParseBase-PublicApi-0032command3NameOrExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0032
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0033
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0033
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameOrExtPresent() test with wildcards in extension.
+//!				Uses API elements:  NameOrExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.*'
+//!				2. Call NameOrExtPresent(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameOrExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new			PBASE-F32-ParseBase-PublicApi-0033command2Set
+			COMMAND		TParsePtrC1	NameOrExtPresent	PBASE-F32-ParseBase-PublicApi-0033command3NameOrExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0033
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0034
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0034
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		NameOrExtPresent() test whre wildcard as filename and extension.
+//!				Uses API elements:  NameOrExtPresent().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\*'
+//!				2. Call NameOrExtPresent(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by NameOrExtPresent() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new			PBASE-F32-ParseBase-PublicApi-0034command2Set
+			COMMAND		TParsePtrC1	NameOrExtPresent	PBASE-F32-ParseBase-PublicApi-0034command3NameOrExtPresent
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0034
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0035
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0035
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsRoot() test where path is root.
+//!				Uses API elements:  IsRoot().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\'
+//!				2. Call IsRoot(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsRoot() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0035command2Set
+			COMMAND		TParsePtrC1	IsRoot		PBASE-F32-ParseBase-PublicApi-0035command3IsRoot
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0035
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0036
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0036
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsRoot() test where path is not root.
+//!				Uses API elements:  IsRoot().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\'
+//!				2. Call IsRoot(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsRoot() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0036command2Set
+			COMMAND		TParsePtrC1	IsRoot		PBASE-F32-ParseBase-PublicApi-0036command3IsRoot
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0036
+
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0037
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0037
+//! @SYMAPI					T_ParsePtrC
+//! @SYMTestCaseDesc		IsWild() test where path has a wildcard.
+//!					Uses API elements:  IsWild().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dri1\dir2\*.ext'
+//!				2. Call IsWild(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsWild() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0037command2Set
+			COMMAND		TParsePtrC1	IsWild		PBASE-F32-ParseBase-PublicApi-0037command3IsWild
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0037
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0038
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0038
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsWild() test where path has not a wildcard.
+//!					Uses API elements:  IsWild().
+//! @SYMTestActions		1. Create TParsePtrC object   passing 'c:\dir1\dir2\nowildcras.ext'
+//!				2. Call IsWild(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsWild() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0038command2Set
+			COMMAND		TParsePtrC1	IsWild		PBASE-F32-ParseBase-PublicApi-0038command3IsWild
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0038
+
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0039
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0039
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsKMatchOne() test where the name contains a question mark wildcard.
+//!				Uses API elements:  IsKMatchOne().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\?.ext'
+//!				2. Call IsKMatchOne(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsKMatchOne() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0039command2Set
+			COMMAND		TParsePtrC1	IsKMatchOne	PBASE-F32-ParseBase-PublicApi-0039command3IsKMatchOne
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0039
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0040
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0040
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsKMatchOne() test where name of file contains asterisk wildcard.
+//!				Uses API elements:  IsKMatchOne().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\*.ext'
+//!				2. Call IsKMatchOne(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsKMatchOne() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0040command2Set
+			COMMAND		TParsePtrC1	IsKMatchOne	PBASE-F32-ParseBase-PublicApi-0040command3IsKMatchOne
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0040
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0041
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0041
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsKMatchAny() test where name of file contains asterisk wildcard.
+//!				Uses API elements:  IsKMatchAny().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\*.ext'
+//!				2. Call IsKMatchAny(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsKMatchAny() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0041command2Set
+			COMMAND		TParsePtrC1	IsKMatchAny	PBASE-F32-ParseBase-PublicApi-0041command3IsKMatchAny
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0041
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0042
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0042
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsKMatchAny() test where name contains a question mark wildcard.
+//!				Uses API elements:  IsKMatchAny().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\?.ext'
+//!				2. Call IsKMatchAny(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsKMatchAny() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0042command2Set
+			COMMAND		TParsePtrC1	IsKMatchAny	PBASE-F32-ParseBase-PublicApi-0042command3IsKMatchAny
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0042
+
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0043
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0043
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsNameWild() test where name contains asterisk wildcard.
+//!				Uses API elements:  IsNameWild().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\*.ext'.
+//!				2. Call IsNameWild(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsNameWild() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0043command2Set
+			COMMAND		TParsePtrC1	IsNameWild	PBASE-F32-ParseBase-PublicApi-0043command3IsNameWild
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0043
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0044
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0044
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsNameWild() test where name not contains a wildcard.
+//!				Uses API elements:  IsNameWild().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'
+//!				2. Call IsNameWild(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsNameWild() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0044command2Set
+			COMMAND		TParsePtrC1	IsNameWild	PBASE-F32-ParseBase-PublicApi-0044command3IsNameWild
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0044
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0045
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0045
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsExtWild() test where extension contains asterisk wildcard.
+//!				Uses API elements:  IsExtWild().
+//! @SYMTestActions		1. Create TParsePtrC object  passed  'c:\dir1\dir2\filename.*'
+//!				2. Call IsExtWild(). Expecting TRUE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsExtWild() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0045command2Set
+			COMMAND		TParsePtrC1	IsExtWild	PBASE-F32-ParseBase-PublicApi-0045command3IsExtWild
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0045
+
+
+START_TESTCASE 			PBASE-F32-ParsePtrC-PublicApi-0046
+//! @SYMTestCaseID		PBASE-F32-ParsePtrC-PublicApi-0046
+//! @SYMAPI			T_ParsePtrC
+//! @SYMTestCaseDesc		IsExtWild() test where extension not contains a wildcard.
+//!				Uses API elements:  IsExtWild().
+//! @SYMTestActions		1. Create TParsePtrC object  passing 'c:\dir1\dir2\filename.ext'
+//!				2. Call IsExtWild(). Expecting FALSE on return.
+//!				3. Delete TParsePtrC object.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Value returned by IsExtWild() is the same as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+			CREATE_OBJECT	TParsePtrC	TParsePtrC1	
+			COMMAND		TParsePtrC1	new		PBASE-F32-ParseBase-PublicApi-0046command2Set
+			COMMAND		TParsePtrC1	IsExtWild	PBASE-F32-ParseBase-PublicApi-0046command3IsExtWild
+			COMMAND		TParsePtrC1	~		
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-ParsePtrC-PublicApi-0046
+

@@ -1,0 +1,49 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_iic_client.mmp
+//
+
+#include "kernel/kern_ext.mmh"
+
+target         iic_client.ldd
+targettype     ldd
+
+// Select the mode to build
+// For Master-Slave mode, uncomment both of the two lines that follow
+macro MASTER_MODE
+macro SLAVE_MODE
+
+macro IIC_SIMULATED_PSL
+
+sourcepath     .
+source         iic_client.cpp
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+// un-comment the following if debug printing is required
+//macro LOG_CLIENT
+
+library iic_testpsl.lib
+
+uid			0x100000af 0x10286b4d
+VENDORID 0x70000001
+
+capability		all
+epocallowdlldata
+
+start wins
+win32_headers
+end
+
+SMPSAFE
+

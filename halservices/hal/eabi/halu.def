@@ -1,0 +1,8 @@
+EXPORTS
+	_ZN3HAL3GetEN7HALData10TAttributeERi @ 1 NONAME ; HAL::Get(HALData::TAttribute, int&)
+	_ZN3HAL3SetEN7HALData10TAttributeEi @ 2 NONAME ; HAL::Set(HALData::TAttribute, int)
+	_ZN3HAL6GetAllERiRPNS_6SEntryE @ 3 NONAME ; HAL::GetAll(int&, HAL::SEntry*&)
+	_ZN3HAL3GetEiN7HALData10TAttributeERi @ 4 NONAME ; HAL::Get(int, HALData::TAttribute, int&)
+	_ZN3HAL3SetEiN7HALData10TAttributeEi @ 5 NONAME ; HAL::Set(int, HALData::TAttribute, int)
+	_ZN11HalInternal12InitialValueE @ 6 NONAME DATA 428
+

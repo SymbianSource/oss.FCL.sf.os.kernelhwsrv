@@ -1,0 +1,36 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// BLD.INF
+// Test code for file server
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_TESTMMPFILES
+
+// mass storage tests
+#if !defined(WINS) && !defined(GENERIC_X86)
+t_msfs	manual
+t_gml_tur	manual
+t_ms_mountstart	manual
+t_ms_publish	manual
+#endif
+t_msfs_scsi	manual
+t_msdrive	manual
+
+// Mock MS file server for client API and server API test
+t_ms_mocksvr	support

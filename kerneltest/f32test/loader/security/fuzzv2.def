@@ -1,0 +1,4 @@
+EXPORTS
+	SomeExport @ 1 NONAME
+	AnotherExport @ 2 NONAME
+

@@ -1,0 +1,6 @@
+EXPORTS
+
+	?SessionCreate@@YAHABVTDesC8@@HPBVTSecurityPolicy@@H@Z @ 1 NONAME ; int __cdecl SessionCreate(class TDesC8 const &,int,class TSecurityPolicy const *,int)
+	?SessionSend@@YAHHHPAXPAVTRequestStatus@@@Z @ 2 NONAME ; int __cdecl SessionSend(int,int,void *,class TRequestStatus *)
+	?SessionSendSync@@YAHHHPAXPAVTRequestStatus@@@Z @ 3 NONAME ; int __cdecl SessionSendSync(int,int,void *,class TRequestStatus *)
+	?SetSessionPtr@@YAXHPBX@Z @ 4 NONAME ; void __cdecl SetSessionPtr(int,void const *)

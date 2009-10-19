@@ -1,0 +1,270 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\x86\uc_utl.cia
+// 
+//
+
+#include <u32exec.h>
+#include <e32base.h>
+#include <e32rom.h>
+#include <e32svr.h>
+#include <e32hashtab.h>
+
+
+// Dummy so we can use same DEF file as WINS
+EXPORT_C void BootEpoc(TBool)
+	{
+	}
+
+
+EXPORT_C __NAKED__ void RFastLock::Wait()
+	{
+	THISCALL_PROLOG0()
+	asm("lock sub dword ptr [ecx+4], 1");
+	asm("jnc fast_lock_wait_sem");
+	THISCALL_EPILOG0()
+	asm("fast_lock_wait_sem:");
+	asm("mov eax, %0": : "i"(EExecSemaphoreWait));
+	asm("mov ecx, [ecx]");
+	asm("xor edx, edx");
+	asm("int 0x21");
+	THISCALL_EPILOG0()
+	}
+
+EXPORT_C __NAKED__ void RFastLock::Signal()
+	{
+	THISCALL_PROLOG0()
+	asm("lock add dword ptr [ecx+4], 1");
+	asm("jne fast_lock_signal_sem");
+	THISCALL_EPILOG0()
+	asm("fast_lock_signal_sem:");
+	asm("mov eax, %0": : "i"(EExecSemaphoreSignal1));
+	asm("mov ecx, [ecx]");
+	asm("int 0x21");
+	THISCALL_EPILOG0()
+	}
+
+#ifdef __MEM_MACHINE_CODED__
+__NAKED__ EXPORT_C void Mem::Swap( TAny* /*aPtr1*/, TAny* /*aPtr2*/, TInt /*aLength*/ )
+/**
+Swaps a number of bytes of data between two specified locations.
+
+The source and target areas can overlap.
+
+@param aPtr1   A pointer to the first location taking part in the swap. 
+@param aPtr2   A pointer to second location taking part in the swap. 
+@param aLength The number of bytes to be swapped between the two locations. 
+               This value must not be negative.
+
+@panic USER 94 In debug builds only, if aLength is negative.
+*/
+
+//
+//	Swap the contents of *aPtr1 with *aPtr2.
+//	NB We assume ES=DS on entry.
+//
+	{
+	asm("push esi");
+	asm("push edi");
+	asm("mov edi,[esp+12]");// aPtr1 address into edi
+	asm("mov esi,[esp+16]");// aPtr2 address into esi
+	asm("mov ecx,[esp+20]");// byte count into ecx
+	asm("pushfd");
+
+	asm("test ecx,ecx");	//
+	asm("jz short memswap0");// if length=0, nothing to do
+	asm("cld");				// go forwards through array
+	asm("cmp ecx,7");		// if length<7 don't bother with alignment check
+	asm("jc short memswap1");//
+	asm("mov edx,ecx");		// length into edx
+	// number of bytes to align aPtr1 = 4-(edi mod 4)
+	asm("mov ecx,4");		
+	asm("sub ecx,edi");		//
+	asm("and ecx,3");		// into ecx
+	asm("jz short memswap2");// if aligned, proceed with dword swap
+	asm("sub edx,ecx");		// subtract number of bytes from length
+	asm("memswap3:");
+	asm("mov al,[edi]");	// al = *aPtr1
+	asm("mov ah,[esi]");	// ah = *aPtr2
+	asm("mov [esi],al");	// *aPtr2=al
+	asm("mov [edi],ah");	// *aPtr1=ah
+	asm("inc esi");			// aPtr2++
+	asm("inc edi");			// aPtr1++
+	asm("dec ecx");			//
+	asm("jnz short memswap3");// loop ecx times - edi is now dword aligned
+	asm("memswap2:");
+	asm("push ebx");		// preserve ebx
+	asm("mov ecx,edx");		// length back into ecx
+	asm("mov ah,cl");		// save lower two bits of dword count in ah bits 3,2
+	asm("add ecx,12");		// divide dword count by 4, rounding to next higher integer
+	asm("shr ecx,4");		// this gives loop count for unfolded loop
+	asm("shl ah,4");		// lower two bits of dword count into ah bits 7,6
+	asm("sahf");			// and into SF,ZF
+	asm("jns short memswap8");// branch if lower two bits of dword count = 0 or 1
+	asm("jz short memswap5");// if lower two bits = 3, miss out first unfolding of loop
+	asm("jnz short memswap6");	// if lower two bits = 2, miss out first two unfoldings
+	asm("memswap8:");
+	asm("jz short memswap7");// if lower two bits = 1, miss out first three unfoldings
+	asm("memswap4:");
+	asm("mov eax,[edi]");	// eax = *aPtr1
+	asm("mov ebx,[esi]");	// ebx = *aPtr2
+	asm("mov [esi],eax");	// *aPtr2=eax
+	asm("mov [edi],ebx");	// *aPtr1=ebx
+	asm("add edi,4");		// aPtr1++
+	asm("add esi,4");		// aPtr2++
+	asm("memswap5:");
+	asm("mov eax,[edi]");	// eax = *aPtr1
+	asm("mov ebx,[esi]");	// ebx = *aPtr2
+	asm("mov [esi],eax");	// *aPtr2=eax
+	asm("mov [edi],ebx");	// *aPtr1=ebx
+	asm("add edi,4");		// aPtr1++
+	asm("add esi,4");		// aPtr2++
+	asm("memswap6:");
+	asm("mov eax,[edi]");	// eax = *aPtr1
+	asm("mov ebx,[esi]");	// ebx = *aPtr2
+	asm("mov [esi],eax");	// *aPtr2=eax
+	asm("mov [edi],ebx");	// *aPtr1=ebx
+	asm("add edi,4");		// aPtr1++
+	asm("add esi,4");		// aPtr2++
+	asm("memswap7:");
+	asm("mov eax,[edi]");	// eax = *aPtr1
+	asm("mov ebx,[esi]");	// ebx = *aPtr2
+	asm("mov [esi],eax");	// *aPtr2=eax
+	asm("mov [edi],ebx");	// *aPtr1=ebx
+	asm("add edi,4");		// aPtr1++
+	asm("add esi,4");		// aPtr2++
+	asm("dec ecx");
+	asm("jnz short memswap4");	// loop ecx times to do main part of swap
+	asm("mov ecx,edx");		// length back into ecx
+	asm("pop ebx");			// restore ebx
+	asm("and ecx,3");		// number of remaining bytes to move
+	asm("jz short memswap0");// if zero, we are finished
+	asm("memswap1:");		// *** come here for small swap
+	asm("mov al,[edi]");	// al = *aPtr1
+	asm("mov ah,[esi]");	// ah = *aPtr2
+	asm("mov [esi],al");	// *aPtr2=al
+	asm("mov [edi],ah");	// *aPtr1=ah
+	asm("inc esi");			// aPtr2++
+	asm("inc edi");			// aPtr1++
+	asm("dec ecx");			//
+	asm("jnz short memswap1");	// loop ecx times - edi is now dword aligned
+
+	asm("memswap0:");
+	asm("popfd");
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+	}
+#endif
+
+// Hash an 8 bit string at aPtr, length aLen bytes.
+__NAKED__ TUint32 DefaultStringHash(const TUint8* /*aPtr*/, TInt /*aLen*/)
+	{
+	asm("push esi");
+	asm("mov esi, [esp+8]");
+	asm("mov ecx, [esp+12]");
+	asm("xor eax, eax");
+	asm("sub ecx, 4");
+	asm("jb lt4");
+	asm("ge4:");
+	asm("xor eax, [esi]");
+	asm("add esi, 4");
+	asm("mov edx, 0x9E3779B9");
+	asm("mul edx");
+	asm("sub ecx, 4");
+	asm("jae ge4");
+	asm("lt4:");
+	asm("add ecx, 4");
+	asm("jz done");
+	asm("xor edx, edx");
+	asm("cmp ecx, 2");
+	asm("jbe le2");
+	asm("mov dl, [esi+2]");
+	asm("shl edx, 16");
+	asm("le2:");
+	asm("cmp ecx, 2");
+	asm("jb onemore");
+	asm("mov dh, [esi+1]");
+	asm("onemore:");
+	asm("mov dl, [esi]");
+	asm("xor eax, edx");
+	asm("mov edx, 0x9E3779B9");
+	asm("mul edx");
+	asm("done:");
+	asm("pop esi");
+	asm("ret");
+	}
+
+// Hash a 16 bit string at aPtr, length aLen bytes.
+__NAKED__ TUint32 DefaultWStringHash(const TUint16* /*aPtr*/, TInt /*aLen*/)
+	{
+	asm("push esi");
+	asm("mov esi, [esp+8]");
+	asm("mov ecx, [esp+12]");
+	asm("xor eax, eax");
+	asm("sub ecx, 8");
+	asm("jb lt8");
+	asm("ge8:");
+	asm("mov edx, [esi+4]");
+	asm("xor eax, [esi]");
+	asm("add esi, 8");
+	asm("rol edx, 8");
+	asm("xor eax, edx");
+	asm("mov edx, 0x9E3779B9");
+	asm("mul edx");
+	asm("sub ecx, 8");
+	asm("jae ge8");
+	asm("lt8:");
+	asm("add ecx, 8");
+	asm("jz done_defwstrhash");
+	asm("xor edx, edx");
+	asm("cmp ecx, 4");
+	asm("jbe le4");
+	asm("mov dx, [esi+4]");
+	asm("rol edx, 8");
+	asm("xor eax, edx");
+	asm("xor edx, edx");
+	asm("le4:");
+	asm("cmp ecx, 4");
+	asm("jb onemore_defwstrhash");
+	asm("mov dx, [esi+2]");
+	asm("shl edx, 16");
+	asm("onemore_defwstrhash:");
+	asm("mov dx, [esi]");
+	asm("xor eax, edx");
+	asm("mov edx, 0x9E3779B9");
+	asm("mul edx");
+	asm("done_defwstrhash:");
+	asm("pop esi");
+	asm("ret");
+	}
+
+
+/**
+@publishedAll
+@released
+
+Calculate a 32 bit hash from a 32 bit integer.
+
+@param	aInt	The integer to be hashed.
+@return			The calculated 32 bit hash value.
+*/
+EXPORT_C __NAKED__ TUint32 DefaultHash::Integer(const TInt& /*aInt*/)
+	{
+	asm("mov edx, [esp+4]");
+	asm("mov eax, 0x9E3779B9");
+	asm("mul dword ptr [edx]");
+	asm("ret");
+	}
+

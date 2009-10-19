@@ -1,0 +1,1453 @@
+THIS RELEASE NOTE NO LONGER IN USE
+
+See \E32\RELEASE.TXT for changes to E32TEST
+
+Version 2.00.531
+============================
+(Made by XXX, XXX)
+
+1) OliverStuart
+	1. DEFECT FIX: DEF138318: SMP + Data Paging T_Chunk fails: t_chunk.exe::Local-c811fe18 Panic KERN-EXEC
+	Modified to use thread pool in chunk-close race condition test to prevent KERN-EXEC 3 when stack is accessed
+	after 50 CloseChunk threads have been created over and over again for 800 times until the backing store is
+	exhausted and there is no storage left to commit to the stack page.
+
+Version 2.00.530
+============================
+(Made by DjordjeK, 18/08/2004)
+
+1)	AndrewR
+	1)	Fix DEF045247 - T_IDRV assumes that the RAM drive is on drive 0
+
+2)	CarlosF
+	1.	Fix DEF046246 - Check in t_serial TimedCheckedWrite() sometimes loses the race
+	2.	Fix DEF047403 - T_SERIAL does not exercise Hardware Handshaking
+
+Version 2.00.529
+============================
+(Made by KamranN, 04/08/2004)
+
+1)	AndrewR
+	1)	Implement CR - LKUH-5WJMEA: Correct and improve EKA2 Stop-Mode Debug API
+
+Version 2.00.528
+============================
+(Made by AndrewJ, 21/07/2004
+
+
+1)	Djordje
+	1)	REQ2731.3 (PREQ728): Descriptors API enhancement (RBuf)
+		Added new t_rbuf test.
+	2)	DEF045758 T_CHUNK shouldn't depend on shared io buffers
+			- Removed D_CHUNK project. 
+			- T_Chunk does not check shared io buffers any more.
+			- D_Sharedio now checks the buffer is initialised to all 0x03s every time it creates it.
+
+2)	JonathanM
+	1)	Fixed bug in T_HEAP which caused failures on the emulator.
+
+Version 2.00.527
+===========================
+(Made by AndrewH, 06/07/2004)
+
+1)	MichaelP
+	1)	Fixed defect DEF046550 - T_USB sends wrong buffer size for non-max size transfers:
+		We now subtract 1 from the reported buffer size only for 64k transfers (=0xFFFF).
+
+
+Version 2.00.526
+===========================
+(Made by Michaelp, 17/06/2004)
+
+1) 	KamranN
+	1) 	Changes for CR HWIE-5YBETE Networking, GT0194 IP Networking, Configuration tool for Etherdrv
+
+2)	DjordjeK
+	1)	REQ2731.1 RArray API enhancement & REQ2731.2 RMessagePtr2 API enhancement:
+		The following tests are changed:
+		T_ARRAY  - Added test cases to check leaving interface of TPointerArray<T>,
+		           TArray<T>, TArray<TInt> & TArray<TUint>.
+		T_CAPSUP - Added test cases to check leaving interface of RMessagePtr2.
+		T_MESSGE - Added test cases to check leaving interface of RMessagePtr2.
+
+
+Version 2.00.525
+===========================
+(Made by JonathanM, 26/05/2004)
+
+1)	MichaelP
+	1)	Fixed defect DEF045263 - "T_USBAPI to be made more generic for autotesting":
+		a)  We don't check any longer at the beginning of the test suite whether we're
+		running on a 'UsbPlatform': If we're not, then the subsequent attempt to load the
+		USB LDD will fail anyway.
+		b)  We now execute the endpoint stall tests only if we're running on a known
+		supported platform, otherwise we just skip those tests. 
+2)	AndrewHi
+	1)	Fix for 'DEF043213 : Build dependency introduced between e32test t_lfsdrv2 and
+		lubbock base port'
+
+
+Version 2.00.524
+===========================
+(Made by AndrewJ, 28/04/2004)
+
+1)	JonathanM
+	1)	Added new test case to T_TEXTNOTIFIER for defect DEF044341 - Notifier framework
+		(ewsrv.dll) generated KErrNoMemory
+
+2)	MichaelP
+	1)	Fixed defect DEF044040 - "iMemMemPslInfo in DDmaTestChannel not set correctly":
+		We now assign the DMA PSL cookie to the kernel side channel object in
+		DDmaTestChannel::DoCreate() for a user side RTestDma::Open() call (instead of
+		for an RTestDma::GetInfo() call).
+
+Version 2.00.523
+===========================
+(Made by JonathanM, 23/04/2004
+
+1.	JonathanM and KeithR
+	1)	Updated T_CAPSUP to test new Platform Security APIs.
+	
+Version 2.00.522
+===========================
+(Made by CarlosF, 14/04/2004)
+
+1)	JonathanM
+	1)	Added new test cases to T_SOUND which test playing tiny buffers.
+
+Version 2.00.521
+===========================
+(Made by JonathanM, 31/03/2004)
+
+1)	CiprianM
+	1)	Fixed defect INC041473 - T_TLOCL fails in WINS - deleting the test as it's considered
+		worthless (see defect notes in TT)
+
+2)	MichaelP
+	1)	Fixed defect DEF042556 - "Wrong IPR categorisation on usbrflct binaries":
+		Changed IPR category of USB test prgram USBRFLCT (in directory
+		/e32test/win32/usbrflct_distribution) from B to E. Permission to do so was
+		granted by way of accepted Source Categorisation Change Request
+		CANY-5W8J8E - "Inconsistent USBRFLCT binary IPR classifications".
+	2)	Fixed defect DEF043596 - "T_USB/USBRFLCT don't test zero-bytes transfers":
+		We now start the loop transfers with 0 bytes instead of with 4. Upped
+		USBRFLCT version number to 1.3.1.
+
+Version 2.00.520
+===========================
+(Made by JonathanM, 19/03/2004)
+
+1.	JonathanM
+	1.	Implemented the requirements:
+		REQ2632 - Configurability of the enforcement of capabilities
+		REQ2633 - Security violation diagnostic
+		REQ3142 - Associate Platform Security information with an executable.
+		See /cedar/generic/base/documentation/Base_How_To_Configure_Platform_Security_Settings.doc
+
+Version 2.00.519
+===========================
+(Made by JonathanM, 26/02/2004)
+
+1.	JonathanM
+	1.	Modified T_CAPSUP to test new Platform Security classes: TCapabilitySet and TSecurityInfo
+	2.	Added T_PLATSECCONFIG which tests use of the PlatSecDisabledCaps keywork in OBY files
+		and Emulator INI files.
+
+Version 2.00.518
+================
+(Made by AndrewHi, 23/01/2004)
+
+1.	CiprianM
+	1.	Fixed DEF040971  Benchmark suite test code optimised out by RVCT in ARM5 builds 
+
+2.	AndrewHi
+	1.	Modified t_lfsdrv2 to conditionally apply Read-While_Write tests for FLASH devices.
+		The condition is dependent on the value of the device identifier read from the chip. 
+		Currently, these tests are only applied for TYAX flash devices.
+
+Version 2.00.517
+================
+(Made by StefanW, 09/01/2004)
+
+1.	CarlosF
+ 	1.	IBUG-5QNJZC "Implement CR IBUG-5N2DZE on Cedar": Modified T_SERIAL to test the new
+ 		turnaround feature.
+
+Version 2.00.516
+================
+(Made by StefanW, 19/12/2003)
+
+1.	MichaelP
+	1.	Updated USBRFLCT to use USBIO v2.0: Upped USBRFLCT version to 1.2.0 and recompiled
+		it against USBIOLIB 2.0. Updated USBRFLCT.SYS to version 2.0. Added separate driver
+		version for Win98 (USBRFL98.SYS, renamed from USBIO98.SYS) and added entries to the
+		usbrflct.inf file so it gets installed on Win98SE.
+	2.	Deleted USB host side GUI test program USBTEST. This program has been discontinued.
+	3.	Added complimentary version of USBRFLCT:
+		USBRFLCTD.EXE is a version of USBRFLCT.EXE with lots of verbose output
+		activated; otherwise it's exactly the same program.
+		The output, most importantly the error messages, can be used to track down
+		problems when trying to get USBRFLCT and T_USB to work together, either for the
+		first time (after a Base/PSL port), or after installation changes on the PC.
+
+Version 2.00.515
+================
+(Made by JonathanM, 05/12/2003)
+
+1.	ChrisM
+	1.	Fixed Defect DEF040185 - Some e32tests make assumptions about the time and date formatting 
+		Set the locale before the test to the locale info used in the base test roms.  Reset it back
+		to the current locale at the end.
+
+2.	MichaelP
+	1.	Added new USB test program T_USBAPI: This program tests device side USB API
+		functionality that is not dependent upon a physical USB connection; it requires
+		no manual intervention and can thus be run as part of an automated test suite.
+		These tests used to be part of T_USB but they have been removed from there.
+
+3.	JonathanM
+	1.	Modified T_TIMER on Lubbock so it doesn't attempt to power off.
+		(Because the Base Port doesn't support this.)
+
+Version 2.00.514
+================
+(Made by StephanGu, 12/11/2003)
+1.	MichaelP
+	1.	- Renamed Win32 USB test program USBTEST(cmdline) to USBRFLCT, also restructured it.
+		- Updated T_USB to use new PID 0x1111.
+		- Added USBRFLCT binary distribution, complete with .sys driver and .inf file.
+	2.	- Added new Win32 USB test program USBTEST (was internally: USBPCTester).
+		- Updated T_USB2 to use new PID 0x2222.
+		- Added USBTEST binary distribution, complete with .sys driver and .inf file.
+
+Version 2.00.513
+================
+(Made by JonathanM, 31/10/2003)
+
+1.	JonathanM
+	1.	Added test for RNotifier::Notify to T_TEXTNOTIFIER
+
+
+Version 2.00.512
+================
+(Made by AndrewJ, 06/10/2003)
+
+1.	CiprianM
+	1.	Added Shared Io Buffers tests.
+
+Version 2.00.511
+================
+(Made by JonathanM, 24/09/2003)
+
+1.	RobertJ
+	1.	Added testing of USB endpoint status, device status ep0 max packet sizes and device control
+		to t_usb.
+
+2.	AndrewT
+	1.	Added test case for DEF037709: NULL deref when setting a text RProperty to KNullDesC.
+
+Version 2.00.510
+================
+(Made by JonathanM, 05/08/2003)
+
+1.	Nicolas
+	1.	Extended DMA tests to exercise per-request max transfer sizes.
+	2.	Extended DMA tests to exercise "missed interrupts" case.
+
+2.	Raja Shekar Reddy
+	1.	CR CANY-5JQFM3 "Enable e32/f32 test suite to be used from a CustKit or DevKit installation". 
+		For Typhoon most of the changes were winc specific files.
+
+3.	CiprianM
+	1.	Extended T_DES to reproduce defect DEF023302 - Invalid test in 
+ 		HBufC8/16::__DbgTestInvariant().  Invariant functions are now
+ 		called by the test harness.
+
+4.	Dennis
+	1.	Extended T_ARRAY to test new binary search functions.
+
+5.	RobertJ
+	1)	Added testing of USB endpoint status, device status ep0 max packet sizes and device control
+		to t_usb.
+
+Version 2.00.509
+================
+(Made by JonathanM, 19/05/2003)
+
+0.	JonathanM and ChrisM
+	1.	Changes resulting from making E32 compatible with with
+		Symbian OS version 7.0
+
+1.	JonathanM
+	1.	Added test case for fixed defect INC022668  - "Modifier example
+		crashes the emulator"
+
+2.	Dennis
+	1.	Modified D_LDD to test global constructors and destructors for LDDs.
+		Modified T_TLDD to test LDD unloading.
+		Modified T_KHEAP to test OOM handling on LDD loading.
+
+	2.	Modified T_SVR5 to do some more testing of asynchronous messages
+		on shared sessions.
+
+3.	Nicolas
+	1.	Introduced T_EVENTTRACKER to exercise resource tracking events.  
+		See usage instruction at top of file.
+	2.	Introduced T_CONTEXT to exercise get/set user context APIs,
+		hardware/software exception trapping and thread death trapping.
+	3.	Modified T_SCHEDHOOK to share some code with T_CONTEXT and 
+		use the new event handler scheme.
+
+4.	Morgan
+	1.	Introduced T_TRACEREDIRECT to exercise user trace redirection
+		hook.
+
+
+Version 2.00.508
+================
+(Made by ChrisM, 17/03/2003)
+
+1.	Dennis
+	1.	Increased maximum loop size for T_MWAIT from 32K to 64K.
+
+2.	Nicolas
+	1.	Added missing critical section region in d_dma(sim).ldd
+	2.	Added missing critical section region in d_schedhook.ldd
+	3.	Migrated fix for Typhoon defect INC017119 - T_TLOCL fails 
+		cause test assumes locale UK.  The UK-specific part of 
+		this test now runs only if the default locale is UK.
+	4.	Fixed bugs in test DMA LDD: 
+		a. DMA buffers were deallocated before stopping transfers
+		b. DMA requests and channels were closed without cancelling
+		   transfers in progress.
+	5.	Fixed bugs in T_TRAP, T_THREAD and T_EUNIW: '=' instead of
+		'==' in test assertions.
+
+3.	JonathanM
+	1.	Modified T_SOUND to provide a test case for DEF016645
+		- "Sound driver returns incorect length of data when recording"	
+	2.	Integrate T_MATCH test code changes for lost defect fix
+		BAD-58CDM4 - "Locale change has no effect on contact filtering."
+		and some "Extra folding tests added to T_Match"
+
+Version 2.00.507
+================
+(Made by JonathanM, 14/01/2003)
+
+1.	JonathanM
+	1.	Reorganised how tests get built: All Variant specific tests are
+		now build by the variant. See relevent \variant_name\TEST\BLD.INF
+		files.
+	2.	Made E32TEST code work when binaries are stored in \System\Bin
+	3.	Extended T_FAIL to test use of ReAlloc. (Test case for defect DEF015827
+		- "OOM testing works incorrectly for ReAlloc")
+	4.	Fixed ARM/Thumb interworking problems with T_MWAIT, also made this
+		an automatic test.
+	5.	Fixed ARM/Thumb interworking problems with T_IMB.
+
+2.	AndrewT
+	1.	Removed useless T_HUF test case
+	2.	Added test T_CACTW for the CActiveSchedulerWait class
+
+3.	ChrisM
+	1.	Added T_ENV and T_ENV_CHILD to test parameter passing into
+		process creation.
+
+4.	Nicolas
+	1.	Added EVENTPRINTER kernel extension in ..\debug.  Intentionally 
+		not in bld.inf as it is useful only for manually testing event
+		notification hooks.
+	2.	Migrated fix for Typhoon defect INC014337 - T_TIMER locked 
+		timers fails
+
+
+Version 2.00.506
+================
+(Made by AndrewT, 29/10/2002)
+
+1.	JonathanM
+	1.	Made capability checking test code only test using capabilities which
+		have been defined.
+	2.	Removed all usage of RProcess::SecureApi and User::RemoveCapabilities.
+	3.	Fixed T_TIMER so it is more robust and accurate. (Applies same fix as
+		for Typhoon defect INC002103)
+
+2.	AndrewT
+	1.	Fixed T_TIMER defect introduced by new power model: use new APIs instead
+		of UserHal::SwitchOff. The test now passes on WINS as well.
+
+3.	Nicolas
+	1.	T_DMA and T_DMASIM do not fail anymore when passed an unexpected 
+		command-line.
+
+Version 2.00.505
+================
+(Made by JonathanM, 21/10/2002)
+
+1.	Nicolas
+	1.	T_MMCPW, T_MSGTXT, T_KILL: set capabilites to none.
+2.	JonathanM
+	1.	Made T_SHAL an Auto test
+3.	ChrisM
+	1.	Fixed DEF002050 t_dceutl panic on startup.  Also removed build warnings
+		 & made secure kernel api changes.
+
+
+
+Version 2.00.504
+================
+(Made by JonathanM, 20/09/2002)
+
+1.	Dennis
+	1.	Split all ARM inline assembler into separate .cia files.
+2.	JonathanM
+	1.	Changed E32TESTs for secure APIs to use SETCAP.EXE.
+3.	Kernel-Team
+	1.	Made all test code work with secure kernel APIs and added
+		CAPABILITY statements to MMP files.
+
+Version 2.00.503
+================
+(Made by Nicolas, 16/09/2002)
+
+1.	VadimA
+	1.	Implemented Pub/Sub Properties Tests.
+2)	Nicolas
+	1)	Fixed DEF000090 - E32TEST MMP files should not specify
+		chkstk.obj for WINSCW builds.
+3)	CarlosF
+	1)	Changes to d_latncy.cpp, d_tick and d_mstim to support Integrator
+	2)	Released bm_mi920_pdd PDD for the BM_SUITE test on Integrator
+4)	RobertJ
+	1)	Added Huffman test buffer\t_huff.cpp & mmp group\t_huff.mmp
+		modified bld.inf
+
+Version 2.00.502
+================
+(Made by Dennis, 16/08/2002)
+
+1)	Nicolas
+	1)	Modified T_LDRTST to use Kern::CodeAccess() and
+		Kern::EndCodeAccess().
+	2)	Added EXC, an utility which generates various kinds
+		exceptions (data abort, ...).
+Version 2.00.501
+================
+(Made by AndrewT, 12/06/2002)
+
+1)	AndrewT
+	1)	Update t_float.exe in line with the fix for migrated Huricane defect
+		(TLex::Val() should not give error for missing exponent)
+	2)	Added t_emul.exe to test emulator specific functionality, in particular
+		the 'escape' mechanism.
+
+Version 2.00.500
+================
+(Made by AndrewT, 23/05/2002)
+
+First release of EKA2 into Symbian OS mainline.
+
+
+Version 1.01.063
+================
+(Made by Dennis, 04/04/2002)
+
+1)	Nicolas
+	1)	Submitted Jon's changes to T_KHEAP.  This test now
+		checks that there is no memory leak if an OOM occurs
+		while expanding the handle array.
+
+Version 1.01.062
+================
+(Made by CarlosF,  13/02/2002)
+
+1)	Nicolas
+	1)	In T_KHEAP, enabled again the process-related code
+		which was commented out.  This helped find an
+		untrapped leave in the process creation code which has
+		been fixed.
+	2)	In T_KHEAP, enabled again the chunk-related code which
+		was commented out.  A comment said that the code
+		(setting the next kernel heap allocation to fail and
+		check that the chunk size can be adjusted) was
+		disabled because it could not possibly work.  Actually
+		it does because the memory used when adjusting a chunk
+		is taken straight from the physical memory pool, not
+		from the kernel heap.
+	3)	Silenced warnings in T_KHEAP.
+
+Version 1.01.061
+================
+(Made by ChrisM,  06/03/2002)
+
+1)	MarkCa
+	1)	Extended T_PWSTR to test E32 fix CAN-579MLN.
+
+2)	CarlosF
+	1)	Changes to T_SERIAL to introduce a new test to test the configurable power
+		down timeout feature introduced on the serial driver LDD.
+
+Version 1.01.060
+================
+(Made by MarkCa,  15/01/2002)
+
+1)	RobertJ
+	1)	Fixed e32test\win32\usbrflct\posusb\brutus_pos.inf
+		[SYMBIAN] section had a missing ']'.
+		Removed references to 'ER6.2'
+	2)	Renamed brutus_pos.inf to symbian_pos.inf
+
+2)	Carlosf
+	1)	Fixed FRS-54YG25 T_SERIAL fails on Assabet.
+
+Version 1.01.059
+================
+(Made by MichaelP, 20/11/2001)
+
+1)	RobertJ
+	1)	Modified e32test\win32\usbrflct\posusb\brutus_pos.inf
+		to use official vendor id
+
+2)	MarkCa
+	1)	Updated T_ATADRV to unlock the secure area when it is run on
+		drive e:.
+
+3)	CarlosF
+	1)	Fixed MOU-543FVR HAL attribute ECaseSwitch returns wrong value for Assabet.
+		The following files were modified:
+		\e32test\pccd\t_lfsdrv.cpp.
+		Fixed FRS-534EWW T_SERIAL fails on Assabet. The following files were
+		modified:
+		\e32test\device\t_serial.cpp.
+
+Version 1.01.058
+================
+(Made by Dennis,  26/10/2001)
+
+1)	MarkCa
+	1)	Moved some definitions from P32MMC.H into T_PWSTR.CPP because it can
+		only be included into ASSP-specific builds.  See \e32\release.txt.
+	2)	Updated T_MMCDRV to print read position only every 32k to speed up test.
+
+2)	JonM
+	1)	Added tests to T_TIME to verify defects FER-4XGDVT and FER-4XDK9G
+
+3)	CarlosF
+	1)	Fixed MOS-53LEVN t_lfsdrv uninitialised var on WINS.
+
+4)	Pete
+	Migrated the fixes for the following 6.1 defects:
+	1) Fixed SCE-534FSY "Serial power handling tests disabled in T_SERIAL"
+		- Renabled the power handling tests and modified them to conform to the
+		serial driver 'idle off' power scheme.
+	2) Fixed PAS-4WRMQS "Requeing a read() after PowerOn Panics the Driver/Kernel"
+		- Added tests to T_PCCD1 for the new KPccdConfigOverrideNormalPwrEvents option
+		now supported by the PC Card Controller function:
+		DPcCardController::RequestConfig().
+
+	3) Fixed MAY-4ZGH8S: "t_serial shoots itself in the foot, and can never pass".
+
+Version 1.01.057
+================
+(Made by ChrisM,  05/10/2001)
+1)	ChrisM
+	1)	Fixed ROS-4Y3CUU (T_MATH and T_FLOAT rely on the compiler generating denormal constants)
+		Defined the denormals used in the test in t_vals.h.  Removed redundant repeated code in t_vals.h
+	2)	Fixed MOS-52BH6B (t_math loop problem)
+
+2)	Pete
+	1)	Removed example device driver PDD - SEROMAWD.PDD.
+	2)	Removed T_MEDCH and D_MEDCH.
+	3)	Removed T_BEXFIQ and D_BEXFIQ.
+	4)	Removed T_EXTFIQ and D_EXTFIQ.
+	5)	Removed T_CRMDRV and T_CRRDRV
+
+Version 1.01.056
+================
+(Made by Pete, 06/08/2001)
+
+1)	MarkCa
+	1)	Moved T_PWSTR from f32test to e32test.  F32 API tested by T_MMC.
+
+2)	Pete
+	1) 	Removed \e32test\group\mnt.bat which was redundant.
+	2)	Fixed PSCE-4YTR5G "Update SEROUT example driver":-
+		Improved the power handling in the example driver SEROUT.LDD - making
+		it more representative of other device drivers.
+		Modified the driver so that it supports 19200bps+9600bps rather than
+		9600bps+300bps (together with corresponding changes to the test program
+		T_SEROUT).
+		Removed simulation of emergency power down from the driver and test.
+		Modified test program so that during the XON/XOFF test it runs until a
+		key is pressed rather than running for a fixed period of time. 
+		Modified test program so it unloads the Brutus PDD rather than the Cogent
+		PDD at the end. 
+	3) 	Added new tests for functions TBusLocalDrive::SetMountInfo() and 
+		TBusLocalDrive::ForceRemount() to T_MEDDRV.EXE. Corresponding changes to
+		MEDT1.PDD and MEDT2.PDD which now require the correct
+		mount info descriptor to be supplied before opening.
+
+3)	TimBa
+	1)	Added tests for folding of Latin extension characters to T_MATCH
+
+Version 1.01.055
+================
+(Made by Michael, 21/06/2001)
+
+1)	MichaelP
+	1)	Added and modified files for the MHELEN ASSP base port.
+
+2)	MarkCa
+	1)	Fixed test programs t_atadrv and t_mmcdrv to work with e32 fixes
+		for EDNHLJT-4WZGTD and EDNHAAO-4WZFYR.
+	2)	Added debug password notifier tests to t_mmcpw.
+
+Version 0.01.054
+================
+(Made by Carlos, 31/05/2001)
+
+1)	Tim Band
+	1)	T_Char can now check the graphical/printable attributes. Tests have
+		been added to check the assigned private use area characters.
+	2)	T_Match has now more stringent checks on matching folded, and tests
+		new internal functions for matching folded.
+	3)	Indic vowel swapping tests have been removed, as collation no longer
+		has this functionality.
+
+Version 0.01.053
+================
+(Made by Pete, 10/05/2001)
+
+1)	Pete
+	1)	Minor change to T_PCCD3 to allow it to be re-run. Prior to
+		this, it passes the first time run but then subsequently fails
+
+2)	Nicolas
+	1)	Added T_PROC3.EXE to test RProcess::GetMemoryInfo().
+	2)	Modified T_DEBUGGER and T_DEBUGGEE_1 to test the validity of the
+		text section base address provided by RDebug.
+
+Version 0.01.052
+================
+(Made by Nicolas, 04/05/2001)
+
+1)	Nicolas
+	1)	Merged 6.1 release branch back into the mainline.
+
+Version 0.01.051
+================
+(Made by Dennis, 20/04/2001)
+
+1)	William
+	1)	Corrected cases where delete was used on pointers obtained with new[] - these
+		should use delete[] instead. This only affects T_ARRAY, and was picked up by the
+		CodeWarrior compiler which handles new and new[] differently.
+2)	Morgan
+	1)	Added T_SILENT to test 'silent running' functionality
+	2)	Updated all tests that call UserHal::SwitchOff() to turn the screen back on
+
+
+Version 0.01.050
+================
+(Made by RobertJ, 26/03/2001)
+
+1)	MarkCa
+	1)	Removed media change tests from t_atadrv for l7200.
+	2)	Added more thorough checking of multi-block reads to t_mmcdrv.
+	3)	Increased WINS PDD name buffer size for t_dtenot.
+
+2)	Dennis
+	1)	In test T_CPER defer all printing until after the timing-critical phase.
+	2)	T_TIMER doesn't test power off on IQ80310.
+
+Version 0.01.049
+================
+(Made by Morgan, 08/03/2001)
+
+1)	Dennis
+	1)	Added test program T_CP0 to test the XScale DSP coprocessor.
+	2)	Added test program CRASH to crash the system and get it into the
+		crash monitor.
+	3)	Modified test T_PS to use default screen size instead of hardcoded
+		78*18. This fixes defect HAS-4TVQ6D (T_PS crashes Brutus).
+	4)	Modified test T_WWINS to take account of the screen size when setting
+		up windows. This is part of the fix for HAS-4U7N92.
+
+Version 0.01.048
+================
+(Made by Carlos, 20/02/2001)
+
+1)	Nicolas
+	1)	Fixed defect EDNJHAS-4MKF4J (T_KILLER support test fails) by
+		implementing suggested fix.  Also fixed two bugs preventing the test
+		to run on WINS.
+	2)	Adding test case in T_SHADOW to verify code patching (following
+		defect EDNNTHY-4PMKJW).
+	3)	D_SHADOW.LPP now flushes caches after modifying shadow pages.
+
+2)	Carlos
+	1)	Fixed T_DTENOT for Assabet (see comments in t_dtenot.cpp)
+	2)	Modified T_SERIAL for Assabet (see comments in t_serial.cpp)
+
+Version 0.01.040
+================
+(Made by Morgan, 09/04/2001)
+
+1)	Jonathan
+	1)	Fixed BRM-4V3E23 "T_NAME Colourful language".
+
+2)	Pete
+	1)	Fixed EDNPSCE-4K9MZJ "T_PCCD3 panics on Brutus"
+
+Version 0.01.039
+================
+(Made by Nicolas, 27/02/2001)
+
+1)	MarkCa
+	1)	Removed media change tests from t_atadrv for l7200.
+	2)	Added more thorough checking of multi-block reads to t_mmcdrv.
+	3)	Increased WINS PDD name buffer size for t_dtenot.
+
+2)	Dennis
+	1)	Modified test T_PS to use default screen size instead of hardcoded
+		78*18. This fixes defect HAS-4TVQ6D (T_PS crashes Brutus).
+	2)	Modified test T_WWINS to take account of the screen size when setting
+		up windows. This is part of the fix for HAS-4U7N92.
+
+3)	Markdo
+	1)	Modified romutil.mke so that D_DRVIF and D_PCCDIF ldds are build
+		into rom for cogent.
+
+
+Version 0.01.038
+================
+(Made by Markdo, 07/02/2001)
+
+1)	Alastair
+	1)	Added test to check the fix for EDNTBAD-4Q8M2F
+		"CBufSeg can leak memory" works.
+
+2)	Nicolas
+	1)	Fixed defect EDNJHAS-4MKF4J (T_KILLER support test fails) by
+		implementing suggested fix.  Also fixed two bugs preventing the test
+		to run on WINS.
+
+
+Version 0.01.037
+================
+(Made by Pete, 19/01/2001)
+
+1)	Morgan
+	1)	Added test code for RMessagePtr::IsNull to T_MESSGE
+
+
+Version 0.01.036
+================
+(Made by RobertJ, 13/12/2000)
+
+1)	Alastair
+	1)	Added new test, t_thread2, because t_thread was becoming quite big.
+		Currently this test just checks that deadlock doesn't occur when a
+		thread suspends itself.
+
+2) Morgan
+	1)	Disabled serial logging over time critical parts of T_CPER for
+		platforms with slow serial devices
+
+3) Dennis
+	1)	Fixed defect EDNRFID-4PXFJ8 (Not enough output in T_Y2K).
+
+Version 0.01.035
+================
+Made by Nicolas, 19/10/2000
+
+1) Pete 
+	1)	Disabled T_PCCD1, T_PCCD2 and T_PCCD3 in WINS builds
+		since WINS is now built with an MMC Peripheral bus controller rather
+		than an PC Card MMC Controller. (These tests will be
+		re-enabled in WINS when multiple Peripheral Bus Controllers are
+		supported).
+
+Version 0.01.034
+================
+Made by MarkCa, 29/09/2000
+
+1)	Jonathan
+	1)	Adjusted MMP files to match E32 301 include file re-org.
+
+2)	MarkCa
+	1)	Added MLNK to list of platforms supported in bld.inf.
+
+Version 0.01.033
+================
+Made by Dennis, 13/09/2000
+
+1) William
+	1) Modified T_FUNC, T_LEX, T_TIME and T_BUF to get rid of GCC warnings 
+	   "decimal integer constant is so large that it is unsigned". The fix is
+	   to put the "u" qualifier on the constants involved.
+
+Version 0.01.032
+================
+Made by Alastair, 2/8/2000
+
+1)	Alastair
+	1)	Completed fix to EDNCMOS-4M8F52 "t_thread undertaker test failure".
+
+
+Version 0.01.031
+================
+Made by RobertJ, 20/7/00
+
+1) Morgan
+	1) Added locale specific test code to to T_LEX
+
+2) AlastairB
+	1) Fixed EDNCMOS-4M8F52 "t_thread undertaker test failure"
+	2) Fixed EDNCMOS-4M8FDR "t_euniw fails if logged on as a user"
+
+3) Dennis
+	1) Modified T_CPER to print the times at which the locked timers expire.
+	2) Modified T_INACT and T_TIMER to test that inactivity timers are
+		unaffected by system time changes.
+
+Version 0.01.030
+================
+Made by Morgan, 5/7/00
+
+1) RobertJ
+	1) Modified t_fir2 to be more rigorous. Now writes the sent length into
+	the first 2 bytes of the buffer so that the receiver can see if the
+	correct length was received. Also modified text menus, added a nominal
+	1ms delay and changed 2051 bytes option to 2042 so that 2051 is covered
+	at the upper limit of the test. Text report now shows the number of frames,
+	the number of errors and the error %ge
+
+	
+Version 0.01.029
+================
+Made by Bob 29-06-2000
+
+1) Pete
+	1) Modified serial tests so that it is possible to open
+	a channel on Com4 for Brutus. Changes to:-
+			- T_SERIAL
+			- T_MODEM1
+			- T_COMMSK
+			- T_DCEUTL
+
+Version 0.01.028
+================
+Made by Dennis 22-06-2000
+
+1) Morgan
+	1)	Removed nasty hacky memory snoopoing from T_CALIB
+
+2) Graham Asher
+	1)	Changes to T_BUF and T_CHAR to test TDesC16::MatchC.
+ 
+
+Version 0.01.027
+================
+(Made by MarkCa, 16/05/00)
+
+1)	Pete
+	1)	Modifications to T_SERIAL and T_DTENOT to allow it to
+		work with PCMCIA serial ports.
+	2)	Updated T_MODEM1 and removed T_MODEM2.
+
+2)	Alastair
+	1)	Fixed EDNABRY-4K2LQA
+		 "Test t_tdll fails under WINS"
+	2)	Fixed EDNABRY-4K2LBC
+		 "Test T_Messge failing under WINS UDEB"
+
+Version 0.01.026
+================
+(Made by Morgan, 7/4/2000)
+
+1)	Alastair
+	1)	Fixed EDNABRY-4JHLV3
+		 "Test T_Thread failing intermittently under WINS UDEB"
+
+
+Version 0.01.025
+================
+(Made by Morgan, 14.04.2000)
+
+1)	Pete
+	1) 	Removed calls of UserPcCardCntrl::PwrDown();
+	2) 	Modified serial tests so that it is possible to
+		overide the default serial port designated to be used
+		by that test by supplying a serial port number on the
+		command line:-
+			- T_SERIAL p1 p2
+			- T_MODEM1 p1
+			- T_COMMSK p1
+			- T_DCEUTL p1
+
+2)	Nicolas
+	1)	Removed T_DBG and T_BREAK.  application debugging tests are
+		now in F32TEST because F32 is needed to copy support
+		files to the RAM-drive.
+		
+3)	MarkCa
+	1)	\E32TEST\WINDOW\T_MMCPW.CPP: no longer tests that
+		KMaxMediaPassword % 4 == 0.
+		
+4)	Morgan
+	1)	Copied k32snd.* and d32snd.* from \e32\include into e32test
+		so the sound test programs build.  These files are no longer
+		exported from E32
+
+5)	Alastair
+	1)	Updated t_euniw test to cope with CreateMutex() and OpenMutex().
+
+
+Version 0.01.024
+================
+(Made by Robert, 17/03/00)
+
+1)	Morgan
+	1)	Added User::ResetInactivityTime tests to T_TIMER.CPP
+
+2)	MarkCa
+	1)	\E32TEST\WINDOW\T_MMCPW.CPP: minor change to password notifier
+		test routine.
+
+Version 0.01.023
+================
+(Made by MarkCa, 03/03/00)
+
+1)	MarkCa
+	1)	Minor changes to T_SEROUT.
+	2)	Added T_MMCPW.CPP to test new password notifier.
+
+2)	Petes
+	1) 	Alterations to T_MODEM2 to work with CF card serial
+		port on Brutus.
+
+
+Version 0.01.022
+================
+(Made by Pete, 24/02/00)
+
+1)	Pete
+	1) 	Change to T_COMMSK to work with MAWD CF card modem driver.
+	2)	Completed T_DCE test program to test DCE Serial driver on
+		Cogent.
+	3)	Exteneded T_DTENOT to cover signal change notification for
+		each of the CTS/DSR/DCD signals becoming MARK or SPACE.
+		Test now passes on WINS,MAWD,MISA,MEIG,MCGA.
+
+2)	Robert
+	1)	Added Slow IR test T_SLOWIR
+
+
+Version 0.01.021
+================
+(Made by Dennis, 14-02-2000)
+
+1)	Dennis
+	1)	Replaced most UserHal:: calls with corresponding HAL:: calls (if they
+		exist).
+
+2)	Mark
+	1)	Added T_EUNIW to test unicode wrapper functions in EUNIW.DLL.
+
+3)	MarkCa
+	1)	Added T_SEROUT test program to test SEROMAWD.PDD, SEROWINS.PDD and
+		SEROUT.LDD in EXAMPLE dir.
+
+4)	Pete
+	1) 	Further changes to T_MODEM2 to work with MAWD CF card modem driver.
+
+
+Version 0.01.020
+================
+(Made by Simon, 03-02-2000)
+
+1)	Pete
+	1) 	Modified T_MODEM2 to work with MAWD CF card modem driver.
+	2)	Modified T_DCE to take into account Cogent Serial PDD re-org.
+
+2)	Simon
+	1)	Replaced '/e32/inc' paths with '/epoc32/include /epoc32/include/kernel' in
+		a number of mmp files.
+
+Version 0.01.019
+================
+(Made by Dennis, 19/01/00)
+
+1)	Alastair
+	1)	Removed ARM3 and MARM targets from BLD.INF.
+	2)	Minor fix to T_EXC so that it works under WINC.
+	2)	Minor change to T_WBC to format test output correctly.
+
+2)	Pete
+	1)	Changes due to the removal in E32 of the classes
+		TLocalDrive, RLogicalChannel, RDevComm.
+
+1)	Dennis
+	1)	Removed tests for functions which no longer exist.
+	2)	Changed T_BUF, T_R32 and T_FLOAT to use TRealX instead of TReal96.
+	3)	Added chkstk.obj to T_FLOAT so it works on WINS.
+	4)	Removed T_R96 since TReal96 no longer exists.
+	5)	Temporarily removed T_R64 since it made extensive use of TReal96 and
+		simply changing over to TRealX doesn't work since the extra precision
+		of TRealX makes the tests fail. What is really needed is a set of test
+		vectors for TReal64.
+	6)	Increased stack size for T_BUF to 12K.
+
+
+Version 0.01.018
+================
+(Made by Peter, 21st December 1999)
+
+1) Pete
+	1)	Added T_DTENOT to test DTE serial driver change notifiers.
+	2)	Added T_DCE and T_DCEUTL to test DCE serial driver.
+
+Version 0.01.017
+================
+(Made by Morgan, 3/12/99)
+
+1)	Dennis
+	1)	Fixed T_MESSGE problem caused by different panic code following IPC
+		changes.
+	2)	Modified tests so they can run from any drive, not just Z:. This
+		basically involved removing explicit references to Z: - we use
+		RProcess().FileName() to determine the path instead.
+	3)	Added test program T_WBC to test that write back cache is flushed
+		when memory is unmapped.
+	4)	Changed T_SVR3 and T_SVR6 to support since they don't terminate.
+
+2) Morgan
+	1)	Added T_CLI to test RProcess::CommandLine()
+
+Version 0.01.016
+================
+(Made by Simon 25-11-1999)
+
+1)	Chris
+	1) Changed t_fir2 to test config and added t_fir.
+
+2)	Pete
+	1)	Added T_MMCDRV.
+
+3)	Alastair
+	1)	Fixed minor typo in T_BMA.
+
+
+Version 0.01.015
+================
+(Made by Morgan, 26/8/99)
+
+1)	Alastair
+	1)	Added E32SDRV.PDD and E32SOUND.LDD, previously part of
+		E32.
+	2)	Added new keywords to various .MMP files so that .IBY files can be
+		generated by ABLD TEST ROMFILE, also added extension makefile
+		GROUP\ROMSTUFF.MKE.
+	3)	Fixed WINS compilation problem in PCCD\T_PCCD3.CPP.
+	4)	Added extension makefile GROUP\ROMUTIL.MKE, to incorporate required
+		executables from E32UTILS into ROMS.  This is a temporary measure and
+		should be undone once the executables in question are moved from
+		E32UTILS into E32TEST.
+
+2)	Pete
+	1)	Changes to T_PCCD3 to allow it to work on Brutus.
+
+3)	Chris
+	1)	Added TestContiguousAllocation() to t_bma to test
+		ImpMmu::RemoveRamPages().
+	2)	Added t_fir2.
+	3)	Tidied up T_Serial. Tested for Wins and Brutus.
+
+4)	Dennis
+	1)	Fixed structure packing problems in T_FARRAY with new GCC.
+		Use 4-character arrays instead of 3 in the offending code.
+	2)	Modified T_TLDD and D_LDD to test initialisation of .bss.
+	3)	Various fixes to T_TPARSE.
+	4)	Fixed operator precedence errors in T_TPARSE, T_ATADRV,
+		T_ATDRV2, T_CRRDRV, T_IDRV, T_CHNOT.
+	5)	Added __SWITCH_TO_ARM macros to some tests so that they can build
+		for THUMB.
+
+5)	Morgan
+	1)	Renamed t_fircon2.cpp to (8.3) t_firco2.cpp
+
+
+Version 0.01.014
+================
+(Made by Alastair, 2.8.1999)
+
+
+1)	Alastair
+	1)	Added ARMI, ARM4 and THUMB platforms to BLD.INF file.
+
+
+Version 0.01.013
+================
+(Made by Dennis, 13.7.1999)
+
+1)	Alastair
+	1)	Added dopcvs.pl and lock.pl to GROUP directory for use with MNT.BAT.
+
+2)	Dennis
+	1)	Modified T_MESSGE, T_ARRAY to work with new GCC/THUMB.
+	2)	Added tests to T_BUF to test variable precision TDes::Format() and
+		precision applied to strings.
+	3)	Modified MMP files for T_CALIB, T_COLOUR, T_PS, T_WJPWIN, T_WSIMP
+		and T_WWINS to link against EWSRV.LIB instead of ECONS.LIB.
+	4)	Removed tests of the form (boolean expr)==TRUE from T_R96.CPP.
+	5)	Changed checked panic category in T_TRAP from USER-Plat to
+		USER-Arch.
+	6)	Took updated version of T_CHAR from Graham Asher to match new unicode
+		collation scheme.
+	7)	Changed status of some tests to 'support'.
+
+
+Version 0.01.12
+================
+(Made by Alastair, 9.6.99)
+
+1)	Malcolm
+   	1)	Moved the *.rel files to e*.rel to match e32 and f32
+		\group\*.rel
+		\group\e*.rel
+
+2)	Pete
+	1) 	Modification to T_PCCDSK to allow the soak test buffer size to be input
+		in units of a sector. Prior to this, the buffer size had to be input in
+		units of 1Kbyte, with 8K being the largest size.
+	2) 	Modified T_ATADRV - added additional tests to verify the operation of the
+		functon TBusLocalDrive::Format(TInt aPos,TInt aLength). This allows just part
+		of a disk to be formatted and was added to E32-181.
+	3)	Added the new test program T_LFSDRV.CPP to test the LFS media driver on
+		WINS/Brutus.
+	4)	Added general media driver test T_MEDDRV and two associated media drivers
+		- MEDT1.PDD and MEDT2.PDD.
+
+
+3)	Alastair
+	1)	Changed zips of releasables put onto the network. There is now one zip
+		file for each platform containing full \Epoc32 paths to each item.
+		There is also a zip file for exported header files.  Hence, the contents
+		of S:\e32test\zip includes wins.<ver>, meig.<ver>, misa.<ver>, marm.<ver>
+		mawd.<ver> and winc.<ver>.
+		The files within these zip files now also have full pathnames so ensure
+		you unzip them into the root of your EPOC drive with any flags required
+		to recreate the directory structure.
+		Added new command, MNT CHECKREL, to check that all releasables are
+		present before doing an MNT PUTREL.
+		Before doing MNT CHECKREL or MNT PUTREL call BLDMAKE -v RELFILES to
+		create the lists of releasables.
+	2)	Changed D_LDDNS.MMP and added BMARM\D_LDDNS.DEF to avoid new
+		makmake warnings arising from LDD targettypes having the wrong second
+		uid specified.
+	3)	Replaced all B[plat].PRJ files for use with BLDMAKE with BLDMAKE.PRJ in
+		accordance with ER5u bldmake changes.  No MAWD or SARM tests are now
+		built in addition to the MARM tests - there doesn't seem to be any need
+		since the __MAWD__ and __SINGLE__ macros haven't been used anywhere to
+		build the test differently from the old standard MARM build.  Where
+		tests do behave differently according to the h/w platform, if they do,
+		then this should be tested at runtime and the behaviour of the test
+		changed accordingly.
+	4)	Removed superseded \E32TEST\GROUP\RUN.BAT.
+	5)	Removed the batch files used for running tests.  These batch files are
+		now created by BLDMAKE in \Epoc32\Bldmake\E32test\[platform]\, and are
+		now called AUTO.BAT and MANUAL.BAT.
+	6)	ETIMR and T_DEVC have been moved into this project from E32.
+	7)	Removed all *.REL files from GROUP directory and changed MNT.BAT so that
+		MNT PUTREL looks for .REL files generated by BLDMAKE instead.  Updated
+		BLDMAKE.PRJ accordingly.
+	8)	Changed #defines in the following files now that __MEIG__ is being used
+		to mean __MARM__ and __MARM__ is being used to mean ARM CPU:
+			SYSTEM\T_EXC.CPP, SYSTEM\T_DBG.CPP. 
+	9)	Updated MNT GETBLD to fetch the SDMODELS component which replaces the
+		SWINS component that E32 used to release.
+	10)	Added the following .DEF files:-
+			BWINS\
+				D_TLSDLL.DEF, T_DLL.DEF, T_DLL1.DEF, T_DLL2.DEF,
+				T_START1.DEF, T_START2.DEF, T_START3.DEF, T_DUID.DEF,
+			BMARM\
+				T_DLL.DEF, T_DLL1.DEF, T_DLL2.DEF, T_DLLA1.DEF, T_DLLA3.DEF,
+				T_START1.DEF, T_START2.DEF, T_START3.DEF, T_DUID.DEF
+	11)	Added \EPOC32\INCLUDE\KERNEL\ as a systeminclude path to those .MMP
+		files requiring it.
+	12)	Specified EKERN.LIB as an ASSPLIBRARY in those .MMP files requiring it.
+
+
+Version 0.01.11
+================
+(Made by Jonathan, 23rd February 1999)
+
+0)	Everyone
+	1)	Boilerplated source.
+
+1)	Dennis
+	1)	Commented out tests in T_REALX involving assigning a NaN from a float
+		or double to a TRealX in MSVC builds. This is because MSVC insists on
+		passing the NaN through the X86 FPU which quietens the NaNs and causes
+		the tests to fail.
+
+2)	Morgan
+	2)	Added test to check that switch-off is disabled for 5 seconds before
+		an alarm is due.
+
+3)	Jonathan
+	1)	Withdrew T_RTIM test.
+	2)	Made T_DBG build for MAWD as well as MARM. MAWD version doesn't
+	  	contain assumptions about Eiger registers.
+
+
+Version 0.01.10
+================
+(Made by Jonathan, 10th February 1999)
+
+1)	Jonathan
+	1)	Conditioned compilation of functions in T_PROT related to
+	  	instruction exceptions on __EPOC32__ to prevent WINS/C warnings and
+	  	fixed cast in ExceptionThread() to keep MSVC compiler happy.
+
+2)	Morgan
+	1)	Updated T_TLDD.
+	2)	Added D_LDDNS.LDD which is an LDD with dodgy UID's.
+
+3) 	Pete
+	1) 	Modified BMAWD.PRJ to remove EIGER specific test programs.
+
+
+Version 0.01.09
+================
+(Made by Pete, 3rd February 1999)
+
+1)	Morgan
+	1) 	More tests in T_TDLLA to test calling of Dll entrypoints with
+		EProcessAttach and EThreadAttach
+	2)	Added case switch on/off test
+
+2)	Dennis
+	1)	Updated T_PROT.CPP to test that data abort, prefetch abort and
+		undefined instruction exceptions in user mode all result in
+		KERN-EXEC 3 panics rather than killing the kernel.
+
+3)	Jonathan
+	1)	Added new tests to T_DBG to check that RDebug::ReadMemory and
+	  	RDebug::WriteMemory return errors (and don't panic the kernel -
+	  	problem EDN671244) when reading/writing to/from unmapped address
+	  	space.
+
+4)	Pete
+	1)	Changed over to use the TBusLocalDrive class rather than TLocalDrive
+		for local drive access. This in turn required converting calls to
+		TBusLocalDrive::Caps() to take a TLocalDriveCapsBuf parameter rather
+		than a TLocalDriveCaps.
+	2)	Added T_ATDRV2.CPP to test TLocalDrive class specifically.
+
+
+
+Version 0.01.08
+================
+(Made by Morgan, 27th January 1999)
+
+1)	Dennis
+	1)	Modified T_SOUND.CPP so it can be run on a Snowdrop.
+
+
+Version 0.01.07
+================
+(Made by Pete, 21st December 1998)
+
+1)	Alastair
+	1)	Updated D_PATCH*.MMP to specify KPatchLddUid as third uid, in line with
+		changes to F32 version 123.
+	2)	Moved T_LDLL to F32TEST.
+	3)	Minor modifications to MNT.BAT.
+	4)	Minor change to T_REALX to avoid VC5 compilation problem.
+
+2) Morgan
+	1)	Killed SARMBE
+
+3) Pete
+	1) 	Modified T_PCCD1, T_PCCD2, T_PCCD3 to work with E32UTILS 025.
+	2)  	Removed a call to a UserPcCardCntrl function which was removed from
+		EUSER in E32-158. (The call was already redundant since the function
+		has been withered for a while).
+	3) Released MAWD releasables.
+
+
+Version 0.01.06
+================
+(Made by Jonathan, 27th October 1998)
+
+1) Dennis
+	1)	Added code from Andrew Thoelke to T_DES.CPP to test compiler-generated
+		literal descriptors.
+
+2)	Alastair
+	1)	Updated .MMP files so that UNICODE builds are available in line with 
+		UNICODE changes to E32TOOLP 095.
+
+
+Version 0.01.05
+================
+(Made by Morgan, 21st October 1998)
+
+1)	Alastair
+	1)	Changed WINS T_SERIAL.CPP to link to a new dll,
+		D_TLSDLL.DLL, the entrypoint of which sets thread local storage.
+		This will test whether the deadlock problem described by
+		Epoc Proposal SW1 - 19 is avoided.  T_SOUND.CPP should link to
+		this in the future.
+	2)	Changed all the .rel files so that they specify T_DUID.DLL
+		rather that non-existent T_DUID.EXE.
+	3)	Removed T_ARRAY from AWINC.BAT since it isn't built or
+		released under WINC.
+	4)	Turned off just-in-time debugging in T_THREAD.CPP and T_PROC1.CPP where these
+		tests panic threads and then check their status in WINS debug builds.
+		Now that code jumps into the debugger whenever a thread is panicked (E32 152),
+		rather than just whenever a thread is panicked with RThread::Panic(),
+		these tests would have jumped into the debugger rather than completing successfully.
+
+2)	Malcolm
+	1)	Added new test program:
+			T_Y2K.EXE - tests the Year 2000 compliance of E32
+
+
+Version 0.01.04
+================
+(Made by Pete, 20/08/1998)
+
+1) Dennis
+	1)	Added new test programs:
+			T_ARRAY.EXE - tests new RArray<> classes
+			T_MWAIT.EXE - tests core clock and memory access speeds
+			T_PROF.EXE - retrieves and displays thread profiling information
+			D_PROF.LDD - LDD for use with T_PROF.EXE
+			T_CTXSW.EXE - measures raw context-switch speed (not message passing)
+			T_PAGES.EXE - dumps all MMU page tables to serial port
+			T_PANIC.EXE - prints out a threads context when it dies
+	2)	Modified T_CHUNK to test RChunk::IsReadable() and RChunk::IsWritable().
+	3)	Added another test to T_MATH2.CPP to test the accuracy of Math::Mod() using
+		the Java IEEERemainder test vector data.
+
+2) Morgan
+	1) Turned off just in time debugging in T_THREAD, T_MESSGE, and T_EXC
+	2) Massaged T_TDLL.CPP for Dll MODULE_HANDLE changes
+
+3) Matthew
+	1)	Turned off just-in-time debugging in T_SOUND, and removed WINS test which
+		is only valid when the driver does dummy recording.
+	2)	Added test to T_SOUND to check that memory allocated in prepare functions
+		is recoverable.
+	3)	Changed T_SOUND so that it passes (with warnings) on hardware which
+		doesn't support all possible capabilities.
+	4)	Switched off just-in-time debugging in T_TIMER.
+
+4) Petteri
+	1) Changed .mmp files D_LDLL, D_RTIM, T_DLLA1 and T_DLLA3
+
+5)	Alastair
+	1)	Changed t_reset test so that it checks that 3 dummy patch ldds
+		are reloaded after a warm reset.  Added dummy patch ldds D_PATCH1.SYS,
+		D_PATCH2.SYS and D_PATCH3.SYS.
+	2)	Minor changes to T_SVR.CPP, T_MSTIM.CPP to remedy compilation
+		warnings.
+	3)	Change to T_CHUNK2.CPP for !WINC builds to allow for E32 change in total
+		RAM size to 64Mb under WINS in E32 141.
+	4)	Updated T_CHAR.CPP to take account of Graham Asher's changes to E32 141.
+	5)	Fixed MNT GETSRC so that it handles version numbers correctly.
+	6)	Minor corrections to T_THREAD.CPP.
+
+6)	Peter
+	1)	Added T_PCCDSR to PCCD. This is a program for
+		repeatly writing to a fixed number of sectors on a CF card - to test
+		if the wear leveling scheme on the card causes any problems.
+	2)	Modified T_PCCD1.CPP,T_PCCD2.CPP and T_PCCD3.CPP to
+		use D_PCCDIF.LDD for accessing the PC Card Contoller rather than
+		UserPcCardCntrl.
+	3)	Modified T_CRMDRV.CPP to use D_DRVIF.LDD for direct
+		access of the media device rather than UserPcCardCntrl.
+	4)	Modified T_PCCDSK.CPP to use
+		UserSvr::ForceRemountMedia() rather than UserPcCardCntrl::PwrDown();
+	5) 	Added further tests to T_ATADRV - testing reads and writes 
+		which are longer than the media drivers local buffer 
+		- particularly required after the changes to the ATA
+		media driver in E32-143.
+
+
+Version 0.01.03
+================
+(Made by Graham, 26th March 1998)
+
+1) Morgan
+	1) Added T_TLDD and D_LDD to test LDD static data.  EPOC only.
+	2) Modified Dll static data tests (T_TDLLA).  Added MiniRomLoader
+	   and reload tests.
+
+2) Alastair
+	1) Changed MNT.BAT to retrieve E32TOOLS 091 and E32TOOLP 091.
+
+3) Matthew
+	1) Changes Test6() and Test8() in T_COBJ to use less stack and
+	   hence build on WINS/WINC without __chkstk errors.
+
+	2) Changed D_RTIM and D_BEXFIQ interrupt binding to use narrow
+	   descriptors, in order to work with E32 127 and higher.
+
+	3) Removed User::After(999999) from T_CHNOT, to speed it up. This
+	   wait is not needed, since midnight-crossover changes now happen
+	   earlier than they used to.
+
+	4) Changed T_CHUNK2 so that it did something more sensible on WINC,
+	   where the concept of "free ram" is different.
+
+	5) Changed T_REGRAM so that is disables auto switch-off while running.
+
+	6) Fixed a few incorrect tests in T_THREAD.
+
+
+Version 0.01.02
+================
+(Made by Jonathan, 10th February 1998)
+
+1) Alastair
+	1) Changed t_sec.cpp to test new security function for E32.  The
+	   function will only be tested if the version of E32 being used
+	   supports the new function, so that the new version of t_sec.cpp
+	   will still work with old versions of E32.
+
+2) Petteri
+        1) Added the test program T_COLOUR to test the new
+           colour text window server.
+
+3) Graham
+        1) Reoved kernel heap checking fro a number of tests. We need
+           to rethink our strategy for this since the current system
+           is clearly broken
+
+        2) Removed superfluous operator attendance from T_TIMER,
+           T_COBJ.
+
+        3) Added AMARM.BAT, AWINS.BAT, etc which run all the
+           automatic tests fro a given platform.
+
+
+Version 0.01.01
+================
+(Made by Graham, 23rd January 1998)
+
+E32TEST contains those test programs which used to be a part of E32
+
+1)  Some renaming:
+     drvbench -> t_pccdbm, drvsoak -> t_pccdsk and more
+
+2)  Known problems:
+     t_svr2 fails due to heap debugging code errors on MARM
+     t_cobj won't compile for WINS - needs stack use reducing
+	 t_tdll,t_rtim and t_irqs seem to fail
+
+
+

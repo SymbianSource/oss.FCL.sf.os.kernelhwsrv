@@ -1,0 +1,14 @@
+# component name "Compiler Runtime Support"
+
+# Copyright (c) Symbian Software Ltd 2005-2007. All rights reserved.
+
+component  base_e32_compsupp
+
+source	\sf\os\kernelhwsrv\kernel\eka\compsupp
+binary	\sf\os\kernelhwsrv\kernel\eka\compsupp all
+exports	\sf\os\kernelhwsrv\kernel\eka\compsupp
+
+notes_source	\component_defs\release.src
+
+
+ipr D 

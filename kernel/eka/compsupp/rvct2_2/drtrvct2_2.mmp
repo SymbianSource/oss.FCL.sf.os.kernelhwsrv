@@ -1,0 +1,27 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include "drtrvct2_2_common.mmh"
+
+TARGET 			drtrvct2_2.dll
+START ARMCC
+#ifdef MARM_ARMV5
+ARMLIBS			f_t_p.l
+#else
+ARMLIBS			f_a_p.l
+#endif
+END
+
+unpagedcode

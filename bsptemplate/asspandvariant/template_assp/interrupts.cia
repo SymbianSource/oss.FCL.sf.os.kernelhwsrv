@@ -1,0 +1,93 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template\template_assp\interrupts.cia
+// Template ASSP interrupt control and dispatch
+// 
+//
+
+#include <template_assp_priv.h>
+
+__NAKED__ void TemplateInterrupt::IrqDispatch()
+	{
+	// IRQ dispatcher
+	// Enter with r0-r3, r12 and return address on IRQ stack
+	// Must preserve r4-r11
+
+	// for the moment, use bit number as priority
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("ldr r4, __KTemplateIntCtrlBase ");
+	asm("ldr r5, __Handlers ");
+	asm("dispatch_irq: ");
+	asm("ldr r12, [r4, #%a0]" : : "i" ((TInt)KHoInterruptsIrqPending));		// r12=IRQ pending register
+	asm("cmp r12, #0 ");
+	asm("ldmeqfd sp!, {r4-r6,pc} ");										// no more pending, so finish
+	asm("mov r3, #31 ");
+	asm("cmp r12, #0x00010000 ");
+	asm("movcc r12, r12, lsl #16 ");
+	asm("subcc r3, r3, #16 ");
+	asm("cmp r12, #0x01000000 ");
+	asm("movcc r12, r12, lsl #8 ");
+	asm("subcc r3, r3, #8 ");
+	asm("cmp r12, #0x10000000 ");
+	asm("movcc r12, r12, lsl #4 ");
+	asm("subcc r3, r3, #4 ");
+	asm("cmp r12, #0x40000000 ");
+	asm("movcc r12, r12, lsl #2 ");
+	asm("subcc r3, r3, #2 ");
+	asm("cmp r12, #0x80000000 ");
+	asm("subcc r3, r3, #1 ");												// r3=bit no. of MS 1
+	asm("add r0, r5, r3, lsl #3 ");											// r0=address of SInterruptHandler
+	asm("adr lr, dispatch_irq ");											// return to dispatch_irq
+	asm("ldmia r0, {r0,pc} ");												// (*iIsr)(iPtr);
+	}
+
+__NAKED__ void TemplateInterrupt::FiqDispatch()
+	{
+	// FIQ dispatcher
+	// Enter with return address on FIQ stack
+	// We may use r8-r12, but must preserve other registers
+	// for the moment, use bit number as priority
+	// NOTE: STACK MISALIGNED ON ENTRY (1 WORD PUSHED)
+	asm("stmfd sp!, {r0-r3,lr} ");
+	asm("ldr r8, __KTemplateIntCtrlBase ");
+	asm("ldr r9, __Handlers ");
+	asm("dispatch_fiq: ");
+	asm("ldr r12, [r4, #%a0]" : : "i" ((TInt)KHoInterruptsFiqPending));		// r12=FIQ pending register
+	asm("cmp r12, #0 ");
+	asm("ldmeqfd sp!, {r0-r3,pc} ");										// no more pending, so finish
+	asm("mov r3, #31 ");
+	asm("cmp r12, #0x00010000 ");
+	asm("movcc r12, r12, lsl #16 ");
+	asm("subcc r3, r3, #16 ");
+	asm("cmp r12, #0x01000000 ");
+	asm("movcc r12, r12, lsl #8 ");
+	asm("subcc r3, r3, #8 ");
+	asm("cmp r12, #0x10000000 ");
+	asm("movcc r12, r12, lsl #4 ");
+	asm("subcc r3, r3, #4 ");
+	asm("cmp r12, #0x40000000 ");
+	asm("movcc r12, r12, lsl #2 ");
+	asm("subcc r3, r3, #2 ");
+	asm("cmp r12, #0x80000000 ");
+	asm("subcc r3, r3, #1 ");												// r3=bit no. of MS 1
+	asm("add r0, r9, r3, lsl #3 ");											// r0=address of SInterruptHandler
+	asm("adr lr, dispatch_fiq ");											// return to dispatch_fiq
+	asm("ldmia r0, {r0,pc} ");												// (*iIsr)(iPtr);
+
+	asm("__KTemplateIntCtrlBase: ");
+	asm(".word %a0" : : "i" ((TInt)KHwBaseInterrupts));
+	asm("__Handlers: ");
+	asm(".word %a0" : : "i" ((TInt)&TemplateInterrupt::Handlers[0]));
+	}
+

@@ -1,0 +1,51 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+//#NAME: autotest NAND, nandloader component
+// depends on the nandtest_test being built first (it includes it)
+
+#define BASE_ROM
+#define NANDLOADER_ROM
+#define NANDLOADERTEST_ROM
+#include <rom\##VARIANT##\header.iby>
+
+#ifdef WITH_EXTENSION
+#undef WITH_EXTENSION
+#endif
+#ifdef WITH_ROFS
+#undef WITH_ROFS
+#endif
+#ifdef WITH_COMP
+#undef WITH_COMP
+#endif
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+data=\epoc32\rom\##VARIANT##\quicknandz.bat			\autoexec.bat
+
+#if defined(LMNAND2) || defined(_NAND2)
+file=\Epoc32\Release\##MAIN##\##BUILD##\NANDLOADER_UNISTORE2.EXE	\nandloader\NANDLOADER.EXE
+#else
+file=\Epoc32\Release\##MAIN##\##BUILD##\NANDLOADER.EXE			\nandloader\NANDLOADER.EXE
+#endif
+
+data=\epoc32\rom\core.img		 \core.img
+data=\epoc32\rom\rofs1.img		 \rofs1.img

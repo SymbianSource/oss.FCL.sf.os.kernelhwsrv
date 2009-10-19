@@ -1,0 +1,51 @@
+Todo:
+=====
+Last updated by Pete 20/05/99
+
+A) API changes
+==============
+
+1) TLocalDrive::Caps should be const - JS
+2) RFs::DismountFileSystem(TInt aDrive); - JS/PDS
+3) ChangeMode should return KErrInUse and have the same api as 
+fileopen - JS
+4) Remove iDrive member from RRawDisk - JS
+5) Remove RFs::IsRomAddress() function as it duplicates
+functionality of User::IsRomAddress() - JS
+
+B) Features:
+============
+1) List filesystems that have been added in order to remove them - JS
+2) Move over throughout F32 to using TInt64 rather than TInt to
+specify disk position - PDS
+3) Add emulated LFS drive (W: ???) in WINS - PDS
+4) Review/enhance system by which file systems are associated with drives
+(ie proper support for file systems other than FAT/ROM). See also A.2 - PDS
+
+C) Optimisations:
+=================
+
+D) Test code:
+=============
+1) Alloc heaven checking for the fileserver and systems - JS
+2) Test out of disk space on adding a directory entry - JS
+3) Review implementation of T_APPINS and T_NOTIFY asynchronous
+requests - PDS 
+
+E) Known bugs:
+==============
+1) The implementation of Seek address in WINS does not re-use a memory
+mapped file - JS
+2) While adding entries to a directory causes it to expand, deleting does
+not contract - JS
+3) A directory may be deleted while an RDir is open on it - JS
+4) 32Mb Internal RAM drive is broken - PDS
+5) Review defered ER5 defects - PDS
+6) Fix warnings in WINS/WINC build
+
+
+F) Omissions:
+=============
+1) Make root directory arbitrary size - JS
+2) Fileserver should operate asynchronously - JS
+

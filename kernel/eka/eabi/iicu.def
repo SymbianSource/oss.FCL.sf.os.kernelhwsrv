@@ -1,0 +1,14 @@
+EXPORTS
+	_ZN17DIicBusController16RegisterChannelsEPP14DIicBusChanneli @ 1 NONAME
+	_ZN17DIicBusController17DeRegisterChannelEP14DIicBusChannel @ 2 NONAME
+	_ZN20TIicBusSlaveCallback7DfcFuncEPv @ 3 NONAME
+	_ZN6IicBus14CaptureChannelEiP5TDes8P20TIicBusSlaveCallbackRii @ 4 NONAME
+	_ZN6IicBus14ReleaseChannelEi @ 5 NONAME
+	_ZN6IicBus15StaticExtensionEjjPvS0_ @ 6 NONAME
+	_ZN6IicBus16QueueTransactionEiP18TIicBusTransaction @ 7 NONAME
+	_ZN6IicBus16QueueTransactionEiP18TIicBusTransactionP15TIicBusCallback @ 8 NONAME
+	_ZN6IicBus16RegisterRxBufferEi5TPtr8aaa @ 9 NONAME
+	_ZN6IicBus16RegisterTxBufferEi5TPtr8aaa @ 10 NONAME
+	_ZN6IicBus17CancelTransactionEiP18TIicBusTransaction @ 11 NONAME
+	_ZN6IicBus22SetNotificationTriggerEii @ 12 NONAME
+

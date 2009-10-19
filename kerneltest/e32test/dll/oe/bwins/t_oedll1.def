@@ -1,0 +1,24 @@
+EXPORTS
+	??0CMessenger@@AAE@AAVCConsoleBase@@@Z @ 1 NONAME ; CMessenger::CMessenger(class CConsoleBase &)
+	??1CMessenger@@UAE@XZ @ 2 NONAME ; CMessenger::~CMessenger(void)
+	??_ECBase@@UAE@I@Z @ 3 NONAME ; CBase::~CBase(unsigned int)
+	??_ECMessenger@@UAE@I@Z @ 4 NONAME ; CMessenger::~CMessenger(unsigned int)
+	?ConstructL@CMessenger@@AAEXABVTDesC16@@@Z @ 5 NONAME ; void CMessenger::ConstructL(class TDesC16 const &)
+	?NewLC@CMessenger@@SAPAV1@AAVCConsoleBase@@ABVTDesC16@@@Z @ 6 NONAME ; class CMessenger * CMessenger::NewLC(class CConsoleBase &, class TDesC16 const &)
+	?ShowMessage@CMessenger@@QAEXXZ @ 7 NONAME ; void CMessenger::ShowMessage(void)
+	?bar@@YAHXZ @ 8 NONAME ; int bar(void)
+	_Environ @ 9 NONAME
+	_HandPtr @ 10 NONAME
+	_HandleTable @ 11 NONAME
+	__aborting @ 12 NONAME
+	__console_exit @ 13 NONAME
+	__cs @ 14 NONAME
+	__global_destructor_chain @ 15 NONAME
+	__stdio_exit @ 16 NONAME
+	_doserrno @ 17 NONAME
+	environ @ 18 NONAME
+	myfoo @ 19 NONAME
+	?uid@@3UTEmulatorImageHeader@@A @ 20 NONAME ; struct TEmulatorImageHeader uid
+	??_7CMessenger@@6B@ @ 21 NONAME ; const CMessenger::`vftable'
+	??_7CBase@@6B@ @ 22 NONAME ; const CBase::`vftable'
+

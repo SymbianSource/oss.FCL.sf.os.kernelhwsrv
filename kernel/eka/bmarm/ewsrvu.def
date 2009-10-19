@@ -1,0 +1,33 @@
+EXPORTS
+	Write__8RConsoleRC7TDesC16 @ 1 NONAME ; RConsole::Write(TDesC16 const &)
+	ClearToEndOfLine__8RConsole @ 2 NONAME ; RConsole::ClearToEndOfLine(void)
+	Code__C11TConsoleKey @ 3 NONAME ; TConsoleKey::Code(void) const
+	Control__8RConsoleRC7TDesC16 @ 4 NONAME ; RConsole::Control(TDesC16 const &)
+	Create__8RConsole @ 5 NONAME ; RConsole::Create(void)
+	CursorPos__C8RConsoleR6TPoint @ 6 NONAME ; RConsole::CursorPos(TPoint &) const
+	Destroy__8RConsole @ 7 NONAME ; RConsole::Destroy(void)
+	GetPaletteEntry__8RConsoleUiRUcN22 @ 8 NONAME ; RConsole::GetPaletteEntry(unsigned int, unsigned char &, unsigned char &, unsigned char &)
+	Init__8RConsoleRC7TDesC16RC5TSize @ 9 NONAME ; RConsole::Init(TDesC16 const &, TSize const &)
+	Modifiers__C11TConsoleKey @ 10 NONAME ; TConsoleKey::Modifiers(void) const
+	MousePos__C11TConsoleKey @ 11 NONAME ; TConsoleKey::MousePos(void) const
+	Panic__F13TConsolePanic @ 12 NONAME ; Panic(TConsolePanic)
+	ReadCancel__8RConsole @ 13 NONAME ; RConsole::ReadCancel(void)
+	Read__8RConsoleR11TConsoleKey @ 14 NONAME ; RConsole::Read(TConsoleKey &)
+	Read__8RConsoleR11TConsoleKeyR14TRequestStatus @ 15 NONAME ; RConsole::Read(TConsoleKey &, TRequestStatus &)
+	ScreenSize__C8RConsoleR5TSize @ 16 NONAME ; RConsole::ScreenSize(TSize &) const
+	SetCursorHeight__8RConsolei @ 17 NONAME ; RConsole::SetCursorHeight(int)
+	SetCursorPosAbs__8RConsoleRC6TPoint @ 18 NONAME ; RConsole::SetCursorPosAbs(TPoint const &)
+	SetCursorPosRel__8RConsoleRC6TPoint @ 19 NONAME ; RConsole::SetCursorPosRel(TPoint const &)
+	SetMode__8RConsole10TVideoMode @ 20 NONAME ; RConsole::SetMode(TVideoMode)
+	SetPaletteEntry__8RConsoleUiUcUcUc @ 21 NONAME ; RConsole::SetPaletteEntry(unsigned int, unsigned char, unsigned char, unsigned char)
+	SetSize__8RConsoleRC5TSize @ 22 NONAME ; RConsole::SetSize(TSize const &)
+	SetTextAttribute__8RConsole14TTextAttribute @ 23 NONAME ; RConsole::SetTextAttribute(TTextAttribute)
+	SetTextColors__8RConsoleUiUi @ 24 NONAME ; RConsole::SetTextColors(unsigned int, unsigned int)
+	SetTitle__8RConsoleRC7TDesC16 @ 25 NONAME ; RConsole::SetTitle(TDesC16 const &)
+	SetUIColors__8RConsoleUiUiUi @ 26 NONAME ; RConsole::SetUIColors(unsigned int, unsigned int, unsigned int)
+	SetWindowPosAbs__8RConsoleRC6TPoint @ 27 NONAME ; RConsole::SetWindowPosAbs(TPoint const &)
+	Size__C8RConsoleR5TSize @ 28 NONAME ; RConsole::Size(TSize &) const
+	Type__C11TConsoleKey @ 29 NONAME ; TConsoleKey::Type(void) const
+	Version__8RConsole @ 30 NONAME ; RConsole::Version(void)
+	ClearScreen__8RConsole @ 31 NONAME ; RConsole::ClearScreen(void)
+

@@ -1,0 +1,77 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+TARGET 			t_drtaeabi.dll
+
+TARGETTYPE		dll
+
+#if defined ARMCC_2_1
+SOURCEPATH		../../../kernel/eka/compsupp/rvct2_1
+#elif defined ARMCC_2_2
+SOURCEPATH		../../../kernel/eka/compsupp/rvct2_2
+#elif defined ARMCC_3_1
+SOURCEPATH		../../../kernel/eka/compsupp/rvct3_1
+#endif
+SOURCE			aeabidiv0.cpp
+SOURCE			drtaeabi.cpp
+SOURCE			type_info.cpp
+
+USERINCLUDE	../../../kernel/eka/include
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+SOURCEPATH		../../../kernel/eka/compsupp/symaehabi
+SOURCE			symbian_support.cpp
+SOURCE			symbian_rtti.cpp
+SOURCE			unwinder.c
+SOURCE			unwind_pr.c
+SOURCE			cppsemantics.cpp
+
+SOURCEPATH		../cppexceptions
+SOURCE			export_internals.cpp
+
+// we're building a runtime support lib so we have to add the libraries we want by hand
+
+#if defined ARMCC_2_1
+LIBRARY 		euser.lib dfpaeabi.lib dfprvct2_1.lib drtrvct2_1.lib
+#elif defined ARMCC_2_2
+LIBRARY 		euser.lib dfpaeabi.lib dfprvct2_2.lib drtrvct2_2.lib
+#elif defined ARMCC_3_1
+LIBRARY 		euser.lib dfpaeabi.lib dfprvct3_1.lib drtrvct3_1.lib scppnwdl.lib
+#endif
+
+START ARMCC
+ARMRT // we're building a runtime support lib so suppress all the default libraries
+ARMINC
+// we want the 'pure' versions to go with softvfp
+#if defined ARMCC_3_1
+    #ifdef MARM_ARMV5
+    ARMLIBS     c_5.l h_5.l cpprt_5.l
+    #else
+    ARMLIBS     c_4.l h_4.l cpprt_4.l
+    #endif
+#else
+    #ifdef MARM_ARMV5
+    ARMLIBS		c_t__un.l cpprt_t__u.l
+    #else
+    ARMLIBS		c_a__un.l cpprt_a__u.l
+    #endif
+#endif
+END
+
+capability		all
+vendorid		0x70000001
+
+
+SMPSAFE

@@ -1,0 +1,7 @@
+EXPORTS
+Init @ 1 NONAME
+FunctionCount @ 2 NONAME
+CallFunction @ 3 NONAME
+SetClose @ 4 NONAME
+Function0Addr @ 5 NONAME
+FunctionNAddr @ 6 NONAME

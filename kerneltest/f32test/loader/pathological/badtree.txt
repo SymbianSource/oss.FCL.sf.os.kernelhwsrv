@@ -1,0 +1,49 @@
+# Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the License "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+# \f32test\loader\pathological\badtree.txt
+# 
+#
+
+# Copyright (c) 2003 Symbian Ltd. All rights reserved.\n";
+#
+# Description file for trees of DLLs and EXEs used for ROMBUILD error testing.
+#
+
+
+# EXE linking to EXE
+
+Exe0		X R		: Dll1
+
+Dll1		R		: Dll2 Dll3
+Dll2		R		: Dll4
+Dll3		R		: Exe1
+Dll4		R
+
+Exe1		X R		: Dll5
+Dll5		R
+
+# EXE linking to 2 other EXEs
+
+Exe2		X R		: Dll6
+Dll6		R		: Exe0
+
+# DLL linking to 2 EXEs
+
+Exe3		X R		: Dll10
+Dll10		R		: Exe3
+
+Dll7		R		: Dll8 Dll9
+Dll8		R		: Dll10
+Dll9		R		: Dll3
+

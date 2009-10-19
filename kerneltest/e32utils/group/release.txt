@@ -1,0 +1,1377 @@
+Version 2.00.1137
+=================
+(Made by Vino Jose   14/08/2009)
+
+1.	OliverStuart
+	1.	MINOR_CHANGE [System Build]: Missing distribution.polocy.s60 files
+
+Version 2.00.1136
+=================
+(Made by Vino Jose   07/08/2009)
+
+
+1.	OliverStuart
+	1.	DEFECT FIX: DEF141411: [BFC]: Warnings in BFC build "SYSTEMINCLUDE path not found" 
+
+Version 2.00.1135
+=================
+(Made by Vino Jose   05/08/2009)
+
+
+1.	OliverStuart
+	1.	DEFECT FIX: DEF141390: [System Build]: SBS Errors "source of export not found" in GT stage
+
+Version 2.00.1134
+=================
+(Made by Vino Jose   03/08/2009)
+
+
+1.	SaravanaAttiyappagounder
+	1.	DEFECT FIX: DEF140935: UID(3) allocation for Setcap.exe
+
+
+Version 2.00.1133
+=================
+(Made by Vino Jose   14/07/2009)
+
+1.	NeilClifford
+	1.	DEFECT FIX: DEF140960: WDP Image fails with BOOTFAULT: 594d555d @ line 234 while booting
+
+
+
+
+Version 2.00.1132
+=================
+(Made by Vino Jose   10/07/2009)
+
+1.	ChrisN
+	1.	MILESTONE: SymTB9.2, GT0419, MS3.36, DS.1815 PREQ2621 System Architecture Relocating header files - K&HS support
+
+Version 2.00.1131
+=================
+(Made by VincentF 26/06/2009)
+
+1	HenryGrant
+	1.	DEFECT FIX: DEF137080: BFC failed due to missing rebootdrv.h 
+
+2.	OliverStuart
+	1.	MINOR CHANGE: CR1970: Adding missing S60 distribution files and correcting IDs.
+	2.	MINOR CHANGE: CR1994: Updating incorrect copyright headers.
+
+Version 2.00.1130
+=================
+(Made by indrajeetsingh 27/11/2008)
+
+1	JenniferH
+	1.	DEFECT FIX: DEF130431: NAND core loader has unguarded print statements
+2.	OliverStuart
+	1.	MINOR CHANGE: CR1970: Setting correct IDs on S60 distribution policy files.
+	2.	MINOR CHANGE: CR1994: Replacing Symbian copyright notices with SF notices.
+
+Version 2.00.1129
+=================
+(Made by DaveGordon 12/11/2008)
+
+1.	DmitryL
+	1.	DEFECT FIX: DEF129769 usbmsapp doesn't respect the original filesystem mounted on the drive
+
+
+Version 2.00.1128
+=================
+(Made by DeleOgunjumelo 06/10/2008)
+
+1.	bhaskarreddy
+	1.	DEFECT FIX: DEF128359: usb bootloader hangs when given a delay 
+
+
+Version 2.00.1127
+=================
+(Made by indrajeetsingh 26/08/2008)
+
+1.	RichardCo
+	1.	DEFECT FIX: DEF126617: btrace will kern-exec 0 when dumping over serial 
+
+
+Version 2.00.1126
+=================
+(Made by VincentF 19/08/2008)
+
+1.	VincentF
+	1.	DEFECT FIX: DEF126482: distribution.policy mismatchs with ipr in base_e32utils
+
+
+Version 2.00.1125
+=================
+(Made by ReubenH 12/05/2008)
+
+1.	LukaszF
+	1.	DEFECT FIX: PDEF122307 : d_exc logs gets deleted on UIQ devices
+
+
+Version 2.00.1124
+=================
+(Made by LukaszF 09/05/2008)
+
+1.	AttilaV
+	1. 	PDEF114174: nandloader not able to flash rofs beyond ~30MByte offset 
+
+2.	SebOlney
+	1.	DEFECT FIX: PDEF122134: Crashread fails to read large crashlogs
+
+
+Version 2.00.1123
+=================
+(Made by DmitryL 28/04/2008)
+1. 	JohnS
+	1. 	DEF120466: make_ecc_512(address_t pEccbuf, address_t pDatabuf) requires copyright banner
+
+
+Version 2.00.1122
+=================
+(Made by JohnS 20/03/2008)
+3.	JohnS
+	1.	MILESTONE: Sphinx, GT0339, MS3.1.2 DS607 PREQ 1115: Peripherals : Support FAT on <90nm flash devices (part 2)
+	2.	MILESTONE: Sphinx, GT0339, MS3.1.3 DS605 PREQ 1115: Peripherals : Support FAT on <90nm flash devices (part 3)
+
+
+Version 2.00.1121
+=================
+(Made by DmitryL 16/01/2008)
+
+1.	LukaszF
+	1. 	CHANGE REQUEST: Development CR: BBRE-79KLJQ, GT0339 Base Meteora, Peripherals: Upgrade netcards.exe to support WiFi
+
+
+Version 2.00.1120
+=================
+(Made by fabiangortz 11/01/2008)
+
+1.	MarkTa
+	1.	MINOR CHANGE: Fix typo in nandloader debug output.
+
+
+Version 2.00.1119
+=================
+(Made by RichardCo 30/11/2007)
+
+1.	NicholasC
+	1.	DEF114775: RestoreMount does not clear fatUnmountList in usbmsapp
+
+Version 2.00.1118
+=================
+(Made by MarkTa 26/09/2007)
+
+1.	MarkTa
+	1.	MILESTONE: Naiad, GT0302, MS3.5.2 DS503 PREQ308 - Defragment physical RAM.
+		Modify the btrace tool to handle fast mutex tracing.
+
+2.	MichaelP
+	1.	DEFECT FIX: DEF112166: Base's USBMSAPP doesn't delete Remote-Wakeup capability from USB Configuration
+		Base's USBMSAPP now deletes Remote-Wakeup capability from the USB Configuration descriptor 
+		so that the USB Mass Storage device can also easily be used for Chapter9 testing.
+
+
+Version 2.00.1117
+=================
+(Made by DmitryL, 11/09/2007)
+
+1.	MichaelP
+	1.	MINOR_CHANGE: Deleted file /e32utils/testusbcldd/inc/d32testusbc.inl since
+		it was not used anywhere.
+
+
+Version 2.00.1116
+=================
+(Made by ReubenH, 29/08/2007)
+
+1.	JonCo
+	MINOR_CHANGE: btrace analyser now skips junk one byte at a time, and also understands EPaging traces
+
+Version 2.00.1115
+=================
+(Made by JonCo, 15/08/2007)
+
+1.	JonM
+	1.	DEFECT FIX:  DEF110290: Various BTrace bugs Various BTrace defect fixes
+
+2.	NickC
+	1.	DEFECT FIX:  PDEF110325: Mass Storage volume spontaneously remounts on Mac OS X and ubuntu
+
+
+Version 2.00.1114
+=================
+(Made by ParameshwariB, 24/07/2007)
+1.	Yogesh Chauhan
+	1.	DEFECT FIX:  PDEF109480: Analyser does not parse symbol file correctly.
+
+Version 2.00.1113
+=================
+(Made by JohnS, 17/07/2007)
+
+1.	lukaszforynski
+	1.	DEFECT FIX:  DEF109580  Documentation: ROFS identified as XIP.
+
+
+Version 2.00.1112
+=================
+(Made by JonCo, 26/06/2007)
+
+1.	ChrisN
+	1.	DEFECT FIX:  PDEF108114  S60 3.2 emulator: netcard.exe crashing when enabling LAN connection (platform_tc
+
+Version 2.00.1111
+=================
+(Made by DjordjeK, 17/01/2007)
+
+1.	NicholasC
+	1.	DEF099681: USB mass storage changes have broken ubootldr mass storage support	
+
+Version 2.00.1110
+=================
+(Made by OlegI, 18/12/2006)
+
+1.	NicholasC
+	1.	PDEF098443: accessing MMC panics when accessed after usbmsapp/MAC connection
+	2.	PDEF098510: USB Disconnect is not handled properly in usbmsapp
+
+Version 2.00.1109
+=================
+(Made by MichaelMo, 04/12/2006)
+
+1.	RichardCo
+	1.	DEFECT FIX: PDEF098447: SSR Nandloader - need to initialise partitions to 5 to get Crash Log to work
+		Make the nandloader determine the extension FBR size correctly.
+
+
+Version 2.00.1108
+=================
+(Made by JonCo, 10/11/2006)
+
+1.	JohnS
+	1.	DEFECT FIX: PDEF095962: DP: nandloader does not flash image files automatically
+		Enhancement implements building of nandloader rom that will automatically flash 
+		NAND in a way that is of general use for demand paging testing.
+2.	MarkTa
+	1.	DEFECT FIX: PDEF097317 	Sampler.ldd will fault the kernel if its client dies
+		Stop sampler device driver panicing supervisor thread when it cleans up sampler up
+	2.	DEFECT FIX: PDEF097642: null thread systematically included in sampling profiler output
+		Make string comparison for NULL thread case insensitive
+
+
+Version 2.00.1107
+=================
+(Made by AndrewHi, 16/10/2006)
+
+1.	MarkTa
+	1.	DEFECT FIX: DEF096234: printstk.pl mis-reads ARM MAP files
+		Make script interpret size in rvct map files as decimal not hex
+
+
+Version 2.00.1106
+=================
+(Made by StefanW, 11/07/2006)
+
+1.	StefanW
+	1.	MILESTONE: Bravo GT0236, MS3.20.1 DS317 PREQ1389 CR0795 Support for >2G SD part 1
+		Updated MMCTEST and D_MMCIF to support >2G SD cards
+		Updated T_SDPARTITION for SD2.0 filesystem compliance testing
+
+Version 2.00.1105
+=================
+(Made by DmitryL, 07/04/2006)
+
+1.	OlegI
+	1.	MILESTONE: Argus GT0286, MS3.5.4 PREQ1030 Kernel support for device driver test suites
+		This completes all of the preconditions checks planned for this PREQ.
+
+Version 2.00.1104
+=================
+(Made by AndreasP, 20/03/2006)
+
+1.	AndreasP
+	1.	DEFECT FIX: DEF081194: Nandloader should autodetect NAND ROFS drive
+		Nandloader now obtains information from all drives numbered within the range of 0 and KMaxDrives.
+		The first drive that is of type KPartitionTypeRofs is the first usable ROFS drive which we are interested in.
+		If such a drive is not found then Nandloader uses testgui::KDefaultDrive (7) as before. In both cases though
+		that value gets overwritten if the -d option has been used to specify a drive number for the NAND area.
+
+Version 2.00.1105
+=================
+(Made by JonathanM, 04/01/2006)
+
+1.	DjordjeK
+	1.	DEFECT FIX: DEF074427: Profiler does not recognize iDFCs
+		Sampler's callback routine (DProfile::Sample runs in interrupt content) samples the program counter by
+		reading the first entry in the interrupt stack - at it is the next address to be executed (in either supervisor
+		or user mode) after the interrupt is completed. It then assigns that value to the current thread (obtained
+		by NKern::CurrentThread()).
+		However, when iDFC is running, the current thread in Scheduler is not updated (nor somehow marked that there is 
+		no current thread). As the consequence, each sample that comes from iDFC is assigned to the last thread running 
+		before iDFC has started.
+		With this fix, Profiler will recognize iDFCs, and assign value -1 as threadID for such samples and text
+		string "Running in iDFC" for thread name. It will also assign the sample to an 'artificial process' with ID -1
+		and set "N/A" for process name.
+	2.	DEFECT FIX: DEF075212: Profiler doesn't work with JAVA VM supporting Jazelle (MCL)
+		Profiler tool panics if an odd program counter is sampled (Jazelle code).
+		This fix clears LSB in the sample ensuring that profiler is OK.
+		As the consequence, the sample of Jazelle code from odd address will be reported as
+		the Jazelle instruction from the previous even address.
+		
+
+Version 2.00.1104
+=================
+(Made by AttilaV, 12/12/2005)
+
+1.	OlegI
+	1.	DEFECT FIX: DEF072990: CoreOs address not read from FBR in nandloader
+		Added SectionData[CoreOSImage].iStart =aFBRRecord.Start(); to CSectionData::UpdateSectionDataFromFBR() 
+		for setting the start of the CoreOS image in the case of presence of AltCoreOS
+
+
+Version 2.00.1103
+=================
+(Made by MichaelP, 15/11/2005)
+
+1.	AndrewHi
+	1.	DEFECT FIX: DEF072105: Missing the header files "nanddefs.h and var_reboot_module.h" in Epoc
+		Added export of nanddefs.h
+
+
+Version 2.00.1102
+=================
+(Made by DmitryL, 31/10/2005)
+
+1.	AndreasP
+	1.	DEFECT FIX: DEF070250: NAND Loader message is misleading.
+		CNandLoaderGui::ProcessKeyPress( ) has been modified to inform the user when the platform doesn't support Miniboot.
+
+2.	JonCo
+	1.	DEFECT FIX: DEF072344: Profiler.exe raises a PlatSec warning
+
+Version 2.00.1101
+=================
+(Made by JenniferH, 11/10/2005)
+
+1.	JonathanM
+	1.	MINOR_CHANGE: Fix test utility REBOOTDRV so that CPU state is cleaner after reboot
+
+2.	YingS
+	1.	DEF067961 USB CF - Mass Storage Class interface (Reported by USB CF)
+
+
+Version 2.00.1100
+=================
+(Made by AndreasP, 14/09/2005)
+
+
+Patch to Version 2.00.1007
+=================
+(Made by RobertJ, 05/08/2005)
+
+1.	RobertJ
+	1.	DEFECT FIX: DEF067024: [system build] GT, CBR (missing files) and ROM building errors in MCL
+		Added source files to the listing in mrp file
+
+Version 2.00.1007
+=================
+(Made by MaximK, 05/08/2005)
+
+1.	AnatolyP
+	1.	DEFECT FIX: INC064563: Printstk.pl needs to be updated to handle RVCT map files 
+		Support of RVCT-generated map-files added.
+		Because of insufficient documentation the \e32toolp\maksym\maksym.pl was used as a template for this modification.
+		Parsing of GCC-generated map-files is slightly modified to make it consistent with maksym.pl that performes the same parsing. 
+
+
+Version 2.00.1006
+=================
+(Made by DjordjeK, 05/07/2005)
+
+1.	MichaelMo
+	1.	MINOR CHANGE: Fix H2 USB bootloader so that it works under Mac OS X
+	2.	MINOR CHANGE: Refactor USB Sample Application / Bootloader code to support building 		both bootloader executable and sample application
+
+
+Version 2.00.1005
+=================
+(Made by AndrewHi, 23/06/2005)
+
+1.	StefanW
+	1.	MINOR CHANGE: Modified BLD.INF to include MMC tests (T_MMCIF.EXE and D_MMCIF.LDD)
+			      and removed an 'unreachable code' build warning from D_MMCIF.
+
+Version 2.00.1004
+=================
+(Made by CarlosF, 06/06/2005)
+
+1.	OlegI & DjordjeK
+	1.	GT0236 MS3.6: CHANGE REQUEST ALAF-68YJKY - System, GT0236 Base, Aid NAND flash/ROFS based platform 
+		performance by making the Sampling Profiler ROFS aware. (development CR)
+		 - Analyser tool upgraded to support NonXIP images.
+		 - Profiler tool now collects DCodeSeg create/delete events.
+		 - Kernel has to be built with __DEBUGGER_SUPPORT__ option to fully support profiling of non-XIP code.
+
+2.	JonCo
+	1.	DEFECT FIX: DEF062081: [Mike IPR] Distribution.policy files not in compliance with 9.1 CKL
+
+Version 2.00.1003
+=================
+(Made by MiguelB, 03/05/2005)
+
+1.	JonCo
+	1.	DEFECT FIX: DEF060454: [Mike IPR] Distribution.policy files not in compliance with 9.1 CKL
+
+
+Version 2.00.1002
+================
+(Made by AndrewHi, 09/03/2005)
+
+1)	AndrewHi
+	1.	DEFECT FIX: DEF056779  [System Build] IPR error in 03510
+	2.	DEFECT FIX: DEF056775 Base build errors in Build From Clean
+
+Version 2.00.1001
+================
+(Made by AndrewHi, 08/03/2005)
+
+1)	AndrewHi
+	1.	DEFECT FIX: DEF056688 - [System Build] CBR Errors in build 03508 - The multiple MRPs owning the same files
+	2.	DEFECT FIX: DEF056698 - [System Build] CBR error in 03509 - base_nandboot_unistore2 - The MRP base_nandboot_unistore2 does not own itself and hence gets deleted
+
+Version 2.00.1000
+================
+(Made by MichaelMo, 04/03/2005)
+
+1)	AndrewHi
+	1.	MILESTONE: Mike,GT0223,MS3.5.1 NAND Unistore II (XSR) submission (Phase 1)
+
+Version 2.00.518
+================
+(Made by DjordjeK, 21/02/2005)
+
+1)	DavidM
+	1.  	CR: RFID-66EMED - Add more trace flag fields to ROM header and increase the size of the
+		boot ROM header. Originally there were 32 kernel trace bits, there are now 256. 
+		The trace bits are now referred to via a bit number instead of a bit-mask.
+	2.  	INTERFACE CHANGE: Break Request 1322 was approved with confirmation 
+		numbers: BR1322.1, BR1322.2 & BR1322.3.
+
+2)	TonyM
+	1.	MINOR CHANGE:
+		Some improvements to the USB MS Boot loader app. Make more code variant configurable.
+
+3)	AndrewHi
+	1.	DEFECT FIX: DEF0046963 - Crashlogger isn't sufficiently configurable
+
+Version 2.00.517
+================
+(Made by CarlosF, 15/02/2005)
+
+1)	WilliamRo
+	1)	DEF055029 - Can't distinguish between EKA1 and EKA2 versions of NandLoader.exe
+
+Version 2.00.516
+================
+(Made by JonathanM, 18/01/2005)
+
+1)	MichaelMo
+	1)	DEFECT FIX: DEF052236 - netcards.exe not in epoc32\tools
+
+Version 2.00.515
+================
+(Made by DjordjeK, 08/12/2004)
+
+1)	JonathanM
+	1)	DEFECT FIX: DEF052516 - [System Build] GT Base errors found in build 03434
+		This reverts defect fix DEF052236 - netcards.exe not in epoc32\tools
+
+
+Version 2.00.514
+================
+(Made by KamranN, 06/12/2004)
+
+2)	IanivS
+	1)	Fixed DEF051807	- Memory leak in USB test LDD (testusbc.ldd) 
+
+Version 2.00.513
+================
+(Made by StefanW, 19/11/2004)
+
+1)	StefanW
+	1)	PREQ544:USB Mass Storage - Added test USB LDD for USB simulation testing.
+
+Version 2.00.512
+================
+(Made by DjordjeK, 16/11/2004)
+
+1)	DjordjeK
+	1) Added capability in crashread.mmp file
+
+Version 2.00.511
+================
+(Made by JonathanM, 26/07/2004)
+
+1)	JonathanM
+	1) Expanded SETCAP.EXE to allow Secure or Vendor IDs to be modified.
+
+Version 2.00.510
+================
+(Made by AndrewH, 06/07/2004)
+
+1)	CarlosF
+	1) Fix defect DEF045188 - Number of blocks in a nand device is assumed to be 2048
+
+Version 2.00.509
+================
+(Made by JonathanM, 26/05/2004)
+
+1) 	CiprianM
+	1)	Fixed DEF041607 - Sampling profiler crashing after 5+ min on Lubbock board 
+		with watchers running. Updated profiler.rtf to reflect these changes and
+		to make people aware of some limitations of the profiler.
+
+Version 2.00.508
+================
+(Made by CarlosF, 14/04/2004)
+
+1) JonathanM
+	1) Fixed defect DEF044235 - printstk.pl problems with Perl v5.6.1 in 7.0s
+
+Version 2.00.507
+================
+(Made by AndrewJ, 13/02/2004)
+
+1.	JonathanM
+	1.	Fix for defect DEF041507 - Sampling Profiler Not Working on Cedar
+		(this fix is a documentation update only.)
+
+2.	StephanGu
+	1.	Implemented CLCT-5VEK4P - "Binary search in ROFS 
+		together with 'expanding ROFS entries with UIDs'".
+		Changed Rofsbuild to provide a sorted array of offsets
+		in order to allow the file system to perform binary search
+		through the image.  Also expended the TRofsEntry structure
+		to include a copy of the file UID data.
+
+		Added Winsnandgen utility to facilitate easy construction
+		of emulated Nand media file for Wins.
+
+
+Version 2.00.506
+================
+(Made by StephanGu, 13/11/2003)
+
+1.	CarlosF
+	1.	Added support for NAND flash as per PREQ12 (REQ1752) NandFlash on EKA2. 
+		Added Nandloader code, modified NandFlash Media Driver and Generic side
+		of RebootDrv.
+
+
+Version 2.00.505
+================
+(Made by JonathanM, 05/08/2003)
+
+1.	Nicolas
+	1.	Propagated fix for DEF032889 - printsym.pl is very slow and can't read 
+		kernel crash debugger memory dumps.
+	2.	Propagated fix for DEF029536 - e32utils cannot build reprob.img with 
+		RVCT.  Building of reprob.img and reproc.img was already disabled in
+		Cedar, but now the binaries are stored in p4 and exported by "abld 
+		export"
+
+Version 2.00.504
+================
+(Made by JonathanM, 19/05/2003)
+
+0.	JonathanM and ChrisM
+	1.	Changes resulting from making E32 compatible with with
+		Symbian OS version 7.0
+
+1.	Nicolas
+	1.	Changed d_exc/minkda to support DKernelEventHandler.
+	2.	Fixed d_exc/minkda which was broken when kernel-side unicode 
+		support was removed.
+	3.	Fixed lifetime bug in minkda: event handler was unconditionally 
+		checking if the current thread is d_exc which is incorrect as
+		the d_exc thread may be closed before the event handler.
+	4.	Updated printsym.pl and printstk.pl so they work with the new
+		memory map (ROM base moved to 0xF8000000).
+
+Version 2.00.503
+================
+(Made by JonathanM, 14/02/2003)
+
+1.	JonathanM
+	1.	Changed SETCAP.EXE so that it can only grant capabilities which it has itself.
+
+
+Version 2.00.502
+================
+(Made by JonathanM, 20/09/2002)
+
+1.	Dennis
+	1.	Split all ARM inline assembler into separate .cia files.
+2.	JonathanM
+	1.	Add SETCAP.EXE: Makes a copy of an exe file and gives it the specified capabilities
+
+		Command line syntax:
+
+		  SETCAP source_exe capability destination_path
+
+		  source_exe         Name of an exe file ( default path z:\system\bin\ )
+		  capability         Hex value for capabilities
+		  destination_path   Name and path to copy the exe to ( defaults to c:\system\bin\ )
+
+		Notes
+
+		1.  If the source EXE is in ROM it must the a RAM executable image. I.e. its entry in
+			an OBY file must start with "data=" and not "file=". To ensure this happens by
+			using an MMP file use something like:
+
+			  ROMTARGET    // Empty ROM path means don't include normal execute-in-place file
+			  RAMTARGET \system\bin\    // Target path (in ROM) for RAM executable image
+
+		2.  The Symbian OS only allows one binary file with a given name; (the name doesn't
+			include file path or extention). This means that if you use SETCAP to make a
+			copy of a binary which is already loaded then the copy will not get loaded when
+			you come to use it; the already loaded version will be used instead. To avoid this,
+			use SETCAP to give the copy a different name. E.g. "SETCAP test.exe 1234 test2.exe"
+
+
+Version 2.00.501
+================
+(Made by Dennis, 16/08/2002)
+
+1)	Nicolas
+	1)	Added MINKDA.LDD, an example of kernel-side debug
+		agent providing minimal support for debugging.
+	2)	Introduced new version of D_EXC, the EKA1 tool used to
+		trap user-side exceptions and panics.  This version
+		uses MINKDA.  By default, it is compatible with the
+		EKA1 version but has additional features, the main one
+		being the ability to dump crash information to a
+		serial port instead of a file. Some documentation is
+		in being written but not completed yet.	 In the
+		meantime, please look at the usage comment at the top
+		of D_EXC.CPP.
+	3)	Updated printstk.pl for new D_EXC.  Its limitations are:
+		a) Map files must be in the directory from which
+		   printstk is started.	 Failing that, no symbols are
+		   displayed for non XIP binaries.
+		b) It does not deal with kernel-side exceptions as
+		   d_exc does not (yet?) dump supervisor stacks.
+
+Version 2.00.500
+================
+(Made by AndrewT, 23/05/2002)
+
+First release of EKA2 into Symbian OS mainline.
+
+
+Version 1.01.134
+================
+(Made by ChrisM, 06/03/2002)
+
+1)	PeterS
+	1)	Enabled the CF/ATA approval test program APPRVATA on SA1100 platforms.
+	
+Version 1.01.133
+================
+(Made by RobertJ, 11/02/2002)
+
+1)	MarkCa
+	1)	Updated MMCTEST / D_MMCIF to get CSD value.
+
+Version 1.01.132
+================
+(Made by MarkCa, 15/01/2002)
+
+1)	Pete
+	1) 	Re-enabled the buidling of D_PCCDIF.LDD for WINS.
+	2)	Modified D_PCCDIF.MMP and D_MMCIF.MMP for new EPBUS?.LIB.
+	3)	Modifications to PCTEST and MMCTEST so that it supports 4 rather
+		than only 2 sockets and no longer crashes on start-up if socket 0
+		isn't a PC Card socket.
+	4)	Changes to D_PCCDIF.LDD and D_MMCIF.LDD corresponding to the kernel
+		changes to support multiple Peripheral Bus Controllers.
+
+Version 1.01.131
+================
+(Made by Dennis,  26/10/2001)
+
+1)	MarkCa
+	1)	Added kernel\ASSP to SYSTEMINCLUDE for D_MMCIF so P32MMC.H can be
+		configured from MMC_CFG.H.  See \e32\release.txt.
+
+2)	Pete
+	Migrated the fixes for the following 6.1 defect:
+	1) Fixed PAS-4WRMQS "Requeing a read() after PowerOn Panics the Driver/Kernel"
+		- Added a further configuration request function to the PC Card Controller
+		test driver D_PCCDIF.LDD. This new version of the function
+		RPcCardCntrlIf::ReqConfig() takes an additonal 'TInt aFlag' parameter and
+		therefore allows the client to specify a flag setting when requesting a
+		configuration. This can be used to request a configuration with the
+		recently added KPccdConfigOverrideNormalPwrEvents setting.
+
+Version 1.01.130
+================
+(Made by ChrisM, 05/10/2001)
+
+1) 	Pete
+	1) 	Removed CROMCOPY as this is specific to MEDCRM.PDD.
+	2)	Removed CF card profile driver D_MEDAWD.CPP.
+	3) 	Removed REPRO source.
+
+Version 1.01.129
+================
+(Made by Pete, 06/08/2001)
+
+1)	Pete
+	1)	Modified pccd\d_medawd.cpp to use new media driver opening system.
+		See release note 7.4 in \e32\release.txt.
+
+Version 0.01.128
+================
+(Made by Michael, 21/06/2001)
+
+1)	MarkCa
+	1)	Modified mmctest to display CID as four words for legibility.
+
+Version 0.01.127
+================
+(Made by Nicolas, 04-05-2001)
+
+1)	Pete
+	1)	Another go at fixing build warnings in PC Card test utilities.
+
+2)	Nicolas
+	1)	Merged 6.1 release branch back into the mainline.
+
+Version 0.01.126
+================
+(Made by Dennis, 20-04-2001)
+
+1)	Pete
+	1) 	Fixed SCE-4V7SG5 "Fix warnings in E32UTILS"
+	2)	Fixed ROS-4U8NYT 'e32utils\repro should not be IPR category E'
+	3)	Fixed EDNPSCE-4K9MZJ "T_PCCD3 panics on Brutus"
+
+Version 0.01.125
+================
+(Made RobertJ, 26.03.01)
+
+1)	MarkCa
+	1)	Removed kernel trace from d_mmcif.cpp.
+
+2) 	Pete
+	1)	Fixed warnings in D_MMCIF.CPP
+
+3)	Markdo	
+	1)	D_MMCIF now build for MEIG instead of D_PCCDIF.
+
+Version 0.01.115
+================
+(Made ???, ???)
+
+1)	Pete
+	1) 	Fixed SCE-4V7SG5 "Fix warnings in E32UTILS"
+
+Version 0.01.114
+================
+(Made MarkCa, 20.03.01)
+
+1)	Pete
+	1)	Fixed ROS-4U8NYT 'e32utils\repro should not be IPR category E'
+
+Version 0.01.113
+================
+(Made by WillR, 06.03.01)
+
+1)	William
+	1)  Changed D_EXC to handle stack overflow and threads with stack but no private heap.
+	    Fixes defect ROS-4UJHR8 "D_EXC doesn't handle stack overflow"
+
+Version 0.01.112
+================
+(Made RobertJ, 13.12.00)
+
+1)	William
+	1)  Changed the way that printstk.pl uses charconv, so that it works with the
+	    revised Perl version. This also generates a narrow text version of the 
+	    d_exc_NNN.txt file as a side-effect.
+	2)  Removed old PVCS support scripts
+
+2)	Pete
+	1)  Switched over to 16Mb version of REPROC.
+
+Version 0.01.111
+================
+(Made Nicolas, 31.10.00)
+1)	William
+	1)  Removed GDBSTUB entirely into a new component DEBUGGER_STUB
+	2)  Renamed DEXEC to be D_EXC
+
+Version 0.01.110
+================
+(Made by Nicolas, 19.10.00)
+
+1)	Pete
+	1)	Enabled building of D_MMCIF in WINS builds.
+
+Version 0.01.109
+================
+(Made by Nicolas, 10.10.00)
+
+1)	Nicolas
+	Replaced old GDBSTUB with first internal release of new GDBSTUB.
+
+Version 0.01.108
+================
+(Made by MarkCa, 29.09.00)
+
+1)	William
+	1)	More MCORE changes - fixed BLD.INF and correct a problem in D_EXC.CPP
+	2)	Tweak D_EXC to allow for MCORE having 18 registers rather than 16, and a
+		different ROM address.
+	3)	Stop building D_EXC and GDBSTUB for WINS
+
+2)	MarkCa
+	1)	Added MLNK to list of supported platforms in bld.inf.
+
+Version 0.01.107
+================
+(Made by RobertJ, 20.07.00)
+
+1)	Morgan
+	1)	Added DEXEC\printsym.pl from WillR
+
+Version 0.01.106
+================
+(Made by Markdo, 07.06.00)
+
+1)	MarkCa
+	1)	Removed TMediaPassword padding from DRVTEST.CPP (pswd encoding moved
+		to DPlatPcCardController.)  Moved automatic store tests
+		from DRVTEST to \F32TEST\SERVER\T_PWSTR.CPP.
+
+2)	Nicolas
+	1)	Changes to GDBSTUB.
+
+3)	Pete
+	1)	Fixed warnings in \PCCD.
+
+
+Version 0.01.105
+================
+(Made by Alastair, 10-03-2000)
+
+1)	Pete
+	1) 	Modified DRVTEST so it now can be used to lock or
+		unlock a removable device supporting password protection.
+
+2)	MarkCa
+	1)	Modified DRVTEST to pad passwords with 0 and added option to
+		test password store.
+
+Version 0.01.104
+================
+(Made by Dennis, 14-02-2000)
+
+1)	Dennis
+	1)	Replaced most UserHal:: calls with corresponding HAL:: calls (if they
+		exist).
+
+
+Version 0.01.103
+================
+(Made by Dennis, 19/01/00)
+
+1) 	Pete 
+	1)	Altered the test media driver for the CF card approval test
+		program (MEDAWD.PDD) so that it employs the same busy wait
+		timeout settings that the normal media driver uses. Prior to
+		this, the test media driver was timing out where the normal
+		one would have been OK.
+	2)	Altered the CF card approval test program (APPRVATA)
+		so that it logs/displays read timings and write timings separately
+		during the single sector stress test.
+	3) 	Added Jason's changes to the Brutus repro program
+		(REPROB) so that 12Mb rom images can be supported. Also changes to
+		DRAM timings to speed up memory access.
+	4) 	Added Petteri's changes to the Cirrus Logic repro program (REPROC)
+		to support the flash device used on the Cirrus CA variant.
+	5)	Added William's change to the Cirrus Logic repro program (REPROC)
+		so this now expects the file size of the main image as a 10
+		character decimal string rather than an 8 character hex. string. This
+		allows it to work with W32REPRO.
+	6)	Changes to various PC Card utilities required due to the removal of
+		the RLogicalChannel class from E32.
+
+Version 0.01.102
+================
+(Made by Pete, 21st December 1999)
+
+1)	Pete
+	1) 	Fixed a problem building CROMCOPY in MEIG
+
+Version 0.01.101
+================
+(Made by Pete, 25th November 1999)
+
+1)	Pete
+	1) 	Fixed problem building PCTEST in WINS.
+	2)	Fixed problem building MEDAWD in MAWD.
+	3)	Added MMCTEST.EXE - the MMC test utility for interrogating and
+		testing MMC cards (and an associated driver for MMAD).
+	4)	Modifications to THexDisplay class (used by DRVTEST,PCTEST and MMCTEST
+		for hex display and editor) to adjust the hex display according to the
+		screen size of the machine.
+
+2)	Alastair
+	1)	(From William) updated PRINTSTK.PL so that it does now handle the Unicode
+		text files and gets the filenames from the command line.
+	2)	Updated PCTEST, APPRVATA and MMCTEST in accordance with AndrewT's IPC
+		architecture changes.
+
+Version 0.01.100
+================
+(Made by Alastair, 14/9/99)
+
+1)	Alastair
+	1)	(From William) Added updated version of D_EXC.EXE and a Perl script,
+		printstk.pl, for decoding the output from D_EXC.EXE.
+	2)	Changed GDBSTUB.EXE so that it's built for an ABI (ARMI, etc) rather
+		than an ASSP (MAWD, etc).
+
+
+Version 0.01.041
+================
+(Made by Morgan, 26/8/99)
+
+1)	Alastair
+	1)	Added empty target "FINAL" to GROUP\REPROIMG.MKE.
+
+
+Version 0.01.040
+================
+(Made by Alastair, 2.8.99)
+
+1)	Alastair
+	1)	Removed all LI.PRJ files now that these are generated automatically.
+	2)	Added RESOURCE target to GROUP\REPROIMG.MKE.
+
+
+Version 0.01.035
+================
+(Made by Alastair, 5.7.99)
+
+1)	Alastair
+	1)	Replaced all B[plat].PRJ files for use with BLDMAKE with BLD.INF in
+		accordance with ER5u bldmake changes.  Note that this means the MARM
+		build has been replaced with MEIG.
+	2)	Removed all *.REL files from GROUP directory and changed MNT.BAT so that
+		MNT PUTREL looks for .REL files generated by BLDMAKE instead.  Updated
+		BLD.INF accordingly.
+	3)	Changed zips of releasables put onto the network. There is now one zip
+		file for each platform containing full \Epoc32 paths to each item.
+		There is also a zip file for exported header files.  Hence, the contents
+		of S:\e32utils\zip includes export.<ver>, meig.<ver>, misa.<ver>,
+		mawd.<ver>.  MEIG is the new platform name
+		for MARM just as far as the base is concerned.
+		The files within these zip files now also have full pathnames so ensure
+		you unzip them into the root of your EPOC drive with any flags required
+		to recreate the directory structure.
+		Added new command, MNT CHECKREL, to check that all releasables are
+		present before doing an MNT PUTREL.
+		Before doing MNT CHECKREL or MNT PUTREL call BLDMAKE -v RELFILES to
+		create the lists of releasables.
+	4)	Added dopcvs.pl and lock.pl to GROUP directory for use with MNT.BAT.
+	5)	Added fetcher definition file, E32UTILS.FTC, to the group directory.
+	6)	Added an MNT.VALID command.
+	7)	Changed REPROB so that REPROB.IMG is created in \EPOC32\Release\MISA\
+		rather than \e32utils\reprob.  Added REPROB.IMG to the releasables' zip
+		file for the MISA platform so there is no longer a separate REPROB zip
+		file.  Incorporated building of REPROB.IMG into the bldmake system.
+	8)	Made similar changes to REPROC as for REPROB.
+	9)	Removed various old build command files and makefiles.
+	
+
+
+Version 0.01.027
+================
+(Made by Pete, 23nd February 1999)
+
+1)	Simon
+	1)	Applied boilerplate copyright to sources.
+
+2)	Jonathan
+	1)	Replaced hard-coded instances of 'R:' in MNT.CMD with '%S%'.
+
+3)	Pete
+	1)	Changed over to use the TBusLocalDrive class rather than TLocalDrive
+		for local drive access. This in turn required converting calls to
+		TBusLocalDrive::Caps() to take a TLocalDriveCapsBuf parameter rather
+		than a TLocalDriveCaps.
+	2)	Added APPRVATA.EXE (and its associated test media driver for
+		MAWD - MEDAWD.PDD). This combines all the individual test programs
+		used when evaluating vendors ATA cards. The output is directed to
+		the serial port and is formatted in such a way that this could be
+		captured into a text file and then used as an evaluation report.
+		Part of the test involves using a timer directly to measure the card
+		busy periods during an ATA command. This is done via a media driver
+		and a separate Media Driver per platform is required (only MAWD released
+		so far).
+
+4)	Alex
+	1)	Modified Reprob to be able to download the kernel image to DRAM
+		and boot it from there (controlled by switch S21 on Brutus board).
+
+Version 0.01.026
+================
+(Made by Pete, 18th December 1998)
+1) Pete
+	1)	Now release D_DRVIF and D_PCCDIF for MISA builds.
+	2)	Fixed problem with PCTEST and DRVTEST such that they could
+		potentially request a console window larger than the available
+		screen size - leading to a panic.
+	3)	Changed UIDs of D_PCCDIF and D_DRVIF UIDs LDDs to be compatible with
+	  	E32 159.
+
+Version 0.01.025
+================
+(Made by Pete, 7th December 1998)
+1) Alastair
+	1)	Removed bld.bat, clean.bat and prepare.bat from group\li.prj.  Bldmake
+		must be run to generate these files.
+
+2) Pete
+	1) 	Modified D_DRVIF, D_PCCDIF and PCTEST to work with E32-158.
+	2)	Fixed a problem with REPROB such that the code was
+		exiting from the erase-complete polling loop to early. Up until now
+		an extra delay had been necessary after erase to cope with this.
+	3)	Changes to REPROC to support 28F160S3/28F320S3 flash devices.
+	4)	Now release D_DRVIF and D_PCCDIF for MAWD builds.
+
+
+Version 0.01.024
+================
+(Made by Dennis, 19th November 1998)
+1) Dennis
+	1)	Fixed problem with REPRO which came to light after Gator changes to
+		E32. REPRO was assuming that ETNA was mapped to linear address
+		0x58001000, i.e. one page after EIGER. Changes for Gator mean that
+		EIGER now takes up 2 pages of addresses (to cope with the extra
+		registers of the 7111 chip) and so ETNA appears at 0x58002000 instead.
+		REPRO now remaps ETNA to 0x5ED00000 so avoiding any future problems of
+		this sort.
+
+Version 0.01.023
+================
+(Made by Jonathan, 29th October 1998)
+
+1)	Alastair
+	1)	Updated .MMP files so that the LDDs in this component get the correct
+		UNICODE uids.
+	2)	Comment out REPRO and PCTEST from \E32UTILS\GROUP\BWINS.PRJ - they
+	  	didn't build under WINS and no WINS versions of anything are
+	  	released from this component anyway.
+
+2)	Jonathan
+	1)	Added new group\bldrtool.bat file to build the ReproB and ReproC
+	  	tools.
+
+
+Version 0.01.022
+================
+(Made by Dennis, 9th October 1998)
+1) Dennis
+	1)	Modified REPRO to work under unicode. The image file on D:\ must have
+		a valid DOS name.
+
+
+Version 0.01.021
+================
+(Made by Pete, 7th October 1998)
+1) Pete
+	1) Added added the following two components:-
+	- REPROB: The repro firmware for the Brutus rack. This is then blown
+	onto a flash device and installed in the rack facilitating serial 
+	repro using PREPRO.EXE (released via PTOOL/PEIGER). REPROB is released
+	separately from the rest of the E32 utilities.
+	- REPROC: The repro firmware for the Cirrus Logic rack. This,
+	together with CREPRO.EXE (released via PTOOL/PEIGER) facilities
+	serial repro. The CL-PS7111 has a boot mode whereby it automatically
+	downloads a 2K main image (serially at 9600baud) into SRAM and executes
+	it. REPROC supplies such a 2K image. REPROC then recieves the main 
+	EPOC image (serially at 115K baud) and programs it into the flash
+	devices. CREPRO.EXE is a modified version of PREPRO.EXE, which intially
+	sends the 2K image at 9600baud. REPROC is released separately from the
+	rest of the E32 utilities.
+
+Version 0.01.020
+================
+(Made by Pete, 23rd June 1998)
+1) Pete
+	1) Changed over to using MAKMAKE system.
+	2) Added D_PCCDIF.LDD and D_DRVIF.LDD which replace the UserPcCardCntrl
+	functions withered in E32-141.
+	3) Changed DRVTEST.CPP and PCTEST.CPP to use D_PCCDIF.LDD/D_DRVIF.LDD
+	rather than UserPcCardCntrl.
+
+Version 0.01.019
+================
+(Made by Dennis, 4th Dec 1997)
+
+1)	Dennis
+	Updated REPRO to work with E32 119 and later. This is required due to
+	different addresses being used for some hardware devices.
+
+Version 0.01.018
+================
+(Made by Dennis, 23rd May 1997)
+
+1) Dennis
+	1) Fixed Panic -28 problem when running repro.exe under EIKON shell. Now, if
+	   RProcess().FileName() is at the beginning of RProcess().CommandLine(), a serial
+	   repro will be done.
+	2) After reprogramming from a CF card, repro will not restart if a character is received
+	   from the serial port. It will still restart if programming via the serial port.
+	3) Removed the two superfluous trailing zeros from the progress indications.
+
+Version 0.01.017
+================
+(Made by Dennis, 21st May 1997)
+
+1) Dennis
+	Speeded up repro from CF card by reducing the rate at which the progress indications
+	are updated during programming.
+
+Version 0.01.016
+================
+(Made by Graham, 20th May 1997)
+
+1) Pete
+	Change to PCTEST to display more configuration entry information (configuration
+	register base address, configuration registers present mask and Vpp requirements).
+
+2) Dennis
+        Fixed a problem with the new repro from CF card facility if
+        the image file was fragmented and a lot of RAM was available
+        to receive that image.
+
+Version 0.01.015
+================
+(Made by Dennis, 20th May 1997)
+
+1) Dennis
+	Upgrade of REPRO to allow reprogramming from an ATA CF card. The image file
+	must be in the root directory of the D: drive. If repro is invoked with no
+	command line parameters, a standard serial repro will be performed. If repro
+	is invoked as
+			repro filename
+	then a repro will be performed from D:\filename. In addition, if repro is
+	executed directly from a CF card on reset under the name D:\SYSTEM\LIBS\EWSRV.EXE
+	then a search will be made for D:\E32ROM.IMG. If this file exists, the FLASH
+	will be reprogrammed from it, otherwise a serial repro will be done.
+
+
+Version 0.01.014
+================
+(Made by Jonathan, 9th May 1997)
+
+1) Jonathan
+	1) Gdbstub:
+		1) Uses changed RDebug interface in E32 105.
+		2) Handles gdb's normal breakpoint set/clear command (m/M) as
+		   well as Psion's hacked one (b/B). We can now use a 'vanilla'
+		   Cygnus gdb release.
+		3) Some support for debugging multiple threads. Currently
+		   #ifdefed out because needs more work.
+		4) Stub dies when debugee thread terminates or is killed.
+		5) When run in -m mode, stub doesn't call RDebug::Open until it
+		   attaches to a panicing thread => it can be happily killed.
+
+Version 0.01.013
+================
+(Made by William, May 1st 1997)
+
+1) William
+	1) Change REPRO to print shorter progress messages, improving the
+	chance of buffering complete requests in the PC uart
+	2) Change REPRO to retry block requests up to 3 times before giving
+	up and restarting from the beginning
+	3) Change REPRO so that it can be persuaded to start all over again
+	after a successful run: if it receives any characters down the
+	serial line it will start again and can be sent an entirely different
+	image, if desired.
+	4) Put #ifdef TEST_REPRO around the parts of REPRO that actually modify
+	the ROM, so that future changes can be tested more easily by building
+	a special "test REPRO". NB. This doesn't work in DEBUG builds.
+
+Version 0.01.012
+================
+(Made by Pete, April 17th 1997)
+
+1) Pete
+	1) Changes to PCTEST to request a dummy attribute memory chunk when
+	powering up a card. This stops the PC Card Controller powering down
+	the card again because no resources have been requested withing
+	the 'notlocked' timeout period.
+	2) Changes to PCTEST to support multifunction cards.
+	3) CROMCOPY no longer prompts the user for the CRom card size. This
+	is detected by the CRom(Prog) driver.
+	4) CROMCOPY no longer unloads the standard CRom driver during repro.
+	The CRom(Prog) driver now has 'high' priority and will open in 
+	preference to the standard one.
+	5) Bug in calculating the drive checksum fixed. The 16bit
+	arithmetic checksum is written in the last 2bytes of the 1st 2K page
+	of the CRom card.
+
+
+Version 0.01.011
+================
+(Made by Graham, April 16th 1997)
+
+1) Graham
+        1) Re-release with new UIDs
+
+Version 0.01.010
+================
+(Made by Graham, April 9th 1997)
+
+1) Jonathan
+        1) Small fixes to gdbstub (larger ones to follow):
+           1) With -d option, no longer waits for user input after hitting a
+              breakpoint.
+           2) Fixed memory writes which were hanging.
+2) Pete
+	1) Changes to PCTEST to display more information when viewing
+	device information tuples.
+	2) Added CROMCOPY. This can be used to write files to a CROM
+	card. It requires the CROM Programmer Media Driver (MEDCRR.PDD).
+
+	The CROM programming procedure is as follows:-
+	i) CROM cards can only be programmed on a Rack D. The rack needs
+	to be programmed with CROMCOPY.EXE and MEDCRR.PDD - use ROMCRRPD.IMG.
+	ii) With power removed, insert the target CROM card into the first
+	socket - D: and a CF card into the second socket - E:. (This requires a
+	CF card carrier to allow it to be inserted into the PC Card socket). 
+	iii) Check the 'VPPEN' switch is in the active position (DOWN). Switch the
+	'3.3V/5V' switch to the 5V position (LEFT). Switch the 'CFVPP' switch to
+	the active position (LEFT). NOTE: This last operation enables +12V to be
+	applied to the WP pin of the first socket (D:) when the rack is powered. It
+	is important that only a programable CROM card is ever present while
+	the socket is in this state. Any other type of card may be damaged.  
+	iv) Power up the rack via the DC input (6V). Power the second socket (E:) by
+	connecting a 5V/200mA supply to the +5V pin next to the '3.3V/5V' switch.
+	v) Copy the required files onto the CF card in E: via PsiWin.  
+	vi) Run CROMCOPY to perform a direct copy from the CF card to the CROM card. 
+	This operation takes 2.5min for a 2Mb card and 7.5min for a 6Mb card.
+	vii) BE SURE TO SWITCH THE 'CFVPP' SWITCH TO THE INACTIVE POSITION (RIGHT)
+	WHEN REPRO IS COMPLETE.
+
+3) Graham
+        1) Updated REPRO\BUILDARM.CMD to remove PETRAN - this is now
+           done automatically by MAKTRAN.
+
+Version 0.01.009
+================
+(Made by Graham, March 12th 1997)
+
+1) Pete
+        1) Rebuilt PCTEST for E32(091)
+	2) Changes to PCTEST to display extra page of information
+	   when viewing configuration entry tuples.
+
+Version 0.01.008
+================
+(Made by Graham, February 28th 1997)
+
+1) Graham
+        1) Updated REPRO to work with E32 090.
+
+Version 0.01.007
+================
+(Made by Graham, February 26th 1997)
+
+1) Graham
+        1) Enhanced REPRO to accomodate the upper 2Mb on Limes.
+
+Version 0.01.005
+================
+(Made by Jane, January 12th 1997)
+
+1) Rebuilt with new E32
+
+Version 0.01.004
+================
+(Made by Graham, November 28th 1996)
+
+1) SteveG
+        1) The GdbStub now gets the correct .textsize of the program
+           being debugged from RDebug - you no longer need to supply
+           the textsize using the -t option to gdbstub
+
+        2) Fixed an End() without matching Start() error when debugging
+           with the -d option
+
+2) Graham
+        1) Fixed, I think, the end of repro bug (HA-257)
+
+Version 0.01.003
+================
+(Made by SteveG)
+
+1) SteveG
+        1) Changes to gdbstub:
+
+           Code tidied up and split into two classes - was previously
+           just a load of local functions based on an example stub
+           supplied with gdb. Now much easier to maintain and add
+           new stub commands etc
+           
+           Added -d option to display debugging information in a console
+           window, showing stub commands as they are received
+
+           Added -c option which spews the size and name of all RAM chunks
+           out the serial port for capturing in a text file or similar
+
+           Added -m option to act as a monitor - running the stub with
+           the -m option will allow you to connect remotely with GDB
+           and to disassemble/examine ROM contents rather than debugging
+           a program
+
+Version 0.01.002
+================
+(Made by Graham, 26 Oct 1996)
+
+In line with E32(072) and F32(028)
+
+Version 0.01.001
+================
+(Made by SteveG, 18 Oct 1996)
+
+Separated REPRO.EXE and D_GDB.EXE from E32, as they are in fact separate
+releaseables which tend to get updated independantly of E32.
+
+1) SteveG
+        1) Added -p and -b switches to the gdb stub, to allow you to
+           select the comms port and baud rate used for debugging.
+           Defaults to port1, 19200 baud if no parameters are specified.
+           The parameters must preceed the filename of the program being
+           debugged, eg:
+
+           D_GDB -p2 -b57600 Z:\TEST\T_WWINS.EXE
+
+           D_GDB.EXE should be in z:\system\libs, and after EUSER.DLL in
+           the rom build. You can launch the stub from the E32 text shell
+           using the DEBUG command, ie:
+
+           DEBUG -b19200 z:\test\t_comms.exe
+
+           Note that GDB itself currently only runs at a maximum of 19200
+           baud, but the stub will accept upto -b115200. To run GDB at
+           19200, use:
+
+           gdb --baud 19200
+

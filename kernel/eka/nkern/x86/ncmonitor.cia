@@ -1,0 +1,46 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\x86\ncmonitor.cia
+// 
+//
+
+#include "nk_priv.h"
+#include <x86.h>
+#include <kernel/monitor.h>
+
+const TLinAddr Monitor_Leave = (TLinAddr)&Monitor::Leave;
+
+__NAKED__ void Monitor::HandleException()
+//
+// Handle an exception while the monitor is running
+//
+	{
+	// EBP points to saved exception frame
+	asm("mov ecx, dword ptr [%a0]": : "i"(&TheMonitorPtr));
+	asm("lea ecx, [ecx+%0]": : "i"_FOFF(Monitor,iExceptionInfo));
+	asm("mov eax, [ebp+%0]": : "i"_FOFF(TX86ExcInfo,iEip));
+	asm("mov ebx, [ebp+%0]": : "i"_FOFF(TX86ExcInfo,iFaultAddress));
+	asm("mov edx, [ebp+%0]": : "i"_FOFF(TX86ExcInfo,iExcErrorCode));
+	asm("mov esi, [ebp+%0]": : "i"_FOFF(TX86ExcInfo,iExcId));
+	asm("mov [ecx+0], eax");
+	asm("mov [ecx+4], ebx");
+	asm("mov [ecx+8], ecx");
+	asm("mov [ecx+12], esi");
+
+	//Monitor::Leave(KErrAbort);
+	asm("push %0": :"i"(KErrAbort));
+	asm("call %a0": :"i"(Monitor_Leave));
+	asm("add esp,4");
+	}
+

@@ -1,0 +1,32 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+#define BASE_ROM
+#define UBOOTLDR_ROM
+#include <rom\##VARIANT##\header.iby>
+
+files=
+bootbinary=\Epoc32\Release\##MAIN##\_##VARIANT##_bootloader_bootrom.bin
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\_##VARIANT##_bootldr.exe			Sys\Bin\bootldr.exe
+device[VARID]=\epoc32\release\##KMAIN##\##BUILD##\_##VARIANT##_ubootldr.ldd	Sys\Bin\ubootldr.ldd
+data=ubootldr.autoexec.bat												autoexec.bat

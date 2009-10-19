@@ -1,0 +1,64 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\arm\ncmonitor.cia
+// Kernel crash debugger - NKERN ARM specific portion
+// 
+//
+
+#include <e32cia.h>
+#include <kernel/monitor.h>
+#include "nk_priv.h"
+#include <arm.h>
+
+#ifdef __CPU_HAS_MMU
+#define __USE_CP15_FAULT_INFO__
+#endif
+
+EXPORT_C __NAKED__ void Monitor::HandleException()
+//
+// Handle an exception while the monitor is running
+//
+	{
+	asm("mov r3, r1 ");				// exception type
+	asm("ldr r0, [sp, #24] ");		// code address
+#ifdef __USE_CP15_FAULT_INFO__
+#ifdef __CPU_ARM_HAS_SPLIT_FSR
+	asm("cmp r1, #%a0 " : : "i" ((TInt)EArmExceptionPrefetchAbort));
+	asm("mrceq p15, 0, r2, c5, c0, 1");		// r2=instruction fault status
+	asm("mrcne p15, 0, r2, c5, c0, 0");		// r2=data fault status
+#ifdef __CPU_ARM_HAS_CP15_IFAR
+	asm("mrceq p15, 0, r1, c6, c0, 2");		// r1= IFAR fault address
+	asm("mrcne p15, 0, r1, c6, c0, 0");		// r1= DFAR fault address
+#else 
+	asm("mrc p15, 0, r1, c6, c0");			// r1= FAR fault address
+#endif // __CPU_ARM_HAS_CP15_IFAR
+#else
+	asm("mrc p15, 0, r1, c6, c0");			// r1=fault address
+	asm("mrc p15, 0, r2, c5, c0");			// r2=fault status
+#endif // __CPU_ARM_HAS_SPLIT_FSR
+#endif // __USE_CP15_FAULT_INFO__
+	asm("add sp, sp, #28 ");		// restore mode_abt/mode_und stack balance
+	asm("mov r12, #0xd1 ");			// back into mode_fiq
+	asm("msr cpsr, r12 ");
+	asm("ldr r12, __TheMonitorPtr ");
+	asm("ldr r12, [r12] ");
+	asm("add r12, r12, #%a0" : : "i" _FOFF(Monitor,iExceptionInfo));
+	asm("stmia r12, {r0-r3} ");		// store exc info
+	asm("mov r0, #%a0" : : "i" ((TInt)KErrAbort));
+	asm("b " CSM_ZN7Monitor5LeaveEi );
+
+	asm("__TheMonitorPtr: ");
+	asm(".word TheMonitorPtr ");
+	}
+

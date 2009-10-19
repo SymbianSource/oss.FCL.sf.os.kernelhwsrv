@@ -1,0 +1,63 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Bootstrap Shadow Memory Region Tests
+//
+
+
+/**
+@file
+
+@SYMPurpose Kernel and User library test code for the SMR Feature.
+*/
+
+
+PRJ_PLATFORMS
+
+ARMV5 
+
+#if defined(FLEXIBLE) || defined(SINGLE)
+// Multiple memory model doesn't support SMP on ARM
+ARMV5SMP
+#endif
+
+
+PRJ_TESTEXPORTS
+
+#ifndef FLEXIBLE
+../rombuild/smrtest.iby						/epoc32/rom/include/smrtest.iby
+../rombuild/smrtest1.bat					/epoc32/rom/include/smrtest1.bat
+../rombuild/smrtest2.bat					/epoc32/rom/include/smrtest2.bat
+../rombuild/smrtest3.bat					/epoc32/rom/include/smrtest3.bat
+../rombuild/smrtest4.bat					/epoc32/rom/include/smrtest4.bat
+../rombuild/smrtest_autoexec.bat			/epoc32/rom/include/smrtest_autoexec.bat
+../rombuild/smrtest_tshell.oby				/os/kernelhwsrv/kernel/eka/rombuild/smrtest_tshell.oby
+
+../rombuild/smrtest_nandldr_autoexec1.bat	/epoc32/rom/include/smrtest_nandldr_autoexec1.bat
+../rombuild/smrtest_nandldr_autoexec2.bat	/epoc32/rom/include/smrtest_nandldr_autoexec2.bat
+../rombuild/smrtest_nandldr_autoexec3.bat	/epoc32/rom/include/smrtest_nandldr_autoexec3.bat
+../rombuild/smrtest_nandldr_autoexec4.bat	/epoc32/rom/include/smrtest_nandldr_autoexec4.bat
+../rombuild/smrtest_nandldr_auto.oby		/os/kernelhwsrv/kernel/eka/rombuild/smrtest_nandldr_auto.oby
+
+../rombuild/smrtest_ne1_autotest.mbc		/os/kernelhwsrv/kernel/eka/rombuild/smrtest_ne1_autotest.mbc
+../rombuild/smrtest_ne1_production.mbc		/os/kernelhwsrv/kernel/eka/rombuild/smrtest_ne1_production.mbc	
+#endif
+
+
+PRJ_TESTMMPFILES
+
+#if !defined(WINS) && !defined(X86)
+../d_smr		support
+../t_smr		manual
+#endif
+

@@ -1,0 +1,40 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Hardware Configuration Respoitory Test Application
+//
+
+#ifndef __HCR_TEST_IBY__
+#define __HCR_TEST_IBY__
+
+
+device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\D_HCRSIM.LDD		\sys\bin\d_hcrsim.ldd
+device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\D_HCRUT.LDD		\sys\bin\d_hcrut.ldd
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_hcr.exe					\sys\bin\t_hcr.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_hcrut.exe					\sys\bin\t_hcrut.exe
+
+data=\epoc32\rom\include\hcrtest.auto.bat				\test\hcrtest.auto.bat
+
+#if defined(HCR_AUTO_ROM)
+data=\epoc32\rom\include\hcr_autoexec.bat				\autoexec.bat
+#endif
+
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\corrupt1.dat      \sys\data\corrupt1.dat	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\corrupt2.dat      \sys\data\corrupt2.dat	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\empty.dat         \sys\data\empty.dat		unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat     \sys\data\filerepos.dat	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\nandrepos.dat     \sys\data\nandrepos.dat	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat     \sys\data\hcr.dat			unpaged paging_unmovable
+
+#endif // __HCR_TEST_IBY__

@@ -1,0 +1,248 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\multiple\arm\xsched.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+#include "nk_cpu.h"
+
+#define iMState		iWaitLink.iSpare1
+
+//#define __DEBUG_BAD_ADDR
+
+#ifdef __REQUEST_COMPLETE_MACHINE_CODED__
+#if defined(_DEBUG)
+extern "C" void __DebugMsgRequestComplete(TInt a0, TInt a1, TInt a2);
+extern "C" void __DebugMsgReqCompleteWrite(TInt a0, TInt a1, TInt a2);
+#endif
+
+__NAKED__ void DThread::RequestComplete(TRequestStatus*& /*aStatus*/, TInt /*aReason*/)
+//
+// Signal this threads request semaphore.
+// Enter with system locked, return with system unlocked.
+//
+	{
+	ASM_DEBUG2(DThreadRequestComplete,r0,lr);
+	
+	asm("ldr r3, [r1] ");					// r3 points to TRequestStatus
+	asm("mov r12, #0 ");
+	asm("str r12, [r1] ");					// aStatus=NULL
+
+	asm(".global _asm_RequestComplete ");
+	asm("_asm_RequestComplete: ");
+
+#ifdef BTRACE_REQUESTS
+	asm("stmdb sp!,{r0-r3,lr}");
+	asm("mov r1,r3");
+	asm("mov r3,r2");											// arg3 = aReason
+	asm("mov r2,r1");											// arg2 = aStatus
+	asm("add r1,r0,#%a0" : : "i" _FOFF(DThread,iNThread));		// arg1 = &this->iNThread
+	asm("ldr r0,_threadReqequestCompleteTraceHeader");			// arg0 = header
+	asm("bl " CSM_ZN6BTrace4OutXEmmmm);
+	asm("ldmia sp!,{r0-r3,lr}");
+#endif
+
+	ASM_DEBUG3(RequestComplete,r0,r3,r2);
+
+	// r0 -> DThread, r3 -> TRequestStatus in user space, r2 = aReason
+	asm("ldrb r12, [r0, #%a0]" : : "i" _FOFF(DThread,iMState));
+	asm("ldr r1, __TheScheduler ");											// r1->TheScheduler
+	asm("stmfd sp!, {r4-r9} ");
+	asm("add r6, r0, #%a0" : : "i" _FOFF(DThread,iNThread));				// r6->target NThread
+	asm("ldr r4, [r1, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));		// r4->current process
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));		// r0->target process
+	asm("cmp r12, #%a0" : : "i" (DThread::EDead));	// test if iMState=EDead
+	asm("beq req_complete_dead_thread ");	// if it is, finished
+	asm("ldr r5, [r1, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));		// r5->current NThread
+
+	asm("mrc p15, 0, r7, c2, c0, 0 ");		// save TTBR0
+	asm("ldr r9, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iLocalPageDir));	// r9 -> target process page directory
+	asm("ldr r8, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r8 = target ASID
+	asm("and r12, r7, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));			// r12 = page table cache attributes
+	asm("orr r9, r9, r12 ");				// r9 = target process TTBR0 value
+	asm("mrs r12, cpsr ");					// save CPSR
+	CPSIDAIF;								// disable all interrupts
+	asm("mcr p15, 0, r12, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+	UPDATE_PW_CACHING_ATTRIBUTES(,r9);		// ERRATUM 1136_317041
+	asm("mcr p15, 0, r9, c2, c0, 0 ");		// change TTBR0
+	asm("mcr p15, 0, r8, c13, c0, 1 ");		// change ASID
+
+#if defined(__CPU_ARM11MP__)
+	// On other platforms, tha ASID change above has already flushed the branch prediction buffers 
+	asm("mcr p15, 0, r12, c7, c5, 6 ");		// flush BTAC
+#endif
+
+	asm("str r0, [r1, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+	asm("str r0, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+	asm("msr cpsr, r12 ");					// restore interrupts
+
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm(".global __magic_address_reqc ");	// NOTE: Z flag always clear here
+	asm("__magic_address_reqc: ");			// this instruction is magically immune from exceptions
+	asm("strt r2, [r3] ");					// store completion code with user permissions
+											// MAY MODIFY Z and R12
+	USER_MEMORY_GUARD_ON(,r12,r12);
+
+	asm("mrs r12, cpsr ");					// save CPSR and Z flag which indicates whether write succeeded
+	asm("ldr r2, [r4, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r2 = current process ASID
+	CPSIDAIF;								// disable all interrupts
+	asm("mcr p15, 0, r12, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+	UPDATE_PW_CACHING_ATTRIBUTES(,r7);		// ERRATUM 1136_317041
+	asm("mcr p15, 0, r7, c2, c0, 0 ");		// restore TTBR0
+	asm("mcr p15, 0, r2, c13, c0, 1 ");		// restore ASID
+
+#if defined(__CPU_ARM11MP__)
+	// On other platforms, tha ASID change above has already flushed the branch prediction buffers 
+	asm("mcr p15, 0, r12, c7, c5, 6 ");		// flush BTAC
+#endif
+
+	asm("str r4, [r1, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+	asm("str r4, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+	asm("msr cpsr, r12 ");					// restore interrupts and Z flag
+
+#ifdef __DEBUG_BAD_ADDR
+	asm("moveq r12, #0xde000000 ");
+	asm("streq r12, [r12, #0xaf] ");		//HACK-CRASH SYSTEM IF WRITE FAILED
+#endif
+
+	asm("movne r0, r6 ");					// if write OK, r0->iNThread
+	asm("req_complete_dead_thread: ");		// NOTE: Z flag set if thread dead
+	asm("ldmfd sp!, {r4-r9} ");				// restore registers whether OK or not
+	asm("movne r1, #0 ");
+	asm("bne " CSM_ZN5NKern19ThreadRequestSignalEP7NThreadP10NFastMutex );
+	asm("b " CSM_ZN5NKern12UnlockSystemEv);	// if any error, unlock system and return
+
+#ifdef BTRACE_REQUESTS
+	asm("_threadReqequestCompleteTraceHeader:");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(16,BTrace::ERequests,BTrace::ERequestComplete)));
+#endif
+	}
+#endif
+
+GLDEF_C __NAKED__ void DoProcessSwitch()
+	{
+	// Enter and return with kernel locked
+	// r0->scheduler, r3->current thread
+	// r5->old process, r9->new process
+	// Return with r2 = (r2<<8) | ASID
+	// Must preserve r0,r3, can modify other registers
+
+	// This code is optimized with the ARM1136 static branch prediction scheme in mind.
+	// Unusually, ARM1136 flushes the BTAC on every ContextID write whether it needs to 
+	// or not!  We only need to flush the prefetch if there's differing local code... -jls
+
+	asm("cmp r5, r9 ");						// check if current address space correct
+	asm("beq address_switch_done");			// skip if address space change not required
+
+	asm("mrc p15, 0, r1, c2, c0, 0 ");		// get TTBR0
+	asm("ldr r4, [r9, #%a0]" : : "i" _FOFF(DMemModelProcess, iLocalPageDir));
+	asm("and r1, r1, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));	// r1 = page table cache attributes
+	asm("str r9, [r0, #%a0]" : : "i" _FOFF(TScheduler, iAddressSpace));
+	asm("orr r4, r4, r1 ");					// r4 = new TTBR0 value
+	asm("ldr r1, [r9, #%a0]" : : "i" _FOFF(DMemModelProcess, iSelfModChunks));
+	asm("mcr p15, 0, r4, c7, c10, 4 ");		// drain write buffer before changing MMU registers (see ARMv6 specs)
+	UPDATE_PW_CACHING_ATTRIBUTES(,r4);		// ERRATUM 1136_317041
+	asm("mcr p15, 0, r4, c2, c0, 0 ");		// set TTBR0 - no TLB flush required due to ASID
+	asm("cmp r1, #0");						// do we have selfmod chunks? (probably not)
+	asm("bgt gotchunks ");					// yes, so we need to look closer (will predict not taken)
+
+	asm("address_switch_done:");
+	asm("ldr r4, [r9, #%a0]" : : "i" _FOFF(DMemModelProcess, iOsAsid));
+	asm("ldr r6, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasLinAddr)-_FOFF(DThread, iNThread)) );
+	asm("orr r2, r4, r2, lsl #8 ");			// r2 = original r2 << 8 | ASID
+	asm("cmp r6, #0");						// check if thread has an alias in place
+	asm("bne got_alias");
+	__JUMP(,lr);
+
+	// restore alias...
+	asm("got_alias:");
+	asm("ldr r7, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasPde)-_FOFF(DThread, iNThread)) );
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(TScheduler, iExtras[1]));	// Alias remap old address
+	asm("ldr r8, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasPdePtr)-_FOFF(DThread, iNThread)) );
+	asm("orr r6, r6, r4");					// put ASID into address for TLB flush later...
+	asm("eor r1, r1, r7 ");					// compare old address with pde
+	asm("cmp r1, #0x1000 ");				// if result only has perm bits, addresses were the same
+	asm("blo remap_alias ");
+
+	asm("alias_remap_done: ");
+	asm("str r7, [r8]");					// restore PDE for alias
+	
+	CACHE_MAINTENANCE_PDE_PTE_UPDATED(r8);
+	
+#ifdef __CPU_ARMV7
+	UTLBIMVA(r6);
+	ARM_DSBSH;
+	ARM_ISBSY;
+#else
+	FLUSH_DTLB_ENTRY(,r6);					// flush TLB for aliased page
+#endif
+	__JUMP(,lr);
+
+	asm("remap_alias: ");
+	asm("ldr r7, [r0, #%a0]" : : "i" _FOFF(TScheduler, iExtras[2]));	// Alias remap new address
+	asm("orr r7, r1, r7 ");					// r1 has perm bits, left over from xor above
+	asm("b alias_remap_done ");
+
+	asm("gotchunks: ");
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(TScheduler, iExtras[0]));	// address of last selfmod process
+	asm("cmp r1, r9");						// was it whoever's next up? (probably)
+	asm("beq address_switch_done");
+	asm("mcr p15, 0, r4, c7, c5, 4 ");		// prefetch flush before returning
+#ifdef __CPU_HAS_UNFLUSHED_BTB
+#ifdef __CPU_ARMV7
+	BPIALL;
+#else
+	FLUSH_BTB(,r1);							// flush the dynamic branch predictor table
+#endif
+#endif
+	asm("str r9, [r0, #%a0]" : : "i" _FOFF(TScheduler, iExtras[0]));	// update it 
+	asm("b address_switch_done");
+
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	};
+
+/**
+Restore the address space of the current thread so it matches its owning process.
+*/
+__NAKED__ void DMemModelThread::RestoreAddressSpace()
+	{
+	asm("ldr r12, __TheScheduler ");										// r12->TheScheduler
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r3->current NThread
+	asm("ldr r0, [r3, #%a0]" : : "i" (-_FOFF(DThread,iNThread)+_FOFF(DThread,iOwningProcess)));		// r0->process
+
+	// switch address space to process r0...
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iLocalPageDir));// r1->process page directory
+	asm("mrc p15, 0, r2, c2, c0, 0 ");		// get TTBR0
+	asm("and r2, r2, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));	// r2 = page table cache attributes
+	asm("orr r1, r1, r2 ");					// r1 = new TTBR0 value
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r2 = ASID
+	CPSIDAIF;								// disable all interrupts
+	asm("mcr p15, 0, r2, c7, c10, 4 ");	// drain write buffer before changing MMU registers (see ARMv6 specs)
+	UPDATE_PW_CACHING_ATTRIBUTES(,r1);		// ERRATUM 1136_317041
+	asm("mcr p15, 0, r1, c2, c0, 0 ");		// change TTBR0
+	asm("mcr p15, 0, r2, c13, c0, 1 ");		// change ASID
+	
+#if defined(__CPU_ARM11MP__)
+	// On other platforms, tha ASID change above has already flushed the branch prediction buffers 
+	asm("mcr p15, 0, r2, c7, c5, 6 ");		// flush BTAC
+#endif
+	
+	asm("str r0, [r12, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+	asm("str r0, [r3, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+	CPSIEAIF;								// enable all interrupts
+	__JUMP(,lr);
+	}

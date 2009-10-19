@@ -1,0 +1,8 @@
+EXPORTS
+	_ZN11TAdcChannel4ReadEPi @ 1 NONAME ; TAdcChannel::Read(int*)
+	_ZN11TAdcChannel8PreambleEv @ 2 NONAME ; TAdcChannel::Preamble()
+	_ZN11TAdcChannel9PostambleEv @ 3 NONAME ; TAdcChannel::Postamble()
+	_ZTV11TAdcChannel @ 4 NONAME ; vtable for TAdcChannel
+	_ZN11TAdcChannelC2Ei @ 5 NONAME ; TAdcChannel::TAdcChannel(int)
+	_ZN4DAdc14SetMinPriorityEii @ 6 NONAME ; DAdc::SetMinPriority(int, int)
+	_ZTI11TAdcChannel @ 7 NONAME ; typeinfo for TAdcChannel

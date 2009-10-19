@@ -1,0 +1,8 @@
+EXPORTS
+	?CharSet@LoclCollation@@SAPBULCharSet@@XZ @ 1 NONAME ; struct LCharSet const * LoclCollation::CharSet(void)
+	?CollTable@LoclCollation@@SAPBGXZ @ 2 NONAME ; unsigned short const * LoclCollation::CollTable(void)
+	?FoldTable@LoclCollation@@SAPBGXZ @ 3 NONAME ; unsigned short const * LoclCollation::FoldTable(void)
+	?LowerTable@LoclCollation@@SAPBGXZ @ 4 NONAME ; unsigned short const * LoclCollation::LowerTable(void)
+	?TypeTable@LoclCollation@@SAPBEXZ @ 5 NONAME ; unsigned char const * LoclCollation::TypeTable(void)
+	?UniCode@LoclCollation@@SAHXZ @ 6 NONAME ; int LoclCollation::UniCode(void)
+	?UpperTable@LoclCollation@@SAPBGXZ @ 7 NONAME ; unsigned short const * LoclCollation::UpperTable(void)

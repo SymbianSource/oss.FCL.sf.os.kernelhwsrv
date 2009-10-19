@@ -1,0 +1,11 @@
+# component name "Kernel Trace Tool"
+
+component	base_e32_drivers_trace
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\trace
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\trace all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\trace
+
+notes_source	\component_defs\release.src
+
+ipr D

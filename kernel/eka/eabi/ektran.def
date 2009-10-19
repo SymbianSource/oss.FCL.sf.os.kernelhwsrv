@@ -1,0 +1,18 @@
+EXPORTS
+	_ZN12CCaptureKeys13SetCaptureKeyEmRK11TCaptureKey @ 1 NONAME ; CCaptureKeys::SetCaptureKey(unsigned long, TCaptureKey const&)
+	_ZN12CCaptureKeys13SetCaptureKeyEmRK11TCaptureKeyh @ 2 NONAME ; CCaptureKeys::SetCaptureKey(unsigned long, TCaptureKey const&, unsigned char)
+	_ZN12CCaptureKeys14AddCaptureKeyLERK11TCaptureKey @ 3 NONAME ; CCaptureKeys::AddCaptureKeyL(TCaptureKey const&)
+	_ZN12CCaptureKeys14AddCaptureKeyLERK11TCaptureKeyh @ 4 NONAME ; CCaptureKeys::AddCaptureKeyL(TCaptureKey const&, unsigned char)
+	_ZN12CCaptureKeys16CancelCaptureKeyEm @ 5 NONAME ; CCaptureKeys::CancelCaptureKey(unsigned long)
+	_ZN12CCaptureKeys20CancelAllCaptureKeysEm @ 6 NONAME ; CCaptureKeys::CancelAllCaptureKeys(unsigned long)
+	_ZN12CCaptureKeys9ConstructEv @ 7 NONAME ; CCaptureKeys::Construct()
+	_ZN12CCaptureKeysC1Ev @ 8 NONAME ; CCaptureKeys::CCaptureKeys()
+	_ZN12CCaptureKeysC2Ev @ 9 NONAME ; CCaptureKeys::CCaptureKeys()
+	_ZN12CCaptureKeysD0Ev @ 10 NONAME ; CCaptureKeys::~CCaptureKeys()
+	_ZN12CCaptureKeysD1Ev @ 11 NONAME ; CCaptureKeys::~CCaptureKeys()
+	_ZN12CCaptureKeysD2Ev @ 12 NONAME ; CCaptureKeys::~CCaptureKeys()
+	_ZN14CKeyTranslator3NewEv @ 13 NONAME ; CKeyTranslator::New()
+	_ZNK12CCaptureKeys18ProcessCaptureKeysER8TKeyData @ 14 NONAME ; CCaptureKeys::ProcessCaptureKeys(TKeyData&) const
+	_ZTI12CCaptureKeys @ 15 NONAME ; typeinfo for CCaptureKeys
+	_ZTV12CCaptureKeys @ 16 NONAME ; vtable for CCaptureKeys
+

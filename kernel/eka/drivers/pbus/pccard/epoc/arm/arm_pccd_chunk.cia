@@ -1,0 +1,153 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\drivers\pbus\pccard\epoc\arm\arm_pccd_chunk.cpp
+// 
+//
+
+#include <pccd_chunk.h>
+
+#ifdef __PCCD_MACHINE_CODED__
+__NAKED__ TInt DPlatPccdChunk::ReadHWordMultiple(TInt /*aPos*/, TAny* /*aPtr*/, TInt /*aCount*/)
+//
+// Perform a series of reads of 16bit halfwords from a single location in the chunk (aCount is in hwords).
+//
+	{
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(DPlatPccdChunk,iChunk));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(DPlatChunkHw,iLinAddr));
+	asm("add r1, r1, r12 ");			// r1 = PC card register address
+	asm("b read_hword_mult_1 ");
+
+	asm("read_hword_mult_2: ");
+    asm("ldrh r12, [r1]");
+    asm("ldrh r4, [r1]");
+	asm("orr r4, r12, r4, lsl #16 ");	// r4=MS:LS
+    asm("ldrh r12, [r1]");
+    asm("ldrh r5, [r1]");
+	asm("orr r5, r12, r5, lsl #16 ");
+    asm("ldrh r12, [r1]");
+    asm("ldrh r6, [r1]");
+	asm("orr r6, r12, r6, lsl #16 ");
+    asm("ldrh r12, [r1]");
+    asm("ldrh lr, [r1]");
+	asm("orr lr, r12, lr, lsl #16 ");
+	asm("stmia r2!, {r4-r6,lr} ");		// store 8 half-words
+
+	asm("read_hword_mult_1: ");
+	asm("subs r3, r3, #8 ");
+	asm("bcs read_hword_mult_2 ");
+	asm("ands r3, r3, #7 ");
+	asm("beq read_hword_mult_0 ");
+
+	asm("tst r3, #4 ");					// check if >=4 half words left over
+	asm("beq read_hword_mult_3 ");
+    asm("ldrh r12, [r1]");
+    asm("ldrh r4, [r1]");
+	asm("orr r4, r12, r4, lsl #16 ");	// r4=MS:LS
+    asm("ldrh r12, [r1]");
+    asm("ldrh r5, [r1]");
+	asm("orr r5, r12, r5, lsl #16 ");
+	asm("stmia r2!, {r4,lr} ");			// store 4 half-words
+
+	asm("read_hword_mult_3: ");
+	asm("tst r3, #2 ");					// check if >=2 half words left over
+    asm("ldrneh r12, [r1]");
+    asm("ldrneh r4, [r1]");
+	asm("orrne r4, r12, r4, lsl #16 ");	// r4=MS:LS
+	asm("strne r4, [r2], #4 ");			// store 2 half-words
+
+	asm("tst r3, #1 ");					// check if 1 half word left over
+    asm("ldrneh r4, [r1]");
+    asm("strneh r4, [r2], #2");
+
+	asm("read_hword_mult_0: ");
+	asm("mov r0, #0 ");
+	asm("ldmfd sp!, {r4-r6,pc} ");
+	}
+
+__NAKED__ TInt DPlatPccdChunk::WriteHWordMultiple(TInt /*aPos*/, const TAny* /*aPtr*/, TInt /*aCount*/)
+//
+// Perform a series of writes of 16bit halfwords to a single location in the chunk (aCount is in hwords).
+//
+	{
+	asm("stmfd sp!, {r4,lr} ");
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(DPlatPccdChunk,iChunk));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(DPlatChunkHw,iLinAddr));
+	asm("add r1, r1, r12 ");			// r1 = PC card register address
+	asm("b write_hword_mult_1 ");
+
+	asm("write_hword_mult_2: ");
+	asm("ldmia r2!, {r0,r4,r12,lr} ");	// read 8 half-words
+    asm("strh r0, [r1]");
+	asm("mov r0, r0, lsr #16 ");
+    asm("strh r0, [r1]");
+    asm("strh r4, [r1]");
+	asm("mov r4, r4, lsr #16 ");
+    asm("strh r4, [r1]");
+    asm("strh r12, [r1]");
+	asm("mov r12, r12, lsr #16 ");
+    asm("strh r12, [r1]");
+    asm("strh lr, [r1]");
+	asm("mov lr, lr, lsr #16 ");
+    asm("strh lr, [r1]");
+
+	asm("write_hword_mult_1: ");
+	asm("subs r3, r3, #8 ");
+	asm("bcs write_hword_mult_2 ");
+	asm("ands r3, r3, #7 ");
+	asm("beq write_hword_mult_0 ");
+
+	asm("tst r3, #4 ");					// check if >=4 half words left over
+	asm("beq write_hword_mult_3 ");
+	asm("ldmia r2!, {r0,r4} ");			// read 4 half words
+    asm("strh r0, [r1]");
+	asm("mov r0, r0, lsr #16 ");
+    asm("strh r0, [r1]");
+    asm("strh r4, [r1]");
+	asm("mov r4, r4, lsr #16 ");
+    asm("strh r4, [r1]");
+
+	asm("write_hword_mult_3: ");
+	asm("tst r3, #2 ");					// check if >=2 half words left over
+	asm("ldrne r0, [r2], #4 ");			// read 2 half-words
+    asm("strneh r0, [r1]");
+	asm("movne r0, r0, lsr #16 ");
+    asm("strneh r0, [r1]");
+
+	asm("tst r3, #1 ");					// check if 1 half word left over
+    asm("ldrneh r0, [r2], #2");
+    asm("strneh r0, [r1]");
+
+	asm("write_hword_mult_0: ");
+	asm("mov r0, #0 ");
+	asm("ldmfd sp!, {r4,pc} ");
+	}
+
+__NAKED__ TUint DPlatPccdChunk::Read8(TInt /*aPos*/)
+	{
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(DPlatPccdChunk,iChunk));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(DPlatChunkHw,iLinAddr));
+	asm("ldrb r0, [r12, r1] ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void DPlatPccdChunk::Write8(TInt /*aPos*/, TUint /*aValue*/)
+	{
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(DPlatPccdChunk,iChunk));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(DPlatChunkHw,iLinAddr));
+	asm("strb r2, [r12, r1] ");
+	__JUMP(,lr);
+	}
+#endif
+

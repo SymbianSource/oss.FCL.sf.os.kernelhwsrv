@@ -1,0 +1,1057 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\arm\ncsched.cia
+// 
+//
+
+// NThreadBase member data
+#define __INCLUDE_NTHREADBASE_DEFINES__
+
+// TDfc member data
+#define __INCLUDE_TDFC_DEFINES__
+
+#include <e32cia.h>
+#include <arm.h>
+#include "nkern.h"
+#include <arm_gic.h>
+#include <arm_scu.h>
+#include <arm_tmr.h>
+//#include <highrestimer.h>
+//#include "emievents.h"
+
+#ifdef _DEBUG
+#define ASM_KILL_LINK(rp,rs)	asm("mov "#rs", #0xdf ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #8 ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #16 ");\
+								asm("str "#rs", ["#rp"] ");\
+								asm("str "#rs", ["#rp", #4] ");
+#else
+#define ASM_KILL_LINK(rp,rs)
+#endif
+
+#define ALIGN_STACK_START			\
+	asm("mov r12, sp");				\
+	asm("tst sp, #4");				\
+	asm("subeq sp, sp, #4");		\
+	asm("str r12, [sp,#-4]!")
+
+#define ALIGN_STACK_END				\
+	asm("ldr sp, [sp]")
+
+
+//#define __DEBUG_BAD_ADDR
+
+extern "C" void NewThreadTrace(NThread* a);
+extern "C" void send_accumulated_resched_ipis();
+
+
+__NAKED__ void TScheduler::Reschedule()
+	{
+	//
+	// Enter in mode_svc with kernel locked, interrupts can be on or off
+	// Exit in mode_svc with kernel unlocked, interrupts off
+	// NOTE: STACK ALIGNMENT UNKNOWN ON ENTRY
+	// NOTE: R4-R11 are modified
+	//
+	asm("mov	r2, sp ");					// bit 0 will be reschedule flag
+	asm("bic	sp, sp, #4 ");				// align stack
+	GET_RWNO_TID(,r0)						// r0->TSubScheduler
+	asm("stmfd	sp!, {r2,lr} ");			// save original SP/resched flag, return address
+	__ASM_CLI();							// interrupts off
+	asm("ldr	r1, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iDfcPendingFlag)&~3));	// check iDfcPendingFlag and iExIDfcPendingFlag
+	asm("mov	r11, r0 ");					// r11->TSubScheduler
+	asm("ldr	r10, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));	// r10->CPU local timer
+
+	asm("start_resched: ");
+	asm("movs	r1, r1, lsr #16 ");			// check if IDFCs or ExIDFCs pending
+
+	asm("blne "	CSM_ZN13TSubScheduler9QueueDfcsEv);		// queue any pending DFCs
+	asm("ldrb	r1, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iRescheduleNeededFlag));
+	asm("ldr	r3, [sp, #0] ");
+	asm("mrs	r2, spsr ");				// r2=spsr_svc
+	asm("cmp	r1, #0 ");					// check if a reschedule is required
+	asm("beq	no_resched_needed ");		// branch out if not
+	__ASM_STI();							// interrupts back on
+	asm("orr	r3, r3, #1 ");
+	asm("str	r3, [sp, #0] ");			// set resched flag
+	asm("stmfd	sp!, {r0,r2} ");			// store SPSR_SVC
+	asm("ldr	r5, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+#ifdef __CPU_ARMV7
+	asm("mrc	p14, 6, r7, c1, c0, 0 ");	// r7 = TEEHBR
+#else
+	asm("mov	r7, #0 ");
+#endif
+	GET_RWRO_TID(,r8);						// r8 = User RO Thread ID
+	GET_RWRW_TID(,r9);						// r9 = User RW Thread ID
+#ifdef __CPU_HAS_VFP
+	VFP_FMRX(,0,VFP_XREG_FPEXC);			// r0 = FPEXC
+	asm("bic r0, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) ); // Store FPEXC with VFP disabled in case this thread runs on a different core next time
+#else
+	asm("mov	r0, #0 ");
+#endif
+	GET_CAR(,	r1);						// r1 = CAR
+	asm("mrc	p15, 0, r12, c3, c0, 0 ");	// r12 = DACR
+	asm("ldr	r4, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iInitialThread));
+
+	// Save auxiliary registers
+	// R0=FPEXC, R1=CAR, R7=TEEHBR, R8=RWROTID, R9=RWRWTID, R12=DACR
+	asm("sub	sp, sp, #%a0" : : "i" _FOFF(SThreadReschedStack,iSpare));
+	asm("str	sp, [r5, #%a0]" : : "i" _FOFF(NThread,iSavedSP));	// store original thread's stack pointer
+	asm("stmia	sp, {r0-r1,r7-r9,r12} ");
+
+	// We must move to a temporary stack before selecting the next thread.
+	// This is because another CPU may begin executing this thread before the
+	// select_next_thread() function returns and our stack would then be
+	// corrupted. We use the stack belonging to this CPU's initial thread since
+	// we are guaranteed that will never run on another CPU.
+	asm("ldr	sp, [r4, #%a0]" : : "i" _FOFF(NThread,iSavedSP));
+
+	asm("select_thread: ");
+	asm("mov	r0, r11 ");
+	asm("bl "	CSM_ZN13TSubScheduler16SelectNextThreadEv );	// also sets r0->iCurrentThread
+#ifdef BTRACE_CPU_USAGE
+	asm("ldr	r2, __BTraceFilter ");
+#endif
+	asm("movs	r3, r0 ");					// r3 = new thread (might be 0)
+	asm("ldrne	sp, [r0, #%a0]" : : "i" _FOFF(NThread,iSavedSP));	// if a thread has been selected, move to its stack
+	asm("beq	no_thread ");				// branch out if no thread is ready
+
+#ifdef BTRACE_CPU_USAGE
+	asm("ldrb	r1, [r2, #4] ");			// check category 4 trace
+	asm("cmp	r1, #0 ");
+	asm("beq	1f ");
+	asm("stmfd	sp!, {r0-r3} ");
+	asm("bl		NewThreadTrace ");
+	asm("ldmfd	sp!, {r0-r3} ");
+	asm("1: ");
+#endif	// BTRACE_CPU_USAGE
+
+	asm("cmp	r3, r5 ");					// same thread?
+	asm("beq	same_thread ");
+	asm("ldrb	r1, [r3, #%a0]" : : "i" _FOFF(NThreadBase, i_ThrdAttr));
+	asm("ldr	r4, [r11, #%a0]" : : "i" _FOFF(TSubScheduler, iScheduler));
+	asm("mov	r2, r3, lsr #6 ");			// r2=current thread>>6
+	asm("tst	r1, #%a0" : : "i" ((TInt)KThreadAttAddressSpace));	// address space required?
+	asm("ldrne	r4, [r4, #%a0]" : : "i" _FOFF(TScheduler,iProcessHandler));	// if so, get pointer to process handler
+
+	// we are doing a thread switch so restore new thread's auxiliary registers
+	// R0=FPEXC, R1=CAR, R7=TEEHBR, R8=RWROTID, R9=RWRWTID, R12=DACR
+	asm("ldmia	sp, {r0-r1,r7-r9,r12} ");
+
+#ifdef __CPU_ARMV7
+	asm("mcr	p14, 6, r7, c1, c0, 0 ");	// r7 = TEEHBR
+#endif
+	SET_RWRO_TID(,r8);						// r8 = User RO Thread ID
+	SET_RWRW_TID(,r9);						// r9 = User RW Thread ID
+#ifdef __CPU_HAS_VFP
+	VFP_FMXR(,VFP_XREG_FPEXC,0);			// r0 = FPEXC
+#endif
+	SET_CAR(,	r1);						// r1 = CAR
+	asm("mcr	p15, 0, r12, c3, c0, 0 ");	// r12 = DACR
+
+	asm("beq	no_as_switch ");			// skip if address space change not required
+
+	// Do address space switching
+	// Handler called with:
+	// r11->subscheduler, r3->current thread
+	// r9->new address space, r5->old address space
+	// Must preserve r10,r11,r3, can modify other registers
+	asm("ldr	r5, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));	// get current address space ptr
+	asm("ldr	r9, [r3, #%a0]" : : "i" _FOFF(NThreadBase,iAddressSpace));		// get new address space ptr
+	asm("adr	lr, as_switch_return ");
+	__JUMP(,	r4);
+
+	asm("no_as_switch: ");
+	asm("mrc	p15, 0, r4, c13, c0, 1 ");	// r4 = CONTEXTID (threadID:ASID)
+	asm("and	r4, r4, #0xff ");			// isolate ASID
+	asm("orr	r2, r4, r2, lsl #8 ");		// r2 = new ContextID (new thread ID : ASID)
+	__DATA_SYNC_BARRIER_Z__(r12);			// needed before change to ContextID
+	asm("mcr	p15, 0, r2, c13, c0, 1 ");	// set ContextID (ASID + debugging thread ID)
+	__INST_SYNC_BARRIER__(r12);
+#ifdef __CPU_NEEDS_BTAC_FLUSH_AFTER_ASID_CHANGE
+	asm("mcr	p15, 0, r12, c7, c5, 6 ");	// flush BTAC
+#endif
+
+	asm("as_switch_return: ");
+	asm("same_thread: ");
+	asm("add	sp, sp, #%a0" : : "i" _FOFF(SThreadReschedStack,iSpare));	// step past auxiliary registers
+ 	asm("ldmib	sp!, {r2,r12} ");			// r2=SPSR_SVC, r12=original SP + resched flag
+	__ASM_CLI();							// interrupts off
+	asm("ldr	r1, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iRescheduleNeededFlag));
+	asm("msr	spsr, r2 ");				// restore spsr_svc
+	asm("mov	r0, r11 ");
+	asm("mov	r2, r12 ");					// r2 = original SP + reschedule flag
+	asm("cmp	r1, #0 ");					// check for more IDFCs and/or another reschedule
+	asm("bne	start_resched ");			// loop if required
+	asm("ldr	r14, [r3, #%a0]" : : "i" _FOFF(NThreadBase,iCsFunction));
+	asm("ldr	r12, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedIPIs));
+	asm("str	r1, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("cmp	r14, #%a0" : : "i" ((TInt)NThreadBase::ECSDivertPending));
+	asm("ldr	lr, [sp, #4] ");			// restore R10, R11, return address
+	asm("bic	sp, r2, #3 ");				// restore initial unaligned stack pointer
+	asm("and	r2, r2, #1 ");				// r2 = reschedule flag
+	asm("beq	resched_thread_divert ");
+
+	// Return with:	R0=&SubScheduler, R1=0, R2=TRUE if reschedule occurred, R3=iCurrentThread
+	//				R12=iReschedIPIs
+	__JUMP(,	lr);
+
+	asm("no_resched_needed: ");
+	asm("ldr	r3, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("ldr	r12, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedIPIs));
+	asm("mov	r0, r11 ");
+	asm("str	r1, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(NThreadBase,iCsFunction));
+	asm("cmp	r2, #%a0" : : "i" ((TInt)NThreadBase::ECSDivertPending));
+	asm("ldmfd	sp, {r2,lr} ");				// r2 = original SP + reschedule flag, restore lr
+	asm("bic	sp, r2, #3 ");				// restore initial unaligned stack pointer
+	asm("and	r2, r2, #1 ");				// r2 = reschedule flag
+	asm("beq	resched_thread_divert ");
+
+	// Return with:	R0=&SubScheduler, R1=0, R2=TRUE if reschedule occurred, R3=iCurrentThread
+	//				R12=iReschedIPIs
+	__JUMP(,	lr);
+
+	asm("resched_thread_divert: ");
+	asm("mov	r1, #1 ");
+	asm("str	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("bic	sp, sp, #4 ");				// align stack
+	asm("stmfd	sp!, {r0-r5,r12,lr} ");		// save registers for diagnostic purposes
+	asm("mov	r4, r3 ");					// don't really need to bother about registers since thread is exiting
+
+	// need to send any outstanding reschedule IPIs
+	asm("cmp	r12, #0 ");
+	asm("blne " CSM_CFUNC(send_accumulated_resched_ipis));
+
+	__ASM_STI();
+	asm("ldrb	r1, [r4, #%a0]" : : "i" _FOFF(NThreadBase,iFastMutexDefer));
+	asm("cmp	r1, #1 ");
+	asm("bne	1f ");
+	__ASM_CRASH();
+	asm("1: ");
+	asm("mov	r2, #0 ");
+	asm("strb	r2, [r4, #%a0]" : : "i" _FOFF(NThreadBase,iFastMutexDefer));
+	asm("mov	r0, r4 ");
+	asm("bl "	CSM_ZN11NThreadBase4ExitEv );
+	__ASM_CRASH();	// shouldn't get here
+
+	// There is no thread ready to run
+	// R11->TSubScheduler, R1=unknown, R2=0, R3=__BTraceFilter, R12=unknown
+	asm("no_thread: ");
+	__ASM_CLI();
+	asm("ldr	r12, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedIPIs));
+	asm("mov	r0, r11 ");
+	asm("cmp	r12, #0 ");
+	asm("blne " CSM_CFUNC(send_accumulated_resched_ipis));
+	__ASM_STI();
+	__DATA_SYNC_BARRIER_Z__(r1);
+	ARM_WFI;
+	asm("no_thread2: ");
+	asm("ldr	r1, [r11, #%a0]" : : "i" (_FOFF(TSubScheduler,iDfcPendingFlag)&~3));	// check iDfcPendingFlag and iExIDfcPendingFlag
+	asm("mov	r0, r11 ");
+	asm("movs	r1, r1, lsr #16 ");
+	asm("beq	no_thread ");
+	asm("bl "	CSM_ZN13TSubScheduler9QueueDfcsEv);		// queue any pending DFCs
+	asm("ldrb	r1, [r11, #%a0]" : : "i" _FOFF(TSubScheduler,iRescheduleNeededFlag));
+	asm("cmp	r1, #0 ");					// check if a reschedule is required
+	asm("beq	no_thread2 ");
+	asm("b		select_thread ");
+
+
+
+/******************************************************************************
+ Missed out stuff:
+	EMI EVENT LOGGING
+	__CPU_ARM1136_ERRATUM_351912_FIXED
+	Debug hooks in the scheduler
+ ******************************************************************************/
+
+	asm("__BTraceFilter: ");
+	asm(".word %a0 " : : "i" ((TInt)&BTraceData.iFilter[0]));
+	};
+
+
+/** 
+ * Returns the range of linear memory which inserting the scheduler hooks needs to modify.
+ * 
+ * @param aStart Set to the lowest memory address which needs to be modified.
+ * @param aEnd   Set to the highest memory address +1 which needs to be modified.
+
+ @pre	Kernel must be locked.
+ @pre	Call in a thread context.
+ @pre	Interrupts must be enabled.
+ */
+EXPORT_C __NAKED__ void NKern::SchedulerHooks(TLinAddr& aStart, TLinAddr& aEnd)
+	{
+#if 0
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_LOCKED|MASK_NOT_ISR|MASK_NOT_IDFC);
+#ifdef __DEBUGGER_SUPPORT__
+	asm("adr r2,resched_trampoline_hook_address");
+	asm("str r2,[r0]");
+	asm("adr r2,resched_trampoline_hook_address+4");
+	asm("str r2,[r1]");
+#else
+	asm("mov r2,#0");
+	asm("str r2,[r0]");
+	asm("str r2,[r1]");
+#endif
+#endif
+	__JUMP(,lr);
+	};
+
+
+/** 
+ * Modifies the scheduler code so that it can call the function set by
+ * NKern::SetRescheduleCallback().
+ *
+ * This requires that the region of memory indicated by NKern::SchedulerHooks() is writable.
+
+ @pre	Kernel must be locked.
+ @pre	Call in a thread context.
+ @pre	Interrupts must be enabled.
+ */
+EXPORT_C __NAKED__ void NKern::InsertSchedulerHooks()
+	{
+#if 0
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_LOCKED|MASK_NOT_ISR|MASK_NOT_IDFC);
+#ifdef __DEBUGGER_SUPPORT__
+	asm("adr r0,resched_trampoline_hook_address");
+	asm("adr r1,resched_trampoline");
+	asm("sub r1, r1, r0");
+	asm("sub r1, r1, #8");
+	asm("mov r1, r1, asr #2");
+	asm("add r1, r1, #0xea000000");  // r1 = a branch instruction from resched_trampoline_hook_address to resched_trampoline
+
+#if defined(__CPU_MEMORY_TYPE_REMAPPING)
+	// These platforms have shadow memory in non-writable page. We cannot use the standard
+	// Epoc::CopyToShadowMemory interface as we hold Kernel lock here.
+	// Instead, we'll temporarily disable access permission checking in MMU by switching
+	// domain#0 into Manager Mode (see Domain Access Control Register).
+	asm("mrs r12, CPSR ");				// save cpsr setting and ...
+	CPSIDAIF;							// ...disable interrupts
+	asm("mrc p15, 0, r2, c3, c0, 0 ");	// read DACR
+	asm("orr r3, r2, #3");				// domain #0 is the first two bits. manager mode is 11b
+	asm("mcr p15, 0, r3, c3, c0, 0 ");	// write DACR
+	asm("str r1,[r0]");
+	asm("mcr p15, 0, r2, c3, c0, 0 ");	// write back the original value of DACR
+	asm("msr CPSR_cxsf, r12 "); 		// restore cpsr setting (re-enable interrupts)
+#else
+	asm("str r1,[r0]");
+#endif
+
+#endif
+#endif
+	__JUMP(,lr);
+	};
+
+
+/** 
+ * Reverts the modification of the Scheduler code performed by NKern::InsertSchedulerHooks()
+ *
+ * This requires that the region of memory indicated by NKern::SchedulerHooks() is writable.
+
+ @pre	Kernel must be locked.
+ @pre	Call in a thread context.
+ @pre	Interrupts must be enabled.
+ */
+EXPORT_C __NAKED__ void NKern::RemoveSchedulerHooks()
+	{
+#if 0
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_LOCKED|MASK_NOT_ISR|MASK_NOT_IDFC);
+#ifdef __DEBUGGER_SUPPORT__
+	asm("adr r0,resched_trampoline_hook_address");
+	asm("ldr r1,resched_trampoline_unhook_data");
+
+#if defined(__CPU_MEMORY_TYPE_REMAPPING)
+	// See comments above in InsertSchedulerHooks
+	asm("mrs r12, CPSR ");				// save cpsr setting and ...
+	CPSIDAIF;							// ...disable interrupts
+	asm("mrc p15, 0, r2, c3, c0, 0 ");	// read DACR
+	asm("orr r3, r2, #3");				// domain #0 is the first two bits. manager mode is 11b
+	asm("mcr p15, 0, r3, c3, c0, 0 ");	// write DACR
+	asm("str r1,[r0]");
+	asm("mcr p15, 0, r2, c3, c0, 0 ");	// write back the original value of DACR
+	asm("msr CPSR_cxsf, r12 "); 		// restore cpsr setting (re-enable interrupts)
+#else
+	asm("str r1,[r0]");
+#endif
+
+#endif
+#endif
+	__JUMP(,lr);
+	};
+
+
+/** 
+ * Set the function which is to be called on every thread reschedule.
+ *
+ * @param aCallback  Pointer to callback function, or NULL to disable callback.
+
+ @pre	Kernel must be locked.
+ @pre	Call in a thread context.
+ @pre	Interrupts must be enabled.
+ */
+EXPORT_C __NAKED__ void NKern::SetRescheduleCallback(TRescheduleCallback /*aCallback*/)
+	{
+#if 0
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_LOCKED|MASK_NOT_ISR|MASK_NOT_IDFC);
+#ifdef __DEBUGGER_SUPPORT__
+	asm("ldr r1, __TheScheduler ");
+	asm("str r0, [r1, #%a0]" : : "i" _FOFF(TScheduler,iRescheduleHook));
+#endif
+#endif
+	__JUMP(,lr);
+	};
+
+
+
+/** Disables interrupts to specified level.
+
+	Note that if we are not disabling all interrupts we must lock the kernel
+	here, otherwise a high priority interrupt which is still enabled could
+	cause a reschedule and the new thread could then reenable interrupts.
+
+	@param  aLevel Interrupts are disbabled up to and including aLevel.  On ARM,
+			level 1 stands for IRQ only and level 2 stands for IRQ and FIQ.
+	@return CPU-specific value passed to RestoreInterrupts.
+
+	@pre 1 <= aLevel <= maximum level (CPU-specific)
+
+	@see NKern::RestoreInterrupts()
+ */
+EXPORT_C __NAKED__ TInt NKern::DisableInterrupts(TInt /*aLevel*/)
+	{
+#ifdef __FIQ_IS_UNCONTROLLED__
+	asm("mrs	r1, cpsr ");
+	asm("cmp	r0, #0 ");
+	asm("beq	1f ");
+	__ASM_CLI();
+	asm("1: ");
+	asm("and	r0, r1, #%a0" : : "i" ((TInt)KAllInterruptsMask));	/* return original CPSR I and F bits */
+	__JUMP(,	lr);
+#else
+	asm("cmp	r0, #1 ");
+	asm("bhi "	CSM_ZN5NKern20DisableAllInterruptsEv);	// if level>1, disable all
+	asm("mrs	r2, cpsr ");			// r2=original CPSR
+	asm("bcc	1f ");					// skip if level=0
+	__ASM_CLI();						// Disable all interrupts to prevent migration
+	GET_RWNO_TID(,r12);					// r12 -> TSubScheduler
+	asm("ldr	r3, [r12, #%a0]!" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("and	r0, r2, #0xc0 ");
+	asm("cmp	r3, #0 ");				// test if kernel locked
+	asm("addeq	r3, r3, #1 ");			// if not, lock the kernel
+	asm("streq	r3, [r12] ");
+	asm("orreq	r0, r0, #0x80000000 ");	// and set top bit to indicate kernel locked
+	__ASM_STI2();						// reenable FIQs only
+	__JUMP(,	lr);
+	asm("1: ");
+	asm("and	r0, r2, #0xc0 ");
+	__JUMP(,	lr);
+#endif
+	}
+
+
+/** Disables all interrupts (e.g. both IRQ and FIQ on ARM). 
+
+	@return CPU-specific value passed to NKern::RestoreInterrupts().
+
+	@see NKern::RestoreInterrupts()
+ */
+EXPORT_C __NAKED__ TInt NKern::DisableAllInterrupts()
+	{
+	asm("mrs r1, cpsr ");
+	asm("and r0, r1, #%a0" : : "i" ((TInt)KAllInterruptsMask));	/* return original CPSR I and F bits */
+	__ASM_CLI();
+	__JUMP(,lr);
+	}
+
+
+/** Enables all interrupts (e.g. IRQ and FIQ on ARM).
+
+	This function never unlocks the kernel.  So it must be used
+	only to complement NKern::DisableAllInterrupts. Never use it
+	to complement NKern::DisableInterrupts.
+
+	@see NKern::DisableInterrupts()
+	@see NKern::DisableAllInterrupts()
+
+	@internalComponent
+ */
+EXPORT_C __NAKED__ void NKern::EnableAllInterrupts()
+	{
+	__ASM_STI();
+	__JUMP(,lr);
+	}
+
+
+/** Restores interrupts to previous level and unlocks the kernel if it was 
+	locked when disabling them.
+
+	@param 	aRestoreData CPU-specific data returned from NKern::DisableInterrupts
+			or NKern::DisableAllInterrupts specifying the previous interrupt level.
+
+	@see NKern::DisableInterrupts()
+	@see NKern::DisableAllInterrupts()
+ */
+EXPORT_C __NAKED__ void NKern::RestoreInterrupts(TInt /*aRestoreData*/)
+	{
+	asm("tst r0, r0 ");					// test state of top bit of aLevel
+	asm("mrs r1, cpsr ");
+	asm("and r0, r0, #%a0" : : "i" ((TInt)KAllInterruptsMask));
+	asm("bic r1, r1, #%a0" : : "i" ((TInt)KAllInterruptsMask));
+	asm("orr r1, r1, r0 ");				// replace I and F bits with those supplied
+	asm("msr cpsr_c, r1 ");				// flags are unchanged (in particular N)
+	__JUMP(pl,lr);						// if top bit of aLevel clear, finished
+
+	// if top bit of aLevel set, fall through to unlock the kernel
+	}
+
+
+/**	Unlocks the kernel.
+
+	Decrements iKernLockCount for current CPU; if it becomes zero and IDFCs
+	or a reschedule are	pending, calls the scheduler to process them.
+	Must be called in mode_svc.
+
+    @pre    Call either in a thread or an IDFC context.
+    @pre    Do not call from an ISR.
+ */
+EXPORT_C __NAKED__ void NKern::Unlock()
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NOT_ISR);
+
+	GET_RWNO_TID(,r0)						// r0=&SubScheduler()
+	__ASM_CLI();							// interrupts off
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedIPIs));
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iRescheduleNeededFlag));
+	asm("subs	r3, r1, #1 ");
+	asm("strne	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("bne	0f ");						// kernel still locked -> return
+	asm("cmp	r2, #0 ");					// check for DFCs or reschedule
+	asm("bne	1f ");
+	asm("cmp	r12, #0 ");					// IPIs outstanding?
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));	// unlock the kernel
+	asm("bne	2f ");
+	asm("0: ");
+	__ASM_STI();							// interrupts back on
+	__JUMP(,lr);
+
+	// need to run IDFCs and/or reschedule
+	asm("1: ");
+	asm("stmfd	sp!, {r0,r4-r11,lr} ");
+	asm("bl "	CSM_ZN10TScheduler10RescheduleEv );
+	asm(".global nkern_unlock_resched_return ");
+	asm("nkern_unlock_resched_return: ");
+
+	// need to send any outstanding reschedule IPIs
+	asm("cmp	r12, #0 ");
+	asm("blne " CSM_CFUNC(send_accumulated_resched_ipis));
+	asm("ldmfd	sp!, {r0,r4-r11,lr} ");
+	__ASM_STI();
+	__JUMP(,lr);
+
+	asm("2:		");
+	asm("stmfd	sp!, {r0,lr} ");
+	asm("bl "	CSM_CFUNC(send_accumulated_resched_ipis));
+	asm("ldmfd	sp!, {r0,lr} ");
+	__ASM_STI();
+	__JUMP(,lr);
+	}
+
+
+/**	Locks the kernel.
+
+	Increments iKernLockCount for the current CPU, thereby deferring IDFCs
+	and preemption.	Must be called in mode_svc.
+
+    @pre    Call either in a thread or an IDFC context.
+    @pre    Do not call from an ISR.
+ */
+EXPORT_C __NAKED__ void NKern::Lock()
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NOT_ISR);
+
+	__ASM_CLI();
+	GET_RWNO_TID(,r12);
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("add r3, r3, #1 ");			// lock the kernel
+	asm("str r3, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	__ASM_STI();
+	__JUMP(,lr);
+	}
+
+
+/**	Locks the kernel and returns a pointer to the current thread.
+
+	Increments iKernLockCount for the current CPU, thereby deferring IDFCs
+	and preemption.	Must be called in mode_svc.
+
+    @pre    Call either in a thread or an IDFC context.
+    @pre    Do not call from an ISR.
+ */
+EXPORT_C __NAKED__ NThread* NKern::LockC()
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NOT_ISR);
+
+	__ASM_CLI();
+	GET_RWNO_TID(,r12);
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("ldr r0, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("add r3, r3, #1 ");			// lock the kernel
+	asm("str r3, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	__ASM_STI();
+	__JUMP(,lr);
+	}
+
+
+/**	Allows IDFCs and rescheduling if they are pending.
+
+	If IDFCs or a reschedule are pending and iKernCSLocked is exactly equal to 1
+	calls the scheduler to process the IDFCs and possibly reschedule.
+	Must be called in mode_svc.
+
+	@return	Nonzero if a reschedule actually occurred, zero if not.
+
+    @pre    Call either in a thread or an IDFC context.
+    @pre    Do not call from an ISR.
+ */
+EXPORT_C __NAKED__ TInt NKern::PreemptionPoint()
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NOT_ISR);
+
+	GET_RWNO_TID(,r0)						// r0=&SubScheduler()
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iRescheduleNeededFlag));
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedIPIs));
+	asm("cmp	r1, #1 ");
+	asm("bgt	0f ");						// if locked more than once return FALSE
+	asm("cmp	r2, #0 ");					// locked once and IDFCs/reschedule pending?
+	asm("bne	1f ");						// skip if so
+	asm("cmp	r12, #0 ");					// locked once and resched IPIs outstanding?
+	asm("bne	2f ");						// skip if so
+	asm("0:		");
+	asm("mov	r0, #0 ");
+	__JUMP(,	lr);						// else return FALSE
+
+	// need to run IDFCs and/or reschedule
+	asm("1:		");
+	asm("stmfd	sp!, {r1,r4-r11,lr} ");
+	asm("bl "	CSM_ZN10TScheduler10RescheduleEv );
+	asm(".global nkern_preemption_point_resched_return ");
+	asm("nkern_preemption_point_resched_return: ");
+	asm("str	r2, [sp] ");
+	asm("mov	r2, #1 ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+
+	// need to send any outstanding reschedule IPIs
+	asm("cmp	r12, #0 ");
+	asm("blne " CSM_CFUNC(send_accumulated_resched_ipis));
+	asm("ldmfd	sp!, {r0,r4-r11,lr} ");		// return TRUE if reschedule occurred
+	__ASM_STI();
+	__JUMP(,	lr);
+
+	asm("2:		");
+	asm("stmfd	sp!, {r2,lr} ");
+	asm("bl "	CSM_CFUNC(send_accumulated_resched_ipis));
+	asm("ldmfd	sp!, {r0,lr} ");			// return TRUE if reschedule occurred
+	__ASM_STI();
+	__JUMP(,	lr);
+	}
+
+
+#ifdef __CPU_HAS_VFP
+// Do the actual VFP context save
+__NAKED__ void VfpContextSave(void*)
+	{
+	VFP_FMRX(,1,VFP_XREG_FPEXC);
+	asm("tst	r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );	// Check to see if VFP in use
+	__JUMP(eq,	lr);										// Return immediately if not
+
+	VFP_FMRX(,2,VFP_XREG_FPSCR);
+	asm("stmia	r0!, {r2} ");								// Save FPSCR
+
+#ifndef __VFP_V3
+	VFP_FMRX(,2,VFP_XREG_FPINST);
+	VFP_FMRX(,3,VFP_XREG_FPINST2);
+	asm("stmia	r0!, {r2-r3} ");							// Save FPINST, FPINST2
+#endif
+
+	VFP_FSTMIADW(CC_AL,0,0,16);								// Save D0 - D15
+
+#ifdef __VFP_V3
+	VFP_FMRX(,2,VFP_XREG_MVFR0);
+	asm("tst r2, #%a0" : : "i" ((TInt)VFP_MVFR0_ASIMD32));	// Check to see if all 32 Advanced SIMD registers are present
+	asm("beq 0f ");											// Skip ahead if not
+	GET_CAR(,r2);
+	asm("tst r2, #%a0" : : "i" ((TInt)VFP_CPACR_D32DIS));	// Check to see if access to the upper 16 registers is disabled
+	VFP_FSTMIADW(CC_EQ,0,16,16);							// If not then save D16 - D31
+#endif
+
+	asm("0: ");
+	asm("bic r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );
+	VFP_FMXR(,VFP_XREG_FPEXC,1);							// Disable VFP
+
+	__JUMP(,lr);
+	}
+#endif
+
+
+/** Check if the kernel is locked the specified number of times.
+
+	@param aCount	The number of times the kernel should be locked
+					If zero, tests if it is locked at all
+	@return TRUE if the tested condition is true.
+
+	@internalTechnology
+*/
+EXPORT_C __NAKED__ TBool NKern::KernelLocked(TInt /*aCount*/)
+	{
+	asm("mrs	r12, cpsr ");
+	__ASM_CLI();
+	GET_RWNO_TID(,r3);
+	asm("movs	r1, r0 ");			// r1 = aCount
+	asm("ldr	r0, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("moveq	r1, r0 ");			// if aCount=0, aCount=iKernLockCount
+	asm("cmp	r1, r0 ");			//
+	asm("movne	r0, #0 ");			// if aCount!=iKernLockCount, return FALSE else return iKernLockCount
+	asm("msr	cpsr, r12 ");
+	__JUMP(,lr);
+	}
+
+
+// Only call this if thread migration is disabled, i.e.
+// interrupts disabled, kernel locked or current thread in 'freeze cpu' mode
+extern "C" __NAKED__ TSubScheduler& SubScheduler()
+	{
+	GET_RWNO_TID(,r0);
+	__JUMP(,lr);
+	}
+
+/** Returns the NThread control block for the currently scheduled thread.
+
+    Note that this is the calling thread if called from a thread context, or the
+	interrupted thread if called from an interrupt context.
+	
+	@return A pointer to the NThread for the currently scheduled thread.
+	
+	@pre Call in any context.
+*/
+EXPORT_C __NAKED__ NThread* NKern::CurrentThread()
+	{
+	asm("mrs	r12, cpsr ");
+	__ASM_CLI();
+	GET_RWNO_TID(,r0);
+	asm("cmp	r0, #0 ");
+	asm("ldrne	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("msr	cpsr, r12 ");
+	__JUMP(,lr);
+	}
+
+
+/** Returns the NThread control block for the currently scheduled thread.
+
+    Note that this is the calling thread if called from a thread context, or the
+	interrupted thread if called from an interrupt context.
+	
+	@return A pointer to the NThread for the currently scheduled thread.
+	
+	@pre Call with migration disabled - i.e. from an ISR, IDFC, with interrupts
+			disabled or with preemption disabled.
+*/
+extern "C" __NAKED__ NThread* NCurrentThreadL()
+	{
+	GET_RWNO_TID(,r0);
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	__JUMP(,lr);
+	}
+
+
+/** Returns the CPU number of the calling CPU.
+
+	@return the CPU number of the calling CPU.
+	
+	@pre Call in any context.
+*/
+EXPORT_C __NAKED__ TInt NKern::CurrentCpu()
+	{
+	asm("mrs	r12, cpsr ");
+	__ASM_CLI();
+	GET_RWNO_TID(,r0);
+	asm("cmp	r0, #0 ");
+	asm("ldrne	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));
+	asm("msr	cpsr, r12 ");
+	__JUMP(,lr);
+	}
+
+
+/**	Returns the current processor context type (thread, IDFC or interrupt).
+
+	@return	A value from NKern::TContext enumeration (but never EEscaped).
+	
+	@pre	Call in any context.
+
+	@see	NKern::TContext
+ */
+EXPORT_C __NAKED__ TInt NKern::CurrentContext()
+	{
+	asm("mrs r1, cpsr ");
+	__ASM_CLI();							// interrupts off to stop migration
+	GET_RWNO_TID(,r3);						// r3 = &SubScheduler()
+	asm("mov r0, #2 ");						// 2 = interrupt
+	asm("and r2, r1, #0x1f ");				// r1 = mode
+	asm("cmp r2, #0x13 ");
+	asm("ldreqb r0, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iInIDFC));
+	asm("bne 0f ");							// if not svc, must be interrupt
+	asm("cmp r0, #0 ");
+	asm("movne r0, #1 ");					// if iInIDFC, return 1 else return 0
+	asm("0: ");
+	asm("msr cpsr, r1 ");					// restore interrupts
+	__JUMP(,lr);
+	}
+
+
+extern "C" __NAKED__ void send_irq_ipi(TSubScheduler*)
+	{
+	__DATA_SYNC_BARRIER_Z__(r3);			// need DSB before sending any IPI
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("mov	r1, #%a0" : : "i" ((TInt)TRANSFERRED_IRQ_VECTOR));
+	asm("orr	r1, r1, r3, lsl #16 ");
+	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
+	__JUMP(,lr);
+	}
+
+// Send any outstanding reschedule IPIs when the kernel is unlocked on this CPU.
+// Call with interrupts disabled, R0->TSubScheduler, R12=R0->iReschedIPIs
+// Return with R0 unaltered.
+extern "C" __NAKED__ void send_accumulated_resched_ipis()
+	{
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));
+	asm("mov	r1, #0 ");
+	asm("str	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedIPIs));
+	__DATA_SYNC_BARRIER__(r1);				// need DSB before sending any IPI
+	asm("mov	r1, r12, lsl #16 ");
+//	asm("orr	r1, r1, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
+	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
+	__JUMP(,lr);
+	}
+
+// Send a reschedule IPI to the specified CPU
+extern "C" __NAKED__ void send_resched_ipi(TInt /*aCpu*/)
+	{
+	GET_RWNO_TID(,r3);
+	__DATA_SYNC_BARRIER_Z__(r2);			// need DSB before sending any IPI
+	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	ASM_DEBUG1(SendReschedIPI,r0);
+	asm("mov	r1, #0x10000 ");
+	asm("mov	r1, r1, lsl r0 ");	// 0x10000<<aCpu
+//	asm("orr	r1, r1, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
+	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
+	__JUMP(,lr);
+	}
+
+// Send a reschedule IPI to the current processor
+// *** DON'T DO ANY TRACING OR INSTRUMENTATION ***
+extern "C" __NAKED__ void send_self_resched_ipi()
+	{
+	GET_RWNO_TID(,r3);
+	__DATA_SYNC_BARRIER_Z__(r2);			// need DSB before sending any IPI
+	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("mov	r1, #0x02000000 ");			// target = requesting CPU only
+//	asm("orr	r1, r1, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
+	asm("str	r1, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPI
+	__JUMP(,lr);
+	}
+
+extern "C" __NAKED__ void send_resched_ipis(TUint32 aMask)
+	{
+	ASM_DEBUG1(SendReschedIPIs,r0);
+	__DATA_SYNC_BARRIER_Z__(r2);			// need DSB before sending any IPI
+	asm("cmp	r0, #0 ");		// any bits set in aMask?
+	GET_RWNO_TID(ne,r3);
+	asm("ldrne	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("movne	r0, r0, lsl #16 ");
+//	asm("orrne	r0, r0, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
+	asm("strne	r0, [r2, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs if any
+	__JUMP(,lr);
+	}
+
+
+extern "C" __NAKED__ void send_resched_ipi_and_wait(TInt /*aCpu*/)
+	{
+	asm("ldr	r1, __TheSubSchedulers ");
+	asm("mov	r2, #0x10000 ");
+	asm("mov	r2, r2, lsl r0 ");	// 0x10000<<aCpu
+	ASM_DEBUG1(SendReschedIPIAndWait,r0);
+	asm("add	r0, r1, r0, lsl #9 ");	// sizeof(TSubScheduler)=512
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));	// we assume i_GicDistAddr is the same for all CPUs
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqCount));
+	__DATA_SYNC_BARRIER_Z__(r1);		// make sure i_IrqCount is read before IPI is sent
+//	asm("orr	r2, r2, #%a0" : : "i" ((TInt)RESCHED_IPI_VECTOR));	RESCHED_IPI_VECTOR=0
+	asm("str	r2, [r3, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
+	__DATA_SYNC_BARRIER__(r1);			// make sure IPI has been sent
+	asm("1: ");
+	asm("ldrb	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iRescheduleNeededFlag));
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqCount));
+	asm("cmp	r1, #0 ");
+	asm("beq	0f ");					// iRescheduleNeededFlag not set -> wait
+	asm("cmp	r2, #0 ");
+	asm("bge	2f ");					// if other CPU is in an ISR, finish
+	asm("cmp	r3, r12 ");				// if not, has i_IrqCount changed?
+	asm("0: ");
+	ARM_WFEcc(CC_EQ);					// if not, wait for something to happen ...
+	asm("beq	1b ");					// ... and loop
+	asm("2: ");
+	__DATA_MEMORY_BARRIER__(r1);		// make sure subsequent memory accesses don't jump the gun
+										// guaranteed to observe final thread state after this
+	__JUMP(,lr);
+
+	asm("__TheSubSchedulers: ");
+	asm(".word TheSubSchedulers ");
+	}
+
+/*	If the current thread is subject to timeslicing, update its remaining time
+	from the current CPU's local timer. Don't stop the timer.
+	If the remaining time is negative, save it as zero.
+ */
+__NAKED__ void TSubScheduler::SaveTimesliceTimer(NThreadBase* /*aThread*/)
+	{
+	asm("ldr	r3, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iTime));
+	asm("ldrb	r12, [r1, #%a0]" : : "i" _FOFF(NThreadBase,i_NThread_Initial));
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
+	asm("cmp	r3, #0 ");
+	asm("ble	0f ");					// thread isn't timesliced or timeslice already expired so skip
+	asm("cmp	r12, #0 ");
+	asm("bne	0f ");					// initial (i.e. idle) thread, so skip
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(ArmLocalTimer,iTimerCount));
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerMultI));
+	asm("cmp	r3, #0 ");
+	asm("movmi	r0, #0 ");				// if timer count is negative, save zero
+	asm("bmi	1f ");
+	asm("umull	r0, r3, r12, r3 ");		// scale up to max timer clock
+	asm("adds	r0, r0, #0x00800000 ");
+	asm("adcs	r3, r3, #0 ");
+	asm("mov	r0, r0, lsr #24 ");
+	asm("orr	r0, r0, r3, lsl #8 ");
+	asm("1:		");
+	asm("str	r0, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iTime));
+	asm("0:		");
+	__JUMP(,lr);
+	}
+
+/*	Update aOld's execution time and set up the timer for aNew
+	Update this CPU's timestamp value
+
+	if (!aOld) aOld=iInitialThread
+	if (!aNew) aNew=iInitialThread
+	newcount = aNew->iTime>0 ? Max(aNew->iTime*i_TimerMultF/2^32, 1) : 2^31-1
+	cli()
+	oldcount = timer count
+	if (oldcount<=0 || aOld!=aNew)
+		{
+		timer count = newcount
+		elapsed = i_LastTimerSet - oldcount
+		i_LastTimerSet = newcount
+		elapsed = elapsed * i_TimerMultI / 2^24
+		aOld->iTotalCpuTime64 += elapsed
+		correction = i_TimestampError;
+		if (correction > i_MaxCorrection)
+			correction = i_MaxCorrection
+		else if (correction < -i_MaxCorrection)
+			correction = -i_MaxCorrection
+		i_TimestampError -= correction
+		i_LastTimestamp += elapsed + i_TimerGap - correction
+		}
+	sti()
+ */
+__NAKED__ void TSubScheduler::UpdateThreadTimes(NThreadBase* /*aOld*/, NThreadBase* /*aNew*/)
+	{
+	asm("cmp	r2, #0 ");
+	asm("ldreq	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iInitialThread));
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerMultF));
+	asm("cmp	r1, #0 ");
+	asm("ldreq	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iInitialThread));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(NThreadBase,iTime));
+	asm("stmfd	sp!, {r4-r7} ");
+	asm("ldr	r6, [r2, #%a0]" : : "i" _FOFF(NThreadBase,iRunCount64));
+	asm("ldr	r7, [r2, #%a0]" : : "i" (_FOFF(NThreadBase,iRunCount64)+4));
+	asm("cmp	r1, r2 ");
+	asm("beq	2f ");
+	asm("adds	r6, r6, #1 ");
+	asm("str	r6, [r2, #%a0]" : : "i" _FOFF(NThreadBase,iRunCount64));
+	asm("ldr	r4, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedCount64));
+	asm("ldr	r6, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iReschedCount64)+4));
+	asm("adcs	r7, r7, #0 ");
+	asm("str	r7, [r2, #%a0]" : : "i" (_FOFF(NThreadBase,iRunCount64)+4));
+	asm("adds	r4, r4, #1 ");
+	asm("adcs	r6, r6, #0 ");
+	asm("str	r4, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iReschedCount64));
+	asm("str	r6, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iReschedCount64)+4));
+	asm("2:		");
+	asm("cmp	r3, #1 ");					// aNew->iTime > 0 ?
+	asm("umullge r4, r3, r12, r3 ");
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
+	asm("movlt	r3, #0x7fffffff ");
+	asm("addges	r3, r3, r4, lsr #31 ");		// round up top 32 bits if bit 31 set
+	asm("moveq	r3, #1 ");					// if result zero, limit to 1
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LastTimerSet));
+	__ASM_CLI();
+	asm("ldr	r4, [r5, #%a0]" : : "i" _FOFF(ArmLocalTimer,iTimerCount));
+	asm("cmp	r1, r2 ");
+	asm("bne	1f ");
+	asm("cmp	r4, #0 ");
+	asm("bgt	0f ");						// same thread, timeslice not expired -> leave timer alone
+	asm("1:		");
+	asm("str	r3, [r5, #%a0]" : : "i" _FOFF(ArmLocalTimer,iTimerCount));	// set new timeslice value in timer
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerMultI));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LastTimerSet));
+	asm("sub	r12, r12, r4 ");			// r12 = elapsed (actual timer ticks)
+	asm("umull	r4, r5, r12, r5 ");
+	asm("ldr	r3, [r1, #%a0]!" : : "i" _FOFF(NThreadBase,iTotalCpuTime64));
+	asm("ldr	r12, [r1, #4] ");
+	asm("adds	r4, r4, #0x00800000 ");
+	asm("adcs	r5, r5, #0 ");
+	asm("mov	r4, r4, lsr #24 ");
+	asm("orr	r4, r4, r5, lsl #8 ");		// r4 = elapsed
+	asm("adds	r3, r3, r4 ");
+	asm("adcs	r12, r12, #0 ");
+	asm("stmia	r1, {r3,r12} ");			// aOld->iTotalCpuTime64 += elapsed
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimestampError));
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_MaxCorrection));
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iLastTimestamp64));
+	asm("ldr	r2, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iLastTimestamp64)+4));
+	asm("mov	r12, r3 ");
+	asm("cmp	r3, r5 ");
+	asm("movgt	r3, r5 ");					// if (correction>i_MaxCorrection) correction=i_MaxCorrection
+	asm("cmn	r3, r5 ");
+	asm("rsblt	r3, r5, #0 ");				// if (correction+i_MaxCorrection<0) correction=-i_MaxCorrection
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerGap));
+	asm("sub	r12, r12, r3 ");
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimestampError));
+	asm("add	r4, r4, r5 ");				// r4 = elapsed + i_TimerGap
+	asm("adds	r1, r1, r4 ");
+	asm("adcs	r2, r2, #0 ");				// iLastTimestamp64 + (elapsed + i_TimerGap)
+	asm("subs	r1, r1, r3 ");
+	asm("sbcs	r1, r1, r3, asr #32 ");		// iLastTimestamp64 + (elapsed + i_TimerGap - correction)
+	asm("str	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iLastTimestamp64));
+	asm("str	r2, [r0, #%a0]" : : "i" (_FOFF(TSubScheduler,iLastTimestamp64)+4));
+	asm("0:		");
+	__ASM_STI();
+	asm("ldmfd	sp!, {r4-r7} ");
+	__JUMP(,lr);
+	}
+
+

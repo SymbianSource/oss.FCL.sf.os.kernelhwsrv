@@ -1,0 +1,11 @@
+# component name "Domain Manager"
+
+component	base_domain
+source	\sf\os\kernelhwsrv\userlibandfileserver\domainmgr
+binary	\sf\os\kernelhwsrv\userlibandfileserver\domainmgr\group all
+exports	\sf\os\kernelhwsrv\userlibandfileserver\domainmgr\group
+notes_source	\component_defs\release.src
+
+
+ipr D 
+

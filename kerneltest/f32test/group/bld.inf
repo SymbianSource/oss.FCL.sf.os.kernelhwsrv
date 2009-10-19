@@ -1,0 +1,275 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/bld.inf
+// Test code for file server
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_PLATFORMS
+
+BASEUSERDEFAULT
+
+PRJ_TESTEXPORTS
+
+../../../userlibandfileserver/fileserver/shostmassstorage/client/rusbhostmslogicalunit.h        /epoc32/include/
+
+../../../userlibandfileserver/fileserver/inc/runtests.h                         /epoc32/include/
+
+PRJ_TESTMMPFILES
+// These tests must be run early on so they do not time out on LFFS disks.
+
+#ifdef WINS
+t_cfileman
+t_fatcharsetconv
+#else
+t_fatcharsetconv    manual
+#endif
+
+
+t_handshare
+fhserver    support
+
+t_vfat
+
+t_rename
+
+t_fsrvbm    support
+t_fsysbm    support
+t_whet      support
+#ifdef ARMCC
+t_whetvfp   support
+#endif
+//T_WARM        manual
+t_gen       
+t_gen32 
+
+b_file      
+b_gen       
+b_mtst  
+b_open
+b_osfil     
+b_rand      
+b_rep       
+t_alert     manual
+t_chkuid
+
+t_dirs      
+t_dlocl     
+t_file      
+t_fman      
+#include "../plugins/version_2/crypto_encryption/group/encryption.inf"
+t_fnames
+t_format
+clean_prepdc    support
+t_dctcb     
+t_dctcballfiles 
+t_dctcbdiskadmin    
+t_dcdiskadminallfiles   
+t_dcallfiles        
+t_dcallcaps     
+t_dcdiskadmin       
+t_dcnone        
+t_fsrv      
+t_gdir
+t_locate    
+t_lock      
+t_misc      
+t_nmbs      
+t_notify    
+t_dspace        
+t_open      
+t_parse     
+t_ramstr    support
+t_rand          
+t_rdsect
+t_resize    
+    
+t_rcount    
+t_scan      
+t_sysbin
+t_sysbin_dll    support
+t_sess      
+t_fsy2k     
+t_appins    
+t_proc      
+t_oom       
+t_clobbr
+t_tfsys     support
+t_tfsys2    support
+t_tfsys3    support
+
+t_cfssimple
+t_cfstest
+t_cfsbench      manual
+t_cfssoak       manual
+t_cfsperform    manual
+
+cfafsdly        support
+
+t_falsespace
+t_locchange
+
+// builds japanese test locale dll as per s60 team way
+t_tlocl_cp932 support
+t_localeutils_cp932
+
+
+t_filematch
+
+#ifdef WINS
+//T_ROMG    
+#endif
+
+//T_TERM        support
+
+t_prel      support
+t_fname         support
+t_soak1     support
+
+#ifdef EPOC32
+
+t_remfsy    support
+t_remote    manual  
+gnumakefile romstuff.mke  support
+#endif
+
+//t_scndr1    manual //-- obsolte; replaced by t_scn32dr1
+//t_scndr2    manual //-- obsolte; replaced by t_scn32dr2
+//T_MMC     manual
+t_pwstr manual
+
+
+t_fsys
+t_mvdr      manual
+
+
+t_logext    support
+t_bitext    support
+t_emptyext  support
+t_ext1
+t_fatext    support
+
+t_virus
+t_vshook    support
+
+t_estart
+t_corruptlog
+
+#ifndef WINS
+t_blockmap
+#endif
+
+t_filecache 
+
+t_fsched
+t_rcache
+t_wcache
+
+
+
+t_loader_delete
+tld_helper  support
+
+#ifdef EPOC32
+t_fragmentdp
+t_nandpaging
+t_reaper
+t_reaper_test_dll support
+t_pagestress
+t_wdpstress
+
+t_pageldrtst0			support
+t_pageldrtst1			support
+t_pageldrtst2			support
+t_pageldrtst3			support
+t_pageldrtst4			support
+t_pageldrtst5			support
+t_pageldrtst6			support
+t_pageldrtst7			support
+t_pageldrtst8			support
+t_pageldrtst9			support
+t_pageldrtst10			support
+t_pageldrtst11			support
+t_pageldrtst12			support
+t_pageldrtst13			support
+t_pageldrtst14			support
+t_pageldrtst15			support
+t_pageldrtst			manual
+t_pageldrtst_auto
+t_pageldrtst_lowmem
+t_pageldrtst_chunk
+t_pageldrtst_reaper
+t_pageldrtst_defrag
+t_pageldrtst_d_exc
+
+t_ramstress    support
+t_mmcpaging
+t_paginginfo
+#endif
+t_clamp
+t_denyclamp
+
+t_findcapall
+t_findcapnone
+
+t_notifydismount
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+t_notifier
+t_notifier_nocaps   support
+t_notifier_allfiles     support
+t_notifier_belongs  support
+t_notify_plugin     support
+t_notify_mfs
+#endif
+
+t_enchook   support
+t_hexhook   support
+t_tracehook support
+t_formathook    support
+
+t_bigfile support
+#ifdef WINS
+t_rawext support
+#endif
+
+t_swapfsys manual
+#include "../filesystem/fat/group/fatfs.inf"
+#include "../filesystem/automounter/bld.inf"
+
+
+#include "perf_test.inf"
+#include "../loader/ldrplatsec.inf"
+#include "../smassstorage/group/smassstorage.inf"
+#include "../plugins/version_2/group/plugin_test_v2.inf"
+t_plugin_v2beta.mmp
+
+t_localtime 
+#ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+t_file64bit manual
+fhserver64bit       support
+#include "../plugins/version_2/file64bit/group/file64bit_plugin.inf"
+#endif
+
+t_ftrace
+
+t_surrogatepair
+
+// this test loads a actual codepage dll (cp932.dll),  should be the last test.
+t_cp932dll      support
+t_cp_plugin
+

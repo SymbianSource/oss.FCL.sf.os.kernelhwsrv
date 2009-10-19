@@ -1,0 +1,32 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\misc\t_undef.cpp
+// 
+//
+
+#include <e32test.h>
+#include <u32std.h>
+
+
+#ifdef __CPU_ARM
+__NAKED__ void Crash()
+	{
+
+	__SWITCH_TO_ARM;
+	asm("mvn r0, #0 ");
+	asm("mcr p15, 0, r0, c3, c0 ");		// accessing CP15 in user mode -> undef exception
+	__JUMP(,lr);
+	__END_ARM;
+	}
+#endif

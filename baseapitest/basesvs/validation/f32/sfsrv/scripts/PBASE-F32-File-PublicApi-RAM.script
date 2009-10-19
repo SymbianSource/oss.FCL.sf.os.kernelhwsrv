@@ -1,0 +1,4238 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! 	@file
+//! 	@SYMTestSuiteName		pbase-f32-sfsrv-publicapi-ram
+//!	@SYMScriptTestEnvironment	This test script requires a basic ROM.
+//! 	@SYMScriptAuthor 		Alvar Udras
+//! 	@SYMScriptDescription		The test script contains API tests for the following functions of RFile class:
+//!	TInt Open(RFs &aFs, const TDesC &aName, TUint aFileMode);
+//!	void Close();
+//!	TInt Create(RFs &aFs, const TDesC &aName, TUint aFileMode);
+//!	TInt Replace(RFs &aFs, const TDesC &aName, TUint aFileMode);
+//!	TInt Temp(RFs &aFs, const TDesC &aPath, TFileName &aName, TUint aFileMode);
+//!	TInt Read(TDes8 &aDes) const;
+//!	void Read(TDes8 &aDes, TRequestStatus &aStatus) const;
+//!	TInt Read(TDes8 &aDes, TInt aLength) const;
+//!	void Read(TDes8 &aDes, TInt aLength, TRequestStatus &aStatus) const;
+//!	TInt Read(TInt aPos, TDes8 &aDes) const;
+//!	void Read(TInt aPos, TDes8 &aDes, TRequestStatus &aStatus) const;
+//!	TInt Read(TInt aPos, TDes8 &aDes, TInt aLength) const;
+//!	void Read(TInt aPos, TDes8 &aDes, TInt aLength, TRequestStatus &aStatus) const;
+//!	void ReadCancel(TRequestStatus &aStatus) const;
+//!	void ReadCancel() const;
+//!	TInt Write(const TDesC8 &aDes);
+//!	void Write(const TDesC8 &aDes, TRequestStatus &aStatus);
+//!	TInt Write(const TDesC8 &aDes, TInt aLength);
+//!	void Write(const TDesC8 &aDes, TInt aLength, TRequestStatus &aStatus);
+//!	TInt Write(TInt aPos, const TDesC8 &aDes);
+//!	void Write(TInt aPos, const TDesC8 &aDes, TRequestStatus &aStatus);
+//!	TInt Write(TInt aPos, const TDesC8 &aDes, TInt aLength);
+//!	void Write(TInt aPos, const TDesC8 &aDes, TInt aLength, TRequestStatus &aStatus);
+//!	TInt Lock(TInt aPos, TInt aLength) const;
+//!	TInt UnLock(TInt aPos, TInt aLength) const;
+//!	TInt Seek(TSeek aMode, TInt &aPos) const;
+//!	TInt Flush();
+//!	void Flush(TRequestStatus &aStatus);
+//!	TInt Size(TInt &aSize) const;
+//!	TInt SetSize(TInt aSize);
+//!	TInt Att(TUint &aAttValue) const;
+//!	TInt SetAtt(TUint aSetAttMask, TUint aClearAttMask);
+//!	TInt Modified(TTime &aTime) const;
+//!	TInt SetModified(const TTime &aTime);
+//!	TInt Set(const TTime &aTime, TUint aSetAttMask, TUint aClearAttMask);
+//!	TInt ChangeMode(TFileMode aNewMode);
+//!	TInt Rename(const TDesC &aNewName);
+//!	TInt Drive(TInt &aDriveNumber, TDriveInfo &aDriveInfo) const;
+//!	TInt Name(TDes &aName) const;
+//!	TInt Duplicate(const RFile &aFile, TOwnerType aType=EOwnerProcess);
+//!	TInt FullName(TDes &aName) const;
+
+LOAD_SUITE	T_SfSrv
+DELAY		1000
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-Install
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-Install
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Setup the Environment to test RFile APIs by creating directories.
+//! @SYMTestActions		1. Rfs::New() to create Rfs Object.
+//!                     2. Rfs::MkDirAll() to create directories required.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Directories get created.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect	
+		COMMAND		RFs1	MkDirAll	PBASE-F32-File-PublicApi-Install
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-Install
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0001
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0001
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Open() test. Open a file and close it.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call Replace passing "{Drives, RAMDriveTestPath}file\tc0001.txt", EFileShareAny | EFileWrite
+//!				3. Write "open test" to file.
+//!				4. Close file.
+//!				5. Open file "{Drives, RAMDriveTestPath}file\tc0001.txt", with EFileRead
+//!				6. Read from file to determine, that the file is opened.
+//!				7. Close file.
+//!				8. Delete file.
+//!				9. Close file system.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Open() returns KErrNone. File is opened after Open call.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0001-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0001-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0001-001-Open_command008
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0001-001-Read_command009
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0001-001-Delete_command013
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0001
+
+
+//FileModes - EFileRead
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-4001
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-4001
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function TFileMode::EFileRead test. open file for reading and try to write to it.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call Replace passing "{Drives, RAMDriveTestPath}file\tc4001.txt", EFileShareAny | EFileWrite
+//!				3. Close file.
+//!				4. Open file "{Drives, RAMDriveTestPath}file\tc4001.txt", with EFileRead
+//!				5. Write "test" to file.
+//!				6. Close file.
+//!				7. Delete file.
+//!				8. Close file system.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write returns KErrAccessDenied.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-4001-001-Replace_command005
+		COMMAND			file	Close		
+		COMMAND			file	Open		PBASE-F32-File-PublicApi-4001-001-Open_command007
+		COMMAND	!Error=-21	file	Write		PBASE-F32-File-PublicApi-4001-001-Write_command008
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-4001-001-Delete_command012
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-4001
+
+
+//EFileShareExclusive
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-4002
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-4002
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function TFileMode::EFileShareExclusive test. Open a file in EFileShareExclusive and try to open the same file through another handle.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call Replace passing "{Drives, RAMDriveTestPath}file\tc4002.txt", EFileShareAny | EFileWrite.
+//!				3. Close file.
+//!				4. Open file "{Drives, RAMDriveTestPath}file\tc4002.txt", with EFileShareExclusive 
+//!				5. Open "{Drives, RAMDriveTestPath}file\tc4002.txt" through new handle called file2, with EFileShareExlusive
+//!				6. Close file.
+//!				7. Delete file.
+//!				8. Close file system.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Open returns KErrInUse.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-4002-001-Replace_command005
+		COMMAND			file	Close		
+		COMMAND			file	Open		PBASE-F32-File-PublicApi-4002-001-Open_command007
+		COMMAND			file2	new		
+		COMMAND	!Error=-14	file2	Open		PBASE-F32-File-PublicApi-4002-001-Open_command010
+		COMMAND			file2	Close		
+		COMMAND			file2	~		
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-4002-001-Delete_command017
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-4002
+
+
+//EFileShareReadersOnly
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-4003
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-4003
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function TFileMode::EFileShareReadersOnly test. Open a file in EFileShareReadersOnly and try to write to it through another handle.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call Replace passing "{Drives, RAMDriveTestPath}file\tc4003.txt", EFileShareAny | EFileWrite 
+//!				3. Write "open test" to file.
+//!				4. Close file.
+//!				5. Open file "{Drives, RAMDriveTestPath}file\tc4003.txt", with EFileShareReadersOnly 
+//!				6. Open "{Drives, RAMDriveTestPath}file\tc4003.txt" through new handle called file2 EFileRead.
+//!				7. Read from file.
+//!				8. Try to write "will cause error" to file.
+//!				9. Close file.
+//!				10. Delete file.
+//!				11. Close file system.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write returns KErrAccessDenied.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-4003-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-4003-001-Write_command006
+		COMMAND			file	Close		
+		COMMAND			file	Open		PBASE-F32-File-PublicApi-4003-001-Open_command008
+		COMMAND			file2	new		
+		COMMAND			file2	Open		PBASE-F32-File-PublicApi-4003-001-Open_command011
+		COMMAND			file2	Read		PBASE-F32-File-PublicApi-4003-001-Read_command012
+		COMMAND	!Error=-21	file2	Write		PBASE-F32-File-PublicApi-4003-001-Write_command013
+		COMMAND			file2	Close		
+		COMMAND			file2	~		
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-4003-001-Delete_command020
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-4003
+
+
+//EFileShareAny
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-4004
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-4004
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function TFileMode::EFileShareAny test. Open a file in EFileShareAny and try to write to it through another handle.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call Replace passing "{Drives, RAMDriveTestPath}file\tc4004.txt", EFileShareAny | EFileWrite 
+//!				3. Write "open test" to file.
+//!				4. Close file.
+//!				5. Open file "{Drives, RAMDriveTestPath}file\tc4004.txt", with EFileShareAny.
+//!				6. Open "{Drives, RAMDriveTestPath}file\tc4004.txt" through new handle called file2 EFileShareAny | EFileWrite.
+//!				7. Read from file.
+//!				8. Try to write "open test" to file.
+//!				9. Close file.
+//!				10. Delete file.
+//!				11. Close file system.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No error is returned or panic raised.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-4004-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-4004-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-4004-001-Open_command008
+		COMMAND		file2	new		
+		COMMAND		file2	Open		PBASE-F32-File-PublicApi-4004-001-Open_command011
+		COMMAND		file2	Read		PBASE-F32-File-PublicApi-4004-001-Read_command012
+		COMMAND		file2	Write		PBASE-F32-File-PublicApi-4004-001-Write_command013
+		COMMAND		file2	Close		
+		COMMAND		file2	~		
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-4004-001-Delete_command020
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-4004
+
+//EFileShareReadersOfWriters
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-4005
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-4005
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function TFileMode::EFileShareReadersOrWriters test. Open a file in EFileShareReadersOrWriters and try to write to it through another handle.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call Replace passing "{Drives, RAMDriveTestPath}file\tc4005.txt", EFileShareAny | EFileWrite. 
+//!				3. Write "open test" to file.
+//!				4. Close file.
+//!				5. Open file "{Drives, RAMDriveTestPath}file\tc4005.txt", with EFileShareReadersOrWriters | EFileRead. 
+//!				6. Open "{Drives, RAMDriveTestPath}file\tc4005.txt" through new handle called file2, EFileShareReadersOrWriters | EFileWrite.
+//!				7. Read from file.
+//!				8. Try to write "open test" to file.
+//!				9. Close file.
+//!				10. Delete file.
+//!				11. Close file system.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No errors returned or panics raised.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-4005-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-4005-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-4005-001-Open_command008
+		COMMAND		file2	new		
+		COMMAND		file2	Open		PBASE-F32-File-PublicApi-4005-001-Open_command011
+		COMMAND		file2	Read		PBASE-F32-File-PublicApi-4005-001-Read_command012
+		COMMAND		file2	Write		PBASE-F32-File-PublicApi-4005-001-Write_command013
+		COMMAND		file2	Close		
+		COMMAND		file2	~		
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-4005-001-Delete_command020
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-4005
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0003
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0003
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Create() test. Create a file.
+//!				Uses API elements: Create().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Create passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0003.txt", EFileShareAny
+//!				3. Open the file.
+//!				4. Write literal "test created this file" to file.
+//!				5. Close RFile.
+//!				6. Delete file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Create() returns KErrNone. File is created. No panics raised or errors returned
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Create		PBASE-F32-File-PublicApi-0003-001-Create_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0003-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0003-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0003
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0004
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0004
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Replace() test. Replace a file.
+//!				Uses API elements: Replace().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0004.txt", EFileWrite
+//!				3. Call RFile::Write passing literal "This file is replaced"
+//!				4. Call Flush on file.
+//!				5. Close file.
+//!				6. Open file.
+//!				7. Read the file.
+//!				8. Close RFile.
+//!				9. Delete file.
+//!				10. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Replace returns KErrNone. File contains written literal and nothing else.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0004-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0004-001-Write_command006
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0004-001-Open_command009
+		COMMAND		file	Read		
+		COMMAND		file	Close
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0004-001-Delete_command013
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0004
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0005
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0005
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Temp() test. Create a temporary file.
+//!				Uses API elements: Temp().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Temp passing RFs, literal "{Drives, RAMDriveTestPath}file\", TDesc&, EFileWrite
+//!				3. Call RFile::Write passing literal "This is temporary file"
+//!				4. Rename the file to "tc0005.txt".
+//!				5. Close RFile.
+//!				6. Delete temporary file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Temp() returns KErrNone, temporary file is created.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Temp		PBASE-F32-File-PublicApi-0005-001-Temp_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0005-001-Write_command006
+		COMMAND		file	Rename		PBASE-F32-File-PublicApi-0005-001-Rename_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0005-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0005
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0006
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0006
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read(TDes8 &aDes) test - will open file and read its contents to a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0006.txt", EFileWrite
+//!				3. Call RFile::Write passing literal "Synchronous read test!".
+//!				4. Set the file position to 0.
+//!				5. Call RFile::Read().
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0006-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0006-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0006-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0006-001-Read_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0006-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0006
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0007
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0007
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read(TDes8& aDes, TRequestStatus &aStatus) test - will open file and read its contents to a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0007.txt", EFileWrite.
+//!				3. Call RFile::Write passing literal "asynchronous read test"
+//!				4. Reset file position
+//!				5. Call RFile::Read() passing TRequestStatus.
+//!				6. Wait until asynchronous call completes
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The asynchronous read call finishes with KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0007-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0007-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0007-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0007-001-Read_command008
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0007-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0007
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0008
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0008
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read(TDes8 &aDes, TInt aLength) test - will open file and read fixed length from its contents to a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0008.txt", EFileWrite
+//!				3. Write "synchronous read with length test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing TDesC, 5 for the length
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0008-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0008-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0008-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0008-001-Read_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0008-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0008
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0009
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0009
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read(TDes8 &aDes, TInt aLength, TRequestStatus &aStatus) test - will open file and read fixed length from its contents to a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0009.txt", EFileWrite.
+//!				3. Call RFile::Write passing literal "Asynchronous read with length test"
+//!				4. Reset file position
+//!				4. Create TRequestStatus variable.
+//!				5. Call RFile::Read() passing TRequestStatus and 5 for length.
+//!				6. Wait until asynchronous call completes
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The asynchronous read call finishes with KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0009-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0009-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0009-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0009-001-Read_command008
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0009-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0009
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0010
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0010
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read(TInt aPos, TDes8 &aDes) test - will open file and read from given position its contents to a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0010.txt", EFileWrite
+//!				3. Write "synchronous read with position test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 5 for position.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0010-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0010-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0010-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0010-001-Read_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0010-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0010
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0011
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0011
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read(TInt aPos, TDes8 &aDes, TRequestStatus &aStatus) test - will open file and read from given position its contents to a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0011.txt", EFileWrite.
+//!				3. Call RFile::Write passing literal "asynchronous read with position test"
+//!				4. Reset file position
+//!				5. Call RFile::Read() passing TRequestStatus and 5 for position.
+//!				6. Wait until asynchronous call completes
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The asynchronous read call finishes with KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0011-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0011-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0011-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0011-001-Read_command008
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0011-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0011
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0012
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0012
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read(TInt aPos, TDes8 &aDes, TInt aLength) test - will open file and read from given position fixed length of contents into a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0012.txt", EFileWrite
+//!				3. Write "synchronous read with length and position test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 5 for  length and 5 for position.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0012-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0012-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0012-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0012-001-Read_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0012-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0012
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0013
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0013
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read(TInt aPos, TDes8 &aDes, TInt aLength, TRequestStatus &aStatus) test - will open file and read from given position fixed length of contents into a buffer.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0013.txt", EFileWrite.
+//!				3. Call RFile::Write passing literal "asynchronous read with length and position test"
+//!				4. Reset file position
+//!				5. Call RFile::Read() passing TRequestStatus, 5 for length and 5 for position.
+//!				6. Wait until asynchronous call completes
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The asynchronous read call finishes with KErrNone. Data is read and verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0013-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0013-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0013-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0013-001-Read_command008
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~	
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0013-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0013
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0014
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0014
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function ReadCancel(TRequestStatus aStatus) and EFileReadAsyncAll test.
+//!				Uses API elements: ReadCancel().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0014.txt", EFileWrite.
+//!				3. Write message "short data" to file.
+//!				4. Close file
+//!				5. Open fail again with EFileShareAny | EFileReadAsyncAll.
+//!				6. Call RFile::Read() passing TRequestStatus.
+//!				7. Call ReadCancel passing TRequestStatus.
+//!				8. Close RFile.
+//!				9. Delete file.
+//!				10. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	TRequestStatus returns KErrCancel after ReadCancel.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0014-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0014-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0014-001-Open_command008
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0014-001-Seek_command009
+		COMMAND	!AsyncError=-3	file	Read		PBASE-F32-File-PublicApi-0014-001-Read_command010
+		ASYNC_DELAY		5
+		COMMAND		file	ReadCancel	
+        COMMAND		file	ReadCancel
+		OUTSTANDING 	
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0014-001-Delete_command015
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0014
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0015
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0015
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function ReadCancel() test, call two asynchronous reads consequently on the same file.
+//!				Uses API elements: ReadCancel().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0015.txt", EFileWrite.
+//!				3. Write message "short data" to file.
+//!				4. Close file
+//!				5. Open fail again with EFileShareAny | EFileReadAsyncAll.
+//!				6. Call RFile::Read() passing TRequestStatus.
+//!				7. Call RFile::Read() passing TRequestStatus.
+//!				8. Call ReadCancel.
+//!				9. Close RFile.
+//!				10. Delete file.
+//!				11. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Both TRequestStatuses return KErrCancel after ReadCancel.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0015-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0015-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0015-001-Open_command008
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0015-001-Seek_command009
+		COMMAND !AsyncError=-3	file	Read		PBASE-F32-File-PublicApi-0015-001-Read_command010
+		COMMAND	!AsyncError=-3	file	Read		PBASE-F32-File-PublicApi-0015-001-Read_command011
+		ASYNC_DELAY		5
+		COMMAND		file	ReadCancel		PBASE-F32-File-PublicApi-0015-001-ReadCancel_command012
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0015-001-Delete_command016
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0015
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0016
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0016
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Write(const TDesC8 &aDes) test - will open file and Write to it from given buffer.
+//!				Uses API elements: Write(const TDesC8 &aDes).
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0016.txt", EFileWrite
+//!				3. Call RFile::Write() passing "Write test".
+//!				4. Reset file position
+//!				5. Read from file to verify it's content.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write() returns KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0016-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0016-001-Write_command006
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0016-001-Open_command009
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0016-001-Read_command010
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0016-001-Delete_command014
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0016
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0017
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0017
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Write(const TDesC8 &aDes, TRequestStatus &aStat) test - will open file and Write to it from given buffer.
+//!				Uses API elements: Write(const TDesC8 &aDes, TRequestStatus &aStat).
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0017.txt", EFileWrite.
+//!				3. Call RFile::Write()  passing "Asynchronous write test" and TRequestStatus.
+//!				4. Wait for request to complete.
+//!				5. Reset file position
+//!				6. Read from file to verify it's content.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Write completes with KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0017-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0017-001-Write_command006
+		OUTSTANDING
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0017-001-Open_command009
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0017-001-Read_command010
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0017-001-Delete_command014
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0017
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0018
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0018
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Write(const TDesC8 &aDes, TInt aLength) test - will open file and Write to it fixed length bytes from given buffer.
+//!				Uses API elements: Write(const TDesC8 &aDes, TInt aLength).
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0018.txt", EFileWrite
+//!				3. Call RFile::Write() passing "Synchronous write test with length", and 5 for length to write.
+//!				4. Reset file position
+//!				5. Read from file to verify it's content.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write() returns KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0018-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0018-001-Write_command006
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0018-001-Open_command009
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0018-001-Read_command010
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0018-001-Delete_command014
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0018
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0019
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0019
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Write(const TDesC8 &aDes, TInt aLength, TRequestStatus &aStatus) test - will open file and Write to it fixed length bytes from given buffer.
+//!				Uses API elements: Write(const TDesC8 &aDes, TInt aLength, TRequestStatus &aStatus).
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0019.txt", EFileWrite.
+//!				3. Call RFile::Write()  passing "Asynchronous write test with length", 5 for length and TRequestStatus.
+//!				4. Wait for request to complete.
+//!				5. Reset file position
+//!				6. Read from file to verify it's content.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Write completes with KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0019-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0019-001-Write_command006
+		OUTSTANDING
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0019-001-Open_command009
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0019-001-Read_command010
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0019-001-Delete_command014
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0019
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0020
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0020
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Write(TInt aPos, const TDesC8 &aDes) test - will open file and Write to it from given position.
+//!				Uses API elements: Write(TInt aPos, const TDesC8 &aDes).
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0020.txt", EFileWrite
+//!				4. Call RFile::Write() passing "Synchronous write test with position", and 2 for position to write from.
+//!				5. Reset file position
+//!				6. Read from file to verify it's content.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write() returns KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0020-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0020-001-Write_command006
+		COMMAND		file	Flush		
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0020-001-Write_command008
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0020-001-Open_command011
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0020-001-Read_command012
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0020-001-Delete_command016
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0020
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0021
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0021
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Write(TInt aPos, const TDesC8 &aDes, TRequestStatus &aStatus) test - will open file and Write to it from given position.
+//!				Uses API elements: Write(TInt aPos, const TDesC8 &aDes, TRequestStatus &aStatus).
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0021.txt", EFileWrite.
+//!				3. Call RFile::Write()  passing "Asynchronous write test with position", 2 for position and TRequestStatus.
+//!				4. Wait for request to complete.
+//!				5. Reset file position
+//!				6. Read from file to verify it's content.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	TRequestStatus equals KErrNone after writing. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0021-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0021-001-Write_command006
+		COMMAND		file	Flush		
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0021-001-Write_command008
+		OUTSTANDING
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0021-001-Open_command011
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0021-001-Read_command012
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0021-001-Delete_command016
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0021
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0022
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0022
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Write(TInt aPos, const TDesC8 &aDes, TInt aLength) test - will open file and Write to it from given position and fixed length of bytes.
+//!				Uses API elements: Write(TInt aPos, const TDesC8 &aDes, TInt aLength).
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0022.txt", EFileWrite
+//!				3. Call RFile::Write() passing "Synchronous write test with position, length", 2 for position and 4 for length to write from.
+//!				4. Reset file position
+//!				5. Read from file to verify it's content.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write() returns KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0022-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0022-001-Write_command006
+		COMMAND		file	Flush		
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0022-001-Write_command008
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0022-001-Open_command011
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0022-001-Read_command012
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0022-001-Delete_command016
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0022
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0023
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0023
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Write(TInt aPos, const TDesC8 &aDes, TInt aLength, TRequestStatus &aStatus) test - will open file and Write to it from given position and fixed length of bytes.
+//!				Uses API elements: Write(TInt aPos, const TDesC8 &aDes, TInt aLength, TRequestStatus &aStatus).
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0023.txt", EFileWrite.
+//!				3. Call RFile::Write()  passing "Asynchronous write test with position, length",2 for position, 4 for length and TRequestStatus.
+//!				4. Wait for request to complete.
+//!				5. Reset file position
+//!				6. Read from file to verify it's content.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	TRequestStatus equals KErrNone after writing. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0023-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0023-001-Write_command006
+		COMMAND		file	Flush		
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0023-001-Write_command008
+		OUTSTANDING
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0023-001-Open_command011
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0023-001-Read_command012
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0023-001-Delete_command016
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0023
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0024
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0024
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Lock(), UnLock test - open a file and lock it, then try to read from it from another RFs.
+//!				Uses API elements: Lock(), Unlock(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0024.txt", EFileWrite, open file as fileOne.
+//!				3. Write "Lock test" to file.
+//!				4. Lock the file by Calling Lock() with pos=0 and length=3.
+//!				5. open  "{Drives, RAMDriveTestPath}file\tc0024.txt" as fileTwo.
+//!				6. read from the fileTwo.
+//!				7. read from fileOne.
+//!				8. unlock fileOne by RFile::Unlock(), with pos=0 and length=3.
+//!				9. read from fileTwo.
+//!				10. Close fileOne.
+//!				11. Close fileTwo.
+//!				12. Delete file.
+//!				13. Close first RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	When fileOne is locked reading of fileTwo returns KErrLocked, Lock() returns KErrNone, UnLock returns KErrNone. 
+//!				After fileOne is unlocked Reading of fileTwo returns KErrNone.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0024-001-Replace_command005
+		COMMAND			file2	new		
+		COMMAND			file2	Open		PBASE-F32-File-PublicApi-0024-001-Open_command008
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-0024-001-Write_command010
+		COMMAND			file	Lock		PBASE-F32-File-PublicApi-0024-001-Lock_command011
+		COMMAND	!Error=-22	file2	Read		
+		COMMAND			file	Read		
+		COMMAND			file	UnLock		PBASE-F32-File-PublicApi-0024-001-UnLock_command016
+		COMMAND			file2	Read		
+		COMMAND			file2	Close		
+		COMMAND			file2	~		
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0024-001-Delete_command025
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0024
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0025
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0025
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Seek() test - open a file and and get it's current position.
+//!				Uses API elements: Seek(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0025.txt", EFileWrite.
+//!				3. Write "Should seek to pos here" to file.
+//!				3. Call RFile::Seek passing ESeekStart, 19
+//!				4. Call RFile::Read;
+//!				5. Close file.
+//!				6. Delete file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Seek() returns KErrNone, buffer contents equals string literal "here".
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0025-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0025-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0025-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0025-001-Read_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0025-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0025
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0125
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0125
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Seek() test - test TSeek::ESeekCurrent.
+//!				Uses API elements: Seek(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0125.txt", EFileWrite.
+//!				3. Write "Should seek to pos here" to file.
+//!				3. Call RFile::Seek passing ESeekStart, 0
+//!				4. Call RFile::Read passing 7 for length.
+//!				5. Call RFile::Seek passing ESeekCurrent, 5.
+//!				6. Call RFile::Read().
+//!				7. Close file.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Seek() returns KErrNone, step 6 returns "to pos here".
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0125-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0125-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0125-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0125-001-Read_command008
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0125-001-Seek_command009
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0125-001-Read_command010
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0125-001-Delete_command014
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0125
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0026
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0026
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Flush() test - open file, write to it and then flush.
+//!				Uses API elements: Open(), Flush(), Write().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0026.txt", EFileWrite.
+//!				5. Call RFile::Write()  passing "This data should be flushed".
+//!				4. Call RFile::Flush();
+//!				5. Close file.
+//!				6. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Flush() returns KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0026-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0026-001-Write_command006
+		COMMAND		file	Flush	
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0026-001-Seek_command008
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0026-001-Read_command009
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0026-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0026
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0027
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0027
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Flush() test - open file, write to it and then flush.
+//!				Uses API elements: Open(), Flush(), Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0027.txt", EFileWrite.
+//!				3. Call RFile::Write()  passing literal "This data should be flushed".
+//!				4. Call RFile::Flush() passing TRequestStatus.
+//!				5. Wait for request to complete.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	TRequestStatus returns KErrNone. File contains written data.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0027-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0027-001-Write_command006
+		COMMAND		file	Flush		PBASE-F32-File-PublicApi-0027-001-Flush_command007
+		OUTSTANDING
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0027-001-Seek_command008
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0027-001-Read_command009
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0027-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0027
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0028
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0028
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function SetSize, Size() test - open file and set it's size, then get it.
+//!				Uses API elements: Open(), Flush(), Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0028.txt", EFileWrite.
+//!				3. Write literal "Size test this text should be truncated" to file.
+//!				4. Call RFile::SetSize() passing it 10 for size.
+//!				5. Call RFile::Size.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Size, RFile::SetSize returns KErrNone(). aSize equals with the size of file.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0028-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0028-001-Write_command006
+		COMMAND		file	SetSize		PBASE-F32-File-PublicApi-0028-001-SetSize_command007
+		COMMAND		file	Size		PBASE-F32-File-PublicApi-0028-001-Size_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0028-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0028
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0029
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0029
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Att(), SetAtt test - open file and get it's attributes.
+//!				Uses API elements: Open(), Att().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0029.txt", EFileWrite.
+//!				3. Write "SetAtt test" to file.
+//!				4. Call RFile::SetAtt, passing KEntryAttNormal, KEntryAttReadOnly
+//!				5. Flush data to file.
+//!				6. Close file.
+//!				7. Open file.
+//!				8. Call RFile::Att().
+//!				9. Close RFile.
+//!				10. Delete file.
+//!				11. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Att(), RFile::SetAtt returns KErrNone, aAttValue & KEntryAttNormal equals KEntryAttNormal.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0029-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0029-001-Write_command006
+		COMMAND		file	SetAtt		PBASE-F32-File-PublicApi-0029-001-SetAtt_command007
+		COMMAND		file	Flush		
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0029-001-Open_command010
+		COMMAND		file	Att		PBASE-F32-File-PublicApi-0029-001-Att_command011
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0029-001-Delete_command015
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0029
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0030
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0030
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Modified(), SetModified test - open file and get/set it's modification time.
+//!				Uses API elements: Open(), Modified(), SetModified().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0030.txt", EFileWrite.
+//!				3. Call RFile::SetModified, passing 20070118:
+//!				4. Close the file.
+//!				5. Open the file.
+//!				6. Call RFile::Modified().
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Modified(), RFile::SetModified returns KErrNone. Modified returns same date as was set with SetModified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0030-001-Replace_command005
+		COMMAND		file	SetModified		PBASE-F32-File-PublicApi-0030-001-SetModified_command006
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0030-001-Open_command008
+		COMMAND		file	Modified		PBASE-F32-File-PublicApi-0030-001-Modified_command009
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0030-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0030
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0031
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0031
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Set() test - open file and set it's modification time and attributes.
+//!				Uses API elements: Open(), Set(), Modified(), Att().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0031.txt", EFileShareAny.
+//!				3. Call RFile::Set() passing it 20070118:, KEntryAttArchive, KEntryAttReadOnly.
+//!				4. Call RFile::Modified() to validate modification date.
+//!				5. Call RFile::Att() to validate attributes.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Set() returns KErrNone. Data and attributes are validated.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0031-001-Replace_command005
+		COMMAND		file	Set		PBASE-F32-File-PublicApi-0031-001-Set_command006
+		COMMAND		file	Att		PBASE-F32-File-PublicApi-0031-001-Att_command007
+		COMMAND		file	Modified		PBASE-F32-File-PublicApi-0031-001-Modified_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0031-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0031
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0032
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0032
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function ChangeMode() test - open file and change it's access mode.
+//!				Uses API elements: Open(), SetModified().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0032.txt".
+//!				3. Close file.
+//!				4. open the file in EFileShareExclusive mode.
+//!				5. Call RFile::ChangeMode() passing it EFileShareReadersOnly.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::ChangeMode() returns KErrNone. Filemode is EFileSareReadersOnly.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0032-001-Replace_command005
+		COMMAND		file	Close		
+		COMMAND		file	Open		PBASE-F32-File-PublicApi-0032-001-Open_command007
+		COMMAND		file	ChangeMode		PBASE-F32-File-PublicApi-0032-001-ChangeMode_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0032-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0032
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0033
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0033
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Rename() test - open file and rename it.
+//!				Uses API elements: Open(), RFile::Rename().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0033.txt", EFileShareExclusive | EFileWrite.
+//!				3. Call RFile::Rename() passing it string literal "test_renamed.txt".
+//!				4. Call RFile::Name.
+//!				5. rename the file back to tc0033.txt
+//!				6. Delete file.
+//!				7. Close resources.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Rename() returns KErrNone. File is renamed.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0033-001-Replace_command005
+		COMMAND		file	Rename		PBASE-F32-File-PublicApi-0033-001-Rename_command006
+		COMMAND		file	Name		
+		COMMAND		file	Rename		PBASE-F32-File-PublicApi-0033-001-Rename_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0033-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0033
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0034
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0034
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Drive() test - open file and get it's drive info.
+//!				Uses API elements: RFile::Drive().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0034.txt", EFileShareAny.
+//!				3. Call RFile::Drive().
+//!				4. Close RFile.
+//!				5. Delete file.
+//!				6. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Drive() returns KErrNone.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0034-001-Replace_command005
+		COMMAND		file	Drive		PBASE-F32-File-PublicApi-0034-001-Drive_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0034-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0034
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0039
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0039
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Name() test. Open a file and get it's name.
+//!				Uses API elements: Name().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Open file "{Drives, RAMDriveTestPath}file\tc0039.txt" as file1
+//!				3. Call RFile::Name().
+//!				4. Close file system.
+//!				5. Delete file.
+//!				6. Close file.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Name() returns KErrNone. File name is verified.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0039-001-Replace_command005
+		COMMAND		file	Name		PBASE-F32-File-PublicApi-0039-001-Name_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0039-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0039
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0040
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0040
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Duplicate() test. Duplicate a file and compare it size to original.
+//!				Uses API elements: Duplicate().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Replace file "{Drives, RAMDriveTestPath}file\tc0040.txt" as file1, with EFileWrite permission
+//!				3. Write "Duplicate Test" to file
+//!				4. Create file2 by calling RFile::Duplicate(), passing reference to file1.
+//!				5. Read from file2 to verify that file1 has been duplicated.
+//!				6. Close file1.
+//!				7. Close file2.
+//!				8. Delete file1
+//!				9. Close fs session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Duplicate() returns KErrNone. The content of file1 and file2 is equal.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0040-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0040-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-0040-001-Seek_command007
+		COMMAND		file2	new		
+		COMMAND		file2	Duplicate	PBASE-F32-File-PublicApi-0040-001-Duplicate_command010
+		COMMAND		file2	Read		PBASE-F32-File-PublicApi-0040-001-Read_command011
+		COMMAND		file2	Close		
+		COMMAND		file2	~		
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0040-001-Delete_command017
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0040
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1040
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1040
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Duplicate()  with aType = EOwnerThread test. Duplicate file and compare it size to original.
+//!				Uses API elements: Duplicate().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Replace file "{Drives, RAMDriveTestPath}file\tc1040.txt" as file1, with EFileWrite permission
+//!				3. Write "Duplicate Test" to file
+//!				4. Create file2 by calling RFile::Duplicate(), passing reference to file1.
+//!				5. Read from file2 to verify that file1 has been duplicated.
+//!				6. Close file1.
+//!				7. Close file2.
+//!				8. Delete file1.
+//!				9. Close fs session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Duplicate() returns KErrNone. The content of file1 and file2 is equal.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1040-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1040-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-1040-001-Seek_command007
+		COMMAND		file2	new		
+		COMMAND		file2	Duplicate	PBASE-F32-File-PublicApi-1040-001-Duplicate_command010
+		COMMAND		file2	Read		PBASE-F32-File-PublicApi-1040-001-Read_command011
+		COMMAND		file2	Close		
+		COMMAND		file2	~		
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1040-001-Delete_command017
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1040
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0041
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0041
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function FullName() test. Open a file and get it's full name.
+//!				Uses API elements: FullName().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Replace file "{Drives, RAMDriveTestPath}file\tc0041.txt" 
+//!				3. Call FullName.
+//!				4. Close file.
+//!				5. Delete file.
+//!				6. Close fs session.
+//!
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::FullName returns KErrNone. Descriptor retrieved from FullName is equal to the path and name of the file.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0041-001-Replace_command005
+		COMMAND		file	FullName		PBASE-F32-File-PublicApi-0041-001-FullName_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0041-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0041
+
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////								//////
+//////		 ///////////////////////////////////		//////
+//////		 ///				 ///		//////
+//////		 ///	  NEGATIVE TESTS	 ///		//////
+//////		 ///				 ///		//////	
+//////		 ///////////////////////////////////		//////
+//////								//////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0101
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0101
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Open() neg. test. Call open with invalid path.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Open file "{Drives, RAMDriveTestPath}file\base\chickenfarm\chicken.txt"
+//!				3. Close fs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	open returns KErrPathNotFound! on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND	!Error=-12	file	Open		PBASE-F32-File-PublicApi-0101-001-Open_command005
+		COMMAND			file	~		
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0101
+
+
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0103
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0103
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Open() neg. test. Call open with invalid filemodes.
+//!				Uses API elements: Open().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Create file "{Drives, RAMDriveTestPath}file\tc0103.txt".
+//!				3. Close file.
+//!				4. Open file "{Drives, RAMDriveTestPath}file\tc0103.txt" with EFileShareReadersOnly | EFileWrite.
+//!				5. Delete file.
+//!				6. Close fs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Open returns KErrArgument on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0103-001-Replace_command005
+		COMMAND			file	Close		
+		COMMAND	!Error=-6	file	Open		PBASE-F32-File-PublicApi-0103-001-Open_command007
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0103-001-Delete_command010
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0103
+
+
+//
+// Create
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0201
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0201
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Create() neg. test. Try to Create a file in nonexistant folder.
+//!				Uses API elements: Create().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Create passing RFs, literal "{Drives, RAMDriveTestPath}file\base\chickenfarm\chicken.txt", EFileShareAny
+//!				3. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Create() returns KErrPathNotFound on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND	!Error=-12	file	Create		PBASE-F32-File-PublicApi-0201-001-Create_command005
+		COMMAND			file	~		
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0201
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0202
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0202
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Create() neg. test. Try to Create a file which already exists.
+//!				Uses API elements: Create().
+//! @SYMTestActions		1. Create RFs handle.
+//!				2. Create a File, by calling RFile::Replace with "{Drives, RAMDriveTestPath}file\tc0202.txt", EFileWrite.
+//!				3. Close file.
+//!				4. Call RFile::Create passing "{Drives, RAMDriveTestPath}file\tc0202.txt", EFileWrite.
+//!				5. Delete file.
+//!				6. Close fs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	KErrAlreadyExists on step 3
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0202-001-Replace_command005
+		COMMAND			file	Close		
+		COMMAND	!Error=-11	file	Create		PBASE-F32-File-PublicApi-0202-001-Create_command007
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0202-001-Delete_command010
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0202
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0203
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0203
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Create() neg. test. Try to Create a file with bizarre filemodes.
+//!				Uses API elements: Create().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Replace file "{Drives, RAMDriveTestPath}file\tc0203.txt"
+//!				3. Delete file "{Drives, RAMDriveTestPath}file\tc0203.txt"
+//!				2. Create file "{Drives, RAMDriveTestPath}file\tc0203.txt" with EFileShareReadersOnly | EFileWrite
+//!				3. Close session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Create returns KErrArgument on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new	
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0203-001-Replace_command001
+		COMMAND			file    Close
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0203-001-Delete_command002
+		COMMAND	!Error=-6	file	Create		PBASE-F32-File-PublicApi-0203-001-Create_command005
+		COMMAND			file	~		
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0203
+
+
+//
+// Replace
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0301
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0301
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Replace() neg. test. Replace a file with nonexistant path.
+//!				Uses API elements: Replace().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\base\chickenfarm\chicken.txt", EFileWrite
+//!				3. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Replace() returns KErrPathNotFound on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND	!Error=-12	file	Replace		PBASE-F32-File-PublicApi-0301-001-Replace_command005
+		COMMAND			file	~		
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0301
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0303
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0303
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Replace() neg. test. Call Replace with bizarre filemodes.
+//!				Uses API elements: Replace().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0303.txt", EFileShareReadersOnly | EFileWrite
+//!				3. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	returns KErrArgument on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND	!Error=-6	file	Replace		PBASE-F32-File-PublicApi-0303-001-Replace_command005
+		COMMAND			file	~		
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0303
+
+//
+// TEMP
+//
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0401
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0401
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Temp() neg. test. Try to create temporary file in nonexistant directory.
+//!				Uses API elements: Temp().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Temp passing RFs, literal "{Drives, RAMDriveChar}:\base\chickenfarm\", TDesc&, EFileWrite
+//!				3. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Temp() KErrPathNotFound on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND	!Error=-12	file	Temp		PBASE-F32-File-PublicApi-0401-001-Temp_command005
+		COMMAND			file	~		
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0401
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0403
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0403
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Temp() neg. test. Try to create a temporary file with obscure filemodes.
+//!				Uses API elements: Temp().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Temp passing RFs, literal "{Drives, RAMDriveTestPath}file\", TDesc&, EFileShareReadersOnly | EFileWrite
+//!				3. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Temp() returns KErrArgument on step 2.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND	!Error=-6	file	Temp		PBASE-F32-File-PublicApi-0403-001-Temp_command005
+		COMMAND			file	~		
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0403
+
+
+//
+// READ3
+//
+
+
+START_TESTCASE 		PBASE-F32-File-PublicApi-0701
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0701
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - try to read negative length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\0701.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing TDesC, -1 for the length
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrArgument.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0701-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-0701-001-Write_command006
+		COMMAND	!Error=-6	file	Read		PBASE-F32-File-PublicApi-0701-001-Read_command007
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0701-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0701
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0702
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0702
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - Will open file and try to read more data from it, than the buffer length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0702.txt", EFileWrite
+//!				3. Write "readtest" to file
+//!				4. Reset file position.
+//!				5. Create buffer descriptor with length 4.
+//!				5. Call RFile::Read() passing buffer, 1000 for the length.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns an KErrOverlow.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0702-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-0702-001-Write_command006
+		COMMAND	!Error=-9	file	Read		PBASE-F32-File-PublicApi-0702-001-Read_command007
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0702-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0702
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0703
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0703
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read(TDesC8& aData, TInt length) test. Pass 0 for length
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0703.txt", EFileWrite
+//!				3. Write "readtest" to file
+//!				4. Reset file position.
+//!				5. Create buffer descriptor with length 4.
+//!				5. Call RFile::Read() passing buffer, 0 for the length.
+//!				6. Close RFile.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns empty descriptor
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0703-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0703-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0703-001-Read_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0703-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0703
+
+
+//
+// READ4
+//
+
+
+START_TESTCASE 		PBASE-F32-File-PublicApi-0801
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0801
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read() neg. test - try to read negative length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0801.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing TDesC, -1 for the length, TRequestStatus
+//!				6. wait for request.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrArgument with TRequestStatus.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0801-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-0801-001-Write_command006
+		COMMAND	!AsyncError=-6	file	Read		PBASE-F32-File-PublicApi-0801-001-Read_command007
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0801-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0801
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0802
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0802
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read() neg. test - Will open file and try to read more data from it, than the buffer length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0802.txt", EFileWrite
+//!				3. Write "readtest" to file
+//!				4. Reset file position.
+//!				5. Create buffer descriptor with length 4.
+//!				6. Call RFile::Read() passing buffer, 1000 for the length, TRequestStatus
+//!				7. Wait for status.
+//!				8. Close RFile.
+//!				9. Delete file.
+//!				10. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns an KErrOverlow, with TRequestStatus.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-0802-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-0802-001-Write_command006
+		COMMAND	!AsyncError=-9	file	Read		PBASE-F32-File-PublicApi-0802-001-Read_command007
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-0802-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0802
+
+
+//
+// READ5
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0901
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0901
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - try to read from negative position.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0901.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing -1 for position.
+//!				6. Close file.
+//!				7. Delete file.
+//!				8. Close file server session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic FSCLIENT:19 at step 5.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0901-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0901-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0901-001-Read_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0901-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0901-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-0901
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-0902
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-0902
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - try to read beyond file's length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc0902.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 100 for position.
+//!				6. Close file.
+//!				7. Delete file.
+//!				8. Close file server session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read(data, position) returns zero length descriptor.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-0902-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-0902-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-0902-001-Read_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-0902-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-0902
+
+
+//
+// READ6
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1001
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1001
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read() neg. test - try to read from negative position.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1001.txt", EFileWrite
+//!				3. Write "synchronous read with position test" to file
+//!				4. Call RFile::Read() passing -1 for position, TRequestStatus.
+//!				5. close file.
+//!				6. Delete tc1001.txt
+//!				7. Close file server session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic FSCLIENT:19 at step 5.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1001-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1001-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-1001-001-Read_command007
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1001-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1001-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-1001
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1002
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1002
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read() neg. test - try to read beyond files length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1002.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 100 for position, TRequestStatus.
+//!				6. close file.
+//!				7. Delete tc1002.txt
+//!				8. Close file server session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read(data, position, status) returns zero length descriptor.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1002-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1002-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-1002-001-Read_command007
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1002-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1002
+
+//
+// READ7 
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1101
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1101
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - Will try to read from negative position.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1101.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 4 for length and -1 for position.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic FSCLIENT:19 at step 5.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1101-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1101-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-1101-001-Read_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1101-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1101-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-1101
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1102
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1102
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - will try to read negative length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1102.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing -4 for length and 10 for position.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrArgument.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1102-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-1102-001-Write_command006
+		COMMAND	!Error=-6	file	Read		PBASE-F32-File-PublicApi-1102-001-Read_command007
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1102-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1102
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1103
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1103
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - Will try to read from position beyond file length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1103.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 4 for  length and 10 for  position (larger than file's content).
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrNone. Length of data read is 0.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1103-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1103-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-1103-001-Read_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1103-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1103
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1104
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1104
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - Read more from file than buffer's length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1104.txt", EFileRead
+//!				3. Write "readtest" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing buffer (with size 4) 1000 for length and 10 for position.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns an KErrOverlow.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1104-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-1104-001-Write_command006
+		COMMAND	!Error=-9	file	Read		PBASE-F32-File-PublicApi-1104-001-Read_command007
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1104-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1104
+
+
+//
+// READ8 
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1201
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1201
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read() neg. test - Will try to read from negative position.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1201.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 4 for length and -1 for position and TRequestStatus.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic FSCLIENT:19 at step 5.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1201-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1201-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-1201-001-Read_command007
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1201-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1201-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-1201
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1202
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1202
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read() neg. test - will try to read negative length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1202.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing -4 for length and 10 for position and TRequestStatus.
+//!				6. wait for request to complete
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrArgument.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1202-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-1202-001-Write_command006
+		COMMAND	!AsyncError=-6	file	Read		PBASE-F32-File-PublicApi-1202-001-Read_command007
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1202-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1202
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1203
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1203
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read() neg. test - Will try to read from position beyond file length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1203.txt", EFileWrite
+//!				3. Write "test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read(), 4 for length, 10 for position.
+//!				6. Wait for request to complete.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns KErrNone. Length of data read is 0.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1203-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1203-001-Write_command006
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-1203-001-Read_command007
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1203-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1203
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1204
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1204
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read() neg. test - Read more from file than buffer's length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1204.txt", EFileWrite
+//!				3. Write "synchronous read with length and position test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing buffer (buffer size 4) 1000 for length and for position 10, TRequestStatus.
+//!				6. Wait for request.
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns an KErrOverlow.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1204-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-1204-001-Write_command006
+		COMMAND	!AsyncError=-9	file	Read		PBASE-F32-File-PublicApi-1204-001-Read_command007
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1204-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1204
+
+//
+// Write
+//
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1301
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1301
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Write(const TDesC8 &aDes) test - write an emptry buffer to file.
+//!				
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1301.txt", EFileWrite.
+//!				3. Call Write, passing "" and descriptor with length 0.
+//!				4. Close file
+//!				5. Close RFile.
+//!				6. Delete file
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No panic is raised, or error returned.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1301-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-1301-001-Write_command006
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1301-001-Delete_command010
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1301
+
+//
+// Write2
+//
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1401
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1401
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function WWrite(const TDesC8 &aDes, TRequestStatus &aStatus) test - write an emptry buffer to file.
+//!				
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc.txt", EFileWrite.
+//!				3. Call Write, passing "" and descriptor with length 0.
+//!				4. Close file
+//!				5. Close RFile.
+//!				6. Delete file
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No panic is raised, or error returned.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1401-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-1401-001-Write_command006
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1401-001-Delete_command010
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1401
+
+
+//
+// Write3
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1602
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1602
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function write neg. test - pass negative number for length.
+//!				
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1602.txt", EFileWrite.
+//!				3. Call Write, pass message "short data" and -1 length.
+//!				4. Close file
+//!				5. Close RFile.
+//!				6. Delete file
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Write() returns KErrArgument.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1602-001-Replace_command005
+		COMMAND	!Error=-6	file	Write		PBASE-F32-File-PublicApi-1602-001-Write_command006
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1602-001-Delete_command010
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1602
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1603
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1603
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function write neg. test - pass 0 number for length.
+//!				
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1603.txt", EFileWrite.
+//!				3. Call Write, pass message "short data" and 0.
+//!				4. Close file
+//!				5. Close RFile.
+//!				6. Delete file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Write() returns KErrNone.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1603-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1603-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1603-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1603
+
+
+//
+// Write4
+//
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1701
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1701
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous function write neg. test - pass negative number for length.
+//!				
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1701.txt", EFileWrite.
+//!				3. Call Write passing literal "test", -1 for length and TRequestStatus.
+//!				4. Close RFile.
+//!				5. Delete file.
+//!				6. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Write() returns KErrArgument.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1701-001-Replace_command005
+		COMMAND	!AsyncError=-6	file	Write		PBASE-F32-File-PublicApi-1701-001-Write_command006
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1701-001-Delete_command010
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1701
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1702
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1702
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous function write test - pass 0 for length.
+//!				
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1702.txt", EFileWrite.
+//!				3. Call Write passing literal "test", 0 for length and TRequestStatus.
+//!				4. Close RFile.
+//!				5. Delete file.
+//!				6. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No panics raised or errors returned.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-1702-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-1702-001-Write_command006
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-1702-001-Delete_command010
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-1702
+
+
+//
+// Write5
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1801
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1801
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function write neg. test. Write to negative position.
+//!				Uses API elements:.
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1801.txt", EFileWrite.
+//!				3. Call Write passing "test" and -1 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic FSCLIENT:19.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1801-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1801-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1801-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1801-001-Delete_command010
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-1801
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1802
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1802
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous function write test. Pass a 0 length descriptor to  RFile::Write().
+//!				Uses API elements: void Write(TInt aPos, const TDesC8 &aDes, TRequestStatus &aStatus).
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1802.txt", EFileWrite.
+//!				3. Call Write passing "" and 1 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No error is returned or panic raised.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1802-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1802-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1802-001-Delete_command010
+		COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-1802
+
+
+//
+// Write6
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1901
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1901
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous function write neg. test. Pass a negative number for position to RFile::Write().
+//!				Uses API elements: void Write(TInt aPos, const TDesC8 &aDes, TRequestStatus &aStatus).
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1901.txt", EFileWrite.
+//!				3. Call Write passing "test" and -1 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic FSCLIENT:19.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1901-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1901-001-Write_command006
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1901-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1901-001-Delete_command010
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-1901
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-1902
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-1902
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous function write test. Pass a 0 length descriptor to  RFile::Write().
+//!				Uses API elements: void Write(TInt aPos, const TDesC8 &aDes, TRequestStatus &aStatus).
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc1902.txt", EFileWrite.
+//!				3. Call Write passing descriptor with length 0 and 1 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No error is returned or panic raised.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-1902-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-1902-001-Write_command006
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-1902-001-Delete_command010
+		COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-1902
+
+
+//
+// Write7
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2001
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2001
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Write(TInt aPos, const TDesC8 &aDes, TInt aLength) neg. test. Pass a negative position and negative length.
+//!				Uses API elements: Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2001.txt", EFileWrite.
+//!				3. call write, pass "test", -1 for length, -1 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic, FSCLIENT:19
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2001-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2001-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2001-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2001-001-Delete_command010
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2001
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2002
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2002
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Write(TInt aPos, const TDesC8 &aDes, TInt aLength) test. Pass 0 for length.
+//!				Uses API elements: Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2002.txt", EFileWrite.
+//!				3. call write, pass "test", 0 for length, 0 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No panic is raised and no error is returned
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2002-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2002-001-Write_command006
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2002-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2002
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2003
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2003
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Write(TInt aPos, const TDesC8 &aDes, TInt aLength) test. Pass -1 for length.
+//!				Uses API elements: Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2003.txt", EFileWrite.
+//!				3. call write, pass "test", -1 for length, 0 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write returns KerrArgument 
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT		RFs	RFs1
+		CREATE_OBJECT		RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2003-001-Replace_command005
+		COMMAND	!Error=-6	file	Write		PBASE-F32-File-PublicApi-2003-001-Write_command006
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2003-001-Delete_command010
+		COMMAND			RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2003
+
+
+//
+// Write8
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2101
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2101
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous function write test. Pass a negative position and negative length.
+//!				Uses API elements: Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2101.txt", EFileWrite.
+//!				3. call write, pass literal "negative write test", -1 for length, -1 for negative, TRequestStatus.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic, FSCLIENT:19
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2101-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2101-001-Write_command006
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2101-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2101-001-Delete_command010
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2101
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2102
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2102
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Write(TInt aPos, const TDesC8 &aDes, TInt aLength) test. Pass 0 for length.
+//!				Uses API elements: Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2102.txt", EFileWrite.
+//!				3. call write, pass "test", 0 for length, 0 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No panic is raised and no error is returned
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2102-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2102-001-Write_command006
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2102-001-Delete_command010
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2102
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2103
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2103
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Write(TInt aPos, const TDesC8 &aDes, TInt aLength) test. Pass a negative length.
+//!				Uses API elements: Write().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2103.txt", EFileWrite.
+//!				3. call write, pass "test", -1 for length, 0 for position.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Write returns KerrArgument 
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT		RFs	RFs1
+		CREATE_OBJECT		RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2103-001-Replace_command005
+		COMMAND	!AsyncError=-6	file	Write		PBASE-F32-File-PublicApi-2103-001-Write_command006
+		OUTSTANDING
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2103-001-Delete_command010
+		COMMAND			RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2103
+
+
+//
+// Lock
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2201
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2201
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Lock() neg. test - open a file and try to lock zero bytes.
+//!				Uses API elements: Lock(), Unlock(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2201.txt", EFileRead.
+//!				3. Write "test" to file.
+//!				4. Lock the file by Calling Lock(), passing pos 0, len 0.
+//!				5. Close file.
+//!				6. Close fs session.
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic - FSCLIENT:17
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2201-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2201-001-Write_command006
+		COMMAND		file	Lock		PBASE-F32-File-PublicApi-2201-001-Lock_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2201-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=17 !PanicString="FSCLIENT"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2201-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2201
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2202
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2202
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Lock() neg. test - open same file with two handles, try to lock the same region twice.
+//!				Uses API elements: Lock(), Unlock(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2202.txt", EFileWrite, open file as fileOne.
+//!				3. Lock the file by Calling Lock().
+//!				4. Open "{Drives, RAMDriveTestPath}file\tc2202.txt" as fileTwo.
+//!				5. lock the file 2 at the same position and length as fileOne.
+//!				6. Close fileOne.
+//!				7. Close fileTwo
+//!				8. Delete file
+//!				9. Close first RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Lock() returns KErrLocked at step 5. 
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2202-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-2202-001-Write_command006
+		COMMAND			file	Lock		PBASE-F32-File-PublicApi-2202-001-Lock_command007
+		COMMAND			file2	new		
+		COMMAND			file2	Open		PBASE-F32-File-PublicApi-2202-001-Open_command010
+		COMMAND	!Error=-22	file2	Lock		PBASE-F32-File-PublicApi-2202-001-Lock_command011
+		COMMAND			file2	Close		
+		COMMAND			file2	~		
+		COMMAND			file	Close		
+		COMMAND			file	~	
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2202-001-Delete_command017
+		COMMAND			RFs1	~
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-2202
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2203
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2203
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Lock() neg. test - try to lock negative length.
+//!				Uses API elements: Lock(), Unlock(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2203.txt", EFileWrite, open file as fileOne.
+//!				3. Lock the file by Calling Lock() with 0 for pos and -1 for length.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Lock() returns panic. 
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2203-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2203-001-Write_command006
+		COMMAND		file	Lock		PBASE-F32-File-PublicApi-2203-001-Lock_command007
+END_TEST_BLOCK	!PanicCode=17 !PanicString="FSCLIENT"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2203-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2203
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2204
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2204
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Lock() neg. test - try to lock negative position.
+//!				Uses API elements: Lock(), Unlock(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2204.txt", EFileWrite, open file as fileOne.
+//!				3. Lock the file by Calling Lock() with -1 for pos and 1 for length.
+//!				4. Close file.
+//!				5. Delete file.
+//!				6. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	No error returned or panic raised. 
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2204-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2204-001-Write_command006
+		COMMAND	    file	Lock		PBASE-F32-File-PublicApi-2204-001-Lock_command007
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2204-001-Delete_command010
+		COMMAND		RFs1	~	
+END_TEST_BLOCK		
+END_TESTCASE 		PBASE-F32-File-PublicApi-2204
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2205
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2205
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Lock() neg. test - try to write to locked file.
+//!				Uses API elements: Lock(), Unlock(), Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2205.txt", EFileWrite, open file as file1.
+//!				3. Call RFile::Open passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2205.txt", EFileWrite | EFileShareAny, open file as file2.
+//!				4. Write "test" to file through file1.
+//!				5. Lock the file by Calling Lock() with 6 for pos and 4 for length, through file1
+//!				6. Write "Trying to write to locked region" through new handle
+//!				7. Close file.
+//!				8. Close second handle
+//!				9. Delete file.
+//!				10. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	trying to write to locked file returns KErrLocked
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		CREATE_OBJECT	RFile	file2
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2205-001-Replace_command005
+		COMMAND			file2	new		
+		COMMAND			file2	Open		PBASE-F32-File-PublicApi-2205-001-Open_command008
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-2205-001-Write_command010
+		COMMAND			file	Lock		PBASE-F32-File-PublicApi-2205-001-Lock_command011
+		COMMAND	!Error=-22	file2	Write		PBASE-F32-File-PublicApi-2205-001-Write_command013
+		COMMAND			file2	Close		
+		COMMAND			file2	~		
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2205-001-Delete_command020
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-2205
+
+//
+// UnLock
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2301
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2301
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function UnLock() neg. test - open a file try to unlock a region that has not been locked.
+//!				
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2301.txt", EFileWrite.
+//!				3. write "test data" to file.
+//!				4. call UnLock with position 2 and with length 4
+//!				5. close file
+//!				6. Delete file.
+//!				7. close fs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	UnLock() returns KErrNotFound.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2301-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-2301-001-Write_command006
+		COMMAND	!Error=-1	file	UnLock		PBASE-F32-File-PublicApi-2301-001-UnLock_command007
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2301-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-2301
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2302
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2302
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function UnLock() neg. test - open a file lock some part, try to unlock a portion of the locked region.
+//!				
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2302.txt", EFileWrite.
+//!				3. Write some data to file.
+//!				4. Lock the file by Calling Lock() with pos 0 and length 2.
+//!				5. UnLock a portion of that file with posi 0 and length 1.	
+//!				6. Close that file.
+//!				7. Delete file.
+//!				8. close fs session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	UnLock() returns KErrNotFound.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2302-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-2302-001-Write_command006
+		COMMAND			file	Lock		PBASE-F32-File-PublicApi-2302-001-Lock_command007
+		COMMAND	!Error=-1	file	UnLock		PBASE-F32-File-PublicApi-2302-001-Close_command008
+		COMMAND			file	Close	
+		COMMAND			file	~			
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2302-001-Delete_command014
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-2302
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2303
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2303
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function UnLock() neg. test - UnLock a region with negative length
+//!				
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2303.txt", EFileWrite.
+//!				3. Write some data to file.
+//!				4. Call Lock with pos 2, length 2.
+//!				5. UnLock by calling 2 for position -2 for length.	
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	UnLock() causes FSCLIENT:18.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2303-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2303-001-Write_command006
+		COMMAND		file	Lock		PBASE-F32-File-PublicApi-2303-001-Lock_command007
+		COMMAND		file	UnLock		PBASE-F32-File-PublicApi-2303-001-UnLock_command008
+END_TEST_BLOCK	!PanicCode=18 !PanicString="FSCLIENT"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2303-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2303
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2304
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2304
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function UnLock() neg. test - UnLock a region with negative position
+//!				
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2304.txt", EFileWrite.
+//!				3. Write some data to file.
+//!				4. Call Lock with pos 2, length 2.
+//!				5. UnLock by calling -2 for position 2 for length.	
+//!				6. Close that file.
+//!				7. Delete file.
+//!				8. close fs session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::UnLock() causes FSCLIENT:19.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2304-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-2304-001-Write_command006
+		COMMAND			file	Lock		PBASE-F32-File-PublicApi-2304-001-Lock_command007
+		COMMAND         file	UnLock		PBASE-F32-File-PublicApi-2304-001-UnLock_command008
+END_TEST_BLOCK	!PanicCode=19 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		    RFs1	new
+		COMMAND		    RFs1	Connect
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2304-001-Delete_command012
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-2304
+
+
+//
+// Seek
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2401
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2401
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Seek() neg. test - try to seek to negative position.
+//!				
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2401.txt", EFileWrite.
+//!				3. Write "Seek test" to file.
+//!				4. Call RFile::Seek() passing ESeekStart, -10.
+//!				5. Close file.
+//!				6. Delete file.
+//!				7. Close fs session.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Seek returns KErrArgument.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-2401-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-2401-001-Write_command006
+		COMMAND	!Error=-6	file	Seek		PBASE-F32-File-PublicApi-2401-001-Seek_command007
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-2401-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-2401
+
+
+//
+// Flush
+//
+
+
+
+
+//
+// Size
+//
+
+
+
+
+//
+// SetSize
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2701
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2701
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function SetSize() neg test - try to pass a negative size.
+//!				
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2701.txt", EFileWrite.
+//!				3. Write "test" to file.
+//!				3. Call SetSize with -2.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic - FSCLIENT:20
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2701-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2701-001-Write_command006
+		COMMAND		file	SetSize		PBASE-F32-File-PublicApi-2701-001-SetSize_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2701-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=20 !PanicString="FSCLIENT"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2701-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2701
+
+
+//
+// Att
+//
+
+
+
+//
+// SetAtt 
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-2901
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-2901
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function SetAtt neg. test - set same attribute on both bitmasks.
+//!				Uses API elements: Att().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc2901.txt", EFileWrite.
+//!				3. Write "test" to file.
+//!				4. Call RFile::SetAtt, passing KEntryAttNormal, KEntryAttNormal
+//!				
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic FSCLIENT:21 at step 3.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-2901-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-2901-001-Write_command006
+		COMMAND		file	SetAtt		PBASE-F32-File-PublicApi-2901-001-SetAtt_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2901-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=21 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-2901-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-2901
+
+
+//
+// Modified 
+//
+
+
+
+//
+// SetModified
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3101
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3101
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function SetModified neg. test - open file for reading and set it's date.
+//!				Uses API elements: Modified(), SetModified().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc3101.txt", EFileWrite.
+//!				3. Write "test" to file
+//!				4. Call RFile::SetModified. 
+//!				5. Close file.
+//!				6. Delete file.
+//!				7. Close fs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::SetModified returns KErrAccessDenied.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-3101-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-3101-001-Write_command006
+		COMMAND			file	Close		
+		COMMAND			file	Open		PBASE-F32-File-PublicApi-3101-001-Open_command008
+		COMMAND	!Error=-21	file	SetModified		PBASE-F32-File-PublicApi-3101-001-SetModified_command009
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-3101-001-Delete_command013
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-3101
+
+
+//
+// ChangeMode
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-5501
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-5501
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function ChangeMode() neg. test - call ChangeMode with value outside of set (EFileShareExclusive, EFileShareReadersOnly).
+//!				Uses API elements: SetModified().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc5501.txt", EFileShareExclusive.
+//!				3. Write "test" to file.
+//!				4. Call RFile::ChangeMode() passing it EFileWrite.
+//!				5. Close RFile.
+//!				6. Delete file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::ChangeMode() returns KErrArgument. 
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-5501-001-Replace_command005
+		COMMAND			file	Write		PBASE-F32-File-PublicApi-5501-001-Write_command006
+		COMMAND	!Error=-6	file	ChangeMode		PBASE-F32-File-PublicApi-5501-001-ChangeMode_command007
+		COMMAND			file	Close		
+		COMMAND			file	~		
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-5501-001-Delete_command011
+		COMMAND			RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-5501
+
+//
+// Set
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3201
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3201
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Set() neg. test - try to clear and set the same attribute.
+//!				Uses API elements: Set(), Modified(), Att().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc3201.txt", EFileShareAny.
+//!				3. Call RFile::Set() passing it 20070118:, KEntryAttReadOnly, KEntryAttReadOnly.
+//!				4. Close file
+//!				5. Delete file.
+//!				6. Close Fs session
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Panic - FSCLIENT:21.
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-3201-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-3201-001-Write_command006
+		COMMAND		file	Set		PBASE-F32-File-PublicApi-3201-001-Set_command007
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	!PanicCode=21 !PanicString="FSCLIENT panic"
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-3201-001-Delete_command011
+		COMMAND		RFs1	~
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-3201
+
+
+
+//
+// Rename 
+//
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3401
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3401
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function Rename() neg. test - open file in read mode and try to rename it.
+//!				Uses API elements: RFile::Rename().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc3401.txt", EFileRead.
+//!				3. Write "test" to file.
+//!				4. Call RFile::Rename() passing it string literal "test_renamed.txt".
+//!				5. Close RFile.
+//!				6. Delete file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Rename() returns KErrAccessDenied.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini
+   		CREATE_OBJECT	RFs	RFs1
+   		CREATE_OBJECT	RFile	file
+   		COMMAND			RFs1	new		
+   		COMMAND			RFs1	Connect		
+   		COMMAND			file	new		
+   		COMMAND			file	Replace		PBASE-F32-File-PublicApi-3401-001-Replace_command005
+   		COMMAND			file	Write		PBASE-F32-File-PublicApi-3401-001-Write_command006
+   		COMMAND			file	Close		
+   		COMMAND			file	Open		PBASE-F32-File-PublicApi-3401-001-Open_command008
+   		COMMAND	!Error=-21	file	Rename		PBASE-F32-File-PublicApi-3401-001-Rename_command009
+   		COMMAND			file	Close		
+   		COMMAND			file	~	
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-3401-001-Delete_command12
+   		COMMAND			RFs1	~		
+	END_TEST_BLOCK
+
+END_TESTCASE 		PBASE-F32-File-PublicApi-3401
+
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3402
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3402
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function BlockMap() negative test, replace a file and then call BlockMap on it.
+//!				Uses API elements: Open(), BlockMap().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace() passing RFs, literal "{Drives, RAMDriveTestPath}file\tc3402.txt", EFileRead. 
+//!				4. Call RFile::BlockMap().
+//!				5. Close RFile.
+//!				6. Delete file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	BlockMap returns KErrNotSupported.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-3402-001-Replace_command003
+		COMMAND	!Error=-5	file	BlockMap
+		COMMAND			file	Close		
+		COMMAND			file	~	
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-3402-001-Delete_command007
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-3402
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3403
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3403
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Function BlockMap() negative test. Call BlockMap with Usage ETestDebug
+//!				Uses API elements: Open(), BlockMap().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace() to create file tc3403 with EFileWrite 
+//!				4. Call RFile::BlockMap() passing ETestDebug for usage, 0 for startPos.
+//!				5. Close RFile.
+//!				6. Delete file.
+//!				7. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	BlockMap returns KErrNotSupported.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect		
+		COMMAND			file	new		
+		COMMAND			file	Replace		PBASE-F32-File-PublicApi-3403-001-Replace_command003
+		COMMAND	!Error=-5	file	BlockMap	PBASE-F32-File-PublicApi-3403-001-BlockMap_command004
+		COMMAND			file	Close		
+		COMMAND			file	~	
+		COMMAND			RFs1	Delete		PBASE-F32-File-PublicApi-3403-001-Delete_command007
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-3403
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3501
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3501
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read(TDes8 &aDes, TInt aLength, TRequestStatus &aStatus) test. Pass 0 for length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc3501.txt", EFileWrite.
+//!				3. Call RFile::Write passing literal "Asynchronous read with length test"
+//!				4. Reset file position
+//!				4. Create TRequestStatus variable.
+//!				5. Call RFile::Read() passing TRequestStatus and 0 for length.
+//!				6. Wait until asynchronous call completes
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns empty descriptor
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-3501-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-3501-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-3501-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-3501-001-Read_command008
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-3501-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-3501
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3502
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3502
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Synchronous Read(TInt aPos, TDes8 &aDes, TInt aLength) test. Pass 0 for length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc3502.txt", EFileWrite
+//!				3. Write "synchronous read with length and position test" to file
+//!				4. Reset file position.
+//!				5. Call RFile::Read() passing 0 for  length and 5 for position.
+//!				6. Close RFile.
+//!				7. Delete file.
+//!				8. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns empty descriptor
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-3502-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-3502-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-3502-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-3502-001-Read_command008
+		COMMAND		file	Close		
+		COMMAND		file	~		
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-3502-001-Delete_command012
+		COMMAND		RFs1	~		
+END_TEST_BLOCK	
+END_TESTCASE 		PBASE-F32-File-PublicApi-3502
+
+
+START_TESTCASE 			PBASE-F32-File-PublicApi-3503
+//! @SYMTestCaseID		PBASE-F32-File-PublicApi-3503
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Asynchronous Read(TInt aPos, TDes8 &aDes, TInt aLength, TRequestStatus &aStatus) test. Pass 0 for length.
+//!				Uses API elements: Read().
+//! @SYMTestActions		1. Create RFs session.
+//!				2. Call RFile::Replace passing RFs, literal "{Drives, RAMDriveTestPath}file\tc3503.txt", EFileWrite.
+//!				3. Call RFile::Write passing literal "asynchronous read with length and position test"
+//!				4. Reset file position
+//!				5. Call RFile::Read() passing TRequestStatus, 0 for length and 5 for position.
+//!				6. Wait until asynchronous call completes
+//!				7. Close RFile.
+//!				8. Delete file.
+//!				9. Close RFs.
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFile::Read() returns empty descriptor
+//!
+//! @SYMTestType		CIT
+START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	file
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect		
+		COMMAND		file	new		
+		COMMAND		file	Replace		PBASE-F32-File-PublicApi-3503-001-Replace_command005
+		COMMAND		file	Write		PBASE-F32-File-PublicApi-3503-001-Write_command006
+		COMMAND		file	Seek		PBASE-F32-File-PublicApi-3503-001-Seek_command007
+		COMMAND		file	Read		PBASE-F32-File-PublicApi-3503-001-Read_command008
+		OUTSTANDING
+		COMMAND		file	Close		
+		COMMAND		file	~	
+		COMMAND		RFs1	Delete		PBASE-F32-File-PublicApi-3503-001-Delete_command011
+		COMMAND		RFs1	~		
+END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-PublicApi-3503
+
+START_TESTCASE 			PBASE-F32-File-Uninstall
+//! @SYMTestCaseID		PBASE-F32-File-Uninstall
+//! @SYMAPI			RFile
+//! @SYMTestCaseDesc		Cleanup the directories created to test RFile
+//! @SYMTestActions		1. Create RFs Session.
+//!                     2. Remove the directories created using Rfs::RmDir().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	 Removes the directory created and keeps the environment clean.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-File-PublicApi.ini
+   		CREATE_OBJECT	RFs	RFs1
+   		COMMAND			RFs1	new		
+   		COMMAND			RFs1	Connect		
+			COMMAND			RFs1	RmDir		PBASE-F32-File-PublicApi-Unistall
+   		COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE 		PBASE-F32-File-Uninstall

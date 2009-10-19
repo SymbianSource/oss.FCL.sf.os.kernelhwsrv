@@ -1,0 +1,14 @@
+# component name "EStart"
+
+component	base_f32_estart
+
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\estart
+
+binary	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\estart all
+exports	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\estart
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+

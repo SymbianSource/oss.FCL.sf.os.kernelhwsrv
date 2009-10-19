@@ -1,0 +1,141 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/memmodel/memmodel.mmp
+// 
+//
+
+#ifdef EPOC32
+sourcepath		../memmodel/epoc
+source			putils.cpp pcodeseg.cpp pprocess.cpp pglobals.cpp
+source			nvram.cpp
+#endif	// EPOC32
+
+
+#if defined(MM_MOVING) || defined(MM_MULTIPLE)
+sourcepath		../memmodel/epoc/mmubase
+source			ramalloc.cpp mmubase.cpp kblockmap.cpp defragbase.cpp
+#endif	// MM_MOVING || MM_MULTIPLE
+
+
+#ifdef MM_MOVING
+
+sourcepath		../memmodel/epoc/moving
+source			mchunk.cpp mglobals.cpp minit.cpp mkernel.cpp
+source			mcodeseg.cpp mmu.cpp mprocess.cpp
+source			mutils.cpp mdefrag.cpp
+
+#ifdef MARM
+sourcepath		../memmodel/epoc/moving/arm
+source			xglobals.cpp xinit.cpp xipc.cia xkernel.cpp xkernel.cia
+source			xmmu.cpp xmmu.cia xsched.cpp xsched.cia
+#endif //MARM
+
+#endif // MM_MOVING
+
+
+#ifdef MM_DIRECT
+
+sourcepath		../memmodel/epoc/direct
+source			mchunk.cpp mglobals.cpp minit.cpp mkernel.cpp
+source			mcodeseg.cpp mprocess.cpp mutils.cpp mdefrag.cpp
+
+#ifdef MARM
+sourcepath		../memmodel/epoc/direct/arm
+source			xglobals.cpp xinit.cpp xipc.cia xkernel.cpp
+source			xsched.cpp xsched.cia xutils.cpp
+#endif //MARM
+#ifdef X86
+sourcepath		../memmodel/epoc/direct/x86
+source			xglobals.cpp xinit.cpp xipc.cpp xkernel.cpp
+source			xsched.cpp xutils.cpp
+#endif //X86
+
+#endif // MM_DIRECT
+
+
+#ifdef MM_MULTIPLE
+
+sourcepath		../memmodel/epoc/multiple
+source			mchunk.cpp mglobals.cpp minit.cpp mkernel.cpp
+source			mcodeseg.cpp mmu.cpp mprocess.cpp
+source			mutils.cpp mdefrag.cpp
+
+#ifdef MARM
+sourcepath		../memmodel/epoc/multiple/arm
+source			xglobals.cpp xinit.cpp xipc.cia xkernel.cpp xkernel.cia
+source			xmmu.cpp xmmu.cia xsched.cpp xsched.cia
+#endif //MARM
+#ifdef X86
+sourcepath		../memmodel/epoc/multiple/x86
+source			xmmu.cia
+source			xsched.cia
+source			xglobals.cpp xinit.cpp xipc.cpp xkernel.cpp
+source			xmmu.cpp
+#endif //X86
+
+#endif // MM_MULTIPLE
+
+
+#ifdef MM_FLEXIBLE
+
+sourcepath		../memmodel/epoc/flexible
+source			mchunk.cpp minit.cpp mkernel.cpp
+source			mcodeseg.cpp mprocess.cpp mshbuf.cpp
+sourcepath		../memmodel/epoc/flexible/mmu
+userinclude		../memmodel/epoc/flexible/mmu
+source			mmu.cpp
+source			mvalloc.cpp mptalloc.cpp mpdalloc.cpp mm.cpp
+source			maddrcont.cpp mpagearray.cpp mslaballoc.cpp
+source			mobject.cpp mmapping.cpp mmappinglist.cpp
+source			mmanager.cpp maddressspace.cpp mcleanup.cpp
+source			mpager.cpp mrom.cpp mdatapaging.cpp mcodepaging.cpp
+source			mexport.cpp mthrash.cpp
+source			mdefrag.cpp mlargemappings.cpp
+sourcepath		../memmodel/epoc/mmubase
+source			kblockmap.cpp ramalloc.cpp defragbase.cpp
+
+#ifdef MARM
+userinclude		../memmodel/epoc/flexible/mmu/arm
+sourcepath		../memmodel/epoc/flexible/arm
+source			xinit.cpp xipc.cia xkernel.cpp xkernel.cia
+source			xsched.cpp xsched.cia
+sourcepath		../memmodel/epoc/flexible/mmu/arm
+source			xmmu.cpp xmmu.cia
+#endif //MARM
+#ifdef X86
+userinclude		../memmodel/epoc/flexible/mmu/x86
+sourcepath		../memmodel/epoc/flexible/x86
+source			xinit.cpp xipc.cpp xkernel.cpp
+source			xsched.cia
+sourcepath		../memmodel/epoc/flexible/mmu/x86
+source			xmmu.cpp xmmu.cia
+#endif //X86
+
+#endif // MM_FLEXIBLE
+
+
+#ifdef MM_WIN32
+
+sourcepath		../memmodel/emul
+source			pglobals.cpp
+source			nvram.cpp
+
+sourcepath		../memmodel/emul/win32
+source			zrom.cpp
+source			mchunk.cpp mglobals.cpp minit.cpp mkernel.cpp
+source			mcodeseg.cpp mprocess.cpp mutils.cpp mshbuf.cpp
+
+#endif // MM_WIN32
+
+

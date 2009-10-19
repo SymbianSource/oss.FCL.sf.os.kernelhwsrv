@@ -1,0 +1,5 @@
+EXPORTS
+	_ZN8DmPolicy14GetDomainSpecsEv @ 1 NONAME
+	_ZN8DmPolicy7ReleaseEPK13TDmDomainSpec @ 2 NONAME
+	_ZN8DmPolicy9GetPolicyER18TDmHierarchyPolicy @ 3 NONAME
+

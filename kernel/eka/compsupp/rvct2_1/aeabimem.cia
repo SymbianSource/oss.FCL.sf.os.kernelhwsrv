@@ -1,0 +1,65 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include <e32cmn.h>
+
+// Call our implementations of memcpy/move/set/clr rather than the ARM supplied
+// ones.
+// 
+// Note that the AEABI switched the order of arg2 and arg3 to save an intruction
+// when calling 'memset' from 'memclr'.
+//
+// Prototypes are:
+//   void __aeabi_memset8(TAny* aTrg, unsigned int aLength, TInt aValue);
+//   void __aeabi_memset4(TAny* aTrg, unsigned int aLength, TInt aValue);
+//   void __aeabi_memset(TAny* aTrg, unsigned int aLength, TInt aValue);
+
+extern "C" __NAKED__ void make_mem_functions_call_euser_versions()
+	{
+	asm(".global __aeabi_memset8  ");
+	asm("__aeabi_memset8: 		  ");
+	asm(".global __aeabi_memset4  ");
+	asm("__aeabi_memset4: 		  ");
+	asm(".global __aeabi_memset   ");
+	asm("__aeabi_memset: 		  ");
+	asm("	mov		r3, r1		  ");
+	asm("	mov		r1, r2		  ");
+	asm("	mov		r2, r3		  ");
+	asm("	b		memset		  ");
+
+	asm(".global __aeabi_memclr8  ");
+	asm("__aeabi_memclr8: 		  ");
+	asm(".global __aeabi_memclr4  ");
+	asm("__aeabi_memclr4: 		  ");
+	asm(".global __aeabi_memclr   ");
+	asm("__aeabi_memclr: 		  ");
+	asm("	b		memclr		  ");
+	
+	asm(".global __aeabi_memcpy8  ");
+	asm("__aeabi_memcpy8: 		  ");
+	asm(".global __aeabi_memcpy4  ");
+	asm("__aeabi_memcpy4: 		  ");
+	asm(".global __aeabi_memcpy   ");
+	asm("__aeabi_memcpy: 		  ");
+	asm("	b		memcpy		  ");
+	
+	asm(".global __aeabi_memmove8 ");
+	asm("__aeabi_memmove8: 		  ");
+	asm(".global __aeabi_memmove4 ");
+	asm("__aeabi_memmove4: 		  ");
+	asm(".global __aeabi_memmove  ");
+	asm("__aeabi_memmove: 		  ");
+	asm("	b		memmove		  ");
+	}

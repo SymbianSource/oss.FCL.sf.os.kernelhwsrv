@@ -1,0 +1,181 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\rombuild\base.iby
+// 
+//
+
+#ifndef __BASE_IBY__
+#define __BASE_IBY__
+
+REM Base operating system, including all assp-specific files
+
+#include <kernel.hby>
+
+#if defined(__MISA__)
+#include <base_assabet.iby>
+#elif defined(__MI920__)
+#include <base_integrator920.iby>
+#elif defined(__NI1136__)
+#include <base_integrator1136.iby>
+#elif defined(__MCOT__)
+#include <base_lubbock.iby>
+#elif defined(__TEMPLATE__)
+#include <base_template.iby>
+#elif defined(__MOMAP16XX_H2__)
+#include <base_h2.iby>
+#elif defined(__MOMAP24XX_H4HRP__)
+#include <base_h4hrp.iby>
+#elif defined(__X86PCHRP__)
+#include <base_x86pc.iby>
+#elif defined(__NE1_TB__)
+#include <base_ne1_tb.iby>
+#elif defined(__FALCON__)
+#include <base_falcon.iby>
+#elif defined(__MOMAP34XX_SDP__)
+#include <base_34xx_sdp.iby>
+#elif defined(__MOMAP34XX_LAB__)
+#include <base_lab.iby>
+#elif defined(BASEPORT_DRV)
+#include BASEPORT_DRV
+#endif
+
+#ifdef SMP
+WARNING This implementation of symmetric multiprocessing is a prototype, not licensed for use in production devices
+#endif
+
+#if !defined(GENERIC_MARM) && !defined _X86GCC
+#include <compsupp.iby>
+#endif
+
+#if defined(GENERIC_MARM)
+file=ABI_DIR\DEBUG_DIR\eka1_entry_stub.dll              \sys\bin\Eka1_Entry_Stub.dll
+#endif
+
+// Run-mode debug sub-system
+#include <rm_debug_svr.iby>
+
+#if !defined(EUSER_DLL)
+#error EUSER_DLL not defined
+#endif
+
+file=KERNEL_DIR\DEBUG_DIR\EUSER_DLL                         \sys\bin\EUser.dll
+file=ABI_DIR\DEBUG_DIR\RPIPE.DLL                            \sys\bin\rpipe.dll
+
+#ifndef USE_CUSTOM_MMC_PARTITION
+// include eMMCPartition library by default
+extension[VARID]=   KERNEL_DIR\DEBUG_DIR\EMMCPTN.DLL                   \sys\bin\EMMCPTN.DLL
+#endif
+
+// Ensure that we prevent insecure Trk debug agent from being installed by blocking its SID.
+file=ABI_DIR\BUILD_DIR\trkdummyapp.exe     \sys\bin\trkdummyapp.exe
+file=ABI_DIR\BUILD_DIR\trkdummyapp2.exe     \sys\bin\trkdummyapp2.exe
+file=ABI_DIR\BUILD_DIR\trkdummyapp200159D8.exe     \sys\bin\trkdummyapp200159D8.exe
+file=ABI_DIR\BUILD_DIR\trkdummyapp200170BC.exe     \sys\bin\trkdummyapp200170BC.exe
+
+file=ABI_DIR\DEBUG_DIR\ektran.dll                           \sys\bin\EKTran.dll
+file=ABI_DIR\DEBUG_DIR\HAL_DLL                              \sys\bin\Hal.dll
+
+#ifndef SYMBIAN_EXCLUDE_KEYMAP
+file=ABI_DIR\DEBUG_DIR\KEYMAP_FILE.dll                      \sys\bin\EKData.dll
+#endif //SYMBIAN_EXCLUDE_KEYMAP
+
+secondary=ABI_DIR\DEBUG_DIR\efile.exe                       \sys\bin\efile.exe  FIXED HEAPMAX(0x40000)
+file=ABI_DIR\DEBUG_DIR\efsrv.dll                            \sys\bin\EFSrv.dll
+device[VARID]=KERNEL_DIR\DEBUG_DIR\d_ftrace.ldd             \sys\bin\d_ftrace.ldd
+
+#ifdef WITH_EXFAT
+file=ABI_DIR\DEBUG_DIR\exfat.fsy                            sys\bin\exfat.fsy
+#endif
+
+
+#ifdef WITH_AUTOMOUNTER
+file=ABI_DIR\DEBUG_DIR\automounter.fsy                      sys\bin\automounter.fsy
+#endif
+
+
+#ifndef CUSTOM_ELOCAL
+file=ABI_DIR\DEBUG_DIR\efat32.fsy							\sys\bin\ELocal.fsy
+#endif
+
+// PREQ2540: Prepare "LFFS" NOR Flash File System TPIP for Symbian Foundation
+// This PREQ removes the LFFS File System component from the rlease codeline.
+// Only define WITH_ELLFS_FSY macro on development branches where the component
+// has been retained.
+#ifdef WITH_ELFFS_FSY
+file=ABI_DIR\DEBUG_DIR\elffs.fsy                            \sys\bin\ELffs.fsy
+#endif
+
+#ifdef WITH_NAND
+file=ABI_DIR\BUILD_DIR\nandftl.fxt                          \sys\bin\nandftl.fxt
+file=ABI_DIR\BUILD_DIR\ecomp.fsy                            \sys\bin\ecomp.fsy
+file=ABI_DIR\BUILD_DIR\erofs.fsy                            \sys\bin\erofs.fsy
+#endif
+
+#if defined(WITH_NAND2) || defined(WITH_ONENAND) || defined (WITH_INTERNAL_MMC)
+file=ABI_DIR\BUILD_DIR\ecomp.fsy                            \sys\bin\ecomp.fsy
+file=ABI_DIR\BUILD_DIR\erofs.fsy                            \sys\bin\erofs.fsy
+#endif
+
+#ifdef WITH_ISO9660
+file=ABI_DIR\DEBUG_DIR\iso9660.fsy                          \sys\bin\Iso9660.fsy
+#endif
+
+#ifdef WITH_NTFS
+file=ABI_DIR\DEBUG_DIR\ntfs.fsy                             \sys\bin\Ntfs.fsy
+#endif
+
+#if !(defined(INST_X86) || defined(INST_X86GCC))
+file=ABI_DIR\DEBUG_DIR\USBCSC_bil.dll                       \sys\bin\usbcsc_bil.dll
+#endif
+
+#ifdef WITH_MASS_STORAGE
+#ifdef USE_MSCDB
+file=ABI_DIR\DEBUG_DIR\msfs_db.fsy                          \sys\bin\msfs.fsy
+#else
+file=ABI_DIR\DEBUG_DIR\msfs.fsy                             \sys\bin\msfs.fsy
+#endif
+#endif
+
+file=ABI_DIR\DEBUG_DIR\ESTART_EXE                           \sys\bin\EStart.exe HEAPMAX(0x10000)
+
+file=ABI_DIR\DEBUG_DIR\domainSrv.exe                        \sys\bin\domainSrv.exe
+file=ABI_DIR\DEBUG_DIR\domainCli.dll                        \sys\bin\domainCli.dll
+file=ABI_DIR\DEBUG_DIR\domainPolicy.dll                     \sys\bin\domainPolicy.dll
+
+#if defined(SYMBIAN_INCLUDE_USB_OTG_HOST)
+file=ABI_DIR\DEBUG_DIR\usbdescriptors.dll                   \sys\bin\usbdescriptors.dll
+file=ABI_DIR\DEBUG_DIR\usbdi_utils.dll                      \sys\bin\usbdi_utils.dll
+#ifdef WITH_MASS_STORAGE
+file=ABI_DIR\DEBUG_DIR\usbhostms.pxy    sys\bin\usbhostms.pxy
+file=ABI_DIR\DEBUG_DIR\usbhostmsclient.dll  sys\bin\usbhostmsclient.dll
+file=ABI_DIR\DEBUG_DIR\usbhostmssrv.exe     sys\bin\usbhostmssrv.exe
+#endif
+#endif //#if defined(SYMBIAN_ENABLE_USB_OTG_HOST) && defined(SYMBIAN_INCLUDE_USB_OTG_HOST) && !defined(SYMBIAN_EXCLUDE_USB)
+
+#if defined(_NAND) || defined(_NAND2) || defined(_ONENAND) || defined (WITH_INTERNAL_MMC)
+#if !defined PAGED_ROM || defined EFFICIENT_ROM_PAGING || defined CODE_PAGING_FROM_ROFS
+REM Start of ROFS image
+ROM_IMAGE[1] {
+#endif
+#endif
+
+#ifndef SYMBIAN_EXCLUDE_D_EXC
+file=ABI_DIR\DEBUG_DIR\d_exc.exe                            \sys\bin\d_exc.exe
+#endif //SYMBIAN_EXCLUDE_D_EXC
+
+#ifndef SYMBIAN_EXCLUDE_SCDV
+file=ABI_DIR\DEBUG_DIR\SCDV_DLL                             \sys\bin\ScDv.dll
+#endif // SYMBIAN_EXCLUDE_SCDV
+
+#endif

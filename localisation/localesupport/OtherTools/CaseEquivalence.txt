@@ -1,0 +1,10 @@
+CaseEquivalence.pl takes as its input the file UnicodeData-3.0.0.txt on the standard input stream and produces as output one of the following on the standard output stream depending on the option -o{t|f|r|m}:
+
+-ot: produce a trie in C++ compilable format which gives a mapping for each Unicode character.
+-of: produce a mapping of characters to canonical case equivalent character
+-or: produce a list of canonical case characters and a list of what maps to each
+-om: as -or but does not print those mappings for which only one character needs to map.
+
+This is used to produce the e32 file FoldTable.inl
+
+The files SpecialCasing.txt and CaseFolding.txt are not used by the tool as yet. These are other files from the Unicode Consortium.

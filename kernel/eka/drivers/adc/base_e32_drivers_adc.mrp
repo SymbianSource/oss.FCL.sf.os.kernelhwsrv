@@ -1,0 +1,8 @@
+# component name "ADC controller"
+
+component	base_e32_drivers_adc
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\adc
+notes_source	\component_defs\release.src
+
+ipr E
+

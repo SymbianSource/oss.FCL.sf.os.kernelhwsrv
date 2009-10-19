@@ -1,0 +1,65 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Test code for file server
+//
+//
+
+
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+ARMV5
+
+
+PRJ_TESTMMPFILES
+
+#if !defined(GCCXML) && defined(MARM_ARMV5)
+#if defined(GENERIC_MARM) || !defined(WINS) || defined(GENERIC_X86)
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+
+#if !defined(WINS)
+#if !defined(X86)
+#if defined(SYMBIAN_ENABLE_USB_OTG_HOST)
+
+msman/client/msmanclient support
+msman/server/usbhostserver support
+msman/server/usbotgserver support
+
+msman/test/t_msman manual
+msman/test/t_msformat manual
+msman/test/t_msblock manual
+msman/test/t_mssbcerr manual
+msman/test/t_msbot manual
+msman/test/t_mssuspend manual
+msman/test/t_msvbus manual
+msman/test/t_mswrpr manual
+msman/test/t_msrmb manual
+
+msman/app/husbconsapp manual
+
+testclient/usbtestclient/usbtestclient manual
+testclient/usbtestmsclient/usbtestmsclient support
+
+#endif
+#endif
+#endif	//!defined(WINS)
+
+#endif
+#endif
+#endif //GCCXML
+

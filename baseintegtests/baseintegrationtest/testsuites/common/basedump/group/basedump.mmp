@@ -1,0 +1,42 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// THINDUMP.EXE copy test logs from board to pc via serial cable
+// 
+//
+
+/**
+ @file thindump.mmp
+ @internalComponent
+*/
+
+TARGET        basedump.exe
+TARGETTYPE    exe
+
+MACRO SYMBIAN_BASEDUMP
+
+UID           0x1000abcd 0x1000abce
+
+SOURCE        ../src/thindump.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+LIBRARY       euser.lib efsrv.lib
+
+START WINS
+	BASEADDRESS 0x4ABC0000
+END
+
+#ifdef EKA2
+VENDORID 0x70000001
+CAPABILITY ALL -Tcb
+#endif

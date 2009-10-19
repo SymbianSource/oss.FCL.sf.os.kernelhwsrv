@@ -1,0 +1,85 @@
+RELEASE.TXT
+===========
+
+Summary of Contents
+====================
+This document describes the components in the Base Integration Test area. This
+area contains test code which is distinct and separate from the E32 and F32
+test suites which are generally used in Base testing. Please note that tests
+will typically use the Test Execute Framework test harness and so will have
+dependencies outside the code provided by a Base Porting Kit.
+
+The following test suites are currently in place:
+
+a) Fat32 Test Suite
+	Location: \src\cedar\generic\base_integration_test\testsuites\fat32
+	Documentation: \src\cedar\generic\base_integration_test\testsuites\fat32\documentation
+
+b) SD Test Suite
+	Location: \src\cedar\generic\base_integration_test\testsuites\sd
+	Documentation: \src\cedar\generic\base_integration_test\testsuites\sd\documentation
+
+Build Instructions
+===================
+ 
+All test suites in this area can be built from the following location: 
+
+\src\cedar\generic\base_integration_test\group
+
+using standard build commands such as:
+
+bldmake bldfiles
+abld test build armv5
+
+etc.
+
+Known Issues
+==============
+
+In the FAT32 test suite, tests associated with the testcase PBASE-FSINFOSTRUC-1-0289 are known to fail.
+This occurs as the FAT32 FSInfo Sector is not fully implemented as yet. 
+
+In the SD test suite, tests associated with the testcase PBASE-SDTESTSPECFS2-0203
+and PBASE-SDTESTSPECFAT32FSBACKUPSECTORS-0216 are know to fail. This due to the
+Backup Boot Sectors not being supported as yet.
+
+Technical Help
+===============
+
+Technical queries regarding this test code should be addressed to the Base
+group within Symbian, in particular the Test Technical Lead (TTL) for Base.
+
+Release Record
+===============
+Release 15/11/2007
+(Made by SushmitaR)
+
+1. 	SushmitaR
+	1. 	DEFECT FIX: DEF113794 Filename Policy non-conformance generates build warnings
+		Changed case of files/paths referenced in .mmp, bld.inf files to match those on filesystem.
+		Changed '\' to '/' in paths in line with file naming policy. 
+	2. 	DEFECT FIX: DEF110892 APIREG: Compiler warnings within FAT32 testsuite
+		Ensure that there are no compiler warnings.
+	3.	DEFECT FIX: DEF110898: APIREG: Testcase failures in FAT32 compliance test  suite
+		Fix filling the disk so that the entire disk is filled. 
+	4.	MINOR CHANGE: Make changes to test suite according to the changes that have been made in PREQ1721 
+		with respect to the FSInfo fields and the backup bootsector.
+	5. 	MINOR CHANGE: Remove external dependancy from base/e32utils. 
+
+Release 23/04/2007:
+
+Add SD card test suite in the location:
+\src\cedar\generic\base_integration_test\testsuites\sd
+
+Release 19/03/2007:
+
+Minor changes to the FAT32 test suite as follows:
+
+a) Removed document numbers from Test Specification and Test Suite Description
+b) Updated the Test Suite Description to specify file paths as relative to src
+c) Corrected test tag information in Test Script bfat32.script.
+
+Release 29/11/2006:
+
+This initial release contains the FAT32 test suite in the location:
+\src\cedar\generic\base_integration_test\testsuites\fat32

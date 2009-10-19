@@ -1,0 +1,48 @@
+# Makefile for generating .IBY stuff needed for rombuilding
+
+CLEAN :
+
+FINAL :
+
+FREEZE :
+
+LIB :
+
+MAKMAKE :
+
+RESOURCE :
+
+BLD : 
+
+SAVESPACE :
+
+RELEASABLES :
+
+ROMFILE :
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\t_file.cpp Test\T_file.cpp
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\t_fsrv.cpp Test\T_FSRV.cpp
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\t_rdsect.txt Test\T_RDSECT.txt
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\preload.lst \System\Data\preload.lst
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\corruptTest\CorruptFileNames.lst \System\Data\CorruptFileNames.lst
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\corruptTest\BadFile1.txt \System\Data\BadFile1.txt
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\corruptTest\BadFile2.txt \System\Data\BadFile2.txt
+	@echo data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\ECOMM.LDD	\Img\ECOMM.LDD
+	@echo data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\TESTUSBC.LDD  \sys\bin\TESTUSBC.LDD
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\plugins\version_1\virus\virusdef.txt Test\virusdef.txt
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\plugins\version_1\virus\virus1.txt Test\virus1.txt
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\plugins\version_1\virus\virus2.txt Test\virus2.txt
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\plugins\version_1\virus\clean.txt Test\clean.txt
+	@echo data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_vshook.pxt Test\t_vshook.pxt
+	@echo data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_enchook.pxt Test\t_enchook.pxt
+	@echo data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_hexhook.pxt Test\t_hexhook.pxt
+	@echo data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_formathook.pxt Test\t_formathook.pxt
+	@echo #ifdef MULTIPLEROFS
+	@echo data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\rom.txt
+	@echo data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\romhide.txt
+	@echo data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\romreplace.txt
+	@echo data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\romreplacefat.txt
+	@echo #endif // MULTIPLEROFS
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\server\t_findcaptestfile.txt            \sys\bin\t_findcaptestfile.txt
+	@echo #ifdef _NANDTEST2
+	@echo data=##BASEPATH##kernelhwsrv\kerneltest\f32test\demandpaging\clamp.txt		Test\clamp.txt
+	@echo #endif // _NANDTEST2

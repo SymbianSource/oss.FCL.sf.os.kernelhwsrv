@@ -1,0 +1,31 @@
+Exceptions library release 2.01.
+
+This source code is intended to be compliant with release 2.0 of the
+EHABI.
+
+Changes against the 2.0 (November 2004) release of these sources are as
+follows:
+
+1) Changed licence agreement.
+
+2) Minor bug fix to restoring VFP registers on some architectures.
+
+The 2.0 (November 2004) source releases contained the following changes
+against the February 2004 release:
+
+1) Minor changes due to progress on the ARM toolchain itself.
+
+2) A small amount of tidying up.
+
+3) Changes to reflect the resolutions agreed in the conference calls,
+namely fixes for type matching, for unwinding frames in which VFP
+registers were saved by FSTMD (instead of FSTMX), and for consequences
+arising from the use of different relocations.
+
+4) The personality routine now defends itself a little against broken
+unwind instructions, by verifying that the notional return address is
+updated by the unwinding instructions. Also the unwinding of WMMX
+registers was performed incorrectly.
+
+5) In the unwinder, __ARM_Unwind_VRS_corerestore is now safe against
+data aborts occurring while restoring the core registers from the stack.

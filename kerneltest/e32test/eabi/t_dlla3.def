@@ -1,0 +1,7 @@
+EXPORTS
+	_Z9Function3v @ 1 NONAME ; Function3()
+	_Z9Function4v @ 2 NONAME ; Function4()
+	_Z11GetDll3Datav @ 3 NONAME ; GetDll3Data()
+	_Z11SetDll3Datai @ 4 NONAME ; SetDll3Data(int)
+
+

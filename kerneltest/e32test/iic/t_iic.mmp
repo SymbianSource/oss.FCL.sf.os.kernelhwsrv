@@ -1,0 +1,45 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/drivers/iic/iic_testclient.mmp
+// Test the client interface of IIC
+//
+
+target			t_iic.exe
+targettype		exe
+
+sourcepath      ../iic
+source  		t_iic.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+library 	iic_testpsl.lib
+library 	euser.lib hal.lib
+
+
+macro IIC_SIMULATED_PSL
+
+macro MASTER_MODE
+macro SLAVE_MODE
+
+capability 	all
+
+uid			0 0x10286b4c
+VENDORID 0x70000001
+
+start wins
+win32_headers
+end
+
+SMPSAFE
+

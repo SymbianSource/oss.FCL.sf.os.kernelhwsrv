@@ -1,0 +1,69 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\eka1_entry_stub.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+#include <e32base.h>
+#include <e32rom.h>
+#include <e32svr.h>
+#include <u32exec.h>
+
+
+// Entry point stub to allow EKA1 binaries to be executed under EKA2
+
+extern "C" void RunV7Thread(TBool aNotFirst, SThreadCreateInfo& aInfo);
+
+extern "C" EXPORT_C __NAKED__ void Eka1ExeEntryStub()
+	{
+	// Process entry point
+	// R4 = entry reason
+	// SP points to information block
+	asm("cmp r4, #%a0" : : "i" ((TInt)KModuleEntryReasonThreadInit) );
+	asm("movls r0, r4 ");		// r0 = aNotFirst
+	asm("movls r1, sp ");		// r1 -> parameter block
+	asm("bls RunV7Thread ");	// process or thread init
+	asm("cmp r4, #%a0" : : "i" ((TInt)KModuleEntryReasonException) );
+	asm("bne " CSM_ZN4User9InvariantEv );	// invalid entry reason
+
+	// exception entry
+	// !! stack layout not same as v7 !!
+	asm("mov r0, sp ");			// r0->parameter block
+	asm("bl " CSM_ZN4User15HandleExceptionEPv );
+	asm("ldr r0, [sp, #16] ");	// r0 = saved CPSR
+	asm("add sp, sp, #20 ");	// skip exc type, exc code, FAR, FSR, CPSR
+#ifdef __SUPPORT_THUMB_INTERWORKING
+	asm("tst r0, #0x20 ");		// test for THUMB
+	asm("bic r0, r0, #0x20 ");	// clear THUMB bit
+	asm("bne 1f ");				// branch if THUMB
+#endif
+	asm("msr cpsr, r0 ");		// restore flags
+	asm("ldmia sp, {r0-r15} ");	// restore r0-r15
+#ifdef __SUPPORT_THUMB_INTERWORKING
+	asm("1: ");					// want to return in THUMB state
+	asm("msr cpsr, r0 ");		// restore flags
+	asm("ldmia sp!, {r0-r12} ");	// restore r0-r12
+	asm("ldr lr, [sp, #4]! ");	// skip saved r13, restore r14
+	asm("str r0, [sp, #0] ");	// push r0 again
+	asm("add r0, pc, #1 ");		// r0 = . + 8 + 1
+	asm("bx r0 ");				// go to next instruction in THUMB
+	asm(".code 16 ");			// get here in THUMB state
+	asm("pop {r0,pc} ");		// restore r0 and return in THUMB state
+	asm("nop ");				// pad
+	asm(".code 32 ");
+#endif
+	}
+

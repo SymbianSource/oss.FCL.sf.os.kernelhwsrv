@@ -1,0 +1,39 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/pbus/mmc/sdcard/sdcard3c/epbusd.mmp
+// 
+//
+
+#include			"../../epbusm.mmh"
+
+target				epbussd.dll
+targettype			kext
+
+sourcepath			.
+source				sdcard.cpp
+USERINCLUDE		.
+
+#if defined(GCC32)
+deffile 			../bmarm/sdcard3c/epbusm.def
+#elif defined(WINS)
+deffile 			../bwins/sdcard3c/epbusm.def
+#elif defined(X86)
+deffile 			../bx86/sdcard3c/epbusm.def
+#else
+deffile 			../eabi/sdcard3c/epbusm.def
+#endif
+
+VENDORID 0x70000001
+
+SMPSAFE

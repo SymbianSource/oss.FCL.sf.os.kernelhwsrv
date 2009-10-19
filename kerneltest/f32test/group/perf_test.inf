@@ -1,0 +1,82 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/perf_test.inf
+// Performance test code for file server
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_PLATFORMS
+
+
+BASEUSERDEFAULT
+
+PRJ_TESTEXPORTS
+
+// f32 Perf tests
+../bench/testscripts/f32_perf_test_H2.bat           /epoc32/rom/h2/f32_perf_test.bat
+../bench/testscripts/f32_perf_test_H2_5000files.bat /epoc32/rom/h2/f32_perf_test_5000files.bat
+
+../bench/testscripts/f32_perf_test_H4.bat           /epoc32/rom/h4hrp/f32_perf_test.bat
+../bench/testscripts/f32_perf_test_H4_5000files.bat /epoc32/rom/h4hrp/f32_perf_test_5000files.bat
+
+
+
+// FAT Performance tests
+../bench/testscripts/fat_perf_test_H2.bat       /epoc32/rom/h2/fat_perf_test.bat
+../bench/testscripts/fat_perf_test_H4.bat       /epoc32/rom/h4hrp/fat_perf_test.bat
+
+
+../bench/testscripts/f32_perf_test_autoexec.bat             /epoc32/rom/f32_perf_test_autoexec.bat
+../bench/testscripts/f32_perf_test_autoexec_fat_exfat.bat   /epoc32/rom/f32_perf_test_autoexec_fat_exfat.bat
+
+
+
+// FAT Directory Cache Performance tests
+../bench/testscripts/fat_perf_test_dircache_setup_H4.bat        /epoc32/rom/h4hrp/fat_perf_test_dircache_setup.bat
+../bench/testscripts/fat_perf_test_dircache_fully_cached_file_creation_H4.bat       /epoc32/rom/h4hrp/fat_perf_test_dircache_fully_cached_file_creation.bat
+../bench/testscripts/fat_perf_test_dircache_fully_cached_file_open_linear_H4.bat    /epoc32/rom/h4hrp/fat_perf_test_dircache_fully_cached_file_open_linear.bat
+../bench/testscripts/fat_perf_test_dircache_fully_cached_file_open_random_H4.bat    /epoc32/rom/h4hrp/fat_perf_test_dircache_fully_cached_file_open_random.bat
+../bench/testscripts/fat_perf_test_dircache_partially_cached_1.7MB_data_H4.bat      /epoc32/rom/h4hrp/fat_perf_test_dircache_partially_cached_1.7MB_data.bat
+../bench/testscripts/fat_perf_test_dircache_partially_cached_5.1MB_data_H4.bat      /epoc32/rom/h4hrp/fat_perf_test_dircache_partially_cached_5.1MB_data.bat
+../bench/testscripts/fat_perf_test_dircache_partially_cached_6.8MB_data_H4.bat      /epoc32/rom/h4hrp/fat_perf_test_dircache_partially_cached_6.8MB_data.bat
+
+
+../bench/testscripts/fat_perf_test_dircache_setup_H2.bat        /epoc32/rom/h2/fat_perf_test_dircache_setup.bat
+../bench/testscripts/fat_perf_test_dircache_fully_cached_file_creation_H2.bat       /epoc32/rom/h2/fat_perf_test_dircache_fully_cached_file_creation.bat
+../bench/testscripts/fat_perf_test_dircache_fully_cached_file_open_linear_H2.bat    /epoc32/rom/h2/fat_perf_test_dircache_fully_cached_file_open_linear.bat
+../bench/testscripts/fat_perf_test_dircache_fully_cached_file_open_random_H2.bat    /epoc32/rom/h2/fat_perf_test_dircache_fully_cached_file_open_random.bat
+../bench/testscripts/fat_perf_test_dircache_partially_cached_1.7MB_data_H2.bat      /epoc32/rom/h2/fat_perf_test_dircache_partially_cached_1.7MB_data.bat
+../bench/testscripts/fat_perf_test_dircache_partially_cached_5.1MB_data_H2.bat      /epoc32/rom/h2/fat_perf_test_dircache_partially_cached_5.1MB_data.bat
+../bench/testscripts/fat_perf_test_dircache_partially_cached_6.8MB_data_H2.bat      /epoc32/rom/h2/fat_perf_test_dircache_partially_cached_6.8MB_data.bat
+
+
+
+PRJ_TESTMMPFILES
+
+t_fsrcreatefiles manual 
+t_fsrdirscan    manual 
+t_fsrdirload    manual 
+t_fsropen       manual 
+t_fsrdel        manual 
+t_fsrrepeat     manual
+t_fsrmkdir      manual
+t_fcachebm      manual 
+t_fat_perf   manual
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+t_notify_perf		manual
+#endif

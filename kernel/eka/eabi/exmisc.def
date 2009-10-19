@@ -1,0 +1,5 @@
+EXPORTS
+	_ZN6MiscHw16PlayBeepSequenceEPKiiPFvPvES2_ @ 1 NONAME ; MiscHw::PlayBeepSequence(int const*, int, void (*)(void*), void*)
+	_ZN6MiscHw18CancelBeepSequenceEv @ 2 NONAME ; MiscHw::CancelBeepSequence()
+	_ZN6MiscHw23SetSoundDriverRecordingEi @ 3 NONAME ; MiscHw::SetSoundDriverRecording(int)
+

@@ -1,0 +1,984 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\arm\ncutils.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm.h>
+
+//#define __DBG_MON_FAULT__
+//#define __RAM_LOADED_CODE__
+//#define __EARLY_DEBUG__
+
+#ifdef _DEBUG
+#define ASM_KILL_LINK(rp,rs)	asm("mov "#rs", #0xdf ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #8 ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #16 ");\
+								asm("str "#rs", ["#rp"] ");\
+								asm("str "#rs", ["#rp", #4] ");
+#else
+#define ASM_KILL_LINK(rp,rs)
+#endif
+
+
+#ifdef __PRI_LIST_MACHINE_CODED__
+/** Return the priority of the highest priority item present on a priority list.
+
+	@return	The highest priority present or -1 if the list is empty.
+ */
+EXPORT_C __NAKED__ TInt TPriListBase::HighestPriority()
+	{
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("ldr r2, [r0, #4] ");				// r2=iPresent MSW
+	asm("ldr r1, [r0, #0] ");				// r1=iPresent LSW
+	CLZ(0,2);								// r0=31-MSB(r2)
+	asm("subs r0, r0, #32 ");				// r0=-1-MSB(r2), 0 if r2=0
+	CLZcc(CC_EQ,0,1);						// if r2=0, r0=31-MSB(r1)
+	asm("rsb r0, r0, #31 ");				// r0=highest priority
+#else
+	asm("ldmia r0, {r1,r2} ");				// r2:r1=iPresent
+	asm("mov r0, #31 ");					// start at 31
+	asm("cmp r2, #0 ");						// high word non-zero?
+	asm("movne r0, #63 ");					// if so, start at 63
+	asm("movne r1, r2 ");					// and set r1=high word
+	asm("cmp r1, #0 ");
+	asm("beq highest_pri_0 ");
+	asm("cmp r1, #0x00010000 ");
+	asm("movcc r1, r1, lsl #16 ");
+	asm("subcc r0, r0, #16 ");
+	asm("cmp r1, #0x01000000 ");
+	asm("movcc r1, r1, lsl #8 ");
+	asm("subcc r0, r0, #8 ");
+	asm("cmp r1, #0x10000000 ");
+	asm("movcc r1, r1, lsl #4 ");
+	asm("subcc r0, r0, #4 ");
+	asm("cmp r1, #0x40000000 ");
+	asm("movcc r1, r1, lsl #2 ");
+	asm("subcc r0, r0, #2 ");
+	asm("cmp r1, #0x80000000 ");
+	asm("subcc r0, r0, #1 ");
+	__JUMP(,lr);
+	asm("highest_pri_0: ");
+	asm("mvn r0, #0 ");						// if list empty, return -1
+#endif
+	__JUMP(,lr);
+	}
+
+/** Find the highest priority item present on a priority list.
+	If multiple items at the same priority are present, return the first to be
+	added in chronological order.
+
+	@return	a pointer to the item or NULL if the list is empty.
+ */
+EXPORT_C __NAKED__ TPriListLink* TPriListBase::First()
+	{
+#ifdef __CPU_ARM_HAS_CLZ
+	asm("ldr r2, [r0, #4] ");				// r2=iPresent MSW
+	asm("ldr r1, [r0], #8 ");				// r1=iPresent LSW, r0=&iQueue[0]
+	CLZ(3,2);								// r3=31-MSB(r2)
+	asm("subs r3, r3, #32 ");				// r3=-1-MSB(r2), 0 if r2=0
+	CLZcc(CC_EQ,3,1);						// if r2=0, r3=31-MSB(r1)
+	asm("rsbs r3, r3, #31 ");				// r3=highest priority
+	asm("ldrpl r0, [r0, r3, lsl #2] ");		// if r3>=0 list is nonempty, r0->first entry
+	asm("movmi r0, #0 ");					// if r3<0 list empty, return NULL
+#else
+	asm("ldmia r0!, {r1,r2} ");				// r2:r1=iPresent, r0=&iQueue[0]
+	asm("cmp r2, #0 ");						// high word non-zero?
+	asm("addne r0, r0, #128 ");				// if so, r0=&iQueue[32]
+	asm("movne r1, r2 ");					// and set r1=high word
+	asm("cmp r1, #0x00010000 ");
+	asm("movcc r1, r1, lsl #16 ");
+	asm("addcs r0, r0, #0x40 ");			// if iPresent>=0x00010000, step r0 on by 16 words
+	asm("cmp r1, #0x01000000 ");
+	asm("movcc r1, r1, lsl #8 ");
+	asm("addcs r0, r0, #0x20 ");			// if iPresent>=0x01000000, step r0 on by 8 words
+	asm("cmp r1, #0x10000000 ");
+	asm("movcc r1, r1, lsl #4 ");
+	asm("addcs r0, r0, #0x10 ");			// if iPresent>=0x10000000, step r0 on by 4 words
+	asm("cmp r1, #0x40000000 ");
+	asm("movcc r1, r1, lsl #2 ");
+	asm("addcs r0, r0, #0x08 ");			// if iPresent>=0x40000000, step r0 on by 2 words
+	asm("cmp r1, #0 ");
+	asm("addmi r0, r0, #4 ");				// if iPresent>=0x80000000, step r0 on by 1 word
+	asm("ldrne r0, [r0] ");					// if iPresent was not zero, r0 points to first entry
+	asm("moveq r0, #0 ");					// else r0=NULL
+#endif
+	__JUMP(,lr);
+	}
+
+/** Add an item to a priority list.
+
+	@param aLink = a pointer to the item - must not be NULL
+ */
+EXPORT_C __NAKED__ void TPriListBase::Add(TPriListLink* /*aLink*/)
+	{
+	asm("ldrb r2, [r1, #8]" );				// r2=priority of aLink
+	asm("add ip, r0, #8 ");					// ip=&iQueue[0]
+	asm("ldr r3, [ip, r2, lsl #2]! ");		// r3->first entry at this priority
+	asm("cmp r3, #0 ");						// is this first entry at this priority?
+	asm("bne pri_list_add_1 ");				// branch if not
+	asm("str r1, [ip] ");					// if queue originally empty, iQueue[pri]=aThread
+	asm("ldrb ip, [r0, r2, lsr #3]! ");		// ip=relevant byte of present mask, r0->same
+	asm("and r2, r2, #7 ");
+	asm("mov r3, #1 ");
+	asm("str r1, [r1, #0] ");				// aThread->next=aThread
+	asm("orr ip, ip, r3, lsl r2 ");			// ip |= 1<<(pri&7)
+	asm("str r1, [r1, #4] ");				// aThread->iPrev=aThread
+	asm("strb ip, [r0] ");					// update relevant byte of present mask
+	__JUMP(,lr);
+	asm("pri_list_add_1: ");
+	asm("ldr ip, [r3, #4] ");				// if nonempty, ip=last
+	asm("str r1, [r3, #4] ");				// first->prev=aThread
+	asm("stmia r1, {r3,ip} ");				// aThread->next=r3=first, aThread->prev=ip=last
+	asm("str r1, [ip, #0] ");				// last->next=aThread
+	__JUMP(,lr);
+	}
+
+/** Change the priority of an item on a priority list
+
+	@param	aLink = pointer to the item to act on - must not be NULL
+	@param	aNewPriority = new priority for the item
+ */
+EXPORT_C __NAKED__ void TPriListBase::ChangePriority(TPriListLink* /*aLink*/, TInt /*aNewPriority*/)
+	{
+	asm("ldrb r3, [r1, #8] ");				// r3=old priority
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("cmp r3, r2 ");
+	asm("ldmeqfd sp!, {r4-r6,pc} ");		// if old priority=new, finished
+	asm("ldmia r1, {r4,r12} ");				// r4=next, r12=prev
+	asm("ldmia r0!, {r6,lr} ");				// lr:r6=present mask, r0=&iQueue[0]
+	asm("subs r5, r4, r1 ");				// check if aLink is only one at that priority, r5=0 if it is
+	asm("beq change_pri_1 ");				// branch if it is
+	asm("ldr r5, [r0, r3, lsl #2] ");		// r5=iQueue[old priority]
+	asm("str r4, [r12, #0] ");				// prev->next=next
+	asm("str r12, [r4, #4] ");				// next->prev=prev
+	asm("cmp r5, r1 ");						// was aLink first?
+	asm("streq r4, [r0, r3, lsl #2] ");		// if it was, iQueue[old priority]=aLink->next
+	asm("b change_pri_2 ");
+	asm("change_pri_1: ");
+	asm("str r5, [r0, r3, lsl #2] ");		// if empty, set iQueue[old priority]=NULL
+	asm("mov r12, #0x80000000 ");
+	asm("rsbs r3, r3, #31 ");				// r3=31-priority
+	asm("bicmi lr, lr, r12, ror r3 ");		// if pri>31, clear bit is MS word
+	asm("bicpl r6, r6, r12, ror r3 ");		// if pri<=31, clear bit in LS word
+	asm("change_pri_2: ");
+	asm("ldr r4, [r0, r2, lsl #2] ");		// r4=iQueue[new priority]
+	asm("strb r2, [r1, #8] ");				// store new priority
+	asm("cmp r4, #0 ");						// new priority queue empty?
+	asm("bne change_pri_3 ");				// branch if not
+	asm("str r1, [r0, r2, lsl #2] ");		// if new priority queue was empty, iQueue[new p]=aLink
+	asm("mov r12, #0x80000000 ");
+	asm("str r1, [r1, #0] ");				// aLink->next=aLink
+	asm("rsbs r2, r2, #31 ");				// r2=31-priority
+	asm("str r1, [r1, #4] ");				// aLink->prev=aLink
+	asm("orrmi lr, lr, r12, ror r2 ");		// if pri>31, set bit is MS word
+	asm("orrpl r6, r6, r12, ror r2 ");		// if pri<=31, set bit in LS word
+	asm("stmdb r0!, {r6,lr} ");				// store present mask and restore r0
+	asm("ldmfd sp!, {r4-r6,pc} ");
+	asm("change_pri_3: ");
+	asm("ldr r12, [r4, #4] ");				// r12->last link at this priority
+	asm("str r1, [r4, #4] ");				// first->prev=aLink
+	asm("str r1, [r12, #0] ");				// old last->next=aLink
+	asm("stmia r1, {r4,r12} ");				// aLink->next=r3=first, aLink->prev=r12=old last
+	asm("stmdb r0!, {r6,lr} ");				// store present mask and restore r0
+	asm("ldmfd sp!, {r4-r6,pc} ");
+	}
+#endif
+
+__NAKED__ void initialiseState()
+	{
+	// entry in mode_svc with irqs and fiqs off	
+	asm("mrs r0, cpsr ");
+	asm("bic r1, r0, #0x1f ");
+	asm("orr r1, r1, #0xd3 ");				// mode_svc
+	asm("msr cpsr, r1 ");
+	__JUMP(,lr);
+	}
+
+// Called by a thread when it first runs
+__NAKED__ void __StartThread()
+	{
+	// On entry r4->current thread, r5->entry point, r6->parameter block
+	asm("mov r0, r6 ");
+	USER_MEMORY_GUARD_OFF_IF_MODE_USR(r6);
+	ERRATUM_353494_MODE_CHANGE(,r6);
+	asm("mov lr, pc ");
+	asm("movs pc, r5 ");
+	asm("b  " CSM_ZN5NKern4ExitEv);
+	}
+
+// Called by a thread which has been forced to exit
+// Interrupts off here, kernel unlocked
+__NAKED__ void __DoForcedExit()
+	{
+	asm("mov r0, #0x13 ");
+	asm("msr cpsr, r0 ");		// interrupts back on
+	asm("bic sp, sp, #4 ");		// align stack since it may be misaligned on return from scheduler
+	asm("bl  " CSM_ZN5NKern4LockEv);	// lock the kernel (must do this before setting iCsCount=0)
+	asm("ldr r0, __TheScheduler ");			// r0 points to scheduler data
+	asm("mov r1, #0 ");
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r0=iCurrentThread
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(NThreadBase,iCsCount));	// set iCsCount=0
+	asm("b  " CSM_ZN11NThreadBase4ExitEv);	// exit
+
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	asm("__BTraceData: ");
+	asm(".word BTraceData ");
+	asm("__DBTraceFilter2_iCleanupHead:");
+#ifdef __EABI__
+	asm(".word _ZN14DBTraceFilter212iCleanupHeadE");
+#else
+	asm(".word _14DBTraceFilter2.iCleanupHead");
+#endif
+	}
+
+
+/** @internalTechnology
+
+	Called to indicate that the system has crashed and all CPUs should be
+	halted and should dump their registers.
+
+*/
+__NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
+	{
+	asm("stmfd	sp!, {r0-r1} ");			// save parameters
+	asm("ldr	r0, __CrashState ");
+	asm("mov	r1, #1 ");
+	asm("str	r1, [r0] ");				// CrashState = ETrue
+	asm("ldr	r0, __TheScheduler ");
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,i_Regs));
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet, iExcCode));
+	asm("cmp	r1, #0 ");					// context already saved?
+	asm("bge	state_already_saved ");		// skip if so
+	asm("mov	r1, lr ");
+	asm("bl "	CSM_ZN3Arm9SaveStateER14SFullArmRegSet );
+	asm("str	r1, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet, iN.iR15));
+	asm("ldmia	sp!, {r2-r3} ");			// original R0,R1
+	asm("stmia	r0, {r2-r3} ");				// save original R0,R1
+	asm("add	r1, r0, #%a0" : : "i" _FOFF(SFullArmRegSet, iExcCode));
+	asm("stmib	r1, {r2-r3} ");				// save a0, a1 in iCrashArgs
+	asm("mov	r1, #13 ");					// r1 = regnum
+	asm("mrs	r2, cpsr ");				// r2 = mode
+	asm("bl "	CSM_ZN3Arm3RegER14SFullArmRegSetim );	// r0 = pointer to exception mode R13
+	asm("str	sp, [r0] ");				// save correct original value for exception mode R13
+	asm("b		state_save_complete ");
+
+	asm("state_already_saved: ");
+	asm("ldmia	sp!, {r2-r3} ");			// original R0,R1
+	asm("add	r1, r0, #%a0" : : "i" _FOFF(SFullArmRegSet, iExcCode));
+	asm("ldr	r4, [r1, #4]! ");
+	asm("cmp	r4, #0 ");
+	asm("stmeqia	r1, {r2-r3} ");			// save a0, a1 in iCrashArgs, provided iCrashArgs not already set
+	asm("state_save_complete: ");
+
+	asm("mov	r2, #0xd1 ");
+	asm("msr	cpsr, r2 ");				// mode_fiq, interrupts off
+	asm("mov	r4, r0 ");
+	asm("bic	sp, sp, #4 ");				// align stack to multiple of 8
+
+	asm("mov	r0, #0 ");
+	asm("mov	r1, #0 ");
+	asm("mov	r2, #0 ");
+	asm("bl		NKCrashHandler ");
+
+	asm("mov	r0, #1 ");
+	asm("ldr	r1, [r4, #%a0] " : : "i" _FOFF(SFullArmRegSet,iN.iR0));	// original R0 = a0 parameter
+	asm("ldr	r2, [r4, #%a0] " : : "i" _FOFF(SFullArmRegSet,iN.iR1));	// original R1 = a1 parameter
+	asm("bl		NKCrashHandler ");
+
+	// shouldn't get back here
+	__ASM_CRASH();
+
+	asm("__CrashState: ");
+	asm(".word %a0" : : "i" ((TInt)&CrashState));
+	}
+
+
+
+__NAKED__ EXPORT_C TBool BTrace::Out(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r2,r3,r4,lr}");
+	asm("and	r2, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r2, [r12, r2, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("mov	r3, r1");			// r3 = a1 (ready for call to handler)
+	asm("adr	lr, 9f");
+	asm("cmp	r2, #0");
+	asm("moveq	r0, #0");
+	asm("ldrne	pc, [r12, #%a0]" : : "i" _FOFF(SBTraceData,iHandler));
+	asm("9:");
+	__POPRET("r2,r3,r4,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutN(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r2,r3,r4,lr}");
+	asm("and	r2, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r2, [r12, r2, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("ldr	r4, [sp, #16]");	// r2 = aDataSize
+	asm("cmp	r2, #0");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r2,r3,r4,");
+
+	asm("cmp	r4, #%a0" : : "i" ((TInt)KMaxBTraceDataArray));
+	asm("movhi	r4, #%a0" : : "i" ((TInt)KMaxBTraceDataArray));
+ 	asm("orrhi	r0, r0, #%a0" : : "i" ((TInt)(BTrace::ERecordTruncated<<(BTrace::EFlagsIndex*8))));
+	asm("add	r0, r0, r4");
+	asm("subs	r4, r4, #1");
+	asm("ldrhs	r2, [r3]");			// get first word of aData is aDataSize!=0
+	asm("mov	r3, r1");			// r3 = a1 (ready for call to handler)
+	asm("cmp	r4, #4");
+	asm("strlo	r2, [sp, #4]");		// replace aData with first word if aDataSize is 1-4
+
+	asm("mov	lr, pc");
+	asm("ldr	pc, [r12, #%a0]" : : "i" _FOFF(SBTraceData,iHandler));
+	__POPRET("r2,r3,r4,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutX(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r2,r3,r4,lr}");
+	asm("and	r2, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r2, [r12, r2, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("mov	r3, r1");			// r3 = a1 (ready for call to handler)
+	asm("ldr	lr, __TheScheduler");
+	asm("cmp	r2, #0");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r2,r3,r4,");
+
+	// set r2 = context id
+	asm("ldrb	r4, [lr, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
+	asm("mrs	r2, cpsr");
+	asm("and	r2, r2, #3");
+	asm("cmp	r2, #3");
+	asm("cmpeq	r4, #0");
+	asm("ldreq	r2, [lr, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+
+	asm("mov	lr, pc");
+	asm("ldr	pc, [r12, #%a0]" : : "i" _FOFF(SBTraceData,iHandler));
+	__POPRET("r2,r3,r4,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutNX(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r2,r3,r4,lr}");
+	asm("and	r2, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r2, [r12, r2, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("ldr	r4, [sp, #16]");	// r2 = aDataSize
+	asm("ldr	lr, __TheScheduler");
+	asm("cmp	r2, #0");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r2,r3,r4,");
+
+	asm("cmp	r4, #%a0" : : "i" ((TInt)KMaxBTraceDataArray));
+	asm("movhi	r4, #%a0" : : "i" ((TInt)KMaxBTraceDataArray));
+ 	asm("orrhi	r0, r0, #%a0" : : "i" ((TInt)(BTrace::ERecordTruncated<<(BTrace::EFlagsIndex*8))));
+	asm("add	r0, r0, r4");
+	asm("subs	r4, r4, #1");
+	asm("ldrhs	r2, [r3]");			// get first word of aData is aDataSize!=0
+	asm("mov	r3, r1");			// r3 = a1 (ready for call to handler)
+	asm("cmp	r4, #4");
+	asm("strlo	r2, [sp, #4]");		// replace aData with first word if aDataSize is 1-4
+
+	// set r2 = context id
+	asm("ldrb	r4, [lr, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
+	asm("mrs	r2, cpsr");
+	asm("and	r2, r2, #3");
+	asm("cmp	r2, #3");
+	asm("cmpeq	r4, #0");
+	asm("ldreq	r2, [lr, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+
+	asm("mov	lr, pc");
+	asm("ldr	pc, [r12, #%a0]" : : "i" _FOFF(SBTraceData,iHandler));
+	__POPRET("r2,r3,r4,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutBig(TUint32 a0, TUint32 a1, const TAny* aData, TInt aDataSize)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r4,lr}");
+	asm("and	r4, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r4, [r12, r4, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("cmp	r4, #0");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r4,");
+
+	asm("ldr	r12, __TheScheduler");
+	asm("stmdb	sp!, {lr}");
+	asm("ldrb	lr, [r12, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
+	asm("mrs	r4, cpsr");
+	asm("and	r4, r4, #3");
+	asm("cmp	r4, #3");
+	asm("cmpeq	lr, #0");
+	asm("ldreq	r4, [r12, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("stmdb	sp!, {r4}");
+	asm("bl " CSM_ZN6BTrace8DoOutBigEmmPKvimm);
+	asm("add	sp, sp, #8");
+	__POPRET("r4,");
+	}
+
+
+__NAKED__ TBool DBTraceFilter2::Check(TUint32 aUid)
+	{
+	asm("stmdb	sp!, {lr}");
+	asm("ldr	r3, [r0,#%a0]" : : "i" _FOFF(DBTraceFilter2,iNumUids));
+	asm("add	r0, r0, #%a0" : : "i" _FOFF(DBTraceFilter2,iUids));
+	asm("mov	r2, #0");
+	asm("0:");
+	asm("cmp	r3, r2");
+	asm("bls	9f");
+	asm("add	r12, r2, r3");
+	asm("mov	r12, r12, asr #1");
+	asm("ldr	lr, [r0, r12, lsl #2]");
+	asm("cmp	r1, lr");
+	asm("addhi	r2, r12, #1");
+	asm("movlo	r3, r12");
+	asm("bne	0b");
+	asm("movs	r0, #1");
+	__POPRET("");
+	asm("9:");
+	asm("movs	r0, #0");
+	__POPRET("");
+	}
+
+
+__NAKED__ TBool SBTraceData::CheckFilter2(TUint32 aUid)
+	{
+	asm("btrace_check_filter2:");
+	// returns r0 = 0 or 1 indicating if trace passed the filter check
+	// returns r2 = trace context id
+
+	asm("ldr	r12, __TheScheduler");
+	asm("stmdb	sp!, {r4-r6,lr}");
+	asm("mrs	r2, cpsr");
+	// r2 = cpsr
+	asm("ldrb	lr, [r12, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
+	asm("and	r4, r2, #3");
+	asm("cmp	r4, #3");
+	asm("cmpeq	lr, #0");
+	asm("ldreq	lr, [r12, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("ldreq	r4, [r12, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("cmpeq	lr, #0");
+	// r4 = context value for trace
+	// zero flag set if we need to enter a critical section
+
+	// NKern::ThreadEnterCS()
+	asm("ldreq	r5, [r4, #%a0]" : : "i" _FOFF(NThreadBase,iCsCount));
+	asm("movne	r5, #0");
+	asm("addeq	r5, r5, #1");
+	asm("streq	r5, [r4, #%a0]" : : "i" _FOFF(NThreadBase,iCsCount));
+	// r5 = true if we entered a critical section
+
+	// DBTraceFilter2::Open()
+	INTS_OFF(r12, r2, INTS_ALL_OFF);
+	asm("ldr	r0, [r0, #%a0]" : : "i" (_FOFF(SBTraceData,iFilter2)));
+	asm("cmp	r0, #1");
+	asm("ldrhi	r12, [r0, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("addhi	r12, r12, #1");
+	asm("strhi	r12, [r0, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("msr	cpsr_c, r2");
+	asm("bls	8f");
+
+
+	asm("mov	r6, r0");
+	asm("bl		Check__14DBTraceFilter2Ul");
+	// r0 = result
+
+
+	// DBTraceFilter2::Close()
+	asm("mrs	r2, cpsr");
+	INTS_OFF(r12, r2, INTS_ALL_OFF);
+	asm("ldr	r12, [r6, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("ldr	r1, __DBTraceFilter2_iCleanupHead");
+	asm("subs	r12, r12, #1");
+	asm("str	r12, [r6, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("ldreq	r12, [r1]");
+	asm("streq	r6, [r1]");
+	asm("streq	r12, [r6, #%a0]" : : "i" _FOFF(DBTraceFilter2,iCleanupLink));
+	asm("msr	cpsr_c, r2");
+
+	// NKern::ThreadLeaveCS()	
+	asm("8:");
+	asm("cmp	r5, #0");
+	asm("beq	9f");
+	asm("mov	r5, r0");
+	asm("bl " CSM_ZN5NKern13ThreadLeaveCSEv);
+	asm("mov	r0, r5");
+	asm("9:");
+	asm("mov	r2, r4"); // r2 = context id
+	__POPRET("r4-r6,");
+	}
+
+
+__NAKED__ EXPORT_C TBool BTrace::OutFiltered(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	// fall through to OutFilteredX...
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredX(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r2,r3,r4,lr}");
+	asm("and	r2, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r2, [r12, r2, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("mov	r3, r1");			// r3 = a1 (ready for call to handler)
+	asm("cmp	r2, #0");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r2,r3,r4,");
+
+	asm("stmdb	sp!, {r0,r3,r12}");
+	asm("mov	r0, r12");
+	asm("bl		btrace_check_filter2");
+	asm("cmp	r0, #0");
+	asm("ldmia	sp!, {r0,r3,r12}");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r2,r3,r4,");
+
+	asm("adr	lr, 9f");
+	asm("ldr	pc, [r12, #%a0]" : : "i" _FOFF(SBTraceData,iHandler));
+	asm("9:");
+	__POPRET("r2,r3,r4,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredN(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	// fall through to OutFilteredNX...
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredNX(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r2,r3,r4,lr}");
+	asm("and	r2, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r2, [r12, r2, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("cmp	r2, #0");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r2,r3,r4,");
+
+	asm("stmdb	sp!, {r0,r1,r3,r12}");
+	asm("mov	r0, r12");
+	asm("bl		btrace_check_filter2");
+	asm("cmp	r0, #0");
+	asm("ldmia	sp!, {r0,r1,r3,r12}");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r2,r3,r4,");
+
+	asm("ldr	r4, [sp, #16]");	// r4 = aDataSize
+	asm("cmp	r4, #%a0" : : "i" ((TInt)KMaxBTraceDataArray));
+	asm("movhi	r4, #%a0" : : "i" ((TInt)KMaxBTraceDataArray));
+ 	asm("orrhi	r0, r0, #%a0" : : "i" ((TInt)(BTrace::ERecordTruncated<<(BTrace::EFlagsIndex*8))));
+	asm("add	r0, r0, r4");
+	asm("subs	r4, r4, #1");
+	asm("ldrhs	lr, [r3]");			// get first word of aData is aDataSize!=0
+	asm("mov	r3, r1");			// r3 = a1 (ready for call to handler)
+	asm("cmp	r4, #4");
+	asm("strlo	lr, [sp, #4]");		// replace aData with first word if aDataSize is 1-4
+
+	asm("mov	lr, pc");
+	asm("ldr	pc, [r12, #%a0]" : : "i" _FOFF(SBTraceData,iHandler));
+	__POPRET("r2,r3,r4,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredBig(TUint32 a0, TUint32 a1, const TAny* aData, TInt aDataSize)
+	{
+	asm("ldr	r12, __BTraceData");
+	asm("stmdb	sp!, {r4,lr}");
+	asm("and	r4, r0, #%a0" : : "i" ((TInt)(0xff<<(BTrace::ECategoryIndex*8))));
+	asm("ldrb	r4, [r12, r4, lsr #%a0]" : : "i" ((TInt)(BTrace::ECategoryIndex*8)));
+	asm("cmp	r4, #0");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r4,");
+
+	asm("stmdb	sp!, {r0-r3,r4,lr}");
+	asm("mov	r0, r12");
+	asm("bl		btrace_check_filter2");
+	asm("cmp	r0, #0");
+	asm("mov	r12, r2");
+	asm("ldmia	sp!, {r0-r3,r4,lr}");
+	asm("moveq	r0, #0");
+	__CPOPRET(eq,"r4,");
+
+	asm("stmdb	sp!, {r12,lr}");
+	asm("bl " CSM_ZN6BTrace8DoOutBigEmmPKvimm);
+	asm("add	sp, sp, #8");
+	__POPRET("r4,");
+	}
+
+	
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredPcFormatBig(TUint32 a0, TUint32 aModuleUid, TUint32 aPc, TUint16 aFormatId, const TAny* aData, TInt aDataSize)
+	{
+	asm("mov	r0, #0"); //kernel side not implemented yet
+	}
+
+/******************************************************************************/
+
+/** Save all the ARM registers
+
+@internalTechnology
+*/
+__NAKED__ void Arm::SaveState(SFullArmRegSet&)
+	{
+	asm("stmia	r0, {r0-r14}^ ");	// save R0-R7, R8_usr-R14_usr
+	asm("str	lr, [r0, #60]! ");	// save R15
+	asm("mrs	r1, cpsr ");
+	asm("str	r1, [r0, #4]! ");	// save CPSR
+	asm("bic	r2, r1, #0x1f ");
+	asm("orr	r2, r2, #0xd3 ");	// mode_svc, all interrupts off
+	asm("msr	cpsr, r2 ");
+	asm("stmib	r0!, {r13,r14} ");	// save R13_svc, R14_svc
+	asm("mrs	r3, spsr ");
+	asm("str	r3, [r0, #4]! ");	// save SPSR_svc
+	asm("bic	r2, r1, #0x1f ");
+	asm("orr	r2, r2, #0xd7 ");	// mode_abt, all interrupts off
+	asm("msr	cpsr, r2 ");
+	asm("stmib	r0!, {r13,r14} ");	// save R13_abt, R14_abt
+	asm("mrs	r3, spsr ");
+	asm("str	r3, [r0, #4]! ");	// save SPSR_abt
+	asm("bic	r2, r1, #0x1f ");
+	asm("orr	r2, r2, #0xdb ");	// mode_und, all interrupts off
+	asm("msr	cpsr, r2 ");
+	asm("stmib	r0!, {r13,r14} ");	// save R13_und, R14_und
+	asm("mrs	r3, spsr ");
+	asm("str	r3, [r0, #4]! ");	// save SPSR_und
+	asm("bic	r2, r1, #0x1f ");
+	asm("orr	r2, r2, #0xd2 ");	// mode_irq, all interrupts off
+	asm("msr	cpsr, r2 ");
+	asm("stmib	r0!, {r13,r14} ");	// save R13_irq, R14_irq
+	asm("mrs	r3, spsr ");
+	asm("str	r3, [r0, #4]! ");	// save SPSR_irq
+	asm("bic	r2, r1, #0x1f ");
+	asm("orr	r2, r2, #0xd1 ");	// mode_fiq, all interrupts off
+	asm("msr	cpsr, r2 ");
+	asm("stmib	r0!, {r8-r14} ");	// save R8_fiq ... R14_fiq
+	asm("mrs	r3, spsr ");
+	asm("str	r3, [r0, #4]! ");	// save SPSR_fiq
+	asm("bic	r2, r1, #0x1f ");
+	asm("orr	r2, r2, #0xd3 ");	// mode_svc, all interrupts off
+	asm("msr	cpsr, r2 ");
+
+	asm("mov	r4, #0 ");
+	asm("mov	r5, #0 ");
+	asm("mov	r6, #0 ");
+	asm("mov	r7, #0 ");
+	asm("mov	r8, #0 ");
+	asm("mov	r9, #0 ");
+	asm("mov	r10, #0 ");
+	asm("mov	r11, #0 ");
+
+	// monitor mode - skip for now
+	asm("mov	r3, #0 ");
+	asm("stmib	r0!, {r4-r6} ");	// R13_mon, R14_mon, SPSR_mon
+
+	// zero spare words
+	asm("mov	r3, #0 ");
+	asm("stmib	r0!, {r4-r11} ");
+	asm("add	r0, r0, #4 ");		// r0 = &a.iA
+
+#ifdef __CPU_ARMV7
+	asm("mrc	p14, 6, r3, c1, c0, 0 ");
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("str	r3, [r0], #4 ");	// TEEHBR
+#ifdef __CPU_HAS_COPROCESSOR_ACCESS_REG
+	GET_CAR(,r3);
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("str	r3, [r0], #4 ");	// CPACR
+
+	// skip SCR, SDER, NSACR, PMCR, MVBAR for now
+	asm("mov	r3, #0 ");
+	asm("stmia	r0!, {r4-r8} ");	// SCR, SDER, NSACR, PMCR, MVBAR
+
+	// zero spare words
+	asm("mov	r3, #0 ");
+	asm("stmia	r0!, {r3-r11} ");	// r0 = &a.iB[0]
+
+	// just fill in iB[0]
+#ifdef __CPU_HAS_MMU
+	asm("mrc	p15, 0, r3, c1, c0, 0 ");
+	asm("str	r3, [r0], #4 ");	// SCTLR
+#ifdef __CPU_HAS_ACTLR
+	asm("mrc	p15, 0, r3, c1, c0, 1 ");
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("str	r3, [r0], #4 ");	// ACTLR
+	asm("mrc	p15, 0, r3, c2, c0, 0 ");
+	asm("str	r3, [r0], #4 ");	// TTBR0
+#ifdef __CPU_HAS_TTBR1
+	asm("mrc	p15, 0, r2, c2, c0, 1 ");
+	asm("mrc	p15, 0, r3, c2, c0, 2 ");
+#else
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+#endif
+	asm("stmia	r0!, {r2,r3} ");	// TTBR1, TTBCR
+	asm("mrc	p15, 0, r3, c3, c0, 0 ");
+	asm("str	r3, [r0], #4 ");	// DACR
+#ifdef __CPU_MEMORY_TYPE_REMAPPING
+	asm("mrc	p15, 0, r2, c10, c2, 0 ");
+	asm("mrc	p15, 0, r3, c10, c2, 1 ");
+#else
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+#endif
+	asm("stmia	r0!, {r2,r3} ");	// PRRR, NMRR
+#ifdef __CPU_ARMV7
+	asm("mrc	p15, 0, r3, c12, c0, 0 ");
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("str	r3, [r0], #4 ");	// VBAR
+#if defined(__CPU_SA1) || defined(__CPU_ARM920T) || defined(__CPU_ARM925T) || defined(__CPU_ARMV5T) || defined(__CPU_ARMV6) || defined(__CPU_ARMV7)
+	asm("mrc	p15, 0, r3, c13, c0, 0 ");
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("str	r3, [r0], #4 ");	// FCSEIDR
+#if defined(__CPU_ARMV6) || defined(__CPU_ARMV7)
+	asm("mrc	p15, 0, r3, c13, c0, 1 ");
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("str	r3, [r0], #4 ");	// CONTEXTIDR
+#ifdef __CPU_HAS_CP15_THREAD_ID_REG
+	GET_RWRW_TID(,r2);
+	GET_RWRO_TID(,r3);
+	GET_RWNO_TID(,r12);
+#else
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+	asm("mov	r12, #0 ");
+#endif
+	asm("stmia	r0!, {r2,r3,r12} ");	// RWRWTID, RWROTID, RWNOTID
+	asm("mrc	p15, 0, r2, c5, c0, 0 ");	// DFSR
+#ifdef __CPU_ARM_HAS_SPLIT_FSR
+	asm("mrc	p15, 0, r3, c5, c0, 1 ");	// IFSR
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("stmia	r0!, {r2,r3} ");	// DFSR, IFSR
+#ifdef __CPU_ARMV7
+	asm("mrc	p15, 0, r2, c5, c1, 0 ");	// ADFSR
+	asm("mrc	p15, 0, r3, c5, c1, 1 ");	// AIFSR
+#else
+	asm("mov	r2, #0 ");
+	asm("mov	r3, #0 ");
+#endif
+	asm("stmia	r0!, {r2,r3} ");	// ADFSR, AIFSR
+	asm("mrc	p15, 0, r2, c6, c0, 0 ");	// DFAR
+#ifdef __CPU_ARM_HAS_CP15_IFAR
+	asm("mrc	p15, 0, r3, c6, c0, 2 ");	// IFAR
+#else
+	asm("mov	r3, #0 ");
+#endif
+	asm("stmia	r0!, {r2,r3} ");	// DFAR, IFAR
+
+	// zero spare words
+	asm("stmia	r0!, {r4-r7} ");
+	asm("stmia	r0!, {r4-r11} ");
+#else	// __CPU_HAS_MMU
+	asm("stmia	r0!, {r4-r11} ");	// no MMU so zero fill
+	asm("stmia	r0!, {r4-r11} ");	// no MMU so zero fill
+	asm("stmia	r0!, {r4-r11} ");	// no MMU so zero fill
+	asm("stmia	r0!, {r4-r11} ");	// no MMU so zero fill
+#endif	// __CPU_HAS_MMU
+
+	// zero iB[1]
+	asm("stmia	r0!, {r4-r11} ");
+	asm("stmia	r0!, {r4-r11} ");
+	asm("stmia	r0!, {r4-r11} ");
+	asm("stmia	r0!, {r4-r11} ");	// r0 = &a.iMore[0]
+	asm("add	r1, r0, #62*8 ");	// r1 = &a.iExcCode
+
+	// Save VFP state
+	// Save order:
+	//				FPEXC	FPSCR
+	// VFPv2 ONLY:	FPINST	FPINST2
+	//				D0-D3	D4-D7	D8-D11	D12-D15 
+	// VFPv3 ONLY:	D16-D19	D20-D23	D24-D27	D28-D31
+#ifdef __CPU_HAS_VFP
+	GET_CAR(,r2);
+	asm("bic	r2, r2, #0x00f00000 ");
+#ifdef __VFP_V3
+	asm("bic	r2, r2, #0xc0000000 ");	// mask off ASEDIS, D32DIS
+#endif
+	asm("orr	r2, r2, #0x00500000 ");	// enable privileged access to CP10, CP11
+	SET_CAR(,r2);
+	VFP_FMRX(,2,VFP_XREG_FPEXC);		// r2=FPEXC
+	asm("orr	r3, r2, #%a0" : : "i" ((TInt)VFP_FPEXC_EN));
+	VFP_FMXR(,VFP_XREG_FPEXC,3);		// enable VFP
+	__DATA_SYNC_BARRIER__(r4);
+	__INST_SYNC_BARRIER__(r4);
+	VFP_FMRX(,3,VFP_XREG_FPSCR);		// r3=FPSCR
+	asm("stmia	r0!, {r2,r3} ");		//
+#ifdef __VFP_V3
+	VFP_FSTMIADW(CC_AL,0,0,16);			// save D0 - D15
+	VFP_FMRX(,3,VFP_XREG_MVFR0);
+	asm("tst r3, #%a0" : : "i" ((TInt)VFP_MVFR0_ASIMD32)); // Check to see if all 32 Advanced SIMD registers are present
+	VFP_FSTMIADW(CC_NE,0,16,16);		// if so then save D16 - D31 (don't need to check CPACR.D32DIS as it is cleared above)
+#else
+	VFP_FMRX(,2,VFP_XREG_FPINST);
+	VFP_FMRX(,3,VFP_XREG_FPINST2);
+	asm("stmia	r0!, {r2,r3} ");		// FPINST, FPINST2
+	VFP_FSTMIADW(CC_AL,0,0,16);			// save D0 - D15
+#endif
+#endif	// __CPU_HAS_VFP
+	asm("1:		");
+	asm("cmp	r0, r1 ");
+	asm("strlo	r4, [r0], #4 ");		// clear up to end of iMore[61]
+	asm("blo	1b ");
+	asm("mov	r1, #%a0" : : "i" ((TInt)KMaxTInt));
+	asm("stmia	r0!, {r1,r5-r7} ");		// iExcCode=KMaxTInt, iCrashArgs[0...2]=0
+	asm("sub	r0, r0, #1024 ");		// r0 = &a
+#ifdef __CPU_HAS_VFP
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iMore[0]));
+	VFP_FMXR(,VFP_XREG_FPEXC,2);		// restore FPEXC
+	__DATA_SYNC_BARRIER__(r4);
+	__INST_SYNC_BARRIER__(r4);
+	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iA.iCPACR));
+	SET_CAR(,r2);						// restore CPACR
+#endif
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iFlags));
+	asm("orr	r1, r1, #0xC0 ");		// interrupts off
+	asm("msr	cpsr, r1 ");			// restore CPSR with interrupts off
+	asm("ldmia	r0, {r0-r11} ");		// restore R4-R11
+	__JUMP(,lr);
+	}
+
+
+/** Update the saved ARM registers with information from an exception
+
+@internalTechnology
+*/
+__NAKED__ void Arm::UpdateState(SFullArmRegSet&, TArmExcInfo&)
+	{
+	asm("ldmia	r1!, {r2,r3,r12} ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iFlags));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iExcCode));
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR13Svc));
+	asm("ldmia	r1!, {r2,r3,r12} ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR4));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR5));
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR6));
+	asm("ldmia	r1!, {r2,r3,r12} ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR7));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR8));
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR9));
+	asm("ldmia	r1!, {r2,r3,r12} ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR10));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR11));
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR14Svc));
+	asm("ldr	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iExcCode));
+	asm("ldmia	r1!, {r2,r3} ");	// r2=iFaultAddress, r3=iFaultStatus
+	asm("cmp	r12, #%a0 " : : "i" ((TInt)EArmExceptionPrefetchAbort));
+	asm("streq	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iB[0].iIFAR));
+	asm("strne	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iB[0].iDFAR));
+	asm("streq	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iB[0].iIFSR));
+	asm("strne	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iB[0].iDFSR));
+	asm("ldmia	r1!, {r2,r3,r12} ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iSpsrSvc));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR13));
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR14));
+	asm("ldmia	r1!, {r2,r3,r12} ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR0));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR1));
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR2));
+	asm("ldmia	r1!, {r2,r3,r12} ");
+	asm("str	r2, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR3));
+	asm("str	r3, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR12));
+	asm("str	r12, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet,iN.iR15));
+	__JUMP(,lr);
+	}
+
+
+/** Get a pointer to a stored integer register, accounting for registers which
+	are banked across modes.
+
+@param	a		Pointer to saved register block
+@param	aRegNum	Number of register required, 0-15 or -1 (indicates SPSR)
+@param	aMode	Bottom 5 bits indicate which processor mode
+				Other bits of aMode are ignored
+@return			Pointer to the required saved register value
+
+@internalTechnology
+*/
+__NAKED__ TArmReg* Arm::Reg(SFullArmRegSet& /*a*/, TInt /*aRegNum*/, TArmReg /*aMode*/)
+	{
+	asm("cmp	r1, #8 ");				// register number < 8 ?
+	asm("addlo	r0, r0, r1, lsl #2 ");	// register R0-R7 are not banked
+	asm("blo	0f ");
+	asm("cmp	r1, #15 ");				// register number = 15 ?
+	asm("addeq	r0, r0, r1, lsl #2 ");	// register R15 not banked
+	asm("movgt	r0, #0 ");				// no registers > 15
+	asm("bge	0f ");
+	asm("cmn	r1, #1 ");
+	asm("movlt	r0, #0 ");				// no registers < -1
+	asm("blt	0f ");
+	asm("and	r12, r2, #0x1F ");
+	asm("cmp	r12, #0x11 ");			// mode_fiq?
+	asm("beq	1f ");					// skip if it is
+	asm("cmp	r1, #13 ");
+	asm("addlo	r0, r0, r1, lsl #2 ");	// register R8-R12 are only banked in mode_fiq
+	asm("blo	0f ");
+	asm("cmp	r12, #0x10 ");			// mode_usr ?
+	asm("cmpne	r12, #0x1F ");			// if not, mode_sys ?
+	asm("bne	2f ");					// skip if neither
+	asm("cmp	r1, #16 ");
+	asm("addlo	r0, r0, r1, lsl #2 ");	// handle R13_usr, R14_usr
+	asm("movhs	r0, #0 ");				// no SPSR in mode_usr or mode_sys
+	asm("blo	0f ");
+	asm("1: ");							// mode_fiq, regnum = 8-12
+	asm("2: ");							// exception mode, regnum not 0-12 or 15
+	asm("cmn	r1, #1 ");				// regnum = -1 ?
+	asm("moveq	r1, #15 ");				// if so, change to 15
+	asm("sub	r1, r1, #13 ");
+	asm("add	r0, r0, r1, lsl #2 ");	// add 0 for R13, 4 for R14, 8 for SPSR
+	asm("cmp	r12, #0x16 ");
+	asm("addeq	r0, r0, #12 ");			// if mon, add offset from R13Fiq to R13Mon
+	asm("cmpne	r12, #0x11 ");
+	asm("addeq	r0, r0, #32 ");			// if valid but not svc/abt/und/irq, add offset from R13Irq to R13Fiq
+	asm("cmpne	r12, #0x12 ");
+	asm("addeq	r0, r0, #12 ");			// if valid but not svc/abt/und, add offset from R13Und to R13Irq
+	asm("cmpne	r12, #0x1b ");
+	asm("addeq	r0, r0, #12 ");			// if valid but not svc/abt, add offset from R13Abt to R13Und
+	asm("cmpne	r12, #0x17 ");
+	asm("addeq	r0, r0, #12 ");			// if valid but not svc, add offset from R13Svc to R13Abt
+	asm("cmpne	r12, #0x13 ");
+	asm("addeq	r0, r0, #%a0" : : "i" _FOFF(SFullArmRegSet, iN.iR13Svc));	// if valid mode add offset to R13Svc
+	asm("movne	r0, #0 ");
+	asm("0: ");
+	__JUMP(,lr);
+	}
+
+
+/** Restore all the ARM registers
+
+@internalTechnology
+*/
+__NAKED__ void Arm::RestoreState(SFullArmRegSet&)
+	{
+	}
+
+
+
+
+

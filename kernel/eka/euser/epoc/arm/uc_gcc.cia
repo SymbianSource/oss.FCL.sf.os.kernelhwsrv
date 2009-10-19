@@ -1,0 +1,146 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_gcc.cia
+// 
+//
+
+#include <u32std.h>
+#include <e32math.h>
+#include "uc_std.h"
+
+extern "C" {
+EXPORT_C __NAKED__ long long __fixdfdi(double /*aVal*/)
+	{
+	// r0:r1 contains argument, return result in r1:r0
+#ifdef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r2, r0 ");					// save sign
+#else
+	asm("mov r2, r1 ");					// save sign
+	asm("mov r1, r0 ");
+	asm("mov r0, r2 ");
+#endif
+	asm("bic r0, r0, #0x80000000 ");	// remove sign bit from r0
+	asm("mov r3, #0x400 ");				// r3=0x43E = exponent of 2^63
+	asm("orr r3, r3, #0x3E ");
+	asm("subs r3, r3, r0, lsr #20 ");	// r3=0x43E-exponent = number of right shifts needed
+	asm("ble 1f ");						// branch to saturate result if exp>=0x43E
+	asm("cmp r3, #63 ");
+	asm("bgt 2f ");						// branch to produce zero result if exp<0x3FF
+	asm("mov r12, r0, lsl #11 ");		// left justify mantissa in r1:r0
+	asm("orr r12, r12, r1, lsr #21 ");
+	asm("mov r0, r1, lsl #11 ");
+	asm("orr r1, r12, #0x80000000 ");	// put in implied integer bit
+	asm("cmp r3, #32 ");				// check if >=32 shifts needed
+	asm("subge r3, r3, #32 ");			// if so reduce count by 32
+	asm("movge r0, r1, lsr r3 ");		// and shift right by (32+r3)
+	asm("movge r1, #0 ");
+	asm("rsblt r12, r3, #32 ");			// else shift right by r3
+	asm("movlt r0, r0, lsr r3 ");
+	asm("orrlt r0, r0, r1, lsl r12 ");
+	asm("movlt r1, r1, lsr r3 ");
+	asm("movs r2, r2 ");				// test sign bit
+	__JUMP(pl,lr);						// if +ve, finished
+	asm("rsbs r0, r0, #0 ");			// if -ve, negate
+	asm("rsc r1, r1, #0 ");
+	__JUMP(,lr);
+	asm("2: ");
+	asm("mov r0, #0 ");
+	asm("mov r1, #0 ");
+	__JUMP(,lr);						// return 0
+	asm("1: ");							// produce saturated result
+	asm("mvn r1, r2, asr #32 ");		// if +ve, r1=FFFFFFFF else r1=0
+	asm("mov r0, r1 ");					//
+	asm("eor r1, r1, #0x80000000 ");	// if +ve, r1:r0=7FFFFFFF FFFFFFFF else r1:r0=80000000 00000000
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ double __floatdidf(long long /*a*/)
+//
+// Convert 64-bit signed integer to double
+//
+	{
+	// r1:r0 = input, return output in r0,r1
+	asm("mov r2, #0x40000000 ");		// r2 will hold result exponent
+	asm("and r12, r1, #0x80000000 ");	// save sign in r12
+	asm("cmp r1, #0 ");					// test for MS word negative or zero
+	asm("orr r2, r2, #0x01E00000 ");	// r2=0x41E=exponent of 2^31
+	asm("bpl 1f ");						// skip if +
+	asm("rsbs r0, r0, #0 ");			// else negate
+	asm("rscs r1, r1, #0 ");
+	asm("1: ");
+	asm("bne 2f ");						// branch if ms word nonzero
+	asm("cmp r0, #0 ");					// check if ls word also zero
+	__JUMP(eq,lr);
+	asm("cmp r0, #0x10000 ");			// normalise r1 and adjust exponent
+	asm("movcc r0, r0, lsl #16 ");
+	asm("subcc r2, r2, #0x01000000 ");
+	asm("cmp r0, #0x1000000 ");
+	asm("movcc r0, r0, lsl #8 ");
+	asm("subcc r2, r2, #0x00800000 ");
+	asm("cmp r0, #0x10000000 ");
+	asm("movcc r0, r0, lsl #4 ");
+	asm("subcc r2, r2, #0x00400000 ");
+	asm("cmp r0, #0x40000000 ");
+	asm("movcc r0, r0, lsl #2 ");
+	asm("subcc r2, r2, #0x00200000 ");
+	asm("cmp r0, #0x80000000 ");
+	asm("movcc r0, r0, lsl #1 ");
+	asm("subcc r2, r2, #0x00100000 ");
+	asm("bic r1, r0, #0x80000000 ");	// remove implied integer bit
+	asm("orr r0, r2, r12 ");			// sign+exponent into r0
+	asm("orr r0, r0, r1, lsr #11 ");	// top 21 mantissa bits into r0
+	asm("mov r1, r1, lsl #21 ");		// remaining 11 mantissa bits in r1
+	asm("b 0f ");
+	asm("2: ");							// come here if ms word non zero
+	asm("mov r3, #32 ");				// r3=32-shift count
+	asm("cmp r1, #0x00010000 ");
+	asm("movcc r1, r1, lsl #16 ");
+	asm("subcc r3, r3, #16 ");
+	asm("cmp r1, #0x01000000 ");
+	asm("movcc r1, r1, lsl #8 ");
+	asm("subcc r3, r3, #8 ");
+	asm("cmp r1, #0x10000000 ");
+	asm("movcc r1, r1, lsl #4 ");
+	asm("subcc r3, r3, #4 ");
+	asm("cmp r1, #0x40000000 ");
+	asm("movcc r1, r1, lsl #2 ");
+	asm("subcc r3, r3, #2 ");
+	asm("cmp r1, #0x80000000 ");
+	asm("movcc r1, r1, lsl #1 ");
+	asm("subcc r3, r3, #1 ");
+	asm("add r2, r2, r3, lsl #20 ");	// r2 now holds result exponent
+	asm("orr r1, r1, r0, lsr r3 ");		// normalise r1:r0
+	asm("rsb r3, r3, #32 ");
+	asm("mov r0, r0, lsl r3 ");
+	asm("mov r3, r0, lsl #21 ");		// rounding bits into r3
+	asm("cmp r3, #0x80000000 ");		// C=1 to round up or halfway, C=0 to round down
+	asm("moveqs r3, r0, lsr #12 ");		// if exactly half-way, carry=LSB of mantissa
+	asm("addcss r0, r0, #0x800 ");		// if C=1, round up
+	asm("adcs r1, r1, #0 ");
+	asm("addcs r2, r2, #0x00100000 ");	// if carry, increment exponent
+	asm("bic r3, r1, #0x80000000 ");	// remove implied integer bit
+	asm("mov r1, r0, lsr #11 ");		// shift mantissa down to correct position
+	asm("orr r1, r1, r3, lsl #21 ");
+	asm("orr r0, r2, r3, lsr #11 ");	// and put in exponent
+	asm("orr r0, r0, r12 ");			// put in sign bit
+	asm("0: ");
+#ifndef __DOUBLE_WORDS_SWAPPED__
+	asm("mov r2, r1 ");					// save sign
+	asm("mov r1, r0 ");
+	asm("mov r0, r2 ");
+#endif
+	__JUMP(,lr);
+	}
+}
+

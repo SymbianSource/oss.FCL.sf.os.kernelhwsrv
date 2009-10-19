@@ -1,0 +1,6 @@
+EXPORTS
+	?WsdFuncX@@YAHXZ @ 1 NONAME ; int WsdFuncX(void)
+	?WsdFuncY@@YAHXZ @ 2 NONAME ; int WsdFuncY(void)
+	?WsdBuf@@YAAAV?$TBuf@$0OKGA@@@XZ @ 3 NONAME ; class TBuf<60000> & WsdBuf(void)
+	?WsdReq@@YAAAVTRequestStatus@@XZ @ 4 NONAME ; class TRequestStatus & WsdReq(void)
+

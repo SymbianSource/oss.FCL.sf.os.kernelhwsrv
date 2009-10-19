@@ -1,0 +1,50 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/edev.mmp
+// 
+//
+
+target			edev.lib
+targettype		klib
+
+#include "kern_int.mmh"
+
+#if defined(X86)
+sourcepath		x86
+source			d_entryx.cpp
+source			d_entry.cia
+#elif defined(MARM)
+#if defined(ARMCC)
+sourcepath		../compsupp/rvct2_1
+source			ucppfini.cpp
+#endif
+sourcepath		arm
+source			d_entry.cia
+#else // WINS
+sourcepath		win32
+source			d_entryx.cpp
+#ifdef CW32
+start wins
+win32_headers
+end
+#endif
+#endif // WINS
+source			d_entry.cpp
+
+
+capability		all
+
+VENDORID 0x70000001
+
+SMPSAFE

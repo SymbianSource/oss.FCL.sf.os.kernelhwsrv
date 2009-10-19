@@ -1,0 +1,3 @@
+; dlltool --output-def ../../EPOC32/BUILD/E32TEST/MARMD/REL/T_DUID.def ../../EPOC32/BUILD/E32TEST/MARMD/REL/T_DUID.in
+EXPORTS
+	dummyExport__Fv @ 1 NONAME

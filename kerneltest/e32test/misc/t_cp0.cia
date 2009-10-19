@@ -1,0 +1,79 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\misc\t_cp0.cia
+// 
+//
+
+#include <e32test.h>
+#include <cpudefs.h>
+#include "nk_cpu.h"
+
+__NAKED__ TUint32 BCUCTL()
+	{
+	asm("mrc p13, 0, r0, c0, c1, 0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void GetAcc0(TInt64&)
+	{
+	MRA(0,1,2);
+	asm("stmia r0, {r1,r2} ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void SetAcc0(const TInt64&)
+	{
+	asm("ldmia r0, {r1,r2} ");
+	MAR(0,1,2);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InnerProduct(TInt64& /*aResult*/, const TInt16* /*aVec1*/, const TInt16* /*aVec2*/, TInt /*aLength*/)
+//
+// Calculate the inner product of vectors using the DSP coprocessor
+//
+	{
+	asm("str lr, [sp, #-4]! ");
+	asm("mov r12, #0 ");
+	asm("mov r14, #0 ");
+	MAR(0,12,14);
+	asm("1: ");
+	asm("ldrh r12, [r1], #2 ");
+	asm("ldrh r14, [r2], #2 ");
+	MIABB(0,12,14);
+	asm("subs r3, r3, #1 ");
+	asm("bne 1b ");
+	MRA(0,12,14);
+	asm("stmia r0, {r12,r14} ");
+	asm("ldr pc, [sp], #4 ");
+	}
+
+__NAKED__ void InnerProduct2(TInt64& /*aResult*/, const TInt16* /*aVec1*/, const TInt16* /*aVec2*/, TInt /*aLength*/)
+//
+// Calculate the inner product of vectors using the normal multiply instructions
+//
+	{
+	asm("stmfd sp!, {r4-r5,lr} ");
+	asm("mov r4, #0 ");
+	asm("mov r5, #0 ");
+	asm("1: ");
+	asm("ldrsh r12, [r1], #2 ");
+	asm("ldrsh r14, [r2], #2 ");
+	asm("smlal r4, r5, r12, r14 ");
+	asm("subs r3, r3, #1 ");
+	asm("bne 1b ");
+	asm("stmia r0, {r4,r5} ");
+	asm("ldmfd sp!, {r4-r5,pc} ");
+	}
+

@@ -1,0 +1,26 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#define EKernelConfigCrazyScheduling	8
+#define EKernelConfigSMPUnsafeCompat	12
+#define EKernelConfigSMPUnsafeCPU0		13
+#define EKernelConfigSMPCrazyInterrupts	14
+#define EKernelConfigDisableAPs			30
+
+#define CRAZYSCHEDULING(state)	kernelconfig EKernelConfigCrazyScheduling state
+#define SMPUNSAFECOMPAT(state)	kernelconfig EKernelConfigSMPUnsafeCompat state
+#define SMPUNSAFECPU0(state)	kernelconfig EKernelConfigSMPUnsafeCPU0 state
+#define CRAZYINTERRUPTS(state)	kernelconfig EKernelConfigSMPCrazyInterrupts state
+#define	SMP_USE_BP_ONLY(state)	kernelconfig EKernelConfigDisableAPs state

@@ -1,0 +1,43 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// eka/drivers/medmmc/emmcptn.mmp
+// 
+//
+
+target			emmcptn.dll
+targettype		kext
+
+#include 		"../../kernel/kern_ext.mmh"
+userinclude		../../include/drivers
+
+source			emmcptn.cpp
+
+library			epbusmmc.lib
+library			elocd.lib
+
+deffile 		../../~/emmcptn.def
+nostrictdef
+noexportlibrary
+
+uid				0x1000008d 0x20026BFD
+VENDORID 0x70000001
+
+SMPSAFE
+
+start wins
+win32_headers
+end
+
+capability		all
+

@@ -1,0 +1,7 @@
+EXPORTS
+	Init7 @ 1 NONAME
+	ChkC7 @ 2 NONAME
+	BlkI7 @ 3 NONAME
+	GetGeneration @ 4 NONAME
+	RBlkI7 @ 5 NONAME
+	SetCloseLib @ 6 NONAME

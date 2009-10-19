@@ -1,0 +1,6 @@
+EXPORTS
+	_ZN10LoclRegion19ShortDateFormatSpecEv @ 1 NONAME
+	_ZN10LoclRegion18LongDateFormatSpecEv @ 2 NONAME
+	_ZN10LoclRegion10LocaleDataEP13SLocaleRegion @ 3 NONAME
+	_ZN10LoclRegion14TimeFormatSpecEv @ 4 NONAME
+	_ZN10LoclRegion14CurrencySymbolEv @ 5 NONAME

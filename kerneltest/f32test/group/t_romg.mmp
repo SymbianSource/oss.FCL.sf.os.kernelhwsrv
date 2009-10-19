@@ -1,0 +1,36 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_romg.mmp
+//
+//
+
+TARGET         T_ROMG.EXE
+TARGETTYPE     EXE
+SOURCEPATH	../MANAGER
+SOURCE         T_ROMG.CPP
+SOURCEPATH     ../SERVER
+SOURCE         T_MAIN.CPP
+SOURCEPATH     ../fileutils/src
+SOURCE         T_CHLFFS.CPP
+
+LIBRARY        EUSER.LIB EFSRV.LIB HAL.LIB
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE    ../server
+USERINCLUDE    ../fileutils/inc
+
+
+CAPABILITY		TCB DISKADMIN ALLFILES
+VENDORID 0x70000001
+
+SMPSAFE

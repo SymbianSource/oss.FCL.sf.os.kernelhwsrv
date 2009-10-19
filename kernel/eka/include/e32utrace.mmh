@@ -1,0 +1,43 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Development Tools\UTF\e32utrace.mmh
+// Executables will need to define the SYMBIAN_INCLUDE_EXECUTABLE_TRACE macro flag in their 
+// mmp files in order for trace to be included. If this macro is not defined the stubbed trace dlls
+// will be used instead.
+// If SYMBIAN_INCLUDE_EXECUTABLE_TRACE is defined trace will be compiled into 
+// components by default but runtime switched off.
+// @publishedPartner
+// @prototype
+//
+
+
+// We want to use an enabled version of the API.
+#if defined(SYMBIAN_INCLUDE_EXECUTABLE_TRACE)
+	MACRO SYMBIAN_TRACE_EXECUTABLE_IS_INCLUDED
+	#ifdef NKERN_DIR
+		//LIBRARY utracekernel.lib //not implemented
+	#else //NKERN_DIR
+		LIBRARY utraceuser.lib
+	#endif //NKERN_DIR
+#endif
+
+// We want to use a stubbed (disabled) version of the API.
+#if !defined(SYMBIAN_INCLUDE_EXECUTABLE_TRACE)
+	#ifdef NKERN_DIR 
+		//LIBRARY utracekernelstubbed.lib //not implemented
+	#else //NKERN_DIR
+		LIBRARY utraceuserstubbed.lib
+	#endif //NKERN_DIR
+#endif
+

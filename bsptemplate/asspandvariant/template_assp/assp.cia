@@ -1,0 +1,36 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template\template_assp\assp.cia
+// 
+//
+
+#include <e32cia.h>
+#include <template_assp_priv.h>
+#include "template_asspcia.h"
+
+__NAKED__ void MsTimerTick(TAny* aPtr)
+	{
+	// Service 1ms tick interrupt
+
+	//
+	// TO DO: (mandatory)
+	//
+	// Clear the interrupt source and re-arm the timer to issue another interrupt 1 ms from now.
+	// When setting up then next match interrupt also updates the iRounding member of NTimerQ if required.
+	// This value could be used to calculate how often the match need to be adjusted so that in the long run
+	// the system tick average what is required
+	//
+
+	asm("b  " CSM_ZN7NTimerQ4TickEv);										// tick the millisecond timer
+	}

@@ -1,0 +1,193 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\mmu\d_cache.cia
+// See e32test\mmu\t_cache.cpp for details
+// 
+//
+
+
+#ifndef __KERNEL_MODE__
+#include <u32std.h>
+#else
+#include <u32std.h>
+#include "nk_cpu.h"
+
+
+#if defined(__CPU_ARMV7)
+/**Returns Cache Type Register content*/
+__NAKED__ TUint32 CacheTypeRegister()
+	{
+	asm("mrc p15, 0, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+
+/**Returns Cache Level ID Register content*/
+__NAKED__ TUint32 CacheLevelIDRegister()
+	{
+	asm("mrc p15, 1, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+
+/**
+Returns Cache Size Id Register content for the given cache level/type
+@param aType 	Cache type: 	0=data/unified, 1=code
+@param aLevel 	Cache level: 	0=Level1 ... 7=Level8
+*/
+__NAKED__ TUint32 CacheSizeIdRegister(TUint32 /*aType*/, TUint32 /*aLevel*/)
+	{
+	asm("orr r0, r1, lsl #1");  		// r0 = entry for Cache Size Selection Reg.
+	asm("mcr p15, 2, r0, c0, c0, 0 ");  // set Cache Size Selection Register
+	ARM_ISBSY;
+    asm("mrc p15, 1, r0, c0, c0, 0 ");  // read Cache Size Id Register
+    __JUMP(,lr);
+	}
+#endif
+
+
+#if defined(__CPU_MEMORY_TYPE_REMAPPING)
+/** Returns Coprocessor Control Register*/
+__NAKED__ TUint32 CtrlRegister()
+	{
+    asm("mrc p15, 0, r0, c1, c0, 0 ");//read CR reg.
+    __JUMP(,lr);
+	}
+
+/** Returns PRRR Register*/
+__NAKED__ TUint32 PRRRRegister()
+	{
+    asm("mrc p15, 0, r0, c10, c2, 0 ");
+    __JUMP(,lr);
+	}
+
+/** Returns NRRR Register*/
+__NAKED__ TUint32 NRRRRegister()
+	{
+    asm("mrc p15, 0, r0, c10, c2, 1 ");
+    __JUMP(,lr);
+	}
+
+/** Sets PRRR Register*/
+__NAKED__ void SetPRRR(TUint32)
+	{
+    asm("mcr p15, 0, r0, c10, c2, 0 ");
+#if defined(__CPU_ARMV7)
+	UTLBIALL;
+	ARM_ISBSY;
+#else
+	FLUSH_DTLB(,r0);
+#endif
+    __JUMP(,lr);
+	}
+
+/** Sets NRRR Register*/
+__NAKED__ void SetNRRR(TUint32)
+	{
+    asm("mcr p15, 0, r0, c10, c2, 1 ");
+    __JUMP(,lr);
+	}
+#endif
+
+
+
+#ifdef __CPU_HAS_CACHE_TYPE_REGISTER
+__NAKED__ TUint32 GetCacheType()
+	{
+	asm("mrc p15, 0, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+#endif
+
+
+#ifdef __XSCALE_L2_CACHE__
+/**	Returns L2 Cache Type Register Content	*/
+__NAKED__ TUint32 L2CacheTypeReg()
+	{
+	asm("mrc p15, 1, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+#endif	// __XSCALE_L2_CACHE__
+
+#define NOP_8()	\
+	asm("nop"); \
+	asm("nop"); \
+	asm("nop"); \
+	asm("nop"); \
+	asm("nop"); \
+	asm("nop"); \
+	asm("nop"); \
+	asm("nop"); \
+
+#define NOP_64()	\
+	NOP_8()	\
+	NOP_8()	\
+	NOP_8()	\
+	NOP_8()	\
+	NOP_8()	\
+	NOP_8()	\
+	NOP_8()	\
+	NOP_8()	\
+
+#define NOP_512()	\
+	NOP_64()	\
+	NOP_64()	\
+	NOP_64()	\
+	NOP_64()	\
+	NOP_64()	\
+	NOP_64()	\
+	NOP_64()	\
+	NOP_64()	\
+
+__NAKED__ void TestCodeFunc()
+	{
+	asm("testcodestart: ");
+	NOP_512(); 		//512 nops * 4 bytes/nop = 2K (800h) of code
+	__JUMP(,lr); 	//+ 4 bytes
+	asm("testcodeend: ");
+	}
+
+__NAKED__ TInt TestCodeFuncSize()
+	{
+	asm("ldr r0, = testcodeend - testcodestart"); //This should return 804h
+	__JUMP(,lr);
+	}
+
+#endif //#ifdef __KERNEL_MODE__
+
+// It assumes that aSize and aBase are aligned to 4 bytes. Also, aSize must be > 0.
+__NAKED__ void DataSegmetTestFunct(void* /*aBase*/, TInt /*aSize*/)
+	{
+	asm("add r1,r1,r0");	// r1 = end address (excluding)
+	asm("mov r2, #50");		// Will take 50 cycles
+	asm("mvn r12, #1");		// r12 = -2
+
+	asm("next_cycle:");
+
+	asm("mov r3, r0");		// r3 = aBase
+	asm("write_loop:");
+	asm("str r12, [r3],#4");
+
+	asm("cmp r3, r1");
+	asm("blo write_loop");
+
+	asm("mov r3, r0");		// r3 = aBase
+	asm("read_loop:");
+	asm("ldr r12, [r3],#4");
+	asm("cmp r3, r1");
+	asm("blo read_loop");
+
+	asm("subs r2,r2,#1");
+	asm("bne next_cycle");
+
+	__JUMP(,lr);
+	}

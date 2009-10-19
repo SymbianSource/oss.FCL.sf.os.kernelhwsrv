@@ -1,0 +1,2503 @@
+EXPORTS
+	_Z16PanicTFixedArrayv @ 1 NONAME ; PanicTFixedArray()
+	_ZN10CCirBuffer3GetEv @ 2 NONAME ; CCirBuffer::Get()
+	_ZN10CCirBuffer3PutEi @ 3 NONAME ; CCirBuffer::Put(int)
+	_ZN10CCirBufferC1Ev @ 4 NONAME ; CCirBuffer::CCirBuffer()
+	_ZN10CCirBufferC2Ev @ 5 NONAME ; CCirBuffer::CCirBuffer()
+	_ZN10CCirBufferD0Ev @ 6 NONAME ; CCirBuffer::~CCirBuffer()
+	_ZN10CCirBufferD1Ev @ 7 NONAME ; CCirBuffer::~CCirBuffer()
+	_ZN10CCirBufferD2Ev @ 8 NONAME ; CCirBuffer::~CCirBuffer()
+	_ZN10CHeartbeat3NewEi @ 9 NONAME ; CHeartbeat::New(int)
+	_ZN10CHeartbeat4NewLEi @ 10 NONAME ; CHeartbeat::NewL(int)
+	_ZN10CHeartbeat4RunLEv @ 11 NONAME ; CHeartbeat::RunL()
+	_ZN10CHeartbeat5StartE14TTimerLockSpecP8MBeating @ 12 NONAME ; CHeartbeat::Start(TTimerLockSpec, MBeating*)
+	_ZN10CHeartbeatC1Ei @ 13 NONAME ; CHeartbeat::CHeartbeat(int)
+	_ZN10CHeartbeatC2Ei @ 14 NONAME ; CHeartbeat::CHeartbeat(int)
+	_ZN10CHeartbeatD0Ev @ 15 NONAME ; CHeartbeat::~CHeartbeat()
+	_ZN10CHeartbeatD1Ev @ 16 NONAME ; CHeartbeat::~CHeartbeat()
+	_ZN10CHeartbeatD2Ev @ 17 NONAME ; CHeartbeat::~CHeartbeat()
+	_ZN10CObjectCon4AddLEP7CObject @ 18 NONAME ; CObjectCon::AddL(CObject*)
+	_ZN10CObjectCon4NewLEv @ 19 NONAME ; CObjectCon::NewL()
+	_ZN10CObjectCon6RemoveEP7CObject @ 20 NONAME ; CObjectCon::Remove(CObject*)
+	_ZN10CObjectConC1Ei @ 21 NONAME ; CObjectCon::CObjectCon(int)
+	_ZN10CObjectConC2Ei @ 22 NONAME ; CObjectCon::CObjectCon(int)
+	_ZN10CObjectConD0Ev @ 23 NONAME ; CObjectCon::~CObjectCon()
+	_ZN10CObjectConD1Ev @ 24 NONAME ; CObjectCon::~CObjectCon()
+	_ZN10CObjectConD2Ev @ 25 NONAME ; CObjectCon::~CObjectCon()
+	_ZN10CObjectConixEi @ 26 NONAME ; CObjectCon::operator[](int)
+	_ZN10RAllocator12__DbgMarkEndEi @ 27 NONAME ; RAllocator::__DbgMarkEnd(int)
+	_ZN10RAllocator14__DbgMarkCheckEiiRK6TDesC8i @ 28 NONAME ; RAllocator::__DbgMarkCheck(int, int, TDesC8 const&, int)
+	_ZN10RAllocator14__DbgMarkStartEv @ 29 NONAME ; RAllocator::__DbgMarkStart()
+	_ZN10RAllocator17__DbgSetAllocFailENS_10TAllocFailEi @ 30 NONAME ; RAllocator::__DbgSetAllocFail(RAllocator::TAllocFail, int)
+	_ZN10RAllocator4OpenEv @ 31 NONAME ; RAllocator::Open()
+	_ZN10RAllocator5CloseEv @ 32 NONAME ; RAllocator::Close()
+	_ZN10RAllocator5FreeZERPv @ 33 NONAME ; RAllocator::FreeZ(void*&)
+	_ZN10RAllocator6AllocLEi @ 34 NONAME ; RAllocator::AllocL(int)
+	_ZN10RAllocator6AllocZEi @ 35 NONAME ; RAllocator::AllocZ(int)
+	_ZN10RAllocator7AllocLCEi @ 36 NONAME ; RAllocator::AllocLC(int)
+	_ZN10RAllocator7AllocZLEi @ 37 NONAME ; RAllocator::AllocZL(int)
+	_ZN10RAllocator7DoCloseEv @ 38 NONAME ; RAllocator::DoClose()
+	_ZN10RAllocator8ReAllocLEPvii @ 39 NONAME ; RAllocator::ReAllocL(void*, int, int)
+	_ZN10RArrayBase13GetElementPtrEPK5CBasei @ 40 NONAME ; RArrayBase::GetElementPtr(CBase const*, int)
+	_ZN10RArrayBase14HeapSortSignedEv @ 41 NONAME ; RArrayBase::HeapSortSigned()
+	_ZN10RArrayBase15InsertIsqSignedEPKvi @ 42 NONAME ; RArrayBase::InsertIsqSigned(void const*, int)
+	_ZN10RArrayBase16GranularCompressEv @ 43 NONAME ; RArrayBase::GranularCompress()
+	_ZN10RArrayBase16HeapSortUnsignedEv @ 44 NONAME ; RArrayBase::HeapSortUnsigned()
+	_ZN10RArrayBase17InsertIsqUnsignedEPKvi @ 45 NONAME ; RArrayBase::InsertIsqUnsigned(void const*, int)
+	_ZN10RArrayBase5CloseEv @ 46 NONAME ; RArrayBase::Close()
+	_ZN10RArrayBase5ResetEv @ 47 NONAME ; RArrayBase::Reset()
+	_ZN10RArrayBase6AppendEPKv @ 48 NONAME ; RArrayBase::Append(void const*)
+	_ZN10RArrayBase6InsertEPKvi @ 49 NONAME ; RArrayBase::Insert(void const*, int)
+	_ZN10RArrayBase6RemoveEi @ 50 NONAME ; RArrayBase::Remove(int)
+	_ZN10RArrayBase8CompressEv @ 51 NONAME ; RArrayBase::Compress()
+	_ZN10RArrayBase8GetCountEPK5CBase @ 52 NONAME ; RArrayBase::GetCount(CBase const*)
+	_ZN10RArrayBase8HeapSortEPFiPKvS1_E @ 53 NONAME ; RArrayBase::HeapSort(int (*)(void const*, void const*))
+	_ZN10RArrayBase9InsertIsqEPKvPFiS1_S1_Ei @ 54 NONAME ; RArrayBase::InsertIsq(void const*, int (*)(void const*, void const*), int)
+	_ZN10RArrayBaseC1Ei @ 55 NONAME ; RArrayBase::RArrayBase(int)
+	_ZN10RArrayBaseC1EiPvi @ 56 NONAME ; RArrayBase::RArrayBase(int, void*, int)
+	_ZN10RArrayBaseC1Eii @ 57 NONAME ; RArrayBase::RArrayBase(int, int)
+	_ZN10RArrayBaseC1Eiii @ 58 NONAME ; RArrayBase::RArrayBase(int, int, int)
+	_ZN10RArrayBaseC2Ei @ 59 NONAME ; RArrayBase::RArrayBase(int)
+	_ZN10RArrayBaseC2EiPvi @ 60 NONAME ; RArrayBase::RArrayBase(int, void*, int)
+	_ZN10RArrayBaseC2Eii @ 61 NONAME ; RArrayBase::RArrayBase(int, int)
+	_ZN10RArrayBaseC2Eiii @ 62 NONAME ; RArrayBase::RArrayBase(int, int, int)
+	_ZN10RSemaphore10OpenGlobalERK7TDesC1610TOwnerType @ 63 NONAME ; RSemaphore::OpenGlobal(TDesC16 const&, TOwnerType)
+	_ZN10RSemaphore11CreateLocalEi10TOwnerType @ 64 NONAME ; RSemaphore::CreateLocal(int, TOwnerType)
+	_ZN10RSemaphore12CreateGlobalERK7TDesC16i10TOwnerType @ 65 NONAME ; RSemaphore::CreateGlobal(TDesC16 const&, int, TOwnerType)
+	_ZN10RSemaphore4OpenE12RMessagePtr2i10TOwnerType @ 66 NONAME ; RSemaphore::Open(RMessagePtr2, int, TOwnerType)
+	_ZN10RSemaphore4OpenEi10TOwnerType @ 67 NONAME ; RSemaphore::Open(int, TOwnerType)
+	_ZN10RSemaphore4WaitEi @ 68 NONAME ; RSemaphore::Wait(int)
+	_ZN10RSemaphore4WaitEv @ 69 NONAME ; RSemaphore::Wait()
+	_ZN10RSemaphore6SignalEi @ 70 NONAME ; RSemaphore::Signal(int)
+	_ZN10RSemaphore6SignalEv @ 71 NONAME ; RSemaphore::Signal()
+	_ZN10TBitOutput4PadLEj @ 72 NONAME ; TBitOutput::PadL(unsigned int)
+	_ZN10TBitOutput6WriteLEji @ 73 NONAME ; TBitOutput::WriteL(unsigned int, int)
+	_ZN10TBitOutput8HuffmanLEj @ 74 NONAME ; TBitOutput::HuffmanL(unsigned int)
+	_ZN10TBitOutputC1EPhi @ 75 NONAME ; TBitOutput::TBitOutput(unsigned char*, int)
+	_ZN10TBitOutputC1Ev @ 76 NONAME ; TBitOutput::TBitOutput()
+	_ZN10TBitOutputC2EPhi @ 77 NONAME ; TBitOutput::TBitOutput(unsigned char*, int)
+	_ZN10TBitOutputC2Ev @ 78 NONAME ; TBitOutput::TBitOutput()
+	_ZN10TBufBase16C1EPKti @ 79 NONAME ; TBufBase16::TBufBase16(unsigned short const*, int)
+	_ZN10TBufBase16C1ERK7TDesC16i @ 80 NONAME ; TBufBase16::TBufBase16(TDesC16 const&, int)
+	_ZN10TBufBase16C1Ei @ 81 NONAME ; TBufBase16::TBufBase16(int)
+	_ZN10TBufBase16C1Eii @ 82 NONAME ; TBufBase16::TBufBase16(int, int)
+	_ZN10TBufBase16C2EPKti @ 83 NONAME ; TBufBase16::TBufBase16(unsigned short const*, int)
+	_ZN10TBufBase16C2ERK7TDesC16i @ 84 NONAME ; TBufBase16::TBufBase16(TDesC16 const&, int)
+	_ZN10TBufBase16C2Ei @ 85 NONAME ; TBufBase16::TBufBase16(int)
+	_ZN10TBufBase16C2Eii @ 86 NONAME ; TBufBase16::TBufBase16(int, int)
+	_ZN10TBufCBase84CopyEPKhi @ 87 NONAME ; TBufCBase8::Copy(unsigned char const*, int)
+	_ZN10TBufCBase84CopyERK6TDesC8i @ 88 NONAME ; TBufCBase8::Copy(TDesC8 const&, int)
+	_ZN10TBufCBase8C1EPKhi @ 89 NONAME ; TBufCBase8::TBufCBase8(unsigned char const*, int)
+	_ZN10TBufCBase8C1ERK6TDesC8i @ 90 NONAME ; TBufCBase8::TBufCBase8(TDesC8 const&, int)
+	_ZN10TBufCBase8C1Ev @ 91 NONAME ; TBufCBase8::TBufCBase8()
+	_ZN10TBufCBase8C2EPKhi @ 92 NONAME ; TBufCBase8::TBufCBase8(unsigned char const*, int)
+	_ZN10TBufCBase8C2ERK6TDesC8i @ 93 NONAME ; TBufCBase8::TBufCBase8(TDesC8 const&, int)
+	_ZN10TBufCBase8C2Ev @ 94 NONAME ; TBufCBase8::TBufCBase8()
+	_ZN10TFindChunk4NextER4TBufILi256EE @ 95 NONAME ; TFindChunk::Next(TBuf<256>&)
+	_ZN10TFindMutex4NextER4TBufILi256EE @ 96 NONAME ; TFindMutex::Next(TBuf<256>&)
+	_ZN10TMonthName3SetE6TMonth @ 97 NONAME ; TMonthName::Set(TMonth)
+	_ZN10TMonthNameC1E6TMonth @ 98 NONAME ; TMonthName::TMonthName(TMonth)
+	_ZN10TMonthNameC1Ev @ 99 NONAME ; TMonthName::TMonthName()
+	_ZN10TMonthNameC2E6TMonth @ 100 NONAME ; TMonthName::TMonthName(TMonth)
+	_ZN10TMonthNameC2Ev @ 101 NONAME ; TMonthName::TMonthName()
+	_ZN11CCirBufBase10SetLengthLEi @ 102 NONAME ; CCirBufBase::SetLengthL(int)
+	_ZN11CCirBufBase5DoAddEPKh @ 103 NONAME ; CCirBufBase::DoAdd(unsigned char const*)
+	_ZN11CCirBufBase5DoAddEPKhi @ 104 NONAME ; CCirBufBase::DoAdd(unsigned char const*, int)
+	_ZN11CCirBufBase5ResetEv @ 105 NONAME ; CCirBufBase::Reset()
+	_ZN11CCirBufBase8DoRemoveEPh @ 106 NONAME ; CCirBufBase::DoRemove(unsigned char*)
+	_ZN11CCirBufBase8DoRemoveEPhi @ 107 NONAME ; CCirBufBase::DoRemove(unsigned char*, int)
+	_ZN11CCirBufBaseC1Ei @ 108 NONAME ; CCirBufBase::CCirBufBase(int)
+	_ZN11CCirBufBaseC2Ei @ 109 NONAME ; CCirBufBase::CCirBufBase(int)
+	_ZN11CCirBufBaseD0Ev @ 110 NONAME ; CCirBufBase::~CCirBufBase()
+	_ZN11CCirBufBaseD1Ev @ 111 NONAME ; CCirBufBase::~CCirBufBase()
+	_ZN11CCirBufBaseD2Ev @ 112 NONAME ; CCirBufBase::~CCirBufBase()
+	_ZN11CDeltaTimer4NewLEi @ 113 NONAME ; CDeltaTimer::NewL(int)
+	_ZN11CDeltaTimer4NewLEi27TTimeIntervalMicroSeconds32 @ 114 NONAME ; CDeltaTimer::NewL(int, TTimeIntervalMicroSeconds32)
+	_ZN11CDeltaTimer5QueueE27TTimeIntervalMicroSeconds32R16TDeltaTimerEntry @ 115 NONAME ; CDeltaTimer::Queue(TTimeIntervalMicroSeconds32, TDeltaTimerEntry&)
+	_ZN11CDeltaTimer6RemoveER16TDeltaTimerEntry @ 116 NONAME ; CDeltaTimer::Remove(TDeltaTimerEntry&)
+	_ZN11RHandleBase10HandleInfoEP11THandleInfo @ 117 NONAME ; RHandleBase::HandleInfo(THandleInfo*)
+	_ZN11RHandleBase11SetHandleNCEi @ 118 NONAME ; RHandleBase::SetHandleNC(int)
+	_ZN11RHandleBase4OpenERK15TFindHandleBase10TOwnerType @ 119 NONAME ; RHandleBase::Open(TFindHandleBase const&, TOwnerType)
+	_ZN11RHandleBase5CloseEv @ 120 NONAME ; RHandleBase::Close()
+	_ZN11RHandleBase9DuplicateERK7RThread10TOwnerType @ 121 NONAME ; RHandleBase::Duplicate(RThread const&, TOwnerType)
+	_ZN11RUndertaker6CreateEv @ 122 NONAME ; RUndertaker::Create()
+	_ZN11TBufCBase164CopyEPKti @ 123 NONAME ; TBufCBase16::Copy(unsigned short const*, int)
+	_ZN11TBufCBase164CopyERK7TDesC16i @ 124 NONAME ; TBufCBase16::Copy(TDesC16 const&, int)
+	_ZN11TBufCBase16C1EPKti @ 125 NONAME ; TBufCBase16::TBufCBase16(unsigned short const*, int)
+	_ZN11TBufCBase16C1ERK7TDesC16i @ 126 NONAME ; TBufCBase16::TBufCBase16(TDesC16 const&, int)
+	_ZN11TBufCBase16C1Ev @ 127 NONAME ; TBufCBase16::TBufCBase16()
+	_ZN11TBufCBase16C2EPKti @ 128 NONAME ; TBufCBase16::TBufCBase16(unsigned short const*, int)
+	_ZN11TBufCBase16C2ERK7TDesC16i @ 129 NONAME ; TBufCBase16::TBufCBase16(TDesC16 const&, int)
+	_ZN11TBufCBase16C2Ev @ 130 NONAME ; TBufCBase16::TBufCBase16()
+	_ZN11TCheckedUid3SetERK6TDesC8 @ 131 NONAME ; TCheckedUid::Set(TDesC8 const&)
+	_ZN11TCheckedUid3SetERK8TUidType @ 132 NONAME ; TCheckedUid::Set(TUidType const&)
+	_ZN11TCheckedUidC1ERK6TDesC8 @ 133 NONAME ; TCheckedUid::TCheckedUid(TDesC8 const&)
+	_ZN11TCheckedUidC1ERK8TUidType @ 134 NONAME ; TCheckedUid::TCheckedUid(TUidType const&)
+	_ZN11TCheckedUidC1Ev @ 135 NONAME ; TCheckedUid::TCheckedUid()
+	_ZN11TCheckedUidC2ERK6TDesC8 @ 136 NONAME ; TCheckedUid::TCheckedUid(TDesC8 const&)
+	_ZN11TCheckedUidC2ERK8TUidType @ 137 NONAME ; TCheckedUid::TCheckedUid(TUidType const&)
+	_ZN11TCheckedUidC2Ev @ 138 NONAME ; TCheckedUid::TCheckedUid()
+	_ZN11TDateSuffix3SetEi @ 139 NONAME ; TDateSuffix::Set(int)
+	_ZN11TDateSuffixC1Ei @ 140 NONAME ; TDateSuffix::TDateSuffix(int)
+	_ZN11TDateSuffixC1Ev @ 141 NONAME ; TDateSuffix::TDateSuffix()
+	_ZN11TDateSuffixC2Ei @ 142 NONAME ; TDateSuffix::TDateSuffix(int)
+	_ZN11TDateSuffixC2Ev @ 143 NONAME ; TDateSuffix::TDateSuffix()
+	_ZN11TDayNameAbb3SetE4TDay @ 144 NONAME ; TDayNameAbb::Set(TDay)
+	_ZN11TDayNameAbbC1E4TDay @ 145 NONAME ; TDayNameAbb::TDayNameAbb(TDay)
+	_ZN11TDayNameAbbC1Ev @ 146 NONAME ; TDayNameAbb::TDayNameAbb()
+	_ZN11TDayNameAbbC2E4TDay @ 147 NONAME ; TDayNameAbb::TDayNameAbb(TDay)
+	_ZN11TDayNameAbbC2Ev @ 148 NONAME ; TDayNameAbb::TDayNameAbb()
+	_ZN11TDblQueBase10DoAddFirstEPv @ 149 NONAME ; TDblQueBase::DoAddFirst(void*)
+	_ZN11TDblQueBase13DoAddPriorityEPv @ 150 NONAME ; TDblQueBase::DoAddPriority(void*)
+	_ZN11TDblQueBase5ResetEv @ 151 NONAME ; TDblQueBase::Reset()
+	_ZN11TDblQueBase9DoAddLastEPv @ 152 NONAME ; TDblQueBase::DoAddLast(void*)
+	_ZN11TDblQueBase9SetOffsetEi @ 153 NONAME ; TDblQueBase::SetOffset(int)
+	_ZN11TDblQueBaseC1Ei @ 154 NONAME ; TDblQueBase::TDblQueBase(int)
+	_ZN11TDblQueBaseC1Ev @ 155 NONAME ; TDblQueBase::TDblQueBase()
+	_ZN11TDblQueBaseC2Ei @ 156 NONAME ; TDblQueBase::TDblQueBase(int)
+	_ZN11TDblQueBaseC2Ev @ 157 NONAME ; TDblQueBase::TDblQueBase()
+	_ZN11TDblQueLink5DequeEv @ 158 NONAME ; TDblQueLink::Deque()
+	_ZN11TFindServer4NextER4TBufILi256EE @ 159 NONAME ; TFindServer::Next(TBuf<256>&)
+	_ZN11TFindThread4NextER4TBufILi256EE @ 160 NONAME ; TFindThread::Next(TBuf<256>&)
+	_ZN11TFormatInfoC1Ev @ 161 NONAME ; TFormatInfo::TFormatInfo()
+	_ZN11TFormatInfoC2Ev @ 162 NONAME ; TFormatInfo::TFormatInfo()
+	_ZN11TRealFormatC1Ei @ 163 NONAME ; TRealFormat::TRealFormat(int)
+	_ZN11TRealFormatC1Eii @ 164 NONAME ; TRealFormat::TRealFormat(int, int)
+	_ZN11TRealFormatC1Ev @ 165 NONAME ; TRealFormat::TRealFormat()
+	_ZN11TRealFormatC2Ei @ 166 NONAME ; TRealFormat::TRealFormat(int)
+	_ZN11TRealFormatC2Eii @ 167 NONAME ; TRealFormat::TRealFormat(int, int)
+	_ZN11TRealFormatC2Ev @ 168 NONAME ; TRealFormat::TRealFormat()
+	_ZN11TSglQueBase10DoAddFirstEPv @ 169 NONAME ; TSglQueBase::DoAddFirst(void*)
+	_ZN11TSglQueBase5ResetEv @ 170 NONAME ; TSglQueBase::Reset()
+	_ZN11TSglQueBase8DoRemoveEPv @ 171 NONAME ; TSglQueBase::DoRemove(void*)
+	_ZN11TSglQueBase9DoAddLastEPv @ 172 NONAME ; TSglQueBase::DoAddLast(void*)
+	_ZN11TSglQueBase9SetOffsetEi @ 173 NONAME ; TSglQueBase::SetOffset(int)
+	_ZN11TSglQueBaseC1Ei @ 174 NONAME ; TSglQueBase::TSglQueBase(int)
+	_ZN11TSglQueBaseC1Ev @ 175 NONAME ; TSglQueBase::TSglQueBase()
+	_ZN11TSglQueBaseC2Ei @ 176 NONAME ; TSglQueBase::TSglQueBase(int)
+	_ZN11TSglQueBaseC2Ev @ 177 NONAME ; TSglQueBase::TSglQueBase()
+	_ZN11TSglQueLink5EnqueEPS_ @ 178 NONAME ; TSglQueLink::Enque(TSglQueLink*)
+	_ZN12CConsoleBase5GetchEv @ 179 NONAME ; CConsoleBase::Getch()
+	_ZN12CConsoleBase6PrintfE11TRefByValueIK7TDesC16Ez @ 180 NONAME ; CConsoleBase::Printf(TRefByValue<TDesC16 const>, ...)
+	_ZN12CConsoleBase6SetPosEi @ 181 NONAME ; CConsoleBase::SetPos(int)
+	_ZN12CConsoleBase6SetPosEii @ 182 NONAME ; CConsoleBase::SetPos(int, int)
+	_ZN12CConsoleBaseC2Ev @ 183 NONAME ; CConsoleBase::CConsoleBase()
+	_ZN12CConsoleBaseD0Ev @ 184 NONAME ; CConsoleBase::~CConsoleBase()
+	_ZN12CConsoleBaseD1Ev @ 185 NONAME ; CConsoleBase::~CConsoleBase()
+	_ZN12CConsoleBaseD2Ev @ 186 NONAME ; CConsoleBase::~CConsoleBase()
+	_ZN12CObjectConIx16CreateContainerLERP10CObjectCon @ 187 NONAME ; CObjectConIx::CreateContainerL(CObjectCon*&)
+	_ZN12CObjectConIx4NewLEv @ 188 NONAME ; CObjectConIx::NewL()
+	_ZN12CObjectConIx6RemoveEP10CObjectCon @ 189 NONAME ; CObjectConIx::Remove(CObjectCon*)
+	_ZN12CObjectConIx7CreateLEv @ 190 NONAME ; CObjectConIx::CreateL()
+	_ZN12CObjectConIxC1Ev @ 191 NONAME ; CObjectConIx::CObjectConIx()
+	_ZN12CObjectConIxC2Ev @ 192 NONAME ; CObjectConIx::CObjectConIx()
+	_ZN12CObjectConIxD0Ev @ 193 NONAME ; CObjectConIx::~CObjectConIx()
+	_ZN12CObjectConIxD1Ev @ 194 NONAME ; CObjectConIx::~CObjectConIx()
+	_ZN12CObjectConIxD2Ev @ 195 NONAME ; CObjectConIx::~CObjectConIx()
+	_ZN12CTrapCleanup3NewEv @ 196 NONAME ; CTrapCleanup::New()
+	_ZN12CTrapCleanupC1Ev @ 197 NONAME ; CTrapCleanup::CTrapCleanup()
+	_ZN12CTrapCleanupC2Ev @ 198 NONAME ; CTrapCleanup::CTrapCleanup()
+	_ZN12CTrapCleanupD0Ev @ 199 NONAME ; CTrapCleanup::~CTrapCleanup()
+	_ZN12CTrapCleanupD1Ev @ 200 NONAME ; CTrapCleanup::~CTrapCleanup()
+	_ZN12CTrapCleanupD2Ev @ 201 NONAME ; CTrapCleanup::~CTrapCleanup()
+	_ZN12CleanupStack13PopAndDestroyEi @ 202 NONAME ; CleanupStack::PopAndDestroy(int)
+	_ZN12CleanupStack13PopAndDestroyEv @ 203 NONAME ; CleanupStack::PopAndDestroy()
+	_ZN12CleanupStack3PopEi @ 204 NONAME ; CleanupStack::Pop(int)
+	_ZN12CleanupStack3PopEv @ 205 NONAME ; CleanupStack::Pop()
+	_ZN12CleanupStack5CheckEPv @ 206 NONAME ; CleanupStack::Check(void*)
+	_ZN12CleanupStack5PushLE12TCleanupItem @ 207 NONAME ; CleanupStack::PushL(TCleanupItem)
+	_ZN12CleanupStack5PushLEP5CBase @ 208 NONAME ; CleanupStack::PushL(CBase*)
+	_ZN12CleanupStack5PushLEPv @ 209 NONAME ; CleanupStack::PushL(void*)
+	_ZN12RSessionBase13CreateSessionE8RServer2RK8TVersioni @ 210 NONAME ; RSessionBase::CreateSession(RServer2, TVersion const&, int)
+	_ZN12RSessionBase13CreateSessionERK7TDesC16RK8TVersioni @ 211 NONAME ; RSessionBase::CreateSession(TDesC16 const&, TVersion const&, int)
+	_ZN12RSessionBase4OpenE12RMessagePtr2i10TOwnerType @ 212 NONAME ; RSessionBase::Open(RMessagePtr2, int, TOwnerType)
+	_ZN12RSessionBase4OpenEi10TOwnerType @ 213 NONAME ; RSessionBase::Open(int, TOwnerType)
+	_ZN12RSessionBase7DoShareEi @ 214 NONAME ; RSessionBase::DoShare(int)
+	_ZN12TFindLibrary4NextER4TBufILi256EE @ 215 NONAME ; TFindLibrary::Next(TBuf<256>&)
+	_ZN12TFindProcess4NextER4TBufILi256EE @ 216 NONAME ; TFindProcess::Next(TBuf<256>&)
+	_ZN12TKeyArrayFix3SetEP8CBufBasei @ 217 NONAME ; TKeyArrayFix::Set(CBufBase*, int)
+	_ZN12TKeyArrayFixC1Ei11TKeyCmpText @ 218 NONAME ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpText)
+	_ZN12TKeyArrayFixC1Ei11TKeyCmpTexti @ 219 NONAME ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpText, int)
+	_ZN12TKeyArrayFixC1Ei14TKeyCmpNumeric @ 220 NONAME ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpNumeric)
+	_ZN12TKeyArrayFixC2Ei11TKeyCmpText @ 221 NONAME ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpText)
+	_ZN12TKeyArrayFixC2Ei11TKeyCmpTexti @ 222 NONAME ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpText, int)
+	_ZN12TKeyArrayFixC2Ei14TKeyCmpNumeric @ 223 NONAME ; TKeyArrayFix::TKeyArrayFix(int, TKeyCmpNumeric)
+	_ZN12TKeyArrayPak3SetEP8CBufBase @ 224 NONAME ; TKeyArrayPak::Set(CBufBase*)
+	_ZN12TKeyArrayPakC1Ei11TKeyCmpText @ 225 NONAME ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpText)
+	_ZN12TKeyArrayPakC1Ei11TKeyCmpTexti @ 226 NONAME ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpText, int)
+	_ZN12TKeyArrayPakC1Ei14TKeyCmpNumeric @ 227 NONAME ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpNumeric)
+	_ZN12TKeyArrayPakC2Ei11TKeyCmpText @ 228 NONAME ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpText)
+	_ZN12TKeyArrayPakC2Ei11TKeyCmpTexti @ 229 NONAME ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpText, int)
+	_ZN12TKeyArrayPakC2Ei14TKeyCmpNumeric @ 230 NONAME ; TKeyArrayPak::TKeyArrayPak(int, TKeyCmpNumeric)
+	_ZN12TKeyArrayVar3SetEP8CBufBase @ 231 NONAME ; TKeyArrayVar::Set(CBufBase*)
+	_ZN12TKeyArrayVarC1Ei11TKeyCmpText @ 232 NONAME ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpText)
+	_ZN12TKeyArrayVarC1Ei11TKeyCmpTexti @ 233 NONAME ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpText, int)
+	_ZN12TKeyArrayVarC1Ei14TKeyCmpNumeric @ 234 NONAME ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpNumeric)
+	_ZN12TKeyArrayVarC2Ei11TKeyCmpText @ 235 NONAME ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpText)
+	_ZN12TKeyArrayVarC2Ei11TKeyCmpTexti @ 236 NONAME ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpText, int)
+	_ZN12TKeyArrayVarC2Ei14TKeyCmpNumeric @ 237 NONAME ; TKeyArrayVar::TKeyArrayVar(int, TKeyCmpNumeric)
+	_ZN12TTrapHandlerC2Ev @ 238 NONAME ; TTrapHandler::TTrapHandler()
+	_ZN13CArrayFixBase10InsertIsqLEPKvR12TKeyArrayFix @ 239 NONAME ; CArrayFixBase::InsertIsqL(void const*, TKeyArrayFix&)
+	_ZN13CArrayFixBase10InsertRepLEiPKvi @ 240 NONAME ; CArrayFixBase::InsertRepL(int, void const*, int)
+	_ZN13CArrayFixBase15SetReserveFlatLEi @ 241 NONAME ; CArrayFixBase::SetReserveFlatL(int)
+	_ZN13CArrayFixBase25InsertIsqAllowDuplicatesLEPKvR12TKeyArrayFix @ 242 NONAME ; CArrayFixBase::InsertIsqAllowDuplicatesL(void const*, TKeyArrayFix&)
+	_ZN13CArrayFixBase3AtREPK5CBasei @ 243 NONAME ; CArrayFixBase::AtR(CBase const*, int)
+	_ZN13CArrayFixBase4SortER12TKeyArrayFix @ 244 NONAME ; CArrayFixBase::Sort(TKeyArrayFix&)
+	_ZN13CArrayFixBase5ResetEv @ 245 NONAME ; CArrayFixBase::Reset()
+	_ZN13CArrayFixBase6CountREPK5CBase @ 246 NONAME ; CArrayFixBase::CountR(CBase const*)
+	_ZN13CArrayFixBase6DeleteEi @ 247 NONAME ; CArrayFixBase::Delete(int)
+	_ZN13CArrayFixBase6DeleteEii @ 248 NONAME ; CArrayFixBase::Delete(int, int)
+	_ZN13CArrayFixBase7ExpandLEi @ 249 NONAME ; CArrayFixBase::ExpandL(int)
+	_ZN13CArrayFixBase7InsertLEiPKv @ 250 NONAME ; CArrayFixBase::InsertL(int, void const*)
+	_ZN13CArrayFixBase7InsertLEiPKvi @ 251 NONAME ; CArrayFixBase::InsertL(int, void const*, int)
+	_ZN13CArrayFixBase7ResizeLEiPKv @ 252 NONAME ; CArrayFixBase::ResizeL(int, void const*)
+	_ZN13CArrayFixBase8CompressEv @ 253 NONAME ; CArrayFixBase::Compress()
+	_ZN13CArrayFixBaseC1EPFP8CBufBaseiEii @ 254 NONAME ; CArrayFixBase::CArrayFixBase(CBufBase* (*)(int), int, int)
+	_ZN13CArrayFixBaseC2EPFP8CBufBaseiEii @ 255 NONAME ; CArrayFixBase::CArrayFixBase(CBufBase* (*)(int), int, int)
+	_ZN13CArrayFixBaseD0Ev @ 256 NONAME ; CArrayFixBase::~CArrayFixBase()
+	_ZN13CArrayFixBaseD1Ev @ 257 NONAME ; CArrayFixBase::~CArrayFixBase()
+	_ZN13CArrayFixBaseD2Ev @ 258 NONAME ; CArrayFixBase::~CArrayFixBase()
+	_ZN13CArrayFixFlatI4TUidEC1Ei @ 259 NONAME ; CArrayFixFlat<TUid>::CArrayFixFlat(int)
+	_ZN13CArrayFixFlatI4TUidEC2Ei @ 260 NONAME ; CArrayFixFlat<TUid>::CArrayFixFlat(int)
+	_ZN13CArrayFixFlatI4TUidED0Ev @ 261 NONAME ; CArrayFixFlat<TUid>::~CArrayFixFlat()
+	_ZN13CArrayFixFlatI4TUidED1Ev @ 262 NONAME ; CArrayFixFlat<TUid>::~CArrayFixFlat()
+	_ZN13CArrayFixFlatI4TUidED2Ev @ 263 NONAME ; CArrayFixFlat<TUid>::~CArrayFixFlat()
+	_ZN13CArrayFixFlatIiEC1Ei @ 264 NONAME ; CArrayFixFlat<int>::CArrayFixFlat(int)
+	_ZN13CArrayFixFlatIiEC2Ei @ 265 NONAME ; CArrayFixFlat<int>::CArrayFixFlat(int)
+	_ZN13CArrayFixFlatIiED0Ev @ 266 NONAME ; CArrayFixFlat<int>::~CArrayFixFlat()
+	_ZN13CArrayFixFlatIiED1Ev @ 267 NONAME ; CArrayFixFlat<int>::~CArrayFixFlat()
+	_ZN13CArrayFixFlatIiED2Ev @ 268 NONAME ; CArrayFixFlat<int>::~CArrayFixFlat()
+	_ZN13CArrayPakBase10InsertIsqLEPKviR12TKeyArrayPak @ 269 NONAME ; CArrayPakBase::InsertIsqL(void const*, int, TKeyArrayPak&)
+	_ZN13CArrayPakBase14BuildVarArrayLERP13CArrayVarFlatIvE @ 270 NONAME ; CArrayPakBase::BuildVarArrayL(CArrayVarFlat<void>*&)
+	_ZN13CArrayPakBase25InsertIsqAllowDuplicatesLEPKviR12TKeyArrayPak @ 271 NONAME ; CArrayPakBase::InsertIsqAllowDuplicatesL(void const*, int, TKeyArrayPak&)
+	_ZN13CArrayPakBase3AtREPK5CBasei @ 272 NONAME ; CArrayPakBase::AtR(CBase const*, int)
+	_ZN13CArrayPakBase5ResetEv @ 273 NONAME ; CArrayPakBase::Reset()
+	_ZN13CArrayPakBase5SortLER12TKeyArrayVar @ 274 NONAME ; CArrayPakBase::SortL(TKeyArrayVar&)
+	_ZN13CArrayPakBase6CountREPK5CBase @ 275 NONAME ; CArrayPakBase::CountR(CBase const*)
+	_ZN13CArrayPakBase6DeleteEi @ 276 NONAME ; CArrayPakBase::Delete(int)
+	_ZN13CArrayPakBase6DeleteEii @ 277 NONAME ; CArrayPakBase::Delete(int, int)
+	_ZN13CArrayPakBase7ExpandLEii @ 278 NONAME ; CArrayPakBase::ExpandL(int, int)
+	_ZN13CArrayPakBase7InsertLEiPKvi @ 279 NONAME ; CArrayPakBase::InsertL(int, void const*, int)
+	_ZN13CArrayPakBase8CompressEv @ 280 NONAME ; CArrayPakBase::Compress()
+	_ZN13CArrayPakBaseC1EPFP8CBufBaseiEi @ 281 NONAME ; CArrayPakBase::CArrayPakBase(CBufBase* (*)(int), int)
+	_ZN13CArrayPakBaseC2EPFP8CBufBaseiEi @ 282 NONAME ; CArrayPakBase::CArrayPakBase(CBufBase* (*)(int), int)
+	_ZN13CArrayPakBaseD0Ev @ 283 NONAME ; CArrayPakBase::~CArrayPakBase()
+	_ZN13CArrayPakBaseD1Ev @ 284 NONAME ; CArrayPakBase::~CArrayPakBase()
+	_ZN13CArrayPakBaseD2Ev @ 285 NONAME ; CArrayPakBase::~CArrayPakBase()
+	_ZN13CArrayVarBase10InsertIsqLEPKviR12TKeyArrayVar @ 286 NONAME ; CArrayVarBase::InsertIsqL(void const*, int, TKeyArrayVar&)
+	_ZN13CArrayVarBase25InsertIsqAllowDuplicatesLEPKviR12TKeyArrayVar @ 287 NONAME ; CArrayVarBase::InsertIsqAllowDuplicatesL(void const*, int, TKeyArrayVar&)
+	_ZN13CArrayVarBase3AtREPK5CBasei @ 288 NONAME ; CArrayVarBase::AtR(CBase const*, int)
+	_ZN13CArrayVarBase4SortER12TKeyArrayVar @ 289 NONAME ; CArrayVarBase::Sort(TKeyArrayVar&)
+	_ZN13CArrayVarBase5ResetEv @ 290 NONAME ; CArrayVarBase::Reset()
+	_ZN13CArrayVarBase6CountREPK5CBase @ 291 NONAME ; CArrayVarBase::CountR(CBase const*)
+	_ZN13CArrayVarBase6DeleteEi @ 292 NONAME ; CArrayVarBase::Delete(int)
+	_ZN13CArrayVarBase6DeleteEii @ 293 NONAME ; CArrayVarBase::Delete(int, int)
+	_ZN13CArrayVarBase7ExpandLEii @ 294 NONAME ; CArrayVarBase::ExpandL(int, int)
+	_ZN13CArrayVarBase7InsertLEiPKvi @ 295 NONAME ; CArrayVarBase::InsertL(int, void const*, int)
+	_ZN13CArrayVarBase8CompressEv @ 296 NONAME ; CArrayVarBase::Compress()
+	_ZN13CArrayVarBaseC1EPFP8CBufBaseiEi @ 297 NONAME ; CArrayVarBase::CArrayVarBase(CBufBase* (*)(int), int)
+	_ZN13CArrayVarBaseC2EPFP8CBufBaseiEi @ 298 NONAME ; CArrayVarBase::CArrayVarBase(CBufBase* (*)(int), int)
+	_ZN13CArrayVarBaseD0Ev @ 299 NONAME ; CArrayVarBase::~CArrayVarBase()
+	_ZN13CArrayVarBaseD1Ev @ 300 NONAME ; CArrayVarBase::~CArrayVarBase()
+	_ZN13CArrayVarBaseD2Ev @ 301 NONAME ; CArrayVarBase::~CArrayVarBase()
+	_ZN13CAsyncOneShot4CallEv @ 302 NONAME ; CAsyncOneShot::Call()
+	_ZN13CAsyncOneShot8DoCancelEv @ 303 NONAME ; CAsyncOneShot::DoCancel()
+	_ZN13CAsyncOneShotC2Ei @ 304 NONAME ; CAsyncOneShot::CAsyncOneShot(int)
+	_ZN13CAsyncOneShotD0Ev @ 305 NONAME ; CAsyncOneShot::~CAsyncOneShot()
+	_ZN13CAsyncOneShotD1Ev @ 306 NONAME ; CAsyncOneShot::~CAsyncOneShot()
+	_ZN13CAsyncOneShotD2Ev @ 307 NONAME ; CAsyncOneShot::~CAsyncOneShot()
+	_ZN13RMsgQueueBase10OpenGlobalERK7TDesC1610TOwnerType @ 308 NONAME ; RMsgQueueBase::OpenGlobal(TDesC16 const&, TOwnerType)
+	_ZN13RMsgQueueBase11CreateLocalEii10TOwnerType @ 309 NONAME ; RMsgQueueBase::CreateLocal(int, int, TOwnerType)
+	_ZN13RMsgQueueBase11MessageSizeEv @ 310 NONAME ; RMsgQueueBase::MessageSize()
+	_ZN13RMsgQueueBase12CreateGlobalERK7TDesC16ii10TOwnerType @ 311 NONAME ; RMsgQueueBase::CreateGlobal(TDesC16 const&, int, int, TOwnerType)
+	_ZN13RMsgQueueBase12SendBlockingEPKvi @ 312 NONAME ; RMsgQueueBase::SendBlocking(void const*, int)
+	_ZN13RMsgQueueBase15ReceiveBlockingEPvi @ 313 NONAME ; RMsgQueueBase::ReceiveBlocking(void*, int)
+	_ZN13RMsgQueueBase19CancelDataAvailableEv @ 314 NONAME ; RMsgQueueBase::CancelDataAvailable()
+	_ZN13RMsgQueueBase19NotifyDataAvailableER14TRequestStatus @ 315 NONAME ; RMsgQueueBase::NotifyDataAvailable(TRequestStatus&)
+	_ZN13RMsgQueueBase20CancelSpaceAvailableEv @ 316 NONAME ; RMsgQueueBase::CancelSpaceAvailable()
+	_ZN13RMsgQueueBase20NotifySpaceAvailableER14TRequestStatus @ 317 NONAME ; RMsgQueueBase::NotifySpaceAvailable(TRequestStatus&)
+	_ZN13RMsgQueueBase4OpenE12RMessagePtr2i10TOwnerType @ 318 NONAME ; RMsgQueueBase::Open(RMessagePtr2, int, TOwnerType)
+	_ZN13RMsgQueueBase4OpenEi10TOwnerType @ 319 NONAME ; RMsgQueueBase::Open(int, TOwnerType)
+	_ZN13RMsgQueueBase4SendEPKvi @ 320 NONAME ; RMsgQueueBase::Send(void const*, int)
+	_ZN13RMsgQueueBase7ReceiveEPvi @ 321 NONAME ; RMsgQueueBase::Receive(void*, int)
+	_ZN13TDeltaQueBase10DoAddDeltaEPvi @ 322 NONAME ; TDeltaQueBase::DoAddDelta(void*, int)
+	_ZN13TDeltaQueBase10FirstDeltaERi @ 323 NONAME ; TDeltaQueBase::FirstDelta(int&)
+	_ZN13TDeltaQueBase13DoRemoveFirstEv @ 324 NONAME ; TDeltaQueBase::DoRemoveFirst()
+	_ZN13TDeltaQueBase5ResetEv @ 325 NONAME ; TDeltaQueBase::Reset()
+	_ZN13TDeltaQueBase8DoRemoveEPv @ 326 NONAME ; TDeltaQueBase::DoRemove(void*)
+	_ZN13TDeltaQueBase9CountDownEi @ 327 NONAME ; TDeltaQueBase::CountDown(int)
+	_ZN13TDeltaQueBase9CountDownEv @ 328 NONAME ; TDeltaQueBase::CountDown()
+	_ZN13TDeltaQueBaseC1Ei @ 329 NONAME ; TDeltaQueBase::TDeltaQueBase(int)
+	_ZN13TDeltaQueBaseC1Ev @ 330 NONAME ; TDeltaQueBase::TDeltaQueBase()
+	_ZN13TDeltaQueBaseC2Ei @ 331 NONAME ; TDeltaQueBase::TDeltaQueBase(int)
+	_ZN13TDeltaQueBaseC2Ev @ 332 NONAME ; TDeltaQueBase::TDeltaQueBase()
+	_ZN13TMonthNameAbb3SetE6TMonth @ 333 NONAME ; TMonthNameAbb::Set(TMonth)
+	_ZN13TMonthNameAbbC1E6TMonth @ 334 NONAME ; TMonthNameAbb::TMonthNameAbb(TMonth)
+	_ZN13TMonthNameAbbC1Ev @ 335 NONAME ; TMonthNameAbb::TMonthNameAbb()
+	_ZN13TMonthNameAbbC2E6TMonth @ 336 NONAME ; TMonthNameAbb::TMonthNameAbb(TMonth)
+	_ZN13TMonthNameAbbC2Ev @ 337 NONAME ; TMonthNameAbb::TMonthNameAbb()
+	_ZN13TSecurityInfo16SetToCreatorInfoEv @ 338 NONAME ; TSecurityInfo::SetToCreatorInfo()
+	_ZN13TSecurityInfoC1E12RMessagePtr2 @ 339 NONAME ; TSecurityInfo::TSecurityInfo(RMessagePtr2)
+	_ZN13TSecurityInfoC1E7RThread @ 340 NONAME ; TSecurityInfo::TSecurityInfo(RThread)
+	_ZN13TSecurityInfoC1E8RProcess @ 341 NONAME ; TSecurityInfo::TSecurityInfo(RProcess)
+	_ZN14CAsyncCallBack3SetERK9TCallBack @ 342 NONAME ; CAsyncCallBack::Set(TCallBack const&)
+	_ZN14CAsyncCallBack8CallBackEv @ 343 NONAME ; CAsyncCallBack::CallBack()
+	_ZN14CAsyncCallBackC1ERK9TCallBacki @ 344 NONAME ; CAsyncCallBack::CAsyncCallBack(TCallBack const&, int)
+	_ZN14CAsyncCallBackC1Ei @ 345 NONAME ; CAsyncCallBack::CAsyncCallBack(int)
+	_ZN14CAsyncCallBackC2ERK9TCallBacki @ 346 NONAME ; CAsyncCallBack::CAsyncCallBack(TCallBack const&, int)
+	_ZN14CAsyncCallBackC2Ei @ 347 NONAME ; CAsyncCallBack::CAsyncCallBack(int)
+	_ZN14CAsyncCallBackD0Ev @ 348 NONAME ; CAsyncCallBack::~CAsyncCallBack()
+	_ZN14CAsyncCallBackD1Ev @ 349 NONAME ; CAsyncCallBack::~CAsyncCallBack()
+	_ZN14CAsyncCallBackD2Ev @ 350 NONAME ; CAsyncCallBack::~CAsyncCallBack()
+	_ZN14TBusLocalDrive10DisconnectEv @ 351 NONAME ; TBusLocalDrive::Disconnect()
+	_ZN14TBusLocalDrive10ReduceSizeEii @ 352 NONAME ; TBusLocalDrive::ReduceSize(int, int)
+	_ZN14TBusLocalDrive11SetPasswordERK6TDesC8S2_i @ 353 NONAME ; TBusLocalDrive::SetPassword(TDesC8 const&, TDesC8 const&, int)
+	_ZN14TBusLocalDrive12ForceRemountEj @ 354 NONAME ; TBusLocalDrive::ForceRemount(unsigned int)
+	_ZN14TBusLocalDrive12SetMountInfoEPK6TDesC8i @ 355 NONAME ; TBusLocalDrive::SetMountInfo(TDesC8 const*, int)
+	_ZN14TBusLocalDrive16ReadPasswordDataER5TDes8 @ 356 NONAME ; TBusLocalDrive::ReadPasswordData(TDes8&)
+	_ZN14TBusLocalDrive17WritePasswordDataERK6TDesC8 @ 357 NONAME ; TBusLocalDrive::WritePasswordData(TDesC8 const&)
+	_ZN14TBusLocalDrive26PasswordStoreLengthInBytesEv @ 358 NONAME ; TBusLocalDrive::PasswordStoreLengthInBytes()
+	_ZN14TBusLocalDrive4CapsER5TDes8 @ 359 NONAME ; TBusLocalDrive::Caps(TDes8&)
+	_ZN14TBusLocalDrive4ReadExiPKvii @ 360 NONAME ; TBusLocalDrive::Read(long long, int, void const*, int, int)
+	_ZN14TBusLocalDrive4ReadExiPKviii @ 361 NONAME ; TBusLocalDrive::Read(long long, int, void const*, int, int, int)
+	_ZN14TBusLocalDrive4ReadExiR5TDes8 @ 362 NONAME ; TBusLocalDrive::Read(long long, int, TDes8&)
+	_ZN14TBusLocalDrive5ClearERK6TDesC8 @ 363 NONAME ; TBusLocalDrive::Clear(TDesC8 const&)
+	_ZN14TBusLocalDrive5WriteExRK6TDesC8 @ 364 NONAME ; TBusLocalDrive::Write(long long, TDesC8 const&)
+	_ZN14TBusLocalDrive5WriteExiPKvii @ 365 NONAME ; TBusLocalDrive::Write(long long, int, void const*, int, int)
+	_ZN14TBusLocalDrive5WriteExiPKviii @ 366 NONAME ; TBusLocalDrive::Write(long long, int, void const*, int, int, int)
+	_ZN14TBusLocalDrive6FormatExi @ 367 NONAME ; TBusLocalDrive::Format(long long, int)
+	_ZN14TBusLocalDrive6FormatER11TFormatInfo @ 368 NONAME ; TBusLocalDrive::Format(TFormatInfo&)
+	_ZN14TBusLocalDrive6UnlockERK6TDesC8i @ 369 NONAME ; TBusLocalDrive::Unlock(TDesC8 const&, int)
+	_ZN14TBusLocalDrive7ConnectEiRi @ 370 NONAME ; TBusLocalDrive::Connect(int, int&)
+	_ZN14TBusLocalDrive7EnlargeEi @ 371 NONAME ; TBusLocalDrive::Enlarge(int)
+	_ZN14TBusLocalDrive9ControlIOEiPvS0_ @ 372 NONAME ; TBusLocalDrive::ControlIO(int, void*, void*)
+	_ZN14TBusLocalDriveC1Ev @ 373 NONAME ; TBusLocalDrive::TBusLocalDrive()
+	_ZN14TBusLocalDriveC2Ev @ 374 NONAME ; TBusLocalDrive::TBusLocalDrive()
+	_ZN14TCapabilitySet11SetDisabledEv @ 375 NONAME ; TCapabilitySet::SetDisabled()
+	_ZN14TCapabilitySet12IntersectionERKS_ @ 376 NONAME ; TCapabilitySet::Intersection(TCapabilitySet const&)
+	_ZN14TCapabilitySet13AddCapabilityE11TCapability @ 377 NONAME ; TCapabilitySet::AddCapability(TCapability)
+	_ZN14TCapabilitySet15SetAllSupportedEv @ 378 NONAME ; TCapabilitySet::SetAllSupported()
+	_ZN14TCapabilitySet16RemoveCapabilityE11TCapability @ 379 NONAME ; TCapabilitySet::RemoveCapability(TCapability)
+	_ZN14TCapabilitySet5UnionERKS_ @ 380 NONAME ; TCapabilitySet::Union(TCapabilitySet const&)
+	_ZN14TCapabilitySet6RemoveERKS_ @ 381 NONAME ; TCapabilitySet::Remove(TCapabilitySet const&)
+	_ZN14TCapabilitySet8SetEmptyEv @ 382 NONAME ; TCapabilitySet::SetEmpty()
+	_ZN14TCapabilitySetC1E11TCapabilityS0_ @ 383 NONAME ; TCapabilitySet::TCapabilitySet(TCapability, TCapability)
+	_ZN14TCapabilitySetC2E11TCapabilityS0_ @ 384 NONAME ; TCapabilitySet::TCapabilitySet(TCapability, TCapability)
+	_ZN14TFindSemaphore4NextER4TBufILi256EE @ 385 NONAME ; TFindSemaphore::Next(TBuf<256>&)
+	_ZN15RChangeNotifier6CreateEv @ 386 NONAME ; RChangeNotifier::Create()
+	_ZN15RSubSessionBase15CloseSubSessionEi @ 387 NONAME ; RSubSessionBase::CloseSubSession(int)
+	_ZN15RSubSessionBase18DoCreateSubSessionERK12RSessionBaseiPK8TIpcArgs @ 388 NONAME ; RSubSessionBase::DoCreateSubSession(RSessionBase const&, int, TIpcArgs const*)
+	_ZN15TCurrencySymbol3SetEv @ 389 NONAME ; TCurrencySymbol::Set()
+	_ZN15TCurrencySymbolC1Ev @ 390 NONAME ; TCurrencySymbol::TCurrencySymbol()
+	_ZN15TCurrencySymbolC2Ev @ 391 NONAME ; TCurrencySymbol::TCurrencySymbol()
+	_ZN15TDblQueIterBase10SetToFirstEv @ 392 NONAME ; TDblQueIterBase::SetToFirst()
+	_ZN15TDblQueIterBase5DoSetEPv @ 393 NONAME ; TDblQueIterBase::DoSet(void*)
+	_ZN15TDblQueIterBase9DoCurrentEv @ 394 NONAME ; TDblQueIterBase::DoCurrent()
+	_ZN15TDblQueIterBase9DoPostDecEv @ 395 NONAME ; TDblQueIterBase::DoPostDec()
+	_ZN15TDblQueIterBase9DoPostIncEv @ 396 NONAME ; TDblQueIterBase::DoPostInc()
+	_ZN15TDblQueIterBase9SetToLastEv @ 397 NONAME ; TDblQueIterBase::SetToLast()
+	_ZN15TDblQueIterBaseC1ER11TDblQueBase @ 398 NONAME ; TDblQueIterBase::TDblQueIterBase(TDblQueBase&)
+	_ZN15TDblQueIterBaseC2ER11TDblQueBase @ 399 NONAME ; TDblQueIterBase::TDblQueIterBase(TDblQueBase&)
+	_ZN15TDblQueLinkBase5EnqueEPS_ @ 400 NONAME ; TDblQueLinkBase::Enque(TDblQueLinkBase*)
+	_ZN15TDblQueLinkBase9AddBeforeEPS_ @ 401 NONAME ; TDblQueLinkBase::AddBefore(TDblQueLinkBase*)
+	_ZN15TFindHandleBase4FindERK7TDesC16 @ 402 NONAME ; TFindHandleBase::Find(TDesC16 const&)
+	_ZN15TFindHandleBaseC1ERK7TDesC16 @ 403 NONAME ; TFindHandleBase::TFindHandleBase(TDesC16 const&)
+	_ZN15TFindHandleBaseC1Ev @ 404 NONAME ; TFindHandleBase::TFindHandleBase()
+	_ZN15TFindHandleBaseC2ERK7TDesC16 @ 405 NONAME ; TFindHandleBase::TFindHandleBase(TDesC16 const&)
+	_ZN15TFindHandleBaseC2Ev @ 406 NONAME ; TFindHandleBase::TFindHandleBase()
+	_ZN15TLocalDriveCapsC1Ev @ 407 NONAME ; TLocalDriveCaps::TLocalDriveCaps()
+	_ZN15TLocalDriveCapsC2Ev @ 408 NONAME ; TLocalDriveCaps::TLocalDriveCaps()
+	_ZN15TSglQueIterBase10SetToFirstEv @ 409 NONAME ; TSglQueIterBase::SetToFirst()
+	_ZN15TSglQueIterBase5DoSetEPv @ 410 NONAME ; TSglQueIterBase::DoSet(void*)
+	_ZN15TSglQueIterBase9DoCurrentEv @ 411 NONAME ; TSglQueIterBase::DoCurrent()
+	_ZN15TSglQueIterBase9DoPostIncEv @ 412 NONAME ; TSglQueIterBase::DoPostInc()
+	_ZN15TSglQueIterBaseC1ER11TSglQueBase @ 413 NONAME ; TSglQueIterBase::TSglQueIterBase(TSglQueBase&)
+	_ZN15TSglQueIterBaseC2ER11TSglQueBase @ 414 NONAME ; TSglQueIterBase::TSglQueIterBase(TSglQueBase&)
+	_ZN15TTimeFormatSpec3SetEv @ 415 NONAME ; TTimeFormatSpec::Set()
+	_ZN15TTimeFormatSpecC1Ev @ 416 NONAME ; TTimeFormatSpec::TTimeFormatSpec()
+	_ZN15TTimeFormatSpecC2Ev @ 417 NONAME ; TTimeFormatSpec::TTimeFormatSpec()
+	_ZN16CActiveScheduler10OnStartingEv @ 418 NONAME ; CActiveScheduler::OnStarting()
+	_ZN16CActiveScheduler10OnStoppingEv @ 419 NONAME ; CActiveScheduler::OnStopping()
+	_ZN16CActiveScheduler10Reserved_1Ev @ 420 NONAME ; CActiveScheduler::Reserved_1()
+	_ZN16CActiveScheduler10Reserved_2Ev @ 421 NONAME ; CActiveScheduler::Reserved_2()
+	_ZN16CActiveScheduler10RunIfReadyERii @ 422 NONAME ; CActiveScheduler::RunIfReady(int&, int)
+	_ZN16CActiveScheduler17WaitForAnyRequestEv @ 423 NONAME ; CActiveScheduler::WaitForAnyRequest()
+	_ZN16CActiveScheduler3AddEP7CActive @ 424 NONAME ; CActiveScheduler::Add(CActive*)
+	_ZN16CActiveScheduler4StopEv @ 425 NONAME ; CActiveScheduler::Stop()
+	_ZN16CActiveScheduler5StartEv @ 426 NONAME ; CActiveScheduler::Start()
+	_ZN16CActiveScheduler7CurrentEv @ 427 NONAME ; CActiveScheduler::Current()
+	_ZN16CActiveScheduler7InstallEPS_ @ 428 NONAME ; CActiveScheduler::Install(CActiveScheduler*)
+	_ZN16CActiveScheduler7ReplaceEPS_ @ 429 NONAME ; CActiveScheduler::Replace(CActiveScheduler*)
+	_ZN16CActiveSchedulerC1Ev @ 430 NONAME ; CActiveScheduler::CActiveScheduler()
+	_ZN16CActiveSchedulerC2Ev @ 431 NONAME ; CActiveScheduler::CActiveScheduler()
+	_ZN16CActiveSchedulerD0Ev @ 432 NONAME ; CActiveScheduler::~CActiveScheduler()
+	_ZN16CActiveSchedulerD1Ev @ 433 NONAME ; CActiveScheduler::~CActiveScheduler()
+	_ZN16CActiveSchedulerD2Ev @ 434 NONAME ; CActiveScheduler::~CActiveScheduler()
+	_ZN16CBitMapAllocator12AllocAlignedEi @ 435 NONAME ; CBitMapAllocator::AllocAligned(int)
+	_ZN16CBitMapAllocator12AllocFromTopEv @ 436 NONAME ; CBitMapAllocator::AllocFromTop()
+	_ZN16CBitMapAllocator15ExtractRamPagesEiRi @ 437 NONAME ; CBitMapAllocator::ExtractRamPages(int, int&)
+	_ZN16CBitMapAllocator16AllocFromTopFromEi @ 438 NONAME ; CBitMapAllocator::AllocFromTopFrom(int)
+	_ZN16CBitMapAllocator17AllocAlignedBlockEi @ 439 NONAME ; CBitMapAllocator::AllocAlignedBlock(int)
+	_ZN16CBitMapAllocator3NewEi @ 440 NONAME ; CBitMapAllocator::New(int)
+	_ZN16CBitMapAllocator4FreeEi @ 441 NONAME ; CBitMapAllocator::Free(int)
+	_ZN16CBitMapAllocator4FreeEii @ 442 NONAME ; CBitMapAllocator::Free(int, int)
+	_ZN16CBitMapAllocator4NewLEi @ 443 NONAME ; CBitMapAllocator::NewL(int)
+	_ZN16CBitMapAllocator4SizeEv @ 444 NONAME ; CBitMapAllocator::Size()
+	_ZN16CBitMapAllocator5AllocEiRi @ 445 NONAME ; CBitMapAllocator::Alloc(int, int&)
+	_ZN16CBitMapAllocator5AllocEv @ 446 NONAME ; CBitMapAllocator::Alloc()
+	_ZN16CBitMapAllocator5AvailEv @ 447 NONAME ; CBitMapAllocator::Avail()
+	_ZN16CBitMapAllocator6IsFreeEi @ 448 NONAME ; CBitMapAllocator::IsFree(int)
+	_ZN16CBitMapAllocator6IsFreeEii @ 449 NONAME ; CBitMapAllocator::IsFree(int, int)
+	_ZN16CBitMapAllocator7AllocAtEi @ 450 NONAME ; CBitMapAllocator::AllocAt(int)
+	_ZN16CBitMapAllocator7AllocAtEii @ 451 NONAME ; CBitMapAllocator::AllocAt(int, int)
+	_ZN16CBitMapAllocator9AllocFromEi @ 452 NONAME ; CBitMapAllocator::AllocFrom(int)
+	_ZN16CBitMapAllocatorC1Eii @ 453 NONAME ; CBitMapAllocator::CBitMapAllocator(int, int)
+	_ZN16CBitMapAllocatorC2Eii @ 454 NONAME ; CBitMapAllocator::CBitMapAllocator(int, int)
+	_ZN16CBitMapAllocatorD0Ev @ 455 NONAME ; CBitMapAllocator::~CBitMapAllocator()
+	_ZN16CBitMapAllocatorD1Ev @ 456 NONAME ; CBitMapAllocator::~CBitMapAllocator()
+	_ZN16CBitMapAllocatorD2Ev @ 457 NONAME ; CBitMapAllocator::~CBitMapAllocator()
+	_ZN16RCriticalSection11CreateLocalE10TOwnerType @ 458 NONAME ; RCriticalSection::CreateLocal(TOwnerType)
+	_ZN16RCriticalSection4WaitEv @ 459 NONAME ; RCriticalSection::Wait()
+	_ZN16RCriticalSection5CloseEv @ 460 NONAME ; RCriticalSection::Close()
+	_ZN16RCriticalSection6SignalEv @ 461 NONAME ; RCriticalSection::Signal()
+	_ZN16RCriticalSectionC1Ev @ 462 NONAME ; RCriticalSection::RCriticalSection()
+	_ZN16RCriticalSectionC2Ev @ 463 NONAME ; RCriticalSection::RCriticalSection()
+	_ZN17RPointerArrayBase13GetElementPtrEPK5CBasei @ 464 NONAME ; RPointerArrayBase::GetElementPtr(CBase const*, int)
+	_ZN17RPointerArrayBase14HeapSortSignedEv @ 465 NONAME ; RPointerArrayBase::HeapSortSigned()
+	_ZN17RPointerArrayBase15InsertIsqSignedEii @ 466 NONAME ; RPointerArrayBase::InsertIsqSigned(int, int)
+	_ZN17RPointerArrayBase16GranularCompressEv @ 467 NONAME ; RPointerArrayBase::GranularCompress()
+	_ZN17RPointerArrayBase16HeapSortUnsignedEv @ 468 NONAME ; RPointerArrayBase::HeapSortUnsigned()
+	_ZN17RPointerArrayBase17InsertIsqUnsignedEji @ 469 NONAME ; RPointerArrayBase::InsertIsqUnsigned(unsigned int, int)
+	_ZN17RPointerArrayBase5CloseEv @ 470 NONAME ; RPointerArrayBase::Close()
+	_ZN17RPointerArrayBase5ResetEv @ 471 NONAME ; RPointerArrayBase::Reset()
+	_ZN17RPointerArrayBase6AppendEPKv @ 472 NONAME ; RPointerArrayBase::Append(void const*)
+	_ZN17RPointerArrayBase6InsertEPKvi @ 473 NONAME ; RPointerArrayBase::Insert(void const*, int)
+	_ZN17RPointerArrayBase6RemoveEi @ 474 NONAME ; RPointerArrayBase::Remove(int)
+	_ZN17RPointerArrayBase8CompressEv @ 475 NONAME ; RPointerArrayBase::Compress()
+	_ZN17RPointerArrayBase8GetCountEPK5CBase @ 476 NONAME ; RPointerArrayBase::GetCount(CBase const*)
+	_ZN17RPointerArrayBase8HeapSortEPFiPKvS1_E @ 477 NONAME ; RPointerArrayBase::HeapSort(int (*)(void const*, void const*))
+	_ZN17RPointerArrayBase9InsertIsqEPKvPFiS1_S1_Ei @ 478 NONAME ; RPointerArrayBase::InsertIsq(void const*, int (*)(void const*, void const*), int)
+	_ZN17RPointerArrayBaseC1EPPvi @ 479 NONAME ; RPointerArrayBase::RPointerArrayBase(void**, int)
+	_ZN17RPointerArrayBaseC1Ei @ 480 NONAME ; RPointerArrayBase::RPointerArrayBase(int)
+	_ZN17RPointerArrayBaseC1Ev @ 481 NONAME ; RPointerArrayBase::RPointerArrayBase()
+	_ZN17RPointerArrayBaseC2EPPvi @ 482 NONAME ; RPointerArrayBase::RPointerArrayBase(void**, int)
+	_ZN17RPointerArrayBaseC2Ei @ 483 NONAME ; RPointerArrayBase::RPointerArrayBase(int)
+	_ZN17RPointerArrayBaseC2Ev @ 484 NONAME ; RPointerArrayBase::RPointerArrayBase()
+	_ZN18RBusLogicalChannel4OpenE12RMessagePtr2i10TOwnerType @ 485 NONAME ; RBusLogicalChannel::Open(RMessagePtr2, int, TOwnerType)
+	_ZN18RBusLogicalChannel4OpenEi10TOwnerType @ 486 NONAME ; RBusLogicalChannel::Open(int, TOwnerType)
+	_ZN18RBusLogicalChannel8DoCancelEj @ 487 NONAME ; RBusLogicalChannel::DoCancel(unsigned int)
+	_ZN18RBusLogicalChannel8DoCreateERK7TDesC16RK8TVersioniPS1_PK6TDesC8i @ 488 NONAME ; RBusLogicalChannel::DoCreate(TDesC16 const&, TVersion const&, int, TDesC16 const*, TDesC8 const*, int)
+	_ZN18RBusLogicalChannel9DoControlEi @ 489 NONAME ; RBusLogicalChannel::DoControl(int)
+	_ZN18RBusLogicalChannel9DoControlEiPv @ 490 NONAME ; RBusLogicalChannel::DoControl(int, void*)
+	_ZN18RBusLogicalChannel9DoControlEiPvS0_ @ 491 NONAME ; RBusLogicalChannel::DoControl(int, void*, void*)
+	_ZN18RBusLogicalChannel9DoRequestEiR14TRequestStatus @ 492 NONAME ; RBusLogicalChannel::DoRequest(int, TRequestStatus&)
+	_ZN18RBusLogicalChannel9DoRequestEiR14TRequestStatusPv @ 493 NONAME ; RBusLogicalChannel::DoRequest(int, TRequestStatus&, void*)
+	_ZN18RBusLogicalChannel9DoRequestEiR14TRequestStatusPvS2_ @ 494 NONAME ; RBusLogicalChannel::DoRequest(int, TRequestStatus&, void*, void*)
+	_ZN18TFindLogicalDevice4NextER4TBufILi256EE @ 495 NONAME ; TFindLogicalDevice::Next(TBuf<256>&)
+	_ZN18TLocaleMessageText3SetE14TLocaleMessage @ 496 NONAME ; TLocaleMessageText::Set(TLocaleMessage)
+	_ZN18TLocaleMessageTextC1E14TLocaleMessage @ 497 NONAME ; TLocaleMessageText::TLocaleMessageText(TLocaleMessage)
+	_ZN18TLocaleMessageTextC1Ev @ 498 NONAME ; TLocaleMessageText::TLocaleMessageText()
+	_ZN18TLocaleMessageTextC2E14TLocaleMessage @ 499 NONAME ; TLocaleMessageText::TLocaleMessageText(TLocaleMessage)
+	_ZN18TLocaleMessageTextC2Ev @ 500 NONAME ; TLocaleMessageText::TLocaleMessageText()
+	_ZN19TFindPhysicalDevice4NextER4TBufILi256EE @ 501 NONAME ; TFindPhysicalDevice::Next(TBuf<256>&)
+	_ZN19TLongDateFormatSpec3SetEv @ 502 NONAME ; TLongDateFormatSpec::Set()
+	_ZN19TLongDateFormatSpecC1Ev @ 503 NONAME ; TLongDateFormatSpec::TLongDateFormatSpec()
+	_ZN19TLongDateFormatSpecC2Ev @ 504 NONAME ; TLongDateFormatSpec::TLongDateFormatSpec()
+	_ZN20CActiveSchedulerWait5StartEv @ 505 NONAME ; CActiveSchedulerWait::Start()
+	_ZN20CActiveSchedulerWait9AsyncStopERK9TCallBack @ 506 NONAME ; CActiveSchedulerWait::AsyncStop(TCallBack const&)
+	_ZN20CActiveSchedulerWait9AsyncStopEv @ 507 NONAME ; CActiveSchedulerWait::AsyncStop()
+	_ZN20CActiveSchedulerWaitC1Ev @ 508 NONAME ; CActiveSchedulerWait::CActiveSchedulerWait()
+	_ZN20CActiveSchedulerWaitC2Ev @ 509 NONAME ; CActiveSchedulerWait::CActiveSchedulerWait()
+	_ZN20CActiveSchedulerWaitD0Ev @ 510 NONAME ; CActiveSchedulerWait::~CActiveSchedulerWait()
+	_ZN20CActiveSchedulerWaitD1Ev @ 511 NONAME ; CActiveSchedulerWait::~CActiveSchedulerWait()
+	_ZN20CActiveSchedulerWaitD2Ev @ 512 NONAME ; CActiveSchedulerWait::~CActiveSchedulerWait()
+	_ZN20TShortDateFormatSpec3SetEv @ 513 NONAME ; TShortDateFormatSpec::Set()
+	_ZN20TShortDateFormatSpecC1Ev @ 514 NONAME ; TShortDateFormatSpec::TShortDateFormatSpec()
+	_ZN20TShortDateFormatSpecC2Ev @ 515 NONAME ; TShortDateFormatSpec::TShortDateFormatSpec()
+	_ZN3Mem16CollationMethodsEv @ 516 NONAME ; Mem::CollationMethods()
+	_ZN3Mem17CollationMethodIdEi @ 517 NONAME ; Mem::CollationMethodId(int)
+	_ZN3Mem19CollationMethodByIdEj @ 518 NONAME ; Mem::CollationMethodById(unsigned int)
+	_ZN3Mem22CollationMethodByIndexEi @ 519 NONAME ; Mem::CollationMethodByIndex(int)
+	_ZN3Mem3CrcERtPKvi @ 520 NONAME ; Mem::Crc(unsigned short&, void const*, int)
+	_ZN3Mem4SwapEPvS0_i @ 521 NONAME ; Mem::Swap(void*, void*, int)
+	_ZN3Mem5Crc32ERmPKvi @ 522 NONAME ; Mem::Crc32(unsigned long&, void const*, int)
+	_ZN3Mem7CompareEPKtiS1_i @ 523 NONAME ; Mem::Compare(unsigned short const*, int, unsigned short const*, int)
+	_ZN3Mem8CompareCEPKhiS1_i @ 524 NONAME ; Mem::CompareC(unsigned char const*, int, unsigned char const*, int)
+	_ZN3Mem8CompareCEPKtiS1_i @ 525 NONAME ; Mem::CompareC(unsigned short const*, int, unsigned short const*, int)
+	_ZN3Mem8CompareCEPKtiS1_iiPK16TCollationMethod @ 526 NONAME ; Mem::CompareC(unsigned short const*, int, unsigned short const*, int, int, TCollationMethod const*)
+	_ZN3Mem8CompareFEPKhiS1_i @ 527 NONAME ; Mem::CompareF(unsigned char const*, int, unsigned char const*, int)
+	_ZN3Mem8CompareFEPKtiS1_i @ 528 NONAME ; Mem::CompareF(unsigned short const*, int, unsigned short const*, int)
+	_ZN4Math10IsInfiniteERKd @ 529 NONAME ; Math::IsInfinite(double const&)
+	_ZN4Math11SetInfiniteERdi @ 530 NONAME ; Math::SetInfinite(double&, int)
+	_ZN4Math2LnERdRKd @ 531 NONAME ; Math::Ln(double&, double const&)
+	_ZN4Math3CosERdRKd @ 532 NONAME ; Math::Cos(double&, double const&)
+	_ZN4Math3ExpERdRKd @ 533 NONAME ; Math::Exp(double&, double const&)
+	_ZN4Math3IntERdRKd @ 534 NONAME ; Math::Int(double&, double const&)
+	_ZN4Math3IntERlRKd @ 535 NONAME ; Math::Int(long&, double const&)
+	_ZN4Math3IntERsRKd @ 536 NONAME ; Math::Int(short&, double const&)
+	_ZN4Math3LogERdRKd @ 537 NONAME ; Math::Log(double&, double const&)
+	_ZN4Math3ModERdRKdS2_ @ 538 NONAME ; Math::Mod(double&, double const&, double const&)
+	_ZN4Math3PowERdRKdS2_ @ 539 NONAME ; Math::Pow(double&, double const&, double const&)
+	_ZN4Math3SinERdRKd @ 540 NONAME ; Math::Sin(double&, double const&)
+	_ZN4Math3TanERdRKd @ 541 NONAME ; Math::Tan(double&, double const&)
+	_ZN4Math4ACosERdRKd @ 542 NONAME ; Math::ACos(double&, double const&)
+	_ZN4Math4ASinERdRKd @ 543 NONAME ; Math::ASin(double&, double const&)
+	_ZN4Math4ATanERdRKd @ 544 NONAME ; Math::ATan(double&, double const&)
+	_ZN4Math4ATanERdRKdS2_ @ 545 NONAME ; Math::ATan(double&, double const&, double const&)
+	_ZN4Math4FracERdRKd @ 546 NONAME ; Math::Frac(double&, double const&)
+	_ZN4Math4PolyEdPK5SPoly @ 547 NONAME ; Math::Poly(double, SPoly const*)
+	_ZN4Math4RandERx @ 548 NONAME ; Math::Rand(long long&)
+	_ZN4Math4SqrtERdRKd @ 549 NONAME ; Math::Sqrt(double&, double const&)
+	_ZN4Math5FRandERx @ 550 NONAME ; Math::FRand(long long&)
+	_ZN4Math5IsNaNERKd @ 551 NONAME ; Math::IsNaN(double const&)
+	_ZN4Math5Mul64ExxRxRy @ 552 NONAME ; Math::Mul64(long long, long long, long long&, unsigned long long&)
+	_ZN4Math5PolyXER6TRealXRKS0_iPS2_ @ 553 NONAME ; Math::PolyX(TRealX&, TRealX const&, int, TRealX const*)
+	_ZN4Math5Pow10ERdi @ 554 NONAME ; Math::Pow10(double&, int)
+	_ZN4Math5RoundERdRKdi @ 555 NONAME ; Math::Round(double&, double const&, int)
+	_ZN4Math6IsZeroERKd @ 556 NONAME ; Math::IsZero(double const&)
+	_ZN4Math6RandomEv @ 557 NONAME ; Math::Random()
+	_ZN4Math6SetNaNERd @ 558 NONAME ; Math::SetNaN(double&)
+	_ZN4Math6UMul64EyyRyS0_ @ 559 NONAME ; Math::UMul64(unsigned long long, unsigned long long, unsigned long long&, unsigned long long&)
+	_ZN4Math7SetZeroERdi @ 560 NONAME ; Math::SetZero(double&, int)
+	_ZN4Math8DivMod64ExxRx @ 561 NONAME ; Math::DivMod64(long long, long long, long long&)
+	_ZN4Math8IsFiniteERKd @ 562 NONAME ; Math::IsFinite(double const&)
+	_ZN4Math9UDivMod64EyyRy @ 563 NONAME ; Math::UDivMod64(unsigned long long, unsigned long long, unsigned long long&)
+	_ZN4Mem14CopyEPvPKvi @ 564 NONAME ; Mem1::Copy(void*, void const*, int)
+	_ZN4Mem14FillEPvi5TChar @ 565 NONAME ; Mem1::Fill(void*, int, TChar)
+	_ZN4Mem14MoveEPvPKvi @ 566 NONAME ; Mem1::Move(void*, void const*, int)
+	_ZN4TKeyC1Ei11TKeyCmpText @ 567 NONAME ; TKey::TKey(int, TKeyCmpText)
+	_ZN4TKeyC1Ei11TKeyCmpTexti @ 568 NONAME ; TKey::TKey(int, TKeyCmpText, int)
+	_ZN4TKeyC1Ei14TKeyCmpNumeric @ 569 NONAME ; TKey::TKey(int, TKeyCmpNumeric)
+	_ZN4TKeyC1Ev @ 570 NONAME ; TKey::TKey()
+	_ZN4TKeyC2Ei11TKeyCmpText @ 571 NONAME ; TKey::TKey(int, TKeyCmpText)
+	_ZN4TKeyC2Ei11TKeyCmpTexti @ 572 NONAME ; TKey::TKey(int, TKeyCmpText, int)
+	_ZN4TKeyC2Ei14TKeyCmpNumeric @ 573 NONAME ; TKey::TKey(int, TKeyCmpNumeric)
+	_ZN4TKeyC2Ev @ 574 NONAME ; TKey::TKey()
+	_ZN4Time10IsLeapYearEi @ 575 NONAME ; Time::IsLeapYear(int)
+	_ZN4Time11DaysInMonthEi6TMonth @ 576 NONAME ; Time::DaysInMonth(int, TMonth)
+	_ZN4Time13LeapYearsUpToEi @ 577 NONAME ; Time::LeapYearsUpTo(int)
+	_ZN4Time8MaxTTimeEv @ 578 NONAME ; Time::MaxTTime()
+	_ZN4Time8MinTTimeEv @ 579 NONAME ; Time::MinTTime()
+	_ZN4Time9NullTTimeEv @ 580 NONAME ; Time::NullTTime()
+	_ZN4User10JustInTimeEv @ 581 NONAME ; User::JustInTime()
+	_ZN4User10LockPeriodEv @ 582 NONAME ; User::LockPeriod()
+	_ZN4User11CommandLineER6TDes16 @ 583 NONAME ; User::CommandLine(TDes16&)
+	_ZN4User11FastCounterEv @ 584 NONAME ; User::FastCounter()
+	_ZN4User11InitProcessEv @ 585 NONAME ; User::InitProcess()
+	_ZN4User11LeaveIfNullEPv @ 586 NONAME ; User::LeaveIfNull(void*)
+	_ZN4User11SetCriticalENS_9TCriticalE @ 587 NONAME ; User::SetCritical(User::TCritical)
+	_ZN4User11SetHomeTimeERK5TTime @ 588 NONAME ; User::SetHomeTime(TTime const&)
+	_ZN4User11TrapHandlerEv @ 589 NONAME ; User::TrapHandler()
+	_ZN4User12AfterHighResE27TTimeIntervalMicroSeconds32 @ 590 NONAME ; User::AfterHighRes(TTimeIntervalMicroSeconds32)
+	_ZN4User12BinarySearchEiRK4TKeyRi @ 591 NONAME ; User::BinarySearch(int, TKey const&, int&)
+	_ZN4User12IsRomAddressERiPv @ 592 NONAME ; User::IsRomAddress(int&, void*)
+	_ZN4User12LeaveIfErrorEi @ 593 NONAME ; User::LeaveIfError(int)
+	_ZN4User12SetDebugMaskEm @ 594 NONAME ; User::SetDebugMask(unsigned long)
+	_ZN4User12StringLengthEPKh @ 595 NONAME ; User::StringLength(unsigned char const*)
+	_ZN4User12StringLengthEPKt @ 596 NONAME ; User::StringLength(unsigned short const*)
+	_ZN4User12ValidateNameERK7TDesC16 @ 597 NONAME ; User::ValidateName(TDesC16 const&)
+	_ZN4User12__DbgMarkEndEii @ 598 NONAME ; User::__DbgMarkEnd(int, int)
+	_ZN4User13LeaveNoMemoryEv @ 599 NONAME ; User::LeaveNoMemory()
+	_ZN4User13SetJustInTimeEi @ 600 NONAME ; User::SetJustInTime(int)
+	_ZN4User14InactivityTimeEv @ 601 NONAME ; User::InactivityTime()
+	_ZN4User14RaiseExceptionE8TExcType @ 602 NONAME ; User::RaiseException(TExcType)
+	_ZN4User14SetTrapHandlerEP12TTrapHandler @ 603 NONAME ; User::SetTrapHandler(TTrapHandler*)
+	_ZN4User14WaitForRequestER14TRequestStatus @ 604 NONAME ; User::WaitForRequest(TRequestStatus&)
+	_ZN4User14WaitForRequestER14TRequestStatusS1_ @ 605 NONAME ; User::WaitForRequest(TRequestStatus&, TRequestStatus&)
+	_ZN4User14__DbgMarkCheckEiiiPKhi @ 606 NONAME ; User::__DbgMarkCheck(int, int, int, unsigned char const*, int)
+	_ZN4User14__DbgMarkStartEi @ 607 NONAME ; User::__DbgMarkStart(int)
+	_ZN4User15CountAllocCellsERi @ 608 NONAME ; User::CountAllocCells(int&)
+	_ZN4User15CountAllocCellsEv @ 609 NONAME ; User::CountAllocCells()
+	_ZN4User15CreatorSecureIdEv @ 610 NONAME ; User::CreatorSecureId()
+	_ZN4User15GetDesParameterEiR5TDes8 @ 611 NONAME ; User::GetDesParameter(int, TDes8&)
+	_ZN4User15GetDesParameterEiR6TDes16 @ 612 NONAME ; User::GetDesParameter(int, TDes16&)
+	_ZN4User15HandleExceptionEPv @ 613 NONAME ; User::HandleException(void*)
+	_ZN4User15ParameterLengthEi @ 614 NONAME ; User::ParameterLength(int)
+	_ZN4User15PriorityControlEv @ 615 NONAME ; User::PriorityControl()
+	_ZN4User15ProcessCriticalEv @ 616 NONAME ; User::ProcessCritical()
+	_ZN4User15RequestCompleteERP14TRequestStatusi @ 617 NONAME ; User::RequestComplete(TRequestStatus*&, int)
+	_ZN4User15SwitchAllocatorEP10RAllocator @ 618 NONAME ; User::SwitchAllocator(RAllocator*)
+	_ZN4User16CompressAllHeapsEv @ 619 NONAME ; User::CompressAllHeaps()
+	_ZN4User16ExceptionHandlerEv @ 620 NONAME ; User::ExceptionHandler()
+	_ZN4User16GetTIntParameterEiRi @ 621 NONAME ; User::GetTIntParameter(int, int&)
+	_ZN4User17CommandLineLengthEv @ 622 NONAME ; User::CommandLineLength()
+	_ZN4User17FreeLogicalDeviceERK7TDesC16 @ 623 NONAME ; User::FreeLogicalDevice(TDesC16 const&)
+	_ZN4User17LoadLogicalDeviceERK7TDesC16 @ 624 NONAME ; User::LoadLogicalDevice(TDesC16 const&)
+	_ZN4User17SetCurrencySymbolERK7TDesC16 @ 625 NONAME ; User::SetCurrencySymbol(TDesC16 const&)
+	_ZN4User17WaitForAnyRequestEv @ 626 NONAME ; User::WaitForAnyRequest()
+	_ZN4User17__DbgSetAllocFailEiN10RAllocator10TAllocFailEi @ 627 NONAME ; User::__DbgSetAllocFail(int, RAllocator::TAllocFail, int)
+	_ZN4User18FreePhysicalDeviceERK7TDesC16 @ 628 NONAME ; User::FreePhysicalDevice(TDesC16 const&)
+	_ZN4User18IsExceptionHandledE8TExcType @ 629 NONAME ; User::IsExceptionHandled(TExcType)
+	_ZN4User18LoadPhysicalDeviceERK7TDesC16 @ 630 NONAME ; User::LoadPhysicalDevice(TDesC16 const&)
+	_ZN4User18SetPriorityControlEi @ 631 NONAME ; User::SetPriorityControl(int)
+	_ZN4User18SetProcessCriticalENS_9TCriticalE @ 632 NONAME ; User::SetProcessCritical(User::TCritical)
+	_ZN4User19ModifyExceptionMaskEmm @ 633 NONAME ; User::ModifyExceptionMask(unsigned long, unsigned long)
+	_ZN4User19ResetInactivityTimeEv @ 634 NONAME ; User::ResetInactivityTime()
+	_ZN4User19SetExceptionHandlerEPFv8TExcTypeEm @ 635 NONAME ; User::SetExceptionHandler(void (*)(TExcType), unsigned long)
+	_ZN4User20MachineConfigurationER5TDes8Ri @ 636 NONAME ; User::MachineConfiguration(TDes8&, int&)
+	_ZN4User21QueryVersionSupportedERK8TVersionS2_ @ 637 NONAME ; User::QueryVersionSupported(TVersion const&, TVersion const&)
+	_ZN4User23SetMachineConfigurationERK6TDesC8 @ 638 NONAME ; User::SetMachineConfiguration(TDesC8 const&)
+	_ZN4User2AtERK5TTime @ 639 NONAME ; User::At(TTime const&)
+	_ZN4User4BeepEi27TTimeIntervalMicroSeconds32 @ 640 NONAME ; User::Beep(int, TTimeIntervalMicroSeconds32)
+	_ZN4User4ExitEi @ 641 NONAME ; User::Exit(int)
+	_ZN4User4FoldEj @ 642 NONAME ; User::Fold(unsigned int)
+	_ZN4User4FoldEji @ 643 NONAME ; User::Fold(unsigned int, int)
+	_ZN4User4FreeEPv @ 644 NONAME ; User::Free(void*)
+	_ZN4User5AfterE27TTimeIntervalMicroSeconds32 @ 645 NONAME ; User::After(TTimeIntervalMicroSeconds32)
+	_ZN4User5AllocEi @ 646 NONAME ; User::Alloc(int)
+	_ZN4User5CheckEv @ 647 NONAME ; User::Check()
+	_ZN4User5FreeZERPv @ 648 NONAME ; User::FreeZ(void*&)
+	_ZN4User5LeaveEi @ 649 NONAME ; User::Leave(int)
+	_ZN4User5PanicERK7TDesC16i @ 650 NONAME ; User::Panic(TDesC16 const&, int)
+	_ZN4User6AllocLEi @ 651 NONAME ; User::AllocL(int)
+	_ZN4User6AllocZEi @ 652 NONAME ; User::AllocZ(int)
+	_ZN4User7AllocLCEi @ 653 NONAME ; User::AllocLC(int)
+	_ZN4User7AllocZLEi @ 654 NONAME ; User::AllocZL(int)
+	_ZN4User7CollateEj @ 655 NONAME ; User::Collate(unsigned int)
+	_ZN4User7ReAllocEPvii @ 656 NONAME ; User::ReAlloc(void*, int, int)
+	_ZN4User7SafeDecERi @ 657 NONAME ; User::SafeDec(int&)
+	_ZN4User7SafeIncERi @ 658 NONAME ; User::SafeInc(int&)
+	_ZN4User7VersionEv @ 659 NONAME ; User::Version()
+	_ZN4User8AllocLenEPKv @ 660 NONAME ; User::AllocLen(void const*)
+	_ZN4User8CriticalEv @ 661 NONAME ; User::Critical()
+	_ZN4User8LanguageEv @ 662 NONAME ; User::Language()
+	_ZN4User8ReAllocLEPvii @ 663 NONAME ; User::ReAllocL(void*, int, int)
+	_ZN4User9AllocSizeERi @ 664 NONAME ; User::AllocSize(int&)
+	_ZN4User9AllocatorEv @ 665 NONAME ; User::Allocator()
+	_ZN4User9AvailableERi @ 666 NONAME ; User::Available(int&)
+	_ZN4User9IMB_RangeEPvS0_ @ 667 NONAME ; User::IMB_Range(void*, void*)
+	_ZN4User9InfoPrintERK7TDesC16 @ 668 NONAME ; User::InfoPrint(TDesC16 const&)
+	_ZN4User9InvariantEv @ 669 NONAME ; User::Invariant()
+	_ZN4User9LockedDecERi @ 670 NONAME ; User::LockedDec(int&)
+	_ZN4User9LockedIncERi @ 671 NONAME ; User::LockedInc(int&)
+	_ZN4User9LowerCaseEj @ 672 NONAME ; User::LowerCase(unsigned int)
+	_ZN4User9QuickSortEiRK4TKeyRK5TSwap @ 673 NONAME ; User::QuickSort(int, TKey const&, TSwap const&)
+	_ZN4User9TickCountEv @ 674 NONAME ; User::TickCount()
+	_ZN4User9TitleCaseEj @ 675 NONAME ; User::TitleCase(unsigned int)
+	_ZN4User9UpperCaseEj @ 676 NONAME ; User::UpperCase(unsigned int)
+	_ZN5CBase6DeleteEPS_ @ 677 NONAME ; CBase::Delete(CBase*)
+	_ZN5CIdle3NewEi @ 678 NONAME ; CIdle::New(int)
+	_ZN5CIdle4NewLEi @ 679 NONAME ; CIdle::NewL(int)
+	_ZN5CIdle4RunLEv @ 680 NONAME ; CIdle::RunL()
+	_ZN5CIdle5StartE9TCallBack @ 681 NONAME ; CIdle::Start(TCallBack)
+	_ZN5CIdle8DoCancelEv @ 682 NONAME ; CIdle::DoCancel()
+	_ZN5CIdleC1Ei @ 683 NONAME ; CIdle::CIdle(int)
+	_ZN5CIdleC2Ei @ 684 NONAME ; CIdle::CIdle(int)
+	_ZN5CIdleD0Ev @ 685 NONAME ; CIdle::~CIdle()
+	_ZN5CIdleD1Ev @ 686 NONAME ; CIdle::~CIdle()
+	_ZN5CIdleD2Ev @ 687 NONAME ; CIdle::~CIdle()
+	_ZN5Power18EnableWakeupEventsE11TPowerState @ 688 NONAME ; Power::EnableWakeupEvents(TPowerState)
+	_ZN5Power19DisableWakeupEventsEv @ 689 NONAME ; Power::DisableWakeupEvents()
+	_ZN5Power29CancelWakeupEventNotificationEv @ 690 NONAME ; Power::CancelWakeupEventNotification()
+	_ZN5Power30RequestWakeupEventNotificationER14TRequestStatus @ 691 NONAME ; Power::RequestWakeupEventNotification(TRequestStatus&)
+	_ZN5Power9PowerDownEv @ 692 NONAME ; Power::PowerDown()
+	_ZN5RHeap13DebugFunctionEiPvS0_ @ 693 NONAME ; RHeap::DebugFunction(int, void*, void*)
+	_ZN5RHeap4FreeEPv @ 694 NONAME ; RHeap::Free(void*)
+	_ZN5RHeap5AllocEi @ 695 NONAME ; RHeap::Alloc(int)
+	_ZN5RHeap5ResetEv @ 696 NONAME ; RHeap::Reset()
+	_ZN5RHeap7ReAllocEPvii @ 697 NONAME ; RHeap::ReAlloc(void*, int, int)
+	_ZN5RHeap8CompressEv @ 698 NONAME ; RHeap::Compress()
+	_ZN5RHeapC1Eiii @ 699 NONAME ; RHeap::RHeap(int, int, int)
+	_ZN5RHeapC1Eiiiiiii @ 700 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
+	_ZN5RHeapC2Eiii @ 701 NONAME ; RHeap::RHeap(int, int, int)
+	_ZN5RHeapC2Eiiiiiii @ 702 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
+	_ZN5RHeapnwEjPv @ 703 NONAME ; RHeap::operator new(unsigned int, void*)
+	_ZN5RTest3EndEv @ 704 NONAME ; RTest::End()
+	_ZN5RTest4NextERK7TDesC16 @ 705 NONAME ; RTest::Next(TDesC16 const&)
+	_ZN5RTest5CloseEv @ 706 NONAME ; RTest::Close()
+	_ZN5RTest5GetchEv @ 707 NONAME ; RTest::Getch()
+	_ZN5RTest5PanicE11TRefByValueIK7TDesC16Ez @ 708 NONAME ; RTest::Panic(TRefByValue<TDesC16 const>, ...)
+	_ZN5RTest5PanicEi11TRefByValueIK7TDesC16Ez @ 709 NONAME ; RTest::Panic(int, TRefByValue<TDesC16 const>, ...)
+	_ZN5RTest5StartERK7TDesC16 @ 710 NONAME ; RTest::Start(TDesC16 const&)
+	_ZN5RTest5TitleEv @ 711 NONAME ; RTest::Title()
+	_ZN5RTest6PrintfE11TRefByValueIK7TDesC16Ez @ 712 NONAME ; RTest::Printf(TRefByValue<TDesC16 const>, ...)
+	_ZN5RTestC1ERK7TDesC16 @ 713 NONAME ; RTest::RTest(TDesC16 const&)
+	_ZN5RTestC1ERK7TDesC16i @ 714 NONAME ; RTest::RTest(TDesC16 const&, int)
+	_ZN5RTestC1ERK7TDesC16iPKt @ 715 NONAME ; RTest::RTest(TDesC16 const&, int, unsigned short const*)
+	_ZN5RTestC2ERK7TDesC16 @ 716 NONAME ; RTest::RTest(TDesC16 const&)
+	_ZN5RTestC2ERK7TDesC16i @ 717 NONAME ; RTest::RTest(TDesC16 const&, int)
+	_ZN5RTestC2ERK7TDesC16iPKt @ 718 NONAME ; RTest::RTest(TDesC16 const&, int, unsigned short const*)
+	_ZN5RTestclEi @ 719 NONAME ; RTest::operator()(int)
+	_ZN5RTestclEii @ 720 NONAME ; RTest::operator()(int, int)
+	_ZN5RTestclEiiPKt @ 721 NONAME ; RTest::operator()(int, int, unsigned short const*)
+	_ZN5TChar7ComposeERjRK7TDesC16 @ 722 NONAME ; TChar::Compose(unsigned int&, TDesC16 const&)
+	_ZN5TDes810AppendFillE5TChari @ 723 NONAME ; TDes8::AppendFill(TChar, int)
+	_ZN5TDes810CapitalizeEv @ 724 NONAME ; TDes8::Capitalize()
+	_ZN5TDes810FormatListERK6TDesC8St9__va_list @ 725 NONAME ; TDes8::FormatList(TDesC8 const&, std::__va_list)
+	_ZN5TDes811AppendNumUCEy6TRadix @ 726 NONAME ; TDes8::AppendNumUC(unsigned long long, TRadix)
+	_ZN5TDes812AppendFormatE11TRefByValueIK6TDesC8EP13TDes8Overflowz @ 727 NONAME ; TDes8::AppendFormat(TRefByValue<TDesC8 const>, TDes8Overflow*, ...)
+	_ZN5TDes812AppendFormatE11TRefByValueIK6TDesC8Ez @ 728 NONAME ; TDes8::AppendFormat(TRefByValue<TDesC8 const>, ...)
+	_ZN5TDes813AppendJustifyEPKhi6TAlign5TChar @ 729 NONAME ; TDes8::AppendJustify(unsigned char const*, int, TAlign, TChar)
+	_ZN5TDes813AppendJustifyEPKhii6TAlign5TChar @ 730 NONAME ; TDes8::AppendJustify(unsigned char const*, int, int, TAlign, TChar)
+	_ZN5TDes813AppendJustifyERK6TDesC8i6TAlign5TChar @ 731 NONAME ; TDes8::AppendJustify(TDesC8 const&, int, TAlign, TChar)
+	_ZN5TDes813AppendJustifyERK6TDesC8ii6TAlign5TChar @ 732 NONAME ; TDes8::AppendJustify(TDesC8 const&, int, int, TAlign, TChar)
+	_ZN5TDes813NumFixedWidthEj6TRadixi @ 733 NONAME ; TDes8::NumFixedWidth(unsigned int, TRadix, int)
+	_ZN5TDes813ZeroTerminateEv @ 734 NONAME ; TDes8::ZeroTerminate()
+	_ZN5TDes815NumFixedWidthUCEj6TRadixi @ 735 NONAME ; TDes8::NumFixedWidthUC(unsigned int, TRadix, int)
+	_ZN5TDes816AppendFormatListERK6TDesC8St9__va_listP13TDes8Overflow @ 736 NONAME ; TDes8::AppendFormatList(TDesC8 const&, std::__va_list, TDes8Overflow*)
+	_ZN5TDes819AppendNumFixedWidthEj6TRadixi @ 737 NONAME ; TDes8::AppendNumFixedWidth(unsigned int, TRadix, int)
+	_ZN5TDes821AppendNumFixedWidthUCEj6TRadixi @ 738 NONAME ; TDes8::AppendNumFixedWidthUC(unsigned int, TRadix, int)
+	_ZN5TDes83NumEx @ 739 NONAME ; TDes8::Num(long long)
+	_ZN5TDes83NumEy6TRadix @ 740 NONAME ; TDes8::Num(unsigned long long, TRadix)
+	_ZN5TDes83NumEdRK11TRealFormat @ 741 NONAME ; TDes8::Num(double, TRealFormat const&)
+	_ZN5TDes84CopyEPKh @ 742 NONAME ; TDes8::Copy(unsigned char const*)
+	_ZN5TDes84CopyEPKhi @ 743 NONAME ; TDes8::Copy(unsigned char const*, int)
+	_ZN5TDes84CopyERK6TDesC8 @ 744 NONAME ; TDes8::Copy(TDesC8 const&)
+	_ZN5TDes84CopyERK7TDesC16 @ 745 NONAME ; TDes8::Copy(TDesC16 const&)
+	_ZN5TDes84FillE5TChar @ 746 NONAME ; TDes8::Fill(TChar)
+	_ZN5TDes84FillE5TChari @ 747 NONAME ; TDes8::Fill(TChar, int)
+	_ZN5TDes84FoldEv @ 748 NONAME ; TDes8::Fold()
+	_ZN5TDes84PtrZEv @ 749 NONAME ; TDes8::PtrZ()
+	_ZN5TDes84SwapERS_ @ 750 NONAME ; TDes8::Swap(TDes8&)
+	_ZN5TDes84TrimEv @ 751 NONAME ; TDes8::Trim()
+	_ZN5TDes84ZeroEv @ 752 NONAME ; TDes8::Zero()
+	_ZN5TDes85CopyCERK6TDesC8 @ 753 NONAME ; TDes8::CopyC(TDesC8 const&)
+	_ZN5TDes85CopyFERK6TDesC8 @ 754 NONAME ; TDes8::CopyF(TDesC8 const&)
+	_ZN5TDes85FillZEi @ 755 NONAME ; TDes8::FillZ(int)
+	_ZN5TDes85FillZEv @ 756 NONAME ; TDes8::FillZ()
+	_ZN5TDes85NumUCEy6TRadix @ 757 NONAME ; TDes8::NumUC(unsigned long long, TRadix)
+	_ZN5TDes86AppendE5TChar @ 758 NONAME ; TDes8::Append(TChar)
+	_ZN5TDes86AppendEPKhi @ 759 NONAME ; TDes8::Append(unsigned char const*, int)
+	_ZN5TDes86AppendERK6TDesC8 @ 760 NONAME ; TDes8::Append(TDesC8 const&)
+	_ZN5TDes86AppendERK7TDesC16 @ 761 NONAME ; TDes8::Append(TDesC16 const&)
+	_ZN5TDes86CopyCPERK6TDesC8 @ 762 NONAME ; TDes8::CopyCP(TDesC8 const&)
+	_ZN5TDes86CopyLCERK6TDesC8 @ 763 NONAME ; TDes8::CopyLC(TDesC8 const&)
+	_ZN5TDes86CopyUCERK6TDesC8 @ 764 NONAME ; TDes8::CopyUC(TDesC8 const&)
+	_ZN5TDes86DeleteEii @ 765 NONAME ; TDes8::Delete(int, int)
+	_ZN5TDes86ExpandEv @ 766 NONAME ; TDes8::Expand()
+	_ZN5TDes86FormatE11TRefByValueIK6TDesC8Ez @ 767 NONAME ; TDes8::Format(TRefByValue<TDesC8 const>, ...)
+	_ZN5TDes86InsertEiRK6TDesC8 @ 768 NONAME ; TDes8::Insert(int, TDesC8 const&)
+	_ZN5TDes86RepeatEPKhi @ 769 NONAME ; TDes8::Repeat(unsigned char const*, int)
+	_ZN5TDes86RepeatERK6TDesC8 @ 770 NONAME ; TDes8::Repeat(TDesC8 const&)
+	_ZN5TDes86SetMaxEv @ 771 NONAME ; TDes8::SetMax()
+	_ZN5TDes87CollateEv @ 772 NONAME ; TDes8::Collate()
+	_ZN5TDes87JustifyERK6TDesC8i6TAlign5TChar @ 773 NONAME ; TDes8::Justify(TDesC8 const&, int, TAlign, TChar)
+	_ZN5TDes87ReplaceEiiRK6TDesC8 @ 774 NONAME ; TDes8::Replace(int, int, TDesC8 const&)
+	_ZN5TDes87TrimAllEv @ 775 NONAME ; TDes8::TrimAll()
+	_ZN5TDes88CollapseEv @ 776 NONAME ; TDes8::Collapse()
+	_ZN5TDes88TrimLeftEv @ 777 NONAME ; TDes8::TrimLeft()
+	_ZN5TDes89AppendNumEx @ 778 NONAME ; TDes8::AppendNum(long long)
+	_ZN5TDes89AppendNumEy6TRadix @ 779 NONAME ; TDes8::AppendNum(unsigned long long, TRadix)
+	_ZN5TDes89AppendNumEdRK11TRealFormat @ 780 NONAME ; TDes8::AppendNum(double, TRealFormat const&)
+	_ZN5TDes89LowerCaseEv @ 781 NONAME ; TDes8::LowerCase()
+	_ZN5TDes89SetLengthEi @ 782 NONAME ; TDes8::SetLength(int)
+	_ZN5TDes89TrimRightEv @ 783 NONAME ; TDes8::TrimRight()
+	_ZN5TDes89UpperCaseEv @ 784 NONAME ; TDes8::UpperCase()
+	_ZN5TLex810BoundedValERx6TRadixRKx @ 785 NONAME ; TLex8::BoundedVal(long long&, TRadix, long long const&)
+	_ZN5TLex810BoundedValERxRKx @ 786 NONAME ; TLex8::BoundedVal(long long&, long long const&)
+	_ZN5TLex810BoundedValERli @ 787 NONAME ; TLex8::BoundedVal(long&, int)
+	_ZN5TLex810BoundedValERm6TRadixj @ 788 NONAME ; TLex8::BoundedVal(unsigned long&, TRadix, unsigned int)
+	_ZN5TLex811SkipAndMarkEiR9TLexMark8 @ 789 NONAME ; TLex8::SkipAndMark(int, TLexMark8&)
+	_ZN5TLex811UnGetToMarkE9TLexMark8 @ 790 NONAME ; TLex8::UnGetToMark(TLexMark8)
+	_ZN5TLex814SkipCharactersEv @ 791 NONAME ; TLex8::SkipCharacters()
+	_ZN5TLex816SkipSpaceAndMarkER9TLexMark8 @ 792 NONAME ; TLex8::SkipSpaceAndMark(TLexMark8&)
+	_ZN5TLex83GetEv @ 793 NONAME ; TLex8::Get()
+	_ZN5TLex83IncEi @ 794 NONAME ; TLex8::Inc(int)
+	_ZN5TLex83IncEv @ 795 NONAME ; TLex8::Inc()
+	_ZN5TLex83ValERx @ 796 NONAME ; TLex8::Val(long long&)
+	_ZN5TLex83ValERx6TRadix @ 797 NONAME ; TLex8::Val(long long&, TRadix)
+	_ZN5TLex83ValERa @ 798 NONAME ; TLex8::Val(signed char&)
+	_ZN5TLex83ValERd @ 799 NONAME ; TLex8::Val(double&)
+	_ZN5TLex83ValERd5TChar @ 800 NONAME ; TLex8::Val(double&, TChar)
+	_ZN5TLex83ValERf @ 801 NONAME ; TLex8::Val(float&)
+	_ZN5TLex83ValERf5TChar @ 802 NONAME ; TLex8::Val(float&, TChar)
+	_ZN5TLex83ValERh6TRadix @ 803 NONAME ; TLex8::Val(unsigned char&, TRadix)
+	_ZN5TLex83ValERl @ 804 NONAME ; TLex8::Val(long&)
+	_ZN5TLex83ValERm6TRadix @ 805 NONAME ; TLex8::Val(unsigned long&, TRadix)
+	_ZN5TLex83ValERs @ 806 NONAME ; TLex8::Val(short&)
+	_ZN5TLex83ValERt6TRadix @ 807 NONAME ; TLex8::Val(unsigned short&, TRadix)
+	_ZN5TLex85UnGetEv @ 808 NONAME ; TLex8::UnGet()
+	_ZN5TLex86AssignEPKh @ 809 NONAME ; TLex8::Assign(unsigned char const*)
+	_ZN5TLex86AssignERK6TDesC8 @ 810 NONAME ; TLex8::Assign(TDesC8 const&)
+	_ZN5TLex89NextTokenEv @ 811 NONAME ; TLex8::NextToken()
+	_ZN5TLex89SkipSpaceEv @ 812 NONAME ; TLex8::SkipSpace()
+	_ZN5TLex8C1Ev @ 813 NONAME ; TLex8::TLex8()
+	_ZN5TLex8C2Ev @ 814 NONAME ; TLex8::TLex8()
+	_ZN5TPtr8C1EPhi @ 815 NONAME ; TPtr8::TPtr8(unsigned char*, int)
+	_ZN5TPtr8C1EPhii @ 816 NONAME ; TPtr8::TPtr8(unsigned char*, int, int)
+	_ZN5TPtr8C1ER10TBufCBase8i @ 817 NONAME ; TPtr8::TPtr8(TBufCBase8&, int)
+	_ZN5TPtr8C2EPhi @ 818 NONAME ; TPtr8::TPtr8(unsigned char*, int)
+	_ZN5TPtr8C2EPhii @ 819 NONAME ; TPtr8::TPtr8(unsigned char*, int, int)
+	_ZN5TPtr8C2ER10TBufCBase8i @ 820 NONAME ; TPtr8::TPtr8(TBufCBase8&, int)
+	_ZN5TRect12BoundingRectERKS_ @ 821 NONAME ; TRect::BoundingRect(TRect const&)
+	_ZN5TRect12IntersectionERKS_ @ 822 NONAME ; TRect::Intersection(TRect const&)
+	_ZN5TRect4GrowERK5TSize @ 823 NONAME ; TRect::Grow(TSize const&)
+	_ZN5TRect4GrowEii @ 824 NONAME ; TRect::Grow(int, int)
+	_ZN5TRect4MoveERK6TPoint @ 825 NONAME ; TRect::Move(TPoint const&)
+	_ZN5TRect4MoveEii @ 826 NONAME ; TRect::Move(int, int)
+	_ZN5TRect6ResizeERK5TSize @ 827 NONAME ; TRect::Resize(TSize const&)
+	_ZN5TRect6ResizeEii @ 828 NONAME ; TRect::Resize(int, int)
+	_ZN5TRect6ShrinkERK5TSize @ 829 NONAME ; TRect::Shrink(TSize const&)
+	_ZN5TRect6ShrinkEii @ 830 NONAME ; TRect::Shrink(int, int)
+	_ZN5TRect7SetRectERK6TPointRK5TSize @ 831 NONAME ; TRect::SetRect(TPoint const&, TSize const&)
+	_ZN5TRect7SetRectERK6TPointS2_ @ 832 NONAME ; TRect::SetRect(TPoint const&, TPoint const&)
+	_ZN5TRect7SetRectEiiii @ 833 NONAME ; TRect::SetRect(int, int, int, int)
+	_ZN5TRect7SetSizeERK5TSize @ 834 NONAME ; TRect::SetSize(TSize const&)
+	_ZN5TRect8SetWidthEi @ 835 NONAME ; TRect::SetWidth(int)
+	_ZN5TRect9NormalizeEv @ 836 NONAME ; TRect::Normalize()
+	_ZN5TRect9SetHeightEi @ 837 NONAME ; TRect::SetHeight(int)
+	_ZN5TRectC1ERK5TSize @ 838 NONAME ; TRect::TRect(TSize const&)
+	_ZN5TRectC1ERK6TPointRK5TSize @ 839 NONAME ; TRect::TRect(TPoint const&, TSize const&)
+	_ZN5TRectC1ERK6TPointS2_ @ 840 NONAME ; TRect::TRect(TPoint const&, TPoint const&)
+	_ZN5TRectC1Eiiii @ 841 NONAME ; TRect::TRect(int, int, int, int)
+	_ZN5TRectC1Ev @ 842 NONAME ; TRect::TRect()
+	_ZN5TRectC2ERK5TSize @ 843 NONAME ; TRect::TRect(TSize const&)
+	_ZN5TRectC2ERK6TPointRK5TSize @ 844 NONAME ; TRect::TRect(TPoint const&, TSize const&)
+	_ZN5TRectC2ERK6TPointS2_ @ 845 NONAME ; TRect::TRect(TPoint const&, TPoint const&)
+	_ZN5TRectC2Eiiii @ 846 NONAME ; TRect::TRect(int, int, int, int)
+	_ZN5TRectC2Ev @ 847 NONAME ; TRect::TRect()
+	_ZN5TSize7SetSizeEii @ 848 NONAME ; TSize::SetSize(int, int)
+	_ZN5TSizemIERK6TPoint @ 849 NONAME ; TSize::operator-=(TPoint const&)
+	_ZN5TSizemIERKS_ @ 850 NONAME ; TSize::operator-=(TSize const&)
+	_ZN5TSizepLERK6TPoint @ 851 NONAME ; TSize::operator+=(TPoint const&)
+	_ZN5TSizepLERKS_ @ 852 NONAME ; TSize::operator+=(TSize const&)
+	_ZN5TSwapC1Ev @ 853 NONAME ; TSwap::TSwap()
+	_ZN5TSwapC2Ev @ 854 NONAME ; TSwap::TSwap()
+	_ZN5TTime13UniversalTimeEv @ 855 NONAME ; TTime::UniversalTime()
+	_ZN5TTime19RoundUpToNextMinuteEv @ 856 NONAME ; TTime::RoundUpToNextMinute()
+	_ZN5TTime3SetERK7TDesC16 @ 857 NONAME ; TTime::Set(TDesC16 const&)
+	_ZN5TTime5ParseERK7TDesC16i @ 858 NONAME ; TTime::Parse(TDesC16 const&, int)
+	_ZN5TTime8HomeTimeEv @ 859 NONAME ; TTime::HomeTime()
+	_ZN5TTimeC1ERK7TDesC16 @ 860 NONAME ; TTime::TTime(TDesC16 const&)
+	_ZN5TTimeC1ERK9TDateTime @ 861 NONAME ; TTime::TTime(TDateTime const&)
+	_ZN5TTimeC2ERK7TDesC16 @ 862 NONAME ; TTime::TTime(TDesC16 const&)
+	_ZN5TTimeC2ERK9TDateTime @ 863 NONAME ; TTime::TTime(TDateTime const&)
+	_ZN5TTimeaSERK9TDateTime @ 864 NONAME ; TTime::operator=(TDateTime const&)
+	_ZN5TTimemIE17TTimeIntervalDays @ 865 NONAME ; TTime::operator-=(TTimeIntervalDays)
+	_ZN5TTimemIE18TTimeIntervalHours @ 866 NONAME ; TTime::operator-=(TTimeIntervalHours)
+	_ZN5TTimemIE18TTimeIntervalYears @ 867 NONAME ; TTime::operator-=(TTimeIntervalYears)
+	_ZN5TTimemIE19TTimeIntervalMonths @ 868 NONAME ; TTime::operator-=(TTimeIntervalMonths)
+	_ZN5TTimemIE20TTimeIntervalMinutes @ 869 NONAME ; TTime::operator-=(TTimeIntervalMinutes)
+	_ZN5TTimemIE20TTimeIntervalSeconds @ 870 NONAME ; TTime::operator-=(TTimeIntervalSeconds)
+	_ZN5TTimemIE25TTimeIntervalMicroSeconds @ 871 NONAME ; TTime::operator-=(TTimeIntervalMicroSeconds)
+	_ZN5TTimemIE27TTimeIntervalMicroSeconds32 @ 872 NONAME ; TTime::operator-=(TTimeIntervalMicroSeconds32)
+	_ZN5TTimepLE17TTimeIntervalDays @ 873 NONAME ; TTime::operator+=(TTimeIntervalDays)
+	_ZN5TTimepLE18TTimeIntervalHours @ 874 NONAME ; TTime::operator+=(TTimeIntervalHours)
+	_ZN5TTimepLE18TTimeIntervalYears @ 875 NONAME ; TTime::operator+=(TTimeIntervalYears)
+	_ZN5TTimepLE19TTimeIntervalMonths @ 876 NONAME ; TTime::operator+=(TTimeIntervalMonths)
+	_ZN5TTimepLE20TTimeIntervalMinutes @ 877 NONAME ; TTime::operator+=(TTimeIntervalMinutes)
+	_ZN5TTimepLE20TTimeIntervalSeconds @ 878 NONAME ; TTime::operator+=(TTimeIntervalSeconds)
+	_ZN5TTimepLE25TTimeIntervalMicroSeconds @ 879 NONAME ; TTime::operator+=(TTimeIntervalMicroSeconds)
+	_ZN5TTimepLE27TTimeIntervalMicroSeconds32 @ 880 NONAME ; TTime::operator+=(TTimeIntervalMicroSeconds32)
+	_ZN6CTimer10ConstructLEv @ 881 NONAME ; CTimer::ConstructL()
+	_ZN6CTimer10InactivityE20TTimeIntervalSeconds @ 882 NONAME ; CTimer::Inactivity(TTimeIntervalSeconds)
+	_ZN6CTimer2AtERK5TTime @ 883 NONAME ; CTimer::At(TTime const&)
+	_ZN6CTimer4LockE14TTimerLockSpec @ 884 NONAME ; CTimer::Lock(TTimerLockSpec)
+	_ZN6CTimer5AfterE27TTimeIntervalMicroSeconds32 @ 885 NONAME ; CTimer::After(TTimeIntervalMicroSeconds32)
+	_ZN6CTimer8DoCancelEv @ 886 NONAME ; CTimer::DoCancel()
+	_ZN6CTimerC2Ei @ 887 NONAME ; CTimer::CTimer(int)
+	_ZN6CTimerD0Ev @ 888 NONAME ; CTimer::~CTimer()
+	_ZN6CTimerD1Ev @ 889 NONAME ; CTimer::~CTimer()
+	_ZN6CTimerD2Ev @ 890 NONAME ; CTimer::~CTimer()
+	_ZN6HBufC83DesEv @ 891 NONAME ; HBufC8::Des()
+	_ZN6HBufC83NewEi @ 892 NONAME ; HBufC8::New(int)
+	_ZN6HBufC84NewLEi @ 893 NONAME ; HBufC8::NewL(int)
+	_ZN6HBufC85NewLCEi @ 894 NONAME ; HBufC8::NewLC(int)
+	_ZN6HBufC86NewMaxEi @ 895 NONAME ; HBufC8::NewMax(int)
+	_ZN6HBufC87NewMaxLEi @ 896 NONAME ; HBufC8::NewMaxL(int)
+	_ZN6HBufC87ReAllocEi @ 897 NONAME ; HBufC8::ReAlloc(int)
+	_ZN6HBufC88NewMaxLCEi @ 898 NONAME ; HBufC8::NewMaxLC(int)
+	_ZN6HBufC88ReAllocLEi @ 899 NONAME ; HBufC8::ReAllocL(int)
+	_ZN6HBufC8aSEPKh @ 900 NONAME ; HBufC8::operator=(unsigned char const*)
+	_ZN6HBufC8aSERK6TDesC8 @ 901 NONAME ; HBufC8::operator=(TDesC8 const&)
+	_ZN6RChunk10OpenGlobalERK7TDesC16i10TOwnerType @ 902 NONAME ; RChunk::OpenGlobal(TDesC16 const&, int, TOwnerType)
+	_ZN6RChunk11CreateLocalEii10TOwnerType @ 903 NONAME ; RChunk::CreateLocal(int, int, TOwnerType)
+	_ZN6RChunk12CreateGlobalERK7TDesC16ii10TOwnerType @ 904 NONAME ; RChunk::CreateGlobal(TDesC16 const&, int, int, TOwnerType)
+	_ZN6RChunk15CreateLocalCodeEii10TOwnerType @ 905 NONAME ; RChunk::CreateLocalCode(int, int, TOwnerType)
+	_ZN6RChunk15SetRestrictionsEj @ 906 NONAME ; RChunk::SetRestrictions(unsigned int)
+	_ZN6RChunk22CreateDoubleEndedLocalEiii10TOwnerType @ 907 NONAME ; RChunk::CreateDoubleEndedLocal(int, int, int, TOwnerType)
+	_ZN6RChunk23CreateDisconnectedLocalEiii10TOwnerType @ 908 NONAME ; RChunk::CreateDisconnectedLocal(int, int, int, TOwnerType)
+	_ZN6RChunk23CreateDoubleEndedGlobalERK7TDesC16iii10TOwnerType @ 909 NONAME ; RChunk::CreateDoubleEndedGlobal(TDesC16 const&, int, int, int, TOwnerType)
+	_ZN6RChunk24CreateDisconnectedGlobalERK7TDesC16iii10TOwnerType @ 910 NONAME ; RChunk::CreateDisconnectedGlobal(TDesC16 const&, int, int, int, TOwnerType)
+	_ZN6RChunk4OpenE12RMessagePtr2ii10TOwnerType @ 911 NONAME ; RChunk::Open(RMessagePtr2, int, int, TOwnerType)
+	_ZN6RChunk4OpenEi10TOwnerType @ 912 NONAME ; RChunk::Open(int, TOwnerType)
+	_ZN6RChunk6CreateEjiiiPK7TDesC1610TOwnerType @ 913 NONAME ABSENT ; RChunk::Create(unsigned int, int, int, int, TDesC16 const*, TOwnerType)
+	_ZN6RDebug5PrintE11TRefByValueIK7TDesC16Ez @ 914 NONAME ; RDebug::Print(TRefByValue<TDesC16 const>, ...)
+	_ZN6RDebug6PrintfEPKcz @ 915 NONAME ; RDebug::Printf(char const*, ...)
+	_ZN6RDebug8RawPrintERK7TDesC16 @ 916 NONAME ; RDebug::RawPrint(TDesC16 const&)
+	_ZN6RMutex10OpenGlobalERK7TDesC1610TOwnerType @ 917 NONAME ; RMutex::OpenGlobal(TDesC16 const&, TOwnerType)
+	_ZN6RMutex11CreateLocalE10TOwnerType @ 918 NONAME ; RMutex::CreateLocal(TOwnerType)
+	_ZN6RMutex12CreateGlobalERK7TDesC1610TOwnerType @ 919 NONAME ; RMutex::CreateGlobal(TDesC16 const&, TOwnerType)
+	_ZN6RMutex4OpenE12RMessagePtr2i10TOwnerType @ 920 NONAME ; RMutex::Open(RMessagePtr2, int, TOwnerType)
+	_ZN6RMutex4OpenEi10TOwnerType @ 921 NONAME ; RMutex::Open(int, TOwnerType)
+	_ZN6RMutex4WaitEv @ 922 NONAME ; RMutex::Wait()
+	_ZN6RMutex6SignalEv @ 923 NONAME ; RMutex::Signal()
+	_ZN6RTimer10InactivityER14TRequestStatus20TTimeIntervalSeconds @ 924 NONAME ; RTimer::Inactivity(TRequestStatus&, TTimeIntervalSeconds)
+	_ZN6RTimer11CreateLocalEv @ 925 NONAME ; RTimer::CreateLocal()
+	_ZN6RTimer2AtER14TRequestStatusRK5TTime @ 926 NONAME ; RTimer::At(TRequestStatus&, TTime const&)
+	_ZN6RTimer4LockER14TRequestStatus14TTimerLockSpec @ 927 NONAME ; RTimer::Lock(TRequestStatus&, TTimerLockSpec)
+	_ZN6RTimer5AfterER14TRequestStatus27TTimeIntervalMicroSeconds32 @ 928 NONAME ; RTimer::After(TRequestStatus&, TTimeIntervalMicroSeconds32)
+	_ZN6RTimer6CancelEv @ 929 NONAME ; RTimer::Cancel()
+	_ZN6RTimer7HighResER14TRequestStatus27TTimeIntervalMicroSeconds32 @ 930 NONAME ; RTimer::HighRes(TRequestStatus&, TTimeIntervalMicroSeconds32)
+	_ZN6TDes1610AppendFillE5TChari @ 931 NONAME ; TDes16::AppendFill(TChar, int)
+	_ZN6TDes1610CapitalizeEv @ 932 NONAME ; TDes16::Capitalize()
+	_ZN6TDes1610FormatListERK7TDesC16St9__va_list @ 933 NONAME ; TDes16::FormatList(TDesC16 const&, std::__va_list)
+	_ZN6TDes1611AppendNumUCEy6TRadix @ 934 NONAME ; TDes16::AppendNumUC(unsigned long long, TRadix)
+	_ZN6TDes1612AppendFormatE11TRefByValueIK7TDesC16EP14TDes16Overflowz @ 935 NONAME ; TDes16::AppendFormat(TRefByValue<TDesC16 const>, TDes16Overflow*, ...)
+	_ZN6TDes1612AppendFormatE11TRefByValueIK7TDesC16Ez @ 936 NONAME ; TDes16::AppendFormat(TRefByValue<TDesC16 const>, ...)
+	_ZN6TDes1613AppendJustifyEPKti6TAlign5TChar @ 937 NONAME ; TDes16::AppendJustify(unsigned short const*, int, TAlign, TChar)
+	_ZN6TDes1613AppendJustifyEPKtii6TAlign5TChar @ 938 NONAME ; TDes16::AppendJustify(unsigned short const*, int, int, TAlign, TChar)
+	_ZN6TDes1613AppendJustifyERK7TDesC16i6TAlign5TChar @ 939 NONAME ; TDes16::AppendJustify(TDesC16 const&, int, TAlign, TChar)
+	_ZN6TDes1613AppendJustifyERK7TDesC16ii6TAlign5TChar @ 940 NONAME ; TDes16::AppendJustify(TDesC16 const&, int, int, TAlign, TChar)
+	_ZN6TDes1613NumFixedWidthEj6TRadixi @ 941 NONAME ; TDes16::NumFixedWidth(unsigned int, TRadix, int)
+	_ZN6TDes1613ZeroTerminateEv @ 942 NONAME ; TDes16::ZeroTerminate()
+	_ZN6TDes1615NumFixedWidthUCEj6TRadixi @ 943 NONAME ; TDes16::NumFixedWidthUC(unsigned int, TRadix, int)
+	_ZN6TDes1616AppendFormatListERK7TDesC16St9__va_listP14TDes16Overflow @ 944 NONAME ; TDes16::AppendFormatList(TDesC16 const&, std::__va_list, TDes16Overflow*)
+	_ZN6TDes1619AppendNumFixedWidthEj6TRadixi @ 945 NONAME ; TDes16::AppendNumFixedWidth(unsigned int, TRadix, int)
+	_ZN6TDes1621AppendNumFixedWidthUCEj6TRadixi @ 946 NONAME ; TDes16::AppendNumFixedWidthUC(unsigned int, TRadix, int)
+	_ZN6TDes163NumEx @ 947 NONAME ; TDes16::Num(long long)
+	_ZN6TDes163NumEy6TRadix @ 948 NONAME ; TDes16::Num(unsigned long long, TRadix)
+	_ZN6TDes163NumEdRK11TRealFormat @ 949 NONAME ; TDes16::Num(double, TRealFormat const&)
+	_ZN6TDes164CopyEPKt @ 950 NONAME ; TDes16::Copy(unsigned short const*)
+	_ZN6TDes164CopyEPKti @ 951 NONAME ; TDes16::Copy(unsigned short const*, int)
+	_ZN6TDes164CopyERK6TDesC8 @ 952 NONAME ; TDes16::Copy(TDesC8 const&)
+	_ZN6TDes164CopyERK7TDesC16 @ 953 NONAME ; TDes16::Copy(TDesC16 const&)
+	_ZN6TDes164FillE5TChar @ 954 NONAME ; TDes16::Fill(TChar)
+	_ZN6TDes164FillE5TChari @ 955 NONAME ; TDes16::Fill(TChar, int)
+	_ZN6TDes164FoldEv @ 956 NONAME ; TDes16::Fold()
+	_ZN6TDes164PtrZEv @ 957 NONAME ; TDes16::PtrZ()
+	_ZN6TDes164SwapERS_ @ 958 NONAME ; TDes16::Swap(TDes16&)
+	_ZN6TDes164TrimEv @ 959 NONAME ; TDes16::Trim()
+	_ZN6TDes164ZeroEv @ 960 NONAME ; TDes16::Zero()
+	_ZN6TDes165CopyCERK7TDesC16 @ 961 NONAME ; TDes16::CopyC(TDesC16 const&)
+	_ZN6TDes165CopyFERK7TDesC16 @ 962 NONAME ; TDes16::CopyF(TDesC16 const&)
+	_ZN6TDes165FillZEi @ 963 NONAME ; TDes16::FillZ(int)
+	_ZN6TDes165FillZEv @ 964 NONAME ; TDes16::FillZ()
+	_ZN6TDes165NumUCEy6TRadix @ 965 NONAME ; TDes16::NumUC(unsigned long long, TRadix)
+	_ZN6TDes166AppendE5TChar @ 966 NONAME ; TDes16::Append(TChar)
+	_ZN6TDes166AppendEPKti @ 967 NONAME ; TDes16::Append(unsigned short const*, int)
+	_ZN6TDes166AppendERK7TDesC16 @ 968 NONAME ; TDes16::Append(TDesC16 const&)
+	_ZN6TDes166CopyCPERK7TDesC16 @ 969 NONAME ; TDes16::CopyCP(TDesC16 const&)
+	_ZN6TDes166CopyLCERK7TDesC16 @ 970 NONAME ; TDes16::CopyLC(TDesC16 const&)
+	_ZN6TDes166CopyUCERK7TDesC16 @ 971 NONAME ; TDes16::CopyUC(TDesC16 const&)
+	_ZN6TDes166DeleteEii @ 972 NONAME ; TDes16::Delete(int, int)
+	_ZN6TDes166FormatE11TRefByValueIK7TDesC16Ez @ 973 NONAME ; TDes16::Format(TRefByValue<TDesC16 const>, ...)
+	_ZN6TDes166InsertEiRK7TDesC16 @ 974 NONAME ; TDes16::Insert(int, TDesC16 const&)
+	_ZN6TDes166RepeatEPKti @ 975 NONAME ; TDes16::Repeat(unsigned short const*, int)
+	_ZN6TDes166RepeatERK7TDesC16 @ 976 NONAME ; TDes16::Repeat(TDesC16 const&)
+	_ZN6TDes166SetMaxEv @ 977 NONAME ; TDes16::SetMax()
+	_ZN6TDes167CollateEv @ 978 NONAME ; TDes16::Collate()
+	_ZN6TDes167JustifyERK7TDesC16i6TAlign5TChar @ 979 NONAME ; TDes16::Justify(TDesC16 const&, int, TAlign, TChar)
+	_ZN6TDes167ReplaceEiiRK7TDesC16 @ 980 NONAME ; TDes16::Replace(int, int, TDesC16 const&)
+	_ZN6TDes167TrimAllEv @ 981 NONAME ; TDes16::TrimAll()
+	_ZN6TDes168CollapseEv @ 982 NONAME ; TDes16::Collapse()
+	_ZN6TDes168TrimLeftEv @ 983 NONAME ; TDes16::TrimLeft()
+	_ZN6TDes169AppendNumEx @ 984 NONAME ; TDes16::AppendNum(long long)
+	_ZN6TDes169AppendNumEy6TRadix @ 985 NONAME ; TDes16::AppendNum(unsigned long long, TRadix)
+	_ZN6TDes169AppendNumEdRK11TRealFormat @ 986 NONAME ; TDes16::AppendNum(double, TRealFormat const&)
+	_ZN6TDes169LowerCaseEv @ 987 NONAME ; TDes16::LowerCase()
+	_ZN6TDes169SetLengthEi @ 988 NONAME ; TDes16::SetLength(int)
+	_ZN6TDes169TrimRightEv @ 989 NONAME ; TDes16::TrimRight()
+	_ZN6TDes169UpperCaseEv @ 990 NONAME ; TDes16::UpperCase()
+	_ZN6TLex1610BoundedValERx6TRadixRKx @ 991 NONAME ; TLex16::BoundedVal(long long&, TRadix, long long const&)
+	_ZN6TLex1610BoundedValERxRKx @ 992 NONAME ; TLex16::BoundedVal(long long&, long long const&)
+	_ZN6TLex1610BoundedValERli @ 993 NONAME ; TLex16::BoundedVal(long&, int)
+	_ZN6TLex1610BoundedValERm6TRadixj @ 994 NONAME ; TLex16::BoundedVal(unsigned long&, TRadix, unsigned int)
+	_ZN6TLex1611SkipAndMarkEiR10TLexMark16 @ 995 NONAME ; TLex16::SkipAndMark(int, TLexMark16&)
+	_ZN6TLex1611UnGetToMarkE10TLexMark16 @ 996 NONAME ; TLex16::UnGetToMark(TLexMark16)
+	_ZN6TLex1614SkipCharactersEv @ 997 NONAME ; TLex16::SkipCharacters()
+	_ZN6TLex1616SkipSpaceAndMarkER10TLexMark16 @ 998 NONAME ; TLex16::SkipSpaceAndMark(TLexMark16&)
+	_ZN6TLex163GetEv @ 999 NONAME ; TLex16::Get()
+	_ZN6TLex163IncEi @ 1000 NONAME ; TLex16::Inc(int)
+	_ZN6TLex163IncEv @ 1001 NONAME ; TLex16::Inc()
+	_ZN6TLex163ValERx @ 1002 NONAME ; TLex16::Val(long long&)
+	_ZN6TLex163ValERx6TRadix @ 1003 NONAME ; TLex16::Val(long long&, TRadix)
+	_ZN6TLex163ValERa @ 1004 NONAME ; TLex16::Val(signed char&)
+	_ZN6TLex163ValERd @ 1005 NONAME ; TLex16::Val(double&)
+	_ZN6TLex163ValERd5TChar @ 1006 NONAME ; TLex16::Val(double&, TChar)
+	_ZN6TLex163ValERf @ 1007 NONAME ; TLex16::Val(float&)
+	_ZN6TLex163ValERf5TChar @ 1008 NONAME ; TLex16::Val(float&, TChar)
+	_ZN6TLex163ValERh6TRadix @ 1009 NONAME ; TLex16::Val(unsigned char&, TRadix)
+	_ZN6TLex163ValERl @ 1010 NONAME ; TLex16::Val(long&)
+	_ZN6TLex163ValERm6TRadix @ 1011 NONAME ; TLex16::Val(unsigned long&, TRadix)
+	_ZN6TLex163ValERs @ 1012 NONAME ; TLex16::Val(short&)
+	_ZN6TLex163ValERt6TRadix @ 1013 NONAME ; TLex16::Val(unsigned short&, TRadix)
+	_ZN6TLex165UnGetEv @ 1014 NONAME ; TLex16::UnGet()
+	_ZN6TLex166AssignEPKt @ 1015 NONAME ; TLex16::Assign(unsigned short const*)
+	_ZN6TLex166AssignERK7TDesC16 @ 1016 NONAME ; TLex16::Assign(TDesC16 const&)
+	_ZN6TLex169NextTokenEv @ 1017 NONAME ; TLex16::NextToken()
+	_ZN6TLex169SkipSpaceEv @ 1018 NONAME ; TLex16::SkipSpace()
+	_ZN6TLex16C1Ev @ 1019 NONAME ; TLex16::TLex16()
+	_ZN6TLex16C2Ev @ 1020 NONAME ; TLex16::TLex16()
+	_ZN6TPoint5SetXYEii @ 1021 NONAME ; TPoint::SetXY(int, int)
+	_ZN6TPointmIERK5TSize @ 1022 NONAME ; TPoint::operator-=(TSize const&)
+	_ZN6TPointmIERKS_ @ 1023 NONAME ; TPoint::operator-=(TPoint const&)
+	_ZN6TPointpLERK5TSize @ 1024 NONAME ; TPoint::operator+=(TSize const&)
+	_ZN6TPointpLERKS_ @ 1025 NONAME ; TPoint::operator+=(TPoint const&)
+	_ZN6TPtr16C1EPti @ 1026 NONAME ; TPtr16::TPtr16(unsigned short*, int)
+	_ZN6TPtr16C1EPtii @ 1027 NONAME ; TPtr16::TPtr16(unsigned short*, int, int)
+	_ZN6TPtr16C1ER11TBufCBase16i @ 1028 NONAME ; TPtr16::TPtr16(TBufCBase16&, int)
+	_ZN6TPtr16C2EPti @ 1029 NONAME ; TPtr16::TPtr16(unsigned short*, int)
+	_ZN6TPtr16C2EPtii @ 1030 NONAME ; TPtr16::TPtr16(unsigned short*, int, int)
+	_ZN6TPtr16C2ER11TBufCBase16i @ 1031 NONAME ; TPtr16::TPtr16(TBufCBase16&, int)
+	_ZN6TPtrC8C1EPKh @ 1032 NONAME ; TPtrC8::TPtrC8(unsigned char const*)
+	_ZN6TPtrC8C1EPKhi @ 1033 NONAME ; TPtrC8::TPtrC8(unsigned char const*, int)
+	_ZN6TPtrC8C1ERK6TDesC8 @ 1034 NONAME ; TPtrC8::TPtrC8(TDesC8 const&)
+	_ZN6TPtrC8C1Ev @ 1035 NONAME ; TPtrC8::TPtrC8()
+	_ZN6TPtrC8C2EPKh @ 1036 NONAME ; TPtrC8::TPtrC8(unsigned char const*)
+	_ZN6TPtrC8C2EPKhi @ 1037 NONAME ; TPtrC8::TPtrC8(unsigned char const*, int)
+	_ZN6TPtrC8C2ERK6TDesC8 @ 1038 NONAME ; TPtrC8::TPtrC8(TDesC8 const&)
+	_ZN6TPtrC8C2Ev @ 1039 NONAME ; TPtrC8::TPtrC8()
+	_ZN6TRealX11SetInfiniteEi @ 1040 NONAME ; TRealX::SetInfinite(int)
+	_ZN6TRealX3SetERKx @ 1041 NONAME ; TRealX::Set(long long const&)
+	_ZN6TRealX3SetEd @ 1042 NONAME ; TRealX::Set(double)
+	_ZN6TRealX3SetEf @ 1043 NONAME ; TRealX::Set(float)
+	_ZN6TRealX3SetEi @ 1044 NONAME ; TRealX::Set(int)
+	_ZN6TRealX3SetEj @ 1045 NONAME ; TRealX::Set(unsigned int)
+	_ZN6TRealX5AddEqERKS_ @ 1046 NONAME ; TRealX::AddEq(TRealX const&)
+	_ZN6TRealX5DivEqERKS_ @ 1047 NONAME ; TRealX::DivEq(TRealX const&)
+	_ZN6TRealX5ModEqERKS_ @ 1048 NONAME ; TRealX::ModEq(TRealX const&)
+	_ZN6TRealX5SubEqERKS_ @ 1049 NONAME ; TRealX::SubEq(TRealX const&)
+	_ZN6TRealX6MultEqERKS_ @ 1050 NONAME ; TRealX::MultEq(TRealX const&)
+	_ZN6TRealX6SetNaNEv @ 1051 NONAME ; TRealX::SetNaN()
+	_ZN6TRealX7SetZeroEi @ 1052 NONAME ; TRealX::SetZero(int)
+	_ZN6TRealXC1ERKx @ 1053 NONAME ; TRealX::TRealX(long long const&)
+	_ZN6TRealXC1Ed @ 1054 NONAME ; TRealX::TRealX(double)
+	_ZN6TRealXC1Ef @ 1055 NONAME ; TRealX::TRealX(float)
+	_ZN6TRealXC1Ei @ 1056 NONAME ; TRealX::TRealX(int)
+	_ZN6TRealXC1Ej @ 1057 NONAME ; TRealX::TRealX(unsigned int)
+	_ZN6TRealXC1Ejjj @ 1058 NONAME ; TRealX::TRealX(unsigned int, unsigned int, unsigned int)
+	_ZN6TRealXC1Ev @ 1059 NONAME ; TRealX::TRealX()
+	_ZN6TRealXC2ERKx @ 1060 NONAME ; TRealX::TRealX(long long const&)
+	_ZN6TRealXC2Ed @ 1061 NONAME ; TRealX::TRealX(double)
+	_ZN6TRealXC2Ef @ 1062 NONAME ; TRealX::TRealX(float)
+	_ZN6TRealXC2Ei @ 1063 NONAME ; TRealX::TRealX(int)
+	_ZN6TRealXC2Ej @ 1064 NONAME ; TRealX::TRealX(unsigned int)
+	_ZN6TRealXC2Ejjj @ 1065 NONAME ; TRealX::TRealX(unsigned int, unsigned int, unsigned int)
+	_ZN6TRealXC2Ev @ 1066 NONAME ; TRealX::TRealX()
+	_ZN6TRealXaSERKx @ 1067 NONAME ; TRealX::operator=(long long const&)
+	_ZN6TRealXaSEd @ 1068 NONAME ; TRealX::operator=(double)
+	_ZN6TRealXaSEf @ 1069 NONAME ; TRealX::operator=(float)
+	_ZN6TRealXaSEi @ 1070 NONAME ; TRealX::operator=(int)
+	_ZN6TRealXaSEj @ 1071 NONAME ; TRealX::operator=(unsigned int)
+	_ZNK6TRealXcvxEv @ 1072 NONAME ; TRealX::operator long long() const
+	_ZNK6TRealXcvdEv @ 1073 NONAME ; TRealX::operator double() const
+	_ZNK6TRealXcvfEv @ 1074 NONAME ; TRealX::operator float() const
+	_ZNK6TRealXcviEv @ 1075 NONAME ; TRealX::operator int() const
+	_ZNK6TRealXcvjEv @ 1076 NONAME ; TRealX::operator unsigned int() const
+	_ZN6TRealXdVERKS_ @ 1077 NONAME ; TRealX::operator/=(TRealX const&)
+	_ZN6TRealXmIERKS_ @ 1078 NONAME ; TRealX::operator-=(TRealX const&)
+	_ZN6TRealXmLERKS_ @ 1079 NONAME ; TRealX::operator*=(TRealX const&)
+	_ZN6TRealXmmEi @ 1080 NONAME ; TRealX::operator--(int)
+	_ZN6TRealXmmEv @ 1081 NONAME ; TRealX::operator--()
+	_ZN6TRealXpLERKS_ @ 1082 NONAME ; TRealX::operator+=(TRealX const&)
+	_ZN6TRealXppEi @ 1083 NONAME ; TRealX::operator++(int)
+	_ZN6TRealXppEv @ 1084 NONAME ; TRealX::operator++()
+	_ZN6TRealXrMERKS_ @ 1085 NONAME ; TRealX::operator%=(TRealX const&)
+	_ZN7CActive11SetPriorityEi @ 1086 NONAME ; CActive::SetPriority(int)
+	_ZN7CActive5DequeEv @ 1087 NONAME ; CActive::Deque()
+	_ZN7CActive6CancelEv @ 1088 NONAME ; CActive::Cancel()
+	_ZN7CActive8RunErrorEi @ 1089 NONAME ; CActive::RunError(int)
+	_ZN7CActive9SetActiveEv @ 1090 NONAME ; CActive::SetActive()
+	_ZN7CActiveC2Ei @ 1091 NONAME ; CActive::CActive(int)
+	_ZN7CActiveD0Ev @ 1092 NONAME ; CActive::~CActive()
+	_ZN7CActiveD1Ev @ 1093 NONAME ; CActive::~CActive()
+	_ZN7CActiveD2Ev @ 1094 NONAME ; CActive::~CActive()
+	_ZN7CBufSeg3PtrEi @ 1095 NONAME ; CBufSeg::Ptr(int)
+	_ZN7CBufSeg4NewLEi @ 1096 NONAME ; CBufSeg::NewL(int)
+	_ZN7CBufSeg6DeleteEii @ 1097 NONAME ; CBufSeg::Delete(int, int)
+	_ZN7CBufSeg7BackPtrEi @ 1098 NONAME ; CBufSeg::BackPtr(int)
+	_ZN7CBufSeg8CompressEv @ 1099 NONAME ; CBufSeg::Compress()
+	_ZN7CBufSeg9DoInsertLEiPKvi @ 1100 NONAME ; CBufSeg::DoInsertL(int, void const*, int)
+	_ZN7CBufSegC1Ei @ 1101 NONAME ; CBufSeg::CBufSeg(int)
+	_ZN7CBufSegC2Ei @ 1102 NONAME ; CBufSeg::CBufSeg(int)
+	_ZN7CBufSegD0Ev @ 1103 NONAME ; CBufSeg::~CBufSeg()
+	_ZN7CBufSegD1Ev @ 1104 NONAME ; CBufSeg::~CBufSeg()
+	_ZN7CBufSegD2Ev @ 1105 NONAME ; CBufSeg::~CBufSeg()
+	_ZN7CObject4OpenEv @ 1106 NONAME ; CObject::Open()
+	_ZN7CObject5CloseEv @ 1107 NONAME ; CObject::Close()
+	_ZN7CObject7SetNameEPK7TDesC16 @ 1108 NONAME ; CObject::SetName(TDesC16 const*)
+	_ZN7CObject8SetNameLEPK7TDesC16 @ 1109 NONAME ; CObject::SetNameL(TDesC16 const*)
+	_ZN7CObjectC1Ev @ 1110 NONAME ; CObject::CObject()
+	_ZN7CObjectC2Ev @ 1111 NONAME ; CObject::CObject()
+	_ZN7CObjectD0Ev @ 1112 NONAME ; CObject::~CObject()
+	_ZN7CObjectD1Ev @ 1113 NONAME ; CObject::~CObject()
+	_ZN7CObjectD2Ev @ 1114 NONAME ; CObject::~CObject()
+	_ZN7Console4NewLERK7TDesC165TSize @ 1115 NONAME ; Console::NewL(TDesC16 const&, TSize)
+	_ZN7HBufC163DesEv @ 1116 NONAME ; HBufC16::Des()
+	_ZN7HBufC163NewEi @ 1117 NONAME ; HBufC16::New(int)
+	_ZN7HBufC164NewLEi @ 1118 NONAME ; HBufC16::NewL(int)
+	_ZN7HBufC165NewLCEi @ 1119 NONAME ; HBufC16::NewLC(int)
+	_ZN7HBufC166NewMaxEi @ 1120 NONAME ; HBufC16::NewMax(int)
+	_ZN7HBufC167NewMaxLEi @ 1121 NONAME ; HBufC16::NewMaxL(int)
+	_ZN7HBufC167ReAllocEi @ 1122 NONAME ; HBufC16::ReAlloc(int)
+	_ZN7HBufC168NewMaxLCEi @ 1123 NONAME ; HBufC16::NewMaxLC(int)
+	_ZN7HBufC168ReAllocLEi @ 1124 NONAME ; HBufC16::ReAllocL(int)
+	_ZN7HBufC16aSEPKt @ 1125 NONAME ; HBufC16::operator=(unsigned short const*)
+	_ZN7HBufC16aSERK7TDesC16 @ 1126 NONAME ; HBufC16::operator=(TDesC16 const&)
+	_ZN7Huffman12ExternalizeLER10TBitOutputPKmi @ 1127 NONAME ; Huffman::ExternalizeL(TBitOutput&, unsigned long const*, int)
+	_ZN7Huffman12InternalizeLER9TBitInputPmi @ 1128 NONAME ; Huffman::InternalizeL(TBitInput&, unsigned long*, int)
+	_ZN7Huffman7IsValidEPKmi @ 1129 NONAME ; Huffman::IsValid(unsigned long const*, int)
+	_ZN7Huffman8DecodingEPKmiPmi @ 1130 NONAME ; Huffman::Decoding(unsigned long const*, int, unsigned long*, int)
+	_ZN7Huffman8EncodingEPKmiPm @ 1131 NONAME ; Huffman::Encoding(unsigned long const*, int, unsigned long*)
+	_ZN7Huffman8HuffmanLEPKmiPm @ 1132 NONAME ; Huffman::HuffmanL(unsigned long const*, int, unsigned long*)
+	_ZN7PlatSec14EmitDiagnosticER18TPlatSecDiagnosticPKc @ 1133 NONAME ; PlatSec::EmitDiagnostic(TPlatSecDiagnostic&, char const*)
+	_ZN7RDevice4OpenERK7TDesC1610TOwnerType @ 1134 NONAME ; RDevice::Open(TDesC16 const&, TOwnerType)
+	_ZN7RLoader11LoadLibraryERiRK7TDesC16S3_RK8TUidTypem @ 1135 NONAME ; RLoader::LoadLibrary(int&, TDesC16 const&, TDesC16 const&, TUidType const&, unsigned long)
+	_ZN7RLoader13DebugFunctionEiiii @ 1136 NONAME ; RLoader::DebugFunction(int, int, int, int)
+	_ZN7RLoader7ConnectEv @ 1137 NONAME ; RLoader::Connect()
+	_ZN7RLoader7GetInfoERK7TDesC16R5TDes8 @ 1138 NONAME ; RLoader::GetInfo(TDesC16 const&, TDes8&)
+	_ZN7RRegion5CloseEv @ 1139 NONAME ; RRegion::Close()
+	_ZN7RRegion7DestroyEv @ 1140 NONAME ; RRegion::Destroy()
+	_ZN7RRegionC1ERK5TRecti @ 1141 NONAME ; RRegion::RRegion(TRect const&, int)
+	_ZN7RRegionC1ERKS_ @ 1142 NONAME ; RRegion::RRegion(RRegion const&)
+	_ZN7RRegionC1Ei @ 1143 NONAME ; RRegion::RRegion(int)
+	_ZN7RRegionC1EiP5TRecti @ 1144 NONAME ; RRegion::RRegion(int, TRect*, int)
+	_ZN7RRegionC1Eii @ 1145 NONAME ; RRegion::RRegion(int, int)
+	_ZN7RRegionC1Ev @ 1146 NONAME ; RRegion::RRegion()
+	_ZN7RRegionC2ERK5TRecti @ 1147 NONAME ; RRegion::RRegion(TRect const&, int)
+	_ZN7RRegionC2ERKS_ @ 1148 NONAME ; RRegion::RRegion(RRegion const&)
+	_ZN7RRegionC2Ei @ 1149 NONAME ; RRegion::RRegion(int)
+	_ZN7RRegionC2EiP5TRecti @ 1150 NONAME ; RRegion::RRegion(int, TRect*, int)
+	_ZN7RRegionC2Eii @ 1151 NONAME ; RRegion::RRegion(int, int)
+	_ZN7RRegionC2Ev @ 1152 NONAME ; RRegion::RRegion()
+	_ZN7RThread10RendezvousEi @ 1153 NONAME ; RThread::Rendezvous(int)
+	_ZN7RThread4KillEi @ 1154 NONAME ; RThread::Kill(int)
+	_ZN7RThread4OpenE9TThreadId10TOwnerType @ 1155 NONAME ; RThread::Open(TThreadId, TOwnerType)
+	_ZN7RThread4OpenERK7TDesC1610TOwnerType @ 1156 NONAME ; RThread::Open(TDesC16 const&, TOwnerType)
+	_ZN7RThread5PanicERK7TDesC16i @ 1157 NONAME ; RThread::Panic(TDesC16 const&, int)
+	_ZN7RThread6CreateERK7TDesC16PFiPvEiP10RAllocatorS3_10TOwnerType @ 1158 NONAME ; RThread::Create(TDesC16 const&, int (*)(void*), int, RAllocator*, void*, TOwnerType)
+	_ZN7RThread6CreateERK7TDesC16PFiPvEiiiS3_10TOwnerType @ 1159 NONAME ; RThread::Create(TDesC16 const&, int (*)(void*), int, int, int, void*, TOwnerType)
+	_ZN4User12RenameThreadERK7TDesC16 @ 1160 NONAME ; User::RenameThread(TDesC16 const&)
+	_ZN7RThread9TerminateEi @ 1161 NONAME ; RThread::Terminate(int)
+	_ZN7TLocale14FormatCurrencyER6TDes16x @ 1162 NONAME ; TLocale::FormatCurrency(TDes16&, long long)
+	_ZN7TLocale14FormatCurrencyER6TDes16R14TDes16Overflowx @ 1163 NONAME ; TLocale::FormatCurrency(TDes16&, TDes16Overflow&, long long)
+	_ZN7TLocale14FormatCurrencyER6TDes16R14TDes16Overflowi @ 1164 NONAME ; TLocale::FormatCurrency(TDes16&, TDes16Overflow&, int)
+	_ZN7TLocale14FormatCurrencyER6TDes16i @ 1165 NONAME ; TLocale::FormatCurrency(TDes16&, int)
+	_ZN7TLocale7RefreshEv @ 1166 NONAME ; TLocale::Refresh()
+	_ZN7TLocaleC1Ev @ 1167 NONAME ; TLocale::TLocale()
+	_ZN7TLocaleC2Ev @ 1168 NONAME ; TLocale::TLocale()
+	_ZN7TPtrC16C1EPKt @ 1169 NONAME ; TPtrC16::TPtrC16(unsigned short const*)
+	_ZN7TPtrC16C1EPKti @ 1170 NONAME ; TPtrC16::TPtrC16(unsigned short const*, int)
+	_ZN7TPtrC16C1ERK7TDesC16 @ 1171 NONAME ; TPtrC16::TPtrC16(TDesC16 const&)
+	_ZN7TPtrC16C1Ev @ 1172 NONAME ; TPtrC16::TPtrC16()
+	_ZN7TPtrC16C2EPKt @ 1173 NONAME ; TPtrC16::TPtrC16(unsigned short const*)
+	_ZN7TPtrC16C2EPKti @ 1174 NONAME ; TPtrC16::TPtrC16(unsigned short const*, int)
+	_ZN7TPtrC16C2ERK7TDesC16 @ 1175 NONAME ; TPtrC16::TPtrC16(TDesC16 const&)
+	_ZN7TPtrC16C2Ev @ 1176 NONAME ; TPtrC16::TPtrC16()
+	_ZN7TRegion10ForceErrorEv @ 1177 NONAME ; TRegion::ForceError()
+	_ZN7TRegion12IntersectionERKS_S1_ @ 1178 NONAME ; TRegion::Intersection(TRegion const&, TRegion const&)
+	_ZN7TRegion14RectangleListWEv @ 1179 NONAME ; TRegion::RectangleListW()
+	_ZN7TRegion4CopyERKS_ @ 1180 NONAME ; TRegion::Copy(TRegion const&)
+	_ZN7TRegion4SortERK6TPoint @ 1181 NONAME ; TRegion::Sort(TPoint const&)
+	_ZN7TRegion4SortEv @ 1182 NONAME ; TRegion::Sort()
+	_ZN7TRegion4TidyEv @ 1183 NONAME ; TRegion::Tidy()
+	_ZN7TRegion5ClearEv @ 1184 NONAME ; TRegion::Clear()
+	_ZN7TRegion5UnionERKS_ @ 1185 NONAME ; TRegion::Union(TRegion const&)
+	_ZN7TRegion6OffsetERK6TPoint @ 1186 NONAME ; TRegion::Offset(TPoint const&)
+	_ZN7TRegion6OffsetEii @ 1187 NONAME ; TRegion::Offset(int, int)
+	_ZN7TRegion7AddRectERK5TRect @ 1188 NONAME ; TRegion::AddRect(TRect const&)
+	_ZN7TRegion7SubRectERK5TRectPS_ @ 1189 NONAME ; TRegion::SubRect(TRect const&, TRegion*)
+	_ZN7TRegion8ClipRectERK5TRect @ 1190 NONAME ; TRegion::ClipRect(TRect const&)
+	_ZN7TRegion9IntersectERKS_ @ 1191 NONAME ; TRegion::Intersect(TRegion const&)
+	_ZN7TRegion9SubRegionERKS_PS_ @ 1192 NONAME ; TRegion::SubRegion(TRegion const&, TRegion*)
+	_ZN7TRegionC1Ei @ 1193 NONAME ; TRegion::TRegion(int)
+	_ZN7TRegionC2Ei @ 1194 NONAME ; TRegion::TRegion(int)
+	_ZN7UserHal10MemoryInfoER5TDes8 @ 1195 NONAME ; UserHal::MemoryInfo(TDes8&)
+	_ZN7UserHal10TickPeriodER27TTimeIntervalMicroSeconds32 @ 1196 NONAME ; UserHal::TickPeriod(TTimeIntervalMicroSeconds32&)
+	_ZN7UserHal11ExceptionIdERi @ 1197 NONAME ; UserHal::ExceptionId(int&)
+	_ZN7UserHal11FaultReasonERi @ 1198 NONAME ; UserHal::FaultReason(int&)
+	_ZN7UserHal11MachineInfoER5TDes8 @ 1199 NONAME ; UserHal::MachineInfo(TDes8&)
+	_ZN7UserHal13ExceptionInfoER8TExcInfo @ 1200 NONAME ; UserHal::ExceptionInfo(TExcInfo&)
+	_ZN7UserHal13StartupReasonER19TMachineStartupType @ 1201 NONAME ; UserHal::StartupReason(TMachineStartupType&)
+	_ZN7UserHal15PageSizeInBytesERi @ 1202 NONAME ; UserHal::PageSizeInBytes(int&)
+	_ZN7UserHal17CalibrationPointsER21TDigitizerCalibration @ 1203 NONAME ; UserHal::CalibrationPoints(TDigitizerCalibration&)
+	_ZN7UserHal21SetXYInputCalibrationERK21TDigitizerCalibration @ 1204 NONAME ; UserHal::SetXYInputCalibration(TDigitizerCalibration const&)
+	_ZN7UserHal22SaveXYInputCalibrationEv @ 1205 NONAME ; UserHal::SaveXYInputCalibration()
+	_ZN7UserHal25RestoreXYInputCalibrationE25TDigitizerCalibrationType @ 1206 NONAME ; UserHal::RestoreXYInputCalibration(TDigitizerCalibrationType)
+	_ZN7UserHal7RomInfoER5TDes8 @ 1207 NONAME ; UserHal::RomInfo(TDes8&)
+	_ZN7UserHal9DriveInfoER5TDes8 @ 1208 NONAME ; UserHal::DriveInfo(TDes8&)
+	_ZN7UserHal9SwitchOffEv @ 1209 NONAME ; UserHal::SwitchOff()
+	_ZN7UserSvr10DllFreeTlsEi @ 1210 NONAME ; UserSvr::DllFreeTls(int)
+	_ZN7UserSvr10ScreenInfoER5TDes8 @ 1211 NONAME ; UserSvr::ScreenInfo(TDes8&)
+	_ZN7UserSvr11DllFileNameEiR6TDes16 @ 1212 NONAME ; UserSvr::DllFileName(int, TDes16&)
+	_ZN7UserSvr11HalFunctionEiiPvS0_ @ 1213 NONAME ; UserSvr::HalFunction(int, int, void*, void*)
+	_ZN7UserSvr12ChangeLocaleERK7TDesC16 @ 1214 NONAME ; UserSvr::ChangeLocale(TDesC16 const&)
+	_ZN7UserSvr12LockRamDriveEv @ 1215 NONAME ; UserSvr::LockRamDrive()
+	_ZN7UserSvr12RequestEventER12TRawEventBufR14TRequestStatus @ 1216 NONAME ; UserSvr::RequestEvent(TRawEventBuf&, TRequestStatus&)
+	_ZN7UserSvr12ResetMachineE19TMachineStartupType @ 1217 NONAME ; UserSvr::ResetMachine(TMachineStartupType)
+	_ZN7UserSvr14IpcV1AvailableEv @ 1218 NONAME ; UserSvr::IpcV1Available()
+	_ZN7UserSvr14UnlockRamDriveEv @ 1219 NONAME ; UserSvr::UnlockRamDrive()
+	_ZN7UserSvr16CaptureEventHookEv @ 1220 NONAME ; UserSvr::CaptureEventHook()
+	_ZN7UserSvr16FsRegisterThreadEv @ 1221 NONAME ; UserSvr::FsRegisterThread()
+	_ZN7UserSvr16ReleaseEventHookEv @ 1222 NONAME ; UserSvr::ReleaseEventHook()
+	_ZN7UserSvr16RomHeaderAddressEv @ 1223 NONAME ; UserSvr::RomHeaderAddress()
+	_ZN7UserSvr16TestBootSequenceEv @ 1224 NONAME ; UserSvr::TestBootSequence()
+	_ZN7UserSvr16WsRegisterThreadEv @ 1225 NONAME ; UserSvr::WsRegisterThread()
+	_ZN7UserSvr16WsSwitchOnScreenEv @ 1226 NONAME ; UserSvr::WsSwitchOnScreen()
+	_ZN7UserSvr18RequestEventCancelEv @ 1227 NONAME ; UserSvr::RequestEventCancel()
+	_ZN7UserSvr19SetMemoryThresholdsEii @ 1228 NONAME ; UserSvr::SetMemoryThresholds(int, int)
+	_ZN7UserSvr23ExecuteInSupervisorModeEPFiPvES0_ @ 1229 NONAME ; UserSvr::ExecuteInSupervisorMode(int (*)(void*), void*)
+	_ZN7UserSvr23RomRootDirectoryAddressEv @ 1230 NONAME ; UserSvr::RomRootDirectoryAddress()
+	_ZN7UserSvr32WsRegisterSwitchOnScreenHandlingEi @ 1231 NONAME ; UserSvr::WsRegisterSwitchOnScreenHandling(int)
+	_ZN7UserSvr6DllTlsEi @ 1232 NONAME ; UserSvr::DllTls(int)
+	_ZN7UserSvr6HalGetEiPv @ 1233 NONAME ; UserSvr::HalGet(int, void*)
+	_ZN7UserSvr6HalSetEiPv @ 1234 NONAME ; UserSvr::HalSet(int, void*)
+	_ZN7UserSvr8AddEventERK9TRawEvent @ 1235 NONAME ; UserSvr::AddEvent(TRawEvent const&)
+	_ZN7UserSvr9DebugMaskEv @ 1236 NONAME ; UserSvr::DebugMask()
+	_ZN7UserSvr9DllSetTlsEiPv @ 1237 NONAME ; UserSvr::DllSetTls(int, void*)
+	_ZN8CBufBase5ResetEv @ 1238 NONAME ; CBufBase::Reset()
+	_ZN8CBufBase5WriteEiPKvi @ 1239 NONAME ; CBufBase::Write(int, void const*, int)
+	_ZN8CBufBase5WriteEiRK6TDesC8 @ 1240 NONAME ; CBufBase::Write(int, TDesC8 const&)
+	_ZN8CBufBase5WriteEiRK6TDesC8i @ 1241 NONAME ; CBufBase::Write(int, TDesC8 const&, int)
+	_ZN8CBufBase7ExpandLEii @ 1242 NONAME ; CBufBase::ExpandL(int, int)
+	_ZN8CBufBase7InsertLEiPKvi @ 1243 NONAME ; CBufBase::InsertL(int, void const*, int)
+	_ZN8CBufBase7InsertLEiRK6TDesC8 @ 1244 NONAME ; CBufBase::InsertL(int, TDesC8 const&)
+	_ZN8CBufBase7InsertLEiRK6TDesC8i @ 1245 NONAME ; CBufBase::InsertL(int, TDesC8 const&, int)
+	_ZN8CBufBase7ResizeLEi @ 1246 NONAME ; CBufBase::ResizeL(int)
+	_ZN8CBufBaseC2Ei @ 1247 NONAME ; CBufBase::CBufBase(int)
+	_ZN8CBufBaseD0Ev @ 1248 NONAME ; CBufBase::~CBufBase()
+	_ZN8CBufBaseD1Ev @ 1249 NONAME ; CBufBase::~CBufBase()
+	_ZN8CBufBaseD2Ev @ 1250 NONAME ; CBufBase::~CBufBase()
+	_ZN8CBufFlat11SetReserveLEi @ 1251 NONAME ; CBufFlat::SetReserveL(int)
+	_ZN8CBufFlat3PtrEi @ 1252 NONAME ; CBufFlat::Ptr(int)
+	_ZN8CBufFlat4NewLEi @ 1253 NONAME ; CBufFlat::NewL(int)
+	_ZN8CBufFlat6DeleteEii @ 1254 NONAME ; CBufFlat::Delete(int, int)
+	_ZN8CBufFlat7BackPtrEi @ 1255 NONAME ; CBufFlat::BackPtr(int)
+	_ZN8CBufFlat8CompressEv @ 1256 NONAME ; CBufFlat::Compress()
+	_ZN8CBufFlat9DoInsertLEiPKvi @ 1257 NONAME ; CBufFlat::DoInsertL(int, void const*, int)
+	_ZN8CBufFlatC1Ei @ 1258 NONAME ; CBufFlat::CBufFlat(int)
+	_ZN8CBufFlatC2Ei @ 1259 NONAME ; CBufFlat::CBufFlat(int)
+	_ZN8CBufFlatD0Ev @ 1260 NONAME ; CBufFlat::~CBufFlat()
+	_ZN8CBufFlatD1Ev @ 1261 NONAME ; CBufFlat::~CBufFlat()
+	_ZN8CBufFlatD2Ev @ 1262 NONAME ; CBufFlat::~CBufFlat()
+	_ZN8CCleanup13PopAndDestroyEi @ 1263 NONAME ; CCleanup::PopAndDestroy(int)
+	_ZN8CCleanup13PopAndDestroyEv @ 1264 NONAME ; CCleanup::PopAndDestroy()
+	_ZN8CCleanup13PreviousLevelEv @ 1265 NONAME ; CCleanup::PreviousLevel()
+	_ZN8CCleanup16PopAndDestroyAllEv @ 1266 NONAME ; CCleanup::PopAndDestroyAll()
+	_ZN8CCleanup3NewEv @ 1267 NONAME ; CCleanup::New()
+	_ZN8CCleanup3PopEi @ 1268 NONAME ; CCleanup::Pop(int)
+	_ZN8CCleanup3PopEv @ 1269 NONAME ; CCleanup::Pop()
+	_ZN8CCleanup4NewLEv @ 1270 NONAME ; CCleanup::NewL()
+	_ZN8CCleanup5CheckEPv @ 1271 NONAME ; CCleanup::Check(void*)
+	_ZN8CCleanup5DoPopEii @ 1272 NONAME ; CCleanup::DoPop(int, int)
+	_ZN8CCleanup5PushLE12TCleanupItem @ 1273 NONAME ; CCleanup::PushL(TCleanupItem)
+	_ZN8CCleanup5PushLEP5CBase @ 1274 NONAME ; CCleanup::PushL(CBase*)
+	_ZN8CCleanup5PushLEPv @ 1275 NONAME ; CCleanup::PushL(void*)
+	_ZN8CCleanup6PopAllEv @ 1276 NONAME ; CCleanup::PopAll()
+	_ZN8CCleanup8DoPopAllEi @ 1277 NONAME ; CCleanup::DoPopAll(int)
+	_ZN8CCleanup9NextLevelEv @ 1278 NONAME ; CCleanup::NextLevel()
+	_ZN8CCleanupC1Ev @ 1279 NONAME ; CCleanup::CCleanup()
+	_ZN8CCleanupC2Ev @ 1280 NONAME ; CCleanup::CCleanup()
+	_ZN8CCleanupD0Ev @ 1281 NONAME ; CCleanup::~CCleanup()
+	_ZN8CCleanupD1Ev @ 1282 NONAME ; CCleanup::~CCleanup()
+	_ZN8CCleanupD2Ev @ 1283 NONAME ; CCleanup::~CCleanup()
+	_ZN8CServer24RunLEv @ 1284 NONAME ; CServer2::RunL()
+	_ZN8CServer25StartERK7TDesC16 @ 1285 NONAME ; CServer2::Start(TDesC16 const&)
+	_ZN8CServer26StartLERK7TDesC16 @ 1286 NONAME ; CServer2::StartL(TDesC16 const&)
+	_ZN8CServer27ReStartEv @ 1287 NONAME ; CServer2::ReStart()
+	_ZN8CServer28DoCancelEv @ 1288 NONAME ; CServer2::DoCancel()
+	_ZN8CServer28RunErrorEi @ 1289 NONAME ; CServer2::RunError(int)
+	_ZN8CServer29DoConnectERK9RMessage2 @ 1290 NONAME ; CServer2::DoConnect(RMessage2 const&)
+	_ZN8CServer2C2EiNS_11TServerTypeE @ 1291 NONAME ; CServer2::CServer2(int, CServer2::TServerType)
+	_ZN8CServer2D0Ev @ 1292 NONAME ; CServer2::~CServer2()
+	_ZN8CServer2D1Ev @ 1293 NONAME ; CServer2::~CServer2()
+	_ZN8CServer2D2Ev @ 1294 NONAME ; CServer2::~CServer2()
+	_ZN8RCondVar10OpenGlobalERK7TDesC1610TOwnerType @ 1295 NONAME ; RCondVar::OpenGlobal(TDesC16 const&, TOwnerType)
+	_ZN8RCondVar11CreateLocalE10TOwnerType @ 1296 NONAME ; RCondVar::CreateLocal(TOwnerType)
+	_ZN8RCondVar12CreateGlobalERK7TDesC1610TOwnerType @ 1297 NONAME ; RCondVar::CreateGlobal(TDesC16 const&, TOwnerType)
+	_ZN8RCondVar4OpenE12RMessagePtr2i10TOwnerType @ 1298 NONAME ; RCondVar::Open(RMessagePtr2, int, TOwnerType)
+	_ZN8RCondVar4OpenEi10TOwnerType @ 1299 NONAME ; RCondVar::Open(int, TOwnerType)
+	_ZN8RCondVar4WaitER6RMutex @ 1300 NONAME ; RCondVar::Wait(RMutex&)
+	_ZN8RCondVar6SignalEv @ 1301 NONAME ; RCondVar::Signal()
+	_ZN8RCondVar9BroadcastEv @ 1302 NONAME ; RCondVar::Broadcast()
+	_ZN8RCondVar9TimedWaitER6RMutexi @ 1303 NONAME ; RCondVar::TimedWait(RMutex&, int)
+	_ZN8RLibrary11GetRamSizesERiS0_ @ 1304 NONAME ; RLibrary::GetRamSizes(int&, int&)
+	_ZN8RLibrary14LoadRomLibraryERK7TDesC16S2_ @ 1305 NONAME ; RLibrary::LoadRomLibrary(TDesC16 const&, TDesC16 const&)
+	_ZN8RLibrary4InitEv @ 1306 NONAME ; RLibrary::Init()
+	_ZN8RLibrary4LoadERK7TDesC16RK8TUidType @ 1307 NONAME ; RLibrary::Load(TDesC16 const&, TUidType const&)
+	_ZN8RLibrary4LoadERK7TDesC16S2_ @ 1308 NONAME ; RLibrary::Load(TDesC16 const&, TDesC16 const&)
+	_ZN8RLibrary4LoadERK7TDesC16S2_RK8TUidType @ 1309 NONAME ; RLibrary::Load(TDesC16 const&, TDesC16 const&, TUidType const&)
+	_ZN8RLibrary4LoadERK7TDesC16S2_RK8TUidTypem @ 1310 NONAME ; RLibrary::Load(TDesC16 const&, TDesC16 const&, TUidType const&, unsigned long)
+	_ZN8RLibrary5CloseEv @ 1311 NONAME ; RLibrary::Close()
+	_ZN8RLibrary7GetInfoERK7TDesC16R5TDes8 @ 1312 NONAME ; RLibrary::GetInfo(TDesC16 const&, TDes8&)
+	_ZN8RProcess10DataCagingEi @ 1313 NONAME ; RProcess::DataCaging(int)
+	_ZN8RProcess10RendezvousEi @ 1314 NONAME ; RProcess::Rendezvous(int)
+	_ZN8RProcess12SetParameterEi11RHandleBase @ 1315 NONAME ; RProcess::SetParameter(int, RHandleBase)
+	_ZN8RProcess12SetParameterEiRK15RSubSessionBase @ 1316 NONAME ; RProcess::SetParameter(int, RSubSessionBase const&)
+	_ZN8RProcess12SetParameterEiRK6TDesC8 @ 1317 NONAME ; RProcess::SetParameter(int, TDesC8 const&)
+	_ZN8RProcess12SetParameterEiRK7TDesC16 @ 1318 NONAME ; RProcess::SetParameter(int, TDesC16 const&)
+	_ZN8RProcess12SetParameterEii @ 1319 NONAME ; RProcess::SetParameter(int, int)
+	_ZN8RProcess4KillEi @ 1320 NONAME ; RProcess::Kill(int)
+	_ZN8RProcess4OpenE10TProcessId10TOwnerType @ 1321 NONAME ; RProcess::Open(TProcessId, TOwnerType)
+	_ZN8RProcess4OpenERK7TDesC1610TOwnerType @ 1322 NONAME ; RProcess::Open(TDesC16 const&, TOwnerType)
+	_ZN8RProcess5PanicERK7TDesC16i @ 1323 NONAME ; RProcess::Panic(TDesC16 const&, int)
+	_ZN8RProcess6CreateERK7TDesC16S2_10TOwnerType @ 1324 NONAME ; RProcess::Create(TDesC16 const&, TDesC16 const&, TOwnerType)
+	_ZN8RProcess6CreateERK7TDesC16S2_RK8TUidType10TOwnerType @ 1325 NONAME ; RProcess::Create(TDesC16 const&, TDesC16 const&, TUidType const&, TOwnerType)
+	_ZN8RProcess6ResumeEv @ 1326 NONAME ; RProcess::Resume()
+	_ZN4User13RenameProcessERK7TDesC16 @ 1327 NONAME ; User::RenameProcess(TDesC16 const&)
+	_ZN8RProcess9SecureApiEi @ 1328 NONAME ; RProcess::SecureApi(int)
+	_ZN8RProcess9TerminateEi @ 1329 NONAME ; RProcess::Terminate(int)
+	_ZN8RRefBase4CopyERKS_ @ 1330 NONAME ; RRefBase::Copy(RRefBase const&)
+	_ZN8RRefBase4FreeEv @ 1331 NONAME ; RRefBase::Free()
+	_ZN8RRefBase7DoAllocEPKvi @ 1332 NONAME ; RRefBase::DoAlloc(void const*, int)
+	_ZN8RRefBase8DoAllocLEPKvi @ 1333 NONAME ; RRefBase::DoAllocL(void const*, int)
+	_ZN8RServer212CreateGlobalERK7TDesC16 @ 1334 NONAME ; RServer2::CreateGlobal(TDesC16 const&)
+	_ZN8RServer212CreateGlobalERK7TDesC16i @ 1335 NONAME ; RServer2::CreateGlobal(TDesC16 const&, int)
+	_ZN8RServer26CancelEv @ 1336 NONAME ; RServer2::Cancel()
+	_ZN8RServer27ReceiveER9RMessage2 @ 1337 NONAME ; RServer2::Receive(RMessage2&)
+	_ZN8RServer27ReceiveER9RMessage2R14TRequestStatus @ 1338 NONAME ; RServer2::Receive(RMessage2&, TRequestStatus&)
+	_ZN8TDayName3SetE4TDay @ 1339 NONAME ; TDayName::Set(TDay)
+	_ZN8TDayNameC1E4TDay @ 1340 NONAME ; TDayName::TDayName(TDay)
+	_ZN8TDayNameC1Ev @ 1341 NONAME ; TDayName::TDayName()
+	_ZN8TDayNameC2E4TDay @ 1342 NONAME ; TDayName::TDayName(TDay)
+	_ZN8TDayNameC2Ev @ 1343 NONAME ; TDayName::TDayName()
+	_ZN8TLdrInfoC1Ev @ 1344 NONAME ; TLdrInfo::TLdrInfo()
+	_ZN8TLdrInfoC2Ev @ 1345 NONAME ; TLdrInfo::TLdrInfo()
+	_ZN8TUidTypeC1E4TUid @ 1346 NONAME ; TUidType::TUidType(TUid)
+	_ZN8TUidTypeC1E4TUidS0_ @ 1347 NONAME ; TUidType::TUidType(TUid, TUid)
+	_ZN8TUidTypeC1E4TUidS0_S0_ @ 1348 NONAME ; TUidType::TUidType(TUid, TUid, TUid)
+	_ZN8TUidTypeC1Ev @ 1349 NONAME ; TUidType::TUidType()
+	_ZN8TUidTypeC2E4TUid @ 1350 NONAME ; TUidType::TUidType(TUid)
+	_ZN8TUidTypeC2E4TUidS0_ @ 1351 NONAME ; TUidType::TUidType(TUid, TUid)
+	_ZN8TUidTypeC2E4TUidS0_S0_ @ 1352 NONAME ; TUidType::TUidType(TUid, TUid, TUid)
+	_ZN8TUidTypeC2Ev @ 1353 NONAME ; TUidType::TUidType()
+	_ZNK8TVersion4NameEv @ 1354 NONAME ; TVersion::Name() const
+	_ZN8TVersionC1Eiii @ 1355 NONAME ; TVersion::TVersion(int, int, int)
+	_ZN8TVersionC1Ev @ 1356 NONAME ; TVersion::TVersion()
+	_ZN8TVersionC2Eiii @ 1357 NONAME ; TVersion::TVersion(int, int, int)
+	_ZN8TVersionC2Ev @ 1358 NONAME ; TVersion::TVersion()
+	_ZTV5CBase @ 1359 NONAME ; #<VT>#
+	_ZN8UserHeap15SetupThreadHeapEiR24SStdEpocThreadCreateInfo @ 1360 NONAME ; UserHeap::SetupThreadHeap(int, SStdEpocThreadCreateInfo&)
+	_ZN8UserHeap16CreateThreadHeapER24SStdEpocThreadCreateInfoRP5RHeapii @ 1361 NONAME ; UserHeap::CreateThreadHeap(SStdEpocThreadCreateInfo&, RHeap*&, int, int)
+	_ZN8UserHeap9ChunkHeapE6RChunkiiiiim @ 1362 NONAME ; UserHeap::ChunkHeap(RChunk, int, int, int, int, int, unsigned long)
+	_ZN8UserHeap9ChunkHeapEPK7TDesC16iiiii @ 1363 NONAME ; UserHeap::ChunkHeap(TDesC16 const*, int, int, int, int, int)
+	_ZN8UserHeap9FixedHeapEPviii @ 1364 NONAME ; UserHeap::FixedHeap(void*, int, int, int)
+	_ZN9CObjectIx2AtEi @ 1365 NONAME ; CObjectIx::At(int)
+	_ZN9CObjectIx2AtEii @ 1366 NONAME ; CObjectIx::At(int, int)
+	_ZN9CObjectIx3AtLEi @ 1367 NONAME ; CObjectIx::AtL(int)
+	_ZN9CObjectIx3AtLEii @ 1368 NONAME ; CObjectIx::AtL(int, int)
+	_ZN9CObjectIx4AddLEP7CObject @ 1369 NONAME ; CObjectIx::AddL(CObject*)
+	_ZN9CObjectIx4NewLEv @ 1370 NONAME ; CObjectIx::NewL()
+	_ZN9CObjectIx6RemoveEi @ 1371 NONAME ; CObjectIx::Remove(int)
+	_ZN9CObjectIxC1Ev @ 1372 NONAME ; CObjectIx::CObjectIx()
+	_ZN9CObjectIxC2Ev @ 1373 NONAME ; CObjectIx::CObjectIx()
+	_ZN9CObjectIxD0Ev @ 1374 NONAME ; CObjectIx::~CObjectIx()
+	_ZN9CObjectIxD1Ev @ 1375 NONAME ; CObjectIx::~CObjectIx()
+	_ZN9CObjectIxD2Ev @ 1376 NONAME ; CObjectIx::~CObjectIx()
+	_ZN9CObjectIxixEi @ 1377 NONAME ; CObjectIx::operator[](int)
+	_ZN9CPeriodic3NewEi @ 1378 NONAME ; CPeriodic::New(int)
+	_ZN9CPeriodic4NewLEi @ 1379 NONAME ; CPeriodic::NewL(int)
+	_ZN9CPeriodic4RunLEv @ 1380 NONAME ; CPeriodic::RunL()
+	_ZN9CPeriodic5StartE27TTimeIntervalMicroSeconds32S0_9TCallBack @ 1381 NONAME ; CPeriodic::Start(TTimeIntervalMicroSeconds32, TTimeIntervalMicroSeconds32, TCallBack)
+	_ZN9CPeriodicC1Ei @ 1382 NONAME ; CPeriodic::CPeriodic(int)
+	_ZN9CPeriodicC2Ei @ 1383 NONAME ; CPeriodic::CPeriodic(int)
+	_ZN9CPeriodicD0Ev @ 1384 NONAME ; CPeriodic::~CPeriodic()
+	_ZN9CPeriodicD1Ev @ 1385 NONAME ; CPeriodic::~CPeriodic()
+	_ZN9CPeriodicD2Ev @ 1386 NONAME ; CPeriodic::~CPeriodic()
+	_ZN9CSession210DisconnectERK9RMessage2 @ 1387 NONAME ; CSession2::Disconnect(RMessage2 const&)
+	_ZN9CSession212ServiceErrorERK9RMessage2i @ 1388 NONAME ; CSession2::ServiceError(RMessage2 const&, int)
+	_ZN9CSession214CountResourcesEv @ 1389 NONAME ; CSession2::CountResources()
+	_ZN9CSession220ResourceCountMarkEndERK9RMessage2 @ 1390 NONAME ; CSession2::ResourceCountMarkEnd(RMessage2 const&)
+	_ZN9CSession222ResourceCountMarkStartEv @ 1391 NONAME ; CSession2::ResourceCountMarkStart()
+	_ZN9CSession27CreateLEv @ 1392 NONAME ; CSession2::CreateL()
+	_ZN9CSession2C2Ev @ 1393 NONAME ; CSession2::CSession2()
+	_ZN9CSession2D0Ev @ 1394 NONAME ; CSession2::~CSession2()
+	_ZN9CSession2D1Ev @ 1395 NONAME ; CSession2::~CSession2()
+	_ZN9CSession2D2Ev @ 1396 NONAME ; CSession2::~CSession2()
+	_ZN9E32Loader10DeviceLoadEPvi @ 1397 NONAME ; E32Loader::DeviceLoad(void*, int)
+	_ZN9E32Loader11CodeSegInfoEPvR18TCodeSegCreateInfo @ 1398 NONAME ; E32Loader::CodeSegInfo(void*, TCodeSegCreateInfo&)
+	_ZN9E32Loader11CodeSegNextERPvRK12TFindCodeSeg @ 1399 NONAME ; E32Loader::CodeSegNext(void*&, TFindCodeSeg const&)
+	_ZN9E32Loader11CodeSegOpenEPvi @ 1400 NONAME ; E32Loader::CodeSegOpen(void*, int)
+	_ZN9E32Loader13LocaleExportsEPvPPFivE @ 1401 NONAME ; E32Loader::LocaleExports(void *, int (**)(void))
+	_ZN9E32Loader12CodeSegCloseEPv @ 1402 NONAME ; E32Loader::CodeSegClose(void*)
+	_ZN9E32Loader13CodeSegCreateER18TCodeSegCreateInfo @ 1403 NONAME ; E32Loader::CodeSegCreate(TCodeSegCreateInfo&)
+	_ZN9E32Loader13CodeSegLoadedER18TCodeSegCreateInfo @ 1404 NONAME ; E32Loader::CodeSegLoaded(TCodeSegCreateInfo&)
+	_ZN9E32Loader13LibraryCreateER18TLibraryCreateInfo @ 1405 NONAME ; E32Loader::LibraryCreate(TLibraryCreateInfo&)
+	_ZN9E32Loader13ProcessCreateER18TProcessCreateInfoPK6TDesC8 @ 1406 NONAME ; E32Loader::ProcessCreate(TProcessCreateInfo&, TDesC8 const*)
+	_ZN9E32Loader13ProcessLoadedER18TProcessCreateInfo @ 1407 NONAME ; E32Loader::ProcessLoaded(TProcessCreateInfo&)
+	_ZN9E32Loader13ReadExportDirEPvPm @ 1408 NONAME ; E32Loader::ReadExportDir(void*, unsigned long*)
+	_ZN9E32Loader16CheckClientStateEi @ 1409 NONAME ; E32Loader::CheckClientState(int)
+	_ZN9E32Loader18GetV7StubAddressesERmS0_ @ 1410 NONAME ; E32Loader::GetV7StubAddresses(unsigned long&, unsigned long&)
+	_ZN9E32Loader19CodeSegDeferDeletesEv @ 1411 NONAME ; E32Loader::CodeSegDeferDeletes()
+	_ZN9E32Loader20CodeSegAddDependencyEPvS0_ @ 1412 NONAME ; E32Loader::CodeSegAddDependency(void*, void*)
+	_ZN9E32Loader20ThreadProcessCodeSegEi @ 1413 NONAME ; E32Loader::ThreadProcessCodeSeg(int)
+	_ZN9E32Loader22CodeSegEndDeferDeletesEv @ 1414 NONAME ; E32Loader::CodeSegEndDeferDeletes()
+	_ZN9RFastLock11CreateLocalE10TOwnerType @ 1415 NONAME ; RFastLock::CreateLocal(TOwnerType)
+	_ZN9RFastLock4WaitEv @ 1416 NONAME ; RFastLock::Wait()
+	_ZN9RFastLock6SignalEv @ 1417 NONAME ; RFastLock::Signal()
+	_ZN9RMessage2C1ERK12RMessagePtr2 @ 1418 NONAME ; RMessage2::RMessage2(RMessagePtr2 const&)
+	_ZN9RMessage2C2ERK12RMessagePtr2 @ 1419 NONAME ; RMessage2::RMessage2(RMessagePtr2 const&)
+	_ZN9RNotifier12NotifyCancelEv @ 1420 NONAME ; RNotifier::NotifyCancel()
+	_ZN9RNotifier13LoadNotifiersE4TUid @ 1421 NONAME ; RNotifier::LoadNotifiers(TUid)
+	_ZN9RNotifier13StartNotifierE4TUidRK6TDesC8 @ 1422 NONAME ; RNotifier::StartNotifier(TUid, TDesC8 const&)
+	_ZN9RNotifier13StartNotifierE4TUidRK6TDesC8R5TDes8 @ 1423 NONAME ; RNotifier::StartNotifier(TUid, TDesC8 const&, TDes8&)
+	_ZN9RNotifier13StartNotifierE4TUidS0_RK6TDesC8R5TDes8 @ 1424 NONAME ; RNotifier::StartNotifier(TUid, TUid, TDesC8 const&, TDes8&)
+	_ZN9RNotifier14CancelNotifierE4TUid @ 1425 NONAME ; RNotifier::CancelNotifier(TUid)
+	_ZN9RNotifier14UpdateNotifierE4TUidRK6TDesC8R5TDes8 @ 1426 NONAME ; RNotifier::UpdateNotifier(TUid, TDesC8 const&, TDes8&)
+	_ZN9RNotifier15UnloadNotifiersE4TUid @ 1427 NONAME ; RNotifier::UnloadNotifiers(TUid)
+	_ZN9RNotifier27StartNotifierAndGetResponseER14TRequestStatus4TUidRK6TDesC8R5TDes8 @ 1428 NONAME ; RNotifier::StartNotifierAndGetResponse(TRequestStatus&, TUid, TDesC8 const&, TDes8&)
+	_ZN9RNotifier27StartNotifierAndGetResponseER14TRequestStatus4TUidS2_RK6TDesC8R5TDes8 @ 1429 NONAME ; RNotifier::StartNotifierAndGetResponse(TRequestStatus&, TUid, TUid, TDesC8 const&, TDes8&)
+	_ZN9RNotifier5CloseEv @ 1430 NONAME ; RNotifier::Close()
+	_ZN9RNotifier6NotifyERK7TDesC16S2_S2_S2_RiR14TRequestStatus @ 1431 NONAME ; RNotifier::Notify(TDesC16 const&, TDesC16 const&, TDesC16 const&, TDesC16 const&, int&, TRequestStatus&)
+	_ZN9RNotifier7ConnectEv @ 1432 NONAME ; RNotifier::Connect()
+	_ZN9RNotifier9InfoPrintERK7TDesC16 @ 1433 NONAME ; RNotifier::InfoPrint(TDesC16 const&)
+	_ZN9RNotifierC1Ev @ 1434 NONAME ; RNotifier::RNotifier()
+	_ZN9RNotifierC2Ev @ 1435 NONAME ; RNotifier::RNotifier()
+	_ZN9RProperty3GetE4TUidjR5TDes8 @ 1436 NONAME ; RProperty::Get(TUid, unsigned int, TDes8&)
+	_ZN9RProperty3GetE4TUidjR6TDes16 @ 1437 NONAME ; RProperty::Get(TUid, unsigned int, TDes16&)
+	_ZN9RProperty3GetE4TUidjRi @ 1438 NONAME ; RProperty::Get(TUid, unsigned int, int&)
+	_ZN9RProperty3GetER5TDes8 @ 1439 NONAME ; RProperty::Get(TDes8&)
+	_ZN9RProperty3GetER6TDes16 @ 1440 NONAME ; RProperty::Get(TDes16&)
+	_ZN9RProperty3GetERi @ 1441 NONAME ; RProperty::Get(int&)
+	_ZN9RProperty3SetE4TUidjRK6TDesC8 @ 1442 NONAME ; RProperty::Set(TUid, unsigned int, TDesC8 const&)
+	_ZN9RProperty3SetE4TUidjRK7TDesC16 @ 1443 NONAME ; RProperty::Set(TUid, unsigned int, TDesC16 const&)
+	_ZN9RProperty3SetE4TUidji @ 1444 NONAME ; RProperty::Set(TUid, unsigned int, int)
+	_ZN9RProperty3SetERK6TDesC8 @ 1445 NONAME ; RProperty::Set(TDesC8 const&)
+	_ZN9RProperty3SetERK7TDesC16 @ 1446 NONAME ; RProperty::Set(TDesC16 const&)
+	_ZN9RProperty3SetEi @ 1447 NONAME ; RProperty::Set(int)
+	_ZN9RProperty6AttachE4TUidj10TOwnerType @ 1448 NONAME ; RProperty::Attach(TUid, unsigned int, TOwnerType)
+	_ZN9RProperty6CancelEv @ 1449 NONAME ; RProperty::Cancel()
+	_ZN9RProperty6DefineE4TUidjii @ 1450 NONAME ; RProperty::Define(TUid, unsigned int, int, int)
+	_ZN9RProperty6DeleteE4TUidj @ 1451 NONAME ; RProperty::Delete(TUid, unsigned int)
+	_ZN9RProperty9SubscribeER14TRequestStatus @ 1452 NONAME ; RProperty::Subscribe(TRequestStatus&)
+	_ZN9TAmPmName3SetE5TAmPm @ 1453 NONAME ; TAmPmName::Set(TAmPm)
+	_ZN9TAmPmNameC1E5TAmPm @ 1454 NONAME ; TAmPmName::TAmPmName(TAmPm)
+	_ZN9TAmPmNameC1Ev @ 1455 NONAME ; TAmPmName::TAmPmName()
+	_ZN9TAmPmNameC2E5TAmPm @ 1456 NONAME ; TAmPmName::TAmPmName(TAmPm)
+	_ZN9TAmPmNameC2Ev @ 1457 NONAME ; TAmPmName::TAmPmName()
+	_ZN9TBitInput3SetEPKhii @ 1458 NONAME ; TBitInput::Set(unsigned char const*, int, int)
+	_ZN9TBitInput5ReadLEi @ 1459 NONAME ; TBitInput::ReadL(int)
+	_ZN9TBitInput5ReadLEv @ 1460 NONAME ; TBitInput::ReadL()
+	_ZN9TBitInput8HuffmanLEPKm @ 1461 NONAME ; TBitInput::HuffmanL(unsigned long const*)
+	_ZN9TBitInputC1EPKhii @ 1462 NONAME ; TBitInput::TBitInput(unsigned char const*, int, int)
+	_ZN9TBitInputC1Ev @ 1463 NONAME ; TBitInput::TBitInput()
+	_ZN9TBitInputC2EPKhii @ 1464 NONAME ; TBitInput::TBitInput(unsigned char const*, int, int)
+	_ZN9TBitInputC2Ev @ 1465 NONAME ; TBitInput::TBitInput()
+	_ZN9TBufBase8C1EPKhi @ 1466 NONAME ; TBufBase8::TBufBase8(unsigned char const*, int)
+	_ZN9TBufBase8C1ERK6TDesC8i @ 1467 NONAME ; TBufBase8::TBufBase8(TDesC8 const&, int)
+	_ZN9TBufBase8C1Ei @ 1468 NONAME ; TBufBase8::TBufBase8(int)
+	_ZN9TBufBase8C1Eii @ 1469 NONAME ; TBufBase8::TBufBase8(int, int)
+	_ZN9TBufBase8C2EPKhi @ 1470 NONAME ; TBufBase8::TBufBase8(unsigned char const*, int)
+	_ZN9TBufBase8C2ERK6TDesC8i @ 1471 NONAME ; TBufBase8::TBufBase8(TDesC8 const&, int)
+	_ZN9TBufBase8C2Ei @ 1472 NONAME ; TBufBase8::TBufBase8(int)
+	_ZN9TBufBase8C2Eii @ 1473 NONAME ; TBufBase8::TBufBase8(int, int)
+	_ZN9TDateTime14SetMicroSecondEi @ 1474 NONAME ; TDateTime::SetMicroSecond(int)
+	_ZN9TDateTime16SetYearLeapCheckEi @ 1475 NONAME ; TDateTime::SetYearLeapCheck(int)
+	_ZN9TDateTime3SetEi6TMonthiiiii @ 1476 NONAME ; TDateTime::Set(int, TMonth, int, int, int, int, int)
+	_ZN9TDateTime6SetDayEi @ 1477 NONAME ; TDateTime::SetDay(int)
+	_ZN9TDateTime7SetHourEi @ 1478 NONAME ; TDateTime::SetHour(int)
+	_ZN9TDateTime7SetYearEi @ 1479 NONAME ; TDateTime::SetYear(int)
+	_ZN9TDateTime8SetMonthE6TMonth @ 1480 NONAME ; TDateTime::SetMonth(TMonth)
+	_ZN9TDateTime9SetMinuteEi @ 1481 NONAME ; TDateTime::SetMinute(int)
+	_ZN9TDateTime9SetSecondEi @ 1482 NONAME ; TDateTime::SetSecond(int)
+	_ZN9TDateTimeC1Ei6TMonthiiiii @ 1483 NONAME ; TDateTime::TDateTime(int, TMonth, int, int, int, int, int)
+	_ZN9TDateTimeC2Ei6TMonthiiiii @ 1484 NONAME ; TDateTime::TDateTime(int, TMonth, int, int, int, int, int)
+	_ZN9TRawEvent3SetENS_5TTypeE @ 1485 NONAME ; TRawEvent::Set(TRawEvent::TType)
+	_ZN9TRawEvent3SetENS_5TTypeEi @ 1486 NONAME ; TRawEvent::Set(TRawEvent::TType, int)
+	_ZN9TRawEvent3SetENS_5TTypeEii @ 1487 NONAME ; TRawEvent::Set(TRawEvent::TType, int, int)
+	_ZNK10CObjectCon10FindByNameERiRK7TDesC16R4TBufILi128EE @ 1488 NONAME ; CObjectCon::FindByName(int&, TDesC16 const&, TBuf<128>&) const
+	_ZNK10CObjectCon14FindByFullNameERiRK7TDesC16R4TBufILi256EE @ 1489 NONAME ; CObjectCon::FindByFullName(int&, TDesC16 const&, TBuf<256>&) const
+	_ZNK10CObjectCon19CheckUniqueFullNameEPK7CObject @ 1490 NONAME ; CObjectCon::CheckUniqueFullName(CObject const*) const
+	_ZNK10CObjectCon19CheckUniqueFullNameEPK7CObjectRK7TDesC16 @ 1491 NONAME ; CObjectCon::CheckUniqueFullName(CObject const*, TDesC16 const&) const
+	_ZNK10CObjectCon2AtEi @ 1492 NONAME ; CObjectCon::At(int) const
+	_ZNK10CObjectCon3AtLEi @ 1493 NONAME ; CObjectCon::AtL(int) const
+	_ZNK10RAllocator5CheckEv @ 1494 NONAME ; RAllocator::Check() const
+	_ZNK10RAllocator5CountERi @ 1495 NONAME ; RAllocator::Count(int&) const
+	_ZNK10RAllocator5CountEv @ 1496 NONAME ; RAllocator::Count() const
+	_ZNK10RArrayBase12BinarySearchEPKvRiPFiS1_S1_E @ 1497 NONAME ; RArrayBase::BinarySearch(void const*, int&, int (*)(void const*, void const*)) const
+	_ZNK10RArrayBase12BinarySearchEPKvRiPFiS1_S1_Ei @ 1498 NONAME ; RArrayBase::BinarySearch(void const*, int&, int (*)(void const*, void const*), int) const
+	_ZNK10RArrayBase13FindIsqSignedEPKv @ 1499 NONAME ; RArrayBase::FindIsqSigned(void const*) const
+	_ZNK10RArrayBase13FindIsqSignedEPKvi @ 1500 NONAME ; RArrayBase::FindIsqSigned(void const*, int) const
+	_ZNK10RArrayBase15FindIsqUnsignedEPKv @ 1501 NONAME ; RArrayBase::FindIsqUnsigned(void const*) const
+	_ZNK10RArrayBase15FindIsqUnsignedEPKvi @ 1502 NONAME ; RArrayBase::FindIsqUnsigned(void const*, int) const
+	_ZNK10RArrayBase18BinarySearchSignedEPKvRi @ 1503 NONAME ; RArrayBase::BinarySearchSigned(void const*, int&) const
+	_ZNK10RArrayBase18BinarySearchSignedEPKvRii @ 1504 NONAME ; RArrayBase::BinarySearchSigned(void const*, int&, int) const
+	_ZNK10RArrayBase20BinarySearchUnsignedEPKvRi @ 1505 NONAME ; RArrayBase::BinarySearchUnsigned(void const*, int&) const
+	_ZNK10RArrayBase20BinarySearchUnsignedEPKvRii @ 1506 NONAME ; RArrayBase::BinarySearchUnsigned(void const*, int&, int) const
+	_ZNK10RArrayBase2AtEi @ 1507 NONAME ; RArrayBase::At(int) const
+	_ZNK10RArrayBase4FindEPKv @ 1508 NONAME ; RArrayBase::Find(void const*) const
+	_ZNK10RArrayBase4FindEPKvPFiS1_S1_E @ 1509 NONAME ; RArrayBase::Find(void const*, int (*)(void const*, void const*)) const
+	_ZNK10RArrayBase5CountEv @ 1510 NONAME ; RArrayBase::Count() const
+	_ZNK10RArrayBase7FindIsqEPKvPFiS1_S1_E @ 1511 NONAME ; RArrayBase::FindIsq(void const*, int (*)(void const*, void const*)) const
+	_ZNK10RArrayBase7FindIsqEPKvPFiS1_S1_Ei @ 1512 NONAME ; RArrayBase::FindIsq(void const*, int (*)(void const*, void const*), int) const
+	_ZNK11RHandleBase10AttributesEv @ 1513 NONAME ; RHandleBase::Attributes() const
+	_ZNK11RHandleBase4NameEv @ 1514 NONAME ; RHandleBase::Name() const
+	_ZNK11RHandleBase8FullNameEv @ 1515 NONAME ; RHandleBase::FullName() const
+	_ZNK11RUndertaker11LogonCancelEv @ 1516 NONAME ; RUndertaker::LogonCancel() const
+	_ZNK11RUndertaker5LogonER14TRequestStatusRi @ 1517 NONAME ; RUndertaker::Logon(TRequestStatus&, int&) const
+	_ZNK11TCheckedUid3DesEv @ 1518 NONAME ; TCheckedUid::Des() const
+	_ZNK11TCheckedUid5CheckEv @ 1519 NONAME ; TCheckedUid::Check() const
+	_ZNK11TDblQueBase14__DbgTestEmptyEv @ 1520 NONAME ; TDblQueBase::__DbgTestEmpty() const
+	_ZNK11TDblQueBase7IsEmptyEv @ 1521 NONAME ; TDblQueBase::IsEmpty() const
+	_ZNK11TSglQueBase7IsEmptyEv @ 1522 NONAME ; TSglQueBase::IsEmpty() const
+	_ZNK12CConsoleBase6WhereXEv @ 1523 NONAME ; CConsoleBase::WhereX() const
+	_ZNK12CConsoleBase6WhereYEv @ 1524 NONAME ; CConsoleBase::WhereY() const
+	_ZNK12CObjectConIx6LookupEi @ 1525 NONAME ; CObjectConIx::Lookup(int) const
+	_ZNK12RMessagePtr212GetDesLengthEi @ 1526 NONAME ; RMessagePtr2::GetDesLength(int) const
+	_ZNK12RMessagePtr213GetDesLengthLEi @ 1527 NONAME ; RMessagePtr2::GetDesLengthL(int) const
+	_ZNK12RMessagePtr215GetDesMaxLengthEi @ 1528 NONAME ; RMessagePtr2::GetDesMaxLength(int) const
+	_ZNK12RMessagePtr216GetDesMaxLengthLEi @ 1529 NONAME ; RMessagePtr2::GetDesMaxLengthL(int) const
+	_ZNK12RMessagePtr218ClientProcessFlagsEv @ 1530 NONAME ; RMessagePtr2::ClientProcessFlags() const
+	_ZNK12RMessagePtr218SetProcessPriorityE16TProcessPriority @ 1531 NONAME ; RMessagePtr2::SetProcessPriority(TProcessPriority) const
+	_ZNK12RMessagePtr24KillEi @ 1532 NONAME ; RMessagePtr2::Kill(int) const
+	_ZNK12RMessagePtr24ReadEiR5TDes8i @ 1533 NONAME ; RMessagePtr2::Read(int, TDes8&, int) const
+	_ZNK12RMessagePtr24ReadEiR6TDes16i @ 1534 NONAME ; RMessagePtr2::Read(int, TDes16&, int) const
+	_ZNK12RMessagePtr25PanicERK7TDesC16i @ 1535 NONAME ; RMessagePtr2::Panic(TDesC16 const&, int) const
+	_ZNK12RMessagePtr25ReadLEiR5TDes8i @ 1536 NONAME ; RMessagePtr2::ReadL(int, TDes8&, int) const
+	_ZNK12RMessagePtr25ReadLEiR6TDes16i @ 1537 NONAME ; RMessagePtr2::ReadL(int, TDes16&, int) const
+	_ZNK12RMessagePtr25WriteEiRK6TDesC8i @ 1538 NONAME ; RMessagePtr2::Write(int, TDesC8 const&, int) const
+	_ZNK12RMessagePtr25WriteEiRK7TDesC16i @ 1539 NONAME ; RMessagePtr2::Write(int, TDesC16 const&, int) const
+	_ZNK12RMessagePtr26ClientER7RThread10TOwnerType @ 1540 NONAME ; RMessagePtr2::Client(RThread&, TOwnerType) const
+	_ZNK12RMessagePtr26WriteLEiRK6TDesC8i @ 1541 NONAME ; RMessagePtr2::WriteL(int, TDesC8 const&, int) const
+	_ZNK12RMessagePtr26WriteLEiRK7TDesC16i @ 1542 NONAME ; RMessagePtr2::WriteL(int, TDesC16 const&, int) const
+	_ZNK12RMessagePtr28CompleteE11RHandleBase @ 1543 NONAME ; RMessagePtr2::Complete(RHandleBase) const
+	_ZNK12RMessagePtr28CompleteEi @ 1544 NONAME ; RMessagePtr2::Complete(int) const
+	_ZNK12RMessagePtr28SecureIdEv @ 1545 NONAME ; RMessagePtr2::SecureId() const
+	_ZNK12RMessagePtr29TerminateEi @ 1546 NONAME ; RMessagePtr2::Terminate(int) const
+	_ZNK12RSessionBase13DoSendReceiveEiPK8TIpcArgs @ 1547 NONAME ; RSessionBase::DoSendReceive(int, TIpcArgs const*) const
+	_ZNK12RSessionBase13DoSendReceiveEiPK8TIpcArgsR14TRequestStatus @ 1548 NONAME ; RSessionBase::DoSendReceive(int, TIpcArgs const*, TRequestStatus&) const
+	_ZNK12RSessionBase6DoSendEiPK8TIpcArgs @ 1549 NONAME ; RSessionBase::DoSend(int, TIpcArgs const*) const
+	_ZNK12TKeyArrayFix2AtEi @ 1550 NONAME ; TKeyArrayFix::At(int) const
+	_ZNK12TKeyArrayPak2AtEi @ 1551 NONAME ; TKeyArrayPak::At(int) const
+	_ZNK12TKeyArrayVar2AtEi @ 1552 NONAME ; TKeyArrayVar::At(int) const
+	_ZNK13CArrayFixBase2AtEi @ 1553 NONAME ; CArrayFixBase::At(int) const
+	_ZNK13CArrayFixBase3EndEi @ 1554 NONAME ; CArrayFixBase::End(int) const
+	_ZNK13CArrayFixBase4BackEi @ 1555 NONAME ; CArrayFixBase::Back(int) const
+	_ZNK13CArrayFixBase4FindEPKvR12TKeyArrayFixRi @ 1556 NONAME ; CArrayFixBase::Find(void const*, TKeyArrayFix&, int&) const
+	_ZNK13CArrayFixBase6SetKeyER12TKeyArrayFix @ 1557 NONAME ; CArrayFixBase::SetKey(TKeyArrayFix&) const
+	_ZNK13CArrayFixBase7FindIsqEPKvR12TKeyArrayFixRi @ 1558 NONAME ; CArrayFixBase::FindIsq(void const*, TKeyArrayFix&, int&) const
+	_ZNK13CArrayPakBase2AtEi @ 1559 NONAME ; CArrayPakBase::At(int) const
+	_ZNK13CArrayPakBase4FindEPKvR12TKeyArrayPakRi @ 1560 NONAME ; CArrayPakBase::Find(void const*, TKeyArrayPak&, int&) const
+	_ZNK13CArrayPakBase6LengthEi @ 1561 NONAME ; CArrayPakBase::Length(int) const
+	_ZNK13CArrayPakBase6SetKeyER12TKeyArrayPak @ 1562 NONAME ; CArrayPakBase::SetKey(TKeyArrayPak&) const
+	_ZNK13CArrayPakBase7FindIsqEPKvR12TKeyArrayPakRi @ 1563 NONAME ; CArrayPakBase::FindIsq(void const*, TKeyArrayPak&, int&) const
+	_ZNK13CArrayPakBase9GetOffsetEi @ 1564 NONAME ; CArrayPakBase::GetOffset(int) const
+	_ZNK13CArrayVarBase2AtEi @ 1565 NONAME ; CArrayVarBase::At(int) const
+	_ZNK13CArrayVarBase4FindEPKvR12TKeyArrayVarRi @ 1566 NONAME ; CArrayVarBase::Find(void const*, TKeyArrayVar&, int&) const
+	_ZNK13CArrayVarBase6LengthEi @ 1567 NONAME ; CArrayVarBase::Length(int) const
+	_ZNK13CArrayVarBase6SetKeyER12TKeyArrayVar @ 1568 NONAME ; CArrayVarBase::SetKey(TKeyArrayVar&) const
+	_ZNK13CArrayVarBase7FindIsqEPKvR12TKeyArrayVarRi @ 1569 NONAME ; CArrayVarBase::FindIsq(void const*, TKeyArrayVar&, int&) const
+	_ZNK14TCapabilitySet13HasCapabilityE11TCapability @ 1570 NONAME ; TCapabilitySet::HasCapability(TCapability) const
+	_ZNK14TCapabilitySet15HasCapabilitiesERKS_ @ 1571 NONAME ; TCapabilitySet::HasCapabilities(TCapabilitySet const&) const
+	_ZNK15RChangeNotifier11LogonCancelEv @ 1572 NONAME ; RChangeNotifier::LogonCancel() const
+	_ZNK15RChangeNotifier5LogonER14TRequestStatus @ 1573 NONAME ; RChangeNotifier::Logon(TRequestStatus&) const
+	_ZNK15RSubSessionBase13DoSendReceiveEiPK8TIpcArgs @ 1574 NONAME ; RSubSessionBase::DoSendReceive(int, TIpcArgs const*) const
+	_ZNK15RSubSessionBase13DoSendReceiveEiPK8TIpcArgsR14TRequestStatus @ 1575 NONAME ; RSubSessionBase::DoSendReceive(int, TIpcArgs const*, TRequestStatus&) const
+	_ZNK15RSubSessionBase6DoSendEiPK8TIpcArgs @ 1576 NONAME ; RSubSessionBase::DoSend(int, TIpcArgs const*) const
+	_ZNK16CActiveScheduler10StackDepthEv @ 1577 NONAME ; CActiveScheduler::StackDepth() const
+	_ZNK16CActiveScheduler4HaltEi @ 1578 NONAME ; CActiveScheduler::Halt(int) const
+	_ZNK16CActiveScheduler5ErrorEi @ 1579 NONAME ; CActiveScheduler::Error(int) const
+	_ZNK17RPointerArrayBase12BinarySearchEPKvRiPFiS1_S1_E @ 1580 NONAME ; RPointerArrayBase::BinarySearch(void const*, int&, int (*)(void const*, void const*)) const
+	_ZNK17RPointerArrayBase12BinarySearchEPKvRiPFiS1_S1_Ei @ 1581 NONAME ; RPointerArrayBase::BinarySearch(void const*, int&, int (*)(void const*, void const*), int) const
+	_ZNK17RPointerArrayBase13FindIsqSignedEi @ 1582 NONAME ; RPointerArrayBase::FindIsqSigned(int) const
+	_ZNK17RPointerArrayBase13FindIsqSignedEii @ 1583 NONAME ; RPointerArrayBase::FindIsqSigned(int, int) const
+	_ZNK17RPointerArrayBase15FindIsqUnsignedEj @ 1584 NONAME ; RPointerArrayBase::FindIsqUnsigned(unsigned int) const
+	_ZNK17RPointerArrayBase15FindIsqUnsignedEji @ 1585 NONAME ; RPointerArrayBase::FindIsqUnsigned(unsigned int, int) const
+	_ZNK17RPointerArrayBase18BinarySearchSignedEiRi @ 1586 NONAME ; RPointerArrayBase::BinarySearchSigned(int, int&) const
+	_ZNK17RPointerArrayBase18BinarySearchSignedEiRii @ 1587 NONAME ; RPointerArrayBase::BinarySearchSigned(int, int&, int) const
+	_ZNK17RPointerArrayBase20BinarySearchUnsignedEjRi @ 1588 NONAME ; RPointerArrayBase::BinarySearchUnsigned(unsigned int, int&) const
+	_ZNK17RPointerArrayBase20BinarySearchUnsignedEjRii @ 1589 NONAME ; RPointerArrayBase::BinarySearchUnsigned(unsigned int, int&, int) const
+	_ZNK17RPointerArrayBase2AtEi @ 1590 NONAME ; RPointerArrayBase::At(int) const
+	_ZNK17RPointerArrayBase4FindEPKv @ 1591 NONAME ; RPointerArrayBase::Find(void const*) const
+	_ZNK17RPointerArrayBase4FindEPKvPFiS1_S1_E @ 1592 NONAME ; RPointerArrayBase::Find(void const*, int (*)(void const*, void const*)) const
+	_ZNK17RPointerArrayBase5CountEv @ 1593 NONAME ; RPointerArrayBase::Count() const
+	_ZNK17RPointerArrayBase7FindIsqEPKvPFiS1_S1_E @ 1594 NONAME ; RPointerArrayBase::FindIsq(void const*, int (*)(void const*, void const*)) const
+	_ZNK17RPointerArrayBase7FindIsqEPKvPFiS1_S1_Ei @ 1595 NONAME ; RPointerArrayBase::FindIsq(void const*, int (*)(void const*, void const*), int) const
+	_ZNK18TCodeSegCreateInfo8RootNameEv @ 1596 NONAME ; TCodeSegCreateInfo::RootName() const
+	_ZNK20CActiveSchedulerWait10CanStopNowEv @ 1597 NONAME ; CActiveSchedulerWait::CanStopNow() const
+	_ZNK4TKey2AtEi @ 1598 NONAME ; TKey::At(int) const
+	_ZNK4TKey7CompareEii @ 1599 NONAME ; TKey::Compare(int, int) const
+	_ZNK4TUid4NameEv @ 1600 NONAME ; TUid::Name() const
+	_ZNK4TUideqERKS_ @ 1601 NONAME ; TUid::operator==(TUid const&) const
+	_ZNK4TUidneERKS_ @ 1602 NONAME ; TUid::operator!=(TUid const&) const
+	_ZNK5RHeap10GetAddressEPKv @ 1603 NONAME ; RHeap::GetAddress(void const*) const
+	_ZNK5RHeap8AllocLenEPKv @ 1604 NONAME ; RHeap::AllocLen(void const*) const
+	_ZNK5RHeap9AllocSizeERi @ 1605 NONAME ; RHeap::AllocSize(int&) const
+	_ZNK5RHeap9AvailableERi @ 1606 NONAME ; RHeap::Available(int&) const
+	_ZNK5TChar10IsAssignedEv @ 1607 NONAME ; TChar::IsAssigned() const
+	_ZNK5TChar10IsHexDigitEv @ 1608 NONAME ; TChar::IsHexDigit() const
+	_ZNK5TChar10IsMirroredEv @ 1609 NONAME ; TChar::IsMirrored() const
+	_ZNK5TChar11GetCategoryEv @ 1610 NONAME ; TChar::GetCategory() const
+	_ZNK5TChar11GetCjkWidthEv @ 1611 NONAME ; TChar::GetCjkWidth() const
+	_ZNK5TChar12GetLowerCaseEv @ 1612 NONAME ; TChar::GetLowerCase() const
+	_ZNK5TChar12GetTitleCaseEv @ 1613 NONAME ; TChar::GetTitleCase() const
+	_ZNK5TChar12GetUpperCaseEv @ 1614 NONAME ; TChar::GetUpperCase() const
+	_ZNK5TChar12IsAlphaDigitEv @ 1615 NONAME ; TChar::IsAlphaDigit() const
+	_ZNK5TChar13GetBdCategoryEv @ 1616 NONAME ; TChar::GetBdCategory() const
+	_ZNK5TChar13IsPunctuationEv @ 1617 NONAME ; TChar::IsPunctuation() const
+	_ZNK5TChar15GetNumericValueEv @ 1618 NONAME ; TChar::GetNumericValue() const
+	_ZNK5TChar17GetCombiningClassEv @ 1619 NONAME ; TChar::GetCombiningClass() const
+	_ZNK5TChar7GetInfoERNS_9TCharInfoE @ 1620 NONAME ; TChar::GetInfo(TChar::TCharInfo&) const
+	_ZNK5TChar7IsAlphaEv @ 1621 NONAME ; TChar::IsAlpha() const
+	_ZNK5TChar7IsDigitEv @ 1622 NONAME ; TChar::IsDigit() const
+	_ZNK5TChar7IsGraphEv @ 1623 NONAME ; TChar::IsGraph() const
+	_ZNK5TChar7IsLowerEv @ 1624 NONAME ; TChar::IsLower() const
+	_ZNK5TChar7IsPrintEv @ 1625 NONAME ; TChar::IsPrint() const
+	_ZNK5TChar7IsSpaceEv @ 1626 NONAME ; TChar::IsSpace() const
+	_ZNK5TChar7IsTitleEv @ 1627 NONAME ; TChar::IsTitle() const
+	_ZNK5TChar7IsUpperEv @ 1628 NONAME ; TChar::IsUpper() const
+	_ZNK5TChar9DecomposeER7TPtrC16 @ 1629 NONAME ; TChar::Decompose(TPtrC16&) const
+	_ZNK5TChar9IsControlEv @ 1630 NONAME ; TChar::IsControl() const
+	_ZNK5TDes818__DbgTestInvariantEv @ 1631 NONAME ; TDes8::__DbgTestInvariant() const
+	_ZNK5TDes87MidTPtrEi @ 1632 NONAME ; TDes8::MidTPtr(int) const
+	_ZNK5TDes87MidTPtrEii @ 1633 NONAME ; TDes8::MidTPtr(int, int) const
+	_ZNK5TDes88LeftTPtrEi @ 1634 NONAME ; TDes8::LeftTPtr(int) const
+	_ZNK5TDes89RightTPtrEi @ 1635 NONAME ; TDes8::RightTPtr(int) const
+	_ZNK5TLex811MarkedTokenE9TLexMark8 @ 1636 NONAME ; TLex8::MarkedToken(TLexMark8) const
+	_ZNK5TLex811MarkedTokenEv @ 1637 NONAME ; TLex8::MarkedToken() const
+	_ZNK5TLex811TokenLengthE9TLexMark8 @ 1638 NONAME ; TLex8::TokenLength(TLexMark8) const
+	_ZNK5TLex812MarkedOffsetE9TLexMark8 @ 1639 NONAME ; TLex8::MarkedOffset(TLexMark8) const
+	_ZNK5TLex817RemainderFromMarkE9TLexMark8 @ 1640 NONAME ; TLex8::RemainderFromMark(TLexMark8) const
+	_ZNK5TLex817RemainderFromMarkEv @ 1641 NONAME ; TLex8::RemainderFromMark() const
+	_ZNK5TLex84PeekEv @ 1642 NONAME ; TLex8::Peek() const
+	_ZNK5TLex86OffsetEv @ 1643 NONAME ; TLex8::Offset() const
+	_ZNK5TLex89RemainderEv @ 1644 NONAME ; TLex8::Remainder() const
+	_ZNK5TPtr818__DbgTestInvariantEv @ 1645 NONAME ; TPtr8::__DbgTestInvariant() const
+	_ZNK5TRect10IntersectsERKS_ @ 1646 NONAME ; TRect::Intersects(TRect const&) const
+	_ZNK5TRect12IsNormalizedEv @ 1647 NONAME ; TRect::IsNormalized() const
+	_ZNK5TRect4SizeEv @ 1648 NONAME ; TRect::Size() const
+	_ZNK5TRect5WidthEv @ 1649 NONAME ; TRect::Width() const
+	_ZNK5TRect6CenterEv @ 1650 NONAME ; TRect::Center() const
+	_ZNK5TRect6HeightEv @ 1651 NONAME ; TRect::Height() const
+	_ZNK5TRect7IsEmptyEv @ 1652 NONAME ; TRect::IsEmpty() const
+	_ZNK5TRect8ContainsERK6TPoint @ 1653 NONAME ; TRect::Contains(TPoint const&) const
+	_ZNK5TRecteqERKS_ @ 1654 NONAME ; TRect::operator==(TRect const&) const
+	_ZNK5TRectneERKS_ @ 1655 NONAME ; TRect::operator!=(TRect const&) const
+	_ZNK5TSize7AsPointEv @ 1656 NONAME ; TSize::AsPoint() const
+	_ZNK5TSizeeqERKS_ @ 1657 NONAME ; TSize::operator==(TSize const&) const
+	_ZNK5TSizemiERK6TPoint @ 1658 NONAME ; TSize::operator-(TPoint const&) const
+	_ZNK5TSizemiERKS_ @ 1659 NONAME ; TSize::operator-(TSize const&) const
+	_ZNK5TSizeneERKS_ @ 1660 NONAME ; TSize::operator!=(TSize const&) const
+	_ZNK5TSizengEv @ 1661 NONAME ; TSize::operator-() const
+	_ZNK5TSizeplERK6TPoint @ 1662 NONAME ; TSize::operator+(TPoint const&) const
+	_ZNK5TSizeplERKS_ @ 1663 NONAME ; TSize::operator+(TSize const&) const
+	_ZNK5TSwap4SwapEii @ 1664 NONAME ; TSwap::Swap(int, int) const
+	_ZNK5TTime10MonthsFromES_ @ 1665 NONAME ; TTime::MonthsFrom(TTime) const
+	_ZNK5TTime11DayNoInWeekEv @ 1666 NONAME ; TTime::DayNoInWeek() const
+	_ZNK5TTime11DayNoInYearES_ @ 1667 NONAME ; TTime::DayNoInYear(TTime) const
+	_ZNK5TTime11DayNoInYearEv @ 1668 NONAME ; TTime::DayNoInYear() const
+	_ZNK5TTime11DaysInMonthEv @ 1669 NONAME ; TTime::DaysInMonth() const
+	_ZNK5TTime11MinutesFromES_R20TTimeIntervalMinutes @ 1670 NONAME ; TTime::MinutesFrom(TTime, TTimeIntervalMinutes&) const
+	_ZNK5TTime11SecondsFromES_R20TTimeIntervalSeconds @ 1671 NONAME ; TTime::SecondsFrom(TTime, TTimeIntervalSeconds&) const
+	_ZNK5TTime12DayNoInMonthEv @ 1672 NONAME ; TTime::DayNoInMonth() const
+	_ZNK5TTime12WeekNoInYearE14TFirstWeekRule @ 1673 NONAME ; TTime::WeekNoInYear(TFirstWeekRule) const
+	_ZNK5TTime12WeekNoInYearES_ @ 1674 NONAME ; TTime::WeekNoInYear(TTime) const
+	_ZNK5TTime12WeekNoInYearES_14TFirstWeekRule @ 1675 NONAME ; TTime::WeekNoInYear(TTime, TFirstWeekRule) const
+	_ZNK5TTime12WeekNoInYearEv @ 1676 NONAME ; TTime::WeekNoInYear() const
+	_ZNK5TTime16MicroSecondsFromES_ @ 1677 NONAME ; TTime::MicroSecondsFrom(TTime) const
+	_ZNK5TTime7FormatLER6TDes16RK7TDesC16 @ 1678 NONAME ; TTime::FormatL(TDes16&, TDesC16 const&) const
+	_ZNK5TTime8DateTimeEv @ 1679 NONAME ; TTime::DateTime() const
+	_ZNK5TTime8DaysFromES_ @ 1680 NONAME ; TTime::DaysFrom(TTime) const
+	_ZNK5TTime9HoursFromES_R18TTimeIntervalHours @ 1681 NONAME ; TTime::HoursFrom(TTime, TTimeIntervalHours&) const
+	_ZNK5TTime9YearsFromES_ @ 1682 NONAME ; TTime::YearsFrom(TTime) const
+	_ZNK5TTimemiE17TTimeIntervalDays @ 1683 NONAME ; TTime::operator-(TTimeIntervalDays) const
+	_ZNK5TTimemiE18TTimeIntervalHours @ 1684 NONAME ; TTime::operator-(TTimeIntervalHours) const
+	_ZNK5TTimemiE18TTimeIntervalYears @ 1685 NONAME ; TTime::operator-(TTimeIntervalYears) const
+	_ZNK5TTimemiE19TTimeIntervalMonths @ 1686 NONAME ; TTime::operator-(TTimeIntervalMonths) const
+	_ZNK5TTimemiE20TTimeIntervalMinutes @ 1687 NONAME ; TTime::operator-(TTimeIntervalMinutes) const
+	_ZNK5TTimemiE20TTimeIntervalSeconds @ 1688 NONAME ; TTime::operator-(TTimeIntervalSeconds) const
+	_ZNK5TTimemiE25TTimeIntervalMicroSeconds @ 1689 NONAME ; TTime::operator-(TTimeIntervalMicroSeconds) const
+	_ZNK5TTimemiE27TTimeIntervalMicroSeconds32 @ 1690 NONAME ; TTime::operator-(TTimeIntervalMicroSeconds32) const
+	_ZNK5TTimeplE17TTimeIntervalDays @ 1691 NONAME ; TTime::operator+(TTimeIntervalDays) const
+	_ZNK5TTimeplE18TTimeIntervalHours @ 1692 NONAME ; TTime::operator+(TTimeIntervalHours) const
+	_ZNK5TTimeplE18TTimeIntervalYears @ 1693 NONAME ; TTime::operator+(TTimeIntervalYears) const
+	_ZNK5TTimeplE19TTimeIntervalMonths @ 1694 NONAME ; TTime::operator+(TTimeIntervalMonths) const
+	_ZNK5TTimeplE20TTimeIntervalMinutes @ 1695 NONAME ; TTime::operator+(TTimeIntervalMinutes) const
+	_ZNK5TTimeplE20TTimeIntervalSeconds @ 1696 NONAME ; TTime::operator+(TTimeIntervalSeconds) const
+	_ZNK5TTimeplE25TTimeIntervalMicroSeconds @ 1697 NONAME ; TTime::operator+(TTimeIntervalMicroSeconds) const
+	_ZNK5TTimeplE27TTimeIntervalMicroSeconds32 @ 1698 NONAME ; TTime::operator+(TTimeIntervalMicroSeconds32) const
+	_ZNK6HBufC818__DbgTestInvariantEv @ 1699 NONAME ; HBufC8::__DbgTestInvariant() const
+	_ZNK6RChunk17AdjustDoubleEndedEii @ 1700 NONAME ; RChunk::AdjustDoubleEnded(int, int) const
+	_ZNK6RChunk3TopEv @ 1701 NONAME ; RChunk::Top() const
+	_ZNK6RChunk4BaseEv @ 1702 NONAME ; RChunk::Base() const
+	_ZNK6RChunk4SizeEv @ 1703 NONAME ; RChunk::Size() const
+	_ZNK6RChunk6AdjustEi @ 1704 NONAME ; RChunk::Adjust(int) const
+	_ZNK6RChunk6BottomEv @ 1705 NONAME ; RChunk::Bottom() const
+	_ZNK6RChunk6CommitEii @ 1706 NONAME ; RChunk::Commit(int, int) const
+	_ZNK6RChunk7MaxSizeEv @ 1707 NONAME ; RChunk::MaxSize() const
+	_ZNK6RChunk8AllocateEi @ 1708 NONAME ; RChunk::Allocate(int) const
+	_ZNK6RChunk8DecommitEii @ 1709 NONAME ; RChunk::Decommit(int, int) const
+	_ZNK6TDes1618__DbgTestInvariantEv @ 1710 NONAME ; TDes16::__DbgTestInvariant() const
+	_ZNK6TDes167MidTPtrEi @ 1711 NONAME ; TDes16::MidTPtr(int) const
+	_ZNK6TDes167MidTPtrEii @ 1712 NONAME ; TDes16::MidTPtr(int, int) const
+	_ZNK6TDes168LeftTPtrEi @ 1713 NONAME ; TDes16::LeftTPtr(int) const
+	_ZNK6TDes169RightTPtrEi @ 1714 NONAME ; TDes16::RightTPtr(int) const
+	_ZNK6TDesC813LocateReverseE5TChar @ 1715 NONAME ; TDesC8::LocateReverse(TChar) const
+	_ZNK6TDesC814LocateReverseFE5TChar @ 1716 NONAME ; TDesC8::LocateReverseF(TChar) const
+	_ZNK6TDesC818__DbgTestInvariantEv @ 1717 NONAME ; TDesC8::__DbgTestInvariant() const
+	_ZNK6TDesC83AtCEi @ 1718 NONAME ; TDesC8::AtC(int) const
+	_ZNK6TDesC83PtrEv @ 1719 NONAME ; TDesC8::Ptr() const
+	_ZNK6TDesC84FindEPKhi @ 1720 NONAME ; TDesC8::Find(unsigned char const*, int) const
+	_ZNK6TDesC84FindERKS_ @ 1721 NONAME ; TDesC8::Find(TDesC8 const&) const
+	_ZNK6TDesC85AllocEv @ 1722 NONAME ; TDesC8::Alloc() const
+	_ZNK6TDesC85FindCEPKhi @ 1723 NONAME ; TDesC8::FindC(unsigned char const*, int) const
+	_ZNK6TDesC85FindCERKS_ @ 1724 NONAME ; TDesC8::FindC(TDesC8 const&) const
+	_ZNK6TDesC85FindFEPKhi @ 1725 NONAME ; TDesC8::FindF(unsigned char const*, int) const
+	_ZNK6TDesC85FindFERKS_ @ 1726 NONAME ; TDesC8::FindF(TDesC8 const&) const
+	_ZNK6TDesC85MatchERKS_ @ 1727 NONAME ; TDesC8::Match(TDesC8 const&) const
+	_ZNK6TDesC86AllocLEv @ 1728 NONAME ; TDesC8::AllocL() const
+	_ZNK6TDesC86LocateE5TChar @ 1729 NONAME ; TDesC8::Locate(TChar) const
+	_ZNK6TDesC86MatchCERKS_ @ 1730 NONAME ; TDesC8::MatchC(TDesC8 const&) const
+	_ZNK6TDesC86MatchFERKS_ @ 1731 NONAME ; TDesC8::MatchF(TDesC8 const&) const
+	_ZNK6TDesC87AllocLCEv @ 1732 NONAME ; TDesC8::AllocLC() const
+	_ZNK6TDesC87CompareERKS_ @ 1733 NONAME ; TDesC8::Compare(TDesC8 const&) const
+	_ZNK6TDesC87LocateFE5TChar @ 1734 NONAME ; TDesC8::LocateF(TChar) const
+	_ZNK6TDesC88CompareCERKS_ @ 1735 NONAME ; TDesC8::CompareC(TDesC8 const&) const
+	_ZNK6TDesC88CompareFERKS_ @ 1736 NONAME ; TDesC8::CompareF(TDesC8 const&) const
+	_ZNK6TLex1611MarkedTokenE10TLexMark16 @ 1737 NONAME ; TLex16::MarkedToken(TLexMark16) const
+	_ZNK6TLex1611MarkedTokenEv @ 1738 NONAME ; TLex16::MarkedToken() const
+	_ZNK6TLex1611TokenLengthE10TLexMark16 @ 1739 NONAME ; TLex16::TokenLength(TLexMark16) const
+	_ZNK6TLex1612MarkedOffsetE10TLexMark16 @ 1740 NONAME ; TLex16::MarkedOffset(TLexMark16) const
+	_ZNK6TLex1617RemainderFromMarkE10TLexMark16 @ 1741 NONAME ; TLex16::RemainderFromMark(TLexMark16) const
+	_ZNK6TLex1617RemainderFromMarkEv @ 1742 NONAME ; TLex16::RemainderFromMark() const
+	_ZNK6TLex164PeekEv @ 1743 NONAME ; TLex16::Peek() const
+	_ZNK6TLex166OffsetEv @ 1744 NONAME ; TLex16::Offset() const
+	_ZNK6TLex169RemainderEv @ 1745 NONAME ; TLex16::Remainder() const
+	_ZNK6TPoint6AsSizeEv @ 1746 NONAME ; TPoint::AsSize() const
+	_ZNK6TPointeqERKS_ @ 1747 NONAME ; TPoint::operator==(TPoint const&) const
+	_ZNK6TPointmiERK5TSize @ 1748 NONAME ; TPoint::operator-(TSize const&) const
+	_ZNK6TPointmiERKS_ @ 1749 NONAME ; TPoint::operator-(TPoint const&) const
+	_ZNK6TPointneERKS_ @ 1750 NONAME ; TPoint::operator!=(TPoint const&) const
+	_ZNK6TPointngEv @ 1751 NONAME ; TPoint::operator-() const
+	_ZNK6TPointplERK5TSize @ 1752 NONAME ; TPoint::operator+(TSize const&) const
+	_ZNK6TPointplERKS_ @ 1753 NONAME ; TPoint::operator+(TPoint const&) const
+	_ZNK6TPtr1618__DbgTestInvariantEv @ 1754 NONAME ; TPtr16::__DbgTestInvariant() const
+	_ZNK6TPtrC818__DbgTestInvariantEv @ 1755 NONAME ; TPtrC8::__DbgTestInvariant() const
+	_ZNK6TRealX10IsInfiniteEv @ 1756 NONAME ; TRealX::IsInfinite() const
+	_ZNK6TRealX3AddERS_RKS_ @ 1757 NONAME ; TRealX::Add(TRealX&, TRealX const&) const
+	_ZNK6TRealX3DivERS_RKS_ @ 1758 NONAME ; TRealX::Div(TRealX&, TRealX const&) const
+	_ZNK6TRealX3ModERS_RKS_ @ 1759 NONAME ; TRealX::Mod(TRealX&, TRealX const&) const
+	_ZNK6TRealX3SubERS_RKS_ @ 1760 NONAME ; TRealX::Sub(TRealX&, TRealX const&) const
+	_ZNK6TRealX4MultERS_RKS_ @ 1761 NONAME ; TRealX::Mult(TRealX&, TRealX const&) const
+	_ZNK6TRealX5IsNaNEv @ 1762 NONAME ; TRealX::IsNaN() const
+	_ZNK6TRealX6IsZeroEv @ 1763 NONAME ; TRealX::IsZero() const
+	_ZNK6TRealX7CompareERKS_ @ 1764 NONAME ; TRealX::Compare(TRealX const&) const
+	_ZNK6TRealX8GetTRealERd @ 1765 NONAME ; TRealX::GetTReal(double&) const
+	_ZNK6TRealX8GetTRealERf @ 1766 NONAME ; TRealX::GetTReal(float&) const
+	_ZNK6TRealX8IsFiniteEv @ 1767 NONAME ; TRealX::IsFinite() const
+	_ZNK6TRealXdvERKS_ @ 1768 NONAME ; TRealX::operator/(TRealX const&) const
+	_ZNK6TRealXmiERKS_ @ 1769 NONAME ; TRealX::operator-(TRealX const&) const
+	_ZNK6TRealXmlERKS_ @ 1770 NONAME ; TRealX::operator*(TRealX const&) const
+	_ZNK6TRealXngEv @ 1771 NONAME ; TRealX::operator-() const
+	_ZNK6TRealXplERKS_ @ 1772 NONAME ; TRealX::operator+(TRealX const&) const
+	_ZNK6TRealXpsEv @ 1773 NONAME ; TRealX::operator+() const
+	_ZNK6TRealXrmERKS_ @ 1774 NONAME ; TRealX::operator%(TRealX const&) const
+	_ZNK7CObject4NameEv @ 1775 NONAME ; CObject::Name() const
+	_ZNK7CObject8FullNameEv @ 1776 NONAME ; CObject::FullName() const
+	_ZNK7HBufC1618__DbgTestInvariantEv @ 1777 NONAME ; HBufC16::__DbgTestInvariant() const
+	_ZNK7RDevice11IsAvailableEiPK7TDesC16PK6TDesC8 @ 1778 NONAME ; RDevice::IsAvailable(int, TDesC16 const*, TDesC8 const*) const
+	_ZNK7RDevice21QueryVersionSupportedERK8TVersion @ 1779 NONAME ; RDevice::QueryVersionSupported(TVersion const&) const
+	_ZNK7RDevice7GetCapsER5TDes8 @ 1780 NONAME ; RDevice::GetCaps(TDes8&) const
+	_ZNK7RThread10ExitReasonEv @ 1781 NONAME ; RThread::ExitReason() const
+	_ZNK7RThread10GetCpuTimeER25TTimeIntervalMicroSeconds @ 1782 NONAME ; RThread::GetCpuTime(TTimeIntervalMicroSeconds&) const
+	_ZNK7RThread10RendezvousER14TRequestStatus @ 1783 NONAME ; RThread::Rendezvous(TRequestStatus&) const
+	_ZNK7RThread11HandleCountERiS0_ @ 1784 NONAME ; RThread::HandleCount(int&, int&) const
+	_ZNK7RThread11LogonCancelER14TRequestStatus @ 1785 NONAME ; RThread::LogonCancel(TRequestStatus&) const
+	_ZNK7RThread11SetPriorityE15TThreadPriority @ 1786 NONAME ; RThread::SetPriority(TThreadPriority) const
+	_ZNK7RThread12ExitCategoryEv @ 1787 NONAME ; RThread::ExitCategory() const
+	_ZNK7RThread12RequestCountEv @ 1788 NONAME ; RThread::RequestCount() const
+	_ZNK7RThread15ProcessPriorityEv @ 1789 NONAME ; RThread::ProcessPriority() const
+	_ZNK7RThread15RequestCompleteERP14TRequestStatusi @ 1790 NONAME ; RThread::RequestComplete(TRequestStatus*&, int) const
+	_ZNK7RThread16RendezvousCancelER14TRequestStatus @ 1791 NONAME ; RThread::RendezvousCancel(TRequestStatus&) const
+	_ZNK7RThread18SetProcessPriorityE16TProcessPriority @ 1792 NONAME ; RThread::SetProcessPriority(TProcessPriority) const
+	_ZNK7RThread2IdEv @ 1793 NONAME ; RThread::Id() const
+	_ZNK7RThread5LogonER14TRequestStatus @ 1794 NONAME ; RThread::Logon(TRequestStatus&) const
+	_ZNK7RThread6ResumeEv @ 1795 NONAME ; RThread::Resume() const
+	_ZNK7RThread7ContextER5TDes8 @ 1796 NONAME ; RThread::Context(TDes8&) const
+	_ZNK7RThread7ProcessER8RProcess @ 1797 NONAME ; RThread::Process(RProcess&) const
+	_ZNK7RThread7SuspendEv @ 1798 NONAME ; RThread::Suspend() const
+	_ZNK7RThread8ExitTypeEv @ 1799 NONAME ; RThread::ExitType() const
+	_ZNK7RThread8PriorityEv @ 1800 NONAME ; RThread::Priority() const
+	_ZNK7RThread9StackInfoER16TThreadStackInfo @ 1801 NONAME ; RThread::StackInfo(TThreadStackInfo&) const
+	_ZNK7TDesC1610HasPrefixCERKS_iPK16TCollationMethod @ 1802 NONAME ; TDesC16::HasPrefixC(TDesC16 const&, int, TCollationMethod const*) const
+	_ZNK7TDesC1613LocateReverseE5TChar @ 1803 NONAME ; TDesC16::LocateReverse(TChar) const
+	_ZNK7TDesC1614LocateReverseFE5TChar @ 1804 NONAME ; TDesC16::LocateReverseF(TChar) const
+	_ZNK7TDesC1618__DbgTestInvariantEv @ 1805 NONAME ; TDesC16::__DbgTestInvariant() const
+	_ZNK7TDesC163AtCEi @ 1806 NONAME ; TDesC16::AtC(int) const
+	_ZNK7TDesC163PtrEv @ 1807 NONAME ; TDesC16::Ptr() const
+	_ZNK7TDesC164FindEPKti @ 1808 NONAME ; TDesC16::Find(unsigned short const*, int) const
+	_ZNK7TDesC164FindERKS_ @ 1809 NONAME ; TDesC16::Find(TDesC16 const&) const
+	_ZNK7TDesC165AllocEv @ 1810 NONAME ; TDesC16::Alloc() const
+	_ZNK7TDesC165FindCEPKti @ 1811 NONAME ; TDesC16::FindC(unsigned short const*, int) const
+	_ZNK7TDesC165FindCEPKtii @ 1812 NONAME ; TDesC16::FindC(unsigned short const*, int, int) const
+	_ZNK7TDesC165FindCERKS_ @ 1813 NONAME ; TDesC16::FindC(TDesC16 const&) const
+	_ZNK7TDesC165FindFEPKti @ 1814 NONAME ; TDesC16::FindF(unsigned short const*, int) const
+	_ZNK7TDesC165FindFERKS_ @ 1815 NONAME ; TDesC16::FindF(TDesC16 const&) const
+	_ZNK7TDesC165MatchERKS_ @ 1816 NONAME ; TDesC16::Match(TDesC16 const&) const
+	_ZNK7TDesC166AllocLEv @ 1817 NONAME ; TDesC16::AllocL() const
+	_ZNK7TDesC166LocateE5TChar @ 1818 NONAME ; TDesC16::Locate(TChar) const
+	_ZNK7TDesC166MatchCERKS_ @ 1819 NONAME ; TDesC16::MatchC(TDesC16 const&) const
+	_ZNK7TDesC166MatchFERKS_ @ 1820 NONAME ; TDesC16::MatchF(TDesC16 const&) const
+	_ZNK7TDesC167AllocLCEv @ 1821 NONAME ; TDesC16::AllocLC() const
+	_ZNK7TDesC167CompareERKS_ @ 1822 NONAME ; TDesC16::Compare(TDesC16 const&) const
+	_ZNK7TDesC167LocateFE5TChar @ 1823 NONAME ; TDesC16::LocateF(TChar) const
+	_ZNK7TDesC168CompareCERKS_ @ 1824 NONAME ; TDesC16::CompareC(TDesC16 const&) const
+	_ZNK7TDesC168CompareCERKS_iPK16TCollationMethod @ 1825 NONAME ; TDesC16::CompareC(TDesC16 const&, int, TCollationMethod const*) const
+	_ZNK7TDesC168CompareFERKS_ @ 1826 NONAME ; TDesC16::CompareF(TDesC16 const&) const
+	_ZNK7TLocale3SetEv @ 1827 NONAME ; TLocale::Set() const
+	_ZNK7TPtrC1618__DbgTestInvariantEv @ 1828 NONAME ; TPtrC16::__DbgTestInvariant() const
+	_ZNK7TRegion12BoundingRectEv @ 1829 NONAME ; TRegion::BoundingRect() const
+	_ZNK7TRegion13IsContainedByERK5TRect @ 1830 NONAME ; TRegion::IsContainedBy(TRect const&) const
+	_ZNK7TRegion7IsEmptyEv @ 1831 NONAME ; TRegion::IsEmpty() const
+	_ZNK7TRegion8ContainsERK6TPoint @ 1832 NONAME ; TRegion::Contains(TPoint const&) const
+	_ZNK7TRegionixEi @ 1833 NONAME ; TRegion::operator[](int) const
+	_ZNK8CBufBase4ReadEiPvi @ 1834 NONAME ; CBufBase::Read(int, void*, int) const
+	_ZNK8CBufBase4ReadEiR5TDes8 @ 1835 NONAME ; CBufBase::Read(int, TDes8&) const
+	_ZNK8CBufBase4ReadEiR5TDes8i @ 1836 NONAME ; CBufBase::Read(int, TDes8&, int) const
+	_ZNK8RLibrary4TypeEv @ 1837 NONAME ; RLibrary::Type() const
+	_ZNK8RLibrary6LookupEi @ 1838 NONAME ; RLibrary::Lookup(int) const
+	_ZNK8RLibrary8FileNameEv @ 1839 NONAME ; RLibrary::FileName() const
+	_ZNK8RProcess10ExitReasonEv @ 1840 NONAME ; RProcess::ExitReason() const
+	_ZNK8RProcess10JustInTimeEv @ 1841 NONAME ; RProcess::JustInTime() const
+	_ZNK8RProcess10RendezvousER14TRequestStatus @ 1842 NONAME ; RProcess::Rendezvous(TRequestStatus&) const
+	_ZNK8RProcess11LogonCancelER14TRequestStatus @ 1843 NONAME ; RProcess::LogonCancel(TRequestStatus&) const
+	_ZNK8RProcess11SetPriorityE16TProcessPriority @ 1844 NONAME ; RProcess::SetPriority(TProcessPriority) const
+	_ZNK8RProcess12ExitCategoryEv @ 1845 NONAME ; RProcess::ExitCategory() const
+	_ZNK8RProcess13GetMemoryInfoER18TProcessMemoryInfo @ 1846 NONAME ; RProcess::GetMemoryInfo(TProcessMemoryInfo&) const
+	_ZNK8RProcess13SetJustInTimeEi @ 1847 NONAME ; RProcess::SetJustInTime(int) const
+	_ZNK8RProcess16RendezvousCancelER14TRequestStatus @ 1848 NONAME ; RProcess::RendezvousCancel(TRequestStatus&) const
+	_ZNK8RProcess2IdEv @ 1849 NONAME ; RProcess::Id() const
+	_ZNK8RProcess4TypeEv @ 1850 NONAME ; RProcess::Type() const
+	_ZNK8RProcess5LogonER14TRequestStatus @ 1851 NONAME ; RProcess::Logon(TRequestStatus&) const
+	_ZNK8RProcess8ExitTypeEv @ 1852 NONAME ; RProcess::ExitType() const
+	_ZNK8RProcess8FileNameEv @ 1853 NONAME ; RProcess::FileName() const
+	_ZNK8RProcess8SecureIdEv @ 1854 NONAME ; RProcess::SecureId() const
+	_ZNK8RProcess8PriorityEv @ 1855 NONAME ; RProcess::Priority() const
+	_ZNK8TUidType11MostDerivedEv @ 1856 NONAME ; TUidType::MostDerived() const
+	_ZNK8TUidType7IsValidEv @ 1857 NONAME ; TUidType::IsValid() const
+	_ZNK8TUidType9IsPresentE4TUid @ 1858 NONAME ; TUidType::IsPresent(TUid) const
+	_ZNK8TUidTypeeqERKS_ @ 1859 NONAME ; TUidType::operator==(TUidType const&) const
+	_ZNK8TUidTypeixEi @ 1860 NONAME ; TUidType::operator[](int) const
+	_ZNK8TUidTypeneERKS_ @ 1861 NONAME ; TUidType::operator!=(TUidType const&) const
+	_ZNK8TUnicode11GetCategoryEPK15TUnicodeDataSet @ 1862 NONAME ; TUnicode::GetCategory(TUnicodeDataSet const*) const
+	_ZNK8TUnicode12GetLowerCaseEPK15TUnicodeDataSet @ 1863 NONAME ; TUnicode::GetLowerCase(TUnicodeDataSet const*) const
+	_ZNK8TUnicode12GetUpperCaseEPK15TUnicodeDataSet @ 1864 NONAME ; TUnicode::GetUpperCase(TUnicodeDataSet const*) const
+	_ZNK8TUnicode4FoldEiPK15TUnicodeDataSet @ 1865 NONAME ; TUnicode::Fold(int, TUnicodeDataSet const*) const
+	_ZNK9CObjectIx2AtEPK7CObject @ 1866 NONAME ; CObjectIx::At(CObject const*) const
+	_ZNK9CObjectIx5CountEP7CObject @ 1867 NONAME ; CObjectIx::Count(CObject*) const
+	_ZNK9TRawEvent3PosEv @ 1868 NONAME ; TRawEvent::Pos() const
+	_ZNK9TRawEvent8ScanCodeEv @ 1869 NONAME ; TRawEvent::ScanCode() const
+	_ZNK9TRawEvent9ModifiersEv @ 1870 NONAME ; TRawEvent::Modifiers() const
+	_ZTI10CCirBuffer @ 1871 NONAME ; typeinfo for CCirBuffer
+	_ZTI10CHeartbeat @ 1872 NONAME ; typeinfo for CHeartbeat
+	_ZTI10CObjectCon @ 1873 NONAME ; typeinfo for CObjectCon
+	_ZTI10RAllocator @ 1874 NONAME ; typeinfo for RAllocator
+	_ZTI10TBitOutput @ 1875 NONAME ; typeinfo for TBitOutput
+	_ZTI11CCirBufBase @ 1876 NONAME ; typeinfo for CCirBufBase
+	_ZTI11CDeltaTimer @ 1877 NONAME ; typeinfo for CDeltaTimer
+	_ZTI12CConsoleBase @ 1878 NONAME ; typeinfo for CConsoleBase
+	_ZTI12CObjectConIx @ 1879 NONAME ; typeinfo for CObjectConIx
+	_ZTI12CTrapCleanup @ 1880 NONAME ; typeinfo for CTrapCleanup
+	_ZTI12TKeyArrayFix @ 1881 NONAME ; typeinfo for TKeyArrayFix
+	_ZTI12TKeyArrayPak @ 1882 NONAME ; typeinfo for TKeyArrayPak
+	_ZTI12TKeyArrayVar @ 1883 NONAME ; typeinfo for TKeyArrayVar
+	_ZTI13CArrayFixBase @ 1884 NONAME ; typeinfo for CArrayFixBase
+	_ZTI13CArrayFixFlatI4TUidE @ 1885 NONAME ; typeinfo for CArrayFixFlat<TUid>
+	_ZTI13CArrayFixFlatIiE @ 1886 NONAME ; typeinfo for CArrayFixFlat<int>
+	_ZTI13CArrayPakBase @ 1887 NONAME ; typeinfo for CArrayPakBase
+	_ZTI13CArrayVarBase @ 1888 NONAME ; typeinfo for CArrayVarBase
+	_ZTI13CAsyncOneShot @ 1889 NONAME ; typeinfo for CAsyncOneShot
+	_ZTI14CAsyncCallBack @ 1890 NONAME ; typeinfo for CAsyncCallBack
+	_ZTI16CActiveScheduler @ 1891 NONAME ; typeinfo for CActiveScheduler
+	_ZTI16CBitMapAllocator @ 1892 NONAME ; typeinfo for CBitMapAllocator
+	_ZTI20CActiveSchedulerWait @ 1893 NONAME ; typeinfo for CActiveSchedulerWait
+	_ZTI17CColorConsoleBase @ 1894 NONAME ; typeinfo for CColorConsoleBase
+	_ZTV17CColorConsoleBase @ 1895 NONAME ; vtable for CColorConsoleBase
+	_ZTI4TKey @ 1896 NONAME ; typeinfo for TKey
+	_ZTI5CIdle @ 1897 NONAME ; typeinfo for CIdle
+	_ZTI5RHeap @ 1898 NONAME ; typeinfo for RHeap
+	_ZTI5TSwap @ 1899 NONAME ; typeinfo for TSwap
+	_ZTI6CTimer @ 1900 NONAME ; typeinfo for CTimer
+	_ZTI7CActive @ 1901 NONAME ; typeinfo for CActive
+	_ZTI7CBufSeg @ 1902 NONAME ; typeinfo for CBufSeg
+	_ZTI7CObject @ 1903 NONAME ; typeinfo for CObject
+	_ZTI8CBufBase @ 1904 NONAME ; typeinfo for CBufBase
+	_ZTI8CBufFlat @ 1905 NONAME ; typeinfo for CBufFlat
+	_ZTI8CCleanup @ 1906 NONAME ; typeinfo for CCleanup
+	_ZTI8CServer2 @ 1907 NONAME ; typeinfo for CServer2
+	_ZTI9CObjectIx @ 1908 NONAME ; typeinfo for CObjectIx
+	_ZTI9CPeriodic @ 1909 NONAME ; typeinfo for CPeriodic
+	_ZTI9CSession2 @ 1910 NONAME ; typeinfo for CSession2
+	_ZTI9TBitInput @ 1911 NONAME ; typeinfo for TBitInput
+	_ZTV10CCirBuffer @ 1912 NONAME ; vtable for CCirBuffer
+	_ZTV10CHeartbeat @ 1913 NONAME ; vtable for CHeartbeat
+	_ZTV10CObjectCon @ 1914 NONAME ; vtable for CObjectCon
+	_ZTV10RAllocator @ 1915 NONAME ; vtable for RAllocator
+	_ZTV10TBitOutput @ 1916 NONAME ; vtable for TBitOutput
+	_ZTV11CCirBufBase @ 1917 NONAME ; vtable for CCirBufBase
+	_ZTV11CDeltaTimer @ 1918 NONAME ; vtable for CDeltaTimer
+	_ZTV12CConsoleBase @ 1919 NONAME ; vtable for CConsoleBase
+	_ZTV12CObjectConIx @ 1920 NONAME ; vtable for CObjectConIx
+	_ZTV12CTrapCleanup @ 1921 NONAME ; vtable for CTrapCleanup
+	_ZTV12TKeyArrayFix @ 1922 NONAME ; vtable for TKeyArrayFix
+	_ZTV12TKeyArrayPak @ 1923 NONAME ; vtable for TKeyArrayPak
+	_ZTV12TKeyArrayVar @ 1924 NONAME ; vtable for TKeyArrayVar
+	_ZTV13CArrayFixBase @ 1925 NONAME ; vtable for CArrayFixBase
+	_ZTV13CArrayFixFlatI4TUidE @ 1926 NONAME ; vtable for CArrayFixFlat<TUid>
+	_ZTV13CArrayFixFlatIiE @ 1927 NONAME ; vtable for CArrayFixFlat<int>
+	_ZTV13CArrayPakBase @ 1928 NONAME ; vtable for CArrayPakBase
+	_ZTV13CArrayVarBase @ 1929 NONAME ; vtable for CArrayVarBase
+	_ZTV13CAsyncOneShot @ 1930 NONAME ; vtable for CAsyncOneShot
+	_ZTV14CAsyncCallBack @ 1931 NONAME ; vtable for CAsyncCallBack
+	_ZTV16CActiveScheduler @ 1932 NONAME ; vtable for CActiveScheduler
+	_ZTV16CBitMapAllocator @ 1933 NONAME ; vtable for CBitMapAllocator
+	_ZTV20CActiveSchedulerWait @ 1934 NONAME ; vtable for CActiveSchedulerWait
+	_ZTV4TKey @ 1935 NONAME ; vtable for TKey
+	_ZTV5CIdle @ 1936 NONAME ; vtable for CIdle
+	_ZTV5RHeap @ 1937 NONAME ; vtable for RHeap
+	_ZTV5TSwap @ 1938 NONAME ; vtable for TSwap
+	_ZTV6CTimer @ 1939 NONAME ; vtable for CTimer
+	_ZTV7CActive @ 1940 NONAME ; vtable for CActive
+	_ZTV7CBufSeg @ 1941 NONAME ; vtable for CBufSeg
+	_ZTV7CObject @ 1942 NONAME ; vtable for CObject
+	_ZTV8CBufBase @ 1943 NONAME ; vtable for CBufBase
+	_ZTV8CBufFlat @ 1944 NONAME ; vtable for CBufFlat
+	_ZTV8CCleanup @ 1945 NONAME ; vtable for CCleanup
+	_ZTV8CServer2 @ 1946 NONAME ; vtable for CServer2
+	_ZTV9CObjectIx @ 1947 NONAME ; vtable for CObjectIx
+	_ZTV9CPeriodic @ 1948 NONAME ; vtable for CPeriodic
+	_ZTV9CSession2 @ 1949 NONAME ; vtable for CSession2
+	_ZTV9TBitInput @ 1950 NONAME ; vtable for TBitInput
+	memclr @ 1951 NONAME ; memclr
+	memcompare @ 1952 NONAME ; memcompare
+	memcpy @ 1953 NONAME ; memcpy
+	memmove @ 1954 NONAME ; memmove
+	memset @ 1955 NONAME ; memset
+	wordmove @ 1956 NONAME ; wordmove
+	_ZNK12RMessagePtr215DoHasCapabilityE11TCapabilityPKc @ 1957 NONAME ; RMessagePtr2::DoHasCapability(TCapability, char const*) const
+	_ZNK12RMessagePtr215DoHasCapabilityE11TCapabilityS0_PKc @ 1958 NONAME ; RMessagePtr2::DoHasCapability(TCapability, TCapability, char const*) const
+	_ZN13TSecurityInfoC2E12RMessagePtr2 @ 1959 NONAME ; TSecurityInfo::TSecurityInfo(RMessagePtr2)
+	_ZN13TSecurityInfoC2E7RThread @ 1960 NONAME ; TSecurityInfo::TSecurityInfo(RThread)
+	_ZN13TSecurityInfoC2E8RProcess @ 1961 NONAME ; TSecurityInfo::TSecurityInfo(RProcess)
+	_ZN15TSecurityPolicy3SetERK6TDesC8 @ 1962 NONAME ; TSecurityPolicy::Set(TDesC8 const&)
+	_ZN15TSecurityPolicyC1E11TCapabilityS0_S0_ @ 1963 NONAME ; TSecurityPolicy::TSecurityPolicy(TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC1E11TCapabilityS0_S0_S0_S0_S0_S0_ @ 1964 NONAME ; TSecurityPolicy::TSecurityPolicy(TCapability, TCapability, TCapability, TCapability, TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC1E9TSecureId11TCapabilityS1_S1_ @ 1965 NONAME ; TSecurityPolicy::TSecurityPolicy(TSecureId, TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC1E9TVendorId11TCapabilityS1_S1_ @ 1966 NONAME ; TSecurityPolicy::TSecurityPolicy(TVendorId, TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC1ENS_14TSecPolicyTypeE @ 1967 NONAME ; TSecurityPolicy::TSecurityPolicy(TSecurityPolicy::TSecPolicyType)
+	_ZN15TSecurityPolicyC2E11TCapabilityS0_S0_ @ 1968 NONAME ; TSecurityPolicy::TSecurityPolicy(TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC2E11TCapabilityS0_S0_S0_S0_S0_S0_ @ 1969 NONAME ; TSecurityPolicy::TSecurityPolicy(TCapability, TCapability, TCapability, TCapability, TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC2E9TSecureId11TCapabilityS1_S1_ @ 1970 NONAME ; TSecurityPolicy::TSecurityPolicy(TSecureId, TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC2E9TVendorId11TCapabilityS1_S1_ @ 1971 NONAME ; TSecurityPolicy::TSecurityPolicy(TVendorId, TCapability, TCapability, TCapability)
+	_ZN15TSecurityPolicyC2ENS_14TSecPolicyTypeE @ 1972 NONAME ; TSecurityPolicy::TSecurityPolicy(TSecurityPolicy::TSecPolicyType)
+	_ZNK8RProcess8VendorIdEv @ 1973 NONAME ; RProcess::VendorId() const
+	_ZN4User15CreatorVendorIdEv @ 1974 NONAME ; User::CreatorVendorId()
+	_ZN4User22DoCreatorHasCapabilityE11TCapabilityPKc @ 1975 NONAME ; User::DoCreatorHasCapability(TCapability, char const*)
+	_ZN4User22DoCreatorHasCapabilityE11TCapabilityS0_PKc @ 1976 NONAME ; User::DoCreatorHasCapability(TCapability, TCapability, char const*)
+	_ZNK7RThread15DoHasCapabilityE11TCapabilityPKc @ 1977 NONAME ; RThread::DoHasCapability(TCapability, char const*) const
+	_ZNK7RThread15DoHasCapabilityE11TCapabilityS0_PKc @ 1978 NONAME ; RThread::DoHasCapability(TCapability, TCapability, char const*) const
+	_ZNK8RProcess15DoHasCapabilityE11TCapabilityPKc @ 1979 NONAME ; RProcess::DoHasCapability(TCapability, char const*) const
+	_ZNK8RProcess15DoHasCapabilityE11TCapabilityS0_PKc @ 1980 NONAME ; RProcess::DoHasCapability(TCapability, TCapability, char const*) const
+	_ZN9RProperty6DefineE4TUidjiRK15TSecurityPolicyS3_i @ 1981 NONAME ; RProperty::Define(TUid, unsigned int, int, TSecurityPolicy const&, TSecurityPolicy const&, int)
+	_ZNK12RMessagePtr28VendorIdEv @ 1982 NONAME ; RMessagePtr2::VendorId() const
+	_ZNK15TSecurityPolicy13DoCheckPolicyE12RMessagePtr2PKc @ 1983 NONAME ; TSecurityPolicy::DoCheckPolicy(RMessagePtr2, char const*) const
+	_ZNK15TSecurityPolicy13DoCheckPolicyE7RThreadPKc @ 1984 NONAME ; TSecurityPolicy::DoCheckPolicy(RThread, char const*) const
+	_ZNK15TSecurityPolicy13DoCheckPolicyE8RProcessPKc @ 1985 NONAME ; TSecurityPolicy::DoCheckPolicy(RProcess, char const*) const
+	_ZNK15TSecurityPolicy7PackageEv @ 1986 NONAME ; TSecurityPolicy::Package() const
+	_ZNK7RThread8SecureIdEv @ 1987 NONAME ; RThread::SecureId() const
+	_ZNK7RThread8VendorIdEv @ 1988 NONAME ; RThread::VendorId() const
+	_ZN7PlatSec13ConfigSettingENS_14TConfigSettingE @ 1989 NONAME ; PlatSec::ConfigSetting(PlatSec::TConfigSetting)
+	_ZN7PlatSec20IsCapabilityEnforcedE11TCapability @ 1990 NONAME ; PlatSec::IsCapabilityEnforced(TCapability)
+	_ZN12RSessionBase13CreateSessionE8RServer2RK8TVersioni15TIpcSessionTypePK15TSecurityPolicyP14TRequestStatus @ 1991 NONAME ; RSessionBase::CreateSession(RServer2, TVersion const&, int, TIpcSessionType, TSecurityPolicy const*, TRequestStatus*)
+	_ZN12RSessionBase13CreateSessionERK7TDesC16RK8TVersioni15TIpcSessionTypePK15TSecurityPolicyP14TRequestStatus @ 1992 NONAME ; RSessionBase::CreateSession(TDesC16 const&, TVersion const&, int, TIpcSessionType, TSecurityPolicy const*, TRequestStatus*)
+	_ZN13CPolicyServer12CheckFailedLERK9RMessage2iRK13TSecurityInfo @ 1993 NONAME ; CPolicyServer::CheckFailedL(RMessage2 const&, int, TSecurityInfo const&)
+	_ZN13CPolicyServer12ProcessErrorERK9RMessage2i @ 1994 NONAME ; CPolicyServer::ProcessError(RMessage2 const&, int)
+	_ZN13CPolicyServer20CustomFailureActionLERK9RMessage2iRK13TSecurityInfo @ 1995 NONAME ; CPolicyServer::CustomFailureActionL(RMessage2 const&, int, TSecurityInfo const&)
+	_ZN13CPolicyServer20CustomSecurityCheckLERK9RMessage2RiR13TSecurityInfo @ 1996 NONAME ; CPolicyServer::CustomSecurityCheckL(RMessage2 const&, int&, TSecurityInfo&)
+	_ZN13CPolicyServer4RunLEv @ 1997 NONAME ; CPolicyServer::RunL()
+	_ZN13CPolicyServer8ProcessLERK9RMessage2 @ 1998 NONAME ; CPolicyServer::ProcessL(RMessage2 const&)
+	_ZN13CPolicyServer8RunErrorEi @ 1999 NONAME ; CPolicyServer::RunError(int)
+	_ZN13CPolicyServerC2EiRKNS_7TPolicyEN8CServer211TServerTypeE @ 2000 NONAME ; CPolicyServer::CPolicyServer(int, CPolicyServer::TPolicy const&, CServer2::TServerType)
+	_ZTI13CPolicyServer @ 2001 NONAME ; typeinfo for CPolicyServer
+	_ZTV13CPolicyServer @ 2002 NONAME ; vtable for CPolicyServer
+	_ZN8RLibrary17GetInfoFromHeaderERK6TDesC8R5TDes8 @ 2003 NONAME ; RLibrary::GetInfoFromHeader(TDesC8 const&, TDes8&)
+	_ZN14TBusLocalDrive13ErasePasswordEv @ 2004 NONAME ; TBusLocalDrive::ErasePassword()
+	_ZN7UserSvr11HalFunctionEiiPvS0_i @ 2005 NONAME ; UserSvr::HalFunction(int, int, void*, void*, int)
+	_ZN10RArrayBaseC1Eiiii @ 2006 NONAME ; RArrayBase::RArrayBase(int, int, int, int)
+	_ZN10RArrayBaseC2Eiiii @ 2007 NONAME ; RArrayBase::RArrayBase(int, int, int, int)
+	_ZN17RPointerArrayBaseC1Eii @ 2008 NONAME ; RPointerArrayBase::RPointerArrayBase(int, int)
+	_ZN17RPointerArrayBaseC2Eii @ 2009 NONAME ; RPointerArrayBase::RPointerArrayBase(int, int)
+	_ZN7UserSvr19ExceptionDescriptorEm @ 2010 NONAME ; UserSvr::ExceptionDescriptor(unsigned long)
+	_ZN5RBuf810CreateMaxLEi @ 2011 NONAME ; RBuf8::CreateMaxL(int)
+	_ZN5RBuf817CleanupClosePushLEv @ 2012 NONAME ; RBuf8::CleanupClosePushL()
+	_ZN5RBuf84SwapERS_ @ 2013 NONAME ; RBuf8::Swap(RBuf8&)
+	_ZN5RBuf85CloseEv @ 2014 NONAME ; RBuf8::Close()
+	_ZN5RBuf86AssignEP6HBufC8 @ 2015 NONAME ; RBuf8::Assign(HBufC8*)
+	_ZN5RBuf86AssignEPhi @ 2016 NONAME ; RBuf8::Assign(unsigned char*, int)
+	_ZN5RBuf86AssignEPhii @ 2017 NONAME ; RBuf8::Assign(unsigned char*, int, int)
+	_ZN5RBuf86AssignERKS_ @ 2018 NONAME ; RBuf8::Assign(RBuf8 const&)
+	_ZN5RBuf86CreateERK6TDesC8 @ 2019 NONAME ; RBuf8::Create(TDesC8 const&)
+	_ZN5RBuf86CreateERK6TDesC8i @ 2020 NONAME ; RBuf8::Create(TDesC8 const&, int)
+	_ZN5RBuf86CreateEi @ 2021 NONAME ; RBuf8::Create(int)
+	_ZN5RBuf87CreateLERK6TDesC8 @ 2022 NONAME ; RBuf8::CreateL(TDesC8 const&)
+	_ZN5RBuf87CreateLERK6TDesC8i @ 2023 NONAME ; RBuf8::CreateL(TDesC8 const&, int)
+	_ZN5RBuf87CreateLEi @ 2024 NONAME ; RBuf8::CreateL(int)
+	_ZN5RBuf87ReAllocEi @ 2025 NONAME ; RBuf8::ReAlloc(int)
+	_ZN5RBuf88ReAllocLEi @ 2026 NONAME ; RBuf8::ReAllocL(int)
+	_ZN5RBuf89CreateMaxEi @ 2027 NONAME ; RBuf8::CreateMax(int)
+	_ZN5RBuf8C1EP6HBufC8 @ 2028 NONAME ; RBuf8::RBuf8(HBufC8*)
+	_ZN5RBuf8C1Eiii @ 2029 NONAME ; RBuf8::RBuf8(int, int, int)
+	_ZN5RBuf8C1Ev @ 2030 NONAME ; RBuf8::RBuf8()
+	_ZN5RBuf8C2EP6HBufC8 @ 2031 NONAME ; RBuf8::RBuf8(HBufC8*)
+	_ZN5RBuf8C2Eiii @ 2032 NONAME ; RBuf8::RBuf8(int, int, int)
+	_ZN5RBuf8C2Ev @ 2033 NONAME ; RBuf8::RBuf8()
+	_ZN6RBuf1610CreateMaxLEi @ 2034 NONAME ; RBuf16::CreateMaxL(int)
+	_ZN6RBuf1617CleanupClosePushLEv @ 2035 NONAME ; RBuf16::CleanupClosePushL()
+	_ZN6RBuf164SwapERS_ @ 2036 NONAME ; RBuf16::Swap(RBuf16&)
+	_ZN6RBuf165CloseEv @ 2037 NONAME ; RBuf16::Close()
+	_ZN6RBuf166AssignEP7HBufC16 @ 2038 NONAME ; RBuf16::Assign(HBufC16*)
+	_ZN6RBuf166AssignEPti @ 2039 NONAME ; RBuf16::Assign(unsigned short*, int)
+	_ZN6RBuf166AssignEPtii @ 2040 NONAME ; RBuf16::Assign(unsigned short*, int, int)
+	_ZN6RBuf166AssignERKS_ @ 2041 NONAME ; RBuf16::Assign(RBuf16 const&)
+	_ZN6RBuf166CreateERK7TDesC16 @ 2042 NONAME ; RBuf16::Create(TDesC16 const&)
+	_ZN6RBuf166CreateERK7TDesC16i @ 2043 NONAME ; RBuf16::Create(TDesC16 const&, int)
+	_ZN6RBuf166CreateEi @ 2044 NONAME ; RBuf16::Create(int)
+	_ZN6RBuf167CreateLERK7TDesC16 @ 2045 NONAME ; RBuf16::CreateL(TDesC16 const&)
+	_ZN6RBuf167CreateLERK7TDesC16i @ 2046 NONAME ; RBuf16::CreateL(TDesC16 const&, int)
+	_ZN6RBuf167CreateLEi @ 2047 NONAME ; RBuf16::CreateL(int)
+	_ZN6RBuf167ReAllocEi @ 2048 NONAME ; RBuf16::ReAlloc(int)
+	_ZN6RBuf168ReAllocLEi @ 2049 NONAME ; RBuf16::ReAllocL(int)
+	_ZN6RBuf169CreateMaxEi @ 2050 NONAME ; RBuf16::CreateMax(int)
+	_ZN6RBuf16C1EP7HBufC16 @ 2051 NONAME ; RBuf16::RBuf16(HBufC16*)
+	_ZN6RBuf16C1Eiii @ 2052 NONAME ; RBuf16::RBuf16(int, int, int)
+	_ZN6RBuf16C1Ev @ 2053 NONAME ; RBuf16::RBuf16()
+	_ZN6RBuf16C2EP7HBufC16 @ 2054 NONAME ; RBuf16::RBuf16(HBufC16*)
+	_ZN6RBuf16C2Eiii @ 2055 NONAME ; RBuf16::RBuf16(int, int, int)
+	_ZN6RBuf16C2Ev @ 2056 NONAME ; RBuf16::RBuf16()
+	_ZNK5RBuf818__DbgTestInvariantEv @ 2057 NONAME ; RBuf8::__DbgTestInvariant() const
+	_ZNK6RBuf1618__DbgTestInvariantEv @ 2058 NONAME ; RBuf16::__DbgTestInvariant() const
+	_ZN4User20PanicUnexpectedLeaveEv @ 2059 NONAME ; User::PanicUnexpectedLeave()
+	_ZN4User16MarkCleanupStackEv @ 2060 NONAME ; User::MarkCleanupStack()
+	_ZN4User18UnMarkCleanupStackEP12TTrapHandler @ 2061 NONAME ; User::UnMarkCleanupStack(TTrapHandler*)
+	_ZN15RSubSessionBase25CreateAutoCloseSubSessionER12RSessionBaseiRK8TIpcArgs @ 2062 NONAME ; RSubSessionBase::CreateAutoCloseSubSession(RSessionBase&, int, TIpcArgs const&)
+	_ZNK15RSubSessionBase7SessionEv @ 2063 NONAME ; RSubSessionBase::Session() const
+	_ZN9RNotifier28UpdateNotifierAndGetResponseER14TRequestStatus4TUidRK6TDesC8R5TDes8 @ 2064 NONAME ; RNotifier::UpdateNotifierAndGetResponse(TRequestStatus&, TUid, TDesC8 const&, TDes8&)
+	_ZN11CDeltaTimer9QueueLongE25TTimeIntervalMicroSecondsR16TDeltaTimerEntry @ 2065 NONAME ; CDeltaTimer::QueueLong(TTimeIntervalMicroSeconds, TDeltaTimerEntry&)
+	_ZN6RTimer10AfterTicksER14TRequestStatusi @ 2066 NONAME ; RTimer::AfterTicks(TRequestStatus&, int)
+	_ZNK7RThread13RequestSignalEv @ 2067 NONAME ; RThread::RequestSignal() const
+	_ZN4User22DoCreatorHasCapabilityE11TCapability @ 2068 NONAME ; User::DoCreatorHasCapability(TCapability)
+	_ZN4User22DoCreatorHasCapabilityE11TCapabilityS0_ @ 2069 NONAME ; User::DoCreatorHasCapability(TCapability, TCapability)
+	_ZN7PlatSec14EmitDiagnosticEv @ 2070 NONAME ; PlatSec::EmitDiagnostic()
+	_ZNK12RMessagePtr215DoHasCapabilityE11TCapability @ 2071 NONAME ; RMessagePtr2::DoHasCapability(TCapability) const
+	_ZNK12RMessagePtr215DoHasCapabilityE11TCapabilityS0_ @ 2072 NONAME ; RMessagePtr2::DoHasCapability(TCapability, TCapability) const
+	_ZNK15TSecurityPolicy13DoCheckPolicyE12RMessagePtr2 @ 2073 NONAME ; TSecurityPolicy::DoCheckPolicy(RMessagePtr2) const
+	_ZNK15TSecurityPolicy13DoCheckPolicyE7RThread @ 2074 NONAME ; TSecurityPolicy::DoCheckPolicy(RThread) const
+	_ZNK15TSecurityPolicy13DoCheckPolicyE8RProcess @ 2075 NONAME ; TSecurityPolicy::DoCheckPolicy(RProcess) const
+	_ZNK7RThread15DoHasCapabilityE11TCapability @ 2076 NONAME ; RThread::DoHasCapability(TCapability) const
+	_ZNK7RThread15DoHasCapabilityE11TCapabilityS0_ @ 2077 NONAME ; RThread::DoHasCapability(TCapability, TCapability) const
+	_ZNK8RProcess15DoHasCapabilityE11TCapability @ 2078 NONAME ; RProcess::DoHasCapability(TCapability) const
+	_ZNK8RProcess15DoHasCapabilityE11TCapabilityS0_ @ 2079 NONAME ; RProcess::DoHasCapability(TCapability, TCapability) const
+	_ZN6CTimer7HighResE27TTimeIntervalMicroSeconds32 @ 2080 NONAME
+	_ZN6RMutex6IsHeldEv @ 2081 NONAME
+	_ZNK15XLeaveException9GetReasonEv @ 2082 NONAME ; XLeaveException::GetReason() const
+	_ZN3Mem23GetDefaultMatchingTableEv @ 2083 NONAME
+	_ZN4User10SetUTCTimeERK5TTime @ 2084 NONAME
+	_ZN4User12SetUTCOffsetE20TTimeIntervalSeconds @ 2085 NONAME
+	_ZN4User19SetUTCTimeAndOffsetERK5TTime20TTimeIntervalSeconds @ 2086 NONAME
+	_ZN4User9UTCOffsetEv @ 2087 NONAME
+	_ZN6RTimer5AtUTCER14TRequestStatusRK5TTime @ 2088 NONAME
+	_ZN4User12SetDebugMaskEmj @ 2089 NONAME
+	_ZN7UserSvr9DebugMaskEj @ 2090 NONAME
+	_ZN6CTimer5AtUTCERK5TTime @ 2091 NONAME
+	_ZN14TBusLocalDrive12DeleteNotifyExi @ 2092 NONAME
+	_ZN15TExtendedLocale10LoadLocaleERK7TDesC16 @ 2093 NONAME
+	_ZN15TExtendedLocale16GetLocaleDllNameE13TLocaleAspectR6TDes16 @ 2094 NONAME
+	_ZN15TExtendedLocale16LoadLocaleAspectEjRK7TDesC16 @ 2095 NONAME
+	_ZN15TExtendedLocale17SetCurrencySymbolERK7TDesC16 @ 2096 NONAME
+	_ZN15TExtendedLocale18LoadSystemSettingsEv @ 2097 NONAME
+	_ZN15TExtendedLocale18SaveSystemSettingsEv @ 2098 NONAME
+	_ZN15TExtendedLocale27GetPreferredCollationMethodEi @ 2099 NONAME
+	_ZN15TExtendedLocaleC1Ev @ 2100 NONAME
+	_ZN15TExtendedLocaleC2Ev @ 2101 NONAME
+	_ZN7UserSvr27LocalePropertiesSetDefaultsEv @ 2102 NONAME
+	_ZN4User10NTickCountEv @ 2103 NONAME
+	_ZNK7TDesC163MidEi @ 2104 NONAME ; TDesC16::Mid(int) const
+	_ZNK7TDesC163MidEii @ 2105 NONAME ; TDesC16::Mid(int, int) const
+	_ZNK7TDesC164LeftEi @ 2106 NONAME ; TDesC16::Left(int) const
+	_ZNK7TDesC165RightEi @ 2107 NONAME ; TDesC16::Right(int) const
+	_ZNK6TDesC83MidEi @ 2108 NONAME ; TDesC8::Mid(int) const
+	_ZNK6TDesC83MidEii @ 2109 NONAME ; TDesC8::Mid(int, int) const 
+	_ZNK6TDesC84LeftEi @ 2110 NONAME ; TDesC8::Left(int) const
+	_ZNK6TDesC85RightEi @ 2111 NONAME ; TDesC8::Right(int) const
+	_ZN9TRawEvent11SetRotationENS_5TTypeEi @ 2112 NONAME
+	_ZN9TRawEvent3SetENS_5TTypeEiii @ 2113 NONAME
+	_ZN9TRawEvent3SetENS_5TTypeEiiiiii @ 2114 NONAME
+	_ZN9TRawEvent7SetTiltENS_5TTypeEii @ 2115 NONAME
+	_ZNK9TRawEvent4TiltEv @ 2116 NONAME
+	_ZNK9TRawEvent5Pos3DEv @ 2117 NONAME
+	_ZNK9TRawEvent8RotationEv @ 2118 NONAME
+	_ZN12CConsoleBase10Extension_EjRPvS0_ @ 2119 NONAME
+	_ZN13CPolicyServer10Extension_EjRPvS0_ @ 2120 NONAME
+	_ZN16CActiveScheduler10Extension_EjRPvS0_ @ 2121 NONAME
+	_ZN17CColorConsoleBase10Extension_EjRPvS0_ @ 2122 NONAME
+	_ZN5CBase10Extension_EjRPvS0_ @ 2123 NONAME
+	_ZN5CBaseD0Ev @ 2124 NONAME
+	_ZN5CBaseD1Ev @ 2125 NONAME
+	_ZN5CBaseD2Ev @ 2126 NONAME
+	_ZN5RHeap10Extension_EjRPvS0_ @ 2127 NONAME
+	_ZN7CActive10Extension_EjRPvS0_ @ 2128 NONAME
+	_ZN7CObject10Extension_EjRPvS0_ @ 2129 NONAME
+	_ZN8CServer210Extension_EjRPvS0_ @ 2130 NONAME
+	_ZN9CSession210Extension_EjRPvS0_ @ 2131 NONAME
+	_ZTI5CBase @ 2132 NONAME ; #<TI>#
+	_ZN9RProperty6DefineEjiRK15TSecurityPolicyS2_i @ 2133 NONAME
+	_ZN10RAllocator10Extension_EjRPvS0_ @ 2134 NONAME
+	_ZN14TBusLocalDrive16GetLastErrorInfoER5TDes8 @ 2135 NONAME
+	_ZN12RSessionBase17SetReturnedHandleEiRK15TSecurityPolicy @ 2136 NONAME
+	_ZN12RSessionBase4OpenE12RMessagePtr2iRK15TSecurityPolicy10TOwnerType @ 2137 NONAME
+	_ZN12RSessionBase4OpenEiRK15TSecurityPolicy10TOwnerType @ 2138 NONAME
+	_ZN9RProperty6DeleteEj @ 2139 NONAME
+	_ZN11DefaultHash5Des16ERK7TDesC16 @ 2140 NONAME
+	_ZN11DefaultHash7IntegerERKi @ 2141 NONAME
+	_ZN14RHashTableBase11ValueInsertEPKviS1_ii @ 2142 NONAME
+	_ZN14RHashTableBase16ConsistencyCheckEPmS0_mS0_ @ 2143 NONAME
+	_ZN14RHashTableBase5CloseEv @ 2144 NONAME
+	_ZN11DefaultHash4Des8ERK6TDesC8 @ 2145 NONAME
+	_ZN14RHashTableBase6RemoveEPKv @ 2146 NONAME
+	_ZN14RHashTableBase9PtrInsertEPKvS1_ @ 2147 NONAME
+	_ZN14RHashTableBaseC1EPFmPKvEPFiS1_S1_Eii @ 2148 NONAME
+	_ZN14RHashTableBaseC2EPFmPKvEPFiS1_S1_Eii @ 2149 NONAME
+	_ZN15DefaultIdentity4Des8ERK6TDesC8S2_ @ 2150 NONAME
+	_ZN15DefaultIdentity5Des16ERK7TDesC16S2_ @ 2151 NONAME
+	_ZN15DefaultIdentity7IntegerERKiS1_ @ 2152 NONAME
+	_ZN18THashTableIterBase4NextEi @ 2153 NONAME
+	_ZN18THashTableIterBase5ResetEv @ 2154 NONAME
+	_ZN18THashTableIterBaseC1ERK14RHashTableBase @ 2155 NONAME
+	_ZN18THashTableIterBaseC2ERK14RHashTableBase @ 2156 NONAME
+	_ZNK14RHashTableBase4FindEPKvi @ 2157 NONAME
+	_ZNK14RHashTableBase5CountEv @ 2158 NONAME
+	_ZNK18THashTableIterBase7CurrentEi @ 2159 NONAME
+	_ZN14RHashTableBase10PtrInsertLEPKvS1_ @ 2160 NONAME
+	_ZN14RHashTableBase12ValueInsertLEPKviS1_ii @ 2161 NONAME
+	_ZNK14RHashTableBase5FindLEPKvi @ 2162 NONAME
+	_ZN14RHashTableBase7ReserveEi @ 2163 NONAME
+	_ZN14RHashTableBase8ReserveLEi @ 2164 NONAME
+	_ZNK15TSecurityPolicy20DoCheckPolicyCreatorEPKc @ 2165 NONAME
+	_ZNK15TSecurityPolicy20DoCheckPolicyCreatorEv @ 2166 NONAME
+	_ZNK12RMessagePtr212ClientStatusEv @ 2167 NONAME
+	_ZN18THashTableIterBase13RemoveCurrentEv @ 2168 NONAME
+	_ZN10RArrayBase9DoReserveEi @ 2169 NONAME
+	_ZN17RPointerArrayBase9DoReserveEi @ 2170 NONAME
+	_ZN4User20SetFloatingPointModeE18TFloatingPointMode26TFloatingPointRoundingMode @ 2171 NONAME
+	_ZNK10RArrayBase11FindReverseEPKv @ 2172 NONAME
+	_ZNK10RArrayBase11FindReverseEPKvPFiS1_S1_E @ 2173 NONAME
+	_ZNK17RPointerArrayBase11FindReverseEPKv @ 2174 NONAME
+	_ZNK17RPointerArrayBase11FindReverseEPKvPFiS1_S1_E @ 2175 NONAME
+	_ZN7UserSvr6DllTlsEii @ 2176 NONAME
+	_ZN7UserSvr9DllSetTlsEiiPv @ 2177 NONAME
+	_ZN6BTrace3OutEmmmm @ 2178 NONAME
+	_ZN6BTrace4OutNEmmmPKvi @ 2179 NONAME
+	_ZN6BTrace4OutXEmmmm @ 2180 NONAME
+	_ZN6BTrace5OutNXEmmmPKvi @ 2181 NONAME
+	_ZN4User15ProcessCriticalE8RProcess @ 2182 NONAME
+	_ZN4User8CriticalE7RThread @ 2183 NONAME
+	_ZN7RLoader19CancelLazyDllUnloadEv @ 2184 NONAME
+	_ZN6RDebug8RawPrintERK6TDesC8 @ 2185 NONAME
+	_ZN4User16SetRealtimeStateENS_14TRealtimeStateE @ 2186 NONAME
+	_ZN11DefaultHash10IntegerPtrERKPi @ 2187 NONAME
+	_ZN11DefaultHash7Des8PtrERKP6TDesC8 @ 2188 NONAME
+	_ZN11DefaultHash8Des16PtrERKP7TDesC16 @ 2189 NONAME
+	_ZN15DefaultIdentity10IntegerPtrERKPiS2_ @ 2190 NONAME
+	_ZN15DefaultIdentity7Des8PtrERKP6TDesC8S3_ @ 2191 NONAME
+	_ZN15DefaultIdentity8Des16PtrERKP7TDesC16S3_ @ 2192 NONAME
+	_ZN8UserHeap15OffsetChunkHeapE6RChunkiiiiiim @ 2193 NONAME
+	KHeapMinCellSize @ 2194 NONAME DATA 4
+	_ZNK7TRegion10IntersectsERK5TRect @ 2195 NONAME
+	KHeapShrinkHysRatio @ 2196 NONAME DATA 4
+	_ZNK7TDesC1617GetCollationKeysLEiPK16TCollationMethod @ 2197 NONAME
+	_ZNK7TDesC1624GetFoldedDecomposedFormLEv @ 2198 NONAME
+	_ZNK7TDesC1628GetNormalizedDecomposedFormLEv @ 2199 NONAME
+	_ZNK7TDesC166MatchCERKS_iiiiPK16TCollationMethod @ 2200 NONAME
+	_ZN7RLoader6DeleteERK7TDesC16 @ 2201 NONAME
+	_ZNK11RHandleBase8FullNameER6TDes16 @ 2202 NONAME
+	_ZN6BTrace12OutFilteredNEmmmPKvi @ 2203 NONAME
+	_ZN6BTrace12OutFilteredXEmmmm @ 2204 NONAME
+	_ZN6BTrace13OutFilteredNXEmmmPKvi @ 2205 NONAME
+	_ZN6BTrace14OutFilteredBigEmmPKvi @ 2206 NONAME
+	_ZN6BTrace6OutBigEmmPKvi @ 2207 NONAME
+	_ZN6BTrace11CheckFilterEm @ 2208 NONAME
+	_ZN6BTrace12CheckFilter2Emm @ 2209 NONAME
+	_ZN6BTrace11OutFilteredEmmmm @ 2210 NONAME
+	_ZN7RLoader16CheckLibraryHashERK7TDesC16i @ 2211 NONAME
+	_ZN4User15WaitForNRequestEPP14TRequestStatusi @ 2212 NONAME
+	_ZN15TExtendedLocale17GetCurrencySymbolEv @ 2213 NONAME
+	_ZN15TExtendedLocale17GetTimeFormatSpecEv @ 2214 NONAME
+	_ZN15TExtendedLocale21GetLongDateFormatSpecEv @ 2215 NONAME
+	_ZN15TExtendedLocale22GetShortDateFormatSpecEv @ 2216 NONAME
+	_ZN8RProcess23CreateWithStackOverrideERK7TDesC16S2_RK8TUidTypei10TOwnerType @ 2217 NONAME
+	_ZN8RProcess13ExeExportDataEv @ 2218 NONAME
+	_ZNK7TDesC166MatchCERKS_PK16TCollationMethodiiii @ 2219 NONAME
+	_ZN9E32Loader12PagingPolicyEv @ 2220 NONAME
+	_ZN9E32Loader24NotifyIfCodeSegDestroyedER14TRequestStatus @ 2221 NONAME
+	_ZN9E32Loader23GetDestroyedCodeSegInfoER20TCodeSegLoaderCookie @ 2222 NONAME
+	_ZN6RChunk4LockEii @ 2223 NONAME
+	_ZN6RChunk6UnlockEii @ 2224 NONAME
+	_ZNK5TTime7FormatLER6TDes16RK7TDesC16RK7TLocale @ 2225 NONAME
+	_ZNK7TDesC165FindCERKS_RiRK16TCollationMethodi @ 2226 NONAME
+	_ZN9TRawEvent9SetRepeatENS_5TTypeEii @ 2227 NONAME
+	_ZNK9TRawEvent7RepeatsEv @ 2228 NONAME
+	_ZN4User16SetUTCTimeSecureERK5TTime @ 2229 NONAME
+	_ZN4User17SetHomeTimeSecureERK5TTime @ 2230 NONAME
+	_ZN5TTime14HomeTimeSecureEv @ 2231 NONAME
+	_ZN5TTime19UniversalTimeSecureEv @ 2232 NONAME
+	_ZN4Exec19SetWin32RuntimeHookEPv @ 2233 NONAME
+	_ZNK11RHandleBase8BTraceIdEv @ 2234 NONAME
+	_ZN11RHandleBase17NotifyDestructionER14TRequestStatus @ 2235 NONAME
+	_ZN4User12NotifyOnIdleER14TRequestStatus @ 2236 NONAME
+	_ZN4User18CancelMiscNotifierER14TRequestStatus @ 2237 NONAME
+	_ZN5RTest32CloseHandleAndWaitForDestructionER11RHandleBase @ 2238 NONAME
+	_ZN10RAllocator22__DbgSetBurstAllocFailENS_10TAllocFailEjj @ 2239 NONAME
+	_ZN4User22__DbgSetBurstAllocFailEiN10RAllocator10TAllocFailEjj @ 2240 NONAME
+	_ZN10RAllocator17__DbgCheckFailureEv @ 2241 NONAME
+	_ZN4User17__DbgCheckFailureEi @ 2242 NONAME
+	_ZN19TDes8IgnoreOverflow8OverflowER5TDes8 @ 2243 NONAME
+	_ZN20TDes16IgnoreOverflow8OverflowER6TDes16 @ 2244 NONAME
+	_ZTI19TDes8IgnoreOverflow @ 2245 NONAME
+	_ZTI20TDes16IgnoreOverflow @ 2246 NONAME
+	_ZTV19TDes8IgnoreOverflow @ 2247 NONAME
+	_ZTV20TDes16IgnoreOverflow @ 2248 NONAME
+	_ZN7UserSvr20RegisterTrustedChunkEi @ 2249 NONAME
+	_ZN6RChunk6CreateER16TChunkCreateInfo @ 2250 NONAME
+	_ZN16TChunkCreateInfo12SetClearByteEh @ 2251 NONAME
+	_ZN16TChunkCreateInfo14SetDoubleEndedEiii @ 2252 NONAME
+	_ZN16TChunkCreateInfo15SetDisconnectedEiii @ 2253 NONAME
+	_ZN16TChunkCreateInfo7SetCodeEii @ 2254 NONAME
+	_ZN16TChunkCreateInfo8SetOwnerE10TOwnerType @ 2255 NONAME
+	_ZN16TChunkCreateInfo9SetGlobalERK7TDesC16 @ 2256 NONAME
+	_ZN16TChunkCreateInfo9SetNormalEii @ 2257 NONAME
+	_ZN16TChunkCreateInfoC1Ev @ 2258 NONAME
+	_ZN16TChunkCreateInfoC2Ev @ 2259 NONAME
+	_ZN9TRawEvent3SetENS_5TTypeEiiih @ 2260 NONAME
+	_ZN8TPoint3D6SetXYZEiii @ 2261 NONAME
+	_ZN8TPoint3D8SetPointERK6TPoint @ 2262 NONAME
+	_ZN8TPoint3DmIERK6TPoint @ 2263 NONAME
+	_ZN8TPoint3DmIERKS_ @ 2264 NONAME
+	_ZN8TPoint3DpLERK6TPoint @ 2265 NONAME
+	_ZN8TPoint3DpLERKS_ @ 2266 NONAME
+	_ZNK8TPoint3D7AsPointEv @ 2267 NONAME
+	_ZNK8TPoint3DeqERKS_ @ 2268 NONAME
+	_ZNK8TPoint3DmiERK6TPoint @ 2269 NONAME
+	_ZNK8TPoint3DmiERKS_ @ 2270 NONAME
+	_ZNK8TPoint3DneERKS_ @ 2271 NONAME
+	_ZNK8TPoint3DngEv @ 2272 NONAME
+	_ZNK8TPoint3DplERK6TPoint @ 2273 NONAME
+	_ZNK8TPoint3DplERKS_ @ 2274 NONAME
+	__e32_atomic_add_acq16 @ 2275 NONAME
+	__e32_atomic_add_acq32 @ 2276 NONAME
+	__e32_atomic_add_acq64 @ 2277 NONAME
+	__e32_atomic_add_acq8 @ 2278 NONAME
+	__e32_atomic_add_ord16 @ 2279 NONAME
+	__e32_atomic_add_ord32 @ 2280 NONAME
+	__e32_atomic_add_ord64 @ 2281 NONAME
+	__e32_atomic_add_ord8 @ 2282 NONAME
+	__e32_atomic_add_rel16 @ 2283 NONAME
+	__e32_atomic_add_rel32 @ 2284 NONAME
+	__e32_atomic_add_rel64 @ 2285 NONAME
+	__e32_atomic_add_rel8 @ 2286 NONAME
+	__e32_atomic_add_rlx16 @ 2287 NONAME
+	__e32_atomic_add_rlx32 @ 2288 NONAME
+	__e32_atomic_add_rlx64 @ 2289 NONAME
+	__e32_atomic_add_rlx8 @ 2290 NONAME
+	__e32_atomic_and_acq16 @ 2291 NONAME
+	__e32_atomic_and_acq32 @ 2292 NONAME
+	__e32_atomic_and_acq64 @ 2293 NONAME
+	__e32_atomic_and_acq8 @ 2294 NONAME
+	__e32_atomic_and_ord16 @ 2295 NONAME
+	__e32_atomic_and_ord32 @ 2296 NONAME
+	__e32_atomic_and_ord64 @ 2297 NONAME
+	__e32_atomic_and_ord8 @ 2298 NONAME
+	__e32_atomic_and_rel16 @ 2299 NONAME
+	__e32_atomic_and_rel32 @ 2300 NONAME
+	__e32_atomic_and_rel64 @ 2301 NONAME
+	__e32_atomic_and_rel8 @ 2302 NONAME
+	__e32_atomic_and_rlx16 @ 2303 NONAME
+	__e32_atomic_and_rlx32 @ 2304 NONAME
+	__e32_atomic_and_rlx64 @ 2305 NONAME
+	__e32_atomic_and_rlx8 @ 2306 NONAME
+	__e32_atomic_axo_acq16 @ 2307 NONAME
+	__e32_atomic_axo_acq32 @ 2308 NONAME
+	__e32_atomic_axo_acq64 @ 2309 NONAME
+	__e32_atomic_axo_acq8 @ 2310 NONAME
+	__e32_atomic_axo_ord16 @ 2311 NONAME
+	__e32_atomic_axo_ord32 @ 2312 NONAME
+	__e32_atomic_axo_ord64 @ 2313 NONAME
+	__e32_atomic_axo_ord8 @ 2314 NONAME
+	__e32_atomic_axo_rel16 @ 2315 NONAME
+	__e32_atomic_axo_rel32 @ 2316 NONAME
+	__e32_atomic_axo_rel64 @ 2317 NONAME
+	__e32_atomic_axo_rel8 @ 2318 NONAME
+	__e32_atomic_axo_rlx16 @ 2319 NONAME
+	__e32_atomic_axo_rlx32 @ 2320 NONAME
+	__e32_atomic_axo_rlx64 @ 2321 NONAME
+	__e32_atomic_axo_rlx8 @ 2322 NONAME
+	__e32_atomic_cas_acq16 @ 2323 NONAME
+	__e32_atomic_cas_acq32 @ 2324 NONAME
+	__e32_atomic_cas_acq64 @ 2325 NONAME
+	__e32_atomic_cas_acq8 @ 2326 NONAME
+	__e32_atomic_cas_ord16 @ 2327 NONAME
+	__e32_atomic_cas_ord32 @ 2328 NONAME
+	__e32_atomic_cas_ord64 @ 2329 NONAME
+	__e32_atomic_cas_ord8 @ 2330 NONAME
+	__e32_atomic_cas_rel16 @ 2331 NONAME
+	__e32_atomic_cas_rel32 @ 2332 NONAME
+	__e32_atomic_cas_rel64 @ 2333 NONAME
+	__e32_atomic_cas_rel8 @ 2334 NONAME
+	__e32_atomic_cas_rlx16 @ 2335 NONAME
+	__e32_atomic_cas_rlx32 @ 2336 NONAME
+	__e32_atomic_cas_rlx64 @ 2337 NONAME
+	__e32_atomic_cas_rlx8 @ 2338 NONAME
+	__e32_atomic_ior_acq16 @ 2339 NONAME
+	__e32_atomic_ior_acq32 @ 2340 NONAME
+	__e32_atomic_ior_acq64 @ 2341 NONAME
+	__e32_atomic_ior_acq8 @ 2342 NONAME
+	__e32_atomic_ior_ord16 @ 2343 NONAME
+	__e32_atomic_ior_ord32 @ 2344 NONAME
+	__e32_atomic_ior_ord64 @ 2345 NONAME
+	__e32_atomic_ior_ord8 @ 2346 NONAME
+	__e32_atomic_ior_rel16 @ 2347 NONAME
+	__e32_atomic_ior_rel32 @ 2348 NONAME
+	__e32_atomic_ior_rel64 @ 2349 NONAME
+	__e32_atomic_ior_rel8 @ 2350 NONAME
+	__e32_atomic_ior_rlx16 @ 2351 NONAME
+	__e32_atomic_ior_rlx32 @ 2352 NONAME
+	__e32_atomic_ior_rlx64 @ 2353 NONAME
+	__e32_atomic_ior_rlx8 @ 2354 NONAME
+	__e32_atomic_load_acq16 @ 2355 NONAME
+	__e32_atomic_load_acq32 @ 2356 NONAME
+	__e32_atomic_load_acq64 @ 2357 NONAME
+	__e32_atomic_load_acq8 @ 2358 NONAME
+	__e32_atomic_store_ord16 @ 2359 NONAME
+	__e32_atomic_store_ord32 @ 2360 NONAME
+	__e32_atomic_store_ord64 @ 2361 NONAME
+	__e32_atomic_store_ord8 @ 2362 NONAME
+	__e32_atomic_store_rel16 @ 2363 NONAME
+	__e32_atomic_store_rel32 @ 2364 NONAME
+	__e32_atomic_store_rel64 @ 2365 NONAME
+	__e32_atomic_store_rel8 @ 2366 NONAME
+	__e32_atomic_swp_acq16 @ 2367 NONAME
+	__e32_atomic_swp_acq32 @ 2368 NONAME
+	__e32_atomic_swp_acq64 @ 2369 NONAME
+	__e32_atomic_swp_acq8 @ 2370 NONAME
+	__e32_atomic_swp_ord16 @ 2371 NONAME
+	__e32_atomic_swp_ord32 @ 2372 NONAME
+	__e32_atomic_swp_ord64 @ 2373 NONAME
+	__e32_atomic_swp_ord8 @ 2374 NONAME
+	__e32_atomic_swp_rel16 @ 2375 NONAME
+	__e32_atomic_swp_rel32 @ 2376 NONAME
+	__e32_atomic_swp_rel64 @ 2377 NONAME
+	__e32_atomic_swp_rel8 @ 2378 NONAME
+	__e32_atomic_swp_rlx16 @ 2379 NONAME
+	__e32_atomic_swp_rlx32 @ 2380 NONAME
+	__e32_atomic_swp_rlx64 @ 2381 NONAME
+	__e32_atomic_swp_rlx8 @ 2382 NONAME
+	__e32_atomic_tas_acq16 @ 2383 NONAME
+	__e32_atomic_tas_acq32 @ 2384 NONAME
+	__e32_atomic_tas_acq64 @ 2385 NONAME
+	__e32_atomic_tas_acq8 @ 2386 NONAME
+	__e32_atomic_tas_ord16 @ 2387 NONAME
+	__e32_atomic_tas_ord32 @ 2388 NONAME
+	__e32_atomic_tas_ord64 @ 2389 NONAME
+	__e32_atomic_tas_ord8 @ 2390 NONAME
+	__e32_atomic_tas_rel16 @ 2391 NONAME
+	__e32_atomic_tas_rel32 @ 2392 NONAME
+	__e32_atomic_tas_rel64 @ 2393 NONAME
+	__e32_atomic_tas_rel8 @ 2394 NONAME
+	__e32_atomic_tas_rlx16 @ 2395 NONAME
+	__e32_atomic_tas_rlx32 @ 2396 NONAME
+	__e32_atomic_tas_rlx64 @ 2397 NONAME
+	__e32_atomic_tas_rlx8 @ 2398 NONAME
+	__e32_atomic_tau_acq16 @ 2399 NONAME
+	__e32_atomic_tau_acq32 @ 2400 NONAME
+	__e32_atomic_tau_acq64 @ 2401 NONAME
+	__e32_atomic_tau_acq8 @ 2402 NONAME
+	__e32_atomic_tau_ord16 @ 2403 NONAME
+	__e32_atomic_tau_ord32 @ 2404 NONAME
+	__e32_atomic_tau_ord64 @ 2405 NONAME
+	__e32_atomic_tau_ord8 @ 2406 NONAME
+	__e32_atomic_tau_rel16 @ 2407 NONAME
+	__e32_atomic_tau_rel32 @ 2408 NONAME
+	__e32_atomic_tau_rel64 @ 2409 NONAME
+	__e32_atomic_tau_rel8 @ 2410 NONAME
+	__e32_atomic_tau_rlx16 @ 2411 NONAME
+	__e32_atomic_tau_rlx32 @ 2412 NONAME
+	__e32_atomic_tau_rlx64 @ 2413 NONAME
+	__e32_atomic_tau_rlx8 @ 2414 NONAME
+	__e32_atomic_xor_acq16 @ 2415 NONAME
+	__e32_atomic_xor_acq32 @ 2416 NONAME
+	__e32_atomic_xor_acq64 @ 2417 NONAME
+	__e32_atomic_xor_acq8 @ 2418 NONAME
+	__e32_atomic_xor_ord16 @ 2419 NONAME
+	__e32_atomic_xor_ord32 @ 2420 NONAME
+	__e32_atomic_xor_ord64 @ 2421 NONAME
+	__e32_atomic_xor_ord8 @ 2422 NONAME
+	__e32_atomic_xor_rel16 @ 2423 NONAME
+	__e32_atomic_xor_rel32 @ 2424 NONAME
+	__e32_atomic_xor_rel64 @ 2425 NONAME
+	__e32_atomic_xor_rel8 @ 2426 NONAME
+	__e32_atomic_xor_rlx16 @ 2427 NONAME
+	__e32_atomic_xor_rlx32 @ 2428 NONAME
+	__e32_atomic_xor_rlx64 @ 2429 NONAME
+	__e32_atomic_xor_rlx8 @ 2430 NONAME
+	__e32_bit_count_32 @ 2431 NONAME
+	__e32_bit_count_64 @ 2432 NONAME
+	__e32_find_ls1_32 @ 2433 NONAME
+	__e32_find_ls1_64 @ 2434 NONAME
+	__e32_find_ms1_32 @ 2435 NONAME
+	__e32_find_ms1_64 @ 2436 NONAME
+	__e32_io_completion_barrier @ 2437 NONAME
+	__e32_memory_barrier @ 2438 NONAME
+	_ZN16TChunkCreateInfo9SetPagingENS_15TChunkPagingAttE @ 2439 NONAME
+	_ZN17TThreadCreateInfo10SetUseHeapEPK10RAllocator @ 2440 NONAME
+	_ZN17TThreadCreateInfo13SetCreateHeapEii @ 2441 NONAME
+	_ZN17TThreadCreateInfo8SetOwnerE10TOwnerType @ 2442 NONAME
+	_ZN17TThreadCreateInfo9SetPagingENS_16TThreadPagingAttE @ 2443 NONAME
+	_ZN17TThreadCreateInfoC1ERK7TDesC16PFiPvEiS3_ @ 2444 NONAME
+	_ZN17TThreadCreateInfoC2ERK7TDesC16PFiPvEiS3_ @ 2445 NONAME
+	_ZN20TChunkHeapCreateInfo11SetUseChunkE6RChunk @ 2446 NONAME
+	_ZN20TChunkHeapCreateInfo14SetCreateChunkEPK7TDesC16 @ 2447 NONAME
+	_ZN14TBusLocalDrive11QueryDeviceEN11RLocalDrive12TQueryDeviceER5TDes8 @ 2448 NONAME
+	_ZN14TBusLocalDrive9ControlIOEiR5TDes8i @ 2449 NONAME
+	_ZN14TBusLocalDrive9ControlIOEiR6TDesC8i @ 2450 NONAME
+	_ZN14TBusLocalDrive9ControlIOEiii @ 2451 NONAME
+	_ZN20TChunkHeapCreateInfoC1Eii @ 2452 NONAME
+	_ZN20TChunkHeapCreateInfoC2Eii @ 2453 NONAME
+	_ZN7RThread6CreateERK17TThreadCreateInfo @ 2454 NONAME
+	_ZN8CServer223SetPinClientDescriptorsEi @ 2455 NONAME
+	_ZN8UserHeap9ChunkHeapERK20TChunkHeapCreateInfo @ 2456 NONAME
+	_ZNK6RChunk7IsPagedEv @ 2457 NONAME
+	_ZNK8RProcess16DefaultDataPagedEv @ 2458 NONAME
+	_ZN16TChunkCreateInfo8SetCacheEi @ 2459 NONAME
+	_ZN6BTrace22OutFilteredPcFormatBigEmmmtPKvi @ 2460 NONAME
+	_ZNK12RMessagePtr216ClientIsRealtimeEv @ 2461 NONAME
+	_ZN8RServer212CreateGlobalERK7TDesC16iii @ 2462 NONAME
+	_ZN8CServer29SetMasterEPKS_ @ 2463 NONAME
+	_ZN9CSession29SetServerEPK8CServer2 @ 2464 NONAME
+	_ZN11TShPoolInfoC1Ev @ 2465 NONAME
+	_ZN11TShPoolInfoC2Ev @ 2466 NONAME
+	_ZN17TShPoolCreateInfo12SetExclusiveEv @ 2467 NONAME
+	_ZN17TShPoolCreateInfo13SetGuardPagesEv @ 2468 NONAME
+	_ZN17TShPoolCreateInfo19SetSizingAttributesEjjjj @ 2469 NONAME
+	_ZN17TShPoolCreateInfoC1ENS_25TShPoolPageAlignedBuffersEjj @ 2470 NONAME
+	_ZN17TShPoolCreateInfoC1ENS_28TShPoolNonPageAlignedBuffersEjjj @ 2471 NONAME
+	_ZN17TShPoolCreateInfoC2ENS_25TShPoolPageAlignedBuffersEjj @ 2472 NONAME
+	_ZN17TShPoolCreateInfoC2ENS_28TShPoolNonPageAlignedBuffersEjjj @ 2473 NONAME
+	_ZN6RShBuf3MapEi @ 2474 NONAME
+	_ZN6RShBuf3PtrEv @ 2475 NONAME
+	_ZN6RShBuf4SizeEv @ 2476 NONAME
+	_ZN6RShBuf5AllocER7RShPoolj @ 2477 NONAME
+	_ZN6RShBuf5CloseEv @ 2478 NONAME
+	_ZN6RShBuf5UnMapEv @ 2479 NONAME
+	_ZN7RShPool15SetBufferWindowEii @ 2480 NONAME
+	_ZN7RShPool26CancelLowSpaceNotificationER14TRequestStatus @ 2481 NONAME
+	_ZN7RShPool27RequestLowSpaceNotificationEjR14TRequestStatus @ 2482 NONAME
+	_ZN7RShPool6CreateERK17TShPoolCreateInfoj @ 2483 NONAME
+	_ZN7RShPoolC1Ev @ 2484 NONAME
+	_ZN7RShPoolC2Ev @ 2485 NONAME
+	_ZNK7RShPool7GetInfoER11TShPoolInfo @ 2486 NONAME
+	_ZNK7RShPool9FreeCountEv @ 2487 NONAME
+	_ZN7RShPool28RequestFreeSpaceNotificationEjR14TRequestStatus @ 2488 NONAME
+	_ZN7RShPool27CancelFreeSpaceNotificationER14TRequestStatus @ 2489 NONAME
+	_ZN14RReadWriteLock11CreateLocalENS_22TReadWriteLockPriorityE @ 2490 NONAME
+	_ZN14RReadWriteLock11TryReadLockEv @ 2491 NONAME
+	_ZN14RReadWriteLock12TryWriteLockEv @ 2492 NONAME
+	_ZN14RReadWriteLock18DowngradeWriteLockEv @ 2493 NONAME
+	_ZN14RReadWriteLock18TryUpgradeReadLockEv @ 2494 NONAME
+	_ZN14RReadWriteLock5CloseEv @ 2495 NONAME
+	_ZN14RReadWriteLock6UnlockEv @ 2496 NONAME
+	_ZN14RReadWriteLock8ReadLockEv @ 2497 NONAME
+	_ZN14RReadWriteLock9WriteLockEv @ 2498 NONAME
+	_ZN4User10RegionCodeEv @ 2499 NONAME
+	_ZN15TExtendedLocale10LoadLocaleERK7TDesC16S2_S2_ @ 2500 NONAME
+	_ZN15TExtendedLocale16LoadLocaleAspectERK7TDesC16 @ 2501 NONAME
+

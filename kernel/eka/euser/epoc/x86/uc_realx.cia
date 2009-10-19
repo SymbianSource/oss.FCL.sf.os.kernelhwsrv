@@ -1,0 +1,3348 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\x86\uc_realx.cia
+// 
+//
+
+
+#include "u32std.h"
+#include <e32math.h>
+
+
+void TRealXPanic(TInt aErr);
+
+LOCAL_C __NAKED__ void TRealXPanicEax(void)
+	{
+	asm("push eax");
+	asm("call %a0": : "i"(&TRealXPanic));
+	}
+
+LOCAL_C __NAKED__ void TRealXRealIndefinite(void)
+	{
+	// return 'real indefinite' NaN in ecx,edx:ebx
+	asm("mov ecx, 0xFFFF0001");	// exponent=FFFF, sign negative
+	asm("mov edx, 0xC0000000"); // mantissa=C0000000 00000000
+	asm("xor ebx, ebx");
+	asm("mov eax, -6"); // return KErrArgument
+	asm("ret");
+	}
+
+LOCAL_C __NAKED__ void TRealXBinOpNaN(void)
+	{
+	// generic routine to process NaN's in binary operations
+	// destination operand in ecx,edx:eax
+	// source operand at [esi]
+
+	asm("mov eax, [esi+8]");			// source operand into eax,edi:ebp
+	asm("mov edi, [esi+4]");
+	asm("mov ebp, [esi]");
+	asm("cmp ecx, 0xFFFF0000");			// check if dest is a NaN
+	asm("jb short TRealXBinOpNaN1");	// if not, swap them
+	asm("cmp edx, 0x80000000");
+	asm("jne short TRealXBinOpNaN2");
+	asm("test ebx, ebx");
+	asm("jne short TRealXBinOpNaN2");
+	asm("TRealXBinOpNaN1:");			// swap the operands
+	asm("xchg ecx, eax");
+	asm("xchg edx, edi");
+	asm("xchg ebx, ebp");
+	asm("TRealXBinOpNaN2:");
+	asm("cmp eax, 0xFFFF0000");			// check if both operands are NaNs
+	asm("jb short TRealXBinOpNaN4");	// if not, ignore non-NaN operand
+	asm("cmp edi, 0x80000000");
+	asm("jne short TRealXBinOpNaN3");
+	asm("test ebp, ebp");
+	asm("je short TRealXBinOpNaN4");
+	asm("TRealXBinOpNaN3:");			// if both operands are NaN's, compare significands
+	asm("cmp edx, edi");
+	asm("ja short TRealXBinOpNaN4");
+	asm("jb short TRealXBinOpNaN5");
+	asm("cmp ebx, ebp");
+	asm("jae short TRealXBinOpNaN4");
+	asm("TRealXBinOpNaN5:");			// come here if dest is smaller - copy source to dest
+	asm("mov ecx, eax");
+	asm("mov edx, edi");
+	asm("mov ebx, ebp");
+	asm("TRealXBinOpNaN4:");			// NaN with larger significand is in ecx,edx:ebx
+	asm("or edx, 0x40000000");			// convert an SNaN to a QNaN
+	asm("mov eax, -6");					// return KErrArgument
+	asm("ret");
+	}
+
+// Add TRealX at [esi] + ecx,edx:ebx
+// Result in ecx,edx:ebx
+// Error code in eax
+// Note:	+0 + +0 = +0, -0 + -0 = -0, +0 + -0 = -0 + +0 = +0,
+//			+/-0 + X = X + +/-0 = X, X + -X = -X + X = +0
+LOCAL_C __NAKED__ void TRealXAdd()
+	{
+	asm("xor ch, ch");				// clear rounding flags
+	asm("cmp ecx, 0xFFFF0000");		// check if dest=NaN or infinity
+	asm("jnc addfpsd");				// branch if it is
+	asm("mov eax, [esi+8]");		// fetch sign/exponent of source
+	asm("cmp eax, 0xFFFF0000");		// check if source=NaN or infinity
+	asm("jnc addfpss");				// branch if it is
+	asm("cmp eax, 0x10000");		// check if source=0
+	asm("jc addfp0s");				// branch if it is
+	asm("cmp ecx, 0x10000");		// check if dest=0
+	asm("jc addfp0d");				// branch if it is
+	asm("and cl, 1");				// clear bits 1-7 of ecx
+	asm("and al, 1");				// clear bits 1-7 of eax
+	asm("mov ch, cl");
+	asm("xor ch, al");				// xor of signs into ch bit 0
+	asm("add ch, ch");
+	asm("or cl, ch");				// and into cl bit 1
+	asm("or al, ch");				// and al bit 1
+	asm("xor ch, ch");				// clear rounding flags
+	asm("mov ebp, [esi]");			// fetch source mantissa 0-31
+	asm("mov edi, [esi+4]");		// fetch source mantissa 32-63
+	asm("ror ecx, 16");				// dest exponent into cx
+	asm("ror eax, 16");				// source exponent into ax
+	asm("push ecx");				// push dest exponent/sign
+	asm("sub cx, ax");				// cx = dest exponent - source exponent
+	asm("je short addfp3b");		// if equal, no shifting required
+	asm("ja short addfp1");			// branch if dest exponent >= source exponent
+	asm("xchg ebx, ebp");			// make sure edi:ebp contains the mantissa to be shifted
+	asm("xchg edx, edi");			
+	asm("xchg eax, [esp]");			// and larger exponent and corresponding sign is on the stack
+	asm("neg cx");					// make cx positive = number of right shifts needed
+	asm("addfp1:");
+	asm("cmp cx, 64");				// if more than 64 shifts needed
+	asm("ja addfp2");				// branch to output larger number
+	asm("jb addfp3");				// branch if <64 shifts
+	asm("mov eax, edi");			// exactly 64 shifts needed - rounding word=mant high
+	asm("test ebp, ebp");			// check bits lost
+	asm("jz short addfp3a");
+	asm("or ch, 1");				// if not all zero, set rounded-down flag
+	asm("addfp3a:");
+	asm("xor edi, edi");			// clear edx:ebx
+	asm("xor ebp, ebp");			
+	asm("jmp short addfp5");		// finished shifting
+	asm("addfp3b:");				// exponents equal
+	asm("xor eax, eax");			// set rounding word=0
+	asm("jmp short addfp5");
+	asm("addfp3:");
+	asm("cmp cl, 32");				// 32 or more shifts needed ?
+	asm("jb short addfp4");			// skip if <32
+	asm("mov eax, ebp");			// rounding word=mant low
+	asm("mov ebp, edi");			// mant low=mant high
+	asm("xor edi, edi");			// mant high=0
+	asm("sub cl, 32");				// reduce count by 32
+	asm("jz short addfp5");			// if now zero, finished shifting
+	asm("shrd edi, eax, cl");		// shift ebp:eax:edi right by cl bits
+	asm("shrd eax, ebp, cl");		//
+	asm("shr ebp, cl");				//
+	asm("test edi, edi");			// check bits lost in shift
+	asm("jz short addfp5");			// if all zero, finished
+	asm("or ch, 1");				// else set rounded-down flag
+	asm("xor edi, edi");			// clear edx again
+	asm("jmp short addfp5");		// finished shifting
+	asm("addfp4:");					// <32 shifts needed now
+	asm("xor eax, eax");			// clear rounding word initially
+	asm("shrd eax, ebp, cl");		// shift edi:ebp:eax right by cl bits
+	asm("shrd ebp, edi, cl");		//
+	asm("shr edi, cl");				//
+
+	asm("addfp5:");
+	asm("mov [esp+3], ch");			// rounding flag into ch image on stack
+	asm("pop ecx");					// recover sign and exponent into ecx, with rounding flag
+	asm("ror ecx, 16");				// into normal position
+	asm("test cl, 2");				// addition or subtraction needed ?
+	asm("jnz short subfp1");		// branch if subtraction
+	asm("add ebx,ebp");				// addition required - add mantissas
+	asm("adc edx,edi");				//
+	asm("jnc short roundfp");		// branch if no carry
+	asm("rcr edx,1");				// shift carry right into mantissa
+	asm("rcr ebx,1");				//
+	asm("rcr eax,1");				// and into rounding word
+	asm("jnc short addfp5a");
+	asm("or ch, 1");				// if 1 shifted out, set rounded-down flag
+	asm("addfp5a:");
+	asm("add ecx, 0x10000");		// and increment exponent
+
+	// perform rounding based on rounding word in eax and rounding flag in ch
+	asm("roundfp:");
+	asm("cmp eax, 0x80000000");		
+	asm("jc roundfp0");				// if rounding word<80000000, round down
+	asm("ja roundfp1");				// if >80000000, round up
+	asm("test ch, 1");
+	asm("jnz short roundfp1");		// if rounded-down flag set, round up
+	asm("test ch, 2");
+	asm("jnz short roundfp0");		// if rounded-up flag set, round down
+	asm("test bl, 1");				// else test mantissa lsb
+	asm("jz short roundfp0");		// round down if 0, up if 1 [round to even]
+	asm("roundfp1:");				// Come here to round up
+	asm("add ebx, 1");				// increment mantissa
+	asm("adc edx,0");				//
+	asm("jnc roundfp1a");			// if no carry OK
+	asm("rcr edx,1");				// else shift carry into mantissa [edx:ebx=0 here]
+	asm("add ecx, 0x10000");		// and increment exponent
+	asm("roundfp1a:");
+	asm("cmp ecx, 0xFFFF0000");		// check for overflow
+	asm("jae short addfpovfw");		// jump if overflow
+	asm("mov ch, 2");				// else set rounded-up flag
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	asm("roundfp0:");				// Come here to round down
+	asm("cmp ecx, 0xFFFF0000");		// check for overflow
+	asm("jae short addfpovfw");		// jump if overflow
+	asm("test eax, eax");			// else check if rounding word zero
+	asm("jz short roundfp0a");		// if so, leave rounding flags as they are
+	asm("mov ch, 1");				// else set rounded-down flag
+	asm("roundfp0a:");				
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	asm("addfpovfw:");				// Come here if overflow occurs
+	asm("xor ch, ch");				// clear rounding flags, exponent=FFFF
+	asm("xor ebx, ebx");
+	asm("mov edx, 0x80000000");		// mantissa=80000000 00000000 for infinity
+	asm("mov eax, -9");				// return KErrOverflow
+	asm("ret");
+
+	// exponents differ by more than 64 - output larger number
+	asm("addfp2:");					
+	asm("pop ecx");					// recover exponent and sign
+	asm("ror ecx, 16");				// into normal position
+	asm("or ch, 1");				// set rounded-down flag
+	asm("test cl, 2");				// check if signs the same
+	asm("jz addfp2a");
+	asm("xor ch, 3");				// if not, set rounded-up flag
+	asm("addfp2a:");
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// signs differ, so must subtract mantissas
+	asm("subfp1:");
+	asm("add ch, ch");				// if rounded-down flag set, change it to rounded-up
+	asm("neg eax");					// subtract rounding word from 0
+	asm("sbb ebx, ebp");			// and subtract mantissas with borrow
+	asm("sbb edx, edi");			//
+	asm("jnc short subfp2");		// if no borrow, sign is correct
+	asm("xor cl, 1");				// else change sign of result
+	asm("shr ch, 1");				// change rounding back to rounded-down
+	asm("not eax");					// negate rounding word
+	asm("not ebx");					// and mantissa
+	asm("not edx");					//
+	asm("add eax,1");				// two's complement negation
+	asm("adc ebx,0");				//
+	asm("adc edx,0");				//
+	asm("subfp2:");
+	asm("jnz short subfp3");		// branch if edx non-zero at this point
+	asm("mov edx, ebx");			// else shift ebx into edx
+	asm("or edx, edx");				//
+	asm("jz short subfp4");			// if still zero, branch
+	asm("mov ebx, eax");			// else shift rounding word into ebx
+	asm("xor eax, eax");			// and zero rounding word
+	asm("sub ecx, 0x200000");		// decrease exponent by 32 due to shift
+	asm("jnc short subfp3");		// if no borrow, carry on
+	asm("jmp short subfpundflw");	// if borrow here, underflow
+	asm("subfp4:");
+	asm("mov edx, eax");			// move rounding word into edx
+	asm("or edx, edx");				// is edx still zero ?
+	asm("jz short subfp0");			// if so, result is precisely zero
+	asm("xor ebx, ebx");			// else zero ebx and rounding word
+	asm("xor eax, eax");			//
+	asm("sub ecx, 0x400000");		// and decrease exponent by 64 due to shift
+	asm("jc short subfpundflw");	// if borrow, underflow
+	asm("subfp3:");
+	asm("mov edi, ecx");			// preserve sign and exponent
+	asm("bsr ecx, edx");			// position of most significant 1 into ecx
+	asm("neg ecx");					//
+	asm("add ecx, 31");				// cl = 31-position of MS 1 = number of shifts to normalise
+	asm("shld edx, ebx, cl");		// shift edx:ebx:eax left by cl bits
+	asm("shld ebx, eax, cl");		//
+	asm("shl eax, cl");				//
+	asm("mov ebp, ecx");			// bit count into ebp for subtraction
+	asm("shl ebp, 16");				// shift left by 16 to align with exponent
+	asm("mov ecx, edi");			// exponent, sign, rounding flags back into ecx
+	asm("sub ecx, ebp");			// subtract shift count from exponent
+	asm("jc short subfpundflw");	// if borrow, underflow
+	asm("cmp ecx, 0x10000");		// check if exponent 0
+	asm("jnc roundfp");				// if not, jump to round result, else underflow
+
+	// come here if underflow
+	asm("subfpundflw:");			
+	asm("and ecx, 1");				// set exponent to zero, leave sign
+	asm("xor edx, edx");
+	asm("xor ebx, ebx");
+	asm("mov eax, -10");			// return KErrUnderflow
+	asm("ret");
+
+	// come here to return zero result
+	asm("subfp0:");
+	asm("xor ecx, ecx");			// set exponent to zero, positive sign
+	asm("xor edx, edx");
+	asm("xor ebx, ebx");
+	asm("addfp0snzd:");
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// come here if source=0 - eax=source exponent/sign
+	asm("addfp0s:");
+	asm("cmp ecx, 0x10000");		// check if dest=0
+	asm("jnc addfp0snzd");			// if not, return dest unaltered
+	asm("and ecx, eax");			// else both zero, result negative iff both zeros negative
+	asm("and ecx, 1");
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// come here if dest=0, source nonzero
+	asm("addfp0d:");
+	asm("mov ebx, [esi]");			// return source unaltered
+	asm("mov edx, [esi+4]");
+	asm("mov ecx, [esi+8]");
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// come here if dest=NaN or infinity
+	asm("addfpsd:");
+	asm("cmp edx, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebx, ebx");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("mov eax, [esi+8]");		// eax=second operand exponent
+	asm("cmp eax, 0xFFFF0000");		// check second operand for NaN or infinity
+	asm("jae short addfpsd1");		// branch if NaN or infinity
+	asm("addfpsd2:");
+	asm("mov eax, -9");				// else return dest unaltered [infinity] and KErrOverflow
+	asm("ret");
+	asm("addfpsd1:");
+	asm("mov ebp, [esi]");			// source mantissa into edi:ebp
+	asm("mov edi, [esi+4]");
+	asm("cmp edi, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebp, ebp");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("xor al, cl");				// both operands are infinity - check signs
+	asm("test al, 1");
+	asm("jz short addfpsd2");		// if both the same, return KErrOverflow
+	asm("jmp %a0": : "i"(&TRealXRealIndefinite));		// else return 'real indefinite'
+
+	// come here if source=NaN or infinity, dest finite
+	asm("addfpss:");
+	asm("mov ebp, [esi]");			// source mantissa into edi:ebp
+	asm("mov edi, [esi+4]");
+	asm("cmp edi, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebp, ebp");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("mov ecx, eax");			// if source=infinity, return source unaltered
+	asm("mov edx, edi");
+	asm("mov ebx, ebp");
+	asm("mov eax, -9");				// return KErrOverflow
+	asm("ret");
+	}
+
+// Subtract TRealX at [esi] - ecx,edx:ebx
+// Result in ecx,edx:ebx
+// Error code in eax
+LOCAL_C __NAKED__ void TRealXSubtract()
+	{
+	asm("xor cl, 1");				// negate subtrahend
+	asm("jmp %a0": :"i"(&TRealXAdd));
+	}
+
+// Multiply TRealX at [esi] * ecx,edx:ebx
+// Result in ecx,edx:ebx
+// Error code in eax
+LOCAL_C __NAKED__ void TRealXMultiply()
+	{
+	asm("xor ch, ch");				// clear rounding flags
+	asm("mov eax, [esi+8]");		// fetch sign/exponent of source
+	asm("xor cl, al");				// xor signs
+	asm("cmp ecx, 0xFFFF0000");		// check if dest=NaN or infinity
+	asm("jnc mulfpsd");				// branch if it is
+	asm("cmp eax, 0xFFFF0000");		// check if source=NaN or infinity
+	asm("jnc mulfpss");				// branch if it is
+	asm("cmp eax, 0x10000");		// check if source=0
+	asm("jc mulfp0");				// branch if it is
+	asm("cmp ecx, 0x10000");		// check if dest=0
+	asm("jc mulfp0");				// branch if it is
+	asm("push ecx");				// save result sign
+	asm("shr ecx, 16");				// dest exponent into cx
+	asm("shr eax, 16");				// source exponent into ax
+	asm("add eax, ecx");			// add exponents
+	asm("sub eax, 0x7FFE");			// eax now contains result exponent
+	asm("push eax");				// save it
+	asm("mov edi, edx");			// save dest mantissa high
+	asm("mov eax, ebx");			// dest mantissa low -> eax
+	asm("mul dword ptr [esi]");		// dest mantissa low * source mantissa low -> edx:eax
+	asm("xchg ebx, eax");			// result dword 0 -> ebx, dest mant low -> eax
+	asm("mov ebp, edx");			// result dword 1 -> ebp
+	asm("mul dword ptr [esi+4]");	// dest mant low * src mant high -> edx:eax
+	asm("add ebp, eax");			// add in partial product to dwords 1 and 2
+	asm("adc edx, 0");				//
+	asm("mov ecx, edx");			// result dword 2 -> ecx
+	asm("mov eax, edi");			// dest mant high -> eax
+	asm("mul dword ptr [esi+4]");	// dest mant high * src mant high -> edx:eax
+	asm("add ecx, eax");			// add in partial product to dwords 2, 3
+	asm("adc edx, 0");				//
+	asm("mov eax, edi");			// dest mant high -> eax
+	asm("mov edi, edx");			// result dword 3 -> edi
+	asm("mul dword ptr [esi]");		// dest mant high * src mant low -> edx:eax
+	asm("add ebp, eax");			// add in partial product to dwords 1, 2
+	asm("adc ecx, edx");			//
+	asm("adc edi, 0");				// 128-bit mantissa product is now in edi:ecx:ebp:ebx
+	asm("mov edx, edi");			// top 64 bits into edx:ebx
+	asm("mov edi, ebx");			
+	asm("mov ebx, ecx");			// bottom 64 bits now in ebp:edi
+	asm("pop ecx");					// recover exponent
+	asm("js short mulfp1");			// skip if mantissa normalised
+	asm("add edi, edi");			// else shift left [only one shift will be needed]
+	asm("adc ebp, ebp");
+	asm("adc ebx, ebx");
+	asm("adc edx, edx");
+	asm("dec ecx");					// and decrement exponent
+	asm("mulfp1:");
+	asm("cmp ebp, 0x80000000");		// compare bottom 64 bits with 80000000 00000000 for rounding
+	asm("ja short mulfp2");			// branch to round up
+	asm("jb short mulfp3");			// branch to round down
+	asm("test edi, edi");
+	asm("jnz short mulfp2");		// branch to round up
+	asm("test bl, 1");				// if exactly half-way, test LSB of result mantissa
+	asm("jz short mulfp4");			// if LSB=0, round down [round to even]
+	asm("mulfp2:");
+	asm("add ebx, 1");				// round up - increment mantissa
+	asm("adc edx, 0");
+	asm("jnc short mulfp2a");
+	asm("rcr edx, 1");
+	asm("inc ecx");	
+	asm("mulfp2a:");
+	asm("mov al, 2");				// set rounded-up flag
+	asm("jmp short mulfp5");
+	asm("mulfp3:");					// round down
+	asm("xor al, al");				// clear rounding flags
+	asm("or ebp, edi");				// check for exact result
+	asm("jz short mulfp5");			// skip if exact
+	asm("mulfp4:");					// come here to round down when we know result inexact
+	asm("mov al, 1");				// else set rounded-down flag
+	asm("mulfp5:");					// final mantissa now in edx:ebx, exponent in ecx
+	asm("cmp ecx, 0xFFFF");			// check for overflow
+	asm("jge short mulfp6");		// branch if overflow
+	asm("cmp ecx, 0");				// check for underflow
+	asm("jle short mulfp7");		// branch if underflow
+	asm("shl ecx, 16");				// else exponent up to top end of ecx
+	asm("mov ch, al");				// rounding flags into ch
+	asm("pop eax");					// recover result sign
+	asm("mov cl, al");				// into cl
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// come here if overflow
+	asm("mulfp6:");					
+	asm("pop eax");					// recover result sign
+	asm("mov ecx, 0xFFFF0000");		// exponent=FFFF
+	asm("mov cl, al");				// sign into cl
+	asm("mov edx, 0x80000000");		// set mantissa to 80000000 00000000 for infinity
+	asm("xor ebx, ebx");
+	asm("mov eax, -9");				// return KErrOverflow
+	asm("ret");
+
+	// come here if underflow
+	asm("mulfp7:");				
+	asm("pop eax");					// recover result sign
+	asm("xor ecx, ecx");			// exponent=0
+	asm("mov cl, al");				// sign into cl
+	asm("xor edx, edx");
+	asm("xor ebx, ebx");
+	asm("mov eax, -10");			// return KErrUnderflow
+	asm("ret");
+
+	// come here if either operand zero
+	asm("mulfp0:");
+	asm("and ecx, 1");				// set exponent=0, keep sign
+	asm("xor edx, edx");
+	asm("xor ebx, ebx");
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// come here if destination operand NaN or infinity
+	asm("mulfpsd:");
+	asm("cmp edx, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebx, ebx");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("cmp eax, 0xFFFF0000");		// check second operand for NaN or infinity
+	asm("jae short mulfpsd1");		// branch if NaN or infinity
+	asm("cmp eax, 0x10000");		// check if second operand zero
+	_ASM_j(c,TRealXRealIndefinite)	// if so, return 'real indefinite'
+	asm("mov eax, -9");				// else return dest [infinity] with xor sign and KErrOverflow
+	asm("ret");
+	asm("mulfpsd1:");
+	asm("mov ebp, [esi]");			// source mantissa into edi:ebp
+	asm("mov edi, [esi+4]");		
+	asm("cmp edi, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebp, ebp");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("mov eax, -9");				// both operands infinity - return infinity with xor sign
+	asm("ret");						// and KErrOverflow
+
+	// come here if source operand NaN or infinity, destination finite
+	asm("mulfpss:");
+	asm("mov ebp, [esi]");			// source mantissa into edi:ebp
+	asm("mov edi, [esi+4]");
+	asm("cmp edi, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebp, ebp");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("cmp ecx, 0x10000");		// source=infinity, check if dest=0
+	_ASM_j(c,TRealXRealIndefinite)	// if so, return 'real indefinite'
+	asm("or ecx, 0xFFFF0000");		// set exp=FFFF, leave xor sign in cl
+	asm("mov edx, edi");			// set mantissa for infinity
+	asm("mov ebx, ebp");
+	asm("mov eax, -9");				// return KErrOverflow
+	asm("ret");
+	}
+
+// Divide 96-bit unsigned dividend EDX:EAX:0 by 64-bit unsigned divisor ECX:EBX
+// Assume ECX bit 31 = 1, ie 2^63 <= divisor < 2^64
+// Assume the quotient fits in 32 bits
+// Return 32 bit quotient in EDI
+// Return 64 bit remainder in EBP:ESI
+LOCAL_C __NAKED__ void LongDivide(void)
+	{
+	asm("push edx");				// save dividend
+	asm("push eax");				//
+	asm("cmp edx, ecx");			// check if truncation of divisor will overflow DIV instruction
+	asm("jb short longdiv1");		// skip if not
+	asm("xor eax, eax");			// else return quotient of 0xFFFFFFFF
+	asm("dec eax");					//
+	asm("jmp short longdiv2");		//
+	asm("longdiv1:");
+	asm("div ecx");					// divide EDX:EAX by ECX to give approximate quotient in EAX
+	asm("longdiv2:");
+	asm("mov edi, eax");			// save approx quotient
+	asm("mul ebx");					// multiply approx quotient by full divisor ECX:EBX
+	asm("mov esi, eax");			// first partial product into EBP:ESI
+	asm("mov ebp, edx");			//
+	asm("mov eax, edi");			// approx quotient back into eax
+	asm("mul ecx");					// upper partial product now in EDX:EAX
+	asm("add eax, ebp");			// add to form 96-bit product in EDX:EAX:ESI
+	asm("adc edx, 0");				//
+	asm("neg esi");					// remainder = dividend - approx quotient * divisor
+	asm("mov ebp, [esp]");			// fetch dividend bits 32-63
+	asm("sbb ebp, eax");			//
+	asm("mov eax, [esp+4]");		// fetch dividend bits 64-95
+	asm("sbb eax, edx");			// remainder is now in EAX:EBP:ESI
+	asm("jns short longdiv4");		// if remainder positive, quotient is correct, so exit
+	asm("longdiv3:");
+	asm("dec edi");					// else quotient is too big, so decrement it
+	asm("add esi, ebx");			// and add divisor to remainder
+	asm("adc ebp, ecx");			//
+	asm("adc eax, 0");				//
+	asm("js short longdiv3");		// if still negative, repeat [requires <4 iterations]
+	asm("longdiv4:");
+	asm("add esp, 8");				// remove dividend from stack
+	asm("ret");						// return with quotient in EDI, remainder in EBP:ESI
+	}
+
+// Divide TRealX at [esi] / ecx,edx:ebx
+// Result in ecx,edx:ebx
+// Error code in eax
+LOCAL_C __NAKED__ void TRealXDivide(void)
+	{
+	asm("xor ch, ch");				// clear rounding flags
+	asm("mov eax, [esi+8]");		// fetch sign/exponent of dividend
+	asm("xor cl, al");				// xor signs
+	asm("cmp eax, 0xFFFF0000");		// check if dividend=NaN or infinity
+	asm("jnc divfpss");				// branch if it is
+	asm("cmp ecx, 0xFFFF0000");		// check if divisor=NaN or infinity
+	asm("jnc divfpsd");				// branch if it is
+	asm("cmp ecx, 0x10000");		// check if divisor=0
+	asm("jc divfpdv0");				// branch if it is
+	asm("cmp eax, 0x10000");		// check if dividend=0
+	asm("jc divfpdd0");				// branch if it is
+	asm("push esi");				// save pointer to dividend
+	asm("push ecx");				// save result sign
+	asm("shr ecx, 16");				// divisor exponent into cx
+	asm("shr eax, 16");				// dividend exponent into ax
+	asm("sub eax, ecx");			// subtract exponents
+	asm("add eax, 0x7FFE");			// eax now contains result exponent
+	asm("push eax");				// save it
+	asm("mov ecx, edx");			// divisor mantissa into ecx:ebx
+	asm("mov edx, [esi+4]");		// dividend mantissa into edx:eax
+	asm("mov eax, [esi]");			
+	asm("xor edi, edi");			// clear edi initially
+	asm("cmp edx, ecx");			// compare EDX:EAX with ECX:EBX
+	asm("jb short divfp1");			// if EDX:EAX < ECX:EBX, leave everything as is
+	asm("ja short divfp2");			//
+	asm("cmp eax, ebx");			// if EDX=ECX, then compare ls dwords
+	asm("jb short divfp1");			// if dividend mant < divisor mant, leave everything as is
+	asm("divfp2:");
+	asm("sub eax, ebx");			// else dividend mant -= divisor mant
+	asm("sbb edx, ecx");			//
+	asm("inc edi");					// and EDI=1 [bit 0 of EDI is the integer part of the result]
+	asm("inc dword ptr [esp]");		// also increment result exponent
+	asm("divfp1:");
+	asm("push edi");				// save top bit of result
+	asm("call %a0": : "i"(&LongDivide));	// divide EDX:EAX:0 by ECX:EBX to give next 32 bits of result in EDI
+	asm("push edi");				// save next 32 bits of result
+	asm("mov edx, ebp");			// remainder from EBP:ESI into EDX:EAX
+	asm("mov eax, esi");			//
+	asm("call %a0": : "i"(&LongDivide));	// divide EDX:EAX:0 by ECX:EBX to give next 32 bits of result in EDI
+	asm("test byte ptr [esp+4], 1");	// test integer bit of result
+	asm("jnz short divfp4");		// if set, no need to calculate another bit
+	asm("xor eax, eax");			//
+	asm("add esi, esi");			// 2*remainder into EAX:EBP:ESI
+	asm("adc ebp, ebp");			//
+	asm("adc eax, eax");			//
+	asm("sub esi, ebx");			// subtract divisor to generate final quotient bit
+	asm("sbb ebp, ecx");			//
+	asm("sbb eax, 0");				//
+	asm("jnc short divfp3");		// skip if no borrow - in this case eax=0
+	asm("add esi, ebx");			// if borrow add back - final remainder now in EBP:ESI
+	asm("adc ebp, ecx");			//
+	asm("adc eax, 0");				// eax will be zero after this and carry will be set
+	asm("divfp3:");
+	asm("cmc");						// final bit = 1-C
+	asm("rcr eax, 1");				// shift it into eax bit 31
+	asm("mov ebx, edi");			// result into EDX:EBX:EAX, remainder in EBP:ESI
+	asm("pop edx");
+	asm("add esp, 4");				// discard integer bit [zero]
+	asm("jmp short divfp5");		// branch to round
+
+	asm("divfp4:");					// integer bit was set
+	asm("mov ebx, edi");			// result into EDX:EBX:EAX
+	asm("pop edx");					//
+	asm("pop eax");					// integer part of result into eax [=1]
+	asm("stc");						// shift a 1 into top end of mantissa
+	asm("rcr edx,1");				//
+	asm("rcr ebx,1");				//
+	asm("rcr eax,1");				// bottom bit into eax bit 31
+
+	// when we get to here we have 65 bits of quotient mantissa in
+	// EDX:EBX:EAX (bottom bit in eax bit 31)
+	// and the remainder is in EBP:ESI
+	asm("divfp5:");
+	asm("pop ecx");					// recover result exponent
+	asm("add eax, eax");			// test rounding bit
+	asm("jnc short divfp6");		// branch to round down
+	asm("or ebp, esi");				// test remainder to see if we are exactly half-way
+	asm("jnz short divfp7");		// if not, round up
+	asm("test bl, 1");				// exactly halfway - test LSB of mantissa
+	asm("jz short divfp8");			// round down if LSB=0 [round to even]
+	asm("divfp7:");
+	asm("add ebx, 1");				// round up - increment mantissa
+	asm("adc edx, 0");
+	asm("jnc short divfp7a");
+	asm("rcr edx, 1");				// if carry, shift 1 into mantissa MSB
+	asm("inc ecx");					// and increment exponent
+	asm("divfp7a:");
+	asm("mov al, 2");				// set rounded-up flag
+	asm("jmp short divfp9");
+	asm("divfp6:");
+	asm("xor al, al");				// round down - first clear rounding flags
+	asm("or ebp, esi");				// test if result exact
+	asm("jz short divfp9");			// skip if exact
+	asm("divfp8:");					// come here to round down when we know result is inexact
+	asm("mov al, 1");				// set rounded-down flag
+	asm("divfp9:");					// final mantissa now in edx:ebx, exponent in ecx
+	asm("cmp ecx, 0xFFFF");			// check for overflow
+	asm("jge short divfp10");		// branch if overflow
+	asm("cmp ecx, 0");				// check for underflow
+	asm("jle short divfp11");		// branch if underflow
+	asm("shl ecx, 16");				// else exponent up to top end of ecx
+	asm("mov ch, al");				// rounding flags into ch
+	asm("pop eax");					// recover result sign
+	asm("mov cl, al");				// into cl
+	asm("pop esi");					// recover dividend pointer
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// come here if overflow
+	asm("divfp10:");
+	asm("pop eax");					// recover result sign
+	asm("mov ecx, 0xFFFF0000");		// exponent=FFFF
+	asm("mov cl, al");				// sign into cl
+	asm("mov edx, 0x80000000");		// set mantissa to 80000000 00000000 for infinity
+	asm("xor ebx, ebx");
+	asm("mov eax, -9");				// return KErrOverflow
+	asm("pop esi");					// recover dividend pointer
+	asm("ret");
+
+	// come here if underflow
+	asm("divfp11:");	
+	asm("pop eax");					// recover result sign
+	asm("xor ecx, ecx");			// exponent=0
+	asm("mov cl, al");				// sign into cl
+	asm("xor edx, edx");
+	asm("xor ebx, ebx");
+	asm("mov eax, -10");			// return KErrUnderflow
+	asm("pop esi");					// recover dividend pointer
+	asm("ret");
+
+
+	// come here if divisor=0, dividend finite
+	asm("divfpdv0:");
+	asm("cmp eax, 0x10000");		// check if dividend also zero
+	_ASM_j(c,TRealXRealIndefinite)	// if so, return 'real indefinite'
+	asm("or ecx, 0xFFFF0000");		// else set exponent=FFFF, leave xor sign in cl
+	asm("mov edx, 0x80000000");		// set mantissa for infinity
+	asm("xor ebx, ebx");
+	asm("mov eax, -41");			// return KErrDivideByZero
+	asm("ret");
+
+	// come here if dividend=0, divisor finite and nonzero
+	asm("divfpdd0:");
+	asm("and ecx, 1");				// exponent=0, leave xor sign in cl
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+
+	// come here if dividend is a NaN or infinity
+	asm("divfpss:");
+	asm("mov ebp, [esi]");			// dividend mantissa into edi:ebp
+	asm("mov edi, [esi+4]");
+	asm("cmp edi, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebp, ebp");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("cmp ecx, 0xFFFF0000");		// check divisor for NaN or infinity
+	asm("jae short divfpss1");		// branch if NaN or infinity
+	asm("or ecx, 0xFFFF0000");		// infinity/finite - return infinity with xor sign
+	asm("mov edx, 0x80000000");
+	asm("xor ebx, ebx");
+	asm("mov eax, -9");				// return KErrOverflow
+	asm("ret");
+	asm("divfpss1:");
+	asm("cmp edx, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebx, ebx");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("jmp %a0": : "i"(&TRealXRealIndefinite)); // if both operands infinite, return 'real indefinite'
+
+	// come here if divisor is a NaN or infinity, dividend finite
+	asm("divfpsd:");
+	asm("cmp edx, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebx, ebx");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("and ecx, 1");				// dividend is finite, divisor=infinity, so return 0 with xor sign
+	asm("xor edx, edx");
+	asm("xor ebx, ebx");
+	asm("xor eax, eax");			// return KErrNone
+	asm("ret");
+	}
+
+// TRealX modulo - dividend at [esi], divisor in ecx,edx:ebx
+// Result in ecx,edx:ebx
+// Error code in eax
+LOCAL_C __NAKED__ void TRealXModulo(void)
+	{
+	asm("mov eax, [esi+8]");		// fetch sign/exponent of dividend
+	asm("mov cl, al");				// result sign=dividend sign
+	asm("xor ch, ch");				// clear rounding flags
+	asm("cmp eax, 0xFFFF0000");		// check if dividend=NaN or infinity
+	asm("jnc short modfpss");		// branch if it is
+	asm("cmp ecx, 0xFFFF0000");		// check if divisor=NaN or infinity
+	asm("jnc short modfpsd");		// branch if it is
+	asm("cmp ecx, 0x10000");		// check if divisor=0
+	_ASM_j(c,TRealXRealIndefinite)	// if so, return 'real indefinite'
+	asm("shr eax, 16");				// ax=dividend exponent
+	asm("ror ecx, 16");				// cx=divisor exponent
+	asm("sub ax, cx");				// ax=dividend exponent-divisor exponent
+	asm("jc short modfpdd0");		// if dividend exponent is smaller, return dividend
+	asm("cmp ax, 64");				// check if exponents differ by >= 64 bits
+	asm("jnc short modfplp");		// if so, underflow
+	asm("mov ah, 0");				// ah bit 0 acts as 65th accumulator bit
+	asm("mov ebp, [esi]");			// edi:ebp=dividend mantissa
+	asm("mov edi, [esi+4]");		//
+	asm("jmp short modfp2");		// skip left shift on first iteration
+	asm("modfp1:");
+	asm("add ebp, ebp");			// shift accumulator left [65 bits]
+	asm("adc edi, edi");
+	asm("adc ah, ah");
+	asm("modfp2:");
+	asm("sub ebp, ebx");			// subtract divisor from dividend
+	asm("sbb edi, edx");
+	asm("sbb ah, 0");
+	asm("jnc short modfp3");		// skip if no borrow
+	asm("add ebp, ebx");			// else add back
+	asm("adc edi, edx");
+	asm("adc ah, 0");
+	asm("modfp3:");
+	asm("dec al");					// any more bits to do?
+	asm("jns short modfp1");		// loop if there are
+	asm("mov edx, edi");			// result mantissa [not yet normalised] into edx:ebx
+	asm("mov ebx, ebp");
+	asm("or edi, ebx");				// check for zero
+	asm("jz short modfp0");			// jump if result zero
+	asm("or edx, edx");				// check if ms dword zero
+	asm("jnz short modfp4");
+	asm("mov edx, ebx");			// if so, shift left by 32
+	asm("xor ebx, ebx");
+	asm("sub cx, 32");				// and decrement exponent by 32
+	asm("jbe short modfpund");		// if borrow or exponent zero, underflow
+	asm("modfp4:");
+	asm("mov edi, ecx");			// preserve sign and exponent
+	asm("bsr ecx, edx");			// position of most significant 1 into ecx
+	asm("neg ecx");					//
+	asm("add ecx, 31");				// cl = 31-position of MS 1 = number of shifts to normalise
+	asm("shld edx, ebx, cl");		// shift edx:ebx left by cl bits
+	asm("shl ebx, cl");				//
+	asm("mov ebp, ecx");			// bit count into ebp for subtraction
+	asm("mov ecx, edi");			// exponent & sign back into ecx
+	asm("sub cx, bp");				// subtract shift count from exponent
+	asm("jbe short modfpund");		// if borrow or exponent 0, underflow
+	asm("rol ecx, 16");				// else ecx=exponent:sign
+	asm("xor eax, eax");			// normal exit, result in ecx,edx:ebx
+	asm("ret");
+
+	// dividend=NaN or infinity
+	asm("modfpss:");
+	asm("mov ebp, [esi]");			// dividend mantissa into edi:ebp
+	asm("mov edi, [esi+4]");
+	asm("cmp edi, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebp, ebp");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("cmp ecx, 0xFFFF0000");		// check divisor for NaN or infinity
+	_ASM_j(b,TRealXRealIndefinite)	// infinity%finite - return 'real indefinite'
+	asm("cmp edx, 0x80000000");		// check for divisor=infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebx, ebx");
+	_ASM_jn(e,TRealXBinOpNaN)
+	asm("jmp %a0": : "i"(&TRealXRealIndefinite));	// if both operands infinite, return 'real indefinite'
+
+	// divisor=NaN or infinity, dividend finite
+	asm("modfpsd:");
+	asm("cmp edx, 0x80000000");		// check for infinity
+	_ASM_jn(e,TRealXBinOpNaN)		// branch if NaN
+	asm("test ebx, ebx");
+	_ASM_jn(e,TRealXBinOpNaN)
+	// finite%infinity - return dividend unaltered
+
+	asm("modfpdd0:");
+	asm("mov ebx, [esi]");			// normal exit, return dividend unaltered
+	asm("mov edx, [esi+4]");
+	asm("mov ecx, [esi+8]");
+	asm("xor eax, eax");
+	asm("ret");
+
+	asm("modfp0:");
+	asm("shr ecx, 16");				// normal exit, result 0
+	asm("xor eax, eax");
+	asm("ret");
+
+	asm("modfpund:");
+	asm("shr ecx, 16");				// underflow, result 0
+	asm("mov eax, -10");			// return KErrUnderflow
+	asm("ret");
+
+	asm("modfplp:");
+	asm("shr ecx, 16");				// loss of precision, result 0
+	asm("mov eax, -7");				// return KErrTotalLossOfPrecision
+	asm("ret");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealX()
+/**
+Constructs a default extended precision object.
+
+This sets the value to zero.
+*/
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax");
+	asm("mov [ecx], eax");				// set value to zero
+	asm("mov [ecx+4], eax");
+	asm("mov [ecx+8], eax");
+	asm("mov eax, ecx");				// must return this
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealX(TUint /*aExp*/, TUint /*aMantHi*/, TUint /*aMantLo*/)
+/**
+Constructs an extended precision object from an explicit exponent and
+a 64 bit mantissa.
+
+@param aExp    The exponent
+@param aMantHi The high order 32 bits of the 64 bit mantissa
+@param aMantLo The low order 32 bits of the 64 bit mantissa
+*/
+	{
+	THISCALL_PROLOG3()
+	asm("mov eax, [esp+4]");			// eax=aExp
+	asm("mov [ecx+8], eax");
+	asm("mov eax, [esp+8]");			// eax=aMantHi
+	asm("mov [ecx+4], eax");
+	asm("mov eax, [esp+12]");			// eax=aMantLo
+	asm("mov [ecx], eax");
+	asm("mov eax, ecx");				// must return this
+	THISCALL_EPILOG3()
+	}
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TInt /*aInt*/)
+/**
+Gives this extended precision object a new value taken
+from a signed integer.
+
+@param aInt The signed integer value.
+
+@return KErrNone, always.
+*/
+	{
+	THISCALL_PROLOG1()
+	// on entry ecx=this, [esp+4]=aInt, return code in eax
+	asm("mov edx, [esp+4]");	// edx=aInt
+	asm("or edx, edx");			// test sign/zero
+	asm("mov eax, 0x7FFF");
+	asm("jz short trealxfromint0_2");	// branch if 0
+	asm("jns short trealxfromint1_2");// skip if positive
+	asm("neg edx");					// take absolute value
+	asm("add eax, 0x10000");		// sign bit in eax bit 16
+	asm("trealxfromint1_2:");
+	asm("push ecx");				// save this
+	asm("bsr ecx, edx");			// bit number of edx MSB into ecx
+	asm("add eax, ecx");			// add to eax to form result exponent
+	asm("neg cl");
+	asm("add cl, 31");				// 31-bit number = number of shifts to normalise edx
+	asm("shl edx, cl");				// normalise edx
+	asm("pop ecx");					// this back into ecx
+	asm("ror eax, 16");				// sign/exponent into normal positions
+	asm("mov [ecx+4], edx");		// store mantissa high word
+	asm("mov [ecx+8], eax");		// store sign/exponent
+	asm("xor eax, eax");
+	asm("mov [ecx], eax");			// zero mantissa low word
+	THISCALL_EPILOG1()					// return KErrNone
+	asm("trealxfromint0_2:");
+	asm("mov [ecx], edx");
+	asm("mov [ecx+4], edx");		// store mantissa high word=0
+	asm("mov [ecx+8], edx");		// store sign/exponent=0
+	asm("xor eax, eax");			// return KErrNone
+	THISCALL_EPILOG1()
+	}
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TUint /*aInt*/)
+/**
+Gives this extended precision object a new value taken from
+an unsigned integer.
+
+@param aInt The unsigned integer value.
+
+@return KErrNone, always.
+*/
+	{
+	THISCALL_PROLOG1()
+	asm("mov edx, [esp+4]");		// edx=aInt
+	asm("mov eax, 0x7FFF");
+	asm("or edx, edx");				// test for 0
+	asm("jz short trealxfromuint0_");// branch if 0
+	asm("push ecx");				// save this
+	asm("bsr ecx, edx");			// bit number of edx MSB into ecx
+	asm("add eax, ecx");			// add to eax to form result exponent
+	asm("neg cl");
+	asm("add cl, 31");				// 31-bit number = number of shifts to normalise edx
+	asm("shl edx, cl");				// normalise edx
+	asm("pop ecx");					// this back into ecx
+	asm("shl eax, 16");				// exponent into normal position
+	asm("mov [ecx+4], edx");		// store mantissa high word
+	asm("mov [ecx+8], eax");		// store exponent
+	asm("xor eax, eax");
+	asm("mov [ecx], eax");			// zero mantissa low word
+	THISCALL_EPILOG1()				// return KErrNone
+	asm("trealxfromuint0_:");
+	asm("mov [ecx], edx");
+	asm("mov [ecx+4], edx");		// store mantissa high word=0
+	asm("mov [ecx+8], edx");		// store sign/exponent=0
+	asm("xor eax, eax");			// return KErrNone
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+LOCAL_C __NAKED__ void TRealXFromTInt64(void)
+	{
+	// Convert TInt64 in edx:ebx to TRealX in ecx,edx:ebx
+	asm("mov eax, 0x7FFF");
+	asm("or edx, edx");					// test sign/zero
+	asm("jz short trealxfromtint64a");	// branch if top word zero
+	asm("jns short trealxfromtint64b");
+	asm("add eax, 0x10000");			// sign bit into eax bit 16
+	asm("neg edx");						// take absolute value
+	asm("neg ebx");
+	asm("sbb edx, 0");
+	asm("jz short trealxfromtint64d");	// branch if top word zero
+	asm("trealxfromtint64b:");
+	asm("bsr ecx, edx");				// ecx=bit number of edx MSB
+	asm("add eax, ecx");				// add to exponent in eax
+	asm("add eax, 32");
+	asm("neg cl");
+	asm("add cl, 31");					// 31-bit number = number of left shifts to normalise
+	asm("shld edx, ebx, cl");			// shift left to normalise edx:ebx
+	asm("shl ebx, cl");
+	asm("mov ecx, eax");				// sign/exponent into ecx
+	asm("ror ecx, 16");					// and into normal positions
+	asm("ret");
+	asm("trealxfromtint64a:");			// come here if top word zero
+	asm("or ebx, ebx");					// test for bottom word also zero
+	asm("jz short trealxfromtint64c");	// branch if it is
+	asm("trealxfromtint64d:");			// come here if top word zero, bottom word not
+	asm("mov edx, ebx");				// shift edx:ebx left 32
+	asm("xor ebx, ebx");
+	asm("bsr ecx, edx");				// ecx=bit number of edx MSB
+	asm("add eax, ecx");				// add to exponent in eax
+	asm("neg cl");
+	asm("add cl, 31");					// 31-bit number = number of left shifts to normalise
+	asm("shl edx, cl");					// normalise
+	asm("mov ecx, eax");				// sign/exponent into ecx
+	asm("ror ecx, 16");					// and into normal positions
+	asm("ret");
+	asm("trealxfromtint64c:");			// entire number is zero
+	asm("xor ecx, ecx");
+	asm("ret");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(const TInt64& /*aInt*/)
+/**
+Gives this extended precision object a new value taken from
+a 64 bit integer.
+
+@param aInt The 64 bit integer value.
+
+@return KErrNone, always.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aInt, return code in eax
+	THISCALL_PROLOG1()
+	asm("push ebx");
+	asm("push ecx");
+	asm("mov edx, [esp+12]");			// edx=address of aInt
+	asm("mov ebx, [edx]");
+	asm("mov edx, [edx+4]");			// edx:ebx=aInt
+	asm("call %a0": : "i"(&TRealXFromTInt64)); // convert to TRealX in ecx,edx:ebx
+	asm("pop eax");						// eax=this
+	asm("mov [eax], ebx");				// store result
+	asm("mov [eax+4], edx");
+	asm("mov [eax+8], ecx");
+	asm("xor eax, eax");				// return KErrNone
+	asm("pop ebx");
+	THISCALL_EPILOG1()
+	}
+
+
+
+LOCAL_C __NAKED__ void __6TRealXi()
+	{
+	// common function for int to TRealX
+	THISCALL_PROLOG1()
+	asm("mov edx, [esp+4]");			// edx=aInt
+	asm("or edx, edx");					// test sign/zero
+	asm("mov eax, 0x7FFF");
+	asm("jz short trealxfromint0");		// branch if 0
+	asm("jns short trealxfromint1");	// skip if positive
+	asm("neg edx");						// take absolute value
+	asm("add eax, 0x10000");			// sign bit in eax bit 16
+	asm("trealxfromint1:");
+	asm("push ecx");					// save this
+	asm("bsr ecx, edx");				// bit number of edx MSB into ecx
+	asm("add eax, ecx");				// add to eax to form result exponent
+	asm("neg cl");
+	asm("add cl, 31");					// 31-bit number = number of shifts to normalise edx
+	asm("shl edx, cl");					// normalise edx
+	asm("pop ecx");						// this back into ecx
+	asm("ror eax, 16");					// sign/exponent into normal positions
+	asm("mov [ecx+4], edx");			// store mantissa high word
+	asm("mov [ecx+8], eax");			// store sign/exponent
+	asm("xor eax, eax");
+	asm("mov [ecx], eax");				// zero mantissa low word
+	asm("mov eax, ecx");				// return eax=this
+	THISCALL_EPILOG1()
+	asm("trealxfromint0:");
+	asm("mov [ecx], edx");
+	asm("mov [ecx+4], edx");			// store mantissa high word=0
+	asm("mov [ecx+8], edx");			// store sign/exponent=0
+	asm("mov eax, ecx");				// return eax=this
+	THISCALL_EPILOG1()
+	}
+
+
+__NAKED__ EXPORT_C TRealX::TRealX(TInt /*aInt*/)
+/**
+Constructs an extended precision object from a signed integer value.
+
+@param aInt The signed integer value.
+*/
+	{
+	// on entry ecx=this, [esp+4]=aInt, return eax=this
+	asm("jmp %a0": : "i"(&__6TRealXi));
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TInt /*aInt*/)
+/**
+Assigns the specified signed integer value to this extended precision object.
+
+@param aInt The signed integer value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	// on entry ecx=this, [esp+4]=aInt, return eax=this
+	asm("jmp %a0": : "i"(&__6TRealXi));
+	}
+
+
+
+LOCAL_C __NAKED__ void __6TRealXui()
+	{
+	// common function for unsigned int to TRealX
+	THISCALL_PROLOG1()
+	asm("mov edx, [esp+4]");			// edx=aInt
+	asm("mov eax, 0x7FFF");
+	asm("or edx, edx");					// test for zero
+	asm("jz short trealxfromuint0");	// branch if 0
+	asm("push ecx");					// save this
+	asm("bsr ecx, edx");				// bit number of edx MSB into ecx
+	asm("add eax, ecx");				// add to eax to form result exponent
+	asm("neg cl");
+	asm("add cl, 31");					// 31-bit number = number of shifts to normalise edx
+	asm("shl edx, cl");					// normalise edx
+	asm("pop ecx");						// this back into ecx
+	asm("shl eax, 16");					// exponent into normal position
+	asm("mov [ecx+4], edx");			// store mantissa high word
+	asm("mov [ecx+8], eax");			// store exponent
+	asm("xor eax, eax");
+	asm("mov [ecx], eax");				// zero mantissa low word
+	asm("mov eax, ecx");				// return eax=this
+	THISCALL_EPILOG1()
+	asm("trealxfromuint0:");
+	asm("mov [ecx], edx");				
+	asm("mov [ecx+4], edx");			// store mantissa high word=0
+	asm("mov [ecx+8], edx");			// store sign/exponent=0
+	asm("mov eax, ecx");				// return eax=this
+	THISCALL_EPILOG1()
+	}
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealX(TUint /*aInt*/)
+/**
+Constructs an extended precision object from an unsigned integer value.
+
+@param aInt The unsigned integer value.
+*/
+	{
+	// on entry ecx=this, [esp+4]=aInt, return eax=this
+	asm("jmp %a0": : "i"(&__6TRealXui));
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TUint /*aInt*/)
+/**
+Assigns the specified unsigned integer value to this extended precision object.
+
+@param aInt The unsigned integer value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	// on entry ecx=this, [esp+4]=aInt, return eax=this
+	asm("jmp %a0": : "i"(&__6TRealXui));
+	}
+
+
+
+
+LOCAL_C __NAKED__ void __6TRealXRC6TInt64()
+	{
+	// common function for TInt64 to TRealX
+	THISCALL_PROLOG1()
+	asm("push ebx");					// preserve ebx
+	asm("push ecx");					// save this
+	asm("mov edx, [esp+12]");			// edx=address of aInt
+	asm("mov ebx, [edx]");
+	asm("mov edx, [edx+4]");			// edx:ebx=aInt
+	asm("call %a0": : "i"(&TRealXFromTInt64));	// convert to TRealX in ecx,edx:ebx
+	asm("pop eax");						// eax=this
+	asm("mov [eax], ebx");				// store result
+	asm("mov [eax+4], edx");
+	asm("mov [eax+8], ecx");
+	asm("mov ecx, eax");				// restore this ptr
+	asm("pop ebx");						// restore ebx
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealX(const TInt64& /*aInt*/)
+/**
+Constructs an extended precision object from a 64 bit integer.
+
+@param aInt A reference to a 64 bit integer.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aInt, return eax=this
+	asm("jmp %a0": : "i"(&__6TRealXRC6TInt64));
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(const TInt64& /*aInt*/)
+/**
+Assigns the specified 64 bit integer value to this extended precision object.
+
+@param aInt A reference to a 64 bit integer.
+
+@return A reference to this extended precision object.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aInt, return eax=this
+	asm("jmp %a0": : "i"(&__6TRealXRC6TInt64));
+	}
+
+
+
+
+LOCAL_C __NAKED__ void ConvertTReal32ToTRealX(void)
+	{
+	// Convert TReal32 in edx to TRealX in ecx:edx,ebx
+	asm("xor ebx, ebx");				// mant low always zero
+	asm("mov eax, edx");
+	asm("shr eax, 23");					// exponent now in al, sign in ah bit 0
+	asm("test al, al");					// check for denormal/zero
+	asm("jz short treal32totrealx2");	// branch if denormal/zero
+	asm("xor ecx, ecx");
+	asm("mov cl, al");
+	asm("add ecx, 0x7F80");				// bias exponent correctly for TRealX
+	asm("cmp al, 0xFF");				// check for infinity/NaN
+	asm("jnz short treal32totrealx1");	// skip if neither
+	asm("mov cl, al");					// else set TRealX exponent to FFFF
+	asm("mov ch, al");
+	asm("treal32totrealx1:");
+	asm("shl edx, 8");					// left-justify mantissa in edx
+	asm("or edx, 0x80000000");			// put in implied integer bit
+	asm("shl ecx, 16");					// exponent into ecx bits 16-31
+	asm("mov cl, ah");					// sign into ecx bit 0
+	asm("ret");
+	asm("treal32totrealx2:");			// come here if exponent 0
+	asm("shl edx, 9");					// left-justify mantissa in edx [shift out integer bit as well]
+	asm("jnz short treal32totrealx3");	// jump if denormal
+	asm("xor ecx, ecx");				// else return 0
+	asm("mov cl, ah");					// with same sign as input value
+	asm("ret");
+	asm("treal32totrealx3:");			// come here if denormal
+	asm("bsr ecx, edx");				// ecx=bit number of MSB of edx
+	asm("neg ecx");
+	asm("add ecx, 31");					// ecx=number of left shifts to normalise edx
+	asm("shl edx, cl");					// normalise
+	asm("neg ecx");
+	asm("add ecx, 0x7F80");				// exponent=7F80-number of shifts
+	asm("shl ecx, 16");					// exponent into ecx bits 16-31
+	asm("mov cl, ah");					// sign into ecx bit 0
+	asm("ret");
+	}
+
+
+
+
+LOCAL_C __NAKED__ void ConvertTReal64ToTRealX(void)
+	{
+	// Convert TReal64 in edx:ebx to TRealX in ecx:edx,ebx
+	asm("mov eax, edx");
+	asm("shr eax, 20");
+	asm("mov ecx, 0x7FF");
+	asm("and ecx, eax");				// ecx=exponent
+	asm("jz short treal64totrealx1");	// branch if zero/denormal
+	asm("add ecx, 0x7C00");				// else bias exponent correctly for TRealX
+	asm("cmp ecx, 0x83FF");				// check for infinity/NaN
+	asm("jnz short treal64totrealx2");
+	asm("mov ch, cl");					// if so, set exponent to FFFF
+	asm("treal64totrealx2:");		
+	asm("shl ecx, 16");					// exponent into ecx bits 16-31
+	asm("mov cl, 11");					// number of shifts needed to justify mantissa correctly
+	asm("shld edx, ebx, cl");			// shift mantissa left
+	asm("shl ebx, cl");
+	asm("or edx, 0x80000000");			// put in implied integer bit
+	asm("shr eax, 11");					// sign bit into al bit 0
+	asm("mov cl, al");					// into ecx bit 0
+	asm("ret");
+	asm("treal64totrealx1:");			// come here if zero/denormal
+	asm("mov cl, 12");					// number of shifts needed to justify mantissa correctly
+	asm("shld edx, ebx, cl");			// shift mantissa left
+	asm("shl ebx, cl");
+	asm("test edx, edx");				// check for zero
+	asm("jnz short treal64totrealx3");
+	asm("test ebx, ebx");
+	asm("jnz short treal64totrealx4");
+	asm("shr eax, 11");					// sign bit into eax bit 0, rest of eax=0
+	asm("mov ecx, eax");				// return 0 result with correct sign
+	asm("ret");
+	asm("treal64totrealx4:");			// come here if denormal, edx=0
+	asm("mov edx, ebx");				// shift mantissa left 32
+	asm("xor ebx, ebx");
+	asm("bsr ecx, edx");				// ecx=bit number of MSB of edx
+	asm("neg ecx");
+	asm("add ecx, 31");					// ecx=number of left shifts to normalise edx
+	asm("shl edx, cl");					// normalise
+	asm("neg ecx");
+	asm("add ecx, 0x7BE0");				// exponent=7BE0-number of shifts	
+	asm("shl ecx, 16");					// exponent into bits 16-31 of ecx
+	asm("shr eax, 11");
+	asm("mov cl, al");					// sign into bit 0 of ecx
+	asm("ret");
+	asm("treal64totrealx3:");			// come here if denormal, edx nonzero
+	asm("bsr ecx, edx");				// ecx=bit number of MSB of edx
+	asm("neg ecx");
+	asm("add ecx, 31");					// ecx=number of left shifts to normalise edx:ebx
+	asm("shld edx, ebx, cl");			// normalise
+	asm("shl ebx, cl");
+	asm("neg ecx");
+	asm("add ecx, 0x7C00");				// exponent=7C00-number of shifts
+	asm("shl ecx, 16");					// exponent into bits 16-31 of ecx
+	asm("shr eax, 11");
+	asm("mov cl, al");					// sign into bit 0 of ecx
+	asm("ret");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TReal32 /*aReal*/)
+/**
+Gives this extended precision object a new value taken from
+a single precision floating point number.
+
+@param aReal The single precision floating point value.
+
+@return KErrNone, if a valid number;
+KErrOverflow, if the number is infinite;
+KErrArgument, if not a number.
+*/
+	{
+	// on entry, ecx=this and aReal is in [esp+4]
+	// on exit, error code in eax
+	THISCALL_PROLOG1()
+	asm("push ecx");
+	asm("push ebx");					// save ebx
+	asm("push ecx");					// save this
+	asm("mov edx, [esp+16]");			// aReal into edx
+	asm("call %a0": : "i"(&ConvertTReal32ToTRealX));
+	asm("pop eax");						// eax=this
+	asm("mov [eax], ebx");				// store result
+	asm("mov [eax+4], edx");
+	asm("mov [eax+8], ecx");
+	asm("xor eax, eax");				// error code=KErrNone initially
+	asm("cmp ecx, 0xFFFF0000");			// check for infinity/NaN
+	asm("jb short trealxsettreal32a");	// if neither, return KErrNone
+	asm("mov eax, -9");					// eax=KErrOverflow
+	asm("cmp edx, 0x80000000");			// check for infinity
+	asm("je short trealxsettreal32a");	// if infinity, return KErrOverflow
+	asm("mov eax, -6");					// if NaN, return KErrArgument
+	asm("trealxsettreal32a:");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Set(TReal64 /*aReal*/)
+/**
+Gives this extended precision object a new value taken from
+a double precision floating point number.
+
+@param aReal The double precision floating point value.
+
+@return KErrNone, if a valid number;
+KErrOverflow, if the number is infinite;
+KErrArgument, if not a number.
+*/
+	{
+	// on entry, ecx=this and aReal is in [esp+4] (mant low) and [esp+8] (sign/exp/mant high)
+	// on exit, error code in eax
+	THISCALL_PROLOG2()
+	asm("push ecx");
+	asm("push ebx");				// save ebx
+	asm("push ecx");				// save this
+	asm("mov ebx, [esp+16]");		// aReal into edx:ebx
+	asm("mov edx, [esp+20]");
+	asm("call %a0": : "i"(&ConvertTReal64ToTRealX));
+	asm("pop eax");					// eax=this
+	asm("mov [eax], ebx");			// store result
+	asm("mov [eax+4], edx");
+	asm("mov [eax+8], ecx");
+	asm("xor eax, eax");			// error code=KErrNone initially
+	asm("cmp ecx, 0xFFFF0000");		// check for infinity/NaN
+	asm("jb short trealxsettreal64a");	// if neither, return KErrNone
+	asm("mov eax, -9");				// eax=KErrOverflow
+	asm("cmp edx, 0x80000000");		// check for infinity
+	asm("jne short trealxsettreal64b");	// branch if NaN
+	asm("test ebx, ebx");
+	asm("je short trealxsettreal64a");	// if infinity, return KErrOverflow
+	asm("trealxsettreal64b:");
+	asm("mov eax, -6");				// if NaN, return KErrArgument
+	asm("trealxsettreal64a:");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG2()
+	}
+
+
+
+
+LOCAL_C __NAKED__ void __6TRealXf()
+	{
+	// common function for float to TRealX
+	THISCALL_PROLOG1()
+	asm("push ebx");					// save ebx
+	asm("push ecx");					// save this
+	asm("mov edx, [esp+12]");			// aReal into edx
+	asm("call %a0": : "i"(&ConvertTReal32ToTRealX));
+	asm("pop eax");						// eax=this
+	asm("mov [eax], ebx");				// store result
+	asm("mov [eax+4], edx");
+	asm("mov [eax+8], ecx");
+	asm("pop ebx");
+	asm("mov ecx,eax");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealX(TReal32 /*aReal*/)
+/**
+Constructs an extended precision object from
+a single precision floating point number.
+
+@param aReal The single precision floating point value.
+*/
+	{
+	// on entry, ecx=this and aReal is in [esp+4]
+	// on exit, eax=this
+	asm("jmp %a0": : "i"(&__6TRealXf));
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TReal32 /*aReal*/)
+/**
+Assigns the specified single precision floating point number to
+this extended precision object.
+
+@param aReal The single precision floating point value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	// on entry, ecx=this and aReal is in [esp+4]
+	// on exit, eax=this
+	asm("jmp %a0": : "i"(&__6TRealXf));
+	}
+
+
+
+
+LOCAL_C __NAKED__ void __6TRealXd()
+	{
+	// common function for double to TRealX
+	THISCALL_PROLOG2()
+	asm("push ebx");				// save ebx
+	asm("push ecx");				// save this
+	asm("mov ebx, [esp+12]");		// aReal into edx:ebx
+	asm("mov edx, [esp+16]");
+	asm("call %a0": : "i"(&ConvertTReal64ToTRealX));
+	asm("pop eax");					// eax=this
+	asm("mov [eax], ebx");			// store result
+	asm("mov [eax+4], edx");
+	asm("mov [eax+8], ecx");
+	asm("pop ebx");
+	asm("mov ecx,eax");
+	THISCALL_EPILOG2()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealX(TReal64 /*aReal*/)
+/**
+Constructs an extended precision object from
+a double precision floating point number.
+
+@param aReal The double precision floating point value.
+*/
+	{
+	// on entry, ecx=this and aReal is in [esp+4] (mant low) and [esp+8] (sign/exp/mant high)
+	// on exit, eax=this
+	asm("jmp %a0": : "i"(&__6TRealXd));
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator=(TReal64 /*aReal*/)
+/**
+Assigns the specified double precision floating point number to
+this extended precision object.
+
+@param aReal The double precision floating point value.
+
+@return A reference to this extended precision object.
+*/
+	{
+	// on entry, ecx=this and aReal is in [esp+4] (mant low) and [esp+8] (sign/exp/mant high)
+	// on exit, eax=this
+	asm("jmp %a0": : "i"(&__6TRealXd));
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TInt() const
+/**
+Gets the extended precision value as a signed integer value.
+
+The operator asm("returns:");
+
+1. zero , if the extended precision value is not a number
+
+2. 0x7FFFFFFF, if the value is positive and too big to fit into a TInt.
+
+3. 0x80000000, if the value is negative and too big to fit into a TInt.
+*/
+	{
+	// on entry ecx=this, return value in eax
+	THISCALL_PROLOG0()
+	asm("push ecx");
+	asm("mov edx, [ecx]");			// edx=mantissa low
+	asm("mov eax, [ecx+4]");		// eax=mantissa high
+	asm("mov ecx, [ecx+8]");		// ecx=exponent/sign
+	asm("ror ecx, 16");				// exponent into cx
+	asm("cmp cx, 0xFFFF");
+	asm("jz short trealxtoint1");	// branch if exp=FFFF
+	asm("mov dx, cx");
+	asm("mov cx, 0x801E");
+	asm("sub cx, dx");				// cx=number of right shifts needed to convert mantissa to int
+	asm("jbe short trealxtoint2");	// if exp>=801E, saturate result
+	asm("cmp cx, 31");				// more than 31 shifts needed?
+	asm("ja short trealxtoint0");	// if so, underflow to zero
+	asm("shr eax, cl");				// else ABS[result]=eax>>cl
+	asm("test ecx, 0x10000");		// test sign
+	asm("jz short trealxtoint3");	// skip if +
+	asm("neg eax");
+	asm("trealxtoint3:");
+	asm("pop ecx");
+	THISCALL_EPILOG0()
+	asm("trealxtoint1:");			// come here if exponent=FFFF
+	asm("cmp eax, 0x80000000");		// check for infinity
+	asm("jnz short trealxtoint0");	// if NaN, return 0
+	asm("test edx, edx");
+	asm("jnz short trealxtoint0");	// if NaN, return 0
+	asm("trealxtoint2:");			// come here if argument too big for 32-bit integer
+	asm("mov eax, 0x7FFFFFFF");
+	asm("shr ecx, 17");				// sign bit into carry flag
+	asm("adc eax, 0");				// eax=7FFFFFFF if +, 80000000 if -
+	asm("pop ecx");					
+	THISCALL_EPILOG0()				// return saturated value
+	asm("trealxtoint0:");			// come here if INT{argument}=0 or NaN
+	asm("xor eax, eax");			// return 0
+	asm("pop ecx");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TUint() const
+/**
+Returns the extended precision value as an unsigned signed integer value.
+
+The operator asm("returns:");
+
+1. zero, if the extended precision value is not a number
+
+2. 0xFFFFFFFF, if the value is positive and too big to fit into a TUint.
+
+3. zero, if the value is negative and too big to fit into a TUint.
+*/
+	{
+	// on entry ecx=this, return value in eax
+	THISCALL_PROLOG0()
+	asm("push ecx");
+	asm("mov edx, [ecx]");				// edx=mantissa low
+	asm("mov eax, [ecx+4]");			// eax=mantissa high
+	asm("mov ecx, [ecx+8]");			// ecx=exponent/sign
+	asm("ror ecx, 16");					// exponent into cx
+	asm("cmp cx, 0xFFFF");
+	asm("jz short trealxtouint1");		// branch if exp=FFFF
+	asm("mov dx, cx");
+	asm("mov cx, 0x801E");
+	asm("sub cx, dx");					// cx=number of right shifts needed to convert mantissa to int
+	asm("jb short trealxtouint2");		// if exp>801E, saturate result
+	asm("cmp cx, 31");					// more than 31 shifts needed?
+	asm("ja short trealxtouint0");		// if so, underflow to zero
+	asm("test ecx, 0x10000");			// test sign
+	asm("jnz short trealxtouint0");		// if -, return 0
+	asm("shr eax, cl");					// else result=eax>>cl
+	asm("pop ecx");
+	THISCALL_EPILOG0()
+	asm("trealxtouint1:");				// come here if exponent=FFFF
+	asm("cmp eax, 0x80000000");			// check for infinity
+	asm("jnz short trealxtouint0");		// if NaN, return 0
+	asm("test edx, edx");
+	asm("jnz short trealxtouint0");		// if NaN, return 0
+	asm("trealxtouint2:");				// come here if argument too big for 32-bit integer
+	asm("mov eax, 0xFFFFFFFF");
+	asm("shr ecx, 17");					// sign bit into carry flag
+	asm("adc eax, 0");					// eax=FFFFFFFF if +, 0 if -
+	asm("pop ecx");			
+	THISCALL_EPILOG0()					// return saturated value
+	asm("trealxtouint0:");				// come here if INT{argument}=0 or NaN
+	asm("xor eax, eax");				// return 0
+	asm("pop ecx");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+LOCAL_C __NAKED__ void ConvertTRealXToTInt64(void)
+	{
+	// Convert TRealX in ecx,edx:ebx to TInt64 in edx:ebx
+	asm("ror ecx, 16");					// exponent into cx
+	asm("cmp cx, 0xFFFF");
+	asm("jz short trealxtoint64a");		// branch if exp=FFFF
+	asm("mov ax, cx");
+	asm("mov cx, 0x803E");
+	asm("sub cx, ax");					// cx=number of right shifts needed to convert mantissa to int
+	asm("jbe short trealxtoint64b");	// if exp>=803E, saturate result
+	asm("cmp cx, 63");					// more than 63 shifts needed?
+	asm("ja short trealxtoint64z");		// if so, underflow to zero
+	asm("cmp cl, 31");					// more than 31 shifts needed?
+	asm("jbe short trealxtoint64d");	// branch if not
+	asm("sub cl, 32");					// cl=shift count - 32
+	asm("mov ebx, edx");				// shift right by 32
+	asm("xor edx, edx");
+	asm("trealxtoint64d:");
+	asm("shrd ebx, edx, cl");			// shift edx:ebx right by cl to give ABS{result}
+	asm("shr edx, cl");
+	asm("test ecx, 0x10000");			// test sign
+	asm("jz short trealxtoint64c");		// skip if +
+	asm("neg edx");						// if -, negate
+	asm("neg ebx");
+	asm("sbb edx, 0");
+	asm("trealxtoint64c:");
+	asm("ret");
+	asm("trealxtoint64a:");				// come here if exponent=FFFF
+	asm("cmp edx, 0x80000000");			// check for infinity
+	asm("jnz short trealxtoint64z");	// if NaN, return 0
+	asm("test ebx, ebx");			
+	asm("jnz short trealxtoint64z");	// if NaN, return 0
+	asm("trealxtoint64b:");				// come here if argument too big for 32-bit integer
+	asm("mov edx, 0x7FFFFFFF");
+	asm("mov ebx, 0xFFFFFFFF");
+	asm("shr ecx, 17");					// sign bit into carry flag
+	asm("adc ebx, 0");					// edx:ebx=7FFFFFFF FFFFFFFF if +,
+	asm("adc edx, 0");					// or 80000000 00000000 if -
+	asm("ret");							// return saturated value
+	asm("trealxtoint64z:");				// come here if INT{argument}=0 or NaN
+	asm("xor edx, edx");				// return 0
+	asm("xor ebx, ebx");
+	asm("ret");
+	}
+
+
+
+
+/**
+Returns the extended precision value as a 64 bit integer value.
+
+The operator asm("returns:");
+
+1. zero, if the extended precision value is not a number
+
+2. 0x7FFFFFFF FFFFFFFF, if the value is positive and too big to fit
+into a TInt64
+
+3. 0x80000000 00000000, if the value is negative and too big to fit
+into a TInt.
+*/
+__NAKED__ EXPORT_C TRealX::operator TInt64() const
+	{
+	// on entry, ecx=this, return value in edx:eax
+	THISCALL_PROLOG0()
+	asm("push ecx");
+	asm("push ebx");
+	asm("mov ebx, [ecx]");				// get TRealX value into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&ConvertTRealXToTInt64));
+	asm("mov eax, ebx");				// result low into eax
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+LOCAL_C __NAKED__ void TRealXGetTReal32(void)
+	{
+	// Convert TRealX in ecx,edx:ebx to TReal32 in edx
+	// Return error code in eax
+	asm("cmp ecx, 0xFFFF0000");				// check for infinity/NaN
+	asm("jnc short trealxgettreal32a");
+	asm("xor eax, eax");
+	asm("ror ecx, 16");						// exponent into cx
+	asm("sub cx, 0x7F80");					// cx=result exponent if normalised
+	asm("jbe short trealxgettreal32b");		// jump if denormal, zero or underflow
+	asm("cmp cx, 0xFF");					// check if overflow
+	asm("jb short trealxgettreal32c");		// jump if not
+	asm("trealxgettreal32d:");				// come here if overflow
+	asm("xor edx, edx");					// set mantissa=0 to generate infinity
+	asm("ror ecx, 16");						// ecx back to normal format
+	asm("trealxgettreal32a:");				// come here if infinity or NaN
+	asm("shr edx, 7");
+	asm("or edx, 0xFF000000");				// set exponent to FF
+	asm("shr ecx, 1");						// sign bit -> carry
+	asm("rcr edx, 1");						// sign bit -> MSB of result
+	asm("mov eax, edx");
+	asm("shl eax, 9");						// test for infinity or NaN
+	asm("mov eax, -9");						// eax=KErrOverflow
+	asm("jz short trealxgettreal32e");
+	asm("mov eax, -6");						// if NaN, eax=KErrArgument
+	asm("trealxgettreal32e:");
+	asm("ret");
+	asm("trealxgettreal32b:");				// come here if exponent<=7F80
+	asm("cmp cx, -24");						// check for zero or total underflow
+	asm("jle short trealxgettreal32z");
+	asm("neg cl");
+	asm("inc cl");							// cl=number of right shifts to form denormal mantissa
+	asm("shrd eax, ebx, cl");				// shift mantissa right into eax
+	asm("shrd ebx, edx, cl");
+	asm("shr edx, cl");
+	asm("or edx, 0x80000000");				// set top bit to ensure correct rounding up
+	asm("xor cl, cl");						// cl=result exponent=0
+	asm("trealxgettreal32c:");				// come here if result normalised
+	asm("cmp dl, 0x80");					// check rounding bits
+	asm("ja short trealxgettreal32f");		// branch to round up
+	asm("jb short trealxgettreal32g");		// branch to round down
+	asm("test ebx, ebx");
+	asm("jnz short trealxgettreal32f");		// branch to round up
+	asm("test eax, eax");
+	asm("jnz short trealxgettreal32f");		// branch to round up
+	asm("test ecx, 0x01000000");			// check rounded-down flag
+	asm("jnz short trealxgettreal32f");		// branch to round up
+	asm("test ecx, 0x02000000");			// check rounded-up flag
+	asm("jnz short trealxgettreal32g");		// branch to round down
+	asm("test dh, 1");						// else round to even
+	asm("jz short trealxgettreal32g");		// branch to round down if LSB=0
+	asm("trealxgettreal32f:");				// come here to round up
+	asm("add edx, 0x100");					// increment mantissa
+	asm("jnc short trealxgettreal32g");
+	asm("rcr edx, 1");
+	asm("inc cl");							// if carry, increment exponent
+	asm("cmp cl, 0xFF");					// and check for overflow
+	asm("jz short trealxgettreal32d");		// branch out if overflow
+	asm("trealxgettreal32g:");				// come here to round down
+	asm("xor dl, dl");
+	asm("add edx, edx");					// shift out integer bit
+	asm("mov dl, cl");
+	asm("ror edx, 8");						// exponent->edx bits 24-31, mantissa in 23-1
+	asm("test edx, edx");					// check if underflow
+	asm("jz short trealxgettreal32h");		// branch out if underflow
+	asm("shr ecx, 17");						// sign bit->carry
+	asm("rcr edx, 1");						// ->edx bit 31, exp->edx bits 23-30, mant->edx bits 22-0
+	asm("xor eax, eax");					// return KErrNone
+	asm("ret");
+	asm("trealxgettreal32z:");				// come here if zero or underflow
+	asm("xor eax, eax");
+	asm("cmp cx, 0x8080");					// check for zero
+	asm("jz short trealxgettreal32y");		// if zero, return KErrNone
+	asm("trealxgettreal32h:");				// come here if underflow after rounding
+	asm("mov eax, -10");					// eax=KErrUnderflow
+	asm("trealxgettreal32y:");
+	asm("xor edx, edx");
+	asm("shr ecx, 17");
+	asm("rcr edx, 1");						// sign bit into edx bit 31, rest of edx=0
+	asm("ret");
+	}
+
+
+
+
+LOCAL_C __NAKED__ void TRealXGetTReal64(void)
+	{
+	// Convert TRealX in ecx,edx:ebx to TReal64 in edx:ebx
+	// Return error code in eax
+	// edi, esi also modified
+	asm("ror ecx, 16");						// exponent into cx
+	asm("cmp cx, 0xFFFF");					// check for infinity/NaN
+	asm("jnc short trealxgettreal64a");
+	asm("xor eax, eax");
+	asm("xor edi, edi");
+	asm("sub cx, 0x7C00");					// cx=result exponent if normalised
+	asm("jbe short trealxgettreal64b");		// jump if denormal, zero or underflow
+	asm("cmp cx, 0x07FF");					// check if overflow
+	asm("jb short trealxgettreal64c");		// jump if not
+	asm("trealxgettreal64d:");				// come here if overflow
+	asm("xor edx, edx");					// set mantissa=0 to generate infinity
+	asm("xor ebx, ebx");
+	asm("trealxgettreal64a:");				// come here if infinity or NaN
+	asm("mov cl, 10");
+	asm("shrd ebx, edx, cl");
+	asm("shr edx, cl");
+	asm("or edx, 0xFFE00000");				// set exponent to 7FF
+	asm("shr ecx, 17");						// sign bit -> carry
+	asm("rcr edx, 1");						// sign bit -> MSB of result
+	asm("rcr ebx, 1");
+	asm("mov eax, edx");
+	asm("shl eax, 12");						// test for infinity or NaN
+	asm("mov eax, -9");						// eax=KErrOverflow
+	asm("jnz short trealxgettreal64n");
+	asm("test ebx, ebx");
+	asm("jz short trealxgettreal64e");
+	asm("trealxgettreal64n:");
+	asm("mov eax, -6");						// if NaN, eax=KErrArgument
+	asm("trealxgettreal64e:");
+	asm("ret");
+	asm("trealxgettreal64b:");				// come here if exponent<=7C00
+	asm("cmp cx, -53");						// check for zero or total underflow
+	asm("jle short trealxgettreal64z");
+	asm("neg cl");
+	asm("inc cl");							// cl=number of right shifts to form denormal mantissa
+	asm("cmp cl, 32");
+	asm("jb trealxgettreal64x");
+	asm("mov eax, ebx");					// if >=32 shifts, do 32 shifts and decrement count by 32
+	asm("mov ebx, edx");
+	asm("xor edx, edx");
+	asm("trealxgettreal64x:");
+	asm("shrd edi, eax, cl");
+	asm("shrd eax, ebx, cl");				// shift mantissa right into eax
+	asm("shrd ebx, edx, cl");
+	asm("shr edx, cl");
+	asm("or edx, 0x80000000");				// set top bit to ensure correct rounding up
+	asm("xor cx, cx");						// cx=result exponent=0
+	asm("trealxgettreal64c:");				// come here if result normalised
+	asm("mov esi, ebx");
+	asm("and esi, 0x7FF");					// esi=rounding bits
+	asm("cmp esi, 0x400");					// check rounding bits
+	asm("ja short trealxgettreal64f");		// branch to round up
+	asm("jb short trealxgettreal64g");		// branch to round down
+	asm("test eax, eax");
+	asm("jnz short trealxgettreal64f");		// branch to round up
+	asm("test edi, edi");
+	asm("jnz short trealxgettreal64f");		// branch to round up
+	asm("test ecx, 0x01000000");			// check rounded-down flag
+	asm("jnz short trealxgettreal64f");		// branch to round up
+	asm("test ecx, 0x02000000");			// check rounded-up flag
+	asm("jnz short trealxgettreal64g");		// branch to round down
+	asm("test ebx, 0x800");					// else round to even
+	asm("jz short trealxgettreal64g");		// branch to round down if LSB=0
+	asm("trealxgettreal64f:");				// come here to round up
+	asm("add ebx, 0x800");					// increment mantissa
+	asm("adc edx, 0");
+	asm("jnc short trealxgettreal64g");
+	asm("rcr edx, 1");
+	asm("inc cx");							// if carry, increment exponent
+	asm("cmp cx, 0x7FF");					// and check for overflow
+	asm("jz short trealxgettreal64d");		// branch out if overflow
+	asm("trealxgettreal64g:");				// come here to round down
+	asm("xor bl, bl");						// clear rounding bits
+	asm("and bh, 0xF8");
+	asm("mov di, cx");						// save exponent
+	asm("mov cl, 10");
+	asm("and edx, 0x7FFFFFFF");				// clear integer bit
+	asm("shrd ebx, edx, cl");				// shift mantissa right by 10
+	asm("shr edx, cl");
+	asm("shl edi, 21");						// exponent into edi bits 21-31
+	asm("or edx, edi");						// into edx bits 21-31
+	asm("test edx, edx");					// check if underflow
+	asm("jnz short trealxgettreal64i");
+	asm("test ebx, ebx");
+	asm("jz short trealxgettreal64h");		// branch out if underflow
+	asm("trealxgettreal64i:");
+	asm("shr ecx, 17");						// sign bit->carry
+	asm("rcr edx, 1");						// ->edx bit 31, exp->edx bits 20-30, mant->edx bits 20-0
+	asm("rcr ebx, 1");
+	asm("xor eax, eax");					// return KErrNone
+	asm("ret");
+	asm("trealxgettreal64z:");				// come here if zero or underflow
+	asm("xor eax, eax");
+	asm("cmp cx, 0x8400");					// check for zero
+	asm("jz short trealxgettreal64y");		// if zero, return KErrNone
+	asm("trealxgettreal64h:");				// come here if underflow after rounding
+	asm("mov eax, -10");					// eax=KErrUnderflow
+	asm("trealxgettreal64y:");
+	asm("xor edx, edx");
+	asm("xor ebx, ebx");
+	asm("shr ecx, 17");
+	asm("rcr edx, 1");						// sign bit into edx bit 31, rest of edx=0, ebx=0
+	asm("ret");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TReal32() const
+/**
+Returns the extended precision value as
+a single precision floating point value.
+*/
+	{
+	// On entry, ecx=this
+	// On exit, TReal32 value on top of FPU stack
+	THISCALL_PROLOG0()
+	asm("push ecx");
+	asm("push ebx");
+	asm("mov ebx, [ecx]");					// *this into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXGetTReal32));	// Convert to TReal32 in edx
+	asm("push edx");						// push TReal32 onto stack
+	asm("fld dword ptr [esp]");				// push TReal32 onto FPU stack
+	asm("pop edx");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::operator TReal64() const
+/**
+Returns the extended precision value as
+a double precision floating point value.
+*/
+	{
+	// On entry, ecx=this
+	// On exit, TReal64 value on top of FPU stack
+	THISCALL_PROLOG0()
+	asm("push ecx");
+	asm("push ebx");
+	asm("push esi");
+	asm("push edi");
+	asm("mov ebx, [ecx]");						// *this into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXGetTReal64));	// Convert to TReal32 in edx:ebx
+	asm("push edx");							// push TReal64 onto stack
+	asm("push ebx");
+	asm("fld qword ptr [esp]");					// push TReal64 onto FPU stack
+	asm("add esp, 8");
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::GetTReal(TReal32& /*aVal*/) const
+/**
+Extracts the extended precision value as
+a single precision floating point value.
+
+@param aVal A reference to a single precision object which contains
+the result of the operation.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// On entry, ecx=this, [esp+4]=address of aVal
+	// On exit, eax=return code
+	THISCALL_PROLOG1()
+	asm("push ecx");
+	asm("push ebx");
+	asm("mov ebx, [ecx]");						// *this into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXGetTReal32));
+	asm("mov ecx, [esp+12]");					// ecx=address of aVal
+	asm("mov [ecx], edx");						// store result
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1()							// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::GetTReal(TReal64& /*aVal*/) const
+/**
+Extracts the extended precision value as
+a double precision floating point value.
+
+@param aVal A reference to a double precision object which
+contains the result of the operation.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// On entry, ecx=this, [esp+4]=address of aVal
+	// On exit, eax=return code
+	THISCALL_PROLOG1()
+	asm("push ecx");
+	asm("push ebx");
+	asm("push esi");
+	asm("push edi");
+	asm("mov ebx, [ecx]");						// *this into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXGetTReal64));
+	asm("mov ecx, [esp+20]");					// ecx=address of aVal
+	asm("mov [ecx], ebx");						// store result
+	asm("mov [ecx+4], edx");
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1()							// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRealX::SetZero(TBool /*aNegative*/)
+/**
+Sets the value of this extended precision object to zero.
+
+@param aNegative ETrue, the value is a negative zero;
+EFalse, the value is a positive zero, this is the default.
+*/
+	{
+	THISCALL_PROLOG1()
+	asm("mov edx, [esp+4]");		// aNegative into edx
+	asm("xor eax, eax");			// eax=0
+	asm("mov [ecx], eax");
+	asm("mov [ecx+4], eax");
+	asm("test edx, edx");
+	asm("jz short setzero1");
+	asm("inc eax");					// eax=1 if aNegative!=0
+	asm("setzero1:");
+	asm("mov [ecx+8], eax");		// generate positive or negative zero
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRealX::SetNaN()
+/**
+Sets the value of this extended precision object to 'not a number'.
+*/
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax");			// set *this to 'real indefinite'
+	asm("mov [ecx], eax");
+	asm("mov eax, 0xC0000000");
+	asm("mov [ecx+4], eax");
+	asm("mov eax, 0xFFFF0001");
+	asm("mov [ecx+8], eax");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRealX::SetInfinite(TBool /*aNegative*/)
+/**
+Sets the value of this extended precision object to infinity.
+
+@param aNegative ETrue, the value is a negative zero;
+EFalse, the value is a positive zero.
+*/
+	{
+	THISCALL_PROLOG1()
+	asm("mov edx, [esp+4]");			// aNegative into edx
+	asm("mov eax, 0xFFFF0000");			// exponent=FFFF, sign=0 initially
+	asm("test edx, edx");
+	asm("jz short setinf1");
+	asm("inc eax");						// sign=1 if aNegative!=0
+	asm("setinf1:");
+	asm("mov [ecx+8], eax");
+	asm("mov eax, 0x80000000");			// generate positive or negative infinity
+	asm("mov [ecx+4], eax");
+	asm("xor eax, eax");
+	asm("mov [ecx], eax");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsZero() const
+/**
+Determines whether the extended precision value is zero.
+
+@return True, if the extended precision value is zero, false, otherwise.
+*/
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+8]");		// check exponent
+	asm("shr eax, 16");				// move exponent into ax
+	asm("jz short iszero1");		// branch if zero
+	asm("xor eax, eax");			// else return 0
+	THISCALL_EPILOG0()
+	asm("iszero1:");
+	asm("inc eax");					// if zero, return 1
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsNaN() const
+/**
+Determines whether the extended precision value is 'not a number'.
+
+@return True, if the extended precision value is 'not a number',
+false, otherwise.
+*/
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+8]");		// check exponent
+	asm("cmp eax, 0xFFFF0000");
+	asm("jc short isnan0");			// branch if not FFFF
+	asm("mov eax, [ecx+4]");
+	asm("cmp eax, 0x80000000");		// check for infinity
+	asm("jne short isnan1");
+	asm("mov eax, [ecx]");
+	asm("test eax, eax");
+	asm("jne short isnan1");
+	asm("isnan0:");
+	asm("xor eax, eax");			// return 0 if not NaN
+	THISCALL_EPILOG0()
+	asm("isnan1:");
+	asm("mov eax, 1");				// return 1 if NaN
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsInfinite() const
+/**
+Determines whether the extended precision value has a finite value.
+
+@return True, if the extended precision value is finite,
+false, if the value is 'not a number' or is infinite,
+*/
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+8]");			// check exponent
+	asm("cmp eax, 0xFFFF0000");
+	asm("jc short isinf0");				// branch if not FFFF
+	asm("mov eax, [ecx+4]");
+	asm("cmp eax, 0x80000000");			// check for infinity
+	asm("jne short isinf0");
+	asm("mov eax, [ecx]");
+	asm("test eax, eax");
+	asm("jne short isinf0");
+	asm("inc eax");						// return 1 if infinity
+	THISCALL_EPILOG0()
+	asm("isinf0:");
+	asm("xor eax, eax");				// return 0 if not infinity
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRealX::IsFinite() const
+/**
+Determines whether the extended precision value has a finite value.
+
+@return True, if the extended precision value is finite,
+false, if the value is 'not a number' or is infinite,
+*/
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+8]");			// check exponent
+	asm("cmp eax, 0xFFFF0000");			// check for NaN or infinity
+	asm("jnc short isfinite0");			// branch if NaN or infinity
+	asm("mov eax, 1");					// return 1 if finite
+	THISCALL_EPILOG0()
+	asm("isfinite0:");
+	asm("xor eax, eax");				// return 0 if NaN or infinity
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator+=(const TRealX& /*aVal*/)
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aVal The extended precision value to be added.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": :"i"(&TRealXAdd));	// do addition, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result in *this
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return this in eax
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator-=(const TRealX& /*aVal*/)
+/**
+Subtracts an extended precision value from this extended precision number.
+
+@param aVal The extended precision value to be subtracted.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");						// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");					// this into esi
+	asm("mov ecx, [esp+20]");				// address of aVal into ecx
+	asm("mov ebx, [ecx]");					// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXSubtract));	// do subtraction, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");					// store result in *this
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)				// panic if error
+	asm("mov eax, esi");					// return this in eax
+	asm("mov ecx, esi");					// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator*=(const TRealX& /*aVal*/)
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be subtracted.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// esi = this
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXMultiply)); // do multiplication, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result in *this
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return this in eax
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator/=(const TRealX& /*aVal*/)
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+@panic MATHX KErrDivideByZero if the divisor is zero.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXDivide));	// do division, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result in *this
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return this in eax
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C const TRealX& TRealX::operator%=(const TRealX& /*aVal*/)
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor.
+
+@return A reference to this object.
+
+@panic MATHX KErrTotalLossOfPrecision panic if precision is lost.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXModulo));	// do modulo, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result in *this
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return this in eax
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::AddEq(const TRealX& /*aVal*/)
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aVal The extended precision value to be added.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow,if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": :"i"(&TRealXAdd));	// do addition, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()					// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::SubEq(const TRealX& /*aVal*/)
+/**
+Subtracts an extended precision value from this extended precision number.
+
+@param aVal The extended precision value to be subtracted.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXSubtract));	// do subtraction, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()					// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::MultEq(const TRealX& /*aVal*/)
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the multiplier.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXMultiply));	// do multiplication, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()					// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::DivEq(const TRealX& /*aVal*/)
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow;
+KErrDivideByZero, if the divisor is zero.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");						// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");					// this into esi
+	asm("mov ecx, [esp+20]");				// address of aVal into ecx
+	asm("mov ebx, [ecx]");					// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXDivide));	// do division, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");					// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("mov ecx, esi");					// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()						// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::ModEq(const TRealX& /*aVal*/)
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor.
+
+@return KErrNone, if the operation is successful;
+KErrTotalLossOfPrecision, if precision is lost;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+20]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXModulo));	// do modulo, result in ecx,edx:ebx, error code in eax
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("mov ecx, esi");				// restore registers
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1()					// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator+() const
+/**
+Returns this extended precision number unchanged.
+
+Note that this may also be referred to as a unary plus operator.
+
+@return The extended precision number.
+*/
+	{
+	THISCALL_PROLOG0_BIGRETVAL()
+	asm("mov eax, [esp+4]");			// eax=address to write return value
+	asm("mov edx, [ecx]");
+	asm("mov [eax], edx");
+	asm("mov edx, [ecx+4]");
+	asm("mov [eax+4], edx");
+	asm("mov edx, [ecx+8]");
+	asm("mov [eax+8], edx");			// return address of return value in eax
+	THISCALL_EPILOG0_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator-() const
+/**
+Negates this extended precision number.
+
+This may also be referred to as a unary minus operator.
+
+@return The negative of the extended precision number.
+*/
+	{
+	THISCALL_PROLOG0_BIGRETVAL()		
+	asm("mov eax, [esp+4]");			// eax=address to write return value
+	asm("mov edx, [ecx]");
+	asm("mov [eax], edx");
+	asm("mov edx, [ecx+4]");
+	asm("mov [eax+4], edx");
+	asm("mov edx, [ecx+8]");
+	asm("xor dl, 1");					// change sign bit
+	asm("mov [eax+8], edx");			
+	THISCALL_EPILOG0_BIGRETVAL()		// return address of return value in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator++()
+/**
+Increments this extended precision number by one,
+and then returns a reference to it.
+
+This is also referred to as a prefix operator.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// pre-increment
+	// on entry ecx=this, return this in eax
+	THISCALL_PROLOG0()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, 0x7FFF0000");			// set ecx,edx:ebx to 1.0
+	asm("mov edx, 0x80000000");
+	asm("xor ebx, ebx");
+	asm("call %a0": :"i"(&TRealXAdd));	// add 1 to *this
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");				// check error code
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// else return this in eax
+	asm("mov ecx, esi");
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator++(TInt)
+/**
+Returns this extended precision number before incrementing it by one.
+
+This is also referred to as a postfix operator.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// post-increment
+	// on entry ecx=this, [esp+4]=address of return value, [esp+8]=dummy int
+	THISCALL_PROLOG1_BIGRETVAL()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov edi, [esp+20]");			// address of return value into edi
+	asm("mov eax, [ecx]");				// copy initial value of *this into [edi]
+	asm("mov [edi], eax");
+	asm("mov eax, [ecx+4]");
+	asm("mov [edi+4], eax");
+	asm("mov eax, [ecx+8]");
+	asm("mov [edi+8], eax");
+	asm("mov ecx, 0x7FFF0000");			// set ecx,edx:ebx to 1.0
+	asm("mov edx, 0x80000000");
+	asm("xor ebx, ebx");
+	asm("call %a0": :"i"(&TRealXAdd));	// add 1 to *this
+	asm("mov [esi], ebx");				// store result in *this
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");				// check error code
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, [esp+20]");			// address of return value into eax
+	asm("mov ecx, esi");
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX& TRealX::operator--()
+/**
+Decrements this extended precision number by one,
+and then returns a reference to it.
+
+This is also referred to as a prefix operator.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// pre-decrement
+	// on entry ecx=this, return this in eax
+	THISCALL_PROLOG0()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, 0x7FFF0001");			// set ecx,edx:ebx to -1.0
+	asm("mov edx, 0x80000000");
+	asm("xor ebx, ebx");
+	asm("call %a0": :"i"(&TRealXAdd));	// add -1 to *this
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");				// check error code
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// else return this in eax
+	asm("mov ecx, esi");
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG0()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator--(TInt)
+/**
+Returns this extended precision number before decrementing it by one.
+
+This is also referred to as a postfix operator.
+
+@return A reference to this object.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// post-decrement
+	// on entry ecx=this, [esp+4]=address of return value, [esp+8]=dummy int	
+	THISCALL_PROLOG1_BIGRETVAL()
+	asm("push ebx");					// save registers
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov edi, [esp+20]");			// address of return value into edi
+	asm("mov eax, [ecx]");				// copy initial value of *this into [edi]
+	asm("mov [edi], eax");
+	asm("mov eax, [ecx+4]");
+	asm("mov [edi+4], eax");
+	asm("mov eax, [ecx+8]");
+	asm("mov [edi+8], eax");
+	asm("mov ecx, 0x7FFF0001");			// set ecx,edx:ebx to -1.0
+	asm("mov edx, 0x80000000");
+	asm("xor ebx, ebx");
+	asm("call %a0": :"i"(&TRealXAdd));	// add -1 to *this
+	asm("mov [esi], ebx");				// store result in *this
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");				// check error code
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, [esp+20]");			// address of return value into eax
+	asm("mov ecx, esi");
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	THISCALL_EPILOG1_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator+(const TRealX& /*aVal*/) const
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aVal The extended precision value to be added.
+
+@return An extended precision object containing the result.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of return value, [esp+8]=address of aVal
+	THISCALL_PROLOG1_BIGRETVAL()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": :"i"(&TRealXAdd));	// do addition, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of return value
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return address of return value in eax
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator-(const TRealX& /*aVal*/) const
+/**
+Subtracts an extended precision value from this extended precision number.
+
+@param aVal The extended precision value to be subtracted.
+
+@return An extended precision object containing the result.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of return value, [esp+8]=address of aVal
+	THISCALL_PROLOG1_BIGRETVAL()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXSubtract)); // do subtraction, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of return value
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return address of return value in eax
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator*(const TRealX& /*aVal*/) const
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the multiplier.
+
+@return An extended precision object containing the result.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of return value, [esp+8]=address of aVal
+	THISCALL_PROLOG1_BIGRETVAL()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXMultiply)); // do multiplication, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of return value
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return address of return value in eax
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator/(const TRealX& /*aVal*/) const
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor.
+
+@return An extended precision object containing the result.
+
+@panic MATHX KErrOverflow if the operation results in overflow.
+@panic MATHX KErrUnderflow if  the operation results in underflow.
+@panic MATHX KErrDivideByZero if the divisor is zero.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of return value, [esp+8]=address of aVal
+	THISCALL_PROLOG1_BIGRETVAL()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXDivide)); // do division, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of return value
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return address of return value in eax
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX TRealX::operator%(const TRealX& /*aVal*/) const
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aVal The extended precision value to be used as the divisor.
+
+@return An extended precision object containing the result.
+
+@panic MATHX KErrTotalLossOfPrecision if precision is lost.
+@panic MATHX KErrUnderflow if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of return value, [esp+8]=address of aVal
+	THISCALL_PROLOG1_BIGRETVAL()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXModulo)); // do modulo, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of return value
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("test eax, eax");
+	_ASM_jn(z,TRealXPanicEax)			// panic if error
+	asm("mov eax, esi");				// return address of return value in eax
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1_BIGRETVAL()
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Add(TRealX& /*aResult*/, const TRealX& /*aVal*/) const
+/**
+Adds an extended precision value to this extended precision number.
+
+@param aResult On return, a reference to an extended precision object
+containing the result of the operation.
+@param aVal    The extended precision value to be added.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aResult, [esp+8]=address of aVal
+	THISCALL_PROLOG2()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": :"i"(&TRealXAdd));	// do addition, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of aResult
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG2()					// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Sub(TRealX& /*aResult*/, const TRealX& /*aVal*/) const
+/**
+Subtracts an extended precision value from this extended precision number.
+
+@param aResult On return, a reference to an extended precision object
+containing the result of the operation.
+@param aVal    The extended precision value to be subtracted.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aResult, [esp+8]=address of aVal
+	THISCALL_PROLOG2()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXSubtract));	// do subtraction, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of aResult
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");			
+	asm("mov [esi+8], ecx");
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG2()					// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Mult(TRealX& /*aResult*/, const TRealX& /*aVal*/) const
+/**
+Multiplies this extended precision number by an extended precision value.
+
+@param aResult On return, a reference to an extended precision object
+containing the result of the operation.
+@param aVal    The extended precision value to be used as the multiplier.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aResult, [esp+8]=address of aVal
+	THISCALL_PROLOG2()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXMultiply)); // do multiplication, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of aResult
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG2()					// return with error code in eax
+	}
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Div(TRealX& /*aResult*/, const TRealX& /*aVal*/) const
+/**
+Divides this extended precision number by an extended precision value.
+
+@param aResult On return, a reference to an extended precision object
+containing the result of the operation.
+@param aVal    The extended precision value to be used as the divisor.
+
+@return KErrNone, if the operation is successful;
+KErrOverflow, if the operation results in overflow;
+KErrUnderflow, if the operation results in underflow;
+KErrDivideByZero, if the divisor is zero.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aResult, [esp+8]=address of aVal
+	THISCALL_PROLOG2()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXDivide)); // do division, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of aResult
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG2()					// return with error code in eax
+	}
+
+
+
+
+__NAKED__ EXPORT_C TInt TRealX::Mod(TRealX& /*aResult*/, const TRealX& /*aVal*/) const
+/**
+Modulo-divides this extended precision number by an extended precision value.
+
+@param aResult On return, a reference to an extended precision object
+containing the result of the operation.
+
+@param aVal    The extended precision value to be used as the divisor.
+
+@return KErrNone, if the operation is successful;
+KErrTotalLossOfPrecision, if precision is lost;
+KErrUnderflow, if the operation results in underflow.
+*/
+	{
+	// on entry ecx=this, [esp+4]=address of aResult, [esp+8]=address of aVal
+	THISCALL_PROLOG2()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, ecx");				// this into esi
+	asm("mov ecx, [esp+28]");			// address of aVal into ecx
+	asm("mov ebx, [ecx]");				// aVal into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXModulo)); // do modulo, result in ecx,edx:ebx, error code in eax
+	asm("mov esi, [esp+24]");			// esi=address of aResult
+	asm("mov [esi], ebx");				// store result
+	asm("mov [esi+4], edx");
+	asm("mov [esi+8], ecx");
+	asm("pop edi");						// restore registers
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG2()					// return with error code in eax
+	}
+
+// Compare TRealX in ecx,edx:ebx (op1) to TRealX at [esi] (op2)
+// Return 1 if op1<op2
+// Return 2 if op1=op2
+// Return 4 if op1>op2
+// Return 8 if unordered
+// Return value in eax
+LOCAL_C __NAKED__ void TRealXCompare(void)
+	{
+	asm("cmp ecx, 0xFFFF0000");		// check if op1=NaN or infinity
+	asm("jc short fpcmp1");			// branch if not
+	asm("cmp edx, 0x80000000");		// check for infinity
+	asm("jnz short fpcmpunord");	// branch if NaN
+	asm("test ebx, ebx");
+	asm("jz short fpcmp1");			// if infinity, process normally
+	asm("fpcmpunord:");				// come here if unordered
+	asm("mov eax, 8");				// return 8
+	asm("ret");
+	asm("fpcmp1:");					// op1 is not a NaN
+	asm("mov eax, [esi+8]");		// get op2 into eax,edi:ebp
+	asm("mov edi, [esi+4]");
+	asm("mov ebp, [esi]");
+	asm("cmp eax, 0xFFFF0000");		// check for NaN or infinity
+	asm("jc short fpcmp2");			// branch if neither
+	asm("cmp edi, 0x80000000");		// check for infinity
+	asm("jnz short fpcmpunord");	// branch if NaN
+	asm("test ebp, ebp");
+	asm("jnz short fpcmpunord");
+	asm("fpcmp2:");					// neither operand is a NaN
+	asm("cmp ecx, 0x10000");		// check if op1=0
+	asm("jc short fpcmpop1z");		// branch if it is
+	asm("cmp eax, 0x10000");		// check if op2=0
+	asm("jc short fpcmp4");			// branch if it is
+	asm("xor al, cl");				// check if signs the same
+	asm("test al, 1");
+	asm("jnz short fpcmp4");		// branch if different
+	asm("push ecx");
+	asm("shr ecx, 16");				// op1 exponent into cx
+	asm("shr eax, 16");				// op2 exponent into ax
+	asm("cmp ecx, eax");			// compare exponents
+	asm("pop ecx");
+	asm("ja short fpcmp4");			// if op1 exp > op2 exp op1>op2 if +ve
+	asm("jb short fpcmp5");			// if op1 exp < op2 exp op1<op2 if +ve
+	asm("cmp edx, edi");			// else compare mantissa high words
+	asm("ja short fpcmp4");
+	asm("jb short fpcmp5");
+	asm("cmp ebx, ebp");			// if equal compare mantissa low words
+	asm("ja short fpcmp4");
+	asm("jb short fpcmp5");
+	asm("fpcmp0:");
+	asm("mov eax, 2");				// numbers exactly equal
+	asm("ret");
+	asm("fpcmp4:");					// come here if ABS{op1}>ABS{op2} or if signs different
+									// or if op2 zero, op1 nonzero
+	asm("mov eax, 4");				// return 4 if +ve
+	asm("test cl, 1");				// check sign
+	asm("jz short fpcmp4a");		// skip if +
+	asm("mov al, 1");				// return 1 if -ve
+	asm("fpcmp4a:");
+	asm("ret");
+	asm("fpcmp5:");					// come here if ABS{op1}<ABS{op2}
+	asm("mov eax, 1");				// return 1 if +ve
+	asm("test cl, 1");				// check sign
+	asm("jz short fpcmp5a");		// skip if +
+	asm("mov al, 4");				// return 4 if -ve
+	asm("fpcmp5a:");
+	asm("ret");
+	asm("fpcmpop1z:");				// come here if op1=0
+	asm("cmp eax, 0x10000");		// check if op2 also zero
+	asm("jc short fpcmp0");			// if so, they are equal
+	asm("test al, 1");				// test sign of op 2
+	asm("mov eax, 4");				// if -, return 4
+	asm("jnz short fpcmpop1z2n");	// skip if -
+	asm("mov al, 1");				// else return 1
+	asm("fpcmpop1z2n:");
+	asm("ret");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TRealX::TRealXOrder TRealX::Compare(const TRealX& /*aVal*/) const
+/**
+*/
+	{
+	// On entry ecx=this, [esp+4]=address of aVal
+	THISCALL_PROLOG1()
+	asm("push ecx");					// save registers
+	asm("push ebx");
+	asm("push ebp");
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi, [esp+24]");			// address of aVal into esi
+	asm("mov ebx, [ecx]");				// *this into ecx,edx:ebx
+	asm("mov edx, [ecx+4]");
+	asm("mov ecx, [ecx+8]");
+	asm("call %a0": : "i"(&TRealXCompare)); // result in eax
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebp");
+	asm("pop ebx");
+	asm("pop ecx");
+	THISCALL_EPILOG1()
+	}
+
+

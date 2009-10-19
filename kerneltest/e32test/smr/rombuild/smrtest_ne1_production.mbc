@@ -1,0 +1,32 @@
+// Meta Build (metabld) script to build the SMR test roms for the NE1 variant.
+// Manual UDEB Debug ROMs only for SMR enabled but no SMRs loaded smoke tests.
+//
+// Example usage:
+//	metabld smrtest_ne1_production.mbc > \logs\ne1p.log 2>&1
+
+
+SECTION_COMMANDS
+
+// Multiple Memory Model - unicore - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL-D.IMG        --type=smrtest_tshell
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-BOOTLDR-FAT32-D.IMG --type=ubootldr -D WITH_FAT32
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL_NAND2-D.IMG    --type=smrtest_tshell -D _NAND2
+
+
+// Flexible Memory model - unicore & SMP - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL-D.IMG   --type=smrtest_tshell
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-TSHELL-D.IMG   --type=smrtest_tshell
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL_NAND2-D.IMG    --type=smrtest_tshell -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-SMRTSHELL_NAND2-D.IMG    --type=smrtest_tshell -D _NAND2
+
+
+SECTION_DIRS
+

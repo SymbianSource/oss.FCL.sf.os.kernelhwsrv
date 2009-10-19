@@ -1,0 +1,79 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\x86\nccpu.cia
+// 
+//
+
+#include <x86.h>
+#include <apic.h>
+
+__NAKED__ void cmos_write(TUint32 val, TUint32 addr)
+	{
+	asm("mov eax, [esp+8]");
+	asm("out 0x70, al");
+	asm("mov eax, [esp+4]");
+	asm("out 0x71, al");
+	asm("ret");
+	}
+
+__NAKED__ void SetupApInitInfo(volatile SApInitInfo&)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("sgdt [ecx+%0]": :"i"_FOFF(SApInitInfo, iGdtr));
+	asm("sidt [ecx+%0]": :"i"_FOFF(SApInitInfo, iIdtr));
+	asm("mov eax, cr0");
+	asm("mov [ecx+%0], eax": :"i"_FOFF(SApInitInfo, iCr0));
+	asm("mov eax, cr3");
+	asm("mov [ecx+%0], eax": :"i"_FOFF(SApInitInfo, iCr3));
+	MOV_EAX_CR4;
+	asm("mov [ecx+%0], eax": :"i"_FOFF(SApInitInfo, iCr4));
+	asm("ret");
+	}
+
+__NAKED__ void _ApMain()
+	{
+	asm("mov eax, %0" : : "i" (RING0_DS));
+	asm("mov ss, ax ");
+	asm("mov ds, ax ");
+	asm("mov es, ax ");
+	asm("mov fs, ax ");
+	asm("mov gs, ax ");
+	asm("lgdt [edi+%0]" : : "i" _FOFF(SApInitInfo, iGdtr));
+	asm("lidt [edi+%0]" : : "i" _FOFF(SApInitInfo, iIdtr));
+	asm("mov esp, [edi+%0]" : : "i" _FOFF(SApInitInfo, iRgs.iEsp));
+	asm("mov eax, [edi+%0]" : : "i" _FOFF(SApInitInfo, iBootFlag));
+	asm("lock dec dword ptr [edi+%0]" : : "i" _FOFF(SApInitInfo, iBootFlag));
+	asm("sub eax, 2 ");
+	asm("wait_for_bp: ");
+	asm("cmp eax, [edi+%0]" : : "i" _FOFF(SApInitInfo, iBootFlag));
+	X86_PAUSE
+	asm("jne wait_for_bp ");
+
+	asm("mov eax, cr0 ");
+	asm("and al, 0xf7 ");	// enable access to FPU
+	asm("mov cr0, eax ");
+	asm("fninit ");			// initialise coprocessor
+	asm("fwait ");
+	asm("or al, 8 ");
+	asm("mov cr0, eax ");	// disable access to coprocessor
+
+	asm("mov ecx, [edi+%0]" : : "i" _FOFF(SApInitInfo, iExtra));
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(SAPBootInfo, iMain));
+	asm("push ecx ");
+	asm("call eax ");
+	asm("add esp, 4 ");
+	asm("spin: ");
+	asm("hlt ");
+	asm("jmp spin ");
+	}

@@ -1,0 +1,4 @@
+EXPORTS
+	?IndWsdFuncX@@YAHXZ @ 1 NONAME ; int IndWsdFuncX(void)
+	?IndWsdFuncY@@YAHXZ @ 2 NONAME ; int IndWsdFuncY(void)
+

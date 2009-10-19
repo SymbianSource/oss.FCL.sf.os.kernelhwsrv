@@ -1,0 +1,36 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_fsrmkdir.mmp
+//
+//
+
+TARGET          t_fsrmkdir.exe
+TARGETTYPE      exe
+SOURCEPATH	../bench
+SOURCE		t_benchmain.cpp t_fsrmkdir.cpp t_select.cpp
+SOURCEPATH      ../fileutils/src
+SOURCE          f32_test_utils.cpp
+SOURCE          t_chlffs.cpp
+
+USERINCLUDE     ../server
+USERINCLUDE     ../fileutils/inc
+
+LIBRARY         euser.lib efsrv.lib hal.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+EPOCHEAPSIZE	0x1000 0x02000000
+
+CAPABILITY		TCB DISKADMIN ALLFILES
+VENDORID 0x70000001
+
+SMPSAFE

@@ -1,0 +1,36 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+// Necessary support
+
+#define BASE_ROM
+
+#include <rom\##VARIANT##\header.iby>
+#include <rom\##VARIANT##\kernel.iby>
+
+#include "user.iby"
+
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+#include "t_usbdi_helper.iby"
+
+data=EPOCROOT##epoc32\rom\e32test\usbho\t_usbdi\track.dat		\scripts\track.dat
+
+// Common Files	used on both sides of H4-H4 Back-to-Back Link
+			 
+file=EPOCROOT##epoc32\Release\ARMV5\UDEB\t_usbdi.exe			\sys\bin\t_usbdi.exe
+file=EPOCROOT##epoc32\Release\ARMV5\UDEB\t_usbhost_usbman.exe	\Sys\Bin\t_usbhost_usbman.exe

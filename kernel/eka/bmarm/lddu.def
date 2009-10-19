@@ -1,0 +1,3 @@
+EXPORTS
+	CreateLogicalDevice__Fv @ 1 NONAME R3UNUSED ; CreateLogicalDevice(void)
+

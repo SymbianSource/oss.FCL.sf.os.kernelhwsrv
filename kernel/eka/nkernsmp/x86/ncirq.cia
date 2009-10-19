@@ -1,0 +1,214 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\x86\ncirq.cia
+// 
+//
+
+/**
+ @file
+ @internalTechnology
+*/
+
+#include "nk_priv.h"
+#include "nk_plat.h"
+#include <nk_irq.h>
+#include <apic.h>
+
+#define	OFFSET_NIrqHandler_iHState	8
+
+__ASSERT_COMPILE(_FOFF(NIrqHandler, iHState) == OFFSET_NIrqHandler_iHState);
+
+// 
+// Atomically increment run count provided ECount set or count <2.
+// If originally zero, atomically set CPU field
+// Wait for EWait to be clear
+// Return state of iIState immediately before increment
+// 
+__NAKED__ TUint32 NIrq::EnterIsr()
+	{
+	THISCALL_PROLOG0()
+	asm("push ebx ");
+	asm("xor ebx, ebx ");
+	asm("str bx ");
+	asm("sub bl, 0x28 ");
+	asm("shr bl, 3 ");			// BL = CPU number
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NIrq,iIState));
+	asm("enterisr_loop: ");
+	asm("mov edx, eax ");
+	asm("cmp edx, 0x10000 ");	// compare run count to 1
+	asm("jae short enterisr_not0 ");	// skip if >=1
+	asm("mov dh, bl ");			// else update CPU
+	asm("enterisr_not0: ");
+	asm("add edx, 0x10000 ");	// increment run count
+	asm("cmp edx, 0x20000 ");	// compare to 2
+	asm("jb short enterisr_lt2 ");
+	asm("test dl, 6 ");			// ECount|ERaw
+	asm("jz short enterisr_wait ");	// if !ECount && !ERaw limit count to 2
+	asm("enterisr_lt2: ");
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NIrq,iIState));
+	asm("jne short enterisr_loop ");
+
+	asm("enterisr_wait: ");
+	asm("mov edx, 1 ");			// EWait
+	asm("enterisr_loop1: ");
+	asm("test edx, [ecx+%0]" : : "i" _FOFF(NIrq,iIState));
+	asm("jnz short enterisr_loop2 ");	// loop while EWait set
+	asm("pop ebx ");
+	asm("lock add dword ptr [esp], 0 ");
+	THISCALL_EPILOG0()
+
+	asm("enterisr_loop2: ");
+	X86_PAUSE
+	asm("jmp short enterisr_loop ");
+	}
+
+//
+// Atomically decrement run count
+// Return TRUE if run count nonzero after decrement
+//
+__NAKED__ TBool NIrq::IsrDone()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, 0xffff0000 ");	// -1<<run count shift
+	asm("lock xadd [ecx+%0], eax" : : "i" _FOFF(NIrq,iIState));
+	asm("shr eax, 16 ");
+	asm("dec eax ");				// eax=new run count = TRUE if nonzero
+	THISCALL_EPILOG0()
+	}
+
+//
+// Wait (allowing interrupts and preemption) until run count = 0 and EWait clear
+// Then atomically set EWait and return with interrupts disabled
+//
+__NAKED__ void NIrq::Wait()
+	{
+	THISCALL_PROLOG0()
+	asm("wait_loop: ");
+	asm("cli ");
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NIrq,iIState));
+	asm("wait_loop1: ");
+	asm("mov edx, eax ");
+	asm("test edx, 0xffff0001 ");	// test run count and EWait
+	asm("jnz short wait_loop2 ");	// if not both zero, must wait
+	asm("inc edx ");				// else try to set EWait
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NIrq,iIState));
+	asm("jne short wait_loop1 ");	// someone beat us to it
+	THISCALL_EPILOG0()			// success - return with interrupts disabled
+
+	// spin, allowing interrupts, while we wait for run count and EWait both zero
+	asm("wait_loop2: ");
+	asm("sti ");
+	X86_PAUSE
+	asm("jmp short wait_loop ");
+	}
+
+//
+// Atomically clear EWait and reenable interrupts
+//
+__NAKED__ void NIrq::Done()
+	{
+	THISCALL_PROLOG0()
+	asm("lock and dword ptr [ecx+%0], 0xfffffffe" : : "i" _FOFF(NIrq,iIState));
+	asm("sti ");
+	THISCALL_EPILOG0()
+	}
+
+
+
+//
+// atomic { if !EUnbind && !ENotReady clear EDisable }
+// Return the initial value of iHState
+//
+__NAKED__ TUint32 NIrqHandler::DoSetEnabled()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NIrqHandler,iHState));
+	asm("dse_loop: ");
+	asm("mov edx, eax ");
+	asm("test dh, 0x0A ");		// EUnbind|ENotReady
+	asm("jnz short dse_end ");	// if either set, finished
+	asm("and dh, 0xFA ");		// else try to clear EDisable and EBind
+	asm("dse_end: ");
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NIrqHandler,iHState));
+	asm("jne short dse_loop ");	// someone beat us to it
+	THISCALL_EPILOG0()			// success - return original iHState
+	}
+
+//
+// Atomically increment run count by aCount if ECount set or run count initially zero.
+// If !EDisable and !EUnbind set EActive
+// Return initial iHState
+//
+__NAKED__ TUint32 NIrqHandler::DoActivate(TInt aCount)
+	{
+	THISCALL_PROLOG1()
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NIrqHandler,iHState));
+	asm("da_loop: ");
+	asm("mov edx, eax ");
+	asm("cmp edx, 0x10000 ");
+	asm("jb short da_zero ");	// skip if run count initially zero
+	asm("test dh, 0x10 ");		// else check ECount
+	asm("jz short da_end ");	// if clear, don't increment
+	asm("da_zero: ");
+	asm("mov edx, [esp+4] ");	// edx = aCount
+	asm("shl edx, 16 ");
+	asm("add edx, eax ");		// increment run count
+	asm("da_end: ");
+	asm("test dh, 0x03 ");		// EUnbind|EDisable
+	asm("jnz short da_1 ");		// skip if EUnbind or EDisable set
+	asm("or dh, 0x20 ");		// set EActive
+	asm("da_1: ");
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NIrqHandler,iHState));
+	asm("jne short da_loop ");	// someone beat us to it
+	THISCALL_EPILOG1()			// success - return original iHState
+	}
+
+//
+// Decrement run count
+// Return initial iHState
+//
+__NAKED__ TUint32 NIrqHandler::EventBegin()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, 0xffff0000 ");	// -1<<run count shift
+	asm("lock xadd [ecx+%0], eax" : : "i" _FOFF(NIrqHandler,iHState));
+	THISCALL_EPILOG0()
+	}
+
+//
+// If count is zero or EDisable or EUnbind
+// are set, clear EActive.
+// Return initial iHState, except for new EActive bit
+//
+__NAKED__ TUint32 NIrqHandler::EventDone()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NIrqHandler,iHState));
+	asm("ed_loop: ");
+	asm("mov edx, eax ");
+	asm("cmp edx, 0x10000 ");
+	asm("jb short ed_rc_0 ");	// skip if run count now zero
+	asm("test dh, 0x03 ");		// test EUnbind and EDisable
+	asm("jz short ed_1 ");		// skip if neither set
+	asm("ed_rc_0: ");
+	asm("and dh, 0xDF ");		// clear EActive
+	asm("ed_1: ");
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NIrqHandler,iHState));
+	asm("jne short ed_loop ");	// someone beat us to it
+	asm("or dh, 0xDF ");		// set all except EActive
+	asm("and ah, dh	");			// clear EActive in return value if we cleared it
+	THISCALL_EPILOG0()			// success - return original iHState with new EActive
+	}
+
+

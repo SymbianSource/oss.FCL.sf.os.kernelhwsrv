@@ -1,0 +1,145 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#define INCLUDED_FROM_ASM
+
+#include <e32cia.h>
+#include <arm_mem.h>
+#include "xdefs.h"
+
+#ifdef _DEBUG
+#define ASM_KILL_LINK(rp,rs)	asm("mov "#rs", #0xdf ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #8 ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #16 ");\
+								asm("str "#rs", ["#rp"] ");\
+								asm("str "#rs", ["#rp", #4] ");
+#else
+#define ASM_KILL_LINK(rp,rs)
+#endif
+
+#ifdef _DEBUG
+extern "C" void __FaultIpcClientNotNull();  // defined in ckernel.cpp
+#endif
+
+
+__NAKED__ TInt DThread::ReadAndParseDesHeader(const TAny* aSrc, TDesHeader& aDest)
+	{
+	ASM_ASSERT_PAGING_SAFE;
+	// save state including 'this', aSrc and sDest. Double word aligns the stack 
+	// which is required to call c++ functions.
+	asm("stmdb sp!, {r0-r2, r4-r8, r10, lr} ");
+
+	// Register use this method:
+	// r0 = 'this' until iIpcClient set.
+	// r1 = aSrc until read_and_parse_des_header_local.
+	// r2 = aDest until read_and_parse_des_header_local.
+	// r4 = target process
+	// r5 = current nthread
+	// r6 = scheduler.
+	// r7 = current process 
+	// r8 = orig ttbr0
+	// r10 = os asid of current process.
+
+	// Open a reference on the target process's os asid as we will be switching to
+	// it so it can't be allowed to be freed and/or reused.
+	asm("ldr r4, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));		// r4->target process
+	asm("bl " CSM_ZN5NKern13ThreadEnterCSEv);	// First enter a critical section so can't leak os asid reference.
+	asm("mov r0, r4");		// r0 = target process ('this' for TryOpenOsAsid() below).
+	asm("bl " CSM_ZN16DMemModelProcess13TryOpenOsAsidEv);
+	// Check a reference could be opened on target process's os asid, failed if r0 < 0.
+	asm("cmp r0, #0");
+	asm("bmi readParseDesHeader_ExitErr");
+
+	asm("mov r10, r0");			// r10 = os asid of current process
+	asm("ldmia sp!, {r0-r2}");	// r0 = this, r1 = aSrc, r2 = aDest
+	
+	__ASM_CLI(); // disable all interrupts
+#ifdef __SMP__
+	GET_RWNO_TID(,r6);														// r6->TSubScheduler
+	asm("ldr r7, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));	// r7->current process
+	asm("ldr r5, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));	// r5->current NThreadBase
+#else
+	asm("ldr r6, __TheScheduler ");											// r6->TheScheduler
+	asm("ldr r7, [r6, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));		// r7->current process
+	asm("ldr r5, [r6, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));		// r5->current NThreadBase
+#endif
+
+	// set TheCurrentThread->iIpcClient to this (r0) thread
+#ifdef _DEBUG
+	asm("ldr r12, [r5, #%a0] " : : "i" (_FOFF(DThread, iIpcClient) - _FOFF(DThread, iNThread)));
+	asm("teq r12, #0 ");
+	asm("bne __FaultIpcClientNotNull ");
+#endif
+	asm("str r0, [r5, #%a0] " : : "i" (_FOFF(DThread, iIpcClient) - _FOFF(DThread, iNThread)));
+
+	// switch address space to process r4...
+	asm("mrc p15, 0, r8, c2, c0, 0 ");		// r8 = original TTBR0
+	asm("ldr r0, [r4, #%a0]" : : "i" _FOFF(DMemModelProcess,iPageDir));		// r0->target process page directory
+	asm("and lr, r8, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));	// lr = TTBR0 extra bits
+	asm("orr r0, r0, lr ");					// r0 = target process page directory + extra bits
+
+	__ASM_SET_ADDRESS_SPACE(r10,r0,lr);
+#ifdef __SMP__
+	asm("str r4, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("str r4, [r6, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("str r4, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+	__ASM_STI(); // enable all interrupts
+
+	// read and parse descriptor header, r1=aSrc, r2=aDest
+	asm("bl read_and_parse_des_header_local");	// defined in e32/kernel/arm/cipc.cia
+		
+	// restore address space to process r7...
+	asm("ldr r12, [r7, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r12 = current process ASID
+
+	__ASM_CLI(); // disable all interrupts
+	__ASM_SET_ADDRESS_SPACE(r12,r8,lr);
+#ifdef __SMP__
+	GET_RWNO_TID(,r6);														// r6->TSubScheduler
+	asm("str r7, [r6, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("str r7, [r6, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("str r7, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+	__ASM_STI(); // enable all interrupts
+
+	// set TheCurrentThread->iIpcClient to NULL again
+	asm("mov r12, #0 ");
+	asm("str r12, [r5, #%a0] " : : "i" (_FOFF(DThread, iIpcClient) - _FOFF(DThread, iNThread)));
+
+	// close the reference on the target process's os asid.
+	asm("mov r6, r0");	// r6 = return value from read_and_parse_des_header_local
+	asm("mov r0, r4");	// r0 = target process
+	asm("bl " CSM_ZN16DMemModelProcess11CloseOsAsidEv);
+	
+	// finished...
+	asm("bl " CSM_ZN5NKern13ThreadLeaveCSEv);	// Os asid reference closed so leave critical section.
+	asm("mov r0, r6");			// r0 = return value from read_and_parse_des_header_local.
+	__POPRET("r4-r8, r10, ");	// Restore the state and return.
+
+	// exit with error...
+	asm("readParseDesHeader_ExitErr:");
+	asm("bl " CSM_ZN5NKern13ThreadLeaveCSEv);	// Os asid reference not open so leave critical section.
+	asm("mov r0, #%a0" : : "i" ((TInt)KErrBadDescriptor));
+	asm("add sp, sp, #12");	// pop r0-r2 off the stack.
+	__POPRET("r4-r8, r10, ");	// Restore the state and return.
+
+#ifndef __SMP__
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+#endif
+	}
+

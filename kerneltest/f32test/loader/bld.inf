@@ -1,0 +1,36 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/loader/bld.inf
+// 
+//
+PRJ_PLATFORMS
+BASEUSERDEFAULT
+
+#ifdef SBSV2
+PRJ_TESTEXPORTS
+ldrtst.flm	/epoc32/tools/makefile_templates/base/ldrtst.flm
+ldrtst.xml	/epoc32/tools/makefile_templates/base/ldrtst.xml
+#endif
+
+#ifndef SBSV2
+// Abld 
+PRJ_TESTMMPFILES
+gnumakefile ldrtst.mke
+#else
+// Raptor
+PRJ_TESTEXTENSIONS
+start extension base/flm_ldrtst
+end
+#endif
+

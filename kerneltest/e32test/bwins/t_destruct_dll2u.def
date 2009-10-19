@@ -1,0 +1,3 @@
+EXPORTS
+	?DynamicMain@@YAXXZ @ 1 NONAME ; void __cdecl StaticMain(void)
+

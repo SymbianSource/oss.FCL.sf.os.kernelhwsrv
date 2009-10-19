@@ -1,0 +1,68 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// This file contains the compiler's run-time support libraries.
+// 
+//
+
+// Make the file acceptable to "e32/rombuild/rom.bat."
+#if defined(COMPSUPP_DIR) && defined(BUILD)
+#   define ABI_DIR      \Epoc32\Release\##COMPSUPP_DIR
+#   define DEBUG_DIR    BUILD
+#endif
+
+#if defined(RVCT2_1)
+#   error "RVCT 2.1 is not supported."
+#endif
+
+// Set a default run-time version. In the future, 3.1 or 4.X should be the default.
+#if !( defined(RVCT2_2) || defined(RVCT3_1) || defined(RVCT4_0) )
+#   define RVCT4_0
+#endif
+
+#if defined(VFPHELPERS) && !defined(NOVFPHELPERS)
+#   define FP_EXT _vfpv2.dll
+#else
+#   define FP_EXT .dll
+#endif
+
+file=ABI_DIR\##DEBUG_DIR\scppnwdl.dll               \sys\bin\scppnwdl.dll
+
+file=ABI_DIR\##DEBUG_DIR\drtaeabi.dll               \sys\bin\drtaeabi.dll
+file=ABI_DIR\##DEBUG_DIR\dfpaeabi##FP_EXT           \sys\bin\dfpaeabi.dll
+
+// Support for old binaries.
+file=ABI_DIR\##DEBUG_DIR\dfprvct-thunk.dll			\sys\bin\dfprvct-thunk.dll
+alias \sys\bin\dfprvct-thunk.dll					\sys\bin\dfprvct2_2-thunk.dll
+alias \sys\bin\dfprvct-thunk.dll					\sys\bin\dfprvct2_1-thunk.dll
+
+#if defined(RVCT2_2)
+REM RVCT 2.2 support
+    file=ABI_DIR\##DEBUG_DIR\drtrvct2_2##FP_EXT     \sys\bin\drtrvct2_2.dll
+    file=ABI_DIR\##DEBUG_DIR\dfprvct2_2##FP_EXT     \sys\bin\dfprvct2_2.dll
+    
+    // Support for old binaries.
+    alias \sys\bin\drtrvct2_2.dll                   \sys\bin\drtrvct2_1.dll
+    alias \sys\bin\dfprvct2_2.dll                   \sys\bin\dfprvct2_1.dll
+#elif defined(RVCT3_1) || defined(RVCT4_0)
+REM RVCT 4.0 support
+    file=ABI_DIR\##DEBUG_DIR\drtrvct3_1##FP_EXT     \sys\bin\drtrvct3_1.dll
+    file=ABI_DIR\##DEBUG_DIR\dfprvct3_1##FP_EXT     \sys\bin\dfprvct3_1.dll
+    
+    // Support for old binaries.
+    alias \sys\bin\drtrvct3_1.dll                   \sys\bin\drtrvct2_2.dll
+    alias \sys\bin\dfprvct3_1.dll                   \sys\bin\dfprvct2_2.dll
+    alias \sys\bin\drtrvct3_1.dll                   \sys\bin\drtrvct2_1.dll
+    alias \sys\bin\dfprvct3_1.dll                   \sys\bin\dfprvct2_1.dll
+#endif
+

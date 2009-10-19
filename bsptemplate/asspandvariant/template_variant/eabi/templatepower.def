@@ -1,0 +1,4 @@
+EXPORTS
+	_ZN24TTemplatePowerController11WakeupEventEv @ 1 NONAME
+	_ZN24TTemplatePowerController15ResourceManagerEv @ 2 NONAME
+

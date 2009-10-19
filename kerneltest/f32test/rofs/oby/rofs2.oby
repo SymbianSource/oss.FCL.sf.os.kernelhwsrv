@@ -1,0 +1,41 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+rofsname = dir2.rofs
+rofssize = 0x1D8000
+
+time = 15/12/2005 4:30:33
+
+
+autosize = 0x4000
+
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\hidden2.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\new2.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs2.txt		\Multiple\replaceme1.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs2.txt		\Multiple\replaceme3.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs2.txt		\Multiple\replaceme4.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs2.txt		\Multiple\replaceme5.txt
+hide=\Multiple\hidden1.txt
+
+REM Test6 (overriding normal file with exattrib)
+data=EPOCROOT##epoc32\rom\rofstest\mrofs2.txt		Exattrib\test6-1.txt		exattrib=U
+
+REM Test7
+data=EPOCROOT##epoc32\rom\rofstest\mrofs2.txt		Exattrib\test7-1.txt		exattrib=U
+
+REM Test8
+data=EPOCROOT##epoc32\rom\rofstest\mrofs2.txt		Exattrib\test8-1.txt		exattrib=U

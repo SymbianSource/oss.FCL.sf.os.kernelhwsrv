@@ -1,0 +1,3 @@
+EXPORTS
+	?ExportedFunction@@YAXXZ @ 1 NONAME ; void __cdecl ExportedFunction(void)
+

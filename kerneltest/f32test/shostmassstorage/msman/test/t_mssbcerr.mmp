@@ -1,0 +1,53 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Verify SCSI Block Command (SBC) error handling
+//
+
+
+TARGET			t_mssbcerr.exe
+
+TARGETTYPE		exe
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE		.
+USERINCLUDE		../shared
+USERINCLUDE		../client
+USERINCLUDE		../../../server
+
+SOURCEPATH		.
+SOURCE			rfsydebug.cpp
+SOURCE			cblockdevicetester.cpp
+SOURCE			ttestutils.cpp
+SOURCE			cmsdrive.cpp
+SOURCE			tmsprintdrive.cpp
+
+SOURCE			t_msmain.cpp
+SOURCE			t_mssbcerr.cpp
+
+
+SOURCEPATH		../shared
+SOURCE			tmslog.cpp
+
+
+LIBRARY			msmanclient.lib efsrv.lib euser.lib
+
+
+// MACRO			_TESTAPP_DEBUG_PRINT_
+
+CAPABILITY ALL
+
+UID			0 0x10285B2E
+
+SMPSAFE
+

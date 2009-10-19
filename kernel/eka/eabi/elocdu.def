@@ -1,0 +1,67 @@
+EXPORTS
+	_Z19CreateLogicalDevicev @ 1 NONAME ; CreateLogicalDevice()
+	_ZN12DMediaDriver10DisconnectEP11DLocalDriveP14TThreadMessage @ 2 NONAME ; DMediaDriver::Disconnect(DLocalDrive*, TThreadMessage*)
+	_ZN12DMediaDriver10InCriticalEv @ 3 NONAME ; DMediaDriver::InCritical()
+	_ZN12DMediaDriver13EndInCriticalEv @ 4 NONAME ; DMediaDriver::EndInCritical()
+	_ZN12DMediaDriver16TotalSizeInBytesEv @ 5 NONAME ; DMediaDriver::TotalSizeInBytes()
+	_ZN12DMediaDriver19SetTotalSizeInBytesExP7TLocDrv @ 6 NONAME ; DMediaDriver::SetTotalSizeInBytes(long long, TLocDrv*)
+	_ZN12DMediaDriver21PartitionInfoCompleteEi @ 7 NONAME ; DMediaDriver::PartitionInfoComplete(int)
+	_ZN12DMediaDriver21SetCurrentConsumptionEi @ 8 NONAME ; DMediaDriver::SetCurrentConsumption(int)
+	_ZN12DMediaDriver23OpenMediaDriverCompleteEi @ 9 NONAME ; DMediaDriver::OpenMediaDriverComplete(int)
+	_ZN12DMediaDriver5CloseEv @ 10 NONAME ; DMediaDriver::Close()
+	_ZN12DMediaDriver8CompleteER14TLocDrvRequesti @ 11 NONAME ; DMediaDriver::Complete(TLocDrvRequest&, int)
+	_ZN12DMediaDriverC2Ei @ 12 NONAME ; DMediaDriver::DMediaDriver(int)
+	_ZN12DMediaDriverD0Ev @ 13 NONAME ; DMediaDriver::~DMediaDriver()
+	_ZN12DMediaDriverD1Ev @ 14 NONAME ; DMediaDriver::~DMediaDriver()
+	_ZN12DMediaDriverD2Ev @ 15 NONAME ; DMediaDriver::~DMediaDriver()
+	_ZN14TLocDrvRequest10ReadRemoteEP5TDes8i @ 16 NONAME ; TLocDrvRequest::ReadRemote(TDes8*, int)
+	_ZN14TLocDrvRequest11WriteRemoteEPK6TDesC8i @ 17 NONAME ; TLocDrvRequest::WriteRemote(TDesC8 const*, int)
+	_ZN14TLocDrvRequest26CheckAndAdjustForPartitionEv @ 18 NONAME ; TLocDrvRequest::CheckAndAdjustForPartition()
+	_ZN17DPrimaryMediaBase10DisconnectEP11DLocalDrive @ 19 NONAME ; DPrimaryMediaBase::Disconnect(DLocalDrive*)
+	_ZN17DPrimaryMediaBase11RunDeferredEv @ 20 NONAME ; DPrimaryMediaBase::RunDeferred()
+	_ZN17DPrimaryMediaBase12DoInCriticalEv @ 21 NONAME ; DPrimaryMediaBase::DoInCritical()
+	_ZN17DPrimaryMediaBase14NotifyPsuFaultEi @ 22 NONAME ; DPrimaryMediaBase::NotifyPsuFault(int)
+	_ZN17DPrimaryMediaBase15DoEndInCriticalEv @ 23 NONAME ; DPrimaryMediaBase::DoEndInCritical()
+	_ZN17DPrimaryMediaBase15InitiatePowerUpEv @ 24 NONAME ; DPrimaryMediaBase::InitiatePowerUp()
+	_ZN17DPrimaryMediaBase15NotifyPowerDownEv @ 25 NONAME ; DPrimaryMediaBase::NotifyPowerDown()
+	_ZN17DPrimaryMediaBase15PowerUpCompleteEi @ 26 NONAME ; DPrimaryMediaBase::PowerUpComplete(int)
+	_ZN17DPrimaryMediaBase16DefaultDriveCapsER17TLocalDriveCapsV2 @ 27 NONAME ; DPrimaryMediaBase::DefaultDriveCaps(TLocalDriveCapsV2&)
+	_ZN17DPrimaryMediaBase16ForceMediaChangeEi @ 28 NONAME ; DPrimaryMediaBase::ForceMediaChange(int)
+	_ZN17DPrimaryMediaBase16QuickCheckStatusEv @ 29 NONAME ; DPrimaryMediaBase::QuickCheckStatus()
+	_ZN17DPrimaryMediaBase17IsRemovableDeviceERi @ 30 NONAME ; DPrimaryMediaBase::IsRemovableDevice(int&)
+	_ZN17DPrimaryMediaBase17NotifyMediaChangeEv @ 31 NONAME ; DPrimaryMediaBase::NotifyMediaChange()
+	_ZN17DPrimaryMediaBase18NotifyMediaPresentEv @ 32 NONAME ; DPrimaryMediaBase::NotifyMediaPresent()
+	_ZN17DPrimaryMediaBase23DeltaCurrentConsumptionEi @ 33 NONAME ; DPrimaryMediaBase::DeltaCurrentConsumption(int)
+	_ZN17DPrimaryMediaBase24NotifyEmergencyPowerDownEv @ 34 NONAME ; DPrimaryMediaBase::NotifyEmergencyPowerDown()
+	_ZN17DPrimaryMediaBase6CreateE12TMediaDeviceii @ 35 NONAME ; DPrimaryMediaBase::Create(TMediaDevice, int, int)
+	_ZN17DPrimaryMediaBase7ConnectEP11DLocalDrive @ 36 NONAME ; DPrimaryMediaBase::Connect(DLocalDrive*)
+	_ZN17DPrimaryMediaBase7RequestER14TLocDrvRequest @ 37 NONAME ; DPrimaryMediaBase::Request(TLocDrvRequest&)
+	_ZN17DPrimaryMediaBase9DoRequestER14TLocDrvRequest @ 38 NONAME ; DPrimaryMediaBase::DoRequest(TLocDrvRequest&)
+	_ZN17DPrimaryMediaBase9HandleMsgER14TLocDrvRequest @ 39 NONAME ; DPrimaryMediaBase::HandleMsg(TLocDrvRequest&)
+	_ZN17DPrimaryMediaBaseC1Ev @ 40 NONAME ; DPrimaryMediaBase::DPrimaryMediaBase()
+	_ZN17DPrimaryMediaBaseC2Ev @ 41 NONAME ; DPrimaryMediaBase::DPrimaryMediaBase()
+	_ZN6DMedia6CreateE12TMediaDeviceii @ 42 NONAME ; DMedia::Create(TMediaDevice, int, int)
+	_ZN6LocDrv19RegisterMediaDeviceE12TMediaDeviceiPKiP17DPrimaryMediaBaseiRK6TDesC8 @ 43 NONAME ; LocDrv::RegisterMediaDevice(TMediaDevice, int, int const*, DPrimaryMediaBase*, int, TDesC8 const&)
+	_ZN6LocDrv21RegisterPasswordStoreEP14TPasswordStore @ 44 NONAME ; LocDrv::RegisterPasswordStore(TPasswordStore*)
+	_ZTI12DMediaDriver @ 45 NONAME ; typeinfo for DMediaDriver
+	_ZTI14TThreadCleanup @ 46 NONAME ABSENT ; typeinfo for TThreadCleanup
+	_ZTI17DPrimaryMediaBase @ 47 NONAME ; typeinfo for DPrimaryMediaBase
+	_ZTI6DMedia @ 48 NONAME ; typeinfo for DMedia
+	_ZTV12DMediaDriver @ 49 NONAME ; vtable for DMediaDriver
+	_ZTV17DPrimaryMediaBase @ 50 NONAME ; vtable for DPrimaryMediaBase
+	_ZTV6DMedia @ 51 NONAME ; vtable for DMedia
+	_ZN6LocDrv13PasswordStoreEv @ 52 NONAME
+	_ZN14TLocDrvRequest13ReadRemoteRawEPvi @ 53 NONAME
+	_ZN14TLocDrvRequest14WriteRemoteRawEPKvi @ 54 NONAME
+	_ZN14TLocDrvRequest10ReadRemoteEPKvP5TDes8 @ 55 NONAME
+	_ZN14TLocDrvRequest18WriteToPageHandlerEPKvii @ 56 NONAME
+	_ZN6LocDrv20RegisterPagingDeviceEP17DPrimaryMediaBasePKiijij @ 57 NONAME
+	_ZN22TPartitionTableScanner3SetEPhP15TPartitionEntryix @ 58 NONAME
+	_ZN22TPartitionTableScanner7NextLBAEv @ 59 NONAME
+	_ZNK22TPartitionTableScanner23NumberOfPartitionsFoundEv @ 60 NONAME
+	_ZN14TLocDrvRequest22GetNextPhysicalAddressERmRi @ 61 NONAME
+	_ZN6LocDrv17RegisterDmaDeviceEP17DPrimaryMediaBaseiii @ 62 NONAME
+	_ZTI10DDmaHelper @ 63 NONAME ; #<TI>#
+	_ZTV10DDmaHelper @ 64 NONAME ; #<VT>#
+	_ZN14TLocDrvRequest19ReadFromPageHandlerEPvii @ 65 NONAME
+

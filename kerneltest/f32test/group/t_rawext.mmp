@@ -1,0 +1,44 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_rawext.mmp
+// 
+//
+
+TARGET			rawext.fxt
+TARGETTYPE		fsy
+
+SOURCEPATH		../ext
+SOURCE			t_rawext.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY			euser.lib efile.lib
+
+UID		0x100039df 0x10000CEE
+VENDORID 0x70000001
+
+library         emulator.lib
+
+START WINS
+WIN32_LIBRARY   kernel32.lib
+#if defined(VC32)
+WIN32_LIBRARY   chkstk.obj
+#endif
+BASEADDRESS     0x65000000
+END
+
+
+#include "../../../userlibandfileserver/fileserver/group/f32caps.mmh"  // Capabilities of File Server process
+
+SMPSAFE

@@ -1,0 +1,372 @@
+EXPORTS
+	__vc__C4CDiri @ 1 NONAME ; CDir::operator[](int) const
+	AbbreviatedPath__9CFileBase @ 2 NONAME ; CFileBase::AbbreviatedPath(void)
+	AddDir__10TParseBaseRC7TDesC16 @ 3 NONAME ; TParseBase::AddDir(TDesC16 const &)
+	AddFileSystem__C3RFsRC7TDesC16 @ 4 NONAME ; RFs::AddFileSystem(TDesC16 const &) const
+	AddL__4CDirRC6TEntry @ 5 NONAME ; CDir::AddL(TEntry const &)
+	Att__C3RFsRC7TDesC16RUi @ 6 NONAME ; RFs::Att(TDesC16 const &, unsigned int &) const
+	Att__C5RFileRUi @ 7 NONAME ; RFile::Att(unsigned int &) const
+	Attribs__8CFileManRC7TDesC16UiUiRC5TTimeUi @ 8 NONAME ; CFileMan::Attribs(TDesC16 const &, unsigned int, unsigned int, TTime const &, unsigned int)
+	Attribs__8CFileManRC7TDesC16UiUiRC5TTimeUiR14TRequestStatus @ 9 NONAME ; CFileMan::Attribs(TDesC16 const &, unsigned int, unsigned int, TTime const &, unsigned int, TRequestStatus &)
+	BytesTransferredByCopyStep__8CFileMan @ 10 NONAME ; CFileMan::BytesTransferredByCopyStep(void)
+	ChangeMode__5RFile9TFileMode @ 11 NONAME ; RFile::ChangeMode(TFileMode)
+	CharToDrive__3RFsG5TCharRi @ 12 NONAME ; RFs::CharToDrive(TChar, int &)
+	CheckDisk__C3RFsRC7TDesC16 @ 13 NONAME ; RFs::CheckDisk(TDesC16 const &) const
+	ClearPassword__3RFsiRCt5TBuf81i16 @ 14 NONAME ; RFs::ClearPassword(int, TBuf8<16> const &)
+	Duplicate__5RFileRC5RFile10TOwnerType @ 15 NONAME R3UNUSED ; RFile::Duplicate(RFile const &, TOwnerType)	
+	Close__8RRawDisk @ 16 NONAME ; RRawDisk::Close(void)
+	Compress__4CDir @ 17 NONAME ; CDir::Compress(void)
+	Connect__3RFsi @ 18 NONAME ; RFs::Connect(int)
+	ConstructL__9CFileBase @ 19 NONAME ; CFileBase::ConstructL(void)
+	ControlIo__3RFsiiPvT3 @ 20 NONAME ; RFs::ControlIo(int, int, void *, void *)
+	Copy__8CFileManRC7TDesC16T1Ui @ 21 NONAME ; CFileMan::Copy(TDesC16 const &, TDesC16 const &, unsigned int)
+	Copy__8CFileManRC7TDesC16T1UiR14TRequestStatus @ 22 NONAME ; CFileMan::Copy(TDesC16 const &, TDesC16 const &, unsigned int, TRequestStatus &)
+	Count__C11TEntryArray @ 23 NONAME ; TEntryArray::Count(void) const
+	Count__C4CDir @ 24 NONAME ; CDir::Count(void) const
+	Create__5RFileR3RFsRC7TDesC16Ui @ 25 NONAME ; RFile::Create(RFs &, TDesC16 const &, unsigned int)
+	CurrentAction__8CFileMan @ 26 NONAME ; CFileMan::CurrentAction(void)
+	CurrentEntry__9CFileBase @ 27 NONAME ; CFileBase::CurrentEntry(void)
+	DefaultPath__C3RFsR6TDes16 @ 28 NONAME ; RFs::DefaultPath(TDes16 &) const
+	Delete__3RFsRC7TDesC16 @ 29 NONAME ; RFs::Delete(TDesC16 const &)
+	Delete__8CFileManRC7TDesC16Ui @ 30 NONAME ; CFileMan::Delete(TDesC16 const &, unsigned int)
+	Delete__8CFileManRC7TDesC16UiR14TRequestStatus @ 31 NONAME ; CFileMan::Delete(TDesC16 const &, unsigned int, TRequestStatus &)
+	DismountFileSystem__C3RFsRC7TDesC16i @ 32 NONAME ; RFs::DismountFileSystem(TDesC16 const &, int) const
+	DriveAndPath__C10TParseBase @ 33 NONAME ; TParseBase::DriveAndPath(void) const
+	DriveList__C3RFsRt5TBuf81i26 @ 34 NONAME ; RFs::DriveList(TBuf8<26> &) const
+	DrivePresent__C10TParseBase @ 35 NONAME ; TParseBase::DrivePresent(void) const
+	DriveToChar__3RFsiR5TChar @ 36 NONAME ; RFs::DriveToChar(int, TChar &)
+	Drive__C10TParseBase @ 37 NONAME ; TParseBase::Drive(void) const
+	Drive__C3RFsR10TDriveInfoi @ 38 NONAME ; RFs::Drive(TDriveInfo &, int) const
+	Entry__C3RFsRC7TDesC16R6TEntry @ 39 NONAME ; RFs::Entry(TDesC16 const &, TEntry &) const
+	ExtPresent__C10TParseBase @ 40 NONAME ; TParseBase::ExtPresent(void) const
+	Ext__C10TParseBase @ 41 NONAME ; TParseBase::Ext(void) const
+	ExtractL__4CDiriRP4CDir @ 42 NONAME ; CDir::ExtractL(int, CDir *&)
+	FileSystemName__C3RFsR6TDes16i @ 43 NONAME ; RFs::FileSystemName(TDes16 &, int) const
+	FindByDir__9TFindFileRC7TDesC16T1 @ 44 NONAME ; TFindFile::FindByDir(TDesC16 const &, TDesC16 const &)
+	FindByPath__9TFindFileRC7TDesC16PC7TDesC16 @ 45 NONAME ; TFindFile::FindByPath(TDesC16 const &, TDesC16 const *)
+	FindWildByDir__9TFindFileRC7TDesC16T1RP4CDir @ 46 NONAME ; TFindFile::FindWildByDir(TDesC16 const &, TDesC16 const &, CDir *&)
+	FindWildByPath__9TFindFileRC7TDesC16PC7TDesC16RP4CDir @ 47 NONAME ; TFindFile::FindWildByPath(TDesC16 const &, TDesC16 const *, CDir *&)
+	FindWild__9TFindFileRP4CDir @ 48 NONAME ; TFindFile::FindWild(CDir *&)
+	Find__9TFindFile @ 49 NONAME ; TFindFile::Find(void)
+	Flush__5RFile @ 50 NONAME ; RFile::Flush(void)
+	FullName__C10TParseBase @ 51 NONAME ; TParseBase::FullName(void) const
+	FullPath__8CDirScan @ 52 NONAME ; CDirScan::FullPath(void)
+	FullPath__9CFileBase @ 53 NONAME ; CFileBase::FullPath(void)
+	GetCurrentSource__8CFileManRt4TBuf1i256 @ 54 NONAME ; CFileMan::GetCurrentSource(TBuf<256> &)
+	GetCurrentTarget__8CFileManRt4TBuf1i256 @ 55 NONAME ; CFileMan::GetCurrentTarget(TBuf<256> &)
+	GetDir__C3RFsRC7TDesC16RC8TUidTypeUiRP4CDir @ 56 NONAME ; RFs::GetDir(TDesC16 const &, TUidType const &, unsigned int, CDir *&) const
+	GetDir__C3RFsRC7TDesC16UiUiRP4CDir @ 57 NONAME ; RFs::GetDir(TDesC16 const &, unsigned int, unsigned int, CDir *&) const
+	GetDir__C3RFsRC7TDesC16UiUiRP4CDirT4 @ 58 NONAME ; RFs::GetDir(TDesC16 const &, unsigned int, unsigned int, CDir *&, CDir *&) const
+	GetDriveName__C3RFsiR6TDes16 @ 59 NONAME ; RFs::GetDriveName(int, TDes16 &) const
+	GetLastError__9CFileBase @ 60 NONAME ; CFileBase::GetLastError(void)
+	GetLongName__C3RFsRC7TDesC16R6TDes16 @ 61 NONAME ; RFs::GetLongName(TDesC16 const &, TDes16 &) const
+	GetMoreInfoAboutError__9CFileBase @ 62 NONAME ; CFileBase::GetMoreInfoAboutError(void)
+	GetNotifyUser__3RFs @ 63 NONAME ; RFs::GetNotifyUser(void)
+	GetShortName__C3RFsRC7TDesC16R6TDes16 @ 64 NONAME ; RFs::GetShortName(TDesC16 const &, TDes16 &) const
+	IsArchive__C6TEntry @ 65 NONAME ; TEntry::IsArchive(void) const
+	IsDir__C6TEntry @ 66 NONAME ; TEntry::IsDir(void) const
+	IsExtWild__C10TParseBase @ 67 NONAME ; TParseBase::IsExtWild(void) const
+	IsFileInRom__C3RFsRC7TDesC16 @ 68 NONAME ; RFs::IsFileInRom(TDesC16 const &) const
+	IsFileOpen__C3RFsRC7TDesC16Ri @ 69 NONAME ; RFs::IsFileOpen(TDesC16 const &, int &) const
+	IsHidden__C6TEntry @ 70 NONAME ; TEntry::IsHidden(void) const
+	IsKMatchAny__C10TParseBase @ 71 NONAME ; TParseBase::IsKMatchAny(void) const
+	IsKMatchOne__C10TParseBase @ 72 NONAME ; TParseBase::IsKMatchOne(void) const
+	IsNameWild__C10TParseBase @ 73 NONAME ; TParseBase::IsNameWild(void) const
+	IsReadOnly__C6TEntry @ 74 NONAME ; TEntry::IsReadOnly(void) const
+	IsRomAddress__3RFsPv @ 75 NONAME ; RFs::IsRomAddress(void *)
+	IsRoot__C10TParseBase @ 76 NONAME ; TParseBase::IsRoot(void) const
+	IsSystem__C6TEntry @ 77 NONAME ; TEntry::IsSystem(void) const
+	IsValidDrive__3RFsi @ 78 NONAME ; RFs::IsValidDrive(int)
+	IsValidName__C3RFsRC7TDesC16 @ 79 NONAME ; RFs::IsValidName(TDesC16 const &) const
+	IsValidName__C3RFsRC7TDesC16RUs @ 80 NONAME ; RFs::IsValidName(TDesC16 const &, unsigned short &) const
+	IsWild__C10TParseBase @ 81 NONAME ; TParseBase::IsWild(void) const
+	LoaderHeapFunction__3RFsiPvT2 @ 82 NONAME ; RFs::LoaderHeapFunction(int, void *, void *)
+	LockDrive__3RFsiRCt5TBuf81i16T2i @ 83 NONAME ; RFs::LockDrive(int, TBuf8<16> const &, TBuf8<16> const &, int)
+	Lock__C5RFileii @ 84 NONAME ; RFile::Lock(int, int) const
+	MkDirAll__3RFsRC7TDesC16 @ 85 NONAME ; RFs::MkDirAll(TDesC16 const &)
+	MkDir__3RFsRC7TDesC16 @ 86 NONAME ; RFs::MkDir(TDesC16 const &)
+	Modified__C3RFsRC7TDesC16R5TTime @ 87 NONAME ; RFs::Modified(TDesC16 const &, TTime &) const
+	Modified__C5RFileR5TTime @ 88 NONAME ; RFile::Modified(TTime &) const
+	MountFileSystem__C3RFsRC7TDesC16i @ 89 NONAME ; RFs::MountFileSystem(TDesC16 const &, int) const
+	Move__8CFileManRC7TDesC16T1Ui @ 90 NONAME ; CFileMan::Move(TDesC16 const &, TDesC16 const &, unsigned int)
+	Move__8CFileManRC7TDesC16T1UiR14TRequestStatus @ 91 NONAME ; CFileMan::Move(TDesC16 const &, TDesC16 const &, unsigned int, TRequestStatus &)
+	NameAndExt__C10TParseBase @ 92 NONAME ; TParseBase::NameAndExt(void) const
+	NameBufC__C10TParsePtrC @ 93 NONAME ; TParsePtrC::NameBufC(void) const
+	NameBufC__C6TParse @ 94 NONAME ; TParse::NameBufC(void) const
+	NameBufC__C9TParsePtr @ 95 NONAME ; TParsePtr::NameBufC(void) const
+	NameBuf__10TParsePtrC @ 96 NONAME ; TParsePtrC::NameBuf(void)
+	NameBuf__6TParse @ 97 NONAME ; TParse::NameBuf(void)
+	NameBuf__9TParsePtr @ 98 NONAME ; TParsePtr::NameBuf(void)
+	NameOrExtPresent__C10TParseBase @ 99 NONAME ; TParseBase::NameOrExtPresent(void) const
+	NamePresent__C10TParseBase @ 100 NONAME ; TParseBase::NamePresent(void) const
+	Name__C10TDriveUnit @ 101 NONAME ; TDriveUnit::Name(void) const
+	Name__C10TParseBase @ 102 NONAME ; TParseBase::Name(void) const
+	NewLC__8CDirScanR3RFs @ 103 NONAME ; CDirScan::NewLC(RFs &)
+	NewL__4CDir @ 104 NONAME ; CDir::NewL(void)
+	NewL__8CDirScanR3RFs @ 105 NONAME ; CDirScan::NewL(RFs &)
+	NewL__8CFileManR3RFs @ 106 NONAME ; CFileMan::NewL(RFs &)
+	NewL__8CFileManR3RFsP16MFileManObserver @ 107 NONAME ; CFileMan::NewL(RFs &, MFileManObserver *)
+	NextL__13TOpenFileScanRP4CDir @ 108 NONAME ; TOpenFileScan::NextL(CDir *&)
+	NextL__8CDirScanRP4CDir @ 109 NONAME ; CDirScan::NextL(CDir *&)
+	Next__7RFormatRi @ 110 NONAME ; RFormat::Next(int &)
+	Next__7RFormatRt8TPckgBuf1ZiR14TRequestStatus @ 111 NONAME ; RFormat::Next(TPckgBuf<int> &, TRequestStatus &)
+	NotifyChangeCancel__3RFs @ 112 NONAME ; RFs::NotifyChangeCancel(void)
+	NotifyChangeCancel__3RFsR14TRequestStatus @ 113 NONAME ; RFs::NotifyChangeCancel(TRequestStatus &)
+	NotifyChange__3RFs11TNotifyTypeR14TRequestStatus @ 114 NONAME ; RFs::NotifyChange(TNotifyType, TRequestStatus &)
+	NotifyChange__3RFs11TNotifyTypeR14TRequestStatusRC7TDesC16 @ 115 NONAME ; RFs::NotifyChange(TNotifyType, TRequestStatus &, TDesC16 const &)
+	NotifyFileManEnded__16MFileManObserver @ 116 NONAME ; MFileManObserver::NotifyFileManEnded(void)
+	NotifyFileManOperation__16MFileManObserver @ 117 NONAME ; MFileManObserver::NotifyFileManOperation(void)
+	NotifyFileManStarted__16MFileManObserver @ 118 NONAME ; MFileManObserver::NotifyFileManStarted(void)
+	Open__4RDirR3RFsRC7TDesC16RC8TUidType @ 119 NONAME ; RDir::Open(RFs &, TDesC16 const &, TUidType const &)
+	Open__4RDirR3RFsRC7TDesC16Ui @ 120 NONAME ; RDir::Open(RFs &, TDesC16 const &, unsigned int)
+	Open__5RFileR3RFsRC7TDesC16Ui @ 121 NONAME ; RFile::Open(RFs &, TDesC16 const &, unsigned int)
+	Open__7RFormatR3RFsRC7TDesC16UiRi @ 122 NONAME ; RFormat::Open(RFs &, TDesC16 const &, unsigned int, int &)
+	Open__8RRawDiskR3RFsi @ 123 NONAME ; RRawDisk::Open(RFs &, int)
+	Parse__C3RFsRC7TDesC16R6TParse @ 124 NONAME ; RFs::Parse(TDesC16 const &, TParse &) const
+	Parse__C3RFsRC7TDesC16T1R6TParse @ 125 NONAME ; RFs::Parse(TDesC16 const &, TDesC16 const &, TParse &) const
+	PathPresent__C10TParseBase @ 126 NONAME ; TParseBase::PathPresent(void) const
+	Path__C10TParseBase @ 127 NONAME ; TParseBase::Path(void) const
+	PopDir__10TParseBase @ 128 NONAME ; TParseBase::PopDir(void)
+	ReadFileSection_RESERVED__C3RFsRC7TDesC16iR5TDes8i @ 129 NONAME ; RFs::ReadFileSection_RESERVED(TDesC16 const &, int, TDes8 &, int) const
+	Read__9_RRawDiskiR5TDes8 @ 130 NONAME ; _RRawDisk::Read(int, TDes8 &)
+	Read__9TFileTextR6TDes16 @ 131 NONAME ; TFileText::Read(TDes16 &)
+	Read__C4RDirR11TEntryArray @ 132 NONAME ; RDir::Read(TEntryArray &) const
+	Read__C4RDirR11TEntryArrayR14TRequestStatus @ 133 NONAME ; RDir::Read(TEntryArray &, TRequestStatus &) const
+	Read__C4RDirR6TEntry @ 134 NONAME ; RDir::Read(TEntry &) const
+	Read__C4RDirRt5TPckg1Z6TEntryR14TRequestStatus @ 135 NONAME ; RDir::Read(TPckg<TEntry> &, TRequestStatus &) const
+	Read__C5RFileR5TDes8 @ 136 NONAME ; RFile::Read(TDes8 &) const
+	Read__C5RFileR5TDes8R14TRequestStatus @ 137 NONAME ; RFile::Read(TDes8 &, TRequestStatus &) const
+	Read__C5RFileR5TDes8i @ 138 NONAME ; RFile::Read(TDes8 &, int) const
+	Read__C5RFileR5TDes8iR14TRequestStatus @ 139 NONAME ; RFile::Read(TDes8 &, int, TRequestStatus &) const
+	Read__C5RFileiR5TDes8 @ 140 NONAME ; RFile::Read(int, TDes8 &) const
+	Read__C5RFileiR5TDes8R14TRequestStatus @ 141 NONAME ; RFile::Read(int, TDes8 &, TRequestStatus &) const
+	Read__C5RFileiR5TDes8i @ 142 NONAME ; RFile::Read(int, TDes8 &, int) const
+	Read__C5RFileiR5TDes8iR14TRequestStatus @ 143 NONAME ; RFile::Read(int, TDes8 &, int, TRequestStatus &) const
+	RealName__C3RFsRC7TDesC16R6TDes16 @ 144 NONAME ; RFs::RealName(TDesC16 const &, TDes16 &) const
+	RemoveFileSystem__C3RFsRC7TDesC16 @ 145 NONAME ; RFs::RemoveFileSystem(TDesC16 const &) const
+	Rename__3RFsRC7TDesC16T1 @ 146 NONAME ; RFs::Rename(TDesC16 const &, TDesC16 const &)
+	Rename__5RFileRC7TDesC16 @ 147 NONAME ; RFile::Rename(TDesC16 const &)
+	Rename__8CFileManRC7TDesC16T1Ui @ 148 NONAME ; CFileMan::Rename(TDesC16 const &, TDesC16 const &, unsigned int)
+	Rename__8CFileManRC7TDesC16T1UiR14TRequestStatus @ 149 NONAME ; CFileMan::Rename(TDesC16 const &, TDesC16 const &, unsigned int, TRequestStatus &)
+	Replace__3RFsRC7TDesC16T1 @ 150 NONAME ; RFs::Replace(TDesC16 const &, TDesC16 const &)
+	Replace__5RFileR3RFsRC7TDesC16Ui @ 151 NONAME ; RFile::Replace(RFs &, TDesC16 const &, unsigned int)
+	ResourceCountMarkEnd__C3RFs @ 152 NONAME ; RFs::ResourceCountMarkEnd(void) const
+	ResourceCountMarkStart__C3RFs @ 153 NONAME ; RFs::ResourceCountMarkStart(void) const
+	ResourceCount__C3RFs @ 154 NONAME ; RFs::ResourceCount(void) const
+	RmDir__3RFsRC7TDesC16 @ 155 NONAME ; RFs::RmDir(TDesC16 const &)
+	RmDir__8CFileManRC7TDesC16 @ 156 NONAME ; CFileMan::RmDir(TDesC16 const &)
+	RmDir__8CFileManRC7TDesC16R14TRequestStatus @ 157 NONAME ; CFileMan::RmDir(TDesC16 const &, TRequestStatus &)
+	RunInSeparateThreadL__9CFileBasePFPv_i @ 158 NONAME ; CFileBase::RunInSeparateThreadL(int (*)(void *))
+	RunL__9CFileBase @ 159 NONAME ; CFileBase::RunL(void)
+	ScanDrive__C3RFsRC7TDesC16 @ 160 NONAME ; RFs::ScanDrive(TDesC16 const &) const
+	Seek__9TFileText5TSeek @ 161 NONAME ; TFileText::Seek(TSeek)
+	Seek__C5RFile5TSeekRi @ 162 NONAME ; RFile::Seek(TSeek, int &) const
+	SessionPath__C3RFsR6TDes16 @ 163 NONAME ; RFs::SessionPath(TDes16 &) const
+	SetAllocFailure__3RFsi @ 164 NONAME ; RFs::SetAllocFailure(int)
+	SetAtt__3RFsRC7TDesC16UiUi @ 165 NONAME ; RFs::SetAtt(TDesC16 const &, unsigned int, unsigned int)
+	SetAtt__5RFileUiUi @ 166 NONAME ; RFile::SetAtt(unsigned int, unsigned int)
+	SetDebugRegister__3RFsi @ 167 NONAME ; RFs::SetDebugRegister(int)
+	SetDefaultPath__3RFsRC7TDesC16 @ 168 NONAME ; RFs::SetDefaultPath(TDesC16 const &)
+	SetDriveName__3RFsiRC7TDesC16 @ 169 NONAME ; RFs::SetDriveName(int, TDesC16 const &)
+	SetEntry__3RFsRC7TDesC16RC5TTimeUiUi @ 170 NONAME ; RFs::SetEntry(TDesC16 const &, TTime const &, unsigned int, unsigned int)
+	SetErrorCondition__3RFsii @ 171 NONAME ; RFs::SetErrorCondition(int, int)
+	SetModified__3RFsRC7TDesC16RC5TTime @ 172 NONAME ; RFs::SetModified(TDesC16 const &, TTime const &)
+	SetModified__5RFileRC5TTime @ 173 NONAME ; RFile::SetModified(TTime const &)
+	SetNoWild__6TParseRC7TDesC16PC7TDesC16T2 @ 174 NONAME ; TParse::SetNoWild(TDesC16 const &, TDesC16 const *, TDesC16 const *)
+	SetNotifyUser__3RFsi @ 175 NONAME ; RFs::SetNotifyUser(int)
+	SetObserver__9CFileBaseP16MFileManObserver @ 176 NONAME ; CFileBase::SetObserver(MFileManObserver *)
+	SetScanDataL__8CDirScanRC7TDesC16UiUiQ28CDirScan14TScanDirection @ 177 NONAME ; CDirScan::SetScanDataL(TDesC16 const &, unsigned int, unsigned int, CDirScan::TScanDirection)
+	SetSessionPath__3RFsRC7TDesC16 @ 178 NONAME ; RFs::SetSessionPath(TDesC16 const &)
+	SetSize__5RFilei @ 179 NONAME ; RFile::SetSize(int)
+	SetSubst__3RFsRC7TDesC16i @ 180 NONAME ; RFs::SetSubst(TDesC16 const &, int)
+	SetVolumeLabel__3RFsRC7TDesC16i @ 181 NONAME ; RFs::SetVolumeLabel(TDesC16 const &, int)
+	Set__5RFileRC5TTimeUiUi @ 182 NONAME ; RFile::Set(TTime const &, unsigned int, unsigned int)
+	Set__6TParseRC7TDesC16PC7TDesC16T2 @ 183 NONAME ; TParse::Set(TDesC16 const &, TDesC16 const *, TDesC16 const *)
+	Set__9TFileTextR5RFile @ 184 NONAME ; TFileText::Set(RFile &)
+	Size__C5RFileRi @ 185 NONAME ; RFile::Size(int &) const
+	Sort__4CDirUi @ 186 NONAME ; CDir::Sort(unsigned int)
+	Subst__C3RFsR6TDes16i @ 187 NONAME ; RFs::Subst(TDes16 &, int) const
+	Temp__5RFileR3RFsRC7TDesC16Rt4TBuf1i256Ui @ 188 NONAME ; RFile::Temp(RFs &, TDesC16 const &, TBuf<256> &, unsigned int)
+	ThreadId__C13TOpenFileScan @ 189 NONAME ; TOpenFileScan::ThreadId(void) const
+	UnLock__C5RFileii @ 190 NONAME ; RFile::UnLock(int, int) const
+	UnlockDrive__3RFsiRCt5TBuf81i16i @ 191 NONAME ; RFs::UnlockDrive(int, TBuf8<16> const &, int)
+	Version__C3RFs @ 192 NONAME ; RFs::Version(void) const
+	Volume__C3RFsR11TVolumeInfoi @ 193 NONAME ; RFs::Volume(TVolumeInfo &, int) const
+	Write__5RFileRC6TDesC8 @ 194 NONAME ; RFile::Write(TDesC8 const &)
+	Write__5RFileRC6TDesC8R14TRequestStatus @ 195 NONAME ; RFile::Write(TDesC8 const &, TRequestStatus &)
+	Write__5RFileRC6TDesC8i @ 196 NONAME ; RFile::Write(TDesC8 const &, int)
+	Write__5RFileRC6TDesC8iR14TRequestStatus @ 197 NONAME ; RFile::Write(TDesC8 const &, int, TRequestStatus &)
+	Write__5RFileiRC6TDesC8 @ 198 NONAME ; RFile::Write(int, TDesC8 const &)
+	Write__5RFileiRC6TDesC8R14TRequestStatus @ 199 NONAME ; RFile::Write(int, TDesC8 const &, TRequestStatus &)
+	Write__5RFileiRC6TDesC8i @ 200 NONAME ; RFile::Write(int, TDesC8 const &, int)
+	Write__5RFileiRC6TDesC8iR14TRequestStatus @ 201 NONAME ; RFile::Write(int, TDesC8 const &, int, TRequestStatus &)
+	Write__9_RRawDiskiR6TDesC8 @ 202 NONAME ; _RRawDisk::Write(int, TDesC8 &)
+	Write__9TFileTextRC7TDesC16 @ 203 NONAME ; TFileText::Write(TDesC16 const &)
+	"_._4CDir" @ 204 NONAME ; CDir::~CDir(void)
+	"_._8CDirScan" @ 205 NONAME ; CDirScan::~CDirScan(void)
+	"_._9CFileBase" @ 206 NONAME ; CFileBase::~CFileBase(void)
+	__10TDriveUnitRC7TDesC16 @ 207 NONAME ; TDriveUnit::TDriveUnit(TDesC16 const &)
+	__10TDriveUniti @ 208 NONAME ; TDriveUnit::TDriveUnit(int)
+	__10TParseBase @ 209 NONAME ; TParseBase::TParseBase(void)
+	__10TParsePtrCRC7TDesC16 @ 210 NONAME ; TParsePtrC::TParsePtrC(TDesC16 const &)
+	__11TEntryArray @ 211 NONAME ; TEntryArray::TEntryArray(void)
+	__11TVolumeInfo @ 212 NONAME ; TVolumeInfo::TVolumeInfo(void)
+	__13TOpenFileScanR3RFs @ 213 NONAME ; TOpenFileScan::TOpenFileScan(RFs &)
+	__4CDir @ 214 NONAME ; CDir::CDir(void)
+	__9CFileBaseR3RFs @ 215 NONAME ; CFileBase::CFileBase(RFs &)
+	__9TFileText @ 216 NONAME ; TFileText::TFileText(void)
+	__9TFindFileR3RFs @ 217 NONAME ; TFindFile::TFindFile(RFs &)
+	__9TParsePtrR6TDes16 @ 218 NONAME ; TParsePtr::TParsePtr(TDes16 &)
+	__as__10TDriveUnitRC7TDesC16 @ 219 NONAME ; TDriveUnit::operator=(TDesC16 const &)
+	__as__10TDriveUniti @ 220 NONAME ; TDriveUnit::operator=(int)
+	__vc__C11TEntryArrayi @ 221 NONAME ; TEntryArray::operator[](int) const
+	AbbreviatedPath__8CDirScan @ 222 NONAME ; CDirScan::AbbreviatedPath(void)
+	DebugNotify__3RFsiUiR14TRequestStatus @ 223 NONAME ; RFs::DebugNotify(int, unsigned int, TRequestStatus &)
+	NotifyDiskSpaceCancel__3RFs @ 224 NONAME ; RFs::NotifyDiskSpaceCancel(void)
+	NotifyDiskSpaceCancel__3RFsR14TRequestStatus @ 225 NONAME ; RFs::NotifyDiskSpaceCancel(TRequestStatus &)
+	NotifyDiskSpace__3RFsxiR14TRequestStatus @ 226 NONAME ; RFs::NotifyDiskSpace(long long, int, TRequestStatus &)
+	__6TEntry @ 227 NONAME ; TEntry::TEntry(void)
+	__6TEntryRC6TEntry @ 228 NONAME ; TEntry::TEntry(TEntry const &)
+	__as__6TEntryRC6TEntry @ 229 NONAME ; TEntry::operator=(TEntry const &)
+	__6TParse @ 230 NONAME ; TParse::TParse(void)
+	Drive__C5RFileRiR10TDriveInfo @ 231 NONAME ; RFile::Drive(int &, TDriveInfo &) const
+	RemountDrive__3RFsiPC6TDesC8Ui @ 232 NONAME ; RFs::RemountDrive(int, TDesC8 const *, unsigned int)
+	MountFileSystemAndScan__C3RFsRC7TDesC16iRi @ 233 NONAME ; RFs::MountFileSystemAndScan(TDesC16 const &, int, int &) const
+	CreatePrivatePath__3RFsi @ 234 NONAME ; RFs::CreatePrivatePath(int)
+	PrivatePath__3RFsR6TDes16 @ 235 NONAME ; RFs::PrivatePath(TDes16 &)
+	SetSessionToPrivate__3RFsi @ 236 NONAME ; RFs::SetSessionToPrivate(int)
+	FileNamesIdentical__FRC7TDesC16T0 @ 237 NONAME ; FileNamesIdentical(TDesC16 const &, TDesC16 const &)
+	AddExtension__3RFsRC7TDesC16 @ 238 NONAME ; RFs::AddExtension(TDesC16 const &)
+	DismountExtension__3RFsRC7TDesC16i @ 239 NONAME ; RFs::DismountExtension(TDesC16 const &, int)
+	ExtensionName__3RFsR6TDes16ii @ 240 NONAME ; RFs::ExtensionName(TDes16 &, int, int)
+	MountExtension__3RFsRC7TDesC16i @ 241 NONAME ; RFs::MountExtension(TDesC16 const &, int)
+	MountFileSystem__3RFsRC7TDesC16T1i @ 242 NONAME ; RFs::MountFileSystem(TDesC16 const &, TDesC16 const &, int)
+	RemoveExtension__3RFsRC7TDesC16 @ 243 NONAME ; RFs::RemoveExtension(TDesC16 const &)
+	StartupInitComplete__3RFsR14TRequestStatus @ 244 NONAME ; RFs::StartupInitComplete(TRequestStatus &)
+	SetLocalDriveMapping__3RFsRC6TDesC8 @ 245 NONAME ; RFs::SetLocalDriveMapping(TDesC8 const &)
+	ControlIo__3RFsii @ 246 NONAME ; RFs::ControlIo(int, int)
+	ControlIo__3RFsiiR5TDes8 @ 247 NONAME ; RFs::ControlIo(int, int, class TDes8&)
+	ControlIo__3RFsiiR5TDes8T3 @ 248 NONAME ; RFs::ControlIo(int, int, TDes8 &, TDes8 &)
+	Adopt__5RFileR3RFsi @ 249 NONAME ; RFile::Adopt(RFs &, int)
+	MountFileSystem__3RFsRC7TDesC16T1ii @ 250 NONAME ; RFs::MountFileSystem(TDesC16 const &, TDesC16 const &, int, int)
+	MountFileSystem__C3RFsRC7TDesC16ii @ 251 NONAME ; RFs::MountFileSystem(TDesC16 const &, int, int) const
+	Read__8RRawDiskxR5TDes8 @ 252 NONAME ; RRawDisk::Read(long long, TDes8 &)
+	Write__8RRawDiskxR6TDesC8 @ 253 NONAME ; RRawDisk::Write(long long, TDesC8 &)
+	FinaliseDrives__3RFs @ 254 NONAME ; RFs::FinaliseDrives(void)
+	SwapFileSystem__C3RFsRC7TDesC16T1i @ 255 NONAME ; RFs::SwapFileSystem(TDesC16 const &, TDesC16 const &, int) const
+	ErasePassword__3RFsi @ 256 NONAME R3UNUSED ; RFs::ErasePassword(int)
+	GetReserveAccess__3RFsi @ 257 NONAME R3UNUSED ; RFs::GetReserveAccess(int)
+	ReleaseReserveAccess__3RFsi @ 258 NONAME R3UNUSED ; RFs::ReleaseReserveAccess(int)
+	ReserveDriveSpace__3RFsii @ 259 NONAME R3UNUSED ; RFs::ReserveDriveSpace(int, int)
+	AdoptFromClient__5RFileRC9RMessage2ii @ 260 NONAME ; RFile::AdoptFromClient(RMessage2 const &, int, int)
+	AdoptFromCreator__5RFileii @ 261 NONAME R3UNUSED ; RFile::AdoptFromCreator(int, int)
+	AdoptFromServer__5RFileii @ 262 NONAME R3UNUSED ; RFile::AdoptFromServer(int, int)
+	TransferToClient__C5RFileRC9RMessage2i @ 263 NONAME R3UNUSED ; RFile::TransferToClient(RMessage2 const &, int) const
+	TransferToProcess__C5RFileR8RProcessii @ 264 NONAME ; RFile::TransferToProcess(RProcess &, int, int) const
+	TransferToServer__C5RFileR8TIpcArgsii @ 265 NONAME ; RFile::TransferToServer(TIpcArgs &, int, int) const
+	Name__C5RFileR6TDes16 @ 266 NONAME R3UNUSED ; RFile::Name(TDes16 &) const
+	Close__4RDir @ 267 NONAME R3UNUSED ; RDir::Close(void)
+	Close__5RFile @ 268 NONAME R3UNUSED ; RFile::Close(void)
+	Close__7RFormat @ 269 NONAME R3UNUSED ; RFormat::Close(void)
+	GetMediaSerialNumber__3RFsRt5TBuf81i64i @ 270 NONAME R3UNUSED ; RFs::GetMediaSerialNumber(TBuf8<64> &, int)
+	Copy__8CFileManRC5RFileRC7TDesC16Ui @ 271 NONAME ; CFileMan::Copy(RFile const &, TDesC16 const &, unsigned int)
+	Copy__8CFileManRC5RFileRC7TDesC16UiR14TRequestStatus @ 272 NONAME ; CFileMan::Copy(RFile const &, TDesC16 const &, unsigned int, TRequestStatus &)
+	FullName__C5RFileR6TDes16 @ 273 NONAME R3UNUSED ; RFile::FullName(TDes16 &) const
+	AddPlugin__C3RFsRC7TDesC16 @ 274 NONAME R3UNUSED ; RFs::AddPlugin(TDesC16 const &) const
+	Close__7RPlugin @ 275 NONAME R3UNUSED ; RPlugin::Close(void)
+	DismountPlugin__C3RFsRC7TDesC16 @ 276 NONAME R3UNUSED ; RFs::DismountPlugin(TDesC16 const &) const
+	DismountPlugin__C3RFsRC7TDesC16i @ 277 NONAME R3UNUSED ; RFs::DismountPlugin(TDesC16 const &, int) const
+	DismountPlugin__C3RFsRC7TDesC16ii @ 278 NONAME ; RFs::DismountPlugin(TDesC16 const &, int, int) const
+	DoCancel__C7RPluginUi @ 279 NONAME R3UNUSED ; RPlugin::DoCancel(unsigned int) const
+	DoControl__C7RPlugini @ 280 NONAME R3UNUSED ; RPlugin::DoControl(int) const
+	DoControl__C7RPluginiR5TDes8 @ 281 NONAME R3UNUSED ; RPlugin::DoControl(int, TDes8 &) const
+	DoControl__C7RPluginiR5TDes8T2 @ 282 NONAME ; RPlugin::DoControl(int, TDes8 &, TDes8 &) const
+	DoRequest__C7RPluginiR14TRequestStatus @ 283 NONAME R3UNUSED ; RPlugin::DoRequest(int, TRequestStatus &) const
+	DoRequest__C7RPluginiR14TRequestStatusR5TDes8 @ 284 NONAME ; RPlugin::DoRequest(int, TRequestStatus &, TDes8 &) const
+	DoRequest__C7RPluginiR14TRequestStatusR5TDes8T3 @ 285 NONAME ; RPlugin::DoRequest(int, TRequestStatus &, TDes8 &, TDes8 &) const
+	MountPlugin__C3RFsRC7TDesC16 @ 286 NONAME R3UNUSED ; RFs::MountPlugin(TDesC16 const &) const
+	MountPlugin__C3RFsRC7TDesC16i @ 287 NONAME R3UNUSED ; RFs::MountPlugin(TDesC16 const &, int) const
+	MountPlugin__C3RFsRC7TDesC16ii @ 288 NONAME ; RFs::MountPlugin(TDesC16 const &, int, int) const
+	Open__7RPluginR3RFsi @ 289 NONAME R3UNUSED ; RPlugin::Open(RFs &, int)
+	PluginName__3RFsR6TDes16ii @ 290 NONAME ; RFs::PluginName(TDes16 &, int, int)
+	RemovePlugin__C3RFsRC7TDesC16 @ 291 NONAME R3UNUSED ; RFs::RemovePlugin(TDesC16 const &) const
+	AllowDismount__C3RFsi @ 292 NONAME R3UNUSED ; RFs::AllowDismount(int) const
+	NotifyDismountCancel__C3RFsR14TRequestStatus @ 293 NONAME R3UNUSED ; RFs::NotifyDismountCancel(TRequestStatus &) const
+	NotifyDismount__C3RFsiR14TRequestStatus19TNotifyDismountMode @ 294 NONAME ; RFs::NotifyDismount(int, TRequestStatus &, TNotifyDismountMode) const
+	NotifyDismountCancel__C3RFs @ 295 NONAME R3UNUSED ; RFs::NotifyDismountCancel(void) const
+	Open__7RFormatR3RFsRC7TDesC16UiRiRC6TDesC8 @ 296 NONAME ; RFormat::Open(RFs &, TDesC16 const &, unsigned int, int &, TDesC8 const &)
+	SetStartupConfiguration__C3RFsiPvT2 @ 297 NONAME ; RFs::SetStartupConfiguration(int, void *, void *) const
+	ReadCancel__C5RFile @ 298 NONAME R3UNUSED ; RFile::ReadCancel(void) const
+	ReadCancel__C5RFileR14TRequestStatus @ 299 NONAME R3UNUSED ; RFile::ReadCancel(TRequestStatus &) const
+	MountFileSystemAndScan__C3RFsRC7TDesC16T1iRi @ 300 NONAME ; RFs::MountFileSystemAndScan(TDesC16 const &, TDesC16 const &, int, int &) const
+	SetNotifyChange__3RFsi @ 301 NONAME R3UNUSED ; RFs::SetNotifyChange(int)
+	AddCompositeMount__C3RFsRC7TDesC16iii @ 302 NONAME ; RFs::AddCompositeMount(TDesC16 const &, int, int, int) const
+	Flush__5RFileR14TRequestStatus @ 303 NONAME R3UNUSED ; RFile::Flush(TRequestStatus &)
+	GetSystemDrive__3RFs @ 304 NONAME R3UNUSED ; RFs::GetSystemDrive(void)
+	BlockMap__C5RFileR13SBlockMapInfoRxxi @ 305 NONAME ; RFile::BlockMap(SBlockMapInfo &, long long &, long long, int) const
+	SetNumberOfBlocks__14TBlockMapEntryUi @ 306 NONAME R3UNUSED ; TBlockMapEntry::SetNumberOfBlocks(unsigned int)
+	SetStartBlock__14TBlockMapEntryUi @ 307 NONAME R3UNUSED ; TBlockMapEntry::SetStartBlock(unsigned int)
+	__14TBlockMapEntry @ 308 NONAME R3UNUSED ; TBlockMapEntry::TBlockMapEntry(void)
+	Clamp__10RFileClampR5RFile @ 309 NONAME R3UNUSED ; RFileClamp::Clamp(RFile &)
+	Close__10RFileClampR3RFs @ 310 NONAME R3UNUSED ; RFileClamp::Close(RFs &)
+	FileSystemSubType__C3RFsiR6TDes16 @ 311 NONAME R3UNUSED ; RFs::FileSystemSubType(int, TDes16 &) const
+	InitialisePropertiesFile__C3RFsRC6TPtrC8 @ 312 NONAME R3UNUSED ; RFs::InitialisePropertiesFile(TPtrC8 const &) const
+	QueryVolumeInfoExt__C3RFsi22TQueryVolumeInfoExtCmdR5TDes8 @ 313 NONAME ; RFs::QueryVolumeInfoExt(int, TQueryVolumeInfoExtCmd, TDes8 &) const
+	VolumeIOParam__C3RFsiR18TVolumeIOParamInfo @ 314 NONAME R3UNUSED ; RFs::VolumeIOParam(int, TVolumeIOParamInfo &) const
+	GetSystemDriveChar__3RFs @ 315 NONAME R3UNUSED ; RFs::GetSystemDriveChar(void)
+	SetSystemDrive__3RFs12TDriveNumber @ 316 NONAME R3UNUSED ; RFs::SetSystemDrive(TDriveNumber)
+	DriveList__C3RFsRt5TBuf81i26Ui @ 317 NONAME R3UNUSED ; RFs::DriveList(TBuf8<26> &, unsigned int) const
+	SetFindMask__9TFindFileUi @ 318 NONAME R3UNUSED ; TFindFile::SetFindMask(unsigned int)
+	FinaliseDrive__C3RFsiQ23RFs16TFinaliseDrvMode @ 319 NONAME R3UNUSED ; RFs::FinaliseDrive(int, RFs::TFinaliseDrvMode) const
+	Volume__C3RFsR11TVolumeInfoiR14TRequestStatus @ 320 NONAME ; RFs::Volume(TVolumeInfo &, int, TRequestStatus &) const
+	AddProxyDrive__3RFsRC7TDesC16 @ 321 NONAME R3UNUSED ; RFs::AddProxyDrive(TDesC16 const &)
+	Caps__8RRawDiskR5TDes8 @ 322 NONAME R3UNUSED ABSENT ; RRawDisk::Caps(TDes8 &)
+	DismountProxyDrive__3RFsUi @ 323 NONAME R3UNUSED ; RFs::DismountProxyDrive(unsigned int)
+	DoMountProxyDrive__3RFsRC8TIpcArgs @ 324 NONAME R3UNUSED ; RFs::DoMountProxyDrive(TIpcArgs const &)
+	RemoveProxyDrive__3RFsRC7TDesC16 @ 325 NONAME R3UNUSED ; RFs::RemoveProxyDrive(TDesC16 const &)
+	ReadFileSection__C3RFsRC7TDesC16xR5TDes8i @ 326 NONAME ; RFs::ReadFileSection(TDesC16 const &, long long, TDes8 &, int) const
+	AdoptFromClient__7RFile64RC9RMessage2ii @ 327 NONAME ; RFile64::AdoptFromClient(RMessage2 const &, int, int)
+	AdoptFromCreator__7RFile64ii @ 328 NONAME R3UNUSED ; RFile64::AdoptFromCreator(int, int)
+	AdoptFromServer__7RFile64ii @ 329 NONAME R3UNUSED ; RFile64::AdoptFromServer(int, int)
+	Create__7RFile64R3RFsRC7TDesC16Ui @ 330 NONAME ; RFile64::Create(RFs &, TDesC16 const &, unsigned int)
+	FileSize__C6TEntry @ 331 NONAME R3UNUSED ; TEntry::FileSize(void) const
+	Lock__C7RFile64xx @ 332 NONAME ; RFile64::Lock(long long, long long) const
+	Open__7RFile64R3RFsRC7TDesC16Ui @ 333 NONAME ; RFile64::Open(RFs &, TDesC16 const &, unsigned int)
+	Read__C7RFile64UiR5TDes8 @ 334 NONAME R3UNUSED ; RFile64::Read(unsigned int, TDes8 &) const
+	Read__C7RFile64UiR5TDes8R14TRequestStatus @ 335 NONAME ; RFile64::Read(unsigned int, TDes8 &, TRequestStatus &) const
+	Read__C7RFile64UiR5TDes8i @ 336 NONAME ; RFile64::Read(unsigned int, TDes8 &, int) const
+	Read__C7RFile64UiR5TDes8iR14TRequestStatus @ 337 NONAME ; RFile64::Read(unsigned int, TDes8 &, int, TRequestStatus &) const
+	Read__C7RFile64xR5TDes8 @ 338 NONAME ; RFile64::Read(long long, TDes8 &) const
+	Read__C7RFile64xR5TDes8R14TRequestStatus @ 339 NONAME ; RFile64::Read(long long, TDes8 &, TRequestStatus &) const
+	Read__C7RFile64xR5TDes8i @ 340 NONAME ; RFile64::Read(long long, TDes8 &, int) const
+	Read__C7RFile64xR5TDes8iR14TRequestStatus @ 341 NONAME ; RFile64::Read(long long, TDes8 &, int, TRequestStatus &) const
+	Replace__7RFile64R3RFsRC7TDesC16Ui @ 342 NONAME ; RFile64::Replace(RFs &, TDesC16 const &, unsigned int)
+	Seek__C7RFile645TSeekRx @ 343 NONAME R3UNUSED ; RFile64::Seek(TSeek, long long &) const
+	SetSize__7RFile64x @ 344 NONAME ; RFile64::SetSize(long long)
+	Size__C7RFile64Rx @ 345 NONAME R3UNUSED ; RFile64::Size(long long &) const
+	Temp__7RFile64R3RFsRC7TDesC16Rt4TBuf1i256Ui @ 346 NONAME ; RFile64::Temp(RFs &, TDesC16 const &, TBuf<256> &, unsigned int)
+	UnLock__C7RFile64xx @ 347 NONAME ; RFile64::UnLock(long long, long long) const
+	Write__7RFile64UiRC6TDesC8 @ 348 NONAME R3UNUSED ; RFile64::Write(unsigned int, TDesC8 const &)
+	Write__7RFile64UiRC6TDesC8R14TRequestStatus @ 349 NONAME ; RFile64::Write(unsigned int, TDesC8 const &, TRequestStatus &)
+	Write__7RFile64UiRC6TDesC8i @ 350 NONAME ; RFile64::Write(unsigned int, TDesC8 const &, int)
+	Write__7RFile64UiRC6TDesC8iR14TRequestStatus @ 351 NONAME ; RFile64::Write(unsigned int, TDesC8 const &, int, TRequestStatus &)
+	Write__7RFile64xRC6TDesC8 @ 352 NONAME ; RFile64::Write(long long, TDesC8 const &)
+	Write__7RFile64xRC6TDesC8R14TRequestStatus @ 353 NONAME ; RFile64::Write(long long, TDesC8 const &, TRequestStatus &)
+	Write__7RFile64xRC6TDesC8i @ 354 NONAME ; RFile64::Write(long long, TDesC8 const &, int)
+	Write__7RFile64xRC6TDesC8iR14TRequestStatus @ 355 NONAME ; RFile64::Write(long long, TDesC8 const &, int, TRequestStatus &)
+	IsValidName__3RFsRC7TDesC16RQ23RFs15TNameValidParam @ 356 NONAME R3UNUSED ; RFs::IsValidName(TDesC16 const &, RFs::TNameValidParam &)
+	Close__3RFs @ 357 NONAME R3UNUSED ; RFs::Close(void)
+	AddNotification__9CFsNotifyUiRC7TDesC16T2 @ 358 NONAME ; CFsNotify::AddNotification(unsigned int, TDesC16 const &, TDesC16 const &)
+	Attributes__C15TFsNotificationRUiT1 @ 359 NONAME R3UNUSED ; TFsNotification::Attributes(unsigned int &, unsigned int &) const
+	CancelNotifications__9CFsNotifyR14TRequestStatus @ 360 NONAME R3UNUSED ; CFsNotify::CancelNotifications(TRequestStatus &)
+	FileSize__C15TFsNotificationRx @ 361 NONAME R3UNUSED ; TFsNotification::FileSize(long long &) const
+	NewL__9CFsNotifyR3RFsi @ 362 NONAME R3UNUSED ; CFsNotify::NewL(RFs &, int)
+	NewName__C15TFsNotificationR7TPtrC16 @ 363 NONAME R3UNUSED ; TFsNotification::NewName(TPtrC16 &) const
+	NextNotification__9CFsNotify @ 364 NONAME R3UNUSED ; CFsNotify::NextNotification(void)
+	NotificationType__C15TFsNotification @ 365 NONAME R3UNUSED ; TFsNotification::NotificationType(void) const
+	Path__C15TFsNotificationR7TPtrC16 @ 366 NONAME R3UNUSED ; TFsNotification::Path(TPtrC16 &) const
+	RemoveNotifications__9CFsNotify @ 367 NONAME R3UNUSED ; CFsNotify::RemoveNotifications(void)
+	RequestNotifications__9CFsNotifyR14TRequestStatus @ 368 NONAME R3UNUSED ; CFsNotify::RequestNotifications(TRequestStatus &)
+	"_._9CFsNotify" @ 369 NONAME R3UNUSED ; CFsNotify::~CFsNotify(void)
+	SupportedFileSystemName__C3RFsR6TDes16ii @ 370 NONAME ; RFs::SupportedFileSystemName(TDes16 &, int, int) const
+

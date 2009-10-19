@@ -1,0 +1,42 @@
+EXPORTS
+	__dcmp4 @ 1 NONAME ; __dcmp4
+	__fcmp4 @ 2 NONAME ; __fcmp4
+	_dabs @ 3 NONAME ; _dabs
+	_dcmp4 @ 4 NONAME ; _dcmp4
+	_dcmpge @ 5 NONAME ; _dcmpge
+	_dfix_r @ 6 NONAME ; _dfix_r
+	_dfixu_r @ 7 NONAME ; _dfixu_r
+	_dflt @ 8 NONAME ; _dflt
+	_dfltu @ 9 NONAME ; _dfltu
+	_dneq @ 10 NONAME ; _dneq
+	_drdiv @ 11 NONAME ; _drdiv
+	_drem @ 12 NONAME ; _drem
+	_drnd @ 13 NONAME ; _drnd
+	_dsqrt @ 14 NONAME ; _dsqrt
+	_fabs @ 15 NONAME ; _fabs
+	_fcmp4 @ 16 NONAME ; _fcmp4
+	_fcmpge @ 17 NONAME ; _fcmpge
+	_ffix_r @ 18 NONAME ; _ffix_r
+	_ffixu_r @ 19 NONAME ; _ffixu_r
+	_fflt @ 20 NONAME ; _fflt
+	_ffltu @ 21 NONAME ; _ffltu
+	_fneq @ 22 NONAME ; _fneq
+	_frdiv @ 23 NONAME ; _frdiv
+	_frem @ 24 NONAME ; _frem
+	_frnd @ 25 NONAME ; _frnd
+	_fsqrt @ 26 NONAME ; _fsqrt
+	_ll_sfrom_d_r @ 27 NONAME ; _ll_sfrom_d_r
+	_ll_sfrom_f_r @ 28 NONAME ; _ll_sfrom_f_r
+	_ll_ufrom_d_r @ 29 NONAME ; _ll_ufrom_d_r
+	_ll_ufrom_f_r @ 30 NONAME ; _ll_ufrom_f_r
+	__ARM_scalbn @ 31 NONAME
+	_ll_sfrom_d @ 32 NONAME
+	_ll_sfrom_f @ 33 NONAME
+	_ll_sto_d @ 34 NONAME
+	_ll_sto_f @ 35 NONAME
+	_ll_ufrom_d @ 36 NONAME
+	_ll_ufrom_f @ 37 NONAME
+	_ll_uto_d @ 38 NONAME
+	_ll_uto_f @ 39 NONAME
+	__ARM_scalbnf @ 40 NONAME
+

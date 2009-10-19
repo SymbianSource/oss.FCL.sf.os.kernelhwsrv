@@ -1,0 +1,415 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+RUN_UTILS MkDir	${SYSDRIVE}\base\
+RUN_UTILS MkDir	${SYSDRIVE}\base\armv5\
+RUN_UTILS MkDir	${SYSDRIVE}\base\winscw\
+RUN_UTILS MkDir	${SYSDRIVE}\base\t_sfsrv\
+
+// copy script files
+
+//SfSrv
+
+RUN_UTILS CopyFile	z:\base\t_base.tcs				${SYSDRIVE}\base\t_base.tcs
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_base.tcs
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Sfsrv-PublicApi.script			${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi.script
+
+
+
+//SfSrv RAM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Sfsrv-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-RAM.script
+
+
+//SfSrv ROM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Sfsrv-PublicApi-ROM.script			${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-ROM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-ROM.script
+
+
+//SfSrv REM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Sfsrv-PublicApi-REM.script			${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-REM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-REM.script
+
+
+
+//SfSrv ANY
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Sfsrv-PublicApi-ANY.script			${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-ANY.script
+
+
+
+//SfSrv OS
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Sfsrv-PublicApi-OS.script			${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-OS.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-OS.script
+
+
+
+//SfSrv NAND
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Sfsrv-PublicApi-NAND.script			${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-NAND.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Sfsrv-PublicApi-NAND.script
+
+
+
+
+//t_parse
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Parse-PublicApi-ANY.script			${SYSDRIVE}\base\PBASE-F32-Parse-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Parse-PublicApi-ANY.script
+
+
+//t_parseptr
+RUN_UTILS CopyFile	z:\base\PBASE-F32-ParsePtr-PublicApi-ANY.script			${SYSDRIVE}\base\PBASE-F32-ParsePtr-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-ParsePtr-PublicApi-ANY.script
+
+
+//t_parseptrc
+RUN_UTILS CopyFile	z:\base\PBASE-F32-ParsePtrC-PublicApi-ANY.script		${SYSDRIVE}\base\PBASE-F32-ParsePtrC-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-ParsePtrC-PublicApi-ANY.script
+
+
+//t_parse-inherited
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Parse-Inherited-PublicApi-ANY.script		${SYSDRIVE}\base\PBASE-F32-Parse-Inherited-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Parse-Inherited-PublicApi-ANY.script
+
+
+//t_parseptr-inherited
+RUN_UTILS CopyFile	z:\base\PBASE-F32-ParsePtr-Inherited-PublicApi-ANY.script	${SYSDRIVE}\base\PBASE-F32-ParsePtr-Inherited-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-ParsePtr-Inherited-PublicApi-ANY.script
+
+
+//t_parseptrc-inherited
+RUN_UTILS CopyFile	z:\base\PBASE-F32-ParsePtrC-Inherited-PublicApi-ANY.script	${SYSDRIVE}\base\PBASE-F32-ParsePtrC-Inherited-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-ParsePtrC-Inherited-PublicApi-ANY.script
+
+
+//t_driveunit
+RUN_UTILS CopyFile	z:\base\PBASE-F32-DriveUnit-PublicApi-ANY.script		${SYSDRIVE}\base\PBASE-F32-DriveUnit-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-DriveUnit-PublicApi-ANY.script
+
+
+//t_format ROM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Format-PublicApi-ROM.script			${SYSDRIVE}\base\PBASE-F32-Format-PublicApi-ROM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Format-PublicApi-ROM.script
+
+
+//t_format REM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Format-PublicApi-REM.script			${SYSDRIVE}\base\PBASE-F32-Format-PublicApi-REM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Format-PublicApi-REM.script
+
+
+//t_format RAM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Format-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-Format-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Format-PublicApi-RAM.script
+
+
+//t_dir
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Dir-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-Dir-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Dir-PublicApi-RAM.script
+
+
+//t_dirscan
+RUN_UTILS CopyFile	z:\base\PBASE-F32-DirScan-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-DirScan-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-DirScan-PublicApi-RAM.script
+
+
+//t_file
+RUN_UTILS CopyFile	z:\base\PBASE-F32-File-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-File-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-File-PublicApi-RAM.script
+
+
+//t_file NAND
+RUN_UTILS CopyFile	z:\base\PBASE-F32-File-PublicApi-NAND.script			${SYSDRIVE}\base\PBASE-F32-File-PublicApi-NAND.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-File-PublicApi-NAND.script
+
+
+
+//t_fileman RAM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FileMan-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-FileMan-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FileMan-PublicApi-RAM.script
+
+
+//t_fileman OS
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FileMan-PublicApi-OS.script			${SYSDRIVE}\base\PBASE-F32-FileMan-PublicApi-OS.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FileMan-PublicApi-OS.script
+
+
+//t_filenamesidentical
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script	${SYSDRIVE}\base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script
+
+
+//t_rdir
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RDir-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-RDir-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RDir-PublicApi-RAM.script
+
+
+//t_Entry
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Entry-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-Entry-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Entry-PublicApi-RAM.script
+
+
+//t_entryarray
+RUN_UTILS CopyFile	z:\base\PBASE-F32-EntryArray-PublicApi-RAM.script		${SYSDRIVE}\base\PBASE-F32-EntryArray-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-EntryArray-PublicApi-RAM.script
+
+
+//t_filetext
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FileText-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-FileText-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FileText-PublicApi-RAM.script
+
+
+//t_findfile REM
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FindFile-PublicApi-REM.script			${SYSDRIVE}\base\PBASE-F32-FindFile-PublicApi-REM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FindFile-PublicApi-REM.script
+
+
+//t_findfile OS
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FindFile-PublicApi-OS.script			${SYSDRIVE}\base\PBASE-F32-FindFile-PublicApi-OS.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FindFile-PublicApi-OS.script
+
+
+//t_OpenFileScan
+RUN_UTILS CopyFile	z:\base\PBASE-F32-OpenFileScan-PublicApi-RAM.script		${SYSDRIVE}\base\PBASE-F32-OpenFileScan-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-OpenFileScan-PublicApi-RAM.script
+
+
+//t_VolumeInfo
+RUN_UTILS CopyFile	z:\base\PBASE-F32-VolumeInfo-PublicApi-ANY.script		${SYSDRIVE}\base\PBASE-F32-VolumeInfo-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-VolumeInfo-PublicApi-ANY.script
+
+
+//t_rawdisk
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RawDisk-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-RawDisk-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RawDisk-PublicApi-RAM.script
+
+
+//t_rawdisk
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RawDisk-PublicApi-REM.script			${SYSDRIVE}\base\PBASE-F32-RawDisk-PublicApi-REM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RawDisk-PublicApi-REM.script
+
+
+//RFs
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.script		${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-ANY.script		${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-ANY.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Files-PublicApi-ANY.script		${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-ANY.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Misc-PublicApi-ANY.script			${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-ANY.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-ANY.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-PublicApi-OS.script			${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-OS.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-OS.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-RAM.script		${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-RAM.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Files-PublicApi-RAM.script		${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-RAM.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Misc-PublicApi-RAM.script			${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-RAM.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.script		${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-PublicApi-ROM.script			${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-ROM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-ROM.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-REM.script		${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM.script
+
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.script	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.script
+
+
+// copy ini data file
+
+//t_parse
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Parse-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-Parse-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Parse-PublicApi.ini
+
+//t_parseptr
+RUN_UTILS CopyFile	z:\base\PBASE-F32-ParsePtr-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-ParsePtr-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-ParsePtr-PublicApi.ini
+
+//t_parseptrc
+RUN_UTILS CopyFile	z:\base\PBASE-F32-ParsePtrC-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-ParsePtrC-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-ParsePtrC-PublicApi.ini
+
+//t_parsebase-inherited
+RUN_UTILS CopyFile	z:\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini		${SYSDRIVE}\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+
+//t_driveunit
+RUN_UTILS CopyFile	z:\base\PBASE-F32-DriveUnit-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-DriveUnit-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-DriveUnit-PublicApi.ini
+
+//t_format
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Format-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-Format-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Format-PublicApi.ini
+
+//t_dir 
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Dir-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-Dir-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Dir-PublicApi.ini
+
+//t_dirscan 
+RUN_UTILS CopyFile	z:\base\PBASE-F32-DirScan-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-DirScan-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-DirScan-PublicApi.ini
+
+//t_file 
+RUN_UTILS CopyFile	z:\base\PBASE-F32-File-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-File-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-File-PublicApi.ini
+
+//t_fileman OS
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FileMan-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-FileMan-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FileMan-PublicApi.ini
+
+//t_filenamesidentical
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FileNamesIdentical-PublicApi.ini		${SYSDRIVE}\base\PBASE-F32-FileNamesIdentical-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FileNamesIdentical-PublicApi.ini
+
+//t_rdir
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RDir-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-RDir-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RDir-PublicApi.ini
+
+//t_Entry
+RUN_UTILS CopyFile	z:\base\PBASE-F32-Entry-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-Entry-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-Entry-PublicApi.ini
+
+//t_entryarray
+RUN_UTILS CopyFile	z:\base\PBASE-F32-EntryArray-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-EntryArray-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-EntryArray-PublicApi.ini
+
+//t_filetext
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FileText-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-FileText-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FileText-PublicApi.ini
+
+//t_findfile
+RUN_UTILS CopyFile	z:\base\PBASE-F32-FindFile-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-FindFile-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-FindFile-PublicApi.ini
+
+//t_OpenFileScan
+RUN_UTILS CopyFile	z:\base\PBASE-F32-OpenFileScan-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-OpenFileScan-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-OpenFileScan-PublicApi.ini
+
+//t_VolumeInfo
+RUN_UTILS CopyFile	z:\base\PBASE-F32-VolumeInfo-PublicApi.ini			${SYSDRIVE}\base\PBASE-F32-VolumeInfo-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-VolumeInfo-PublicApi.ini
+
+//t_rawdisk
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RawDisk-PublicApi.ini				${SYSDRIVE}\base\PBASE-F32-RawDisk-PublicApi.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RawDisk-PublicApi.ini
+
+
+//RFs
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-ANY.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-ANY.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-ANY.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Files-PublicApi-ANY.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-ANY.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-ANY.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Misc-PublicApi-ANY.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-ANY.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-ANY.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-PublicApi-OS.ini				${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-OS.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-OS.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-RAM.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-RAM.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-RAM.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Files-PublicApi-RAM.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-RAM.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Files-PublicApi-RAM.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Misc-PublicApi-RAM.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-RAM.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Misc-PublicApi-RAM.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-PublicApi-ROM.ini				${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-ROM.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-PublicApi-ROM.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-REM.ini			${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM.ini
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini		${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+
+RUN_UTILS CopyFile	z:\base\base_f32_env.ini					${SYSDRIVE}\base\base_f32_env.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\base_f32_env.ini
+
+// copy other data files
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\test.txt					${SYSDRIVE}\base\t_sfsrv\test.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\test.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\Test1.txt					${SYSDRIVE}\base\t_sfsrv\Test1.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\Test1.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\Test2.txt					${SYSDRIVE}\base\t_sfsrv\Test2.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\Test2.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\Test3.txt					${SYSDRIVE}\base\t_sfsrv\Test3.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\Test3.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\USBLOAD.ZIP					${SYSDRIVE}\base\t_sfsrv\USBLOAD.ZIP
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\USBLOAD.ZIP
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\1mb						${SYSDRIVE}\base\t_sfsrv\1mb
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\1mb
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\any.txt						${SYSDRIVE}\base\t_sfsrv\any.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\any.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\big_line.txt					${SYSDRIVE}\base\t_sfsrv\big_line.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\big_line.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\filetext_eof.txt				${SYSDRIVE}\base\t_sfsrv\filetext_eof.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\filetext_eof.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\filetext_read.txt				${SYSDRIVE}\base\t_sfsrv\filetext_read.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\filetext_read.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\multiline.txt					${SYSDRIVE}\base\t_sfsrv\multiline.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\multiline.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\oneliner.txt					${SYSDRIVE}\base\t_sfsrv\oneliner.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\oneliner.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\new_file.txt					${SYSDRIVE}\base\t_sfsrv\new_file.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\new_file.txt

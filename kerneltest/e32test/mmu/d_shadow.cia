@@ -1,0 +1,67 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\mmu\d_shadow.cia
+// LDD for testing ROM shadowing
+// 
+//
+
+#include <kernel/kern_priv.h>
+#include <platform.h>
+#include <kernel/cache.h>
+#include "d_shadow.h"
+
+#ifdef __MARM__
+#include <arm.h>
+
+__NAKED__ TInt DoRead(TAny*)
+	{
+	asm("mrs r2, cpsr ");
+	asm("orr r3, r2, #%a0" : : "i" ((TInt)KAllInterruptsMask));
+	asm("msr cpsr, r3 ");
+	asm("mrc p15, 0, ip, c3, c0, 0 ");
+	asm("mvn r1, #0 ");
+	asm("mcr p15, 0, r1, c3, c0, 0 ");
+	CPWAIT(,r1);
+	asm("ldr r0, [r0] ");
+	asm("mcr p15, 0, ip, c3, c0, 0 ");
+	CPWAIT(,r1);
+	asm("msr cpsr, r2 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt GetMmuId()
+	{
+	asm("mrc p15, 0, r0, c0, c0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt GetCacheType()
+	{
+	asm("mrc p15, 0, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint GetTTBCR()
+	{
+	asm("mrc p15, 0, r0, c2, c0 ,2");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint GetControlRegister()
+	{
+	asm("mrc p15, 0, r0, c1, c0");
+	__JUMP(,lr);
+	}
+	
+#endif

@@ -1,0 +1,43 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/ewsrv/ewsrv.mmp
+// ewsrv.exe Text shell window server
+// 
+//
+
+/**
+ @file
+*/
+
+
+target                  ewsrv.exe
+targettype              exe
+
+sourcepath				.
+source                   ws_dat.cpp ws_main.cpp ws_utl.cpp ws_win.cpp
+
+USERINCLUDE			../include
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+library                 euser.lib econs.lib ektran.lib hal.lib efsrv.lib
+library					domaincli.lib
+
+uid						0x1000008c 0x100000bf
+VENDORID 0x70000001
+
+capability				all -tcb
+
+unpaged
+
+SMPSAFE

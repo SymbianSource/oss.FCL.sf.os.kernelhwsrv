@@ -1,0 +1,296 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\drivers\trace\arm\btracex_impl.cia
+// 
+//
+
+	// adjust a0 for timestamp(s) 
+#ifdef BTRACE_INCLUDE_TIMESTAMPS
+#ifdef USE_TIMESTAMP2
+	asm("add	r0, r0, #8 ");
+	asm("orr	r0, r0, #%a0" : : "i" ((TInt)((BTrace::ETimestampPresent | BTrace::ETimestamp2Present)<<BTrace::EFlagsIndex*8)));
+#else
+	asm("add	r0, r0, #4 ");
+	asm("orr	r0, r0, #%a0" : : "i" ((TInt)(BTrace::ETimestampPresent<<BTrace::EFlagsIndex*8)));
+#endif
+#endif
+#ifdef __SMP__
+	// add in CPU ID field to Header2
+	asm("tst r0, #%a0" : : "i" ((TInt)(BTrace::EHeader2Present<<BTrace::EFlagsIndex*8)));
+	asm("movne r12, r1, lsl #12 ");		// if Header2 already present, r12=Header2<<12
+	asm("mrc p15, 0, r1, c0, c0, 5 ");	// r1 = CPU ID
+	asm("orr r0, r0, #%a0" : : "i" ((TInt)(BTrace::EHeader2Present<<BTrace::EFlagsIndex*8)));	// Header2 is there
+	asm("addeq r0, r0, #%a0" : : "i" ((TInt)(4<<BTrace::ESizeIndex*8)));	// if Header2 was not there, add 4 to size
+	asm("mov r1, r1, lsl #20 ");		// CPU ID into top 12 bits of Header2
+	asm("orrne r1, r1, r12, lsr #12 ");	// if Header2 was already there, keep bottom 20 bits of it
+	asm("stmdb	sp!,{r0-r12,lr} ");		// save first 4 args, callee-save registers, CPSR and return address (14 words)
+#else
+	asm("mrs	r12, cpsr ");			// r12 = save interrupt status
+	asm("stmdb	sp!,{r0-r12,lr} ");		// save first 4 args, callee-save registers, CPSR and return address (14 words)
+	INTS_OFF(r14, r12, INTS_ALL_OFF);	// disable interrupts
+#endif
+	asm("ldr	r10, __Buffer ");		// r10 = our buffer structure
+	asm("add	r4, r0, #3 ");
+	asm("and	r4, r4, #0xfc ");		// r4 = size of trace record rounded up to whole word size
+	asm("ldmia	r10, {r5-r7} ");		// r5 = Buffer.iAddress
+										// r6 = Buffer.iStart
+										// r7 = Buffer.iEnd
+	asm("ldr	r14, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iGeneration));
+	asm("ldr	r9, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iRequestDataSize));
+	asm("ldr	r12, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iRecordOffsets));
+	asm("add	r14, r14, #1 ");
+	asm("str	r14, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iGeneration));
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER_Z__(r8);
+#endif
+	asm("ldr	r2, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iTail));
+										// r2 = original iTail (might have bit 0 set)
+	asm("ldr	r14, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iMode));
+										// r14 = iMode
+
+	asm("8: ");
+	asm("ldr	r8, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iHead));
+	asm("bic	r1, r2, #1 ");			// r1 = tail (bit 0 cleared)
+	asm("add	r3, r8, r4 ");			// r3 = head+size = newHead (always multiple of 4)
+
+	/* Registers: R0=spare, R1=tail, R2=orig_tail, R3=newHead, R4=size, R5=&user_buffer, R6=iStart, R7=iEnd
+		R8=head, R9=requestDataSize, R10=&Buffer, R11=unused, R12=iRecordOffsets, R14=iMode
+	 */
+
+	asm("tst	r14, #%a0" : : "i" ((TInt)RBTrace::EEnable));
+	asm("beq	trace_off ");			// end now if tracing is disabled
+
+	asm("cmp	r3, r7 ");				// cmp newHead,end
+	asm("bls	1f "); // 1f==no_wrap
+	asm("mov	r9, #0 ");				// iRequestDataSize=0
+	asm("add	r3, r6, r4 ");			// newHead = start+size
+	asm("add	r0, r3, #1 ");			// r0 = newHead+1
+	asm("cmp	r8, r1 ");				// cmp head,tail
+	asm("cmphs	r1, r0 ");				// cmp tail,newHead+1
+	asm("strhs	r8, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iWrap));
+	asm("movhs	r8, r6 ");				// head = start
+	asm("bhs	3f ");					// ... done (3f==update_offsets)
+	// new trace would be overwriting tail pointer...
+	asm("tst	r14, #%a0" : : "i" ((TInt)RBTrace::EFreeRunning));
+	asm("beq	trace_dropped ");		// if we aren't in freerunning mode, drop the trace
+	asm("ldrb	r1, [r12, r3, lsr #2] ");// r1 = word offset to next record after newHead
+	asm("str	r8, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iWrap));
+	asm("mov	r8, r6 ");				// head = start
+	asm("add	r1, r3, r1, lsl #2 ");	// tail = newHead + offset to next record
+	asm("b		2f ");					// 2f==overwrite
+
+	asm("1: "); // no_wrap
+	asm("cmp	r8, r1 ");				// cmp head,tail
+	asm("bhs	3f ");					// if >= then done (3f==update_offsets)
+	asm("cmp	r1, r3 ");				// cmp tail,newHead
+	asm("bhi	3f ");					// if > the done (3f==update_offsets)
+	asm("ldr	r0, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iWrap)); // r0 = wrap
+	asm("tst	r14, #%a0" : : "i" ((TInt)RBTrace::EFreeRunning));
+	asm("beq	trace_dropped ");		// if we aren't in freerunning mode, drop the trace
+	asm("cmp	r3, r7 ");				// cmp newHead,end
+	asm("cmplo	r3, r0 ");				// cmp newHead,wrap
+	asm("ldrlob	r1, [r12, r3, lsr #2] ");// r1 = word offset to next record after newHead
+	asm("mov	r9, #0 ");				// iRequestDataSize=0
+	asm("addlo	r1, r3, r1, lsl #2 ");	// tail = newHead + offset to next record
+	asm("cmplo	r1, r7 ");				// cmp tail,end
+	asm("cmplo	r1, r0 ");				// cmp tail,wrap
+	asm("movhs	r1, r6 ");				// tail = start
+
+	asm("2: "); // overwrite
+	asm("ldr	r0, [r5, r1] ");			// r1 = first word of record at new tail
+#ifndef __SMP__
+	// On single processor iTail can't have been updated since interrupts are off here
+	asm("orr	r1, r1, #1 ");
+	asm("str	r1,	[r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iTail)); // update tail
+	asm("bic	r1, r1, #1 ");
+#endif
+	asm("orr	r0, r0, #%a0" : : "i" ((TInt)(BTrace::EMissingRecord<<(BTrace::EFlagsIndex*8))));
+	asm("str	r0, [r5, r1] ");			// set 'missing record' flag in next record to be read
+#ifdef __SMP__
+	// attempt to atomically update iTail
+	asm("9: ");
+	asm("add	r5,	r5, #%a0" : : "i" _FOFF(TBTraceBuffer,iTail)); // r5=&user_buffer.iTail
+	asm("orr	r1, r1, #1 ");
+	LDREX(0,5);
+	asm("cmp r0, r2 ");		// iTail = orig_tail ?
+	asm("movne r2, r0 ");	// if not, orig_tail = iTail
+	asm("bne 8b ");			// and go round again
+	STREX(0,1,5);			// else try to update iTail with tail|1
+	asm("cmp r0, #0 ");
+	asm("bne 9b ");
+	__DATA_MEMORY_BARRIER__(r0);	// ensure update to iTail observed before overwrites
+	asm("sub	r5,	r5, #%a0" : : "i" _FOFF(TBTraceBuffer,iTail)); // r5=&user_buffer.iTail
+#endif
+
+	asm("3: "); // update_offsets
+	asm("sub	r9, r9, r4 ");			// iRequestDataSize -= size
+	asm("str	r3, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iHead));	// OK to do this here since only used kernel side
+	asm("str	r9, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iRequestDataSize));
+
+	asm("add	r5, r5, r8 ");			// r5 = address+head = destination to store trace
+	asm("mov	r4, r4, asr #2 ");		// r4 = size/4 = number of words in trace record
+	asm("add	r11, r12, r8, asr #2 ");	// r11 = address to store record sizes
+	// unused regs are now r0 r1 r2 r3 r6 r7 r8 r9 r12 r14
+
+	asm("ldr	r14, [r10,#%a0]" : : "i" _FOFF(TBTraceBufferK,iDropped));
+	asm("ldmia	sp, {r6-r9} ");			// r6 = aHeader, r7 = aHeader2, r8 = aContext, r9 = a1
+	asm("cmp	r14, #0 ");
+	asm("movne	r14, #0 ");
+	asm("strne	r14, [r10,#%a0]" : : "i" _FOFF(TBTraceBufferK,iDropped));
+	asm("orrne	r6, r6, #%a0" : : "i" ((TInt)(BTrace::EMissingRecord<<BTrace::EFlagsIndex*8)));
+
+	asm("str	r6, [r5], #4 ");			// store aHeader
+	asm("strb	r4, [r11], #1 ");
+	asm("sub	r4, r4, #1 ");
+
+	asm("tst	r6, #%a0" : : "i" ((TInt)(BTrace::EHeader2Present<<BTrace::EFlagsIndex*8)));
+	asm("strne	r7, [r5], #4 ");			// store aHeader2 ?
+	asm("strneb	r4, [r11], #1 ");
+	asm("subne	r4, r4, #1 ");
+
+#ifdef BTRACE_INCLUDE_TIMESTAMPS
+#ifdef __SMP__
+	asm("bl		Timestamp__5NKern ");
+	asm("str	r0, [r5], #4 ");		// store timestamp low word
+#ifdef USE_TIMESTAMP2
+	asm("str	r1, [r5], #4 ");		// store timestamp high word
+#endif
+#else	// __SMP__
+#ifdef HAS_HIGH_RES_TIMER
+	GET_HIGH_RES_TICK_COUNT(r0);		// r0 = timestamp
+#else
+	asm("bl " CSM_ZN5NKern11FastCounterEv);
+#endif
+	asm("str	r0, [r5], #4 ");		// store timestamp
+	asm("strb	r4, [r11], #1 ");
+	asm("subs	r4, r4, #1 ");
+#ifdef USE_TIMESTAMP2
+	asm("bl " CSM_ZN5NKern9TickCountEv );
+	asm("str	r0, [r5], #4 ");		// store timestamp2
+	asm("strb	r4, [r11], #1 ");
+	asm("subs	r4, r4, #1 ");
+#endif
+#endif	// __SMP__
+#endif	// BTRACE_INCLUDE_TIMESTAMPS
+
+	asm("add	r0, sp, #14*4 ");
+	asm("ldmia	r0, {r0-r3} ");			// r0 = a2, r1 = a3, r2 = aExtra, r3 = aPc
+
+	asm("tst	r6, #%a0" : : "i" ((TInt)(BTrace::EContextIdPresent<<BTrace::EFlagsIndex*8)));
+	asm("strne	r8, [r5], #4 ");			// store aContext ?
+	asm("strneb	r4, [r11], #1 ");
+	asm("subne	r4, r4, #1 ");
+
+	asm("tst	r6, #%a0" : : "i" ((TInt)(BTrace::EPcPresent<<BTrace::EFlagsIndex*8)));
+	asm("strne	r3, [r5], #4 ");			// store aPc ?
+	asm("strneb	r4, [r11], #1 ");
+	asm("subne	r4, r4, #1 ");
+
+	asm("tst	r6, #%a0" : : "i" ((TInt)(BTrace::EExtraPresent<<BTrace::EFlagsIndex*8)));
+	asm("strne	r2, [r5], #4 ");			// store aExtra ?
+	asm("strneb	r4, [r11], #1 ");
+	asm("subne	r4, r4, #1 ");
+
+	asm("cmp	r4, #0 ");				// done?
+	asm("ble	6f ");					// 6f==trace_stored
+
+	asm("str	r9, [r5], #4 ");			// store a1
+	asm("strb	r4, [r11], #1 ");
+	asm("subs	r4, r4, #1 ");
+	asm("ble	6f ");					// 6f==trace_stored
+
+	asm("str	r0, [r5], #4 ");			// store a2
+	asm("strb	r4, [r11], #1 ");
+	asm("subs	r4, r4, #1 ");
+	asm("ble	6f ");					// 6f==trace_stored
+
+	asm("cmp	r4, #1 ");
+	asm("streq	r1, [r5], #4 ");			// store a3 ?
+	asm("streqb	r4, [r11], #1 ");
+	asm("beq	6f ");					// 6f==trace_stored
+
+	// r9 = pointer to rest of data to store...
+	asm("mov	r9, r1 ");
+
+	asm("cmp	r4, #7 ");
+	asm("blo	5f "); // store_loop_last
+
+	asm("ldr	r14, __03020100 ");
+	asm("add	r4, r4, r4, asl #8 ");
+	asm("add	r4, r4, r4, asl #16 ");
+	asm("sub	r4, r4, r14 ");
+	asm("ldr	r8, __04040404 ");
+
+	// align destination to 4 words...
+	asm("movs	r14, r5, asl #28 ");
+	asm("beq	4f "); // 4f==block_copy_loop
+	asm("rsb	r14, r14, #0 ");
+	asm("msr	cpsr_f, r14 ");
+
+	asm("ldmeqia	r9!, {r0} ");
+	asm("streqb		r4, [r11], #1 ");
+	asm("subeq		r4, r4, r8, lsr #2 ");
+	asm("stmeqia	r5!, {r0} ");
+
+	asm("ldmmiia	r9!, {r2,r3} ");
+	asm("strmih		r4, [r11], #2 ");
+	asm("submi		r4, r4, r8, lsr #1 ");
+	asm("stmmiia	r5!, {r2,r3} ");
+
+	asm("4: "); // block_copy_loop
+	asm("ldmia	r9!, {r0-r3} ");
+	asm("stmia	r5!, {r0-r3} ");
+	asm("str	r4, [r11], #4 ");
+	asm("subs	r4, r4, r8 ");
+	asm("cmphs	r4, #0x01000000 ");
+	asm("bhs	4b ");					// 4b==block_copy_loop
+
+	asm("ands	r4, r4, #3 ");
+	asm("beq	6f ");					// 6f==trace_stored
+
+	asm("5: "); // store_loop_last
+	asm("ldr	r0, [r9], #4 ");			// get next word for record
+	asm("strb	r4, [r11], #1 ");		// store size offset
+	asm("subs	r4, r4, #1 ");
+	asm("str	r0, [r5], #4 ");			// store word of trace record
+	asm("bhi	5b "); // 5b==store_loop_last
+
+	asm("6: "); // trace_stored
+	asm("ldr	r5, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iAddress));
+	asm("ldr	r6, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iHead));
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER_Z__(r8);		// make sure all buffer writes observed before head pointer update
+#endif
+	asm("ldr	r4, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iWaitingDfc));
+	asm("ldr	r7, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iGeneration));
+	asm("ldr	r0, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iRequestDataSize));
+	asm("str	r6, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iHead));	// update user-visible head pointer
+	asm("add	r7, r7, #1 ");
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER__(r8);		// make sure head pointer update seen before generation update
+#endif
+	asm("str	r7, [r5, #%a0]" : : "i" _FOFF(TBTraceBuffer,iGeneration));
+	asm("cmp	r4, #0 ");
+	asm("beq	done ");
+	asm("cmp	r0, #0 ");
+	asm("bgt	done ");
+
+	// iWaitingDfc exists and iRequestDataSize<=0 so we need to trigger the DFC...
+	asm("mov	r0, #0 ");
+	asm("str	r0, [r10, #%a0]" : : "i" _FOFF(TBTraceBufferK,iWaitingDfc)); // iWaitingDfc=0
+
+	asm("mov	r0, r4 ");
+	asm("bl	"	CSM_ZN4TDfc6RawAddEv);
+	asm("b		done ");
+

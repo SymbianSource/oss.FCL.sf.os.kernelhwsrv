@@ -1,0 +1,75 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\defrag\t_pagemove.cia
+// All rights reserved.
+// This code is used to test code mofication while moving a page.
+// 
+//
+
+#include <u32std.h>
+
+#ifdef __CPU_ARM
+
+/*
+ * Assembly code to test pagemove while writing to code section. 
+ * NOTE: Do not change instruction ordering without looking at t_pagemove.cpp 
+ * Look at TestCodeModification and TestCodeAsync (TestCodeModificationAsync)
+ */
+__NAKED__ TInt TestCodeModFunc(void)
+	{
+	asm("mov     r0, #5 ");
+	asm("b 1f");
+	/* Need to put 3f here because this jump will move up by one instruction */
+	asm("b 3f");
+	asm("1: ");
+	asm("mov     r0, #1 ");
+	asm("b 3f");
+	asm("2: ");
+	asm("mov     r0, #2 ");
+	asm("3: ");
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ TInt Increment(TInt)
+	{
+	asm("add r0, r0, #1 ");
+	__JUMP(,lr);
+	asm("Increment__Fi_end: ");
+	}
+
+__NAKED__ TUint Increment_Length()
+	{
+	asm("adr r0, Increment__Fi_end ");
+	asm("adr r1, Increment__Fi ");
+	asm("sub r0, r0, r1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TInt Decrement(TInt)
+	{
+	asm("sub r0, r0, #1 ");
+	__JUMP(,lr);
+	asm("Decrement__Fi_end: ");
+	}
+
+__NAKED__ TUint Decrement_Length()
+	{
+	asm("adr r0, Decrement__Fi_end ");
+	asm("adr r1, Decrement__Fi ");
+	asm("sub r0, r0, r1 ");
+	__JUMP(,lr);
+	}
+
+#endif

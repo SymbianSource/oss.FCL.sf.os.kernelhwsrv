@@ -1,0 +1,49 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/int_svr_calls.mmp
+// 
+//
+
+#ifdef GCC32
+always_build_as_arm
+#endif //GCC32
+
+target			int_svr_calls.dll
+targettype		dll
+
+sourcepath		../misc
+
+source			int_svr_calls.cpp
+#ifdef MARM
+source			int_svr_calls.cia
+#endif
+
+library			euser.lib
+#ifdef WINS
+library			emulator.lib
+#endif //WINS
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+nostrictdef
+deffile			../~/int_svr_calls.def
+
+capability		all
+vendorid		0x70000001
+
+start wins
+win32_headers
+end //wins
+
+SMPSAFE

@@ -1,0 +1,308 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_exec.cia
+// 
+//
+
+#define __GEN_USER_EXEC_CODE__
+
+#include "uc_std.h"
+#include <e32svr.h>
+#include <u32exec.h>
+
+/******************************************************************************
+ * Slow executive calls with preprocessing or extra arguments
+ ******************************************************************************/
+
+__NAKED__ TInt Exec::SessionSend(TInt /*aHandle*/, TInt /*aFunction*/, TAny* /*aPtr*/, TRequestStatus* /*aStatus*/)
+//
+// Send a blind message to the server.
+//
+	{
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("movs r8, r2 ");				// test for aPtr==NULL, set iArgFlags=0 if so
+	asm("ldmneia r2, {r4-r8} ");		// else get args into r4-r8
+	asm("swi	%a0" : : "i" (EExecSessionSend|EXECUTIVE_SLOW));
+	__POPRET("r4-r8,");
+	}
+
+__NAKED__ TInt Exec::SessionSendSync(TInt /*aHandle*/, TInt /*aFunction*/, TAny* /*aPtr*/, TRequestStatus* /*aStatus*/)
+//
+// Send a blind message to the server using thread's dedicated message slot.
+//
+	{
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("movs r8, r2 ");				// test for aPtr==NULL, set iArgFlags=0 if so
+	asm("ldmneia r2, {r4-r8} ");		// else get args into r4-r8
+	asm("swi	%a0" : : "i" (EExecSessionSendSync|EXECUTIVE_SLOW));
+	__POPRET("r4-r8,");
+	}
+
+__NAKED__ TInt Exec::MessageIpcCopy(TInt /*aHandle*/, TInt /*aParam*/, SIpcCopyInfo& /*aInfo*/, TInt /*anOffset*/)
+//
+// IPC transfer using message handle
+//
+	{
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("ldmia r2, {r4-r6} ");		// load SIpcCopyInfo into r4-r6
+	asm("swi	%a0" : : "i" (EExecMessageIpcCopy|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::Out(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	// fall through...
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutX(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	asm("stmfd sp!, {r4-r6,lr}");
+	asm("mov r4, r2");
+	asm("mov r5, r3");
+	asm("mov r6, lr");
+	asm("mov r3, #0");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutN(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	// fall through...
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutNX(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	asm("stmfd sp!, {r4-r6,lr}");
+	asm("mov r4, r2");
+	asm("mov r5, r3");
+	asm("ldr r3, [sp,#16]");
+	asm("mov r6, lr");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutBig(TUint32 a0, TUint32 a1, const TAny* aData, TInt aDataSize)
+	{
+	asm("stmfd sp!, {r4-r6,lr}");
+	asm("mov r4, #0");
+	asm("mov r5, r2");
+	asm("mov r6, lr");
+
+	asm("cmp r3, #8");
+	asm("bls 0f");
+	asm("cmp r3, #%a0" : : "i" (KMaxBTraceDataArray+4u));
+	asm("bls 1f");
+	asm("swi %a0" : : "i" (EExecBTraceOutBig|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+
+	asm("1:");
+	asm("add r0, r0, #4");
+	asm("sub r3, r3, #4");
+	asm("ldr r4, [r5] ,#4");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+
+	asm("0:");
+	asm("cmp r3, #0");
+	asm("ldrne r4, [r2]");
+	asm("cmp r3, #4");
+	asm("ldrhi r5, [r2, #4]");
+	asm("add r0, r0, r3");
+	asm("mov r3, #0");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFiltered(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	// fall through...
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredX(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
+	{
+	asm("stmfd sp!, {r4-r6,lr}");
+	asm("orr r0, r0, #%a0" : : "i" (EMissingRecord<<BTrace::EFlagsIndex*8)); // overload meaning of this flag to indicate filtered trace
+	asm("mov r4, r2");
+	asm("mov r5, r3");
+	asm("mov r6, lr");
+	asm("mov r3, #0");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredN(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	// fall through...
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredNX(TUint32 a0, TUint32 a1, TUint32 a2, const TAny* aData, TInt aDataSize)
+	{
+	asm("stmfd sp!, {r4-r6,lr}");
+	asm("orr r0, r0, #%a0" : : "i" (EMissingRecord<<BTrace::EFlagsIndex*8)); // overload meaning of this flag to indicate filtered trace
+	asm("mov r4, r2");
+	asm("mov r5, r3");
+	asm("ldr r3, [sp,#16]");
+	asm("mov r6, lr");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredBig(TUint32 a0, TUint32 a1, const TAny* aData, TInt aDataSize)
+	{
+	asm("stmfd sp!, {r4-r6,lr}");
+	asm("orr r0, r0, #%a0" : : "i" (EMissingRecord<<BTrace::EFlagsIndex*8)); // overload meaning of this flag to indicate filtered trace
+	asm("mov r4, #0");
+	asm("mov r5, r2");
+	asm("mov r6, lr");
+
+	asm("cmp r3, #8");
+	asm("bls 0f");
+	asm("cmp r3, #%a0" : : "i" (KMaxBTraceDataArray+4u));
+	asm("bls 1f");
+	asm("swi %a0" : : "i" (EExecBTraceOutBig|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+
+	asm("1:");
+	asm("add r0, r0, #4");
+	asm("sub r3, r3, #4");
+	asm("ldr r4, [r5] ,#4");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+
+	asm("0:");
+	asm("cmp r3, #0");
+	asm("ldrne r4, [r2]");
+	asm("cmp r3, #4");
+	asm("ldrhi r5, [r2, #4]");
+	asm("add r0, r0, r3");
+	asm("mov r3, #0");
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+__NAKED__ EXPORT_C TBool BTrace::OutFilteredPcFormatBig(TUint32 a0, TUint32 aModuleUid, TUint32 aPc, TUint16 aFormatId, const TAny* aData, TInt aDataSize)
+	{
+	asm("stmfd sp!, {r4-r6,lr}");
+	asm("orr r0, r0, #%a0" : : "i" (EMissingRecord<<BTrace::EFlagsIndex*8)); // overload meaning of this flag to indicate filtered trace
+	asm("mov r4, r3"); 		
+	asm("ldr r5, [sp, #16]");	
+	asm("mov r6, r2"); 		
+	asm("ldr r3, [sp, #20]");	
+	
+	asm("cmp r3, #%a0" : : "i" (KMaxBTraceDataArray+0u));
+	asm("bls 0f"); 
+	asm("swi %a0" : : "i" (EExecUTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	
+	asm("0:");
+	asm("add r0, r0, #4");	
+	asm("swi %a0" : : "i" (EExecBTraceOut|EXECUTIVE_SLOW));
+	__POPRET("r4-r6,");
+	}
+
+EXPORT_C __NAKED__ void RThread::RequestComplete(TRequestStatus*& aStatus, TInt aReason) const
+/**
+Signals this thread that an asynchronous request originating from this thread, 
+is complete.
+	
+The request is associated with the specified request status object supplied 
+by this thread.
+	
+Typically, the caller of this function is the service provider responsible 
+for satisfying the request made by this thread.
+	
+The request is completed with the completion code passed in aReason. This 
+value is copied into this thread's request status, *aStatus, before signalling 
+this thread's request semaphore.
+	
+The meaning of the completion code is a matter of convention to be decided 
+between the service provider and this thread.
+	
+In a client-server situation, completion of a request takes place in the context 
+of the server thread, but the pointer is interpreted in the address space 
+of the client.
+	
+It is often the case in client-server situations that the client and the server 
+are in the same address space (i.e. the same process).
+	
+Setting the pointer to the request status to NULL is a convenience, not all 
+servers need it.
+	
+@param aStatus A reference to a pointer to the request status originally
+               supplied by this thread. This is a pointer into this thread's
+               address space, which may be different to the thread currently
+               executing (this code). On return, the pointer to the request
+               status is set to NULL.
+               
+@param aReason The completion code of this request.
+*/
+//
+// Signal a request completion.
+//
+	{
+	asm("mov r3, #0 ");
+#ifdef __CPU_ARM_HAS_LDREX_STREX
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER__(r3);			// release semantics
+#endif
+	asm("		   str	 r14, [sp, #-4]! ");
+	asm("tryagain: ");
+	LDREX(12, 1);							// read
+	STREX(14, 3, 1);						// write
+	asm("          teq   r14, #0 ");		// success?
+	asm("          bne   tryagain ");		// no!
+	asm("		   cmp   r12, #0 ");		// if pointer not null...
+	asm("		   ldrne r0, [r0] ");
+	asm("		   strne r2, [r12] ");		// store aReason into request status
+	asm("		   swine %a0" : : "i" (EExecThreadRequestSignal|EXECUTIVE_SLOW));
+	asm("		   ldr	 pc,  [sp], #4 ");	// return
+#else
+	asm("swp r3, r3, [r1] ");	// clear TRequestStatus pointer, pointer into r3
+	asm("ldr r0, [r0] ");
+	asm("cmp r3, #0 ");			// if pointer not null...
+	asm("strne r2, [r3] ");		// store aReason into request status
+	asm("swine %a0" : : "i" (EExecThreadRequestSignal|EXECUTIVE_SLOW));
+	__JUMP(,lr);
+#endif
+	}
+
+/**
+Signal this threads request semaphore.
+
+This is similar to RThread::RequestComplete() except that no TRequestStatus object
+is modified.
+
+May only be used to signal a thread in the same process as the callers.
+
+@panic KERN-EXEC 46 if the thread is not in the same process as the callers
+*/
+EXPORT_C __NAKED__ void RThread::RequestSignal() const
+	{
+	asm("ldr r0, [r0] ");
+	asm("swi %a0" : : "i" (EExecThreadRequestSignal|EXECUTIVE_SLOW));
+	__JUMP(,lr);
+	}
+
+
+
+__NAKED__ void ExitCurrentThread(TExitType /*aType*/, TInt /*aReason*/, const TDesC8* /*aCategory*/)
+	{
+	asm("mov r3, r2 ");
+	asm("mov r2, r1 ");
+	asm("mov r1, r0 ");
+	asm("mvn r0, #0xfe ");			// r0=0xffffff01
+	asm("bic r0, r0, #0x7f00 ");	// r0=0xffff8001=KCurrentThreadHandle
+	asm("swi	%a0" : : "i" (EExecThreadKill|EXECUTIVE_SLOW));
+	__JUMP(,lr);
+	}

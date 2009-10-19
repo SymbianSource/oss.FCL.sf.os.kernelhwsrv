@@ -1,0 +1,71 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/drivers/media/bld.inf
+// Media Drivers
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_EXPORTS
+../pbus/mmc/sdcard/sdcard3c/sdio/callback.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/callback.inl     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/cisreader.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/function.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/function.inl    SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/interrupt.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/regifc.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdio.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdio.inl     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdiodefs.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdioinit.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdiopsu.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdiopsu.inl     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/dummyexp.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdiocard.h     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+../pbus/mmc/sdcard/sdcard3c/sdio/sdiocard.inl     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/sdio/)
+
+PRJ_MMPFILES
+
+#if defined(GENERIC_MARM) || defined(WINS) || defined(GENERIC_X86)
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+
+
+// ../../drivers/medint/medint
+../../drivers/medmmc/emmcptn
+../../drivers/medmmc/emmcptn_lib
+../../drivers/pbus/mmc/epbusmmc
+../../drivers/medmmc/medmmc
+
+#if !defined(WINS) && !defined(GENERIC_X86)
+../../drivers/pbus/mmc/sdcard/sdcard3c/epbussd
+../../drivers/pbus/mmc/sdcard/sdcard3c/sdio/epbussdio
+#endif
+
+// Build the folowing from variant if required.
+// (Restricted IPR prevents them from being in the generic build)
+//
+// ../../drivers/medsd4c/medsdp
+// ../../drivers/pbus/mmc/sdcard/sdcard4c/epbussdp
+
+
+#endif
+#endif

@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<driver:driver xmlns:driver="http://www.symbian.com/TestDriver">
+	<task name="base" timeout="0">
+		<task name="validation">
+			<task name="f32">
+				<executeOnPC>
+					<build testBuild="true" URI="${sourceroot}\group\">
+						<componentName>t_sfsrv</componentName>
+						<componentName>t_prompt</componentName>
+					</build>
+				</executeOnPC>
+				<transferToSymbian>
+					<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\${platform}\base_f32_env.ini" SymbianPath="$:\base\base_f32_env.ini"/>
+					<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\USBLOAD.ZIP" SymbianPath="$:\base\t_sfsrv\USBLOAD.ZIP"/>
+				</transferToSymbian>
+				<task name="f32-manual">
+					<task name="ram-manual">
+						<task name="pbase-f32-sfsrv-publicapi-rem-manual-suite" timeout="1000">
+							<transferToSymbian>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini" SymbianPath="$:\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini"/>
+							</transferToSymbian>
+							<executeOnSymbian>
+								<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-drives-publicapi-rem-manual.script" SymbianPath="$:\base\pbase-f32-rfs-drives-publicapi-rem-manual.script">
+									<testCasesList operator="exclude">
+										<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+									</testCasesList>
+								</testExecuteScript>
+							</executeOnSymbian>
+						</task>
+					</task>
+				</task>
+				<task name="f32-dualdrive">
+					<task name="dual-drive">
+						<task name="pbase-f32-sfsrv-Publicapi-ram-DualDrive-suite" timeout="1000">
+							<transferToSymbian>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\${platform}\dual_drive_env.ini" SymbianPath="$:\base\dual_drive_env.ini"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\USBLOAD.ZIP" SymbianPath="$:\base\t_sfsrv\USBLOAD.ZIP"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\test.txt" SymbianPath="$:\base\t_sfsrv\test.txt"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\Test1.txt" SymbianPath="$:\base\t_sfsrv\Test1.txt"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\Test2.txt" SymbianPath="$:\base\t_sfsrv\Test2.txt"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\Test3.txt" SymbianPath="$:\base\t_sfsrv\Test3.txt"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\1mb" SymbianPath="$:\base\t_sfsrv\1mb"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\big.txt" SymbianPath="$:\base\t_sfsrv\big.txt"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-dual-drive-publicapi-ram.ini" SymbianPath="$:\base\pbase-f32-dual-drive-publicapi-ram.ini"/>
+							</transferToSymbian>
+							<executeOnSymbian>
+								<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-dual-drive-publicapi-ram.script" SymbianPath="$:\base\pbase-f32-dual-drive-publicapi-ram.script">
+									<testCasesList operator="exclude">
+										<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+									</testCasesList>
+								</testExecuteScript>
+							</executeOnSymbian>
+						</task>
+					</task>
+				</task>
+				<task name="f32-automated">
+					<transferToSymbian>
+						<transfer move="false" PCPath="${epocroot}\epoc32\release\${platform}\${build}\t_testfxt.fxt" SymbianPath="$:\sys\bin\t_testfxt.fxt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\test.txt" SymbianPath="$:\base\t_sfsrv\test.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\Test1.txt" SymbianPath="$:\base\t_sfsrv\Test1.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\Test2.txt" SymbianPath="$:\base\t_sfsrv\Test2.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\Test3.txt" SymbianPath="$:\base\t_sfsrv\Test3.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\1mb" SymbianPath="$:\base\t_sfsrv\1mb"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\any.txt" SymbianPath="$:\base\t_sfsrv\any.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\big_line.txt" SymbianPath="$:\base\t_sfsrv\big_line.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\filetext_eof.txt" SymbianPath="$:\base\t_sfsrv\filetext_eof.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\filetext_read.txt" SymbianPath="$:\base\t_sfsrv\filetext_read.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\multiline.txt" SymbianPath="$:\base\t_sfsrv\multiline.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\new_file.txt" SymbianPath="$:\base\t_sfsrv\new_file.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\t_sfsrv\oneliner.txt" SymbianPath="$:\base\t_sfsrv\oneliner.txt"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Dir-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-Dir-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-DirScan-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-DirScan-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-DriveUnit-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-DriveUnit-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Entry-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-Entry-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-EntryArray-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-EntryArray-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-File-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-File-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FileMan-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-FileMan-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FileNamesIdentical-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-FileNamesIdentical-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FileText-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-FileText-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FindFile-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-FindFile-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Format-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-Format-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-OpenFileScan-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-OpenFileScan-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Parse-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-Parse-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-ParsePtr-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-ParsePtr-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-ParsePtrC-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-ParsePtrC-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RawDisk-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-RawDisk-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RDir-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-RDir-PublicApi.ini"/>
+						<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-VolumeInfo-PublicApi.ini" SymbianPath="$:\base\PBASE-F32-VolumeInfo-PublicApi.ini"/>
+					</transferToSymbian>
+					<task name="pbase-f32-sfsrv-publicapi-any-suite" timeout="1000">
+						<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\release\${platform}\${build}\t_testfsy1.fsy" SymbianPath="$:\sys\bin\t_testfsy1.fsy"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.ini" SymbianPath="$:\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.ini"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-mounts-publicapi-any.script" SymbianPath="$:\base\pbase-f32-rfs-mounts-publicapi-any.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-ANY.ini" SymbianPath="$:\base\PBASE-F32-RFS-Drives-PublicApi-ANY.ini"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-drives-publicapi-any.script" SymbianPath="$:\base\pbase-f32-rfs-drives-publicapi-any.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Files-PublicApi-ANY.ini" SymbianPath="$:\base\PBASE-F32-RFS-Files-PublicApi-ANY.ini"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-files-publicapi-any.script" SymbianPath="$:\base\pbase-f32-rfs-files-publicapi-any.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Misc-PublicApi-ANY.ini" SymbianPath="$:\base\PBASE-F32-RFS-Misc-PublicApi-ANY.ini"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-misc-publicapi-any.script" SymbianPath="$:\base\pbase-f32-rfs-misc-publicapi-any.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-DriveUnit-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-DriveUnit-PublicApi-ANY.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Parse-Inherited-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-Parse-Inherited-PublicApi-ANY.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Parse-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-Parse-PublicApi-ANY.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-ParsePtr-Inherited-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-ParsePtr-Inherited-PublicApi-ANY.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-ParsePtr-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-ParsePtr-PublicApi-ANY.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-ParsePtrC-Inherited-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-ParsePtrC-Inherited-PublicApi-ANY.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-ParsePtrC-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-ParsePtrC-PublicApi-ANY.script"/>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-VolumeInfo-PublicApi-ANY.script" SymbianPath="$:\base\PBASE-F32-VolumeInfo-PublicApi-ANY.script"/>
+						</transferToSymbian>
+						<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-sfsrv-publicapi-any.script" SymbianPath="$:\base\pbase-f32-sfsrv-publicapi-any.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+						</executeOnSymbian>
+					</task>
+					<task name="nand">
+						<task name="pbase-f32-sfsrv-publicapi-nand-suite" timeout="1000">
+							<transferToSymbian>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-File-PublicApi-NAND.script" SymbianPath="$:\base\PBASE-F32-File-PublicApi-NAND.script"/>
+							</transferToSymbian>
+							<executeOnSymbian>
+								<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-sfsrv-publicapi-nand.script" SymbianPath="$:\base\pbase-f32-sfsrv-publicapi-nand.script">
+									<testCasesList operator="exclude">
+										<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+									</testCasesList>
+								</testExecuteScript>
+							</executeOnSymbian>
+						</task>
+					</task>
+					<task name="os">
+						<task name="pbase-f32-sfsrv-publicapi-os-suite" timeout="1000">
+							<transferToSymbian>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-PublicApi-OS.ini" SymbianPath="$:\base\PBASE-F32-RFS-PublicApi-OS.ini"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-publicapi-os.script" SymbianPath="$:\base\pbase-f32-rfs-publicapi-os.script"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Fileman-PublicApi-OS.script" SymbianPath="$:\base\PBASE-F32-Fileman-PublicApi-OS.script"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FindFile-PublicApi-OS.script" SymbianPath="$:\base\PBASE-F32-FindFile-PublicApi-OS.script"/>
+							</transferToSymbian>
+							<executeOnSymbian>
+								<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-sfsrv-publicapi-os.script" SymbianPath="$:\base\pbase-f32-sfsrv-publicapi-os.script">
+									<testCasesList operator="exclude">
+										<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+									</testCasesList>
+								</testExecuteScript>
+							</executeOnSymbian>
+						</task>
+					</task>
+					<task name="rom">
+						<task name="pbase-f32-sfsrv-publicapi-rom-suite" timeout="1000">
+							<transferToSymbian>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-PublicApi-ROM.ini" SymbianPath="$:\base\PBASE-F32-RFS-PublicApi-ROM.ini"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-publicapi-rom.script" SymbianPath="$:\base\pbase-f32-rfs-publicapi-rom.script"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Format-PublicApi-ROM.script" SymbianPath="$:\base\PBASE-F32-Format-PublicApi-ROM.script"/>
+							</transferToSymbian>
+							<executeOnSymbian>
+								<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-sfsrv-publicapi-rom.script" SymbianPath="$:\base\pbase-f32-sfsrv-publicapi-rom.script">
+									<testCasesList operator="exclude">
+										<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+									</testCasesList>
+								</testExecuteScript>
+							</executeOnSymbian>
+						</task>
+					</task>
+					<task name="ram">
+						<task name="fixed">
+							<task name="pbase-f32-publicapi-sfsrv-ram-suite" timeout="1000">
+								<transferToSymbian>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Dir-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-Dir-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-DirScan-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-DirScan-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Entry-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-Entry-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-EntryArray-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-EntryArray-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-File-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-File-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FileMan-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-FileMan-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FileText-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-FileText-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Format-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-Format-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-OpenFileScan-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-OpenFileScan-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RawDisk-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-RawDisk-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RDir-PublicApi-RAM.script" SymbianPath="$:\base\PBASE-F32-RDir-PublicApi-RAM.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-RAM.ini" SymbianPath="$:\base\PBASE-F32-RFS-Drives-PublicApi-RAM.ini"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-drives-publicapi-ram.script" SymbianPath="$:\base\pbase-f32-rfs-drives-publicapi-ram.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Files-PublicApi-RAM.ini" SymbianPath="$:\base\PBASE-F32-RFS-Files-PublicApi-RAM.ini"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-files-publicapi-ram.script" SymbianPath="$:\base\pbase-f32-rfs-files-publicapi-ram.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Misc-PublicApi-RAM.ini" SymbianPath="$:\base\PBASE-F32-RFS-Misc-PublicApi-RAM.ini"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-misc-publicapi-ram.script" SymbianPath="$:\base\pbase-f32-rfs-misc-publicapi-ram.script"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.ini" SymbianPath="$:\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.ini"/>
+									<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-mounts-publicapi-ram.script" SymbianPath="$:\base\pbase-f32-rfs-mounts-publicapi-ram.script"/>
+								</transferToSymbian>
+								<executeOnSymbian>
+									<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-sfsrv-publicapi-ram.script" SymbianPath="$:\base\pbase-f32-sfsrv-publicapi-ram.script">
+										<testCasesList operator="exclude">
+											<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+										</testCasesList>
+									</testExecuteScript>
+								</executeOnSymbian>
+							</task>
+						</task>
+						<task name="pbase-f32-publicapi-sfsrv-rem-suite" timeout="1000">
+							<transferToSymbian>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-Format-PublicApi-REM.script" SymbianPath="$:\base\PBASE-F32-Format-PublicApi-REM.script"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RawDisk-PublicApi-REM.script" SymbianPath="$:\base\PBASE-F32-RawDisk-PublicApi-REM.script"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-FindFile-PublicApi-REM.script" SymbianPath="$:\base\PBASE-F32-FindFile-PublicApi-REM.script"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-REM.ini" SymbianPath="$:\base\PBASE-F32-RFS-Drives-PublicApi-REM.ini"/>
+								<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-rfs-drives-publicapi-rem.script" SymbianPath="$:\base\pbase-f32-rfs-drives-publicapi-rem.script"/>
+							</transferToSymbian>
+							<executeOnSymbian>
+								<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\pbase-f32-sfsrv-publicapi-rem.script" SymbianPath="$:\base\pbase-f32-sfsrv-publicapi-rem.script">
+									<testCasesList operator="exclude">
+										<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+									</testCasesList>
+								</testExecuteScript>
+							</executeOnSymbian>
+						</task>
+					</task>
+				</task>
+			</task>
+		</task>
+		<task name="performance">
+			<task name="f32">
+				<executeOnPC>
+					<build testBuild="true" URI="${sourceroot}\group\">
+						<componentName>t_perf</componentName>
+					</build>
+				</executeOnPC>
+				<transferToSymbian>
+					<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\${platform}\base_perf_f32_env.ini" SymbianPath="$:\base\performance\f32\base_perf_f32_env.ini"/>
+					<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfile-performance-utils.ini" SymbianPath="$:\base\performance\f32\pbase-f32-rfile-performance-utils.ini"/>
+				</transferToSymbian>
+				<task name="small">
+					<task name="pbase-f32-rfile-performance-small" timeout="1300">
+						<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfile-performance-small.ini" SymbianPath="$:\base\performance\f32\pbase-f32-rfile-performance-small.ini"/>
+						</transferToSymbian>
+						<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfile-performance-small.script" SymbianPath="$:\base\performance\f32\pbase-f32-rfile-performance-small.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+						</executeOnSymbian>
+					</task>
+					<task name="pbase-f32-rfs-performance-small" timeout="1300">
+						<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfs-performance-small.ini" SymbianPath="$:\base\performance\f32\pbase-f32-rfs-performance-small.ini"/>
+						</transferToSymbian>
+						<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfs-performance-small.script" SymbianPath="$:\base\performance\f32\pbase-f32-rfs-performance-small.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+						</executeOnSymbian>
+					</task>
+				</task>
+				<task name="medium">
+					<task name="pbase-f32-rfile-performance-medium" timeout="1300">
+						<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfile-performance-medium.ini" SymbianPath="$:\base\performance\f32\pbase-f32-rfile-performance-medium.ini"/>
+						</transferToSymbian>
+						<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfile-performance-medium.script" SymbianPath="$:\base\performance\f32\pbase-f32-rfile-performance-medium.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+						</executeOnSymbian>
+					</task>
+					<task name="pbase-f32-rfs-performance-medium" timeout="1300">
+						<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfs-performance-medium.ini" SymbianPath="$:\base\performance\f32\pbase-f32-rfs-performance-medium.ini"/>
+						</transferToSymbian>
+						<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfs-performance-medium.script" SymbianPath="$:\base\performance\f32\pbase-f32-rfs-performance-medium.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+						</executeOnSymbian>
+					</task>
+				</task>
+				<task name="large">
+					<task name="pbase-f32-rfile-performance-large" timeout="15000">
+						<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfile-performance-large.ini" SymbianPath="$:\base\performance\f32\pbase-f32-rfile-performance-large.ini"/>
+						</transferToSymbian>
+						<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfile-performance-large.script" SymbianPath="$:\base\performance\f32\pbase-f32-rfile-performance-large.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+						</executeOnSymbian>
+					</task>
+					<task name="pbase-f32-rfs-performance-large" timeout="1300">
+						<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfs-performance-large.ini" SymbianPath="$:\base\performance\f32\pbase-f32-rfs-performance-large.ini"/>
+						</transferToSymbian>
+						<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\performance\f32\pbase-f32-rfs-performance-large.script" SymbianPath="$:\base\performance\f32\pbase-f32-rfs-performance-large.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+						</executeOnSymbian>
+					</task>
+				</task>
+				<retrieveFromSymbian>
+					<transfer move="false" PCPath="${resultroot}\f32-perfResults.csv" SymbianPath="$:\f32-perfResults.csv"/>
+				</retrieveFromSymbian>
+			</task>
+		</task>
+		<task name="conformance" timeout="0">
+			<task name="f32" timeout="0">
+				<task name="fat32" timeout="0">
+					<executeOnPC>
+						<build testBuild="true" URI="${sourceroot}\group\">
+							<componentName>t_fat32</componentName>
+						</build>
+					</executeOnPC>
+					<transferToSymbian>
+							<transfer move="false" PCPath="${epocroot}\epoc32\data\z\base\conformance\f32\fat32\f32-fat32-conformance.ini" SymbianPath="$:\base\conformance\f32\fat32\f32-fat32-conformance.ini"/>
+					</transferToSymbian>
+					<executeOnSymbian>
+							<testExecuteScript PCPath="${epocroot}\epoc32\data\z\base\conformance\f32\fat32\f32-fat32-conformance.script" SymbianPath="$:\base\conformance\f32\fat32\f32-fat32-conformance.script">
+								<testCasesList operator="exclude">
+									<testCase target="${epocroot}\epoc32\data\z\base\t_base.tcs"/>
+								</testCasesList>
+							</testExecuteScript>
+					</executeOnSymbian>
+				</task>
+			</task>
+		</task>
+	</task>
+</driver:driver>

@@ -1,0 +1,14 @@
+# component name "exFAT File System"
+
+component   base_f32_automounter
+
+source  \sf\os\kernelhwsrv\userlibandfileserver\fileserver\automounter
+
+binary  \sf\os\kernelhwsrv\userlibandfileserver\fileserver\automounter all
+exports \sf\os\kernelhwsrv\userlibandfileserver\fileserver\automounter
+
+notes_source    \component_defs\release.src
+
+
+ipr B
+

@@ -1,0 +1,240 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\arm\ncirq.cia
+// 
+//
+
+/**
+ @file
+ @internalTechnology
+*/
+
+#include "nk_priv.h"
+#include "nk_plat.h"
+#include <nk_irq.h>
+#include <arm.h>
+#include <arm_gic.h>
+#include <arm_scu.h>
+#include <arm_tmr.h>
+
+// 
+// Atomically increment run count provided ECount set or count <2.
+// If originally zero, atomically set CPU field
+// Wait for EWait to be clear
+// Return state of iIState immediately before increment
+// 
+__NAKED__ TUint32 NIrq::EnterIsr()
+	{
+	GET_RWNO_TID(,r12);
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrq,iIState));
+	asm("ldr	r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iCpuNum));
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("mov	r1, r0 ");
+	asm("cmp	r0, #0x10000 ");		// run count >= 1 ?
+	asm("biclo	r1, r1, #0xff00 ");		// if not, update CPU
+	asm("orrlo	r1, r1, r12, lsl #8 ");
+	asm("add	r1, r1, #0x10000 ");	// increment run count
+	asm("cmp	r1, #0x20000 ");		// >= 2 ?
+	asm("bhs	3f ");
+	asm("2: ");
+	STREX(2,1,3);
+	asm("cmp	r2, #0 ");
+	asm("bne	1b ");
+
+	asm("4: ");
+	__DATA_MEMORY_BARRIER__(r2);
+	asm("tst	r1, #%a0" : : "i" (NIrq::EWait));
+	asm("bne	5f ");
+	__JUMP(,lr);
+
+	asm("3: ");
+	asm("tst	r1, #%a0" : : "i" (NIrq::ECount|NIrq::ERaw));
+	asm("bne	2b ");
+	asm("mov	r2, #0 ");
+	asm("b		4b ");
+
+	asm("5: ");
+	ARM_WFE;
+	asm("ldr	r1, [r3] ");
+	asm("b		4b ");
+	}
+
+//
+// Atomically decrement run count
+// Return TRUE if run count nonzero after decrement
+//
+__NAKED__ TBool NIrq::IsrDone()
+	{
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrq,iIState));
+	__DATA_MEMORY_BARRIER_Z__(r2);
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("subs	r1, r0, #0x10000 ");
+	STREX(2,1,3);
+	asm("cmp	r2, #0 ");
+	asm("bne	1b ");
+	asm("mov	r0, r1, lsr #16 ");	// r0 = new run count = TRUE if nonzero
+	__JUMP(,lr);
+	}
+
+//
+// Wait (allowing interrupts and preemption) until run count = 0 and EWait clear
+// Then atomically set EWait and return with interrupts disabled
+//
+__NAKED__ void NIrq::Wait()
+	{
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrq,iIState));
+
+	asm("0: ");
+	__ASM_CLI();
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("mov	r1, r0, ror #1 ");	// bit 31 = wait, bits 15-30 = run count
+	asm("cmp	r1, #0x8000 ");		// run count and EWait both zero?
+	asm("bcs	2f ");				// if not, must wait
+	asm("orr	r1, r0, #1 ");		// else try to set EWait
+	STREX(2,1,3);
+	asm("cmp	r2, #0 ");
+	asm("bne	1b ");
+	__DATA_MEMORY_BARRIER__(r2);
+	__JUMP(,lr);					// success - return with interrupts disabled
+
+	// spin, allowing interrupts, while we wait for run count and EWait both zero
+	asm("2: ");
+	__ASM_STI();
+	asm("nop ");
+	ARM_WFE;
+	asm("nop ");
+	asm("b		0b ");
+	}
+
+//
+// Atomically clear EWait and reenable interrupts
+//
+__NAKED__ void NIrq::Done()
+	{
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrq,iIState));
+	__DATA_MEMORY_BARRIER_Z__(r2);
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("bic	r0, r0, #1 ");		// clear EWait
+	STREX(2,0,3);
+	asm("cmp	r2, #0 ");
+	asm("bne	1b ");
+	__DATA_SYNC_BARRIER__(r2);		// ensure completion before SEV
+	ARM_SEV;						// kick any waiting processors
+	__ASM_STI();					// interrupts back on
+	__JUMP(,lr);
+	}
+
+
+
+//
+// atomic { if !EUnbind && !ENotReady clear EDisable }
+// Return the initial value of iHState
+//
+__NAKED__ TUint32 NIrqHandler::DoSetEnabled()
+	{
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrqHandler,iHState));
+	__DATA_MEMORY_BARRIER_Z__(r2);
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("tst	r0, #%a0" : : "i" (NIrqHandler::EUnbind|NIrqHandler::ENotReady));
+	asm("bne	2f ");			// if EUnbind or ENotReady, finished
+	asm("bic	r1, r0, #%a0" : : "i" (NIrqHandler::EDisable|NIrqHandler::EBind));
+	STREX(2,1,3);
+	asm("cmp	r2, #0 ");
+	asm("bne	1b ");
+
+	asm("2: ");
+	__DATA_MEMORY_BARRIER__(r2);
+	__JUMP(,lr);
+	}
+
+//
+// Atomically increment run count by aCount if ECount set or run count initially zero.
+// If !EDisable and !EUnbind set EActive
+// Return initial iHState
+//
+__NAKED__ TUint32 NIrqHandler::DoActivate(TInt /*aCount*/)
+	{
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrqHandler,iHState));
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("mov	r2, r0 ");
+	asm("cmp	r0, #0x10000 ");
+	asm("blo	2f ");			// if run count initially zero, skip
+	asm("tst	r0, #%a0" : : "i" (NIrqHandler::ECount));
+	asm("beq	3f ");			// else if !ECount, don't increment
+	asm("2: ");
+	asm("add	r2, r2, r1, lsl #16 ");	// add aCount to run count
+	asm("3: ");
+	asm("tst	r2, #%a0" : : "i" (NIrqHandler::EUnbind|NIrqHandler::EDisable));
+	asm("orreq	r2, r2, #%a0" : : "i" (NIrqHandler::EActive));	// if !EUnbind && !EDisable, set EActive
+	STREX(12,2,3);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	__JUMP(,lr);
+	}
+
+//
+// Decrement run count
+// Return initial iHState
+//
+__NAKED__ TUint32 NIrqHandler::EventBegin()
+	{
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrqHandler,iHState));
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("sub	r2, r0, #0x10000 ");
+	STREX(12,2,3);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	__DATA_MEMORY_BARRIER__(r12);
+	__JUMP(,lr);
+	}
+
+//
+// If count is zero or EDisable or EUnbind
+// are set, clear EActive.
+// Return initial iHState, except for new EActive bit
+//
+__NAKED__ TUint32 NIrqHandler::EventDone()
+	{
+	asm("add	r3, r0, #%a0" : : "i" _FOFF(NIrqHandler,iHState));
+	__DATA_MEMORY_BARRIER_Z__(r12);
+
+	asm("1: ");
+	LDREX(0,3);
+	asm("mov	r2, r0 ");
+	asm("cmp	r0, #0x10000 ");	// run count zero ?
+	asm("tsths	r2, #%a0" : : "i" (NIrqHandler::EUnbind|NIrqHandler::EDisable));	// if so, test EUnbind and EDisable
+	asm("bicne	r2, r2, #%a0" : : "i" (NIrqHandler::EActive));	// if runcount==0 or EUnbind or EDisable set, clear EActive
+	STREX(12,2,3);
+	asm("cmp	r12, #0 ");
+	asm("bne	1b ");
+	asm("tst	 r2, #%a0" : : "i" (NIrqHandler::EActive));	// EActive now clear in new value ?
+	asm("biceq	r0, r0, #%a0" : : "i" (NIrqHandler::EActive));	// if so, clear it in return value
+	__JUMP(,lr);
+	}
+

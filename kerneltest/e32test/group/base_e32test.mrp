@@ -1,0 +1,13 @@
+# component name "E32 Tests"
+
+component	base_e32test
+source	\sf\os\kernelhwsrv\kerneltest\e32test
+binary	\sf\os\kernelhwsrv\kerneltest\e32test\group all
+binary	\sf\os\kernelhwsrv\kerneltest\e32test\resourceman\acctst all
+exports	\sf\os\kernelhwsrv\kerneltest\e32test\group
+exports	\sf\os\kernelhwsrv\kerneltest\e32test\resourceman\acctst
+notes_source	\component_defs\release.src
+
+
+ipr T 
+

@@ -1,0 +1,53 @@
+// @SYMTestCaseID           PBASE-USB-MSTORE-0802
+// @SYMTestCaseDesc         Mass Storage device testing
+// @SYMTestActions
+//   Each Test Action is preceded by a connection to the Mass Storage device (MSD) and
+//   followed by a disconnection.
+//    1. Short Loop Test
+//    2. Format Drive
+//    3. Create a large number of directories, sub-directories and files on the MSD
+//    4. Read entries created during preceding action
+//    5. Create a large file on the MSD
+//    6. Read file created during preceding action
+//    7. Create a large file on the MSD
+//    8. Read file created during preceding action
+//    9. Create several large files on the MSD
+//    10. Read files created during preceding action
+//    11. Short Loop Test
+// @SYMTestExpectedResults
+//   No errors reported and:
+//     4. Contents of directories and files have not changed
+//     6. Contents of file have not changed
+//     7 to 10. Time measurements taken for each test action.
+// @SYMTestPriority         High
+//
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+WaitConnect
+Loop		50	150	1000	0	0	2	1	1000	100	
+Wait
+MStore		0x110F
+WaitDrive	F
+// createfilesanddirs
+Perl		massstorage\createfilesanddirs.pl --depth=4 --spread=4 --size=1024  --drive=F: --read=0
+Eject		F
+WaitConnect	20000
+MStore		0x110F
+WaitDrive	F
+Perl		massstorage\createfilesanddirs.pl --depth=4 --spread=4 --size=1024  --drive=F: --read=1
+// createlargefile
+Perl		massstorage\createlargefile.pl --size=3000000  --drive=F: --read=0
+Eject		F
+WaitConnect	20000
+MStore		0x110F
+WaitDrive	F
+Perl		massstorage\createlargefile.pl --size=3000000  --drive=F: --read=1
+// bmwritelargefile
+Perl		massstorage\bmwritelargefile.pl --size=30 --drive=F: --read=0
+Perl		massstorage\bmwritelargefile.pl --size=30 --drive=F: --read=1
+// bmwritemanyfiles
+Perl		massstorage\bmwritemanyfiles.pl --files=30 --size=1 --drive=F: --read=0
+Perl		massstorage\bmwritemanyfiles.pl --files=30 --size=1 --drive=F: --read=1
+Eject		F
+WaitConnect	20000
+Loop		50	150	1000	0	0	2	1	1000	100	
+Wait

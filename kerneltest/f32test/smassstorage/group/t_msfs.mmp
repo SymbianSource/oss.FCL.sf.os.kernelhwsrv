@@ -1,0 +1,51 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_msfs.mmp
+// 
+//
+
+TARGET         	t_msfs.exe
+TARGETTYPE     	EXE
+
+SOURCEPATH	../src
+SOURCE         	t_ms_main.cpp
+SOURCE	       	t_ms_clisvr.cpp
+SOURCE	       	t_ms_fsunit.cpp
+SOURCE			t_ms_common.cpp
+
+SOURCEPATH	../../../../userlibandfileserver/fileserver/smassstorage
+SOURCE		cmassstoragefilesystem.cpp
+SOURCE		cusbmassstoragecontroller.cpp
+SOURCE		cmassstoragemountcb.cpp
+SOURCE		drivemanager.cpp
+SOURCE		rwdrivethread.cpp
+SOURCE		drivepublisher.cpp
+SOURCE		cbulkonlytransport.cpp
+SOURCE		cbulkonlytransportusbcldd.cpp
+SOURCE		cbulkonlytransportusbcscldd.cpp
+SOURCE		cactivedevicestatenotifierbase.cpp
+SOURCE		massstorageutil.cpp
+SOURCE		scsiprot.cpp
+SOURCE		cusbmassstorageserver.cpp
+SOURCE 		cusbmassstoragesession.cpp
+	
+LIBRARY        euser.lib efsrv.lib hal.lib usbcsc_bil.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE    ../../../../userlibandfileserver/fileserver/smassstorage/inc
+USERINCLUDE    ../inc
+
+capability  NetworkControl DiskAdmin
+
+
+SMPSAFE

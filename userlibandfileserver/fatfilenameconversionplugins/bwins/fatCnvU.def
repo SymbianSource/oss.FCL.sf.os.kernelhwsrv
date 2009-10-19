@@ -1,0 +1,8 @@
+EXPORTS
+	?ConvertFromUnicodeL@UnicodeConv@@SAXAAVTDes8@@ABVTDesC16@@@Z @ 1 NONAME ; void UnicodeConv::ConvertFromUnicodeL(class TDes8 &, class TDesC16 const &)
+	?ConvertToUnicodeL@UnicodeConv@@SAXAAVTDes16@@ABVTDesC8@@@Z @ 2 NONAME ; void UnicodeConv::ConvertToUnicodeL(class TDes16 &, class TDesC8 const &)
+	?IsLegalShortNameCharacter@UnicodeConv@@SAHI@Z @ 3 NONAME ; int UnicodeConv::IsLegalShortNameCharacter(unsigned int)
+	?ConvertFromUnicodeL@UnicodeConv@@SAHAAVTDes8@@ABVTDesC16@@H@Z @ 4 NONAME ; int UnicodeConv::ConvertFromUnicodeL(class TDes8 &, class TDesC16 const &, int)
+	?ConvertToUnicodeL@UnicodeConv@@SAHAAVTDes16@@ABVTDesC8@@H@Z @ 5 NONAME ; int UnicodeConv::ConvertToUnicodeL(class TDes16 &, class TDesC8 const &, int)
+	
+

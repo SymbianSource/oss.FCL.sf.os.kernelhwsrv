@@ -1,0 +1,36 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_format.mmp
+//
+//
+
+TARGET         t_format.exe
+TARGETTYPE     EXE
+SOURCEPATH     ../server
+SOURCE         t_format.cpp
+SOURCE         t_main.cpp
+SOURCEPATH     ../fileutils/src
+SOURCE         f32_test_utils.cpp
+SOURCE         t_chlffs.cpp
+
+LIBRARY         euser.lib efsrv.lib hal.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude     ../server
+USERINCLUDE     ../fileutils/inc
+
+CAPABILITY		TCB DISKADMIN ALLFILES
+VENDORID		0x70000001
+UID             0x00000001 0x100039e3 
+
+SMPSAFE

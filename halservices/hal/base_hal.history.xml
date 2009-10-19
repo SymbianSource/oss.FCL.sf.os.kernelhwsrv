@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<relnotes name="User HAL">
+  <purpose>
+    User side access to hardware via hardware abstraction.
+  </purpose>
+</relnotes>

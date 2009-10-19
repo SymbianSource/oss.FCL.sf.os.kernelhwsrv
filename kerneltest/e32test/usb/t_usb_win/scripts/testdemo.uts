@@ -1,0 +1,70 @@
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+Do
+WaitConnect	""	"H4Device"
+Loop		50	150	1000	0	0	2	1	10000	100	
+Wait
+Loop		50	150	1000	0	0	2	3	10000	100	
+Loop		50	150	1000	0	0	4	5	10000	100	
+Wait
+Compare		50	150	1000	0	0	2	1	10000	100	
+Compare		50	150	1000	0	0	4	5	10000	100	
+Wait
+Compare		50	750	1000	0	1	2	3	10000	100	
+Compare		90	750	1000	0	1	4	1	10000	100	
+Wait
+Stream			550	1000	0	0	99	1	10000	100
+Wait
+Stream			1500	1000	0	0	4	99	10000	100
+Wait
+Stream			50	1000	0	0	99	1	10000	100
+Stream			150	1000	0	0	99	3	10000	100
+Stream			250	1000	0	0	99	5	10000	100
+Wait
+Stream			50	1000	0	1	99	1	10000	100
+Stream			150	1000	0	1	99	3	10000	100
+Wait
+Stream			50	1000	0	2	99	1	10000	100
+Stream			150	1000	0	2	99	4	10000	100
+Wait
+Stream			50	1000	0	0	4	99	10000	100
+Stream			150	1000	0	0	2	99	10000	100
+Wait
+//usbcv
+//WaitConnect	""	"H4Device"
+Disconnect
+WaitConnect	""	"H2Device"
+Loop		50	150	1000	0	0	2	1	10000	100	
+Wait
+Loop		50	150	1000	0	0	2	3	10000	100	
+Loop		50	150	1000	0	0	4	5	10000	100	
+Wait
+Compare		50	150	1000	0	0	2	1	10000	100	
+Compare		50	150	1000	0	0	4	5	10000	100	
+Wait
+Compare		50	750	1000	0	1	2	3	10000	100	
+Compare		90	750	1000	0	1	4	1	10000	100	
+Wait
+Stream			550	1000	0	0	99	1	10000	100
+Wait
+Stream			1500	1000	0	0	4	99	10000	100
+Wait
+Stream			50	1000	0	0	99	1	10000	100
+Stream			150	1000	0	0	99	3	10000	100
+Stream			250	1000	0	0	99	5	10000	100
+Wait
+Stream			50	1000	0	1	99	1	10000	100
+Stream			150	1000	0	1	99	3	10000	100
+Wait
+Stream			50	1000	0	2	99	1	10000	100
+Stream			150	1000	0	2	99	4	10000	100
+Wait
+Stream			50	1000	0	0	4	99	10000	100
+Stream			150	1000	0	0	2	99	10000	100
+Wait
+//usbcv
+//WaitConnect	""	"H2Device"
+Switch	3
+Repeat	10
+WaitConnect	""	"H2Device"
+Disconnect
+WaitConnect	""	"H4Device"

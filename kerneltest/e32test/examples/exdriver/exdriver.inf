@@ -1,0 +1,42 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/examples/exdriver/exdriver.inf
+// Tutorial reference drivers
+// 
+//
+
+PRJ_PLATFORMS
+ARMV5 WINSCW
+
+PRJ_TESTMMPFILES
+// build only for ARMV5 and WINSCW, as we are not supporting other platforms
+#if defined(MARM_ARMV5)||defined(WINSCW)
+// pio, synch reference driver
+exdriver_pio/group/d_expio_ldd	support
+exdriver_pio/group/t_expio_user	support		
+#endif
+
+// build these drivers only for ARMV5, as we are not supporting other platforms
+#if defined(MARM_ARMV5)
+// interrupts,dfc,asynch reference driver
+exdriver_int/group/d_exint_ldd	support
+exdriver_int/group/t_exint_user	support
+exdriver_sync/group/d_exsync_ldd	support
+exdriver_sync/group/t_exsync_user	support
+// dma reference driver
+exdriver_dma/group/d_exdma_ldd	support
+exdriver_dma/group/t_exdma_user	support
+exdriver_chnk/group/d_exchnk_ldd	support
+exdriver_chnk/group/t_exchnk_user	support
+#endif

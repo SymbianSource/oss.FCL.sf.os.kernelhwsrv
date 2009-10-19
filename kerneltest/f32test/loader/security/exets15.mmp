@@ -1,0 +1,37 @@
+
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// /F32TEST/loader/gen/EXETS15.MMP
+// 
+//
+
+macro             	__DLLNUM15
+target            	exets15.exe
+targettype        	exe
+sourcepath        	.
+source            	exet.cpp
+library           	euser.lib
+capability		ALL
+library           	dllts11.lib
+deffile           	./exets15.def
+nostrictdef
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude       	.
+epocfixedprocess
+uid               	0x00000000 0x00000136
+VENDORID 0x70000001
+ROMTARGET
+RAMTARGET +
+
+SMPSAFE

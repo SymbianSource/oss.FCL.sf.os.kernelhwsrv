@@ -1,0 +1,1086 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\common\arm\cmem.cia
+// 
+//
+
+#include "../common.h"
+#include <e32cia.h>
+#if defined(__REPLACE_GENERIC_UTILS)
+#include "replacement_utils.h"
+#endif
+
+#if defined(__MEM_MACHINE_CODED__)
+
+#ifndef USE_REPLACEMENT_MEMSET
+
+#if defined(_DEBUG)
+
+#ifdef __STANDALONE_NANOKERNEL__
+
+#define ARM_ASSERT_MULTIPLE_OF_FOUR(rt1, panicfunc)	\
+	asm("tst "#rt1", #3"); \
+	asm("ldrne "#rt1", ["#rt1"]")
+
+#else	// __STANDALONE_NANOKERNEL__
+GLDEF_C void PanicEWordMoveLengthNotMultipleOf4();
+GLDEF_C void PanicEWordMoveSourceNotAligned();
+GLDEF_C void PanicEWordMoveTargetNotAligned();
+
+#define ARM_ASSERT_MULTIPLE_OF_FOUR(rt1, panicfunc)	\
+	asm("tst "#rt1", #3"); \
+	asm("bne " panicfunc )
+
+#endif	// __STANDALONE_NANOKERNEL__
+
+#else	// _DEBUG
+
+#define ARM_ASSERT_MULTIPLE_OF_FOUR(rt1, panicfunc)
+
+#endif	//_DEBUG
+
+
+// See header file e32cmn.h for the in-source documentation.
+extern "C" EXPORT_C __NAKED__ TAny* memclr(TAny* /*aTrg*/, unsigned int /*aLength*/)
+	{
+	KMEMCLRHOOK
+	asm("mov r2, #0 ");
+	asm("b fill ");
+	}
+
+// See header file e32cmn.h for the in-source documentation.
+extern "C" EXPORT_C __NAKED__ TAny* memset(TAny* /*aTrg*/, TInt /*aValue*/, unsigned int /*aLength*/)
+    {
+    KMEMSETHOOK
+    asm("   mov		 r3, r2 ");				/* length into r3 */
+    asm("   and      r2,r1,#255");			/* fill value into r2 */
+	asm("	mov		 r1, r3 ");				/* length into r1 */
+
+    asm("fill:");
+    asm("   cmp      r1,#8");
+	asm("   bls      small_fill");			// only taken ~20% of the time
+
+    asm("   stmfd    sp!,{r0,r4-r9,lr}");
+	asm("   movs     r3, r0, lsl #30 ");	// Check if word aligned
+	asm("   orr      r2,r2,r2,lsl #8");
+    asm("   orr      r2,r2,r2,lsl #16");
+	asm("   bne		 unaligned_fill ");
+		
+	// Align destination address to 32 byte boundary if possible
+	
+	asm("word_aligned_fill: ");
+    asm("   mov      r4,r2");
+    asm("   mov      r5,r2");
+    asm("   mov      r6,r2");
+	asm("   movs     r3, r0, lsl #27 ");
+    asm("   beq      aligned_fill ");
+    asm("   rsb      r3, r3, #0 ");				// calculate fill length necessary for aligment
+	asm("   cmp      r1, r3, lsr #27 ");		// compare with remaining length
+	asm("   blo		 smaller_fill ");			// skip alignment if greater
+	asm("   msr      cpsr_f, r3 ");				// put length bits 4, 3, 2 into N, Z, C flags
+    asm("   strcs    r2, [r0], #4 ");			// align to 8 byte boundary
+    asm("   stmeqia  r0!, {r2, r4} ");			// align to 16 byte boundary
+    asm("   stmmiia  r0!, {r2, r4-r6} ");		// align to 32 byte boundary
+	asm("   sub      r1, r1, r3, lsr #27 ");	// adjust remaining length
+
+    asm("aligned_fill:");
+	asm("   cmp		 r1, #64 ");
+	asm("   bhs		 big_fill ");
+
+	// Fill 0-63 bytes
+	
+    asm("smaller_fill:");
+    asm("   movs     r1, r1, lsl #26");
+	asm("	beq		 mem_fill_end ");
+    asm("   msr      cpsr_flg, r1 ");
+    asm("   stmmiia  r0!,{r2,r4-r6}");	// Fill 32
+    asm("   stmmiia  r0!,{r2,r4-r6}");
+    asm("   stmeqia  r0!,{r2,r4-r6}");	// Fill 16
+    asm("   stmcsia  r0!,{r2,r4}");		// Fill 8
+    asm("   strvs    r2,[r0],#4");		// Fill 4
+	asm("   movs	 r1, r1, lsl #4 ");
+	asm("	bne		 smallest_fill ");
+	asm("mem_fill_end: ");
+	__POPRET("r0,r4-r9,");
+
+	// Fill last 1-3 bytes
+	
+    asm("smallest_fill: ");
+    asm("   msr      cpsr_flg,r1");
+    asm("   strmih   r2,[r0],#2");  	// Fill 2
+    asm("   streqb   r2,[r0],#1");  	// Fill 1
+	__POPRET("r0,r4-r9,");
+
+	// Fill loop for length >= 64
+	
+	asm("big_fill: ");
+	asm("   mov      r3,r2");
+    asm("   mov      r7,r2");
+    asm("   mov      r8,r2");
+    asm("   mov      r9,r2");
+    asm("   movs     ip,r1,lsr #8");	// Number of 256 byte blocks to fill
+	asm("   beq		 medium_fill ");
+    asm("fill_256_bytes_loop:");
+    asm("   stmia    r0!,{r2-r9}");		// Fill 256 bytes
+    asm("   stmia    r0!,{r2-r9}");
+    asm("   stmia    r0!,{r2-r9}");
+    asm("   stmia    r0!,{r2-r9}");
+    asm("   stmia    r0!,{r2-r9}");
+    asm("   stmia    r0!,{r2-r9}");
+    asm("   stmia    r0!,{r2-r9}");
+    asm("   stmia    r0!,{r2-r9}");
+    asm("   subs     ip,ip,#1");
+    asm("   bne      fill_256_bytes_loop");
+	asm("medium_fill: ");
+    asm("   movs     ip,r1,lsl #24");
+    asm("   msr      cpsr_flg,ip");	
+    asm("   stmmiia  r0!,{r2-r9}");		// Fill 128
+    asm("   stmmiia  r0!,{r2-r9}");  
+    asm("   stmmiia  r0!,{r2-r9}"); 
+    asm("   stmmiia  r0!,{r2-r9}"); 
+    asm("   stmeqia  r0!,{r2-r9}");		// Fill 64
+    asm("   stmeqia  r0!,{r2-r9}"); 
+	asm("   and		 r1, r1, #63 ");
+	asm("   b 		 smaller_fill");
+
+	// Word-align destination address, length >= 8
+	
+	asm("unaligned_fill: ");
+    asm("   rsb      r3, r3, #0 ");				// calculate fill length necessary for aligment
+    asm("   msr      cpsr_flg, r3");
+	asm("   streqb   r2, [r0], #1 ");			// align to 2 byte boundary
+    asm("   strmih   r2, [r0], #2 ");			// align to 4 byte boundary
+	asm("   sub      r1, r1, r3, lsr #30 ");
+	asm("	b		 word_aligned_fill ");
+
+	// Fill for length <= 8
+	
+	asm("small_fill: ");
+	asm("	mov		 r3, r0 ");				/* r3=dest */
+	asm("   adr      ip, small_fill_end ");
+	asm("   sub		 pc, ip, r1, lsl #2 ");
+    asm("   strb     r2, [r3], #1");
+    asm("   strb     r2, [r3], #1");
+    asm("   strb     r2, [r3], #1");
+    asm("   strb     r2, [r3], #1");
+    asm("   strb     r2, [r3], #1");
+    asm("   strb     r2, [r3], #1");
+    asm("   strb     r2, [r3], #1");
+    asm("   strb     r2, [r3], #1");
+	asm("small_fill_end: ");
+	__JUMP(,lr);
+
+#ifdef __EABI__
+	// The AEABI switched the order of arg2 and arg3 to save an intruction when
+	// calling 'memset' from 'memclr'	
+	asm(".global __aeabi_memset8 ");
+	asm("__aeabi_memset8: 		 ");
+	asm(".global __aeabi_memset4 ");
+	asm("__aeabi_memset4: 		 ");
+	asm(".global __aeabi_memset  ");
+	asm("__aeabi_memset: 		 ");
+    asm("   and      r2, r2, #255");
+	asm("	b		 fill		 ");
+#endif
+    }
+
+#endif  // USE_REPLACEMENT_MEMSET
+
+#ifndef USE_REPLACEMENT_MEMCPY
+
+// See header file e32cmn.h for the in-source documentation.
+
+extern "C" EXPORT_C __NAKED__ TAny* wordmove(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+//
+// Assumes all is aligned
+//
+    {
+	ARM_ASSERT_MULTIPLE_OF_FOUR(r0, CSM_Z30PanicEWordMoveTargetNotAlignedv);
+	ARM_ASSERT_MULTIPLE_OF_FOUR(r1, CSM_Z30PanicEWordMoveSourceNotAlignedv);
+	ARM_ASSERT_MULTIPLE_OF_FOUR(r2, CSM_Z34PanicEWordMoveLengthNotMultipleOf4v);
+
+	// Mask length to a multiple of four bytes to avoid memory, or register
+	// corruption by the special cases below.
+	asm("bic r2,r2,#3");
+
+	// Length <= 24 in ~90% of cases, however can only copy > 16 bytes in 4
+	// instructions if LDM instuction restores thumb state when loading the PC.	
+#ifdef __CPU_ARM_LDR_PC_SETS_TBIT
+	asm("cmp r2, #24 ");
+#else
+	asm("cmp r2, #16 ");
+#endif
+	PLD(1);
+	asm("addls pc, pc, r2, lsl #2 ");		// take branch depending on size
+	asm("b 9f ");							// too big
+
+	// 0 words
+	__JUMP(,lr);
+	__JUMP(,lr);
+	__JUMP(,lr);
+	__JUMP(,lr);
+
+	// 1 word
+	asm("ldr ip, [r1] ");
+	asm("str ip, [r0] ");
+	__JUMP(,lr);
+	__JUMP(,lr);
+
+	// 2 words
+	asm("ldmia r1, {r2,r3}");
+	asm("stmia r0, {r2,r3}");
+	__JUMP(,lr);
+	__JUMP(,lr);
+
+	// 3 words
+	asm("ldmia r1, {r2,r3,ip}");
+	asm("stmia r0, {r2,r3,ip}");
+	__JUMP(,lr);
+	__JUMP(,lr);
+
+	// 4 words
+	asm("ldmia r1, {r1,r2,r3,ip}");
+	asm("stmia r0, {r1,r2,r3,ip}");
+	__JUMP(,lr);
+	__JUMP(,lr);
+
+#ifdef __CPU_ARM_LDR_PC_SETS_TBIT
+	// 5 words
+	asm("stmfd sp!, {lr}");
+	asm("ldmia r1, {r1,r2,r3,ip,lr}");
+	asm("stmia r0, {r1,r2,r3,ip,lr}");
+	asm("ldmfd sp!, {pc}");
+
+	// 6 words
+	asm("stmfd sp!, {r4,lr}");
+	asm("ldmia r1, {r1,r2,r3,r4,ip,lr}");
+	asm("stmia r0, {r1,r2,r3,r4,ip,lr}");
+	asm("ldmfd sp!, {r4,pc}");
+#endif
+
+	asm("9: ");
+    asm("subs r3, r0, r1 ");				// r3 = dest - source
+	__JUMP(eq,lr);							// return if source = dest
+    asm("stmfd sp!, {r0,r4-r11,lr} ");
+	asm("cmphi r2, r3 ");					// if dest>source, compare length with dest-source
+    asm("bls mem_move_fore ");				// if dest<source or length<=dest-source do forwards aligned copy
+    asm("add r0, r0, r2 ");
+    asm("add r1, r1, r2 ");
+    asm("b mem_move_back ");				// Backwards aligned copy
+    }
+
+
+
+
+// See header file e32cmn.h for the in-source documentation.
+extern "C" EXPORT_C __NAKED__ TAny* memmove(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+	{
+	KMEMMOVEHOOK
+	// fall through
+	}
+
+
+
+// See header file e32cmn.h for the in-source documentation.
+extern "C" EXPORT_C __NAKED__ TAny* memcpy(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+    {
+    KMEMCPYHOOK
+//
+// Check for zero length or source and target being the same
+//
+    asm("	cmp		r2, #0 ");				// zero length?
+    asm("	subnes	r3, r0, r1 ");			// if not, r3 = dest-source
+	__JUMP(eq,lr);							// if zero length or dest=source, nothing to do
+	asm("	cmphi	r2, r3 ");				// if dest>source compare length to dest-source
+	asm("	movhi	r3, #0 ");				// if dest>source and length>dest-source need to go backwards - set r3=0
+//
+//	If <16 bytes, just do byte moves
+//
+    asm("	cmp		r2,	#15 ");
+	asm("	bhi		main_copy ");
+
+	asm("	ldrb	r12, [r0] ");			// read dest so it's in cache - avoid lots of single accesses to external memory
+	asm("	sub		r12, r0, #1 ");
+	asm("	ldrb	r12, [r12, r2] ");		// read dest+length-1
+	asm("	cmp		r3, #0 ");
+	asm("	beq		small_copy_back ");		// r3=0 means go backwards
+
+	asm("small_copy_fwd: ");
+	asm("	mov		r3, r0 ");
+	asm("	adr		r12, small_copy_fwd_end ");
+	asm("	sub		pc, r12, r2, lsl #3 ");
+
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("	ldrb	r12, [r1], #1 ");
+	asm("	strb	r12, [r3], #1 ");
+	asm("small_copy_fwd_end: ");
+	__JUMP(,lr);
+
+	asm("small_copy_back: ");
+	asm("	add		r3, r0, r2 ");
+	asm("	add		r1, r1, r2 ");
+	asm("	adr		r12, small_copy_back_end ");
+	asm("	sub		pc, r12, r2, lsl #3 ");
+
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("	ldrb	r12, [r1, #-1]! ");
+	asm("	strb	r12, [r3, #-1]! ");
+	asm("small_copy_back_end: ");
+	__JUMP(,lr);
+
+	
+	asm("main_copy: ");
+	PLD(1);											// preload first two cache lines
+	PLD_ioff(1, 32);
+	asm("	stmfd	sp!, {r0,r4-r11,lr} ");			// r0 == dest, r1 == src, r2 == len
+	asm("	cmp		r3, #0 ");
+	asm("	beq		copy_back ");					// we must go backwards
+    asm("   movs	r3, r0, lsl #30 ");				// check destination word aligned
+	asm("   bne		dest_unaligned_fore ");
+
+//
+// Normal copy forwards. r0 should point to end address on exit
+// Destination now word-aligned; if source is also word-aligned, do aligned copy.
+//	
+	asm("dest_aligned_fore: ");
+    asm("   ands	r12, r1, #3 ");		// r12=alignment of source
+    asm("   bne		copy_fwd_nonaligned ");
+
+//
+// We are now word aligned, at least 13 bytes to do
+//
+	
+    asm("mem_move_fore:");
+//
+// superalign
+//
+    asm("	movs	r4, r0, lsl #27 ");		 		 		// destination alignment into r4
+	asm("	beq		f_al_already_aligned ");				// fast path
+	asm("	rsb		r4, r4, #0 ");							// bytes required to align destination to 32
+	asm("	cmp		r2, r4, lsr #27 ");						// check that many remaining
+	asm("	blo		its_smaller_fore ");					// if too short, just stick with word alignment
+	asm("	msr		cpsr_flg, r4 ");		 		 		// destination alignment into N, Z, C flags
+															// do word moves to align destination
+	asm("	ldrcs	lr, [r1], #4 ");						// C flag == 1 word (we are already word aligned)
+	asm("	ldmeqia	r1!, {r3,r9} ");						// Z flag == 2 words
+	asm("	ldmmiia	r1!, {r5-r8} ");						// N flag == 4 words, destination now 32 byte aligned
+	asm("	sub		r2, r2, r4, lsr #27 ");		 			// adjust length
+	asm("	strcs	lr, [r0], #4 ");						// destination now 8 byte aligned
+	asm("	stmeqia	r0!, {r3,r9} ");						// destination now 16 byte aligned
+	asm("	stmmiia	r0!, {r5-r8} ");						// destination now 32 byte aligned	
+
+	asm("f_al_already_aligned: ");
+	asm("	cmp		r2, #64 ");
+	asm("	bhs		large_copy_fore ");
+//
+// Less than 64 bytes to go...
+//	
+    asm("its_smaller_fore:");
+    asm("	movs	ip, r2, lsl #26 ");		// length bits 5, 4, 3, 2 into N, Z, C, V
+	asm("	beq		mem_copy_end ");		// skip if remaining length zero
+    asm("	msr		cpsr_flg, ip ");
+    asm("	ldmmiia	r1!, {r3-r10} ");
+    asm("	stmmiia	r0!, {r3-r10} ");		// copy 32	
+    asm("	ldmeqia	r1!, {r3-r6} ");
+    asm("	ldmcsia	r1!, {r7-r8} ");
+    asm("	ldrvs	r9, [r1], #4 ");
+    asm("	stmeqia	r0!, {r3-r6} ");		// copy 16
+    asm("	stmcsia	r0!, {r7-r8} ");		// copy 8
+    asm("	strvs	r9, [r0], #4 ");		// copy 4
+
+    asm("	movs	ip, r2, lsl #30 ");	
+	asm("	bne		smallest_copy_fore ");
+	
+	asm("mem_copy_end: ");
+	__POPRET("r0,r4-r11,");
+
+	
+//
+// Less than 4 bytes to go...
+//
+	
+	asm("smallest_copy_fore: ");
+    asm("	msr		cpsr_flg, ip ");
+    asm("	ldrmih	r3, [r1], #2 ");
+    asm("	ldreqb	r4, [r1], #1 ");
+    asm("	strmih	r3, [r0], #2 ");		// copy 2
+    asm("	streqb	r4, [r0], #1 ");		// copy 1
+	__POPRET("r0,r4-r11,");
+
+	
+//
+// Do byte moves if necessary to word-align destination
+//
+	asm("dest_unaligned_fore: ");
+	asm("	rsb		r3, r3, #0 ");
+	asm("	msr		cpsr_flg, r3 ");
+	asm("	ldrmib	r4, [r1], #1 ");				// move bytes to align destination
+	asm("	ldrmib	r5, [r1], #1 ");
+	asm("	ldreqb	r6, [r1], #1 ");
+	asm("	sub		r2, r2, r3, lsr #30 ");			// adjust length, at least 13 bytes remaining
+	asm("	strmib	r4, [r0], #1 ");
+	asm("	strmib	r5, [r0], #1 ");
+	asm("	streqb	r6, [r0], #1 ");
+	asm("   b		dest_aligned_fore ");
+
+	
+//
+//	Large copy, length >= 64
+//
+	
+	asm("large_copy_fore: ");
+	asm("	movs	ip, r2, lsr #6 ");						// ip = number of 64 blocks to copy
+	asm("1: ");
+	PLD_ioff(1, 32);
+	PLD_ioff(1, 64);
+    asm("	ldmia	r1!, {r3-r10} ");		// Copy 64
+    asm("	stmia	r0!, {r3-r10} "); 
+    asm("	ldmia	r1!, {r3-r10} ");
+    asm("	subs	ip, ip, #1 ");
+    asm("	stmia	r0!, {r3-r10} "); 	
+	asm("	bne		1b ");		
+	asm("	and		r2, r2, #63 ");
+	asm("	b		its_smaller_fore ");
+
+	
+//
+// Forward unlaigned copy
+//	
+	
+	asm("copy_fwd_nonaligned:");
+//
+// superalign
+//	
+	asm("	bic		r1, r1, #3 ");					// align source
+	asm("	ldr		r11, [r1], #4 ");				// get first word
+	asm("	mov		r12, r12, lsl #3 ");			// r12 = 8*source alignment
+	asm("	ands	r4, r0, #31 ");					// destination alignment into r4
+	asm("	beq		medium_unal_copy ");			// skip if already aligned
+	asm("	rsb		r4, r4, #32 ");					// r4 = bytes to align dest to 32
+	asm("	cmp		r2, r4 ");						// check if length big enough to align to 32
+	asm("	blo		copy_fwd_remainder ");			// skip if too small
+	asm("	sub		r2, r2, r4 ");					// adjust length
+	asm("	rsb		r3, r12, #32 ");				// r3 = 32 - 8*source alignment
+
+	asm("1: ");
+	asm("	mov		r5, r11, lsr r12 ");			// r5 = part of previous source word required to make destination word
+	asm("	ldr		r11, [r1], #4 ");				// get next word
+	asm("	subs	r4, r4, #4 ");					// 4 bytes less to do
+	asm("	orr		r5, r5, r11, lsl r3 ");			// form next destination word
+	asm("	str		r5, [r0], #4 ");				// and store it
+	asm("	bne		1b ");							// loop until destination 32 byte aligned
+
+	asm("medium_unal_copy: ");						// destination now aligned to 32 bytes
+	asm("	movs	lr, r2, lsr #5 ");				// lr=number of 32-byte blocks
+	asm("	beq		copy_fwd_remainder ");			// skip if length < 32
+
+	asm("	cmp		r12, #16 ");
+	asm("	beq		copy_fwd_nonaligned_2 ");		// branch if source = 2 mod 4
+	asm("	bhi		copy_fwd_nonaligned_3 ");		// branch if source = 3 mod 4, else source = 1 mod 4
+
+// source = 1 mod 4
+	asm("copy_fwd_nonaligned_1: ");
+	asm("	mov		r3, r11, lsr #8 ");
+	asm("	ldmia	r1!, {r4-r11} ");
+	PLD_ioff(1, 32);
+	asm("	subs	lr, lr, #1 ");
+	asm("	orr		r3, r3, r4, lsl #24 ");
+	asm("	mov		r4, r4, lsr #8 ");
+	asm("	orr		r4, r4, r5, lsl #24 ");
+	asm("	mov		r5, r5, lsr #8 ");
+	asm("	orr		r5, r5, r6, lsl #24 ");
+	asm("	mov		r6, r6, lsr #8 ");
+	asm("	orr		r6, r6, r7, lsl #24 ");
+	asm("	mov		r7, r7, lsr #8 ");
+	asm("	orr		r7, r7, r8, lsl #24 ");
+	asm("	mov		r8, r8, lsr #8 ");
+	asm("	orr		r8, r8, r9, lsl #24 ");
+	asm("	mov		r9, r9, lsr #8 ");
+	asm("	orr		r9, r9, r10, lsl #24 ");
+	asm("	mov		r10, r10, lsr #8 ");
+	asm("	orr		r10, r10, r11, lsl #24 ");
+	asm("	stmia	r0!, {r3-r10} ");
+	asm("	bne		copy_fwd_nonaligned_1 ");
+	asm("	b		copy_fwd_remainder ");
+
+// source = 2 mod 4
+	asm("copy_fwd_nonaligned_2: ");
+	asm("	mov		r3, r11, lsr #16 ");
+	asm("	ldmia	r1!, {r4-r11} ");
+	PLD_ioff(1, 32);
+	asm("	subs	lr, lr, #1 ");
+	asm("	orr		r3, r3, r4, lsl #16 ");
+	asm("	mov		r4, r4, lsr #16 ");
+	asm("	orr		r4, r4, r5, lsl #16 ");
+	asm("	mov		r5, r5, lsr #16 ");
+	asm("	orr		r5, r5, r6, lsl #16 ");
+	asm("	mov		r6, r6, lsr #16 ");
+	asm("	orr		r6, r6, r7, lsl #16 ");
+	asm("	mov		r7, r7, lsr #16 ");
+	asm("	orr		r7, r7, r8, lsl #16 ");
+	asm("	mov		r8, r8, lsr #16 ");
+	asm("	orr		r8, r8, r9, lsl #16 ");
+	asm("	mov		r9, r9, lsr #16 ");
+	asm("	orr		r9, r9, r10, lsl #16 ");
+	asm("	mov		r10, r10, lsr #16 ");
+	asm("	orr		r10, r10, r11, lsl #16 ");
+	asm("	stmia	r0!, {r3-r10} ");
+	asm("	bne		copy_fwd_nonaligned_2 ");
+	asm("	b		copy_fwd_remainder ");
+
+// source = 3 mod 4
+	asm("copy_fwd_nonaligned_3: ");
+	asm("	mov		r3, r11, lsr #24 ");
+	asm("	ldmia	r1!, {r4-r11} ");
+	PLD_ioff(1, 32);
+	asm("	subs	lr, lr, #1 ");
+	asm("	orr		r3, r3, r4, lsl #8 ");
+	asm("	mov		r4, r4, lsr #24 ");
+	asm("	orr		r4, r4, r5, lsl #8 ");
+	asm("	mov		r5, r5, lsr #24 ");
+	asm("	orr		r5, r5, r6, lsl #8 ");
+	asm("	mov		r6, r6, lsr #24 ");
+	asm("	orr		r6, r6, r7, lsl #8 ");
+	asm("	mov		r7, r7, lsr #24 ");
+	asm("	orr		r7, r7, r8, lsl #8 ");
+	asm("	mov		r8, r8, lsr #24 ");
+	asm("	orr		r8, r8, r9, lsl #8 ");
+	asm("	mov		r9, r9, lsr #24 ");
+	asm("	orr		r9, r9, r10, lsl #8 ");
+	asm("	mov		r10, r10, lsr #24 ");
+	asm("	orr		r10, r10, r11, lsl #8 ");
+	asm("	stmia	r0!, {r3-r10} ");
+	asm("	bne		copy_fwd_nonaligned_3 ");
+
+// <32 bytes to go, source alignment could be 1, 2 or 3 mod 4
+// r12 = 8 * (source mod 4)
+	asm("copy_fwd_remainder: ");
+	asm("	ands	r4, r2, #0x1c ");			// r4 = 4*number of words left
+	asm("	beq		2f ");						// skip if none
+	asm("	rsb		r3, r12, #32 ");			// r3 = 32 - 8*source alignment
+
+	asm("1: ");
+	asm("	mov		r5, r11, lsr r12 ");		// r5 = part of previous source word required to make destination word
+	asm("	ldr		r11, [r1], #4 ");			// get next word
+	asm("	subs	r4, r4, #4 ");				// 4 bytes less to do
+	asm("	orr		r5, r5, r11, lsl r3 ");		// form next destination word
+	asm("	str		r5, [r0], #4 ");			// and store it
+	asm("	bne		1b ");						// loop until destination 32 byte aligned
+
+	asm("2: ");
+	asm("	sub		r1, r1, #4 ");
+	asm("	add		r1, r1, r12, lsr #3 ");		// r1 = real unaligned source address
+	asm("	tst		r2, #2 ");					// 2 bytes left?
+	asm("	ldrneb	r5, [r1], #1 ");			// copy 2
+	asm("	strneb	r5, [r0], #1 ");
+	asm("	ldrneb	r5, [r1], #1 ");
+	asm("	strneb	r5, [r0], #1 ");
+	asm("	tst		r2, #1 ");					// 1 byte left?
+	asm("	ldrneb	r5, [r1], #1 ");			// copy 1
+	asm("	strneb	r5, [r0], #1 ");
+	__POPRET("r0,r4-r11,");
+
+	
+//
+// Source is before destination and they overlap, so need to copy backwards
+//
+	
+    asm("copy_back:");
+	asm("	add		r0, r0, r2 ");				// r0=last dest address+1
+	asm("	add		r1, r1, r2 ");				// r1=last source address+1
+	PLD_noff(1, 33);							// preload last two cache lines
+	PLD_noff(1, 1);
+
+    asm("	movs	r3, r0, lsl #30 ");			// check destination word aligned
+	asm("	bne		dest_unaligned_back ");
+	
+	asm("dest_aligned_back: ");
+	asm("	ands	r12, r1, #3 ");					// r12=alignment of source
+    asm("	bne		copy_back_nonaligned ");
+
+//
+// Backwards copying, addresses both word aligned, at least 13 bytes to go
+//
+	
+    asm("mem_move_back:");
+//
+// superalign
+// 
+	asm("	movs	r4, r0, lsl #27 ");					// bytes required to align destination to 32
+	asm("	beq		bal_already_aligned ");				// skip if already aligned to 32
+	asm("	cmp		r2, r4, lsr #27 ");					// check that many remaining
+	asm("	blo		its_smaller_back ");				// if too short, just stick with word alignment
+	asm("	msr		cpsr_flg, r4 ");		 		 	// destination alignment into N, Z, C flags
+														// do word moves to align destination
+	asm("	ldrcs	lr, [r1, #-4]! ");					// C flag == 1 word (we are already word aligned)
+	asm("	ldmeqdb	r1!, {r3,r9} ");					// Z flag == 2 words
+	asm("	ldmmidb	r1!, {r5-r8} ");
+	asm("	sub		r2, r2, r4, lsr #27 ");		 		// adjust length
+	asm("	strcs	lr, [r0, #-4]! ");					// destination now 8 byte aligned
+	asm("	stmeqdb	r0!, {r3,r9} ");					// destination now 16 byte aligned
+	asm("	stmmidb	r0!, {r5-r8} ");					// N flag == 4 words, destination now 32 byte aligned
+
+	asm("bal_already_aligned: ");
+	asm("	cmp		r2, #64 ");
+	asm("	bhs		large_copy_back ");
+//
+// Less than 64 bytes to go
+//
+    asm("its_smaller_back: ");
+    asm("	movs	ip, r2, lsl #26 ");		// r2 = remaining length (<256) << 24
+	asm("	beq		mem_copy_end2 ");		// skip if remaining length zero
+    asm("	msr		cpsr_flg, ip ");
+    asm("	ldmmidb	r1!, {r3-r10} ");
+    asm("	stmmidb	r0!, {r3-r10} ");		// copy 32
+    asm("	ldmeqdb	r1!, {r3-r6} ");
+    asm("	ldmcsdb	r1!, {r7,r8} ");
+    asm("   ldrvs	r9, [r1, #-4]! ");
+    asm("	stmeqdb	r0!, {r3-r6} ");		// copy 16
+    asm("	stmcsdb	r0!, {r7,r8} ");		// copy 8
+    asm("   strvs	r9, [r0, #-4]! ");		// copy 4
+	
+    asm("	movs	ip, r2, lsl #30 ");
+	asm("	bne		smallest_copy_back ");
+
+	asm("mem_copy_end2: ");
+	__POPRET("r0,r4-r11,");
+
+	
+//
+// Less than 4 bytes to go...
+//
+	
+	asm("smallest_copy_back: ");
+    asm("	msr		cpsr_flg, ip ");
+    asm("	ldrmih	r3, [r1, #-2]! ");
+    asm("	ldreqb	r4, [r1, #-1]! ");
+    asm("	strmih	r3, [r0, #-2]! ");		// copy 2
+    asm("	streqb	r4, [r0, #-1]! ");		// copy 1
+	__POPRET("r0,r4-r11,");
+	
+
+//
+// Do byte moves if necessary to word-align destination
+//
+	asm("dest_unaligned_back: ");
+	asm("	msr		cpsr_flg, r3 ");				// destination alignment in r3 into N,Z flags
+	asm("	ldrmib	r4, [r1, #-1]! ");				// do byte moves to align destination
+	asm("	ldrmib	r5, [r1, #-1]! ");
+	asm("	ldreqb	r6, [r1, #-1]! ");
+	asm("	sub		r2, r2, r3, lsr #30 ");			// adjust length, at least 13 bytes remaining
+	asm("	strmib	r4, [r0, #-1]! ");
+	asm("	strmib	r5, [r0, #-1]! ");
+	asm("	streqb	r6, [r0, #-1]! ");
+	asm("	b		dest_aligned_back ");
+
+
+//
+//	Large backwards copy, length >= 64
+//	
+
+	asm("large_copy_back: ");
+    asm("	movs	ip, r2, lsr #6 ");
+	asm("1: ");
+	PLD_noff(1, 65);
+	PLD_noff(1, 33);
+    asm("	ldmdb	r1!, {r3-r10} ");		// Copy 64
+    asm("	stmdb	r0!, {r3-r10} "); 
+    asm("	ldmdb	r1!, {r3-r10} ");
+    asm("	subs	ip, ip, #1 ");
+    asm("	stmdb	r0!, {r3-r10} "); 
+	asm("	bne		1b ");		
+	asm("	and		r2, r2, #63 ");
+	asm("	b		its_smaller_back ");
+
+//
+// Backwards unlaigned copy
+//	
+
+	asm("copy_back_nonaligned: ");
+//
+// superalign
+//
+	asm("	bic		r1, r1, #3 ");					// align source
+	asm("	ldr		r3, [r1] ");					// get first word
+	asm("	mov		r12, r12, lsl #3 ");			// r12 = 8*source alignment
+	asm("	ands	r4, r0, #31 ");					// r4 = bytes to align dest to 32
+	asm("	beq		bunal_already_aligned ");		// skip if already aligned
+	asm("	cmp		r2, r4 ");						// check if length big enough to align to 32
+	asm("	blo		copy_back_remainder ");			// skip if too small
+	asm("	sub		r2, r2, r4 ");					// adjust length
+	asm("	rsb		r6, r12, #32 ");				// r6 = 32 - 8*source alignment
+
+	asm("1: ");
+	asm("	mov		r5, r3, lsl r6 ");				// r5 = part of previous source word required to make destination word
+	asm("	ldr		r3, [r1, #-4]! ");				// get next word
+	asm("	subs	r4, r4, #4 ");					// 4 bytes less to do
+	asm("	orr		r5, r5, r3, lsr r12 ");			// form next destination word
+	asm("	str		r5, [r0, #-4]! ");				// and store it
+	asm("	bne		1b ");							// loop until destination 32 byte aligned
+
+	asm("bunal_already_aligned: ");					// destination now aligned to 32 bytes
+	asm("	movs	lr, r2, lsr #5 ");				// lr=number of 32-byte blocks
+	asm("	beq		copy_back_remainder ");			// skip if length < 32
+
+	asm("	cmp		r12, #16 ");
+	asm("	beq		copy_back_nonaligned_2 ");		// branch if source = 2 mod 4
+	asm("	bhi		copy_back_nonaligned_3 ");		// branch if source = 3 mod 4, else source = 1 mod 4
+
+// source = 1 mod 4
+	asm("copy_back_nonaligned_1: ");
+	asm("	mov		r11, r3, lsl #24 ");
+	asm("	ldmdb	r1!, {r3-r10} ");
+	PLD_noff(1, 64);
+	asm("	orr		r11, r11, r10, lsr #8 ");
+	asm("	mov		r10, r10, lsl #24 ");
+	asm("	orr		r10, r10, r9, lsr #8 ");
+	asm("	mov		r9, r9, lsl #24 ");
+	asm("	orr		r9, r9, r8, lsr #8 ");
+	asm("	mov		r8, r8, lsl #24 ");
+	asm("	orr		r8, r8, r7, lsr #8 ");
+	asm("	mov		r7, r7, lsl #24 ");
+	asm("	orr		r7, r7, r6, lsr #8 ");
+	asm("	mov		r6, r6, lsl #24 ");
+	asm("	orr		r6, r6, r5, lsr #8 ");
+	asm("	mov		r5, r5, lsl #24 ");
+	asm("	orr		r5, r5, r4, lsr #8 ");
+	asm("	mov		r4, r4, lsl #24 ");
+	asm("	orr		r4, r4, r3, lsr #8 ");
+	asm("	stmdb	r0!, {r4-r11} ");
+	asm("	subs	lr, lr, #1 ");
+	asm("	bne		copy_back_nonaligned_1 ");
+	asm("	b		copy_back_remainder ");
+
+// source = 2 mod 4
+	asm("copy_back_nonaligned_2: ");
+	asm("	mov		r11, r3, lsl #16 ");
+	asm("	ldmdb	r1!, {r3-r10} ");
+	PLD_noff(1, 64);
+	asm("	orr		r11, r11, r10, lsr #16 ");
+	asm("	mov		r10, r10, lsl #16 ");
+	asm("	orr		r10, r10, r9, lsr #16 ");
+	asm("	mov		r9, r9, lsl #16 ");
+	asm("	orr		r9, r9, r8, lsr #16 ");
+	asm("	mov		r8, r8, lsl #16 ");
+	asm("	orr		r8, r8, r7, lsr #16 ");
+	asm("	mov		r7, r7, lsl #16 ");
+	asm("	orr		r7, r7, r6, lsr #16 ");
+	asm("	mov		r6, r6, lsl #16 ");
+	asm("	orr		r6, r6, r5, lsr #16 ");
+	asm("	mov		r5, r5, lsl #16 ");
+	asm("	orr		r5, r5, r4, lsr #16 ");
+	asm("	mov		r4, r4, lsl #16 ");
+	asm("	orr		r4, r4, r3, lsr #16 ");
+	asm("	stmdb	r0!, {r4-r11} ");
+	asm("	subs	lr, lr, #1 ");
+	asm("	bne		copy_back_nonaligned_2 ");
+	asm("	b		copy_back_remainder ");
+
+// source = 3 mod 4
+	asm("copy_back_nonaligned_3: ");
+	asm("	mov		r11, r3, lsl #8 ");
+	asm("	ldmdb	r1!, {r3-r10} ");
+	PLD_noff(1, 64);
+	asm("	orr		r11, r11, r10, lsr #24 ");
+	asm("	mov		r10, r10, lsl #8 ");
+	asm("	orr		r10, r10, r9, lsr #24 ");
+	asm("	mov		r9, r9, lsl #8 ");
+	asm("	orr		r9, r9, r8, lsr #24 ");
+	asm("	mov		r8, r8, lsl #8 ");
+	asm("	orr		r8, r8, r7, lsr #24 ");
+	asm("	mov		r7, r7, lsl #8 ");
+	asm("	orr		r7, r7, r6, lsr #24 ");
+	asm("	mov		r6, r6, lsl #8 ");
+	asm("	orr		r6, r6, r5, lsr #24 ");
+	asm("	mov		r5, r5, lsl #8 ");
+	asm("	orr		r5, r5, r4, lsr #24 ");
+	asm("	mov		r4, r4, lsl #8 ");
+	asm("	orr		r4, r4, r3, lsr #24 ");
+	asm("	stmdb	r0!, {r4-r11} ");
+	asm("	subs	lr, lr, #1 ");
+	asm("	bne		copy_back_nonaligned_3 ");
+
+// <32 bytes to go, source alignment could be 1, 2 or 3 mod 4
+// r12 = 8 * (source mod 4)
+	asm("copy_back_remainder: ");
+	asm("	ands	r4, r2, #0x1c ");			// r4 = 4*number of words left
+	asm("	beq		2f ");						// skip if none
+	asm("	rsb		r6, r12, #32 ");			// r6 = 32 - 8*source alignment
+
+	asm("1: ");
+	asm("	mov		r5, r3, lsl r6 ");			// r5 = part of previous source word required to make destination word
+	asm("	ldr		r3, [r1, #-4]! ");			// get next word
+	asm("	subs	r4, r4, #4 ");				// 4 bytes less to do
+	asm("	orr		r5, r5, r3, lsr r12 ");		// form next destination word
+	asm("	str		r5, [r0, #-4]! ");			// and store it
+	asm("	bne		1b ");						// loop until destination 32 byte aligned
+
+	asm("2: ");
+	asm("	add		r1, r1, r12, lsr #3 ");		// r1 = real unaligned source address
+	asm("	tst		r2, #2 ");					// 2 bytes left?
+	asm("	ldrneb	r3, [r1, #-1]! ");			// copy 2
+	asm("	strneb	r3, [r0, #-1]! ");
+	asm("	ldrneb	r3, [r1, #-1]! ");
+	asm("	strneb	r3, [r0, #-1]! ");
+	asm("	tst		r2, #1 ");					// 1 byte left?
+	asm("	ldrneb	r3, [r1, #-1]! ");			// copy 1
+	asm("	strneb	r3, [r0, #-1]! ");
+	__POPRET("r0,r4-r11,");
+    }
+
+#endif  // USE_REPLACEMENT_MEMCPY
+
+
+#ifndef __KERNEL_MODE__
+#ifdef __GCC32__ 
+/**
+Compares a block of data at one specified location with a block of data at 
+another specified location.
+
+The comparison proceeds on a byte for byte basis, the result of the comparison 
+is based on the difference of the first bytes to disagree.
+
+The data at the two locations are equal if they have the same length and content. 
+Where the lengths are different and the shorter section of data is the same 
+as the first part of the longer section of data, the shorter is considered 
+to be less than the longer.
+
+@param aLeft   A pointer to the first (or left) block of 8 bit data
+               to be compared.
+@param aLeftL  The length of the first (or left) block of data to be compared,  
+               i.e. the number of bytes.
+@param aRight  A pointer to the second (or right) block of 8 bit data to be 
+               compared.
+@param aRightL The length of the second (or right) block of data to be compared 
+               i.e. the number of bytes.
+               
+@return Positive, if the first (or left) block of data is greater than the 
+        second (or right) block of data.
+        Negative, if the first (or left) block of data is less than the
+        second (or right) block of data.
+        Zero, if both the first (or left) and second (or right) blocks of data
+        have the same length and the same content.
+*/
+EXPORT_C __NAKED__ TInt Mem::Compare(const TUint8* /*aLeft*/, TInt /*aLeftL*/, const TUint8* /*aRight*/, TInt /*aRightL*/)
+	{
+	// fall through
+	}
+#endif
+#endif
+
+
+
+// See header file e32cmn.h for the in-source documentation.
+extern "C" EXPORT_C __NAKED__ TInt memcompare(const TUint8* /*aLeft*/, TInt /*aLeftL*/, const TUint8* /*aRight*/, TInt /*aRightL*/)
+//
+// Compares until the smaller of the two lengths is reached.
+// If the lengths differ, returns leftlen-rightlen
+// If a difference is encountered, returns left byte-right byte
+//
+    {
+
+    asm("   stmfd    sp!,{r4,r5,r6,lr}");
+    asm("   mov      r4,r0");
+//
+// Get the shorter of the two lengths, and check for zero length
+//
+    asm("   cmp      r1,r3");
+    asm("   mov      r6,r1");
+    asm("   movge    r6,r3");
+    asm("   cmp      r6,#0");
+    asm("   beq      compare_done");
+    asm("   cmp      r6,#16");
+//
+// Check for aligned buffers for faster comparing if more than 16 bytes
+//
+    asm("   andge    r0,r4,#3");
+    asm("   andge    r5,r2,#3");
+    asm("   addlt    r0,r5,#1");
+    asm("   cmp      r0,r5");
+    asm("   beq      aligned_compare");
+//
+// Get aLeft+Min(aLeftL,aRightL)
+//
+    asm("   add      r6,r4,r6");
+
+    asm("compare_loop:");
+    asm("   ldrb     r0,[r4],#1");
+    asm("   ldrb     r5,[r2],#1");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+    asm("   cmp      r4,r6");
+    asm("   beq      compare_done");
+
+    asm("   ldrb     r0,[r4],#1");
+    asm("   ldrb     r5,[r2],#1");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+    asm("   cmp      r4,r6");
+    asm("   beq      compare_done");
+
+    asm("   ldrb     r0,[r4],#1");
+    asm("   ldrb     r5,[r2],#1");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+    asm("   cmp      r4,r6");
+    asm("   beq      compare_done");
+
+    asm("   ldrb     r0,[r4],#1");
+    asm("   ldrb     r5,[r2],#1");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+    asm("   cmp      r4,r6");
+    asm("   bne      compare_loop");
+//
+// Return difference of lengths
+//
+    asm("compare_done:");
+    asm("   sub      r0,r1,r3");
+
+    asm("compare_exit:");
+	__POPRET("r4-r6,");
+//
+// Compare byte at a time until word aligned...
+//
+    asm("aligned_compare:");
+//
+// Get number of bytes to compare before word alignment reached...and jump to appropriate point
+//
+    asm("   mov      ip,r6");
+    asm("   add      r6,r4,r6");
+    asm("   subs     r0,r0,#1");
+    asm("   movmi    r0,#3");
+    asm("   rsb      r5,r0,#3");
+    asm("   sub      ip,ip,r5");
+    asm("   mov      ip,ip,lsr #2");
+	asm("   add      pc,pc,r0,asl #4");
+    asm("   b        compare_done"); // Never executed
+//
+// Jump here if alignment is 1. Do not use more than 4 instructions without altering above relative jump
+//
+    asm("   ldrb     r0,[r4],#1");
+    asm("   ldrb     r5,[r2],#1");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+//
+// Jump here if alignment is 2. Do not use more than 4 instructions without altering above relative jump
+//
+    asm("   ldrb     r0,[r4],#1");
+    asm("   ldrb     r5,[r2],#1");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+//
+// Jump here if alignment is 3. Do not use more than 4 instructions without altering above relative jump
+//
+    asm("   ldrb     r0,[r4],#1");
+    asm("   ldrb     r5,[r2],#1");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+//
+// Must now be word aligned
+//
+    asm("aligned_compare_loop:");
+    asm("   ldr      r0,[r4],#4");
+    asm("   ldr      r5,[r2],#4");
+    asm("   eors     r0,r0,r5");
+    asm("   bne      word_different");
+    asm("   subs     ip,ip,#1");
+    asm("   bne      aligned_compare_loop");
+//
+// Less than 4 bytes to go...
+//
+    asm("   cmp      r4,r6");
+    asm("   bne      compare_loop");
+    asm("   sub      r0,r1,r3");
+	__POPRET("r4-r6,");
+//
+// A difference encountered while word comparing, find out which byte it was
+//
+    asm("word_different:");
+    asm("   ldrb     r0,[r4,#-4]");
+    asm("   ldrb     r5,[r2,#-4]");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+    asm("   ldrb     r0,[r4,#-3]");
+    asm("   ldrb     r5,[r2,#-3]");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+    asm("   ldrb     r0,[r4,#-2]");
+    asm("   ldrb     r5,[r2,#-2]");
+    asm("   subs     r0,r0,r5");
+	asm("bne compare_exit ");
+//
+// This must be the different byte...
+//
+    asm("   ldrb     r0,[r4,#-1]");
+    asm("   ldrb     r5,[r2,#-1]");
+    asm("   sub      r0,r0,r5");
+	__POPRET("r4-r6,");
+    }
+#endif
+

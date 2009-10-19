@@ -1,0 +1,8 @@
+EXPORTS
+	?CreatePhysicalDevice@@YAPAVDPhysicalDevice@@XZ @ 1 NONAME ; class DPhysicalDevice * CreatePhysicalDevice(void)
+	??0DSimulatedIicBusChannelMasterI2c@@QAE@W4TBusType@DIicBusChannel@@W4TChannelDuplex@2@@Z @ 2 NONAME ; DSimulatedIicBusChannelMasterI2c::DSimulatedIicBusChannelMasterI2c(enum DIicBusChannel::TBusType, enum DIicBusChannel::TChannelDuplex)
+	?DfcFunc@TIicBusSlaveCallback@@CAXPAX@Z @ 3 NONAME ; void TIicBusSlaveCallback::DfcFunc(void *)
+	??0DSimulatedIicBusChannelSlaveI2c@@QAE@W4TBusType@DIicBusChannel@@W4TChannelDuplex@2@@Z @ 4 NONAME ; DSimulatedIicBusChannelSlaveI2c::DSimulatedIicBusChannelSlaveI2c(enum DIicBusChannel::TBusType, enum DIicBusChannel::TChannelDuplex)
+	??0DIicBusChannelMasterSlave@@QAE@W4TBusType@DIicBusChannel@@W4TChannelDuplex@2@PAVDIicBusChannelMaster@@PAVDIicBusChannelSlave@@@Z @ 5 NONAME ; DIicBusChannelMasterSlave::DIicBusChannelMasterSlave(enum DIicBusChannel::TBusType, enum DIicBusChannel::TChannelDuplex, class DIicBusChannelMaster *, class DIicBusChannelSlave *)
+	??0DSimulatedIicBusChannelMasterSlaveI2c@@QAE@W4TBusType@DIicBusChannel@@W4TChannelDuplex@2@PAVDSimulatedIicBusChannelMasterI2c@@PAVDSimulatedIicBusChannelSlaveI2c@@@Z @ 6 NONAME ; DSimulatedIicBusChannelMasterSlaveI2c::DSimulatedIicBusChannelMasterSlaveI2c(enum DIicBusChannel::TBusType, enum DIicBusChannel::TChannelDuplex, class DSimulatedIicBusChannelMasterI2c *, class DSimulatedIicBusChannelSlaveI2c *)
+

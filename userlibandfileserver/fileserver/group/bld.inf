@@ -1,0 +1,62 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32/group/bld.inf
+// File server
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_EXPORTS
+../inc/f32file.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(f32file.h)
+../inc/f32file_private.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32file_private.h)
+../inc/f32file.inl								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(f32file.inl)
+#ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
+../inc/f32file64.h								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(f32file64.h)
+../inc/f32file64.inl							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(f32file64.inl)
+#endif
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+../inc/f32notification.h						SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(f32notification.h)
+#endif
+../inc/f32fsys.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32fsys.h)
+../inc/f32fsys.inl								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32fsys.inl)
+../inc/f32ver.h									SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32ver.h)
+../inc/f32dbg.h									SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32dbg.h)
+../inc/f32image.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32image.h)
+../inc/rofs.h									SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rofs.h)
+../inc/ftlcontrolio.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(ftlcontrolio.h)
+../inc/f32pluginUtils.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32pluginutils.h)
+../inc/F32plugin.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.h)
+../inc/f32plugin.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.inl)
+
+../inc/f32tracedef.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32tracedef.h)
+../inc/utraceefsrv.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(utraceefsrv.h)
+../inc/utraceefile.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(utraceefile.h)
+../rom/f32.iby	 		/epoc32/rom/f32/f32.iby
+
+PRJ_MMPFILES
+
+#if !defined(SMP)
+efsrv
+efile
+runtests
+#endif
+
+ftrace

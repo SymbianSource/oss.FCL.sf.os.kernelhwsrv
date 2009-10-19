@@ -1,0 +1,44 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_loclus.mmp
+// Localisation DLL for the US
+// 
+//
+
+TARGET			t_loclus.dll
+
+TARGETTYPE		dll
+
+
+SOURCEPATH	../locl
+SOURCE			 t_cyus.cpp t_lneng.cpp t_mseng.cpp
+SOURCE			 t_lat1.cpp t_table.cpp t_unic.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+DEFFILE			../../../kernel/eka/~/elocl.def
+
+LIBRARY			euser.lib
+
+UID		0x100039e6 0x100065bb
+VENDORID 0x70000001
+ROMTARGET \sys\bin\T_LOCLUS.DLL //
+RAMTARGET \sys\bin\T_LOCLUS_RAM.DLL //
+
+// Locale dlls shouldn't be paged.
+UNPAGED
+
+CAPABILITY		all
+
+SMPSAFE

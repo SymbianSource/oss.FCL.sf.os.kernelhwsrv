@@ -1,0 +1,8 @@
+# component name "ROM File System"
+
+component	base_f32_srom
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\srom
+notes_source	\component_defs\release.src
+
+ipr E
+

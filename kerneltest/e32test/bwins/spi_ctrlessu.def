@@ -1,0 +1,7 @@
+EXPORTS
+	?CreatePhysicalDevice@@YAPAVDPhysicalDevice@@XZ @ 1 NONAME ; class DPhysicalDevice * CreatePhysicalDevice(void)
+	?DfcFunc@TIicBusSlaveCallback@@CAXPAX@Z @ 2 NONAME ; void TIicBusSlaveCallback::DfcFunc(void *)
+	??0DSimulatedIicBusChannelMasterSpi@@QAE@W4TBusType@DIicBusChannel@@W4TChannelDuplex@2@@Z @ 3 NONAME ; DSimulatedIicBusChannelMasterSpi::DSimulatedIicBusChannelMasterSpi(enum DIicBusChannel::TBusType, enum DIicBusChannel::TChannelDuplex)
+	??0DSimulatedIicBusChannelSlaveSpi@@QAE@W4TBusType@DIicBusChannel@@W4TChannelDuplex@2@@Z @ 4 NONAME ; DSimulatedIicBusChannelSlaveSpi::DSimulatedIicBusChannelSlaveSpi(enum DIicBusChannel::TBusType, enum DIicBusChannel::TChannelDuplex)
+	??0DIicBusChannelMasterSlave@@QAE@W4TBusType@DIicBusChannel@@W4TChannelDuplex@2@PAVDIicBusChannelMaster@@PAVDIicBusChannelSlave@@@Z @ 5 NONAME ; DIicBusChannelMasterSlave::DIicBusChannelMasterSlave(enum DIicBusChannel::TBusType, enum DIicBusChannel::TChannelDuplex, class DIicBusChannelMaster *, class DIicBusChannelSlave *)
+

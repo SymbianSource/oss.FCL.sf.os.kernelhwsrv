@@ -1,0 +1,37 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRJ_TESTEXPORTS
+
+../scripts/f32-fat32-conformance.script				z:/base/conformance/f32/fat32/f32-fat32-conformance.script
+
+../testdata/winscw/f32-fat32-conformance.ini		/epoc32/release/winscw/udeb/z/base/conformance/f32/fat32/f32-fat32-conformance.ini
+../testdata/winscw/f32-fat32-conformance.ini		/epoc32/release/winscw/urel/z/base/conformance/f32/fat32/f32-fat32-conformance.ini
+../testdata/armv5/f32-fat32-conformance.ini			/epoc32/data/z/base/conformance/f32/fat32/f32-fat32-conformance.ini
+
+//pkg
+
+../pkg/t_fat32.pkg									/epoc32/pkg/t_fat32.pkg
+../pkg/tfat32.bat									/epoc32/pkg/tfat32.bat
+
+../scripts/f32-fat32-conformance.script				/epoc32/pkg/conformance/f32/fat32/f32-fat32-conformance.script
+
+../testdata/armv5/f32-fat32-conformance.ini			/epoc32/pkg/conformance/f32/fat32/f32-fat32-conformance.ini
+
+./t_base_f32_fat32.iby								/epoc32/rom/include/t_base_f32_fat32.iby
+
+PRJ_TESTMMPFILES
+t_fat32.mmp

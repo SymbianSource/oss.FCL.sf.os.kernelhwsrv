@@ -1,0 +1,3 @@
+EXPORTS
+	?New@CScreenDriver@@SAPAV1@XZ @ 1 NONAME ; public: static class CScreenDriver * __cdecl CScreenDriver::New(void)
+

@@ -1,0 +1,49 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/euser/eexe_instrumented_heap.mmp
+// 
+//
+
+target			eexe_instrumented_heap.lib
+targettype		lib
+
+#if defined(GCC32)
+ALWAYS_BUILD_AS_ARM
+#endif
+
+macro USE_INSTRUMENTED_HEAP
+
+#if defined(WINS)
+sourcepath		epoc/win32
+#ifdef CW32
+source			uc_cwhelp.cpp
+#endif
+#elif defined(X86)
+sourcepath		epoc/x86
+source			uc_exe.cia
+#elif defined(MARM)
+sourcepath		epoc/arm
+source			uc_exe.cia
+#endif
+source			uc_exe.cpp
+
+USERINCLUDE	../include
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+
+capability		all
+
+VENDORID 0x70000001
+
+SMPSAFE

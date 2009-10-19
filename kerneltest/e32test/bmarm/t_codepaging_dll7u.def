@@ -1,0 +1,3 @@
+EXPORTS
+	GetAddressOfRelocatedDataProxy__FRiRPvT1 @ 1 NONAME R3UNUSED ; GetAddressOfRelocatedDataProxy(int &, void *&, void *&)
+

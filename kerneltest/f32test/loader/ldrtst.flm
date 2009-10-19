@@ -1,0 +1,33 @@
+#
+# Copyright (c) 2009 Nokia Ltd.  All rights reserved.
+#
+
+GDIR:=gen
+
+SRC:=dllt.h dllt.cpp dllt.cia dlltifc.h exet.cpp exetifc.h \
+	exetifc.cpp t_ldrtst.h t_ldrtst.cpp t_ldrtst2.cpp t_ldrtst.mmp t_sfhash.cpp t_hash.h
+
+SOURCE_FILES:=$(addprefix $(TO_BLDINF)/,$(SRC))
+DEST_FILES:=$(addprefix $(TO_BLDINF)/$(GDIR)/,$(SRC))
+
+
+define ldrtest_buildcode
+# Use guard to ensure only generate and build the source once
+ifeq ($(f32test_loader_dlltree_$(call sanitise,$(PROJECT_META))),)
+f32test_loader_dlltree_$(call sanitise,$(PROJECT_META)):=1
+
+$(DEST_FILES): $(TO_BLDINF)/$(GDIR)/% : $(TO_BLDINF)/% $(TO_BLDINF)/$(GDIR)/generated
+	cp -u $$(filter-out %generated,$$^) $$@
+
+$(TO_BLDINF)/$(GDIR)/generated: $(TO_BLDINF)/dlltree.pl $(TO_BLDINF)/dlltree.txt
+	perl $(TO_BLDINF)/dlltree.pl $(TO_BLDINF)/dlltree.txt $(TO_BLDINF)/$(GDIR)
+	touch $$@
+endif
+
+ALL :: $(DEST_FILES) $(TO_BLDINF)/$(GDIR)/generated
+	$(SBS_HOME)/bin/sbs -b $(TO_BLDINF)/$(GDIR)/dlltree.inf -m $(EPOCBLD)/f32test_loader_dlltree.mk -f $(EPOCBLD)/f32test_loader_dlltree.log -c $(SBS_CONFIGURATION)
+
+endef
+
+$(eval $(ldrtest_buildcode))
+

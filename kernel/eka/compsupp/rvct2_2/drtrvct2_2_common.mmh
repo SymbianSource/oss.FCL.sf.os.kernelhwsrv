@@ -1,0 +1,66 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// DRTRVCT2_2_COMMON.MMP
+// 
+//
+
+TARGETTYPE		dll
+
+OPTION ARMCC	--no_exceptions --no_exceptions_unwind
+
+SOURCEPATH		.
+SOURCE			rtabort.cpp 
+SOURCE			rtdiv0.cpp 
+SOURCE			rtexit.cpp 
+SOURCE			rtlib.cpp 
+SOURCE			rtraise.cpp
+SOURCE			drtrvct2_2.cpp
+// global new/delete operators
+SOURCE			rtopnew.cpp rtopdel.cpp
+
+// exception support - from RVCT 2.1 onwards
+// SOURCE			exception_support.cpp
+// default _fp_init definition - should be overridden by fp library
+SOURCE			sftfpini.cpp	
+// dummy for now, needs to go away
+// SOURCE			rte32dll.cpp	
+
+// yuk
+LIBRARY 		scppnwdl.lib euser.lib
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+SYSTEMINCLUDE		../../include
+#endif
+
+START ARMCC
+ARMRT
+ARMINC
+#ifdef MARM_ARMV5
+ARMLIBS			c_t__un.l 
+ARMLIBS			h_t__un.l
+//ARMLIBS		cpprt_t__u.l
+// shouldn't really need this if btod.o wasn't so monolithic....
+#else
+ARMLIBS			c_a__un.l 
+ARMLIBS			h_a__un.l
+//ARMLIBS		cpprt_a__u.l
+// shouldn't really need this if btod.o wasn't so monolithic....
+#endif
+END
+
+capability		all
+VENDORID 0x70000001
+
+SMPSAFE

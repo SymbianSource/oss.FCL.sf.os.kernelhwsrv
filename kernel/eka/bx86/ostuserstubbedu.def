@@ -1,0 +1,22 @@
+EXPORTS
+	?Classification@TTraceContext@@QBEEXZ @ 1 NONAME ; public: unsigned char __thiscall TTraceContext::Classification(void)const 
+	?ComponentId@TTraceContext@@QBEKXZ @ 2 NONAME ; public: unsigned long __thiscall TTraceContext::ComponentId(void)const 
+	?DefaultComponentId@TTraceContext@@SAKXZ @ 3 NONAME ; public: static unsigned long __cdecl TTraceContext::DefaultComponentId(void)
+	?HasProgramCounter@TTraceContext@@QBE?AW4THasProgramCounter@@XZ @ 4 NONAME ; public: enum THasProgramCounter __thiscall TTraceContext::HasProgramCounter(void)const 
+	?HasThreadIdentification@TTraceContext@@QBE?AW4THasThreadIdentification@@XZ @ 5 NONAME ; public: enum THasThreadIdentification __thiscall TTraceContext::HasThreadIdentification(void)const 
+	?IsTraceActive@@YAHABVTTraceContext@@@Z @ 6 NONAME ; int __cdecl IsTraceActive(class TTraceContext const &)
+	?OstPrint@@YAHABVTTraceContext@@ABVTDesC16@@@Z @ 7 NONAME ; int __cdecl OstPrint(class TTraceContext const &,class TDesC16 const &)
+	?OstPrint@@YAHABVTTraceContext@@ABVTDesC8@@@Z @ 8 NONAME ; int __cdecl OstPrint(class TTraceContext const &,class TDesC8 const &)
+	?OstPrintf@@YAHABVTTraceContext@@PBDZZ @ 9 NONAME ; int __cdecl OstPrintf(class TTraceContext const &,char const *,...)
+	?OstPrintf@@YAHABVTTraceContext@@V?$TRefByValue@$$CBVTDesC16@@@@ZZ @ 10 NONAME ; int __cdecl OstPrintf(class TTraceContext const &,class TRefByValue<class TDesC16 const >,...)
+	?OstPrintf@@YAHABVTTraceContext@@V?$TRefByValue@$$CBVTDesC8@@@@ZZ @ 11 NONAME ; int __cdecl OstPrintf(class TTraceContext const &,class TRefByValue<class TDesC8 const >,...)
+	?OstTrace@@YAHABVTTraceContext@@G@Z @ 12 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short)
+	?OstTrace@@YAHABVTTraceContext@@GABVTDesC16@@@Z @ 13 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short,class TDesC16 const &)
+	?OstTrace@@YAHABVTTraceContext@@GABVTDesC8@@@Z @ 14 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short,class TDesC8 const &)
+	?OstTrace@@YAHABVTTraceContext@@GE@Z @ 15 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short,unsigned char)
+	?OstTrace@@YAHABVTTraceContext@@GG@Z @ 16 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short,unsigned short)
+	?OstTrace@@YAHABVTTraceContext@@GK@Z @ 17 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short,unsigned long)
+	?OstTrace@@YAHABVTTraceContext@@GKK@Z @ 18 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short,unsigned long,unsigned long)
+	?OstTrace@@YAHABVTTraceContext@@GPBXH@Z @ 19 NONAME ; int __cdecl OstTrace(class TTraceContext const &,unsigned short,void const *,int)
+	?GroupId@TTraceContext@@QBEEXZ @ 20 NONAME ; public: unsigned char __thiscall TTraceContext::GroupId(void)const 
+

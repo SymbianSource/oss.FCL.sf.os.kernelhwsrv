@@ -1,0 +1,300 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\common\x86\cmem.cia
+// 
+//
+
+#include "common.h"
+
+
+#if defined(__MEM_MACHINE_CODED__)
+extern "C" {
+
+
+// See header file e32cmn.h for the in-source documentation.
+EXPORT_C __NAKED__ TAny* memmove(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+	{
+	asm("push ebx");
+	asm("push esi");
+	asm("push edi");
+	asm("mov edi,[esp+16]");// destination address into edi
+	asm("mov esi,[esp+20]");// source address into esi
+	asm("mov ecx,[esp+24]");// byte count into ecx
+	asm("pushfd");
+
+	asm("mov eax,edi");		// return value
+	asm("cld");				// assume forward copy initially
+	asm("test ecx,ecx");	//
+	asm("jz short memcopy0");// if length=0, nothing to do
+	asm("xor edx,edx");		//
+	asm("cmp edi,esi");		// compare source and dest addresses
+	asm("je short memcopy0");// if equal, nothing to do
+	asm("jc short memcopy1");// if dest<source, must go forwards
+	asm("std");				// else go backwards
+	asm("add esi,ecx");		// and start at end of block
+	asm("add edi,ecx");		//
+	asm("inc edx");			// edx=1 if backwards, 0 if forwards
+	asm("memcopy1:");
+	asm("cmp ecx,16");		// if length<16 don't bother with alignment check
+	asm("jc short memcopy2");//
+	asm("mov ebx,edi");		// ebx = destination address
+	asm("and ebx,3");		// ebx bottom 2 bits = alignment of destination wrt hardware bus
+	asm("jz short memcopy3");// if aligned, proceed with block move
+	asm("or edx,edx");		// check direction of move
+	asm("jnz short memcopy4");// if backwards, ebx = number of byte moves to align destination
+	asm("neg ebx");			// else number of byte moves = 4-ebx
+	asm("add ebx,4");		//
+	asm("memcopy4:");
+	asm("sub ecx,ebx");		// subtract number of bytes from length
+	asm("xchg ecx,ebx");	// temporarily put length in ebx
+	asm("sub edi,edx");		// adjust if backwards move
+	asm("sub esi,edx");		//
+	asm("rep movsb");		// move bytes to align destination
+	asm("add edi,edx");		// adjust if backwards move
+	asm("add esi,edx");		//
+	asm("mov ecx,ebx");		// length back into ecx
+	asm("memcopy3:");
+	asm("mov ebx,ecx");		// save length in ebx
+	asm("shl edx,2");		// adjustment 4 for backwards move
+	asm("shr ecx,2");		// number of dwords to move into ecx
+	asm("sub edi,edx");		// adjust if backwards move
+	asm("sub esi,edx");		//
+	asm("rep movsd");		// perform DWORD block move
+	asm("add edi,edx");		// adjust if backwards move
+	asm("add esi,edx");		//
+	asm("mov ecx,ebx");		// length back into ecx
+	asm("and ecx,3");		// number of remaining bytes to move
+	asm("jz short memcopy0");// if zero, we are finished
+	asm("shr edx,2");		// adjustment 1 for backwards move
+	asm("memcopy2:");		// *** come here for small move
+	asm("sub edi,edx");		// adjust if backwards move
+	asm("sub esi,edx");		//
+	asm("rep movsb");			// move remaining bytes
+
+	asm("memcopy0:");
+	asm("popfd");
+	asm("pop edi");
+	asm("pop esi");
+	asm("pop ebx");
+	asm("ret");				// finished - return value in EAX
+	}
+
+
+// See header file e32cmn.h for the in-source documentation.
+EXPORT_C __NAKED__ TAny* memcpy(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+	{
+	asm("jmp %a0": :"i"(&memmove));
+	}
+
+
+
+
+// See header file e32cmn.h for the in-source documentation.
+EXPORT_C __NAKED__ TAny* wordmove(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/)
+	{
+	asm("push esi");
+	asm("push edi");
+	asm("mov edi,[esp+12]");// destination address into edi
+	asm("mov esi,[esp+16]");// source address into esi
+	asm("mov ecx,[esp+20]");// byte count into ecx
+	asm("pushfd");
+
+	asm("mov eax,edi");		// return value
+	asm("cld");				//
+	asm("test ecx,ecx");	//
+	asm("jz short memmove0");// if length=0, nothing to do
+	asm("cmp edi,esi");		// compare source and dest addresses
+	asm("je short memmove0");// if equal, nothing to do
+	asm("jc short memmove1");// if dest<source, must go forwards
+	asm("std");				// else go backwards
+	asm("lea esi,[esi+ecx-4]"); // and start at end of block - 4
+	asm("lea edi,[edi+ecx-4]");	//
+	asm("memmove1:");
+	asm("shr ecx,2");		// ecx now contains number of dwords to move
+	asm("rep movsd");		// do dword block move
+
+	asm("memmove0:");
+	asm("popfd");
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");				// finished - return value in EAX
+	}
+
+
+
+// See header file e32cmn.h for the in-source documentation.
+EXPORT_C __NAKED__ TAny* memset(TAny* /*aTrg*/, TInt /*aValue*/, unsigned int /*aLength*/)
+	{
+	asm("push edi");
+	asm("mov edi,[esp+8]"); // destination address into edi
+	asm("mov al,[esp+12]");	// fill value into al
+	asm("mov ecx,[esp+16]");// number of bytes to fill into ecx
+	asm("push edi");		// save destination for return value
+	asm("pushfd");
+	asm("cld");				// go forwards through array
+	asm("test ecx,ecx");	//
+	asm("jz short memfill0");// if length zero, nothing to do
+	asm("cmp ecx,8");		// if array very small, just do byte fills
+	asm("jb short memfill1");
+
+	asm("mov ah,al");		// repeat al in all bytes of eax
+	asm("movzx edx,ax");	//
+	asm("shl eax,16");		//
+	asm("or eax,edx");		//
+	asm("mov edx,ecx");		// length into edx
+	asm("mov ecx,4");		// number of byte fills to align = 4-[edi mod 4]
+	asm("sub ecx,edi");		//
+	asm("and ecx,3");		//
+	asm("jz short memfill2");// if already aligned, proceed to dword fill
+	asm("sub edx,ecx");		// subtract alignment bytes from length
+	asm("rep stosb");		// do byte fills to align
+	asm("memfill2:");
+	asm("mov ecx,edx");		// length remaining into ecx
+	asm("shr ecx,2");		// number of dwords to fill into ecx
+	asm("rep stosd");		// perform dword fill
+	asm("mov ecx,edx");		// calculate number of leftover bytes
+	asm("and ecx,3");		// in ecx
+	asm("jz short memfill0");// if none left, exit
+	asm("memfill1:");
+	asm("rep stosb");		// do byte fills to make up correct length
+
+	asm("memfill0:");
+	asm("popfd");
+	asm("pop eax");			// return value
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+
+
+// See header file e32cmn.h for the in-source documentation.
+EXPORT_C __NAKED__ TAny* memclr(TAny* /*aTrg*/, unsigned int /*aLength*/)
+	{
+	asm("push edi");
+	asm("mov edi,[esp+8]");	// destination address into edi
+	asm("mov ecx,[esp+12]");// number of bytes to fill into ecx
+	asm("xor eax, eax");	// fill value
+	asm("push edi");		// save destination for return value
+	asm("pushfd");
+	asm("cld");				// go forwards through array
+	asm("test ecx,ecx");	//
+	asm("jz short memclr0");// if length zero, nothing to do
+	asm("cmp ecx,8");		// if array very small, just do byte fills
+	asm("jb short memclr1");
+
+	asm("mov edx,ecx");		// length into edx
+	asm("mov ecx,4");		// number of byte fills to align = 4-[edi mod 4]
+	asm("sub ecx,edi");		//
+	asm("and ecx,3");		//
+	asm("jz short memclr2");// if already aligned, proceed to dword fill
+	asm("sub edx,ecx");		// subtract alignment bytes from length
+	asm("rep stosb");		// do byte fills to align
+	asm("memclr2:");
+	asm("mov ecx,edx");		// length remaining into ecx
+	asm("shr ecx,2");		// number of dwords to fill into ecx
+	asm("rep stosd");		// perform dword fill
+	asm("mov ecx,edx");		// calculate number of leftover bytes
+	asm("and ecx,3");		// in ecx
+	asm("jz short memclr0");// if none left, exit
+	asm("memclr1:");
+	asm("rep stosb");		// do byte fills to make up correct length
+
+	asm("memclr0:");
+	asm("popfd");
+	asm("pop eax");			// return value
+	asm("pop edi");
+	asm("ret");
+	}
+
+
+
+//EXPORT_C __NAKED__ TInt Mem::Compare(const TUint8* /*aLeft*/, TInt /*aLeftL*/, const TUint8* /*aRight*/, TInt /*aRightL*/)
+//	{
+//	asm("jmp _memcompare");
+//	}
+
+// See header file e32cmn.h for the in-source documentation.
+EXPORT_C __NAKED__ TInt memcompare(const TUint8* /*aLeft*/, TInt /*aLeftL*/, const TUint8* /*aRight*/, TInt /*aRightL*/)
+	{
+	asm("push esi");
+	asm("push edi");
+	asm("mov esi,[esp+12]");// left buffer address into esi
+	asm("mov ecx,[esp+16]");// left buffer length into ecx
+	asm("mov edi,[esp+20]");// right buffer address into edi
+	asm("mov eax,[esp+24]");// right buffer length into eax
+	asm("pushfd");
+
+	asm("mov edx,ecx");		// edx = left len
+	asm("cld");				// go forwards through arrays
+	asm("sub edx,eax");		// edx = [left len - right len]
+	asm("jbe short memcmp1");//
+	asm("mov ecx,eax");		// ecx = min[ left len, right len ]
+	asm("memcmp1:");
+	asm("mov eax,edx");		// save length difference for later use
+	asm("test ecx,ecx");	//
+	asm("jz short memcmp0");// if length=0, nothing to compare
+	asm("cmp ecx,8");		// for small buffers don't bother with alignment check
+	asm("jc short memcmp2");//
+	asm("mov edx,ecx");		// comparison length into edx
+	asm("mov ecx,4");		// number of byte compares to align left ptr = 4-[esi mod 4]
+	asm("sub ecx,esi");		//
+	asm("and ecx,3");		// number of byte compares to align in ecx
+	asm("jz short memcmp3");// if already aligned, proceed with dword compare
+	asm("sub edx,ecx");		// subtract number of byte compares from length
+	asm("repe cmpsb");		// do byte compares to align
+	asm("jne short memcmp4");// if a difference was found, exit
+	asm("memcmp3:");
+	asm("mov ecx,edx");		// length back into ecx
+	asm("shr ecx,2");		// number of dwords to compare
+	asm("repe cmpsd");		// perform DWORD block comparison
+	asm("je short memcmp5");// if no difference found, proceed with leftover bytes
+	asm("mov eax,[esi-4]");	// differing left dword into eax [first char in al]
+	asm("mov edx,[edi-4]");	// differing right dword into edx [first char in dl]
+	asm("cmp al,dl");		// compare 1st chars
+	asm("jne short memcmp7");// if difference found, exit
+	asm("cmp ah,dh");		// compare 2nd chars
+	asm("jne short memcmp6");// if difference found, exit
+	asm("shr eax,16");		// 3rd and 4th chars into al, ah respectively
+	asm("shr edx,16");		// 3rd and 4th chars into dl, dh respectively
+	asm("cmp al,dl");		// compare 3rd chars
+	asm("jne short memcmp7");// if difference found, exit, else 4th chars must differ
+	asm("memcmp6:");
+	asm("mov al,ah");		// differing bytes into al and dl
+	asm("mov dl,dh");		//
+	asm("memcmp7:");
+	asm("movzx eax,al");	// zero extend al into eax
+	asm("movzx edx,dl");	// zero extend dl into edx
+	asm("jmp short memcmp8");// and exit with eax = difference of bytes
+	asm("memcmp5:");
+	asm("mov ecx,edx");		// length back into ecx
+	asm("and ecx,3");		// number of remaining bytes to compare
+	asm("jz short memcmp0");// if zero, exit with eax=length difference
+	asm("memcmp2:");		// *** come here for small buffers
+	asm("repe cmpsb");		// compare remaining bytes
+	asm("je short memcmp0");// if no difference found, exit with eax=length difference
+	asm("memcmp4:");		// *** come here if a byte has been compared and differs
+	asm("movzx eax,byte ptr [esi-1]");
+	asm("movzx edx,byte ptr [edi-1]");
+	asm("memcmp8:");
+	asm("sub eax,edx");		// return value is difference of bytes
+	
+	asm("memcmp0:");		// *** come here if common initial segment identical
+	asm("popfd");
+	asm("pop edi");
+	asm("pop esi");
+	asm("ret");
+	}
+}
+#endif

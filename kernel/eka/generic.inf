@@ -1,0 +1,36 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/generic.inf
+// This file contains the generic sections of E32 and is included
+// in the main BLD.INF file
+// 
+//
+
+
+PRJ_EXTENSIONS
+start		extension		base/genexec
+
+option		EXTRA_SRC_PATH		$(EXTENSION_ROOT)/kernel
+
+end
+
+PRJ_MMPFILES
+#if defined(GENERIC_MARM) || defined(WINS) || defined(GENERIC_X86)
+
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+kernel/ekll
+#endif
+
+#endif
+

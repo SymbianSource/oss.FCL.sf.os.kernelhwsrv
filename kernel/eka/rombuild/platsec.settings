@@ -1,0 +1,4 @@
+PlatSecDiagnostics ON
+PlatSecEnforcement ON
+PlatSecProcessIsolation ON
+PlatSecEnforceSysBin ON

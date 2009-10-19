@@ -1,0 +1,12 @@
+EXPORTS
+	Read1 @ 1 NONAME
+	Read2 @ 2 NONAME
+	Read3 @ 3 NONAME
+	Read4 @ 4 NONAME
+	Read5 @ 5 NONAME
+	Read6 @ 6 NONAME
+	Read7 @ 7 NONAME
+	Read8 @ 8 NONAME
+	Read9 @ 9 NONAME
+	GetDataAddress @ 10 NONAME
+	GetSizeOfData @ 11 NONAME

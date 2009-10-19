@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?> 
+<build xmlns="http://symbian.com/xml/build" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symbian.com/xml/build http://symbian.com/xml/build/2_0.xsd">
+
+<!--  Extension interfaces : replacements for Template Extension Makefiles  --> 
+
+<interface name="base.flm_ldrtst" extends="Symbian.UserFLM" flm="ldrtst.flm">
+</interface>
+</build>

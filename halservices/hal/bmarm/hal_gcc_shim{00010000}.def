@@ -1,0 +1,4 @@
+EXPORTS
+	Get__3HALQ27HALData10TAttributeRi=export_at_ordinal_1__Fv @ 1 NONAME ; HAL::Get(HALData::TAttribute, int &)
+	Set__3HALQ27HALData10TAttributei=export_at_ordinal_2__Fv @ 2 NONAME ; HAL::Set(HALData::TAttribute, int)
+	GetAll__3HALRiRPQ23HAL6SEntry=export_at_ordinal_3__Fv @ 3 NONAME ; HAL::GetAll(int &, HAL::SEntry *&)

@@ -1,0 +1,112 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! 	@file
+//! 	@SYMTestSuiteName		pbase-f32-sfsrv-publicapi-ram
+//!	@SYMScriptTestEnvironment	This test script requires a basic ROM.
+//! 	@SYMScriptAuthor 		Jaanus Randveer, Runno Sgirka
+//! 	@SYMScriptCreationDate		27/08/2007
+//! 	@SYMScriptDescription		The test script contains API test for the FileNamesIdentical function:
+//!	FileNamesIdentical()
+
+LOAD_SUITE	T_SfSrv
+DELAY 		5000
+
+
+START_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3001
+//! @SYMTestCaseID		PBASE-F32-FileNamesIdentical-PublicApi-3001
+//! @SYMAPI			FileNamesIdentical
+//! @SYMTestCaseDesc		Function FileNamesIdentical(const TDesC &aFileName1, const TDesC &aFileName2) test, that compares two
+//!				identical files.
+//! 				Uses API elements: FileNamesIdentical().
+//! @SYMTestActions		1.Call FileNamesIdentical() and 
+//!				  <DRIVE>:\base\t_sfsrv\Test3.txt as first parameter, and
+//!				  <DRIVE>:\base\t_sfsrv\Test3.txt as second parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The FileNamesIdentical() method call returns ETrue. 
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	50	T_SfSrv		\base\PBASE-F32-FileNamesIdentical-PublicApi.ini 
+		CREATE_OBJECT	FileNamesIdentical	FileNamesIdentical1
+		COMMAND		FileNamesIdentical1	FileNamesIdentical		PBASE-F32-FileNamesIdentical-PublicApi-3001-001-FileNamesIdentical_command001
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3001
+
+
+START_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3002
+//! @SYMTestCaseID		PBASE-F32-FileNamesIdentical-PublicApi-3002
+//! @SYMAPI			FileNamesIdentical
+//! @SYMTestCaseDesc		Function FileNamesIdentical(const TDesC &aFileName1, const TDesC &aFileName2) test, that compares two
+//!				not identical files.
+//! 				Uses API elements: FileNamesIdentical().
+//! @SYMTestActions		1.Call FileNamesIdentical() and 
+//!				  <DRIVE>:\base\t_sfsrv\Test3.txt as first parameter, and
+//!				  <DRIVE>:\base\t_sfsrv\Test2.txt as second parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The FileNamesIdentical() method call returns EFalse. 
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	50	T_SfSrv		\base\PBASE-F32-FileNamesIdentical-PublicApi.ini 
+		CREATE_OBJECT	FileNamesIdentical	FileNamesIdentical1
+		COMMAND		FileNamesIdentical1	FileNamesIdentical		PBASE-F32-FileNamesIdentical-PublicApi-3002-001-FileNamesIdentical_command001
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3002
+
+
+START_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3003
+//! @SYMTestCaseID		PBASE-F32-FileNamesIdentical-PublicApi-3003
+//! @SYMAPI			FileNamesIdentical
+//! @SYMTestCaseDesc		Function FileNamesIdentical(const TDesC &aFileName1, const TDesC &aFileName2) test, that compares the same file,
+//!				but one is with absolute path and the other one with relative path.
+//! 				Uses API elements: FileNamesIdentical().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::SetSessionPath() to set new session path, passing <drive>:\ as parameter.
+//!				3.Call RFs::SessionPath() to verify previous action.
+//!				4.Call FileNamesIdentical() and 
+//!				  <DRIVE>:\base\t_sfsrv\Test3.txt as first parameter, and
+//!				  \base\t_sfsrv\Test3.txt as second parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The FileNamesIdentical() method call returns EFalse. 
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	50	T_SfSrv		\base\PBASE-F32-FileNamesIdentical-PublicApi.ini 
+		CREATE_OBJECT	RFs			RFs1
+		CREATE_OBJECT	FileNamesIdentical	FileNamesIdentical1
+		COMMAND		RFs1			new		
+		COMMAND		RFs1			Connect		
+		COMMAND		RFs1			SetSessionPath		PBASE-F32-FileNamesIdentical-PublicApi-3003-001-SetSessionPath_command004
+		COMMAND		RFs1			SessionPath		PBASE-F32-FileNamesIdentical-PublicApi-3003-001-SessionPath_command005
+		COMMAND		FileNamesIdentical1	FileNamesIdentical	PBASE-F32-FileNamesIdentical-PublicApi-3003-001-FileNamesIdentical_command006
+		COMMAND		RFs1			~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3003
+
+
+START_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3004
+//! @SYMTestCaseID		PBASE-F32-FileNamesIdentical-PublicApi-3004
+//! @SYMAPI			FileNamesIdentical
+//! @SYMTestCaseDesc		Function FileNamesIdentical(const TDesC &aFileName1, const TDesC &aFileName2) test, that compares the same, but
+//!				invalid path.
+//! 				Uses API elements: FileNamesIdentical().
+//! @SYMTestActions		1.Call FileNamesIdentical() using :: and :: as parameters.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The FileNamesIdentical() method call will panic (FSCLIENT Code=24). 
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	50	T_SfSrv		\base\PBASE-F32-FileNamesIdentical-PublicApi.ini 
+		CREATE_OBJECT	FileNamesIdentical	FileNamesIdentical1
+		COMMAND		FileNamesIdentical1	FileNamesIdentical	PBASE-F32-FileNamesIdentical-PublicApi-3004-001-FileNamesIdentical_command001
+	END_TEST_BLOCK	!PanicCode=24	!PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-FileNamesIdentical-PublicApi-3004

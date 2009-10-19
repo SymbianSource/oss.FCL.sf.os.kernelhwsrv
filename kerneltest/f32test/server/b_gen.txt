@@ -1,0 +1,55 @@
+Differences from S3a B_GEN
+==========================
+
+testnodeinfo: Commented out - dunno what a node info is.
+testdeviceinfo: TVolumeInfo structure doesn't contain a version member, test commented out
+testfileinfo: TEntry structure doesn't contain a version number, test commented out
+
+testrename: 
+Long filenames are allowed
+Test rename of directories across directories: This works - used to return AccessErr
+
+testDelete: Attempting to delete a directory returns KErrBadName instead of an AccessErr
+testUnique: Seeking ie. random access on a temp file is now valid - used to return E_FILE_INV
+
+testVolumeName:
+SetVolumeLabel will set the volume label to any string of 11 chars or less.
+
+testDir:
+All directories require some matching criteria eg: "*" or "*.txt"
+Test filenames starting with '.' eg: \\.ZZZ are now legal.
+
+test.Printf(_L("Test filenames starting with 05/E5\n"));
+0xE5 at the start of a filename => a VFAT entry
+0x05 at the start of a filename returns an error under NT
+
+testMedia: Not implemented
+testNodeInfo: Not implemented
+
+testFileInfo: Changed argument values.
+Paths are allowed on Z:
+Asking for info on a drive that does not exist return KErrBadName not NoFileSystemErr
+
+test.Printf(_L("Test weird filenames\n"));
+All weird names are now valid except _L(" ");
+All short names are valid except "" and "\\"
+All long names < 256 chars are valid
+Dots within a filename are valid
+
+Test Make directory:
+Long directory names are now valid < 256 chars
+
+Test read of zero bytes:
+No longer returns any EofErr. Instead reading zero bytes will zero the length of the buffer.
+
+Test set file date:
+Old test data commented out because NT fails on dates < 1601.
+
+Interface to Format has changed (will probably be changed back shortly) Test commented out
+
+Differences between WINS and EPOC platforms
+===========================================
+NT will register time differences of less than 30 microseconds FAT needs ~ 1/10 sec
+The filename _L("...") -> KErrAccessDenied on NT but is ok on VFAT
+0x05 at the start of a filename is disallowed by NT. VFAT will accept 0x05 but doesn't translate it into a 0xE5.
+NT will match a single '?' to the _L(".") directory. VFAT never sees '.'

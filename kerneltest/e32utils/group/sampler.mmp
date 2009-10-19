@@ -1,0 +1,38 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32utils/group/sampler.mmp
+// sampler.ldd Test utility
+// 
+//
+
+/**
+ @file
+*/
+
+
+#include		"kernel/kern_ext.mmh"
+
+target			sampler.ldd
+targettype		ldd
+linkas			sampler.ldd
+romtarget		sampler.ldd
+
+sourcepath		../profiler
+source			sampler.cpp sampler.cia
+
+epocallowdlldata
+
+uid				0x100000af 0x100000c9
+VENDORID 0x70000001
+capability	all

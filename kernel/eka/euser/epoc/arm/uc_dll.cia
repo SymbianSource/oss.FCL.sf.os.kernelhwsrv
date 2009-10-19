@@ -1,0 +1,78 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_dll.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+
+extern "C" {
+
+extern TInt _E32Dll_Body(TInt);
+
+__NAKED__ TInt _E32Dll(TInt /*aReason*/)
+	{
+	// DLL entry point
+	EKA2_ENTRY_POINT_VERSION_IDENTIFIER;	// DUMMY INSTRUCTION TO INDICATE EKA2 ENTRY POINT
+	asm("ldr r12, 1f ");
+	__JUMP(,r12);
+
+	asm(".word 0 ");			// loader will replace with code seg unique ID
+								// for RAM-loaded code segment
+								// MUST BE AT OFFSET 12 FROM ENTRY POINT
+
+	asm("1: ");
+	asm(".word _E32Dll_Body ");
+
+#ifdef __ARMCC__
+#ifdef __SUPPORT_CPP_EXCEPTIONS__
+
+
+  /* It is possible no functions included in the image require
+   * a handler table. Therefore make only a weak reference to
+   * the handler table base symbol, which may be absent.
+   */
+  extern |.ARM.exidx$$Base|;
+  extern |.ARM.exidx$$Limit|;
+  extern |.ARM.extab$$Base| [WEAK];
+  extern |Image$$ER_RO$$Base|;
+  extern |Image$$ER_RO$$Limit|;
+  export |Symbian$$CPP$$Exception$$Descriptor|;
+
+  /* Symbian$$CPP$$Exception$$Descriptor is referenced from the Image header.
+   * A pointer to this object can be cached by the unwinder in the UCB
+   * on the assumption that the EHT for the previous frame is likely to be right
+   * for the current frame
+   */
+
+|Symbian$$CPP$$Exception$$Descriptor|
+#ifdef __LEAVE_EQUALS_THROW__
+|Symbian$$eit_base|  		dcd |.ARM.exidx$$Base|;   /* index table base */
+|Symbian$$eit_limit|  		dcd |.ARM.exidx$$Limit| ;  /* index table limit */
+#endif
+#if __ARMCC_VERSION > 220000
+|Symbian$$code_seg_base| 	dcd |Image$$ER_RO$$Base| + 1 ; /* RO segment base + mark as ehabi v2 */
+|Symbian$$code_seg_limit| 	dcd |Image$$ER_RO$$Limit| ;/* RO segment limit */
+|Symbian$$reserved|		dcd 0 ; /* reserved for future use */
+#else
+|Symbian$$code_seg_base| 	dcd |Image$$ER_RO$$Base| ; /* RO segment base */
+|Symbian$$code_seg_limit| 	dcd |Image$$ER_RO$$Limit| ;/* RO segment limit */
+#endif
+
+#endif
+#endif
+	}
+}
+

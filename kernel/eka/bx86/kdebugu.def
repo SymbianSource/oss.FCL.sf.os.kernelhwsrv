@@ -1,0 +1,4 @@
+EXPORTS
+	?DebuggerInfo@Debugger@@SAPAVDDebuggerInfo@@XZ @ 1 NONAME ; public: static class DDebuggerInfo * __cdecl Debugger::DebuggerInfo(void)
+	?Install@Debugger@@SAHPAVDDebuggerInfo@@@Z @ 2 NONAME ; public: static int __cdecl Debugger::Install(class DDebuggerInfo *)
+

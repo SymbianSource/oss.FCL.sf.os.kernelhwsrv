@@ -1,0 +1,69 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+//#NAME: h4usbtest MMC, mmcloader component
+// depends on the h4usbmmctest_test being built first (it includes it)
+
+#define BASE_ROM
+#define REBOOT_DRIVER
+
+#include <rom\##VARIANT##\header.iby>
+
+#undef WITH_EXTENSION
+#undef WITH_ROFS
+#undef WITH_COMP
+#undef MMC_DUAL_SLOT
+#undef USE_SDIO_SD_MMC
+#undef _NAND2
+
+// enable slot 2, so we can write to "internal" MMC...
+#define MMC_DUAL_SLOT
+#define USE_SDIO_SD_MMC
+#define MULTIPLEROFS
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+data=\epoc32\rom\##VARIANT##\mmctest_load_autoexec.bat		\autoexec.bat
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\MMCLOADER.EXE		\sys\bin\MMCLOADER.EXE
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\crash.exe           sys\bin\crash.exe 
+
+// Built with mmctest_test.oby
+#ifdef NAMETAG
+data=##VARIANT##.##KMAIN##.##BUILD##.##NAMETAG##.core.img		\core.img
+#else
+data=##VARIANT##.##KMAIN##.##BUILD##.core.img					\core.img
+#endif
+
+
+#if defined(MULTIPLEROFS)
+// Built by rom.pl with type=nandtest_test
+data=tests.rofs								\rofs1.img
+data=dir.rofs								\rofs2.img
+data=extension.rofs							\rofsextension3.img
+data=dir1.rofs								\rofs4.img
+data=dir2.rofs								\rofs5.img
+data=dir3.rofs								\rofs6.img
+data=\epoc32\rom\rofstest\fatimage.bin					\user3.img
+#else
+data=dir.rofs								\rofs1.img
+#endif

@@ -1,0 +1,55 @@
+# Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the License "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+# Version information for crash monitor data
+#
+
+Version 1.00.002
+=================
+(Made by XXXX XXXX XX/06/2009)
+
+1.	OliverStuart
+	1.	MINOR CHANGE: CR1970: Adding missing S60 distribution files and correcting IDs.
+	2.	MINOR CHANGE: CR1994: Updating incorrect copyright headers.
+
+Version 1.00.001
+=================
+(Made by Vino Jose 09/06/2009)
+
+1.	OliverStuart
+	1.	MINOR CHANGE: CR1970: Setting correct IDs on S60 distribution policy files.
+	2.	MINOR CHANGE: CR1994: Replacing Symbian copyright notices with SF notices.
+
+Version 1.00.000
+=================
+
+(Made by stephenroberts 17/11/2008)
+
+1. stephenroberts
+	MILESTONE: Capari,GT0441,MS3.x,DSx: PREQ1700: Extend core dump server to capture system crash data
+	Initial release of PREQ1700. The System Crash Monitor and Crash Log Walker supports the following data types:
+		TCrashOffsetsHeader version 1
+		TCrashInfoHeader version 1
+		TRawData version 1
+		TThreadData version 1
+		TThreadStack version 1
+		TRegisterValue version 1
+		TRegisterSet version 1
+		TMemoryDump version 1
+		TCodeSegmentSet version 1
+		TCodeSegment version 1
+		TCodeSegment version 1
+		TVariantSpecificData version 1
+		TRomHeaderData version 1
+		TSCMLockData version 1
+		TScmChecksum version 1

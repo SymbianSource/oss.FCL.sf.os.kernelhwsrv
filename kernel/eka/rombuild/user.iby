@@ -1,0 +1,179 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+#ifndef	EDISP_DRV
+#define	EDISP_DRV	\EDISP.DLL
+#endif
+
+#if !defined(EUSER_DLL)
+#error EUSER_DLL not defined
+#endif
+#if !defined(COMPSUPP_DIR)
+#define	COMPSUPP_DIR	MAIN
+#endif
+
+file=\Epoc32\Release\##EUSERDIR##\##BUILD##\##EUSER_DLL					\sys\bin\EUSER.DLL
+
+#ifdef RVCT
+#include <rom\include\compsupp.iby>
+#endif
+
+#ifndef SYMBIAN_EXCLUDE_KEYBOARD
+file=\Epoc32\Release\##MAIN##\##BUILD##\EKTRAN.DLL						\sys\bin\EKTRAN.DLL
+#endif
+file=\Epoc32\Release\##MAIN##\##BUILD##\RPIPE.DLL						\sys\bin\RPIPE.DLL
+#ifndef SYMBIAN_EXCLUDE_WINSRV
+file=\Epoc32\Release\##MAIN##\##BUILD##\ECONS.DLL						\sys\bin\ECONS.DLL
+file=\Epoc32\Release\##MAIN##\##BUILD##\EWSRV.EXE						\sys\bin\EWSRV.EXE	FIXED HEAPMAX(0x40000)
+#endif
+
+// Ensure that we prevent insecure Trk debug agent from being installed by blocking its SID.
+file=\Epoc32\Release\##MAIN##\##BUILD##\trkdummyapp.exe     \sys\bin\trkdummyapp.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\trkdummyapp2.exe     \sys\bin\trkdummyapp2.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\trkdummyapp200159D8.exe     \sys\bin\trkdummyapp200159D8.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\trkdummyapp200170BC.exe     \sys\bin\trkdummyapp200170BC.exe
+
+#ifndef SYMBIAN_EXCLUDE_DISPLAY_DRIVER
+file=\Epoc32\Release\##MAIN##\##BUILD##EDISP_DRV						\sys\bin\EDISP.DLL
+#endif
+
+#ifndef SYMBIAN_EXCLUDE_DOMAINSRV
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainSrv.exe					\sys\bin\domainSrv.exe HEAPMAX(0x20000)
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainCli.dll					\sys\bin\domainCli.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\domainPolicy.dll				\sys\bin\domainPolicy.dll
+#endif
+
+#ifdef SYMBIAN_INCLUDE_USB_OTG_HOST
+file=\Epoc32\Release\##MAIN##\##BUILD##\usbdescriptors.dll				\sys\bin\usbdescriptors.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\usbdi_utils.dll					\sys\bin\usbdi_utils.dll
+#endif // SYMBIAN_INCLUDE_USB_OTG_HOST
+
+#if !(defined(INST_X86) || defined(INST_X86GCC)) && !defined(RVCT)
+file=\Epoc32\Release\##MAIN##\##BUILD##\eka1_entry_stub.dll				\sys\bin\eka1_entry_stub.dll
+#endif
+
+
+#ifndef USE_CUSTOM_MMC_PARTITION
+extension[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\EMMCPTN.DLL                   \Sys\Bin\EMMCPTN.DLL
+#endif
+
+// Run-mode debug subsystem
+#include "rm_debug_svr.iby"
+
+// Load Platform Security settings
+#ifndef __DONT_LOAD_PLATSEC_SETTINGS__
+#ifndef NOPLATSEC
+#include "platsec.settings"
+#endif
+#endif
+
+#ifndef EXCLUDE_BTRACE
+file=\Epoc32\Release\##MAIN##\##BUILD##\btracec.dll					\sys\bin\btracec.dll
+file=\Epoc32\Release\##MAIN##\##BUILD##\btrace.exe					\sys\bin\btrace.exe
+#endif
+
+#if !(defined(INST_X86) || defined(INST_X86GCC))
+file=           \Epoc32\Release\##MAIN##\##BUILD##\USBCSC_bil.dll               \Sys\Bin\usbcsc_bil.dll
+#endif
+
+// Include some extra utilities for X86 builds
+#if defined(INST_X86) || defined(INST_X86GCC)
+file=\Epoc32\Release\##MAIN##\##BUILD##\eject.exe					\sys\bin\_eject.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\reboot.exe					\sys\bin\_reboot.exe
+#endif
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\dptest.dll					\sys\bin\dptest.dll
+
+#if defined(PAGED_ROM) || defined(PAGED_CODE) || defined(PAGED_DATA)
+// Limit paging cache to make sure paging is excercised well without slowing testing too much.
+// There must be some difference between min and max to allow cache pages to be donated and
+// reclaimed. For a "stress-free" configuration, allow for 2MB min and approx 128MB max.
+//
+//                 Min       Max        Young/Old    NAND page read   NAND page read	Old/Oldest
+//                 live      live       page ratio   delay            CPU overhead 		page ratio
+//                 pages     pages                   (microseconds)   (microseconds)
+//
+#if defined(STRESS_FREE_PAGING)
+demandpagingconfig 512       32767      3            660              5					3
+#elif defined(PAGED_DATA)
+demandpagingconfig 120       136        3            660              5					3
+#else
+demandpagingconfig 60        68         3            660              5					3
+#endif
+
+// select codepagingoverride...
+#if defined(CODEPAGINGOVERRIDE_NOPAGING)
+codepagingoverride nopaging
+#elif defined(CODEPAGINGOVERRIDE_ALWAYSPAGE)
+codepagingoverride alwayspage
+#elif defined(CODEPAGINGOVERRIDE_DEFAULTUNPAGED)
+codepagingoverride defaultunpaged
+#else
+codepagingoverride defaultpaged	// Make the ROM partition's executables defaultpaged.
+#endif
+#endif // PAGED_ROM || PAGED_CODE
+
+// select paging policy
+#if defined(PAGINGPOLICY_NOPAGING)
+pagingpolicy nopaging
+#elif defined(PAGINGPOLICY_ALWAYSPAGE)
+pagingpolicy alwayspage
+#elif defined(PAGINGPOLICY_DEFAULTUNPAGED)
+pagingpolicy defaultunpaged
+#elif defined(PAGINGPOLICY_DEFAULTPAGED)
+pagingpolicy defaultpaged
+#else
+#define NO_PAGINGPOLICY
+#endif
+
+#ifdef PAGED_CODE
+// select code paging policy
+#if defined(CODEPAGINGPOLICY_NOPAGING)
+codepagingpolicy nopaging
+#elif defined(CODEPAGINGPOLICY_ALWAYSPAGE)
+codepagingpolicy alwayspage
+#elif defined(CODEPAGINGPOLICY_DEFAULTUNPAGED)
+codepagingpolicy defaultunpaged
+#elif defined(NO_PAGINGPOLICY)
+codepagingpolicy defaultpaged
+#endif
+#else
+#if defined(NO_PAGINGPOLICY)
+codepagingpolicy nopaging
+#endif
+#endif // PAGED_CODE
+
+#ifdef PAGED_DATA
+// select data paging policy
+#if defined(DATAPAGINGPOLICY_NOPAGING)
+datapagingpolicy nopaging
+#elif defined(DATAPAGINGPOLICY_ALWAYSPAGE)
+datapagingpolicy alwayspage
+#elif defined(DATAPAGINGPOLICY_DEFAULTUNPAGED)
+datapagingpolicy defaultunpaged
+#elif defined(NO_PAGINGPOLICY)
+datapagingpolicy defaultpaged
+#endif
+#else
+#if defined(NO_PAGINGPOLICY)
+datapagingpolicy nopaging
+#endif
+#endif // PAGED_DATA
+
+// Test constant patching works by setting KHeapMinCellSize to zero, which is the default anyway
+patchdata ekern.exe @ KHeapMinCellSize 0
+patchdata euser.dll @ KHeapMinCellSize 0

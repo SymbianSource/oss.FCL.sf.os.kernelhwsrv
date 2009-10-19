@@ -1,0 +1,1519 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_utl.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+#include <e32base.h>
+#include <e32rom.h>
+#include <e32svr.h>
+#include <e32hashtab.h>
+#include <u32exec.h>
+#include "uc_std.h"
+
+
+#if defined(__MEM_MACHINE_CODED__)
+EXPORT_C __NAKED__ void Mem::Swap(TAny* /*aPtr1*/, TAny* /*aPtr2*/, TInt /*aLength*/)
+/**
+Swaps a number of bytes of data between two specified locations.
+
+The source and target areas can overlap.
+
+@param aPtr1   A pointer to the first location taking part in the swap. 
+@param aPtr2   A pointer to second location taking part in the swap. 
+@param aLength The number of bytes to be swapped between the two locations. 
+               This value must not be negative.
+
+@panic USER 94 In debug builds only, if aLength is negative.
+*/
+    {
+
+    asm("   cmp      r0,r1");
+    asm("   cmpne    r2,#0");
+	__JUMP(eq,lr);
+//
+// Test for same alignment, if more than 16 bytes to swap
+//
+    asm("   and      r3,r0,#3");
+    asm("   and      ip,r1,#3");
+    asm("   cmp      r2,#16");
+    asm("   addlt    r3,r3,#4");
+    asm("   cmp      r3,ip");
+    asm("   beq      same_aligned_swap");
+
+    asm("   stmfd    sp!,{r4,lr}");
+
+    asm("swap_loop:");
+
+    asm("   ldrb     r3,[r0]");
+    asm("   ldrb     r4,[r1]");
+    asm("   strb     r3,[r1],#1");
+    asm("   strb     r4,[r0],#1");
+    asm("   subs     r2,r2,#1");
+	asm("beq swap_exit1 ");
+
+    asm("   ldrb     r3,[r0]");
+    asm("   ldrb     r4,[r1]");
+    asm("   strb     r3,[r1],#1");
+    asm("   strb     r4,[r0],#1");
+    asm("   subs     r2,r2,#1");
+	asm("beq swap_exit1 ");
+
+    asm("   ldrb     r3,[r0]");
+    asm("   ldrb     r4,[r1]");
+    asm("   strb     r3,[r1],#1");
+    asm("   strb     r4,[r0],#1");
+    asm("   subs     r2,r2,#1");
+	asm("beq swap_exit1 ");
+
+    asm("   ldrb     r3,[r0]");
+    asm("   ldrb     r4,[r1]");
+    asm("   strb     r3,[r1],#1");
+    asm("   strb     r4,[r0],#1");
+    asm("   subs     r2,r2,#1");
+    asm("   bne      swap_loop");
+	asm("swap_exit1: ");
+	__POPRET("r4,");
+
+    asm("same_aligned_swap:");
+
+    asm("   stmfd    sp!,{r4-r10,lr}");
+//
+// r3 contains the byte offset from word alignment, 0,1,2 or 3
+// subtract 1 to get -1,0,1 or 2, and if -1 make it 3
+// that gives us 0,1,2 or 3 if the alignment is 3,2,1 or 0 respectively
+// We can use that to jump directly to the appropriate place for
+// swapping the relevent number of bytes to achieve word alignment
+// r4 is set to 3-r3 to correct the length for the number of bytes
+// swapped
+//
+    asm("   subs     r3,r3,#1");
+    asm("   movmi    r3,#3");
+    asm("   rsb      r4,r3,#3");
+    asm("   sub      r2,r2,r4");
+	asm("   add      pc,pc,r3,asl #4");
+	asm("	nop ");	// never executed
+//
+// Jumps here if 3 bytes to swap before word aligned
+//
+    asm("   ldrb     r4,[r0]");
+    asm("   ldrb     ip,[r1]");
+    asm("   strb     r4,[r1],#1");
+    asm("   strb     ip,[r0],#1");
+//
+// Jumps here if 2 bytes to swap before word aligned
+//
+    asm("   ldrb     r4,[r0]");
+    asm("   ldrb     ip,[r1]");
+    asm("   strb     r4,[r1],#1");
+    asm("   strb     ip,[r0],#1");
+//
+// Jumps here if 1 byte to swap before word aligned
+//
+    asm("   ldrb     r4,[r0]");
+    asm("   ldrb     ip,[r1]");
+    asm("   strb     r4,[r1],#1");
+    asm("   strb     ip,[r0],#1");
+//
+// We are now word aligned. Fast swapping, here we come...
+//
+    asm("word_aligned_swap:");
+    asm("   movs     ip,r2,lsr #6"); // Number of 64 blocks to swap
+    asm("   beq      its_smaller_swap");
+
+    asm("swap_64_bytes:");
+    asm("   ldmia    r1,{r3-r6}");
+    asm("   ldmia    r0,{r7-r10}");
+    asm("   stmia    r1!,{r7-r10}");
+    asm("   stmia    r0!,{r3-r6}");
+    asm("   ldmia    r1,{r3-r6}");
+    asm("   ldmia    r0,{r7-r10}");
+    asm("   stmia    r1!,{r7-r10}");
+    asm("   stmia    r0!,{r3-r6}");
+    asm("   ldmia    r1,{r3-r6}");
+    asm("   ldmia    r0,{r7-r10}");
+    asm("   stmia    r1!,{r7-r10}");
+    asm("   stmia    r0!,{r3-r6}");
+    asm("   ldmia    r1,{r3-r6}");
+    asm("   ldmia    r0,{r7-r10}");
+    asm("   stmia    r1!,{r7-r10}");
+    asm("   stmia    r0!,{r3-r6}");
+    asm("   subs     ip,ip,#1");
+    asm("   bne      swap_64_bytes");
+//
+// Less than 64 bytes to go...
+//
+    asm("its_smaller_swap:");
+    asm("   ands     r2,r2,#63");
+	asm("beq swap_exit2 ");
+    asm("   cmp      r2,#4");
+    asm("   blt      finish_swap");
+    asm("final_swap_loop:");
+    asm("   ldr      r3,[r1]");
+    asm("   ldr      ip,[r0]");
+    asm("   str      r3,[r0],#4");
+    asm("   str      ip,[r1],#4");
+    asm("   subs     r2,r2,#4");
+    asm("   cmp      r2,#4");
+    asm("   bge      final_swap_loop");
+//
+// Less than 4 bytes to go...
+//
+    asm("finish_swap:");
+    asm("   tst      r2,#2");
+    asm("   ldrneb   r3,[r0]");
+    asm("   ldrneb   ip,[r1]");
+    asm("   strneb   r3,[r1],#1");
+    asm("   strneb   ip,[r0],#1");
+    asm("   ldrneb   r3,[r0]");
+    asm("   ldrneb   ip,[r1]");
+    asm("   strneb   r3,[r1],#1");
+    asm("   strneb   ip,[r0],#1");
+
+    asm("   tst      r2,#1");
+    asm("   ldrneb   r3,[r0]");
+    asm("   ldrneb   ip,[r1]");
+    asm("   strneb   r3,[r1],#1");
+    asm("   strneb   ip,[r0],#1");
+
+	asm("swap_exit2: ");
+	__POPRET("r4-r10,");
+    }
+#endif
+
+#ifdef __REGIONS_MACHINE_CODED__
+
+__NAKED__ GLDEF_C void AllocAnotherRect( TRegion * /*aRegion*/ )
+	{
+	// Returns with Z flag set to indicate error
+	
+	asm("ldr r1, [r0, #4] ");			// r1=iError
+	asm("cmp r1, #0 ");
+	asm("bne return_error ");
+	asm("ldr r1, [r0, #8] ");			// r1=iAllocedRects
+	asm("ldr r12, [r0] ");				// r12=iCount
+	asm("tst r1, #0x40000000 ");		// test ERRegionBuf
+	asm("beq allocanother1 ");			// don't branch if TRegionFix
+	asm("cmn r1, r12 ");				// test if iCount==-iAllocedRects
+	__JUMP(ne,lr);
+	asm("b  " CSM_ZN7TRegion10ForceErrorEv);		// if so, ForceError()
+	asm("allocanother1: ");
+	asm("cmp r1, #0 ");
+	asm("bpl allocanother3 ");			// branch if RRegion, continue if RRegionBuf
+	asm("orr r2, r1, #0x40000000 ");	// r2=iAllocedRects|ERRegionBuf
+	asm("cmn r2, r12 ");				// check if iCount==(-(iAllocedRects|ERRegionBuf))
+	__JUMP(ne,lr);
+	asm("ldr r2, [r0, #12] ");			// r2=iGranularity
+	asm("add r1, r12, r2 ");			// iAllocedRects=iCount+iGranularity - change into RRegion
+	asm("str r1, [r0, #8] ");
+	asm("stmfd sp!, {r0,r1,r12,lr} ");	// save registers used in function call
+	asm("mov r0, r1, lsl #4 ");			// number of bytes to allocate
+	asm("bl  " CSM_ZN4User5AllocEi);			// User::Alloc
+	asm("movs r2, r0 ");				// returned pointer into r2
+	asm("ldmfd sp!, {r0,r1,r12,lr} ");	// restore registers
+	asm("add r3, r0, #20 ");			// r3=address of first rectangle
+	asm("str r2, [r0, #16] ");			// iRectangleList=returned pointer
+	asm("beq  " CSM_ZN7TRegion10ForceErrorEv);	// if pointer null, ForceError()
+	asm("cmp r12, #0 ");
+	asm("beq return_success ");
+	asm("stmfd sp!, {r4,r5} ");
+	asm("allocanother2: ");
+	asm("ldmia r3!, {r0,r1,r4,r5} ");	// copy data to new area
+	asm("subs r12, r12, #1 ");
+	asm("stmia r2!, {r0,r1,r4,r5} ");
+	asm("bne allocanother2 ");
+	asm("ldmfd sp!, {r4,r5} ");
+	asm("return_success: ");
+	asm("movs r0, #1 ");				// clear Z flag to indicate success
+	__JUMP(,lr);
+	asm("allocanother3: ");				// come here if RRegion
+	asm("cmp r1, r12 ");				// check if iCount==iAllocedRects
+	__JUMP(ne,lr);
+	asm("ldr r2, [r0, #12] ");			// r2 = iGranularity
+	asm("add r1, r1, r2 ");				// iAllocedRects+=iGranularity
+	asm("str r1, [r0, #8] ");
+	asm("stmfd sp!, {r0,lr} ");			// preserve r0,lr across function call
+	asm("ldr r0, [r0, #16] ");			// r0=address of current cell
+	asm("mov r1, r1, lsl #4 ");			// r1=number of bytes to allocate
+	asm("mov r2, #0 ");
+	asm("bl  " CSM_ZN4User7ReAllocEPvii);		// User::ReAlloc
+	asm("movs r2, r0 ");				// returned pointer into r2
+	asm("ldmfd sp!, {r0,lr} ");			// restore r0,lr
+	asm("strne r2, [r0, #16] ");		// if returned ptr not null, iRectangleList=returned ptr
+	__JUMP(ne,lr);
+	asm("b  " CSM_ZN7TRegion10ForceErrorEv);		// else ForceError()
+	}
+
+
+__NAKED__ EXPORT_C void TRegion::ForceError()
+	{
+	// Returns with Z flag set to indicate error
+	
+	asm("stmfd sp!, {r0,lr} ");
+	asm("bl " CSM_ZN7TRegion5ClearEv);	// Clear()
+	asm("ldmfd sp!, {r0,lr} ");			// restore r0,lr
+	asm("mov r1, #1 ");
+	asm("str r1, [r0, #4] ");			// iError=ETrue
+	asm("return_error: ");
+	asm("movs r0, #0 ");				// set Z flag to indicate error
+	__JUMP(,lr);
+	}
+
+
+
+__NAKED__ EXPORT_C TRect TRegion::BoundingRect() const
+/**
+Gets the minimal rectangle that bounds the entire region.
+
+@return The region's minimal bounding rectangle.
+*/
+	{
+	asm("ldr r2, [r1] ");			// r2=iCount
+	asm("cmp r2, #0 ");				// list empty?
+	asm("beq boundingrect0 ");		// branch if empty
+	asm("ldr r3, [r1, #8] ");			// if not empty, r3 points to first rectangle
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("cmn r3, r3 ");
+	asm("ldrcc r3, [r1, #16] ");		// if RRegion
+	asm("addcs r3, r1, #20 ");			// RRegionBuf
+	asm("submi r3, r3, #8 ");			// TRegionFix
+	asm("ldmia r3!, {r4-r7} ");			// if not empty bounds = first rectangle
+	asm("b boundingrect2 ");			// if not empty go and check rest of list
+	asm("boundingrect1: ");
+	asm("ldmia r3!, {r1,r8,r12,lr} ");	// fetch next rectangle
+	asm("cmp r1, r4 ");					// if next.iTl.iX<bounds.iTl.iX
+	asm("movlt r4, r1 ");				//		bounds.iTl.iX=next.iTl.iX
+	asm("cmp r8, r5 ");					// if next.iTl.iY<bounds.iTl.iY
+	asm("movlt r5, r8 ");				//		bounds.iTl.iY=next.iTl.iY
+	asm("cmp r12, r6 ");				// if next.iBr.iX>bounds.iBr.iX
+	asm("movgt r6, r12 ");				//		bounds.iBr.iX=next.iBr.iX
+	asm("cmp lr, r7 ");					// if next.iBr.iY>bounds.iBr.iY
+	asm("movgt r7, lr ");				//		bounds.iBr.iY=next.iBr.iY
+	asm("boundingrect2: ");
+	asm("subs r2, r2, #1 ");			// decrement count
+	asm("bne boundingrect1 ");			// repeat for all rectangles
+	asm("stmia r0, {r4-r7} ");			// store result
+	__POPRET("r4-r8,");
+
+	asm("boundingrect0: ");
+	asm("mov r1, #0 ");					// if list empty, bounds = 0,0,0,0
+	asm("mov r3, #0 ");
+	asm("mov r12, #0 ");
+	asm("stmia r0, {r1,r2,r3,r12} ");	// store result
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRegion::IsContainedBy(const TRect & /*aRect*/) const
+/**
+Tests whether the region is fully enclosed within the specified rectangle.
+
+@param aRect The specified rectangle.
+ 
+@return True, if the region is fully enclosed within the rectangle (their sides 
+        may touch); false, otherwise.
+*/
+	{
+	asm("ldr r12, [r0, #8] ");			// r12 points to first rectangle
+	asm("stmfd sp!, {r4-r7,lr} ");	
+	asm("cmn r12, r12 ");
+	asm("ldrcc r12, [r0, #16] ");		// if RRegion
+	asm("addcs r12, r0, #20 ");			// RRegionBuf
+	asm("submi r12, r12, #8 ");			// TRegionFix
+
+	asm("ldr r0, [r0] ");				// r0=iCount
+	asm("ldmia r1, {r4-r7} ");			// aRect coordinates into r4-r7
+	
+	asm("subs r0, r0, #1 ");			// decrement it
+	asm("bmi iscontainedby2 ");			// if iCount was zero, return TRUE
+	
+	asm("iscontainedby1: ");
+	asm("ldmia r12!, {r1,r2,r3,lr} ");	// coordinates of next rectangle
+	asm("cmp r1, r4 ");					// compare next.iTl.iX with aRect.iTl.iX
+	asm("cmpge r2, r5 ");				// if >=, compare next.iTl.iY with aRect.iTl.iY
+	asm("cmpge r6, r3 ");				// if >=, compare aRect.Br.iX with next.iBr.iX
+	asm("cmpge r7, lr ");				// if >=, compare aRect.Br.iY with next.iBr.iY
+	asm("subges r0, r0, #1 ");			// if >=, next is contained in aRect, so iterate
+	asm("bge iscontainedby1 ");			// will drop through if r0<0 or if next exceeds aRect
+	asm("iscontainedby2: ");
+	asm("mov r0, r0, lsr #31 ");		// return 1 if r0<0, 0 if r0>=0
+	__POPRET("r4-r7,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRegion::Copy(const TRegion & /*aRegion*/)
+/**
+Copies another region to this region.
+
+The state of the specified region's error flag is also copied.
+
+@param aRegion The region to be copied.
+*/
+	{
+	asm("ldr r2, [r1, #4] ");					// r2 = aRegion.iError
+	asm("cmp r2, #0 ");
+	asm("bne  " CSM_ZN7TRegion10ForceErrorEv);	// if (aRegion.iError) ForceError();
+	asm("ldr r2, [r1] ");						// r1 = aRegion.iCount
+	asm("cmp r2, #0 ");
+	asm("beq " CSM_ZN7TRegion5ClearEv);			// region to copy is empty so simply clear our buffer
+	asm("stmfd sp!, {r0,r1,r4,r5,r6,lr} ");		// preserve r0,r1,lr across function calls
+	asm("mov r4, r1 ");
+	asm("mov r5, r0 ");
+	asm("ldr r2, [r0, #4] ");					// r2 = iError
+	asm("cmp r2, #0 ");
+	asm("blne  " CSM_ZN7TRegion5ClearEv);		// if (iError) Clear();
+	asm("mov r0, r5 ");
+	asm("ldr r1, [r4] ");						// r1 = aRegion.iCount, r0 = this
+	asm("bl	 " CSM_ZN7TRegion11SetListSizeEi);	// SetListSize(aRegion.iCount);
+	asm("cmp r0, #0 ");
+	asm("beq copyregion_end ");
+	asm("ldr r3, [r4] ");						// r3 = aRegion.iCount
+	asm("cmp r3, #0 ");
+	asm("str r3, [r5] ");						// iCount=aRegion.iCount
+	asm("beq copyregion_end ");
+	asm("ldr r0, [r5, #8] ");					// r0 points to first rectangle
+	asm("cmn r0, r0 ");
+	asm("ldrcc r0, [r5, #16] ");				// if RRegion
+	asm("addcs r0, r5, #20 ");					// RRegionBuf
+	asm("submi r0, r0, #8 ");					// TRegionFix
+	asm("ldr r1, [r4, #8] ");					// r1 points to first rectangle
+	asm("cmn r1, r1 ");
+	asm("ldrcc r1, [r4, #16] ");				// if RRegion
+	asm("addcs r1, r4, #20 ");					// RRegionBuf
+	asm("submi r1, r1, #8 ");					// TRegionFix
+	asm("copyregion1: ");
+	asm("ldmia r1!, {r2,r4,r5,r12} ");			// copy aRegion.iRectangleList to iRectangleList
+	asm("subs r3, r3, #1 ");
+	asm("stmia r0!, {r2,r4,r5,r12} ");
+	asm("bne copyregion1 ");
+
+	asm("copyregion_end: ");
+	__POPRET("r0,r1,r4,r5,r6,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRegion::Offset(const TPoint & /*anOffset*/)
+/**
+Moves the region by adding a TPoint offset to the co-ordinates of its corners.
+	
+The size of the region is not changed.
+	
+@param aOffset The offset by which the region is moved. The region is moved 
+               horizontally by aOffset.iX pixels and vertically by aOffset.iY pixels.
+*/
+	{
+	asm("ldmia r1, {r1,r2} ");		// r1=anOffset.iX, r2=anOffset.iY
+	// fall through...
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRegion::Offset(TInt /*xOffset*/,TInt /*yOffset*/)
+/**
+Moves the region by adding X and Y offsets to the co-ordinates of its corners.
+	
+The size of the region is not changed.
+	
+@param aXoffset The number of pixels by which to move the region horizontally. 
+                If negative, the region moves leftwards. 
+@param aYoffset The number of pixels by which to move the region vertically. 
+                If negative, the region moves upwards.
+*/
+	{
+	asm("ldr r12, [r0] ");			// r12=iCount
+	asm("cmp r12, #0 ");
+	__JUMP(eq,lr);
+	asm("ldr r3, [r0, #8] ");		// r0 points to first rectangle
+	asm("cmn r3, r3 ");
+	asm("ldrcc r0, [r0, #16] ");	// if RRegion
+	asm("addcs r0, r0, #20 ");		// RRegionBuf
+	asm("submi r0, r0, #8 ");		// TRegionFix
+	asm("stmfd sp!, {r4,r5,lr} ");
+	asm("offsetregion2: ");
+	asm("ldmia r0, {r3-r5,lr} ");	// r3-r5,lr = next rectangle coordinates
+	asm("subs r12, r12, #1 ");
+	asm("add r3, r3, r1 ");			// Tl.iX += anOffset.iX
+	asm("add r4, r4, r2 ");			// Tl.iY += anOffset.iY
+	asm("add r5, r5, r1 ");			// Br.iX += anOffset.iX
+	asm("add lr, lr, r2 ");			// Br.iY += anOffset.iY
+	asm("stmia r0!, {r3-r5,lr} ");	// store new coordinates
+	asm("bne offsetregion2 ");
+	__POPRET("r4,r5,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRegion::Contains(const TPoint & /*aPoint*/) const
+/**
+Tests whether a point is located within the region.
+
+If the point is located on the top or left hand side of any rectangle in the 
+region, it is considered to be within that rectangle and within the region. 
+
+If the point is located on the right hand side or bottom of a rectangle, it 
+is considered to be outside that rectangle, and may be outside the region.
+
+@param aPoint The specified point. 
+
+@return True, if the point is within the region; false, otherwise.
+*/
+	{
+	asm("ldr r12, [r0] ");			// r12 = iCount
+	asm("stmfd sp!, {r4,r5,lr} ");
+	asm("cmp r12, #0 ");
+	asm("beq contains0 ");			// if iCount=0, return FALSE
+	asm("ldr r3, [r0, #8] ");		// r0 points to first rectangle
+	asm("cmn r3, r3 ");
+	asm("ldrcc r0, [r0, #16] ");	// if RRegion
+	asm("addcs r0, r0, #20 ");		// RRegionBuf
+	asm("submi r0, r0, #8 ");		// TRegionFix
+	asm("ldmia r1, {r1, r2} ");		// r1=aPoint.iX, r2=aPoint.iY
+	asm("contains1: ");
+	asm("ldmia r0!, {r3-r5,lr} ");	// coordinates of next rectangle into r3-r5,lr
+	asm("cmp r3, r1 ");				// compare next.iTl.iX with aPoint.iX
+	asm("cmple r4, r2 ");			// if <=, compare next.iTl.iY with aPoint.iY
+	asm("bgt contains2 ");			// if >, aPoint is not contained in rectangle, so iterate
+	asm("cmp r1, r5 ");				// compare aPoint.iX with next.iBr.iX
+	asm("cmplt r2, lr ");			// if <, compare aPoint.iY with next.iBr.iY
+	asm("contains2: ");
+	asm("subges r12, r12, #1 ");	// if >=, aPoint is not contained in rect, so iterate
+	asm("bgt contains1 ");
+	asm("cmp r12, #0 ");
+	asm("movne r0, #1 ");			// if r12 non-zero, return TRUE else FALSE
+	asm("contains0: ");
+	asm("moveq r0, #0 ");
+	__POPRET("r4,r5,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C TBool TRegion::Intersects(const TRect &/*aRect*/) const
+/**
+Tests whether where there is any intersection between this region and the specified rectangle.
+
+@param aRect The specified rectangle.
+ 
+@return True, if there is an intersection; false, otherwise.
+*/
+	{
+	asm("ldr    r12, [r0] ");		// r12 = iCount
+	asm("stmfd  sp!, {r4-r7,lr} ");
+	asm("cmp    r12, #0 ");
+	asm("beq    intersects0 ");		// if iCount=0, return FALSE
+	asm("ldr    lr, [r0, #8] ");	// r0 points to first rectangle	
+	asm("ldmia  r1, {r1-r4} ");		// (load aRect into r1 - r4)
+	asm("cmn    lr, lr ");
+	asm("ldrcc  r0, [r0, #16] ");	// if RRegion
+	asm("addcs  r0, r0, #20 ");		// RRegionBuf
+	asm("submi  r0, r0, #8 ");		// TRegionFix
+	asm("cmp    r1, r3 ");			// check if aRect is empty
+	asm("cmplt  r2, r4 ");
+	asm("bge    intersects0 ");
+	
+	asm("intersects1: ");
+	asm("ldmia  r0!, {r5-r7,lr} ");	// coordinates of next rectangle into r5-r7,lr	
+	asm("cmp    r1, r7 ");			// check if they intersect
+	asm("cmplt  r2, lr ");
+	asm("cmplt  r5, r3 ");
+	asm("cmplt  r6, r4 ");
+	asm("subges r12, r12, #1 ");	// if not then decrement and loop
+	asm("bgt    intersects1 ");
+	
+	asm("intersects0: ");
+	asm("movge  r0, #0 ");
+	asm("movlt  r0, #1 ");
+	__POPRET("r4-r7,");
+	}
+
+
+
+
+__NAKED__ void TRegion::DeleteRect(TRect * /*aRect*/)
+//
+// Delete a specific rectangle in the list.
+//
+	{
+	asm("ldr r12, [r0] ");			// r12=iCount
+	asm("ldr r3, [r0, #8] ");		// r0 points to first rectangle
+	asm("subs r12, r12, #1 ");		// decrement it
+	asm("str r12, [r0] ");			// iCount--;
+	asm("cmn r3, r3 ");
+	asm("ldrcc r0, [r0, #16] ");	// if RRegion
+	asm("addcs r0, r0, #20 ");		// RRegionBuf
+	asm("submi r0, r0, #8 ");		// TRegionFix
+	asm("sub r2, r1, r0 ");			// r2=offset of aRect from iRectangleList
+	asm("subs r12, r12, r2, lsr #4 ");	// r12 now equals number of rectangles requiring moving
+	__JUMP(eq,lr);
+	asm("add r0, r1, #16 ");			// r0 = aRect+1
+	asm("stmfd sp!, {r4,lr} ");
+	asm("deleterect1: ");
+	asm("ldmia r0!, {r2-r4,lr} ");		// move rectangles following aRect back by one place
+	asm("subs r12, r12, #1 ");
+	asm("stmia r1!, {r2-r4,lr} ");
+	asm("bne deleterect1 ");
+	__POPRET("r4,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRegion::ClipRect(const TRect & /*aRect*/)
+/**
+Clips the region to the specified rectangle.
+
+The resulting region is the area of overlap between the region and the rectangle. 
+If there is no overlap, all rectangles within this region are deleted and 
+the resulting region is empty.
+
+@param aRect The rectangle to which this region is to be clipped.
+*/
+// Can not fail.
+	{
+	asm("ldr r12, [r0] ");				// r12=iCount
+	asm("cmp r12, #0 ");
+	__JUMP(eq,lr);
+	asm("stmfd sp!, {r4-r10,lr} ");
+	asm("ldmia r1, {r2-r5} ");			// get coordinates of aRect into r2-r5
+	asm("ldr r1, [r0, #8] ");			// r1 points to first rectangle
+	asm("cmn r1, r1 ");
+	asm("ldrcc r1, [r0, #16] ");		// if RRegion
+	asm("addcs r1, r0, #20 ");			// RRegionBuf
+	asm("submi r1, r1, #8 ");			// TRegionFix
+
+	asm("cliprect1: ");
+	asm("ldmia r1!, {r6-r9} ");			// next rectangle coordinates into r6-r9
+	asm("cmp r6, r2 ");					// clip the rectangle to aRect
+	asm("movlt r6, r2 ");	
+	asm("strlt r2, [r1, #-16] ");
+	asm("cmp r7, r3 ");
+	asm("movlt r7, r3 ");
+	asm("strlt r3, [r1, #-12] ");
+	asm("cmp r8, r4 ");
+	asm("movgt r8, r4 ");
+	asm("strgt r4, [r1, #-8] ");
+	asm("cmp r9, r5 ");
+	asm("movgt r9, r5 ");
+	asm("strgt r5, [r1, #-4] ");
+	asm("cmp r6, r8 ");					// check if clipped rect is empty
+	asm("cmplt r7, r9 ");				// empty if r6>=r8 or r7>=r9
+	asm("bge cliprect_delete ");		// if empty, branch to other loop to delete rect 
+	asm("subs r12, r12, #1 ");			// decrement loop counter
+	asm("bne cliprect1 ");				// loop if any more rectangles to do
+	__POPRET("r4-r10,");
+
+	asm("cliprect_delete: ");			// (enter loop here)
+	asm("ldr lr, [r0] ");				// lr=iCount, updateed if we delete rects
+	asm("sub r10, r1, #16 ");			// r1 -> next rect, r10 -> previous deleted rect
+	asm("subs r12, r12, #1 ");			// decrement loop counter
+	asm("beq cliprect_move_end ");	
+	asm("cliprect_move: ");
+	asm("ldmia r1!, {r6-r9} ");			// next rectangle coordinates into r6-r9
+	asm("cmp r6, r2 ");					// clip the rectangle to aRect
+	asm("movlt r6, r2 ");
+	asm("cmp r7, r3 ");
+	asm("movlt r7, r3 ");
+	asm("cmp r8, r4 ");
+	asm("movgt r8, r4 ");
+	asm("cmp r9, r5 ");
+	asm("movgt r9, r5 ");
+	asm("cmp r6, r8 ");					// check if clipped rect is empty
+	asm("cmplt r7, r9 ");				// empty if r6>=r8 or r7>=r9
+	asm("stmltia r10!, {r6-r9} ");		// if non-empty then store the rect
+	asm("subge lr, lr, #1 ");			// else decrement rect count	
+	asm("subs r12, r12, #1 ");			// decrement loop counter
+	asm("bne cliprect_move ");			// loop if any more rectangles to do
+	asm("cliprect_move_end: ");	
+	asm("sub lr, lr, #1 ");				// decrement count for first deleted rect
+	asm("str lr, [r0] ");				// store updated iCount
+	__POPRET("r4-r10,");	
+	}
+
+
+
+	
+__NAKED__ EXPORT_C void TRegion::SubRect(const TRect& /*aRect*/,TRegion* /*aSubtractedRegion*/)
+/**
+Removes a rectangle from this region.
+
+If there is no intersection between the rectangle and this region, then this 
+region is unaffected. 
+
+@param aRect             The rectangular area to be removed from this region. 
+@param aSubtractedRegion A pointer to a region. If this is supplied, the
+                         removed rectangle is added to it. By default this
+                         pointer is NULL.
+*/
+	{
+	asm("ldr r12, [r0] ");			// r12=iCount=limit
+	asm("cmp r12, #0 ");
+	__JUMP(eq,lr);
+	asm("stmfd sp!, {r3-r11,lr} ");
+	asm("ldmia r1, {r4-r7} ");		// r4-r7 = coordinates of aRect
+	asm("cmp r4, r6 ");				// check if aRect is empty i.e. (r4>=r6 || r5>=r7)
+	asm("cmplt r5, r7 ");
+	asm("bge subrect_end ");		// if aRect is empty nothing to do
+
+	asm("mov r3, #0 ");				// r3=index
+	asm("subrect1: ");
+	asm("ldr lr, [r0, #8] ");		// lr points to first rectangle
+	asm("cmn lr, lr ");
+	asm("ldrcc lr, [r0, #16] ");	// if RRegion
+	asm("addcs lr, r0, #20 ");		// RRegionBuf
+	asm("submi lr, lr, #8 ");		// TRegionFix
+	asm("add lr, lr, r3, lsl #4 ");	// lr=iRectangleList+index
+//	asm("ldmia r1, {r4-r7} ");		// r4-r7 = coordinates of aRect
+	asm("ldmia lr, {r8-r11} ");		// r8-r11 = coordinates of next rectangle in region
+	asm("cmp r10, r4 ");			// compare next.iBr.iX with aRect.iTl.iX
+	asm("cmpgt r11, r5 ");			// if >, compare next.iBr.iY with aRect.iTl.iY
+	asm("cmpgt r6, r8 ");			// if >, compare aRect.iBr.iX with next.iTl.iX
+	asm("cmpgt r7, r9 ");			// if >, compare aRect.iBr.iY with next.iTl.iY
+	asm("addle r3, r3, #1 ");		// if empty intersection, increment index
+	asm("ble subrect2 ");			// if <=, next and aRect have empty intersection, so skip
+	asm("add r4, lr, #16 ");		// r4 = source pointer for copy, lr = dest
+	asm("ldr r5, [r0] ");			// r5 = iCount
+	asm("sub r5, r5, #1 ");			// decrement iCount
+	asm("str r5, [r0] ");
+	asm("sub r12, r12, #1 ");		// decrement limit
+	asm("subs r5, r5, r3 ");		// loop count for copy = iCount-index
+	asm("beq subrect4 ");			// if loop count zero, skip the copy
+	asm("stmfd sp!, {r8,r9} ");		// preserve r8,r9
+	asm("subrect3: ");
+	asm("ldmia r4!, {r6-r9} ");		// remove the current rectangle
+	asm("stmia lr!, {r6-r9} ");
+	asm("subs r5, r5, #1 ");
+	asm("bne subrect3 ");
+	asm("ldmfd sp!, {r8-r9} ");		// restore r8,r9
+	asm("subrect4: ");
+	asm("ldmia r1, {r4-r7} ");		// restore coordinates of aRect into r4-r7
+	asm("cmp r7, r11 ");			// compare aRect.iBr.iY with rect.iBr.iY
+	asm("movgt r7, r11 ");			// r7=inter.iBr.iY
+	asm("bllt subrectapp1 ");		// if <, append 1st subrectangle
+	asm("cmp r5, r9 ");				// compare aRect.iTl.iY with rect.iTl.iY
+	asm("movlt r5, r9 ");			// r5=inter.iTl.iY
+	asm("blgt subrectapp2 ");		// if >, append 2nd subrectangle
+	asm("cmp r6, r10 ");			// compare aRect.iBr.iX with rect.iBr.iX
+	asm("movgt r6, r10 ");			// r6=inter.iBr.iX
+	asm("bllt subrectapp3 ");		// if <, append 3rd subrectangle
+	asm("cmp r4, r8 ");				// compare aRect.iTl.iX with rect.iTl.iX
+	asm("movlt r4, r8 ");			// r4=inter.iTl.iX
+	asm("blgt subrectapp4 ");		// if >, append 4th subrectangle
+	asm("ldr lr, [r0, #4] ");		// lr=iError
+	asm("cmp lr, #0 ");				// check for an error
+	asm("bne subrect_end ");
+	asm("cmp r2, #0 ");				// check if aSubtractedRegion!=NULL
+	asm("blne subrectadd ");		// if non-null, add inter to aSubtractedRegion
+	asm("subrect2: ");
+	asm("cmp r3, r12 ");			// compare index to limit
+	asm("ldmltia r1, {r4-r7} ");	// if index<limit, r4-r7 = coordinates of aRect
+	asm("blt subrect1 ");			// if index<limit, loop again
+
+	asm("subrect_end: ");
+	__POPRET("r3-r11,");
+
+	// AppendRect(TRect(rect.iTl.iX,inter.iBr.iY,rect.iBr.iX,rect.iBr.iY))
+	asm("subrectapp1: ");
+	asm("stmfd sp!, {r0-r3,r12,lr} ");			// preserve registers across function call
+	asm("bl  " CSM_Z16AllocAnotherRectP7TRegion);
+	asm("ldmfd sp!, {r0-r3} ");
+	asm("beq subrectapp1_end ");		// exit if error
+
+	asm("ldr r12, [r0] ");				// r12=iCount
+	asm("ldr lr, [r0, #8] ");		// lr points to first rectangle
+	asm("cmn lr, lr ");
+	asm("ldrcc lr, [r0, #16] ");	// if RRegion
+	asm("addcs lr, r0, #20 ");		// RRegionBuf
+	asm("submi lr, lr, #8 ");		// TRegionFix
+	asm("add lr, lr, r12, lsl #4 ");	// lr=&(iRectangleList[iCount])
+	asm("add r12, r12, #1 ");			// increment iCount
+	asm("str r12, [r0] ");				//
+	asm("stmia lr!, {r8} ");			// append rectangle - rect.iTl.iX
+	asm("stmia lr!, {r7,r10,r11} ");	// inter.iBr.iY, rect.iBr.iX, rect.iBr.iY
+	asm("subrectapp1_end: ");
+	__POPRET("r12,");
+
+	// AppendRect(TRect(rect.iTl.iX,rect.iTl.iY,rect.iBr.iX,inter.iTl.iY))
+	asm("subrectapp2: ");
+	asm("stmfd sp!, {r0-r3,r12,lr} ");			// preserve registers across function call
+	asm("bl  " CSM_Z16AllocAnotherRectP7TRegion);
+	asm("ldmfd sp!, {r0-r3} ");
+	asm("beq subrectapp1_end ");		// exit if error
+
+	asm("ldr r12, [r0] ");				// r12=iCount
+	asm("ldr lr, [r0, #8] ");		// lr points to first rectangle
+	asm("cmn lr, lr ");
+	asm("ldrcc lr, [r0, #16] ");	// if RRegion
+	asm("addcs lr, r0, #20 ");		// RRegionBuf
+	asm("submi lr, lr, #8 ");		// TRegionFix
+	asm("add lr, lr, r12, lsl #4 ");	// lr=&(iRectangleList[iCount])
+	asm("add r12, r12, #1 ");			// increment iCount
+	asm("str r12, [r0] ");				//
+	asm("stmia lr!, {r8,r9,r10} ");		// append rectangle - rect.iTl.iX,rect.iTl.iY,rect.iBr.iX
+	asm("stmia lr!, {r5} ");			// inter.iTl.iY
+	__POPRET("r12,");
+
+	// AppendRect(TRect(inter.iBr.iX,inter.iTl.iY,rect.iBr.iX,inter.iBr.iY))
+	asm("subrectapp3: ");
+	asm("stmfd sp!, {r0-r3,r12,lr} ");			// preserve registers across function call
+	asm("bl  " CSM_Z16AllocAnotherRectP7TRegion);
+	asm("ldmfd sp!, {r0-r3} ");
+	asm("beq subrectapp1_end ");		// exit if error
+	asm("ldr r12, [r0] ");				// r12=iCount
+	asm("ldr lr, [r0, #8] ");		// lr points to first rectangle
+	asm("cmn lr, lr ");
+	asm("ldrcc lr, [r0, #16] ");	// if RRegion
+	asm("addcs lr, r0, #20 ");		// RRegionBuf
+	asm("submi lr, lr, #8 ");		// TRegionFix
+	asm("add lr, lr, r12, lsl #4 ");	// lr=&(iRectangleList[iCount])
+	asm("add r12, r12, #1 ");			// increment iCount
+	asm("str r12, [r0] ");				//
+	asm("stmia lr!, {r6} ");			// append rectangle - inter.iBr.iX
+	asm("stmia lr!, {r5,r10} ");		// inter.iTl.iY, rect.iBr.iX
+	asm("stmia lr!, {r7} ");			// inter.iBr.iY
+	__POPRET("r12,");
+
+	// AppendRect(TRect(rect.iTl.iX,inter.iTl.iY,inter.iTl.iX,inter.iBr.iY))
+	asm("subrectapp4: ");
+	asm("stmfd sp!, {r0-r3,r12,lr} ");			// preserve registers across function call
+	asm("bl  " CSM_Z16AllocAnotherRectP7TRegion);
+	asm("ldmfd sp!, {r0-r3} ");
+	asm("beq subrectapp1_end ");		// exit if error
+	asm("ldr r12, [r0] ");				// r12=iCount
+	asm("ldr lr, [r0, #8] ");		// lr points to first rectangle
+	asm("cmn lr, lr ");
+	asm("ldrcc lr, [r0, #16] ");	// if RRegion
+	asm("addcs lr, r0, #20 ");		// RRegionBuf
+	asm("submi lr, lr, #8 ");		// TRegionFix
+	asm("add lr, lr, r12, lsl #4 ");	// lr=&(iRectangleList[iCount])
+	asm("add r12, r12, #1 ");			// increment iCount
+	asm("str r12, [r0] ");				//
+	asm("stmia lr!, {r8} ");			// append rectangle - rect.iTl.iX
+	asm("stmia lr!, {r5} ");			// inter.iTl.iY
+	asm("stmia lr!, {r4,r7} ");			// inter.iTl.iX, inter.iBr.iY
+	__POPRET("r12,");
+
+	// aSubtractedRegion->AddRect(inter)
+	asm("subrectadd: ");
+	asm("stmfd sp!, {r0-r7,r12,lr} ");	// preserve registers and put inter onto stack
+	asm("mov r0, r2 ");					// this = aSubtractedRegion
+	asm("add r1, sp, #16 ");			// inter is 16 bytes above sp
+	asm("bl  " CSM_ZN7TRegion7AddRectERK5TRect);	// call TRegion::AddRect
+	__POPRET("r0-r7,r12,");
+	}
+
+
+
+
+__NAKED__ EXPORT_C void TRegion::Intersection(const TRegion& /*aRegion1*/,const TRegion& /*aRegion2*/)
+/**
+Replaces this region with the area of intersection between two specified regions.
+	
+Notes:
+	
+1. If the error flag of either of the two specified regions is set, then this 
+   region is cleared and its error flag is set. This frees up allocated memory.
+	
+2. If this region's error flag is already set, then the function has no effect.
+	
+@param aRegion1 The first region. 
+@param aRegion2 The second region.
+*/
+	{
+	// r0=this, r1=&aRegion1, r2=&aRegion2
+	asm("ldr r3, [r1, #4] ");			// r3=aRegion1.iError
+	asm("ldr r12, [r2, #4] ");			// r12=aRegion2.iError
+	asm("orrs r3, r3, r12 ");
+	asm("bne  " CSM_ZN7TRegion10ForceErrorEv);	// if either set, ForceError()
+	asm("str r3, [r0] ");				// iCount=0
+	asm("ldr r3, [r1] ");				// r3=aRegion1.iCount
+	asm("ldr r12, [r2] ");				// r12=aRegion2.iCount
+	asm("cmp r3, #0 ");
+	asm("cmpne r12, #0 ");
+	__JUMP(eq,lr);
+	asm("stmfd sp!, {r3-r11,lr} ");
+	asm("ldr lr, [r1, #8] ");			// r1 points to first rectangle of aRegion1 = pRect1
+	asm("cmn lr, lr ");
+	asm("ldrcc r1, [r1, #16] ");		// if RRegion
+	asm("addcs r1, r1, #20 ");			// RRegionBuf
+	asm("submi r1, r1, #8 ");			// TRegionFix
+	asm("intersection1: ");
+	asm("ldr lr, [r2, #8] ");			// lr points to first rectangle of aRegion2
+	asm("cmn lr, lr ");
+	asm("ldrcc lr, [r2, #16] ");		// if RRegion
+	asm("addcs lr, r2, #20 ");			// RRegionBuf
+	asm("submi lr, lr, #8 ");			// TRegionFix
+	asm("ldr r12, [r2] ");				// r12=aRegion2.iCount
+	asm("intersection2: ");
+	asm("ldmia r1, {r4-r7} ");			// r4-r7 = *pRect1
+	asm("ldmia lr!, {r8-r11} ");		// r8-r11 = *pRect2++
+	asm("cmp r6, r8 ");					// compare pRect1->iBr.iX with pRect2->iTl.iX
+	asm("cmpgt r7, r9 ");				// if >, compare pRect1->iBr.iY with pRect2->iTl.iY
+	asm("cmpgt r10, r4 ");				// if >, compare pRect2->iBr.iX with pRect1->iTl.iX
+	asm("cmpgt r11, r5 ");				// if >, compare pRect2->iBr.iY with pRect1->iTl.iY
+	asm("ble intersection3 ");			// if <=, rectangles have empty intersection, so iterate
+	asm("cmp r4, r8 ");					// compute intersection and place in r8-r11
+	asm("movgt r8, r4 ");
+	asm("cmp r5, r9 ");
+	asm("movgt r9, r5 ");
+	asm("cmp r6, r10 ");
+	asm("movlt r10, r6 ");
+	asm("cmp r7, r11 ");
+	asm("movlt r11, r7 ");
+	asm("stmfd sp!, {r0-r3,r12,lr} ");	// preserve registers across function call
+	asm("bl  " CSM_Z16AllocAnotherRectP7TRegion);
+	asm("ldmfd sp!, {r0-r3} ");
+	asm("ldmeqfd sp!, {r12,lr} ");		// exit if error
+	asm("beq intersection_end ");
+
+	asm("ldr r12, [r0] ");				// r12=iCount
+	asm("ldr lr, [r0, #8] ");			// lr points to first rectangle
+	asm("cmn lr, lr ");
+	asm("ldrcc lr, [r0, #16] ");		// if RRegion
+	asm("addcs lr, r0, #20 ");			// RRegionBuf
+	asm("submi lr, lr, #8 ");			// TRegionFix
+	asm("add lr, lr, r12, lsl #4 ");	// lr=&(iRectangleList[iCount])
+	asm("add r12, r12, #1 ");			// increment iCount
+	asm("str r12, [r0] ");				//
+	asm("stmia lr!, {r8-r11} ");		// append intersection of rectangles
+	asm("ldmfd sp!, {r12,lr} ");		// restore registers
+	asm("intersection3: ");
+	asm("subs r12, r12, #1 ");
+	asm("bne intersection2 ");			// loop for all values of pRect2
+	asm("add r1, r1, #16 ");			// increment pRect1
+	asm("subs r3, r3, #1 ");
+	asm("bne intersection1 ");			// loop for all values of pRect1
+
+	asm("intersection_end: ");
+	__POPRET("r3-r11,");
+	}
+	
+#endif
+
+
+
+
+#ifdef __COBJECT_MACHINE_CODED__
+__NAKED__ EXPORT_C CObject *CObjectIx::At(TInt /*aHandle*/,TInt /*aUniqueID*/)
+/**
+Gets a pointer to the reference counting object with the specified handle
+number and matching unique ID.
+
+@param aHandle   The handle number of the reference counting object.
+@param aUniqueID The unique ID.
+
+@return A pointer to the reference counting object. If there is no matching 
+        object, then this is NULL.
+*/
+	{
+	// r0=this, r1=aHandle, r2=aUniqueID
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(CObjectIx,iHighWaterMark));	// r3=iHighWaterMark
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(CObjectIx,iObjects));	// r0=iObjects
+	asm("mov r12, r1, lsl #17 ");		// r12=r1<<17 = index(aHandle)<<17
+	asm("cmp r3, r12, lsr #17 ");		// compare iHighWaterMark with index(aHandle)
+	asm("movle r0, #0 ");				// if hwm<=index, return NULL
+	__JUMP(le,lr);
+	asm("add r0, r0, r12, lsr #14 ");	// r0=iObjects+index(Handle)=pS
+	asm("ldr r3, [r0] ");				// r3=pS->uniqueID:pS->instance
+	asm("mov r1, r1, lsl #2 ");			// r1=instance(Handle)<<18
+	asm("mov r1, r1, lsr #18 ");		// r1=instance(Handle)
+	asm("orr r1, r1, r2, lsl #16 ");	// r1=aUniqueID:instance(Handle)
+	asm("cmp r1, r3 ");					// check uniqueID and instance
+	asm("movne r0, #0 ");				// if wrong, return 0
+	asm("ldreq r0, [r0, #4] ");			// else return pointer to CObject
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C CObject *CObjectIx::At(TInt aHandle)
+/**
+Gets a pointer to the reference counting object with the specified
+handle number.
+
+@param aHandle The handle number of the reference counting object.
+
+@return A pointer to the reference counting object. If there is no matching 
+        object, then this is NULL.
+*/
+	{
+	// r0=this, r1=aHandle
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(CObjectIx,iHighWaterMark));	// r3=iHighWaterMark
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(CObjectIx,iObjects));	// r0=iObjects
+	asm("mov r12, r1, lsl #17 ");		// r12=r1<<17 = index(aHandle)<<17
+	asm("cmp r3, r12, lsr #17 ");		// compare iHighWaterMark with index(aHandle)
+	asm("movle r0, #0 ");				// if hwm<=index, return NULL
+	__JUMP(le,lr);
+	asm("add r0, r0, r12, lsr #14 ");	// r0=iObjects+index(Handle)=pS
+	asm("ldr r3, [r0] ");				// r3=pS->uniqueID:pS->instance
+	asm("ldr r2, __instanceMask ");
+	asm("and r1, r1, r2 ");				// r1=instance(Handle)<<16
+	asm("cmp r1, r3, lsl #16 ");		// check instance
+	asm("movne r0, #0 ");				// if wrong, return 0
+	asm("ldreq r0, [r0, #4] ");			// else return pointer to CObject
+	__JUMP(,lr);
+	asm("__instanceMask: ");
+	asm(".word 0x3FFF0000 ");
+	}
+
+
+
+
+GLREF_C void PanicCObjectIxIndexOutOfRange(void);
+
+
+
+
+__NAKED__ EXPORT_C CObject* CObjectIx::operator[](TInt /*anIndex*/)
+/**
+Gets a pointer to a reference counting object located at the specified offset 
+within the object index.
+
+@param anIndex The offset of the reference counting object within the object 
+               index. Offset is relative to zero. 
+               
+@return A pointer to the reference counting object.
+
+@panic E32USER-CBase 21 if the value of anIndex is negative or is greater than
+                        or equal to the total number of objects held by
+                        the index.
+*/
+	{
+	// r0=this, r1=anIndex
+	asm("cmp r1, #0 ");								// check anIndex>=0
+	asm("ldrge r3, [r0, #%a0]" : : "i" _FOFF(CObjectIx,iHighWaterMark));	// if so, r3=iHighWaterMark
+	asm("cmpge r3, r1 ");							// and compare iHighWaterMark to anIndex
+	asm("ldrgt r0, [r0, #%a0]" : : "i" _FOFF(CObjectIx,iObjects));	// if OK, r0=iObjects
+	asm("addgt r0, r0, r1, lsl #3 ");				// r0=iObjects+anIndex
+	asm("ldrgt r0, [r0, #4] ");						// r0=pointer to CObject
+#ifdef __CPU_ARMV6
+	asm("ble 1f ");
+	__JUMP(,lr);
+#else
+	__JUMP(gt,lr);
+#endif
+	asm("1: ");
+	asm("b  " CSM_Z29PanicCObjectIxIndexOutOfRangev);	// if anIndex<0 or iCount<=anIndex, panic
+	}
+
+
+
+
+GLREF_C void PanicCObjectConIndexOutOfRange(void);
+GLREF_C void PanicCObjectConFindBadHandle(void);
+GLREF_C void PanicCObjectConFindIndexOutOfRange(void);
+
+
+
+
+__NAKED__ EXPORT_C CObject *CObjectCon::operator[](TInt /*anIndex*/)
+/**
+Gets a pointer to the reference counting object located at the specified offset 
+within the object container.
+
+@param anIndex The offset of the reference counting object within the object 
+               container. Offset is relative to zero.
+
+@return A pointer to the owning reference counting object.
+
+@panic E32USER-CBase 21 if anIndex is negative or is greater than or equal to
+                        the total number of objects held by the container.
+*/
+	{
+	// r0=this, r1=anIndex
+	asm("cmp r1, #0 ");
+	asm("ldrge r2, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iCount));
+	asm("cmpge r2, r1 ");
+	asm("ldrgt r0, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iObjects));
+	asm("ldrgt r0, [r0, r1, lsl #2] ");
+#ifdef __CPU_ARMV6
+	asm("ble 1f ");
+	__JUMP(,lr);
+#else
+	__JUMP(gt,lr);
+#endif
+	asm("1: ");
+	asm("b  " CSM_Z30PanicCObjectConIndexOutOfRangev);
+	}
+
+
+
+
+__NAKED__ EXPORT_C CObject *CObjectCon::At(TInt /*aFindHandle*/) const
+/**
+Gets a pointer to the reference counting object with the specified find-handle 
+number.
+
+A find-handle number is an integer which uniquely identifies a reference
+counting object with respect to its object container.
+
+@param aFindHandle The find-handle number of the reference counting object. 
+                   The unique Id part of this number must be the same as the
+                   unique Id of this container.
+                   The index part of the find-handle number must be
+                   a valid index. 
+
+@return A pointer to the reference counting object.
+
+@panic E32User-CBase 38 if the unique Id part of aFindHandle is not the same as
+                        the unique Id of this container.
+@panic E32User-CBase 39 if the index part of aFindHandle is negative or greater
+                        than or equal to the total number of reference counting
+                        objects held by this object container.
+*/
+	{
+	// r0=this, r1=aFindHandle
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iUniqueID));
+	asm("cmp r2, r1, lsr #16 ");
+	asm("ldreq r2, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iCount));
+	asm("bne  " CSM_Z28PanicCObjectConFindBadHandlev);
+	asm("mov r1, r1, lsl #17 ");
+	asm("cmp r2, r1, lsr #17 ");
+	asm("ldrgt r0, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iObjects));
+	asm("ble  " CSM_Z34PanicCObjectConFindIndexOutOfRangev);
+	asm("ldr r0, [r0, r1, lsr #15] ");
+	__JUMP(,lr);
+	}
+
+
+
+
+__NAKED__ EXPORT_C CObject *CObjectCon::AtL(TInt /*aFindHandle*/) const
+/**
+Gets a pointer to the reference counting object with the specified find-handle 
+number, and leaves on error.
+
+A find-handle number is an integer which uniquely identifies a reference
+counting object with respect to its object container.
+
+@param aFindHandle The find-handle number of the reference counting object. 
+                   The unique Id part of this number must be the same as
+                   the unique Id of this container.
+                   The index part of the find-handle number must be
+                   a valid index. 
+
+@return A pointer to the reference counting object.
+
+@leave KErrBadHandle if the unique Id part of aFindHandle is not the same as
+                     the unique Id of this container.
+@leave KErrArgument if the index part of aFindHandle is negative or greater
+                    than or equal to the total number of reference counting
+                    objects held by this object container.
+*/
+	{
+	// r0=this, r1=aFindHandle
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iUniqueID));
+	asm("cmp r2, r1, lsr #16 ");
+	asm("ldreq r2, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iCount));
+	asm("bne 1f ");
+	asm("mov r1, r1, lsl #17 ");
+	asm("cmp r2, r1, lsr #17 ");
+	asm("ldrgt r0, [r0, #%a0]" : : "i" _FOFF(CObjectCon,iObjects));
+	asm("ble 2f ");
+	asm("ldr r0, [r0, r1, lsr #15] ");
+	__JUMP(,lr);
+	// User::Leave tail called, so no annotations required since
+	// current frame is reused by User::Leave
+	asm("1: ");
+	asm("mvn r0, #7 "); // KErrBadHandle
+	asm("b  " CSM_ZN4User5LeaveEi);
+	asm("2: ");
+	asm("mvn r0, #5 "); // KErrArgument
+	asm("b  " CSM_ZN4User5LeaveEi);
+	}
+#endif
+
+#ifdef __CACTIVESCHEDULER_MACHINE_CODED__
+extern "C" void PanicStrayEvent();
+
+/**
+@internalComponent
+
+The inner active scheduler loop. This repeatedly waits for a signal and then
+dispatches the highest priority ready active object. The loop terminates either
+if one of the RunL()s stops the current active scheduler level or leaves.
+
+Stop when aLoop becomes 'Inactive'
+*/
+__NAKED__ void CActiveScheduler::DoRunL(TLoopOwner* const volatile& aLoop, CActive* volatile & aCurrentObj, TCleanupBundle* aCleanupBundlePtr)
+	{
+	asm("stmfd sp!, {r4-r8,lr} ");
+	__EH_FRAME_PUSH2(r4-r8,lr)
+	
+#ifdef _DEBUG
+	// need to copy aCleanupBundlePtr to somewhere else before it's clobbered by the next line.
+	asm("mov r8, r3 ");														// r8 = &aCleanupBundlePtr
+#endif
+	
+	asm("ldr r3, [r0, #%a0]" : : "i" (_CBASE_VPTR_OFFSET_));				// r3 = vptr
+	asm("add r4, r0, #%a0" : : "i" _FOFF(CActiveScheduler,iActiveQ));		// r4 = &iActiveQ
+	asm("mov r5, r1 ");														// r5 = &aLoop
+	asm("mov r7, r2 ");														// r7 = &aCurrentObj
+	asm("ldr r6, [r3, #%a0]" : : "i" (_CACTIVESCHEDULER_WAIT_OFFSET_));		// r6 = &WaitForAnyRequest()
+
+	asm("active_scheduler_loop: ");
+	asm("ldr r1, [r5] ");													// r1 = aLoop
+	asm("adr lr, 1f ");														// return address
+	asm("sub r0, r4, #%a0 " : : "i" _FOFF(CActiveScheduler,iActiveQ));		// this
+	asm("cmp r1, #0 ");
+	__JUMP(ne, r6);															// call WaitForAnyRequest() if still active
+	__POPRET("r4-r8,");														// else return
+
+	// get here when WaitForAnyRequest() returns
+	asm("1: ");
+	asm("ldr r14, [r4, #0] ");												// r14->first active object
+
+	asm("2: ");
+	asm("cmp r14, r4 ");													// end of queue?
+	asm("sub r0, r14, #%a0" : : "i" _FOFF(CActive,iLink));					// r0->CActive
+	asm("ldmneda r14, {r2, r12, r14} ");									// r2=iStatus, r12=iStatus.iFlags (old iActive), r14 = next object
+	asm("beq PanicStrayEvent ");											// if end of queue, panic
+#ifdef _DEBUG
+	asm("ands r3, r12, #%a0" : : "i" ((TInt)(TRequestStatus::EActive|TRequestStatus::ERequestPending)));	// only active bit and request-pending bit
+	asm("cmpne r3, #%a0" : : "i" ((TInt)(TRequestStatus::EActive|TRequestStatus::ERequestPending)));		// active bit == request pending bit
+	asm("bne PanicStrayEvent ");											// if active bit != request pending bit, panic
+#endif
+	asm("cmp r2, #%a0" : : "i" ((TInt)KRequestPending));					// test if iStatus!=KRequestPending
+	asm("andnes r3, r12, #%a0" : : "i" ((TInt)TRequestStatus::EActive));	// if so, test iActive
+	asm("beq 2b ");															// if not active or still pending, do next CActive
+
+	// have an active object to run
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER_Z__(r3);											// acquire semantics
+#endif
+	asm("ldr r3, [r0, #%a0]" : : "i" (_CBASE_VPTR_OFFSET_));				// r3=CActive->vptr
+	asm("bic r12, r12, #%a0" : : "i" ((TInt)(TRequestStatus::EActive|TRequestStatus::ERequestPending)));
+	asm("ldr r3, [r3, #%a0]" : : "i" (_CACTIVE_RUNL_OFFSET_));				// r3 = &CActive::RunL()
+	asm("str r12, [r0, #%a0]" : : "i" (_FOFF(CActive,iStatus)+_FOFF(TRequestStatus,iFlags)));	// iActive=EFalse
+	asm("str r0, [r7] ");													// save active object in aCurrentObj in case RunL leaves
+#ifdef _DEBUG
+	__JUMPL(3);															// call RunL() (and continue)
+#else
+	asm("adr lr, active_scheduler_loop ");								// set lr (return address) to label, active_scheduler_loop
+	__JUMP(,r3);														// call RunL() (and loop)
+#endif
+	
+	
+#ifdef _DEBUG
+	//check whether there's a cleanup stack installed:
+
+	asm("cmp r8, #0");															// check CleanupBundle* == NULL
+	asm("beq active_scheduler_loop ");											// If r8 == NULL, branch to label, active_scheduler_loop
+	asm("ldr r0, [r8, #%a0]" : : "i" _FOFF(TCleanupBundle,iCleanupPtr)); 		// r0 = CCleanup* (load the CCleanup*)
+
+	//there is a cleanupstack installed:
+	asm("add r1, r8, #%a0" : : "i" _FOFF(TCleanupBundle,iDummyInt)); 			// r1 = iDummyInt* (load the TInt*)
+	asm("adr lr, active_scheduler_loop ");										// set lr (return address) to label, active_scheduler_loop
+	asm("b  " CSM_ZN8CCleanup5CheckEPv); 										// call CCleanup::Check(iDummyInt*)
+#endif
+	
+	}
+#endif
+
+
+#ifdef __CSERVER_MACHINE_CODED__
+__NAKED__ EXPORT_C void CServer2::RunL()
+	{
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(CServer2,iMessage.iFunction)); // r2=Message().Function()
+	asm("stmfd sp!, {r4, lr}");			// save regs
+	__EH_FRAME_PUSH2(r4,lr)
+	asm("cmp r2, #0");					// check for Connect/Disconnect message
+	asm("bmi server2_con_dis");
+
+	// Service the message
+	asm("mov r4, r0 ");						// r4=this
+	asm("ldr r0, [r4, #%a0]" : : "i" _FOFF(CServer2,iMessage.iSessionPtr)); // r0=session
+	asm("add r1, r4, #%a0" : : "i" (_FOFF(CServer2,iMessage)));	// r1=&iServer.Message()
+	asm("cmp r0, #0");  // Check for NULL session
+	asm("ldrne r12, [r0, #%a0]" : : "i" (_CBASE_VPTR_OFFSET_));			// r12=CSession2::vptr
+#ifdef __SUPPORT_THUMB_INTERWORKING
+	asm("ldrne r3, [r12, #%a0]" : : "i" (_CSESSION2_SERVICEL_OFFSET_));	// call CSession2::ServiceL(iMessage)
+	asm("adr lr, server2_run_postamble ");
+	asm("bxne r3 ");
+#else
+	asm("adr lr, server2_run_postamble ");
+	asm("ldrne pc, [r12, #%a0]" : : "i" (_CSESSION2_SERVICEL_OFFSET_));	// call CSession2::ServiceL(iMessage)
+#endif
+	asm("mov r0, r1");
+	asm("b  " CSM_ZN8CServer212NotConnectedERK9RMessage2); // NULL session ptr means not connected
+
+	// Do this after processing any message
+	asm("server2_run_postamble: ");
+	asm("ldr r2, [r4, #%a0]" : : "i" (_FOFF(CServer2,iStatus)+_FOFF(TRequestStatus,iFlags)));	// r2=iStatus.iFlags (old iActive)
+	asm("mov r0, #0x80000001 ");								// r0=KRequestPending
+	asm("ands r1, r2, #%a0" : : "i" ((TInt)TRequestStatus::EActive));
+	asm("bne server2_run_end ");							// if already active, finished
+	asm("orr r2, r2, #%a0" : : "i" ((TInt)(TRequestStatus::EActive|TRequestStatus::ERequestPending)));
+	asm("add r1, r4, #%a0" : : "i" _FOFF(CActive,iStatus));		// r1->iStatus
+	asm("stmia r1, {r0,r2} "); // set iStatus=KRequestPending, set active bit, set request pending bit
+	asm("add r2, r4, #%a0" : : "i" _FOFF(CServer2,iMessage));	// r2->iServer.Message()
+	asm("ldr r0, [r4, #%a0]" : : "i" _FOFF(CServer2,iServer));	// r0=iServer.iHandle
+	asm("bl  " CSM_ZN4Exec13ServerReceiveEiR14TRequestStatusPv);// call Exec::ServerReceive
+	asm("server2_run_end: ");
+	__POPRET("r4,");
+
+	// Deal with Connect and Disconnect messages
+	asm("server2_con_dis:");	
+	asm("mov r4, r0 ");					// r4=this
+	asm("add r1, r0, #%a0" : : "i" _FOFF(CServer2,iMessage)); // r1=&iServer.Message()
+	asm("adr lr, server2_run_postamble "); // return address for after any processing
+	asm("cmp r2, #%a0" : : "i" (RMessage2::EConnect));
+	asm("beq  " CSM_ZN8CServer27ConnectERK9RMessage2); // Do Connect()
+	asm("cmp r2, #%a0" : : "i" (RMessage2::EDisConnect));
+	asm("beq  " CSM_ZN8CServer210DisconnectERK9RMessage2); // Do Disconnect()
+	asm("mov r0, r1");
+	asm("b  " CSM_ZN8CServer210BadMessageERK9RMessage2); // Bad message
+	}
+#endif
+
+EXPORT_C __NAKED__ void RFastLock::Wait()
+	{
+	asm("1: ");
+	asm("add	r0, r0, #4 ");					// point to iCount
+
+#ifdef __CPU_ARM_HAS_LDREX_STREX
+	asm("2:		");
+	LDREX(		2, 0);							// read
+	asm("subs	r1, r2, #1 ");					// decrement
+	STREX(		3, 1, 0);						// write
+	asm("teq	r3, #0 ");						// success?
+	asm("bne	2b ");							// no!
+	asm("sub	r0, r0, #4 ");					// r0 = this
+	asm("bcs "	CSM_ZN10RSemaphore4WaitEv);		// if no borrow from decrement wait on semaphore
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER__(r3);				// no need to wait, but still need acquire barrier
+#endif
+	__JUMP(,	lr );
+#else
+	asm("mov	r1, #1 ");						// 'looking' value
+	asm("swp	r1, r1, [r0] ");				// write looking value, read original
+	asm("subs	r1, r1, #1 ");					// decrement count
+	asm("strlt	r1, [r0] ");					// if it becomes negative, no-one was looking
+	__JUMP(cc,	lr);							// if borrow, was originally zero so we are finished
+	asm("sub	r0, r0, #4 ");					// r0=this
+	asm("blt "	CSM_ZN10RSemaphore4WaitEv);		// lock held so wait on semaphore
+	asm("stmfd	sp!, {r0,lr} ");				// otherwise save registers
+	asm("mov	r0, #1000 ");					// someone was looking, so wait 1ms and try again
+	asm("bl "	CSM_ZN4User12AfterHighResE27TTimeIntervalMicroSeconds32);
+	asm("ldmfd	sp!, {r0,lr} ");
+	asm("b		1b ");
+#endif
+	}
+
+EXPORT_C __NAKED__ void RFastLock::Signal()
+	{
+	asm("1: ");
+	asm("add	r0, r0, #4 ");					// point to iCount
+
+#ifdef __CPU_ARM_HAS_LDREX_STREX
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER_Z__(r3);				// need release barrier
+#endif
+	asm("2:		");
+	LDREX(		2, 0);							// read
+	asm("adds	r1, r2, #1 ");					// increment
+	STREX(		3, 1, 0);						// write
+	asm("teq	r3, #0 ");						// success?
+	asm("bne	2b ");							// no!
+	asm("sub	r0, r0, #4 ");					// r0 = this
+	asm("bcc "	CSM_ZN10RSemaphore6SignalEv);	// if no carry from increment, signal semaphore
+	__JUMP(,	lr );
+#else
+	asm("mov	r1, #1 ");						// 'looking' value
+	asm("swp	r1, r1, [r0] ");				// write looking value, read original
+	asm("adds	r1, r1, #1 ");					// increment count
+	asm("strle	r1, [r0] ");					// if still <=0, no-one was looking
+	__JUMP(eq,	lr);							// if it's now zero, no-one is waiting so we are finished
+	asm("sub	r0, r0, #4 ");					// r0=this
+	asm("blt "	CSM_ZN10RSemaphore6SignalEv);	// someone is waiting so signal semaphore
+	asm("stmfd	sp!, {r0,lr} ");				// otherwise save registers
+	asm("mov	r0, #1000 ");					// someone was looking, so wait 1ms and try again
+	asm("bl "	CSM_ZN4User12AfterHighResE27TTimeIntervalMicroSeconds32);
+	asm("ldmfd	sp!, {r0,lr} ");
+	asm("b		1b ");
+#endif
+	}
+
+
+// Entry point stub to allow EKA1 binaries to be executed under EKA2
+// Only called when process is first loaded
+
+extern "C" TLinAddr GetEka1ExeEntryPoint();
+
+__NAKED__ TInt E32Loader::V7ExeEntryStub()
+	{
+	// Process entry point
+	// R4 = entry reason
+	// SP points to information block
+	asm("cmp r4, #%a0" : : "i" ((TInt)KModuleEntryReasonProcessInit) );
+	asm("bne " CSM_ZN4User9InvariantEv );	// invalid entry reason
+	asm("bl GetEka1ExeEntryPoint ");		// load the entry stub and return its address
+	__JUMP(,r0);							// jump to the entry stub with R4, SP unchanged
+	}
+
+__NAKED__ TInt E32Loader::V7DllEntryStub(TInt)
+	{
+
+	__JUMP(,lr);
+	}
+
+
+// Hash an 8 bit string at aPtr, length aLen bytes.
+__NAKED__ TUint32 DefaultStringHash(const TUint8* /*aPtr*/, TInt /*aLen*/)
+	{
+	asm("ldr r3, one_over_phi ");
+	asm("subs r1, r1, #4 ");
+	asm("mov r2, r0 ");
+	asm("mov r0, #0 ");
+	asm("blo 1f ");
+	asm("ands r12, r2, #3 ");
+	asm("bne hash_unal ");
+	asm("2: ");
+	asm("ldr r12, [r2], #4 ");
+	asm("subs r1, r1, #4 ");
+	asm("eor r0, r0, r12 ");
+	asm("umull r0, r12, r3, r0 ");
+	asm("bcs 2b ");
+	asm("1: ");
+	asm("adds r1, r1, #4 ");
+	__JUMP(eq,lr);
+	asm("4: ");
+	asm("ldrb r12, [r2], #1 ");
+	asm("cmp r1, #2 ");
+	asm("eor r0, r0, r12 ");
+	asm("ldrcsb r12, [r2], #1 ");
+	asm("eorcs r0, r0, r12, lsl #8 ");
+	asm("ldrhib r12, [r2], #1 ");
+	asm("eorhi r0, r0, r12, lsl #16 ");
+	asm("umull r0, r12, r3, r0 ");
+	__JUMP(,lr);
+
+	asm("hash_unal: ");
+	asm("bic r2, r2, #3 ");
+	asm("stmfd sp!, {r4,r5,lr} ");
+	asm("mov r12, r12, lsl #3 ");
+	asm("rsb r14, r12, #32 ");
+	asm("ldr r4, [r2], #4 ");
+	asm("3: ");
+	asm("eor r0, r0, r4, lsr r12 ");
+	asm("ldr r4, [r2], #4 ");
+	asm("subs r1, r1, #4 ");
+	asm("eor r0, r0, r4, lsl r14 ");
+	asm("umull r0, r5, r3, r0 ");
+	asm("bcs 3b ");
+	asm("adds r1, r1, #4 ");
+	asm("ldmfd sp!, {r4,r5,lr} ");
+	asm("subne r2, r2, #4 ");
+	asm("addne r2, r2, r12, lsr #3 ");
+	asm("bne 4b ");
+	__JUMP(,lr);
+	}
+
+// Hash a 16 bit string at aPtr, length aLen bytes.
+__NAKED__ TUint32 DefaultWStringHash(const TUint16* /*aPtr*/, TInt /*aLen*/)
+	{
+	asm("str lr, [sp, #-4]! ");
+	asm("ldr r3, one_over_phi ");
+	asm("subs r1, r1, #8 ");
+	asm("mov r2, r0 ");
+	asm("mov r0, #0 ");
+	asm("blo 1f ");
+	asm("ands r12, r2, #3 ");
+	asm("bne whash_unal ");
+	asm("2: ");
+	asm("ldmia r2!, {r12,r14} ");
+	asm("subs r1, r1, #8 ");
+	asm("eor r0, r0, r12 ");
+	asm("eor r0, r0, r14, ror #24 ");
+	asm("umull r0, r12, r3, r0 ");
+	asm("bcs 2b ");
+	asm("1: ");
+	asm("adds r1, r1, #8 ");
+	asm("beq 8f ");
+	asm("4: ");
+	asm("ldrh r12, [r2], #2 ");
+	asm("cmp r1, #4 ");
+	asm("eor r0, r0, r12 ");
+	asm("ldrcsh r12, [r2], #2 ");
+	asm("eorcs r0, r0, r12, lsl #16 ");
+	asm("ldrhih r12, [r2], #2 ");
+	asm("eorhi r0, r0, r12, ror #24 ");
+	asm("umull r0, r12, r3, r0 ");
+	asm("8: ");
+	__POPRET("");
+
+	asm("whash_unal: ");
+	asm("add r2, r2, #2 ");				// r2 must be 2 mod 4
+	asm("ldr r14, [r2, #-4] ");
+	asm("3: ");
+	asm("eor r0, r0, r14, lsr #16 ");	// char 0 goes into bytes 0,1
+	asm("ldmia r2!, {r12,r14} ");
+	asm("subs r1, r1, #8 ");
+	asm("eor r0, r0, r12, lsl #16 ");	// char 1 goes into bytes 2,3
+	asm("mov r12, r12, lsr #16 ");
+	asm("orr r12, r12, r14, lsl #16 ");	// r12 = char3:char2
+	asm("eor r0, r0, r12, ror #24 ");	// char 2 into bytes 1,2 ; char 3 into bytes 3,0
+	asm("umull r0, r12, r3, r0 ");
+	asm("bcs 3b ");
+	asm("adds r1, r1, #8 ");
+	asm("subne r2, r2, #2 ");
+	asm("bne 4b ");
+	__POPRET("");
+	}
+
+
+/**
+@publishedAll
+@released
+
+Calculate a 32 bit hash from a 32 bit integer.
+
+@param	aInt	The integer to be hashed.
+@return			The calculated 32 bit hash value.
+*/
+EXPORT_C __NAKED__ TUint32 DefaultHash::Integer(const TInt& /*aInt*/)
+	{
+	asm("ldr r0, [r0] ");
+	asm("ldr r1, one_over_phi ");
+	asm("umull r0, r2, r1, r0 ");
+	__JUMP(,lr);
+	asm("one_over_phi: ");
+	asm(".word 0x9e3779b9 ");
+	}
+
+
+#ifdef __USERSIDE_THREAD_DATA__
+
+/**
+@internalComponent
+
+Get a pointer to the thread local user data stored in the thread ID register.
+*/
+__NAKED__ TLocalThreadData* LocalThreadData()
+	{
+	GET_RWRW_TID(,r0);
+	__JUMP(,lr);	
+	}
+
+#endif

@@ -1,0 +1,6 @@
+EXPORTS
+	?Function3@@YAHXZ @ 1 NONAME ; int __cdecl Function3(void)
+	?Function4@@YAHXZ @ 2 NONAME ; int __cdecl Function4(void)
+	?GetDll3Data@@YAHXZ @ 3 NONAME ; int __cdecl GetDll3Data(void)
+	?SetDll3Data@@YAXH@Z @ 4 NONAME ; void __cdecl SetDll3Data(int)
+

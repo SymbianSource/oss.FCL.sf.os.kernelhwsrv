@@ -1,0 +1,3 @@
+EXPORTS
+	?TrapExceptionInDll@@YAXXZ @ 1 NONAME ; void TrapExceptionInDll(void)
+

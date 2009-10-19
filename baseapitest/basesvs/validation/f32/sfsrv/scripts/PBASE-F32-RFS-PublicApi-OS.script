@@ -1,0 +1,190 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! 	@file
+//! 	@SYMTestSuiteName		PBASE-F32-RFS-PublicApi-OS
+//!	@SYMScriptTestEnvironment	This test script requires a basic ROM.
+//! 	@SYMScriptAuthor 		Anton Grober, Oleg Kunetsov
+//! 	@SYMScriptDescription		The test script contains API tests for RFs functions that perform operations on a C-drive.
+
+LOAD_SUITE	T_Sfsrv
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1036
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1036
+//! @SYMAPI			RFs
+//! @SYMAuthor			Anton Grober 
+//! @SYMCreationDate		02/10/2006 
+//! @SYMTestCaseDesc		LockDrive() function test. Passing C drive index as parameter.
+//!				Uses API elements: LockDrive().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive()  passing C drive as drive number.
+//!				3. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Function LockDrive() returns KErrNotSupported.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-PublicApi-OS.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect
+		COMMAND	!Error=-5	RFs1	LockDrive		PBASE-F32-RFS-PublicApi-1036-001-LockDrive_command03
+		COMMAND			RFs1	Close		
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-RFS-PublicApi-1036
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1061
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1061
+//! @SYMAPI			RFs
+//! @SYMAuthor			Anton Grober 
+//! @SYMCreationDate		22/08/2006 
+//! @SYMTestCaseDesc		ScanDrive() test. Passing C drive's path as parameter.
+//!				Uses API elements: ScanDrive()
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call ScanDrive() passing C drive's path as path parameter.	
+//!				3. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Function ScanDrive() returns KErrInUse.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-PublicApi-OS.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect
+		COMMAND	!Error=-14	RFs1	ScanDrive		PBASE-F32-RFS-PublicApi-1061-001-ScanDrive_command03
+		COMMAND			RFs1	Close		
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-RFS-PublicApi-1061
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-3010
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-3010
+//! @SYMAPI			RFs
+//! @SYMTestCaseDesc		Function ResourceCountMarkStart(), ResourceCount(), ResourceCountMarkEnd() test.
+//!				Uses API elements: ResourceCountMarkStart(), ResourceCount(), ResourceCountMarkEnd().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call ResourceCountMarkStart().
+//!				3. Call RFile's Open() and pass "\base\T_Sfsrv\test.txt" as parameter.
+//!				4. Call ResourceCount() and check that it returns 1.
+//!				5. Call CloseFile().
+//!				6. Call ResourceCountMarkEnd().
+//!				7. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Resource count returns correct number of opened resources.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-PublicApi-OS.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	RFile1
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	ResourceCountMarkStart
+		COMMAND		RFile1	new		
+		COMMAND		RFile1	Open		PBASE-F32-RFS-PublicApi-3010-001-Open_command06
+		COMMAND		RFs1	ResourceCount		PBASE-F32-RFS-PublicApi-3010-001-ResourceCount_command08
+		COMMAND		RFile1	Close		
+		COMMAND		RFile1	~		
+		COMMAND		RFs1	ResourceCountMarkEnd
+		COMMAND		RFs1	Close		
+		COMMAND		RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-RFS-PublicApi-3010
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-3122
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-3122
+//! @SYMAPI			RFs
+//! @SYMTestCaseDesc		Function ResourceCountMarkEnd() test, where number of opened resources is not equals to the number of closed resources.
+//!				Uses API elements: Open(), ResourceCountMarkEnd().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call ResourceCountMarkStart().
+//!				3. Call RFile's Open() passing "\base\T_Sfsrv\test.txt" as parameter and EFileRead as the mode in which the file is opened.
+//!				4. Call ResourceCountMarkEnd().
+//!				5. Call Close() for opened file.
+//!				6. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Panic 2 (CSessionFs)
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-PublicApi-OS.ini 
+		CREATE_OBJECT	RFs	RFs1
+		CREATE_OBJECT	RFile	RFile1
+		COMMAND		RFs1	new		
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	ResourceCountMarkStart
+		COMMAND		RFile1	new	
+		COMMAND		RFile1	Open		PBASE-F32-RFS-PublicApi-3122-001-Open_command06
+		COMMAND		RFs1	ResourceCountMarkEnd
+		COMMAND		RFile1	Close		
+		COMMAND		RFile1	~		
+		COMMAND		RFs1	Close		
+		COMMAND		RFs1	~		
+	END_TEST_BLOCK	!PanicCode=2 !PanicString="CSessionFs"
+END_TESTCASE 			PBASE-F32-RFS-PublicApi-3122
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1088
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1088
+//! @SYMAPI			RFs
+//! @SYMTestCaseDesc		Setting SystemDrive with various drives using SetSystemDrive()
+//!				Uses API elements: SetSystemDrive().
+//! @SYMTestActions		1. Call Connect() method.
+//!				2. Call SetSystemDrive() passing the default drive number as argument.
+//!				3. Call SetSystemDrive() passing different drive letters (should all fail with KErrAlreadyexists)
+//!				4. Call Close() method.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	RFs::SetSystemDrive() is supposed to be called only once when the device boots.It will set with the valid drive for the first time.
+//!                         The subsequent call to SetSystemDrive() will result in -11(KErrAlready Exists). If the drive attribute is not valid
+//!                         it results in KernelPanic. Without TCB capability will return KErrPermissionDenied (-46)
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv 	\base\PBASE-F32-RFS-PublicApi-OS.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new		
+		COMMAND			RFs1	Connect
+		COMMAND			RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_command03
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_0
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_1
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_2
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_3
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_4
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_5
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_6
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_7
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_8
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_9
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_10
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_11
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_12
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_13
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_14
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_15
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_16
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_17
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_18
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_19
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_20
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_21
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_22
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_23
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_24
+		COMMAND	!Error=-11	RFs1	SetSystemDrive		PBASE-F32-RFS-PublicApi-1088-001-SetSystemDrive_25
+		COMMAND			RFs1	Close		
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-RFS-PublicApi-1088
+

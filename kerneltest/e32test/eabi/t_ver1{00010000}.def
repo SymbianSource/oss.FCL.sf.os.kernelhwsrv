@@ -1,0 +1,5 @@
+EXPORTS
+	_Z7Export1v @ 1 NONAME ; Export1()
+	_Z7Export2v @ 2 NONAME ; Export2()
+	_Z7Export3v @ 3 NONAME ; Export3()
+

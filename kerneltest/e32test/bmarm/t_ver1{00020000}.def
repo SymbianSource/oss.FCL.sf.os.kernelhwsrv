@@ -1,0 +1,7 @@
+EXPORTS
+	Export1__Fv @ 1 NONAME ; Export1(void)
+	Export2__Fv @ 2 NONAME ; Export2(void)
+	Export3__Fv @ 3 NONAME ; Export3(void)
+	Export4__Fv @ 4 NONAME ABSENT ; Export4(void)
+	Export5__Fi @ 5 NONAME ; Export5(int)
+

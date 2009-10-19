@@ -1,0 +1,3 @@
+PlatSecEnforcement ON
+PlatSecDiagnostics ON
+PlatSecDisabledCaps -TCB+CommDD-PowerMgmt+MultimediaDD-ReadDeviceData+WriteDeviceData-DRM+TrustedUI-ProtServ+DiskAdmin-NetworkControl+AllFiles-SwEvent+NetworkServices-LocalServices+ReadUserData-WriteUserData+Location

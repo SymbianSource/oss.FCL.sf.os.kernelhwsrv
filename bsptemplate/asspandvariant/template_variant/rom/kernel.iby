@@ -1,0 +1,93 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+//
+// TO DO: (mandatory)
+//
+// This file includes all the kernel files for your base port
+//
+//
+// Important: 'extension' libraries are started at boot time in the order specified
+//             in this file, ensure dependencies are considered.
+//
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_KATEMPLATE.DLL	\sys\bin\katemplate.dll
+primary[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EKERN.EXE		\sys\bin\ekern.exe
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_BTRACEX.LDD	\sys\bin\btracex.ldd
+variant[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_ECUST.DLL		\sys\bin\ecust.dll
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EXMONCOMMON.DLL \sys\bin\exmoncommon.dll
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EXMONDEBUG.DLL \sys\bin\exmondebug.dll
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_POWER.DLL		\sys\bin\power.dll
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_DMA.DLL		\sys\bin\DMA.DLL
+//
+// TO DO: (mandatory)
+//
+// In the initial phases of development, when neither display and keyboard drivers are available
+// you may want to use the VT100 Sreen Driver (which also keyboard input and keyboard translation).
+// In that case just include the following line:
+// #define EDISP_DRV	\EDISP_VT100.DLL
+// alternatively include the DLLs for display, keyboard, key mapping and eventually digitiser
+//
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_LCD.DLL		\sys\bin\lcd.dll
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EKEYB.DLL		\sys\bin\ekeyb.dll
+file[VARID]=		\Epoc32\Release\##MAIN##\##BUILD##\_##VARIANT##_EKDATA.DLL		\sys\bin\ekdata.dll
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EXYIN.DLL		\sys\bin\exyin.dll
+device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EUART.PDD		\sys\bin\euart.pdd
+// SYM_BRANCH: Delete old sound driver
+device[VARID]= 		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_SOUNDSC.PDD    	\sys\bin\soundsc.pdd
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\ELOCD.LDD					\sys\bin\elocd.ldd
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_MEDINT.PDD		\sys\bin\medint.pdd
+//extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EPBUS.DLL		\sys\bin\epbus.dll
+//extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EPBUSV.DLL		\sys\bin\epbusv.dll
+//extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_MEDLFS.PDD		\sys\bin\medlfs.pdd
+//device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_MEDATA.PDD		\sys\bin\medata.pdd
+device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\ECOMM.LDD					\sys\bin\ecomm.ldd
+// SYM_BRANCH: Delete old sound driver
+device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\PIPELIB.LDD					\sys\bin\pipelib.ldd
+device[VARID]= 		\Epoc32\Release\##KMAIN##\##BUILD##\ESOUNDSC.LDD				\sys\bin\esoundsc.ldd
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\EXSTART.DLL					\sys\bin\exstart.dll
+device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\ECAMERASC.LDD			\sys\bin\ecamerasc.ldd
+device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_CAMERASC.PDD		\sys\bin\camerasc.pdd
+
+// USB Client
+device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\USBC.LDD					\sys\bin\EUSBC.LDD
+// USB Device Driver
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_USBCC.DLL		\sys\bin\USBCC.DLL
+
+// Include if IIC Controller support is required
+//extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\IIC.DLL			   			\sys\bin\iic.dll
+//
+// Include if IIC Channel support is required
+// extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_IIC.dll	\sys\bin\iic_channel.dll
+
+
+// TO DO: 
+//
+// Uncomment the following line if euser is to be built from the variant
+//
+//#define	EUSER_DLL	_##VARIANT##_euser.dll
+#define	EUSER_DLL	euser_v6k.dll
+
+#ifdef E32TESTS_INCLUDED
+// Include optional test drivers for e32test
+
+// Include if platform supports the standard Symbian DMA framework
+//device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_dma.ldd					\sys\bin\d_dma.ldd
+
+// Include if platform supports MMC
+//device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_medch.ldd					\sys\bin\d_medch.ldd
+
+#endif
+

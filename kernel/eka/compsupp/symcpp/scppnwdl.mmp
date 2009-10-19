@@ -1,0 +1,37 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "ARM EABI LICENCE.txt"
+// which accompanies this distribution, and is available
+// in kernel/eka/compsupp.
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Creates scppnwdl.dll which implements Symbian's global operator new and global
+// operator delete.
+// 
+//
+
+TARGET 			scppnwdl.dll
+
+TARGETTYPE		dll
+
+OPTION ARMCC	--no_exceptions --no_exceptions_unwind
+
+SOURCEPATH		.
+SOURCE			rtopnew.cpp rtopdel.cpp
+
+LIBRARY 		euser.lib	 
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+capability		all
+VENDORID		0x70000001
+
+UNPAGED
+SMPSAFE
+

@@ -1,0 +1,103 @@
+EXPORTS
+	??0DMMCMediaChange@@QAE@H@Z @ 1 NONAME ; public: __thiscall DMMCMediaChange::DMMCMediaChange(int)
+	??0DMMCPsu@@QAE@HH@Z @ 2 NONAME ; public: __thiscall DMMCPsu::DMMCPsu(int,int)
+	??0DMMCSession@@QAE@ABVTMMCCallBack@@@Z @ 3 NONAME ; public: __thiscall DMMCSession::DMMCSession(class TMMCCallBack const &)
+	??0DMMCSocket@@QAE@HPAVTMMCPasswordStore@@@Z @ 4 NONAME ; public: __thiscall DMMCSocket::DMMCSocket(int,class TMMCPasswordStore *)
+	??0DMMCStack@@QAE@HPAVDMMCSocket@@@Z @ 5 NONAME ; public: __thiscall DMMCStack::DMMCStack(int,class DMMCSocket *)
+	??0DMediaChangeBase@@QAE@H@Z @ 6 NONAME ; public: __thiscall DMediaChangeBase::DMediaChangeBase(int)
+	??0TPBusCallBack@@QAE@P6AXPAXH00@Z0@Z @ 7 NONAME ; public: __thiscall TPBusCallBack::TPBusCallBack(void (__cdecl*)(void *,int,void *,void *),void *)
+	??0TPBusCallBack@@QAE@P6AXPAXH@Z0I@Z @ 8 NONAME ; public: __thiscall TPBusCallBack::TPBusCallBack(void (__cdecl*)(void *,int),void *,unsigned int)
+	??0TPBusCallBack@@QAE@XZ @ 9 NONAME ; public: __thiscall TPBusCallBack::TPBusCallBack(void)
+	??1DMMCSession@@UAE@XZ @ 10 NONAME ; public: virtual __thiscall DMMCSession::~DMMCSession(void)
+	?AcquireStackSM@DMMCStack@@MAEKXZ @ 11 NONAME ; protected: virtual unsigned long __thiscall DMMCStack::AcquireStackSM(void)
+	?Add@DPBusSocket@@QAEXPAVTPBusCallBack@@@Z @ 12 NONAME ; public: void __thiscall DPBusSocket::Add(class TPBusCallBack *)
+	?AddNewCard@TMMCardArray@@QAEXPBEPAVTRCA@@@Z @ 13 NONAME ; public: void __thiscall TMMCardArray::AddNewCard(unsigned char const *,class TRCA *)
+	?AllocCards@TMMCardArray@@UAEHXZ @ 14 NONAME ; public: virtual int __thiscall TMMCardArray::AllocCards(void)
+	?AllocSession@DMMCStack@@UBEPAVDMMCSession@@ABVTMMCCallBack@@@Z @ 15 NONAME ; public: virtual class DMMCSession * __thiscall DMMCStack::AllocSession(class TMMCCallBack const &)const 
+	?Block@DMMCStack@@IAEXPAVDMMCSession@@K@Z @ 16 NONAME ; protected: void __thiscall DMMCStack::Block(class DMMCSession *,unsigned long)
+	?CIMReadWriteBlocksSM@DMMCStack@@MAEKXZ @ 17 NONAME ; protected: virtual unsigned long __thiscall DMMCStack::CIMReadWriteBlocksSM(void)
+	?CIMReadWriteBlocksSMST@DMMCStack@@KAKPAX@Z @ 18 NONAME ; protected: static unsigned long __cdecl DMMCStack::CIMReadWriteBlocksSMST(void *)
+	?CSDField@TCSD@@QBEIABI0@Z @ 19 NONAME ; public: unsigned int __thiscall TCSD::CSDField(unsigned int const &,unsigned int const &)const 
+	?CardDetect@DMMCStack@@MAEHI@Z @ 20 NONAME ; protected: virtual int __thiscall DMMCStack::CardDetect(unsigned int)
+	?CardRCA@DMMCSession@@QAE?AVTRCA@@XZ @ 21 NONAME ; public: class TRCA  __thiscall DMMCSession::CardRCA(void)
+	?Create@DMMCMediaChange@@UAEHXZ @ 22 NONAME ; public: virtual int __thiscall DMMCMediaChange::Create(void)
+	?Create@DMediaChangeBase@@UAEHXZ @ 23 NONAME ; public: virtual int __thiscall DMediaChangeBase::Create(void)
+	?Create@TMMCardControllerInterface@@QAEHXZ @ 24 NONAME ; public: int __thiscall TMMCardControllerInterface::Create(void)
+	?DeclareCardAsGone@TMMCardArray@@UAEXI@Z @ 25 NONAME ; public: virtual void __thiscall TMMCardArray::DeclareCardAsGone(unsigned int)
+	?DeltaCurrentConsumption@DPBusSocket@@QAEXH@Z @ 26 NONAME ; public: void __thiscall DPBusSocket::DeltaCurrentConsumption(int)
+	?DeviceSize@TCSD@@QBEIXZ @ 27 NONAME ; public: unsigned int __thiscall TCSD::DeviceSize(void)const 
+	?Direction@TMMCCommandDesc@@QBEHXZ @ 28 NONAME ; public: int __thiscall TMMCCommandDesc::Direction(void)const 
+	?Dispatch@TMMCStateMachine@@QAEKXZ @ 29 NONAME ; public: unsigned long __thiscall TMMCStateMachine::Dispatch(void)
+	?DoCreate@DMMCPsu@@UAEHXZ @ 30 NONAME ; public: virtual int __thiscall DMMCPsu::DoCreate(void)
+	?DoCreate@DPBusPsuBase@@UAEHXZ @ 31 NONAME ; public: virtual int __thiscall DPBusPsuBase::DoCreate(void)
+	?DoTickService@DPBusPsuBase@@UAEXXZ @ 32 NONAME ; public: virtual void __thiscall DPBusPsuBase::DoTickService(void)
+	?DoorClosedService@DMediaChangeBase@@QAEXXZ @ 33 NONAME ; public: void __thiscall DMediaChangeBase::DoorClosedService(void)
+	?DoorOpenService@DMediaChangeBase@@QAEXXZ @ 34 NONAME ; public: void __thiscall DMediaChangeBase::DoorOpenService(void)
+	?EffectiveModes@DMMCStack@@QAEKABVTMMCStackConfig@@@Z @ 35 NONAME ; public: unsigned long __thiscall DMMCStack::EffectiveModes(class TMMCStackConfig const &)
+	?EndInCritical@DPBusSocket@@QAEXXZ @ 36 NONAME ; public: void __thiscall DPBusSocket::EndInCritical(void)
+	?Engage@DMMCSession@@QAEHXZ @ 37 NONAME ; public: int __thiscall DMMCSession::Engage(void)
+	?EpocErrorCode@DMMCSession@@QBEHXZ @ 38 NONAME ; public: int __thiscall DMMCSession::EpocErrorCode(void)const 
+	?EraseGroupSize@TCSD@@QBEIXZ @ 39 NONAME ; public: unsigned int __thiscall TCSD::EraseGroupSize(void)const 
+	?EraseSectorSize@TCSD@@QBEIXZ @ 40 NONAME ; public: unsigned int __thiscall TCSD::EraseSectorSize(void)const 
+	?FillCommandArgs@DMMCSession@@QAEXVTMMCArgument@@KPAEK@Z @ 41 NONAME ; public: void __thiscall DMMCSession::FillCommandArgs(class TMMCArgument,unsigned long,unsigned char *,unsigned long)
+	?FillCommandDesc@DMMCSession@@QAEXW4TMMCCommandEnum@@@Z @ 42 NONAME ; public: void __thiscall DMMCSession::FillCommandDesc(enum TMMCCommandEnum)
+	?FillCommandDesc@DMMCSession@@QAEXW4TMMCCommandEnum@@VTMMCArgument@@@Z @ 43 NONAME ; public: void __thiscall DMMCSession::FillCommandDesc(enum TMMCCommandEnum,class TMMCArgument)
+	?FillCommandDesc@DMMCSession@@QAEXXZ @ 44 NONAME ; public: void __thiscall DMMCSession::FillCommandDesc(void)
+	?ForceMediaChange@DPBusSocket@@QAEXXZ @ 45 NONAME ; public: void __thiscall DPBusSocket::ForceMediaChange(void)
+	?GetMacro@DMMCSession@@MBEP6AKPAX@ZH@Z @ 46 NONAME ; protected: virtual unsigned long (__cdecl*__thiscall DMMCSession::GetMacro(int)const )(void *)
+	?InCritical@DPBusSocket@@QAEHXZ @ 47 NONAME ; public: int __thiscall DPBusSocket::InCritical(void)
+	?Init@DMMCStack@@UAEHXZ @ 48 NONAME ; public: virtual int __thiscall DMMCStack::Init(void)
+	?IsLocked@DPBusPsuBase@@UAEHXZ @ 49 NONAME ; public: virtual int __thiscall DPBusPsuBase::IsLocked(void)
+	?IsLocked@TMMCard@@QBEHXZ @ 50 NONAME ; public: int __thiscall TMMCard::IsLocked(void)const 
+	?IsMappingIncorrect@TMMCPasswordStore@@QAEHABVTCID@@ABV?$TBuf8@$0BA@@@@Z @ 51 NONAME ; public: int __thiscall TMMCPasswordStore::IsMappingIncorrect(class TCID const &,class TBuf8<16> const &)
+	?IsReady@TMMCard@@QBEHXZ @ 52 NONAME ; public: int __thiscall TMMCard::IsReady(void)const 
+	?IssueMMCCommandSMST@DMMCStack@@KAKPAX@Z @ 53 NONAME ; protected: static unsigned long __cdecl DMMCStack::IssueMMCCommandSMST(void *)
+	?Jump@TMMCStateMachine@@QAEKP6AKPAX@ZH@Z @ 54 NONAME ; public: unsigned long __thiscall TMMCStateMachine::Jump(unsigned long (__cdecl*)(void *),int)
+	?MaxReadCurrentInMilliamps@TCSD@@QBEIXZ @ 55 NONAME ; public: unsigned int __thiscall TCSD::MaxReadCurrentInMilliamps(void)const 
+	?MaxTranSpeedInKilohertz@TCSD@@QBEIXZ @ 56 NONAME ; public: unsigned int __thiscall TCSD::MaxTranSpeedInKilohertz(void)const 
+	?MaxWriteCurrentInMilliamps@TCSD@@QBEIXZ @ 57 NONAME ; public: unsigned int __thiscall TCSD::MaxWriteCurrentInMilliamps(void)const 
+	?MediaType@TCSD@@QBE?AW4TMMCMediaTypeEnum@@XZ @ 58 NONAME ; public: enum TMMCMediaTypeEnum  __thiscall TCSD::MediaType(void)const 
+	?MinReadCurrentInMilliamps@TCSD@@QBEIXZ @ 59 NONAME ; public: unsigned int __thiscall TCSD::MinReadCurrentInMilliamps(void)const 
+	?MinWriteCurrentInMilliamps@TCSD@@QBEIXZ @ 60 NONAME ; public: unsigned int __thiscall TCSD::MinWriteCurrentInMilliamps(void)const 
+	?Panic@DMMCSocket@@SAXW4TMMCPanic@1@@Z @ 61 NONAME ; public: static void __cdecl DMMCSocket::Panic(enum DMMCSocket::TMMCPanic)
+	?Panic@DPBusSocket@@SAXW4TPanic@1@@Z @ 62 NONAME ; public: static void __cdecl DPBusSocket::Panic(enum DPBusSocket::TPanic)
+	?PowerDownComplete@DPBusSocket@@QAEXXZ @ 63 NONAME ; public: void __thiscall DPBusSocket::PowerDownComplete(void)
+	?PowerDownStack@DMMCStack@@QAEXXZ @ 64 NONAME ; public: void __thiscall DMMCStack::PowerDownStack(void)
+	?PowerUp@DPBusSocket@@QAEHXZ @ 65 NONAME ; public: int __thiscall DPBusSocket::PowerUp(void)
+	?PowerUpSequenceComplete@DPBusSocket@@QAEXH@Z @ 66 NONAME ; public: void __thiscall DPBusSocket::PowerUpSequenceComplete(int)
+	?PowerUpStack@DMMCStack@@QAEXXZ @ 67 NONAME ; public: void __thiscall DMMCStack::PowerUpStack(void)
+	?Push@TMMCStateMachine@@QAEKP6AKPAX@ZH@Z @ 68 NONAME ; public: unsigned long __thiscall TMMCStateMachine::Push(unsigned long (__cdecl*)(void *),int)
+	?ReadBlockLength@TCSD@@QBEIXZ @ 69 NONAME ; public: unsigned int __thiscall TCSD::ReadBlockLength(void)const 
+	?ReceiveVoltageCheckResult@DPBusPsuBase@@UAEXH@Z @ 70 NONAME ; public: virtual void __thiscall DPBusPsuBase::ReceiveVoltageCheckResult(int)
+	?Remove@TPBusCallBack@@QAEXXZ @ 71 NONAME ; public: void __thiscall TPBusCallBack::Remove(void)
+	?RequestAsyncPowerDown@DPBusSocket@@QAEXXZ @ 72 NONAME ; public: void __thiscall DPBusSocket::RequestAsyncPowerDown(void)
+	?Reset@TMMCStateMachine@@QAEXXZ @ 73 NONAME ; public: void __thiscall TMMCStateMachine::Reset(void)
+	?SetCard@DMMCSession@@QAEXPAVTMMCard@@@Z @ 74 NONAME ; public: void __thiscall DMMCSession::SetCard(class TMMCard *)
+	?SetSocket@TPBusCallBack@@QAEXH@Z @ 75 NONAME ; public: void __thiscall TPBusCallBack::SetSocket(int)
+	?SetState@DPBusPsuBase@@QAEHW4TPBusPsuState@@@Z @ 76 NONAME ; public: int __thiscall DPBusPsuBase::SetState(enum TPBusPsuState)
+	?SetupCIMEraseGroup@DMMCSession@@QAEXVTMMCArgument@@K@Z @ 77 NONAME ; public: void __thiscall DMMCSession::SetupCIMEraseGroup(class TMMCArgument,unsigned long)
+	?SetupCIMEraseSector@DMMCSession@@QAEXVTMMCArgument@@K@Z @ 78 NONAME ; public: void __thiscall DMMCSession::SetupCIMEraseSector(class TMMCArgument,unsigned long)
+	?SetupCIMLockUnlock@DMMCSession@@QAEXKPAE@Z @ 79 NONAME ; public: void __thiscall DMMCSession::SetupCIMLockUnlock(unsigned long,unsigned char *)
+	?SetupCIMReadBlock@DMMCSession@@QAEXVTMMCArgument@@KPAE@Z @ 80 NONAME ; public: void __thiscall DMMCSession::SetupCIMReadBlock(class TMMCArgument,unsigned long,unsigned char *)
+	?SetupCIMReadIO@DMMCSession@@QAEXEKPAE@Z @ 81 NONAME ; public: void __thiscall DMMCSession::SetupCIMReadIO(unsigned char,unsigned long,unsigned char *)
+	?SetupCIMReadMBlock@DMMCSession@@QAEXVTMMCArgument@@KPAEK@Z @ 82 NONAME ; public: void __thiscall DMMCSession::SetupCIMReadMBlock(class TMMCArgument,unsigned long,unsigned char *,unsigned long)
+	?SetupCIMWriteBlock@DMMCSession@@QAEXVTMMCArgument@@KPAE@Z @ 83 NONAME ; public: void __thiscall DMMCSession::SetupCIMWriteBlock(class TMMCArgument,unsigned long,unsigned char *)
+	?SetupCIMWriteIO@DMMCSession@@QAEXEKPAE@Z @ 84 NONAME ; public: void __thiscall DMMCSession::SetupCIMWriteIO(unsigned char,unsigned long,unsigned char *)
+	?SetupCIMWriteMBlock@DMMCSession@@QAEXVTMMCArgument@@KPAEK@Z @ 85 NONAME ; public: void __thiscall DMMCSession::SetupCIMWriteMBlock(class TMMCArgument,unsigned long,unsigned char *,unsigned long)
+	?SetupCommand@DMMCSession@@QAEXW4TMMCCommandEnum@@VTMMCArgument@@@Z @ 86 NONAME ; public: void __thiscall DMMCSession::SetupCommand(enum TMMCCommandEnum,class TMMCArgument)
+	?SetupDTCommand@DMMCSession@@QAEXW4TMMCCommandEnum@@VTMMCArgument@@KPAEKHW4TMMCCmdDirEnum@@K@Z @ 87 NONAME ; public: void __thiscall DMMCSession::SetupDTCommand(enum TMMCCommandEnum,class TMMCArgument,unsigned long,unsigned char *,unsigned long,int,enum TMMCCmdDirEnum,unsigned long)
+	?SetupRSCommand@DMMCSession@@QAEXW4TMMCCommandEnum@@VTMMCArgument@@KW4TMMCCommandTypeEnum@@W4TMMCResponseTypeEnum@@K@Z @ 88 NONAME ; public: void __thiscall DMMCSession::SetupRSCommand(enum TMMCCommandEnum,class TMMCArgument,unsigned long,enum TMMCCommandTypeEnum,enum TMMCResponseTypeEnum,unsigned long)
+	?SocketFromId@DPBusSocket@@SAPAV1@H@Z @ 89 NONAME ; public: static class DPBusSocket * __cdecl DPBusSocket::SocketFromId(int)
+	?Stop@DMMCStack@@QAEHPAVTMMCard@@@Z @ 90 NONAME ; public: int __thiscall DMMCStack::Stop(class TMMCard *)
+	?UnBlock@DMMCStack@@IAEXPAVDMMCSession@@KK@Z @ 91 NONAME ; protected: void __thiscall DMMCStack::UnBlock(class DMMCSession *,unsigned long,unsigned long)
+	?WriteBlockLength@TCSD@@QBEIXZ @ 92 NONAME ; public: unsigned int __thiscall TCSD::WriteBlockLength(void)const 
+	?WriteProtected@DMMCStack@@MAEHI@Z @ 93 NONAME ; protected: virtual int __thiscall DMMCStack::WriteProtected(unsigned int)
+	?InitStackAfterUnlockSM@DMMCStack@@MAEKXZ @ 94 NONAME ; protected: virtual unsigned long __thiscall DMMCStack::InitStackAfterUnlockSM(void)
+	?RegisterMediaDevices@TMMCardControllerInterface@@MAEHH@Z @ 95 NONAME ; protected: virtual int __thiscall TMMCardControllerInterface::RegisterMediaDevices(int)
+	?ModifyCardCapabilitySM@DMMCStack@@MAEKXZ @ 96 NONAME ; unsigned long DMMCStack::ModifyCardCapabilitySM(void)
+	?Dummy1@DMMCStack@@EAEXXZ @ 97 NONAME ; void DMMCStack::Dummy1(void)
+	?GetInterface@DMMCStack@@MAEXW4TInterfaceId@1@AAPAVMInterface@1@@Z @ 98 NONAME ; protected: virtual void __thiscall DMMCStack::GetInterface(enum DMMCStack::TInterfaceId,class DMMCStack::MInterface * &)
+	?MachineInfo@DMMCStack@@UAEXAAVTDes8@@@Z @ 99  NONAME ; public: virtual void __thiscall DMMCStack::MachineInfo(class TDes8 &)
+	?SetBusWidth@DMMCStack@@MAEXK@Z @ 100 NONAME ; protected: virtual void __thiscall DMMCStack::SetBusWidth(unsigned long)
+	?ControlIO@DPBusSocket@@UAEHHPAX0@Z @ 101 NONAME ; public: virtual int __thiscall DPBusSocket::ControlIO(int,void *,void *)
+

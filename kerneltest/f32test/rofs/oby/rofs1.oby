@@ -1,0 +1,72 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+rofsname = dir1.rofs
+rofssize = 0x1D8000
+
+time = 10/12/2005 2:00:03
+
+
+autosize = 0x4000
+
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\hidden1.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\hidden3.txt
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\new1.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		\Multiple\replaceme1.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		\Multiple\replaceme2.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		\Multiple\replaceme4.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		\Multiple\romreplace.txt
+hide=\Multiple\romhide.txt
+
+REM exattrib test
+
+REM TEST1 - should list test1[02-00] and test1[03-00]
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		Exattrib\test1.txt		exattrib=U
+
+REM TEST2 (hide and override) - should list only test2[03-00]
+hide=\Exattrib\test2.txt[02-00]
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		Exattrib\test2.txt		exattrib=U
+
+REM TEST3 (hide, override by renaming and list) - should list only test3-1[02-00]
+hide=\Exattrib\test3-1.txt[02-00]
+rename=\Exattrib\test3-1.txt[02-00]	\Exattrib\test3-2.txt[02-00]
+
+REM Test4 (creating, hiding and renaming to main rofs entry)
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		\Exattrib\test4-2.txt		exattrib=U
+hide=\Exattrib\test4-2.txt[03-00]
+rename=\Exattrib\test4-2.txt[03-00]	\Exattrib\test4-1.txt[02-00]
+
+REM Test5 (creating file with name mangle and exattrib on)
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		\Exattrib\test5-1.txt[x-y]	exattrib=U
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		\Exattrib\test5-2.txt[x-y]
+
+
+REM ******************************************************
+REM Below are the failure test cases that does not apply hide 
+REM for the present and next rofs mounts
+REM ******************************************************
+
+REM Test7 (creating, hiding and renaming to next rofs mount entry)
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		Exattrib\test7-1.txt		exattrib=U
+hide=\Exattrib\test7-1.txt[03-00]
+rename=\Exattrib\test7-1.txt[03-00]		\Exattrib\test7-1.txt[04-00]
+
+REM Test8 (overriding normal file with exattrib)
+REM Test8 (hide a non existing file from previous rofs mounts - but present in the next rofs mount)
+data=EPOCROOT##epoc32\rom\rofstest\mrofs1.txt		Exattrib\test8-1.txt[04-00]
+hide=\Exattrib\test8-1.txt[04-00]
+

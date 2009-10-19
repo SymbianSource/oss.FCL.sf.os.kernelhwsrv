@@ -1,0 +1,141 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Needs to be kept in sync with hal/inc/hal_data.h
+// 
+//
+
+#define _PATCHARRAYDATA(dll,symbol,size,index,value)    patchdata dll@symbol##:##size##[##index##] value
+
+#define HALOVERRIDE(eindex,value)		_PATCHARRAYDATA(hal.dll,HalInternal::InitialValue,32,eindex,value)
+
+#define EManufacturer					0
+#define EManufacturerHardwareRev		1
+#define EManufacturerSoftwareRev		2
+#define EManufacturerSoftwareBuild		3
+#define EModel							4
+#define EMachineUid						5
+#define EDeviceFamily					6
+#define EDeviceFamilyRev				7
+#define ECPU							8
+#define ECPUArch						9
+#define ECPUABI							10
+#define ECPUSpeed						11
+#define ESystemStartupReason			12
+#define ESystemException				13
+#define ESystemTickPeriod				14
+#define EMemoryRAM						15
+#define EMemoryRAMFree					16
+#define EMemoryROM						17
+#define EMemoryPageSize					18
+#define EPowerGood						19
+#define EPowerBatteryStatus				20
+#define EPowerBackup					21
+#define EPowerBackupStatus				22
+#define EPowerExternal					23
+#define EKeyboard						24
+#define EKeyboardDeviceKeys				25
+#define EKeyboardAppKeys				26
+#define EKeyboardClick					27
+#define EKeyboardClickState				28
+#define EKeyboardClickVolume			29
+#define EKeyboardClickVolumeMax			30
+#define EDisplayXPixels					31
+#define EDisplayYPixels					32
+#define EDisplayXTwips					33
+#define EDisplayYTwips					34
+#define EDisplayColors					35
+#define EDisplayState					36
+#define EDisplayContrast				37
+#define EDisplayContrastMax				38
+#define EBacklight						39
+#define EBacklightState					40
+#define EPen							41
+#define EPenX							42
+#define EPenY							43
+#define EPenDisplayOn					44
+#define EPenClick						45
+#define EPenClickState					46
+#define EPenClickVolume					47
+#define EPenClickVolumeMax				48
+#define EMouse							49
+#define EMouseX							50
+#define EMouseY							51
+#define EMouseState						52
+#define EMouseSpeed						53
+#define EMouseAcceleration				54
+#define EMouseButtons					55
+#define EMouseButtonState				56
+#define ECaseState						57
+#define ECaseSwitch						58
+#define ECaseSwitchDisplayOn			59
+#define ECaseSwitchDisplayOff			60
+#define ELEDs							61
+#define ELEDmask						62
+#define EIntegratedPhone				63
+#define EDisplayBrightness				64
+#define EDisplayBrightnessMax			65
+#define EKeyboardBacklightState			66
+#define EAccessoryPower					67
+#define ELanguageIndex					68
+#define EKeyboardIndex					69
+#define EMaxRAMDriveSize				70
+#define EKeyboardState					71
+#define ESystemDrive					72
+#define EPenState						73
+#define EDisplayIsMono					74
+#define EDisplayIsPalettized			75
+#define EDisplayBitsPerPixel			76
+#define EDisplayNumModes				77
+#define EDisplayMemoryAddress			78
+#define EDisplayOffsetToFirstPixel		79
+#define EDisplayOffsetBetweenLines		80
+#define EDisplayPaletteEntry			81
+#define EDisplayIsPixelOrderRGB			82
+#define EDisplayIsPixelOrderLandscape	83
+#define EDisplayMode					84
+#define ESwitches						85
+#define EDebugPort						86
+#define ELocaleLoaded					87
+#define EClipboardDrive					88
+#define ECustomRestart					89
+#define ECustomRestartReason			90
+#define EDisplayNumberOfScreens			91
+#define ENanoTickPeriod					92
+#define EFastCounterFrequency			93
+#define EFastCounterCountsUp			94
+#define EPointer3D						95
+#define EPointer3DZ						96
+#define EPointer3DThetaSupported		97
+#define EPointer3DPhiSupported			98
+#define EPointer3DRotationSupported		99
+#define EPointer3DPressureSupported		100
+#define EHardwareFloatingPoint			101
+#define ETimeNonSecureOffset			102
+#define EPersistStartupModeKernel		103
+#define EMaximumCustomRestartReasons	104
+#define EMaximumRestartStartupModes		105
+#define ECustomResourceDrive			106
+#define EPointer3DProximityStep			107
+#define EPointerMaxPointers				108
+#define EPointerNumberOfPointers		109
+#define EPointer3DMaxPressure			110
+#define EPointer3DPressureStep			111
+#define EPointer3DEnterHighPressureThreshold	112
+#define EPointer3DExitHighPressureThreshold		113
+#define EPointer3DEnterCloseProximityThreshold	114
+#define EPointer3DExitCloseProximityThreshold	115
+#define EDisplayMemoryHandle			116
+#define ESerialNumber					117
+#define ECpuProfilingDefaultInterruptBase		118
+#define ENumCpus						119

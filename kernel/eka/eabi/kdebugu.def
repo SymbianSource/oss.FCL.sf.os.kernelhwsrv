@@ -1,0 +1,5 @@
+EXPORTS
+	_ZN8Debugger12DebuggerInfoEv @ 1 NONAME ; Debugger::DebuggerInfo()
+	_ZN8Debugger7InstallEP13DDebuggerInfo @ 2 NONAME ; Debugger::Install(DDebuggerInfo*)
+	_ZN8Debugger7VersionEv @ 3 NONAME ; Debugger::Version()
+

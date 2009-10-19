@@ -1,0 +1,89 @@
+EXPORTS
+	_ZSt9terminatev @ 1 NONAME ; std::terminate()
+	_ZdaPv @ 2 NONAME ; operator delete[](void*)
+	_ZdaPvRKSt9nothrow_t @ 3 NONAME ; operator delete[](void*, std::nothrow_t const&)
+	_ZdlPv @ 4 NONAME ; operator delete(void*)
+	_ZdlPvRKSt9nothrow_t @ 5 NONAME ; operator delete(void*, std::nothrow_t const&)
+	_Znaj @ 6 NONAME ; operator new[](unsigned int)
+	_ZnajRKSt9nothrow_t @ 7 NONAME ; operator new[](unsigned int, std::nothrow_t const&)
+	_Znwj @ 8 NONAME ; operator new(unsigned int)
+	_ZnwjRKSt9nothrow_t @ 9 NONAME ; operator new(unsigned int, std::nothrow_t const&)
+	_Znwjj @ 10 NONAME ; operator new(unsigned int, unsigned int)
+	__btod_div_common @ 11 NONAME ; __btod_div_common
+	__btod_mult_common @ 12 NONAME ; __btod_mult_common
+	__memmove_aligned @ 13 NONAME ; __memmove_aligned
+	__rt_abort @ 14 NONAME ; __rt_abort
+	__rt_div0 @ 15 NONAME ; __rt_div0
+	__rt_divtest @ 16 NONAME ; __rt_divtest
+	__rt_exit @ 17 NONAME ; __rt_exit
+	__rt_fp_status_addr @ 18 NONAME ; __rt_fp_status_addr
+	__rt_lib_init @ 19 NONAME ; __rt_lib_init
+	__rt_lib_shutdown @ 20 NONAME ; __rt_lib_shutdown
+	__rt_memcpy @ 21 NONAME ; __rt_memcpy
+	__rt_memset @ 22 NONAME ; __rt_memset
+	__rt_raise @ 23 NONAME ; __rt_raise
+	__rt_sdiv @ 24 NONAME ; __rt_sdiv
+	__rt_sdiv10 @ 25 NONAME ; __rt_sdiv10
+	__rt_sdiv32by16 @ 26 NONAME ; __rt_sdiv32by16
+	__rt_sdiv64by32 @ 27 NONAME ; __rt_sdiv64by32
+	__rt_switch8 @ 28 NONAME ; __rt_switch8
+	__rt_udiv @ 29 NONAME ; __rt_udiv
+	__rt_udiv10 @ 30 NONAME ; __rt_udiv10
+	__rt_udiv32by16 @ 31 NONAME ; __rt_udiv32by16
+	_btod_d2e @ 32 NONAME ; _btod_d2e
+	_btod_ediv @ 33 NONAME ; _btod_ediv
+	_btod_edivd @ 34 NONAME ; _btod_edivd
+	_btod_emul @ 35 NONAME ; _btod_emul
+	_btod_emuld @ 36 NONAME ; _btod_emuld
+	_btod_etento @ 37 NONAME ; _btod_etento
+	_d2e_denorm_low @ 38 NONAME ; _d2e_denorm_low
+	_d2e_norm_op1 @ 39 NONAME ; _d2e_norm_op1
+	_e2d @ 40 NONAME ; _e2d
+	_e2e @ 41 NONAME ; _e2e
+	_fp_init @ 42 NONAME ; _fp_init
+	_ll_add @ 43 NONAME ; _ll_add
+	_ll_addls @ 44 NONAME ; _ll_addls
+	_ll_addlu @ 45 NONAME ; _ll_addlu
+	_ll_addss @ 46 NONAME ; _ll_addss
+	_ll_adduu @ 47 NONAME ; _ll_adduu
+	_ll_and @ 48 NONAME ; _ll_and
+	_ll_cmpge @ 49 NONAME ; _ll_cmpge
+	_ll_cmple @ 50 NONAME ; _ll_cmple
+	_ll_cmpu @ 51 NONAME ; _ll_cmpu
+	_ll_eor @ 52 NONAME ; _ll_eor
+	_ll_from_l @ 53 NONAME ; _ll_from_l
+	_ll_from_u @ 54 NONAME ; _ll_from_u
+	_ll_mul @ 55 NONAME ; _ll_mul
+	_ll_mulls @ 56 NONAME ; _ll_mulls
+	_ll_mullu @ 57 NONAME ; _ll_mullu
+	_ll_mulss @ 58 NONAME ; _ll_mulss
+	_ll_muluu @ 59 NONAME ; _ll_muluu
+	_ll_neg @ 60 NONAME ; _ll_neg
+	_ll_not @ 61 NONAME ; _ll_not
+	_ll_or @ 62 NONAME ; _ll_or
+	_ll_rsb @ 63 NONAME ; _ll_rsb
+	_ll_rsbls @ 64 NONAME ; _ll_rsbls
+	_ll_rsblu @ 65 NONAME ; _ll_rsblu
+	_ll_rsbss @ 66 NONAME ; _ll_rsbss
+	_ll_rsbuu @ 67 NONAME ; _ll_rsbuu
+	_ll_srdv @ 68 NONAME ; _ll_srdv
+	_ll_sub @ 69 NONAME ; _ll_sub
+	_ll_subls @ 70 NONAME ; _ll_subls
+	_ll_sublu @ 71 NONAME ; _ll_sublu
+	_ll_subss @ 72 NONAME ; _ll_subss
+	_ll_subuu @ 73 NONAME ; _ll_subuu
+	_ll_to_l @ 74 NONAME ; _ll_to_l
+	_ll_udiv10 @ 75 NONAME ; _ll_udiv10
+	_ll_udiv_big @ 76 NONAME ; _ll_udiv_big
+	_ll_udiv_ginormous @ 77 NONAME ; _ll_udiv_ginormous
+	_ll_udiv_small @ 78 NONAME ; _ll_udiv_small
+	_ll_urdv @ 79 NONAME ; _ll_urdv
+	_memcpy_lastbytes @ 80 NONAME ; _memcpy_lastbytes
+	_memset @ 81 NONAME ; _memset
+	_memset_w @ 82 NONAME ; _memset_w
+	abs @ 83 NONAME ; abs
+	div @ 84 NONAME ; div
+	ldiv @ 85 NONAME ; ldiv
+	llabs @ 86 NONAME ; llabs
+	lldiv @ 87 NONAME ; lldiv
+

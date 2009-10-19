@@ -1,0 +1,51 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+#define BASE_ROM
+#include <rom\##VARIANT##\header.iby>
+
+trace 4
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+data=\epoc32\release\##MAIN##\##BUILD##\t_ver2{1.0}.dll				img\t_ver2{1.0}.dll
+data=\epoc32\release\##MAIN##\##BUILD##\t_ver2{1.1}.dll				img\t_ver2{1.1}.dll
+data=\epoc32\release\##MAIN##\##BUILD##\t_ver2{2.0}.dll				img\t_ver2{2.0}.dll
+data=\epoc32\release\##MAIN##\##BUILD##\t_ver2.dll					img\t_ver2.dll
+
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2a.exe				img\t_xver2a.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2b.exe				img\t_xver2b.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2c.exe				img\t_xver2c.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2d.exe				img\t_xver2d.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2e.exe				img\t_xver2e.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2f.exe				img\t_xver2f.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2g.exe				img\t_xver2g.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2h.exe				img\t_xver2h.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2i.exe				img\t_xver2i.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2j.exe				img\t_xver2j.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2k.exe				img\t_xver2k.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2l.exe				img\t_xver2l.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2m.exe				img\t_xver2m.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2n.exe				img\t_xver2n.exe
+data=\epoc32\release\##MAIN##\##BUILD##\t_xver2o.exe				img\t_xver2o.exe
+
+file=\epoc32\release\##MAIN##\##BUILD##\t_xxver2.exe				sys\bin\t_xxver2.exe

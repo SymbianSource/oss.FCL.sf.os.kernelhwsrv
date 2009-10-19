@@ -1,0 +1,195 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/ekern.mmp
+// ekern.exe Kernel
+// 
+//
+
+/**
+ @file
+*/
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE		../include/kernel
+
+#include <variant.mmh>
+macro	__IN_KERNEL__
+
+target					VariantTarget(ekern,exe)
+
+targettype				exexp
+
+#include "kern_int.mmh"
+
+firstlib				VariantTarget(kc_exe,lib)
+
+// For emulator, specify newlib containing kernel-side definitions of new and delete operators
+// to override default library, containing user-side definitions, linked by toolchain for EXE and DLL targets
+#ifdef WINS
+newlib					scppnwdl_kern.lib
+#endif
+
+#if defined(DEMAND_PAGING)
+// we have to keep this here, and not in kern_int.mmh, because media drivers
+// use the same macro name for different puposes...
+macro __DEMAND_PAGING__
+#endif
+
+
+#ifdef SMP
+#include "../nkernsmp/nkern.mmp"
+#else
+#include "../nkern/nkern.mmp"
+#endif
+
+#if defined(MARM)
+
+#if defined(EABI)
+// Symbian implementation of operator vector new / delete
+sourcepath .
+source array_eabi.cpp
+#endif
+
+#ifndef SMP
+sourcepath				../nkern
+source					nk_old.cpp
+#endif
+sourcepath				arm
+source					 cglobals.cpp cexec.cpp cexec.cia cinit.cpp
+source					 ckernel.cpp ckernel.cia cipc.cpp cipc.cia csched.cia
+source					 cutils.cpp cutils.cia
+source					 cache.cpp cache_maintenance.cia cache_maintenance.cpp
+source 					 cache_maintenancev7.cia cache_external.cpp
+
+#ifdef DEMAND_PAGING
+source					byte_pair.cia
+#endif
+
+sourcepath				../klib/arm
+source					 ckdes8.cia cumem.cia cbma.cia
+sourcepath				../common/arm
+source					carray.cia cdes8.cia cheap.cia cmem.cia
+#if defined(GCC32)
+source 					cgcchelp.cpp cgcchelp.cia
+#elif defined(ARMCC)
+source					armcchlp.cpp
+#ifndef SBSV2
+source					armcchlp.cia
+#endif
+#endif
+
+#if defined(REPLACE_GENERIC_UTILS)
+macro					__REPLACE_GENERIC_UTILS
+USERINCLUDE			VariantReplacementUtilsPath
+sourcepath				VariantReplacementUtilsPath
+source					kernel.cia common.cia
+#endif
+
+#elif defined(X86)
+sourcepath				.
+source					byte_pair.cpp
+sourcepath				x86
+source					cglobals.cpp cexec.cpp cinit.cpp
+source					ckernel.cpp cipc.cpp csched.cpp
+source					cutils.cpp abort.cpp cache.cpp
+source					cexec.cia
+source					ckernel.cia
+source					csched.cia
+source					cutils.cia
+sourcepath				../klib/x86
+source					cumem.cpp
+source					cumem.cia
+sourcepath				../common/x86
+userinclude				../common
+source					cmem.cia
+
+
+#elif defined(WINS)
+
+sourcepath				../nkern
+source					nk_old.cpp
+sourcepath				../common/win32
+source					 seh.cpp
+
+sourcepath				win32
+source					 cboot.cpp
+source					 cglobals.cpp cexec.cpp cinit.cpp
+source					 ckernel.cpp csched.cpp
+source					 cutils.cpp cache.cpp
+
+library					emulator.lib
+#endif
+
+#include "../memmodel/memmodel.mmp"
+
+sourcepath				.
+source					 sglobals.cpp device.cpp eventq.cpp
+source					 sexec.cpp sinit.cpp skernel.cpp
+source					 scodeseg.cpp sipc.cpp notifier.cpp 
+source					 object.cpp power.cpp server.cpp
+source					 stimer.cpp sutils.cpp random.cpp
+source					 sprocess.cpp sthread.cpp 
+source 					 smqueue.cpp
+source					 sproperty.cpp
+source					 ssharedio.cpp
+source					 ssecure.cpp
+source					 emi.cpp
+source					 objectix.cpp
+source					 sbtrace.cpp
+source					 stest.cpp
+source					 sshbuf.cpp smap.cpp
+
+sourcepath				../klib
+source					dbase.cpp kdes8.cpp
+source					kheap.cpp bma.cpp
+
+sourcepath				../common
+source					alloc.cpp array.cpp des8.cpp heap.cpp mem.cpp
+source					secure.cpp
+macro					__EXPORT_MEMCPY__
+#ifdef MARM
+source					gcchelp.cpp
+#endif
+
+#ifdef SMP
+deffile 				ekernsmp.def
+nostrictdef
+#else
+deffile 				ekern.def
+#endif
+
+start wins
+
+win32_library			kernel32.lib
+#if defined(VC32)
+win32_library			msvcrt.lib
+#endif
+end
+
+epocstacksize			0x1000
+
+// uids
+#ifdef SMP
+uid						0x1000008b 0x10287037
+#else
+uid						0x1000008b 0x100041af
+#endif
+vendorid				0x70000001
+
+noexportlibrary
+linkas					ekern.exe
+
+capability				all
+
+SMPSAFE

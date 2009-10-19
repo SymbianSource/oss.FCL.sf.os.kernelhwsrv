@@ -1,0 +1,11 @@
+# component name "File Server Tests"
+
+component	base_f32test
+source	\sf\os\kernelhwsrv\kerneltest\f32test
+binary	\sf\os\kernelhwsrv\kerneltest\f32test\group all
+exports	\sf\os\kernelhwsrv\kerneltest\f32test\group
+notes_source	\component_defs\release.src
+
+
+ipr T 
+

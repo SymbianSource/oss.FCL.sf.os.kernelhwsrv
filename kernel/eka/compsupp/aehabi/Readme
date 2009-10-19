@@ -1,0 +1,23 @@
+Exceptions library release 1.01.
+
+This source code is intended to be compliant with release 1.0 of the EHABI. 
+
+The following defects against the previous (1.0) release have been fixed:
+
+1) The personality routines were checking handler table entry descriptor
+ranges using virtual r14 not virtual r15. Consequently if the entry contained
+two or more descriptors with matching ranges, and the first was a cleanup,
+subsequent descriptors would incorrectly fail the range check because the
+cleanup code legitimately corrupted r14 (and hence virtual r14; virtual r15
+is preserved).
+
+2) The runtime library would call abort() instead of terminate() under this
+sequence of events:
+i)   The program installs an unexpected exception handler (set_unexpected(...)).
+ii)  A throw of type T violates a function exception specification, causing
+     unexpected() to be called and the user's handler to be entered.
+iii) The handler throws another exception of type T.
+
+3) Type matching when throwing a NULL pointer to pointer to T (any type T)
+could dereference down the "pointer" chain beginning at location 0 (=NULL),
+hence possibly accessing any location in memory.

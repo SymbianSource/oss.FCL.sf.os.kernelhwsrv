@@ -1,0 +1,3 @@
+EXPORTS
+	New__13CScreenDriver @ 1 NONAME ; CScreenDriver::New(void)
+

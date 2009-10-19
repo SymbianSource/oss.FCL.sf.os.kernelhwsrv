@@ -1,0 +1,357 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\mmu\t_mwait.cia
+// 
+//
+
+#include <e32test.h>
+#include <u32std.h>
+#include "d_shadow.h"
+
+#if defined(__CPU_ARM)
+#define INS8	asm(".word 0xe1a00000,0xe1a01001,0xe1a02002,0xe1a03003,0xe1a00000,0xe1a01001,0xe1a02002,0xe1a03003 ")
+#define INS16	INS8 ; INS8
+#define INS32	INS16 ; INS16
+#define INS64	INS32 ; INS32
+#define INS128	INS64 ; INS64
+#elif defined(__CPU_X86)
+#ifdef __GCC32__
+#define INC_EAX	asm("inc eax"); 
+#else
+#define INC_EAX	__asm inc eax
+#endif
+#define INS4	INC_EAX \
+				INC_EAX \
+				INC_EAX \
+				INC_EAX
+#define INS8	INS4	INS4
+#define INS16	INS8	INS8
+#define INS32	INS16	INS16
+#define INS64	INS32	INS32
+#define INS128	INS64	INS64
+#define INS256	INS128	INS128
+#define INS512	INS256	INS256
+#endif
+
+__NAKED__ TLinAddr MemSpeedTest(TInt /*aLoopSize*/, TInt& /*aCount*/)
+	{
+#if defined(__CPU_ARM)
+	asm("memspeedtest: ");
+	__SWITCH_TO_ARM;
+	asm("movs r0, r0 ");
+	asm("beq get_function_end ");	// if loopsize=0, return end address of this function
+	asm("mov r3, r3 ");
+	asm("mov r3, #0 ");				// count of how many loops done
+	asm("adr r2, loopend ");
+	asm("sub r2, r2, r0 ");			// r2=point to branch back to in loop
+	asm("loopstart: ");				// from here to loopend must be 64k bytes
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS128;
+	INS64;
+	INS32;
+	INS16;
+	INS8;
+	asm(".word 0xe1a00000,0xe1a01001,0xe1a02002 ");
+	asm("add r3, r3, #1 ");			// increment counter
+	asm("str r3, [r1] ");			// and store in aCount
+	__JUMP(,r2);				// branch back to start of loop
+	asm("mov r0, r0 ");				// two NOPs because of prefetch
+	asm("mov r0, r0 ");
+	asm("loopend: ");
+	asm("get_function_end: ");
+	asm("adr r0, memspeedtest_end ");
+	__END_ARM;
+	__JUMP(,lr);
+	asm("memspeedtest_end: ");
+#elif defined(__CPU_X86)
+	asm("mov ecx, [esp+4]");		// ecx=loop size
+	asm("test ecx, ecx");
+	asm("jz get_function_end");		// if zero, return function end address
+	asm("mov edx, [esp+8]");		// edx=&aCount
+	asm("lea ebx, loopend");
+	asm("sub ebx, ecx");			// ebx=point to jump back to in loop
+	asm("xor ecx, ecx");			// count of loops done
+	asm("loopstart:");				// from here to loopend must be 64k bytes
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS512;
+	INS256;
+	INS128;
+	INS64;
+	INS32;
+	INS16;
+	INS8;
+	asm("inc ecx");			// increment loop counter
+	asm("mov [edx], ecx");	// update aCount
+	asm("jmp ebx");			// jump back
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("loopend:");
+	asm("get_function_end:");
+	asm("lea eax, memspeedtest_end");
+	asm("ret");
+	asm("memspeedtest_end:");
+#endif
+	}
+

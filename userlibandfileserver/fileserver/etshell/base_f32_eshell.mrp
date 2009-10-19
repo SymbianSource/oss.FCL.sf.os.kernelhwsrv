@@ -1,0 +1,14 @@
+# component name "Text Shell"
+
+component	base_f32_eshell
+
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\etshell
+
+binary	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\etshell all
+exports	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\etshell
+
+notes_source	\component_defs\release.src
+
+
+ipr T
+

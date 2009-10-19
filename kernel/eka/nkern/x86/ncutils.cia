@@ -1,0 +1,106 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\x86\ncutils.cia
+// 
+//
+
+#include <x86.h>
+
+EXPORT_C __NAKED__ TUint64 X86::Timestamp()
+	{
+	asm("rdtsc");
+	asm("ret");
+	}
+
+extern "C" __NAKED__ void NKIdle(TInt)
+	{
+	asm("hlt");
+	asm("ret");
+	}
+
+__NAKED__ void InitFpu()
+	{
+	asm("mov eax, cr0");
+	asm("and al, 0xf7");	// enable access to FPU
+	asm("mov cr0, eax");
+	asm("fninit");
+	asm("lea ecx, %a0": : "i"(DefaultCoprocessorState));
+	asm("fwait");
+	asm("fnsave [ecx]");	// save clean coprocessor state
+	asm("fwait");
+	asm("or al, 8");
+	asm("mov cr0, eax");	// disable access to coprocessor
+	asm("ret");
+	}
+
+
+const TLinAddr addressof_CrashState = (TLinAddr)&::CrashState;
+const TLinAddr addressof_X86_Regs = (TLinAddr)&::X86_Regs;
+const TLinAddr addressof_X86_IrqNestCount = (TLinAddr)&::X86_IrqNestCount;
+
+/** @internalTechnology
+
+	Called to indicate that the system has crashed and all CPUs should be
+	halted and should dump their registers.
+
+	Doesn't return
+*/
+__NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
+	{
+	asm("pushfd ");
+	asm("cli ");
+	asm("push ebp ");
+	asm("mov ebp, %0" : : "i" (addressof_CrashState));
+	asm("mov dword ptr [ebp], 1 ");
+	asm("mov ebp, %0" : : "i" (addressof_X86_Regs));
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet,iEax));
+	asm("mov [ebp+%0], ebx" : : "i" _FOFF(SFullX86RegSet,iEbx));
+	asm("mov [ebp+%0], ecx" : : "i" _FOFF(SFullX86RegSet,iEcx));
+	asm("mov [ebp+%0], edx" : : "i" _FOFF(SFullX86RegSet,iEdx));
+	asm("mov [ebp+%0], esi" : : "i" _FOFF(SFullX86RegSet,iEsi));
+	asm("mov [ebp+%0], edi" : : "i" _FOFF(SFullX86RegSet,iEdi));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEbp));			// pushed EBP
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEflags));		// pushed EFLAGS
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEip));			// return address
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultCategory));	// a0 parameter
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultReason));	// a1 parameter
+	asm("mov [ebp+%0], esp" : : "i" _FOFF(SFullX86RegSet,iEsp));
+	asm("lea eax, [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iCs));
+	asm("mov [eax], cs ");
+	asm("mov [eax+4], ds ");
+	asm("mov [eax+8], es ");
+	asm("mov [eax+12], fs ");
+	asm("mov [eax+16], gs ");
+	asm("mov [eax+20], ss ");
+	asm("mov ebx, %0" : : "i" (addressof_X86_IrqNestCount));
+	asm("mov eax, 0x80000000 ");
+	asm("lock xchg eax, [ebx] ");
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet,iIrqNestCount));
+
+	asm("xor eax, eax ");
+	asm("push eax ");
+	asm("push eax ");
+	asm("push eax ");
+	asm("call %a0" : : "i" (NKCrashHandler));
+	asm("pop eax ");
+	asm("pop eax ");
+	asm("pop eax ");
+	asm("push dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultReason));		// a1 parameter
+	asm("push dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultCategory));	// a0 parameter
+	asm("push 1 ");
+	asm("call %a0" : : "i" (NKCrashHandler));
+
+	asm("int 0xff ");	// shouldn't get here
+	}
+

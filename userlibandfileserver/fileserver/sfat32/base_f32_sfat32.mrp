@@ -1,0 +1,14 @@
+# component name "FAT32 File System"
+
+component	base_f32_sfat32
+
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat32
+
+binary	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat32 all
+exports	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat32
+
+notes_source	\component_defs\release.src
+
+
+ipr B
+

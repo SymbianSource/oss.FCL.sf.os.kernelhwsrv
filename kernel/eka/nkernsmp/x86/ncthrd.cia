@@ -1,0 +1,799 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\x86\ncthrd.cia
+// 
+//
+
+#include <x86.h>
+#include <apic.h>
+
+const TLinAddr NKern_Exit = (TLinAddr)NKern::Exit;
+//const TLinAddr NKern_Lock = (TLinAddr)NKern::Lock;
+
+extern "C" void send_resched_ipis(TUint32 aMask);
+extern "C" void __fastcall add_dfc(TDfc* aDfc);
+
+
+__NAKED__ void __StartThread()
+	{
+	// On entry interrupts disabled, SThreadExcStack on stack
+	asm("mov eax, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("add esp, 4 ");		// get rid of iReason
+	asm("shr eax, 24 ");
+	asm("mov esi, [eax*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("xor eax, eax ");
+	asm("lock xchg eax, [esi+%0]" : : "i" _FOFF(TSubScheduler, iReschedIPIs));
+	asm("test eax, eax ");
+	asm("jz short no_resched_ipis ");
+	asm("push eax ");
+	asm("call %a0" : : "i" (&send_resched_ipis));
+	asm("add esp, 4 ");
+	asm("no_resched_ipis: ");
+	asm("pop ecx ");
+	asm("pop edx ");
+	asm("pop ebx ");
+	asm("pop esi ");
+	asm("pop edi ");
+	asm("pop ebp ");
+	asm("pop eax ");
+	asm("pop ds ");
+	asm("pop es ");
+	asm("pop fs ");
+	asm("pop gs ");
+	asm("sti ");
+	asm("push ebx ");
+	asm("call eax ");
+	asm("add esp, 4 ");
+	asm("call %a0" : : "i" (NKern_Exit));
+	}
+
+extern "C" __NAKED__ TUint __tr()
+	{
+	asm("xor eax, eax");
+	asm("str ax");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 X86::GetCR0()
+	{
+	asm("mov eax, cr0");
+	asm("ret");
+	}
+
+__NAKED__ void X86::SetCR0(TUint32)
+	{
+	asm("mov eax, [esp+4]");
+	asm("mov cr0, eax");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 X86::ModifyCR0(TUint32 /*clear*/, TUint32 /*set*/)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("mov edx, [esp+8]");
+	asm("mov eax, cr0");
+	asm("not ecx");
+	asm("and ecx, eax");
+	asm("or ecx, edx");
+	asm("mov cr0, ecx");
+	asm("ret");
+	}
+
+/**	Mark the beginning of an event handler tied to a thread or thread group
+
+	Return the number of the CPU on which the event handler should run
+*/
+__NAKED__ TInt NSchedulable::BeginTiedEvent()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, 0x10000 ");		// EEventCountInc
+	asm("lock xadd [ecx+%0], eax" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("test eax, 0x8000 ");		// EEventParent
+	asm("jz short bte0 ");			// not set so don't look at group
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(NSchedulable,iParent));
+	asm("cmp edx, 0 ");
+	asm("jz short bte_bad ");		// no parent - shouldn't happen
+	asm("cmp edx, ecx ");
+	asm("jz short bte2 ");			// parent not yet updated, use iNewParent
+	asm("bte1: ");
+	asm("mov eax, 0x10000 ");		// EEventCountInc
+	asm("lock xadd [edx+%0], eax" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("bte0: ");
+	asm("and eax, 0x1f ");			// EEventCpuMask
+	THISCALL_EPILOG0()
+
+	asm("bte2: ");
+	asm("lock add dword ptr [esp], 0 ");		// make sure iNewParent is read after iParent
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(NThreadBase,iNewParent));
+	asm("cmp edx, 0 ");
+	asm("jnz short bte1 ");
+	asm("lock add dword ptr [esp], 0 ");		// make sure iParent is read after iNewParent
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(NSchedulable,iParent));	// iNewParent has been cleared, so iParent must now have been set
+	asm("cmp edx, ecx ");
+	asm("jnz short bte1 ");			// if iParent still not set, something is wrong
+
+	asm("bte_bad: ");
+	asm("int 0xff ");
+	}
+
+
+/**	Mark the end of an event handler tied to a thread or thread group
+
+*/
+__NAKED__ void NSchedulable::EndTiedEvent()
+	{
+	THISCALL_PROLOG0()
+	asm("test dword ptr [ecx+%0], 0x800" : : "i" _FOFF(NSchedulable,iEventState));		// EEventParent
+	asm("jnz short etep0 ");
+	asm("ete1: ");
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("ete2: ");
+	asm("mov edx, eax ");
+	asm("sub edx, 0x10000 ");		// EEventCountInc
+	asm("cmp edx, 0x10000 ");		// EEventCountInc
+	asm("jae short ete3 ");
+	asm("mov dl, dh ");
+	asm("and dl, 0x1f ");			// event cpu = thread cpu
+	asm("ete3: ");
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("jne short ete2 ");
+	asm("cmp edx, 0x10000 ");		// EEventCountInc
+	asm("jae short ete4 ");			// If this wasn't last tied event, finish
+	asm("test edx, 0x4000 ");		// test deferred ready flag
+	asm("jz short ete4 ");
+	asm("push ecx ");
+	asm("lea ecx, [ecx+%0]" : : "i" _FOFF(NSchedulable,i_IDfcMem));
+	asm("call %a0" : : "i" (add_dfc));
+	asm("pop ecx ");
+	asm("ete4: ");
+	THISCALL_EPILOG0()
+
+	asm("etep0: ");
+	asm("lock add dword ptr [esp], 0 ");	// make sure iParent is read after seeing parent flag set
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(NSchedulable,iParent));
+	asm("cmp edx, 0 ");
+	asm("jz short ete_bad ");		// no parent - shouldn't happen
+	asm("cmp edx, ecx ");
+	asm("jz short etep1 ");			// parent not yet updated, use iNewParent
+	asm("etep2: ");
+	asm("push ecx ");
+	asm("mov ecx, edx ");
+	asm("call ete1 ");				// operate on parent state
+	asm("pop ecx ");				// restore this
+//		mb();
+	asm("mov eax, 0xffff0000 ");	// -EEventCountInc
+	asm("lock xadd [ecx+%0], eax" : : "i" _FOFF(NSchedulable,iEventState));	// decrement thread's event count
+	THISCALL_EPILOG0()
+
+	asm("etep1: ");
+	asm("lock add dword ptr [esp], 0 ");		// make sure iNewParent is read after iParent
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(NThreadBase,iNewParent));
+	asm("cmp edx, 0 ");
+	asm("jnz short etep2 ");
+	asm("lock add dword ptr [esp], 0 ");		// make sure iParent is read after iNewParent
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(NSchedulable,iParent));	// iNewParent has been cleared, so iParent must now have been set
+	asm("cmp edx, ecx ");
+	asm("jnz short etep2 ");	// if iParent still not set, something is wrong
+
+	asm("ete_bad: ");
+	asm("int 0xff ");
+	}
+
+
+/**	Check for concurrent tied events when a thread/group becomes ready
+
+	This is only ever called on a lone thread or a group, not on a thread
+	which is part of a group.
+
+	Update the thread CPU field in iEventState
+	If thread CPU != event CPU and event count nonzero, atomically
+	set the ready deferred flag and return TRUE, else return FALSE.
+	If event count zero, set event CPU = thread CPU atomically.
+
+	@param aCpu the CPU on which the thread/group is to become ready
+	@return	TRUE if the ready must be deferred.
+*/
+__NAKED__ TBool NSchedulable::TiedEventReadyInterlock(TInt aCpu)
+	{
+	THISCALL_PROLOG1()
+	asm("push ebx ");
+	asm("mov ebx, [esp+8] ");		// ebx = aCpu
+	asm("and ebx, 0x1f ");
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("teri1: ");
+	asm("mov edx, eax ");
+	asm("and dh, 0xe0 ");
+	asm("or dh, bl ");				// set thread CPU field
+	asm("cmp edx, 0x10000 ");		// EEventCountInc
+	asm("jb short teri2 ");			// skip if event count zero
+	asm("cmp dl, bl ");				// thread CPU = event CPU?
+	asm("je short teri3 ");			// skip if same
+	asm("or edx, 0x4000 ");			// EDeferredReady
+	asm("jmp short teri3 ");
+	asm("teri2: ");
+	asm("mov dl, dh ");
+	asm("and dl, 0x1f ");			// event CPU = thread CPU
+	asm("teri3: ");
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("jne short teri1 ");
+	asm("xor eax, edx ");			// old iEventState ^ new iEventState
+	asm("pop ebx ");
+	asm("and eax, 0x4000 ");		// return TRUE if EDeferredReady was set
+	THISCALL_EPILOG1()
+	}
+
+
+/**	Check for concurrent tied events when a thread leaves a group
+
+	If event count zero, atomically	set the event and thread CPUs to the
+	current CPU, clear the parent flag and return TRUE, else return FALSE.
+
+	@return	TRUE if the parent flag has been cleared
+*/
+__NAKED__ TBool NThreadBase::TiedEventLeaveInterlock()
+	{
+	THISCALL_PROLOG0()
+	asm("push ebx ");
+	asm("xor ebx, ebx ");
+	asm("str bx ");
+	asm("sub bl, 0x28 ");
+	asm("shr bl, 3 ");
+	asm("mov bh, bl ");
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("teli1: ");
+	asm("cmp eax, 0x10000 ");		// EEventCountInc
+	asm("jae short teli0 ");		// if count >=1, finish and return FALSE
+	asm("mov edx, ebx ");			// update CPUs, clear parent flag
+								// NOTE: Deferred ready flag must have been clear since thread is running
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("jne short teli1 ");
+	asm("pop ebx ");
+	asm("mov eax, 1 ");				// return TRUE
+	THISCALL_EPILOG0()
+	asm("teli0: ");
+	asm("pop ebx ");
+	asm("xor eax, eax ");			// return FALSE
+	THISCALL_EPILOG0()
+	}
+
+
+/**	Check for concurrent tied events when a thread joins a group
+
+	If event count zero, atomically	set the parent flag and return TRUE,
+	else return FALSE.
+
+	@return	TRUE if the parent flag has been set
+*/
+__NAKED__ TBool NThreadBase::TiedEventJoinInterlock()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+%0]" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("teji1: ");
+	asm("cmp eax, 0x10000 ");		// EEventCountInc
+	asm("jae short teji0 ");		// if count >=1, finish and return FALSE
+	asm("mov edx, eax ");
+	asm("or edx, 0x8000 ");			// set parent flag
+	asm("lock cmpxchg [ecx+%0], edx" : : "i" _FOFF(NSchedulable,iEventState));
+	asm("jne short teji1 ");
+	asm("mov eax, 1 ");				// return TRUE
+	THISCALL_EPILOG0()
+	asm("teji0: ");
+	asm("xor eax, eax ");			// return FALSE
+	THISCALL_EPILOG0()
+	}
+
+
+/**	Decrement a fast semaphore count
+
+	If count > 0, decrement and do memory barrier
+	If count = 0, set equal to (thread>>2)|0x80000000
+	Return original count
+*/
+__NAKED__ TInt NFastSemaphore::Dec(NThreadBase*)
+	{
+	THISCALL_PROLOG1()
+	asm("mov eax, [ecx]");
+	asm("fsdec:");
+	asm("mov edx, eax");
+	asm("dec edx");
+	asm("jns short fsdec1");
+	asm("mov edx, [esp+4]");
+	asm("shr edx, 2");
+	asm("or edx, 0x80000000");
+	asm("fsdec1:");
+	asm("lock cmpxchg [ecx], edx");
+	asm("jne short fsdec");
+	THISCALL_EPILOG1()
+	}
+
+/**	Increment a fast semaphore count
+
+	Do memory barrier
+	If iCount >= 0, increment by aCount and return 0
+	If iCount < 0, set count equal to aCount-1 and return (original count << 2)
+*/
+__NAKED__ NThreadBase* NFastSemaphore::Inc(TInt)
+	{
+	THISCALL_PROLOG1()
+	asm("mov eax, [ecx]");
+	asm("fsinc:");
+	asm("mov edx, [esp+4]");
+	asm("test eax, eax");
+	asm("js short fsinc1");
+	asm("lea edx, [edx+eax+1]");
+	asm("fsinc1:");
+	asm("dec edx");
+	asm("lock cmpxchg [ecx], edx");
+	asm("jne short fsinc");
+	asm("add eax, eax");
+	asm("jc short fsinc2");
+	asm("xor eax, eax");
+	asm("fsinc2:");
+	asm("add eax, eax");
+	THISCALL_EPILOG1()
+	}
+
+/**	Reset a fast semaphore count
+
+	Do memory barrier
+	If iCount >= 0, set iCount=0 and return 0
+	If iCount < 0, set iCount=0 and return (original count << 2)
+*/
+__NAKED__ NThreadBase* NFastSemaphore::DoReset()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax");
+	asm("lock xchg eax, [ecx]");
+	asm("add eax, eax");
+	asm("jc short fsrst0");
+	asm("xor eax, eax");
+	asm("fsrst0:");
+	asm("add eax, eax");
+	THISCALL_EPILOG0()
+	}
+
+/** Check whether a thread holds a fast mutex.
+	If so set the mutex contention flag and return TRUE, else return FALSE.
+
+	Called with kernel lock held
+
+	@internalComponent
+ */
+__NAKED__ TBool NThreadBase::CheckFastMutexDefer()
+	{
+	THISCALL_PROLOG0()
+	asm("mov eax, [ecx+%0]": :"i"_FOFF(NThreadBase, iHeldFastMutex));
+	asm("mov edx, 0xfffffffc");
+	asm("and edx, eax");	// edx points to mutex if any, eax bit 0 = flag
+	asm("jnz short checkfmd1");
+	asm("xor eax, eax");	// no mutex - return FALSE
+	THISCALL_EPILOG0()
+
+	// iHeldFastMutex points to a mutex
+	asm("checkfmd1:");
+	asm("test al, 1");
+	asm("jz short checkfmd2");
+
+	// mutex being released
+	asm("mov eax, ecx");
+	asm("inc ecx");
+	asm("lock cmpxchg [edx], ecx");	// if m->iHoldingThread==this, set m->iHoldingThread = this+1 ...
+	asm("jz short checkfmd3");		// ... and return TRUE
+	asm("cmp eax, ecx");			// otherwise check if contention flag already set
+	asm("jz short checkfmd3");		// if so return TRUE
+	asm("xor eax, eax");
+	asm("dec ecx");
+	asm("mov [ecx+%0], eax": :"i"_FOFF(NThreadBase, iHeldFastMutex));	// else already released, so set iHeldFastMutex=0
+	THISCALL_EPILOG0()				// and return FALSE
+
+	// mutex being acquired or has been acquired
+	// if it has been acquired set the contention flag and return TRUE, else return FALSE
+	asm("checkfmd2:");
+	asm("mov eax, ecx");
+	asm("inc ecx");
+	asm("lock cmpxchg [edx], ecx");	// if m->iHoldingThread==this, set m->iHoldingThread = this+1
+	asm("jz short checkfmd3");		// ... and return TRUE
+	asm("cmp eax, ecx");			// otherwise check if contention flag already set
+	asm("jz short checkfmd3");		// if so return TRUE
+	asm("xor eax, eax");
+	THISCALL_EPILOG0()				// else return FALSE
+
+	asm("checkfmd3:");
+	asm("mov eax, 1");				// return TRUE
+	THISCALL_EPILOG0()
+	}
+
+
+/**	Transition the state of an IDFC or DFC when Add() is called
+
+	0000->008n, 00Cn->00En, all other states unchanged
+	Return original state.
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::AddStateChange()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("ascr: ");
+	asm("mov edx, eax ");
+	asm("test eax, eax ");
+	asm("jne short asc1 ");
+	asm("str dx ");
+	asm("shr dl, 3 ");			// dl = current CPU number + 5
+	asm("add dl, 0x7b ");		// 0000->008n
+	asm("jmp short asc0 ");
+	asm("asc1: ");
+	asm("cmp eax, 0xE0 ");
+	asm("jae short asc0 ");		// if outside range 00C0-00DF leave alone
+	asm("cmp eax, 0xC0 ");
+	asm("jb short asc0 ");
+	asm("add dl, 0x20 ");		// 00Cn->00En
+	asm("asc0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short ascr ");
+	THISCALL_EPILOG0()
+	}
+
+/**	Transition the state of an IDFC just before running it.
+
+	002g->00Cn, 008n->00Cn, 00An->00Cn, XXYY->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::RunIDFCStateChange()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("risr: ");
+	asm("cmp ah, 0 ");
+	asm("jne short ris1 ");
+	asm("mov edx, eax ");
+	asm("and dl, 0xfe ");
+	asm("cmp dl, 0x20 ");
+	asm("je short ris2 ");		// 002g
+	asm("mov edx, eax ");
+	asm("cmp dl, 0xc0 ");
+	asm("jge short ris_bad ");	// not 80-BF
+	asm("and dl, 0x1f ");
+
+asm("push ebx ");
+asm("str bx ");
+asm("sub bl, 0x28 ");
+asm("shr bl, 3 ");
+asm("cmp bl, dl ");
+asm("pop ebx ");
+asm("jne short ris_bad ");
+
+	asm("or dl, 0xc0 ");		// 008n->00Cn, 00An->00Cn
+	asm("jmp short ris0 ");
+	asm("ris_bad: ");
+	asm("int 0xff ");			// DIE
+	asm("ris2: ");
+asm("mov edx, eax ");
+asm("xor dl, 0x21 ");
+asm("cmp dl, [%a0]" : : "i" (&TheScheduler.iIdleGeneration));
+asm("jne short ris_bad ");
+	asm("str dx ");
+	asm("shr dl, 3 ");			// dl = current CPU number + 5
+	asm("add dl, 0xbb ");		// 002g->00Cn
+	asm("jmp short ris0 ");
+	asm("ris1: ");
+	asm("xor edx, edx ");
+	asm("cmp al, 0 ");
+	asm("je short ris0 ");		// XX00->0000
+asm("str dx ");
+asm("sub dl, 0x28 ");
+asm("shr dl, 3 ");
+asm("xor dl, al ");
+asm("and dl, 0x1f ");
+asm("jne short ris_bad ");
+asm("xor edx, edx ");
+	asm("mov dh, ah ");			// XXYY->XX00
+	asm("ris0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short risr ");
+	THISCALL_EPILOG0()
+	}
+
+/**	Transition the state of an IDFC just after running it.
+
+	First swap aS->iCurrentIDFC with 0
+	If original value != this, return 0xFFFFFFFF and don't touch *this
+	Else 00Cn->0000, 00En->008n, 006n->006n, XXCn->XX00, XXEn->XX00, XX6n->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::EndIDFCStateChange(TSubScheduler* /*aS*/)
+	{
+	THISCALL_PROLOG1()
+	asm("mov edx, [esp+4] ");		// edx = aS
+	asm("xor eax, eax ");
+	asm("lock xchg eax, [edx+%0]" : : "i" _FOFF(TSubScheduler,iCurrentIDFC));		// swap aS->iCurrentIDFC with 0
+	asm("xor eax, ecx ");			// if aS->iCurrentIDFC==this originally, eax=0
+	asm("jne short eis9 ");			// else bail out
+	asm("mov ax, [ecx+10] ");
+	asm("eisr: ");
+	asm("xor edx, edx ");
+	asm("cmp al, 0 ");
+	asm("je short eis0 ");			// XX00->0000
+	asm("cmp al, 0x60 ");
+	asm("jb short eis_bad ");		// bad if < 60
+	asm("cmp al, 0xC0 ");
+	asm("jl short eis_bad ");		// bad if 80-BF
+asm("str dx ");
+asm("sub dl, 0x28 ");
+asm("shr dl, 3 ");
+asm("xor dl, al ");
+asm("and dl, 0x1f ");
+asm("jne short eis_bad ");
+asm("xor edx, edx ");
+	asm("cmp ah, 0 ");
+	asm("je short eis1 ");
+	asm("mov dh, ah ");				// XX6n->XX00, XXCn->XX00, XXEn->XX00
+	asm("jmp short eis0 ");
+	asm("eis1: ");
+	asm("cmp al, 0xE0 ");
+	asm("jl short eis0 ");			// 00Cn->0000
+	asm("mov dl, al ");
+	asm("jb short eis0 ");			// 006n->006n
+	asm("sub dl, 0x60 ");			// 00En->008n
+	asm("eis0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short eisr ");
+	THISCALL_EPILOG1()
+	asm("eis9: ");
+	asm("mov eax, 0xffffffff ");
+	THISCALL_EPILOG1()
+	asm("eis_bad: ");
+	asm("int 0xff ");
+	}
+
+/**	Transition the state of an IDFC just after running it.
+
+	006n->002g where g = TheScheduler.iIdleGeneration
+	XX6n->XX00
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::EndIDFCStateChange2()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("eis2r: ");
+	asm("xor edx, edx ");
+	asm("cmp al, 0x60 ");
+	asm("jl short eis2_bad ");	// if not 006n or XX6n, invalid
+asm("str dx ");
+asm("sub dl, 0x28 ");
+asm("shr dl, 3 ");
+asm("xor dl, al ");
+asm("and dl, 0x1f ");
+asm("jne short eis2_bad ");
+asm("xor edx, edx ");
+	asm("or dh, ah ");
+	asm("jne short eis20 ");	// XX6n->XX00
+	asm("mov edx, 0x20 ");
+	asm("or dl, [%a0]" : : "i" (&TheScheduler.iIdleGeneration));
+	asm("eis20: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short eis2r ");
+	THISCALL_EPILOG0()
+	asm("eis2_bad: ");
+	asm("int 0xff ");
+	}
+
+/**	Transition the state of a DFC just before moving it from the IDFC queue to
+	its final queue.
+
+	002g->0001, 008n->0001, XX2g->XX00, XX8n->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+*/
+__NAKED__ TUint32 TDfc::MoveToFinalQStateChange()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("mfqr: ");
+	asm("xor edx, edx ");
+	asm("cmp al, 0xa0 ");
+	asm("jl short mfq1a ");		// 80-9F ok
+	asm("cmp al, 0x20 ");
+	asm("je short mfq1 ");		// 20 ok
+	asm("cmp al, 0x21 ");
+	asm("je short mfq1 ");		// 21 ok
+	asm("cmp eax, 0 ");
+	asm("je short mfq_bad ");	// 0000 -> bad
+	asm("cmp al, 0 ");			// XX00 ok
+	asm("je short mfq0 ");		// XX00->0000
+	asm("jmp short mfq_bad ");	// not 002g, 008n, XX2g, XX8n, XX00
+asm("mfq1a: ");
+asm("str dx ");
+asm("sub dl, 0x28 ");
+asm("shr dl, 3 ");
+asm("xor dl, al ");
+asm("and dl, 0x1f ");
+asm("jne short mfq_bad ");
+asm("xor edx, edx ");
+	asm("mfq1: ");
+	asm("cmp ah, 0 ");
+	asm("jne short mfq2 ");
+	asm("mov dl, 1 ");
+	asm("jmp short mfq0 ");		// 002g->0001, 008n->0001
+	asm("mfq2: ");
+	asm("mov dh, ah ");			// XXYY->XX00
+	asm("mfq0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short mfqr ");
+	THISCALL_EPILOG0()
+	asm("mfq_bad: ");
+	asm("int 0xff ");
+	}
+
+/**	Transition the state of an IDFC when transferring it to another CPU
+
+	002g->00Am, 008n->00Am, XXYY->XX00, XX00->0000
+	other initial states invalid
+	Return original state
+
+	Enter and return with interrupts disabled and target CPU's ExIDfcLock held.
+*/
+__NAKED__ TUint32 TDfc::TransferIDFCStateChange(TInt /*aCpu*/)
+	{
+	THISCALL_PROLOG1()
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("tisr: ");
+	asm("xor edx, edx ");
+	asm("cmp al, 0xa0 ");
+	asm("jl short tis1a ");		// 80-9F ok
+	asm("cmp al, 0x20 ");
+	asm("je short tis1 ");		// 20 ok
+	asm("cmp al, 0x21 ");
+asm("je short tis1 ");		// 21 ok
+	asm("jne short tis_bad ");	// not 002g or 008n -> bad
+asm("tis1a: ");
+asm("str dx ");
+asm("sub dl, 0x28 ");
+asm("shr dl, 3 ");
+asm("xor dl, al ");
+asm("and dl, 0x1f ");
+asm("jne short tis_bad ");
+asm("xor edx, edx ");
+	asm("tis1: ");
+	asm("cmp ah, 0 ");
+	asm("jne short tis2 ");
+	asm("mov dl, [esp+4] ");
+	asm("or dl, 0xA0 ");
+	asm("jmp short tis0 ");		// 002g->00Am, 008n->00Am
+	asm("tis2: ");
+	asm("cmp al, 0 ");
+	asm("je short tis0 ");		// XX00->0000
+	asm("mov dh, ah ");			// XXYY->XX00
+	asm("tis0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short tisr ");
+	THISCALL_EPILOG1()
+	asm("tis_bad: ");
+	asm("int 0xff ");
+	}
+
+/**	Transition the state of an IDFC/DFC just before cancelling it.
+
+	0000->0000, XX00->ZZ00, xxYY->zzYY
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::CancelInitialStateChange()
+	{
+	THISCALL_PROLOG0()
+	asm("push ebx ");
+	asm("str bx ");
+	asm("shr bl, 3 ");
+	asm("add bl, 3 ");			// bl = current cpu number + 8
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("cisr: ");
+	asm("mov edx, eax ");
+	asm("test eax, eax ");
+	asm("je short cis0 ");		// 0000->0000
+	asm("bts edx, ebx ");		// XX00->ZZ00, xxYY->zzYY
+	asm("cis0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short cisr ");
+	asm("pop ebx ");
+	THISCALL_EPILOG0()
+	}
+
+/**	Transition the state of an IDFC/DFC at the end of a cancel operation
+
+	XXYY->XX00, XX00->0000
+	Return original state
+
+	Enter and return with interrupts disabled.
+*/
+__NAKED__ TUint32 TDfc::CancelFinalStateChange()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("cfsr: ");
+	asm("xor edx, edx ");
+	asm("cmp al, 0 ");
+	asm("je short cfs0 ");		// XX00->0000
+	asm("mov dh, ah ");			// XXYY->XX00
+	asm("cfs0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short cfsr ");
+	THISCALL_EPILOG0()
+	}
+
+/**	Transition the state of an IDFC or DFC when QueueOnIdle() is called
+
+	0000->002g where g = TheScheduler.iIdleGeneration,
+	00Cn->006n, all other states unchanged
+	Return original state.
+
+	Enter and return with interrupts disabled and IdleSpinLock held.
+*/
+__NAKED__ TUint32 TDfc::QueueOnIdleStateChange()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("mov ax, [ecx+10] ");
+	asm("qisr: ");
+	asm("mov edx, eax ");
+	asm("test eax, eax ");
+	asm("jne short qis1 ");
+	asm("mov edx, 0x20 ");
+	asm("or dl, [%a0]" : : "i" (&TheScheduler.iIdleGeneration));
+	asm("jmp short qis0 ");
+	asm("qis1: ");
+	asm("cmp eax, 0xE0 ");
+	asm("jae short qis0 ");		// if outside range 00C0-00DF leave alone
+	asm("cmp eax, 0xC0 ");
+	asm("jb short qis0 ");
+	asm("sub dl, 0x60 ");		// 00Cn->006n
+	asm("qis0: ");
+	asm("lock cmpxchg [ecx+10], dx ");
+	asm("jne short qisr ");
+	THISCALL_EPILOG0()
+	}
+
+
+__NAKED__ void TDfc::ResetState()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("lock xchg ax, [ecx+10] ");
+	asm("cmp eax, 0 ");
+	asm("je short rst_bad ");
+	THISCALL_EPILOG0()
+	asm("rst_bad: ");
+	asm("int 0xf8 ");
+	}
+
+
+

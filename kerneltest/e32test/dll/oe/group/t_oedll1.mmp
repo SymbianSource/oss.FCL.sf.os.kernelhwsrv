@@ -1,0 +1,37 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// t_oedll.mmp
+// 
+//
+
+
+TARGET			t_oedll1.dll
+TARGETTYPE		stddll
+CAPABILITY		all
+romtarget
+ramtarget 		sys\bin\ //force this to be non-XIP
+
+VENDORID 		0x70000001
+
+SOURCEPATH    	..
+SOURCE        	t_oedll.cpp
+
+USERINCLUDE   	..
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY       	euser.lib
+nostrictdef
+nocompresstarget
+epocallowdlldata
+SMPSAFE

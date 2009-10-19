@@ -1,0 +1,36 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_file64bit.mmp
+//
+//
+
+TARGET         T_FILE64BIT.EXE
+TARGETTYPE     EXE
+SOURCEPATH     ../SERVER
+SOURCE         T_FILE64BIT.CPP
+SOURCE         T_MAIN.CPP
+SOURCEPATH     ../FILEUTILS/SRC
+SOURCE         f32_test_utils.cpp
+SOURCE         t_chlffs.cpp
+LIBRARY        EUSER.LIB EFSRV.LIB HAL.LIB
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE    ../SERVER
+USERINCLUDE    ../FILEUTILS/INC
+
+CAPABILITY	   All -TCB NetworkControl
+
+VENDORID 0x70000001
+
+epocstacksize 40960
+SMPSAFE

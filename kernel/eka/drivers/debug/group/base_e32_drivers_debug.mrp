@@ -1,0 +1,15 @@
+# component name "Run mode debugger"
+
+component	base_e32_drivers_debug
+
+source	\sf\os\kernelhwsrv\kernel\eka\debug
+source	\sf\os\kernelhwsrv\kernel\eka\debug\crashMonitor
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\debug
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\debug\group all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\debug\group
+
+notes_source	\component_defs\release.src
+
+
+ipr D

@@ -1,0 +1,35 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/plugins/version_2/file64bit/group/file64bit_plugin.mmp
+// 
+//
+
+
+TARGET			file64bit_plugin.pxt
+TARGETTYPE		fsy
+
+SOURCEPATH		../src
+SOURCE			file64bit_plugin.cpp
+USERINCLUDE     	../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+LIBRARY			euser.lib efile.lib efsrv.lib
+
+UID				0x100039df 0x10000CEE
+MACRO			__SECURE_API__
+MACRO			__DATA_CAGING__not_done
+
+epocallowdlldata
+
+#include "../../../../../../userlibandfileserver/fileserver/group/f32caps.mmh"  // Capabilities of File Server process
+SMPSAFE

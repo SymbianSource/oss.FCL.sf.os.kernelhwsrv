@@ -1,0 +1,665 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\moving\arm\xsched.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+
+#define iMState		iWaitLink.iSpare1
+
+//#define __DEBUG_BAD_ADDR
+
+#define iCurrentVMProcess				iExtras[0]
+#define	iCurrentDataSectionProcess		iExtras[1]
+#define	iCompleteDataSectionProcess		iExtras[2]
+
+#ifdef __REQUEST_COMPLETE_MACHINE_CODED__
+
+#if defined(_DEBUG)
+extern "C" void __DebugMsgRequestComplete(TInt a0, TInt a1, TInt a2);
+extern "C" void __DebugMsgReqCompleteWrite(TInt a0, TInt a1, TInt a2);
+#endif
+
+__NAKED__ void DThread::RequestComplete(TRequestStatus*& /*aStatus*/, TInt /*aReason*/)
+//
+// Signal this threads request semaphore.
+// Enter with system locked, return with system unlocked.
+//
+	{
+	ASM_DEBUG2(DThreadRequestComplete,r0,lr);
+
+	asm("ldr r3, [r1] ");					// r3 points to TRequestStatus
+	asm("mov r12, #0 ");
+	asm("str r12, [r1] ");					// aStatus=NULL
+
+	asm(".global _asm_RequestComplete ");
+	asm("_asm_RequestComplete: ");
+
+#ifdef BTRACE_REQUESTS
+	asm("stmdb sp!,{r0-r3,lr}");
+	asm("mov r1,r3");
+	asm("mov r3,r2");											// arg3 = aReason
+	asm("mov r2,r1");											// arg2 = aStatus
+	asm("add r1,r0,#%a0" : : "i" _FOFF(DThread,iNThread));		// arg1 = &this->iNThread
+	asm("ldr r0,_threadReqequestCompleteTraceHeader");			// arg0 = header
+	asm("bl " CSM_ZN6BTrace4OutXEmmmm);
+	asm("ldmia sp!,{r0-r3,lr}");
+#endif
+
+	ASM_DEBUG3(RequestComplete,r0,r3,r2);
+	asm("ldrb r12, [r0, #%a0]" : : "i" _FOFF(DThread,iMState));
+	asm("stmfd sp!, {r4-r6} ");
+	asm("add r6, r0, #%a0" : : "i" _FOFF(DThread,iNThread));
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));
+	asm("cmp r12, #%a0" : : "i" (DThread::EDead));	// test if iMState=EDead
+	asm("ldr r12, [r0, #%a0]!" : : "i" _FOFF(DMemModelProcess, iNumChunks));	// step r0 on to iChunks[0]
+	asm("beq req_complete_dead_thread ");	// if it is, finished
+	asm("b req_complete_2");
+
+	// lookup r3 in address space of process r0
+	asm("req_complete_1: ");
+	asm("ldmcsib r0!, {r1,r4} ");			// r1=data section base, r4=chunk ptr
+	asm("subcss r1, r3, r1 ");				// r1=offset
+	asm("ldrcs r5, [r4, #%a0]" : : "i" _FOFF(DChunk,iMaxSize));	// if offset>=0, r5=chunk max size
+	asm("cmpcs r1, r5 ");					// and compare offset to max size
+	asm("addcs r0, r0, #4 ");				// if offset>=max size, move to next entry
+	asm("req_complete_2: ");
+ 	asm("subcss r12, r12, #1 ");			// and decrement counter
+	asm("bcs req_complete_1 ");				// loop if more chunks to check
+	asm("cmp r12, #0 ");					// did we find chunk?
+	asm("ldrge r3, [r4, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomeRegionOffset));
+	asm("ldrge r5, [r4, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomeRegionSize));
+	asm("cmpge r1, r3 ");					// if we did but offset<iHomeRegionOffset, no good
+	asm("blt req_complete_invalid ");		// or if we didn't find it, no good
+	asm("add r3, r3, r5 ");					// r3=home region offset+home region size
+	asm("cmp r1, r3 ");						// if offset >= iHomeRegionOffset+iHomeRegionSize, no good
+	asm("ldrlt r0, [r4, #%a0]" : : "i" _FOFF(DChunk,iBase));	// if OK, r0=chunk base
+	asm("bge req_complete_invalid ");
+											// Zero flag always clear here
+
+	ASM_DEBUG3(ReqCompleteWrite,r0,r1,r2);
+
+	asm(".global __magic_address_reqc ");
+	asm("__magic_address_reqc: ");			// this instruction is magically immune from exceptions
+	asm("str r2, [r0, r1] ");				// r0+r1=current address, store completion code
+
+	asm("movne r0, r6 ");					// if write OK, r0->iNThread
+	asm("ldmnefd sp!, {r4-r6} ");			// restore registers
+	asm("movne r1, #0 ");
+	asm("bne  " CSM_ZN5NKern19ThreadRequestSignalEP7NThreadP10NFastMutex);
+#ifndef __DEBUG_BAD_ADDR
+	asm("req_complete_invalid: ");
+	asm("ldmfd sp!, {r4-r6} ");				// restore registers
+	asm("b  " CSM_ZN5NKern12UnlockSystemEv);
+#endif
+#ifdef __DEBUG_BAD_ADDR
+	asm("req_complete_invalid: ");			//DEBUG
+	asm("mov r9, #0xde000000 ");
+	asm("str r9, [r9, #0xaf] ");			//HACK-CRASH SYSTEM
+#endif
+	asm("req_complete_dead_thread: ");
+	asm("ldmfd sp!, {r4-r6} ");				// restore registers
+	asm("b  " CSM_ZN5NKern12UnlockSystemEv);
+
+#ifdef BTRACE_REQUESTS
+	asm("_threadReqequestCompleteTraceHeader:");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(16,BTrace::ERequests,BTrace::ERequestComplete)));
+#endif
+	}
+#endif
+
+#ifdef __SCHEDULER_MACHINE_CODED__
+
+#if defined(_DEBUG)
+extern "C" void __DebugMsgFixedAddress();
+extern "C" void __DebugMsgMoving();
+extern "C" void __DebugMsgProtectChunks(int aProc);
+extern "C" void __DebugMsgUnprotectChunks(int aProc);
+extern "C" void __DebugMsgMoveChunksToHome(int aProc);
+extern "C" void __DebugMsgMoveChunksToData(int aProc);
+extern "C" void __DebugMsgMoveChunkToHomeAddress(int aChunk);
+extern "C" void __DebugMsgProtectChunk(int aChunk);
+extern "C" void __DebugMsgMoveChunkToRunAddress(int aChunk, int aRunAddr);
+extern "C" void __DebugMsgUnprotectChunk(int aChunk);
+#endif
+
+GLDEF_C __NAKED__ void DoProcessSwitch()
+	{
+	//
+	// Enter and return in mode_svc with system lock held, kernel unlocked, interrupts enabled.
+	// On entry r0->scheduler, r2->current thread, r5->current address space, r9->new address space
+	// Must preserve r0,r2, can modify other registers
+	//
+	asm("mrc p15, 0, r7, c3, c0, 0 ");		// r7=DACR
+	asm("ldr r4, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+	asm("mov r1, r9 ");
+	asm("stmfd sp!, {r7,lr} ");
+	asm("orr r7, r7, #0x30 ");				// unlock page tables
+	asm("mcr p15, 0, r7, c3, c0, 0 ");		// set DACR
+	CPWAIT(,ip);
+
+	asm("ldr lr, [r9, #%a0]" : : "i" _FOFF(DArmPlatProcess,iAttributes));
+	asm("mov ip, #0 ");
+	asm("cmp r4, #0 ");
+	asm("ldrne ip, [r4, #%a0]" : : "i" _FOFF(DArmPlatProcess,iAttributes));
+
+	// register contents at this point are:
+	// r0->TheScheduler, r1->new process, r2->new thread, r3=scratch, r4=current VM process
+	// r5=scratch, r7-11 scratch, r12=current VM process attributes,
+	// r14=new process attributes
+
+	asm("ands r6, lr, #%a0" : : "i" ((TInt)DMemModelProcess::EMoving));
+	asm("beq resched_fixed ");				// skip if new process is fixed
+
+	// The current process has moving chunks
+	ASM_DEBUG0(Moving)
+
+#ifdef __CPU_WRITE_BACK_CACHE
+	// We need to flush the DCache before moving anything.
+	// Condition for flush here is
+	// NEW PROCESS MOVING && (NEW PROCESS!=COMPLETE DATA SECTION PROCESS)
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCompleteDataSectionProcess));	// r3=complete data section process
+	asm("cmp r3, r1 ");						// check if TheCurrentProcess==TheCompleteDataSectionProcess
+	asm("blne SyncMapChangeAttempt ");		// if not same, flush the DCache; on return ZF=0 means abort
+											// stack alignment OK since called function is assembler
+	asm("bne end_process_switch ");			// if contention, just exit now
+#endif
+
+	asm("mov r6, #0 ");
+	asm("str r6, [r0, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+
+	// if (pD && pD!=pP) ...
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentDataSectionProcess));		// r3=current data section process
+	asm("mov r8, #0 ");
+	asm("str r8, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCompleteDataSectionProcess));
+	asm("cmp r3, #0 ");						// if !TheCurrentDataSectionProcess
+	asm("cmpne r3, r1 ");					// || TheCurrentDataSectionProcess==TheCurrentProcess
+	asm("beq resched_moving1 ");			// skip next section
+
+	// Move TheCurrentDataSectionProcess to the home section and protect it
+	ASM_DEBUG1(MoveChunksToHome,r3)
+
+	asm("ldr r5, [r3, #%a0]" : : "i" _FOFF(DMemModelProcess,iNumChunks));
+	asm("cmp r5, #0 ");						// check if current data section process has no chunks
+	asm("beq resched_moving1b ");			// skip if it does
+	asm("stmfd sp!, {r1-r4,r12} ");
+	asm("add r4, r3, #%a0" : : "i" (_FOFF(DMemModelProcess,iChunks)+4));
+	asm("resched_moving1a: ");
+	asm("ldr r7, [r4], #12 ");				// r7=address of chunk to move
+	asm("bl MoveHomeOrProtectChunk ");		// move chunk - this must preserve r0
+	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));
+	asm("cmp ip, #0 ");						// check for contention
+	asm("bne abort_resched_mh ");			// if there is, abort
+#ifdef BTRACE_FAST_MUTEX
+	asm("ldrb ip, [r0, #%a0]" : : "i" (_FOFF(TScheduler,iFastMutexFilter)));
+	asm("cmp ip, #0");
+	asm("ldrne r2, [sp, #4]"); // current thread
+	asm("blne procswitch_trace_flash");
+#endif
+	asm("subs r5, r5, #1 ");
+	asm("bne resched_moving1a ");
+	asm("ldmfd sp!, {r1-r4,r12} ");
+	asm("resched_moving1b: ");
+	asm("cmp r3, r4 ");
+	asm("moveq r4, #0 ");					// ... TheCurrentVMProcess=NULL
+	asm("streq r4, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+	asm("mov r3, #0 ");						// TheCurrentDataSectionProcess=NULL
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentDataSectionProcess));
+
+	// if (pV && pV!=pP)
+	asm("resched_moving1: ");
+	asm("cmp r4, #0 ");						// if !TheCurrentVMProcess
+	asm("cmpne r4, r1 ");					// || TheCurrentVMProcess==TheCurrentProcess
+	asm("beq resched_moving2 ");			// skip next section
+
+	// Protect TheCurrentVMProcess but don't move it
+	// register contents at this point are:
+	// r0->TheScheduler, r2->new thread, r1->TheCurrentProcess, r4=current VM process
+	// r12=current VM process attributes, r3,r5,r7-r11->scratch
+	
+	ASM_DEBUG1(ProtectChunks,r4)
+
+	asm("tst r12, #%a0" : : "i" (DMemModelProcess::EVariableAccess));	// r12=TheCurrentVMProcess->iAttributes
+	asm("beq resched_moving2 ");			// if fixed access process, nothing to do
+	asm("ldr r5, [r4, #%a0]" : : "i" _FOFF(DMemModelProcess,iNumChunks));
+	asm("cmp r5, #0 ");
+	asm("beq resched_moving2b ");			// if number of chunks=0, nothing to do
+	asm("add r11, r4, #%a0" : : "i" (_FOFF(DMemModelProcess,iChunks)+4));
+	asm("resched_moving2a: ");
+	asm("ldr r7, [r11], #12 ");				// r7=address of chunk to protect
+	asm("bl ProtectChunk ");				// protect it
+	asm("ldr r7, [r0, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));
+	asm("cmp r7, #0 ");						// check for contention
+	asm("bne abort_resched_mp ");			// if there is, abort
+#ifdef BTRACE_FAST_MUTEX
+	asm("ldrb ip, [r0, #%a0]" : : "i" (_FOFF(TScheduler,iFastMutexFilter)));
+	asm("cmp ip, #0");
+	asm("blne procswitch_trace_flash");
+#endif
+	asm("subs r5, r5, #1 ");
+	asm("bne resched_moving2a ");
+	asm("resched_moving2b: ");
+	asm("mov r4, #0 ");						// TheCurrentVMProcess=NULL
+	asm("str r4, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+
+	asm("resched_moving2: ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentDataSectionProcess));
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+
+	// Unprotect the TheCurrentProcess and move it to the data section if necessary
+	// register contents at this point are:
+	// r0->TheScheduler, r2->new thread, r1->TheCurrentProcess
+	// r12=current VM process attributes, r3,r5,r7-r11->scratch
+	
+	ASM_DEBUG1(MoveChunksToData,r1)
+
+	asm("ldr r5, [r1, #%a0]" : : "i" _FOFF(DMemModelProcess,iNumChunks));
+	asm("cmp r5, #0 ");
+	asm("beq resched_finish ");				// if number of chunks=0, nothing to do
+	asm("stmfd sp!, {r1-r2,r12} ");			// don't need r3 or r4 any more
+	asm("add r4, r1, #%a0" : : "i" _FOFF(DMemModelProcess,iChunks));
+	asm("resched_moving3a: ");
+	asm("ldmia r4!, {r7,r8,r9} ");			// r7=run address, r8=ptr to chunk, r9 top 16bits=isReadOnly
+	asm("bl MoveRunOrUnprotectChunk ");		// move chunk to data section and/or unprotect it
+	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));
+	asm("cmp ip, #0 ");						// check for contention
+	asm("bne abort_resched_mr ");			// if there is, abort
+#ifdef BTRACE_FAST_MUTEX
+	asm("ldrb ip, [r0, #%a0]" : : "i" (_FOFF(TScheduler,iFastMutexFilter)));
+	asm("cmp ip, #0");
+	asm("blne procswitch_trace_flash");
+#endif
+	asm("subs r5, r5, #1 ");
+	asm("bne resched_moving3a ");
+	asm("ldmfd sp!, {r1-r2,r12} ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCompleteDataSectionProcess));
+	asm("b resched_finish ");
+
+	// The current process has no moving chunks
+	asm("resched_fixed: ");
+
+	ASM_DEBUG0(FixedAddress)
+
+	asm("str r6, [r0, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+	asm("cmp r4, #0	");						// if TheCurrentVMProcess==NULL
+	asm("beq resched_fixed1 ");				// skip this section
+
+	// Protect TheCurrentVMProcess
+	ASM_DEBUG1(ProtectChunks,r4)
+
+	asm("ldr r5, [r4, #%a0]" : : "i" _FOFF(DMemModelProcess,iNumChunks));
+	asm("add r11, r4, #%a0" : : "i" (_FOFF(DMemModelProcess,iChunks)+4));
+	asm("cmp r5, #0 ");
+	asm("beq resched_fixed1b ");			// if number of chunks=0, nothing to do
+	asm("resched_fixed1a: ");
+	asm("ldr r7, [r11], #12 ");				// r7=address of chunk to protect
+	asm("bl ProtectChunk ");				// protect it
+	asm("ldr r7, [r0, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));
+	asm("cmp r7, #0 ");						// check for contention
+	asm("bne abort_resched_fp ");			// if there is, abort
+#ifdef BTRACE_FAST_MUTEX
+	asm("ldrb ip, [r0, #%a0]" : : "i" (_FOFF(TScheduler,iFastMutexFilter)));
+	asm("cmp ip, #0");
+	asm("blne procswitch_trace_flash");
+#endif
+	asm("subs r5, r5, #1 ");
+	asm("bne resched_fixed1a ");
+	asm("resched_fixed1b: ");
+	asm("mov r4, #0 ");						// TheCurrentVMProcess=NULL
+	asm("str r4, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+
+	asm("resched_fixed1: ");
+
+	// Unprotect TheCurrentProcess
+	ASM_DEBUG1(UnprotectChunks,r1)
+
+	asm("ldr r5, [r1, #%a0]" : : "i" _FOFF(DMemModelProcess,iNumChunks));
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+	asm("cmp r5, #0 ");
+	asm("beq resched_finish ");				// if number of chunks=0, nothing to do
+	asm("add r11, r1, #%a0" : : "i" _FOFF(DMemModelProcess,iChunks));
+	asm("resched_fixed2a: ");
+	asm("ldmia r11!, {r7,r8,r9} ");			// r7=run address, r8=ptr to chunk, r9 top 16bits=isReadOnly
+	asm("bl UnprotectChunk ");				// unprotect chunk
+	asm("ldr r7, [r0, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));
+	asm("cmp r7, #0 ");						// check for contention
+	asm("bne abort_resched_fu ");			// if there is, abort
+#ifdef BTRACE_FAST_MUTEX
+	asm("ldrb ip, [r0, #%a0]" : : "i" (_FOFF(TScheduler,iFastMutexFilter)));
+	asm("cmp ip, #0");
+	asm("blne procswitch_trace_flash");
+#endif
+	asm("subs r5, r5, #1 ");
+	asm("bne resched_fixed2a ");
+
+	asm("resched_finish: ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));	// iAddressSpace=new process
+
+	asm("resched_flush: ");
+#ifdef __CPU_SPLIT_TLB
+	asm("tst r6, #%a0" : : "i" (Mmu::EFlushDPermChg));
+	asm("mov r1, #0 ");
+	FLUSH_DTLB(ne,r1);
+	asm("tst r6, #%a0" : : "i" (Mmu::EFlushIPermChg));
+	FLUSH_ITLB(ne,r1);
+#else
+	asm("tst r6, #%a0" : : "i" (Mmu::EFlushDPermChg|Mmu::EFlushIPermChg));
+	asm("mov r1, #0 ");
+	FLUSH_IDTLB(ne,r1);
+#endif
+#ifdef __CPU_WRITE_BACK_CACHE
+//#ifdef __CPU_SPLIT_CACHE
+	// D cache flush already done
+//	asm("tst r6, #%a0" : : "i" (Mmu::EFlushIMove));	Should never need to flush ICache during context switch
+//	FLUSH_ICACHE(ne,r1);
+//#endif
+#else
+#ifdef __CPU_SPLIT_CACHE
+	asm("tst r6, #%a0" : : "i" (Mmu::EFlushDMove));
+	FLUSH_DCACHE(ne,r1);
+//	asm("tst r6, #%a0" : : "i" (Mmu::EFlushIMove));	Should never need to flush ICache during context switch
+//	FLUSH_ICACHE(ne,r1);
+#else
+	asm("tst r6, #%a0" : : "i" (Mmu::EFlushDMove|Mmu::EFlushIMove));
+	FLUSH_IDCACHE(ne,r1);
+#endif
+#endif
+	asm("cmp r6, #0 ");						// any page table changes?
+	DRAIN_WRITE_BUFFER(ne,r1,r7);			// if so, make sure page table changes take effect
+
+	asm("end_process_switch: ");
+	asm("ldmia sp!, {r7,lr} ");
+	asm("mcr p15, 0, r7, c3, c0 ");			// restore DACR
+	CPWAIT(,r3);
+	__JUMP(,lr);
+
+	asm("abort_resched_mh: ");				// Reschedule aborted during MoveToHome
+	asm("ldmfd sp!, {r1-r4,r12} ");
+	asm("subs r5, r5, #1 ");
+	asm("bne resched_flush ");				// if MoveToHome incomplete skip
+	asm("cmp r3, r4 ");						// if TheCurrentDataSectionProcess==TheCurrentVMProcess ...
+	asm("streq r5, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));	// ... TheCurrentVMProcess=NULL
+	asm("str r5, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentDataSectionProcess));	// TheCurrentDataSectionProcess=NULL
+	asm("b resched_flush ");				//
+
+	asm("abort_resched_mp: ");				// Reschedule aborted during protect before moving
+	asm("subs r5, r5, #1 ");
+	asm("streq r5, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+	asm("b resched_flush ");				//
+
+	asm("abort_resched_mr: ");				// Reschedule aborted during MoveToRunAddress
+	asm("ldmfd sp!, {r1-r2,r12} ");
+	asm("subs r5, r5, #1 ");
+	asm("streq r1, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCompleteDataSectionProcess));
+	asm("b resched_flush ");				//
+
+	asm("abort_resched_fp: ");				// Reschedule aborted during protect before fixed
+	asm("subs r5, r5, #1 ");
+	asm("streq r5, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentVMProcess));
+	asm("b resched_flush ");				//
+
+	asm("abort_resched_fu: ");				// Reschedule aborted during unprotect
+	asm("subs r5, r5, #1 ");
+	asm("streq r1, [r0, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));	// iAddressSpace=new process
+	asm("b resched_flush ");				//
+
+
+	//
+	// Subroutines
+	//
+	// MoveHomeOrProtectChunk
+	// If a chunk is movable and not at its home address, move it to the home address;
+	// if the chunk is variable-access and not protected, protect it
+	// r7 points to chunk
+	// modifies r1-r3 and r8-r12
+	asm("MoveHomeOrProtectChunk: ");
+	asm("ldr r10, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iAttributes));
+	asm("tst r10, #%a0" : : "i" (DMemModelChunk::EFixedAddress));
+	asm("bne ProtectChunk1 ");
+	asm("ldr r11, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iHomeBase));	// r11=home base
+	asm("ldr r12, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iBase));	// r12=iBase
+	asm("cmp r11, r12 ");
+	asm("beq ProtectChunk1 ");			// already at home address
+
+	ASM_DEBUG1(MoveChunkToHomeAddress,r7)
+
+	asm("str r11, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iBase));	// iBase=iHomeBase
+	asm("add r8, r7, #%a0" : : "i" _FOFF(DMemModelChunk,iNumPdes));
+	asm("ldmia r8, {r8-r10} ");	// r8=numpdes r9=base pdes, r10=home pdes
+	asm("cmp r8, #0 ");
+	asm("str r10, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	asm("beq MoveHome0 ");
+	asm("ldr r12, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdePermissions[0]));
+	asm("mov r1, #0 ");
+	asm("str r1, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iChunkState));	// iChunkState=ENotRunning
+	asm("MoveHome1: ");
+	asm("ldr r3, [r9] ");				// fetch old pde
+	asm("str r1, [r9], #4 ");			// clear old pde
+	asm("bics r3, r3, #0x3fc ");		// mask out permissions and check for not present PDE
+	asm("orrne r3, r3, r12 ");			// if present, or in new permissions
+	asm("moveq r3, #0 ");				// else zero entry
+	asm("str r3, [r10], #4 ");			// put into new pde
+	asm("subs r8, r8, #1 ");
+	asm("bne MoveHome1 ");				// loop to do next PDE
+	asm("orr r6, r6, #%a0" : : "i" (Mmu::EFlushDMove|Mmu::EFlushDPermChg));	// moving chunk can't contain code
+	__JUMP(,lr);
+	asm("MoveHome0: ");
+	asm("str r8, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iChunkState));	// iChunkState=ENotRunning
+	__JUMP(,lr);
+
+	// ProtectChunk
+	// Protect a chunk - r7 points to chunk
+	// r8-r10,r12 modified
+	asm("ProtectChunk: ");
+	asm("ldr r10, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iAttributes));
+
+	asm("ProtectChunk1: ");
+	asm("tst r10, #%a0" : : "i" (DMemModelChunk::EFixedAccess));
+	asm("ldreq r12, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iChunkState));
+	__JUMP(ne,lr);
+	asm("cmp r12, #0 ");
+	__JUMP(eq,lr);						// if already in non-running state, nothing to do
+	asm("ldr r8, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iNumPdes));	// r8=number of chunk pdes
+	asm("ldr r9, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));	// r9=pde address
+
+	ASM_DEBUG1(ProtectChunk,r7)
+
+	asm("cmp r8, #0 ");
+	asm("beq ProtectChunk0 ");
+	asm("tst r10, #%a0" : : "i" (DMemModelChunk::ECode));		// check if chunk contains code
+	asm("orrne r6, r6, #%a0" : : "i" (Mmu::EFlushIPermChg));	// if it does, may need to flush ITLB
+	asm("ldr r10, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdePermissions[0]));	//r10=new permissions
+	asm("ProtectChunk2: ");
+	asm("ldr r12, [r9] ");				// fetch old pde
+	asm("bics r12, r12, #0x3fc ");		// mask out permissions and check for not present PDE
+	asm("orrne r12, r12, r10 ");		// if present, or in new permissions
+	asm("moveq r12, #0 ");				// else zero pde
+	asm("str r12, [r9], #4 ");			// replace pde
+	asm("subs r8, r8, #1 ");
+	asm("bne ProtectChunk2 ");			// loop for next PDE
+	asm("orr r6, r6, #%a0" : : "i" (Mmu::EFlushDPermChg));
+	asm("ProtectChunk0: ");
+	asm("str r8, [r7, #%a0]" : : "i" _FOFF(DMemModelChunk,iChunkState));	// iChunkState=ENotRunning
+	__JUMP(,lr);
+
+	// MoveRunOrUnprotectChunk
+	// If a chunk is movable and not at its run address in this process, move it to the run address;
+	// if the chunk is variable-access and not unprotected, unprotect it.
+	// r7=run address, r8 points to chunk
+	// ignore read-only flag since the ARM cannot support it
+	// r1-r3, r7, r9-r12 modified, r8 unmodified
+	asm("MoveRunOrUnprotectChunk: ");
+	asm("mov r9, #2 ");					// r9=state of chunk
+
+	asm("MoveToRunAddress: ");
+	asm("ldr r12, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iAttributes));
+	asm("tst r12, #%a0" : : "i" (DMemModelChunk::EFixedAddress));
+	asm("bne UnprotectChunk1 ");
+	asm("ldr r11, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iBase));	// r11=old base
+	asm("cmp r11, r7 ");				// check if already at run address
+	asm("beq UnprotectChunk1 ");		// if it is, just unprotect it
+
+	ASM_DEBUG2(MoveChunkToRunAddress,r8,r7)
+
+	asm("str r7, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iBase));	// iBase=run address
+	asm("ldr r12, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iNumPdes));
+	asm("str r9, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iChunkState));	// store new chunk state
+	asm("cmp r12, #0 ");
+	asm("beq MoveRun0 ");
+	asm("ldr r10, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	asm("mov r1, #0 ");
+	asm("add r7, r10, r7, lsr #18 ");	// r7=iPdes+(new address/2^18)
+	asm("sub r7, r7, r11, lsr #18 ");	// r7=iPdes+(new address-old address)/2^18
+	asm("str r7, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	asm("add r9, r8, r9, lsl #2 ");
+	asm("ldr r9, [r9, #%a0]" : : "i" (_FOFF(DMemModelChunk,iPdePermissions[0])));	// r9=PDE permissions to use
+	asm("MoveRun1: ");
+	asm("ldr r3, [r10] ");				// fetch old pde
+	asm("str r1, [r10], #4 ");			// clear old pde
+	asm("bics r3, r3, #0x3fc ");		// mask out permissions and check for not present PDE
+	asm("orrne r3, r3, r9 ");			// if present, or in new permissions
+	asm("moveq r3, #0 ");				// else clear pde
+	asm("str r3, [r7], #4 ");			// put into new pde
+	asm("subs r12, r12, #1 ");
+	asm("bne MoveRun1 ");
+	asm("orr r6, r6, #%a0" : : "i" (Mmu::EFlushDMove|Mmu::EFlushDPermChg));	// moving chunk can't contain code
+	asm("MoveRun0: ");
+	__JUMP(,lr);
+
+	// UnprotectChunk
+	// Apply running permissions to a chunk
+	// r8 points to chunk
+	// ignore read-only flag since the ARM cannot support it
+	// r7,r9,r10,r12 modified, r8,r11 unmodified
+	asm("UnprotectChunk: ");
+	asm("mov r9, #2 ");					// r9=new state of chunk
+
+	asm("ApplyTopLevelPermissions: ");
+	asm("ldr r12, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iAttributes));
+
+	asm("UnprotectChunk1: ");
+	asm("tst r12, #%a0" : : "i" (DMemModelChunk::EFixedAccess));
+	asm("ldreq r10, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iChunkState));	// r10=old chunk state
+	__JUMP(ne,lr);
+	asm("cmp r10, r9 ");
+	__JUMP(eq,lr);						// if state already correct, nothing to do
+	asm("ldr r10, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iNumPdes));
+
+	ASM_DEBUG1(UnprotectChunk,r8)
+
+	asm("str r9, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iChunkState));	// iChunkState=ERunningRW
+	asm("cmp r10, #0 ");
+	asm("beq UnprotectChunk0 ");
+	asm("tst r12, #%a0" : : "i" (DMemModelChunk::ECode));		// check if chunk contains code
+	asm("orrne r6, r6, #%a0" : : "i" (Mmu::EFlushIPermChg));	// if it does, may need to flush ITLB
+	asm("ldr r12, [r8, #%a0]" : : "i" _FOFF(DMemModelChunk,iPdes));
+	asm("add r9, r8, r9, lsl #2 ");
+	asm("ldr r9, [r9, #%a0]" : : "i" (_FOFF(DMemModelChunk,iPdePermissions[0])));	//r9=new permissions
+	asm("UnprotectChunk2: ");
+	asm("ldr r7, [r12] ");				// fetch old pde
+	asm("bics r7, r7, #0x3fc ");		// mask out permissions and check for not present PDE
+	asm("orrne r7, r7, r9 ");			// if present, or in new permissions
+	asm("moveq r7, #0 ");				// else clear pde
+	asm("str r7, [r12], #4 ");			// replace pde
+	asm("subs r10, r10, #1 ");
+	asm("bne UnprotectChunk2 ");
+	asm("orr r6, r6, #%a0" : : "i" (Mmu::EFlushDPermChg));
+	asm("UnprotectChunk0: ");
+	__JUMP(,lr);
+
+#ifdef BTRACE_FAST_MUTEX
+	// expects scheduler in r0, current thread in r2, preserves all but r10
+	asm("procswitch_trace_flash:");
+	asm("mov r10, sp");
+	asm("bic sp, sp, #7"); 					// align stack to 8 bytes
+	asm("stmdb sp!,{r3,ip}");
+	asm("stmdb sp!,{r0,r1,r2,lr}");		// 4th item on stack is PC value for trace
+	asm("mov r1, r0");
+	asm("ldr r0, procswitch_trace_header"); // header parameter in r0
+	asm("add r3, r1, #%a0" : : "i" _FOFF(TScheduler,iLock)); // fast mutex parameter in r3
+	asm("mov lr, pc");
+	asm("ldr pc, [r1, #%a0]" : : "i" _FOFF(TScheduler,iBTraceHandler));	
+	asm("ldmia sp!,{r0,r1,r2,lr}");
+	asm("ldmia sp!,{r3,ip}");
+	asm("mov sp, r10");					// put stack back
+	__JUMP(,lr);
+
+	asm("procswitch_trace_header:");
+	asm(".word %a0" : : "i" ((TInt)(16<<BTrace::ESizeIndex) + ((BTrace::EContextIdPresent|BTrace::EPcPresent) << BTrace::EFlagsIndex*8) + (BTrace::EFastMutex<< BTrace::ECategoryIndex*8) + (BTrace::EFastMutexFlash << BTrace::ESubCategoryIndex*8)) );
+#endif
+
+	// Global data references
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	asm("__TheMmu: ");
+	asm(".word %a0" : : "i" ((TInt)&::TheMmu));
+	};
+
+__NAKED__ TUint32 DMemModelChunk::ApplyTopLevelPermissions(TChunkState /*aChunkState*/)
+	{
+	asm("stmfd sp!, {r6-r11,lr} ");
+	asm("mov r8, r0 ");		// r8 = chunk ptr
+	asm("mov r9, r1 ");		// r9 = chunk state
+	asm("mrc p15, 0, r3, c3, c0, 0 ");	// r3=DACR
+	asm("mov r6, #0 ");
+	asm("orr r1, r3, #0x30 ");
+	asm("mcr p15, 0, r1, c3, c0, 0 ");	// unlock page tables
+	CPWAIT(,lr);
+	asm("bl ApplyTopLevelPermissions ");
+	asm("mcr p15, 0, r3, c3, c0, 0 ");	// lock page tables
+	asm("mov r0, r6 ");					// return flush flags
+	DRAIN_WRITE_BUFFER(,r1,r1);
+	CPWAIT(,r1);
+	asm("ldmfd sp!, {r6-r11,pc} ");
+	}
+
+__NAKED__ TUint32 DMemModelChunk::MoveToRunAddress(TLinAddr /*aLinAddr*/, TChunkState /*aChunkState*/)
+	{
+	asm("stmfd sp!, {r5-r11,lr} ");
+	asm("mov r8, r0 ");		// r8 = chunk ptr
+	asm("mov r7, r1 ");		// r7 = run address
+	asm("mrc p15, 0, r5, c3, c0, 0 ");	// r5=DACR
+	asm("mov r9, r2 ");		// r9 = chunk state
+	asm("mov r6, #0 ");
+	asm("orr r1, r5, #0x30 ");
+	asm("mcr p15, 0, r1, c3, c0, 0 ");	// unlock page tables
+	CPWAIT(,lr);
+	asm("bl MoveToRunAddress ");
+	asm("mcr p15, 0, r5, c3, c0, 0 ");	// lock page tables
+	asm("mov r0, r6 ");					// return flush flags
+	DRAIN_WRITE_BUFFER(,r1,r1);
+	CPWAIT(,r1);
+	asm("ldmfd sp!, {r5-r11,pc} ");
+	}
+
+__NAKED__ TUint32 DMemModelChunk::MoveToHomeSection()
+	{
+	asm("stmfd sp!, {r5-r11,lr} ");
+	asm("mov r7, r0 ");		// r7 = chunk ptr
+	asm("mrc p15, 0, r0, c3, c0, 0 ");	// r0=DACR
+	asm("mov r6, #0 ");
+	asm("orr r1, r0, #0x30 ");
+	asm("mcr p15, 0, r1, c3, c0, 0 ");	// unlock page tables
+	CPWAIT(,lr);
+	asm("bl MoveHomeOrProtectChunk ");
+	asm("mcr p15, 0, r0, c3, c0, 0 ");	// lock page tables
+	asm("mov r0, r6 ");					// return flush flags
+	DRAIN_WRITE_BUFFER(,r1,r1);
+	CPWAIT(,r1);
+	asm("ldmfd sp!, {r5-r11,pc} ");
+	}
+#endif
+

@@ -1,0 +1,1114 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! 	@file
+//! 	@SYMTestSuiteName		pbase-f32-sfsrv-publicapi-ram
+//!	@SYMScriptTestEnvironment	This test script requires a basic ROM.
+//! 	@SYMScriptAuthor 		Jaanus Randveer, Runno Sgirka
+//! 	@SYMScriptCreationDate		12/10/2007
+//! 	@SYMScriptDescription		The test script contains API tests for the following functions of CDirScan class:
+//!	CDirScan *NewL(RFs &aFs);
+//!	CDirScan *NewLC(RFs &aFs);
+//!	~CDirScan();
+//!	void SetScanDataL(const TDesC &aMatchName, TUint anEntryAttMask, TUint anEntrySortMask, TScanDirection aScanDir=EScanDownTree);
+//!	void NextL(CDir *&aDirEntries);
+//!	TPtrC AbbreviatedPath();
+//!	TPtrC FullPath();
+
+
+LOAD_SUITE	T_SfSrv
+DELAY	5000
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1001
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1001
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Constructor NewL(RFs &aFs) test, that constucts a CDirScan object.
+//! 				Uses API elements: NewL().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewL() and session as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	CDirScan object is not NULL
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect
+		COMMAND		CDirScan1	NewL		PBASE-F32-DirScan-PublicApi-1001-001-NewL_command004		
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1001
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1002
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1002
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Constructor NewLC(RFs &aFs) test, that constructs a CDirScan object and puts it to the clenupstack.
+//! 				Uses API elements: NewLC().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function;
+//!				2.Call CDirScan::NewLC() and connected file server session as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	CDirScan object is not NULL.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect
+		COMMAND		CDirScan1	NewLC		PBASE-F32-DirScan-PublicApi-1002-001-NewLC_command004		
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1002
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1003
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1003
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL(const TDesC &aMatchName, TUint anEntryAttMask, TUint anEntrySortMask, 
+//!				TScanDirection aScanDir=EScanDownTree) and function FullPath() test, that initialises a directory entries scan.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 1 files and no directories.
+//! 				Uses API elements: NewLC(), SetScanDataL() FullPath();
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewLC() and connected file server session as parameter.
+//!				3.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttHidden as second
+//!				  parameter, ESortNone as third parameter and CDirScan::EScanUpTree as fourth parameter
+//!				4.Call CDirScan::FullPath().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Scans directory structure and checks if CDirScan::FullPath() result is equal to "<RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\"
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1003-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1003-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1003-001-Copy_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect
+		COMMAND		CDirScan1	NewLC		PBASE-F32-DirScan-PublicApi-1003-002-NewLC_command004
+		COMMAND		CDirScan1	SetScanDataL	PBASE-F32-DirScan-PublicApi-1003-002-SetScanDataL_command005
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1003-002-FullPath_command006
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1003-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1003-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1003-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1003
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1004
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1004
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function NextL(CDir *&aDirEntries) test, that scans the directory structure.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains no files and no directories.
+//!				The directory structure to be created is following: main directory <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\, in there two
+//!				sub-directories TempDir1 and TempDir2, in TempDir1 two sub-directories TempDir1Sub1 and TempDir1Sub2 and
+//!				in TempDir2 one sub-directory TempDir2Sub.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\ as parameter
+//!				3.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\ as parameter
+//!				4.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\TempDir1Sub1 as parameter
+//!				5.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\TempDir1Sub2 as parameter
+//!				6.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\TempDir2Sub as parameter
+//!				7.Call CDirScan::NewL() and connected file server session as parameter.
+//!				8.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttDir as second
+//!				  parameter, ESortByName as third parameter and EScanDownTree as fourth parameter
+//!				9.Call CDirScan::NextL() and CDir object as parameter.
+//!				10.Call CDirScan::FullPath() to verify the expected directory path.
+//!				11.Call CDirScan::NextL() and CDir object as parameter.
+//!				12.Call CDirScan::FullPath() to verify the expected directory path.
+//!				13.Call CDirScan::NextL() and CDir object as parameter.
+//!				14.Call CDirScan::FullPath() to verify the expected directory path.
+//!				15.Call CDirScan::NextL() and CDir object as parameter.
+//!				16.Call CDirScan::FullPath() to verify the expected directory path.
+//!				17.Call CDirScan::NextL() and CDir object as parameter.
+//!				18.Call CDirScan::FullPath() to verify the expected directory path.
+//!				19.Call CDirScan::NextL() and CDir object as parameter.
+//!				20.Call CDirScan::FullPath() to verify the expected directory path.
+//!				21.Call CDirScan::NextL() and CDir object as parameter.
+//!				22.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\TempDir1Sub1 as parameter
+//!				23.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\TempDir1Sub2 as parameter
+//!				24.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\TempDir2Sub as parameter
+//!				25.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\ as parameter
+//!				26.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\ as parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Moves down the directory tree until there are no more directories. All the verifications pass.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1004-001-MkDirAll_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect		
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1004-002-MkDirAll_command004
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1004-002-MkDirAll_command005
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1004-002-MkDirAll_command006
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1004-002-MkDirAll_command007
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1004-002-MkDirAll_command008
+		COMMAND		CDirScan1	NewL		PBASE-F32-DirScan-PublicApi-1004-002-NewL_command009
+		COMMAND		CDirScan1	SetScanDataL	PBASE-F32-DirScan-PublicApi-1004-002-SetScanDataL_command010
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1004-002-NextL_command011
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1004-002-FullPath_command013
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1004-002-NextL_command014
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1004-002-FullPath_command016
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1004-002-NextL_command017
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1004-002-FullPath_command019
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1004-002-NextL_command020
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1004-002-FullPath_command022
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1004-002-NextL_command023
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1004-002-FullPath_command025
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1004-002-NextL_command026
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1004-002-FullPath_command028
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1004-002-NextL_command029
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1004-002-RmDir_command032
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1004-002-RmDir_command033
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1004-002-RmDir_command034
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1004-002-RmDir_command035
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1004-002-RmDir_command036
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1004-003-RmDir_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1004
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1005
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1005
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function AbbreviatedPath() test, that gets the abbreviated path of the entry currently being scanned.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains no files and no directories.
+//! 				Uses API elements: NewLC(), SetScanDataL, AbbreviatedPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewLC() and session as parameter.
+//!				3.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttHidden as second
+//!				  parameter, ESortNone as third parameter and CDirScan::EScanUpTree as fourth parameter
+//!				4.Call CDirScan::AbbreviatedPath().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Abbreviated path is equal to \.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1005-001-MkDirAll_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect
+		COMMAND		CDirScan1	NewLC			PBASE-F32-DirScan-PublicApi-1005-002-NewLC_command004
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1005-002-SetScanDataL_command005
+		COMMAND		CDirScan1	AbbreviatedPath		PBASE-F32-DirScan-PublicApi-1005-002-AbbreviatedPath_command006
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1005-003-RmDir_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1005
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1006
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1006
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function NextL(CDir *&aDirEntries) test, that scans an empty directory.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir - contains no files and directories.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//!				3.Call CDirScan::NewL() and connected file server session as parameter.
+//!				4.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as first parameter, KEntryAttDir as second
+//!				  parameter, ESortByName as third parameter and EScanDownTree as fourth parameter
+//!				5.Call CDirScan::NextL() and CDir object as parameter.
+//!				6.Call CDirScan::FullPath() to verify the expected directory path.
+//!				7.Call CDirScan::NextL() and CDir object as parameter.
+//!				8.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The first NexL() method call returns the empty directory itself, the second one returns NULL (nothing more
+//!				to scan).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1006-001-MkDirAll_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect		
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1006-002-MkDirAll_command004
+		COMMAND		CDirScan1	NewL		PBASE-F32-DirScan-PublicApi-1006-002-NewL_command005
+		COMMAND		CDirScan1	SetScanDataL	PBASE-F32-DirScan-PublicApi-1006-002-SetScanDataL_command006
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1006-002-NextL_command007
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	FullPath	PBASE-F32-DirScan-PublicApi-1006-002-FullPath_command009
+		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1006-002-NextL_command010
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1006-002-RmDir_command013
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1006-003-RmDir_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1006
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1007
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1007
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL(const TDesC &aMatchName, TUint anEntryAttMask, TUint anEntrySortMask, 
+//!				TScanDirection aScanDir=EScanDownTree) test, that uses KEntryAttNormal as attribute mask and expects files
+//!				only to be returned.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 4 files and no directories. One directory
+//!				is going to be created.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//!				3.Call CDirScan::NewL() and connected file server session as parameter.
+//!				4.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttNormal as second
+//!				  parameter, ESortByName as third parameter and EScanDownTree as fourth parameter
+//!				5.Call CDirScan::NextL() and CDir object as parameter.
+//!				6.Call CDirScan::FullPath() to verify the expected directory path.
+//!				7.Call CDir::Count() to verify the number of entries returned.
+//!				8.Call CDir::operator[] to verify the entries returned.
+//!				9.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using KEntryAttNormal as attribute mask returns files only.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1007-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1007-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1007-001-Copy_command006
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1007-001-Copy_command007
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1007-001-Copy_command008
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1007-001-Copy_command009
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll			PBASE-F32-DirScan-PublicApi-1007-002-MkDirAll_command006
+		COMMAND		TEntry1		new
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1007-002-NewL_command008
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1007-002-SetScanDataL_command009
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1007-002-NextL_command010
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1007-002-FullPath_command011
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1007-002-Count_command012
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1007-002-index_command013
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1007-002-index_command014
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1007-002-index_command015
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1007-002-index_command016
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~
+		COMMAND		RFs1		RmDir			PBASE-F32-DirScan-PublicApi-1007-002-RmDir_command019
+		COMMAND		TEntry1		~
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1007-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1007-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1007-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1007
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1008
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1008
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL(const TDesC &aMatchName, TUint anEntryAttMask, TUint anEntrySortMask, 
+//!				TScanDirection aScanDir=EScanDownTree) test, that uses KEntryAttDir as attribute mask and expects files
+//!				and directories both to be returned.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 4 files and no directories. One directory
+//!				is going to be created.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//!				3.Call CDirScan::NewL() and connected file server session as parameter.
+//!				4.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttDir as second
+//!				  parameter, ESortByName as third parameter and EScanDownTree as fourth parameter
+//!				5.Call CDirScan::NextL() and CDir object as parameter.
+//!				6.Call CDirScan::FullPath() to verify the expected directory path.
+//!				7.Call CDir::Count() to verify the number of entries returned.
+//!				8.Call CDir::operator[] to verify the entries returned.
+//!				9.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using KEntryAttDir as attribute mask returns both files and directories.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1008-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1008-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1008-001-Copy_command006
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1008-001-Copy_command007
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1008-001-Copy_command008
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1008-001-Copy_command009
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect		
+		COMMAND		RFs1		MkDirAll			PBASE-F32-DirScan-PublicApi-1008-002-MkDirAll_command006
+		COMMAND		TEntry1		new
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1008-002-NewL_command008
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1008-002-SetScanDataL_command009
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1008-002-NextL_command010
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1008-002-FullPath_command011
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1008-002-Count_command012
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1008-002-index_command013
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1008-002-index_command014
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1008-002-index_command015
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1008-002-index_command016
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1008-002-index_command017
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		RmDir			PBASE-F32-DirScan-PublicApi-1008-002-RmDir_command020
+		COMMAND		TEntry1		~
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1008-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1008-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1008-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1008
+
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1009
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1009
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL(const TDesC &aMatchName, TUint anEntryAttMask, TUint anEntrySortMask, 
+//!				TScanDirection aScanDir=EScanDownTree) test, that uses KEntryAttDir|KEntryAttMatchExclusive as attribute mask
+//!				and expects directories only to be returned.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains no files and no directories. One directory
+//!				is going to be created.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//!				3.Call CDirScan::NewL() and connected file server session as parameter.
+//!				4.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttDir|KEntryAttMatchExclusive
+//!				  as second parameter, ESortByName as third parameter and EScanDownTree as fourth parameter
+//!				5.Call CDirScan::NextL() and CDir object as parameter.
+//!				6.Call CDirScan::FullPath() to verify the expected directory path.
+//!				7.Call CDir::Count() to verify the number of entries returned.
+//!				8.Call CDir::operator[] to verify the entries returned.
+//!				9.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir\ as parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using KEntryAttDir|KEntryAttMatchExclusive as attribute mask returns
+//!				directories only.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1009-001-MkDirAll_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect		
+		COMMAND		RFs1		MkDirAll			PBASE-F32-DirScan-PublicApi-1009-002-MkDirAll_command006
+		COMMAND		TEntry1		new
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1009-002-NewL_command008
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1009-002-SetScanDataL_command009
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1009-002-NextL_command010
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1009-002-FullPath_command011
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1009-002-Count_command012
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1009-002-index_command013
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		RmDir			PBASE-F32-DirScan-PublicApi-1009-002-RmDir_command016
+		COMMAND		TEntry1		~
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1009-003-RmDir_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1009
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1010
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1010
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL(const TDesC &aMatchName, TUint anEntryAttMask, TUint anEntrySortMask, 
+//!				TScanDirection aScanDir=EScanDownTree) test, that uses KEntryAttReadOnly|KEntryAttMatchExclusive as attribute
+//!				mask and expects only read-only files to be returned.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 4 files and no directories.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::SetAtt() to clear all possible read-only attributes.
+//!				3.Call RFs::SetAtt() to set some read-only attributes.
+//!				4.Call CDirScan::NewL() and connected file server session as parameter.
+//!				5.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttReadOnly|KEntryAttMatchExclusive
+//!				  as second parameter, ESortByName as third parameter and EScanDownTree as fourth parameter
+//!				6.Call CDirScan::NextL() and CDir object as parameter.
+//!				7.Call CDirScan::FullPath() to verify the expected directory path.
+//!				8.Call CDir::Count() to verify the number of entries returned.
+//!				9.Call CDir::operator[] to verify the entries returned.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using KEntryAttReadOnly|KEntryAttMatchExclusive as attribute mask returns
+//!				only read-only files and directories.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1010-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1010-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1010-001-Copy_command006
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1010-001-Copy_command007
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1010-001-Copy_command008
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1010-001-Copy_command009
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect		
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command006
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command007
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command008
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command009
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command010
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command011
+		COMMAND		TEntry1		new
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1010-002-NewL_command013
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1010-002-SetScanDataL_command014
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1010-002-NextL_command015
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1010-002-FullPath_command016
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1010-002-Count_command017
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1010-002-index_command018
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1010-002-index_command019
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command020
+		COMMAND		RFs1		SetAtt			PBASE-F32-DirScan-PublicApi-1010-002-SetAtt_command021
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~
+		COMMAND		TEntry1		~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1010-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1010-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1010-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1010
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1011
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1011
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL() test, that checks that when using relative path then everything else is taken from
+//!				the session path.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains no files and no directories.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::SetSessionPath() to set new session path, passing <RAM_DRIVE>:\<RELATIVE_PATH>\ as parameter.
+//!				3.Call RFs::SessionPath() to verify previous action.
+//!				4.Call CDirScan::NewL() and connected file server session as parameter.
+//!				5.Call CDirScan::SetScanDataL() and \dirscan\ as first parameter, KEntryAttNormal as second parameter,
+//!				  ESortByName as third parameter and EScanDownTree as fourth parameter.
+//!				6.Call CDirScan::NextL() and CDir object as parameter.
+//!				7.Call CDirScan::FullPath() to verify the expected directory path.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using relative path takes everything else from the session path.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1011-001-MkDirAll_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect		
+		COMMAND		RFs1		SetSessionPath		PBASE-F32-DirScan-PublicApi-1011-002-SetSessionPath_command004
+		COMMAND		RFs1		SessionPath		PBASE-F32-DirScan-PublicApi-1011-002-SessionPath_command005
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1011-002-NewL_command006
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1011-002-SetScanDataL_command007
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1011-002-NextL_command008
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1011-002-FullPath_command009
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1011-003-RmDir_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1011
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1012
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1012
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL() test, that checks that when using path without the traling \ then it starts scanning
+//!				the parent directory.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains no files and no directories.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewL() and connected file server session as parameter.
+//!				3.Call CDirScan::SetScanDataL() and drive>:\dirscan as first parameter, KEntryAttNormal as second parameter,
+//!				  ESortByName as third parameter and EScanDownTree as fourth parameter.
+//!				4.Call CDirScan::NextL() and CDir object as parameter.
+//!				5.Call CDirScan::FullPath() to verify the expected directory path.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using path without trailing \ starts scanning the parent directory.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1012-001-MkDirAll_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect		
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1012-002-NewL_command004
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1012-002-SetScanDataL_command005
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1012-002-NextL_command006
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1012-002-FullPath_command007
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1012-003-RmDir_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1012
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1013
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1013
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL() test, that uses ESortByName | EAscending as sort key.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 4 files and no directories.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewL() and connected file server session as parameter.
+//!				3.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttNormal as second
+//!				  parameter, ESortByName | EAscending as third parameter and EScanDownTree as fourth parameter
+//!				4.Call CDirScan::NextL() and CDir object as parameter.
+//!				5.Call CDirScan::FullPath() to verify the expected directory path.
+//!				6.Call CDir::Count() to verify the number of entries returned.
+//!				7.Call CDir::operator[] to verify the entries returned.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using ESortByName | EAscending as sort key sorts the entries as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1013-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1013-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1013-001-Copy_command006
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1013-001-Copy_command007
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1013-001-Copy_command008
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1013-001-Copy_command009
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect	
+		COMMAND		TEntry1		new	
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1013-002-NewL_command007
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1013-002-SetScanDataL_command008
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1013-002-NextL_command009
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1013-002-FullPath_command010
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1013-002-Count_command011
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1013-002-index_command012
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1013-002-index_command013
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1013-002-index_command014
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1013-002-index_command015
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~
+		COMMAND		TEntry1		~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1013-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1013-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1013-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1013
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1014
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1014
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL() test, that uses ESortByExt | EDescending as sort key.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 4 files and no directories.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewL() and connected file server session as parameter.
+//!				3.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttNormal as second
+//!				  parameter, ESortByExt | EDescending as third parameter and EScanDownTree as fourth parameter
+//!				4.Call CDirScan::NextL() and CDir object as parameter.
+//!				5.Call CDirScan::FullPath() to verify the expected directory path.
+//!				6.Call CDir::Count() to verify the number of entries returned.
+//!				7.Call CDir::operator[] to verify the entries returned.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using ESortByExt | EDescending as sort key sorts the entries as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1014-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1014-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1014-001-Copy_command006
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1014-001-Copy_command007
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1014-001-Copy_command008
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1014-001-Copy_command009
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect	
+		COMMAND		TEntry1		new	
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1014-002-NewL_command007
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1014-002-SetScanDataL_command008
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1014-002-NextL_command009
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1014-002-FullPath_command010
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1014-002-Count_command011
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1014-002-index_command012
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1014-002-index_command013
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1014-002-index_command014
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1014-002-index_command015
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~
+		COMMAND		TEntry1		~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1014-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1014-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1014-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1014
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1015
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1015
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL() test, that uses EDirsFirst | EDirDescending | ESortByDate as sort key.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 4 files and no directories. Two directories
+//!				will be created.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\ as parameter
+//!				3.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\ as parameter
+//!				4.Call RFs::SetModified(const TDesC &aName, const TTime &aTime) to set directories' and files' modified date.
+//!				5.Call CDirScan::NewL() and connected file server session as parameter.
+//!				6.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttDir as second
+//!				  parameter, EDirsFirst | EDirDescending | ESortByDate as third parameter and EScanDownTree as fourth parameter
+//!				7.Call CDirScan::NextL() and CDir object as parameter.
+//!				8.Call CDirScan::FullPath() to verify the expected directory path.
+//!				9.Call CDir::Count() to verify the number of entries returned.
+//!				10.Call CDir::operator[] to verify the entries returned.
+//!				11.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\ as parameter
+//!				12.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\ as parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using EDirsFirst | EDirDescending | ESortByDate as sort key sorts the entries as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1015-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1015-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1015-001-Copy_command006
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1015-001-Copy_command007
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1015-001-Copy_command008
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1015-001-Copy_command009
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect	
+		COMMAND		RFs1		MkDirAll			PBASE-F32-DirScan-PublicApi-1015-002-MkDirAll_command006
+		COMMAND		RFs1		MkDirAll			PBASE-F32-DirScan-PublicApi-1015-002-MkDirAll_command007
+		COMMAND		RFs1		SetModified		PBASE-F32-DirScan-PublicApi-1015-002-SetModified_command008
+		COMMAND		RFs1		SetModified		PBASE-F32-DirScan-PublicApi-1015-002-SetModified_command009
+		COMMAND		RFs1		SetModified		PBASE-F32-DirScan-PublicApi-1015-002-SetModified_command010
+		COMMAND		RFs1		SetModified		PBASE-F32-DirScan-PublicApi-1015-002-SetModified_command011
+		COMMAND		TEntry1		new	
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1015-002-NewL_command013
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1015-002-SetScanDataL_command014
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1015-002-NextL_command015
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1015-002-FullPath_command016
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1015-002-Count_command017
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1015-002-index_command018
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1015-002-index_command019
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1015-002-index_command020
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1015-002-index_command021
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1015-002-index_command022
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1015-002-index_command023
+		COMMAND		RFs1		RmDir			PBASE-F32-DirScan-PublicApi-1015-002-RmDir_command024
+		COMMAND		RFs1		RmDir			PBASE-F32-DirScan-PublicApi-1015-002-RmDir_command025
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~	
+		COMMAND		TEntry1		~	
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1015-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1015-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1015-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1015
+
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1016
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1016
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL() test, that uses EDirsLast | ESortBySize as sort key.
+//!				Directory used in SetScanDataL() - <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ - contains 4 files and no directories. Two directories
+//!				will be created.
+//! 				Uses API elements: NewL(), SetScanDataL(), NextL(), FullPath().
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\ as parameter
+//!				3.Call RFs::MkDirAll() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\ as parameter
+//!				4.Call CDirScan::NewL() and connected file server session as parameter.
+//!				5.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttDir as second
+//!				  parameter, EDirsLast | ESortBySize as third parameter and EScanDownTree as fourth parameter
+//!				6.Call CDirScan::NextL() and CDir object as parameter.
+//!				7.Call CDirScan::FullPath() to verify the expected directory path.
+//!				8.Call CDir::Count() to verify the number of entries returned.
+//!				9.Call CDir::operator[] to verify the entries returned.
+//!				10.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir1\ as parameter
+//!				11.Call RFs::RmDir() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\TempDir2\ as parameter
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SetScanDataL() method call using EDirsLast | ESortBySize as sort key sorts the entries as expected.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1016-001-MkDirAll_command004
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1016-001-NewL_command005
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1016-001-Copy_command006
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1016-001-Copy_command007
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1016-001-Copy_command008
+		COMMAND		CFileMan1	Copy		PBASE-F32-DirScan-PublicApi-1016-001-Copy_command009
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	TEntry		TEntry1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND		RFs1		new		
+		COMMAND		RFs1		Connect	
+		COMMAND		RFs1		MkDirAll			PBASE-F32-DirScan-PublicApi-1016-002-MkDirAll_command006
+		COMMAND		RFs1		MkDirAll			PBASE-F32-DirScan-PublicApi-1016-002-MkDirAll_command007
+		COMMAND		TEntry1		new
+		COMMAND		CDirScan1	NewL			PBASE-F32-DirScan-PublicApi-1016-002-NewL_command009
+		COMMAND		CDirScan1	SetScanDataL		PBASE-F32-DirScan-PublicApi-1016-002-SetScanDataL_command010
+		COMMAND		CDirScan1	NextL			PBASE-F32-DirScan-PublicApi-1016-002-NextL_command011
+		COMMAND		CDirScan1	FullPath		PBASE-F32-DirScan-PublicApi-1016-002-FullPath_command012
+		COMMAND		CDir1		Count			PBASE-F32-DirScan-PublicApi-1016-002-Count_command013
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1016-002-index_command014
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1016-002-index_command015
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1016-002-index_command016
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1016-002-index_command017
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1016-002-index_command018
+		COMMAND		CDir1		[]			PBASE-F32-DirScan-PublicApi-1016-002-index_command019
+		COMMAND		RFs1		RmDir			PBASE-F32-DirScan-PublicApi-1016-002-RmDir_command020
+		COMMAND		RFs1		RmDir			PBASE-F32-DirScan-PublicApi-1016-002-RmDir_command021
+		COMMAND		CDir1		~
+		COMMAND		CDirScan1	~
+		COMMAND		TEntry1		~		
+		COMMAND		RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CFileMan	CFileMan1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		CFileMan1	NewL		PBASE-F32-DirScan-PublicApi-1016-003-NewL_command004
+		COMMAND		CFileMan1	Delete		PBASE-F32-DirScan-PublicApi-1016-003-Delete_command005
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1016-003-RmDir_command006
+		COMMAND		CFileMan1	~
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1016
+
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+//////								//////
+//////		 ///////////////////////////////////		//////
+//////		 ///				 ///		//////
+//////		 ///	  NEGATIVE TESTS	 ///		//////
+//////		 ///				 ///		//////	
+//////		 ///////////////////////////////////		//////
+//////								//////
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////
+
+
+
+//////////////
+//SETSCANDATAL
+//////////////
+
+START_TESTCASE			PBASE-F32-DirScan-PublicApi-1101
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1101
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function SetScanDataL(const TDesC &aMatchName, TUint anEntryAttMask, TUint anEntrySortMask, 
+//!				TScanDirection aScanDir=EScanDownTree) negative test, that tries initialise directories entries scan
+//!				with directory which not exists.
+//! 				Uses API elements: NewLC(), SetScanDataL(), NextL();
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewLC() and connected file server session as parameter.
+//!				3.Call CDirScan::SetScanDataL() and <RAM_DRIVE>:\<RELATIVE_PATH>\dirscan\ as first parameter, KEntryAttHidden as second
+//!				  parameter, ESortNone as third parameter and CDirScan::EScanUpTree as fourth parameter
+//!				4.Call CDirScan::NextL() and CDir pointer as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	NextL() returns KErrPathNotFound.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		MkDirAll		PBASE-F32-DirScan-PublicApi-1101-001-MkDirAll_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		CREATE_OBJECT	CDirScan	CDirScan1
+		CREATE_OBJECT	CDir		CDir1
+		COMMAND			RFs1		new		
+		COMMAND			RFs1		Connect
+		COMMAND			CDirScan1	NewLC		PBASE-F32-DirScan-PublicApi-1101-002-NewLC_command004
+		COMMAND			CDirScan1	SetScanDataL	PBASE-F32-DirScan-PublicApi-1101-002-SetScanDataL_command005
+		COMMAND !Error=-12	CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1101-002-NextL_command006
+		COMMAND			CDir1		~
+		COMMAND			CDirScan1	~		
+		COMMAND			RFs1		~		
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+		CREATE_OBJECT	RFs		RFs1
+		COMMAND		RFs1		new			
+		COMMAND		RFs1		Connect
+		COMMAND		RFs1		RmDir		PBASE-F32-DirScan-PublicApi-1101-003-RmDir_command003
+		COMMAND		RFs1		~
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-DirScan-PublicApi-1101
+
+
+////////
+//NEXTL
+////////
+
+//! START_TESTCASE			PBASE-F32-DirScan-PublicApi-1102
+//! @SYMTestCaseID		PBASE-F32-DirScan-PublicApi-1102
+//! @SYMAPI			CDirScan
+//! @SYMTestCaseDesc		Function NextL(CDir *&aDirEntries) negative test, that tries to scan next directory entries when SetScanDataL()
+//!				hasn't been called.
+//! 				Uses API elements: NewLC(), NextL();
+//! @SYMTestActions		1.Call Create a RFs session and call it's Connect() function.
+//!				2.Call CDirScan::NewLC() and connected file server session as parameter.
+//!				3.Call CDirScan::NextL() and CDir pointer as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	NextL() raises Panic USER Code = 17 
+//! @SYMTestType		CIT
+//! 	START_TEST_BLOCK	100	T_SfSrv		\base\PBASE-F32-DirScan-PublicApi.ini 
+//! 		CREATE_OBJECT	RFs		RFs1
+//! 		CREATE_OBJECT	CDirScan	CDirScan1
+//! 		CREATE_OBJECT	CDir		CDir1
+//! 		COMMAND		RFs1		new		
+//! 		COMMAND		RFs1		Connect
+//! 		COMMAND		CDirScan1	NewLC		PBASE-F32-DirScan-PublicApi-1102-001-NewLC_command004	
+//! 		COMMAND		CDirScan1	NextL		PBASE-F32-DirScan-PublicApi-1102-001-NextL_command005
+//! 		COMMAND		CDir1		~		
+//! 		COMMAND		CDirScan1	~		
+//! 		COMMAND		RFs1		~		
+//! 	END_TEST_BLOCK	!PanicCode=17 !PanicString=USER
+//! END_TESTCASE			PBASE-F32-DirScan-PublicApi-1102

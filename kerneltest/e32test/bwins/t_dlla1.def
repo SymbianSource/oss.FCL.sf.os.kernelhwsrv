@@ -1,0 +1,6 @@
+EXPORTS
+	?AFunction@@YAHXZ @ 1 NONAME ; int __cdecl AFunction(void)
+	?Inc@@YAHXZ @ 2 NONAME ; int __cdecl Inc(void)
+	?GetProcessName@@YAAAV?$TBuf@$0BAA@@@XZ @ 3 NONAME ; class TBuf<256> & __cdecl GetProcessName(void)
+	?GetThreadName@@YAAAV?$TBuf@$0BAA@@@XZ @ 4 NONAME ; class TBuf<256> & __cdecl GetThreadName(void)
+

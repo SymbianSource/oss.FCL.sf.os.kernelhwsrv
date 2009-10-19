@@ -1,0 +1,12 @@
+# component name "Local Media Subsystem"
+
+component	base_e32_drivers_locmedia
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\locmedia
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\locmedia all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\locmedia
+notes_source	\component_defs\release.src
+
+ipr D
+

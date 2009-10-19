@@ -1,0 +1,14 @@
+# component name "Ethernet Driver"
+
+component	base_e32_drivers_ethernet
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\ethernet
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\ethernet all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\ethernet
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+

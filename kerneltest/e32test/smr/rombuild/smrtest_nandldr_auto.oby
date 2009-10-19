@@ -1,0 +1,69 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+//#NAME: NAND Loader rom
+//Following lines copied from os\kernelhwsrv\kernel\eka\rombuild\nandloader.oby
+
+#define BASE_ROM
+#define NANDLOADER_ROM
+#include <rom\##VARIANT##\header.iby>
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+
+#ifdef WITH_EXTENSION
+#undef WITH_EXTENSION
+#endif
+#ifdef WITH_ROFS
+#undef WITH_ROFS
+#endif
+#ifdef WITH_COMP
+#undef WITH_COMP
+#endif
+
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+
+//----------------------------------------------------------------------------
+//Specific to SMR NAND test on NE1
+
+
+file=\Epoc32\Release\ARMV5\udeb\NANDLOADER_UNISTORE2.EXE	\sys\bin\NANDLOADER.EXE
+
+#if defined(SMR_AUTO_ROM1)
+
+data=##VARIANT####KMAIN##D-SMRTSHELL_NAND2_AUTO1-D.IMG		\core.img
+data=\Epoc32\rom\include\smrtest_nandldr_autoexec1.bat		\autoexec.bat
+
+#elif defined(SMR_AUTO_ROM2)
+
+data=##VARIANT####KMAIN##D-SMRTSHELL_NAND2_AUTO2-D.IMG		\core.img
+data=\Epoc32\rom\include\smrtest_nandldr_autoexec2.bat		\autoexec.bat
+
+#elif defined(SMR_AUTO_ROM3)
+
+data=##VARIANT####KMAIN##D-SMRTSHELL_NAND2_AUTO3-D.IMG		\core.img
+data=\Epoc32\rom\include\smrtest_nandldr_autoexec3.bat		\autoexec.bat
+
+#elif defined(SMR_AUTO_ROM4)
+
+data=##VARIANT####KMAIN##D-SMRTSHELL_NAND2_AUTO4-D.IMG		\core.img
+data=\Epoc32\rom\include\smrtest_nandldr_autoexec4.bat		\autoexec.bat
+
+#endif

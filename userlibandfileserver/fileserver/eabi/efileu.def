@@ -1,0 +1,313 @@
+EXPORTS
+	_ZN14CAsyncNotifier3NewEv @ 1 NONAME ; CAsyncNotifier::New()
+	_Z11WriteToDiskRK7TDesC16RK6TDesC8 @ 2 NONAME ; WriteToDisk(TDesC16 const&, TDesC8 const&)
+	_Z12AllocBufferLRP7HBufC16RK7TDesC16 @ 3 NONAME ; AllocBufferL(HBufC16*&, TDesC16 const&)
+	_Z13DebugRegisterv @ 4 NONAME ; DebugRegister()
+	_Z13GetFileSystemRK7TDesC16 @ 5 NONAME ; GetFileSystem(TDesC16 const&)
+	_Z13GetLocalDrivei @ 6 NONAME ; GetLocalDrive(int)
+	_Z16CompareFilenamesRK7TDesC16S1_ @ 7 NONAME ; CompareFilenames(TDesC16 const&, TDesC16 const&)
+	_Z17CreateProxyDriveLP11CProxyDriveP8CMountCB @ 8 NONAME ; CreateProxyDriveL(CProxyDrive*, CMountCB*)
+	_Z19DebugNotifySessionsii @ 9 NONAME ; DebugNotifySessions(int, int)
+	_Z24IsValidLocalDriveMappingi @ 10 NONAME ; IsValidLocalDriveMapping(int)
+	_ZN11CFileSystem10SetLibraryE8RLibrary @ 11 NONAME ; CFileSystem::SetLibrary(RLibrary)
+	_ZN11CFileSystem6RemoveEv @ 12 NONAME ; CFileSystem::Remove()
+	_ZN11CFileSystemC2Ev @ 13 NONAME ; CFileSystem::CFileSystem()
+	_ZN11CFileSystemD0Ev @ 14 NONAME ; CFileSystem::~CFileSystem()
+	_ZN11CFileSystemD1Ev @ 15 NONAME ; CFileSystem::~CFileSystem()
+	_ZN11CFileSystemD2Ev @ 16 NONAME ; CFileSystem::~CFileSystem()
+	_ZN11CProxyDrive12DeleteNotifyExi @ 17 NONAME ; CProxyDrive::DeleteNotify(long long, int)
+	_ZN11CProxyDrive4ReadExiPKviii @ 18 NONAME ; CProxyDrive::Read(long long, int, void const*, int, int, int)
+	_ZN11CProxyDrive5WriteExiPKviii @ 19 NONAME ; CProxyDrive::Write(long long, int, void const*, int, int, int)
+	_ZN11CProxyDrive9ControlIOERK12RMessagePtr2iPvS3_ @ 20 NONAME ; CProxyDrive::ControlIO(RMessagePtr2 const&, int, void*, void*)
+	_ZN14CAsyncNotifier6NotifyERK7TDesC16S2_S2_S2_Ri @ 21 NONAME ; CAsyncNotifier::Notify(TDesC16 const&, TDesC16 const&, TDesC16 const&, TDesC16 const&, int&)
+	_ZN14CLocDrvMountCB14InitLocalDriveEv @ 22 NONAME ; CLocDrvMountCB::InitLocalDrive()
+	_ZN14CLocDrvMountCB16CreateLocalDriveER14TBusLocalDrive @ 23 NONAME ; CLocDrvMountCB::CreateLocalDrive(TBusLocalDrive&)
+	_ZN14CLocDrvMountCB20DismountedLocalDriveEv @ 24 NONAME ; CLocDrvMountCB::DismountedLocalDrive()
+	_ZN14CLocDrvMountCBC2Ev @ 25 NONAME ; CLocDrvMountCB::CLocDrvMountCB()
+	_ZN14CLocDrvMountCBD0Ev @ 26 NONAME ; CLocDrvMountCB::~CLocDrvMountCB()
+	_ZN14CLocDrvMountCBD1Ev @ 27 NONAME ; CLocDrvMountCB::~CLocDrvMountCB()
+	_ZN14CLocDrvMountCBD2Ev @ 28 NONAME ; CLocDrvMountCB::~CLocDrvMountCB()
+	_ZN17CFsDispatchObject15IsCorrectThreadEv @ 29 NONAME ; CFsDispatchObject::IsCorrectThread()
+	_ZN17CFsDispatchObject5CloseEv @ 30 NONAME ; CFsDispatchObject::Close()
+	_ZN18CBaseExtProxyDrive10DismountedEv @ 31 NONAME ; CBaseExtProxyDrive::Dismounted()
+	_ZN18CBaseExtProxyDrive10InitialiseEv @ 32 NONAME ; CBaseExtProxyDrive::Initialise()
+	_ZN18CBaseExtProxyDrive10ReduceSizeEii @ 33 NONAME ; CBaseExtProxyDrive::ReduceSize(int, int)
+	_ZN18CBaseExtProxyDrive12ForceRemountEj @ 34 NONAME ; CBaseExtProxyDrive::ForceRemount(unsigned int)
+	_ZN18CBaseExtProxyDrive12SetMountInfoEPK6TDesC8i @ 35 NONAME ; CBaseExtProxyDrive::SetMountInfo(TDesC8 const*, int)
+	_ZN18CBaseExtProxyDrive4CapsER5TDes8 @ 36 NONAME ; CBaseExtProxyDrive::Caps(TDes8&)
+	_ZN18CBaseExtProxyDrive4LockER5TBuf8ILi16EES2_i @ 37 NONAME ; CBaseExtProxyDrive::Lock(TBuf8<16>&, TBuf8<16>&, int)
+	_ZN18CBaseExtProxyDrive4ReadExiPKvii @ 38 NONAME ; CBaseExtProxyDrive::Read(long long, int, void const*, int, int)
+	_ZN18CBaseExtProxyDrive4ReadExiPKviii @ 39 NONAME ; CBaseExtProxyDrive::Read(long long, int, void const*, int, int, int)
+	_ZN18CBaseExtProxyDrive4ReadExiR5TDes8 @ 40 NONAME ; CBaseExtProxyDrive::Read(long long, int, TDes8&)
+	_ZN18CBaseExtProxyDrive5ClearER5TBuf8ILi16EE @ 41 NONAME ; CBaseExtProxyDrive::Clear(TBuf8<16>&)
+	_ZN18CBaseExtProxyDrive5WriteExRK6TDesC8 @ 42 NONAME ; CBaseExtProxyDrive::Write(long long, TDesC8 const&)
+	_ZN18CBaseExtProxyDrive5WriteExiPKvii @ 43 NONAME ; CBaseExtProxyDrive::Write(long long, int, void const*, int, int)
+	_ZN18CBaseExtProxyDrive5WriteExiPKviii @ 44 NONAME ; CBaseExtProxyDrive::Write(long long, int, void const*, int, int, int)
+	_ZN18CBaseExtProxyDrive6FormatExi @ 45 NONAME ; CBaseExtProxyDrive::Format(long long, int)
+	_ZN18CBaseExtProxyDrive6FormatER11TFormatInfo @ 46 NONAME ; CBaseExtProxyDrive::Format(TFormatInfo&)
+	_ZN18CBaseExtProxyDrive6UnlockER5TBuf8ILi16EEi @ 47 NONAME ; CBaseExtProxyDrive::Unlock(TBuf8<16>&, int)
+	_ZN18CBaseExtProxyDrive7EnlargeEi @ 48 NONAME ; CBaseExtProxyDrive::Enlarge(int)
+	_ZN18CBaseExtProxyDrive9ControlIOERK12RMessagePtr2iPvS3_ @ 49 NONAME ; CBaseExtProxyDrive::ControlIO(RMessagePtr2 const&, int, void*, void*)
+	_ZN18CBaseExtProxyDriveC1EP11CProxyDriveP8CMountCB @ 50 NONAME ; CBaseExtProxyDrive::CBaseExtProxyDrive(CProxyDrive*, CMountCB*)
+	_ZN18CBaseExtProxyDriveC2EP11CProxyDriveP8CMountCB @ 51 NONAME ; CBaseExtProxyDrive::CBaseExtProxyDrive(CProxyDrive*, CMountCB*)
+	_ZN18CBaseExtProxyDriveD0Ev @ 52 NONAME ; CBaseExtProxyDrive::~CBaseExtProxyDrive()
+	_ZN18CBaseExtProxyDriveD1Ev @ 53 NONAME ; CBaseExtProxyDrive::~CBaseExtProxyDrive()
+	_ZN18CBaseExtProxyDriveD2Ev @ 54 NONAME ; CBaseExtProxyDrive::~CBaseExtProxyDrive()
+	_ZN18CProxyDriveFactory6RemoveEv @ 55 NONAME ; CProxyDriveFactory::Remove()
+	_ZN18CProxyDriveFactoryC2Ev @ 56 NONAME ; CProxyDriveFactory::CProxyDriveFactory()
+	_ZN6CDirCB19StoreLongEntryNameLERK7TDesC16 @ 57 NONAME ; CDirCB::StoreLongEntryNameL(TDesC16 const&)
+	_ZN6CDirCB5InitLEP6TDrive @ 58 NONAME ; CDirCB::InitL(TDrive*)
+	_ZN6CDirCBC2Ev @ 59 NONAME ; CDirCB::CDirCB()
+	_ZN6CDirCBD0Ev @ 60 NONAME ; CDirCB::~CDirCB()
+	_ZN6CDirCBD1Ev @ 61 NONAME ; CDirCB::~CDirCB()
+	_ZN6CDirCBD2Ev @ 62 NONAME ; CDirCB::~CDirCB()
+	_ZN6TDrive13GetNotifyUserEv @ 63 NONAME ; TDrive::GetNotifyUser()
+	_ZN6TDrive3AttEv @ 64 NONAME ; TDrive::Att()
+	_ZN6TDrive8DismountEv @ 65 NONAME ; TDrive::Dismount()
+	_ZN7CFileCB19SetArchiveAttributeEv @ 66 NONAME ; CFileCB::SetArchiveAttribute()
+	_ZN7CFileCB5InitLEP6TDriveS1_P7HBufC16 @ 67 NONAME
+	_ZN7CFileCBC2Ev @ 68 NONAME ; CFileCB::CFileCB()
+	_ZN7CFileCBD0Ev @ 69 NONAME ; CFileCB::~CFileCB()
+	_ZN7CFileCBD1Ev @ 70 NONAME ; CFileCB::~CFileCB()
+	_ZN7CFileCBD2Ev @ 71 NONAME ; CFileCB::~CFileCB()
+	_ZN8CMountCB11IsFileInRomERK7TDesC16RPh @ 72 NONAME ; CMountCB::IsFileInRom(TDesC16 const&, unsigned char*&)
+	_ZN8CMountCB18SetDiskSpaceChangeEx @ 73 NONAME ; CMountCB::SetDiskSpaceChange(long long)
+	_ZN8CMountCBC2Ev @ 74 NONAME ; CMountCB::CMountCB()
+	_ZN8CMountCBD0Ev @ 75 NONAME ; CMountCB::~CMountCB()
+	_ZN8CMountCBD1Ev @ 76 NONAME ; CMountCB::~CMountCB()
+	_ZN8CMountCBD2Ev @ 77 NONAME ; CMountCB::~CMountCB()
+	_ZN9CFormatCB10CheckMountEv @ 78 NONAME ; CFormatCB::CheckMount()
+	_ZN9CFormatCBC2Ev @ 79 NONAME ; CFormatCB::CFormatCB()
+	_ZN9CFormatCBD0Ev @ 80 NONAME ; CFormatCB::~CFormatCB()
+	_ZN9CFormatCBD1Ev @ 81 NONAME ; CFormatCB::~CFormatCB()
+	_ZN9CFormatCBD2Ev @ 82 NONAME ; CFormatCB::~CFormatCB()
+	_ZN9CFsObject15IsCorrectThreadEv @ 83 NONAME ; CFsObject::IsCorrectThread()
+	_ZN9CFsObject4OpenEv @ 84 NONAME ; CFsObject::Open()
+	_ZN9CFsObject5CloseEv @ 85 NONAME ; CFsObject::Close()
+	_ZN9CFsObject7SetNameEPK7TDesC16 @ 86 NONAME ; CFsObject::SetName(TDesC16 const*)
+	_ZN9CFsObjectC1Ev @ 87 NONAME ; CFsObject::CFsObject()
+	_ZN9CFsObjectC2Ev @ 88 NONAME ; CFsObject::CFsObject()
+	_ZN9CFsObjectD0Ev @ 89 NONAME ; CFsObject::~CFsObject()
+	_ZN9CFsObjectD1Ev @ 90 NONAME ; CFsObject::~CFsObject()
+	_ZN9CFsObjectD2Ev @ 91 NONAME ; CFsObject::~CFsObject()
+	_ZNK11CFileSystem20IsExtensionSupportedEv @ 92 NONAME ; CFileSystem::IsExtensionSupported() const
+	_ZNK11CFileSystem21QueryVersionSupportedERK8TVersion @ 93 NONAME ; CFileSystem::QueryVersionSupported(TVersion const&) const
+	_ZNK11CFileSystem7LibraryEv @ 94 NONAME ; CFileSystem::Library() const
+	_ZNK6TDrive10DriveFaultEi @ 95 NONAME ; TDrive::DriveFault(int) const
+	_ZNK6TDrive12IsMainThreadEv @ 96 NONAME ; TDrive::IsMainThread() const
+	_ZNK6TDrive13IsDriveThreadEv @ 97 NONAME ; TDrive::IsDriveThread() const
+	_ZNK6TDrive19IsWriteableResourceEv @ 98 NONAME ; TDrive::IsWriteableResource() const
+	_ZNK6TDrive22IsCurrentWriteFunctionEv @ 99 NONAME ; TDrive::IsCurrentWriteFunction() const
+	_ZNK7CFileCB7AddressERi @ 100 NONAME ; CFileCB::Address(int&) const
+	_ZNK8CMountCB13MatchEntryAttEjj @ 101 NONAME ; CMountCB::MatchEntryAtt(unsigned int, unsigned int) const
+	_ZNK8CMountCBneERKS_ @ 102 NONAME ; CMountCB::operator!=(CMountCB const&) const
+	_ZNK9CFsObject4NameEv @ 103 NONAME ; CFsObject::Name() const
+	_ZTI11CFileSystem @ 104 NONAME ; typeinfo for CFileSystem
+	_ZTI11CProxyDrive @ 105 NONAME ; typeinfo for CProxyDrive
+	_ZTI12CFsObjectCon @ 106 NONAME ABSENT ; typeinfo for CFsObjectCon
+	_ZTI14CLocDrvMountCB @ 107 NONAME ; typeinfo for CLocDrvMountCB
+	_ZTI17CFsDispatchObject @ 108 NONAME ; typeinfo for CFsDispatchObject
+	_ZTI18CBaseExtProxyDrive @ 109 NONAME ; typeinfo for CBaseExtProxyDrive
+	_ZTI18CProxyDriveFactory @ 110 NONAME ; typeinfo for CProxyDriveFactory
+	_ZTI6CDirCB @ 111 NONAME ; typeinfo for CDirCB
+	_ZTI7CFileCB @ 112 NONAME ; typeinfo for CFileCB
+	_ZTI8CMountCB @ 113 NONAME ; typeinfo for CMountCB
+	_ZTI9CFormatCB @ 114 NONAME ; typeinfo for CFormatCB
+	_ZTI9CFsObject @ 115 NONAME ; typeinfo for CFsObject
+	_ZTV11CFileSystem @ 116 NONAME ; vtable for CFileSystem
+	_ZTV11CProxyDrive @ 117 NONAME ; vtable for CProxyDrive
+	_ZTV12CFsObjectCon @ 118 NONAME ABSENT ; vtable for CFsObjectCon
+	_ZTV14CLocDrvMountCB @ 119 NONAME ; vtable for CLocDrvMountCB
+	_ZTV17CFsDispatchObject @ 120 NONAME ; vtable for CFsDispatchObject
+	_ZTV18CBaseExtProxyDrive @ 121 NONAME ; vtable for CBaseExtProxyDrive
+	_ZTV18CProxyDriveFactory @ 122 NONAME ; vtable for CProxyDriveFactory
+	_ZTV6CDirCB @ 123 NONAME ; vtable for CDirCB
+	_ZTV7CFileCB @ 124 NONAME ; vtable for CFileCB
+	_ZTV8CMountCB @ 125 NONAME ; vtable for CMountCB
+	_ZTV9CFormatCB @ 126 NONAME ; vtable for CFormatCB
+	_ZTV9CFsObject @ 127 NONAME ; vtable for CFsObject
+	_ZN18CBaseExtProxyDrive13ErasePasswordEv @ 128 NONAME ; CBaseExtProxyDrive::ErasePassword()
+	_ZN14CAsyncNotifierD0Ev @ 129 NONAME ; CAsyncNotifier::~CAsyncNotifier()
+	_ZN14CAsyncNotifierD1Ev @ 130 NONAME ; CAsyncNotifier::~CAsyncNotifier()
+	_ZN14CAsyncNotifierD2Ev @ 131 NONAME ; CAsyncNotifier::~CAsyncNotifier()
+	_Z29DriveNumberToLocalDriveNumberi @ 132 NONAME
+	_ZN11CFileSystem12GetInterfaceEiRPvS0_ @ 133 NONAME
+	_ZN11CProxyDrive12GetInterfaceEiRPvS0_ @ 134 NONAME
+	_ZN18CBaseExtProxyDrive12GetInterfaceEiRPvS0_ @ 135 NONAME
+	_ZN6CDirCB12GetInterfaceEiRPvS0_ @ 136 NONAME
+	_ZN7CFileCB12GetInterfaceEiRPvS0_ @ 137 NONAME
+	_ZN8CMountCB12GetInterfaceEiRPvS0_ @ 138 NONAME
+	_ZN9CFormatCB12GetInterfaceEiRPvS0_ @ 139 NONAME
+	_Z22GetFatUtilityFunctionsv @ 140 NONAME
+	_Z10GetNewNameP16TFsPluginRequestR6TDes16 @ 141 NONAME
+	_Z15GetModifiedTimeP16TFsPluginRequestRP5TTimei @ 142 NONAME
+	_Z17GetFileAccessInfoP16TFsPluginRequestRiS1_ @ 143 NONAME
+	_Z6GetAttP16TFsPluginRequestRi @ 144 NONAME
+	_Z7GetNameP16TFsPluginRequestR6TDes16 @ 145 NONAME
+	_Z7GetPathP16TFsPluginRequestR6TDes16 @ 146 NONAME
+	_ZN13CFsPluginConn5CloseEv @ 147 NONAME
+	_ZN13CFsPluginConnC2Ev @ 148 NONAME
+	_ZN13CFsPluginConnD0Ev @ 149 NONAME
+	_ZN13CFsPluginConnD1Ev @ 150 NONAME
+	_ZN13CFsPluginConnD2Ev @ 151 NONAME
+	_ZN16CFsPluginFactory10SetLibraryE8RLibrary @ 152 NONAME
+	_ZN16CFsPluginFactory6RemoveEv @ 153 NONAME
+	_ZN16CFsPluginFactoryC2Ev @ 154 NONAME
+	_ZN16CFsPluginFactoryD0Ev @ 155 NONAME
+	_ZN16CFsPluginFactoryD1Ev @ 156 NONAME
+	_ZN16CFsPluginFactoryD2Ev @ 157 NONAME
+	_ZN16TFsPluginRequestC1EP10CFsRequest @ 158 NONAME
+	_ZN16TFsPluginRequestC2EP10CFsRequest @ 159 NONAME
+	_ZN21TPluginConnRequestQue11DoCancelAllEi @ 160 NONAME
+	_ZN9CFsPlugin11InitialiseLEv @ 161 NONAME
+	_ZN9CFsPlugin14NewPluginConnLEv @ 162 NONAME
+	_ZN9CFsPlugin17RegisterInterceptEiNS_14TInterceptAttsE @ 163 NONAME
+	_ZN9CFsPlugin19UnregisterInterceptEiNS_14TInterceptAttsE @ 164 NONAME
+	_ZN9CFsPlugin7DeliverER16TFsPluginRequest @ 165 NONAME
+	_ZN9CFsPluginC2Ev @ 166 NONAME
+	_ZN9CFsPluginD0Ev @ 167 NONAME
+	_ZN9CFsPluginD1Ev @ 168 NONAME
+	_ZN9CFsPluginD2Ev @ 169 NONAME
+	_ZNK16CFsPluginFactory7LibraryEv @ 170 NONAME
+	_ZNK16TFsPluginRequest11DriveNumberEv @ 171 NONAME
+	_ZNK16TFsPluginRequest12ScratchValueEv @ 172 NONAME
+	_ZNK16TFsPluginRequest12SubstedDriveEv @ 173 NONAME
+	_ZNK16TFsPluginRequest14ScratchValue64Ev @ 174 NONAME
+	_ZNK16TFsPluginRequest3SrcEv @ 175 NONAME
+	_ZNK16TFsPluginRequest4DestEv @ 176 NONAME
+	_ZNK16TFsPluginRequest5DriveEv @ 177 NONAME
+	_ZNK16TFsPluginRequest7MessageEv @ 178 NONAME
+	_ZNK16TFsPluginRequest7RequestEv @ 179 NONAME
+	_ZNK16TFsPluginRequest8FunctionEv @ 180 NONAME
+	_ZTI13CFsPluginConn @ 181 NONAME ; #<TI>#
+	_ZTI16CFsPluginFactory @ 182 NONAME ; #<TI>#
+	_ZTI9CFsPlugin @ 183 NONAME ; #<TI>#
+	_ZTV13CFsPluginConn @ 184 NONAME ; #<VT>#
+	_ZTV16CFsPluginFactory @ 185 NONAME ; #<VT>#
+	_ZTV9CFsPlugin @ 186 NONAME ; #<VT>#
+	_ZN18CBaseExtProxyDrive16GetLastErrorInfoER5TDes8 @ 187 NONAME
+	_ZN11CProxyDrive16GetLastErrorInfoER5TDes8 @ 188 NONAME
+	_ZNK16TFsPluginRequest15IsPostOperationEv @ 189 NONAME
+	_ZN18CBaseExtProxyDrive12DeleteNotifyExi @ 190 NONAME
+	_ZN11CProxyDrive13GetLocalDriveERP14TBusLocalDrive @ 191 NONAME
+	_Z7UNUSED1v @ 192 NONAME
+	_Z7UNUSED2v @ 193 NONAME
+	_Z7UNUSED3v @ 194 NONAME
+	_ZN8CMountCB13IsFileClampedEx @ 195 NONAME
+	_Z19GetLocalDriveNumberP14TBusLocalDrive @ 196 NONAME
+	_ZN13F32Properties10InitialiseEii @ 197 NONAME
+	_ZN13F32Properties6GetIntERK6TDesC8S2_Rl @ 198 NONAME
+	_ZN13F32Properties7GetBoolERK6TDesC8S2_Ri @ 199 NONAME
+	_ZN13F32Properties9GetStringERK6TDesC8S2_R5TDes8 @ 200 NONAME
+	_ZN9CFsPlugin10ClientReadER16TFsPluginRequestR5TDes8i @ 201 NONAME
+	_ZN9CFsPlugin11ClientWriteER16TFsPluginRequestRK6TDesC8i @ 202 NONAME
+	_ZN9CFsPlugin8FileReadER16TFsPluginRequestR5TDes8x @ 203 NONAME
+	_ZN9CFsPlugin9FileWriteER16TFsPluginRequestRK6TDesC8x @ 204 NONAME
+	_ZN10RDirPlugin4OpenERK7TDesC16RK8TUidType @ 205 NONAME
+	_ZN10RDirPlugin4OpenERK7TDesC16j @ 206 NONAME
+	_ZN10RDirPlugin4ReadER11TEntryArray @ 207 NONAME
+	_ZN10RDirPlugin4ReadER6TEntry @ 208 NONAME
+	_ZN10RDirPlugin5CloseEv @ 209 NONAME
+	_ZN10RDirPluginC1ER16TFsPluginRequesti @ 210 NONAME
+	_ZN10RDirPluginC2ER16TFsPluginRequesti @ 211 NONAME
+	_ZN11RFilePlugin10ChangeModeE9TFileMode @ 212 NONAME
+	_ZN11RFilePlugin11SetModifiedERK5TTime @ 213 NONAME
+	_ZN11RFilePlugin15AdoptFromClientEv @ 214 NONAME
+	_ZN11RFilePlugin16TransferToClientEv @ 215 NONAME
+	_ZN11RFilePlugin3SetERK5TTimejj @ 216 NONAME
+	_ZN11RFilePlugin4OpenERK7TDesC16j @ 217 NONAME
+	_ZN11RFilePlugin4TempERK7TDesC16R4TBufILi256EEj @ 218 NONAME
+	_ZN11RFilePlugin5CloseEv @ 219 NONAME
+	_ZN11RFilePlugin5FlushEv @ 220 NONAME
+	_ZN11RFilePlugin5WriteExRK6TDesC8 @ 221 NONAME
+	_ZN11RFilePlugin5WriteExRK6TDesC8i @ 222 NONAME
+	_ZN11RFilePlugin6CreateERK7TDesC16j @ 223 NONAME
+	_ZN11RFilePlugin6RenameERK7TDesC16 @ 224 NONAME
+	_ZN11RFilePlugin6SetAttEjj @ 225 NONAME
+	_ZN11RFilePlugin7ReplaceERK7TDesC16j @ 226 NONAME
+	_ZN11RFilePlugin7SetSizeEx @ 227 NONAME
+	_ZN11RFilePluginC1ER16TFsPluginRequesti @ 228 NONAME
+	_ZN11RFilePluginC2ER16TFsPluginRequesti @ 229 NONAME
+	_ZN10RDirPluginD1Ev @ 230 NONAME
+	_ZN10RDirPluginD2Ev @ 231 NONAME
+	_ZN11RFilePluginD1Ev @ 232 NONAME
+	_ZN11RFilePluginD2Ev @ 233 NONAME
+	_ZN14TRawEntryArray3BufEv @ 234 NONAME
+	_ZN14TRawEntryArray6SetBufER5TDes8 @ 235 NONAME
+	_ZN14TRawEntryArray9EntrySizeEi @ 236 NONAME
+	_ZN16TFsPluginRequest11SetSharePosERx @ 237 NONAME
+	_ZN16TFsPluginRequest4ReadENS_11TF32ArgTypeER5TDes8i @ 238 NONAME
+	_ZN16TFsPluginRequest4ReadENS_11TF32ArgTypeER6TDes16i @ 239 NONAME
+	_ZN16TFsPluginRequest4ReadENS_11TF32ArgTypeERi @ 240 NONAME
+	_ZN16TFsPluginRequest4ReadENS_11TF32ArgTypeERj @ 241 NONAME
+	_ZN16TFsPluginRequest4ReadENS_11TF32ArgTypeERx @ 242 NONAME
+	_ZN16TFsPluginRequest5WriteENS_11TF32ArgTypeERK6TDesC8i @ 243 NONAME
+	_ZN16TFsPluginRequest5WriteENS_11TF32ArgTypeERK7TDesC16i @ 244 NONAME
+	_ZN16TFsPluginRequest8FileNameER6TDes16 @ 245 NONAME
+	_ZN9RFsPlugin5CloseEv @ 246 NONAME
+	_ZN9RFsPlugin6DeleteERK7TDesC16 @ 247 NONAME
+	_ZN9RFsPlugin6RenameERK7TDesC16S2_ @ 248 NONAME
+	_ZN9RFsPlugin7ConnectEv @ 249 NONAME
+	_ZN9RFsPlugin7ReplaceERK7TDesC16S2_ @ 250 NONAME
+	_ZN9RFsPlugin8SetEntryERK7TDesC16RK5TTimejj @ 251 NONAME
+	_ZN9RFsPluginC1ER16TFsPluginRequesti @ 252 NONAME
+	_ZN9RFsPluginC2ER16TFsPluginRequesti @ 253 NONAME
+	_ZN9RFsPluginD1Ev @ 254 NONAME
+	_ZN9RFsPluginD2Ev @ 255 NONAME
+	_ZNK11RFilePlugin3AttERj @ 256 NONAME
+	_ZNK11RFilePlugin4LockExx @ 257 NONAME
+	_ZNK11RFilePlugin4ReadExR5TDes8 @ 258 NONAME
+	_ZNK11RFilePlugin4ReadExR5TDes8i @ 259 NONAME
+	_ZNK11RFilePlugin4SeekE5TSeekRx @ 260 NONAME
+	_ZNK11RFilePlugin4SizeERx @ 261 NONAME
+	_ZNK11RFilePlugin6UnLockExx @ 262 NONAME
+	_ZNK11RFilePlugin8ModifiedER5TTime @ 263 NONAME
+	_ZNK9RFsPlugin15ReadFileSectionERK7TDesC16xR5TDes8i @ 264 NONAME
+	_ZNK9RFsPlugin5EntryERK7TDesC16R6TEntry @ 265 NONAME
+	_Z12IsProxyDrivei @ 266 NONAME
+	_Z13GetProxyDrivei @ 267 NONAME
+	_Z13GetProxyDriveiRP11CProxyDrive @ 268 NONAME
+	_ZN11CFileSystem21IsProxyDriveSupportedEv @ 269 NONAME
+	_ZN11CProxyDrive8FinaliseEi @ 270 NONAME
+	_ZN14CExtProxyDrive12GetInterfaceEiRPvS0_ @ 271 NONAME
+	_ZN14CExtProxyDrive12NotifyChangeER5TDes8P14TRequestStatus @ 272 NONAME
+	_ZN14CExtProxyDrive7SetInfoERK9RMessage2PvS3_ @ 273 NONAME
+	_ZN14CExtProxyDriveC2EP8CMountCBP21CExtProxyDriveFactory @ 274 NONAME
+	_ZN14CExtProxyDriveD0Ev @ 275 NONAME
+	_ZN14CExtProxyDriveD1Ev @ 276 NONAME
+	_ZN14CExtProxyDriveD2Ev @ 277 NONAME
+	_ZN14CLocDrvMountCB11CreateDriveEi @ 278 NONAME
+	_ZN21CExtProxyDriveFactory14AsyncEnumerateEv @ 279 NONAME
+	_ZN21CExtProxyDriveFactory6RemoveEv @ 280 NONAME
+	_ZN21CExtProxyDriveFactoryC2Ev @ 281 NONAME
+	_ZN3RFs13AddProxyDriveERK7TDesC16 @ 282 NONAME
+	_ZN3RFs16RemoveProxyDriveERK7TDesC16 @ 283 NONAME
+	_ZN3RFs17DoMountProxyDriveERK8TIpcArgs @ 284 NONAME
+	_ZN3RFs18DismountProxyDriveEj @ 285 NONAME
+	_ZTI14CExtProxyDrive @ 286 NONAME
+	_ZTI21CExtProxyDriveFactory @ 287 NONAME
+	_ZTV14CExtProxyDrive @ 288 NONAME
+	_ZTV21CExtProxyDriveFactory @ 289 NONAME
+	_ZN14CExtProxyDrive18NotifyChangeCancelEv @ 290 NONAME
+	_ZN7CFileCB9SetSize64Exi @ 291 NONAME
+	_ZNK7CFileCB6Size64Ev @ 292 NONAME
+	_ZN18CCacheMemoryClient12LockSegmentsEPhm @ 293 NONAME
+	_ZN18CCacheMemoryClient14UnlockSegmentsEPhm @ 294 NONAME
+	_ZN18CCacheMemoryClient16DecommitSegmentsEPhm @ 295 NONAME
+	_ZN18CCacheMemoryClient23AllocateAndLockSegmentsEm @ 296 NONAME
+	_ZN18CCacheMemoryClient5ResetEv @ 297 NONAME
+	_ZN19CCacheMemoryManager14ConnectClientLERK7TDesC16mm @ 298 NONAME
+	_ZN26CCacheMemoryManagerFactory18CacheMemoryManagerEv @ 299 NONAME
+	_ZNK19CCacheMemoryManager22SegmentSizeInBytesLog2Ev @ 300 NONAME
+	_ZTI18CCacheMemoryClient @ 301 NONAME
+	_ZTI19CCacheMemoryManager @ 302 NONAME
+	_ZTV18CCacheMemoryClient @ 303 NONAME
+	_ZTV19CCacheMemoryManager @ 304 NONAME
+	_ZN7CFileCB19SetMaxSupportedSizeEy @ 305 NONAME
+	_Z11GetCodePagev @ 306 NONAME
+	_ZNK14TCodePageUtils17ConvertToUnicodeLER6TDes16RK6TDesC8NS_15TOverflowActionE @ 307 NONAME
+	_ZNK14TCodePageUtils19ConvertFromUnicodeLER5TDes8RK7TDesC16NS_15TOverflowActionE @ 308 NONAME
+	_ZNK14TCodePageUtils25IsLegalShortNameCharacterEji @ 309 NONAME
+	_ZNK8CMountCB10FileSystemEv @ 310 NONAME
+	_ZN8CMountCB5InitLER6TDriveP11CFileSystem @ 311 NONAME
+

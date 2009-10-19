@@ -1,0 +1,422 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// eka\kernel\arm\cache.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm.h>
+#include "cache_maintenance.h"
+
+#if defined (__HAS_EXTERNAL_CACHE__)
+#include <mmboot.h>
+#endif
+
+#if defined(__CPU_MEMORY_TYPE_REMAPPING)
+// Returns the value from Primary Region Remap Register.
+__NAKED__ TUint32 InternalCache::PrimaryRegionRemapRegister()
+	{
+	asm("mrc p15, 0, r0, c10, c2, 0 ");	// PRRR
+	__JUMP(,lr);
+	}
+
+// Returns the value from Normal Memory Remap Register.
+__NAKED__ TUint32 InternalCache::NormalMemoryRemapRegister()
+	{
+	asm("mrc p15, 0, r0, c10, c2, 1 "); // NMRR
+	__JUMP(,lr);
+	}
+
+#endif
+
+#if !defined(__CPU_ARMV7)
+
+__NAKED__ TUint32 InternalCache::TypeRegister()
+	{
+	asm("mrc p15, 0, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::DrainBuffers()
+	{
+	asm("mov r0, #0 ");
+	DRAIN_WRITE_BUFFER(,r0,r1);
+#ifdef __CPU_HAS_PREFETCH_BUFFER
+	FLUSH_PREFETCH_BUFFER(,r0);
+#endif
+	__JUMP(,lr);
+
+	asm("__DCacheInfo: ");
+	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoD]));
+	asm("__ICacheInfo: ");
+	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoI]));
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	}
+
+__NAKED__ void InternalCache::Invalidate_ICache_Region(TLinAddr, TUint)
+	{
+	asm("ldr r2, __ICacheInfo ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+#ifdef __CPU_ARM1136__
+#ifndef __OMIT_1136_R0_ERRATA__
+	asm("mrs r12, CPSR ");		// save cpsr setting and disable interrupts before CleanAndInvalidateing  ...
+	CPSIDAIF;					// ... ICache by MVA. See ARM1136 r0p2 Errata: 328429 & 325157
+#endif
+#endif
+	FLUSH_ICACHE_LINE(cs,r0,r2);	// CleanAndInvalidate ICache line
+#ifdef __CPU_ARM1136__
+#ifdef __OMIT_1136_R0_ERRATA__
+	asm("nop ");				// if we do not disable interrupts while CleanAndInvalidateing ICache , we need 
+								// an extra 'nop' to delay branch instruction after flash
+#else
+	asm("msr CPSR_cxsf, r12 "); // restore cpsr setting
+#endif
+#endif
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+#ifdef __CPU_HAS_BTB
+	FLUSH_BTB(,r1);
+#endif
+#ifdef __CPU_HAS_PREFETCH_BUFFER
+	FLUSH_PREFETCH_BUFFER(,r0);
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Invalidate_ICache_All()
+	{
+	asm("mov r0, #0 ");
+#if !defined(__CPU_ARM1136_ERRATUM_411920_FIXED) && (defined(__CPU_ARM1136__) || defined(__CPU_ARM1176__))
+	FLUSH_ICACHE(,r0,r1);
+#else	
+	FLUSH_ICACHE(,r0);
+#endif	
+#ifdef __CPU_HAS_BTB
+	FLUSH_BTB(,r0);
+#endif
+#ifdef __CPU_HAS_PREFETCH_BUFFER
+	FLUSH_PREFETCH_BUFFER(,r0);
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Invalidate_DCache_Region(TLinAddr, TUint)
+	{
+	asm("ldr r2, __DCacheInfo ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+	PURGE_DCACHE_LINE(cs,r0);	// Invalidate DCache line
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Clean_DCache_Region(TLinAddr, TUint)
+	{
+	asm("ldr r2, __DCacheInfo ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+	CLEAN_DCACHE_LINE(cs,r0);	// clean DCache line
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+	DRAIN_WRITE_BUFFER(,r1,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::Clean_DCache_All()
+	{
+	// this code assumes number of sets is a multiple of 4
+	asm("ldr r0, __DCacheInfo ");
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iCleanAndInvalidateMask));			// get set mask
+	asm("ldrh r2, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));		// get line length
+	asm("ldrh r3, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iSize));				// get cache size in lines
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iCleanAndInvalidatePtr));			// get way increment value
+	asm("mov r0, #0 ");					// cache index
+	asm("1: ");
+	CLEAN_DCACHE_INDEX(,r0);			// clean line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	CLEAN_DCACHE_INDEX(,r0);			// clean line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	CLEAN_DCACHE_INDEX(,r0);			// clean line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	CLEAN_DCACHE_INDEX(,r0);			// clean line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	asm("tst r0, r1 ");					// all lines in way done?
+	asm("bic r0, r0, r1 ");				// clear set index
+	asm("addne r0, r0, r12 ");			// if all lines in way done, next way
+	asm("subs r3, r3, #4 ");			// 4 lines done
+	asm("bne 1b ");						// loop through lines
+	DRAIN_WRITE_BUFFER(,r3,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::CleanAndInvalidate_DCache_All()
+	{
+	// this code assumes number of sets is a multiple of 4
+	asm("ldr r0, __DCacheInfo ");
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iCleanAndInvalidateMask));			// get set mask
+	asm("ldrh r2, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));		// get line length
+	asm("ldrh r3, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iSize));				// get cache size in lines
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(SCacheInfo,iCleanAndInvalidatePtr));			// get way increment value
+	asm("mov r0, #0 ");					// cache index
+	asm("1: ");
+	FLUSH_DCACHE_INDEX(,r0);			// CleanAndInvalidate line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	FLUSH_DCACHE_INDEX(,r0);			// CleanAndInvalidate line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	FLUSH_DCACHE_INDEX(,r0);			// CleanAndInvalidate line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	FLUSH_DCACHE_INDEX(,r0);			// CleanAndInvalidate line whose way/set index is in r0
+	asm("add r0, r0, r2 ");				// next line in way
+	asm("tst r0, r1 ");					// all lines in way done?
+	asm("bic r0, r0, r1 ");				// clear set index
+	asm("addne r0, r0, r12 ");			// if all lines in way done, next way
+	asm("subs r3, r3, #4 ");			// 4 lines done
+	asm("bne 1b ");						// loop through lines
+	DRAIN_WRITE_BUFFER(,r3,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void InternalCache::CleanAndInvalidate_DCache_Region(TLinAddr, TUint)
+	{
+	asm("ldr r2, __DCacheInfo ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("and ip, ip, r0 ");		// ip=offset of start address within line
+	asm("add r1, r1, ip ");		// add this to the size
+	asm("sub ip, r3, #1 ");
+	asm("bic r0, r0, ip ");		// round base address down to start of line
+	asm("add r1, r1, ip ");		// round size up
+	asm("1: ");
+	asm("subs r1, r1, r3 ");	// decrement size by line length
+	FLUSH_DCACHE_LINE(cs,r0);	// CleanAndInvalidate DCache line
+	asm("add r0, r0, r3 ");		// step address on
+	asm("bhi 1b ");				// loop if more lines
+	DRAIN_WRITE_BUFFER(,r1,r0);
+	__JUMP(,lr);
+	}
+
+
+// Perform any cache/memory synchronisation required prior to a change
+// in virtual to physical address mappings.
+// Enter and return with system locked
+#if defined(__MEMMODEL_MOVING__) // Systems with physically tagged cache don't need this function
+__NAKED__ void CacheMaintenance::OnProcessSwitch()
+	{
+	asm("stmfd sp!, {r5-r11,lr} ");
+	asm("1: ");
+	asm("bl SyncMapChangeAttempt ");		// try to CleanAndInvalidate cache
+	asm("ldmeqfd sp!, {r5-r11,pc} ");		// if successful, exit
+	asm("adr lr, 1b ");
+	asm("b  " CSM_ZN5NKern11FlashSystemEv);			// contention - let higher priority thread in and then retry
+
+// Subroutine SyncMapChangeAttempt
+// Attempt to CleanAndInvalidate the DCache in a thread
+// Enter and return with system locked
+// Return ZF=1 if successful, ZF=0 if aborted due to system lock contention.
+// Clobbers r3,r5-r11
+// This is a buried function used by the scheduler
+	asm(".global SyncMapChangeAttempt ");
+	asm("SyncMapChangeAttempt: ");
+	asm("ldr r7, __DCacheInfo ");
+	asm("ldr r5, __TheScheduler ");
+
+	// this code assumes number of sets is a multiple of 4
+	asm("ldr r6, [r7, #%a0]" : : "i" _FOFF(SCacheInfo,iCleanAndInvalidateMask));			// get set mask
+	asm("ldrb r8, [r7, #%a0]" : : "i" _FOFF(SCacheInfo,iPreemptBlock));		// get preempt block size in lines
+	asm("ldrh r9, [r7, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));		// get line length
+	asm("ldrh r10, [r7, #%a0]" : : "i" _FOFF(SCacheInfo,iSize));			// get cache size in lines
+	asm("ldr r7, [r7, #%a0]" : : "i" _FOFF(SCacheInfo,iCleanAndInvalidatePtr));			// get way increment value
+	asm("mov r3, #0 ");					// cache index
+	asm("1: ");
+	asm("ldr r11, [r5, #%a0]" : : "i" _FOFF(TScheduler,iLock.iWaiting));
+	asm("cmp r11, #0 ");
+	asm("bne 3f ");						// branch if contention
+	asm("mov r11, r8 ");				// r11 counts preempt block
+	asm("2: ");
+	FLUSH_DCACHE_INDEX(,r3);			// clean and invalidate line whose way/set index is in r3
+	asm("add r3, r3, r9 ");				// next line in way
+	FLUSH_DCACHE_INDEX(,r3);			// clean and invalidate line whose way/set index is in r3
+	asm("add r3, r3, r9 ");				// next line in way
+	FLUSH_DCACHE_INDEX(,r3);			// clean and invalidate line whose way/set index is in r3
+	asm("add r3, r3, r9 ");				// next line in way
+	FLUSH_DCACHE_INDEX(,r3);			// clean and invalidate line whose way/set index is in r3
+	asm("add r3, r3, r9 ");				// next line in way
+	asm("tst r3, r6 ");					// all lines in way done?
+	asm("bic r3, r3, r6 ");				// clear set index
+	asm("addne r3, r3, r7 ");			// next way
+	asm("subs r11, r11, #4 ");			//
+	asm("bne 2b ");						// loop through preemption block
+	asm("subs r10, r10, r8 ");			//
+	asm("bne 1b ");						// loop through preemption blocks
+	asm("3: ");
+	DRAIN_WRITE_BUFFER(eq,r10,r3);
+	CPWAIT(,r3);
+	__JUMP(,lr);
+	}
+
+#endif	// #if defined(__MEMMODEL_MOVING__)
+
+__NAKED__ void InternalCache::IMB_CacheLine(TLinAddr /*aAddr*/)
+	{
+	asm("mov r1, #0 "); //will need zero reg for coprocessor instructions
+//--Round the address down to the start of line--//
+	asm("ldr r2, __DCacheInfo ");
+	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
+	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
+	asm("bic r0, r0, ip ");		// r0 = cache line base
+
+//--Clean Data Cache--//
+	CLEAN_DCACHE_LINE(,r0);	// clean DCache line
+	DRAIN_WRITE_BUFFER(,r1,r2);
+
+//--Invalidate Instruction Cache--//
+#if defined (__CPU_ARM1136__) && defined(__OMIT_1136_R0_ERRATA__)
+	asm("mrs ip, CPSR ");		// save cpsr setting and disable interrupts before flushing  ...
+	CPSIDAIF;					// ... ICache by MVA. See ARM1136 r0p2 Errata: 328429 & 325157
+#endif //
+	FLUSH_ICACHE_LINE(,r0,r2);	// flush ICache line
+#if defined (__CPU_ARM1136__) && defined(__OMIT_1136_R0_ERRATA__)
+	asm("msr CPSR_cxsf, ip "); // restore cpsr setting
+#endif //
+
+#ifdef __CPU_HAS_BTB
+	FLUSH_BTB(,r1);//Flush entire branch target cache (if applicable)
+#endif
+
+#ifdef __CPU_HAS_PREFETCH_BUFFER
+	FLUSH_PREFETCH_BUFFER(,r0);
+#endif
+	__JUMP(,lr);
+	}
+
+#endif //#if !defined(__CPU_ARMV7)
+
+#if defined (__ARM_L210_CACHE__)
+__NAKED__ void ExternalCache::DrainBuffers()
+{
+	asm("ldr r0, __ExternalCacheCtrlBase ");
+	asm("ldr r0, [r0]");
+	asm("mov r1, #0");
+	asm("str r1, [r0, #%a0]" : : "i" (ARML2C_CacheSync));	//sync command
+	#if !defined (__ARM_L210_ERRATA_CACHESYNC_DOESNT_FLUSH_EVICTION_BUFFER_FIXED)
+	asm("ldr r0, __KDummyUncachedAddr ");
+	asm("swp r1, r1, [r0] ");
+	#endif
+	__JUMP(,lr);
+	
+	asm("__ExternalCacheCtrlBase: ");
+	asm(".word %a0" : : "i" ((TInt)&Base));
+	asm("__KDummyUncachedAddr: ");
+	asm(".word %a0" : : "i" ((TInt)KDummyUncachedAddr));
+}
+#elif defined (__ARM_L220_CACHE__)
+__NAKED__ void ExternalCache::DrainBuffers()
+{
+	asm("stmdb	sp!, {lr}");
+
+	asm("bl  " CSM_ZN5NKern20DisableAllInterruptsEv);		// r0 = DisableAllInterrupts();
+
+	asm("ldr r3, __ExternalCacheCtrlBase ");
+	asm("ldr r3, [r3]");									// r3 = ExternalCache::Base
+
+	#if !defined (__ARM_L220_ERRATUM_484863_FIXED)
+	asm("ldr r2, __KDummyUncachedAddr ");
+	asm("str r0, [r2] ");									// Dummy STR to Uncached Normal address
+	#endif
+
+	asm("1:");
+	asm("ldr r2, [r3, #%a0]" : : "i" (ARML2C_CacheSync));
+	asm("tst r2, #1");
+	asm("bne 1b");											// while (*syncReg & 1);
+	
+	asm("mov r1, #0");
+	asm("str r1, [r3, #%a0]" : : "i" (ARML2C_CacheSync));	// *syncReg = 0;
+
+	asm("mrs r1, cpsr ");									//	}
+	asm("and r0, r0, #0xc0 ");								//	}
+	asm("bic r1, r1, #0xc0 ");								//	} RestoreInterrupts(r0)
+	asm("orr r1, r1, r0 ");									//	}
+	asm("msr cpsr_c, r1 ");									//	} 
+
+	__POPRET("");
+	
+	asm("__ExternalCacheCtrlBase: ");
+	asm(".word %a0" : : "i" ((TInt)&Base));
+	asm("__KDummyUncachedAddr: ");
+	asm(".word %a0" : : "i" ((TInt)KDummyUncachedAddr));
+}
+#elif defined (__ARM_PL310_CACHE__)
+__NAKED__ void ExternalCache::DrainBuffers()
+{
+	asm("stmdb	sp!, {lr}");
+
+#if defined(__SMP__)
+	asm("ldr	r0, __PL310SpinLock ");
+	asm("bl "	CSM_ZN9TSpinLock11LockIrqSaveEv ); 			// hold PL310 spinlock
+															// r0 = irq
+#else
+	asm("bl  " CSM_ZN5NKern20DisableAllInterruptsEv);       // r0 = DisableAllInterrupts();
+#endif	
+	asm("ldr r2, __ExternalCacheCtrlBase ");
+	asm("ldr r2, [r2]");									// r2 = base address of PL310 controller
+
+	asm("mov r1, #0");
+	asm("str r1, [r2, #%a0]" : : "i" (ARML2C_CacheSync));	// sync command
+
+#if defined(__SMP__)
+	asm("mov	r1, r0 ");									// r1 = irq
+	asm("ldr	r0, __PL310SpinLock ");
+	asm("bl "	CSM_ZN9TSpinLock16UnlockIrqRestoreEi );		// release PL310 spinlock
+#else
+	asm("mrs r1, cpsr ");                                   //  }
+	asm("and r0, r0, #0xc0 ");                              //  }
+	asm("bic r1, r1, #0xc0 ");                              //  } RestoreInterrupts(r0)
+	asm("orr r1, r1, r0 ");                                 //  }
+	asm("msr cpsr_c, r1 ");                                 //  } 
+#endif	
+	
+	__POPRET("");
+	
+	asm("__ExternalCacheCtrlBase: ");
+	asm(".word %a0" : : "i" ((TInt)&Base));
+#if defined(__SMP__)
+	asm("__PL310SpinLock: ");
+	asm(".word %a0" : : "i" ((TInt)&iLock));
+#endif	
+}
+#endif //(__ARM_L210_CACHE__) or (__ARM_L220_CACHE__) or (__ARM_PL310_CACHE__)

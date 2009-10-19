@@ -1,0 +1,33 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\bench\t_kernbm.cia
+// 
+//
+
+#include <e32test.h>
+#include <u32exec.h>
+
+#ifdef __EPOC32__
+__NAKED__ void DummyKernMsg()
+	{
+#if defined(__CPU_ARM)
+	__SWITCH_TO_ARM;
+	SLOW_EXEC0(EExecKernMsgTest);
+	__END_ARM;
+#elif defined (__CPU_X86)
+	SLOW_EXEC0(EExecKernMsgTest);
+#endif
+	}
+#endif
+

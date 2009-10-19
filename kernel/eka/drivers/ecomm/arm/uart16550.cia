@@ -1,0 +1,131 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\drivers\ecomm\arm\uart16550.cia
+// PDD for 16550 UART - ARM assembler bits
+// 
+//
+
+#include <comm.h>
+#include <assp.h>
+#include <var_defs.h>
+#include <uart16550.h>
+#include <e32hal.h>
+
+__NAKED__ void T16550Uart::ModifyFCR(TUint /*aClearMask*/, TUint /*aSetMask*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("orr r3, ip, #0xc0 ");
+	asm("msr cpsr, r3 ");
+	asm("ldrb r3, [r0, #4] ");
+	asm("bic r3, r3, r1 ");
+	asm("ldr r1, [r0, #0] ");
+	asm("orr r3, r3, r2 ");
+	asm("strb r3, [r0, #4] ");
+	asm("strb r3, [r1, #%a0]" : : "i" ((TInt)K16550FCROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void T16550Uart::ModifyLCR(TUint /*aClearMask*/, TUint /*aSetMask*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("orr r3, ip, #0xc0 ");
+	asm("msr cpsr, r3 ");
+	asm("ldrb r3, [r0, #5] ");
+	asm("bic r3, r3, r1 ");
+	asm("ldr r1, [r0, #0] ");
+	asm("orr r3, r3, r2 ");
+	asm("strb r3, [r0, #5] ");
+	asm("strb r3, [r1, #%a0]" : : "i" ((TInt)K16550LCROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void T16550Uart::ModifyMCR(TUint /*aClearMask*/, TUint /*aSetMask*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("orr r3, ip, #0xc0 ");
+	asm("msr cpsr, r3 ");
+	asm("ldrb r3, [r0, #6] ");
+	asm("bic r3, r3, r1 ");
+	asm("ldr r1, [r0, #0] ");
+	asm("orr r3, r3, r2 ");
+	asm("strb r3, [r0, #6] ");
+	asm("strb r3, [r1, #%a0]" : : "i" ((TInt)K16550MCROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void T16550Uart::ModifyIER(TUint /*aClearMask*/, TUint /*aSetMask*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("orr r3, ip, #0xc0 ");
+	asm("msr cpsr, r3 ");
+	asm("ldrb r3, [r0, #7] ");
+	asm("bic r3, r3, r1 ");
+	asm("ldr r1, [r0, #0] ");
+	asm("orr r3, r3, r2 ");
+	asm("strb r3, [r0, #7] ");
+	asm("strb r3, [r1, #%a0]" : : "i" ((TInt)K16550IEROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void T16550Uart::SetFCR(TUint /*aValue*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("ldr r3, [r0, #0] ");
+	asm("orr r2, ip, #0xc0 ");
+	asm("msr cpsr, r2 ");
+	asm("strb r1, [r0, #4] ");
+	asm("strb r1, [r3, #%a0]" : : "i" ((TInt)K16550FCROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void T16550Uart::SetLCR(TUint /*aValue*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("ldr r3, [r0, #0] ");
+	asm("orr r2, ip, #0xc0 ");
+	asm("msr cpsr, r2 ");
+	asm("strb r1, [r0, #5] ");
+	asm("strb r1, [r3, #%a0]" : : "i" ((TInt)K16550LCROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void T16550Uart::SetMCR(TUint /*aValue*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("ldr r3, [r0, #0] ");
+	asm("orr r2, ip, #0xc0 ");
+	asm("msr cpsr, r2 ");
+	asm("strb r1, [r0, #6] ");
+	asm("strb r1, [r3, #%a0]" : : "i" ((TInt)K16550MCROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void T16550Uart::SetIER(TUint /*aValue*/)
+	{
+	asm("mrs ip, cpsr ");
+	asm("ldr r3, [r0, #0] ");
+	asm("orr r2, ip, #0xc0 ");
+	asm("msr cpsr, r2 ");
+	asm("strb r1, [r0, #7] ");
+	asm("strb r1, [r3, #%a0]" : : "i" ((TInt)K16550IEROffset));
+	asm("msr cpsr, ip ");
+	__JUMP(,lr);
+	}

@@ -1,0 +1,929 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\cexec.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm.h>
+#include <kernel/cache.h>
+
+#include "nk_priv.h"
+
+GLREF_C TInt CalcKernelHeapUsed();
+GLREF_C void InvalidFastExec();
+
+void GetLatencyValues(TInt aMode, TInt& aCount, TInt* aDest);
+void KernMsgTest();
+void InvalidExecHandler();
+void PreprocessHandler();
+
+#define __GEN_KERNEL_EXEC_CODE__
+
+#include "execs.h"
+
+/***********************************************************************************
+ * User-side executive handlers
+ ***********************************************************************************/
+
+#ifdef __ATOMIC64_USE_FAST_EXEC__
+__NAKED__ void ExecHandler::FastAtomicAxo64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #8 ");		// r12 = a
+	asm("stmfd sp!, {r4-r7} ");
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = u
+	asm("ldrt r5, [r0], #4 ");
+	asm("ldrt r2, [r12], #4 ");		// r3:r2 = *a = oldv
+	asm("ldrt r3, [r12], #-4 ");
+	asm("ldrt r6, [r0], #4 ");		// r7:r6 = v
+	asm("ldrt r7, [r0], #-20 ");
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #4 ");
+	asm("and r2, r2, r4 ");
+	asm("and r3, r3, r5 ");			// r3:r2 = oldv & u
+	asm("eor r2, r2, r6 ");
+	asm("eor r3, r3, r7 ");			// r3:r2 = (oldv & u) ^ v
+	asm("strt r2, [r12], #4 ");		// write back to *a
+	asm("strt r3, [r12], #-4 ");
+	asm("ldmfd sp!, {r4-r7} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ TBool ExecHandler::FastAtomicCas64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r1, [r0], #4 ");		// r1 = q
+	asm("stmfd sp!, {r4-r5} ");
+	asm("ldrt r2, [r12], #4 ");		// r3:r2 = *a
+	asm("ldrt r3, [r12], #-4 ");
+	asm("ldrt r4, [r1], #4 ");		// r5:r4 = *q
+	asm("ldrt r5, [r1], #-4 ");
+	asm("cmp r2, r4 ");
+	asm("cmpeq r3, r5 ");
+	asm("ldreqt r2, [r0], #4 ");	// if equal r3:r2 = v
+	asm("ldreqt r3, [r0], #4 ");
+	asm("strnet r2, [r1], #4 ");	// if not equal *q = *a
+	asm("strnet r3, [r1], #-4 ");
+	asm("streqt r2, [r12], #4 ");	// if equal *a = v
+	asm("streqt r3, [r12], #-4 ");
+	asm("ldmfd sp!, {r4-r5} ");
+	asm("movne r0, #0 ");
+	asm("moveq r0, #1 ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::FastAtomicAdd64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #8 ");		// r12 = a
+	asm("stmfd sp!, {r4-r5} ");
+	asm("ldrt r2, [r12], #4 ");		// r3:r2 = *a = oldv
+	asm("ldrt r3, [r12], #-4 ");
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = v
+	asm("ldrt r5, [r0], #-12 ");
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #-4 ");
+	asm("adds r2, r2, r4 ");		// r3:r2 = oldv + v
+	asm("adcs r3, r3, r5 ");
+	asm("strt r2, [r12], #4 ");		// write back to *a
+	asm("strt r3, [r12], #-4 ");
+	asm("ldmfd sp!, {r4-r5} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::FastAtomicTau64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0] ");			// r12 = a
+	asm("stmfd sp!, {r4-r5} ");
+	asm("ldrt r2, [r12], #4 ");		// r3:r2 = *a = oldv
+	asm("ldrt r3, [r12], #-4 ");
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #4 ");
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = t
+	asm("ldrt r5, [r0], #4 ");
+	asm("cmp r2, r4 ");				// oldv - t
+	asm("sbcs r1, r3, r5 ");
+	asm("addcc r0, r0, #8 ");		// if oldv<t r0->v else r0->u
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = u or v
+	asm("ldrt r5, [r0], #4 ");
+	asm("adds r2, r2, r4 ");		// r3:r2 = oldv + u or v
+	asm("adcs r3, r3, r5 ");
+	asm("strt r2, [r12], #4 ");		// write back to *a
+	asm("strt r3, [r12], #-4 ");
+	asm("ldmfd sp!, {r4-r5} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::FastAtomicTas64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0] ");			// r12 = a
+	asm("stmfd sp!, {r4-r5} ");
+	asm("ldrt r2, [r12], #4 ");		// r3:r2 = *a = oldv
+	asm("ldrt r3, [r12], #-4 ");
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #4 ");
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = t
+	asm("ldrt r5, [r0], #4 ");
+	asm("cmp r2, r4 ");				// oldv - t
+	asm("sbcs r1, r3, r5 ");
+	asm("addlt r0, r0, #8 ");		// if oldv<t r0->v else r0->u
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = u or v
+	asm("ldrt r5, [r0], #4 ");
+	asm("adds r2, r2, r4 ");		// r3:r2 = oldv + u or v
+	asm("adcs r3, r3, r5 ");
+	asm("strt r2, [r12], #4 ");		// write back to *a
+	asm("strt r3, [r12], #-4 ");
+	asm("ldmfd sp!, {r4-r5} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __ATOMIC64_USE_SLOW_EXEC__
+#ifndef __CPU_ARM_HAS_CPS
+#error Only need slow exec atomics on ARMv6
+#endif
+
+
+// Attempt to load and store the lsb of data.  If interrupts are re-enabled 
+// during the ldr or str then a page fault occurred so retry.
+// The exception handler prevents the strt instruction writing old data to 
+// memory by skipping that instruction if a page fault occurs.
+// Note only need to ldr and str one word as the values will be 8 byte 
+// aligned and therefore won't span page boundaries.
+#define ENSURE_PAGED_IN_64(rAddr, rLsbs, rMsbs, rCpsr, tag) 					\
+	asm("retry_atomic64_"#tag": "); 											\
+	CPSIDAIF; 																	\
+	asm(".global magic_atomic64_ldrt_"#tag" "); 								\
+	asm("magic_atomic64_ldrt_"#tag": "); 										\
+	asm("ldrt r"#rLsbs", [r"#rAddr"]"); 										\
+	asm("mrs r"#rCpsr", cpsr "); 												\
+	asm("and r"#rCpsr", r"#rCpsr", #%a0 " : : "i" ((TInt)KAllInterruptsMask)); 	\
+	asm("cmp r"#rCpsr", #%a0 " : : "i" ((TInt)KAllInterruptsMask)); 			\
+	asm("bne retry_atomic64_"#tag" "); 											\
+	asm(".global magic_atomic64_strt_"#tag" "); 								\
+	asm("magic_atomic64_strt_"#tag": "); 										\
+	asm("strt r"#rLsbs", [r"#rAddr"], #4 "); 									\
+	asm("mrs r"#rCpsr", cpsr "); 												\
+	asm("and r"#rCpsr", r"#rCpsr", #%a0 " : : "i" ((TInt)KAllInterruptsMask)); 	\
+	asm("cmp r"#rCpsr", #%a0 " : : "i" ((TInt)KAllInterruptsMask)); 			\
+	asm("bne retry_atomic64_"#tag" "); 											\
+	asm("ldrt r"#rMsbs", [r"#rAddr"], #-4")
+
+
+__NAKED__ void ExecHandler::SlowAtomicAxo64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("stmfd sp!, {r4-r8} ");
+	asm("ldrt r12, [r0], #8 ");		// r12 = a
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = u
+	asm("ldrt r5, [r0], #4 ");
+	asm("ldrt r6, [r0], #4 ");		// r7:r6 = v
+	asm("ldrt r7, [r0], #-20 ");
+
+	// Disable interrupts and ensure the 64-bit data is paged in with write permissions.
+	ENSURE_PAGED_IN_64(12,2,3,8,axo);
+	// Data paged in so perform the operation.
+	asm("and r4, r2, r4 ");
+	asm("and r5, r3, r5 ");			// r5:r4 = oldv & u
+	asm("eor r4, r4, r6 ");
+	asm("eor r5, r5, r7 ");			// r5:r4 = (oldv & u) ^ v
+	asm("strt r4, [r12], #4 ");		// write back to *a
+	asm("strt r5, [r12], #-4 ");
+	CPSIEIF;
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #-4 ");
+	asm("ldmfd sp!, {r4-r8} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ TBool ExecHandler::SlowAtomicCas64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("stmfd sp!, {r4-r8} ");
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r1, [r0], #4 ");		// r1 = q
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = v
+	asm("ldrt r5, [r0], #-12 ");
+	asm("ldrt r6, [r1], #4 ");		// r7:r6 = *q
+	asm("ldrt r7, [r1], #-4 ");
+
+	// Disable interrupts and ensure the 64-bit data is paged in with write permissions.
+	ENSURE_PAGED_IN_64(12,2,3,8,cas);
+	// Data paged in so perform the operation.
+	asm("cmp r2, r6 ");
+	asm("cmpeq r3, r7 ");
+	asm("streqt r4, [r12], #4 ");	// if oldv==*q, *a=v
+	asm("streqt r5, [r12], #-4 ");
+	CPSIEIF;
+	asm("strnet r2, [r1], #4 ");	// if oldv!=*q, *q=oldv
+	asm("strnet r3, [r1], #-4 ");
+	asm("ldmfd sp!, {r4-r8} ");
+	asm("movne r0, #0 ");			// return 0 if oldv!=*q
+	asm("moveq r0, #1 ");			// return 1 if oldv==*q
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::SlowAtomicAdd64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("stmfd sp!, {r4-r6} ");
+	asm("ldrt r12, [r0], #8 ");		// r12 = a
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = v
+	asm("ldrt r5, [r0], #-12 ");
+
+	// Disable interrupts and ensure the 64-bit data is paged in with write permissions.
+	ENSURE_PAGED_IN_64(12,2,3,6,add);
+	// Data paged in so perform the operation.
+	asm("adds r4, r2, r4 ");
+	asm("adcs r5, r3, r5 ");		// r5:r4 = oldv + v
+	asm("strt r4, [r12], #4 ");		// write back to *a
+	asm("strt r5, [r12], #-4 ");
+	CPSIEIF;
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #-4 ");
+	asm("ldmfd sp!, {r4-r6} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::SlowAtomicTau64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("stmfd sp!, {r4-r10} ");
+	asm("ldrt r12, [r0], #8 ");		// r12 = a
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = t
+	asm("ldrt r5, [r0], #4 ");
+	asm("ldrt r6, [r0], #4 ");		// r7:r6 = u
+	asm("ldrt r7, [r0], #4 ");
+	asm("ldrt r8, [r0], #4 ");		// r9:r8 = v
+	asm("ldrt r9, [r0], #-28 ");
+
+	// Disable interrupts and ensure the 64-bit data is paged in with write permissions.
+	ENSURE_PAGED_IN_64(12,2,3,10,tau);
+	// Data paged in so perform the operation.
+	asm("cmp r2, r4 ");
+	asm("sbcs r1, r3, r5 ");		// oldv - t
+	asm("movcc r6, r8 ");			// if oldv<t r7:r6=v
+	asm("movcc r7, r9 ");
+	asm("adds r4, r2, r6 ");		// r5:r4 = oldv + u or v
+	asm("adcs r5, r3, r7 ");
+	asm("strt r4, [r12], #4 ");		// write back to *a
+	asm("strt r5, [r12], #-4 ");
+	CPSIEIF;
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #-4 ");
+	asm("ldmfd sp!, {r4-r10} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::SlowAtomicTas64(SAtomicOpInfo64*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("stmfd sp!, {r4-r10} ");
+	asm("ldrt r12, [r0], #8 ");		// r12 = a
+	asm("ldrt r4, [r0], #4 ");		// r5:r4 = t
+	asm("ldrt r5, [r0], #4 ");
+	asm("ldrt r6, [r0], #4 ");		// r7:r6 = u
+	asm("ldrt r7, [r0], #4 ");
+	asm("ldrt r8, [r0], #4 ");		// r9:r8 = v
+	asm("ldrt r9, [r0], #-28 ");
+
+	// Disable interrupts and ensure the 64-bit data is paged in with write permissions.
+	ENSURE_PAGED_IN_64(12,2,3,10,tas);
+	// Data paged in so perform the operation.
+	asm("cmp r2, r4 ");
+	asm("sbcs r1, r3, r5 ");		// oldv - t
+	asm("movlt r6, r8 ");			// if oldv<t r7:r6=v
+	asm("movlt r7, r9 ");
+	asm("adds r4, r2, r6 ");		// r5:r4 = oldv + u or v
+	asm("adcs r5, r3, r7 ");
+	asm("strt r4, [r12], #4 ");		// write back to *a
+	asm("strt r5, [r12], #-4 ");
+	CPSIEIF;
+	asm("strt r2, [r0], #4 ");		// return oldv
+	asm("strt r3, [r0], #-4 ");
+	asm("ldmfd sp!, {r4-r10} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __ATOMIC_USE_FAST_EXEC__
+__NAKED__ TUint32 ExecHandler::FastAtomicAxo32(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r2, [r0], #4 ");		// r2 = u
+	asm("ldrt r3, [r0], #4 ");		// r3 = v
+	asm("ldrt r0, [r12] ");			// r0 = *a = oldv
+	asm("and r1, r0, r2 ");
+	asm("eor r1, r1, r3 ");
+	asm("strt r1, [r12] ");			// *a = (oldv & u) ^ v
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TBool ExecHandler::FastAtomicCas32(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r1, [r0], #4 ");		// r1 = q
+	asm("ldrt r2, [r12] ");			// r2 = *a = oldv
+	asm("ldrt r3, [r1] ");			// r3 = *q
+	asm("cmp r2, r3 ");
+	asm("ldreqt r2, [r0], #4 ");	// if (oldv==*q) *a=v
+	asm("strnet r2, [r1] ");		// if (oldv!=*q) *q=oldv
+	asm("streqt r2, [r12] ");
+	asm("movne r0, #0 ");
+	asm("moveq r0, #1 ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv==*q
+	}
+
+__NAKED__ TUint32 ExecHandler::FastAtomicAdd32(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r2, [r0], #4 ");		// r2 = v
+	asm("ldrt r0, [r12] ");			// r0 = *a = oldv
+	asm("add r1, r0, r2 ");
+	asm("strt r1, [r12] ");			// *a = oldv + v
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TUint32 ExecHandler::FastAtomicTau32(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("mov r3, r0 ");
+	asm("ldrt r12, [r3], #4 ");		// r12 = a
+	asm("ldrt r2, [r3], #4 ");		// r2 = t
+	asm("ldrt r0, [r12] ");			// r0 = *a = oldv
+	asm("cmp r0, r2 ");				// oldv - t
+	asm("addcc r3, r3, #4 ");		// if oldv<t r3->v else r3->u
+	asm("ldrt r1, [r3] ");			// r1 = u or v
+	asm("add r1, r0, r1 ");
+	asm("strt r1, [r12] ");			// *a = oldv + u or v
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TInt32 ExecHandler::FastAtomicTas32(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("mov r3, r0 ");
+	asm("ldrt r12, [r3], #4 ");		// r12 = a
+	asm("ldrt r2, [r3], #4 ");		// r2 = t
+	asm("ldrt r0, [r12] ");			// r0 = *a = oldv
+	asm("cmp r0, r2 ");				// oldv - t
+	asm("addlt r3, r3, #4 ");		// if oldv<t r3->v else r3->u
+	asm("ldrt r1, [r3] ");			// r1 = u or v
+	asm("add r1, r0, r1 ");
+	asm("strt r1, [r12] ");			// *a = oldv + u or v
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TUint16 ExecHandler::FastAtomicAxo16(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r2, [r0], #4 ");		// r2 = u
+	asm("ldrt r3, [r0], #4 ");		// r3 = v
+	asm("ldrbt r0, [r12], #1 ");	// r0 = *a = oldv
+	asm("ldrbt r1, [r12], #-1 ");
+	asm("orr r0, r0, r1, lsl #8 ");
+	asm("and r1, r0, r2 ");
+	asm("eor r1, r1, r3 ");
+	asm("strbt r1, [r12], #1 ");	// *a = (oldv & u) ^ v
+	asm("mov r1, r1, lsr #8 ");
+	asm("strbt r1, [r12] ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TBool ExecHandler::FastAtomicCas16(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r1, [r0], #4 ");		// r1 = q
+	asm("stmfd sp!, {r4-r5} ");
+	asm("ldrbt r2, [r12], #1 ");	// r3:r2 = *a = oldv
+	asm("ldrbt r3, [r12], #-1 ");	//
+	asm("ldrbt r4, [r1], #1 ");		// r5:r4 = *q
+	asm("ldrbt r5, [r1], #-1 ");
+	asm("cmp r2, r4 ");
+	asm("cmpeq r3, r5 ");
+	asm("ldreqbt r2, [r0], #1 ");	// if (oldv==*q) *a=v
+	asm("ldreqbt r3, [r0], #-1 ");	// if (oldv==*q) *a=v
+	asm("strnebt r2, [r1], #1 ");	// if (oldv!=*q) *q=oldv
+	asm("strnebt r3, [r1], #-1 ");
+	asm("streqbt r2, [r12], #1 ");
+	asm("streqbt r3, [r12], #-1 ");
+	asm("movne r0, #0 ");
+	asm("moveq r0, #1 ");
+	asm("ldmfd sp!, {r4-r5} ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv==*q
+	}
+
+__NAKED__ TUint16 ExecHandler::FastAtomicAdd16(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r2, [r0], #4 ");		// r2 = v
+	asm("ldrbt r0, [r12], #1 ");	// r0 = *a = oldv
+	asm("ldrbt r1, [r12], #-1 ");
+	asm("orr r0, r0, r1, lsl #8 ");
+	asm("add r1, r0, r2 ");
+	asm("strbt r1, [r12], #1 ");	// *a = oldv + v
+	asm("mov r1, r1, lsr #8 ");
+	asm("strbt r1, [r12], #-1 ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TUint16 ExecHandler::FastAtomicTau16(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("mov r3, r0 ");
+	asm("ldrt r12, [r3], #4 ");		// r12 = a
+	asm("ldrt r2, [r3], #4 ");		// r2 = t
+	asm("ldrbt r0, [r12], #1 ");	// r0 = *a = oldv
+	asm("ldrbt r1, [r12], #-1 ");
+	asm("orr r0, r0, r1, lsl #8 ");
+	asm("cmp r0, r2 ");				// oldv - t
+	asm("addcc r3, r3, #4 ");		// if oldv<t r3->v else r3->u
+	asm("ldrt r1, [r3] ");			// r1 = u or v
+	asm("add r1, r0, r1 ");
+	asm("strbt r1, [r12], #1 ");	// *a = oldv + u or v
+	asm("mov r1, r1, lsr #8 ");
+	asm("strbt r1, [r12], #-1 ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TInt16 ExecHandler::FastAtomicTas16(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("mov r3, r0 ");
+	asm("ldrt r12, [r3], #4 ");		// r12 = a
+	asm("ldrt r2, [r3], #4 ");		// r2 = t
+	asm("ldrbt r0, [r12], #1 ");	// r0 = *a = oldv
+	asm("ldrbt r1, [r12], #-1 ");
+	asm("orr r0, r0, r1, lsl #8 ");
+	asm("mov r0, r0, lsl #16 ");
+	asm("cmp r0, r2, lsl #16 ");	// oldv - t
+	asm("addlt r3, r3, #4 ");		// if oldv<t r3->v else r3->u
+	asm("ldrt r1, [r3] ");			// r1 = u or v
+	asm("add r1, r1, r0, asr #16 ");
+	asm("strbt r1, [r12], #1 ");	// *a = oldv + u or v
+	asm("mov r1, r1, lsr #8 ");
+	asm("strbt r1, [r12], #-1 ");
+	asm("mov r0, r0, asr #16 ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TUint8 ExecHandler::FastAtomicAxo8(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r2, [r0], #4 ");		// r2 = u
+	asm("ldrt r3, [r0], #4 ");		// r3 = v
+	asm("ldrbt r0, [r12] ");		// r0 = *a = oldv
+	asm("and r1, r0, r2 ");
+	asm("eor r1, r1, r3 ");
+	asm("strbt r1, [r12] ");		// *a = (oldv & u) ^ v
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TBool ExecHandler::FastAtomicCas8(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r1, [r0], #4 ");		// r1 = q
+	asm("ldrbt r2, [r12] ");		// r2 = *a = oldv
+	asm("ldrbt r3, [r1] ");			// r3 = *q
+	asm("cmp r2, r3 ");
+	asm("ldreqt r2, [r0], #4 ");	// if (oldv==*q) *a=v
+	asm("strnebt r2, [r1] ");		// if (oldv!=*q) *q=oldv
+	asm("streqbt r2, [r12] ");
+	asm("movne r0, #0 ");
+	asm("moveq r0, #1 ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv==*q
+	}
+
+__NAKED__ TUint8 ExecHandler::FastAtomicAdd8(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldrt r12, [r0], #4 ");		// r12 = a
+	asm("ldrt r2, [r0], #4 ");		// r2 = v
+	asm("ldrbt r0, [r12] ");		// r0 = *a = oldv
+	asm("add r1, r0, r2 ");
+	asm("strbt r1, [r12] ");		// *a = oldv + v
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TUint8 ExecHandler::FastAtomicTau8(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("mov r3, r0 ");
+	asm("ldrt r12, [r3], #4 ");		// r12 = a
+	asm("ldrt r2, [r3], #4 ");		// r2 = t
+	asm("ldrbt r0, [r12] ");		// r0 = *a = oldv
+	asm("cmp r0, r2 ");				// oldv - t
+	asm("addcc r3, r3, #4 ");		// if oldv<t r3->v else r3->u
+	asm("ldrt r1, [r3] ");			// r1 = u or v
+	asm("add r1, r0, r1 ");
+	asm("strbt r1, [r12] ");		// *a = oldv + u or v
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+
+__NAKED__ TInt8 ExecHandler::FastAtomicTas8(SAtomicOpInfo32*)
+	{
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("mov r3, r0 ");
+	asm("ldrt r12, [r3], #4 ");		// r12 = a
+	asm("ldrt r2, [r3], #4 ");		// r2 = t
+	asm("ldrbt r0, [r12] ");		// r0 = *a = oldv
+	asm("mov r0, r0, lsl #24 ");
+	asm("cmp r0, r2, lsl #24 ");	// oldv - t
+	asm("addlt r3, r3, #4 ");		// if oldv<t r3->v else r3->u
+	asm("ldrt r1, [r3] ");			// r1 = u or v
+	asm("add r1, r1, r0, asr #24 ");
+	asm("strbt r1, [r12] ");		// *a = oldv + u or v
+	asm("mov r0, r0, asr #24 ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	__JUMP(,lr);					// return oldv
+	}
+#endif
+
+#ifdef __FASTEXEC_MACHINE_CODED__
+__NAKED__ RAllocator* ExecHandler::Heap()
+	{
+	asm("ldr r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iAllocator)-_FOFF(DThread,iNThread)));
+	__JUMP(,lr);
+	}
+
+__NAKED__ TTrapHandler* ExecHandler::PushTrapFrame(TTrap* /*aFrame*/)
+//
+// Push a new trap frame.
+// For user code only, kernel code should not use TRAP/Leave.
+//
+	{
+#ifdef __LEAVE_EQUALS_THROW__
+	asm("b  " CSM_Z15InvalidFastExecv);
+#else
+	asm("ldr r2, [r1, #%a0]" : : "i" (_FOFF(DThread,iFrame)-_FOFF(DThread,iNThread)));
+	asm("add ip, r0, #%a0" : : "i" _FOFF(TTrap,iNext));
+	asm("ldr r3, [r1, #%a0]" : : "i" (_FOFF(DThread,iTrapHandler)-_FOFF(DThread,iNThread)));
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("str r12, [sp, #-4]! ");
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldr r12, [sp], #4 ");
+#endif
+	asm("strt r2, [ip] ");			// aFrame.iNext=TheCurrentThread->iFrame
+	asm("add ip, r0, #%a0" : : "i" _FOFF(TTrap,iHandler));
+	asm("strt r3, [ip] ");			// aFrame.iHandler=TheCurrentThread->iTrapHandler
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	asm("str r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iFrame)-_FOFF(DThread,iNThread)));
+	asm("mov r0, r3 ");				// return TheCurrentThread->iTrapHandler
+	__JUMP(,lr);
+#endif
+	}
+
+__NAKED__ TTrap* ExecHandler::PopTrapFrame()
+//
+// Pop the current frame.
+// For user code only, kernel code should not use TRAP/Leave.
+//
+	{
+#ifdef __LEAVE_EQUALS_THROW__
+	asm("b  " CSM_Z15InvalidFastExecv);
+#else
+	asm("ldr r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iFrame)-_FOFF(DThread,iNThread)));		// r0=TheCurrentThread->iFrame
+	asm("cmp r0, #0 ");				// check if NULL
+	asm("add ip, r0, #%a0" : : "i" _FOFF(TTrap,iNext));
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm("ldrnet r2, [ip] ");		// if not r2=iFrame->iNext
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	asm("strne r2, [r1, #%a0]" : : "i" (_FOFF(DThread,iFrame)-_FOFF(DThread,iNThread)));	// and iFrame=iFrame->iNext
+	__JUMP(,lr);
+#endif
+	}
+
+__NAKED__ CActiveScheduler* ExecHandler::ActiveScheduler()
+//
+// Return the address of the current active scheduler
+//
+	{
+	asm("ldr r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iScheduler)-_FOFF(DThread,iNThread)));
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::SetActiveScheduler(CActiveScheduler* /*aScheduler*/)
+//
+// Set the address of the current active scheduler
+//
+	{
+	asm("str r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iScheduler)-_FOFF(DThread,iNThread)));
+	__JUMP(,lr);
+	}
+
+__NAKED__ TTrapHandler* ExecHandler::TrapHandler()
+//
+// Return the current trap handler.
+//
+	{
+	asm("ldr r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iTrapHandler)-_FOFF(DThread,iNThread)));
+	__JUMP(,lr);
+	}
+
+__NAKED__ TTrapHandler* ExecHandler::SetTrapHandler(TTrapHandler* /*aHandler*/)
+//
+// Set the current trap handler.
+//
+	{
+	asm("ldr r2, [r1, #%a0]" : : "i" (_FOFF(DThread,iTrapHandler)-_FOFF(DThread,iNThread)));
+	asm("str r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iTrapHandler)-_FOFF(DThread,iNThread)));
+	asm("mov r0, r2 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ExecHandler::SetReentryPoint(TLinAddr)
+	{
+	asm("ldr r2, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	asm("str r0, [r2, #%a0]" : : "i" _FOFF(DProcess,iReentryPoint));
+	__JUMP(,lr);
+	}
+#endif
+
+/***********************************************************************************
+ * Exec dispatch code
+ ***********************************************************************************/
+
+__NAKED__ void InvalidFastExec()
+	{
+	asm("mov r0, #0x13 ");
+	asm("msr cpsr, r0 ");
+	asm("b  " CSM_Z18InvalidExecHandlerv);
+	}
+
+
+/***************************************************************************
+ * Look up a handle in r0 in the current thread or process handles array
+ * On entry r5=0xY000000X, where bits 0-5 indicate the type of object referenced.
+ * Also r10 points to K::TheScheduler, r9 to the current NThread
+ * Can use registers r0,r4,r7,r8,ip. Preserve r1,r2,r3,r5,r6,r9-r11
+ * Return r0=address of object referenced, or NULL if handle invalid
+ * Enter and leave with system locked
+ ***************************************************************************/
+__NAKED__ void PreprocessHandler()
+	{
+	asm("tst r5, #0x20 ");				// message lookup?
+	asm("bne lookup_message ");
+	asm("ands r7, r5, #0x1f ");			// r7 = object container number+1 = DObjectCon uniqueID
+	asm("mvneq r7, #0 ");				// r7=-1 if any type ok
+	asm("adds ip, r0, r0 ");			// check for special handle (bit 31 set => special)
+	asm("bcs lookup_special ");			// if not, N flag indicates local handle
+	asm("ldrpl ip, [r9, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// if not local, ip=aThread->iOwningProcess
+	asm("addmi ip, r9, #%a0" : : "i" (_FOFF(DThread,iHandles)-_FOFF(DThread,iNThread)));	// if local, ip=&aThread->iHandles
+	asm("addpl ip, ip, #%a0" : : "i" _FOFF(DProcess,iHandles));		// if not, ip=&aThread->iOwningProcess->iHandles
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,ip,lr} ");		// save r0, ip and lr
+	asm("mov r0, ip ");						// move RObjectIx this(ip) to r0
+	asm("BL _ZN9RObjectIx15AcquireReadLockEv") // call RObjectIx::AquireReadLock
+	asm("ldmfd sp!, {r0,ip,lr} ");		// restore r0, ip and lr
+#else
+	// assumes system lock is held
+#endif
+
+	asm("mov r4, r0, lsl #17 ");		// r4=r0<<17 = index(aHandle)<<17
+	asm("mov r0, r0, lsl #2 ");			// r0=instance(Handle)<<18
+	asm("ldr r8, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iCount));		// r8=iCount
+	asm("ldr ip, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iSlots));		// ip=iSlots
+	asm("mov r0, r0, lsr #18 ");		// r0=instance(Handle)
+	asm("cmp r8, r4, lsr #17 ");		// compare iCount with index(aHandle)
+	asm("ldrgt r8, [ip, r4, lsr #14]! ");	// if count>index, r8=pS->uniqueID(bits14-19):pS->instance(bits0-13), ip=iObjects+index(Handle)=pS
+	asm("ble lookup_handle_bad ");		// if count<=index, bad handle
+	asm("cmn r7, #1 ");					// check if any type of object is ok
+	asm("orreq r8, r8, r7, lsl #14 ");	// if it is, (therefore r7=-1) set top 18 bits of r8
+	asm("orr r0, r0, r7, lsl #14 ");	// r0=aUniqueID(bits14-19):instance(Handle)(bits0-13)
+	asm("mov r0, r0, lsl #12 ");		// only interested in comparing lower 20 bits...
+	asm("mov r8, r8, lsl #12 ");
+	asm("cmp r0, r8 ");					// check instance, and unique ID if necessary
+	asm("ldreq r0, [ip, #4] ");			// if OK return pointer to CObject
+	asm("movne r0, #0");				// else r0 = 0
+	asm("andeq r0, r0, #%a0" : : "i" (RObjectIx::EObjRObjMask));	// r0 = (pointer & EObjRObjMask);
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,ip,lr} ");		// save r0, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15ReleaseReadLockEv") // call RObjectIx::ReleaseReadLock
+	asm("ldmfd sp!, {r0,ip,lr} ");		// restore r0, ip and lr
+#else
+	// system lock is held, nothing to do
+#endif
+
+	asm("cmp r0, #0 ");
+	__JUMP(ne,lr);
+	asm("b lookup_handle_bad ");		// if NULL, bad handle
+	
+	asm("lookup_special: ");			// r12=handle<<1 (valid values are fffx0000 and fffx0002, where x=e or f)
+	asm("bic ip, ip, #0x10000 ");		// clear 'no close' flag
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp ip, #0x10000000 ");
+	asm("blo lookup_thread_pseudo ");	// if handle<0x88000000, it's an IPC client thread pseudo handle
+#endif
+	asm("add ip, ip, #0x20000 ");		// valid values now 0 and 2
+	asm("cmp r7, #2 ");					// r7=container number+1 or -1 if any object OK (can only be -1,1-31)
+	asm("bgt lookup_handle_bad ");
+	asm("beq 1f ");
+	asm("cmp ip, #2 ");
+	asm("subeq r0, r9, #%a0" : : "i" _FOFF(DThread,iNThread));
+	__JUMP(eq,lr);
+	asm("cmn r7, #1 ");					// r7=-1 means any type of object will do
+	asm("bne lookup_handle_bad ");
+	asm("1: ");
+	asm("cmp ip, #0 ");
+	asm("ldreq r0, [r9, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	__JUMP(eq,lr);
+	asm("b lookup_handle_bad ");
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("lookup_thread_pseudo: ");
+	asm("ldr r4, __KernMsgInfo ");									// r4->msg chunk info
+	asm("cmp r7, #1 ");
+	asm("bgt lookup_handle_bad ");									// object type must be thread or unspecified
+	asm("mov r0, ip, lsl #16 ");									// demangle handle; r0 = low half of handle
+	asm("add r7, ip, r0, lsr #16 ");								// demangle handle; r7 = purported offset of RMessageK in msg chunk
+	asm("ldr r0, [r4, #%a0]" : : "i" _FOFF(K::SMsgInfo,iBase));		// r0 = base address of kernel msg chunk
+	asm("add r12, r7, #%a0" : : "i" ((TInt)sizeof(RMessageK)));		// r12 = offset + sizeof(RMessageK)
+	asm("ldr r4, [r4, #%a0]" : : "i" _FOFF(K::SMsgInfo,iMaxSize));	// r4 = max size of kernel msg chunk
+	asm("add r0, r0, r7 ");											// demangle handle; r0 = pointer to RMessageK (if good handle)
+	asm("cmp r4, r12 ");											// is this off the end of the msg chunk?
+	asm("blo lookup_handle_bad ");									// if so, bad handle
+	asm("b lookup_message_client ");								// if not, get client
+#endif
+
+	asm("lookup_message: ");										// r0 points to RMessageK, validate it
+	asm("ldr r4, __KernMsgInfo ");									// r4->msg chunk info
+	asm("ldr r7, [r4, #%a0]" : : "i" _FOFF(K::SMsgInfo,iBase));		// r7 = base address of kernel msg chunk
+	asm("ldr r4, [r4, #%a0]" : : "i" _FOFF(K::SMsgInfo,iMaxSize));	// r4 = max size of kernel msg chunk
+	asm("subs r7, r0, r7 ");										// r7 = aMsg - base of kernel msg chunk
+	asm("addhs r12, r7, #%a0" : : "i" ((TInt)sizeof(RMessageK)));	// if >=, r12 = offset+sizeof(RMessageK)
+	asm("cmphs r4, r12 ");											// compare max size to this value
+	asm("blo bad_message_handle ");									// if offset < 0 or max size < offset+sizeof(RMessageK), panic
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("lookup_message_client: ");
+#endif
+	// r0 is pointer to message, r7 is offset within chunk
+	asm("tst r7, #%a0" : : "i" (RMessageK::KMessageSize-1));		// check alignment
+	asm("ldr r8, [r9, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// r8->current process
+	asm("bne bad_message_handle ");									// reject if misaligned
+	asm("adds ip, r0, #%a0" : : "i" _FOFF(RMessageK, iServerLink));
+	// NOTE: Z flag clear here after 'adds' above
+	asm(".global __magic_address_msg_lookup_1 ");
+	asm("__magic_address_msg_lookup_1: ");							// this instruction is magically immune from exceptions
+	// Warning: HARDCODED OFFSET(RMessageK) - assumes next 3 words are from class RMessageKBase
+	asm("ldmia ip, {r4,r7,ip} ");									// get message iNext, iPrev, iFunction, set Z if bad
+																	// should have r4=~r0, r7=~r8 if OK
+	asm("beq bad_message_handle ");									// if exception, panic
+	asm("eor r4, r4, r0 ");											// should be 0xffffffff
+	asm("eor r7, r7, r8 ");											// should be 0xffffffff
+	asm("and r4, r4, r7 ");											// should be 0xffffffff
+	asm("cmn r4, #1 ");
+	asm("bne bad_message_handle ");									// if no good, panic
+	asm("and r7, r5, #0x3f ");
+	asm("cmp r7, #%a0" : : "i" ((TInt)EIpcMessageD));				// EIpcMessageD requested?
+	__JUMP(eq, lr);													// if so, finished
+	asm("cmp ip, #%a0" : : "i" ((TInt)RMessage2::EDisConnect));		// else check iFunction != RMessage2::EDisConnect
+	asm("beq bad_message_handle ");									// if it is, no good
+	asm("cmp r7, #%a0" : : "i" ((TInt)EIpcMessage));				// EIpcMessage requested?
+	asm("ldrne r0, [r0, #%a0]" : : "i" _FOFF(RMessageK, iClient));	// if not, r0=message->iClient
+	__JUMP(,lr);
+
+	asm("lookup_handle_bad: ");
+	asm("mov r0, #%a0" : : "i" (EBadHandle));
+	asm("b  " CSM_ZN1K18PanicCurrentThreadEi);
+
+	asm("bad_message_handle: ");
+	asm("mov r0, #%a0" : : "i" (EBadMessageHandle));
+	asm("b  " CSM_ZN1K18PanicCurrentThreadEi);
+
+	asm("__KernMsgInfo: ");
+	asm(".word  " CSM_ZN1K8MsgInfoE);
+	}
+
+
+/** Execute a HAL function
+
+ Executes a HAL function in the group specified.  
+ Kern::HalFunction is the way to call the HAL functions from kernel code.  
+
+@param aGroup The HAL group this function belonmgs to.  Defined in THalFunctionGroup.
+@param aFunction The function within the specified group
+@param a1 HAL Function parameter
+@param a2 HAL Function parameter
+@param aDeviceNumber The device number (eg. screen number)
+@return KErrNone, if successful, KErrNotSupported if aGroup or aFunction is out of range, 
+		or if there is no function registered to handle the group or any of the other system errors.
+@see Kern::AddHalEntry
+@see THalFunctionGroup
+@see KMaxHalGroups
+
+@pre	No fast mutex can be held.
+@pre	Kernel must be unlocked.
+@pre	Call in a thread context.
+@pre	Interrupts must be enabled.
+*/
+EXPORT_C __NAKED__ TInt Kern::HalFunction(TInt /*aGroup*/, TInt /*aFunction*/, TAny* /*a1*/, TAny* /*a2*/,TInt /*aDeviceNumber*/)
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_UNLOCKED|MASK_NOT_ISR|MASK_NOT_IDFC|MASK_NO_FAST_MUTEX);
+
+	asm("ldr ip, [sp, #0] ");
+	asm("orr r0, r0, ip, lsl #16 ");
+	}
+
+/** Execute a HAL function
+
+ Executes a HAL function in the group specified.  
+ Kern::HalFunction is the way to call the HAL functions from kernel code.  
+
+@param aGroup The HAL group this function belonmgs to.  Defined in THalFunctionGroup.
+@param aFunction The function within the specified group
+@param a1 HAL Function parameter
+@param a2 HAL Function parameter
+@return KErrNone, if successful, KErrNotSupported if aGroup or aFunction is out of range, 
+		or if there is no function registered to handle the group or any of the other system errors.
+@see Kern::AddHalEntry
+@see THalFunctionGroup
+@see KMaxHalGroups
+
+@pre	No fast mutex can be held.
+@pre	Kernel must be unlocked.
+@pre	Call in a thread context.
+@pre	Interrupts must be enabled.
+*/
+EXPORT_C __NAKED__ TInt Kern::HalFunction(TInt /*aGroup*/, TInt /*aFunction*/, TAny* /*a1*/, TAny* /*a2*/)
+// This must be done as a SWI to get the correct permissions when calling from supervisor mode.
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_UNLOCKED|MASK_NOT_ISR|MASK_NOT_IDFC|MASK_NO_FAST_MUTEX);
+
+	asm("mrs	ip, spsr ");
+	asm("stmfd	sp!, {ip, lr} ");		// swi will trash lr and spsr when called in svc mode
+	asm("swi	%a0" : : "i" (EExecHalFunction|EXECUTIVE_SLOW));
+	asm("ldmfd	sp!, {ip, lr} ");
+	asm("msr	spsr, ip");
+#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
+	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
+	asm("nop ");							// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
+	asm("nop ");
+#endif
+	__JUMP(,	lr);
+
+	// Assembler version of ExecHandler::ThreadRequestSignal
+	// Enter with r0->DThread
+	// r9->current NThread
+	// Can trash r0-r4, r6-r8, r12
+	asm("_asm_exec_ThreadRequestSignal: ");
+	asm("ldr r6, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));	// r6->target process
+	asm("ldr r12, [r9, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// r12->current process
+	asm("add r0, r0, #%a0" : : "i" _FOFF(DThread,iNThread));	// r0->target NThread
+	asm("mov r1, #0 ");											// Mutex arg for NKern::ThreadRequestSignal
+	asm("cmp r6, r12 ");										// target process = current process?
+	asm("beq " CSM_ZN5NKern19ThreadRequestSignalEP7NThreadP10NFastMutex );	// NKern::ThreadRequestSignal
+	asm("b  " CSM_ZN1K27LockedPlatformSecurityPanicEv);
+	}
+
+

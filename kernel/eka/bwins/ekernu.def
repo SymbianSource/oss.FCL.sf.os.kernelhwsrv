@@ -1,0 +1,923 @@
+EXPORTS
+	?Dispatch@@YIHHPAH@Z @ 1 NONAME ; int __fastcall Dispatch(int,int *)
+	??0DBatteryMonitor@@QAE@XZ @ 2 NONAME ; public: __thiscall DBatteryMonitor::DBatteryMonitor(void)
+	??0DKernelEventHandler@@QAE@P6AIW4TKernelEvent@@PAX11@Z1@Z @ 3 NONAME ; public: __thiscall DKernelEventHandler::DKernelEventHandler(unsigned int (__cdecl*)(enum TKernelEvent,void *,void *,void *),void *)
+	??0DLogicalChannel@@QAE@XZ @ 4 NONAME ; public: __thiscall DLogicalChannel::DLogicalChannel(void)
+	??0DObject@@QAE@XZ @ 5 NONAME ; public: __thiscall DObject::DObject(void)
+	??0DObjectIx@@IAE@PAX@Z @ 6 NONAME ABSENT ; protected: __thiscall DObjectIx::DObjectIx(void *)
+	??0DPowerController@@QAE@XZ @ 7 NONAME ; public: __thiscall DPowerController::DPowerController(void)
+	??0DPowerHal@@QAE@XZ @ 8 NONAME ; public: __thiscall DPowerHal::DPowerHal(void)
+	??0DPowerHandler@@QAE@ABVTDesC8@@@Z @ 9 NONAME ; public: __thiscall DPowerHandler::DPowerHandler(class TDesC8 const &)
+	??0RArrayBase@@IAE@H@Z @ 10 NONAME ; protected: __thiscall RArrayBase::RArrayBase(int)
+	??0RArrayBase@@IAE@HH@Z @ 11 NONAME ; protected: __thiscall RArrayBase::RArrayBase(int,int)
+	??0RArrayBase@@IAE@HHH@Z @ 12 NONAME ; protected: __thiscall RArrayBase::RArrayBase(int,int,int)
+	??0RArrayBase@@IAE@HHHH@Z @ 13 NONAME ; protected: __thiscall RArrayBase::RArrayBase(int,int,int,int)
+	??0RPhysicalDeviceArray@@QAE@XZ @ 14 NONAME ; public: __thiscall RPhysicalDeviceArray::RPhysicalDeviceArray(void)
+	??0RPointerArrayBase@@IAE@H@Z @ 15 NONAME ; protected: __thiscall RPointerArrayBase::RPointerArrayBase(int)
+	??0RPointerArrayBase@@IAE@HH@Z @ 16 NONAME ; protected: __thiscall RPointerArrayBase::RPointerArrayBase(int,int)
+	??0RPointerArrayBase@@IAE@XZ @ 17 NONAME ; protected: __thiscall RPointerArrayBase::RPointerArrayBase(void)
+	??0TBitMapAllocator@@QAE@HH@Z @ 18 NONAME ; public: __thiscall TBitMapAllocator::TBitMapAllocator(int,int)
+	??0TBufBase8@@IAE@ABVTDesC8@@H@Z @ 19 NONAME ; protected: __thiscall TBufBase8::TBufBase8(class TDesC8 const &,int)
+	??0TBufBase8@@IAE@H@Z @ 20 NONAME ; protected: __thiscall TBufBase8::TBufBase8(int)
+	??0TBufBase8@@IAE@HH@Z @ 21 NONAME ; protected: __thiscall TBufBase8::TBufBase8(int,int)
+	??0TBufBase8@@IAE@PBEH@Z @ 22 NONAME ; protected: __thiscall TBufBase8::TBufBase8(unsigned char const *,int)
+	??0TBufCBase8@@IAE@ABVTDesC8@@H@Z @ 23 NONAME ; protected: __thiscall TBufCBase8::TBufCBase8(class TDesC8 const &,int)
+	??0TBufCBase8@@IAE@PBEH@Z @ 24 NONAME ; protected: __thiscall TBufCBase8::TBufCBase8(unsigned char const *,int)
+	??0TBufCBase8@@IAE@XZ @ 25 NONAME ; protected: __thiscall TBufCBase8::TBufCBase8(void)
+	??0TCapabilitySet@@QAE@W4TCapability@@0@Z @ 26 NONAME ; public: __thiscall TCapabilitySet::TCapabilitySet(enum TCapability,enum TCapability)
+	??0TDfc@@QAE@P6AXPAX@Z0@Z @ 27 NONAME ; public: __thiscall TDfc::TDfc(void (__cdecl*)(void *),void *)
+	??0TDfc@@QAE@P6AXPAX@Z0H@Z @ 28 NONAME ; public: __thiscall TDfc::TDfc(void (__cdecl*)(void *),void *,int)
+	??0TDfc@@QAE@P6AXPAX@Z0PAVTDfcQue@@H@Z @ 29 NONAME ; public: __thiscall TDfc::TDfc(void (__cdecl*)(void *),void *,class TDfcQue *,int)
+	??0TDfcQue@@QAE@XZ @ 30 NONAME ; public: __thiscall TDfcQue::TDfcQue(void)
+	??0TInactivityLink@@QAE@XZ @ 31 NONAME ; public: __thiscall TInactivityLink::TInactivityLink(void)
+	??0TMessageQue@@QAE@P6AXPAX@Z0PAVTDfcQue@@H@Z @ 32 NONAME ; public: __thiscall TMessageQue::TMessageQue(void (__cdecl*)(void *),void *,class TDfcQue *,int)
+	??0TPriListBase@@QAE@H@Z @ 33 NONAME ; public: __thiscall TPriListBase::TPriListBase(int)
+	??0TPtr8@@AAE@AAVTBufCBase8@@H@Z @ 34 NONAME ; private: __thiscall TPtr8::TPtr8(class TBufCBase8 &,int)
+	??0TPtr8@@QAE@PAEH@Z @ 35 NONAME ; public: __thiscall TPtr8::TPtr8(unsigned char *,int)
+	??0TPtr8@@QAE@PAEHH@Z @ 36 NONAME ; public: __thiscall TPtr8::TPtr8(unsigned char *,int,int)
+	??0TPtrC8@@QAE@ABVTDesC8@@@Z @ 37 NONAME ; public: __thiscall TPtrC8::TPtrC8(class TDesC8 const &)
+	??0TPtrC8@@QAE@PBE@Z @ 38 NONAME ; public: __thiscall TPtrC8::TPtrC8(unsigned char const *)
+	??0TPtrC8@@QAE@PBEH@Z @ 39 NONAME ; public: __thiscall TPtrC8::TPtrC8(unsigned char const *,int)
+	??0TPtrC8@@QAE@XZ @ 40 NONAME ; public: __thiscall TPtrC8::TPtrC8(void)
+	??0TSecondLink@@QAE@XZ @ 41 NONAME ; public: __thiscall TSecondLink::TSecondLink(void)
+	??0TSecurityPolicy@@QAE@VTSecureId@@W4TCapability@@11@Z @ 42 NONAME ; public: __thiscall TSecurityPolicy::TSecurityPolicy(class TSecureId,enum TCapability,enum TCapability,enum TCapability)
+	??0TSecurityPolicy@@QAE@VTVendorId@@W4TCapability@@11@Z @ 43 NONAME ; public: __thiscall TSecurityPolicy::TSecurityPolicy(class TVendorId,enum TCapability,enum TCapability,enum TCapability)
+	??0TSecurityPolicy@@QAE@W4TCapability@@000000@Z @ 44 NONAME ; public: __thiscall TSecurityPolicy::TSecurityPolicy(enum TCapability,enum TCapability,enum TCapability,enum TCapability,enum TCapability,enum TCapability,enum TCapability)
+	??0TSecurityPolicy@@QAE@W4TCapability@@00@Z @ 45 NONAME ; public: __thiscall TSecurityPolicy::TSecurityPolicy(enum TCapability,enum TCapability,enum TCapability)
+	??0TSecurityPolicy@@QAE@W4TSecPolicyType@0@@Z @ 46 NONAME ; public: __thiscall TSecurityPolicy::TSecurityPolicy(enum TSecurityPolicy::TSecPolicyType)
+	??0TThreadCleanup@@QAE@XZ @ 47 NONAME ; public: __thiscall TThreadCleanup::TThreadCleanup(void)
+	??0TTickLink@@QAE@XZ @ 48 NONAME ; public: __thiscall TTickLink::TTickLink(void)
+	??0TVersion@@QAE@HHH@Z @ 49 NONAME ; public: __thiscall TVersion::TVersion(int,int,int)
+	??0TVersion@@QAE@XZ @ 50 NONAME ; public: __thiscall TVersion::TVersion(void)
+	??1DLogicalChannel@@UAE@XZ @ 51 NONAME ; public: virtual __thiscall DLogicalChannel::~DLogicalChannel(void)
+	??1DLogicalChannelBase@@UAE@XZ @ 52 NONAME ; public: virtual __thiscall DLogicalChannelBase::~DLogicalChannelBase(void)
+	??1DLogicalDevice@@UAE@XZ @ 53 NONAME ; public: virtual __thiscall DLogicalDevice::~DLogicalDevice(void)
+	??1DObject@@UAE@XZ @ 54 NONAME ; public: virtual __thiscall DObject::~DObject(void)
+	??1DObjectIx@@UAE@XZ @ 55 NONAME ABSENT ; public: virtual __thiscall DObjectIx::~DObjectIx(void)
+	??1DPhysicalDevice@@UAE@XZ @ 56 NONAME ; public: virtual __thiscall DPhysicalDevice::~DPhysicalDevice(void)
+	??1DPowerHandler@@UAE@XZ @ 57 NONAME ; public: virtual __thiscall DPowerHandler::~DPowerHandler(void)
+	??1DSharedIoBuffer@@UAE@XZ @ 58 NONAME ; public: virtual __thiscall DSharedIoBuffer::~DSharedIoBuffer(void)
+	??2DBase@@SAPAXI@Z @ 59 NONAME ; public: static void * __cdecl DBase::operator new(unsigned int)
+	??2DBase@@SAPAXII@Z @ 60 NONAME ; public: static void * __cdecl DBase::operator new(unsigned int,unsigned int)
+	??ADObjectCon@@QAEPAVDObject@@H@Z @ 61 NONAME ; public: class DObject * __thiscall DObjectCon::operator[](int)
+	??ADObjectIx@@QAEPAVDObject@@H@Z @ 62 NONAME ABSENT ; public: class DObject * __thiscall DObjectIx::operator[](int)
+	?AccessCode@Kern@@SAXXZ @ 63 NONAME ; public: static void __cdecl Kern::AccessCode(void)
+	?Add@DKernelEventHandler@@QAEHW4TAddPolicy@1@@Z @ 64 NONAME ; public: int __thiscall DKernelEventHandler::Add(enum DKernelEventHandler::TAddPolicy)
+	?Add@DObjectCon@@QAEHPAVDObject@@@Z @ 65 NONAME ; public: int __thiscall DObjectCon::Add(class DObject *)
+	?Add@DObjectIx@@QAEHPAVDObject@@AAH@Z @ 66 NONAME ABSENT ; public: int __thiscall DObjectIx::Add(class DObject *,int &)
+	?Add@DPowerHandler@@QAEXXZ @ 67 NONAME ; public: void __thiscall DPowerHandler::Add(void)
+	?Add@TDfc@@QAEHXZ @ 68 NONAME ; public: int __thiscall TDfc::Add(void)
+	?Add@TPriListBase@@QAEXPAVTPriListLink@@@Z @ 69 NONAME ; public: void __thiscall TPriListBase::Add(class TPriListLink *)
+	?AddCapability@TCapabilitySet@@QAEXW4TCapability@@@Z @ 70 NONAME ; public: void __thiscall TCapabilitySet::AddCapability(enum TCapability)
+	?AddCleanup@DThread@@QAEXPAVTThreadCleanup@@@Z @ 71 NONAME ; public: void __thiscall DThread::AddCleanup(class TThreadCleanup *)
+	?AddEvent@Kern@@SAHABVTRawEvent@@@Z @ 72 NONAME ; public: static int __cdecl Kern::AddEvent(class TRawEvent const &)
+	?AddHalEntry@Kern@@SAHHP6AHPAXH00@Z0@Z @ 73 NONAME ; public: static int __cdecl Kern::AddHalEntry(int,int (__cdecl*)(void *,int,void *,void *),void *)
+	?AddHalEntry@Kern@@SAHHP6AHPAXH00@Z0H@Z @ 74 NONAME ; public: static int __cdecl Kern::AddHalEntry(int,int (__cdecl*)(void *,int,void *,void *),void *,int)
+	?AddToProcess@DObject@@UAEHPAVDProcess@@@Z @ 75 NONAME ; public: virtual int __thiscall DObject::AddToProcess(class DProcess *)
+	?Adjust@TInternalRamDrive@@SAHH@Z @ 76 NONAME ; public: static int __cdecl TInternalRamDrive::Adjust(int)
+	?Advance@NTimerQ@@SAXH@Z @ 77 NONAME ; public: static void __cdecl NTimerQ::Advance(int)
+	?Again@NTimer@@QAEHH@Z @ 78 NONAME ; public: int __thiscall NTimer::Again(int)
+	?Alloc@Kern@@SAPAXH@Z @ 79 NONAME ; public: static void * __cdecl Kern::Alloc(int)
+	?Alloc@TBitMapAllocator@@QAEHXZ @ 80 NONAME ; public: int __thiscall TBitMapAllocator::Alloc(void)
+	?Alloc@TBitMapAllocator@@QAEXHH@Z @ 81 NONAME ; public: void __thiscall TBitMapAllocator::Alloc(int,int)
+	?AllocAligned@TBitMapAllocator@@QBEHHHHH@Z @ 82 NONAME ; public: int __thiscall TBitMapAllocator::AllocAligned(int,int,int,int)const 
+	?AllocAligned@TBitMapAllocator@@QBEHHHHHAAH0@Z @ 83 NONAME ; public: int __thiscall TBitMapAllocator::AllocAligned(int,int,int,int,int &,int &)const 
+	?AllocConsecutive@TBitMapAllocator@@QBEHHH@Z @ 84 NONAME ; public: int __thiscall TBitMapAllocator::AllocConsecutive(int,int)const 
+	?AllocList@TBitMapAllocator@@QAEHHPAH@Z @ 85 NONAME ; public: int __thiscall TBitMapAllocator::AllocList(int,int *)
+	?AllocZ@Kern@@SAPAXH@Z @ 86 NONAME ; public: static void * __cdecl Kern::AllocZ(int)
+	?Append@RArrayBase@@IAEHPBX@Z @ 87 NONAME ; protected: int __thiscall RArrayBase::Append(void const *)
+	?Append@RPointerArrayBase@@IAEHPBX@Z @ 88 NONAME ; protected: int __thiscall RPointerArrayBase::Append(void const *)
+	?Append@TDes8@@QAEXABVTDesC8@@@Z @ 89 NONAME ; public: void __thiscall TDes8::Append(class TDesC8 const &)
+	?Append@TDes8@@QAEXPBEH@Z @ 90 NONAME ; public: void __thiscall TDes8::Append(unsigned char const *,int)
+	?Append@TDes8@@QAEXVTChar@@@Z @ 91 NONAME ; public: void __thiscall TDes8::Append(class TChar)
+	?AppendFormat@Kern@@SAXAAVTDes8@@PBDQAPAC@Z @ 92 NONAME ; public: static void __cdecl Kern::AppendFormat(class TDes8 &,char const *,signed char * * const)
+	?AppendFullName@DObject@@QAEXAAVTDes8@@@Z @ 93 NONAME ; public: void __thiscall DObject::AppendFullName(class TDes8 &)
+	?AppendName@DObject@@QAEXAAVTDes8@@@Z @ 94 NONAME ; public: void __thiscall DObject::AppendName(class TDes8 &)
+	?AppendNum@TDes8@@QAEX_J@Z @ 95 NONAME ; public: void __thiscall TDes8::AppendNum(__int64)
+	?AppendNum@TDes8@@QAEX_KW4TRadix@@@Z @ 96 NONAME ; public: void __thiscall TDes8::AppendNum(unsigned __int64,enum TRadix)
+	?AppendNumFixedWidth@TDes8@@QAEXIW4TRadix@@H@Z @ 97 NONAME ; public: void __thiscall TDes8::AppendNumFixedWidth(unsigned int,enum TRadix,int)
+	?AsyncClose@DObject@@QAEHXZ @ 98 NONAME ; public: int __thiscall DObject::AsyncClose(void)
+	?AsyncDelete@DBase@@QAEXXZ @ 99 NONAME ; public: void __thiscall DBase::AsyncDelete(void)
+	?AsyncFree@Kern@@SAXPAX@Z @ 100 NONAME ; public: static void __cdecl Kern::AsyncFree(void *)
+	?AsyncNotifyChanges@Kern@@SAXI@Z @ 101 NONAME ; public: static void __cdecl Kern::AsyncNotifyChanges(unsigned int)
+	?At@DObjectCon@@QAEPAVDObject@@ABVTFindHandle@@@Z @ 102 NONAME ; public: class DObject * __thiscall DObjectCon::At(class TFindHandle &)
+	?At@DObjectIx@@QAEHPAVDObject@@@Z @ 103 NONAME ABSENT ; public: int __thiscall DObjectIx::At(class DObject *)
+	?At@DObjectIx@@QAEPAVDObject@@H@Z @ 104 NONAME ABSENT ; public: class DObject * __thiscall DObjectIx::At(int)
+	?At@DObjectIx@@QAEPAVDObject@@HH@Z @ 105 NONAME ABSENT ; public: class DObject * __thiscall DObjectIx::At(int,int)
+	?At@RArrayBase@@IBEPAXH@Z @ 106 NONAME ; protected: void * __thiscall RArrayBase::At(int)const 
+	?At@RPointerArrayBase@@IBEAAPAXH@Z @ 107 NONAME ; protected: void * & __thiscall RPointerArrayBase::At(int)const 
+	?At@TSecondLink@@QAEHAB_JP6AXPAX@Z1@Z @ 108 NONAME ; public: int __thiscall TSecondLink::At(__int64 const &,void (__cdecl*)(void *),void *)
+	?AtC@TDesC8@@IBEABEH@Z @ 109 NONAME ; protected: unsigned char const & __thiscall TDesC8::AtC(int)const 
+	?AtomicSyncMemory@Cache@@SAXXZ @ 110 NONAME ; public: static void __cdecl Cache::AtomicSyncMemory(void)
+	?Attach@RPropertyRef@@QAEHVTUid@@H@Z @ 111 NONAME ; public: int __thiscall RPropertyRef::Attach(class TUid,int)
+	?Base@TInternalRamDrive@@SAKXZ @ 112 NONAME ; public: static unsigned long __cdecl TInternalRamDrive::Base(void)
+	?BinarySearch@RArrayBase@@IBEHPBXAAHP6AH00@Z@Z @ 113 NONAME ; protected: int __thiscall RArrayBase::BinarySearch(void const *,int &,int (__cdecl*)(void const *,void const *))const 
+	?BinarySearch@RArrayBase@@IBEHPBXAAHP6AH00@ZH@Z @ 114 NONAME ; protected: int __thiscall RArrayBase::BinarySearch(void const *,int &,int (__cdecl*)(void const *,void const *),int)const 
+	?BinarySearch@RPointerArrayBase@@IBEHPBXAAHP6AH00@Z@Z @ 115 NONAME ; protected: int __thiscall RPointerArrayBase::BinarySearch(void const *,int &,int (__cdecl*)(void const *,void const *))const 
+	?BinarySearch@RPointerArrayBase@@IBEHPBXAAHP6AH00@ZH@Z @ 116 NONAME ; protected: int __thiscall RPointerArrayBase::BinarySearch(void const *,int &,int (__cdecl*)(void const *,void const *),int)const 
+	?BinarySearchSigned@RArrayBase@@IBEHPBXAAH@Z @ 117 NONAME ; protected: int __thiscall RArrayBase::BinarySearchSigned(void const *,int &)const 
+	?BinarySearchSigned@RArrayBase@@IBEHPBXAAHH@Z @ 118 NONAME ; protected: int __thiscall RArrayBase::BinarySearchSigned(void const *,int &,int)const 
+	?BinarySearchSigned@RPointerArrayBase@@IBEHHAAH@Z @ 119 NONAME ; protected: int __thiscall RPointerArrayBase::BinarySearchSigned(int,int &)const 
+	?BinarySearchSigned@RPointerArrayBase@@IBEHHAAHH@Z @ 120 NONAME ; protected: int __thiscall RPointerArrayBase::BinarySearchSigned(int,int &,int)const 
+	?BinarySearchUnsigned@RArrayBase@@IBEHPBXAAH@Z @ 121 NONAME ; protected: int __thiscall RArrayBase::BinarySearchUnsigned(void const *,int &)const 
+	?BinarySearchUnsigned@RArrayBase@@IBEHPBXAAHH@Z @ 122 NONAME ; protected: int __thiscall RArrayBase::BinarySearchUnsigned(void const *,int &,int)const 
+	?BinarySearchUnsigned@RPointerArrayBase@@IBEHIAAH@Z @ 123 NONAME ; protected: int __thiscall RPointerArrayBase::BinarySearchUnsigned(unsigned int,int &)const 
+	?BinarySearchUnsigned@RPointerArrayBase@@IBEHIAAHH@Z @ 124 NONAME ; protected: int __thiscall RPointerArrayBase::BinarySearchUnsigned(unsigned int,int &,int)const 
+	?Block@NKern@@SAHKI@Z @ 125 NONAME ; public: static int __cdecl NKern::Block(unsigned long,unsigned int)
+	?Block@NKern@@SAHKIPAVNFastMutex@@@Z @ 126 NONAME ; public: static int __cdecl NKern::Block(unsigned long,unsigned int,class NFastMutex *)
+	?Cancel@NTimer@@QAEHXZ @ 127 NONAME ; public: int __thiscall NTimer::Cancel(void)
+	?Cancel@RPropertyRef@@QAEXAAVTPropertySubsRequest@@@Z @ 128 NONAME ; public: void __thiscall RPropertyRef::Cancel(class TPropertySubsRequest &)
+	?Cancel@TDfc@@QAEHXZ @ 129 NONAME ; public: int __thiscall TDfc::Cancel(void)
+	?Cancel@TInactivityLink@@QAEXXZ @ 130 NONAME ; public: void __thiscall TInactivityLink::Cancel(void)
+	?Cancel@TMessageBase@@QAEXXZ @ 131 NONAME ; public: void __thiscall TMessageBase::Cancel(void)
+	?Cancel@TSecondLink@@QAEXXZ @ 132 NONAME ; public: void __thiscall TSecondLink::Cancel(void)
+	?Cancel@TTickLink@@QAEXXZ @ 133 NONAME ; public: void __thiscall TTickLink::Cancel(void)
+	?CancelTimer@DThread@@QAEXXZ @ 134 NONAME ; public: void __thiscall DThread::CancelTimer(void)
+	?ChangePriority@TPriListBase@@QAEXPAVTPriListLink@@H@Z @ 135 NONAME ; public: void __thiscall TPriListBase::ChangePriority(class TPriListLink *,int)
+	?CheckSuspendThenReady@NThreadBase@@QAEXXZ @ 136 NONAME ; public: void __thiscall NThreadBase::CheckSuspendThenReady(void)
+	?CheckUniqueFullName@DObjectCon@@QAEHPAVDObject@@@Z @ 137 NONAME ; public: int __thiscall DObjectCon::CheckUniqueFullName(class DObject *)
+	?CheckUniqueFullName@DObjectCon@@QAEHPAVDObject@@ABVTDesC8@@@Z @ 138 NONAME ; public: int __thiscall DObjectCon::CheckUniqueFullName(class DObject *,class TDesC8 const &)
+	?CheckedOpen@DObject@@QAEXXZ @ 139 NONAME ; public: void __thiscall DObject::CheckedOpen(void)
+	?ChunkAddress@Kern@@SAHPAVDChunk@@HHAAK@Z @ 140 NONAME ; public: static int __cdecl Kern::ChunkAddress(class DChunk *,int,int,unsigned long &)
+	?ChunkClose@Kern@@SAHPAVDChunk@@@Z @ 141 NONAME ; public: static int __cdecl Kern::ChunkClose(class DChunk *)
+	?ChunkCommit@Kern@@SAHPAVDChunk@@HH@Z @ 142 NONAME ; public: static int __cdecl Kern::ChunkCommit(class DChunk *,int,int)
+	?ChunkCommitContiguous@Kern@@SAHPAVDChunk@@HHAAK@Z @ 143 NONAME ; public: static int __cdecl Kern::ChunkCommitContiguous(class DChunk *,int,int,unsigned long &)
+	?ChunkCommitPhysical@Kern@@SAHPAVDChunk@@HHK@Z @ 144 NONAME ; public: static int __cdecl Kern::ChunkCommitPhysical(class DChunk *,int,int,unsigned long)
+	?ChunkCommitPhysical@Kern@@SAHPAVDChunk@@HHPBK@Z @ 145 NONAME ; public: static int __cdecl Kern::ChunkCommitPhysical(class DChunk *,int,int,unsigned long const *)
+	?ChunkCreate@Kern@@SAHABVTChunkCreateInfo@@AAPAVDChunk@@AAK2@Z @ 146 NONAME ; public: static int __cdecl Kern::ChunkCreate(class TChunkCreateInfo const &,class DChunk * &,unsigned long &,unsigned long &)
+	?ChunkPhysicalAddress@Kern@@SAHPAVDChunk@@HHAAK11PAK@Z @ 147 NONAME ; public: static int __cdecl Kern::ChunkPhysicalAddress(class DChunk *,int,int,unsigned long &,unsigned long &,unsigned long &,unsigned long *)
+	?Client@TMessageBase@@QAEPAVDThread@@XZ @ 148 NONAME ; public: class DThread * __thiscall TMessageBase::Client(void)
+	?Close@DKernelEventHandler@@QAEHXZ @ 149 NONAME ; public: int __thiscall DKernelEventHandler::Close(void)
+	?Close@DLogicalChannel@@UAEHPAX@Z @ 150 NONAME ; public: virtual int __thiscall DLogicalChannel::Close(void *)
+	?Close@DObject@@UAEHPAX@Z @ 151 NONAME ; public: virtual int __thiscall DObject::Close(void *)
+	?Close@RArrayBase@@IAEXXZ @ 152 NONAME ; protected: void __thiscall RArrayBase::Close(void)
+	?Close@RPhysicalDeviceArray@@QAEXXZ @ 153 NONAME ; public: void __thiscall RPhysicalDeviceArray::Close(void)
+	?Close@RPointerArrayBase@@IAEXXZ @ 154 NONAME ; protected: void __thiscall RPointerArrayBase::Close(void)
+	?Close@RPropertyRef@@QAEXXZ @ 155 NONAME ; public: void __thiscall RPropertyRef::Close(void)
+	?CloseHandle@Kern@@SAHPAVDThread@@H@Z @ 156 NONAME ; public: static int __cdecl Kern::CloseHandle(class DThread *,int)
+	?CodeSegFromAddress@Kern@@SAPAVDCodeSeg@@KPAVDProcess@@@Z @ 157 NONAME ; public: static class DCodeSeg * __cdecl Kern::CodeSegFromAddress(unsigned long,class DProcess *)
+	?CodeSegFromEntryPoint@DCodeSeg@@SAPAV1@H@Z @ 158 NONAME ; public: static class DCodeSeg * __cdecl DCodeSeg::CodeSegFromEntryPoint(int)
+	?CodeSegGetMemoryInfo@Kern@@SAXAAVDCodeSeg@@AAVTProcessMemoryInfo@@PAVDProcess@@@Z @ 159 NONAME ; public: static void __cdecl Kern::CodeSegGetMemoryInfo(class DCodeSeg &,class TProcessMemoryInfo &,class DProcess *)
+	?CodeSegList@Kern@@SAPAUSDblQue@@XZ @ 160 NONAME ; public: static struct SDblQue * __cdecl Kern::CodeSegList(void)
+	?CodeSegLock@Kern@@SAPAVDMutex@@XZ @ 161 NONAME ; public: static class DMutex * __cdecl Kern::CodeSegLock(void)
+	?ColdStart@Kern@@SAHXZ @ 162 NONAME ; public: static int __cdecl Kern::ColdStart(void)
+	?Compare@TDesC8@@QBEHABV1@@Z @ 163 NONAME ; public: int __thiscall TDesC8::Compare(class TDesC8 const &)const 
+	?CompareF@TDesC8@@QBEHABV1@@Z @ 164 NONAME ; public: int __thiscall TDesC8::CompareF(class TDesC8 const &)const 
+	?Complete@TMessageBase@@QAEXHH@Z @ 165 NONAME ; public: void __thiscall TMessageBase::Complete(int,int)
+	?CompleteAll@TMessageQue@@QAEXH@Z @ 166 NONAME ; public: void __thiscall TMessageQue::CompleteAll(int)
+	?Compress@RArrayBase@@IAEXXZ @ 167 NONAME ; protected: void __thiscall RArrayBase::Compress(void)
+	?Compress@RPointerArrayBase@@IAEXXZ @ 168 NONAME ; protected: void __thiscall RPointerArrayBase::Compress(void)
+	?Containers@Kern@@SAPBQAVDObjectCon@@XZ @ 169 NONAME ; public: static class DObjectCon * const * __cdecl Kern::Containers(void)
+	?Copy@TBufCBase8@@IAEXABVTDesC8@@H@Z @ 170 NONAME ; protected: void __thiscall TBufCBase8::Copy(class TDesC8 const &,int)
+	?Copy@TBufCBase8@@IAEXPBEH@Z @ 171 NONAME ; protected: void __thiscall TBufCBase8::Copy(unsigned char const *,int)
+	?Copy@TDes8@@QAEXABVTDesC8@@@Z @ 172 NONAME ; public: void __thiscall TDes8::Copy(class TDesC8 const &)
+	?Copy@TDes8@@QAEXPBE@Z @ 173 NONAME ; public: void __thiscall TDes8::Copy(unsigned char const *)
+	?Copy@TDes8@@QAEXPBEH@Z @ 174 NONAME ; public: void __thiscall TDes8::Copy(unsigned char const *,int)
+	?CopyAlignedRange@TBitMapAllocator@@QAEXPBV1@HH@Z @ 175 NONAME ; public: void __thiscall TBitMapAllocator::CopyAlignedRange(class TBitMapAllocator const *,int,int)
+	?Count@DObjectIx@@QAEHPAVDObject@@@Z @ 176 NONAME ABSENT ; public: int __thiscall DObjectIx::Count(class DObject *)
+	?Count@RArrayBase@@IBEHXZ @ 177 NONAME ; protected: int __thiscall RArrayBase::Count(void)const 
+	?Count@RPointerArrayBase@@IBEHXZ @ 178 NONAME ; protected: int __thiscall RPointerArrayBase::Count(void)const 
+	?CreateWin32Thread@@YAPAXW4TEmulThreadType@@P6GKPAX@Z1H@Z @ 179 NONAME ; void * __cdecl CreateWin32Thread(enum TEmulThreadType,unsigned long (__stdcall*)(void *),void *,int)
+	?CurrentContext@NKern@@SAHXZ @ 180 NONAME ; public: static int __cdecl NKern::CurrentContext(void)
+	?CurrentProcess@Kern@@SAAAVDProcess@@XZ @ 181 NONAME ; public: static class DProcess & __cdecl Kern::CurrentProcess(void)
+	?CurrentThread@Kern@@SAAAVDThread@@XZ @ 182 NONAME ; public: static class DThread & __cdecl Kern::CurrentThread(void)
+	?CurrentThread@NKern@@SAPAVNThread@@XZ @ 183 NONAME ; public: static class NThread * __cdecl NKern::CurrentThread(void)
+	?DebugSupportEnabled@DKernelEventHandler@@SAHXZ @ 184 NONAME ; public: static int __cdecl DKernelEventHandler::DebugSupportEnabled(void)
+	?Define@RPropertyRef@@QAEHHABVTSecurityPolicy@@0HPAVDProcess@@@Z @ 185 NONAME ; public: int __thiscall RPropertyRef::Define(int,class TSecurityPolicy const &,class TSecurityPolicy const &,int,class DProcess *)
+	?Delete@DBase@@SAXPAV1@@Z @ 186 NONAME ; public: static void __cdecl DBase::Delete(class DBase *)
+	?Delete@RPropertyRef@@QAEHPAVDProcess@@@Z @ 187 NONAME ; public: int __thiscall RPropertyRef::Delete(class DProcess *)
+	?DeltaCurrentConsumption@DPowerHandler@@QAEXH@Z @ 188 NONAME ; public: void __thiscall DPowerHandler::DeltaCurrentConsumption(int)
+	?DesRead@DThread@@QAEHPBXPAEHHH@Z @ 189 NONAME ABSENT ; public: int __thiscall DThread::DesRead(void const *,unsigned char *,int,int,int)
+	?DesWrite@DThread@@QAEHPBXPBEHHHPAV1@@Z @ 190 NONAME ABSENT ; public: int __thiscall DThread::DesWrite(void const *,unsigned char const *,int,int,int,class DThread *)
+	?DfcQCreate@Kern@@SAHAAPAVTDfcQue@@HPBVTDesC8@@@Z @ 191 NONAME ; public: static int __cdecl Kern::DfcQCreate(class TDfcQue * &,int,class TDesC8 const *)
+	?DfcQInit@Kern@@SAHPAVTDfcQue@@HPBVTDesC8@@@Z @ 192 NONAME ; public: static int __cdecl Kern::DfcQInit(class TDfcQue *,int,class TDesC8 const *)
+	?DfcQue0@Kern@@SAPAVTDfcQue@@XZ @ 193 NONAME ; public: static class TDfcQue * __cdecl Kern::DfcQue0(void)
+	?DfcQue1@Kern@@SAPAVTDfcQue@@XZ @ 194 NONAME ; public: static class TDfcQue * __cdecl Kern::DfcQue1(void)
+	?DisableAllInterrupts@NKern@@SAHXZ @ 195 NONAME ; public: static int __cdecl NKern::DisableAllInterrupts(void)
+	?DisableInterrupts@NKern@@SAHH@Z @ 196 NONAME ; public: static int __cdecl NKern::DisableInterrupts(int)
+	?DoAppendFullName@DObject@@QAEXAAVTDes8@@@Z @ 197 NONAME ; public: void __thiscall DObject::DoAppendFullName(class TDes8 &)
+	?DoAppendName@DObject@@UAEXAAVTDes8@@@Z @ 198 NONAME ; public: virtual void __thiscall DObject::DoAppendName(class TDes8 &)
+	?DoCheckPolicy@TSecurityPolicy@@ABEHPAVDProcess@@@Z @ 199 NONAME ; private: int __thiscall TSecurityPolicy::DoCheckPolicy(class DProcess *)const 
+	?DoCheckPolicy@TSecurityPolicy@@ABEHPAVDProcess@@PBD@Z @ 200 NONAME ; private: int __thiscall TSecurityPolicy::DoCheckPolicy(class DProcess *,char const *)const 
+	?DoCheckPolicy@TSecurityPolicy@@ABEHPAVDThread@@@Z @ 201 NONAME ; private: int __thiscall TSecurityPolicy::DoCheckPolicy(class DThread *)const 
+	?DoCheckPolicy@TSecurityPolicy@@ABEHPAVDThread@@PBD@Z @ 202 NONAME ; private: int __thiscall TSecurityPolicy::DoCheckPolicy(class DThread *,char const *)const 
+	?DoCreate@DLogicalChannelBase@@UAEHHPBVTDesC8@@ABVTVersion@@@Z @ 203 NONAME ; public: virtual int __thiscall DLogicalChannelBase::DoCreate(int,class TDesC8 const *,class TVersion const &)
+	?DoCurrentThreadHasCapability@Kern@@CAHW4TCapability@@@Z @ 204 NONAME ; private: static int __cdecl Kern::DoCurrentThreadHasCapability(enum TCapability)
+	?DoCurrentThreadHasCapability@Kern@@CAHW4TCapability@@PBD@Z @ 205 NONAME ; private: static int __cdecl Kern::DoCurrentThreadHasCapability(enum TCapability,char const *)
+	?DoEnque@TDfc@@QAEHXZ @ 206 NONAME ; public: int __thiscall TDfc::DoEnque(void)
+	?DoHasCapability@DProcess@@AAEHW4TCapability@@@Z @ 207 NONAME ; private: int __thiscall DProcess::DoHasCapability(enum TCapability)
+	?DoHasCapability@DProcess@@AAEHW4TCapability@@PBD@Z @ 208 NONAME ; private: int __thiscall DProcess::DoHasCapability(enum TCapability,char const *)
+	?DoHasCapability@DThread@@AAEHW4TCapability@@@Z @ 209 NONAME ; private: int __thiscall DThread::DoHasCapability(enum TCapability)
+	?DoHasCapability@DThread@@AAEHW4TCapability@@PBD@Z @ 210 NONAME ; private: int __thiscall DThread::DoHasCapability(enum TCapability,char const *)
+	?EmptyQueue@DCodeSeg@@SAXAAUSDblQue@@K@Z @ 211 NONAME ; public: static void __cdecl DCodeSeg::EmptyQueue(struct SDblQue &,unsigned long)
+	?EndAccessCode@Kern@@SAXXZ @ 212 NONAME ; public: static void __cdecl Kern::EndAccessCode(void)
+	?EndOfInterrupt@@YAXXZ @ 213 NONAME ; void __cdecl EndOfInterrupt(void)
+	?Enque@TDfc@@QAEHPAVNFastMutex@@@Z @ 214 NONAME ; public: int __thiscall TDfc::Enque(class NFastMutex *)
+	?Enque@TDfc@@QAEHXZ @ 215 NONAME ; public: int __thiscall TDfc::Enque(void)
+	?Exception@TExcTrap@@QAEXH@Z @ 216 NONAME ; public: void __thiscall TExcTrap::Exception(int)
+	?Exit@Kern@@SAXH@Z @ 217 NONAME ; public: static void __cdecl Kern::Exit(int)
+	?Exit@NKern@@SAXXZ @ 218 NONAME ; public: static void __cdecl NKern::Exit(void)
+	?FMSignal@NKern@@SAXPAVNFastMutex@@@Z @ 219 NONAME ; public: static void __cdecl NKern::FMSignal(class NFastMutex *)
+	?FMWait@NKern@@SAXPAVNFastMutex@@@Z @ 220 NONAME ; public: static void __cdecl NKern::FMWait(class NFastMutex *)
+	?FSSetOwner@NKern@@SAXPAVNFastSemaphore@@PAVNThreadBase@@@Z @ 221 NONAME ; public: static void __cdecl NKern::FSSetOwner(class NFastSemaphore *,class NThreadBase *)
+	?FSSignal@NKern@@SAXPAVNFastSemaphore@@@Z @ 222 NONAME ; public: static void __cdecl NKern::FSSignal(class NFastSemaphore *)
+	?FSSignal@NKern@@SAXPAVNFastSemaphore@@PAVNFastMutex@@@Z @ 223 NONAME ; public: static void __cdecl NKern::FSSignal(class NFastSemaphore *,class NFastMutex *)
+	?FSSignalN@NKern@@SAXPAVNFastSemaphore@@H@Z @ 224 NONAME ; public: static void __cdecl NKern::FSSignalN(class NFastSemaphore *,int)
+	?FSSignalN@NKern@@SAXPAVNFastSemaphore@@HPAVNFastMutex@@@Z @ 225 NONAME ; public: static void __cdecl NKern::FSSignalN(class NFastSemaphore *,int,class NFastMutex *)
+	?FSWait@NKern@@SAXPAVNFastSemaphore@@@Z @ 226 NONAME ; public: static void __cdecl NKern::FSWait(class NFastSemaphore *)
+	?FastCounter@NKern@@SAKXZ @ 227 NONAME ; public: static unsigned long __cdecl NKern::FastCounter(void)
+	?FastCounterFrequency@NKern@@SAHXZ @ 228 NONAME ; public: static int __cdecl NKern::FastCounterFrequency(void)
+	?Fault@Exc@@SAXPAX@Z @ 229 NONAME ; public: static void __cdecl Exc::Fault(void *)
+	?Fault@Kern@@SAXPBDH@Z @ 230 NONAME ; public: static void __cdecl Kern::Fault(char const *,int)
+	?Fill@TDes8@@QAEXVTChar@@@Z @ 231 NONAME ; public: void __thiscall TDes8::Fill(class TChar)
+	?Fill@TDes8@@QAEXVTChar@@H@Z @ 232 NONAME ; public: void __thiscall TDes8::Fill(class TChar,int)
+	?FillZ@TDes8@@QAEXH@Z @ 233 NONAME ; public: void __thiscall TDes8::FillZ(int)
+	?FillZ@TDes8@@QAEXXZ @ 234 NONAME ; public: void __thiscall TDes8::FillZ(void)
+	?Find@RArrayBase@@IBEHPBX@Z @ 235 NONAME ; protected: int __thiscall RArrayBase::Find(void const *)const 
+	?Find@RArrayBase@@IBEHPBXP6AH00@Z@Z @ 236 NONAME ; protected: int __thiscall RArrayBase::Find(void const *,int (__cdecl*)(void const *,void const *))const 
+	?Find@RPointerArrayBase@@IBEHPBX@Z @ 237 NONAME ; protected: int __thiscall RPointerArrayBase::Find(void const *)const 
+	?Find@RPointerArrayBase@@IBEHPBXP6AH00@Z@Z @ 238 NONAME ; protected: int __thiscall RPointerArrayBase::Find(void const *,int (__cdecl*)(void const *,void const *))const 
+	?Find@TDesC8@@QBEHABV1@@Z @ 239 NONAME ; public: int __thiscall TDesC8::Find(class TDesC8 const &)const 
+	?Find@TDesC8@@QBEHPBEH@Z @ 240 NONAME ; public: int __thiscall TDesC8::Find(unsigned char const *,int)const 
+	?FindByFullName@DObjectCon@@QAEHAAVTFindHandle@@ABVTDesC8@@AAV?$TBuf@$0BAA@@@@Z @ 241 NONAME ; public: int __thiscall DObjectCon::FindByFullName(class TFindHandle &,class TDesC8 const &,class TBuf<256> &)
+	?FindByName@DObjectCon@@QAEHAAVTFindHandle@@ABVTDesC8@@AAV?$TBuf@$0FA@@@@Z @ 242 NONAME ; public: int __thiscall DObjectCon::FindByName(class TFindHandle &,class TDesC8 const &,class TBuf<80> &)
+	?FindHalEntry@Kern@@SAPAUSHalEntry@@H@Z @ 243 NONAME ; public: static struct SHalEntry * __cdecl Kern::FindHalEntry(int)
+	?FindHalEntry@Kern@@SAPAUSHalEntry@@HH@Z @ 244 NONAME ; public: static struct SHalEntry * __cdecl Kern::FindHalEntry(int,int)
+	?FindIsq@RArrayBase@@IBEHPBXP6AH00@Z@Z @ 245 NONAME ; protected: int __thiscall RArrayBase::FindIsq(void const *,int (__cdecl*)(void const *,void const *))const 
+	?FindIsq@RArrayBase@@IBEHPBXP6AH00@ZH@Z @ 246 NONAME ; protected: int __thiscall RArrayBase::FindIsq(void const *,int (__cdecl*)(void const *,void const *),int)const 
+	?FindIsq@RPointerArrayBase@@IBEHPBXP6AH00@Z@Z @ 247 NONAME ; protected: int __thiscall RPointerArrayBase::FindIsq(void const *,int (__cdecl*)(void const *,void const *))const 
+	?FindIsq@RPointerArrayBase@@IBEHPBXP6AH00@ZH@Z @ 248 NONAME ; protected: int __thiscall RPointerArrayBase::FindIsq(void const *,int (__cdecl*)(void const *,void const *),int)const 
+	?FindIsqSigned@RArrayBase@@IBEHPBX@Z @ 249 NONAME ; protected: int __thiscall RArrayBase::FindIsqSigned(void const *)const 
+	?FindIsqSigned@RArrayBase@@IBEHPBXH@Z @ 250 NONAME ; protected: int __thiscall RArrayBase::FindIsqSigned(void const *,int)const 
+	?FindIsqSigned@RPointerArrayBase@@IBEHH@Z @ 251 NONAME ; protected: int __thiscall RPointerArrayBase::FindIsqSigned(int)const 
+	?FindIsqSigned@RPointerArrayBase@@IBEHHH@Z @ 252 NONAME ; protected: int __thiscall RPointerArrayBase::FindIsqSigned(int,int)const 
+	?FindIsqUnsigned@RArrayBase@@IBEHPBX@Z @ 253 NONAME ; protected: int __thiscall RArrayBase::FindIsqUnsigned(void const *)const 
+	?FindIsqUnsigned@RArrayBase@@IBEHPBXH@Z @ 254 NONAME ; protected: int __thiscall RArrayBase::FindIsqUnsigned(void const *,int)const 
+	?FindIsqUnsigned@RPointerArrayBase@@IBEHI@Z @ 255 NONAME ; protected: int __thiscall RPointerArrayBase::FindIsqUnsigned(unsigned int)const 
+	?FindIsqUnsigned@RPointerArrayBase@@IBEHIH@Z @ 256 NONAME ; protected: int __thiscall RPointerArrayBase::FindIsqUnsigned(unsigned int,int)const 
+	?First@TPriListBase@@QAEPAVTPriListLink@@XZ @ 257 NONAME ; public: class TPriListLink * __thiscall TPriListBase::First(void)
+	?FlashSystem@NKern@@SAHXZ @ 258 NONAME ; public: static int __cdecl NKern::FlashSystem(void)
+	?ForceResume@NThreadBase@@QAEHXZ @ 259 NONAME ; public: int __thiscall NThreadBase::ForceResume(void)
+	?Forward@TMessageBase@@QAEXPAVTMessageQue@@H@Z @ 260 NONAME ; public: void __thiscall TMessageBase::Forward(class TMessageQue *,int)
+	?Free@Kern@@SAXPAX@Z @ 261 NONAME ; public: static void __cdecl Kern::Free(void *)
+	?Free@TBitMapAllocator@@QAEXH@Z @ 262 NONAME ; public: void __thiscall TBitMapAllocator::Free(int)
+	?Free@TBitMapAllocator@@QAEXHH@Z @ 263 NONAME ; public: void __thiscall TBitMapAllocator::Free(int,int)
+	?FreeRamInBytes@Kern@@SAHXZ @ 264 NONAME ; public: static int __cdecl Kern::FreeRamInBytes(void)
+	?FullName@DObject@@QAEXAAVTDes8@@@Z @ 265 NONAME ; public: void __thiscall DObject::FullName(class TDes8 &)
+	?Get@RPropertyRef@@QAEHAAHPAVDProcess@@@Z @ 266 NONAME ; public: int __thiscall RPropertyRef::Get(int &,class DProcess *)
+	?Get@RPropertyRef@@QAEHAAVTDes8@@PAVDProcess@@@Z @ 267 NONAME ; public: int __thiscall RPropertyRef::Get(class TDes8 &,class DProcess *)
+	?GetDesInfo@DThread@@QAEHPBXAAH1AAPAEH@Z @ 268 NONAME ABSENT ; public: int __thiscall DThread::GetDesInfo(void const *,int &,int &,unsigned char * &,int)
+	?GetDesLength@DThread@@QAEHPBX@Z @ 269 NONAME ABSENT ; public: int __thiscall DThread::GetDesLength(void const *)
+	?GetDesMaxLength@DThread@@QAEHPBX@Z @ 270 NONAME ABSENT ; public: int __thiscall DThread::GetDesMaxLength(void const *)
+	?GetDriverList@RPhysicalDeviceArray@@QAEHABVTDesC8@@HPBV2@ABVTVersion@@@Z @ 271 NONAME ; public: int __thiscall RPhysicalDeviceArray::GetDriverList(class TDesC8 const &,int,class TDesC8 const *,class TVersion const &)
+	?GetStatus@RPropertyRef@@QAEHAAVTPropertyStatus@@@Z @ 272 NONAME ; public: int __thiscall RPropertyRef::GetStatus(class TPropertyStatus &)
+	?HalFunction@Kern@@SAHHHPAX0@Z @ 273 NONAME ; public: static int __cdecl Kern::HalFunction(int,int,void *,void *)
+	?HalFunction@Kern@@SAHHHPAX0H@Z @ 274 NONAME ; public: static int __cdecl Kern::HalFunction(int,int,void *,void *,int)
+	?HasCapabilities@TCapabilitySet@@QBEHABV1@@Z @ 275 NONAME ; public: int __thiscall TCapabilitySet::HasCapabilities(class TCapabilitySet const &)const 
+	?HasCapability@TCapabilitySet@@QBEHW4TCapability@@@Z @ 276 NONAME ; public: int __thiscall TCapabilitySet::HasCapability(enum TCapability)const 
+	?HighestPriority@TPriListBase@@QAEHXZ @ 277 NONAME ; public: int __thiscall TPriListBase::HighestPriority(void)
+	?IMB_Range@Cache@@SAXKI@Z @ 278 NONAME ; public: static void __cdecl Cache::IMB_Range(unsigned long,unsigned int)
+	?Idle@NThread@@SAXXZ @ 279 NONAME ; public: static void __cdecl NThread::Idle(void)
+	?IdleTime@NTimerQ@@SAHXZ @ 280 NONAME ; public: static int __cdecl NTimerQ::IdleTime(void)
+	?Info@DPhysicalDevice@@UAEHHPAX@Z @ 281 NONAME ; public: virtual int __thiscall DPhysicalDevice::Info(int,void *)
+	?InfoCopy@Kern@@SAXAAVTDes8@@ABVTDesC8@@@Z @ 282 NONAME ; public: static void __cdecl Kern::InfoCopy(class TDes8 &,class TDesC8 const &)
+	?InfoCopy@Kern@@SAXAAVTDes8@@PBEH@Z @ 283 NONAME ; public: static void __cdecl Kern::InfoCopy(class TDes8 &,unsigned char const *,int)
+	?Insert@RArrayBase@@IAEHPBXH@Z @ 284 NONAME ; protected: int __thiscall RArrayBase::Insert(void const *,int)
+	?Insert@RPointerArrayBase@@IAEHPBXH@Z @ 285 NONAME ; protected: int __thiscall RPointerArrayBase::Insert(void const *,int)
+	?InsertIsq@RArrayBase@@IAEHPBXP6AH00@ZH@Z @ 286 NONAME ; protected: int __thiscall RArrayBase::InsertIsq(void const *,int (__cdecl*)(void const *,void const *),int)
+	?InsertIsq@RPointerArrayBase@@IAEHPBXP6AH00@ZH@Z @ 287 NONAME ; protected: int __thiscall RPointerArrayBase::InsertIsq(void const *,int (__cdecl*)(void const *,void const *),int)
+	?InsertIsqSigned@RArrayBase@@IAEHPBXH@Z @ 288 NONAME ; protected: int __thiscall RArrayBase::InsertIsqSigned(void const *,int)
+	?InsertIsqSigned@RPointerArrayBase@@IAEHHH@Z @ 289 NONAME ; protected: int __thiscall RPointerArrayBase::InsertIsqSigned(int,int)
+	?InsertIsqUnsigned@RArrayBase@@IAEHPBXH@Z @ 290 NONAME ; protected: int __thiscall RArrayBase::InsertIsqUnsigned(void const *,int)
+	?InsertIsqUnsigned@RPointerArrayBase@@IAEHIH@Z @ 291 NONAME ; protected: int __thiscall RPointerArrayBase::InsertIsqUnsigned(unsigned int,int)
+	?Intersection@TCapabilitySet@@QAEXABV1@@Z @ 292 NONAME ; public: void __thiscall TCapabilitySet::Intersection(class TCapabilitySet const &)
+	?IsAvailable@DLogicalDevice@@UBEHHPBVTDesC8@@0@Z @ 293 NONAME ; public: virtual int __thiscall DLogicalDevice::IsAvailable(int,class TDesC8 const *,class TDesC8 const *)const 
+	?IsAvailable@DPhysicalDevice@@UBEHHPBVTDesC8@@@Z @ 294 NONAME ; public: virtual int __thiscall DPhysicalDevice::IsAvailable(int,class TDesC8 const *)const 
+	?KDebugMask@@YAHXZ @ 295 NONAME ; int __cdecl KDebugMask(void)
+	?KDebugNum@@YAHH@Z @ 296 NONAME ; int __cdecl KDebugNum(int)
+	?KUDesGet@Kern@@SAXAAVTDes8@@ABVTDesC8@@@Z @ 297 NONAME ; public: static void __cdecl Kern::KUDesGet(class TDes8 &,class TDesC8 const &)
+	?KUDesInfo@Kern@@SAPBEABVTDesC8@@AAH1@Z @ 298 NONAME ; public: static unsigned char const * __cdecl Kern::KUDesInfo(class TDesC8 const &,int &,int &)
+	?KUDesPut@Kern@@SAXAAVTDes8@@ABVTDesC8@@@Z @ 299 NONAME ; public: static void __cdecl Kern::KUDesPut(class TDes8 &,class TDesC8 const &)
+	?KUDesSetLength@Kern@@SAXAAVTDes8@@H@Z @ 300 NONAME ; public: static void __cdecl Kern::KUDesSetLength(class TDes8 &,int)
+	?KUSafeDec@Kern@@SAHAAH@Z @ 301 NONAME ; public: static int __cdecl Kern::KUSafeDec(int &)
+	?KUSafeInc@Kern@@SAHAAH@Z @ 302 NONAME ; public: static int __cdecl Kern::KUSafeInc(int &)
+	?KUSafeRead@Kern@@SAPAXPBXPAXH@Z @ 303 NONAME ; public: static void * __cdecl Kern::KUSafeRead(void const *,void *,int)
+	?KUSafeWrite@Kern@@SAPAXPAXPBXH@Z @ 304 NONAME ; public: static void * __cdecl Kern::KUSafeWrite(void *,void const *,int)
+	?KernelToUser@DSharedIoBuffer@@QAEKK@Z @ 305 NONAME ; public: unsigned long __thiscall DSharedIoBuffer::KernelToUser(unsigned long)
+	?Kill@NThreadBase@@QAEXXZ @ 306 NONAME ; public: void __thiscall NThreadBase::Kill(void)
+	?Last@TMessageQue@@QAEPAVTMessageBase@@XZ @ 307 NONAME ; public: class TMessageBase * __thiscall TMessageQue::Last(void)
+	?Left@TDesC8@@QBE?AVTPtrC8@@H@Z @ 308 NONAME ; public: class TPtrC8  __thiscall TDesC8::Left(int)const 
+	?Locate@TDesC8@@QBEHVTChar@@@Z @ 309 NONAME ; public: int __thiscall TDesC8::Locate(class TChar)const 
+	?LocateReverse@TDesC8@@QBEHVTChar@@@Z @ 310 NONAME ; public: int __thiscall TDesC8::LocateReverse(class TChar)const 
+	?Lock@NKern@@SAXXZ @ 311 NONAME ; public: static void __cdecl NKern::Lock(void)
+	?Lock@TInternalRamDrive@@SAXXZ @ 312 NONAME ; public: static void __cdecl TInternalRamDrive::Lock(void)
+	?Lock@TTickLink@@QAEXHP6AXPAX@Z0@Z @ 313 NONAME ; public: void __thiscall TTickLink::Lock(int,void (__cdecl*)(void *),void *)
+	?LockSystem@NKern@@SAXXZ @ 314 NONAME ; public: static void __cdecl NKern::LockSystem(void)
+	__old_LockedAdd @ 315 NONAME ; public: static int __cdecl NKern::LockedAdd(int &,int)
+	__old_LockedDec @ 316 NONAME ; public: static int __cdecl NKern::LockedDec(int &)
+	__old_LockedInc @ 317 NONAME ; public: static int __cdecl NKern::LockedInc(int &)
+	__old_LockedSetClear8 @ 318 NONAME ; public: static unsigned char __cdecl NKern::LockedSetClear8(unsigned char &,unsigned char,unsigned char)
+	__old_LockedSetClear @ 319 NONAME ; public: static unsigned long __cdecl NKern::LockedSetClear(unsigned long &,unsigned long,unsigned long)
+	?MachineConfig@Kern@@SAAAVTMachineConfig@@XZ @ 320 NONAME ; public: static class TMachineConfig & __cdecl Kern::MachineConfig(void)
+	?MachinePowerStatus@Kern@@SA?AW4TSupplyStatus@@XZ @ 321 NONAME ; public: static enum TSupplyStatus  __cdecl Kern::MachinePowerStatus(void)
+	?MakeHandleAndOpen@Kern@@SAHPAVDThread@@PAVDObject@@@Z @ 322 NONAME ; public: static int __cdecl Kern::MakeHandleAndOpen(class DThread *,class DObject *)
+	?Match@TDesC8@@QBEHABV1@@Z @ 323 NONAME ; public: int __thiscall TDesC8::Match(class TDesC8 const &)const 
+	?MatchC@TDesC8@@QBEHABV1@@Z @ 324 NONAME ; public: int __thiscall TDesC8::MatchC(class TDesC8 const &)const 
+	?MatchF@TDesC8@@QBEHABV1@@Z @ 325 NONAME ; public: int __thiscall TDesC8::MatchF(class TDesC8 const &)const 
+	?MaxSize@TInternalRamDrive@@SAHXZ @ 326 NONAME ; public: static int __cdecl TInternalRamDrive::MaxSize(void)
+	?Message@Kern@@SAAAVTThreadMessage@@XZ @ 327 NONAME ; public: static class TThreadMessage & __cdecl Kern::Message(void)
+	?MessageK@RMessageK@@SAPAV1@H@Z @ 328 NONAME ; public: static class RMessageK * __cdecl RMessageK::MessageK(int)
+	?Mid@TDesC8@@QBE?AVTPtrC8@@H@Z @ 329 NONAME ; public: class TPtrC8  __thiscall TDesC8::Mid(int)const 
+	?Mid@TDesC8@@QBE?AVTPtrC8@@HH@Z @ 330 NONAME ; public: class TPtrC8  __thiscall TDesC8::Mid(int,int)const 
+	?MutexCreate@Kern@@SAHAAPAVDMutex@@ABVTDesC8@@I@Z @ 331 NONAME ; public: static int __cdecl Kern::MutexCreate(class DMutex * &,class TDesC8 const &,unsigned int)
+	?MutexSignal@Kern@@SAXAAVDMutex@@@Z @ 332 NONAME ; public: static void __cdecl Kern::MutexSignal(class DMutex &)
+	?MutexWait@Kern@@SAHAAVDMutex@@@Z @ 333 NONAME ; public: static int __cdecl Kern::MutexWait(class DMutex &)
+	?Name@DObject@@QAEXAAVTDes8@@@Z @ 334 NONAME ; public: void __thiscall DObject::Name(class TDes8 &)
+	?Name@TVersion@@QBE?AV?$TBuf@$0BA@@@XZ @ 335 NONAME ; public: class TBuf<16>  __thiscall TVersion::Name(void)const 
+	?NanoBlock@NKern@@SAXKIPAX@Z @ 336 NONAME ; public: static void __cdecl NKern::NanoBlock(unsigned long,unsigned int,void *)
+	?NanoWait@Kern@@SAXK@Z @ 337 NONAME ; public: static void __cdecl Kern::NanoWait(unsigned long)
+	?New@DObjectIx@@SAPAV1@PAX@Z @ 338 NONAME ABSENT ; public: static class DObjectIx * __cdecl DObjectIx::New(void *)
+	?New@DSharedIoBuffer@@SAHAAPAV1@KI@Z @ 339 NONAME ; public: static int __cdecl DSharedIoBuffer::New(class DSharedIoBuffer * &,unsigned long,unsigned int)
+	?New@HBuf8@@SAPAV1@ABVTDesC8@@@Z @ 340 NONAME ; public: static class HBuf8 * __cdecl HBuf8::New(class TDesC8 const &)
+	?New@HBuf8@@SAPAV1@H@Z @ 341 NONAME ; public: static class HBuf8 * __cdecl HBuf8::New(int)
+	?New@TBitMapAllocator@@SAPAV1@HH@Z @ 342 NONAME ; public: static class TBitMapAllocator * __cdecl TBitMapAllocator::New(int,int)
+	?NotAllocated@TBitMapAllocator@@QBEHHH@Z @ 343 NONAME ; public: int __thiscall TBitMapAllocator::NotAllocated(int,int)const 
+	?NotFree@TBitMapAllocator@@QBEHHH@Z @ 344 NONAME ; public: int __thiscall TBitMapAllocator::NotFree(int,int)const 
+	?NotifyChanges@Kern@@SAXI@Z @ 345 NONAME ; public: static void __cdecl Kern::NotifyChanges(unsigned int)
+	?NotifyThreadDeath@Kern@@SAXPAVDThread@@@Z @ 346 NONAME ; public: static void __cdecl Kern::NotifyThreadDeath(class DThread *)
+	?Num@TDes8@@QAEX_J@Z @ 347 NONAME ; public: void __thiscall TDes8::Num(__int64)
+	?Num@TDes8@@QAEX_KW4TRadix@@@Z @ 348 NONAME ; public: void __thiscall TDes8::Num(unsigned __int64,enum TRadix)
+	?NumFixedWidth@TDes8@@QAEXIW4TRadix@@H@Z @ 349 NONAME ; public: void __thiscall TDes8::NumFixedWidth(unsigned int,enum TRadix,int)
+	?ObjectFromHandle@DThread@@QAEPAVDObject@@H@Z @ 350 NONAME ; public: class DObject * __thiscall DThread::ObjectFromHandle(int)
+	?ObjectFromHandle@DThread@@QAEPAVDObject@@HH@Z @ 351 NONAME ; public: class DObject * __thiscall DThread::ObjectFromHandle(int,int)
+	?ObjectFromHandle@Kern@@SAPAVDObject@@PAVDThread@@HH@Z @ 352 NONAME ; public: static class DObject * __cdecl Kern::ObjectFromHandle(class DThread *,int,int)
+	?OneShot@NTimer@@QAEHH@Z @ 353 NONAME ; public: int __thiscall NTimer::OneShot(int)
+	?OneShot@NTimer@@QAEHHH@Z @ 354 NONAME ; public: int __thiscall NTimer::OneShot(int,int)
+	?OneShot@TTickLink@@QAEXHP6AXPAX@Z0@Z @ 355 NONAME ; public: void __thiscall TTickLink::OneShot(int,void (__cdecl*)(void *),void *)
+	?Open@RPropertyRef@@QAEHVTUid@@H@Z @ 356 NONAME ; public: int __thiscall RPropertyRef::Open(class TUid,int)
+	?OpenByFullName@DObjectCon@@QAEHAAPAVDObject@@ABVTDesC8@@@Z @ 357 NONAME ; public: int __thiscall DObjectCon::OpenByFullName(class DObject * &,class TDesC8 const &)
+	?OpenSharedChunk@Kern@@SAPAVDChunk@@PAVDThread@@HH@Z @ 358 NONAME ; public: static class DChunk * __cdecl Kern::OpenSharedChunk(class DThread *,int,int)
+	?OpenSharedChunk@Kern@@SAPAVDChunk@@PAVDThread@@PBXHAAH@Z @ 359 NONAME ; public: static class DChunk * __cdecl Kern::OpenSharedChunk(class DThread *,void const *,int,int &)
+	?Package@TSecurityPolicy@@QBE?AVTPtrC8@@XZ @ 360 NONAME ; public: class TPtrC8  __thiscall TSecurityPolicy::Package(void)const 
+	?PanicClient@TMessageBase@@QAEXABVTDesC8@@H@Z @ 361 NONAME ; public: void __thiscall TMessageBase::PanicClient(class TDesC8 const &,int)
+	?PanicCurrentThread@Kern@@SAXABVTDesC8@@H@Z @ 362 NONAME ; public: static void __cdecl Kern::PanicCurrentThread(class TDesC8 const &,int)
+	?Periodic@TTickLink@@QAEXHP6AXPAX@Z0@Z @ 363 NONAME ; public: void __thiscall TTickLink::Periodic(int,void (__cdecl*)(void *),void *)
+	?Poll@TMessageQue@@QAEPAVTMessageBase@@XZ @ 364 NONAME ; public: class TMessageBase * __thiscall TMessageQue::Poll(void)
+	?PollingWait@Kern@@SAHP6AHPAX@Z0HH@Z @ 365 NONAME ; public: static int __cdecl Kern::PollingWait(int (__cdecl*)(void *),void *,int,int)
+	?Pos3D@TRawEvent@@QBE?AVTPoint3D@@XZ @ 366 NONAME ; public: class TPoint3D  __thiscall TRawEvent::Pos3D(void)const 
+	?Pos@TRawEvent@@QBE?AVTPoint@@XZ @ 367 NONAME ; public: class TPoint  __thiscall TRawEvent::Pos(void)const 
+	?PowerDownDone@DPowerHandler@@QAEXXZ @ 368 NONAME ; public: void __thiscall DPowerHandler::PowerDownDone(void)
+	?PowerGood@Kern@@SAHXZ @ 369 NONAME ; public: static int __cdecl Kern::PowerGood(void)
+	?PowerModel@Kern@@SAPAVDPowerModel@@XZ @ 370 NONAME ; public: static class DPowerModel * __cdecl Kern::PowerModel(void)
+	?PowerUpDone@DPowerHandler@@QAEXXZ @ 371 NONAME ; public: void __thiscall DPowerHandler::PowerUpDone(void)
+	?PreemptionPoint@NKern@@SAHXZ @ 372 NONAME ; public: static int __cdecl NKern::PreemptionPoint(void)
+	?Printf@Kern@@SAXPBDZZ @ 373 NONAME ; public: static void __cdecl Kern::Printf(char const *,...)
+	?ProcessCreate@Kern@@SAHAAPAVDProcess@@AAVTProcessCreateInfo@@AAPAVHBuf8@@PAH@Z @ 374 NONAME ; public: static int __cdecl Kern::ProcessCreate(class DProcess * &,class TProcessCreateInfo &,class HBuf8 * &,int *)
+	?ProcessFromId@Kern@@SAPAVDProcess@@I@Z @ 375 NONAME ; public: static class DProcess * __cdecl Kern::ProcessFromId(unsigned int)
+	?Ptr@TDesC8@@QBEPBEXZ @ 376 NONAME ; public: unsigned char const * __thiscall TDesC8::Ptr(void)const 
+	?Ptr@TScheduler@@SAPAV1@XZ @ 377 NONAME ; public: static class TScheduler * __cdecl TScheduler::Ptr(void)
+	?QueryVersionSupported@DLogicalDevice@@UBEHABVTVersion@@@Z @ 378 NONAME ; public: virtual int __thiscall DLogicalDevice::QueryVersionSupported(class TVersion const &)const 
+	?QueryVersionSupported@DPhysicalDevice@@UBEHABVTVersion@@@Z @ 379 NONAME ; public: virtual int __thiscall DPhysicalDevice::QueryVersionSupported(class TVersion const &)const 
+	?QueryVersionSupported@Kern@@SAHABVTVersion@@0@Z @ 380 NONAME ; public: static int __cdecl Kern::QueryVersionSupported(class TVersion const &,class TVersion const &)
+	?Random@Kern@@SAKXZ @ 381 NONAME ; public: static unsigned long __cdecl Kern::Random(void)
+	?RandomSalt@Kern@@SAXK@Z @ 382 NONAME ; public: static void __cdecl Kern::RandomSalt(unsigned long)
+	?ReAlloc@HBuf8@@QAEPAV1@H@Z @ 383 NONAME ; public: class HBuf8 * __thiscall HBuf8::ReAlloc(int)
+	?ReAlloc@Kern@@SAPAXPAXHH@Z @ 384 NONAME ; public: static void * __cdecl Kern::ReAlloc(void *,int,int)
+	?Ready@NThreadBase@@QAEXXZ @ 385 NONAME ; public: void __thiscall NThreadBase::Ready(void)
+	?Receive@TMessageQue@@QAEXXZ @ 386 NONAME ; public: void __thiscall TMessageQue::Receive(void)
+	?RecordIntLatency@NKern@@SAXHH@Z @ 387 NONAME ; public: static void __cdecl NKern::RecordIntLatency(int,int)
+	?RecordThreadLatency@NKern@@SAXH@Z @ 388 NONAME ; public: static void __cdecl NKern::RecordThreadLatency(int)
+	?Register@DBatteryMonitor@@QAEXXZ @ 389 NONAME ; public: void __thiscall DBatteryMonitor::Register(void)
+	?Register@DPowerController@@QAEXXZ @ 390 NONAME ; public: void __thiscall DPowerController::Register(void)
+	?Register@DPowerHal@@QAEXXZ @ 391 NONAME ; public: void __thiscall DPowerHal::Register(void)
+	?Release@NThreadBase@@QAEXH@Z @ 392 NONAME ; public: void __thiscall NThreadBase::Release(int)
+	?ReleaseWait@DThread@@QAEHH@Z @ 393 NONAME ; public: int __thiscall DThread::ReleaseWait(int)
+	?Remove@DObjectCon@@QAEXPAVDObject@@@Z @ 394 NONAME ; public: void __thiscall DObjectCon::Remove(class DObject *)
+	?Remove@DObjectIx@@QAEHHAAPAVDObject@@AAPAX@Z @ 395 NONAME ABSENT ; public: int __thiscall DObjectIx::Remove(int,class DObject * &,void * &)
+	?Remove@DPowerHandler@@QAEXXZ @ 396 NONAME ; public: void __thiscall DPowerHandler::Remove(void)
+	?Remove@RArrayBase@@IAEXH@Z @ 397 NONAME ; protected: void __thiscall RArrayBase::Remove(int)
+	?Remove@RPointerArrayBase@@IAEXH@Z @ 398 NONAME ; protected: void __thiscall RPointerArrayBase::Remove(int)
+	?Remove@TCapabilitySet@@QAEXABV1@@Z @ 399 NONAME ; public: void __thiscall TCapabilitySet::Remove(class TCapabilitySet const &)
+	?Remove@TPriListBase@@QAEXPAVTPriListLink@@@Z @ 400 NONAME ; public: void __thiscall TPriListBase::Remove(class TPriListLink *)
+	?Remove@TThreadCleanup@@QAEXXZ @ 401 NONAME ; public: void __thiscall TThreadCleanup::Remove(void)
+	?RemoveCapability@TCapabilitySet@@QAEXW4TCapability@@@Z @ 402 NONAME ; public: void __thiscall TCapabilitySet::RemoveCapability(enum TCapability)
+	?RemoveHalEntry@Kern@@SAHH@Z @ 403 NONAME ; public: static int __cdecl Kern::RemoveHalEntry(int)
+	?RemoveHalEntry@Kern@@SAHHH@Z @ 404 NONAME ; public: static int __cdecl Kern::RemoveHalEntry(int,int)
+	?Request@DLogicalChannel@@UAEHHPAX0@Z @ 405 NONAME ; public: virtual int __thiscall DLogicalChannel::Request(int,void *,void *)
+	?RequestComplete@DThread@@QAEXAAPAVTRequestStatus@@H@Z @ 406 NONAME ABSENT ; public: void __thiscall DThread::RequestComplete(class TRequestStatus * &,int)
+	?RequestComplete@Kern@@SAXPAVDThread@@AAPAVTRequestStatus@@H@Z @ 407 NONAME ; public: static void __cdecl Kern::RequestComplete(class DThread *,class TRequestStatus * &,int)
+	?RequestSignal@NThreadBase@@QAEXXZ @ 408 NONAME ; public: void __thiscall NThreadBase::RequestSignal(void)
+	?RequestUserHandle@DObject@@UAEHPAVDThread@@W4TOwnerType@@@Z @ 409 NONAME ; public: virtual int __thiscall DObject::RequestUserHandle(class DThread *,enum TOwnerType)
+	?Reset@NFastSemaphore@@QAEXXZ @ 410 NONAME ; public: void __thiscall NFastSemaphore::Reset(void)
+	?Reset@RArrayBase@@IAEXXZ @ 411 NONAME ; protected: void __thiscall RArrayBase::Reset(void)
+	?Reset@RPointerArrayBase@@IAEXXZ @ 412 NONAME ; protected: void __thiscall RPointerArrayBase::Reset(void)
+	?Restart@Kern@@SAXH@Z @ 413 NONAME ; public: static void __cdecl Kern::Restart(int)
+	?RestoreInterrupts@NKern@@SAXH@Z @ 414 NONAME ; public: static void __cdecl NKern::RestoreInterrupts(int)
+	?Resume@NThreadBase@@QAEHXZ @ 415 NONAME ; public: int __thiscall NThreadBase::Resume(void)
+	?Right@TDesC8@@QBE?AVTPtrC8@@H@Z @ 416 NONAME ; public: class TPtrC8  __thiscall TDesC8::Right(int)const 
+	?RotateReadyList@NKern@@SAXH@Z @ 417 NONAME ; public: static void __cdecl NKern::RotateReadyList(int)
+	?Rotation@TRawEvent@@QBEHXZ @ 418 NONAME ; public: int __thiscall TRawEvent::Rotation(void)const 
+	?RoundToChunkSize@Kern@@SAKK@Z @ 419 NONAME ; public: static unsigned long __cdecl Kern::RoundToChunkSize(unsigned long)
+	?RoundToPageSize@Kern@@SAKK@Z @ 420 NONAME ; public: static unsigned long __cdecl Kern::RoundToPageSize(unsigned long)
+	?SafeClose@Kern@@SAXAAPAVDObject@@PAX@Z @ 421 NONAME ; public: static void __cdecl Kern::SafeClose(class DObject * &,void *)
+	__old_SafeDec @ 422 NONAME ; public: static int __cdecl NKern::SafeDec(int &)
+	__old_SafeInc @ 423 NONAME ; public: static int __cdecl NKern::SafeInc(int &)
+	?SafeReAlloc@Kern@@SAHAAPAXHH@Z @ 424 NONAME ; public: static int __cdecl Kern::SafeReAlloc(void * &,int,int)
+	?SafeRead@Kern@@SAPAXPBXPAXH@Z @ 425 NONAME ; public: static void * __cdecl Kern::SafeRead(void const *,void *,int)
+	__old_SafeSwap8 @ 426 NONAME ; public: static unsigned char __cdecl NKern::SafeSwap8(unsigned char,unsigned char &)
+	__old_SafeSwap @ 427 NONAME ; public: static void * __cdecl NKern::SafeSwap(void *,void * &)
+	?SafeWrite@Kern@@SAPAXPAXPBXH@Z @ 428 NONAME ; public: static void * __cdecl Kern::SafeWrite(void *,void const *,int)
+	?ScanCode@TRawEvent@@QBEHXZ @ 429 NONAME ; public: int __thiscall TRawEvent::ScanCode(void)const 
+	?SelectiveFree@TBitMapAllocator@@QAEXHH@Z @ 430 NONAME ; public: void __thiscall TBitMapAllocator::SelectiveFree(int,int)
+	?SemaphoreCreate@Kern@@SAHAAPAVDSemaphore@@ABVTDesC8@@H@Z @ 431 NONAME ; public: static int __cdecl Kern::SemaphoreCreate(class DSemaphore * &,class TDesC8 const &,int)
+	?SemaphoreSignal@Kern@@SAXAAVDSemaphore@@@Z @ 432 NONAME ; public: static void __cdecl Kern::SemaphoreSignal(class DSemaphore &)
+	?SemaphoreWait@Kern@@SAHAAVDSemaphore@@H@Z @ 433 NONAME ; public: static int __cdecl Kern::SemaphoreWait(class DSemaphore &,int)
+	?Send@TMessageBase@@QAEXPAVTMessageQue@@@Z @ 434 NONAME ; public: void __thiscall TMessageBase::Send(class TMessageQue *)
+	?SendReceive@TMessageBase@@QAEHPAVTMessageQue@@@Z @ 435 NONAME ; public: int __thiscall TMessageBase::SendReceive(class TMessageQue *)
+	?Set@RPropertyRef@@QAEHABVTDesC8@@PAVDProcess@@@Z @ 436 NONAME ; public: int __thiscall RPropertyRef::Set(class TDesC8 const &,class DProcess *)
+	?Set@RPropertyRef@@QAEHHPAVDProcess@@@Z @ 437 NONAME ; public: int __thiscall RPropertyRef::Set(int,class DProcess *)
+	?Set@TRawEvent@@QAEXW4TType@1@@Z @ 438 NONAME ; public: void __thiscall TRawEvent::Set(enum TRawEvent::TType)
+	?Set@TRawEvent@@QAEXW4TType@1@H@Z @ 439 NONAME ; public: void __thiscall TRawEvent::Set(enum TRawEvent::TType,int)
+	?Set@TRawEvent@@QAEXW4TType@1@HH@Z @ 440 NONAME ; public: void __thiscall TRawEvent::Set(enum TRawEvent::TType,int,int)
+	?Set@TRawEvent@@QAEXW4TType@1@HHH@Z @ 441 NONAME ; public: void __thiscall TRawEvent::Set(enum TRawEvent::TType,int,int,int)
+	?Set@TRawEvent@@QAEXW4TType@1@HHHHHH@Z @ 442 NONAME ; public: void __thiscall TRawEvent::Set(enum TRawEvent::TType,int,int,int,int,int,int)
+	?Set@TSecurityPolicy@@QAEHABVTDesC8@@@Z @ 443 NONAME ; public: int __thiscall TSecurityPolicy::Set(class TDesC8 const &)
+	?SetAllSupported@TCapabilitySet@@QAEXXZ @ 444 NONAME ; public: void __thiscall TCapabilitySet::SetAllSupported(void)
+	?SetCurrentConsumption@DPowerHandler@@QAEXH@Z @ 445 NONAME ; public: void __thiscall DPowerHandler::SetCurrentConsumption(int)
+	?SetDfcQ@DLogicalChannel@@QAEXPAVTDfcQue@@@Z @ 446 NONAME ; public: void __thiscall DLogicalChannel::SetDfcQ(class TDfcQue *)
+	?SetEmpty@TCapabilitySet@@QAEXXZ @ 447 NONAME ; public: void __thiscall TCapabilitySet::SetEmpty(void)
+	?SetLength@TDes8@@QAEXH@Z @ 448 NONAME ; public: void __thiscall TDes8::SetLength(int)
+	?SetMax@TDes8@@QAEXXZ @ 449 NONAME ; public: void __thiscall TDes8::SetMax(void)
+	?SetName@DObject@@QAEHPBVTDesC8@@@Z @ 450 NONAME ; public: int __thiscall DObject::SetName(class TDesC8 const *)
+	?SetOwner@DObject@@QAEHPAV1@@Z @ 451 NONAME ; public: int __thiscall DObject::SetOwner(class DObject *)
+	?SetOwner@NFastSemaphore@@QAEXPAVNThreadBase@@@Z @ 452 NONAME ; public: void __thiscall NFastSemaphore::SetOwner(class NThreadBase *)
+	?SetPriority@NThreadBase@@QAEXH@Z @ 453 NONAME ; public: void __thiscall NThreadBase::SetPriority(int)
+	?SetProperties@NThread@@SAXHH@Z @ 454 NONAME ; public: static void __cdecl NThread::SetProperties(int,int)
+	?SetRotation@TRawEvent@@QAEXW4TType@1@H@Z @ 455 NONAME ; public: void __thiscall TRawEvent::SetRotation(enum TRawEvent::TType,int)
+	?SetSystemTime@Kern@@SAHAB_JI@Z @ 456 NONAME ; public: static int __cdecl Kern::SetSystemTime(__int64 const &,unsigned int)
+	?SetThreadPriority@DThread@@QAEXH@Z @ 457 NONAME ; public: void __thiscall DThread::SetThreadPriority(int)
+	?SetThreadPriority@Kern@@SAHHPAVDThread@@@Z @ 458 NONAME ; public: static int __cdecl Kern::SetThreadPriority(int,class DThread *)
+	?SetTilt@TRawEvent@@QAEXW4TType@1@HH@Z @ 459 NONAME ; public: void __thiscall TRawEvent::SetTilt(enum TRawEvent::TType,int,int)
+	?Signal@NFastMutex@@QAEXXZ @ 460 NONAME ; public: void __thiscall NFastMutex::Signal(void)
+	?Signal@NFastSemaphore@@QAEXXZ @ 461 NONAME ; public: void __thiscall NFastSemaphore::Signal(void)
+	?Signal@TInternalRamDrive@@SAXXZ @ 462 NONAME ; public: static void __cdecl TInternalRamDrive::Signal(void)
+	?SignalN@NFastSemaphore@@QAEXH@Z @ 463 NONAME ; public: void __thiscall NFastSemaphore::SignalN(int)
+	?Size@TInternalRamDrive@@SAHXZ @ 464 NONAME ; public: static int __cdecl TInternalRamDrive::Size(void)
+	?Sleep@NKern@@SAXK@Z @ 465 NONAME ; public: static void __cdecl NKern::Sleep(unsigned long)
+	?Start@TInactivityLink@@QAEHHP6AXPAX@Z0@Z @ 466 NONAME ; public: int __thiscall TInactivityLink::Start(int,void (__cdecl*)(void *),void *)
+	?StartOfInterrupt@@YAXXZ @ 467 NONAME ; void __cdecl StartOfInterrupt(void)
+	?Subscribe@RPropertyRef@@QAEHAAVTPropertySubsRequest@@PAVDProcess@@@Z @ 468 NONAME ; public: int __thiscall RPropertyRef::Subscribe(class TPropertySubsRequest &,class DProcess *)
+	?SuperPage@Kern@@SAAAVTSuperPage@@XZ @ 469 NONAME ; public: static class TSuperPage & __cdecl Kern::SuperPage(void)
+	?Suspend@NThreadBase@@QAEHH@Z @ 470 NONAME ; public: int __thiscall NThreadBase::Suspend(int)
+	?SvMsgQue@Kern@@SAPAVTDfcQue@@XZ @ 471 NONAME ; public: static class TDfcQue * __cdecl Kern::SvMsgQue(void)
+	?SyncMemoryAfterDmaRead@Cache@@SAXKI@Z @ 472 NONAME ; public: static void __cdecl Cache::SyncMemoryAfterDmaRead(unsigned long,unsigned int)
+	?SyncMemoryBeforeDmaRead@Cache@@SAXKI@Z @ 473 NONAME ; public: static void __cdecl Cache::SyncMemoryBeforeDmaRead(unsigned long,unsigned int)
+	?SyncMemoryBeforeDmaRead@Cache@@SAXKIK@Z @ 474 NONAME ; public: static void __cdecl Cache::SyncMemoryBeforeDmaRead(unsigned long,unsigned int,unsigned long)
+	?SyncMemoryBeforeDmaWrite@Cache@@SAXKI@Z @ 475 NONAME ; public: static void __cdecl Cache::SyncMemoryBeforeDmaWrite(unsigned long,unsigned int)
+	?SyncMemoryBeforeDmaWrite@Cache@@SAXKIK@Z @ 476 NONAME ; public: static void __cdecl Cache::SyncMemoryBeforeDmaWrite(unsigned long,unsigned int,unsigned long)
+	?SystemTime@Kern@@SA_JXZ @ 477 NONAME ; public: static __int64 __cdecl Kern::SystemTime(void)
+	?TheAsic@Arch@@SAPAVAsic@@XZ @ 478 NONAME ; public: static class Asic * __cdecl Arch::TheAsic(void)
+	?Thread@RMessageK@@QBEPAVDThread@@XZ @ 479 NONAME ; public: class DThread * __thiscall RMessageK::Thread(void)const 
+	?ThreadCreate@Kern@@SAHAAUSThreadCreateInfo@@@Z @ 480 NONAME ; public: static int __cdecl Kern::ThreadCreate(struct SThreadCreateInfo &)
+	?ThreadCreate@NKern@@SAHPAVNThread@@AAUSNThreadCreateInfo@@@Z @ 481 NONAME ; public: static int __cdecl NKern::ThreadCreate(class NThread *,struct SNThreadCreateInfo &)
+	?ThreadDesRead@Kern@@SAHPAVDThread@@PBXAAVTDes8@@HH@Z @ 482 NONAME ; public: static int __cdecl Kern::ThreadDesRead(class DThread *,void const *,class TDes8 &,int,int)
+	?ThreadDesWrite@Kern@@SAHPAVDThread@@PAXABVTDesC8@@HH0@Z @ 483 NONAME ; public: static int __cdecl Kern::ThreadDesWrite(class DThread *,void *,class TDesC8 const &,int,int,class DThread *)
+	?ThreadEnterCS@NKern@@SAXXZ @ 484 NONAME ; public: static void __cdecl NKern::ThreadEnterCS(void)
+	?ThreadForceResume@NKern@@SAHPAVNThread@@@Z @ 485 NONAME ; public: static int __cdecl NKern::ThreadForceResume(class NThread *)
+	?ThreadForceResume@NKern@@SAHPAVNThread@@PAVNFastMutex@@@Z @ 486 NONAME ; public: static int __cdecl NKern::ThreadForceResume(class NThread *,class NFastMutex *)
+	?ThreadFromId@Kern@@SAPAVDThread@@I@Z @ 487 NONAME ; public: static class DThread * __cdecl Kern::ThreadFromId(unsigned int)
+	?ThreadGetDesInfo@Kern@@SAHPAVDThread@@PBXAAH2AAPAEH@Z @ 488 NONAME ; public: static int __cdecl Kern::ThreadGetDesInfo(class DThread *,void const *,int &,int &,unsigned char * &,int)
+	?ThreadGetDesLength@Kern@@SAHPAVDThread@@PBX@Z @ 489 NONAME ; public: static int __cdecl Kern::ThreadGetDesLength(class DThread *,void const *)
+	?ThreadGetDesMaxLength@Kern@@SAHPAVDThread@@PBX@Z @ 490 NONAME ; public: static int __cdecl Kern::ThreadGetDesMaxLength(class DThread *,void const *)
+	?ThreadKill@Kern@@SAXPAVDThread@@W4TExitType@@HABVTDesC8@@@Z @ 491 NONAME ; public: static void __cdecl Kern::ThreadKill(class DThread *,enum TExitType,int,class TDesC8 const &)
+	?ThreadKill@NKern@@SAXPAVNThread@@@Z @ 492 NONAME ; public: static void __cdecl NKern::ThreadKill(class NThread *)
+	?ThreadKill@NKern@@SAXPAVNThread@@PAVNFastMutex@@@Z @ 493 NONAME ; public: static void __cdecl NKern::ThreadKill(class NThread *,class NFastMutex *)
+	?ThreadLeaveCS@NKern@@SAXXZ @ 494 NONAME ; public: static void __cdecl NKern::ThreadLeaveCS(void)
+	?ThreadRawRead@Kern@@SAHPAVDThread@@PBXPAXH@Z @ 495 NONAME ; public: static int __cdecl Kern::ThreadRawRead(class DThread *,void const *,void *,int)
+	?ThreadRawWrite@Kern@@SAHPAVDThread@@PAXPBXH0@Z @ 496 NONAME ; public: static int __cdecl Kern::ThreadRawWrite(class DThread *,void *,void const *,int,class DThread *)
+	?ThreadRelease@NKern@@SAXPAVNThread@@H@Z @ 497 NONAME ; public: static void __cdecl NKern::ThreadRelease(class NThread *,int)
+	?ThreadRelease@NKern@@SAXPAVNThread@@HPAVNFastMutex@@@Z @ 498 NONAME ; public: static void __cdecl NKern::ThreadRelease(class NThread *,int,class NFastMutex *)
+	?ThreadRequestSignal@NKern@@SAXPAVNThread@@@Z @ 499 NONAME ; public: static void __cdecl NKern::ThreadRequestSignal(class NThread *)
+	?ThreadRequestSignal@NKern@@SAXPAVNThread@@H@Z @ 500 NONAME ; public: static void __cdecl NKern::ThreadRequestSignal(class NThread *,int)
+	?ThreadRequestSignal@NKern@@SAXPAVNThread@@PAVNFastMutex@@@Z @ 501 NONAME ; public: static void __cdecl NKern::ThreadRequestSignal(class NThread *,class NFastMutex *)
+	?ThreadResume@Kern@@SAXAAVDThread@@@Z @ 502 NONAME ; public: static void __cdecl Kern::ThreadResume(class DThread &)
+	?ThreadResume@NKern@@SAHPAVNThread@@@Z @ 503 NONAME ; public: static int __cdecl NKern::ThreadResume(class NThread *)
+	?ThreadResume@NKern@@SAHPAVNThread@@PAVNFastMutex@@@Z @ 504 NONAME ; public: static int __cdecl NKern::ThreadResume(class NThread *,class NFastMutex *)
+	?ThreadSetPriority@NKern@@SAXPAVNThread@@H@Z @ 505 NONAME ; public: static void __cdecl NKern::ThreadSetPriority(class NThread *,int)
+	?ThreadSetPriority@NKern@@SAXPAVNThread@@HPAVNFastMutex@@@Z @ 506 NONAME ; public: static void __cdecl NKern::ThreadSetPriority(class NThread *,int,class NFastMutex *)
+	?ThreadSuspend@Kern@@SAXAAVDThread@@H@Z @ 507 NONAME ; public: static void __cdecl Kern::ThreadSuspend(class DThread &,int)
+	?ThreadSuspend@NKern@@SAHPAVNThread@@H@Z @ 508 NONAME ; public: static int __cdecl NKern::ThreadSuspend(class NThread *,int)
+	?Tick@NTimerQ@@QAEXXZ @ 509 NONAME ; public: void __thiscall NTimerQ::Tick(void)
+	?TickCount@Kern@@SAKXZ @ 510 NONAME ; public: static unsigned long __cdecl Kern::TickCount(void)
+	?TickCount@NKern@@SAKXZ @ 511 NONAME ; public: static unsigned long __cdecl NKern::TickCount(void)
+	?TickPeriod@Kern@@SAHXZ @ 512 NONAME ; public: static int __cdecl Kern::TickPeriod(void)
+	?TickPeriod@NKern@@SAHXZ @ 513 NONAME ; public: static int __cdecl NKern::TickPeriod(void)
+	?Tilt@TRawEvent@@QBE?AVTAngle3D@@XZ @ 514 NONAME ; public: class TAngle3D  __thiscall TRawEvent::Tilt(void)const 
+	?TimerAddress@NTimerQ@@SAPAXXZ @ 515 NONAME ; public: static void * __cdecl NTimerQ::TimerAddress(void)
+	?TimerDfcQ@Kern@@SAPAVTDfcQue@@XZ @ 516 NONAME ; public: static class TDfcQue * __cdecl Kern::TimerDfcQ(void)
+	?TimerTicks@NKern@@SAHH@Z @ 517 NONAME ; public: static int __cdecl NKern::TimerTicks(int)
+	?TraceAppendFullName@DObject@@QAEXAAVTDes8@@H@Z @ 518 NONAME ; public: void __thiscall DObject::TraceAppendFullName(class TDes8 &,int)
+	?TraceAppendName@DObject@@QAEXAAVTDes8@@H@Z @ 519 NONAME ; public: void __thiscall DObject::TraceAppendName(class TDes8 &,int)
+	?Trap@TExcTrap@@QAEHP6AXPAV1@PAVDThread@@PAX@Z@Z @ 520 NONAME ; public: int __thiscall TExcTrap::Trap(void (__cdecl*)(class TExcTrap *,class DThread *,void *))
+	?Trap@TExcTrap@@QAEHXZ @ 521 NONAME ; public: int __thiscall TExcTrap::Trap(void)
+	?TraverseCodeSegs@DProcess@@QAEHPAUSDblQue@@PAVDCodeSeg@@KK@Z @ 522 NONAME ; public: int __thiscall DProcess::TraverseCodeSegs(struct SDblQue *,class DCodeSeg *,unsigned long,unsigned long)
+	?Union@TCapabilitySet@@QAEXABV1@@Z @ 523 NONAME ; public: void __thiscall TCapabilitySet::Union(class TCapabilitySet const &)
+	?Unlock@NKern@@SAXXZ @ 524 NONAME ; public: static void __cdecl NKern::Unlock(void)
+	?Unlock@TInternalRamDrive@@SAXXZ @ 525 NONAME ; public: static void __cdecl TInternalRamDrive::Unlock(void)
+	?UnlockSystem@NKern@@SAXXZ @ 526 NONAME ; public: static void __cdecl NKern::UnlockSystem(void)
+	?UnmarkAll@DCodeSeg@@SAXK@Z @ 527 NONAME ; public: static void __cdecl DCodeSeg::UnmarkAll(unsigned long)
+	?UserMap@DSharedIoBuffer@@QAEHPAVDProcess@@@Z @ 528 NONAME ; public: int __thiscall DSharedIoBuffer::UserMap(class DProcess *)
+	?UserToKernel@DSharedIoBuffer@@QAEKKK@Z @ 529 NONAME ; public: unsigned long __thiscall DSharedIoBuffer::UserToKernel(unsigned long,unsigned long)
+	?UserUnmap@DSharedIoBuffer@@QAEHXZ @ 530 NONAME ; public: int __thiscall DSharedIoBuffer::UserUnmap(void)
+	?ValidateFullName@Kern@@SAHABVTDesC8@@@Z @ 531 NONAME ; public: static int __cdecl Kern::ValidateFullName(class TDesC8 const &)
+	?ValidateName@Kern@@SAHABVTDesC8@@@Z @ 532 NONAME ; public: static int __cdecl Kern::ValidateName(class TDesC8 const &)
+	?VerifyHandle@DCodeSeg@@SAPAV1@PAX@Z @ 533 NONAME ; public: static class DCodeSeg * __cdecl DCodeSeg::VerifyHandle(void *)
+	?Wait@NFastMutex@@QAEXXZ @ 534 NONAME ; public: void __thiscall NFastMutex::Wait(void)
+	?Wait@NFastSemaphore@@QAEXXZ @ 535 NONAME ; public: void __thiscall NFastSemaphore::Wait(void)
+	?Wait@TInternalRamDrive@@SAXXZ @ 536 NONAME ; public: static void __cdecl TInternalRamDrive::Wait(void)
+	?WaitForAnyRequest@NKern@@SAXXZ @ 537 NONAME ; public: static void __cdecl NKern::WaitForAnyRequest(void)
+	?WaitForRequest@Kern@@SAXAAVTRequestStatus@@@Z @ 538 NONAME ; public: static void __cdecl Kern::WaitForRequest(class TRequestStatus &)
+	?WakeupEvent@DPowerController@@QAEXXZ @ 539 NONAME ; public: void __thiscall DPowerController::WakeupEvent(void)
+	?Zero@TDes8@@QAEXXZ @ 540 NONAME ; public: void __thiscall TDes8::Zero(void)
+	NKFault @ 541 NONAME
+	memclr @ 542 NONAME
+	memcompare @ 543 NONAME
+	memcpy @ 544 NONAME
+	memicmp @ 545 NONAME
+	memmove @ 546 NONAME
+	memset @ 547 NONAME
+	wordmove @ 548 NONAME
+	?SetTraceHandler@Kern@@SAP6AHABVTDesC8@@W4TTraceSource@@@ZP6AH01@Z@Z @ 549 NONAME ; public: static int (__cdecl*__cdecl Kern::SetTraceHandler(int (__cdecl*)(class TDesC8 const &,enum TTraceSource)))(class TDesC8 const &,enum TTraceSource)
+	?AddTaskEvent@EMI@@SAHAAUTTaskEventRecord@@@Z @ 550 NONAME ; int EMI::AddTaskEvent(struct TTaskEventRecord &)
+	?AfterIdle@EMI@@SAXH@Z @ 551 NONAME ; void EMI::AfterIdle(int)
+	?EnterIdle@EMI@@SAXXZ @ 552 NONAME ; void EMI::EnterIdle(void)
+	?GetDfcTriggerTag@EMI@@SAKXZ @ 553 NONAME ; unsigned long EMI::GetDfcTriggerTag(void)
+	?GetIdleThread@EMI@@SAPAVNThread@@XZ @ 554 NONAME ; class NThread * EMI::GetIdleThread(void)
+	?GetMask@EMI@@SAKXZ @ 555 NONAME ; unsigned long EMI::GetMask(void)
+	?GetSigmaThread@EMI@@SAPAVNThread@@XZ @ 556 NONAME ; class NThread * EMI::GetSigmaThread(void)
+	?GetState@EMI@@SAKXZ @ 557 NONAME ; unsigned long EMI::GetState(void)
+	?GetTaskEvent@EMI@@SAHAAUTTaskEventRecord@@@Z @ 558 NONAME ; int EMI::GetTaskEvent(struct TTaskEventRecord &)
+	?GetThreadLoggable@EMI@@SAHPAVNThread@@@Z @ 559 NONAME ; int EMI::GetThreadLoggable(class NThread *)
+	?GetThreadTag@EMI@@SAKPAVNThread@@@Z @ 560 NONAME ; unsigned long EMI::GetThreadTag(class NThread *)
+	?GetThreadVemsData@EMI@@SAPAXPAVNThread@@@Z @ 561 NONAME ; void * EMI::GetThreadVemsData(class NThread *)
+	?LeaveIdle@EMI@@SAXXZ @ 562 NONAME ; void EMI::LeaveIdle(void)
+	?NThreadToDThread@Kern@@SAPAVDThread@@PAVNThread@@@Z @ 563 NONAME ; class DThread * Kern::NThreadToDThread(class NThread *)
+	?SetDfc@EMI@@SAXPAVTDfc@@K@Z @ 564 NONAME ; void EMI::SetDfc(class TDfc *, unsigned long)
+	?SetMask@EMI@@SAXK@Z @ 565 NONAME ; void EMI::SetMask(unsigned long)
+	?SetState@EMI@@SAXK@Z @ 566 NONAME ; void EMI::SetState(unsigned long)
+	?SetThreadLoggable@EMI@@SAXPAVNThread@@H@Z @ 567 NONAME ; void EMI::SetThreadLoggable(class NThread *, int)
+	?SetThreadTag@EMI@@SAXPAVNThread@@K@Z @ 568 NONAME ; void EMI::SetThreadTag(class NThread *, unsigned long)
+	?SetThreadVemsData@EMI@@SAXPAVNThread@@PAX@Z @ 569 NONAME ; void EMI::SetThreadVemsData(class NThread *, void *)
+	?TaskEventLogging@EMI@@SAHHH@Z @ 570 NONAME ; int EMI::TaskEventLogging(int, int)
+	?TaskEventLogging@EMI@@SAHHHP6AHPAVNThread@@@ZP6AX0@Z@Z @ 571 NONAME ; int EMI::TaskEventLogging(int, int, int (*)(class NThread *), void (*)(class NThread *))
+	?ThreadMonitors@EMI@@SAXP6AHPAVNThread@@@ZP6AX0@Z@Z @ 572 NONAME ; void EMI::ThreadMonitors(int (*)(class NThread *), void (*)(class NThread *))
+	?SetHook@Kern@@CAP6AHXZW4TKernelHookType@@P6AHXZH@Z @ 573 NONAME ; int (*)(void) Kern::SetHook(enum TKernelHookType, int (*)(void), int)
+	?FindReverse@RArrayBase@@IBEHPBX@Z @ 574 NONAME ; int RArrayBase::FindReverse(void const *) const
+	?FindReverse@RArrayBase@@IBEHPBXP6AH00@Z@Z @ 575 NONAME ; int RArrayBase::FindReverse(void const *, int (*)(void const *, void const *)) const
+	?FindReverse@RPointerArrayBase@@IBEHPBX@Z @ 576 NONAME ; int RPointerArrayBase::FindReverse(void const *) const
+	?FindReverse@RPointerArrayBase@@IBEHPBXP6AH00@Z@Z @ 577 NONAME ; int RPointerArrayBase::FindReverse(void const *, int (*)(void const *, void const *)) const
+	?Out@BTrace@@SAHKKKK@Z @ 578 NONAME ; public: static int __cdecl BTrace::Out(unsigned long,unsigned long,unsigned long,unsigned long)
+	?OutBig@BTrace@@SAHKKPBXH@Z @ 579 NONAME ; public: static int __cdecl BTrace::OutBig(unsigned long,unsigned long,void const *,int)
+	?OutN@BTrace@@SAHKKKPBXH@Z @ 580 NONAME ; public: static int __cdecl BTrace::OutN(unsigned long,unsigned long,unsigned long,void const *,int)
+	?OutNX@BTrace@@SAHKKKPBXH@Z @ 581 NONAME ; public: static int __cdecl BTrace::OutNX(unsigned long,unsigned long,unsigned long,void const *,int)
+	?OutX@BTrace@@SAHKKKK@Z @ 582 NONAME ; public: static int __cdecl BTrace::OutX(unsigned long,unsigned long,unsigned long,unsigned long)
+	?Prime@BTrace@@SAXH@Z @ 583 NONAME ; public: static void __cdecl BTrace::Prime(int)
+	?SetFilter@BTrace@@SAHIH@Z @ 584 NONAME ; public: static int __cdecl BTrace::SetFilter(unsigned int,int)
+	?SetHandler@BTrace@@SAP6AHKKKKKKKK@ZP6AHKKKKKKKK@Z@Z @ 585 NONAME ; public: static int (__cdecl*__cdecl BTrace::SetHandler(int (__cdecl*)(unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long)))(unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long)
+	?SetTextTraceMode@Kern@@SAIII@Z @ 586 NONAME ; public: static unsigned int __cdecl Kern::SetTextTraceMode(unsigned int,unsigned int)
+	?RawAdd@TDfc@@QAEHXZ @ 587 NONAME ; public: int __thiscall TDfc::RawAdd(void)
+	__old_LockedDec64 @ 588 NONAME ; long long NKern::LockedDec(long long &)
+	__old_LockedInc64 @ 589 NONAME ; long long NKern::LockedInc(long long &)
+	?KHeapMinCellSize@@3HB @ 590 NONAME ; int const  KHeapMinCellSize
+	?GetThresholds@Cache@@SAHAAUTCacheThresholds@@I@Z @ 591 NONAME ; public: static int __cdecl Cache::GetThresholds(struct TCacheThresholds &,unsigned int)
+	?SetThresholds@Cache@@SAHABUTCacheThresholds@@I@Z @ 592 NONAME ; public: static int __cdecl Cache::SetThresholds(struct TCacheThresholds const &,unsigned int)
+	?KHeapShrinkHysRatio@@3HB @ 593 NONAME ; int const  KHeapShrinkHysRatio
+	?InstallLogicalDevice@Kern@@SAHPAVDLogicalDevice@@@Z @ 594 NONAME ; int Kern::InstallLogicalDevice(class DLogicalDevice *)
+	?InstallPhysicalDevice@Kern@@SAHPAVDPhysicalDevice@@@Z @ 595 NONAME ; int Kern::InstallPhysicalDevice(class DPhysicalDevice *)
+	?OutFiltered@BTrace@@SAHKKKK@Z @ 596 NONAME ; public: static int __cdecl BTrace::OutFiltered(unsigned long,unsigned long,unsigned long,unsigned long)
+	?OutFilteredBig@BTrace@@SAHKKPBXH@Z @ 597 NONAME ; public: static int __cdecl BTrace::OutFilteredBig(unsigned long,unsigned long,void const *,int)
+	?OutFilteredN@BTrace@@SAHKKKPBXH@Z @ 598 NONAME ; public: static int __cdecl BTrace::OutFilteredN(unsigned long,unsigned long,unsigned long,void const *,int)
+	?OutFilteredNX@BTrace@@SAHKKKPBXH@Z @ 599 NONAME ; public: static int __cdecl BTrace::OutFilteredNX(unsigned long,unsigned long,unsigned long,void const *,int)
+	?OutFilteredX@BTrace@@SAHKKKK@Z @ 600 NONAME ; public: static int __cdecl BTrace::OutFilteredX(unsigned long,unsigned long,unsigned long,unsigned long)
+	?Filter2@BTrace@@SAHAAPAKAAH@Z @ 601 NONAME ; public: static int __cdecl BTrace::Filter2(unsigned long * &,int &)
+	?SetFilter2@BTrace@@SAHKH@Z @ 602 NONAME ; public: static int __cdecl BTrace::SetFilter2(unsigned long,int)
+	?SetFilter2@BTrace@@SAHPBKH@Z @ 603 NONAME ; public: static int __cdecl BTrace::SetFilter2(unsigned long const *,int)
+	?SetFilter2@BTrace@@SAHH@Z @ 604 NONAME ; public: static int __cdecl BTrace::SetFilter2(int)
+	?CheckFilter2@BTrace@@SAHKK@Z @ 605 NONAME ; public: static int __cdecl BTrace::CheckFilter2(unsigned long,unsigned long)
+	?CheckFilter@BTrace@@SAHK@Z @ 606 NONAME ; public: static int __cdecl BTrace::CheckFilter(unsigned long)
+	?AddEvent@Kern@@SAHABVTRawEvent@@H@Z @ 607 NONAME ; int Kern::AddEvent(class TRawEvent const &, int)
+	??0RArrayBase@@IAE@HPAXH@Z @ 608 NONAME ; protected: __thiscall RArrayBase::RArrayBase(int,void *,int)
+	?Destroy@TDynamicDfcQue@@QAEXXZ @ 609 NONAME ; public: void __thiscall TDynamicDfcQue::Destroy(void)
+	?DynamicDfcQCreate@Kern@@SAHAAPAVTDynamicDfcQue@@HABVTDesC8@@@Z @ 610 NONAME ; public: static int __cdecl Kern::DynamicDfcQCreate(class TDynamicDfcQue * &,int,class TDesC8 const &)
+	?SystemTimeSecure@Kern@@SA_JXZ @ 611 NONAME ; public: static __int64 __cdecl Kern::SystemTimeSecure(void)
+	?OneShot@NTimer@@QAEHHAAVTDfc@@@Z @ 612 NONAME ; public: int __thiscall NTimer::OneShot(int,class TDfc &)
+	??0NFastMutex@@QAE@XZ @ 613 NONAME ; public: __thiscall NFastMutex::NFastMutex(void)
+	??0TSpinLock@@QAE@I@Z @ 614 NONAME ; public: __thiscall TSpinLock::TSpinLock(unsigned int)
+	?AddHead@TPriListBase@@QAEXPAVTPriListLink@@@Z @ 615 NONAME ; public: void __thiscall TPriListBase::AddHead(class TPriListLink *)
+	__old_AddIfGe @ 616 NONAME ; public: static int __cdecl NKern::AddIfGe(int &,int,int)
+	__old_AddIfLt @ 617 NONAME ; public: static int __cdecl NKern::AddIfLt(int &,int,int)
+	__old_CompareAndSwap16 @ 618 NONAME ; public: static int __cdecl NKern::CompareAndSwap16(unsigned short &,unsigned short,unsigned short)
+	__old_CompareAndSwap8 @ 619 NONAME ; public: static int __cdecl NKern::CompareAndSwap8(unsigned char &,unsigned char,unsigned char)
+	__old_CompareAndSwap @ 620 NONAME ; public: static int __cdecl NKern::CompareAndSwap(void * &,void *,void *)
+	?CpuIdleHandler@NKern@@SAPAUSCpuIdleHandler@@XZ @ 621 NONAME ; public: static struct SCpuIdleHandler * __cdecl NKern::CpuIdleHandler(void)
+	?CurrentCpu@NKern@@SAHXZ @ 622 NONAME ; public: static int __cdecl NKern::CurrentCpu(void)
+	?DeferredExit@NKern@@SAXXZ @ 623 NONAME ; public: static void __cdecl NKern::DeferredExit(void)
+	?EndFreezeCpu@NKern@@SAXH@Z @ 624 NONAME ; public: static void __cdecl NKern::EndFreezeCpu(int)
+	?FMFlash@NKern@@SAHPAVNFastMutex@@@Z @ 625 NONAME ; public: static int __cdecl NKern::FMFlash(class NFastMutex *)
+	??0TRWSpinLock@@QAE@I@Z @ 626 NONAME ; public: __thiscall TRWSpinLock::TRWSpinLock(unsigned int)
+	?EnableAllInterrupts@NKern@@SAXXZ @ 627 NONAME ; public: static void __cdecl NKern::EnableAllInterrupts(void)
+	?FreezeCpu@NKern@@SAHXZ @ 628 NONAME ; public: static int __cdecl NKern::FreezeCpu(void)
+	?HeldByCurrentThread@NFastMutex@@QAEHXZ @ 629 NONAME ; public: int __thiscall NFastMutex::HeldByCurrentThread(void)
+	?HeldFastMutex@NKern@@SAPAVNFastMutex@@XZ @ 630 NONAME ; public: static class NFastMutex * __cdecl NKern::HeldFastMutex(void)
+	?KernelLocked@NKern@@SAHH@Z @ 631 NONAME ; public: static int __cdecl NKern::KernelLocked(int)
+	?LockC@NKern@@SAPAVNThread@@XZ @ 632 NONAME ; public: static class NThread * __cdecl NKern::LockC(void)
+	?LockIrqSave@TSpinLock@@QAEHXZ @ 633 NONAME ABSENT ; public: int __thiscall TSpinLock::LockIrqSave(void)
+	?LockOnly@TSpinLock@@QAEHXZ @ 634 NONAME ABSENT ; public: int __thiscall TSpinLock::LockOnly(void)
+	?LockPtr@BTrace@@SAPAVTSpinLock@@XZ @ 635 NONAME ; public: static class TSpinLock * __cdecl BTrace::LockPtr(void)
+	__old_LockedAdd64 @ 636 NONAME ; public: static __int64 __cdecl NKern::LockedAdd(__int64 &,__int64)
+	__old_LockedSetClear16 @ 637 NONAME ; public: static unsigned short __cdecl NKern::LockedSetClear16(unsigned short &,unsigned short,unsigned short)
+	?NumberOfCpus@NKern@@SAHXZ @ 638 NONAME ; public: static int __cdecl NKern::NumberOfCpus(void)
+	?QueueOnIdle@TDfc@@QAEHXZ @ 639 NONAME ; public: int __thiscall TDfc::QueueOnIdle(void)
+	__old_SafeSwap16 @ 640 NONAME ; public: static unsigned short __cdecl NKern::SafeSwap16(unsigned short,unsigned short &)
+	?ThreadSetCpuAffinity@NKern@@SAKPAVNThread@@K@Z @ 641 NONAME ; public: static unsigned long __cdecl NKern::ThreadSetCpuAffinity(class NThread *,unsigned long)
+	?TimesliceTicks@NKern@@SAHK@Z @ 642 NONAME ; public: static int __cdecl NKern::TimesliceTicks(unsigned long)
+	?UnlockIrqRestore@TSpinLock@@QAEXXZ @ 643 NONAME ABSENT ; public: void __thiscall TSpinLock::UnlockIrqRestore(void)
+	?UnlockOnly@TSpinLock@@QAEXXZ @ 644 NONAME ABSENT ; public: void __thiscall TSpinLock::UnlockOnly(void)
+	?YieldTimeslice@NKern@@SAXXZ @ 645 NONAME ; public: static void __cdecl NKern::YieldTimeslice(void)
+	?CpuTimeMeasFreq@NKern@@SAKXZ @ 646 NONAME ; public: static unsigned long __cdecl NKern::CpuTimeMeasFreq(void)
+	?ThreadCpuTime@NKern@@SA_KPAVNThread@@@Z @ 647 NONAME ; public: static unsigned __int64 __cdecl NKern::ThreadCpuTime(class NThread *)
+	?RotateReadyList@NKern@@SAXHH@Z @ 648 NONAME ; public: static void __cdecl NKern::RotateReadyList(int, int)
+	?SetHandlers@BTrace@@SAXP6AHKKKKKKKK@ZP6AHW4TControl@1@PAX2@ZAAP6AHKKKKKKKK@ZAAP6AH122@Z@Z @ 649 NONAME ; public: static void __cdecl BTrace::SetHandlers(int (__cdecl*)(unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long),int (__cdecl*)(enum BTrace::TControl,void *,void *),int (__cdecl*&)(unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long,unsigned long),int (__cdecl*&)(enum BTrace::TControl,void *,void *))
+	?Control@BTrace@@SAHW4TControl@1@PAX1@Z @ 650 NONAME ; public: static int __cdecl BTrace::Control(enum BTrace::TControl,void *,void *)
+	?ProcessSecureId@Kern@@SA?AVTSecureId@@PAVDProcess@@@Z @ 651 NONAME ; public: static class TSecureId  __cdecl Kern::ProcessSecureId(class DProcess *)
+	?ProcessVendorId@Kern@@SA?AVTVendorId@@PAVDProcess@@@Z @ 652 NONAME ; public: static class TVendorId  __cdecl Kern::ProcessVendorId(class DProcess *)
+	?ThreadSecureId@Kern@@SA?AVTSecureId@@PAVDThread@@@Z @ 653 NONAME ; public: static class TSecureId  __cdecl Kern::ThreadSecureId(class DThread *)
+	?ThreadVendorId@Kern@@SA?AVTVendorId@@PAVDThread@@@Z @ 654 NONAME ; public: static class TVendorId  __cdecl Kern::ThreadVendorId(class DThread *)
+	?ValidateHeap@Kern@@SAXXZ @ 655 NONAME ; public: static void __cdecl Kern::ValidateHeap(void)
+	??0TAsyncRequest@@IAE@P6AXPAX@ZPAVTDfcQue@@H@Z @ 656 NONAME ; protected: __thiscall TAsyncRequest::TAsyncRequest(void (__cdecl*)(void *),class TDfcQue *,int)
+	?Cancel@TAsyncRequest@@QAEXXZ @ 657 NONAME ; public: void __thiscall TAsyncRequest::Cancel(void)
+	?Complete@TAsyncRequest@@QAEXH@Z @ 658 NONAME ; public: void __thiscall TAsyncRequest::Complete(int)
+	?Send@TAsyncRequest@@QAEXPAVNFastSemaphore@@@Z @ 659 NONAME ; public: void __thiscall TAsyncRequest::Send(class NFastSemaphore *)
+	?Send@TAsyncRequest@@QAEXPAVTDfc@@@Z @ 660 NONAME ; public: void __thiscall TAsyncRequest::Send(class TDfc *)
+	?SendReceive@TAsyncRequest@@QAEHXZ @ 661 NONAME ; public: int __thiscall TAsyncRequest::SendReceive(void)
+	?Overflow@TDes8IgnoreOverflow@@UAEXAAVTDes8@@@Z @ 662 NONAME ; public: virtual void __thiscall TDes8IgnoreOverflow::Overflow(class TDes8 &)
+	?PrepareMemoryForDMA@Kern@@SAHPAVDThread@@PAXHPAK@Z @ 663 NONAME ; int Kern::PrepareMemoryForDMA(class DThread *, void *, int, unsigned long *)
+	?ReleaseMemoryFromDMA@Kern@@SAHPAVDThread@@PAXHPAK@Z @ 664 NONAME ; int Kern::ReleaseMemoryFromDMA(class DThread *, void *, int, unsigned long *)
+	?PowerController@TPowerController@@SAPAVDPowerController@@XZ @ 665 NONAME ; public: static class DPowerController * __cdecl TPowerController::PowerController(void)
+	?RegisterResourceController@DPowerController@@QAEHPAVDBase@@H@Z @ 666 NONAME ; public: int __thiscall DPowerController::RegisterResourceController(class DBase *,int)
+	?AllocAligned@TBitMapAllocator@@QBEHHHHHAAH0I@Z @ 667 NONAME ; public: int __thiscall TBitMapAllocator::AllocAligned(int,int,int,int,int &,int &,unsigned int)const 
+	?Set@TRawEvent@@QAEXW4TType@1@HHHE@Z @ 668 NONAME ; public: void __thiscall TRawEvent::Set(enum TRawEvent::TType,int,int,int,unsigned char)
+	??0TSecurityInfo@@QAE@PAVDProcess@@@Z @ 669 NONAME ; public: __thiscall TSecurityInfo::TSecurityInfo(class DProcess *)
+	??0TSecurityInfo@@QAE@PAVDThread@@@Z @ 670 NONAME ; public: __thiscall TSecurityInfo::TSecurityInfo(class DThread *)
+	?QueueRequestComplete@Kern@@SAXPAVDThread@@PAVTClientRequest@@H@Z @ 671 NONAME ; public: static void __cdecl Kern::QueueRequestComplete(class DThread *,class TClientRequest *,int)
+	?CreateClientRequest@Kern@@SAHAAPAVTClientRequest@@@Z @ 672 NONAME ; public: static int __cdecl Kern::CreateClientRequest(class TClientRequest * &)
+	?DestroyClientRequest@Kern@@SAXAAPAVTClientRequest@@@Z @ 673 NONAME ; public: static void __cdecl Kern::DestroyClientRequest(class TClientRequest * &)
+	?Reset@TClientRequest@@QAEXXZ @ 674 NONAME ; public: void __thiscall TClientRequest::Reset(void)
+	?SetStatus@TClientRequest@@QAEHPAVTRequestStatus@@@Z @ 675 NONAME ; public: TInt __thiscall TClientRequest::SetStatus(class TRequestStatus *)
+	?IsReady@TClientRequest@@QAEHXZ @ 676 NONAME ; public: TBool __thiscall TClientRequest::IsReady(void)
+	?CreateClientDataRequestBase@Kern@@CAHAAPAVTClientDataRequestBase@@H@Z @ 677 NONAME ; private: static int __cdecl Kern::CreateClientDataRequestBase(class TClientDataRequestBase * &,int)
+	?RequestComplete@Kern@@SAXAAPAVTRequestStatus@@H@Z @ 678 NONAME ; public: static void __cdecl Kern::RequestComplete(class TRequestStatus * &,int)
+	?SetRealtimeState@Kern@@SAXW4TThreadRealtimeState@@@Z @ 679 NONAME ; public: static void __cdecl Kern::SetRealtimeState(enum TThreadRealtimeState)
+	?StatusPtr@TClientRequest@@QAEPAVTRequestStatus@@XZ @ 680 NONAME ; public: class TRequestStatus * __thiscall TClientRequest::StatusPtr(void)
+	?Crashed@NKern@@SAHXZ @ 681 NONAME ; public: static int __cdecl NKern::Crashed(void)
+	?IsPending@NTimer@@QAEHXZ @ 682 NONAME ; public: int __thiscall NTimer::IsPending(void)
+	?Thread@TDfc@@QAEPAVNThreadBase@@XZ @ 683 NONAME ; public: class NThreadBase * __thiscall TDfc::Thread(void)
+	?ThreadSetTimeslice@NKern@@SAXPAVNThread@@H@Z @ 684 NONAME ; public: static void __cdecl NKern::ThreadSetTimeslice(class NThread *,int)
+	__e32_atomic_add_acq16 @ 685 NONAME
+	__e32_atomic_add_acq32 @ 686 NONAME
+	__e32_atomic_add_acq64 @ 687 NONAME
+	__e32_atomic_add_acq8 @ 688 NONAME
+	__e32_atomic_add_ord16 @ 689 NONAME
+	__e32_atomic_add_ord32 @ 690 NONAME
+	__e32_atomic_add_ord64 @ 691 NONAME
+	__e32_atomic_add_ord8 @ 692 NONAME
+	__e32_atomic_add_rel16 @ 693 NONAME
+	__e32_atomic_add_rel32 @ 694 NONAME
+	__e32_atomic_add_rel64 @ 695 NONAME
+	__e32_atomic_add_rel8 @ 696 NONAME
+	__e32_atomic_add_rlx16 @ 697 NONAME
+	__e32_atomic_add_rlx32 @ 698 NONAME
+	__e32_atomic_add_rlx64 @ 699 NONAME
+	__e32_atomic_add_rlx8 @ 700 NONAME
+	__e32_atomic_and_acq16 @ 701 NONAME
+	__e32_atomic_and_acq32 @ 702 NONAME
+	__e32_atomic_and_acq64 @ 703 NONAME
+	__e32_atomic_and_acq8 @ 704 NONAME
+	__e32_atomic_and_ord16 @ 705 NONAME
+	__e32_atomic_and_ord32 @ 706 NONAME
+	__e32_atomic_and_ord64 @ 707 NONAME
+	__e32_atomic_and_ord8 @ 708 NONAME
+	__e32_atomic_and_rel16 @ 709 NONAME
+	__e32_atomic_and_rel32 @ 710 NONAME
+	__e32_atomic_and_rel64 @ 711 NONAME
+	__e32_atomic_and_rel8 @ 712 NONAME
+	__e32_atomic_and_rlx16 @ 713 NONAME
+	__e32_atomic_and_rlx32 @ 714 NONAME
+	__e32_atomic_and_rlx64 @ 715 NONAME
+	__e32_atomic_and_rlx8 @ 716 NONAME
+	__e32_atomic_axo_acq16 @ 717 NONAME
+	__e32_atomic_axo_acq32 @ 718 NONAME
+	__e32_atomic_axo_acq64 @ 719 NONAME
+	__e32_atomic_axo_acq8 @ 720 NONAME
+	__e32_atomic_axo_ord16 @ 721 NONAME
+	__e32_atomic_axo_ord32 @ 722 NONAME
+	__e32_atomic_axo_ord64 @ 723 NONAME
+	__e32_atomic_axo_ord8 @ 724 NONAME
+	__e32_atomic_axo_rel16 @ 725 NONAME
+	__e32_atomic_axo_rel32 @ 726 NONAME
+	__e32_atomic_axo_rel64 @ 727 NONAME
+	__e32_atomic_axo_rel8 @ 728 NONAME
+	__e32_atomic_axo_rlx16 @ 729 NONAME
+	__e32_atomic_axo_rlx32 @ 730 NONAME
+	__e32_atomic_axo_rlx64 @ 731 NONAME
+	__e32_atomic_axo_rlx8 @ 732 NONAME
+	__e32_atomic_cas_acq16 @ 733 NONAME
+	__e32_atomic_cas_acq32 @ 734 NONAME
+	__e32_atomic_cas_acq64 @ 735 NONAME
+	__e32_atomic_cas_acq8 @ 736 NONAME
+	__e32_atomic_cas_ord16 @ 737 NONAME
+	__e32_atomic_cas_ord32 @ 738 NONAME
+	__e32_atomic_cas_ord64 @ 739 NONAME
+	__e32_atomic_cas_ord8 @ 740 NONAME
+	__e32_atomic_cas_rel16 @ 741 NONAME
+	__e32_atomic_cas_rel32 @ 742 NONAME
+	__e32_atomic_cas_rel64 @ 743 NONAME
+	__e32_atomic_cas_rel8 @ 744 NONAME
+	__e32_atomic_cas_rlx16 @ 745 NONAME
+	__e32_atomic_cas_rlx32 @ 746 NONAME
+	__e32_atomic_cas_rlx64 @ 747 NONAME
+	__e32_atomic_cas_rlx8 @ 748 NONAME
+	__e32_atomic_ior_acq16 @ 749 NONAME
+	__e32_atomic_ior_acq32 @ 750 NONAME
+	__e32_atomic_ior_acq64 @ 751 NONAME
+	__e32_atomic_ior_acq8 @ 752 NONAME
+	__e32_atomic_ior_ord16 @ 753 NONAME
+	__e32_atomic_ior_ord32 @ 754 NONAME
+	__e32_atomic_ior_ord64 @ 755 NONAME
+	__e32_atomic_ior_ord8 @ 756 NONAME
+	__e32_atomic_ior_rel16 @ 757 NONAME
+	__e32_atomic_ior_rel32 @ 758 NONAME
+	__e32_atomic_ior_rel64 @ 759 NONAME
+	__e32_atomic_ior_rel8 @ 760 NONAME
+	__e32_atomic_ior_rlx16 @ 761 NONAME
+	__e32_atomic_ior_rlx32 @ 762 NONAME
+	__e32_atomic_ior_rlx64 @ 763 NONAME
+	__e32_atomic_ior_rlx8 @ 764 NONAME
+	__e32_atomic_load_acq16 @ 765 NONAME
+	__e32_atomic_load_acq32 @ 766 NONAME
+	__e32_atomic_load_acq64 @ 767 NONAME
+	__e32_atomic_load_acq8 @ 768 NONAME
+	__e32_atomic_store_ord16 @ 769 NONAME
+	__e32_atomic_store_ord32 @ 770 NONAME
+	__e32_atomic_store_ord64 @ 771 NONAME
+	__e32_atomic_store_ord8 @ 772 NONAME
+	__e32_atomic_store_rel16 @ 773 NONAME
+	__e32_atomic_store_rel32 @ 774 NONAME
+	__e32_atomic_store_rel64 @ 775 NONAME
+	__e32_atomic_store_rel8 @ 776 NONAME
+	__e32_atomic_swp_acq16 @ 777 NONAME
+	__e32_atomic_swp_acq32 @ 778 NONAME
+	__e32_atomic_swp_acq64 @ 779 NONAME
+	__e32_atomic_swp_acq8 @ 780 NONAME
+	__e32_atomic_swp_ord16 @ 781 NONAME
+	__e32_atomic_swp_ord32 @ 782 NONAME
+	__e32_atomic_swp_ord64 @ 783 NONAME
+	__e32_atomic_swp_ord8 @ 784 NONAME
+	__e32_atomic_swp_rel16 @ 785 NONAME
+	__e32_atomic_swp_rel32 @ 786 NONAME
+	__e32_atomic_swp_rel64 @ 787 NONAME
+	__e32_atomic_swp_rel8 @ 788 NONAME
+	__e32_atomic_swp_rlx16 @ 789 NONAME
+	__e32_atomic_swp_rlx32 @ 790 NONAME
+	__e32_atomic_swp_rlx64 @ 791 NONAME
+	__e32_atomic_swp_rlx8 @ 792 NONAME
+	__e32_atomic_tas_acq16 @ 793 NONAME
+	__e32_atomic_tas_acq32 @ 794 NONAME
+	__e32_atomic_tas_acq64 @ 795 NONAME
+	__e32_atomic_tas_acq8 @ 796 NONAME
+	__e32_atomic_tas_ord16 @ 797 NONAME
+	__e32_atomic_tas_ord32 @ 798 NONAME
+	__e32_atomic_tas_ord64 @ 799 NONAME
+	__e32_atomic_tas_ord8 @ 800 NONAME
+	__e32_atomic_tas_rel16 @ 801 NONAME
+	__e32_atomic_tas_rel32 @ 802 NONAME
+	__e32_atomic_tas_rel64 @ 803 NONAME
+	__e32_atomic_tas_rel8 @ 804 NONAME
+	__e32_atomic_tas_rlx16 @ 805 NONAME
+	__e32_atomic_tas_rlx32 @ 806 NONAME
+	__e32_atomic_tas_rlx64 @ 807 NONAME
+	__e32_atomic_tas_rlx8 @ 808 NONAME
+	__e32_atomic_tau_acq16 @ 809 NONAME
+	__e32_atomic_tau_acq32 @ 810 NONAME
+	__e32_atomic_tau_acq64 @ 811 NONAME
+	__e32_atomic_tau_acq8 @ 812 NONAME
+	__e32_atomic_tau_ord16 @ 813 NONAME
+	__e32_atomic_tau_ord32 @ 814 NONAME
+	__e32_atomic_tau_ord64 @ 815 NONAME
+	__e32_atomic_tau_ord8 @ 816 NONAME
+	__e32_atomic_tau_rel16 @ 817 NONAME
+	__e32_atomic_tau_rel32 @ 818 NONAME
+	__e32_atomic_tau_rel64 @ 819 NONAME
+	__e32_atomic_tau_rel8 @ 820 NONAME
+	__e32_atomic_tau_rlx16 @ 821 NONAME
+	__e32_atomic_tau_rlx32 @ 822 NONAME
+	__e32_atomic_tau_rlx64 @ 823 NONAME
+	__e32_atomic_tau_rlx8 @ 824 NONAME
+	__e32_atomic_xor_acq16 @ 825 NONAME
+	__e32_atomic_xor_acq32 @ 826 NONAME
+	__e32_atomic_xor_acq64 @ 827 NONAME
+	__e32_atomic_xor_acq8 @ 828 NONAME
+	__e32_atomic_xor_ord16 @ 829 NONAME
+	__e32_atomic_xor_ord32 @ 830 NONAME
+	__e32_atomic_xor_ord64 @ 831 NONAME
+	__e32_atomic_xor_ord8 @ 832 NONAME
+	__e32_atomic_xor_rel16 @ 833 NONAME
+	__e32_atomic_xor_rel32 @ 834 NONAME
+	__e32_atomic_xor_rel64 @ 835 NONAME
+	__e32_atomic_xor_rel8 @ 836 NONAME
+	__e32_atomic_xor_rlx16 @ 837 NONAME
+	__e32_atomic_xor_rlx32 @ 838 NONAME
+	__e32_atomic_xor_rlx64 @ 839 NONAME
+	__e32_atomic_xor_rlx8 @ 840 NONAME
+	__e32_bit_count_32 @ 841 NONAME
+	__e32_bit_count_64 @ 842 NONAME
+	__e32_find_ls1_32 @ 843 NONAME
+	__e32_find_ls1_64 @ 844 NONAME
+	__e32_find_ms1_32 @ 845 NONAME
+	__e32_find_ms1_64 @ 846 NONAME
+	__e32_io_completion_barrier @ 847 NONAME
+	__e32_memory_barrier @ 848 NONAME
+	?CreateVirtualPinObject@Kern@@SAHAAPAVTVirtualPinObject@@@Z @ 849 NONAME ; public: static int __cdecl Kern::CreateVirtualPinObject(class TVirtualPinObject * &)
+	?DestroyVirtualPinObject@Kern@@SAXAAPAVTVirtualPinObject@@@Z @ 850 NONAME ; public: static void __cdecl Kern::DestroyVirtualPinObject(class TVirtualPinObject * &)
+	?PinVirtualMemory@Kern@@SAHPAVTVirtualPinObject@@KIPAVDThread@@@Z @ 851 NONAME ; public: static int __cdecl Kern::PinVirtualMemory(class TVirtualPinObject *,unsigned long,unsigned int)
+	?UnpinVirtualMemory@Kern@@SAXPAVTVirtualPinObject@@@Z @ 852 NONAME ; public: static void __cdecl Kern::UnpinVirtualMemory(class TVirtualPinObject *)
+	?NotifyBusy@DPagingDevice@@QAEXXZ @ 853 NONAME ; public: void __thiscall DPagingDevice::NotifyBusy(void)
+	?NotifyIdle@DPagingDevice@@QAEXXZ @ 854 NONAME ; public: void __thiscall DPagingDevice::NotifyIdle(void)
+	?ChunkUserBase@Kern@@SAPAEPAVDChunk@@PAVDThread@@@Z @ 855 NONAME ; public: static unsigned char * __cdecl Kern::ChunkUserBase(class DChunk *,class DThread *)
+	?Test@KernTest@@SAHW4TTestFunction@1@PAX11@Z @ 856 NONAME ; public: static int __cdecl KernTest::Test(enum KernTest::TTestFunction,void *,void *,void *)
+	?AddBuffer@TClientBufferRequest@@QAEHAAPAVTClientBuffer@@KHH@Z @ 857 NONAME ; public: int __thiscall TClientBufferRequest::AddBuffer(class TClientBuffer * &,unsigned long,int,int)
+	?AddBuffer@TClientBufferRequest@@QAEHAAPAVTClientBuffer@@PAX@Z @ 858 NONAME ; public: int __thiscall TClientBufferRequest::AddBuffer(class TClientBuffer * &,void *)
+	?CreateClientBufferRequest@Kern@@SAHAAPAVTClientBufferRequest@@II@Z @ 859 NONAME ; public: static int __cdecl Kern::CreateClientBufferRequest(class TClientBufferRequest * &,unsigned int,unsigned int)
+	?DestroyClientBufferRequest@Kern@@SAXAAPAVTClientBufferRequest@@@Z @ 860 NONAME ; public: static void __cdecl Kern::DestroyClientBufferRequest(class TClientBufferRequest * &)
+	?EndSetup@TClientBufferRequest@@QAEXXZ @ 861 NONAME ; public: void __thiscall TClientBufferRequest::EndSetup(void)
+	?IsWriteable@TClientBuffer@@QBEHXZ @ 862 NONAME ; public: int __thiscall TClientBuffer::IsWriteable(void)const 
+	?Length@TClientBuffer@@QBEHXZ @ 863 NONAME ; public: int __thiscall TClientBuffer::Length(void)const 
+	?MaxLength@TClientBuffer@@QBEHXZ @ 864 NONAME ; public: int __thiscall TClientBuffer::MaxLength(void)const 
+	?PinVirtualMemory@Kern@@SAHPAVTVirtualPinObject@@ABVTClientBuffer@@PAVDThread@@@Z @ 865 NONAME ; public: static int __cdecl Kern::PinVirtualMemory(class TVirtualPinObject *,class TClientBuffer const &)
+	?QueueBufferRequestComplete@Kern@@SAXPAVDThread@@PAVTClientBufferRequest@@H@Z @ 866 NONAME ; public: static void __cdecl Kern::QueueBufferRequestComplete(class DThread *,class TClientBufferRequest *,int)
+	?Reset@TClientBufferRequest@@QAEXXZ @ 867 NONAME ; public: void __thiscall TClientBufferRequest::Reset(void)
+	?StartSetup@TClientBufferRequest@@QAEHPAVTRequestStatus@@@Z @ 868 NONAME ; public: int __thiscall TClientBufferRequest::StartSetup(class TRequestStatus *)
+	?ThreadBufRead@Kern@@SAHPAVDThread@@PBVTClientBuffer@@AAVTDes8@@HH@Z @ 869 NONAME ; public: static int __cdecl Kern::ThreadBufRead(class DThread *,class TClientBuffer const *,class TDes8 &,int,int)
+	?ThreadBufWrite@Kern@@SAHPAVDThread@@PAVTClientBuffer@@ABVTDesC8@@HH0@Z @ 870 NONAME ; public: static int __cdecl Kern::ThreadBufWrite(class DThread *,class TClientBuffer *,class TDesC8 const &,int,int,class DThread *)
+	?SendMsg@DLogicalChannel@@UAEHPAVTMessageBase@@@Z @ 871 NONAME ; public: virtual int __thiscall DLogicalChannel::SendMsg(class TMessageBase *)
+	?SetRealtimeState@TDynamicDfcQue@@QAEXW4TThreadRealtimeState@@@Z @ 872 NONAME ; public: void __thiscall TDynamicDfcQue::SetRealtimeState(enum TThreadRealtimeState)
+	?CreateAndPinVirtualMemory@Kern@@SAHAAPAVTVirtualPinObject@@KI@Z @ 873 NONAME ; int Kern::CreateAndPinVirtualMemory(class TVirtualPinObject * &, unsigned long, unsigned int)
+	??0TClientBuffer@@QAE@XZ @ 874 NONAME ; public: __thiscall TClientBuffer::TClientBuffer(void)
+	?IsSet@TClientBuffer@@QBEHXZ @ 875 NONAME ; public: int __thiscall TClientBuffer::IsSet(void)const 
+	?Reset@TClientBuffer@@QAEXXZ @ 876 NONAME ; public: void __thiscall TClientBuffer::Reset(void)
+	?SetFromBuffer@TClientBuffer@@QAEXKHH@Z @ 877 NONAME ; public: void __thiscall TClientBuffer::SetFromBuffer(unsigned long,int,int)
+	?SetFromDescriptor@TClientBuffer@@QAEHPAXPAVDThread@@@Z @ 878 NONAME ; public: int __thiscall TClientBuffer::SetFromDescriptor(void *,class DThread *)
+	?UpdateDescriptorLength@TClientBuffer@@QAEHPAVDThread@@@Z @ 879 NONAME ; public: int __thiscall TClientBuffer::UpdateDescriptorLength(class DThread *)
+	?CreateClientDataRequestBase2@Kern@@CAHAAPAVTClientDataRequestBase2@@HH@Z @ 880 NONAME ; private: static int __cdecl Kern::CreateClientDataRequestBase2(class TClientDataRequestBase2 * &,int,int)
+	?DmaBufferAlignment@Cache@@SAIXZ @ 881 NONAME ; unsigned int Cache::DmaBufferAlignment(void)
+	?OutFilteredPcFormatBig@BTrace@@SAHKKKGPBXH@Z @ 882 NONAME ; int BTrace::OutFilteredPcFormatBig(unsigned long, unsigned long, unsigned long, unsigned short, void const *, int)
+	?UnpinPhysicalMemory@Kern@@SAHPAVTPhysicalPinObject@@@Z @ 883 NONAME ; int Kern::UnpinPhysicalMemory(class TPhysicalPinObject *)
+	?PinPhysicalMemory@Kern@@SAHPAVTPhysicalPinObject@@KIHAAKPAK1AAIPAVDThread@@@Z @ 884 NONAME ; int Kern::PinPhysicalMemory(class TPhysicalPinObject *, unsigned long, unsigned int, int, unsigned long &, unsigned long *, unsigned long &, unsigned int &, class DThread *)
+	?SyncPhysicalMemoryAfterDmaRead@Cache@@SAHPAKIIIK@Z @ 885 NONAME ; int Cache::SyncPhysicalMemoryAfterDmaRead(unsigned long *, unsigned int, unsigned int, unsigned int, unsigned long)
+	?SyncPhysicalMemoryBeforeDmaRead@Cache@@SAHPAKIIIK@Z @ 886 NONAME ; int Cache::SyncPhysicalMemoryBeforeDmaRead(unsigned long *, unsigned int, unsigned int, unsigned int, unsigned long)
+	?SyncMemoryAfterDmaRead@Cache@@SAXKIK@Z @ 887 NONAME ; void Cache::SyncMemoryAfterDmaRead(unsigned long, unsigned int, unsigned long)
+	?DestroyPhysicalPinObject@Kern@@SAHAAPAVTPhysicalPinObject@@@Z @ 888 NONAME ; int Kern::DestroyPhysicalPinObject(class TPhysicalPinObject * &)
+	?CreatePhysicalPinObject@Kern@@SAHAAPAVTPhysicalPinObject@@@Z @ 889 NONAME ; int Kern::CreatePhysicalPinObject(class TPhysicalPinObject * &)
+	?SyncPhysicalMemoryBeforeDmaWrite@Cache@@SAHPAKIIIK@Z @ 890 NONAME ; int Cache::SyncPhysicalMemoryBeforeDmaWrite(unsigned long *, unsigned int, unsigned int, unsigned int, unsigned long)
+	?AllocFrom@TBitMapAllocator@@QAEHI@Z @ 891 NONAME ; public: int __thiscall TBitMapAllocator::AllocFrom(unsigned int)
+	?ShBufMakeHandleAndOpen@Kern@@SAHPAVTShBuf@@PAVDThread@@@Z @ 892 NONAME ; int Kern::ShBufMakeHandleAndOpen(class TShBuf *, class DThread *)
+	?ShBufClose@Kern@@SAHPAVTShBuf@@@Z @ 893 NONAME ; int Kern::ShBufClose(class TShBuf *)
+	?ShBufSize@Kern@@SAIPAVTShBuf@@@Z @ 894 NONAME ; unsigned int Kern::ShBufSize(class TShBuf *)
+	??0TShPoolCreateInfo@@QAE@W4TShPoolPageAlignedBuffers@0@II@Z @ 895 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(enum TShPoolCreateInfo::TShPoolPageAlignedBuffers, unsigned int, unsigned int)
+	?ShPoolGetInfo@Kern@@SAXPAVTShPool@@AAVTShPoolInfo@@@Z @ 896 NONAME ; void Kern::ShPoolGetInfo(class TShPool *, class TShPoolInfo &)
+	??0TShPoolCreateInfo@@QAE@W4TShPoolNonPageAlignedBuffers@0@III@Z @ 897 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(enum TShPoolCreateInfo::TShPoolNonPageAlignedBuffers, unsigned int, unsigned int, unsigned int)
+	?RequestUserHandle@DObject@@UAEHPAVDThread@@W4TOwnerType@@I@Z @ 898 NONAME ; int DObject::RequestUserHandle(class DThread *, enum TOwnerType, unsigned int)
+	?AddToProcess@DObject@@UAEHPAVDProcess@@I@Z @ 899 NONAME ; int DObject::AddToProcess(class DProcess *, unsigned int)
+	?ShPoolAlloc@Kern@@SAHPAVTShPool@@AAPAVTShBuf@@I@Z @ 900 NONAME ; int Kern::ShPoolAlloc(class TShPool *, class TShBuf * &, unsigned int)
+	?ShPoolSetBufferWindow@Kern@@SAHPAVTShPool@@H@Z @ 901 NONAME ; int Kern::ShPoolSetBufferWindow(class TShPool *, int)
+	?ShBufPtr@Kern@@SAPAEPAVTShBuf@@@Z @ 902 NONAME ; unsigned char * Kern::ShBufPtr(class TShBuf *)
+	?SetSizingAttributes@TShPoolCreateInfo@@QAEHIIII@Z @ 903 NONAME ; int TShPoolCreateInfo::SetSizingAttributes(unsigned int, unsigned int, unsigned int, unsigned int)
+	?ShPoolOpen@Kern@@SAHAAPAVTShPool@@PAVDThread@@HHI@Z @ 904 NONAME ; int Kern::ShPoolOpen(class TShPool * &, class DThread *, int, int, unsigned int)
+	?ShPoolClose@Kern@@SAHPAVTShPool@@@Z @ 905 NONAME ; int Kern::ShPoolClose(class TShPool *)
+	??0TShPoolCreateInfo@@QAE@W4TShPoolMemoryDevice@0@IIIIK@Z @ 906 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(enum TShPoolCreateInfo::TShPoolMemoryDevice, unsigned int, unsigned int, unsigned int, unsigned int, unsigned long)
+	?SetExclusive@TShPoolCreateInfo@@QAEHXZ @ 907 NONAME ; int TShPoolCreateInfo::SetExclusive(void)
+	??0TShPoolInfo@@QAE@XZ @ 908 NONAME ; TShPoolInfo::TShPoolInfo(void)
+	?ShPoolCreate@Kern@@SAHAAPAVTShPool@@AAVTShPoolCreateInfo@@HI@Z @ 909 NONAME ; int Kern::ShPoolCreate(class TShPool * &, class TShPoolCreateInfo &, int, unsigned int)
+	?ShPoolMakeHandleAndOpen@Kern@@SAHPAVTShPool@@PAVDThread@@I@Z @ 910 NONAME ; int Kern::ShPoolMakeHandleAndOpen(class TShPool *, class DThread *, unsigned int)
+	?ShPoolBufSize@Kern@@SAIPAVTShPool@@@Z @ 911 NONAME ; unsigned int Kern::ShPoolBufSize(class TShPool *)
+	?ShPoolFreeCount@Kern@@SAIPAVTShPool@@@Z @ 912 NONAME ; unsigned int Kern::ShPoolFreeCount(class TShPool *)
+	?ObjectFromHandle@DThread@@QAEPAVDObject@@HHAAI@Z @ 913 NONAME ; class DObject * DThread::ObjectFromHandle(int, int, unsigned int &)
+	??0TShPoolCreateInfo@@QAE@W4TShPoolMemoryDevice@0@IIIIPAK@Z @ 914 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(enum TShPoolCreateInfo::TShPoolMemoryDevice, unsigned int, unsigned int, unsigned int, unsigned int, unsigned long *)
+	?SetContiguous@TShPoolCreateInfo@@QAEHXZ @ 915 NONAME ; int TShPoolCreateInfo::SetContiguous(void)
+	?ShBufOpen@Kern@@SAHAAPAVTShBuf@@PAVDThread@@H@Z @ 916 NONAME ; int Kern::ShBufOpen(class TShBuf * &, class DThread *, int)
+	?SetGuardPages@TShPoolCreateInfo@@QAEHXZ @ 917 NONAME ; int TShPoolCreateInfo::SetGuardPages(void)
+	?ObjectFromHandle@Kern@@SAPAVDObject@@PAVDThread@@HHAAI@Z @ 918 NONAME ; class DObject * Kern::ObjectFromHandle(class DThread *, int, int, unsigned int &)
+	?ShBufPin@Kern@@SAHPAVTShBuf@@PAVTPhysicalPinObject@@HAAKPAK2AAI@Z @ 919 NONAME ; int Kern::ShBufPin(class TShBuf *, class TPhysicalPinObject *, int, unsigned long &, unsigned long *, unsigned long &, unsigned int &)
+	?Repeats@TRawEvent@@QBEHXZ @ 920 NONAME ; int TRawEvent::Repeats(void) const
+	?SetRepeat@TRawEvent@@QAEXW4TType@1@HH@Z @ 921 NONAME ; void TRawEvent::SetRepeat(enum TRawEvent::TType, int, int)
+

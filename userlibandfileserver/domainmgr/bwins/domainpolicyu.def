@@ -1,0 +1,4 @@
+EXPORTS
+	?GetDomainSpecs@DmPolicy@@SAPBUTDmDomainSpec@@XZ @ 1 NONAME ; public: static struct TDmDomainSpec const * __cdecl DmPolicy::GetDomainSpecs(void)
+	?Release@DmPolicy@@SAXPBUTDmDomainSpec@@@Z @ 2 NONAME ; public: static void __cdecl DmPolicy::Release(struct TDmDomainSpec const *)
+	?GetPolicy@DmPolicy@@SAHAAVTDmHierarchyPolicy@@@Z @ 3 NONAME ; public: static int __cdecl DmPolicy::GetPolicy(class TDmHierarchyPolicy &)

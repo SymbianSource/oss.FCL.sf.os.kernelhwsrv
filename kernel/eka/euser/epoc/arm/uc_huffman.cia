@@ -1,0 +1,310 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_huffman.cia
+// 
+//
+
+#include "e32huffman.h"
+#include <cpudefs.h>
+
+#ifdef __HUFFMAN_MACHINE_CODED__
+
+// NB The EABI layout of TBitInput is different from GCC. Its vtbl is at 
+// offset 0 rather than offset 16
+
+EXPORT_C __NAKED__ TUint TBitInput::ReadL()
+/** Read a single bit from the input
+
+	Return the next bit in the input stream. This will call UnderflowL() if
+	there are no more bits available.
+
+	@return The next bit in the stream
+
+	@leave "UnderflowL()" It the bit stream is exhausted more UnderflowL is called
+		to get more data
+*/
+	{
+	asm(".code 32");
+#ifdef __EABI__
+	asm("ldmib r0!, {r2,r3}");
+#else
+	asm("ldmia r0!, {r2,r3}");
+#endif
+	// r0 = this+8
+	asm("subs	r2, r2, #1");
+	asm("movpl	r12, r3, asl #1");
+#ifdef __EABI__
+	asm("stmplda r0, {r2,r12}");
+#else
+	asm("stmpldb r0, {r2,r12}");
+#endif
+	asm("movpl	r0, r3, lsr #31");
+	__JUMP(pl,lr);
+	asm("mov r12, #0");
+	asm("b __readmorebits");	// r2==-1, r12==0 -> so all set
+	}
+
+EXPORT_C __NAKED__ TUint TBitInput::ReadL(TInt aSize)
+/** Read a multi-bit value from the input
+
+	Return the next few bits as an unsigned integer. The last bit read is
+	the least significant bit of the returned value, and the value is
+	zero extended to return a 32-bit result.
+
+	A read of zero bits will always reaturn zero.
+	
+	This will call UnderflowL() if there are not enough bits available.
+
+	@param "TInt aSize" The number of bits to read
+	
+	@return The bits read from the stream
+
+	@leave "UnderflowL()" It the bit stream is exhausted more UnderflowL is called
+		to get more data
+*/
+	{
+	asm(".code 32");
+#ifdef __EABI__
+	asm("   ldmib r0!, {r2,r3}");
+#else
+	asm("   ldmia r0!, {r2,r3}");
+#endif
+	asm("	subs r2, r2, r1");
+	asm("	movpl r12, r3, asl r1");
+#ifdef __EABI__
+	asm("   stmplda r0, {r2,r12}");
+#else
+	asm("   stmpldb r0, {r2,r12}");
+#endif
+	asm("	rsb r1, r1, #32");
+	asm("	movpl r0, r3, lsr r1");
+	__JUMP(pl,lr);
+	// r0=this+8, r1=32-#reqd, r2=count-#reqd (<0), r3=bits
+	asm("   sub r1, r1, r2");		// r1 = 32-iCount
+	asm("	mov r3, r3, lsr r1");	// scrub existing bits
+	asm("	rsb r1, r2, #0");		// r1 = #reqd-iCount
+	asm("	mov r12, r3, lsl r1");	// r12 has bits in final position
+	asm("__readmorebits:");
+	//r0=this+8
+	asm("	stmfd sp!, {r12,lr}");
+	
+#ifdef __EABI__
+	asm("	ldmib r0!, {r1,r14}");	// r1=remain, r14=ptr
+#else
+	asm("	ldmia r0!, {r1,r14}");	// r1=remain, r14=ptr
+#endif
+	//r0=this+16
+	asm("	cmp r1, #0");
+	asm("	ble	__readunderflow");
+	asm("	ldr	r12, [r14], #4");
+	asm("	subs r3, r1, #32");
+#ifdef __EABI__
+	asm("	stmda r0!, {r3,r14}");
+#else
+	asm("	stmdb r0!, {r3,r14}");
+#endif
+	// r0=this+8
+	asm("	addmi r1, r2, r1");
+	asm("	addpl r1, r2, #32");		// r1 = bits left in
+	asm("	eor	r3, r12, r12, ror #16");
+	asm("	bic	r3, r3, #16711680");
+	asm("	mov	r3, r3, lsr #8");
+	asm("	eor	r3, r3, r12, ror #8");		// r3=bits
+	// r0=this+8, r1=count-#reqd, r2=-#reqd, r3=bits, sp[0]=accum, sp[4]=return-pc
+	asm("	cmp r1, #0");
+	asm("	bmi __readgoroundagain");
+	asm("__readhavebits:");
+	asm("	rsb r12, r2, #0");
+	asm("	mov r12, r3, asl r12");
+#ifdef __EABI__
+	asm("	stmda r0, {r1,r12}");
+#else
+	asm("	stmdb r0, {r1,r12}");
+#endif
+	asm("	ldmfd sp!, {r12,lr}");
+	asm("	add r2, r2, #32");
+	asm("	orr	r0, r12, r3, lsr r2");
+	__JUMP(,lr);
+	asm("__readunderflow:");
+#ifdef __EABI__
+	asm("	ldr	r3, [r0, #-16]!");	// restore r0 to this
+#else
+	asm("	ldr	r3, [r0], #-16");	// restore r0 to this
+#endif
+	asm("	stmfd sp!, {r0,r2}");
+	// at this point the stack has grown by 16 bytes from the CFA
+	__EH_FRAME_ADDRESS(sp,16)
+	// The stack looks like this
+	// CFA-4  -> lr
+	// CFA-8  -> r12
+	// CFA-12 -> r2
+	// CFA-16 -> r0
+	// So we need to record lr @ CFA-4
+	// Nothing else needs to be restored since there's no barrier here
+	__EH_FRAME_SAVE1(lr,-4)
+	asm("	adr lr, 1f ");
+#ifdef __EABI__
+	asm("	ldr	ip, [r3, #0]");
+#else
+	asm("	ldr	ip, [r3, #8]");
+#endif
+	__JUMP(,ip);
+	asm("1: ");
+	asm("	ldmfd sp!, {r0,r2}");
+#ifdef __EABI__
+	asm("	ldmib r0!, {r1,r3}");	// r1=count, r3=bits
+#else
+	asm("	ldmia r0!, {r1,r3}");	// r1=count, r3=bits
+#endif
+	asm("	adds r1, r1, r2");		// adjust count for bits to extract
+	asm("	bpl __readhavebits");
+	asm("__readgoroundagain:");
+	// r0=this+8, r1=count-#reqd (<0), r2=-#reqd, r3=bits, sp[0]=accum, sp[4]=return-pc
+	asm("   sub r12, r1, r2");		// r12 = iCount
+	asm("	rsb r12, r12, #32");	// r12= 32-iCount
+	asm("	mov r3, r3, lsr r12");	// scrub existing bits
+	asm("	ldmfd sp!, {r12,lr}");
+	asm("	mov r2, r1");			// r2 = iCount-#reqd
+	asm("	rsb r1, r1, #0");		// r1 = #reqd-iCount
+	asm("	orr r12, r12, r3, lsl r1");	// r12 has bits in final position
+	asm("	b __readmorebits");
+	}
+
+EXPORT_C __NAKED__ TUint TBitInput::HuffmanL(const TUint32* aTree)
+/** Read and decode a Huffman Code
+
+	Interpret the next bits in the input as a Huffman code in the specified
+	decoding. The decoding tree should be the output from Huffman::Decoding().
+
+	@param "const TUint32* aTree" The huffman decoding tree
+
+	@return The symbol that was decoded
+
+	@leave "UnderflowL()" It the bit stream is exhausted more UnderflowL is called
+		to get more data
+*/
+	{
+	asm(".code 32");
+	asm("__huffman:");
+#ifdef __EABI__
+	asm("   ldmib r0!, {r2,r3}");
+#else
+	asm("   ldmia r0!, {r2,r3}");
+#endif
+	asm("__decode:");
+	asm("	ldr r12, [r1]");
+	asm("	subs	r2, r2, #4");
+	asm("	bmi __fewbits");
+	asm("__fastloop:");
+	asm("	movs	r3, r3, asl #1");
+	asm("	movcc	r12, r12, asl #16");
+	asm("	tst	r12, #65536");
+	asm("	bne	__fastdecoded");
+	asm("	ldr	r12, [r1, r12, lsr #16]!");
+	asm("	sub	r2, r2, #1");
+	asm("	movs	r3, r3, asl #1");
+	asm("	movcc	r12, r12, asl #16");
+	asm("	tst	r12, #65536");
+	asm("	bne	__fastdecoded");
+	asm("	ldr	r12, [r1, r12, lsr #16]!");
+	asm("	sub	r2, r2, #1");
+	asm("	movs	r3, r3, asl #1");
+	asm("	movcc	r12, r12, asl #16");
+	asm("	tst	r12, #65536");
+	asm("	bne	__fastdecoded");
+	asm("	ldr	r12, [r1, r12, lsr #16]!");
+	asm("	sub	r2, r2, #1");
+	asm("	movs	r3, r3, asl #1");
+	asm("	movcc	r12, r12, asl #16");
+	asm("	tst	r12, #65536");
+	asm("	bne	__fastdecoded");
+	asm("	ldr	r12, [r1, r12, lsr #16]!");
+	asm("	subs	r2, r2, #1");
+	asm("	bpl __fastloop");
+	asm("__fewbits:");
+	asm("	adds r2, r2, #3");
+	asm("	bmi __nobits");
+	asm("__slowloop:");
+	asm("	movs	r3, r3, asl #1");
+	asm("	movcc	r12, r12, asl #16");
+	asm("	tst	r12, #65536");
+	asm("	bne	__decoded");
+	asm("	ldr	r12, [r1, r12, lsr #16]!");
+	asm("	subs	r2, r2, #1");
+	asm("	bpl __slowloop");
+	asm("__nobits:");
+	// r0=this, r1=tree, r2=count (-1), r3=bits (0), r12=node=*tree
+	// must preserve r0,r1
+#ifdef __EABI__
+	asm("	ldmib r0!, {r2,r3}");	// r2=remain, r3=ptr
+#else
+	asm("	ldmia r0!, {r2,r3}");	// r2=remain, r3=ptr
+#endif
+	asm("	cmp r2, #0");
+	asm("	ble	__underflow");
+	asm("	ldr	r12, [r3], #4");
+	asm("	subs r2, r2, #32");
+#ifdef __EABI__
+	asm("	stmda r0!, {r2,r3}");
+#else
+	asm("	stmdb r0!, {r2,r3}");
+#endif
+	asm("	addmi r2, r2, #32");
+	asm("	movpl r2, #32");
+	asm("	eor	r3, r12, r12, ror #16");
+	asm("	bic	r3, r3, #16711680");
+	asm("	mov	r3, r3, lsr #8");
+	asm("	eor	r3, r3, r12, ror #8");
+	asm("	b	__decode");
+	asm("__underflow:");
+#ifdef __EABI__
+	asm("	ldr	r3, [r0, #-16]!");	// restore r0 to this
+#else
+	asm("	ldr	r3, [r0], #-16");	// restore r0 to this
+#endif
+	asm("	stmfd sp!, {r0,r1,r2,lr}");
+	// sp is 16 bytes from CFA
+	__EH_FRAME_ADDRESS(sp,16)
+	// The stack looks like this:
+	// CFA-4  -> lr
+	// CFA-8  -> r2
+	// CFA-12 -> r1
+	// CFA-16 -> r0
+	// We saved lr @ CFA-4
+	// Nothing else needs to be restored since there's no barrier here
+	__EH_FRAME_SAVE1(lr,-4)
+	asm("	adr lr, 1f ");
+#ifdef __EABI__
+	asm("	ldr	ip, [r3, #0]");
+#else
+	asm("	ldr	ip, [r3, #8]");
+#endif
+	__JUMP(,ip);
+	asm("1: ");
+	asm("	ldmfd sp!, {r0,r1,r2,lr}");
+	asm("	b __huffman");
+	asm("__fastdecoded:");
+	asm("	add r2, r2, #3");
+	asm("__decoded:");
+#ifdef __EABI__
+	asm("	stmda r0, {r2, r3}");
+#else
+	asm("	stmdb r0, {r2, r3}");
+#endif
+	asm("	mov	r0, r12, lsr #17");
+	__JUMP(,lr);
+	}
+
+#endif
+

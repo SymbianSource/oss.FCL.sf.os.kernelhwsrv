@@ -1,0 +1,126 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\arm\uc_exe.cia
+// 
+//
+
+#include <e32cia.h>
+#include <u32std.h>
+// Include this to get imports from User (i.e. User::Invariant and User::HandleException). 
+// This sets VISIBILITY to DEFAULT for BPABI builds.
+#include <e32std.h>
+
+extern "C" {
+
+void _xxxx_call_user_invariant();
+void _xxxx_call_user_handle_exception(void *);
+
+extern void RunThread(TBool aNotFirst, SThreadCreateInfo& aInfo);
+
+// NOTE: This MUST be the first function in this module
+__NAKED__ TInt _E32Startup()
+	{
+	// Process entry point
+	// R4 = entry reason
+	// SP points to information block
+	EKA2_ENTRY_POINT_VERSION_IDENTIFIER;	// DUMMY INSTRUCTION TO INDICATE EKA2 ENTRY POINT
+	asm("cmp r4, #%a0" : : "i" ((TInt)KModuleEntryReasonThreadInit) );
+	asm("b 1f ");				// branch over space for unique ID
+
+	asm(".word 0 ");			// loader will replace with code seg unique ID
+								// for RAM-loaded code segment
+								// MUST BE AT OFFSET 12 FROM ENTRY POINT
+
+	asm("1: ");
+	asm("movls r0, r4 ");		// r0 = aNotFirst
+	asm("movls r1, sp ");		// r1 -> parameter block
+	asm("bls RunThread ");		// process or thread init
+	asm("cmp r4, #%a0" : : "i" ((TInt)KModuleEntryReasonException) );
+//  	asm("bne " CSM_ZN4User9InvariantEv );	// invalid entry reason
+  	asm("bne _xxxx_call_user_invariant " );	// invalid entry reason
+
+	// exception entry
+	// NOTE: THUMB only works on ARMv5 and above
+	asm("mov r0, sp ");			// r0->parameter block
+	asm("ldr r4, [sp, #16]");	// r4 = saved CPSR
+	asm("tst r4, #0x20 ");		// test for THUMB
+	asm("ldrne r1, [sp, #80] ");	// r1 = saved return addr
+	asm("orrne r1, r1, #1 ");
+	asm("strne r1, [sp, #80] ");	// if THUMB, set bit 0 of return addr
+
+	asm("mov r11, sp ");		// save stack pointer
+
+	// The frame starts 84 bytes (up) from r11 i.e. CFA is r11 + 84
+	__EH_FRAME_ADDRESS(r11, 84)
+	// we can only restore callee-save values, but that's what we want if we 'leave'
+	// saved link is -8 bytes from CFA (= r11 + 0x24 + 0x20 + 0x8)
+	__EH_FRAME_SAVE1(lr, -8)
+
+	// the other callee saves start at -48 from CFA (= r11 + 0x24)
+#if 0
+	// would like to say this 
+	__EH_FRAME_SAVE1(r4-r11, -48)
+	// but the macro expansion gives rise to odd code so we do what follows
+#endif
+#ifdef __ARMCC__
+	FRAME SAVE {r4-r11}, -48
+#endif
+
+	asm("bic sp, sp, #4 ");		// align stack to 8 byte boundary
+//  	asm("bl " CSM_ZN4User15HandleExceptionEPv );
+  	asm("bl _xxxx_call_user_handle_exception ");
+	asm("add sp, r11, #16 ");	// skip exc type, exc code, FAR, FSR
+	asm("ldr r4, [sp], #4 ");	// r4 = saved CPSR
+	asm("bic r4, r4, #0x20 ");	// clear THUMB bit
+	asm("msr cpsr, r4 ");		// restore flags
+	asm("ldmia sp, {r0-r15} ");	// restore r0-r15
+
+#ifdef __ARMCC__
+#ifdef __SUPPORT_CPP_EXCEPTIONS__
+
+
+  /* It is possible no functions included in the image require
+   * a handler table. Therefore make only a weak reference to
+   * the handler table base symbol, which may be absent.
+   */
+  extern |.ARM.exidx$$Base|;
+  extern |.ARM.exidx$$Limit|;
+  extern |.ARM.extab$$Base| [WEAK];
+  extern |Image$$ER_RO$$Base|;
+  extern |Image$$ER_RO$$Limit|;
+  export |Symbian$$CPP$$Exception$$Descriptor|;
+
+|Symbian$$CPP$$Exception$$Descriptor|
+#ifdef __LEAVE_EQUALS_THROW__
+|Symbian$$eit_base|  		dcd |.ARM.exidx$$Base|;   /* index table base */
+|Symbian$$eit_limit|  		dcd |.ARM.exidx$$Limit| ;  /* index table limit */
+#endif
+#if __ARMCC_VERSION > 220000
+|Symbian$$code_seg_base| 	dcd |Image$$ER_RO$$Base| + 1 ; /* RO segment base + mark as ehabi v2 */
+|Symbian$$code_seg_limit| 	dcd |Image$$ER_RO$$Limit| ;/* RO segment limit */
+|Symbian$$reserved|		dcd 0 ; /* reserved for future use */
+#else
+|Symbian$$code_seg_base| 	dcd |Image$$ER_RO$$Base| ; /* RO segment base */
+|Symbian$$code_seg_limit| 	dcd |Image$$ER_RO$$Limit| ;/* RO segment limit */
+#endif
+
+#endif
+#endif
+
+	}
+void _xxxx_call_user_invariant() { User::Invariant(); }
+void _xxxx_call_user_handle_exception(void * arg) { User::HandleException(arg); }
+
+}
+

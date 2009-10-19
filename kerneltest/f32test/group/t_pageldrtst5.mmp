@@ -1,0 +1,33 @@
+// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// /f32test/demandpaging/loader/gen/t_pageldrtst5.mmp
+// 
+//
+
+target				t_pageldrtst5.dll
+targettype			dll
+sourcepath			../demandpaging/loader
+source				t_pageldrtstdll.cpp t_pageldrtstdll.cia
+library				euser.lib
+Capability			all
+deffile				../demandpaging/loader/t_pageldrtst.def
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude			../demandpaging/loader/
+userinclude			../demandpaging/
+epocallowdlldata
+uid					0x00000000 0x00000100
+nostrictdef
+PAGEDCODE
+
+SMPSAFE

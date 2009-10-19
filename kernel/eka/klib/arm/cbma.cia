@@ -1,0 +1,743 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\klib\arm\cbma.cia
+// Machine coded bitmap allocator for ARM
+// This file is directly included in the test harness t_tbma
+// 
+//
+
+#include <kernel/kbma.h>
+#include <cpudefs.h>
+#include <e32cia.h>
+
+#ifdef TBMA_TEST_CODE
+
+#include <e32atomics.h>
+
+#ifdef __MARM__
+#define __TBMA_MACHINE_CODED__
+#endif
+
+#else
+
+#include <kernel/kern_priv.h>
+
+#endif
+
+#ifdef __TBMA_MACHINE_CODED__
+
+extern void TBmaFault(TInt aLine);
+#define	ASM_FAULT_LINE(x)	asm("ldr r0, [pc] "); asm("b " CSM_Z9TBmaFaulti ); asm(".word %a0" : : "i" (x));
+#define	ASM_FAULT()		ASM_FAULT_LINE(__LINE__)
+
+#ifndef __EABI_CTORS__
+/**	Construct a new TBitMapAllocator object
+
+	@param	aSize The number of bit positions required
+	@param	aState	TRUE if all bit positions initially free
+					FALSE if all bit positions initially allocated
+ */
+EXPORT_C __NAKED__ TBitMapAllocator::TBitMapAllocator(TInt /*aSize*/, TBool /*aState*/)
+	{
+	asm("cmp r1, #0 ");
+	asm("ble 0f ");
+	asm("cmp r2, #0 ");
+	asm("movne r2, r1 ");				// if aState r2=aSize else r2=0
+	asm("str r2, [r0, #0] ");			// iAvail=aState?aSize:0
+	asm("add r12, r0, #12 ");			// r12=&iMap[0]
+	asm("str r1, [r0, #8] ");			// iSize=r1
+	asm("add r3, r1, #31 ");
+	asm("bic r3, r3, #31 ");			// r3=aSize rounded up to multiple of 32
+	asm("sub r3, r3, #32 ");			// r3=32*(number of map words-1)
+	asm("addeq r12, r12, r3, lsr #3 ");	// if !aState r12=&iMap[nmapw-1]
+	asm("str r12, [r0, #4] ");			// iCheckFirst=aState?&iMap[0]:&iMap[nmapw-1]
+	asm("mvnne r2, #0 ");				// if aState r2=0xffffffff else r2=0
+	asm("add r12, r0, #12 ");			// r12=&iMap[0]
+	asm("1: ");
+	asm("str r2, [r12], #4 ");			// fill map
+	asm("subs r1, r1, #32 ");
+	asm("bhi 1b ");
+	asm("rsbne r1, r1, #0 ");			// if aSize not a multiple of 32, r1=number of tail bits to clear
+	asm("movne r2, r2, lsl r1 ");		// clear unused bits
+	asm("strne r2, [r12, #-4] ");
+	__JUMP(,lr);
+	asm("0: ");
+	ASM_FAULT();
+	}
+#endif
+
+
+/**	Allocate the next available bit position
+
+	@return	Number of position allocated, -1 if all positions occupied
+ */
+EXPORT_C __NAKED__ TInt TBitMapAllocator::Alloc()
+	{
+	asm("ldmia r0, {r1,r2} ");			// r1=available, r2=check first address
+	asm("subs r1, r1, #1 ");			// decrement free count
+	asm("mvnmi r0, #0 ");				// if none free, return with r0=-1
+	__JUMP(mi,lr);
+	asm("str r1, [r0] ");				// store decremented free count
+	asm("alloc_1: ");
+	asm("ldr r3, [r2], #4 ");			// check word
+	asm("cmp r3, #0 ");					// any free entries?
+	asm("beq alloc_1 ");				// if not, check next word
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(12, 3);
+#else
+	asm("mov ip, #0 ");
+	asm("cmp r3, #0x00010000 ");		// ip=number of leading zeros in r3
+	asm("movlo r3, r3, lsl #16 ");
+	asm("addlo ip, ip, #16 ");
+	asm("cmp r3, #0x01000000 ");
+	asm("movlo r3, r3, lsl #8 ");
+	asm("addlo ip, ip, #8 ");
+	asm("cmp r3, #0x10000000 ");
+	asm("movlo r3, r3, lsl #4 ");
+	asm("addlo ip, ip, #4 ");
+	asm("cmp r3, #0x40000000 ");
+	asm("movlo r3, r3, lsl #2 ");
+	asm("addlo ip, ip, #2 ");
+	asm("cmp r3, #0x80000000 ");
+	asm("addlo ip, ip, #1 ");
+#endif
+	asm("ldr r3, [r2, #-4]! ");
+	asm("mov r1, #0x80000000 ");
+	asm("bic r3, r3, r1, lsr ip ");		// clear bit in allocator word
+	asm("str r3, [r2] ");
+	asm("str r2, [r0, #4] ");			// update check first address
+	asm("sub r0, r2, r0 ");
+	asm("sub r0, r0, #12 ");			// r0=offset of word from iMap[0]
+	asm("adds r0, ip, r0, lsl #3 ");	// multiply by 8 and add bit position
+	__JUMP(,lr);
+	}
+
+
+/**	Free the specified bit position
+
+	@param	aPos Number of bit position to be freed; must be currently allocated.
+ */
+EXPORT_C __NAKED__ void TBitMapAllocator::Free(TInt /*aPos*/)
+	{
+	asm("ldr r3, [r0, #8] ");			// r3=iSize
+	asm("mov r2, r1, lsr #5 ");			// r2=word index
+	asm("add r2, r0, r2, lsl #2 ");		// r2=address of word-12
+	asm("cmp r1, r3 ");
+	asm("bhs free_error ");
+	asm("and ip, r1, #0x1f ");			// ip=bit number in word
+	asm("ldr r3, [r2, #12]! ");			// r3=allocator word
+	asm("mov r1, #0x80000000 ");
+	asm("tst r3, r1, lsr ip ");			// test bit
+	asm("bne free_error ");				// if already free, error
+	asm("orr r3, r3, r1, lsr ip ");		// set free bit
+	asm("str r3, [r2] ");
+	asm("ldmia r0, {r1,r3} ");			// r1=available count, r3=first free address
+	asm("cmp r1, #1 ");					// check original free count
+	asm("add r1, r1, #1 ");				// increment available count
+	asm("str r1, [r0, #0] ");
+	asm("cmpcs r2, r3 ");				// compare word address with first free
+	asm("strcc r2, [r0, #4] ");			// if lower, update first free
+	__JUMP(,lr);
+
+	asm("free_error: ");
+	ASM_FAULT();
+	}
+
+
+/**	Allocate a specific range of bit positions
+	Specified range must lie within the total range for this allocator and all
+	the positions must currently be free.
+
+	@param	aStart	First position to allocate
+	@param	aLength	Number of consecutive positions to allocate, must be >0
+ */
+EXPORT_C __NAKED__ void TBitMapAllocator::Alloc(TInt /*aStart*/, TInt /*aLength*/)
+	{
+	asm("ldr ip, [r0, #8] ");
+	asm("str lr, [sp, #-4]! ");
+	asm("adds lr, r1, r2 ");
+	asm("bcs 0f ");
+	asm("cmp lr, ip ");
+	asm("bhi 0f ");
+	asm("mov r3, r1, lsr #5 ");
+	asm("ldr ip, [r0] ");
+	asm("and r1, r1, #0x1f ");
+	asm("add r3, r0, r3, lsl #2 ");
+	asm("sub ip, ip, r2 ");				// reduce free count
+	asm("str ip, [r0] ");
+	asm("add ip, r2, r1 ");
+	asm("cmp ip, #32 ");
+	asm("bhi 1f ");
+	asm("mvn ip, #0 ");
+	asm("ldr r0, [r3, #12]! ");
+	asm("mvn ip, ip, lsr r2 ");
+	asm("mov ip, ip, lsr r1 ");
+	asm("orr lr, r0, ip ");
+	asm("cmp lr, r0 ");
+	asm("bne 0f ");
+	asm("bic r0, r0, ip ");
+	asm("str r0, [r3] ");
+	asm("ldr pc, [sp], #4 ");
+	asm("1: ");
+	asm("add r3, r3, #12 ");
+	asm("mvn r2, #0 ");
+	asm("mov r2, r2, lsr r1 ");
+	asm("2: ");
+	asm("ldr r1, [r3] ");
+	asm("orr lr, r1, r2 ");
+	asm("cmp lr, r1 ");
+	asm("bne 0f ");
+	asm("bic r1, r1, r2 ");
+	asm("str r1, [r3], #4 ");
+	asm("mvn r2, #0 ");
+	asm("subs ip, ip, #32 ");
+	asm("ldrls pc, [sp], #4 ");
+	asm("cmp ip, #32 ");
+	asm("mvncc r2, r2, lsr ip ");
+	asm("b 2b ");
+
+	asm("0: ");
+	ASM_FAULT();
+	}
+
+
+/**	Free a specific range of bit positions
+	Specified range must lie within the total range for this allocator and all
+	the positions must currently be allocated.
+
+	@param	aStart	First position to free
+	@param	aLength	Number of consecutive positions to free, must be >0
+ */
+EXPORT_C __NAKED__ void TBitMapAllocator::Free(TInt /*aStart*/, TInt /*aLength*/)
+	{
+	asm("ldr ip, [r0, #8] ");
+	asm("str lr, [sp, #-4]! ");
+	asm("adds lr, r1, r2 ");
+	asm("bcs 0f ");
+	asm("cmp lr, ip ");
+	asm("bhi 0f ");
+	asm("mov r3, r1, lsr #5 ");
+	asm("and r1, r1, #0x1f ");
+	asm("add r3, r0, r3, lsl #2 ");
+	asm("ldmia r0, {ip,lr} ");			// ip=free count, lr=first check addr
+	asm("add r3, r3, #12 ");
+	asm("cmp ip, #1 ");					// check original free count
+	asm("add ip, ip, r2 ");				// increase free count
+	asm("cmpcs r3, lr ");				// if none free originally, always update address
+	asm("str ip, [r0] ");
+	asm("strcc r3, [r0, #4] ");			// update first check addr if necessary
+	asm("add lr, r2, r1 ");
+	asm("cmp lr, #32 ");
+	asm("bhi 1f ");
+	asm("mvn lr, #0 ");
+	asm("ldr r0, [r3] ");
+	asm("mvn lr, lr, lsr r2 ");
+	asm("mov lr, lr, lsr r1 ");
+	asm("tst r0, lr ");
+	asm("bne 0f ");
+	asm("orr r0, r0, lr ");
+	asm("str r0, [r3] ");
+	asm("ldr pc, [sp], #4 ");
+	asm("1: ");
+	asm("mvn r2, #0 ");
+	asm("mov r2, r2, lsr r1 ");
+	asm("2: ");
+	asm("ldr r1, [r3] ");
+	asm("tst r1, r2 ");
+	asm("bne 0f ");
+	asm("orr r1, r1, r2 ");
+	asm("str r1, [r3], #4 ");
+	asm("mvn r2, #0 ");
+	asm("subs lr, lr, #32 ");
+	asm("ldrls pc, [sp], #4 ");
+	asm("cmp lr, #32 ");
+	asm("mvncc r2, r2, lsr lr ");
+	asm("b 2b ");
+
+	asm("0: ");
+	ASM_FAULT();
+	}
+
+
+/**	Free a specific range of bit positions
+	Specified range must lie within the total range for this allocator but it is
+	not necessary that all the positions are currently allocated.
+
+	@param	aStart	First position to free
+	@param	aLength	Number of consecutive positions to free, must be >0
+ */
+EXPORT_C __NAKED__ void TBitMapAllocator::SelectiveFree(TInt /*aStart*/, TInt /*aLength*/)
+	{
+	asm("ldr r3, [r0, #8] ");
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("adds lr, r1, r2 ");
+	asm("bcs 0f ");
+	asm("cmp lr, r3 ");
+	asm("bhi 0f ");
+	asm("mov r7, r0 ");					// r7 -> this
+	asm("mov r4, r1, lsr #5 ");
+	asm("and r1, r1, #0x1f ");
+	asm("ldmia r7, {r6,r8} ");			// r6=free count, r8=first check addr
+	asm("add r4, r7, r4, lsl #2 ");
+	asm("add r4, r4, #12 ");
+	asm("cmp r6, #1 ");					// check original free count
+	asm("add r6, r6, r2 ");				// r6=new free count assuming no positions already free
+	asm("cmpcs r4, r8 ");				// if none free originally, always update address
+	asm("strcc r4, [r7, #4] ");			// update first check addr if necessary
+	asm("add r8, r2, r1 ");
+	asm("cmp r8, #32 ");
+	asm("bhi sfree_cross_bdry ");
+	asm("mvn r8, #0 ");
+	asm("mvn r8, r8, lsr r2 ");
+	asm("mov r8, r8, lsr r1 ");
+	asm("ldr r1, [r4] ");
+	asm("ands r0, r1, r8 ");			// r0 has 1's in positions which are already free
+	asm("orr r1, r1, r8 ");
+	asm("str r1, [r4] ");				// store new bit mask
+	asm("beq sfree_0 ");				// if none were already free, finished
+	asm("bl " CSM_CFUNC(__e32_bit_count_32));
+	asm("sub r6, r6, r0 ");
+	asm("sfree_0: ");
+	asm("str r6, [r7] ");				// store free count
+	asm("ldmfd sp!, {r4-r8,pc} ");			// return
+	
+	asm("sfree_cross_bdry: ");
+	asm("mvn r5, #0 ");
+	asm("mov r5, r5, lsr r1 ");
+	asm("sfree_cross_bdry_1: ");
+	asm("ldr r1, [r4] ");				// original bit mask
+	asm("ands r0, r1, r5 ");			// r0 has 1's in bit positions which are already free
+	asm("orr r1, r1, r5 ");
+	asm("str r1, [r4], #4 ");			// store new bit mask
+	asm("beq sfree_2 ");				// skip if none were already free
+	asm("bl " CSM_CFUNC(__e32_bit_count_32));
+	asm("sub r6, r6, r0 ");
+	asm("sfree_2: ");
+	asm("mvn r5, #0 ");
+	asm("subs r8, r8, #32 ");
+	asm("bls sfree_0 ");
+	asm("cmp r8, #32 ");
+	asm("mvncc r5, r5, lsr r8 ");
+	asm("b sfree_cross_bdry_1 ");
+
+	asm("0: ");
+	ASM_FAULT();
+	}
+
+
+/**	Tests if a specific range of bit positions are all free
+	Specified range must lie within the total range for this allocator.
+
+	@param	aStart	First position to check
+	@param	aLength	Number of consecutive positions to check, must be >0
+	@return	FALSE if all positions free, TRUE if at least one is occupied.
+ */
+EXPORT_C __NAKED__ TBool TBitMapAllocator::NotFree(TInt /*aStart*/, TInt /*aLength*/) const
+	{
+	// Inverse logic - returns 0 if all positions free, nonzero otherwise
+	asm("ldr r3, [r0, #8] ");
+	asm("adds ip, r1, r2 ");
+	asm("bcs 0f ");
+	asm("cmp ip, r3 ");
+	asm("bhi 0f ");
+	asm("mov r3, r1, lsr #5 ");
+	asm("and r1, r1, #0x1f ");
+	asm("add r3, r0, r3, lsl #2 ");
+	asm("add ip, r2, r1 ");
+	asm("add r3, r3, #12 ");
+	asm("cmp ip, #32 ");
+	asm("bhi 1f ");
+	asm("mvn ip, #0 ");
+	asm("ldr r0, [r3] ");
+	asm("mvn ip, ip, lsr r2 ");
+	asm("mov ip, ip, lsr r1 ");
+	asm("eor r0, r0, ip ");
+	asm("ands r0, r0, ip ");
+	__JUMP(,lr);
+	asm("1: ");
+	asm("mvn r2, #0 ");
+	asm("mov r2, r2, lsr r1 ");
+	asm("2: ");
+	asm("ldr r1, [r3], #4 ");
+	asm("eor r0, r1, r2 ");
+	asm("ands r0, r0, r2 ");
+	__JUMP(ne,lr);
+	asm("mvn r2, #0 ");
+	asm("subs ip, ip, #32 ");
+	__JUMP(ls,lr);
+	asm("cmp ip, #32 ");
+	asm("mvncc r2, r2, lsr ip ");
+	asm("b 2b ");
+
+	asm("0: ");
+	ASM_FAULT();
+	}
+
+
+/**	Tests if a specific range of bit positions are all occupied
+	Specified range must lie within the total range for this allocator.
+
+	@param	aStart	First position to check
+	@param	aLength	Number of consecutive positions to check, must be >0
+	@return	FALSE if all positions occupied, TRUE if at least one is free.
+ */
+EXPORT_C __NAKED__ TBool TBitMapAllocator::NotAllocated(TInt /*aStart*/, TInt /*aLength*/) const
+	{
+	// Inverse logic - returns 0 if all positions allocated, nonzero otherwise
+	asm("ldr r3, [r0, #8] ");
+	asm("adds ip, r1, r2 ");
+	asm("bcs 0f ");
+	asm("cmp ip, r3 ");
+	asm("bhi 0f ");
+	asm("mov r3, r1, lsr #5 ");
+	asm("and r1, r1, #0x1f ");
+	asm("add r3, r0, r3, lsl #2 ");
+	asm("add ip, r2, r1 ");
+	asm("add r3, r3, #12 ");
+	asm("cmp ip, #32 ");
+	asm("bhi 1f ");
+	asm("mvn ip, #0 ");
+	asm("ldr r0, [r3] ");
+	asm("mvn ip, ip, lsr r2 ");
+	asm("ands r0, r0, ip, lsr r1 ");
+	__JUMP(,lr);
+	asm("1: ");
+	asm("mvn r2, #0 ");
+	asm("mov r2, r2, lsr r1 ");
+	asm("2: ");
+	asm("ldr r1, [r3], #4 ");
+	asm("ands r0, r1, r2 ");
+	__JUMP(ne,lr);
+	asm("mvn r2, #0 ");
+	asm("subs ip, ip, #32 ");
+	__JUMP(ls,lr);
+	asm("cmp ip, #32 ");
+	asm("mvncc r2, r2, lsr ip ");
+	asm("b 2b ");
+
+	asm("0: ");
+	ASM_FAULT();
+	}
+
+
+/**	Allocate up to a specified number of available bit positions
+	The allocated positions are not required to bear any relationship to
+	each other.
+	If the number of free positions is less than the number requested,
+	allocate all currently free positions.
+
+	@param	aLength	Maximum number of positions to allocate.
+	@param	aList	Pointer to memory area where allocated bit numbers should be stored.
+	@return	The number of positions allocated
+ */
+EXPORT_C __NAKED__ TInt TBitMapAllocator::AllocList(TInt /*aLength*/, TInt* /*aList*/)
+	{
+	asm("ldmia r0, {r3,ip} ");				// r3=iAvail, ip=first check word
+	asm("stmfd sp!, {r4-r5,lr} ");
+	asm("cmp r1, r3 ");
+	asm("movgt r1, r3 ");					// if aLength>iAvail, aLength=iAvail
+	asm("movs r5, r1 ");					// r5 counts allocations
+	asm("beq 0f ");							// if length 0, exit
+	asm("sub r3, r3, r1 ");					// reduce available count
+	asm("sub r4, ip, r0 ");
+	asm("sub r4, r4, #12 ");				// r4=offset of first check word from iMap[0];
+	asm("str r3, [r0] ");
+	asm("mov r4, r4, lsl #3 ");				// r4=bit number of MSB of first check word
+	asm("1: ");
+	asm("ldr lr, [ip], #4 ");				// lr=next word
+	asm("cmp lr, #0 ");
+	asm("addeq r4, r4, #32 ");				// if word=0, increment bit number by 32 and check next word
+	asm("beq 1b ");
+	asm("mov r3, #1 ");
+	asm("sub r4, r4, #1 ");
+	asm("2: ");
+	asm("mov r3, r3, ror #1 ");				// shift mask right one
+	asm("add r4, r4, #1 ");					// and increment bit number
+	asm("tst lr, r3 ");						// check next bit
+	asm("beq 2b ");
+	asm("str r4, [r2], #4 ");				// bit=1, so store bit number in list
+	asm("subs r5, r5, #1 ");				// check if we are finished
+	asm("beq 4f ");							// branch if we are
+	asm("bics lr, lr, r3 ");				// clear bit and see if word now empty
+	asm("bne 2b ");							// if word not empty, get next bit
+	asm("str lr, [ip, #-4] ");				// word empty - clear word
+	asm("add r4, r4, #32 ");				// word empty - step bit number on to next word
+	asm("bic r4, r4, #31 ");
+	asm("b 1b ");							// and go to check next word
+	asm("4: ");
+	asm("bics lr, lr, r3 ");				// clear bit
+	asm("str lr, [ip, #-4] ");				// we are finished - store modified word
+	asm("subne ip, ip, #4 ");				// if word not empty, first check=last read word
+	asm("str ip, [r0, #4] ");				// update first check word
+	asm("0: ");
+	asm("mov r0, r1 ");						// return number of positions allocated
+	asm("ldmfd sp!, {r4-r5,pc} ");
+	}
+
+
+/**	Find a set of consecutive bit positions with specified alignment, with
+	support for chaining multiple allocators.
+	Note that this function does not mark the positions as allocated.
+
+	@param	aLength		number of consecutive bit positions to allocate
+	@param	aAlign		logarithm to base 2 of the alignment required
+	@param	aBase		the alignment of the first bit of this allocator - only significant modulo 2^aAlign
+	@param	aBestFit	TRUE for best fit allocation strategy, FALSE for first fit
+	@param	aCarry		carry in/carry out
+	@param	aRunLength	Holds best run length found so far.  This will be set to KMaxTInt when no
+						suitable run length has been found.  In best fit mode aCarry should also be
+						checked as aRunLength will not be set if aCarry is the only suitable run length
+						found.
+	@param	aOffset		The bit position to start the search from, set to 0 to search all bit positions.
+						aOffset will be aligned so all bits before an aligned aOffset will be
+						ignored.  This can only be non-zero if aCarry is zero as any carry in bits will be
+						ignored if aOffset is non-zero.
+
+	@return	Start position if a suitable run was found
+	@return	KErrNotFound if no suitable run was found
+	@return KErrOverflow, if all positions free and best fit mode, or if all positions free 
+			in first fit mode and length requested > number of positions available.
+
+	@see	TBitMapAllocator::AllocConsecutive(TInt aLength, TBool aBestFit)
+	@see	TBitMapAllocator::AllocAligned(TInt aLength, TInt aAlign, TInt aBase, TBool aBestFit)
+	@see	..\bma.cpp for more details
+ */
+EXPORT_C __NAKED__ TInt TBitMapAllocator::AllocAligned(TInt /*aLength*/, TInt /*aAlign*/, TInt /*aBase*/,
+												TBool /*aBestFit*/, TInt& /*aCarry*/, TInt& /*aRunLength*/,
+												TUint /*aOffset*/) const
+	{
+	// r0=this, r1=aLength, r2=aAlign, r3=aBase, [sp+0]=aBestFit, [sp+4]=&aCarry, [sp+8]=&aRunLength
+	// [sp+12] = aOffset.
+	asm("ldr r12, [sp, #0] ");				// r12=aBestFit
+	asm("cmp r1, #0 ");
+	asm("ble aa_inv ");						// __ASSERT_ALWAYS(aLength>0, TBMA_FAULT())
+	asm("cmp r2, #31 ");					
+	asm("bhs aa_inv ");						// __ASSERT_ALWAYS(TUint(aAlign)<31, TBMA_FAULT())
+	asm("stmfd sp!, {r4-r11,lr} ");
+	asm("movs r8, r12 ");					//
+	asm("ldr r11, [sp, #40] ");				// r11=&aCarry
+	asm("mvnne r8, #0x80000000 ");			// if (aBestFit) r8=7fffffff else r8=0
+	asm("ldmia r0!, {r4-r6} ");				// r4=iAvail, r5=iCheckFirst, r6=iSize, r0->iMap[0]
+	asm("ldr r12, [sp, #48] ");				// r12 = aOffset;
+	asm("cmp r6, r12 ");
+	asm("bls aa_inv ");						// __ASSERT_ALWAYS(aOffset < (TUint)iSize, TBMA_FAULT())
+	asm("ldr r9, [r11] ");					// r9=aCarry
+	asm("cmp r9, #0 ");
+	asm("cmpne r12, #0 ");
+	asm("bne aa_inv ");						//__ASSERT_ALWAYS(!aCarry || !aOffset, TBMA_FAULT())
+	asm("mov r12, #1 ");
+	asm("mov r12, r12, lsl r2 ");			// r12=alignsize = 1<<aAlign
+	asm("sub r2, r12, #1 ");				// r2=alignmask = alignsize-1
+	asm("cmp r4, r6 ");						// check for iAvail==iSize
+	asm("beq aa_all_free ");				// branch if so
+	asm("rsbs r9, r9, #0 ");				// r9=run start=-aCarry
+	asm("movne r5, r0 ");					// if carry, pW=iMap
+	asm("sub r4, r5, r0 ");					// r4=first check address - &iMap[0]
+	asm("add r12, r6, #31 ");
+	asm("mov r4, r4, lsl #3 ");				// r4=bit number of first bit to check
+	asm("bic r12, r12, #31 ");				// r12=size rounded up to multiple of 32
+	asm("mvn r7, #0 ");						// saved bit number (p)
+	asm("add r10, r0, r12, lsr #3 ");		// r10=end address of bitmap
+	asm("str r7, [sp, #-4]! ");				// saved bit number (p) onto stack
+	asm("movs r11, r9 ");
+	asm("mvnne r11, #0 ");					// if (aCarry) r0=~0 else r0=0
+
+	// registers:	r0=this->iMap, r1=aLength, r2=alignmask, r3=aBase, r4=current bit number, r5=word pointer
+	//				r6=iSize, r7=, r8=saved run length, r9=run start pos
+	//				r10=end address of bitmap, r11=state
+	asm("ldr r7, [sp, #52] ");				// r7 = aOffset;
+	asm("cmp r7, #0 ");						// if (aOffset)
+	asm("beq aa_word ");
+	asm("add r7, r7, r3 ");					// r7 = aOffset + aBase
+	asm("add r7, r7, r2 ");					// r7 = aOffset + aBase + alignmask
+	asm("bic r7, r7, r2 ");					// r7 = (aOffset + aBase + alignmask) & ~alignmask
+	asm("sub r7, r7, r3 ");					// r7 -= aBase
+	asm("mov r12, r7, lsr #5 ");			// r12 = aOffset >> 5 (number of pointer increments required)
+	asm("add r0, r0, r12, lsl #2 ");		// r0 = offsetWord = iMap + (aOffset >> 5)	(pointer add so shift=2)
+	asm("cmp r0, r5 ");						// if (offsetWord >= pW)
+	asm("movpl r5, r0 ");					// r5 = pW = offsetWord
+	asm("andpl r4, r7, #0xffffffe0 ");		// r4 = n = aOffset & 0xffffffe0
+	asm("andpl r7, r7, #31 ");				// r7 = aOffset & 31
+	asm("mov r0, #0xffffffff ");			// r0 = 0xffffffff
+	asm("mov r7, r0, lsr r7 ");				// r7 = offsetMask = 0xffffffff >> (aOffset & 31)
+
+	// registers:	r0=bit to check (b), r1=aLength, r2=alignmask, r3=aBase, r4=current bit number, r5=word pointer
+	//				r6=iSize, r7=offsetMask, r8=saved run length, r9=run start pos
+	//				r10=end address of bitmap, r11=state, r12=word
+	asm("aa_word: ");						// while (pW < pE)
+	asm("cmp r5, r10 ");					// reached end?
+	asm("ldrlo r12, [r5], #4 ");			// if not, r12=next word (=*pW++)
+	asm("bhs aa_end_loop ");				// if end, branch out
+
+	asm("cmp r7, #0 ");						// if (offsetMask)
+	asm("andne r12, r12, r7 ");				// r12 = word &= offsetMask
+	asm("movne r7, #0 ");					// offsetmask = 0;
+	
+	asm("eors r12, r12, r11 ");				// r12=w^s, test if any of required bit present
+	asm("addeq r4, r4, #32 ");				// if not, increment bit # by 32
+	asm("beq aa_word ");					// and do next word
+	asm("mov r0, #0x80000000 ");			// bit to check (b)
+
+	asm("aa_bit: ");						// if ((word ^ s) & b)
+	asm("tst r12, r0 ");					// does bit have required state?
+	asm("bne aa_bit_found ");
+	asm("aa_end_for: ");
+	asm("add r4, r4, #1 ");					// increment bit number
+	asm("movs r0, r0, lsr #1 ");			// next bit
+	asm("bne aa_bit ");						// if all bits not done, do next
+	asm("b aa_word ");						// else do next word
+
+	asm("aa_bit_found: ");
+	asm("mvns r12, r12 ");					// Invert r12 to invert search bit
+	asm("mvns r14, r11 ");					// if (s)
+	asm("cmpeq r4, r6 ");					// && n==iSize
+	asm("beq aa_end_loop ");				// ... finished
+	asm("mvns r11, r11 ");					// else s=~s
+	asm("movne r9, r4 ");					// if (s) q=n (1 found so save position)
+	asm("bne aa_end_for ");
+
+	asm("sub r14, r4, r9 ");				// r14 = run length = n - q
+	asm("stmdb sp!, {r0,r12} ");			// store b (r0) and word (r12) on stack
+	asm("add r12, r9, r3 ");				// r12 = q + aBase
+	asm("add r12, r12, r2 ");				// r12 = q + aBase + alignmask
+	asm("bic r12, r12, r2 ");				// r12 = (q + aBase + alignmask) & ~alignmask
+	asm("sub r12, r12, r3 ");				// r12 = alignedStartPos = r12 - aBase
+	asm("sub r0, r12, r9 ");				// r0 = lost = alignedStartPos - q
+	asm("sub r0, r14, r0 ");				// r0 = run length - lost
+	asm("cmp r0, r1 ");						// if (run length - lost >= aLength)
+	asm("ldmltia sp!, {r0,r12} ");			// if aligned length too short: r0 = b and r12 = word from stack 
+	asm("blt aa_end_for ");					// (run length - lost) too short (must be signed comparison)
+
+// if (rl-lost>=aLength)
+
+	asm("cmp r1, r14 ");					// check for exact run length match (if (run length == aLength))
+	asm("cmpne r8, #0 ");					// check for best fit (r8 only ever set if (aBestfit))
+	asm("beq aa_found_it ");				// exact match or not in best fit mode
+
+// 		if (r1<minrl)
+	asm("cmp r12, #0 ");
+	asm("movmi r12, #0 ");					// r12 = (alignedStartPos >= 0)? alignedStartPos : 0
+	asm("cmp r14, r8 ");					// Compare run length with current minimum
+	asm("movlo r8, r14 ");					// if shorter, replace
+	asm("strlo r12, [sp, #8] ");			// save alignedStartPos (p = (alignedStartPos >= 0)? alignedStartPos : 0)
+	asm("ldmia sp!, {r0,r12} ");			// r0 = b and r12 = word from stack
+	asm("b aa_end_for ");					// next bit
+// 		end {if (r1<minrl)}
+
+// 		if (!aBestFit || run length == aLength)
+	// registers:	r12 = alignedStartPos, r14 = run length
+	asm("aa_found_it: ");
+	asm("ldr r1, [sp, #52] ");				// r1=&aCarry
+	asm("ldr r7, [sp, #56] ");				// r7=&aRunLength
+	asm("subs r0, r12, #0 ");				// r0 = alignStartPos, alignedStartPos >= 0?
+	asm("movmi r0, #0 ");					// if alignedStartPos < 0 r0=0
+	asm("str r14, [r7] ");					// aRunLength = run length
+	asm("mov r14, #0 ");
+	asm("strge r14, [r1] ");				// if (alignedStartPos >= 0), aCarry=0
+	asm("ldmfd sp!, {r1-r11,pc} ");			// return
+// 		end {if (!aBestFit || run length == aLength)}
+
+// end {if (rl-lost>=aLength)}
+
+	asm("aa_end_loop: ");
+	asm("ldr r10, [sp, #48] ");				// r10=&aRunLength
+
+//		registers: 	r2 = alignmask, r3 = aBase, r4=current bit number(n), 
+//					r9=run start pos(q),  r10=&aRunLength, r11 = state(s), r14 = run length(rl)
+	asm("cmp r8, r1 ");						// compare min rl with aLength
+	asm("beq aa_end_loop2 ");				// if exact match, skip
+
+// if (minrl != aLength)
+	asm("ldr r12, [sp, #44] ");				// r12=&aCarry
+	asm("mov r14, #0 ");					// r14 = run length = 0
+	asm("cmp r11, #0 ");
+	asm("beq aa_end_loop3 ");				// if (!s) no final run
+	asm("sub r14, r4, r9 ");				// rl4 = run length = n-q
+	asm("cmp r8, #0 ");						// if (!aBestFit) (r8 only and always set when best fit mode)
+	asm("bne aa_end_loop3 ");				// if best fit, don't count final run
+
+//		if (!aBestFit)
+	asm("add r0, r9, r3 ");					// r0 = q + aBase
+	asm("add r0, r0, r2 ");					// r0 = q + aBase + alignmask
+	asm("bic r0, r0, r2 ");					// r0 = (q + aBase + alignmask) & ~alignmask
+	asm("sub r0, r0, r3 ");					// r0 = alignedStartPos = r0 -= aBase
+	asm("sub r2, r0, r9 ");					// r2 = lost = alignedStartPos - q
+	asm("sub r2, r14, r2 ");				// r2 = run length - lost
+	asm("cmp r2, r1 ");						// if (run length - lost >= aLength)
+	asm("blt aa_end_loop3 ");
+
+//			if (run length - lost >= aLength)
+	asm("mov r8, r14 ");					// r8 = run length (ready to be stored in return)
+	asm("mov r14, #0 ");					// r14 = 0 (aCarry on return)
+	asm("str r0, [sp, #0] ");				// Save alignedStartPos on stack ready for return
+
+//			end {if (run length - lost >= aLength)}
+//		end {if (!aBestFit)}
+
+	asm("aa_end_loop3: ");
+	asm("str r14, [r12] ");					// Save aCarry = run length = r14
+// end {if (minrl != aLength)}
+
+	asm("aa_end_loop2: ");
+	asm("str r8, [r10] ");					// aRunLength = minrl
+	asm("ldmfd sp!, {r0,r4-r11,pc} ");		// return saved pos
+
+// r1 = aLength r2 = alignmask, r3 = aBase,  r4 = iAvail, r6 = iSize, r9 = aCarry, r11 = &aCarry
+	asm("aa_all_free: ");
+	asm("ldr r12, [sp, #48] ");				// r12 = aOffset;
+	asm("cmp r12, #0 ");					// if (aOffset)
+	asm("addne r12, r12, r3 ");				// r12 = aOffset + aBase
+	asm("addne r12, r12, r2 ");				// r12 = aOffset + aBase + alignmask
+	asm("bicne r12, r12, r2 ");				// r12 = (aOffset + aBase + alignmask)&~alignmask
+	asm("subne r12, r12, r3 ");				// r12 = ((aOffset + aBase + alignmask)&~alignmask) - aBase
+	asm("subs r10, r6, r12 ");				// r10 = runLength = iSize - aOffset
+	asm("movmi r10, #0 ");					// if (aOffset < (TUint)iSize) runLength = 0;
+
+	asm("movs r0, r8 ");					// best fit? if not, r0=0
+	asm("bne aa_all_free2 ");				// skip if best fit mode
+	asm("sub r6, r12, r9 ");				// r6=aOffset-aCarry
+	asm("add r6, r6, r3 ");					// r6=aOffset-aCarry+aBase
+	asm("add r6, r6, r2 ");					// r6=aOffset-aCarry+aBase+alignmask
+	asm("bic r6, r6, r2 ");					// r6=(aOffset-aCarry+aBase+alignmask)&~alignmask
+	asm("sub r6, r6, r3 ");					// r6 = alignedStartPos
+	asm("sub r3, r12, r9 ");				// r3 = aOffset - aCarry
+	asm("sub r3, r6, r3 ");					// r3 = lost = alignedStartPos - (aOffset - aCarry)
+	asm("add r2, r10, r9 ");				// r2 = aRunLength + aCarry
+	asm("sub r2, r2, r3 ");					// r2 -= lost
+	asm("cmp r2, r1 ");						// if (aRunLength + aCarry - lost >= aLength)
+	asm("blt aa_all_free2 ");
+	asm("cmp r6, #0 ");
+	asm("ldr r5, [sp, #44] ");				// r5 = &RunLength
+	asm("str r10, [r5] ");					// Save aRunLength (aRunLength = runLength)
+	asm("movge r9, #0 ");					// if (alignedStartPos >= 0) aCarry = 0;
+	asm("str r9, [r11] ");					// Save aCarry
+	asm("movge r0, r6 ");					// r0 = (alignedStartPos >= 0)? alignedStartPos : 0
+	asm("ldmfd sp!, {r4-r11,pc} ");			// return r0
+
+	asm("aa_all_free2: ");
+	asm("ldr r12, [sp, #48] ");				// r12 = aOffset;
+	asm("cmp r12, #0 ");					// if (aOffset)
+	asm("movne r9, r10 ");					// r9 = aCarry = runLength
+	asm("addeq r9, r9, r4 ");				// r9 = aCarry + iAvail
+	asm("str r9, [r11] ");					// Save aCarry
+	asm("ldr r5, [sp, #44] ");				// r5 = &RunLength
+	asm("mov r0, #%a0" : : "i" ((TInt)KMaxTInt));
+	asm("str r0, [r5] ");					// aRunLength = KMaxTInt
+	asm("mov r0, #%a0" : : "i" ((TInt)KErrOverflow));
+	asm("ldmfd sp!, {r4-r11,pc} ");			// return KErrOverflow
+
+	asm("aa_inv: ");
+	ASM_FAULT();
+	}
+#endif

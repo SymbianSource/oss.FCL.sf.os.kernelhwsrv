@@ -1,0 +1,54 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32/group/efat.mmp
+// 
+//
+
+TARGET          efat.fsy
+
+TARGETTYPE      fsy
+
+USERINCLUDE       ../sfat
+USERINCLUDE       ../sfat/inc
+USERINCLUDE       ../sfile
+SOURCEPATH  ../sfat
+SOURCE           fat_config.cpp sl_cache.cpp sl_dir.cpp
+SOURCE           sl_disk.cpp sl_drv.cpp sl_file.cpp
+SOURCE           sl_fmt.cpp sl_fsy.cpp sl_main.cpp sl_mnt.cpp
+SOURCE           sl_utl.cpp sl_vfat.cpp sl_bpb.cpp
+SOURCE           sl_scan.cpp sl_check.cpp
+SOURCE           sl_fat16.cpp sl_mnt16.cpp sl_fatcache.cpp fat_table.cpp ram_fat_table.cpp
+SOURCE           sl_leafdir_cache.cpp
+SOURCE           sl_dir_cache.cpp
+
+SOURCEPATH  .
+DOCUMENT         ../group/release.txt
+
+USERINCLUDE   ../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY          efile.lib efsrv.lib euser.lib hal.lib
+
+START WINS
+BASEADDRESS     0x61000000
+END
+
+UID     0 0x100000d6
+VENDORID 0x70000001
+
+
+#include "../group/f32caps.mmh"  // Capabilities of File Server process
+#include "../group/f32.mmh"      // Generic definitions for the whole f32 component
+
+SMPSAFE

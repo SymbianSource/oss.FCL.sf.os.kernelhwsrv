@@ -1,0 +1,3 @@
+EXPORTS
+	_Z13GetStartTime2v @ 1 NONAME ; GetStartTime2()
+

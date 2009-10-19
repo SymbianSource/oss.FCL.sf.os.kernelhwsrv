@@ -1,0 +1,35 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		PBASE-F32-Sfsrv-PublicApi
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM.
+/////////////////////////////////////////////////////////////////////
+// PBASE-F32-Sfsrv-PublicApi.script
+//
+// Tests all public elements of the RFs class and other classes.
+// as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll APIs for RFs, and other classes.
+// Negative testing is performed to confirm that correct errors are returned when incorrect parameters are given.
+// The tests are fully automated.
+/////////////////////////////////////////////////////////////////////
+
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-Sfsrv-publicapi-ram.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-Sfsrv-publicapi-rem.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-Sfsrv-publicapi-rom.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-Sfsrv-publicapi-any.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-Sfsrv-publicapi-os.script
+RUN_SCRIPT	${SYSDRIVE}\base\pbase-f32-Sfsrv-publicapi-nand.script

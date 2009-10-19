@@ -1,0 +1,41 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template/templarte_variant/datxab.mmp
+// 
+//
+
+#define __USING_ASSP_REGISTER_API__
+#define __USING_ASSP_INTERRUPT_API__
+
+#include			<variant.mmh>
+#include			"kernel/kern_ext.mmh"
+
+target				VariantTarget(euart,pdd)
+targettype			pdd
+romtarget			euart.pdd
+
+USERINCLUDE		inc
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/template_assp)
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+sourcepath			specific
+source				uart.cpp
+
+library				VariantTarget(ecust,lib)
+
+uid					0 0x1000015b
+
+VENDORID 0x70000001
+
+capability			all

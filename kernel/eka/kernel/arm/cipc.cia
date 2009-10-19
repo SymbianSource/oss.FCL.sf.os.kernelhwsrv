@@ -1,0 +1,429 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\cipc.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+#include "execs.h"
+#include <kernel/kern_priv.h>
+
+#ifdef _DEBUG
+#define ASM_KILL_LINK(rp,rs)	asm("mov "#rs", #0xdf ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #8 ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #16 ");\
+								asm("str "#rs", ["#rp"] ");\
+								asm("str "#rs", ["#rp", #4] ");
+#else
+#define ASM_KILL_LINK(rp,rs)
+#endif
+
+#ifdef __MESSAGE_MACHINE_CODED__
+
+#define iMState		iWaitLink.iSpare1
+
+#ifdef KIPC
+extern "C" void __DebugMsgComplete(TInt, TInt a, TInt b, TInt c);
+extern "C" void __DebugMsgSessionSend(TInt a, TInt b, TInt c);
+#endif //KIPC
+
+#ifdef _DEBUG
+extern "C" void __FaultBadMsgPool();
+extern "C" void __FaultMsgNotFree();
+extern "C" void __FaultMsgInUse();
+extern "C" void __FaultMsgCompleteDiscNotSent();
+extern "C" void __DebugMsgAccept(TInt a, TInt b);
+extern "C" void __DebugMsgAccept2(TInt a, TInt b);
+extern "C" void __DebugMsgServerReceive(TInt a, TInt b, TInt c);
+#endif //_DEBUG
+
+extern "C" void __PanicSyncMsgSentTwice();
+extern "C" void __PanicRequestAlreadyPending();
+extern "C" void __PanicSessionAlreadyConnected();
+extern "C" void __PanicMesAlreadyPending();
+extern "C" void __SendDiscMsg(DSession*);
+
+__NAKED__ void ExecHandler::MessageComplete(RMessageK* /*aMsg*/, TInt /*aReason*/)
+	{
+	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(RMessageK, iFunction));		// get iFunction, as per preprocessor
+
+	// Subroutine MessageComplete
+	// Complete an IPC message
+	// Enter with r0=message handle, r1=completion code, ip=RMessageK::iFunction
+	// Preserve r4-r11
+	// Enter and leave with system lock held
+	asm(".global _asm_exec_MessageComplete ");
+	asm("_asm_exec_MessageComplete: ");
+
+#ifdef BTRACE_CLIENT_SERVER
+	asm("stmfd sp!,{r0,r1,ip,lr}");
+	asm("mov r2,r1");							// arg2 = aReason
+	asm("mov r1,r0");							// arg1 = aMsg
+	asm("ldr r0,_messageCompleteTraceHeader");	// arg0 = header
+	asm("bl " CSM_ZN6BTrace4OutXEmmmm);
+	asm("ldmfd sp!,{r0,r1,ip,lr}");
+#endif
+
+	asm("cmp ip, #%a0" : : "i" (RMessage2::EDisConnect));
+	asm("ldreq r0, [r0, #%a0]" : : "i" _FOFF(RMessageK,iSession));
+	asm("beq " CSM_ZN8DSession19CloseFromDisconnectEv );	// if disconnect, do it in C++
+	asm("mov r2, r1 ");					// r2=aReason
+	ASM_DEBUG2(Complete,r0,r2);
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(RMessageK, iSession)); 	// r3=iSession
+	
+	asm("subs r1, ip, #%a0" : : "i" (RMessage2::EConnect));		// (m.iFunction == RMessage2::EConnect)?
+	asm("streq r1, [r3, #%a0] " : : "i" _FOFF(DSession, iConnectMsgPtr));	// iSession->iConnectMsgPtr = NULL
+
+	asm("ldr r1, [r3, #%a0]" : : "i" _FOFF(DSession,iAccessCount));	// r1=iSession->iAccessCount	
+	asm("cmp r1, #0 ");					// iAccessCount = 0?
+	asm("beq 2f ");
+
+	// if (!s->IsClosing())
+	asm("mov r1, r0");					// r1 = RMessageK ptr
+	asm("ldr r0, [r0, #%a0] " : : "i" _FOFF(RMessageK,iClient));    // r0=iClient
+	asm("mov ip, #1");
+	asm("str ip, [r1, #%a0]" : : "i" _FOFF(RMessageK, iServerLink.iNext));	// iServerLink.iNext=1
+	asm("b " CSM_ZN4Kern20QueueRequestCompleteEP7DThreadP14TClientRequesti);
+
+	// if (s->IsClosing())
+	asm("2: ");
+	asm("cmp ip, #%a0" : : "i" (RMessage2::EConnect));	// (m.iFunction == RMessage2::EConnect)?
+	asm("beq 4f ");
+	asm("3: ");
+	asm("stmfd sp!, {r0,lr} ");
+	asm("bl " CSM_ZN14TClientRequest5ResetEv);
+	asm("ldmfd sp!, {r0,lr} ");
+	asm("b " CSM_ZN9RMessageK8CloseRefEv);
+
+	asm("4: ");
+	// if closing & connect msg
+	asm("ldr r2, [r3, #%a0] " : : "i" _FOFF(DSession, iSessionCookie));	// r2=iSession->iSessionCookie
+	asm("teq r2, #0");
+#ifdef _DEBUG
+	asm("beq nosession ");
+	asm("ldr r1, [r3, #%a0] " : : "i" _FOFF(DSession, iServer));		// r1=iSession->iServer
+	asm("cmp r1, #0 ");
+ 	asm("beq noserver ");
+	asm("ldr r2, [r3, #%a0] " : : "i" (_FOFF(DSession, iDisconnectMsgPtr)));  // r2=iSession->iDisconnectMsgPtr
+	asm("ldr r2, [r2, #%a0] " : : "i" (_FOFF(RMessageK, iServerLink.iNext)));	// r2=iDisconnectMsgPtr->iServerLink.iNext
+	asm("cmp r2, #0 ");
+	asm("beq __FaultMsgCompleteDiscNotSent ");	// die if a session has been created and no disc msg sent
+	asm("ldr r2, [r3, #%a0] " : : "i" _FOFF(DSession, iSessionCookie));	// r2=iSession->iSessionCookie
+	asm("noserver: ");
+	asm("teq r2, #0");
+	asm("nosession: ");
+#endif //_DEBUG
+	asm("moveq r0, r3 ");
+	asm("beq __SendDiscMsg ");	// if no session object to clean up, send disc msg in C++
+	asm("b 3b ");				// return
+
+#ifdef BTRACE_CLIENT_SERVER
+	asm("_messageCompleteTraceHeader:");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(12,BTrace::EClientServer,BTrace::EMessageComplete)));
+	asm("_messageDeliverTraceHeader:");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(16,BTrace::EClientServer,BTrace::EMessageSend)));
+#endif
+
+	}
+
+
+__NAKED__ void DServer::Deliver(RMessageK* /*aMessage*/)
+//
+// Delivers a message to the server.
+//
+	{
+	asm("stmfd sp!, {r4-r10,lr} ");
+#ifdef __SMP__
+	GET_RWNO_TID(,r10);		// NOTE: Can't migrate because we hold system lock
+	asm("ldr r9, [r10, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+#else
+	asm("ldr r10, __TheScheduler ");
+	asm("ldr r9, [r10, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+#endif
+	asm("bl ServerDeliver ");
+	asm("ldmfd sp!, {r4-r10,pc} ");
+
+	// Subroutine ServerDeliver
+	// Deliver a message to a DServer
+	// Enter with r0->DServer, r1->RMessageK, r10->T(Sub)Scheduler
+	// Preserve r5,r11 but not r4,r6-r10
+	// Enter and leave with system lock held
+	asm("ServerDeliver: ");
+	
+	// if (iMessage->IsReady()) { Accept(aMsg); return; }
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(DServer, iMessage));
+	asm("ldr r2, [r12, #%a0]" : : "i" _FOFF(TServerMessage, iStatus));
+	asm("teq r2, #0 ");
+	asm("beq 1f ");
+	asm("tst r2, #%a0 " : : "i" ((TInt)KClientRequestFlagMask));
+	asm("beq ServerAccept ");
+
+	asm("1: ");
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(DServer,iDeliveredQ.iA.iPrev));	// r3->last entry in delivered Q
+	asm("add r2, r0, #%a0" : : "i" _FOFF(DServer,iDeliveredQ));	// r2->iDeliveredQ
+	// Warning: HARDCODED OFFSET(SDblQueLink) - assumes format of this structure
+	asm("add r1, r1, #%a0" : : "i" _FOFF(RMessageK,iServerLink)); // r1->message.iServerLink
+	asm("str r1, [r2, #4] ");	// head->prev = new message
+	asm("str r1, [r3, #0] ");	// last->next=new message
+	asm("stmia r1, {r2,r3} ");	// new->next=head entry, new->prev=old last entry
+	__JUMP(, lr);
+
+#ifndef __SMP__
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+#endif
+	}
+
+__NAKED__ void DServer::Receive(TRequestStatus& /*aStatus*/, TAny* /*aMessage*/)
+//
+// Receive a message asynchronously.
+//
+	{
+	asm("stmfd sp!, {r4-r10,lr} ");
+#ifdef __SMP__
+	GET_RWNO_TID(,r10);		// NOTE: Can't migrate because we hold system lock
+#else
+	asm("ldr r10, __TheScheduler ");
+#endif
+	asm("bl _asm_exec_ServerReceive ");
+	asm("ldmfd sp!, {r4-r10,pc} ");
+	}
+
+__NAKED__ void DServer::Accept(RMessageK* /*aMsg*/)
+//
+// Accepts a message, assumes one is pending.
+//
+	{
+	asm("stmfd sp!, {r4-r10,lr} ");
+#ifdef __SMP__
+	GET_RWNO_TID(,r10);		// NOTE: Can't migrate because we hold system lock
+#else
+	asm("ldr r10, __TheScheduler ");
+#endif
+	asm("bl ServerAccept ");
+	asm("ldmfd sp!, {r4-r10,pc} ");
+
+	// Subroutine ServerReceive
+	// Receive a message on a DServer
+	// Enter with r0->DServer, r2=aMessage , r1=&aStatus
+	// r10->T(Sub)Scheduler
+	// Preserve r5,r11 but not r4,r6-r10
+	// Enter and leave with system lock held
+	asm(".global _asm_exec_ServerReceive ");
+	asm("_asm_exec_ServerReceive: ");
+	ASM_DEBUG3(ServerReceive,r0,r1,r2);
+
+	// if (iMessage->SetStatus(&aStatus) != KErrNone) K::PanicCurrentThread(EMesAlreadyPending);
+	asm("ldr r4, [r0, #%a0]" : : "i" _FOFF(DServer, iMessage));		// r4->iMessage
+	asm("stmfd sp!, {r0-r2, lr}");
+	asm("mov r0, r4 ");	
+	asm("bl " CSM_ZN14TClientRequest9SetStatusEP14TRequestStatus);	// iMessage->SetStatus(aStatus)
+	asm("teq r0, #0 ");
+	asm("ldmfd sp!, {r0-r2, lr}");
+	asm("bne __PanicMesAlreadyPending" );
+	
+	asm("add r3, r0, #%a0" : : "i" _FOFF(DServer, iDeliveredQ.iA));	// r3->iDeliveredQ anchor
+	asm("ldr r1, [r3, #%a0]" : : "i" _FOFF(SDblQueLink, iNext));	// r1->first entry on delivered queue
+	asm("str r2, [r4, #%a0]" : : "i" _FOFF(TServerMessage, iMessagePtr));	// iMessage->iMessagePtr = aMessage
+	asm("cmp r1, r3 ");												// is queue empty?
+	__JUMP(eq, lr);													// if it is, nothing else to do
+
+	// else deque first message: NB head->iPrev = &iA for head of list
+	asm("ldr r6, [r1, #%a0]" : : "i" _FOFF(SDblQueLink, iNext));	// r6=r1->next
+	ASM_KILL_LINK(r1,r7);											// kill link
+	asm("str r3, [r6, #%a0]" : : "i" _FOFF(SDblQueLink, iPrev));	// r1->next->prev = r1->prev (== &iA)
+	asm("str r6, [r3, #%a0]" : : "i" _FOFF(SDblQueLink, iNext));	// r1->prev->next (== iA.iNext) = r1->next
+	asm("sub r1, r1, #%a0" : : "i" _FOFF(RMessageK, iServerLink));	// r1 now points to RMessageK
+
+	// Subroutine ServerAccept
+	// Accept a message on a DServer
+	// Enter with r0->DServer, r1->RMessageK to accept
+	// r10->T(Sub)Scheduler
+	// Preserve r5,r11 but not r4,r6-r10
+	asm(".global ServerAccept ");
+	asm("ServerAccept: ");
+	asm("ldr r7, [r0, #%a0]" : : "i" _FOFF(DServer,iOwningThread));	//r7=iOwningThread
+	asm("mvn r2, r1 ");				// r2 = ~msg address
+	asm("ldr r3, [r7, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));	// r3=iOwningThread->iOwningProcess
+#ifdef __SMP__
+	asm("ldr r9, [r10, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+#else
+	asm("ldr r9, [r10, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+#endif
+	asm("ldrb r6, [r7, #%a0]" : : "i" _FOFF(DThread,iMState));	// r6=iOwningThread->iMState
+	asm("mvn r4, r3 ");				// r4 = ~owning process address
+	asm("add ip, r1, #%a0" : : "i" _FOFF(RMessageK, iServerLink));
+	asm("stmia ip, {r2,r4} ");		// set ACCEPTED state
+	asm("cmp r6, #%a0" : : "i" (DThread::EDead));	// is thread dead?
+	__JUMP(eq, lr);					// if it is, exit
+#ifdef BTRACE_CLIENT_SERVER
+	asm("stmfd sp!,{r0-r3,r12,lr}");
+	asm("ldr r0,_messageReceiveTraceHeader");					// arg0 = header
+	asm("bl " CSM_ZN6BTrace4OutXEmmmm);
+	asm("ldmfd sp!,{r0-r3,r12,lr}");
+#endif
+#ifdef KIPC
+	ASM_DEBUG2(Accept,r0,r1);
+#endif
+	// iMessage->iMessageData = aMsg;
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DServer, iMessage));
+	asm("str r1, [r2, #%a0]" : : "i" _FOFF(TServerMessage,iMessageData)); 
+	// Kern::QueueRequestComplete(iOwningThread, iMessage, KErrNone);
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DServer,iOwningThread));
+	asm("mov r1, r2");
+	asm("mov r2, #0"); // KErrNone
+	asm("b " CSM_ZN4Kern20QueueRequestCompleteEP7DThreadP14TClientRequesti);
+
+#ifdef BTRACE_CLIENT_SERVER
+	asm("_messageReceiveTraceHeader:");
+	asm(".word %a0" : : "i" (BTRACE_HEADER(8,BTrace::EClientServer,BTrace::EMessageReceive)));
+#endif
+	}
+
+#endif
+
+#ifdef __MESSAGE_MACHINE_CODED_2__
+__NAKED__ void ExecHandler::MessageConstructFromPtr(RMessageK*, TAny*)
+	{
+	// Enter with:
+	// r0->RMessageK, r1->user side message to be populated
+	// Can modify r0-r4, r6-r10, r12
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(RMessageK,iFunction));		// r2 = function
+	asm("ldr r9, [r0, #%a0]" : : "i" _FOFF(RMessageK,iSession));		// r9->iSession
+	asm("subs r3, r2, #%a0" : : "i" ((TInt)RMessage2::EDisConnect));	// is it disconnect ? if so, r3=0
+	asm("ldr r9, [r9, #%a0]" : : "i" _FOFF(DSession,iSessionCookie));	// r9 = user cookie
+	asm("beq 2f ");								// branch if it is
+	
+	asm("add r10, r0, #%a0" : : "i" _FOFF(RMessageK, iMsgArgs.iArgs));
+	// HARDCODED(RMessageK)- this assumes KMaxMessageArguments is 4
+	asm("ldmia r10, {r3,r4,r6,r7} ");		// r3,4,6,7=args
+	asm("stmfd sp!, {r0-r4,lr} ");
+	asm("bl  " CSM_ZN5NKern12UnlockSystemEv);
+	asm("ldmfd sp!, {r0-r4,lr} ");
+	USER_MEMORY_GUARD_OFF(,r8,r8);
+	asm("mov r8, #0");	// r8=iSpare1
+	asm("strt r0, [r1], #4 ");			// store handle
+	asm("strt r2, [r1], #4 ");			// store function
+	asm("strt r3, [r1], #4 ");			// store arg0
+	asm("strt r4, [r1], #4 ");			// store arg1
+	asm("strt r6, [r1], #4 ");			// store arg2
+	asm("strt r7, [r1], #4 ");			// store arg3
+	asm("strt r8, [r1], #4 ");			// store iSpare1
+	asm("strt r9, [r1], #4 ");			// store user cookie
+	USER_MEMORY_GUARD_ON(,r8,r8);
+	__JUMP(,lr);
+
+	// get here if disconnect message
+	asm("2: ");
+	asm("stmfd sp!, {r1-r3,lr} ");
+	asm("bl  " CSM_ZN5NKern12UnlockSystemEv);
+	asm("ldmfd sp!, {r1-r3,lr} ");
+	USER_MEMORY_GUARD_OFF(,r8,r8);
+	asm("strt r0, [r1], #4 ");			// store handle
+	asm("strt r2, [r1], #4 ");			// store function
+	asm("strt r3, [r1], #4 ");			// store arg0 = 0
+	asm("strt r3, [r1], #4 ");			// store arg1 = 0
+	asm("strt r3, [r1], #4 ");			// store arg2 = 0
+	asm("strt r3, [r1], #4 ");			// store arg3 = 0
+	asm("strt r3, [r1], #4 ");			// store capability = 0
+	asm("strt r9, [r1], #4 ");			// store user cookie
+	USER_MEMORY_GUARD_ON(,r8,r8);
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ RMessageK* RMessageK::MessageK(TInt /*aMsgHandle*/)
+	{
+#ifdef __SMP__
+	GET_RWNO_TID(,r1);					// NOTE: can't migrate because system lock held
+#else
+	asm("ldr r1, __TheScheduler ");
+#endif
+	asm("stmfd sp!, {r4,lr} ");
+#ifdef __SMP__
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+#else
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+#endif
+	asm("ldr r1, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// r1->process to check
+	asm("bl do_messagek ");
+	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(RMessageK,iFunction));		// ip = function
+	asm("bcc 0f ");														// if bad handle, panic
+	asm("cmp ip, #%a0" : : "i" ((TInt)RMessage2::EDisConnect));			// check iFunction != RMessage2::EDisConnect
+	asm("ldmnefd sp!, {r4,pc} ");										// if not, return OK
+	asm("0: ");
+	asm("mov r0, #%a0" : : "i" (EBadMessageHandle));					// panic, disconnect not allowed
+	asm("b  " CSM_ZN1K18PanicCurrentThreadEi);
+	}
+
+__NAKED__ RMessageK* RMessageK::MessageK(TInt /*aMsgHandle*/, DThread* /*aThread*/)
+	{
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));	// r1->process to check
+	asm("do_messagek: ");
+	asm("ldr ip, __K_MsgInfo ");										// ip->msg chunk info
+	asm("tst r0, #%a0" : : "i" (RMessageK::KMessageSize-1));			// test handle alignment
+	asm("bne 0f ");														// handle is bad if misaligned
+	asm("ldr r2, [ip, #%a0]" : : "i" _FOFF(K::SMsgInfo,iBase));			// r2=base address of kernel msg chunk
+	asm("ldr r3, [ip, #%a0]" : : "i" _FOFF(K::SMsgInfo,iMaxSize));		// r3=max size of kernel msg chunk
+	asm("subs ip, r0, r2 ");											// ip=aMsg-kernel msg chunk base
+	asm("subhs r3, r3, #%a0" : : "i" ((TInt)sizeof(RMessageK)-1));		// if >=, r3=max size - (sizeof(RMessageK)-1)
+	asm("cmphs r3, ip ");												// compare this value to offset
+	asm("bls 0f ");														// if offset<0 or offset+sizeof(RMessageK)-1>=max size, bad handle
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("lookup_message_client: ");
+#endif
+	asm("adds ip, r0, #%a0" : : "i" _FOFF(RMessageK, iServerLink));
+	// NOTE: Z flag clear here after 'adds' above
+	asm(".global __magic_address_msg_lookup_2 ");
+	asm("__magic_address_msg_lookup_2: ");		// this instruction is magically immune from exceptions
+	// Warning: HARDCODED OFFSET(RMessageK) - assumes layout of SDblQueLink and wierd use of iServerLink
+	asm("ldmia ip, {r2,r3} ");			// get message iNext/iPrev, set Z if bad.
+										// should have r2=~r0, r3=~r1 if OK
+	asm("beq 0f ");						// if exception, bad handle
+	asm("eor r2, r2, r0 ");				// should be 0xffffffff
+	asm("eor r3, r3, r1 ");				// should be 0xffffffff
+	asm("and r2, r2, r3 ");				// should be 0xffffffff
+	asm("cmn r2, #1 ");
+	__JUMP(eq, lr);						// if so, message is valid, return (RMessageK*)aMsgHandle and carry=1
+	asm("0: ");
+	asm("movs r0, pc, lsl #31 ");		// r0=0, carry=0 (since pc is a multiple of 4)
+	__JUMP(,lr);						// return NULL
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm(".global do_lookup_thread_pseudo ");
+	asm("do_lookup_thread_pseudo: ");
+	// ip = (handle << 1) &~ 0x10000 (no close flag removed)
+	// r1 -> current NThread
+	asm("ldr r3, __K_MsgInfo ");									// r3->msg chunk info
+	asm("mov r0, ip, lsl #16 ");
+	asm("ldr r1, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// r1->current process
+	asm("add r0, ip, r0, lsr #16 ");								// r0 = offset of RMessageK from kernel msg chunk base
+	asm("ldr r2, [r3, #%a0]" : : "i" _FOFF(K::SMsgInfo,iBase));		// r2=base address of kernel msg chunk
+	asm("ldr r3, [r3, #%a0]" : : "i" _FOFF(K::SMsgInfo,iMaxSize));	// r3=max size of kernel msg chunk
+	asm("add ip, r0, #%a0" : : "i" ((TInt)sizeof(RMessageK)-1) );	// ip = offset + sizeof(RMessageK) - 1
+	asm("add r0, r0, r2 ");											// r0 = pointer to RMessageK (if good handle)
+	asm("cmp ip, r3 ");												// is this off the end of the msg chunk?
+	asm("blo lookup_message_client ");								// if not, get client
+	asm("b 0b ");													// if so, bad handle
+#endif
+
+#if !defined(__SMP__) && !defined(__MESSAGE_MACHINE_CODED__)
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+#endif
+	asm("__K_MsgInfo: ");
+	asm(".word  " CSM_ZN1K8MsgInfoE);
+	}
+#endif

@@ -1,0 +1,40 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/nkern/nk_exe.mmp
+// 
+//
+
+#define	STANDALONE_NANOKERNEL
+macro __STANDALONE_NANOKERNEL__
+
+#include		<variant.mmh>
+
+#include		"nkern_int.mmh"
+
+target			VariantTarget(nk_exe,lib)
+targettype		klib
+
+#if defined(MARM)
+sourcepath		arm
+source			nk_entry.cia
+#elif defined(X86)
+sourcepath		x86
+source			nk_entry.cpp
+source          nk_entry.cia
+#elif defined(WINS)
+sourcepath		win32
+source			nk_entry.cpp
+#endif
+
+SMPSAFE

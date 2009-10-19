@@ -1,0 +1,31 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+rofsname = dir3.rofs
+rofssize = 0x1D8000
+
+time = 02/01/2006 15:45:37
+
+
+autosize = 0x4000
+
+data=EPOCROOT##epoc32\rom\rofstest\hello8.txt		\Multiple\new3.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs3.txt		\Multiple\replaceme2.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs3.txt		\Multiple\replaceme3.txt
+data=EPOCROOT##epoc32\rom\rofstest\mrofs3.txt		\Multiple\replaceme4.txt
+hide=\Multiple\hidden2.txt
+hide=\Multiple\hidden3.txt

@@ -1,0 +1,347 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		PBASE-F32-RFS-Drives-PublicApi-REM-manual
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM.
+//! @SYMScriptAuthor 		Anton Grober
+//! @SYMScriptDescription	The test script contains API drives & volumes related tests for RFs functions 
+//!				that perform operations on a removeable RAM drive, but cannot be fully automated. This script requires user intervention.
+
+LOAD_SUITE	T_Sfsrv
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1041
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1041
+//! @SYMAPI			RFs
+//! @SYMAuthor			Anton Grober
+//! @SYMCreationDate		02/10/2006
+//! @SYMTestCaseDesc		UnlockDrive() function test. Passing invalid password as parameter.
+//!				Uses API elements: UnlockDrive().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() passing some valid drive's number as drive number parameter and some password.
+//!				3. Open/close card door.
+//!				4. Call UnlockDrive() passing same drive's number as drive number parameter and invalid password as old password.
+//!				5  Call UnlockDrive() passing same drive's number as drive number parameter and valid password. It's neccessary for clearing password in next step.
+//!				6. Call ClearPassword() to clean up changes.
+//!				7. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Function UnlockDrive() returns KErrAccessDenied.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new
+		COMMAND			RFs1	Connect
+		COMMAND			RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1041-001-LockDrive_command03
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1041-001-NotifyChange_command05
+		COMMAND			RFs1	prompt
+		OUTSTANDING
+		COMMAND			RFs1	Drive		PBASE-F32-RFS-PublicApi-1041-001-Drive_command07
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1041-001-NotifyChange_command08
+		OUTSTANDING
+		COMMAND			RFs1	Drive		PBASE-F32-RFS-PublicApi-1041-001-Drive_command10
+		COMMAND	!Error=-21	RFs1	UnlockDrive	PBASE-F32-RFS-PublicApi-1041-001-UnlockDrive_command11
+		COMMAND			RFs1	UnlockDrive	PBASE-F32-RFS-PublicApi-1041-001-UnlockDrive_command12
+		COMMAND			RFs1	ClearPassword	PBASE-F32-RFS-PublicApi-1041-001-ClearPassword_command13
+		COMMAND			RFs1	Close
+		COMMAND			RFs1	~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-RFS-PublicApi-1041
+
+
+START_TESTCASE			PBASE-F32-RFS-PublicApi-1056
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1056
+//! @SYMAPI			RFs
+//! @SYMCreationDate		22/08/2006
+//! @SYMTestCaseDesc		ClearPassword() test. Testing with invalid password.
+//!				Uses API elements: ClearPassword(), LockDrive(), UnlockDrive().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() with MMC-card drive's number and 'test' password.
+//!				3. Open/Close MMC-card doors.
+//!				4. Call UnlockDrive() with MMC-card drive's number and 'test' password.
+//!				5. Call ClearPassword() passing MMC-card drive's number and wrong password.
+//!				6. Call ClearPassword() passing MMC-card drive's number and 'test' as password.
+//!				7. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Function ClearPassworPassword() returns KErrAccessDenied.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new
+		COMMAND			RFs1	Connect
+		COMMAND			RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1056-001-LockDrive_command03
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1056-001-NotifyChange_command05
+		COMMAND			RFs1	prompt
+		OUTSTANDING
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1056-001-NotifyChange_command07
+		OUTSTANDING
+		COMMAND			RFs1	UnlockDrive	PBASE-F32-RFS-PublicApi-1056-001-UnlockDrive_command09
+		COMMAND	!Error=-21	RFs1	ClearPassword	PBASE-F32-RFS-PublicApi-1056-001-ClearPassword_command10
+		COMMAND			RFs1	ClearPassword	PBASE-F32-RFS-PublicApi-1056-001-ClearPassword_command11
+		COMMAND			RFs1	Close
+		COMMAND			RFs1	~
+	END_TEST_BLOCK
+END_TESTCASE			PBASE-F32-RFS-PublicApi-1056
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1067
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1067
+//! @SYMAPI			RFs
+//! @SYMCreationDate		22/08/2006
+//! @SYMScriptInfo		This test case should DESTROY all your data on MMC card.
+//! @SYMTestCaseDesc		ErasePassword() test. Passing existing drive as paramter. Drive should be an MMC card.
+//!				Uses API elements: ErasePassword()
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() passing MMC drive's with fat filesystem number and "test" as password.
+//!				3. Open/Close card door.
+//!				4. Call ErasePassword() passing MMC drive's with FAT filesystem number.
+//!				5. Call Close().
+//!				6. Reformatting MMC-drive with EHighDensity parameter.(step PBASE-F32-RFS-PublicApi-1067-002)
+//!				7. Copying USBLOAD.ZIP to MMC drive.(step PBASE-F32-RFS-PublicApi-1067-003)
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function ErasePassword() erase a drive and clears password and returns KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1067-001-LockDrive_command03
+		COMMAND		RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1067-001-NotifyChange_command05
+		COMMAND		RFs1	prompt
+		OUTSTANDING
+		COMMAND		RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1067-001-NotifyChange_command07
+		OUTSTANDING
+		COMMAND		RFs1	ErasePassword	PBASE-F32-RFS-PublicApi-1067-001-ErasePassword_command09
+		COMMAND		RFs1	Close
+		COMMAND		RFs1	~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+		CREATE_OBJECT	RFs	rfs
+		CREATE_OBJECT	RFormat	format
+		COMMAND		rfs	new
+		COMMAND		rfs	Connect
+		COMMAND		format	new		PBASE-F32-RFS-PublicApi-1067-002-new_command04
+		COMMAND		format	Open		PBASE-F32-RFS-PublicApi-1067-002-Open_command05
+		COMMAND		format	Next
+		COMMAND		format	Close
+		COMMAND		format	~
+		COMMAND		rfs	Close
+		COMMAND		rfs	~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+		CREATE_OBJECT	RFs	rfs
+		CREATE_OBJECT	CFileMan	fileMan
+		CREATE_OBJECT	RFile	file
+		COMMAND		rfs	new
+		COMMAND		rfs	Connect
+		COMMAND		file	new
+		COMMAND		file	Open		PBASE-F32-RFS-PublicApi-1067-003-Open_command05
+		COMMAND		fileMan	NewL		PBASE-F32-RFS-PublicApi-1067-003-NewL_command07
+		COMMAND		fileMan	Copy		PBASE-F32-RFS-PublicApi-1067-003-Copy_command08
+		COMMAND		fileMan	~
+		COMMAND		file	Close
+		COMMAND		file	~
+		COMMAND		rfs	Close
+		COMMAND		rfs	~
+	END_TEST_BLOCK
+END_TESTCASE 			PBASE-F32-RFS-PublicApi-1067
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1011
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1011
+//! @SYMAPI			RFs
+//! @SYMAuthor			Anton Grober 
+//! @SYMCreationDate		22/08/2006 
+//! @SYMTestCaseDesc		LockDrive(), UnlockDrive() and ClearPassword() tests. LockDrive() locks MMC card using a short password, UnlockDrive() unlocks using same password and ClearPassword() clears the password.
+//!				Uses API elements: LockDrive(), UnlockDrive(), ClearPassword()
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() passing drive's with FAT filesystem number as first parameter passing "test"(TMediaPassword type) as second parameter.
+//!				3. Open/close card door.
+//!				4. Call UnlockDrive() passing drive's with FAT filesystem number as first parameter and "test"(TMediaPassword type) as second parameter.
+//!				5. Open/close card door.
+//!				6. Call ClearPassword() passing drive's with FAT filesystem number as first parameter and "test"(TMediaPassword type) as second parameter.
+//!				7. Open/close card door.
+//!				8. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function LockDrive() returns KErrNone. Function UnlockDrive() returns KErrNone. Function ClearPassword() returns KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND		RFs1	new
+		COMMAND		RFs1	Connect
+		COMMAND		RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1011-001-LockDrive_command03
+		COMMAND		RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1011-001-NotifyChange_command05
+		COMMAND		RFs1	prompt
+		OUTSTANDING	
+		COMMAND		RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1011-001-NotifyChange_command08
+		COMMAND		RFs1	Drive		PBASE-F32-RFS-PublicApi-1011-001-Drive_command07
+		OUTSTANDING	
+		COMMAND		RFs1	Drive		PBASE-F32-RFS-PublicApi-1011-001-Drive_command10
+		COMMAND		RFs1	UnlockDrive	PBASE-F32-RFS-PublicApi-1011-001-UnlockDrive_command11
+		COMMAND		RFs1	ClearPassword	PBASE-F32-RFS-PublicApi-1011-001-ClearPassword_command12
+		COMMAND		RFs1	Close
+		COMMAND		RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-RFS-PublicApi-1011
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1039
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1039
+//! @SYMAPI			RFs
+//! @SYMAuthor			Anton Grober 
+//! @SYMCreationDate		02/10/2006 
+//! @SYMTestCaseDesc		LockDrive() function test. Passing invalid password as parameter.
+//!				Uses API elements: LockDrive().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() passing some valid drive's number as drive number parameter and some password.
+//!				3. Open/close MMC card door.
+//!				4. Call LockDrive() passing same drive's number as drive number parameter and invalid password as old password.
+//!				5. Call UnlockDrive() with valid password and same drive to be able to clear password later.
+//!				6. Call ClearPassword() to clean up changes.
+//!				7. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Function LockDrive() returns KErrAccessDenied.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new
+		COMMAND			RFs1	Connect
+		COMMAND			RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1039-001-LockDrive_command03
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1039-001-NotifyChange_command05
+		COMMAND			RFs1	prompt
+		OUTSTANDING	
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1039-001-NotifyChange_command07
+		OUTSTANDING	
+		COMMAND	!Error=-21	RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1039-001-LockDrive_command09
+		COMMAND			RFs1	UnlockDrive	PBASE-F32-RFS-PublicApi-1039-001-UnlockDrive_command10
+		COMMAND			RFs1	ClearPassword	PBASE-F32-RFS-PublicApi-1039-001-ClearPassword_command11
+		COMMAND			RFs1	Close
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-RFS-PublicApi-1039
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1054
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1054
+//! @SYMAPI			RFs
+//! @SYMAuthor			Anton Grober 
+//! @SYMCreationDate		4/01/2007 
+//! @SYMTestCaseDesc		Volume() test on locked MMC-drive.
+//!				Uses API elements: Volume().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() with MMCCardDrive as parameter and "test" as password.
+//!				3. Open/Close MMC-card door.
+//!				4. Call Volume() with MMCCardDrive as parameter.
+//!				5. Call UnlockDrive() with MMCCardDrive as parameter and "test" as password..
+//!				6. Call ClearPassword() with MMCCardDrive as parameter and "test" as password..
+//!				7. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Function Volume() returns KErrLocked.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new
+		COMMAND			RFs1	Connect
+		COMMAND			RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1054-001-LockDrive_command03
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1054-001-NotifyChange_command05
+		COMMAND			RFs1	prompt
+		OUTSTANDING	
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1054-001-NotifyChange_command07
+		OUTSTANDING	
+		COMMAND	!Error=-22	RFs1	Volume		PBASE-F32-RFS-PublicApi-1054-001-Volume_command09
+		COMMAND			RFs1	UnlockDrive	PBASE-F32-RFS-PublicApi-1054-001-UnlockDrive_command10
+		COMMAND			RFs1	ClearPassword	PBASE-F32-RFS-PublicApi-1054-001-ClearPassword_command11
+		COMMAND			RFs1	Close
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-RFS-PublicApi-1054
+
+
+START_TESTCASE 			PBASE-F32-RFS-PublicApi-1055
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1055
+//! @SYMAPI			RFs
+//! @SYMAuthor			Anton Grober 
+//! @SYMCreationDate		4/01/2007 
+//! @SYMTestCaseDesc		ReserveDriveSpace() test on locked MMC-drive.
+//!				Uses API elements: ReserveDriveSpace(), LockDrive(), UnlockDrive(), ClearPassword().
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() with MMCardDrive as parameter and "test" as password.
+//!				3. Open/Close MMC-card door.
+//!				4. Call ReserveDriveSpace() with MMCardDrive as parameter and some space to reserve.
+//!				5. Call UnlockDrive() with MMCardDrive as parameter and "test" as password..
+//!				6. Call ClearPassword() with MMCardDrive as parameter and "test" as password..
+//!				7. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Function ReserveDriveSpace() return KErrLocked.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new
+		COMMAND			RFs1	Connect
+		COMMAND			RFs1	LockDrive		PBASE-F32-RFS-PublicApi-1055-001-LockDrive_command03
+		COMMAND			RFs1	NotifyChange		PBASE-F32-RFS-PublicApi-1055-001-NotifyChange_command05
+		COMMAND			RFs1	prompt
+		OUTSTANDING	
+		COMMAND			RFs1	NotifyChange		PBASE-F32-RFS-PublicApi-1055-001-NotifyChange_command07
+		OUTSTANDING	
+		COMMAND	!Error=-22	RFs1	ReserveDriveSpace	PBASE-F32-RFS-PublicApi-1055-001-ReserveDriveSpace_command09
+		COMMAND			RFs1	UnlockDrive		PBASE-F32-RFS-PublicApi-1055-001-UnlockDrive_command10
+		COMMAND			RFs1	ClearPassword		PBASE-F32-RFS-PublicApi-1055-001-ClearPassword_command11
+		COMMAND			RFs1	Close
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-RFS-PublicApi-1055
+
+
+START_TESTCASE			PBASE-F32-RFS-PublicApi-1057
+//! @SYMTestCaseID		PBASE-F32-RFS-PublicApi-1057
+//! @SYMAPI			RFs
+//! @SYMScriptInfo		This test case could DESTROY all your data on MMC card.
+//! @SYMCreationDate		22/08/2006
+//! @SYMTestCaseDesc		ErasePassword() test. Trying to ErasePassword() in unlockded state(locked and after being unlocked).
+//!				Uses API elements: ErasePassword()
+//! @SYMTestActions		1. Call Connect().
+//!				2. Call LockDrive() with MMC-card drive's number and 'test' password.
+//!				3. Open/Close MMC-card doors.
+//!				4. Call UnlockDrive() with MMC-card drive's number and 'test' password.
+//!				5. Call ErasePassword() passing MMC-card drive's number.
+//!				6. Call ClearPassword() passing MMC-card drive's number.
+//!				7. Call Close().
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Function ErasePassword() returns KErrAccessDenied as drive is not locked.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_Sfsrv	\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini 
+		CREATE_OBJECT	RFs	RFs1
+		COMMAND			RFs1	new
+		COMMAND			RFs1	Connect
+		COMMAND			RFs1	LockDrive	PBASE-F32-RFS-PublicApi-1057-001-LockDrive_command03
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1057-001-NotifyChange_command05
+		COMMAND			RFs1	prompt
+		OUTSTANDING	
+		COMMAND			RFs1	NotifyChange	PBASE-F32-RFS-PublicApi-1057-001-NotifyChange_command07
+		OUTSTANDING	
+		COMMAND			RFs1	UnlockDrive	PBASE-F32-RFS-PublicApi-1057-001-UnlockDrive_command09
+		COMMAND	!Error=-21	RFs1	ErasePassword	PBASE-F32-RFS-PublicApi-1057-001-ErasePassword_command10
+		COMMAND			RFs1	ClearPassword	PBASE-F32-RFS-PublicApi-1057-001-ClearPassword_command11
+		COMMAND			RFs1	Close
+		COMMAND			RFs1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			PBASE-F32-RFS-PublicApi-1057

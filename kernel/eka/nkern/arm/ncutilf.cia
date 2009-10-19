@@ -1,0 +1,507 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\arm\ncutilf.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm.h>
+#include "highrestimer.h"
+
+#ifdef __SCHEDULER_MACHINE_CODED__
+/** Signals the request semaphore of a nanothread.
+
+	This function is intended to be used by the EPOC layer and personality
+	layers.  Device drivers should use Kern::RequestComplete instead.
+
+	@param aThread Nanothread to signal.  Must be non NULL.
+
+	@see Kern::RequestComplete()
+
+	@pre Interrupts must be enabled.
+	@pre Do not call from an ISR.
+ */
+EXPORT_C __NAKED__ void NKern::ThreadRequestSignal(NThread* /*aThread*/)
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR);
+
+	asm("ldr r2, __TheScheduler ");
+	asm("str lr, [sp, #-4]! ");
+	asm("ldr r3, [r2, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("add r0, r0, #%a0" : : "i" _FOFF(NThread,iRequestSemaphore));
+	asm("add r3, r3, #1 ");
+	asm("str r3, [r2, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("bl  " CSM_ZN14NFastSemaphore6SignalEv);	// alignment OK since target is also assembler
+	asm("ldr lr, [sp], #4 ");
+	asm("b  " CSM_ZN5NKern6UnlockEv);
+	}
+
+
+/** Atomically signals the request semaphore of a nanothread and a fast mutex.
+
+	This function is intended to be used by the EPOC layer and personality
+	layers.  Device drivers should use Kern::RequestComplete instead.
+
+	@param aThread Nanothread to signal.  Must be non NULL.
+	@param aMutex Fast mutex to signal.  If NULL, the system lock is signaled.
+
+	@see Kern::RequestComplete()
+
+	@pre Kernel must be unlocked.
+	@pre Call in a thread context.
+	@pre Interrupts must be enabled.
+ */
+EXPORT_C __NAKED__ void NKern::ThreadRequestSignal(NThread* /*aThread*/, NFastMutex* /*aMutex*/)
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_ENABLED|MASK_KERNEL_UNLOCKED|MASK_NOT_ISR|MASK_NOT_IDFC);
+
+	asm("ldr r2, __TheScheduler ");
+	asm("cmp r1, #0 ");
+	asm("ldreq r1, __SystemLock ");
+	asm("ldr r3, [r2, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("stmfd sp!, {r1,lr} ");
+	asm("add r0, r0, #%a0" : : "i" _FOFF(NThread,iRequestSemaphore));
+	asm("add r3, r3, #1 ");
+	asm("str r3, [r2, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
+	asm("bl  " CSM_ZN14NFastSemaphore6SignalEv);
+	asm("ldr r0, [sp], #4 ");
+	asm("bl  " CSM_ZN10NFastMutex6SignalEv);		// alignment OK since target is also assembler
+	asm("ldr lr, [sp], #4 ");
+	asm("b  " CSM_ZN5NKern6UnlockEv);
+
+	asm("__SystemLock: ");
+	asm(".word %a0" : : "i" ((TInt)&TheScheduler.iLock));
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	}
+#endif
+
+
+#ifndef __USER_CONTEXT_TYPE_MACHINE_CODED__
+// called by C++ version of NThread::UserContextType()
+__NAKED__ TBool RescheduledAfterInterrupt(TUint32 /*aAddr*/)
+	{
+	asm("ldr r1, __irq_resched_return ");
+	asm("cmp r0, r1 ");
+	asm("movne r0, #0 ");
+	__JUMP(,lr);
+	asm("__irq_resched_return: ");
+	asm(".word irq_resched_return ");
+	}
+
+#else
+
+/** Get a value which indicates where a thread's user mode context is stored.
+
+	@return A value that can be used as an index into the tables returned by
+	NThread::UserContextTables().
+
+	@pre any context
+	@pre kernel locked
+	@post kernel locked
+ 
+	@see UserContextTables
+	@publishedPartner
+ */
+EXPORT_C __NAKED__ NThread::TUserContextType NThread::UserContextType()
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_KERNEL_LOCKED|MASK_NOT_ISR);
+//
+// Optimisation note: It may be possible to coalesce the first and second
+// checks below by creating separate "EContextXxxDied" context types for each
+// possible way a thread can die and ordering these new types before
+// EContextException.
+//
+
+	// Dying thread? use context saved earlier by kernel
+
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(NThread,iCsFunction));
+	asm("ldrb r2, [r0, #%a0]" : : "i" _FOFF(NThread,iSpare3));   // r2 = iUserContextType
+	asm("mov r1, r0 ");    // r1 = this
+	asm("cmp r3, #%a0" : : "i" ((TInt)NThread::ECSExitInProgress));
+	asm("moveq r0, r2"); 
+	__JUMP(eq,lr);
+
+	// Exception or no user context?
+
+	asm("ldr r3, __TheScheduler");
+	asm("cmp r2, #%a0 " : : "i" ((TInt)NThread::EContextException));
+	asm("ldr r3, [r3, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("movls r0, r2 ");  // Return EContextNone or EContextException
+	__JUMP(ls,lr);
+	asm("cmp r2, #%a0 " : : "i" ((TInt)NThread::EContextUserIntrCallback));
+	asm("blo 1f");
+	asm("cmp r2, #%a0 " : : "i" ((TInt)NThread::EContextWFARCallback));
+	asm("movls r0, r2 ");  // Return EContextUserIntrCallback or EContextWFARCallback
+	__JUMP(ls,lr);
+
+	// Getting current thread context? must be in exec call as exception
+	// and dying thread cases were tested above.
+
+	asm("1: ");
+	asm("cmp r3, r1");
+	asm("moveq r0, #%a0" : : "i" ((TInt)NThread::EContextExec));
+	__JUMP(eq,lr);
+
+	asm("ldr r0, [r1, #%a0]" : : "i" _FOFF(NThread,iStackBase));
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(NThread,iStackSize));
+	asm("ldr r3, [r1, #%a0]" : : "i" _FOFF(NThread,iSavedSP));
+	asm("add r2, r2, r0");
+	asm("ldr r0, [r3, #%a0]" : : "i" (EXTRA_STACK_SPACE+11*4)); // get saved return address from reschedule
+	asm("ldr r12, __irq_resched_return ");
+	asm("sub r2, r2, r3");
+	asm("cmp r0, r12 ");
+	asm("beq preempted ");
+
+	// Transition to supervisor mode must have been due to a SWI
+
+	asm("not_preempted:");
+	asm("cmp r2, #%a0 " : : "i" ((TInt)(EXTRA_STACK_SPACE+15*4)));
+	asm("moveq r0, #%a0 " : : "i" ((TInt)NThread::EContextWFAR)); // thread must have blocked doing Exec::WaitForAnyRequest
+	asm("movne r0, #%a0 " : : "i" ((TInt)NThread::EContextExec)); // Thread must have been in a SLOW or UNPROTECTED Exec call
+	__JUMP(,lr);
+	
+	// thread was preempted due to an interrupt
+	// interrupt and reschedule will have pushed ? words + USER_MEMORY_GUARD_SAVE_WORDS + EXTRA_STACK_SPACE onto the stack
+
+	asm("preempted:");
+	asm("ldr r12, [r3, #%a0]" : : "i" (EXTRA_STACK_SPACE+USER_MEMORY_GUARD_SAVE_WORDS*4+12*4));  // first word on stack before reschedule
+	asm("mov r0, #%a0 " : : "i" ((TInt)NThread::EContextUserInterrupt));
+	asm("and r12, r12, #0x1f ");
+	asm("cmp r12, #0x10 ");   // interrupted mode = user?
+	__JUMP(eq,lr);
+
+	asm("cmp r2, #%a0 " : : "i" ((TInt)(EXTRA_STACK_SPACE+USER_MEMORY_GUARD_SAVE_WORDS*4+30*4)));
+	asm("bcs not_preempted "); 	// thread was interrupted in supervisor mode, return address and r4-r11 were saved
+
+	// interrupt occurred in exec call entry before r4-r11 saved
+	asm("cmp r2, #%a0 " : : "i" ((TInt)(EXTRA_STACK_SPACE+USER_MEMORY_GUARD_SAVE_WORDS*4+20*4)));
+	asm("moveq r0, #%a0 " : : "i" ((TInt)NThread::EContextSvsrInterrupt1)); // interrupt before return address was saved or after registers restored
+	asm("movne r0, #%a0 " : : "i" ((TInt)NThread::EContextSvsrInterrupt2)); // interrupt after return address saved
+	__JUMP(,lr);
+
+	asm("__irq_resched_return: ");
+	asm(".word irq_resched_return ");
+	}
+
+#endif  // __USER_CONTEXT_TYPE_MACHINE_CODED__
+
+__NAKED__ void Arm::GetUserSpAndLr(TAny*) 
+	{
+	asm("stmia r0, {r13, r14}^ ");
+	asm("mov r0, r0"); // NOP needed between stm^ and banked register access
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Arm::SetUserSpAndLr(TAny*) 
+	{
+	asm("ldmia r0, {r13, r14}^ ");
+	asm("mov r0, r0"); // NOP needed between ldm^ and banked register access
+	__JUMP(,lr);
+	}
+
+#ifdef __CPU_ARM_USE_DOMAINS
+__NAKED__ TUint32 Arm::Dacr()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Arm::SetDacr(TUint32)
+	{
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 Arm::ModifyDacr(TUint32, TUint32)
+	{
+	asm("mrc p15, 0, r2, c3, c0, 0 ");
+	asm("bic r2, r2, r0 ");
+	asm("orr r2, r2, r1 ");
+	asm("mcr p15, 0, r2, c3, c0, 0 ");
+	CPWAIT(,r0);
+	asm("mov r0, r2 ");
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __CPU_HAS_COPROCESSOR_ACCESS_REG
+__NAKED__ void Arm::SetCar(TUint32)
+	{
+	SET_CAR(,r0);
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+#endif
+
+
+
+/** Get the CPU's coprocessor access register value
+
+@return The value of the CAR, 0 if CPU doesn't have CAR
+
+@publishedPartner
+@released
+ */
+EXPORT_C __NAKED__ TUint32 Arm::Car()
+	{
+#ifdef __CPU_HAS_COPROCESSOR_ACCESS_REG
+	GET_CAR(,r0);
+#else
+	asm("mov r0, #0 ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+/** Modify the CPU's coprocessor access register value
+	Does nothing if CPU does not have CAR.
+
+@param	aClearMask	Mask of bits to clear	(1 = clear this bit)
+@param	aSetMask	Mask of bits to set		(1 = set this bit)
+@return The original value of the CAR, 0 if CPU doesn't have CAR
+
+@publishedPartner
+@released
+ */
+EXPORT_C __NAKED__ TUint32 Arm::ModifyCar(TUint32 /*aClearMask*/, TUint32 /*aSetMask*/)
+	{
+#ifdef __CPU_HAS_COPROCESSOR_ACCESS_REG
+	GET_CAR(,r2);
+	asm("bic r0, r2, r0 ");
+	asm("orr r0, r0, r1 ");
+	SET_CAR(,r0);
+	CPWAIT(,r0);
+	asm("mov r0, r2 ");
+#else
+	asm("mov r0, #0 ");
+#endif
+	__JUMP(,lr);
+	}
+
+#ifdef __CPU_HAS_VFP
+__NAKED__ void Arm::SetFpExc(TUint32)
+	{
+#if defined(__CPU_ARM1136__) && !defined(__CPU_ARM1136_ERRATUM_351912_FIXED)
+// If we are about to enable VFP, disable dynamic branch prediction
+// If we are about to disable VFP, enable dynamic branch prediction if return stack prediction is enabled
+	asm("mrs r3, cpsr ");
+	CPSIDAIF;
+	asm("mrc p15, 0, r1, c1, c0, 1 ");
+	asm("tst r0, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );
+	asm("bic r1, r1, #2 ");				// clear DB bit (disable dynamic prediction)
+	asm("and r2, r1, #1 ");				// r2 bit 0 = RS bit (1 if return stack enabled)
+	asm("orreq r1, r1, r2, lsl #1 ");	// if VFP is being disabled set DB = RS
+	asm("mcr p15, 0, r1, c1, c0, 1 ");
+	asm("mcr p15, 0, r2, c7, c5, 6 ");	// flush BTAC
+	VFP_FMXR(,VFP_XREG_FPEXC,0);
+	asm("msr cpsr, r3 ");
+	__JUMP(,lr);
+#else
+	VFP_FMXR(,VFP_XREG_FPEXC,0);
+	__JUMP(,lr);
+#endif
+	}
+#endif
+
+
+
+/** Get the value of the VFP FPEXC register
+
+@return The value of FPEXC, 0 if there is no VFP
+
+@publishedPartner
+@released
+ */
+EXPORT_C __NAKED__ TUint32 Arm::FpExc()
+	{
+#ifdef __CPU_HAS_VFP
+	VFP_FMRX(,0,VFP_XREG_FPEXC);
+#else
+	asm("mov r0, #0 ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+/** Modify the VFP FPEXC register
+	Does nothing if there is no VFP
+
+@param	aClearMask	Mask of bits to clear	(1 = clear this bit)
+@param	aSetMask	Mask of bits to set		(1 = set this bit)
+@return The original value of FPEXC, 0 if no VFP present
+
+@publishedPartner
+@released
+ */
+EXPORT_C __NAKED__ TUint32 Arm::ModifyFpExc(TUint32 /*aClearMask*/, TUint32 /*aSetMask*/)
+	{
+#ifdef __CPU_HAS_VFP
+	VFP_FMRX(,12,VFP_XREG_FPEXC);
+	asm("bic r0, r12, r0 ");
+	asm("orr r0, r0, r1 ");
+
+#if defined(__CPU_ARM1136__) && !defined(__CPU_ARM1136_ERRATUM_351912_FIXED)
+// If we are about to enable VFP, disable dynamic branch prediction
+// If we are about to disable VFP, enable dynamic branch prediction if return stack prediction is enabled
+	asm("mrs r3, cpsr ");
+	CPSIDAIF;
+	asm("mrc p15, 0, r1, c1, c0, 1 ");
+	asm("tst r0, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );
+	asm("bic r1, r1, #2 ");				// clear DB bit (disable dynamic prediction)
+	asm("and r2, r1, #1 ");				// r2 bit 0 = RS bit (1 if return stack enabled)
+	asm("orreq r1, r1, r2, lsl #1 ");	// if VFP is being disabled set DB = RS
+	asm("mcr p15, 0, r1, c1, c0, 1 ");
+	asm("mcr p15, 0, r2, c7, c5, 6 ");	// flush BTAC
+	VFP_FMXR(,VFP_XREG_FPEXC,0);
+	asm("msr cpsr, r3 ");
+#else
+	VFP_FMXR(,VFP_XREG_FPEXC,0);
+#endif	// erratum 351912
+
+	asm("mov r0, r12 ");
+#else	// no vfp
+	asm("mov r0, #0 ");
+#endif
+	__JUMP(,lr);
+	}
+
+/** Get the value of the VFP FPSCR register
+
+@return The value of FPSCR, 0 if there is no VFP
+
+@publishedPartner
+@released
+ */
+EXPORT_C __NAKED__ TUint32 Arm::FpScr()
+	{
+#ifdef __CPU_HAS_VFP
+	VFP_FMRX(,0,VFP_XREG_FPSCR);
+#else
+	asm("mov r0, #0 ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+
+/** Modify the VFP FPSCR register
+	Does nothing if there is no VFP
+
+@param	aClearMask	Mask of bits to clear	(1 = clear this bit)
+@param	aSetMask	Mask of bits to set		(1 = set this bit)
+@return The original value of FPSCR, 0 if no VFP present
+
+@publishedPartner
+@released
+ */
+EXPORT_C __NAKED__ TUint32 Arm::ModifyFpScr(TUint32 /*aClearMask*/, TUint32 /*aSetMask*/)
+	{
+#ifdef __CPU_HAS_VFP
+	VFP_FMRX(,2,VFP_XREG_FPSCR);
+	asm("bic r0, r2, r0 ");
+	asm("orr r0, r0, r1 ");
+	VFP_FMXR(,VFP_XREG_FPSCR,0);
+	asm("mov r0, r2 ");
+#else
+	asm("mov r0, #0 ");
+#endif
+	__JUMP(,lr);
+	}
+
+
+/** Detect whether NEON is present
+
+@return ETrue if present, EFalse if not
+
+@internalTechnology
+@released
+ */
+#if defined(__CPU_HAS_VFP) && defined(__VFP_V3)
+__NAKED__ TBool Arm::NeonPresent()
+	{
+	asm("mov	r0, #0 ");										// Not present
+	VFP_FMRX(,	1,VFP_XREG_FPEXC);								// Save VFP state
+	asm("orr	r2, r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EN));
+	VFP_FMXR(,	VFP_XREG_FPEXC,1);								// Enable VFP
+
+	VFP_FMRX(,	2,VFP_XREG_MVFR0);								// Read MVFR0
+	asm("tst	r2, #%a0" : : "i" ((TInt)VFP_MVFR0_ASIMD32));	// Check to see if all 32 Advanced SIMD registers are present
+	asm("beq	0f ");											// Skip ahead if not
+	GET_CAR(,	r2);
+	asm("tst	r2, #%a0" : : "i" ((TInt)VFP_CPACR_ASEDIS));	// Check to see if ASIMD is disabled
+	asm("bne	0f ");											// Skip ahead if so
+	asm("tst	r2, #%a0" : : "i" ((TInt)VFP_CPACR_D32DIS));	// Check to see if the upper 16 registers are disabled
+	asm("moveq	r0, #1" );										// If not then eport NEON present
+
+	asm("0: ");
+	VFP_FMXR(,VFP_XREG_FPEXC,1);								// Restore VFP state
+	__JUMP(,	lr);
+	}
+#endif
+
+
+#ifdef __CPU_HAS_MMU
+__NAKED__ TBool Arm::MmuActive()
+	{
+	asm("mrc p15, 0, r0, c1, c0, 0 ");
+	asm("and r0, r0, #1 ");
+	__JUMP(,lr);
+	}
+
+// Returns the content of Translate Table Base Register 0.
+// To get physical address of the level 1 table, on some platforms this must be orred with 0xffff8000 (to get rid of table walk cache attributes)
+__NAKED__ TUint32 Arm::MmuTTBR0()
+	{
+	asm("mrc p15, 0, r0, c2, c0, 0 ");
+	__JUMP(,lr);
+	}
+#endif
+
+
+
+/** Get the current value of the high performance counter.
+
+    If a high performance counter is not available, this uses the millisecond
+    tick count instead.
+*/
+#ifdef HAS_HIGH_RES_TIMER
+EXPORT_C __NAKED__ TUint32 NKern::FastCounter()
+	{
+	GET_HIGH_RES_TICK_COUNT(R0);
+	__JUMP(,lr);
+	}
+#else
+EXPORT_C TUint32 NKern::FastCounter()
+	{
+	return NTickCount();
+	}
+#endif
+
+
+
+/** Get the frequency of counter queried by NKern::FastCounter().
+*/
+EXPORT_C TInt NKern::FastCounterFrequency()
+	{
+#ifdef HAS_HIGH_RES_TIMER
+	return KHighResTimerFrequency;
+#else
+	return 1000000 / NKern::TickPeriod();
+#endif
+	}
+

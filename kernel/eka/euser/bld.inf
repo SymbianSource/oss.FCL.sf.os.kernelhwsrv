@@ -1,0 +1,88 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/euser/bld.inf
+// User Library
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_EXPORTS
+
+
+PRJ_MMPFILES
+#if defined(GENERIC_MARM) || defined(WINS) || defined(GENERIC_X86)
+
+#if defined(GENERIC_MARM) && !defined(ARMCC)
+epoc/egcc
+#endif
+
+epoc/edllstub
+edll
+eexe
+eexe_instrumented_heap
+eexe_monitor_heap
+
+#ifdef WINS
+#ifndef SMP		// NO SMP EMULATOR
+estub
+epoc
+emulator
+scppnwdl
+scppnwdl_kern
+#endif
+#endif
+
+#if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+
+#if !defined(SMP)
+euser_lib
+rpipe
+#endif
+
+#if defined(GENERIC_MARM)
+#if defined(SMP)
+euser_v6k_smp
+euser_v7_smp
+#else
+#if defined(MARM_ARM4) || defined(MARM_ARMV4)
+euser_v4
+#endif
+euser_v5
+euser_v6
+euser_v6k
+#endif
+#elif defined(EPOC32) && !defined(MARM)
+euser
+#elif !defined(EPOC32)
+euser
+#endif
+
+#if defined(GENERIC_MARM) && !defined(ARMCC)
+#ifndef SMP
+epoc/arm/eka1_entry_stub
+#endif
+#endif
+
+#endif	// #if !defined(MARM_THUMB) && !defined(MARM_ARMI)
+#endif	// #if defined(GENERIC_MARM) || defined(WINS) || defined(GENERIC_X86)
+
+

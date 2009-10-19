@@ -1,0 +1,82 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/nkernsmp/nkern_int.mmh
+// 
+//
+
+macro				__KERNEL_MODE__
+
+#ifndef __BUILD_AS_THUMB__
+ALWAYS_BUILD_AS_ARM
+#endif
+
+// Pick up any Variant or ASSP headers first
+#ifdef VariantNKernIncludePath
+macro				__VARIANT_NKERN_INCLUDE_PATH_PRESENT__
+userinclude			VariantNKernIncludePath
+systeminclude		VariantNKernIncludePath
+#endif
+#ifdef AsspNKernIncludePath
+macro				__ASSP_NKERN_INCLUDE_PATH_PRESENT__
+userinclude			AsspNKernIncludePath
+systeminclude		AsspNKernIncludePath
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYMBIAN_BASE_SYSTEMINCLUDE(nkernsmp)
+
+userinclude			../include
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include
+#endif
+userinclude			../include/nkernsmp
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include/nkernsmp
+#endif
+
+#ifdef MARM
+SYMBIAN_BASE_SYSTEMINCLUDE(nkernsmp/arm)
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include/nkernsmp/arm
+#endif
+USERINCLUDE		../include/nkernsmp/arm
+#endif	// MARM
+
+#ifdef X86
+SYMBIAN_BASE_SYSTEMINCLUDE(nkernsmp/x86)
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+systeminclude		../include/nkernsmp/x86
+#endif
+USERINCLUDE		../include/nkernsmp/x86
+#endif	// X86
+
+#ifdef WINS
+#error	No SMP on WINS
+#endif	// WINS
+
+#define	NKERN_DIR	nkernsmp
+
+#ifdef STANDALONE_NANOKERNEL
+#ifndef	ExtraNKernIncludePath
+#ifdef MARM
+#define	ExtraNKernIncludePath	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/arm)
+#elif defined(X86)
+#define	ExtraNKernIncludePath	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/x86)
+#endif
+#endif
+#ifdef	ExtraNKernIncludePath
+userinclude			ExtraNKernIncludePath
+systeminclude		ExtraNKernIncludePath
+#endif
+#endif

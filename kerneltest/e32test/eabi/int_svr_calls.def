@@ -1,0 +1,5 @@
+EXPORTS
+	_Z11SessionSendiiPvP14TRequestStatus @ 1 NONAME
+	_Z13SessionCreateRK6TDesC8iPK15TSecurityPolicyi @ 2 NONAME
+	_Z13SetSessionPtriPKv @ 3 NONAME
+	_Z15SessionSendSynciiPvP14TRequestStatus @ 4 NONAME

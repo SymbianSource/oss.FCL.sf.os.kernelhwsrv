@@ -1,0 +1,48 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// erofs.fsy ROFS file system
+// 
+//
+
+/**
+ @file
+*/
+
+OPTION CW   -w off
+
+TARGET			erofs.fsy
+
+TARGETTYPE		fsy
+
+
+SOURCEPATH	../srofs
+SOURCE		sr_rofs.cpp dircache.cpp
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SOURCEPATH 	.
+DOCUMENT	../group/release.txt
+
+LIBRARY		 efile.lib efsrv.lib euser.lib
+
+START WINS
+BASEADDRESS		0x61000000
+END
+
+UID		0 0x100000d6
+VENDORID 0x70000001
+
+unpagedcode
+
+#include "../group/f32caps.mmh"  // Capabilities of File Server process
+#include "../group/f32.mmh"  	// Generic definitions for the whole f32 component
+SMPSAFE

@@ -1,0 +1,88 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template\template_variant\rom\base_template.iby
+// 
+//
+
+#define HEAPMAX(x)
+#define FIXED	fixed
+
+//kerneltrace 0xffffffff
+
+multikernel
+
+bootbinary=ABI_DIR\_template_bootrom.bin
+
+romlinearbase=0xf8000000
+romalign=0x10
+kerneldataaddress=0x64000000
+kernelheapmin=0x08000
+kernelheapmax=0x00FFC000
+dataaddress=0x400000
+defaultstackreserve=0x200000
+romchecksum=0x12345678
+
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_kasa1100.dll			\sys\bin\katemplate.dll
+primary[VARID]	=KERNEL_DIR\DEBUG_DIR\_template_ekern.exe				\sys\bin\ekern.exe
+variant[VARID]	=KERNEL_DIR\DEBUG_DIR\_template_ecust.dll				\sys\bin\ecust.dll
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_exmoncommon.dll			\sys\bin\exmoncommon.dll
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_exmondebug.dll			\sys\bin\exmondebug.dll
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_power.dll				\sys\bin\power.dll
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_dma.dll					\sys\bin\dma.dll
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_lcd.dll					\sys\bin\lcd.dll
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_ekeyb.dll				\sys\bin\ekeyb.dll
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_exyin.dll				\sys\bin\exyin.dll
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\_template_euart.pdd				\sys\bin\euart1.pdd	  // not EUART.PDD, unlike text shell ROMs
+// SYM_BRANCH: Delete old sound driver
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\_template_soundsc.pdd				\sys\bin\soundsc.pdd
+//extension[VARID]=KERNEL_DIR\DEBUG_DIR\elocd.ldd							\sys\bin\elocd.ldd
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_medint.pdd				\sys\bin\medint.pdd
+//extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_epbus.dll				\sys\bin\epbus.dll
+//extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_epbusv.dll				\sys\bin\epbusv.dll
+//extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_medlfs.pdd				\sys\bin\medlfs.pdd
+//device[VARID]	=KERNEL_DIR\DEBUG_DIR\_template_medata.pdd				\sys\bin\medata.pdd
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\ecomm.ldd							\sys\bin\ecomm.ldd
+// SYM_BRANCH: Delete old sound driver
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\esoundsc.ldd						\sys\bin\esoundsc.ldd
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\pipelib.ldd						\sys\bin\pipelib.ldd
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\minkda.ldd						\sys\bin\minkda.ldd
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\exstart.dll						\sys\bin\exstart.dll
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\ecamerasc.ldd						\sys\bin\ecamerasc.ldd
+device[VARID]	=KERNEL_DIR\DEBUG_DIR\_template_camerasc.pdd					\sys\bin\camerasc.pdd
+
+// USB Drivers
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_usbcc.dll				\sys\bin\usbcc.dll
+device[VARID]=	KERNEL_DIR\DEBUG_DIR\usbc.ldd							\sys\bin\eusbc.ldd
+
+// Include if IIC Controller support is required
+//extension[VARID] =KERNEL_DIR\DEBUG_DIR\iic.dll				   		\sys\bin\iic.dll
+//
+// Include if IIC Channel support is required
+// extension[VARID] =KERNEL_DIR\DEBUG_DIR\_template_iic.dll				\sys\bin\iic_channel.dll
+
+define	HAL_DLL			_template_hal.dll
+define	ESTART_EXE		e32strt.exe
+define	KEYMAP_FILE		_template_ekdata
+define	SCDV_DLL		_template_scdv.dll
+
+//#define WITH_LFFS
+
+// TO DO (MANDATORY): 
+//
+// Specify which version of EUSER should be used
+// Specify euser_v4, euser_v5, euser_v6, euser_v6k according to which ARM CPU architecture is in use.
+// For SMP specify euser_v6k_smp or euser_v7_smp.
+// If a variant build of EUSER is required, specify the name of that.
+//
+#define	EUSER_DLL		euser_v6k.dll

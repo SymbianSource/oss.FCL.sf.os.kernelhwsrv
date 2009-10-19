@@ -1,0 +1,33 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\rombuild\bootldr_me.oby
+// Purpose: Mini Env bootloader supporting software upgrade of NOR image
+// 
+//
+
+#define BASE_ROM
+#define UBOOTLDROU_ROM
+#include <rom\##VARIANT##\header_me.iby>
+
+files=
+bootbinary=\Epoc32\Release\##MAIN##\_##VARIANT##_bootloader_me_bootrom.bin
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\_##VARIANT##_bootldr_me.exe			Sys\Bin\bootldr_me.exe
+
+device[VARID]=\epoc32\release\##KMAIN##\##BUILD##\_##VARIANT##_ubootldr.ldd	Sys\Bin\ubootldr.ldd

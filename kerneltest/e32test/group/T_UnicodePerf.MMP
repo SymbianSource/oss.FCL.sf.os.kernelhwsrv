@@ -1,0 +1,33 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+TARGET         t_unicodeperf.exe        
+TARGETTYPE     EXE
+
+SOURCEPATH	../buffer
+SOURCE         T_UnicodePerf.cpp
+
+SOURCEPATH		../../../kernel/eka/euser/unicode
+SOURCE			collate.cpp
+SOURCE			unicode.cpp
+SOURCE			unitable.cpp
+SOURCE			Compare.cpp
+
+LIBRARY        euser.lib hal.lib
+USERINCLUDE    ../../../kernel/eka/euser/unicode
+USERINCLUDE    ../../../kernel/eka/include
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+SMPSAFE

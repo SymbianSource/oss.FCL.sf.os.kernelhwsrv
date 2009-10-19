@@ -1,0 +1,4 @@
+component		basesvs
+source			\sf\os\kernelhwsrv\baseapitest\basesvs
+notes_source	\sf\os\kernelhwsrv\baseapitest\basesvs\group\release.txt
+ipr T

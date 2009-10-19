@@ -1,0 +1,122 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template/template_variant/bld.inf
+// Master build description file for template variant
+// TO DO: (mandatory)
+// If your port uses an ASSP / variant split, include the ASSP bld.inf file here
+// 
+//
+
+#include "../template_assp/template_assp.inf"
+
+PRJ_PLATFORMS
+//
+// TO DO: (mandatory)
+//
+// Add here a definition for your ASSP port (as declared in E32PLAT.PM)
+//
+ARM4 ARMV4 ARMV5 ARM4T
+
+PRJ_EXPORTS
+
+inc/iolines.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(template/specific/)
+inc/mconf.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(template/)
+inc/variantmediadef.h	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(template/)
+
+template.oby			/epoc32/rom/include/	//
+rom/base_template.iby	/epoc32/rom/include/	//
+rom/header.iby			/epoc32/rom/template/	//
+rom/kernel.iby			/epoc32/rom/template/	//
+
+PRJ_MMPFILES
+../../../kernel/eka/nkern/nk_exe
+../../../kernel/eka/nkern/nkern_sa
+../../../kernel/eka/kernel/ekern
+../../../kernel/eka/kernel/kc_exe
+../../../kernel/eka/drivers/medint/medint
+../../../kernel/eka/kernel/exmoncommon
+../../../kernel/eka/drivers/trace/btracex
+
+// TO DO: 
+//
+// Uncomment the following line if euser is to be built from the variant
+//
+//../../../kernel/eka/euser/variant_euser
+
+// ../../../kernel/eka/drivers/medata/medata
+
+// TO DO: (mandatory)
+//
+// Add here the list of MMP files required to build the variant
+// parts of your port
+//
+
+vtemplate
+exmontemplate
+datxtemplate
+exlcdtemplate
+exxytemplate
+// SYM_BRANCH: delete old sound driver
+//dasntemplate
+expwrtemplate
+
+
+// TO DO: (mandatory)
+// There are two sample keyboard drivers; one is polled and the other interrupt-driven.
+// Need to comment out the one that is not appropriate for the hardware
+exkey_inttemplate
+exkeytemplate
+
+cakdtemplate
+medlffstemplate
+soundsctemplate
+camerasctemplate
+exi2s
+//epbus
+//exbusab
+//enet
+exiic
+
+// Make the HAL
+
+PRJ_EXTENSIONS
+start		extension		base/config
+
+option		HALPATH			$(EXTENSION_ROOT)/../../../halservices/hal/../.
+option		PREFIX			_template_
+option		SOURCE			$(EXTENSION_ROOT)/hal
+
+end
+
+PRJ_MMPFILES
+hal/hal
+
+// TO DO: (mandatory)
+//
+// Call the makefile to build the bootstrap
+//
+
+PRJ_EXTENSIONS
+start		extension		base/bootstrap
+
+option		NAME			_template_bootrom
+option		CPU			arm
+option		MEMMODEL		multiple
+option		SOURCES			template.s
+option		EXTRA_SRC_PATH		$(EXTENSION_ROOT)/bootstrap
+option		INCLUDES		$(EXTENSION_ROOT)/config.inc
+option		E32PATH			$(EXTENSION_ROOT)/../../../kernel/eka/../.
+
+end
+

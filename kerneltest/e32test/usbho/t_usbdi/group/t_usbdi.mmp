@@ -1,0 +1,130 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+TARGET			t_usbdi.exe
+TARGETTYPE		exe
+
+CAPABILITY		WriteDeviceData CommDD PowerMgmt // Direct access to all communications equipment device drivers
+UID				0 0x10282b48 // Uid2 ignored 
+
+
+//MACRO GENERATE_TREES 
+// uncomment this line to save trees in files(ref. trees)
+// Header file paths
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+
+USERINCLUDE		../inc 
+
+// Source file paths
+
+SOURCEPATH		../src
+
+// The test executable
+
+SOURCE			main.cpp
+
+// Engine and controller
+
+SOURCE			testengine.cpp
+SOURCE			testcasecontroller.cpp
+SOURCE			testpolicy.cpp
+SOURCE			usbdescriptoroffsets.cpp
+SOURCE			fdfactor.cpp
+
+// Test factory
+
+SOURCE			testcasefactory.cpp
+
+// Timers/Watchers
+
+SOURCE			usbclientstatewatcher.cpp
+SOURCE			basicwatcher.cpp
+SOURCE			softwareconnecttimer.cpp
+SOURCE			wakeuptimer.cpp
+
+// Modelled test devices
+
+SOURCE			testdevicebase.cpp
+SOURCE			testinterfacebase.cpp
+SOURCE			testinterfacesettingbase.cpp
+SOURCE			vendordevice.cpp
+SOURCE			testdeviceA.cpp
+SOURCE			testdeviceB.cpp
+SOURCE			testdeviceC.cpp
+SOURCE			testdeviceD.cpp
+SOURCE			endpointreader.cpp
+SOURCE			endpointwriter.cpp
+SOURCE			controlendpointreader.cpp
+
+// Transfers
+
+SOURCE			controltransferrequests.cpp
+SOURCE			hostinterrupttransfers.cpp
+SOURCE			hostisochronoustransfers.cpp
+SOURCE			hostbulktransfers.cpp 
+SOURCE			Ep0Reader.cpp 
+SOURCE			BaseTestCase.cpp 
+SOURCE			BaseBulkTestCase.cpp 
+SOURCE			PBASE-T_USBDI-0472.cpp 
+SOURCE			PBASE-T_USBDI-0473.cpp 
+SOURCE			PBASE-T_USBDI-0474.cpp 
+SOURCE			PBASE-T_USBDI-0475.cpp 
+SOURCE			PBASE-T_USBDI-0476.cpp 
+SOURCE			PBASE-T_USBDI-0477.cpp 
+SOURCE			PBASE-T_USBDI-0478.cpp 
+SOURCE			PBASE-T_USBDI-0479.cpp 
+SOURCE			PBASE-T_USBDI-0480.cpp 
+SOURCE			PBASE-T_USBDI-0481.cpp 
+SOURCE			PBASE-T_USBDI-0482.cpp 
+SOURCE			PBASE-T_USBDI-0483.cpp 
+SOURCE			PBASE-T_USBDI-0484.cpp 
+SOURCE			PBASE-T_USBDI-0485.cpp 
+SOURCE			PBASE-T_USBDI-0486.cpp 
+SOURCE			PBASE-T_USBDI-0487.cpp 
+SOURCE			PBASE-T_USBDI-0488.cpp 
+SOURCE			PBASE-T_USBDI-0489.cpp 
+SOURCE			PBASE-T_USBDI-0490.cpp 
+SOURCE			PBASE-T_USBDI-0491.cpp 
+SOURCE			PBASE-T_USBDI-0492.cpp 
+SOURCE			PBASE-T_USBDI-0493.cpp 
+SOURCE			PBASE-T_USBDI-0494.cpp 
+SOURCE			PBASE-T_USBDI-0495.cpp 
+SOURCE			PBASE-T_USBDI-0496.cpp 
+SOURCE			PBASE-T_USBDI-0497.cpp
+SOURCE			PBASE-T_USBDI-0498.cpp
+SOURCE			PBASE-T_USBDI-0499.cpp
+SOURCE			PBASE-T_USBDI-0500.cpp
+SOURCE			PBASE-T_USBDI-1229.cpp 
+SOURCE			PBASE-T_USBDI-1230.cpp 
+SOURCE			PBASE-T_USBDI-1231.cpp 
+
+SOURCE          PBASE-T_USBDI-1234.cpp 
+SOURCE          PBASE-T_USBDI-1235.cpp  
+SOURCE          PBASE-T_USBDI-1236.cpp  
+
+// The test cases
+
+
+// Link Libraries
+
+LIBRARY     	euser.lib efsrv.lib
+LIBRARY			usbdescriptors.lib usbdi_utils.lib
+
+VENDORID		0x70000001
+
+
+SMPSAFE

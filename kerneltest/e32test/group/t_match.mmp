@@ -1,0 +1,39 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_match.mmp
+// 
+//
+
+TARGET         t_match.exe        
+TARGETTYPE     EXE
+SOURCEPATH	../buffer
+SOURCE         t_match.cpp
+LIBRARY        euser.lib
+LIBRARY        efsrv.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude    ../../../kernel/eka/euser/unicode
+userinclude    ../../../kernel/eka/include
+sourcepath     ../../../kernel/eka/euser/unicode
+source         collate.cpp unicode.cpp unitable.cpp
+source		   Compare.cpp
+
+
+capability		all
+
+// increase heap uplimit for bigger test file KUnicodeTestDataFile.
+EPOCHEAPSIZE	0x1000	2048000
+
+VENDORID 0x70000001
+
+SMPSAFE

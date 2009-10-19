@@ -1,0 +1,4 @@
+EXPORTS
+	_Z12DllTlsHandlev @ 1 NONAME ; DllTlsHandle()
+	_Z9AFunctionj @ 2 NONAME ; AFunction(unsigned int)
+

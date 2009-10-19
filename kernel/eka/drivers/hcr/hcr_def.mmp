@@ -1,0 +1,54 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Hardware Configuration Respoitory Platform Independent Layer (PIL)
+//
+
+
+// -- PIL Statements ----------------------------------------------------------
+//
+// Taken from the hcr.mmh file...keep aligned
+//
+
+#include            "kernel/kern_ext.mmh"
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+target              hcr_def.dll
+targettype          kext
+linkas              hcr.dll
+
+uid                 0x1000008d 0x100039e9
+vendorid            0x70000001
+
+noexportlibrary
+
+capability          all
+
+epocallowdlldata
+
+#define HCR_PIL_SOURCE  hcr_api.cpp hcr_pil.cpp hcr_debug.cpp
+
+
+//
+// Typical lines used in a variant hcr.mmp file
+//
+
+macro               MAKE_DEF_FILE
+
+deffile				../../~/hcr.def
+
+sourcepath			.
+source				hcr_api.cpp
+
+smpsafe

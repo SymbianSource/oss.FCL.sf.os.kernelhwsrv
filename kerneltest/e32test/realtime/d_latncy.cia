@@ -1,0 +1,115 @@
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\realtime\d_latncy.cia
+// 
+//
+
+#include <platform.h>
+
+#if defined(__MEIG__)
+#include <cl7211.h>
+#elif defined(__MAWD__)
+#include <windermere.h>
+#elif defined(__MISA__)
+#include <sa1100.h>
+#elif defined(__MCOT__)
+#include <cotulla.h>
+#elif defined(__MI920__) || defined(__NI1136__)
+#include <integratorap.h>
+#elif defined(__RVEMUBOARD__)
+#include <rvemuboard.h>
+#endif
+
+#include <kernel/kern_priv.h>		//temporary
+#include "d_latncy.h"
+
+#if !defined(__SMP__)
+#if !defined(__EPOC32__) || !defined(__CPU_X86)
+__NAKED__ TUint IntStackPtr()
+	{
+	asm("mrs r1, cpsr ");
+	asm("bic r3, r1, #0x1f ");
+#ifdef __MISA__
+	asm("orr r3, r3, #0xd1 ");		// mode_fiq, all interrupts off
+#else
+	asm("orr r3, r3, #0xd2 ");		// mode_irq, all interrupts off
+#endif
+	asm("msr cpsr, r3 ");
+	asm("mov r0, sp ");				// r0=sp_irq or sp_fiq
+	asm("msr cpsr, r1 ");			// restore interrupts
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __CAPTURE_EXTRAS
+#include <arm.h>
+
+__NAKED__ void CaptureExtras(SLatencyResults&)
+	{
+	asm("mrs r1, spsr ");			// r1=interrupted mode
+	asm("mrs r2, cpsr ");			// r2=current PSR
+	asm("tst r1, #0x0f ");			// check if we interrupted user mode
+	asm("orr ip, r1, #%a0" : : "i" ((TInt)KAllInterruptsMask));		// ip=interrupted mode with interrupts off
+	asm("orreq ip, ip, #0x1f ");	// if we interrupted user mode, go to system mode instead
+	asm("bic ip, ip, #0x20 ");		// make sure we don't go into THUMB mode
+	asm("msr cpsr, ip ");			// switch to interrupted mode with ints off
+	asm("mov r3, lr ");				// r3=interrupted mode R14
+	asm("msr cpsr, r2 ");			// back to interrupt mode
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(SLatencyResults,iIntSpsr));
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(SLatencyResults,iIntR14));
+	__JUMP(,lr);
+	}
+#endif
+#endif	// __SMP__
+
+#if defined (__MISA__) || defined (__MCOT__)
+__NAKED__ void DLatency::MsCallBack(TAny* aPtr)
+	{
+	asm("ldr ip, __KHwBaseOst");
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(DLatency,iTickIncrement));
+	asm("ldr r1, [ip, #0x10] ");		// r1=OSCR
+	asm("ldr r2, [ip, #0x00] ");		// r2=OSMR0
+	asm("sub r1, r1, r2 ");				// r1=int latency in ticks
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DLatency,iResults.iIntTicks));
+	asm("str r2, [r0, #%a0]" : : "i" _FOFF(DLatency,iTriggerTime));
+	asm("add r2, r2, r3 ");				// add increment to OSMR0
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DLatency,iIntStackTop));
+	asm("ldrb r3, [r0, #%a0]" : : "i" _FOFF(DLatency,iOff));
+	asm("str r2, [ip, #0x00] ");
+	asm("ldr r1, [r1, #-4] ");			// r1=interrupt return address
+	asm("mov r2, #1 ");
+	asm("cmp r3, #0 ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(DLatency,iResults.iIntRetAddr));
+	asm("str r2, [ip, #0x14] ");		// clear interrupt
+	asm("add r0, r0, #%a0" : : "i" _FOFF(DLatency,iMsDfc));
+	asm("beq Add__4TDfc ");
+	__JUMP(,lr);
+
+	asm("__KHwBaseOst: ");	//OS timer register locations
+#ifdef __MISA__
+	#ifdef __MEMMODEL_DIRECT__
+		asm(".word 0x90000000");		//Assabet direct MM
+	#else
+		asm(".word 0x63008000");		//Assabet non-direct MM
+	#endif
+#else
+	#ifdef __MEMMODEL_DIRECT__
+		asm(".word 0x40A00000");		//Lubbock direct MM
+	#else
+		asm(".word 0x6300A000");		//Lubbock non-direct MM
+	#endif
+#endif
+	}
+#endif
+

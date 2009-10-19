@@ -1,0 +1,51 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template/template_variant/expwrab.mmp
+// 
+//
+
+#define __USING_ASSP_REGISTER_API__
+#define __USING_ASSP_INTERRUPT_API__
+
+#include			<variant.mmh>
+#include			"kernel/kern_ext.mmh"
+
+target				VariantTarget(power,dll)
+targettype			kext
+linkas				power.dll
+romtarget			power.dll
+
+USERINCLUDE			inc
+SYMBIAN_BASE_SYSTEMINCLUDE(template)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/template_assp)
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYMBIAN_BASE_SYSTEMINCLUDE(template/specific)
+
+sourcepath			../../../kernel/eka/drivers/power/binary
+source				bpower.cpp
+
+sourcepath			specific
+source				power.cpp
+
+library				VariantTarget(ecust,lib)
+
+deffile				./~/templatepower.def
+nostrictdef
+
+epocallowdlldata
+
+uid 				0x1000008d 0x100039e8
+VENDORID 0x70000001
+
+capability			all

@@ -1,0 +1,957 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\x86\vectors.cia
+// 
+//
+
+#include <x86.h>
+#include <apic.h>
+#include "vectors.h"
+
+#ifdef _DEBUG
+#define __CHECK_LOCK_STATE__
+#endif
+
+void __X86VectorIrq();
+void __X86VectorExc();
+void __X86ExcFault(TAny*);
+
+#ifdef __GCC32__
+#define DECLARE_X86_INT(n)			GLDEF_C __NAKED__ void __X86Vector##n() { asm("push 0"); asm("push 0x"#n); asm("jmp %a0" : : "i" (&__X86VectorIrq)); }
+#define DECLARE_X86_EXC_NOERR(n)	GLDEF_C __NAKED__ void __X86Vector##n() { asm("push 0"); asm("push 0x"#n); asm("jmp %a0" : : "i" (&__X86VectorExc)); }
+#define DECLARE_X86_EXC_ERR(n)		GLDEF_C __NAKED__ void __X86Vector##n() { asm("push 0x"#n); asm("jmp %a0" : : "i" (&__X86VectorExc)); }
+#else
+#define DECLARE_X86_INT(n)			GLDEF_C __NAKED__ void __X86Vector##n() { _asm push 0 _asm push 0x##n _asm jmp __X86VectorIrq }
+#define DECLARE_X86_EXC_NOERR(n)	GLDEF_C __NAKED__ void __X86Vector##n() { _asm push 0 _asm push 0x##n _asm jmp __X86VectorExc }
+#define DECLARE_X86_EXC_ERR(n)		GLDEF_C __NAKED__ void __X86Vector##n() { _asm push 0x##n _asm jmp __X86VectorExc }
+#endif
+
+
+const TLinAddr NKern_WaitForAnyRequest = (TLinAddr)&NKern::WaitForAnyRequest;
+const TLinAddr NKern_Lock = (TLinAddr)&NKern::Lock;
+const TLinAddr NKern_LockSystem = (TLinAddr)&NKern::LockSystem;
+const TLinAddr NKern_UnlockSystem = (TLinAddr)&NKern::UnlockSystem;
+const TLinAddr NKern_Unlock = (TLinAddr)&NKern::Unlock;
+const TLinAddr NKern_ThreadLeaveCS = (TLinAddr)&NKern::ThreadLeaveCS;
+const TLinAddr TScheduler_Reschedule = (TLinAddr)&TScheduler::Reschedule;
+const TLinAddr addressof_TheScheduler = (TLinAddr)&TheScheduler;
+const TLinAddr addressof_CrashState = (TLinAddr)&::CrashState;
+extern "C" void send_resched_ipis(TUint32 aMask);
+extern "C" void run_user_mode_callbacks();
+
+#ifdef __CHECK_LOCK_STATE__
+/******************************************************************************
+ * Check that the kernel is unlocked, no fast mutex is held and the thread
+ * is not in a critical section when returning to user mode.
+ ******************************************************************************/
+extern "C" __NAKED__ void check_lock_state()
+	{
+	asm("pushfd ");
+	asm("cli ");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov edx, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edx, 24 ");
+	asm("push esi ");
+	asm("mov esi, [edx*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("cmp dword ptr [esi+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short bad_lock_state1 ");
+	asm("mov ecx, [esi+%0]" : : "i" _FOFF(TSubScheduler, iCurrentThread));
+	asm("cmp dword ptr [ecx+%0], 0" : : "i" _FOFF(NThreadBase, iHeldFastMutex));
+	asm("jne short bad_lock_state2 ");
+	asm("cmp dword ptr [ecx+%0], 0" : : "i" _FOFF(NThreadBase, iCsCount));
+	asm("jne short bad_lock_state3 ");
+	asm("pop esi ");
+	asm("popfd ");
+	asm("ret ");
+	asm("bad_lock_state1: ");
+	asm("int 0xff ");
+	asm("bad_lock_state2: ");
+	asm("int 0xff ");
+	asm("bad_lock_state3: ");
+	asm("int 0xff ");
+	}
+#endif
+
+/******************************************************************************
+* Int 20h Handler - Fast Executive Calls
+* Enter with:
+*		Call number in EAX
+*		Parameter in ECX if any
+* On entry SS:ESP references current threads supervisor stack
+* [ESP+0] = return EIP
+* [ESP+4] = return CS
+* [ESP+8] = return EFLAGS
+* [ESP+12] = return ESP if privilege change occurred
+* [ESP+16] = return SS if privilege change occurred
+*******************************************************************************/
+GLDEF_C __NAKED__ void __X86Vector20()
+	{
+	// Interrupts disabled on entry
+	asm("cld ");
+	asm("push 0 ");			// error code
+	asm("push 0x20 ");		// vector number
+	asm("push gs ");
+	asm("push fs ");
+	asm("push es ");
+	asm("push ds ");
+	asm("push eax ");
+	asm("push ebp ");
+	asm("push edi ");
+	asm("push esi ");
+	asm("push ebx ");
+	asm("push edx ");
+	asm("push ecx ");
+	asm("mov cx, ds ");
+	asm("mov dx, ss ");
+	asm("mov ds, dx ");
+	asm("mov gs, cx ");
+	asm("mov es, dx ");
+	asm("mov ecx, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr ecx, 24 ");
+	asm("mov esi, [ecx*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("mov edi, [esi+%0]" : : "i" _FOFF(TSubScheduler, iCurrentThread));
+	asm("test eax, eax ");
+	asm("je short wait_for_any_request ");
+	asm("mov edx, [edi+%0]" : : "i" _FOFF(NThreadBase, iFastExecTable));
+	asm("cmp eax, [edx] ");
+	asm("jae short fast_exec_invalid ");
+	asm("call [edx][eax*4] ");
+	asm("fast_exec_exit: ");
+	asm("test dword ptr [esp+%0], 3" : : "i" _FOFF(SThreadExcStack, iCs));	// returning to user mode?
+	asm("jz short fast_exec_exit2 ");		// no so just return
+#ifdef __CHECK_LOCK_STATE__
+	asm("call %a0" : : "i" (&check_lock_state));
+#endif
+	// don't need to check for user mode callbacks here since
+	// we couldn't have rescheduled
+	asm("fast_exec_exit2: ");
+	asm("pop ecx ");
+	asm("pop edx ");
+	asm("pop ebx ");
+	asm("pop esi ");
+	asm("pop edi ");
+	asm("pop ebp ");
+	asm("add esp, 4 ");
+	asm("pop ds ");
+	asm("pop es ");
+	asm("pop fs ");
+	asm("pop gs ");
+	asm("add esp, 8 ");
+	asm("iretd ");
+
+	asm("wait_for_any_request: ");
+	asm("sti ");
+	asm("call %a0" : : "i" (NKern_WaitForAnyRequest));
+	asm("cli ");
+	asm("test dword ptr [esp+%0], 3" : : "i" _FOFF(SThreadExcStack, iCs));	// returning to user mode?
+	asm("jz short fast_exec_exit2 ");		// no so just return
+#ifdef __CHECK_LOCK_STATE__
+	asm("call %a0" : : "i" (&check_lock_state));
+#endif
+	asm("cmp dword ptr [edi+%0], 4" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
+	asm("jb short fast_exec_exit2 ");
+	asm("call run_user_mode_callbacks ");
+	asm("jmp short fast_exec_exit2 ");
+
+	asm("fast_exec_invalid: ");
+	asm("sti ");
+	asm("mov esi, [edi+%0]" : : "i" _FOFF(NThreadBase,iSlowExecTable));	// esi=slow exec table base
+	asm("call [esi-8] ");												// call invalid exec handler
+	asm("cli ");
+	asm("jmp short fast_exec_exit ");
+	}
+
+/******************************************************************************
+ * Int 21h Handler - Slow Executive Calls
+ * Enter with:
+ *		Call number in EAX
+ *		Parameters in ECX, EDX, EBX, ESI in that order
+ * On entry SS:ESP references current threads supervisor stack
+ * Must preserve EBX, EBP, ESI, EDI
+ * [ESP+0] = return EIP
+ * [ESP+4] = return CS
+ * [ESP+8] = return EFLAGS
+ * [ESP+12] = return ESP if privilege change occurred
+ * [ESP+16] = return SS if privilege change occurred
+ ******************************************************************************/
+GLDEF_C __NAKED__ void __X86Vector21()
+	{
+	// Interrupts disabled on entry
+	asm("cld ");
+	asm("push 0 ");									// error code
+	asm("push 0x21 ");								// vector number
+	asm("sub esp, 32 ");							// reserve space for additional arguments
+	asm("push gs ");
+	asm("push fs ");
+	asm("push es ");
+	asm("push ds ");
+	asm("push eax ");
+	asm("push ebp ");
+	asm("push edi ");
+	asm("push esi ");
+	asm("push ebx ");
+	asm("push edx ");
+	asm("push ecx ");
+	asm("mov cx, ds ");
+	asm("mov dx, ss ");
+	asm("mov ds, dx ");
+	asm("mov gs, cx ");
+	asm("mov es, dx ");
+	asm("mov edi, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr edi, 24 ");
+	asm("mov esi, [edi*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("mov edi, [esi+%0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));	// edi=TheCurrentThread
+	asm("sti");
+	asm("mov esi, [edi+%0]" : : "i" _FOFF(NThreadBase, iSlowExecTable));	// esi=slow exec table base
+	asm("lea ebp, [esi][eax*8] ");					// ebp points to exec table entry
+	asm("cmp eax, [esi-12] ");
+	asm("jae short slow_exec_invalid ");
+	asm("mov ebx, [ebp] ");							// ebx=flags
+	asm("test ebx, 0x1c000000 ");					// additional arguments required?
+	asm("jz short slow_exec_no_extra_args ");
+
+	asm("mov edx, [esp+8] ");						// edx points to additional args
+	asm("lea eax, [esp+44] ");						// address of copied additional arguments
+	asm("mov [esp+8], eax ");						// replace supplied address
+	asm("mov ecx, ebx ");
+	asm("shr ecx, 26 ");
+	asm("and cl, 7 ");								// ecx=number of additional arguments-1
+	asm("test edx, edx ");
+	asm("jnz short slow_exec_extra_args_present ");	// if arg ptr not NULL, copy args
+	asm("slow_exec_zero_args: ");
+	asm("mov [esp+ecx*4+44], edx ");				// else zero args
+	asm("dec ecx ");
+	asm("jns short slow_exec_zero_args ");
+	asm("jmp short slow_exec_no_extra_args ");
+
+	asm("slow_exec_extra_args_present: ");
+	asm("slow_exec_copy_args: ");
+	asm("mov eax, gs:[edx+ecx*4] ");				// get argument
+	asm("mov [esp+ecx*4+44], eax ");				// copy it
+	asm("dec ecx ");
+	asm("jns short slow_exec_copy_args ");
+
+	asm("slow_exec_no_extra_args:");
+	asm("test ebx, 0x80000000 ");					// test EClaim
+	asm("jz short slow_exec_no_claim ");
+	asm("call %a0" : : "i" (NKern_LockSystem));		// trashes eax, ecx, edx
+	asm("slow_exec_no_claim: ");
+	asm("test ebx, 0x20000000 ");					// test EPreprocess
+	asm("jz short slow_exec_no_preprocess ");
+	asm("mov eax, [esi-4] ");						// preprocess handler address
+	asm("mov esi, edi ");							// save NThread pointer in ESI, also leave it in EDI
+	asm("call eax ");								// trashes eax, ecx, edx, edi
+	asm("mov edi, esi ");							// NThread pointer back into EDI
+	asm("slow_exec_no_preprocess: ");
+	asm("call [ebp+4] ");							// call exec function
+	asm("mov [esp+%0], eax" : : "i" _FOFF(SThreadSlowExecStack, iEax));	// save return value
+	asm("test ebx, 0x40000000 ");					// test ERelease
+	asm("jz short slow_exec_no_release ");
+	asm("call %a0" : : "i" (NKern_UnlockSystem));	// trashes eax, ecx, edx
+	asm("slow_exec_no_release: ");
+
+	asm("slow_exec_exit: ");
+	asm("cli ");
+	asm("test dword ptr [esp+%0], 3" : : "i" _FOFF(SThreadSlowExecStack, iCs));	// returning to user mode?
+	asm("jz short slow_exec_exit2 ");				// no so just return
+#ifdef __CHECK_LOCK_STATE__
+	asm("call %a0" : : "i" (&check_lock_state));
+#endif
+	asm("cmp dword ptr [edi+%0], 4" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
+	asm("jb short slow_exec_exit2 ");
+	asm("call run_user_mode_callbacks ");
+	asm("slow_exec_exit2: ");
+	asm("pop ecx ");
+	asm("pop edx ");
+	asm("pop ebx ");
+	asm("pop esi ");
+	asm("pop edi ");
+	asm("pop ebp ");
+	asm("pop eax ");
+	asm("pop ds ");
+	asm("pop es ");
+	asm("pop fs ");
+	asm("pop gs ");
+	asm("add esp, 40 ");
+	asm("iretd ");
+
+	asm("slow_exec_invalid: ");
+	asm("call [esi-8] ");							// call invalid exec handler
+	asm("jmp short slow_exec_exit ");
+	}
+
+
+__NAKED__ TUint32 __tr()
+	{
+	asm("xor eax, eax ");
+	asm("str ax ");
+	asm("ret ");
+	}
+
+extern "C" void _irqdebug(TUint a);
+extern "C" void generic_ipi_isr(TSubScheduler* aS);
+extern "C" void run_event_handlers(TSubScheduler* aS);
+extern "C" void IrqStartTrace(TUint32 aVector);
+extern "C" void IrqEndTrace();
+
+
+/******************************************************************************
+ * IRQ Preamble/Postamble Common Code
+ * On entry SS:ESP references current threads supervisor stack
+ * [ESP+0] = vector number
+ * [ESP+4] = error code (=0)
+ * [ESP+8] = return EIP
+ * [ESP+12] = return CS
+ * [ESP+16] = return EFLAGS
+ * [ESP+20] = return ESP if privilege change occurred
+ * [ESP+24] = return SS if privilege change occurred
+ ******************************************************************************/
+__NAKED__ void __X86VectorIrq()
+	{
+	// Interrupts disabled on entry
+	asm("cld ");
+	asm("push gs ");
+	asm("push fs ");
+	asm("push es ");
+	asm("push ds ");
+	asm("push eax ");
+	asm("push ebp ");
+	asm("push edi ");
+	asm("push esi ");
+	asm("push ebx ");
+	asm("push edx ");
+	asm("push ecx ");
+	asm("mov ax, ss ");
+	asm("mov ds, ax ");
+	asm("mov es, ax ");
+	asm("mov eax, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24 ");
+	asm("mov esi, [eax*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("mov edi, esp ");								// edi points to saved stuff
+	asm("inc dword ptr [esi+36+%0]" : : "i" _FOFF(TSubScheduler, iExtras));	// increment i_IrqCount
+	asm("inc dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));	// nest count starts at -1, iExtras[13]
+	asm("jnz short nested_irq_entry ");
+	asm("mov esp, [esi+56+%0]" : : "i" _FOFF(TSubScheduler, iExtras));			// iExtras[14] = irq stack top
+	asm("push edi ");
+	asm("nested_irq_entry: ");
+	asm("mov edx, [esi+%0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
+	asm("lock or [%a0], edx" : : "i" (&TheScheduler.iCpusNotIdle));
+	asm("mov ebx, [edi+%0]" : : "i" _FOFF(SThreadExcStack, iVector));
+
+#ifdef BTRACE_CPU_USAGE
+	asm("cmp byte ptr %a0, 0" : : "i" (&BTraceData.iFilter[4/*BTrace::ECpuUsage*/]));
+	asm("jz short no_trace ");
+	asm("push ebx ");
+	asm("call %a0" : : "i" (IrqStartTrace));
+	asm("add esp, 4 ");
+	asm("no_trace: ");
+#endif
+	
+#ifdef _DEBUG
+	asm("push ebx ");
+	asm("call %a0 ": :"i" (&_irqdebug));
+	asm("add esp, 4 ");
+#endif
+	asm("cmp ebx, 0x30 ");
+	asm("jb short kernel_ipi ");
+	asm("mov ecx, ebx ");
+	asm("call [%a0]" : : "i" (&X86_IrqHandler));
+	asm("jmp short postamble ");
+	asm("kernel_ipi: ");
+	asm("cmp ebx, %0" : : "i" (SPURIOUS_INTERRUPT_VECTOR));
+	asm("je short postamble ");
+	asm("xor eax, eax ");
+	asm("mov ds:[%0], eax" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_EOI));
+
+	asm("cmp ebx, %0" : : "i" (TRANSFERRED_IRQ_VECTOR));
+	asm("je short postamble");
+	asm("cmp ebx, %0" : : "i" (RESCHED_IPI_VECTOR));
+	asm("je short resched_ipi ");
+	asm("cmp ebx, %0" : : "i" (TIMESLICE_VECTOR));
+	asm("jne short generic_ipi ");
+	asm("resched_ipi: ");
+	asm("mov byte ptr [esi+%0], 1" : : "i" _FOFF(TSubScheduler, iRescheduleNeededFlag));
+	asm("jmp short postamble ");
+
+	asm("generic_ipi:");
+	asm("cmp ebx, %0" : : "i" (GENERIC_IPI_VECTOR));
+	asm("jne short postamble ");
+	asm("push esi ");
+	asm("call %a0" : : "i" (&generic_ipi_isr));
+	asm("add esp, 4 ");
+
+	// Postamble. Interrupts disabled here.
+	asm("postamble: ");
+	asm("cli ");
+	asm("dec dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
+	asm("jns short nested_irq_exit ");
+
+	// Check for deferred/transferred IRQs
+	asm("cmp byte ptr [esi+%0], 0 " : : "i" _FOFF(TSubScheduler,iEventHandlersPending));
+	asm("je short no_event_handlers ");
+
+	// increment i_IrqNestCount again since we are going to run more ISRs
+	asm("inc dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
+	asm("push esi ");
+	asm("call %a0" : : "i" (run_event_handlers));
+	asm("add esp, 4 ");
+	asm("dec dword ptr [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
+
+	asm("no_event_handlers: ");
+	asm("pop eax ");
+	asm("mov esp, eax ");
+	asm("cmp dword ptr [esi+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jne short irq_kernel_locked_exit ");
+//	asm("cmp dword ptr [esi]TSubScheduler.iRescheduleNeededFlag, 0	VC6 ignores the "dword ptr"
+	asm("lea eax, [esi+%0]" : : "i" _FOFF(TSubScheduler, iRescheduleNeededFlag));
+	asm("cmp dword ptr [eax], 0 ");
+	asm("je short irq_kernel_locked_exit ");
+	asm("mov dword ptr [esi+%0], 1" : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("sti ");
+	asm("push 2 ");
+	asm("call %a0" : : "i" (TScheduler_Reschedule));	// returns with EDI -> current thread
+	asm("add esp, 4 ");
+
+	asm("xor eax, eax ");
+	asm("lock xchg eax, [esi+%0]" : : "i" _FOFF(TSubScheduler, iReschedIPIs));
+	asm("test eax, eax ");
+	asm("jz short irq_user_check ");
+	asm("push eax ");
+	asm("call %a0" : : "i" (&send_resched_ipis));
+	asm("add esp, 4 ");
+
+	asm("irq_user_check: ");
+	asm("test dword ptr [esp+%0], 3" : : "i" _FOFF(SThreadExcStack, iCs));	// returning to user mode?
+	asm("jz short irq_exit ");		// no so just return
+#ifdef __CHECK_LOCK_STATE__
+	asm("call %a0" : : "i" (&check_lock_state));
+#endif
+	asm("cmp dword ptr [edi+%0], 4" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
+	asm("jb short irq_exit ");		// no callbacks so just return
+	asm("call run_user_mode_callbacks ");
+	asm("jmp short irq_exit ");
+
+	asm("irq_kernel_locked_exit: ");
+	asm("nested_irq_exit: ");
+
+#ifdef BTRACE_CPU_USAGE
+	asm("cmp byte ptr %a0, 0" : : "i" (&BTraceData.iFilter[4/*BTrace::ECpuUsage*/]));
+	asm("jz short no_trace2 ");
+	asm("call %a0" : : "i" (IrqEndTrace));
+	asm("no_trace2: ");
+#endif
+
+	asm("irq_exit: ");
+	asm("pop ecx ");
+	asm("pop edx ");
+	asm("pop ebx ");
+	asm("pop esi ");
+	asm("pop edi ");
+	asm("pop ebp ");
+	asm("pop eax ");
+	asm("pop ds ");
+	asm("pop es ");
+	asm("pop fs ");
+	asm("pop gs ");
+	asm("add esp, 8 ");
+	asm("iretd ");
+	}
+
+
+/******************************************************************************
+ * General Exception Handler
+ * On entry SS:ESP references current threads supervisor stack
+ * [ESP+0] = vector number
+ * [ESP+4] = error code (filled with 0 for exceptions without error codes)
+ * [ESP+8] = return EIP
+ * [ESP+12] = return CS
+ * [ESP+16] = return EFLAGS
+ * [ESP+20] = return ESP if privilege change occurred
+ * [ESP+24] = return SS if privilege change occurred
+ ******************************************************************************/
+GLDEF_C __NAKED__ void __X86VectorExc()
+	{
+	// Interrupts disabled on entry
+	asm("cld ");
+	asm("push gs ");
+	asm("push fs ");
+	asm("push es ");
+	asm("push ds ");
+	asm("push eax ");
+	asm("push ebp ");
+	asm("push edi ");
+	asm("push esi ");
+	asm("push ebx ");
+	asm("push edx ");
+	asm("push ecx ");
+	asm("mov bp, ss ");
+	asm("mov ds, bp ");
+	asm("mov es, bp ");
+	asm("mov eax, cr2 ");
+	asm("push eax ");
+	asm("sub esp, 8 ");
+	asm("mov ebp, esp ");		// ebp points to exception info frame
+	asm("mov esi, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr esi, 24 ");
+	asm("mov esi, [esi*4+%0]" : : "i" (&SubSchedulerLookupTable));			// esi -> subscheduler
+	asm("mov edi, [esi+%0]" : : "i" _FOFF(TSubScheduler, iCurrentThread));	// edi -> current thread
+	asm("xor eax, eax ");
+	asm("mov ax, ss ");
+	asm("mov [ebp+4], eax ");	// SS
+	asm("lea eax, [ebp+%0]" : : "i" _FOFF(TX86ExcInfo,iEsp3));	// EAX = ESP at point of exception if ring 0
+	asm("test dword ptr [ebp+%0], 3 " : : "i" _FOFF(TX86ExcInfo,iCs));		// check if we came from kernel mode
+	asm("jz short ring0_exception ");
+	asm("add eax, 8 ");			// EAX = ESP at point of exception if ring 3
+	asm("mov cx, %0" : : "i" (KRing0DS));
+	asm("mov gs, cx ");			// exception in user mode -> GS = user mode DS
+	asm("ring0_exception: ");
+	asm("mov [ebp], eax ");
+
+	asm("cmp dword ptr [esi+52+%0], -1 " : : "i" _FOFF(TSubScheduler, iExtras));
+	asm("jnz short fatal_exception_irq ");
+	asm("cmp dword ptr [esi+%0], 0 " : : "i" _FOFF(TSubScheduler, iKernLockCount));
+	asm("jnz short fatal_exception_locked ");
+	asm("sti ");
+	asm("cmp dword ptr [ebp+%0], 7 " : : "i" _FOFF(TX86ExcInfo, iExcId)); // check for device not available
+	asm("jne short not_fpu ");
+	asm("call %a0" : : "i" (NKern_Lock));
+	asm("clts ");
+	asm("frstor [edi+%0]" : : "i" _FOFF(NThread,iCoprocessorState));
+	asm("call %a0" : : "i" (NKern_Unlock));
+	asm("jmp short proceed ");
+
+	asm("not_fpu: ");
+	asm("mov eax, [edi+%0]" : : "i" _FOFF(NThreadBase,iHandlers)); 
+	asm("push edi ");		// pass current thread parameter
+	asm("push ebp ");		// pass frame address
+	asm("call [eax+%0]" : : "i" _FOFF(SNThreadHandlers,iExceptionHandler)); 
+	asm("add esp, 8 ");		// remove parameters
+
+	asm("proceed:");
+	asm("cli ");
+	asm("add esp, 12 ");	// skip iEsp, iSs, iFaultAddress
+
+	asm("test dword ptr [esp+%0], 3" : : "i" _FOFF(SThreadExcStack, iCs));	// returning to user mode?
+	asm("jz short exc_exit ");		// no so just return
+#ifdef __CHECK_LOCK_STATE__
+	asm("call %a0" : : "i" (&check_lock_state));
+#endif
+	asm("cmp dword ptr [edi+%0], 4" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
+	asm("jb short exc_exit ");		// no callbacks so just return
+	asm("call run_user_mode_callbacks ");
+
+	asm("exc_exit: ");
+	asm("pop ecx ");
+	asm("pop edx ");
+	asm("pop ebx ");
+	asm("pop esi ");
+	asm("pop edi ");
+	asm("pop ebp ");
+	asm("pop eax ");
+	asm("pop ds ");
+	asm("pop es ");
+	asm("pop fs ");
+	asm("pop gs ");
+	asm("add esp, 8 ");		// skip vector number and error code
+	asm("iretd ");
+
+	asm("fatal_exception_irq: ");
+	asm("fatal_exception_locked: ");
+	asm("mov eax, %0" : : "i" (addressof_TheScheduler)); 
+	asm("lea eax, [eax+%0]" : : "i" _FOFF(TScheduler,iMonitorExceptionHandler));
+	asm("mov eax, [eax] ");
+
+	asm("test eax, eax ");
+	asm("jnz short monitor_exception ");
+	asm("push ebp ");
+	asm("call %a0" : : "i" (&__X86ExcFault));	// doesn't return
+
+	asm("monitor_exception: ");
+	asm("jmp eax ");
+	}
+
+
+/******************************************************************************
+ * NMI Interrupt handler
+ * Used to halt other CPUs when one CPU detects a fault
+ * On entry SS:ESP references current threads supervisor stack
+ * [ESP+0] = return EIP
+ * [ESP+4] = return CS
+ * [ESP+8] = return EFLAGS
+ * [ESP+12] = return ESP if privilege change occurred
+ * [ESP+16] = return SS if privilege change occurred
+ ******************************************************************************/
+extern "C" __NAKED__ void __X86Vector02()
+	{
+	asm("push ds ");
+	asm("push ebp ");
+	asm("push esi ");
+	asm("push edi ");
+	asm("mov bp, ss ");
+	asm("mov ds, bp ");
+	asm("mov esi, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr esi, 24 ");
+	asm("mov esi, [esi*4+%0]" : : "i" (&SubSchedulerLookupTable));			// esi -> subscheduler
+	asm("mov ebp, [esi+44+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
+	asm("cmp ebp, 16 ");
+	asm("jae nmihook ");
+	asm("mov ebp, [esi+60+%0]" : : "i" _FOFF(TSubScheduler, iExtras));		// points to SCpuData
+	asm("mov edi, %0" : : "i" (addressof_TheScheduler)); 
+	asm("lea ebp, [ebp+%0]" : : "i" _FOFF(SCpuData, iRegs));
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iEax));
+	asm("mov [ebp+%0], ebx" : : "i" _FOFF(SFullX86RegSet, iEbx));
+	asm("mov [ebp+%0], ecx" : : "i" _FOFF(SFullX86RegSet, iEcx));
+	asm("mov [ebp+%0], edx" : : "i" _FOFF(SFullX86RegSet, iEdx));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iEdi));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iEsi));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iEbp));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iDs));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iEip));
+	asm("pop edx "); // return CS
+	asm("mov [ebp+%0], edx" : : "i" _FOFF(SFullX86RegSet, iCs));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iEflags));
+	asm("xor eax, eax ");
+	asm("mov ax, es ");
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iEs));
+	asm("mov ax, fs ");
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iFs));
+	asm("mov ax, gs ");
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iGs));
+	asm("lea ebx, [esi+52+%0]" : : "i" _FOFF(TSubScheduler, iExtras));		// points to i_IrqNestCount
+	asm("mov eax, 0x80000000 ");
+	asm("lock xchg eax, [ebx] ");
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iIrqNestCount));
+	asm("test dl, 3 ");
+	asm("jnz short priv_change ");
+	asm("mov [ebp+%0], esp" : : "i" _FOFF(SFullX86RegSet, iEsp));
+	asm("mov ax, ss ");
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet, iSs));
+	asm("jmp short got_regs ");
+	asm("priv_change: ");
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iEsp));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet, iSs));
+	asm("got_regs: ");
+	asm("mov dword ptr [esi+44+%0], 2" : : "i" _FOFF(TSubScheduler, iExtras));	// flag that this CPU is done
+	asm("nmi_halt: ");
+	asm("cli ");
+	asm("xor eax, eax ");
+	asm("push eax ");
+	asm("push eax ");
+	asm("push eax ");
+	asm("call %a0" : : "i" (NKCrashHandler));
+	asm("pop eax ");
+	asm("pop eax ");
+	asm("pop eax ");
+	asm("mov eax, [esi+%0] " : : "i" _FOFF(TSubScheduler,iCpuMask));
+	asm("not eax ");
+	asm("mov edx, %0": :"i" (addressof_CrashState)); 
+	asm("lock and [edx+2], ax ");
+	asm("pushfd ");
+	asm("push cs ");
+	asm("lea eax, nmi_halt2 ");
+	asm("push eax ");
+	asm("iretd ");		// return to next instruction, allowing further NMIs
+	asm("nmi_halt2: ");
+	asm("hlt ");
+	asm("jmp short nmi_halt2 ");
+	asm("nmihook: ");
+	asm("mov edi, [esi+%0]" : : "i" _FOFF(TSubScheduler, iCpuNum));
+	asm("call ebp ");
+	asm("pop edi ");
+	asm("pop esi ");
+	asm("pop ebp ");
+	asm("pop ds ");
+	asm("iret ");
+	}
+
+extern "C" __NAKED__ void __X86Vector27()
+	{
+	asm("jmp %a0": : "i"(&__X86Vector02));
+	}
+
+/******************************************************************************
+ * Exception Handlers
+ ******************************************************************************/
+
+DECLARE_X86_EXC_NOERR(00)
+DECLARE_X86_EXC_NOERR(01)
+DECLARE_X86_EXC_NOERR(03)
+DECLARE_X86_EXC_NOERR(04)
+DECLARE_X86_EXC_NOERR(05)
+DECLARE_X86_EXC_NOERR(06)
+DECLARE_X86_EXC_NOERR(07)
+DECLARE_X86_EXC_ERR(08)
+DECLARE_X86_EXC_NOERR(09)
+DECLARE_X86_EXC_ERR(0A)
+DECLARE_X86_EXC_ERR(0B)
+DECLARE_X86_EXC_ERR(0C)
+DECLARE_X86_EXC_ERR(0D)
+DECLARE_X86_EXC_ERR(0E)
+DECLARE_X86_EXC_NOERR(0F)
+DECLARE_X86_EXC_NOERR(10)
+DECLARE_X86_EXC_ERR(11)
+DECLARE_X86_EXC_NOERR(12)
+DECLARE_X86_EXC_NOERR(13)
+DECLARE_X86_EXC_NOERR(14)
+DECLARE_X86_EXC_NOERR(15)
+DECLARE_X86_EXC_NOERR(16)
+DECLARE_X86_EXC_NOERR(17)
+DECLARE_X86_EXC_NOERR(18)
+DECLARE_X86_EXC_NOERR(19)
+DECLARE_X86_EXC_NOERR(1A)
+DECLARE_X86_EXC_NOERR(1B)
+DECLARE_X86_EXC_NOERR(1C)
+DECLARE_X86_EXC_NOERR(1D)
+DECLARE_X86_EXC_NOERR(1E)
+DECLARE_X86_EXC_NOERR(1F)
+
+/***************************************************************************
+ * Interrupt Handlers
+ ***************************************************************************/
+
+// IPIs
+DECLARE_X86_INT(28)
+DECLARE_X86_INT(29)
+DECLARE_X86_INT(2A)
+DECLARE_X86_INT(2B)
+DECLARE_X86_INT(2C)
+DECLARE_X86_INT(2D)
+DECLARE_X86_INT(2E)
+DECLARE_X86_INT(2F)
+
+// External interrupts
+DECLARE_X86_INT(30)
+DECLARE_X86_INT(31)
+DECLARE_X86_INT(32)
+DECLARE_X86_INT(33)
+DECLARE_X86_INT(34)
+DECLARE_X86_INT(35)
+DECLARE_X86_INT(36)
+DECLARE_X86_INT(37)
+DECLARE_X86_INT(38)
+DECLARE_X86_INT(39)
+DECLARE_X86_INT(3A)
+DECLARE_X86_INT(3B)
+DECLARE_X86_INT(3C)
+DECLARE_X86_INT(3D)
+DECLARE_X86_INT(3E)
+DECLARE_X86_INT(3F)
+DECLARE_X86_INT(40)
+DECLARE_X86_INT(41)
+DECLARE_X86_INT(42)
+DECLARE_X86_INT(43)
+DECLARE_X86_INT(44)
+DECLARE_X86_INT(45)
+DECLARE_X86_INT(46)
+DECLARE_X86_INT(47)
+DECLARE_X86_INT(48)
+DECLARE_X86_INT(49)
+DECLARE_X86_INT(4A)
+DECLARE_X86_INT(4B)
+DECLARE_X86_INT(4C)
+DECLARE_X86_INT(4D)
+DECLARE_X86_INT(4E)
+DECLARE_X86_INT(4F)
+
+
+// /*const*/ PFV TheExcVectors[64]=
+const PFV TheExcVectors[80]=
+	{
+	__X86Vector00,	__X86Vector01,	__X86Vector02,	__X86Vector03,
+	__X86Vector04,	__X86Vector05,	__X86Vector06,	__X86Vector07,
+	__X86Vector08,	__X86Vector09,	__X86Vector0A,	__X86Vector0B,
+	__X86Vector0C,	__X86Vector0D,	__X86Vector0E,	__X86Vector0F,
+	__X86Vector10,	__X86Vector11,	__X86Vector12,	__X86Vector13,
+	__X86Vector14,	__X86Vector15,	__X86Vector16,	__X86Vector17,
+	__X86Vector18,	__X86Vector19,	__X86Vector1A,	__X86Vector1B,
+	__X86Vector1C,	__X86Vector1D,	__X86Vector1E,	__X86Vector1F,
+	__X86Vector20,	__X86Vector21,	NULL,			NULL,
+	NULL,			NULL,			NULL,			__X86Vector27,
+	__X86Vector28,	__X86Vector29,	__X86Vector2A,	__X86Vector2B,
+	__X86Vector2C,	__X86Vector2D,	__X86Vector2E,	__X86Vector2F,
+	__X86Vector30,	__X86Vector31,	__X86Vector32,	__X86Vector33,
+	__X86Vector34,	__X86Vector35,	__X86Vector36,	__X86Vector37,
+	__X86Vector38,	__X86Vector39,	__X86Vector3A,	__X86Vector3B,
+	__X86Vector3C,	__X86Vector3D,	__X86Vector3E,	__X86Vector3F,
+	__X86Vector40,	__X86Vector41,	__X86Vector42,	__X86Vector43,
+	__X86Vector44,	__X86Vector45,	__X86Vector46,	__X86Vector47,
+	__X86Vector48,	__X86Vector49,	__X86Vector4A,	__X86Vector4B,
+	__X86Vector4C,	__X86Vector4D,	__X86Vector4E,	__X86Vector4F
+	};
+
+// Call from ISR
+EXPORT_C __NAKED__ TLinAddr X86::IrqReturnAddress()
+	{
+	asm("mov eax, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24 ");
+	asm("mov eax, [eax*4+%0]" : : "i" (&SubSchedulerLookupTable));			// esi -> subscheduler
+	asm("mov eax, [eax+56+%0]" : : "i" _FOFF(TSubScheduler, iExtras));		// eax = i_IrqStackTop
+	asm("mov eax, [eax-4] ");												// saved supervisor stack pointer
+	asm("mov eax, [eax+%0]" : : "i" _FOFF(SThreadExcStack, iEip));			// saved return address from original interrupt
+	asm("ret ");
+	}
+
+__NAKED__ TUint32 get_cr0()
+	{
+	asm("mov eax, cr0 ");
+	asm("ret ");
+	}
+
+__NAKED__ TUint32 get_cr3()
+	{
+	asm("mov eax, cr3 ");
+	asm("ret ");
+	}
+
+__NAKED__ TUint32 get_esp()
+	{
+	asm("mov eax, esp ");
+	asm("ret ");
+	}
+
+__NAKED__ void __ltr(TInt /*aSelector*/)
+	{
+	asm("mov eax, [esp+4] ");
+	asm("ltr ax ");
+	asm("ret ");
+	}
+
+__NAKED__ void __lidt(SX86Des* /*aTable*/, TInt /*aLimit*/)
+	{
+	asm("mov eax, [esp+4] ");
+	asm("mov ecx, [esp+8] ");
+	asm("shl ecx, 3 ");
+	asm("sub ecx, 1 ");
+	asm("sub esp, 8 ");
+	asm("mov word ptr [esp], cx ");
+	asm("mov dword ptr [esp+2], eax ");
+	asm("lidt [esp] "); 
+	asm("add esp, 8 ");
+	asm("ret ");
+	}
+
+const TLinAddr addressof_TheSubSchedulers = (TLinAddr)&(TheSubSchedulers[0]);
+const TInt sss = sizeof(TSubScheduler);
+
+// Called with interrupts off
+extern "C" __NAKED__ void send_generic_ipis(TUint32)
+	{
+	asm("mov eax, [esp+4] ");
+#ifdef __USE_LOGICAL_DEST_MODE__
+	asm("shl eax, 24 ");	// CPUs mask into bits 24-31
+	asm("jz short sgi0 ");	// no CPUs, so nothing to do
+	asm("mov edx, %0 " : : "i" (GENERIC_IPI_VECTOR | 0x4800));
+	asm("mov ds:[%0], eax " : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRH));
+	asm("mov ds:[%0], edx " : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRL));
+	asm("sgi0: ");
+#else
+	asm("mov edx, %0" : : "i" (GENERIC_IPI_VECTOR | 0x4000));
+	asm("push esi ");
+	asm("push ebx ");
+	asm("mov esi, %0" : : "i" (addressof_TheSubSchedulers));
+	asm("mov ebx, %0" : : "i" (sss));
+	asm("shr eax, 1 ");
+	asm("jnc short sgi1 ");
+	asm("sgi2: ");
+	asm("mov ecx, [esi+48+%0]" : : "i" _FOFF(TSubScheduler, iExtras));	// ss.i_APICID
+	asm("mov ds:[%0], ecx" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRH));
+	asm("mov ds:[%0], edx" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRL));
+	asm("sgi1: ");
+	asm("add esi, ebx ");
+	asm("shr eax, 1 ");
+	asm("jc short sgi2 ");
+	asm("jnz short sgi1 ");
+	asm("sgi0: ");
+	asm("pop ebx ");
+	asm("pop esi ");
+#endif
+	asm("ret ");
+	}
+
+
+/******************************************************************************
+ * Run TUserModeCallbacks when a thread is about to return to user mode
+ *
+ * On entry:
+ *		Interrupts disabled, kernel unlocked, thread not in CS
+ *		EDI points to current NThread
+ *		We know there is at least one callback on the list
+ * On return:
+ *		Interrupts disabled, kernel unlocked, thread not in CS
+ *		No TUserModeCallbacks outstanding at the point where interrupts were
+ *		disabled.
+ *		EAX, EBX, ECX, EDX modified
+ ******************************************************************************/
+extern "C" __NAKED__ void run_user_mode_callbacks()
+	{
+#ifdef __GNUC__
+	asm(".global run_user_mode_callbacks ");
+	asm("run_user_mode_callbacks: ");
+#endif
+#ifdef __CHECK_LOCK_STATE__
+	asm("cmp dword ptr [edi+%0], 0" : : "i" _FOFF(NThreadBase,iCsCount));
+	asm("jz short rumc0 ");
+	asm("int 0xff ");
+#endif
+	asm("rumc0: ");
+	asm("sti ");
+
+	// EnterCS() - not in CS to start with
+	asm("mov dword ptr [edi+%0], 1" : : "i" _FOFF(NThreadBase,iCsCount));
+
+	asm("rumc1:	");
+	asm("xor ebx, ebx ");
+	asm("lock xchg ebx, [edi+%0]" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
+
+	asm("rumc2: ");
+	asm("mov ecx, [ebx+4] ");			// ecx = callback->iFunc
+	asm("mov eax, ebx ");				// eax = pointer to callback
+	asm("mov ebx, 1 ");
+	asm("lock xchg ebx, [eax] ");		// ebx = callback->iNext, callback->iNext=KUserModeCallbackUnqueued, memory barrier
+	asm("push %0" : : "i" (EUserModeCallbackRun));
+	asm("push eax ");
+	asm("call ecx ");				/* (*callback->iFunc)(callback, EUserModeCallbackRun); */
+	asm("add esp, 8 ");				// remove parameters
+	asm("cmp ebx, 0 ");				// any more callbacks to do?
+	asm("jnz short rumc2 ");		// loop if there are
+
+	asm("rumc3: ");
+	asm("cli ");					// turn off interrupts
+	asm("lock add [esp], ebx ");
+	asm("cmp ebx, [edi+%0]" : : "i" _FOFF(NThreadBase,iCsFunction));
+	asm("jnz short rumc5 ");		/* jump to slow path if anything to do in ThreadLeaveCS() */
+	asm("cmp ebx, [edi+%0]" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));	// any more callbacks queued?
+	asm("jnz short rumc4 ");		// loop if there are
+
+	// no more callbacks, no CsFunction so just ThreadLeaveCS() and return
+	asm("mov [edi+%0], ebx" : : "i" _FOFF(NThreadBase,iCsCount));
+	asm("ret ");
+
+	// more callbacks have been queued so loop round and do them
+	asm("rumc4: ");
+	asm("sti ");
+	asm("jmp short rumc1 ");
+
+	// CsFunction outstanding so do it
+	asm("rumc5: ");
+	asm("sti ");
+	asm("call %a0" : : "i" (NKern_ThreadLeaveCS));
+	asm("cli ");
+	asm("lock add [esp], ebx ");
+	asm("cmp ebx, [edi+%0]" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));	// any more callbacks queued?
+	asm("jnz short rumc0 ");		// loop if there are
+	asm("ret ");
+	}
+
+
+

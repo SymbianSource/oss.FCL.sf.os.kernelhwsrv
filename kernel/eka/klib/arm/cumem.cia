@@ -1,0 +1,654 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\klib\arm\cumem.cia
+// 
+//
+
+#include <kernel/klib.h>
+#include <e32cia.h>
+#include <arm.h>
+#if defined(__REPLACE_GENERIC_UTILS)
+#include "replacement_utils.h"
+#endif
+
+extern "C" {
+
+#ifdef _DEBUG
+#define CUMEM_FAULT(cc, reason) asm("mov"#cc" r0, #%a0 " : : "i" (reason)); \
+                                asm("b"#cc" " CSM_ZN2KL5PanicENS_13TKernLibPanicE)	
+#endif
+
+
+__NAKED__ void kumemget_no_paging_assert(TAny* /*aKernAddr*/, const TAny* /*aAddr*/, TInt /*aLength*/)
+	{
+	asm("mrs r3, spsr ");			// r3=spsr_svc
+	asm("tst r3, #0x0f ");			// test for user mode
+	asm("bne memcpy ");				// if not, just do memcpy
+#ifndef USE_REPLACEMENT_UMEMGET
+	asm("b umemget_no_paging_assert");
+#else
+	asm("b umemget");
+#endif
+	}
+
+
+#ifndef USE_REPLACEMENT_UMEMGET
+	
+#ifdef __CPU_ARMV6
+// Conditional returns are not predicted on ARMv6
+__NAKED__ void dummy_umemget32_exit()
+	{
+	asm("_umemget32_exit: ");
+	asm("ldmfd sp!, {r4, pc} ");	
+	}
+#define UMEMGET32_EXIT(cc)	asm("b"#cc" _umemget32_exit")
+#else
+#define UMEMGET32_EXIT(cc)	asm("ldm"#cc"fd sp!, {r4, pc}")
+#endif
+
+	
+EXPORT_C __NAKED__ void kumemget32(TAny* /*aKernAddr*/, const TAny* /*aAddr*/, TInt /*aLength*/)
+	{
+	asm("mrs r3, spsr ");			// r3=spsr_svc
+	asm("tst r3, #0x0f ");			// test for user mode
+	asm("bne wordmove ");			// if not, just do wordmove
+	// otherwise fall through to umemget32
+	}
+
+
+EXPORT_C __NAKED__ void umemget32(TAny* /*aKernAddr*/, const TAny* /*aUserAddr*/, TInt /*aLength*/)
+	{
+	ASM_ASSERT_PAGING_SAFE
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmfd sp!, {r11, lr} ");
+	asm("subs r12, r2, #1");
+	asm("ldrhsb r11, [r0]"); // test access to first byte of kernel memory
+	asm("ldrhsb r11, [r0,r12]"); // test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);
+	asm("bl 1f");
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldmfd sp!, {r11, pc} ");	
+	asm("1:");
+#endif
+	PLD(1);
+#ifdef _DEBUG
+	asm("tst r2, #3 ");						// check length is a whole number of words
+	CUMEM_FAULT(ne, KL::EWordMoveLengthNotMultipleOf4);
+#endif
+	asm("_umemget_word_aligned: ");	
+	asm("stmfd sp!, {r4, lr} ");
+	asm("subs ip, r2, #32 ");
+	asm("blo _umemget32_small_copy ");
+	PLD_ioff(1, 32);
+	asm("beq _umemget32_32_byte_case ");	// 32 byte case is common - don't bother to align
+
+	asm("rsb lr, r0, #32 ");				// align destination: 0 - 28 byte copy
+	asm("movs lr, lr, lsl #27 ");
+	asm("beq _umemget32_large_copy ");
+	asm("sub r2, r2, lr, lsr #27 ");
+	asm("msr cpsr_f, lr ");					// put length bits 4, 3, 2 into N, Z, C
+	asm("ldrmit r3, [r1], #4 ");
+	asm("ldrmit r4, [r1], #4 ");
+	asm("ldrmit ip, [r1], #4 ");
+	asm("ldrmit lr, [r1], #4 ");
+	asm("stmmiia r0!, {r3, r4, ip, lr} ");
+	asm("ldreqt r3, [r1], #4 ");
+	asm("ldreqt r4, [r1], #4 ");
+	asm("ldrcst ip, [r1], #4 ");
+	asm("stmeqia r0!, {r3, r4} ");
+	asm("strcs ip, [r0], #4 ");
+	asm("subs ip, r2, #32 ");
+	asm("blo _umemget32_small_copy ");
+
+	asm("_umemget32_large_copy: ");			// copy 32 byte blocks
+	PLD_ioff(1, 64);
+	asm("_umemget32_32_byte_case: ");
+	asm("ldrt r2, [r1], #4 ");
+	asm("ldrt r3, [r1], #4 ");
+	asm("ldrt r4, [r1], #4 ");
+	asm("ldrt lr, [r1], #4 ");
+	asm("subs ip, ip, #32 ");
+	asm("stmia r0!, {r2, r3, r4, lr} ");
+	asm("ldrt r2, [r1], #4 ");
+	asm("ldrt r3, [r1], #4 ");
+	asm("ldrt r4, [r1], #4 ");
+	asm("ldrt lr, [r1], #4 ");
+	asm("stmia r0!, {r2, r3, r4, lr} ");
+	asm("bhs _umemget32_large_copy ");
+		
+	asm("_umemget32_small_copy: ");			// 0 - 31 byte copy, length in ip bits 0-4
+	asm("movs r2, ip, lsl #27 ");
+	UMEMGET32_EXIT(eq);
+	asm("msr cpsr_f, r2 ");					// put length bits 4, 3, 2 into N, Z, C
+	asm("ldrmit r3, [r1], #4 ");
+	asm("ldrmit r4, [r1], #4 ");
+	asm("ldrmit ip, [r1], #4 ");
+	asm("ldrmit lr, [r1], #4 ");
+	asm("stmmiia r0!, {r3, r4, ip, lr} ");
+	asm("ldreqt r3, [r1], #4 ");
+	asm("ldreqt r4, [r1], #4 ");
+	asm("ldrcst ip, [r1], #4 ");
+	asm("stmeqia r0!, {r3, r4} ");
+	asm("strcs ip, [r0], #4 ");	
+	asm("movs r2, r2, lsl #3 ");
+	UMEMGET32_EXIT(eq);
+	asm("msr cpsr_f, r2 ");					// put length bits 1, 0 into N, Z	
+	asm("ldrmibt r3, [r1], #1 ");
+	asm("ldrmibt r4, [r1], #1 ");	
+	asm("ldreqbt ip, [r1], #1 ");
+	asm("strmib r3, [r0], #1 ");
+	asm("strmib r4, [r0], #1 ");
+	asm("streqb ip, [r0], #1 ");
+	asm("ldmfd sp!, {r4, pc} ");	
+	}
+
+
+EXPORT_C __NAKED__ void kumemget(TAny* /*aKernAddr*/, const TAny* /*aAddr*/, TInt /*aLength*/)
+	{
+	asm("mrs r3, spsr ");			// r3=spsr_svc
+	asm("tst r3, #0x0f ");			// test for user mode
+	asm("bne memcpy ");				// if not, just do memcpy
+	// otherwise fall through to umemget
+	}
+
+
+EXPORT_C __NAKED__ void umemget(TAny* /*aKernAddr*/, const TAny* /*aUserAddr*/, TInt /*aLength*/)
+	{
+	// Optimised for aligned transfers, as unaligned are very rare in practice
+
+	ASM_ASSERT_PAGING_SAFE
+	asm("umemget_no_paging_assert:");
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmfd sp!, {r11, lr} ");
+	asm("subs r12, r2, #1");
+	asm("ldrhsb r11, [r0]"); // test access to first byte of kernel memory
+	asm("ldrhsb r11, [r0,r12]"); // test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);
+	asm("bl 1f");
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldmfd sp!, {r11, pc} ");	
+	asm("1:");
+#endif
+	PLD(1);
+	asm("tst r0, #3 ");
+	asm("tsteq r1, #3 ");
+	asm("beq _umemget_word_aligned ");
+	asm("cmp r2, #8 ");
+	asm("bhs 1f ");
+
+	asm("2: ");
+	asm("subs r2, r2, #1 ");
+ 	asm("ldrplbt r3, [r1], #1 ");
+	asm("strplb r3, [r0], #1 ");
+	asm("bgt 2b ");
+	__JUMP(,lr);
+
+	asm("1: ");						// Attempt to word align
+	asm("movs r3, r0, lsl #30 ");
+	asm("beq 5f ");
+	asm("rsbs r3, r3, #0 ");		// 01->c0000000 (MI,VC) 10->80000000 (MI,VS) 11->40000000 (PL,VC)
+	asm("sub r2, r2, r3, lsr #30 ");
+	asm("ldrmibt r3, [r1], #1 ");
+	asm("strmib r3, [r0], #1 ");
+	asm("ldrmibt r3, [r1], #1 ");
+	asm("strmib r3, [r0], #1 ");
+	asm("ldrvcbt r3, [r1], #1 ");
+	asm("strvcb r3, [r0], #1 ");	// r0 now word aligned
+	asm("5: ");
+	asm("movs r3, r1, lsl #31 ");
+	asm("bic r1, r1, #3 ");
+	asm("bcs 3f ");					// branch if src mod 4 = 2 or 3
+	asm("bpl _umemget_word_aligned ");	// branch if src mod 4 = 0
+
+	asm("4: ");						// src mod 4 = 1
+	asm("subs r2, r2, #4 ");
+	asm("ldrget r3, [r1], #4 ");
+	asm("ldrget ip, [r1] ");
+	asm("movge r3, r3, lsr #8 ");
+	asm("orrge r3, r3, ip, lsl #24 ");
+	asm("strge r3, [r0], #4 ");
+	asm("bgt 4b ");
+	asm("add r1, r1, #1 ");
+	asm("b umemget_do_end ");
+	
+	asm("3: ");						
+	asm("bmi 5f ");
+	asm("2: ");						// src mod 4 = 2
+	asm("subs r2, r2, #4 ");
+	asm("ldrget r3, [r1], #4 ");
+	asm("ldrget ip, [r1] ");
+	asm("movge r3, r3, lsr #16 ");
+	asm("orrge r3, r3, ip, lsl #16 ");
+	asm("strge r3, [r0], #4 ");
+	asm("bgt 2b ");
+	asm("add r1, r1, #2 ");
+	asm("b umemget_do_end ");
+	
+	asm("5: ");						// src mod 4 = 3
+	asm("subs r2, r2, #4 ");
+	asm("ldrget r3, [r1], #4 ");
+	asm("ldrget ip, [r1] ");
+	asm("movge r3, r3, lsr #24 ");
+	asm("orrge r3, r3, ip, lsl #8 ");
+	asm("strge r3, [r0], #4 ");
+	asm("bgt 5b ");
+	asm("add r1, r1, #3 ");
+
+	asm("umemget_do_end: ");
+	__JUMP(eq,lr);
+	asm("adds r2, r2, #2 ");		// -1 if 1 left, 0 if 2 left, +1 if 3 left
+	asm("ldrplbt r3, [r1], #1 ");
+	asm("strplb r3, [r0], #1 ");
+	asm("ldrplbt r3, [r1], #1 ");
+	asm("strplb r3, [r0], #1 ");
+	asm("ldrnebt r3, [r1], #1 ");
+	asm("strneb r3, [r0], #1 ");
+	__JUMP(,lr);
+	}
+
+#endif  // USE_REPLACEMENT_UMEMGET
+
+__NAKED__ void kumemput_no_paging_assert(TAny* /*aAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	asm("mrs r3, spsr ");			// r3=spsr_svc
+	asm("tst r3, #0x0f ");			// test for user mode
+	asm("bne memcpy ");				// if not, just do memcpy
+#ifndef USE_REPLACEMENT_UMEMPUT
+	asm("b umemput_no_paging_assert");
+#else
+	asm("b umemput");
+#endif
+	}
+
+
+#ifndef USE_REPLACEMENT_UMEMPUT
+	
+#ifdef __CPU_ARMV6
+// Conditional returns are not predicted on ARMv6
+__NAKED__ void dummy_umemput32_exit()
+	{
+	asm("_umemput32_exit: ");
+	asm("ldmfd sp!, {r4, pc} ");	
+	}
+#define UMEMPUT32_EXIT(cc)	asm("b"#cc" _umemput32_exit")
+#else
+#define UMEMPUT32_EXIT(cc)	asm("ldm"#cc"fd sp!, {r4, pc}")
+#endif
+
+	
+EXPORT_C __NAKED__ void kumemput32(TAny* /*aAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	asm("mrs r3, spsr ");			// r3=spsr_svc
+	asm("tst r3, #0x0f ");			// test for user mode
+	asm("bne wordmove ");			// if not, just do wordmove
+	// otherwise fall through to umemput32
+	}
+
+	
+EXPORT_C __NAKED__ void umemput32(TAny* /*aUserAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	ASM_ASSERT_DATA_PAGING_SAFE
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmfd sp!, {r11, lr} ");
+	asm("subs r12, r2, #1");
+	asm("ldrhsb r11, [r1]"); // test access to first byte of kernel memory
+	asm("ldrhsb r11, [r1,r12]"); // test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);
+	asm("bl 1f");
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldmfd sp!, {r11, pc} ");	
+	asm("1:");
+#endif
+	PLD(1);
+#ifdef _DEBUG
+	asm("tst r2, #3 ");						// check length is a whole number of words
+	CUMEM_FAULT(ne, KL::EWordMoveLengthNotMultipleOf4);
+#endif
+	asm("cmp r2, #4 ");						// special case for 4 byte copy which is common
+	asm("ldrhs r3, [r1], #4 ");
+	asm("subhs r2, r2, #4 ");
+	asm("strhst r3, [r0], #4 ");
+	__JUMP(ls,lr);
+	
+	asm("_umemput_word_aligned: ");
+	asm("stmfd sp!, {r4, lr} ");
+	asm("subs r2, r2, #32 ");
+	asm("bhs _umemput32_align_source ");
+
+	asm("_umemput32_small_copy: ");			// copy 1 - 31 bytes
+	asm("mov r2, r2, lsl #27 ");
+	asm("msr cpsr_f, r2 ");					// put length bits 4, 3, 2 into N, Z, C
+	asm("ldmmiia r1!, {r3, r4, ip, lr} ");
+	asm("strmit r3, [r0], #4 ");
+	asm("strmit r4, [r0], #4 ");
+	asm("ldmeqia r1!, {r3, r4} ");
+	asm("strmit ip, [r0], #4 ");
+	asm("ldrcs ip, [r1], #4 ");
+	asm("strmit lr, [r0], #4 ");
+	asm("streqt r3, [r0], #4 ");
+	asm("streqt r4, [r0], #4 ");
+	asm("strcst ip, [r0], #4 ");
+	asm("movs r2, r2, lsl #3 ");
+	UMEMPUT32_EXIT(eq);
+	asm("msr cpsr_f, r2 ");					// put length bits 1, 0 into N, Z
+	asm("ldrmih r3, [r1], #2 ");
+	asm("ldreqb r4, [r1], #1 ");
+	asm("strmibt r3, [r0], #1 ");
+	asm("movmi r3, r3, lsr #8 ");
+	asm("strmibt r3, [r0], #1 ");
+	asm("streqbt r4, [r0], #1 ");
+	asm("ldmfd sp!, {r4, pc} ");
+	
+	asm("_umemput32_align_source: ");
+	PLD_ioff(1, 32);
+	asm("cmp r2, #32 ");
+	asm("bls _umemput32_large_copy ");		// don't bother if length <= 64
+	asm("rsb ip, r1, #32 ");
+	asm("movs ip, ip, lsl #27 ");
+	asm("beq _umemput32_large_copy ");
+	asm("msr cpsr_f, ip ");					// put length bits 4, 3, 2 into N, Z, C
+	asm("sub r2, r2, ip, lsr #27 ");
+	asm("ldmmiia r1!, {r3, r4, ip, lr} ");
+	asm("strmit r3, [r0], #4 ");
+	asm("strmit r4, [r0], #4 ");
+	asm("ldmeqia r1!, {r3, r4} ");
+	asm("strmit ip, [r0], #4 ");
+	asm("ldrcs ip, [r1], #4 ");
+	asm("strmit lr, [r0], #4 ");
+	asm("streqt r3, [r0], #4 ");
+	asm("streqt r4, [r0], #4 ");
+	asm("strcst ip, [r0], #4 ");
+
+	asm("_umemput32_large_copy: ");			// copy 32 byte blocks
+	PLD_ioff(1, 64);
+	asm("ldmia r1!, {r3, r4, ip, lr} ");
+	asm("strt r3, [r0], #4 ");
+	asm("strt r4, [r0], #4 ");
+	asm("strt ip, [r0], #4 ");
+	asm("strt lr, [r0], #4 ");
+	asm("ldmia r1!, {r3, r4, ip, lr} ");
+	asm("strt r3, [r0], #4 ");
+	asm("strt r4, [r0], #4 ");
+	asm("strt ip, [r0], #4 ");
+	asm("strt lr, [r0], #4 ");
+	asm("subs r2, r2, #32 ");
+	asm("bhs _umemput32_large_copy ");
+	asm("adds r2, r2, #32 ");
+	asm("bne _umemput32_small_copy ");
+	asm("ldmfd sp!, {r4, pc} ");
+	}
+
+
+__NAKED__ void uumemcpy32(TAny* /*aUserDst*/, const TAny* /*aUserSrc*/, TInt /*aLength*/)
+	{
+	ASM_ASSERT_PAGING_SAFE
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmfd sp!, {r11, lr} ");
+	USER_MEMORY_GUARD_OFF(,r11,r12);
+	asm("bl 1f");
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldmfd sp!, {r11, pc} ");	
+	asm("1:");
+#endif
+	asm("1: ");
+	asm("subs r2, r2, #4 ");
+	asm("ldrplt r3, [r1], #4 ");
+	asm("strplt r3, [r0], #4 ");
+	asm("bpl 1b ");
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void uumemcpy(TAny* /*aUserDst*/, const TAny* /*aUserSrc*/, TInt /*aLength*/)
+	{
+	ASM_ASSERT_PAGING_SAFE
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmfd sp!, {r11, lr} ");
+	USER_MEMORY_GUARD_OFF(,r11,r12);
+	asm("bl 1f");
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldmfd sp!, {r11, pc} ");	
+	asm("1:");
+#endif
+	asm("cmp r2, #8 ");
+	asm("bcs 1f ");
+	asm("2: ");
+	asm("subs r2, r2, #1 ");
+	asm("ldrplbt r3, [r1], #1 ");
+	asm("strplbt r3, [r0], #1 ");
+	asm("bgt 2b ");
+	__JUMP(,lr);
+	asm("1: ");
+	asm("movs r3, r0, lsl #30 ");
+	asm("beq 5f ");
+	asm("rsbs r3, r3, #0 ");		// 01->c0000000 (MI,VC) 10->80000000 (MI,VS) 11->40000000 (PL,VC)
+	asm("sub r2, r2, r3, lsr #30 ");
+	asm("ldrmibt r3, [r1], #1 ");
+	asm("strmibt r3, [r0], #1 ");
+	asm("ldrmibt r3, [r1], #1 ");
+	asm("strmibt r3, [r0], #1 ");
+	asm("ldrvcbt r3, [r1], #1 ");
+	asm("strvcbt r3, [r0], #1 ");	// r0 now word aligned
+	asm("5: ");
+	asm("movs r3, r1, lsl #31 ");
+	asm("bic r1, r1, #3 ");
+	asm("bcs 3f ");					// branch if src mod 4 = 2 or 3
+	asm("bmi 4f ");					// branch if src mod 4 = 1
+	asm("2: ");
+	asm("subs r2, r2, #4 ");
+	asm("ldrget r3, [r1], #4 ");
+	asm("strget r3, [r0], #4 ");
+	asm("bgt 2b ");
+	asm("uumemcpy_do_end: ");
+	__JUMP(eq,lr);
+	asm("adds r2, r2, #2 ");		// -1 if 1 left, 0 if 2 left, +1 if 3 left
+	asm("ldrplbt r3, [r1], #1 ");
+	asm("strplbt r3, [r0], #1 ");
+	asm("ldrplbt r3, [r1], #1 ");
+	asm("strplbt r3, [r0], #1 ");
+	asm("ldrnebt r3, [r1], #1 ");
+	asm("strnebt r3, [r0], #1 ");
+	__JUMP(,lr);
+	asm("3: ");						// get here if src mod 4 = 2 or 3
+	asm("bmi 5f ");					// branch if 3
+	asm("2: ");
+	asm("subs r2, r2, #4 ");
+	asm("ldrget r3, [r1], #4 ");
+	asm("ldrget ip, [r1] ");
+	asm("movge r3, r3, lsr #16 ");
+	asm("orrge r3, r3, ip, lsl #16 ");
+	asm("strget r3, [r0], #4 ");
+	asm("bgt 2b ");
+	asm("add r1, r1, #2 ");
+	asm("b uumemcpy_do_end ");
+	asm("5: ");
+	asm("subs r2, r2, #4 ");
+	asm("ldrget r3, [r1], #4 ");
+	asm("ldrget ip, [r1] ");
+	asm("movge r3, r3, lsr #24 ");
+	asm("orrge r3, r3, ip, lsl #8 ");
+	asm("strget r3, [r0], #4 ");
+	asm("bgt 5b ");
+	asm("add r1, r1, #3 ");
+	asm("b uumemcpy_do_end ");
+	asm("4: ");
+	asm("subs r2, r2, #4 ");
+	asm("ldrget r3, [r1], #4 ");
+	asm("ldrget ip, [r1] ");
+	asm("movge r3, r3, lsr #8 ");
+	asm("orrge r3, r3, ip, lsl #24 ");
+	asm("strget r3, [r0], #4 ");
+	asm("bgt 4b ");
+	asm("add r1, r1, #1 ");
+	asm("b uumemcpy_do_end ");
+	}
+
+
+EXPORT_C __NAKED__ void kumemput(TAny* /*aAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	asm("mrs r3, spsr ");			// r3=spsr_svc
+	asm("tst r3, #0x0f ");			// test for user mode
+	asm("bne memcpy ");				// if not, just do memcpy
+	// otherwise fall through to umemput
+	}
+
+
+EXPORT_C __NAKED__ void umemput(TAny* /*aUserAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
+	{
+	// Optimised for word-aligned transfers, as unaligned are very rare in practice	
+
+	ASM_ASSERT_DATA_PAGING_SAFE
+	asm("umemput_no_paging_assert:");
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmfd sp!, {r11, lr} ");
+	asm("subs r12, r2, #1");
+	asm("ldrhsb r11, [r1]"); // test access to first byte of kernel memory
+	asm("ldrhsb r11, [r1,r12]"); // test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);
+	asm("bl 1f");
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldmfd sp!, {r11, pc} ");	
+	asm("1:");
+#endif
+	PLD(1);
+	asm("tst r0, #3 ");
+	asm("tsteq r1, #3 ");
+	asm("beq _umemput_word_aligned ");
+	
+	asm("cmp r2, #8 ");
+	asm("bcs 1f ");
+	asm("2: ");						// Copy 0 - 7 bytes
+	asm("subs r2, r2, #1 ");
+	asm("ldrplb r3, [r1], #1 ");
+	asm("strplbt r3, [r0], #1 ");
+	asm("bgt 2b ");
+	__JUMP(,lr);
+	
+	asm("1: ");						// Word-align dest
+	asm("movs r3, r0, lsl #30 ");
+	asm("beq 5f ");
+	asm("rsbs r3, r3, #0 ");		// 01->c0000000 (MI,VC) 10->80000000 (MI,VS) 11->40000000 (PL,VC)
+	asm("sub r2, r2, r3, lsr #30 ");
+	asm("ldrmib r3, [r1], #1 ");
+	asm("strmibt r3, [r0], #1 ");
+	asm("ldrmib r3, [r1], #1 ");
+	asm("strmibt r3, [r0], #1 ");
+	asm("ldrvcb r3, [r1], #1 ");
+	asm("strvcbt r3, [r0], #1 ");	// r0 now word aligned
+	asm("5: ");
+	asm("movs r3, r1, lsl #31 ");
+	asm("bic r1, r1, #3 ");
+	asm("bcs 3f ");					// branch if src mod 4 = 2 or 3
+	asm("bpl _umemput_word_aligned "); // branch if src mod 4 = 0
+
+	asm("4: ");						// get here if src mod 4 = 1
+	asm("subs r2, r2, #4 ");
+	asm("ldrge r3, [r1], #4 ");
+	asm("ldrge ip, [r1] ");
+	asm("movge r3, r3, lsr #8 ");
+	asm("orrge r3, r3, ip, lsl #24 ");
+	asm("strget r3, [r0], #4 ");
+	asm("bgt 4b ");
+	asm("add r1, r1, #1 ");
+	asm("b _umemput_do_end ");
+	
+	asm("3: ");						// get here if src mod 4 = 2 or 3
+	asm("bmi 5f ");					// branch if 3
+	asm("2: ");
+	asm("subs r2, r2, #4 ");
+	asm("ldrge r3, [r1], #4 ");
+	asm("ldrge ip, [r1] ");
+	asm("movge r3, r3, lsr #16 ");
+	asm("orrge r3, r3, ip, lsl #16 ");
+	asm("strget r3, [r0], #4 ");
+	asm("bgt 2b ");
+	asm("add r1, r1, #2 ");
+	asm("b _umemput_do_end ");
+	
+	asm("5: ");						// get here if src mod 4 = 3
+	asm("subs r2, r2, #4 ");
+	asm("ldrge r3, [r1], #4 ");
+	asm("ldrge ip, [r1] ");
+	asm("movge r3, r3, lsr #24 ");
+	asm("orrge r3, r3, ip, lsl #8 ");
+	asm("strget r3, [r0], #4 ");
+	asm("bgt 5b ");
+	asm("add r1, r1, #3 ");
+
+	asm("_umemput_do_end: ");		// z set if done, else r2 == length remaining - 4
+	__JUMP(eq,lr);
+	asm("adds r2, r2, #2 ");		// r2 = -1 if 1 left, 0 if 2 left, +1 if 3 left
+	asm("ldrplb r3, [r1], #1 ");
+	asm("strplbt r3, [r0], #1 ");
+	asm("ldrplb r3, [r1], #1 ");
+	asm("strplbt r3, [r0], #1 ");
+	asm("ldrneb r3, [r1], #1 ");
+	asm("strnebt r3, [r0], #1 ");
+	__JUMP(,lr);
+	}
+
+#endif  // USE_REPLACEMENT_UMEMPUT
+	
+	
+EXPORT_C __NAKED__ void kumemset(TAny* /*aAddr*/, const TUint8 /*aValue*/, TInt /*aLength*/)
+	{
+	asm("mrs r3, spsr ");			// r3=spsr_svc
+	asm("tst r3, #0x0f ");			// test for user mode
+	asm("bne memset ");				// if not, just do memset
+	// otherwise fall through to umemset
+	}
+
+
+EXPORT_C __NAKED__ void umemset(TAny* /*aUserAddr*/, const TUint8 /*aValue*/, TInt /*aLength*/)
+	{
+	ASM_ASSERT_DATA_PAGING_SAFE
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmfd sp!, {r11, lr} ");
+	USER_MEMORY_GUARD_OFF(,r11,r12);
+	asm("bl 1f");
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldmfd sp!, {r11, pc} ");	
+	asm("1:");
+#endif
+	asm("cmp r2, #7 ");
+	asm("bhi 2f ");
+	asm("1: ");
+	asm("subs r2, r2, #1 ");
+	asm("strplbt r1, [r0], #1 ");
+	asm("bgt 1b ");
+	__JUMP(,lr);	
+	asm("2: ");
+	asm("and r1, r1, #0xff ");
+	asm("orr r1, r1, r1, lsl #8 ");
+	asm("orr r1, r1, r1, lsl #16 ");
+	asm("movs r3, r0, lsl #30 ");
+	asm("beq 3f ");
+	asm("rsbs r3, r3, #0 ");		// 01->c0000000 (MI,VC) 10->80000000 (MI,VS) 11->40000000 (PL,VC)
+	asm("strmibt r1, [r0], #1 ");	// if 01 or 10 do 2 byte stores
+	asm("strmibt r1, [r0], #1 ");
+	asm("strvcbt r1, [r0], #1 ");	// if 01 or 11 do 1 byte store
+	asm("sub r2, r2, r3, lsr #30 ");
+	asm("3: ");						// r0 now word aligned
+	asm("subs r2, r2, #4 ");
+	asm("strplt r1, [r0], #4 ");
+	asm("bgt 3b ");
+	__JUMP(eq,lr);					// return if finished
+	asm("adds r2, r2, #2 ");		// -1 if 1 left, 0 if 2 left, +1 if 3 left
+	asm("strplbt r1, [r0], #1 ");
+	asm("strplbt r1, [r0], #1 ");
+	asm("strnebt r1, [r0], #1 ");
+	__JUMP(,lr);
+	}
+	
+}

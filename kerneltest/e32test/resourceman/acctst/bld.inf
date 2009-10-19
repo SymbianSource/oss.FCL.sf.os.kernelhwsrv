@@ -1,0 +1,39 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/resourceman/acctst/bld.inf
+// Resource Manager Acceptance Tests
+// 
+//
+
+/**
+ @file
+*/
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_TESTEXPORTS
+
+./prmacctst.bat			/epoc32/rom/prmacctst.bat
+
+PRJ_TESTMMPFILES
+
+#if !defined(WINS) && !defined(X86)
+../../group/d_prmacctst support
+
+#ifndef SMP
+../../group/t_prmacctst
+#endif
+#endif

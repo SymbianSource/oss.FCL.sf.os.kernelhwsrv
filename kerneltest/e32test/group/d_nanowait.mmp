@@ -1,0 +1,41 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_nanowait.mmp
+// 
+//
+
+#include		"kernel/kern_ext.mmh"
+
+TARGET		    D_NANOWAIT.LDD
+TARGETTYPE		LDD
+ROMTARGET		D_NANOWAIT.LDD
+
+SOURCEPATH		../SYSTEM
+SOURCE			D_NANOWAIT.CPP
+
+LIBRARY			EKERN.LIB
+
+epocallowdlldata
+
+UID		0x100000af
+VENDORID 0x70000001
+
+START WINS
+Win32_Library		kernel32.lib
+#if defined(VC32)
+Win32_Library		msvcrt.lib
+#endif
+END
+
+capability		all

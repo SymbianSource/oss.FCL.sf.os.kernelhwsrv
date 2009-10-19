@@ -1,0 +1,5 @@
+EXPORTS
+	DebuggerInfo__8Debugger @ 1 NONAME ; Debugger::DebuggerInfo(void)
+	Install__8DebuggerP13DDebuggerInfo @ 2 NONAME ; Debugger::Install(DDebuggerInfo *)
+	Version__8Debugger @ 3 NONAME ; Debugger::Version(void)
+

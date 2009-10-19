@@ -1,0 +1,7 @@
+EXPORTS
+	?Export1@@YAHXZ @ 1 NONAME ; int __cdecl Export1(void)
+	?Export2@@YAHXZ @ 2 NONAME ; int __cdecl Export2(void)
+	?Export3@@YAHXZ @ 3 NONAME ; int __cdecl Export3(void)
+	?Export4@@YAHXZ @ 4 NONAME ABSENT ; int __cdecl Export4(void)
+	?Export5@@YAHH@Z @ 5 NONAME ; int __cdecl Export5(int)
+

@@ -1,0 +1,36 @@
+  + length=18, type=0x01
+   >12010002ffffff40220e4000050301020301
+  + length=9, type=0x02
+   >09026a00050104e000
+   \ 
+    + length=9, type=0x04
+     >0904000000ffffff06
+    + length=9, type=0x04
+     >0904010002ffffff07
+     \ 
+      + length=7, type=0x05
+       >07050102400000
+      + length=7, type=0x05
+       >07058402400000
+     / 
+    + length=8, type=0x0b
+     >080b0202ffffff02
+     \ 
+      + length=9, type=0x04
+       >0904020003ffffff08
+       \ 
+        + length=7, type=0x05
+         >07058103080040
+        + length=7, type=0x05
+         >07050102400000
+        + length=7, type=0x05
+         >07058402400000
+       / 
+      + length=9, type=0x04
+       >0904020100ffffff06
+      + length=9, type=0x04
+       >0904030000ffffff06
+     / 
+    + length=9, type=0x04
+     >0904040000ffffff06
+   / 

@@ -1,0 +1,71 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\euser\epoc\x86\uc_trp.cia
+// 
+//
+
+#include <u32exec.h>
+#include <e32panic.h>
+
+
+#ifndef __LEAVE_EQUALS_THROW__
+
+void __stdcall DoTrap(TTrap* aFrame);
+
+EXPORT_C __NAKED__ TInt TTrap::Trap(TInt& /*aResult*/)
+//
+// Save the enter frame state and return 0.
+//
+	{
+	THISCALL_PROLOG1()
+	asm("mov edx, [esp]");
+	asm("mov [ecx+0], edx");
+	asm("mov [ecx+4], ebx");
+	asm("mov [ecx+8], ebp");
+	asm("mov [ecx+12], esp");
+	asm("mov [ecx+16], esi");
+	asm("mov [ecx+20], edi");
+	asm("mov [ecx+24], ds");
+	asm("mov [ecx+28], es");
+	asm("mov [ecx+32], fs");
+	asm("mov [ecx+36], gs");
+	asm("mov edx, [esp+4]");
+	asm("xor eax, eax");
+	asm("mov [edx], eax");
+	asm("mov [ecx+%0], edx": : "i"_FOFF(TTrap,iResult));
+	asm("push ecx");
+	asm("call %a0": : "i"(&DoTrap));
+	asm("xor eax, eax");
+	THISCALL_EPILOG1()
+	}
+
+__NAKED__ void DoLeave(TTrap*)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("mov edx, [ecx+0]");
+	asm("mov ebx, [ecx+4]");
+	asm("mov ebp, [ecx+8]");
+	asm("mov esp, [ecx+12]");
+	asm("mov esi, [ecx+16]");
+	asm("mov edi, [ecx+20]");
+	asm("mov ds, [ecx+24]");
+	asm("mov es, [ecx+28]");
+	asm("mov fs, [ecx+32]");
+	asm("mov gs, [ecx+36]");
+	asm("mov [esp], edx");
+	asm("mov eax, 1");
+	THISCALL_EPILOG1() 
+	}
+
+#endif // !__LEAVE_EQUALS_THROW__

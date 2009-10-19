@@ -1,0 +1,7 @@
+EXPORTS
+	_ZN6DPTest10FlushCacheEv @ 1 NONAME
+	_ZN6DPTest12SetCacheSizeEjj @ 2 NONAME
+	_ZN6DPTest9CacheSizeERjS0_S0_ @ 3 NONAME
+	_ZN6DPTest9EventInfoER5TDes8 @ 4 NONAME
+	_ZN6DPTest10AttributesEv @ 5 NONAME
+

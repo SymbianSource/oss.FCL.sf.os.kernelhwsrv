@@ -1,0 +1,37 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_xver2a.mmp
+// 
+//
+
+target              t_xver2a.exe
+targettype          exe
+sourcepath          ../dll
+source              t_xver2.cpp
+library             euser.lib t_ver2{1.0}.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude         ../dll
+uid                 0x00000000 0x40abcd61
+romtarget
+ramtarget			img\			//
+
+macro               __USE01__
+macro               __USE10__
+macro               __USE11__
+macro               __USE18__
+macro               __USE19__
+
+CAPABILITY		TCB CommDD MultimediaDD WriteDeviceData TrustedUI DiskAdmin AllFiles NetworkServices ReadUserData Location
+VENDORID		0x01234561
+SMPSAFE

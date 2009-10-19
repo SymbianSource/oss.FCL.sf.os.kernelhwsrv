@@ -1,0 +1,9 @@
+EXPORTS
+	_ll_sto_d @ 1 NONAME ; _ll_sto_d
+	_ll_usto_d @ 2 NONAME ; _ll_usto_d
+	_ll_sfrom_d @ 3 NONAME ; _ll_sfrom_d
+	_ll_usfrom_d @ 4 NONAME ; _ll_usfrom_d
+	_ll_sfrom_f @ 5 NONAME ; _ll_sfrom_f
+	_ll_sto_f @ 6 NONAME ; _ll_sto_f
+	_ll_usfrom_f @ 7 NONAME ; _ll_usfrom_f
+	_ll_usto_f @ 8 NONAME ; _ll_usto_f

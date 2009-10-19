@@ -1,0 +1,4 @@
+EXPORTS
+	RegisterConstructorCall @ 1 NONAME
+	RegisterInitCall @ 2 NONAME
+	RegisterDestructorCall @ 3 NONAME

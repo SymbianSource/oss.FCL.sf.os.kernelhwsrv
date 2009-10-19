@@ -1,0 +1,234 @@
+EXPORTS
+	DebugPrintf @ 1 NONAME
+	GetROMExceptionSearchTable @ 2 NONAME
+	InitialiseSymbianSpecificUnwinderCache @ 3 NONAME
+	ReLoadExceptionDescriptor @ 4 NONAME
+	SearchEITV1 @ 5 NONAME
+	SearchEST @ 6 NONAME
+	_ZN10__cxxabiv116__enum_type_infoD0Ev @ 7 NONAME
+	_ZN10__cxxabiv116__enum_type_infoD1Ev @ 8 NONAME
+	_ZN10__cxxabiv116__enum_type_infoD2Ev @ 9 NONAME
+	_ZN10__cxxabiv117__array_type_infoD0Ev @ 10 NONAME
+	_ZN10__cxxabiv117__array_type_infoD1Ev @ 11 NONAME
+	_ZN10__cxxabiv117__array_type_infoD2Ev @ 12 NONAME
+	_ZN10__cxxabiv117__class_type_infoD0Ev @ 13 NONAME
+	_ZN10__cxxabiv117__class_type_infoD1Ev @ 14 NONAME
+	_ZN10__cxxabiv117__class_type_infoD2Ev @ 15 NONAME
+	_ZN10__cxxabiv117__pbase_type_infoD0Ev @ 16 NONAME
+	_ZN10__cxxabiv117__pbase_type_infoD1Ev @ 17 NONAME
+	_ZN10__cxxabiv117__pbase_type_infoD2Ev @ 18 NONAME
+	_ZN10__cxxabiv119__pointer_type_infoD0Ev @ 19 NONAME
+	_ZN10__cxxabiv119__pointer_type_infoD1Ev @ 20 NONAME
+	_ZN10__cxxabiv119__pointer_type_infoD2Ev @ 21 NONAME
+	_ZN10__cxxabiv120__function_type_infoD0Ev @ 22 NONAME
+	_ZN10__cxxabiv120__function_type_infoD1Ev @ 23 NONAME
+	_ZN10__cxxabiv120__function_type_infoD2Ev @ 24 NONAME
+	_ZN10__cxxabiv120__si_class_type_infoD0Ev @ 25 NONAME
+	_ZN10__cxxabiv120__si_class_type_infoD1Ev @ 26 NONAME
+	_ZN10__cxxabiv120__si_class_type_infoD2Ev @ 27 NONAME
+	_ZN10__cxxabiv121__vmi_class_type_infoD0Ev @ 28 NONAME
+	_ZN10__cxxabiv121__vmi_class_type_infoD1Ev @ 29 NONAME
+	_ZN10__cxxabiv121__vmi_class_type_infoD2Ev @ 30 NONAME
+	_ZN10__cxxabiv123__fundamental_type_infoD0Ev @ 31 NONAME
+	_ZN10__cxxabiv123__fundamental_type_infoD1Ev @ 32 NONAME
+	_ZN10__cxxabiv123__fundamental_type_infoD2Ev @ 33 NONAME
+	_ZN10__cxxabiv129__pointer_to_member_type_infoD0Ev @ 34 NONAME
+	_ZN10__cxxabiv129__pointer_to_member_type_infoD1Ev @ 35 NONAME
+	_ZN10__cxxabiv129__pointer_to_member_type_infoD2Ev @ 36 NONAME
+	_ZN23TCppRTExceptionsGlobalsC1Ev @ 37 NONAME
+	_ZN23TCppRTExceptionsGlobalsC2Ev @ 38 NONAME
+	_ZNKSt10bad_typeid4whatEv @ 39 NONAME
+	_ZNKSt8bad_cast4whatEv @ 40 NONAME
+	_ZNKSt9type_info4nameEv @ 41 NONAME
+	_ZNKSt9type_info6beforeERKS_ @ 42 NONAME
+	_ZNKSt9type_infoeqERKS_ @ 43 NONAME
+	_ZNKSt9type_infoneERKS_ @ 44 NONAME
+	_ZNSt10bad_typeidC1ERKS_ @ 45 NONAME
+	_ZNSt10bad_typeidC1Ev @ 46 NONAME
+	_ZNSt10bad_typeidC2ERKS_ @ 47 NONAME
+	_ZNSt10bad_typeidC2Ev @ 48 NONAME
+	_ZNSt10bad_typeidD0Ev @ 49 NONAME
+	_ZNSt10bad_typeidD1Ev @ 50 NONAME
+	_ZNSt10bad_typeidD2Ev @ 51 NONAME
+	_ZNSt10bad_typeidaSERKS_ @ 52 NONAME
+	_ZNSt8bad_castC1ERKS_ @ 53 NONAME
+	_ZNSt8bad_castC1Ev @ 54 NONAME
+	_ZNSt8bad_castC2ERKS_ @ 55 NONAME
+	_ZNSt8bad_castC2Ev @ 56 NONAME
+	_ZNSt8bad_castD0Ev @ 57 NONAME
+	_ZNSt8bad_castD1Ev @ 58 NONAME
+	_ZNSt8bad_castD2Ev @ 59 NONAME
+	_ZNSt8bad_castaSERKS_ @ 60 NONAME
+	_ZNSt9type_infoD0Ev @ 61 NONAME
+	_ZNSt9type_infoD1Ev @ 62 NONAME
+	_ZNSt9type_infoD2Ev @ 63 NONAME
+	_ZSt21__gen_dummy_typeinfosv @ 64 NONAME
+	_ZTIN10__cxxabiv116__enum_type_infoE @ 65 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv117__array_type_infoE @ 66 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv117__class_type_infoE @ 67 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv117__pbase_type_infoE @ 68 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv119__pointer_type_infoE @ 69 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv120__function_type_infoE @ 70 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv120__si_class_type_infoE @ 71 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv121__vmi_class_type_infoE @ 72 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv123__fundamental_type_infoE @ 73 NONAME ; #<TI>#
+	_ZTIN10__cxxabiv129__pointer_to_member_type_infoE @ 74 NONAME ; #<TI>#
+	_ZTIPKa @ 75 NONAME ; #<TI>#
+	_ZTIPKb @ 76 NONAME ; #<TI>#
+	_ZTIPKc @ 77 NONAME ; #<TI>#
+	_ZTIPKd @ 78 NONAME ; #<TI>#
+	_ZTIPKe @ 79 NONAME ; #<TI>#
+	_ZTIPKf @ 80 NONAME ; #<TI>#
+	_ZTIPKh @ 81 NONAME ; #<TI>#
+	_ZTIPKi @ 82 NONAME ; #<TI>#
+	_ZTIPKj @ 83 NONAME ; #<TI>#
+	_ZTIPKl @ 84 NONAME ; #<TI>#
+	_ZTIPKm @ 85 NONAME ; #<TI>#
+	_ZTIPKs @ 86 NONAME ; #<TI>#
+	_ZTIPKt @ 87 NONAME ; #<TI>#
+	_ZTIPKv @ 88 NONAME ; #<TI>#
+	_ZTIPKw @ 89 NONAME ; #<TI>#
+	_ZTIPKx @ 90 NONAME ; #<TI>#
+	_ZTIPKy @ 91 NONAME ; #<TI>#
+	_ZTIPa @ 92 NONAME ; #<TI>#
+	_ZTIPb @ 93 NONAME ; #<TI>#
+	_ZTIPc @ 94 NONAME ; #<TI>#
+	_ZTIPd @ 95 NONAME ; #<TI>#
+	_ZTIPe @ 96 NONAME ; #<TI>#
+	_ZTIPf @ 97 NONAME ; #<TI>#
+	_ZTIPh @ 98 NONAME ; #<TI>#
+	_ZTIPi @ 99 NONAME ; #<TI>#
+	_ZTIPj @ 100 NONAME ; #<TI>#
+	_ZTIPl @ 101 NONAME ; #<TI>#
+	_ZTIPm @ 102 NONAME ; #<TI>#
+	_ZTIPs @ 103 NONAME ; #<TI>#
+	_ZTIPt @ 104 NONAME ; #<TI>#
+	_ZTIPv @ 105 NONAME ; #<TI>#
+	_ZTIPw @ 106 NONAME ; #<TI>#
+	_ZTIPx @ 107 NONAME ; #<TI>#
+	_ZTIPy @ 108 NONAME ; #<TI>#
+	_ZTISt10bad_typeid @ 109 NONAME ; #<TI>#
+	_ZTISt8bad_cast @ 110 NONAME ; #<TI>#
+	_ZTISt9type_info @ 111 NONAME ; #<TI>#
+	_ZTIa @ 112 NONAME ; #<TI>#
+	_ZTIb @ 113 NONAME ; #<TI>#
+	_ZTIc @ 114 NONAME ; #<TI>#
+	_ZTId @ 115 NONAME ; #<TI>#
+	_ZTIe @ 116 NONAME ; #<TI>#
+	_ZTIf @ 117 NONAME ; #<TI>#
+	_ZTIh @ 118 NONAME ; #<TI>#
+	_ZTIi @ 119 NONAME ; #<TI>#
+	_ZTIj @ 120 NONAME ; #<TI>#
+	_ZTIl @ 121 NONAME ; #<TI>#
+	_ZTIm @ 122 NONAME ; #<TI>#
+	_ZTIs @ 123 NONAME ; #<TI>#
+	_ZTIt @ 124 NONAME ; #<TI>#
+	_ZTIv @ 125 NONAME ; #<TI>#
+	_ZTIw @ 126 NONAME ; #<TI>#
+	_ZTIx @ 127 NONAME ; #<TI>#
+	_ZTIy @ 128 NONAME ; #<TI>#
+	_ZTVN10__cxxabiv116__enum_type_infoE @ 129 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv117__array_type_infoE @ 130 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv117__class_type_infoE @ 131 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv117__pbase_type_infoE @ 132 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv119__pointer_type_infoE @ 133 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv120__function_type_infoE @ 134 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv120__si_class_type_infoE @ 135 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv121__vmi_class_type_infoE @ 136 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv123__fundamental_type_infoE @ 137 NONAME ; #<VT>#
+	_ZTVN10__cxxabiv129__pointer_to_member_type_infoE @ 138 NONAME ; #<VT>#
+	_ZTVSt10bad_typeid @ 139 NONAME ; #<VT>#
+	_ZTVSt8bad_cast @ 140 NONAME ; #<VT>#
+	_ZTVSt9type_info @ 141 NONAME ; #<VT>#
+	__aeabi_idiv0 @ 142 NONAME
+	__aeabi_idivmod @ 143 NONAME
+	__aeabi_lasr @ 144 NONAME
+	__aeabi_lcmp @ 145 NONAME
+	__aeabi_ldiv0 @ 146 NONAME
+	__aeabi_ldivmod @ 147 NONAME
+	__aeabi_llsl @ 148 NONAME
+	__aeabi_llsr @ 149 NONAME
+	__aeabi_lmul @ 150 NONAME
+	__aeabi_memclr @ 151 NONAME
+	__aeabi_memclr4 @ 152 NONAME
+	__aeabi_memclr8 @ 153 NONAME
+	__aeabi_memcpy @ 154 NONAME
+	__aeabi_memcpy4 @ 155 NONAME
+	__aeabi_memcpy8 @ 156 NONAME
+	__aeabi_memmove @ 157 NONAME
+	__aeabi_memmove4 @ 158 NONAME
+	__aeabi_memmove8 @ 159 NONAME
+	__aeabi_memset @ 160 NONAME
+	__aeabi_memset4 @ 161 NONAME
+	__aeabi_memset8 @ 162 NONAME
+	__aeabi_uidivmod @ 163 NONAME
+	__aeabi_ulcmp @ 164 NONAME
+	__aeabi_uldivmod @ 165 NONAME
+	__aeabi_unwind_cpp_pr0 @ 166 NONAME
+	__aeabi_unwind_cpp_pr1 @ 167 NONAME
+	__aeabi_unwind_cpp_pr2 @ 168 NONAME
+	__aeabi_uread4 @ 169 NONAME
+	__aeabi_uread8 @ 170 NONAME
+	__aeabi_uwrite4 @ 171 NONAME
+	__aeabi_uwrite8 @ 172 NONAME
+	__aeabi_vec_cctor_nocookie_nodtor @ 173 NONAME
+	__aeabi_vec_ctor_cookie_nodtor @ 174 NONAME
+	__aeabi_vec_ctor_nocookie_nodtor @ 175 NONAME
+	__aeabi_vec_delete @ 176 NONAME
+	__aeabi_vec_delete3 @ 177 NONAME
+	__aeabi_vec_delete3_nodtor @ 178 NONAME
+	__aeabi_vec_dtor @ 179 NONAME
+	__aeabi_vec_dtor_cookie @ 180 NONAME
+	__aeabi_vec_new_cookie @ 181 NONAME
+	__aeabi_vec_new_cookie_noctor @ 182 NONAME
+	__aeabi_vec_new_cookie_nodtor @ 183 NONAME
+	__aeabi_vec_new_nocookie @ 184 NONAME
+	__cxa_allocate_exception @ 185 NONAME
+	__cxa_bad_cast @ 186 NONAME
+	__cxa_bad_typeid @ 187 NONAME
+	__cxa_begin_catch @ 188 NONAME
+	__cxa_begin_cleanup @ 189 NONAME
+	__cxa_call_unexpected @ 190 NONAME
+	__cxa_end_catch @ 191 NONAME
+	__cxa_end_cleanup @ 192 NONAME
+	__cxa_free_exception @ 193 NONAME
+	__cxa_get_globals @ 194 NONAME
+	__cxa_guard_abort @ 195 NONAME
+	__cxa_guard_acquire @ 196 NONAME
+	__cxa_guard_release @ 197 NONAME
+	__cxa_pure_virtual @ 198 NONAME
+	__cxa_rethrow @ 199 NONAME
+	__cxa_throw @ 200 NONAME
+	__cxa_vec_cctor @ 201 NONAME
+	__cxa_vec_cleanup @ 202 NONAME
+	__cxa_vec_ctor @ 203 NONAME
+	__cxa_vec_delete @ 204 NONAME
+	__cxa_vec_delete2 @ 205 NONAME
+	__cxa_vec_delete3 @ 206 NONAME
+	__cxa_vec_dtor @ 207 NONAME
+	__cxa_vec_new @ 208 NONAME
+	__cxa_vec_new2 @ 209 NONAME
+	__cxa_vec_new3 @ 210 NONAME
+	__dynamic_cast @ 211 NONAME
+	__get_typeid @ 212 NONAME
+	_ZTI15XLeaveException @ 213 NONAME
+	_ZTV15XLeaveException @ 214 NONAME
+	_ZN15XLeaveException16ForceKeyFunctionEv @ 215 NONAME
+	_ZSt10unexpectedv @ 216 NONAME
+	_ZSt13set_terminatePFvvE @ 217 NONAME
+	_ZSt14set_unexpectedPFvvE @ 218 NONAME
+	_ZSt18uncaught_exceptionv @ 219 NONAME
+	_ZSt9terminatev @ 220 NONAME
+	SearchEITV2 @ 221 NONAME
+	_Unwind_VRS_Get @ 222 NONAME
+	_Unwind_VRS_Pop @ 223 NONAME
+	_Unwind_VRS_Set @ 224 NONAME
+	__cxa_call_terminate @ 225 NONAME
+	__cxa_current_exception_type @ 226 NONAME
+	__cxa_type_match @ 227 NONAME
+	abort @ 228 NONAME
+	__aeabi_idiv @ 229 NONAME
+	__aeabi_uidiv @ 230 NONAME
+	_ZNSt13bad_exceptionC1ERKS_ @ 231 NONAME
+	_ZNSt13bad_exceptionC1Ev @ 232 NONAME
+	_ZNSt13bad_exceptionD1Ev @ 233 NONAME

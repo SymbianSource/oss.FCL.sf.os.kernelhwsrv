@@ -1,0 +1,11 @@
+EXPORTS
+	_ZdaPv @ 1 NONAME
+	_ZdaPvRKSt9nothrow_t @ 2 NONAME
+	_ZdlPv @ 3 NONAME
+	_ZdlPvRKSt9nothrow_t @ 4 NONAME
+	_Znaj @ 5 NONAME
+	_ZnajRKSt9nothrow_t @ 6 NONAME
+	_Znwj @ 7 NONAME
+	_ZnwjRKSt9nothrow_t @ 8 NONAME
+	_Znwjj @ 9 NONAME
+

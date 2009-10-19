@@ -1,0 +1,119 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+#if (!defined __T_SFSRV_TESTDATA_IBY__)
+#define __T_SFSRV_TESTDATA_IBY__
+
+data=EPOCROOT##epoc32\data\z\base\setup-PBASE-F32-Sfsrv-PublicApi.script			base\setup-PBASE-F32-Sfsrv-PublicApi.script
+
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Sfsrv-PublicApi-RAM.script				base\PBASE-F32-Sfsrv-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Sfsrv-PublicApi-ROM.script				base\PBASE-F32-Sfsrv-PublicApi-ROM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Sfsrv-PublicApi-REM.script				base\PBASE-F32-Sfsrv-PublicApi-REM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Sfsrv-PublicApi-ANY.script				base\PBASE-F32-Sfsrv-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Sfsrv-PublicApi-OS.script				base\PBASE-F32-Sfsrv-PublicApi-OS.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Sfsrv-PublicApi-NAND.script				base\PBASE-F32-Sfsrv-PublicApi-NAND.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Sfsrv-PublicApi.script					base\PBASE-F32-Sfsrv-PublicApi.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-DriveUnit-PublicApi-ANY.script			base\PBASE-F32-DriveUnit-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Format-PublicApi-RAM.script				base\PBASE-F32-Format-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Format-PublicApi-REM.script				base\PBASE-F32-Format-PublicApi-REM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Format-PublicApi-ROM.script				base\PBASE-F32-Format-PublicApi-ROM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RawDisk-PublicApi-RAM.script			base\PBASE-F32-RawDisk-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RawDisk-PublicApi-REM.script			base\PBASE-F32-RawDisk-PublicApi-REM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Dir-PublicApi-RAM.script				base\PBASE-F32-Dir-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-DirScan-PublicApi-RAM.script			base\PBASE-F32-DirScan-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-File-PublicApi-RAM.script				base\PBASE-F32-File-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-File-PublicApi-NAND.script				base\PBASE-F32-File-PublicApi-NAND.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FileMan-PublicApi-RAM.script			base\PBASE-F32-FileMan-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FileMan-PublicApi-OS.script				base\PBASE-F32-FileMan-PublicApi-OS.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script	base\PBASE-F32-FileNamesIdentical-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RDir-PublicApi-RAM.script				base\PBASE-F32-RDir-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Entry-PublicApi-RAM.script				base\PBASE-F32-Entry-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-EntryArray-PublicApi-RAM.script			base\PBASE-F32-EntryArray-PublicApi-RAM.script
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-Parse-PublicApi-ANY.script				base\PBASE-F32-Parse-PublicApi-ANY.script
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-ParsePtr-PublicApi-ANY.script			base\PBASE-F32-ParsePtr-PublicApi-ANY.script
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-ParsePtrC-PublicApi-ANY.script			base\PBASE-F32-ParsePtrC-PublicApi-ANY.script
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-Parse-Inherited-PublicApi-ANY.script	base\PBASE-F32-Parse-Inherited-PublicApi-ANY.script
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-ParsePtr-Inherited-PublicApi-ANY.script	base\PBASE-F32-ParsePtr-Inherited-PublicApi-ANY.script
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-ParsePtrC-Inherited-PublicApi-ANY.script	base\PBASE-F32-ParsePtrC-Inherited-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FileText-PublicApi-RAM.script			base\PBASE-F32-FileText-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-VolumeInfo-PublicApi-ANY.script			base\PBASE-F32-VolumeInfo-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FindFile-PublicApi-REM.script			base\PBASE-F32-FindFile-PublicApi-REM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FindFile-PublicApi-OS.script			base\PBASE-F32-FindFile-PublicApi-OS.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-OpenFileScan-PublicApi-RAM.script		base\PBASE-F32-OpenFileScan-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-ANY.script			base\PBASE-F32-RFS-Drives-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.script			base\PBASE-F32-RFS-Mounts-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Files-PublicApi-ANY.script			base\PBASE-F32-RFS-Files-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Misc-PublicApi-ANY.script			base\PBASE-F32-RFS-Misc-PublicApi-ANY.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-PublicApi-OS.script					base\PBASE-F32-RFS-PublicApi-OS.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-RAM.script			base\PBASE-F32-RFS-Drives-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Files-PublicApi-RAM.script			base\PBASE-F32-RFS-Files-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Misc-PublicApi-RAM.script			base\PBASE-F32-RFS-Misc-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.script			base\PBASE-F32-RFS-Mounts-PublicApi-RAM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-PublicApi-ROM.script				base\PBASE-F32-RFS-PublicApi-ROM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-REM.script			base\PBASE-F32-RFS-Drives-PublicApi-REM.script
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.script	base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.script
+
+
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-DriveUnit-PublicApi.ini					base\PBASE-F32-DriveUnit-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Format-PublicApi.ini					base\PBASE-F32-Format-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RawDisk-PublicApi.ini					base\PBASE-F32-RawDisk-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Dir-PublicApi.ini						base\PBASE-F32-Dir-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-DirScan-PublicApi.ini					base\PBASE-F32-DirScan-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-File-PublicApi.ini						base\PBASE-F32-File-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FileMan-PublicApi.ini					base\PBASE-F32-FileMan-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FileNamesIdentical-PublicApi.ini		base\PBASE-F32-FileNamesIdentical-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RDir-PublicApi.ini						base\PBASE-F32-RDir-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-Entry-PublicApi.ini						base\PBASE-F32-Entry-PublicApi.ini
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-ParseBase-Inherited-PublicApi.ini		base\PBASE-F32-ParseBase-Inherited-PublicApi.ini
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-Parse-PublicApi.ini						base\PBASE-F32-Parse-PublicApi.ini
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-ParsePtr-PublicApi.ini					base\PBASE-F32-ParsePtr-PublicApi.ini
+data=EPOCROOT##Epoc32\data\z\base\PBASE-F32-ParsePtrC-PublicApi.ini					base\PBASE-F32-ParsePtrC-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FileText-PublicApi.ini					base\PBASE-F32-FileText-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-VolumeInfo-PublicApi.ini				base\PBASE-F32-VolumeInfo-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-EntryArray-PublicApi.ini				base\PBASE-F32-EntryArray-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-FindFile-PublicApi.ini					base\PBASE-F32-FindFile-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-OpenFileScan-PublicApi.ini				base\PBASE-F32-OpenFileScan-PublicApi.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-ANY.ini			base\PBASE-F32-RFS-Drives-PublicApi-ANY.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Mounts-PublicApi-ANY.ini			base\PBASE-F32-RFS-Mounts-PublicApi-ANY.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Files-PublicApi-ANY.ini				base\PBASE-F32-RFS-Files-PublicApi-ANY.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Misc-PublicApi-ANY.ini				base\PBASE-F32-RFS-Misc-PublicApi-ANY.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-PublicApi-OS.ini					base\PBASE-F32-RFS-PublicApi-OS.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-RAM.ini			base\PBASE-F32-RFS-Drives-PublicApi-RAM.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Files-PublicApi-RAM.ini				base\PBASE-F32-RFS-Files-PublicApi-RAM.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Misc-PublicApi-RAM.ini				base\PBASE-F32-RFS-Misc-PublicApi-RAM.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Mounts-PublicApi-RAM.ini			base\PBASE-F32-RFS-Mounts-PublicApi-RAM.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-PublicApi-ROM.ini					base\PBASE-F32-RFS-PublicApi-ROM.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-REM.ini			base\PBASE-F32-RFS-Drives-PublicApi-REM.ini
+data=EPOCROOT##epoc32\data\z\base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini		base\PBASE-F32-RFS-Drives-PublicApi-REM-manual.ini
+
+data=EPOCROOT##epoc32\data\z\base\armv5\base_f32_env.ini							base\base_f32_env.ini
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\test.txt									base\t_sfsrv\test.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\Test1.txt									base\t_sfsrv\Test1.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\Test2.txt									base\t_sfsrv\Test2.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\Test3.txt									base\t_sfsrv\Test3.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\test_rom.txt								base\t_sfsrv\test_rom.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\USBLOAD.ZIP								base\t_sfsrv\USBLOAD.ZIP
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\1mb										base\t_sfsrv\1mb
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\any.txt									base\t_sfsrv\any.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\big_line.txt								base\t_sfsrv\big_line.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\filetext_eof.txt							base\t_sfsrv\filetext_eof.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\filetext_read.txt							base\t_sfsrv\filetext_read.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\multiline.txt								base\t_sfsrv\multiline.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\new_file.txt								base\t_sfsrv\new_file.txt
+data=EPOCROOT##epoc32\data\z\base\t_sfsrv\oneliner.txt								base\t_sfsrv\oneliner.txt
+
+#endif

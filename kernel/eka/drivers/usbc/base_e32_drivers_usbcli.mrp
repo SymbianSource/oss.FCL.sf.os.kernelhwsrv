@@ -1,0 +1,17 @@
+# component name "USB Client Driver"
+
+component	base_e32_drivers_usbcli
+
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\usbc
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\usbcc
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\usbcsc
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\usbc all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\usbc
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+

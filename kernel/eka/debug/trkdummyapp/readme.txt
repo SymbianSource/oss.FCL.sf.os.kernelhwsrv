@@ -1,0 +1,20 @@
+# Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the License "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+# This application exists to ensure that insecure Trk debug agents cannot be installed via SWInstall, because
+# the trkdummyapp already has the SID of the insecure Trk .SIS file.
+# Removing this application from the device would allow the insecure Trk to be installed via SWInstall, and
+# this would allow the total disabling of Platform Security.
+# See Symbian PDEF122022: Platform Security can be disabled by an insecure debug agent
+#
+

@@ -1,0 +1,7 @@
+EXPORTS
+	?CacheSize@DPTest@@SAHAAI00@Z @ 1 NONAME ; int DPTest::CacheSize(unsigned int &, unsigned int &, unsigned int &)
+	?EventInfo@DPTest@@SAHAAVTDes8@@@Z @ 2 NONAME ; int DPTest::EventInfo(class TDes8 &)
+	?FlushCache@DPTest@@SAHXZ @ 3 NONAME ; int DPTest::FlushCache(void)
+	?SetCacheSize@DPTest@@SAHII@Z @ 4 NONAME ; int DPTest::SetCacheSize(unsigned int, unsigned int)
+	?Attributes@DPTest@@SAKXZ @ 5 NONAME ; unsigned long DPTest::Attributes(void)
+

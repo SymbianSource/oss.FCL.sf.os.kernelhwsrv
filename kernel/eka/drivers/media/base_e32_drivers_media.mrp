@@ -1,0 +1,62 @@
+# component name "Media Drivers"
+
+component	base_e32_drivers_media
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\crashflash\crashflashnor.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\crashflash\excrashflashnor.mmp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\crashflash\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\medata
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\medint
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\medlfs
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\medmmc
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\mednand
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\pbusmedia.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\spbus.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\pccard
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\epbusm.mmh
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\epbusmmc.mmp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\mmccd_init.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\session.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\stack.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\stackbody.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\stackbody.h
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\Obtaining_PSL_Software_Source_Code.txt
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\sdcard.cpp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\epbussd.mmp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bmarm\sdcard3c\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bmarm\sdcard3c\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bwins\sdcard3c\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bwins\sdcard3c\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bx86\sdcard3c\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bx86\sdcard3c\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\eabi\sdcard3c\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\eabi\sdcard3c\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bmarm\sdcard3c\sdio\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bmarm\sdcard3c\sdio\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bwins\sdcard3c\sdio\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bwins\sdcard3c\sdio\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bx86\sdcard3c\sdio\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\bx86\sdcard3c\sdio\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\eabi\sdcard3c\sdio\epbusmu.def
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\eabi\sdcard3c\sdio\distribution.policy.s60
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\sdio
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\media
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\media all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\media
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+
+ipr E \sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard
+# Access to SD Card PIL and PSL Software Source Code and Documentation 
+# is subject to the relevant party entering into the necessary
+# agreement(s) with SD-3C LLC and/or 4C LLC.
+

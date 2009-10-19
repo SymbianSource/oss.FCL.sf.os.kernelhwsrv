@@ -1,0 +1,72 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\direct\arm\xsched.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+
+#define iMState		iWaitLink.iSpare1
+
+#ifdef __SCHEDULER_MACHINE_CODED__
+
+#if defined(_DEBUG)
+extern "C" void __DebugMsgRequestComplete(TInt a0, TInt a1, TInt a2);
+extern "C" void __DebugMsgReqCompleteWrite(TInt a0, TInt a1, TInt a2);
+#endif
+
+__NAKED__ void DThread::RequestComplete(TRequestStatus*& /*aStatus*/, TInt /*aReason*/)
+//
+// Signal this threads request semaphore.
+//
+	{
+	ASM_DEBUG2(DThreadRequestComplete,r0,lr);
+
+	asm("ldr r3, [r1] ");					// r3 points to TRequestStatus
+	asm("mov r12, #0 ");
+	asm("str r12, [r1] ");					// aStatus=NULL
+
+	asm(".global _asm_RequestComplete ");
+	asm("_asm_RequestComplete: ");
+
+#ifdef BTRACE_REQUESTS
+	asm("stmdb sp!,{r0-r3,lr}");
+	asm("mov r1,r3");
+	asm("mov r3,r2");											// arg3 = aReason
+	asm("mov r2,r1");											// arg2 = aStatus
+	asm("add r1,r0,#%a0" : : "i" _FOFF(DThread,iNThread));		// arg1 = &this->iNThread
+	asm("ldr r0,_threadReqequestCompleteTraceHeader");			// arg0 = header
+	asm("bl " CSM_ZN6BTrace4OutXEmmmm);
+	asm("ldmia sp!,{r0-r3,lr}");
+#endif
+
+	ASM_DEBUG3(RequestComplete,r0,r3,r2);
+	asm("ldrb r12, [r0, #%a0]" : : "i" _FOFF(DThread,iMState));
+	asm("add r0, r0, #%a0" : : "i" _FOFF(DThread,iNThread));
+	asm("cmp r12, #%a0" : : "i" (DThread::EDead));	// test if iMState=EDead
+	asm("beq " CSM_ZN5NKern12UnlockSystemEv );		// if it is, finish
+	asm("tst r3, #3 ");						// check address aligned
+	asm("streq r2, [r3] ");					// if so, write completion code
+	asm("moveq r1, #0 ");					// and signal thread
+	asm("beq " CSM_ZN5NKern19ThreadRequestSignalEP7NThreadP10NFastMutex );
+	asm("b " CSM_ZN5NKern12UnlockSystemEv ); // bad address, just finish.
+#ifdef BTRACE_REQUESTS
+	asm("_threadReqequestCompleteTraceHeader:");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(16,BTrace::ERequests,BTrace::ERequestComplete)));
+#endif
+	}
+
+#endif
+

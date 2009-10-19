@@ -1,0 +1,65 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template\template_assp\template_assp.cia
+// Template ASSP architecture layer
+// 
+//
+
+#include <e32cia.h>
+#include <template_assp_priv.h>
+
+__NAKED__ TUint64 DoRead64(TLinAddr /*aAddr*/)
+	{	
+	asm("ldmia	r0, {r0-r1} ");
+	__JUMP(,lr);	
+	}
+	
+
+__NAKED__ void DoWrite64(TLinAddr aAddr, TUint64 aValue)
+	{
+#ifdef __EABI__
+	asm("stmia	r0, {r2-r3} ");
+#else
+	asm("stmia	r0, {r1-r2} ");
+#endif
+	__JUMP(,lr);	            
+	}
+		
+EXPORT_C __NAKED__ void TTemplate::BootWaitMilliSeconds(TInt aDuration)
+//
+// Active waiting loop (not to be used after System Tick timer has been set up - Init3()
+//
+	{
+	//
+	// TO DO: (optional)
+	//
+	// Program a Hardware Timer to generate the required duration, and then loop until the timer expires.
+	// Do NOT use interrupts!
+	//
+	}
+
+
+__NAKED__ void TTemplate::NanoWait(TUint32 aInterval)
+//
+// Wait for aInterval nanoseconds
+//
+	{
+	// TO DO: work out the correct values for the hardware
+	
+	asm("sub r0, r0, #100");
+	asm("1:");
+	asm("subs r0, r0, #20");
+	asm("bgt 1b");	
+	__JUMP(,lr);
+	}

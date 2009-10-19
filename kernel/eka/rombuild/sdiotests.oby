@@ -1,0 +1,60 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#define BASE_ROM
+#define EXCLUDE_SERIAL_DRIVERS
+#define SYMBIAN_EXCLUDE_SERIALPORT
+
+#include <rom\##VARIANT##\header.iby>
+
+files=
+
+#include <rom\##VARIANT##\kernel.iby>
+#include "user.iby"
+#include <rom\hal\hal.iby>
+#include <rom\f32\f32.iby>
+
+
+file=\epoc32\release\##MAIN##\##BUILD##\mmctest.exe				sys\bin\mmctest.exe
+device[ALL]=\epoc32\release\##KMAIN##\##BUILD##\d_mmcif.ldd		sys\bin\d_mmcif.ldd
+
+file=\epoc32\release\##MAIN##\##BUILD##\sdiotest.exe			sys\bin\sdiotest.exe
+device[ALL]=\epoc32\release\##KMAIN##\##BUILD##\d_sdioif.ldd	sys\bin\d_sdioif.ldd
+
+file=\epoc32\release\##MAIN##\##BUILD##\sdioapitest.exe			sys\bin\sdioapitest.exe
+device[ALL]=\epoc32\release\##KMAIN##\##BUILD##\d_sdioapi.ldd	sys\bin\d_sdioapi.ldd
+
+
+// NB These OMAP DMA COMM LDD & PDDs will get excluded by EXCLUDE_SERIAL_DRIVERS so
+// that we can use the generic COMM LDD which is compatible with sdiosessionuart.pdd
+//device[0x09080004]=		\epoc32\release\##KMAIN##\##BUILD##\ECOMMDMA.LDD	\sys\bin\ECOMM.LDD
+//device[0x09080004]=		\epoc32\release\##KMAIN##\##BUILD##\_H2_EUART.PDD	\sys\bin\EUART.PDD
+//device[0x09080004]=		\epoc32\release\##KMAIN##\##BUILD##\sdiouart.pdd		\sys\bin\EUART2.PDD
+
+
+// Generic COMM LDD
+device[0x09080004]=		\epoc32\release\##KMAIN##\##BUILD##\ECOMM.LDD	\sys\bin\ECOMM.LDD
+
+// Test SDIO PIO COMM PDD, used by SDIOAPITEST.EXE - compatible with generic COMM LDD
+device[0x09080004]=		\epoc32\release\##KMAIN##\##BUILD##\sdiosessionuart.pdd	\sys\bin\SESSIONEUART.PDD
+
+// Test SDIO DMA COMM PDD, used by SDIOAPITEST.EXE - compatible with generic COMM LDD
+// device[0x09080004]=		\epoc32\release\##KMAIN##\##BUILD##\sdiosessramuart.pdd	\sys\bin\SESSIONEUART.PDD
+
+// Test SDIO Fragment DMA COMM PDD, used by SDIOAPITEST.EXE - compatible with generic COMM LDD
+// device[0x09080004]=		\epoc32\release\##KMAIN##\##BUILD##\sdiosessfragramuart.pdd	\sys\bin\SESSIONEUART.PDD
+
+

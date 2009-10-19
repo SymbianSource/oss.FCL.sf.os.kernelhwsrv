@@ -1,0 +1,4 @@
+EXPORTS
+	Ordinal1L__Fv @ 1 NONAME R3UNUSED ; Ordinal1L(void)
+	Ordinal2__Fv @ 2 NONAME R3UNUSED ; Ordinal2(void)
+

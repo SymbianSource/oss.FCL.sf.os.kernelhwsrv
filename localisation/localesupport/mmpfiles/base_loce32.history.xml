@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<relnotes name="Locale Support">
+  <purpose>
+    Localisation framework implementing a library of locale specific information, such as the currency symbol, date format etc., loaded and used by Kernel and User Library.
+  </purpose>
+
+  <deliverystep number="557" name="Filename policy changes" osproject="Oghma" revision="003">
+    <milestone project="GT0329" number="3.11"/>
+    <preq number="1182" title="GNU Make-based build system">
+    Updating the component source files to comply with the Symbian filename policy.
+  </preq>
+  </deliverystep>
+
+  <minorchange revision="002">
+    Symbian OS v9.3 component branched from common codeline
+  </minorchange>
+
+  <defect number="PDEF101969" title="Incorrect output of TTimeFormatSpec, TShortDateFormatSpec &amp; TLongDateFormatSpec" revision="001">
+    Modified the short date format of the Japanese locale to YY/MM/DD
+  </defect>
+</relnotes>

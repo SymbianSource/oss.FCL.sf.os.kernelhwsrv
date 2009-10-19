@@ -1,0 +1,48 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+TARGET      	basetestsd.exe
+TARGETTYPE  	exe
+UID             0x1000007A 0x10281825
+VENDORID 		0x70000001
+
+CAPABILITY		ALL
+
+SOURCEPATH  	../src
+SOURCE			sdserver.cpp
+SOURCE			sdbase.cpp
+SOURCE			sdbigfileread.cpp
+SOURCE			sdbigfilewrite.cpp
+SOURCE			sdcheckdisk.cpp
+SOURCE			sdcopyfile.cpp
+SOURCE			sddialogbox.cpp
+SOURCE			sddisplayinfo.cpp
+SOURCE			sdfieldcheck.cpp
+SOURCE			sdfileoperations1.cpp
+SOURCE			sdfileoperations2.cpp
+SOURCE			sdfileoperationsbase.cpp
+SOURCE			sdfillsectors.cpp
+SOURCE			sdformat.cpp
+SOURCE			sdreadfiles1.cpp
+SOURCE			sdreadfiles2.cpp
+SOURCE			sdusb.cpp
+
+USERINCLUDE   	../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY			efsrv.lib
+LIBRARY     	euser.lib
+LIBRARY			testexecutelogclient.lib
+LIBRARY			testexecuteutils.lib

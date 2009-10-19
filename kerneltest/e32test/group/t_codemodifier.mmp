@@ -1,0 +1,34 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_codemodifier.mmp
+// 
+//
+
+ALWAYS_BUILD_AS_ARM
+
+target         	t_codemodifier.exe
+targettype     	exe
+sourcepath	   	../debug
+source        	t_codemodifier.cpp 
+source        	t_codemodifier.cia 
+library		euser.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+capability	none
+
+VENDORID 0x70000001
+
+ROMTARGET 	    \sys\bin\	//
+
+SMPSAFE

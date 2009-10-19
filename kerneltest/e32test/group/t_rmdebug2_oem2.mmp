@@ -1,0 +1,33 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_rmdebug2_oem2.mmp
+// Same tests as t_rmdebug2.mmp but with some OEM rights conferred
+// by the OEMDebug_F1234567.exe token file.
+// 
+//
+
+#include "t_rmdebug2.mmh"
+
+target         t_rmdebug2_oem2.exe
+
+UID            0x0 0x4321bbbb
+SECUREID       0xF1234567
+VENDORID       0x70000001
+
+CAPABILITY 	READUSERDATA POWERMGMT
+
+// Used when compiling tests to work in the presence of an
+// OEM Debug Token with AllFiles only capability
+macro SYMBIAN_OEM2DEBUG
+

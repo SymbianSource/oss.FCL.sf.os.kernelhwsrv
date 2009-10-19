@@ -1,0 +1,374 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName			pbase-f32-sfsrv-publicapi-any
+//! @SYMScriptTestEnvironment		This test script requires a basic ROM.
+//! @SYMScriptAuthor 			Tanel Milsaar, Runno Sgirka
+//! @SYMScriptDescription		The test script contains API tests for the following functions of TDriveUnit class:
+//!	TDriveUnit(TInt aDrive);
+//!	TDriveUnit(const TDesC &aDrive);
+//!	TDriveUnit &operator=(TInt aDrive);
+//!	void TDriveUnit &operator=(TInt aDrive);
+//!	TDriveUnit &operator=(const TDesC &aDrive);
+//!	operator TInt() const;
+//!	TDriveName Name() const;
+
+
+LOAD_SUITE	t_sfsrv
+DELAY	5000
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0001
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0001
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a drive number lesser than KMaxDrives.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "3" as parameter.
+//!				2. Call operator TInt() to convert the drive unit to an integer value, passing "3" as expected value,
+//!				for verification.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The TDriveUnit() method call is completed without errors, test returns "3" as drive number.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0001-001-new_command01
+		COMMAND		driveUnit1	convertToInt	PBASE-F32-DriveUnit-PublicApi-0001-001-convertToInt_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0001
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0002
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0002
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a drive letter defined in TDriveName.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "C" as parameter.
+//!				2. Call Name() to get the drive unit name as text, passing "C:" as expected value for verification.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The TDriveUnit() method call is completed without errors, test returns "C:" as drive name.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0002-001-new_command01
+		COMMAND		driveUnit1	name		PBASE-F32-DriveUnit-PublicApi-0002-001-name_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0002
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0003
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0003
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function operator=() test. Assigns a new drive number lesser than KMaxDrives to the drive unit.
+//!				Uses API elements: TDriveUnit(), operator=().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "3" as parameter.
+//!				2. Call operator=() to assign a new drive number, passing "4" as parameter.
+//!				3. Call operator TInt() to convert the drive unit to an integer value, passing "4" as expected value,
+//!				for verification.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The operator=() call is completed without errors, test returns "4" as drive number.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0003-001-new_command01
+		COMMAND		driveUnit1	=		PBASE-F32-DriveUnit-PublicApi-0003-001-_command02
+		COMMAND		driveUnit1	convertToInt	PBASE-F32-DriveUnit-PublicApi-0003-001-convertToInt_command03
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0003
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0004
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0004
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function operator=() test. Assigns a new drive letter to the drive unit.
+//!				Uses API elements: TDriveUnit(), operator=().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "C" as parameter.
+//!				2. Call operator=() to assign a new drive letter, passing "F" as parameter.
+//!				3. Call Name() to get the drive unit name as text, passing "F:" as expected value for verification.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The operator=() call is completed without errors, test returns "F:" as drive name.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0004-001-new_command01
+		COMMAND		driveUnit1	=		PBASE-F32-DriveUnit-PublicApi-0004-001-_command02
+		COMMAND		driveUnit1	name		PBASE-F32-DriveUnit-PublicApi-0004-001-name_command03
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0004
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0005
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0005
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function operator TInt() test. Converts the drive unit to an integer value.
+//!				Uses API elements: TDriveUnit(), operator TInt().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "C" as parameter.
+//!				2. Call operator TInt() to convert the drive unit to an integer value, passing 2 as expected value.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The TInt() operator call is completed without errors, returning 2.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0005-001-new_command01
+		COMMAND		driveUnit1	convertToInt		PBASE-F32-DriveUnit-PublicApi-0005-001-convertToInt_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0005
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0006
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0006
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function Name() test. Gets the drive unit name as text.
+//!				Uses API elements: TDriveUnit(), Name().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "22" as parameter.
+//!				2. Call Name() to get the drive unit name as text, passing "W:" as expected value.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Name() method call is completed without errors, returning "W:".
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0006-001-new_command01
+		COMMAND		driveUnit1	name		PBASE-F32-DriveUnit-PublicApi-0006-001-name_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0006
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0007
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0007
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a drive letter defined in TDriveName, with a colon at the end.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "C:" as parameter.
+//!				2. Call Name() to get the drive unit name as text, passing "C:" as expected value for verification.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The TDriveUnit() method call is completed without errors, test returns "C:" as drive name.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0007-001-new_command01
+		COMMAND		driveUnit1	name		PBASE-F32-DriveUnit-PublicApi-0007-001-name_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0007
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0008
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0008
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a drive letter defined in TDriveName, as lowercase.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "c" as parameter.
+//!				2. Call Name() to get the drive unit name as text, passing "C:" as expected value for verification.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The TDriveUnit() method call is completed without errors, test returns "C:" as drive name.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0008-001-new_command01
+		COMMAND		driveUnit1	name		PBASE-F32-DriveUnit-PublicApi-0008-001-name_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0008
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0009
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0009
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function operator=() test. Assigns a new lowercase drive letter to the drive unit.
+//!				Uses API elements: TDriveUnit(), operator=().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "C" as parameter.
+//!				2. Call operator=() to assign a new drive letter, passing "f" as parameter.
+//!				3. Call Name() to get the drive unit name as text, passing "F:" as expected value for verification.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The operator=() call is completed without errors, test returns "F:" as drive name.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0009-001-new_command01
+		COMMAND		driveUnit1	=		PBASE-F32-DriveUnit-PublicApi-0009-001-_command02
+		COMMAND		driveUnit1	name		PBASE-F32-DriveUnit-PublicApi-0009-001-name_command03
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0009
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0010
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-0010
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create a TDriveUnit instance.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit() to create a TDriveUnit object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The TDriveUnit() method call is completed without errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-0010-001-new_command01
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-0010
+
+
+// 	************************
+//	***  NEGATIVE TESTS  ***
+// 	************************
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1001
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-1001
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a drive number greater than KMaxDrives.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "100" as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High Priority
+//! @SYMTestExpectedResults	The TDriveUnit() method call will panic (FSCLIENT Code=0).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-1001-001-new_command01
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	!PanicCode=0	!PanicString="FSCLIENT panic"
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1001
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1002
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-1002
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function operator=() test. Assigns a drive number greater than KMaxDrives to the drive unit.
+//!				Uses API elements: TDriveUnit, operator=().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "16" as parameter.
+//!				2. Call operator=() to assign a new drive number, passing "100" as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High Priority
+//! @SYMTestExpectedResults	The TDriveUnit() method call will panic (FSCLIENT Code=0).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-1002-001-new_command01
+		COMMAND		driveUnit1	=		PBASE-F32-DriveUnit-PublicApi-1002-001-_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	!PanicCode=0	!PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-DriveUnit-PublicApi-1002
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1003
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-1003
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a drive number equal to KMaxDrives.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "26" as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High Priority
+//! @SYMTestExpectedResults	The TDriveUnit() method call will panic (FSCLIENT Code=0).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-1003-001-new_command01
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	!PanicCode=0	!PanicString="FSCLIENT panic"
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1003
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1004
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-1004
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a drive number bigger than KMaxDrives.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "50" as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High Priority
+//! @SYMTestExpectedResults	The TDriveUnit() method call will panic (FSCLIENT Code=0).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-1004-001-new_command01
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	!PanicCode=0	!PanicString="FSCLIENT panic"
+END_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1004
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1005
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-1005
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function operator=() test. Assigns a new drive number to the drive unit bigger than KMaxDrives.
+//!				Uses API elements: TDriveUnit(), operator=().
+//! @SYMTestActions		1. Call TDriveUnit(TInt aDrive) to create a TDriveUnit object, passing "7" as parameter.
+//!				2. Call operator=() to assign a new drive number, passing "100" as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High Priority
+//! @SYMTestExpectedResults	The operator=() call will panic (FSCLIENT Code=0).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-1005-001-new_command01
+		COMMAND		driveUnit1	=		PBASE-F32-DriveUnit-PublicApi-1005-001-_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	!PanicCode=0	!PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-DriveUnit-PublicApi-1005
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1006
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-1006
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function TDriveUnit() test. Create an instance with a malformed drive name.
+//!				Uses API elements: TDriveUnit().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "##" as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High Priority
+//! @SYMTestExpectedResults	The TDriveUnit() method call will panic (FSCLIENT Code=1).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-1006-001-new_command01
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	!PanicCode=1	!PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-DriveUnit-PublicApi-1006
+
+
+START_TESTCASE 			PBASE-F32-DriveUnit-PublicApi-1007
+//! @SYMTestCaseID		PBASE-F32-DriveUnit-PublicApi-1007
+//! @SYMAPI			TDriveUnit
+//! @SYMTestCaseDesc		Function operator=() test. Assigns a malformed drive name to the drive unit.
+//!				Uses API elements: TDriveUnit(), operator=().
+//! @SYMTestActions		1. Call TDriveUnit(const TDesC &aDrive) to create a TDriveUnit object, passing "Z" as parameter.
+//!				2. Call operator=() to assign a new drive letter, passing "##" as parameter.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High Priority
+//! @SYMTestExpectedResults	The operator=() call will panic (FSCLIENT Code=1).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	t_sfsrv	\base\PBASE-F32-DriveUnit-PublicApi.ini 
+		CREATE_OBJECT	TDriveUnit	driveUnit1
+		COMMAND		driveUnit1	new		PBASE-F32-DriveUnit-PublicApi-1007-001-new_command01
+		COMMAND		driveUnit1	=		PBASE-F32-DriveUnit-PublicApi-1007-001-_command02
+		COMMAND		driveUnit1	~		
+	END_TEST_BLOCK	!PanicCode=1	!PanicString="FSCLIENT panic"
+END_TESTCASE			PBASE-F32-DriveUnit-PublicApi-1007

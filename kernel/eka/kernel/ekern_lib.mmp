@@ -1,0 +1,42 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/ekern_lib.mmp
+// 
+//
+
+#ifdef SMP
+target			ekernsmp.lib
+#else
+target			ekern.lib
+#endif
+
+targettype		implib
+linkas			ekern.exe
+
+#ifdef SMP
+deffile 				ekernsmp.def
+nostrictdef
+#else
+deffile 				ekern.def
+#endif
+
+// uids
+#ifdef SMP
+uid						0x1000008b 0x10287037
+#else
+uid						0x1000008b 0x100041af
+#endif
+vendorid				0x70000001
+
+SMPSAFE

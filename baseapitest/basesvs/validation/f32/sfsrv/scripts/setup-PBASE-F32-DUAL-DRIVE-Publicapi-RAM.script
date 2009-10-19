@@ -1,0 +1,56 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+RUN_UTILS MkDir	${SYSDRIVE}\base\
+RUN_UTILS MkDir	${SYSDRIVE}\base\armv5\
+RUN_UTILS MkDir	${SYSDRIVE}\base\winscw\
+RUN_UTILS MkDir	${SYSDRIVE}\base\t_sfsrv\
+
+// copy script files
+
+//SfSrv
+RUN_UTILS CopyFile	z:\base\PBASE-F32-DUAL-DRIVE-Publicapi-RAM.script			${SYSDRIVE}\base\PBASE-F32-DUAL-DRIVE-Publicapi-RAM.script
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-DUAL-DRIVE-Publicapi-RAM.script
+
+RUN_UTILS CopyFile	z:\base\PBASE-F32-DUAL-DRIVE-Publicapi-RAM.ini				${SYSDRIVE}\base\PBASE-F32-DUAL-DRIVE-Publicapi-RAM.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\PBASE-F32-DUAL-DRIVE-Publicapi-RAM.ini
+
+RUN_UTILS CopyFile	z:\base\t_base.tcs				${SYSDRIVE}\base\t_base.tcs
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_base.tcs
+
+RUN_UTILS CopyFile	z:\base\dual_drive_env.ini					${SYSDRIVE}\base\dual_drive_env.ini
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\dual_drive_env.ini
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\test.txt					${SYSDRIVE}\base\t_sfsrv\test.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\test.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\Test1.txt					${SYSDRIVE}\base\t_sfsrv\Test1.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\Test1.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\Test2.txt					${SYSDRIVE}\base\t_sfsrv\Test2.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\Test2.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\Test3.txt					${SYSDRIVE}\base\t_sfsrv\Test3.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\Test3.txt
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\USBLOAD.ZIP					${SYSDRIVE}\base\t_sfsrv\USBLOAD.ZIP
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\USBLOAD.ZIP
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\1mb						${SYSDRIVE}\base\t_sfsrv\1mb
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\1mb
+
+RUN_UTILS CopyFile	z:\base\t_sfsrv\big.txt						${SYSDRIVE}\base\t_sfsrv\big.txt
+RUN_UTILS MakeReadWrite	${SYSDRIVE}\base\t_sfsrv\big.txt

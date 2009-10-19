@@ -1,0 +1,90 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+// Meta Build (metabld) script to build the entire NE1 variant.
+//
+// Example usage:
+//	stmetabld -D BUILD_NO_UREL hcrtest_ne1roms.mbc > \logs\hcrne1roms.log 2>&1
+
+
+
+SECTION_COMMANDS
+
+
+
+// -- PRODUCTION ROMS ---------------------------------------------------------
+#define BUILD_NO_UREL
+
+#ifndef BUILD_NO_UREL
+	// Direct/Single Memory model - unicore - udeb
+	//
+	// oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v sne1_tb -b urel -i armv5 --zip --symbol --name=SNE1_TBARMV5D-TSHELL.IMG   --type=tshell_hcrtest
+	
+	// Multiple Memory Model - unicore - udeb
+	//
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b urel -i armv5 --zip --symbol --name=NE1_TBARMV5D-TSHELL.IMG        --type=tshell_hcrtest
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b urel -i armv5 --zip --symbol --name=NE1_TBARMV5D-BOOTLDR.IMG       --type=ubootldr
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b urel -i armv5 --zip --symbol --name=NE1_TBARMV5D-BOOTLDR-FAT32.IMG --type=ubootldr -D WITH_FAT32
+	
+	// Large block NAND support
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b urel -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR.IMG        --type=nandloader -D _NAND2
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b urel -i armv5 --zip --symbol --name=NE1_TBARMV5D-TSHELL_NAND2.IMG    --type=tshell_hcrtest -D _NAND2
+	// OneNAND support -- -D _ONENANDE not supported on NE1
+	
+	
+	// Flexible Memory model - unicore & SMP - udeb
+	//
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b urel -i armv5 --zip --symbol --name=FNE1_TBARMV5D-TSHELL.IMG   --type=tshell_hcrtest
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b urel -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-TSHELL.IMG   --type=tshell_hcrtest
+	
+	// Large block NAND support
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b urel -i armv5 --zip --symbol --name=FNE1_TBARMV5D-NAND2LDR.IMG        --type=nandloader -D _NAND2
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b urel -i armv5 --zip --symbol --name=FNE1_TBARMV5D-TSHELL_NAND2.IMG    --type=tshell_hcrtest -D _NAND2
+	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b urel -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-TSHELL_NAND2.IMG    --type=tshell_hcrtest -D _NAND2
+	// OneNAND support -- -D _ONENANDE not supported on NE1
+#endif
+
+
+// Direct/Single Memory model - unicore - udeb
+//
+// oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v sne1_tb -b udeb -i armv5 --zip --symbol --name=SNE1_TBARMV5D-TSHELL-D.IMG   --type=tshell_hcrtest
+
+// Multiple Memory Model - unicore - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-TSHELL-D.IMG        --type=tshell_hcrtest
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-BOOTLDR-D.IMG       --type=ubootldr
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-BOOTLDR-FAT32-D.IMG --type=ubootldr -D WITH_FAT32
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-TSHELL_NAND2-D.IMG    --type=tshell_hcrtest -D _NAND2
+// OneNAND support -- -D _ONENANDE not supported on NE1
+
+
+// Flexible Memory model - unicore & SMP - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-TSHELL-D.IMG   --type=tshell_hcrtest
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-TSHELL-D.IMG   --type=tshell_hcrtest
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-TSHELL_NAND2-D.IMG    --type=tshell_hcrtest -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-TSHELL_NAND2-D.IMG    --type=tshell_hcrtest -D _NAND2
+// OneNAND support -- -D _ONENANDE not supported on NE1
+
+
+
+
+SECTION_DIRS
+

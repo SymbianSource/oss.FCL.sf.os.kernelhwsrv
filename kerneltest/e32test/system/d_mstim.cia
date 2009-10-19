@@ -1,0 +1,62 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#include "plat_priv.h"
+#include "d_mstim.h"
+
+#if defined(__X86__)
+typedef TUint TCounter;
+TUint32* TickCountPtr;
+
+const TLinAddr NTimerQ_TimerAddress = (TLinAddr)&NTimerQ::TimerAddress;
+
+__NAKED__ TCounter TIMER()
+	{
+	asm("mov eax, [%a0]": :"i"(&TickCountPtr));
+	asm("pushfd");
+	asm("mov eax, [eax]");
+	asm("cli");
+	asm("shl eax, 16");
+	asm("mov al, 0x80");	// channel 2 latch cmd
+	asm("out 0x43, al");
+	asm("in al, 0x42");		// get ls byte
+	asm("mov ah, al");
+	asm("in al, 0x42");		// get ms byte
+	asm("xchg al, ah");
+	asm("popfd");
+	asm("ret");
+	}
+
+__NAKED__ void SetUpTimerChannel2()
+	{
+	asm("pushfd");
+	asm("cli");
+	asm("in al, 0x61");
+	asm("and al, 0xfc");	// disable speaker
+	asm("or al, 1");		// enable timer channel 2
+	asm("out 0x61, al");
+	asm("mov al, 0xb4");
+	asm("out 0x43, al");	// timer chan 2 mode 2
+	asm("mov al, 0");
+	asm("out 0x42, al");	// initial count 0 = free running
+	asm("out 0x42, al");
+	asm("popfd");
+	asm("call %a0": :"i"(NTimerQ_TimerAddress));
+	asm("lea eax, [eax+%0]": :"i"_FOFF(NTimerQ,iMsCount));
+	asm("mov [%a0], eax": :"i"(&TickCountPtr));
+	asm("ret");
+	}
+#endif

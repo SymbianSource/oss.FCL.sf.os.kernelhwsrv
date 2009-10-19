@@ -1,0 +1,31 @@
+EXPORTS
+	_ZN4GPIO10GetPinBiasEiRNS_9TGpioBiasE @ 1 NONAME
+	_ZN4GPIO10GetPinModeEiRNS_9TGpioModeE @ 2 NONAME
+	_ZN4GPIO10SetPinBiasEiNS_9TGpioBiasE @ 3 NONAME
+	_ZN4GPIO10SetPinModeEiNS_9TGpioModeE @ 4 NONAME
+	_ZN4GPIO12EnableWakeupEi @ 5 NONAME
+	_ZN4GPIO13BindInterruptEiPFvPvES0_ @ 6 NONAME
+	_ZN4GPIO13DisableWakeupEi @ 7 NONAME
+	_ZN4GPIO13GetInputStateEiP13TGpioCallback @ 8 NONAME
+	_ZN4GPIO13GetInputStateEiRNS_10TGpioStateE @ 9 NONAME
+	_ZN4GPIO14ClearInterruptEi @ 10 NONAME
+	_ZN4GPIO14GetOutputStateEiRNS_10TGpioStateE @ 11 NONAME
+	_ZN4GPIO14SetOutputStateEiNS_10TGpioStateE @ 12 NONAME
+	_ZN4GPIO14SetOutputStateEiNS_10TGpioStateEP13TGpioCallback @ 13 NONAME
+	_ZN4GPIO15EnableInterruptEi @ 14 NONAME
+	_ZN4GPIO15GetDebounceTimeEiRi @ 15 NONAME
+	_ZN4GPIO15GetPinDirectionEiRNS_14TGpioDirectionE @ 16 NONAME
+	_ZN4GPIO15IsWakeupEnabledEiRi @ 17 NONAME
+	_ZN4GPIO15SetDebounceTimeEii @ 18 NONAME
+	_ZN4GPIO15SetPinDirectionEiNS_14TGpioDirectionE @ 19 NONAME
+	_ZN4GPIO15StaticExtensionEiiPvS0_ @ 20 NONAME
+	_ZN4GPIO15UnbindInterruptEi @ 21 NONAME
+	_ZN4GPIO16DisableInterruptEi @ 22 NONAME
+	_ZN4GPIO16SetWakeupTriggerEiNS_21TGpioDetectionTriggerE @ 23 NONAME
+	_ZN4GPIO18IsInterruptEnabledEiRi @ 24 NONAME
+	_ZN4GPIO19SetInterruptTriggerEiNS_21TGpioDetectionTriggerE @ 25 NONAME
+	_ZN4GPIO20GetRawInterruptStateEiRi @ 26 NONAME
+	_ZN4GPIO23GetMaskedInterruptStateEiRi @ 27 NONAME
+	_ZN4GPIO31GetPinIdleConfigurationAndStateEiRi @ 28 NONAME
+	_ZN4GPIO31SetPinIdleConfigurationAndStateEii @ 29 NONAME
+

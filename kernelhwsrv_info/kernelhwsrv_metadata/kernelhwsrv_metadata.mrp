@@ -1,0 +1,6 @@
+component           kernelhwsrv_metadata
+source   \sf\os\kernelhwsrv\kernelhwsrv_info\kernelhwsrv_metadata 
+source   \sf\os\kernelhwsrv\package_definition.xml
+source   \sf\os\kernelhwsrv\distribution.policy.s60
+notes_source      \component_defs\release.src
+ipr T 

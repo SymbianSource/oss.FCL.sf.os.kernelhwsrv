@@ -1,0 +1,4 @@
+EXPORTS
+	_ZN6TDlla2C1Ev @ 1 NONAME ; TDlla2::TDlla2()
+	_ZN6TDlla2C2Ev @ 2 NONAME ; TDlla2::TDlla2()
+

@@ -1,0 +1,5 @@
+EXPORTS
+	_Z16KeyDataConvTableR10SConvTableRjS1_R18SScanCodeBlockListR12SKeyCodeList @ 1 NONAME ; KeyDataConvTable(SConvTable&, unsigned int&, unsigned int&, SScanCodeBlockList&, SKeyCodeList&)
+	_Z16KeyDataFuncTableR11SFuncTables @ 2 NONAME ; KeyDataFuncTable(SFuncTables&)
+	_Z15KeyDataSettingsR6TRadixR22TCtrlDigitsTerminationRiS3_ @ 3 NONAME ; KeyDataSettings(TRadix&, TCtrlDigitsTermination&, int&, int&)
+

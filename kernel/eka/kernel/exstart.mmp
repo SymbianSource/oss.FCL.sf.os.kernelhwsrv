@@ -1,0 +1,44 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32/kernel/exstart.mmp
+// 
+//
+
+target				exstart.dll
+targettype			kext
+
+#include "kern_ext.mmh"
+
+sourcepath			.
+source				exstart.cpp
+
+
+#ifdef WINS
+library			emulator.lib
+#endif
+
+epocallowdlldata
+
+uid 				0x1000008d 0x10004087
+VENDORID 0x70000001
+
+romtarget			exstart.dll
+
+start wins
+win32_headers
+end
+
+capability		all
+
+SMPSAFE

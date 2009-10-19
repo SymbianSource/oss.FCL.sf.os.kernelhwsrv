@@ -1,0 +1,4 @@
+EXPORTS
+	SetTls @ 1 NONAME
+	Tls @ 2 NONAME
+	FreeTls @ 3 NONAME

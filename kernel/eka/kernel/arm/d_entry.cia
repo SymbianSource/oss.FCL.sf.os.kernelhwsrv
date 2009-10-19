@@ -1,0 +1,38 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\d_entry.cia
+// 
+//
+
+#include <u32std.h>
+
+extern "C" {
+
+extern TInt _E32Dll_Body(TInt);
+
+__NAKED__ TInt _E32Dll(TInt /*aReason*/)
+	{
+	EKA2_ENTRY_POINT_VERSION_IDENTIFIER;	// DUMMY INSTRUCTION TO INDICATE EKA2 ENTRY POINT
+	asm("ldr r12, 1f ");
+	__JUMP(,r12);
+
+	asm(".word 0 ");			// loader will replace with code seg unique ID
+								// for RAM-loaded code segment
+								// MUST BE AT OFFSET 12 FROM ENTRY POINT
+
+	asm("1: ");
+	asm(".word _E32Dll_Body ");
+	}
+}
+

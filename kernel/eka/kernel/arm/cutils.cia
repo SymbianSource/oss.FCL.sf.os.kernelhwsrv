@@ -1,0 +1,1534 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\cutils.cia
+// 
+//
+
+//#define __EARLY_DEBUG__
+//#define __NE1__
+//#define __MI920__
+//#define __BOOTLDRIN__
+//#define __MCOT__
+
+#include <e32cia.h>
+#include <arm_mem.h>
+#include "nk_cpu.h"
+#include <kernel/kern_priv.h>
+#include <kernel/cache.h>
+
+#if defined(__MEMMODEL_MOVING__) || defined(__MEMMODEL_MULTIPLE__)
+#include <mmubase.h>
+#endif
+
+#ifdef __SMP__
+__NAKED__ TUint __arm_cpu_number()
+	{
+	asm("mrc	p15, 0, r0, c0, c0, 5 ");
+	asm("and	r0, r0, #15 ");
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __EARLY_DEBUG__
+__NAKED__ void DebugOutputChar(TUint)
+//
+// Early debug print code - must hack this for the particular platform.
+// We assume bootstrap trace has already initialised the port.
+//
+	{
+#if defined(__MISA__)
+	// Brutus debug print code.
+	asm("ldr r1, __UartBase ");
+	asm("wait_tx_rdy: ");
+	asm("ldr r2, [r1, #0x20] ");
+	asm("tst r2, #0x04 ");
+	asm("beq wait_tx_rdy ");
+	asm("str r0, [r1, #0x14] ");
+	__JUMP(,lr);
+	asm("__UartBase: ");
+	asm(".word 0x63001000 ");
+#elif defined(__MAWD__)
+	// S5mx debug print code.
+	asm("ldr r1, __UartBase ");
+	asm("wait_tx_rdy: ");
+	asm("ldr r2, [r1, #0x10] ");
+	asm("tst r2, #0x20 ");
+	asm("bne wait_tx_rdy ");
+	asm("str r0, [r1, #0x00] ");
+	__JUMP(,lr);
+	asm("__UartBase: ");
+	asm(".word 0x63000700 ");
+#elif defined(__SAWD__)
+	// S5mx debug print code.
+	asm("ldr r1, __UartBase ");
+	asm("wait_tx_rdy: ");
+	asm("ldr r2, [r1, #0x10] ");
+	asm("tst r2, #0x20 ");
+	asm("bne wait_tx_rdy ");
+	asm("str r0, [r1, #0x00] ");
+	__JUMP(,lr);
+	asm("__UartBase: ");
+	asm(".word 0x80000700 ");
+#elif defined(__MI920__) || defined(__NI1136__) || defined(__BOOTLDRIN__)
+	// Integrator debug print code.
+	asm("ldr r1, __UartBase ");
+	asm("wait_tx_rdy: ");
+	asm("ldr r2, [r1, #0x18] ");
+	asm("tst r2, #0x20 ");
+	asm("bne wait_tx_rdy ");
+	asm("str r0, [r1, #0x00] ");
+	__JUMP(,lr);
+	asm("__UartBase: ");
+#if defined(__MI920__)
+	asm(".word 0x63006000 ");
+#elif defined(__NI1136__)
+	asm(".word 0xc6006000 ");
+#elif defined(__BOOTLDRIN__)
+	asm(".word 0x16000000 ");
+#endif
+#elif 0
+//#elif defined(__NI1136__)
+	// Use debug comms channel
+//	asm("mov r1, #0x1000 ");
+//	asm("mcr p14, 0, r1, c0, c1, 0 ");
+//	asm("1: ");
+//	asm("mrc p14, 0, r15, c0, c1, 0 ");		// read comm channel flags into CPSR
+//	asm("bcs 1b ");	// wait for space
+//	asm("mcr p14, 0, r0, c0, c5, 0 ");		// output character
+//	__JUMP(,lr);
+	asm("mov r1, #0xc3000000 ");
+	asm("add r1, r1, #0xc000 ");
+	asm("str r0, [r1, #0x20] ");
+	__JUMP(,lr);
+#elif defined(__MCOT__)
+	// Lubbock debug print code.
+	asm("ldr r1, __UartBase ");
+	asm("1: ");
+	asm("ldr r2, [r1, #0x14] ");
+	asm("tst r2, #0x20 ");
+	asm("beq 1b ");
+	asm("str r0, [r1, #0x00] ");
+	__JUMP(,lr);
+	asm("__UartBase: ");
+	asm(".word 0x63001000 ");
+#elif defined(__IS_OMAP1610__) || defined(__IS_OMAP1510__)
+	// omap 1510 and 1610 debug print code.
+	// N.B. Could also use JTAG DCC code from Arm::DebugOutJTAG()
+	asm("ldr r1, __UartBase ");
+	asm("1: ");
+	asm("ldrb r2, [r1, #0x14] ");
+	asm("tst r2, #0x20 ");
+	asm("beq 1b ");
+	asm("strb r0, [r1, #0x00] ");
+	__JUMP(,lr);
+	asm("__UartBase: ");
+	#if defined(__MEMMODEL_DIRECT__)
+	asm(".word 0xFFFB0000 ");	// Physical for single
+	#else
+	asm(".word 0x630B0000 ");	// Virtual for normal
+	#endif
+#elif defined(__NE1__)
+	asm("ldr	r1, __SuperPageAddress ");
+	asm("adr	r2, __UartBase ");
+	asm("ldr	r1, [r1] ");
+	asm("ldr	r1, [r1, #%a0]" : : "i" _FOFF(TSuperPage,iDebugPort));
+	asm("cmp	r1, #0 ");
+	asm("ldrne	r2, [r2, #4] ");
+	asm("ldreq	r2, [r2, #0] ");
+	asm("1: ");
+	asm("ldr	r3, [r2, #0x14] ");	// LSR
+	asm("tst	r3, #0x20 ");
+	asm("beq	1b ");
+	asm("str	r0, [r2, #0x00] ");	// THR
+	__JUMP(,lr);
+	asm("__UartBase: ");
+	#if defined(__MEMMODEL_DIRECT__)
+	asm(".word 0x18034000 ");
+	asm(".word 0x18034400 ");
+	#else
+	asm(".word 0xc6000000 ");
+	asm(".word 0xc6000400 ");
+	#endif
+	asm("__SuperPageAddress: ");
+	asm(".word SuperPageAddress ");
+#elif defined(__REALVIEW__)
+	// RealView platform debug print code.
+	asm("ldr r1, __SuperPageBase ");
+	asm("ldr r1, [r1] ");
+	asm("ldr r1, [r1, #%a0] " : : "i" _FOFF(TSuperPage,iDebugPort));
+	asm("cmp r1, #%a0 " : : "i" ((TInt)KNullDebugPort));
+	asm("bxeq lr ");                // debug output supressed
+	asm("adr r2, __UartBase ");
+	asm("ldr r1, [r2] ");
+	asm("1: ");
+	asm("ldr r2, [r1, #0x18] ");    // check status Tpl011::KHoFlags
+	asm("tst r2, #0x20 ");          // compare to Tpl011::KFlagTxFifoFull  
+	asm("bne 1b ");                 // if transmit data full, wait
+	asm("str r0, [r1] ");           // store to data register Tpl011::KHoData
+	asm("bx  lr ");
+	asm("__SuperPageBase: ");
+	asm(".word %a0 " : : "i" ((TInt)&SuperPageAddress));
+	asm("__UartBase: ");
+	asm(".word 0xc6004000 ");
+#endif
+	}
+#endif
+
+__NAKED__ EXPORT_C TInt Arm::DebugOutJTAG(TUint /*aChar*/)
+	{
+#if defined(__CPU_ARM920T__) || defined(__CPU_ARM720T__) || defined(__CPU_ARM926J__)
+	asm("mov r2, #0x100000 ");			// timeout
+	asm("1: ");
+	asm("mrc p14, 0, r1, c0, c0, 0 ");	// get debug comms control register
+	asm("tst r1, #2 ");					// test W bit (1=busy)
+	asm("subnes r2, r2, #1 ");			// if busy, decrement timeout
+	asm("bne 1b ");						// if busy and not timed out, loop
+	asm("tst r1, #2 ");
+	asm("mcreq p14, 0, r0, c1, c0, 0 ");	// if not busy, output value
+	asm("moveq r0, #0 ");				// and return KErrNone
+	asm("movne r0, #%a0" : : "i" ((TInt)KErrTimedOut));	// else return KErrTimedOut
+#elif defined(__CPU_ARM1020T__)
+	asm("mov r2, #0x100000 ");			// timeout
+	asm("1: ");
+	asm("mrc p14, 0, r1, c0, c1, 0 ");	// get DSCR
+	asm("movs r1, r1, lsl #25 ");		// test WE bit (1=empty) - set N flag if empty
+	asm("subpls r2, r2, #1 ");			// if busy, decrement timeout
+	asm("bpl 1b ");						// if busy and not timed out, loop
+	asm("cmp r1, #0 ");
+	asm("mcrmi p14, 0, r0, c0, c5, 0 ");	// if not busy, output value
+	asm("movmi r0, #0 ");				// and return KErrNone
+	asm("movpl r0, #%a0" : : "i" ((TInt)KErrTimedOut));	// else return KErrTimedOut
+#elif defined(__CPU_ARM1136__) || defined(__CPU_ARM1176__)
+	asm("mov r2, #0x100000 ");			// timeout
+	asm("1: ");
+	asm("mrc p14, 0, r15, c0, c1, 0 ");	// test DSCR, wDTRfull->C flag (1=full)
+	asm("subcss r2, r2, #1 ");			// if busy, decrement timeout
+	asm("bcs 1b ");						// if busy and not timed out, loop
+	asm("mrc p14, 0, r15, c0, c1, 0 ");	// test DSCR, wDTRfull->C flag (1=full)
+	asm("mcrcc p14, 0, r0, c0, c5, 0 ");	// if not busy, output value
+	asm("movcc r0, #0 ");				// and return KErrNone
+	asm("movcs r0, #%a0" : : "i" ((TInt)KErrTimedOut));	// else return KErrTimedOut
+#else
+	asm("mov r0, #%a0" : : "i" ((TInt)KErrNotSupported));
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ EXPORT_C TInt Arm::DebugInJTAG(TUint32& /*aRxData*/)
+	{
+#if defined(__CPU_ARM920T__) || defined(__CPU_ARM720T__) || defined(__CPU_ARM926J__)
+	asm("mrc p14, 0, r2, c0, c0, 0 ");	// get debug comms control register
+	asm("tst r2, #1 ");					// test R bit (1=data available)
+	asm("mrcne p14, 0, r2, c1, c0, 0 ");	// get RX data
+	asm("strne r2, [r0] ");				// store RX data
+	asm("movne r0, #0 ");				// return KErrNone
+	asm("moveq r0, #%a0" : : "i" ((TInt)KErrNotReady));	// if no data available return KErrNotReady
+#elif defined(__CPU_ARM1020T__)
+	asm("mrc p14, 0, r2, c0, c1, 0 ");	// get DSCR
+	asm("tst r2, #0x80 ");				// test RF bit (1=full)
+	asm("mrcne p14, 0, r2, c0, c5, 0 ");	// get RX data
+	asm("strne r2, [r0] ");				// store RX data
+	asm("movne r0, #0 ");				// return KErrNone
+	asm("moveq r0, #%a0" : : "i" ((TInt)KErrNotReady));	// if no data available return KErrNotReady
+#elif defined(__CPU_ARM1136__) || defined(__CPU_ARM1176__)
+	asm("mrc p14, 0, r15, c0, c1, 0 ");	// test DSCR, rDTRfull->Z flag (1=full)
+	asm("mrceq p14, 0, r2, c0, c5, 0 ");	// get RX data
+	asm("streq r2, [r0] ");				// store RX data
+	asm("moveq r0, #0 ");				// return KErrNone
+	asm("movne r0, #%a0" : : "i" ((TInt)KErrNotReady));	// if no data available return KErrNotReady
+#else
+	asm("mov r0, #%a0" : : "i" ((TInt)KErrNotSupported));
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void KPrintf(const char*, ...)
+	{
+	asm("b  " CSM_ZN4Kern6PrintfEPKcz);
+	}
+
+__NAKED__ TInt A::CallSupervisorFunction(TSupervisorFunction, TAny*)
+//
+// Execute an F32 function in supervisor mode - might be THUMB.
+//
+	{
+	asm("mov r2, r0 ");					// r2=function ptr
+	asm("mov r0, r1 ");					// r0=argument
+	__JUMP(,r2);						// call function in correct mode
+	}
+
+#if defined (__DES8_MACHINE_CODED__)
+/**
+Checks whether the specified name is a valid DObject full name.
+
+A name is deemed to be invalid, if it contains an asterisk or a question
+mark.
+
+@param aName Name to check.
+	
+@return KErrNone, if valid;
+        KErrBadName, if invalid.
+*/
+#ifndef __KERNEL_MODE__
+#error "TDesC is not 8-bit as __KERNEL_MODE__ is not defined (see e32cmn.h)"
+#endif
+__NAKED__ EXPORT_C TInt Kern::ValidateFullName(const TDesC& /*aName*/)
+//
+// Check for * or ? in descriptor, return KErrBadName if found
+//
+	{
+	asm("ldr r2, [r0], #4 ");			// r2=length/type
+	asm("cmp r2, #0x50000000 ");
+	asm("mvncs r0, #%a0" : : "i" (~KErrBadDescriptor));
+	__JUMP(cs,lr);
+	asm("bics r3, r2, #0xF0000000 ");	// r3=length
+	asm("moveq r0, #0 ");				// if length=0, return KErrNone
+	__JUMP(eq,lr);
+	asm("eor r2, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r2 ");
+	asm("addcs r0, r0, #4 ");
+	asm("ldrle r0, [r0] ");
+	asm("addeq r0, r0, #4 ");			// r0=this.Ptr()
+	asm("ValidateFullName_1: ");
+	asm("ldrb r1, [r0], #1 ");			// r1=*r0++
+	asm("cmp r1, #0x20 ");				// is it < 0x20 ?
+	asm("rsbhss r2, r1, #0x7f ");		// if not, compare 0x7f with char
+	asm("bls ValidateFullName_2 ");		// if char < 0x20 or char >= 0x7f, error
+	asm("cmp r1, #'*' ");				// is it *
+	asm("cmpne r1, #'?' ");				// if not, is it ?
+	asm("subnes r3, r3, #1 ");			// if neither of these, decrement length
+	asm("bne ValidateFullName_1 ");
+	
+	asm("ValidateFullName_2: ");		// About to return so did we
+	asm("cmp r3, #0 ");					// reach the end of string?
+	asm("moveq r0, #0 ");				// if we did, return KErrNone
+	asm("mvnne r0, #%a0" : : "i" (~KErrBadName));	// else return KErrBadName
+	__JUMP(,lr);
+	}
+#endif
+
+
+/**
+Default implementation for Kern::NanoWait, which waits for the specified time.
+
+@param aInterval The time to wait in nanoseconds.
+*/
+__NAKED__ void K::DoNanoWait(TUint32 /*aInterval*/)
+	{
+	asm("ldr r1, __NanoWaitCal ");
+	asm("ldr r1, [r1] ");				// r1=PP::NanoWaitCal
+
+	asm(".align 8");					// to make the 'nanowait_loop' start on a cache line
+	asm("nanowait_loop: ");
+	asm("subs r0, r0, r1 ");
+	asm("bhi nanowait_loop ");
+	__JUMP(,lr);
+
+	asm("__NanoWaitCal: ");
+	asm(".word  " CSM_ZN2PP11NanoWaitCalE );
+	}
+
+__NAKED__ void A::StartCrashDebugger(const TAny*, TInt)
+	{
+	USER_MEMORY_GUARD_OFF(,r0,r0);		// let crash debugger have unfettered access to user memory
+	asm("ldr r0, __MonitorEntryPoint ");
+	asm("ldmia r0, {r1-r3} ");			// r1 = debugger entry point
+	asm("mvn r0, r2 ");
+	asm("cmp r1, r0 ");					// r2 = complement of r1 if valid
+	asm("moveq r12, r1, lsr #2 ");
+	asm("muleq r0, r12, r2 ");			// r3 = (r1*r2/4)MOD 2^32 if valid
+	asm("cmpeq r3, r0 ");
+	__JUMP(ne,lr);						// if debugger entry point invalid, return
+#ifdef __SMP__
+	GET_RWNO_TID(,r0);
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_Regs));	// pass in address of stored registers
+#else
+	asm("ldr r0, __TheScheduler ");
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,i_Regs));	// pass in address of stored registers
+#endif
+	__JUMP(,r1);						// jump to monitor
+										// if it returns, return from this function and reboot
+
+	asm("__MonitorEntryPoint: ");
+	asm(".word  " CSM_ZN2PP17MonitorEntryPointE);
+	}
+
+
+/**	Increments atomically a counter that's initially positive
+
+	It checks the previous CPU mode and if it's User, it only applies user permissions when accessing aValue.
+	It doesn't increment if aValue is negative or zero.
+
+	@param aValue Reference to the counter to increment
+	@return Previous value of counter
+
+********** NO GOOD ON SMP ****************
+
+*/
+EXPORT_C __NAKED__ TInt Kern::KUSafeInc(TInt& /*aValue*/)
+	{
+	ASM_ASSERT_PAGING_SAFE
+	asm("mrs ip, cpsr ");
+	INTS_OFF_1(r2, ip, INTS_ALL_OFF);
+	asm("mrs r3, spsr ");		// check caller's mode
+	asm("mov r1, r0 ");			// address into r1
+	asm("tst r3, #0x0f ");		// test for user mode
+	asm("bne 1f ");				// branch if not
+	INTS_OFF_2(r2, ip, INTS_ALL_OFF);	// interrupts off
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm("ldrt r0, [r1] ");		// r0=original value, only allow user permissions
+	asm("cmp r0, #0 ");
+	asm("addgt r2, r0, #1 ");
+	asm("strgtt r2, [r1] ");	// if original value >0, increment
+	USER_MEMORY_GUARD_ON(,r2,r2);
+	asm("msr cpsr, ip ");		// restore interrupts
+	__JUMP(,lr);
+	asm("1: ");
+	INTS_OFF_2(r2, ip, INTS_ALL_OFF);	// interrupts off
+	asm("ldr r0, [r1] ");		// r0=original value
+	asm("cmp r0, #0 ");
+	asm("addgt r2, r0, #1 ");
+	asm("strgt r2, [r1] ");		// if >0, increment
+	asm("msr cpsr, ip ");		// restore interrupts
+	__JUMP(,lr);
+	}
+
+/**	Decrements atomically a counter that's initially positive
+
+	It checks the previous CPU mode and if it's User, it only applies user permissions when accessing aValue.
+	It doesn't decrement if aValue is negative or zero.
+
+	@param aValue Reference to the counter to decrement
+	@return Previous value of counter 
+
+	********** NO GOOD ON SMP ****************
+
+*/
+EXPORT_C __NAKED__ TInt Kern::KUSafeDec(TInt& /*aValue*/)
+	{
+	ASM_ASSERT_PAGING_SAFE
+	asm("mrs ip, cpsr ");
+	INTS_OFF_1(r2, ip, INTS_ALL_OFF);
+	asm("mrs r3, spsr ");		// check caller's mode
+	asm("mov r1, r0 ");			// address into r1
+	asm("tst r3, #0x0f ");		// test for user mode
+	asm("bne 1f ");				// branch if not
+	INTS_OFF_2(r2, ip, INTS_ALL_OFF);	// interrupts off
+	USER_MEMORY_GUARD_OFF(,r2,r2);
+	asm("ldrt r0, [r1] ");		// r0=original value, only allow user permissions
+	asm("subs r2, r0, #1 ");	// decrement
+	asm("strget r2, [r1] ");	// update if result >=0
+	USER_MEMORY_GUARD_ON(,r2,r2);
+	asm("msr cpsr, ip ");		// restore interrupts
+	__JUMP(,lr);
+	asm("1: ");
+	INTS_OFF_2(r2, ip, INTS_ALL_OFF);	// interrupts off
+	asm("ldr r0, [r1] ");		// r0=original value
+	asm("subs r2, r0, #1 ");	// decrement
+	asm("strge r2, [r1] ");		// update if result >=0
+	asm("msr cpsr, ip ");		// restore interrupts
+	__JUMP(,lr);
+	}
+
+#ifdef __HANDLES_MACHINE_CODED__
+EXPORT_C __NAKED__ DObject* DThread::ObjectFromHandle(TInt /*aHandle*/)
+	{
+	// r0=this, r1=aHandle
+	asm("adds ip, r1, r1 ");			// check for special handle (bit 31 set => special)
+	asm("bcs 2f ");						// if not, N flag indicates local handle
+	asm("ldrpl ip, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));	// if not local, ip=aThread->iOwningProcess
+	asm("addmi ip, r0, #%a0" : : "i" _FOFF(DThread,iHandles));		// if local, ip=&aThread->iHandles
+	asm("addpl ip, ip, #%a0" : : "i" _FOFF(DProcess,iHandles));		// if not, ip=&aThread->iOwningProcess->iHandles
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,r1,ip,lr} ");	// save r0, r1, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15AcquireReadLockEv") // call RObjectIx::AquireReadLock
+	asm("ldmfd sp!, {r0,r1,ip,lr} ");	// restore r0, r1, ip and lr
+#else
+	// system lock is held
+#endif
+	
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+// TODO: If handle lookup protected only by RW spin lock, must take a reference on the object
+// (__HANDLES_USE_RW_SPIN_LOCK__ is not supported or even finished)
+#endif
+
+	asm("mov r3, r1, lsl #17 ");		// r3=r1<<17 = index(aHandle)<<17
+	asm("mov r1, r1, lsl #2 ");			// r1=instance(Handle)<<18
+	asm("ldr r0, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iCount));		// r0=iCount
+	asm("ldr ip, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iSlots));		// ip=iSlots
+	asm("subs r0, r0, r3, lsr #17 ");	// r0 = iCount - index(aHandle) - 1
+	asm("ldrge r2, [ip, r3, lsr #14]! ");	// if count-1>=index, r2=pS->uniqueID:pS->instance, ip=iSlots+index(Handle)=pS ...
+	asm("ldrge r0, [ip, #4] ");			// ... and r0 = pointer to DObject ...
+	asm("andge r0, r0, #%a0" : : "i" (RObjectIx::EObjRObjMask));	// r0 = (pointer & EObjRObjMask);
+	asm("eorge r1, r1, r2, lsl #18 ");	// ... and check if instance(aHandle)<<18 == pS->(uid:instance)<<18
+	asm("movges r1, r1, lsr #18 ");
+	asm("movne r0, #0");				// ... else r0 = 0
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,ip,lr} ");	// save r0, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15ReleaseReadLockEv") // call RObjectIx::ReleaseReadLock
+	asm("ldmfd sp!, {r0,ip,lr} ");	// restore r0, ip and lr
+#else
+	// system lock is held, nothing to do
+#endif
+
+	// r0 now either 0(EBadHandle) or valid pointer...
+	__JUMP(,lr);
+
+	asm("1: ");
+	asm("mov r0, #0 ");					// if wrong, bad handle
+	__JUMP(,lr);
+	
+	asm("2: ");							// r12=handle<<1 (valid values are ffff0000 and ffff0002)
+	asm("bic ip, ip, #0x10000 ");		// clear 'no close' flag
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp ip, #0x10000000 ");
+	asm("blo dobj_pseudo_5 ");			// if handle<0x88000000, it's an IPC client thread pseudo handle
+#endif
+	asm("ldr r0, __TheScheduler ");
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r0->current NThread
+	asm("adds ip, ip, #0x20000 ");		// valid values now 0 and 2
+	asm("ldreq r0, [r0, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	__JUMP(eq,lr);						// if handle = ffff8000, return TheCurrentThread->iOwningProcess
+	asm("cmp ip, #2 ");					// otherwise, handle = ffff8001 ?
+	asm("subeq r0, r0, #%a0" : : "i" _FOFF(DThread,iNThread));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread
+	asm("b 1b ");						// else bad handle
+
+	asm("badobjectfault: ");
+	asm("mov r0, #%a0" : : "i" (EBadObjectType));
+	asm("b  " CSM_ZN1K5FaultENS_6TFaultE);
+	}
+
+
+/**
+Returns the kernel object that the given handle refers.
+
+The handle passed is looked up in the thread's handles collection if the handle is local or
+in the thread's owner process' collection otherwise. If aHandle is negative or not found in
+the thread's or process' collection then NULL is returned.
+Two special handle values KCurrentThreadHandle and KCurrentProcessHandle can be used to get
+a pointer to the current thread and the current process.
+
+aType is used to ensure that the object referred by the handle is of desired type.
+If the type of the object referred by aHandle is different from aType then NULL is returned.
+If aType is negative, the type of the object is ignored and no type checking is done.
+If aType is positive and greater than the maximum number of object types (ENumObjectTypes)
+the kernel will fault.
+
+@param aThread The thread that owns the handle passed.
+@param aHandle Handle to the object to be returned.
+@param aType TObjectType parameter specifying the type of the object referred by the handle.  
+
+@return Pointer to the DObject referred by the handle or NULL if the handle is not
+		found in the thread's handles collection.
+
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+
+@see TObjectType
+@see DThread::ObjectFromHandle()
+*/
+EXPORT_C __NAKED__ DObject* Kern::ObjectFromHandle(DThread* /*aThread*/, TInt /*aHandle*/, TInt /*aType*/)
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NOT_ISR|MASK_NOT_IDFC);
+
+	// r0=aThread, r1=aHandle, r2=aType (-1=any, 0=thread, etc.)
+	asm("add r3, r2, #1 ");
+	asm("cmp r3, #%a0" : : "i" ((TInt)ENumObjectTypes));
+	asm("bhi badobjectfault ");						// invalid object type
+	// fall through
+	}
+
+EXPORT_C __NAKED__ DObject* DThread::ObjectFromHandle(TInt /*aHandle*/, TInt /*aType*/)
+	{
+	// r0=this, r1=aHandle, r2=aType (-1=any, 0=thread, etc.)
+	asm("adds ip, r1, r1 ");			// check for special handle (bit 31 set => special)
+	asm("bcs 2f ");						// if not, N flag indicates local handle
+	asm("ldrpl ip, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));	// if not local, ip=aThread->iOwningProcess
+	asm("addmi ip, r0, #%a0" : : "i" _FOFF(DThread,iHandles));		// if local, ip=&aThread->iHandles
+	asm("addpl ip, ip, #%a0" : : "i" _FOFF(DProcess,iHandles));		// if not, ip=&aThread->iOwningProcess->iHandles
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0-r2,ip,lr} ");	// save r0-r2, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15AcquireReadLockEv") // call RObjectIx::AquireReadLock
+	asm("ldmfd sp!, {r0-r2,ip,lr} ");	// restore r0-r2, ip and lr
+#else
+	// system lock is held
+#endif
+	
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+// TODO: If handle lookup protected only by RW spin lock, must take a reference on the object
+#endif
+
+	asm("mov r3, r1, lsl #17 ");		// r3=r1<<17 = index(aHandle)<<17
+	asm("mov r1, r1, lsl #2 ");			// r1=instance(Handle)<<18
+	asm("ldr r0, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iCount));		// r0=iCount
+	asm("ldr ip, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iSlots));		// ip=iSlots
+	asm("mov r1, r1, lsr #18 ");		// r1=instance(Handle)
+	asm("cmp r0, r3, lsr #17 ");		// compare iCount with index(aHandle)
+	asm("ldrgt r0, [ip, r3, lsr #14]! ");	// if count>index, r0=pS->uniqueID:pS->instance, ip=iSlots+index(Handle)=pS
+	asm("ble 1f ");						// if count<=index, bad handle
+	asm("adds r3, r2, #1 ");			// r3=0 if any type of object is ok, r3=UID if not
+	asm("biceq r0, r0, r2, lsl #14 ");	// if it is, (r2 therefore -1) clear top 18 bits of r0
+	asm("orr r1, r1, r3, lsl #14 ");	// r1=aUniqueID(bits14-19):instance(Handle)(bits0-13)
+	asm("mov r0, r0, lsl #12 ");		// only interested in comparing lower 20 bits...
+	asm("mov r1, r1, lsl #12 ");
+	asm("cmp r0, r1 ");					// check instance, and unique ID if necessary
+	asm("ldreq r0, [ip, #4] ");			// if OK return pointer to DObject
+	asm("movne r0, #0");				// else r0 = 0
+	asm("andeq r0, r0, #%a0" : : "i" (RObjectIx::EObjRObjMask));	// r0 = (pointer & EObjRObjMask);
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,ip,lr} ");	// save r0, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15ReleaseReadLockEv") // call RObjectIx::ReleaseReadLock
+	asm("ldmfd sp!, {r0,ip,lr} ");	// restore r0, ip and lr
+#else
+	// system lock is held, nothing to do
+#endif
+
+	// r0 now either 0(EBadHandle) or valid pointer...
+	__JUMP(,lr);
+
+	asm("1: ");
+	asm("mov r0, #0 ");					// if wrong, bad handle
+	__JUMP(,lr);
+	
+	asm("2: ");							// r12=handle<<1 (valid values are fffx0000 and fffx0002, x=e or f)
+	asm("bic ip, ip, #0x10000 ");		// clear 'no close' flag
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp ip, #0x10000000 ");
+	asm("blo 4f ");						// if handle<0x88000000, it's an IPC client thread pseudo handle
+#endif
+	asm("ldr r0, __TheScheduler ");
+	asm("add ip, ip, #0x20000 ");		// valid values now 0 and 2
+	asm("cmp r2, #1 ");					// r2=container number or -1 if any object OK
+	asm("ldrle r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r0->current NThread
+	asm("bgt 1b ");						// if type is neither thread nor process nor any, bad handle
+	asm("beq 3f ");						// skip check for KCurrentThreadHandle if process required
+	asm("cmp ip, #2 ");					// handle = ffff8001 ?
+	asm("subeq r0, r0, #%a0" : : "i" _FOFF(DThread,iNThread));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread
+	asm("cmn r2, #1 ");					// r2=-1 means any type of object will do
+	asm("bne 1b ");
+	asm("3: ");
+	asm("cmp ip, #0 ");					// handle = ffff8000 ?
+	asm("ldreq r0, [r0, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread->iOwningProcess
+	asm("b 1b ");						// else bad handle
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("4: ");
+	asm("cmp r2, #0 ");					// type must be thread or any
+	asm("bgt 1b ");						// if not, bad handle
+
+	asm("dobj_pseudo_5: ");
+	asm("add r1, r0, #%a0" : : "i" _FOFF(DThread,iNThread));	// r1->iNThread
+	asm("stmfd sp!, {r4,lr} ");
+	asm("bl do_lookup_thread_pseudo ");
+	asm("bcc 6f ");						// skip if bad handle
+	asm("cmp ip, #%a0" : : "i" ((TInt)RMessage2::EDisConnect));	// else check iFunction != RMessage2::EDisConnect
+	asm("ldrne r0, [r0, #%a0]" : : "i" _FOFF(RMessageK,iClient));
+	asm("moveq r0, #0 ");
+	asm("6: ");
+	asm("ldmfd sp!, {r4,pc} ");
+#endif
+	}
+
+
+/**
+Returns the kernel object that the given handle refers.
+
+The handle passed is looked up in the thread's handles collection if the handle is local or
+in the thread's owner process' collection otherwise. If aHandle is negative or not found in
+the thread's or process' collection then NULL is returned.
+Two special handle values KCurrentThreadHandle and KCurrentProcessHandle can be used to get
+a pointer to the current thread and the current process.
+
+aType is used to ensure that the object referred by the handle is of desired type.
+If the type of the object referred by aHandle is different from aType then NULL is returned.
+If aType is negative, the type of the object is ignored and no type checking is done.
+If aType is positive and greater than the maximum number of object types (ENumObjectTypes)
+the kernel will fault.
+
+@param aThread The thread that owns the handle passed.
+@param aHandle Handle to the object to be returned.
+@param aType TObjectType parameter specifying the type of the object referred by the handle.  
+@param aAttr Returns the attributes for this object.  
+
+@return Pointer to the DObject referred by the handle or NULL if the handle is not
+		found in the thread's handles collection.
+
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+
+@see TObjectType
+@see DThread::ObjectFromHandle()
+*/
+EXPORT_C __NAKED__ DObject* Kern::ObjectFromHandle(DThread* /*aThread*/, TInt /*aHandle*/, TInt /*aType*/, TUint& /*aAttr*/)
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_NOT_ISR|MASK_NOT_IDFC);
+
+	// r0=aThread, r1=aHandle, r2=aType (-1=any, 0=thread, etc.), r3=&aAttr
+	asm("add r2, r2, #1 ");				// compare against 0 to ENumObjectTypes
+	asm("cmp r2, #%a0" : : "i" ((TInt)ENumObjectTypes));
+	asm("sub r2, r2, #1 ");				// revert the adjustment (quicker than save/restore of used register)
+	asm("bhi badobjectfault ");			// invalid object type
+	// fall through
+	}
+
+EXPORT_C __NAKED__ DObject* DThread::ObjectFromHandle(TInt /*aHandle*/, TInt /*aObjType*/, TUint& /*aAttr*/)
+	{
+	// r0=this, r1=aHandle, r2=aType (-1=any, 0=thread, etc.), r3=&aAttr
+	asm("stmfd sp!, {r3}");				// save r3
+	asm("adds ip, r1, r1 ");			// check for special handle (bit 31 set => special)
+	asm("bcs 2f ");						// if not, N flag indicates local handle
+	asm("ldrpl ip, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));	// if not local, ip=aThread->iOwningProcess
+	asm("addmi ip, r0, #%a0" : : "i" _FOFF(DThread,iHandles));		// if local, ip=&aThread->iHandles
+	asm("addpl ip, ip, #%a0" : : "i" _FOFF(DProcess,iHandles));		// if not, ip=&aThread->iOwningProcess->iHandles
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0-r2,ip,lr} ");	// save r0-r2, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15AcquireReadLockEv") // call RObjectIx::AquireReadLock
+	asm("ldmfd sp!, {r0-r2,ip,lr} ");	// restore r0-r2, ip and lr
+#else
+	// system lock is held
+#endif
+	
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+// TODO: If handle lookup protected only by RW spin lock, must take a reference on the object
+#endif
+
+	asm("mov r3, r1, lsl #17 ");		// r3=r1<<17 = index(aHandle)<<17
+	asm("mov r1, r1, lsl #2 ");			// r1=instance(Handle)<<18
+	asm("ldr r0, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iCount));		// r0=iCount
+	asm("ldr ip, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iSlots));		// ip=iSlots
+	asm("mov r1, r1, lsr #18 ");		// r1=instance(Handle)
+	asm("cmp r0, r3, lsr #17 ");		// compare iCount with index(aHandle)
+	asm("ldrgt r0, [ip, r3, lsr #14]! ");	// if count>index, r0=pS->uniqueID:pS->instance, ip=iSlots+index(Handle)=pS
+	asm("ble 1f ");						// if count<=index, bad handle
+	asm("adds r3, r2, #1 ");			// r3=0 if any type of object is ok, r3=UID if not
+	asm("biceq r0, r0, r2, lsl #14 ");	// if it is, (r2 therefore -1) clear top 18 bits of r0
+	asm("orr r1, r1, r3, lsl #14 ");	// r1=aUniqueID(bits14-19):instance(Handle)(bits0-13)
+	asm("mov r0, r0, lsl #12 ");		// only interested in comparing lower 20 bits...
+	asm("mov r1, r1, lsl #12 ");
+	asm("cmp r0, r1 ");					// check instance, and unique ID if necessary
+	asm("ldreq r0, [ip, #4] ");			// if OK return pointer to DObject
+	asm("movne r0, #0");				// else r0 = 0
+	asm("mov r2, r0");					// r2 = 0 or pointer(bits2-31):flags(bits0-1)
+	asm("andeq r0, r0, #%a0" : : "i" (RObjectIx::EObjRObjMask));	// r0 = (pointer & EObjRObjMask);
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,r2,ip,lr}");		// save r0, r2, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15ReleaseReadLockEv") // call RObjectIx::ReleaseReadLock
+	asm("ldmfd sp!, {r0,r2,ip,lr}");		// restore r0, r2, ip and lr
+#else
+	// system lock is held, nothing to do
+#endif
+
+	asm("ldmfd sp!, {r3}");				// restore r3 (r3=&aAttr)
+	asm("cmp r0, #0");					// if r0!=0
+	asm("ldrne r1, [ip]");				//     r1=attributes:pS->uniqueID:pS->instance
+	asm("movne r1, r1, lsr #20");		//     r1=attributes(bits0-11)
+	asm("orrne r1, r1, r2, lsl #31 ");	//     r1=resv_flag(bit31):attributes(bits0-11)
+	asm("strne r1, [r3] ");				//     aAttr=resv_flag(bit31):attributes(bits0-11)
+	
+	// r0 now either 0(EBadHandle) or valid pointer...
+	__JUMP(,lr);
+
+	asm("1: ");
+	asm("add sp, sp, #4");				// pop and discard r3 (not used)
+	asm("mov r0, #0 ");					// if wrong, bad handle
+	__JUMP(,lr);
+	
+	asm("2: ");							// r12=handle<<1 (valid values are fffx0000 and fffx0002, x=e or f)
+	asm("bic ip, ip, #0x10000 ");		// clear 'no close' flag
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp ip, #0x10000000 ");
+	asm("blo 4f ");						// if handle<0x88000000, it's an IPC client thread pseudo handle
+#endif
+	asm("ldr r0, __TheScheduler ");
+	asm("add ip, ip, #0x20000 ");		// valid values now 0 and 2
+	asm("cmp r2, #1 ");					// r2=container number or -1 if any object OK
+	asm("ldrle r0, [r0, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r0->current NThread
+	asm("bgt 1b ");						// if type is neither thread nor process nor any, bad handle
+	asm("beq 3f ");						// skip check for KCurrentThreadHandle if process required
+	asm("cmp ip, #2 ");					// handle = ffff8001 ?
+	asm("subeq r0, r0, #%a0" : : "i" _FOFF(DThread,iNThread));
+	asm("add sp, sp, #4");				// pop and discard r3 (not used)
+	__JUMP(eq,lr);						// if so, return TheCurrentThread
+	asm("cmn r2, #1 ");					// r2=-1 means any type of object will do
+	asm("bne 1b ");
+	asm("3: ");
+	asm("cmp ip, #0 ");					// handle = ffff8000 ?
+	asm("ldreq r0, [r0, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	asm("add sp, sp, #4");				// pop and discard r3 (not used)
+	__JUMP(eq,lr);						// if so, return TheCurrentThread->iOwningProcess
+	asm("b 1b ");						// else bad handle
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("4: ");
+	asm("cmp r2, #0 ");					// type must be thread or any
+	asm("bgt 1b ");						// if not, bad handle
+
+	asm("add sp, sp, #4");				// pop and discard r3 (not used)
+	asm("add r1, r0, #%a0" : : "i" _FOFF(DThread,iNThread));	// r1->iNThread
+	asm("stmfd sp!, {r4,lr} ");
+	asm("bl do_lookup_thread_pseudo ");
+	asm("bcc 6f ");						// skip if bad handle
+	asm("cmp ip, #%a0" : : "i" ((TInt)RMessage2::EDisConnect));	// else check iFunction != RMessage2::EDisConnect
+	asm("ldrne r0, [r0, #%a0]" : : "i" _FOFF(RMessageK,iClient));
+	asm("moveq r0, #0 ");
+	asm("6: ");
+	asm("ldmfd sp!, {r4,pc} ");
+#endif
+	}
+
+__NAKED__ DObject* K::ObjectFromHandle(TInt /*aHandle*/)
+//
+// Look up an object in the current thread/process handles array
+// Panic on bad handle
+// Enter and leave with system locked
+//
+	{
+	// r0=aHandle
+	asm("ldr r1, __TheScheduler ");
+	asm("adds ip, r0, r0 ");			// check for special handle (bit 31 set => special)
+	asm("ldr r1, [r1, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r1->current NThread
+	asm("bcs 2f ");						// if not, N flag indicates local handle
+	asm("ldrpl ip, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// if not local, ip=aThread->iOwningProcess
+	asm("addmi ip, r1, #%a0" : : "i" (_FOFF(DThread,iHandles)-_FOFF(DThread,iNThread)));	// if local, ip=&current Thread->iHandles
+	asm("addpl ip, ip, #%a0" : : "i" _FOFF(DProcess,iHandles));		// if not, ip=&current Thread->iOwningProcess->iHandles
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,r1,ip,lr} ");	// save r0, r1, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15AcquireReadLockEv") // call RObjectIx::AquireReadLock
+	asm("ldmfd sp!, {r0,r1,ip,lr} ");	// restore r0, r1, ip and lr
+#else
+	// system lock is held
+#endif
+	
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+// TODO: If handle lookup protected only by RW spin lock, must take a reference on the object
+#endif
+
+	asm("mov r3, r0, lsl #17 ");		// r3=r0<<17 = index(aHandle)<<17
+	asm("mov r1, r0, lsl #2 ");			// r1=instance(Handle)<<18
+	asm("ldr r0, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iCount));		// r0=iCount
+	asm("ldr ip, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iSlots));	// ip=iSlots
+	asm("subs r0, r0, r3, lsr #17 ");	// r0 = iCount - index(aHandle) - 1
+	asm("ldrge r2, [ip, r3, lsr #14]! ");	// if count-1>=index, r2=pS->uniqueID:pS->instance, ip=iSlots+index(Handle)=pS ...
+	asm("ldrge r0, [ip, #4] ");			// ... and r0 = pointer to DObject ...
+	asm("andge r0, r0, #%a0" : : "i" (RObjectIx::EObjRObjMask));	// r0 = (pointer & EObjRObjMask);
+	asm("eorge r1, r1, r2, lsl #18 ");	// ... and check if instance(aHandle)<<18 == pS->(uid:instance)<<18
+	asm("movges r1, r1, lsr #18 ");
+	asm("movne r0, #0");				// ... else r0 = 0
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,ip,lr} ");	// save r0, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15ReleaseReadLockEv") // call RObjectIx::ReleaseReadLock
+	asm("ldmfd sp!, {r0,ip,lr} ");	// restore r0, ip and lr
+#else
+	// system lock is held, nothing to do
+#endif
+
+	asm("cmp r0, #0 ");					// check if this is a valid pointer
+	__JUMP(ne,lr);						// if OK, return pointer to DObject
+
+	asm("1: ");							// if wrong, bad handle
+	asm("mov r0, #%a0" : : "i" (EBadHandle));
+	asm("b  " CSM_ZN1K18PanicCurrentThreadEi);
+	
+	asm("2: ");							// r12=handle<<1 (valid values are fffx0000 and fffx0002, x=e or f)
+	asm("bic ip, ip, #0x10000 ");		// clear 'no close' flag
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp ip, #0x10000000 ");
+	asm("blo 3f ");						// if handle<0x88000000, it's an IPC client thread pseudo handle
+#endif
+	asm("adds ip, ip, #0x20000 ");		// valid values now 0 and 2
+	asm("ldreq r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	__JUMP(eq,lr);						// if handle = ffff8000, return TheCurrentThread->iOwningProcess
+	asm("cmp ip, #2 ");					// otherwise, handle = ffff8001 ?
+	asm("subeq r0, r1, #%a0" : : "i" _FOFF(DThread,iNThread));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread
+	asm("b 1b ");						// else bad handle
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("k_pseudo_4: ");
+	asm("cmp r1, #0 ");					// type must be thread or any
+	asm("bgt 1b ");						// if not, panic
+	asm("mov r1, r2 ");					// r1->current NThread
+
+	asm("3: ");
+	asm("stmfd sp!, {r4,lr} ");
+	asm("bl do_lookup_thread_pseudo ");
+	asm("bcc 1b ");						// panic if bad
+	asm("cmp ip, #%a0" : : "i" ((TInt)RMessage2::EDisConnect));	// else check iFunction != RMessage2::EDisConnect
+	asm("ldrne r0, [r0, #%a0]" : : "i" _FOFF(RMessageK,iClient));
+	asm("ldmnefd sp!, {r4,pc} ");
+	asm("b 1b ");
+#endif
+	}
+
+__NAKED__ DObject* K::ObjectFromHandle(TInt /*aHandle*/, TInt /*aType*/)
+//
+// Look up an object of specific type in the current thread/process handles array
+// Panic on bad handle
+// Enter and leave with system locked
+//
+	{
+	// r0=aHandle, r1=aType (-1=any, 0=thread, etc.)
+	asm("ldr r2, __TheScheduler ");
+	asm("adds ip, r0, r0 ");			// check for special handle (bit 31 set => special)
+	asm("ldr r2, [r2, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r2->current NThread
+	asm("bcs 2f ");						// if not, N flag indicates local handle
+	asm("ldrpl ip, [r2, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// if not local, ip=aThread->iOwningProcess
+	asm("addmi ip, r2, #%a0" : : "i" (_FOFF(DThread,iHandles)-_FOFF(DThread,iNThread)));		// if local, ip=&aThread->iHandles
+	asm("addpl ip, ip, #%a0" : : "i" _FOFF(DProcess,iHandles));		// if not, ip=&aThread->iOwningProcess->iHandles
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,r1,ip,lr} ");	// save r0, r1, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15AcquireReadLockEv") // call RObjectIx::AquireReadLock
+	asm("ldmfd sp!, {r0,r1,ip,lr} ");	// restore r0, r1, ip and lr
+#else
+	// system lock is held
+#endif
+	
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+// TODO: If handle lookup protected only by RW spin lock, must take a reference on the object
+#endif
+
+	asm("mov r3, r0, lsl #17 ");		// r3=r0<<17 = index(aHandle)<<17
+	asm("mov r2, r0, lsl #2 ");			// r2=instance(Handle)<<18
+	asm("ldr r0, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iCount));		// r0=iCount
+	asm("ldr ip, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iSlots));	// ip=iSlots
+	asm("mov r2, r2, lsr #18 ");		// r2=instance(Handle)
+	asm("cmp r0, r3, lsr #17 ");		// compare iCount with index(aHandle)
+	asm("ldrgt r0, [ip, r3, lsr #14]! ");	// if count>index, r0=pS->uniqueID:pS->instance, ip=iSlots+index(Handle)=pS
+	asm("ble 1f ");						// if count<=index, bad handle
+	asm("adds r3, r1, #1 ");			// r3=0 if any type of object is ok, r3=UID if not
+	asm("biceq r0, r0, r1, lsl #14 ");	// if it is, (therefore r1=-1) clear top 18 bits of r0
+	asm("orr r2, r2, r3, lsl #14 ");	// r2=aUniqueID(bits14-19):instance(Handle)(bits0-13)
+	asm("mov r0, r0, lsl #12 ");		// only interested in comparing lower 20 bits...
+	asm("mov r2, r2, lsl #12 ");
+	asm("cmp r0, r2 ");					// check instance, and unique ID if necessary
+	asm("ldreq r0, [ip, #4] ");			// if OK return pointer to DObject
+	asm("movne r0, #0");				// else r0 = 0
+	asm("andeq r0, r0, #%a0" : : "i" (RObjectIx::EObjRObjMask));	// r0 = (pointer & EObjRObjMask);
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,ip,lr} ");	// save r0, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15ReleaseReadLockEv") // call RObjectIx::ReleaseReadLock
+	asm("ldmfd sp!, {r0,ip,lr} ");	// restore r0, ip and lr
+#else
+	// system lock is held, nothing to do
+#endif
+
+	asm("cmp r0, #0 ");					// check if this is a valid pointer
+	__JUMP(ne,lr);						// if OK, return pointer to DObject
+
+	asm("1: ");							// if wrong, bad handle
+	asm("mov r0, #%a0" : : "i" (EBadHandle));
+	asm("b  " CSM_ZN1K18PanicCurrentThreadEi);
+	
+	asm("2: ");							// r12=handle<<1 (valid values are fffx0000 and fffx0002, x=e or f)
+	asm("bic ip, ip, #0x10000 ");		// clear 'no close' flag
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp ip, #0x10000000 ");
+	asm("blo k_pseudo_4 ");				// if handle<0x88000000, it's an IPC client thread pseudo handle
+#endif
+	asm("adds ip, ip, #0x20000 ");		// valid values now 0 and 2
+	asm("cmp r1, #1 ");					// r1=container number or -1 if any object OK
+	asm("bgt 1b ");						// if type is neither thread nor process nor any, bad handle
+	asm("beq 3f ");						// skip check for KCurrentThreadHandle if process required
+	asm("cmp ip, #2 ");					// handle = ffff8001 ?
+	asm("subeq r0, r2, #%a0" : : "i" _FOFF(DThread,iNThread));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread
+	asm("cmn r1, #1 ");					// r1=-1 means any type of object will do
+	asm("bne 1b ");
+	asm("3: ");
+	asm("cmp ip, #0 ");					// handle = ffff8000 ?
+	asm("ldreq r0, [r2, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread->iOwningProcess
+	asm("b 1b ");						// else bad handle
+	}
+
+__NAKED__ DObject* K::ObjectFromHandle(TInt /*aHandle*/, TInt /*aObjType*/, TUint& /*aAttr*/)
+//
+// Look up an object of specific type in the current thread/process handles array
+// Panic on bad handle
+// Enter and leave with system locked
+//
+	{
+	// r0=aHandle, r1=aObjType (-1=any, 0=thread, etc.), r2=&aAttr
+	asm("stmfd sp!, {r2}");				// save r2
+	asm("ldr r2, __TheScheduler ");
+	asm("adds ip, r0, r0 ");			// check for special handle (bit 31 set => special)
+	asm("ldr r2, [r2, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r2->current NThread
+	asm("bcs 2f ");						// if not, N flag indicates local handle
+	asm("ldrpl ip, [r2, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// if not local, ip=aThread->iOwningProcess
+	asm("addmi ip, r2, #%a0" : : "i" (_FOFF(DThread,iHandles)-_FOFF(DThread,iNThread)));		// if local, ip=&aThread->iHandles
+	asm("addpl ip, ip, #%a0" : : "i" _FOFF(DProcess,iHandles));		// if not, ip=&aThread->iOwningProcess->iHandles
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,r1,ip,lr} ");	// save r0, r1, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15AcquireReadLockEv") // call RObjectIx::AquireReadLock
+	asm("ldmfd sp!, {r0,r1,ip,lr} ");	// restore r0, r1, ip and lr
+#else
+	// system lock is held
+#endif
+	
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+// TODO: If handle lookup protected only by RW spin lock, must take a reference on the object
+#endif
+
+	asm("mov r3, r0, lsl #17 ");		// r3=r0<<17 = index(aHandle)<<17
+	asm("mov r2, r0, lsl #2 ");			// r2=instance(Handle)<<18
+	asm("ldr r0, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iCount));		// r0=iCount
+	asm("ldr ip, [ip, #%a0]" : : "i" _FOFF(RObjectIx,iSlots));	// ip=iSlots
+	asm("mov r2, r2, lsr #18 ");		// r2=instance(Handle)
+	asm("cmp r0, r3, lsr #17 ");		// compare iCount with index(aHandle)
+	asm("ldrgt r0, [ip, r3, lsr #14]! ");	// if count>index, r0=pS->uniqueID:pS->instance, ip=iSlots+index(Handle)=pS
+	asm("ble 1f ");						// if count<=index, bad handle
+	asm("adds r3, r1, #1 ");			// r3=0 if any type of object is ok, r3=UID if not
+	asm("biceq r0, r0, r1, lsl #14 ");	// if it is, (therefore r1=-1) clear top 18 bits of r0
+	asm("orr r2, r2, r3, lsl #14 ");	// r2=aUniqueID(bits14-19):instance(Handle)(bits0-13)
+	asm("mov r0, r0, lsl #12 ");		// only interested in comparing lower 20 bits...
+	asm("mov r2, r2, lsl #12 ");
+	asm("cmp r0, r2 ");					// check instance, and unique ID if necessary
+	asm("ldreq r0, [ip, #4] ");			// if OK return pointer to DObject
+	asm("movne r0, #0");				// else r0 = 0
+	asm("mov r3, r0");					// r3=0 or pointer(bits2-31):flags(bits0-1)
+	asm("andeq r0, r0, #%a0" : : "i" (RObjectIx::EObjRObjMask));	// r0 = (pointer & EObjRObjMask);
+
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	asm("stmfd sp!, {r0,r3,ip,lr} ");	// save r0, r3, ip and lr
+	asm("mov r0, ip ");					// move RObjectIx this(ip) to r0
+	asm("bl _ZN9RObjectIx15ReleaseReadLockEv") // call RObjectIx::ReleaseReadLock
+	asm("ldmfd sp!, {r0,r3,ip,lr} ");	// restore r0, r3, ip and lr
+#else
+	// system lock is held, nothing to do
+#endif
+
+	asm("ldmfd sp!, {r2}");				// restore r2 (r2=&aAttr)
+	asm("cmp r0, #0");					// if r0!=0
+	asm("ldrne r1, [ip]");				//     r1=attributes:pS->uniqueID:pS->instance
+	asm("movne r1, r1, lsr #20");		//     r1=attributes(bits0-11)
+	asm("orrne r1, r1, r3, lsl #31 ");	//     r1=resv_flag(bit31):attributes(bits0-11)
+	asm("strne r1, [r2] ");				//     aAttr=resv_flag(bit31):attributes(bits0-11)
+	
+	__JUMP(ne,lr);						//     return pointer to DObject
+
+	asm("1: ");							// if wrong, bad handle
+	asm("mov r0, #%a0" : : "i" (EBadHandle));
+	asm("b  " CSM_ZN1K18PanicCurrentThreadEi);
+	
+	asm("2: ");							// r12=handle<<1 (valid values are fffx0000 and fffx0002, x=e or f)
+	asm("add sp, sp, #4");				// pop and discard r2 (not used)
+	asm("bic ip, ip, #0x10000 ");		// clear 'no close' flag
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp ip, #0x10000000 ");
+	asm("blo k_pseudo_4 ");				// if handle<0x88000000, it's an IPC client thread pseudo handle
+#endif
+	asm("adds ip, ip, #0x20000 ");		// valid values now 0 and 2
+	asm("cmp r1, #1 ");					// r1=container number or -1 if any object OK
+	asm("bgt 1b ");						// if type is neither thread nor process nor any, bad handle
+	asm("beq 3f ");						// skip check for KCurrentThreadHandle if process required
+	asm("cmp ip, #2 ");					// handle = ffff8001 ?
+	asm("subeq r0, r2, #%a0" : : "i" _FOFF(DThread,iNThread));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread
+	asm("cmn r1, #1 ");					// r1=-1 means any type of object will do
+	asm("bne 1b ");
+	asm("3: ");
+	asm("cmp ip, #0 ");					// handle = ffff8000 ?
+	asm("ldreq r0, [r2, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	__JUMP(eq,lr);						// if so, return TheCurrentThread->iOwningProcess
+	asm("b 1b ");						// else bad handle
+	}
+#endif
+
+/**	Returns the current state of interrupts
+	
+	@param	aRequest indicates which state of interrupts should be returned
+			
+	@return if aRequest is ETrue, function returns ETrue if interrupts are enabled and EFalse otherwise
+			if aRequest is EFalse, function returns ETrue if interrupts are disabled and EFalse otherwise
+*/
+__NAKED__ TBool InterruptsStatus(TBool)
+	{
+	asm("cmp r0, #0 ");
+	asm("beq check_interrupts_disabled ");
+	//check that ints are enabled
+	asm("mrs r0, cpsr ");
+	asm("ands r0, r0, #%a0 " : : "i" ((TInt)KAllInterruptsMask));
+	asm("moveq r0,#1");				
+	asm("movne r0,#0");				
+	__JUMP(,lr);
+	asm("check_interrupts_disabled: ");	
+	asm("mrs r0, cpsr ");
+	asm("and r0, r0, #%a0 " : : "i" ((TInt)KAllInterruptsMask));
+	asm("cmp r0, #%a0 " : : "i" ((TInt)KAllInterruptsMask));
+	asm("moveq r0,#1");				
+	asm("movne r0,#0");				
+	__JUMP(,lr);
+	}
+
+extern "C" EXPORT_C __NAKED__ void pagecpy(TAny* /*aTrg*/, const TAny* /*aSrc*/)
+	{
+	// Source and destination 4k page aligned (and thus cache aligned)
+	// Fixed copy size of 4k
+	//  - easy as pie
+	asm("mov r2, #12 ");
+	// fall through to fastcpy
+	}
+
+extern "C" __NAKED__ void fastcpy(TAny* /*aTrg*/, const TAny* /*aSrc*/, TUint8 /*aPower*/)
+	{
+	asm("stmfd sp!, {r4-r9} ");
+	asm("mov ip, #-1 ");
+	asm("mvn ip, ip, lsl r2 ");
+	asm("pagecpy_loop: ");
+	PLD_ioff(1, 32);
+	PLD_ioff(1, 64);
+	asm("ldmia r1!, {r2-r9} ");
+	asm("stmia r0!, {r2-r9} ");
+	asm("ldmia r1!, {r2-r9} ");
+	asm("tst r1, ip ");
+	asm("stmia r0!, {r2-r9} ");
+	asm("bne pagecpy_loop ");
+	asm("ldmfd sp!, {r4-r9} ");
+	__JUMP(,lr);
+
+
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	}
+
+#if defined(__MEMMODEL_MOVING__) || defined(__MEMMODEL_MULTIPLE__)
+__NAKED__ TInt MmuBase::MoveKernelStackPage(DChunk* /*aChunk*/, TUint32 /*aOffset*/, TPhysAddr /*aOld*/,
+		TPhysAddr& /*aNew*/, TUint /*aBlockZoneId*/, TBool /*aBlockRest*/)
+	{
+	// Switch to a safe stack then call the regular MoveKernelPage
+	
+	asm("mov ip, sp ");
+	asm("ldr sp, [r0, #%a0]" : : "i" _FOFF(MmuBase,iAltStackBase));		// r0=this
+	asm("stmfd sp!, {ip,lr} ");
+	asm("ldr lr, [ip, #8] ");
+	asm("str lr, [sp, #-8]! ");
+	asm("ldr lr, [ip, #4] ");
+	asm("str lr, [sp, #-4]! ");
+	asm("ldr lr, [ip] ");
+	asm("str lr, [sp, #-4]! ");
+	asm("bl " CSM_ZN3Mmu14MoveKernelPageEP6DChunkmmRmji);
+	asm("ldmfd sp, {r1,r2,r3,ip,sp,pc} ");
+	}
+#endif
+
+__NAKED__ TInt K::FloatingPointSystemId(TUint32& /*aSysId*/)
+	{
+#if __CPU_HAS_VFP
+	VFP_FMRX(,1,VFP_XREG_FPSID);
+	asm("str r1, [r0] ");
+	asm("mov r0, #0 ");
+#else
+	asm("mov r0, #%a0 " : : "i" ((TInt)KErrNotSupported));
+#endif
+	__JUMP(,lr);
+	}
+
+#ifdef __CLIENT_REQUEST_MACHINE_CODED__
+
+__NAKED__ void TServerMessage::CallbackFunc(TAny* aData, TUserModeCallbackReason aReason)
+	{
+	// r0 -> TClientRequest object
+	// r1 == reason code: 0 => run, 1 => cancel
+
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(TClientRequest, iResult));
+	asm("teq r1, #%a0" : : "i" (EUserModeCallbackRun));
+	asm("teqeq r3, #0");					// iResult == KErrNone
+	asm("bne clientRequestCallback2");
+	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(TServerMessage, iMessagePtr));
+	asm("stmfd sp!, {r0, r4-r7}");
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TServerMessage, iMessageData));
+	asm("mov r6, #0");
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(RMessageK, iFunction));
+	asm("ldr r7, [r0, #%a0]" : : "i" _FOFF(RMessageK, iSession));
+	asm("cmn r1, #%a0" : : "i" (-RMessage2::EDisConnect));
+	asm("beq setupDisconnect");
+
+	// HARDCODED(RMessageK)- this assumes KMaxMessageArguments is 4
+	asm("add r2, r0, #%a0" : : "i" _FOFF(RMessageK, iMsgArgs.iArgs));
+	asm("ldmia r2, {r2-r5}");
+
+	asm("userWrite:");						// NOTE: Z flag always clear here
+	asm("ldr r7, [r7, #%a0]" : : "i" _FOFF(DSession, iSessionCookie));
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("stmdb sp!,{r12}");
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("ldmia sp!,{r12}");
+#endif
+	// HARDCODED(RMessage2)- this assumes the layout of the first 8 words of this structure
+	asm(".global __magic_address_svr_accept_1 ");
+	asm("__magic_address_svr_accept_1: ");	// this instruction is magically immune from exceptions
+	asm("strt r0, [ip], #4");
+	asm(".global __magic_address_svr_accept_2 ");
+	asm("__magic_address_svr_accept_2: ");	// this instruction is magically immune from exceptions
+	asm("strnet r1, [ip], #4");
+	asm(".global __magic_address_svr_accept_3 ");
+	asm("__magic_address_svr_accept_3: ");	// this instruction is magically immune from exceptions
+	asm("strnet r2, [ip], #4");
+	asm(".global __magic_address_svr_accept_4 ");
+	asm("__magic_address_svr_accept_4: ");	// this instruction is magically immune from exceptions
+	asm("strnet r3, [ip], #4");
+	asm(".global __magic_address_svr_accept_5 ");
+	asm("__magic_address_svr_accept_5: ");	// this instruction is magically immune from exceptions
+	asm("strnet r4, [ip], #4");
+	asm(".global __magic_address_svr_accept_6 ");
+	asm("__magic_address_svr_accept_6: ");	// this instruction is magically immune from exceptions
+	asm("strnet r5, [ip], #4");
+	asm(".global __magic_address_svr_accept_7 ");
+	asm("__magic_address_svr_accept_7: ");	// this instruction is magically immune from exceptions
+	asm("strnet r6, [ip], #4");
+	asm(".global __magic_address_svr_accept_8 ");
+	asm("__magic_address_svr_accept_8: ");	// this instruction is magically immune from exceptions
+	asm("strnet r7, [ip], #4");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	asm("ldmfd sp!, {r0, r4-r7}");
+	asm("mov r1, #%a0" : : "i" (EUserModeCallbackRun));
+	asm("mov r3, #0" );
+	asm("b clientRequestCallback2");
+
+	asm("setupDisconnect:");
+	asm("mov r2, #0");
+	asm("mov r3, #0");
+	asm("mov r4, #0");
+	asm("mov r5, #0");
+	asm("cmp r5, #1"); // clear zero flag
+	asm("b userWrite");
+ 	}
+
+__NAKED__ void TClientRequest::CallbackFunc(TAny* /*aData*/, TUserModeCallbackReason /*aReason*/)
+	{
+	// parameters:
+	//   r0 -> this
+	//   r1 == reason code
+	// locals:
+	//   r2 == old status
+	//   r3 == result 
+
+	asm("clientRequestCallback:");
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(TClientRequest, iResult));
+	asm("clientRequestCallback2:");
+	asm("stmfd sp!, {r0, r1, r3, lr} ");
+#ifdef _DEBUG
+	ASM_CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL);
+#endif
+	asm("mov ip, #%a0" : : "i" ((TInt)KRequestPending));
+	asm("str ip, [r0, #%a0]" : : "i" _FOFF(TClientRequest, iResult));
+	asm("mov r1, #%a0" : : "i" ((TInt)KClientRequestFlagClosing));
+	asm("add r0, r0, #%a0 " : : "i" _FOFF(TClientRequest, iStatus));
+	asm("bl __e32_atomic_and_ord32 ");
+	asm("mov r2, r0 ");
+	asm("ldmfd sp!, {r0, r1, r3, lr} ");
+	
+#ifdef _DEBUG
+	asm("teq r2, #0");
+	asm("tstne r2, #%a0" : : "i" ((TInt)KClientRequestFlagInUse));
+	asm("moveq r0, #%a0" : : "i" (K::EClientRequestCallbackInWrongState));
+	asm("bleq " CSM_ZN1K5FaultENS_6TFaultE);
+#endif	
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("bic r12, r2, #%a0 " : : "i" ((TInt)KClientRequestFlagMask));
+	asm("teq r12, #%a0 " : : "i" ((TInt)KClientRequestNullStatus));
+	asm("teqne r1, #%a0" : : "i" (EUserModeCallbackCancel));
+	asm(".global __magic_address_client_request_callback ");
+	asm("__magic_address_client_request_callback: ");		// this instruction is magically immune from exceptions
+	asm("strnet r3, [r12]");
+	USER_MEMORY_GUARD_ON(,r12,r12);	
+	asm("tst r2, #%a0" : : "i" ((TInt)KClientRequestFlagClosing));
+	asm("bne " CSM_ZN4Kern9AsyncFreeEPv);
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __REQUEST_COMPLETE_MACHINE_CODED__
+
+#ifndef __MEMMODEL_FLEXIBLE__
+__NAKED__ EXPORT_C void Kern::RequestComplete(DThread* /*aThread*/, TRequestStatus*& /*aStatus*/, TInt /*aReason*/)
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_THREAD_STANDARD);
+	ASM_ASSERT_DATA_PAGING_SAFE;	// Assembler version needs paging check, c++ version calls RawWrite which checks already
+
+	ASM_DEBUG2(KernRequestComplete,r0,lr);
+
+	asm("stmfd	sp!, {r0-r2,lr} ");
+	asm("bl "	CSM_ZN5NKern10LockSystemEv);
+	asm("ldmfd	sp!, {r0-r2,lr} ");
+	asm("ldr	r3, [r1] ");
+	asm("teq	r3, #0 ");
+	asm("beq "	CSM_ZN5NKern12UnlockSystemEv);
+	asm("mov	r12, #0 ");
+	asm("str	r12, [r1] ");				// aStatus=NULL
+	asm("b		_asm_RequestComplete ");	// call into DThread::RequestComplete with r3 == status ptr
+	}
+#endif
+
+__NAKED__ EXPORT_C void Kern::RequestComplete(TRequestStatus*& /*aStatus*/, TInt /*aReason*/)
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_KERNEL_UNLOCKED | MASK_INTERRUPTS_ENABLED | MASK_NOT_ISR | MASK_NOT_IDFC);
+
+	asm("mov	r12, #0 ");
+#ifdef __CPU_ARM_HAS_LDREX_STREX
+	asm("1:		");
+	LDREX(		2, 0);			// read	
+	STREX(		3, 12, 0);		// write
+	asm("teq	r3, #0 ");		// success?
+	asm("bne	1b ");			// no!
+#else
+	asm("swp	r2, r12, [r0] ");
+#endif
+	asm("ldr	r3, __TheScheduler ");
+	asm("teq	r2, #0 ");		// clear zero flag if address is not null
+	USER_MEMORY_GUARD_OFF(,r0,r0);
+	asm(".global __magic_address_kern_request_complete ");
+	asm("__magic_address_kern_request_complete: ");   // this instruction is magically immune from exceptions
+	asm("strnet	r1, [r2] ");
+	USER_MEMORY_GUARD_ON(,r0,r0);
+	__JUMP(		eq, lr);		// return if address zero or store failed
+	asm("ldr	r0, [r3, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r0->current NThread
+	asm("b "	CSM_ZN5NKern19ThreadRequestSignalEP7NThread);
+	}
+
+#endif
+
+extern "C" __NAKED__ TInt read_and_parse_des_header_local(TAny* aUnused, TAny* aDesPtr, TDesHeader& aOut)
+	{
+	asm("mov r0, r1 ");
+	asm("mov r1, r2 ");
+	// fall through
+	}
+
+/**
+Read the header of a user-side descriptor in the current process, parse it, and populate a
+TDesHeader with the result.
+
+@param aDesPtr The descriptor for which information is to be fetched.
+@param aOut    On return, set to the parsed contents of the descriptor header.
+
+@return KErrNone if successful, or one of the system-wide error codes.
+
+@pre  Interrupts must be enabled.
+@pre  Kernel must be unlocked.
+@pre  No fast mutex can be held.
+@pre  Call in a thread context.
+@pre  Can be used in a device driver.
+*/
+__NAKED__ TInt K::USafeReadAndParseDesHeader(TAny* aDesPtr, TDesHeader& aOut)
+	{
+	// r0  -> user-side descriptor
+	// r1  -> parsed header out
+
+	asm("stmfd sp!, {lr} ");
+
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	
+	// set condition codes to 'hi' condition (unless we're reading a null pointer)
+	asm("cmp r0, #0");
+
+	// read first word of descriptor...
+	asm(".global __magic_address_readdesheader1 ");
+	asm("__magic_address_readdesheader1: ");			// this instruction is magically immune from exceptions
+	asm("ldrhit r2, [r0], #4");							// WILL SET Z FLAG AND MODIFY R12 IF EXCEPTION OCCURS
+
+	// r12 = length of this descriptor type...
+	asm("adrhi r12, LengthLookup");
+	asm("ldrhib r12, [r12, r2, lsr #28]");
+	asm("cmphi r12, #0");								// set zero flag for invalid descriptor type
+	// r3 = 2nd word of descriptor (if it is 8 bytes or more in size)...
+	asm("cmphi r12, #7");
+	asm(".global __magic_address_readdesheader2 ");
+	asm("__magic_address_readdesheader2: ");			// this instruction is magically immune from exceptions
+	asm("ldrhit r3, [r0], #4");							// WILL SET Z FLAG AND MODIFY R12 IF EXCEPTION OCCURS
+
+	// r12 = 3rd word of descriptor (if it is 12 bytes or more in size)...
+	asm("cmphi r12, #11");
+	asm(".global __magic_address_readdesheader3 ");
+	asm("__magic_address_readdesheader3: ");			// this instruction is magically immune from exceptions
+	asm("ldrhit r12, [r0], #4");						// WILL SET Z FLAG AND MODIFY R12 IF EXCEPTION OCCURS
+
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("str	r12, [sp, #-4]! ");
+	USER_MEMORY_GUARD_ON(,r12,r12);
+	asm("ldr	r12, [sp], #4 ");
+#endif
+	
+	asm("beq bad_descriptor ");			// Z flag set here if we took an exception
+	
+	asm("eor r14, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, r14 ");
+
+	                                    // r12 == header_in[2]
+	asm("movcc r12, r3 ");				// r12 = header_in[1] if EBufC, EPtrC
+	asm("movgt r12, r0 ");				// r12 = pointer to word after header if EBufC, EBuf
+	asm("addeq r12, r12, #4 ");			// r12 += sizeof(TDesC) if EBufCPtr
+
+	                                    // r3 == header_in[1]
+	                                    // r3 = KErrBadDescriptor if EBufC, EPtrC
+	asm("mvncc r3, #%a0" : : "i" (~TDesHeader::KConstMaxLength));  
+
+	                                    // r0 is an aligned pointer
+	asm("moveq r0, r12 ");              // r0 = pointer to des data if EBufCPtr
+	asm("tst r0, #3 ");                 // if (type == EBufCPtr && ((TUint)p & 3) != 0)
+	asm("bne bad_descriptor ");			//     return KErrBadDescriptor;
+	
+	asm("bic r14, r2, #0xf0000000 ");
+	asm("cmp r14, r3 ");				// if (len > max)
+	asm("bhi bad_descriptor ");			//     return KErrBadDescriptor;
+	
+	asm("stmia r1, {r2,r3,r12}");
+	asm("mov r0, #0 ");
+ 	__POPRET("");
+
+	asm("bad_descriptor: ");
+	asm("mvn r0, #%a0" : : "i" (~KErrBadDescriptor));
+ 	__POPRET("");
+	
+	asm("LengthLookup:");
+	asm(".byte 4,8,12,8,12,0,0,0,0,0,0,0,0,0,0,0");
+	}
+
+#ifdef __SMP__
+extern TSpinLock BTraceFilter2Lock;
+
+__NAKED__ TBool DBTraceFilter2::Check(TUint32 aUid)
+	{
+	asm("DBTraceFilter2_Check: ");
+	asm("stmdb	sp!, {lr}");
+	asm("ldr	r3, [r0,#%a0]" : : "i" _FOFF(DBTraceFilter2,iNumUids));
+	asm("add	r0, r0, #%a0" : : "i" _FOFF(DBTraceFilter2,iUids));
+	asm("mov	r2, #0");
+	asm("0:");
+	asm("cmp	r3, r2");
+	asm("bls	9f");
+	asm("add	r12, r2, r3");
+	asm("mov	r12, r12, asr #1");
+	asm("ldr	lr, [r0, r12, lsl #2]");
+	asm("cmp	r1, lr");
+	asm("addhi	r2, r12, #1");
+	asm("movlo	r3, r12");
+	asm("bne	0b");
+	asm("movs	r0, #1");
+	__POPRET("");
+	asm("9:");
+	asm("movs	r0, #0");
+	__POPRET("");
+	}
+
+
+__NAKED__ TBool SBTraceData::CheckFilter2(TUint32 aUid)
+	{
+	asm("btrace_check_filter2:");
+	// returns r0 = 0 or 1 indicating if trace passed the filter check
+	// returns r2 = trace context id
+
+	asm("stmdb	sp!, {r4-r8,lr}");
+	asm("mov	r4, r0 ");
+	asm("mov	r8, r1 ");
+	asm("mrs	r14, cpsr ");
+	__ASM_CLI();
+	GET_RWNO_TID(,r3);
+	asm("mov	r5, #0 ");			// r5 = TRUE if critical section entered
+	asm("and	r6, r14, #0x0f ");
+	asm("cmp	r6, #3 ");
+	asm("movhi	r6, #2 ");			// r6 = context ID = 1 for FIQ, 2 for IRQ/ABT/UND/SYS
+	asm("bne	1f ");				// branch if not mode_svc
+	asm("ldrb	r12, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iInIDFC));
+	asm("cmp	r12, #0 ");
+	asm("bne	1f ");				// branch if IDFC
+	asm("ldrb	r12, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
+	asm("ldr	r6, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("cmp	r12, #0 ");			// kernel locked?
+	asm("bne	1f ");				// if so, don't enter CS
+	asm("msr	cpsr, r14 ");		// restore interrupts
+	asm("bl "	CSM_ZN5NKern14_ThreadEnterCSEv );
+	asm("mov	r5, #1 ");
+	asm("b		2f ");
+
+	asm("1: ");
+	asm("msr	cpsr, r14 ");		// restore interrupts
+	asm("2: ");						// r6 = context ID, r5 = TRUE if critical section entered
+
+	// DBTraceFilter2::Open()
+	asm("ldr	r0, __BTraceFilter2Lock ");
+	asm("bl "	CSM_ZN9TSpinLock11LockIrqSaveEv );
+	asm("ldr	r7, [r4, #%a0]" : : "i" _FOFF(SBTraceData,iFilter2));
+	asm("cmp	r7, #1 ");
+	asm("ldrhi	r2, [r7, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("addhi	r2, r2, #1 ");
+	asm("strhi	r2, [r7, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("mov	r1, r0 ");
+	asm("ldr	r0, __BTraceFilter2Lock ");
+	asm("bl "	CSM_ZN9TSpinLock16UnlockIrqRestoreEi );
+	asm("cmp	r7, #1 ");
+	asm("bls	3f ");
+
+	// DBTraceFilter2::Check()
+	asm("mov	r0, r7 ");
+	asm("mov	r1, r8 ");
+	asm("bl		DBTraceFilter2_Check ");
+	asm("mov	r8, r0 ");
+
+	// DBTraceFilter2::Close()
+	asm("ldr	r0, __BTraceFilter2Lock ");
+	asm("bl "	CSM_ZN9TSpinLock11LockIrqSaveEv );
+	asm("ldr	r2, [r7, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("ldr	r1, __DBTraceFilter2_iCleanupHead");
+	asm("subs	r2, r2, #1");
+	asm("str	r2, [r7, #%a0]" : : "i" _FOFF(DBTraceFilter2,iAccessCount));
+	asm("ldreq	r2, [r1] ");
+	asm("streq	r7, [r1] ");
+	asm("streq	r2, [r7, #%a0]" : : "i" _FOFF(DBTraceFilter2,iCleanupLink));
+	asm("mov	r1, r0 ");
+	asm("ldr	r0, __BTraceFilter2Lock ");
+	asm("bl "	CSM_ZN9TSpinLock16UnlockIrqRestoreEi );
+	asm("mov	r7, r8 ");		// r7 = result
+	asm("3: ");
+
+	// NKern::ThreadLeaveCS()
+	asm("cmp	r5, #0");
+	asm("blne "	CSM_ZN5NKern14_ThreadLeaveCSEv );
+	asm("mov	r0, r7 ");		// r0 = result
+	asm("mov	r2, r6 ");		// r2 = context id
+	__POPRET("r4-r8,");
+
+	asm("__DBTraceFilter2_iCleanupHead:");
+	asm(".word %a0" : : "i" ((TInt)&DBTraceFilter2::iCleanupHead));
+	asm("__BTraceFilter2Lock: ");
+	asm(".word %a0" : : "i" ((TInt)&BTraceFilter2Lock));
+	}
+#endif
+
+

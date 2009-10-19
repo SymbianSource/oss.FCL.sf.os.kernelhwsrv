@@ -1,0 +1,34 @@
+EXPORTS
+	_ZN3I2s10DisableDMAEii @ 1 NONAME
+	_ZN3I2s10EnableFIFOEiNS_14TI2sFramePhaseEi @ 2 NONAME
+	_ZN3I2s11DisableFIFOEiNS_14TI2sFramePhaseEi @ 3 NONAME
+	_ZN3I2s12IsDMAEnabledEiRi @ 4 NONAME
+	_ZN3I2s13IsFIFOEnabledEiNS_14TI2sFramePhaseERi @ 5 NONAME
+	_ZN3I2s13ReadFIFOLevelEiNS_14TI2sFramePhaseENS_13TI2sDirectionERi @ 6 NONAME
+	_ZN3I2s14GetDelayCyclesEiNS_14TI2sFramePhaseERi @ 7 NONAME
+	_ZN3I2s14GetFrameFormatEiRiS0_ @ 8 NONAME
+	_ZN3I2s14SetDelayCyclesEiNS_14TI2sFramePhaseEi @ 9 NONAME
+	_ZN3I2s15GetSampleLengthEiNS_14TI2sFramePhaseERi @ 10 NONAME
+	_ZN3I2s15GetSamplingRateEiRi @ 11 NONAME
+	_ZN3I2s15SetSampleLengthEiNS_14TI2sFramePhaseENS_16TI2sSampleLengthE @ 12 NONAME
+	_ZN3I2s15SetSamplingRateEiNS_16TI2sSamplingRateE @ 13 NONAME
+	_ZN3I2s16SetFIFOThresholdEiNS_14TI2sFramePhaseENS_13TI2sDirectionEi @ 14 NONAME
+	_ZN3I2s18ConfigureInterfaceEiP5TDes8 @ 15 NONAME
+	_ZN3I2s18ReadFIFOModeStatusEiNS_14TI2sFramePhaseERi @ 16 NONAME
+	_ZN3I2s19ReadReceiveRegisterEiNS_14TI2sFramePhaseERi @ 17 NONAME
+	_ZN3I2s20EnableFIFOInterruptsEiNS_14TI2sFramePhaseEi @ 18 NONAME
+	_ZN3I2s20ReadTransmitRegisterEiNS_14TI2sFramePhaseERi @ 19 NONAME
+	_ZN3I2s21DisableFIFOInterruptsEiNS_14TI2sFramePhaseEi @ 20 NONAME
+	_ZN3I2s21WriteTransmitRegisterEiNS_14TI2sFramePhaseEi @ 21 NONAME
+	_ZN3I2s22IsFIFOInterruptEnabledEiNS_14TI2sFramePhaseERi @ 22 NONAME
+	_ZN3I2s22ReadRegisterModeStatusEiNS_14TI2sFramePhaseERi @ 23 NONAME
+	_ZN3I2s23SetFrameLengthAndFormatEiNS_15TI2sFrameLengthEi @ 24 NONAME
+	_ZN3I2s24EnableRegisterInterruptsEiNS_14TI2sFramePhaseEi @ 25 NONAME
+	_ZN3I2s25DisableRegisterInterruptsEiNS_14TI2sFramePhaseEi @ 26 NONAME
+	_ZN3I2s25GetInterfaceConfigurationEiR5TDes8 @ 27 NONAME
+	_ZN3I2s26IsRegisterInterruptEnabledEiNS_14TI2sFramePhaseERi @ 28 NONAME
+	_ZN3I2s4StopEii @ 29 NONAME
+	_ZN3I2s5StartEii @ 30 NONAME
+	_ZN3I2s9EnableDMAEii @ 31 NONAME
+	_ZN3I2s9IsStartedEiNS_13TI2sDirectionERi @ 32 NONAME
+

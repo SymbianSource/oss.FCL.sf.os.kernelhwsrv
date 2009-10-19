@@ -1,0 +1,32 @@
+// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_cobj.mmp
+// 
+//
+
+TARGET         t_cobj.exe        
+TARGETTYPE     EXE
+SOURCEPATH	../system
+SOURCE         t_cobj.cpp
+LIBRARY        euser.lib
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+EPOCHEAPSIZE	0x00001000 0x01000000	// Set max heap size to 16Mb
+
+capability		all
+
+VENDORID 0x70000001
+
+unpageddata 	// Runs too slowly when data paged due to the amount of user heap use.
+
+SMPSAFE

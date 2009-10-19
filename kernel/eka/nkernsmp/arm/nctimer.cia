@@ -1,0 +1,628 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\arm\nctimer.cia
+// Fast Millisecond Timer Implementation
+// 
+//
+
+#include <e32cia.h>
+#include <arm.h>
+
+#ifdef __MSTIM_MACHINE_CODED__
+
+
+#ifdef _DEBUG
+#define ASM_KILL_LINK(rp,rs)	asm("mov "#rs", #0xdf ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #8 ");\
+								asm("orr "#rs", "#rs", "#rs", lsl #16 ");\
+								asm("str "#rs", ["#rp"] ");\
+								asm("str "#rs", ["#rp", #4] ");
+
+#define ASM_KILL_LINK_OFFSET(rp,rs,offset)	asm("mov "#rs", #0xdf ");\
+											asm("orr "#rs", "#rs", "#rs", lsl #8 ");\
+											asm("orr "#rs", "#rs", "#rs", lsl #16 ");\
+											asm("str "#rs", ["#rp", #"#offset"] ");\
+											asm("str "#rs", ["#rp", #"#offset"+4] ");
+#else
+#define ASM_KILL_LINK(rp,rs)
+#define ASM_KILL_LINK_OFFSET(rp,rs,offset)
+#endif
+
+#ifdef _DEBUG
+#define __DEBUG_CALLBACK(n)	asm("stmfd sp!, {r0-r3,r12,lr} ");		\
+							asm("ldr r0, __TheTimerQ ");			\
+							asm("ldr r12, [r0, #%a0]!" : : "i" _FOFF(NTimerQ,iDebugFn));	\
+							asm("cmp r12, #0 ");					\
+							asm("movne r1, #" #n );					\
+							asm("ldrne r0, [r0, #4] ");				\
+							asm("movne lr, pc ");					\
+							__JUMP(ne,r12);							\
+							asm("ldmfd sp!, {r0-r3,r12,lr} ")
+#else
+#define __DEBUG_CALLBACK(n)
+#endif
+
+
+/** Start a nanokernel timer in zero-drift periodic mode with ISR or DFC callback.
+	Queues the timer to expire in the specified number of nanokernel ticks,
+	measured from the time at which it last expired. This allows exact periodic
+	timers to be implemented with no drift caused by delays in requeueing the
+	timer.
+	The expiry handler will be called in the same context as the previous timer
+	expiry. Generally the way this is used is that NTimer::OneShot() is used to start 
+	the first time interval and this specifies whether the callback is in ISR context 
+	or in the context of the nanokernel timer thread (DfcThread1) or other Dfc thread.
+	The expiry handler then uses NTimer::Again() to requeue the timer.
+
+	@param	aTime Timeout in nanokernel ticks
+	@return	KErrNone if no error
+	@return	KErrInUse if timer is already active
+	@return	KErrArgument if the requested expiry time is in the past
+	@pre	Any context
+ */
+__NAKED__ EXPORT_C TInt NTimer::Again(TInt /*aTime*/)
+	{
+	asm("mrs r12, cpsr ");
+	INTS_OFF(r3, r12, INTS_ALL_OFF);	// all interrupts off
+	asm("ldrb r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iState));		// r3=iState
+	asm("ldr r2, __TheTimerQ ");
+	asm("cmp r3, #%a0" : : "i" ((TInt)EIdle));
+	asm("ldreq r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// r3=iTriggerTime
+	asm("bne add_mscb_in_use ");		// if already queued return KErrInUse
+	asm("add r3, r3, r1 ");				// add requested time interval
+	asm("ldr r1, [r2, #%a0]" : : "i" _FOFF(NTimerQ,iMsCount));		// r1=iMsCount
+	asm("subs r1, r3, r1 ");			// r1=trigger time-next tick time
+	asm("strpl r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// iTriggerTime+=aTime
+	asm("bpl AddMsCallBack ");			// if time interval positive, ok
+	asm("mov r0, #%a0" : : "i" ((TInt)KErrArgument));	// else return KErrArgument
+	asm("b add_mscb_0 ");
+	}
+
+
+/** Start a nanokernel timer in one-shot mode with ISR callback.
+	Queues the timer to expire in the specified number of nanokernel ticks. The
+	actual wait time will be at least that much and may be up to one tick more.
+	The expiry handler will be called in ISR context.
+
+	@param	aTime Timeout in nanokernel ticks
+	@return	KErrNone if no error
+	@return	KErrInUse if timer is already active
+	@pre	Any context
+ */
+__NAKED__ EXPORT_C TInt NTimer::OneShot(TInt /*aTime*/)
+	{
+	asm("mov r2, #0 ");
+	// fall through
+	}
+
+
+/** Start a nanokernel timer in one-shot mode with ISR or DFC callback.
+	Queues the timer to expire in the specified number of nanokernel ticks. The
+	actual wait time will be at least that much and may be up to one tick more.
+	The expiry handler will be called in either ISR context or in the context
+	of the nanokernel timer thread (DfcThread1).
+
+	@param	aTime Timeout in nanokernel ticks
+	@param	aDfc TRUE if DFC callback required, FALSE if ISR callback required.
+	@return	KErrNone if no error
+	@return	KErrInUse if timer is already active
+	@pre	Any context
+ */
+__NAKED__ EXPORT_C TInt NTimer::OneShot(TInt /*aTime*/, TBool /*aDfc*/)
+	{
+	asm("mrs r12, cpsr ");
+	INTS_OFF(r3, r12, INTS_ALL_OFF);	// all interrupts off
+	asm("ldrb r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iState));		// r3=iState
+	asm("cmp r3, #%a0" : : "i" ((TInt)EIdle));
+	asm("bne add_mscb_in_use ");		// if already queued return KErrInUse
+	asm("strb r2, [r0, #%a0]" : : "i" _FOFF(NTimer,iCompleteInDfc));	// iCompleteInDfc=aDfc
+	asm("ldr r2, __TheTimerQ ");
+	asm("ldr r3, [r2, #%a0]" : : "i" _FOFF(NTimerQ,iMsCount));	// r3=iMsCount
+	asm("add r3, r3, r1 ");
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// iTriggerTime=ms count + aTime
+
+	// r0->CallBack, r2=TheTimerQ, r1=time interval, r3=trigger time
+	asm("AddMsCallBack: ");
+	asm("cmp r1, #32 ");				// compare interval with 32ms
+	asm("bge add_mscb_holding ");		// if >=32ms put it on holding queue
+	asm("ldrb r1, [r0, #%a0]" : : "i" _FOFF(NTimer,iCompleteInDfc));	// r1=iCompleteInDfc
+	asm("and r3, r3, #0x1f ");			// r3=trigger time & 0x1f
+	asm("cmp r1, #0 ");
+	asm("add r1, r2, r3, lsl #4 ");		// r1->IntQ corresponding to trigger time
+	asm("addne r1, r1, #8 ");			// if (iCompleteInDfc), r1 points to DfcQ
+	asm("ldr r3, [r1, #4] ");			// r3=pQ->iA.iPrev
+	asm("str r0, [r1, #4] ");			// pQ->iA.iPrev=pC
+	asm("str r0, [r3, #0] ");			// pQ->iA.iPrev->iNext=pC
+	asm("stmia r0, {r1,r3} ");			// pC->iNext=&pQ->iA, pC->iPrev=pQ->iA.iPrev
+	asm("mov r1, #%a0" : : "i" ((TInt)EFinal));
+	asm("strb r1, [r0, #%a0]" : : "i" _FOFF(NTimer,iState));		// iState=EFinal
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// r0=iTriggerTime
+	asm("ldr r3, [r2, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));	// r3=TheTimerQ->iPresent
+	asm("and r0, r0, #0x1f ");
+	asm("mov r1, #1 ");
+	asm("orr r3, r3, r1, lsl r0 ");		// iPresent |= (1<<index)
+	asm("str r3, [r2, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));
+	asm("mov r0, #0 ");					// return KErrNone
+	asm("msr cpsr, r12 ");
+	__JUMP(,lr);
+
+	asm("add_mscb_holding: ");
+	asm("ldr r3, [r2, #%a0]!" : : "i" _FOFF(NTimerQ,iHoldingQ.iA.iPrev));	// r3=pQ->iPrev, r2=&iHoldingQ.iA.iPrev
+	asm("mov r1, #%a0" : : "i" ((TInt)EHolding));
+	asm("strb r1, [r0, #%a0]" : : "i" _FOFF(NTimer,iState));	// iState=EHolding
+	asm("str r0, [r2], #-4 ");			// pQ->iPrev=pC, r2=&iHoldingQ
+	asm("str r0, [r3, #0] ");			// pQ->iPrev->iNext=pC
+	asm("stmia r0, {r2,r3} ");			// pC->iNext=pQ, pC->iPrev=pQ->iPrev
+	asm("mov r0, #0 ");					// return KErrNone
+
+	asm("add_mscb_0: ");
+	asm("msr cpsr, r12 ");
+	__JUMP(,lr);
+
+	asm("add_mscb_in_use: ");
+	asm("mov r0, #%a0" : : "i" ((TInt)KErrInUse));		// return KErrInUse
+	asm("msr cpsr, r12 ");
+	__JUMP(,lr);
+
+	asm("__TheTimerQ: ");
+	asm(".word TheTimerQ ");
+	}
+
+
+/** Starts a nanokernel timer in one-shot mode with callback in dfc thread that provided DFC belongs to.
+	
+	Queues the timer to expire in the specified number of nanokernel ticks. The
+	actual wait time will be at least that much and may be up to one tick more.
+	On expiry aDfc will be queued in ISR context.
+
+    Note that NKern::TimerTicks() can be used to convert milliseconds to ticks.
+
+	@param	aTime Timeout in nanokernel ticks
+	@param	aDfc - Dfc to be queued when the timer expires.
+	
+	@return	KErrNone if no error; KErrInUse if timer is already active.
+	
+	@pre	Any context
+	
+	@see    NKern::TimerTicks()
+ */
+
+__NAKED__ EXPORT_C TInt NTimer::OneShot(TInt /*aTime*/, TDfc& /*aDfc*/)
+	{
+	asm("mrs r12, cpsr ");
+	INTS_OFF(r3, r12, INTS_ALL_OFF);	// all interrupts off
+	asm("ldrb r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iState));		// r3=iState
+	asm("cmp r3, #%a0" : : "i" ((TInt)EIdle));
+	asm("bne add_mscb_in_use ");		// if already queued return KErrInUse
+	asm("mov r3, #0 ");
+	asm("strb r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iCompleteInDfc));	// iCompleteInDfc=0
+	asm("str r3,  [r0, #%a0]" : : "i" _FOFF(NTimer,iFunction));			// iFunction=NULL
+	asm("str r2,  [r0, #%a0]" : : "i" _FOFF(NTimer,iPtr));				// iPtr= &aDfc
+	asm("ldr r2, __TheTimerQ ");
+	asm("ldr r3, [r2, #%a0]" : : "i" _FOFF(NTimerQ,iMsCount));	// r3=iMsCount
+	asm("add r3, r3, r1 ");
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// iTriggerTime=ms count + aTime
+	asm("b AddMsCallBack ");
+	}
+
+
+/** Cancel a nanokernel timer.
+	Removes this timer from the nanokernel timer queue. Does nothing if the
+	timer is inactive or has already expired.
+	Note that if the timer was queued and DFC callback requested it is possible
+	for the expiry handler to run even after Cancel() has been called. This will
+	occur in the case where DfcThread1 is preempted just before calling the
+	expiry handler for this timer and the preempting thread/ISR/IDFC calls
+	Cancel() on the timer.
+
+	@pre	Any context
+ */
+EXPORT_C __NAKED__ void NTimer::Cancel()
+	{
+	asm("mrs r12, cpsr ");
+	INTS_OFF(r3, r12, INTS_ALL_OFF);	// all interrupts off
+	asm("ldrb r3, [r0, #%a0]" : : "i" _FOFF(NTimer,iState));
+	asm("mov r1, #0 ");
+	asm("cmp r3, #%a0" : : "i" ((TInt)ETransferring));
+	asm("bcc cancel_idle ");			// if EIdle, nothing to do
+	asm("strb r1, [r0, #%a0]" : : "i" _FOFF(NTimer,iState));	// iState=EIdle
+	asm("beq cancel_xfer ");			// if ETransferring, branch
+	asm("ldmia r0, {r1,r2} ");			// If queued, dequeue - r1=next, r2=prev
+	asm("cmp r3, #%a0" : : "i" ((TInt)ECritical));
+	asm("str r1, [r2, #0] ");			// if queued, prev->next=next
+	asm("str r2, [r1, #4] ");			// and next->prev=prev
+	ASM_KILL_LINK(r0,r1);
+	asm("ldrcs r1, __TheTimerQ ");
+	asm("ldrhi r0, [r0, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// r0=iTriggerTime
+	asm("ldrhi r3, [r1, #%a0]" : : "i" _FOFF(NTimerQ,iMsCount));	// r3=iMsCount
+	asm("bcc cancel_idle ");			// if EHolding or EOrdered, finished
+	asm("beq cancel_critical ");		// if ECritical, branch
+										// r1->ms timer, state was EFinal
+	asm("subs r3, r0, r3 ");			// r3=trigger time - next tick
+	asm("bmi cancel_idle ");			// if trigger time already expired, don't touch iPresent (was on iCompletedQ)
+	asm("and r0, r0, #0x1f ");			// r0=iTriggerTime&0x1f = queue index
+	asm("mov r3, r1 ");
+	asm("ldr r2, [r3, r0, lsl #4]! ");	// r3->iIntQ for this timer, r2=iIntQ head pointer
+	asm("cmp r2, r3 ");
+	asm("bne cancel_idle ");			// iIntQ not empty so finished
+	asm("ldr r2, [r3, #8]! ");			// r2=iDfcQ head pointer
+	asm("cmp r2, r3 ");
+	asm("bne cancel_idle ");			// iDfcQ not empty so finished
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));	// r2=TheTimerQ->iPresent
+	asm("mov r3, #1 ");
+	asm("bic r2, r2, r3, lsl r0 ");		// iPresent &= ~(1<<index)
+	asm("str r2, [r1, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));
+
+	asm("cancel_idle: ");
+	asm("msr cpsr, r12 ");
+	__JUMP(,lr);
+
+	asm("cancel_xfer: ");
+	asm("ldr r1, __TheTimerQ ");		// r1->ms timer, state was ETransferring
+	asm("strb r3, [r1, #%a0]" : : "i" _FOFF(NTimerQ,iTransferringCancelled));
+	asm("msr cpsr, r12 ");
+	__JUMP(,lr);
+
+	asm("cancel_critical: ");			// r1->ms timer, state was ECritical
+	asm("strb r3, [r1, #%a0]" : : "i" _FOFF(NTimerQ,iCriticalCancelled));
+	asm("msr cpsr, r12 ");
+	__JUMP(,lr);
+	}
+
+
+/** Return the number of ticks before the next nanokernel timer expiry.
+	May on occasion return a pessimistic estimate (i.e. too low).
+	Used by base port to disable the system tick interrupt when the system
+	is idle.
+
+	@return	The number of ticks before the next nanokernel timer expiry.
+	
+	@pre	Interrupts must be disabled.
+	
+	@post	Interrupts are disabled.
+ */
+EXPORT_C __NAKED__ TInt NTimerQ::IdleTime()
+	{
+	ASM_CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED);
+
+	asm("ldr r12, __TheTimerQ ");
+	asm("mvn r0, #0x80000000 ");		// set r0=KMaxTInt initially
+	asm("ldr r2, [r12, #%a0]!" : : "i" _FOFF(NTimerQ,iOrderedQ));	// r12->iOrderedQ, r2=iOrderedQ first
+	asm("ldr r3, [r12, #-12] ");		// r3=next tick number
+	asm("cmp r2, r12 ");				// check if iOrderedQ empty
+	asm("ldrne r0, [r2, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// if not, r0=ordered Q first->trigger time
+	asm("ldr r1, [r12, #-8]! ");		// r1=iHoldingQ first, r12->iHoldingQ
+	asm("bicne r0, r0, #0x0f ");
+	asm("subne r0, r0, #16 ");			// r0=tick at which transfer to final queue would occur
+	asm("subne r0, r0, r3 ");			// return value = trigger time - iMsCount
+	asm("cmp r1, r12 ");				// holding Q empty?
+	asm("ldr r1, [r12, #-8] ");			// r1=iPresent
+	asm("and r12, r3, #0x1f ");			// r12=next tick mod 32
+	asm("beq 1f ");						// branch if holding Q empty
+	asm("ands r2, r3, #0x0f ");			// else r2=next tick no. mod 16
+	asm("rsbne r2, r2, #16 ");			// if nonzero, subtract from 16 to give #ticks before next multiple of 16
+	asm("cmp r2, r0 ");
+	asm("movlt r0, r2 ");				// update result if necessary
+	asm("1: ");
+	asm("movs r1, r1, ror r12 ");		// r1=iPresent rotated so that LSB corresponds to next tick
+	__JUMP(eq,lr);						// if iPresent=0, finished
+	asm("mov r3, #0 ");					// r3 will accumulate bit number of least significant 1
+	asm("movs r2, r1, lsl #16 ");
+	asm("movne r1, r2 ");
+	asm("addeq r3, r3, #16 ");
+	asm("movs r2, r1, lsl #8 ");
+	asm("movne r1, r2 ");
+	asm("addeq r3, r3, #8 ");
+	asm("movs r2, r1, lsl #4 ");
+	asm("movne r1, r2 ");
+	asm("addeq r3, r3, #4 ");
+	asm("movs r2, r1, lsl #2 ");
+	asm("movne r1, r2 ");
+	asm("addeq r3, r3, #2 ");
+	asm("movs r2, r1, lsl #1 ");
+	asm("addeq r3, r3, #1 ");
+	asm("cmp r3, r0 ");
+	asm("movlt r0, r3 ");				// update result if necessary
+	__JUMP(,lr);
+	}
+
+
+/** Tick over the nanokernel timer queue.
+	This function should be called by the base port in the system tick timer ISR.
+	It should not be called at any other time.
+	The value of 'this' to pass is the value returned by NTimerQ::TimerAddress().
+
+	@see NTimerQ::TimerAddress()
+ */
+__NAKED__ EXPORT_C void NTimerQ::Tick()
+	{
+	// Enter with r0 pointing to NTimerQ
+	asm("ldr r1, __TheScheduler ");
+	asm("mrs r12, cpsr ");
+
+	// do the timeslice tick - on ARM __SCHEDULER_MACHINE_CODED is mandatory
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
+	asm("ldr r3, [r2, #%a0]" : : "i" _FOFF(NThread,iTime));
+	asm("subs r3, r3, #1 ");
+	asm("strge r3, [r2, #%a0]" : : "i" _FOFF(NThread,iTime));
+	asm("streqb r12, [r1, #%a0]" : : "i" _FOFF(TScheduler,iRescheduleNeededFlag));	// r12 lower byte is never 0
+	INTS_OFF(r3, r12, INTS_ALL_OFF);	// disable all interrupts
+
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iMsCount));	// r1=iMsCount
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));	// r3=iPresent
+	asm("and r2, r1, #0x1f ");			// r2=iMsCount & 0x1f
+	asm("add r1, r1, #1 ");
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iMsCount));	// iMsCount++
+	asm("mov r1, #1 ");
+	asm("tst r3, r1, lsl r2 ");			// test iPresent bit for this tick
+	asm("bic r1, r3, r1, lsl r2 ");		// clear iPresent bit
+	asm("strne r1, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));	// update iPresent if necessary
+	asm("bne mstim_tick_1 ");			// if bit was set, we have work to do
+	asm("tst r2, #0x0f ");				// else test for tick 0 or 16
+	asm("msrne cpsr_c, r12 ");			// if neither return
+	__JUMP(ne,lr);
+
+	asm("mstim_tick_1: ");				// get here if timers complete this tick
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("add r1, r0, r2, lsl #4 ");		// r1->IntQ for this tick
+	asm("ldr r3, [r1, #8]! ");			// r1->DfcQ and r3=DfcQ first
+	asm("mov r5, #0 ");					// r5=doDfc=FALSE
+	asm("cmp r3, r1 ");
+	asm("beq mstim_tick_2 ");			// skip if DfcQ empty
+
+	// Move DFC completions from iDfcQ to iCompletedQ
+	asm("ldr lr, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iCompletedQ.iA.iPrev));	// lr=last completed
+	asm("ldr r4, [r1, #4] ");			// r4=DfcQ last
+	asm("add r5, r0, #%a0" : : "i" _FOFF(NTimerQ,iDfc));	// doDfc=TRUE
+	asm("str r3, [lr, #0] ");			// old last pending->next = DfcQ first
+	asm("str r4, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iCompletedQ.iA.iPrev));	// last pending=DfcQ last
+	asm("str lr, [r3, #4] ");			// DfcQ first->prev = old last pending
+	asm("add lr, r0, #%a0" : : "i" _FOFF(NTimerQ,iCompletedQ));				// lr=&iCompletedQ.iA
+	asm("str lr, [r4, #0] ");			// DfcQ last->next=&iPending
+	asm("str r1, [r1, #0] ");			// DfcQ first=&DfcQ
+	asm("str r1, [r1, #4] ");			// DfcQ last=&DfcQ
+
+	asm("mstim_tick_2: ");
+	asm("tst r2, #0x0f ");				// check for tick 0 or 16
+	asm("bne mstim_tick_3 ");			// skip if not
+
+	// Tick 0 or 16 - must check holding queue and ordered queue
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iHoldingQ));	// r3=iHoldingQ first
+	asm("add r6, r0, #%a0" : : "i" _FOFF(NTimerQ,iHoldingQ));	// r6=&iHoldingQ
+	asm("cmp r3, r6 ");
+	asm("addne r5, r0, #%a0" : : "i" _FOFF(NTimerQ,iDfc));	// if iHoldingQ nonempty, doDfc=TRUE and skip ordered queue check
+	asm("bne mstim_tick_3 ");			// skip if iHoldingQ nonempty
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iOrderedQ));	// r3=iOrderedQ first
+	asm("add r6, r0, #%a0" : : "i" _FOFF(NTimerQ,iOrderedQ));	// r6=&iOrderedQ
+	asm("cmp r3, r6 ");
+	asm("beq mstim_tick_3 ");			// skip if iOrderedQ empty
+	asm("ldr r4, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iMsCount));		// else r4=iMsCount
+	asm("ldr r3, [r3, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// and r3=trigger time of first on ordered queue
+	asm("sub r3, r3, r4 ");				// r3=trigger time-iMsCount
+	asm("cmp r3, #31 ");
+	asm("addls r5, r0, #%a0" : : "i" _FOFF(NTimerQ,iDfc));	// if first expiry in <=31ms, doDfc=TRUE
+
+	// Check iIntQ
+	asm("mstim_tick_3: ");
+	asm("ldr r3, [r1, #-8]! ");			// r1->iIntQ, r3=iIntQ first
+	asm("mov r6, r12 ");				// r6=original cpsr
+	asm("cmp r3, r1 ");					// test if iIntQ empty
+	asm("beq mstim_tick_4 ");			// branch if it is
+
+	// Transfer iIntQ to a temporary queue
+	asm("ldr r4, [r1, #4] ");			// r4=iIntQ last
+	asm("str r1, [r1, #0] ");			// clear iIntQ
+	asm("str r1, [r1, #4] ");
+	asm("stmfd sp!, {r3,r4} ");			// copy queue onto stack
+	asm("str sp, [r4, #0] ");			// iIntQ last->next=sp
+	asm("str sp, [r3, #4] ");			// iIntQ first->prev=sp
+	INTS_OFF_1(r4, r6, INTS_ALL_OFF);	// r4=cpsr with all interrupts off
+
+	// Walk the temporary queue and complete timers
+	asm("mstim_tick_5: ");
+	INTS_OFF_2(r4, r6, INTS_ALL_OFF);	// all interrupts off
+	asm("ldr r0, [sp, #0] ");			// r0=q.iNext
+	asm("mov r3, #%a0" : : "i" ((TInt)NTimer::EIdle));
+	asm("cmp r0, sp ");					// end of queue?
+	asm("beq mstim_tick_6 ");			// if so, branch out
+	asm("ldmia r0!, {r1,r2} ");			// r1=next r2=prev, r0->iPtr
+	asm("strb r3, [r0, #%a0]" : : "i" (_FOFF(NTimer,iState)-8));	// iState=EIdle
+	ASM_KILL_LINK_OFFSET(r0,r12,-8);
+	asm("ldmia r0, {r0,r12} ");			// r0=iPtr, r12=iFunction
+	asm("str r1, [r2, #0] ");			// prev->next=next
+	asm("str r2, [r1, #4] ");			// next->prev=prev
+	asm("adr lr, mstim_tick_5 ");		// return to mstim_tick_5
+	asm("msr cpsr, r6 ");				// restore interrupts
+	asm("cmp r12, #0 ");				// iFunction==NULL ?
+	asm("beq mstim_tick_7 ");			// if so queue Dfc (iPtr is a pointer to TDfc )
+	__JUMP(,r12);						// call timer callback with r0=iPtr
+	asm("b mstim_tick_6 ");				// skip queuing of Dfc
+
+	asm("mstim_tick_7: ");
+	asm("b  " CSM_ZN4TDfc3AddEv);		// add the DFC with r0=iPtr - a pointer to TDfc
+
+	asm("mstim_tick_6: ");
+	asm("add sp, sp, #8 ");				// take temporary queue off stack
+
+	asm("mstim_tick_4: ");
+	asm("msr cpsr, r6 ");				// restore original interrupt state
+	asm("movs r0, r5 ");				// DFC needed? if so, r0->iDfc
+	asm("ldmfd sp!, {r4-r6,lr} ");		// restore registers
+	asm("bne  " CSM_ZN4TDfc3AddEv);				// add the DFC if required
+	__JUMP(,lr);						// if no DFC needed, return
+
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+	}
+
+__NAKED__ void NTimerQ::DfcFn(TAny* /*aPtr*/)
+	{
+	// Enter with r0 pointing to NTimerQ
+	asm("stmfd sp!, {r7-r11,lr} ");
+	SET_INTS_1(r11, MODE_SVC, INTS_ALL_ON);		// always called from SVC mode 
+	SET_INTS_1(r10, MODE_SVC, INTS_ALL_OFF);	// with interruts enabled
+
+	// First transfer entries on the Ordered queue to the Final queues
+	asm("mstim_dfc_0: ");
+	SET_INTS_2(r10, MODE_SVC, INTS_ALL_OFF);	// disable interrupts
+	asm("ldr r1, [r0, #%a0]!" : : "i" _FOFF(NTimerQ,iOrderedQ));	// r0->iOrderedQ, r1=orderedQ first
+	asm("cmp r1, r0 ");
+	asm("beq mstim_dfc_1 ");			// ordered Q empty so move to next stage
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// r2=r1->trigger time
+	asm("ldr r3, [r0, #-12] ");			// r3=iMsCount
+	asm("subs r3, r2, r3 ");			// r3=trigger time-iMsCount
+	asm("cmp r3, #31 ");				// test if remaining time <32ms or has already passed
+	asm("bgt mstim_dfc_1 ");			// if >31ms, move to next stage (signed comparison to catch already passed case)
+	asm("sub r0, r0, #%a0" : : "i" _FOFF(NTimerQ,iOrderedQ));		// r0->NTimerQ
+	asm("bl dequeaddfinal ");			// <=31ms, so deque and add to final queue
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	__DEBUG_CALLBACK(0);
+	asm("b mstim_dfc_0 ");
+
+	asm("mstim_dfc_1: ");
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	asm("sub r0, r0, #%a0" : : "i" _FOFF(NTimerQ,iOrderedQ));		// r0->NTimerQ
+	__DEBUG_CALLBACK(1);
+
+	// Next transfer entries on the Holding queue to the Ordered queue or final queue
+	asm("mstim_dfc_2: ");
+	SET_INTS_2(r10, MODE_SVC, INTS_ALL_OFF);	// disable interrupts
+	asm("ldr r1, [r0, #%a0]!" : : "i" _FOFF(NTimerQ,iHoldingQ));	// r0->iHoldingQ, r1=holdingQ first
+	asm("cmp r1, r0 ");
+	asm("beq mstim_dfc_3 ");			// holding Q empty so move to next stage
+	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// r2=r1->trigger time
+	asm("ldr r3, [r0, #-4] ");			// r3=iMsCount
+	asm("sub r0, r0, #%a0" : : "i" _FOFF(NTimerQ,iHoldingQ));		// r0->NTimerQ
+	asm("subs r3, r2, r3 ");			// r3=trigger time-iMsCount
+	asm("cmp r3, #31 ");				// test if remaining time <32ms or has already passed
+	asm("bgt mstim_dfc_4 ");			// if >31ms, need to put it on the ordered Q (signed comparison to catch late case)
+	asm("bl dequeaddfinal ");			// <=31ms or already passed, so deque and add to final queue
+
+	asm("mstim_dfc_7: ");
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	__DEBUG_CALLBACK(2);
+	asm("b mstim_dfc_2 ");				// process next holding Q entry
+
+	// need to put entry r1 trigger time r2 on the ordered Q
+	asm("mstim_dfc_4: ");
+	asm("ldmia r1, {r3,r12} ");			// r3=r1->next, r12=r1->prev
+	asm("mov r9, #0 ");
+	asm("strb r9, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iTransferringCancelled));	// iTransferringCancelled=0
+	asm("str r3, [r12, #0] ");			// prev->next=next
+	asm("str r12, [r3, #4] ");			// next->prev=prev
+	asm("mov r3, #%a0" : : "i" ((TInt)NTimer::ETransferring));
+	asm("strb r3, [r1, #%a0]" : : "i" _FOFF(NTimer,iState));		// r1->iState=ETransferring
+
+	asm("mstim_dfc_5: ");
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	asm("add lr, r0, #%a0" : : "i" _FOFF(NTimerQ,iOrderedQ));	// lr=&iOrderedQ.iA
+	__DEBUG_CALLBACK(3);
+	SET_INTS_2(r10, MODE_SVC, INTS_ALL_OFF);	// disable interrupts
+
+	asm("mstim_dfc_9: ");
+	asm("ldrb r12, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iTransferringCancelled));
+	asm("ldr r3, [lr, #0] ");			// r3=iOrderedQ first
+	asm("cmp r12, #0 ");
+	asm("bne mstim_dfc_7 ");			// Entry r1 has been cancelled so move to next one
+	asm("strb r9, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iCriticalCancelled));	// iCriticalCancelled=0
+
+	// Walk iOrderedQ to find correct position for this entry
+	asm("mstim_dfc_6: ");
+	asm("cmp r3, lr ");					// reached end of ordered Q?
+	asm("ldrne r12, [r3, #%a0]" : : "i" _FOFF(NTimer,iTriggerTime));	// if not, r12=r3->trigger time
+	asm("beq mstim_dfc_8 ");			// branch if we have
+	asm("mov r8, #%a0" : : "i" ((TInt)NTimer::ECritical));
+	asm("subs r12, r12, r2 ");			// r12=r3->trigger - r1->trigger
+	asm("bpl mstim_dfc_8 ");			// branch if r3 expires after r1
+	asm("strb r8, [r3, #%a0]" : : "i" _FOFF(NTimer,iState));		// r3->iState=ECritical
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	asm("mov r8, #%a0" : : "i" ((TInt)NTimer::EOrdered));
+	__DEBUG_CALLBACK(4);
+	SET_INTS_2(r10, MODE_SVC, INTS_ALL_OFF);	// disable interrupts
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iTransferringCancelled));
+	asm("tst r12, #0xff00 ");			// test iCriticalCancelled
+	asm("streqb r8, [r3, #%a0]" : : "i" _FOFF(NTimer,iState));	// if not set, r3->iState=EOrdered
+	asm("cmp r12, #0 ");				// test iTransferringCancelled and iCriticalCancelled
+	asm("ldreq r3, [r3, #0] ");			// if neither set r3=r3->iNext
+	asm("beq mstim_dfc_6 ");			// and inspect next ordered Q entry
+	asm("b mstim_dfc_9 ");				// if either set, start again from beginning of ordered Q
+
+	asm("mstim_dfc_8: ");				// if we get to here we need to insert r1 before r3
+	asm("ldr r12, [r3, #4] ");			// r12=r3->iPrev
+	asm("mov r8, #%a0" : : "i" ((TInt)NTimer::EOrdered));
+	asm("strb r8, [r1, #%a0]" : : "i" _FOFF(NTimer,iState));		// r1->iState=EOrdered
+	asm("str r1, [r3, #4] ");			// r3->prev=r1
+	asm("str r1, [r12, #0] ");			// r3->prev->next=r1
+	asm("stmia r1, {r3,r12} ");			// r1->next=r3, r1->prev=r3->prev
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	__DEBUG_CALLBACK(5);
+	asm("b mstim_dfc_2 ");				// process next holding Q entry
+
+	// Get here when all holding Q entries processed
+	asm("mstim_dfc_3: ");
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	__DEBUG_CALLBACK(6);
+	asm("add r8, r0, #16 ");			// r8->iCompletedQ
+
+	// Finally do call backs for timers which requested DFC callback
+	asm("mstim_dfc_10: ");
+	SET_INTS_2(r10, MODE_SVC, INTS_ALL_OFF);	// disable interrupts
+	asm("ldr r9, [r8, #0] ");			// r9=completed Q first
+	asm("mov r3, #%a0" : : "i" ((TInt)NTimer::EIdle));
+	asm("cmp r9, r8 ");					// Is completed Q empty?
+	asm("beq mstim_dfc_11 ");			// branch out if it is
+	asm("ldmia r9!, {r1,r2} ");			// r1=r9->next, r2=r9->prev, r9->iPtr of completed entry
+	asm("strb r3, [r9, #%a0]" : : "i" (_FOFF(NTimer,iState)-8));	// iState=EIdle for completed entry
+	asm("ldmia r9, {r0,r3} ");			// r0=iPtr, r3=function address
+	ASM_KILL_LINK_OFFSET(r9,r12,-8);
+	asm("str r1, [r2, #0] ");			// prev->next=next
+	asm("str r2, [r1, #4] ");			// next->prev=prev
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	__DEBUG_CALLBACK(7);
+	asm("adr lr, mstim_dfc_10 ");		// return to mstim_dfc_10
+	__JUMP(,r3);						// call back with r0=iPtr
+
+	// All done
+	asm("mstim_dfc_11: ");	
+	SET_INTS_2(r11, MODE_SVC, INTS_ALL_ON);	// let interrupts in
+	asm("ldmfd sp!, {r7-r11,pc} ");		// and return
+
+	// Subroutine dequeaddfinal
+	// Deque the NTimer pointed to by r1 and put it on its final queue
+	// Enter with r0->NTimerQ, r1->NTimer, r2=r1->iTriggerTime
+	// Enter and leave with interrupts disabled
+	// Can modify r1-r3,r8,r9,r12
+	asm("dequeaddfinal: ");
+	asm("ldmia r1, {r8,r9} ");			// r8=r1->next, r9=r1->prev
+	asm("mov r3, #%a0" : : "i" ((TInt)NTimer::EFinal));
+	asm("strb r3, [r1, #%a0]" : : "i" _FOFF(NTimer,iState));	// iState=EFinal
+	asm("str r8, [r9, #0] ");			// prev->next=next
+	asm("str r9, [r8, #4] ");			// next->prev=prev
+	asm("ldr r12, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));	// r12=timer iPresent
+	asm("and r2, r2, #0x1f ");			// r2=trigger time & 0x1f
+	asm("mov r3, #1 ");
+	asm("orr r12, r12, r3, lsl r2 ");	// set bit in iPresent
+	asm("ldrb r3, [r1, #%a0]" : : "i" _FOFF(NTimer,iCompleteInDfc));	// r3=iCompleteInDfc
+	asm("str r12, [r0, #%a0]" : : "i" _FOFF(NTimerQ,iPresent));
+	asm("add r2, r0, r2, lsl #4 ");		// r2->iIntQ for this timer
+	asm("cmp r3, #0 ");
+	asm("addne r2, r2, #8 ");			// if iCompleteInDfc, r2->iDfcQ for this timer
+	asm("ldr r12, [r2, #4] ");			// r12->last on queue
+	asm("str r1, [r2, #4] ");			// queue->last=this
+	asm("str r1, [r12, #0] ");			// last->next=this
+	asm("stmia r1, {r2,r12} ");			// this->next=&queue, this->prev=last on queue
+	__JUMP(,lr);
+	}
+#endif
+

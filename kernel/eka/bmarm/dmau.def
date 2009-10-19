@@ -1,0 +1,13 @@
+EXPORTS
+	__11DDmaRequestR11TDmaChannelPFQ211DDmaRequest7TResultPv_vPvi @ 1 NONAME ; DDmaRequest::DDmaRequest(TDmaChannel &, void (*)(DDmaRequest::TResult, void *), void *, int)
+	Close__11TDmaChannel @ 2 NONAME ; TDmaChannel::Close(void)
+	DmaTestInfo__Fv @ 3 NONAME ; DmaTestInfo(void)
+	ExpandDesList__11DDmaRequesti @ 4 NONAME ; DDmaRequest::ExpandDesList(int)
+	Fragment__11DDmaRequestUlUliUiUl @ 5 NONAME ; DDmaRequest::Fragment(unsigned long, unsigned long, int, unsigned int, unsigned long)
+	FreeDesList__11DDmaRequest @ 6 NONAME ; DDmaRequest::FreeDesList(void)
+	Open__11TDmaChannelRCQ211TDmaChannel11SCreateInfoRP11TDmaChannel @ 7 NONAME ; TDmaChannel::Open(TDmaChannel::SCreateInfo const &, TDmaChannel *&)
+	Queue__11DDmaRequest @ 8 NONAME ; DDmaRequest::Queue(void)
+	"_._11DDmaRequest" @ 9 NONAME ; DDmaRequest::~DDmaRequest(void)
+	CancelAll__11TDmaChannel @ 10 NONAME ; TDmaChannel::CancelAll(void)
+	StaticExtension__11TDmaChanneliPv @ 11 NONAME ; TDmaChannel::StaticExtension(int, void *)
+

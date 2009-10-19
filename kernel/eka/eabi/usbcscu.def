@@ -1,0 +1,23 @@
+EXPORTS
+	_ZN15TEndpointBuffer11WriteBufferEPvjiR14TRequestStatus @ 1 NONAME
+	_ZN15TEndpointBuffer11WriteBufferEjjiR14TRequestStatus @ 2 NONAME
+	_ZN15TEndpointBuffer16GetInBufferRangeERPvRj @ 3 NONAME
+	_ZN15TEndpointBuffer16GetInBufferRangeERjS0_ @ 4 NONAME
+	_ZN15TEndpointBuffer5CloseEv @ 5 NONAME
+	_ZN15TEndpointBuffer9GetBufferERPvRjRiR14TRequestStatusj @ 6 NONAME
+	_ZN15TEndpointBufferC1Ev @ 7 NONAME
+	_ZN15TEndpointBufferC2Ev @ 8 NONAME
+	_ZN16RDevUsbcScClient12OpenEndpointER15TEndpointBufferi @ 9 NONAME
+	_ZN16RDevUsbcScClient17FinalizeInterfaceERP6RChunk @ 10 NONAME
+	_ZN16RDevUsbcScClient17FinalizeInterfaceEv @ 11 NONAME
+	_ZN16RDevUsbcScClient20GetDataTransferChunkERP6RChunk @ 12 NONAME
+	_ZN16RDevUsbcScClient28StartNextOutAlternateSettingEi @ 13 NONAME
+	_ZN18TUsbcScChunkHeader20GetNumberOfEndpointsEi @ 14 NONAME
+	_ZN18TUsbcScChunkHeader9GetBufferEiiRP24TUsbcScHdrEndpointRecord @ 15 NONAME
+	_ZN18TUsbcScChunkHeaderC1E6RChunk @ 16 NONAME
+	_ZN18TUsbcScChunkHeaderC2E6RChunk @ 17 NONAME
+	_ZN15TEndpointBuffer4DumpEv @ 18 NONAME
+	_ZN15TEndpointBuffer10TakeBufferERPvRjRiR14TRequestStatusj @ 19 NONAME
+	_ZN15TEndpointBuffer6ExpireEv @ 20 NONAME
+	_ZN15TEndpointBuffer6ExpireEPv @ 21 NONAME
+

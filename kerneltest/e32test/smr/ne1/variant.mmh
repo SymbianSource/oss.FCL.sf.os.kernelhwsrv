@@ -1,0 +1,139 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+//
+// TO DO: (mandatory)
+//
+// Add here a definition for your CPU (list in CONFIG.INC)
+//
+macro __CPU_ARM11MP__
+//
+// TO DO: (mandatory)
+//
+// Add here a definition for your Memory Model
+//
+#define MM_MULTIPLE
+//
+// TO DO: (mandatory)
+//
+// Macro which generates the names for the binaries for this platform
+//
+#ifndef VariantTarget
+#define VariantTarget(name,ext) _ne1_tb_##name##.##ext
+#endif
+
+#ifndef VariantMediaDefIncludePath
+#define VariantMediaDefIncludePath /epoc32/include/ne1_tb
+#endif
+
+// Used in MMP files for include paths e.g. to hcrconfig.h header
+#ifndef VariantIncludePath
+#define VariantIncludePath /epoc32/include/ne1_tb
+#endif
+
+
+//Include debug support
+macro __DEBUGGER_SUPPORT__
+
+//
+// TO DO: 
+//
+// If euser is built from the variant, uncomment the following line to build it
+// as ARM rather than Thumb
+// 
+//#define __BUILD_VARIANT_EUSER_AS_ARM__
+//
+// TO DO: (optional)
+//
+// To replace some of the generic utility functions with variant specific
+// versions (eg to replace memcpy with a version optimised for the hardware),
+// uncomment the two lines below and edit the files in the replacementUtils
+// directory.
+//
+//#define REPLACE_GENERIC_UTILS
+//#define VariantReplacementUtilsPath ne1_tb/replacement_utils
+//
+// TO DO: (optional)
+//
+// Enable BTrace support in release versions of the kernel by adding
+// the following BTRACE macro declarations
+//
+macro BTRACE_KERNEL_ALL
+//
+// TO DO:
+//
+// Uncomment the following line if using the r1p0 release or later of the ARM1136 processor.
+// 
+//#define __CPU_ARM1136_IS_R1__
+//
+
+// Include the following line if default memory mapping should use shared memory.
+// Should be on for multicore (SMP) devices.
+
+macro	__CPU_USE_SHARED_MEMORY
+
+// Include the following line if CPU cannot tolerate the presence of nonshared
+// cached memory. This seems to be the case for the ARM11 MPCore - corruption
+// of data is observed in non-shared cached regions if __CPU_USE_SHARED_MEMORY
+// is used.
+
+macro	__CPU_FORCE_SHARED_MEMORY_IF_CACHED
+
+
+
+// TO DO:
+//
+// Uncomment the next line if using the ARM1136 processor and ARM1136 Erratum 406973
+// "CLREX instruction might be ignored during data cache line fill"
+// is fixed on this hardware.
+// 
+//#define __CPU_ARM1136_ERRATUM_406973_FIXED
+
+// Uncomment next line if using the ARM1136 processor and ARM1136 Erratum 408022 
+// "Cancelled write to CONTEXTID register might update ASID" 
+// is fixed on this hardware.
+//
+//#define __CPU_ARM1136_ERRATUM_408022_FIXED
+
+
+// Uncomment if:
+//	1)	using ARM1136 processor and ARM1136 Erratum 411920: "Invalidate Entire Instruction Cache
+//	  	operation might fail to invalidate some lines if coincident with linefill"
+//  	  	is fixed on this hardware, or
+//	2)	using ARM1176 processor and ARM1176 Erratum 415045: "Invalidate Entire Instruction Cache
+// 	  	operation might fail to invalidate some lines if coincident with linefill
+//	  	is fixed on this hardware.
+// Workaround:
+//	1)	Disables the use of of prefetch range cache operations by setting RV bit in Auxiliary Ctrl Reg.
+//	2)	Replaces Invalidate ICache operation with the sequence defined in the errata document.
+// If this macro is enabled, it should be accompanied by:
+// 	"GBLL CFG_CPU_ARM1136_ERRATUM_411920_FIXED" in variant.mmh
+//
+// #define __CPU_ARM1136_ERRATUM_411920_FIXED
+
+macro FAULTY_NONSHARED_DEVICE_MEMORY
+
+#define AsspNKernIncludePath		/epoc32/include/assp/naviengine/nkern
+
+// FIQ can not be disabled on naviengine, tell kernel to ignore it...
+macro __FIQ_IS_UNCONTROLLED__
+
+macro MONITOR_THREAD_CPU_TIME
+
+#if defined(__USING_USING_ASSP_REGISTER_API__) || defined(__USING_INTERRUPT_API__) || defined(__USING_ASSP_REGISTER_API__)
+library	VariantTarget(kanaviengine,lib)
+#endif
+

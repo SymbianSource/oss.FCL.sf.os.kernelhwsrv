@@ -1,0 +1,44 @@
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/bld.inf
+// Test code for stdexe and stddll 0th ordinal access
+// This has to be done in a separate bld.inf as stdexe/stddlls can't be built from
+// std base codeline.  Building stdexe/stddlls requires the following syslibs libraries 
+// to be present under the epoc32 dir of the platform type you are building for:
+// libcrt0.dll/.lib
+// ucrt0.dll/.lib
+// The binaries are intending to be run from non-XIP memory to allow the fixups
+// of the import table to be tested by adding lines like those below to an oby file:
+// file=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oedll.dll         sys\bin\t_oedll.dll 
+// data=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oedll1.dll        sys\bin\t_oedll1.dll attrib=r
+// data=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oeexport.exe      sys\bin\t_oeexport.exe attrib=r
+// data=\EPOC32\RELEASE\##MAIN##\##BUILD##\t_oeexport1.exe      sys\bin\t_oeexport1.exe attrib=r
+// 
+//
+
+/**
+ @file
+*/
+
+#ifdef LIBC_UCRT_PRESENT
+// Only supported by the following platforms
+PRJ_PLATFORMS
+ARMV5 WINSCW
+
+PRJ_TESTMMPFILES
+t_oedll		support
+t_oedll1	support
+t_oeexport
+t_oeexport1 support
+#endif

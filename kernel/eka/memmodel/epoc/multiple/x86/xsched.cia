@@ -1,0 +1,65 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\multiple\x86\xsched.cia
+// 
+//
+
+#include <x86_mem.h>
+
+GLDEF_C __NAKED__ void DoProcessSwitch()
+	{
+	// Enter with kernel locked
+	// EBX = pointer to new thread (NThread)
+	// EDI = pointer to TScheduler
+	// ESI = pointer to TSubScheduler (SMP only)
+	// Preserve ESI, EDI
+	// eax = new process (DX86PlatProcess)
+	asm("mov eax, [ebx+%0]": : "i"_FOFF(NThreadBase,iAddressSpace)); 
+#ifdef __SMP__
+	asm("cmp eax, [esi+%0]": :"i"_FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("cmp eax, [edi+%0]": : "i"_FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("jz no_as_switch");
+
+	asm("mov ecx, [eax+%0]": : "i"_FOFF(DMemModelProcess,iGlobalPageDir));
+	asm("mov cr3, ecx");
+#ifdef __SMP__
+	asm("mov [esi+%0], eax": :"i"_FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("mov [edi+%0], eax": : "i"_FOFF(TScheduler,iAddressSpace));
+#endif
+
+	asm("no_as_switch:");
+
+	// Get DThread* from NThread* (former contains latter so we go backwards in memory to get there)
+	asm("mov ecx, 0");
+	asm("lea ecx, [ecx+%0]": : "i"_FOFF(DThread,iNThread));
+	asm("sub ebx, ecx");
+
+	// check for memory being aliased...
+	asm("mov ecx, [ebx+%0]": : "i"_FOFF(DMemModelThread,iAliasLinAddr));
+	asm("cmp ecx, 0");
+	asm("jz done");
+
+	// restore alias...
+	asm("mov edx, [ebx+%0]": : "i"_FOFF(DMemModelThread,iAliasPdePtr));
+	asm("mov eax, [ebx+%0]": : "i"_FOFF(DMemModelThread,iAliasPde));
+	asm("mov [edx], eax");
+	asm("invlpg [ecx]");
+
+	asm("done:");
+	asm("ret");
+	};
+

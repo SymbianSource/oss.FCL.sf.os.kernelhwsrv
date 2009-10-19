@@ -1,0 +1,135 @@
+// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\cmonitor.cia
+// Kernel crash debugger - ARM specific portion
+// 
+//
+
+#include <e32cia.h>
+#include <kernel/monitor.h>
+#include <arm_mem.h>
+
+GLREF_D TUint32 MonitorStack[1024];
+
+EXPORT_C __NAKED__ TInt TTrapM::Trap(TInt& /*aResult*/)
+//
+// Save the enter frame state and return 0.
+//
+	{
+	asm("mov r2, #0 ");					// aResult==KErrNone
+	asm("str r2, [r1, #0] ");			// iResult=(&aResult)
+	asm("str r1, [r0, #%a0]" : : "i" _FOFF(TTrapM,iResult));
+	asm("stmia r0, {r4-r11, sp, lr} ");	// Save the context
+	asm("ldr r12, __TheMonitorPtr ");
+	asm("ldr r12, [r12] ");
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(Monitor,iFrame));
+	asm("str r3, [r0, #%a0]" : : "i" _FOFF(TTrapM,iNext));
+	asm("str r0, [r12, #%a0]" : : "i" _FOFF(Monitor,iFrame));
+	asm("mov r0, #0 ");
+	__JUMP(,lr);
+
+	asm("__TheMonitorPtr: ");
+	asm(".word TheMonitorPtr ");
+	}
+
+EXPORT_C __NAKED__ void Monitor::Leave(TInt /*aReason*/)
+//
+// Leave to the current control region.
+//
+	{
+	asm("ldr r12, __TheMonitorPtr ");
+	asm("ldr r12, [r12] ");
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(Monitor,iFrame));
+	asm("ldr r2, [r3, #%a0]" : : "i" _FOFF(TTrapM,iNext));
+	asm("str r2, [r12, #%a0]" : : "i" _FOFF(Monitor,iFrame));
+	asm("ldr r2, [r3, #%a0]" : : "i" _FOFF(TTrapM,iResult));
+	asm("str r0, [r2] ");
+	asm("mov r0, #1	"); // return(1)
+	asm("ldmia r3, {r4-r11, sp, pc}	"); // Restore the context and return
+	}
+
+EXPORT_C __NAKED__ void TTrapM::UnTrap()
+//
+// Pop the current trap frame
+//
+	{
+	asm("ldr r12, __TheMonitorPtr ");
+	asm("ldr r12, [r12] ");
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(Monitor,iFrame));
+	asm("ldr r2, [r3, #%a0]" : : "i" _FOFF(TTrapM,iNext));
+	asm("str r2, [r12, #%a0]" : : "i" _FOFF(Monitor,iFrame));
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ void Monitor::Entry(TAny* /*aRegs*/)
+//
+// Monitor entry point - enter in mode_fiq, r0 points to saved registers
+// Saved iCrashArgs[0] points to fault category, saved iCrashArgs[1] fault reason
+//
+	{
+	asm("mov r12, #0xd1 ");
+	asm("msr cpsr, r12 ");				// mode FIQ, all interrupts off
+	asm("ldr sp, __MonitorStack ");		// make sure we have a valid stack
+	asm("add sp, sp, #4096 ");
+	asm("bic sp, sp, #4 ");
+	asm("ldr r12, __TheMonitorPtr ");
+	asm("ldr r12, [r12] ");
+	asm("str r0, [r12, #%a0]" : : "i" _FOFF(Monitor,iRegs));
+	asm("mov r1, #0x1000 ");
+	asm("str r1, [r12, #%a0]" : : "i" _FOFF(Monitor,iPageSize));
+	asm("add r0, r0, #%a0" : : "i" _FOFF(SFullArmRegSet,iCrashArgs));
+	asm("ldmia r0, {r1,r2} ");
+	asm("mov r0, r12 ");
+	asm("b " CSM_ZN7Monitor4InitEPvi );
+
+	asm("__MonitorStack: ");
+	asm(".word MonitorStack ");
+	}
+
+#ifdef __CPU_ARM_USE_DOMAINS
+__NAKED__ TUint32 Arm::Dacr()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __CPU_HAS_MMU
+__NAKED__ TUint32 GetMMUID()
+	{
+	asm("mrc p15, 0, r0, c0, c0, 0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 GetMMUCR()
+	{
+	asm("mrc p15, 0, r0, c1, c0, 0 ");
+	__JUMP(,lr);
+	}
+
+#if defined(__CPU_XSCALE__) || defined(__CPU_ARMV6)
+__NAKED__ TUint32 GetAUXCR()
+	{
+	asm("mrc p15, 0, r0, c1, c0, 1 ");
+	__JUMP(,lr);
+	}
+#endif
+#endif
+#ifdef __CPU_HAS_CACHE_TYPE_REGISTER
+__NAKED__ TUint32 GetCacheType()
+	{
+	asm("mrc p15, 0, r0, c0, c0, 1 ");
+	__JUMP(,lr);
+	}
+#endif

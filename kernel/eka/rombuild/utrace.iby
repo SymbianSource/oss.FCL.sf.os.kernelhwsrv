@@ -1,0 +1,33 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#ifndef UTRACE_IBY
+#define UTRACE_IBY
+
+#include <btrace.iby>
+
+//Put kernel side DLLs in the core image on NAND configurations 
+//since that's where the majority of the client code will also be.
+//This also works for NOR configurations since then the 'core' image is 
+//the entire ROM and there's no ROFS.
+//ROM_IMAGE[0] device[VARID]=ABI_DIR\DEBUG_DIR\e32utracekernel.dll						sys\bin\e32utracekernel.dll
+//ROM_IMAGE[0] device[VARID]=ABI_DIR\DEBUG_DIR\e32utracekernelstubbed.dll			sys\bin\e32utracekernelstubbed.dll
+
+file=ABI_DIR\DEBUG_DIR\utraceuser.dll 								sys\bin\utraceuser.dll
+file=ABI_DIR\DEBUG_DIR\utraceuserstubbed.dll 						sys\bin\utraceuserstubbed.dll
+
+
+#endif

@@ -1,0 +1,13 @@
+EXPORTS
+	Test2__8TestDll1 @ 1 NONAME
+	Data__8TestDll1 @ 2 NONAME
+	GlobalAlloc__8TestDll1i @ 3 NONAME
+	GlobalAllocated__8TestDll1 @ 4 NONAME
+	GlobalRead__8TestDll1iR5TDes8 @ 5 NONAME
+	GlobalWrite__8TestDll1iRC6TDesC8 @ 6 NONAME
+	Sem__8TestDll1 @ 7 NONAME
+	Server__8TestDll1 @ 8 NONAME
+	SetData__8TestDll1i @ 9 NONAME
+	Test1__8TestDll1 @ 10 NONAME
+	Attach__8TestDll1i @ 11 NONAME ; TestDll1::Attach(int)
+

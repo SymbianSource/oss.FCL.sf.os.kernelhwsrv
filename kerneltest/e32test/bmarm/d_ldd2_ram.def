@@ -1,0 +1,12 @@
+EXPORTS
+	CreateLogicalDevice__Fv @ 1 NONAME R3UNUSED ; CreateLogicalDevice(void)
+	LinkedTest9__Fv @ 2 NONAME R3UNUSED ; LinkedTest9(void)
+	LinkedTest1__Fv @ 3 NONAME R3UNUSED ; LinkedTest1(void)
+	LinkedTest2__Fv @ 4 NONAME R3UNUSED ; LinkedTest2(void)
+	LinkedTest3__Fv @ 5 NONAME R3UNUSED ; LinkedTest3(void)
+	LinkedTest4__Fv @ 6 NONAME R3UNUSED ; LinkedTest4(void)
+	LinkedTest5__Fv @ 7 NONAME R3UNUSED ; LinkedTest5(void)
+	LinkedTest6__Fi @ 8 NONAME R3UNUSED ; LinkedTest6(int)
+	LinkedTest7__Fv @ 9 NONAME R3UNUSED ; LinkedTest7(void)
+	LinkedTest8__FUl @ 10 NONAME R3UNUSED ; LinkedTest8(unsigned long)
+

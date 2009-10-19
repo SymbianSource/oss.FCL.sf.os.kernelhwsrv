@@ -1,0 +1,178 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test\nkernsa\x86\x86utils.cia
+// 
+//
+
+#include <x86.h>
+#include <nktest/nkutils.h>
+
+
+extern "C" {
+
+void __fastcall thread_request_signal(NThread* aThread);
+
+extern TUint64 fcf;
+extern TUint32 nfcf;
+extern TUint32 nfcfs;
+
+__NAKED__ void __cpu_idle()
+	{
+	asm("hlt");
+	asm("ret");
+	}
+
+__NAKED__ void __cpu_yield()
+	{
+	X86_PAUSE
+	asm("ret");
+	}
+
+__NAKED__ TLinAddr __stack_pointer()
+	{
+	asm("mov eax, esp");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 __cpu_status_reg()
+	{
+	asm("pushfd");
+	asm("pop eax");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 __cpu_id()
+	{
+	asm("xor eax, eax");
+	asm("str ax");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 __trace_cpu_num()
+	{
+	asm("xor eax, eax");
+	asm("str ax");
+	asm("sub al, 0x28");
+	asm("shr al, 3");
+	asm("ret");
+	}
+
+TUint64 __NAKED__ fast_counter()
+	{
+	asm("rdtsc");
+	asm("ret");
+	}
+
+TUint32 __NAKED__ norm_fast_counter()
+	{
+	asm("mov ecx, [%a0]": :"i"(&nfcfs));
+	asm("rdtsc");
+	asm("shrd eax, edx, cl");
+	asm("ret");
+	}
+
+__NAKED__ void nfcfspin(TUint32 aTicks)
+	{
+	asm("mov ecx, [%a0]": :"i"(&nfcfs));
+	asm("push ebx");
+	asm("mov ebx, [esp+8]");
+	asm("rdtsc");
+	asm("shrd eax, edx, cl");
+	asm("add ebx, eax");
+	asm("nfcfspin1:");
+	asm("rdtsc");
+	asm("shrd eax, edx, cl");
+	asm("sub eax, ebx");
+	asm("js nfcfspin1");
+	asm("pop ebx");
+	asm("ret");
+	}
+
+__NAKED__ void fcfspin(TUint64 aTicks)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("push ebx");
+	asm("mov ebx, [esp+12]");
+	asm("rdtsc");
+	asm("add ecx, eax");
+	asm("adc ebx, edx");
+	asm("fcfspin1:");
+	asm("rdtsc");
+	asm("sub eax, ecx");
+	asm("sbb edx, ebx");
+	asm("js fcfspin1");
+	asm("pop ebx");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 set_bit0_if_nonnull(TUint32&)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("mov eax, [ecx]");
+	asm("xx1:");
+	asm("cmp eax, 0");
+	asm("jz short done1");
+	asm("mov edx, eax");
+	asm("or edx, 1");
+	asm("lock cmpxchg [ecx], edx");
+	asm("jne short xx1");
+	asm("done1:");
+	asm("ret");
+	}
+
+__NAKED__ void flip_bit0(TUint32&)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("lock xor dword ptr [ecx], 1");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 swap_out_if_bit0_clear(TUint32&)
+	{
+	asm("mov ecx, [esp+4]");
+	asm("mov eax, [ecx]");
+	asm("xx2:");
+	asm("test eax, 1");
+	asm("jnz short done2");
+	asm("xor edx, edx");
+	asm("lock cmpxchg [ecx], edx");
+	asm("jne short xx2");
+	asm("done2:");
+	asm("ret");
+	}
+
+__NAKED__ TUint32 __eflags()
+	{
+	asm("pushfd ");
+	asm("pop eax ");
+	asm("ret ");
+	}
+}
+
+__NAKED__ void RequestComplete(NThread* /*aThread*/, NRequestStatus*& /*aStatus*/, TInt /*aValue*/)
+	{
+	asm("mov ecx, [esp+8]");
+	asm("xor eax, eax");
+	asm("lock xchg eax, [ecx]");
+	asm("mov edx, [esp+12]");
+	asm("cmp eax, 0");
+	asm("jz done3");
+	asm("mov ecx, [esp+4]");
+	asm("mov [eax], edx");
+	asm("call %a0": :"i"(&thread_request_signal));
+	asm("done3:");
+	asm("ret");
+	}
+
+

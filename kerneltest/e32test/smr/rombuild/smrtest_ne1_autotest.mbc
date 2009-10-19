@@ -1,0 +1,75 @@
+// Meta Build (metabld) script to build the SMR test roms for the NE1 variant.
+// Automated UDEB Debug ROMs only for NAND test scenarios.
+//
+// Example usage:
+//	metabld smrtest_ne1_autotest.mbc > \logs\ne1at.log 2>&1
+
+
+SECTION_COMMANDS
+
+// Multiple Memory Model - unicore - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL-D.IMG        --type=smrtest_tshell
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-BOOTLDR-FAT32-D.IMG --type=ubootldr -D WITH_FAT32
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL_NAND2-D.IMG    --type=smrtest_tshell -D _NAND2
+// Large block NAND support AUTO TEST 1
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL_NAND2_AUTO1-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM1
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR_AUTO1-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM1
+// Large block NAND support AUTO TEST 2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL_NAND2_AUTO2-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR_AUTO2-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM2
+// Large block NAND support AUTO TEST 3
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL_NAND2_AUTO3-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM3
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR_AUTO3-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM3
+// Large block NAND support AUTO TEST 4
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-SMRTSHELL_NAND2_AUTO4-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM4
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v ne1_tb -b udeb -i armv5 --zip --symbol --name=NE1_TBARMV5D-NAND2LDR_AUTO4-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM4
+
+
+
+// Flexible Memory model - unicore - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL-D.IMG   --type=smrtest_tshell
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRNAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL_NAND2-D.IMG    --type=smrtest_tshell -D _NAND2
+// Large block NAND support AUTO TEST 1
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL_NAND2_AUTO1-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM1
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-NAND2LDR_AUTO1-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM1
+// Large block NAND support AUTO TEST 2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL_NAND2_AUTO2-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-NAND2LDR_AUTO2-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM2
+// Large block NAND support AUTO TEST 3
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL_NAND2_AUTO3-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM3
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-NAND2LDR_AUTO3-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM3
+// Large block NAND support AUTO TEST 4
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-SMRTSHELL_NAND2_AUTO4-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM4
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 --zip --symbol --name=FNE1_TBARMV5D-NAND2LDR_AUTO4-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM4
+
+
+// Flexible Memory model - SMP - udeb
+//
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-SMRTSHELL-D.IMG   --type=smrtest_tshell
+
+// Large block NAND support
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-SMRTSHELL_NAND2-D.IMG    --type=smrtest_tshell -D _NAND2
+// Large block NAND support AUTO TEST 1
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-SMRTSHELL_NAND2_AUTO1-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM1
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-NAND2LDR_AUTO1-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM1
+// Large block NAND support AUTO TEST 2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-SMRTSHELL_NAND2_AUTO2-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM2
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-NAND2LDR_AUTO2-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM2
+// Large block NAND support AUTO TEST 3
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-SMRTSHELL_NAND2_AUTO3-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM3
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-NAND2LDR_AUTO3-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM3
+// Large block NAND support AUTO TEST 4
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-SMRTSHELL_NAND2_AUTO4-D.IMG    --type=smrtest_tshell -D _NAND2,SMR_AUTO_ROM4
+oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fne1_tb -b udeb -i armv5 -x armv5smp --zip --symbol --name=FNE1_TBARMV5SMPD-NAND2LDR_AUTO4-D.IMG        --type=smrtest_nandldr_auto -D _NAND2,SMR_AUTO_ROM4
+
+
+SECTION_DIRS
+

@@ -1,0 +1,7 @@
+EXPORTS
+	Postamble__11TAdcChannel @ 1 NONAME ; TAdcChannel::Postamble(void)
+	Preamble__11TAdcChannel @ 2 NONAME ; TAdcChannel::Preamble(void)
+	Read__11TAdcChannelPi @ 3 NONAME ; TAdcChannel::Read(int *)
+	SetMinPriority__4DAdcii @ 4 NONAME ; DAdc::SetMinPriority(int, int)
+	__11TAdcChanneli @ 5 NONAME ; TAdcChannel::TAdcChannel(int)
+

@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE SystemDefinition [
+<!ELEMENT SystemDefinition ( systemModel )>
+<!ATTLIST SystemDefinition
+  name CDATA #REQUIRED
+  schema CDATA #REQUIRED
+>
+<!-- all paths are relative to the environment variable specified by the root attribute, or SOURCEROOT if not.  -->
+
+<!-- System Model Section of DTD -->
+<!ELEMENT systemModel (layer+)>
+
+<!ELEMENT layer (block* | collection*)*>
+<!-- Kernel Services, Base Services, OS Services, Etc -->
+<!ATTLIST layer
+  name CDATA #REQUIRED
+  long-name CDATA #IMPLIED
+  levels NMTOKENS #IMPLIED
+  span CDATA #IMPLIED
+>
+
+<!ELEMENT block (subblock* | collection*)*>
+ <!-- Generic OS services, Comms Services, etc -->
+<!ATTLIST block
+  levels NMTOKENS #IMPLIED
+  span CDATA #IMPLIED
+  level NMTOKEN #IMPLIED
+  name CDATA #REQUIRED
+  long-name CDATA #IMPLIED
+>
+
+<!ELEMENT subblock (collection)*>
+<!-- Cellular Baseband Services, Networking Services, etc -->
+<!ATTLIST subblock
+  name CDATA #REQUIRED
+  long-name CDATA #IMPLIED
+>
+
+<!ELEMENT collection (component)*>
+<!-- Screen Driver, Content Handling, etc -->
+<!ATTLIST collection
+  name CDATA #REQUIRED
+  long-name CDATA #IMPLIED
+  level NMTOKEN #IMPLIED
+>
+
+<!ELEMENT component (unit)*>
+<!-- contains units or is a  package or prebuilt -->
+<!ATTLIST component
+  name CDATA #REQUIRED
+  long-name CDATA #IMPLIED
+  deprecated CDATA #IMPLIED
+  introduced CDATA #IMPLIED
+  contract CDATA #IMPLIED
+  plugin (Y|N) "N"
+  filter CDATA #IMPLIED
+  class NMTOKENS #IMPLIED
+  supports CDATA #IMPLIED
+  purpose ( optional | mandatory | development ) "optional"
+>
+
+<!ELEMENT unit EMPTY >
+<!-- must be buildable (bld.inf) -->
+<!-- bldFile  may someday be removed in favour of mrp -->
+<!ATTLIST unit
+  mrp CDATA #IMPLIED
+  filter CDATA #IMPLIED
+  bldFile CDATA #IMPLIED
+  root CDATA #IMPLIED
+  version NMTOKEN #IMPLIED
+  prebuilt NMTOKEN #IMPLIED
+  late (Y|N) #IMPLIED
+  priority CDATA #IMPLIED
+>
+]>
+<SystemDefinition schema="2.0.1" name="Kernel and Hardware Services">
+<systemModel>
+<layer name="anonymous">
+<block name="kernelhwsrv" long-name="Kernel and Hardware Services" levels="hw-if adaptation framework test">
+<collection name="baseintegtests" long-name="Base Integration Testing" level="test">
+<component name="baseintegrationtest" long-name="Base Integration Test" introduced="9.3" purpose="development">
+<unit bldFile="/sf/os/kernelhwsrv/baseintegtests/baseintegrationtest/group" mrp="/sf/os/kernelhwsrv/baseintegtests/baseintegrationtest/group/base_integration_test.mrp"/>
+</component>
+</collection>
+<collection name="brdbootldr" long-name="Board Boot Loader" level="hw-if">
+<component name="ubootldr" long-name="Boot Loader" introduced="9.2" purpose="optional">
+<unit mrp="/sf/os/kernelhwsrv/brdbootldr/ubootldr/base_ubootldr.mrp"/>
+</component>
+</collection>
+<collection name="bsptemplate" long-name="Board Support Package Template" level="hw-if">
+<component name="asspandvariant" long-name="Template ASSP and Variant" introduced="6.0" purpose="development">
+<unit bldFile="/sf/os/kernelhwsrv/bsptemplate/asspandvariant/template_variant" mrp="/sf/os/kernelhwsrv/bsptemplate/asspandvariant/base_template.mrp"/>
+</component>
+</collection>
+<collection name="kernel" long-name="Kernel Architecture" level="adaptation">
+<component name="eka" long-name="Kernel Architecture" introduced="8.0" purpose="mandatory">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka" mrp="/sf/os/kernelhwsrv/kernel/eka/base_e32.mrp"/>
+</component>
+</collection>
+<collection name="kerneltest" long-name="Kernel Test" level="hw-if">
+<component name="e32utils" long-name="E32 Utilities" purpose="development">
+<unit bldFile="/sf/os/kernelhwsrv/kerneltest/e32utils/group" mrp="/sf/os/kernelhwsrv/kerneltest/e32utils/group/base_e32utils.mrp"/>
+</component>
+<component name="e32test" long-name="E32 Tests" purpose="development">
+<unit bldFile="/sf/os/kernelhwsrv/kerneltest/e32test/group" mrp="/sf/os/kernelhwsrv/kerneltest/e32test/group/base_e32test.mrp"/>
+</component>
+<component name="f32test" long-name="File Server Tests" purpose="development">
+<unit bldFile="/sf/os/kernelhwsrv/kerneltest/f32test/group" mrp="/sf/os/kernelhwsrv/kerneltest/f32test/group/base_f32test.mrp"/>
+</component>
+</collection>
+<collection name="ldds" long-name="Logical Device Drivers" level="adaptation">
+<component name="ethernetldd" long-name="Ethernet Drivers" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/ethernet" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/ethernet/base_e32_drivers_ethernet.mrp"/>
+</component>
+<component name="audioldd" long-name="Audio Drivers" introduced="8.1b" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/soundsc" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/soundsc/base_e32_drivers_sound.mrp"/>
+</component>
+<component name="serialldd" long-name="Serial Port Drivers" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/ecomm" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/ecomm/base_e32_drivers_ecomm.mrp"/>
+</component>
+<component name="legacydrivers" long-name="Legacy Drivers" purpose="optional">
+<unit mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/adc/base_e32_drivers_adc.mrp"/>
+</component>
+<component name="locmedia" long-name="Local Media Subsystem" introduced="8.1b" purpose="mandatory">
+<!-- these are LDDs for storage media-->
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/locmedia" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/locmedia/base_e32_drivers_locmedia.mrp"/>
+</component>
+<component name="runmodedebugger" long-name="Run Mode Debugger" purpose="mandatory">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/debug/group" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/debug/group/base_e32_drivers_debug.mrp"/>
+</component>
+<component name="btrace" long-name="Kernel Trace Tool" purpose="mandatory">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/trace" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/trace/base_e32_drivers_trace.mrp"/>
+</component>
+<component name="cameraldd" long-name="Camera Drivers" introduced="tb92" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/camerasc" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/camerasc/base_drivers_camerasc.mrp"/>
+</component>
+<component name="displayldd" long-name="Display Drivers" introduced="tb92" purpose="optional">
+<!-- owned and maintained by graphics package. To be moved there as soon as technical limitations are resolved -->
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/display" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/display/base_e32_drivers_display.mrp"/>
+</component>
+<component name="usbclientdrivers" long-name="USB Client Drivers" introduced="8.1b" purpose="optional">
+<!-- owned and maintained by usb package. To be moved there as soon as technical limitations are resolved -->
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/usbc" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/usbc/base_e32_drivers_usbcli.mrp"/>
+</component>
+</collection>
+<collection name="driversupport" long-name="Generic Driver Support" level="hw-if">
+<component name="mediadrivers" long-name="Media Drivers" purpose="optional">
+<!-- these are for storage media-->
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/media" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/media/base_e32_drivers_media.mrp"/>
+</component>
+<component name="genericboardsupport" long-name="Generic Board Support" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/drivers/bsp" mrp="/sf/os/kernelhwsrv/kernel/eka/drivers/bsp/base_e32_drivers_bsp.mrp"/>
+</component>
+</collection>
+<collection name="userlibandfileserver" long-name="User Library and File Server" level="framework">
+<component name="euser" long-name="User Library" purpose="mandatory">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/euser" mrp="/sf/os/kernelhwsrv/kernel/eka/euser/base_e32_euser.mrp"/>
+</component>
+<component name="compsupp" long-name="Compiler Runtime Support" filter="gt" purpose="mandatory">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/compsupp" mrp="/sf/os/kernelhwsrv/kernel/eka/compsupp/base_e32_compsupp.mrp"/>
+</component>
+<component name="fileserver" long-name="File Server" filter="gt" purpose="mandatory">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/group" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/group/base_f32.mrp"/>
+</component>
+<component name="estart" long-name="Base Starter" filter="gt" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/estart" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/estart/base_f32_estart.mrp"/>
+</component>
+<component name="domainmgr" long-name="Domain Manager" introduced="8.1b" purpose="mandatory">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/domainmgr/group" mrp="/sf/os/kernelhwsrv/userlibandfileserver/domainmgr/group/base_domain.mrp"/>
+</component>
+</collection>
+<collection name="filesystems" long-name="File Systems" level="framework">
+<component name="romfs" long-name="ROM File System" filter="gt" purpose="optional" plugin="Y">
+<unit mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/srom/base_f32_srom.mrp"/>
+</component>
+<component name="rofs" long-name="ROFS" filter="gt" purpose="optional" plugin="Y">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/srofs" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/srofs/base_f32_srofs.mrp"/>
+</component>
+<component name="usbmsfs" long-name="USB Mass Storage File System" filter="gt" purpose="optional" plugin="Y">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/smassstorage" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/smassstorage/base_f32_smassstorage.mrp"/>
+</component>
+<component name="usbhostmssrv" long-name="USB Host Mass Storage Server" filter="gt" introduced="tb92" purpose="optional" plugin="Y">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/shostmassstorage" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/shostmassstorage/base_f32_shostmassstorage.mrp"/>
+</component>
+<component name="fat32fs" long-name="FAT32 File System" filter="gt" purpose="optional" plugin="Y">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/sfat32" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/sfat32/base_f32_sfat32.mrp"/>
+</component>
+<component name="fatfs" long-name="FAT File System" filter="gt" purpose="optional" plugin="Y">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/sfat" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/sfat/base_f32_sfat.mrp"/>
+</component>
+<component name="compfs" long-name="Composite File System" filter="gt" purpose="optional" plugin="Y">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/scomp" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/scomp/base_f32_scomp.mrp"/>
+</component>
+</collection>
+<collection name="halservices" long-name="HAL Services" level="framework">
+<component name="hal" long-name="User-Side Hardware Abstraction" introduced="6.0" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/halservices/hal" mrp="/sf/os/kernelhwsrv/halservices/hal/base_hal.mrp"/>
+</component>
+</collection>
+<collection name="textmodeshell" long-name="Text Mode Shell" level="test">
+<component name="e32wsrv" long-name="Text Window Server" purpose="optional">
+<unit bldFile="/sf/os/kernelhwsrv/kernel/eka/ewsrv" mrp="/sf/os/kernelhwsrv/kernel/eka/ewsrv/base_e32_ewsrv.mrp"/>
+</component>
+<component name="textshell" long-name="Text Shell" filter="gt" purpose="development">
+<unit bldFile="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/etshell" mrp="/sf/os/kernelhwsrv/userlibandfileserver/fileserver/etshell/base_f32_eshell.mrp"/>
+</component>
+</collection>
+<collection name="baseapitest" long-name="Base API Tests" level="test">
+<component name="basesvs" long-name="Base Verification Suite" introduced="tb91" purpose="development">
+<unit mrp="/sf/os/kernelhwsrv/baseapitest/basesvs/group/basesvs.mrp"/>
+</component>
+</collection>
+<collection name="kernelhwsrv_info" long-name="Kernel and Hardware Services Info" level="test">
+<component name="kernelhwsrv_metadata" long-name="Kernel and Hardware Services Metadata" introduced="tb91" purpose="development" class="config PC">
+<unit mrp="/sf/os/kernelhwsrv/kernelhwsrv_info/kernelhwsrv_metadata/kernelhwsrv_metadata.mrp"/>
+</component>
+</collection>
+</block>
+</layer>
+</systemModel>
+</SystemDefinition>

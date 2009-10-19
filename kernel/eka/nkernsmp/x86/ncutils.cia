@@ -1,0 +1,156 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkernsmp\x86\ncutils.cia
+// 
+//
+
+#include <x86.h>
+#include <apic.h>
+
+extern "C" __NAKED__ void NKIdle(TInt)
+	{
+	asm("sti");
+	asm("hlt");
+	asm("ret");
+	}
+
+__NAKED__ void InitFpu()
+	{
+	asm("mov eax, cr0");
+	asm("and al, 0xf7");	// enable access to FPU
+	asm("mov cr0, eax");
+	asm("fninit");
+	asm("lea ecx, %a0": : "i"(DefaultCoprocessorState));
+	asm("fwait");
+	asm("fnsave [ecx]");	// save clean coprocessor state
+	asm("fwait");
+	asm("or al, 8");
+	asm("mov cr0, eax");	// disable access to coprocessor
+	asm("ret");
+	}
+
+
+const TLinAddr addressof_CrashState = (TLinAddr)&::CrashState;
+
+/** @internalTechnology
+
+	Called to indicate that the system has crashed and all CPUs should be
+	halted and should dump their registers.
+
+	Doesn't return
+*/
+__NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
+	{
+	asm("pushfd ");
+	asm("cli ");
+	asm("push ecx ");
+	asm("push edx ");
+	asm("push eax ");
+	asm("push ebp ");
+	asm("push esi ");
+	asm("mov ecx, %0": :"i" (addressof_CrashState)); 
+	asm("mov esi, ds:[%0]" : : "i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr esi, 24");
+	asm("mov esi, [esi*4+%0]" : : "i"(&SubSchedulerLookupTable));
+	asm("mov eax, [ecx] ");
+	asm("atomic_set: ");
+	asm("mov edx, eax ");
+	asm("cmp eax, 0 ");
+	asm("jnz short atomic_set_1 ");
+	asm("mov edx, [%a0]" : : "i" (&TheScheduler.iActiveCpus1));
+	asm("shl edx, 16 ");
+	asm("atomic_set_1: ");
+	asm("or edx, [esi+%0]" : : "i" _FOFF(TSubScheduler,iCpuMask));
+	asm("lock cmpxchg [ecx], edx ");
+	asm("jne short atomic_set ");
+
+	asm("cmp eax, 0 ");								// were we first to crash?
+	asm("jz first_to_crash ");
+
+	// not the first to crash - wait for NMI
+	asm("cli ");
+	asm("pushfd ");
+	asm("push cs ");
+	asm("lea eax, crash_halt ");
+	asm("push eax ");
+	asm("iretd ");				// return to next instruction, allowing further NMIs
+	asm("crash_halt: ");
+	asm("hlt ");
+	asm("jmp short crash_halt ");
+
+	asm("first_to_crash: ");
+	asm("mov ebp, [esi+60+%0]" : : "i" _FOFF(TSubScheduler,iExtras));	// points to SCpuData
+	asm("lea ebp, [ebp+%0]" : : "i" _FOFF(SCpuData,iRegs));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEsi));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEbp));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEax));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEdx));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEcx));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEflags));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iEip));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultCategory));
+	asm("pop dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultReason));
+	asm("mov [ebp+%0], ebx" : : "i" _FOFF(SFullX86RegSet,iEbx));
+	asm("mov [ebp+%0], edi" : : "i" _FOFF(SFullX86RegSet,iEdi));
+	asm("mov [ebp+%0], esp" : : "i" _FOFF(SFullX86RegSet,iEsp));
+	asm("lea eax, [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iCs));
+	asm("mov [eax], cs ");
+	asm("mov [eax+4], ds ");
+	asm("mov [eax+8], es ");
+	asm("mov [eax+12], fs ");
+	asm("mov [eax+16], gs ");
+	asm("mov [eax+20], ss ");
+	asm("lea ebx, [esi+52+%0]" : : "i" _FOFF(TSubScheduler,iExtras));	// points to i_IrqNestCount
+	asm("mov eax, 0x80000000 ");
+	asm("lock xchg eax, [ebx] ");
+	asm("mov [ebp+%0], eax" : : "i" _FOFF(SFullX86RegSet,iIrqNestCount));
+
+	// send NMI to every other processor
+	asm("cli ");
+	asm("xor eax, eax ");
+	asm("mov ds:[%0], eax": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRH));
+	asm("mov eax, %0" : : "i" (0x000C4400));
+	asm("mov ds:[%0], eax": :"i"(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ICRL));
+
+	asm("xor eax, eax ");
+	asm("push eax ");
+	asm("push eax ");
+	asm("push eax ");
+	asm("call %a0" : : "i" (NKCrashHandler));
+	asm("pop eax ");
+	asm("pop eax ");
+	asm("pop eax ");
+
+	asm("cli ");
+	asm("mov eax, [esi+%0] " : : "i" _FOFF(TSubScheduler,iCpuMask));
+	asm("not eax ");
+	asm("mov edx, %0": :"i" (addressof_CrashState)); 
+	asm("lock and [edx+2], ax ");
+	asm("mov dword ptr [esi+44+%0], 1" : : "i" _FOFF(TSubScheduler, iExtras));	// flag that this CPU is done
+	asm("xor ecx, ecx ");
+	asm("wait_other_cpus: ");
+	asm("mov ax, [edx+2] ");
+	asm("cmp ax, 0 ");
+	asm("jz short wait_other_cpus_done ");
+	asm("dec ecx ");
+	asm("jnz short wait_other_cpus ");
+	asm("wait_other_cpus_done: ");
+
+	asm("push dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultReason));		// a1 parameter
+	asm("push dword ptr [ebp+%0]" : : "i" _FOFF(SFullX86RegSet,iFaultCategory));	// a0 parameter
+	asm("push 1 ");
+	asm("call %a0" : : "i" (NKCrashHandler));
+	asm("int 0xff ");	// shouldn't get here
+	}
+

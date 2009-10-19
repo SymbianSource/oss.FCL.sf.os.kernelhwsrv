@@ -1,0 +1,36 @@
+EXPORTS
+	_Z14AsicInitialisev @ 1 NONAME
+	_ZN12TemplateAssp12MsTickPeriodEv @ 2 NONAME
+	_ZN12TemplateAssp13StartupReasonEv @ 3 NONAME
+	_ZN12TemplateAssp19NanoWaitCalibrationEv @ 4 NONAME
+	_ZN12TemplateAssp27SystemTimeInSecondsFrom2000ERi @ 5 NONAME
+	_ZN12TemplateAssp30SetSystemTimeInSecondsFrom2000Ei @ 6 NONAME
+	_ZN12TemplateAssp5Init1Ev @ 7 NONAME
+	_ZN12TemplateAssp5Init3Ev @ 8 NONAME
+	_ZN12TemplateAsspC2Ev @ 9 NONAME
+	_ZN9Interrupt11SetPriorityEii @ 10 NONAME
+	_ZN9Interrupt4BindEiPFvPvES0_ @ 11 NONAME
+	_ZN9Interrupt5ClearEi @ 12 NONAME
+	_ZN9Interrupt6EnableEi @ 13 NONAME
+	_ZN9Interrupt6UnbindEi @ 14 NONAME
+	_ZN9Interrupt7DisableEi @ 15 NONAME
+	_ZN9TTemplate10SetIntMaskEj @ 16 NONAME
+	_ZN9TTemplate10SetRtcDataEj @ 17 NONAME
+	_ZN9TTemplate11IntsPendingEv @ 18 NONAME
+	_ZN9TTemplate12CpuVersionIdEv @ 19 NONAME
+	_ZN9TTemplate12VideoRamPhysEv @ 20 NONAME
+	_ZN9TTemplate13DebugPortAddrEv @ 21 NONAME
+	_ZN9TTemplate13ModifyIntMaskEjj @ 22 NONAME
+	_ZN9TTemplate13StartupReasonEv @ 23 NONAME
+	_ZN9TTemplate19ProcessorPeriodInPsEv @ 24 NONAME
+	_ZN9TTemplate20BootWaitMilliSecondsEi @ 25 NONAME
+	_ZN9TTemplate7RtcDataEv @ 26 NONAME
+	_ZTI12TemplateAssp @ 27 NONAME ; #<TI>#
+	_ZTV12TemplateAssp @ 28 NONAME ; #<VT>#
+	_ZN12AsspRegister6Read64Em @ 29 NONAME
+	_ZN12AsspRegister7Modify8Emhh @ 30 NONAME
+	_ZN12AsspRegister7Write64Emy @ 31 NONAME
+	_ZN12AsspRegister8Modify16Emtt @ 32 NONAME
+	_ZN12AsspRegister8Modify32Emmm @ 33 NONAME
+	_ZN12AsspRegister8Modify64Emyy @ 34 NONAME
+

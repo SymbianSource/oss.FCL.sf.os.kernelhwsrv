@@ -1,0 +1,47 @@
+// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template/template_variant/exkey_inttemplate.mmp
+// ekeyb.dll Template keyboard library
+// 
+//
+
+/**
+ @file
+*/
+#define __USING_ASSP_REGISTER_API__
+#define __USING_ASSP_INTERRUPT_API__
+
+#include			<variant.mmh>
+#include			"kernel/kern_ext.mmh"
+
+target				VariantTarget(int_ekeyb,dll)
+targettype			kext
+romtarget			int_ekeyb.dll
+
+USERINCLUDE		inc
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/template_assp)
+
+sourcepath			specific
+source				keyboard_interrupt.cpp
+
+library				VariantTarget(ecust,lib)
+
+noexportlibrary
+deffile				../../../kernel/eka/~/empty.def
+
+uid					0x100039cf 0x100000db
+
+VENDORID 0x70000001
+
+capability			all

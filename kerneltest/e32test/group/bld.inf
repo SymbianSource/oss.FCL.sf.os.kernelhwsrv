@@ -1,0 +1,992 @@
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/bld.inf
+// Kernel and User library test code
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_EXPORTS
+../secure/platsecconfig.settings  /epoc32/rom/e32test/t_platsecconfig.iby
+../secure/platsecconfig.settings  /epoc32/data/t_platsecconfig.ini
+
+PRJ_TESTEXPORTS
+
+../../../kernel/eka/debug/crashMonitor/inc/crashlogwalker.h				/epoc32/include/
+
+../../../kernel/eka/include/kernel/dobject.h						/epoc32/include/kernel/			
+
+../../../userlibandfileserver/domainmgr/inc/domainobserver.h				/epoc32/include/
+
+../dll/d_ldrtst.h					/epoc32/include/
+
+../nkernsa/interrupts.h				/epoc32/include/nktest/	//
+../nkernsa/nkutils.h				/epoc32/include/nktest/	//
+../nkernsa/utils.h					/epoc32/include/nktest/	//
+../nkernsa/diag.h					/epoc32/include/nktest/	//
+
+../../../kernel/eka/include/e32huffman.h				/epoc32/include/
+
+platsec.settings        /epoc32/data/defaulttest.ini
+../mmu/d_memorytest.h   /epoc32/include/e32test/d_memorytest.h
+
+../buffer/UnicodeData.txt    /epoc32/data/z/test/unicodedata.txt
+../buffer/UnicodeData.txt    /epoc32/release/wins/udeb/z/test/unicodedata.txt
+../buffer/UnicodeData.txt    /epoc32/release/wins/urel/z/test/unicodedata.txt
+../buffer/UnicodeData.txt    /epoc32/release/winscw/udeb/z/test/unicodedata.txt
+../buffer/UnicodeData.txt    /epoc32/release/winscw/urel/z/test/unicodedata.txt
+
+// batch file that runs all automatic Unicode tests on hardware
+../group/UnicodeTests.bat   /epoc32/data/z/system/test/unicodetests.bat
+../group/UnicodeTest.iby    /epoc32/rom/include/unicodetest.iby
+
+// REMOVE_ME - Work-around to get stdexe and stddll test cases into ROM.
+// should be removed once new tools have been submitted
+../dll/oe/eabi/udeb/t_oedll.dll         /epoc32/release/armv5/udeb/t_oedll.dll
+../dll/oe/eabi/udeb/t_oedll1.dll        /epoc32/release/armv5/udeb/t_oedll1.dll
+../dll/oe/eabi/udeb/t_oeexport.exe      /epoc32/release/armv5/udeb/t_oeexport.exe
+../dll/oe/eabi/udeb/t_oeexport1.exe     /epoc32/release/armv5/udeb/t_oeexport1.exe
+../dll/oe/eabi/urel/t_oedll.dll         /epoc32/release/armv5/urel/t_oedll.dll
+../dll/oe/eabi/urel/t_oedll1.dll        /epoc32/release/armv5/urel/t_oedll1.dll
+../dll/oe/eabi/urel/t_oeexport.exe      /epoc32/release/armv5/urel/t_oeexport.exe
+../dll/oe/eabi/urel/t_oeexport1.exe     /epoc32/release/armv5/urel/t_oeexport1.exe
+
+../demandpaging/d_pagestress.h		/epoc32/include/
+
+../iic/iic_psl/i2c.h			/epoc32/include/e32test/
+../iic/iic_psl/spi.h			/epoc32/include/e32test/
+
+PRJ_TESTMMPFILES
+
+/******************************************************************************
+ Put all device drivers here. These build both SMP and non-SMP variants.
+ User side code builds a single variant for both.
+ *NOTE: Base BTB will build properly any kernel-side test code embedded within 
+ positive check ( #ifdef SMP ), however these binaries will not be included in BTB 
+ autotest images for SMP platforms. Refer to DTW-KHS BTB00055 for more details.
+ ******************************************************************************/
+d_implicit					support
+d_emitest					support
+d_ldd						support
+d_ldd_ram					support
+d_ldd2						support
+d_ldd2_ram					support
+d_lddns						support
+d_lddpowerseqtest			support
+d_ldddigitisertest			support
+d_lddturnaroundtimertest	support
+d_newldd					support
+d_ipccpy					support
+d_kucopy					support
+d_ldrtst					support
+t_prop_ldd					support
+bm_ldd						support
+d_sharedio					support
+d_dobject					support
+d_memorytest				support
+d_kheap						support
+d_sharedchunk				support
+d_nktrace					support
+d_sldd						support
+d_logtofile					support
+d_eventtracker				support
+d_traceredirect				support
+d_btrace					support
+d_perflogger_test_ldd		support
+d_kern_msg					support
+d_gobble					support
+d_nanowait					support
+d_medch						support
+d_shbuf_client				support
+d_shbuf_own					support
+d_asid						support
+
+#ifdef GENERIC_MARM
+d_schedhook					support
+d_kernasmbm					support
+d_codemodifier				support
+d_debugapi					support
+d_context					support
+earlyextension				support
+d_testearlyextension		support
+#endif
+
+#if !defined X86 
+rescontrol_psl				support
+rescontrol_extended_psl		support
+d_rescontrolcli				support
+d_extendedrescontrolcli		support
+d_prmacctstsim				support
+../resmanus/resourcecontrol	support
+../resmanus/resourcecontrollerextended	support
+#endif
+
+// DMA kernel-side test harness for software-simulated DMA framework
+// software-simulated DMA framework
+d_dmasim					support
+dmasim						support
+
+// Examples for demand paging device driver migration
+d_pagingexample_1_pre  support
+d_pagingexample_1_post support
+d_pagingexample_2_pre  support
+d_pagingexample_2_post support
+
+#if defined(EPOC32) && !defined(X86)
+// Test LDD for real hardware DMA
+d_dma						support
+#endif
+
+#ifdef EPOC32
+d_atomic					support
+d_pagestress				support
+d_ramstress					support
+d_export					support
+d_import					support
+#endif
+
+#ifdef	WINS
+d_guiconfig					support
+d_second_excp2				support
+#endif
+
+#if defined(MARM_ARMV5) || defined(MARM_ARMV4)
+d_second_excp				support
+d_second_excp2				support
+#endif
+
+#if !defined(WINS)
+d_demandpaging				support
+#endif
+
+#if !defined(WINS) && !defined(X86)
+d_ramdefrag					support
+d_pagemove					support
+#endif
+
+#if !defined(X86)
+#if defined(WINS)
+../iic/iic_psl/iic_testpsl			support
+../iic/iic_psl/spi					support
+../iic/iic_psl/i2c					support
+../iic/iic_psl/d_iic_client			support
+../iic/iic_psl/d_iic_slaveclient	support
+
+../iic/iic_psl/spi_ctrless			support
+../iic/iic_psl/i2c_ctrless			support
+../iic/iic_psl/d_iic_client_ctrless		support
+../iic/iic_psl/d_iic_slaveclient_ctrless	support
+#endif
+#endif
+
+#if !defined(WINS) && !defined(X86)
+d_crazyints support
+#endif
+
+/******************************************************************************
+ User side code here - builds a single variant for both SMP and non-SMP.
+ ******************************************************************************/
+#ifndef SMP
+#ifdef WINS
+// used to make some tests 'manual' on WINS (those which don't really add any useful testing like benchmarks)
+#define MANUAL_ON_WINS manual
+#else
+#define MANUAL_ON_WINS
+#endif
+
+#ifdef EPOC32
+//T_ROMCHK      // check the ROM is OK before starting tests
+#endif
+
+// todo: t_shadow tests currently need to run before any ROM pages get shadowed so do this first
+// for now
+#ifdef EPOC32
+t_shadow
+#endif
+
+// Do these here since they interfere with latency measurement
+t_implicit
+
+t_dmasim    // user-side test harness for software-simulated DMA framework
+
+#ifdef GENERIC_MARM
+t_schedhook
+#endif
+
+t_emi
+
+// RAM defragmentation tests.
+// These tests assume that all pages are movable during the tests
+// to increase the chances of this nothing should be running in the background.
+// Therefore these need to be run before t_lat2 is started.
+#if !defined(WINS) && !defined(X86)
+t_ramdefrag
+#endif
+
+#ifdef EPOC32
+// Start the latency measurement
+t_lat2
+#endif
+
+// /E32TEST/ACTIVE tests
+t_act
+t_asyc      
+t_cact      
+t_cactw
+t_cper      
+t_ctimer    
+t_timerduration
+t_dtim      
+t_idle      
+t_messge    
+
+// /E32TEST/BENCH tests
+#ifdef GENERIC_MARM
+t_desbm     manual
+#endif
+t_dhry      support
+t_excbm     MANUAL_ON_WINS
+t_exec      support
+t_membm     MANUAL_ON_WINS
+t_proc1 
+t_proc2     support
+t_r64bm     MANUAL_ON_WINS
+#ifdef ARMCC
+t_vfpbm
+#endif
+t_rxbm      MANUAL_ON_WINS
+t_svr
+t_svr2
+t_svr5
+t_svrstress
+t_svr_connect
+int_svr_calls   support
+t_t64bm     MANUAL_ON_WINS
+t_ipcbm     MANUAL_ON_WINS
+#ifndef X86
+t_kernbm    MANUAL_ON_WINS
+#endif
+
+t_ctxsw 
+t_ctxsw3
+#ifdef EPOC32
+t_prof      support
+#endif
+#ifdef GENERIC_MARM
+t_kernasmbm manual
+t_userasmbm manual
+#endif
+
+// /e32test/benchmark
+#ifndef X86
+bm_suite    MANUAL_ON_WINS
+#else
+bm_suite    manual
+#endif
+
+// /E32TEST/BUFFER tests
+t_bflat 
+t_bma   
+t_bseg  
+t_buf   
+t_rbuf  
+t_char  
+t_circ
+t_collate
+t_des   
+t_farray
+t_func  
+t_graph 
+t_key   
+t_lex   
+t_match 
+t_parray
+t_que   
+t_readar
+t_regn  
+t_sque  
+t_varray
+t_versio
+t_array 
+t_hashtab
+T_FoldPerf
+T_UnicodePerf
+t_huff
+t_memcpy    support     // time consuming, tests rarely-changed code
+#ifndef MARM_THUMB
+// That test contains lots of ARM assembly language which is normally
+// executed only in privileged mode.  So there is no need to build it
+// for thumb.
+t_tbma      support     // time consuming, tests rarely-changed code
+#endif
+
+// /E32TEST/DATETIME tests
+t_dparse    support
+t_time  
+t_tparse
+
+// /E32TEST/DEVICE tests
+t_ampv      support
+t_comm      support
+t_commsk    support
+t_loop      support
+//  T_MODEM1    support
+//  T_PROM      support
+t_term      support
+
+t_serial    manual
+#ifndef X86
+// sound drivers have rotted on X86
+t_sound2
+t_sound_api
+t_sound_api_helper support
+t_soundmchan
+t_soundwav  support
+#endif
+t_dtenot    manual
+//  T_DCE       manual      Commented out until DCE implemented
+//  T_DCEUTL    manual
+t_keyboardrotate    manual
+#ifdef GENERIC_MARM
+t_slowir    support
+//  T_FIR2      support
+t_usb       manual
+t_usbapi
+t_usbcsc
+t_testearlyextension
+#endif
+#ifdef MARM_ARMV5
+t_usb_device	manual
+t_usb_scdevice	manual
+#endif
+
+t_tldd
+t_newldd
+t_lddpowerseqtest
+t_ldddigitisertest
+t_traweventdigitiser
+t_persistrestart	manual
+halsettings	support
+
+// /E32TEST/DLL tests
+t_dll1      support
+t_dll2      support
+
+t_dlla1     support
+t_dlla2     support
+t_dlla3     support
+
+t_start1    support
+t_start2    support
+t_start3    support
+t_tdll12
+
+t_staticdata
+t_tdlla 
+
+t_tls
+t_tlsdll    support
+t_tstart
+t_loadfail
+// REMOVE_ME - Work-around to get stdexe and stddll test cases into ROM.
+// should be removed once new tools have been submitted
+#if defined(MARM_ARMV5)
+t_oefixup
+#endif
+
+#ifdef EPOC32
+t_ver1_1_0  support
+t_ver1_1_1  support
+t_ver1_2_0  support
+#endif
+t_ver1_3_0  support
+#ifdef EPOC32
+t_ver2_1_0  support
+t_ver2_1_1  support
+t_ver2_2_0  support
+#endif
+t_ver2_3_0  support
+#ifdef EPOC32
+t_xver2a    support             // request 1.0 work with any
+t_xver2b    support             // request 1.0 work with 2.0 but not 3.0
+t_xver2c    support             // request 1.0 don't work with 2.0
+t_xver2d    support             // request 1.1 work with 1.0 but not 2.0
+t_xver2e    support             // request 1.1 work with any
+t_xver2f    support             // request 1.1 work with 2.0, 3.0 but not with 1.0
+t_xver2g    support             // request 1.1 don't work with 2.0, 3.0 or 1.0
+t_xver2h    support             // request 1.1 work with 1.0 and 2.0 but not 3.0
+t_xver2i    support             // request 1.1 work with 2.0 but not 3.0 or 1.0
+t_xver2j    support             // request 2.0 only use 1.0 exports
+t_xver2k    support             // request 2.0 only use 1.0, 1.1 exports
+t_xver2l    support             // request 2.0 use 2.0 exports work on 3.0
+t_xver2m    support             // request 2.0 use 2.0 exports, don't work on 3.0
+t_xver2n    support             // request 3.0 use 1.0 exports only
+t_xver2o    support             // request 3.0 use all
+t_xxver2
+#else
+t_xxver2w
+#endif
+
+#ifdef EPOC32
+t_path
+t_path2		support
+t_pathdll1	support
+t_pathdll2	support
+t_import_ldd
+#endif
+
+#if defined(WINS)
+t_dllwsd_dll 	support
+t_dllwsd_dlli	support
+t_dllwsd
+t_dllwsdi
+t_dllwsdd
+t_dllwsddi
+d_wsdextension	support
+t_wsdextension	support
+#endif
+
+// /e32test/ethernet
+../ethernet/pump/etherpump  manual
+../ethernet/macset/macset   manual
+
+// /E32TEST/HEAP tests
+t_fail
+
+#ifdef EPOC32
+t_hcomp     support
+#endif
+
+t_heap
+t_heap2
+t_heapdb
+t_kheap
+
+// /E32TEST/LFFS tests
+t_lfsdrv2       manual
+t_lfsdrvbm		manual
+#if defined(GENERIC_MARM)
+tf_fsscan       manual
+tf_suspend      manual
+tf_suspendsoak  manual
+tf_suspendsoakw manual
+tf_read         manual
+tf_write        manual
+tf_erase        manual
+tf_dump         manual
+#endif
+loadlffs        manual
+#if defined(GENERIC_MARM)
+bf_raw          manual
+bf_cpu          manual
+#endif
+load9660        support
+loadntfs        support
+
+// /E32TEST/LOCALE tests
+t_msgtxt    manual
+t_names 
+t_currencyformat
+
+
+#if !defined(MARM_ARMI) && !defined(MARM_THUMB)
+// Don't build localisation DLLs for ARMI or THUMB
+t_loclus	support
+t_loclus1	support
+t_loclus2	support
+t_loclge	support
+#endif
+
+
+// /E32TEST/MATH tests
+t_float
+t_i64
+t_i64_2 
+t_math  
+t_math2 
+t_r32   
+/*T_R64*/
+t_realx
+t_roundtrip
+#ifdef GENERIC_MARM
+t_vfp
+#endif
+
+// /E32TEST/MISC tests
+
+t_duid      support
+t_uid
+cpumeter    support
+crash       support
+reboot		support
+exc         support
+freemem     support
+//  THRDLIST    support
+t_abt       support
+t_dabt      support
+t_pabt      support
+t_alive     support
+t_busy      support
+t_cmpres
+t_death     support
+t_kill      manual
+t_ramuse    support
+t_repmd     support
+t_stres1    support
+t_svr3      support
+t_svr6      support
+t_xyldr     support
+t_proc3     support
+t_proc3a    support
+t_mem       support
+t_unzip     support
+t_ymodem    support
+t_ymodemz   support
+t_lbk       support
+t_forever   support
+t_ipccpy
+flash       support
+flash32     support
+systemize   support
+kill        support
+t_add2p
+t_add2p2    support
+drvdump     support
+drvread     support
+eject       support
+t_pcreat    support
+
+#if !defined(WINS)
+t_zip       manual
+#endif
+
+#ifdef EPOC32
+t_undef     support
+t_tmout     support
+#endif
+t_empty
+t_empty2
+
+// /E32TEST/MMU tests
+t_chunk 
+t_chunk2
+t_chunk3    support
+t_chunk4
+t_dchunk    manual
+t_mmubm
+t_wbc
+t_sharedio
+t_sharedio2
+t_sharedio3
+t_sharedio4
+t_sharedchunk
+t_sharedchunkf
+t_mmustress
+t_shbuf_client
+t_shbuf_own
+t_shbuf_perf
+
+#ifdef GENERIC_MARM
+t_codemodifier
+t_codemodifier2 support
+t_cache
+#endif
+
+t_dobject
+
+
+#if defined(EPOC32) && !defined(MARM_THUMB)
+t_imb
+t_btb manual
+#endif
+
+#ifdef EPOC32
+t_ramall    support
+t_pages     support
+t_mwait
+t_asid
+t_asid_dummy support
+#endif
+
+// /E32TEST/NKERN tests
+t_nktrace   manual
+
+// /E32TEST/PCCD tests
+t_atadrv    manual
+t_atadr3    support
+t_media     manual
+t_idrv
+t_pccdbm    manual
+t_nandbm    manual
+t_pccdsk    support
+t_pccdsr    support
+t_mmcdrv    manual
+t_med_writebm   manual
+
+#ifdef EPOC32
+t_crrdrv    support
+
+//  T_PCCD1
+//  T_PCCD2 
+//  T_PCCD3     manual
+#endif
+
+t_multislot	manual
+t_medch
+
+// /E32TEST/POWER tests
+t_power
+t_power_slave   support
+t_domain
+t_domain_slave  support
+domainPolicyTest support
+t_switchoff
+
+// /E32TEST/PRIME tests
+t_kern      support
+t_sem
+t_semutx
+t_semutx2
+t_mutex     support
+t_timer
+t_rwlock
+
+// /e32test/property
+t_property
+t_prop_sec  support
+t_prop_define0  support
+t_prop_define1  support
+t_prop_define2  support
+t_prop_define3  support
+t_stress_property   support
+
+// /E32TEST/REALTIME tests
+t_frag      support
+#ifdef EPOC32
+t_lat2m     support
+t_latncy    support
+#endif
+t_write     support
+
+// /E32TEST/SYSTEM tests
+t_atomic
+t_chnot     
+t_cobj      
+t_ctrap     
+t_exc       
+t_inf       manual
+t_multin    
+t_prot
+t_prot2     support
+t_prot2a    support
+t_reason    support 
+t_ref       
+t_reg       
+t_trap
+t_cli
+t_inact     manual
+t_kucopy
+t_condvar
+t_condvar2  support
+
+t_tick      manual
+t_tock
+
+t_env
+t_env_child     support
+
+t_mstim2    support
+#ifndef EPOC32
+t_mstim     support     // win32 timers sometimes irregular, but a useful test nonetheless
+#else
+t_mstim
+
+t_debug     support
+//  T_REGRAM    support
+t_panic     support
+#endif
+
+// /E32TEST/THREAD tests
+t_killer    support // because it takes several minutes to run
+t_thread    
+t_thread2   
+t_threadedserver   
+#ifdef EPOC32
+t_smpsafe
+smpsafea	support
+smpsafeb	support
+smpsafec	support
+smpsafed	support
+smpsafee	support
+smpsafexa	support
+smpsafe0	support
+smpsafe1	support
+smpsafe2	support
+smpsafe3	support
+smpsafe4	support
+smpsafex0	support
+smpsafex2	support
+#endif
+
+// ../VIDEO tests
+#ifndef X86
+t_video
+t_videomemory
+t_videomemprocess
+#endif
+t_vidmode   support
+
+// /E32TEST/DISPCHAN tests
+// DISPCHAN can change the state of the emulator GUI and currently must be run
+// AFTER t_video
+#ifndef X86
+// Run test on H4 once defects in dislay0.ldd are resolved
+t_dispchan
+#endif
+
+// /E32TEST/WINDOW tests
+
+t_calib     support
+t_colour    manual
+t_wjpwin    support
+t_wsimp     support
+t_wwins     manual
+t_mmcpw     manual
+
+t_keys      support
+
+// /E32TEST/Y2K tests
+t_y2k
+
+// /E32TEST/MQUEUE message queue tests
+t_mqueue
+t_mqueueecho support
+
+#if defined(WINS)
+t_emul
+t_emul_slave support
+t_emul_dll1 support
+t_emul_dll2 support
+
+t_guiconfig
+t_jit       manual
+t_emulex
+#endif
+
+#if defined(GENERIC_MARM) || defined(GENERIC_X86)       // should really be GENERIC_EPOC32 but that doesn't exist
+gnumakefile romstuff.mke  support
+#endif
+
+// PLATFORM SECURITY TESTS
+t_rendezvous
+t_smessage
+t_sprocess
+t_sthread
+t_sprioritycap_systemserver
+t_sprioritycap_realtimeserver
+t_suser
+t_polsvr
+t_capsup
+t_platsecconfig
+t_platsecconfig2    support
+t_psc_static        support
+t_psc_dynamic       support
+t_psc_dll       support
+t_sobject
+t_sserver
+t_shal
+t_sdrivers
+#ifdef GENERIC_MARM
+t_ipcsafety
+#endif
+
+// Debugger support
+t_logtofile         manual
+t_eventtracker      manual
+t_traceredirect     support
+t_heapcorruption	support
+t_btrace
+t_perflogger
+
+#ifdef GENERIC_MARM
+t_debugapi      manual
+t_context
+#endif
+
+// /E32TEST/DMA tests
+t_dma       // user-side test harness for real DMA framework
+
+// Example RTOS personality
+../personality/example/t_expers support
+
+// Text notifier tests
+t_textnotifier
+textnotifier2   support
+
+// /E32TEST/CPPEXCEPTIONS
+#ifdef WINS
+t_romtable2
+#endif // WINS
+
+#if defined(MARM_ARMV5) || defined(MARM_ARMV4)
+#if defined(__LEAVE_EQUALS_THROW__)
+t_romtable  
+t_romtable2
+#endif
+t_drtaeabi     support
+#endif
+
+t_unmap
+t_unmap2        support
+d_unmap			support
+d_unmap2		support
+
+t_cputime
+
+t_setkey    manual
+
+t_cachechunk
+#if !defined(WINS)
+t_demandpaging
+#if !defined(X86)
+t_codepaging
+t_codepaging_dll support
+t_codepaging_dll2 support
+t_codepaging_dll3 support
+t_codepaging_dll4 support
+t_codepaging_dll5 support
+t_codepaging_dll6 support
+t_codepaging_dll7 support
+dpinfo manual
+#endif
+
+// t_dpapi suffixes:
+//   c => ram loaded code
+//   p => pageddata
+//   u => unpageddata
+t_dpapi
+t_dpapi_p
+t_dpapi_u
+t_dpapi_c
+t_dpapi_cp
+t_dpapi_cu
+
+t_datapaging
+t_svrpinning
+t_svrpinning_p
+t_svrpinning_up
+t_tbus_datapaging
+#endif
+t_wdpsoak support
+t_pin
+t_kblockmap
+t_thrash
+
+// Examples for demand paging device driver migration
+t_pagingexample
+
+// Pipe tests related mmps
+t_pipe.mmp
+t_pipe2.mmp support
+t_pipe3.mmp support
+t_pipe5.mmp support
+t_pipe4.mmp
+
+// Page moving tests
+#if !defined(WINS) && !defined(X86)
+t_pagemove
+t_pagemove_dll	support
+t_pmwsd		support
+t_defragperf
+t_defragtestperf	support
+t_defragdll0	support
+#endif
+
+// /E32TEST/RESMANUS tests
+#if !defined X86 
+../resmanus/t_resmanus
+../resmanus/t_resmanuskern
+../resmanus/t_resmanusextended
+#endif
+
+// /E32TEST/RESOURCEMAN tests
+#if !defined X86 
+t_rescontrolcli
+t_extendedrescontrolcli
+t_prmacctstsim
+#endif
+
+// /E32TEST/IIC tests
+#if !defined(X86)
+#if defined(WINS)
+../iic/t_iic
+#endif
+#endif
+
+#if defined(MARM_ARMV5)
+t_oeexport2
+#endif
+
+#if defined(MARM_ARMV5) || defined(MARM_ARMV4)
+t_trkdummyapp
+#endif
+
+#if defined(MARM_ARMV5)
+t_rmdebug_dll support
+t_rmdebug_security0 support
+t_rmdebug_security1 support
+t_rmdebug_security2 support
+t_rmdebug_security3 support
+t_rmdebug_app support
+t_rmdebug2
+t_rmdebug2_oem
+t_rmdebug2_oemtoken support
+t_rmdebug2_oem2
+t_rmdebug2_oemtoken2 support
+t_crashmonitor_lib
+#endif
+
+t_stacksize
+
+#if !defined(WINS) && !defined(X86)
+t_crazyints	
+#endif
+
+#endif	// SMP
+
+t_nanowait
+smp_demo support
+
+t_bytepair
+t_destruct
+t_destruct_slave	support
+t_destruct_dll		support
+t_destruct_dll2		support
+t_destruct_dll3		support
+
+#include "../examples/examples.inf"
+// Shared chunk camera driver tests.
+t_camera_api		manual
+t_camera_gen		manual
+d_mmcsc			support
+
+#include "../hcr/hcr.inf"

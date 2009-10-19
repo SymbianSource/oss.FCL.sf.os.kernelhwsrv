@@ -1,0 +1,829 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName			pbase-f32-sfsrv-publicapi-os
+//! @SYMScriptTestEnvironment		This test script requires a basic ROM.
+//! @SYMScriptAuthor 			Dmitri Trofimov
+//! @SYMScriptDescription		The test script contains API tests for the following functions of TFindFile class:
+//! @SYMCreationDate			17/12/2006 
+//! TFindFile(RFs &aFs);
+//! TInt FindByPath(const TDesC &aFileName, const TDesC *aPathList);
+//! TInt FindByDir(const TDesC &aFileName, const TDesC &aDirPath);
+//! TInt FindWildByPath(const TDesC &aFileName, const TDesC *aPathList, CDir *&aDirList);
+//! TInt FindWildByDir(const TDesC &aFileName, const TDesC &aDirPath, CDir *&aDir);
+//! TInt Find();
+//! TInt FindWild(CDir *&aDirList);
+//! const TDesC &File() const;
+
+LOAD_SUITE				T_SfSrv
+DELAY					5000
+
+
+START_TESTCASE				SETUP_FILES
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	CFileMan	CFileMan1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		RFs1		MkDirAll	test_dir
+			COMMAND		RFs1		MkDirAll	test_dir1
+			COMMAND		RFs1		MkDirAll	test_dir2
+			COMMAND		CFileMan1	NewL	fileman_fs
+			COMMAND		CFileMan1	Copy	test_file1
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file2
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	Copy	test_file3
+			COMMAND		CFileMan1	Close
+			COMMAND		CFileMan1	~
+			COMMAND		RFs1	~
+	END_TEST_BLOCK
+END_TESTCASE				SETUP_FILES
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0001
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0001
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			TFindFile() passing a reference to a connected file session as a parameter. This tests for successful object creation and initialization.
+//!					Uses API elements: TFindFile()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Function does not leave nor panic
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1	
+			COMMAND		RFs1		new		
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0001-command4new
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0001
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0002
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0002
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByPath() test. This tests for successful finding of a file.
+//!					Uses API elements: FindByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath()  passing file name "Test1.txt" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByPath returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1	
+			CREATE_OBJECT		TEntry		TEntry1
+			CREATE_OBJECT		CDir		CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0002-command4new
+			COMMAND			TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0002-command5FindByPath
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1		~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0002
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0003
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0003
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByPath() negative test. This tests for function returning KErrNotFound when the file cannot be found.
+//!					Uses API elements: FindByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file name "Test3.txt" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByPath returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1		new			
+			COMMAND			RFs1		Connect			
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0003-command4new
+			COMMAND	!Error=-1	TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0003-command5FindByPath
+			COMMAND			TFindFile1	~			
+			COMMAND			RFs1		~			
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0003
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0004
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0004
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByPath() negative test. This test for function returning KErrArgument when filename is empty.
+//!					Uses API elements: FindByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file empty name and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByPath returns KErrArgument.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs	RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1	new		
+			COMMAND			RFs1	Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0004-command4new
+			COMMAND	!Error=-6	TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0004-command5FindByPath
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0004
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0005
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0005
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByPath() negative test. This test for function returning KErrArgument when filename and path is empty.
+//!					Uses API elements: FindByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file empty name and empty path as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByPath returns KErrArgument.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0005-command4new
+			COMMAND	!Error=-6	TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0005-command5FindByPath
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1		~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0005
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0006
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0006
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByPath() negative test where filename has wildcard and other characters.
+//!					Uses API elements: FindByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file name "$%&?*" and path "\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByPath returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs	RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir		CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0006-command4new
+			COMMAND	!Error=-1	TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0006-command5FindByPath
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0006
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0007
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0007
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByPath() negative test where path has wildcard and other characters.
+//!					Uses API elements: FindByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file name "a" and path "$%&*?" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByPath returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs	RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0007-command4new
+			COMMAND	!Error=-1	TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0007-command5FindByPath
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0007
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0008
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0008
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByDir() test. This test for successful finding of file.
+//!					Uses API elements: FindByDir()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByDir() passing file name "Test1.txt" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByDir() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1	
+			CREATE_OBJECT	TEntry	TEntry1
+			CREATE_OBJECT	CDir	CDir1
+			COMMAND		RFs1	new		
+			COMMAND		RFs1	Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0008-command4new
+			COMMAND		TFindFile1	FindByDir	PBASE-F32-FindFile-PublicApi-0008-command5FindByDir
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0008
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0009
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0009
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByDir() negative test. This tests for function returning KErrNotFound when the file cannot be found. 
+//!					Uses API elements: FindByDir()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByDir() passing file name "Test3.txt" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByDir() returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs	RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1	new		
+			COMMAND			RFs1	Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0009-command4new
+			COMMAND	!Error=-1	TFindFile1	FindByDir	PBASE-F32-FindFile-PublicApi-0009-command5FindByDir
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0009
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0010
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0010
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByDir() negative test. This tests for function returning KErrArgument when file name is empty.
+//!					Uses API elements: FindByDir()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByDir() passing file empty name and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindByDir() returns KErrArgument.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs	RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1	new		
+			COMMAND			RFs1	Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0010-command4new
+			COMMAND	!Error=-6	TFindFile1	FindByDir	PBASE-F32-FindFile-PublicApi-0010-command5FindByDir
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0010
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0011
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0011
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByPath() test. This tests for successful finding of file with wildcard.
+//!					Uses API elements: FindWildByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindWildByPath() passing file name "Test?.*" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByPath() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1	
+			CREATE_OBJECT	TEntry		TEntry1
+			CREATE_OBJECT	CDir		CDir1
+			COMMAND		RFs1		new		
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0011-command4new
+			COMMAND		TFindFile1	FindWildByPath	PBASE-F32-FindFile-PublicApi-0011-command5FindWildByPath
+			//!//!COMMAND		TFindFile1	cleanup		
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0011
+
+
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0012
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0012
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByPath() negative test. This tests for function returning KErrNotFound when the file cannot be found.
+//!					Uses API elements: FindWildByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindWildByPath() passing file name "?ester.*" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByPath() returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir		CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0012-command4new
+			COMMAND	!Error=-1	TFindFile1	FindWildByPath	PBASE-F32-FindFile-PublicApi-0012-command5FindWildByPath
+			//!//!COMMAND			TFindFile1	cleanup		
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0012
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0013
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0013
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByPath() negative test. This tests for function returning KErrArgument when the file cannot be found.
+//!					Uses API elements: FindWildByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindWildByPath() passing file empry name and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByPath() returns KErrArgument.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1	
+			CREATE_OBJECT		CDir		CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0013-command4new
+			COMMAND	!Error=-6	TFindFile1	FindWildByPath	PBASE-F32-FindFile-PublicApi-0013-command5FindWildByPath
+			//!COMMAND			TFindFile1	cleanup		
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0013
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0014
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0014
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByDir() test. This tests for successful finding of file with wildcard in name.
+//!					Uses API elements: FindWildByDir()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to a connected file session as a parameter.
+//!					4. Call FindWildByDir() passing file name "Test?.*" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByDir() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1	
+			CREATE_OBJECT	TEntry	TEntry1
+			CREATE_OBJECT	CDir	CDir1
+			COMMAND		RFs1		new		
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0014-command4new
+			COMMAND		TFindFile1	FindWildByDir	PBASE-F32-FindFile-PublicApi-0014-command5FindWildByDir	
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1		~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0014
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0015
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0015
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByDir() negative test. This test for function returning KErrNotFound when the file cannont be found.
+//!					Uses API elements: FindWildByDir()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to a connected file session as a parameter.
+//!					4. Call FindWildByDir() passing file name "?ester.*" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByDir() returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs	RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0015-command4new
+			COMMAND	!Error=-1	TFindFile1	FindWildByDir	PBASE-F32-FindFile-PublicApi-0015-command5FindWildByDir
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0015
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0016
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0016
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByDir() negative test. This tests function returning KErrArgument when the file name is empty.
+//!					Uses API elements: FindWildByDir()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to a connected file session as a parameter.
+//!					4. Call FindWildByDir() passing file empty name and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByDir() returns KErrArgument.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1	
+			COMMAND			RFs1		new
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0016-command4new
+			COMMAND	!Error=-6	TFindFile1	FindWildByDir	PBASE-F32-FindFile-PublicApi-0016-command5FindWildByDir
+			//!COMMAND		TFindFile1	cleanup		
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0016
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0017
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0017
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			Find() test. This tests for successful finding of file after FindByPath() call.
+//!					Uses API elements: FindByPath(), Find()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file name "Test1.txt" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!					5. Call Find().
+//!					6. Call File() with checking that value is '\base\t_sfsrv\t_findfile\test2\Test1.txt'
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Find() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1	
+			CREATE_OBJECT	TEntry		TEntry1
+			CREATE_OBJECT	CDir		CDir1
+			COMMAND		RFs1		new		
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0017-command4new
+			COMMAND		TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0017-command5FindByPath
+			COMMAND		TFindFile1	Find		
+			COMMAND		TFindFile1	File		correct_file_path2
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0017
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0018
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0018
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			Find() negative test. This tests for function returning KErrNotFound when file cannot be found after FindByPath() call.
+//!					Uses API elements: FindByPath(), Find()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file name "Test2.txt" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!					5. Call Find().
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Find() returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1	
+			COMMAND			RFs1		new
+			CREATE_OBJECT		CDir		CDir1
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0018-command4new
+			COMMAND			TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0018-command5FindByPath
+			COMMAND	!Error=-1	TFindFile1	Find		
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0018
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0020
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0020
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			Find() negative test. This tests for function returning KErrNotFound when file cannot be found after
+//!					FindByDir() call.
+//!					Uses API elements: FindByDir(), Find()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Create RFile object
+//!					3. Call Rfs::Connect().
+//!					4. Call RFile::Create() and pass name "temp.txt" as parameter.
+//!					5. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					6. Call FindByDir() passing file name "temp.txt" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!					7. Call Find().
+//!					8. Call RFs::Delete() and pass name "temp.txt" as parameter.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Second Find() returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1
+			CREATE_OBJECT		RFile		RFile1
+			CREATE_OBJECT		TFindFile	TFindFile1
+			CREATE_OBJECT		CDir		CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFile1		new
+			COMMAND			RFs1		Connect	
+			COMMAND			RFile1		Create		PBASE-F32-FindFile-PublicApi-0020-command1Create
+			COMMAND			RFile1		Close
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0020-command4new
+			COMMAND			TFindFile1	FindByDir	PBASE-F32-FindFile-PublicApi-0020-command5FindByDir
+			COMMAND	!Error=-1	TFindFile1	Find
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1		Delete		PBASE-F32-FindFile-PublicApi-0020-command6Delete
+			COMMAND			RFile1		~
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0020
+
+
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0021
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0021
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWild() test. This test for successful finding of file ather FindWildByPath() call.
+//!					Uses API elements: FindWildByPath(), FindWild()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindWildByPath() passing file name "Test1.*" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!					5. Call FindWild()
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWild() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1
+			CREATE_OBJECT	TEntry	TEntry1
+			CREATE_OBJECT	CDir	CDir1			
+			COMMAND		RFs1		new		
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0021-command4new
+			COMMAND		TFindFile1	FindWildByPath	PBASE-F32-FindFile-PublicApi-0021-command5FindWildByPath
+			COMMAND		TFindFile1	FindWild	common_dir_wrapper	
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0021
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0022
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0022
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWild() negative test. This test for function returning KErrNotFound if file cannot be found after FindWildByPath() call.
+//!					Uses API elements: FindWildByPath(), FindWild()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindWildByPath() passing file name "Test2.txt" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!					5. Call FindWild()
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWild() returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1	
+			CREATE_OBJECT		TFindFile	TFindFile1	
+			CREATE_OBJECT		CDir	CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFs1		Connect		
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0022-command4new
+			COMMAND			TFindFile1	FindWildByPath	PBASE-F32-FindFile-PublicApi-0022-command5FindWildByPath
+			COMMAND	!Error=-1	TFindFile1	FindWild	common_dir_wrapper	
+			COMMAND			TFindFile1	~		
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0022
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0024
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0024
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWild() negative test. This test for function returning KErrNotFound if file cannot be found after FindWildByDir() call.
+//!					Uses API elements: FindWildByDir(), FindWild()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Create RFile object
+//!					3. Call Connect().
+//!					4. Call RFile::Create() and pass name "temp.txt" as parameter.
+//!					5. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					6. Call FindWildByDir() passing file name "temp.*" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!					7. Call FindWild()
+//!					8. Call RFs::Delete() and pass name "temp.txt" as parameter.
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Both FindWild() returns KErrNotFound.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT		RFs		RFs1
+			CREATE_OBJECT		RFile		RFile1
+			CREATE_OBJECT		TFindFile	TFindFile1	
+			CREATE_OBJECT		TEntry		TEntry1
+			CREATE_OBJECT		CDir		CDir1
+			COMMAND			RFs1		new		
+			COMMAND			RFile1		new
+			COMMAND			RFs1		Connect
+			COMMAND			RFile1		Create		PBASE-F32-FindFile-PublicApi-0024-command1Create
+			COMMAND			RFile1		Close
+			COMMAND			TFindFile1	new		PBASE-F32-FindFile-PublicApi-0024-command4new
+			COMMAND			TFindFile1	FindWildByDir	PBASE-F32-FindFile-PublicApi-0024-command5FindWildByDir
+			COMMAND	!Error=-1	TFindFile1	FindWild	common_dir_wrapper	
+			COMMAND			TFindFile1	~
+			COMMAND			RFs1		Delete		PBASE-F32-FindFile-PublicApi-0024-command6Delete
+			COMMAND			RFile1		~
+			COMMAND			RFs1	~		
+	END_TEST_BLOCK 
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0024
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0025
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0025
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindByPath() test. This tests for function to return correct data.
+//!					Uses API elements: FindByPath(), File()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindByPath() passing file name "Test1.txt" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!					5. Call File() with checking that value is '\base\t_sfsrv\t_findfile\test1\Test1.txt'
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		File returns "\base\t_sfsrv\t_findfile\test1\Test1.txt".
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1
+			CREATE_OBJECT	TFindFile	TFindFile1
+			CREATE_OBJECT	TEntry		TEntry1
+			CREATE_OBJECT	CDir		CDir1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0025-command4new
+			COMMAND		TFindFile1	FindByPath	PBASE-F32-FindFile-PublicApi-0025-command5FindByPath
+			COMMAND		TFindFile1	File		correct_file_path
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0025
+
+
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0027
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0027
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByDir() test. This tests for successful finding of file without wildcard in name.
+//!					Uses API elements: FindWildByDir()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to a connected file session as a parameter.
+//!					4. Call FindWildByDir() passing file name "Test1.txt" and path "\base\t_sfsrv\t_findfile\test1\" as arguments.
+//!					5. Call File() with checking that value is '\base\t_sfsrv\t_findfile\test1\Test1.txt'
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByDir() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs		RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1	
+			CREATE_OBJECT	TEntry		TEntry1
+			CREATE_OBJECT	CDir		CDir1
+			COMMAND		RFs1		new		
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0027-command4new
+			COMMAND		TFindFile1	FindWildByDir	PBASE-F32-FindFile-PublicApi-0027-command5FindWildByDir
+			COMMAND		TFindFile1	File	correct_file_path
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0027
+
+
+START_TESTCASE 				PBASE-F32-FindFile-PublicApi-0028
+//! @SYMTestCaseID			PBASE-F32-FindFile-PublicApi-0028
+//! @SYMAPI				TFindFile
+//! @SYMTestCaseDesc			FindWildByPath() test. This tests for successful finding of file without wildcard in name.
+//!					Uses API elements: FindWildByPath()
+//! @SYMTestActions			1. Create RFs object.
+//!					2. Call Connect().
+//!					3. Create TFindFile object passing a reference to the connected file session as a parameter.
+//!					4. Call FindWildByPath() passing file name "Test1.txt" and path "\base\t_sfsrv\t_findfile\test1\;\base\t_sfsrv\t_findfile\test2\" as arguments.
+//!					5. Call File() with checking that value is '\base\t_sfsrv\t_findfile\test1\Test1.txt'
+//!
+//! @SYMTestStatus			Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		FindWildByPath() returns KErrNone.
+//! @SYMTestType			CIT
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1	
+			CREATE_OBJECT	TFindFile	TFindFile1
+			CREATE_OBJECT	TEntry		TEntry1
+			CREATE_OBJECT	CDir		CDir1
+			COMMAND		RFs1		new		
+			COMMAND		RFs1		Connect		
+			COMMAND		TFindFile1	new		PBASE-F32-FindFile-PublicApi-0028-command4new
+			COMMAND		TFindFile1	FindWildByPath	PBASE-F32-FindFile-PublicApi-0028-command5FindWildByPath
+			COMMAND		TFindFile1	File		correct_file_path
+			COMMAND		TFindFile1	~		
+			COMMAND		RFs1	~		
+	END_TEST_BLOCK
+END_TESTCASE				PBASE-F32-FindFile-PublicApi-0028
+
+
+START_TESTCASE				REMOVE_FILES
+	START_TEST_BLOCK	100	T_SfSrv	\base\PBASE-F32-FindFile-PublicApi.ini
+			CREATE_OBJECT	RFs	RFs1
+			CREATE_OBJECT	CFileMan	CFileMan1
+			COMMAND		RFs1		new
+			COMMAND		RFs1		Connect
+			COMMAND		CFileMan1	NewL	fileman_fs
+			COMMAND		CFileMan1	Delete	all_files1
+			COMMAND		CFileMan1	Delete	all_files2
+			COMMAND		RFs1		RmDir	test_dir1
+			COMMAND		RFs1		RmDir	test_dir2
+			COMMAND		RFs1		RmDir	test_dir
+			COMMAND		CFileMan1	~
+			COMMAND		RFs1	~
+	END_TEST_BLOCK
+END_TESTCASE				REMOVE_FILES
+

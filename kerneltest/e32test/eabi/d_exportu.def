@@ -1,0 +1,8 @@
+EXPORTS
+	_Z19CreateLogicalDevicev @ 1 NONAME
+	_Z22ExportMultiplyFunctionjj @ 2 NONAME
+	_ZTI14DExportChannel @ 3 NONAME
+	_ZTI14DExportFactory @ 4 NONAME
+	_ZTV14DExportChannel @ 5 NONAME
+	_ZTV14DExportFactory @ 6 NONAME
+

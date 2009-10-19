@@ -1,0 +1,12 @@
+
+
+The directory containing this files contains ARM's example
+implementation of the EHABI which is part of 'The Base Standard ABI
+for the ARM architecture'. All parts of this specification including
+the code contained here can be obtained via the link
+[http://www.armdevzone.com/EABI/HomePage.html]. Symbian's
+implementation of exception handling is derived from this code. This
+file will document the amendments made to integrate the code with
+SymbianOS.
+
+

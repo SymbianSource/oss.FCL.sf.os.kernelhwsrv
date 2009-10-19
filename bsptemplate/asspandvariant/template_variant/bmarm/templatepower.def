@@ -1,0 +1,4 @@
+EXPORTS
+	ResourceManager__24TTemplatePowerController @ 1 NONAME R3UNUSED ; TTemplatePowerController::ResourceManager(void)
+	WakeupEvent__24TTemplatePowerController @ 2 NONAME R3UNUSED ; TTemplatePowerController::WakeupEvent(void)
+

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<relnotes name="Bootstrap">
+  <purpose>
+    Prepares hardware including memory and peripherals, maps virtual address space if an MMU is present, and starts the kernel. Includes processor, MMU, and other device dependent which may be substituted by a specific platform variant as well as generic code.
+  </purpose>
+</relnotes>

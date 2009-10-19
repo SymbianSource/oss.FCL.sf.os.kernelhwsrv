@@ -1,0 +1,710 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+//==========================
+//Base Test - F32 Test Suite
+//==========================
+
+ //! @SYMTestCaseID TestStartStopServer_Normal1
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test start/stop server in normal conditions
+
+ //! @SYMFssID Base/emstore/2.2.1
+
+ //! @SYMTestActions 
+ //!	a. Load MS Server/File system, 
+ //!	b. start it with correct SUID. 
+ //!	c. Send GET_MAX_LUN request using TestLdd. 
+ //! 	d. Send TEST_UNIT_READY CBW for all LUN using TestLdd. 
+ //!	e. Stop server. 
+ //!	f. Check USB clients have been deregistered. 
+
+ //! @SYMTestExpectedResults The Load and Start request (step a and b) should complete successfully, Expected LUN should be
+ //!	returned. 
+ //!	NOT_PRESENT CSW should be returned for every TEST_UNIT_READY request (step d). 
+ //!	Stop request (step e) should be completed successfully.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //--------------------------------------
+
+
+ //! @SYMTestCaseID TestStartStopServer_Abnormal1
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test start/stop server when MS FS doesn't loaded or when incorrect SUID provided
+
+ //! @SYMFssID Base/emstore/5.1.1
+ 
+
+ //! @SYMTestActions 
+ //!	a. Do not load MS Server/File system. Try start it with correct SUID. 
+ //! 	b. Send GET_MAX_LUN request using TestLdd. 
+ //!	c. Send TEST_UNIT_READY CBW for LUN 0 using TestLdd. 
+ //! 	d. Load Server/FS. 
+ //!	e. Start it using wrong SUID, and then 
+ //!	f. start it using correct SUID. 
+ //!	g. Try start in again. 
+ //! 	h. Stop server. 
+ //!	i. Try Stop it again.  
+
+ //! @SYMTestExpectedResults The start request (step a) should fail. 
+ //!	The GET_MAX_LUN (step b) and TEST_UNIT_READY requests (step c) should fail
+ //! 	First (step a), second  (step e) and fours (step g) start requests should fail. 
+ //!	Third  Start request should succeed.
+ //!	First stop request (step h) should succeed.
+ //!	Second Stop request (step i) should fail.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+
+ //! @SYMTestCaseID Drive_Registering_1
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test registering MS FS
+
+ //! @SYMFssID Base/emstore/3.1.1
+ //! @SYMFssID Base/emstore/3.2.1
+ //! @SYMFssID Base/emstore/4.1.1
+
+ //! @SYMTestActions 
+ //!	a. Load MS Server/File system and start it. 
+ //!	b. Mount media as MS FS. Drive letter passed as a parameter
+ //! 	c. Format media using FAT FS. 
+ //!	d. Store boot sector for comparison. 
+ //!	e. Dismount media. 
+ //!	f. Mount MS FS for this  media.
+ //! 	g. Read boot sector passing SCSI command through TestLdd, 
+ //!	h. compare this boot sector with saved.
+ //! 	i. Try to mount and read the removable media using file server.
+
+ //! @SYMTestExpectedResults 
+ //!	This test should be run for different drives.
+ //!	Non removable media should not be mounted (step b) and test expected to fail.
+ //!	For removable media - 	Steps from c to g should completed successfully
+ //! 	Read boot sector should be the same as saved. 
+ //!	File Server's read attempt (step i) should fail when MS FS mounted.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+ //---------------------------------------------
+ //! @SYMTestCaseID Drive_UnRegistering_1
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test un-registering MS FS
+
+ //! @SYMFssID Base/emstore/3.2.1
+ //! @SYMFssID Base/emstore/5.1.2
+
+ //! @SYMTestActions 
+ //!	a. Try to un-registering already registering MS FS while SCSI is accessing the drive.
+ //! 	b. Wait for access completion.
+ //! 	c. Un-register already registered MS FS. 	
+ //! 	d. Try to read media using file server. 
+ //! 	e. Remount FAT FS.
+ //! 	f. Issue UnitReady and Read SCSI command through test LDD. 
+ //!	g. Try to read media using file server again.
+ //!	h. Un-mount FAT FS and mount MS FS
+ //! 
+ //! 
+
+ //! @SYMTestExpectedResults 
+ //!	Un-registering request (step a) should return an appropriate error code when media is in use. 
+ //!	Next un-registering (step c) should be successful. 
+ //!	attempt (step d) should fail. 
+ //!    SCSI commands (step f) should report error when MS FS is un-mounted. 
+ //!	File server read request (step g) should be successful when FAT FS is mounted  
+ //!    
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Read_boot_sector
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test if NAND media does not expose its Master Boot Record (MBR)
+
+ //! @SYMFssID Base/emstore/2.1.2
+
+ //! @SYMTestActions Read sector 0 using Test LDD. Check if its regular Boot Sector or MBR
+
+ //! @SYMTestExpectedResults  Sector 0 should be regular Boot Sector.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Bulk_only_error_conditions_1
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test Bulk_only_transport under the bad condition
+
+ //! @SYMFssID Base/emstore/1.1.1
+
+ //! @SYMTestActions 
+ //!	a. Send GET_MAX_LUN command to MS using Test LDD, check the response.
+ //! 	b. Send unsupported command. Check the responce.
+ //!	c. Clear the error conditions. 
+ //!	d. Send bad CBW.
+ //!	e. Send normal CBW. 
+ //!	f. Send Reset command to clear.
+ //! 	g. Send normal CBW (INQUIRY) again.
+
+ //! @SYMTestExpectedResults  GET_MAX_LUN (step a) should return expected data. 
+ //! After unsupported command (step b) STALL PID should be returned at the next Data stage transaction
+ //! After bad CBW (step d) transport should stall and not response for good CBW (step e). Check no CSW is returned even if normal CBW passed.
+ //! The last normal CBW (step g) should cause return of CSW with zero's in inquiry packet response. 
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Bulk_only_13_cases
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test Bulk_only_transport for 13 cases (section 6.7 from 
+ //! "Universal Serial Bus. Mass Storage Class Bulk-Only Transport" Revision 1.0)
+
+ //! @SYMFssID Base/emstore/1.1.1
+ //! @SYMFssID Base/emstore/1.2.1
+
+ //! @SYMTestActions Exercise  Balk only transport for all 13 cases.
+ //!  - No data to send or receive (P20 case(1))
+ //!    Normal case - Use TEST_UNIT_READY and check no data returned and bCswStatus = 0 or 1
+ //! 
+ //!  - Host expects no data, device intends to send/receive data (P20 Case(2) or (3))
+ //!    Sent READ command (1 sector?) with KCbwDataTransferLength == 0 - Case 2
+ //!    Sent WRITE command (1 sector?) with KCbwDataTransferLength == 0 - Case 3
+ //!     - In above cases, transport should issue PHASE_ERROR (bCswStatus = 2)
+ //! 
+ //!  - Host expects to receive data (case 6)
+ //!    Send READ command, 1 sector, KCbwDataTransferLength = 512 bytes - Should return 512bytes with valid CSW
+ //! 
+ //!  - Device intends to send less data than expected from host (case 4 and 5)
+ //!    Send READ command, 1 sector, KCbwDataTransferLength = 1024 bytes 
+ //!      - Above should return 1024bytes (KCbwDataTransferLength) with 512 byte padding, 512 bytes residue and valid CSW
+ //! 
+ //!  - Device intends to send more data than expected by host (case 7 and 8)
+ //!    Send READ command, 2 sector, KCbwDataTransferLength = 512 bytes 
+ //!      - Above should return 512bytes (KCbwDataTransferLength), return bCswStatus = 2
+ //! 
+ //!  - Host expects to send data to the device
+ //!    - Device intends to read less than the host sends (case 9,11,12)
+ //!      Send WRITE command (1 sector) with KCbwDataTransferLength == 1024
+ //!       - Device reads all data (1024) discarding the last 512 bytes, returns status = 0, residue = 512
+ //! 
+ //!    - Device intends to receive more data than sent by the host (case 10, 13)
+ //!      Send WRITE command (2 sector) with KCbwDataTransferLength == 512
+ //!      - Device should read all data, return bCswStatus = 2
+ //! 
+ //! @SYMTestExpectedResults  Pass
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+
+ //! @SYMTestCaseID Scsi_Inquiry_normal
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Exercise INQUIRY command in normal conditions
+
+ //! @SYMFssID Base/emstore/1.2.3
+ //! @SYMFssID Base/emstore/1.2.3.1
+
+ //! @SYMTestActions Issue INQUIRY command (CMDDT, EVPD and PAGE OR OPERATION CODE =0 ) when media not present. 
+ //! Check the response. Then mount media and issue INQUIRY command again. Check the response.
+
+ //! @SYMTestExpectedResults  For both INQUIRY command IDevice type ==0, RMB==1, Version==0, Response Data Format == 0x02 
+ //! Vendor ID/Product ID/Revision Level should be the same as passed in during Server Start.
+ //! For first INQUIRY command Qualifier == 1 (the physical device is not currently connected to this logical unit),
+ //! for next one Qualifier == 0.
+
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Inquiry_error
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Exercise INQUIRY command in error conditions
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Issue INQUIRY command with CMDDT =1, Check the sense code.
+ //! Issue INQUIRY command with CMDDT =0 and EVPD=0 when PAGE OR OPERATION CODE field is not zero, Check the sense code.
+
+
+ //! @SYMTestExpectedResults  The SCSI protocol shall return CHECK CONDITION status with the sense
+ //! key set to ILLEGAL REQUEST and an additional sense code of INVALID FIELD IN CDB.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Request_Sense
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Exercise REQUEST_SENSE command
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions - Issue REQUEST_SENSE before any other command - Should return OK sense code
+ //!  - Issue TEST_UNIT_READY for unregistered drive
+ //!	    Check CSW returns status = 0x01
+ //!	    Issue REQUEST_SENSE - should return NOT_READY sense code
+ //!	    Issue REQUEST_SENSE - should return OK sense code
+ //!
+ //!  - Issue TEST_UNIT_READY for registered drive.
+ //!	    Check CSW returns status = 0x00
+ //!	    Issue REQUEST_SENSE - should return OK sense code
+ //!
+ //!  - Issue TEST_UNIT_READY for unregistered drive.
+ //!	    Check CSW returns status = 0x01
+ //!	    Issue TEST_UNIT_READY for registered drive.
+ //!	    Check CSW returns status = 0x00
+ //!	    Issue REQUEST_SENSE - should return OK sense code
+
+ //! @SYMTestExpectedResults  Described above
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Mode_Sense
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Exercise MODE_SENSE command
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions 
+ //!	Register drive. 
+ //!	Issue request for 3Fh code page for write protected and not write protected media
+
+ //!	dev notes: latest implementation of scsi protocol supports only (SPC-2 p.100):
+ //!		- PC field
+ //!			- 00b	| supported 
+ //!			- 10b	| in the same
+ //!			- 11b	| manner
+ //!			- 01b - NOT supported
+ //!		- PAGE CODE (p. 189)
+ //!			- 3Fh code ONLY
+ //!	
+
+ //! @SYMTestExpectedResults 
+ //!	OUTPUT:
+ //!		- device-specific parameter, field WP only (table 147, p.189 and table 101, p.107 in SBC-2)
+ //!		NOT supported:
+ //!		- block descriptors are not supported (table 146)
+ //!		- pages
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Bad_Lun
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test SCSI commands behavior for when unsupported LUN provided
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Issue all supported SCSI command with unsupported LUN.
+
+ //! @SYMTestExpectedResults  All commands should return CHECK CONDITION status 
+ //!		with the sense key set to ILLEGAL REQUEST / LUN NOT SUPPORTED. 
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_media_change
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test SCSI commands behavior when media changed
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Mount media. Issue INQUIRY command then simulate media change. Issue TEST UNIT READY.
+ //! Repeat with  other commands (except REQUEST SENSE )
+
+ //! @SYMTestExpectedResults  All commands should return CHECK CONDITION status with the sense key set to UNIT ATTENTION
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Test_Unit_Ready
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test TEST UNIT READY command
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Don't register media. Issue TEST UNIT READY command. Check sense code. 
+ //! Register media, repeat TEST UNIT READY command.
+
+ //! @SYMTestExpectedResults  First commands should return CHECK CONDITION status with the sense key set to NOT READY.
+ //! second command should return GOOD status with no additional sense information
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Read_Capacity
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test READ_CAPACITY command
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions 	Note media capacity before registering drive. Register drive and issue READ_CAPACITY command
+ //! NOTE: LOGICAL BLOCK ADDRESS and PMI have to be set to 00h.
+
+ //! @SYMTestExpectedResults  Data returned by READ_CAPACITY command should match with previously stored data. 
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Start_Stop_Unit
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test START_STOP_UNIT command
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Issue START_STOP_UNIT command with START bit =1 then =0 when media is unregistered. Check sense code.
+ //! Register drive. Issue START_STOP_UNIT command with START bit =1 then =0.
+ //! NOTE: not supported fields: IMMED; POWER CONDITIONS; LOEJ
+ //! 		the only supported field is: START
+
+ //! @SYMTestExpectedResults  First to request should return CHECK CONDITION status with the sense key set to NOT READY.
+ //! Last to requests should return GOOD status.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Prevent_Allow_Media_Removal
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test PREVENT/ALLOW MEDIUM REMOVAL command
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Same pattern as it define at Scsi_Start_Stop_Unit
+ //! NOTE: supported PREVENT field only.
+
+ //! @SYMTestExpectedResults  
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_Read_Write_Verify
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test READ, WRITE and VERIFY commands
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Register drive. Perform Write/Read/Verify tests of differing lengths and offsets. 
+ //! Check boundary conditions - Read/Write off end of media (start <> length, end <> length)
+ //! Perform Write/Read/Verify tests with write PROTECT media
+ //! NOTE: only true or false is supported for PROTECT flag.
+ 
+ //! @SYMTestExpectedResults  All operation should be completed successfully.
+ //! end < length condition should result in ILLEGAL REQUEST / LBA OUT OF RANGE sense code.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Scsi_unsupported_commands
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test system response for unsupported commands
+
+ //! @SYMFssID Base/emstore/1.2.3
+
+ //! @SYMTestActions Issue several unsupported commands, Check the sense code.
+
+ //! @SYMTestExpectedResults  ILLEGAL REQUEST / INVALID COMMAND CODE sense code should be returned.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Notification_1
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test Publish and Subscribe events.
+
+
+ //! @SYMFssID Base/emstore/4.2.1
+ //! @SYMFssID Base/emstore/5.1.3
+ //! @SYMFssID Base/emstore/6.1.2.2
+
+ //! @SYMTestActions Initiate different events (using Test LDD and Test server extension) to put USB mass storage 
+ //! sequentially to all 9 states and test if user app receive proper notification.
+
+ //! @SYMTestExpectedResults  All new state should trigger corresponded publish event.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Notification_2
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc Test Data Transferred notification 
+
+ //! @SYMFssID Base/emstore/4.3.1
+
+ //! @SYMTestActions Register media. Issue Read and Write commands using test LDD. Check notification about data transferred.
+
+ //! @SYMTestExpectedResults  Amount of data read and writen should match to 1K within numbers provided by notification service.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Password_1
+ //! @SYMTestType CT
+
+ //! @SYMTestCaseDesc 
+
+ //! @SYMFssID Base/emstore/6.1.1
+ //! @SYMFssID Base/emstore/6.1.2.1
+ //! @SYMFssID Base/emstore/6.1.2.2
+
+ //! @SYMTestActions Insert unlocked card. Lock and store password. Force media change (using TBusLocalDrive::ForceRemount or RFs)
+ //! Load MSFSYS. Card should be automatically unlocked.
+ //! Un-mount MSFSYS. Unlock and Clear Password. Lock and don't store password.
+ //! Force media change (using TBusLocalDrive::ForceRemount or RFs). Load MSFSYS. 
+ //! User should be notified. Test App gets Locked P&S event
+ //! Try to read/write (using Test LDD) registered, but not password protected media. Read/Write should succeed
+ //! Unlock and store. Force media change (using TBusLocalDrive::ForceRemount or RFs).
+ //! Next access should be unlocked
+
+ //! @SYMTestExpectedResults  Pass
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined 
+
+
+
+ //====================================================
+ // Integration tests (required host PC)
+ //====================================================
+ //! @SYMTestCaseID Media_removal
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test media removal. (Manual integration test)
+
+ //! @SYMFssID Base/emstore/4.2.1
+
+ //! @SYMTestActions Initiate writing of big file (start Perl Script on PC) and 
+ //!	remove card during write. 
+ //!	Reinsert card after 1-2 seconds.
+ //!	Wait for writing completion (indicated by script prompt).
+ //!	Stop USB mass storage device using standard Windows tool.
+ //! 	Unplug/plug-in USB cable to reset windows cache. 
+ //! 	Read written file and compare (perl script)
+
+ //! @SYMTestExpectedResults  Read data should match with written.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Non_FAT_media
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test reaction for non FAT media. (Manual integration test)
+
+ //! @SYMFssID Base/emstore/2.1.1
+
+ //! @SYMTestActions 
+ //!	a Insert MMC card formatted as FAT	
+ //!	b Start USB MS application
+ //!	c Check the displayed drive list 
+ //!	d Double click on removable drive which is MMC card.
+ //!	e Note if drive is accessible	
+ //!	f Stop USB MS application
+ //!	g Insert FAT formatted MMC card
+ //!	h repeat steps from b to f
+ //!    i reboot the board 
+
+ //! @SYMTestExpectedResults  The drive correspondent to MMC card should be accessible when FAT formatted card is inserted
+ //! and inaccessible when MMC card formatted as NTFS 
+
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Cable_plug_unplug
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test system behavior on USB cable plug-in/plug-out (automated integration test)
+
+ //! @SYMFssID Base/emstore/5.1.1
+ //! @SYMFssID Base/emstore/5.1.2
+
+ //! @SYMTestActions Start USB MS using USB manager. Simulate cable removal.
+ //! USB Man notifies USB App of cable removal. USB App should dismount MSFSYS. 
+ //! USB App should get Disconnected state from P&S. USB App should remount FAT.
+ //! USB App commands MS Class Controller to stop the server/transport.
+ //! Repeat in backward order.
+
+ //! @SYMTestExpectedResults  Pass.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Interoperability_1
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test Mass Storage functionality on different platforms (Windows 2000/XP/ME, MacOS) (Manual test)
+
+ //! @SYMFssID Base/emstore/1.1.1
+ //! @SYMFssID Base/emstore/3.1.1
+
+ //! @SYMTestActions Connect device to a host PC. Enable MS. Start perl script on PC. 
+ //! This script formats drive and creates several folders with levels of nested folders and writes set of files to them. 
+ //! File sizes varied from several kilobytes to several megabytes. 
+ //! The number of folders, nest depth, number of files placed in each folder and  there sizes should be configurable.
+ //! Then script prompt ask to unplug/plug USB cable (to flash OS read cache) and then read all files back and compare.
+
+ //! @SYMTestExpectedResults  Read data from files should match with written.
+ //---------------------------------------------
+ //! @SYMTestCaseID Interoperability_2
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test Mass Storage functionality on different platforms (Windows 2000/XP/ME, MacOS) (Manual test)
+
+ //! @SYMFssID Base/emstore/1.1.1
+ //! @SYMFssID Base/emstore/3.1.1
+
+ //! @SYMTestActions Connect device to a host PC. Enable MS. Start perl script on PC. 
+ //! This script formats drive and queries size of it. 
+ //! Than script create file with size close to drive size and check free space.
+ //! Then script prompt ask to unplug/plug USB cable (to flash OS read cache) and then read the file back and compare.
+
+ //! @SYMTestExpectedResults  File creation should succeed. Read data from file should match with written. 
+ //! Sum of file size and free space should be close to drive size.
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Performance_Ready_Time
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test readiness time. (Manual test)
+
+ //! @SYMFssID Base/emstore/1.1.1
+
+ //! @SYMTestActions Open "My computer folder". Enable MS on device. Plug in USB cable. 
+ //! Note delay between cable insertion and new drive icon appearance using watch stop.
+ //! Unplug cable then repeat test.
+
+ //! @SYMTestExpectedResults  Delay after second cable plug-in should be not bigger then 10 seconds 
+ //! However firs delay can be longer if this device was not used with this PC before.
+ //! Thus result of first step  can be ignored.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Performance_1
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Measure file read/write performance (manual)
+ //! @SYMFssID Base/emstore/1.1.1
+
+ //! @SYMTestActions Use PassMark Performace test v5.0 (http://www.passmark.com/)
+ //! Create new thread under advanced disk test with parameters: 
+ //! File size - 5Mb, Block Size - 16384, Access Method - Standart Win32 API (un-cached),
+ //! Request Mode - Synchronous, 100% Write, 100% Sequential
+ //! Run test, note Mb/sec numbers.
+ //! Change to 100% Read, Run test, note Mb/sec numbers.
+ //! Change to 50% Read/Write, 50% Sequential/Random
+ //! Change to 100% Read, Run test, note Mb/sec numbers.
+
+ //! @SYMTestExpectedResults  Number for Lace card reader with 16MB SanDisc MMC (USB 1.1) - 0.12/0.14/0.14 Mb/sec
+ //! SunDisk Cruiser mini 256MB flash drive (under USB 1.1) - 0.7/0.78/0.42 Mb/sec
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+//---------------------------------------------
+ //! @SYMTestCaseID Performance_2
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test if phone can receive incoming call when acting as a mass storage device. (Manual integration test)
+
+ //! @SYMTestActions Enable MS, connect device (H2 board) to PC. Start script on PC side which write/read files. Place a call from another GSM phone to the device. Hang off, then hang on.
+
+ //! @SYMTestExpectedResults  Call should be received and proceeded properly.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+
+
+ //---------------------------------------------
+ //! @SYMTestCaseID Performance_3
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test if phone can receive incoming SMS when acting as a mass storage device. (Manual integration test)
+ //! @SYMFssID Base/emstore/1.1.1
+
+ //! @SYMTestActions Enable MS, connect device (H2 board) to PC. Start script on PC side which write/read files. Send a SMS message from another GSM phone to the device
+ //! @SYMTestExpectedResults  SMS should be received properly.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined
+
+//---------------------------------------------
+ //! @SYMTestCaseID Performance_4
+ //! @SYMTestType IT
+
+ //! @SYMTestCaseDesc Test if it possible to browse Address Book when device acting as a mass storage. (Manual integration test)
+ //! @SYMFssID Base/emstore/1.1.1
+
+ //! @SYMTestActions Enable MS, connect device (H2 board) to PC. Start script on PC side which write/read files. 
+ //! Open Address Book application and try to navigate through records.
+ //! @SYMTestExpectedResults  Address Book application should work properly.
+
+ //! @SYMTestPriority Low
+ //! @SYMTestStatus Defined

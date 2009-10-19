@@ -1,0 +1,21 @@
+# component name "Generic Board Support Packages"
+
+component	base_e32_drivers_bsp
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\bsp
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\dma
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\power
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\resourceman
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\resmanus
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\xyin
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\iic
+source  \sf\os\kernelhwsrv\kernel\eka\drivers\hcr
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\bsp all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\bsp
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+

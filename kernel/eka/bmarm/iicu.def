@@ -1,0 +1,14 @@
+EXPORTS
+	StaticExtension__6IicBusUiUiPvT3 @ 1 NONAME ; IicBus::StaticExtension(unsigned int, unsigned int, void *, void *)
+	CaptureChannel__6IicBusiP5TDes8P20TIicBusSlaveCallbackRii @ 2 NONAME ; IicBus::CaptureChannel(int, TDes8 *, TIicBusSlaveCallback *, int &, int)
+	DeRegisterChannel__17DIicBusControllerP14DIicBusChannel @ 3 NONAME R3UNUSED ; DIicBusController::DeRegisterChannel(DIicBusChannel *)
+	DfcFunc__20TIicBusSlaveCallbackPv @ 4 NONAME R3UNUSED ; TIicBusSlaveCallback::DfcFunc(void *)
+	QueueTransaction__6IicBusiP18TIicBusTransaction @ 5 NONAME R3UNUSED ; IicBus::QueueTransaction(int, TIicBusTransaction *)
+	QueueTransaction__6IicBusiP18TIicBusTransactionP15TIicBusCallback @ 6 NONAME R3UNUSED ; IicBus::QueueTransaction(int, TIicBusTransaction *, TIicBusCallback *)
+	RegisterChannels__17DIicBusControllerPP14DIicBusChanneli @ 7 NONAME R3UNUSED ; DIicBusController::RegisterChannels(DIicBusChannel **, int)
+	RegisterRxBuffer__6IicBusiG5TPtr8ScScSc @ 8 NONAME ; IicBus::RegisterRxBuffer(int, TPtr8, signed char, signed char, signed char)
+	RegisterTxBuffer__6IicBusiG5TPtr8ScScSc @ 9 NONAME ; IicBus::RegisterTxBuffer(int, TPtr8, signed char, signed char, signed char)
+	ReleaseChannel__6IicBusi @ 10 NONAME R3UNUSED ; IicBus::ReleaseChannel(int)
+	SetNotificationTrigger__6IicBusii @ 11 NONAME R3UNUSED ; IicBus::SetNotificationTrigger(int, int)
+	CancelTransaction__6IicBusiP18TIicBusTransaction @ 12 NONAME R3UNUSED ; IicBus::CancelTransaction(int, TIicBusTransaction *)
+

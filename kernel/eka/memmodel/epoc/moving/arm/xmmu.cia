@@ -1,0 +1,476 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\memmodel\epoc\moving\arm\xmmu.cia
+// 
+//
+
+#include <e32cia.h>
+#include <arm_mem.h>
+#include "execs.h"
+#include "cache_maintenance.h"
+
+__NAKED__ void InvalidateTLBForPage(TLinAddr /*aLinAddr*/)
+//
+// Flush a specified virtual address from the DTLB.
+// Flush from the ITLB as well, provided that doesn't require flushing the whole ITLB
+// ArmMmu::SyncCodeMappings() should follow this if flushing from the ITLB is essential.
+//
+	{
+#ifdef __CPU_SPLIT_TLB
+#if defined(__CPU_HAS_SINGLE_ENTRY_IDTLB_FLUSH)
+	FLUSH_IDTLB_ENTRY(,r0);
+#elif defined(__CPU_HAS_SINGLE_ENTRY_ITLB_FLUSH)
+	FLUSH_DTLB_ENTRY(,r0);
+	FLUSH_ITLB_ENTRY(,r0);
+#else
+	FLUSH_DTLB_ENTRY(,r0);
+#endif
+#else
+	FLUSH_IDTLB_ENTRY(,r0);
+#endif
+	// don't need CPWAIT since it always happens in the function which calls this one
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ArmMmu::SyncCodeMappings()
+//
+// Flush the ITLB if it is not flushed page-by-page during unmapping of pages
+//
+	{
+#if defined(__CPU_SPLIT_TLB) && !defined(__CPU_HAS_SINGLE_ENTRY_ITLB_FLUSH) && !defined(__CPU_HAS_SINGLE_ENTRY_IDTLB_FLUSH)
+	asm("mov r2, #0 ");
+	FLUSH_ITLB(,r2);
+	CPWAIT(,r0);
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void FlushTLBs()
+	{
+	asm("mov r0, #0 ");
+	FLUSH_IDTLB(,r0);
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void FlushUnmapShadow(TLinAddr /*aRomAddr*/)
+//
+// Flush both I and D TLBs and flush page at aRomAddr from both caches
+//
+	{
+	asm("mov r0, #0 ");
+	FLUSH_IDTLB(,r0);		// flush both TLBs
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+// Generic cache/TLB flush function.
+// Which things are flushed is determined by aMask.
+// Call this with the system locked. Preemption can occur during this function.
+__NAKED__ void ArmMmu::GenericFlush(TUint32 /*aMask*/)
+	{
+	asm("tst r1, #%a0" : : "i" (EFlushDMove|EFlushDDecommit));
+	asm("orrne r1, r1, #%a0" : : "i" (EFlushDCache));
+	asm("tst r1, #%a0" : : "i" (EFlushDMove|EFlushDDecommit|EFlushDPermChg));
+	asm("orrne r1, r1, #%a0" : : "i" (EFlushDTLB));
+	asm("tst r1, #%a0" : : "i" (EFlushIMove));
+	asm("orrne r1, r1, #%a0" : : "i" (EFlushICache));
+	asm("tst r1, #%a0" : : "i" (EFlushIMove|EFlushIPermChg));
+	asm("orrne r1, r1, #%a0" : : "i" (EFlushITLB));
+	asm("mov r2, #0 ");
+#ifdef __CPU_SPLIT_CACHE
+	asm("tst r1, #%a0" : : "i" (EFlushDCache) );
+#else
+	asm("tst r1, #%a0" : : "i" (EFlushDCache|EFlushICache) );
+#endif
+	asm("beq 1f ");
+	asm("stmfd sp!, {r1,lr} ");
+	asm("bl  " CSM_ZN16CacheMaintenance15OnProcessSwitchEv);	// flush data or unified cache
+	asm("ldmfd sp!, {r1,lr} ");
+	asm("mov r2, #0 ");
+	asm("1: ");
+
+#ifdef __CPU_SPLIT_CACHE
+	asm("tst r1, #%a0" : : "i" (EFlushICache) );
+	FLUSH_ICACHE(ne,r2);
+#endif
+
+#ifdef __CPU_SPLIT_TLB
+	asm("tst r1, #%a0" : : "i" (EFlushDTLB) );
+	FLUSH_DTLB(ne,r2);
+	asm("tst r1, #%a0" : : "i" (EFlushITLB) );
+	FLUSH_ITLB(ne,r2);
+#else
+	asm("tst r1, #%a0" : : "i" (EFlushDTLB|EFlushITLB) );
+	FLUSH_IDTLB(ne,r2);
+#endif
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+#if defined(__CPU_XSCALE__)
+// Special routine to process minicache attributes
+__NAKED__ TUint MiniCacheConfig()
+	{
+	asm("mrc p15, 0, r0, c1, c0, 1 ");
+#if defined (__CPU_XSCALE_MANZANO__)
+	asm("and r0, r0, #0x30 ");	// 00=WBRA 01=WBRA 10=WTRA 11=WBRA
+	asm("cmp r0, #0x20");		//is it WTRA?
+	asm("moveq r0, #8");		// yes
+	asm("movne r0, #10");		// no
+#else	
+	asm("mov r0, r0, lsr #4 ");
+	asm("and r0, r0, #3 ");		// 00=WBRA 01=WBWA 10=WTRA 11=UNP
+	asm("bic r0, r0, #2 ");		// 10=WBRA 11=WBWA 00=WTRA 01=UNP
+	asm("add r0, r0, #8 ");		// WBRA->AWBR, WBWA->AWBW, WTRA->AWTR, UNP->AWTW (can't occur)
+#endif	
+	__JUMP(,lr);
+	}
+#endif
+
+__NAKED__ void ExecHandler::UnlockRamDrive()
+	{
+	asm("ldr r0, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DProcess,iS.iCaps));
+// __KERNEL_CAPABILITY_CHECK
+	asm("tst r0, #%a0 " : : "i" ((TInt)(1<<ECapabilityTCB)));
+	__JUMP(eq,lr);				// don't unlock the RAM drive if don't have MediaDD capability
+
+	// fall through to unlock
+	}
+
+EXPORT_C __NAKED__ void TInternalRamDrive::Unlock()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("orr r0, r0, #0xc0 ");
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+EXPORT_C __NAKED__ void TInternalRamDrive::Lock()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("bic r0, r0, #0xc0 ");
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+#if defined(__CPU_WRITE_BACK_CACHE)
+#if defined(__CPU_HAS_SINGLE_ENTRY_DCACHE_FLUSH)
+__NAKED__ void CopyPageForRemap32(TLinAddr /*aDest*/, TLinAddr /*aSrc*/)
+	{
+	// Source and destination 4k page aligned (and thus cache aligned)
+	// Fixed copy size of 4k
+	// But.. after each cache line we need to purge the line from the cache
+	// and when we're done we need to drain the write buffer
+	// We are assuming 32-byte cache lines here but this function is only used
+	// when this is the case, so it's ok.
+	
+	asm("stmfd sp!, {r4-r9} ");
+	asm("1: ");
+	PLD_ioff(1, 32);
+	asm("mov ip, r1 ");
+	asm("ldmia r1!, {r2-r9} ");
+	asm("tst r1, #0xff0 ");
+	asm("stmia r0!, {r2-r9} ");
+	PURGE_DCACHE_LINE(,ip);
+	asm("bne 1b ");
+	asm("ldmfd sp!, {r4-r9} ");
+	DRAIN_WRITE_BUFFER(,r0,r1);
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+
+__NAKED__ void CopyPageForRemap16(TLinAddr /*aDest*/, TLinAddr /*aSrc*/)
+	{
+	// Source and destination 4k page aligned (and thus cache aligned)
+	// Fixed copy size of 4k
+	// But.. after each cache line we need to purge the line from the cache
+	// and when we're done we need to drain the write buffer
+	// We are assuming 16-byte cache lines here but this function is only used
+	// when this is the case, so it's ok.
+	
+	asm("stmfd sp!, {r4-r5} ");
+	asm("1: ");
+	PLD_ioff(1, 16);
+	asm("mov ip, r1 ");
+	asm("ldmia r1!, {r2-r5} ");
+	asm("tst r1, #0xff0 ");
+	asm("stmia r0!, {r2-r5} ");
+	PURGE_DCACHE_LINE(,ip);
+	asm("bne 1b ");
+	asm("ldmfd sp!, {r4-r5} ");
+	DRAIN_WRITE_BUFFER(,r0,r1);
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+#endif
+#else //!__CPU_HAS_WRITE_BACK_CACHE
+__NAKED__ void CopyPageForRemapWT(TLinAddr /*aDest*/, TLinAddr /*aSrc*/)
+	{
+	// Source and destination 4k page aligned (and thus cache aligned)
+	// Fixed copy size of 4k
+	// Writethrough cache means no purging is required, but
+	// when we're done we still need to drain the write buffer
+	
+	asm("stmfd sp!, {r4-r8} ");
+	asm("1: ");
+	PLD_ioff(1, 16);
+	asm("ldmia r1!, {r2-r8,ip} ");
+	asm("tst r1, #0xff0 ");
+	asm("stmia r0!, {r2-r8,ip} ");
+	asm("bne 1b ");
+	asm("ldmfd sp!, {r4-r8,ip} ");
+	DRAIN_WRITE_BUFFER(,r0,r1);
+	CPWAIT(,r0);
+	__JUMP(,lr);
+	}
+#endif
+
+#ifdef __MMU_MACHINE_CODED__
+__NAKED__ void ImpMmu::MapRamPages(TInt /*anId*/, TLinAddr /*anAddr*/, TPhysAddr* /*aPageList*/, TInt /*aNumPages*/, TPte /*aPtePerm*/)
+//
+// Map a list of physical RAM pages to a specified linear address using a specified page table and
+// specified PTE permissions. Call this with the kernel locked.
+//
+	{
+	// enter with r0=&MM::TheMmu, r1=anId, r2=anAddr, r3=aPageList, [sp]=aNumPages, [sp+4]=aPtePerm
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("mov r4, r1 ");						// r4=anId
+	asm("mov r5, r2 ");						// r5=anAddr
+	asm("mov r6, r3 ");						// r6=aPageList
+	asm("bl  " CSM_ZN6ImpMmu16UnlockPageTablesEv);	// unlock page tables
+	asm("mov r0, r5, lsr #20 ");			// r0=pdeIndex
+	asm("bic r1, r5, r0, lsl #20 ");		// r1=anAddr & 0xfffff
+	asm("and r1, r1, #0xff000 ");			// r1=ptOffset<<12
+	asm("mov r4, r4, lsl #10 ");
+	asm("add r4, r4, #%a0" : : "i" ((TInt)KPageTableLinearBase));	// r4=linear address of page table anId
+	asm("add r1, r4, r1, lsr #10 ");		// r1 points to first PTE to add
+	asm("ldr r2, [sp, #16] ");				// r2=number of pages to map
+	asm("mov r0, r0, lsl #2 ");
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageDirectoryLinearAddress));
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageTableInfoOffset));	// r0->page table info entry for anAddr
+	asm("ldr r3, [r0] ");
+	asm("add r3, r3, r2 ");					// add number of pages to pages present count
+	asm("str r3, [r0] ");
+	asm("ldr r3, [sp, #20] ");				// r3=PTE permissions
+	asm("b map_ram_pages2 ");
+
+	asm("map_ram_pages1: ");
+	asm("ldr lr, [r6], #4 ");				// get physical address of page and step to next in list
+	asm("orr lr, lr, r3 ");					// OR in permissions to give PTE
+	asm("str lr, [r1], #4 ");				// store PTE and step to next
+
+	asm("map_ram_pages2: ");
+	asm("subs r2, r2, #1 ");
+	asm("bge map_ram_pages1 ");				// loop for all pages
+	asm("ldmfd sp!, {r4-r6,lr} ");
+	DRAIN_WRITE_BUFFER(,r0,r0);
+	CPWAIT(,r0);
+	asm("b  " CSM_ZN6ImpMmu14LockPageTablesEv);		// lock page tables and exit
+	}
+
+__NAKED__ void ImpMmu::MapPhysicalPages(TInt /*anId*/, TLinAddr /*anAddr*/, TPhysAddr /*aPhysAddr*/, TInt /*aNumPages*/, TPte /*aPtePerm*/)
+//
+// Map consecutive physical pages to a specified linear address using a specified page table and
+// specified PTE permissions. Call this with the kernel locked.
+//
+	{
+	// enter with r0=&MM::TheMmu, r1=anId, r2=anAddr, r3=aPhysAddr, [sp]=aNumPages, [sp+4]=aPtePerm
+	asm("stmfd sp!, {r4-r6,lr} ");
+	asm("mov r4, r1 ");						// r4=anId
+	asm("mov r5, r2 ");						// r5=anAddr
+	asm("mov r6, r3 ");						// r6=aPhysAddr
+	asm("bl  " CSM_ZN6ImpMmu16UnlockPageTablesEv);	// unlock page tables
+	asm("mov r0, r5, lsr #20 ");			// r0=pdeIndex
+	asm("bic r1, r5, r0, lsl #20 ");		// r1=anAddr & 0xfffff
+	asm("and r1, r1, #0xff000 ");			// r1=ptOffset<<12
+	asm("mov r4, r4, lsl #10 ");
+	asm("add r4, r4, #%a0" : : "i" ((TInt)KPageTableLinearBase));	// r4=linear address of page table anId
+	asm("add r1, r4, r1, lsr #10 ");		// r1 points to first PTE to add
+	asm("ldr r2, [sp, #16] ");				// r2=number of pages to map
+	asm("mov r0, r0, lsl #2 ");
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageDirectoryLinearAddress));
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageTableInfoOffset));	// r0->page table info entry for anAddr
+	asm("ldr r3, [r0] ");
+	asm("add r3, r3, r2 ");					// add number of pages to pages present count
+	asm("str r3, [r0] ");
+	asm("ldr r3, [sp, #20] ");				// r3=PTE permissions
+	asm("orr r3, r3, r6 ");					// OR in physical address to give first PTE
+	asm("b map_phys_pages2 ");
+
+	asm("map_phys_pages1: ");
+	asm("str r3, [r1], #4 ");				// store PTE and step to next
+	asm("add r3, r3, #0x1000 ");			// step physical address on by page size
+
+	asm("map_phys_pages2: ");
+	asm("subs r2, r2, #1 ");
+	asm("bge map_phys_pages1 ");			// loop for all pages
+	asm("ldmfd sp!, {r4-r6,lr} ");
+	DRAIN_WRITE_BUFFER(,r0,r0);
+	CPWAIT(,r0);
+	asm("b  " CSM_ZN6ImpMmu14LockPageTablesEv);		// lock page tables and exit
+	}
+
+__NAKED__ TInt ImpMmu::UnmapPages(TInt /*anId*/, TLinAddr /*anAddr*/, TInt /*aNumPages*/, TPhysAddr* /*aPageList*/, TInt& /*aNumPtes*/)
+//
+// Unmap a specified area at address anAddr mapped by page table anId. Place physical addresses of unmapped
+// RAM pages into aPageList and count of unmapped pages into aNumPtes. Return number of pages still
+// mapped using this page table. Call this with the kernel locked.
+// Note that a write-back cache may also require flushing after this.
+//
+	{
+	// Enter with r0=this, r1=anId, r2=anAddr, r3=aNumPages, [sp]=aPageList, [sp+4]=&aNumPtes
+	asm("stmfd sp!, {r4-r9,lr} ");
+	asm("mov r4, r0 ");
+	asm("mov r5, r1 ");
+	asm("mov r6, r2 ");
+	asm("mov r7, r3 ");
+	asm("bl  " CSM_ZN6ImpMmu16UnlockPageTablesEv);	// unlock the page tables
+	asm("mov r8, r6, lsr #20 ");			// r8=pdeIndex
+	asm("bic r0, r6, r8, lsl #20 ");		// r0=anAddr&0xfffff
+	asm("and r0, r0, #0xff000 ");			// r0=ptOffset<<12
+	asm("mov r5, r5, lsl #10 ");			// convert page table id to linear address
+	asm("add r5, r5, r0, lsr #10 ");		// add offset within page table
+	asm("add r5, r5, #%a0" : : "i" ((TInt)KPageTableLinearBase));	// r5=pte address
+	asm("mov ip, #0 ");						// ip=0 throughout loop
+	asm("mov r3, #0 ");						// r3 counts present pages
+	asm("ldr r9, [sp, #28] ");				// r9=aPageList
+	asm("mov r2, #0xff ");
+	asm("orr r2, r2, #0xf00 ");				// r2=BIC mask for PTE->page physical address
+	asm("b unmap_pages_2 ");
+
+	asm("unmap_pages_1: ");
+	asm("ldr r0, [r5] ");					// fetch PTE
+	asm("str ip, [r5], #4 ");				// clear PTE
+	asm("tst r0, #3 ");						// test if page present
+#ifdef __CPU_SPLIT_TLB
+#if defined(__CPU_HAS_SINGLE_ENTRY_IDTLB_FLUSH)
+	FLUSH_IDTLB_ENTRY(ne,r6);				// flush page from both TLBs if possible
+#elif defined(__CPU_HAS_SINGLE_ENTRY_ITLB_FLUSH)
+	FLUSH_DTLB_ENTRY(ne,r6);
+	FLUSH_ITLB_ENTRY(ne,r6);
+#else
+	FLUSH_DTLB_ENTRY(ne,r6);				// no single-entry ITLB flush, complete ITLB flush will be done later
+#endif
+#else
+	FLUSH_IDTLB_ENTRY(ne,r6);
+#endif
+	asm("bicne r0, r0, r2 ");				// ... r0=page physical address ...
+	asm("strne r0, [r9], #4 ");				// ... *aPageList++=r0 ...
+	asm("addne r3, r3, #1 ");				// ... increment present pages count
+	asm("add r6, r6, #0x1000 ");			// increment address by page size
+
+	asm("unmap_pages_2: ");
+	asm("subs r7, r7, #1 ");				// decrement page count
+	asm("bge unmap_pages_1 ");
+
+	asm("ldr r0, [sp, #32] ");				// r0=&aNumPtes
+	asm("str r3, [r0] ");					// aNumPtes=r3
+	asm("mov r0, #%a0" : : "i" ((TInt)KPageDirectoryLinearAddress));
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageTableInfoOffset));	// r0->base of page table info array
+	asm("add r0, r0, r8, lsl #2 ");			// r0 points to PTINFO entry for this pde
+	asm("ldr r1, [r0] ");					// r1[31:16]=page table id, r1[15:0]=present pages
+	asm("sub r1, r1, r3 ");					// subtract number of pages unmapped
+	asm("str r1, [r0] ");					// store new pages present count
+	asm("mov r4, r1, lsl #16 ");			// shift out top 16 bits and store in r4
+	asm("bl  " CSM_ZN6ImpMmu14LockPageTablesEv);		// lock the page tables
+	asm("mov r0, r4, lsr #16 ");			// r0=number of pages remaining
+	DRAIN_WRITE_BUFFER(,r0,r1);
+	CPWAIT(,r1);
+	asm("ldmfd sp!, {r4-r9,pc} ");			// restore registers and return
+	}
+
+__NAKED__ TInt Mmu::PageTableId(TLinAddr /*anAddr*/)
+	{
+	asm("mov r1, r1, lsr #20 ");			// r1=anAddr>>20
+	asm("mov r0, #%a0" : : "i" ((TInt)KPageDirectoryLinearAddress));
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageTableInfoOffset));	// r0->base of page table info array
+	asm("mrc p15, 0, r2, c3, c0, 0 ");		// r2=current DACR
+	asm("orr r3, r2, #0x30 ");
+	asm("mcr p15, 0, r3, c3, c0, 0 ");		// unlock page tables
+	CPWAIT(,r3);
+	asm("ldr r0, [r0, r1, lsl #2] ");		// fetch page table info entry for anAddr
+	asm("mcr p15, 0, r2, c3, c0, 0 ");		// lock page tables
+	asm("cmn r0, #0x10000 ");				// test if page table id=0xffff
+	asm("movcc r0, r0, lsr #16 ");			// if not, return page table id
+	asm("mvncs r0, #0 ");					// else return -1
+	__JUMP(,lr);
+	}
+
+__NAKED__ void ImpMmu::AssignPageTable(TInt /*anId*/, TLinAddr /*anAddr*/, TPde /*aPdePerm*/)
+//
+// Assign an allocated page table to map a given linear address with specified permissions.
+// This function assumes the page table initially contains no physical RAM page mappings.
+// This should be called with the kernel locked.
+//
+	{
+	// on entry r0=&MM::TheMmu, r1=anId, r2=anAddr, r3=aPdePerm
+	asm("stmfd sp!, {r4,lr} ");
+	asm("and r4, r1, #3 ");					// r4=bottom 2 bits of anId (offset of page table within page)
+	asm("orr r3, r3, r4, lsl #10 ");		// combine these bits with PDE permissions
+	asm("bic r0, r1, #3 ");					// r0=anId with bottom 2 bits cleared
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageTableLinearBase));	// r0=address of PTE mapping page table anId
+	asm("mov r1, r1, lsl #16 ");			// put ptid into top 16 bits of r1, zero bottom 16 bits
+	asm("mov r2, r2, lsr #20 ");			// r2=anAddr>>20
+	asm("mov r2, r2, lsl #2 ");				// r2=pdeIndex*4
+	asm("add r2, r2, #%a0" : : "i" ((TInt)KPageDirectoryLinearAddress));	// r2 points to PDE for anAddr
+	asm("mrc p15, 0, lr, c3, c0, 0 ");		// lr=current DACR
+	asm("orr r4, lr, #0x30 ");
+	asm("mcr p15, 0, r4, c3, c0, 0 ");		// unlock page tables
+	CPWAIT(,r4);
+	asm("ldr r0, [r0] ");					// fetch page table PTE
+	asm("mov r0, r0, lsr #12 ");			// shift out permission bits, leave phys addr>>12
+	asm("orr r3, r3, r0, lsl #12 ");		// r3=PDE word (add PDE permissions and offset within page)
+	asm("str r3, [r2] ");					// store PDE
+	asm("add r2, r2, #%a0" : : "i" ((TInt)KPageTableInfoOffset));	// r2 points to PT info entry
+	asm("str r1, [r2] ");					// PTinfo top 16=page table ID, PT info bottom 16=pages present=0 (assumption)
+	asm("mcr p15, 0, lr, c3, c0, 0 ");		// lock page tables
+	DRAIN_WRITE_BUFFER(,r0,r0);
+	CPWAIT(,r0);
+	asm("ldmfd sp!, {r4,pc} ");
+	}
+
+__NAKED__ void ImpMmu::UnassignPageTable(TLinAddr /*anAddr*/)
+//
+// Unassign a now-empty page table currently mapping the specified linear address.
+// We assume that TLB and/or cache flushing has been done when any RAM pages were unmapped.
+// Call this with the kernel locked.
+//
+	{
+	asm("mov r1, r1, lsr #20 ");			// r1=anAddr>>20
+	asm("mov r0, #%a0" : : "i" ((TInt)KPageDirectoryLinearAddress));
+	asm("add r0, r0, r1, lsl #2 ");			// r0 points to page directory entry for anAddr
+	asm("ldr r1, __NotPresentPtInfo ");		// r1=PTInfo entry for not present PDE
+	asm("mrc p15, 0, r2, c3, c0, 0 ");		// r2=current DACR
+	asm("orr r3, r2, #0x30 ");
+	asm("mcr p15, 0, r3, c3, c0, 0 ");		// unlock page tables
+	CPWAIT(,r3);
+	asm("mov r3, #0 ");
+	asm("str r3, [r0] ");					// clear the PDE
+	asm("add r0, r0, #%a0" : : "i" ((TInt)KPageTableInfoOffset));	// step r0 on to PT info entry
+	asm("str r1, [r0] ");					// clear the PT info entry
+	asm("mcr p15, 0, r2, c3, c0, 0 ");		// lock page tables
+	DRAIN_WRITE_BUFFER(,r0,r0);
+	CPWAIT(,r0);
+	__JUMP(,lr);
+
+	asm("__NotPresentPtInfo: ");
+	asm(".word 0xffff0000 ");
+	}
+#endif
+
+

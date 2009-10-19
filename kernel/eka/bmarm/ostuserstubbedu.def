@@ -1,0 +1,22 @@
+EXPORTS
+	OstTrace__FRC13TTraceContextUsUs @ 1 NONAME R3UNUSED ; OstTrace(TTraceContext const &, unsigned short, unsigned short)
+	ComponentId__C13TTraceContext @ 2 NONAME R3UNUSED ; TTraceContext::ComponentId(void) const
+	DefaultComponentId__13TTraceContext @ 3 NONAME R3UNUSED ; TTraceContext::DefaultComponentId(void)
+	HasProgramCounter__C13TTraceContext @ 4 NONAME R3UNUSED ; TTraceContext::HasProgramCounter(void) const
+	HasThreadIdentification__C13TTraceContext @ 5 NONAME R3UNUSED ; TTraceContext::HasThreadIdentification(void) const
+	IsTraceActive__FRC13TTraceContext @ 6 NONAME R3UNUSED ; IsTraceActive(TTraceContext const &)
+	OstPrint__FRC13TTraceContextRC6TDesC8 @ 7 NONAME R3UNUSED ; OstPrint(TTraceContext const &, TDesC8 const &)
+	OstPrint__FRC13TTraceContextRC7TDesC16 @ 8 NONAME R3UNUSED ; OstPrint(TTraceContext const &, TDesC16 const &)
+	OstPrintf__FRC13TTraceContextGt11TRefByValue1ZC6TDesC8e @ 9 NONAME ; OstPrintf(TTraceContext const &, TRefByValue<TDesC8 const>,...)
+	OstPrintf__FRC13TTraceContextGt11TRefByValue1ZC7TDesC16e @ 10 NONAME ; OstPrintf(TTraceContext const &, TRefByValue<TDesC16 const>,...)
+	OstPrintf__FRC13TTraceContextPCce @ 11 NONAME ; OstPrintf(TTraceContext const &, char const *,...)
+	OstTrace__FRC13TTraceContextUs @ 12 NONAME R3UNUSED ; OstTrace(TTraceContext const &, unsigned short)
+	OstTrace__FRC13TTraceContextUsPCvi @ 13 NONAME ; OstTrace(TTraceContext const &, unsigned short, void const *, int)
+	OstTrace__FRC13TTraceContextUsRC6TDesC8 @ 14 NONAME R3UNUSED ; OstTrace(TTraceContext const &, unsigned short, TDesC8 const &)
+	OstTrace__FRC13TTraceContextUsRC7TDesC16 @ 15 NONAME R3UNUSED ; OstTrace(TTraceContext const &, unsigned short, TDesC16 const &)
+	OstTrace__FRC13TTraceContextUsUc @ 16 NONAME R3UNUSED ; OstTrace(TTraceContext const &, unsigned short, unsigned char)
+	OstTrace__FRC13TTraceContextUsUl @ 17 NONAME R3UNUSED ; OstTrace(TTraceContext const &, unsigned short, unsigned long)
+	OstTrace__FRC13TTraceContextUsUlUl @ 18 NONAME ; OstTrace(TTraceContext const &, unsigned short, unsigned long, unsigned long)
+	Classification__C13TTraceContext @ 19 NONAME R3UNUSED ; TTraceContext::Classification(void) const
+	GroupId__C13TTraceContext @ 20 NONAME R3UNUSED ; TTraceContext::GroupId(void) const
+

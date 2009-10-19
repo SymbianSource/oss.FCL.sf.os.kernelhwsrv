@@ -1,0 +1,85 @@
+T_ACT			OK
+T_ASYC			OK
+T_CACT			OK
+T_CPER			OK
+T_CTIMER		OK
+T_DTIM			OK
+T_IDLE			OK
+T_MESSGE		OK
+T_PROC1 		OK
+T_SVR			OK
+T_SVR2			OK
+T_BFLAT 		OK
+T_BMA			OK
+T_BSEG			OK
+T_BUF			OK
+T_CHAR			OK
+T_CIRC			OK
+T_DES			OK
+T_FARRAY		OK
+T_FUNC			OK
+T_GRAPH 		OK
+T_HUF			OK
+T_KEY			OK
+T_LEX			OK
+T_MATCH 		OK
+T_PARRAY		OK
+T_QUE			OK
+T_READAR		OK
+T_REGN			OK
+T_SQUE			OK
+T_VARRAY		OK
+T_VERSIO		OK
+T_TIME			OK
+T_TPARSE		OK
+T_TLDD			OK apart from User::FreeLogicalDevice
+T_TDLL			OK
+T_TDLL12		OK
+T_TDLLA 		OK
+T_TLS			OK
+T_TSTART		OK
+T_FAIL			OK
+T_HEAP			OK
+T_HEAPDB		OK
+T_KHEAP 		OK
+T_NAMES 		OK
+T_TLOCL 		OK
+T_FLOAT 		OK
+T_I64			OK
+T_MATH			OK
+T_MATH2 		OK
+T_R32			OK
+T_R64			OK
+T_R96			OK
+T_REALX 		OK
+T_MLDR			OK
+T_SEC			OK
+T_UID			OK
+T_CHUNK 		OK except for chunk access attributes
+T_CHUNK2		OK
+T_SHADOW		OK
+T_KERN			OK
+T_SEM			OK
+T_SEMUTX		OK
+T_TIMER 		OK
+T_CHNOT 		OK
+T_COBJ			OK
+T_CTRAP 		OK
+T_DBG			Didn't build
+T_EXC			OK
+T_MULTIN		OK
+T_PROT			OK
+T_REF			OK
+T_REG			OK
+T_RTIM			No longer relevant
+T_TRAP			OK
+T_THREAD		OK except for busy flags
+T_KEYS			OK
+T_MSTIM 		Didn't build
+T_ARRAY 		OK
+T_CTXSW 		OK
+T_Y2K
+
+rem extras
+T_PAGES 		OK
+T_MWAIT 		OK

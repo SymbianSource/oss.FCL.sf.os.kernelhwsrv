@@ -1,0 +1,315 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\x86\cexec.cia
+// 
+//
+
+#include <x86_mem.h>
+#include <u32std.h>
+#include <kernel/cache.h>
+
+GLREF_C TInt CalcKernelHeapUsed();
+void GetLatencyValues(TInt aMode, TInt& aCount, TInt* aDest);
+void KernMsgTest();
+void InvalidExecHandler();
+void InvalidFastExec();
+void PreprocessHandler();
+
+void InvalidExecHandler();
+
+#define __GEN_KERNEL_EXEC_CODE__
+
+#include "execs.h"
+
+// These must be defined here because the inline assembler syntax can't
+// cope with symbols or expressions involving scope resolution (::).
+// Therefore, each such value should be turned into a simple constant ...
+
+const TLinAddr K_PanicCurrentThread = (TLinAddr)&K::PanicCurrentThread;
+const TLinAddr K_MsgInfo = (TLinAddr)&K::MsgInfo;
+const TLinAddr NKern_CurrentThread = (TLinAddr)&NKern::CurrentThread;
+
+#ifdef __X86GCC__
+
+const TUint32 RMessage2_EDisConnect = RMessage2::EDisConnect;
+const TUint32 RMessageK_AlignMask = (RMessageK::KMessageSize-1);
+const TUint32 offset_DThread_iNThread = _FOFF(DThread,iNThread);
+const TUint32 offset_RMessageK_iNext = _FOFF(RMessageK,iServerLink.iNext);
+const TUint32 offset_RMessageK_iPrev = _FOFF(RMessageK,iServerLink.iPrev);
+const TUint32 offset_SMsgInfo_iBase = _FOFF(K::SMsgInfo,iBase);
+const TUint32 offset_SMsgInfo_iMaxSize = _FOFF(K::SMsgInfo,iMaxSize);
+const TUint32 sizeof_RMessageK = sizeof(RMessageK);
+
+#else
+
+// With non-GCC for immediate values, including offsets, we must use the
+// following enum trick, as otherwise the compiler allocates storage for
+// the consts and the code emitted uses the address of this storage rather
+// than the value of the constant.  Grrr.
+
+enum
+	{
+	RMessage2_EDisConnect = RMessage2::EDisConnect,
+	RMessageK_AlignMask = (RMessageK::KMessageSize-1),
+	offset_DThread_iNThread = _FOFF(DThread,iNThread),
+	offset_RMessageK_iNext = _FOFF(RMessageK,iServerLink.iNext),
+	offset_RMessageK_iPrev = _FOFF(RMessageK,iServerLink.iPrev),
+	offset_SMsgInfo_iBase = _FOFF(K::SMsgInfo,iBase),
+	offset_SMsgInfo_iMaxSize = _FOFF(K::SMsgInfo,iMaxSize),
+	sizeof_RMessageK = sizeof(RMessageK),
+	};
+
+#endif
+
+
+/***********************************************************************************
+* User-side executive handlers
+***********************************************************************************/
+
+__NAKED__ void InvalidFastExec()
+	{
+	asm("sti");
+	asm("call %a0": :"i" (&InvalidExecHandler));
+	}
+
+
+/***************************************************************************
+* Look up a handle in the current thread or process handles array
+* If handle invalid, panic the current thread
+* A handle is:
+*		Bits 0-14	index
+*		Bit  15		no-close flag (ignored here)
+*		Bits 16-29	instance value
+*		Bit  30		thread-local flag
+*		Bit  31		special handle flag
+* On entry:
+*		EBX = attribute flags for this call
+*				(bits 0-4 indicate the type of object referenced)
+*				XXX means that only 0x1F valid, but RObjectIx::At uses 0x3F ???
+*		EDI points to current NThread
+*		Executive call arguments in the usual place on the stack
+*					i.e. [ESP+4] onwards - handle is at [ESP+4]
+* Return:
+*		EAX, ECX, EDX, EDI modified, other registers preserved
+*		[ESP+4] replaced with object pointer
+*		K::PanicCurrentThread(EBadHandle) if not a valid handle
+*
+* System lock is held on entry and on return.
+***************************************************************************/
+__NAKED__ void PreprocessHandler()
+	{
+	asm("mov eax, [esp+4]");										// get the handle
+	asm("mov ecx, %0": :"i" (offset_DThread_iNThread));
+	asm("sub edi, ecx");											// EDI points to DThread
+	// HARDCODED(TObjectType) - all (and only) IPC types are assumed to have this bit set!
+	asm("test bl, 0x20");											// IPC handle?
+	asm("jnz lookup_message_handle");
+	asm("test eax, eax");				// check for special handle
+	asm("js lookup_special");			// branch if special
+
+	asm("test eax, 0x40000000");		// check for thread-relative handle
+	asm("jnz handle_local");			// branch if it is
+	asm("mov ecx, [edi+%0]": : "i"_FOFF(DThread,iOwningProcess));
+	asm("lea ecx, [ecx+%0]": : "i"_FOFF(DProcess,iHandles));
+	asm("jmp got_ix_ptr");
+
+	asm("handle_local:");
+	asm("lea ecx, [edi+%0]": : "i"_FOFF(DThread,iHandles));
+
+	asm("got_ix_ptr:");
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	XXX TODO need to acquire the read lock
+	// (__HANDLES_USE_RW_SPIN_LOCK__ is not supported or even finished)
+#else
+	// System lock held on entry, so nothing to do here
+#endif
+	asm("mov edx, eax");
+	asm("and edx, 0x00007fff");			// edx=handle index
+	asm("cmp edx, [ecx+%0]": : "i"_FOFF(RObjectIx,iCount));	// check against count
+	asm("jae lookup_handle_bad");		// if >= count, invalid
+
+	asm("shl edx, 3");					// sizeof iSlots[0] == 8
+	asm("add edx, [ecx+%0]": : "i"_FOFF(RObjectIx,iSlots));	// edx points to record for this handle
+	asm("shr eax, 16");					// eax=instance value with thread-local and special bits
+	asm("mov ecx, [edx]");				// ecx=attrib:type:instance
+	asm("mov edx, [edx+4]");			// edx points to DObject specified by handle
+
+	// check the instance value in the incoming handle against the value in the slot
+	asm("xor ax, cx");
+	asm("and eax, 0x3fff");
+	asm("jnz lookup_handle_bad");
+
+	// check that we have the right type of object
+	asm("test bl, 0x1f");				// if zero, any type of object accepted
+										// should be the same constant as in "and al" line below
+	asm("jz handle_ok");
+
+	asm("shr ecx, 14");
+	asm("mov al, bl");
+	asm("xor al, cl");
+	asm("and al, 0x1f");				// this should be 0x3f, but function header says
+										// it's only lower 5 bits of ebx
+	asm("jnz lookup_handle_bad");
+
+	asm("handle_ok:");
+	asm("and edx, 0xFFFFFFFC");			// clear bottom two bits in pointer [EObjRObjMask]
+	asm("jz lookup_handle_bad");		// => value was < 4, i.e. a reserved slot, not a valid DObject pointer
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	XXX TODO must take a reference to the object (call edx->Open(), must == KErrNone)
+		if handle lookup only protected by RW spin lock
+#endif
+	asm("mov [esp+4], edx");			// handle OK so replace handle with DObject pointer
+	asm("ret");
+
+	asm("lookup_special:");
+	asm("xor ecx, ecx");
+	asm("mov cl, bl");
+	asm("and cl, 0x1f");											// ecx=required UID or zero if none specified
+	asm("cmp cl, 2");
+	asm("ja lookup_handle_bad_no_unlock");			// special handle can only refer to thread or process
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("cmp eax, 0x88000000");
+	asm("jb lookup_thread_pseudo");									// jump if IPC client thread pseudo handle
+#endif
+	asm("add eax, 0x8000");
+	asm("jnc lookup_handle_bad_no_unlock");			// must be >= FFFF8000
+	asm("je lookup_special_1");			// branch if must be process
+	asm("dec eax");						// test for current thread handle
+	asm("je current_thread_handle");
+	asm("test cl, cl");
+	asm("jnz lookup_handle_bad_no_unlock");
+	asm("inc eax");
+	asm("lookup_special_1:");
+	asm("test eax, eax");
+	asm("jnz lookup_handle_bad_no_unlock");
+	asm("mov edi, [edi+%0]": : "i" _FOFF(DThread,iOwningProcess));
+	asm("current_thread_handle:");
+	asm("mov [esp+4], edi");										// handle OK so replace handle with DObject pointer
+	asm("ret");
+
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("lookup_thread_pseudo:");
+	asm("cmp cl, 1");												// must be thread or unspecified
+	asm("ja lookup_handle_bad_no_unlock");
+	asm("mov ecx, %0" : : "i" (K_MsgInfo));							// ecx->msg chunk info
+	asm("add ax, ax");												// shift off no-close bit
+	asm("add eax, eax");											// shift off top bit, eax = alleged message offset
+	asm("test eax, %0" : : "i" (RMessageK_AlignMask));				// check alignment
+	asm("jne bad_message_handle");									// reject if misaligned
+	asm("lea edx, [eax+%0]" : : "i" (sizeof_RMessageK));			// edx = alleged message offset + sizeof RMessageK
+	asm("cmp edx, [ecx+%0]" : : "i" (offset_SMsgInfo_iMaxSize));
+	asm("ja lookup_handle_bad_no_unlock");											// reject if offset+size > msg chunk max size
+	asm("add eax, [ecx+%0]" : : "i" (offset_SMsgInfo_iBase));		// eax = message address
+	asm("jmp lookup_message_handle2");
+#endif
+
+	asm("lookup_message_handle:");
+	asm("mov ecx, %0" : : "i" (K_MsgInfo));							// ecx->msg chunk info
+	asm("mov edx, eax");											// edx = handle
+	asm("sub edx, [ecx+%0]" : : "i" (offset_SMsgInfo_iBase));		// edx = handle - kernel msg chunk base
+	asm("jb bad_message_handle");									// reject if offset is negative
+	asm("test edx, %0" : : "i" (RMessageK_AlignMask));				// check alignment
+	asm("jne bad_message_handle");									// reject if misaligned
+	asm("add edx, %0": : "i" (sizeof_RMessageK));
+	asm("cmp edx, [ecx+%0]" : : "i" (offset_SMsgInfo_iMaxSize));
+	asm("ja bad_message_handle");									// reject if offset+size > msg chunk max size
+#ifdef	__OBSOLETE_V1_IPC_SUPPORT__
+	asm("lookup_message_handle2:");
+#endif
+	asm("lea edx, bad_message_handle");								// if exception occurs, handle is bad
+	asm("mov [edi+%0], edx": : "i" _FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("mov edx, [eax+%0]": : "i" (offset_RMessageK_iNext));		// edx should be complement of message address
+	asm("mov ecx, [eax+%0]": : "i" (offset_RMessageK_iPrev));		// ecx should be complement of server process address
+	asm("xor edx, eax");											// should be 0xffffffff
+	asm("xor ecx, [edi+%0]": : "i" _FOFF(DThread,iOwningProcess));	// should be 0xffffffff
+	asm("and ecx, edx");											// should be 0xffffffff
+	asm("mov dword ptr [edi+%0], 0": : "i" _FOFF(DX86PlatThread,iMagicExcHandler));
+	asm("inc ecx");													// this should be zero
+	asm("jne bad_message_handle");									// if not, bad
+	asm("cmp bl, %0": : "i" (EIpcMessageD));						// allow disconnect?
+	asm("je lookup_msg_ok");
+	asm("mov ecx, [eax+%0]": : "i" _FOFF(RMessageK,iFunction));
+	asm("cmp ecx, %0": : "i" (RMessage2_EDisConnect));				// check function
+	asm("je bad_message_handle");									// disconnect is not allowed
+	asm("cmp bl, %0": : "i" (EIpcMessage));											// message or client?
+	asm("je lookup_msg_ok");										// if message, finished
+	asm("mov edx, [eax+%0]": : "i" _FOFF(RMessageK,iClient));
+	asm("mov [esp+4], edx");										// if client, replace first arg with client ptr
+	asm("lookup_msg_ok:");
+	asm("ret");
+
+	// XXX	we only take the handle-reading spin lock if we're not dealing with a
+	//		special handle (same as in the ARM implementation).  In that case, we
+	//		shouldn't release the spinlock when they decide that the handle they've
+	//		been given is bad.
+	asm("lookup_handle_bad:");
+#ifdef __HANDLES_USE_RW_SPIN_LOCK__
+	XXX TODO release the read lock
+#else
+	// System lock held on entry and exit, so don't release here
+#endif
+	asm("lookup_handle_bad_no_unlock:");
+	// K::PanicCurrentThread(EBadHandle) - x86gcc can't handle "mov dword ptr [esp], %a0" : : "i" (EBadHandle)
+	// EBadHandle is 0
+	asm("mov dword ptr [esp], %0": :"i" (EBadHandle));
+	asm("call %a0": :"i"(K_PanicCurrentThread));
+
+	asm("bad_message_handle:");
+
+	// ((DX86PlatThread*)TheCurrentThread)->iMagicExcHandler = 0;
+	asm("call %a0" : : "i" (NKern_CurrentThread));
+	asm("sub eax, %0": :"i" (offset_DThread_iNThread));
+	asm("mov dword ptr [eax+%0], 0": :"i" _FOFF(DX86PlatThread,iMagicExcHandler));
+
+	// K::PanicCurrentThread(EBadMessageHandle);
+	asm("mov dword ptr [esp], %0": :"i" (EBadMessageHandle));
+	asm("call %a0": :"i" (K_PanicCurrentThread));
+	}
+
+static __NAKED__ TInt Kern__HalFunction()
+	{
+	asm("mov eax, %0": : "i" (EExecHalFunction));
+	asm("push ebx");
+	asm("push esi");
+	asm("mov ecx, [esp+12]");
+	asm("mov edx, [esp+16]");
+	asm("mov ebx, [esp+20]");
+	asm("mov esi, [esp+24]");
+	asm("int 0x21");
+	asm("pop esi");
+	asm("pop ebx");
+	asm("ret");
+	}
+
+EXPORT_C __NAKED__ TInt Kern::HalFunction(TInt /*aGroup*/, TInt /*aFunction*/, TAny* /*a1*/, TAny* /*a2*/, TInt aDeviceNumber)
+//
+// Execute a HAL function
+// This must be done as an exec to get the correct permissions when calling from supervisor mode.
+//
+	{
+	asm("mov eax, [esp+20]");
+	asm("shl eax, 16");
+	asm("or [esp+4], eax");
+	asm("jmp %a0" : : "i" (&Kern__HalFunction));
+	}
+
+EXPORT_C __NAKED__ TInt Kern::HalFunction(TInt /*aGroup*/, TInt /*aFunction*/, TAny* /*a1*/, TAny* /*a2*/)
+//
+// Execute a HAL function
+// This must be done as an exec to get the correct permissions when calling from supervisor mode.
+//
+	{
+	asm("jmp %a0": :"i" (&Kern__HalFunction));
+	}
+

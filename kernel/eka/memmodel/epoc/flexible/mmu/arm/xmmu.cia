@@ -1,0 +1,116 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include <arm_mem.h>
+#include "execs.h"
+
+
+__NAKED__ TUint32 TTCR()
+	{
+	asm("mrc p15, 0, r0, c2, c0, 2 ");
+	asm("and r0, r0, #7 ");	// only bottom 3 bits are defined
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ TUint32 CPUID(TInt /*aRegNum*/)
+	{
+	asm("movs r1, r0");
+	asm("mrcmi p15, 0, r0, c0, c0, 0 "); // for -ve reg, return old CPUID register
+	asm("mrceq p15, 0, r0, c0, c1, 0 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c1, 1 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c1, 2 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c1, 3 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c1, 4 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c1, 5 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c1, 6 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c1, 7 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 0 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 1 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 2 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 3 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 4 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 5 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 6 ");
+	asm("subs r1, r1, #1");
+	asm("mrceq p15, 0, r0, c0, c2, 7 ");
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void UnlockIPCAlias()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("orr r0, r0, #0x10 ");			// Alias memory in domain 2
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void LockIPCAlias()
+	{
+	asm("mrc p15, 0, r0, c3, c0, 0 ");
+	asm("bic r0, r0, #0x30 ");			// Alias memory in domain 2
+	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void M::LockUserMemory()
+	{
+	USER_MEMORY_GUARD_ON(,r0,r0);
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void M::UnlockUserMemory()
+	{
+	USER_MEMORY_GUARD_OFF(,r0,r0);
+	__JUMP(,lr);
+	}
+
+
+__NAKED__ void UserWriteFault(TLinAddr /*aAddr*/)
+	{
+	asm("strbt r1,[r0]");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void UserReadFault(TLinAddr  /*aAddr*/)
+	{	
+	asm("ldrbt r1,[r0]");
+	__JUMP(,lr);
+	}
+
+
+extern "C" __NAKED__ void __e32_instruction_barrier()
+	{
+	__INST_SYNC_BARRIER_Z__(r0);
+	__JUMP(,lr);
+	}
+

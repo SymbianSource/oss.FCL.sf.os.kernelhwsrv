@@ -1,0 +1,54 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// template/template_variant/exxytemplate.mmp
+// exyin.dll Template digitizer library
+// 
+//
+
+/**
+ @file
+*/
+#define __USING_ASSP_REGISTER_API__
+#define __USING_ASSP_INTERRUPT_API__
+
+#include			<variant.mmh>
+#include			"kernel/kern_ext.mmh"
+
+target				VariantTarget(exyin,dll)
+targettype			kext
+linkas				exyin.dll
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/template_assp)
+SYMBIAN_BASE_SYSTEMINCLUDE(template)
+SYMBIAN_BASE_SYSTEMINCLUDE(template/specific)
+USERINCLUDE		inc
+
+sourcepath			../../../kernel/eka/drivers/xyin
+source				d_xyin.cpp
+
+sourcepath			specific
+source				xyin.cpp
+
+library				VariantTarget(ecust,lib)
+library 			VariantTarget(power,lib)
+
+noexportlibrary
+deffile				../../../kernel/eka/~/empty.def
+
+uid					0x1000008d 0x100039ea
+
+VENDORID 0x70000001
+
+capability 			all

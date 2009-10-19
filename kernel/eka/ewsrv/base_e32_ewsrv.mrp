@@ -1,0 +1,16 @@
+# component name "Text Window Server"
+
+component	base_e32_ewsrv
+
+
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\edisp
+source	\sf\os\kernelhwsrv\kernel\eka\ewsrv
+
+binary	\sf\os\kernelhwsrv\kernel\eka\ewsrv all
+exports	\sf\os\kernelhwsrv\kernel\eka\ewsrv
+
+notes_source	\component_defs\release.src
+
+
+ipr E

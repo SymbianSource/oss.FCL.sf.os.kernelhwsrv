@@ -1,0 +1,37 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+TARGET		encman.exe        
+TARGETTYPE	EXE
+UID         0x1000007A 0x101F7784
+SOURCEPATH	../src
+SOURCE		encryptionmanager.cpp
+
+USERINCLUDE	../inc
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+LIBRARY		euser.lib efsrv.lib
+#ifdef __USE_CRYPTOSPI__
+LIBRARY         cryptospi.lib
+LIBRARY         cryptography.lib
+#endif
+
+MACRO		__SECURE_API__
+MACRO		__DATA_CAGING__not_done
+
+CAPABILITY	TCB DISKADMIN ALLFILES
+SMPSAFE

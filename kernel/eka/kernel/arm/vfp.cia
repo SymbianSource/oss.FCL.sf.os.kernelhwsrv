@@ -1,0 +1,146 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\arm\vfp.cia
+// 
+//
+
+#include <vfpsupport.h>
+#include <arm_vfp.h>
+#include <nk_cpu.h>
+
+/*
+This function checks if the VFP has taken a compute exception -
+if not, then the instruction was really undefined. Both can be
+true at once, in which case this will return true, the exception
+will be handled, and a second undefined instruction exception
+caused when the instruction is retried, which will then return
+false.
+*/
+__NAKED__ TBool VFPIsComputeException(TUint32 /*instr*/)
+	{
+	VFP_FMRX(,0,VFP_XREG_FPEXC);
+	// return 1 for a pending computational bounce, EX bit set
+	// return 0 for an illegal instruction bounce, EX bit clear
+	asm("MOV r0, r0, LSR #31"); // return EX, bit 31
+	__JUMP(,lr);
+	}
+
+/*
+This function fills in a computation description structure for the ARM
+VFP bounce handling library, by examining the state of the VFP registers.
+It returns true for a precise bounce, meaning the thread should resume at
+the next instruction, or false for an imprecise bounce, meaning the thread
+should resume at the same instruction.
+
+Note that the code for supporting VFP10 rev0 has been removed in the
+interests of reducing code complexity and size. VFP9, VFP10 rev 1, and
+VFP11 are all supported.
+*/
+__NAKED__ TBool VFPCollectTrapDescription(TVFPComputationDescription& /*aDesc*/, TUint32 /*aInstr*/)
+	{
+	// Disable interrupts - we mustn't be context switched
+	asm("MRS r1, cpsr");
+	asm("1:");
+	INTS_OFF_1(r2, r1, INTS_ALL_OFF);
+	INTS_OFF_2(r2, r1, INTS_ALL_OFF);
+
+	// Clear EX and FP2V bits in FPEXC
+	// but leave original value in r12 for later
+	VFP_FMRX(,12,VFP_XREG_FPEXC);
+	asm("BIC r2, r12, #(1 << 31)|(1 << 28)"); // clear EX bit 31 and FP2V bit 28
+	VFP_FMXR(,VFP_XREG_FPEXC,2);
+	
+	// Test if we own the VFP
+	// If not, reenable interrupts, touch FPSCR and try again
+	asm("TST r12, #(1 << 30)"); // test EN bit 30
+	asm("BNE 2f");
+	asm("MSR cpsr, r1");
+	VFP_FMRX(,2,VFP_XREG_FPSCR);
+	asm("B 1b");
+
+	// Read FPINST and FPINST2 with interrupts still off, so we know
+	// for certain they are the values that belong to us
+	// Then finally it's ok to turn interrupts back on
+	asm("2:");
+	VFP_FMRX(,2,VFP_XREG_FPINST);
+	VFP_FMRX(,3,VFP_XREG_FPINST2);
+	asm("MSR cpsr, r1");
+
+	// process faulting instruction description in r2
+	asm("BIC r2, r2, #0x00000e00"); // clear top cp_num bits [11..9]
+	asm("BIC r2, r2, #0xff000000"); // clear cond & CDP bits [31..24]
+
+	// get the remaining vector length from FPEXC VECITR bits [10..8]
+	// this is in ((vector length - 1) % 8) format, as in the FPSCR
+	asm("ADD r1, r12, #(1 << 8)"); // add one for the faulting iteration
+	asm("AND r1, r1, #(7 << 8)"); // mask out bits [10..8]
+
+	// vlen in r1, starting at bit 8
+	asm("ORR r2, r2, r1, LSL #16"); // move to bits [26..24], and add to op
+
+	asm("TST r12, #(1 << 28)"); // check FP2V: FPINST2 is valid
+	asm("BNE collect_op2");
+
+	// write out computation description
+	// no second operation, so count is 1
+	asm("MOV r1, #1");
+	asm("MOV r3, #0");  // clear reserved words
+	asm("STMIA r0!, {r1, r3}"); // write count, flags
+	asm("STMIA r0!, {r2, r3}"); // write first entry
+
+	// check inexact enable, IXE, bit 12 of FPSCR
+	VFP_FMRX(,0,VFP_XREG_FPSCR);
+	asm("MOV r0, r0, LSR #12");
+	asm("AND r0, r0, #1");
+
+	// return 0 for imprecise bounce, IXE = 0,
+	//     re-execute bounced instruction
+	// return 1 for precise bounce, IXE = 1,
+	//     do not re-execute bounced instruction
+
+	__JUMP(,lr);
+
+	asm("collect_op2:");
+
+	// r0 points to the computation description
+	// r2 contains op[0]
+	// r3 contains FPINST2
+	// FP2V was set but has already been cleared
+
+	// process pending instruction in FPINST2
+	asm("BIC r3, r3, #0x00000e00"); // clear top cp_num bits [11..9]
+        // bits [31..28] contain the cond field
+        // bits [27..24] are always 0b1110
+        // bit 4 is always zero
+	asm("BIC r3, r3, #0xff000000"); // clear bits [31..24]
+
+	// use vector length in FPSCR LEN field bits [18..16]
+	// this is in ((vector length - 1) % 8) format, as required for op
+	VFP_FMRX(,1,VFP_XREG_FPSCR);
+	asm("AND r1, r1, #(7 << 16)"); // mask out bits [18..16]
+	asm("ORR r3, r3, r1, LSL #8"); // move to bits [26..24], and add to op
+
+	// write out computation description
+	// op count is 2
+	asm("MOV r1, #2");
+	asm("MOV r12, #0");  // clear reserved words
+	asm("STMIA r0!, {r1, r12}"); // count, flags
+	asm("STMIA r0!, {r2, r12}"); // 1st entry
+	asm("STMIA r0!, {r3, r12}"); // 2nd entry
+
+	// return 0 for imprecise bounce
+	asm("MOV r0, #0");
+	__JUMP(,lr);
+	}
+

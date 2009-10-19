@@ -1,0 +1,8 @@
+EXPORTS
+	_Z17VariantInitialisev @ 1 NONAME
+	_ZN7Variant10PowerResetEv @ 2 NONAME
+	_ZN7Variant14BaseLinAddressEv @ 3 NONAME
+	_ZN7Variant16MarkDebugPortOffEv @ 4 NONAME
+	_ZN7Variant8SwitchesEv @ 5 NONAME
+	_ZN7Variant8UartInitEv @ 6 NONAME
+

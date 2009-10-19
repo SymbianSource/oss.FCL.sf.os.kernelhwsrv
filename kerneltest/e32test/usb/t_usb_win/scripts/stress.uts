@@ -1,0 +1,17 @@
+// @SYMTestCaseID           PBASE-USB-STRESS-0804
+// @SYMTestCaseDesc         USB Transfers with background activity
+// @SYMTestActions
+//    Stream using 2 IN and 2 OUT while E32/F32 test suites are running
+// @SYMTestExpectedResults
+//    No error reported
+// @SYMTestPriority			Medium
+//
+//		MIN	MAX	PACKET	IFACE	ALT	OUT	IN	REPEAT	DISPLAY	SETTING	BEFORE	AFTER	OUT_RATE	IN_RATE
+WaitConnect
+Do
+Stream			100000	100000	0	0	99	1	1000	200
+Stream			100000	100000	0	0	2	99	1000	200
+Stream			100000	100000	0	0	99	3	1000	200
+Stream			100000	100000	0	0	4	99	1000	200
+Wait
+Repeat			30

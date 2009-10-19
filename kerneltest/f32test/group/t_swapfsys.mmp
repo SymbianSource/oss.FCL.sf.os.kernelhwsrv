@@ -1,0 +1,33 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32test/group/t_swapfsys.mmp
+// 
+//
+
+TARGET			t_swapfsys.exe
+TARGETTYPE		EXE
+
+SOURCEPATH		../server
+
+SOURCE			t_swapfsys.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY			euser.lib efsrv.lib
+
+VENDORID 		0x70000001
+
+CAPABILITY		TCB DISKADMIN ALLFILES
+
+SMPSAFE

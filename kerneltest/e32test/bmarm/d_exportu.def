@@ -1,0 +1,4 @@
+EXPORTS
+	CreateLogicalDevice__Fv @ 1 NONAME R3UNUSED ; CreateLogicalDevice(void)
+	ExportMultiplyFunction__FUiUi @ 2 NONAME R3UNUSED ; ExportMultiplyFunction(unsigned int, unsigned int)
+

@@ -1,0 +1,272 @@
+@
+cuid: 0x00000001
+eid: 1
+type: Int32
+flags: 0x0000
+intval: 555666
+.
+
+@
+cuid: 0x00000001
+eid: 10
+type: Bool
+flags: 0x0000
+intval: 1
+.
+
+@
+cuid: 0x000003e8
+eid: 28672
+type: Text8
+flags: 0x0000
+strval: "ENSUTIXABRMNOBXIEZTGSIYAPKNHESPUFWXCVGLHKKYHEMLOJMSSXYZWYCJWHJSJAPNDTJVGXBQKLECTVCOSGFHGLSCXNGSVWJBRLIRLEZSNWAHVVFKXWRLXJVEKCUKUBGJILRKSAAWBNCKCVSYTSZUSBPJDZNQEFXTKZAKCJQDCEHPBLZCNITSZASYRRXBDYNZAWBZBISWRESBPLAIEVQLFZJNJMOGEDUCDQLJEEUZLQLVUTHLODJDETGDIGBUBTZRKNXPLHUSYHNWALUQGSRWAISHLNZZTAWQHHDSCHIRNLDAZUBPQTHOBWMUJNZFQFTGCMAPQWKYEFJBPDFHUBABYRYXQCTQGULIUGHDVYPZUENQDATFRDSFQEXHLUZLNKIZGIUZTNCRZUSJCFXEABFQHBUBVSKQOUIUAGKVTVOIFYHSGNHLHQJYMBOLLOCKSZWQNBBEMFDOQJMBSADSSJEQXDOZJIBWZZWZWPRMVENMGJPSVVDZKGNCRIWIMQWM#"
+.
+
+
+@
+cuid: 0x10000001
+eid: 4128
+type: Int8
+flags: 0x0000
+intval: -33
+.
+
+@
+cuid: 0x10000001
+eid: 4160
+type: UInt32
+flags: 0x0000
+intval: 999999
+.
+
+@
+cuid: 0x10000002
+eid: 128
+type: BinData
+flags: 0x0000
+binval: 18 a1 0b bc 61 41 de c9 cd d2 f9 3b ba 99 e5 e2
+binval: fa e0 13 fe 8f d4 e3 50 1a 5e a3 32 39 34 1f 16
+binval: 9a a8 b3 61 1d 7d 7f fd b1 58 af 91 53 f7 76 c4
+binval: da dd a7 7c f0 94 97 6a ee 30 2e ef ef 38 c6 9c
+binval: da a7 dc 4c b6 1b 0a 41 fc ed 71 1c 47 4e fa 29
+binval: 18 14 92 d8 01 62 d3 da f5 cc 2f be 0e 2a 25 7b
+binval: 91 b6 7d d1 6a a4 25 e2 00 db a0 f6 8d fa a3 c1
+binval: df 42 e2 2e b2 aa 91 f4 74 a1 9e fa c2 c8 3d eb
+binval: 5e 34 b9 d1 de 68 1e 3a f6 b5 c7 bd 84 1d 46 47
+binval: 44 6b cb 20 5c a1 72 12 99 65 99 88 9e 9a bb 27
+binval: c9 ca d6 b0 1e 81 ea a7 00 53 98 9c f3 a1 64 7b
+binval: 41 da a9 d9 c0 44 c0 98 7b 15 67 d4 9c ef f3 75
+binval: 42 67 46 5d a0 cf 26 91 29 d7 ef 42 0a 3b 25 26
+binval: bd 23 01 09 07 57 6c f1 18 f8 77 d2 21 dc e0 22
+binval: 22 43 a2 4f 41 fb 19 67 63 ab cd e7 5e 64 57 1b
+binval: 81 22 80 ec c3 68 10 91 56 9b 5f fe f6 42 26 84
+binval: a9 de a9 84 46 77 b0 a0 88 82 5d 4c f1 60 73 32
+binval: 44 fb fa 44 ec cc ee f3 02 d3 dd 5d 4f c6 0f f8
+binval: fe 00 45 82 5c 7a 7f bb 5a 55 f3 b9 27 38 97 4c
+binval: a0 1a 6c 5c e3 9e ef 9a d4 c0 d8 7c c7 d8 91 e3
+binval: 31 b8 85 58 97 05 c6 41 83 65 07 fe d1 c1 8c 53
+binval: 19 31 fa 05 72 c5 a5 12 68 c6 5f 6e 61 ae 45 b3
+binval: 3c 5f a4 9b 76 e2 69 bf 94 3d 3e 74 26 94 c2 39
+binval: 1d 3f f0 9b ca ec 49 ed 46 94 a8 d0 88 47 71 dd
+binval: fd 93 00 6b dd a1 f6 ce 09 ae 61 fa c4 15 4e f6
+binval: fe 85 c5 fe 83 89 bc c7 da 1f 12 c6 0f 6b ff de
+binval: 3d 3e 23 6d 19 9b a3 0d 43 d2 64 fb b3 6f f2 8c
+binval: f9 90 13 9a 9f d8 89 44 7c a5 23 fc 32 a7 83 3b
+binval: ac 8e bd d0 df f0 4c 23 8c 0b 60 64 62 94 15 04
+binval: 32 33 9f 61 87 df e1 0f 69 ac 8a a7 92 53 39 83
+binval: e2 fc a8 4a 4c 8b 79 bf 16 03 98 b0 a8 3f c6 70
+binval: b5 8b 57 cd 0b 69 9e db c7 01 1e 83 3c 8d 03 49
+
+.
+
+@
+cuid: 0x10000002
+eid: 208
+type: UInt64
+flags: 0x0000
+binval: 01 00 00 00 00 00 00 00
+.
+
+@
+cuid: 0x10000002
+eid: 4294967295
+type: UInt8
+flags: 0x0000
+intval: 25
+.
+
+@
+cuid: 0x10000003
+eid: 12288
+type: Int32
+flags: 0x0000
+intval: -987654
+.
+
+@
+cuid: 0x10000003
+eid: 12304
+type: Int16
+flags: 0x0000
+intval: -12345
+.
+
+@
+cuid: 0x10000003
+eid: 12320
+type: Int8
+flags: 0x0000
+intval: -100
+.
+
+@
+cuid: 0x10000003
+eid: 12336
+type: Bool
+flags: 0x0000
+intval: 0
+.
+
+@
+cuid: 0x10000003
+eid: 12352
+type: UInt32
+flags: 0x0000
+intval: 1234567890
+.
+
+@
+cuid: 0x10000003
+eid: 12368
+type: UInt16
+flags: 0x0000
+intval: 12345
+.
+
+@
+cuid: 0x10000003
+eid: 12384
+type: UInt8
+flags: 0x0000
+intval: 123
+.
+
+@
+cuid: 0x10000003
+eid: 12400
+type: LinAddr
+flags: 0x0000
+hexval: 0xabcdef01
+.
+
+@
+cuid: 0x10000004
+eid: 8320
+type: BinData
+flags: 0x0000
+binval: 18
+
+.
+
+@
+cuid: 0x10000004
+eid: 8339
+type: Text8
+flags: 0x0000
+strval: "_"
+.
+
+@
+cuid: 0x10000004
+eid: 8352
+type: ArrayInt32
+flags: 0x0000
+arrval: 2034128484
+.
+
+@
+cuid: 0x10000004
+eid: 8369
+type: ArrayUInt32
+flags: 0x0000
+arrval: 2034128484
+.
+
+@
+cuid: 0x10000004
+eid: 8386
+type: Int64
+flags: 0x0000
+binval: 00 00 00 00 00 00 00 80
+.
+
+@
+cuid: 0x10000004
+eid: 8400
+type: UInt64
+flags: 0x0000
+binval: ff ff ff ff ff ff ff 7f
+.
+
+@
+cuid: 0x10000004
+eid: 4294967295
+type: Int8
+flags: 0x0000
+intval: -1
+.
+
+@
+cuid: 0xffffffff
+eid: 32
+type: ArrayUInt32
+flags: 0x0000
+arrval: 2034128484
+arrval: 358489471
+arrval: 3098359310
+arrval: 3071843677
+arrval: 3651893893
+arrval: 2964418197
+arrval: 2696294136
+arrval: 1696227301
+arrval: 1516067404
+arrval: 1171111215
+arrval: 45904065
+arrval: 3152352058
+arrval: 204038089
+arrval: 3427962251
+arrval: 3455401965
+arrval: 1362098275
+arrval: 2253564637
+arrval: 3426182366
+arrval: 173516448
+arrval: 3814089518
+arrval: 136723162
+arrval: 2036722935
+arrval: 4113668927
+arrval: 1744493008
+arrval: 2493449248
+arrval: 3579645660
+arrval: 567353362
+arrval: 882914186
+arrval: 386211010
+arrval: 3553761645
+arrval: 2569035486
+arrval: 508738370
+.
+
+@
+cuid: 0xffffffff
+eid: 3435973836
+type: UInt64
+flags: 0x0000
+binval: 00 00 00 00 00 00 00 00
+.
+
+@
+cuid: 0xffffffff
+eid: 4294967295
+type: Int8
+flags: 0x0000
+intval: 100
+.

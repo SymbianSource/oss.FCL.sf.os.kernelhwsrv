@@ -1,0 +1,5 @@
+EXPORTS
+	?KeyDataConvTable@@YAXAAUSConvTable@@AAI1AAUSScanCodeBlockList@@AAUSKeyCodeList@@@Z @ 1 NONAME ; void __cdecl KeyDataConvTable(struct SConvTable &,unsigned int &,unsigned int &,struct SScanCodeBlockList &,struct SKeyCodeList &)
+	?KeyDataFuncTable@@YAXAAUSFuncTables@@@Z @ 2 NONAME ; void __cdecl KeyDataFuncTable(struct SFuncTables &)
+	?KeyDataSettings@@YAXAAW4TRadix@@AAW4TCtrlDigitsTermination@@AAH2@Z @ 3 NONAME ; void __cdecl KeyDataSettings(enum TRadix &,enum TCtrlDigitsTermination &,int &,int &)
+

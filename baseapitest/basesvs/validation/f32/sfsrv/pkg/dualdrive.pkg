@@ -1,0 +1,65 @@
+;
+; Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+; All rights reserved.
+; This component and the accompanying materials are made available
+; under the terms of the License "Eclipse Public License v1.0"
+; which accompanies this distribution, and is available
+; at the URL "http://www.eclipse.org/legal/epl-v10.html".
+;
+; Initial Contributors:
+; Nokia Corporation - initial contribution.
+;
+; Contributors:
+;
+; Description:
+;
+;
+; Install file for t_sfsrv.exe
+;
+
+; Languages -
+&EN
+
+; Installation header
+; UID is the app's UID
+#{"t_sfsrv"},(0x20000F7D),1,0,0
+
+;%{"Vendor-EN"}
+;:"Symbian"
+
+; Localised Vendor name
+%{"Nokia"}
+
+; Unique Vendor name
+:"Nokia"
+
+
+"t_sfsrv.exe"-"!:\sys\bin\t_sfsrv.exe"
+"t_prompt.exe"-"!:\sys\bin\t_prompt.exe"
+"T_TESTFSY1.fsy"-"!:\sys\bin\T_TESTFSY1.fsy"
+"T_TestFXT.fxt"-"!:\sys\bin\T_TestFXT.fxt"
+
+
+"setup-pbase-f32-dual-drive-publicapi-ram.script"-"!:\base\setup-pbase-f32-dual-drive-publicapi-ram.script"
+"pbase-f32-dual-drive-publicapi-ram.script"-"!:\base\pbase-f32-dual-drive-publicapi-ram.script"
+"t_base.tcs"-"!:\base\t_base.tcs"
+
+
+"pbase-f32-dual-drive-publicapi-ram.ini"-"!:\base\pbase-f32-dual-drive-publicapi-ram.ini"
+
+
+"dual_drive_env.ini"-"!:\base\dual_drive_env.ini"
+
+"t_sfsrv\test.txt"-"!:\base\t_sfsrv\test.txt"
+"t_sfsrv\USBLOAD.ZIP"-"!:\base\t_sfsrv\USBLOAD.ZIP"
+"t_sfsrv\Test1.txt"-"!:\base\t_sfsrv\Test1.txt"
+"t_sfsrv\Test2.txt"-"!:\base\t_sfsrv\Test2.txt"
+"t_sfsrv\Test3.txt"-"!:\base\t_sfsrv\Test3.txt"
+"t_sfsrv\big.txt"-"!:\base\t_sfsrv\big.txt"
+
+
+; Required files
+; None
+
+; Component .sis files
+; None

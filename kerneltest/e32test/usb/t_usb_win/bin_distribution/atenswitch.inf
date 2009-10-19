@@ -1,0 +1,198 @@
+; Copyright (c) 2001-2009 Nokia Corporation and/or its subsidiary(-ies).
+; All rights reserved.
+; This component and the accompanying materials are made available
+; under the terms of the License "Eclipse Public License v1.0"
+; which accompanies this distribution, and is available
+; at the URL "http://www.eclipse.org/legal/epl-v10.html".
+;
+; Initial Contributors:
+; Nokia Corporation - initial contribution.
+;
+; Contributors:
+;
+; Description:
+; ATENSWITCH Setup Information file
+;
+; This file supports:
+;     Windows 2000
+;     Windows 2000 Server
+;     Windows XP
+;     Windows Server 2003
+;     Windows Vista
+;
+; Note:
+; Some section names (enclosed in []) are system-defined and should not be changed.
+; Private section names start with an '_'. Those can be changed.
+;
+; Refer to the Windows DDK documentation for more information on INF files.
+;
+
+;******************************************************************************
+; Version section
+;------------------------------------------------------------------------------
+[Version]
+Signature="$Windows NT$"
+Provider=%S_Provider%
+DriverVer=04/11/2007,2.41.0.0
+
+; This specifies the .cat file provided by WHQL if the driver is certified.
+;CatalogFile=tusbwin.cat
+
+; use a private device class that is defined by Symbian:
+Class=SymbianOSControlledUSBDevices
+ClassGUID={BA23B65A-55AB-41da-A973-AF8B31B49BEC}
+
+
+;******************************************************************************
+; Class Install section
+;------------------------------------------------------------------------------
+;
+; The following sections are required if a private device class is used
+; (see also the comments above).
+;
+[ClassInstall32] 
+AddReg=_AddReg_ClassInstall
+
+[_AddReg_ClassInstall]
+HKR,,,,"%S_DeviceClassDisplayName%"
+HKR,,Icon,,"-20"
+
+
+;******************************************************************************
+; Options
+;------------------------------------------------------------------------------
+[ControlFlags]
+; Advanced options can be specified here.
+; For details, refer to the Windows DDK documentation.
+
+
+;******************************************************************************
+; Manufacturer section
+;------------------------------------------------------------------------------
+[Manufacturer]
+%S_Mfg%=_Models
+
+
+;******************************************************************************
+; Models section
+;------------------------------------------------------------------------------
+; x86-based systems
+[_Models]
+; This section specifies your device's hardware ID.
+
+%S_DeviceDesc%=_Install, USB\VID_0557&PID_2404
+; Optionally, you can append the revision code to be more unambiguous
+; example: USB\VID_053C&PID_0001&REV_0001
+;%S_DeviceDesc%=_Install, USB\VID_XXXX&PID_XXXX&REV_XXXX
+
+
+;******************************************************************************
+; Install sections x86-based systems
+;------------------------------------------------------------------------------
+[_Install.ntx86]
+CopyFiles=_CopyFiles_sys
+
+[_Install.ntx86.Services]
+AddService = %S_DriverName%, 0x00000002, _AddService, _EventLog
+
+[_Install.ntx86.HW]
+AddReg=_AddReg_HW
+
+[_AddService]
+ServiceType    = 1                  ; SERVICE_KERNEL_DRIVER
+StartType      = 3                  ; SERVICE_DEMAND_START
+ErrorControl   = 1                  ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %10%\System32\Drivers\%S_DriverName%.sys
+
+[_EventLog]
+AddReg=_EventLog_AddReg
+
+[_EventLog_AddReg]
+HKR,,EventMessageFile,%REG_EXPAND_SZ%,"%%SystemRoot%%\System32\IoLogMsg.dll;%%SystemRoot%%\System32\drivers\%S_DriverName%.sys"
+HKR,,TypesSupported,  %REG_DWORD%,7
+
+
+;******************************************************************************
+; Registry sections
+;------------------------------------------------------------------------------
+[_AddReg_HW]
+
+;
+HKR,,DriverUserInterfaceGuid,,"{A6942415-49EE-4ef2-9CE8-D33E888EF133}"
+
+
+; Set the default behaviour of the driver for Windows 2000 and Windows XP
+HKR,,PowerStateOnOpen,     %REG_DWORD%, 0
+HKR,,PowerStateOnClose,    %REG_DWORD%, 0
+HKR,,MinPowerStateUsed,    %REG_DWORD%, 3
+HKR,,MinPowerStateUnused,  %REG_DWORD%, 3
+HKR,,EnableRemoteWakeup,   %REG_DWORD%, 0
+HKR,,AbortPipesOnPowerDown,%REG_DWORD%, 1
+HKR,,UnconfigureOnClose,   %REG_DWORD%, 1
+HKR,,ResetDeviceOnClose,   %REG_DWORD%, 0
+HKR,,MaxIsoPackets,        %REG_DWORD%, 512
+HKR,,ShortTransferOk,      %REG_DWORD%, 1
+HKR,,RequestTimeout,       %REG_DWORD%, 1000
+HKR,,SuppressPnPRemoveDlg, %REG_DWORD%, 1
+
+
+;******************************************************************************
+; Copy Files section
+;------------------------------------------------------------------------------
+[_CopyFiles_sys]
+tusbwin.sys
+
+
+;******************************************************************************
+; Destination Directories
+;------------------------------------------------------------------------------
+[DestinationDirs]
+DefaultDestDir =     12   ; %SystemRoot%\system32\drivers 
+_CopyFiles_sys =     12
+
+
+;******************************************************************************
+; Disk Layout
+;------------------------------------------------------------------------------
+[SourceDisksNames.x86]
+1=%S_DiskName%,,
+
+[SourceDisksFiles.x86]
+tusbwin.sys=1
+
+
+;******************************************************************************
+; Text Strings
+;------------------------------------------------------------------------------
+[Strings]
+;
+; Non-Localizable Strings, DO NOT MODIFY!
+;
+REG_SZ         = 0x00000000
+REG_MULTI_SZ   = 0x00010000
+REG_EXPAND_SZ  = 0x00020000
+REG_BINARY     = 0x00000001
+REG_DWORD      = 0x00010001
+
+;
+; Localizable Strings, modify as required
+;
+
+; provider name
+S_Provider="Symbian Software Ltd."
+; manufacturer name
+S_Mfg="Symbian Software Ltd."
+
+; device class display name, shown in Device Manager
+S_DeviceClassDisplayName="Symbian OS controlled USB devices"
+
+; device description
+S_DeviceDesc="ATEN switch device"
+
+; disk name
+S_DiskName="t_usb_win Driver Disk"
+
+; File name of driver executable.
+S_DriverName="tusbwin"
+
+; *** EOF ***

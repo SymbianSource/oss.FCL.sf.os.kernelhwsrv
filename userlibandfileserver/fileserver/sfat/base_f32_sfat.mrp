@@ -1,0 +1,15 @@
+# component name "FAT File System"
+
+component	base_f32_sfat
+
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\swins
+
+binary	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat all
+exports	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfat
+
+notes_source	\component_defs\release.src
+
+
+ipr E
+

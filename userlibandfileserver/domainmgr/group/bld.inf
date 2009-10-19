@@ -1,0 +1,43 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// /domain/group/bld.inf
+// Domain manager
+// 
+//
+
+/**
+ @file
+*/
+
+
+PRJ_PLATFORMS
+
+BASEUSERDEFAULT
+
+PRJ_EXPORTS
+
+../inc/domaindefs.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domaindefs.h)
+../inc/domainmanager.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainmanager.h)
+../inc/domainmember.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainmember.h)
+../inc/domainpolicy.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainpolicy.h)
+
+../bmarm/domainpolicyu.def	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(def/bmarm/domainpolicyu.def)
+../bwins/domainpolicyu.def	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(def/bwins/domainpolicyu.def)
+../eabi/domainpolicyu.def	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(def/eabi/domainpolicyu.def)
+
+PRJ_MMPFILES
+
+domaincli.mmp
+domainsrv.mmp
+domainpolicy.mmp

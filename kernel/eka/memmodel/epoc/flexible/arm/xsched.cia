@@ -1,0 +1,237 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+#define INCLUDED_FROM_ASM
+
+#include <e32cia.h>
+#include <arm_mem.h>
+#include "nk_cpu.h"
+#include "xdefs.h"
+#include "cache_maintenance.h"
+
+#define iMState		iWaitLink.iSpare1
+
+//#define __DEBUG_BAD_ADDR
+
+#ifdef __REQUEST_COMPLETE_MACHINE_CODED__
+#if defined(_DEBUG)
+extern "C" void __DebugMsgRequestComplete(TInt a0, TInt a1, TInt a2);
+extern "C" void __DebugMsgReqCompleteWrite(TInt a0, TInt a1, TInt a2);
+#endif
+
+__NAKED__ void DoRequestComplete(DThread* /*aThread*/, TRequestStatus* /*aStatus*/, TInt /*aReason*/)
+	{
+	// r0 -> DThread, r1 -> TRequestStatus in user space, r2 = aReason
+
+	ASM_ASSERT_DATA_PAGING_SAFE;
+	
+#ifdef BTRACE_REQUESTS
+	asm("stmdb sp!,{r0-r3,lr}");
+	asm("mov r3,r2");											// arg3 = aReason
+	asm("mov r2,r1");											// arg2 = aStatus
+	asm("add r1,r0,#%a0" : : "i" _FOFF(DThread,iNThread));		// arg1 = &this->iNThread
+	asm("ldr r0,_threadReqequestCompleteTraceHeader");			// arg0 = header
+	asm("bl " CSM_ZN6BTrace4OutXEmmmm);
+	asm("ldmia sp!,{r0-r3,lr}");
+#endif
+
+	ASM_DEBUG3(RequestComplete,r0,r1,r2);
+
+	asm("ldrb r12, [r0, #%a0]" : : "i" _FOFF(DThread,iMState));
+#ifdef __SMP__
+	GET_RWNO_TID(,r3);		// NOTE: Can't migrate because we hold system lock
+#else
+	asm("ldr r3, __TheScheduler ");
+#endif
+	asm("stmfd sp!, {r4-r9} ");
+	asm("add r6, r0, #%a0" : : "i" _FOFF(DThread,iNThread));				// r6->target NThread
+#ifdef __SMP__
+	asm("ldr r4, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));	// r4->current process
+#else
+	asm("ldr r4, [r3, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));		// r4->current process
+#endif
+	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(DThread,iOwningProcess));		// r0->target process
+	asm("cmp r12, #%a0" : : "i" (DThread::EDead));	// test if iMState=EDead
+	asm("beq req_complete_dead_thread ");	// if it is, finished
+#ifdef __SMP__
+	asm("ldr r5, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));	// r5->current NThread
+#else
+	asm("ldr r5, [r3, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));		// r5->current NThread
+#endif
+
+	asm("mrc p15, 0, r7, c2, c0, 0 ");		// save TTBR0
+	asm("ldr r9, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iPageDir));		// r9 -> target process page directory
+	asm("and r12, r7, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));			// r12 = page table cache attributes
+	// Get the os asid of the aThread's owning process, no need to open a reference 
+	// as aThread is not dead and the system lock is held so it can't be made dead.
+	asm("ldr r8, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r8 = target ASID
+	asm("orr r9, r9, r12 ");				// r9 = new TTBR0 value
+
+	__ASM_CLI(); // disable all interrupts
+	__ASM_SET_ADDRESS_SPACE(r8,r9,r12);
+#ifdef __SMP__
+	asm("str r0, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("str r0, [r3, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("str r0, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+	__ASM_STI(); // enable all interrupts
+
+	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm(".global __magic_address_reqc ");	// NOTE: Z flag always clear here
+	asm("__magic_address_reqc: ");			// this instruction is magically immune from exceptions
+	asm("strt r2, [r1] ");					// store completion code with user permissions
+											// MAY MODIFY Z and R12
+	USER_MEMORY_GUARD_ON(,r12,r12);
+
+	asm("mrs r9, cpsr ");					// save CPSR and Z flag which indicates whether write succeeded
+	// Read current process's os asid no reference required as it can't be freed as it is the current process. 
+	asm("ldr r2, [r4, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r2 = current process ASID
+
+	__ASM_CLI(); // disable all interrupts
+	__ASM_SET_ADDRESS_SPACE(r2,r7,r12);
+#ifdef __SMP__
+	asm("str r4, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("str r4, [r3, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("str r4, [r5, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+
+	asm("msr cpsr, r9 ");					// restore interrupts and Z flag
+
+#ifdef __DEBUG_BAD_ADDR
+	asm("moveq r12, #0xde000000 ");
+	asm("streq r12, [r12, #0xaf] ");		//HACK-CRASH SYSTEM IF WRITE FAILED
+#endif
+
+	asm("movne r0, r6 ");					// if write OK, r0->iNThread
+	asm("req_complete_dead_thread: ");		// NOTE: Z flag set if thread dead
+	asm("ldmfd sp!, {r4-r9} ");				// restore registers whether OK or not
+	asm("movne r1, #0 ");
+	asm("bne " CSM_ZN5NKern19ThreadRequestSignalEP7NThreadP10NFastMutex );
+	asm("b " CSM_ZN5NKern12UnlockSystemEv);	// if any error, unlock system and return
+
+#ifdef BTRACE_REQUESTS
+	asm("_threadReqequestCompleteTraceHeader:");
+	asm(".word %a0" : : "i" (BTRACE_HEADER_C(16,BTrace::ERequests,BTrace::ERequestComplete)));
+#endif
+	}
+#endif	//	__REQUEST_COMPLETE_MACHINE_CODED__
+
+
+GLDEF_C __NAKED__ void DoProcessSwitch()
+	{
+	// Enter and return with kernel locked
+	// UP: r0->scheduler, r3->current thread r2 = ContextID>>8
+	// SMP: r11->subscheduler, r3->current thread r2 = ContextID>>8
+	// r5->old process, r9->new process
+	// UP: Must preserve r0,r3, can modify other registers
+	// SMP: Must preserve r3,r10,r11, can modify other registers
+
+	// Read the new process os asid, no need to open a reference as it is about 
+	// to become the current thread.
+	asm("ldr r4, [r9, #%a0]" : : "i" _FOFF(DMemModelProcess, iOsAsid));
+	asm("ldr r6, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasLinAddr)-_FOFF(DThread, iNThread)) );
+	asm("cmp r5, r9 ");					// check if current address space correct
+	asm("orr r2, r4, r2, lsl #8 ");		// r2 = ContextID :  ASID
+	asm("beq same_process");			// skip if address space change not required
+
+	// switching to another process...
+	asm("ldr r7, [r9, #%a0]" : : "i" _FOFF(DMemModelProcess, iPageDir));
+	asm("mrc p15, 0, r8, c2, c0, 0 ");	// read current TTBR0
+	asm("and r8, r8, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));
+	asm("orr r7, r7, r8 ");
+	// r7 now = new TTBR0
+
+	__ASM_SET_ADDRESS_SPACE(r2,r7,r12);
+#ifdef __SMP__
+	asm("str r9, [r11, #%a0]" : : "i" _FOFF(TSubScheduler, iAddressSpace));
+#else
+	asm("str r9, [r0, #%a0]" : : "i" _FOFF(TScheduler, iAddressSpace));
+#endif
+
+	asm("cmp r6, #0");					// check if thread has an alias in place
+	asm("bne got_alias");
+	__JUMP(,lr);
+
+	// 'switching' to same process, just update debug thread ID...
+	asm("same_process:");
+	__DATA_SYNC_BARRIER_Z__(r12);		// needed before change to ContextID
+	asm("mcr p15, 0, r2, c13, c0, 1 ");	// set ASID + debugging thread ID
+	__INST_SYNC_BARRIER__(r12);
+	asm("cmp r6, #0");					// check if thread has an alias in place
+	asm("bne got_alias");
+	__JUMP(,lr);
+
+	// restore alias...
+	asm("got_alias:");
+	asm("ldr r8, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasPdePtr)-_FOFF(DThread, iNThread)) );
+	asm("ldr r7, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasPde)-_FOFF(DThread, iNThread)) );
+	asm("orr r6, r6, r4");				// put ASID into address for TLB flush later...
+	asm("str r7, [r8]");				// restore PDE for alias
+	
+	CACHE_MAINTENANCE_PDE_PTE_UPDATED(r8);
+
+#if defined(__CPU_ARM11MP__) // why?...
+	asm("mcr p15, 0, r6, c8, c7, 3 ");	// flush TLB for aliased page
+#else
+	asm("mcr p15, 0, r6, c8, c7, 1 ");	// flush TLB for aliased page
+#endif
+	asm("mov r8,#0");
+	asm("mcr p15, 0, r8, c7, c5, 6 ");	// BPIALL (Branch predictor invalidate all)
+	__DATA_SYNC_BARRIER__(r8);
+	__INST_SYNC_BARRIER__(r8);
+	__JUMP(,lr);
+
+#ifndef __SMP__
+	asm("__TheScheduler: ");
+	asm(".word TheScheduler ");
+#endif
+	};
+
+/**
+Restore the address space of the current thread so it matches its owning process.
+*/
+__NAKED__ void DMemModelThread::RestoreAddressSpace()
+	{
+	asm("stmfd sp!, {lr} ");
+#ifdef __SMP__
+	GET_RWNO_TID(,r12);
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));	// r3->current NThread
+#else
+	asm("ldr r12, __TheScheduler ");										// r12->TheScheduler
+	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));	// r3->current NThread
+#endif
+	asm("ldr r0, [r3, #%a0]" : : "i" (-_FOFF(DThread,iNThread)+_FOFF(DThread,iOwningProcess)));		// r0->process
+
+	// switch address space to process r0...
+	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iPageDir));	// r1->process page directory
+	asm("mrc p15, 0, r2, c2, c0, 0 ");
+	asm("and r2, r2, #%a0" : : "i" ((TInt)KTTBRExtraBitsMask));
+	asm("orr r1, r1, r2 ");
+	// Get the os asid of the current process, no need to open a reference as it is the current process.
+	asm("ldr r2, [r0, #%a0]" : : "i" _FOFF(DMemModelProcess,iOsAsid));		// r2 = ASID
+
+	__ASM_CLI(); // disable all interrupts
+	__ASM_SET_ADDRESS_SPACE(r2,r1,lr);
+#ifdef __SMP__
+	asm("str r0, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iAddressSpace));
+#else
+	asm("str r0, [r12, #%a0]" : : "i" _FOFF(TScheduler,iAddressSpace));
+#endif
+	asm("str r0, [r3, #%a0]" : : "i" _FOFF(NThread,iAddressSpace));
+	__ASM_STI(); // enable all interrupts
+
+	__POPRET("");
+	}

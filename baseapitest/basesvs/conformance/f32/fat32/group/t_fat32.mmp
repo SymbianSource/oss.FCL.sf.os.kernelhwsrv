@@ -1,0 +1,56 @@
+/*
+* Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+
+
+TARGET      	t_fat32server.exe
+TARGETTYPE  	exe
+UID             0x1000007A 0x10281824
+VENDORID 		0x70000001
+EPOCHEAPSIZE	0x1000 0x02000000
+EPOCSTACKSIZE 	0x8000
+
+
+CAPABILITY		ALL
+
+SOURCEPATH  	../src
+SOURCE			t_fat32server.cpp 
+SOURCE			t_fat32base.cpp
+SOURCE			t_fat32format.cpp
+SOURCE			t_fat32mount.cpp
+SOURCE			t_fat32readraw.cpp
+SOURCE			t_fat32writeraw.cpp
+SOURCE			t_fat32readfile.cpp
+SOURCE			t_fat32writefile.cpp
+SOURCE			t_fat32checkdisk.cpp
+SOURCE			t_fat32calculate.cpp
+SOURCE			t_fat32filldisk.cpp
+SOURCE			t_fat32clusterbound.cpp
+SOURCE			t_fat32readwrite.cpp
+SOURCE			t_fat32larger512.cpp
+
+USERINCLUDE   	../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY     	euser.lib
+LIBRARY			efsrv.lib
+LIBRARY			testexecuteutils.lib
+LIBRARY			testexecutelogclient.lib
+LIBRARY			hal.lib
+SMPSAFE
+
+

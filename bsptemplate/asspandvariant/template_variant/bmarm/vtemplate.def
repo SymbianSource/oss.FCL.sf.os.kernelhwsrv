@@ -1,0 +1,8 @@
+EXPORTS
+	VariantInitialise__Fv @ 1 NONAME R3UNUSED ; VariantInitialise(void)
+	BaseLinAddress__7Variant @ 2 NONAME R3UNUSED ; Variant::BaseLinAddress(void)
+	MarkDebugPortOff__7Variant @ 3 NONAME R3UNUSED ; Variant::MarkDebugPortOff(void)
+	PowerReset__7Variant @ 4 NONAME R3UNUSED ; Variant::PowerReset(void)
+	Switches__7Variant @ 5 NONAME R3UNUSED ; Variant::Switches(void)
+	UartInit__7Variant @ 6 NONAME R3UNUSED ; Variant::UartInit(void)
+

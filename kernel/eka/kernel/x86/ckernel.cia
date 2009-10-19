@@ -1,0 +1,400 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\kernel\x86\ckernel.cia
+// 
+//
+
+#include <x86_mem.h>
+#ifdef __SMP__
+#include <apic.h>
+#endif
+
+
+/********************************************
+ * Thread
+ ********************************************/
+
+const TLinAddr Kern_Exit_Addr = (TLinAddr)&Kern::Exit;
+const TInt OFFSET_DThread_iType = _FOFF(DThread,iThreadType);
+const TInt OFFSET_DThread_iFlags = _FOFF(DThread,iFlags);
+const TInt OFFSET_DThread_iUserStackSize = _FOFF(DThread,iUserStackSize);
+const TInt OFFSET_DThread_iNThread = _FOFF(DThread,iNThread);
+const TInt OFFSET_DThread_iOwningProcess = _FOFF(DThread,iOwningProcess);
+const TInt CONST_THREAD_RUNNING = DThread::EUserThreadRunning;
+
+__NAKED__ void DThread::EpocThreadFunction(TAny*)
+//
+// Called when an EPOC thread starts running
+//
+	{
+#ifdef __SMP__
+	asm("mov ebx, ebp ");
+	asm("mov ebp, [esp+4] ");
+	asm("cli ");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]" : : "i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24 ");
+	asm("mov eax, [eax*4+%0]" : : "i" (&SubSchedulerLookupTable));
+	asm("mov edx, [eax+%0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("sti ");
+#else
+	asm("mov ebp, [esp+4] ");
+	asm("mov edx, [%a0]" : : "i" (&TheScheduler.iCurrentThread));
+#endif
+	asm("sub edx, %0" : : "i" (OFFSET_DThread_iNThread));
+	asm("mov eax, %0" : : "i" (OFFSET_DThread_iType));
+	asm("lea eax, [edx+eax] ");
+	asm("cmp byte ptr [eax], 3 "); // EThreadUser
+	asm("je short epoc_user_thread ");
+	asm("mov eax, [ebp+%0]" : : "i" _FOFF(SThreadCreateInfo,iFunction));
+	asm("mov ecx, [ebp+%0]" : : "i" _FOFF(SThreadCreateInfo,iPtr));
+#ifdef __SMP__
+	asm("mov esp, ebx ");
+#else
+	asm("mov esp, ebp ");
+	asm("add esp, [ebp+%0]" : : "i" _FOFF(SThreadCreateInfo,iTotalSize));
+#endif
+	asm("push ecx ");
+	asm("call eax ");
+	asm("push eax ");
+	asm("mov ecx, %0" : : "i" (Kern_Exit_Addr));
+	asm("call ecx ");
+
+	asm("epoc_user_thread: ");
+	asm("mov ecx, %0" : : "i" (CONST_THREAD_RUNNING));
+	asm("mov [edx+%0], ecx" : : "i" _FOFF(DThread,iUserThreadState));
+	asm("mov edi, [edx+%0]" : : "i" _FOFF(DThread,iUserStackRunAddress));
+	asm("mov ecx, %0" : : "i" (OFFSET_DThread_iUserStackSize));
+	asm("mov ecx, [edx+ecx] ");
+	asm("and cl, 0x0f0 ");
+	asm("shr ecx, 2 ");
+	asm("mov ax, %0" : : "i" (KRing3DS));
+	asm("mov gs, ax ");
+	asm("mov es, ax ");
+	asm("mov eax, 0x29292929 ");
+	asm("cld ");
+	asm("rep stosd ");					// after this edi points to address after user stack
+	asm("mov esi, ebp ");
+	asm("add esi, [ebp+%0]" : : "i" _FOFF(SThreadCreateInfo,iTotalSize));
+	asm("copy_create_info: ");
+	asm("mov eax, [esi-4] ");
+	asm("sub esi, 4 ");
+	asm("mov gs:[edi-4], eax ");
+	asm("sub edi, 4 ");
+	asm("cmp esi, ebp ");
+	asm("ja copy_create_info ");
+	asm("mov esp, ebp ");
+	asm("add esp, [ebp+%0]" : : "i" _FOFF(SThreadCreateInfo,iTotalSize));	// restore supervisor stack balance
+	asm("mov ebx, %0" : : "i" (OFFSET_DThread_iFlags));
+	asm("xor eax, eax ");
+	asm("mov esi, %0" : : "i" (OFFSET_DThread_iOwningProcess));
+	asm("mov ebx, [edx+ebx] ");	// ebx = thread flags
+	asm("mov ax, %0" : : "i" (KRing3DS));
+	asm("mov esi, [edx+esi] ");			// esi -> owning process
+	asm("push eax ");					// SS in user mode
+	asm("push edi ");					// ESP in user mode	
+	asm("mov eax, %0" : :"i" (0x41202));	// EAX = EFLAGS in user mode {AC=1, IOPL=1, IF=1, rest 0}
+	asm("push eax ");
+	asm("xor eax, eax ");
+	asm("mov edx, [esi+%0]" : : "i" _FOFF(DProcess,iReentryPoint));
+	asm("mov esi, [esi+%0]" : : "i" _FOFF(DProcess,iCodeSeg));	// esi->process code seg
+	asm("mov ax, %0" : : "i" (KRing3CS));
+	asm("push eax ");					// CS in user mode
+	asm("and ebx, %0" : : "i" (KThreadFlagOriginal)); // test original thread flag
+	asm("setz bl ");						// BL=0 if first thread in process, 1 otherwise
+	asm("jnz not_first ");
+	asm("mov edx, [esi+%0]" : : "i" _FOFF(DCodeSeg,iEntryPtVeneer)); // EIP in user mode = process entry point
+	asm("not_first: ");
+	asm("push edx ");					// EIP in user mode = process entry point or reentry point
+	asm("movzx ebx, bl ");				// EBX=0 if first thread in process, 1 otherwise
+	asm("mov ax, %0" : : "i" (KRing3DS));
+	asm("mov ds, ax ");
+	asm("mov es, ax ");
+	asm("iretd ");						// jump to process entry point in user mode
+										// ebx=entry reason, esp->thread creation info
+	}
+
+
+#ifdef __GCC32__
+#define	PUSH(x)	asm("mov eax, [ecx+%0]" : : "i" _FOFF(TX86ExcInfo,x)); asm("sub edi, 4 "); asm("mov gs:[edi], eax ");
+#else
+#define	PUSH(x)	__asm mov eax, [ecx]TX86ExcInfo.x __asm sub edi, 4  __asm mov gs:[edi], eax;
+#endif
+
+__NAKED__ void __fastcall PushExcInfoOnUserStack(TX86ExcInfo*, TInt)
+	{
+	// Save registers on user stack (low to high addr)
+	// ExcType, iExcId, iExcErrorCode, iFaultAddress, iEax, iEcx, iEdx, iEbx, iEsp, iEbp, iEsi, iEdi,
+	// iSs, iDs, iEs, iFs, iGs, iEflags, iEip, iCs
+	asm("push edi ");
+	asm("mov edi, [ecx+%0]" : : "i" _FOFF(TX86ExcInfo,iEsp3));
+	PUSH(iCs);
+	PUSH(iEip);
+	PUSH(iEflags);
+	PUSH(iGs);
+	PUSH(iFs);
+	PUSH(iEs);
+	PUSH(iDs);
+	PUSH(iSs3);
+	PUSH(iEdi);
+	PUSH(iEsi);
+	PUSH(iEbp);
+	PUSH(iEsp3);
+	PUSH(iEbx);
+	PUSH(iEdx);
+	PUSH(iEcx);
+	PUSH(iEax);
+	PUSH(iFaultAddress);
+	PUSH(iExcErrorCode);
+	PUSH(iExcId);
+	asm("sub edi, 4 ");
+	asm("mov gs:[edi], edx ");
+	asm("mov [ecx+%0], edi" : : "i" _FOFF(TX86ExcInfo,iEsp3));
+	asm("pop edi ");
+	asm("ret ");
+	}
+
+
+extern "C" {
+
+__NAKED__ void TExcTrap_Trap()
+	{
+	// ecx = 'this' TExcTrap*
+	// returns eax = current thread
+#ifdef __SMP__
+	asm("cli ");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]" : :"i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24 ");
+	asm("mov eax, [eax*4+%0]" : :"i" (&SubSchedulerLookupTable));
+	asm("mov eax, [eax+%0]" : :"i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("sti ");
+#else
+	asm("mov eax, [%a0]" : : "i" (&TheScheduler.iCurrentThread));
+#endif
+	asm("mov edx, 0");
+	asm("lea edx, [edx+%0]": : "i"_FOFF(DThread,iNThread)); 
+	asm("sub eax, edx"); 
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TExcTrap,iThread));
+	asm("mov [eax+%0], ecx": : "i"_FOFF(DThread,iExcTrap));
+	asm("mov [ecx+4], ebx");
+	asm("mov [ecx+8], ebp");
+	asm("mov [ecx+16], esi");
+	asm("mov [ecx+20], edi");
+	asm("mov [ecx+24], ds");
+	asm("mov [ecx+28], es");
+	asm("mov [ecx+32], fs");
+	asm("mov [ecx+36], gs");
+	asm("ret");
+	}
+}
+
+extern "C" void DefaultExcTrapHandler(TExcTrap* xt, DThread*, TAny*);
+extern "C" void IpcExcHandler(TExcTrap* xt, DThread*, TAny*);
+#ifdef _DEBUG
+extern "C" void __FaultIpcClientNotNull();
+#endif
+
+
+__NAKED__ TBool TIpcExcTrap::IsTIpcExcTrap()
+	{
+	THISCALL_PROLOG0()
+#ifdef __GCC32__
+	asm("mov eax, %0": : "i"(&IpcExcHandler));
+#else
+	__asm lea eax, IpcExcHandler
+#endif
+	asm("cmp eax, [ecx+%0]": : "i"_FOFF(TExcTrap,iHandler));
+	asm("mov eax, 0");
+	asm("sete al");
+	THISCALL_EPILOG0();
+	}
+
+
+__NAKED__ TInt TIpcExcTrap::Trap(DThread*)
+	{
+	THISCALL_PROLOG1();
+	// ecx=this, [esp]=return address, [esp+4]=aThread
+#ifdef __GCC32__
+	asm("mov eax, %0": : "i"(&IpcExcHandler));
+#else
+	__asm lea eax, IpcExcHandler
+#endif
+	asm("mov [ecx+%0], eax": : "i"_FOFF(TExcTrap,iHandler));
+	asm("mov eax, [esp]");
+	asm("mov [ecx+0], eax");
+	asm("mov eax, esp");
+#ifndef __GCC32__					// MSVC __thiscall is callee-cleanup, whereas GCC isnt, and we
+	 asm("add eax, 4");				// correct the saved ESP *before* the ret from TExcTrap::Exception
+#endif
+	asm("mov [ecx+12], eax");
+	asm("call %a0": :"i"(&TExcTrap_Trap));
+
+#ifdef _DEBUG
+	asm("mov edx, [eax+%0]": : "i"_FOFF(DThread,iIpcClient));	
+	asm("cmp edx, 0");
+	asm("je ipcclientnull ");
+	asm("jmp %a0": :"i"(&__FaultIpcClientNotNull));
+	asm("ipcclientnull: ");
+#endif
+
+	asm("mov edx, [esp+4]");
+	asm("mov [eax+%0], edx": : "i"_FOFF(DThread,iIpcClient));	
+	asm("xor eax, eax");
+	THISCALL_EPILOG1();
+	}
+
+EXPORT_C __NAKED__ TInt TExcTrap::Trap()
+	{
+	THISCALL_PROLOG0()
+	// ecx=this, [esp]=return address
+#ifdef __GCC32__
+	asm("mov eax, %0" : : "i" (&DefaultExcTrapHandler));
+	asm("mov [ecx+%0], eax" : : "i" _FOFF(TExcTrap,iHandler));
+#else
+	__asm lea eax, DefaultExcTrapHandler
+	__asm mov [ecx]this.iHandler, eax
+#endif
+	asm("mov eax, [esp]");			// eax = retaddr
+	asm("mov [ecx+0], eax");		// iState[0] = retaddr
+	asm("mov eax, esp");
+	asm("mov [ecx+12], eax");
+	asm("call %a0": :"i"(&TExcTrap_Trap));
+	asm("xor eax, eax");
+	THISCALL_EPILOG0();
+	}
+
+EXPORT_C __NAKED__ TInt TExcTrap::Trap(TExcTrapHandler /*aHandler*/)
+	{
+	THISCALL_PROLOG1()
+	// ecx=this, [esp]=return address, [esp+4]=aHandler
+#ifdef __GCC32__
+	asm("mov eax, [esp+4] ");
+	asm("mov [ecx+%0], eax" : : "i" _FOFF(TExcTrap,iHandler));
+#else
+	asm("mov eax, [esp+4] ");
+	__asm mov [ecx]this.iHandler, eax
+#endif
+	asm("mov eax, [esp] ");
+	asm("mov [ecx+0], eax ");
+	asm("mov eax, esp ");
+#ifndef __GCC32__					// MSVC __thiscall is callee-cleanup, whereas GCC isnt, and we
+	asm("add eax, 4");				// correct the saved ESP *before* the ret from TExcTrap::Exception
+#endif
+	asm("mov [ecx+12], eax");
+	asm("call %a0": :"i"(&TExcTrap_Trap));
+	asm("xor eax, eax");
+	THISCALL_EPILOG1();
+	}
+
+EXPORT_C __NAKED__ void TExcTrap::Exception(TInt /*aResult*/)
+	{
+	THISCALL_PROLOG1()
+	// On entry ecx=this, [esp]=return address (unused), [esp+4]=aResult
+	// Need ret 4 since saved esp leaves parameter to TExcTrap::Trap on the stack
+#ifdef __GCC32__
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(TExcTrap,iThread));
+#else
+	__asm mov edx, [ecx]this.iThread
+#endif
+	asm("xor eax, eax ");
+	asm("mov [edx+%0], eax" : : "i" _FOFF(DThread,iExcTrap));
+	asm("mov [edx+%0], eax" : : "i" _FOFF(DThread,iPagingExcTrap));
+	asm("mov eax, [esp+4] ");
+	asm("mov edx, [ecx+0] ");
+	asm("mov ebx, [ecx+4] ");
+	asm("mov ebp, [ecx+8] ");
+	asm("mov esp, [ecx+12] ");
+	asm("mov esi, [ecx+16] ");
+	asm("mov edi, [ecx+20] ");
+	asm("mov ds, [ecx+24] ");
+	asm("mov es, [ecx+28] ");
+	asm("mov fs, [ecx+32] ");
+	asm("mov gs, [ecx+36] ");
+	asm("mov [esp],edx ");
+	asm("ret "); // behave as if returning from TExcTrap::Trap [with ESP already cleaned up for MSVC]
+	}
+
+
+
+extern "C" {
+
+__NAKED__ void TPagingExcTrap_Trap()
+	{
+	// ecx = 'this' TPagingExcTrap*
+#ifdef __SMP__
+	asm("cli ");	// so we don't migrate between reading APIC ID and thread pointer
+	asm("mov eax, ds:[%0]" : :"i" (X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID));
+	asm("shr eax, 24 ");
+	asm("mov eax, [eax*4+%0]" : :"i" (&SubSchedulerLookupTable));
+	asm("mov eax, [eax+%0]" : :"i" _FOFF(TSubScheduler,iCurrentThread));
+	asm("sti ");
+#else
+	asm("mov eax, [%a0]" : : "i" (&TheScheduler.iCurrentThread));
+#endif
+	asm("mov edx, 0 ");
+	asm("lea edx, [edx+%0]" : : "i" _FOFF(DThread,iNThread)); 
+	asm("sub eax, edx "); 
+	asm("mov [ecx+%0], eax" : : "i" _FOFF(TPagingExcTrap,iThread));
+	asm("mov [eax+%0], ecx" : : "i" _FOFF(DThread,iPagingExcTrap));
+	asm("mov [ecx+4], ebx ");
+	asm("mov [ecx+8], ebp ");
+	asm("mov [ecx+16], esi ");
+	asm("mov [ecx+20], edi ");
+	asm("mov [ecx+24], ds ");
+	asm("mov [ecx+28], es ");
+	asm("mov [ecx+32], fs ");
+	asm("mov [ecx+36], gs ");
+	asm("xor eax, eax ");
+	asm("ret ");
+	}
+}
+
+__NAKED__ TInt TPagingExcTrap::Trap()
+	{
+	THISCALL_PROLOG0();
+	// ecx=this, [esp]=return address
+	asm("mov eax, [esp] ");			// eax = retaddr
+	asm("mov [ecx+0], eax ");		// iState[0] = retaddr
+	asm("mov eax, esp ");
+	asm("mov [ecx+12], eax ");
+	asm("call %a0" : :"i" (&TPagingExcTrap_Trap));
+	THISCALL_EPILOG0();
+	}
+
+__NAKED__ void TPagingExcTrap::Exception(TInt /*aResult*/)
+	{
+	THISCALL_PROLOG1();
+	// On entry ecx=this, [esp]=return address (unused), [esp+4]=aResult
+	// Need ret 4 since saved esp leaves parameter to TPagingExcTrap::Trap on the stack
+#ifdef __GCC32__
+	asm("mov edx, [ecx+%0]" : : "i" _FOFF(TPagingExcTrap,iThread));
+#else
+	__asm mov edx, [ecx]this.iThread
+#endif
+	asm("xor eax, eax ");
+	asm("mov [edx+%0], eax" : : "i" _FOFF(DThread,iPagingExcTrap));
+	asm("mov eax, [esp+4] ");
+	asm("mov edx, [ecx+0] ");
+	asm("mov ebx, [ecx+4] ");
+	asm("mov ebp, [ecx+8] ");
+	asm("mov esp, [ecx+12] ");
+	asm("mov esi, [ecx+16] ");
+	asm("mov edi, [ecx+20] ");
+	asm("mov ds, [ecx+24] ");
+	asm("mov es, [ecx+28] ");
+	asm("mov fs, [ecx+32] ");
+	asm("mov gs, [ecx+36] ");
+	asm("mov [esp],edx ");
+	asm("ret "); // behave as if returning from TPagingExcTrap::Trap [with ESP already cleaned up for MSVC]
+	}
+

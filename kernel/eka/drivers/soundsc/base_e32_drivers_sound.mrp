@@ -1,0 +1,15 @@
+# component name "Audio Driver"
+
+component	base_e32_drivers_sound
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\soundsc
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\soundsc all
+exports	\sf\os\kernelhwsrv\kernel\eka\drivers\soundsc
+
+notes_source	\component_defs\release.src
+
+
+
+ipr E
+
