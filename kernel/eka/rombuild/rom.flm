@@ -26,5 +26,14 @@ FINAL::
 endef
 
 # expand
-# Will generate udeb and urel version! How????
 $(eval $(rom))
+
+# The items produced by this FLM:
+RELEASEABLES:=$(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img
+
+## What targets -- declare the files produced here
+$(eval $(call whatmacro, $(RELEASEABLES)))
+## Clean up
+$(eval $(call GenerateStandardCleanTarget, $(RELEASEABLES)))
+
+
