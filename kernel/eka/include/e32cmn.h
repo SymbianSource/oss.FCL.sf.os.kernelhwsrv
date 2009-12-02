@@ -1566,7 +1566,7 @@ public:
 	/**
     @internalComponent
     */
-	typedef TUint16 __TText;
+	typedef wchar_t __TText;
 
 #elif defined(__CW32__)
 
