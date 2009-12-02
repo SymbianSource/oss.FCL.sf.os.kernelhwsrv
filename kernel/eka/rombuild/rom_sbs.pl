@@ -50,7 +50,6 @@ my $result = GetOptions (\%opts, "assp=s",
 						 "define=s@",
 						 "rofsbuilder=s",
 						 "compress",
-						 "epocroot=s"
 						 );
 
 my (@assps, @builds, %variants, @templates, %flags, %insts, %zip, %builder);
@@ -81,22 +80,31 @@ my $drive;
 my $BasePath;
 
 BEGIN {
+
+	$EpocRoot = $ENV{EPOCROOT};
+	die "ERROR: Must set the EPOCROOT environment variable.\n" if (!defined($EpocRoot));
+	print "Environmental epocroot - >$EpocRoot<\n";
+	$EpocRoot =~ s-/-\\-go;	# for those working with UNIX shells
+	if ($EpocRoot =~ /^([a-z]:)(.*)$/i)
+	{
+		# Raptor style: Drive letter and trailing \\ removed
+		$drive = $1;
+		$EpocRoot = "$2\\";
+		$ENV{EPOCROOT} = $EpocRoot;
+	}
+	die "ERROR: EPOCROOT must be an absolute path, " .
+		"not containing a drive letter.\n" if ($EpocRoot !~ /^\\/);
+	die "ERROR: EPOCROOT must not be a UNC path.\n" if ($EpocRoot =~ /^\\\\/);
+	die "ERROR: EPOCROOT must end with a backslash.\n" if ($EpocRoot !~ /\\$/);
+	die "ERROR: EPOCROOT must specify an existing directory.\n" if (!-d $EpocRoot);
+
+	# The cpp needed a drive apparently
 	my $cwd = Cwd::cwd();
-	$EpocRoot = $ENV{'EPOCROOT'};
-	print "epocroot - >$EpocRoot<\n";
-	if ($EpocRoot =~ /^[a-z]:/i)
-	{
-	# Raptor style: Drive letter and trailing \\ removed
-	$drive = substr($EpocRoot, 0, 2);
-	$EpocRoot = substr($EpocRoot, 2) . "\\";
-	}
-	else
-	{
-	# old style - no drive letter, so deduce it from $cwd
-	$drive = substr($cwd, 0, 2);
-	}
-	print "drive, epocroot = >$drive<, >$EpocRoot<\n";
-	
+	$cwd =~ /^(.)/;
+	$drive = "$1:" unless $drive;
+	print "epocroot = >$EpocRoot<\n";
+	print "drive = >$drive<\n";
+
 	my $fp0 = $0;
 	$cwd =~ s/\//\\/g;
 	$fp0 =~ s/\//\\/g;
@@ -129,7 +137,6 @@ use E32Plat;
 }
 
 if ($debug) {
-	print "\n";
 	print "EpocRoot = $EpocRoot\n";
 	print "Epoc32Path = $Epoc32Path\n";
 	print "drive = $drive\n";
@@ -138,7 +145,6 @@ if ($debug) {
 	print "e32path = $e32path\n";
 	print "rombuildpath = $rombuildpath\n";
 	print "BasePath = $BasePath\n";
-	print "\n";
 }
 
 my $cppflags="-P -undef -traditional -lang-c++ -nostdinc -iwithprefixbefore $rombuildpath -I $rombuildpath -I $Epoc32Path ";
@@ -149,7 +155,6 @@ my $cppflags="-P -undef -traditional -lang-c++ -nostdinc -iwithprefixbefore $rom
 use E32Variant;
 use Pathutl;
 my $variantMacroHRHFile = Variant_GetMacroHRHFile();
-
 if($variantMacroHRHFile){
 	# Using absolute paths so must include drive letter otherwise cpp will fail
 	# Also adding the directory containing the HRH file to main includes paths in
@@ -176,7 +181,6 @@ OPTIONS:
 \tINSTRUCTION SET: $opts{'inst'}
 \tBUILD: $opts{'build'}
 \tMODULES: $opts{'modules'}
-\tepocroot: $opts{'epocroot'}
 EOF
 }
 
@@ -262,7 +266,6 @@ $defines .= "-D BASEPATH=$BasePath ";
 $defines .= "-D EPOCROOT=$EpocRoot ";
 $defines .= "-D SMAIN=$smain " if $smain;
 
-
 foreach (@{$opts{'define'}}) {
 	my @array=split(/,/,$_);
 	foreach (@array) {
@@ -285,7 +288,6 @@ foreach (keys %opts) {
 	next if ($_ eq 'symbol');
 	next if ($_ eq 'kerneltrace');
 	next if ($_ eq 'define');
-	next if ($_ eq 'epocroot');
 	$defines.="-D ".uc $_."=".$opts{$_}." ";
 	$defines.="-D ".uc $_."_".$opts{$_}." ";
 }
@@ -308,20 +310,17 @@ my $ret=1;
 my $cppcmd;
 if($opts{'build'}=~/^u/i) {
 	# Unicode build
-	#$cppcmd = "c:/apps/Raptor/win32/mingw/bin/cpp $cppflags -D UNICODE $defines rom1.tmp rom2.tmp";
-	#$cppcmd = "F:/S60/devices/S60_5th_Edition_SDK_v1.0_2/epoc32/gcc/bin/cpp $cppflags -D UNICODE $defines rom1.tmp rom2.tmp";
 	$cppcmd = "$Epoc32Path/gcc/bin/cpp $cppflags -D UNICODE $defines rom1.tmp rom2.tmp";
-	} else {
+} else {
 	$cppcmd = "cpp $cppflags $defines rom1.tmp rom2.tmp";
 }
-print "\nExecuting CPP:\n\t$cppcmd\n" if $debug;
+print "Executing CPP:\n\t$cppcmd\n" if $debug;
 $ret = system($cppcmd);
 die "ERROR EXECUTING CPP\n" if $ret;
 
 # Zap any ## marks REMS or blank lines
 
 cleanup("rom2.tmp", "rom3.tmp", $k);
-
 
 # scan tmp file and generate auxiliary files, if required
 open TMP, "rom3.tmp" or die("Can't open rom3.tmp\n");
@@ -544,7 +543,6 @@ The following options are required:
   --variant=<variant>         e.g. --variant=assabet
   --inst=<instruction set>    e.g. --inst=arm4
   --build=<build>             e.g. --build=udeb
-  --epocroot=<epocroot>       e.g. --epocroot="\\"
   --type=<type of rom>  
          tshell for a text shell rom
          e32tests for a rom with e32tests
@@ -620,7 +618,6 @@ sub checkopts {
 	$opts{'build'}="UDEB" unless($opts{'build'});
 	$opts{'type'}="TSHELL" unless($opts{'type'});
 	$opts{'inst'}="ARM4" unless($opts{'inst'});
-	$opts{'epocroot'}="\\" unless($opts{'epocroot'});
 
 	my $additional;
 	if ($opts{'modules'}) {
@@ -628,8 +625,6 @@ sub checkopts {
 		$additional=~ s/,/_/ig;
 	}
 	my $build=lc $opts{build};
-	$EpocRoot=lc $opts{epocroot};
-	#print "EpocRoot = $EpocRoot\n";
 	my $inst=uc $opts{'inst'};
 	if ($inst eq "MARM") {
 		# Hackery to cope with old compiler
