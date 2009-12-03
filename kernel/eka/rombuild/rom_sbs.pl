@@ -147,7 +147,7 @@ if ($debug) {
 	print "BasePath = $BasePath\n";
 }
 
-my $cppflags="-P -undef -traditional -lang-c++ -nostdinc -iwithprefixbefore $rombuildpath -I $rombuildpath -I $Epoc32Path ";
+my $cppflags="-P -undef -traditional -lang-c++ -nostdinc -iwithprefixbefore $rombuildpath -I $rombuildpath -I $drive$Epoc32Path ";
 
 # Include variant hrh file defines when processing oby and ibys with cpp
 # (Code copied from \\EPOC\master\cedar\generic\tools\romkit\tools\buildrom.pm -
