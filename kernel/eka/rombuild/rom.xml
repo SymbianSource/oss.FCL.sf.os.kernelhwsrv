@@ -22,6 +22,5 @@
 	<interface name="base.rom" extends="Symbian.KernelFLM" flm="rom.flm">
 		<param name="REE_TARGET"/>
 		<param name="TYPE"/>
-		<param name="EPOCROOT" default='/'/>
 	</interface>
 </build>
