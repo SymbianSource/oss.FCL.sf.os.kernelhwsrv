@@ -20,9 +20,8 @@
 
 <build xmlns="http://symbian.com/xml/build" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://symbian.com/xml/build ../../schema/build/2_0.xsd">
 	<interface name="base.rom" extends="Symbian.KernelFLM" flm="rom.flm">
-    <param name="REE_TARGET"/>
-	<param name="TYPE"/>
-	<param name="REE_PATH"/>
-    <param name="EPOCROOT" default='/'/>
+		<param name="REE_TARGET"/>
+		<param name="TYPE"/>
+		<param name="EPOCROOT" default='/'/>
 	</interface>
 </build>
