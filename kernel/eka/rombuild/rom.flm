@@ -18,9 +18,9 @@ endif
 
 FINAL::	
 	$(call startrule,copy) \
-	mv $(EPOCROOT)/$(REE_PATH)/rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_rom.oby; \
-	mv $(EPOCROOT)/$(REE_PATH)/ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_ROMBUILD.LOG; \
-	mv $(EPOCROOT)/$(REE_PATH)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img $(EPOCROOT)/epoc32/rom/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img; \
+	mv rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_rom.oby; \
+	mv ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_ROMBUILD.LOG; \
+	mv $(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img $(EPOCROOT)/epoc32/rom/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img; \
 	$(call endrule,copy)
 
 endef
@@ -35,5 +35,6 @@ RELEASEABLES:=$(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATF
 $(eval $(call whatmacro, $(RELEASEABLES)))
 ## Clean up
 $(eval $(call GenerateStandardCleanTarget, $(RELEASEABLES)))
+
 
 
