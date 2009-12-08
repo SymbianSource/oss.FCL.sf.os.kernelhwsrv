@@ -783,7 +783,7 @@ EXPORT_C const IMAGE_IMPORT_DESCRIPTOR* Emulator::TModule::Imports() const
 EXPORT_C TInt Emulator::RImageFile::Open(LPCTSTR aImageFile)
 	{
 	Buf8<MAX_PATH>   nameBuf(aImageFile);
-	char *pName = strrchr(LPCSTR(nameBuf), '\\');
+	char *pName = (char *)strrchr(LPCSTR(nameBuf), '\\');
 	pName ? ++pName : pName = (char *)LPCSTR(nameBuf);
 
 	__LOCK_HOST;

@@ -14,10 +14,13 @@ project (eka)
 cmake_minimum_required(VERSION 2.6)
 
 #add_definitions(-DUNICODE)
-add_definitions(-D__CPU_X86)
 add_definitions(-D__VC32__)
 add_definitions(-D_UNICODE)
 add_definitions(-D__LEAVE_EQUALS_THROW__)
+add_definitions(-D__WINS__)
+#__CPU_X86 is declared by __WINS__ 
+#add_definitions(-D__CPU_X86)
+add_definitions(-D__DLL__)
 
 include_directories (./euser ./euser/unicode ./include)
 
@@ -50,6 +53,12 @@ ${sourcepath}array.cpp ${sourcepath}des8.cpp ${sourcepath}des16.cpp ${sourcepath
 ${sourcepath}mem.cpp ${sourcepath}secure.cpp
 )
 
+#Adding the sources from common/win32
+set (sourcepath ./common/win32/)
+set (source ${source}
+${sourcepath}atomics.cpp
+)
+
 #Adding the sources from maths
 set (sourcepath ./euser/maths/)
 set (source ${source}
@@ -80,8 +89,26 @@ ${sourcepath}collate.cpp ${sourcepath}unicode.cpp ${sourcepath}unitable.cpp ${so
 )
 
 #define our library
-add_library (euser SHARED ${source}	)
+add_library (emulator SHARED ./euser/epoc/win32/emulator.cpp)
+target_link_libraries(emulator kernel32)
+
+add_library (euser SHARED ${source})
+target_link_libraries(euser emulator)
+
+add_library (estub ./euser/epoc/win32/uc_stub.cpp)
+
+add_executable(epoc ./euser/epoc/win32/uc_epoc.cpp)
+target_link_libraries(epoc estub euser)
+
+
+
+
+
+
 
 #define vs IDE folders
 source_group(Sources REGULAR_EXPRESSION ".+\\.cpp$")
 source_group(Includes REGULAR_EXPRESSION ".+\\.h$") 	
+
+#TODO: generate the exec enum
+#perl genexec.pl -i execs.txt -e ../include/exec_enum.h -u ../include/exec_user.h -k ../include/exec_kernel.h
