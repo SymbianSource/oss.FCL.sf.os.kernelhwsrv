@@ -595,9 +595,13 @@ void CRequestThread::Receive()
 			iRequest->Process();
 
 		if(iExit)
-			break;
+		    {
+		    //Any requests that sneaked on to
+		    //the queue are cancelled in 
+		    //CRequestThread::ThreadFunction()
+		    break;
+		    }
 		}
-
 	}
 
 void CRequestThread::Deliver(CFsRequest* aRequest,TBool aIsFront, TBool aLowPriority)
@@ -647,8 +651,6 @@ void CRequestThread::Deliver(CFsRequest* aRequest,TBool aIsFront, TBool aLowPrio
 			iList.AddLast(*aRequest);
 		iListLock.Signal();
 		}
-
-
 	}
 
 void CRequestThread::DeliverFront(CFsRequest* aRequest)
@@ -922,7 +924,13 @@ CPluginThread::CPluginThread(CFsPlugin& aPlugin)
 	{
 	/** @prototype */
 	iOperationLock.Close();
+	iPlugin.Open();
 	}
+
+CPluginThread::~CPluginThread()
+    {
+    iPlugin.Close();
+    }
 
 
 CPluginThread* CPluginThread::NewL(CFsPlugin& aPlugin)
@@ -954,7 +962,7 @@ TUint CPluginThread::StartL()
 
 void CPluginThread::CompleteSessionRequests(CSessionFs* aSession, TInt aValue)
 	{
-	__THRD_PRINT(_L("CPluginThread::CompleteSessionReqeusts()"));
+	__THRD_PRINT(_L("CPluginThread::CompleteSessionRequests()"));
 	iListLock.Wait();
 	TDblQueIter<CFsRequest> q(iList);
 	CFsRequest* pR;

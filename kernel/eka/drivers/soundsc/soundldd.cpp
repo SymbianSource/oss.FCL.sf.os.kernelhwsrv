@@ -1660,12 +1660,13 @@ void DSoundScLdd::RecordCallback(TUint aTransferID,TInt aTransferResult,TInt aBy
 		aTransferResult=KErrTimedOut;
 		}
 #endif
-	__KTRACE_OPT(KSOUND1, Kern::Printf(">DSoundScLdd::RecordCallback(ID:%xH,Len:%d) - %d",aTransferID,aBytesRecorded,aTransferResult));
+	__KTRACE_OPT(KSOUND1, Kern::Printf(">DSoundScLdd::RecordCallback(ID:%xH,Len:%d) - %d (iCurrentRecBufTf.iTfState %d)",aTransferID,aBytesRecorded,aTransferResult, iCurrentRecBufTf.iTfState));
 	
 	// If the transfer fragment is not for the current record buffer and were not paused then ignore it. Either the PDD
 	// has got very confused or more likely its a trailing fragment from an earlier buffer we have already failed. If 
 	// we're paused, the PDD doesn't need to bother with a transfer ID, we assume its for the current buffer.
-	if (aTransferID==iCurrentRecBufTf.iId || iState==EPaused)
+	if (iCurrentRecBufTf.iTfState != TSndScTransfer::ETfDone &&
+		(aTransferID==iCurrentRecBufTf.iId || (aTransferID == 0 && iState==EPaused)))
 		{
 		// Update the count of bytes recorded.
 		iBytesTransferred+=aBytesRecorded;
@@ -1813,7 +1814,7 @@ TInt DSoundScLdd::StartNextRecordTransfers()
 		TInt len=iCurrentRecBufTf.iAudioBuffer->GetFragmentLength(pos,iCurrentRecBufTf.GetNotStartedLen(),physAddr);
 		
 		r=Pdd()->TransferData(iCurrentRecBufTf.iId,(iBufManager->iChunkBase+pos),physAddr,len);
-		__KTRACE_OPT(KSOUND1, Kern::Printf("<PDD:TransferData(off:%x len:%d) - %d",pos,len,r));
+		__KTRACE_OPT(KSOUND1, Kern::Printf("<PDD:TransferData(off:%x len:%d) A - %d",pos,len,r));
 		if (r==KErrNone)
 			iCurrentRecBufTf.SetStarted(len);	// Successfully queued a transfer - update the status.
 		}
@@ -1828,7 +1829,7 @@ TInt DSoundScLdd::StartNextRecordTransfers()
 		TInt len=iNextRecBufTf.iAudioBuffer->GetFragmentLength(pos,iNextRecBufTf.GetNotStartedLen(),physAddr);
 		
 		r=Pdd()->TransferData(iNextRecBufTf.iId,(iBufManager->iChunkBase+pos),physAddr,len);
-		__KTRACE_OPT(KSOUND1, Kern::Printf("<PDD:TransferData(off:%x len:%d) - %d",pos,len,r));
+		__KTRACE_OPT(KSOUND1, Kern::Printf("<PDD:TransferData(off:%x len:%d) B - %d",pos,len,r));
 		if (r==KErrNone)
 			iNextRecBufTf.SetStarted(len);	// Successfully queued a transfer - update the status.
 		}

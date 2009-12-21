@@ -16,6 +16,8 @@
 //
 
 #include <e32def.h>
+#undef IMPORT_C
+#define IMPORT_C
 #undef EXPORT_C
 #define EXPORT_C
 
@@ -26,6 +28,8 @@
 #undef EXPORT_C
 #define EXPORT_C __declspec(dllexport)
 
+
+#ifdef __MARM__
 // ripped from e32\euser\epoc\arm\uc_exec.cia
 
 __NAKED__ TInt Exec::SessionSend(TInt /*aHandle*/, TInt /*aFunction*/, TAny* /*aPtr*/, TRequestStatus* /*aStatus*/)
@@ -73,3 +77,45 @@ EXPORT_C void SetSessionPtr(TInt aHandle, const TAny* aPtr)
 	{
 	Exec::SetSessionPtr(aHandle, aPtr);
 	}
+#endif //__MARM__
+
+#ifdef __X86__
+// ripped from e32\euser\epoc\x86\uc_exec.cpp
+
+__NAKED__ TInt Exec::SessionSend(TInt /*aHandle*/, TInt /*aFunction*/, TAny* /*aPtr*/, TRequestStatus* /*aStatus*/)
+//
+// Send a blind message to the server.
+//
+	{
+	SLOW_EXEC4(EExecSessionSend);
+	}
+
+__NAKED__ TInt Exec::SessionSendSync(TInt /*aHandle*/, TInt /*aFunction*/, TAny* /*aPtr*/, TRequestStatus* /*aStatus*/)
+//
+// Send a blind message to the server using thread's dedicated message slot.
+//
+	{
+	SLOW_EXEC4(EExecSessionSendSync);
+	}
+
+EXPORT_C TInt SessionCreate(const TDesC8& aName, TInt aMsgSlots, const TSecurityPolicy* aPolicy, TInt aType)
+	{
+	RDebug::Printf("Exec: %08x %08x %08x %08x", &aName, aMsgSlots, aPolicy, aType);
+	return Exec::SessionCreate(aName, aMsgSlots, aPolicy, aType);
+	}
+
+EXPORT_C TInt SessionSend(TInt aHandle, TInt aFunction, TAny* aArgs, TRequestStatus* aStatus)
+	{
+	return Exec::SessionSend(aHandle, aFunction, aArgs, aStatus);
+	}
+
+EXPORT_C TInt SessionSendSync(TInt aHandle, TInt aFunction, TAny* aArgs, TRequestStatus* aStatus)
+	{
+	return Exec::SessionSendSync(aHandle, aFunction, aArgs, aStatus);
+	}
+
+EXPORT_C void SetSessionPtr(TInt aHandle, const TAny* aPtr)
+	{
+	Exec::SetSessionPtr(aHandle, aPtr);
+	}
+#endif //__X86__

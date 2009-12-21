@@ -110,6 +110,12 @@ hal/hal
 PRJ_EXTENSIONS
 start		extension		base/bootstrap
 
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+option INC_PATH   /epoc32/include
+#else
+option INC_PATH  /epoc32/include/platform
+#endif
+
 option		NAME			_template_bootrom
 option		CPU			arm
 option		MEMMODEL		multiple

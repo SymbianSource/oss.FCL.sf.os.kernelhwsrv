@@ -1455,10 +1455,40 @@ LOCAL_C TInt getStackPointer()
 	TUint8 here;
 	return &here-&there;
 	}
-LOCAL_C void sheLeavesMe(TBool sheLeavesMeNot)
+LOCAL_C void sheLeavesMeL(TBool sheLeavesMeNot)
 	{
 	if (!sheLeavesMeNot)
 		User::Leave(KErrBadName);	// Montague
+	}
+
+// Variables for stack balance test need to be global or clever compiler optimisations
+// Can interfere with stack balance calculations.
+TInt StackBalanceLoopCounter;
+TInt StackBalanceResult=KErrNone;
+TInt StackBalanceBefore;
+TInt StackBalanceAfter;
+
+// Split into two functions because x86gcc makes a local stack optimisation for the second
+// loop which unbalances the stack frame of the first loop.
+LOCAL_C TInt StackBalanceNotLeaving()
+	{
+	StackBalanceBefore=getStackPointer();
+	for (StackBalanceLoopCounter=0; StackBalanceLoopCounter<20;StackBalanceLoopCounter++)
+		{
+		TRAP(StackBalanceResult,sheLeavesMeL(ETrue));
+		}
+	StackBalanceAfter=getStackPointer();
+	return StackBalanceAfter-StackBalanceBefore;
+	}
+LOCAL_C TInt StackBalanceLeaving()
+	{
+	StackBalanceBefore=getStackPointer();
+	for (StackBalanceLoopCounter=0; StackBalanceLoopCounter<20;StackBalanceLoopCounter++)
+		{
+		TRAP(StackBalanceResult,sheLeavesMeL(EFalse));
+		}
+	StackBalanceAfter=getStackPointer();
+	return StackBalanceAfter-StackBalanceBefore;
 	}
 
 LOCAL_C void testStackBalance()
@@ -1466,25 +1496,17 @@ LOCAL_C void testStackBalance()
 // Ensure that we get the stack properly balanced
 //
 	{
+	// Not leaving case
+	test.Start(_L("Stack balance without Leaving"));
+	TInt balance = StackBalanceNotLeaving();
+	test.Printf(_L("Stack balance: %d bytes\n"), balance);
+	test(balance == 0);
 
-	TInt i;
-	TInt r=KErrNone;
-	test.Start(_L("Stack balance without leaving"));
-	TInt before=getStackPointer();
-	for (i=0; i<20;i++)
-		TRAP(r,sheLeavesMe(ETrue));
-	TInt after=getStackPointer();
-	test(r==KErrNone);
-	test(before==after);
-//
+	// Leaving case
 	test.Next(_L("Stack balance after Leave"));
-	before=getStackPointer();
-	for (i=0; i<20;i++)
-		TRAP(r,sheLeavesMe(EFalse));
-	after=getStackPointer();
-	test(r==KErrBadName);
-	test(before==after);
-//
+	balance = StackBalanceLeaving();
+	test.Printf(_L("Stack balance: %d bytes\n"), balance);
+	test(balance == 0);
 	test.End();
 	}
 

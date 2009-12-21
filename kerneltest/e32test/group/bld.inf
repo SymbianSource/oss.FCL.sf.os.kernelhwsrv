@@ -354,14 +354,13 @@ t_loop      support
 t_term      support
 
 t_serial    manual
-#ifndef X86
-// sound drivers have rotted on X86
+
 t_sound2
 t_sound_api
 t_sound_api_helper support
 t_soundmchan
 t_soundwav  support
-#endif
+
 t_dtenot    manual
 //  T_DCE       manual      Commented out until DCE implemented
 //  T_DCEUTL    manual

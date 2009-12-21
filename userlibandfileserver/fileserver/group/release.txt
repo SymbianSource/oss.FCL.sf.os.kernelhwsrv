@@ -1,3 +1,36 @@
+
+Version 2.00.2015
+=================
+(Made by Vino Jose 22/10/2009)
+
+1.	MichaelCox
+	1.	DEFECT FIX: DEF142065: F32 Plugins can be removed whilst still being in use 
+
+2.	DmitryL
+	1.	MINOR_UPDATE: Separating source code for 'sfat' and 'sfat32' components
+
+
+Version 2.00.2014
+=================
+(Made by  Vino Jose 21/10/2009)
+
+1.	SophieY
+	1.	DEFECT FIX: DEF142394: File server uses excessively sized heap
+
+Version 2.00.2013
+=================
+(Made by  Vino Jose 13/10/2009)
+
+
+1.	NicholasC
+	1.	MINOR CHANGE: Remove TCB from t_fsysbm
+	2.	DEFECT FIX: DEF141910: Usbmsapp does not correctly support OTG environments
+	3.	DEFECT FIX: DEF142293: [OTG] Host Ms Thread1 crashes when connecting large capacity USB stick to phone
+	4.	DEFECT FIX: DEF142428: Buffer allocation can be improved in CUsbHostMsLogicalUnit 
+
+2.	DmitryL
+	1.	DEFECT FIX:  DEF142328: make use efat32.fsy by default  
+
 Version 2.00.2012
 =================
 (Made by  Vino Jose 07/10/2009)
@@ -6,6 +39,7 @@ Version 2.00.2012
 	1.	DEFECT FIX: DEF142383: USB connection does not work after an OTG device is connected
 2.	MiguelB
 	1.	DEFECT FIX: DEF142169: File Server crash observed on the NE1_TB.ARMV5.UREL.SMPDATAPAGE configuration 
+
 
 
 Version 2.00.2011

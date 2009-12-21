@@ -58,10 +58,7 @@ TInt __fastcall LazyDispatch(TInt aFunction, TInt* aArgs)
 	return 0;
 	}
 
-#endif //__WINS__
-
-#ifndef __MARM__
-// Do the exec stuff in a cpp file for WINS/X86
+// Do the exec stuff in a cpp file for WINS
 #define __GEN_USER_EXEC_CODE__
 #include <e32svr.h>
 #include <u32exec.h>
@@ -106,4 +103,4 @@ EXPORT_C void SetSessionPtr(TInt aHandle, const TAny* aPtr)
 	{
 	Exec::SetSessionPtr(aHandle, aPtr);
 	}
-#endif //!__MARM__
+#endif //__WINS__

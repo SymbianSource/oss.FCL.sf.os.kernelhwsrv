@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<relnotes name="INTEGRATIONTEST">
-  <purpose>
-    Contains test suites which are relevant to Base but not suitable for addition to the main Base component as they have dependencies outside the Base Porting Kit or a specialised purpose
-  </purpose>
-</relnotes>

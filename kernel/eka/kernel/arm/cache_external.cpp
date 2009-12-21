@@ -115,7 +115,7 @@
  *				__ARM_PL310_ERRATUM_588369_FIXED
  *			is not defined in variant.mmh
  * 			CleanAndInvalidateByPA is replaced by CleanByPA and InvalidateByPA.
- * 			CleanAndInvalidateBySetWay is replaced by CleanBySetWay and InvalidateBySetWay.
+ * 			CleanAndInvalidateByIndexWay is made sure never to happen.
  * 			CleanAndInvalidateByWay is made sure never to happen.
  * 			Coherancy problem mentioned in the workaround is not relevant. 
  * 
@@ -274,7 +274,7 @@ void ExternalCache::Invalidate(TLinAddr aBase, TUint aSize)
 	__KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::Purge base=%xH, size=%xH", aBase, aSize));
 
 #if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
-		//CleanAndInvalidate not available, so do not bother checking the threshld
+		//Cannot Clean&Invalidate all cache, so do not bother checking the threshold
 		Maintain_Region(aBase, aSize, (TInt*)(Base+ARML2C_InvalidateLineByPA));
 #else // defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)	
 	
@@ -294,9 +294,8 @@ void ExternalCache::CleanAndInvalidate(TLinAddr aBase, TUint aSize)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::CleanAndInvalidate base=%xH, size=%xH", aBase, aSize));
 #if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
-	//CleanAndInvalidate not available
-	Maintain_Region(aBase, aSize, (TInt*)(Base+ARML2C_CleanLineByPA));
-	Maintain_Region(aBase, aSize, (TInt*)(Base+ARML2C_InvalidateLineByPA));
+    //Cannot Clean&Invalidate all cache, so do not bother checking the threshold
+    Maintain_Region(aBase, aSize, (TInt*)(Base+ARML2C_CleanInvalidateLineByPA));
 #else //defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
 
 	if (aSize>=Info.CleanAndInvalidateThresholdBytes())
@@ -417,13 +416,14 @@ void ExternalCache::CleanAndInvalidatePhysicalMemory(TPhysAddr aAddr, TUint aSiz
     PL310_SPIN_LOCK;
 
 #if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
-
-	volatile TInt* cleanReg = (volatile TInt*)(Base+ARML2C_CleanLineByPA);
+    volatile TInt* cleanReg = (volatile TInt*)(Base+ARML2C_CleanLineByPA);
 	volatile TInt* invalidateReg = (volatile TInt*)(Base+ARML2C_InvalidateLineByPA);
 
 lineLoop:
+    TInt ret = NKern::DisableAllInterrupts();
 	*cleanReg = aAddr;
 	*invalidateReg = aAddr;
+    NKern::RestoreInterrupts(ret);
 
 #else // #idefined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
 
@@ -448,10 +448,6 @@ void ExternalCache::Maintain_Region(TLinAddr aBase, TUint aSize, TInt* aCtrlReg)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::Maintain_Region %08xH+%08xH, reg=%xH", aBase, aSize, aCtrlReg));
 
-#if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
-	//CleanAndInvalidate is broken
-	__ASSERT_DEBUG((TInt)aCtrlReg != Base+ARML2C_CleanInvalidateLineByPA, CACHEL2FAULT());
-#endif
 	if (aSize == 0)
 		return;
 	
@@ -486,9 +482,25 @@ findStartingPA:
     PL310_SPIN_LOCK;
 lineLoop:
 
+#if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
+    if((TInt)aCtrlReg == Base+ARML2C_CleanInvalidateLineByPA)
+        {
+        // CleanInvalidateLineByPA is broken
+        volatile TInt* cleanReg = (volatile TInt*)(Base+ARML2C_CleanLineByPA);
+        volatile TInt* invalidateReg = (volatile TInt*)(Base+ARML2C_InvalidateLineByPA);
+        TInt ret = NKern::DisableAllInterrupts();
+        *cleanReg = physAddress;
+        *invalidateReg = physAddress;
+        NKern::RestoreInterrupts(ret);
+        }
+    else
+        *ctrlReg = physAddress; //This will clean, purge or flush the line
+        
+#else
     L220_COMMAND_PREAMBLE;
-	*ctrlReg = physAddress;	//This will clean, purge or flush the line
+    *ctrlReg = physAddress;	//This will clean, purge or flush the line
     L220_COMMAND_POSTAMBLE;
+#endif
     PL310_SPIN_FLASH;
 	
 	if ((TInt)aSize>0 && ((TInt)aSize<=lineLength))
@@ -526,7 +538,7 @@ void ExternalCache::Maintain_All(TInt* aCtrlReg)
 	__KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::Maintain_All %xH", aCtrlReg));
 
 #if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
-	//CleanAndInvalidate is broken
+	//CleanAndInvalidateByIndexWay is broken
 	__ASSERT_DEBUG((TInt)aCtrlReg != Base+ARML2C_CleanInvalidateByIndexWay, CACHEL2FAULT());
 #endif
 	
@@ -540,8 +552,8 @@ void ExternalCache::Maintain_All(TInt* aCtrlReg)
 		for (index = 0 ; index <indexNo ; index++)
 			{
 		    L220_COMMAND_PREAMBLE;
-			*ctrlReg = (way<<29) | (index<<5); //this will clean,purge or flush cache line
-		    L220_COMMAND_POSTAMBLE;
+            *ctrlReg = (way<<29) | (index<<5); //this will clean,purge or flush cache line
+            L220_COMMAND_POSTAMBLE;
 			PL310_SPIN_FLASH;
 			}
 		}

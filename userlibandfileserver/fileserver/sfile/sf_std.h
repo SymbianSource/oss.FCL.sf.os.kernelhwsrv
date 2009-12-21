@@ -442,7 +442,8 @@ enum TFsFault
 	EFileBodyIsNull,
 	ETraceLddLoadFailure,				//200
 	ETooManyDrivesPerSocket,
-	ENotificationFault
+	ENotificationFault,
+	EFsObjectOpen
 	};
 
 
@@ -800,6 +801,8 @@ NONSHARABLE_CLASS(CPluginThread) : public CRequestThread
 	{
 public:
 	CPluginThread(CFsPlugin& aPlugin);
+	~CPluginThread();
+	
 	void CompleteSessionRequests(CSessionFs* aSession, TInt aValue);
 
 	/** @prototype */

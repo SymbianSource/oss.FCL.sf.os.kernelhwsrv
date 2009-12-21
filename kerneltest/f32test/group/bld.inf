@@ -249,8 +249,6 @@ t_rawext support
 
 t_swapfsys manual
 #include "../filesystem/fat/group/fatfs.inf"
-#include "../filesystem/automounter/bld.inf"
-
 
 #include "perf_test.inf"
 #include "../loader/ldrplatsec.inf"

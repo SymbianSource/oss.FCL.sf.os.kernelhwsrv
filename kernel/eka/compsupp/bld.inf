@@ -22,10 +22,10 @@ ARMV4 ARMV5 ARMV5SMP ARMV7
 
 PRJ_EXPORTS
 
-rvct.h                      rvct/
-gcce/gcce.h                 gcce/
+rvct.h                      SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(rvct/)
+gcce/gcce.h                 SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(gcce/)
 
-symcpp/symcpp.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(symcpp.h)
+symcpp/symcpp.h SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(symcpp.h)
 
 compsupp.iby                /epoc32/rom/include/
 

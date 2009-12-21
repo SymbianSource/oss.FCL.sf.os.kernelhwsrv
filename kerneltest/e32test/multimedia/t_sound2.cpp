@@ -425,6 +425,14 @@ LOCAL_C void TestBasicRecordFunctions()
 	retOffset=stat.Int();
 	CHECK(retOffset==KErrOverflow);
 
+	// Make sure we can issue a successful RecordData after recovering from overflow.
+	RxSoundDevice.RecordData(stat,length);
+	User::WaitForRequest(stat);
+	retOffset=stat.Int();
+	CHECK_POSITIVE(retOffset);
+    r=RxSoundDevice.ReleaseBuffer(retOffset);
+    CHECK_NOERROR(r);
+
 	RxSoundDevice.CancelRecordData();	// Stop the driver from recording.
 	chunk.Close();
 	}
@@ -1055,7 +1063,7 @@ LOCAL_C void TestRecordCancel()
 							3)	The counts should be equal.
 	@SYMREQ					PREQ1073.4
 */
-LOCAL_C void TestRecordPauseResume()
+LOCAL_C void TestRecordPauseResume(TUint aChannels)
 	{
 	TRequestStatus stat[2];
 	TInt length[2];
@@ -1064,7 +1072,7 @@ LOCAL_C void TestRecordPauseResume()
 	RecordFormatBuf().iRate = ESoundRate44100Hz;
 	if (RecordCapsBuf().iEncodings&KSoundEncoding16BitPCM)
 		RecordFormatBuf().iEncoding = ESoundEncoding16BitPCM;
-	PlayFormatBuf().iChannels = 2;
+	RecordFormatBuf().iChannels = aChannels;
 	PrintConfig(RecordFormatBuf(),Test);
 	TInt r = RxSoundDevice.SetAudioFormat(RecordFormatBuf);
 	CHECK_NOERROR(r);
@@ -1127,6 +1135,7 @@ LOCAL_C void TestRecordPauseResume()
 				remainingRecordCount--;
 
 				CHECK_POSITIVE(length[currentReq]);
+				CHECK(length[currentReq]<=bufSize);
 				bytesRecorded += length[currentReq];
 				if (length[currentReq]<bufSize)
 					bytesToRecord-=(bufSize-length[currentReq]);
@@ -1217,6 +1226,7 @@ LOCAL_C void TestRecordPauseResume()
 		{
 		// Partially filled buffer.
 		CHECK(length[0]>0);
+		CHECK(length[0] <= bufSize);
 		Test.Printf(_L("2nd req partially completed(len=%d)\r\n"),length[0]);
 		r=RxSoundDevice.ReleaseBuffer(retOffset);
 		CHECK_NOERROR(r);
@@ -1227,12 +1237,20 @@ LOCAL_C void TestRecordPauseResume()
 		Test.Printf(_L("2nd req cancelled\r\n"));
 		}
 
-	// Any further record request should return straight away with KErrCancel
-	RxSoundDevice.RecordData(stat[0],length[0]);
-	User::WaitForRequest(stat[0]);
-	retOffset=stat[0].Int();
-	CHECK(retOffset==KErrCancel);
-	Test.Printf(_L("3rd req cancelled\r\n"));
+	for(;;)
+		{
+		// Read all buffers until driver is empty. The RecordData call after that should immediately return with KErrCancel
+		Test.Printf(_L("Draining driver\r\n"));
+		RxSoundDevice.RecordData(stat[0],length[0]);
+		User::WaitForRequest(stat[0]);
+		retOffset=stat[0].Int();
+		if(retOffset==KErrCancel)
+			{
+			break;
+			}
+		CHECK_NOERROR(retOffset);
+		}
+	Test.Printf(_L("Driver empty\r\n"));
 
 	r=RxSoundDevice.Resume();			// Don't leave it in paused state.
 	CHECK_NOERROR(r);
@@ -1431,15 +1449,24 @@ void TestSimultaneousPlayRecord()
 			}
 		else
 			{
-			// Its one of the play requests that have completed, release the buffer.
-			CHECK_NOERROR(stat[i].Int());
-//			Test.Printf(_L("PLAY(%d) i%d CompBuf %d\r\n"),remainingPlayCount-1,i,activePlayOffset[i]);
-			r=RxSoundDevice.ReleaseBuffer(activePlayOffset[i]);
-			CHECK_NOERROR(r);
+			// Its one of the play requests that have completed
+			if(stat[i].Int() >= 0)
+				{
+				// release the buffer.
+//				Test.Printf(_L("PLAY(%d) i%d CompBuf %d\r\n"),remainingPlayCount-1,i,activePlayOffset[i]);
+				r=RxSoundDevice.ReleaseBuffer(activePlayOffset[i]);
+				CHECK_NOERROR(r);
+				Test.Printf(_L("*"));
+				}
+			else
+				{
+				// Play failed - but we ignore underflow because it often happens on WDP roms.
+				CHECK(stat[i].Int() == KErrUnderflow);
+				Test.Printf(_L("U"));
+				}
 
 			remainingPlayCount--;
 			bytesPlayed += bufSize;
-			Test.Printf(_L("*"));
 
 			// If there are buffers available then issue a further play request and update the 'next to play' list.
 			if (playQueue.Count() != 0)
@@ -2454,7 +2481,8 @@ TInt E32Main()
 		TestRecordVolume(2,10);
 		TestPlayCancel();
 		TestRecordCancel();
-		TestRecordPauseResume();
+		TestRecordPauseResume(1);
+		TestRecordPauseResume(2);
 		TestSimultaneousPlayRecord();
 		TestTimePlayed();
 		TestTimeRecorded();

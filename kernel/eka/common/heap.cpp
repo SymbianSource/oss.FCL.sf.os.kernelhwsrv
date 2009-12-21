@@ -1204,12 +1204,21 @@ EXPORT_C TInt UserHeap::CreateThreadHeap(SStdEpocThreadCreateInfo& aInfo, RHeap*
 	TChunkCreateInfo createInfo;
 	createInfo.SetThreadHeap(0, maxLength, KLitDollarHeap());	// Initialise with no memory committed.
 
-	// Set the heap chunk to be paged or unpaged based on the thread's settings.
-	// aInfo.iFlags will have already been set by the kernel based on the paging policies.
-	TBool paged = (aInfo.iFlags & EThreadCreateFlagPagingMask) == EThreadCreateFlagPaged;
-	TChunkCreateInfo::TChunkPagingAtt paging = 
-		(paged)? TChunkCreateInfo::EPaged : TChunkCreateInfo::EUnpaged;
-	createInfo.SetPaging(paging);
+	// Set the paging policy of the heap chunk based on the thread's paging policy.
+	TUint pagingflags = aInfo.iFlags & EThreadCreateFlagPagingMask;
+	switch (pagingflags)
+		{
+		case EThreadCreateFlagPaged:
+			createInfo.SetPaging(TChunkCreateInfo::EPaged);
+			break;
+		case EThreadCreateFlagUnpaged:
+			createInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+			break;
+		case EThreadCreateFlagPagingUnspec:
+			// Leave the chunk paging policy unspecified so the process's 
+			// paging policy is used.
+			break;
+		}
 
 	TInt r = c.Create(createInfo);
 	if (r!=KErrNone)

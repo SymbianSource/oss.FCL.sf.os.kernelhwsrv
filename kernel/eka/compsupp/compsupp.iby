@@ -27,7 +27,7 @@
 
 // Set a default run-time version. In the future, 3.1 or 4.X should be the default.
 #if !( defined(RVCT2_2) || defined(RVCT3_1) || defined(RVCT4_0) )
-#   define RVCT4_0
+#   define RVCT2_2
 #endif
 
 #if defined(VFPHELPERS) && !defined(NOVFPHELPERS)
@@ -47,7 +47,6 @@ alias \sys\bin\dfprvct-thunk.dll					\sys\bin\dfprvct2_2-thunk.dll
 alias \sys\bin\dfprvct-thunk.dll					\sys\bin\dfprvct2_1-thunk.dll
 
 #if defined(RVCT2_2)
-REM RVCT 2.2 support
     file=ABI_DIR\##DEBUG_DIR\drtrvct2_2##FP_EXT     \sys\bin\drtrvct2_2.dll
     file=ABI_DIR\##DEBUG_DIR\dfprvct2_2##FP_EXT     \sys\bin\dfprvct2_2.dll
     
@@ -55,7 +54,6 @@ REM RVCT 2.2 support
     alias \sys\bin\drtrvct2_2.dll                   \sys\bin\drtrvct2_1.dll
     alias \sys\bin\dfprvct2_2.dll                   \sys\bin\dfprvct2_1.dll
 #elif defined(RVCT3_1) || defined(RVCT4_0)
-REM RVCT 4.0 support
     file=ABI_DIR\##DEBUG_DIR\drtrvct3_1##FP_EXT     \sys\bin\drtrvct3_1.dll
     file=ABI_DIR\##DEBUG_DIR\dfprvct3_1##FP_EXT     \sys\bin\dfprvct3_1.dll
     

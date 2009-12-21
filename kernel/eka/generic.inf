@@ -21,6 +21,13 @@
 PRJ_EXTENSIONS
 start		extension		base/genexec
 
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+option INC_PATH   /epoc32/include
+#else
+option INC_PATH  /epoc32/include/platform
+#endif
+
+
 option		EXTRA_SRC_PATH		$(EXTENSION_ROOT)/kernel
 
 end

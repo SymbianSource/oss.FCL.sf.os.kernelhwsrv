@@ -803,9 +803,15 @@ public:
  * 			the client may decide to use CacheMaintenance::SyncPhysicalCache_All
  * 			instead of CacheMaintenance::PageToReuse.
  */
-	static TUint SyncAllPerformanceThresholdPages()
+	inline static TUint SyncAllPerformanceThresholdPages()
 	{
+#if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
+	// Clean&Invalidate by Set/Way in pl310 is broken, so we cannot maintain entire cache(s).
+	// This will ensure no cache threshold is reached so all cache maitenance will be performed by cache line(s).
+	return KMaxTUint;
+#else
 	return InternalCache::Info[KCacheInfoD].InvalidateThresholdPages();
+#endif // #if defined(__ARM_PL310_CACHE__) && !defined(__ARM_PL310_ERRATUM_588369_FIXED)
 	}
 
 #endif // #if defined(__MEMMODEL_MOVING__) || defined(__MEMMODEL_MULTIPLE__)

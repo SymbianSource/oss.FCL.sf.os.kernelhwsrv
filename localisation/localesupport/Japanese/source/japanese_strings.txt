@@ -1,8 +1,20 @@
+%
+% Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+% All rights reserved.
+% This component and the accompanying materials are made available
+% under the terms of "Eclipse Public License v1.0"
+% which accompanies this distribution, and is available
+% at the URL "http://www.eclipse.org/legal/epl-v10.html".
+%
+% Initial Contributors:
+% Nokia Corporation - initial contribution.
+%
+% Contributors:
+%
+% Description: 
 % Strings for a Japanese collation method.
 % Supplied by Naoki Kanetani of K3
-% Copyright (C) 2001 Symbian Ltd.
-% All rights reserved.
-%
+
 FF73 FF9E [.102C.0020.000F.FF73] [.0000.00E8.0012.FF9E] %Halfwidth Katakana Letter  VU
 FF76 FF9E [.103F.0020.000F.FF76] [.0000.00E8.0012.FF9E] %Halfwidth Katakana Letter  GA
 FF77 FF9E [.1044.0020.000F.FF77] [.0000.00E8.0012.FF9E] %Halfwidth Katakana Letter  GI

@@ -1,3 +1,17 @@
+%
+% Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+% All rights reserved.
+% This component and the accompanying materials are made available
+% under the terms of "Eclipse Public License v1.0"
+% which accompanies this distribution, and is available
+% at the URL "http://www.eclipse.org/legal/epl-v10.html".
+%
+% Initial Contributors:
+% Nokia Corporation - initial contribution.
+%
+% Contributors:
+%
+% Description: 
 516B ; [.4E01.0000.0007.516B] % ∞À
 4EC8 ; [.4E02.0000.0007.4EC8] % Åî
 5DF4 ; [.4E03.0000.0007.5DF4] % ∞Õ

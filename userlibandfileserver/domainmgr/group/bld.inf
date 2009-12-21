@@ -32,9 +32,9 @@ PRJ_EXPORTS
 ../inc/domainmember.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainmember.h)
 ../inc/domainpolicy.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(domainpolicy.h)
 
-../bmarm/domainpolicyu.def	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(def/bmarm/domainpolicyu.def)
-../bwins/domainpolicyu.def	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(def/bwins/domainpolicyu.def)
-../eabi/domainpolicyu.def	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(def/eabi/domainpolicyu.def)
+../bmarm/domainpolicyu.def	/epoc32/include/def/bmarm/domainpolicyu.def
+../bwins/domainpolicyu.def	/epoc32/include/def/bwins/domainpolicyu.def
+../eabi/domainpolicyu.def	/epoc32/include/def/eabi/domainpolicyu.def
 
 PRJ_MMPFILES
 

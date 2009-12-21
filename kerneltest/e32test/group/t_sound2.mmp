@@ -24,7 +24,7 @@ library        	euser.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 
-capability	all
+capability	all -TCB
 
 VENDORID 	0x70000001
 

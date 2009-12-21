@@ -165,7 +165,6 @@ TInt FsPluginManager::MountPlugin(CFsPluginFactory& aPluginFactory, TInt aDrive,
 	err = InitPlugin(*pP);
 	if(err != KErrNone)
 		{
-		pP->Close();
 		return err;
 		}
  	aPluginFactory.IncrementMounted();
@@ -175,6 +174,7 @@ TInt FsPluginManager::MountPlugin(CFsPluginFactory& aPluginFactory, TInt aDrive,
 
 /**
 Dismounts a plugin
+
 Must be called with the plugin chain locked.
 */
 void FsPluginManager::DismountPlugin(CFsPluginFactory& aPluginFactory,TInt aPos)
@@ -188,12 +188,12 @@ void FsPluginManager::DismountPlugin(CFsPluginFactory& aPluginFactory,TInt aPos)
 		TransferRequests(plugin->iThreadP);
 
 		plugin->iThreadP=NULL;
-
+		
+		//Remove the plugin from the chain
 		iPluginChain.Remove(aPos);
 		iPluginChain.Compress();
 
-		//Need this to remove it from container
-		//plugin->Close() deletes plugin.
+	    //Close the plugin (destructed when CPluginThread is destructed).
  		plugin->Close();
 		plugin=NULL;
 		}
@@ -234,6 +234,9 @@ void FsPluginManager::GetNextCancelPluginOpRequest(CPluginThread* aPluginThread,
 /**
 Transfer any outstanding requests to next/previous plugin depending on
 if it is post filter or not
+
+Must be called with the plugin chain locked.
+Attains plugin-thread's listlock.
 */
 void FsPluginManager::TransferRequests(CPluginThread* aPluginThread)
 	{
@@ -382,9 +385,18 @@ CFsPluginFactory* FsPluginManager::GetPluginFactory(const TDesC& aName)
 
 /**
 Find the next plugin that supports the operation
+
+@param aPlugin - On calling the function this may contain either NULL or the current plugin.
+                 If it is called with NULL, then we start to look for plugins from the beginning of the chain.
+                 If is is called with a plugin then we start to look after that plugin for the next one.
+                 On return, aPlugin shall contain either a plugin or NULL.
+                 
+@param aLock - If this is set to ETRUE, then the function shall lock the plugin chain.
+               If this is set to EFALSE, then the caller of the function MUST already hold the lock.
+
 @param aCheckCurrentOperation - Optional, if false, will return the next plugin,
  								whether the plugin is currently registered
-								for the current function of not. (so long as mounted on the current drive)
+								for the current function or not. (so long as mounted on the current drive)
 */
 TInt FsPluginManager::NextPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgRequest,TBool aLock, TBool aCheckCurrentOperation)
 	{
@@ -394,7 +406,6 @@ TInt FsPluginManager::NextPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 		return KErrNotFound;
 		}
 
-	TInt r = KErrNone;
 	TInt start;
 	TInt function = aMsgRequest->Operation()->Function();
 	TInt drive = aMsgRequest->DriveNumber();
@@ -402,6 +413,7 @@ TInt FsPluginManager::NextPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 	if(aLock)
 	    LockChain();
 	
+	//the plugin chain lock must be held by this point.
 	TInt count = iPluginChain.Count();
 
 	if(aPlugin == NULL)
@@ -421,7 +433,7 @@ TInt FsPluginManager::NextPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 					aPlugin = iPluginChain[i];
 					if(aLock)
 					    UnlockChain();
-					return(r);
+					return KErrNone;
 					}
 				}
 			}
@@ -429,11 +441,13 @@ TInt FsPluginManager::NextPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 	aPlugin = NULL;
 	if(aLock)
 	    UnlockChain();
-	return(KErrNotFound);
+	return KErrNotFound;
 	}
 
 /**
 Find the next plugin that supports the operation
+
+@see FsPluginManager::NextPlugin
 */
 TInt FsPluginManager::PrevPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgRequest, TBool aLock)
 	{
@@ -443,7 +457,6 @@ TInt FsPluginManager::PrevPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 		return KErrNotFound;
 		}
 
-	TInt r = KErrNone;
 	TInt start;
 	TInt function = aMsgRequest->Operation()->Function();
 	TInt drive = aMsgRequest->DriveNumber();
@@ -451,6 +464,7 @@ TInt FsPluginManager::PrevPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 	if(aLock)
 	    LockChain();
 	
+	//the plugin chain lock must be held by this point.
 	TInt count= iPluginChain.Count();
 
 	if(aPlugin == NULL)
@@ -474,7 +488,7 @@ TInt FsPluginManager::PrevPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 					aPlugin = iPluginChain[i];
 					if(aLock)
 					    UnlockChain();
-					return(r);
+					return KErrNone;
 					}
 				}
 			}
@@ -482,7 +496,7 @@ TInt FsPluginManager::PrevPlugin(CFsPlugin*& aPlugin, CFsMessageRequest* aMsgReq
 	aPlugin = NULL;
 	if(aLock)
 	    UnlockChain();
-	return(KErrNotFound);
+	return KErrNotFound;
 	}
 /**
 Inserts the plugin in the stack (chain)
@@ -594,9 +608,11 @@ CFsPluginConn* FsPluginManager::CreatePluginConnL(TInt aUniquePosition, TUint aC
 	if(pP != NULL)
 		{
 		CFsPluginConn* pC = pP->NewPluginConnL();
+		CleanupStack::PushL(pC);
 		pC->iPluginP = pP;
 		pC->iClientId = aClientId;
 		iPluginConns->AddL(pC, ETrue);
+		CleanupStack::Pop(pC);
 		return pC;
 		}
 
@@ -719,8 +735,8 @@ void FsPluginManager::DispatchSync(CFsRequest* aRequest)
 
 void FsPluginManager::CompleteSessionRequests(CSessionFs* aSession, TInt aValue, CFsInternalRequest* aRequest)
 /**
-Complete outstanding requests for the specified session
-*/
+ * Complete outstanding requests for the specified session
+ */
 	{
 	__PRINT2(_L("FsPluginManager::CompleteSessionRequests(%08x, %d)"), aSession, aValue);
 

@@ -647,10 +647,16 @@ LOCAL_C void TestPlay()
 		len&=~(PlayCapsBuf().iRequestMinSize-1);	// Keep the buffer length valid for the driver.
 	TxSoundDevice.PlayData(stat[0],bufferConfig.iBufferOffsetList[0],len);
 	TxSoundDevice.PlayData(stat[1],(bufferConfig.iBufferOffsetList[0]+len),len,KSndFlagLastSample);
+	bool brokenByPaging = false;
+	if((stat[0] != KRequestPending) || (stat[1] != KRequestPending))
+		{
+		brokenByPaging = true;
+		Test.Printf(_L("Paging gap between PlayData calls - skipping test\n"));
+		}
 	User::WaitForRequest(stat[0]);
-	CHECK_NOERROR(stat[0].Int());
+	if(!brokenByPaging) CHECK_NOERROR(stat[0].Int());
 	User::WaitForRequest(stat[1]);
-	CHECK_NOERROR(stat[1].Int());
+	if(!brokenByPaging) CHECK_NOERROR(stat[1].Int());
 	
 	/**	@SYMTestCaseID 		PBASE-T_SOUND_API-244
 	@SYMTestCaseDesc 		Play operation - tracking the count of bytes transferred.

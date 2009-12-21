@@ -63,7 +63,12 @@ include/cpudefs.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(cpudefs.h)
 include/e32cia.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32cia.h)
 include/arm_vfp.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(arm_vfp.h)
 include/kernperflogger.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernperflogger.h)
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
 :zip include/dummy_genexec.zip
+#else
+:zip include/dummy_genexec_hr.zip
+#endif
+
 
 include/nkern/dfcs.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
 include/nkern/nkern.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
@@ -76,7 +81,7 @@ include/nkern/arm/nk_plat.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/arm
 include/nkern/win32/nk_plat.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/win32/)
 include/nkern/x86/nk_plat.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/x86/)
 
-nkern/nkern_ext.mmh								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkern/)
+nkern/nkern_ext.mmh								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(nkern/)
 
 
 include/nkernsmp/dfcs.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
@@ -97,7 +102,7 @@ include/nkernsmp/x86/ncern.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/
 include/nkernsmp/x86/nk_plat.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/x86/)
 include/nkernsmp/x86/apic.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/x86/)
 
-nkernsmp/nkern_ext.mmh							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nkernsmp/)
+nkernsmp/nkern_ext.mmh							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(nkernsmp/)
 
 
 include/kernel/debug.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
@@ -169,7 +174,7 @@ include/memmodel/epoc/flexible/arm/mmboot.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PA
 include/memmodel/epoc/flexible/x86/mmboot.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(memmodel/epoc/flexible/x86/)
 
 
-kernel/kern_ext.mmh								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+kernel/kern_ext.mmh								SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(kernel/)
 
 include/partitions.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(partitions.h)
 
@@ -368,7 +373,7 @@ include/d32resmanus.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32resmanus.
 include/e32utf.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utf.h)
 include/e32utrace.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace.inl)
 include/e32utrace_basic_types.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace_basic_types.h)
-include/e32utrace.mmh							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace.mmh)
+include/e32utrace.mmh							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32utrace.mmh)
 
 //Open System Trace API
 include/opensystemtrace.h					/epoc32/include/platform/

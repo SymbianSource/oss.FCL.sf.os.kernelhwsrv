@@ -24,7 +24,7 @@ library        	euser.lib efsrv.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 
-capability	all
+capability	all -tcb
 
 VENDORID 	0x70000001
 

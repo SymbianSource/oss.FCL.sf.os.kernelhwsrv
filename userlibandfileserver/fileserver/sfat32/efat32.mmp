@@ -19,20 +19,19 @@ TARGET          efat32.fsy
 
 TARGETTYPE      fsy
 
-USERINCLUDE     ../sfat
-USERINCLUDE     ../sfat32/inc
 USERINCLUDE     ../sfile
+USERINCLUDE     ../inc
+USERINCLUDE     ../sfat32
+USERINCLUDE     ../sfat32/inc
 
-SOURCEPATH      ../sfat
+SOURCEPATH      ../sfat32
+
 SOURCE          fat_config.cpp sl_dir.cpp
 SOURCE          sl_disk.cpp sl_drv.cpp sl_file.cpp
 SOURCE          sl_fmt.cpp sl_fsy.cpp sl_main.cpp sl_mnt.cpp
 SOURCE          sl_utl.cpp sl_vfat.cpp sl_cache.cpp sl_fatcache.cpp
-SOURCE          sl_leafdir_cache.cpp
-SOURCE          sl_dir_cache.cpp
+SOURCE          sl_leafdir_cache.cpp sl_dir_cache.cpp
 
-
-SOURCEPATH      ../sfat32
 SOURCE          sl_fatmisc32.cpp sl_bpb32.cpp fat_table32.cpp ram_fat_table32.cpp
 SOURCE          sl_scan32.cpp sl_mnt32.cpp
 SOURCE          sl_fatcache32.cpp
@@ -40,7 +39,7 @@ SOURCE          sl_fatcache32.cpp
 SOURCEPATH      .
 DOCUMENT        ../group/release.txt
 
-USERINCLUDE   	../inc
+
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 LIBRARY         efile.lib efsrv.lib euser.lib hal.lib
