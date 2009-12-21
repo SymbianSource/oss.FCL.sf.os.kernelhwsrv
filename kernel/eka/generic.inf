@@ -17,6 +17,10 @@
 // 
 //
 
+PRJ_EXPORTS
+rombuild/rom.flm		/epoc32/tools/makefile_templates/base/rom.flm
+rombuild/rom.meta		/epoc32/tools/makefile_templates/base/rom.meta
+rombuild/rom.xml		/epoc32/tools/makefile_templates/base/rom.xml
 
 PRJ_EXTENSIONS
 start		extension		base/genexec
