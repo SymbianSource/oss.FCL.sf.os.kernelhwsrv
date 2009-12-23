@@ -19,12 +19,10 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
 #include <d32usbdi.h>
 
 #include <d32usbtransfers.h>
 #include "msctypes.h"
-#include "mscutils.h"
 #include "shared.h"
 #include "msgservice.h"
 #include "botmsctypes.h"
@@ -59,10 +57,9 @@ void CUsbHostMsDevice::ConstructL()
 
 CUsbHostMsDevice::CUsbHostMsDevice(THostMassStorageConfig& aConfig)
 :	iConfig(aConfig),
-	iState(EActive)
+	iState(EReady)
     {
     __MSFNLOG
-
 	}
 
 
@@ -186,29 +183,14 @@ void CUsbHostMsDevice::SuspendLunL(TLun aLun)
 	iState = ESuspended;
 	}
 
-TBool CUsbHostMsDevice::IsActive()
-	{
-    __MSFNLOG
-	return (iState == EActive)? ETrue : EFalse;
-	}
 
-TBool CUsbHostMsDevice::IsSuspended()
-	{
-    __MSFNLOG
-	return (iState == ESuspended)? ETrue : EFalse;
-	}
-
-void CUsbHostMsDevice::ResumeL(TRequestStatus &aStatus)
+void CUsbHostMsDevice::Resume(TRequestStatus& aStatus)
 	{
     __MSFNLOG
 	if (iState == ESuspended)
 		{
 		StartTimer();
 		iDeviceSuspendResume->Resume(aStatus);
-		}
-	else
-		{
-        __HOSTPRINT(_L("CUsbHostMsDevice: Wierd we are not suspended but were asked to resume"));
 		}
 	}
 
@@ -358,6 +340,6 @@ void CUsbHostMsDevice::DoResumeLogicalUnitsL()
 void CUsbHostMsDevice::ResumeCompletedL()
 	{
     __MSFNLOG
-	iState = EActive;
+	iState = EReady;
 	DoResumeLogicalUnitsL();
 	}

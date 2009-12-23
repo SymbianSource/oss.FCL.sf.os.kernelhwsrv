@@ -70,6 +70,11 @@ void CScsiProtocol::ConstructL(TLun aLun)
 	__MSFNLOG
     iFsm = CMassStorageFsm::NewL(*this);
 	iState = EDisconnected;
+
+    const TInt blockLength = 0x200;
+
+    iHeadbuf.CreateL(blockLength);
+    iTailbuf.CreateL(blockLength);
     }
 
 
@@ -85,6 +90,8 @@ CScsiProtocol::~CScsiProtocol()
     {
 	__MSFNLOG
     delete iFsm;
+    iHeadbuf.Close();
+    iTailbuf.Close();
     delete iSbcInterface;
     }
 
@@ -351,6 +358,7 @@ TInt CScsiProtocol::MsInquiryL()
 
     // SCSI Block device
     iSbcInterface = new (ELeave) TSbcClientInterface(iSpcInterface.Transport());
+    iSbcInterface->InitBuffers(&iHeadbuf, &iTailbuf);
 
     return KErrNone;
     }
@@ -653,7 +661,8 @@ void CScsiProtocol::CreateSbcInterfaceL(TUint32 aBlockLen, TUint32 aLastLba)
     // SCSI Block device
     ASSERT(iSbcInterface == NULL);
     iSbcInterface = new (ELeave) TSbcClientInterface(iSpcInterface.Transport());
-    iSbcInterface->SetCapacity(aBlockLen, aLastLba);
+    iSbcInterface->InitBuffers(&iHeadbuf, &iTailbuf);
+    iSbcInterface->SetCapacityL(aBlockLen, aLastLba);
     }
 
 

@@ -124,6 +124,10 @@ TInt DIpcCpyFactory::Install()
 	// Allocate a kernel thread to run the DFC 
 	TInt r = Kern::DynamicDfcQCreate(iDfcQ, KIpcCpyThreadPriority, KIpcCpyThread);
 
+#ifdef CPU_AFFINITY_ANY
+	NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);			
+#endif
+
 	if (r != KErrNone)
 		return r; 	
 

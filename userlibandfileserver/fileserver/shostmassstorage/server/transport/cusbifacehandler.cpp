@@ -19,7 +19,6 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
 #include <d32usbdi_hubdriver.h>
 #include <d32usbdi.h>
 #include <d32otgdi.h>
@@ -27,7 +26,6 @@
 #include <d32usbtransfers.h>
 #include "botmsctypes.h"
 #include "msctypes.h"
-#include "mscutils.h"
 #include "mtransport.h"
 #include "mprotocol.h"
 #include "cusbifacehandler.h"

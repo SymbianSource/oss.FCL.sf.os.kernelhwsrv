@@ -45,4 +45,6 @@ romtarget			exmonlog.dll
 
 #endif
 
+SMPSAFE
+
 

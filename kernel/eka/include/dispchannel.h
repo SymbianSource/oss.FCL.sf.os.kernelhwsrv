@@ -112,7 +112,8 @@ public:
 		ECtrlNextLineOffset,
 		// v 1.2
 		ECtrlNextPlaneOffsetExtended,
-		ECtrlNextLineOffsetExtended
+		ECtrlNextLineOffsetExtended,
+		ECtrlCreateUserBuffer
 		};
 
     // request messages
@@ -298,6 +299,9 @@ public:		//structures used
     // v1.2 methods
 	inline TInt NextPlaneOffset(const TBufferFormat& aBufferFormat, const TResolution& aResolution, TDisplayRotation aRotation, TInt aPlane);
 	inline TInt NextLineOffset(const TBufferFormat& aBufferFormat, const TResolution& aResolution, TDisplayRotation aRotation, TInt aPlane);
+#ifdef _DEBUG
+	inline TInt CreateUserBuffer(TBufferFormat& aBufferFormat, RChunk& aChunk);
+#endif // _DEBUG
 #endif
 	};
 

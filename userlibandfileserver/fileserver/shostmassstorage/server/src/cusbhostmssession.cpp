@@ -19,10 +19,8 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
-#include <e32property.h>
+
 #include "msctypes.h"
-#include "mscutils.h"
 #include "shared.h"
 #include "msgservice.h"
 #include "cusbhostmslogicalunit.h"
@@ -59,7 +57,6 @@ CUsbHostMsSession::CUsbHostMsSession(CUsbHostMsServer& aServer)
 	: iUsbHostMsServer(aServer)
 	{
     __MSFNLOG
-	iMsgCount = 0;
 	}
 
 
@@ -121,10 +118,9 @@ void CUsbHostMsSession::DispatchMessageL(const RMessage2& aMessage)
 	case EUsbHostMsFinalCleanup:
 		if(iDeviceThread->IsActive())
 			{
-			TRequestStatus* s=&iDeviceThread->iStatus;
-			iThread.RequestComplete(s, KErrSessionClosed);
+			iThread.RequestComplete(iClientStatus, KErrSessionClosed);
 			}
-		iDeviceThread->Cancel();
+	
 		delete iDeviceThread;
 		iThread.Kill(KErrNone);
 		aMessage.Complete(KErrNone);
@@ -133,53 +129,41 @@ void CUsbHostMsSession::DispatchMessageL(const RMessage2& aMessage)
 		break;
 		}
 
-	__HOSTPRINT1(_L("Queuing %d message"), ++iMsgCount);
 	__ASSERT_DEBUG(iDeviceThread != NULL, User::Panic(KUsbMsHostPanicCat, EDeviceThreadDoesNotExist));
 
 	r = iDeviceThread->QueueMsg(aMessage);
-	if(r != KErrNone)
+	if (r != KErrNone)
 		{
 		aMessage.Complete(r);
 		return;
 		}
 
-	if(iDeviceThread->IsActive())
+	if (iClientStatus && *iClientStatus == KRequestPending)
 		{
-		iDeviceThread->Lock();
-		if(iDeviceThread->iIsSignalled)
-			{
-			iDeviceThread->Unlock();
-			return;
-			}
-		iDeviceThread->iIsSignalled = ETrue;
-		iDeviceThread->Unlock();
 		__HOSTPRINT(_L("Signaling device thread to handle message"));
-		TRequestStatus* s=&iDeviceThread->iStatus;
-		iThread.RequestComplete(s, KErrNone);
+		iThread.RequestComplete(iClientStatus, KErrNone);
 		}
 	}
 
 
 void CUsbHostMsSession::CreateDeviceThreadL(const RMessage2& aMessage)
 	{
+    __MSFNLOG
 	THostMassStorageConfig msDeviceConfig;
 	TPtr8 ptr((TUint8*)&msDeviceConfig,sizeof(THostMassStorageConfig));
 
 	aMessage.ReadL(0, ptr);
 	__HOSTPRINT1(_L("EUsbHostMsRegisterInterface Token=%d "), msDeviceConfig.iInterfaceToken);
 
-	TInt r = KErrNone;
-    TName nameBuf;
-	TRequestStatus aStatus;
-
+    TBuf<20> nameBuf;
 	nameBuf.Format(_L("Host Ms Thread%d"), msDeviceConfig.iInterfaceToken);
-	iDeviceThread = CUsbHostMsDeviceThread::NewL(msDeviceConfig.iInterfaceToken);
+	iDeviceThread = CUsbHostMsDeviceThread::NewL(*this, msDeviceConfig.iInterfaceToken);
 
 	RHeap* h = (RHeap*)&User::Allocator();
 	TInt maxsize = h->MaxLength();	// loader heap max size = file server heap max size
 	const TUint KHeapMinSize = 2048;
 
-	r = iThread.Create(nameBuf, CUsbHostMsDeviceThread::Entry, KDefaultStackSize, KHeapMinSize, maxsize, iDeviceThread);
+	TInt r = iThread.Create(nameBuf, CUsbHostMsDeviceThread::Entry, KDefaultStackSize, KHeapMinSize, maxsize, iDeviceThread);
 	if(r != KErrNone)
 		{
 		delete iDeviceThread;
@@ -187,20 +171,29 @@ void CUsbHostMsSession::CreateDeviceThreadL(const RMessage2& aMessage)
 		User::Leave(r);
 		}
 	iThread.SetPriority(EPriorityAbsoluteBackgroundNormal);
-	iThread.Rendezvous(aStatus);
+	TRequestStatus status;
+	iThread.Rendezvous(status);
 	iThread.Resume();
-	User::WaitForRequest(aStatus);
-	if(aStatus != KErrNone)
+	User::WaitForRequest(status);
+	if(status != KErrNone)
 		{
 		if(iDeviceThread->IsActive())
-			{
-			TRequestStatus* s=&iDeviceThread->iStatus;
-			iThread.RequestComplete(s, KErrSessionClosed);
+			{			
+			iThread.RequestComplete(iClientStatus, KErrSessionClosed);
 			}
 		iDeviceThread->Cancel();
 		delete iDeviceThread;
         iDeviceThread = NULL;
 		iThread.Kill(KErrNone);
-		User::Leave(aStatus.Int());
+		User::Leave(status.Int());
 		}
 	}
+
+
+
+void CUsbHostMsSession::MessageRequest(TRequestStatus& aStatus)
+    {
+    __MSFNLOG
+    iClientStatus = &aStatus;
+    *iClientStatus = KRequestPending;
+    }

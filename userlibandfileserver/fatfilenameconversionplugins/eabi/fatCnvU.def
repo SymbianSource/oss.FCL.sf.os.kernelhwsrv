@@ -1,7 +1,0 @@
-EXPORTS
-	_ZN11UnicodeConv19ConvertFromUnicodeLER5TDes8RK7TDesC16 @ 1 NONAME
-	_ZN11UnicodeConv17ConvertToUnicodeLER6TDes16RK6TDesC8 @ 2 NONAME
-	_ZN11UnicodeConv25IsLegalShortNameCharacterEj @ 3 NONAME
-	_ZN11UnicodeConv19ConvertFromUnicodeLER5TDes8RK7TDesC16i @ 4 NONAME
-	_ZN11UnicodeConv17ConvertToUnicodeLER6TDes16RK6TDesC8i @ 5 NONAME
-	

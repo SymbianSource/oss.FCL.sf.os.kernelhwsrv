@@ -21,15 +21,23 @@
 #include <e32cmn.h>
 #include <e32ver.h>
 #include <drivers/hcr.h>
+#ifndef HCRTEST_USERSIDE_INTERFACE
 #include "hcr_hai.h"
 #include "hcr_pil.h"
+#endif // HCRTEST_USERSIDE_INTERFACE
 
 #ifndef __KERNEL_MODE__
 using namespace HCR;
 #endif // __KERNEL_MODE__
 
-// Device driver name
-_LIT(KTestHcrSim, "d_hcrsim");
+// Device driver names
+_LIT(KTestHcrRealOwn, "d_hcrext_own");
+_LIT(KTestHcrSimOwn, "d_hcrsim_own");
+_LIT(KTestHcrRealClient, "d_hcrext_client");
+_LIT(KTestHcrSimClient, "d_hcrsim_client");
+
+const TUint KTestBenchmarkNumberOfSettingsInCategory = 1001;
+const HCR::TCategoryUid KTestBenchmarkCategoryId = 0x60000000;
 
 // The following flags are used when calling InitExtension() in order to modify
 // the behaviour of the test PSL.
@@ -51,6 +59,22 @@ enum TTestPslConfiguration {
 
 	// Set Override Repository address to the Empty Compiled Repository
 	ETestEnableOverrideRepository = 0x20,
+
+	// Make PSL fail to create a variant object
+	ETestVariantObjectCreateFail = 0x40,
+
+	// Make PSL initialisation fail
+	ETestInitialisationFail = 0x80,
+
+	// Use bad repository with NULL ordered list
+	ETestNullOrderedList = 0x100,
+
+	// Make PSL return NULL when asked for the address of the Compiled Repository
+	// but return KErrNone
+	ETestNullRepositoryKErrNone = 0x200,
+
+	// GetCompiledRepositoryAddress return wrong error code
+	ETestBadErrorCode = 0x400,
 };
 
 class RHcrSimTestChannel : public RBusLogicalChannel
@@ -85,17 +109,25 @@ public:
 		EHcrSwitchRepository,
 		EHcrClearRepository,
 		EHcrCheckIntegrity,
+		// Others
+		EHcrGetInitExtensionTestResults,
+		EHcrBenchmarkGetSettingInt,
+		EHcrBenchmarkGetSettingArray,
+		EHcrBenchmarkGetSettingDes,
+		EHcrBenchmarkFindNumSettingsInCategory,
+		EHcrBenchmarkFindSettings,
+		EHcrBenchmarkGetTypeAndSize,
+		EHcrBenchmarkGetWordSettings,
 		};
- 
+
 #ifndef __KERNEL_MODE__
-	inline TInt Open();
+	inline TInt Open(const TDesC& aLdd);
 	inline TInt GetLinAddr(const TSettingId& aId, TLinAddr& aValue);
 	inline TInt FindNumSettingsInCategory(TCategoryUid aCatUid);
 	inline TInt FindSettings(TCategoryUid aCatUid,
 							TInt aMaxNum, TUint32& aNumFound,
 							TElementId* aElIds, TSettingType* aTypes, TUint16* aLens);
-	inline TInt FindSettings(TCategoryUid aCat,
-							TInt aMaxNum, TUint32 aAtId,
+	inline TInt FindSettings(TCategoryUid aCat,	TInt aMaxNum,
 							TUint32 aMask, TUint32 aPattern, TUint32& aNumFound,
 							TElementId* aElIds, TSettingType* aTypes, TUint16* aLens);
 	inline TInt GetTypeAndSize(const TSettingId& aId,
@@ -125,12 +157,20 @@ public:
 	inline TInt InitExtension(const TUint32 aFlags = 0);
 	inline TInt SwitchRepository(const TDesC8& aFileName, HCRInternal::TReposId aId);
 	inline TInt CheckIntegrity();
+	inline TInt GetInitExtensionTestResults(TInt& aLine, TInt& aError);
+	inline TInt BenchmarkGetSettingInt(const TSettingId& aId, TUint32& aTimeMs);
+	inline TInt BenchmarkGetSettingArray(const TSettingId& aId, TUint32& aTimeMs);
+	inline TInt BenchmarkGetSettingDes(const TSettingId& aId, TUint32& aTimeMs);
+	inline TInt BenchmarkFindNumSettingsInCategory(const TCategoryUid aCatUid, TUint32& aTimeMs);
+	inline TInt BenchmarkFindSettings(const TCategoryUid aCatUid, TUint32& aTimeMs);
+	inline TInt BenchmarkGetTypeAndSize(const TSettingId& aId, TUint32& aTimeMs);
+	inline TInt BenchmarkGetWordSettings(const TCategoryUid aCatUid, TUint32& aTimeMs);
 #endif // __KERNEL_MODE__
 	};
 
 #ifndef __KERNEL_MODE__
-inline TInt RHcrSimTestChannel::Open()
-	{return (DoCreate(KTestHcrSim(), TVersion(1, 0, KE32BuildVersionNumber), KNullUnit, NULL, NULL, EOwnerThread));}
+inline TInt RHcrSimTestChannel::Open(const TDesC& aLdd)
+	{return (DoCreate(aLdd, TVersion(1, 0, KE32BuildVersionNumber), KNullUnit, NULL, NULL, EOwnerThread));}
 inline TInt RHcrSimTestChannel::GetLinAddr(const TSettingId& aId, TLinAddr& aValue)
 	{return DoControl(EHcrGetLinAddr, (TAny*) &aId, (TAny*) &aValue);}
 inline TInt RHcrSimTestChannel::FindNumSettingsInCategory(TCategoryUid aCatUid)
@@ -148,21 +188,19 @@ inline TInt RHcrSimTestChannel::FindSettings(TCategoryUid aCatUid,
 	args[5] = (TAny*) aLens;
 	return DoControl(EHcrFindSettingsCategory, (TAny*) args);
 	}
-inline TInt RHcrSimTestChannel::FindSettings(TCategoryUid aCat,
-					TInt aMaxNum, TUint32 aAtId,
+inline TInt RHcrSimTestChannel::FindSettings(TCategoryUid aCat,	TInt aMaxNum, 
 					TUint32 aMask, TUint32 aPattern, TUint32& aNumFound,
 					TElementId* aElIds, TSettingType* aTypes, TUint16* aLens)
 	{
-	TAny* args[9];
+	TAny* args[8];
 	args[0] = (TAny*) aCat;
 	args[1] = (TAny*) aMaxNum;
-	args[2] = (TAny*) aAtId;
-	args[3] = (TAny*) aMask;
-	args[4] = (TAny*) aPattern;
-	args[5] = (TAny*) &aNumFound;
-	args[6] = (TAny*) aElIds;
-	args[7] = (TAny*) aTypes;
-	args[8] = (TAny*) aLens;
+	args[2] = (TAny*) aMask;
+	args[3] = (TAny*) aPattern;
+	args[4] = (TAny*) &aNumFound;
+	args[5] = (TAny*) aElIds;
+	args[6] = (TAny*) aTypes;
+	args[7] = (TAny*) aLens;
 	return DoControl(EHcrFindSettingsPattern, (TAny*) args);
 	}
 inline TInt RHcrSimTestChannel::GetTypeAndSize(const TSettingId& aId,
@@ -254,5 +292,21 @@ inline TInt RHcrSimTestChannel::SwitchRepository(const TDesC8& aFileName, HCRInt
 	{return DoControl(EHcrSwitchRepository, (TAny*) &aFileName, (TAny*) aId);}
 inline TInt RHcrSimTestChannel::CheckIntegrity()
 	{return DoControl(EHcrCheckIntegrity);}
+inline TInt RHcrSimTestChannel::GetInitExtensionTestResults(TInt& aLine, TInt& aError)
+	{return DoControl(EHcrGetInitExtensionTestResults, (TAny*) &aLine, (TAny*) &aError);}
+inline TInt RHcrSimTestChannel::BenchmarkGetSettingInt(const TSettingId& aId, TUint32& aTimeMs)
+	{return DoControl(EHcrBenchmarkGetSettingInt, (TAny*) &aId, (TAny*) &aTimeMs);}
+inline TInt RHcrSimTestChannel::BenchmarkGetSettingArray(const TSettingId& aId, TUint32& aTimeMs)
+	{return DoControl(EHcrBenchmarkGetSettingArray, (TAny*) &aId, (TAny*) &aTimeMs);}
+inline TInt RHcrSimTestChannel::BenchmarkGetSettingDes(const TSettingId& aId, TUint32& aTimeMs)
+	{return DoControl(EHcrBenchmarkGetSettingDes, (TAny*) &aId, (TAny*) &aTimeMs);}
+inline TInt RHcrSimTestChannel::BenchmarkFindNumSettingsInCategory(const TCategoryUid aCatUid, TUint32& aTimeMs)
+	{return DoControl(EHcrBenchmarkFindNumSettingsInCategory, (TAny*) aCatUid, (TAny*) &aTimeMs);}
+inline TInt RHcrSimTestChannel::BenchmarkFindSettings(const TCategoryUid aCatUid, TUint32& aTimeMs)
+	{return DoControl(EHcrBenchmarkFindSettings, (TAny*) aCatUid, (TAny*) &aTimeMs);}
+inline TInt RHcrSimTestChannel::BenchmarkGetTypeAndSize(const TSettingId& aId, TUint32& aTimeMs)
+	{return DoControl(EHcrBenchmarkGetTypeAndSize, (TAny*) &aId, (TAny*) &aTimeMs);}
+inline TInt RHcrSimTestChannel::BenchmarkGetWordSettings(const TCategoryUid aCatUid, TUint32& aTimeMs)
+	{return DoControl(EHcrBenchmarkGetWordSettings, (TAny*) aCatUid, (TAny*) &aTimeMs);}
 #endif // __KERNEL_MODE__
 #endif // D_HCRSIM_H

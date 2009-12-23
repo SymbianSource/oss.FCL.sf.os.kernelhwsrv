@@ -180,6 +180,9 @@ public:
 		// chunks, all other local chunks should be nameless.
 		ELocalNamed 		= 0x000000080,
 
+		// Make global chunk read only to all processes but the controlling owner
+		EReadOnly			= 0x000000100,
+
 		// Paging attributes for chunks.
 		EPagingUnspec		= 0x00000000,
 		EPaged				= 0x80000000,
@@ -187,7 +190,7 @@ public:
 		EPagingMask 		= EPaged | EUnpaged,
 
 		EChunkCreateAttMask =	EMappingMask | EGlobal | ECode |
-								ELocalNamed | EPagingMask,
+								ELocalNamed | EReadOnly | EPagingMask,
 		};
 public:
 	TUint iAtt;

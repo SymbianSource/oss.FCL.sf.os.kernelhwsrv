@@ -28,6 +28,8 @@
 #include <dispchannel.h>
 #include <e32std.h>
 #include <e32std_private.h>
+#include <e32def.h>
+#include <e32def_private.h>
 #include <e32svr.h>
 #include <e32test.h>
 #include <pixelformats.h>
@@ -163,6 +165,7 @@ class CDisplayChannelTest : public CActive
 		ETestV11inV10,
 		EVisualTest,
 		ETestSecondHandle,
+		ETestBufferTransitions,
 		ETestFinished
 	};
 	
@@ -204,6 +207,7 @@ class CDisplayChannelTest : public CActive
 				RDisplayChannel::TDisplayRotation aRotation, TInt aStep);
 		void GetHalDisplayInfo();
 		void CheckSecondHandle();
+		void TestBufferTransitions();
 
 	private:
 		RDisplayChannel iDisp;			/// handle to display channel device driver
@@ -282,7 +286,7 @@ Constructor
 	: CActive(EPriorityStandard), iScreenId(aScreenId)
 	{	
 	TVersion versionRequired = iDisp.VersionRequired();
-	test.Printf(_L("Opening display channel for screen %d. Test compiled against version %d.%d.%d\n"), 
+	test.Printf(_L("*** Opening display channel for screen %d. Test compiled against version %d.%d.%d ***\n"),
 			iScreenId, versionRequired.iMajor, versionRequired.iMinor, versionRequired.iBuild);
 	TInt err = iDisp.Open(iScreenId);
 	test_KErrNone(err);
@@ -347,6 +351,19 @@ Check the values returned by CheckDisplayInfo
 	TPckgBuf<RDisplayChannel::TDisplayInfo> infoPkg;
 
 	test_KErrNone(iDisp.GetDisplayInfo(infoPkg));
+
+	// This test only works with 24 and 32 BPP displays and crashes otherwise.  Test for this and display
+	// a nice human readable message rather than just crashing
+	if ((infoPkg().iBitsPerPixel != 24) && (infoPkg().iBitsPerPixel != 32))
+		{
+		TBuf<256> message;
+
+		message.Format(_L("*** Error! %d bits per pixel displays are not supported. ***\n*** Please configure your ROM to use 24 or 32 bits per pixel.  ***\n"), infoPkg().iBitsPerPixel);
+		test.Printf(message);
+
+		// And fail the test for the benefit of automated ONB tests
+		test_Equal(infoPkg().iBitsPerPixel, 24);
+		}
 
 	test_Compare(infoPkg().iBitsPerPixel, >=, 1);
 	test_Compare(infoPkg().iAvailableRotations, !=, 0);
@@ -686,8 +703,18 @@ is used.
 	else
 		{
 		// buffer format not switched in v1.1 so test just validates post / wait for post
+		TPckgBuf<RDisplayChannel::TDisplayInfo> infoPkg;
+		test_KErrNone(iDisp.GetDisplayInfo(infoPkg));
+
+		err = iDisp.SetRotation(aRotation, configChanged);
+		TInt expectedErr = KErrNone;
+		if ((!IsValidRotation(aRotation)) || ((infoPkg().iAvailableRotations & aRotation) == 0))
+			{
+			expectedErr = KErrArgument;
+			}
+		test(err == expectedErr);
+
 		actualBufferFormat = aBufferFormat;
-		test_KErrNone(iDisp.SetRotation(aRotation, configChanged));
 		}
 	
 	// Get the composition buffer index
@@ -1119,13 +1146,9 @@ fail and the current rotation should be unchanged.
 	TBool displayConfigChanged = EFalse;
 	TInt err = iDisp.SetRotation(aNewRotation, displayConfigChanged);
 	TInt expectedErr = KErrNone;
-	if (! IsValidRotation(aNewRotation))
+	if ((!IsValidRotation(aNewRotation)) || ((aSupported & aNewRotation) == 0))
 		{
 		expectedErr = KErrArgument;
-		}
-	else if ((aSupported & aNewRotation) == 0)
-		{
-		expectedErr = KErrNotSupported;
 		}
 	test(err == expectedErr);
 
@@ -1179,13 +1202,11 @@ If the version number is > 1.0 then this method does nothing.
 	TBuf8<256> buf;
 	TSize size;
 	
-#ifdef __WINS__	// Unknown requests panic on H4 implementation
-	test.Printf(_L("Testing display change APIs"));
+	test.Printf(_L("Testing display change APIs\n"));
 	iDisp.NotifyOnDisplayChangeCancel();
 	TRequestStatus status;	
 	iDisp.NotifyOnDisplayChange(status);
 	test(status == KErrNotSupported);
-#endif	
 
 	err = iDisp.NumberOfResolutions();
 	test(err == KErrNotSupported);
@@ -1225,14 +1246,77 @@ Opens a second RDisplayChannel.
 The driver may not support this but must not crash. 
 */
 	{
-	test.Next(_L("Open a second handle\n"));
-#ifdef	__WINS__	
-	// This crashes on H4
+	test.Next(_L("Open a second handle"));
 	RDisplayChannel disp2;
 	TInt err = disp2.Open(iScreenId);
-	test_KErrNone(err);
+	test(err == KErrNone || err == KErrInUse);
 	disp2.Close();
-#endif
+	}
+
+void CDisplayChannelTest::TestBufferTransitions()
+/**
+Because different buffer types (ie. composition, legacy and user) complete differently, we must test
+switching between those different types of buffers to ensure that this is taken into account.
+*/
+	{
+	// The support code required for this test exists only in the separated GCE display LDD, not in the
+	// legacy monolithic WINSCW LDD
+#if defined(_DEBUG) && !defined(__WINS__)
+	test.Next(_L("Test transitions between buffer types"));
+
+	TPckgBuf<RDisplayChannel::TDisplayInfo> displayInfo;
+	test_KErrNone(iDisp.GetDisplayInfo(displayInfo));
+
+	RChunk chunk;
+	RDisplayChannel::TBufferFormat bufferFormat(TSize(iHalInfo.iXPixels, iHalInfo.iYPixels), displayInfo().iPixelFormat);
+
+	test.Next(_L("Get the LDD to create a user buffer"));
+	TInt err = iDisp.CreateUserBuffer(bufferFormat, chunk);
+	test_KErrNone(err);
+
+	test.Next(_L("Register a user buffer"));
+	RDisplayChannel::TBufferId bufferId;
+	err = iDisp.RegisterUserBuffer(bufferId, chunk, 0);
+	test_KErrNone(err);
+
+	test.Next(_L("Post a user buffer"));
+	TRequestStatus status;
+	RDisplayChannel::TPostCount postCount;
+	iDisp.PostUserBuffer(bufferId, status, NULL, postCount);
+	iDisp.PostLegacyBuffer(NULL, postCount);
+
+	test.Printf(_L("Waiting for user buffer\n"));
+	User::WaitForRequest(status);
+	test(status.Int() == KErrNone || status.Int() == KErrCancel);
+	test.Printf(_L("Waiting for legacy buffer\n"));
+	iDisp.WaitForPost(postCount, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+
+	test.Printf(_L("Getting composition buffer\n"));
+	TUint bufferIndex;
+	iDisp.GetCompositionBuffer(bufferIndex, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+
+	iDisp.PostUserBuffer(bufferId, status, NULL, postCount);
+	iDisp.PostCompositionBuffer(NULL, postCount);
+
+	test.Printf(_L("Waiting for user buffer\n"));
+	User::WaitForRequest(status);
+	test(status.Int() == KErrNone || status.Int() == KErrCancel);
+	test.Printf(_L("Waiting for composition buffer\n"));
+	iDisp.WaitForPost(postCount, status);
+	User::WaitForRequest(status);
+	test_KErrNone(status.Int());
+
+	test.Printf(_L("Deregistering user buffers\n"));
+	err = iDisp.DeregisterUserBuffer(bufferId);
+	test_KErrNone(err);
+
+	test.Printf(_L("Done, closing shared chunk\n"));
+	chunk.Close();
+#endif // defined(_DEBUG) && !defined(__WINS__)
 	}
 
 void CDisplayChannelTest::Start()
@@ -1273,7 +1357,7 @@ void CDisplayChannelTest::RunL()
 	{
 	test_KErrNone(iStatus.Int());
 	
-	test.Printf(_L("Test state %d"), iState);
+	test.Printf(_L("Test state %d\n"), iState);
 	switch (iState)
 		{
 		case ETestDisplayInfo:
@@ -1355,7 +1439,12 @@ void CDisplayChannelTest::RunL()
 			break;
 		case ETestSecondHandle:
 			CheckSecondHandle();
+			CompleteSelf(ETestBufferTransitions);
+			break;
+		case ETestBufferTransitions:
+			TestBufferTransitions();
 			CompleteSelf(ETestFinished);
+			break;
 		case ETestFinished:
 			CActiveScheduler::Stop();
 			break;
@@ -1378,6 +1467,12 @@ void MainL()
 	TInt err = User::LoadLogicalDevice(KLdd);	
 	test(err == KErrNone || err == KErrAlreadyExists || err == KErrNotFound);		
 	
+	// Only test for kenel memory leaks for non WINSCW builds as the WINSCW LDD is obsolete and would
+	// take forever to debug
+#ifndef __WINS__
+	__KHEAP_MARK;
+#endif // ! __WINS__
+
 	if (err == KErrNone || err == KErrAlreadyExists)
 		{
 		TInt numberOfScreens;
@@ -1395,9 +1490,13 @@ void MainL()
 		}
 	else
 		{
-		test.Printf(_L("display0.ldd not present. Finishing test."));
+		test.Printf(_L("display0.ldd not present. Finishing test.\n"));
 		}
 	
+#ifndef __WINS__
+	__KHEAP_MARKEND;
+#endif // ! __WINS__
+
 	test.End();
 	}
 

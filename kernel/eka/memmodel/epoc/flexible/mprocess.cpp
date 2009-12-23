@@ -941,7 +941,9 @@ TInt DThread::RawRead(const TAny* aSrc, TAny* aDest, TInt aLength, TInt aFlags, 
 
 		if(aFlags&KCheckLocalAddress)
 			MM::ValidateLocalIpcAddress(dest,alias_size,ETrue);
+		UNLOCK_USER_MEMORY();
 		memcpy( (TAny*)dest, (const TAny*)alias_src, alias_size);
+		LOCK_USER_MEMORY();
 
 		src+=alias_size;
 		dest+=alias_size;
@@ -1018,7 +1020,9 @@ TInt DThread::RawWrite(const TAny* aDest, const TAny* aSrc, TInt aLength, TInt a
 
 		if(aFlags&KCheckLocalAddress)
 			MM::ValidateLocalIpcAddress(src,alias_size,EFalse);
+		UNLOCK_USER_MEMORY();
 		memcpy( (TAny*)alias_dest, (const TAny*)src, alias_size);
+		LOCK_USER_MEMORY();
 
 		src+=alias_size;
 		dest+=alias_size;

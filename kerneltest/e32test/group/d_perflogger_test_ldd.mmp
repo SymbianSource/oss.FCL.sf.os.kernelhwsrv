@@ -40,6 +40,8 @@ start wins
 win32_headers
 end // wins
 
+macro CPU_AFFINITY_ANY
+SMPSAFE
 
 
 

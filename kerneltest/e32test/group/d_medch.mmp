@@ -49,3 +49,6 @@ macro		   __SECURE_API__
 // Don't put this in ROM here since it would stop ROMs building on platforms
 // without MMC support.
 romtarget
+
+macro CPU_AFFINITY_ANY
+SMPSAFE

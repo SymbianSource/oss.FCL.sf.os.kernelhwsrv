@@ -3363,13 +3363,14 @@ class RChunk : public RHandleBase
 	{
 public:
 	/**	
-    Set of flags used by SetRestrictions().
-    
-    @see RChunk::SetRestrictions
-    */
+	Set of flags used by SetRestrictions().
+	
+	@see RChunk::SetRestrictions
+	*/
 	enum TRestrictions
 		{
-		EPreventAdjust = 0x01,  // Prevent Adjust, Commit, Allocate and Decommit
+		/** Prevent Adjust, Commit, Allocate and Decommit */
+		EPreventAdjust = 0x01,
 		};
 public:
 	inline TInt Open(const TFindChunk& aFind,TOwnerType aType=EOwnerProcess);
@@ -3446,6 +3447,7 @@ public :
 	IMPORT_C void SetGlobal(const TDesC& aName);
 	IMPORT_C void SetClearByte(TUint8 aClearByte);
 	IMPORT_C void SetPaging(const TChunkPagingAtt aPaging);
+	IMPORT_C void SetReadOnly();
 	void SetThreadHeap(TInt aInitialSize, TInt aMaxSize, const TDesC& aName);
 
 	/**

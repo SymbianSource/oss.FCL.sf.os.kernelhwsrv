@@ -387,14 +387,16 @@ public:
         EKernPerfLog = 5,
 
         /**
-		@internalTechnology
-        @prototype 9.3
+		Trace generated when client-server activity takes place such as server creation,
+		session management, message handling, etc.
+
+		If #Prime is called with this category, traces will be generated for all
+		servers currently running and their sessions.
         */
         EClientServer = 6,
 
         /**
-		@internalTechnology
-        @prototype 9.3
+		Trace generated on thread request completion.
         */
         ERequests = 7,
 
@@ -773,14 +775,13 @@ public:
 	enum TClientServer
 		{
 		/**
-		Trace generated whenever a server is created.
+		Trace generated whenever a server is created and during prime.
 
 		Trace data format:
 		- 4 bytes containing the server id (a DServer*).
-		- 4 bytes containing undefined data
+		- 4 bytes containing the owning thread pointer (a DThread*).
 		- Remaining data is the ASCII name of the server.
 
-		The context id (NThread*) in this trace is that of the thread creating the server.
 		*/
 		EServerCreate,
 
@@ -794,14 +795,16 @@ public:
 		EServerDestroy,
 
 		/**
-		Trace generated whenever a new session is attached to a server.
+		Trace generated whenever a new session is attached to a server and during prime.
 		I.e. a new session has been created.
 
 		Trace data format:
 		- 4 bytes containing the session id (a DSession*).
 		- 4 bytes containing the server id (a DServer*).
+		- 4 bytes containing the owner id (a DObject*).
 
-		The context id (NThread*) in this trace is that of the thread creating the session.
+		The context id (NThread*) in this trace is that of the thread creating the session
+		(apart from during prime when it is NULL).
 		*/
 		ESessionAttach,
 

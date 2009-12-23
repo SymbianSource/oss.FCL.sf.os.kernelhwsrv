@@ -110,7 +110,9 @@ Note: callers of this function should be constructor of various caches, it is th
 */
 EXPORT_C CCacheMemoryClient* CCacheMemoryManager::ConnectClientL(const TDesC& aClientName, TUint32 aMinSizeInSegs, TUint32 aMaxSizeInSegs)
 	{
-	__PRINT3(_L("CCacheMemoryManager::ConnectClientL: [%S], minSeg=%d, maxSeg=%d"), &aClientName, aMinSizeInSegs, aMaxSizeInSegs);
+	__PRINT3(_L("CCacheMemoryManager::ConnectClientL([%S], minSeg=%d, maxSeg=%d)"), &aClientName, aMinSizeInSegs, aMaxSizeInSegs);
+	
+	// search for existing clients by name
 	for (TInt i = 0; i < iRegisteredClients.Count(); i++)
 		{
 		if (aClientName.Compare(iRegisteredClients[i]->Name()) == 0)
@@ -121,20 +123,20 @@ EXPORT_C CCacheMemoryClient* CCacheMemoryManager::ConnectClientL(const TDesC& aC
 			}
 		}
 
+	// if it is a new drive/file system who wants to connect, create a new client for it
 	// parameter validation
 	ASSERT(iSizeInBytes > iCurrentOffsetMark + (aMaxSizeInSegs << SegmentSizeInBytesLog2()));
 	if (iSizeInBytes < iCurrentOffsetMark + (aMaxSizeInSegs << SegmentSizeInBytesLog2()))
 		{
 		ASSERT(0);
-		return NULL;
+		User::Leave(KErrArgument);
 		}
 	
-	// if not found in registered clients, creates new
-	// this may leave under OOM condition
+	// note: client creation may leave under OOM conditions
 	CCacheMemoryClient* client = CCacheMemoryClient::NewL(*this, aClientName, iCurrentOffsetMark, aMinSizeInSegs, aMaxSizeInSegs);
 
 	// if error happens during client registration, the client will be deleted
-	// this may leave under OOM condition
+	// this may leave under OOM conditions
 	TInt err = iRegisteredClients.Append(client);
 	if (err != KErrNone)
 		{
@@ -157,7 +159,7 @@ Commit a contiguous set of segments.
 */
 TInt CCacheMemoryManager::AllocateAndLockSegments(TUint8* aStartRamAddr, TInt aSegmentCount)
 	{
-	__PRINT2(_L("CCacheMemoryManager::AllocateAndLockSegments: base=0x%x, seg=%d"), aStartRamAddr, aSegmentCount);
+	__PRINT2(_L("CCacheMemoryManager::AllocateAndLockSegments(base=0x%x, seg=%d)"), aStartRamAddr, aSegmentCount);
 	TMemoryInfoV1Buf meminfo;
 	TInt r = UserHal::MemoryInfo(meminfo);
 	__ASSERT_DEBUG(r==KErrNone,Fault(EMemoryInfoFailed));

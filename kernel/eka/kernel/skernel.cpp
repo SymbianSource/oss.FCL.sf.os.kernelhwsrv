@@ -1173,6 +1173,13 @@ TInt DChunk::Create(SChunkCreateInfo& aInfo)
 		return KErrArgument;
 		}
 
+	// Check if chunk is read-only
+	if (aInfo.iAtt & TChunkCreate::EReadOnly)
+		{
+		iAttributes |= EReadOnly;
+		iRestrictions |= EChunkPreventAdjust;
+		}
+
 	// Save the clear byte.
 	iClearByte = aInfo.iClearByte;
 
@@ -1195,11 +1202,12 @@ TInt DChunk::Create(SChunkCreateInfo& aInfo)
 TInt DChunk::AddToProcess(DProcess* aProcess)
 	{
 	__KTRACE_OPT(KEXEC,Kern::Printf("Adding chunk %O to process %O",this,aProcess));
-	TInt r=aProcess->AddChunk(this,EFalse);
-	if (r==KErrAccessDenied)
+	TBool readOnly = (iAttributes & EReadOnly) && (aProcess->iId != iControllingOwner);
+	TInt r = aProcess->AddChunk(this, readOnly);
+	if (r == KErrAccessDenied)
 		{
 		__KTRACE_OPT(KEXEC,Kern::Printf("Chunk is private - will not be mapped in to process"));
-		r=KErrNone;
+		r = KErrNone;
 		}
 	return r;
 	}
@@ -1211,7 +1219,7 @@ void DChunk::BTracePrime(TInt aCategory)
 	if (aCategory == BTrace::EChunks || aCategory == -1)
 		{
 		TKName nameBuf;
-		Name(nameBuf);				
+		Name(nameBuf);
 		BTraceN(BTrace::EChunks,BTrace::EChunkCreated,this,iMaxSize,nameBuf.Ptr(),nameBuf.Size());
 		if(iOwningProcess)
 			BTrace8(BTrace::EChunks,BTrace::EChunkOwner,this,iOwningProcess);

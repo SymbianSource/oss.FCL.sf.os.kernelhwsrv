@@ -32,6 +32,8 @@ class TBlockTransfer
 public:
     TBlockTransfer();
 
+    void InitBuffers(RBuf8* aHeadbuf, RBuf8* aTailbuf);
+
     void ReadL(MBlockTransferProtocol& aProtocol,
                TPos aPosition,
                TInt aLength,
@@ -43,7 +45,7 @@ public:
                 TDesC8& aBuf);
 
     TUint32 BlockLength() const;
-    void SetCapacity(TUint32 aBlockLength, TLba aLastLba);
+    void SetCapacityL(TUint32 aBlockLength, TLba aLastLba);
 
 private:
     TPos GetHeadBlockOffset(TPos aPos);
@@ -57,12 +59,18 @@ private:
     TInt64 iBlockLength;
     /** Last Logical Block Address */
     TLba iLastLba;
+
+    // buffers for block manipulation (not owend by this class)
+    RBuf8* iHeadbuf;
+	RBuf8* iTailbuf;
     };
 
 
 /** Constructor */
 inline TBlockTransfer::TBlockTransfer()
-:   iBlockLength(0)
+:   iBlockLength(0),
+    iHeadbuf(NULL),
+    iTailbuf(NULL)
     {
     }
 
@@ -71,6 +79,13 @@ inline TBlockTransfer::TBlockTransfer()
 inline TUint32 TBlockTransfer::BlockLength() const
     {
     return iBlockLength;
+    }
+
+
+inline void TBlockTransfer::InitBuffers(RBuf8* aHeadbuf, RBuf8* aTailbuf)
+    {
+    iHeadbuf = aHeadbuf;
+    iTailbuf = aTailbuf;
     }
 
 #endif // TBLOCKTRANSFER_H

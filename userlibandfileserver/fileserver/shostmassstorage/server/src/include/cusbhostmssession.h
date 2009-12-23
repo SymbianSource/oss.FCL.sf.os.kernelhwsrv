@@ -33,9 +33,8 @@ enum TUsbMsPanicClient
 //
 // Forward declarations
 //
-class CUsbMassStorageServer;
-class CUsbHostMsDevice;
 class CUsbHostMsServer;
+class CUsbHostMsDeviceThread;
 
 /**
  The CUsbMassStorageSession class
@@ -50,6 +49,8 @@ public:
 	// CSession
 	virtual void ServiceL(const RMessage2& aMessage);
 
+    void MessageRequest(TRequestStatus& aStatus);
+
 protected:
 	CUsbHostMsSession(CUsbHostMsServer& aServer);
 	void ConstructL();
@@ -61,7 +62,8 @@ private:
 	CUsbHostMsServer& iUsbHostMsServer;
 	CUsbHostMsDeviceThread* iDeviceThread;
 	RThread	iThread;
-	TUint32 iMsgCount;
+
+    TRequestStatus* iClientStatus;
 	};
 
 #endif //__CUSBMASSSTORAGESESSION_H__

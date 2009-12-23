@@ -110,7 +110,6 @@ LOCAL_C void Compare(const TDesC& aDir1,const TDesC& aDir2)
 // Test that the contents of two directories are identical
 //
 	{
-
 	CDirScan* scanDir1=CDirScan::NewL(TheFs);
 	scanDir1->SetScanDataL(aDir1,KEntryAttMaskSupported,ESortByName);
 	CDirScan* scanDir2=CDirScan::NewL(TheFs);
@@ -241,13 +240,12 @@ TBool CheckIfShortPathsAreSupported()
 	return ret;
 	}
 	
-	LOCAL_C void TestDelete()
+LOCAL_C void TestDelete()
 //
 // Test files are deleted
 //
 	{
-	
-	test.Next(_L("Set up files and start deleting"));
+	test.Next(_L("Test delete - Set up files and start deleting"));
 
 	MakeDir(_L("\\F32-TST\\TFMAN\\DELDIR\\DELTEST\\EMPTY\\"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\DELDIR\\FILE1.TXT"));
@@ -391,6 +389,7 @@ _LIT(KInvalidLongPath, "\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\
 	test(r == KErrNone || r == KErrNotFound);
     if (f.FindF(_L("Fat")) == 0 )
     	{
+		test.Next(_L("Test wild card matching in short file names"));
     	MakeFile(_L("abcdefghi.txt"));
     	TInt err = gFileMan->Delete(_L("ABCDEF~*"));
     	test(err == KErrNone);
@@ -411,7 +410,6 @@ LOCAL_C void TestCopy()
 // Test copy
 //
 	{
-
 	test.Next(_L("Test copy"));
 	RmDir(_L("\\F32-TST\\TFMAN\\COPYDIR\\*"));
 
@@ -433,8 +431,8 @@ LOCAL_C void TestCopy()
 	TInt r;
 	
 	if (testingInvalidPathLengths)
-//	Create a path of greater 256 characters by renaming a directory and check it can be
-//	manipulated (tests fix to F32)		
+		// Create a path of greater than 256 characters by renaming a directory and
+		// check it can be manipulated (tests fix to F32)
 		{
 		MakeDir(_L("\\START\\LONG\\"));
 		MakeDir(_L("\\FINISH\\"));
@@ -612,8 +610,8 @@ LOCAL_C void TestCopy()
 	test(r==KErrNone);
 	r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\DELDIR\\RUMBA?.TXT"));
 	test(r==KErrNone);
-	
 	}
+
 LOCAL_C void TestDEF121663_Setup(TFileName& aSrcPath)
 	{
 	RmDir(aSrcPath);
@@ -630,7 +628,7 @@ LOCAL_C void TestDEF121663_Setup(TFileName& aSrcPath)
 	
 LOCAL_C void TestDEF121663()
 	{
-	test.Next(_L("++TestDEF121663"));
+	test.Next(_L("Test moving directory to its subdirectory (DEF121663)"));
 	
 	gFileMan->SetObserver(NULL);
 	TInt err = 0;
@@ -694,12 +692,12 @@ LOCAL_C void TestDEF121663()
 	gFileMan->SetObserver(gObserver);
 	// remove previous dirs
 	RmDir(_L("C:\\TestDEF121663\\"));
-	test.Next(_L("--TestDEF121663"));
 	}
 
+// Test moving directories where source and target have matching subdirectory structures
 LOCAL_C void TestDEF123575()
 	{
-	test.Next(_L("++TestDEF123575"));
+	test.Next(_L("Test moving directories with matching subdirectory structures (DEF123575)"));
 	TFileName srcPath;
 	TFileName destPath;
 	TInt err;
@@ -732,12 +730,11 @@ LOCAL_C void TestDEF123575()
 	
 	//delete the entire directory structure
 	RmDir(_L("\\F32-TST\\DEF123575\\*"));
-	test.Next(_L("--TestDEF123575"));
 	}
 
 LOCAL_C void TestDEF125570()
 	{
-	test.Next(_L("++TestDEF125570"));
+	test.Next(_L("Test move when trg has at least one of the src dirs (DEF125570)"));
 	gFileMan->SetObserver(NULL);
 	TInt err = KErrNone; 
 	TFileName srcPath = _L("C:\\TestDEF125570\\src\\");
@@ -774,12 +771,11 @@ LOCAL_C void TestDEF125570()
 	gFileMan->SetObserver(gObserver);
 	// remove previous dirs
 	RmDir(_L("C:\\TestDEF125570\\"));
-	test.Next(_L("--TestDEF125570"));
 	}
 
 LOCAL_C void TestDEF130404()
 	{
-	test.Printf(_L("++TestDEF130404"));
+	test.Printf(_L("Test move when the src doesn't fully exist (DEF130404)"));
 	
 	TInt r = 0;
 	TFileName trgPath;
@@ -805,125 +801,190 @@ LOCAL_C void TestDEF130404()
 	trgPath.Format(_L("%c:\\TestDEF130404\\"), (TUint8)gDriveToTest);
 	RmDir(trgPath);
 	RmDir(_L("C:\\TestDEF130404\\"));
-	
-	test.Printf(_L("--TestDEF130404"));
 	}
 
 
 /**
-This is to test that moving files to overwrite folders with the same names 
-returns proper error code. 
+This is to test that moving files to overwrite folders with the same names
+and moving folders (directories) to overwrite files with the same names
+across drives return proper error codes
 */
 void TestPDEF137716()
 	{
-	test.Next(_L("Test moving files to overwrite folders or folders to files"));
+	// Do not run tests if we cannot move across different drives
+	if (gSessionPath[0]=='C')
+		return; 
 
-	TInt err = KErrNone;
+	// Move FILE to overwrite FOLDER --------------------------------------------------------
+	test.Next(_L("Test moving files to overwrite folders with the same names"));
 	gFileMan->SetObserver(NULL);
+
+	_LIT(KFixedTargetTestFolder,		"\\PDEF137716\\");
+	_LIT(KFileToDirTargetCreatePath,	"\\PDEF137716\\FileToDir_Target\\ITEM\\");
+	_LIT(KFileToDirTargetNameWild,		"\\PDEF137716\\FileToDir_Target\\");
+
+	_LIT(KFixedSourceTestFolder,		"C:\\PDEF137716\\");
+	_LIT(KFileToDirSourceName,			"C:\\PDEF137716\\FileToDir_Source\\ITEM");
+	_LIT(KFileToDirSourceNameWild,		"C:\\PDEF137716\\FileToDir_Source\\");
+
+	RmDir(KFixedTargetTestFolder);
+	RmDir(KFixedSourceTestFolder);
+	MakeDir(KFileToDirTargetCreatePath);
+	MakeFile(KFileToDirSourceName);
+	TInt err = KErrNone;
+
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KFileToDirSourceName, KFileToDirTargetNameWild, 0);
+		}
+	else
+		{
+		err = gFileMan->Move(KFileToDirSourceName, KFileToDirTargetNameWild, 0, gStat);
+		}
+	TestResult(err,KErrAccessDenied);
+
+	RmDir(KFixedTargetTestFolder);
+	RmDir(KFixedSourceTestFolder);
+	MakeDir(KFileToDirTargetCreatePath);
+	MakeFile(KFileToDirSourceName);	
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KFileToDirSourceName, KFileToDirTargetNameWild, CFileMan::EOverWrite);
+		}
+	else
+		{
+		err = gFileMan->Move(KFileToDirSourceName, KFileToDirTargetNameWild, CFileMan::EOverWrite, gStat);
+		}
+	TestResult(err,KErrAccessDenied);
+
+	RmDir(KFixedTargetTestFolder);
+	RmDir(KFixedSourceTestFolder);
+	MakeDir(KFileToDirTargetCreatePath);
+	MakeFile(KFileToDirSourceName);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KFileToDirSourceNameWild, KFileToDirTargetNameWild, 0);
+		}
+	else
+		{
+		err = gFileMan->Move(KFileToDirSourceNameWild, KFileToDirTargetNameWild, 0, gStat);
+		}
+	TestResult(err,KErrAccessDenied);
+
+	RmDir(KFixedTargetTestFolder);
+	RmDir(KFixedSourceTestFolder);
+	MakeDir(KFileToDirTargetCreatePath);
+	MakeFile(KFileToDirSourceName);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KFileToDirSourceNameWild, KFileToDirTargetNameWild, CFileMan::EOverWrite);
+		}
+	else
+		{
+		err = gFileMan->Move(KFileToDirSourceNameWild, KFileToDirTargetNameWild, CFileMan::EOverWrite, gStat);
+		}
+	TestResult(err,KErrAccessDenied);
+
 	
-#if defined(__WINS__)
-	_LIT(KFileToDirTargetName,			"Y:\\PDEF137716\\FileToDir_Target\\ITEM");
-	_LIT(KFileToDirTargetNameWild,		"Y:\\PDEF137716\\FileToDir_Target\\");
-
-	_LIT(KFixedTargetTestFolder,		"Y:\\PDEF137716\\");
-	_LIT(KFileToDirTargetCreatePath,	"Y:\\PDEF137716\\FileToDir_Target\\ITEM\\");
-#else
-	_LIT(KFileToDirTargetName,			"D:\\PDEF137716\\FileToDir_Target\\ITEM");
-	_LIT(KFileToDirTargetNameWild,		"D:\\PDEF137716\\FileToDir_Target\\");
-
-	_LIT(KFixedTargetTestFolder,		"D:\\PDEF137716\\");
-	_LIT(KFileToDirTargetCreatePath,	"D:\\PDEF137716\\FileToDir_Target\\ITEM\\");
-#endif
-
-	_LIT(KFixedSrouceTestFolder,		"\\PDEF137716\\");
-	_LIT(KFileToDirSourceName,			"\\PDEF137716\\FileToDir_Source\\ITEM");
-	_LIT(KFileToDirSourceNameWild,		"\\PDEF137716\\FileToDir_Source\\");
+	// Move FOLDER to overwrite FILE --------------------------------------------------------
+	test.Next(_L("Test moving folders to overwrite files with the same names"));
 	
-	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
-	MakeDir(KFileToDirTargetCreatePath);
-	MakeFile(KFileToDirSourceName);
-	err = gFileMan->Move(KFileToDirSourceName, KFileToDirTargetNameWild, 0);
-	test(err == KErrAccessDenied);
-
-	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
-	MakeDir(KFileToDirTargetCreatePath);
-	MakeFile(KFileToDirSourceName);
-	err = gFileMan->Move(KFileToDirTargetName, KFileToDirSourceNameWild, CFileMan::EOverWrite);
-	test(err == KErrAccessDenied);
-
-	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
-	MakeDir(KFileToDirTargetCreatePath);
-	MakeFile(KFileToDirSourceName);
-	err = gFileMan->Move(KFileToDirSourceNameWild, KFileToDirTargetNameWild, 0);
-	test(err == KErrAccessDenied);
-
-	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
-	MakeDir(KFileToDirTargetCreatePath);
-	MakeFile(KFileToDirSourceName);
-	err = gFileMan->Move(KFileToDirSourceNameWild, KFileToDirTargetNameWild, CFileMan::EOverWrite);
-	test(err == KErrAccessDenied);
-
-#if defined(__WINS__)
-	_LIT(KDirToFileTargetName,			"Y:\\PDEF137716\\DirToFile_Target\\ITEM");
-	_LIT(KDirToFileTargetNameWild,		"Y:\\PDEF137716\\DirToFile_Target\\");
-#else
-	_LIT(KDirToFileTargetName,			"D:\\PDEF137716\\DirToFile_Target\\ITEM");
-	_LIT(KDirToFileTargetNameWild,		"D:\\PDEF137716\\DirToFile_Target\\");
-#endif
+	_LIT(KDirToFileTargetName,			"\\PDEF137716\\DirToFile_Target\\ITEM");
+	_LIT(KDirToFileTargetNameWild,		"\\PDEF137716\\DirToFile_Target\\");
 	
-	_LIT(KDirToFileSourceName,			"\\PDEF137716\\DirToFile_Source\\ITEM");
-	_LIT(KDirToFileSourceNameWild,		"\\PDEF137716\\DirToFile_Source\\");
+	_LIT(KDirToFileSourceName,			"C:\\PDEF137716\\DirToFile_Source\\ITEM");
+	_LIT(KDirToFileSourceNameWild,		"C:\\PDEF137716\\DirToFile_Source\\");
 
-	_LIT(KDirToFileSourceCreatePath,	"\\PDEF137716\\DirToFile_Source\\ITEM\\");
+	_LIT(KDirToFileSourceCreatePath,	"C:\\PDEF137716\\DirToFile_Source\\ITEM\\");
 
 	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
+	RmDir(KFixedSourceTestFolder);
 	MakeFile(KDirToFileTargetName);
 	MakeDir(KDirToFileSourceCreatePath);
-	err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetName, 0);
-	test(err == KErrAccessDenied);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetName, 0);
+		}
+	else
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetName, 0, gStat);
+		}
+	TestResult(err,KErrAccessDenied,KErrAccessDenied);
 
 	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
+	RmDir(KFixedSourceTestFolder);
 	MakeFile(KDirToFileTargetName);
 	MakeDir(KDirToFileSourceCreatePath);
-	err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetName, CFileMan::EOverWrite);
-	test(err == KErrAccessDenied);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetName, CFileMan::EOverWrite);
+		}
+	else
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetName, CFileMan::EOverWrite, gStat);
+		}
+	TestResult(err,KErrAccessDenied,KErrAccessDenied);
 
 	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
+	RmDir(KFixedSourceTestFolder);
 	MakeFile(KDirToFileTargetName);
 	MakeDir(KDirToFileSourceCreatePath);
-	err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetNameWild, 0);
-	test(err == KErrAccessDenied);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetNameWild, 0);
+		}
+	else
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetNameWild, 0, gStat);
+		}
+	TestResult(err,KErrAccessDenied,KErrAccessDenied);
 
 	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
+	RmDir(KFixedSourceTestFolder);
 	MakeFile(KDirToFileTargetName);
 	MakeDir(KDirToFileSourceCreatePath);
-	err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetNameWild, CFileMan::EOverWrite);
-	test(err == KErrAccessDenied);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetNameWild, CFileMan::EOverWrite);
+		}
+	else
+		{
+		err = gFileMan->Move(KDirToFileSourceName, KDirToFileTargetNameWild, CFileMan::EOverWrite, gStat);
+		}
+	TestResult(err,KErrAccessDenied,KErrAccessDenied);
 
 	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
+	RmDir(KFixedSourceTestFolder);
 	MakeFile(KDirToFileTargetName);
 	MakeDir(KDirToFileSourceCreatePath);
 	err = gFileMan->Move(KDirToFileSourceNameWild, KDirToFileTargetNameWild, 0);
-	test(err == KErrNotFound);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KDirToFileSourceNameWild, KDirToFileTargetNameWild, 0);
+		}
+	else
+		{
+		err = gFileMan->Move(KDirToFileSourceNameWild, KDirToFileTargetNameWild, 0, gStat);
+		}
+	TestResult(err,KErrNotFound);
 
 	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
+	RmDir(KFixedSourceTestFolder);
 	MakeFile(KDirToFileTargetName);
 	MakeDir(KDirToFileSourceCreatePath);
-	err = gFileMan->Move(KDirToFileSourceNameWild, KDirToFileTargetNameWild, CFileMan::EOverWrite);
-	test(err == KErrNotFound);
+	if(!gAsynch)
+		{
+		err = gFileMan->Move(KDirToFileSourceNameWild, KDirToFileTargetNameWild, CFileMan::EOverWrite);
+		}
+	else
+		{
+		err = gFileMan->Move(KDirToFileSourceNameWild, KDirToFileTargetNameWild, CFileMan::EOverWrite, gStat);
+		}
+	TestResult(err,KErrNotFound);
 
 	RmDir(KFixedTargetTestFolder);
-	RmDir(KFixedSrouceTestFolder);
+	RmDir(KFixedSourceTestFolder);
+	gFileMan->SetObserver(gObserver);
 	}
 
 LOCAL_C void TestMove()
@@ -931,7 +992,6 @@ LOCAL_C void TestMove()
 // Test Move
 //
 	{
-
 	test.Next(_L("Test move"));
 	RmDir(_L("\\F32-TST\\TFMAN\\MOVEDIR\\*"));
 
@@ -947,8 +1007,8 @@ LOCAL_C void TestMove()
 	TInt r=KErrNone;
 
 	if (testingInvalidPathLengths)
-//	Create a path of greater 256 characters by renaming a directory and check it can be
-//	manipulated (tests fix to F32)		
+		//	Create a path of greater 256 characters by renaming a directory and check it can be
+		//	manipulated (tests fix to F32)		
 		{
 		MakeDir(_L("\\START\\LONG\\"));
 		MakeDir(_L("\\FINISH\\"));
@@ -959,7 +1019,7 @@ LOCAL_C void TestMove()
 		r=gFileMan->Rename(_L("\\START\\LONG"),_L("\\START\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff"),CFileMan::EOverWrite);
 		test(r==KErrNone);
 
-	//	Two long directory names - makes paths invalid
+		//	Two long directory names - makes paths invalid
 		MakeDir(_L("\\TEST\\LONG\\NAME\\FGHIJ"));
 		MakeDir(_L("\\TEST\\LONG\\NAME\\FGHIJ\\DIRECTORY1DIRECTORY2DIRECTORY3DIRECTORY4\\"));
 		MakeFile(_L("\\TEST\\LONG\\NAME\\FGHIJ\\ELEPHANT01ELEPHANT02ELEPHANT03ELEPHANT04"));
@@ -1118,16 +1178,13 @@ LOCAL_C void TestMove()
 		r=gFileMan->RmDir(_L("\\TEST\\"));
 		test(r==KErrNone);
 		}
-	// Test moving directory to its subdirectory
-	TestDEF121663();
-	TestDEF123575();
-	//Test Move when trg has at least one of the src dirs
-	TestDEF125570();
-	//Test move when the src doesn't fully exist 
-	TestDEF130404();
 	
-	// Test moving files to overwrite folders that have the same names.
-	TestPDEF137716();
+	TestDEF121663(); // Test moving directory to its subdirectory
+	TestDEF123575(); // Test moving directories where src and trg have matching subdirectory structures
+	TestDEF125570(); // Test move when trg has at least one of the src dirs
+	TestDEF130404(); // Test move when the src doesn't fully exist
+	if (!IsTestingLFFS())
+		TestPDEF137716(); // Test moving files to overwrite folders that have the same names
 	}
 
 LOCAL_C void TestSimultaneous()
@@ -1135,8 +1192,7 @@ LOCAL_C void TestSimultaneous()
 // Create and run two CFileMen simultaneously
 //
 	{
-
-	test.Next(_L("Create and run two CFileMans simultaneously"));
+	test.Next(_L("Test create and run two CFileMans simultaneously"));
 	RmDir(_L("\\F32-TST\\TFMAN\\fman2\\"));
 
 	MakeDir(_L("\\F32-TST\\TFMAN\\FMAN1\\"));
@@ -1175,12 +1231,14 @@ LOCAL_C void TestSimultaneous()
 	Compare(_L("\\F32-TST\\TFMAN\\After\\*"),_L("\\F32-TST\\TFMAN\\FMAN2\\*"));
 	}
 
+// Test wildcards are replaced with letters from the matched file (CFileMan::CreateTargetNameFromSource)
 LOCAL_C void TestDEF092084()
 	{
 	if(gAsynch)  
 		{
 		return;
 		}
+	test.Next(_L("Test wildcards are replaced with letters from the matched file (DEF092084)"));
 	MakeDir(_L("\\DEF092084"));
 	MakeFile(_L("\\DEF092084\\FILE1.TXT"));
 	
@@ -1248,98 +1306,59 @@ void TestINC109754()
 /*
 Test code for INC111038() and executed with Cache enabled and FS_NOT_RUGGED.
 */
-
 LOCAL_C void TestINC111038()
 	{
-	////////////////////////////////////////////////////////
-	////
-
 	TInt r;
+	test.Next(_L("Test example of incorrect attribute flushing"));
 
-	test.Next(_L("Example of incorrect attribute flushing"));
-	////
-	////////////////////////////////////////////////////////
-	////
 	_LIT(KTestFile, "\\TESTFILE.TXT");
 	
-	
-	////////////////////////////////////////////////////////
-	//// 2: Create Test File
-	////
-	test.Printf(_L("2: Create Test File\n"));
+	test.Printf(_L("1: Create Test File\n"));
 	RFile testFile;
 	r = testFile.Create(TheFs, KTestFile, EFileRead | EFileWrite);
 	test(r == KErrNone);
 
-	////////////////////////////////////////////////////////
-	//// 3: Populate Data
-	////
-	test.Printf(_L("\n3: Populate testFile1 Data\n"));
+	test.Printf(_L("2: Populate testFile1 Data\n"));
 	r = testFile.Write(_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
 	test(r == KErrNone);
 
-
-	////////////////////////////////////////////////////////
-	//// 4: Get Initial Attributes
-	////
-	test.Printf(_L("\n4: Get Initial Attributes\n"));
+	test.Printf(_L("3: Get Initial Attributes\n"));
 	TUint atts = 0;
 	r = testFile.Att(atts);
 	test(r == KErrNone);
-	test.Printf(_L("\n   Attributes: %08x"), atts);
+	test.Printf(_L("   Attributes: %08x"), atts);
 
-	////////////////////////////////////////////////////////
-	//// 5: Set KEntryAttHidden Attribute
-	////
-	test.Printf(_L("\n5: Set KEntryAttHidden Attribute"));
+	test.Printf(_L("4: Set KEntryAttHidden Attribute\n"));
 	r = testFile.SetAtt(KEntryAttHidden, 0);
 	test(r == KErrNone);
 
-	
-	////////////////////////////////////////////////////////
-	//// 6: Verify KEntryAttHidden Attribute is set
-	////
-	test.Printf(_L("\n6: Verify KEntryAttHidden Attribute is set for testFile1"));
+	test.Printf(_L("5: Verify KEntryAttHidden Attribute is set for testFile1\n"));
 	r = testFile.Att(atts);
 	test(r == KErrNone);
 	test(atts & KEntryAttHidden);
 
-
-  	////////////////////////////////////////////////////////
-	//// 7: Read Data from beginning of file
-	////
-	test.Printf(_L("\n7: Read Data from beginning of file testFile1\n"));
+	test.Printf(_L("6: Read Data from beginning of file testFile1\n"));
 	TBuf8<4> data;
 	r = testFile.Read(0, data);
 	test(r == KErrNone);
 
-
-     ////////////////////////////////////////////////////////
-	//// 8: Close file
-	////
-	test.Printf(_L("\n8: Close all the testFiles"));
+	test.Printf(_L("7: Close all the testFiles\n"));
 	testFile.Close();
 	
-
-   	////////////////////////////////////////////////////////
-	//// 9: Verify KEntryAttHidden is present
-	////
-	test.Printf(_L("\n9: Verify KEntryAttHidden is present"));
+	test.Printf(_L("8: Verify KEntryAttHidden is present\n"));
 	r = TheFs.Att(KTestFile, atts);
 	test(r == KErrNone);
-	test.Printf(_L(" \n Finally, attributes are : %08x"), atts);
+	test.Printf(_L("  Finally, attributes are : %08x\n"), atts);
 	test(atts & KEntryAttHidden);
 	
-	
-	test.Printf(_L("10: Delete Test File"));
-	 r = TheFs.Delete(KTestFile);
+	test.Printf(_L("9: Delete Test File\n"));
+	r = TheFs.Delete(KTestFile);
 	test(r == KErrNone || r == KErrNotFound);
-
 	}
 	
 LOCAL_C void TestDEF113299()
 	{
-	test.Next(_L("TestDEF113299"));
+	test.Next(_L("Test invalid file rename (DEF113299)"));
 	
 	TInt err =0;
 	TFileName srcFileName = _L("C:\\F32-TST\\TFMAN\\DEF113299\\src\\corner.html");
@@ -1349,6 +1368,8 @@ LOCAL_C void TestDEF113299()
 	
 	RmDir(_L("C:\\F32-TST\\TFMAN\\DEF113299\\"));
 	MakeFile(srcFileName,_L8("Test Data"));
+	
+	// Renaming a file with invalid special characters should fail with error code KErrBadName(-28)
 	if (!gAsynch)
 		err = gFileMan->Rename(srcFileName,trgInvalidFileName);
 	else
@@ -1369,8 +1390,7 @@ LOCAL_C void TestRename()
 // Test rename with wildcards
 //
 	{
-
-	test.Next(_L("Rename with wildcards"));
+	test.Next(_L("Test rename with wildcards"));
 	RmDir(_L("\\F32-TST\\TFMAN\\rename\\dest\\"));
 	
 	MakeDir(_L("\\F32-TST\\TFMAN\\RENAME\\DEST\\"));
@@ -1601,9 +1621,9 @@ LOCAL_C void TestRename()
 	err=TheFs.SetSessionPath(sessionPath);
 	test(err==KErrNone);
 	
-	TestINC109754();
-	TestDEF092084();
-	TestDEF113299();
+	TestINC109754(); // Test empty source directory should exist after contents being renamed
+	TestDEF092084(); // Test wildcards are replaced with letters from the matched file
+	TestDEF113299(); // Test invalid file rename
 	}
 
 LOCAL_C void TestAttribs()
@@ -1611,8 +1631,7 @@ LOCAL_C void TestAttribs()
 // Test attribs
 //
 	{
-
-	test.Next(_L("Set file attributes"));
+	test.Next(_L("Test set file attributes"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\ATTRIBS\\Attrib1.AT"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\ATTRIBS\\Attrib2.at"));
 
@@ -1681,7 +1700,8 @@ LOCAL_C void TestAttribs()
 	test(entry.iModified==time);
 	delete entryList;
 	delete scan;
-	TestINC111038();
+	
+	TestINC111038(); // Test example of incorrect attribute flushing
 	}
 	
 LOCAL_C void  TestINC091841()
@@ -1691,6 +1711,7 @@ LOCAL_C void  TestINC091841()
 		return;
 		}
 
+	test.Next(_L("Test delete long fullnames (INC091841)"));
 	MakeDir(_L("\\12345678\\Book\\12345678\\"));
 	TFileName longname;
 	longname.Copy(_L("\\12345678\\Book\\12345678\\12345678901234567890123456789012345678901234567890.x"));
@@ -1732,7 +1753,6 @@ LOCAL_C void TestRmDir()
 // Test rmdir function
 //
 	{
-
 	test.Next(_L("Test rmdir function"));
 
 	MakeDir(_L("\\F32-TST\\TFMAN\\RMDIR\\EMPTY\\"));
@@ -1811,7 +1831,6 @@ LOCAL_C void TestRmDir()
 			test(r==KErrNone);
 			WaitForSuccess();
 			}
-
 		}
 
 	TEntry entry;
@@ -1864,7 +1883,7 @@ LOCAL_C void TestRmDir()
 	
 	if(testingInvalidPathLengths)
 		{
-		TestINC091841();
+		TestINC091841(); // Test delete long fullnames
 		}
 
 	//--------------------------------------------- 
@@ -1878,6 +1897,7 @@ LOCAL_C void TestRmDir()
 	//! @SYMTestStatus			Implemented 
 	//--------------------------------------------- 	
 
+	test.Next(_L("Test delete directory containing open files"));
 	gFileMan->SetObserver(NULL);
 
 	MakeDir(_L("\\F32-TST\\TFMAN\\OPENFILE\\"));
@@ -1918,7 +1938,6 @@ LOCAL_C void TestRecursiveCopy()
 // Test the recursive copy function
 //
 	{
-
 	test.Next(_L("Test recursive copy"));
 	RmDir(_L("\\F32-TST\\TFMAN\\COPYDIR\\"));
 
@@ -1994,7 +2013,6 @@ LOCAL_C void TestRecursiveAttribs()
 // Test set attribs recursively
 //
 	{
-
 	test.Next(_L("Test recursive attribs"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\Attrib1.AT"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\Attrib2.at"));
@@ -2092,7 +2110,6 @@ LOCAL_C void TestRecursiveDelete()
 // Test Recursive delete
 //
 	{
-
 	test.Next(_L("Test recursive delete"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\RECDELETE\\FULL\\GRAPE.TXT"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\RECDELETE\\FULL\\GRAPE.PLP"));
@@ -2120,7 +2137,7 @@ LOCAL_C void TestRecursiveDelete()
 LOCAL_C void TestINC108401()
   {
    	
-   	test.Next(_L("Test INC108401 : starts"));
+   	test.Next(_L("Test synchronous and asynchronous move operations (INC108401)"));
    	TInt err = 0;
    	
 	TFileName trgPath = _L("?:\\F32-TST\\");
@@ -2258,7 +2275,7 @@ LOCAL_C void TestINC108401()
 	RmDir(trgPath);
 	RmDir(_L("\\F32-TST\\"));
 
-	test.Next(_L("Test INC108401 : ends"));
+	test.Printf(_L("Test INC108401 : ends\n"));
   }
 
 LOCAL_C void TestINC089638()
@@ -2267,6 +2284,8 @@ LOCAL_C void TestINC089638()
 		{
 		return;
 		}
+	
+	test.Next(_L("Test all items removed from source directory after recursive moving (INC089638)"));
 	RmDir(_L("\\INC089638\\source\\"));
 	RmDir(_L("\\INC089638\\dest\\"));
 	MakeFile(_L("\\INC089638\\source\\file1"));
@@ -2289,6 +2308,7 @@ LOCAL_C void TestINC089638()
 
 void TestINC101379()
 	{
+	test.Next(_L("Test moving of directory to its subdirectory recursively and not recursively (INC101379)"));
 	TInt err;
 	_LIT(KSourceDir,"\\INC101379\\dir\\");
 	_LIT(KFile1, "\\INC101379\\dir\\file1.txt");
@@ -2329,6 +2349,9 @@ void TestINC101379()
 	
  void TestINC099600() // and INC101061
 	{
+	// Test move files from the internal drive to an external one (INC099600)
+	// Test move files with system (KEntryAttSystem) or hidden (KEntryAttHidden) attributes (INC101061)
+	test.Next(_L("Test move files from internal drive to external with system and hidden attributes"));
 	_LIT(KDest,"C:\\DEST099600\\");
 	TBuf<64> source;
 	source.Format(_L("%c:\\INC099600\\"), (TUint) gDriveToTest);
@@ -2683,9 +2706,10 @@ LOCAL_C void TestRecursiveMove()
 	TestResult(err, KErrNone);
 	Compare(_L("\\F32-TST\\TFMAN\\INC106735\\"), _L("\\F32-TST\\TFMAN\\INC106735_COM\\"));
 
-	TestINC089638();
-	TestINC101379();
-	TestINC099600();  // and INC101061
+	TestINC089638(); // Test all items removed from source directory after recursive moving
+	TestINC101379(); // Test moving of directory to its subdirectory recursively and not recursively
+	TestINC099600(); // and INC101061, Test move files from internal drive to external with system
+					 // 			   and hidden attributes
 	}
 
 
@@ -2740,12 +2764,10 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 // Test recursive move across drives
 //
 	{
-
 	test.Next(_L("Test recursive move across drives"));
 
 	TFileName trgDir   = _L("\\F32-TST\\TFMAN\\RECMOVE2\\");
 	TFileName trgSpec  = _L("\\F32-TST\\TFMAN\\RECMOVE2\\*");
-
 
 	if (gSessionPath[0]=='C')
 		{
@@ -2771,6 +2793,7 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 		err=gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\RECMOVE\\*.PLP"),trgDir,CFileMan::ERecurse);
 	else
 		err=gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\RECMOVE\\*.PLP"),trgDir,CFileMan::ERecurse,gStat);
+	test.Printf(_L("TestRecursiveMoveAcrossDrives(),gFileMan->Move(),err=%d\n"),err);
 	TestResult(err);
 
 	RmDir(_L("C:\\F32-TST\\TFMAN\\after\\"));
@@ -2803,20 +2826,30 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	//! @SYMTestCaseID			PBASE-T_FMAN-0571
 	//! @SYMTestType			UT
 	//! @SYMREQ					INC108401
-	//! @SYMTestCaseDesc		This testcase tests the synchronous and asynchronous move operations exhaustively with flags set as 0, CFileMan::EOverWrite,
-	//!							CFileMan::ERecurse on the SAME and ACROSS drives without trailing slash at the end of source dir path.
+	//! @SYMTestCaseDesc		This testcase tests the synchronous and asynchronous move operations 
+	//!							exhaustively with flags set as 0, CFileMan::EOverWrite, CFileMan::ERecurse
+	//!							on the SAME and ACROSS drives without trailing slash at the end of source
+	//!							dir path.
 	//! @SYMTestActions			1. Copy directory structures to another directory across drive.
-	//! 						2. Copy directory structures to another directory across drive overwriting duplicate files.
+	//! 						2. Copy directory structures to another directory across drive overwriting
+	//!							   duplicate files.
 	//! 						3. Copy directory structures to another directory across drive.
 	//! 						4. Copy directory structures to another directory on same drive.
-	//! 						5. Copy directory structures to another directory on same drive overwriting duplicate files.
+	//! 						5. Copy directory structures to another directory on same drive overwriting
+	//!							   duplicate files.
 	//! 						6. Copy directory structures to another directory on same drive.
-	//! @SYMTestExpectedResults 1. Completes with no error, the last directory and its contents are moved from the src directory to the destination directory.
-	//!							2. Completes with no error, the last directory and its contents are moved from the src directory to the destination directory, duplicate files are updated.
-	//!							3. Completes with no error, the last directory and its contents are moved from the src directory to the destination directory.
-	//!							4. Completes with no error, the last directory and its contents are moved from the src directory to the destination directory.
-	//!							5. Completes with no error, the last directory and its contents are moved from the src directory to the destination directory, duplicate files are updated.
-	//!							6. Completes with no error, the last directory and its contents are moved from the src directory to the destination directory.
+	//! @SYMTestExpectedResults 1. Completes with no error, the last directory and its contents are moved
+	//!							   from the src directory to the destination directory.
+	//!							2. Completes with no error, the last directory and its contents are moved
+	//!							   from the src directory to the destination directory, duplicate files are updated.
+	//!							3. Completes with no error, the last directory and its contents are moved
+	//!							   from the src directory to the destination directory.
+	//!							4. Completes with no error, the last directory and its contents are moved
+	//!							   from the src directory to the destination directory.
+	//!							5. Completes with no error, the last directory and its contents are moved
+	//!							   from the src directory to the destination directory, duplicate files are updated.
+	//!							6. Completes with no error, the last directory and its contents are moved
+	//!							   from the src directory to the destination directory.
 	//! @SYMTestPriority		High
 	//! @SYMTestStatus			Implemented
 	//--------------------------------------------- 	
@@ -2980,7 +3013,6 @@ CFileManCopyAllCancel::CFileManCopyAllCancel(CFileMan* aFileMan)
 // Constructor
 //
 	{
-
 	__DECLARE_NAME(_S("CFileManCopyAllCancel"));
 	iFileMan=aFileMan;
 	}
@@ -2990,7 +3022,6 @@ MFileManObserver::TControl CFileManCopyAllCancel::NotifyFileManStarted()
 // Observer for TestCopyAllCancel tests
 //
 	{
-	
 	return(MFileManObserver::ECancel);
 	}
 
@@ -2999,7 +3030,6 @@ MFileManObserver::TControl CFileManCopyAllCancel::NotifyFileManEnded()
 // Observer for TestCopyAllCancel tests
 //
 	{
-	
 	return(MFileManObserver::EContinue);
 	}
 	
@@ -3007,10 +3037,9 @@ MFileManObserver::TControl CFileManCopyAllCancel::NotifyFileManEnded()
 	
 LOCAL_C void TestCopyAllCancel()
 //
-// Test copy ( all cancel)
+// Test copy (all cancel)
 //
 	{
-
 	test.Next(_L("Test copy all cancel"));
 	
 	RmDir(_L("\\F32-TST\\TFMAN\\COPYDIR\\*"));
@@ -3018,7 +3047,6 @@ LOCAL_C void TestCopyAllCancel()
 	CleanupStack::PushL(fManObserver);
 	gFileMan->SetObserver(fManObserver);
 	
-
 	MakeDir(_L("\\F32-TST\\TFMAN\\COPYDIR\\"));
 	MakeDir(_L("\\F32-TST\\TFMAN\\DELDIR\\DELTEST\\EMPTY\\"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\NewDir\\ABC.DEF"));
@@ -3049,7 +3077,6 @@ LOCAL_C void TestCopyAllCancel()
 	TestResult(r,KErrCancel);
 	gFileMan->SetObserver(gObserver);
 	CleanupStack::PopAndDestroy();
-	
 	}
 
 class CFileManObserverOverWrite : public CBase, public MFileManObserver
@@ -3067,7 +3094,6 @@ CFileManObserverOverWrite::CFileManObserverOverWrite(CFileMan* aFileMan)
 // Constructor
 //
 	{
-
 	__DECLARE_NAME(_S("CFileManObserverOverWrite"));
 	iFileMan=aFileMan;
 	}
@@ -3078,7 +3104,6 @@ MFileManObserver::TControl CFileManObserverOverWrite::NotifyFileManEnded()
 // Observer for testoverwrite tests
 //
 	{
-
 	TInt lastError=iFileMan->GetLastError();
 	if (lastError!=KErrNone)
 		{
@@ -3097,7 +3122,6 @@ LOCAL_C void TestOverWrite()
 // Test overwrite for copy and rename
 //
 	{
-
 	test.Next(_L("Test overwrite option"));
 	RmDir(_L("\\F32-TST\\TFMAN\\OVERWRITE\\"));
 	CFileManObserverOverWrite* fManObserver=new(ELeave) CFileManObserverOverWrite(gFileMan);
@@ -3202,7 +3226,6 @@ LOCAL_C void TestErrorHandling()
 // Test bad paths etc
 //
 	{
-
 	test.Next(_L("Test error handling"));
 	if (!gAsynch)
 		{
@@ -3340,7 +3363,7 @@ LOCAL_C void TestErrorHandling()
 	
 
 	MakeFile(_L("Dummyfile"));
-	test.Next(_L("Illegal names"));
+	test.Next(_L("Test illegal names"));
 	r=gFileMan->Attribs(_L(":C:"),0,0,TTime(0),0);
 	test(r==KErrBadName);
 	r=gFileMan->Copy(_L(":C:"),_L("newname"),0);
@@ -3391,7 +3414,7 @@ LOCAL_C void TestNameMangling()
 // Synchronous test of name mangling
 //
 	{
-
+	test.Next(_L("Test name mangling"));
 	gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\TRG\\"));
 	MakeDir(_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\TRG\\"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\SRC\\abc.def"));
@@ -3468,7 +3491,6 @@ LOCAL_C void TestLongNames()
 	r=gFileMan->RmDir(longRootDirNameA);
 	test(r==KErrNone);
 
-
 	TFileName longSubDirName=_L("\\Files\\");
 	TPtrC longSubDirFileName(longFileNameA.Ptr(),longFilePtrLength-longSubDirName.Length());
 	longSubDirName+=longSubDirFileName;
@@ -3481,7 +3503,6 @@ LOCAL_C void TestLongNames()
 	test(r==KErrNone);
 	test(dirList->Count()==0);
 	delete dirList;
-
 
 	TPtrC ptrLongSubDirSrc(longSubDirName.Ptr(),longSubDirName.Length()-1);
 	TPtrC ptrLongSubDirTrg(longRootDirNameA.Ptr(),longRootDirNameA.Length()-1);
@@ -3503,7 +3524,7 @@ LOCAL_C void TestFileAttributes()
 // Test file attributes are copied and new settings
 //
 	{
-
+	test.Next(_L("Test file attributes are copied"));
 	gFileMan->Delete(_L("\\F32-TST\\TFMAN\\FILEATT\\TRG\\*.*"));
 	MakeDir(_L("\\F32-TST\\TFMAN\\FILEATT\\TRG\\"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\FILEATT\\SRC\\readonly.def"),KEntryAttReadOnly);
@@ -3537,7 +3558,6 @@ CFileManObserverContinue::CFileManObserverContinue(CFileMan* aFileMan)
 // Constructor
 //
 	{
-
 	__DECLARE_NAME(_S("CFileManObserverOverWrite"));
 	iFileMan=aFileMan;
 	}
@@ -3548,7 +3568,6 @@ MFileManObserver::TControl CFileManObserverContinue::NotifyFileManEnded()
 // Observer for testoverwrite tests
 //
 	{
-
 	return(MFileManObserver::EContinue);
 	}
 
@@ -3557,8 +3576,7 @@ LOCAL_C void TestCopyOpenFile()
 // Copy a file while it is open
 //
 	{
-
-	test.Next(_L("Copying open files"));
+	test.Next(_L("Test copying open files"));
 
 	CFileManObserverContinue* fManObserver=new(ELeave) CFileManObserverContinue(gFileMan);
 	gFileMan->SetObserver(fManObserver);
@@ -3600,6 +3618,7 @@ LOCAL_C void TestCopyOpenFile()
 
 void TestINC101844()
 	{
+	test.Next(_L("Test move files and subdirs with different attributes (INC101844)"));
 	_LIT(KDest,"C:\\DEST101844\\");
 	TBuf<64> source;
 	source.Format(_L("%c:\\INC101844\\"), (TUint) gDriveToTest);
@@ -3608,7 +3627,8 @@ void TestINC101844()
 	RmDir(KDest);
 	MakeDir(KDest);
 	TInt r;
-		
+	
+	// Create files and subdirs with different attributes
 	src = source;
 	src.Append(_L("file1"));
 	MakeFile(src, _L8("blah"));
@@ -3629,9 +3649,11 @@ void TestINC101844()
 	src.Append(_L("subdir1"));
 	TheFs.SetAtt(src, KEntryAttSystem | KEntryAttHidden, KEntryAttArchive);
 
+	// Move directory containing files and subdirs with different attributes
 	r = gFileMan->Move(source, KDest, 0);
 	test(r==KErrNone);
 	
+	// Check that the files and subdirs have moved and have the correct attributes
 	TEntry entry;
 	src = KDest;
 	src.Append(_L("file1"));
@@ -3672,8 +3694,7 @@ LOCAL_C void TestMoveAcrossDrives()
 // Move a file from C: to the target drive
 //
 	{
-
-	test.Next(_L("Move across drives"));
+	test.Next(_L("Test move across drives"));
 
 	TFileName trgDrive   = _L("\\");
 	TFileName trgFile    = _L("\\Sketch");
@@ -3701,7 +3722,8 @@ LOCAL_C void TestMoveAcrossDrives()
 	MakeFile(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\Sketch"));
 		
 	// Move Sketch from the source to target
-	gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\Sketch"),trgDrive);
+	TInt r = gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\Sketch"),trgDrive);
+	test.Printf(_L("TestMoveAcrossDrives(),gFileMan->Move(),r=%d\n"),r);
 	// Check Sketch no longer exists on source drive
 	CheckFileExists(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\Sketch"),KErrNotFound);
 	// Check Sketch exists on target drive
@@ -3709,7 +3731,8 @@ LOCAL_C void TestMoveAcrossDrives()
 
 	MakeFile(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\Sketch"));
 	// Move Directory DRIVEMOVE from the source to target
-	gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE"),trgDrive);
+	r = gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE"),trgDrive);
+	test.Printf(_L("TestMoveAcrossDrives(),gFileMan->Move(),r=%d\n"),r);
 	// Check DRIVEMOVE no longer exists on source drive
 	CheckFileExists(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\Sketch"),KErrPathNotFound);
 	// Check Sketch exists on target drive
@@ -3718,7 +3741,7 @@ LOCAL_C void TestMoveAcrossDrives()
 	RmDir(trgDir);
 	test(TheFs.Delete(trgFile) == KErrNone);	
 
-	TestINC101844();
+	TestINC101844(); // Test move files and subdirs with different attributes
 	}
 
 class CFileManObserverCopyAbort : public CBase, public MFileManObserver
@@ -3758,7 +3781,6 @@ MFileManObserver::TControl CFileManObserverCopyAbort::NotifyFileManEnded()
 // Observer for testoverwrite tests
 //
 	{
-
 	TInt lastError = iFileMan->GetLastError();
 	test(lastError == KErrNone);
 
@@ -3776,11 +3798,10 @@ MFileManObserver::TControl CFileManObserverCopyAbort::NotifyFileManEnded()
 
 LOCAL_C void TestAbortedMoveAcrossDrives()
 //
-// Move a file from C: to Y:, and test various cancel conditions
+// Move a file from C: to D: or Y:, and test various cancel conditions
 //
 	{
-
-	test.Next(_L("Cancel Move across drives"));
+	test.Next(_L("Test cancel move across drives"));
 
 	const TInt KNumFiles = 5;
 
@@ -3806,7 +3827,7 @@ LOCAL_C void TestAbortedMoveAcrossDrives()
 	CFileManObserverCopyAbort* fManObserver=new(ELeave) CFileManObserverCopyAbort(gFileMan);
 	CleanupStack::PushL(fManObserver);
 
-// Check that source files exist when interrupting the copy step
+	// Check that source files exist when interrupting the copy step
 	TInt step = 0;
 	TInt i = 0;
 	for(step = 1; step <= KNumFiles+1; ++step)
@@ -3830,6 +3851,7 @@ LOCAL_C void TestAbortedMoveAcrossDrives()
 		else
 			r=gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\CANCELMOVE"),trgDirRoot, CFileMan::EOverWrite, gStat);
 		
+		test.Printf(_L("TestAbortedMoveAcrossDrives(),gFileMan->Move(),r=%d\n"),r);
 		TestResult(r, (step <= KNumFiles) ? KErrCancel : KErrNone);
 
 		gFileMan->SetObserver(NULL);
@@ -3871,8 +3893,7 @@ LOCAL_C void TestMoveEmptyDirectory()
 //	"Try to move an empty directory C:\F32-TST\TFMAN\DRIVEMOVE\ to C:\"
 //
 	{
-
-	test.Next(_L("Move empty directory"));
+	test.Next(_L("Test move empty directory"));
 
 #if !defined(__WINS__)
 	TFileName trgDrive=_L("D:\\");
@@ -3884,6 +3905,7 @@ LOCAL_C void TestMoveEmptyDirectory()
 
 	MakeDir(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\"));
 	TInt r=gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\*"),trgDrive,CFileMan::ERecurse);
+	test.Printf(_L("TestMoveEmptyDirectory(),gFileMan->Move(),r=%d\n"),r);
 	test (r==KErrNotFound);
 	}
 
@@ -3892,7 +3914,7 @@ LOCAL_C void TestCopyAndRename()
 // Rename while copying files and directories
 //
 	{
-	test.Next(_L("Rename while copying files and directories"));
+	test.Next(_L("Test rename while copying files and directories"));
 	gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\CPMV"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\CPMV\\ONE\\ONE_1.TXT"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\CPMV\\ONE\\ONE_2.TXT"));
@@ -3916,20 +3938,20 @@ LOCAL_C void TestCopyAndRename()
 	MakeFile(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\TWO__1.TXT"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\TWO__2.TXT"));
 
-// copy and rename dir
+	// copy and rename dir
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE"), CFileMan::ERecurse);
 	test(r==KErrNone);
 	Compare(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE\\*"));
 
-// copy and move into another dir
+	// copy and move into another dir
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE\\TWO"), CFileMan::ERecurse);
 	test(r==KErrNone);
 	Compare(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE\\TWO\\*"));
 
-// copy and rename files and dirs in current dir
+	// copy and rename files and dirs in current dir
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\CPMV\\TWO*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE*"), CFileMan::ERecurse);
 	test(r==KErrNone);
-//	Compare(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE2\\*"));
+	//	Compare(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE2\\*"));
 
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\CPMV\\ONE\\THREEO.TWO"), KErrNone);
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\CPMV\\THREE\\TWO__1.TXT"), KErrNone);
@@ -4016,7 +4038,6 @@ LOCAL_C void InitialiseL()
 // Set up test variables
 //
 	{
-
 	gFileMan=CFileMan::NewL(TheFs);
 	gObserver=new(ELeave) CFileManObserver(gFileMan);
 	gFileMan->SetObserver(gObserver);
@@ -4027,7 +4048,6 @@ LOCAL_C void Cleanup()
 // Cleanup test variables
 //
 	{
-
 	delete gFileMan;
 	delete gObserver;
 	}
@@ -4115,7 +4135,7 @@ LOCAL_C void SetupDirStructure(TFileName& aSrcPath,TFileName& aTrgPath)
 	
 LOCAL_C void TestPDEF112148()
 	{
-	test.Next(_L("++TestPDEF112148 : \n"));
+	test.Next(_L("Test recursive and non-recursive move across drives (PDEF112148)"));
 	
 	TInt err = 0;
 	
@@ -4193,8 +4213,6 @@ LOCAL_C void TestPDEF112148()
 	// clean up before leaving
 	RmDir(srcPath);
 	RmDir(trgPath);
-
-	test.Next(_L("--TestPDEF112148 : \n"));
 	}
 //---------------------------------------------
 //! @SYMTestCaseID			PBASE-T_FMAN-2398
@@ -4207,9 +4225,8 @@ LOCAL_C void TestPDEF112148()
 //! @SYMTestStatus			Implemented
 //---------------------------------------------
 void TestDEF130678()
-{
-	test.Next(_L("++TestDEF130678\n"));
-	
+	{
+	test.Next(_L("Test CFileMan::Move does not leak any memory"));
 	_LIT(KFromFile,"C:\\TestDEF130678\\FROM\\from_");
 	_LIT(KToFile,"C:\\TestDEF130678\\TO\\");
 
@@ -4266,9 +4283,8 @@ void TestDEF130678()
 		} // End of OOM loop
 		
 	// cleanup
-	RmDir(_L("C:\\TestDEF130678\\"));
-	test.Next(_L("--TestDEF130678\n"));		
-}
+	RmDir(_L("C:\\TestDEF130678\\"));	
+	}
 
 GLDEF_C void CallTestsL()
 //
@@ -4286,8 +4302,10 @@ GLDEF_C void CallTestsL()
 //	to prevent paths >256 ever being created
 	testingInvalidPathLengths = CheckIfShortPathsAreSupported();
 	
+	//-----------------------------------------------------------------------------------
+	// Asynchronous tests
+	//
 	gAsynch=ETrue;
-	
 	test.Next(_L("Asynchronous tests ..."));
 	TheFs.SetAllocFailure(gAllocFailOff);
 
@@ -4304,7 +4322,7 @@ GLDEF_C void CallTestsL()
 		TestRecursiveMoveAcrossDrives();
 		TestMoveEmptyDirectory();
 		TestAbortedMoveAcrossDrives();
-		TestPDEF112148();
+		TestPDEF112148(); // Test recursive and non-recursive move across drives
 		}
 
 	TestOverWrite();
@@ -4325,6 +4343,9 @@ GLDEF_C void CallTestsL()
 	TestMove();
 	TestCopyAllCancel();
 
+	//-----------------------------------------------------------------------------------
+	// Synchronous tests
+	//
 	gAsynch=EFalse;
 	test.Next(_L("Synchronous tests ..."));
 	TheFs.SetAllocFailure(gAllocFailOn);
@@ -4335,7 +4356,7 @@ GLDEF_C void CallTestsL()
 		TestRecursiveMoveAcrossDrives();
 		TestMoveEmptyDirectory();
 		TestAbortedMoveAcrossDrives();
-		TestPDEF112148();
+		TestPDEF112148(); // Test recursive and non-recursive move across drives
 		}
 
 	TestCopyOpenFile();
@@ -4359,8 +4380,7 @@ GLDEF_C void CallTestsL()
 	TestCopyAndRename();
 	TestCopyAllCancel();
 	
-	// OOM testing
-	TestDEF130678();
+	TestDEF130678(); // Test CFileMan::Move does not leak any memory
 #ifndef __WINS__
 	RThread t;
 	TThreadStackInfo stack;

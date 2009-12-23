@@ -2214,8 +2214,8 @@ EXPORTS
 	__17TShPoolCreateInfoQ217TShPoolCreateInfo25TShPoolPageAlignedBuffersUiUi @ 2213 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(TShPoolCreateInfo::TShPoolPageAlignedBuffers, unsigned int, unsigned int)
 	__17TShPoolCreateInfoQ217TShPoolCreateInfo28TShPoolNonPageAlignedBuffersUiUiUi @ 2214 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(TShPoolCreateInfo::TShPoolNonPageAlignedBuffers, unsigned int, unsigned int, unsigned int)
 	__7RShPool @ 2215 NONAME R3UNUSED ; RShPool::RShPool(void)
-	RequestFreeSpaceNotification__7RShPoolUiR14TRequestStatus @ 2216  NONAME R3UNUSED ; RShPool::RequestFreeSpaceNotification(unsigned int, TRequestStatus &)
-	CancelFreeSpaceNotification__7RShPoolR14TRequestStatus @ 2217  NONAME R3UNUSED ; RShPool::CancelFreeSpaceNotification(TRequestStatus &)
+	RequestFreeSpaceNotification__7RShPoolUiR14TRequestStatus @ 2216 NONAME R3UNUSED ; RShPool::RequestFreeSpaceNotification(unsigned int, TRequestStatus &)
+	CancelFreeSpaceNotification__7RShPoolR14TRequestStatus @ 2217 NONAME R3UNUSED ; RShPool::CancelFreeSpaceNotification(TRequestStatus &)
 	Close__14RReadWriteLock @ 2218 NONAME R3UNUSED ; RReadWriteLock::Close(void)
 	CreateLocal__14RReadWriteLockQ214RReadWriteLock22TReadWriteLockPriority @ 2219 NONAME R3UNUSED ; RReadWriteLock::CreateLocal(RReadWriteLock::TReadWriteLockPriority)
 	DowngradeWriteLock__14RReadWriteLock @ 2220 NONAME R3UNUSED ; RReadWriteLock::DowngradeWriteLock(void)
@@ -2230,4 +2230,5 @@ EXPORTS
 	LoadLocaleAspect__15TExtendedLocaleRC7TDesC16 @ 2229 NONAME R3UNUSED ; TExtendedLocale::LoadLocaleAspect(TDesC16 const &)
 	LoadLocale__15TExtendedLocaleRC7TDesC16N21 @ 2230 NONAME ; TExtendedLocale::LoadLocale(TDesC16 const &, TDesC16 const &, TDesC16 const &)
 	RegionCode__4User @ 2231 NONAME R3UNUSED ; User::RegionCode(void)
+	SetReadOnly__16TChunkCreateInfo @ 2232 NONAME R3UNUSED ; TChunkCreateInfo::SetReadOnly(void)
 

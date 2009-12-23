@@ -938,4 +938,5 @@ EXPORTS
 	?ShPoolSetBufferWindow@Kern@@SAHPAVTShPool@@H@Z @ 937 NONAME ; public: static int __cdecl Kern::ShPoolSetBufferWindow(class TShPool *,int)
 	?Repeats@TRawEvent@@QBEHXZ @ 938 NONAME ; int TRawEvent::Repeats(void) const
 	?SetRepeat@TRawEvent@@QAEXW4TType@1@HH@Z @ 939 NONAME ; void TRawEvent::SetRepeat(enum TRawEvent::TType, int, int)
+	?MakeHandleAndOpen@Kern@@SAHPAVDThread@@PAVDObject@@W4TOwnerType@@@Z @ 940 NONAME ; public: static int __cdecl Kern::MakeHandleAndOpen(class DThread *,class DObject *,enum TOwnerType)
 

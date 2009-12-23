@@ -17,24 +17,8 @@
 
 /** 
 @file hcr.h
-Kernel side API for Hardware Configuration Repository (HCR).
-
-
-===============================================================
- ____            _        _                    
-|  _ \ _ __ ___ | |_ ___ | |_ _   _ _ __   ___ 
-| |_) | '__/ _ \| __/ _ \| __| | | | '_ \ / _ \
-|  __/| | | (_) | || (_) | |_| |_| | |_) |  __/
-|_|   |_|  \___/ \__\___/ \__|\__, | .__/ \___|
-                              |___/|_|         
-
-This API and component are in an early release form. As such
-this component, it's API/HAI interfaces and internal design 
-are not fixed and may be updated/changed at any time before 
-final release.
-
-===============================================================
-
+Kernel side API for Hardware Configuration Repository (HCR). The HCR service 
+provides access to hardware settings defined for the base port.
 
 @publishedPartner
 @prototype
@@ -93,7 +77,7 @@ namespace HCR
     /** The setting Identifier type. A class used to uniquely identify a 
     setting in the HCR. Used in calls to HCR API. 
 	*/
-    class TSettingId
+    class TSettingId : public SSettingId
     	{
     public:
     	TSettingId ()
@@ -103,13 +87,8 @@ namespace HCR
     	TSettingId (const SSettingId& aId)
     	 { iCat = aId.iCat; iKey = aId.iKey; };
 		TSettingId& operator= (const SSettingId& rhs)
-		 { iCat = rhs.iCat; iKey = rhs.iKey; return *this; }  
-		   
-        /** The allocated UID identifying the category the setting belongs too */
-        TCategoryUid iCat;
-        
-        /** The integer key identifying the setting element in the category */
-        TElementId iKey;
+		 { iCat = rhs.iCat; iKey = rhs.iKey; return *this; }
+
     	};
     
     /** The setting types supported. The types are shown in two groups: Word 
@@ -152,6 +131,7 @@ namespace HCR
             KErrNotReady if the HCR is used before it has been initialised
             KErrCorrupt if HCR finds a repository to be corrupt
             KErrGeneral if an internal failure occurs, see trace.
+            Otherwise one of the other system-wide error codes. 
 
 	@pre    Call from thread context, during Init1 or later
 	*/
@@ -185,6 +165,7 @@ namespace HCR
             KErrCorrupt if HCR finds a repository to be corrupt
             KErrTooBig if the setting is larger than the supplied buffer
             KErrGeneral if an internal failure occurs, see trace
+            Otherwise one of the other system-wide error codes.
 
 	@pre    Call from thread context, during Init1 or later
 	*/
@@ -206,6 +187,7 @@ namespace HCR
             KErrCorrupt if HCR finds a repository to be corrupt
             KErrTooBig if the setting is larger than the supplied buffer
             KErrGeneral if an internal failure occurs, see trace
+            Otherwise one of the other system-wide error codes.
 
 	@pre    Call from thread context, during Init1 or later
 	*/
@@ -229,6 +211,7 @@ namespace HCR
             KErrCorrupt if HCR finds a repository to be corrupt
             KErrTooBig if the setting is larger than the supplied buffer
             KErrGeneral if an internal failure occurs, see trace
+            Otherwise one of the other system-wide error codes.
 
 	@pre    Call from thread context, during Init1 or later
 	*/
@@ -240,7 +223,7 @@ namespace HCR
     /**
     Retrieve multiple simple settings from the Hardware Configuration 
     Repository in one call. This method can be used for all settings of size 4 
-    byes or less (i.e those with a type in 0x0000ffff).
+    bytes or less (i.e those with a type in 0x0000ffff).
     
     @param aNum     in: The number of settings to retrieve. It is also the 
                     size of the arrays in the following arguments
@@ -249,23 +232,31 @@ namespace HCR
     @param aTypes   out: An optional array of type enumerations describing 
                     the type of each setting found. May be 0 if client is 
                     not interested
-    @param aErrors  out: An optional array of return codes to describe the 
-                    result of the lookup for each setting. May be 0 if 
-                    client is not interested
+    @param aErrors  out: A mandatory array supplied by the user which is populated by error
+	                     codes for each setting. If no error found for the setting then 
+						 KErrNone(=0) is written
+                    setting.  
+                    Possible error codes:
+                    KErrArgument     if the setting has size larger than  
+                                     four bytes
+                    KErrNotFound     if the setting is not found
+                    KErrNone         no any errors reported for this setting
+                       
     
-	@return	KErrNone if successful and all values have been retrieved
-			KErrArgument if one of the arguments is incorrect.
-            KErrNotFound if one or more setting IDs is not known 
-            KErrNotReady if the HCR is used before it has been initialised
-            KErrCorrupt if HCR finds a repository to be corrupt
-            KErrGeneral if an internal failure occurs, see trace
-            KErrNotSupported if method is not supported
+	@return	Zero or positive number of settings found, -ve on error
+            KErrArgument    if some parameters are wrong(i.e. aErrors is a null
+                            pointer, aNum is negative and so on)
+            KErrCorrupt     if HCR finds a repository to be corrupt
+            KErrGeneral     if an internal failure occurs, see trace
+            KErrNotReady    if the HCR is used before it has been initialised
+            KErrNoMemory    if the memory allocation within this function failed
+            Otherwise one of the other system-wide error codes.
                 
 	@pre    Call from thread context, during Init1 or later
-	*/    
+	*/   
     IMPORT_C TInt GetWordSettings(TInt aNum, const SSettingId aIds[], 
-            TInt32 aValues[], TSettingType aTypes[], 
-                                     TInt aErrors[]);
+            TInt32 aValues[], TSettingType aTypes[], TInt aErrors[]);
+    
 
     /**
     Retrieve the type and size of a HCR setting. Can be used by clients to 
@@ -280,7 +271,7 @@ namespace HCR
             KErrNotReady if the HCR is used before it has been initialised
             KErrCorrupt if HCR finds a repository to be corrupt
             KErrGeneral if an internal failure occurs, see trace
-            KErrNotSupported if method is not supported
+            Otherwise one of the other system-wide error codes.
 
 	@pre    Call from thread context, during Init1 or later
     */    
@@ -302,43 +293,42 @@ namespace HCR
             KErrNotReady if the HCR is used before it has been initialised
             KErrCorrupt if HCR finds a repository to be corrupt
             KErrGeneral if an internal failure occurs, see trace
-            KErrNotSupported if method is not supported
+            Otherwise one of the other system-wide error codes.
 
 	@pre    Call from thread context, during Init1 or later
     */ 
 	IMPORT_C TInt FindNumSettingsInCategory (TCategoryUid aCatUid);
-	 
-    /**
+	
+	/**
     Retrieve all the setting ids, types and sizes in one particular
 	category. Can be used by clients to obtain the number, size and types of 
 	all the settings in a category. It allows a client to alloc buffers for 
-	other calls to the HCR to retrieve these settings.
+	other calls to the HCR to retrieve these settings should any be larger than
+	4 bytes.
     
     @param aCatUid	 in: The setting identifier category to use in the search
     @param aMaxNum   in: The maximum number of settings to return. It is also 
-                         the size of the arrays in the following arguments   
-    
-    @param aNumFound out: The number of settings found 
-    @param aElIds    inout: Client supplied array populated on exit. Large
+                         the size of the arrays in the following arguments 
+    @param aKeyIds    inout: Client supplied array populated on exit. Large
 						    enough to hold all elements in category.
     @param aTypes	 inout: Client supplied array populated with setting types 
 						    enumerations on exit. May be 0 if client is 
                             not interested.
-    @param aLen  	 inout: Client supplied array populated with setting lengths
+    @param aLens  	 inout: Client supplied array populated with setting lengths
 						    on exit. May be 0 if client is not interested.
         
 	@return	Zero or positive number of settings found in category, -ve on error
-            KErrOverflow if ok but with more settings than aMaxNum were found
+			KErrArgument if some parameters are wrong(i.e. aErrors is a null
+                            pointer, aNum is negative and so on)
 			KErrNotReady if the HCR is used before it has been initialised
-            KErrCorrupt if HCR finds a repository to be corrupt
-            KErrGeneral if an internal failure occurs, see trace
-            KErrNotSupported if method is not supported
+            KErrCorrupt  if HCR finds a repository to be corrupt
+            KErrGeneral  if an internal failure occurs, see trace
+            Otherwise one of the other system-wide error codes.
 
 	@pre    Call from thread context, during Init1 or later
     */ 
-    IMPORT_C TInt FindSettings(TCategoryUid aCatUid, 
-					TInt aMaxNum, TUint32& aNumFound, 
-					TElementId* aElIds, TSettingType* aTypes, TUint16* aLens);
+    IMPORT_C TInt FindSettings(TCategoryUid aCatUid, TInt aMaxNum,
+					TElementId aKeyIds[], TSettingType aTypes[], TUint16 aLens[]);
                                        
     /** 
     Finds multiple settings in the Hardware Configuration Repository who's
@@ -362,13 +352,11 @@ namespace HCR
     @param aCat      in: The category to retrieve settings for
     @param aMaxNum   in: The maximum number of settings to retrieve. It is also 
                          the size of the arrays in the following arguments   
-    @param aAtId     in: The Minimum element ID to commence the search at. 
-                         Used when retrieving settings in batches.
-    @param aElemMask in: Element ID mask.
-    @param aPattern  in: Identifies the set of fieldy to return in the search.
-						                   
-    @param aNumFound out: The number of settings found 
-    @param aElIds    inout: Client supplied array populated on exit. Large
+    @param aElemMask in: The bits in the Element ID to be checked against 
+                         aPattern
+    @param aPattern  in: Identified the bits that must be set for a 
+                         setting to be returned in the search
+    @param aKeyIds    inout: Client supplied array populated on exit. Large
 						    enough to hold aMaxNum element ids.
     @param aTypes    inout: Client supplied array populated with setting types 
 						    enumerations on exit. May be 0 if client is 
@@ -377,18 +365,20 @@ namespace HCR
 						    on exit. May be 0 if client is not interested.
     
 	@return	Zero or positive number of settings found in category, -ve on error
-            KErrOverflow if ok but with more settings than aMaxNum were found 
+            KErrArgument if some parameters are wrong(i.e. aErrors is a null
+                            pointer, aNum is negative and so on) 
             KErrNotReady if the HCR is used before it has been initialised
-            KErrCorrupt if HCR finds a repository to be corrupt
-            KErrGeneral if an internal failure occurs, see trace
-            KErrNotSupported if method is not supported
+            KErrCorrupt  if HCR finds a repository to be corrupt
+            KErrGeneral  if an internal failure occurs, see trace
+            KErrNoMemory if the memory allocation within this function failed
+            Otherwise one of the other system-wide error codes.
+            
          
 	@pre    Call from thread context, during Init1 or later
 	*/    
-    IMPORT_C TInt FindSettings(TCategoryUid aCat, 
-					TInt aMaxNum, TUint32 aAtId,
-                    TUint32 aMask, TUint32 aPattern, TUint32& aNumFound,
-                    TElementId* aElIds, TSettingType* aTypes, TUint16* aLens);
+    IMPORT_C TInt FindSettings(TCategoryUid aCat, TInt aMaxNum, 
+					TUint32 aMask, TUint32 aPattern, TElementId aKeyIds[], 
+					TSettingType aTypes[], TUint16 aLens[]);
      
 }
 

@@ -21,17 +21,15 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
+
 #include "msctypes.h"
-#include "mscutils.h"
 #include "shared.h"
 #include "msgservice.h"
 #include "cusbhostmslogicalunit.h"
 #include "cusbhostmsdevice.h"
-#include "cusbhostmsserver.h"
 #include "msdebug.h"
-#include "cusbhostmsdevicethread.h"
 #include "cusbhostmssession.h"
+#include "cusbhostmsdevicethread.h"
 #include "debug.h"
 
 /**
@@ -134,8 +132,7 @@ void CUsbHostMsDeviceThread::DoStartServerL(TAny* aPtr)
 	CUsbHostMsDeviceThread* iThread = (CUsbHostMsDeviceThread*)aPtr;
 	CActiveScheduler::Add(iThread);
 
-	iThread->iStatus = KRequestPending;
-	iThread->SetActive();
+    iThread->Start();
 
 	RThread::Rendezvous(KErrNone);
 
@@ -167,70 +164,76 @@ TInt CUsbHostMsDeviceThread::Entry(TAny* aPtr)
 void  CUsbHostMsDeviceThread::RunL()
 	{
     __MSFNLOG
-	Lock();
-	if (!iUsbHostMsDevice || iUsbHostMsDevice->IsActive())
+
+    // called on completion of MessageRequest() or Resume()
+    User::LeaveIfError(iStatus.Int());
+
+	Lock();    
+    if (iUsbHostMsDevice)
         {
-        // Note: In the case of suspended/resuming state we do not want to get
-        // woken by the session msg handler repeatedly
-        iIsSignalled = EFalse;
+        if (iUsbHostMsDevice->IsSuspended())
+            {
+            // request resume 
+            Unlock();
+            iUsbHostMsDevice->Resume(iStatus);
+            SetActive();
+            return;
+            }
         }
 
-	Unlock();
+    // process message queue
+    RMessage2 msg = iRMessage2[iDequeueIndex];
 
-	RMessage2	msg;
-	TBool handleMsg = EFalse;
+    iDequeueIndex++;
 
-	for(;;)
-		{
-		Lock();
-		if ((iQueueIndex != iDequeueIndex) || iQueueFull)
-			{
-			if (iUsbHostMsDevice && iUsbHostMsDevice->IsSuspended())
-				{
-				Unlock();
-				SetActive();
-				iUsbHostMsDevice->ResumeL(iStatus);
-				return;
-				}
+    if(iDequeueIndex >= KMaxNumMessage)
+     	iDequeueIndex = 0;
+    if(iQueueFull)
+     	iQueueFull = EFalse;
 
-			msg = iRMessage2[iDequeueIndex];
-			handleMsg = ETrue;
-			iDequeueIndex++;
+    HandleMessage(msg);
 
-			if(iDequeueIndex >= KMaxNumMessage)
-				{
-				iDequeueIndex = 0;
-				}
-			if(iQueueFull)
-				{
-				iQueueFull = EFalse;
-				}
-			}
-		Unlock();
-		if (handleMsg)
-			{
-			HandleMessage(msg);
-			handleMsg = EFalse;
-			}
-		else
-			{
-			break;
-			}
-		}
-	iStatus = KRequestPending;
-	SetActive();
+    if ((iQueueIndex != iDequeueIndex) || iQueueFull)
+	   	{
+        // self completion        
+        TRequestStatus* status = &iStatus;
+        User::RequestComplete(status, KErrNone);
+        SetActive();
+        }
+    else
+        {
+        iUsbHostMsSession.MessageRequest(iStatus);
+        SetActive();
+        }
+    Unlock();
 	}
+
+
+void CUsbHostMsDeviceThread::DoCancel()
+    {
+    TRequestStatus* status = &iStatus;
+    User::RequestComplete(status, KErrCancel);
+    }
+
+
+TInt CUsbHostMsDeviceThread::RunError(TInt aError)
+{
+    __HOSTPRINT1(_L(">> HOST RunError returning %d"), aError);
+    return KErrNone;
+}
 
 
 TInt CUsbHostMsDeviceThread::QueueMsg(const RMessage2& aMsg)
 	{
     __MSFNLOG
+
 	if (iQueueFull)
 		{
 		return KErrOverflow;
 		}
 
     Lock();
+
 	iRMessage2[iQueueIndex] = aMsg;
 	iQueueIndex++;
 
@@ -248,42 +251,37 @@ TInt CUsbHostMsDeviceThread::QueueMsg(const RMessage2& aMsg)
 	}
 
 
-void CUsbHostMsDeviceThread::Lock()
-	{
-    __MSFNLOG
-	iMutex.Wait();
-	}
-
-
-void CUsbHostMsDeviceThread::Unlock()
-	{
-    __MSFNLOG
-	iMutex.Signal();
-	}
-
-
-CUsbHostMsDeviceThread::CUsbHostMsDeviceThread(TUint token)
+CUsbHostMsDeviceThread::CUsbHostMsDeviceThread(CUsbHostMsSession& aUsbHostMsSession, TUint aToken)
 :	CActive(EPriorityStandard),
-	iIsSignalled(EFalse),
+    iUsbHostMsSession(aUsbHostMsSession),
     iQueueFull(EFalse)
 	{
-    TName nameBuf;
-    nameBuf.Format(_L("Host Ms ThreadMutex%d"), token);
+    __MSFNLOG
+    TBuf<30> nameBuf;
+    nameBuf.Format(_L("Host Ms ThreadMutex%d"), aToken);
 	iMutex.CreateGlobal(nameBuf,EOwnerProcess);
 	}
 
 CUsbHostMsDeviceThread::~CUsbHostMsDeviceThread()
 	{
+    __MSFNLOG
+    Cancel();
 	iMutex.Close();
 	}
 
-CUsbHostMsDeviceThread* CUsbHostMsDeviceThread::NewL(TUint aToken)
+CUsbHostMsDeviceThread* CUsbHostMsDeviceThread::NewL(CUsbHostMsSession& aUsbHostMsSession, TUint aToken)
 	{
-	CUsbHostMsDeviceThread* r = new (ELeave) CUsbHostMsDeviceThread(aToken);
-	CleanupStack::PushL(r);
-	CleanupStack::Pop();
+    __MSFNSLOG
+	CUsbHostMsDeviceThread* r = new (ELeave) CUsbHostMsDeviceThread(aUsbHostMsSession, aToken);
 	return r;
 	}
+
+
+void CUsbHostMsDeviceThread::Start()
+    {
+    iUsbHostMsSession.MessageRequest(iStatus);
+    SetActive();
+    }
 
 
 /**
@@ -323,11 +321,13 @@ void CUsbHostMsDeviceThread::HandleMessage(const RMessage2& aMessage)
 		break;
     default:
         // Try Device Handler and Logical Unit Handler
+        __ASSERT_DEBUG(iUsbHostMsDevice, User::Invariant());
         TDeviceHandler deviceHandler(*iUsbHostMsDevice);
         TRAP(ret, deviceHandler.HandleMessageL(aMessage));
 		break;
 		}
     __HOSTPRINT1(_L(">> HOST returning %d"), ret);
+
     if (aMessage.Function() != EUsbHostMsNotifyChange)
         {
         aMessage.Complete(ret);

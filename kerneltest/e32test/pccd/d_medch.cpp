@@ -24,6 +24,9 @@ const TInt KMajorVersionNumber=1;
 const TInt KMinorVersionNumber=0;
 const TInt KBuildVersionNumber=1;
 
+_LIT(KDFCThreadName,"D_MEDCH_DFC_THREAD");
+const TInt KMedChThreadPriority = 27;
+
 class DLddFactoryMedCh : public DLogicalDevice
 	{
 public:
@@ -50,6 +53,7 @@ private:
 	DPBusSocket* iSocketP;
 	DThread* iClient;
 	TRequestStatus* iReqStat;
+	TDynamicDfcQue* iDfcQ;
 	
 	NTimer iMsCallBack;
 	TInt iMsInterval;
@@ -124,6 +128,9 @@ DLddMedCh::~DLddMedCh()
 		(void)iSocketP->ControlIO(DPBusSocket::EControlMediaState, (TAny*)DPBusSocket::EPeriphBusMediaNormal, NULL);
 
 	Kern::SafeClose((DObject*&)iClient, NULL);
+
+	if (iDfcQ)
+		iDfcQ->Destroy();
 	}
 
 TInt DLddMedCh::DoCreate(TInt aUnit, const TDesC8* /*aInfo*/, const TVersion& aVer)
@@ -142,7 +149,18 @@ TInt DLddMedCh::DoCreate(TInt aUnit, const TDesC8* /*aInfo*/, const TVersion& aV
 	if(iSocketP == NULL)
 		return(KErrNoMemory);
 
-	SetDfcQ(Kern::DfcQue0());
+	if (!iDfcQ)
+ 			{
+ 			TInt r = Kern::DynamicDfcQCreate(iDfcQ, KMedChThreadPriority, KDFCThreadName);
+			if (r != KErrNone)
+ 				return r;
+#ifdef CPU_AFFINITY_ANY
+			NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);			
+#endif
+
+			SetDfcQ(iDfcQ);
+ 			}	
+
 	iMsgQ.Receive();
 	
     return KErrNone;

@@ -1163,33 +1163,35 @@ __NAKED__ TInt K::FloatingPointSystemId(TUint32& /*aSysId*/)
 
 __NAKED__ void TServerMessage::CallbackFunc(TAny* aData, TUserModeCallbackReason aReason)
 	{
-	// r0 -> TClientRequest object
+	// r0 -> TServerMessage object (this is derived from TClientRequest)
 	// r1 == reason code: 0 => run, 1 => cancel
 
 	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(TClientRequest, iResult));
 	asm("teq r1, #%a0" : : "i" (EUserModeCallbackRun));
 	asm("teqeq r3, #0");					// iResult == KErrNone
 	asm("bne clientRequestCallback2");
+
+	asm("stmfd sp!, {r0, r4-r7, lr}");
 	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(TServerMessage, iMessagePtr));
-	asm("stmfd sp!, {r0, r4-r7}");
 	asm("ldr r0, [r0, #%a0]" : : "i" _FOFF(TServerMessage, iMessageData));
-	asm("mov r6, #0");
 	asm("ldr r1, [r0, #%a0]" : : "i" _FOFF(RMessageK, iFunction));
 	asm("ldr r7, [r0, #%a0]" : : "i" _FOFF(RMessageK, iSession));
+
+	// If the message is not a disconnect, load the arguments from the message.
+	// If it is a disconnect, set all message arguments (r2-r5) to 0 instead.
 	asm("cmn r1, #%a0" : : "i" (-RMessage2::EDisConnect));
-	asm("beq setupDisconnect");
-
+	asm("moveq r2, #0");
+	asm("addne r2, r0, #%a0" : : "i" _FOFF(RMessageK, iMsgArgs.iArgs));
+	asm("moveq r3, #0");
 	// HARDCODED(RMessageK)- this assumes KMaxMessageArguments is 4
-	asm("add r2, r0, #%a0" : : "i" _FOFF(RMessageK, iMsgArgs.iArgs));
-	asm("ldmia r2, {r2-r5}");
-
-	asm("userWrite:");						// NOTE: Z flag always clear here
+	asm("ldmneia r2, {r2-r5}");
+	asm("moveq r4, #0");
+	asm("moveq r5, #0");
+	asm("mov r6, #0");
 	asm("ldr r7, [r7, #%a0]" : : "i" _FOFF(DSession, iSessionCookie));
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("stmdb sp!,{r12}");
-	USER_MEMORY_GUARD_OFF(,r12,r12);
-	asm("ldmia sp!,{r12}");
-#endif
+
+	asm("cmp r6, #1");						// ensure Z flag is clear
+	USER_MEMORY_GUARD_OFF(,lr,lr);
 	// HARDCODED(RMessage2)- this assumes the layout of the first 8 words of this structure
 	asm(".global __magic_address_svr_accept_1 ");
 	asm("__magic_address_svr_accept_1: ");	// this instruction is magically immune from exceptions
@@ -1215,19 +1217,12 @@ __NAKED__ void TServerMessage::CallbackFunc(TAny* aData, TUserModeCallbackReason
 	asm(".global __magic_address_svr_accept_8 ");
 	asm("__magic_address_svr_accept_8: ");	// this instruction is magically immune from exceptions
 	asm("strnet r7, [ip], #4");
-	USER_MEMORY_GUARD_ON(,r12,r12);
-	asm("ldmfd sp!, {r0, r4-r7}");
+	USER_MEMORY_GUARD_ON(,lr,lr);
+
+	asm("ldmfd sp!, {r0, r4-r7, lr}");
 	asm("mov r1, #%a0" : : "i" (EUserModeCallbackRun));
 	asm("mov r3, #0" );
 	asm("b clientRequestCallback2");
-
-	asm("setupDisconnect:");
-	asm("mov r2, #0");
-	asm("mov r3, #0");
-	asm("mov r4, #0");
-	asm("mov r5, #0");
-	asm("cmp r5, #1"); // clear zero flag
-	asm("b userWrite");
  	}
 
 __NAKED__ void TClientRequest::CallbackFunc(TAny* /*aData*/, TUserModeCallbackReason /*aReason*/)
@@ -1260,6 +1255,7 @@ __NAKED__ void TClientRequest::CallbackFunc(TAny* /*aData*/, TUserModeCallbackRe
 	asm("moveq r0, #%a0" : : "i" (K::EClientRequestCallbackInWrongState));
 	asm("bleq " CSM_ZN1K5FaultENS_6TFaultE);
 #endif	
+
 	USER_MEMORY_GUARD_OFF(,r12,r12);
 	asm("bic r12, r2, #%a0 " : : "i" ((TInt)KClientRequestFlagMask));
 	asm("teq r12, #%a0 " : : "i" ((TInt)KClientRequestNullStatus));
@@ -1352,9 +1348,8 @@ __NAKED__ TInt K::USafeReadAndParseDesHeader(TAny* aDesPtr, TDesHeader& aOut)
 	// r1  -> parsed header out
 
 	asm("stmfd sp!, {lr} ");
+	USER_MEMORY_GUARD_OFF(,lr,lr);
 
-	USER_MEMORY_GUARD_OFF(,r12,r12);
-	
 	// set condition codes to 'hi' condition (unless we're reading a null pointer)
 	asm("cmp r0, #0");
 
@@ -1379,34 +1374,29 @@ __NAKED__ TInt K::USafeReadAndParseDesHeader(TAny* aDesPtr, TDesHeader& aOut)
 	asm("__magic_address_readdesheader3: ");			// this instruction is magically immune from exceptions
 	asm("ldrhit r12, [r0], #4");						// WILL SET Z FLAG AND MODIFY R12 IF EXCEPTION OCCURS
 
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("str	r12, [sp, #-4]! ");
-	USER_MEMORY_GUARD_ON(,r12,r12);
-	asm("ldr	r12, [sp], #4 ");
-#endif
+	USER_MEMORY_GUARD_ON(,lr,lr);
+	asm("beq bad_descriptor ");							// Z flag set here if we took an exception
 	
-	asm("beq bad_descriptor ");			// Z flag set here if we took an exception
-	
-	asm("eor r14, r2, r2, lsr #1 ");
-	asm("msr cpsr_flg, r14 ");
+	asm("eor lr, r2, r2, lsr #1 ");
+	asm("msr cpsr_flg, lr ");
 
-	                                    // r12 == header_in[2]
-	asm("movcc r12, r3 ");				// r12 = header_in[1] if EBufC, EPtrC
-	asm("movgt r12, r0 ");				// r12 = pointer to word after header if EBufC, EBuf
-	asm("addeq r12, r12, #4 ");			// r12 += sizeof(TDesC) if EBufCPtr
+	                                    				// r12 == header_in[2]
+	asm("movcc r12, r3 ");								// r12 = header_in[1] if EBufC, EPtrC
+	asm("movgt r12, r0 ");								// r12 = pointer to word after header if EBufC, EBuf
+	asm("addeq r12, r12, #4 ");							// r12 += sizeof(TDesC) if EBufCPtr
 
-	                                    // r3 == header_in[1]
-	                                    // r3 = KErrBadDescriptor if EBufC, EPtrC
+	                                    				// r3 == header_in[1]
+	                                    				// r3 = KErrBadDescriptor if EBufC, EPtrC
 	asm("mvncc r3, #%a0" : : "i" (~TDesHeader::KConstMaxLength));  
 
-	                                    // r0 is an aligned pointer
-	asm("moveq r0, r12 ");              // r0 = pointer to des data if EBufCPtr
-	asm("tst r0, #3 ");                 // if (type == EBufCPtr && ((TUint)p & 3) != 0)
-	asm("bne bad_descriptor ");			//     return KErrBadDescriptor;
+	                                    				// r0 is an aligned pointer
+	asm("moveq r0, r12 ");              				// r0 = pointer to des data if EBufCPtr
+	asm("tst r0, #3 ");                 				// if (type == EBufCPtr && ((TUint)p & 3) != 0)
+	asm("bne bad_descriptor ");							//     return KErrBadDescriptor;
 	
-	asm("bic r14, r2, #0xf0000000 ");
-	asm("cmp r14, r3 ");				// if (len > max)
-	asm("bhi bad_descriptor ");			//     return KErrBadDescriptor;
+	asm("bic lr, r2, #0xf0000000 ");
+	asm("cmp lr, r3 ");									// if (len > max)
+	asm("bhi bad_descriptor ");							//     return KErrBadDescriptor;
 	
 	asm("stmia r1, {r2,r3,r12}");
 	asm("mov r0, #0 ");
@@ -1457,11 +1447,11 @@ __NAKED__ TBool SBTraceData::CheckFilter2(TUint32 aUid)
 	asm("stmdb	sp!, {r4-r8,lr}");
 	asm("mov	r4, r0 ");
 	asm("mov	r8, r1 ");
-	asm("mrs	r14, cpsr ");
+	asm("mrs	lr, cpsr ");
 	__ASM_CLI();
 	GET_RWNO_TID(,r3);
 	asm("mov	r5, #0 ");			// r5 = TRUE if critical section entered
-	asm("and	r6, r14, #0x0f ");
+	asm("and	r6, lr, #0x0f ");
 	asm("cmp	r6, #3 ");
 	asm("movhi	r6, #2 ");			// r6 = context ID = 1 for FIQ, 2 for IRQ/ABT/UND/SYS
 	asm("bne	1f ");				// branch if not mode_svc
@@ -1472,13 +1462,13 @@ __NAKED__ TBool SBTraceData::CheckFilter2(TUint32 aUid)
 	asm("ldr	r6, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iCurrentThread));
 	asm("cmp	r12, #0 ");			// kernel locked?
 	asm("bne	1f ");				// if so, don't enter CS
-	asm("msr	cpsr, r14 ");		// restore interrupts
+	asm("msr	cpsr, lr ");		// restore interrupts
 	asm("bl "	CSM_ZN5NKern14_ThreadEnterCSEv );
 	asm("mov	r5, #1 ");
 	asm("b		2f ");
 
 	asm("1: ");
-	asm("msr	cpsr, r14 ");		// restore interrupts
+	asm("msr	cpsr, lr ");		// restore interrupts
 	asm("2: ");						// r6 = context ID, r5 = TRUE if critical section entered
 
 	// DBTraceFilter2::Open()

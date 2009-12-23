@@ -147,7 +147,7 @@ DCameraScLdd::DCameraScLdd()
 		iPowerDownDfc(DCameraScLdd::PowerDownDfc,this,3),
 		iPowerUpDfc(DCameraScLdd::PowerUpDfc,this,3)
 	{
-//	iState=EOpen;
+	iState=EOpen;
 //	iCaptureMode=ECaptureModeImage;
 //	iFrameHeight=0;
 //	iFrameWidth=0;
@@ -184,31 +184,27 @@ DCameraScLdd::~DCameraScLdd()
 		{
 		iPowerHandler->Remove();
 		delete iPowerHandler;
-		iPowerHandler=NULL;
 		}
 
 	if (iCaptureModeConfig)
 		{
-		// Delete any buffers, the shared chunk we created, and the buffer config struct.
+		// Delete any buffers and shared chunk we created.
 		for (captureMode=0; captureMode < ECamCaptureModeMax; captureMode++)
 			{
 			if (iCaptureModeConfig[captureMode].iBufManager)
-				{
 				delete iCaptureModeConfig[captureMode].iBufManager;
-				iCaptureModeConfig[captureMode].iBufManager=NULL;
-				}
-
-			if (iCaptureModeConfig[captureMode].iBufConfig)
-				{
-				Kern::Free(iCaptureModeConfig[captureMode].iBufConfig);
-				iCaptureModeConfig[captureMode].iBufConfig=NULL;
-				}
 			}
 
-		delete[] iCaptureModeConfig;
-		iCaptureModeConfig=NULL;
-		}
+		// Delete the buffer config. info. structure.
+		for (captureMode=0; captureMode < ECamCaptureModeMax; captureMode++)
+			{
+			if (iCaptureModeConfig[captureMode].iBufConfig)
+				Kern::Free(iCaptureModeConfig[captureMode].iBufConfig);
+			}
 
+			if (iCaptureModeConfig)
+				delete[] iCaptureModeConfig;
+		}
 	// Close our reference on the client thread
 	Kern::SafeClose((DObject*&)iOwningThread,NULL);
 
@@ -283,6 +279,11 @@ TInt DCameraScLdd::DoCreate(TInt aUnit, const TDesC8* /*aInfo*/, const TVersion&
 	TAny* frameSizeCapsBuf=0;
 	TPtr8 frameSizeCapsPtr(0,0,0);
 
+	// Set the cache to hold the default dynamic attribute values.
+	iBrightnessValue = caps->iDynamicRange[ECamAttributeBrightness].iDefault;
+	iContrastValue = caps->iDynamicRange[ECamAttributeContrast].iDefault;
+	iColorEffectValue = caps->iDynamicRange[ECamAttributeColorEffect].iDefault;
+	
 	for (captureMode=0; captureMode < ECamCaptureModeMax; captureMode++)
 		{
 		if ((captureMode==ECamCaptureModeImage) && (caps->iNumImagePixelFormats==0))
@@ -304,15 +305,15 @@ TInt DCameraScLdd::DoCreate(TInt aUnit, const TDesC8* /*aInfo*/, const TVersion&
 			return r;
 			}
 		frameSize=(SDevCamFrameSize*) frameSizeCapsPtr.Ptr();
-		iCaptureModeConfig[captureMode].iCamConfig.iFrameSize=*frameSize;
+		iCaptureModeConfig[captureMode].iCamConfig.iFrameSize = *frameSize;
+		iCaptureModeConfig[captureMode].iCamConfig.iFrameRate = frameSize->iMinFrameRate;
 		Kern::Free(frameSizeCapsBuf);
 
-		iCaptureModeConfig[captureMode].iCamConfig.iFlashMode=ECamFlashNone;
-		iCaptureModeConfig[captureMode].iCamConfig.iExposureMode=ECamExposureAuto;
-		iCaptureModeConfig[captureMode].iCamConfig.iWhiteBalanceMode=ECamWBAuto;
-		iCaptureModeConfig[captureMode].iCamConfig.iZoom=0;
-		iCaptureModeConfig[captureMode].iCamConfig.iPixelWidthInBytes=0;
-		iCaptureModeConfig[captureMode].iCamConfig.iFrameRate = 0;
+		iCaptureModeConfig[captureMode].iCamConfig.iFlashMode = ECamFlashNone;
+		iCaptureModeConfig[captureMode].iCamConfig.iExposureMode = ECamExposureAuto;
+		iCaptureModeConfig[captureMode].iCamConfig.iWhiteBalanceMode = ECamWBAuto;
+		iCaptureModeConfig[captureMode].iCamConfig.iZoom = 0;
+		iCaptureModeConfig[captureMode].iCamConfig.iPixelWidthInBytes = 0;
 		}
 	Kern::Free(capsBuf);
 	// Setup the default buffer config.
@@ -577,20 +578,22 @@ TInt DCameraScLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			r=KErrNone;
 			break;
 			}
+			
 		case RDevCameraSc::EControlBufferIdToOffset:
 			{
 			// a1 has pointer to buffer for search criteria
 			// a2 has pointer to offset for result
 			TDevCamBufferModeAndId info;
-			TPtr8 indesc((TUint8*)&info,sizeof(info));
+			TPtr8 inDesc((TUint8*)(&info), sizeof(info));
 
-			r = Kern::ThreadDesRead(iOwningThread,a1,indesc,0);
-			if (KErrNone==r)
+			r = Kern::ThreadDesRead(iOwningThread,a1,inDesc,0);
+			if (r == KErrNone)
 				{
 				TInt id = info.iId;
 				TDevCamCaptureMode captureMode = info.iCaptureMode;
+
+				r = KErrNotFound;
 				DBufferManager* mgr = iCaptureModeConfig[captureMode].iBufManager;
-				
 				if (mgr)
 					{
 					if (mgr->iImageBuffer[id].iId == id)
@@ -598,12 +601,9 @@ TInt DCameraScLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 						kumemput32(a2, &mgr->iImageBuffer[id].iChunkOffset, sizeof(TInt));
 						r = KErrNone;
 						}
-					else
-						{
-						r = KErrNotFound;
-						}
 					}
 				}
+			
 			break;
 			}
 		case RDevCameraSc::EControlCapsSize:
@@ -616,14 +616,29 @@ TInt DCameraScLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			r = GetFrameSizeCaps(a1, a2);
 			break;
 			}
+			
 		case RDevCameraSc::EControlSetDynamicAttribute:
 			{
-			// Set the new camera configuration.
 			NKern::ThreadEnterCS();
-			r=SetDynamicAttribute((TInt)a1, (TUint)a2);
+			r = SetDynamicAttribute((TInt)a1, (TUint)a2);
 			NKern::ThreadLeaveCS();
 			break;
 			}
+			
+		case RDevCameraSc::EControlGetDynamicAttribute:
+			{
+			TInt attribute = (TInt)(a1);
+			TUint value = 0;
+			
+			r = GetDynamicAttribute(attribute, value);
+			if (r == KErrNone)
+				{
+				kumemput32(a2, &value, sizeof(TUint));
+				}
+				
+			break;
+			}
+			
 		}
 	return(r);
 	}
@@ -737,6 +752,9 @@ Allows changing of the dynamic settings.
 Checks locally the validity of the arguments passed so as to increase performance by not
 forcing a context switch.
 
+If the setting has been accepted by the sensor the new value is cached by the LDD so further
+querying does not involve another context switch.
+
 @param aAttribute An enum identifying the dynamic attribute to change.
 @param aValue The attributes value.
 @return KErrNone if successful, KErrNotSupported if not supported, KErrArgument if aValue out of range.
@@ -745,19 +763,73 @@ forcing a context switch.
 */
 TInt DCameraScLdd::SetDynamicAttribute(TInt aAttribute, TUint aValue)
 	{
-	Kern::Printf(">DCameraScLdd::SetDynamicAttribute()");
-	switch(aAttribute)
+	TUint* attrCachePtr = NULL;
+	TInt err = KErrNotSupported;
+	
+	switch (aAttribute)
 		{
 		case ECamAttributeBrightness:
-			return Pdd()->SetBrightness(aValue);
+			err = Pdd()->SetBrightness(aValue);
+			attrCachePtr = &iBrightnessValue;
+			break;
+			
 		case ECamAttributeContrast:
-			return Pdd()->SetContrast(aValue);
+			err = Pdd()->SetContrast(aValue);
+			attrCachePtr = &iContrastValue;
+			break;
+			
 		case ECamAttributeColorEffect:
-			return Pdd()->SetColorEffect(aValue);
+			err = Pdd()->SetColorEffect(aValue);
+			attrCachePtr = &iColorEffectValue;
+			break;
+			
+		default:
+			return err;
+		}
+	
+	if (err == KErrNone)
+		{
+		// Cache the set value.
+		__ASSERT_DEBUG(attrCachePtr, Kern::Fault(KCameraLddPanic, __LINE__));
+		*attrCachePtr = aValue;
+		}
+		
+	return err;
+	}
+
+
+/**
+Allows querying of a dynamic setting.
+The value is read from the cached LDD values.
+
+@param aAttribute An enum identifying the dynamic attribute to change.
+@param aValue A reference to a variable that will receive the attribute value.
+@return KErrNone if successful, KErrNotFound if aAttribute is an unsupported
+        setting. The parameter aValue is not changed if this function fails.
+*/
+TInt DCameraScLdd::GetDynamicAttribute(TInt aAttribute, TUint& aValue)
+	{
+	switch (aAttribute)
+		{
+		case ECamAttributeBrightness:
+			aValue = iBrightnessValue;
+			break;
+			
+		case ECamAttributeContrast:
+			aValue = iContrastValue;
+			break;
+			
+		case ECamAttributeColorEffect:
+			aValue = iColorEffectValue;
+			break;
+			
 		default:
 			return KErrNotFound;
 		}
+		
+	return KErrNone;
 	}
+
 
 /**
 Updates the buffer configuration of the camera for the specified capture mode.
@@ -863,14 +935,11 @@ TInt DCameraScLdd::ChunkClose(TInt aCaptureMode)
 	{
 	__KTRACE_CAM(Kern::Printf(">DCameraScLdd::ChunkClose(Capture Mode-%d)",aCaptureMode));
 
-	// For the active mode we need to perform extra checks.
 	if(iCaptureMode == aCaptureMode)
-		{
-		if (iState==ECapturing)
-			{
-			return(KErrInUse);
-			}
-		}
+        {
+        if (iState==ECapturing)
+            return(KErrInUse);
+        }
 
 	// Delete any existing buffers
 	if (iCaptureModeConfig[aCaptureMode].iBufManager)
@@ -941,10 +1010,8 @@ TInt DCameraScLdd::Start()
 	{
 	__KTRACE_CAM(Kern::Printf(">DCameraScLdd::Start(Current Mode-%d)",iCaptureMode));
 
-	// We should only be able to do this for the active mode.
 	if (iState==ECapturing)
 		return(KErrInUse);
-
 	TInt r=KErrNone;
 
 	// Only continue if the mode being started has been configured
@@ -979,12 +1046,15 @@ TInt DCameraScLdd::DoStart()
 	TPhysAddr physAddr=bufManager->iCurrentBuffer->iPhysicalAddress;
 	TInt r=Pdd()->Start(iCaptureMode,linAddr,physAddr);
 
-	if (r==KErrNone && bufManager->iNextBuffer)
+/*
+ * 	James Cooper: Uncommenting this code will cause the ASSERT_DEBUG in SetImageCaptured() to fail
+ * 	if (r==KErrNone && bufManager->iNextBuffer)
 		{
 		linAddr=(bufManager->iChunkBase)+(bufManager->iNextBuffer->iChunkOffset);
 		physAddr=bufManager->iNextBuffer->iPhysicalAddress;
 		r=Pdd()->CaptureNextImage(linAddr,physAddr);
 		}
+*/	
 	return(r);
 	}
 
@@ -1226,15 +1296,12 @@ Stores the camera configuration passed in from the user after checking and valid
 TInt DCameraScLdd::DoSetConfig(TInt aCaptureMode, const TDesC8* aCamConfigBuf)
 	{
 	__KTRACE_CAM(Kern::Printf(">DCameraScLdd::DoSetConfig(CaptureMode=%d)",aCaptureMode));
-
-	// For the active mode we need to perform extra checks.
-	if(iCaptureMode == aCaptureMode)
-		{
-		if (iState==ECapturing)
-			{
-			return(KErrInUse);
-			}
-		}
+	
+    if(iCaptureMode == aCaptureMode)
+        {
+        if (iState==ECapturing)
+            return(KErrInUse);
+        }
 
 	// Read the config structure from the client
 	TCameraConfigV02 config;
@@ -1252,13 +1319,9 @@ TInt DCameraScLdd::DoSetConfig(TInt aCaptureMode, const TDesC8* aCamConfigBuf)
 		return(r);
 		}
 
-	// For the active mode we need to perform extra tasks.
 	// We're about to replace any previous configuration - so set the
 	// status back to un-configured. A new buffer configuration must be calculated as a result of that.
-	if(iCaptureMode == aCaptureMode)
-		{
-		iState=EOpen;
-		}
+	//iState=EOpen;
 
 	// Save the new configuration.
 	iCaptureModeConfig[aCaptureMode].iCamConfig=config;
@@ -1390,8 +1453,10 @@ TInt DCameraScLdd::DoValidateConfig(TCameraCapsV02* aCamCaps, TInt& aCaptureMode
 				frameSize = (SDevCamFrameSize*) frameSizeCapsPtr.Ptr();
 				for(l=0; l<pixelFormat->iNumFrameSizes; l++ )
 					{
-					if (aConfig.iFrameSize.iWidth==frameSize->iWidth && aConfig.iFrameSize.iHeight==frameSize->iHeight &&
-						aConfig.iFrameRate >= frameSize->iMinFrameRate && aConfig.iFrameRate <= frameSize->iMaxFrameRate)
+					if (aConfig.iFrameSize.iWidth == frameSize->iWidth &&
+						aConfig.iFrameSize.iHeight == frameSize->iHeight &&
+						aConfig.iFrameRate >= frameSize->iMinFrameRate &&
+						aConfig.iFrameRate <= frameSize->iMaxFrameRate)
 						{
 						NKern::ThreadEnterCS();
 						Kern::Free(frameSizeCapsBuf);
@@ -1539,6 +1604,7 @@ TInt DCameraScLdd::GetFrameSizeCaps(TAny* aBuffer, TAny* aFrameSizeCapsInfo)
 	return KErrNone;
 	}
 
+
 /**
 Constructor for the buffer manager.
 */
@@ -1559,7 +1625,6 @@ DBufferManager::~DBufferManager()
 	if (iChunk)
 		Kern::ChunkClose(iChunk);
 	delete[] iImageBuffer;
-	iImageBuffer=NULL;
 	}
 
 /**
@@ -1924,7 +1989,6 @@ Destructor for the image buffer class.
 TImageBuffer::~TImageBuffer()
 	{
 	delete[] iPhysicalPages;
-	iPhysicalPages=NULL;
 	}
 
 /**
@@ -2022,10 +2086,7 @@ Destructor for the capture request queue.
 TCameraScRequestQueue::~TCameraScRequestQueue()
 	{
 	for (TInt i=0 ; i<KMaxCamScRequestsPending ; i++)
-		{
 		delete iRequest[i];
-		iRequest[i]=NULL;
-		}
 	}
 
 /**

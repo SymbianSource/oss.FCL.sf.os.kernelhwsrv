@@ -715,6 +715,10 @@ TInt DMsTimFactory::Install()
 	// Allocate a kernel thread to run the DFC 
 	TInt r = Kern::DynamicDfcQCreate(gDfcQ, KDMsTimThreadPriority, KDMsTimThread);
 
+#ifdef CPU_AFFINITY_ANY
+			NKern::ThreadSetCpuAffinity((NThread*)(gDfcQ->iThread), KCpuAffinityAny);			
+#endif
+
 	if (r != KErrNone)
 		return r; 	
 

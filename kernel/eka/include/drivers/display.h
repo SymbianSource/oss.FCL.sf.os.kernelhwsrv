@@ -11,10 +11,9 @@
 // Contributors:
 //
 // Description:
-// e32\include\drivers\display.h 
+// os\kernelhwsrv\kernel\eka\include\drivers\display.h 
 // Interface to LDD of the Display GCE driver
 // Kernel side definitions for the GCE driver
-// 
 //
 
 /**
@@ -41,6 +40,7 @@ const TInt KDisplayUBMax = 8;
 
 const TInt KPendingReqArraySize  = RDisplayChannel::EReqWaitForPost +1;
   
+const TInt KMaxQueuedRequests 	 = 3;
 
 class DDisplayChannel;
 
@@ -84,9 +84,10 @@ An object encapsulating a request from the client(iOwningThread) to the GCE driv
 */ 
 typedef struct
 {
-	  /** The request status associated with the request - used to signal completion of the request and pass back a
+	  
+	  /** The TClientRequest object associated with the request - used to signal completion of the request and pass back a
 	   completion code. */
-	  TRequestStatus* 	iStatus;
+	  TClientRequest*   iTClientReq;
 	  
 	  /** The thread which issued the request and which supplied the request status. */
 	  DThread* 			iOwningThread;
@@ -144,15 +145,18 @@ private:
 private:
 	// Implementation for the differnt kinds of messages sent through RBusLogicalChannel
 	TInt  			DoControl(TInt aFunction, TAny* a1, TAny* a2, DThread* aClient);
-	TInt  			DoRequest(TInt aReqNo, TRequestStatus* aStatus, TAny* a1, TAny* a2, DThread* aClient);
+	TInt  			DoRequest(TInt aReqNo, TAny* a1, TAny* a2,  TInt index, DThread* aClient);
 	void  			DoCancel(TUint aMask);
-           
+	
+	TInt 		    SendRequest(TMessageBase* aMsg);
+	TInt 		    SendControl(TMessageBase* aMsg);
+	TInt 		    SendMsg(TMessageBase* aMsg);	 
        
     TBufferNode*  	FindUserBufferNode(TInt aBufferId);  
     TInt 			CheckAndOpenUserBuffer(TBufferNode* aNode, TInt aHandle, TInt aOffset, DThread* aClient);         
     TInt  			FreeUserBufferNode(TBufferNode* aNode);
     
-    void 			CompleteRequest(DThread* aThread,TRequestStatus*& aStatus,TInt aReason);
+    void 			CompleteRequest(DThread* aThread, TClientRequest*& aTClientReq, TInt aReason);
           
     DDisplayPdd * 	Pdd();  
     	
@@ -180,22 +184,41 @@ public:
     TBufferNode 	iUserBuffer[KDisplayUBMax];
      
     //pending queue for asynchronous requests
-    TRequestNode 	iPendingReq[KPendingReqArraySize];
+    TRequestNode 	iPendingReq[KPendingReqArraySize][KMaxQueuedRequests];
+        
+    //Queue of TClientRequest objects, one for each type of asynchronous request.
+    TClientRequest* iClientRequest[KPendingReqArraySize][KMaxQueuedRequests];
+	
+	//The index in structures iPendingReq and iClientRequest that identifies the active TClientRequest object.
+	//For each type of asynchronous request, iPendingIndex is the index of the active TClientRequest object 
+	//in iPendingReq
+	TInt			iPendingIndex[KPendingReqArraySize];
+    
+    // Protect access of iClientRequest
+    DMutex * 		 iClientRequestMutex;
+    
      
     // current index
     TInt    		iLegacyBuffIdx;
 	TInt    		iCompositionBuffIdx;
     TInt    		iUserBuffIdx;
      
-    // rotations
-    TInt    		iLegacyRotation;
-    TInt    		iCurrentRotation;
+    
+    RDisplayChannel::TDisplayRotation 	iLegacyRotation;
+    RDisplayChannel::TDisplayRotation   iCurrentRotation;
+    
     
     TBool    		iReady;  
     
     /** Used in debug builds to track that all calls to DThread::Open() are balanced with a close before the driver closes. */
 	TInt iThreadOpenCount; 
-     
+	
+	/** Used in debug builds to track the number of asynchronous requests that are queued is equal to the number of 
+	requests that are completed, before the driver closes.*/
+	TInt iAsyncReqCount; 
+
+	/** Chunk used in UDEB only for testing user buffers. */
+	DChunk*	iChunk;
 	};
 
 
@@ -227,7 +250,7 @@ class DDisplayPdd : public DBase
      
      @return KErrNone if successful; or one of the other system wide error codes.
      */       
-    virtual TInt  SetRotation(TInt aRotation)=0;
+    virtual TInt  SetRotation(RDisplayChannel::TDisplayRotation aRotation)=0;
 
      /**
      Called by the LDD to handle the device specific part of posting a User Buffer.
@@ -316,17 +339,23 @@ inline TInt DDisplayPdd::RequestComplete(TInt aRequest, TInt aReason)
 
 
 
+
 //#define _GCE_DISPLAY_DEBUG
 
 #ifdef _GCE_DISPLAY_DEBUG
 
-#define  __DEBUG_PRINT(a) 		Kern::Printf(a)
-#define  __DEBUG_PRINT2(a,b) 	Kern::Printf(a,b)
+#define  __DEBUG_PRINT(a) 			Kern::Printf(a)
+#define  __DEBUG_PRINT2(a,b) 		Kern::Printf(a,b)
+#define  __DEBUG_PRINT3(a,b,c) 		Kern::Printf(a,b,c)
+#define  __DEBUG_PRINT4(a,b,c,d) 	Kern::Printf(a,b,c,d)
+#define  __DEBUG_PRINT5(a,b,c,d,e) 	Kern::Printf(a,b,c,d,e)
 
 #else
-
 #define  __DEBUG_PRINT(a)
 #define  __DEBUG_PRINT2(a,b)
+#define  __DEBUG_PRINT3(a,b,c)
+#define  __DEBUG_PRINT4(a,b,c,d) 
+#define  __DEBUG_PRINT5(a,b,c,d,e)
 
 #endif
 

@@ -2500,4 +2500,5 @@ EXPORTS
 	_ZN4User10RegionCodeEv @ 2499 NONAME
 	_ZN15TExtendedLocale10LoadLocaleERK7TDesC16S2_S2_ @ 2500 NONAME
 	_ZN15TExtendedLocale16LoadLocaleAspectERK7TDesC16 @ 2501 NONAME
+	_ZN16TChunkCreateInfo11SetReadOnlyEv @ 2502 NONAME
 

@@ -67,30 +67,32 @@ __NAKED__ TUint32 CPUID(TInt /*aRegNum*/)
 __NAKED__ void UnlockIPCAlias()
 	{
 	asm("mrc p15, 0, r0, c3, c0, 0 ");
-	asm("orr r0, r0, #0x10 ");			// Alias memory in domain 2
+	asm("orr r0, r0, #%a0 " : : "i" (1 << (2*KIPCAliasDomain)));	// Allow client access to Alias mappings
 	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	__INST_SYNC_BARRIER_Z__(r0);
 	__JUMP(,lr);
 	}
 
 __NAKED__ void LockIPCAlias()
 	{
 	asm("mrc p15, 0, r0, c3, c0, 0 ");
-	asm("bic r0, r0, #0x30 ");			// Alias memory in domain 2
+	asm("bic r0, r0, #%a0 " : : "i" (3 << (2*KIPCAliasDomain)));	// Prevent access to Alias mappings
 	asm("mcr p15, 0, r0, c3, c0, 0 ");
+	__INST_SYNC_BARRIER_Z__(r0);
 	__JUMP(,lr);
 	}
 
 
 __NAKED__ void M::LockUserMemory()
 	{
-	USER_MEMORY_GUARD_ON(,r0,r0);
+	USER_MEMORY_GUARD_ON(,r0,r0);		// Prevent access to User mappings in domain 15
 	__JUMP(,lr);
 	}
 
 
 __NAKED__ void M::UnlockUserMemory()
 	{
-	USER_MEMORY_GUARD_OFF(,r0,r0);
+	USER_MEMORY_GUARD_OFF(,r0,r0);		// Allow access to User mappings in domain 15
 	__JUMP(,lr);
 	}
 

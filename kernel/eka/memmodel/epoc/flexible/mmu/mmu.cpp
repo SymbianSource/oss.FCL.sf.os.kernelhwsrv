@@ -1037,7 +1037,7 @@ TInt Mmu::ClaimPhysicalRam(TPhysAddr aPhysAddr, TUint aCount, TRamAllocFlags aFl
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ClaimPhysicalRam(0x%08x,0x%x,0x%08x)",aPhysAddr,aCount,aFlags));
 	aPhysAddr &= ~KPageMask;
-	TInt r = iRamPageAllocator->ClaimPhysicalRam(aPhysAddr,aCount);
+	TInt r = iRamPageAllocator->ClaimPhysicalRam(aPhysAddr,(aCount << KPageShift));
 	if(r!=KErrNone)
 		return r;
 

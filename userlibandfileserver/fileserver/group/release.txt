@@ -1,3 +1,44 @@
+Version 2.00.2018
+=================
+(Made by Vino Jose 05/11/2009)
+
+1.	KaiDuan
+	1.	DEF140485: ASSERT triggered in CCacheMemoryClient::Reset()
+
+Version 2.00.2017
+=================
+(Made by Vino Jose 04/11/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX:  DEF142796: exFAT: CExFatMountCB::SetVolumeClean() sometimes corrupts original boot code.  
+
+2.	NicholasC
+	1.	DEFECT FIX: DEF142538: b_fat32 hangs when using large Mass Storage devices
+	2.	DEFECT FIX: DEF141812: F32TEST T_NOTIFY_MFS on Unicore SMP (Naviengine) Image
+
+3.	SophieY
+	1.	DEFECT FIX: DEF141402: File server trace LDD causes zombie thread to remain in existence forever 
+
+4.	FadhliMustaffa
+	1.	DEFECT FIX: DEF142406: T_FMAN and T_FSYS failing on X86 (T_fman.cpp:105 & T_fsys.cpp:570)
+	2.	MINOR_CHANGE: Correctly labelled tests in T_FMAN
+
+
+Version 2.00.2016
+=================
+(Made by Vino Jose 29/10/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX:  DEF142713  RFs::NotifyDismount() has behaviour which is not documented  
+	
+2.	HaoJiang
+	1.	DEFECT FIX:  PDEF142695: unwanted disk space check when RFile::Att or RFile::Modified is called 
+
+3.	NicholasC
+	1.	MINOR CHANGE: /smassstorage/inc/cusbmassstoragescheduler.h is test file so moved to /f32test/smassstorage/inc/ 
+	2.	DEFECT FIX: DEF142701: suspend not entered with large USB mass storage device after formatting
+	3.	DEFECT FIX: DEF142703: Improve use of buffers in TBlockTransfer
+
 
 Version 2.00.2015
 =================

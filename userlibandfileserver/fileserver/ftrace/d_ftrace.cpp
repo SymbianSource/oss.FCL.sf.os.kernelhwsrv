@@ -23,16 +23,8 @@
 
 #include "f32trace.h"
 
-#define __DLOGICAL_CHANNEL_BASE__
-
-#ifdef __DLOGICAL_CHANNEL_BASE__
 DMutex* TheTraceMutex = NULL;
 _LIT(KLitTraceMutexName, "FTRACE_MUTEX");
-#else
-TDynamicDfcQue* gDfcQ;
-const TInt KDFTraceThreadPriority = 27;
-_LIT(KDFTraceThread,"DFTraceThread");
-#endif
 
 const TInt KMajorVersionNumber=1;
 const TInt KMinorVersionNumber=0;
@@ -49,11 +41,7 @@ public:
 	virtual TInt Create(DLogicalChannelBase*& aChannel); 	//overriding pure virtual
 	};
 
-#ifdef __DLOGICAL_CHANNEL_BASE__
 class DLddFTrace : public DLogicalChannelBase
-#else
-class DLddFTrace : public DLogicalChannel
-#endif
 	{
 public:
 	DLddFTrace();
@@ -61,11 +49,7 @@ public:
 protected:
 	virtual TInt DoCreate(TInt aUnit, const TDesC8* anInfo, const TVersion& aVer);
 
-#ifdef __DLOGICAL_CHANNEL_BASE__
 	virtual TInt Request(TInt aReqNo, TAny* a1, TAny* a2);
-#else
-	virtual void HandleMsg(class TMessageBase *);
-#endif
 
 private:
 	void DoCancel(TInt aReqNo);
@@ -73,16 +57,13 @@ private:
 	TInt DoControl(TInt aFunction, TAny* a1, TAny* a2);
 
 private:
-	DThread* iClient;
     };
 
 DECLARE_STANDARD_LDD()
 	{
-#ifdef __DLOGICAL_CHANNEL_BASE__
 	TInt r = Kern::MutexCreate(TheTraceMutex,  KLitTraceMutexName, KMutexOrdNone);
 	if (r != KErrNone)
 		return NULL;
-#endif
 
 	return new DLddFactoryFTrace;
 	}
@@ -103,13 +84,6 @@ TInt DLddFactoryFTrace::Create(DLogicalChannelBase*& aChannel)
 
 TInt DLddFactoryFTrace::Install()
 	{
-#ifndef __DLOGICAL_CHANNEL_BASE__
-	// Allocate a kernel thread to run the DFC 
-	TInt r = Kern::DynamicDfcQCreate(gDfcQ, KDFTraceThreadPriority, KDFTraceThread);
-	if (r != KErrNone)
-		return r; 	
-#endif
-
     TPtrC name=_L("FTrace");
 	return(SetName(&name));
 	}
@@ -120,21 +94,14 @@ void DLddFactoryFTrace::GetCaps(TDes8& /*aDes*/) const
 
 DLddFactoryFTrace::~DLddFactoryFTrace()
 	{
-#ifndef __DLOGICAL_CHANNEL_BASE__
-	if (gDfcQ)
-		gDfcQ->Destroy();
-#endif
 	}
 
 DLddFTrace::DLddFTrace()
 	{
-	iClient=&Kern::CurrentThread();
-	((DObject*)iClient)->Open();	// can't fail since thread is running
     }
 
 DLddFTrace::~DLddFTrace()
 	{
-  	Kern::SafeClose((DObject*&)iClient,NULL);
     }
 
 TInt DLddFTrace::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TVersion& aVer)
@@ -143,11 +110,6 @@ TInt DLddFTrace::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TVersio
 	if (!Kern::QueryVersionSupported(TVersion(KMajorVersionNumber,KMinorVersionNumber,KBuildVersionNumber),aVer))
 		return(KErrNotSupported);
 
-#ifndef __DLOGICAL_CHANNEL_BASE__
-	SetDfcQ(gDfcQ);
-	iMsgQ.Receive();
-#endif
-
     return(KErrNone);
 	}
 
@@ -155,7 +117,6 @@ void DLddFTrace::DoCancel(TInt /*aReqNo*/)
 	{
 	}
 
-#ifdef __DLOGICAL_CHANNEL_BASE__
 TInt DLddFTrace::Request(TInt aReqNo, TAny* a1, TAny* a2)
 	{
 	NKern::ThreadEnterCS();
@@ -167,47 +128,9 @@ TInt DLddFTrace::Request(TInt aReqNo, TAny* a1, TAny* a2)
 	return r;
 	}
 
-#else
-
-void DLddFTrace::HandleMsg(TMessageBase* aMsg)
-    {
-    TThreadMessage& m=*(TThreadMessage*)aMsg;
-    TInt id=m.iValue;
-    
-	if (id==(TInt)ECloseMsg)
-		{
-		m.Complete(KErrNone, EFalse);
-		return;
-		}
-    else if (id==KMaxTInt)
-		{
-		// DoCancel
-		m.Complete(KErrNone,ETrue);
-		return;
-		}
-
-    if (id<0)
-		{
-		// DoRequest
-		TRequestStatus* pS=(TRequestStatus*)m.Ptr0();
-		
-		// WDP FIXME change this to use the Kern::RequestComplete() API which doesn't take a thread pointer
-		// when this becomes available
-    	Kern::RequestComplete(iClient, pS, KErrNotSupported);
-		m.Complete(KErrNotSupported, ETrue);
-		}
-    else
-		{
-		// DoControl
-		TInt r=DoControl(id, m.Ptr0(), m.Ptr1());
-		m.Complete(r,ETrue);
-		}
-	}
-#endif	// __DLOGICAL_CHANNEL_BASE__
 
 const TUint KTraceBufferSize = 4096;
 TUint8 gTraceBuffer[KTraceBufferSize];
-
 
 
 #define MIN(a,b)			((a) < (b) ? (a) : (b))
@@ -235,19 +158,12 @@ TInt DLddFTrace::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 
 			TraceArgs args={0};
 
-#ifdef __DLOGICAL_CHANNEL_BASE__
 			XTRAP(r, XT_DEFAULT, kumemget32(&args, a1, sizeof(args)));
 			if (r != KErrNone)
 				return r;
-#else
-			r = Kern::ThreadRawRead(iClient, a1, &args, sizeof(args));
-			if (r != KErrNone)
-				return r;
-#endif
-
 
 			// current descriptor - MUST be either a TPtr8 or a TBuf8<4>
-			TUint32 desc[2] = {0, 0};	
+			TUint32 desc[2] = {0, 0};
 			TUint32& desLength = desc[0];
 
 			TUint offset = 0;
@@ -260,13 +176,7 @@ TInt DLddFTrace::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			for (TInt n=0; n< args.iDescriptorCount; n++, des = (TDesC8*) (((TUint8*) des) + desSize) )
 				{
 
-#ifdef __DLOGICAL_CHANNEL_BASE__
 				XTRAP(r, XT_DEFAULT, kumemget32(desc, des, sizeof(desc)));
-#else
-				r = Kern::ThreadRawRead(iClient, des, desc, sizeof(desc));
-				if (r != KErrNone)
-					return r;
-#endif
 				TUint32 desType = desLength >> KShiftDesType;
 				desLength &= (TUint) (KMaskDesLength);
 				if (desType == EPtrC)
@@ -288,19 +198,12 @@ TInt DLddFTrace::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 					return KErrArgument;
 
 				TUint len = MIN(KTraceBufferSize - offset, desLength);
-#ifdef __DLOGICAL_CHANNEL_BASE__
 				XTRAP(r, XT_DEFAULT, kumemget(gTraceBuffer+offset, (const TUint8*) desc[1], len));
-#else
-				TPtr8 dest(gTraceBuffer+offset, len, len);
-				r = Kern::ThreadDesRead(iClient, des, dest, 0, KChunkShiftBy0);
-				if (r != KErrNone)
-					return r;
-#endif
 				offset+= len;
-				
+
 				}
 
-			BTrace::OutFilteredBig 
+			BTrace::OutFilteredBig
 				(BTRACE_HEADER_C(8,args.iCategory, 0), args.iUid, gTraceBuffer, offset);
 
 			r=KErrNone;

@@ -1436,17 +1436,16 @@ TInt DThread::MakeHandleAndOpen(TOwnerType aType, DObject* aObj, TInt& aHandle, 
 	}
 
 /**
-Makes a handle to a kernel object and increments the access count on the object.
+Makes a thread-owned handle to a kernel object and increments the access count
+on the object.
 
 @param aThread  The thread to own the handle.
                 If this is NULL, the current thread is used.
 
 @param aObject  The object to which the handle will refer.
 
-@return The created handle (a value >0), if successful;
+@return The created handle (a value >=0), if successful;
         otherwise one of the other system wide error codes, (a value <0).
-
-@return KErrNone, if successful; otherwise one of the other system wide error codes.
 
 @pre Calling thread must be in a critical section
 @pre Interrupts must be enabled.
@@ -1455,13 +1454,46 @@ Makes a handle to a kernel object and increments the access count on the object.
 @pre Call in a thread context.
 @pre Can be used in a device driver.
 */
+
 EXPORT_C TInt Kern::MakeHandleAndOpen(DThread* aThread, DObject* aObject)
 	{
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::MakeHandleAndOpen");			
+	return MakeHandleAndOpen(aThread, aObject, EOwnerThread);
+	}
+
+/**
+Makes a handle to a kernel object and increments the access count on the object.
+
+The handle can be owned by either a thread or a process.
+
+@param aThread  The thread to own the handle, if the handle is to be owned by a
+                thread.
+                A thread owned by the process to own the handle, if the handle
+                is to be owned by a process.
+                If this is NULL, the current thread is used.
+
+@param aObject  The object to which the handle will refer.
+
+@param aType    An enumeration whose enumerators define the ownership of this
+                handle.
+
+@return The created handle (a value >=0), if successful;
+        otherwise one of the other system wide error codes, (a value <0).
+
+@pre Calling thread must be in a critical section
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+*/
+
+EXPORT_C TInt Kern::MakeHandleAndOpen(DThread* aThread, DObject* aObject, TOwnerType aType)
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::MakeHandleAndOpen");
 	if (!aThread)
 		aThread = TheCurrentThread;
 	TInt h;
-	TInt r = aThread->MakeHandleAndOpen(EOwnerThread, aObject, h);
+	TInt r = aThread->MakeHandleAndOpen(aType, aObject, h);
 	return (r == KErrNone) ? h : r;
 	}
 

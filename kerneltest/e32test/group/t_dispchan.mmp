@@ -15,7 +15,7 @@
 // 
 //
 
-capability		WriteDeviceData
+capability		all
 vendorid 		0x70000001
 
 target			t_dispchan.exe        

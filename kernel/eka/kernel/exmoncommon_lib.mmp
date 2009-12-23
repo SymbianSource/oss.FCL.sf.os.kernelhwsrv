@@ -18,3 +18,5 @@
 target			exmoncommon.lib
 targettype		implib
 linkas			exmoncommon.dll
+
+SMPSAFE

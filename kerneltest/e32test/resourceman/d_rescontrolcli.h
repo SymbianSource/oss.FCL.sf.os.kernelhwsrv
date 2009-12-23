@@ -129,7 +129,7 @@ public:
     TInt RequestNotification(TUint aClientId, TUint aResourceId);
     TInt RequestNotification(TUint aClientId, TUint aResourceId, TInt aDirection, TInt aThreshold);
     TInt CancelNotification(TUint aClientId, TUint aResourceId, TBool aType);
-    TInt RegisterForIdleResourcesInfo(TUint aPowerControllerId, TUint aResourceNum);
+    TInt RegisterForIdleResourcesInfo(TUint aPowerControllerId, TUint aResourceNum, TAny* anInfo);
     TInt GetIdleResourcesInfo(TUint aResourceNum, TAny* info);
 	TInt DeRegisterClientLevelFromResource(TInt aClientId, TUint aResId);
 	TInt CheckPostBootLevelNotifications();
@@ -458,9 +458,13 @@ TInt RTestResMan::CancelNotification(TUint aClientId, TUint aResourceId, TBool a
 	@Param	- aResourceNum - Number of resource, whose information needs to be cached
 	@return- KErrNone on Sucess or one of system wide errors.
 	*/
-TInt RTestResMan::RegisterForIdleResourcesInfo(TUint aPowerControllerId, TUint aResourceNum)
+TInt RTestResMan::RegisterForIdleResourcesInfo(TUint aPowerControllerId, TUint aResourceNum, TAny* aPtr)
      {
-     return DoControl(ERegisterForIdleResourcesInfo, (TAny*)aPowerControllerId, (TAny*)aResourceNum);
+	 TParameterListInfo anInfo;
+	 anInfo.iClientId = aPowerControllerId;
+	 anInfo.iPtr1 = (TAny*)aResourceNum;
+	 anInfo.iPtr2 = (TAny*)aPtr;
+     return DoControl(ERegisterForIdleResourcesInfo, (TAny*)&anInfo);
      }
 
 /** Request to Deregister client level from resource. 

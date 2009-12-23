@@ -259,17 +259,17 @@ TInt DHcrTestChannel::Request(TInt aReqNo, TAny*, TAny*)
     		}
     	
 	    // Switch iCoreImgStore to a repositore store located in \sys\bin directory
-		const TText * fileInSysBinName = (const TText *)"t_hcr.exe";
+		const TText * fileInSysBinName = (const TText *)"d_hcrsim_own.ldd";
 		err = gObserver.SwitchRepository(fileInSysBinName, HCR::HCRInternal::ECoreRepos);
 		if (err != KErrNone)
-             HCR_LOG_RETURN(err);
+             HCR_TRACE_RETURN(err);
 
 
         // Switch iOverrideStore to a repositore store located in \sys\Data directory
         const TText * fileInSysDataName = (const TText *)"EMPTY.DAT";
         err = gObserver.SwitchRepository(fileInSysDataName, HCR::HCRInternal::EOverrideRepos);
 		if (err != KErrNone)
-             HCR_LOG_RETURN(err);
+             HCR_TRACE_RETURN(err);
 
         // Try to switch iCoreImgStore to a not existing one and check the SwitchRepository() 
         // keeps its original value.
@@ -278,14 +278,14 @@ TInt DHcrTestChannel::Request(TInt aReqNo, TAny*, TAny*)
         const TText * wrongFileName = (const TText *)"hcr.ldl";
 		err = gObserver.SwitchRepository(wrongFileName, HCR::HCRInternal::ECoreRepos);
 		if ( err != KErrNotFound)
-             HCR_LOG_RETURN(err);
+             HCR_TRACE_RETURN(err);
              
         err = KErrNone;
         
         HCR::TRepository* newRepos = gObserver.GetCoreImgRepos();     
         HCR_TRACE1("--- value of iCoreImgStore:0x%08x after try to switch to a not exist", newRepos);             
         if ( oldRepos != newRepos )
-            HCR_LOG_RETURN(KErrGeneral);
+            HCR_TRACE_RETURN(KErrGeneral);
             
         // Switch iOverrideStore to a new, existing repository, different the current and check the 
         // iOverrideStore value changed.
@@ -293,12 +293,12 @@ TInt DHcrTestChannel::Request(TInt aReqNo, TAny*, TAny*)
         HCR_TRACE1("--- value of iOverrideStore:0x%08x before try to switch to existing one", oldRepos);
 		err = gObserver.SwitchRepository(fileInSysBinName, HCR::HCRInternal::EOverrideRepos);
 		if ( err != KErrNone)
-             HCR_LOG_RETURN(err);
+             HCR_TRACE_RETURN(err);
         
         newRepos = gObserver.GetOverrideImgRepos();     
         HCR_TRACE1("--- value of iOverrideStore:0x%08x after try to switch to existing on", newRepos);             
         if ( oldRepos == newRepos )
-            HCR_LOG_RETURN(KErrGeneral);            
+            HCR_TRACE_RETURN(KErrGeneral);            
         
 		return err;
 		}
@@ -327,13 +327,13 @@ DECLARE_STANDARD_LDD()
     
     HCR::MVariant* varPtr = CreateHCRVariant();
 	if (varPtr==0)
-    	return (0) ; //HCR_LOG_RETURN(0);
+    	return 0;
     	
 	new(&gTestHcrInt) HCR::HCRInternal(varPtr);
 
 	TInt err = gTestHcrInt.Initialise();
 	if (err != KErrNone)
-    	return (0) ; //HCR_LOG_RETURN(0);
+    	return 0;
 
 	new(&gObserver) HCR::HCRInternalTestObserver(&gTestHcrInt);
 	               

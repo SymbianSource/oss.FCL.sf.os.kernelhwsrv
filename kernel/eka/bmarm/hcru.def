@@ -17,6 +17,6 @@ EXPORTS
 	GetBool__3HCRRCQ23HCR10TSettingIdRi @ 16  NONAME R3UNUSED ; HCR::GetBool(HCR::TSettingId const &, int &)
 	GetArray__3HCRRCQ23HCR10TSettingIdUsPlRUs @ 17  NONAME ; HCR::GetArray(HCR::TSettingId const &, unsigned short, long *, unsigned short &)
 	GetArray__3HCRRCQ23HCR10TSettingIdUsPUlRUs @ 18  NONAME ; HCR::GetArray(HCR::TSettingId const &, unsigned short, unsigned long *, unsigned short &)
-	FindSettings__3HCRUliRUlPUlPQ23HCR12TSettingTypePUs @ 19  NONAME ; HCR::FindSettings(unsigned long, int, unsigned long &, unsigned long *, HCR::TSettingType *, unsigned short *)
-	FindSettings__3HCRUliUlUlUlRUlPUlPQ23HCR12TSettingTypePUs @ 20  NONAME ; HCR::FindSettings(unsigned long, int, unsigned long, unsigned long, unsigned long, unsigned long &, unsigned long *, HCR::TSettingType *, unsigned short *)
+	FindSettings__3HCRUliPUlPQ23HCR12TSettingTypePUs @ 19  NONAME ; HCR::FindSettings(unsigned long, int, unsigned long *, HCR::TSettingType *, unsigned short *)
+	FindSettings__3HCRUliUlUlPUlPQ23HCR12TSettingTypePUs @ 20  NONAME ; HCR::FindSettings(unsigned long, int, unsigned long, unsigned long, unsigned long *, HCR::TSettingType *, unsigned short *)
 	FindNumSettingsInCategory__3HCRUl @ 21  NONAME R3UNUSED ; HCR::FindNumSettingsInCategory(unsigned long)

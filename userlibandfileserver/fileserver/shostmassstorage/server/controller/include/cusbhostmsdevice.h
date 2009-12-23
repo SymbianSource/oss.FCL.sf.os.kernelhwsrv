@@ -30,11 +30,6 @@ class TLogicalUnitList;
 class CUsbHostMsDevice : public CBase
 	{
 public:
-    enum TDeviceState
-        {
-		EActive,
-		ESuspended,
-        };
 
 	static CUsbHostMsDevice* NewL(THostMassStorageConfig& aConfig);
 	~CUsbHostMsDevice();
@@ -50,12 +45,13 @@ public:
 	void SetMaxLun(TLun aMaxLun);
 	TLun GetMaxLun() const;
 
-	TBool IsActive();
-	TBool IsSuspended();
+	TBool IsReady() const;
+	TBool IsSuspended() const;
+
 	void InitLunL(TLun aLun);
 
 	void SuspendLunL(TLun aLun);
-	void ResumeL(TRequestStatus &aStatus);
+	void Resume(TRequestStatus& aStatus);
 	void ResumeLogicalUnitsL();
 	void ResumeCompletedL();
 
@@ -72,6 +68,12 @@ private:
 	static TInt TimerCallback(TAny* obj);
 
 private:
+    enum TDeviceState
+        {
+        EReady,
+        ESuspended
+        };
+
 	MTransport* iTransport;
 	TLun iMaxLun;
     TLogicalUnitList iLuList;
@@ -91,6 +93,18 @@ inline TLun CUsbHostMsDevice::GetMaxLun() const
     {
     return iMaxLun;
     }
+
+
+inline TBool CUsbHostMsDevice::IsReady() const
+	{
+	return (iState == EReady)? ETrue : EFalse;
+	}
+
+
+inline TBool CUsbHostMsDevice::IsSuspended() const
+	{
+	return (iState == ESuspended)? ETrue : EFalse;
+	}
 
 #endif // CUSBHOSTMSDEVICE_H
 

@@ -913,7 +913,7 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	TPde* pd = Mmu::PageDirectory(osAsid);
 	TInt pdeIndex = aAddr>>KChunkShift;
 	TPde pde = pd[pdeIndex];
-	pde = (pde&~(0xf<<5))|(KIPCAliasDomain<<5); // change domain for PDE
+	pde = PDE_IN_DOMAIN(pde, KIPCAliasDomain);	// change domain for PDE
 	// Get os asid, this is the current thread's process so no need for reference.
 	TUint32 local_asid = ((DMemModelProcess*)iOwningProcess)->OsAsid();
 #ifdef __SMP__

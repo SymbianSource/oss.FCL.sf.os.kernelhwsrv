@@ -159,6 +159,9 @@ data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
 // rom.pl will put this in a rofs extension image
 #include <rom\rofstest\extension.oby>
 
+// rom.pl will put this in a SMR partition image
+#include <rom\include\smr1.oby>
+
 #ifdef MULTIPLEROFS
 // rom.pl will put this in a rofs image
 #include <rom\rofstest\rofs1.oby>

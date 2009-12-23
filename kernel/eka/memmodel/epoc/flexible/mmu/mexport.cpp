@@ -565,9 +565,17 @@ EXPORT_C TPhysAddr Epoc::LinearToPhysical(TLinAddr aLinAddr)
 //	a higher-level RTOS for which these conditions are meaningless. Thus, it's been
 //	disabled for now.
 //	CHECK_PRECONDITIONS(MASK_KERNEL_UNLOCKED|MASK_INTERRUPTS_ENABLED|MASK_NOT_ISR|MASK_NOT_IDFC,"Epoc::LinearToPhysical");
-	DMemModelProcess* pP=(DMemModelProcess*)TheCurrentThread->iOwningProcess;
-	// Get the os asid of current thread's process so no need to open a reference on it.
-	TInt osAsid = pP->OsAsid();
+
+	// When called by a higher-level OS we may not be in a DThread context, so avoid looking up the
+	// current process in the DThread for a global address
+	TInt osAsid = KKernelOsAsid;
+	if (aLinAddr < KGlobalMemoryBase)
+		{
+		// Get the os asid of current thread's process so no need to open a reference on it.
+		DMemModelProcess* pP=(DMemModelProcess*)TheCurrentThread->iOwningProcess;
+		osAsid = pP->OsAsid();
+		}
+	
 #if 1
 	return Mmu::UncheckedLinearToPhysical(aLinAddr, osAsid);
 #else

@@ -1407,7 +1407,8 @@ public:
 		ETrustedChunk	=0x10,
 		EDataPaged		=0x20,		// Set when the chunk is data paged.
 		ECache			=0x40,
-		EChunkAttributesMask = 0x7f,
+		EReadOnly		=0x80,
+		EChunkAttributesMask = 0xff,
 		};
 
 	enum TCommitType
@@ -1764,6 +1765,7 @@ public:
 		{__ASSERT_SYSTEM_LOCK; iTotalAccessCount++;};
 	TInt TotalAccessDec();
 	TInt TotalAccessDecRel();
+	void BTracePrime(TInt aCategory);
 
 public:
 	// Static methods called from exec handlers
@@ -1825,6 +1827,7 @@ public:
 	void Cancel();
 	void Accept(RMessageK* aMsg);
 	void Deliver(RMessageK* aMsg);
+	void BTracePrime(TInt aCategory);
 public:
 	inline TBool IsClosing();
 public:

@@ -172,7 +172,6 @@ static void TestFileSystem(TInt aDrive)
 		test.Printf(_L("error=%d"),r);
 		test(EFalse);
 		}
-	
 
 	TFullName oldFs;
 	r=TheFs.FileSystemName(oldFs,aDrive);
@@ -271,7 +270,6 @@ static void TestMountingBrokenMedia(TInt aDrive)
 		test.Printf(_L("error=%d"),r);
 		test(EFalse);
 		}
-	
 
 	TFullName oldFs;
 	r=TheFs.FileSystemName(oldFs,aDrive);
@@ -321,7 +319,6 @@ static void TestMountingBrokenMedia(TInt aDrive)
 	test.Printf(_L("Remounts = %d"), remounts);
 	test(remounts ==  KMaxMountFailures);
 	
-
 	// simulate a media change to reset failure count
 	r = TheFs.RemountDrive(aDrive, NULL, 0);
 
@@ -568,7 +565,7 @@ static void TestFileSystemClusterSizeQuery()
 				{
 				test.Printf(_L("CD ROM with no media!\n"));
                 r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
-				test(r == KErrNone);
+				test(r == KErrNone || r == KErrNotReady);
 				}
 			else
 				{
@@ -673,6 +670,12 @@ static void TestMediaBlockSizeQuery()
 				r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
 				test(r == KErrNone || r == KErrNotReady);
 				}
+			else if (driveInfo.iType==EMediaCdRom)
+				{
+				test.Printf(_L("CD ROM with no media will report not ready!\n"));
+                r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
+				test(r == KErrNotReady);
+				}
 			else
 				{
 				r = TheFs.QueryVolumeInfoExt(i, EIOParamInfo, ioInfo);
@@ -707,34 +710,32 @@ static void TestMediaBlockSizeQuery()
 					TLocalDriveCaps DriveCaps;
 					TLocalDriveCapsV7 DriveCapsV7;
 					for(locDriveNumber = 0; locDriveNumber < KMaxLocalDrives; locDriveNumber++)
-					{
+						{
 						r = drive.Connect(locDriveNumber,changeFlag);
 						if(r==KErrNone)
-						{
-						TPckg<TLocalDriveCaps> capsPckg(DriveCaps);
-						r=drive.Caps(capsPckg);
-						if((r==KErrNone) && (DriveCaps.iFileSystemId==KDriveFileSysLFFS))
-						{
-							
-							break;
+							{
+							TPckg<TLocalDriveCaps> capsPckg(DriveCaps);
+							r=drive.Caps(capsPckg);
+							if((r==KErrNone) && (DriveCaps.iFileSystemId==KDriveFileSysLFFS))
+								{
+								break;
+								}
+							drive.Disconnect();
+							}
 						}
-						drive.Disconnect();
-						}
-					}
 					TPckg<TLocalDriveCapsV7> capsPckg(DriveCapsV7);
 					r=drive.Caps(capsPckg);
 					test(r==KErrNone);
 					if ((fsName.CompareF(_L("Lffs"))==0) && (DriveCapsV7.iObjectModeSize != 0))
-					{	
-									
+						{					
 						test(ioInfo().iBlockSize == (TInt) DriveCapsV7.iObjectModeSize);
 						continue;
-					}
+						}
 					else
-					{
-					test(ioInfo().iBlockSize == (TInt) KDefaultVolumeBlockSize);
-					continue;
-					}
+						{
+						test(ioInfo().iBlockSize == (TInt) KDefaultVolumeBlockSize);
+						continue;
+						}
 					}
 				// if Nand flash (with Fat file system), test block size == 512 (small-block) or 2048 (large-block)
 				if ((driveInfo.iType == EMediaNANDFlash) &&

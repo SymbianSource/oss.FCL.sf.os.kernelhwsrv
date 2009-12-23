@@ -47,35 +47,49 @@ private:
 	CUsbHostMsLogicalUnit& iLu;
     };
 
+class CUsbHostMsSession;
 
 class CUsbHostMsDeviceThread : public CActive
     {
 public:
     static const TInt KMaxNumMessage = 32;
 
-	static TInt Entry(TAny* aPtr);
-	void RunL();
-	inline void DoCancel()	{	};
-	void Lock();
-	void Unlock();
-	TInt QueueMsg(const RMessage2& aMsg);
-	void HandleMessage(const RMessage2& aMessage);
-	static CUsbHostMsDeviceThread* NewL(TUint aToken);
-	void UnRegisterInterfaceL(const RMessage2& aMessage);
+	static CUsbHostMsDeviceThread* NewL(CUsbHostMsSession& aUsbHostMsSession, TUint aToken);
 	~CUsbHostMsDeviceThread();
+
+private:
+    CUsbHostMsDeviceThread(CUsbHostMsSession& aUsbHostMsSession, TUint aToken);
+
+public:
+	static TInt Entry(TAny* aPtr);
+	TInt QueueMsg(const RMessage2& aMsg);
+    void Lock();
+    void Unlock();
+
+
+private:
+    void Start();
+
+	void RunL();
+	void DoCancel();
+    TInt RunError(TInt aError);
+
+	void HandleMessage(const RMessage2& aMessage);
+
+	void UnRegisterInterfaceL(const RMessage2& aMessage);
+
 private:
     static void DoStartServerL(TAny* aPtr);
-	CUsbHostMsDeviceThread(TUint);
+
 	void RegisterInterfaceL(const RMessage2& aMessage);
 	void InitialiseInterfaceL(const RMessage2& aMessage);
 	void GetNumLunL(const RMessage2& aMessage);
 	void RegisterLogicalUnitL(const RMessage2& aMessage);
 	TInt Shutdown();
 
-public:
-	TBool iIsSignalled;
-
 private:
+    CUsbHostMsSession& iUsbHostMsSession;
+
 	CUsbHostMsDevice* iUsbHostMsDevice;
 
 	RMessage2 iRMessage2[KMaxNumMessage];
@@ -85,5 +99,18 @@ private:
 	TInt iDequeueIndex;
 	TBool iQueueFull;
     };
+
+
+inline void CUsbHostMsDeviceThread::Lock()
+	{
+	iMutex.Wait();
+	}
+
+
+inline void CUsbHostMsDeviceThread::Unlock()
+	{
+	iMutex.Signal();
+	}
+
 
 #endif // CUSBMASSSTORAGEDEVICETHREAD_H

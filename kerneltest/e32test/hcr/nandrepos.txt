@@ -265,7 +265,7 @@ binval: 00 00 00 00 00 00 00 00
 
 @
 cuid: 0xffffffff
-eid: 4294967295
+eid: 4294967294
 type: Int8
 flags: 0x0000
 intval: 100

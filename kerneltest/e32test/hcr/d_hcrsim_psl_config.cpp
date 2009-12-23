@@ -86,3 +86,10 @@ SRepositoryCompiled CompiledRepositoryCorrupt2 =
 	&RepositoryHeaderCorrupt2,
 	SettingsListCorrupt2
 	};
+
+// Bad repository: iOrderedSettingList points to NULL
+SRepositoryCompiled CompiledRepositoryNullOrderedList =
+	{ 
+	&RepositoryHeader,
+	NULL
+	};

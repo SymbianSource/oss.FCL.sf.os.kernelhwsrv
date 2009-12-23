@@ -16,25 +16,8 @@
 
 /** 
 @file hcr_hai.h
-Kernel side definitions for the HCR Hardware Abstraction Interface for variants
-to implement when creating a HCR.dll binary.
-
-
-===============================================================
- ____            _        _                    
-|  _ \ _ __ ___ | |_ ___ | |_ _   _ _ __   ___ 
-| |_) | '__/ _ \| __/ _ \| __| | | | '_ \ / _ \
-|  __/| | | (_) | || (_) | |_| |_| | |_) |  __/
-|_|   |_|  \___/ \__\___/ \__|\__, | .__/ \___|
-                              |___/|_|         
-
-This API and component are in an early release form. As such
-this component, it's API/HAI interfaces and internal design 
-are not fixed and may be updated/changed at any time before 
-final release.
-
-===============================================================
-
+Kernel side definitions for the HCR Symbian Hardware Abstraction 
+Interface (SHAI) for variants to implement when creating a HCR.dll binary.
 
 @publishedPartner
 @prototype
@@ -51,12 +34,6 @@ final release.
 #include <e32err.h> 
 
 #include <drivers/hcr.h>
-
-/** Macro used in PSL source as the value for the finger print field in a
-compiled repository.
-@see SRepositoryBase::iFingerPrint
-*/
-#define HCR_FINGER_PRINT {'H', 'C', 'R'}
 
 
 // -- CLASSES -----------------------------------------------------------------
@@ -189,7 +166,6 @@ namespace HCR
     enum TSettingProperties
         {
         EPropUndefined     = 0x0000,   //!< Unknown/not set
-        
    
         // Following properties are not yet supported:
         EPropUnintiailised = 0x0001,   //!< Setting has no initial value
@@ -321,6 +297,84 @@ code.
 */
 GLREF_C HCR::MVariant* CreateHCRVariant(); 
 
+
+
+// -- MACROS ------------------------------------------------------------------
+
+
+/** 
+Global macro for use in defining the finger print field of a 
+SRepositoryCompiled.iHdr instance in the PSL compiled repository static data.
+
+Macro used in PSL source as the value for the finger print field in a
+compiled repository.
+@see SRepositoryBase::iFingerPrint
+*/
+#define HCR_FINGER_PRINT {'H', 'C', 'R'}
+
+/** 
+Global macro for use in defining the finger print field of a 
+SRepositoryCompiled.iHdr instance in the PSL compiled repository static data.
+
+Macro used in PSL source as the value for the finger print field in a
+compiled repository.
+@see SRepositoryBase::iFingerPrint
+*/
+#define HCR_SETTING_COUNT(a) (sizeof(a)/sizeof(SSettingC))
+
+/**
+Global macro for use in setting the flags attribute of a SSettingC 
+instance in the PSL compiled repository static data.
+
+@see HCR::MVariant
+@see HCR::SRepositoryCompiled
+*/
+#define HCR_FLAGS_NONE		HCR::EPropUndefined
+
+/**
+Global macro for use in setting the length attribute of a SSettingC 
+instance in the PSL compiled repository static data.
+
+@see HCR::MVariant
+@see HCR::SRepositoryCompiled
+*/
+#define HCR_LEN_NA			0x0000
+
+/**
+Global macro for use in defining the actual integer (word) value of a SettingC 
+instance in the PSL compiled repository static data. This can be used to 
+simplify the setting table for settings with the type flag
+set to one of 0x0000FFFF.
+
+@see HCR::MVariant
+@see HCR::SRepositoryCompiled
+*/
+#define HCR_WVALUE(a)	static_cast<TInt32>(a)
+
+/**
+Global macro for use in assigning the address of a large setting value to an 
+instance of a SettingC in the PSL compiled repository static data. This can be 
+used to simplify the setting table for settings with the type flag
+set to one of 0xFFFF0000.
+
+@see HCR::MVariant
+@see HCR::SRepositoryCompiled
+*/
+#define HCR_LVALUE(a)	reinterpret_cast<TInt32>(a)
+
+/**
+Global macro used as last entry in a PSL compiled repository static data. 
+The main use of this is to avoid the "last entry needs no following comma" issue
+and to aid HCR initial thead testing. 
+The Setting (0xffffffff, 0xffffffff) was choosen as it should never appear in
+a real variant as this category UID can not be allocated offically. Testers
+should also be aware of the special use of this setting so as not to use it in
+a file repository.
+
+@see HCR::MVariant
+@see HCR::SRepositoryCompiled
+*/
+#define HCR_LAST_SETTING { { { 0xFFFFFFFF, 0xFFFFFFFF}, ETypeUInt32, HCR_FLAGS_NONE, HCR_LEN_NA }, { { 0x4C415354 }}}
 
 
 #endif // HCR_HAI_H

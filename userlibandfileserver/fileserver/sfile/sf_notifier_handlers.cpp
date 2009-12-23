@@ -147,19 +147,21 @@ TInt TFsNotificationRequest::DoRequestL(CFsRequest* aRequest)
 	if(status!=CFsNotifyRequest::EOutstandingOverflow)
 		{
 		notifyRequest->SetActive(CFsNotifyRequest::EActive);
-		
-		// DEF140387:
-		// If this is not the first call to RequestNotifications then if the 
-		// user just got an overflow notification (and requested again) 
-		// then its possible that iClientTail is not zero now.
-	
-		// We should set iClientHead to iClientTail, otherwise the client
-		// can receive another overflow straight away.
-		notifyRequest->iClientHead = notifyRequest->iClientTail;
+		// RDebug::Print(_L("TFsNotificationRequest::DoRequestL Not-OutOver- iClientHead==%d, iClientTail==%d"),notifyRequest->iClientHead,notifyRequest->iClientTail);
 		}
 	else
 		{
 		notifyRequest->SetActive(CFsNotifyRequest::EInactive);
+		
+		// RDebug::Print(_L("TFsNotificationRequest::DoRequestL OutOver- iClientHead==%d, iClientTail==%d"),notifyRequest->iClientHead,notifyRequest->iClientTail);
+		
+		// If the user is in OutstandingOverflow notification state, 
+		// then we can set iClientHead to be equal to iServerTail now.
+		// That way if the client requests again and the state will go 
+		// back to active, the server will see that buffer as empty 
+		// rather than full/overflow.
+		
+		notifyRequest->iClientHead = notifyRequest->iClientTail;
 		}
 	FsNotificationManager::Unlock();
 	return r;

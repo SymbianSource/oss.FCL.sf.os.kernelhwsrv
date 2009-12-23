@@ -25,7 +25,11 @@
 #include <e32def.h>
 #include <e32def_private.h>
 
-RTest test(_L("T_SHBUF"));
+#ifdef TEST_CLIENT_THREAD
+RTest test(_L("T_SHBUF_CLIENT"));
+#else
+RTest test(_L("T_SHBUF_OWN"));
+#endif
 
 RShPool P1; // User-side pool
 RShPool P2; // Kernel-side pool

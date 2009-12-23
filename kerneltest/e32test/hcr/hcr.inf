@@ -32,10 +32,51 @@ hcr_tests.iby				/epoc32/rom/include/hcr_tests.iby
 tshell_hcrtest.oby			../../../kernel/eka/rombuild/tshell_hcrtest.oby
 hcrtest.auto.bat			/epoc32/rom/include/hcrtest.auto.bat
 hcr_autoexec.bat			/epoc32/rom/include/hcr_autoexec.bat
+smr1.oby					/epoc32/rom/include/smr1.oby
+
+// The emulator test data exported next must match that included into a
+// ROM for the HCR Test suite. See hcr_tests.iby
+
+filerepos.dat				/epoc32/release/wins/udeb/z/sys/data/filerepos.dat
+nandrepos.dat				/epoc32/release/wins/udeb/z/sys/data/nandrepos.dat
+corrupt1.dat				/epoc32/release/wins/udeb/z/sys/data/corrupt1.dat
+corrupt2.dat				/epoc32/release/wins/udeb/z/sys/data/corrupt2.dat
+empty.dat					/epoc32/release/wins/udeb/z/sys/data/empty.dat
+megalarge1.dat				/epoc32/release/wins/udeb/z/sys/data/megalarge1.dat
+megalarge2.dat				/epoc32/release/wins/udeb/z/sys/data/megalarge2.dat
+filerepos.dat				/epoc32/release/wins/udeb/Z/sys/data/hcr.dat
+
+filerepos.dat				/epoc32/release/wins/urel/z/sys/data/filerepos.dat
+nandrepos.dat				/epoc32/release/wins/urel/z/sys/data/nandrepos.dat
+corrupt1.dat				/epoc32/release/wins/urel/z/sys/data/corrupt1.dat
+corrupt2.dat				/epoc32/release/wins/urel/z/sys/data/corrupt2.dat
+empty.dat					/epoc32/release/wins/urel/z/sys/data/empty.dat
+megalarge1.dat				/epoc32/release/wins/urel/z/sys/data/megalarge1.dat
+megalarge2.dat				/epoc32/release/wins/urel/z/sys/data/megalarge2.dat
+filerepos.dat				/epoc32/release/wins/urel/Z/sys/data/hcr.dat
+
+filerepos.dat				/epoc32/release/winscw/udeb/z/sys/data/filerepos.dat
+nandrepos.dat				/epoc32/release/winscw/udeb/z/sys/data/nandrepos.dat
+corrupt1.dat				/epoc32/release/winscw/udeb/z/sys/data/corrupt1.dat
+corrupt2.dat				/epoc32/release/winscw/udeb/z/sys/data/corrupt2.dat
+empty.dat					/epoc32/release/winscw/udeb/z/sys/data/empty.dat
+megalarge1.dat				/epoc32/release/winscw/udeb/z/sys/data/megalarge1.dat
+megalarge2.dat				/epoc32/release/winscw/udeb/z/sys/data/megalarge2.dat
+filerepos.dat				/epoc32/release/winscw/udeb/Z/sys/data/hcr.dat
+
+filerepos.dat				/epoc32/release/winscw/urel/z/sys/data/filerepos.dat
+nandrepos.dat				/epoc32/release/winscw/urel/z/sys/data/nandrepos.dat
+corrupt1.dat				/epoc32/release/winscw/urel/z/sys/data/corrupt1.dat
+corrupt2.dat				/epoc32/release/winscw/urel/z/sys/data/corrupt2.dat
+empty.dat					/epoc32/release/winscw/urel/z/sys/data/empty.dat
+megalarge1.dat				/epoc32/release/winscw/urel/z/sys/data/megalarge1.dat
+megalarge2.dat				/epoc32/release/winscw/urel/z/sys/data/megalarge2.dat
+filerepos.dat				/epoc32/release/winscw/urel/Z/sys/data/hcr.dat
 
 PRJ_TESTMMPFILES
 
-d_hcrsim					support
+d_hcrsim_client				support
+d_hcrsim_own				support
 d_hcrut 					support
 
 #ifndef SMP

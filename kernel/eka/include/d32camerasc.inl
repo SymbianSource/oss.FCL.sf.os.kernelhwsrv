@@ -49,7 +49,7 @@ inline TInt RDevCameraSc::Open(TInt aUnit)
 		TAny* capsBufPtr = User::Alloc(iCapsSize);
 		if(NULL == capsBufPtr)
 			{
-			iCapsSize = 0;
+			Close();
 			return KErrNoMemory;
 			}
 
@@ -157,61 +157,66 @@ inline TInt RDevCameraSc::FrameSizeCaps(TDevCamCaptureMode aCaptureMode, TUidPix
 	SFrameSizeCapsInfo info = {aUidPixelFormat, aCaptureMode};
 	return(DoControl(EControlFrameSizeCaps, (TAny*)&aFrameSizeCapsBuf, &info));
 	}
-	
-inline TInt RDevCameraSc::SetDynamicAttribute(TDevCamDynamicAttributes aAttribute, TUint aValue)
+
+//
+//
+//
+inline TInt RDevCameraSc::CheckAttributeSupported(TDevCamDynamicAttribute aAttribute)
 	{
-	TInt r = KErrNone;
+	TUint mask = 0;
 	
-	// Are we not supported?
-	TInt misc = 0;
 	switch (aAttribute)
 		{
 		case ECamAttributeBrightness:
-			{
-			misc = KCamMiscBrightness;
+			mask = KCamMiscBrightness;
 			break;
-			}
+			
 		case ECamAttributeContrast:
-			{
-			misc = KCamMiscContrast;
+			mask = KCamMiscContrast;
 			break;
-			}
+			
 		case ECamAttributeColorEffect:
-			{
-			misc = KCamMiscColorEffect;
+			mask = KCamMiscColorEffect;
 			break;
-			}
+			
 		default:
-			{
-			r = KErrBadName;
-			}
+			return KErrNotSupported;
 		}
-
-	if (KErrNone != r)
+	
+	// Check that the attribute is supported by the hardware.
+	return (iCameraCaps->iCapsMisc & mask ? KErrNone : KErrNotSupported);
+	}
+	
+//
+//
+//
+inline TInt RDevCameraSc::SetDynamicAttribute(TDevCamDynamicAttribute aAttribute, TUint aValue)
+	{
+	TInt err = CheckAttributeSupported(aAttribute);
+	if (err == KErrNone)
 		{
-		return r;
-		}
-
-	if (!(iCameraCaps->iCapsMisc & misc))
-		{
-		r = KErrNotSupported;
-		}
-
-	else
-		{
+		err = KErrArgument;
 		TDynamicRange &range = iCameraCaps->iDynamicRange[aAttribute];
-		// Not within range?
-		if (aValue < range.iMin || aValue > range.iMax)
+		if ((aValue >= range.iMin) && (aValue <= range.iMax))
 			{
-			r = KErrArgument;
-			}
-		else
-			{
-			r = DoControl(EControlSetDynamicAttribute,(TAny*)aAttribute, (TAny*)aValue);
+			err = DoControl(EControlSetDynamicAttribute, (TAny*)aAttribute, (TAny*)aValue);
 			}
 		}
 
-	return r;
+	return err;
 	}
 
+//
+//
+//
+inline TInt RDevCameraSc::GetDynamicAttribute(TDevCamDynamicAttribute aAttribute, TUint& aValue)
+	{
+	TInt err = CheckAttributeSupported(aAttribute);
+	if (err == KErrNone)
+		{
+		err = DoControl(EControlGetDynamicAttribute, (TAny*)aAttribute, (TAny*)&aValue);
+		}
+		
+	return err;
+	}
 #endif	// __KERNEL_MODE__

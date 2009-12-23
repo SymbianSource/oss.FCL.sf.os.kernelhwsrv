@@ -233,14 +233,9 @@ TInt TInterface::GetResourceState(TUint aClientId, TUint aResourceId, TBool aCac
 
 TInt TInterface::GetResourceState(TUint aClientId, TUint aResourceId, TBool aCached, TPowerResourceCb& aCb)
     {
-	GET_CRITICAL_SECTION_COUNT
 	TInt r;
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">TInterface::GetResourceState"));
     r = PowerResourceController->GetResourceState(aClientId, aResourceId, aCached, aCb);
-	if(!&aCb) //Not checking incase of asynchronous function as mutex might be held in RC thread, when this is checked.
-		{
-		LOCK_AND_CRITICAL_SECTION_COUNT_CHECK
-		}
 	return r;
     }
 
@@ -345,29 +340,19 @@ DPowerResourceController::DPowerResourceController()
 DPowerResourceController::~DPowerResourceController()
 	{
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf("DPowerResourceController::~DPowerResourceController()"));
-	//Push Power controller ID back to Pool
-	SPowerResourceClient* pC = NULL;
-	pC = iClientList[(TUint16)(iPowerControllerId & ID_INDEX_BIT_MASK)];
-	if(pC)
-		{
-		iClientCount--; //Decrement client count
-		LIST_PUSH(iClientPool, pC, iNextInList);
-		}
+#ifdef RESOURCE_MANAGER_SIMULATED_PSL
+	iCleanList.ResetAndDestroy();
+#endif
 	iClientList.Delete();
 	iUserSideClientList.Delete();
+
+
+		
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 	iDynamicResourceList.Delete();
 	iDynamicResDependencyList.Delete();
 #endif
-	pC = iClientPool;
-	while(iClientPool) //Find the starting position of array to delete
-		{
-		if(iClientPool < pC)
-			pC = iClientPool;
-		iClientPool = iClientPool->iNextInList;
-		}
-	//delete pC;
-	delete []pC;
+
 	SPowerResourceClientLevel *pCL = iClientLevelPool;
 	while(iClientLevelPool) //Find the starting position of array to delete
 		{
@@ -422,8 +407,8 @@ void DPowerResourceController::CompleteNotifications(TInt aClientId, DStaticPowe
 			pN->iCallback.iLevel = aState;
 			pN->iCallback.iClientId = aClientId;
 			pN->iCallback.iLevelOwnerId = aLevelOwnerId;
-			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Notification ClientId = 0x%x, ResourceId = %d, state = %d, \
-				             Result = %d", pN->iCallback.iClientId, pN->iCallback.iResourceId, aState, aReturnCode));
+			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Notification ClientId = 0x%x, ResourceId = %d, state = %d, Result = %d", 
+									pN->iCallback.iClientId, pN->iCallback.iResourceId, aState, aReturnCode));
 			PRM_POSTNOTIFICATION_SENT_TRACE
 			pN->iCallback.Enque();
 			continue;
@@ -437,8 +422,8 @@ void DPowerResourceController::CompleteNotifications(TInt aClientId, DStaticPowe
             pN->iCallback.iLevel=aState;
             pN->iCallback.iClientId = aClientId;
 			pN->iCallback.iLevelOwnerId = aLevelOwnerId;
-			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Notifications ClientId = 0x%x, ResourceId = %d, State = %d, \
-				              Result = %d", pN->iCallback.iClientId, pN->iCallback.iResourceId, aState, aReturnCode));
+			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Notifications ClientId = 0x%x, ResourceId = %d, State = %d, Result = %d",
+										pN->iCallback.iClientId, pN->iCallback.iResourceId, aState, aReturnCode));
 			PRM_POSTNOTIFICATION_SENT_TRACE
             pN->iCallback.Enque();
 			}
@@ -515,7 +500,7 @@ void DPowerResourceController::HandleMsg(TPowerRequest& aRequest)
 		else
 			pC = iClientList[TUint16(aClientId & ID_INDEX_BIT_MASK)];
 #endif		
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("Request Type = %d, ClientId = 0x%x, ResourceId = %d",  \
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("Request Type = %d, ClientId = 0x%x, ResourceId = %d",
 		                             aRequest.ReqType(), aRequest.ClientId(), aRequest.ResourceId()));
     if(aRequest.ReqType()==TPowerRequest::EChange)
 		{
@@ -604,7 +589,8 @@ void DPowerResourceController::HandleMsg(TPowerRequest& aRequest)
 			aRequest.Level() = pR->iDefaultLevel;
 			}
 		}
-	aRequest.ReturnCode() = pR->DoRequest(aRequest);
+	if((aRequest.ReqType() == TPowerRequest::EGet) || (pR->iCachedLevel != aRequest.Level()))
+		aRequest.ReturnCode() = pR->DoRequest(aRequest);
 	CompleteRequest(aRequest);
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::HandleMsg"));
 	}
@@ -630,7 +616,7 @@ void DPowerResourceController::HandleDependencyMsg(TPowerRequest& aRequest)
 		else
 			pC = iClientList[TUint16(aClientId & ID_INDEX_BIT_MASK)];
 		}
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("Request Type = %d, ClientId = 0x%x, ResourceId = %d",  \
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("Request Type = %d, ClientId = 0x%x, ResourceId = %d",  
 		                             aRequest.ReqType(), aRequest.ClientId(), aRequest.ResourceId()));
 	if((aRequest.ResourceId() & KIdMaskResourceWithDependencies) && (aRequest.ReqType() != TPowerRequest::EGet))
 		{
@@ -656,6 +642,7 @@ void DPowerResourceController::MsgQFunc(TAny* aPtr)
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::MsgQFunc"));
     DPowerResourceController* pRC=(DPowerResourceController*)aPtr;
     TPowerRequest* aReq=(TPowerRequest*)pRC->iMsgQ->iMessage;
+	DStaticPowerResource *pR = aReq->Resource();
 	if(aReq->ReqType() == TPowerRequest::EAllocReserve)
 		{
 		aReq->ReturnCode() = pRC->HandleReservationOfObjects(*aReq);
@@ -704,7 +691,6 @@ void DPowerResourceController::MsgQFunc(TAny* aPtr)
 	else
 		pC = pRC->iClientList[TUint16(aReq->ClientId() & ID_INDEX_BIT_MASK)];
 
-	DStaticPowerResource *pR = aReq->Resource();
     TUint aResourceId = aReq->ResourceId();
     TInt r = aReq->ReturnCode();
     if(aReq->ReqType()==TPowerRequest::EGet)
@@ -743,6 +729,7 @@ void DPowerResourceController::MsgQDependencyFunc(TAny* aPtr)
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::MsgQDependencyFunc"));
     DPowerResourceController* pRC=(DPowerResourceController*)aPtr;
     TPowerRequest* aReq=(TPowerRequest*)pRC->iMsgQDependency->iMessage;
+	DStaticPowerResource *pR = aReq->Resource();
 	pRC->HandleDependencyMsg(*aReq);
 	if((aReq->ResourceId() & KIdMaskDynamic) && (aReq->ResourceCb()))
 		{
@@ -777,7 +764,6 @@ void DPowerResourceController::MsgQDependencyFunc(TAny* aPtr)
 	else
 		pC = pRC->iClientList[TUint16(aReq->ClientId() & ID_INDEX_BIT_MASK)];
 
-	DStaticPowerResource *pR = aReq->Resource();
     TUint aResourceId = aReq->ResourceId();
     TInt r = aReq->ReturnCode();
     if(aReq->ReqType()==TPowerRequest::EGet)
@@ -864,10 +850,10 @@ TInt DPowerResourceController::InitResources()
 	SPowerResourceClient * pC = NULL;
 	// By now client pool should be created
 	LIST_POP(iClientPool, pC, iNextInList);
+	TUint16 growBy = iClientList.GrowBy();
 	if(!pC)
 		{
 		UnLock();
-		TUint16 growBy = iClientList.GrowBy();
 		// coverity[alloc_fn]
 		SPowerResourceClient *pCL = new SPowerResourceClient[growBy];
 		if(!pCL)
@@ -875,8 +861,9 @@ TInt DPowerResourceController::InitResources()
 			__KTRACE_OPT(KRESMANAGER, Kern::Printf("No memory to grow client pool"));
 			Panic(ENoMemToCreatePowerControllerClient);
 			}
-		if(iClientList.ReSize(growBy))
-			Panic(ENoMemToCreatePowerControllerClient);
+#ifdef RESOURCE_MANAGER_SIMULATED_PSL
+		iCleanList.Append(pCL);
+#endif
 		Lock();
         for(count = 0; count < growBy-1; count++)
 			LIST_PUSH(iClientPool, &pCL[count], iNextInList);
@@ -887,7 +874,16 @@ TInt DPowerResourceController::InitResources()
 #endif
 		}
 	pC->iName = (const TDesC8*)&KPowerController;
-    iClientList.Add(pC, iPowerControllerId);
+	UnLock();
+	if(iClientList.Allocd()==iClientList.Count())
+		{
+		if(iClientList.ReSize(growBy))
+			{
+			Panic(ENoMemToCreatePowerControllerClient);
+			}
+		}
+	Lock();
+	iClientList.Add(pC, iPowerControllerId);
 	pC->iClientId = iPowerControllerId | CLIENT_POWER_CONTROLLER_BIT_MASK;
 	iPowerControllerId = pC->iClientId;
     iClientCount++;
@@ -951,8 +947,8 @@ TInt DPowerResourceController::InitResources()
 TInt DPowerResourceController::CheckLevelAndAddClient(SPowerResourceClient* pC, TPowerRequest* aReq)
 	{
     //Client level addition in state change needs to be taken care.
-    __KTRACE_OPT(KRESMANAGER, Kern::Printf("DPowerResourceController::CheckLevelAndAddClient, ClientId = 0x%x, \
-		                     ResourceId = %d, ReqType = %d", pC->iClientId, aReq->ResourceId(), aReq->ReqType()));
+    __KTRACE_OPT(KRESMANAGER, Kern::Printf("DPowerResourceController::CheckLevelAndAddClient, ClientId = 0x%x, ResourceId = %d, ReqType = %d",
+													pC->iClientId, aReq->ResourceId(), aReq->ReqType()));
 	
 	SPowerResourceClientLevel* pSCL=NULL; //Place to hold the current client
 	SPowerResourceClientLevel* pMCL=NULL; //Place to hold the prevailing client.
@@ -1009,8 +1005,8 @@ TInt DPowerResourceController::CheckLevelAndAddClient(SPowerResourceClient* pC, 
 		// and add it to the client list and in resource list.
         if((pC->iReservedCl ==0) && !iClientLevelPoolCount)
 			{
-			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client level quota exhausted and its free pool empty, \
-				        iReservedCl = %d, iClientLevelPoolCount = %d", pC->iReservedCl, iClientLevelPoolCount));
+			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client level quota exhausted and its free pool empty, iReservedCl = %d, iClientLevelPoolCount = %d", 
+													pC->iReservedCl, iClientLevelPoolCount));
 			return KErrUnderflow;
 			}
         LIST_POP(iClientLevelPool, pSCL, iNextInList);
@@ -1132,7 +1128,7 @@ TInt DPowerResourceController::CheckLevelAndAddClient(SPowerResourceClient* pC, 
     if(((aResource->Sense() == DStaticPowerResource::ENegative) && aReq->Level()<CurrentLevel) || 
 		                 ((aResource->Sense() == DStaticPowerResource::EPositive) && aReq->Level()>CurrentLevel))
 		{
-		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Resource is in increasing order with respect to sense and level is %d",\
+		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Resource is in increasing order with respect to sense and level is %d",
 			                                                                                           aReq->Level()));
         aReq->RequiresChange()=ETrue;
         return KErrNone;
@@ -1190,7 +1186,7 @@ TInt DPowerResourceController::CheckLevelAndAddClient(SPowerResourceClient* pC, 
 TInt DPowerResourceController::InitPools(TUint16 aKClients, TUint16 aUClients, TUint16 aNClientLevels, TUint16 aNRequests)
 	{
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::InitPools"));
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("aKClients = %d, aUClients = %d, aNClientLevels = %d, aNRequests = %d", \
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("aKClients = %d, aUClients = %d, aNClientLevels = %d, aNRequests = %d",
 		                                                     aKClients, aUClients, aNClientLevels, aNRequests));
     __ASSERT_ALWAYS((iInitialised == EResConCreated) && !(iClientPool || iRequestPool || iClientLevelPool), Kern::Fault("Already initialized"
 		                                                     __FILE__, __LINE__));
@@ -1267,6 +1263,9 @@ TInt DPowerResourceController::InitPools(TUint16 aKClients, TUint16 aUClients, T
 			return KErrNoMemory;
 			}
 		}
+#ifdef RESOURCE_MANAGER_SIMULATED_PSL
+	iCleanList.Append(pC);
+#endif
 	Lock();
 	TUint16 c;
 	for(c = 0; c < iStaticResDependencyCount; c++)
@@ -1275,6 +1274,9 @@ TInt DPowerResourceController::InitPools(TUint16 aKClients, TUint16 aUClients, T
 		}
 	iResourceLevelPoolCount = iStaticResDependencyCount;
 #else
+#ifdef RESOURCE_MANAGER_SIMULATED_PSL
+    iCleanList.Append(pC);
+#endif
     Lock();
     TUint16 c;
 #endif
@@ -1344,8 +1346,7 @@ Register a client with the Resource Manager.
 */
 TInt DPowerResourceController::RegisterClient(TUint& aClientId, const TDesC8& aName, TOwnerType aType)
 	{
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::RegisterClient, Name = %S, \
-		                                                                 Type = %d", &aName, aType));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::RegisterClient, Name = %S, Type = %d", &aName, aType));
 	DThread& thread = Kern::CurrentThread();	
 	CHECK_CONTEXT(thread)
 	//If number of expected kernel side clients is set to 0 during initial configuration
@@ -1414,25 +1415,22 @@ TInt DPowerResourceController::HandleClientRegistration(TPowerRequest& aRequest)
 		{
 		//Get Next client from FreePool
 		LIST_POP(iClientPool, pC, iNextInList);
+
+		TUint16 growBy = iClientList.GrowBy();
 		if(!pC)
 			{
 			//Free Pool is empty, so try to grow the pool.
-			TUint16 growBy = iClientList.GrowBy();
 			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Client pool exhausted so growing client Pool by %d", growBy));
 			// coverity[alloc_fn]
-			SPowerResourceClient *pCL = new SPowerResourceClient[growBy];
+			SPowerResourceClient *pCL = (SPowerResourceClient*)Kern::Alloc(sizeof(SPowerResourceClient) * growBy);
 			if(!pCL)
 				{
 				__KTRACE_OPT(KRESMANAGER, Kern::Printf("No memory to grow client pool"));
 				return(KErrNoMemory);
 				}
-			//Resize the container for holding client list
-			if(!iClientList.ReSize(growBy))
-				{
-				__KTRACE_OPT(KRESMANAGER, Kern::Printf("No memory for client container allocation"));
-				delete []pCL;
-				return(KErrNoMemory);
-				}
+#ifdef RESOURCE_MANAGER_SIMULATED_PSL
+			iCleanList.Append(pCL);
+#endif
 			Lock();
 			TUint16 count;
 			for(count = 0; count < growBy-1; count++)
@@ -1445,6 +1443,15 @@ TInt DPowerResourceController::HandleClientRegistration(TPowerRequest& aRequest)
 			pC = &pCL[count];
 			}
 		pC->iClientId = 0;
+		if(iClientList.Allocd()==iClientList.Count())
+			{
+			//Resize the container for holding client list
+			if(iClientList.ReSize(growBy)!=KErrNone)
+				{
+				__KTRACE_OPT(KRESMANAGER, Kern::Printf("No memory for client container allocation"));
+				return(KErrNoMemory);
+				}
+			}
 		Lock();
 		iClientList.Add(pC, clientId);
 		++iClientCount;
@@ -1454,22 +1461,18 @@ TInt DPowerResourceController::HandleClientRegistration(TPowerRequest& aRequest)
 		{
 		//Get Next client from FreePool
 		LIST_POP(iClientPool, pC, iNextInList);
+		TUint16 growBy = iUserSideClientList.GrowBy();
 		if(!pC)
 			{
 			//Free Pool is empty, so try to grow the pool.
-			TUint16 growBy = iUserSideClientList.GrowBy();
-			SPowerResourceClient* pCL = new SPowerResourceClient[growBy];
+			SPowerResourceClient *pCL = (SPowerResourceClient*)Kern::Alloc(sizeof(SPowerResourceClient) * growBy);
 			if(!pCL)
 				{
 				return KErrNoMemory;
 				}
-			//Resize the container for holding client list
-			if(!iUserSideClientList.ReSize(growBy))
-				{
-				__KTRACE_OPT(KRESMANAGER, Kern::Printf("No memory for container class allocation"));
-				delete []pCL;
-				return KErrNoMemory;
-				}
+#ifdef RESOURCE_MANAGER_SIMULATED_PSL
+			iCleanList.Append(pCL);
+#endif
 			Lock();
 			TUint16 count;
 			for(count = 0; count < growBy - 1; count++)
@@ -1485,6 +1488,15 @@ TInt DPowerResourceController::HandleClientRegistration(TPowerRequest& aRequest)
 		//User side clients are always thread relative as they execute in the context of proxy driver.
 		pC->iClientId = CLIENT_THREAD_RELATIVE_BIT_MASK; //Set 31st bit;
 		pC->iClientId|=USER_SIDE_CLIENT_BIT_MASK;
+		if(iUserSideClientList.Allocd()==iUserSideClientList.Count())
+			{
+			//Resize the container for holding client list
+			if(iUserSideClientList.ReSize(growBy)!=KErrNone)
+				{
+				__KTRACE_OPT(KRESMANAGER, Kern::Printf("No memory for container class allocation"));
+				return KErrNoMemory;
+				}
+			}
 		Lock();
 		iUserSideClientList.Add(pC, clientId);
 		++iUserSideClientCount;
@@ -1522,13 +1534,11 @@ void DPowerResourceController::ResourceStateChangeOfClientLevels(SPowerResourceC
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::ResourceStateChangeOfClientLevels"));
     TPowerRequest* pReq = (TPowerRequest*)&TPowerRequest::Get();
     DStaticPowerResource* pR = NULL;
-    TInt r = KErrNone;
     SPowerResourceClientLevel* pCL = pC->iLevelList;
     SPowerResourceClientLevel* pCLL = NULL;
 	while(pCL != NULL)
 		{
-        __KTRACE_OPT(KRESMANAGER, Kern::Printf("Client 0x%x has requirement on resource %d", pCL->iClientId, \
-			                                                                                 pCL->iResourceId));
+        __KTRACE_OPT(KRESMANAGER, Kern::Printf("Client 0x%x has requirement on resource %d", pCL->iClientId, pCL->iResourceId));
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 		switch((pCL->iResourceId >>RESOURCE_BIT_IN_ID_CHECK) & 0x3)													
 		{																		
@@ -1549,10 +1559,10 @@ void DPowerResourceController::ResourceStateChangeOfClientLevels(SPowerResourceC
 		pR = iStaticResourceArray[pCL->iResourceId -1];
 #endif
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-		if((((TInt)pCL->iClientId == pR->iLevelOwnerId) || (pR->Sense() == DStaticPowerResource::ECustom)) && (!(pCL->iResourceId & KIdMaskDynamic) ||
+		if(((pR->Sense() == DStaticPowerResource::ECustom) || ((TInt)pCL->iClientId == pR->iLevelOwnerId)) && (!(pCL->iResourceId & KIdMaskDynamic) ||
 			         ((pCL->iResourceId & KIdMaskDynamic) && (((DDynamicPowerResource*)pR)->LockCount() != 0))))
 #else
-			if(((TInt)pCL->iClientId == pR->iLevelOwnerId) || (pR->Sense() == DStaticPowerResource::ECustom))
+		if((pR->Sense() == DStaticPowerResource::ECustom) || ((TInt)pCL->iClientId == pR->iLevelOwnerId)) 
 #endif
 		    {
             pReq->ReqType() = TPowerRequest::ESetDefaultLevel;
@@ -1562,13 +1572,13 @@ void DPowerResourceController::ResourceStateChangeOfClientLevels(SPowerResourceC
 			pReq->Level() = pR->iCachedLevel;
             pReq->ResourceCb() = NULL;
 			pReq->ReturnCode() = KErrNone;
-            r = KErrNone;
 #ifdef PRM_INSTRUMENTATION_MACRO
 			//Setting level to current level as correct level will be known only at the end,
 			TInt aNewState = pR->iCachedLevel; 
 			TUint aResourceId = pReq->ResourceId(); 
 			PRM_CLIENT_CHANGE_STATE_START_TRACE
 #endif
+			TInt r = KErrNone;
 			if(pR->LatencySet())
 				{
 #ifdef PRM_ENABLE_EXTENDED_VERSION
@@ -1600,15 +1610,21 @@ void DPowerResourceController::ResourceStateChangeOfClientLevels(SPowerResourceC
 					pReq->ClientId() = -1;
 					pReq->Level() = pR->iDefaultLevel;
 					}
+
 				if((!pR->Usage()) || (pR->Usage() && pReq->RequiresChange()))
 					{
 					// NOTE:Not checking error here as no action can be taken based on error.
-					UnLock();
-					r = pR->DoRequest(*pReq);
-					Lock();
+					if(pR->iCachedLevel != pReq->Level())
+						{
+						UnLock();
+						r = pR->DoRequest(*pReq);
+						Lock();
+						}
 					CompleteNotifications(pReq->ClientId(), pReq->Resource(), pReq->Level(), 
 						                            pReq->ReturnCode(), pReq->ClientId(), EFalse);
+#ifdef PRM_INSTRUMENTATION_MACRO
 					PRM_CLIENT_CHANGE_STATE_END_TRACE
+#endif
 					pR->iLevelOwnerId = pReq->ClientId();
 					pR->iCachedLevel = pReq->Level();
 					if(pR->iIdleListEntry)
@@ -1619,6 +1635,7 @@ void DPowerResourceController::ResourceStateChangeOfClientLevels(SPowerResourceC
 						}
 					}
 				}
+
 			}
 		/* Deque from resource */
 		pCLL = pCL;
@@ -1744,8 +1761,7 @@ Obtain the name of a registered client of the resource manager
 */
 TInt DPowerResourceController::GetClientName(TUint aClientId, TUint aTargetClientId, TDes8& aName)
 	{
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetClientName, CallingClientId = 0x%x, \
-		                                                       TargetClientId = 0x%x", aClientId, aTargetClientId));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetClientName, CallingClientId = 0x%x, TargetClientId = 0x%x", aClientId, aTargetClientId));
 	DThread& thread = Kern::CurrentThread();	
 	CHECK_CONTEXT(thread)
 	if((aName.MaxLength() - aName.Length()) < KMaxClientNameLength)
@@ -1791,8 +1807,7 @@ Obtain the Id of registered client of the resource manager
 */
 TInt DPowerResourceController::GetClientId(TUint aClientId, TDesC8& aClientName, TUint& aTargetClientId)
 	{
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetClientId CallingClientId = 0x%x, \
-		                                                           ClientName = %S", aClientId, &aClientName));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetClientId CallingClientId = 0x%x, ClientName = %S", aClientId, &aClientName));
 	DThread& thread = Kern::CurrentThread();	
 	CHECK_CONTEXT(thread)
 	if(aClientName.Length() > KMaxClientNameLength)
@@ -1854,8 +1869,7 @@ TInt DPowerResourceController::GetResourceId(TUint aClientId, TDesC8& aResourceN
 		if((iStaticResourceArray[count]) && (!(aResourceName.Compare(*(const TDesC8*)iStaticResourceArray[count]->iName))))
 			{
 			aResourceId = ++count;
-			__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetResourceId, ResourceId = 0x%x", \
-				                                                                                    aResourceId));
+			__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetResourceId, ResourceId = 0x%x", aResourceId));
 			UNLOCK_RETURN(KErrNone);
 			}
 		}
@@ -1875,8 +1889,7 @@ TInt DPowerResourceController::GetResourceId(TUint aClientId, TDesC8& aResourceN
 		if(!(aResourceName.Compare(*(const TDesC8*)iStaticResDependencyArray[count]->iName)))
 			{
 			aResourceId = iStaticResDependencyArray[count]->iResourceId;
-			__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetResourceId, ResourceId = 0x%x", \
-				                                                                                    aResourceId));
+			__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetResourceId, ResourceId = 0x%x", aResourceId));
 			UNLOCK_RETURN(KErrNone);
 			}
 		}
@@ -1951,8 +1964,7 @@ TInt DPowerResourceController::GetResourceInfo(TUint aClientId, TUint aResourceI
 #else
 	if(!aResourceId)
 		{
-		__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetResourceInfo, return value = %d", \
-			                                                                                          KErrNotFound));
+		__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetResourceInfo, return value = %d", KErrNotFound));
 		UNLOCK_RETURN(KErrNotFound);
 		}
 	//Get resource from corresponding container
@@ -2017,8 +2029,7 @@ TInt DPowerResourceController::GetNumResourcesInUseByClient(TUint aClientId, TUi
 #else
 		aNumResource = iStaticResourceCount;
 #endif
-		__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetNumResourcesInUseByClient, \
-			                                                              numResources = %d", aNumResource));
+		__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetNumResourcesInUseByClient, numResources = %d", aNumResource));
 		UNLOCK_RETURN(KErrNone);
 		}
 	GET_TARGET_CLIENT();
@@ -2029,8 +2040,7 @@ TInt DPowerResourceController::GetNumResourcesInUseByClient(TUint aClientId, TUi
 		aNumResource++;
 		pCL = pCL->iNextInList;
 		}
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetNumResourcesInUseByClient, \
-		                                                              numResources = %d", aNumResource));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetNumResourcesInUseByClient, numResources = %d", aNumResource));
 	UNLOCK_RETURN(KErrNone);
 	}
 
@@ -2193,8 +2203,7 @@ TInt DPowerResourceController::GetInfoOnResourcesInUseByClient(TUint aClientId, 
 		pInfo->Append(buf);
 		}
 	aNumResources = count;
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetInfoOnResourcesInUseByClient, \
-		                                                     AcutalNoOfResources = %d", aNumResources));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetInfoOnResourcesInUseByClient, AcutalNoOfResources = %d", aNumResources));
 	UNLOCK_RETURN(KErrNone);
 	}
 
@@ -2255,8 +2264,7 @@ TInt DPowerResourceController::GetNumClientsUsingResource(TUint aClientId, TUint
 	aNumClients = 0;
 	for(SDblQueLink*pCL = pR->iClientList.First(); pCL != &pR->iClientList.iA; pCL=pCL->iNext)
 	   aNumClients++;
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetNumClientsUsingResource, \
-		                                                                NumClients = %d", aNumClients));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetNumClientsUsingResource, NumClients = %d", aNumClients));
 	UNLOCK_RETURN(KErrNone);
 	}
 
@@ -2373,8 +2381,7 @@ TInt DPowerResourceController::GetInfoOnClientsUsingResource(TUint aClientId, TU
         pInfo->Append(TPckgC<TPowerClientInfoV01>(info));
 		}
 	aNumClients = c;
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetInfoOnClientsUsingResource, \
-		                                                                NumClients = %d", aNumClients));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("<DPowerResourceController::GetInfoOnClientsUsingResource, NumClients = %d", aNumClients));
 	UNLOCK_RETURN(KErrNone);
 	}
 
@@ -2446,10 +2453,10 @@ TInt DPowerResourceController::ChangeResourceState(TUint aClientId, TUint aResou
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::ChangeResourceState"));
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf("ClientId = 0x%x, ResourceId = %d, NewState = %d", aClientId, \
 		                                                                          aResourceId, aNewState));
+	DThread& thread = Kern::CurrentThread();	
 	CHECK_CONTEXT(thread)
 	if(iInitialised <= EResConCreated)
 		return KErrNotReady;
-	DThread& thread = Kern::CurrentThread();	
 	if(!aResourceId)
 		return KErrNotFound;
 	SPowerResourceClient* pC = NULL;
@@ -2466,6 +2473,11 @@ TInt DPowerResourceController::ChangeResourceState(TUint aClientId, TUint aResou
 	if(!pR)
 		UNLOCK_RETURN(KErrNotFound);
 #endif
+	//Return if the resource is already in that state and client is also the same.
+	if((aNewState == pR->iCachedLevel) && ((TInt)aClientId == pR->iLevelOwnerId))
+		UNLOCK_RETURN(KErrNone);
+
+	
 	PRM_CLIENT_CHANGE_STATE_START_TRACE
 	//If long latency resource requested synchronously from DFC thread 0 Panic
 
@@ -2723,12 +2735,12 @@ TInt DPowerResourceController::GetResourceState(TUint aClientId, TUint aResource
 																						TInt& aLevelOwnerId)
 	{
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetResourceState(synchronous)"));
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("ClientId = 0x%x, ResourceId = %d, Cached = %d", aClientId, aResourceId,\
-																										aCached));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("ClientId = 0x%x, ResourceId = %d, Cached = %d", aClientId, aResourceId, aCached));
+
+	DThread& thread = Kern::CurrentThread();	
 	CHECK_CONTEXT(thread)
 	if(iInitialised <= EResConCreated) 
 		return KErrNotReady;
-	DThread& thread = Kern::CurrentThread();	
 	SPowerResourceClient* pC = NULL;
 	TInt r = KErrNone;
 	Lock();
@@ -2817,8 +2829,7 @@ TInt DPowerResourceController::GetResourceState(TUint aClientId, TUint aResource
 		((DDynamicPowerResource*)pR)->UnLock();
 #endif
 	UnLock();
-    __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetResourceState(synchronous), Level = %d",\
-																											aState));
+    __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetResourceState(synchronous), Level = %d", aState));
 	if(pR->LatencyGet()) //For long latency resource btrace is done in controller thread.
 		return r;
 	PRM_RESOURCE_GET_STATE_END_TRACE
@@ -2869,20 +2880,18 @@ synchronously for instantaneous resource
 TInt DPowerResourceController::GetResourceState(TUint aClientId, TUint aResourceId, TBool aCached,  TPowerResourceCb& aCb)
 	{
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetResourceState(asynchronous)"));
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("ClientId = 0x%x, ResourceId = %d, Cached = %d", aClientId, aResourceId, \
-																											aCached));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("ClientId = 0x%x, ResourceId = %d, Cached = %d", aClientId, aResourceId, aCached));
+
+	DThread& thread = Kern::CurrentThread();	
 	CHECK_CONTEXT(thread)
 	if(iInitialised <= EResConCreated) 
 		return KErrNotReady;
-	DThread& thread = Kern::CurrentThread();	
 	SPowerResourceClient* pC = NULL;
 	TInt r = KErrNone;
 	Lock();
 	VALIDATE_CLIENT(thread);
 	if(!aResourceId)
 		UNLOCK_RETURN(KErrNotFound);
-	if(!&aCb) //Need to specify a callback for this asynchronous API
-		UNLOCK_RETURN(KErrArgument);
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 	DStaticPowerResource *pR = NULL;
 	GET_RESOURCE_FROM_LIST(aResourceId, pR) 
@@ -2899,12 +2908,10 @@ TInt DPowerResourceController::GetResourceState(TUint aClientId, TUint aResource
 	if(!pR)
 		UNLOCK_RETURN(KErrNotFound);
 #endif
-	if(&aCb)
-		{
-		aCb.iResult = KErrNone;
-		aCb.iResourceId = aResourceId;
-		aCb.iClientId = aClientId;
-		}
+	aCb.iResult = KErrNone;
+	aCb.iResourceId = aResourceId;
+	aCb.iClientId = aClientId;
+
 	PRM_RESOURCE_GET_STATE_START_TRACE
 	if(aCached) //Call the callback directly
 		{
@@ -2985,8 +2992,7 @@ TInt DPowerResourceController::GetResourceState(TUint aClientId, TUint aResource
 		aCb.iCallback(aClientId, aResourceId, req->Level(), pR->iLevelOwnerId, r, aCb.iParam);
 		aCb.iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
 		}
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetResourceState(asynchronous), Level = %d", \
-																										req->Level()));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetResourceState(asynchronous), Level = %d", req->Level()));
 	if(pR->LatencyGet())
 		return r;
 #ifdef PRM_INSTRUMENTATION_MACRO
@@ -3051,13 +3057,17 @@ TInt DPowerResourceController::CancelAsyncRequestCallBack(TUint aClientId, TUint
 		{
         __KTRACE_OPT(KRESMANAGER, Kern::Printf("aCb.iClientId = 0x%x, aClientId = 0x%x", aCb.iClientId, aClientId));
         r = KErrAccessDenied;
+#ifdef PRM_INSTRUMENTATION_MACRO
         PRM_RESOURCE_CANCEL_LONGLATENCY_OPERATION_TRACE
+#endif
         UNLOCK_RETURN(r);
 		}
 	if(aCb.iResult == KErrCompletion)
 		{
         r = KErrCompletion;
+#ifdef PRM_INSTRUMENTATION_MACRO
         PRM_RESOURCE_CANCEL_LONGLATENCY_OPERATION_TRACE
+#endif
 		UNLOCK_RETURN(r);
 		}
 	//Search in the controller message queue for this message
@@ -3075,7 +3085,9 @@ TInt DPowerResourceController::CancelAsyncRequestCallBack(TUint aClientId, TUint
 				pRM->Deque();
 				pMsgQ->iState = TMessageBase::EFree; //Reset the state
 				MoveRequestToFreePool(pReq);
+#ifdef PRM_INSTRUMENTATION_MACRO
 				PRM_RESOURCE_CANCEL_LONGLATENCY_OPERATION_TRACE
+#endif
 				UNLOCK_RETURN(r);
 				}
 			}
@@ -3093,12 +3105,16 @@ TInt DPowerResourceController::CancelAsyncRequestCallBack(TUint aClientId, TUint
 				pRM->Deque();
 				pMsgQ->iState = TMessageBase::EFree; //Reset the state
 				MoveRequestToFreePool(pReq);
+#ifdef PRM_INSTRUMENTATION_MACRO
 				PRM_RESOURCE_CANCEL_LONGLATENCY_OPERATION_TRACE
+#endif
 				UNLOCK_RETURN(r);
 				}
 			}
 		}
+#ifdef PRM_INSTRUMENTATION_MACRO
     PRM_RESOURCE_CANCEL_LONGLATENCY_OPERATION_TRACE
+#endif
 	UNLOCK_RETURN(r);
 	}
 
@@ -3669,8 +3685,7 @@ TInt DPowerResourceController::DeregisterProxyClient(TUint aClientId)
 TInt DPowerResourceController::RegisterResourcesForIdle(TInt aPowerControllerId, TUint aNumResources, TPtr* aBuf)
 	{
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::RegisterResourceForIdle"));
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf("PowerControllerId = 0x%x, NumResources = %d", aPowerControllerId, \
-																							aNumResources));
+	__KTRACE_OPT(KRESMANAGER, Kern::Printf("PowerControllerId = 0x%x, NumResources = %d", aPowerControllerId, aNumResources));
 #ifdef DEBUG_VERSION //Surrounding with macro to avoid warnings.
 	DThread& t = Kern::CurrentThread();	
 	CHECK_CONTEXT(t)
@@ -3685,9 +3700,10 @@ TInt DPowerResourceController::RegisterResourcesForIdle(TInt aPowerControllerId,
 		return KErrArgument;
 	GET_CRITICAL_SECTION_COUNT
 	Lock();
-	SIdleResourceInfo* pS=(SIdleResourceInfo*)aBuf;
+	SIdleResourceInfo* pS=(SIdleResourceInfo*)aBuf->Ptr();
 	DStaticPowerResource* pR=NULL;
-	TUint count=0, id=0;
+	TUint count=0;
+	TUint id=0;
 	for(count=0;count<aNumResources;count++) //Check for valid resource ID.
 		{
 #ifndef PRM_ENABLE_EXTENDED_VERSION
@@ -3705,8 +3721,8 @@ TInt DPowerResourceController::RegisterResourcesForIdle(TInt aPowerControllerId,
 			return KErrNotSupported;
 			}
 		if((!pS->iResourceId) || ((pS->iResourceId & KIdMaskResourceWithDependencies) && 
-			     (pS->iResourceId > iStaticResDependencyCount)) || (pS->iResourceId > iStaticResourceArrayEntries)
-				                                 || (!iStaticResourceArray[pS->iResourceId-1]))
+			     (pS->iResourceId > iStaticResDependencyCount)) || (!(pS->iResourceId & KIdMaskResourceWithDependencies) && 
+					((pS->iResourceId > iStaticResourceArrayEntries) || (!iStaticResourceArray[pS->iResourceId-1]))))
 			{
 			UnLock();
 			LOCK_AND_CRITICAL_SECTION_COUNT_CHECK
@@ -3715,7 +3731,7 @@ TInt DPowerResourceController::RegisterResourcesForIdle(TInt aPowerControllerId,
 #endif
 		pS++;
 		}
-	pS = (SIdleResourceInfo*)aBuf;
+	pS = (SIdleResourceInfo*)aBuf->Ptr();
 	for(count=0;count<aNumResources;count++)
 		{
 		id=pS->iResourceId;
@@ -3725,10 +3741,13 @@ TInt DPowerResourceController::RegisterResourcesForIdle(TInt aPowerControllerId,
 		else
 #endif
 		pR=iStaticResourceArray[id-1];
+		pS->iLevelOwnerId = pR->iLevelOwnerId;
+		pS->iCurrentLevel = pR->iCachedLevel;
 		pR->iIdleListEntry=pS;
 		pS++;
 		}
-	iListForIdle=(SIdleResourceInfo*)aBuf;
+	iListForIdle=(SIdleResourceInfo*)aBuf->Ptr();
+	pS = (SIdleResourceInfo*)aBuf->Ptr();
 	UnLock();
 	LOCK_AND_CRITICAL_SECTION_COUNT_CHECK
 	return KErrNone;
@@ -3903,11 +3922,11 @@ TInt DPowerResourceController::GetInterface(TUint aClientId, TUint aInterfaceId,
 											                                             TAny* aParam3)
 	{
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetInterface"));
+	DThread& thread = Kern::CurrentThread();	
 	CHECK_CONTEXT(thread)
 	if((iInitialised != EResConStartupCompleted) && (aInterfaceId != KResManControlIoGetVersion))
 		return KErrNotSupported;
 	TInt r = KErrNone;
-	DThread& thread = Kern::CurrentThread();	
 	Lock();
 	SPowerResourceClient* pC = NULL;
 	VALIDATE_CLIENT(thread);

@@ -619,7 +619,7 @@ t_btb manual
 #endif
 
 #ifdef EPOC32
-t_ramall    support
+t_ramall
 t_pages     support
 t_mwait
 t_asid
@@ -758,7 +758,6 @@ t_vidmode   support
 // DISPCHAN can change the state of the emulator GUI and currently must be run
 // AFTER t_video
 #ifndef X86
-// Run test on H4 once defects in dislay0.ldd are resolved
 t_dispchan
 #endif
 

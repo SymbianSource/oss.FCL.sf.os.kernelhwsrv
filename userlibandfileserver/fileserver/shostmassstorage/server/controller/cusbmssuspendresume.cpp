@@ -19,12 +19,10 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
 #include <d32usbdi.h>
 
 #include <d32usbtransfers.h>
 #include "msctypes.h"
-#include "mscutils.h"
 #include "shared.h"
 #include "msgservice.h"
 #include "botmsctypes.h"
@@ -70,10 +68,11 @@ TInt CUsbMsIfaceSuspendResume::RunError(TInt aError)
 	}
 
 
-void CUsbMsIfaceSuspendResume::Resume(TRequestStatus &aStatus)
+void CUsbMsIfaceSuspendResume::Resume(TRequestStatus& aStatus)
 	{
     __MSFNLOG
 	iCancelSuspend = ETrue;
+    aStatus = KRequestPending;
 	iDeviceStatus = &aStatus;
 	iTransport->Resume();
 	}
@@ -92,14 +91,13 @@ CUsbMsIfaceSuspendResume* CUsbMsIfaceSuspendResume::NewL(MTransport *aTransport,
 	return new (ELeave) CUsbMsIfaceSuspendResume(aTransport, aDevice);
 	}
 
-CUsbMsIfaceSuspendResume::CUsbMsIfaceSuspendResume(MTransport *aTransport, CUsbHostMsDevice *aDevice)
-:	CActive(EPriorityHigh)
+CUsbMsIfaceSuspendResume::CUsbMsIfaceSuspendResume(MTransport* aTransport, CUsbHostMsDevice* aDevice)
+:	CActive(EPriorityHigh),
+    iTransport(aTransport),
+    iDevice(aDevice),
+    iCancelSuspend(EFalse)
 	{
     __MSFNLOG
-	iTransport = aTransport;
-	iDevice = aDevice;
-	iCancelSuspend = EFalse;
-	iDeviceStatus = NULL;
 	CActiveScheduler::Add(this);
 	}
 

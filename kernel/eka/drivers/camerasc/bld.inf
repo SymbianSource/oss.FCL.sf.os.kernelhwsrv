@@ -20,6 +20,8 @@
  @file
 */
 
+#include <variant/platform_paths.hrh>
+
 PRJ_PLATFORMS
 
 BASEDEFAULT

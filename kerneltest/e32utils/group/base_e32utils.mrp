@@ -16,6 +16,7 @@ source	\sf\os\kernelhwsrv\kerneltest\e32utils\setcap
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\testusbcldd
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\trace
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\usbmsapp
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\sdpartition	
 	
 #MattD: Reltools 2.67 don't understand 'cwtools' are the CW equivelent of 'tools' and try to do '-what cwtools udeb' instead of '-what cwtools deb'.
 #binary	\sf\os\kernelhwsrv\kerneltest\e32utils\group cwtools

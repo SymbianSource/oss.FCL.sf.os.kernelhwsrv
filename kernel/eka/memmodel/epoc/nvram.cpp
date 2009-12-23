@@ -131,9 +131,11 @@ EXPORT_C TInt TInternalRamDrive::Adjust(TInt aNewSize)
 EXPORT_C void TInternalRamDrive::Wait()
 	{
 	Kern::MutexWait(*Mutex);
+	UNLOCK_USER_MEMORY();
 	}
 
 EXPORT_C void TInternalRamDrive::Signal()
 	{
+	LOCK_USER_MEMORY();
 	Kern::MutexSignal(*Mutex);
 	}

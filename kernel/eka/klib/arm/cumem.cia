@@ -70,22 +70,27 @@ EXPORT_C __NAKED__ void kumemget32(TAny* /*aKernAddr*/, const TAny* /*aAddr*/, T
 EXPORT_C __NAKED__ void umemget32(TAny* /*aKernAddr*/, const TAny* /*aUserAddr*/, TInt /*aLength*/)
 	{
 	ASM_ASSERT_PAGING_SAFE
+
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
+	// Wrap the workings of this function in an internal call, so we can save/restore UMG state
 	asm("stmfd sp!, {r11, lr} ");
 	asm("subs r12, r2, #1");
-	asm("ldrhsb r11, [r0]"); // test access to first byte of kernel memory
-	asm("ldrhsb r11, [r0,r12]"); // test access to last byte of kernel memory
-	USER_MEMORY_GUARD_OFF(,r11,r12);
-	asm("bl 1f");
+	asm("ldrhsb r11, [r0]");				// test access to first byte of kernel memory
+	asm("ldrhsb r11, [r0,r12]");			// test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);		// leaves UMG mode in r11
+	asm("bl 0f");							// call to label below
 	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	asm("ldmfd sp!, {r11, pc} ");	
-	asm("1:");
+
+	asm("0:");
 #endif
-	PLD(1);
+
 #ifdef _DEBUG
 	asm("tst r2, #3 ");						// check length is a whole number of words
 	CUMEM_FAULT(ne, KL::EWordMoveLengthNotMultipleOf4);
 #endif
+
+	PLD(1);
 	asm("_umemget_word_aligned: ");	
 	asm("stmfd sp!, {r4, lr} ");
 	asm("subs ip, r2, #32 ");
@@ -169,17 +174,21 @@ EXPORT_C __NAKED__ void umemget(TAny* /*aKernAddr*/, const TAny* /*aUserAddr*/, 
 
 	ASM_ASSERT_PAGING_SAFE
 	asm("umemget_no_paging_assert:");
+
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
+	// Wrap the workings of this function in an internal call, so we can save/restore UMG state
 	asm("stmfd sp!, {r11, lr} ");
 	asm("subs r12, r2, #1");
-	asm("ldrhsb r11, [r0]"); // test access to first byte of kernel memory
-	asm("ldrhsb r11, [r0,r12]"); // test access to last byte of kernel memory
-	USER_MEMORY_GUARD_OFF(,r11,r12);
-	asm("bl 1f");
+	asm("ldrhsb r11, [r0]");				// test access to first byte of kernel memory
+	asm("ldrhsb r11, [r0,r12]");			// test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);		// leaves UMG mode in r11
+	asm("bl 0f");							// call to label below
 	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	asm("ldmfd sp!, {r11, pc} ");	
-	asm("1:");
+
+	asm("0:");
 #endif
+
 	PLD(1);
 	asm("tst r0, #3 ");
 	asm("tsteq r1, #3 ");
@@ -299,22 +308,27 @@ EXPORT_C __NAKED__ void kumemput32(TAny* /*aAddr*/, const TAny* /*aKernAddr*/, T
 EXPORT_C __NAKED__ void umemput32(TAny* /*aUserAddr*/, const TAny* /*aKernAddr*/, TInt /*aLength*/)
 	{
 	ASM_ASSERT_DATA_PAGING_SAFE
+
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
+	// Wrap the workings of this function in an internal call, so we can save/restore UMG state
 	asm("stmfd sp!, {r11, lr} ");
 	asm("subs r12, r2, #1");
-	asm("ldrhsb r11, [r1]"); // test access to first byte of kernel memory
-	asm("ldrhsb r11, [r1,r12]"); // test access to last byte of kernel memory
-	USER_MEMORY_GUARD_OFF(,r11,r12);
-	asm("bl 1f");
+	asm("ldrhsb r11, [r1]");				// test access to first byte of kernel memory
+	asm("ldrhsb r11, [r1,r12]");			// test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);		// leaves UMG mode in r11
+	asm("bl 0f");							// call to label below
 	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	asm("ldmfd sp!, {r11, pc} ");	
-	asm("1:");
+
+	asm("0:");
 #endif
-	PLD(1);
+
 #ifdef _DEBUG
 	asm("tst r2, #3 ");						// check length is a whole number of words
 	CUMEM_FAULT(ne, KL::EWordMoveLengthNotMultipleOf4);
 #endif
+
+	PLD(1);
 	asm("cmp r2, #4 ");						// special case for 4 byte copy which is common
 	asm("ldrhs r3, [r1], #4 ");
 	asm("subhs r2, r2, #4 ");
@@ -393,14 +407,18 @@ EXPORT_C __NAKED__ void umemput32(TAny* /*aUserAddr*/, const TAny* /*aKernAddr*/
 __NAKED__ void uumemcpy32(TAny* /*aUserDst*/, const TAny* /*aUserSrc*/, TInt /*aLength*/)
 	{
 	ASM_ASSERT_PAGING_SAFE
+
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
+	// Wrap the workings of this function in an internal call, so we can save/restore UMG state
 	asm("stmfd sp!, {r11, lr} ");
-	USER_MEMORY_GUARD_OFF(,r11,r12);
-	asm("bl 1f");
+	USER_MEMORY_GUARD_OFF(,r11,r12);		// leaves UMG mode in r11
+	asm("bl 0f");							// call to label below
 	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	asm("ldmfd sp!, {r11, pc} ");	
-	asm("1:");
+
+	asm("0:");
 #endif
+
 	asm("1: ");
 	asm("subs r2, r2, #4 ");
 	asm("ldrplt r3, [r1], #4 ");
@@ -413,14 +431,18 @@ __NAKED__ void uumemcpy32(TAny* /*aUserDst*/, const TAny* /*aUserSrc*/, TInt /*a
 __NAKED__ void uumemcpy(TAny* /*aUserDst*/, const TAny* /*aUserSrc*/, TInt /*aLength*/)
 	{
 	ASM_ASSERT_PAGING_SAFE
+
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
+	// Wrap the workings of this function in an internal call, so we can save/restore UMG state
 	asm("stmfd sp!, {r11, lr} ");
-	USER_MEMORY_GUARD_OFF(,r11,r12);
-	asm("bl 1f");
+	USER_MEMORY_GUARD_OFF(,r11,r12);		// leaves UMG mode in r11
+	asm("bl 0f");							// call to label below
 	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	asm("ldmfd sp!, {r11, pc} ");	
-	asm("1:");
+
+	asm("0:");
 #endif
+
 	asm("cmp r2, #8 ");
 	asm("bcs 1f ");
 	asm("2: ");
@@ -510,17 +532,21 @@ EXPORT_C __NAKED__ void umemput(TAny* /*aUserAddr*/, const TAny* /*aKernAddr*/, 
 
 	ASM_ASSERT_DATA_PAGING_SAFE
 	asm("umemput_no_paging_assert:");
+
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
+	// Wrap the workings of this function in an internal call, so we can save/restore UMG state
 	asm("stmfd sp!, {r11, lr} ");
 	asm("subs r12, r2, #1");
-	asm("ldrhsb r11, [r1]"); // test access to first byte of kernel memory
-	asm("ldrhsb r11, [r1,r12]"); // test access to last byte of kernel memory
-	USER_MEMORY_GUARD_OFF(,r11,r12);
-	asm("bl 1f");
+	asm("ldrhsb r11, [r1]");				// test access to first byte of kernel memory
+	asm("ldrhsb r11, [r1,r12]");			// test access to last byte of kernel memory
+	USER_MEMORY_GUARD_OFF(,r11,r12);		// leaves UMG mode in r11
+	asm("bl 0f");							// call to label below
 	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	asm("ldmfd sp!, {r11, pc} ");	
-	asm("1:");
+
+	asm("0:");
 #endif
+
 	PLD(1);
 	asm("tst r0, #3 ");
 	asm("tsteq r1, #3 ");
@@ -613,14 +639,18 @@ EXPORT_C __NAKED__ void kumemset(TAny* /*aAddr*/, const TUint8 /*aValue*/, TInt 
 EXPORT_C __NAKED__ void umemset(TAny* /*aUserAddr*/, const TUint8 /*aValue*/, TInt /*aLength*/)
 	{
 	ASM_ASSERT_DATA_PAGING_SAFE
+
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
+	// Wrap the workings of this function in an internal call, so we can save/restore UMG state
 	asm("stmfd sp!, {r11, lr} ");
-	USER_MEMORY_GUARD_OFF(,r11,r12);
-	asm("bl 1f");
+	USER_MEMORY_GUARD_OFF(,r11,r12);		// leaves UMG mode in r11
+	asm("bl 0f");							// call to label below
 	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	asm("ldmfd sp!, {r11, pc} ");	
-	asm("1:");
+
+	asm("0:");
 #endif
+
 	asm("cmp r2, #7 ");
 	asm("bhi 2f ");
 	asm("1: ");

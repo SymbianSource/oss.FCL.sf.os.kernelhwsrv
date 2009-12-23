@@ -571,30 +571,26 @@ must be dynamically updated.
 	ENotifyDisk=0x40
 	};
 
-enum TNotifyDismountMode
 /**
-@publishedAll
-@released
+    @publishedAll
+    @released
 
-Notification modes for safe media removal notification API
+    Notification modes for safe media removal notification API
 
-@see RFs::NotifyDismount
+    @see RFs::NotifyDismount
 */
+enum TNotifyDismountMode
 	{
-	/**
-	Used by a client to register for notification of pending dismount.
-		- This is the default behaviour for RFs::NotifyDismount
-	*/
+	/** Used by a client to register for notification of pending dismount. This is the default behaviour for RFs::NotifyDismount*/
 	EFsDismountRegisterClient=0x01,
 	
-	/**
-	Used to notify clients of a pending dismount.
-	*/
+	/** 
+    Used for graceful file system dismounting with notifying clients of a pending dismount. 
+    If all clients have responded by RFs::AllowDismount(), the file system will be dismounted. 
+    */
 	EFsDismountNotifyClients=0x02,
 	
-	/**
-	Used to forcibly dismount the file system without notifying clients.
-	*/
+	/**  Used to forcibly dismount the file system without notifying clients. */
 	EFsDismountForceDismount=0x03,
 	};
 

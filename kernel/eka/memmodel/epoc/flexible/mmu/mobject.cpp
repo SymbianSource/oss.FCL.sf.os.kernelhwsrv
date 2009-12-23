@@ -758,6 +758,10 @@ void DCoarseMemory::DPageTables::AssignPageTable(TUint aChunkIndex, TPte* aPageT
 			TLinAddr linAddrAndOsAsid = mapping->LinAddrAndOsAsid()+start*KPageSize;
 			TPde* pPde = Mmu::PageDirectoryEntry(linAddrAndOsAsid&KPageMask,linAddrAndOsAsid);
 			TPde pde = ptPhys|mapping->BlankPde();
+#ifdef	__USER_MEMORY_GUARDS_ENABLED__
+			if (mapping->IsUserMapping())
+				pde = PDE_IN_DOMAIN(pde, USER_MEMORY_DOMAIN);
+#endif
 			TRACE2(("!PDE %x=%x",pPde,pde));
 			__NK_ASSERT_DEBUG(((*pPde^pde)&~KPdeMatchMask)==0 || *pPde==KPdeUnallocatedEntry);
 			*pPde = pde;

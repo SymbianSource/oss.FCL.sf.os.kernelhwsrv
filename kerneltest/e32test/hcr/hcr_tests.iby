@@ -17,12 +17,17 @@
 #ifndef __HCR_TEST_IBY__
 #define __HCR_TEST_IBY__
 
+device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\D_HCRSIM_CLIENT.LDD	\sys\bin\d_hcrsim_client.ldd
+device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\D_HCRSIM_OWN.LDD		\sys\bin\d_hcrsim_own.ldd
+device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\D_HCRUT.LDD			\sys\bin\d_hcrut.ldd
 
-device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\D_HCRSIM.LDD		\sys\bin\d_hcrsim.ldd
-device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\D_HCRUT.LDD		\sys\bin\d_hcrut.ldd
+#ifdef HCR_INCLUDE_VARIANT_TEST_DRIVERS
+extension[0x09080001]=\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_D_HCREXT_OWN.LDD		\sys\bin\d_hcrext_own.ldd
+extension[0x09080001]=\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_D_HCREXT_CLIENT.LDD	\sys\bin\d_hcrext_client.ldd
+#endif
 
-file=\Epoc32\Release\##MAIN##\##BUILD##\t_hcr.exe					\sys\bin\t_hcr.exe
-file=\Epoc32\Release\##MAIN##\##BUILD##\t_hcrut.exe					\sys\bin\t_hcrut.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_hcr.exe						\sys\bin\t_hcr.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_hcrut.exe						\sys\bin\t_hcrut.exe
 
 data=\epoc32\rom\include\hcrtest.auto.bat				\test\hcrtest.auto.bat
 
@@ -35,6 +40,7 @@ data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\corrupt2.dat      \sys\data\
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\empty.dat         \sys\data\empty.dat		unpaged paging_unmovable
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat     \sys\data\filerepos.dat	unpaged paging_unmovable
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\nandrepos.dat     \sys\data\nandrepos.dat	unpaged paging_unmovable
-data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat     \sys\data\hcr.dat			unpaged paging_unmovable
-
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\megalarge1.dat    \sys\data\megalarge1.dat	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\megalarge2.dat    \sys\data\megalarge2.dat	unpaged paging_unmovable
+hcrdata=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat  \sys\data\hcr.dat
 #endif // __HCR_TEST_IBY__

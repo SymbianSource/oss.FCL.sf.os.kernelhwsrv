@@ -2394,15 +2394,14 @@ for example, RSemaphore, RThread, RProcess, RCriticalSection etc.
 */
 class RHandleBase
 	{
-#ifndef SYMBIAN_ENABLE_SPLIT_HEADERS
 public:
     /**
-    @internalComponent
+    @publishedAll
+    @released
+
+	Read/Write attributes for the handle.
     */
-#else
-protected:
-#endif
-    enum
+    enum TAttributes
 		{
 		EReadAccess=0x1,
 		EWriteAccess=0x2,
@@ -6794,3 +6793,4 @@ class TShPoolInfo;
 #endif
 
 #endif //__E32CMN_H__
+

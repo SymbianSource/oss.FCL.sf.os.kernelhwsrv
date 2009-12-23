@@ -149,28 +149,26 @@ LOCAL_D const TPte ChunkPtePermissions[ENumChunkTypes] =
 #endif
 	};
 
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-#define USER_DOMAIN 15
-#else
-#define USER_DOMAIN 0
-#endif
-
+// The domain for each chunk is selected according to its type.
+// The RamDrive lives in a separate domain, to minimise the risk
+// of accidental access and corruption. User chunks may also be
+// located in a separate domain (15) in DEBUG builds.
 LOCAL_D const TPde ChunkPdePermissions[ENumChunkTypes] =
 	{
-	PT_PDE(0),				// EKernelData
-	PT_PDE(0),				// EKernelStack
-	PT_PDE(0),				// EKernelCode
-	PT_PDE(0),				// EDll
-	PT_PDE(USER_DOMAIN),	// EUserCode
-	PT_PDE(1),				// ERamDrive
-	PT_PDE(USER_DOMAIN),	// EUserData
-	PT_PDE(USER_DOMAIN),	// EDllData
-	PT_PDE(USER_DOMAIN),	// EUserSelfModCode
-	PT_PDE(USER_DOMAIN),	// ESharedKernelSingle
-	PT_PDE(USER_DOMAIN),	// ESharedKernelMultiple
-	PT_PDE(0),				// ESharedIo
-	PT_PDE(0),				// ESharedKernelMirror
-	PT_PDE(0),				// EKernelMessage
+	PT_PDE(0),						// EKernelData
+	PT_PDE(0),						// EKernelStack
+	PT_PDE(0),						// EKernelCode
+	PT_PDE(0),						// EDll
+	PT_PDE(USER_MEMORY_DOMAIN),		// EUserCode
+	PT_PDE(1),						// ERamDrive
+	PT_PDE(USER_MEMORY_DOMAIN),		// EUserData
+	PT_PDE(USER_MEMORY_DOMAIN),		// EDllData
+	PT_PDE(USER_MEMORY_DOMAIN),		// EUserSelfModCode
+	PT_PDE(USER_MEMORY_DOMAIN),		// ESharedKernelSingle
+	PT_PDE(USER_MEMORY_DOMAIN),		// ESharedKernelMultiple
+	PT_PDE(0),						// ESharedIo
+	PT_PDE(0),						// ESharedKernelMirror
+	PT_PDE(0),						// EKernelMessage
 	};
 
 // Inline functions for simple transformations
@@ -2600,7 +2598,7 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	TPde pde = pd[pdeIndex];
 	if ((TPhysAddr)(pde&~KPageMask) == AliasRemapOld)
 		pde = AliasRemapNew|(pde&KPageMask);
-	pde = (pde&~(0xf<<5))|(KIPCAliasDomain<<5); // change domain for PDE
+	pde = PDE_IN_DOMAIN(pde, KIPCAliasDomain);
 	TLinAddr aliasAddr = KIPCAlias+(aAddr&(KChunkMask & ~KPageMask));
 	if(pde==iAliasPde && iAliasLinAddr)
 		{

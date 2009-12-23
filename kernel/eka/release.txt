@@ -1,3 +1,125 @@
+Version 2.00.2055
+=================
+(Made by VincentF 24/11/2009)
+
+1.	VincentF
+	1.	DEFECT FIX: DEF143148: HCR Setting batch retrieval does not work
+
+
+Version 2.00.2054
+=================
+(Made by Vino Jose 20/11/2009)
+
+1.	VincentF
+	1.	MILESTONE: SymTB10.1, GT0472, MS3.16, DS.1714 HCR_DS2 : Complete and Tested PIL
+		PREQ2131 Hardware Configuration Repository
+		CR322 Prototype Kernel-side HCR API adjust following testing feedback
+		This change delivers the remaining HCR APIs and PIL.
+
+
+Version 2.00.2053
+=================
+(Made by Vino Jose 16/11/2009)
+
+1.	vinojose
+	1.	DEFECT FIX: DEF143037 [System Build] : Errors in GT stage 
+
+
+Version 2.00.2052
+=================
+(Made by Vino Jose 10/11/2009)
+
+1.	DaveGordon
+ 	1.	DEFECT FIX: DEF142684: T_TIME hangs on Ivalo waiting for absolute timer after changing secure time
+ 		Improve test by making sure time + secure offset settings are sane before changing secure time
+ 	2.	DEFECT FIX: DEF142504 T_PAGELDRTST_REAPER issues
+ 		Fixes KERN-EXEC panic with code EBadHandle by restructuring loops in CopyAndFragmentFiles().
+ 		Fixes issue with failing Attrib() leaving file unusable - now tries making file R/W if first
+ 		attempt at deleting it fails.
+ 
+
+
+Version 2.00.2051
+=================
+(Made by Vino Jose 05/11/2009)
+
+1.	LaneRoberts
+	1.	MINOR CHANGE: VFP doc update to include information on the latest VFPv3 and SMP support
+	2.	DEFECT FIX: DEF142855: BTrace categories need tweaking for SMP
+	3.	DEFECT FIX: DEF142898: VFP changes have incorrect syntax
+
+2.	Jeff Yoo
+	1.	DEFECT FIX: DEF141475: ECamera LDD & Template Camera PDD (BASE/CAMERA) :- Support for Effect Settings in Camera and 		LDD/PDD update based on reviews.
+
+3.	coliward
+	1.	MILESTONE: SymTB9.2 RM-RIM REQ417 SUB-REQ52733 DS.1931 WDP Safe GCE Driver
+
+
+Version 2.00.2050
+=================
+(Made by Vino Jose 04/11/2009)
+
+1.	LaneRoberts
+	1.	DEFECT FIX: DEF142567: NaviEngine VFP is not turned on
+
+2.	Saravana Attiyap
+	1.	DEFECT FIX: DEF142597:edev.mmp depends on a deprecated source folder
+
+3.	PatrickConway
+	1.	MINOR_CHANGE: Add missing SMPSAFE keywords to mmp files and unlock test driver DFC threads from core 0
+
+4	Jonco
+	1.	DEFECT FIX: DEF142749: t_implicit crashes when run on Ivalo 
+
+
+Version 2.00.2049
+=================
+(Made by Vino Jose 02/11/2009)
+
+1.	marcinmaksymiuk
+	1.	DEFECT FIX: DEF142717: Some of UTFv2-inherited enumerations duplication.
+
+
+Version 2.00.2048
+=================
+(Made by Vino Jose 01/11/2009)
+
+1.	VincentF
+	1.	MILESTONE: SymTB9.2, GT0419, MS3.41, DS.1928 417-60865: Read-Only Memory Sharing
+		PREQ1490 Flexible Memory Model
+		Introduce read-only memory chunks for the FMM (see RChunk::SetReadOnly()) and
+		add a new Kern::MakeHandleAndOpen() overload so process-local handles can be
+		created.
+
+
+Version 2.00.2047
+=================
+(Made by Vino Jose 29/10/2009)
+
+1.	Neil Clifford
+	1.	DEFECT FIX: DEF142675: T_TBUS_DATAPAGING fails on Ivalo due to test problem
+
+2.	JonCo
+	1.	MINOR CHANGE: Mark Tai's fix for t_pagemove failures on Ivalo
+
+3.	RyanHarkin
+	1.	MINOR_CHANGE: Updated MBC files, they should now be able to build the NaviEngine, at long last.
+
+4.	ChrisNotton
+	1.	DEFECT FIX: DEF142000 ROMS are not getting completed on BTB systems (TRGTEST RETURNS 7)
+
+5.	ChrisBeale
+	1. 	DEFECT FIX: DEF142535:Epoc::ClaimPhysicalRam() on the flexible memory model doesn't claim enough ram
+
+6.	DaveGordon
+	1.	MILESTONE: SymTB9.2 RM-RIM REQ417 SUB-REQ52733 DS.1926 UMG for FMM
+		This change adds the "User Memory Guard" feature to DEBUG builds on
+		all platforms using the Flexible Memory Model.
+
+7.	GayathriR
+	1.	DEFECT FIX: DEF142214: PRM: Fix the invalid memory calculation for BTRACE and client registration
+
+
 Version 2.00.2046
 =================
 (Made by Vino Jose 22/10/2009)
@@ -1304,7 +1426,7 @@ Version 2.00.1982
                 (This includes Break Request BR2705)
 	3.	DEFECT FIX: DEF133712: IIC Active wait issue for Slave channels on single-processor systems  
 	4.	DEFECT FIX: DEF133713: IIC Potential for corruption of spin lock state  
-	5.	DEFECT FIX: DEF133715: IIC Slave “Close?of client thread may be attempted from an ISR  
+	5.	DEFECT FIX: DEF133715: IIC Slave ?lose?of client thread may be attempted from an ISR  
 
 3. 	RyanHarkin
 	1.	MINOR_CHANGE: update MBC files after \f32\sftl directory removed
@@ -3137,7 +3259,7 @@ Version 2.00.1925
 	3.	DEFECT_FIX: DEF117988: LCD ROM macro usage forces redundant use of macros.
 	4.	DEFECT_FIX: DEF121284: Display configuration reported by H4 display driver is incorrect.
 	5.	DEFECT_FIX: DEF120343: RDisplayChannel::RegisterUserBuffer returns unexpected return values.
-	6.  DEFECT_FIX: DEF121284: Display configuration reported by H4 display driver is incorrect.
+	6.  DEFECT_FIX: DEF121284:?Display configuration reported by H4 display driver is incorrect.
 
 
 
@@ -5629,7 +5751,7 @@ Version 2.00.1514
 
 
 10. AndreasP
-	1. DEFECT FIX: DEF100093: template baseport has 2 mmp files generating _template_ekeyb.dll
+	1. DEFECT FIX: DEF100093:?template baseport has 2 mmp files generating _template_ekeyb.dll
 
 Version 2.00.1513
 ==========================

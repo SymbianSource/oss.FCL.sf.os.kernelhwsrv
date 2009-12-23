@@ -276,7 +276,7 @@ public:
 /**
 Defines a list of settings that are changable often (dynamically) within a single use of the device.
 */
-enum TDevCamDynamicAttributes
+enum TDevCamDynamicAttribute
 	{
 	ECamAttributeBrightness,
 	ECamAttributeContrast,
@@ -286,12 +286,13 @@ enum TDevCamDynamicAttributes
 
 /**
 Holds the range and interval (rate of change) values for a dynamic capability.
-An array of these would be indexed by TDevCamDynamicAttributes
+An array of these would be indexed by TDevCamDynamicAttribute
 */
 struct TDynamicRange
 	{
 	TUint iMin;
 	TUint iMax;
+	TUint iDefault;
 	};
 
 /**
@@ -329,11 +330,11 @@ public :
 	Will be set to 0 if image capture is not supported. */
 	TUint iNumViewFinderPixelFormats;
 	
-	/** An array specifying the range in values for settings as defined by TDevCamDynamicAttributes.
-		Indices for settings are in the order defined in TDevCamDynamicAttributes.
+	/** An array specifying the range in values for settings as defined by TDevCamDynamicAttribute.
+		Indices for settings are in the order defined in TDevCamDynamicAttribute.
 		If the setting is not supported then the entry is still present for performance reasons,
 		i.e. indexing over searching.
-		@see TDevCamDynamicAttributes
+		@see TDevCamDynamicAttribute
 		@see TDynamicRange
 	*/
 	TDynamicRange iDynamicRange[ECamAttributeMax];
@@ -430,7 +431,8 @@ public:
 		EControlBufferIdToOffset,
 		EControlCapsSize,
 		EControlFrameSizeCaps,
-		EControlSetDynamicAttribute
+		EControlSetDynamicAttribute,
+		EControlGetDynamicAttribute
 		};
 
 public:
@@ -652,7 +654,7 @@ public:
 	
 
 	/**
-	Allows changing of the dynamic settings as specified in TDevCamDynamicAttributes.
+	Allows changing of the dynamic settings as specified in TDevCamDynamicAttribute.
 	Checks locally the validity of the arguments passed so as to increase performance by not
 	forcing a context switch.
 	Check the allowable range of the settings via the TCameraCapsV02::iDynamicRange member.
@@ -660,15 +662,32 @@ public:
 	@param aAttribute An enum identifying the dynamic attribute to change.
 	@param aValue The attributes value within a valid range.
 	@return KErrNone if successful, KErrNotSupported if not supported, 
-			KErrArgument if aValue out of range, KErrBadName is aAttribute not valid setting.
+			KErrArgument if aValue is out of range.
 			Otherwise, one of the system wide error codes.
-	@see TDevCamDynamicAttributes
+	@see TDevCamDynamicAttribute
 	@see TCameraCapsV02
 	*/
-	inline TInt SetDynamicAttribute(TDevCamDynamicAttributes aAttribute, TUint aValue);
+	TInt SetDynamicAttribute(TDevCamDynamicAttribute aAttribute, TUint aValue);
+
+	/**
+	Queries the driver for a dynamic setting's value.
+	This function does not force a context switch by reading the values from a cache.
+	
+	@param aAttribute An enum identifying the dynamic attribute to query.
+	@param aValue A reference to a variable that will be set to the queried attribute's value.
+	@return KErrNone if successful, KErrNotFound if aAttribute is not supported by the driver.
+		Otherwise, one of the system-wide error codes.
+
+	@see TDevCamDynamicAttribute
+	@see TCameraCapsV02
+	*/
+	TInt GetDynamicAttribute(TDevCamDynamicAttribute aAttribute, TUint& aValue);
+
+protected:
+	TInt CheckAttributeSupported(TDevCamDynamicAttribute aAttribute);
+
 
 private:
-
 	/** 
 	Capability of Sensor. 
 	Kept here for performance issues, i.e. to avoid context switches.

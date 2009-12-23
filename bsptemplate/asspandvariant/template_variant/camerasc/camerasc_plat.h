@@ -231,6 +231,10 @@ private:
 	TDfcQue*	iDFCQueue;
 	/** DFCs used for image capture timer callbacks happeing in our DFC thread */
 	TDfc		*iImageTimerDFCs[KTotalCameraRequests];
+    
+    /* Used for cheesy animation effect */
+    TUint8 iCounter;
+    TBool iFlipSwitch;
 	};
 
 /**
@@ -278,7 +282,7 @@ public:
 	@param aValue A verified brightness setting.
 	@return KErrNone if successful, KErrNotSupported if not supported.
 	*/
-	TInt SetBrightness(TUint aValue);
+	TInt SetBrightness(TUint aBrightness);
 
 	/**
 	Sets the sensor contrast to the desired setting.
@@ -286,7 +290,7 @@ public:
 	@param aValue A verified contrast setting.
 	@return KErrNone if successful, KErrNotSupported if not supported.
 	*/
-	TInt SetContrast(TUint aValue);
+	TInt SetContrast(TUint aContrast);
 
 	/**
 	Sets the sensor color effect to the desired setting.
@@ -294,7 +298,7 @@ public:
 	@param aValue A verified color effect setting.
 	@return KErrNone if successful, KErrNotSupported if not supported.
 	*/
-	TInt SetColorEffect(TUint aValue);
+	TInt SetColorEffect(TUint aColorEffect);
 
 private:
 
@@ -331,7 +335,8 @@ struct SLogo
 	{
 	TUint	iWidth;
 	TUint	iHeight;
-	TUint8	iPixelData[124 * 47 * 3];
+	TUint8	iPixelData[80 * 61 * 3 + 1];
+    TUint8  iPixelData2[80 * 61 * 3 + 1];
 	};
 
 #endif /* __CAMERASC_PLAT_H__ */

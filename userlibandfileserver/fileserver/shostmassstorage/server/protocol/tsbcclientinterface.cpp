@@ -216,7 +216,7 @@ TInt TSbcClientInterface::ReadCapacity10L(TLba& aLba, TUint32& aBlockSize)
         __SCSIPRINT2(_L("Capacity LBA=0x%08x SIZE=0x%08x"),
                      aLba, aBlockSize);
 
-        iBlockTransfer.SetCapacity(aBlockSize, aLba);
+        iBlockTransfer.SetCapacityL(aBlockSize, aLba);
         }
 	return err;
     }

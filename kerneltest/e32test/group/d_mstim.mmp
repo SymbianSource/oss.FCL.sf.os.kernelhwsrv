@@ -67,3 +67,6 @@ Win32_Library		msvcrt.lib
 END
 
 capability		all
+
+macro CPU_AFFINITY_ANY
+SMPSAFE

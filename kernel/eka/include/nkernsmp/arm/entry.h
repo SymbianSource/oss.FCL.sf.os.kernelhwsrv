@@ -137,7 +137,7 @@ __NAKED__ void __this_must_go_at_the_beginning_of_the_kernel_image()
 	__DATA_MEMORY_BARRIER_Z__(r2);		// ensure memory accesses in interrupted code are observed before
 										// the writes to i_IrqCount, i_IrqNestCount
 	asm("str	r0, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqCount));		// increment i_IrqCount
-	asm("ldr	r11, [r12,#%a0]" : : "i" _FOFF(SArmInterruptInfo,iIrqHandler));	// address if IRQ handler
+	asm("ldr	r11, [r12,#%a0]" : : "i" _FOFF(SArmInterruptInfo,iIrqHandler));	// address of IRQ handler
 	asm("ldr	r6, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicCpuIfcAddr));
 	asm("str	r7, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));	// increment i_IrqNestCount
 

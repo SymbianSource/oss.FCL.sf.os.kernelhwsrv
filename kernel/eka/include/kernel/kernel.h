@@ -1096,6 +1096,7 @@ public:
 	IMPORT_C static DCodeSeg* CodeSegFromAddress(TLinAddr aAddr, DProcess* aProcess);
 	IMPORT_C static void CodeSegGetMemoryInfo(DCodeSeg& aCodeSeg, TModuleMemoryInfo& aInfo, DProcess* aProcess);
 	IMPORT_C static TInt MakeHandleAndOpen(DThread* aThread, DObject* aObject);
+	IMPORT_C static TInt MakeHandleAndOpen(DThread* aThread, DObject* aObject, TOwnerType aType);
 	IMPORT_C static TInt CloseHandle(DThread* aThread, TInt aHandle);
 	IMPORT_C static TInt ChunkCreate(const TChunkCreateInfo& aInfo, DChunk*& aChunk, TLinAddr& aKernAddr, TUint32& iMapAttr);
 	IMPORT_C static TInt ChunkCommit(DChunk* aChunk, TInt aOffset, TInt aSize);

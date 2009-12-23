@@ -19,7 +19,6 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
 #include <d32usbdi_hubdriver.h>
 #include <d32usbdi.h>
 #include <d32otgdi.h>
@@ -85,12 +84,11 @@ void CBulkOnlyTransport::Resume()
 	{
     __MSFNSLOG
 	__BOTPRINT(_L("BOT RESUME"));
-	User::AfterHighRes(1000 * 1000); 	//	DEF126984 - we need delay here in order for the usb to resume properly in the case of cancelling a suspend
+ 
 	iInterface.CancelPermitSuspend();
-	User::AfterHighRes(1000 * 1000); 	//	DEF126984 - we need delay here in order for the usb to resume properly in the case of cancelling a suspend
 	}
 
-void CBulkOnlyTransport::Suspend(TRequestStatus &aStatus)
+void CBulkOnlyTransport::Suspend(TRequestStatus& aStatus)
 	{
     __MSFNSLOG
 	__BOTPRINT(_L("BOT SUSPEND"));

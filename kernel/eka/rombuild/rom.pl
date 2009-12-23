@@ -326,13 +326,15 @@ while ($line=<TMP>)
 
 parsePatchData("rom3.tmp", "rom4.tmp");
 
-# break down the oby file into rom, rofs and extensions oby files
+# break down the oby file into rom, rofs, extensions and smr oby files
 
 my $oby_index =0;
 my $dumpfile="rom.oby";
 my $rofs=0;
+my $smr=0;
 my $extension=0;
 my $corerofsname="";
+my $smrname="";
 open DUMPFILE, ">$dumpfile" or die("Can't create $dumpfile\n");
 my $line;
 open TMP, "rom4.tmp" or die("Can't open rom4.tmp\n");
@@ -348,6 +350,18 @@ while ($line=<TMP>)
 		unlink $corerofsname || print "unable to delete $corerofsname";
 		my $dumpfile="rofs".$rofs.".oby";
 		$rofs++;
+		open DUMPFILE, ">$dumpfile" or (close TMP and die("Can't create $dumpfile\n"));
+		}
+
+	if ($line=~/^\s*imagename/i)
+		{
+		close DUMPFILE;							# close rom.oby or previous rofs#/extension#.oby
+		$smrname=$line;
+		$smrname =~ s/imagename\s*=\s*//i;		# save smr name
+		$smrname =~ s/\s*$//g; 			# remove trailing \n
+		unlink $smrname || print "unable to delete $smrname";
+		my $dumpfile="smr".$smr.".oby";
+		$smr++;
 		open DUMPFILE, ">$dumpfile" or (close TMP and die("Can't create $dumpfile\n"));
 		}
 
@@ -483,6 +497,22 @@ if ($rofs and $extension) {
 			$rerrors++;
 			}
 		rename "rofsbuild.log", "extension$i.log"
+		}
+}
+
+if ($smr) {
+	$rofsbuilder = $opts{'rofsbuilder'};
+	$rofsbuilder = "rofsbuild" unless ($rofsbuilder);
+	for(my $i=0;$i<$smr;++$i) {
+		print "Executing $rofsbuilder on smr partition\n" if !$quiet;
+		my $image="smr".$i.".oby";
+		system("$rofsbuilder -smr=$image");
+		if ($? != 0)
+			{
+			print "$rofsbuilder -smr=$image returned $?\n";
+			$rerrors++;
+			}
+		rename "rofsbuild.log", "smr$i.log"
 		}
 }
 
