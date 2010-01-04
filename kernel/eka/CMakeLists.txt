@@ -110,5 +110,14 @@ target_link_libraries(epoc estub euser)
 source_group(Sources REGULAR_EXPRESSION ".+\\.cpp$")
 source_group(Includes REGULAR_EXPRESSION ".+\\.h$") 	
 
-#TODO: generate the exec enum
+#Generate the exec enum using CMAKE custom command
 #perl genexec.pl -i execs.txt -e ../include/exec_enum.h -u ../include/exec_user.h -k ../include/exec_kernel.h
+
+add_custom_command (
+ 	TARGET euser
+   	PRE_BUILD
+   	COMMAND perl ./kernel/genexec.pl -i ./kernel/execs.txt -e ./include/exec_enum.h -u ./include/exec_user.h -k ./include/exec_kernel.h
+	WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} 	
+   	COMMENT "Generating exec headers..."
+   	VERBATIM
+ 	)
