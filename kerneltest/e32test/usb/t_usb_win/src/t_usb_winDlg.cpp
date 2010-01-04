@@ -151,7 +151,7 @@ void CT_usb_winDlg::DisplayHello()
 		   USBIO_VERSION_MAJOR, USBIO_VERSION_MINOR);
 
 	PRINT_ALWAYS "* USB Test Application, Host-side Part"NL);
-	PRINT_ALWAYS "*   Copyright (c) 2007 Symbian Software Ltd."NL);
+	PRINT_ALWAYS "*   Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies)."NL);
 	PRINT_ALWAYS "*------------------------------------------------------------------------------"NL); 
 	}
 

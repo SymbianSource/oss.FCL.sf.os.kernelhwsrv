@@ -1,26 +1,20 @@
-// Copyright (c) 1994-2009 Nokia Corporation and/or its subsidiary(-ies).
-// All rights reserved.
-// This component and the accompanying materials are made available
-// under the terms of the License "Eclipse Public License v1.0"
-// which accompanies this distribution, and is available
-// at the URL "http://www.eclipse.org/legal/epl-v10.html".
-//
-// Initial Contributors:
-// Nokia Corporation - initial contribution.
-//
-// Contributors:
-//
-// Description:
-//
+/*
+* Copyright (c) 1994-2000 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description: 
+*
+*/
 
-// LS_CYUS.CPP
-//
-// Copyright (c) 1994-2000 Symbian Ltd.  All rights reserved.
-//
-
-//
-// Default locale settings for the US
-//
 
 #include "ls_std.h"
 #include "locl_language.h"

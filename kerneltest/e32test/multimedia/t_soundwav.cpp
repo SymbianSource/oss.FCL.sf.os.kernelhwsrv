@@ -255,7 +255,10 @@ LOCAL_C TInt WavPlay()
 	TInt i;
 	for (i=0;i<3;i++)
 		tPtr[i]=new TPtr8(NULL,0); 
-		
+
+	TTime startTime;
+	startTime.HomeTime();
+	
 	// Start off by issuing a play request for each buffer (assuming that the file is long enough). Use the full size
 	// of each buffer.
 	TInt stillToRead=bytesToPlay;
@@ -290,6 +293,17 @@ LOCAL_C TInt WavPlay()
 		{
 		// Wait for any one of the outstanding play requests to complete.
 		User::WaitForAnyRequest();
+
+		TTime currentTime;
+		currentTime.HomeTime();
+		TInt64 elapsedTime = currentTime.Int64()-startTime.Int64();	// us
+		TTimeIntervalMicroSecondsBuf timePlayedBuf;
+		if(TxSoundDevice.TimePlayed(timePlayedBuf) == KErrNone)
+			{
+			// Compare TimePlayed with the actual elapsed time. They should be different, but not drift apart too badly...
+			TInt32 offset = TInt32(elapsedTime - timePlayedBuf().Int64());
+			Test.Printf(_L("\telapsedTime - TimePlayed = %d ms\n"), offset/1000);
+			}		
 	
 		// Work out which buffer this applies to
 		for (i=0 ; i<3 ; i++)
@@ -511,6 +525,9 @@ LOCAL_C TInt WavRecord()
 	TRequestStatus stat;
 	TInt length;
 	TPtrC8 buf;
+
+	TTime startTime;
+	startTime.HomeTime();
 	
 	// Start off by issuing a record request.
 	TTime starttime;
@@ -518,12 +535,27 @@ LOCAL_C TInt WavRecord()
 	TInt bytesRecorded = 0;
 	RxSoundDevice.RecordData(stat,length);
 
+	TInt pausesToDo = 10;
+	pausesToDo = 0;
 	FOREVER
 		{
 		// Wait for the outstanding record request to complete.
+        User::After(6000);
+
 		User::WaitForAnyRequest();
 		if (stat==KRequestPending)
 			return(KErrGeneral);
+
+		TTime currentTime;
+		currentTime.HomeTime();
+		TInt64 elapsedTime = currentTime.Int64()-startTime.Int64();	// us
+		TTimeIntervalMicroSecondsBuf timeRecordedBuf;
+		if(RxSoundDevice.TimeRecorded(timeRecordedBuf) == KErrNone)
+			{
+			// Compare TimeRecorded with the actual elapsed time. They should be different, but not drift apart too badly...
+			TInt32 offset = TInt32(elapsedTime - timeRecordedBuf().Int64());
+			Test.Printf(_L("\telapsedTime - TimeRecorded = %d ms\n"), offset/1000);
+			}		
 			
 		// Check whether the record request was succesful.
 		TInt retOffset=stat.Int();
@@ -549,11 +581,25 @@ LOCAL_C TInt WavRecord()
 			}
 		
 		Test.Printf(_L("Recorded %d more bytes - %d\r\n"),length,retOffset);
+
+		if((pausesToDo > 0) && (bytesRecorded > bytesToRecord/2))
+			{
+			--pausesToDo;
+			Test.Printf(_L("Pause\r\n"));
+			RxSoundDevice.Pause();
+			Test.Printf(_L("Paused, sleeping for 0.5 seconds\r\n"));
+			User::After(500*1000);
+            Test.Printf(_L("Resume\r\n"));
+			RxSoundDevice.Resume();
+			}
 		
 		// Check whether we have now recorded all the data. If more to record then queue a further request
 		bytesRecorded+=length;
 		if (bytesRecorded<bytesToRecord)
+		    {
+            Test.Printf(_L("RecordData\r\n"));
 			RxSoundDevice.RecordData(stat,length);
+		    }
 		else
 			break;
 		}

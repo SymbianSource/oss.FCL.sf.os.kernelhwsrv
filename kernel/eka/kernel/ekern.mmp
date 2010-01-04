@@ -21,6 +21,7 @@
 */
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+SYMBIAN_BASE_SYSTEMINCLUDE(kernel)
 USERINCLUDE		../include/kernel
 
 #include <variant.mmh>

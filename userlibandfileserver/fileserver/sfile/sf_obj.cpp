@@ -191,15 +191,16 @@ Where a derived class implements its own version of this function, it must
 either use the protected member function Inc() to increment the reference 
 count or make a base call to this function.
 
-@return KErrNone if successful.
-        KErrGeneral if unable to increment reference count.
+@return KErrNone, or another system-wide error code.
 */
 
 EXPORT_C TInt CFsObject::Open()
 	{
 	TInt count=Inc();
+	(void)count;
 	__THRD_PRINT2(_L("CFsObject::Open() object=0x%x count=%d"),this,count);
-	return(count?KErrNone:KErrGeneral);
+	__ASSERT_DEBUG(count>=1,Fault(EFsObjectOpen));
+	return KErrNone;
 	}
 
 

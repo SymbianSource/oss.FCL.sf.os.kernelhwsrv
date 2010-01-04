@@ -89,7 +89,7 @@ macro __DEBUGGER_SUPPORT__
 //	   is fixed on this hardware.
 //
 // macro __CPU_ARM1136_ERRATUM_408022_FIXED
-
+                                                                                                                                                                                                                          
 // Uncomment if:
 //	1)	using ARM1136 processor and ARM1136 Erratum 411920: "Invalidate Entire Instruction Cache
 //	  	operation might fail to invalidate some lines if coincident with linefill"
@@ -104,6 +104,11 @@ macro __DEBUGGER_SUPPORT__
 // 	"GBLL CFG_CPU_ARM1136_ERRATUM_411920_FIXED" in variant.mmh
 //
 // macro __CPU_ARM1136_ERRATUM_411920_FIXED
+
+// Uncomment next line if using the ARM1176 processor and ARM1176 Erratum 720013 "Invalidate Instruction
+// Cache operations can fail" is fixed on this hardware.
+//
+// macro __CPU_ARM1176_ERRATUM_720013_FIXED
 
 // TO DO:
 //

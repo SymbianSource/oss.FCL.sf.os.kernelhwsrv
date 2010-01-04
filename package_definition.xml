@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <SystemDefinition schema="3.0.0">
   <package id="kernelhwsrv" name="Kernel and Hardware Services" levels="hw-if adaptation framework test">
-    <collection id="baseintegtests" name="Base Integration Testing" level="test">
-      <component id="baseintegrationtest" name="Base Integration Test" introduced="9.3" purpose="development">
-        <unit bldFile="baseintegtests/baseintegrationtest/group" mrp="baseintegtests/baseintegrationtest/group/base_integration_test.mrp"/>
-      </component>
-    </collection>
     <collection id="brdbootldr" name="Board Boot Loader" level="hw-if">
       <component id="ubootldr" name="Boot Loader" introduced="9.2" purpose="optional">
         <unit mrp="brdbootldr/ubootldr/base_ubootldr.mrp"/>
@@ -130,8 +125,8 @@
       </component>
     </collection>
     <collection id="baseapitest" name="Base API Tests" level="test">
-      <component id="basesvs" name="Base Verification Suite" introduced="tb91" purpose="development">
-        <unit mrp="baseapitest/basesvs/group/basesvs.mrp"/>
+      <component id="basesvs" name="Base Verification Suite" introduced="tb91" purpose="development" filter="test">
+        <unit mrp="baseapitest/basesvs/group/basesvs.mrp" bldFile="baseapitest/basesvs/group"/>
       </component>
     </collection>
     <collection id="kernelhwsrv_info" name="Kernel and Hardware Services Info" level="test">

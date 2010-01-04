@@ -1642,7 +1642,7 @@ void CFsMessageRequest::Dispatch()
 
 TBool CFsMessageRequest::DispatchToPlugin()
 //
-//
+// Common route: Receive -> Process -> Dispatch -> DispatchToPlugin
 //
 	{
 	TInt drivenumber = DriveNumber();
@@ -1694,8 +1694,21 @@ TBool CFsMessageRequest::DispatchToPlugin()
 					{
 					// The plugin has processed synchronously (case 1)
 					//  - Pass the message on to the next plugin
-					FsPluginManager::NextPlugin(iCurrentPlugin, this,(TBool)ETrue);
-					continue;
+					if(FsFunction() != EFsPluginOpen)
+					    {
+	                    FsPluginManager::NextPlugin(iCurrentPlugin, this,(TBool)ETrue);
+	                    continue;
+					    }
+					else // FsFunction == EFsPluginOpen
+					    {
+					    /* 
+					     * PluginOpen requests should not be passed down the plugin stack.
+					     * 
+
+					     */
+					    iCurrentPlugin = NULL;
+					    continue;
+					    }
 					}
 				else if(err == KPluginMessageComplete)
 					{

@@ -274,8 +274,12 @@ LOCAL_C void Test1()
 	TInt64 t20((TInt64)1.0E-1);
 	test(I64LOW(t20)==0 && I64HIGH(t20)==0);
 	
-	x = 9.223372036854776831e18; // 2^63 + 2^10 (to ensure rounding outside of TInt64 range)
-	TInt64 t21((TInt64)x);
+	// Make variable volatile to protect ourselves from compiler optimisations. Given that the
+	// following test is negative with unspecified results, we don't really care if we do not have
+	// FPU/compiler parity.
+	volatile TReal xout;
+	xout = 9.223372036854776831e18; // 2^63 + 2^10 (to ensure rounding outside of TInt64 range)
+	TInt64 t21((TInt64)xout);
 
 	// IEEE 754 does not specify the value to be returned when a conversion
 	// is performed on a value that is outside the range of the target, only
@@ -295,7 +299,11 @@ LOCAL_C void Test1()
 	TInt64 t23((TInt64)(limit-1.0));
 	test(I64LOW(t23)==0xffffffff && I64HIGH(t23)==0x001fffff);
 	TReal i64limit=limit*1024.0;				// 2^63
-	TInt64 t24((TInt64)i64limit);
+	// Make variable volatile to protect ourselves from compiler optimisations. Given that the
+	// following test is negative with unspecified results, we don't really care if we do not have
+	// FPU/compiler parity.
+	volatile TReal i64limitout=i64limit;
+	TInt64 t24((TInt64)i64limitout);
 	
 	// IEEE 754 does not specify the value to be returned when a conversion
 	// is performed on a value that is outside the range of the target, only
@@ -343,11 +351,15 @@ LOCAL_C void Test1()
 	// TInt64::GetTReal
 	test.Next(_L("TInt64::GetTReal"));
 
-	l = MAKE_TINT64(0x7fffffff,0xffffffff);
-	x = I64REAL(l);
-
-	TReal xx = i64limit - 1.0;
-	test(x == xx);
+	// GCC does optimise large portions of the test code out and there can be small
+	// differences in the way GCC and the FPU round floating point values.
+	// We isolate the following test by giving it its own variables. This should
+	// prevent values returned by the FPU from being compared with wrong GCC calculations.
+	TInt64 m = MAKE_TINT64(0x7fffffff,0xffffffff);
+	TReal xy = I64REAL(m);
+	TReal xx = 1048576.0*1048576.0*1048576.0*8.0 - 1.0; // 2^63 - 1
+	test(xy == xx);
+	//
 
 	l = MAKE_TINT64(0x7fffffff,0xfffffc00);
 	x = I64REAL(l);

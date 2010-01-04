@@ -25,12 +25,9 @@ PRJ_PLATFORMS
 
 BASEUSERDEFAULT
 
+PRJ_EXPORTS
 
-//-- the common global exported header file "filesystem_fat.h" is being used (and owned) by 2 components:
-//-- "sfat" and "sfat32". Exporting this file from different places causes some CheckEnv errors. 
-//-- at present this file is exported from "sfat" component only.
-//PRJ_EXPORTS
-//../sfat/filesystem_fat.h SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(filesystem_fat.h)
+filesystem_fat.h SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(filesystem_fat.h)
 
 
 PRJ_MMPFILES

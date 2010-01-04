@@ -1,8 +1,8 @@
-
+#
 # Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
 # All rights reserved.
 # This component and the accompanying materials are made available
-# under the terms of the License "Eclipse Public License v1.0"
+# under the terms of "Eclipse Public License v1.0"
 # which accompanies this distribution, and is available
 # at the URL "http://www.eclipse.org/legal/epl-v10.html".
 #
@@ -11,14 +11,13 @@
 #
 # Contributors:
 #
-# Description:
+# Description: 
 # Case Equivalence
 # Given the unicode data file, work out the case equivalence classes
 # i.e. the equivalence classes for the transitive closure of ~ defined as
 # follows:
 # a~b if Uppercase(a) == b || Lowercase(a) == b || Titlecase(a) == b
 # Usage: perl CaseEquivalence <UnicodeData.txt
-# 
 #
 
 use strict;

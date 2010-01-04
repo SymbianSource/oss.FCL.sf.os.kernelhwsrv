@@ -4909,7 +4909,10 @@ fourth parameter.
                  the thread function of the new process's main thread,
                  when it is first scheduled.
 @param aUidType  A UID type (a triplet of UIDs) which the executable must match. 
-@param aMinStackSize Minimum stack size of the new process.
+@param aMinStackSize Minimum stack size of the new process. If this is less than
+                 than the stack size set in the image header of the executable,
+                 the minimum stack size will be set to the image header stack
+                 size.
 @param aType     Defines the ownership of this process handle. If not specified, 
                  EOwnerProcess is the default.
                  

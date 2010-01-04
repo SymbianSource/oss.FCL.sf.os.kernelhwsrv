@@ -323,8 +323,15 @@ Indicates the presense of external cache controller.
 #define FLUSH_ICACHE(cc,r)			asm("mcr"#cc" p15, 0, "#r", c7, c5, 0 "); /**< @internalTechnology */
 #endif // else !(__CPU_ARM1136_ERRATUM_411920_FIXED) && (__CPU_ARM1136__ || __CPU_ARM1176__)
 #if defined(__CPU_ARM1136_ERRATUM_371025_FIXED) || !defined(__CPU_ARM1136__)
+
+#if !defined(__CPU_ARM1176_ERRATUM_720013_FIXED) && defined(__CPU_ARM1176__)
+#define FLUSH_ICACHE_LINE(cc,r,tmp) asm("mcr"#cc" p15, 0, "#r", c7, c5, 1 ");       \
+                                    asm("mcr"#cc" p15, 0, "#r", c7, c5, 1 "); /**< @internalTechnology */
+#else
 #define FLUSH_ICACHE_LINE(cc,r,tmp)	asm("mcr"#cc" p15, 0, "#r", c7, c5, 1 "); /**< @internalTechnology */
-#else // workaround for erratum 371025...
+#endif // !defined(__CPU_ARM1176_ERRATUM_720013_FIXED) && defined(__CPU_ARM1176__)
+
+#else // workaround for erratum 371025 of 1136...
 /** @internalTechnology */
 #define FLUSH_ICACHE_LINE(cc,r,tmp)	asm("orr"#cc" "#tmp", "#r", #0xC0000000 ");		\
 									asm("bic"#cc" "#tmp", "#tmp", #1 ");			\
@@ -336,7 +343,13 @@ Indicates the presense of external cache controller.
 									asm("sub"#cc" "#tmp", "#tmp", #0x40000000 ");	\
 									asm("mcr"#cc" p15, 0, "#tmp", c7, c5, 2 ");
 #endif //else (__CPU_ARM1136_ERRATUM_371025_FIXED) || !(__CPU_ARM1136__)
+
+#if !defined(__CPU_ARM1176_ERRATUM_720013_FIXED) && defined(__CPU_ARM1176__)
+// It is commented out to ensure it is not used on 1176 cores with 720013 erratum
+// #define FLUSH_ICACHE_INDEX(cc,r)    asm("mcr"#cc" p15, 0, "#r", c7, c5, 2 ");
+#else
 #define FLUSH_ICACHE_INDEX(cc,r)	asm("mcr"#cc" p15, 0, "#r", c7, c5, 2 ");	/**< @internalTechnology */
+#endif //!defined(__CPU_ARM1176_ERRATUM_720013_FIXED) && defined(__CPU_ARM1176__)
 #define PURGE_DCACHE_LINE(cc,r)		asm("mcr"#cc" p15, 0, "#r", c7, c6, 1 ");	/**< @internalTechnology */
 #define PURGE_DCACHE_INDEX(cc,r)	asm("mcr"#cc" p15, 0, "#r", c7, c6, 2 ");	/**< @internalTechnology */
 #define CLEAN_DCACHE_LINE(cc,r)		asm("mcr"#cc" p15, 0, "#r", c7, c10, 1 ");	/**< @internalTechnology */

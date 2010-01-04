@@ -1,3 +1,46 @@
+Version 2.00.2046
+=================
+(Made by Vino Jose 22/10/2009)
+
+1.	MarkTa
+	1.	DEFECT FIX: DEF142628: WDP: Binaries compiled against 9.4 do not have their heaps paged 
+		Ensure that threads that don't have the paging policy specified also leave the heap chunk's paging 
+		policy unspecified which will cause the process's paging polic to be used for the heap chunk. 
+
+2.	VincentF
+	1.	DEFECT FIX: DEF142536: Known x86gcc test failures should be investigated
+
+Version 2.00.2045
+=================
+(Made by Vino Jose 21/10/2009)
+
+
+1.	ChrisNotton
+	1.	MINOR_CHANGE: Update to allow STVariants to compile with BTB symtb92.
+
+2.	DjordjeK
+	1.	DEFECT FIX: DEF142453: The fix for ARM1176 erratum #720013 is required
+		The fix for ARM1176 erratum: 720013: Invalidate Instruction Cache operations can fai
+	2.	DEFECT FIX: DEF141955: PL310 erratum 588369 fix is not implemented properly
+		This should correct the the original fix for PL310 (External Cache Controller) erratum.
+		The change only affects non-SMP Kernel running on H/W with PL310.
+
+3.	VincentF
+	1.	DEFECT FIX: DEF142499: T_CTRAP fails stack pointer comparison on X86GCC.UREL (T_ctrap.cpp:1478)
+	2.	MINOR_CHANGE: Remove EPL copyright notices for USBHO code
+
+4.	MarkP
+	1.	DEFECT FIX: DEF141726: MMFDevSoundServer: User 20 Error occurs on H6
+		Fix driver to correctly cancel record dma requests during Pause. Correct record length calculation.
+		Correct TimeRecorded calculation.
+	2.	DEFECT FIX: DEF141122: T_SOUND2 (and T_SOUND_API) fails on H4HRP MMCPAGED configurations... 
+		Enhance test code to not fail under severe timing pressure on h4 fmm mmcpage ROMs.
+
+5.	LaneRoberts
+	1.	DEFECT FIX: DEF142250: Occasional kernel crashes caused by T_LDRTST on 34xx_sdp.armv5.udeb
+
+
+
 Version 2.00.2044
 =================
 (Made by Vino Jose 13/10/2009)
@@ -27,6 +70,7 @@ Version 2.00.2044
 
 7.	GavinCochrane
 	1.	DEFECT FIX: DEF140911: T_PAGEMOVE fails on H2 and NaviEngine in TestUserData
+
 
 Version 2.00.2043
 =================
@@ -70,12 +114,14 @@ Version 2.00.2042
 1.	NeilClifford
 	1.	DEFECT FIX: DEF142326 WDP: MMC Paging does not work when Direct address is switch off
 
+
 Version 2.00.2041
 =================
 (Made by Chinenye Ajagu 05/10/2009)
 
 1.	chinenyeajagu
 	1.	DEFECT FIX: DEF142233: opensystemtrace.h uses WRONG macro name.
+
 
 Version 2.00.2040
 =================
@@ -110,14 +156,13 @@ Version 2.00.2040
 9.	ChrisNotton
 	1.	DEFECT FIX: DEF142232: Header relocation regression in MMC 
 
+
 Version 2.00.2039
 =================
 (Made by Vino Jose 29/09/2009)
 
 1.	mariamsood
 	1.DEF142287: BFC build errors on base_e32utils component build in MSF00207 tb92sf
-
-
 
 
 Version 2.00.2038
@@ -135,8 +180,6 @@ Version 2.00.2037
 1. 	AttilaV
 	1.	DEFECT FIX: DPDEF141801: Absent file '\epoc32\release\armv5\fne1_tb_un2_coreldr.bin' detected 
 
-2
-
 2.	MariamSood
 	1.	DEFECT FIX: DTW-KHS BTB00022: SD Support for H4 and H2 boards
 
@@ -150,6 +193,7 @@ Version 2.00.2037
 	1.	DEF142120: pl310 (in bridge) on non-SMP platform should not use spin locks
 		Non-SMP Kernel build for H/W with PL310 external cache controller used to call spin locks (which are not defined
 		in non-SMP build). These calls are now replaced by Disable/Restore interrupts.
+
 
 Version 2.00.2036
 =================
@@ -215,7 +259,6 @@ Version 2.00.2035
 14.	JunWookKwak
 	1.	MINOR_CHANGE: Set up a work-around to avoid GCC compilation error of x86 FMM.
 
-
 15.	JonCo
 	1.	DEFECT FIX: DEF142021: Performance regression between Flexible Memory Model and Multiple Memory Model 
 
@@ -234,8 +277,6 @@ Version 2.00.2034
 
 1.	marcinmaksymiuk
 	1.	MILESTONE: SymTB9.2, GT0518, MS3.2, DS.1817 PREQ2390: Unified Trace Framework alignment with OST - User Side
-	
-
 
 
 Version 2.00.2033
@@ -249,13 +290,13 @@ Version 2.00.2033
 	1.	MILESTONE: SymTB10.1, GT0472, MS3.13, DS.1708 PREQ1494: SDIO v2.0 : v2.0 APIs
 	2.	MILESTONE: SymTB10.1, GT0472, MS3.14, DS.1709 PREQ1494: SDIO v2.0 : Delivery of SDIO Simplified to the Symbian Foundation
 
+
 Version 2.00.2032
 =================                         
 (Made by Hai Xu 09/09/2009)
 
 1.	haixu
 	1.	MINOR_CHANGE: Add PREQ1924, new locale model support to base
-	
 
 
 Version 2.00.2031
@@ -270,7 +311,6 @@ Version 2.00.2031
 
 3.	Stefan Karlsson
 	1.	DEFECT FIX: PDEF141861: try/catch link error with GCCE build
-
 
 
 Version 2.00.2030
@@ -293,7 +333,6 @@ Version 2.00.2030
 	2.	DEFECT FIX: DEF141655: Some problems in omap3_restricted_coreldr.flm
 
 
-
 Version 2.00.2029
 =================             
 (Made by Vino Jose 27/08/2009)
@@ -306,7 +345,6 @@ Version 2.00.2029
 
 3.	FadhliMustaffa
 	1.	MINOR_CHANGE: Fixed missing deletion from DEF141558 (external submission CL1677229)
-
 
 
 Version 2.00.2028
@@ -341,14 +379,13 @@ Version 2.00.2028
 
 8.	Saravanaumar
    	1.	DEFECT FIX:DEF141057: [SymTB9.2,SymTB10.1] {Fix Dev Branch} Cannot build f32test\loader using Raptor and custom configurations 
-   
+
 
 Version 2.00.2027
 =================             
 (Made by Vino Jose 18/08/2009)
 1.	MarkTa
 	1. MILESTONE: SymTB9.2, GT0419, MS3.12.5, DS.1696 REQ12525: Add RAM defragmentation functionality to the Flexible Memory Model
-
 
 
 Version 2.00.2026
@@ -361,13 +398,12 @@ Version 2.00.2026
 	2.	DEFECT FIX: DEF141577: Multiple bugs in SMP thread groups
 		This change may fix crashes or misbehaviour when using SMP compatibility mode.
 
+
 Version 2.00.2025
 =================
 (Made by Prakash betageri  13/08/2009)
 1.   
      MILESTONE: SymTB9.2,DS.1698 PREQ2621 relocating header files 
-	
-
 
 
 Version 2.00.2024
@@ -399,7 +435,6 @@ Version 2.00.2023
 =================
 (Made by Vino Jose   07/08/2009)
 
-
 1.	patrickconway
 	1.	DEFECT FIX: DEF133196: t_cputime frequently fails on smp roms 
 
@@ -421,13 +456,12 @@ Version 2.00.2022
 	1.	MILESTONE: SymTB10.1, GT0515, MS3.11, DS.1706 PREQ1494: SDIO version 2.0
 	2.	MILESTONE: SymTB10.1, GT0515, MS3.12, DS.1707 PREQ1494: SDIO version 2.0
 
-
 2.	LukaszF
 	1.	DEFECT FIX: DEF138639: NaviEngine CSI test driver (d_csi) build configuration issue.
 
 3.	OliverStuart
 	1.	DEFECT FIX: DEF141390: [System Build]: SBS Errors "source of export not found" in GT stage
-   
+
 
 Version 2.00.2021
 =================
@@ -443,7 +477,6 @@ Version 2.00.2021
 3.	GayathriR
 	1.	DEFECT FIX: PDEF138130: USB shared chunk BIL function cannot always determine next alternate setting
 
-
 4.	ChrisNotton
 	1.	MINOR_CHANGE: Changed OS_LAYER_SYSTEMINCLUDE to OS_LAYER_SYSTEMINCLUDE_SYMBIAN.
 
@@ -453,7 +486,6 @@ Version 2.00.2021
 6.	LukaszF
 	1. 	MINOR_CHANGE: Updated t_crazyints / d_crazyints test code because DTW-KHS BTB00055 could not be fixed.
 		(DTW-KHS BTB00055: btb not picking SMP related stuff properly for tests (bld.inf).)
-	
 
 7.	indrajeetsingh
 	1. 	DEFECT FIX: DEF141121: IIC: Make QueueTransaction more robust to mis-use by clients
@@ -462,6 +494,7 @@ Version 2.00.2021
 	1.	CR1970: Refactoring e32utils into two components: base_e32utils and base_32utils_restricted so that
 		tools needed by users of the Symbian Foundation can be released while third-part IP is restricted
 		for internal use only (requires supporting submission).
+
 
 Version 2.00.2020
 =================
@@ -486,6 +519,7 @@ Version 2.00.2020
 6.	BhaskarReddy
 	1.	DEFECT FIX: DEF128530: T_USBAPI test failure on 3430.I for storing repeated events 
 
+
 version 2.00.2019
 =================
 (Made by Vino Jose   21/07/2009)
@@ -502,8 +536,6 @@ version 2.00.2019
 4.	TomCosgrove
 	1.	DEFECT FIX: DEF141156: ETrue vs EFalse compiler warnings from locmedia.h
   		Just return "Flags() & EPhysAddr" rather than using foo ? ETrue : EFalse.
-  
-
 
 
 Version 2.00.2018
@@ -564,12 +596,14 @@ Version 2.00.2017
 		Delivery Step: 1797 
 		Component Change request "213:Audio Drivers"
 
+
 Version 2.00.2016
 =================
 (Made by Vino Jose   10/07/2009)
 
 1.	ChrisN
 	1.	MILESTONE: SymTB9.2, GT0419, MS3.36, DS.1815 PREQ2621 System Architecture Relocating header files - K&HS support
+
 
 Version 2.00.2015
 =================
@@ -583,7 +617,6 @@ Version 2.00.2015
 	1.	DEFECT FIX: DEF139712: E32TEST T_SOUND2 fails on H4
 	2.	DEFECT FIX: DEF139854: T_SOUND2 intermittently failing under WINSCW.UDEB
 	3.	DEFECT FIX: DTW-MM00678: RSoundSc::RecordData() returns recorded length > allocated buffer size
-
 
 
 Version 2.00.2014
@@ -605,6 +638,7 @@ Version 2.00.2014
 
 4.	OliverStuart
 	1.	DEFECT FIX: DEF140585: T_SESS panics on H2 with KERN-EXEC
+
 
 Version 2.00.2013
 =================
@@ -628,6 +662,7 @@ Version 2.00.2013
 		Update nandloader in automated and mauual mode to to flexibly set boundary between locked
 		and unlocked regions during device format when using 1.5 drivers.
 
+
 Version 2.00.2012
 =================
 (Made by Vino Jose   25/06/2009)
@@ -646,13 +681,14 @@ Version 2.00.2012
 4.	DjordjeK
 	1.	MILESTONE: SymTB10.1, GT0472, MS3.2.1, DS 1597, PREQ 2094: SMP Caching
 
+
 Version 2.00.2011
 =================
 (Made by Vino Jose   22/06/2009)
 
 8.	AndreiMironenko
 	1.	DEFECT FIX: PDEF134539: NAND acceptance test t_blockrep is crashing, in NEC NaviEngine1 platform
- 	
+
 
 Version 2.00.2010
 =================
@@ -702,7 +738,6 @@ Version 2.00.2009
 	1.	DEFECT FIX: DEF140215: elf2e32 crashed in 64 bit windows
 
 
-
 Version 2.00.2008
 =================
 (Made by Vino Jose   12/06/2009)
@@ -732,7 +767,7 @@ Version 2.00.2007
 2.	junwookkwak
 	1.	DEFECT FIX: DEF139741: Documentation for 2x YUV_422 pixel format wrong in E32's
 
-	
+
 Version 2.00.2006
 =================
 (Made by Vino Jose  08/06/2009)
@@ -789,7 +824,6 @@ Version 2.00.2004
 
 5.	BhaskarReddy
 	1.	DEFECT FIx: DEF139054 ONB: graphics wstest_t_draw_s1_nga test failure (armv5)
-	
 
 
 Version 2.00.2003
@@ -845,7 +879,6 @@ Version 2.00.2003
 
 13.	InderpalSingh
 	1. 	DEFECT FIX: DEF138855: H6 UREL ROMs crash early in boot when DebugPort > 2
-
 
 
 Version 2.00.2002

@@ -26,6 +26,7 @@ romtarget
 ramtarget		+
 
 epocheapsize	0x1000 0x00010000
+epocstacksize	0x2000
 
 capability		all
 

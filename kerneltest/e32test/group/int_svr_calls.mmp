@@ -25,7 +25,7 @@ targettype		dll
 sourcepath		../misc
 
 source			int_svr_calls.cpp
-#ifdef MARM
+#ifndef WINS
 source			int_svr_calls.cia
 #endif
 
