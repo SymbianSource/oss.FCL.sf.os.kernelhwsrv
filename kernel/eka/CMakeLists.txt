@@ -67,7 +67,10 @@ ${sourcepath}um_frac.cpp ${sourcepath}um_int.cpp ${sourcepath}um_ln.cpp ${source
 ${sourcepath}um_mod.cpp ${sourcepath}um_pow.cpp ${sourcepath}um_pow10.cpp
 ${sourcepath}um_rand.cpp ${sourcepath}um_rtod.cpp ${sourcepath}um_sin.cpp ${sourcepath}um_spec.cpp
 ${sourcepath}um_sqrt.cpp ${sourcepath}um_tan.cpp ${sourcepath}um_utl.cpp
+./euser/epoc/win32/uc_i64.cpp
+./euser/epoc/win32/uc_dll.cpp
 )
+
 
 #Adding the sources from epoc/win32
 set (sourcepath ./euser/epoc/win32/)
@@ -97,8 +100,9 @@ target_link_libraries(euser emulator)
 
 add_library (estub ./euser/epoc/win32/uc_stub.cpp)
 
-add_executable(epoc ./euser/epoc/win32/uc_epoc.cpp)
-target_link_libraries(epoc estub euser)
+#No need for emulator here
+#add_executable(epoc ./euser/epoc/win32/uc_epoc.cpp)
+#target_link_libraries(epoc estub euser)
 
 
 
