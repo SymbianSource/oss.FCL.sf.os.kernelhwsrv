@@ -379,7 +379,7 @@ TInt DModuleList::CompileDepLists()
 				TInt	mainlen;
 				{
 				TUint16 mainBuf[MAX_PATH];
-				mainlen=Emulator::GetModuleFileName(reinterpret_cast<HMODULE>(pM->iModuleHandle),mainBuf);
+				mainlen=Emulator::GetModuleFileName(reinterpret_cast<HMODULE>(pM->iModuleHandle),(LPWSTR)mainBuf);
 				TruncToNarrow(mainBuf8, mainBuf, mainlen);
 				}
 				TPtrC mainp(mainBuf8,mainlen);
@@ -393,7 +393,7 @@ TInt DModuleList::CompileDepLists()
 				TInt	deplen;
 				{
 				TUint16 depBuf[MAX_PATH];
-				deplen=Emulator::GetModuleFileName(reinterpret_cast<HMODULE>(dep.iModuleHandle),depBuf);
+				deplen=Emulator::GetModuleFileName(reinterpret_cast<HMODULE>(dep.iModuleHandle),(LPWSTR)depBuf);
 				TruncToNarrow(depBuf8, depBuf, deplen);
 				}
 				TPtrC depp(depBuf8,deplen);
@@ -729,14 +729,14 @@ TInt DWin32CodeSeg::DoCreate(TCodeSegCreateInfo& aInfo, DProcess* aProcess)
 		TUint16 fileNameW[KMaxFileName];
 		ExpandToWide(fileNameW, iFileName->Ptr(), iFileName->Length());
 		fileNameW[iFileName->Length()] = '\0';
-		iWinInstance = Emulator::LoadLibrary(fileNameW);
+		iWinInstance = Emulator::LoadLibrary((LPCWSTR)fileNameW);
 		__KTRACE_OPT(KDLL,Kern::Printf("W32CodeSeg : EKERN %08x", iWinInstance));
 		if (!iWinInstance)
 			return KErrGeneral;
 		if (aInfo.iTotalDataSize)
 			iMark|=EMarkData|EMarkDataPresent;
 		KernelCodeSeg=this;
-		KernelModuleHandle=Emulator::GetModuleHandle(fileNameW);
+		KernelModuleHandle=Emulator::GetModuleHandle((LPCWSTR)fileNameW);
 		return RegisterCodeSeg(KernelModuleHandle);
 		}
 	TWin32Filename w32fn(*iFileName);
@@ -880,7 +880,7 @@ TInt DWin32CodeSeg::CreateAlreadyLoaded(HMODULE aModule, TInt aDepCount)
 	if (!r)
 		return Emulator::LastError();
 	TUint8 name8[MAX_PATH+1];
-	TruncToNarrow(name8,name,-1);
+	TruncToNarrow(name8,(const TUint16*)name,-1);
 
 	TPtrC fpptr((const TText*)name8);
 	TInt slash=fpptr.LocateReverse('\\');
