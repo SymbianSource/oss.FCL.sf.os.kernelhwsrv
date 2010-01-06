@@ -24,71 +24,82 @@ add_definitions(-D__DLL__)
 
 include_directories (./euser ./euser/unicode ./include)
 
+
+#Add the given source files to our source prepending the sourcepath
+macro(add_source)
+	foreach(mySource ${ARGV})
+		string(REGEX REPLACE "(^.+)" "${sourcepath}\\1" newsource ${mySource})
+		set(source ${source} ${newsource})
+	endforeach(mySource) 
+endmacro(add_source) 
+
+
 #Adding the sources from cbase
 set (sourcepath ./euser/cbase/)
-set (source ${source}
-${sourcepath}ub_act.cpp ${sourcepath}ub_array.cpp ${sourcepath}ub_bma.cpp ${sourcepath}ub_buf.cpp
-${sourcepath}ub_circ.cpp ${sourcepath}ub_cln.cpp ${sourcepath}ub_cons.cpp ${sourcepath}ub_dtim.cpp
-${sourcepath}ub_obj.cpp ${sourcepath}ub_svr.cpp ${sourcepath}ub_polsvr.cpp
-${sourcepath}ub_tim.cpp ${sourcepath}ub_utl.cpp ${sourcepath}ub_tque.cpp
+add_source(
+ub_act.cpp ub_array.cpp ub_bma.cpp ub_buf.cpp
+ub_circ.cpp ub_cln.cpp ub_cons.cpp ub_dtim.cpp
+ub_obj.cpp ub_svr.cpp ub_polsvr.cpp
+ub_tim.cpp ub_utl.cpp ub_tque.cpp
 )
+
 
 #Add euser sources
 set (sourcepath ./euser/)
-set (source ${source}
-${sourcepath}us_evnt.cpp ${sourcepath}locmapping.cpp ${sourcepath}us_exec.cpp ${sourcepath}us_func.cpp
-${sourcepath}us_graph.cpp ${sourcepath}us_hand.cpp ${sourcepath}us_ksvr.cpp ${sourcepath}us_des.cpp
-${sourcepath}us_lex16.cpp ${sourcepath}us_lex8.cpp ${sourcepath}us_loc.cpp ${sourcepath}us_mes.cpp
-${sourcepath}us_parse.cpp ${sourcepath}us_power.cpp ${sourcepath}us_property.cpp ${sourcepath}us_que.cpp
-${sourcepath}us_ref.cpp ${sourcepath}us_regn.cpp ${sourcepath}us_test.cpp ${sourcepath}us_time.cpp
-${sourcepath}us_trp.cpp ${sourcepath}us_utl.cpp ${sourcepath}us_mqueue.cpp ${sourcepath}us_encode.cpp
-${sourcepath}us_decode.cpp ${sourcepath}us_secure.cpp ${sourcepath}us_htab.cpp ${sourcepath}us_rwlock.cpp
-${sourcepath}us_shbuf.cpp
+add_source(
+us_evnt.cpp locmapping.cpp us_exec.cpp us_func.cpp
+us_graph.cpp us_hand.cpp us_ksvr.cpp us_des.cpp
+us_lex16.cpp us_lex8.cpp us_loc.cpp us_mes.cpp
+us_parse.cpp us_power.cpp us_property.cpp us_que.cpp
+us_ref.cpp us_regn.cpp us_test.cpp us_time.cpp
+us_trp.cpp us_utl.cpp us_mqueue.cpp us_encode.cpp
+us_decode.cpp us_secure.cpp us_htab.cpp us_rwlock.cpp
+us_shbuf.cpp
 )
+
 
 #Adding the sources from common
 set (sourcepath ./common/)
-set (source ${source}
-${sourcepath}array.cpp ${sourcepath}des8.cpp ${sourcepath}des16.cpp ${sourcepath}alloc.cpp ${sourcepath}heap.cpp
-${sourcepath}mem.cpp ${sourcepath}secure.cpp
+add_source(
+array.cpp des8.cpp des16.cpp alloc.cpp heap.cpp
+mem.cpp secure.cpp
 )
 
 #Adding the sources from common/win32
 set (sourcepath ./common/win32/)
-set (source ${source}
-${sourcepath}atomics.cpp
+add_source(
+atomics.cpp
 )
 
 #Adding the sources from maths
 set (sourcepath ./euser/maths/)
-set (source ${source}
-${sourcepath}um_asin.cpp ${sourcepath}um_atan.cpp ${sourcepath}um_dtor.cpp ${sourcepath}um_exp.cpp
-${sourcepath}um_frac.cpp ${sourcepath}um_int.cpp ${sourcepath}um_ln.cpp ${sourcepath}um_log.cpp
-${sourcepath}um_mod.cpp ${sourcepath}um_pow.cpp ${sourcepath}um_pow10.cpp
-${sourcepath}um_rand.cpp ${sourcepath}um_rtod.cpp ${sourcepath}um_sin.cpp ${sourcepath}um_spec.cpp
-${sourcepath}um_sqrt.cpp ${sourcepath}um_tan.cpp ${sourcepath}um_utl.cpp
-./euser/epoc/win32/uc_i64.cpp
-./euser/epoc/win32/uc_dll.cpp
+add_source(
+um_asin.cpp um_atan.cpp um_dtor.cpp um_exp.cpp
+um_frac.cpp um_int.cpp um_ln.cpp um_log.cpp
+um_mod.cpp um_pow.cpp um_pow10.cpp
+um_rand.cpp um_rtod.cpp um_sin.cpp um_spec.cpp
+um_sqrt.cpp um_tan.cpp um_utl.cpp
 )
 
 
 #Adding the sources from epoc/win32
 set (sourcepath ./euser/epoc/win32/)
-set (source ${source}
-${sourcepath}uc_i64.cpp ${sourcepath}uc_realx.cpp
-${sourcepath}uc_trp.cpp ${sourcepath}uc_utl.cpp ${sourcepath}uc_exec.cpp
+add_source(
+uc_i64.cpp uc_realx.cpp
+uc_trp.cpp uc_utl.cpp uc_exec.cpp
+uc_dll.cpp
 )
 
 #Adding the sources from epoc
 set (sourcepath ./euser/epoc/)
-set (source ${source}
-${sourcepath}up_lib.cpp ${sourcepath}up_utl.cpp
+add_source(
+up_lib.cpp up_utl.cpp
 )
 
 #Adding the sources from unicode
 set (sourcepath ./euser/unicode/)
-set (source ${source}
-${sourcepath}collate.cpp ${sourcepath}unicode.cpp ${sourcepath}unitable.cpp ${sourcepath}Compare.cpp
+add_source(
+collate.cpp unicode.cpp unitable.cpp Compare.cpp
 )
 
 #define our library
