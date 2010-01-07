@@ -119,7 +119,8 @@ mcodeseg.cpp mprocess.cpp mutils.cpp mshbuf.cpp
 #add_executable(ekern ${source})
 add_library(ekern SHARED ${source})
 add_dependencies(ekern genexec emulator)
-				
+#install(TARGETS ekern DESTINATION ./symbian/bin)
+
 
 
 
