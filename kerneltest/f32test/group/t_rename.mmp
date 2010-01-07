@@ -22,6 +22,7 @@ SOURCE         t_rename.cpp
 SOURCE         t_main.cpp
 SOURCEPATH     ../fileutils/src
 SOURCE         t_chlffs.cpp
+SOURCE         f32_test_utils.cpp
 
 LIBRARY        euser.lib efsrv.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN

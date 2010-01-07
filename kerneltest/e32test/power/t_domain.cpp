@@ -58,6 +58,8 @@
 #include "domainpolicytest.h"
 #include <e32debug.h>
 #include <f32file.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 
 LOCAL_D RTest test(_L(" T_DOMAIN "));
 _LIT(KThreadName, "t_domain_panic_thread");

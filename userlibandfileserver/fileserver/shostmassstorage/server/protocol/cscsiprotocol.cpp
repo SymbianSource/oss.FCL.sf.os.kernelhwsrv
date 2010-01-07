@@ -260,7 +260,15 @@ void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
 	TLba lastLba;
 	TUint32 blockLength;
 
-	TInt err = iSbcInterface->ReadCapacity10L(lastLba, blockLength);
+    // Retry ReadCapacity10L if stalled
+    TInt stallCounter = 4;
+    TInt err = KErrNone;
+    do
+        {
+        err = iSbcInterface->ReadCapacity10L(lastLba, blockLength);
+        } while (err == KErrCommandStalled && stallCounter-- > 0);
+
+
     if (err)
         {
         if (err == KErrCommandFailed)

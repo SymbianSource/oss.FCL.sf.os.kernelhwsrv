@@ -32,6 +32,7 @@
 RTest test(_L("T_NANDPAGING"));
 
 #include <e32rom.h>
+#include <e32svr.h>
 #include <u32hal.h>
 #include <f32file.h>
 #include <f32dbg.h>

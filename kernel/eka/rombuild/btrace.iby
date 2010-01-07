@@ -18,7 +18,7 @@
 #ifndef BTRACE_INCLUDED
 #define BTRACE_INCLUDED
 
-data=ABI_DIR\DEBUG_DIR\BTRACEX_LDD	\sys\bin\btracex.ldd
+data=KERNEL_DIR\DEBUG_DIR\BTRACEX_LDD	\sys\bin\btracex.ldd
 file=ABI_DIR\DEBUG_DIR\btracec.dll	\sys\bin\btracec.dll
 
 #endif

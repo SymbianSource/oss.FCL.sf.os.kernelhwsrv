@@ -20,6 +20,7 @@
 #include <e32cons.h>
 #include <e32test.h>
 #include <e32ldr.h>
+#include <e32svr.h>
 #include <e32cmn.h>
 #include <e32cmn_private.h>
 #include <f32dbg.h>

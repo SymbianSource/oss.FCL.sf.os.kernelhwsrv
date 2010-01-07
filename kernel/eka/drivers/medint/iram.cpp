@@ -189,7 +189,7 @@ TInt DMediaDriverIRam::Caps(TLocDrvRequest& m)
 	{
 	TLocalDriveCapsV6& caps=*(TLocalDriveCapsV6*)m.RemoteDes();
 	caps.iType=EMediaRam;
-	caps.iBattery=EBatNotSupported;
+	caps.iConnectionBusType=EConnectionBusInternal;
 	caps.iDriveAtt=KDriveAttLocal|KDriveAttInternal;
 	caps.iMediaAtt=KMediaAttVariableSize|KMediaAttFormattable;
     caps.iBaseAddress=(TUint8*)TInternalRamDrive::Base();

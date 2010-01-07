@@ -1713,7 +1713,7 @@ TInt CLocal::DefaultPath(TDes& aPath) const
 
 void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 //
-// Return the drive info. iBatteryState already set.
+// Return the drive info.
 //
 	{
 
@@ -1725,6 +1725,7 @@ void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 		anInfo.iType=EMediaRom;
 		anInfo.iMediaAtt=KMediaAttWriteProtected;
 		anInfo.iDriveAtt=KDriveAttRom|KDriveAttInternal;
+		anInfo.iConnectionBusType=EConnectionBusInternal;
 		return;
 		}
 	if (aDriveNumber==EDriveC)
@@ -1732,6 +1733,7 @@ void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 		anInfo.iType=EMediaHardDisk;
 		anInfo.iMediaAtt=KMediaAttVariableSize;
 		anInfo.iDriveAtt=KDriveAttLocal|KDriveAttInternal;
+		anInfo.iConnectionBusType=EConnectionBusInternal;
 		return;
 		}
 	TFileName envValue;
@@ -1739,6 +1741,7 @@ void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 		{
 		anInfo.iType=EMediaHardDisk;
 		anInfo.iDriveAtt=KDriveAttLocal|KDriveAttInternal;
+		anInfo.iConnectionBusType=EConnectionBusInternal;
 		return;		
 		}
 	anInfo.iType=EMediaNotPresent;

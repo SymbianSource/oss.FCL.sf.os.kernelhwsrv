@@ -15,6 +15,7 @@
 
 #include <f32file.h>
 #include <e32test.h>
+#include <e32svr.h>
 #include <e32math.h>
 
 #include "fat_utils.h"

@@ -1287,6 +1287,7 @@ public:
 		EMachineUid_EmuBoard=0x1200afed,
 		EMachineUid_OmapH6=0x10286564,
 		EMachineUid_OmapZoom=0x10286565,
+		EMachineUid_STE8500=0x101FF810,
 		};
 
 

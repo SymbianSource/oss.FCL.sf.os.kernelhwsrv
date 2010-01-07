@@ -31,8 +31,8 @@
 #include <nkern/nk_trace.h>
 #include "filesystem_fat.h"
 
-    TPtrC ptrFormatHelp=_L("Drive:[\\] [fat12|fat16|fat32] [spc:X] [rs:Y] [ft:Z] [/Q] [/S] [/E]\nfat12 or fat16 or fat32 specifies explicit FAT type\nspc:X specifies \"X\" sectors per cluster\nrs:Y specifies \"Y\" reserved sectors\nft:Z specifies \"Z\" FAT tables (1 or 2)\n\n/q - QuickFormat, /s - SpecialFormat, /e - ForcedErase ");
-    TPtrC ptrMountHelp=_L("Drive:[\\]  <fsy:X> <fs:Y> [pext:Z] [/S][/U][/F]\n'X' *.fsy module name, like elocal.fsy\n'Y' file system name, like 'FAT'\n'Z' optional primary extension module name\n/U - dismount FS from the drive e.g 'mount d: /u' \n/F - force mounting with dismounting existing FS \n/S - mout drive as synchronous ");
+    TPtrC ptrFormatHelp=_L("Drive:[\\] [fat12|fat16|fat32] [spc:X] [rs:Y] [ft:Z] [/Q][/S][/E][/F]\nfat12 or fat16 or fat32 specifies explicit FAT type\nspc:X specifies \"X\" sectors per cluster\nrs:Y specifies \"Y\" reserved sectors\nft:Z specifies \"Z\" FAT tables (1 or 2)\n\n/q - QuickFormat, /s - SpecialFormat, /e - ForcedErase\n/f - force formatting (ignore volume being in use)");
+    TPtrC ptrMountHelp=_L("Drive:[\\]  <fsy:X> <fs:Y> [pext:Z] [/S][/U][/F][/R]\n'X' *.fsy module name, like elocal.fsy\n'Y' file system name, like 'FAT'\n'Z' optional primary extension module name\n/U - dismount FS from the drive e.g 'mount d: /u' \n/F - force mounting with dismounting existing FS \n/S - mount drive as synchronous\n/R - remount the file system ");
 
 
 //	lint -e40,e30
@@ -47,7 +47,7 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
 	TShellCommand(_L("DEL"),_L("Delete one file"),_L("[drive:][path][filename]"),TShellCommand::ESSwitch,ShellFunction::Del),
 	TShellCommand(_L("DIR"),_L("Show directory contents"),_L("[drive:][path][filename] [/p][/w]\n\n  /p - Pause after each screen of information\n  /w - Wide format"),TShellCommand::EPSwitch|TShellCommand::EWSwitch|TShellCommand::EASwitch,ShellFunction::Dir),
 //	TShellCommand(_L("EDLIN"),_L("Edit a text file"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information"),TShellCommand::EPSwitch,ShellFunction::Edit),
-    TShellCommand(_L("FORMAT"),_L("Format a disk"),ptrFormatHelp,TShellCommand::EQSwitch|TShellCommand::ESSwitch|TShellCommand::EESwitch,ShellFunction::Format),
+    TShellCommand(_L("FORMAT"),_L("Format a disk"),ptrFormatHelp,TShellCommand::EQSwitch|TShellCommand::ESSwitch|TShellCommand::EESwitch|TShellCommand::EFSwitch,ShellFunction::Format),
     TShellCommand(_L("GOBBLE"),_L("Create a file"),_L("[filename] size [/e]\n\n /e - create an empty file, without writing any data"),TShellCommand::EESwitch,ShellFunction::Gobble),
 	TShellCommand(_L("HEXDUMP"),_L("Display the contents of a file in hexadecimal"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information\n\n  Hit escape to exit from hexdump "),TShellCommand::EPSwitch,ShellFunction::Hexdump),
 	TShellCommand(_L("LABEL"),_L("Set or return the volume label"),_L("[newlabel]"),0,ShellFunction::VolumeLabel),
@@ -70,7 +70,7 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
 	TShellCommand(_L("PLUGIN"),_L("Manage Plugins"),_L("[name][/A][/R][/M][/D]"),TShellCommand::EASwitch|TShellCommand::ERSwitch|TShellCommand::EMSwitch|TShellCommand::EDSwitch,ShellFunction::Plugin),
     TShellCommand(_L("DRVINFO"),_L("Print information about present drive(s) in the system"),_L("[DriveLetter:[\\]] [/p]\n/p - pause after each drive"),TShellCommand::EPSwitch,ShellFunction::DrvInfo),
 	TShellCommand(_L("SYSINFO"),_L("Print information about system features and status"),_L(""),0,ShellFunction::SysInfo),
-    TShellCommand(_L("MOUNT"),_L("Mount / dismount file system on specified drive"),ptrMountHelp,TShellCommand::EUSwitch|TShellCommand::ESSwitch|TShellCommand::EFSwitch,ShellFunction::MountFileSystem),
+    TShellCommand(_L("MOUNT"),_L("Mount / dismount file system on specified drive"),ptrMountHelp,TShellCommand::EUSwitch|TShellCommand::ESSwitch|TShellCommand::EFSwitch|TShellCommand::ERSwitch,ShellFunction::MountFileSystem),
     TShellCommand(_L("ECHO"),_L("Print out the command line to the console and standard debug port."),_L("[line to print out]"),0,ShellFunction::ConsoleEcho),
 	TShellCommand(_L("RUNEXEC"),_L("Run a program in a loop"),_L("count filename[.exe] [/E/S/R]\n	/E - exit early on error\n	/S - count in seconds\n	     zero - run forever\n	/R - reset debug regs after each run"),TShellCommand::EESwitch|TShellCommand::ESSwitch|TShellCommand::ERSwitch,ShellFunction::RunExec),
 
@@ -1174,7 +1174,6 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
         FormatDrvMediaTypeInfo(driveInfo, Buf);
 	    apConsole->Printf(Buf);
 
-	    //apConsole->Printf(_L("BatteryState:%d\n"),driveInfo.iBattery);
 	}
     
     //-- print drive attributes
@@ -1384,6 +1383,75 @@ TInt DoDismountFS(RFs& aFs, TInt aDrvNum)
     }
 }
 
+//-----------------------------------------------------------------------------------------------------------------------
+TInt DoRemountFS(RFs& aFs, TInt aDrvNum)
+{
+    TInt        nRes;
+    TBuf<40>    fsName;
+    TBuf<40>    pextName;
+
+    //-- 1. get file system name
+    nRes = aFs.FileSystemName(fsName, aDrvNum);
+    if(nRes != KErrNone)
+        return KErrNotFound;
+
+    //-- 2. find out if the drive sync/async
+    TPckgBuf<TBool> drvSyncBuf;
+    TBool& drvSynch = drvSyncBuf();
+
+    nRes = aFs.QueryVolumeInfoExt(aDrvNum, EIsDriveSync, drvSyncBuf);
+    if(nRes != KErrNone)
+    {//-- pretend that the drive is asynch. in the case of file system being corrupted. this is 99.9% true
+       drvSynch = EFalse;
+    }
+   
+    //-- 3. find out primary extension name if it is present; we will need to add it again when mounting the FS
+    //-- other extensions (non-primary) are not supported yet
+    nRes = aFs.ExtensionName(pextName, aDrvNum, 0);
+    if(nRes != KErrNone)
+    {
+        pextName.SetLength(0);
+    }
+    
+    //-- 3.1 check if the drive has non-primary extensions, fail in this case
+    {
+        TBuf<40> extName;
+        nRes = aFs.ExtensionName(extName, aDrvNum, 1);
+        if(nRes == KErrNone)
+        {   
+            CShell::TheConsole->Printf(_L("Non-primary extensions are not supported!\n"));
+            return KErrNotSupported;
+        }
+    }
+
+    //-- 4. dismount the file system
+    nRes = DoDismountFS(aFs, aDrvNum);
+    if(nRes != KErrNone)
+        return nRes;
+
+    //-- 5. mount the FS back
+    if(pextName.Length() > 0)
+    {//-- we need to mount FS with the primary extension
+        nRes = aFs.AddExtension(pextName);
+        if(nRes != KErrNone && nRes != KErrAlreadyExists)
+        {
+            return nRes;
+        }
+        
+        nRes = aFs.MountFileSystem(fsName, pextName, aDrvNum, drvSynch);
+    }
+    else
+    {//-- the FS did not have primary extension
+        nRes = aFs.MountFileSystem(fsName, aDrvNum, drvSynch);
+    }
+
+    if(nRes == KErrNone)
+    {
+        CShell::TheConsole->Printf(_L("mounted filesystem:%S\n"), &fsName);
+    }
+
+    return nRes;
+}
 
 //-----------------------------------------------------------------------------------------------------------------------
 /**
@@ -1398,6 +1466,7 @@ TInt DoDismountFS(RFs& aFs, TInt aDrvNum)
     /u dismounts a filesystem on the specified drive; e.g. "mount d: /u"
     /s for mounting FS specifies that the drive will be mounted as synchronous one.
     /f for forcing mounting the FS; the previous one will be automatically dismounted
+    /r remount existing FS (dismount and mount it back)
 */
 TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
 {
@@ -1424,6 +1493,14 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
 
     const TInt drvNum = nRes; //-- this is the drive number;
 
+
+    //-- remounting the existing FS (/R switch)
+    if(aSwitches & TShellCommand::ERSwitch)
+    {
+        nRes = DoRemountFS(fs, drvNum);
+        return nRes;
+    }
+    
     //-- check if we dismounting the FS (/U switch)
     if(aSwitches & TShellCommand::EUSwitch)
     {
@@ -1547,7 +1624,7 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
 		/Q : Quick Format
 		/S : Special Format
 		/E : Remove Password and Format
-
+        /F : force formatting, even if there are files opened on the drive
 */
 
 TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
@@ -1572,6 +1649,11 @@ TInt ShellFunction::Format(TDes& aPath, TUint aSwitches)
 	//-- Format /E - force erase
     if (aSwitches & TShellCommand::EESwitch)
 		fmtMode|=EForceErase;
+
+	//-- Format /F - force format. The volume will be formatted even if there are files or directories opened on this drive
+    if (aSwitches & TShellCommand::EFSwitch)
+		fmtMode|=EForceFormat;
+
 
 	TInt    fmtCnt = 0;
 	RFormat format;

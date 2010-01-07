@@ -31,6 +31,7 @@
 #include <e32lmsg.h>
 #include <e32event.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <e32power.h>
 #include <e32shbufcmn.h>
 #include <e32property.h>

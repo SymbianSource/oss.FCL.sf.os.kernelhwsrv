@@ -27,3 +27,4 @@ deffile	       d_ldd2.def
 EPOCALLOWDLLDATA
 
 capability		all
+SMPSAFE

@@ -43,6 +43,7 @@
 
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
+#include <e32svr.h>
 #include <f32file.h>
 #include <e32ldr.h>
 #include <u32hal.h>

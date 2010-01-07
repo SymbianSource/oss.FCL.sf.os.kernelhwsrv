@@ -1458,6 +1458,12 @@ GLDEF_C TInt E32Main()
 
 	TInt r = KErrNone;
 
+    // Turn off lazy dll unloading
+    RLoader l;
+    gTest(l.Connect()==KErrNone);
+    gTest(l.CancelLazyDllUnload()==KErrNone);
+    l.Close();
+
 #ifdef IIC_SIMULATED_PSL
 	gTest.Next(_L("Start the IIC with controller test\n"));
 	aStandAloneChan = 0;

@@ -702,17 +702,6 @@ TBool CScanDrive::AddMatchingEntryL(const TEntryPos& aEntryPos)
 	}
 
 
-static inline TBool BoolXOR(TBool a1, TBool a2)
-    {
-    if(!a1 && !a2)        
-        return EFalse;
-    else if(a1 && a2)
-        return EFalse;
-    else
-        return ETrue;
-    }
-
-
 /**
 Scan for differnces in the new and old FAT table writing them to media if discovered
 

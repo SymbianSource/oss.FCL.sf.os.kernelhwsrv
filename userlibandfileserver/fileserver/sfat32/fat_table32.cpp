@@ -33,14 +33,14 @@
 //---------------------------------------------------------------------------------------------------------------------------------------
 /** 
     Implements automatic locking object.
-    Calls TFatDriveInterface::AcquireLock() on construction and TFatDriveInterface::ReleaseLock() on destruction. 
+    Calls TDriveInterface::AcquireLock() on construction and TDriveInterface::ReleaseLock() on destruction. 
     Can be constructed on the stack only.
 */
 class XAutoLock
     {
      public:
        inline XAutoLock(CFatMountCB* apOwner) : iDrv(apOwner->DriveInterface()) {iDrv.AcquireLock();}
-       inline XAutoLock(TFatDriveInterface& aDrv) : iDrv(aDrv) {iDrv.AcquireLock();}
+       inline XAutoLock(TDriveInterface& aDrv) : iDrv(aDrv) {iDrv.AcquireLock();}
        inline ~XAutoLock() {iDrv.ReleaseLock();}
 
      private:
@@ -48,7 +48,7 @@ class XAutoLock
         void* operator new(TUint, void*);
 
      private:
-        TFatDriveInterface &iDrv; ///< reference to the drive interface
+        TDriveInterface &iDrv; ///< reference to the drive interface
     };
 
 
@@ -125,6 +125,12 @@ void CFatTable::InitializeL()
     //-- get FAT type from the owner
     iFatType = iOwner->FatType();
     ASSERT(IsFat12() || IsFat16() || IsFat32());
+
+    //-- set the EOC code
+    iFatEocCode = EocCodeByFatType(iFatType);
+    
+
+
 
     iFreeClusterHint = KFatFirstSearchCluster;
 
@@ -1732,42 +1738,21 @@ TUint32 CAtaFatTable::FindClosestFreeClusterL(TUint32 aCluster)
     Get the next cluster in the chain from the FAT
 
     @param aCluster number to read, contains next cluster upon return
-    @leave
     @return False if end of cluster chain
 */
 TBool CFatTable::GetNextClusterL(TInt& aCluster) const
     {
 	__PRINT1(_L("CAtaFatTable::GetNextClusterL(%d)"), aCluster);
     
-    const TInt nextCluster = ReadL(aCluster);
-    TBool ret = EFalse; 
+    const TUint32 nextCluster = ReadL(aCluster);
+    const TBool bEOC = IsEndOfClusterCh(nextCluster);
+
+    if(bEOC) 
+        return EFalse; //-- the end of cluster chain
+
+    aCluster = nextCluster;
     
-    switch(FatType())
-        {
-        case EFat12:
-            ret=!IsEof12Bit(nextCluster);
-        break;
-
-        case EFat16:
-            ret=!IsEof16Bit(nextCluster);
-        break;
-
-        case EFat32:
-            ret=!IsEof32Bit(nextCluster);
-        break;
-
-        default:
-            ASSERT(0);
-            return EFalse;//-- get rid of warning
-        };
-	
-    if (ret)
-        {
-		aCluster=nextCluster;
-	    }
-
-    return ret;
-
+    return ETrue;    
     }
 
 /**

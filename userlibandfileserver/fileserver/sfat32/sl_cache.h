@@ -148,7 +148,7 @@ class CMediaWTCache : public CBase, public MWTCacheInterface
 public:
         ~CMediaWTCache();
         
-        static CMediaWTCache* NewL(TFatDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2);
+        static CMediaWTCache* NewL(TDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2);
 
         void ConstructL(TUint32 aNumPages, TUint32 aPageSizeLog2);
         
@@ -169,7 +169,7 @@ public:
         
 protected:
         CMediaWTCache();
-        CMediaWTCache(TFatDriveInterface& aDrive);
+        CMediaWTCache(TDriveInterface& aDrive);
         
         inline TInt64  CalcPageStartPos(TInt64 aPos) const;
         inline TUint32 PageSize() const;
@@ -182,12 +182,12 @@ protected:
         TUint32 FindOrGrabReadPageL(TInt64 aPos);
         
 protected:
-        TFatDriveInterface& iDrive;        ///< reference to the driver for media access
+        TDriveInterface& iDrive;        ///< reference to the driver for media access
         TUint32             iPageSizeLog2; ///< Log2 (cache page size)
         mutable TBool       iAllPagesValid;///< ETrue if all cache pages have valid data
         TInt64              iCacheBasePos; ///< Cache pages base position, used to align them at cluster size
         RPointerArray<CWTCachePage> iPages; ///< array of pointers to the cache pages. Used for organising LRU list
-        TUint32             iCacheDisabled :1; ///< if not 0 the cache is disabled totally and all reads and writes go via TFatDriveInterface directly
+        TUint32             iCacheDisabled :1; ///< if not 0 the cache is disabled totally and all reads and writes go via TDriveInterface directly
     };
 
 

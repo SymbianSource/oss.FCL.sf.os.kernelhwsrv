@@ -20,6 +20,7 @@
 #include <f32file.h>
 #include <f32image.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <e32rom.h>
 #include "sf_deflate.h"
 

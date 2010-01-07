@@ -97,9 +97,9 @@ public:
 	*/
 	TMediaType iType;
 	/**
-	Indicates state of battery if supported
+	Connection type used to interface to the media
 	*/
-	TBatteryState iBattery;
+	TConnectionBusType iConnectionBusType;
 	/**
 	Attributes of the drive
 	*/
@@ -277,8 +277,6 @@ public:
     };
 typedef TPckgBuf<TLocalDriveCapsV4> TLocalDriveCapsV4Buf;
 //
-#define KMaxSerialNumLength 64
-typedef TBuf8<KMaxSerialNumLength> TMediaSerialNumber;
 class TLocalDriveCapsV5 : public TLocalDriveCapsV4
 /**
 Add serial number support for certain media.

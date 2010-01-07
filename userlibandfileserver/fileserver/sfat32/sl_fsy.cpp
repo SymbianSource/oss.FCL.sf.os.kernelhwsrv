@@ -109,50 +109,6 @@ TInt CFatFileSystem::DefaultPath(TDes& aPath) const
 	}
 
 
-void CFatFileSystem::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
-//
-// Return the drive info. iBatteryState are already set.
-//
-	{
-
-	if(!IsValidLocalDriveMapping(aDriveNumber))
-		return;
-
-    TLocalDriveCapsV2Buf localDriveCaps;
-	
-	TInt r = KErrNone;
-
-	// is the drive local?
-	if (!IsProxyDrive(aDriveNumber))
-		{
-		// if not valid local drive, use default values in localDriveCaps
-		// if valid local drive and not locked, use TBusLocalDrive::Caps() values
-		// if valid drive and locked, hard-code attributes
-		r = GetLocalDrive(aDriveNumber).Caps(localDriveCaps);
-		}
-	else  // this need to be made a bit nicer
-		{   
-		CExtProxyDrive* pD = GetProxyDrive(aDriveNumber);
-		if(pD)
-			r = pD->Caps(localDriveCaps);
-		else
-			r = KErrNotReady;	// What should the behaviour really be here?
-		}
-
-	if (r != KErrLocked )
-		{
-		anInfo.iMediaAtt=localDriveCaps().iMediaAtt;
-		}
-	else
-		{
-		anInfo.iMediaAtt = KMediaAttLocked | KMediaAttLockable | KMediaAttHasPassword;
-		}
-
-	anInfo.iType=localDriveCaps().iType;
-	anInfo.iDriveAtt=localDriveCaps().iDriveAtt;
-	}
-
-
 TBool CFatFileSystem::IsExtensionSupported() const
 //
 //

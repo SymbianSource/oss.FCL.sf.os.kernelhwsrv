@@ -156,7 +156,7 @@ ResetEntry
 
 		PRTLN	"InitialiseHardware use of optional SuperPage fields:"
 	IF	:DEF: CFG_ENABLE_SMR_SUPPORT					; When defined the bootstrap PSL in InitialiseHardware()
-		LDR		r0, [r10, #SSuperPageBase_iSmrData] 	; must set this field to a valid adderss of the SMRIB or 
+		LDR		r0, [r10, #SSuperPageBase_iSmrData] 	; must set this field to a valid address of the SMRIB or 
 														; KSuperPageAddressFieldUndefined if no SMRIB found.
 		DWORD	r0, "  SMR_SUPPORT Enabled - iSmrData"	
 	ELSE
@@ -420,7 +420,7 @@ DoneRomBanks
 ;
 ; - Setup R11 to point to free entry after first null entry in iRamBootData list
 ; - Reserve any SMRs in the SP SMRIB by adding them to the pre-allocation list
-; - Call the bootstrap PSL to allow futher platform specific RAM reservation
+; - Call the bootstrap PSL to allow further platform-specific RAM reservation
 ;
 
 ; Point R11 to preallocated block list
@@ -651,7 +651,7 @@ MapRamBlock_End
 
 	ELSE
 
-; moving or multiple model
+; moving, multiple or flexible model
 
 ; map super page + CPU page
 		PRTLN	"Map super/CPU pages"
@@ -705,9 +705,8 @@ MapRamBlock_End
 	ENDIF
 
 	IF :DEF: CFG_HasL210Cache :LOR: :DEF: CFG_HasL220Cache :LOR: :DEF: CFG_HasPL310Cache
-		MOV r7, #0								; Flag to indicate if H/W bank that matches SSuperPageBase::iArmL2CacheBase is found.
-												; When found, we should stop searching. (Otherwise could be fatal if linear address of
-												; External Cache Controller accidentally matches physical address of a H/W bank.)
+		LDR		r5, [r10, #SSuperPageBase_iArmL2CacheBase] ; r5 = PhysAddr of External Cache Controller.
+		MOV		r7, #1	; R7 != 0 => LinAddr of ExtCacheCtrl is not found yet. Set R7 to 0 when found. 
 	ENDIF
 MapHwBank
 		LDR		r1, [r9], #4					; get phys addr / size
@@ -738,30 +737,51 @@ MapHwBank
 		ADD		r0, r0, r6
 		BIC		r0, r0, r6						; round up linear address
 	ENDIF
-
-	IF :DEF: CFG_HasL210Cache :LOR: :DEF: CFG_HasL220Cache :LOR: :DEF: CFG_HasPL310Cache
-        CMP		r7, #0
-		LDREQ	r5, [r10, #SSuperPageBase_iArmL2CacheBase]	; get L2 cache controller base address from super page
-		CMPEQ	r1,r5										; if physical address matches ...
-		STREQ	r0, [r10, #SSuperPageBase_iArmL2CacheBase]	; ...set linear address in super page
-		MOVEQ	r7, #1										; mark that L2CacheBase PhysToLinear transfer is completed
-	ENDIF
 		BL		MapContiguous					; make mapping
+	IF :DEF: CFG_HasL210Cache :LOR: :DEF: CFG_HasL220Cache :LOR: :DEF: CFG_HasPL310Cache
+		MOV		r4, r0 ; r4 = LinAddr of the current HwBank
+	ENDIF
 		ADD		r0, r0, r3						; increment linear address
+	IF :DEF: CFG_HasL210Cache :LOR: :DEF: CFG_HasL220Cache :LOR: :DEF: CFG_HasPL310Cache
+		B		MapHwBank3						; test whether the current HwBank contains ExtCacheCtrl 
+	ELSE
 		B		MapHwBank						; next bank
+	ENDIF
 MapHwBank2
 		STR		r0, [sp, #-4]!					; save default linear address
 		MOV		r0, r6							; r0 = specified linear address
+		BL		MapContiguous					; make mapping
+	IF :DEF: CFG_HasL210Cache :LOR: :DEF: CFG_HasL220Cache :LOR: :DEF: CFG_HasPL310Cache
+		MOV		r4, r0 ; r4 = LinAddr of the current HwBank
+	ENDIF
+		LDR		r0, [sp], #4					; restore default linear address
 
 	IF :DEF: CFG_HasL210Cache :LOR: :DEF: CFG_HasL220Cache :LOR: :DEF: CFG_HasPL310Cache
-        CMP		r7, #0
-        LDREQ	r5, [r10, #SSuperPageBase_iArmL2CacheBase]	; get L2 cache controller base address from super page
-		CMPEQ	r1,r5										; if physical address matches ...
-		STREQ	r0, [r10, #SSuperPageBase_iArmL2CacheBase]	; ...set linear address in super page
-		MOVEQ	r7, #1										; mark that L2CacheBase PhysToLinear transfer is completed
-	ENDIF
-		BL		MapContiguous					; make mapping
-		LDR		r0, [sp], #4					; restore default linear address
+MapHwBank3
+		; Check if the current HW bank contains External Cache Controller.
+		; If so, write down its virtual address into SSuperPageBase::iArmL2CacheBase.
+		; r5 = phys. address of the external cache controller
+		; r1 = physical address of the current HW bank
+		; r4 = virtual address of the current HW bank
+		; r3 = the size of the current bank
+		; r7 = 0 if we have already found cache controller in of the previous HW banks
+		CMP		r7, #0					; Still in search for linear address of external cache controller?
+		BEQ		MapHwBank				; If no, go to the next HwBank
+
+		SUBS	r7, r5, r1				; r7 = PhysAddr of ExtCacheCtrl - PhysAddr of current HwBank
+										; i.e. offset of cache controller with respect to the current bank
+		BLO		MapHwBank				; ofsset(in r7) is <0 so not in this bank (and r7 != 0)
+
+		CMP		r7, r3					; If 0 <= r7 < r3 then it's in this bank
+		BHS		MapHwBank				; Not in this bank (and r7 != 0)
+
+		; The current HwBank holds External Cache Controller
+		ADD		r5, r7, r4				; r5 = LinAddr of ExtCacheCtrl
+		STR		r5, [r10, #SSuperPageBase_iArmL2CacheBase]	; Set Linear Address of ExtCacheCtrl in super page
+
+		MOV		r7, #0					; Mark that Linear Address of ExtCacheCtrl is found
+	ENDIF	; IF :DEF: CFG_HasL210Cache :LOR: :DEF: CFG_HasL220Cache :LOR: :DEF: CFG_HasPL310Cache
+
 		B		MapHwBank						; next bank
 
 MapHwBank_End

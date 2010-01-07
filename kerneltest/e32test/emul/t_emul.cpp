@@ -34,8 +34,10 @@
 #define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32atomics.h>
-#include "e32std.h"
-#include "e32std_private.h"
+#include <e32std.h>
+#include <e32std_private.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 #include "e32test.h"
 #include "emulator.h"
 #include "t_emul.h"

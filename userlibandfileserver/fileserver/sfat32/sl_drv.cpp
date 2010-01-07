@@ -25,7 +25,7 @@ const TInt KMaxCriticalRetries=10;
 //---------------------------------------------------------------------------------------------------------------------------------------
 
 
-TFatDriveInterface::TFatDriveInterface() 
+TDriveInterface::TDriveInterface() 
                    :iMount(NULL)
 {
 }
@@ -34,7 +34,7 @@ TFatDriveInterface::TFatDriveInterface()
     Initialise the interface object.
     @param  aMount the CFatMountCB that owns this object
 */
-TBool TFatDriveInterface::Init(CFatMountCB* aMount)
+TBool TDriveInterface::Init(CFatMountCB* aMount)
 {
     ASSERT(aMount);
     iMount = aMount;
@@ -45,7 +45,7 @@ TBool TFatDriveInterface::Init(CFatMountCB* aMount)
 /**
     pseudo-destructor. 
 */
-void TFatDriveInterface::Close()
+void TDriveInterface::Close()
 {
 	 if(iMount)
 		iMount->LocalDrive()->SetMount(NULL);
@@ -68,7 +68,7 @@ void TFatDriveInterface::Close()
     @return KErrBadPower - failure due to low power
 
 */
-TInt TFatDriveInterface::ReadNonCritical(TInt64 aPos, TInt aLength, TDes8& aTrg) const
+TInt TDriveInterface::ReadNonCritical(TInt64 aPos, TInt aLength, TDes8& aTrg) const
 {
     TInt nRes = KErrNone;
     TInt cntRetry = KMaxRecoverableRetries;
@@ -81,7 +81,7 @@ TInt TFatDriveInterface::ReadNonCritical(TInt64 aPos, TInt aLength, TDes8& aTrg)
         if (nRes==KErrNone)
             break;
 
-        __PRINT4(_L("TFatDriveInterface::ReadNonCritical() failure! drv:%d Posl=%LU len=%d retval=%d"), iMount->DriveNumber(), aPos, aLength, nRes);
+        __PRINT4(_L("TDriveInterface::ReadNonCritical() failure! drv:%d Posl=%LU len=%d retval=%d"), iMount->DriveNumber(), aPos, aLength, nRes);
         
         if(--cntRetry <= 0)
         {
@@ -115,7 +115,7 @@ TInt TFatDriveInterface::ReadNonCritical(TInt64 aPos, TInt aLength, TDes8& aTrg)
     @return KErrBadPower - failure due to low power
 
 */
-TInt TFatDriveInterface::ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const
+TInt TDriveInterface::ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const
 {
     //__PRINT2(_L("#=+++ Read_nc2: pos:%LU, len:%u"), aPos, aLength);
 
@@ -128,7 +128,7 @@ TInt TFatDriveInterface::ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aT
         if (nRes==KErrNone)
             break;
 
-        __PRINT4(_L("TFatDriveInterface::ReadNonCritical() Failure! drv:%d aPosl=%d len=%d anOffset=%d"), iMount->DriveNumber(), aPos,aLength, anOffset);
+        __PRINT4(_L("TDriveInterface::ReadNonCritical() Failure! drv:%d aPosl=%d len=%d anOffset=%d"), iMount->DriveNumber(), aPos,aLength, anOffset);
         
         if(--cntRetry <= 0)
         {
@@ -159,7 +159,7 @@ TInt TFatDriveInterface::ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aT
     @return KErrCorrupt - an illegal write is detected
     @return KErrAbort - user aborted read
 */
-TInt TFatDriveInterface::ReadCritical(TInt64 aPos,TInt aLength,TDes8& aTrg) const
+TInt TDriveInterface::ReadCritical(TInt64 aPos,TInt aLength,TDes8& aTrg) const
 {
     //__PRINT2(_L("#=+++ Read_C: pos:%LU, len:%u"), aPos, aLength);
 
@@ -171,7 +171,7 @@ TInt TFatDriveInterface::ReadCritical(TInt64 aPos,TInt aLength,TDes8& aTrg) cons
 		if(nRes == KErrNone)
             break;
 
-		__PRINT4(_L("TFatDriveInterface::ReadCritical() Error! drv:%d Posl=%LU len=%d retval=%d"), iMount->DriveNumber(), aPos, aLength, nRes);
+		__PRINT4(_L("TDriveInterface::ReadCritical() Error! drv:%d Posl=%LU len=%d retval=%d"), iMount->DriveNumber(), aPos, aLength, nRes);
 		
         nRes=HandleCriticalError(nRes);
 		if (nRes != ERetry)
@@ -198,7 +198,7 @@ TInt TFatDriveInterface::ReadCritical(TInt64 aPos,TInt aLength,TDes8& aTrg) cons
     @return KErrCorrupt - an illegal write is detected
     @return KErrAccessDenied - write to protected media
 */
-TInt TFatDriveInterface::WriteNonCritical(TInt64 aPos, TInt aLength, const TAny* aSrc, const RMessagePtr2 &aMessage, TInt anOffset)
+TInt TDriveInterface::WriteNonCritical(TInt64 aPos, TInt aLength, const TAny* aSrc, const RMessagePtr2 &aMessage, TInt anOffset)
 {
     //__PRINT2(_L("#=+++ Write_NC: pos:%LU, len:%u"), aPos, aLength);
 
@@ -213,7 +213,7 @@ TInt TFatDriveInterface::WriteNonCritical(TInt64 aPos, TInt aLength, const TAny*
         if (nRes==KErrNone)
             break;
 
-        __PRINT4(_L("TFatDriveInterface::WriteNonCritical() failure! drv:%d, Pos=%LU len=%d anOffset=%d"), iMount->DriveNumber(), aPos, aLength, anOffset);
+        __PRINT4(_L("TDriveInterface::WriteNonCritical() failure! drv:%d, Pos=%LU len=%d anOffset=%d"), iMount->DriveNumber(), aPos, aLength, anOffset);
         
         if(--cntRetry <= 0)
         {
@@ -246,7 +246,7 @@ TInt TFatDriveInterface::WriteNonCritical(TInt64 aPos, TInt aLength, const TAny*
     @return KErrCorrupt - an illegal write is detected
     @return KErrAccessDenied - write to protected media
 */
-TInt TFatDriveInterface::WriteCritical(TInt64 aPos, const TDesC8& aSrc)
+TInt TDriveInterface::WriteCritical(TInt64 aPos, const TDesC8& aSrc)
 {
     //__PRINT2(_L("#=+++ Write_C: pos:%LU, len:%u"), aPos, aSrc.Length());
 
@@ -282,7 +282,7 @@ TInt TFatDriveInterface::WriteCritical(TInt64 aPos, const TDesC8& aSrc)
 
                 nRes = iMount->WriteFailError(); 
                 simulatedWriteFailure = ETrue; //-- won't perform actual write later
-                __PRINT4(_L("TFatDriveInterface::WriteCritical() Simulating write failure. drv:%d, aPos=%LU len=%d Code=%d"), iMount->DriveNumber(), aPos,aSrc.Length(),nRes);
+                __PRINT4(_L("TDriveInterface::WriteCritical() Simulating write failure. drv:%d, aPos=%LU len=%d Code=%d"), iMount->DriveNumber(), aPos,aSrc.Length(),nRes);
 
 			}
 		}
@@ -303,7 +303,7 @@ TInt TFatDriveInterface::WriteCritical(TInt64 aPos, const TDesC8& aSrc)
 		    }
 
             //-- write error occured
-            __PRINT4(_L("TFatDriveInterface::WriteCritical() failure! drv:%d, aPos=%LU len=%d retval=%d"), iMount->DriveNumber(), aPos,aSrc.Length(),nRes);
+            __PRINT4(_L("TDriveInterface::WriteCritical() failure! drv:%d, aPos=%LU len=%d retval=%d"), iMount->DriveNumber(), aPos,aSrc.Length(),nRes);
 
             nRes=HandleCriticalError(nRes);
             if (nRes!=ERetry)
@@ -324,7 +324,7 @@ TInt TFatDriveInterface::WriteCritical(TInt64 aPos, const TDesC8& aSrc)
     @return KErrNone - success, interrogate aErrorInfo for further info
     @return KErrNotSupported - media driver does not support
 */
-TInt TFatDriveInterface::GetLastErrorInfo(TDes8& aErrorInfo) const
+TInt TDriveInterface::GetLastErrorInfo(TDes8& aErrorInfo) const
 {
     return iProxyDrive.GetLastErrorInfo(aErrorInfo);
 }
@@ -342,9 +342,9 @@ TInt TFatDriveInterface::GetLastErrorInfo(TDes8& aErrorInfo) const
     @return KErrAccessDenied - media is read only
     @return KErrCorrupt - cf-card is corrupt
 */
-TInt TFatDriveInterface::HandleCriticalError(TInt aResult) const
+TInt TDriveInterface::HandleCriticalError(TInt aResult) const
 	{
-    __PRINT2(_L("TFatDriveInterface::HandleCriticalError drv:%d, code:%d"), iMount->DriveNumber(),aResult);
+    __PRINT2(_L("TDriveInterface::HandleCriticalError drv:%d, code:%d"), iMount->DriveNumber(),aResult);
 
 	TLocaleMessage line1;
 	TLocaleMessage line2;
@@ -456,9 +456,9 @@ End:
     @return KErrBadPower - low power failure
     @return KErrNotReady - non-critical error
 */
-TInt TFatDriveInterface::HandleRecoverableError(TInt aResult) const
+TInt TDriveInterface::HandleRecoverableError(TInt aResult) const
 	{
-	__PRINT2(_L("TFatDriveInterface::HandleRecoverableError drv:%d, code:%d"), iMount->DriveNumber(),aResult);
+	__PRINT2(_L("TDriveInterface::HandleRecoverableError drv:%d, code:%d"), iMount->DriveNumber(),aResult);
 
 	if (aResult==KErrAccessDenied)
 		return(KErrAccessDenied);
@@ -486,7 +486,7 @@ TInt TFatDriveInterface::HandleRecoverableError(TInt aResult) const
 	}	
 
 /** @return true if the mount can be remounted for a recoverable error */
-TBool TFatDriveInterface::IsRecoverableRemount() const
+TBool TDriveInterface::IsRecoverableRemount() const
 	{
 	if(IsDriveWriteProtected()&&(iMount->Drive().IsWriteableResource()||iMount->Drive().IsCurrentWriteFunction()))
 		return(EFalse);
@@ -494,7 +494,7 @@ TBool TFatDriveInterface::IsRecoverableRemount() const
 	}
 
 /** return true if the media is write protected */
-TBool TFatDriveInterface::IsDriveWriteProtected() const
+TBool TDriveInterface::IsDriveWriteProtected() const
 	{
 	TLocalDriveCapsV2Buf localDriveCaps;
     TInt r=iProxyDrive.Caps(localDriveCaps);
@@ -509,7 +509,7 @@ TBool TFatDriveInterface::IsDriveWriteProtected() const
 
 //---------------------------------------------------------------------------------------------------------------------------------------
 
-TFatDriveInterface::XProxyDriveWrapper::XProxyDriveWrapper() 
+TDriveInterface::XProxyDriveWrapper::XProxyDriveWrapper() 
                    :iLocalDrive(0) 
 {
     TInt nRes = iLock.CreateLocal();
@@ -518,7 +518,7 @@ TFatDriveInterface::XProxyDriveWrapper::XProxyDriveWrapper()
 }
 
 
-TFatDriveInterface::XProxyDriveWrapper::~XProxyDriveWrapper() 
+TDriveInterface::XProxyDriveWrapper::~XProxyDriveWrapper() 
 {
     iLock.Close();
 }
@@ -528,7 +528,7 @@ TFatDriveInterface::XProxyDriveWrapper::~XProxyDriveWrapper()
     @param  aProxyDrive pointer to the raw drive access interface
     @return true on success
 */
-TBool TFatDriveInterface::XProxyDriveWrapper::Init(CProxyDrive* aProxyDrive) 
+TBool TDriveInterface::XProxyDriveWrapper::Init(CProxyDrive* aProxyDrive) 
 {
     ASSERT(aProxyDrive);
     if(!iLock.Handle()) //-- the mutex must have been created by constructor
@@ -538,9 +538,9 @@ TBool TFatDriveInterface::XProxyDriveWrapper::Init(CProxyDrive* aProxyDrive)
     return ETrue;
 }
 
-//-- see original TFatDriveInterface methods
+//-- see original TDriveInterface methods
 
-TInt TFatDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const
+TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const
 {
     EnterCriticalSection();
     TInt nRes = iLocalDrive->Read(aPos, aLength, aTrg, aMessage.Handle(), anOffset);
@@ -548,7 +548,7 @@ TInt TFatDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,const
     return nRes;
 }
        
-TInt TFatDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,TDes8& aTrg) const
+TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,TDes8& aTrg) const
 {
     EnterCriticalSection();
     TInt nRes = iLocalDrive->Read(aPos, aLength, aTrg);
@@ -556,7 +556,7 @@ TInt TFatDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,TDes8
     return nRes;
 }
 
-TInt TFatDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset)
+TInt TDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset)
 {
     EnterCriticalSection();
     TInt nRes = iLocalDrive->Write(aPos, aLength, aSrc, aMessage.Handle(), anOffset);
@@ -564,7 +564,7 @@ TInt TFatDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos,TInt aLength,cons
     return nRes;
 }
 
-TInt TFatDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos, const TDesC8& aSrc)
+TInt TDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos, const TDesC8& aSrc)
 {
     EnterCriticalSection();
     TInt nRes = iLocalDrive->Write(aPos, aSrc);
@@ -572,7 +572,7 @@ TInt TFatDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos, const TDesC8& aS
     return nRes;
 }
 
-TInt TFatDriveInterface::XProxyDriveWrapper::GetLastErrorInfo(TDes8& aErrorInfo) const
+TInt TDriveInterface::XProxyDriveWrapper::GetLastErrorInfo(TDes8& aErrorInfo) const
 {
     EnterCriticalSection();
     TInt nRes = iLocalDrive->GetLastErrorInfo(aErrorInfo);
@@ -580,7 +580,7 @@ TInt TFatDriveInterface::XProxyDriveWrapper::GetLastErrorInfo(TDes8& aErrorInfo)
     return nRes;
 }
 
-TInt TFatDriveInterface::XProxyDriveWrapper::Caps(TDes8& anInfo) const
+TInt TDriveInterface::XProxyDriveWrapper::Caps(TDes8& anInfo) const
 {
     EnterCriticalSection();
     TInt nRes = iLocalDrive->Caps(anInfo);

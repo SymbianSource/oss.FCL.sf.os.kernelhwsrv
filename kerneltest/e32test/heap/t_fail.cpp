@@ -37,6 +37,8 @@
 #include <e32panic.h>
 #include <e32def.h>
 #include <e32def_private.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 #include "d_kheap.h"
 
 LOCAL_D RTest test(_L("T_FAIL"));

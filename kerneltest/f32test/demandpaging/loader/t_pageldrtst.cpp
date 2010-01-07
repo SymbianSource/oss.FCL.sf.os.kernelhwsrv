@@ -120,6 +120,7 @@
 
 #include <e32test.h>
 #include <e32rom.h>
+#include <e32svr.h>
 #include <u32hal.h>
 #include <f32file.h>
 #include <f32dbg.h>
@@ -127,6 +128,7 @@
 #include <e32math.h>
 #include <e32btrace.h>
 #include <d32btrace.h>
+#include <d32locd.h>
 #include <hal.h>
 
 #include "t_hash.h"

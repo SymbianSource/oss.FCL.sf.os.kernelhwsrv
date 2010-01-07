@@ -1,3 +1,128 @@
+Version 2.00.2058
+=================
+(Made by vinojose 03/12/2009)
+
+
+1.	ChrisNotton
+	1.	DEFECT FIX: DEF142863: Public header files must not include platform or internal headers
+
+2.	NeilClifford
+	1.	DEFECT FIX: DEF143039: MedMMC should not use Cache for Physical Address Requests
+
+3.	RichardCo
+	1.	DEFECT FIX: DEF142738: T_SMPSAFE fails on SMP unicore
+
+4.	MarkTa
+	1.	DEFECT FIX: DEF143129: WDP - Allocating a demand paged page table can fault the system 
+		Implement on demand stealing of paged page tables when allocating paged page tables.
+
+5.	StephenSun
+	1.	DEFECT FIX: DEF142844: initialize SRP timeout
+
+6.	OliverStuart
+	1.	DEFECT FIX: DEF142840: KERN-EXEC 3 panics in T_SHBUF_PERF
+		Must use kumemget to read TPtr8 from user memory.
+
+7.	LaneRoberts
+	1.	DEFECT FIX: DEF143152: NaviEngine ARM4 ROMs cannot be built
+
+8. ChrisBeale
+	1.	DEFECT FIX: DEF143114: FMM thrashing monitor timer runs even when device is idle 
+
+9.	cnotton
+	1.	MINOR_CHANGE: Fix SMP Soak test for Header File Relocation
+	2.	DEFECT FIX: DEF143183: CTS79_MCL_wk46: TB92_200945 symbian tests compilation errors
+
+10.	lanerobe
+	1.	DEFECT FIX: DEFECT FIX: DEF141811: T_MSTIM on Unicore SMP (Naviengine) Image
+
+Version 2.00.2057
+=================
+(Made by vinojose 01/12/2009)
+
+1.	ChrisNotton
+	1.	DEFECT FIX: DEF143217: [System Build] Rom build stage unknow keyword in MSF00270
+
+
+Version 2.00.2056
+=================
+(Made by VincentF 25/11/2009)
+
+1.	IndrajeetSingh
+	1.	DEFECT FIX: DEF141945: Base Template Port build fails
+
+2.	PatrickConway
+	2.	MINOR_CHANGE: Add missing SMPSAFE keywords to mmp files (mostly test drivers)
+
+3.	ChrisNotton
+	1.	DEFECT FIX: DEF142927: BSP regressions in header relocation build
+	2.	DEFECT FIX: DEF143040: CrashMonitor public headers should not include platform headers
+	3.	DEFECT FIX: DEF143042: Public header e32test.h includes platform headers...
+	4.	DEFECT FIX: DEF143044: Public header u32std.h includes platform header files...
+	5.	DEFECT FIX: DEF143053: Public header e32event.h includes platform header...
+	6.	DEFECT FIX: DEF142880: btrace.iby does not use KERNEL_DIR for ldd
+
+4.	VincentF
+	1.	DEFECT FIX: DEF142854: Bootstrap.flm and related bld.inf changes not submitted to the MCL
+		Use FLM, rather than extension makefile, to build bootstraps on all SymTB10.1
+		baseports with SBSv2 (Raptor).
+
+5.	YiluZhu
+	1.	DEFECT FIX: DEF142969: Raptor GCCE: compsupp doesn't deal gracefully with a Raptor GCCE build
+
+6.	DaveGordon
+	1.	DEFECT FIX: DEF142684: T_TIME hangs on Ivalo waiting for absolute timer after changing secure time
+		Improve test by making sure time + secure offset settings are sane before changing secure time
+	2.	DEFECT FIX: DEF142504 T_PAGELDRTST_REAPER issues
+		Fixes KERN-EXEC panic with code EBadHandle by restructuring loops in CopyAndFragmentFiles().
+		Fixes issue with failing Attrib() leaving file unusable - now tries making file R/W if first
+		attempt at deleting it fails.
+	3.	DEFECT FIX: DEF141903 T_TIMER intermitant failure on 3430 (t_timer.cpp:633)
+		Fixes mismatch between getting time in UTC vs. setting alarm in Local time!
+		(also fixes dup PDEF136734 T_TIMER fails intermittently on SMP platforms)
+
+7.	NeilClifford
+	1.	DEFECT FIX: DEF142716: Medmmc / USB enhancement
+
+8.	Saravana Attiyap
+	1.	DEFECT FIX: DEF142896: t_drtaeabi.mmp references deprecated source directories
+	2.	DEFECT FIX: DEF142878: t_datapaging soak test fail in production environement
+
+9.	VincentF
+	1.	MINOR_CHANGE: Include missing split header files
+
+10.	JessieZh
+	1.	DEFECT FIX: DEF142437: t_iic failed to run in eshell
+
+11.	RichardCo
+	1.	DEFECT FIX: DEF142744: Missing constant KImageHWFloat_VFPv3 
+
+12.	RyanHarkin
+	1.	DEFECT FIX: DEF142549: Bridge: e32test t_timer fails on 8500
+		Added an exception, via a new Machine UID so the 8500 does not run the "Test sequential locks
+		fail over on/off" test
+		
+13:	MiguelB
+	1.	DEFECT FIX: DEF142719: WDP: Media card Passwords do not work in WDP environment 
+	2.	DEFECT FIX: DEF142819: exFAT partitions are not recognised by MMC/SD stack
+
+14.	Saravana Attiyap
+	1.	DEFECT FIX DEF142943: T_THRASH - CreatePagedChunk test method fails with KErrNoMemory on gekko77
+
+15.	SushmitaR
+	1.	MINOR CHANGE: Add SMP Soak Tests
+
+16. 	JimmyZhou
+	1.	DEFECT FIX: DEF141425: USB ONB testing steps passing rate doesn't meet test pass critiera   
+	2. 	DEFECT FIX: DEF141212: Engineering improvement  
+
+17.	DjordjeK
+	1.	DEFECT FIX: DEF142736: Bootstrap should support flexible mapping of external cache controller
+		Previously, external cache controller had to be positioned at the start of a H/W region specified in
+		bootstrap. That restriction is now removed so it can be mapped in 64KB or 1MB mappings alongside with
+		other controllers (which may save 1KB of page table & improve performance due to less TLB misses).
+
+
 Version 2.00.2055
 =================
 (Made by VincentF 24/11/2009)

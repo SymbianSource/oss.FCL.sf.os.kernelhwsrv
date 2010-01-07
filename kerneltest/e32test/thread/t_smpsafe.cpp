@@ -23,6 +23,37 @@
 #include <u32hal.h>
 #include <d_ldrtst.h>
 
+/////////////////////////////////////////////////////////////////////////////
+//
+//! @SYMTestCaseID			KBASE-T_SMPSAFE-2700
+//! @SYMTestType			UT
+//! @SYMPREQ				PREQ2094
+//! @SYMTestCaseDesc		SMP compatibility mode test
+//! @SYMTestActions			
+//! @SYMTestExpectedResults All tests should pass.
+//! @SYMTestPriority        Medium
+//! @SYMTestStatus          Implemented
+//
+// The test attempts to prove that the SMPSAFE compatibility mode mechanism
+// works and correctly forces processes which contain any unsafe code to run
+// as if they were on a single-cpu machine. This is done by loading and
+// unloading various combinations of DLLs into the test process itself, and
+// by spawning and exiting various EXEs.
+//
+// Two things are checked for each combination:
+//
+// 1) D_LDRTST is used to retrieve the relevant process's SMP unsafe count,
+//    the number of top-level binaries loaded into that process which are not
+//    SMP safe. This works on all systems, including uniprocessor, even if
+//    compatibility mode is not enabled, as this accounting is done
+//    unconditionally.
+//
+// 2) If the system running the test has multiple processors, and one of the
+//    compatibility modes is actually enabled, the test process runs a loop
+//    designed to see if concurrent execution of threads actually happens.
+//    (the loop is in smpsafe.cpp because it is shared between the test and
+//    the small slave programs used).
+
 RTest test(_L("T_SMPSAFE"));
 RLdrTest ldd;
 
@@ -32,12 +63,17 @@ TBool CompatMode;
 
 extern TInt CheckAffinity();
 
+// load an exe and check that it has the expected SMP unsafe count (check 1)
+// don't resume/delete it yet.
 void DoStartExe(RProcess& p, const TDesC &aFilename, TInt aExpectedUnsafe)
 	{
 	test_KErrNone(p.Create(aFilename, KNullDesC));
 	test_Equal(aExpectedUnsafe, ldd.ProcessSMPUnsafeCount(p.Handle()));
 	}
 
+// resume the exe and if compatibility mode is available, check that the
+// expected outcome of the test loop was observed (check 2)
+// delete it afterward.
 void DoStopExe(RProcess& p, TInt aExpectedUnsafe)
 	{
 	TRequestStatus s;
@@ -62,6 +98,7 @@ void StopExe(TInt aExpectedUnsafe)
 	DoStopExe(pLoaded, aExpectedUnsafe);
 	}
 
+// start and stop an exe, doing both checks 1 and 2.
 void TryExe(const TDesC &aFilename, TInt aExpectedUnsafe)
 	{
 	RProcess p;
@@ -69,6 +106,7 @@ void TryExe(const TDesC &aFilename, TInt aExpectedUnsafe)
 	DoStopExe(p, aExpectedUnsafe);
 	}
 
+// check the main test process, both checks 1 and 2.
 void CheckSelf(TInt aExpectedUnsafe)
 	{
 	test_Equal(aExpectedUnsafe, ldd.ProcessSMPUnsafeCount(RProcess().Handle()));
@@ -93,16 +131,25 @@ GLDEF_C TInt E32Main()
 	TInt cpus = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
 	test_Compare(cpus, >, 0);
 	SMPPlatform = cpus > 1;
-
-	test.Next(_L("Get compatibility mode setting"));
-	TInt flags = UserSvr::HalFunction(EHalGroupKernel, EKernelHalConfigFlags, 0, 0);
-	test_Compare(flags, >=, 0);
-	CompatMode = flags & (EKernelConfigSMPUnsafeCompat | EKernelConfigSMPUnsafeCPU0);
-	if (SMPPlatform && !CompatMode)
+	if (!SMPPlatform)
 		{
-		test.Printf(_L("*************************************************\n"));
-		test.Printf(_L("Compatibility mode is not enabled, not testing it\n"));
-		test.Printf(_L("*************************************************\n"));
+		CompatMode = EFalse;
+		test.Printf(_L("*****************************************************\n"));
+		test.Printf(_L("Uniprocessor system, not actually testing compat mode\n"));
+		test.Printf(_L("*****************************************************\n"));
+		}
+	else
+		{
+		test.Next(_L("Get compatibility mode setting"));
+		TInt flags = UserSvr::HalFunction(EHalGroupKernel, EKernelHalConfigFlags, 0, 0);
+		test_Compare(flags, >=, 0);
+		CompatMode = flags & (EKernelConfigSMPUnsafeCompat | EKernelConfigSMPUnsafeCPU0);
+		if (!CompatMode)
+			{
+			test.Printf(_L("*************************************************\n"));
+			test.Printf(_L("Compatibility mode is not enabled, not testing it\n"));
+			test.Printf(_L("*************************************************\n"));
+			}
 		}
 
 	test.Next(_L("Load test LDD"));

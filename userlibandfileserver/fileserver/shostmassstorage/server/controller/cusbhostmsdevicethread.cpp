@@ -257,8 +257,8 @@ CUsbHostMsDeviceThread::CUsbHostMsDeviceThread(CUsbHostMsSession& aUsbHostMsSess
     iQueueFull(EFalse)
 	{
     __MSFNLOG
-    TBuf<30> nameBuf;
-    nameBuf.Format(_L("Host Ms ThreadMutex%d"), aToken);
+    TBuf<32> nameBuf;
+    nameBuf.Format(_L("Host Ms ThreadMutex%8x"), aToken);
 	iMutex.CreateGlobal(nameBuf,EOwnerProcess);
 	}
 

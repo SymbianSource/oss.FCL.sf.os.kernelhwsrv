@@ -348,7 +348,7 @@ void DebugDumpDriveCaps(const TLocDrv* aDrive, const TAny* aCaps)
 	Kern::Printf("Drive %d Caps:", aDrive->iDriveNumber);
 	Kern::Printf("Size: %lx", c.iSize);
 	Kern::Printf("Type: %08x", c.iType);
-	Kern::Printf("Batt: %08x", c.iBattery);
+	Kern::Printf("Bus : %08x", c.iConnectionBusType);
 	Kern::Printf("DAtt: %08x", c.iDriveAtt);
 	Kern::Printf("MAtt: %08x", c.iMediaAtt);
 	Kern::Printf("Base: %08x", c.iBaseAddress);
@@ -615,27 +615,45 @@ TInt DLocalDrive::Request(TInt aFunction, TAny* a1, TAny* a2)
 		case RLocalDrive::EControlPasswordLock:
 			{
 			m.Id()=EPasswordLock;
-			TLocalDrivePasswordData* ppd = (TLocalDrivePasswordData*)a1;
-			m.RemoteDes()=(TAny*)ppd;
-			r=iDrive->Request(m);
+			m.RemoteDes() = a1;
+
+			TMediaPassword oldPasswd;
+			TMediaPassword newPasswd;
+			TLocalDrivePasswordData pswData;
+			r = ReadPasswordData(m, pswData, oldPasswd, newPasswd);
+
+			if (r == KErrNone)
+				r = iDrive->Request(m);
 			break;
 			}
 		case RLocalDrive::EControlPasswordUnlock:
 			{
 			m.Id()=EPasswordUnlock;
-			TLocalDrivePasswordData* ppd = (TLocalDrivePasswordData*)a1;
-			m.RemoteDes()=(TAny*)ppd;
-			r=iDrive->Request(m);
+			m.RemoteDes() = a1;
+
+			TMediaPassword oldPasswd;
+			TMediaPassword newPasswd;
+			TLocalDrivePasswordData pswData;
+			r = ReadPasswordData(m, pswData, oldPasswd, newPasswd);
+
 			if(r == KErrNone)
+				r=iDrive->Request(m);
+			if (r == KErrNone)
 				iDrive->iPrimaryMedia->iTotalPartitionsOpened = 0;
 			break;
 			}
 		case RLocalDrive::EControlPasswordClear:
 			{
 			m.Id()=EPasswordClear;
-			TLocalDrivePasswordData* ppd = (TLocalDrivePasswordData*)a1;
-			m.RemoteDes()=(TAny*)ppd;
-			r=iDrive->Request(m);
+			m.RemoteDes() = a1;
+
+			TMediaPassword oldPasswd;
+			TMediaPassword newPasswd;
+			TLocalDrivePasswordData pswData;
+			r = ReadPasswordData(m, pswData, oldPasswd, newPasswd);
+
+			if (r == KErrNone)
+				r = iDrive->Request(m);
 			break;
 			}
 		case RLocalDrive::EControlPasswordErase:
@@ -660,15 +678,43 @@ TInt DLocalDrive::Request(TInt aFunction, TAny* a1, TAny* a2)
 			break;
 		case RLocalDrive::EControlReadPasswordStore:
 			{
+			TUint8  passData[TPasswordStore::EMaxPasswordLength];
+			m.RemoteDes() = (TAny*) passData;
+			m.Length() = sizeof(passData);
 			m.Id()=EReadPasswordStore;
-			m.RemoteDes()=(TDes8*)a1;
 			r=iDrive->Request(m);
+			if (r==KErrNone)
+				{
+				TPtr8 pData(passData, (TInt) m.Length(), TPasswordStore::EMaxPasswordLength);
+				m.RemoteDes()=(TDes8*)a1;
+				r = m.WriteRemote(&pData,0);
+				}
 			break;
 			}
 		case RLocalDrive::EControlWritePasswordStore:
 			{
+			TUint8  passData[TPasswordStore::EMaxPasswordLength];
+			TPtr8 pData(passData, TPasswordStore::EMaxPasswordLength);
+
+			DThread* pT=m.RemoteThread();
+			if (!pT)
+				pT=m.Client();
+
+			m.RemoteDes() = (TDes8*)a1;
+			r = Kern::ThreadGetDesLength(pT, m.RemoteDes());
+			if ( r > pData.MaxLength() )
+				r = KErrOverflow;
+			if ( r < KErrNone)
+				break;
+
+			r = m.ReadRemote(&pData,0);
+			if (r != KErrNone)
+				break;
+
+
+			m.RemoteDes() = (TAny*) pData.Ptr();
+			m.Length() = pData.Length();
 			m.Id()=EWritePasswordStore;
-			m.RemoteDes()=(TDes8*)a1;
 			r=iDrive->Request(m);
 			if(r == KErrNone)
 				iDrive->iPrimaryMedia->iTotalPartitionsOpened = 0;
@@ -677,8 +723,16 @@ TInt DLocalDrive::Request(TInt aFunction, TAny* a1, TAny* a2)
 		case RLocalDrive::EControlPasswordStoreLengthInBytes:
 			{
 			m.Id()=EPasswordStoreLengthInBytes;
-			m.RemoteDes()=a1;
+			TInt length;
+			m.RemoteDes() = (TAny*) &length;
 			r=iDrive->Request(m);
+
+			if (r == KErrNone)
+				{
+				m.RemoteDes()=a1;
+				r = m.WriteRemoteRaw(&length,sizeof(TInt));
+				}
+			
 			break;
 			}
 		case RLocalDrive::EControlGetLastErrorInfo:
@@ -724,6 +778,32 @@ TInt DLocalDrive::Request(TInt aFunction, TAny* a1, TAny* a2)
 	__TRACE_TIMING(4);
 	return r;
 	}
+
+TInt DLocalDrive::ReadPasswordData(TLocDrvRequest& aReq, TLocalDrivePasswordData& aPswData, TMediaPassword& aOldPasswd, TMediaPassword& aNewPasswd)
+	{
+	TLocalDrivePasswordData clientData;
+	TInt r = aReq.ReadRemoteRaw(&clientData, sizeof(TLocalDrivePasswordData));
+
+	DThread* pT = aReq.RemoteThread();
+	if (!pT)
+		pT = aReq.Client();
+
+	if (r == KErrNone)
+		r = Kern::ThreadDesRead(pT, clientData.iOldPasswd, aOldPasswd, 0 ,KChunkShiftBy0);
+	if (r == KErrNone)
+		r = Kern::ThreadDesRead(pT, clientData.iNewPasswd, aNewPasswd, 0 ,KChunkShiftBy0);
+	
+	aPswData.iStorePasswd = clientData.iStorePasswd;
+	aPswData.iOldPasswd = &aOldPasswd;
+	aPswData.iNewPasswd = &aNewPasswd;
+
+
+	aReq.RemoteDes() = (TAny*) &aPswData;
+	aReq.Flags()|= TLocDrvRequest::EKernelBuffer;
+
+	return r;
+	}
+
 
 #ifdef __DEMAND_PAGING__
 TInt DLocalDrive::LockMountInfo(DPrimaryMediaBase& aPrimaryMedia, TLocDrvRequest& aReq)
@@ -954,7 +1034,7 @@ Reads data from an arbitrary descriptor in the requesting thread's process.
 This is used by the media driver to read data from a descriptor in the
 requesting thread.  
 
-NB This is NOT supported in a datapaging environment as there is no guarantee 
+NB This is NOT supported on datapaging media as there is no guarantee 
 that the remote descriptor won't be paged out. If this function is called and
 data-paging is enabled the kernel will fault in debug mode and return 
 KErrNotSupported in release mode.
@@ -972,13 +1052,20 @@ KErrNotSupported in release mode.
 */
 EXPORT_C TInt TLocDrvRequest::ReadRemote(const TAny* aSrc, TDes8* aDes)
 	{
+	if (Flags() & TLocDrvRequest::EKernelBuffer)
+		{
+		aDes->Copy(* (TDesC8*) aSrc);
+		return KErrNone;
+		}
+
 	DThread* pT=RemoteThread();
 	if (!pT)
 		pT=Client();
 
 #ifdef __DEMAND_PAGING__
-	__ASSERT_DEBUG(!DataPagingDeviceRegistered, LOCM_FAULT());
-	if (DataPagingDeviceRegistered)
+	__ASSERT_DEBUG(!DataPagingDfcQ(Drive()->iPrimaryMedia), LOCM_FAULT());
+
+	if (DataPagingDfcQ(Drive()->iPrimaryMedia))
 		return KErrNotSupported;
 #endif
 
@@ -1005,6 +1092,12 @@ buffer.
 */
 EXPORT_C TInt TLocDrvRequest::ReadRemoteRaw(TAny* aDest, TInt aSize)
 	{
+	if (Flags() & TLocDrvRequest::EKernelBuffer)
+		{
+		(void)memcpy(aDest, (TAny*) RemoteDes(), aSize);
+		return KErrNone;
+		}
+
 	DThread* pT=RemoteThread();
 	if (!pT)
 		pT=Client();
@@ -1583,30 +1676,17 @@ TInt DPrimaryMediaBase::PinSendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddres
 				}
 			}
 
-		case DLocalDrive::ECaps:
-		case DLocalDrive::EGetLastErrorInfo:
-		case DLocalDrive::EQueryDevice:
-			{
-			TInt len = aReq.Length();
-
-			if (len > (TInt) ThePinObjectAllocator->iFragmentGranularity)
-				return KErrTooBig;
-
-			return PinFragmentSendReceive(aReq, (TLinAddr) aReq.RemoteDes(), len);
-			}
-
 		case DLocalDrive::ERead:
 		case DLocalDrive::EWrite:
 			{
 			return PinFragmentSendReceive(aReq, aLinAddress, aReq.Length());
 			}
 		
-
-
-		// For the time being, don't support any password requests to the data paging device.
-		// This shouldn't be a problem as the device should be flagged as non-removable...
-		// This would be difficult to do anyway as it would involve pinning up to 3 buffers - 
-		// TLocalDrivePasswordData itself, iOldPasswd & iNewPasswd
+		// For all these requests, aReq.RemoteDes() points to a buffer on the stack in DLocalDrive::Request()
+		// This is a kernel stack & so should be unpaged & not require pinning...
+		case DLocalDrive::ECaps:
+		case DLocalDrive::EGetLastErrorInfo:
+		case DLocalDrive::EQueryDevice:
 		case DLocalDrive::EPasswordLock:
 		case DLocalDrive::EPasswordUnlock:
 		case DLocalDrive::EPasswordClear:
@@ -1614,7 +1694,6 @@ TInt DPrimaryMediaBase::PinSendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddres
 		case DLocalDrive::EWritePasswordStore:
 		case DLocalDrive::EPasswordStoreLengthInBytes:
 		case DLocalDrive::EPasswordErase:
-			return KErrNotSupported;
 
 		default:		
 			return SendReceive(aReq);
@@ -1858,7 +1937,6 @@ It initializes media type of drive as unknown and has to be overridden in the de
 	// default implementation
 	// aCaps is zeroed beforehand
 	aCaps.iType = EMediaUnknown;
-	//	aCaps.iBattery = EBatNotSupported;
 	}
 	
 EXPORT_C TBool DPrimaryMediaBase::IsRemovableDevice(TInt& /*aSocketNum*/)
@@ -1977,38 +2055,17 @@ It handles the drive request encapsulated in TLocDrvRequest depending on the mes
 			}
 		case DLocalDrive::EReadPasswordStore:
 			{
-			TUint8  passData[TPasswordStore::EMaxPasswordLength];
-			TPtr8 pData(passData, TPasswordStore::EMaxPasswordLength);
-			TInt r = ThePasswordStore->ReadPasswordData(pData);
-			if (r==KErrNone)
-				r = m.WriteRemote(&pData,0);
+			TPtr8 pswData ((TUint8*) m.RemoteDes(), (TInt) m.Length());
+			TInt r = ThePasswordStore->ReadPasswordData(pswData);
+			m.Length() = pswData.Length();
 			CompleteRequest(m, r);
 			return;
 			}
 		case DLocalDrive::EWritePasswordStore:
 			{
-			TUint8  passData[TPasswordStore::EMaxPasswordLength];
-			TPtr8 pData(passData, TPasswordStore::EMaxPasswordLength);
+			TPtrC8 pData((TUint8*) m.RemoteDes(), (TInt) m.Length());
+			TInt r = ThePasswordStore->WritePasswordData(pData);
 
-			DThread* pT=m.RemoteThread();
-			if (!pT)
-				pT=m.Client();
-
-			TInt lengthOrError = Kern::ThreadGetDesLength(pT, m.RemoteDes() );
-			if ( lengthOrError > pData.MaxLength() )
-				{
-				CompleteRequest(m, KErrOverflow);
-				return;
-				}
-			else if ( lengthOrError < KErrNone)
-				{
-				CompleteRequest(m, lengthOrError);
-				return;
-				}	
-
-			TInt r = m.ReadRemote(&pData,0);
-			if (r==KErrNone)
-				r = ThePasswordStore->WritePasswordData(pData);
 			if(r != KErrNone)
 				{
 				CompleteRequest(m, r);
@@ -2029,8 +2086,8 @@ It handles the drive request encapsulated in TLocDrvRequest depending on the mes
 		case DLocalDrive::EPasswordStoreLengthInBytes:
 			{
 			TInt length = ThePasswordStore->PasswordStoreLengthInBytes();
-			TInt r = m.WriteRemoteRaw(&length,sizeof(TInt));
-			CompleteRequest(m, r);
+			*(TInt*) m.RemoteDes() = length;
+			CompleteRequest(m, KErrNone);
 			return;
 			}
 		default:

@@ -235,7 +235,7 @@ void CFatMountCB::SetVolumeCleanL(TBool aClean)
 
     //-- further read and write will be directly from the CProxyDrive, bypassing FAT cache. 
     //-- this is because CFatTable doesn't allow access to FAT[0] & FAT[1]
-    //-- We also need to write data through CProxyDrive, because TFatDriveInterface has a call back that can call this method
+    //-- We also need to write data through CProxyDrive, because TDriveInterface has a call back that can call this method
 
     if(Is32BitFat())
         {//-- Fat32
@@ -323,8 +323,8 @@ Determine whether "VolumeClean" (ClnShutBitmask) flag is set.
 TBool CFatMountCB::VolumeCleanL() 
     {
 
-    //-- read access to the FAT is through TFatDriveInterface, because CFatTable doesn't allow access to FAT[1]
-    TFatDriveInterface& drive =DriveInterface();
+    //-- read access to the FAT is through TDriveInterface, because CFatTable doesn't allow access to FAT[1]
+    TDriveInterface& drive =DriveInterface();
 
     if(Is32BitFat())
         {//-- Fat32
@@ -412,7 +412,7 @@ void CFatMountCB::MountL(TBool aForceMount)
     bootSector.PrintDebugInfo();
 
     //-- determine FAT type by data from boot sector. This is done by counting number of clusters, not by BPB_RootEntCnt
-    iFatType = bootSector.FatType();
+    SetFatType(bootSector.FatType());
     ASSERT(iFatType != EInvalid); //-- this shall be checked in ReadBootSector()
     
 
@@ -421,7 +421,7 @@ void CFatMountCB::MountL(TBool aForceMount)
      //-- than required for FAT32. Probably this is incorrectly FAT32 formatted media. Put the drive into ReadOnly mode, assuming
      //-- that is FAT32.
         __PRINT(_L("FAT type mismatch! Setting drive to ReadOnly mode for FAT32. \n"));
-        iFatType = EFat32; //-- force FAT type to be FAT32
+        SetFatType(EFat32); //-- force FAT type to be FAT32
         SetReadOnly(ETrue);
     }
 
@@ -629,43 +629,13 @@ TInt CFatMountCB::ReadFSInfoSector(TInt64 aMediaPos, TFSInfo& aFSInfo)  const
     return KErrNone;
     }
 
-/**
-Checks for end of file for all Fat types
-
-@param aCluster Cluster to check
-@return Result of test
-*/
-TBool CFatMountCB::IsEndOfClusterCh(TInt aCluster) const
-	{
-	if(Is32BitFat())
-		return(aCluster>=(TInt)0x0FFFFFF8 && aCluster<=(TInt)0x0FFFFFFF);
-	else if(Is16BitFat())
-		return(aCluster>=0xFFF8 && aCluster<=0xFFFF);
-	else
-		return(aCluster>=0xFF8 && aCluster<=0xFFF);
-	}
 
 /**
-Set a cluster to the end of cluster chain marker
+    Initialize data to represent the root directory
 
-@param aCluster cluster to set to end of chain marker
+    @param anEntry Entry to initialise
 */
-void CFatMountCB::SetEndOfClusterCh(TInt &aCluster) const
-	{
-	if(Is32BitFat())
-		aCluster=EOF_32Bit;
-	else if(Is16BitFat())
-		aCluster=EOF_16Bit;
-	else
-		aCluster=EOF_12Bit;
-	}
-
-/**
-Initialize data to represent the root directory
-
-@param anEntry Entry to initialise
-*/
-void CFatMountCB::InitializeRootEntry(TFatDirEntry & anEntry) const
+void CFatMountCB::InitializeRootEntry(TFatDirEntry& anEntry) const
 	{
 	anEntry.SetName(_L8("ROOT"));
 	anEntry.SetAttributes(KEntryAttDir);
@@ -675,21 +645,21 @@ void CFatMountCB::InitializeRootEntry(TFatDirEntry & anEntry) const
 
 
 /**
-Implementation of CMountCB::FileSystemSubType(). Retrieves the sub type of Fat file system
-and returns the name as a descriptor.
+    Implementation of CMountCB::FileSystemSubType(). Retrieves the sub type of Fat file system
+    and returns the name as a descriptor.
 
-@param aName Name of the sub type of Fat file system
-@return KErrNone if successful; KErrArgument if aName is not long enough; KErrNotReady if
-		the mount is not ready.
+    @param aName Name of the sub type of Fat file system
+    @return KErrNone if successful; KErrArgument if aName is not long enough; KErrNotReady if
+		    the mount is not ready.
 
-@see CMountCB::FileSystemSubType()
+    @see CMountCB::FileSystemSubType()
 */
 TInt CFatMountCB::SubType(TDes& aName) const
 	{
 	if(aName.MaxLength() < 5)
 		return KErrArgument;
 	
-	switch (iFatType)
+	switch (FatType())
 		{
 		case EFat12:
 			{

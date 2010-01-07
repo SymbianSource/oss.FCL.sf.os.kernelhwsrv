@@ -27,6 +27,7 @@
 #include <e32kpan.h>
 #include <u32std.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <e32event.h>
 #include <e32event_private.h>
 #include <d32locd.h>

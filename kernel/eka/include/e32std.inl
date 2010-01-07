@@ -3559,7 +3559,7 @@ inline TInt RDevice::Open(const TFindLogicalDevice& aFind,TOwnerType aType)
 // Class RCriticalSection
 inline TBool RCriticalSection::IsBlocked() const
 /**
-Tests whether the critical section is occupied by another thread.
+Tests whether the critical section is occupied by any thread.
 
 @return True, if the critical section is occupied by another thread. False, 
         otherwise.

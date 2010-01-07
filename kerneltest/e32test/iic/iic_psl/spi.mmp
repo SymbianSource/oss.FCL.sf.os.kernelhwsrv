@@ -14,6 +14,8 @@
 // e32test/iic/iic_psl/spi.mmp
 //
 
+macro IIC_SIMULATED_PSL
+#define IIC_SIMULATED_PSL /*Only for iic_channel.mmh to pick up the needed iic_testpsl.lib*/
 #include "../../../../kernel/eka/drivers/iic/iic_channel.mmh"
 
 target          spi.pdd
@@ -25,7 +27,6 @@ source		IIC_PIL_SOURCE
 sourcepath		.
 source          spi.cpp
 
-macro IIC_SIMULATED_PSL
 macro BUS_TYPE=(DIicBusChannel::ESpi)
 
 // Select the mode to build
@@ -39,7 +40,7 @@ macro SLAVE_MODE
 // un-comment the following if BTRACE output is required
 macro IIC_INSTRUMENTATION_MACRO
 
-library iic_testpsl.lib
+// library iic_testpsl.lib	// commented out as this iic_testpsl.lib is now included from iic_channel.mmh
 
 uid			0x100039d0 0x10286b51
 VENDORID 0x70000001

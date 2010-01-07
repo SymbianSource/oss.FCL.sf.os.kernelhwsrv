@@ -30,4 +30,5 @@ VENDORID 0x70000001
 start wins
 win32_headers
 end
+SMPSAFE
 

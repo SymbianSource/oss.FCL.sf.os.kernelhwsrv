@@ -45,11 +45,14 @@
 //
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
+#include <e32ver.h>
 RTest test(_L("T_WDPSTRESS"));
 
 #include <e32rom.h>
 #include <u32hal.h>
 #include <f32file.h>
+#include <e32svr.h>
+#include <e32hal.h>
 #include <f32dbg.h>
 #include <e32msgqueue.h>
 #include <e32math.h>

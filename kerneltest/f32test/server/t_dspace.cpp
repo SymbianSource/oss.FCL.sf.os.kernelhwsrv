@@ -178,7 +178,6 @@ LOCAL_C void Initialise()
 		TheBuffer.SetLength(KMaxBufSize);
 		Mem::Fill((void*)TheBuffer.Ptr(),KMaxBufSize,0xab);
 		}
-	TheDiskSize=DiskSize(KDefaultDrive);
 #if defined(__WINS__)
 	RemovableDrive=EDriveX;
 #else
@@ -240,6 +239,7 @@ LOCAL_C void Initialise()
 	// test not run on c: drive but does use it
 	Format(EDriveC);
 #endif
+	TheDiskSize=DiskSize(KDefaultDrive);
 	// and set the default directory
 	r=TheFs.MkDirAll(gSessionPath);
 	test(r==KErrNone || r==KErrAlreadyExists);

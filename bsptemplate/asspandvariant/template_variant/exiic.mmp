@@ -57,8 +57,7 @@ OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 //SYMBIAN_BASE_SYSTEMINCLUDE(template)
 //SYMBIAN_BASE_SYSTEMINCLUDE(template/specific)
 
-//library			iic.lib			// iic.lib provides the IIC Controller. 
-									// This is included from the variant.mmh, so not needed here.
+//library			iic.lib			// commented out as this iic.lib is now included from iic_channel.mmh
 
 library     VariantTarget(gpio,lib)
 

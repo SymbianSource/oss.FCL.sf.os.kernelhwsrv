@@ -1448,14 +1448,14 @@ public:
     The type of media mounted on the drive.
     */
 	TMediaType iType;
- 
- 
+
+
     /**
     Indicates whether the drive supports a battery, and if so, its state.
     */
     TBatteryState iBattery;
- 
- 
+
+
     /**
     The drive attributes.
     
@@ -1464,7 +1464,8 @@ public:
     @see KDriveAttRedirected
     @see KDriveAttSubsted
     @see KDriveAttInternal
-    @see KDriveAttRemovable
+    @see KDriveAttRemovable 
+    @see KDriveAttExternal 
     */
 	TUint iDriveAtt;
  
@@ -1480,11 +1481,12 @@ public:
     @see KMediaAttLocked
     */
 	TUint iMediaAtt;
-private:	
+
+
 	/**
-	Reserved for future expansion
+	The type of interface used to connect to the media.
 	*/
-	TUint32 iReserved;	
+	TConnectionBusType iConnectionBusType;
 	};
 
 

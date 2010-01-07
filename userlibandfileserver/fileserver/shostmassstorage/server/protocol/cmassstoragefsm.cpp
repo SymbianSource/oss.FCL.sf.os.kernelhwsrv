@@ -19,7 +19,6 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
 
 #include "usbmshostpanic.h"
 #include "debug.h"

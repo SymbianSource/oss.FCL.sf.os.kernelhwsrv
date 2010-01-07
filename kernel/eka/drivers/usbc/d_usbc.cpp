@@ -127,12 +127,7 @@ DLddUsbcChannel::DLddUsbcChannel()
 								  KUsbRequestCallbackPriority),
       iOtgFeatureChangePtr(NULL),
       iOtgFeatureCallbackInfo(this, DLddUsbcChannel::OtgFeatureChangeCallback, KUsbRequestCallbackPriority),
-	  iBufferBaseEp0(NULL),
-	  iBufferSizeEp0(0),
 	  iNumberOfEndpoints(0),
-	  iHwChunkIN(NULL),
-	  iHwChunkOUT(NULL),
-	  iHwChunkEp0(NULL),
 	  iDeviceState(EUsbcDeviceStateUndefined),
 	  iOwnsDeviceControl(EFalse),
 	  iAlternateSetting(0),
@@ -1731,9 +1726,8 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	// Both IN and OUT buffers will be fully cached:
 	const TUint32 cacheAttribs = EMapAttrSupRw | EMapAttrCachedMax;
 	const TUint32 bandwidthPriority = aInfoBuf->iBandwidthPriority;
-	TInt totalINBufferSize = 0;
-	TInt totalOUTBufferSize = 0;
 
+	// Supports ep0+5 endpoints
 	TInt real_ep_numbers[6] = {-1, -1, -1, -1, -1, -1};
 
     // See if PIL will accept this interface
@@ -1778,7 +1772,10 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 		goto F1;
 		}
 
+	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcChannel::SetInterface num_endpoints=%d", num_endpoints));
+
 	// other endpoints
+	// calculate the total buffer size
 	for (TInt i = 1; i <= num_endpoints; i++, pEndpointData++)
 		{
 		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface for ep=%d", i));
@@ -1787,6 +1784,7 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 			r = KErrUsbBadEndpoint;
 			goto F2;
 			}
+
 		TUsbcEndpoint* ep = new TUsbcEndpoint(this, iController, pEndpointData, i, bandwidthPriority);
 		alternateSettingListRec->iEndpoint[i] = ep;
 		if (!ep)
@@ -1799,19 +1797,56 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 			r = KErrNoMemory;
 			goto F2;
 			}
-		if (pEndpointData->iDir == KUsbEpDirIn)
-			{
-			totalINBufferSize += ep->BufferTotalSize();
-			__KTRACE_OPT(KUSB, Kern::Printf("IN buffering now %d", totalINBufferSize));
-			}
-		else if (pEndpointData->iDir == KUsbEpDirOut)
-			{
-			totalOUTBufferSize += ep->BufferTotalSize();
-			__KTRACE_OPT(KUSB, Kern::Printf("OUT buffering now %d", totalOUTBufferSize));
-			}
+
 		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface for ep=%d rec=0x%08x ep==0x%08x",
 										i, alternateSettingListRec, ep));
 		}
+
+	// buf size of each endpoint
+	TInt bufSizes[KMaxEndpointsPerClient + 1];
+	TInt epNum[KMaxEndpointsPerClient + 1];
+
+    // init
+    for( TInt i=0;i<KMaxEndpointsPerClient+1;i++ )
+        {
+        bufSizes[i] = -1;
+        epNum[i] = i;
+        }
+
+	// Record the actual buf size of each endpoint
+	for( TInt i=1;i<=num_endpoints;i++ )
+	    {
+	    bufSizes[i] = alternateSettingListRec->iEndpoint[i]->BufferSize();
+	    }
+
+	__KTRACE_OPT(KUSB, Kern::Printf("Sort the endpoints:"));
+
+    // sort the endpoint number by the bufsize decreasely
+	for( TInt i=1;i<num_endpoints;i++ )
+	    {
+	    TInt epMaxBuf = i;
+	    for(TInt k=i+1;k<=num_endpoints;k++ )
+	        {
+	        if( bufSizes[epMaxBuf]<bufSizes[k])
+	            {
+	            epMaxBuf = k;
+	            }
+	        }
+	    TInt temp = bufSizes[i];
+	    bufSizes[i] = bufSizes[epMaxBuf];
+	    bufSizes[epMaxBuf] = temp;
+
+	    temp = epNum[i];
+        epNum[i] = epNum[epMaxBuf];
+        epNum[epMaxBuf] = temp;
+
+	    alternateSettingListRec->iEpNumDeOrderedByBufSize[i] = epNum[i];
+
+	    __KTRACE_OPT(KUSB, Kern::Printf(" %d:%d", epNum[i], bufSizes[i]));
+	    }
+    alternateSettingListRec->iEpNumDeOrderedByBufSize[num_endpoints] = epNum[num_endpoints];
+    __KTRACE_OPT(KUSB, Kern::Printf(" %d:%d", epNum[num_endpoints], bufSizes[num_endpoints]));
+    __KTRACE_OPT(KUSB, Kern::Printf("\n"));
 
 	// chain in this alternate setting
 	alternateSettingListRec->iNext = iAlternateSettingList;
@@ -1826,47 +1861,27 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 		alternateSettingListRec->iEndpoint[i]->SetRealEpNumber(real_ep_numbers[i]);
 		}
 
-	if (totalOUTBufferSize != 0)
-		{
-		// maximally cached always
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface setting up OUT buffering size=%d", totalOUTBufferSize));
-		iHwChunkOUT = SetupInterfaceMemory(totalOUTBufferSize, iHwChunkOUT, KUsbEpDirOut, cacheAttribs);
-		if (iHwChunkOUT == NULL)
-			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("SetInterface can't get chunk for OUT buffering size=%d reason=%d",
-											  totalOUTBufferSize, r));
-			r = KErrNoMemory;
-			goto KillAll;
-			}
-		}
-	if (totalINBufferSize != 0)
-		{
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface setting up IN buffering size=%d", totalINBufferSize));
-		iHwChunkIN = SetupInterfaceMemory(totalINBufferSize, iHwChunkIN, KUsbEpDirIn, cacheAttribs);
-		if (iHwChunkIN == NULL)
-			{
-			__KTRACE_OPT(KPANIC, Kern::Printf("SetInterface can't get chunk for IN buffering size=%d reason=%d",
-											  totalOUTBufferSize, r));
-			r = KErrNoMemory;
-			goto KillAll;
-			}
-		}
-	__KTRACE_OPT(KUSB, Kern::Printf("SetInterface ready to exit"));
-
-	if (aInterfaceNumber == 0)
-		{
-		// make sure we're ready to go with the main interface
-		iValidInterface = ETrue;
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface SelectAlternateSetting"));
-		SelectAlternateSetting(0);
-		}
-	return KErrNone;
-
- KillAll:
-	__KTRACE_OPT(KUSB, Kern::Printf("Destroying all interfaces"));
-	DestroyAllInterfaces();
-	DestroyEp0();
-	return r;
+	r = SetupInterfaceMemory(iHwChunks, cacheAttribs );
+	if( r==KErrNone )
+	    {
+        __KTRACE_OPT(KUSB, Kern::Printf("SetInterface ready to exit"));
+    
+        if (aInterfaceNumber == 0)
+            {
+            // make sure we're ready to go with the main interface
+            iValidInterface = ETrue;
+            __KTRACE_OPT(KUSB, Kern::Printf("SetInterface SelectAlternateSetting"));
+            SelectAlternateSetting(0);
+            }
+        return KErrNone;
+	    }
+	else
+	    {
+        __KTRACE_OPT(KUSB, Kern::Printf("Destroying all interfaces"));
+        DestroyAllInterfaces();
+        DestroyEp0();
+        return r;
+	    }
 
  F2:
 	delete alternateSettingListRec;
@@ -1882,51 +1897,123 @@ TInt DLddUsbcChannel::SetInterface(TInt aInterfaceNumber, TUsbcIfcInfo* aInfoBuf
 	return r;
 	}
 
+// realloc the memory, and set the previous interfaces 
+TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks, 
+        TUint32 aCacheAttribs )
+    {
+    TUsbcAlternateSettingList* asRec = iAlternateSettingList;
 
-DPlatChunkHw* DLddUsbcChannel::SetupInterfaceMemory(TInt aBufferSize, DPlatChunkHw* aHwChunk,
-													TUint aDirection, TUint32 aCacheAttribs)
-	{
-	TUint8* oldBase = NULL;
-	if (aHwChunk != NULL)
-		oldBase = reinterpret_cast<TUint8*>(aHwChunk->LinearAddress());
+    // if buffers has been changed
+    TBool chunkChanged = EFalse;
+    TInt numOfEp = asRec->iNumberOfEndpoints;
+ 
+    // 1, collect all bufs' sizes for the current interface
+    //    to realloc all the chunks
+    __KTRACE_OPT(KUSB, Kern::Printf("Collect all buffer sizes:"));
+    RArray<TInt> bufSizes;
+    for(TInt i=1;i<=numOfEp;i++)
+        {
+        TInt nextEp = asRec->iEpNumDeOrderedByBufSize[i];
+        TInt epBufCount = asRec->iEndpoint[nextEp]->BufferNumber();
+        __KTRACE_OPT(KUSB, Kern::Printf(" ep %d, buf count %d", nextEp, epBufCount ));
+        for(TInt k=0;k<epBufCount;k++)
+            {
+            TInt epBufSize = asRec->iEndpoint[nextEp]->BufferSize();
+            TInt r = bufSizes.Append(epBufSize);
+            if(r!=KErrNone)
+                {
+                iController->DeRegisterClient(this);
+                bufSizes.Close();
+                return r;
+                }
+            __KTRACE_OPT(KUSB,Kern::Printf(" %d", epBufSize ));
+            }
+        __KTRACE_OPT(KUSB, Kern::Printf("\n"));
 
-	DPlatChunkHw* chunk = ReAllocate(aBufferSize, aHwChunk, aCacheAttribs);
-	if (chunk == NULL)
-		{
-		// lost all interfaces:
-		// Tell Controller to release Interface and h/w resources associated with this
-		iController->DeRegisterClient(this);
-		}
-	else
-		{
-		// Parcel out the memory between endpoints
-		TUint8* newBase = reinterpret_cast<TUint8*>(chunk->LinearAddress());
-		TBool needsRebase = (newBase != oldBase);
-		TUint8* pBuf = newBase;
-		TUint8* pBufIf = pBuf;							   // this is where an interface's ep buffering starts
-		TUsbcAlternateSettingList* asRec = iAlternateSettingList;
-		// the current interface
-		__KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory rebasing setting=%d", asRec->iSetting));
-		RebaseInterfaceMemory(asRec, pBuf, aDirection);
-		// now the others if a rebase has occured
-		if (needsRebase)
-			{
-			__KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory rebasing "));
-			asRec = asRec->iNext;
-			while (asRec)
-				{
-				// Interfaces are not concurrent so they can all start at the same logical address
-				__KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory rebasing setting=%d", asRec->iSetting));
-				pBuf = pBufIf;
-				RebaseInterfaceMemory(asRec, pBuf, aDirection);
-				asRec = asRec->iNext;
-				}
-			}
-		__KTRACE_OPT(KUSB, Kern::Printf("SetInterface numberOfEndpoints"));
-		}
-	return chunk;
-	}
+        }
+   
+    // 2, alloc the buffer decreasely, biggest-->smallest
+    //   2.1 check the existing chunks
+    TInt bufCount = bufSizes.Count();
+    __KTRACE_OPT(KUSB, Kern::Printf(" ep buf number needed %d", bufCount ));
+    __KTRACE_OPT(KUSB, Kern::Printf(" chunks available %d", aHwChunks.Count() ));
 
+    TInt chunkInd = 0;
+    while( (chunkInd<aHwChunks.Count())&& (chunkInd<bufCount))
+        {
+        TUint8* oldAddr = NULL;
+        oldAddr = reinterpret_cast<TUint8*>(aHwChunks[chunkInd]->LinearAddress());
+
+        DPlatChunkHw* chunk = ReAllocate(bufSizes[chunkInd], aHwChunks[chunkInd], aCacheAttribs);
+        if (chunk == NULL)
+            {
+            __KTRACE_OPT(KUSB, Kern::Printf("Failed to alloc chunks size %d!", bufSizes[chunkInd]));
+            // lost all interfaces:
+            // Tell Controller to release Interface and h/w resources associated with this
+            iController->DeRegisterClient(this);
+            bufSizes.Close();
+            return KErrNoMemory;
+            }
+        else
+            {
+            // Parcel out the memory between endpoints
+            TUint8* newAddr = reinterpret_cast<TUint8*>(chunk->LinearAddress());
+            __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory alloc new chunk=0x%x, size=%d", newAddr,bufSizes[chunkInd]));
+            chunkChanged = (newAddr != oldAddr);
+            aHwChunks[chunkInd] = chunk;
+            }
+        chunkInd++;
+        }
+    
+    //   2.2 in case available chunks are not enough
+    while( chunkInd<bufCount)
+        {
+        DPlatChunkHw* chunk = NULL;
+        chunk = Allocate( bufSizes[chunkInd], aCacheAttribs);
+        if (chunk == NULL)
+            {
+            __KTRACE_OPT(KUSB, Kern::Printf("Failed to alloc chunk, size %d!", bufSizes[chunkInd]));
+            // lost all interfaces:
+            // Tell Controller to release Interface and h/w resources associated with this
+            iController->DeRegisterClient(this);
+            bufSizes.Close();
+            return KErrNoMemory;
+            }
+        else
+            {
+            // Parcel out the memory between endpoints
+            __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory alloc new chunk=0x%x, size=%d",
+            						reinterpret_cast<TUint8*>(chunk->LinearAddress()), bufSizes[chunkInd]));
+            TInt r = aHwChunks.Append(chunk);
+            if(r!=KErrNone)
+                {
+                ClosePhysicalChunk(chunk);
+                iController->DeRegisterClient(this);
+                bufSizes.Close();
+                return r;
+                }
+            }
+        chunkInd++;
+        }
+
+    // 3, Set the the bufs of the interfaces
+    
+    ReSetInterfaceMemory(asRec, aHwChunks);
+
+    if(chunkChanged)
+        {
+        __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory readdressing."));
+        asRec = asRec->iNext;
+        while (asRec)
+            {
+            // Interfaces are not concurrent so they can all start at the same logical address
+            __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory readdressing setting=%d", asRec->iSetting));
+            ReSetInterfaceMemory(asRec, aHwChunks);
+            asRec = asRec->iNext;
+            }
+        }
+    return KErrNone;
+    }
 
 TInt DLddUsbcChannel::SetupEp0()
 	{
@@ -1945,44 +2032,70 @@ TInt DLddUsbcChannel::SetupEp0()
 		{
 		return KErrNoMemory;
 		}
-	TInt bufferSize = ep0->BufferTotalSize();
-	TUint32 cacheAttribs = EMapAttrSupRw | EMapAttrCachedMax;
-	iHwChunkEp0 = Allocate(bufferSize, cacheAttribs);
-	if (iHwChunkEp0 == NULL)
-		{
-		return KErrNoMemory;
-		}
-	iBufferSizeEp0 = bufferSize;
-	iBufferBaseEp0 = (TUint8*) iHwChunkEp0->LinearAddress();
-	ep0->SetBufferBase(iBufferBaseEp0);
-	ep0->SetRealEpNumber(0);
-	__KTRACE_OPT(KUSB, Kern::Printf("SetupEp0 60 buffersize=%d", iBufferSizeEp0));
-	__KTRACE_OPT(KUSB, Kern::Printf("SetupEp0 exit bufferbase=0x%08x", iBufferBaseEp0));
+
+    TInt bufferNum = ep0->BufferNumber();
+    TInt bufferSize = ep0->BufferSize();
+    TUint32 cacheAttribs = EMapAttrSupRw | EMapAttrCachedMax;
+
+    for(TInt i=0;i<bufferNum;i++)
+        {
+        DPlatChunkHw* chunk = Allocate(bufferSize, cacheAttribs );
+        if(chunk==NULL)
+            {
+            return KErrNoMemory;
+            }
+        TInt r = iHwChunksEp0.Append(chunk);
+        if(r!=KErrNone)
+            {
+            ClosePhysicalChunk(chunk);
+            return r;
+            }
+        TUint8 * buf;
+        buf = (TUint8*) chunk->LinearAddress();
+        ep0->SetBufferAddr( i, buf);
+        __KTRACE_OPT(KUSB, Kern::Printf("SetupEp0 60 buffer number %d", i));
+        __KTRACE_OPT(KUSB, Kern::Printf("SetupEp0 60 buffer size %d", bufferSize));
+        }
+
+    ep0->SetRealEpNumber(0);
 	return KErrNone;
 	}
 
+// Set buffer address of the interface
+// Precondition: Enough chunks available.
+void DLddUsbcChannel::ReSetInterfaceMemory(TUsbcAlternateSettingList* aAlternateSettingListRec,
+        RArray<DPlatChunkHw*> &aHwChunks)
+    {
+    TUsbcAlternateSettingList* asRec = aAlternateSettingListRec;
 
-void DLddUsbcChannel::RebaseInterfaceMemory(TUsbcAlternateSettingList* aAlternateSettingListRec,
-											TUint8* aBase, TUint aDirection)
-	{
-	TUint8* pBuf = aBase;
-	__KTRACE_OPT(KUSB, Kern::Printf("RebaseInterfaceMemory buffer base rec= 0x%08x", aAlternateSettingListRec));
-	for (TInt i = 1; i <= aAlternateSettingListRec->iNumberOfEndpoints; i++)
-		{
-		TUsbcEndpoint* ep = aAlternateSettingListRec->iEndpoint[i];
-		if (ep != NULL && (ep->EndpointInfo()->iDir == aDirection))
-			{
-			__KTRACE_OPT(KUSB, Kern::Printf("RebaseInterfaceMemory buffer base for ep%d 0x%08x 0x%08x",
-											i, pBuf, ep));
-			pBuf = ep->SetBufferBase(pBuf);
-			}
-		else
-			{
-			__KTRACE_OPT(KUSB, Kern::Printf("RebaseInterfaceMemory ep%d wrong direction", i));
-			}
-		}
-	}
+    // set all the interfaces
+    TInt chunkInd = 0;
+    TInt numOfEp = asRec->iNumberOfEndpoints;
 
+    for (TInt i = 1; i <= numOfEp; i++)
+        {
+        TInt nextEp = asRec->iEpNumDeOrderedByBufSize[i];
+        TInt epBufCount = asRec->iEndpoint[nextEp]->BufferNumber();
+        for(TInt k=0;k<epBufCount;k++)
+            {
+            TUsbcEndpoint* ep = asRec->iEndpoint[nextEp];
+            if (ep != NULL )
+                {
+                TUint8* pBuf = NULL;
+                pBuf = reinterpret_cast<TUint8*>(aHwChunks[chunkInd]->LinearAddress());
+                ep->SetBufferAddr( k, pBuf);
+                __KTRACE_OPT(KUSB, Kern::Printf("  ep %d, buf %d, addr 0x%x", nextEp, k, pBuf ));
+                chunkInd++;
+                __ASSERT_DEBUG(chunkInd<=aHwChunks.Count(),
+                               Kern::Printf("  Error: available chunks %d, run out at epInd%d, bufInd%d",
+                                       aHwChunks.Count(), i, k));
+                __ASSERT_DEBUG(chunkInd<=aHwChunks.Count(),
+                                   Kern::Fault("usbc.ldd", __LINE__));
+                }
+            }
+        }
+
+    }
 
 void DLddUsbcChannel::DestroyAllInterfaces()
 	{
@@ -1998,8 +2111,11 @@ void DLddUsbcChannel::DestroyAllInterfaces()
 	iNumberOfEndpoints = 0;
 	iAlternateSettingList = NULL;
 
-	ClosePhysicalChunk(iHwChunkIN);
-	ClosePhysicalChunk(iHwChunkOUT);
+    for(TInt i=0;i<iHwChunks.Count();i++)
+        {
+        ClosePhysicalChunk( iHwChunks[i]);
+        }
+	iHwChunks.Close();
 
 	iValidInterface = EFalse;
 	}
@@ -2045,8 +2161,11 @@ void DLddUsbcChannel::DestroyInterface(TUint aInterfaceNumber)
 	if (iAlternateSettingList == NULL)
 		{
 		// if no interfaces left destroy non-ep0 buffering
-		ClosePhysicalChunk(iHwChunkIN);
-		ClosePhysicalChunk(iHwChunkOUT);
+		for(TInt i=0;i<iHwChunks.Count();i++)
+	        {
+	        ClosePhysicalChunk( iHwChunks[i]);
+	        }
+	    iHwChunks.Close();
 		}
 	}
 
@@ -2055,7 +2174,11 @@ void DLddUsbcChannel::DestroyEp0()
 	{
 	delete iEndpoint[0];
 	iEndpoint[0] = NULL;
-	ClosePhysicalChunk(iHwChunkEp0);
+	for(TInt i=0;i<iHwChunksEp0.Count();i++)
+	    {
+	    ClosePhysicalChunk( iHwChunksEp0[i] );
+	    }
+	iHwChunksEp0.Close();
 	}
 
 
@@ -2491,9 +2614,79 @@ TInt DLddUsbcChannel::DoEmergencyComplete()
         if (iRequestStatus[i])
             {
             __KTRACE_OPT(KUSB, Kern::Printf("Complete request 0x%x", iRequestStatus[i]));
-		CompleteBufferRequest(iClient, i, KErrDisconnected);
+
+            if (i == RDevUsbcClient::ERequestAlternateDeviceStatusNotify)
+                {
+
+                iDeviceStatusNeeded = EFalse;
+                iStatusFifo->FlushQueue();
+
+                if (iStatusChangePtr)
+                    {
+                    iStatusChangeReq->Data() = iController->GetDeviceStatus();
+                    iStatusChangePtr = NULL;
+
+                    if (iStatusChangeReq->IsReady())
+                        {
+                        iRequestStatus[i] = NULL;
+                        Kern::QueueRequestComplete(iClient, iStatusChangeReq,
+                                KErrDisconnected);
+                        }
+                    }
+
+                }
+            else if (i == RDevUsbcClient::ERequestEndpointStatusNotify)
+                {
+                	
+               	if (iEndpointStatusChangePtr)
+					{
+	                TUint epBitmap = 0;
+					for (TInt i = 0; i <= iNumberOfEndpoints; i++)
+						{
+						TInt v = iController->GetEndpointStatus(this, iEndpoint[i]->RealEpNumber());
+						TUint b;
+						(v == EEndpointStateStalled) ? b = 1 : b = 0;
+						epBitmap |= b << i;
+						}	
+
+					iEndpointStatusChangeReq->Data() = epBitmap;
+					iEndpointStatusChangePtr = NULL;
+					}
+
+                if (iEndpointStatusChangeReq->IsReady())
+                    {
+					iRequestStatus[i] = NULL;
+					Kern::QueueRequestComplete(iClient,iEndpointStatusChangeReq,KErrDisconnected);
+					}
+
+                }
+            else if (i == RDevUsbcClient::ERequestOtgFeaturesNotify)
+                {
+                	
+                if (iOtgFeatureChangePtr)
+			        {
+			        TUint8 features;
+			        iController->GetCurrentOtgFeatures(features);
+					iOtgFeatureChangeReq->Data()=features;
+			        iOtgFeatureChangePtr = NULL;
+			        }
+                	
+                if (iOtgFeatureChangeReq->IsReady())
+                    {
+                    iRequestStatus[i] = NULL;
+                    Kern::QueueRequestComplete(iClient, iOtgFeatureChangeReq,
+                            KErrDisconnected);
+                    }
+
+                }
+            else
+            	{
+				CompleteBufferRequest(iClient, i, KErrDisconnected);
+				}
+
             }
         }
+
     iStatusCallbackInfo.Cancel();
     iEndpointStatusCallbackInfo.Cancel();
     iOtgFeatureCallbackInfo.Cancel();
@@ -2911,7 +3104,7 @@ TInt TUsbcEndpoint::ContinueWrite()
 		zlpReqd = iTransferInfo.iZlpReqd;
 		}
 	r = iDmaBuffers->TxStoreData(iLdd->Client(), iLdd->GetClientBuffer(iEndpointNumber), length, iBytesTransferred);
-	if (r != KErrNone)											
+	if (r != KErrNone)
 		return r;
 	iDmaBuffers->TxSetActive();
 	iRequestCallbackInfo->SetTxBufferInfo(bufferAddr, physAddr, length);
@@ -2978,6 +3171,7 @@ TUsbcAlternateSettingList::TUsbcAlternateSettingList()
 	{
 	for (TInt i = 0; i <= KMaxEndpointsPerClient; i++)
 		{
+		iEpNumDeOrderedByBufSize[i] = -1;
 		iEndpoint[i] = NULL;
 		}
 	}

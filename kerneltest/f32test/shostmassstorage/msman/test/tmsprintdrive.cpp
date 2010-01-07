@@ -28,10 +28,10 @@ void TMsPrintDrive::FormatDriveInfo(TDes& aBuffer, const TDriveInfo& aDriveInfo)
     {
     // Append battery, media and drive information to aBuffer
     // Define descriptor constants using the _LIT macro
-    _LIT(KFormatString,"Type=0x%02x,Battery=0x%02x,DriveAtt=0x%02x,MediaAtt=0x%02x\r\n");
-    _LIT(KBatLow,"Battery low\r\n");
-    _LIT(KBatGood,"Battery good\r\n");
-    _LIT(KBatNotSupported,"Battery not supported\r\n");
+    _LIT(KFormatString,"Type=0x%02x,Connection Bus=0x%02x,DriveAtt=0x%02x,MediaAtt=0x%02x\r\n");
+    _LIT(KConnectionBusInternal,"Connection Bus is Internal\r\n");
+    _LIT(KConnectionBusUsb,"Connection Bus is USB\r\n");
+    _LIT(KConnectionBusUnknown,"Connection Bus is Unknown\r\n");
     _LIT(KNotPresent,"No media present\r\n");
     _LIT(KFloppy,"Media is floppy disk\r\n");
     _LIT(KHard,"Media is hard disk\r\n");
@@ -49,6 +49,7 @@ void TMsPrintDrive::FormatDriveInfo(TDes& aBuffer, const TDriveInfo& aDriveInfo)
     _LIT(KSubstituted," substituted");
     _LIT(KInternal," internal");
     _LIT(KRemovable," removable");
+    _LIT(KExternal," external");
     _LIT(KMediaAtts,"\r\nMedia attributes:");
     _LIT(KDynamic," dynamic");
     _LIT(KDual," dual-density");
@@ -60,20 +61,20 @@ void TMsPrintDrive::FormatDriveInfo(TDes& aBuffer, const TDriveInfo& aDriveInfo)
     _LIT(KNewLine,"\r\n");
 
     aBuffer.AppendFormat(KFormatString, TInt(aDriveInfo.iType),
-                         TInt(aDriveInfo.iBattery),
+                         TInt(aDriveInfo.iConnectionBusType),
                          TInt(aDriveInfo.iDriveAtt),
                          TInt(aDriveInfo.iMediaAtt));
 
-    switch (aDriveInfo.iBattery)
+    switch (aDriveInfo.iConnectionBusType)
         {
-        case EBatLow:
-            aBuffer.Append(KBatLow);
+        case EConnectionBusInternal:
+            aBuffer.Append(KConnectionBusInternal);
             break;
-        case EBatGood:
-            aBuffer.Append(KBatGood);
+        case EConnectionBusUsb:
+            aBuffer.Append(KConnectionBusUsb);
             break;
         default:
-            aBuffer.Append(KBatNotSupported);
+            aBuffer.Append(KConnectionBusUnknown);
         }
 
     switch (aDriveInfo.iType)
@@ -122,6 +123,8 @@ void TMsPrintDrive::FormatDriveInfo(TDes& aBuffer, const TDriveInfo& aDriveInfo)
            aBuffer.Append(KInternal);
         if (aDriveInfo.iDriveAtt & KDriveAttRemovable)
            aBuffer.Append(KRemovable);
+        if (aDriveInfo.iDriveAtt & KDriveAttExternal)
+           aBuffer.Append(KExternal);
         aBuffer.Append(KMediaAtts);
         if (aDriveInfo.iMediaAtt & KMediaAttVariableSize)
             aBuffer.Append(KDynamic);

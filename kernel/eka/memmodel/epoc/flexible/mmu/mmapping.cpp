@@ -507,19 +507,20 @@ TPte* DFineMapping::GetOrAllocatePageTable(TLinAddr aAddr, TPinArgs& aPinArgs)
 		if(pinnedPt && pinnedPt!=pt)
 			{
 			// previously pinned page table not needed...
-			PageTableAllocator::UnpinPageTable(pinnedPt,aPinArgs);
+			::PageTables.UnpinPageTable(pinnedPt,aPinArgs);
 
 			// make sure we have memory for next pin attempt...
 			MmuLock::Unlock();
 			aPinArgs.AllocReplacementPages(KNumPagesToPinOnePageTable);
-			MmuLock::Lock();
 			if(!aPinArgs.HaveSufficientPages(KNumPagesToPinOnePageTable)) // if out of memory...
 				{
 				// make sure we free any unneeded page table we allocated...
 				if(pt)
 					FreePageTable(Mmu::PageDirectoryEntry(OsAsid(),aAddr));
+				MmuLock::Lock();
 				return 0;
 				}
+			MmuLock::Lock();
 			}
 
 		if(!pt)
@@ -539,8 +540,16 @@ TPte* DFineMapping::GetOrAllocatePageTable(TLinAddr aAddr, TPinArgs& aPinArgs)
 			return pt;
 
 		// pin the page table...
+		if (::PageTables.PinPageTable(pt,aPinArgs) != KErrNone)
+			{// Couldn't pin the page table...
+			MmuLock::Unlock();
+			// make sure we free any unneeded page table we allocated...
+			FreePageTable(Mmu::PageDirectoryEntry(OsAsid(),aAddr));
+			MmuLock::Lock();
+			return 0;
+			}
+
 		pinnedPt = pt;
-		PageTableAllocator::PinPageTable(pinnedPt,aPinArgs);
 		}
 	}
 
@@ -1485,7 +1494,7 @@ void DVirtualPinMapping::UnpinPageTables(TPinArgs& aPinArgs)
 
 	MmuLock::Lock();
 	while(pPt<pPtEnd)
-		PageTableAllocator::UnpinPageTable(*pPt++,aPinArgs);
+		::PageTables.UnpinPageTable(*pPt++,aPinArgs);
 	MmuLock::Unlock();
 	iNumPinnedPageTables = 0;
 

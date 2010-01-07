@@ -18,6 +18,7 @@
 #include <e32std.h>
 #include <e32std_private.h>
 #include <e32test.h>
+#include <e32ver.h>
 #include <e32hal.h>
 #include <e32twin.h>
 #include <e32svr.h>

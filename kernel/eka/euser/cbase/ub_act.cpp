@@ -137,9 +137,20 @@ or
 
 2. the active object within the implementation of the Cancel() function.
 
+E32USER-CBase 46 panics may occur if an active object is set active but
+no request is made on its TRequestStatus, or vice-versa. This panic happens
+no earlier than the next time that the active scheduler assesses which
+objects are ready to run, and may happen much later. This panic is termed 
+a 'stray event' because it indicates that some entity has sent an event 
+to the active scheduler thread, but this thread is not in a state ready to handle it.
+
 @see CActive::IsActive
 @see CActive::RunL
 @see CActive::Cancel
+
+@panic E32USER-CBase 42 if this active object is already active
+@panic E32USER-CBase 49 if this active object has not been added to the active
+       scheduler.
 */
 	{
 	__ASSERT_ALWAYS(!(iStatus.iFlags&TRequestStatus::EActive),Panic(EReqAlreadyActive));

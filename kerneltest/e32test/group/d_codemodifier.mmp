@@ -35,3 +35,4 @@ epocallowdlldata
 start wins
 win32_headers
 end // wins
+SMPSAFE

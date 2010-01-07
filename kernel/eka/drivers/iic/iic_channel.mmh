@@ -24,8 +24,13 @@ SYMBIAN_BASE_SYSTEMINCLUDE(drivers)
 #endif
 
 #ifdef STANDALONE_CHANNEL
-#define IIC_PIL_SOURCE	iic_channel.cpp iic_transaction.cpp
+	#define IIC_PIL_SOURCE	iic_channel.cpp iic_transaction.cpp
 #else
+	#ifndef IIC_SIMULATED_PSL
+		library		iic.lib
+	#else
+		library		iic_testpsl.lib
+	#endif
 #define IIC_PIL_SOURCE iic_channel.cpp
 #endif
 

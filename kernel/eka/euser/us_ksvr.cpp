@@ -4316,7 +4316,7 @@ EXPORT_C TLocalDriveCaps::TLocalDriveCaps()
 //
 	:	iSize(0),
 		iType(EMediaNotPresent),
-		iBattery(EBatNotSupported),
+		iConnectionBusType(EConnectionBusInternal),
 		iDriveAtt(0),
 		iMediaAtt(0),
 		iBaseAddress(NULL),

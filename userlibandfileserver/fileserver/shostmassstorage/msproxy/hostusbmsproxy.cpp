@@ -535,31 +535,32 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
 	TLocalDriveCapsV6Buf caps;
     caps.FillZ();
 
-	caps().iType = EMediaHardDisk;
-	caps().iBattery = EBatNotSupported;
-	caps().iDriveAtt = KDriveAttLocal | KDriveAttRemovable;
-	caps().iMediaAtt = KMediaAttFormattable;
-	caps().iFileSystemId = KDriveFileSysFAT;
-	caps().iExtraInfo = EFalse;
+    TLocalDriveCapsV6& c = caps();
+
+	c.iType = EMediaHardDisk;
+    c.iConnectionBusType = EConnectionBusUsb;
+	c.iDriveAtt = KDriveAttLocal | KDriveAttRemovable | KDriveAttExternal;
+	c.iMediaAtt = KMediaAttFormattable;
+	c.iFileSystemId = KDriveFileSysFAT;
 
 	TCapsInfo capsInfo;
 	TInt r = iUsbHostMsLun.Caps(capsInfo);
 	if (KErrNone == r)
 		{
-        caps().iBlockSize = capsInfo.iBlockLength;
+        c.iBlockSize = capsInfo.iBlockLength;
         TUint64 size = iMsDataMemMap.DataSize();
         if (size == 0)
             {
             // No valid partitions so specify the size of the disk
             size = static_cast<TUint64>(capsInfo.iNumberOfBlocks) * capsInfo.iBlockLength;
             }
-        caps().iSize = size;
+        c.iSize = size;
 
-        caps().iEraseBlockSize = 0;
+        c.iEraseBlockSize = 0;
 
         if (capsInfo.iWriteProtect)
             {
-            caps().iMediaAtt |= KMediaAttWriteProtected;
+            c.iMediaAtt |= KMediaAttWriteProtected;
             }
         __HOSTPRINT4(_L("<<< HOST Caps Block[num=0x%x size=0x%x] Media[size=0x%lx WP=0x%x]"),
                     capsInfo.iNumberOfBlocks, capsInfo.iBlockLength,
@@ -568,7 +569,7 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
 	else
         {
         __HOSTPRINT(_L("<<< HOST Caps Media Not Present"));
-		caps().iType = EMediaNotPresent;
+		c.iType = EMediaNotPresent;
 		if(r != KErrNotReady)
 			r = KErrUnknown;
         }

@@ -17,6 +17,7 @@
 #include <e32std_private.h>
 #include "sr_rofs.h"
 #include <rofs.h>
+#include <e32hal.h>
 
 void CRofs::Panic( TPanic aPanic )
 	{

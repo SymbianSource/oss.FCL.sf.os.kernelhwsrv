@@ -259,7 +259,7 @@ GLDEF_C TInt E32Main()
 #endif
 	// test.Getch();
 	test(info.iType==EMediaHardDisk);
-	test(info.iBattery==EBatNotSupported);
+	test(info.iConnectionBusType==EConnectionBusInternal);
 	test(info.iDriveAtt==(TUint)(KDriveAttLocal|KDriveAttRemovable));
 	test(info.iMediaAtt==KMediaAttFormattable);
 	test(info.iFileSystemId==KDriveFileSysFAT);

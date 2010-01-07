@@ -31,8 +31,6 @@ PRJ_EXPORTS
 
 PRJ_TESTEXPORTS
 
-../../../kernel/eka/debug/crashMonitor/inc/crashlogwalker.h				/epoc32/include/
-
 ../../../kernel/eka/include/kernel/dobject.h						/epoc32/include/kernel/			
 
 ../../../userlibandfileserver/domainmgr/inc/domainobserver.h				/epoc32/include/
@@ -181,6 +179,7 @@ d_demandpaging				support
 #if !defined(WINS) && !defined(X86)
 d_ramdefrag					support
 d_pagemove					support
+d_smpsoak					support
 #endif
 
 #if !defined(X86)
@@ -585,6 +584,12 @@ t_tmout     support
 t_empty
 t_empty2
 
+#if !defined(WINS) && !defined(X86)
+t_smpsoak		
+t_smpsoakprocess support	
+t_smpsoakspin	support	
+#endif
+
 // /E32TEST/MMU tests
 t_chunk 
 t_chunk2
@@ -889,6 +894,7 @@ t_dpapi_cp
 t_dpapi_cu
 
 t_datapaging
+t_pagetable_limit
 t_svrpinning
 t_svrpinning_p
 t_svrpinning_up

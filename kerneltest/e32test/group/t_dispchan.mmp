@@ -30,3 +30,4 @@ source			t_dispchan.cpp
 library			euser.lib hal.lib
 
 UID 0 0x0100b003
+SMPSAFE

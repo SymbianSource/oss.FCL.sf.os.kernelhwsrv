@@ -164,6 +164,8 @@ public:
 		{ return(iX86BootIndicator==KBootIndicatorBootable && (IsValidDosPartition() || IsValidFAT32Partition())); }
 	TBool IsValidFAT32Partition()
 		{ return (iNumSectors>0 && PartitionIsFAT32(iPartitionType)); }
+	TBool IsValidExFATPartition()
+		{ return (iNumSectors>0 && PartitionIsNTFS(iPartitionType)); }
 public:
 	TUint8 iX86BootIndicator;
 	TUint8 iStartHead;

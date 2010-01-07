@@ -39,18 +39,7 @@ TPtrC RemoveTrailingDots(const TDesC& aName)
 
 TUint32 Log2(TUint32 aVal)
 {
-    __ASSERT_COMPILE(sizeof(TUint32) == 4);
-    ASSERT(aVal);
-
-    TUint32 bitPos=31;
-
-    if(!(aVal >> 16)) {bitPos-=16; aVal<<=16;}
-    if(!(aVal >> 24)) {bitPos-=8;  aVal<<=8 ;}
-    if(!(aVal >> 28)) {bitPos-=4;  aVal<<=4 ;}
-    if(!(aVal >> 30)) {bitPos-=2;  aVal<<=2 ;}
-    if(!(aVal >> 31)) {bitPos-=1;}
-    
-    return bitPos;
+    return Log2_inline(aVal);
 }
 
 

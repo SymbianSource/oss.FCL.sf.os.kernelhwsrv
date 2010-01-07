@@ -23,6 +23,7 @@
 #define __KBLOCKMAP_H__
 
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 
 /**
 The kernel-side representation of a block map.

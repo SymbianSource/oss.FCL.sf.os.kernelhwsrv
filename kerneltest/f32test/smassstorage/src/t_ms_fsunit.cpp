@@ -211,6 +211,9 @@ TInt CFileSystem::DefaultPath(TDes& /*aPath*/) const
 	return KErrNone;
 	}
 
+EXPORT_C void CFileSystem::DriveInfo(TDriveInfo& aInfo, TInt aDriveNumber) const
+	{
+	}
 
 EXPORT_C TBool CFileSystem::IsExtensionSupported() const
 	{

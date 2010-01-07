@@ -187,11 +187,11 @@ void CAtaDisk::ConstructL()
 
 		TRAPD(err, ipDirCache = CDynamicDirCache::NewL(iDrive, CacheSizeMinInPages, CacheSizeMaxInPages, PageDataSizeLog2, clientName));
 		if (err == KErrNone)
-	    	{
-	    	__PRINT4(_L("CDynamicDirCache::NewL(drv:%C, minPageNum:%u, maxPageNum:%u, pageDataSize:%u)\n"), 'A'+iFatMount->DriveNumber(), CacheSizeMinInPages, CacheSizeMaxInPages, 1<<PageDataSizeLog2);
 	    	return;
-	    	}
-		}
+		
+        //-- fall back to constructing old type of cache
+
+        }
 #endif // USE_DP_DIR_CACHE
 
     //=========================== create legacy type of the directory cache

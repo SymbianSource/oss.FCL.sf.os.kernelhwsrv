@@ -227,7 +227,7 @@ TInt CTestFileSystem::DefaultPath(TDes& aPath) const
 
 void CTestFileSystem::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 ///
-/// Return drive info - iDriveAtt and iBatteryState are already set
+/// Return drive info - iDriveAtt already set
 ///
 	{
 	TTestDebug::Printf(_L("CTestFileSystem::DriveInfo(%d)\n"), aDriveNumber);

@@ -60,7 +60,7 @@ public:
 
 private:
 
-	TFatDriveInterface& iDrive;     ///< Driver's interface to access the media
+	TDriveInterface&    iDrive;     ///< Driver's interface to access the media
     MWTCacheInterface*  ipDirCache; ///< pointer to the FAT Directory cache object
     MWTCacheInterface*  iUidCache;  ///< pointer to the UID cache object
 

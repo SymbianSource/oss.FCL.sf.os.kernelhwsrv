@@ -79,7 +79,7 @@ public:
     This class can't be instantinated by user; only CFatMountCB can do this; see CFatMountCB::DriveInterface()
 
 */
-class TFatDriveInterface
+class TDriveInterface
     {
 public:
 	enum TAction {ERetry=1};
@@ -106,9 +106,9 @@ public:
 
 
 protected:
-    TFatDriveInterface();
-    TFatDriveInterface(const TFatDriveInterface&);
-    TFatDriveInterface& operator=(const TFatDriveInterface&);
+    TDriveInterface();
+    TDriveInterface(const TDriveInterface&);
+    TDriveInterface& operator=(const TDriveInterface&);
 
     TBool Init(CFatMountCB* aMount);
     void Close(); 
@@ -138,7 +138,7 @@ private:
         inline void EnterCriticalSection() const {iLock.Wait();}
         inline void LeaveCriticalSection() const {iLock.Signal();}
 
-        //-- methods' wrappers that are used by TFatDriveInterface
+        //-- methods' wrappers that are used by TDriveInterface
         TInt Read(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const;
         TInt Read(TInt64 aPos,TInt aLength,TDes8& aTrg) const;
         TInt Write(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset);
@@ -243,15 +243,14 @@ protected:
     inline TInt     SectorSizeLog2() const;
     inline TUint32  FreeClusters() const;
 
-	inline TBool IsEof32Bit(TInt aCluster) const;
-	inline TBool IsEof16Bit(TInt aCluster) const;
-	inline TBool IsEof12Bit(TInt aCluster) const;
-	
+    inline TBool IsEndOfClusterCh(TUint32 aCluster) const;
+
 
     inline TFatType FatType() const;
     inline TBool IsFat12() const;
     inline TBool IsFat16() const;
     inline TBool IsFat32() const;
+    
 
     inline TBool ClusterNumberValid(TUint32 aClusterNo) const;
 
@@ -269,6 +268,7 @@ private:
     TUint32  iFreeClusters;     ///< Number of free cluster in the fat table
 	TUint32  iFreeClusterHint;  ///< this is just a hint to the free cluster number, not required to contain exact information.
 	TFatType iFatType;          ///< FAT type 12/16/32, cached from the iOwner
+    TUint32  iFatEocCode;       ///< End Of Cluster Chain code, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
     TUint32  iMaxEntries;       ///< maximal number of FAT entries in the table. This value is taken from the CFatMount that calculates it
 
     };
@@ -487,15 +487,15 @@ protected:
     TInt IsFinalised(TBool& aFinalised);
 
     /** 
-        A wrapper around TFatDriveInterface providing its instantination and destruction.
+        A wrapper around TDriveInterface providing its instantination and destruction.
         You must not create objects of this class, use DriveInterface() instead.
     */
-    class XDriveInterface: public TFatDriveInterface
+    class XDriveInterface: public TDriveInterface
         {
       public:
-        XDriveInterface() : TFatDriveInterface() {}
+        XDriveInterface() : TDriveInterface() {}
         ~XDriveInterface() {Close();}
-        TBool Init(CFatMountCB* aMount) {return TFatDriveInterface::Init(aMount);}
+        TBool Init(CFatMountCB* aMount) {return TDriveInterface::Init(aMount);}
         };
 
 
@@ -543,7 +543,11 @@ public:
 	
     inline TBool IsRootDir(const TEntryPos &aEntry) const;
 	inline CAsyncNotifier* Notifier() const;
-	inline TFatDriveInterface& DriveInterface() const;
+	inline TDriveInterface& DriveInterface() const;
+
+    inline TBool IsEndOfClusterCh(TInt aCluster) const;
+	inline void SetEndOfClusterCh(TInt &aCluster) const;
+
     
     void ReadUidL(TInt aCluster,TEntry& anEntry) const;
 	
@@ -567,9 +571,8 @@ public:
 	void FindDosNameL(const TDesC& aName,TUint anAtt,TEntryPos& aDosEntryPos,TFatDirEntry& aDosEntry,TDes& aFileName,TInt anError) const;
 	
 	void Dismount();
-	TBool IsEndOfClusterCh(TInt aCluster) const;
-	void SetEndOfClusterCh(TInt &aCluster) const;
-	void InitializeRootEntry(TFatDirEntry & anEntry) const;
+	
+    void InitializeRootEntry(TFatDirEntry & anEntry) const;
 
     TInt64 MakeLinAddrL(const TEntryPos& aPos) const;
 	
@@ -711,6 +714,8 @@ private:
     void    DoUpdateFSInfoSectorsL(TBool aInvalidateFSInfo);
     void    UnFinaliseMountL();
     void    DoReMountL();
+    void    SetFatType(TFatType aFatType);
+
 
 private:
 	
@@ -734,7 +739,9 @@ private:
     TBool iMainBootSecValid : 1;///< true if the main boot sector is valid, if false, a backup boot sector may be in use. 
 
     TFatMntState iState;        ///< this mounnt internal state
+
     TFatType iFatType;          ///< FAT type, FAT12,16 or 32
+    TUint32  iFatEocCode;       ///< End Of Cluster Chain code, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
 
     CLeafDirCache* iLeafDirCache;	///< A cache for most recently visited directories, only valid when limit is set bigger than 1
     HBufC* iLastLeafDir;        	///< The last visited directory, only valid when limit of iLeafDirCache is less than 1 
@@ -779,7 +786,7 @@ private:
 
 friend class CFatFormatCB;
 friend class CScanDrive;
-friend class TFatDriveInterface;
+friend class TDriveInterface;
 	};
 
 
@@ -841,13 +848,12 @@ private:
 
 	TUint32* iSeekIndex;    ///< Seek index into file
 	TInt iSeekIndexSize;    ///< size of seek index
-	TBool iAttPending;
 	TInt iStartCluster;     ///< Start cluster number of file
 	TEntryPos iCurrentPos;  ///< Current position in file data
 	TEntryPos iFileDirPos;  ///< File directory entry position
 	TBool iFileSizeModified; 
 	};
-//
+
 
 /**
 Fat file system directory subsession implmentation, provides all that is required of a plug in
@@ -963,7 +969,6 @@ public:
 	CFileCB* NewFileL() const;
 	CDirCB* NewDirL() const;
 	CFormatCB* NewFormatL() const;
-	void DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const;
 	TInt DefaultPath(TDes& aPath) const;
 	TBool IsExtensionSupported() const;
 	TBool GetUseLocalTime() const;
@@ -999,21 +1004,12 @@ public:
 TPtrC RemoveTrailingDots(const TDesC& aName);
 
 /**
-Indicates if a number passed in is a power of two
-@return ETrue if aVal is a power of 2 
-*/
-inline TBool IsPowerOf2(TUint32 aVal);
-
-/**
 Calculates the log2 of a number
 
 @param aNum Number to calulate the log two of
 @return The log two of the number passed in
 */
 TUint32 Log2(TUint32 aVal);
-
-/** @return 2^aVal*/
-inline TUint32 Pow2(TUint32 aVal);
 
 
 /**
@@ -1073,6 +1069,7 @@ Calculates the check sum for a standard directory entry
 */
 TUint8 CalculateShortNameCheckSum(const TDesC8& aShortName);
 
+TUint32 EocCodeByFatType(TFatType aFatType);
 
 
 

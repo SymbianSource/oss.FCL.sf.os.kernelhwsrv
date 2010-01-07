@@ -860,11 +860,16 @@ TInt DMsTim::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 		case RMsTim::EControlGetInfo:
 			{
 			SMsTimerInfo info;
-			info.iMin=TicksToMicroseconds(m.iMin);
-			info.iMax=TicksToMicroseconds(m.iMax);
 			info.iCount=m.iCount;
 			Int64 avg=m.iTotal/m.iCount;
 			info.iAvg=TicksToMicroseconds((TInt)avg);
+#ifdef __SMP__
+			info.iMin=info.iAvg;
+			info.iMax=info.iAvg;
+#else
+			info.iMin=TicksToMicroseconds(m.iMin);
+			info.iMax=TicksToMicroseconds(m.iMax);
+#endif
 
 			r=Kern::ThreadRawWrite(iThread,a2,&info,sizeof(info));
 			break;

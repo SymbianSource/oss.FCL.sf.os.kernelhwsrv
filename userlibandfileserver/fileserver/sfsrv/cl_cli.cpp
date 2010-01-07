@@ -644,11 +644,14 @@ Dismounts the file system from the specified drive.
 
 /**
     Gets the name of the file system mounted on the specified drive.
-
     The function can be called before calling DismountFileSystem().
 			     
     @param aName  On successful return, contains the name of the file system.
     @param aDrive The drive for which the file system name is required.
+
+    Note that the file system name, returned in the aName descriptor shall be threated as case-insensitive string. I.e. 
+    "fileSystem" and "FILESYSTEM" mean absolutely the same. Therefore, case-insensitive string methods (like TDesC::FindF(), TDesC::CompareF())
+    shall be used to deal with the names.
 
     @return KErrNone, if successful;
             KErrNotFound if aFileSystemName is not found, or the drive does not have a file	system mounted on it;
@@ -675,6 +678,10 @@ EFSRV_EXPORT_C TInt RFs::FileSystemName(TDes& aName,TInt aDrive) const
     shall be at least 2 names in the list. For example "FAT" and "exFAT". 
     If "automatic file system recognising" feature is not supported, the list will consist of just one name, and 
     this will be the name returned by RFs::FileSystemName() API.
+
+    Note that the file system name, returned in the aName descriptor shall be threated as case-insensitive string. I.e. 
+    "fileSystem" and "FILESYSTEM" mean absolutely the same. Therefore, case-insensitive string methods (like TDesC::FindF(), TDesC::CompareF())
+    shall be used to deal with the names.
 
     @param  aName           On successful return, contains the name of the file system that correspond to the aFsEnumerator value.
     m@param aDrive          The drive number 
@@ -3741,24 +3748,29 @@ can effect the return value of each field within aParamInfo.
 	}
 
 
-EFSRV_EXPORT_C TInt RFs::FileSystemSubType(TInt aDrive, TDes& aName) const
 /**
-This function queries the sub type of the file system mounted on the specified volume. For example, 'FAT16' 
-of the Fat file system. 
+    This function queries the sub type of the file system mounted on the specified volume. For example, 'FAT16' of the Fat file system. 
+    TFSName is recommended as the type for aName when using this function.
 
-TFSName is recommended as the type for aName when using this function.
+    NOTE: For the file systems without a sub type (e.g. ROM file system), the  the file system name is returned (For example, 'Rom').
+    Examples:
+        "FAT"   file system; the subtypes can be "fat12", "fat16" or "fat32"
+        "ROFS"  file system; the subtype will be "ROFS"
 
-NOTE: File systems without a sub type (For example, a ROM file system), the name of the file system is 
-returned (For example, 'Rom').
+    Note also that the file system name, returned in the aName descriptor shall be threated as case-insensitive string. I.e. 
+    "fileSystem" and "FILESYSTEM" mean absolutely the same. Therefore, case-insensitive string methods (like TDesC::FindF(), TDesC::CompareF())
+    shall be used to deal with the names.
 
-@param aDrive A drive number, specifies which volume to query.
-@param aName A descriptor containing the returned sub type name or file system name.
 
-@return KErrNone if successful; KErrNotSuppoted if sub type is not supported; 
-		otherwise another system-wide error code is returned.
+    @param  aDrive  drive number, specifies which volume to query.
+    @param  aName   descriptor containing the returned sub type name or file system name.
 
-@see TFSName
+    @return KErrNone if successful; KErrNotSuppoted if sub type is not supported; 
+		    otherwise another system-wide error code is returned.
+
+    @see TFSName
 */
+EFSRV_EXPORT_C TInt RFs::FileSystemSubType(TInt aDrive, TDes& aName) const
 	{
 	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemSubType, MODULEUID, Handle(), aDrive, aName);
 

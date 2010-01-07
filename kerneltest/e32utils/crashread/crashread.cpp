@@ -16,6 +16,7 @@
 #include <e32std.h>
 #include <e32std_private.h>
 #include <f32file.h>
+#include <d32locd.h>
 #include <e32cons.h>
 #include "crashflash.h"
 #include <partitions.h>

@@ -1,3 +1,35 @@
+Version 2.00.2020
+=================
+(Made by VincentF 27/11/2009)
+
+1.	NicholasC
+	1.	DEFECT FIX: DEF143079: E32USER-CBASE 46 with Host Ms Thread3 in mass storage file system
+
+2.	DmitryL
+	1.	DEFECT FIX: DEF143009 T_scn32rd2 test fails on 1MB FAT volume and no call to DoRummageDirCacheL()
+
+3.	ChrisNotton
+	1.	DEFECT FIX: DEF142863: Public header files must not include platform or internal headers
+
+
+Version 2.00.2019
+=================
+(Made by Vino Jose 25/11/2009)
+
+1.	NicholasC
+	1.	DEFECT FIX: DEF142837: Enable File Server client to determine if logical drive is attached to USB bus	
+	2.	DEFECT FIX: DEF142899: t_ext1 fails on NaviEngine UREL with USB MS drive
+	3.	DEFECT FIX: DEF142900: t_dspace failing with USB Mass Storage drive
+
+2.	DmitryL
+	1.	DEFECT FIX: DEF142322 FAT: CFatMountCB::IsEndOfClusterCh() implementation is not optimal  
+	2. 	DEFECT FIX: DEF142991 Automounter FS shall comply with changes introduced in DEF142837  
+	3.	DEFECT FIX: DEF143023 FAT, exFAT: CDynamicDirCache::ReadL() can't handle bulk reads  
+
+3.	MichaelCox
+	1.	DEFECT FIX: DEF142995: F32 Plugins cannot get the filename when intercepting EFsSetEntry 
+
+
 Version 2.00.2018
 =================
 (Made by Vino Jose 05/11/2009)
@@ -15,6 +47,7 @@ Version 2.00.2017
 2.	NicholasC
 	1.	DEFECT FIX: DEF142538: b_fat32 hangs when using large Mass Storage devices
 	2.	DEFECT FIX: DEF141812: F32TEST T_NOTIFY_MFS on Unicore SMP (Naviengine) Image
+	3.	DEFECT FIX: DEF142590: Test hanging in usb host mass storage file system 
 
 3.	SophieY
 	1.	DEFECT FIX: DEF141402: File server trace LDD causes zombie thread to remain in existence forever 

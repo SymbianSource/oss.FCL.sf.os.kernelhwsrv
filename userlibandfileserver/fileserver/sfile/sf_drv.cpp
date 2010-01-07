@@ -17,8 +17,6 @@
 
 #include "sf_std.h"
 #include "sf_file_cache.h"
-#include <hal.h>
-
 
 
 //const TInt KMaxNotifierAttempts=4; // not used anywhere
@@ -885,29 +883,8 @@ void TDrive::DriveInfo(TDriveInfo& anInfo)
 	{
 	anInfo.iType=EMediaNotPresent;
 	anInfo.iMediaAtt=0;
-
-	TInt batStatus=HAL::EPowerBatteryStatus_Zero;
-	TInt r=HAL::Get(HAL::EPowerBatteryStatus, batStatus);
-	if (r==KErrNone)
-		{
-		switch(batStatus)
-			{
-		case HAL::EPowerBatteryStatus_Zero:
-			anInfo.iBattery=EBatLow;
-			break;
-		case HAL::EPowerBatteryStatus_Replace:
-			anInfo.iBattery=EBatLow;
-			break;
-		case HAL::EPowerBatteryStatus_Low:
-			anInfo.iBattery=EBatLow;
-			break;
-		case HAL::EPowerBatteryStatus_Good:
-			anInfo.iBattery=EBatGood;
-			break;
-			}		
-		}
-	else
-		anInfo.iBattery=EBatNotSupported;
+	anInfo.iBattery=EBatNotSupported;
+    anInfo.iConnectionBusType=EConnectionBusInternal;
 
 	if(iFSys)
 		{

@@ -19,7 +19,7 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
+
 #include "debug.h"
 #include "msdebug.h"
 #include "mprotocol.h"

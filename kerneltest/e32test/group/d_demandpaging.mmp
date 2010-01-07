@@ -27,4 +27,5 @@ epocheapsize	0x1000 0x00010000
 
 capability		all
 vendorid		0x70000001
+SMPSAFE
 

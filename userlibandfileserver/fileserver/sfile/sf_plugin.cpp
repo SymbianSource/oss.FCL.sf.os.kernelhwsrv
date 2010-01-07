@@ -629,6 +629,7 @@ EXPORT_C TInt TFsPluginRequest::FileName(TDes& aName)
 	switch(Function())
 		{
 		case EFsDirOpen:
+		case EFsSetEntry:
 			{
 			aName.Copy(Request()->Src().FullName());
 			break;

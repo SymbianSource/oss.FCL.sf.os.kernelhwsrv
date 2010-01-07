@@ -35,6 +35,8 @@
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <f32file.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 
 RTest test(_L("T_PATH"));
 RFs	gFs;

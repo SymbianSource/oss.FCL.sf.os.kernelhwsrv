@@ -15,6 +15,7 @@
 
 #include <e32test.h>
 #include <f32file.h>
+#include <e32svr.h>
 
 _LIT(KGerLocale, "T_LOCLGE.DLL");
 _LIT(KEngLocale, "T_LOCLUS.DLL");

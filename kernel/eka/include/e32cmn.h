@@ -4839,6 +4839,9 @@ public:
 	};
 
 
+#define KMaxSerialNumLength 64
+typedef TBuf8<KMaxSerialNumLength> TMediaSerialNumber;
+
 
 /**
 @publishedAll

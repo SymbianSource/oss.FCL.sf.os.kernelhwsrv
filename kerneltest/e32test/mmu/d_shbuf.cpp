@@ -339,12 +339,15 @@ TInt DShBufTestDrvChannel::SendMsg(TMessageBase* aMsg)
 		// Descriptor writes
 		case RShBufTestChannel::EFromTPtr8ProcessAndReturn:
 			{
-			TUint size = ((const TDes8*)a1)->Size();
+			TPtr8 tempPtr(0, 0, 0);
+			kumemget(&tempPtr, a1, sizeof(tempPtr));
+
+			TUint size = tempPtr.Size();
 			
 			if(size <= sizeof(iDriverRxBuffer))
 				{
 				NKern::ThreadEnterCS();
-				r = Kern::CreateAndPinVirtualMemory(iPin, (TLinAddr)((const TDes8*)a1)->Ptr(), size);
+				r = Kern::CreateAndPinVirtualMemory(iPin, (TLinAddr)tempPtr.Ptr(), size);
 				NKern::ThreadLeaveCS();
 				}
 			else

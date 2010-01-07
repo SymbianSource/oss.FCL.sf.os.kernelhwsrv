@@ -18,6 +18,7 @@
 #define __E32TEST_EXTENSION__
 
 #include <f32file.h>
+#include <e32svr.h>
 #include <e32test.h>
 #include <f32dbg.h>
 #include "t_server.h"

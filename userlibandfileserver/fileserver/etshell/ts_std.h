@@ -15,6 +15,8 @@
 // 
 //
 
+#include <e32debug.h>
+#include <e32svr.h>
 #include <f32file.h>
 #include <f32ver.h>
 #include <f32dbg.h>

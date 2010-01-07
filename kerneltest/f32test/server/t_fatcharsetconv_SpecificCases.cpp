@@ -19,6 +19,7 @@
 #include "T_Fatcharsetconv_aux.h"
 #include <f32file.h>
 #include <e32test.h>
+#include <e32svr.h>
 #include <HAL.H>
 #include <f32fsys.h>
 #include <f32dbg.h>

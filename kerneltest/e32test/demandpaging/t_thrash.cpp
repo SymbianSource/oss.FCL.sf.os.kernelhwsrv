@@ -405,6 +405,20 @@ TInt E32Main()
 
 	test_KErrNone(GetGlobalPolicies());
 
+	TUint cacheOriginalMin = 0;
+	TUint cacheOriginalMax = 0;
+	TUint cacheCurrentSize = 0;
+
+	if (gDataPagingSupported)
+		{
+		test.Next(_L("Thrash test: change maximum cache size to minimal"));
+		//store original values
+		DPTest::CacheSize(cacheOriginalMin, cacheOriginalMax, cacheCurrentSize);
+		gMaxCacheSize = 256;
+		gMinCacheSize = 64;
+		test_KErrNone(DPTest::SetCacheSize(gMinCacheSize * gPageSize, gMaxCacheSize * gPageSize));
+		}
+
 	TBool flexibleMemoryModel = (MemModelAttributes() & EMemModelTypeMask) == EMemModelTypeFlexible;
 	if (flexibleMemoryModel)
 		TestThrashHal();
@@ -415,6 +429,12 @@ TInt E32Main()
 		{		
 		test.Next(_L("Extended thrashing tests"));
 		TestThrashing();
+		}
+	if (gDataPagingSupported)
+		{
+		//Reset the cache size to normal
+		test.Next(_L("Thrash test: Reset cache size to normal"));
+		test_KErrNone(DPTest::SetCacheSize(cacheOriginalMin, cacheOriginalMax));
 		}
 
 	test.End();

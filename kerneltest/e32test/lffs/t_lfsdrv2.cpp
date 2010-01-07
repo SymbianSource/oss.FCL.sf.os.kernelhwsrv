@@ -532,7 +532,7 @@ GLDEF_C TInt E32Main()
 	test(r==KErrNone);
 	test.Printf(_L("Size            : %08x\n"),I64LOW(DriveCaps.iSize));
 	test.Printf(_L("Type            : %d\n"),DriveCaps.iType);
-	test.Printf(_L("BatState        : %d\n"),DriveCaps.iBattery);
+	test.Printf(_L("Connection Bus  : %d\n"),DriveCaps.iConnectionBusType);
 	test.Printf(_L("DriveAtt        : %02x\n"),DriveCaps.iDriveAtt);
 	test.Printf(_L("MediaAtt        : %02x\n"),DriveCaps.iMediaAtt);
 	test.Printf(_L("BaseAddress     : %08x\n"),DriveCaps.iBaseAddress);

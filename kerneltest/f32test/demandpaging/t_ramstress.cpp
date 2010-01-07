@@ -32,6 +32,7 @@
 #include <e32test.h>
 #include <u32hal.h>
 #include <f32file.h>
+#include <e32svr.h>
 #include <hal.h>
 #include "t_ramstress.h"
 

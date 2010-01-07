@@ -1228,7 +1228,7 @@ TKeyCode CShell::OutputStringToConsole(TBool aPageSwitch,TRefByValue<const TDesC
 	VA_LIST list;
 	VA_START(list,aFmt);
 	
-	TBuf<0x140> aBuf;
+	TBuf<0x200> aBuf;
 	//format output string using argument list
 	
 	//coverity[uninit_use_in_call]
@@ -1252,7 +1252,7 @@ TKeyCode CShell::OutputStringToConsole(const TDesC& aNotification,TBool aPageSwi
 	VA_LIST list;
 	VA_START(list,aFmt);
 	
-	TBuf<0x140> aBuf;
+	TBuf<0x200> aBuf;
 	//format output string using argumen list
 	
 	//coverity[uninit_use_in_call]

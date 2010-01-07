@@ -26,6 +26,8 @@
 #ifndef __F32IMAGE_H__
 #define __F32IMAGE_H__
 #include <e32cmn.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 
 /**
 Value used for E32ImageHeader::iCpuIdentifier.
@@ -89,6 +91,8 @@ const TUint KImageHWFloatMask		= 0x00f00000u;	///< Bitmask for Floating Point ty
 const TInt	KImageHWFloatShift		= 20;			///< Bit shift count for Floating Point type.
 const TUint	KImageHWFloat_None		= EFpTypeNone << KImageHWFloatShift;	///< No hardware floating point used.
 const TUint KImageHWFloat_VFPv2		= EFpTypeVFPv2 << KImageHWFloatShift;	///< ARM VFPv2 floating point used.
+const TUint KImageHWFloat_VFPv3		= EFpTypeVFPv3 << KImageHWFloatShift;	///< ARM VFPv3 floating point used. This includes Advanced SIMD (NEON).
+const TUint KImageHWFloat_VFPv3D16	= EFpTypeVFPv3D16 << KImageHWFloatShift;	///< ARM VFPv3-D16 floating point used. This does not include Advanced SIMD (NEON).
 
 const TUint KImageHdrFmtMask		= 0x0f000000u;	///< Bitmask for header format type.
 const TInt	KImageHdrFmtShift		= 24;			///< Bit shift count for header format type.

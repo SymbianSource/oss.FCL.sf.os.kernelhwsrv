@@ -18,6 +18,9 @@
 #if !defined(__T_CHLFFS_H__)
 #define __T_CHLFFS_H__
 
+#include <f32file.h>
+#include <d32locd.h>
+
 #if defined(__WINS__)
 // #define __TEST_LFFS_ONLY__
 #endif

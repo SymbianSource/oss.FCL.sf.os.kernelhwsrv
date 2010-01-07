@@ -23,6 +23,7 @@
 #ifndef AUTOMOUNTER_FILESYSTEM_H
 #define AUTOMOUNTER_FILESYSTEM_H
 
+#include "filesystem_utils.h"
 #include <f32fsys.h>
 #include <f32dbg.h>
 
@@ -70,20 +71,6 @@ IMPORT_C TUint32 DebugRegister();
 //#######################################################################################################################################
 //#     constants definitions here
 //#######################################################################################################################################
-
-
-//-----------------------------------------------------------------------------
-
-const TUint32 K1KiloByte = 1<<10; 
-const TUint32 K1MegaByte = 1<<20; 
-
-const TUint32 K1uSec = 1;               ///< 1 microsecond in TTimeIntervalMicroSeconds32
-const TUint32 K1mSec = 1000;            ///< 1 millisecond in TTimeIntervalMicroSeconds32
-const TUint32 K1Sec  = 1000*K1mSec;     ///< 1 second in TTimeIntervalMicroSeconds32
-
-
-const TUint KBitsInByteLog2 = 3;
-const TUint KBitsInByte = 1<<KBitsInByteLog2;
 
 
 
@@ -166,7 +153,6 @@ public:
     CFileCB* NewFileL() const;
     CDirCB* NewDirL() const;
     CFormatCB* NewFormatL() const;
-    void DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const;
     
     //-- non-pure virtual interface, overrides from CFileSystem
 #ifdef _DEBUG

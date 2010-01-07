@@ -148,7 +148,7 @@ GLDEF_C TInt E32Main()
 	test(theCRomDrive.Caps(info)==KErrNone);
 	test(info().iSize==(TInt64)KMaxDriveLen);
 	test(info().iType==EMediaFlash);
-	test(info().iBattery==EBatNotSupported);
+	test(info().iConnectionBusType==EConnectionBusInternal);
 	test(info().iDriveAtt==(KDriveAttLocal|KDriveAttRemovable));
 	test(info().iMediaAtt==KMediaAttFormattable);
 	test(info().iFileSystemId==KDriveFileSysFAT);

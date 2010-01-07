@@ -25,7 +25,7 @@
 #define COMMON_CONSTANTS_H
 
 
-
+#include "filesystem_utils.h"
 #include <f32fsys.h>
 #include <f32dbg.h>
 
@@ -93,14 +93,6 @@ typedef TUint32 TLinAddr;
 typedef TUint32 TFat32Entry;
 typedef TUint16 TFat16Entry;
 
-const TUint16 K1KiloByteLog2 = 10;
-const TUint32 K1KiloByte = 1<<10; 
-const TUint32 K1MegaByte = 1<<20; 
-
-const TUint32 K1uSec = 1;               ///< 1 misrosecond in TTimeIntervalMicroSeconds32
-const TUint32 K1mSec = 1000;            ///< 1 millisecond in TTimeIntervalMicroSeconds32
-const TUint32 K1Sec  = 1000*K1mSec;     ///< 1 second in TTimeIntervalMicroSeconds32
-
 _LIT8(KLit8ReplacementForUnconvertibleUnicodeCharacters, "_");
 _LIT8(KFileSystemName12,"FAT12   ");    ///< Name in BPB given to a Fat12 volume
 _LIT8(KFileSystemName16,"FAT16   ");    ///< Name in BPB given to a Fat16 volume
@@ -118,9 +110,6 @@ const TInt KMaxFAT16Entries=0xFFF0;	    ///< Maximum number of clusters in a Fat
 const TInt KMaxFAT12Entries=0xFF0;	    ///< Maximum number of clusters in a Fat12 Fat table, 4080
 const TUint8 KBootSectorMediaDescriptor=0xF8;   ///< Media descriptor for a Fat volume, Generic disk
 const TUint8 KEntryErasedMarker=0xE5;           ///< Erased entry marker for a directory entry
-
-const TUint KDefSectorSzLog2=9;                         ///< Log2 of the default sector size for FAT
-const TUint KDefaultSectorSize = 1 << KDefSectorSzLog2; ///< Default sector size for FAT, 512 bytes
 
 
 const TInt EOF_32Bit =0x0fffffff;   ///< End of cluster chain value for Fat32

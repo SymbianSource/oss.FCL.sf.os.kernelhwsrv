@@ -22,6 +22,7 @@
 #include <HAL.H>
 #include <f32fsys.h>
 #include <f32dbg.h>
+#include <e32svr.h>
 #include "..\server\t_server.h"
 #include "fat_utils.h"
 

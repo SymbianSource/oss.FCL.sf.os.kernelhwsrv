@@ -61,6 +61,12 @@ data=EPOCROOT##epoc32\Release\##KMAIN##\##BUILD##\minkda.ldd			\sys\bin\minkda.l
 data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged
 #endif
 
+#if defined(SMPSOAK)
+data=autoexec_smpsoak.bat			\autoexec.bat
+#else
+data=autoexec_smpsoak.bat			Test\smpsoak.bat
+#endif
+
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\smp_demo\war_and_peace_ch1.txt		test\war_and_peace_ch1.txt
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\smp_demo\war_and_peace_ch2.txt		test\war_and_peace_ch2.txt
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\smp_demo\war_and_peace_ch3.txt		test\war_and_peace_ch3.txt

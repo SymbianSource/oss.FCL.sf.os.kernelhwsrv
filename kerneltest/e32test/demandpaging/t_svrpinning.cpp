@@ -32,6 +32,7 @@
 #include <e32def.h>
 #include <e32def_private.h>
 #include <e32test.h>
+#include <e32ver.h>
 #include <e32panic.h>
 #include <dptest.h>
 #include <u32hal.h>

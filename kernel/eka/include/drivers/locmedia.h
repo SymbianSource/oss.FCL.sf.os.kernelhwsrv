@@ -293,6 +293,7 @@ private:
 	TInt LockMountInfo(DPrimaryMediaBase& aPrimaryMedia, TLocDrvRequest& aReq);
 	void UnlockMountInfo(DPrimaryMediaBase& aPrimaryMedia);
 #endif
+	TInt ReadPasswordData(TLocDrvRequest& aReq, TLocalDrivePasswordData& aPswData, TMediaPassword& aOldPasswd, TMediaPassword& aNewPasswd);
 
 public:
 	TLocDrv* iDrive;							/**< @internalComponent */
@@ -340,6 +341,7 @@ public:
 		ECodePaging=0x20,			// a code paging request
 		EDataPaging=0x40,			// a data paging request
 		ETClientBuffer=0x80,		// RemoteDes() points to a TClientBuffer
+		EKernelBuffer=0x100,		// RemoteDes() points to a kernel-side buffer
 		};
 public:
     

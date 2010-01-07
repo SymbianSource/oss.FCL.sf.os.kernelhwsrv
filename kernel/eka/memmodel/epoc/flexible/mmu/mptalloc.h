@@ -44,6 +44,12 @@ The maximum number of pages required to pin a single page table.
 */
 const TUint KNumPagesToPinOnePageTable = 2; // 1 page table page + 1 page table info page
 
+/**
+The minimum number of unpinned paged page table pages required so a page fault 
+can't fail to allocate a page table.
+*/
+const TUint KMinUnpinnedPagedPtPages = KMaxCpus;
+
 
 /**
 Class for allocating MMU page tables.
@@ -159,7 +165,7 @@ public:
 						at least #KNumPagesToPinOnePageTable replacement
 						pages available.
 	*/
-	static void PinPageTable(TPte* aPageTable, TPinArgs& aPinArgs);
+	TInt PinPageTable(TPte* aPageTable, TPinArgs& aPinArgs);
 
 	/**
 	Unpin the RAM page containing a page table, as well as the RAM page
@@ -172,7 +178,7 @@ public:
 						completely unpinned, e.g. those which can be reused
 						as new replacement pages or freed.
 	*/
-	static void UnpinPageTable(TPte* aPageTable, TPinArgs& aPinArgs);
+	void UnpinPageTable(TPte* aPageTable, TPinArgs& aPinArgs);
 
 private:
 	/**
@@ -358,17 +364,97 @@ private:
 		void Init2(TUint aNumInitPages);
 		TInt Alloc(TBool aDemandPaged);
 		void Free(TUint aPageIndex, TBool aDemandPaged);
-		TBool IsDemandPaged(SPageInfo* aPageInfo)
-			{// Is the highest page table index this page table info page can reference 
+		
+		/**
+		Determine if the page table info page is paged.
+		
+		@param aPageInfo Pointer to the SPageInfo of the page table info page.
+		@return ETrue if the page table info page is paged, EFalse otherwise.
+		@pre MmuLock is held.
+		*/
+		inline TBool IsDemandPagedPtInfo(SPageInfo* aPageInfo)
+			{
+			// Is the highest page table index this page table info page can reference 
 			// allocated within the demand paged region of the page table address space.
 			TUint groupIndex = aPageInfo->Index();
 			return ((groupIndex+1) * KPageTableGroupSize)-1 >= iUpperWaterMark;
 			}
+
+		/**
+		Determine if the page table page is paged.
+		
+		@param aPageInfo Pointer to the SPageInfo of the page table info page.
+		@return ETrue if the page table page is paged, EFalse otherwise.
+		@pre MmuLock is held.	
+		*/
+		inline TBool IsDemandPagedPt(SPageInfo* aPageInfo)
+			{
+			return aPageInfo->Index() >= iUpperWaterMark;
+			}
+
+		/**
+		Get a random paged page table page.
+		
+		@return The index of a paged page table page.
+		@pre All paged page table pages are allocated.
+		@pre Page tables lock is held.
+		*/
+		TUint RandomPagedPtPage();
+
+		/**
+		Increase the count of pinned paged page table pages.
+		
+		@return KErrNone on success, KErrNoMemory if too many pages are already pinned.
+		@pre MmuLock is held
+		*/
+		inline TInt PtPagePinCountInc()
+			{
+			if (AtPinnedPagedPtsLimit(iUpperWaterMark, iLowerWaterMark, iPinnedPageTablePages + 1))
+				{
+				return KErrNoMemory;
+				}
+			iPinnedPageTablePages++;
+			return KErrNone;
+			}
+
+		/**
+		Decrease the count of pinned paged page table pages.
+		
+		@pre MmuLock is held
+		*/
+		inline void PtPagePinCountDec()
+			{
+			__NK_ASSERT_DEBUG(iPinnedPageTablePages);	// Can't be zero.
+			iPinnedPageTablePages--;
+			}
+
+	private:
+		/**
+		Check whether it is safe to pin a paged page table or reduce the amount of 
+		virtual address space available to paged page tables.  By checking that we 
+		either have spare virtual address space to increase the	amount of paged page 
+		tables or that there are already enough unpinned paged page tables.
+		
+		@return ETrue if there isn't or EFalse if it is ok to pin more paged page
+				tables or increase the number of unpaged page tables.
+		*/
+		TBool AtPinnedPagedPtsLimit(TUint aUpperWaterMark, TUint aLowerWaterMark, TUint aPinnedPtPages)
+			{
+			TUint adjustedUpperWaterMark = aUpperWaterMark & ~(KPageTableGroupSize - 1);
+			TUint availPagedPtPages = KMaxPageTablePages - adjustedUpperWaterMark;
+			TUint availUnpinnedPagedPtPages = availPagedPtPages - aPinnedPtPages;
+			// This check is sufficient as we only increase the pinned paged page table 
+			// pages or unpaged page table pages one at a time.
+			return (aLowerWaterMark + 1 == adjustedUpperWaterMark && 
+					availUnpinnedPagedPtPages < KMinUnpinnedPagedPtPages);
+			}
+
 	private:
 		TBitMapAllocator* iLowerAllocator; ///< Allocator for unpaged page tables
 		TUint iLowerWaterMark; ///< Highest page index allocated by iLowerAllocator
 		TBitMapAllocator* iUpperAllocator; ///< Allocator for demand paged page tables
 		TUint iUpperWaterMark; ///< Lowest page index allocated by iUpperAllocator
+		TUint iPinnedPageTablePages; ///< The number of pinned paged page table pages.
 		};
 
 	/**

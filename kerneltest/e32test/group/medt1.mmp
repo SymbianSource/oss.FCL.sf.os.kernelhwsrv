@@ -26,3 +26,4 @@ UID		0x100039d0
 VENDORID 0x70000001
 
 capability		all
+SMPSAFE

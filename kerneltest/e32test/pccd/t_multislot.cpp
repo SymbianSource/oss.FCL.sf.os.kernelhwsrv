@@ -16,6 +16,7 @@
 */
 #include <e32test.h>
 #include <f32file.h>
+#include <d32locd.h>
 
 static RTest test(_L("Testing t_multislot"));
 _LIT(KYes, "yes");

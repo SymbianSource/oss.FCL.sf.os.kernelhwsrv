@@ -19,7 +19,7 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
+
 #include "msdebug.h"
 #include "debug.h"
 #include "msctypes.h"

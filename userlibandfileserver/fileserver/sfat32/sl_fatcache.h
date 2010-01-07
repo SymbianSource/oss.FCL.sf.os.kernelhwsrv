@@ -110,7 +110,7 @@ class CFatCacheBase : public CBase
     TUint16     iFatSecSzLog2;  ///< Log2(FAT Sector size)
     TUint16     iFatClustSzLog2;///< Log2(FAT cluster size)
     TFatType    iFatType;       ///< FAT type
-    TFatDriveInterface* ipDrive;///< interface to the media driver
+    TDriveInterface* ipDrive;///< interface to the media driver
     //---
 
     TBool       iDirty;         ///< ETrue if the cache is dirty

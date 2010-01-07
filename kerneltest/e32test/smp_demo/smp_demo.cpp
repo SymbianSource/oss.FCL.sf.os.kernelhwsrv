@@ -18,6 +18,7 @@
 
 #include <e32test.h>
 #include <u32hal.h>
+#include <e32svr.h>
 #include <f32file.h>
 #include <hal.h>
 #include <e32math.h>

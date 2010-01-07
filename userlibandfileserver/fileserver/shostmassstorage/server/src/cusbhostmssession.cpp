@@ -115,12 +115,7 @@ void CUsbHostMsSession::DispatchMessageL(const RMessage2& aMessage)
 			}
 		break;
 	/* If it is a cleanup then we need to delete the iDeviceThread */
-	case EUsbHostMsFinalCleanup:
-		if(iDeviceThread->IsActive())
-			{
-			iThread.RequestComplete(iClientStatus, KErrSessionClosed);
-			}
-	
+	case EUsbHostMsFinalCleanup:	
 		delete iDeviceThread;
 		iThread.Kill(KErrNone);
 		aMessage.Complete(KErrNone);
@@ -155,8 +150,8 @@ void CUsbHostMsSession::CreateDeviceThreadL(const RMessage2& aMessage)
 	aMessage.ReadL(0, ptr);
 	__HOSTPRINT1(_L("EUsbHostMsRegisterInterface Token=%d "), msDeviceConfig.iInterfaceToken);
 
-    TBuf<20> nameBuf;
-	nameBuf.Format(_L("Host Ms Thread%d"), msDeviceConfig.iInterfaceToken);
+    TBuf<32> nameBuf;
+	nameBuf.Format(_L("Host Ms Thread%8x"), msDeviceConfig.iInterfaceToken);
 	iDeviceThread = CUsbHostMsDeviceThread::NewL(*this, msDeviceConfig.iInterfaceToken);
 
 	RHeap* h = (RHeap*)&User::Allocator();
@@ -177,11 +172,6 @@ void CUsbHostMsSession::CreateDeviceThreadL(const RMessage2& aMessage)
 	User::WaitForRequest(status);
 	if(status != KErrNone)
 		{
-		if(iDeviceThread->IsActive())
-			{			
-			iThread.RequestComplete(iClientStatus, KErrSessionClosed);
-			}
-		iDeviceThread->Cancel();
 		delete iDeviceThread;
         iDeviceThread = NULL;
 		iThread.Kill(KErrNone);
