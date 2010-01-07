@@ -123,6 +123,26 @@ add_dependencies(ekern genexec emulator)
 
 
 
+#
+#Copy ekern.dll to be next to epoc.exe
+#
+
+get_target_property(LIB_NAME ekern LOCATION)
+get_target_property(DEST_NAME epoc LOCATION)
+set(target_suffix .dll)
+#Extract path from full filename
+string(REGEX REPLACE "(^.+)/epoc.exe" "\\1" DEST_NAME ${DEST_NAME})
+set(DEST_NAME ${DEST_NAME}/ekern${target_suffix})
+
+#message(${DEST_NAME})
+
+add_custom_command (
+ 	TARGET ekern
+   	POST_BUILD
+   	COMMAND ${CMAKE_COMMAND} -E copy ${LIB_NAME} ${DEST_NAME}
+ 	)
+
+
 
 #define vs IDE folders
 source_group(Sources REGULAR_EXPRESSION ".+\\.cpp$")
