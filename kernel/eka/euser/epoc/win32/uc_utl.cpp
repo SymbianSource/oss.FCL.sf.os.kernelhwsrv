@@ -98,7 +98,9 @@ Tests whether the specified address is in the ROM.
    
 EXPORT_C void BootEpoc(TBool aAutoRun)
 	{
-	HINSTANCE epoc = LoadLibraryA("ekern.exe");
+	//SL:
+	HINSTANCE epoc = LoadLibraryA("ekern.dll");
+	//HINSTANCE epoc = LoadLibraryA("ekern.exe");
 	if (epoc)
 		{
 		TBootEpoc ep = (TBootEpoc)GetProcAddress(epoc, "_E32Startup");

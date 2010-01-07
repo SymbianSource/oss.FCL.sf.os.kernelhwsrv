@@ -120,17 +120,6 @@ mcodeseg.cpp mprocess.cpp mutils.cpp mshbuf.cpp
 add_library(ekern SHARED ${source})
 add_dependencies(ekern genexec emulator)
 				
-#library					
-#include "../memmodel/memmodel.mmp"
-
-
-#macro					
-
-
-#No need for emulator here
-#add_executable(epoc ./euser/epoc/win32/uc_epoc.cpp)
-#target_link_libraries(epoc estub euser)
-
 
 
 

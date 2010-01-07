@@ -109,8 +109,21 @@ target_link_libraries(emulator kernel32)
 add_library (euser SHARED ${source})
 add_dependencies(euser genexec emulator)
 
-add_library (estub ../euser/epoc/win32/uc_stub.cpp)
+add_library (estub STATIC ../euser/epoc/win32/uc_stub.cpp)
+#set_target_properties(estub PROPERTIES LINK_FLAGS /ENTRY:E32Bootstrap)
 
+add_executable(epoc ../euser/epoc/win32/uc_epoc.cpp)
+add_dependencies(epoc estub euser)
+set_target_properties(epoc PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup /SUBSYSTEM:WINDOWS")
+#set_target_properties(epoc PROPERTIES LINK_FLAGS "/ENTRY:_E32Bootstrap /SUBSYSTEM:WINDOWS /NODEFAULTLIB /NOASSEMBLY")
+ #set_target_properties(target1 target2 ... PROPERTIES prop1 value1 prop2 value2 ...)
+
+
+#No need for emulator here
+#add_executable(epoc ./euser/epoc/win32/uc_epoc.cpp)
+#target_link_libraries(epoc estub euser)
+ 
+ 
 #define vs IDE folders
 source_group(Sources REGULAR_EXPRESSION ".+\\.cpp$")
 source_group(Includes REGULAR_EXPRESSION ".+\\.h$") 	

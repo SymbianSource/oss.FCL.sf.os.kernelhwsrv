@@ -14,3 +14,34 @@
 // e32\euser\epoc\win32\uc_epoc.cpp
 // 
 //
+#include <e32std.h>
+#include <e32std_private.h>
+#include <e32wins.h>
+
+
+//SL: this file is empty on FCL
+
+/*
+extern "C"
+GLDEF_C TInt _E32Startup()
+//
+// Unused in the stub
+//
+	{
+	return KErrNone;
+	}
+
+GLDEF_C void __stdcall _E32Bootstrap()
+//
+// stub for bootstrapping EPOC
+//
+	{
+	BootEpoc(EFalse);
+	}
+*/
+
+
+int main(int argc, char* argv[])
+	{
+	BootEpoc(EFalse);
+	}

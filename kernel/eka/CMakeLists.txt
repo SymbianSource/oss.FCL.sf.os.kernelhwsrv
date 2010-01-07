@@ -32,7 +32,7 @@ set_source_files_properties(./include/kernel/exec_kernel.h PROPERTIES GENERATED 
 #Custom target that will generate our exec headers 
 add_custom_target(genexec DEPENDS ./include/exec_enum.h ./include/exec_user.h ./include/kernel/exec_kernel.h)
 
-add_subdirectory(./euser ./euser/bin)
-add_subdirectory(./kernel ./kernel/bin)
+add_subdirectory(./euser)
+add_subdirectory(./kernel)
 
 
