@@ -23,7 +23,7 @@ int atexit(void (__cdecl *)(void))
 	return 0;
 	}
 
-#ifdef __CW32__
+#if defined(__CW32__) || defined(__VC32__)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

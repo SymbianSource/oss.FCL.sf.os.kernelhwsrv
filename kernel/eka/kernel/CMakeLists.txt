@@ -29,6 +29,7 @@ add_definitions(-D__WINS__)
 add_definitions(-D__EXPORT_MEMCPY__)				
 add_definitions(-D__IN_KERNEL__)
 add_definitions(-D__KERNEL_MODE__)
+add_definitions(-D__MEMMODEL_EMUL_SINGLE_HOST_PROCESS__)
 
 #__CPU_X86 is declared by __WINS__ 
 #add_definitions(-D__CPU_X86)
@@ -66,8 +67,8 @@ cboot.cpp
 cglobals.cpp cexec.cpp cinit.cpp
 ckernel.cpp csched.cpp
 cutils.cpp cache.cpp
+k_entry.cpp #originally from kc_exe.mmp
 )
-#k_entry.cpp
 
 
 set (sourcepath ../kernel/)
@@ -116,20 +117,24 @@ mchunk.cpp mglobals.cpp minit.cpp mkernel.cpp
 mcodeseg.cpp mprocess.cpp mutils.cpp mshbuf.cpp
 )
 
-#add_executable(ekern ${source})
-add_library(ekern SHARED ${source})
-add_dependencies(ekern genexec emulator)
+
+add_executable(ekern ${source}) 
+#add_library(ekern SHARED ${source})
+add_dependencies(ekern genexec emulator scppnwdl_kern)
+set_target_properties(ekern PROPERTIES LINK_FLAGS "/ENTRY:KernelMain /NODEFAULTLIB")
+target_link_libraries(ekern kernel32 msvcrt)
+#set_target_properties(ekern PROPERTIES COMPILE_FLAGS "/Zl")
 #install(TARGETS ekern DESTINATION ./symbian/bin)
 
 
 
-#
-#Copy ekern.dll to be next to epoc.exe
-#
+##
+##Copy ekern.dll to be next to epoc.exe
+##
 
 get_target_property(LIB_NAME ekern LOCATION)
 get_target_property(DEST_NAME epoc LOCATION)
-set(target_suffix .dll)
+set(target_suffix .exe)
 #Extract path from full filename
 string(REGEX REPLACE "(^.+)/epoc.exe" "\\1" DEST_NAME ${DEST_NAME})
 set(DEST_NAME ${DEST_NAME}/ekern${target_suffix})
@@ -141,7 +146,8 @@ add_custom_command (
    	POST_BUILD
    	COMMAND ${CMAKE_COMMAND} -E copy ${LIB_NAME} ${DEST_NAME}
  	)
-
+	
+######################
 
 
 #define vs IDE folders
