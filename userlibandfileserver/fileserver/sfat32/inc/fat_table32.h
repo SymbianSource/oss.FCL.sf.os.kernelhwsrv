@@ -161,6 +161,7 @@ public:
     void FreeClusterListL(TUint32 aCluster);
     TUint32 AllocateSingleClusterL(TUint32 aNearestCluster);
     void ExtendClusterListL(TUint32 aNumber,TInt& aCluster);
+    TUint32 AllocateClusterListL(TUint32 aNumber,TUint32 aNearestCluster);
 
 private:
     CRamFatTable(CFatMountCB& aOwner);

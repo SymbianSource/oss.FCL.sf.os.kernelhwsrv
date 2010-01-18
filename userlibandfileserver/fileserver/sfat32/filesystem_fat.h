@@ -117,8 +117,8 @@ class TVolFormatParam_FAT : public TVolFormatParam
         {
         KOffsetSubType =0,  //-- 0
         KOffsetReservedSec, //-- 1
-        KOffsetSpc,         //-- 2
-        KOffsetNumFATs,     //-- 3
+        KOffsetSpc,         //-- 2  !! do not change this offset. 
+        KOffsetNumFATs,     //-- 3  !! do not change this offset. 
         
         };
 
@@ -141,6 +141,9 @@ typedef TPckgBuf<TVolFormatParam_FAT> TVolFormatParam_FATBuf;
 TVolFormatParam_FAT::TVolFormatParam_FAT() : TVolFormatParam() 
     {
      __ASSERT_COMPILE(sizeof(TVolFormatParam_FAT) == sizeof(TVolFormatParam));
+     __ASSERT_COMPILE(KOffsetSpc == 2);
+     __ASSERT_COMPILE(KOffsetNumFATs == 3);
+     
      Init();
     }
 

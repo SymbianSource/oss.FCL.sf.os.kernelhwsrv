@@ -759,7 +759,7 @@ void ArmMmu::RemapPage(TInt aId, TUint32 aAddr, TPhysAddr aOldAddr, TPhysAddr aN
 // Call this with the system locked.
 //
 	{
-	__KTRACE_OPT(KMMU,Kern::Printf("ArmMmu::RemapPages() id=%d addr=%08x old=%08x new=%08x perm=%08x", aId, aAddr, aOldAddr, aNewAddr, aPtePerm));
+	__KTRACE_OPT(KMMU,Kern::Printf("ArmMmu::RemapPage() id=%d addr=%08x old=%08x new=%08x perm=%08x", aId, aAddr, aOldAddr, aNewAddr, aPtePerm));
 
 	TInt ptOffset=(aAddr&KChunkMask)>>KPageShift;			// entry number in page table
 	TPte* pPte=PageTable(aId)+ptOffset;						// address of PTE
@@ -785,7 +785,7 @@ void ArmMmu::RemapPage(TInt aId, TUint32 aAddr, TPhysAddr aOldAddr, TPhysAddr aN
 		}
 	else
 		{
-		__KTRACE_OPT(KMMU,Kern::Printf("ArmMmu::RemapPages() called on a non-4K page!"));
+		__KTRACE_OPT(KMMU,Kern::Printf("ArmMmu::RemapPage() called on a non-4K page!"));
 		Panic(ERemapPageFailed);
 		}
 	}

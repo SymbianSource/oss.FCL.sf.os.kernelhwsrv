@@ -229,6 +229,7 @@ const TUint8 KMutexOrdGeneral0			= 0xf0;
 
 
 const TUint8 KMutexOrdRamDrive			= KMutexOrdGeneral7; /**< @internalComponent */
+const TUint8 KMutexOrdDmaChannel		= 0x70; /**< @internalComponent */
 const TUint8 KMutexOrdShPool			= 0x68; /**< @internalComponent */
 const TUint8 KMutexOrdCodeSegLock		= 0x60; /**< @internalComponent */
 const TUint8 KMutexOrdPubSub2			= 0x5e; /**< @internalComponent */

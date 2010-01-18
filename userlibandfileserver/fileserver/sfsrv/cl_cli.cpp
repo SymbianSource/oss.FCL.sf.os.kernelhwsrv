@@ -2631,8 +2631,6 @@ to a disk is opened.
 
 
 
-
-EFSRV_EXPORT_C TInt RFs::CheckDisk(const TDesC& aDrive) const
 /**
 Checks the integrity of the disk on the specified drive.
 On FAT, this checks if a cluster number is invalid, if a cluster is allocated to
@@ -2652,11 +2650,11 @@ of an entry is invalid.
         KErrNotReady, if the specified drive is empty;
         KErrNotSupported, if the drive cannot handle this request;
         KErrPermissionDenied, if the caller doesn't have DiskAdmin capability;
-		KErrTooBig, if the drives folder depth exceeds maximum allowed. For the current FAT file system implementation this limit is 50.
         Other system wide error codes may also be returned.
 
 @capability DiskAdmin
 */
+EFSRV_EXPORT_C TInt RFs::CheckDisk(const TDesC& aDrive) const
 	{
 	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsCheckDisk, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsCheckDisk,TIpcArgs(&aDrive));

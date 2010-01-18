@@ -37,7 +37,7 @@ const TInt KPluginMessageComplete = 2; ///< Returned from ::Dispatch() to indica
 const TInt KCountNeeded=KMinTInt;
 
 /**
-List of file server operations 
+List of file server operations
 */
 enum TFsMessage
 	{
@@ -70,7 +70,7 @@ enum TFsMessage
 	EFsFormatSubClose,          ///< Closes the Format subsession
 	EFsDirSubClose,             ///< Closes the directory.
 	EFsFileSubClose,            ///< Closes the file
-	EFsRawSubClose,             ///< Closes the direct access channel to the disk 
+	EFsRawSubClose,             ///< Closes the direct access channel to the disk
 	EFsFileOpen,				///< -- 30 Opens file
 	EFsFileCreate,				///< Creates and opens a new file
 	EFsFileReplace,             ///< Replaces a file of the same name or creates a new file
@@ -142,7 +142,7 @@ enum TFsMessage
 	EFsSwapFileSystem,          ///< Swaps file systems
 	EFsErasePassword,           ///< Erase the password from the locked MultiMedia card
 	EFsReserveDriveSpace,		///< -- 100 Reserves an area of a drive
-	EFsGetReserveAccess,        ///< Get exclusive access to reserved area 
+	EFsGetReserveAccess,        ///< Get exclusive access to reserved area
 	EFsReleaseReserveAccess,    ///< Release exclusive access to reserved area
 	EFsFileName,                ///< Gets the final part of a filename
     EFsGetMediaSerialNumber,    ///<  Gets the serial number of media
@@ -151,7 +151,7 @@ enum TFsMessage
 	EFsRemovePlugin,            ///< Removes the specified plugin
 	EFsMountPlugin,			    ///< Mounts the specified plugin
 	EFsDismountPlugin,	        ///< Dismounts the specified plugin
-	EFsPluginName,				///<-- 110 Gets a plugin's name in specific position and drive 
+	EFsPluginName,				///<-- 110 Gets a plugin's name in specific position and drive
 	EFsPluginOpen,              ///< Opens the plugin
 	EFsPluginSubClose,          ///< Closes the plugin
 	EFsPluginDoRequest,         ///< Issues an asynchronous plugin request
@@ -178,10 +178,10 @@ enum TFsMessage
 	EFsDismountProxyDrive,		///< Dismounts a proxy drive
 	EFsNotificationOpen,		///< Opens the notification
 	EFsNotificationBuffer,		///< Communicates buffer to file server
-	EFsNotificationRequest,		///< Sends the notification request 
-	EFsNotificationCancel,		///< Cancels the notification request 
-	EFsNotificationSubClose,	///< -- 140 Closes the notification 
-	EFsNotificationAdd,			///< Adds filter to the server, comprising a path and notification type
+	EFsNotificationRequest,		///< Sends the notification request
+	EFsNotificationCancel,		///< Cancels the notification request
+	EFsNotificationSubClose,	///< Closes the notification
+	EFsNotificationAdd,			///< -- 140 Adds filter to the server, comprising a path and notification type
 	EFsNotificationRemove,		///< Removes filters from Server-Side
 	EFsLoadCodePage,			///< Loads a code page library
 	EMaxClientOperations		///< This must always be the last operation insert above
@@ -190,7 +190,7 @@ enum TFsMessage
 class CFsRequest;
 
 /**
-Request wrapper for plugins 
+Request wrapper for plugins
 */
 class TFsPluginRequest
 	{
@@ -221,6 +221,7 @@ public:
 		EUid,
 		EEntryArray,
 		ENewPosition,
+		EVolumeInfo
 		};
 	
 	IMPORT_C TFsPluginRequest(CFsRequest* aRequest);
@@ -374,18 +375,18 @@ public:
 	IMPORT_C RLibrary Library() const;
 public:
 	/**
-	@internalTechnology 
-	Installs the plugin factory 
+	@internalTechnology
+	Installs the plugin factory
 	@return KErrNone or one of the system wide errors
 	*/
 	virtual TInt Install()=0;
-	/** 
+	/**
 	@internalTechnology
-	Creates a new plugin 
+	Creates a new plugin
 	@return plugin object
 	*/
 	virtual CFsPlugin* NewPluginL()=0;
-	/**	
+	/**
 	@internalTechnology
 	Returns unique position of the plugin
 	@return unique position of the plugin
@@ -430,7 +431,7 @@ public:
 	inline virtual TInt SessionDisconnect(CSessionFs* aSession);
 protected:
 	IMPORT_C virtual void InitialiseL();
-	IMPORT_C virtual TInt Deliver(TFsPluginRequest& aRequest);	
+	IMPORT_C virtual TInt Deliver(TFsPluginRequest& aRequest);
 	virtual TInt DoRequestL(TFsPluginRequest& aRequest) = 0;
 	
 	IMPORT_C virtual CFsPluginConn* NewPluginConnL();
@@ -466,7 +467,7 @@ private:
 	The remaining space in this base class in release 9.1 is defined as follows:
 		TUint8 iRegisteredIntercepts[EMaxClientOperations << 1];	244 bytes
 		TInt iUniquePos;											  4 bytes
-															TOTAL	248 bytes 
+															TOTAL	248 bytes
 	where EMaxClientOperations = 122.
 
 	Unfortunately, the remaining space in release 9.2+ WAS defined as follows:
@@ -475,17 +476,17 @@ private:
 																	  2 bytes (padding)
 		TInt iUniquePos;											  4 bytes
 															TOTAL:	252 bytes
-  
-	This meant that a 9.1-compiled plugin running on 9.2+ would have it's first data 
+
+	This meant that a 9.1-compiled plugin running on 9.2+ would have its first data
 	member overwritten when the base class (CFsPlugin) wrote to iUniquePos.
 
-	To maintain Binary Compatibility (BC), we need to preserve both the (smaller) 9.1 
-	and (larger) 9.2+ class sizes. 
+	To maintain Binary Compatibility (BC), we need to preserve both the (smaller) 9.1
+	and (larger) 9.2+ class sizes.
 	To allow 9.1 plugins to work unchanged on 9.2+ iUniquePos has been moved to BEFORE
 	the iRegisteredIntercepts byte array
 
-	N.B. - the iRegisteredIntercepts array uses only 2 bits per function, so the 
-	array size only needs to be >= EMaxClientOperations/4. 
+	N.B. - the iRegisteredIntercepts array uses only 2 bits per function, so the
+	array size only needs to be >= EMaxClientOperations/4.
 	*/
     enum {KIntcArrSize = 132};
 	TInt iUniquePos;									//			  4 bytes
@@ -527,6 +528,11 @@ private:
 	};
 
 /**
+A class for making file server request internally from within a
+file server plugin.
+
+See also RFilePlugin and RDirPlugin.
+
 @publishedPartner
 @released
 */
@@ -545,6 +551,7 @@ public:
 	IMPORT_C TInt Entry(const TDesC& aName,TEntry& anEntry) const;
 	IMPORT_C TInt SetEntry(const TDesC& aName,const TTime& aTime,TUint aSetAttMask,TUint aClearAttMask);
 	IMPORT_C TInt ReadFileSection(const TDesC& aName,TInt64 aPos,TDes8& aDes,TInt aLength) const;
+	IMPORT_C TInt Volume(TVolumeInfo &aVol,TInt aDrive=KDefaultDrive) const;
 
 protected:
 	TInt SendReceive(TInt aFunction,const TIpcArgs& aArgs) const;
@@ -579,13 +586,13 @@ public:
 	IMPORT_C TInt Create(const TDesC& aName,TUint aFileMode);
     IMPORT_C TInt Replace(const TDesC& aName,TUint aFileMode);
     IMPORT_C TInt Temp(const TDesC& aPath,TFileName& aName,TUint aFileMode);
-       
+
     // re-open SAME file as client's request
     IMPORT_C TInt AdoptFromClient();
 
     // Transfer the plugin's open file to the client
 	IMPORT_C TInt TransferToClient();
-	
+
 	IMPORT_C void Close();
 
     // RFile overloads
@@ -690,7 +697,7 @@ public:
 public:
 	TInt InitControl(CFsRequest* aRequest);
 	TInt InitRequest(CFsRequest* aRequest);
-private:	
+private:
 	TDblQueLink iLink;
 	CFsPluginConn& iPluginConn;
 	TInt iFunction;

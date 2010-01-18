@@ -86,6 +86,7 @@ TInt CheckAffinity()
 	t.SetPriority(EPriorityLess);
 	t.Resume();
 
+	TInt a = 1;
 	for (TInt i = KLoopTries; i>0; --i)
 		{
 		Affinity = 1; // assume we are locked to a single cpu
@@ -95,7 +96,8 @@ TInt CheckAffinity()
 			{
 			// spin, waiting to see if the other thread actually *does* run
 			}
-		if (Affinity == 0)
+		a = Affinity;
+		if (a == 0)
 			break;
 		Stop.Wait(); // We didn't see it this time, but try again in case of scheduling fluke
 		}
@@ -104,7 +106,7 @@ TInt CheckAffinity()
 	User::WaitForRequest(s);
 	t.Close();
 
-	return Affinity;
+	return a;
 	}
 
 #ifndef OMIT_MAIN

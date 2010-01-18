@@ -12,6 +12,7 @@
 //
 // Description:
 // Hardware Configuration Repository Platform Independent Layer (PIL)
+// Contains debugging macros used in PIL and PSL source code of HCR.
 //
 
 #ifndef HCR_DEBUG_H

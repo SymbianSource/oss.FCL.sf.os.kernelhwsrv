@@ -130,7 +130,7 @@
 	#endif
 	#endif
 
-	#if (defined(__CPU_ARM1136__) && defined(__CPU_ARM1136_ERRATUM_399234_FIXED)) || (defined(__CPU_ARM11MP__) && defined (__SMP__) )
+	#if (defined(__CPU_ARM1136__) && defined(__CPU_ARM1136_ERRATUM_399234_FIXED) && !defined(__MEMMODEL_FLEXIBLE__)) || (defined(__CPU_ARM11MP__) && defined (__SMP__) )
 	// Page tables on these platforms are either uncached or write through cached.
 	#else
 	// Page/directory tables are fully cached (write-back) on these platforms. 

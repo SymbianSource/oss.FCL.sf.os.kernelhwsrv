@@ -152,6 +152,9 @@ d_pagingexample_2_post support
 #if defined(EPOC32) && !defined(X86)
 // Test LDD for real hardware DMA
 d_dma						support
+d_dma2						support
+d_dma_compat				support
+d_dma2_compat				support
 #endif
 
 #ifdef EPOC32
@@ -174,11 +177,11 @@ d_second_excp2				support
 
 #if !defined(WINS)
 d_demandpaging				support
+d_pagemove					support
 #endif
 
 #if !defined(WINS) && !defined(X86)
 d_ramdefrag					support
-d_pagemove					support
 d_smpsoak					support
 #endif
 
@@ -629,6 +632,7 @@ t_pages     support
 t_mwait
 t_asid
 t_asid_dummy support
+t_alias_remove
 #endif
 
 // /E32TEST/NKERN tests
@@ -837,6 +841,7 @@ t_context
 
 // /E32TEST/DMA tests
 t_dma       // user-side test harness for real DMA framework
+t_dma2       // user-side test harness for DMAv2 framework
 
 // Example RTOS personality
 ../personality/example/t_expers support

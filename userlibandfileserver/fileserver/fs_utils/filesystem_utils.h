@@ -64,12 +64,40 @@ inline TBool IsPowerOf2_64(TUint64 aVal);   //-- return ETrue if aVal is a power
 inline TUint32 RoundDown(TUint32 aVal, TUint32 aGranularityLog2);
 inline TUint32 RoundUp(TUint32 aVal, TUint32 aGranularityLog2);
 
-inline TBool BoolXOR(TBool a1, TBool a2);    //-- return Boolean XOR of a1 and a2
+inline TBool BoolXOR(TBool a1, TBool a2);           //-- return Boolean XOR of a1 and a2
 
 inline TUint32 Log2_inline(TUint32 aVal);           //-- Calculates the Log2(aVal)
-inline TUint32 Count1Bits_inline(TUint32 aVal);     //-- counts number of '1' bits in the aVal
+TUint32 Log2(TUint32 aVal);                         //-- Calculates the Log2(aVal)
 
- 
+inline TUint32 Count1Bits_inline(TUint32 aVal);     //-- counts number of '1' bits in the aVal
+TUint32 Count1Bits(TUint32 aVal);                   //-- counts number of '1' bits in the aVal
+
+//-----------------------------------------------------------------------------
+
+TPtrC RemoveTrailingDots(const TDesC& aName); //-- Removes trailing dots from aName. "Name..." -> "Name"
+
+
+//#######################################################################################################################################
+/**
+    A class representing a simple abstraction of the 32 bit flags
+*/
+class T32Bits
+{
+ public:
+    T32Bits() : iData(0) {}
+
+    inline void  Clear();
+    inline TBool HasBitsSet() const;
+    inline void SetBit(TUint32 aIndex);
+    inline TBool operator[](TUint32 aIndex) const;
+
+ private:
+    TUint32 iData; ///< 32 bits data
+};
+
+
+
+
 
 
 #include "filesystem_utils.inl"

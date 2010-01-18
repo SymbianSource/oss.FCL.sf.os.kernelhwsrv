@@ -31,14 +31,17 @@
 #include <f32ver.h>
 #include <e32svr.h>
 #include <kernel/localise.h>
+
 #include "filesystem_fat.h"
+using namespace FileSystem_FAT;
 
 #include "common_constants.h"
 #include "sl_bpb.h"
 #include "fat_config.h"
 #include "fat_dir_entry.h"
+#include "bit_vector.h"
 
-using namespace FileSystem_FAT;
+
 
 #ifdef _DEBUG
 _LIT(KThisFsyName,"EFAT32.FSY"); ///< This FSY name
@@ -719,11 +722,6 @@ private:
 
 private:
 	
-    TBool ValidClusterNumber(TUint32 aCluster) const;
-    void  CheckUnvisitedClustersL(const RBitVector& aFatBitVec) const;
-	TInt  WalkClusterListL(RBitVector& aFatBitVec, TInt aCluster);
-	void  ChkEntryL(RBitVector& aFatBitVec, const TFatDirEntry& anEntry);
-	void  ChkDirL(RBitVector& aFatBitVec, TInt aDirCluster);
 
 	CFatMountCB();
 
@@ -1001,17 +999,6 @@ public:
 	};
 //
 
-TPtrC RemoveTrailingDots(const TDesC& aName);
-
-/**
-Calculates the log2 of a number
-
-@param aNum Number to calulate the log two of
-@return The log two of the number passed in
-*/
-TUint32 Log2(TUint32 aVal);
-
-
 /**
 Converts Dos time (from a directory entry) to TTime format
 
@@ -1070,103 +1057,6 @@ Calculates the check sum for a standard directory entry
 TUint8 CalculateShortNameCheckSum(const TDesC8& aShortName);
 
 TUint32 EocCodeByFatType(TFatType aFatType);
-
-
-
-//-----------------------------------------------------------------------------
-
-/**
-    This class represents a bit vector i.e. an array of bits. Vector size can be 1..2^32 bits.
-*/
-class RBitVector
-    {
- public:
-    
-    RBitVector(); //-- Creates an empty vector. see Create() methods for memory allocation
-   ~RBitVector(); 
-    
-    void Close(); 
-    
-    TInt Create(TUint32 aNumBits);
-    void CreateL(TUint32 aNumBits);
-
-    inline TUint32 Size() const;
-
-    //-- single bit manipulation methods
-    inline TBool operator[](TUint32 aIndex) const;
-    inline void SetBit(TUint32 aIndex);
-    inline void ResetBit(TUint32 aIndex);
-    inline void InvertBit(TUint32 aIndex);
-    inline void SetBitVal(TUint32 aIndex, TBool aVal);
-    
-    void Fill(TBool aVal);
-    void Fill(TUint32 aIndexFrom, TUint32 aIndexTo, TBool aVal);
-
-    void Invert();
-   
-    TBool operator==(const RBitVector& aRhs) const; 
-    TBool operator!=(const RBitVector& aRhs) const;
-
-    //-- logical operations between 2 vectors. 
-    void And(const RBitVector& aRhs);
-    void Or (const RBitVector& aRhs);
-    void Xor(const RBitVector& aRhs);
-
-    TBool Diff(const RBitVector& aRhs, TUint32& aDiffIndex) const;
-
-    /** Bit search specifiers */
-    enum TFindDirection
-        {
-        ELeft,      ///< Search from the given position to the left (towards lower index)
-        ERight,     ///< Search from the given position to the right (towards higher index)
-        ENearestL,  ///< Search in both directions starting from the given position; in the case of the equal distances return the position to the left
-        ENearestR   ///< Search in both directions starting from the given position; in the case of the equal distances return the position to the right
-
-        //-- N.B the current position the search starts with isn't included to the search.
-        };
-
-    TBool Find(TUint32& aStartPos, TBool aBitVal, TFindDirection aDir) const;
-
-    /** panic codes */
-    enum TPanicCode
-        {
-        EIndexOutOfRange,       ///< index out of range
-        EWrondFindDirection,    ///< a value doesn't belong to TFindDirection
-        ESizeMismatch,          ///< Size mismatch for binary operators
-        ENotInitialised,        ///< No memory allocated for the array
-        ENotImplemented,        ///< functionality isn't implemented
-        };
-
- protected:
-    
-    //-- these are outlawed. Can't use them because memory allocator can leave and we don't have conthrol on it  in these methods. 
-    RBitVector(const RBitVector& aRhs);            
-    RBitVector& operator=(const RBitVector& aRhs); 
-  
-    void Panic(TPanicCode aPanicCode) const;
-
-    inline TUint32 WordNum(TUint32 aBitPos)  const;
-    inline TUint32 BitInWord(TUint32 aBitPos) const;
-
- private:
-    TBool FindToRight(TUint32& aStartPos, TBool aBitVal) const;
-    TBool FindToLeft (TUint32& aStartPos, TBool aBitVal) const;
-    TBool FindNearest(TUint32& aStartPos, TBool aBitVal, TBool aToLeft) const;
-   
-    inline TUint32 MaskLastWord(TUint32 aVal) const; 
-    inline TBool ItrLeft(TUint32& aIdx) const;
-    inline TBool ItrRight(TUint32& aIdx) const;
-
-
- protected:
-
-    TUint32   iNumBits; ///< number of bits in the vector
-    TUint32*  ipData;   ///< pointer to the data 
-    TUint32   iNumWords;///< number of 32-bit words that store bits
-    };
-
-
-//-----------------------------------------------------------------------------
 
 
 #include "sl_std.inl"

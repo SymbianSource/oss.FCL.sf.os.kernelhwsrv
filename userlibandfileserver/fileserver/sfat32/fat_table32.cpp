@@ -1761,7 +1761,7 @@ TBool CFatTable::GetNextClusterL(TInt& aCluster) const
 */
 void CFatTable::WriteFatEntryEofL(TUint32 aFatIndex)
 	{
-	__PRINT1(_L("CAtaFatTable::WriteFatEntryEofL(%d)"), aFatIndex);
+	__PRINT1(_L("CFatTable::WriteFatEntryEofL(%d)"), aFatIndex);
 
     //-- use EOF_32Bit (0x0fffffff) for all types of FAT, FAT cache will mask it appropriately
     WriteL(aFatIndex, EOF_32Bit);

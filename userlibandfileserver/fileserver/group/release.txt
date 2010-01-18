@@ -1,3 +1,63 @@
+Version 2.00.2025
+=================
+(Made by vfebvre 16/12/2009)
+
+1.	MichaelCox
+	1.	MINOR_CHANGE: Improve documentation for class CFsNotify concerning how big the buffer should be
+
+2.	HaoJ
+	1.	DEFECT FIX: DEF143253 [Coverity]:DEADCODE and CHECKED_RETURN error in MSF00264 vtb101sf
+	2.	MINOR_CHANGE: Remove a build warning in arm4 and wins introduced by fix for DEF143253
+
+3.	hengrant
+	1.	DEFECT FIX: DEF143386: t_notify_perf failure of edge use cases on gekko79 
+
+4.	DmitryL
+	1.	DEFECT FIX: DEF143263 FAT CheckDisk() is too slow comparing to ScanDrive() 
+
+5.	FadhliMustaffa
+	1.	DEFECT FIX: DEF142711: RFsPlugin needs to expose a Volume() API
+
+
+Version 2.00.2024
+=================
+(Made by vfebvre 15/12/2009)
+
+1.	cnotton
+	1.	MINOR_CHANGE Added two missing public headers for case when SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT is used.
+
+
+Version 2.00.2023
+=================
+(Made by VincentF 14/12/2009)
+
+1.	cnotton
+	1.	DEF143346: Stop including platform headers in f32file.h
+
+
+Version 2.00.2022
+=================
+(Made by VincentF 10/12/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX: DEF143214 t_automounter.cpp depends on exfat which is not contributed to the foundation  
+
+2.	KaiD
+	1.	DEFECT FIX: DEF143215: 	File server requesting a large chunk
+
+
+Version 2.00.2021
+=================
+(Made by VincentF 03/12/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX: DEF142313 excessive usage of Entry() in the file server  
+	2. 	MINOR_CHANGE: placing RBitVector into common utilities file
+
+2.	HaoJ
+	1.	DEFECT FIX: DEF143222 t_notify_perf failure
+
+
 Version 2.00.2020
 =================
 (Made by VincentF 27/11/2009)

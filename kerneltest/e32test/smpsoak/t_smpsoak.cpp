@@ -14,6 +14,7 @@
 // e32test\smpsoak\t_smpsoak.cpp
 
 //  User Includes
+#include <e32hal.h>
 #include "t_smpsoak.h"
 
 void ParseCommandLine ();

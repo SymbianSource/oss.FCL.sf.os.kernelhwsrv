@@ -62,6 +62,14 @@ const TInt KErrUsbRemoteWakeupAlreadyEnabled  = -6660;
 const TInt KErrUsbRemoteWakeupAlreadyDisabled = -6661;
 const TInt KErrUsbAlreadyResumed              = -6662;
 
+/*
+The following two codes are used to indicate attachment/detachment of some malfunction 
+USB peripherals, which behaviour don't comply with USB specification. For example, some 
+hubs drive their upstream port VBus, however such behaviour is not allowed according to USB specification. 
+*/
+const TInt KErrUsbBadDeviceAttached           = -6663;
+const TInt KEventUsbBadDeviceDetached         = -6664;
+
 namespace UsbdiPanics
 	{
 	_LIT(KUsbHubDriverPanicCat, "USBHubDriver");

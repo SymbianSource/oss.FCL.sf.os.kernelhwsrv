@@ -12,6 +12,8 @@
 //
 // Description:
 // Hardware Configuration Respoitory Platform Independent Layer (PIL)
+// Contains the hardware abstraction interface implemented in the variant PSL
+// HCR kernel extension project.
 //
 
 /** 

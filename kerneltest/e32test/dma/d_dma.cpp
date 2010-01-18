@@ -128,6 +128,9 @@ TInt TBufferMgr::Alloc(TInt aIdx, TInt aSize)
 		if (r != KErrNone)
 			Epoc::FreePhysicalRam(phys, aSize);
 		iBufs[aIdx].iSize = aSize;
+		
+		__KTRACE_OPT(KDMA, Kern::Printf("TBufferMgr::Alloc buffer %d linAddr=0x%08x, physAddr=0x%08x, size=%d",
+					aIdx, Addr(aIdx), PhysAddr(aIdx), Size(aIdx)));
 		}
 	NKern::ThreadLeaveCS();
 	return r;
@@ -155,6 +158,8 @@ void TBufferMgr::FreeAll()
 
 #endif
 
+
+#ifndef DMA_APIV2
 static TInt FragmentCount(DDmaRequest* aRequest)
 	{
 	TInt count = 0;
@@ -162,6 +167,8 @@ static TInt FragmentCount(DDmaRequest* aRequest)
 		count++;
 	return count;
 	}
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -321,8 +328,11 @@ TInt DDmaTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 		while (p < end)
 			if (*p++ != val)
 				{
-				__KTRACE_OPT(KDMA, Kern::Printf("Check DMA buffer failed offset: %d value: %d",
-												p-iBufMgr.Addr(i)-1, *(p-1)));
+#ifdef _DEBUG
+				const TUint8 prevValue = *(p-1);
+#endif
+				__KTRACE_OPT(KDMA, Kern::Printf("Check DMA buffer number %d failed at offset: %d value: %d(%c)",
+												i, p-iBufMgr.Addr(i)-1, prevValue, prevValue));
 				return EFalse;
 				}
 		return ETrue;
@@ -361,7 +371,11 @@ TInt DDmaTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 		{
 		TInt reqIdx = (TInt)a1;
 		__ASSERT_DEBUG(0 <= reqIdx && reqIdx < KMaxRequests, Kern::PanicCurrentThread(KClientPanicCat, __LINE__));
+#ifdef DMA_APIV2
+		return iRequests[reqIdx]->FragmentCount();
+#else
 		return FragmentCount(iRequests[reqIdx]);
+#endif
 		}
 	case RTestDma::EMissInterrupts:
 		return iChannel->MissNextInterrupts((TInt)a1);
@@ -376,6 +390,8 @@ TInt DDmaTestChannel::Execute(const TDesC8& aDes)
 	{
 	TBuf8<64> cmd;
 	Kern::KUDesGet(cmd, aDes);
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaTestChannel::Execute cmd=%S", &cmd));
+
 	const TText8* p = cmd.Ptr();
 	const TText8* pEnd = p + cmd.Length();
 	while (p<pEnd)

@@ -414,7 +414,7 @@ EXPORT_C TInt RPlugin::DoControl(TInt aFunction, TDes8& a1) const
 Client requests a synchronous operation
 
 @param	aFunction: The operation to be handled
-@param	a1: returned buffer from plugin on comletion of the request
+@param	a1: returned buffer from plugin on completion of the request
 */
 	{
 	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl2, MODULEUID, Session().Handle(), SubSessionHandle(), aFunction, &a1);
@@ -432,8 +432,8 @@ EXPORT_C TInt RPlugin::DoControl(TInt aFunction, TDes8& a1, TDes8& a2) const
 Client requests a synchronous operation
 
 @param	aFunction: The operation to be handled
-@param	a1: returned buffer from plugin on comletion of the request
-@param  a2: 2nd returned buffer from plugin on comletion of the request
+@param	a1: returned buffer from plugin on completion of the request
+@param  a2: 2nd returned buffer from plugin on completion of the request
 */
 	{
 	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl3, MODULEUID, Session().Handle(), SubSessionHandle(), aFunction, &a1, &a2);

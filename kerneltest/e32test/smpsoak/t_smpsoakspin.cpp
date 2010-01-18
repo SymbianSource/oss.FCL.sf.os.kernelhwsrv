@@ -15,6 +15,7 @@
 //
 
 #define __E32TEST_EXTENSION__
+#include <e32svr.h>
 #include <e32test.h>
 #include <u32hal.h>
 #include <f32file.h>

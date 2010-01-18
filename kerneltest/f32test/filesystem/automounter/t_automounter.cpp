@@ -29,7 +29,6 @@
 #include <f32dbg.h>
 
 #include "filesystem_fat.h"
-#include "filesystem_exfat.h" 
 #include "filesystem_automounter.h" 
 
 
@@ -70,11 +69,26 @@ _LIT(KFsy1, "efat32.fsy");
 _LIT(KFsy1, "elocal.fsy");
 #endif    
     
-//-- exFAT is used as a child filesystem #1
-//_LIT(KFSName2, "exfat");  ///< filesystem #2 name
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//-- exFAT is used as a child filesystem #1. The problem here: some poor guys might not have the exFAT at all including the header file
+//-- "filesystem_exfat.h" that defines exFAT volume formatting structure. Fortunately for them the exFAT formatting parameters like "sectors per cluster" and
+//-- "number of FATs" have the same layout in the data container as FAT ones. So FAT formatting structure can be used for formatting exFAT.
+//-- The macro defines if exFAT might not be available.
+#define EXFAT_MIGHT_NOT_BE_PRESENT
 
 /** filesystem #2 name */
-#define KFSName2 KFileSystemName_exFAT
+#ifdef EXFAT_MIGHT_NOT_BE_PRESENT
+    _LIT(KFSName2, "exFAT");
+#else
+    #define KFSName2 KFileSystemName_exFAT
+    #include "filesystem_exfat.h" 
+    using namespace FileSystem_EXFAT;
+#endif
+
+
+
+
 _LIT(KFsy2, "exfat.fsy"); ///< filesystem #2 *.fsy module name
 
 TBool automounter_Loaded  = EFalse; ///< ETrue if automounter.fsy is loaded; used for correct cleanup
@@ -1508,7 +1522,7 @@ void TestFormatting_FsName_Parameters_FAT()
 
 void TestFormatting_FsName_Parameters_exFAT()
 {
-    using namespace FileSystem_EXFAT;
+
 
     test.Next(_L("Testing TVolFormatParam_exFAT formatting API\n"));
 
@@ -1531,8 +1545,15 @@ void TestFormatting_FsName_Parameters_exFAT()
     //================================================================================
     //-- 1.0  simple unit test for TVolFormatParam_FAT
 
-    TVolFormatParam_exFATBuf    fmtParamBuf_exFAT;
-    TVolFormatParam_exFAT&      fmtParam = fmtParamBuf_exFAT();
+#ifndef EXFAT_MIGHT_NOT_BE_PRESENT    
+    TVolFormatParam_exFATBuf    fmtParamBuf;
+    TVolFormatParam_exFAT&      fmtParam = fmtParamBuf();
+#else
+    //-- see the comments to "EXFAT_MIGHT_NOT_BE_PRESENT" macro definition
+    TVolFormatParam_FATBuf  fmtParamBuf;
+    TVolFormatParam_FAT&    fmtParam= fmtParamBuf();
+#endif
+
 
     fmtParam.SetSectPerCluster(64);
     test(fmtParam.SectPerCluster()==64);
@@ -1555,7 +1576,12 @@ void TestFormatting_FsName_Parameters_exFAT()
     test.Printf(_L("fmt: using TVolFormatParam_exFAT, no parameters.\n"));
     fmtParam.Init();
     
-    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt, fmtParamBuf_exFAT);
+#ifdef EXFAT_MIGHT_NOT_BE_PRESENT
+    //-- need to forcedly set exFAT FS name, because fmtParam.Init(); set it to "FAT"
+    ((TVolFormatParam&)fmtParam).SetFileSystemName(KFSName2);
+#endif        
+
+    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt, fmtParamBuf);
     test(nRes==KErrNone);
     
     nRes = DoFormatSteps(format, fmtCnt);
@@ -1571,7 +1597,7 @@ void TestFormatting_FsName_Parameters_exFAT()
     fmtParam.SetSectPerCluster(1);
     fmtParam.SetNumFATs(2);
 
-    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt, fmtParamBuf_exFAT);
+    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt, fmtParamBuf);
     test(nRes==KErrNone);
     
     nRes = DoFormatSteps(format, fmtCnt);

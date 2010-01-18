@@ -94,6 +94,7 @@ void CModifierPlugin::EnableInterceptsL()
 	User::LeaveIfError(RegisterIntercept(EFsFileSeek,			EPreIntercept));
 	User::LeaveIfError(RegisterIntercept(EFsPluginDoControl,	EPreIntercept));
 	User::LeaveIfError(RegisterIntercept(EFsPluginDoRequest,	EPreIntercept));
+	User::LeaveIfError(RegisterIntercept(EFsVolume,				EPreIntercept));
 
 
     _LOG(_L("Modifier Plugin: Enabled intercepts."));
@@ -131,6 +132,7 @@ void CModifierPlugin::DisableInterceptsL()
 	User::LeaveIfError(UnregisterIntercept(EFsEntry,			EPreIntercept));
 	User::LeaveIfError(UnregisterIntercept(EFsSetEntry,			EPreIntercept));
 	User::LeaveIfError(UnregisterIntercept(EFsFileSeek,			EPreIntercept));
+	User::LeaveIfError(UnregisterIntercept(EFsVolume,			EPreIntercept));
 
     _LOG(_L("Modifier Plugin: Disabled intercepts."));
 
@@ -152,13 +154,13 @@ TInt CModifierPlugin::DoRequestL(TFsPluginRequest& aRequest)
 	
 	if(aRequest.IsPostOperation())
 		{
-		_LOG2(_L("Modifier Plugin::DoRequestL for Function %d in Post-Interception"),function);
+		_LOG2(_L("CModifierPlugin::DoRequestL for Function %d in Post-Interception"),function);
 		}
 	else
 		{
-		_LOG2(_L("Modifier Plugin::DoRequestL for Function %d in Pre-Interception"),function);
+		_LOG2(_L("CModifierPlugin::DoRequestL for Function %d in Pre-Interception"),function);
 		}
-	 
+	
 	switch(function)
 		{
 		case EFsFileRead:
@@ -247,6 +249,10 @@ TInt CModifierPlugin::DoRequestL(TFsPluginRequest& aRequest)
 
 		case EFsSetEntry:
 			TRAP(err, FsSetEntryL(aRequest));
+			break;
+
+		case EFsVolume:
+			TRAP(err, FsVolumeL(aRequest));
 			break;
 
 		default:
@@ -423,7 +429,7 @@ void CModifierPlugin::FsFileLockL(TFsPluginRequest& aRequest)
 				User::Leave(err); //trapped in DoRequestL
 
 			fileplugin.Close();
-			
+
 			User::Leave(KErrCompletion);
 			}
 		}
@@ -525,7 +531,7 @@ void CModifierPlugin::FsFileSizeL(TFsPluginRequest& aRequest)
 		_LOG(_L("CModifierPlugin::FsFileSizeL, pre intercept"));
 		if(extension.CompareF(_L(".size")) == 0)
 			{
-			_LOG(_L("ModifierPlugin::FsFileSizeL"));
+			_LOG(_L("CModifierPlugin::FsFileSizeL"));
 
 			RFilePlugin fileplugin(aRequest);
 			TInt err = fileplugin.AdoptFromClient();
@@ -703,7 +709,7 @@ void CModifierPlugin::FsFileReadL(TFsPluginRequest& aRequest)
 				User::Leave(err); //trapped in DoRequestL
 
 			err = fsplugin.ReadFileSection(filename, pos, tempBufPtr, length);
-			_LOG2(_L("CModifierPlugin::FsReadFileSectionL, FileRead returned %d"), err);
+			_LOG2(_L("CModifierPlugin::FileRead, FileRead returned %d"), err);
 			iLastError = err;
 			iLineNumber = __LINE__;
 			if(err!=KErrNone)
@@ -711,7 +717,7 @@ void CModifierPlugin::FsFileReadL(TFsPluginRequest& aRequest)
 
 
 			err = aRequest.Write(TFsPluginRequest::EData, tempBufPtr);
-			_LOG2(_L("CModifierPlugin::FsReadFileSectionL, ClientWrite returned %d"), err);
+			_LOG2(_L("CModifierPlugin::FileRead, ClientWrite returned %d"), err);
 			iLastError = err;
 			iLineNumber = __LINE__;
 			if(err!=KErrNone)
@@ -841,7 +847,7 @@ void CModifierPlugin::FsFileWriteL(TFsPluginRequest& aRequest)
 			//open a second file
 
 			err = fileplugin2.Open(testfilename1, EFileWrite);
-			_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+			_LOG3(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 			iLastError = err;
 			iLineNumber = __LINE__;
 			if(err!=KErrNone)
@@ -895,7 +901,7 @@ void CModifierPlugin::FsFileWriteL(TFsPluginRequest& aRequest)
 			iLineNumber = __LINE__;
 			if(err!=KErrNone)
 				User::Leave(err); //trapped in DoRequestL
-			_LOG2(_L("RFilePlugin::Create returned %d"), err);
+			_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Create returned %d"), err);
 
 			//write to the newly created file
 			err = fileplugin.Write(pos, tempBufPtr2);
@@ -1071,7 +1077,7 @@ void CModifierPlugin::FsFileCreateL(TFsPluginRequest& aRequest)
 
 		TInt err = fileplugin.Create(filename, mode);
 
-		_LOG2(_L("RFilePlugin::Create returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsFileCreateL, RFilePlugin::Create returned %d"), err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1178,7 +1184,7 @@ void CModifierPlugin::FsFileOpenL(TFsPluginRequest& aRequest)
 
 		RFilePlugin fileplugin(aRequest);
 		err = fileplugin.Open(filename, mode);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &filename, err);
+		_LOG3(_L("CModifierPlugin::FsFileOpenL, RFilePlugin::Open for %S returned %d"), &filename, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1259,14 +1265,14 @@ void CModifierPlugin::FsFileTempL(TFsPluginRequest& aRequest)
 		TFileName fn;
 		RFilePlugin fileplugin(aRequest);
 		err = fileplugin.Temp(testfilename1, fn, mode);
-		_LOG2(_L("RFilePlugin::Temp returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsFileTempL, RFilePlugin::Temp returned %d"), err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
 			User::Leave(err); //trapped in DoRequestL
 
 		err = aRequest.Write(TFsPluginRequest::ENewName, fn);
-		_LOG2(_L("CModifierPlugin::FsFileReadL, ClientWrite returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsFileTempL, ClientWrite returned %d"), err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1352,7 +1358,7 @@ void CModifierPlugin::FsFileReplaceL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin(aRequest);
 
 		TInt err = fileplugin.Replace(filename, mode);
-		_LOG2(_L("RFilePlugin::Replace returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsFileReplaceL, RFilePlugin::Replace returned %d"), err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1452,16 +1458,16 @@ void CModifierPlugin::FsReadFileSectionL(TFsPluginRequest& aRequest)
 			if(err!=KErrNone)
 				User::Leave(err); //trapped in DoRequestL
 			fsplugin.Close();
-			
+
 			TBuf<26> temp_wide;
 			temp_wide.Copy(temp);
-			
+
 			iLogging = ETrue;
 			_LOG2(_L("CModifierPlugin::FsReadFileSectionL - wanted to read length = %d\n"),length);
 			_LOG2(_L("CModifierPlugin::FsReadFileSectionL - data read length = %d\n"),temp.Length());
 			_LOG2(_L("CModifierPlugin::FsReadFileSectionL - data read = %S\n"),&temp_wide);
 			iLogging = EFalse;
-			
+
 
 			err = aRequest.Write(TFsPluginRequest::EData, temp);
 			_LOG3(_L("CModifierPlugin::FsReadFileSectionL - RFilePlugin::Write for %S returned %d"), &testfilename1, err);
@@ -1498,7 +1504,7 @@ void CModifierPlugin::FsDeleteL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsDeleteL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1513,7 +1519,7 @@ void CModifierPlugin::FsDeleteL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsDeleteL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1523,7 +1529,7 @@ void CModifierPlugin::FsDeleteL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsDeleteL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1538,7 +1544,7 @@ void CModifierPlugin::FsDeleteL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsDeleteL, RFilePlugin::Close to the second file returned %d"), err);
 
 		RFsPlugin fsplugin(aRequest);
 		err = fsplugin.Connect();
@@ -1605,7 +1611,7 @@ void CModifierPlugin::FsReplaceL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsReplaceL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1620,7 +1626,7 @@ void CModifierPlugin::FsReplaceL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsReplaceL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1628,7 +1634,7 @@ void CModifierPlugin::FsReplaceL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsReplaceL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1643,7 +1649,7 @@ void CModifierPlugin::FsReplaceL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsReplaceL, FilePlugin::Close to the second file returned %d"), err);
 
 		_LOG(_L("CModifierPlugin::FsReplaceL, calling RFsPlugin::Replace"));
 		RFsPlugin fsplugin(aRequest);
@@ -1704,7 +1710,7 @@ void CModifierPlugin::FsRenameL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsRenameL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1712,7 +1718,7 @@ void CModifierPlugin::FsRenameL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsRenameL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1727,7 +1733,7 @@ void CModifierPlugin::FsRenameL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsRenameL, RFilePlugin::Close to the second file returned %d"), err);
 
 		_LOG(_L("CModifierPlugin::FsRenameL, calling RFsPlugin::Rename"));
 		RFsPlugin fsplugin(aRequest);
@@ -1771,7 +1777,7 @@ void CModifierPlugin::FsEntryL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsEntryL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1786,7 +1792,7 @@ void CModifierPlugin::FsEntryL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsEntryL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1794,7 +1800,7 @@ void CModifierPlugin::FsEntryL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsEntryL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1809,7 +1815,7 @@ void CModifierPlugin::FsEntryL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsEntryL, RFilePlugin::Close to the second file returned %d"), err);
 
 		_LOG(_L("CModifierPlugin::FsEntryL, calling RFsPlugin::Entry"));
 		RFsPlugin fsplugin(aRequest);
@@ -1842,7 +1848,6 @@ void CModifierPlugin::FsEntryL(TFsPluginRequest& aRequest)
 	}
 
 
-
 void CModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 	{
 	TInt err = KErrNone;
@@ -1856,11 +1861,11 @@ void CModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 
 	if (aRequest.IsPostOperation())
 		{
-		_LOG(_L("CModifierPlugin::FsRenameL, post intercept"));
+		_LOG(_L("CModifierPlugin::FsSetEntryL, post intercept"));
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsSetEntryL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1875,7 +1880,7 @@ void CModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CModifierPlugin::FsSetEntryL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1883,7 +1888,7 @@ void CModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CModifierPlugin::FsSetEntryL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1898,9 +1903,7 @@ void CModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
-
-		_LOG(_L("CModifierPlugin::FsSetEntryL, calling RFsPlugin::SetEntry"));
+		_LOG2(_L("CModifierPlugin::FsSetEntryL, FilePlugin::Close to the second file returned %d"), err);
 
 		TTime time;
 		TPtr8 t((TUint8*)&time,sizeof(TTime));
@@ -1945,6 +1948,67 @@ void CModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 		}
 	}
 
+/**
+@see TestVolume()
+*/
+void CModifierPlugin::FsVolumeL(TFsPluginRequest& aRequest)
+	{
+	if (aRequest.IsPostOperation())
+		{
+		_LOG(_L("CModifierPlugin::FsVolumeL, post intercept"));
+		}
+	else
+		{
+		_LOG(_L("CModifierPlugin::FsVolumeL, pre intercept"));
+		RFsPlugin fsplugin(aRequest);
+		CleanupClosePushL(fsplugin);
+
+		TInt err = fsplugin.Connect();
+		iLastError = err;
+		iLineNumber = __LINE__;
+		if(err!=KErrNone)
+			User::Leave(err); // Trapped in DoRequestL
+
+		TVolumeInfo volInfo;
+		TInt drive = (TInt)(iDriveToTest - (TChar)'A');
+		err = fsplugin.Volume(volInfo,drive);
+		_LOG3(_L("CModifierPlugin::FsVolumeL, RFsPlugin::Volume(drive %d) returned %d"), drive, err);
+		iLastError = err;
+		iLineNumber = __LINE__;
+		if(err!=KErrNone)
+			User::Leave(err); // Trapped in DoRequestL
+
+		// Check that the volume label is the same as what was set in t_plugin_v2
+		_LIT(KVolumeLabel,"1Volume");
+		err = volInfo.iName.Compare(KVolumeLabel);
+		_LOG2(_L("CModifierPlugin::FsVolumeL, Compare volume label returned %d"), err);
+		iLastError = err;
+		iLineNumber = __LINE__;
+		if(err!=KErrNone)
+			User::Leave(err); // Trapped in DoRequestL
+
+		// Modify volume name
+		_LOG2(_L("CModifierPlugin::FsVolumeL, Old volume name = %S"), &volInfo.iName);
+		TBuf<7> newVolumeName = volInfo.iName;
+		newVolumeName[0] = '2';
+		volInfo.iName = newVolumeName;
+		_LOG2(_L("CModifierPlugin::FsVolumeL, New volume name = %S"), &volInfo.iName);
+
+		// Send back volume info
+		TPckgC<TVolumeInfo> volInfoPckg(volInfo);
+		err = aRequest.Write(TFsPluginRequest::EVolumeInfo, volInfoPckg);
+		iLastError = err;
+		iLineNumber = __LINE__;
+		if(err!=KErrNone)
+			User::Leave(err); // Trapped in DoRequestL
+
+		CleanupStack::PopAndDestroy();
+
+		// Request processed by plug-in
+		User::Leave(KErrCompletion);
+		}
+	}
+
 
 /**
 @internalComponent
@@ -1975,7 +2039,7 @@ void CModifierPlugin::FsDirOpenL(TFsPluginRequest& aRequest)
 	iLineNumber = __LINE__;
 	if(err!=KErrNone)
 		User::Leave(err); //trapped in DoRequestL
-	
+
 	//setting up test files
 	testfilename1.Append(iDriveToTest);
 	testfilename1.Append(_L(":\\Data2\\"));
@@ -2186,7 +2250,7 @@ TInt CModifierPlugin::FsPluginDoControlL(CFsPluginConnRequest& aRequest)
 			}
 		case KPluginSetDirFullName:
 			{
-			//This is necessary as at present we have nwo way of getting the name of
+			//This is necessary as at present we have no way of getting the name of
 			//a directory!
 			TRAP(err,aRequest.ReadParam1L(dirnamePckg));
 			break;

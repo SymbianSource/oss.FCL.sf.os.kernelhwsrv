@@ -766,7 +766,7 @@ TInt DMemModelAlignedShPool::DestroyMappings(DMemModelAlignedShPoolClient* aClie
 		++i;
 		}
 
-	__KTRACE_OPT(KMMU, Kern::Printf("<MemModelAlignedShPool::DestroyMappings"));
+	__KTRACE_OPT(KMMU, Kern::Printf("<DMemModelAlignedShPool::DestroyMappings"));
 
 	return r;
 	}

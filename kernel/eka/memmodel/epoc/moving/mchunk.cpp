@@ -728,7 +728,7 @@ void DMemModelChunk::DoDecommit(TInt aOffset, TInt aSize, TDecommitType aDecommi
 		}
 	if (iSize==0 && (iAttributes&EFixedAddress)==0)
 		{
-		__KTRACE_OPT(KMMU,Kern::Printf("DMemModelChunk::Adjust remove region"));
+		__KTRACE_OPT(KMMU,Kern::Printf("DMemModelChunk::DoDecommit remove region"));
 		NKern::LockSystem();
 		if (TLinAddr(iBase)==iHomeBase)
 			iBase=NULL;

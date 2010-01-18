@@ -1924,8 +1924,8 @@ asynchronously by another thread.
 EXPORT_C DProcess* Kern::ProcessFromId(TUint aId)
 	{
 	DObjectCon& processes=*K::Containers[EProcess];
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::ProcessFromId");				
-	__ASSERT_WITH_MESSAGE_MUTEX(processes.Lock(),"Process container mutex must be held","Kern::ThreadFromId");			
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::ProcessFromId");
+	__ASSERT_WITH_MESSAGE_MUTEX(processes.Lock(),"Process container mutex must be held","Kern::ProcessFromId");
 	//end of preconditions check
 	TInt c=processes.Count();
 	TInt i;
@@ -3033,10 +3033,17 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 		}
 	if (!m)
 		return KErrNone;
-	if (aFunction)
-		Kern::Printf("In function %s :-", aFunction);
-	else
-		Kern::Printf("At address %08x :-", aAddr);
+	if (aFunction && aAddr)
+		{
+		Kern::Printf("In function %s called from %08x :-", aFunction, aAddr);
+		}
+	else 
+		{
+		if (aFunction)
+			Kern::Printf("In function %s :-", aFunction);
+		else
+			Kern::Printf("At address %08x :-", aAddr);
+		}
 	if (m & MASK_NO_FAST_MUTEX)
 		Kern::Printf("Assertion failed: No fast mutex must be held");
 	if (m & MASK_NO_CRITICAL)
@@ -4431,7 +4438,7 @@ Creates an object which is used to pin physical memory. Suported by Kernel runni
 */
 EXPORT_C TInt Kern::CreatePhysicalPinObject(TPhysicalPinObject*& aPinObject)
 	{
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::CreateVirtualPinObject");			
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::CreatePhysicalPinObject");
 	return M::CreatePhysicalPinObject(aPinObject);
 	}
 

@@ -618,6 +618,11 @@
 #endif
 #endif
 
+// Macro used to get the caller of the function containing a CHECK_PRECONDITIONS()
+#if defined(__ARMCC_VERSION) && __ARMCC_VERSION >= 200000
+#define PRECOND_FUNCTION_CALLER		__return_address()
+#endif
+
 #if !defined(__CPU_ARM_HAS_LDREX_STREX_V6K)
 #if defined(__CPU_ARM_HAS_LDREX_STREX)
 #define	__ATOMIC64_USE_SLOW_EXEC__
@@ -639,6 +644,15 @@
 #define	__crash()						asm("int 0xff " : : : "memory")
 #endif
 
+#ifdef __VC32__
+// Not available in the version of MSVC normally used
+// #define PRECOND_FUNCTION_CALLER		((TLinAddr)_ReturnAddress())
+#endif
+
 #endif	// __CPU_X86
+
+#ifdef __GCC32__
+#define PRECOND_FUNCTION_CALLER		((TLinAddr)__builtin_return_address(0))
+#endif
 
 #endif

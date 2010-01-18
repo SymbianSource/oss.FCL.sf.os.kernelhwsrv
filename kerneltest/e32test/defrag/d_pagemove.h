@@ -23,6 +23,8 @@
 #endif
 
 
+_LIT(KPageMoveLddName,"d_pagemove");
+
 class TCapsPageMoveV01
 	{
 public:
@@ -66,7 +68,10 @@ public:
 #ifndef __KERNEL_MODE__
 inline TInt RPageMove::Open()
 	{
-	return DoCreate(_L("PageMove"),TVersion(0,1,1),KNullUnit,NULL,NULL);
+	TInt r=User::LoadLogicalDevice(KPageMoveLddName);
+	if(r==KErrNone || r==KErrAlreadyExists)
+		r=DoCreate(KPageMoveLddName,TVersion(0,1,1),KNullUnit,NULL,NULL);
+	return r;
 	}
 
 inline TInt RPageMove::TryMovingKHeap()

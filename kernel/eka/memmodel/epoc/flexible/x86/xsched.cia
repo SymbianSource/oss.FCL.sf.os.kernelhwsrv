@@ -52,10 +52,15 @@ GLDEF_C __NAKED__ void DoProcessSwitch()
 	asm("jz done");
 
 	// restore alias...
+	// Disable interrupts so setting the alias pde is must complete before
+	// Mmu::RemoveAliasesForPageTable() can execute the alias IPI and vice 
+	// versa.
+	asm("cli ");					// turn off interrupts
 	asm("mov edx, [ebx+%0]": : "i"_FOFF(DMemModelThread,iAliasPdePtr));
 	asm("mov eax, [ebx+%0]": : "i"_FOFF(DMemModelThread,iAliasPde));
 	asm("mov [edx], eax");
 	asm("invlpg [ecx]");
+	asm("sti ");					// turn on interrupts
 
 	asm("done:");
 	asm("ret");

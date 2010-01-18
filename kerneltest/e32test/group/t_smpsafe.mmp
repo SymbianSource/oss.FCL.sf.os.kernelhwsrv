@@ -27,5 +27,6 @@ ramtarget +
 
 smpsafe
 macro OMIT_MAIN
+unpaged  // must be unpaged for CheckAffinity() to be robust
 
 VENDORID 0x70000001

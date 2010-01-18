@@ -308,8 +308,8 @@ void ExternalCache::CleanAndInvalidate(TLinAddr aBase, TUint aSize)
 
 void ExternalCache::AtomicSync()
 	{
-	CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"ExternalCache::AtomicCleanAndInvalidate");				
-	__KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::AtomicCleanAndInvalidate"));
+	CHECK_PRECONDITIONS(MASK_INTERRUPTS_DISABLED,"ExternalCache::AtomicSync");
+	__KTRACE_OPT(KMMU,Kern::Printf("ExternalCache::AtomicSync"));
 
 #if defined(__ARM_PL310_CACHE__)
 	// On Pl310, we hold the lock while maintaining cache. Therefore, we cannot

@@ -1,3 +1,111 @@
+Version 2.00.2063
+=================
+(Made by vfebvre 16/12/2009)
+
+1.	MichaelP
+	1.	DEFECT FIX: DEF143310: DMA Framework makes use of PRM difficult
+		Introduced new virtual DMA PIL function TDmaChannel::QueuedRequestCountChanged()
+		which can be overridden in a DMA PSL to implement channel/DMAC power management
+		functionality outside of any PIL mutexes. For details see the description in
+		/os/kernelhwsrv/kernel/eka/include/drivers/dma_v1.h.
+
+
+Version 2.00.2062
+=================
+(Made by vfebvre 15/12/2009)
+
+1.	cnotton
+	1.	MINOR_CHANGE Added a few missing headers for when SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT is enabled.
+
+
+Version 2.00.2061
+=================
+(Made by VincentF 14/12/2009)
+
+1.	gcochran
+	1.	DEF142419: Kernel doesn't flush prefetch buffer properly
+
+
+Version 2.00.2060
+=================
+(Made by VincentF 10/12/2009)
+
+1.	TomCosgrove
+	1.	MINOR_CHANGE: Fix function names given in various trace and precondition statements
+	2.	DEFECT FIX: DEF143168: Kernel precondition checks don't give any indication of the caller
+		Added compiler-specific macro PRECOND_FUNCTION_CALLER, defaulting to 0 if not present, and
+		use this in CHECK_PRECONDITIONS() and the various __ASSERT_WITH_MESSAGE_*() macros.  Also
+		updated CheckPreconditions() to print this address even if the function name is given (as
+		it is when called from the C macros).
+	3.	DEFECT FIX: DEF143237: SBTraceData::CheckFilter2() causes issues when executed with undefined CPU mode
+		Don't just take the CPSR & 0x03 to get the context value, since undef (etc) mode gets
+		confused with thread (normal supervisor) mode.  Instead, AND with 0x0f and set to 2 if
+		higher than 3.
+
+2.	DjordjeK
+	1.	DEFECT FIX: DEF143166: 	Default caching of page tables on 1136 flexible memory model is wrong
+		Fixed the problem with caching attributes (of page tables, code & exception vector) on 1136
+		running flexible memory model. Platforms other then 1136 are not affected.
+
+3.	kingbozhang
+	1.	DEFECT FIX: DEF142623: TKEA-7WJC4S:[OTG] A malfunctioning peripheral cannot be reported to the UI
+		This defect is some USB devices do not comply with USB2.0 spec. Because they drive VBus of
+		their upstream port, however, such behaviour is forbidden in USB2.0.
+
+4.	DaveGordon
+	1.	DEFECT FIX: DEF141546: T_CPUTIME fails on SMPPAGE/SMPDATAPAGE ROMs...
+		Improve test by making sure threads are bound to the right cores
+	2.	DEFECT FIX: DEF143303: Crash unpinning message descriptors
+		Pinning operation now uses an initialised local array to hold potential references to pin
+		objects, and then transfers them all into a heap-allocated object only if at least one
+		such reference was created, ensuring that the subsequent unpin sees only good values.
+
+5.	stmansfi
+	1.	MINOR_CHANGE Update header comments in HCR PIL files
+
+6.	vfebvre
+	1.	MINOR_CHANGE Rename Bld.inf to bld.inf (for DEF142518)
+
+7.	kunmitta
+	1.	MINOR_CHANGE Added library names in compsupp explicitly for RVCT4.0 linkage
+
+8.	cnotton
+	1.	MINOR_CHANGE Fixed T_SMPSOAKSPIN.CPP for e32svr.h.
+	2.	DEFECT FIX: DEF143216: btrace.iby does not load btracex.ldd as an extension
+
+
+Version 2.00.2059
+=================
+(Made by VincentF 03/12/2009)
+
+1.	MichaelP
+	1.	MILESTONE: GT0515, MS3.15
+		RM-RIM REQ417-52838:FEA417-62893 DMA Upgrade : Client Callback from ISR
+		Gaia Feature Release 428985 Package Release 428988
+	2.	DEFECT FIX: DEF143285: t_dma and t_dma2 test failures
+
+2.	MarkTa
+	1.	DEFECT FIX: DEF143220: Flexible memory model - Aliasing can cause the system to crash.
+		Fix various race conditions in the flexible memory model's handling of aliasing.
+
+3.	RyanHarkin
+	1.	MINOR_CHANGE: Removed SYMBIAN_BASE_USE_GCE from header.iby files as this broke the build
+	2.	MINOR_CHANGE: Tidy up naviengine.h and naviengine_priv.h
+	3.	MINOR_CHANGE: Update NaviEngine release.txt because nobody else has
+	4.	MINOR_CHANGE: Remove commented out code from csi.mmp
+	5.	MINOR_CHANGE: updated NaviEngine User Guide
+	6.	MINOR_CHANGE: Bootloader OBY file bootbinary directive fixed
+
+4.	RichardCo
+	1.	DEFECT FIX: DEF142738: T_SMPSAFE fails on SMP unicore
+
+5.	erifung
+	1.	DEFECT FIX: DEF142542: Bridge: t_dobject fails on 8500..
+
+6.	cnotton
+	1.	DEFECT FIX: DEF143224: Move TFlowControl to a published header
+
+
 Version 2.00.2058
 =================
 (Made by vinojose 03/12/2009)
@@ -9,31 +117,28 @@ Version 2.00.2058
 2.	NeilClifford
 	1.	DEFECT FIX: DEF143039: MedMMC should not use Cache for Physical Address Requests
 
-3.	RichardCo
-	1.	DEFECT FIX: DEF142738: T_SMPSAFE fails on SMP unicore
-
-4.	MarkTa
+3.	MarkTa
 	1.	DEFECT FIX: DEF143129: WDP - Allocating a demand paged page table can fault the system 
 		Implement on demand stealing of paged page tables when allocating paged page tables.
 
-5.	StephenSun
+4.	StephenSun
 	1.	DEFECT FIX: DEF142844: initialize SRP timeout
 
-6.	OliverStuart
+5.	OliverStuart
 	1.	DEFECT FIX: DEF142840: KERN-EXEC 3 panics in T_SHBUF_PERF
 		Must use kumemget to read TPtr8 from user memory.
 
-7.	LaneRoberts
+6.	LaneRoberts
 	1.	DEFECT FIX: DEF143152: NaviEngine ARM4 ROMs cannot be built
 
-8. ChrisBeale
+7. ChrisBeale
 	1.	DEFECT FIX: DEF143114: FMM thrashing monitor timer runs even when device is idle 
 
-9.	cnotton
+8.	cnotton
 	1.	MINOR_CHANGE: Fix SMP Soak test for Header File Relocation
 	2.	DEFECT FIX: DEF143183: CTS79_MCL_wk46: TB92_200945 symbian tests compilation errors
 
-10.	lanerobe
+9.	lanerobe
 	1.	DEFECT FIX: DEFECT FIX: DEF141811: T_MSTIM on Unicore SMP (Naviengine) Image
 
 Version 2.00.2057

@@ -1678,7 +1678,7 @@ Sets the realtime state for the current thread.
 */
 EXPORT_C void Kern::SetRealtimeState(TThreadRealtimeState aNewState)
 	{
-	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"Kern::RequestComplete");
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"Kern::SetRealtimeState");
 	TheCurrentThread->SetRealtimeState(aNewState);
 	}
 

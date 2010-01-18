@@ -701,6 +701,7 @@ TInt Mmu::HandlePageFault(TLinAddr aPc, TLinAddr aFaultAddress, TUint aAccessPer
 	//   which has a reference on it's process, which should own the address space!
 
 #ifdef __BROADCAST_CACHE_MAINTENANCE__
+	TInt aliasAsid = -1;
 	if (thread->iAliasLinAddr)
 		{
 		// If an alias is in effect, the the thread will be locked to the current CPU,
@@ -713,6 +714,12 @@ TInt Mmu::HandlePageFault(TLinAddr aPc, TLinAddr aFaultAddress, TUint aAccessPer
 			__KTRACE_OPT2(KPAGING,KPANIC,Kern::Printf("Fault with thread locked to current CPU! addr=0x%08x (%O pc=%x)",aFaultAddress,thread,aPc));
 			Exc::Fault(aExceptionInfo);
 			}
+		// Open a reference on the aliased process's os asid before removing the alias
+		// so that the address space can't be freed while we try to access its members.
+		aliasAsid = thread->iAliasProcess->TryOpenOsAsid();
+		// This should never fail as until we remove the alias there will 
+		// always be at least one reference on the os asid.
+		__NK_ASSERT_DEBUG(aliasAsid >= 0);
 		thread->RemoveAlias();
 		}
 #endif
@@ -782,6 +789,15 @@ TInt Mmu::HandlePageFault(TLinAddr aPc, TLinAddr aFaultAddress, TUint aAccessPer
 		// which would have done this.)...
 		DMemModelThread::RestoreAddressSpace();
 		}
+
+#ifdef __BROADCAST_CACHE_MAINTENANCE__
+	// Close any reference on the aliased process's os asid before we leave the
+	// critical section.
+	if (aliasAsid >= 0)
+		{
+		thread->iAliasProcess->CloseOsAsid();
+		}
+#endif
 
 	NKern::ThreadLeaveCS();  // thread will die now if CheckRealtimeThreadFault caused a panic
 
@@ -1284,6 +1300,56 @@ void Mmu::TTempMapping::Unmap()
 	iCount = 0;
 	}
 
+#ifdef __SMP__
+/**
+Dummy IPI to be invoked when a thread's alias pde members are updated remotely
+by another thread.
+
+@internalComponent
+*/
+class TAliasIPI : public TGenericIPI
+	{
+public:
+	static void RefreshIsr(TGenericIPI*);
+	void RefreshAlias();
+	};
+
+
+/**
+Dummy isr method.
+*/
+void TAliasIPI::RefreshIsr(TGenericIPI*)
+	{
+	TRACE2(("TAliasIPI"));
+	}
+
+
+/**
+Queue the dummy IPI on all other processors.  This ensures that DoProcessSwitch will
+have completed updating iAliasPdePtr once this method returns.
+*/
+void TAliasIPI::RefreshAlias()
+	{
+	NKern::Lock();
+	QueueAllOther(&RefreshIsr);
+	NKern::Unlock();
+	WaitCompletion();
+	}
+
+
+/** 
+Perform a dummy ipi on all the other processors to ensure if any of them are 
+executing DoProcessSwitch they will see the new value of iAliasPde before they 
+update iAliasPdePtr or will finish updating iAliasPdePtr before we continue.  
+This works as DoProcessSwitch() has interrupts disabled while reading iAliasPde 
+and updating iAliasPdePtr.
+*/
+void BroadcastAliasRefresh()
+	{
+	TAliasIPI ipi;
+	ipi.RefreshAlias();
+	}
+#endif //__SMP__
 
 /**
 Remove any thread IPC aliases which use the specified page table.
@@ -1311,11 +1377,12 @@ void Mmu::RemoveAliasesForPageTable(TPhysAddr aPageTable)
 			TRACE2(("Thread %O RemoveAliasesForPageTable", this));
 			thread->iAliasPde = KPdeUnallocatedEntry;
 #ifdef __SMP__ // we need to also unmap the page table in case thread is running on another core...
-			// need Data Memory Barrier (DMB) here to make sure iAliasPde change is
-			// seen before we set the PDE entry, otherwise 'thread' may read old value
-			// and put it back
-			__e32_memory_barrier();
+
+			// Ensure other processors see the update to iAliasPde.
+			BroadcastAliasRefresh();
+
 			*thread->iAliasPdePtr = KPdeUnallocatedEntry;
+
 			SinglePdeUpdated(thread->iAliasPdePtr);
 			__NK_ASSERT_DEBUG((thread->iAliasLinAddr&KPageMask)==0);
 			// Invalidate the tlb for the page using os asid of the process that created the alias
@@ -1325,9 +1392,6 @@ void Mmu::RemoveAliasesForPageTable(TPhysAddr aPageTable)
 			// note, race condition with 'thread' updating its iAliasLinAddr is
 			// not a problem because 'thread' will not the be accessing the aliased
 			// region and will take care of invalidating the TLB.
-			// FIXME: There is still a race here. If the thread owning the alias reads the
-			// PDE before we clear thread->iAliasPde and writes it after we clear
-			// *thread->iAliasPdePtr the alias still ends up restored when it shouldn't be.
 #endif
 			}
 		MmuLock::Flash();

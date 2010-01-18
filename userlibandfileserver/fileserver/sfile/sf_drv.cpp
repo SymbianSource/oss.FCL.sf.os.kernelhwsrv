@@ -59,7 +59,6 @@ TInt ValidateDrive(TInt aDriveNumber,CFsRequest* aRequest)
 // Validate a drive number and set iTheDrive.
 //
 	{
-	__CHECK_MAINTHREAD();
 	if (aDriveNumber==KDefaultDrive)
 		aDriveNumber=aRequest->Session()->CurrentDrive();
 	if (!RFs::IsValidDrive(aDriveNumber))
@@ -1002,33 +1001,30 @@ TInt TDrive::RmDir(const TDesC& aName)
 	return(r);
 	}
 
+/*
+ Delete files allowing wild cards.
+*/
 TInt TDrive::Delete(const TDesC& aName)
-//
-// Delete files allowing wild cards.
-//
 	{
 	TInt r=CheckMountAndEntryName(aName);
-	if (r!=KErrNone)
-		return(r);
-	CFileCB* pF=LocateFile(aName);
-	if (pF!=NULL)
-		return(KErrInUse);		
+	if(r!=KErrNone)
+		return r;
+	
+	if(LocateFile(aName))
+		return KErrInUse; //-- the file is already opened by someone
 
 	// remove from closed queue - NB this isn't strictly necessary if file is read-only or write-protected...
 	LocateClosedFile(aName, EFalse);
 
-	TEntry entry;
-	r=Entry(aName,entry);
-	if (r!=KErrNone)
-		return(r);
-	if (entry.IsDir() || IsWriteProtected() || entry.IsReadOnly())
+    if (IsWriteProtected())
 		return(KErrAccessDenied);
 
+    //-- filesystems' CMountCB::DeleteL() implementations shall check the entry attributes themeselves. 
 	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteL, EF32TraceUidFileSys, DriveNumber(), aName);
 	TRAP(r,CurrentMount().DeleteL(aName))
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteLRet, EF32TraceUidFileSys, r);
 
-	return(r);
+	return r;
 	}
 
 TInt TDrive::CheckMountAndEntryNames(const TDesC& anOldName,const TDesC& aNewName)
@@ -1686,22 +1682,20 @@ TInt TDrive::GetLongName(const TDesC& aShortName,TDes& aLongName)
 	return(r);
 	}
 
+
+/**
+    Query whether the file is open or not.
+*/
 TInt TDrive::IsFileOpen(const TDesC& aFileName,CFileCB*& aFileCB)
-//
-// Query whether the file is open or not.
-//
 	{
 	__CHECK_DRIVETHREAD(iDriveNumber);
 
 	aFileCB = NULL;
 	
-	TEntry dumEntry;
-	TInt r=Entry(aFileName,dumEntry);
+	TInt r=CheckMountAndEntryName(aFileName);
 	if (r!=KErrNone)
 		return(r);
-	if(dumEntry.iAtt&KEntryAttDir)
-		return KErrArgument;
-
+    
 	Files->Lock();
 	TInt count=Files->Count();
 

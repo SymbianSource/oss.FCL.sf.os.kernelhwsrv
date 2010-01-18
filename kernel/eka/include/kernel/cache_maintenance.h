@@ -301,12 +301,16 @@ private:
 	static void CleanAndInvalidate_DCache_All();
 
 /*
- * Synchronises a single line of cache(s) for instruction execution.
+ * Synchronises the ICache and DCache for instruction execution.
+ * Also invalidates the branch predictor array, this is architecture dependant:
+ *   ARM7: Invalidates aAddr and aAddr+2 (covering possible THUMB instructions)
+ *   ARM6: Invalidates the whole Branch Predictor Array
+ *
  * On SMP, only the running core is maintained.
  * 
- * @arg aAddr Virtual address that belongs to the cache line.
+ * @arg aAddr 32bit aligned virtual address that belongs to the cache line.
  * 
- * NOTE: On SMP this is guaranted NOT to broadcast to other cores.
+ * NOTE: On SMP this is guaranteed NOT to broadcast to other cores.
  * NOTE: It assumes the same line size for ICache and DCache
  */
 	static void IMB_CacheLine(TLinAddr aAddr);

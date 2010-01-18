@@ -1,0 +1,53 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include "kernel/kern_ext.mmh"
+
+#ifdef	VariantDmaImportLib
+target		VariantTarget(d_dma2_compat,ldd)
+#else
+target		d_dma2_compat.ldd
+#endif
+
+targettype	ldd
+
+sourcepath	../dmav2
+source		d_dma2.cpp d_dma2_cmn.cpp
+
+sourcepath	../../../../kernelhwsrv/kernel/eka/drivers/dma
+source		dma2_shared.cpp
+
+#ifdef	VariantDmaImportLib
+library		VariantDmaImportLib
+#else
+library		dma.lib
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+epocallowdlldata
+
+capability	all
+VENDORID 0x70000001
+
+// Don't put this in ROM here since it would stop ROMs building on platforms
+// without DMA support.
+romtarget
+
+#ifdef SMP
+MACRO CPU_AFFINITY_ANY
+#endif
+
+SMPSAFE

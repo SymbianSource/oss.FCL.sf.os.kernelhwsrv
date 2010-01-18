@@ -12,11 +12,15 @@
 //
 // Description:
 // Hardware Configuration Respoitory Platform Independent Layer (PIL)
+// Contains internal definitions for the PIL software of the HCR component
+// which includes the singleton class that contains the algorithms and the
+// TRepository hierachy that encapsulated the repository data in all its forms
+// hiding the specifics from the algoritms in the singleton HCRInternal object.
 //
 
 /**
 @file hcr_pil.h
-Kernel side definitions for the HCR Platform Indepent Layer. 
+Kernel side definitions for the HCR Platform Independent Layer. 
 
 @internalTechnology
 */

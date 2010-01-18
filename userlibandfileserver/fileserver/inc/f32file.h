@@ -26,11 +26,21 @@
 #include <e32base.h>
 #endif
 
+#ifndef SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT
+// Old implementation including platform e32svr.h (which includes the several other platform headers)...
 #if !defined(__E32SVR_H__)
 #include <e32svr.h>
 #endif
-
 #include <e32ldr.h>
+#else
+// New implementation including only the public headers needed for f32file.h...
+#include <e32ldr.h>
+// And the public headers previously included via e32svr.h but otherwise not needed for f32file.h...
+#include <e32def.h>
+#include <e32event.h>
+#include <e32debug.h>
+#include <e32keys.h> 
+#endif
 
 
 /**

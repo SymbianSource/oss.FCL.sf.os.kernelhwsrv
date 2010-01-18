@@ -87,6 +87,9 @@ IMPORT_C TUint32 DebugRegister();
 //-- define this macro in order to enable the DEMAND PAGING DIRECTORY CACHE.
 #define USE_DP_DIR_CACHE
 
+//-- define this macro in order to use "Rummage Dirictory Cache" feature: searching for the entry in the cache first
+#define USE_DIR_CACHE_RUMMAGE
+
 //-----------------------------------------------------------------------------
 
 typedef TUint32 TLinAddr;
@@ -142,30 +145,26 @@ enum TFault
 	EFatBadStdFormatName,           // 5
 	EFatBadDosFormatName,           // 6
 	EFatCorrupt,                    // 7
-	EFatChkDskIllegalClusterNumber, // 8
-	EFatChkDskClusterAlreadyInUse,  // 9
-	EFatChkDskBadCluster,           // 10
-	EFatChkDskInvalidEntrySize,     // 11
-	EFatFilePosBeyondEnd,			// 12
-	EFatFileSeekIndexTooSmall,      // 13
-	EFatFileSeekIndexTooSmall2,     // 14
-	ELruCacheBadGranularity,        // 15
-	EFatRawReadTooBig,              // 16
-	EFatReadUidFailed,              // 17
-	ELruCacheFlushNotSupported,     // 18
-	EReadFileSectionFailed,         // 19
-	EBadReplacementForUnconvertibleUnicodeCharacters, // 20
+	EFatFilePosBeyondEnd,			// 8 
+	EFatFileSeekIndexTooSmall,      // 9 
+	EFatFileSeekIndexTooSmall2,     // 10
+	ELruCacheBadGranularity,        // 11
+	EFatRawReadTooBig,              // 12
+	EFatReadUidFailed,              // 13
+	ELruCacheFlushNotSupported,     // 14
+	EReadFileSectionFailed,         // 15
+	EBadReplacementForUnconvertibleUnicodeCharacters, // 16
 
-    EFatRAMDriveSizeInvalid,        // 21
-	EFatRAMDriveFreeInvalid,        // 22
-    ECheckFatIndexZero,             // 23
+    EFatRAMDriveSizeInvalid,        // 17
+	EFatRAMDriveFreeInvalid,        // 18
+    ECheckFatIndexZero,             // 19
 
-    EFatCache_BadGranularity,       // 24
-    EFatCache_DiscardingDirtyData,  // 25
-    EFatCache_NotImplemented,       // 26
-    EFatCache_BadFatType,           // 27
+    EFatCache_BadGranularity,       // 20
+    EFatCache_DiscardingDirtyData,  // 21
+    EFatCache_NotImplemented,       // 22
+    EFatCache_BadFatType,           // 23
 
-    EFatTable_InvalidIndex,         // 28
+    EFatTable_InvalidIndex,         // 24
 
 	};
 

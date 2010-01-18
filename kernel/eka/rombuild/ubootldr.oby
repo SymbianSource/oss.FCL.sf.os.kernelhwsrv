@@ -20,7 +20,7 @@
 #include <rom\##VARIANT##\header.iby>
 
 files=
-bootbinary=\Epoc32\Release\##MAIN##\_##VARIANT##_bootloader_bootrom.bin
+bootbinary=\Epoc32\Release\##KMAIN##\_##VARIANT##_bootloader_bootrom.bin
 
 #include <rom\##VARIANT##\kernel.iby>
 #include "user.iby"

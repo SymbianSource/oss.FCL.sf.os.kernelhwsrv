@@ -1331,9 +1331,29 @@ void CNotifyWatcher::MakeChangeRecordL(RArray<TEntry>& aArray)
 TBool CNotifyWatcher::CompareEntry(const TEntry& aEntry1, const TEntry& aEntry2)
 	{
 	// we don't compare name, because names are compared by CompareEntryName() already
-	if ((aEntry1.iAtt == aEntry2.iAtt) && (aEntry1.iModified == aEntry2.iModified) 
-			&& (aEntry1.iSize == aEntry2.iSize) && (aEntry1.iType == aEntry2.iType))
-		return ETrue;
+	// we don't check attributes when creating files, because dir scan sometimes returns file
+	// entries before attributes being flushed, and we don't care about it in this test case.
+	// we also don't check the modified time for all the test cases expect replacing test, 
+	// because dir scan sometimes returns file entries before time being flushed, 
+	// and we don't care about it as well.
+	// For replacing test, we check modification time, because it's the way we distinguish the old and new files.
+	if (iCurrentOp == EOpCreate)
+	    {
+	    if ((aEntry1.iSize == aEntry2.iSize) && (aEntry1.iType == aEntry2.iType))
+            return ETrue;
+	    }
+	else if (iCurrentOp == EOpReplace || iCurrentOp == EOpManyFiles || iCurrentOp == EOpManyChanges || iCurrentOp == EOpMixed)
+	    {
+        if ((aEntry1.iAtt == aEntry2.iAtt) && (aEntry1.iModified == aEntry2.iModified) 
+                && (aEntry1.iSize == aEntry2.iSize) && (aEntry1.iType == aEntry2.iType))
+            return ETrue;
+	    }
+	else
+	    {
+        if ((aEntry1.iAtt == aEntry2.iAtt) && (aEntry1.iSize == aEntry2.iSize) 
+                && (aEntry1.iType == aEntry2.iType))
+            return ETrue;
+	    }
 	
 	return EFalse;
 	}

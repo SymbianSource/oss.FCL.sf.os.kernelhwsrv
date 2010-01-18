@@ -1666,8 +1666,8 @@ Note, this address may become invalid if the process closes then re-opens the ch
 */
 EXPORT_C TUint8* Kern::ChunkUserBase(DChunk* aChunk, DThread* aThread)
 	{
-	CHECK_PRECONDITIONS(MASK_NO_FAST_MUTEX,"Kern::ChunkUserAddress");		
-	__KTRACE_OPT(KMMU,Kern::Printf("Kern::ChunkUserAddress aChunk=%08x, aThread=%08x",  aChunk, aThread));
+	CHECK_PRECONDITIONS(MASK_NO_FAST_MUTEX,"Kern::ChunkUserBase");
+	__KTRACE_OPT(KMMU,Kern::Printf("Kern::ChunkUserBase aChunk=%08x, aThread=%08x", aChunk, aThread));
 	NKern::LockSystem();
 	TUint8* r = aChunk->Base(aThread->iOwningProcess);
 	NKern::UnlockSystem();

@@ -546,6 +546,8 @@ TInt RMessageK::PinDescriptors(DSession* aSession, TBool aPinningServer)
 	NKern::ThreadEnterCS();
 	NKern::UnlockSystem();
 	TInt r = KErrNone;
+	TBool anyPins = EFalse;
+	TPinArray pinArray = { { 0, 0, 0, 0 } };			// local, copy to heap later if used
 
 	for (TInt i = 0; descFlags != 0; ++i, argPinFlags >>= 1, descFlags >>= TIpcArgs::KBitsPerType)
  		{
@@ -561,19 +563,11 @@ TInt RMessageK::PinDescriptors(DSession* aSession, TBool aPinningServer)
 			TUint pinLength = desInfo.IsWriteable() ? desInfo.MaxLength() : desInfo.Length();
 			if (pinLength)
 				{
-				if (!iPinArray)
-					{
-					iPinArray = new TPinArray;
-					if (!iPinArray)
-						{
-						r = KErrNoMemory;
-						break;
-						}
-					}
-
 				// This will only create and pin if the descriptor data is paged.
 				// An out-of-memory error here means we fail the whole operation.
-				r = Kern::CreateAndPinVirtualMemory(iPinArray->iPinPtrs[i], desInfo.DataPtr(), pinLength);
+				r = Kern::CreateAndPinVirtualMemory(pinArray.iPinPtrs[i], desInfo.DataPtr(), pinLength);
+				if (pinArray.iPinPtrs[i])
+					anyPins = ETrue;
 				if (r == KErrNoMemory)
 					break;
 				if (r != KErrNone)
@@ -589,24 +583,27 @@ TInt RMessageK::PinDescriptors(DSession* aSession, TBool aPinningServer)
 			}
 		}
 
+	if (anyPins && r != KErrNoMemory)
+		{
+		iPinArray = new TPinArray (pinArray);
+		if (!iPinArray)
+			r = KErrNoMemory;
+		}
+
 	if (r == KErrNoMemory)
 		{
 		// Failed to pin everything so clean up any pin objects created.
 		// This will also unpin any pinned memory.
-		if (iPinArray)
-			{
-			UnpinMessageArguments(iPinArray);
-			delete iPinArray;
-			iPinArray = NULL;
-			}
+		UnpinMessageArguments(&pinArray);
 		}
 
 	NKern::LockSystem();
 
 	// Remove the access on the session.
 	if (aSession->TotalAccessDec() == DObject::EObjectDeleted)
-		{// This was the last access on the session and it has been deleted so 
-		// don't access any of its members.
+		{
+		// This was the last access on the session and it has been deleted
+		// so don't access any of its members.
 		r = KErrDisconnected;
 		}
 	NKern::ThreadLeaveCS();

@@ -264,7 +264,7 @@ void LoadAndMountPlugins()
 
 	r = TheFs.MountPlugin(KModifierPluginName,20);
 	if(r==KErrInUse) r = KErrNone;
-	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.exe"));
+	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 
 
 	//Use RPlugin to communicate to the plugins which drive they should be
@@ -311,11 +311,11 @@ void LoadAndMountPlugins()
 
 	r = rplugin.Open(TheFs,KModifierPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
-	TRequestStatus aStatus; 
+	TRequestStatus aStatus;
 	rplugin.DoRequest(1,aStatus,drivePckg);
 	User::WaitForRequest(aStatus);
 	rplugin.Close();
-		
+	
 	}
 //-------------------------------------------------------------------------------------------------
 //! @SYMTestCaseID				KBASE-t_plugin_v2-1336
@@ -349,14 +349,14 @@ void TestReadFileDirect()
 	{
 
 	//As the plugin is installed at this point, rather than removing it
-	//or not mounting it until after, lets disable intercepts
-	//and enabled them at the end of this function.
+	//or not mounting it until after, let's disable intercepts
+	//and enable them at the end of this function.
 	MyRPlugin rplugin;
 	TInt r = rplugin.Open(TheFs,KModifierPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	TBool interceptsStatus;
 	TPckg<TBool> interceptsStatusDes(interceptsStatus);
-	test.Next(_L("RPlugin: togle itnercepts (Modifier)"));
+	test.Next(_L("RPlugin: toggle intercepts (Modifier)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now disabled"));
@@ -368,7 +368,7 @@ void TestReadFileDirect()
 
 	r = rplugin.Open(TheFs,KObserverPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
-	test.Next(_L("RPlugin: togle itnercepts (Observer)"));
+	test.Next(_L("RPlugin: toggle intercepts (Observer)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now disabled"));
@@ -412,7 +412,7 @@ void TestReadFileDirect()
 
 	r = rplugin.Open(TheFs,KModifierPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
-	test.Next(_L("RPlugin: togle itnercepts (Observer)"));
+	test.Next(_L("RPlugin: toggle intercepts (Observer)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now enabled"));
@@ -424,7 +424,7 @@ void TestReadFileDirect()
 
 	r = rplugin.Open(TheFs,KObserverPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
-	test.Next(_L("RPlugin: togle itnercepts (Observer)"));
+	test.Next(_L("RPlugin: toggle intercepts (Observer)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now enabled"));
@@ -557,7 +557,7 @@ void TestWriteFileDirect()
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	TBool interceptsStatus;
 	TPckg<TBool> interceptsStatusDes(interceptsStatus);
-	test.Next(_L("RPlugin: togle itnercepts (Modifier)"));
+	test.Next(_L("RPlugin: toggle intercepts (Modifier)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now disabled"));
@@ -570,7 +570,7 @@ void TestWriteFileDirect()
 
 	r = rplugin.Open(TheFs,KObserverPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
-	test.Next(_L("RPlugin: togle itnercepts (Observer)"));
+	test.Next(_L("RPlugin: toggle intercepts (Observer)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now disabled"));
@@ -627,7 +627,7 @@ void TestWriteFileDirect()
 
 	r = rplugin.Open(TheFs,KModifierPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
-	test.Next(_L("RPlugin: togle itnercepts (Observer)"));
+	test.Next(_L("RPlugin: toggle intercepts (Modifier)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now enabled"));
@@ -639,7 +639,7 @@ void TestWriteFileDirect()
 
 	r = rplugin.Open(TheFs,KObserverPos);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
-	test.Next(_L("RPlugin: togle itnercepts (Observer)"));
+	test.Next(_L("RPlugin: toggle intercepts (Observer)"));
 	r = rplugin.DoControl(KPluginToggleIntercepts,interceptsStatusDes);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	test.Next(_L("Ensure that intercepts are now enabled"));
@@ -1977,7 +1977,7 @@ void LoadPluginsForSpecificDriveTests()
 		//if this fails, did you forget to do a \f32test\group\wintest ?
 		plugin_test(test,KDriveZPos,__LINE__,(TText*)Expand("drivez_plugin.cpp"));
 		safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp")); //if this fails, did you forget to do a \f32test\group\wintest ?
-		file.Close(); 
+		file.Close();
 
 		r = file.Replace(TheFs,_L("c:\\drivecplugin.txt"),EFileWrite);
 		plugin_test(test,KDriveCPos,__LINE__,(TText*)Expand("drivec_plugin.cpp"));
@@ -2007,7 +2007,7 @@ void LoadPluginsForSpecificDriveTests()
 	}
 
 //-------------------------------------------------------------------------------------------------
-//! @SYMTestCaseID				KBASE-t_plugin_v2-1357
+//! @SYMTestCaseID				KBASE-t_plugin_v2-1358
 //! @SYMTestType				CT
 //! @SYMTestCaseDesc			Testing unremovable plugins
 //! @SYMPREQ					REQ8794
@@ -2483,8 +2483,6 @@ void LoadStackedPluginAndTest()
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 
 
-
-
 	//Setting up test data
     TBuf8<20> wbuffer;
 	wbuffer.FillZ(20);
@@ -2543,6 +2541,62 @@ void LoadStackedPluginAndTest()
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 	}
 
+//-------------------------------------------------------------------------------------------------
+//! @SYMTestCaseID				KBASE-t_plugin_v2-1359
+//! @SYMTestType				CT
+//! @SYMTestCaseDesc			Test calling RFsPlugin::Volume()
+//!
+//! @SYMDEF						DEF142711: RFsPlugin needs to expose a Volume() API
+//! @SYMTestPriority			High
+//! @SYMTestActions				TestVolume() sets the volume label and gets the volume
+//!								information via the modifier plugin, which will verify
+//!								that the volume has the correct label and then change it.
+//!
+//!								1.	Set volume label to "MyVolume".
+//!								2.	Get volume information via modifier plugin.
+//!								3.	Verify correct volume label after changes by modifier plugin.
+//!								4.	Reset volume label.
+//!
+//! @SYMTestExpectedResults		1.	Volume label set without any panic.
+//!								2.	Volume information request completes without any panic.
+//!								3.	Correct volume label after modification.
+//!								4.	Volume label reset without any panic.
+//!
+//! @SYMTestPriority			High
+//! @SYMTestStatus				Implemented
+//-------------------------------------------------------------------------------------------------
+void TestVolume()
+	{
+	test.Next(_L("TestVolume()"));
+	
+	TInt theDrive;
+	TInt r = TheFs.CharToDrive(gDriveToTest,theDrive);
+	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
+	
+	// Set volume label to MyVolume so we can test it in the modifier plugin
+	_LIT(KVolumeLabel1,"1Volume");
+	r = TheFs.SetVolumeLabel(KVolumeLabel1,theDrive);
+	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
+	test.Printf(_L("TestVolume, RFs::SetVolumeLabel returned %d\n"), r);
+	
+	test.Printf(_L("TestVolume, Get volume information for drive %d via modifier plugin\n"), theDrive);
+	TVolumeInfo volInfo;
+	r = TheFs.Volume(volInfo,theDrive);
+	test.Printf(_L("TestVolume, RFs::Volume returned %d\n"), r);
+	plugin_test(test,KModifierPos,__LINE__,(TText*)Expand("modifier_plugin.cpp"));
+	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
+	
+	// Check volume name after modification by modifier plugin
+	_LIT(KVolumeLabel2,"2Volume");
+	r = volInfo.iName.Compare(KVolumeLabel2);
+	test.Printf(_L("TestVolume, Compare volume label returned %d\n"), r);
+	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
+	
+	test.Printf(_L("TestVolume, Reset volume label to nothing\n"));
+	r = TheFs.SetVolumeLabel(_L(""),theDrive);
+	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
+	}
+
 
 GLDEF_C void CallTestsL()
 	{
@@ -2554,19 +2608,19 @@ GLDEF_C void CallTestsL()
 	TVolumeInfo volInfo;
 	r = TheFs.Volume(volInfo, theDrive);
 	test (r == KErrNone);
-
+	
 	TDriveInfo drvInfo;
 	r = TheFs.Drive(drvInfo,theDrive);
 	test (r == KErrNone);
 
 	if(drvInfo.iType == EMediaRam || drvInfo.iType == EMediaRom || drvInfo.iMediaAtt == KMediaAttWriteProtected || drvInfo.iMediaAtt == KMediaAttLocked)
 		{
+		test.Printf(_L("T_PLUGIN_V2 SKIPPED:\n"));
 		test.Printf(_L("Local Buffers are not supported on RAM or ROM drives\n"));
 		if(drvInfo.iMediaAtt == KMediaAttLocked)
 			{
 			test.Printf(_L("This media is locked. Drive %d\n"),theDrive);
 			}
-		test.Printf(_L("Skipping Test\n"));
 		return;
 		}
 	
@@ -2724,7 +2778,10 @@ GLDEF_C void CallTestsL()
 	r = TheFs.Subst(path,drive);
 	safe_test(r,__LINE__,(TText*)Expand("t_plugin_v2.cpp"));
 
-
+#ifndef __WINS__
+	// RFs::SetVolumeLabel - Does not run on WINS
+	TestVolume();
+#endif
 	TestReadFileDirect();
 	TestReadFileViaPlugin();
 	TestWriteFileDirect();

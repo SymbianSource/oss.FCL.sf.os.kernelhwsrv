@@ -56,6 +56,7 @@ void DMemModelProcess::Destruct()
 	DProcess::Destruct();
 	}
 
+
 TInt DMemModelProcess::TryOpenOsAsid()
 	{
 	if (__e32_atomic_tas_ord32(&iOsAsidRefCount, 1, 1, 0))
@@ -65,6 +66,7 @@ TInt DMemModelProcess::TryOpenOsAsid()
 	return KErrDied;
 	}
 
+
 void DMemModelProcess::CloseOsAsid()
 	{
 	if (__e32_atomic_tas_ord32(&iOsAsidRefCount, 1, -1, 0) == 1)
@@ -73,6 +75,7 @@ void DMemModelProcess::CloseOsAsid()
 		}
 	}
 
+
 void DMemModelProcess::AsyncCloseOsAsid()
 	{
 	if (__e32_atomic_tas_ord32(&iOsAsidRefCount, 1, -1, 0) == 1)
@@ -80,6 +83,7 @@ void DMemModelProcess::AsyncCloseOsAsid()
 		MM::AsyncAddressSpaceFree(iOsAsid);
 		}
 	}
+
 
 TInt DMemModelProcess::NewChunk(DChunk*& aChunk, SChunkCreateInfo& aInfo, TLinAddr& aRunAddr)
 	{

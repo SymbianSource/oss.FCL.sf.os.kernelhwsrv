@@ -21,37 +21,38 @@
  @internalTechnology
 */
 
-//#define DEBUG_SCANDRIVE
-
 #include "sl_std.h"
 #include "sl_scandrv.h"
 
+const TInt KMaxScanDepth			= 20;   ///< Maximum scan depth of to avoid stack over flow 
+const TInt KClusterListGranularity	= 8;    ///< Granularity of cluster list used for storage of clusters when KMaxScanDepth is reached
 
-
-const TInt KEndOfDirectory			= 0xFFFF;   ///< End of directory marker
-const TInt KMaxScanDepth			= 20;       ///< Maximum scan depth of to avoid stack over flow 
-const TInt KClusterListGranularity	= 8;        ///< Granularity of cluster list used for storage of clusters when KMaxScanDepth is reached
 
 
 /**
-Creates a CScanDrive
-@param aMount The owning mount
+    CScanDrive factory method
+    @param  aMount the owning mount
 */
- CScanDrive* CScanDrive::NewL(CFatMountCB* aMount)
+CScanDrive* CScanDrive::NewL(CFatMountCB* aMount)
 	{
-	if(aMount==NULL)
-		User::Leave(KErrArgument);
+	if(!aMount)
+		{
+        ASSERT(0);
+        User::Leave(KErrArgument);
+        }
+
 	CScanDrive* self=new (ELeave) CScanDrive();
 	CleanupStack::PushL(self);
 	self->ConstructL(aMount);
 	CleanupStack::Pop();
-	return self;
+	
+    return self;
 	}
 
 
 CScanDrive::~CScanDrive()
 	{
-	for(TInt i=0;i<KMaxArrayDepth && iClusterListArray[i]!=NULL;++i)
+	for(TUint i=0; i<KMaxArrayDepth && iClusterListArray[i]!=NULL; ++i)
 		{
 		iClusterListArray[i]->Close();
 		delete iClusterListArray[i];
@@ -63,24 +64,28 @@ CScanDrive::~CScanDrive()
 	}
 
 /**
-Allocates the Cluster array, the bit packed Fats and if run in a seperate
-thread the extra CFatTable and cluster buffer
-
-@param aMount The owning mount
+    Creates the structure of this class.
+    @param aMount The owning mount
 */
 void CScanDrive::ConstructL(CFatMountCB* aMount)
     {
-	iMount=aMount;
+    ASSERT(aMount);
+
+    //--- setting up 
+    iMount=aMount;
+    iGenericError = ENoErrors;
+    iDirError     = ENoDirError;  
+    iMaxClusters  = iMount->UsableClusters()+KFatFirstSearchCluster; //-- UsableClusters() doesn't count first 2 unused clusers
+    //------------------------------
 	
-    //-- create bit vectors that will represent FAT on media and reconstructed by ScanDrive
-    //-- each bit in the vector represents 1 FAT cluster.
-    const TUint32 KClustersNum = iMount->UsableClusters()+KFatFirstSearchCluster; //-- UsableClusters() doesn't count first 2 unused clusers
-    
+    //-- create bit vectors that will represent FAT on media and reconstructed by ScanDrive. Each bit in the vector represents 1 FAT cluster.
+    const TUint32 KClustersNum = MaxClusters();
+
     CleanupClosePushL(iMediaFatBits);
     CleanupClosePushL(iScanFatBits);
 
     iMediaFatBits.CreateL(KClustersNum);
-    iScanFatBits.CreateL(KClustersNum);;
+    iScanFatBits.CreateL(KClustersNum);
 
     CleanupStack::Pop(&iScanFatBits);
     CleanupStack::Pop(&iMediaFatBits);
@@ -88,18 +93,18 @@ void CScanDrive::ConstructL(CFatMountCB* aMount)
 
 //----------------------------------------------------------------------------------------------------
 /**
-    FAT type-agnnostic parser. Reads whole FAT and sets up a bit vector.
+    FAT type-agnostic parser. Reads whole FAT and sets up a bit vector.
     for FAT12/16 it's OK, because the FAT12/16 is fully cached.
 */
 void CScanDrive::DoParseFatL()
     {
-    const TInt MaxClusters = iMount->UsableClusters()+KFatFirstSearchCluster;
-    
-
+    const TInt KMaxClusters = MaxClusters();
 
     iMediaFatBits.Fill(0);
 
-    for(TInt i=KFatFirstSearchCluster; i<MaxClusters; ++i)
+    __PRINT1(_L("CScanDrive::DoParseFatL(), clusters:%d"), KMaxClusters);
+
+    for(TInt i=KFatFirstSearchCluster; i<KMaxClusters; ++i)
 	    {
         const TUint32 nFatEntry = ReadFatL(i);
        
@@ -143,9 +148,12 @@ void CScanDrive::DoParseFat32Buf(const TPtrC8& aBuf, TUint32& aCurrFatEntry)
 */
 void CScanDrive::DoParseFat32L()
     {
-    ASSERT(iMount->FatType() == EFat32);
+    const TInt    KNumClusters = MaxClusters();
+    
+    __PRINT1(_L("CScanDrive::DoParseFat32L(), clusters:%d"), KNumClusters);
 
-    const TUint32 KNumClusters  = iMount->UsableClusters()+KFatFirstSearchCluster;
+    ASSERT(iMount->FatType() == EFat32);
+    
     const TUint32 KFat1StartPos = iMount->StartOfFatInBytes();
     const TUint32 KFatSize      = KNumClusters * sizeof(TFat32Entry); //-- usable size of one FAT.
 
@@ -183,6 +191,8 @@ void CScanDrive::DoParseFat32L()
     CleanupStack::PopAndDestroy(&buf); 
     }
 
+
+
 //----------------------------------------------------------------------------------------------------
 /**
     Sets up a bit list representation of the media fat
@@ -192,63 +202,23 @@ void CScanDrive::ReadMediaFatL()
     {
     ASSERT(iMount->ConsistentState());
     
+    TInt nRes;
+
     if(iMount->FatType() == EFat32)
         {//-- for FAT32 try to use specialised method of parsing
-        TInt nRes;
         TRAP(nRes, DoParseFat32L())
         if(nRes == KErrNone)
             return;
         }
-    
+
+
     //-- use old FAT-agnostic parsing
     DoParseFatL();
     }
 
-/**
-Set a cluster as visited in the bit packed scan Fat
-
-@param aCluster Cluster number
-*/
-void CScanDrive::SetUsedL(TUint aCluster)
-	{
-	__ASSERT_ALWAYS(aCluster >= KFatFirstSearchCluster && aCluster < (KFatFirstSearchCluster+iMount->UsableClusters()),User::Leave(KErrCorrupt));
-    iScanFatBits.SetBit(aCluster);
-	}
-
 
 /**
-Query whether a cluster is already set as used 
-
-@param aCluster Cluster to query
-*/
-TBool CScanDrive::AlreadyUsedL(TUint aCluster) const
-	{
-	__ASSERT_ALWAYS(aCluster >= KFatFirstSearchCluster && aCluster < (KFatFirstSearchCluster+iMount->UsableClusters()),User::Leave(KErrCorrupt));
-
-    return iScanFatBits[aCluster];
-	}
-
-/**
-@param aPos Position in a directory cluster
-@return  ETrue if aPos is the last entry in the root directory
-*/
-TBool CScanDrive::IsEndOfRootDir(const TEntryPos& aPos)const
-	{
-	return(iMount->IsRootDir(aPos)&&(iMount->StartOfRootDirInBytes()+aPos.iPos==(iMount->RootDirEnd()-KSizeOfFatDirEntry)));
-	}
-
-/**
-@param aVal Value of the cluster to be tested
-@return ETrue if aVal is the end of cluster marker
-*/
-TBool CScanDrive::IsEofF(TInt aVal) const 
-	{
-    return iMount->IsEndOfClusterCh(aVal);
-	}
-
-
-/**
-@return True if a directory error has been found
+    @return True if a directory error has been found
 */
 TBool CScanDrive::IsDirError() const
 	{
@@ -256,77 +226,103 @@ TBool CScanDrive::IsDirError() const
 	}
 
 /**
-    After StartL() and finishing allows us to know if there were any problems at all.
+    After StartL() and finishing allows us to know if there were any problems discovered at all.
     The client may wish to remount the filesystem if there were errors.
 
-    @return EFalse if there were no problems in FS.
+    @return The code describing the problem.
 */
-TBool CScanDrive::ProblemsDiscovered() const
+CScanDrive::TGenericError CScanDrive::ProblemsDiscovered() const
 {
-    return IsDirError() || iFoundProblems;
+
+    if(IsDirError()) 
+        return EScanDriveDirError;
+    else
+        return iGenericError;
 }
 
 /**
     Sets the flag indicating than there are errors in filesystem structure
     See ProblemsDiscovered()
+
+    @param  aError a code describing the error
 */
-void CScanDrive::IndicateErrorsFound()
+void CScanDrive::IndicateErrorsFound(TGenericError aError)
 {
-    iFoundProblems = ETrue;
+    ASSERT(aError != ENoErrors);
+    iGenericError = aError;
 }
 
 
-
+//----------------------------------------------------------------------------------------------------
 /**
-Start point for scan drive also fixes up errors 
-
-@return The result of the scan
-@leave 
+    Start the scanner. The this calss description about what it actually does.
+    @param  aMode specifies the operational mode.
 */
-TInt CScanDrive::StartL()
+void CScanDrive::StartL(TScanDriveMode aMode)
 	{
-	__PRINT1(_L("CScanDrive::StartL(), drive:%d"), iMount->DriveNumber());
+	__PRINT2(_L("CScanDrive::StartL(%d), drive:%d"), aMode, iMount->DriveNumber());
+    iScanDriveMode = aMode;
 
     //-- used for measuring time
     TTime   timeStart;
     TTime   timeEnd;
+    
     timeStart.UniversalTime(); //-- take start time
-
 
 	ReadMediaFatL();
 
-	CheckDirStructureL();
-#if defined(DEBUG_SCANDRIVE)
-	CompareFatsL();
-#endif
-	if(IsDirError())
-		FixupDirErrorL();
+        //timeEnd.UniversalTime(); //-- take end time
+        //elapsedTime = (TInt)( (timeEnd.MicroSecondsFrom(timeStart)).Int64() / K1mSec);
+        //__PRINT1(_L("#@@@ CScanDrive #1:%d ms "), elapsedTime);
 
-	WriteNewFatsL();
-#if defined(DEBUG_SCANDRIVE)
+	CheckDirStructureL();
+
+    //-- uncomments a line below if you need to compare real and restored FAT tables and print out all differences
+    //CompareFatsL(EFalse);
+
+        //timeEnd.UniversalTime(); //-- take end time
+        //elapsedTime = (TInt)( (timeEnd.MicroSecondsFrom(timeStart)).Int64() / K1mSec);
+        //__PRINT1(_L("#@@@ CScanDrive #2:%d ms "), elapsedTime);
+
+    if(CheckDiskMode())
+        {//-- in check disk mode it is nesessarily just to detech FS errors
+        CompareFatsL(ETrue); //-- will stop on the first error found
+        }
+    else
+        {//-- In ScanDrive mode we need to find and fix Rugged FAT artefacts.
+     
+        if(IsDirError())
+		    FixupDirErrorL();
+
+	    CompareAndFixFatsL();
+        }
+
 	PrintErrors();
-#endif
-   
 
 
     timeEnd.UniversalTime(); //-- take end time
-    const TInt msScanTime = (TInt)( (timeEnd.MicroSecondsFrom(timeStart)).Int64() / K1mSec);
-    (void)msScanTime;
-    
-    __PRINT1(_L("CScanDrive: Directories visisted = %d\n"),iDirsChecked);
-    __PRINT1(_L("#@@@ CScanDrive time taken:%d ms "), msScanTime);
+    const TInt elapsedTime = (TInt)( (timeEnd.MicroSecondsFrom(timeStart)).Int64() / K1mSec);
+    (void)elapsedTime;
 
-	return KErrNone;
+    __PRINT1(_L("CScanDrive: Directories visisted = %d\n"),iDirsChecked);
+    __PRINT1(_L("#@@@ CScanDrive time taken:%d ms "), elapsedTime);
+    
+    
+
+	return;
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Fix errors detected by the drive scan
+    Fix errors detected by the drive scan
  
-@leave System wide error code
+    @leave System wide error code
 */
 void CScanDrive::FixupDirErrorL()
 	{
-	if(!IsDirError())
+	ASSERT(!CheckDiskMode());
+    
+    if(!IsDirError())
 		return;
 	
     if(iDirError==EScanMatchingEntry)
@@ -339,21 +335,23 @@ void CScanDrive::FixupDirErrorL()
         FixPartEntryL();
         }
 
-    IndicateErrorsFound(); //-- indicate that we have found errors
+    IndicateErrorsFound(EScanDriveDirError); //-- indicate that we have found errors
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Find positions of entries with same start cluster for error correction, searches
-the whole volume. Starts at the root directory. 
+    Find positions of entries with same start cluster for error correction, searches
+    the whole volume. Starts at the root directory. 
 
-@leave System wide error code
+    @leave System wide error code
 */
 void CScanDrive::FindSameStartClusterL()
 	{
 	TInt err=FindStartClusterL(iMount->RootIndicator());
 	if(err==KErrNone)
 		return;
-	for(TInt i=0;i<KMaxArrayDepth && iClusterListArray[i]!=NULL;++i)
+	
+    for(TUint i=0;i<KMaxArrayDepth && iClusterListArray[i]!=NULL;++i)
 		{
 		RArray<TInt>* clusterList=iClusterListArray[i];
 		for(TInt j=0;j<clusterList->Count();++j)
@@ -364,15 +362,17 @@ void CScanDrive::FindSameStartClusterL()
 				return;
 			}
 		}
+
 	__ASSERT_ALWAYS(err==KErrNone,User::Leave(KErrNotFound));
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Scan through directory structure looking for start cluster found in iMatching
+    Scan through directory structure looking for start cluster found in iMatching
 
-@param aDirCluster Start cluster for scan to start
-@return System wide error value
-@leave 
+    @param aDirCluster Start cluster for scan to start
+    @return System wide error value
+    @leave 
 */
 TInt CScanDrive::FindStartClusterL(TInt aDirCluster)
 	{
@@ -402,32 +402,36 @@ TInt CScanDrive::FindStartClusterL(TInt aDirCluster)
 		TEntryPos vfatPos=entryPos;
 		isComplete=MoveToVFatEndL(entryPos,entry,dirEntries);
 		__ASSERT_ALWAYS(isComplete,User::Leave(KErrBadName));
+
 		TInt err=CheckEntryClusterL(entry,vfatPos);
 		if(err==KErrNone)
 			{
 			--iRecursiveDepth;
 			return(err);
 			}
+
 		if(IsEndOfRootDir(entryPos))
 			break;
+
 		MoveToNextEntryL(entryPos);
 		}
 	--iRecursiveDepth;
 	return(KErrNotFound);
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Procces aEntry to find matching start cluster
+    Procces aEntry to find matching start cluster
 
-@param aEntry Directory entry to check
-@param aEntryPos Position of directory to check
-@return System wide error value
-@leave 
+    @param aEntry Directory entry to check
+    @param aEntryPos Position of directory to check
+    @return System wide error value
+    @leave 
 */
 TInt CScanDrive::CheckEntryClusterL(const TFatDirEntry& aEntry, const TEntryPos& aEntryPos)
 	{
 	__PRINT(_L("CScanDrive::CheckEntryClusterL"));
-	if(iMount->StartCluster(aEntry)==iMatching.iStartCluster)
+	if((TUint)iMount->StartCluster(aEntry)==iMatching.iStartCluster)
 		{
 		TBool complete=AddMatchingEntryL(aEntryPos);
 		if(complete)
@@ -435,14 +439,16 @@ TInt CScanDrive::CheckEntryClusterL(const TFatDirEntry& aEntry, const TEntryPos&
 		}
 	else if(aEntry.Attributes()&KEntryAttDir)
 		return(FindStartClusterL(iMount->StartCluster(aEntry)));
+
 	return(KErrNotFound);
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Checks directory strucutre for errors, can be considered the start point of the scan.  
-Handles recursion depth to avoid stack overflow.
+    Checks directory structure for errors, can be considered the start point of the scan.  
+    Handles recursion depth to avoid stack overflow.
 
-@leave System wide error code
+    @leave System wide error code
 */
 void CScanDrive::CheckDirStructureL()
 	{
@@ -450,7 +456,8 @@ void CScanDrive::CheckDirStructureL()
 	// Due to recursive nature of CheckDirL when a depth of
 	// KMaxScanDepth is reached clusters are stored in a list
 	// and passed into CheckDirL afresh
-	for(TInt i=0;i<KMaxArrayDepth && iClusterListArray[i]!=NULL;++i)
+
+	for(TUint i=0;i<KMaxArrayDepth && iClusterListArray[i]!=NULL;++i)
 		{
 		RArray<TInt>* clusterList=iClusterListArray[i];
 		++iListArrayIndex;
@@ -463,17 +470,18 @@ void CScanDrive::CheckDirStructureL()
 	}
 
 
+//----------------------------------------------------------------------------------------------------
 /**
-Function is called recursively with Process entry untill the whole volume has been scanned.
-Each directory entry is scanned for errors, these are recorded for later fixing. 
+    This function is called recursively with Process entry untill the whole volume has been scanned.
+    Each directory entry is scanned for errors, these are recorded for later fixing. 
 
-@param aCluster Directory cluster to start checking
-@leave System wide error codes
+    @param aCluster Directory cluster to start checking
+    @leave System wide error codes
 */
-void CScanDrive::CheckDirL(TInt aCluster)
+void CScanDrive::CheckDirL(TUint32 aCluster)
 	{
 	__PRINT1(_L("CScanDrive::CheckDirL aCluster=%d"),aCluster);
-	__ASSERT_ALWAYS(aCluster>=0,User::Leave(KErrCorrupt));
+
 	// check depth of recursion
 	if(++iRecursiveDepth==KMaxScanDepth)
 		{
@@ -481,9 +489,9 @@ void CScanDrive::CheckDirL(TInt aCluster)
 		--iRecursiveDepth;
 		return;
 		}
-#if defined(DEBUG_SCANDRIVE)
+
 	++iDirsChecked;
-#endif
+
 	TEntryPos entryPos(aCluster,0);
 	TInt dirEntries=0;
 	FOREVER
@@ -492,31 +500,46 @@ void CScanDrive::CheckDirL(TInt aCluster)
 		ReadDirEntryL(entryPos,entry);
 		if(!iMount->IsEndOfClusterCh(entryPos.iCluster))
 			++dirEntries;
-		if(entry.IsParentDirectory()||entry.IsCurrentDirectory()||entry.IsErased())
+
+		if(entry.IsParentDirectory() || entry.IsCurrentDirectory() || entry.IsErased())
 			{
 			if(IsEndOfRootDir(entryPos))
 				break;
+
 			MoveToNextEntryL(entryPos);
 			continue;
 			}
+
 		if(entry.IsEndOfDirectory())
 			{
 			if(aCluster)	
-				WriteClusterChainL(aCluster,dirEntries<<KSizeOfFatDirEntryLog2);
+				RecordClusterChainL(aCluster,dirEntries<<KSizeOfFatDirEntryLog2);
+
 			break;
 			}
+
 		TEntryPos origPos=entryPos;
 		TFatDirEntry origEntry=entry;
 		TInt origDirEntries=dirEntries;
-		TBool isComplete;
-		isComplete=MoveToVFatEndL(entryPos,entry,dirEntries);
-		// Only assume that this is a corrupted VFAT entry if the VFAT attributes are set; 
+		
+		const TBool isComplete = MoveToVFatEndL(entryPos,entry,dirEntries);
+        
+        if(!isComplete && CheckDiskMode())
+            {//-- broken VFAT entryset; in CheckDisk mode this is the FS error, abort further activity
+                IndicateErrorsFound(EInvalidEntrySize);
+                User::Leave(KErrCorrupt);
+            }
+
+        // Only assume that this is a corrupted VFAT entry if the VFAT attributes are set; 
 		// assuming a non-VFAT corrupted entry is a VFAT entry is dangerous as we then assume that the 
 		// first byte is a count of entries to skip, thus completely invalidating the next <n> directories.
-		if (!isComplete && origEntry.IsVFatEntry())
+		
+        //-- this code seems to deal with one of the Rugged FAT artefacts: partially deleted VFAT entryset, when DOS entry is deleted first
+        //-- and delettion of VFAT ones had failed
+        if(!isComplete && origEntry.IsVFatEntry())
 			{
 			AddPartialVFatL(origPos,origEntry);
-			if(entryPos.iCluster!=KEndOfDirectory)
+			if(!IsEofF(entryPos.iCluster))
 				{
 				TInt toMove=origEntry.NumFollowing()-(dirEntries-origDirEntries);
 				if(toMove)
@@ -530,22 +553,26 @@ void CScanDrive::CheckDirL(TInt aCluster)
 				}
 			}
 		else
-			ProcessEntryL(entry);
+			{
+            ProcessEntryL(entry);
+            }
+
 		if(IsEndOfRootDir(entryPos))
 			break;
+
 		MoveToNextEntryL(entryPos);
 		}
 	--iRecursiveDepth;
 	}
 
-
+//----------------------------------------------------------------------------------------------------
 /**
-Process non trivial entries, such as files, if they are correct by filling out their 
-cluster allocation in the bit packed Fat table. If it comes accross a directory 
-CheckDirL will be called.
+    Process non trivial entries, such as files, if they are correct by filling out their 
+    cluster allocation in the bit packed Fat table. If it comes accross a directory 
+    CheckDirL will be called.
 
-@param aEntry Directory entry to check
-@leave System wide error code
+    @param aEntry Directory entry to check
+    @leave System wide error code
 */
 void CScanDrive::ProcessEntryL(const TFatDirEntry& aEntry)
 	{
@@ -553,82 +580,116 @@ void CScanDrive::ProcessEntryL(const TFatDirEntry& aEntry)
 	TInt entryAtt=aEntry.Attributes();
 
 	__ASSERT_ALWAYS(!(entryAtt&~KEntryAttMaskSupported)&&!aEntry.IsErased(),User::Leave(KErrCorrupt));
-	if(!(entryAtt&(KEntryAttDir|KEntryAttVolume)) && iMount->StartCluster(aEntry)>0)
-		WriteClusterChainL(iMount->StartCluster(aEntry),(TUint) aEntry.Size());
+	
+    if(!(entryAtt&(KEntryAttDir|KEntryAttVolume)) && iMount->StartCluster(aEntry)>0)
+		{//-- this is a file with length >0. Check that its cluster chain corresponds to its size
+        RecordClusterChainL(iMount->StartCluster(aEntry),(TUint) aEntry.Size());
+        }
 	else if(entryAtt&KEntryAttDir)
-		CheckDirL(iMount->StartCluster(aEntry));
+		{//-- this is the directory, walk into it
+        CheckDirL(iMount->StartCluster(aEntry));
+        }
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Writes out the cluster chain for a correct file or directory, checks that the cluster 
-has not already been used and that the correct number of clusters are allocated for the 
-size of file. Registers cluster as used if correct
+    Walks the cluster chain for a correct file or directory, checks that the cluster 
+    has not already been used and that the correct number of clusters are allocated for the 
+    size of file. Registers cluster as used, if correct.
 
-@param aCluster Cluster chain start point
-@param aSizeInBytes Size of the file or directory in bytes
-@leave System wide error values
+    @param aCluster Cluster chain start point
+    @param aSizeInBytes Size of the file or directory in bytes
+    @leave System wide error values
 */
-void CScanDrive::WriteClusterChainL(TInt aCluster,TUint aSizeInBytes)
-//
-// Mark off in the new fat the clusters used by entry with start cluster of aCluster
-//
+void CScanDrive::RecordClusterChainL(TInt aCluster, TUint aSizeInBytes)
 	{
-	__PRINT1(_L("CScanDrive::WriteClusterChainL starting at %d"),aCluster);
-	__ASSERT_ALWAYS(aCluster>0,User::Leave(KErrCorrupt));
-	TInt clusterCount;
-	if(aSizeInBytes==0)
+	__PRINT2(_L("CScanDrive::RecordClusterChainL() cl:%d, sz:%d") ,aCluster, aSizeInBytes);
+	__ASSERT_ALWAYS(aCluster>0, User::Leave(KErrCorrupt));
+	
+    TUint clusterCount;
+	
+    if(aSizeInBytes==0)
 		clusterCount=1;
 	else
-		clusterCount = (TInt) (( TInt64(aSizeInBytes) + TInt64((1<<iMount->ClusterSizeLog2())-1) ) >> iMount->ClusterSizeLog2());
+		{
+        const TUint64 tmp = aSizeInBytes + Pow2_64(iMount->ClusterSizeLog2()) - 1;
+        clusterCount = (TUint) (tmp >> iMount->ClusterSizeLog2());
+        }
+
 	TInt startCluster=aCluster;
 	while(clusterCount)
 		{
-		if(AlreadyUsedL(aCluster))
-			{
-			__ASSERT_ALWAYS(!IsDirError()&&iMatching.iStartCluster==0&&aCluster==startCluster,User::Leave(KErrCorrupt));
+        if(IsClusterUsedL(aCluster))
+			{//-- this cluster already seems to belong to some other object; crosslinked cluster chain. Can't fix it.
+			if(CheckDiskMode())
+                {//-- in check disk mode this is a FS error; Indicate error and abort furter scanning
+                __PRINT1(_L("CScanDrive::RecordClusterChainL #1 %d"),aCluster); 
+                IndicateErrorsFound(EClusterAlreadyInUse);
+                User::Leave(KErrCorrupt);
+                }
+            
+            __ASSERT_ALWAYS(!IsDirError() && iMatching.iStartCluster==0 && aCluster==startCluster,User::Leave(KErrCorrupt));
 			iMatching.iStartCluster=aCluster;
 			iDirError=EScanMatchingEntry;		//ERROR POINT
-            IndicateErrorsFound(); //-- indicate that we have found errors
+            IndicateErrorsFound(EScanDriveDirError); //-- indicate that we have found errors
 			return;
 			}
-		if(clusterCount==1)
+
+		
+        if(clusterCount==1)
 			{
 			if(!iMount->IsEndOfClusterCh(ReadFatL(aCluster)))
-				{
-				//This is a genuine truncation
+				{//-- seems to be a rugged FAT artefact; File truncation had failed before and now file length is less than
+                 //-- the corresponding cluster chain shall be. It will be truncated.
 				iTruncationCluster = aCluster;								
+                
+                if(CheckDiskMode())
+                    {//-- in check disk mode this is a FS error; Indicate error and abort furter scanning
+                    __PRINT1(_L("CScanDrive::RecordClusterChainL #2 %d"),aCluster); 
+                    IndicateErrorsFound(EInvalidEntrySize);
+                    User::Leave(KErrCorrupt);
+                    }
                 }
-			SetUsedL(aCluster);
+
+            //__PRINT1(_L("#--: %d -> EOC"), aCluster); 
+            MarkClusterUsedL(aCluster);
 			return;
 			}
 		else
 			{
-			TInt clusterVal=ReadFatL(aCluster);
-			__ASSERT_ALWAYS(!IsEofF(clusterVal) && clusterVal!=0,User::Leave(KErrCorrupt));
-			SetUsedL(aCluster);
+			const TUint clusterVal=ReadFatL(aCluster);
+
+            //__PRINT2(_L("#--: %d -> %d"), aCluster, clusterVal); 
+			
+            __ASSERT_ALWAYS(!IsEofF(clusterVal) && clusterVal !=KSpareCluster, User::Leave(KErrCorrupt));
+			MarkClusterUsedL(aCluster);
 			aCluster=clusterVal;
 			--clusterCount;
 			}
-		}
+		
+        }//while(clusterCount)
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Move to dos entry, checking all vfat entry ID numbers are in sequence.
-Assumes aEntry is not erased
+    Move to dos entry, checking all vfat entry ID numbers are in sequence.
+    Assumes aEntry is not erased
 
-@param aPos Position of the entry to move from, returns with new position
-@param aEntry The Dos entry after the Vfat entries on return
-@param aDirLength Running total of the length of the directory in entries
-@leave System wide error codes
-@return EFalse if not valid vfat entries or dos entry, else returns ETrue
+    @param aPos Position of the entry to move from, returns with new position
+    @param aEntry The Dos entry after the Vfat entries on return
+    @param aDirLength Running total of the length of the directory in entries
+    @leave System wide error codes
+    @return EFalse if not valid vfat entries or dos entry, else returns ETrue
 */
 TBool CScanDrive::MoveToVFatEndL(TEntryPos& aPos,TFatDirEntry& aEntry,TInt& aDirLength)
 	{
 	__PRINT2(_L("CScanDrive::MoveToVFatEndL cluster=%d,pos=%d"),aPos.iCluster,aPos.iPos);
 	if(!aEntry.IsVFatEntry())
 		return IsDosEntry(aEntry);
+
 	TInt toFollow=aEntry.NumFollowing();
-	__ASSERT_ALWAYS(toFollow>0&&!aEntry.IsErased(),User::Leave(KErrCorrupt));
+	__ASSERT_ALWAYS(toFollow>0 && !aEntry.IsErased(), User::Leave(KErrCorrupt));
+
 	FOREVER
 		{
 		MoveToNextEntryL(aPos);
@@ -637,31 +698,36 @@ TBool CScanDrive::MoveToVFatEndL(TEntryPos& aPos,TFatDirEntry& aEntry,TInt& aDir
 		--toFollow;
 		if(!toFollow)
 			break;
-		if(!IsValidVFatEntry(aEntry,toFollow))
+		
+        if(!IsValidVFatEntry(aEntry,toFollow))
 			return(EFalse);
 		}
-	return(IsDosEntry(aEntry));
+	
+    return(IsDosEntry(aEntry));
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Check if an entry is valid VFat
+    Check if an entry is valid VFat
 
-@param aEntry Entry to check
-@param aPrevNum Number into VFat entries for a dos entry to ensure in correct position
-@return ETrue if aEntry is a valid vfat entry
+    @param aEntry Entry to check
+    @param aPrevNum Number into VFat entries for a dos entry to ensure in correct position
+    @return ETrue if aEntry is a valid vfat entry
 */
 TBool CScanDrive::IsValidVFatEntry(const TFatDirEntry& aEntry,TInt aPrevNum)const
 	{
 	if(aEntry.IsErased()||!aEntry.IsVFatEntry())
-		return(EFalse);
+		return EFalse;
+
 	return(aEntry.NumFollowing()==aPrevNum);
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Check if an entry is a Dos entry
+    Check if an entry is a Dos entry
 
-@param aEntry Entry to check
-@return ETrue if aEntry is a dos entry
+    @param aEntry Entry to check
+    @return ETrue if aEntry is a dos entry
 */
 TBool CScanDrive::IsDosEntry(const TFatDirEntry& aEntry)const
 	{
@@ -669,13 +735,13 @@ TBool CScanDrive::IsDosEntry(const TFatDirEntry& aEntry)const
 	return res;
 	} 
 
+//----------------------------------------------------------------------------------------------------
 /**
-Add partial entry to iPartEntry under the error condition of not all Vfat entries 
-being present
+    Add partial entry to iPartEntry under the error condition of not all Vfat entries being present
 
-@param aStartPos Position of the Dos entry associated with the VFat entries
-@param aEntry Directory Entry of the Dos entry associated with the VFat entries
-@leave KErrCorrupt Occurs if the entry is not valid
+    @param aStartPos Position of the Dos entry associated with the VFat entries
+    @param aEntry Directory Entry of the Dos entry associated with the VFat entries
+    @leave KErrCorrupt Occurs if the entry is not valid
 */
 void CScanDrive::AddPartialVFatL(const TEntryPos& aStartPos, const TFatDirEntry& aEntry)
 	{
@@ -686,12 +752,13 @@ void CScanDrive::AddPartialVFatL(const TEntryPos& aStartPos, const TFatDirEntry&
 	iDirError=EScanPartEntry;
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Add entry position to iMatching
+    Add entry position to iMatching
 
-@param aEntryPos Position of the entry with the matching entry
-@leave KErrCorrupt if the start cluster is 0 or more that two matching entries occurs
-@return 
+    @param aEntryPos Position of the entry with the matching entry
+    @leave KErrCorrupt if the start cluster is 0 or more that two matching entries occurs
+    @return 
 */
 TBool CScanDrive::AddMatchingEntryL(const TEntryPos& aEntryPos)
 	{
@@ -702,15 +769,18 @@ TBool CScanDrive::AddMatchingEntryL(const TEntryPos& aEntryPos)
 	}
 
 
+//----------------------------------------------------------------------------------------------------
 /**
-Scan for differnces in the new and old FAT table writing them to media if discovered
+    Scan for differnces in the new and old FAT table writing them to media if discovered
+    It is supposed to be called in 'ScanDrive' mode only
 
-@leave System wide error codes
+    @leave System wide error codes
 */
-void CScanDrive::WriteNewFatsL()
+void CScanDrive::CompareAndFixFatsL()
     {
-	
-    __PRINT1(_L("CScanDrive::WriteNewFatsL() drv:%d"),iMount->DriveNumber());
+    __PRINT1(_L("CScanDrive::CompareAndFixFatsL() drv:%d"),iMount->DriveNumber());
+
+    ASSERT(!CheckDiskMode());
 
     TUint32 nClustersFixed = 0; //-- fixed clusters count
     TUint32 nBadClusters   = 0; //-- bad cluster count
@@ -732,7 +802,7 @@ void CScanDrive::WriteNewFatsL()
                 {//-- difference in the cluster "i" between a real FAT and what ScanDrive restored.
           
                 //-- indicate that there are some problems in FAT. and we probably wrote something there.
-                IndicateErrorsFound(); 
+                IndicateErrorsFound(EScanDriveDirError); 
                 
                 //-- skip BAD cluster, can't mark it as unused.
                 if(iMount->IsBadCluster(ReadFatL(i)))
@@ -790,7 +860,7 @@ void CScanDrive::WriteNewFatsL()
 		iMount->FAT().FlushL();
 		
         //-- indicate that there are some problems in FAT. and we probably wrote something there.
-        IndicateErrorsFound(); //-- indicate that we have found errors
+        IndicateErrorsFound(EScanDriveDirError); //-- indicate that we have found errors
 
         ++nClustersFixed;
         }
@@ -798,14 +868,15 @@ void CScanDrive::WriteNewFatsL()
     __PRINT2(_L("CScanDrive::WriteNewFatsL() fixed:%d, bad:%d"), nClustersFixed, nBadClusters);
     }
 
+//----------------------------------------------------------------------------------------------------
 /**
-Read the ID stored in reserved2 in the Dos entry or associated with the Dos entry of the 
-Entry at the position passed in. This is used to find which version of two matching entries 
-should be kept.
+    Read the "Rugged FAT" ID, stored in reserved2 in the Dos entry or associated with the Dos entry of the 
+    Entry at the position passed in. This is used to find which version of two matching entries should be kept.
 
-@param aVFatPos Position of an entry to read ID from
-@leave System wide error codes
-@return The ID found in reserved2 field of dos entry 
+
+    @param aVFatPos Position of an entry to read ID from
+    @leave System wide error codes
+    @return The ID found in reserved2 field of dos entry 
 */
 TInt CScanDrive::GetReservedidL(TEntryPos aVFatPos)
 	{
@@ -822,47 +893,54 @@ TInt CScanDrive::GetReservedidL(TEntryPos aVFatPos)
 	return(entry.RuggedFatEntryId());
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Erase part entry found in iPartEntry
-
-@leave System wide error code
+    Erase part entry found in iPartEntry
+    @leave System wide error code
 */
 void CScanDrive::FixPartEntryL()
 	{
 	__PRINT2(_L("CScanDrive::FixPartEntryL cluster=%d,pos=%d"),iPartEntry.iEntryPos.iCluster,iPartEntry.iEntryPos.iPos);
-	iMount->EraseDirEntryL(iPartEntry.iEntryPos,iPartEntry.iEntry);
-    IndicateErrorsFound(); //-- indicate that we have found errors
+	ASSERT(!CheckDiskMode());
+    iMount->EraseDirEntryL(iPartEntry.iEntryPos,iPartEntry.iEntry);
+    IndicateErrorsFound(EScanDriveDirError); //-- indicate that we have found errors
 	}
 	
+//----------------------------------------------------------------------------------------------------
 /**
-Delete entry with largest value in the reserved2 section(bytes 20 and 21) of dos entry
+    Delete entry with largest value in the reserved2 section(bytes 20 and 21) of dos entry
 
-@leave System wide error code
+    @leave System wide error code
 */
 void CScanDrive::FixMatchingEntryL()
 	{
-	__PRINT1(_L("CScanDrive::FixMatchingEntryL() start cluster=%d"),iMatching.iStartCluster);
+	
+    __PRINT1(_L("CScanDrive::FixMatchingEntryL() start cluster=%d"),iMatching.iStartCluster);
 	__ASSERT_ALWAYS(iMatching.iCount==KMaxMatchingEntries,User::Leave(KErrCorrupt));
-	TInt idOne=GetReservedidL(iMatching.iEntries[0]);
+	ASSERT(!CheckDiskMode());
+
+    TInt idOne=GetReservedidL(iMatching.iEntries[0]);
 	TInt idTwo=GetReservedidL(iMatching.iEntries[1]);
 	TFatDirEntry entry;
 	TInt num=idOne>idTwo?0:1;
 	ReadDirEntryL(iMatching.iEntries[num],entry);
 	iMount->EraseDirEntryL(iMatching.iEntries[num],entry);
-    IndicateErrorsFound(); //-- indicate that we have found errors
+    IndicateErrorsFound(EScanDriveDirError); //-- indicate that we have found errors
 	}
-/**
-Move past specified number of entries
 
-@param aEntryPos Start position to move from, updated as move takes place
-@param aEntry Directory entry moved to
-@param aToMove Number of entries to move through
-@param aDirEntries Number of entries moved, updated as move takes place
-@leave System wide error code
+//----------------------------------------------------------------------------------------------------
+/**
+    Move past specified number of entries
+
+    @param aEntryPos Start position to move from, updated as move takes place
+    @param aEntry Directory entry moved to
+    @param aToMove Number of entries to move through
+    @param aDirEntries Number of entries moved, updated as move takes place
+    @leave System wide error code
 */
 void CScanDrive::MovePastEntriesL(TEntryPos& aEntryPos,TFatDirEntry& aEntry,TInt aToMove,TInt& aDirEntries)
 	{
-	while(aToMove-- && aEntryPos.iCluster!=KEndOfDirectory)
+	while(aToMove-- && !IsEofF(aEntryPos.iCluster))
 		{
 		MoveToNextEntryL(aEntryPos);
 		++aDirEntries;
@@ -870,33 +948,38 @@ void CScanDrive::MovePastEntriesL(TEntryPos& aEntryPos,TFatDirEntry& aEntry,TInt
 	ReadDirEntryL(aEntryPos,aEntry);
 	}
 
+//----------------------------------------------------------------------------------------------------
 /**
-Adds aCluster to cluster list array so that it may be revisited later, avoids stack 
-over flow
+    Adds aCluster to cluster list array so that it may be revisited later, avoids stack 
+    over flow
 
-@param aCluster Directory cluster number to add to the list
-@leave KErrNoMemory If allocation fails
+    @param aCluster Directory cluster number to add to the list
+    @leave KErrNoMemory If allocation fails
 */
 void CScanDrive::AddToClusterListL(TInt aCluster)
 	{
+
 	if(iListArrayIndex>=KMaxArrayDepth)
 		return;
+
 	if(iClusterListArray[iListArrayIndex]==NULL)
 		iClusterListArray[iListArrayIndex]=new(ELeave) RArray<TInt>(KClusterListGranularity);
 	iClusterListArray[iListArrayIndex]->Append(aCluster);
 	}
 
 
-#if defined(DEBUG_SCANDRIVE)
+//----------------------------------------------------------------------------------------------------
 /**
-Used for debug purposes only, compares new Fat and first Fat table, displays any differences
-and there meaning
-
-@leave System wide error codes
+    Used in "CheckDisk" mode mostly. Compares first FAT table on the media with the FAT bitmap restored by walking the directory structure.
+    Displays any differences and records an error if found.
+    
+    @param  aStopOnFirstErrorFound if ETrue will stop after discovering first error (FATs discrepancy)
+    
+    @leave  System wide error codes
 */
-void CScanDrive::CompareFatsL() const 
+void CScanDrive::CompareFatsL(TBool aStopOnFirstErrorFound)  
     {
-	__PRINT(_L("CScanDrive::CompareFatsL()"));
+	__PRINT1(_L("CScanDrive::CompareFatsL(%d)"), aStopOnFirstErrorFound);
 		
    
     TUint32 diffPos;
@@ -904,34 +987,51 @@ void CScanDrive::CompareFatsL() const
         return; //-- FATs are identical
     
     //-- there is a difference between the real FAT and reconstructed one. Find the mismaching bit and fix FAT. 
-    const TInt clusters = iMount->UsableClusters();
+    const TUint clusters = iMount->UsableClusters();
     ASSERT(diffPos < (TUint32)clusters);
                         
-    TInt scanusedcnt=0;
-	TInt mediausedcnt=0;
+    TUint scanusedcnt=0;
+	TUint mediausedcnt=0;
 	
-    for(TInt i=diffPos; i<clusters; ++i)
+    for(TUint i=diffPos; i<clusters; ++i)
 	    {
         const TBool bRealFatEntry = iMediaFatBits[i];
         const TBool bNewFatEntry  = iScanFatBits[i];
 
 		if(BoolXOR(bRealFatEntry, bNewFatEntry))
-		    {
-			if(bRealFatEntry && !bNewFatEntry)
-			    {	
-                __PRINT1(_L("Lost cluster=%d\n"),i);
+		    {//-- mismatch between FAT on the media and the FAT bitmap restored by walking directory structure
+
+			    if(bRealFatEntry)
+                {//-- FAT[i] on the media is marked as occupied, but retored FAT bitmap shows that it is free
+                    if(iMount->IsBadCluster(ReadFatL(i)))
+                        continue; //-- this is a BAD cluster it can't be occupied by the FS object, OK.
+
+                    __PRINT2(_L("FAT[%d] = %d\n"), i, ReadFatL(i));        
+                    __PRINT1(_L("iTruncationCluster = %d\n"), iTruncationCluster);        
+                    
+                    //-- this is a lost cluster
+                    if(!IsEofF(ReadFatL(i)) && (i==iTruncationCluster))
+                        {//-- seems to be a Rugged FAT ertefact
+                        __PRINT1(_L("Hanging cluster = %d\n"),i);        
+                        }
+                    else
+                        {
+                        __PRINT1(_L("Lost cluster=%d\n"),i);
+                        }
+                    
+                    
+                    IndicateErrorsFound(EBadClusterValue);
                 }
-			else if((bRealFatEntry && !IsEofF(ReadFatL(i))) && (i==iTruncationCluster))
-			    {
-            	__PRINT1(_L("Hanging cluster = %d\n"),i);
+                else
+                {//-- FAT[i] on the media is marked as free, but retored FAT bitmap shows that it is occupied by some object
+                    IndicateErrorsFound(EClusterAlreadyInUse);
+                    __PRINT1(_L("Unflushed cluster = %d\n"),i);
                 }
-			else if(!bRealFatEntry && bNewFatEntry)
-                {
-				__PRINT1(_L("Unflushed cluster = %d\n"),i);
-                }
-			else
-				User::Leave(KErrCorrupt);
-		    }
+
+             if(aStopOnFirstErrorFound)
+                 break; //-- not asked to check for errors further
+
+            }
 		
         if(bRealFatEntry)
 			mediausedcnt++;
@@ -943,11 +1043,13 @@ void CScanDrive::CompareFatsL() const
     __PRINT2(_L("Scan Fat Used=%d, Media Fat Used=%d \n"),scanusedcnt,mediausedcnt);
     }	
 
+//----------------------------------------------------------------------------------------------------
 /**
-For debug purposes, print errors found as debug output
+    For debug purposes, print errors found as debug output
 */
 void CScanDrive::PrintErrors()
     {
+#if defined(_DEBUG)    
 	__PRINT1(_L("Directories visisted = %d\n"),iDirsChecked);
 
 	if(iDirError==EScanPartEntry)
@@ -960,8 +1062,10 @@ void CScanDrive::PrintErrors()
 		__PRINT2(_L("\tcluster 1 - dir cluster=%d,dir pos=%d\n"),iMatching.iEntries[0].iCluster,iMatching.iEntries[0].iPos);
 		__PRINT2(_L("\tcluster 2 - dir cluster=%d,dir pos=%d\n"),iMatching.iEntries[1].iCluster,iMatching.iEntries[1].iPos);
 	    }
-    }
 #endif
+    }
+
+
 
 /**
 Read a FAT directory entry from disk, either reads directly from the main cache or
@@ -973,7 +1077,7 @@ from the cluster buffer if scan drive is running in a seperate thread.
 */
 void CScanDrive::ReadDirEntryL(const TEntryPos& aPos,TFatDirEntry& aDirEntry)
     {
-	__PRINT(_L("CScanDrive::ReadDirEntryL"));
+	//__PRINT(_L("CScanDrive::ReadDirEntryL"));
 	if (iMount->IsEndOfClusterCh(aPos.iCluster))
 		{
 		Mem::FillZ(&aDirEntry,sizeof(TFatDirEntry));
@@ -985,12 +1089,10 @@ void CScanDrive::ReadDirEntryL(const TEntryPos& aPos,TFatDirEntry& aDirEntry)
 
 
 /**
-Move to next directory entry, if anEntry is at the end of the cluster, and we are not 
-the root dir, move it to the next cluster in the chain.
+    Move to next directory entry, if anEntry is at the end of the cluster, and we are not 
+    the root dir, move it to the next cluster in the chain.
 
-@param aPos Current directory position up dated to position of next entry.
-@leave System wide error codes
-
+    @param aPos Current directory position up dated to position of next entry.
 */
 void CScanDrive::MoveToNextEntryL(TEntryPos& aPos)
 	{
@@ -999,19 +1101,87 @@ void CScanDrive::MoveToNextEntryL(TEntryPos& aPos)
 	}	
 
 /**
-Read a cluster from the Media Fat if scan run in a seperate thread read from scan fat table
-otherwise read from mount owned Fat table
+    Read a cluster from the Media Fat if scan run in a seperate thread read from scan fat table
+    otherwise read from mount owned Fat table
 
-@param aClusterNum Cluster to read
-@leave System wide error code
-@return Value of cluster read from Fat
+    @param aClusterNum Cluster to read
+    @return Value of cluster read from Fat
 */
-TUint32 CScanDrive::ReadFatL(TInt aClusterNum) const
+TUint32 CScanDrive::ReadFatL(TUint aClusterNum) 
 	{
-	return iMount->FAT().ReadL(aClusterNum);			
+	if(aClusterNum < KFatFirstSearchCluster || aClusterNum >= MaxClusters())
+        {
+        IndicateErrorsFound(EBadClusterNumber);
+        User::Leave(KErrCorrupt);
+        }
+
+    //-- actually, ReadL() can leave with some error code, that won't be reflected in IndicateErrorsFound().
+    //-- it's possible to improve but is it worth it?
+    return iMount->FAT().ReadL(aClusterNum);			
     }
 
 
+/**
+    Set a cluster as visited in the bit packed scan Fat
+    @param aCluster Cluster number
+*/
+void CScanDrive::MarkClusterUsedL(TUint aClusterNum)
+	{
+	if(aClusterNum < KFatFirstSearchCluster || aClusterNum >= MaxClusters())
+        {
+        IndicateErrorsFound(EBadClusterNumber);
+        User::Leave(KErrCorrupt);
+        }
+
+    iScanFatBits.SetBit(aClusterNum);
+	}
+
+
+/**
+    Query whether a cluster is already set as used 
+    @param aCluster Cluster to query
+*/
+TBool CScanDrive::IsClusterUsedL(TUint aClusterNum) 
+	{
+	if(aClusterNum < KFatFirstSearchCluster || aClusterNum >= MaxClusters())
+        {
+        IndicateErrorsFound(EBadClusterNumber);
+        User::Leave(KErrCorrupt);
+        }
+
+    return iScanFatBits[aClusterNum];
+	}
+
+/**
+    @param aPos Position in a directory cluster
+    @return  ETrue if aPos is the last entry in the root directory
+*/
+TBool CScanDrive::IsEndOfRootDir(const TEntryPos& aPos)const
+	{
+	return(iMount->IsRootDir(aPos)&&(iMount->StartOfRootDirInBytes()+aPos.iPos==(iMount->RootDirEnd()-KSizeOfFatDirEntry)));
+	}
+
+/**
+    @param aVal Value of the cluster to be tested
+    @return ETrue if aVal is the end of cluster marker
+*/
+TBool CScanDrive::IsEofF(TInt aVal) const 
+	{
+    return iMount->IsEndOfClusterCh(aVal);
+	}
+
+/** @return max. number of clusters on the volume being scanned */
+TUint32 CScanDrive::MaxClusters() const
+    {
+        ASSERT(iMaxClusters);
+        return iMaxClusters;
+    }
+
+/** @return ETrue in we are operating in "CheckDisk" mode*/
+TBool CScanDrive::CheckDiskMode() const 
+    {
+    return iScanDriveMode == ECheckDisk;
+    }
 
 
 

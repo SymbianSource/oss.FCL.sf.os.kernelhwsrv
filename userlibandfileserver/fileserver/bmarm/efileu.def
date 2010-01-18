@@ -239,4 +239,5 @@ EXPORTS
 	InitL__8CMountCBR6TDriveP11CFileSystem @ 238 NONAME R3UNUSED ; CMountCB::InitL(TDrive &, CFileSystem *)
 	DriveInfo__C11CFileSystemR10TDriveInfoi @ 239 NONAME R3UNUSED ; CFileSystem::DriveInfo(TDriveInfo &, int) const
 	GetDriveInfo__FR10TDriveInfoi @ 240 NONAME R3UNUSED ; GetDriveInfo(TDriveInfo &, int)
+	Volume__C9RFsPluginR11TVolumeInfoi @ 241 NONAME R3UNUSED ; RFsPlugin::Volume(TVolumeInfo &, int) const
 

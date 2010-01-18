@@ -28,25 +28,6 @@
 
 //-----------------------------------------------------------------------------
 
-/**
-    A simple abstraction of the 32 bit flags
-*/
-class T32Bits
-{
- public:
-    T32Bits() : iData(0) {}
-
-    inline void  Clear();
-    inline TBool HasBitsSet() const;
-    inline void SetBit(TUint32 aIndex);
-    inline TBool operator[](TUint32 aIndex) const;
-
- private:
-    TUint32 iData; ///< 32 bits data
-};
-
-//-----------------------------------------------------------------------------
-
 class CFatBitCache;
 
 /**

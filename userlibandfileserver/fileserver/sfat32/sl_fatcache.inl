@@ -23,36 +23,6 @@
 #define SL_FAT_CACHE_INL
 
 
-//-----------------------------------------------------------------------------
-
-/** clear all bits */
-void T32Bits::Clear()
-    {
-    iData = 0;
-    }
-
-/** @return non-0 if at least one of 32 bits is set to '1' */
-TBool T32Bits::HasBitsSet() const 
-    {
-    return iData;
-    } 
-
-/** sets bit number "aIndex" to '1' */
-void T32Bits::SetBit(TUint32 aIndex)
-    {
-    ASSERT(aIndex < 32);
-    iData |= (1<<aIndex);
-    }
-
-/** 
-    Get value of the bit number "aIndex". 
-    @return 0 if the bit aIndex is '0' non-zero otherwise
-*/
-TBool T32Bits::operator[](TUint32 aIndex) const
-    {
-    ASSERT(aIndex < 32);
-    return (iData & (1<<aIndex));
-    }
 
 
 //-----------------------------------------------------------------------------
