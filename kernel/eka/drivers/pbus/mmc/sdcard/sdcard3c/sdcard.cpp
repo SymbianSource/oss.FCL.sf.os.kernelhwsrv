@@ -14,6 +14,14 @@
 //
 
 #include <drivers/sdcard.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "sdcardTraces.h"
+#endif
 
 
 // ======== TSDCard ========
@@ -29,6 +37,7 @@ TInt64 TSDCard::DeviceSize64() const
 // returns the SD device size
 //
 	{
+	OstTraceFunctionEntry1( TSDCARD_DEVICESIZE64_ENTRY, this );
 	if(iFlags & KSDCardIsSDCard)
 		{	
 		return (IsHighCapacity()) ? 512 * 1024 * (TInt64)(1 + CSD().CSDField(69, 48)) : TMMCard::DeviceSize64();
@@ -42,6 +51,7 @@ TUint32 TSDCard::PreferredWriteGroupLength() const
 // return SD erase sector size, (SECTOR_SIZE + 1) * 2 ** WRITE_BLK_LEN
 //
 	{
+	OstTraceFunctionEntry1( TSDCARD_PREFERREDWRITEGROUPLENGTH_ENTRY, this );
 	if(iFlags & KSDCardIsSDCard)
 		{	
 		TSDCSD sdcsd(CSD());
@@ -94,6 +104,7 @@ TInt TSDCard::GetEraseInfo(TMMCEraseInfo& aEraseInfo) const
 // Return info. on erase services for this card
 //
 	{
+	OstTraceFunctionEntry1( TSDCARD_GETERASEINFO_ENTRY, this );
 	
 	// SD Controllers support MMC cards too. Check if we are really dealing with an SD card
 	if(!(iFlags&KSDCardIsSDCard))
@@ -102,6 +113,7 @@ TInt TSDCard::GetEraseInfo(TMMCEraseInfo& aEraseInfo) const
 	if (CSD().CCC() & KMMCCmdClassErase)
 		{
 		// This card supports erase cmds. However, SD cards don't support Erase Group commands (i.e. CMD35, CMD36).
+		OstTrace0( TRACE_INTERNALS, TSDCARD_GETERASEINFO, "Card supports erase class commands" );		
 		aEraseInfo.iEraseFlags=KMMCEraseClassCmdsSupported; 
 		
 		// Return the preferred size to be used as the unit for erase operations.
@@ -123,7 +135,8 @@ TInt TSDCard::GetEraseInfo(TMMCEraseInfo& aEraseInfo) const
 	else		
 		aEraseInfo.iEraseFlags=0;
 		
-	return(KErrNone);	
+	OstTraceFunctionExitExt( TSDCARD_GETERASEINFO_EXIT, this, KErrNone );
+	return KErrNone;	
 	}
 
 TInt TSDCard::MaxReadBlLen() const
@@ -134,6 +147,7 @@ TInt TSDCard::MaxReadBlLen() const
  * if possible, to try to avoid compatibility issues.
  */
 	{
+	OstTraceFunctionEntry1( TSDCARD_MAXREADBLLEN_ENTRY, this );
 	if (IsSDCard())
 		{
 		TInt blkLenLog2 = CSD().ReadBlLen();
@@ -142,13 +156,17 @@ TInt TSDCard::MaxReadBlLen() const
 			// The SD card spec. makes a special case for 2GByte cards,
 			// ...and some manufacturers apply the same method to support 4G cards
 			__KTRACE_OPT(KPBUS1, Kern::Printf("=mmc:mrbl > 2GB SD"));
+			OstTrace0( TRACE_INTERNALS, TSDCARD_MAXREADBLLEN, "SD Card > 2GB" );
 			blkLenLog2 = KDefaultBlockLen;
 			}
+		OstTraceFunctionExitExt( TSDCARD_MAXREADBLLEN_EXIT, this, blkLenLog2 );
 		return blkLenLog2;
 		}
 	else		// MMC card
 		{
-		return (TMMCard::MaxReadBlLen());
+		TInt ret = TMMCard::MaxReadBlLen();
+		OstTraceFunctionExitExt( DUP1_TSDCARD_MAXREADBLLEN_EXIT, this, ret );
+		return ret;
 		}
 	}
 
@@ -160,6 +178,7 @@ TInt TSDCard::MaxWriteBlLen() const
  * if possible, to try to avoid compatibility issues.
  */
 	{
+	OstTraceFunctionEntry1( TSDCARD_MAXWRITEBLLEN_ENTRY, this );
 	if (IsSDCard())
 		{
 		TInt blkLenLog2 = CSD().WriteBlLen();
@@ -168,13 +187,17 @@ TInt TSDCard::MaxWriteBlLen() const
 			// The SD card spec. makes a special case for 2GByte cards,
 			// ...and some manufacturers apply the same method to support 4G cards
 			__KTRACE_OPT(KPBUS1, Kern::Printf("=mmc:mwbl > 2GB SD"));
+			OstTrace0( TRACE_INTERNALS, TSDCARD_MAXWRITEBLLEN, "SD Card > 2GB" );
 			blkLenLog2 = KDefaultBlockLen;
 			}
+		OstTraceFunctionExitExt( TSDCARD_MAXWRITEBLLEN_EXIT, this, blkLenLog2 );
 		return blkLenLog2;
 		}
 	else		// MMC card
 		{
-		return (TMMCard::MaxWriteBlLen());
+		TInt ret = TMMCard::MaxWriteBlLen();
+		OstTraceFunctionExitExt( DUP1_TSDCARD_MAXWRITEBLLEN_EXIT, this, ret );
+		return ret;
 		}
 	}
 	
@@ -184,6 +207,7 @@ TUint TSDCard::MaxTranSpeedInKilohertz() const
  * @return Speed, in Kilohertz
  */
 	{
+	OstTraceFunctionEntry1( TSDCARD_MAXTRANSPEEDINKILOHERTZ_ENTRY, this );
 	TUint maxClk = TMMCard::MaxTranSpeedInKilohertz();
 	
 	if (IsSDCard())
@@ -195,16 +219,19 @@ TUint TSDCard::MaxTranSpeedInKilohertz() const
 		if ( (maxClk != KSDDTClk25MHz) && (maxClk != KSDDTClk50MHz) )
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("\t >DSDStack: Non-Compliant DT Clock"));
+			OstTrace0( TRACE_INTERNALS, TSDCARD_MAXTRANSPEEDINKILOHERTZ, "Non-Compliant DT Clock" );			
 			}
 #endif
 		if (maxClk > KSDDTClk50MHz)
 			{
 			//Clock rate exceeds SD possible max clock rate
 			__KTRACE_OPT(KPBUS1, Kern::Printf("\t >DSDStack: Tuning DT Clock down to 50MHz"));
+			OstTrace0( TRACE_INTERNALS, TSDCARD_MAXTRANSPEEDINKILOHERTZ1, "Tuning DT Clock down to 50MHz" );			
 			maxClk = KSDDTClk50MHz;
 			}
 		}
 		
+	OstTraceFunctionExitExt( TSDCARD_MAXTRANSPEEDINKILOHERTZ_EXIT, this, maxClk );
 	return maxClk;
 	}
 
@@ -217,17 +244,25 @@ EXPORT_C TInt TSDCardArray::AllocCards()
 // if it fails.
 //
 	{
+	OstTraceFunctionEntry1( TSDCARDARRAY_ALLOCCARDS_ENTRY, this );
 	for (TInt i = 0; i < (TInt) KMaxMMCardsPerStack; ++i)
 		{
 		// zeroing the card data used to be implicit because embedded in
 		// CBase-derived DMMCStack.
 		if ((iCards[i] = new TSDCard) == 0)
+		    {
+			OstTraceFunctionExitExt( TSDCARDARRAY_ALLOCCARDS_EXIT, this, KErrNoMemory );
 			return KErrNoMemory;
+		    }
 		iCards[i]->iUsingSessionP = 0;
 		if ((iNewCards[i] = new TSDCard) == 0)
+		    {
+			OstTraceFunctionExitExt( DUP1_TSDCARDARRAY_ALLOCCARDS_EXIT, this, KErrNoMemory );
 			return KErrNoMemory;
+			}
 		}
 
+	OstTraceFunctionExitExt( DUP2_TSDCARDARRAY_ALLOCCARDS_EXIT, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -237,6 +272,7 @@ void TSDCardArray::AddCardSDMode(TUint aCardNumber,const TUint8* aCID,TRCA* aNew
 // the CID value in the slot. Return a RCA for the card.
 //
 	{
+	OstTraceFunctionEntryExt( TSDCARDARRAY_ADDCARDSDMODE_ENTRY, this );
 
 	TRCA rca=0;
 	
@@ -256,6 +292,7 @@ void TSDCardArray::AddCardSDMode(TUint aCardNumber,const TUint8* aCID,TRCA* aNew
 
 	Card(aCardNumber).iIndex=(aCardNumber+1); // Mark card as being present
 	*aNewRCA=rca;
+	OstTraceFunctionExit1( TSDCARDARRAY_ADDCARDSDMODE_EXIT, this );
 	}
 
 TInt TSDCardArray::StoreRCAIfUnique(TUint aCardNumber,TRCA& anRCA)
@@ -264,20 +301,28 @@ TInt TSDCardArray::StoreRCAIfUnique(TUint aCardNumber,TRCA& anRCA)
 // no duplication then store in slot 'aCardNumber'.
 //
 	{
+	OstTraceExt3(TRACE_FLOW, TSDCARDARRAY_STORERCAIFUNIQUE_ENTRY ,"TSDCardArray::StoreRCAIfUnique;aCardNumber=%x;anRCA=%x;this=%x", aCardNumber, (TUint) anRCA, (TUint) this);
 
 	if (anRCA==0)
-		return(KErrGeneral);
+		{
+		OstTraceFunctionExitExt( TSDCARDARRAY_STORERCAIFUNIQUE_EXIT, this, KErrGeneral );
+		return KErrGeneral;
+		}
 	Card(aCardNumber).iRCA=0;
 
 	// Now let's look if we've seen this card before
 	for ( TUint i=0 ; i<iOwningStack->iMaxCardsInStack ; i++ )
 		{
 		if ( Card(i).IsPresent() && Card(i).iRCA==anRCA )
-			return(KErrInUse);
+			{
+			OstTraceFunctionExitExt( DUP1_TSDCARDARRAY_STORERCAIFUNIQUE_EXIT, this, KErrInUse );
+			return KErrInUse;
+			}
 		}
 	Card(aCardNumber).iRCA=anRCA;
 	Card(aCardNumber).iIndex=(aCardNumber+1); // Mark card as being present
-	return(KErrNone);
+	OstTraceFunctionExitExt( DUP2_TSDCARDARRAY_STORERCAIFUNIQUE_EXIT, this, KErrNone );
+	return KErrNone;
 	}
 
 EXPORT_C void TSDCardArray::DeclareCardAsGone(TUint aCardNumber)
@@ -285,24 +330,30 @@ EXPORT_C void TSDCardArray::DeclareCardAsGone(TUint aCardNumber)
 // reset SD specific fields to initial values and then reset generic MultiMediaCard
 //
 	{
+	OstTraceFunctionEntryExt( TSDCARDARRAY_DECLARECARDASGONE_ENTRY, this );
 	Card(aCardNumber).SetBusWidth(1);
 	TMMCardArray::DeclareCardAsGone(aCardNumber);
+	OstTraceFunctionExit1( TSDCARDARRAY_DECLARECARDASGONE_EXIT, this );
 	}
 
 // ======== DSDSession ========
 
 void DSDSession::FillAppCommandDesc(TMMCCommandDesc& aDesc, TSDAppCmd aCmd)
 	{
+	OstTraceFunctionEntry0( DSDSESSION_FILLAPPCOMMANDDESC_ENTRY );
 	aDesc.iCommand = (TMMCCommandEnum) aCmd;
 	aDesc.iArgument = 0;						// set stuff bits to zero
 	FillAppCommandDesc(aDesc);
+	OstTraceFunctionExit0( DSDSESSION_FILLAPPCOMMANDDESC_EXIT );
 	}
 
 void DSDSession::FillAppCommandDesc(TMMCCommandDesc& aDesc, TSDAppCmd aCmd, TMMCArgument aArg)
 	{
+	OstTraceFunctionEntry0( DUP1_DSDSESSION_FILLAPPCOMMANDDESC_ENTRY );
 	aDesc.iCommand = (TMMCCommandEnum) aCmd;
 	aDesc.iArgument = aArg;
 	FillAppCommandDesc(aDesc);
+	OstTraceFunctionExit0( DUP1_DSDSESSION_FILLAPPCOMMANDDESC_EXIT );
 	}
 
 const TUint32 CCA = KMMCCmdClassApplication;
@@ -319,9 +370,11 @@ const TMMCIdxCommandSpec AppCmdSpecTable[] =
 
 void DSDSession::FillAppCommandDesc(TMMCCommandDesc& aDesc)
 	{
+	OstTraceFunctionEntry0( DUP2_DSDSESSION_FILLAPPCOMMANDDESC_ENTRY );
 	aDesc.iSpec = FindCommandSpec(AppCmdSpecTable, aDesc.iCommand);
 	aDesc.iFlags = 0;
 	aDesc.iBytesDone = 0;
+	OstTraceFunctionExit0( DUP2_DSDSESSION_FILLAPPCOMMANDDESC_EXIT );
 	}
 
 const TMMCIdxCommandSpec SdSpecificCmdSpecTable[] =
@@ -340,23 +393,29 @@ const TMMCIdxCommandSpec SdSpecificCmdSpecTable[] =
 
 void DSDSession::FillSdSpecificCommandDesc(TMMCCommandDesc& aDesc, TSDSpecificCmd aCmd, TMMCArgument aArg)
 	{
+	OstTraceFunctionEntry0( DSDSESSION_FILLSDSPECIFICCOMMANDDESC_ENTRY );
 	aDesc.iCommand = (TMMCCommandEnum) aCmd;
 	aDesc.iArgument = aArg;
 	FillSdSpecificCommandDesc(aDesc);
+	OstTraceFunctionExit0( DSDSESSION_FILLSDSPECIFICCOMMANDDESC_EXIT );
 	}
 
 void DSDSession::FillSdSpecificCommandDesc(TMMCCommandDesc& aDesc, TSDSpecificCmd aCmd)
 	{
+	OstTraceFunctionEntry0( DUP1_DSDSESSION_FILLSDSPECIFICCOMMANDDESC_ENTRY );
 	aDesc.iCommand = (TMMCCommandEnum) aCmd;
 	aDesc.iArgument = 0;						// set stuff bits to zero
 	FillSdSpecificCommandDesc(aDesc);
+	OstTraceFunctionExit0( DUP1_DSDSESSION_FILLSDSPECIFICCOMMANDDESC_EXIT );
 	}
 
 void DSDSession::FillSdSpecificCommandDesc(TMMCCommandDesc& aDesc)
 	{
+	OstTraceFunctionEntry0( DUP2_DSDSESSION_FILLSDSPECIFICCOMMANDDESC_ENTRY );
 	aDesc.iSpec = FindCommandSpec(SdSpecificCmdSpecTable, aDesc.iCommand);
 	aDesc.iFlags = 0;
 	aDesc.iBytesDone = 0;
+	OstTraceFunctionExit0( DUP2_DSDSESSION_FILLSDSPECIFICCOMMANDDESC_EXIT );
 	}
 
 
@@ -364,7 +423,10 @@ void DSDSession::FillSdSpecificCommandDesc(TMMCCommandDesc& aDesc)
 
 EXPORT_C TInt DSDStack::Init()
 	{
-	return DMMCStack::Init();
+	OstTraceFunctionEntry1( DSDSTACK_INIT_ENTRY, this );
+	TInt ret = DMMCStack::Init();
+	OstTraceFunctionExitExt( DSDSTACK_INIT_EXIT, this, ret );
+	return ret;
 	}
 
 
@@ -399,9 +461,11 @@ EXPORT_C TMMCErr DSDStack::AcquireStackSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM, "Current session = 0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM1, "EStBegin" );
         __KTRACE_OPT(KPBUS1, Kern::Printf(">DSDStack::AcquireStackSM()"));
         
 		iRCAPool.ReleaseUnlocked();
@@ -409,6 +473,7 @@ EXPORT_C TMMCErr DSDStack::AcquireStackSM()
 
 	SMF_STATE(EStNextFullRange)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM2, "EStNextFullRange" );
 		iCxCardType = ESDCardTypeUnknown;
 
 		AddressCard(iCxCardCount); 	// Address the next card
@@ -422,6 +487,7 @@ EXPORT_C TMMCErr DSDStack::AcquireStackSM()
 
 	SMF_STATE(EStSendCIDIssued)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM3, "EStSendCIDIssued" );
 		if( !err )
 			{
 			// The card responded with a CID. We need to initialise the
@@ -457,10 +523,12 @@ EXPORT_C TMMCErr DSDStack::AcquireStackSM()
 
 	SMF_STATE(EStIssueSendRCA)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM4, "EStIssueSendRCA" );
 		SMF_INVOKES(ExecCommandSMST,EStSendRCACheck)
 
 	SMF_STATE(EStSendRCACheck)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM5, "EStSendRCACheck" );
 		// We need to check that the RCA recieved from the card doesn't clash
 		// with any others in this stack. RCA is first 2 bytes of response buffer (in big endian)
 		TRCA rca=(TUint16)((s.ResponseP()[0]<<8) | s.ResponseP()[1]);
@@ -469,13 +537,16 @@ EXPORT_C TMMCErr DSDStack::AcquireStackSM()
 
 	SMF_STATE(EStRCADone)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM6, "EStRCADone" );
 		SMF_INVOKES(ConfigureMemoryCardSMST, EStMoreCardsCheck)
 
 	SMF_STATE(EStMoreCardsCheck)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_ATTACHCARDSM7, "EStMoreCardsCheck" );
 		if (++iCxCardCount < (TInt)iMaxCardsInStack)
 		    {
 		    __KTRACE_OPT(KPBUS1, Kern::Printf(">DSDStack::AcquireStackSM(): More Cards to check: %d",iCxCardCount));
+			OstTrace1( TRACE_INTERNALS, DSDSTACK_ACQUIRESTACKSM8, "More Cards to check: iCxCardCount=%d", iCxCardCount );		    
 			SMF_GOTOS(EStNextFullRange)
 		    }
 		else
@@ -516,12 +587,14 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 		DMMCSession& s=Session();
 		DMMCPsu* psu=(DMMCPsu*)MMCSocket()->iVcc;
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM, "Current session = 0x%x", &s );
 			
 		static const TUint32 KCmd8Param		= 0x0100 | 0x00AA;	// Voltage supplied : 2.7-3.6V, Check Pattern 10101010b
 		static const TUint32 KCmd8CheckMask = 0x00000FFF;
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM1, "EStBegin" );
 		iCxCardType = ESDCardTypeUnknown;
 		s.iCardP = NULL;	// This stops ExecCommandSM() from setting old RCA when sending CMD55
 
@@ -530,6 +603,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_STATE(EStSendInterfaceCondition)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM2, "EStSendInterfaceCondition" );
 		iCxPollRetryCount=0; 						 // Reset max number of poll attempts on card busy
 		iConfig.SetPollAttempts(KSDMaxPollAttempts); // Increase card busy timeout to 1 Sec for SD Cards
 
@@ -542,6 +616,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 		if (!(MMCSocket()->MachineInfo().iFlags & TMMCMachineInfo::ESupportsR7))
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("R7 not supported."));
+			OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM3, "R7 not supported" );
 			Command().iSpec.iResponseType = ERespTypeR1;
 			}
 
@@ -551,6 +626,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
  
  	SMF_STATE(EStSentInterfaceCondition)
  
+ 		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM4, "EStSentInterfaceCondition" );
  		if (err == KMMCErrNone)
  			{
  			// Check the response for voltage and check pattern
@@ -558,12 +634,14 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
  			if((status & KCmd8CheckMask) == KCmd8Param)
  				{
  				__KTRACE_OPT(KPBUS1, Kern::Printf("Found v2 card."));
+ 				OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM5, "Found v2 card" );
 				iCurrentOpRange |= KMMCOCRAccessModeHCS;
  				}
  			else
  				{
  				// Pattern Mis-match, card does not support the specified voltage range
- 				return( KMMCErrNotSupported );
+ 				OstTraceFunctionExitExt( DSDSTACK_INITIALISEMEMORYCARDSM_EXIT, this, (TInt) KMMCErrNotSupported );
+ 				return KMMCErrNotSupported;
  				}
 
 			SMF_GOTOS(EStCheckVoltage);
@@ -575,7 +653,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_STATE(EStCheckVoltage)
 
-
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM6, "EStCheckVoltage" );
 		// If platform doesn't support an adjustable voltage PSU then there's no
 		// point in doing a full range for its supported range. To support range
 		// checking on a multi-card stack would require a complete scan of all
@@ -591,6 +669,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_STATE(EStSetFullRangeCmd)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM7, "EStSetFullRangeCmd" );
 		// Issue ACMD41/CMD1 with omitted voltage range
 		if (iCxCardType==ESDCardTypeIsMMC)
 			{
@@ -608,9 +687,11 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_STATE(EStCheckForFullRangeCmd41Timeout)
 	
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM8, "EStCheckForFullRangeCmd41Timeout" );
 		if (err==KMMCErrResponseTimeOut)	
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("ACMD 41 not supported - Assuming MMC"));
+			OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM9, "ACMD 41 not supported - Assuming MMC" );
 			iCxCardType=ESDCardTypeIsMMC;
 
 			// Send CMD0 to re-initialise the card - otherwise we may get 
@@ -630,6 +711,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_STATE(EStFullRangeDone)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM10, "EStFullRangeDone" );
 		if (!err)												
 			{
 			// Card responded with Op range - evaluate the common subset with the current setting.
@@ -637,7 +719,8 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 			const TUint32 range = (iCurrentOpRange & ~KMMCOCRAccessModeHCS) & (TMMC::BigEndian32(s.ResponseP()) & ~KMMCOCRBusy);
 			if(range == 0)
 				{
-				return( KMMCErrNotSupported ); // Card is incompatible with our h/w
+				OstTraceFunctionExitExt( DSDSTACK_INITIALISEMEMORYCARDSM_EXIT1, this, (TInt) KMMCErrNotSupported );
+				return KMMCErrNotSupported; // Card is incompatible with our h/w
 				}
 			iCurrentOpRange = range | (iCurrentOpRange & KMMCOCRAccessModeHCS);
 			}
@@ -656,6 +739,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_STATE(EStSetRangeCmd)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM11, "EStSetRangeCmd" );
 		// Issue ACMD41/CMD1 with voltage range
 		if (iCxCardType==ESDCardTypeIsMMC)
 			{
@@ -678,7 +762,9 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_STATE(EStCheckForRangeCmd41Timeout)
 	
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM12, "EStCheckForRangeCmd41Timeout" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:ascs:crct:%d", err));
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM13, "err=%d", (TInt) err);
 		if (err==KMMCErrResponseTimeOut)	
 			{
 			iCxCardType=ESDCardTypeIsMMC;
@@ -696,6 +782,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 			__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:ascs:crct2:%x", iCardArray));
 			__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:ascs:crct3:%x", iCxCardCount));
 			__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:ascs:crct4:%x", CardArray().CardP(iCxCardCount)));
+			OstTraceExt3(TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM14, "iCardArray=0x%x;iCxCardCount=%d;CardArray().CardP(iCxCardCount)=%d", (TUint) iCardArray, (TInt) iCxCardCount, (TInt) CardArray().CardP(iCxCardCount));
 
 			(CardArray().CardP(iCxCardCount)->iFlags)|=KSDCardIsSDCard;
 			iCxCardType=ESDCardTypeIsSD;
@@ -703,7 +790,9 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 			
 	SMF_STATE(EStSetRangeBusyCheck)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM15, "EStSetRangeBusyCheck" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:ascs:src:%d",iCxCardType)); // 1:MMC, 2:SD
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM16, "iCxCardType=%d", iCxCardType);
 		
 		if ( !err )
 			{
@@ -716,13 +805,15 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 				if ( ++iCxPollRetryCount > iConfig.OpCondBusyTimeout() )
 					{
 					__KTRACE_OPT2(KPBUS1, KPANIC, Kern::Printf("-sd:ocr busy timed out"));
-					return( KMMCErrBusTimeOut );
+					OstTraceFunctionExitExt( DSDSTACK_INITIALISEMEMORYCARDSM_EXIT2, this, (TInt) KMMCErrBusTimeOut );
+					return KMMCErrBusTimeOut;
 					}
 					
 #ifdef _DEBUG
 				if ( iCxPollRetryCount > KMMCSpecOpCondBusyTimeout )
 					{
 					__KTRACE_OPT2(KPBUS1, KPANIC, Kern::Printf("-sd:ocr exceeded spec timeout!! (%d ms)", (iCxPollRetryCount*KMMCRetryGapInMilliseconds)));
+					OstTrace1( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM17, "Exceeded spec timeout (%d ms)", (iCxPollRetryCount*KMMCRetryGapInMilliseconds));
 					}
 #endif
 				m.ResetTraps(); 
@@ -738,10 +829,12 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 					if(iCxCardType == ESDCardTypeIsSD)
 						{
 						__KTRACE_OPT(KPBUS1, Kern::Printf("Found large SD card."));
+						OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM18, "Found large SD card" );
 						}
 					else if(iCxCardType == ESDCardTypeIsMMC)
 						{
 						__KTRACE_OPT(KPBUS1, Kern::Printf("Found large MMC card."));
+						OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM19, "Found large MMC card" );
 						}
 #endif
 					}
@@ -765,18 +858,20 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 		psu->SetVoltage(iCurrentOpRange);
 		if (psu->SetState(EPsuOnFull) != KErrNone)
 			{
-			return(KMMCErrHardware);
+			OstTraceFunctionExitExt( DSDSTACK_INITIALISEMEMORYCARDSM_EXIT3, this, (TInt) KMMCErrHardware );
+			return KMMCErrHardware;
 			}
 
 	SMF_STATE(EStCIDCmd)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM20, "EStCIDCmd" );
 		s.FillCommandDesc(ECmdAllSendCID,0);
 		m.ResetTraps();
 		SMF_INVOKES(ExecCommandSMST,EStSendCIDIssued)
 
 	SMF_STATE(EStSendCIDIssued)
 
-
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM21, "EStSendCIDIssued" );
 		// All done - Higher level state machine expects CID in s.ResponseP()
 
 	SMF_END
@@ -797,11 +892,13 @@ TMMCErr DSDStack::ConfigureMemoryCardSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_CONFIGUREMEMORYCARDSM, "Current session = 0x%x", &s );
 
 	//coverity[UNREACHABLE]
 	//Part of state machine design.
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_CONFIGUREMEMORYCARDSM1, "EStBegin" );
 		// Cards is initialised so get its CSD
 
 		s.FillCommandDesc(ECmdSendCSD, TUint32(CardArray().CardP(iCxCardCount)->iRCA) << 16);
@@ -809,6 +906,7 @@ TMMCErr DSDStack::ConfigureMemoryCardSM()
 
 	SMF_STATE(EStSendCSDDone)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_CONFIGUREMEMORYCARDSM2, "EStSendCSDDone" );
 		// Store the CSD in the new card entry
 		TMMCard* cardP = CardArray().CardP(iCxCardCount);
 		cardP->iCSD = s.ResponseP();
@@ -863,14 +961,17 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM, "Current session = 0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM1, "EStBegin" );
         __KTRACE_OPT(KPBUS1, Kern::Printf(">DSDStack::InitStackAfterUnlockSM()"));
 		iRCAPool.ReleaseUnlocked();
 		iCxCardCount=0; 		// Reset current card number
 
 	SMF_STATE(EStNextCard)	    
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM2, "EStNextCard" );
 		AddressCard(iCxCardCount); 	// Address the next card
 
 		if (!CardDetect(iCxCardCount))
@@ -885,6 +986,7 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 
 	SMF_STATE(EStSelectCard)
 
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM3, "EStSelectCard" );
 		TRCA targetRCA = CardArray().Card(iCxCardCount).RCA();
 		if (targetRCA == SelectedCard())
 			{
@@ -895,6 +997,7 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 		SMF_INVOKES(ExecCommandSMST,EStSetBusWidth)
 
 	SMF_STATE(EStSetBusWidth)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM4, "EStSetBusWidth" );
 		const TMMCStatus status = s.LastStatus();
 		if((status & KMMCStatCardIsLocked) != 0)
 			SMF_GOTOS(EStDeselectCard)
@@ -905,11 +1008,13 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStSetBusWidth1)
 
 	SMF_STATE(EStSetBusWidth1)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM5, "EStSetBusWidth1" );
 		CardArray().Card(iCxCardCount).SetBusWidth(4);
 		DSDSession::FillAppCommandDesc(Command(), ESDACmdSetBusWidth, KSDBusWidth4);
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStGetSDStatus)
 
 	SMF_STATE(EStGetSDStatus)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM6, "EStGetSDStatus" );
 		// Now we have sent ACMD6, ask the controller to set the bus width to 4
 		DoSetBusWidth(EBusWidth4);
 
@@ -919,21 +1024,27 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStGetSDStatus1)
 
 	SMF_STATE(EStGetSDStatus1)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM7, "EStGetSDStatus1" );
 		DSDSession::FillAppCommandDesc(Command(), ESDACmdSDStatus);
 		s.FillCommandArgs(0, KSDStatusBlockLength, iPSLBuf, KSDStatusBlockLength);
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStDecodeSDStatus);
 
 	SMF_STATE(EStDecodeSDStatus)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM8, "EStDecodeSDStatus" );
 #ifdef _DEBUG
 		for (TUint i = 0; i < KSDStatusBlockLength; ++i)
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("SD_STATUS[0x%x] = %x", i, iPSLBuf[i]));
+			OstTraceExt2( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM9, "SD_STATUS[0x%x]=0x%x", i, (TUint) iPSLBuf[i]);
 			}
 #endif
 		// bits 495:480 are SD_CARD_TYPE.  Check this is 00xxh (x = don't care).
 
 		if (iPSLBuf[2] != 0)
+		    {
+			OstTraceFunctionExitExt( DSDSTACK_INITSTACKAFTERUNLOCKSM_EXIT, this, (TInt) KMMCErrNotSupported );
 			return KMMCErrNotSupported;
+		    }
 
 		// bits 479:448 contain SIZE_OF_PROTECTED_AREA.  
 		// (This is bytes 4 to 7 in big-endian format.)
@@ -942,6 +1053,7 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 		__KTRACE_OPT(KPBUS1, Kern::Printf("\t >DSDStack: Card %d", iCxCardCount));
 		TUint32 size_of_protected_area = TMMC::BigEndian32(&iPSLBuf[4]);
 		__KTRACE_OPT(KPBUS1, Kern::Printf("\t >DSDStack: SizeOfProtectedArea: %d", size_of_protected_area));
+		OstTraceExt2( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM10, "iCxCardCount=%d;SizeOfProtectedArea=%d", iCxCardCount, (TInt) size_of_protected_area);
 		const TCSD& csd = sdc.CSD();
 		TUint32 pas = 0;
 		
@@ -951,6 +1063,7 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 			// Protected Area = SIZE_OF_PROTECTED_AREA
 			pas = size_of_protected_area;
 			__KTRACE_OPT(KPBUS1, Kern::Printf("\t >DSDStack(SDHC): SetProtectedAreaSize: %d", pas));
+			OstTrace1( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM11, "SDHC: SetProtectedAreaSize=%d", pas);
 			}
 		else
 			{
@@ -958,6 +1071,7 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 			// Protected Area = SIZE_OF_PROTECTED_AREA * C_SIZE_MULT * BLOCK_LEN
 			pas = size_of_protected_area * (1 << (csd.CSizeMult() + 2 + csd.ReadBlLen()));
 			__KTRACE_OPT(KPBUS1, Kern::Printf("\t >DSDStack(SDSC): SetProtectedAreaSize: %d", pas));
+			OstTrace1( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM12, "SDSC: SetProtectedAreaSize=%d", pas);
 			}		
 
 		sdc.SetProtectedAreaSize(pas);
@@ -972,10 +1086,12 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
 		SMF_INVOKES(SwitchToHighSpeedModeSMST, EStDeselectCard)
 
 	SMF_STATE(EStDeselectCard)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM13, "EStDeselectCard" );
 		s.FillCommandDesc(ECmdSelectCard, 0);
 		SMF_INVOKES(ExecCommandSMST, EStCardDeselectedReadCSD)
     
 	SMF_STATE(EStCardDeselectedReadCSD)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM14, "EStCardDeselectedReadCSD" );
 		//
       	// Read the card's CSD register (again)
 		//
@@ -986,6 +1102,7 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
       	SMF_INVOKES(ExecCommandSMST, EStCSDCmdSent)
 
 	SMF_STATE(EStCSDCmdSent)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM15, "EStCSDCmdSent" );
 		//
       	// Store the CSD in the card entry
 		//
@@ -993,9 +1110,11 @@ EXPORT_C TMMCErr DSDStack::InitStackAfterUnlockSM()
       	cardP->iCSD = s.ResponseP();
 
 	SMF_STATE(EStMoreCardsCheck)
+		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM16, "EStMoreCardsCheck" );
 		if (++iCxCardCount < (TInt)iMaxCardsInStack)
 		    {
 		    __KTRACE_OPT(KPBUS1, Kern::Printf("\t >DSDStack: Address Next card: %d",iCxCardCount));
+		    OstTrace1( TRACE_INTERNALS, DSDSTACK_INITSTACKAFTERUNLOCKSM17, "Address Next card=%d", iCxCardCount);
 			SMF_GOTOS(EStNextCard)
 		    }
 		else
@@ -1041,11 +1160,13 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 			};
 
 		DMMCSession& s = Session();
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM, "Current session = 0x%x", &s );
 
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">SD:RWBlocksSM %x",TUint(s.iLastStatus)));
 
 	SMF_BEGIN
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM1, "EStBegin" );
 		TSDCard& sdCard = *static_cast<TSDCard*>(s.iCardP);
 		AddressCard(sdCard.iIndex-1);
 
@@ -1063,7 +1184,10 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 			// Check that the card supports class 4 (Write) commands
 			const TUint ccc = s.iCardP->CSD().CCC();
 			if(!(ccc & KMMCCmdClassBlockWrite))
-				return( KMMCErrNotSupported );
+			    {
+				OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT, this, (TInt) KMMCErrNotSupported );
+				return KMMCErrNotSupported;
+			    }
 			}
 
 		Command().iCustomRetries = 0;			// MBW retries
@@ -1072,6 +1196,7 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStRestart)		// NB: ErrBypass is not processed here
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM2, "EStRestart" );
 		SMF_CALLMEWR(EStRestart) // Create a recursive call entry to recover from the errors trapped
 		m.SetTraps(KMMCErrStatus);
 		if (s.Command().iSpec.iCommandClass!=KMMCCmdClassApplication || s.Command().iCommand==ECmdAppCmd )
@@ -1082,12 +1207,15 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 
 	SMF_BPOINT(EStAttached)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM3, "EStAttached" );
 		TMMCCommandDesc& cmd = s.Command();
 
 		const TUint32 blockLength = cmd.BlockLength();
 		if((blockLength == 0) || (blockLength > (TUint)KDefaultBlockLenInBytes))
 			{
 			__KTRACE_OPT(KPBUS1,Kern::Printf(">SD:RWBlocksSM err BlockLen:%d",blockLength));
+			OstTrace1( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM4, "blockLength=%d", blockLength );
+			OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT1, this, (TInt) KMMCErrArgument );
 			return KMMCErrArgument;
 			}
 
@@ -1100,6 +1228,7 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 			if(!cmd.AdjustForBlockOrByteAccess(s))
 				{
 				// unable to convert command arguments to suit the underlying block/byte access mode
+				OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT2, this, (TInt) KMMCErrArgument );
 				return KMMCErrArgument;
 				}
 			}
@@ -1117,14 +1246,19 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStLength1)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM5, "EStLength1" );
 		const TMMCStatus status(s.ResponseP());
 		s.PopCommandStack();
 		if (status.Error())
+		    {
+		    OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT3, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus)
+		    }
 		s.iCardP->iSetBlockLen = s.Command().BlockLength();
 
 	SMF_STATE(EStLengthSet)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM6, "EStLengthSet" );
 		TMMCCommandDesc& cmd = s.Command();
 		TUint opType = 0;
 		const TUint kTypeWrite =	KBit0;
@@ -1154,7 +1288,10 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 
 		const TUint blocks = cmd.iTotalLength / cmd.BlockLength();
 		if ( blocks * cmd.BlockLength() != cmd.iTotalLength )
-			return( KMMCErrArgument );
+		    {
+			OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT4, this, (TInt) KMMCErrArgument );
+			return KMMCErrArgument;
+		    }
 
 		if ( !(opType & kTypeSpecial) )	// A special session has already set its command descriptor
 			{
@@ -1183,6 +1320,7 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStIssued)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM7, "EStIssued" );
 		// check state of card after data transfer with CMD13.
 		if (s.Command().Direction() != 0)
 			{
@@ -1192,6 +1330,7 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 		SMF_GOTOS(EStRWFinish);
 
 	SMF_STATE(EStWaitFinish)
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM8, "EStWaitFinish" );
 		// if MBW fail, then recover by rewriting ALL blocks...
 		// (used to recover using ACMD22, but this has been changed
 		// as is difficult to test for little gain in efficiency)
@@ -1199,6 +1338,7 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 			{
 			if (Command().iCustomRetries++ >= (TInt) KSDMaxMBWRetries)
 				{
+				OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT5, this, (TInt) err );
 				SMF_RETURN(err)
 				}
 
@@ -1218,6 +1358,7 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStWaitFinish1)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM9, "EStWaitFinish1" );
 		const TMMCStatus status(s.ResponseP());
 		s.PopCommandStack();
 
@@ -1232,22 +1373,32 @@ EXPORT_C TMMCErr DSDStack::CIMReadWriteBlocksSM()
 			}
 
 		if (status.Error())
+		    {
+			OstTraceFunctionExitExt( DUP7_DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus)
+		    }
 #endif
 		
 		// Fall through if CURRENT_STATE is not PGM or DATA
 	SMF_STATE(EStRWFinish)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM10, "EStRWFinish" );
 		if (TMMCStatus(s.ResponseP()).Error() != 0)
+		    {
+		    OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT6, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus);
+		    }
 
 		s.iState &= ~KMMCSessStateInProgress;
 
 		// skip over recursive entry or throw error and catch in CIMLockUnlockSM()
-		return (s.Command().iCommand == ECmdLockUnlock) ? KMMCErrUpdPswd : KMMCErrBypass;
+		TMMCErr ret = (s.Command().iCommand == ECmdLockUnlock) ? KMMCErrUpdPswd : KMMCErrBypass; 
+		OstTraceFunctionExitExt( DSDSTACK_CIMREADWRITEBLOCKSSM_EXIT7, this, (TInt) ret );
+		return ret;
 
 	SMF_STATE(EStDone)
 	    
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_CIMREADWRITEBLOCKSSM11, "EStDone" );
 	    __KTRACE_OPT(KPBUS1,Kern::Printf("<SD:RWBlocksSM()"));
 
 	SMF_END
@@ -1272,9 +1423,12 @@ EXPORT_C TMMCErr DSDStack::ModifyCardCapabilitySM()
 	//Part of state machine design.
 	SMF_BEGIN
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_MODIFYCARDCAPABILITYSM, "EStBegin" );
     	SMF_INVOKES( DMMCStack::BaseModifyCardCapabilitySMST, EStDone )
 
     SMF_STATE(EStDone)
+    
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_MODIFYCARDCAPABILITYSM1, "EStDone" );
 
     SMF_END
 	}
@@ -1300,10 +1454,14 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">SD:SwitchToHighSpeedModeSM "));
 
 		DMMCSession& s = Session();
+		OstTrace1( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM, "Current session = 0x%x", &s );
 
 	SMF_BEGIN
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM1, "EStBegin");
+	
 	SMF_STATE(EstCheckController) 	
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM2, "EstCheckController");
 	  	// Get the clock speed supported by the controller
 		TMMCMachineInfoV4 machineInfo;
 		TMMCMachineInfoV4Pckg machineInfoPckg(machineInfo);
@@ -1314,11 +1472,13 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
 			if (machineInfo.iMaxClockSpeedInMhz < (KSDDTClk50MHz/1000) )
 				{
 				__KTRACE_OPT(KPBUS1, Kern::Printf("High speed mode not supported by controller"));
+				OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM3, "High speed mode not supported by controller");
 				SMF_GOTOS(EStDone);
 				}
 			}	
 
 	SMF_STATE(EStSendSCRCmd)
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM4, "EStSendSCRCmd");
 		//
       	// ACMD51 Read the SD Configuration Register
       	//
@@ -1327,6 +1487,7 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
       	SMF_INVOKES(ExecCommandSMST, EStCheckSpecVer);
 
 	SMF_STATE(EStCheckSpecVer)
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM5, "EStCheckSpecVer");
       	//	
       	// Check the SD version
 		//
@@ -1335,6 +1496,7 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
 		//
       	__KTRACE_OPT(KPBUS1,Kern::Printf("   SD Configuration Register received"));
       	__KTRACE_OPT(KPBUS1,Kern::Printf("   ...card_status=%x", TUint(s.iLastStatus)));
+      	OstTrace1( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM6, "SD Configuration Register received: card_status=0x%x", (TUint) s.iLastStatus);
 
 #ifdef _DEBUG
       	for (TUint32 i = 0; i < KSDSCRLength; ++i)
@@ -1346,25 +1508,30 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
       	if(iPSLBuf[0]==2)
 			{
 			__KTRACE_OPT(KPBUS1,Kern::Printf("   ...SD Spec Version 2"));
+			OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM7, "SD Spec Version 2");
 			SMF_GOTOS(EStCheckFunction);
 			}
   
       	if(iPSLBuf[0]==1)
 			{
 			__KTRACE_OPT(KPBUS1,Kern::Printf("   ...SD Spec Version 1.10"));
+			OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM8, "SD Spec Version 1.10");
 			SMF_GOTOS(EStCheckFunction);
 			}
   
       	if(iPSLBuf[0]==0)
 			{
 			__KTRACE_OPT(KPBUS1,Kern::Printf("   ...SD Spec Version 1.01"));
+			OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM9, "SD Spec Version 1.01");
 			SMF_GOTOS(EStDone);
         	}
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf("   ...SD Spec Version > 2 !"));
+	OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM10, "SD Spec Version > 2");
 
 	SMF_STATE(EStCheckFunction)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM11, "EStCheckFunction");
 		m.SetTraps(KMMCErrResponseTimeOut | KMMCErrNotSupported);
 
  		//
@@ -1379,18 +1546,22 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
 
 	SMF_STATE(EStCheckFunctionSent)
  
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM12, "EStCheckFunctionSent");
        	__KTRACE_OPT(KPBUS1,Kern::Printf("   CheckFunctionSent %x",TUint(s.iLastStatus)));
+       	OstTrace1( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM13, "CheckFunctionSent=0x%x", (TUint) s.iLastStatus);
 
 		m.ResetTraps();
 
 		if(err == KMMCErrResponseTimeOut)
 			{
 	       	__KTRACE_OPT(KPBUS1,Kern::Printf("   ...CMD6 [Read] Response Timeout"));
+	       	OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM14, "CMD6 [Read] Response Timeout");
 			SMF_GOTOS(EStDone);
 			}
 		else if(err == KMMCErrNotSupported)
 			{
 	       	__KTRACE_OPT(KPBUS1,Kern::Printf("   ...CMD6 [Read] Not Supported"));
+	       	OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM15, "CMD6 [Read] Not Supported");
 			SMF_GOTOS(EStDone);
 			}
 
@@ -1415,21 +1586,26 @@ TMMCErr DSDStack::SwitchToHighSpeedModeSM()
 	
 	SMF_STATE(EStSwitchFunctionSent)
 
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM16, "EStSwitchFunctionSent");
 #ifdef _DEBUG
 		m.ResetTraps();
 
 		if(err == KMMCErrResponseTimeOut)
 			{
 	       	__KTRACE_OPT(KPBUS1,Kern::Printf("   ...CMD6 [Write] Response Timeout"));
+	       	OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM17, "CMD6 [Write] Response Timeout");
 			}
 
 		for (TUint32 i = 0; i < KSDSwitchFuncLength; ++i)
 			{
 	  		__KTRACE_OPT(KPBUS1, Kern::Printf("   ...SD Switch[0x%x] = %x", i, iPSLBuf[i]));
+	  		OstTraceExt2( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM18, "SD Switch[0x%x]=0x%x", (TUint) i, (TUint) iPSLBuf[i]);
 			}
 #endif
 
 	SMF_STATE(EStDone)
+	
+        OstTrace0( TRACE_INTERNALS, DSDSTACK_SWITCHTOHIGHSPEEDMODESM19, "EStSwitchFunctionSent");
       
 	SMF_END
 	}
@@ -1443,6 +1619,7 @@ EXPORT_C DMMCSession* DSDStack::AllocSession(const TMMCCallBack& aCallBack) cons
 * @return A pointer to the new session
 */
 	{
+	OstTraceFunctionEntry1( DSDSTACK_ALLOCSESSION_ENTRY, this );
 	return new DSDSession(aCallBack);
 	}
 

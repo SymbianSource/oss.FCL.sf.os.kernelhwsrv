@@ -115,7 +115,7 @@ void TestPinPhysicalMemory()
 
 	test.Printf(_L("Allocate user chunk\n"));
 	TChunkCreateInfo createInfo;
-	createInfo.SetDisconnected(0,UCPageCount*PageSize,UCPageCount*PageSize);
+	createInfo.SetDisconnected(0,KUCPageCount*PageSize,KUCPageCount*PageSize);
 	createInfo.SetPaging(TChunkCreateInfo::EPaged);
 	test_KErrNone(chunk.Create(createInfo));
 	UCBase = (TInt8*)chunk.Base();
@@ -130,12 +130,12 @@ void TestPinPhysicalMemory()
 	test_KErrNone(Ldd.UnpinPhysicalMemory());	
 
 	test.Printf(_L("Perform Physical pin operation on the chunk\n"));
-	test_KErrNone(Ldd.PinPhysicalMemory((TLinAddr)UCBase, UCPageCount*PageSize));	
+	test_KErrNone(Ldd.PinPhysicalMemory((TLinAddr)UCBase, KUCPageCount*PageSize));	
 
 	test.Printf(_L("Test that pinned physical memory preserves its mapping when recommited\n"));
-	test_KErrNone(chunk.Decommit(0,UCPageCount*PageSize));							 //Decommit all
-	for (i=UCPageCount-1;i>=0;i--) test_KErrNone(chunk.Commit(i*PageSize,PageSize)); //Commit in reverse order
-	for (i=0;i<UCPageCount;i++) // Recommited memory is not paged in. So, write into each page, before driver 
+	test_KErrNone(chunk.Decommit(0,KUCPageCount*PageSize));							 //Decommit all
+	for (i=KUCPageCount-1;i>=0;i--) test_KErrNone(chunk.Commit(i*PageSize,PageSize)); //Commit in reverse order
+	for (i=0;i<KUCPageCount;i++) // Recommited memory is not paged in. So, write into each page, before driver 
 		{						// calls Kern::LinearToPhysical or it will get KErrInvalidMemory in return.
 		volatile TInt8* ptr = (volatile TInt8*)(UCBase+i*PageSize);
 		*ptr = 10;
@@ -143,10 +143,10 @@ void TestPinPhysicalMemory()
 	test_KErrNone(Ldd.CheckPageList(chunk.Base())); 					// Check that the mapping is preserved. 	
 	
 	test.Printf(_L("Sync cache & memory of User Chunk\n"));//Test Cache::SyncPhysicalMemoryBeforeDmaWrite
-	test_KErrNone(Ldd.SyncPinnedPhysicalMemory(0,UCPageCount*PageSize));
+	test_KErrNone(Ldd.SyncPinnedPhysicalMemory(0,KUCPageCount*PageSize));
 
 	test.Printf(_L("Invalidate cache of User Chunk\n"));//Test Cache::SyncPhysicalMemoryBefore/AfterDmaRead
-	test_KErrNone(Ldd.InvalidatePinnedPhysicalMemory(0,UCPageCount*PageSize));
+	test_KErrNone(Ldd.InvalidatePinnedPhysicalMemory(0,KUCPageCount*PageSize));
 	
 	test.Printf(_L("Try to move pinned phys. memory...\n")); //RAM defrag should return error code here.
 	i = Ldd.MovePinnedPhysicalMemory(0);
@@ -157,15 +157,15 @@ void TestPinPhysicalMemory()
 	chunk.Close();						  // ... mapped to another virtual memory.
 
 	test.Printf(_L("Allocate & initilise the second chunk\n"));// Kernel sholudn't commit pinned physical memory ...
-	test_KErrNone(chunk.CreateLocal(2*PageSize,2*PageSize));   // ...that has been just decommited from the first chunk.
+	test_KErrNone(chunk.CreateLocal(KUCPageCount*PageSize,KUCPageCount*PageSize));   // ...that has been just decommited from the first chunk.
 	UCBase = (TInt8*)chunk.Base();
-	for (i=0;i<UCPageCount*PageSize;i++) UCBase[i]=0; //Initialise user buffer
+	for (i=0;i<KUCPageCount*PageSize;i++) UCBase[i]=0; //Initialise user buffer
 
 	test.Printf(_L("Invalidate cache of pinned memory\n"));//This shouldn't affect the second chunk.
-	test_KErrNone(Ldd.InvalidatePinnedPhysicalMemory(0,UCPageCount*PageSize));
+	test_KErrNone(Ldd.InvalidatePinnedPhysicalMemory(0,KUCPageCount*PageSize));
 
 	test.Printf(_L("Check data in the second chunk is unaffected\n"));
-	for (i=0;i<UCPageCount*PageSize;i++) test(UCBase[i]==0);
+	for (i=0;i<KUCPageCount*PageSize;i++) test(UCBase[i]==0);
 	
 	test.Printf(_L("Close the second chunk\n"));
 	chunk.Close();
@@ -199,7 +199,7 @@ void TestPhysicalPinOutOfMemory()
 	RChunk chunk;
 
 	test.Printf(_L("Allocate user chunk\n"));
-	test_KErrNone(chunk.CreateDisconnectedLocal(0,UCPageCount*PageSize,UCPageCount*PageSize));
+	test_KErrNone(chunk.CreateDisconnectedLocal(0,KUCPageCount*PageSize,KUCPageCount*PageSize));
 	UCBase = (TInt8*)chunk.Base();
 	
 	const TInt KMaxKernelAllocations = 1024;
@@ -223,7 +223,7 @@ void TestPhysicalPinOutOfMemory()
 		{
 		__KHEAP_FAILNEXT(i);
 		test.Printf(_L("Perform physical pin operation\n"));
-		r = Ldd.PinPhysicalMemory((TLinAddr)UCBase, UCPageCount*PageSize);
+		r = Ldd.PinPhysicalMemory((TLinAddr)UCBase, KUCPageCount*PageSize);
 		__KHEAP_RESET;
 		}
 	test.Printf(_L("Perform physical pin operation took %d tries\n"),i);
@@ -649,6 +649,163 @@ void TestPinOutOfMemory()
 	}
 
 
+TInt KernelModifyData(TAny*)
+	{
+	Ldd.KernelMapReadAndModifyMemory();
+	return KErrNone;
+	}
+
+void TestMapAndPinMemory()
+	{
+	
+	TInt mm = UserSvr::HalFunction(EHalGroupKernel, EKernelHalMemModelInfo, 0, 0) & EMemModelTypeMask;
+	if (mm < EMemModelTypeFlexible)
+		{
+		test.Printf(_L("Memory model (%d) doesn't support physical pining\n"),mm);
+		return;
+		}
+	TInt i;
+	TUint KUCBytes = KUCPageCount * PageSize;
+	RChunk chunk;
+
+	test.Printf(_L("Allocate user chunk\n"));
+	TChunkCreateInfo createInfo;
+	createInfo.SetDisconnected(0, KUCBytes, KUCBytes);
+	createInfo.SetPaging(TChunkCreateInfo::EPaged);
+	test_KErrNone(chunk.Create(createInfo));
+	TUint8* chunkBase = (TUint8*)chunk.Base();
+	
+	test.Printf(_L("Create kernel map object\n"));
+	test_KErrNone(Ldd.CreateKernelMapObject(0));
+
+	test.Printf(_L("Perform kernel map operation on zero-length buffer\n"));
+	test_KErrNone(Ldd.KernelMapMemory((TLinAddr)chunkBase, 0));	
+
+	test.Printf(_L("Perform kernel unmap operation\n"));
+	test_KErrNone(Ldd.KernelUnmapMemory());	
+
+	test.Printf(_L("Perform kernel map operation on the chunk\n"));
+	test_KErrNone(Ldd.KernelMapMemory((TLinAddr)chunkBase, KUCBytes));
+
+	test.Printf(_L("Attempt to map the memory again while already mapped\n"));
+	test_Equal(KErrInUse, Ldd.KernelMapMemory((TLinAddr)chunkBase, KUCBytes));
+
+	test.Printf(_L("Use the kernel mapping to modify the data and verify it\n"));
+	TUint8* p = chunkBase;
+	for (i = 0; i < (TInt)KUCBytes; i++)
+		*p++ = (TUint8)i;
+	test_KErrNone(Ldd.KernelMapReadAndModifyMemory());
+	p = chunkBase;
+	for (i = 0; i < (TInt)KUCBytes; i++)
+		test_Equal((TUint8)(i + 1), *p++);	
+
+	test.Printf(_L("Test that kernel mapped memory preserves its mapping when recommited\n"));
+	test_KErrNone(chunk.Decommit(0,KUCPageCount*PageSize));							 //Decommit all
+	for (i=KUCPageCount-1;i>=0;i--) test_KErrNone(chunk.Commit(i*PageSize,PageSize)); //Commit in reverse order
+	for (i=0;i<KUCPageCount;i++) // Recommited memory is not paged in. So, write into each page, before driver 
+		{						// calls Kern::LinearToPhysical or it will get KErrInvalidMemory in return.
+		volatile TInt8* ptr = (volatile TInt8*)(chunkBase+i*PageSize);
+		*ptr = 10;
+		}
+	test_KErrNone(Ldd.KernelMapCheckPageList(chunkBase)); 	// Check that the mapping is preserved. 	
+	
+	test.Printf(_L("Sync cache & memory of User Chunk\n"));	//Test Cache::SyncMemoryBeforeDmaWrite
+	test_KErrNone(Ldd.KernelMapSyncMemory());
+
+	test.Printf(_L("Invalidate cache of User Chunk\n"));//Test Cache::SyncMemoryBefore/AfterDmaRead
+	test_KErrNone(Ldd.KernelMapInvalidateMemory());
+	
+	test.Printf(_L("Try to move kernel map memory...\n")); //RAM defrag should return error code here.
+	for (i = 0; i < KUCPageCount; i++)
+		{
+		TInt r = Ldd.KernelMapMoveMemory(0);
+		test.Printf(_L("...[%d] returned %d\n"), i, r);
+		test(r != KErrNone);
+		}
+
+	test.Printf(_L("Unmap the memory and attempt to map with invalid attributes\n"));
+	test_KErrNone(Ldd.KernelUnmapMemory());
+	test_Equal(KErrArgument, Ldd.KernelMapMemoryInvalid((TLinAddr)chunkBase, KUCBytes));
+
+	test.Printf(_L("Map the memory read only and attempt to modify it kernel side\n"));
+	test_KErrNone(Ldd.KernelMapMemoryRO((TLinAddr)chunkBase, KUCBytes));
+	// Reset the contents of the memory.
+	p = chunkBase;
+	for (i = 0; i < (TInt)KUCBytes; i++)
+		*p++ = (TUint8)i;
+
+	RThread modThread;
+	test_KErrNone(modThread.Create(KNullDesC, KernelModifyData, PageSize, PageSize, PageSize, (TAny*)NULL));
+	TRequestStatus status;
+	modThread.Logon(status);
+	test_Equal(KRequestPending, status.Int());
+	modThread.Resume();
+	User::WaitForRequest(status);
+	test_Equal(EExitPanic, modThread.ExitType());
+	test(modThread.ExitCategory() == _L("KERN-EXEC"));
+	test_Equal(ECausedException, modThread.ExitReason());
+	CLOSE_AND_WAIT(modThread);
+
+	test.Printf(_L("Close the chunk\n")); // Phys. memory is pinned and shouldn't be ...
+	chunk.Close();						  // ... mapped to another virtual memory.
+
+	test.Printf(_L("Allocate & initilise the second chunk\n"));// Kernel shouldn't commit pinned physical memory ...
+	test_KErrNone(chunk.CreateLocal(KUCBytes, KUCBytes));   // ...that has just been decommited from the first chunk.
+	chunkBase = (TUint8*)chunk.Base();
+	for (i = 0; i < KUCPageCount * PageSize; i++) 
+		chunkBase[i] = 0; //Initialise user buffer
+
+	test.Printf(_L("Invalidate cache of pinned memory\n"));//This shouldn't affect the second chunk.
+	test_KErrNone(Ldd.KernelMapInvalidateMemory());
+
+	test.Printf(_L("Check data in the second chunk is unaffected\n"));
+	for (i=0; i < KUCPageCount * PageSize; i++) 
+		test(chunkBase[i]==0);
+	
+	test.Printf(_L("Close the second chunk\n"));
+	chunk.Close();
+
+	test.Printf(_L("Perform kernel unmap operation\n"));
+	test_KErrNone(Ldd.KernelUnmapMemory());	
+
+	test.Printf(_L("Perform physical unpin operation (again)\n"));
+	test_KErrNone(Ldd.KernelUnmapMemory());	// test double unpin ok
+
+	test.Printf(_L("Destroy physical pin object\n"));
+	test_KErrNone(Ldd.DestroyKernelMapObject());
+
+	test.Printf(_L("Destroy physical pin object (again)\n"));
+	test_KErrNone(Ldd.DestroyKernelMapObject());  // test double destroy ok
+
+	//
+	//	Test a kernel mapping with preserved resources doesn't allocate when mapping and pinning.
+	//
+	test.Printf(_L("Create a pre-reserving kernel mapping object\n"));
+	TUint mappingSize = KUCBytes>>1;
+	// This test step relies on mapping objet being smaller than the user chunk
+	// and as mapping object will always be >=2 pages, user chunk must be at least 4.
+	__ASSERT_COMPILE(KUCPageCount >= 4);
+	test_KErrNone(Ldd.CreateKernelMapObject(mappingSize));
+	TChunkCreateInfo chunkInfo;
+	chunkInfo.SetNormal(KUCBytes, KUCBytes);
+	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	test_KErrNone(chunk.Create(chunkInfo));
+
+	test.Printf(_L("Map and pin an unpaged chunk with pre-reserved resources\n"));
+	__KHEAP_FAILNEXT(1);	// Ensure any attempted kernel heap allocations fail.
+	test_KErrNone(Ldd.KernelMapMemory((TLinAddr)chunk.Base(), mappingSize));
+	test_KErrNone(Ldd.KernelUnmapMemory());
+
+	test.Printf(_L("Map more memory than we have pre-reserved resources for\n"));
+	test_Equal(KErrArgument, Ldd.KernelMapMemory((TLinAddr)chunk.Base(), mappingSize*2));
+
+	test.Printf(_L("Destroy the kernel map object with pre-reserved resources\n"));
+	test_KErrNone(Ldd.DestroyKernelMapObject());	// This will also unpin the memory.
+	// Clear the kernel heap fail next.
+	__KHEAP_RESET;
+	chunk.Close();
+	}
+
 TInt E32Main()
 	{
 	test.Title();
@@ -717,7 +874,10 @@ TInt E32Main()
 	
 	test.Next(_L("Physical pinning OOM"));
 	TestPhysicalPinOutOfMemory();
-	
+
+	test.Next(_L("Kernel pin mapping"));
+	TestMapAndPinMemory();
+
 	test.Next(_L("Pin OOM Tests"));
 	TestPinOutOfMemory();
 

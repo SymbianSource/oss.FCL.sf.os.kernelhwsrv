@@ -46,6 +46,8 @@ LOCAL_C TInt GetUValueWordSetting (const TSettingId& aId,
     if (HCRNotReady)
         HCR_TRACE_RETURN(KErrNotReady);
 
+	__NK_ASSERT_DEBUG((aType & KMaskWordTypes) != 0);
+
     TSettingRef sref(0,0);
     TInt err = 0;
     err = HCRSingleton->FindSetting(aId, aType, sref);
@@ -53,8 +55,7 @@ LOCAL_C TInt GetUValueWordSetting (const TSettingId& aId,
         HCR_TRACE_RETURN(err);
 
     err = sref.iRep->GetValue(sref, aValue);
-    if (err != KErrNone)
-        HCR_TRACE_RETURN(err);
+	__NK_ASSERT_DEBUG(err == KErrNone);
     
     return KErrNone;	
     }
@@ -76,8 +77,7 @@ LOCAL_C TInt GetUValueLargeSetting64 (const TSettingId& aId,
         HCR_TRACE_RETURN(err);
 
     err = sref.iRep->GetLargeValue(sref, aValue);
-    if (err != KErrNone)
-        HCR_TRACE_RETURN(err);
+	__NK_ASSERT_DEBUG(err == KErrNone);
     
     return KErrNone;	
     }
@@ -101,8 +101,7 @@ LOCAL_C TInt GetUValueLargeSettingTDes8 (const TSettingId& aId,
 
     UValueLarge value;
     err = sref.iRep->GetLargeValue(sref, value);
-    if (err != KErrNone)
-        HCR_TRACE_RETURN(err);
+    __NK_ASSERT_DEBUG(err == KErrNone);
    
     TInt len = sref.iRep->GetLength(sref);
     if (len > aValue.MaxSize())
@@ -134,9 +133,8 @@ LOCAL_C TInt GetUValueLargeSettingTUint8 (const TSettingId& aId, TSettingType aT
 
     UValueLarge value;
     err = sref.iRep->GetLargeValue(sref, value);
-	    if (err != KErrNone)
-        HCR_TRACE_RETURN(err);
-   
+	__NK_ASSERT_DEBUG(err == KErrNone);
+    
     aLen = sref.iRep->GetLength(sref);
     if (aLen > aMaxLen)
         HCR_TRACE_RETURN(KErrTooBig);    
@@ -492,8 +490,7 @@ EXPORT_C TInt HCR::GetWordSettings(TInt aNum, const SSettingId aIds[],
     //All de-allocations are done, leave a critical section
     NKern::ThreadLeaveCS();
 
-    if(err < KErrNone)
-        HCR_TRACE_RETURN(err);
+    __NK_ASSERT_DEBUG(err >= KErrNone);
 
     return err;
     
@@ -516,18 +513,15 @@ EXPORT_C TInt HCR::GetTypeAndSize(const TSettingId& aId, TSettingType& aType,
     TSettingRef sref(0,0);
     TInt err = HCRSingleton->FindSettingWithType(aId, aType, sref);
 	
-    if(err == KErrNone)
-        {
-        aLen = sref.iRep->GetLength(sref);
-        }
-    else if(err == KErrNotFound)
+	__NK_ASSERT_DEBUG(err == KErrNone || err == KErrNotFound);
+
+	if(err == KErrNotFound)
         {
         aLen = 0;
         HCR_TRACE_RETURN(KErrNotFound);
         }
-    else
-        HCR_TRACE_RETURN(err);
     
+	aLen = sref.iRep->GetLength(sref);
     return KErrNone;
    
 #else
@@ -558,7 +552,6 @@ EXPORT_C TInt HCR::FindNumSettingsInCategory (TCategoryUid aCatUid)
 	HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
-
 
 EXPORT_C TInt HCR::FindSettings(TCategoryUid aCat, TInt aMaxNum,
         TElementId aElIds[], TSettingType aTypes[], TUint16 aLens[])

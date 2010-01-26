@@ -16,7 +16,8 @@
 
 macro HCRTEST_NO_EXPORT
 macro HCRTEST_NO_KEXT_ENTRY_POINT
-macro HCR_TRACE
+// Uncomment for debug trace
+// macro HCR_TRACE
 #define HCRTEST_TEST_MMP
 #include "../../../kernel/eka/drivers/hcr/hcr.mmh"
 
@@ -24,6 +25,7 @@ target			d_hcrut.ldd
 targettype		ldd
 
 userinclude		../../../kernel/eka/drivers/hcr
+userinclude     ../../../../boardsupport/naviengine/navienginebsp/ne1_tb/hcr
 
 sourcepath		../../../kernel/eka/drivers/hcr
 source			HCR_PIL_SOURCE

@@ -121,18 +121,7 @@ namespace HCR
 	             */
 	            inline TSa() :iSa(NULL){}
 	            
-	            /**
-	             *  Costructor with a pointer initialization with 
-	             * already allocated pointer.
-	             * The member variable pointer iSa is initialized with the 
-	             * pointer provided by function parameter. Ownership is moved to
-	             * safe pointer object and source pointer is reset to NULL.
-	             * 
-	             * @param  aP      Pointer to a heap allocated array of element 
-	             *                 with type T. 
-	             */
-	            inline TSa(T* aP) {iSa = aP;}
-	            
+	           
 	            /**
 	             *  operator()() returns an address to the array  
 	             * maintained by this SafeArray object.
@@ -166,16 +155,7 @@ namespace HCR
 	             */
 	            inline T& operator[](TInt aIndex){return *(iSa + aIndex);}
 	            
-	            /**
-	             *  operator[]() - constant version. Returns the constant 
-	             * reference to the element of the array.
-	             * @param  aIndex      Position of the element within SafeArray
-	             * @return             Constant reference to the element from 
-	             *                     array 
-	             */
-	            inline const T& operator[](TInt aIndex) const {return *(iSa + aIndex);}
-	           
-	             
+	           	             
 	            /**
 	             *  Destructor
 	             */
@@ -187,7 +167,7 @@ namespace HCR
 	             *  Copy constructor must not be called explicitly by the
 	             * code
 	             */
-	            inline TSa(TSa& aSa){}
+	            inline TSa(TSa& aSa);
 	            
 	        protected:
 	            /**< Pointer to the allocated heap array*/
@@ -544,7 +524,6 @@ namespace HCR
         // Setting accessor methods
         virtual TBool IsWordValue(const TSettingRef& aRef);
         virtual TBool IsLargeValue(const TSettingRef& aRef);
-        virtual void GetId(const TSettingRef& aRef, TCategoryUid& aCat, TElementId& aKey);
         virtual void GetId(const TSettingRef& aRef, SSettingId& aId);
         virtual TInt32 GetType(const TSettingRef& aRef);
         virtual TUint16 GetLength(const TSettingRef& aRef);

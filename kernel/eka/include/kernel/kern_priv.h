@@ -2781,6 +2781,11 @@ public:
 	static void UnpinPhysicalMemory(TPhysicalPinObject* aPinObject);
 	static void DestroyPhysicalPinObject(TPhysicalPinObject*& aPinObject);
 
+	static TInt CreateKernelMapObject(TKernelMapObject*& aMapObject, TUint aMaxReserveSize);
+	static TInt MapAndPinMemory(TKernelMapObject* aMapObject, DThread* aThread, TLinAddr aStart, TUint aSize, TUint aMapAttributes, TLinAddr& aKernelAddr, TPhysAddr* aPages);
+	static void UnmapAndUnpinMemory(TKernelMapObject* aMapObject);
+	static void DestroyKernelMapObject(TKernelMapObject*& aMapObject);
+
 	// RAM allocator and defrag interfaces.
 	static void RamAllocLock();
 	static void RamAllocUnlock();

@@ -14,6 +14,15 @@
 //
 
 #include <drivers/mmc.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "sessionTraces.h"
+#endif
+
 
 
 //	--------  class DMMCSession  --------
@@ -34,6 +43,7 @@ EXPORT_C DMMCSession::DMMCSession(const TMMCCallBack& aCallBack)
 #endif	// #ifdef __EPOC32__
 	iConfig()
 	{
+	OstTraceFunctionEntry1( DMMCSESSION_DMMCSESSION_ENTRY, this );
 	}
 
 EXPORT_C DMMCSession::~DMMCSession()
@@ -41,11 +51,13 @@ EXPORT_C DMMCSession::~DMMCSession()
  * Destructor.
  */
 	{
+	OstTraceFunctionEntry1( DUP1_DMMCSESSION_DMMCSESSION_ENTRY, this );
 	// Ensure that the stack isn't currently running in another thread's context, otherwise this session won't be 
 	// removed from the stack's workset until some time later - by which time the session will have been deleted
 	__ASSERT_ALWAYS(!iStackP->StackRunning(), DMMCSocket::Panic(DMMCSocket::EMMCNotInDfcContext));
 	Abort();
 	UnlockStack();
+	OstTraceFunctionExit1( DUP1_DMMCSESSION_DMMCSESSION_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetCard(TMMCard* aCardP)
@@ -59,8 +71,10 @@ EXPORT_C void DMMCSession::SetCard(TMMCard* aCardP)
  * @param aCardP A pointer to the card to be assigned to the session.
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSESSION_SETCARD_ENTRY, this );
 	iCardP = aCardP;
 	iCID = iCardP->CID();
+	OstTraceFunctionExit1( DMMCSESSION_SETCARD_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMReadBlock(TMMCArgument aDevAddr, TUint32 aLength, TUint8* aMemoryP)
@@ -75,9 +89,11 @@ EXPORT_C void DMMCSession::SetupCIMReadBlock(TMMCArgument aDevAddr, TUint32 aLen
  * @param aMemoryP host destination address
  */
 	{
+	OstTraceExt4(TRACE_FLOW, DMMCSESSION_SETUPCIMREADBLOCK_ENTRY, "DMMCSession::SetupCIMReadBlock;aDevAddr=%x;aLength=%x;aMemoryP=%x;this=%x", (TUint) aDevAddr, (TUint) aLength, (TUint) aMemoryP, (TUint) this);
 	ResetCommandStack();
 	FillCommandArgs(aDevAddr, aLength, aMemoryP, aLength);
 	iSessionID = ECIMReadBlock;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMREADBLOCK_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMWriteBlock(TMMCArgument aDevAddr, TUint32 aLength, TUint8* aMemoryP)
@@ -92,9 +108,11 @@ EXPORT_C void DMMCSession::SetupCIMWriteBlock(TMMCArgument aDevAddr, TUint32 aLe
  * @param aMemoryP Host source address
  */
 	{
+	OstTraceExt4(TRACE_FLOW, DMMCSESSION_SETUPCIMWRITEBLOCK_ENTRY, "DMMCSession::SetupCIMWriteBlock;aDevAddr=%x;aLength=%x;aMemoryP=%x;this=%x", (TUint) aDevAddr, (TUint) aLength, (TUint) aMemoryP, (TUint) this);
 	ResetCommandStack();
 	FillCommandArgs(aDevAddr, aLength, aMemoryP, aLength);
 	iSessionID = ECIMWriteBlock;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMWRITEBLOCK_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMReadMBlock(TMMCArgument aDevAddr, TUint32 aLength, TUint8* aMemoryP, TUint32 aBlkLen)
@@ -111,9 +129,11 @@ EXPORT_C void DMMCSession::SetupCIMReadMBlock(TMMCArgument aDevAddr, TUint32 aLe
  * @param aBlkLen Block length
  */
 	{
+	OstTraceExt5(TRACE_FLOW, DMMCSESSION_SETUPCIMREADMBLOCK_ENTRY, "DMMCSession::SetupCIMReadMBlock;aDevAddr=%x;aLength=%x;aMemoryP=%x;aBlkLen=%x;this=%x", (TUint) aDevAddr, (TUint) aLength, (TUint) aMemoryP, (TUint) aBlkLen,(TUint) this);
 	ResetCommandStack();
 	FillCommandArgs(aDevAddr, aLength, aMemoryP, aBlkLen);
 	iSessionID = ECIMReadMBlock;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMREADMBLOCK_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMWriteMBlock(TMMCArgument aDevAddr, TUint32 aLength, TUint8* aMemoryP, TUint32 aBlkLen)
@@ -130,9 +150,11 @@ EXPORT_C void DMMCSession::SetupCIMWriteMBlock(TMMCArgument aDevAddr, TUint32 aL
  * @param aBlkLen Block length
  */
 	{
+	OstTraceExt5(TRACE_FLOW, DMMCSESSION_SETUPCIMWRITEMBLOCK_ENTRY, "DMMCSession::SetupCIMWriteMBlock;aDevAddr=%x;aLength=%x;aMemoryP=%x;aBlkLen=%x;this=%x", (TUint) aDevAddr, (TUint) aLength, (TUint) aMemoryP, (TUint) aBlkLen,(TUint) this);
 	ResetCommandStack();
 	FillCommandArgs(aDevAddr, aLength, aMemoryP, aBlkLen);
 	iSessionID = ECIMWriteMBlock;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMWRITEMBLOCK_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMEraseSector(TMMCArgument aDevAddr, TUint32 aLength)
@@ -152,9 +174,11 @@ EXPORT_C void DMMCSession::SetupCIMEraseSector(TMMCArgument aDevAddr, TUint32 aL
  * @param aLength Total number of bytes to erase
  */
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSESSION_SETUPCIMERASESECTOR_ENTRY, "DMMCSession::SetupCIMEraseSector;aDevAddr=%x;aLength=%x;this=%x", (TUint) aDevAddr, (TUint) aLength, (TUint) this);
 	ResetCommandStack();
 	FillCommandArgs(aDevAddr, aLength, NULL, 0);
 	iSessionID = ECIMEraseSector;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMERASESECTOR_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMEraseGroup(TMMCArgument aDevAddr, TUint32 aLength)
@@ -173,9 +197,11 @@ EXPORT_C void DMMCSession::SetupCIMEraseGroup(TMMCArgument aDevAddr, TUint32 aLe
  * @param aLength Total number of bytes to erase
  */
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSESSION_SETUPCIMERASEGROUP_ENTRY, "DMMCSession::SetupCIMEraseGroup;aDevAddr=%x;aLength=%x;this=%x", (TUint) aDevAddr, (TUint) aLength, (TUint) this);
 	ResetCommandStack();
 	FillCommandArgs(aDevAddr, aLength, NULL, 0);
 	iSessionID = ECIMEraseGroup;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMERASEGROUP_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMReadIO(TUint8 aRegAddr, TUint32 aLength, TUint8* aMemoryP)
@@ -189,9 +215,11 @@ EXPORT_C void DMMCSession::SetupCIMReadIO(TUint8 aRegAddr, TUint32 aLength, TUin
  * @param aMemoryP Host destination address
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSESSION_SETUPCIMREADIO_ENTRY, this );
 	ResetCommandStack();
 	FillCommandArgs(aRegAddr, aLength, aMemoryP, 0);
 	iSessionID = ECIMReadIO;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMREADIO_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMWriteIO(TUint8 aRegAddr, TUint32 aLength, TUint8* aMemoryP)
@@ -205,9 +233,11 @@ EXPORT_C void DMMCSession::SetupCIMWriteIO(TUint8 aRegAddr, TUint32 aLength, TUi
  * @param aMemoryP Host source address
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSESSION_SETUPCIMWRITEIO_ENTRY, this );
 	ResetCommandStack();
 	FillCommandArgs(aRegAddr, aLength, aMemoryP, 0);
 	iSessionID = ECIMWriteIO;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMWRITEIO_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCIMLockUnlock(TUint32 aLength, TUint8* aMemoryP)
@@ -225,12 +255,14 @@ EXPORT_C void DMMCSession::SetupCIMLockUnlock(TUint32 aLength, TUint8* aMemoryP)
  * @param aMemoryP Host source address containing password data
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSESSION_SETUPCIMLOCKUNLOCK_ENTRY, this );
 	__KTRACE_OPT(KPBUS1, Kern::Printf("ms:slu%08x", aLength));
 
 	ResetCommandStack();
 	FillCommandDesc(ECmdLockUnlock);
 	FillCommandArgs(0, aLength, aMemoryP, aLength);
 	iSessionID = ECIMLockUnlock;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMLOCKUNLOCK_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupCommand(TMMCCommandEnum aCommand, TMMCArgument anArgument)
@@ -243,9 +275,11 @@ EXPORT_C void DMMCSession::SetupCommand(TMMCCommandEnum aCommand, TMMCArgument a
  * @param anArgument Associated argument
  */
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSESSION_SETUPCOMMAND_ENTRY, "DMMCSession::SetupCommand;aCommand=%d;anArgument=%x;this=%x", (TInt) aCommand, (TUint) anArgument, (TUint) this);
 	ResetCommandStack();
 	FillCommandDesc(aCommand, anArgument);
 	iSessionID = ECIMNakedSession;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCOMMAND_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupRSCommand(TMMCCommandEnum aCommand, TMMCArgument anArgument,
@@ -265,6 +299,8 @@ EXPORT_C void DMMCSession::SetupRSCommand(TMMCCommandEnum aCommand, TMMCArgument
  * @todo Complete the parameter descriptions
  */
 	{
+	OstTraceExt4( TRACE_FLOW, DMMCSESSION_SETUPRSCOMMAND_ENTRY1, "DMMCSession::SetupRSCommand;aCommand=%d;anArgument=%x;aResponseLength=%x;this=%x", (TInt) aCommand, (TUint) anArgument, (TUint) aResponseLength, (TUint) this );
+	OstTraceExt4( TRACE_FLOW, DMMCSESSION_SETUPRSCOMMAND_ENTRY2, "DMMCSession::SetupRSCommand;aCommandType=%d;aResponseType=%d;aCommandClass=%x;this=%x", (TInt) aCommandType, (TInt) aResponseType, (TUint) aCommandClass, (TUint) this );
 	ResetCommandStack();
 	FillCommandDesc(aCommand, anArgument);
 	TMMCCommandSpec& cmdSpec = Command().iSpec;
@@ -283,6 +319,7 @@ EXPORT_C void DMMCSession::SetupRSCommand(TMMCCommandEnum aCommand, TMMCArgument
 		cmdSpec.iCommandClass = aCommandClass;
 
 	iSessionID = ECIMNakedSession;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPRSCOMMAND_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::SetupDTCommand(TMMCCommandEnum aCommand, TMMCArgument anArgument,
@@ -305,6 +342,8 @@ EXPORT_C void DMMCSession::SetupDTCommand(TMMCCommandEnum aCommand, TMMCArgument
  * @todo Complete the parameter descriptions
  */
 	{
+	OstTraceExt5( TRACE_FLOW, DMMCSESSION_SETUPDTCOMMAND_ENTRY1, "DMMCSession::SetupDTCommand;aCommand=%d;anArgument=%x;aTotalLength=%x;aMemoryAddress=%x;this=%x", (TInt) aCommand, (TUint) anArgument, (TUint) aTotalLength, (TUint) aMemoryAddress, (TUint) this );
+	OstTraceExt5( TRACE_FLOW, DMMCSESSION_SETUPDTCOMMAND_ENTRY2, "DMMCSession::SetupDTCommand;aBlockLength=%x;aStopTransmission=%d;aDir=%d;aCommandClass=%x;this=%x", (TUint) aBlockLength, (TInt) aStopTransmission, (TInt) aDir, (TUint) aCommandClass , (TUint) this );
 	ResetCommandStack();
 	FillCommandDesc(aCommand);
 	FillCommandArgs(anArgument, aTotalLength, aMemoryAddress, aBlockLength);
@@ -328,6 +367,7 @@ EXPORT_C void DMMCSession::SetupDTCommand(TMMCCommandEnum aCommand, TMMCArgument
 		cmd.iSpec.iCommandClass = aCommandClass;
 
 	iSessionID = ECIMNakedSession;
+	OstTraceFunctionExit1( DMMCSESSION_SETUPDTCOMMAND_EXIT, this );
 	}
 
 void DMMCSession::SetupCIMControl(TInt aSessID)
@@ -335,6 +375,7 @@ void DMMCSession::SetupCIMControl(TInt aSessID)
 // find matching macro function for supplied session
 //
 	{
+	OstTraceFunctionEntryExt( DMMCSESSION_SETUPCIMCONTROL_ENTRY, this );
 	TMMCSMSTFunc f = GetMacro(aSessID);
 
 	if (f == 0)
@@ -352,6 +393,7 @@ void DMMCSession::SetupCIMControl(TInt aSessID)
 	ResetCommandStack();
 
 	iMachine.Setup(f, iStackP);
+	OstTraceFunctionExit1( DMMCSESSION_SETUPCIMCONTROL_EXIT, this );
 	}
 
 EXPORT_C TMMCSMSTFunc DMMCSession::GetMacro(TInt aSessNum) const
@@ -395,28 +437,40 @@ EXPORT_C TInt DMMCSession::Engage()
  * @return KErrNone if successful
  */
 	{
+	OstTraceFunctionEntry1( DMMCSESSION_ENGAGE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">ms:eng"));
 
 	if( iStackP == NULL )
-		return( KErrBadDriver );
+	    {
+		OstTraceFunctionExitExt( DMMCSESSION_ENGAGE_EXIT, this, KErrBadDriver );
+		return KErrBadDriver;
+	    }
 
 	if( iStackP->iLockingSessionP != NULL && iStackP->iLockingSessionP != this &&
 		(iStackP->EffectiveModes(iConfig) & KMMCModeEnqueIfLocked) == 0 )
-		return( KErrServerBusy );
+	    {
+		OstTraceFunctionExitExt( DUP1_DMMCSESSION_ENGAGE_EXIT, this, KErrServerBusy );
+		return KErrServerBusy;
+	    }
 
 	const TMediaState doorState=iStackP->MMCSocket()->iMediaChange->MediaState();
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:Eng ds = %x", doorState));
+	OstTrace1( TRACE_INTERNALS, DMMCSESSION_ENGAGE, "doorState = 0x%x", doorState);
 
 	if (doorState == EDoorOpen)
+	    {
+		OstTraceFunctionExitExt( DUP2_DMMCSESSION_ENGAGE_EXIT, this, KErrNotReady );
 		return KErrNotReady;
+	    }
 
 	SetupCIMControl(iSessionID);
 
 	iStackP->Add(this);
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf("<ms:eng"));
-	return(KErrNone);
+	OstTraceFunctionExitExt( DUP3_DMMCSESSION_ENGAGE_EXIT, this, KErrNone );
+	return KErrNone;
 	}
 
 // Command specification table for standard MMC commands (CMD0 - CMD63)
@@ -495,11 +549,13 @@ EXPORT_C void DMMCSession::FillCommandDesc()
  * Fills the current command descriptor with the default data according to MMC spec V2.1
  */
 	{
+	OstTraceFunctionEntry1( DMMCSESSION_FILLCOMMANDDESC1_ENTRY, this );
 	TMMCCommandDesc& cmd = Command();
 	cmd.iSpec = CommandTable[cmd.iCommand & KMMCCommandMask];
 
 	cmd.iFlags = 0;
 	cmd.iBytesDone = 0;
+	OstTraceFunctionExit1( DMMCSESSION_FILLCOMMANDDESC1_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::FillCommandDesc(TMMCCommandEnum aCommand)
@@ -509,9 +565,11 @@ EXPORT_C void DMMCSession::FillCommandDesc(TMMCCommandEnum aCommand)
  * @param aCommand Contains the command.
  */
 	{
+	OstTraceExt2(TRACE_FLOW, DMMCSESSION_FILLCOMMANDDESC2_ENTRY, "DMMCSession::FillCommandDesc;aCommand=%d;this=%x", (TInt) aCommand, (TUint) this);
 	Command().iCommand = aCommand;
 	Command().iArgument = 0;					// set stuff bits to zero
 	FillCommandDesc();
+	OstTraceFunctionExit1( DMMCSESSION_FILLCOMMANDDESC2_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::FillCommandDesc(TMMCCommandEnum aCommand, TMMCArgument anArgument)
@@ -522,10 +580,12 @@ EXPORT_C void DMMCSession::FillCommandDesc(TMMCCommandEnum aCommand, TMMCArgumen
  * @param anArgument Specifies the argument.
  */
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSESSION_FILLCOMMANDDESC3_ENTRY, "DMMCSession::FillCommandDesc;aCommand=%d;anArgument=%x;this=%x", (TInt) aCommand, (TUint) anArgument, (TUint) this);
 	TMMCCommandDesc& cmd = Command();
 	cmd.iCommand = aCommand;
 	FillCommandDesc();
 	cmd.iArgument = anArgument;
+	OstTraceFunctionExit1( DMMCSESSION_FILLCOMMANDDESC3_EXIT, this );
 	}
 
 EXPORT_C void DMMCSession::FillCommandArgs(TMMCArgument anArgument, TUint32 aLength, TUint8* aMemoryP,
@@ -540,6 +600,7 @@ EXPORT_C void DMMCSession::FillCommandArgs(TMMCArgument anArgument, TUint32 aLen
  * @param aBlkLen Block length
  */
 	{
+	OstTraceExt5(TRACE_FLOW, DMMCSESSION_FILLCOMMANDARGS_ENTRY ,"DMMCSession::FillCommandArgs;anArgument=%x;aLength=%x;aMemoryP=%x;aBlkLen=%x;this=%x", (TUint) anArgument, (TUint) aLength, (TUint) aMemoryP, (TUint) aBlkLen, (TUint) this);
 	TMMCCommandDesc& cmd = Command();
 
 	cmd.iArgument = anArgument;
@@ -547,6 +608,7 @@ EXPORT_C void DMMCSession::FillCommandArgs(TMMCArgument anArgument, TUint32 aLen
 	cmd.iDataMemoryP = aMemoryP;
 	cmd.iBlockLength = aBlkLen;
 	cmd.iFlags = 0;
+	OstTraceFunctionExit1( DMMCSESSION_FILLCOMMANDARGS_EXIT, this );
 	}
 
 const TMMCCommandSpec& DMMCSession::FindCommandSpec(const TMMCIdxCommandSpec aSpecs[], TInt aIdx)
@@ -557,9 +619,11 @@ const TMMCCommandSpec& DMMCSession::FindCommandSpec(const TMMCIdxCommandSpec aSp
  * @param aIdx The requested command.
  */
 	{
+	OstTraceFunctionEntry0( DMMCSESSION_FINDCOMMANDSPEC_ENTRY );	
 	TInt i = 0;
 	while (aSpecs[i].iIdx != aIdx)
 		++i;
+	OstTraceFunctionExit0( DMMCSESSION_FINDCOMMANDSPEC_EXIT );
 	return aSpecs[i].iSpec;
 	}
 
@@ -568,7 +632,9 @@ void DMMCSession::SynchBlock(TUint32 aFlag)
 // Blocks a session synchronously (within scheduler context)
 //
 	{
+	OstTraceFunctionEntryExt( DMMCSESSION_SYNCHBLOCK_ENTRY, this );
 	(void)__e32_atomic_ior_ord32(&iBlockOn, aFlag);
+	OstTraceFunctionExit1( DMMCSESSION_SYNCHBLOCK_EXIT, this );
 	}
 
 void DMMCSession::SynchUnBlock(TUint32 aFlag)
@@ -576,10 +642,15 @@ void DMMCSession::SynchUnBlock(TUint32 aFlag)
 // Unblocks a session synchronously (within scheduler context)
 //
 	{
+	OstTraceFunctionEntryExt( DMMCSESSION_SYNCHUNBLOCK_ENTRY, this );
 	if( (iBlockOn & aFlag) == 0 )
+	    {
+		OstTraceFunctionExit1( DMMCSESSION_SYNCHUNBLOCK_EXIT, this );
 		return;
+	    }
 
 	(void)__e32_atomic_and_ord32(&iBlockOn, ~aFlag);
+	OstTraceFunctionExit1( DUP1_DMMCSESSION_SYNCHUNBLOCK_EXIT, this );
 	}
 
 EXPORT_C TRCA DMMCSession::CardRCA()
@@ -598,26 +669,32 @@ EXPORT_C TRCA DMMCSession::CardRCA()
 #ifdef __EPOC32__
 void DMMCSession::ProgramTimerCallBack(TAny* aSessP)
 	{
+	OstTraceFunctionEntry0( DMMCSESSION_PROGRAMTIMERCALLBACK_ENTRY );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mss:pgtcb"));
 	
     static_cast<DMMCSession *>(aSessP)->iState |= KMMCSessStateDoDFC;
 	static_cast<DMMCSession *>(aSessP)->UnBlock(KMMCBlockOnPgmTimer, KMMCErrNone);
+	OstTraceFunctionExit0( DMMCSESSION_PROGRAMTIMERCALLBACK_EXIT );
 	}
 
 void DMMCSession::PollTimerCallBack(TAny* aSessP)
 	{
+	OstTraceFunctionEntry0( DMMCSESSION_POLLTIMERCALLBACK_ENTRY );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mss:ptcb"));
 
     static_cast<DMMCSession *>(aSessP)->iState |= KMMCSessStateDoDFC;
 	static_cast<DMMCSession *>(aSessP)->UnBlock(KMMCBlockOnPollTimer, KMMCErrNone);
+	OstTraceFunctionExit0( DMMCSESSION_POLLTIMERCALLBACK_EXIT );
 	}
 
 void DMMCSession::RetryTimerCallBack(TAny* aSessP)
 	{
+	OstTraceFunctionEntry0( DMMCSESSION_RETRYTIMERCALLBACK_ENTRY );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mss:rtcb"));
 
     static_cast<DMMCSession *>(aSessP)->iState |= KMMCSessStateDoDFC;
 	static_cast<DMMCSession *>(aSessP)->UnBlock(KMMCBlockOnRetryTimer, KMMCErrNone);
+	OstTraceFunctionExit0( DMMCSESSION_RETRYTIMERCALLBACK_EXIT );
 	}
 
 #endif	// #ifdef __EPOC32__
@@ -630,8 +707,10 @@ EXPORT_C TInt DMMCSession::EpocErrorCode() const
  * @return Standard Symbian OS error code
  */
 	{
+	OstTraceFunctionEntry1( DMMCSESSION_EPOCERRORCODE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mss:eee:%08x,%08x", MMCExitCode(), LastStatus().State() ));
-
+	OstTraceExt2( TRACE_INTERNALS, DMMCSESSION_EPOCERRORCODE, "MMCExitCode = 0x%08x; LastStatus State = 0x%08x", (TUint) MMCExitCode(), (TUint) LastStatus().State());
+	
 	struct errorTableEntry
 		{
 		TUint32 iMask;
@@ -670,7 +749,10 @@ EXPORT_C TInt DMMCSession::EpocErrorCode() const
 	TUint32 errCode = MMCExitCode();
 
 	if( errCode == 0 )
+	    {
+		OstTraceFunctionExitExt( DMMCSESSION_EPOCERRORCODE_EXIT, this, KErrNone );
 		return KErrNone;
+	    }
 
 	const errorTableEntry* ptr = &mmcTable[0];
 
@@ -679,12 +761,19 @@ EXPORT_C TInt DMMCSession::EpocErrorCode() const
 		ptr = &statusTable[0];
 
 		if( (errCode = LastStatus()) == 0 )
-			return( KErrUnknown );
+		    {
+			OstTraceFunctionExitExt( DUP1_DMMCSESSION_EPOCERRORCODE_EXIT, this, KErrUnknown );
+			return KErrUnknown;
+		    }
 		}
 
 	for( ;; )
 		if( (errCode & ptr->iMask) != 0 )
-			return( ptr->iErrorCode );
+		    {
+		    TInt ret = ptr->iErrorCode; 
+			OstTraceFunctionExitExt( DUP2_DMMCSESSION_EPOCERRORCODE_EXIT, this, ret );
+			return ret;
+		    }
 		else
 			ptr++;
 	}

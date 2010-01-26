@@ -63,6 +63,12 @@ TInt DMemoryMapping::Construct(TMemoryAttributes aAttributes, TMappingCreateFlag
 DMemoryMapping::~DMemoryMapping()
 	{
 	TRACE(("DMemoryMapping[0x%08x]::~DMemoryMapping()",this));
+	Destruct();
+	}
+
+
+void DMemoryMapping::Destruct()
+	{
 	__NK_ASSERT_DEBUG(!IsAttached());
 
 	// remove from address space...
@@ -1258,6 +1264,74 @@ TPte* DFineMapping::FindPageTable(TLinAddr aLinAddr, TUint aMemoryIndex)
 	}
 
 
+//
+// DKernelPinMapping
+//
+DKernelPinMapping::DKernelPinMapping()
+	// : iReservePages(0)	// Allocated on the kernel heap so will already be 0.
+	{
+	Flags() |= EPhysicalPinningMapping | EPinned;
+	}
+
+
+TInt DKernelPinMapping::Construct(TUint aReserveMaxSize)
+	{
+	TInt r = KErrNone;
+	if (aReserveMaxSize)
+		{
+		// Should not call Construct() on a mapping that has already reserved resources.
+		__NK_ASSERT_DEBUG(!iReservePages);
+		r = DFineMapping::Construct(EMemoryAttributeStandard, 
+									EMappingCreateReserveAllResources, 
+									KKernelOsAsid, 
+									0, 
+									aReserveMaxSize, 
+									0);
+		if (r == KErrNone)
+			iReservePages = aReserveMaxSize >> KPageShift;
+		}
+	return r;
+	}
+
+
+TInt DKernelPinMapping::MapAndPin(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TMappingPermissions aPermissions)
+	{
+	if (IsAttached())
+		{
+		return KErrInUse;
+		}
+
+	if (!iReservePages)
+		{
+		TInt r = DFineMapping::Construct(	EMemoryAttributeStandard, 
+											EMappingCreateDefault, 
+											KKernelOsAsid, 
+											0, 
+											aCount, 
+											0);
+		if (r != KErrNone)
+			return r;
+		}
+	// Map the memory, this will pin it first then map it.
+	TInt r = DFineMapping::Map(aMemory, aIndex, aCount, aPermissions);
+
+	if (r != KErrNone && !iReservePages)
+		{// Reset this mapping object so it can be reused but has freed its address space.
+		DMemoryMapping::Destruct();
+		}
+	return r;
+	}
+
+
+void DKernelPinMapping::UnmapAndUnpin()
+	{
+	DFineMapping::Unmap();
+	if (!iReservePages)
+		{// Reset this mapping object so it can be reused but has freed its address space.
+		DMemoryMapping::Destruct();
+		}
+	}
+
 
 //
 // DPhysicalPinMapping
@@ -1266,41 +1340,6 @@ TPte* DFineMapping::FindPageTable(TLinAddr aLinAddr, TUint aMemoryIndex)
 DPhysicalPinMapping::DPhysicalPinMapping()
 	: DMemoryMappingBase(EPinned|EPhysicalPinningMapping)
 	{
-	}
-
-
-TInt DPhysicalPinMapping::PhysAddr(TUint aIndex, TUint aCount, TPhysAddr& aPhysicalAddress, TPhysAddr* aPhysicalPageList)
-	{
-	__NK_ASSERT_ALWAYS(IsAttached());
-
-	__NK_ASSERT_ALWAYS(TUint(aIndex+aCount)>aIndex && TUint(aIndex+aCount)<=iSizeInPages);
-	aIndex += iStartIndex;
-
-	DCoarseMemory* memory = (DCoarseMemory*)Memory(true); // safe because we should only be called whilst memory is Pinned
-	TInt r = memory->PhysAddr(aIndex,aCount,aPhysicalAddress,aPhysicalPageList);
-	if(r!=KErrNone)
-		return r;
-
-	if(memory->IsDemandPaged() && !IsReadOnly())
-		{
-		// the memory is demand paged and writeable so we need to mark it as dirty
-		// as we have to assume that the memory will be modified via the physical
-		// addresses we return...
-		MmuLock::Lock();
-		TPhysAddr* pages = aPhysicalPageList;
-		TUint count = aCount;
-		while(count)
-			{
-			SPageInfo* pi = SPageInfo::FromPhysAddr(*(pages++));
-			pi->SetDirty();
-			if((count&(KMaxPageInfoUpdatesInOneGo-1))==0)
-				MmuLock::Flash(); // flash lock every KMaxPageInfoUpdatesInOneGo iterations of the loop
-			--count;
-			}
-		MmuLock::Unlock();
-		}
-
-	return KErrNone;
 	}
 
 
@@ -1711,6 +1750,41 @@ void DMemoryMappingBase::UnlinkFromMemory(TMappingList& aMappingList)
 		// then queue cleanup of decommitted pages...
 		memory->iManager->QueueCleanup(memory,DMemoryManager::ECleanupDecommitted);
 		}
+	}
+
+
+TInt DMemoryMappingBase::PhysAddr(TUint aIndex, TUint aCount, TPhysAddr& aPhysicalAddress, TPhysAddr* aPhysicalPageList)
+	{
+	__NK_ASSERT_ALWAYS(IsAttached() && IsPhysicalPinning());
+
+	__NK_ASSERT_ALWAYS(TUint(aIndex+aCount)>aIndex && TUint(aIndex+aCount)<=iSizeInPages);
+	aIndex += iStartIndex;
+
+	DCoarseMemory* memory = (DCoarseMemory*)Memory(true); // safe because we should only be called whilst memory is Pinned
+	TInt r = memory->PhysAddr(aIndex,aCount,aPhysicalAddress,aPhysicalPageList);
+	if(r!=KErrNone)
+		return r;
+
+	if(memory->IsDemandPaged() && !IsReadOnly())
+		{
+		// the memory is demand paged and writeable so we need to mark it as dirty
+		// as we have to assume that the memory will be modified via the physical
+		// addresses we return...
+		MmuLock::Lock();
+		TPhysAddr* pages = aPhysicalPageList;
+		TUint count = aCount;
+		while(count)
+			{
+			SPageInfo* pi = SPageInfo::FromPhysAddr(*(pages++));
+			pi->SetDirty();
+			if((count&(KMaxPageInfoUpdatesInOneGo-1))==0)
+				MmuLock::Flash(); // flash lock every KMaxPageInfoUpdatesInOneGo iterations of the loop
+			--count;
+			}
+		MmuLock::Unlock();
+		}
+
+	return KErrNone;
 	}
 
 

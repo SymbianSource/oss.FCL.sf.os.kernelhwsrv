@@ -1083,4 +1083,8 @@ EXPORTS
 	_ZN9TRawEvent9SetRepeatENS_5TTypeEii @ 1082 NONAME
 	_ZNK9TRawEvent7RepeatsEv @ 1083 NONAME
 	_ZN4Kern17MakeHandleAndOpenEP7DThreadP7DObject10TOwnerType @ 1084 NONAME
+	_ZN4Kern15MapAndPinMemoryEP16TKernelMapObjectP7DThreadmjjRmPm @ 1085 NONAME
+	_ZN4Kern19UnmapAndUnpinMemoryEP16TKernelMapObject @ 1086 NONAME
+	_ZN4Kern21CreateKernelMapObjectERP16TKernelMapObjectj @ 1087 NONAME
+	_ZN4Kern22DestroyKernelMapObjectERP16TKernelMapObject @ 1088 NONAME
 

@@ -14,6 +14,9 @@
 // Hardware Configuration Respoitory Test Application
 //
 
+#ifndef D_HCRSIM_TESTDATA_H
+#define D_HCRSIM_TESTDATA_H
+
 const TText8* TestString1 = reinterpret_cast<const TText8*>("_");
 const TText8* TestString64a = reinterpret_cast<const TText8*>("Two peanuts walked into a bar, and ... one was a-salted... !!! #");
 const TText8* TestString64b = reinterpret_cast<const TText8*>("A termite walks into a bar and says, 'Is the bar tender here?' #");
@@ -181,7 +184,17 @@ const TInt32 TestInt32Array[] =
 	0xd665d40b, 0xd88e2f37, 0x4a54a266, 0xbb462ef0,
 	};
 
-const TCategoryUid KTestCategories[] = {1, 2, 1000, 0xffffffff, 0x10000001, 0x10000002, 0x10000003, 0x10000004};
+const TCategoryUid KTestCategories[] = {
+	1,					// 0
+	2,					// 1
+	1000,				// 2
+	0xfffffff0,			// 3
+	0x10000001,			// 4
+	0x10000002,			// 5
+	0x10000003,			// 6
+	0x10000004			// 7
+	};
+
 const TInt64 KTestI64One = I64LIT(-1);
 const TInt64 KTestI64Two = KMinTInt64;
 const TInt64 KTestI64Three = KMaxTInt64;
@@ -245,7 +258,7 @@ SSettingC SettingsListCorrupt2[] = {
 	{{{ KTestCategories[0], 1}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 	{{{ KTestCategories[0], 2}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 	};
-#ifndef __KERNEL_MODE__
+#if !defined(__KERNEL_MODE__) || defined(HCRTEST_USERSIDE_INTERFACE)
 const TUint32 KTestInvalidCategory = 1234;
 const TUint32 KTestInvalidSettingId = 5678;
 
@@ -657,4 +670,5 @@ SSettingC SettingsList7[] = {
 	{{{ KTestCategories[5], 0x00d0}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
 	{{{ KTestCategories[5], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
 	};
-#endif // __KERNEL_MODE__
+#endif // !defined(__KERNEL_MODE__) || defined(HCRTEST_USERSIDE_INTERFACE)
+#endif // !D_HCRSIM_TESTDATA_H

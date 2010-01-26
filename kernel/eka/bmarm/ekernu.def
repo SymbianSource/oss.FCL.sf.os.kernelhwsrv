@@ -1033,4 +1033,8 @@ EXPORTS
 	Repeats__C9TRawEvent @ 1032 NONAME R3UNUSED ; TRawEvent::Repeats(void) const
 	SetRepeat__9TRawEventQ29TRawEvent5TTypeii @ 1033 NONAME ; TRawEvent::SetRepeat(TRawEvent::TType, int, int)
 	MakeHandleAndOpen__4KernP7DThreadP7DObject10TOwnerType @ 1034 NONAME R3UNUSED ; Kern::MakeHandleAndOpen(DThread *, DObject *, TOwnerType)
+	CreateKernelMapObject__4KernRP16TKernelMapObjectUi @ 1035 NONAME R3UNUSED ; Kern::CreateKernelMapObject(TKernelMapObject *&, unsigned int)
+	DestroyKernelMapObject__4KernRP16TKernelMapObject @ 1036 NONAME R3UNUSED ; Kern::DestroyKernelMapObject(TKernelMapObject *&)
+	MapAndPinMemory__4KernP16TKernelMapObjectP7DThreadUlUiUiRUlPUl @ 1037 NONAME ; Kern::MapAndPinMemory(TKernelMapObject *, DThread *, unsigned long, unsigned int, unsigned int, unsigned long &, unsigned long *)
+	UnmapAndUnpinMemory__4KernP16TKernelMapObject @ 1038 NONAME R3UNUSED ; Kern::UnmapAndUnpinMemory(TKernelMapObject *)
 

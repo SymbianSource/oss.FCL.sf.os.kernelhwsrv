@@ -17,12 +17,11 @@
 #include "d_hcrsim.h"
 #include <kernel/kernel.h>
 #include <plat_priv.h>
-#ifndef HCRTEST_USERSIDE_INTERFACE
 #include "hcr_debug.h"
-#include "hcr_hai.h"
-#include "hcr_pil.h"
-#endif // HCRTEST_USERSIDE_INTERFACE
 #include "hcr_uids.h"
+#ifdef HCRTEST_USERSIDE_INTERFACE
+#include "d_hcrsim_testdata.h"
+#endif // HCRTEST_USERSIDE_INTERFACE
 
 #define TEST(a)				CheckPoint(a, __LINE__)
 #define TEST_KERRNONE(a)	CheckPointError(a, __LINE__)
@@ -107,10 +106,40 @@ void CheckPointError(TInt aErrorCode, TInt aLine)
 		}
 	}
 
+void HasRepositoryInSmr(TBool& aHasSmr, TBool& aHasSmrHcr)
+	{
+	aHasSmr = EFalse;
+	aHasSmrHcr = EFalse;
+
+	// Note: the SMR feature by which we obtain the address of the override
+	// repository is only supported in the ARM bootstrap, not X86 or WINS so 
+	// this test code needs conditional compilation.
+#if !defined(__WINS__) && !defined(__X86__)
+	const TSuperPage& superpage = Kern::SuperPage();
+	TUint32* smrib = (TUint32*) superpage.iSmrData;
+	SSmrBank* smrbank = (SSmrBank*) smrib;
+	if((smrib != NULL) && (smrib != (TUint32*)KSuperPageAddressFieldUndefined))
+		{
+		aHasSmr = ETrue;
+		while (smrbank->iBase)
+			{
+			if (smrbank->iPayloadUID == KHCRUID_SMRPayloadUID)
+				{
+				// We have a HCR repository - assuming it is the test one...
+				aHasSmrHcr = ETrue;
+				break;
+				}
+			++smrbank;
+			}
+		}
+#endif // !__WINS__ && !__X86__
+	}
+
 #ifdef HCRTEST_USERSIDE_INTERFACE
 #define KEXT_TESTKERRNONE(_r)						\
 	{												\
-	if ((_r) && !TestKernExtensionTestLine)			\
+	TInt _s = _r;									\
+	if ((_s) && !TestKernExtensionTestLine)			\
 		{											\
 		TestKernExtensionTestError = (_r);			\
 		TestKernExtensionTestLine = __LINE__;		\
@@ -128,18 +157,101 @@ void CheckPointError(TInt aErrorCode, TInt aLine)
 void KextInitTests()
 	{
 	TInt r;
-	// Get last Setting in compiled repository
+	// Get last Setting in Reference Compiled Repository
 	TUint32 value1;
-	HCR::TSettingId setting1(0xFFFFFFFF, 0xFFFFFFFF);
-	r = HCR::GetUInt(setting1, value1);
+	TSettingId setting1(0xFFFFFFFF, 0xFFFFFFFF);
+	r = GetUInt(setting1, value1);
 	KEXT_TESTKERRNONE(r);
 	KEXT_TEST(value1==0x4C415354); // 'L', 'A', 'S', 'T'
 
-	// Get Setting in file repository
-	TUint32 value2;
-	HCR::TSettingId setting2(2, 2);
-	r = HCR::GetUInt(setting2, value2);
-	KEXT_TESTKERRNONE(r);
+	// Determine what test repositories the HCR has loaded
+	// Make sure we have the file repository
+	const TRomHeader& romheader = Epoc::RomHeader();
+	KEXT_TEST(romheader.iHcrFileAddress != NULL); // Assuming this is the test repository (hcr.dat)
+	// Find the nand repository
+	TBool smr;
+	TBool smrrep;
+	SSettingC* repos = NULL;
+	TInt nosettings = 0;
+	HasRepositoryInSmr(smr, smrrep);
+	if (smrrep)
+		{
+		repos = SettingsList6; // File+Nand
+		nosettings = sizeof(SettingsList6) / sizeof(SSettingC);
+		}
+	else if (!smr)
+		{
+		repos = SettingsList7; // File Only
+		nosettings = sizeof(SettingsList7) / sizeof(SSettingC);
+		}
+	else
+		{
+		// SMR partitions found but no HCR repository
+		KEXT_TEST(0);
+		return;
+		}
+
+	// Simple word setting Get
+	for (SSettingC* setting = repos; setting < repos + nosettings; setting++)
+		{
+// Note: these macros are irrelevant here, it is just so the two test kernel
+// extensions do something different
+#ifdef HCRTEST_CLIENT_THREAD
+		if (setting->iName.iType == ETypeInt32)
+			{
+			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+			TInt32 val;
+			r = GetInt(id, val);
+			KEXT_TESTKERRNONE(r);
+			KEXT_TEST(setting->iValue.iLit.iInt32 == val);
+			}
+#else // !HCRTEST_CLIENT_THREAD
+		if (setting->iName.iType == ETypeUInt32)
+			{
+			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+			TUint32 val;
+			r = GetUInt(id, val);
+			KEXT_TESTKERRNONE(r);
+			KEXT_TEST(setting->iValue.iLit.iUInt32 == val);
+			}
+#endif // !HCRTEST_CLIENT_THREAD
+		}
+
+	// Large setting Get
+	for (SSettingC* setting = repos; setting < repos + nosettings; setting++)
+		{
+// Note: these macros are irrelevant here, it is just so the two test kernel
+// extensions do something different
+#ifdef HCRTEST_CLIENT_THREAD
+		if (setting->iName.iType == ETypeBinData)
+			{
+			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+			TBuf8<KMaxSettingLength> val;
+			TPtrC8 aval(setting->iValue.iPtr.iData, setting->iName.iLen);
+			r = GetData(id, val);
+			KEXT_TESTKERRNONE(r);
+			KEXT_TEST(0 == val.Compare(aval));
+			}
+#else // !HCRTEST_CLIENT_THREAD
+		if (setting->iName.iType == ETypeText8)
+			{
+			TSettingId id(setting->iName.iId.iCat, setting->iName.iId.iKey);
+			TBuf8<KMaxSettingLength> val;
+			TPtrC8 aval(setting->iValue.iPtr.iString8, setting->iName.iLen);
+			r = GetString(id, val);
+			KEXT_TESTKERRNONE(r);
+			KEXT_TEST(0 == val.Compare(aval));
+			}
+#endif // !HCRTEST_CLIENT_THREAD
+		}
+
+	// Some other API calls
+	TUint i;
+	for (i = 0; i < sizeof(KTestCategories) / sizeof(TCategoryUid); i++)
+		{
+		r = FindNumSettingsInCategory(KTestCategories[i]);
+		KEXT_TEST(r >= 0);
+		}
 	}
 
 DECLARE_EXTENSION_WITH_PRIORITY(KExtensionMaximumPriority)
@@ -266,16 +378,16 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 		{
 		case RHcrSimTestChannel::EHcrGetLinAddr:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TLinAddr value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetLinAddr(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetLinAddr(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrFindNumSettingsInCategory:
 			{
-			r = HCR::FindNumSettingsInCategory((HCR::TCategoryUid) a1);
+			r = FindNumSettingsInCategory((TCategoryUid) a1);
 			break;
 			}
 		case RHcrSimTestChannel::EHcrFindSettingsCategory:
@@ -284,82 +396,88 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TAny* args[6];
 			TEST_MEMGET(a1, args, sizeof(args));
 			TInt aMaxNum = (TInt) args[1];
-			// Allocate temporary memory
-		
-			HCR::TElementId* ids;
-			HCR::TSettingType* types = NULL;
+				
+			TElementId* ids = NULL;
+			TSettingType* types = NULL;
 			TUint16* lens = NULL;
-			TEST_ENTERCS();
-			ids = (HCR::TElementId*) Kern::Alloc(aMaxNum * sizeof(HCR::TElementId));
-			TEST_LEAVECS();
-			if (ids == NULL)
-				{
-				r = KErrNoMemory;
-				}
+			if(args[3])
+			    {
+			    TEST_ENTERCS();
+			    ids = (TElementId*) Kern::Alloc(_ABS(aMaxNum) * sizeof(TElementId));
+			    TEST_LEAVECS();
+			    }
+			
+			if (args[4]) // aTypes
+			    {
+			    TEST_ENTERCS();
+			    types = (TSettingType*) Kern::Alloc(_ABS(aMaxNum) * sizeof(TSettingType));
+			    TEST_LEAVECS();
+			    }
+			if (types == NULL && args[4])
+			    {
+			    r = KErrNoMemory;
+			    }
 			else
-				{
-				if (args[4]) // aTypes
-					{
-					TEST_ENTERCS();
-					types = (HCR::TSettingType*) Kern::Alloc(aMaxNum * sizeof(HCR::TSettingType));
-					TEST_LEAVECS();
-					}
-				if (types == NULL && args[4])
-					{
-					r = KErrNoMemory;
-					}
-				else
-					{
-					if (args[5]) // aLens
-						{
-						TEST_ENTERCS();
-						lens = (TUint16*) Kern::Alloc(aMaxNum * sizeof(TUint16));
-						TEST_LEAVECS();
-						}
-					if (lens == NULL && args[5])
-						{
-						r = KErrNoMemory;
-						}
-					else
-						{
-						// Actual API call
-						r = HCR::FindSettings((HCR::TCategoryUid) args[0],
-							aMaxNum, ids, types, lens);
-						
-						// Send values back to client
-						if (r >= 0)
-							{
-							TEST_MEMPUT(args[2], &r, sizeof(TUint32));
-							TEST_MEMPUT(args[3], ids, aMaxNum * sizeof(HCR::TElementId));
-							if (args[4])
-								{
-								TEST_MEMPUT(args[4], types, aMaxNum * sizeof(HCR::TSettingType));
-								}
-							if (args[5])
-								{
-								TEST_MEMPUT(args[5], lens, aMaxNum * sizeof(TUint16));
-								}
-							}
-						if (args[5])
-							{
-							TEST_ENTERCS();
-							Kern::Free(lens);
-							TEST_LEAVECS();
-							}
-						}
-					if (args[4])
-						{
-						TEST_ENTERCS();
-						Kern::Free(types);
-						TEST_LEAVECS();
-						}
-					}
-				TEST_ENTERCS();
-				Kern::Free(ids);
-				TEST_LEAVECS();
-				}
+			    {
+			    if (args[5]) // aLens
+			        {
+			        TEST_ENTERCS();
+			        lens = (TUint16*) Kern::Alloc(_ABS(aMaxNum) * sizeof(TUint16));
+			        TEST_LEAVECS();
+			        }
+			    if (lens == NULL && args[5])
+			        {
+			        r = KErrNoMemory;
+			        }
+			    else
+			        {
+			        // Actual API call
+			        r = FindSettings((TCategoryUid) args[0],
+			                aMaxNum, ids, types, lens);
+
+			        // Send values back to client
+			        if (r >= 0)
+			            {
+			            if(args[3])
+			                {
+			                TEST_MEMPUT(args[3], ids, _ABS(aMaxNum) * sizeof(TElementId));
+
+			                if (args[4])
+			                    {
+			                    TEST_MEMPUT(args[4], types, _ABS(aMaxNum) * sizeof(TSettingType));
+			                    }
+			                if (args[5])
+			                    {
+			                    TEST_MEMPUT(args[5], lens, _ABS(aMaxNum) * sizeof(TUint16));
+			                    }
+			                }
+			            }
+
+			        if (args[5])
+			            {
+			            TEST_ENTERCS();
+			            Kern::Free(lens);
+			            TEST_LEAVECS();
+			            }
+			        }
+			    if (args[4])
+			        {
+			        TEST_ENTERCS();
+			        Kern::Free(types);
+			        TEST_LEAVECS();
+			        }
+			    }
+			
+			if(args[3])
+			    {
+			    TEST_ENTERCS();
+			    Kern::Free(ids);
+			    TEST_LEAVECS();
+			    }
+
 			break;
 			}
+			
 		case RHcrSimTestChannel::EHcrFindSettingsPattern:
 			{
 			// Get list of pointers
@@ -367,80 +485,88 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TEST_MEMGET(a1, args, sizeof(args));
 			TInt aMaxNum = (TInt) args[1];
 			// Allocate temporary memory
-			TUint32 numfound;
-			HCR::TElementId* ids;
-			HCR::TSettingType* types = NULL;
+			
+			TElementId* ids = NULL;
+			TSettingType* types = NULL;
 			TUint16* lens = NULL;
-			TEST_ENTERCS();
-			ids = (HCR::TElementId*) Kern::Alloc(aMaxNum * sizeof(HCR::TElementId));
-			TEST_LEAVECS();
-			if (ids == NULL)
-				{
-				r = KErrNoMemory;
-				}
+						
+			if(args[5])
+			    {
+			    TEST_ENTERCS();
+			    ids = (TElementId*) Kern::Alloc(_ABS(aMaxNum) * sizeof(TElementId));
+			    if(!ids)
+			        return KErrNoMemory;
+			    TEST_LEAVECS();    
+			    }
+
+			if (args[6]) // aTypes
+			    {
+			    TEST_ENTERCS();
+			    types = (TSettingType*) Kern::Alloc(_ABS(aMaxNum) * sizeof(TSettingType));
+			    TEST_LEAVECS();
+			    }
+			
+			if (types == NULL && args[6])
+			    {
+			    r = KErrNoMemory;
+			    }
 			else
-				{
-				if (args[6]) // aTypes
-					{
-					TEST_ENTERCS();
-					types = (HCR::TSettingType*) Kern::Alloc(aMaxNum * sizeof(HCR::TSettingType));
-					TEST_LEAVECS();
-					}
-				if (types == NULL && args[6])
-					{
-					r = KErrNoMemory;
-					}
-				else
-					{
-					if (args[7]) // aLens
-						{
-						TEST_ENTERCS();
-						lens = (TUint16*) Kern::Alloc(aMaxNum * sizeof(TUint16));
-						TEST_LEAVECS();
-						}
-					if (lens == NULL && args[7])
-						{
-						r = KErrNoMemory;
-						}
-					else
-						{
-						// Actual API call
-						r = HCR::FindSettings((HCR::TCategoryUid) args[0],
-							aMaxNum, (TUint32) args[2], (TUint32) args[3],
-							ids, types, lens);
-				
-						// Send values back to client
-						if (r > 0)
-							{
-							TEST_MEMPUT(args[4], &numfound, sizeof(TUint32));
-							TEST_MEMPUT(args[5], ids, aMaxNum * sizeof(HCR::TElementId));
-							if (args[6])
-								{
-								TEST_MEMPUT(args[6], types, aMaxNum * sizeof(HCR::TSettingType));
-								}
-							if (args[7])
-								{
-								TEST_MEMPUT(args[7], lens, aMaxNum * sizeof(TUint16));
-								}
-							}
-						if (args[7])
-							{
-							TEST_ENTERCS();
-							Kern::Free(lens);
-							TEST_LEAVECS();
-							}
-						}
-					if (args[6])
-						{
-						TEST_ENTERCS();
-						Kern::Free(types);
-						TEST_LEAVECS();
-						}
-					}
-				TEST_ENTERCS();
-				Kern::Free(ids);
-				TEST_LEAVECS();
-				}
+			    {
+			    if (args[7]) // aLens
+			        {
+			        TEST_ENTERCS();
+			        lens = (TUint16*) Kern::Alloc(_ABS(aMaxNum) * sizeof(TUint16));
+			        TEST_LEAVECS();
+			        }
+			    if (lens == NULL && args[7])
+			        {
+			        r = KErrNoMemory;
+			        }
+			    else
+			        {
+			       
+			        // Actual API call
+			        r = FindSettings((TCategoryUid) args[0],
+			                aMaxNum, (TUint32) args[2], (TUint32) args[3],
+			                ids, types, lens);
+			       
+			        // Send values back to client
+			        if (r > 0)
+			            {
+
+			            TEST_MEMPUT(args[5], ids, _ABS(aMaxNum) * sizeof(TElementId));
+			            if (args[6])
+			                {
+			                TEST_MEMPUT(args[6], types, _ABS(aMaxNum) * sizeof(TSettingType));
+			                }
+			            if (args[7])
+			                {
+			                TEST_MEMPUT(args[7], lens, _ABS(aMaxNum) * sizeof(TUint16));
+			                }
+			            }
+			        if (args[7])
+			            {
+			            TEST_ENTERCS();
+			            Kern::Free(lens);
+			            TEST_LEAVECS();
+			            }
+			        }
+			    if (args[6])
+			        {
+			        TEST_ENTERCS();
+			        Kern::Free(types);
+			        TEST_LEAVECS();
+			        }
+			    }
+			
+			if(args[5])
+			    {
+			    TEST_ENTERCS();
+			    Kern::Free(ids);
+			    TEST_LEAVECS();
+			    }
+			
+			
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetTypeAndSize:
@@ -448,12 +574,12 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			// Get list of pointers
 			TAny* args[3];
 			TEST_MEMGET(a1, args, sizeof(args));
-			HCR::TSettingId id;
-			TEST_MEMGET(args[0], &id, sizeof(HCR::TSettingId));
-			HCR::TSettingType type;
+			TSettingId id;
+			TEST_MEMGET(args[0], &id, sizeof(TSettingId));
+			TSettingType type;
 			TUint16 len;
-			r = HCR::GetTypeAndSize(id, type, len);
-			TEST_MEMPUT(args[1], &type, sizeof(HCR::TSettingType));
+			r = GetTypeAndSize(id, type, len);
+			TEST_MEMPUT(args[1], &type, sizeof(TSettingType));
 			TEST_MEMPUT(args[2], &len, sizeof(TUint16));
 			break;
 			}
@@ -464,16 +590,16 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TEST_MEMGET(a1, args, sizeof(args));
 			TInt aNum = (TInt) args[0];
 			// Allocate temporary memory
-			HCR::SSettingId* ids;
-			HCR::SSettingId* inIds = (HCR::SSettingId*)args[1];
+			SSettingId* ids;
+			SSettingId* inIds = (SSettingId*)args[1];
 			TInt32* vals;
-			HCR::TSettingType* types= NULL;
+			TSettingType* types= NULL;
 			TInt* errors = NULL;
 			
 			TEST_ENTERCS();
 			if(inIds)
 			    {
-			    ids = (HCR::SSettingId*) Kern::Alloc((aNum>=0?aNum:-aNum) * sizeof(HCR::SSettingId));
+			    ids = (SSettingId*) Kern::Alloc((aNum>=0?aNum:-aNum) * sizeof(SSettingId));
 			    //Read data from the user side
 			    if (ids == NULL)
 			        {
@@ -481,7 +607,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			        break;
 			        }
 
-			    TEST_MEMGET(inIds, ids, (aNum>=0?aNum:-aNum) * sizeof(HCR::SSettingId));
+			    TEST_MEMGET(inIds, ids, (aNum>=0?aNum:-aNum) * sizeof(SSettingId));
 			    }
 			else
 			    ids = NULL;
@@ -504,8 +630,8 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			if (args[3]) // aTypes
 			    {
 			    TEST_ENTERCS();
-			    types = (HCR::TSettingType*) Kern::Alloc((aNum>=0?aNum:-aNum) * 
-                            sizeof(HCR::TSettingType));
+			    types = (TSettingType*) Kern::Alloc((aNum>=0?aNum:-aNum) * 
+                            sizeof(TSettingType));
 			    TEST_LEAVECS();
 			    }
 			if (types == NULL && args[3])
@@ -527,15 +653,15 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			    else
 			        {
 			        // Actual API call
-			        r = HCR::GetWordSettings(aNum, ids, vals, types, errors);
+			        r = GetWordSettings(aNum, ids, vals, types, errors);
 			        // Send values back to client
 			        if (r >= 0)
 			            {
-			            TEST_MEMPUT(args[1], ids, aNum * sizeof(HCR::SSettingId));
+			            TEST_MEMPUT(args[1], ids, aNum * sizeof(SSettingId));
 			            TEST_MEMPUT(args[2], vals, aNum * sizeof(TInt32));
 			            if (args[3])
 			                {
-			                TEST_MEMPUT(args[3], types,(aNum>=0?aNum:-aNum) * sizeof(HCR::TSettingType));
+			                TEST_MEMPUT(args[3], types,(aNum>=0?aNum:-aNum) * sizeof(TSettingType));
 			                }
 			            if (args[4])
 			                {
@@ -571,46 +697,46 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			}
 		case RHcrSimTestChannel::EHcrGetInt64:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TInt64 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetInt32:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TInt32 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetInt16:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TInt16 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetInt8:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TInt8 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetBool:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TBool value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetBool(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetBool(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
@@ -621,8 +747,8 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TEST_MEMGET(a1, args, sizeof(args));
 			TUint maxlen = (TUint) args[1];
 			// Retrieve structures from client
-			HCR::TSettingId id;
-			TEST_MEMGET(args[0], &id, sizeof(HCR::TSettingId));
+			TSettingId id;
+			TEST_MEMGET(args[0], &id, sizeof(TSettingId));
 			// Allocate temporary memory
 			TUint16 len;
 			TUint8* value;
@@ -636,7 +762,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			else
 				{
 				// Actual API call
-				r = HCR::GetData(id, (TUint16) maxlen,
+				r = GetData(id, (TUint16) maxlen,
 							value, len);
 				// Send value back to client
 				if (!r)
@@ -652,8 +778,8 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			}
 		case RHcrSimTestChannel::EHcrGetDataDes:
 			{
-			HCR::TSettingId setting;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
+			TSettingId setting;
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
 			TInt userdes[sizeof(TDes8) / sizeof(TInt) + 1];
 			TEST_MEMGET(a2, userdes, sizeof(TDes8));
 			HBuf8* value;
@@ -666,7 +792,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 				}
 			else
 				{
-				r = HCR::GetData(setting, *value);
+				r = GetData(setting, *value);
 				TEST_DESPUT(a2, *value);
 				TEST_ENTERCS();
 				delete value;
@@ -676,37 +802,37 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			}
 		case RHcrSimTestChannel::EHcrGetUInt64:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TUint64 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetUInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetUInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetUInt32:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TUint32 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetUInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetUInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetUInt16:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TUint16 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetUInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetUInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
 		case RHcrSimTestChannel::EHcrGetUInt8:
 			{
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TUint8 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
-			r = HCR::GetUInt(setting, value);
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
+			r = GetUInt(setting, value);
 			TEST_MEMPUT(a2, &value, sizeof(value));
 			break;
 			}
@@ -717,8 +843,8 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TEST_MEMGET(a1, args, sizeof(args));
 			TUint maxlen = (TUint) args[1];
 			// Retrieve structures from client
-			HCR::TSettingId id;
-			TEST_MEMGET(args[0], &id, sizeof(HCR::TSettingId));
+			TSettingId id;
+			TEST_MEMGET(args[0], &id, sizeof(TSettingId));
 			// Allocate temporary memory
 			TUint16 len;
 			TInt32* value;
@@ -732,7 +858,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			else
 				{
 				// Actual API call
-				r = HCR::GetArray(id, (TUint16) maxlen,
+				r = GetArray(id, (TUint16) maxlen,
 							value, len);
 				// Send value back to client
 				if (!r)
@@ -753,8 +879,8 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TEST_MEMGET(a1, args, sizeof(args));
 			TUint maxlen = (TUint) args[1];
 			// Retrieve structures from client
-			HCR::TSettingId id;
-			TEST_MEMGET(args[0], &id, sizeof(HCR::TSettingId));
+			TSettingId id;
+			TEST_MEMGET(args[0], &id, sizeof(TSettingId));
 			// Allocate temporary memory
 			TUint16 len;
 			TUint32* value;
@@ -768,7 +894,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			else
 				{
 				// Actual API call
-				r = HCR::GetArray(id, (TUint16) maxlen,
+				r = GetArray(id, (TUint16) maxlen,
 							value, len);
 				// Send value back to client
 				if (!r)
@@ -789,8 +915,8 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TEST_MEMGET(a1, args, sizeof(args));
 			TUint maxlen = (TUint) args[1];
 			// Retrieve structures from client
-			HCR::TSettingId id;
-			TEST_MEMGET(args[0], &id, sizeof(HCR::TSettingId));
+			TSettingId id;
+			TEST_MEMGET(args[0], &id, sizeof(TSettingId));
 			// Allocate temporary memory
 			TUint16 len;
 			TText8* value;
@@ -804,7 +930,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			else
 				{
 				// Actual API call
-				r = HCR::GetString(id, (TUint16) maxlen,
+				r = GetString(id, (TUint16) maxlen,
 							value, len);
 				// Send value back to client
 				if (!r)
@@ -820,8 +946,8 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			}
 		case RHcrSimTestChannel::EHcrGetStringDes:
 			{
-			HCR::TSettingId setting;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
+			TSettingId setting;
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
 			TInt userdes[sizeof(TDes8) / sizeof(TInt) + 1];
 			TEST_MEMGET(a2, userdes, sizeof(TDes8));
 			HBuf8* value;
@@ -834,7 +960,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 				}
 			else
 				{
-				r = HCR::GetString(setting, *value);
+				r = GetString(setting, *value);
 				TEST_DESPUT(a2, *value);
 				TEST_ENTERCS();
 				delete value;
@@ -863,13 +989,13 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 				{
 				pfile = NULL;
 				}
-			if ((TUint) a2 == HCR::HCRInternal::ECoreRepos)
+			if ((TUint) a2 == HCRInternal::ECoreRepos)
 				{
-				r = HCRSingleton->SwitchRepository(pfile, HCR::HCRInternal::ECoreRepos);
+				r = HCRSingleton->SwitchRepository(pfile, HCRInternal::ECoreRepos);
 				}
-			else if ((TUint) a2 == HCR::HCRInternal::EOverrideRepos)
+			else if ((TUint) a2 == HCRInternal::EOverrideRepos)
 				{
-				r = HCRSingleton->SwitchRepository(pfile, HCR::HCRInternal::EOverrideRepos);
+				r = HCRSingleton->SwitchRepository(pfile, HCRInternal::EOverrideRepos);
 				}
 			break;
 			}
@@ -886,18 +1012,28 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TEST_MEMPUT(a2, (TAny*) &TestKernExtensionTestError, sizeof(TInt));
 			}
 			break;
+		case RHcrSimTestChannel::EHcrHasRepositoryInSmr:
+			{
+			r = KErrNone;
+			TBool smr;
+			TBool smrrep;
+			HasRepositoryInSmr(smr, smrrep);
+			TEST_MEMPUT(a1, (TAny*) &smr, sizeof(TBool));
+			TEST_MEMPUT(a2, (TAny*) &smrrep, sizeof(TBool));
+			}
+			break;
 		case RHcrSimTestChannel::EHcrBenchmarkGetSettingInt:
 			{
 			r = KErrNone;
 			TUint i;
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TInt32 value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
 			//
 			TUint32 start = NKern::TickCount();
 			for (i = 0; i < KTestBenchmarkIterations; i++)
 				{
-				r |= HCR::GetInt(setting, value);
+				r |= GetInt(setting, value);
 				}
 			TUint32 end = NKern::TickCount();
 			//
@@ -910,12 +1046,12 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			{
 			r = KErrNone;
 			TUint i;
-			HCR::TSettingId setting;
+			TSettingId setting;
 			TText8* value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
 			// Allocate temporary memory
 			TEST_ENTERCS();
-			value = (TText8*) Kern::Alloc(HCR::KMaxSettingLength);
+			value = (TText8*) Kern::Alloc(KMaxSettingLength);
 			TEST_LEAVECS();
 			if (value == NULL)
 				{
@@ -927,7 +1063,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 				TUint32 start = NKern::TickCount();
 				for (i = 0; i < KTestBenchmarkIterations; i++)
 					{
-					r |= HCR::GetString(setting, (TUint16) HCR::KMaxSettingLength, value, len);
+					r |= GetString(setting, (TUint16) KMaxSettingLength, value, len);
 					}
 				TUint32 end = NKern::TickCount();
 				//
@@ -944,13 +1080,13 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			{
 			r = KErrNone;
 			TUint i;
-			HCR::TSettingId setting;
-			TBuf8<HCR::KMaxSettingLength> value;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
+			TSettingId setting;
+			TBuf8<KMaxSettingLength> value;
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
 			TUint32 start = NKern::TickCount();
 			for (i = 0; i < KTestBenchmarkIterations; i++)
 				{
-				r |= HCR::GetString(setting, value);
+				r |= GetString(setting, value);
 				}
 			TUint32 end = NKern::TickCount();
 			//
@@ -966,7 +1102,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			TUint32 start = NKern::TickCount();
 			for (i = 0; i < KTestBenchmarkIterations; i++)
 				{
-				r |= HCR::FindNumSettingsInCategory((HCR::TCategoryUid) a1);
+				r |= FindNumSettingsInCategory((TCategoryUid) a1);
 				}
 			TUint32 end = NKern::TickCount();
 			//
@@ -980,11 +1116,11 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			r = 0;
 			TUint i;
 
-			HCR::TElementId* ids;
-			HCR::TSettingType* types;
+			TElementId* ids;
+			TSettingType* types;
 			TUint16* lens;
 			TEST_ENTERCS();
-			ids = (HCR::TElementId*) Kern::Alloc(KTestBenchmarkNumberOfSettingsInCategory * sizeof(HCR::TElementId));
+			ids = (TElementId*) Kern::Alloc(KTestBenchmarkNumberOfSettingsInCategory * sizeof(TElementId));
 			TEST_LEAVECS();
 			if (!ids)
 				{
@@ -995,7 +1131,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 				{
 				
 				TEST_ENTERCS();
-				types = (HCR::TSettingType*) Kern::Alloc(KTestBenchmarkNumberOfSettingsInCategory * sizeof(HCR::TSettingType));
+				types = (TSettingType*) Kern::Alloc(KTestBenchmarkNumberOfSettingsInCategory * sizeof(TSettingType));
 				TEST_LEAVECS();
 				if (!types)
 					{
@@ -1018,7 +1154,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 						TUint32 start = NKern::TickCount();
 						for (i = 0; i < KTestBenchmarkIterations; i++)
 							{
-							r |= HCR::FindSettings((HCR::TCategoryUid) a1,
+							r |= FindSettings((TCategoryUid) a1,
 										KTestBenchmarkNumberOfSettingsInCategory,
 										ids, types, lens);
 							}
@@ -1046,15 +1182,15 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			{
 			r = KErrNone;
 			TUint i;
-			HCR::TSettingId setting;
-			HCR::TSettingType type;
+			TSettingId setting;
+			TSettingType type;
 			TUint16 len;
-			TEST_MEMGET(a1, &setting, sizeof(HCR::TSettingId));
+			TEST_MEMGET(a1, &setting, sizeof(TSettingId));
 			//
 			TUint32 start = NKern::TickCount();
 			for (i = 0; i < KTestBenchmarkIterations; i++)
 				{
-				r |= HCR::GetTypeAndSize(setting, type, len);
+				r |= GetTypeAndSize(setting, type, len);
 				}
 			TUint32 end = NKern::TickCount();
 			//
@@ -1067,15 +1203,15 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 			{
 			r = 0;
 			TUint i;
-			HCR::SSettingId* ids;
-			HCR::TSettingType* types;
-			HCR::TCategoryUid catId = (HCR::TCategoryUid)a1;
+			SSettingId* ids;
+			TSettingType* types;
+			TCategoryUid catId = (TCategoryUid)a1;
 			TInt32* values;
 			TInt* errors;
 			TEST_ENTERCS();
 			//We allocate here KTestBenchmarkNumberOfSettingsInCategory - 1 because
 			//last element in the category is a large setting
-			ids = (HCR::SSettingId*) Kern::Alloc((KTestBenchmarkNumberOfSettingsInCategory - 1) * sizeof(HCR::SSettingId));
+			ids = (SSettingId*) Kern::Alloc((KTestBenchmarkNumberOfSettingsInCategory - 1) * sizeof(SSettingId));
 			TEST_LEAVECS();
 			if (!ids)
 				{
@@ -1091,7 +1227,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 				    ids[eId].iKey = eId + 1;
 				    }
 				TEST_ENTERCS();
-				types = (HCR::TSettingType*) Kern::Alloc((KTestBenchmarkNumberOfSettingsInCategory - 1) * sizeof(HCR::TSettingType));
+				types = (TSettingType*) Kern::Alloc((KTestBenchmarkNumberOfSettingsInCategory - 1) * sizeof(TSettingType));
 				TEST_LEAVECS();
 				if (!types)
 					{
@@ -1123,7 +1259,7 @@ TInt DHcrSimTestDrvChannel::DoControl(TInt aReqNo, TAny* a1, TAny* a2)
 							TUint32 start = NKern::TickCount();
 							for (i = 0; i < KTestGetMultipleBenchmarkIterations; i++)
 								{
-								r |= HCR::GetWordSettings(KTestBenchmarkNumberOfSettingsInCategory - 1, ids, values, types, errors);
+								r |= GetWordSettings(KTestBenchmarkNumberOfSettingsInCategory - 1, ids, values, types, errors);
 								}
 							TUint32 end = NKern::TickCount();
 							//

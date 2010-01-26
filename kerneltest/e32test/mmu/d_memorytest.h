@@ -25,7 +25,7 @@
 
 _LIT(KMemoryTestLddName,"d_memorytest");
 
-const TInt UCPageCount = 2;//Page count of user chunk used in physical pinning tests.
+const TInt KUCPageCount = 4;//Page count of user chunk used in physical pinning tests.
 
 class RMemoryTestLdd : public RBusLogicalChannel
 	{
@@ -54,7 +54,18 @@ public:
 		EDestroyPhysicalPinObject,
 		EPinKernelPhysicalMemory,
 		ESetPanicTrace,
-		EIsMemoryPresent
+		EIsMemoryPresent,
+		ECreateKernelMapObject,
+		EDestroyKernelMapObject,
+		EKernelMapMemory,
+		EKernelMapMemoryRO,
+		EKernelMapMemoryInvalid,
+		EKernelMapCheckPageList,
+		EKernelMapSyncMemory,
+		EKernelMapInvalidateMemory,
+		EKernelMapMoveMemory,
+		EKernelMapReadModifyMemory,
+		EKernelUnmapMemory,
 		};
 
 #ifndef __KERNEL_MODE__
@@ -112,6 +123,28 @@ public:
 		{ return DoControl(ESetPanicTrace,(TAny*)aEnable); }
 	inline TInt IsMemoryPresent(const TAny* aPtr)
 		{ return DoControl(EIsMemoryPresent,(TAny*)aPtr); }
+	inline TInt CreateKernelMapObject(TUint aReserveBytes)
+		{ return DoControl(ECreateKernelMapObject, (TAny*)aReserveBytes); }
+	inline TInt DestroyKernelMapObject()
+		{ return DoControl(EDestroyKernelMapObject); }
+	inline TInt KernelMapMemory(TLinAddr aStart, TUint aSize)
+		{ return DoControl(EKernelMapMemory,(TAny*)aStart, (TAny*)aSize); }
+	inline TInt KernelMapMemoryRO(TLinAddr aStart, TUint aSize)
+		{ return DoControl(EKernelMapMemoryRO,(TAny*)aStart, (TAny*)aSize); }
+	inline TInt KernelMapMemoryInvalid(TLinAddr aStart, TUint aSize)
+		{ return DoControl(EKernelMapMemoryInvalid,(TAny*)aStart, (TAny*)aSize); }
+	inline TInt KernelMapCheckPageList(TUint8* aStart)
+		{ return DoControl(EKernelMapCheckPageList, (TAny*)aStart); }
+	inline TInt KernelMapSyncMemory()
+		{ return DoControl(EKernelMapSyncMemory); }
+	inline TInt KernelMapInvalidateMemory()
+		{ return DoControl(EKernelMapInvalidateMemory); }
+	inline TInt KernelMapMoveMemory(TUint aIndex)
+		{ return DoControl(EKernelMapMoveMemory, (TAny*)aIndex); }
+	inline TInt KernelMapReadAndModifyMemory()
+		{ return DoControl(EKernelMapReadModifyMemory); }
+	inline TInt KernelUnmapMemory()
+		{ return DoControl(EKernelUnmapMemory); }
 #endif
 	};
 

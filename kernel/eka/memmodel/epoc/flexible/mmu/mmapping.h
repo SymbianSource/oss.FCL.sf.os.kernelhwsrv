@@ -273,6 +273,33 @@ public:
 	*/
 	void UnlinkFromMemory(TMappingList& aMappingList);
 
+	/**
+	Get the physical address(es) for a region of pages in this mapping.
+
+	@param aIndex			Page index, within the mapping, for start of the region.
+	@param aCount			Number of pages in the region.
+	@param aPhysicalAddress	On success, this value is set to one of two values.
+							If the specified region is physically contiguous,
+							the value is the physical address of the first page
+							in the region. If the region is discontiguous, the
+							value is set to KPhysAddrInvalid.
+	@param aPhysicalPageList If not zero, this points to an array of TPhysAddr
+							objects. On success, this array will be filled
+							with the addresses of the physical pages which
+							contain the specified region. If aPageList is
+							zero, then the function will fail with
+							KErrNotFound if the specified region is not
+							physically contiguous.
+
+	@return 0 if successful and the whole region is physically contiguous.
+			1 if successful but the region isn't physically contiguous.
+			KErrNotFound, if any page in the region is not present,
+			otherwise one of the system wide error codes.
+
+	@pre This mapping must have been attached to a memory object with #Pin.
+	*/
+	TInt PhysAddr(TUint aIndex, TUint aCount, TPhysAddr& aPhysicalAddress, TPhysAddr* aPhysicalPageList);
+
 protected:
 	/**
 	@param aType Initial value for #Flags.
@@ -676,6 +703,12 @@ protected:
 	~DMemoryMapping();
 
 	/**
+	Free any resources owned by this mapping, i.e. allow Construct() to be used
+	on this mapping at a new address etc.
+	*/
+	void Destruct();
+
+	/**
 	Allocatate virtual addresses for this mapping to use.
 	This is called from #Construct and the arguments to this function are the same.
 
@@ -872,6 +905,25 @@ private:
 	};
 
 
+/**
+A mapping which maps any memory into the kernel address space and provides access to 
+the physical address used by a memory object.
+
+These mappings are always of the 'pinned' type to prevent the obtained physical addresses
+from becoming invalid.
+*/
+class DKernelPinMapping : public DFineMapping
+	{
+public:
+	DKernelPinMapping();
+	TInt Construct(TUint aReserveSize);
+	TInt MapAndPin(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TMappingPermissions aPermissions);
+	void UnmapAndUnpin();
+
+public:
+	TInt iReservePages;		///< The number of pages this mapping is able to map with its reserved resources(page tables etc).
+	};
+
 
 /**
 A mapping which provides access to the physical address used by a memory object
@@ -914,32 +966,6 @@ public:
 	*/
 	virtual void Unpin();
 
-	/**
-	Get the physical address(es) for a region of pages in this mapping.
-
-	@param aIndex			Page index, within the mapping, for start of the region.
-	@param aCount			Number of pages in the region.
-	@param aPhysicalAddress	On success, this value is set to one of two values.
-							If the specified region is physically contiguous,
-							the value is the physical address of the first page
-							in the region. If the region is discontiguous, the
-							value is set to KPhysAddrInvalid.
-	@param aPhysicalPageList If not zero, this points to an array of TPhysAddr
-							objects. On success, this array will be filled
-							with the addresses of the physical pages which
-							contain the specified region. If aPageList is
-							zero, then the function will fail with
-							KErrNotFound if the specified region is not
-							physically contiguous.
-
-	@return 0 if successful and the whole region is physically contiguous.
-			1 if successful but the region isn't physically contiguous.
-			KErrNotFound, if any page in the region is not present,
-			otherwise one of the system wide error codes.
-
-	@pre This mapping must have been attached to a memory object with #Pin.
-	*/
-	TInt PhysAddr(TUint aIndex, TUint aCount, TPhysAddr& aPhysicalAddress, TPhysAddr* aPhysicalPageList);
 private:
 	// from DMemoryMappingBase...
 	virtual TInt MapPages(RPageArray::TIter aPages, TUint aMapInstanceCount); ///< Not implemented. Faults in debug builds.

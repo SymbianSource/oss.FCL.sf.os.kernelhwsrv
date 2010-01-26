@@ -400,6 +400,8 @@ TInt CBulkOnlyTransportUsbcLdd::SetupInterfaceDescriptors()
 			{
 			// InEndpoint is going to be our TX (IN, write) endpoint
 			ifc().iEndpointData[0].iType = KUsbEpTypeBulk;
+			if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) == KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
+				ifc().iEndpointData[0].iFeatureWord1  = KUsbcEndpointInfoFeatureWord1_DMA|KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
 			ifc().iEndpointData[0].iDir  = KUsbEpDirIn;
 			ifc().iEndpointData[0].iSize = maxPacketSize;
 			ifc().iEndpointData[0].iInterval_Hs = 0;
@@ -415,6 +417,8 @@ TInt CBulkOnlyTransportUsbcLdd::SetupInterfaceDescriptors()
 			{
 			// OutEndpoint is going to be our RX (OUT, read) endpoint
 			ifc().iEndpointData[1].iType = KUsbEpTypeBulk;
+			if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) == KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
+				ifc().iEndpointData[1].iFeatureWord1  = KUsbcEndpointInfoFeatureWord1_DMA|KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
 			ifc().iEndpointData[1].iDir  = KUsbEpDirOut;
 			ifc().iEndpointData[1].iSize = maxPacketSize;
 			ifc().iEndpointData[1].iInterval_Hs = 0;
@@ -486,28 +490,36 @@ void CBulkOnlyTransportUsbcLdd::CancelReadWriteRequests()
 
 void CBulkOnlyTransportUsbcLdd::AllocateEndpointResources()
 	{
-		// Set up DMA if possible (errors are non-critical)
-	TInt err = iLdd.AllocateEndpointResource(OutEndpoint, EUsbcEndpointResourceDMA);
-	if (err != KErrNone)
+	TUsbDeviceCaps d_caps;
+	TInt ret = iLdd.DeviceCaps(d_caps);
+	if (ret == KErrNone)
 		{
-		__PRINT1(_L("Set DMA on OUT endpoint failed with error code: %d"), err);
-		}
-	err = iLdd.AllocateEndpointResource(InEndpoint, EUsbcEndpointResourceDMA);
-	if (err != KErrNone)
-		{
-		__PRINT1(_L("Set DMA on IN endpoint failed with error code: %d"), err);
-		}
+		if((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) != KUsbDevCapsFeatureWord1_EndpointResourceAllocV2)
+			{
+				// Set up DMA if possible (errors are non-critical)
+			TInt err = iLdd.AllocateEndpointResource(OutEndpoint, EUsbcEndpointResourceDMA);
+			if (err != KErrNone)
+				{
+				__PRINT1(_L("Set DMA on OUT endpoint failed with error code: %d"), err);
+				}
+			err = iLdd.AllocateEndpointResource(InEndpoint, EUsbcEndpointResourceDMA);
+			if (err != KErrNone)
+				{
+				__PRINT1(_L("Set DMA on IN endpoint failed with error code: %d"), err);
+				}
 
-	// Set up Double Buffering if possible (errors are non-critical)
-	err = iLdd.AllocateEndpointResource(OutEndpoint, EUsbcEndpointResourceDoubleBuffering);
-	if (err != KErrNone)
-		{
-		__PRINT1(_L("Set Double Buffering on OUT endpoint failed with error code: %d"), err);
-		}
-	err = iLdd.AllocateEndpointResource(InEndpoint, EUsbcEndpointResourceDoubleBuffering);
-	if (err != KErrNone)
-		{
-		__PRINT1(_L("Set Double Buffering on IN endpoint failed with error code: %d"), err);
+				// Set up Double Buffering if possible (errors are non-critical)
+			err = iLdd.AllocateEndpointResource(OutEndpoint, EUsbcEndpointResourceDoubleBuffering);
+			if (err != KErrNone)
+				{
+				__PRINT1(_L("Set Double Buffering on OUT endpoint failed with error code: %d"), err);
+				}
+			err = iLdd.AllocateEndpointResource(InEndpoint, EUsbcEndpointResourceDoubleBuffering);
+			if (err != KErrNone)
+				{
+				__PRINT1(_L("Set Double Buffering on IN endpoint failed with error code: %d"), err);
+				}
+			}
 		}
 	}
 

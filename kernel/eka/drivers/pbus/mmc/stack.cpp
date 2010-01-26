@@ -20,6 +20,15 @@
 #include <drivers/locmedia.h>
 #include "stackbody.h"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "stackTraces.h"
+#endif
+
 #ifdef __SMP__
 TSpinLock MMCLock(TSpinLock::EOrderGenericIrqHigh0);
 #endif
@@ -312,6 +321,8 @@ EXPORT_C TBool TMMCard::IsReady() const
 	{
 	const TUint state = iStatus.State();
 	__KTRACE_OPT(KPBUS1, Kern::Printf("=mcc:ir:%d,0x%08x", IsPresent(), state));
+	OstTraceExt2( TRACE_INTERNALS, TMMCARD_ISREADY, "IsPresent=%d; state=0x%08x", IsPresent(), state );
+	
 	return IsPresent() && (state == ECardStateStby || state == ECardStateTran || state == ECardStateSlp);
 	}
 
@@ -327,6 +338,7 @@ EXPORT_C TBool TMMCard::IsLocked() const
  * @return ETrue if locked, EFalse otherwise.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARD_ISLOCKED_ENTRY, this );
 	if ( !IsPresent() ) 
 		return( EFalse );
 
@@ -339,6 +351,7 @@ TInt64 TMMCard::DeviceSize64() const
  * @return The size of the MMC card in bytes.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARD_DEVICESIZE64_ENTRY, this );
 	const TBool highCapacity = IsHighCapacity();
 	const TUint32 sectorCount = ExtendedCSD().SectorCount();
 	
@@ -352,6 +365,7 @@ TUint32 TMMCard::PreferredWriteGroupLength() const
  * @return The preferred write group length.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARD_PREFERREDWRITEGROUPLENGTH_ENTRY, this );
 	return(CSD().WriteBlockLength() << 5);	// 16K for a standard 512byte block length
 	}
 
@@ -400,11 +414,13 @@ TInt TMMCard::GetEraseInfo(TMMCEraseInfo& aEraseInfo) const
  * @return Symbian OS error code.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARD_GETERASEINFO_ENTRY, this );
 	
 	// Check whether this card supports Erase Class Commands. Also, validate the erase group size
 	if ((CSD().CCC() & KMMCCmdClassErase) && IsPowerOfTwo(CSD().EraseGroupSize()))
 		{
 		// This card supports erase cmds. Also, all versions of MMC cards support Erase Group commands (i.e. CMD35, CMD36).
+		OstTrace0( TRACE_INTERNALS, TMMCARD_GETERASEINFO, "Card supports erase class commands" );
 		aEraseInfo.iEraseFlags=(KMMCEraseClassCmdsSupported|KMMCEraseGroupCmdsSupported); 
 		
 		// Return the preferred size to be used as the unit for format operations. We need to return a sensible
@@ -422,7 +438,8 @@ TInt TMMCard::GetEraseInfo(TMMCEraseInfo& aEraseInfo) const
 	else	
 		aEraseInfo.iEraseFlags=0;
 	
-	return(KErrNone);
+	OstTraceFunctionExitExt( TMMCARD_GETERASEINFO_EXIT, this, KErrNone );
+	return KErrNone;
 	}
 
 TUint TMMCard::MaxTranSpeedInKilohertz() const
@@ -431,6 +448,7 @@ TUint TMMCard::MaxTranSpeedInKilohertz() const
  * @return Speed, in Kilohertz
  */
 	{
+	OstTraceFunctionEntry1( TMMCARD_MAXTRANSPEEDINKILOHERTZ_ENTRY, this );
 	// Default implementation obtains the transaction speed from the CSD
 	TUint32 highSpeedClock = HighSpeedClock();
 	return(highSpeedClock ? highSpeedClock : iCSD.MaxTranSpeedInKilohertz());
@@ -445,6 +463,7 @@ TInt TMMCard::MaxReadBlLen() const
  * if possible, to try to avoid compatibility issues.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARD_MAXREADBLLEN_ENTRY, this );
 	const TInt KDefaultReadBlockLen = 9;	// 2^9 = 512 bytes
 	const TCSD& csd = CSD();
 
@@ -453,6 +472,9 @@ TInt TMMCard::MaxReadBlLen() const
 	if (blkLenLog2 > KDefaultReadBlockLen)
 		{
 		__KTRACE_OPT(KPBUS1, Kern::Printf("=mmc:mrbl %d", blkLenLog2));
+		OstTrace1( TRACE_INTERNALS, TMMCARD_MAXREADBLLEN1, "Block length 1=%d", blkLenLog2 );
+		
+		
 		if (csd.ReadBlPartial() || CSD().SpecVers() >= 4)
 			{
 			//
@@ -461,9 +483,11 @@ TInt TMMCard::MaxReadBlLen() const
 			//
 			blkLenLog2 = KDefaultReadBlockLen;	
 			__KTRACE_OPT(KPBUS1, Kern::Printf("=mmc:mrbl -> %d", blkLenLog2));
+			OstTrace1( TRACE_INTERNALS, TMMCARD_MAXREADBLLEN2, "Block length 2=%d", blkLenLog2 );
 			}
 		}
 
+	OstTraceFunctionExitExt( TMMCARD_MAXREADBLLEN_EXIT, this, blkLenLog2 );
 	return blkLenLog2;
 
 	}
@@ -476,6 +500,7 @@ TInt TMMCard::MaxWriteBlLen() const
  * if possible, to try to avoid compatibility issues.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARD_MAXWRITEBLLEN_ENTRY, this );
 	const TInt KDefaultWriteBlockLen = 9;	// 2^9 = 512 bytes
 	const TCSD& csd = CSD();
 
@@ -484,6 +509,7 @@ TInt TMMCard::MaxWriteBlLen() const
 	if (blkLenLog2 > KDefaultWriteBlockLen)
 		{
 		__KTRACE_OPT(KPBUS1, Kern::Printf("=mmc:mrbl %d", blkLenLog2));
+		OstTrace1( TRACE_INTERNALS, TMMCARD_MAXWRITEBLLEN1, "Block length 1=%d", blkLenLog2 );
 		if (csd.WriteBlPartial() || CSD().SpecVers() >= 4)
 			{
 			//
@@ -492,9 +518,11 @@ TInt TMMCard::MaxWriteBlLen() const
 			//
 			blkLenLog2 = KDefaultWriteBlockLen;	
 			__KTRACE_OPT(KPBUS1, Kern::Printf("=mmc:mrbl -> %d", blkLenLog2));
+			OstTrace1( TRACE_INTERNALS, TMMCARD_MAXWRITEBLLEN2, "Block length 1=%d", blkLenLog2 );
 			}
 		}
 
+	OstTraceFunctionExitExt( TMMCARD_MAXWRITEBLLEN_EXIT, this, blkLenLog2 );
 	return blkLenLog2;
 
 	}
@@ -510,18 +538,26 @@ EXPORT_C TInt TMMCardArray::AllocCards()
  * @return KErrNone if successful, Standard Symbian OS error code otherwise.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARDARRAY_ALLOCCARDS_ENTRY, this );
 	for (TUint i = 0; i < KMaxMMCardsPerStack; ++i)
 		{
 		// zeroing the card data used to be implicit because embedded in
 		// CBase-derived DMMCStack.
 		if ((iCards[i] = new TMMCard) == 0)
+		    {
+			OstTraceFunctionExitExt( TMMCARDARRAY_ALLOCCARDS_EXIT1, this, KErrNoMemory );
 			return KErrNoMemory;
+		    }
 		iCards[i]->iUsingSessionP = 0;
 		if ((iNewCards[i] = new TMMCard) == 0)
+		    {
+			OstTraceFunctionExitExt( TMMCARDARRAY_ALLOCCARDS_EXIT2, this, KErrNoMemory );
 			return KErrNoMemory;
+		    }
 		iNewCards[i]->iUsingSessionP = 0;
 		}
 
+	OstTraceFunctionExitExt( TMMCARDARRAY_ALLOCCARDS_EXIT3, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -530,7 +566,9 @@ void TMMCardArray::InitNewCardScan()
  * Prepare card array for new scan.
  */
 	{
+	OstTraceFunctionEntry1( TMMCARDARRAY_INITNEWCARDSCAN_ENTRY, this );
 	iNewCardsCount=0;
+	OstTraceFunctionExit1( TMMCARDARRAY_INITNEWCARDSCAN_EXIT, this );
 	}
 
 void TMMCardArray::MoveCardAndLockRCA(TMMCard& aSrcCard,TMMCard& aDestCard,TInt aDestIndex)
@@ -538,6 +576,7 @@ void TMMCardArray::MoveCardAndLockRCA(TMMCard& aSrcCard,TMMCard& aDestCard,TInt 
  * Copy card object and lock RCA.
  */
 	{
+	OstTraceExt2(TRACE_FLOW, TMMCARDARRAY_MOVECARDANDLOCKRCA_ENTRY, "TMMCardArray::MoveCardAndLockRCA;aDestIndex=%d;this=%x", aDestIndex, (TUint) this);
 	__KTRACE_OPT(KPBUS1, Kern::Printf("=mca:mclr:%d", aDestIndex));
 
 	aDestCard.iCID=aSrcCard.iCID;
@@ -556,6 +595,7 @@ void TMMCardArray::MoveCardAndLockRCA(TMMCard& aSrcCard,TMMCard& aDestCard,TInt 
 	aSrcCard.iHighSpeedClock = 0;
 
 	aSrcCard.iUsingSessionP = NULL;
+	OstTraceFunctionExit1( TMMCARDARRAY_MOVECARDANDLOCKRCA_EXIT, this );
 	}
 
 EXPORT_C void TMMCardArray::AddNewCard(const TUint8* aCID,TRCA* aNewRCA)
@@ -565,6 +605,7 @@ EXPORT_C void TMMCardArray::AddNewCard(const TUint8* aCID,TRCA* aNewRCA)
  * entries.
  */
 	{
+	OstTraceFunctionEntryExt( TMMCARDARRAY_ADDNEWCARD_ENTRY, this );
 	// Store the CID in the next free slot
 	NewCard(iNewCardsCount).iCID = aCID;
 
@@ -589,8 +630,11 @@ EXPORT_C void TMMCardArray::AddNewCard(const TUint8* aCID,TRCA* aNewRCA)
 		}
 
 	__KTRACE_OPT(KPBUS1, Kern::Printf("mca:adn: assigning new card %d rca 0x%04x", iNewCardsCount, TUint16(*aNewRCA) ));
+	OstTraceExt2( TRACE_INTERNALS, TMMCARDARRAY_ADDNEWCARD, "iNewCardsCount=%d; RCA=0x%04x", iNewCardsCount, (TUint) *aNewRCA );
+	
 	NewCard(iNewCardsCount).iRCA=*aNewRCA;
 	iNewCardsCount++;
+	OstTraceFunctionExit1( TMMCARDARRAY_ADDNEWCARD_EXIT, this );
 	}
 
 TInt TMMCardArray::MergeCards(TBool aFirstPass)
@@ -600,8 +644,12 @@ TInt TMMCardArray::MergeCards(TBool aFirstPass)
  * Returns KErrNotFound if not able to successfully place all the new cards.
  */
 	{
+	OstTraceFunctionEntryExt( TMMCARDARRAY_MERGECARDS_ENTRY, this );
 
+	
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mca:mc:%d,%d", aFirstPass, iNewCardsCount));
+	OstTrace1( TRACE_INTERNALS, TMMCARDARRAY_MERGECARDS1, "iNewCardsCount=%d", iNewCardsCount );
+	
 	TUint i;	// New card index
 	TUint j;	// Main card index
 
@@ -611,6 +659,7 @@ TInt TMMCardArray::MergeCards(TBool aFirstPass)
 		for ( i=0 ; i<iNewCardsCount ; i++ )
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("-mca:fp,i=%d,idx=0x%x", i, NewCard(i).iIndex));
+			OstTraceExt2( TRACE_INTERNALS, TMMCARDARRAY_MERGECARDS2, "i=%d; Index=0x%x", i, NewCard(i).iIndex );
 			if( NewCard(i).iIndex != 0 ) // Signifies card was here before (iIndex has old slot number +1)
 				{
 				// Put it in the same slot as before
@@ -628,18 +677,24 @@ TInt TMMCardArray::MergeCards(TBool aFirstPass)
 			// Find a spare slot in main array for this new card
 			while ( Card(j).IsPresent() )
 				if ( ++j==iOwningStack->iMaxCardsInStack )
-					return(KErrNotFound);
+				    {
+					OstTraceFunctionExitExt( TMMCARDARRAY_MERGECARDS_EXIT1, this, KErrNotFound );
+					return KErrNotFound;
+				    }
 
 			// Found a free slot; move the card info there
 			__KTRACE_OPT(KPBUS1, Kern::Printf("-mca:freej=%d,rca=0x%04x", j, TUint16(Card(j).iRCA) ));
+			OstTraceExt2( TRACE_INTERNALS, TMMCARDARRAY_MERGECARDS3, "j=%d; RCA=0x%04x", j, (TUint) (Card(j).iRCA) );
 			if ( Card(j).iRCA != 0 )
 				iOwningStack->iRCAPool.UnlockRCA(Card(j).iRCA);
 
 			__KTRACE_OPT(KPBUS1, Kern::Printf("merging new card %d to card %d dest index %d", i, j, j+1));
+			OstTraceExt3( TRACE_INTERNALS, TMMCARDARRAY_MERGECARDS4, "Merging new card %d to card %d; Destination index=%d", (TInt) i, (TInt) j, (TInt) j+1 );
 			MoveCardAndLockRCA(NewCard(i),Card(j),(j+1));
 			}
 		}
-	return(KErrNone);
+	OstTraceFunctionExitExt( TMMCARDARRAY_MERGECARDS_EXIT2, this, KErrNone );
+	return KErrNone;
 	}
 
 void TMMCardArray::UpdateAcquisitions(TUint* aMaxClock)
@@ -649,7 +704,8 @@ void TMMCardArray::UpdateAcquisitions(TUint* aMaxClock)
  * maximum bus clock that can be employed - by checking the CSD of each card.
  */
 	{
-
+	OstTraceFunctionEntryExt( TMMCARDARRAY_UPDATEACQUISITIONS_ENTRY, this );
+	
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mca:uda"));
 	iCardsPresent=0;
 	TUint maxClk = iOwningStack->iMultiplexedBus ? 1 : 800000; // ???
@@ -680,6 +736,7 @@ void TMMCardArray::UpdateAcquisitions(TUint* aMaxClock)
 	// instead of relying on ASSP defaults.
 
 	*aMaxClock=maxClk;
+	OstTraceFunctionExit1( TMMCARDARRAY_UPDATEACQUISITIONS_EXIT, this );
 	}
 
 EXPORT_C void TMMCardArray::DeclareCardAsGone(TUint aCardNumber)
@@ -687,7 +744,8 @@ EXPORT_C void TMMCardArray::DeclareCardAsGone(TUint aCardNumber)
  * Clears up a card info object in the main card array
  */
 	{
-
+	OstTraceFunctionEntryExt( TMMCARDARRAY_DECLARECARDASGONE_ENTRY, this );
+	
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mca:dcag"));
 	// If we thought this one was present then mark it as not present
 	TMMCard& card = Card(aCardNumber);
@@ -706,17 +764,20 @@ EXPORT_C void TMMCardArray::DeclareCardAsGone(TUint aCardNumber)
 	card.iFlags=0; 		// Reset 'has password' and 'write protected' bit fields
 	card.iHighSpeedClock=0;
 	card.iBusWidth=1;
+	OstTraceFunctionExit1( TMMCARDARRAY_DECLARECARDASGONE_EXIT, this );
 	}
 
 // return this card's index in the array or KErrNotFound if not found
 TInt TMMCardArray::CardIndex(const TMMCard* aCard)
 	{
+	OstTraceFunctionEntryExt( TMMCARDARRAY_CARDINDEX_ENTRY, this );
 	TInt i;
 	for (i = KMaxMMCardsPerStack-1; i>= 0; i--)
 		{
 		if (iCards[i] == aCard)
 			break;
 		}
+	OstTraceFunctionExitExt( TMMCARDARRAY_CARDINDEX_EXIT, this, i );
 	return i;
 	}
 
@@ -727,11 +788,17 @@ EXPORT_C TInt TMMCCommandDesc::Direction() const
  * returns -1, 0 or +1 for DT directions read, none or write respectively
  */
 	{
+	OstTraceFunctionEntry1( TMMCCOMMANDDESC_DIRECTION_ENTRY, this );
 	TUint dir = iSpec.iDirection;
 	TInt result = dir;
+	TInt ret;
 
 	if( dir == 0 )
-		return( 0 );
+	    {
+	    ret = 0;
+		OstTraceFunctionExitExt( TMMCCOMMANDDESC_DIRECTION_EXIT1, this, ret );
+		return ret;
+	    }
 
 	if( dir & KMMCCmdDirWBitArgument )
 		result = TUint(iArgument) >> (dir & KMMCCmdDirIndBitPosition);
@@ -739,12 +806,16 @@ EXPORT_C TInt TMMCCommandDesc::Direction() const
 	if( dir & KMMCCmdDirNegate )
 		result = ~result;
 
-	return( ((result&1)-1)|1 );
+	ret = ((result&1)-1)|1;
+
+	OstTraceFunctionExitExt( TMMCCOMMANDDESC_DIRECTION_EXIT2, this, ret );
+	return ret;
 	}
 
 
 TBool TMMCCommandDesc::AdjustForBlockOrByteAccess(const DMMCSession& aSession)
 	{
+	OstTraceExt2(TRACE_FLOW, TMMCCOMMANDDESC_ADJUSTFORBLOCKORBYTEACCESS_ENTRY, "TMMCCommandDesc::AdjustForBlockOrByteAccess;Session ID=%d;this=%x", (TInt) aSession.SessionID(), (TUint) this);
 /**
  * The MMC session provides both block and byte based IO methods, all of which can
  * be used on both block and byte based MMC cards.  This method adjusts the command
@@ -759,7 +830,8 @@ TBool TMMCCommandDesc::AdjustForBlockOrByteAccess(const DMMCSession& aSession)
 	   iTotalLength % KMMCardHighCapBlockSize != 0	||	// always aligned on 512 bytes
 	   blockLength % KMMCardHighCapBlockSize != 0)
 		{
-		return(EFalse);
+		OstTraceFunctionExitExt( TMMCCOMMANDDESC_ADJUSTFORBLOCKORBYTEACCESS_EXIT1, this, (TUint) EFalse );
+		return EFalse;
 		}
 
 	if(aSession.CardP()->IsHighCapacity())
@@ -772,7 +844,8 @@ TBool TMMCCommandDesc::AdjustForBlockOrByteAccess(const DMMCSession& aSession)
 			if(iArgument % KMMCardHighCapBlockSize != 0)
 				{
 				// Block based media does not support misaligned access
-				return(EFalse);
+				OstTraceFunctionExitExt( TMMCCOMMANDDESC_ADJUSTFORBLOCKORBYTEACCESS_EXIT2, this, (TUint) EFalse );
+				return EFalse;
 				}
 
 			// adjust for block based access
@@ -792,7 +865,8 @@ TBool TMMCCommandDesc::AdjustForBlockOrByteAccess(const DMMCSession& aSession)
 			if(iArgument > maxBlocks)
 				{
 				// The address is out of range (>2G) - cannot convert
-				return(EFalse);
+				OstTraceFunctionExitExt( TMMCCOMMANDDESC_ADJUSTFORBLOCKORBYTEACCESS_EXIT3, this, (TUint) EFalse );
+				return EFalse;
 				}
 
 			// adjust for byte-based access
@@ -802,11 +876,13 @@ TBool TMMCCommandDesc::AdjustForBlockOrByteAccess(const DMMCSession& aSession)
 		else if(iArgument % KMMCardHighCapBlockSize != 0)
 			{
 			// byte addressing, unaligned address
-			return(EFalse);
+			OstTraceFunctionExitExt( TMMCCOMMANDDESC_ADJUSTFORBLOCKORBYTEACCESS_EXIT4, this, (TUint) EFalse );
+			return EFalse;
 			}
 		}
 
-	return(ETrue);
+	OstTraceFunctionExitExt( TMMCCOMMANDDESC_ADJUSTFORBLOCKORBYTEACCESS_EXIT5, this, (TUint) ETrue );
+	return ETrue;
 	}
 
 void TMMCCommandDesc::Dump(TUint8* aResponseP, TMMCErr aErr)
@@ -965,11 +1041,17 @@ TRCA TMMCRCAPool::GetFreeRCA()
  * Returns a free RCA number from the pool or zero if none is available
  */
 	{
+	OstTraceFunctionEntry1( TMMCRCAPOOL_GETFREERCA_ENTRY, this );
 	TUint32 seekm = (iPool | iLocked) + 1;
 	iPool |= (seekm & ~iLocked);
-
+	TUint16 ret;
+	
 	if( (seekm & 0xFFFFFFFF) == 0 )
-		return( 0 );
+	    {
+	    ret = 0;
+		OstTraceFunctionExitExt( TMMCRCAPOOL_GETFREERCA_EXIT1, this, (TUint) ret);
+		return ret;
+	    }
 
 	TUint16 pos = 1;
 
@@ -986,7 +1068,9 @@ TRCA TMMCRCAPool::GetFreeRCA()
 	// The iRCA field itself is only assigned values from iNewCards[] or zero.  iNewCards
 	// in turn is fed values from this function, in DMMCStack::CIMUpdateAcqSM() / EStSendCIDIssued.
 
-	return TUint16(pos << 8 | pos);
+	ret = TUint16(pos << 8 | pos);
+	OstTraceFunctionExitExt( TMMCRCAPOOL_GETFREERCA_EXIT2, this, (TUint) ret);
+	return ret;
 	}
 
 
@@ -998,14 +1082,18 @@ TMMCSessRing::TMMCSessRing()
  * Constructor
  */
 	: iPMark(NULL),iPoint(NULL),iPrevP(NULL),iSize(0)
-	{}
+	{OstTraceFunctionEntry1( TMMCSESSRING_TMMCSESSRING_ENTRY, this );}
 
 
 void TMMCSessRing::Erase()
 /**
  * Erases all the ring content
  */
-	{iPMark = iPoint = iPrevP = NULL; iSize = 0;}
+	{
+	OstTraceFunctionEntry1( TMMCSESSRING_ERASE_ENTRY, this );
+	iPMark = iPoint = iPrevP = NULL; iSize = 0;
+	OstTraceFunctionExit1( TMMCSESSRING_ERASE_EXIT, this );
+	}
 
 
 DMMCSession* TMMCSessRing::operator++(TInt)
@@ -1030,15 +1118,20 @@ TBool TMMCSessRing::Point(DMMCSession* aSessP)
  * Finds aSessP and sets Point to that position
  */
 	{
+	OstTraceFunctionEntryExt( TMMCSESSRING_POINT_ENTRY, this );
 	Point();
 
 	while( iPoint != NULL )
 		if( iPoint == aSessP )
-			return( ETrue );
+		    {
+			OstTraceFunctionExitExt( TMMCSESSRING_POINT_EXIT1, this, (TUint) ETrue );
+			return ETrue;
+		    }
 		else
 			this->operator++(0);
 
-	return( EFalse );
+	OstTraceFunctionExitExt( TMMCSESSRING_POINT_EXIT2, this, (TUint) EFalse );
+	return EFalse;
 	}
 
 void TMMCSessRing::Add(DMMCSession* aSessP)
@@ -1046,11 +1139,13 @@ void TMMCSessRing::Add(DMMCSession* aSessP)
  * Inserts aSessP before Marker. Point is moved into the Marker position.
  */
 	{
+	OstTraceFunctionEntryExt( TMMCSESSRING_ADD1_ENTRY, this );
 	if( iSize == 0 )
 		{
 		iPMark = iPrevP = iPoint = aSessP;
 		aSessP->iLinkP = aSessP;
 		iSize = 1;
+		OstTraceFunctionExit1( TMMCSESSRING_ADD1_EXIT1, this );
 		return;
 		}
 
@@ -1059,6 +1154,7 @@ void TMMCSessRing::Add(DMMCSession* aSessP)
 	aSessP->iLinkP = iPoint;
 	iPMark = iPrevP = aSessP;
 	iSize++;
+	OstTraceFunctionExit1( TMMCSESSRING_ADD1_EXIT2, this );
 	}
 
 
@@ -1069,10 +1165,14 @@ void TMMCSessRing::Add(TMMCSessRing& aRing)
  * Erases aRing.
  */
 	{
+	OstTraceFunctionEntry1( TMMCSESSRING_ADD2_ENTRY, this );
 	Point();
 
 	if( aRing.iSize == 0 )
+	    {
+		OstTraceFunctionExit1( TMMCSESSRING_ADD2_EXIT1, this );
 		return;
+	    }
 
 	if( iSize == 0 )
 		{
@@ -1089,6 +1189,7 @@ void TMMCSessRing::Add(TMMCSessRing& aRing)
 		}
 
 	aRing.Erase();
+	OstTraceFunctionExit1( TMMCSESSRING_ADD2_EXIT2, this );
 	}
 
 DMMCSession* TMMCSessRing::Remove()
@@ -1097,6 +1198,7 @@ DMMCSession* TMMCSessRing::Remove()
  * Point (and possibly Marker) move forward as in operator++
  */
 	{
+	OstTraceFunctionEntry1( TMMCSESSRING_REMOVE1_ENTRY, this );
 	DMMCSession* remS = iPrevP;
 
 	if( iSize < 2 )
@@ -1117,7 +1219,8 @@ DMMCSession* TMMCSessRing::Remove()
 			}
 		}
 
-	return( remS );
+	OstTraceFunctionExitExt( TMMCSESSRING_REMOVE1_EXIT, this, ( TUint )( remS ) );
+	return remS;
 	}
 
 
@@ -1126,10 +1229,12 @@ void TMMCSessRing::Remove(DMMCSession* aSessP)
  * Removes a specified session from the ring
  */
 	{
+	OstTraceFunctionEntryExt( TMMCSESSRING_REMOVE2_ENTRY, this );
 	if( Point(aSessP) )
 		Remove();
 	else
 		DMMCSocket::Panic(DMMCSocket::EMMCSessRingNoSession);
+	OstTraceFunctionExit1( TMMCSESSRING_REMOVE2_EXIT, this );
 	}
 
 
@@ -1144,9 +1249,11 @@ It also resets the stack and the exit code.
 */
 EXPORT_C void TMMCStateMachine::Reset()
 	{
+	OstTraceFunctionEntry1( TMMCSTATEMACHINE_RESET_ENTRY, this );
 	iAbort = EFalse;
 	iSP = 0; iExitCode = 0;
 	iStack[0].iState = 0; iStack[0].iTrapMask = 0;
+	OstTraceFunctionExit1( TMMCSTATEMACHINE_RESET_EXIT, this );
 	}
 
 
@@ -1159,7 +1266,8 @@ The state machine dispatcher.
 */
 EXPORT_C TMMCErr TMMCStateMachine::Dispatch()
 	{
-
+	OstTraceFunctionEntry1( TMMCSTATEMACHINE_DISPATCH_ENTRY, this );
+	
 	// If a state machine returns non-zero, i.e. a non-empty error set, then the second
 	// inner while loop is broken.  The errors are thrown like an exception where the
 	// stack is unravelled until it reaches a state machine which can handle at least
@@ -1182,11 +1290,13 @@ EXPORT_C TMMCErr TMMCStateMachine::Dispatch()
 		if ( iExitCode )
 			{
 			__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:Err %x",iExitCode));
+			OstTrace1( TRACE_INTERNALS, TMMCSTATEMACHINE_DISPATCH, "iExitCode=0x%x", iExitCode );
 			}
 
 		while( iSP >= 0 && !iAbort )
 			{
 			__KTRACE_OPT(KPBUS1,Kern::Printf("-msm:dsp:%02x:%08x.%02x",iSP, TUint32(iStack[iSP].iFunction), State()));
+			OstTraceExt3( TRACE_INTERNALS, TMMCSTATEMACHINE_DISPATCH2, "iSP=%d; iStack[iSP].iFunction=0x%08x; State=0x%02x", (TInt) iSP, (TUint) iStack[iSP].iFunction, (TUint) State() );
 
 			iSuspend = ETrue;
 			const TMMCErr signal = iStack[iSP].iFunction(iContextP);
@@ -1200,12 +1310,14 @@ EXPORT_C TMMCErr TMMCStateMachine::Dispatch()
 			if( iSuspend )
 				{
 				__KTRACE_OPT(KPBUS1,Kern::Printf("<msm:dsp:exitslp"));
+				OstTraceFunctionExit1( TMMCSTATEMACHINE_DISPATCH_EXIT1, this );
 				return(0);
 				}
 			}
 		}
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf("<msm:dsp:exit%08x", iExitCode));
+	OstTraceFunctionExit1( TMMCSTATEMACHINE_DISPATCH_EXIT2, this );
 	return( KMMCErrBypass | iExitCode );
 	}
 
@@ -1235,6 +1347,7 @@ SMF_CALL, SMF_CALLWAIT, SMF_INVOKES, SMF_INVOKEWAITS
 */
 EXPORT_C TMMCErr TMMCStateMachine::Push(TMMCErr (*anEntry)(TAny*), TBool aSuspend)
 	{
+	OstTraceFunctionEntry1( TMMCSTATEMACHINE_PUSH_ENTRY, this );
 	iSP++;
 	__ASSERT_ALWAYS(TUint(iSP)<KMaxMMCMachineStackDepth,
 		DMMCSocket::Panic(DMMCSocket::EMMCMachineStack));
@@ -1243,7 +1356,8 @@ EXPORT_C TMMCErr TMMCStateMachine::Push(TMMCErr (*anEntry)(TAny*), TBool aSuspen
 	iStack[iSP].iTrapMask = 0;
 	if( !aSuspend )
 		iSuspend = EFalse;
-	return( 0 );
+	OstTraceFunctionExit1( TMMCSTATEMACHINE_PUSH_EXIT, this );
+	return 0;
 	}
 
 
@@ -1262,12 +1376,14 @@ Jumps to the specified state machine function in the current state machine entry
 */
 EXPORT_C TMMCErr TMMCStateMachine::Jump(TMMCErr (*anEntry)(TAny*), TBool aSuspend)
 	{
+	OstTraceFunctionEntry1( TMMCSTATEMACHINE_JUMP_ENTRY, this );
 	iStack[iSP].iFunction = anEntry;
 	iStack[iSP].iState = 0;
 	iStack[iSP].iTrapMask = 0;
 	if( !aSuspend )
 		iSuspend = EFalse;
-	return( 0 );
+	OstTraceFunctionExit1( TMMCSTATEMACHINE_JUMP_EXIT, this );
+	return 0;
 	}
 
 
@@ -1320,13 +1436,20 @@ EXPORT_C TInt DMMCStack::Init()
  * @return KErrNone if successful, standard error code otherwise.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_INIT_ENTRY, this );
 	// allocate and initialize session object
 	if ((iStackSession = AllocSession(TMMCCallBack(StackSessionCBST, this))) == 0)
-		return(KErrNoMemory);
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_INIT_EXIT1, this, KErrNoMemory );
+		return KErrNoMemory;
+	    }
 
 	// create helper class
 	if ((iBody = new DBody(*this)) == NULL)
-		return(KErrNoMemory);
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_INIT_EXIT2, this, KErrNoMemory );
+		return KErrNoMemory;
+	    }
 
 	iStackSession->SetStack(this);
 
@@ -1339,7 +1462,8 @@ EXPORT_C TInt DMMCStack::Init()
 
 	TInt r = iCardArray->AllocCards();
 
-	return(r);
+	OstTraceFunctionExitExt( DMMCSTACK_INIT_EXIT3, this, r );
+	return r;
 	}
 
 EXPORT_C void DMMCStack::PowerUpStack()
@@ -1348,6 +1472,7 @@ EXPORT_C void DMMCStack::PowerUpStack()
  * This is an asynchronous operation, which calls DMMCSocket::PowerUpSequenceComplete upon completion.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_POWERUPSTACK_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:pus"));
 
 	if (iPSLBuf == NULL)
@@ -1359,6 +1484,7 @@ EXPORT_C void DMMCStack::PowerUpStack()
 	ReportPowerDown();							// ensure power will be switch on regardless
 
 	Scheduler( iInitialise );
+	OstTraceFunctionExit1( DMMCSTACK_POWERUPSTACK_EXIT, this );
 	}
 
 void DMMCStack::QSleepStack()
@@ -1366,9 +1492,11 @@ void DMMCStack::QSleepStack()
  * Schedules a session to place media in Sleep State
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_QSLEEPSTACK_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:qsleep"));
 
 	Scheduler( iSleep );
+	OstTraceFunctionExit1( DMMCSTACK_QSLEEPSTACK_EXIT, this );
 	}
 
 EXPORT_C void DMMCStack::PowerDownStack()
@@ -1382,6 +1510,7 @@ EXPORT_C void DMMCStack::PowerDownStack()
  * timeout system can be left to power it down.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_POWERDOWNSTACK_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:pds"));
 
 	ReportPowerDown();
@@ -1435,6 +1564,7 @@ EXPORT_C void DMMCStack::PowerDownStack()
 	iInitialise = EFalse;
 	iStackState &= ~(KMMCStackStateInitInProgress | KMMCStackStateInitPending | KMMCStackStateBusInconsistent | KMMCStackStateWaitingDFC);
 	iSessionP = NULL;
+	OstTraceFunctionExit1( DMMCSTACK_POWERDOWNSTACK_EXIT, this );
 	}
 
 //
@@ -1445,10 +1575,14 @@ DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedGetOnDFC()
  * Initiates stack DFC. Returns either Continue or Loop.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDGETONDFC_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sgd"));
 
 	if( iDFCRunning )
-		return( ESchedContinue );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDGETONDFC_EXIT1, this, (TInt) ESchedContinue);
+		return ESchedContinue;
+	    }
 
 	if( (iStackState & KMMCStackStateWaitingDFC) == 0 )
 		{
@@ -1460,7 +1594,8 @@ DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedGetOnDFC()
 			iStackDFC.Enque();
 		}
 
-	return( ESchedLoop );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDGETONDFC_EXIT2, this, (TInt) ESchedLoop);
+	return ESchedLoop;
 	}
 
 void DMMCStack::SchedSetContext(DMMCSession* aSessP)
@@ -1470,12 +1605,14 @@ void DMMCStack::SchedSetContext(DMMCSession* aSessP)
  * @param aSessP A pointer to the session.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDSETCONTEXT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:ssc"));
 
 	if( (iStackState & (KMMCStackStateInitPending|KMMCStackStateBusInconsistent)) != 0 &&
 		aSessP->iSessionID != ECIMInitStack )
 		{
 		iInitialise = ETrue;
+		OstTraceFunctionExit1( DMMCSTACK_SCHEDSETCONTEXT_EXIT1, this );
 		return;
 		}
 
@@ -1497,6 +1634,7 @@ void DMMCStack::SchedSetContext(DMMCSession* aSessP)
 		}
 
 	iSessionP->iState &= ~KMMCSessStateDoReSchedule;
+	OstTraceFunctionExit1( DMMCSTACK_SCHEDSETCONTEXT_EXIT2, this );
 	}
 
 void DMMCStack::SchedDoAbort(DMMCSession* aSessP)
@@ -1505,6 +1643,7 @@ void DMMCStack::SchedDoAbort(DMMCSession* aSessP)
  * @param aSessP A pointer to the session to be aborted.
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_SCHEDDOABORT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sda"));
 
 #ifdef __EPOC32__
@@ -1532,6 +1671,7 @@ void DMMCStack::SchedDoAbort(DMMCSession* aSessP)
 	(void)__e32_atomic_and_ord32(&aSessP->iBlockOn, ~(KMMCBlockOnPollTimer | KMMCBlockOnRetryTimer |
 						  							  KMMCBlockOnWaitToLock | KMMCBlockOnASSPFunction | 
 						  							  KMMCBlockOnInterrupt | KMMCBlockOnDataTransfer) );
+	OstTraceFunctionExit1( DMMCSTACK_SCHEDDOABORT_EXIT, this );
 	}
 
 DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedResolveStatBlocks(DMMCSession* aSessP)
@@ -1541,6 +1681,7 @@ DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedResolveStatBlocks(DMMCSession
  * @return EschedContinue or ESchedLoop (if scheduler is to be restarted)
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_SCHEDRESOLVESTATBLOCKS_ENTRY, this );
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:srsb"));
 
@@ -1554,10 +1695,12 @@ DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedResolveStatBlocks(DMMCSession
 		iStackState &= ~KMMCStackStateWaitingToLock;
 		aSessP->SynchUnBlock( KMMCBlockOnWaitToLock );
 		MarkComplete( aSessP, KMMCErrNone );
-		return( ESchedLoop );
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDRESOLVESTATBLOCKS_EXIT1, this, (TInt) ESchedLoop );
+		return ESchedLoop;
 		}
 
-	return( ESchedContinue );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDRESOLVESTATBLOCKS_EXIT2, this, (TInt) ESchedContinue );
+	return ESchedContinue;
 	}
 
 DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedGroundDown(DMMCSession* aSessP, TMMCErr aReason)
@@ -1575,10 +1718,14 @@ DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedGroundDown(DMMCSession* aSess
  * separate scheduler pass.
  */
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSTACK_SCHEDGROUNDDOWN_ENTRY, "DMMCStack::SchedGroundDown;aSessionP=%x;aReason=%d;this=%x", (TUint) aSessP, (TInt) aReason, (TUint) this);
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sgdn"));
 
 	if( (aSessP == iStackSession) || InitStackInProgress() )
-		return( ESchedLoop );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDGROUNDDOWN_EXIT1, this, (TInt) ESchedLoop );
+		return ESchedLoop;
+	    }
 	
 	if( aSessP->iState & KMMCSessStateInProgress )
 		{
@@ -1590,7 +1737,8 @@ DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedGroundDown(DMMCSession* aSess
 							KMMCSessStateDoDFC);
 		}
 
-	return( ESchedContinue );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDGROUNDDOWN_EXIT2, this, (TInt) ESchedContinue );
+	return ESchedContinue;
 	}
 
 DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedEnqueStackSession(TMMCSessionTypeEnum aSessID)
@@ -1599,18 +1747,21 @@ DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedEnqueStackSession(TMMCSession
  * @return EschedContinue or ESchedLoop
  */
 	{
+	OstTraceExt2(TRACE_FLOW, DMMCSTACK_SCHEDENQUESTACKSESSION_ENTRY ,"DMMCStack::SchedEnqueStackSession;aSessID=%d;this=%x", (TInt) aSessID, (TUint) this);
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sess"));
 
 		if( iStackSession->IsEngaged() )
 			{
 			MarkComplete( iStackSession, KMMCErrAbort );
-			return( ESchedLoop );
+			OstTraceFunctionExitExt( DMMCSTACK_SCHEDENQUESTACKSESSION_EXIT1, this, (TInt) ESchedLoop );
+			return ESchedLoop;
 			}
 
 		iStackSession->SetupCIMControl( aSessID );
 		iWorkSet.Add( iStackSession );
 		iStackSession->iState |= KMMCSessStateEngaged;
-		return( ESchedContinue );
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDENQUESTACKSESSION_EXIT2, this, (TInt) ESchedContinue );
+		return ESchedContinue;
 	}
 
 void DMMCStack::SchedGrabEntries()
@@ -1619,6 +1770,8 @@ void DMMCStack::SchedGrabEntries()
  * after the completion pass
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDGRABENTRIES_ENTRY, this );
+	
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sge"));
 
 	iAttention = EFalse;		// Strictly in this order
@@ -1628,6 +1781,7 @@ void DMMCStack::SchedGrabEntries()
 		iReadyQueue.Add( iEntryQueue );
 		RESTOREPREEMPTION
 		}
+	OstTraceFunctionExit1( DMMCSTACK_SCHEDGRABENTRIES_EXIT, this );
 	}
 
 void DMMCStack::SchedDisengage()
@@ -1637,6 +1791,7 @@ void DMMCStack::SchedDisengage()
  * clear up the dependent resources
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDDISENGAGE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sd"));
 
 	DMMCSession* sessP = iWorkSet.Remove();
@@ -1665,6 +1820,7 @@ void DMMCStack::SchedDisengage()
 		ASSPDisengage();
 
 	sessP->iState = 0;
+	OstTraceFunctionExit1( DMMCSTACK_SCHEDDISENGAGE_EXIT, this );
 	}
 
 inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedAbortPass()
@@ -1673,6 +1829,7 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedAbortPass()
  * only for the sake of Scheduler() clarity.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDABORTPASS_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sap"));
 
 	iAbortReq = EFalse;
@@ -1699,7 +1856,10 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedAbortPass()
 			iReadyQueue++;
 
 	if( iAbortReq )
-		return( ESchedLoop );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDABORTPASS_EXIT1, this, (TInt) ESchedLoop );
+		return ESchedLoop;
+	    }
 
 	// Clearing iAbortAll here is a bit dodgy. It wouldn't work if somebody interrupted us
 	// at this point, enqued a session and then immediately called Reset() - that session
@@ -1707,7 +1867,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedAbortPass()
 	// and process them in the Scheduler main loop) seems to be too expensive just to avoid
 	// this particular effect.
 	iAbortAll = EFalse;
-	return( ESchedContinue );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDABORTPASS_EXIT2, this, (TInt) ESchedContinue  );
+	return ESchedContinue;
 	}
 
 inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedCompletionPass()
@@ -1716,6 +1877,7 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedCompletionPass()
  * Returns either Continue or Loop.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDCOMPLETIONPASS_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:scp"));
 
 	iCompReq = EFalse;
@@ -1738,7 +1900,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedCompletionPass()
 				// DFC has been queued so return back to main loop.  Next time
 				// SchedGetOnDfc() will return EFalse, and the callback will be called.
 				iCompReq = ETrue;
-				return( ESchedLoop );
+				OstTraceFunctionExitExt( DMMCSTACK_SCHEDCOMPLETIONPASS_EXIT1, this, (TInt) ESchedLoop );
+				return ESchedLoop;
 				}
 
 			SchedDisengage();					// calls iWorkSet.Remove
@@ -1787,11 +1950,15 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedCompletionPass()
 			iWorkSet++;
 
 	if( iCompReq )
-		return( ESchedLoop );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDCOMPLETIONPASS_EXIT2, this, (TInt) ESchedLoop );
+		return ESchedLoop;
+	    }
 
 	iCompleteAllExitCode = 0;
 
-	return( ESchedContinue );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDCOMPLETIONPASS_EXIT3, this, ( TInt) ESchedContinue );
+	return ESchedContinue;
 	}
 
 inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedInitStack()
@@ -1799,10 +1966,14 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedInitStack()
  * "Immediate" InitStack initiator. Returns either Continue or Loop.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDINITSTACK_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sis"));
 
 	if( SchedGetOnDFC() )
-		return( ESchedLoop );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDINITSTACK_EXIT1, this, (TInt) ESchedLoop );
+		return ESchedLoop;
+	    }
 
 	if( iSessionP != NULL && (iStackState & KMMCStackStateJobChooser) == 0 )
 		{
@@ -1811,7 +1982,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedInitStack()
 			if( SchedGroundDown(iSessionP, KMMCErrPowerDown) )
 				{
 				MarkComplete( iSessionP, KMMCErrPowerDown );
-				return( ESchedLoop );
+				OstTraceFunctionExitExt( DMMCSTACK_SCHEDINITSTACK_EXIT2, this, (TInt) ESchedLoop );
+				return ESchedLoop;
 				}
 			}
 		else
@@ -1829,7 +2001,10 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedInitStack()
 	if( iSessionP == NULL || iSessionP->iSessionID != ECIMInitStack )
 		{
 		if( SchedEnqueStackSession(ECIMInitStack) )
-			return( ESchedLoop );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_SCHEDINITSTACK_EXIT3, this, (TInt) ESchedLoop );
+			return ESchedLoop;
+		    }
 
 		SchedSetContext( iStackSession );	// make the internal session to be current job
 		}
@@ -1841,7 +2016,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedInitStack()
 	iStackState |= KMMCStackStateInitInProgress;
 	// nothing can stop this session now; it's safe to clear iInitialise here.
 	iInitialise = EFalse;
-	return( ESchedContinue );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDINITSTACK_EXIT4, this, (TInt) ESchedContinue );
+	return ESchedContinue;
 	}
 
 inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSleepStack()
@@ -1849,13 +2025,15 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSleepStack()
  * "Immediate" Stack sleep mode. Returns either Continue or Loop.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDSLEEPSTACK_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:SchdSlp!"));
 
 	// Make sure Stack DFC is Running!
 	if( SchedGetOnDFC() )
 		{
 		__KTRACE_OPT(KPBUS1, Kern::Printf("mst:SchdSlp - DFC not running"));
-		return( ESchedLoop );
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDSLEEPSTACK_EXIT1, this, (TInt) ESchedLoop );
+		return ESchedLoop;
 		}
 
 	if( iSessionP != NULL && (iStackState & KMMCStackStateJobChooser) == 0 )
@@ -1865,7 +2043,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSleepStack()
 			// A session has been queued before sleep, 
 			// cancel sleep and loop for next session
 			iSleep = EFalse;
-			return( ESchedLoop );
+			OstTraceFunctionExitExt( DMMCSTACK_SCHEDSLEEPSTACK_EXIT2, this, (TInt) ESchedLoop );
+			return ESchedLoop;
 			}
 		}
 	
@@ -1875,7 +2054,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSleepStack()
 		__KTRACE_OPT(KPBUS1,Kern::Printf("SchdSlp: already Enqued"));
 		// Stack already busy cancel sleep
 		iSleep = EFalse;
-		return( ESchedLoop );
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDSLEEPSTACK_EXIT3, this, (TInt) ESchedLoop );
+		return ESchedLoop;
 		}
 
 	SchedSetContext( iStackSession );	// make the internal session to be current job
@@ -1885,7 +2065,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSleepStack()
 	iStackState |= KMMCStackStateSleepinProgress;
 	__KTRACE_OPT(KPBUS1, Kern::Printf("<mst:SchdSlp"));
 	
-	return( ESchedLoop );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDSLEEPSTACK_EXIT4, this, (TInt) ESchedLoop );
+	return ESchedLoop;
 	}
 
 
@@ -1894,14 +2075,21 @@ inline TBool DMMCStack::SchedPreemptable()
  * Checks if the current session can be preempted
  */
 	{	// strictly in the following order
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDPREEMPTABLE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:spe"));
 	
 	if( (iStackState & KMMCStackStateJobChooser) ||
 		(iSessionP->iState & KMMCSessStateDoReSchedule) )
-		return( ETrue );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT1, this, (TUint) ETrue );
+		return ETrue;
+	    }
 
 	if( (iSessionP->iBlockOn & KMMCBlockOnASSPFunction) )
-		return( EFalse );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT2, this, (TUint) EFalse );
+		return EFalse;
+	    }
 
 	TBool preemptDC = EFalse;	
 
@@ -1916,7 +2104,10 @@ inline TBool DMMCStack::SchedPreemptable()
 		// is set at the variant, and determines whether commands may be
 		// issued during the data transfer period.
 		if(!(iSessionP->iState & KMMCSessStateAllowDirectCommands))
-			return( EFalse );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT3, this, (TUint) EFalse );
+			return EFalse;
+		    }
 		
 		// We must consider the remaining blocking conditions
 		// before being sure that we can enable pre-emtion of this session
@@ -1924,23 +2115,39 @@ inline TBool DMMCStack::SchedPreemptable()
 		}
 
 	if( (iSessionP->iBlockOn & (KMMCBlockOnCardInUse | KMMCBlockOnNoRun)) )
-		return( ETrue );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT4, this, (TUint) ETrue );
+		return ETrue;
+	    }
 	
 	if( (iConfig.iModes & KMMCModeEnablePreemption) == 0 )
-		return( EFalse );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT5, this, (TUint) EFalse );
+		return EFalse;
+	    }
 
 	if( (iSessionP->iBlockOn & KMMCBlockOnGapTimersMask) &&
 		(iConfig.iModes & KMMCModePreemptInGaps) &&
 		(iSessionP->iState & KMMCSessStateSafeInGaps) )
-		return( ETrue );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT6, this, (TUint) ETrue );
+		return ETrue;
+	    }
 
 	if( iSessionP->iBlockOn & KMMCBlockOnInterrupt )
-		return( ETrue );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT7, this, (TUint) ETrue );
+		return ETrue;
+	    }
 
 	if(preemptDC)
-		return( ETrue );
+	    {
+		OstTraceFunctionExitExt( DDMMCSTACK_SCHEDPREEMPTABLE_EXIT8, this, (TUint) ETrue );
+		return ETrue;
+	    }
 		
-	return( EFalse );
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDPREEMPTABLE_EXIT9, this, (TUint) EFalse );
+	return EFalse;
 	}
 
 inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSession()
@@ -1948,37 +2155,54 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSession()
  * Current context analyser. Returns Exit, Loop or ChooseJob.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDSESSION_ENTRY, this );
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:ss"));
 
 	// If no current session selected then we need to choose one
 	if (iSessionP == NULL)
-		return(ESchedChooseJob);
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDSESSION_EXIT1, this, (TInt) ESchedChooseJob );
+		return ESchedChooseJob;
+	    }
 
 	// Check any static blocking conditions on the current session and remove if possible
 	if (SchedResolveStatBlocks(iSessionP)==ESchedLoop)
-		return(ESchedLoop);
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDSESSION_EXIT2, this, (TInt) ESchedLoop );
+		return ESchedLoop;
+	    }
 
 	// If current session is still blocked, see if we could pre-empt the session
 	if (iSessionP->iBlockOn)
 		{
 		if( SchedPreemptable() )
-			return(ESchedChooseJob);
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_SCHEDSESSION_EXIT3, this, (TInt) ESchedChooseJob );
+			return ESchedChooseJob;
+		    }
 
-		return( ESchedExit );	// No preemption possible
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDSESSION_EXIT4, this, (TInt) ESchedExit );
+		return ESchedExit;	// No preemption possible
 		}
 
 	// If the current session has been marked to be 'un-scheduled' then we
 	// need to choose another session if ones available
 	if ( (iSessionP->iState & KMMCSessStateDoReSchedule) )
-		return( ESchedChooseJob );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_SCHEDSESSION_EXIT5, this, (TInt) ESchedChooseJob );
+		return ESchedChooseJob;
+	    }
 
 	// Check if this session requires to be run in DFC context - loop if necessary
 	if ( (iSessionP->iState & KMMCSessStateDoDFC) )
 		{
 		iSessionP->iState &= ~KMMCSessStateDoDFC;
 		if( SchedGetOnDFC()==ESchedLoop )
-			return( ESchedLoop );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_SCHEDSESSION_EXIT6, this, (TInt) ESchedLoop );
+			return ESchedLoop;
+		    }
 		}
 
 	// Now we actually execute the current session
@@ -2023,7 +2247,8 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedSession()
 	if( exitCode )
 		MarkComplete( iSessionP, (exitCode & ~KMMCErrBypass) );
 
-	return(ESchedLoop);
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDSESSION_EXIT7, this, (TInt) ESchedLoop );
+	return ESchedLoop;
 	}
 
 TBool DMMCStack::SchedYielding(DMMCSession* aSessP)
@@ -2031,6 +2256,7 @@ TBool DMMCStack::SchedYielding(DMMCSession* aSessP)
  * Check whether the scheduler should yield to another command
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_SCHEDYIELDING_ENTRY, this );
 	// Test whether a full loop through the sessions has occurred during a yield
 	if ((aSessP->iBlockOn & KMMCBlockOnYielding) && (iStackState & KMMCStackStateYielding))
 		{
@@ -2038,7 +2264,9 @@ TBool DMMCStack::SchedYielding(DMMCSession* aSessP)
 		aSessP->iBlockOn &= ~KMMCBlockOnYielding;
 		iStackState &= ~KMMCStackStateYielding;
 		}
-	return(iStackState & KMMCStackStateYielding) != 0;
+	TBool ret = (iStackState & KMMCStackStateYielding) != 0;
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDYIELDING_EXIT, this, ret );
+	return ret;
 	}
 
 TBool DMMCStack::SchedAllowDirectCommands(DMMCSession* aSessP)
@@ -2046,6 +2274,7 @@ TBool DMMCStack::SchedAllowDirectCommands(DMMCSession* aSessP)
  * Check whether direct only commands can be run.
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_SCHEDALLOWDIRECTCOMMANDS_ENTRY, this );
 	TBool allowDirectCommands = EFalse;
 
 	// Test the remaining sessions to see if they have a DMA data transfer blockage which allow direct commands only
@@ -2058,7 +2287,8 @@ TBool DMMCStack::SchedAllowDirectCommands(DMMCSession* aSessP)
 		}			
 	while((aSessP != testSessP) && (testSessP != NULL));
 
-	return(allowDirectCommands);
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDALLOWDIRECTCOMMANDS_EXIT, this, allowDirectCommands );
+	return allowDirectCommands;
 	}
 
 inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedChooseJob()
@@ -2066,6 +2296,7 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedChooseJob()
  * Find an unblocked job to run. Returns Exit or Loop.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_SCHEDCHOOSEJOB_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:scj"));
 
 	iStackState |= KMMCStackStateJobChooser;
@@ -2110,7 +2341,10 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedChooseJob()
 		{
 		// first, remove all static blocking conditions
 		if( SchedResolveStatBlocks(sessP) )
-			return( ESchedLoop );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_SCHEDCHOOSEJOB_EXIT1, this, (TInt) ESchedLoop );
+			return ESchedLoop;
+		    }
 
 		TBool scheduleSession = ETrue;
 		// Test whether we are yielding 
@@ -2127,13 +2361,15 @@ inline DMMCStack::TMMCStackSchedStateEnum DMMCStack::SchedChooseJob()
 			{
 			iWorkSet.SetMarker();
 			SchedSetContext( sessP );
-			return( ESchedLoop );
+			OstTraceFunctionExitExt( DMMCSTACK_SCHEDCHOOSEJOB_EXIT2, this, (TInt) ESchedLoop );
+			return ESchedLoop;
 			}
 			
 		iWorkSet++;
 		}
 	
-	return( ESchedExit );		
+	OstTraceFunctionExitExt( DMMCSTACK_SCHEDCHOOSEJOB_EXIT3, this, (TInt) ESchedExit );
+	return ESchedExit;		
 	}
 
 void DMMCStack::StackDFC(TAny* aStackP)
@@ -2141,10 +2377,12 @@ void DMMCStack::StackDFC(TAny* aStackP)
  * This DFC is used to startup Stack Scheduler from the background.
  */
 	{
+	OstTraceFunctionEntry0( DMMCSTACK_STACKDFC_ENTRY );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sdf"));
 
 	DMMCStack* const stackP = static_cast<DMMCStack*>(aStackP);
 	stackP->Scheduler( stackP->iDFCRunning );
+	OstTraceFunctionExit0( DMMCSTACK_STACKDFC_EXIT );
 	}
 
 void DMMCStack::Scheduler(volatile TBool& aFlag)
@@ -2154,6 +2392,7 @@ void DMMCStack::Scheduler(volatile TBool& aFlag)
  * DoSchedule()
  */
 	{
+	OstTraceFunctionEntry0( DMMCSTACK_SCHEDULER_ENTRY );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sch"));
 
 	DISABLEPREEMPTION
@@ -2168,10 +2407,12 @@ void DMMCStack::Scheduler(volatile TBool& aFlag)
 	iStackState |= KMMCStackStateRunning;
 	RESTOREPREEMPTION
 	DoSchedule();
+	OstTraceFunctionExit0( DMMCSTACK_SCHEDULER_EXIT );
 	}
 
 void DMMCStack::DoSchedule()
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_DOSCHEDULE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">mst:dos"));
 
 	for(;;)
@@ -2224,6 +2465,7 @@ void DMMCStack::DoSchedule()
 			
 			RESTOREPREEMPTION
 			__KTRACE_OPT(KPBUS1,Kern::Printf("<mst:dos"));
+			OstTraceFunctionExit1( DMMCSTACK_DOSCHEDULE_EXIT1, this );
 			return;
 			}
 
@@ -2239,6 +2481,7 @@ void DMMCStack::Add(DMMCSession* aSessP)
  * Adds session aSessP to the EntryQueue (asynchronous function)
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_ADD_ENTRY, this );
 	ASSERT_NOT_ISR_CONTEXT
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:Add %d",TUint(aSessP->iSessionID)));
 
@@ -2247,6 +2490,7 @@ void DMMCStack::Add(DMMCSession* aSessP)
 	aSessP->iState |= KMMCSessStateEngaged;
 	RESTOREPREEMPTION
 	Scheduler( iAttention );
+	OstTraceFunctionExit1( DMMCSTACK_ADD_EXIT, this );
 	}
 
 void DMMCStack::Abort(DMMCSession* aSessP)
@@ -2254,16 +2498,21 @@ void DMMCStack::Abort(DMMCSession* aSessP)
  * Aborts a session
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_ABORT_ENTRY, this );
 	ASSERT_NOT_ISR_CONTEXT
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:abt"));
 
 	if( !aSessP->IsEngaged() )
+	    {
+		OstTraceFunctionExit1( DMMCSTACK_ABORT_EXIT1, this );
 		return;
+	    }
 
 	aSessP->iDoAbort = ETrue;
 	aSessP->iMachine.Abort();
 
 	Scheduler( iAbortReq );
+	OstTraceFunctionExit1( DMMCSTACK_ABORT_EXIT2, this );
 	}
 
 void DMMCStack::Stop(DMMCSession* aSessP)
@@ -2271,26 +2520,38 @@ void DMMCStack::Stop(DMMCSession* aSessP)
  * Signals session to stop
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_STOP1_ENTRY, this );
 	ASSERT_NOT_ISR_CONTEXT
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:stp"));
 
 	if( !aSessP->IsEngaged() )
+	    {
+		OstTraceFunctionExit1( DMMCSTACK_STOP1_EXIT1, this );
 		return;
+	    }
 
 	aSessP->iDoStop = ETrue;
+	OstTraceFunctionExit1( DMMCSTACK_STOP1_EXIT2, this );
 	}
 
 EXPORT_C void DMMCStack::Block(DMMCSession* aSessP, TUint32 aFlag)
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_BLOCK_ENTRY, this );
 	ASSERT_NOT_ISR_CONTEXT
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:blk"));
 
 	if( !aSessP->IsEngaged() )
+	    {
+		OstTraceFunctionExit1( DMMCSTACK_BLOCK_EXIT1, this );
 		return;
+	    }
 
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:blk:[aFlag=%08x, iBlockOn=%08x]", aFlag, aSessP->iBlockOn));
+	OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_BLOCK, "aFlag=0x%08x; iBlockOn=0x%08x", aFlag, aSessP->iBlockOn );
+	
 
 	(void)__e32_atomic_ior_ord32(&aSessP->iBlockOn, aFlag);
+	OstTraceFunctionExit1( DMMCSTACK_BLOCK_EXIT2, this );
 	}
 
 EXPORT_C void DMMCStack::UnBlock(DMMCSession* aSessP, TUint32 aFlag, TMMCErr anExitCode)
@@ -2299,14 +2560,20 @@ EXPORT_C void DMMCStack::UnBlock(DMMCSession* aSessP, TUint32 aFlag, TMMCErr anE
  * session is waiting on all of these events, then it is scheduled.
  */
 	{
+	OstTraceExt4(TRACE_FLOW, DMMCSTACK_UNBLOCK_ENTRY , "DMMCStack::UnBlock;aSessP=%x;aFlag=%x;anExitCode=%d;this=%x", (TUint) aSessP, (TUint) aFlag, (TInt) anExitCode, (TUint) this);
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:ubl"));
 
 	if (aSessP != NULL)
 		{
 		__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:ubl:[aFlag=%08x, iBlockOn=%08x", aFlag, aSessP->iBlockOn));
+		OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_UNBLOCK, "aFlag=0x%08x; iBlockOn=0x%08x", aFlag, aSessP->iBlockOn );
+		
 
 		if( (aSessP->iBlockOn & aFlag) == 0 )
+		    {
+			OstTraceFunctionExit1( DMMCSTACK_UNBLOCK_EXIT1, this );
 			return;
+		    }
 
 		// Must be either in a DFC or have the KMMCSessStateDoDFC flag set
 		__ASSERT_DEBUG( 
@@ -2320,6 +2587,7 @@ EXPORT_C void DMMCStack::UnBlock(DMMCSession* aSessP, TUint32 aFlag, TMMCErr anE
 		if( aSessP->iBlockOn == 0 )
 			Scheduler( iAttention );
 		}
+	OstTraceFunctionExit1( DMMCSTACK_UNBLOCK_EXIT2, this );
 	}
 
 void DMMCStack::UnlockStack(DMMCSession* aSessP)
@@ -2327,6 +2595,7 @@ void DMMCStack::UnlockStack(DMMCSession* aSessP)
  * Removes stack lock. Asynchronous function.
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_UNLOCKSTACK_ENTRY, this );
 	ASSERT_NOT_ISR_CONTEXT
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:ust"));
 
@@ -2337,6 +2606,7 @@ void DMMCStack::UnlockStack(DMMCSession* aSessP)
 		iLockingSessionP = NULL;
 		Scheduler( iAttention );
 		}
+	OstTraceFunctionExit1( DMMCSTACK_UNLOCKSTACK_EXIT1, this );
 	}
 
 EXPORT_C TInt DMMCStack::Stop(TMMCard* aCardP)
@@ -2345,6 +2615,7 @@ EXPORT_C TInt DMMCStack::Stop(TMMCard* aCardP)
  * Returns either KErrNone or KErrServerBusy.
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_STOP2_ENTRY, this );
 	ASSERT_NOT_ISR_CONTEXT
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:stp"));
 
@@ -2353,7 +2624,7 @@ EXPORT_C TInt DMMCStack::Stop(TMMCard* aCardP)
 	if( iStackState & KMMCStackStateRunning )
 		{
 		RESTOREPREEMPTION
-		return( KErrServerBusy );	// can not operate in foreground
+		return KErrServerBusy;	// can not operate in foreground
 		}
 
 	iStackState |= KMMCStackStateRunning;
@@ -2382,7 +2653,8 @@ EXPORT_C TInt DMMCStack::Stop(TMMCard* aCardP)
 
 	SchedGetOnDFC();
 	DoSchedule();
-	return( KErrNone );
+	OstTraceFunctionExitExt( DMMCSTACK_STOP2_EXIT, this, KErrNone );
+	return KErrNone;
 	}
 
 void DMMCStack::MarkComplete(DMMCSession* aSessP, TMMCErr anExitCode)
@@ -2390,6 +2662,7 @@ void DMMCStack::MarkComplete(DMMCSession* aSessP, TMMCErr anExitCode)
  * Marks session to be completed on the next scheduler pass.
  */
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSTACK_MARKCOMPLETE_ENTRY ,"DMMCStack::MarkComplete;aSessP=%x;anExitCode=%d;this=%x", (TUint) aSessP, (TInt) anExitCode, (TUint) this);
 	ASSERT_NOT_ISR_CONTEXT
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:mcp"));
 
@@ -2397,6 +2670,7 @@ void DMMCStack::MarkComplete(DMMCSession* aSessP, TMMCErr anExitCode)
 	aSessP->iMMCExitCode = anExitCode;
 	aSessP->iDoComplete = ETrue;
 	iCompReq = ETrue;
+	OstTraceFunctionExit1( DMMCSTACK_MARKCOMPLETE_EXIT, this );
 	}
 
 //
@@ -2407,6 +2681,7 @@ EXPORT_C TUint32 DMMCStack::EffectiveModes(const TMMCStackConfig& aClientConfig)
  * Calculates effective client modes as real client modes merged with iMasterConfig modes
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_EFFECTIVEMODES_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:em"));
 
 	const TUint32 masterMode = (iMasterConfig.iModes & iMasterConfig.iUpdateMask) |
@@ -2422,10 +2697,18 @@ EXPORT_C TUint32 DMMCStack::EffectiveModes(const TMMCStackConfig& aClientConfig)
 	const TUint32 effectiveMode = (userMode & userMask) | (masterMode & ~userMask);
 
 	if( effectiveMode & KMMCModeEnableClientConfig )
-		return( effectiveMode );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_EFFECTIVEMODES_EXIT1, this, ( TUint )( effectiveMode ) );
+		return effectiveMode;
+	    }
 	else
-		return( (effectiveMode & KMMCModeClientOverrides) |
-				(masterMode & ~(KMMCModeClientOverrides | KMMCModeClientMask)) );
+	    {
+	    
+		TUint32 ret = (effectiveMode & KMMCModeClientOverrides) |
+				(masterMode & ~(KMMCModeClientOverrides | KMMCModeClientMask));
+		OstTraceFunctionExitExt( DMMCSTACK_EFFECTIVEMODES_EXIT2, this, ( TUint )( ret ) );
+		return ret;
+	    }
 	}
 
 void DMMCStack::MergeConfig(DMMCSession* aSessP)
@@ -2433,6 +2716,7 @@ void DMMCStack::MergeConfig(DMMCSession* aSessP)
  * Merges client and master configuration into iConfig
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_MERGECONFIG_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:mc"));
 
 	TMMCStackConfig& cC = aSessP->iConfig;
@@ -2514,6 +2798,7 @@ void DMMCStack::MergeConfig(DMMCSession* aSessP)
 	iConfig.iBusConfig.iBusyTimeOut = (modes & KMMCModeClientBusyTimeOut)
 							? cC.iBusConfig.iBusyTimeOut
 							: mC.iBusConfig.iBusyTimeOut;
+	OstTraceFunctionExit1( DMMCSTACK_MERGECONFIG_EXIT, this );
 	}
 
 TBool DMMCStack::StaticBlocks()
@@ -2522,18 +2807,25 @@ TBool DMMCStack::StaticBlocks()
  * Returns ETrue if the session has to be stopped right now
  */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_STATICBLOCKS_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:stb"));
 
 	if( iSessionP->iDoStop )
 		{
 		MarkComplete( iSessionP, KMMCErrAbort );
-		return( ETrue );
+		OstTraceFunctionExitExt( DMMCSTACK_STATICBLOCKS_EXIT1, this, (TUint) ETrue );
+		return ETrue;
 		}
 
 	if( !iDFCRunning && (iSessionP->iState & KMMCSessStateDoDFC) )
-		return( ETrue );
+	    {
+		OstTraceFunctionExitExt( DMMCSTACK_STATICBLOCKS_EXIT2, this, (TUint) ETrue );
+		return ETrue;
+	    }
 
-	return( (iSessionP->iState & KMMCSessStateDoReSchedule) != 0 );
+	TBool ret = (iSessionP->iState & KMMCSessStateDoReSchedule) != 0; 
+	OstTraceFunctionExitExt( DMMCSTACK_STATICBLOCKS_EXIT3, this, ret );
+	return ret;
 	}
 
 
@@ -2566,7 +2858,6 @@ void DMMCStack::StackSessionCBST(TAny* aStackP)
  * Stack Session completion routine.
  */
 	{
-
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sscbs"));
 	static_cast<DMMCStack *>(aStackP)->StackSessionCB();
 	}
@@ -2574,13 +2865,15 @@ void DMMCStack::StackSessionCBST(TAny* aStackP)
 
 TInt DMMCStack::StackSessionCB()
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_STACKSESSIONCB_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:sscb "));
 
 	if (iStackState & KMMCStackStateSleepinProgress)
 		{
 		// Sleep completed update stack state
 		iStackState &= ~KMMCStackStateSleepinProgress;
-		return( 0 );
+		OstTraceFunctionExit1( DMMCSTACK_STACKSESSIONCB_EXIT1, this );
+		return 0;
 		}
 	
 	TMMCErr mmcError = iStackSession->MMCExitCode();
@@ -2646,6 +2939,7 @@ TInt DMMCStack::StackSessionCB()
 					{
 					// don't complete power up request yet
 					//  - This will be done in DMMCStack::AutoUnlockCB()
+					OstTraceFunctionExit1( DMMCSTACK_STACKSESSIONCB_EXIT2, this );
 					return 0;
 					}
 				}
@@ -2685,7 +2979,8 @@ TInt DMMCStack::StackSessionCB()
 
 		}
 
-	return( 0 );
+	OstTraceFunctionExit1( DMMCSTACK_STACKSESSIONCB_EXIT3, this );
+	return 0;
 	}
 
 void DMMCStack::AutoUnlockCBST(TAny *aStackP)
@@ -2698,6 +2993,7 @@ void DMMCStack::AutoUnlockCBST(TAny *aStackP)
 
 TInt DMMCStack::AutoUnlockCB()
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_AUTOUNLOCKCB_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("=mst:aucb"));
 
 	// This is the session end callback for iAutoUnlockSession,
@@ -2714,6 +3010,7 @@ TInt DMMCStack::AutoUnlockCB()
 	iSocket->PowerUpSequenceComplete(epocErr);
 	iStackState |= KMMCStackStateRunning;
 
+	OstTraceFunctionExit1( DMMCSTACK_AUTOUNLOCKCB_EXIT, this );
 	return 0;
 	}
 
@@ -2740,11 +3037,16 @@ inline TMMCErr DMMCStack::AttachCardSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_ATTACHCARDSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ATTACHCARDSM2, "EStBegin" );
 		if( s.iCardP == NULL )
-			return( KMMCErrNoCard );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_ATTACHCARDSM_EXIT1, this, (TInt) KMMCErrNoCard );
+			return KMMCErrNoCard;
+		    }
 
 		if( s.iCardP->iUsingSessionP != NULL && s.iCardP->iUsingSessionP != &s )
 			{
@@ -2755,7 +3057,10 @@ inline TMMCErr DMMCStack::AttachCardSM()
 		if( s.iCardP->IsPresent() && s.iCardP->iCID == s.iCID )
 			s.iCardP->iUsingSessionP = &s;
 		else
-			return( KMMCErrNoCard );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_ATTACHCARDSM_EXIT2, this, (TInt) KMMCErrNoCard );
+			return KMMCErrNoCard;
+		    }
 
 		s.iConfig.SetMode( KMMCModeCardControlled );	// for future context switching
 		iConfig.SetMode( KMMCModeCardControlled );		// for this context
@@ -2773,7 +3078,9 @@ inline TMMCErr DMMCStack::AttachCardSM()
 
 	SMF_STATE(EStAttStatus)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ATTACHCARDSM3, "EStAttStatus" );
 		s.PopCommandStack();
+		OstTraceFunctionExitExt( DMMCSTACK_ATTACHCARDSM_EXIT3, this, (TInt) err );
 		SMF_RETURN( err )
 
 	SMF_END
@@ -2795,17 +3102,21 @@ inline TMMCErr DMMCStack::CIMInitStackSM()
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:InitStackSM"));
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMINITSTACKSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMINITSTACKSM2, "EStBegin" );
 		m.SetTraps( KMMCErrAll );	// to prevent this macro from infinite restarts via iInitialise
 
 		SMF_INVOKES( CIMUpdateAcqSMST, EStInitDone )
 
 	SMF_STATE(EStInitDone)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMINITSTACKSM3, "EStInitDone" );
 		s.iState &= ~KMMCSessStateInProgress;	// now we won't be restarted
 		SchedGetOnDFC();						// StackSessionCB must be on DFC
+		OstTraceFunctionExitExt( DMMCSTACK_CIMINITSTACKSM_EXIT, this, (TInt) err );
 		SMF_RETURN( err )						// _?_ power cycles can be performed here if error
 
 	SMF_END
@@ -2840,9 +3151,11 @@ TMMCErr DMMCStack::CIMUpdateAcqSM()
 
 		DMMCSession& s=Session();
 		DMMCPsu* psu=(DMMCPsu*)iSocket->iVcc;
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM2, "EStBegin" );
 		// This macro works naked and must not be preempted
 		iConfig.RemoveMode( KMMCModeEnablePreemption | KMMCModeCardControlled );
 		// Ensure DFC is running before and after powering up
@@ -2865,6 +3178,7 @@ TMMCErr DMMCStack::CIMUpdateAcqSM()
 
 	SMF_STATE(EStPoweredUp)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM3, "EStPoweredUp" );
 		// Switch on the bus clock in identification mode
 		SetBusConfigDefaults(iMasterConfig.iBusConfig, KMMCBusClockFOD);
 		DoSetClock(KMMCBusClockFOD);
@@ -2879,6 +3193,7 @@ TMMCErr DMMCStack::CIMUpdateAcqSM()
 
 	SMF_STATE(EStClockOn)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM4, "EStClockOn" );
 		// Check if there are any cards present in the stack
 		if (!HasCardsPresent())
 			SMF_GOTOS( EStCheckStack )
@@ -2895,16 +3210,19 @@ TMMCErr DMMCStack::CIMUpdateAcqSM()
 
 	SMF_STATE(EStStartInterrogation)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM5, "EStStartInterrogation" );
 		// NB: RCAs are not unlocked here. They will be unlocked one by one during the update of card info array.
 		SMF_INVOKES( AcquireStackSMST, EStCheckStack )
 
 	SMF_STATE(EStCheckStack)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM6, "EStCheckStack" );
 		// Check that all known cards are still present by issuing select/deselect
 		SMF_INVOKES( CheckStackSMST, EStCardCap )
 
 	SMF_STATE(EStCardCap)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM7, "EStCardCap" );
 		// Call a licencee-specific state machine to allow card capabilities to be modified.
 		SMF_INVOKES( ModifyCardCapabilitySMST, EStIssueDSR )
 
@@ -2918,6 +3236,7 @@ TMMCErr DMMCStack::CIMUpdateAcqSM()
 		// of a multiplexed bus such as SD), the highest clock is returned and the clock
 		// rate is changed when a new card is selected.
 		//
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM8, "EStIssueDSR" );
 		TUint maxClk;
 		iCardArray->UpdateAcquisitions(&maxClk);
 		SetBusConfigDefaults( iMasterConfig.iBusConfig, maxClk );
@@ -2932,6 +3251,7 @@ TMMCErr DMMCStack::CIMUpdateAcqSM()
 		
 	SMF_STATE(EStFinishUp)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMUPDATEACQSM9, "EStFinishUp" );
 		s.iState &= ~(KMMCSessStateInProgress | KMMCSessStateCritical);
 
 		// Update/Init stack has been completed. 
@@ -2967,9 +3287,11 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 
 	DMMCSession& s = Session();
 	TBool initSingleCard = (s.CardP() == NULL) ? (TBool)EFalse : (TBool)ETrue;
+	OstTrace1( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM2, "EStBegin" );
 		if(initSingleCard)
 			{
 			iSelectedCardIndex = iCxCardCount;
@@ -2994,6 +3316,8 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 
 	SMF_STATE(EStTestNextCard)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM3, "EStTestNextCard" );
+
 		// any more cards ?
 		if (++iSelectedCardIndex >= iCxCardCount)
 			SMF_GOTOS(EStNoMoreCards);
@@ -3011,9 +3335,13 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 
 	SMF_STATE(EStGetExtendedCSD)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM4, "EStGetExtendedCSD" );
+	
 		// Get the Extended CSD if this is an MMC version 4 card
 
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">ConfigureHighSpeed(), SpecVers() %u", s.CardP()->CSD().SpecVers()));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM5, "SpecVers()=%u", s.CardP()->CSD().SpecVers() );
+		
 
 		// clear the Extended CSD contents in case this is a pre-version 4 card or the read fails.
 		memset(s.CardP()->iExtendedCSD.Ptr(), 0, KMMCExtendedCSDLength);
@@ -3030,7 +3358,8 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 		SMF_INVOKES(CIMReadWriteBlocksSMST, EStGotExtendedCSD)
 
 	SMF_STATE(EStGotExtendedCSD)
-				
+		
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM6, "EStGotExtendedCSD" );
 		if (err != KMMCErrNone)
 			{
 			SMF_GOTOS(EStExit);
@@ -3043,6 +3372,8 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 
 	SMF_STATE(EStGotModifiedExtendedCSD)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM7, "EStGotExtendedCSD" );
+	
 		__KTRACE_OPT(KPBUS1, Kern::Printf("Extended CSD"));
 		__KTRACE_OPT(KPBUS1, Kern::Printf("CSDStructureVer:            %u", s.CardP()->ExtendedCSD().CSDStructureVer()));
 		__KTRACE_OPT(KPBUS1, Kern::Printf("ExtendedCSDRev:             %u", s.CardP()->ExtendedCSD().ExtendedCSDRev()));
@@ -3070,7 +3401,14 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 		__KTRACE_OPT(KPBUS1, Kern::Printf("BootConfig:                 %u", s.CardP()->ExtendedCSD().BootConfig()));
 		__KTRACE_OPT(KPBUS1, Kern::Printf("BootBusWidth:               %u", s.CardP()->ExtendedCSD().BootBusWidth()));
 		__KTRACE_OPT(KPBUS1, Kern::Printf("EraseGroupDef:              %u", s.CardP()->ExtendedCSD().EraseGroupDef()));
-				
+		
+		OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM8, "CSDStructureVer=%u; ExtendedCSDRev=%u; SupportedCmdSet=%u", s.CardP()->ExtendedCSD().CSDStructureVer(), s.CardP()->ExtendedCSD().ExtendedCSDRev(), s.CardP()->ExtendedCSD().SupportedCmdSet() );
+		OstTraceDefExt4( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM9, "PowerClass26Mhz360V=0x%02x; PowerClass52Mhz360V=0x%02x; PowerClass26Mhz195V=0x%02x; PowerClass52Mhz195V=0x%02x", s.CardP()->ExtendedCSD().PowerClass26Mhz360V(), s.CardP()->ExtendedCSD().PowerClass52Mhz360V(), s.CardP()->ExtendedCSD().PowerClass26Mhz195V(), s.CardP()->ExtendedCSD().PowerClass52Mhz195V() );
+		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM10, "CardType=%u; CmdSet=%u; CmdSetRev=%u; PowerClass=%u; HighSpeedTiming=%u", s.CardP()->ExtendedCSD().CardType(), s.CardP()->ExtendedCSD().CmdSet(), s.CardP()->ExtendedCSD().CmdSetRev(), s.CardP()->ExtendedCSD().PowerClass(), s.CardP()->ExtendedCSD().HighSpeedTiming() );
+		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM11, "HighCapacityEraseGroupSize=%u; AccessSize=%u; BootInfo=%u; BootSizeMultiple=%u; EraseTimeoutMultiple=%u", s.CardP()->ExtendedCSD().HighCapacityEraseGroupSize(), s.CardP()->ExtendedCSD().AccessSize(), s.CardP()->ExtendedCSD().BootInfo(), s.CardP()->ExtendedCSD().BootSizeMultiple(), s.CardP()->ExtendedCSD().EraseTimeoutMultiple() );
+		OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM12, "ReliableWriteSector=%u; HighCapWriteProtGroupSize=%u; SleepCurrentVcc=%u; SleepCurrentVccQ=%u; SleepAwakeTimeout=%u", s.CardP()->ExtendedCSD().ReliableWriteSector(), s.CardP()->ExtendedCSD().HighCapacityWriteProtectGroupSize(), s.CardP()->ExtendedCSD().SleepCurrentVcc(), s.CardP()->ExtendedCSD().SleepCurrentVccQ(), s.CardP()->ExtendedCSD().SleepAwakeTimeout() );
+		OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_INITSTACKAFTERUNLOCKSM13, "BootConfig=%u; BootBusWidth=%u; EraseGroupDef=%u", s.CardP()->ExtendedCSD().BootConfig(), s.CardP()->ExtendedCSD().BootBusWidth(), s.CardP()->ExtendedCSD().EraseGroupDef() );
+		
 		if (s.CardP()->ExtendedCSD().ExtendedCSDRev() >= 3)
 			{
 			if (!(s.CardP()->ExtendedCSD().EraseGroupDef()) && s.CardP()->ExtendedCSD().HighCapacityEraseGroupSize())
@@ -3083,6 +3421,8 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 					0);
 	
 				__KTRACE_OPT(KPBUS1, Kern::Printf(">Writing to EXT_CSD (EEraseGroupDefIndex), arg %08X", (TUint32) arg));
+				OstTrace1( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM14, "Writing to EXT_CSD (EEraseGroupDefIndex); arg=0x%08x", (TUint32) arg );
+				
 				s.FillCommandDesc(ECmdSwitch, arg);
 				
 				SMF_INVOKES(ExecSwitchCommandST, EStEraseGroupDefSet)
@@ -3093,6 +3433,8 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 		
 	SMF_STATE(EStEraseGroupDefSet)
 	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM15, "EStEraseGroupDefSet" );
+	
 		if (err == KMMCErrNone)
 			{
 			// EEraseGroupDef has been updated succussfully, 
@@ -3102,10 +3444,12 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 	
 	SMF_STATE(EStDetermineBusWidthAndClock)
 	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM16, "EStDetermineBusWidthAndClock" );
 		SMF_INVOKES( DetermineBusWidthAndClockSMST, EStGotBusWidthAndClock )
 
     SMF_STATE(EStGotBusWidthAndClock)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM17, "EStGotBusWidthAndClock" );
 		SMF_NEXTS(initSingleCard ? EStExit : EStTestNextCard)
 
 		if(iMultiplexedBus || iCardArray->CardsPresent() == 1)
@@ -3117,8 +3461,11 @@ EXPORT_C TMMCErr DMMCStack::InitStackAfterUnlockSM()
 
 	SMF_STATE(EStNoMoreCards)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM18, "EStNoMoreCards" );
 
 	SMF_STATE(EStExit)
+	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_INITSTACKAFTERUNLOCKSM19, "EStExit" );
 		m.ResetTraps();
 
 	SMF_END
@@ -3154,8 +3501,11 @@ TMMCErr DMMCStack::DetermineBusWidthAndClockSM()
 
 	DMMCSession& s = Session();
 	TMMCard* cardP = iCardArray->CardP(iSelectedCardIndex);
+	OstTrace1( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
+	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM2, "EStBegin" );
 		// Trap Switch errors & no-response errors
 		m.SetTraps(KMMCErrResponseTimeOut | KMMCErrStatus);
 
@@ -3164,6 +3514,8 @@ TMMCErr DMMCStack::DetermineBusWidthAndClockSM()
 
 	SMF_STATE(EStWritePowerClass)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM3, "EStWritePowerClass" );
+	
 		// Check the card type is valid
 		// The only currently valid values for this field are 0x01 or 0x03
 		TUint cardType = cardP->iExtendedCSD.CardType();
@@ -3171,6 +3523,8 @@ TMMCErr DMMCStack::DetermineBusWidthAndClockSM()
 			cardType != (TExtendedCSD::EHighSpeedCard26Mhz | TExtendedCSD::EHighSpeedCard52Mhz))
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardType));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM4, "Unsupported card type=%u", cardType );
+			
 			SMF_GOTOS(EStExit);
 			}
 
@@ -3193,12 +3547,15 @@ TMMCErr DMMCStack::DetermineBusWidthAndClockSM()
 				0);
 
 			__KTRACE_OPT(KPBUS1, Kern::Printf(">ConfigureHighSpeed(), Writing to EXT_CSD (EPowerClass), arg %08X", (TUint32) arg));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM5, "Writing to EXT_CSD (EPowerClass); arg=0x%08x", (TUint32) arg );
 			s.FillCommandDesc(ECmdSwitch, arg);
 			SMF_INVOKES(ExecSwitchCommandST, EStStartBusTest)
 			}
 
 	SMF_STATE(EStStartBusTest)
 		
+        OstTrace0( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM6, "EStStartBusTest" );
+        	
 		if (err != KMMCErrNone)
 			{
 			SMF_GOTOS(EStExit);
@@ -3209,6 +3566,8 @@ TMMCErr DMMCStack::DetermineBusWidthAndClockSM()
 		SMF_INVOKES(ExecBusTestSMST, EStExit);
 
 	SMF_STATE(EStExit)
+	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM7, "EStExit" );
 		m.ResetTraps();
 
 	SMF_END
@@ -3244,13 +3603,17 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 
 	DMMCSession& s = Session();
 	TMMCard* cardP = iCardArray->CardP(iSelectedCardIndex);
+	OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+        OstTrace0( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM2, "EStBegin" );
+        
 		// Trap Switch errors & no-response errors
 		m.SetTraps(KMMCErrResponseTimeOut | KMMCErrStatus);
 
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">ConfigureHighSpeed(), iCxCardCount %u", iCxCardCount));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM3, "iCxCardCount=%d", iCxCardCount );
 
 		cardP->SetHighSpeedClock(0);
 
@@ -3261,6 +3624,7 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 			cardType != (TExtendedCSD::EHighSpeedCard26Mhz | TExtendedCSD::EHighSpeedCard52Mhz))
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardType));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM4, "Unsupported card type=%u", cardType );
 			SMF_GOTOS(EStExit);
 			}
 
@@ -3275,12 +3639,15 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 				0);
 
 			__KTRACE_OPT(KPBUS1, Kern::Printf(">ConfigureHighSpeed(), Writing to EXT_CSD (EBusWidthMode), arg %08X", (TUint32) arg));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM5, "Writing to EXT_CSD (EBusWidthMode); arg=0x%x", (TUint32) arg );
 			s.FillCommandDesc(ECmdSwitch, arg);
 			SMF_INVOKES(ExecSwitchCommandST, EStConfigureBusWidth)
 			}
 
 	SMF_STATE(EStConfigureBusWidth)
 
+        OstTrace0( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM6, "EStConfigureBusWidth" );
+        
 		if (err != KMMCErrNone)
 			{
 			SMF_GOTOS(EStExit);
@@ -3299,6 +3666,9 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 		// fall through to next state
 
 	SMF_STATE(EStWriteHsTiming)
+	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM7, "EStWriteHsTiming" );
+	
 		if (iBusWidthAndClock == E1Bit20Mhz)
 			SMF_GOTOS(EStExit);
 
@@ -3309,12 +3679,15 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 			0);
 
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">ConfigureHighSpeed(), Writing to EXT_CSD (EHighSpeedInterfaceTiming), arg %08X", (TUint32) arg));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM8, "Writing to EXT_CSD (EHighSpeedInterfaceTiming); arg=0x%x", (TUint32) arg );
 		s.FillCommandDesc(ECmdSwitch, arg);
 		SMF_INVOKES(ExecSwitchCommandST, EStConfigureClock)
 
 
 	SMF_STATE(EStConfigureClock)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM9, "EStConfigureClock" );
+	
 		if (err != KMMCErrNone)
 			{
 			DoSetBusWidth(EBusWidth1);
@@ -3327,6 +3700,9 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 			            TMMCMachineInfoV4::EClockSpeed26Mhz)));
 
 	SMF_STATE(EStExit)
+	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM10, "EStExit" );
+	
 		m.ResetTraps();
 
 	SMF_END
@@ -3345,15 +3721,19 @@ TMMCErr DMMCStack::ExecSwitchCommand()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECSWITCHCOMMAND1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
-		SMF_INVOKES(ExecCommandSMST, EStSendStatus)
+    	OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSWITCHCOMMAND2, "EStBegin" );
+    	SMF_INVOKES(ExecCommandSMST, EStSendStatus)
 
 	SMF_STATE(EStSendStatus)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSWITCHCOMMAND3, "EStSendStatus" );
 		s.FillCommandDesc(ECmdSendStatus, 0);
 		SMF_INVOKES(ExecCommandSMST, EStGetStatus)
 
 	SMF_STATE(EStGetStatus)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSWITCHCOMMAND4, "EStGetStatus" );
 		const TMMCStatus st(s.ResponseP());
 
 		const TMMCardStateEnum st1 = st.State();
@@ -3383,9 +3763,12 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 	
+        OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM2, "EStBegin" );
+        
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">ExecSleepCommandSM()"));
 		
 		iAutoUnlockIndex = -1;
@@ -3393,6 +3776,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 		
 	SMF_STATE(EStIndexNxtCard)
 	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM3, "EStIndexNxtCard" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">EStIndexNxtCard"));
 		// the cycle is finished when iAutoUnlockIndex == KMaxMultiMediaCardsPerStack
 		if(iAutoUnlockIndex >= TInt(KMaxMMCardsPerStack))
@@ -3415,6 +3799,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 			if (useIndex)
 				{
 				__KTRACE_OPT(KPBUS1, Kern::Printf(">Card[%d]: is v4.3 device",iAutoUnlockIndex));
+				OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM4, "Card[%d]: is v4.3+ device", iAutoUnlockIndex );
 				break;
 				}
 			}
@@ -3435,6 +3820,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 		
 	SMF_STATE(EStSleepAwakeIssued)
 		 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM5, "EStSleepAwakeIssued" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">EStSleepAwakeIssued!"));
 		
 		const TMMCStatus status(s.ResponseP());
@@ -3446,6 +3832,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 			// R1b is issued before Sleep state is achieved and 
 			// will therefore return the previous state which was Standby
 			__KTRACE_OPT(KPBUS1, Kern::Printf(">Card[%d]: SLEEP",iAutoUnlockIndex));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM6, "Card[%d]: SLEEP", iAutoUnlockIndex );
 			
 			// Ensure card status is ECardStateSlp
 			s.CardP()->iStatus.UpdateState(ECardStateSlp);
@@ -3456,6 +3843,8 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 		else
 			{ 
 			__KTRACE_OPT(KPBUS1, Kern::Printf(">Card[%d]: UNKNOWN",iAutoUnlockIndex));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM7, "Card[%d]: UNKNOWN", iAutoUnlockIndex );
+			
 			return (KMMCErrStatus);
 			}
 		
@@ -3463,6 +3852,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 
 	SMF_STATE(EStUpdateStackState)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM8, "EStUpdateStackState" );
 		if (iStackState & KMMCStackStateSleep)
 			{ 
 			// Media has been transitioned to sleep state
@@ -3477,6 +3867,7 @@ TMMCErr DMMCStack::ExecSleepCommandSM()
 			
 	SMF_STATE(EStDone)
 		
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECSLEEPCOMMANDSM9, "EStDone" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("<ExecSleepCommandSM()"));
 		
 	SMF_END
@@ -3496,9 +3887,11 @@ TMMCErr DMMCStack::ExecAwakeCommandSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM2, "EStBegin" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">ExecAwakeCommandSM()"));
 		
 		// Call PSL to ensure VccQ is powered up before continuing
@@ -3506,6 +3899,7 @@ TMMCErr DMMCStack::ExecAwakeCommandSM()
 		
 	SMF_STATE(EStPoweredUp)	
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM3, "EStPoweredUp" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("VccQ Powered Up"));
 		
 		//Issue CMD5 to awaken media
@@ -3517,6 +3911,7 @@ TMMCErr DMMCStack::ExecAwakeCommandSM()
 		
 	SMF_STATE(EStAwakeIssued)
 		 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM4, "EStAwakeIssued" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf(">>EStAwakeIssued!"));
 		
 		TMMCStatus status(s.ResponseP());
@@ -3526,19 +3921,22 @@ TMMCErr DMMCStack::ExecAwakeCommandSM()
 			// R1b is issued before Standby state is achieved and 
 			// will therefore return the previous state which was Sleep
 			__KTRACE_OPT(KPBUS1, Kern::Printf(">Card[%d]: STANDBY",iAutoUnlockIndex));
-			
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM5, "Card[%d]: STANDBY", iAutoUnlockIndex );
 			s.CardP()->iStatus.UpdateState(ECardStateStby);
 			}
 		else
 			{ 
 			__KTRACE_OPT(KPBUS1, Kern::Printf(">Card[%d]: UNKNOWN",iAutoUnlockIndex));
-			return (KMMCErrStatus);
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM6, "Card[%d]: UNKNOWN", iAutoUnlockIndex );
+			OstTraceFunctionExitExt( DMMCSTACK_EXECAWAKECOMMANDSM_EXIT, this, (TInt) KMMCErrStatus );
+			return KMMCErrStatus;
 			}
 
 		s.PopCommandStack();	
 
 	SMF_STATE(EStDone)
 	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECAWAKECOMMANDSM7, "EStDone" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("<ExecAwakeCommandSM()"));
 	
 	SMF_END
@@ -3553,6 +3951,7 @@ void DMMCStack::DetermineBusWidthAndClock(
 	TUint& aPowerClass,
 	TBusWidthAndClock& aBusWidthAndClock)
 	{
+	OstTraceExt2(TRACE_FLOW, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCK_ENTRY, "DMMCStack::DetermineBusWidthAndClock;aLowVoltage=%d;this=%x", (TInt) aLowVoltage, (TUint) this);
 
 	// Set default return values - in case power constraints aren't matched
 	aPowerClass = 0;
@@ -3564,7 +3963,10 @@ void DMMCStack::DetermineBusWidthAndClock(
 	TMMCMachineInfoV4Pckg machineInfoPckg(machineInfo);
 	MachineInfo(machineInfoPckg);
 	if (machineInfo.iVersion < TMMCMachineInfoV4::EVersion4)
+	    {
+		OstTraceFunctionExit1( DMMCSTACK_DETERMINEBUSWIDTHANDCLOCK_EXIT1, this );
 		return;
+	    }
 
 	TBusWidth maxBusWidth = machineInfo.iMaxBusWidth;
 	TInt maxClockSpeedInMhz = machineInfo.iMaxClockSpeedInMhz;
@@ -3614,10 +4016,13 @@ void DMMCStack::DetermineBusWidthAndClock(
 		}
 
 	__KTRACE_OPT(KPBUS1, Kern::Printf("aPowerClass %u, targetWidthAndClock = %08X", aPowerClass, aBusWidthAndClock));
+	OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCK, "aPowerClass=%u; targetWidthAndClock=0x%08x", aPowerClass, (TUint) aBusWidthAndClock );
+	OstTraceFunctionExit1( DMMCSTACK_DETERMINEBUSWIDTHANDCLOCK_EXIT2, this );
 	}
 
 TUint DMMCStack::GetPowerClass(const TMMCard& aCard, TBusWidthAndClock aWidthAndClock, TBool aLowVoltage)
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSTACK_GETPOWERCLASS_ENTRY, "DMMCStack::GetPowerClass;aWidthAndClock=%d;aLowVoltage=%d;this=%x", (TInt) aWidthAndClock, (TInt) aLowVoltage, (TUint) this);
 	// The power class for 4 bit bus configurations is in the low nibble,
 	// The power class for 8 bit bus configurations is in the high nibble,
 	#define LO_NIBBLE(val) (val & 0x0F)
@@ -3670,6 +4075,7 @@ TUint DMMCStack::GetPowerClass(const TMMCard& aCard, TBusWidthAndClock aWidthAnd
 			}
 		}
 
+		OstTraceFunctionExitExt( DMMCSTACK_GETPOWERCLASS_EXIT, this, powerClass );
 		return powerClass;
 	}
 
@@ -3689,25 +4095,30 @@ TMMCErr DMMCStack::ExecBusTestSM()
 		};
 
 	DMMCSession& s = Session();
+	OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 		//
 		// Start the BUSTEST sequence at the maximum supported by the PSL
 		//  - iSpare[0] keeps track of the current bus width
 		//
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM2, "EStBegin" );
 		if (iBusWidthAndClock & E8BitMask)
 			{
 			iSpare[0] = EBusWidth8;
 			__KTRACE_OPT(KPBUS1, Kern::Printf("...Hardware supports 8-bit bus"));
+			OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM3, "Hardware supports 8-bit bus" );
 			}
 		else if(iBusWidthAndClock & E4BitMask)
 			{
 			iSpare[0] = EBusWidth4;
 			__KTRACE_OPT(KPBUS1, Kern::Printf("...Hardware supports 4-bit bus"));
+			OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM4, "Hardware supports 4-bit bus" );
 			}
 		else
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("...Hardware supports 1-bit bus"));
+			OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM5, "Hardware supports 1-bit bus" );
 			iSpare[0] = EBusWidth1;
 			}
 
@@ -3719,12 +4130,14 @@ TMMCErr DMMCStack::ExecBusTestSM()
 		//
 		// Issue the BUSTEST_W command
 		//
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM6, "EStSendBusTest_W" );
 		TInt length = 2;
 		switch(iSpare[0])
 			{
 			case EBusWidth8:
 				// Set the host to 8-bit mode
 				__KTRACE_OPT(KPBUS1, Kern::Printf("BUSTEST : EBusWidth8"));
+				OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM7, "BUSTEST : EBusWidth8" );
 				DoSetBusWidth(EBusWidth8);
 				iPSLBuf[0] = 0x55;
 				iPSLBuf[1] = 0xaa;
@@ -3733,6 +4146,7 @@ TMMCErr DMMCStack::ExecBusTestSM()
 			case EBusWidth4:
 				// Set the host to 4-bit mode
 				__KTRACE_OPT(KPBUS1, Kern::Printf("BUSTEST : EBusWidth4"));
+				OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM8, "BUSTEST : EBusWidth4" );
 				DoSetBusWidth(EBusWidth4);
 				iPSLBuf[0] = 0x5a;
 				iPSLBuf[1] = 0x00;
@@ -3742,6 +4156,7 @@ TMMCErr DMMCStack::ExecBusTestSM()
 			default:
 				// Set the host to 1-bit mode
 				__KTRACE_OPT(KPBUS1, Kern::Printf("BUSTEST : EBusWidth1"));
+				OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM9, "BUSTEST : EBusWidth1" );
 				DoSetBusWidth(EBusWidth1);
 				iPSLBuf[0] = 0x40;
 				iPSLBuf[1] = 0x00;
@@ -3751,6 +4166,7 @@ TMMCErr DMMCStack::ExecBusTestSM()
 		// Issue BUSTEST_W
 
 		__KTRACE_OPT(KPBUS1, Kern::Printf("...Issue BUSTEST_W [%02x:%02x]", iPSLBuf[1], iPSLBuf[0]));
+		OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM10, "Issue BUSTEST_W [%02x:%02x]", (TUint) iPSLBuf[1], (TUint) iPSLBuf[0] );
 
 		m.SetTraps(KMMCErrDataCRC); // CRC check is optional for BUSTEST
 
@@ -3762,11 +4178,14 @@ TMMCErr DMMCStack::ExecBusTestSM()
 		//
 		// Issue the BUSTEST_R command
 		//
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM11, "EStSendBusTest_R" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("...got BUSTEST_W response : %02x", err));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM12, "Got BUSTEST_W response=0x%02x", err );
 
 		if(err == KMMCErrNone || err == KMMCErrDataCRC)
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("...sending BUSTEST_R"));
+			OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM13, "Sending BUSTEST_R" );
 
 			iPSLBuf[0] = 0;
 			iPSLBuf[1] = 0;
@@ -3777,6 +4196,7 @@ TMMCErr DMMCStack::ExecBusTestSM()
 			}
 		else
 			{
+			OstTraceFunctionExitExt( DMMCSTACK_EXECBUSTESTSM_EXIT, this, (TInt) KMMCErrNotSupported );
 			SMF_RETURN(KMMCErrNotSupported);
 			}
 
@@ -3784,7 +4204,9 @@ TMMCErr DMMCStack::ExecBusTestSM()
 		//
 		// Validate the BUSTEST_R data with that issued by BUSTEST_W
 		//
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM14, "EStGotBusTest_R" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("...got BUSTEST_R response [%02x:%02x] : err(%02x)", iPSLBuf[1], iPSLBuf[0], err));
+		OstTraceExt3( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM15, "Got BUSTEST_R response [%02x:%02x]; err(%x)", (TUint) iPSLBuf[1], (TUint) iPSLBuf[0], (TUint) err );
 
 		TBool retry = EFalse;
 		TBool is52MHzSupported = (iBusWidthAndClock & E52MhzMask) ? (TBool)ETrue : (TBool)EFalse;
@@ -3845,6 +4267,7 @@ TMMCErr DMMCStack::ExecBusTestSM()
 		if(retry)
 			{
 			__KTRACE_OPT(KPBUS1, Kern::Printf("...BUSTEST Failed : Retry"));
+			OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM16, "BUSTEST Failed : Retry" );
 			SMF_GOTOS(EstSendBusTest_W);
 			}
 		
@@ -3866,10 +4289,12 @@ TMMCErr DMMCStack::ExecBusTestSM()
 			}
 
 		__KTRACE_OPT(KPBUS1, Kern::Printf("...BUSTEST OK"));
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM17, "BUSTEST OK" );
 
 		DoSetBusWidth(EBusWidth1);
 
 	SMF_STATE(EStExit)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECBUSTESTSM18, "EStExit" );
 		iConfig.SetMode( KMMCModeCardControlled );
 
 	SMF_END
@@ -3885,6 +4310,7 @@ TMMCErr DMMCStack::ExecBusTestSM()
 */
 EXPORT_C void DMMCStack::GetInterface(TInterfaceId aInterfaceId, MInterface*& aInterfacePtr)
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_GETINTERFACE_ENTRY, this );
 	if (aInterfaceId == KInterfaceCancelSession)
 		{
 		DMMCSession* session = (DMMCSession*&) aInterfacePtr;
@@ -3892,6 +4318,7 @@ EXPORT_C void DMMCStack::GetInterface(TInterfaceId aInterfaceId, MInterface*& aI
 		UnlockStack(session);
 		}
 
+	OstTraceFunctionExit1( DMMCSTACK_GETINTERFACE_EXIT, this );
 	}
 
 
@@ -3911,17 +4338,21 @@ TMMCErr DMMCStack::GoIdleSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_GOIDLESM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_GOIDLESM2, "EStBegin" );
 		s.FillCommandDesc( ECmdGoIdleState, 0 );
 		iCxPollRetryCount = KMMCIdleCommandsAtRestart;
 
 	SMF_STATE(EStIdleLoop)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_GOIDLESM3, "EStIdleLoop" );
 		SMF_INVOKES( ExecCommandSMST, EStIdleEndCheck )
 
 	SMF_STATE(EStIdleEndCheck)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_GOIDLESM4, "EStIdleEndCheck" );
 		if( --iCxPollRetryCount > 0 )
 			SMF_INVOKES( RetryGapTimerSMST, EStIdleLoop )
 
@@ -3965,9 +4396,11 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 		DMMCSession& s=Session();
 		DMMCPsu* psu=(DMMCPsu*)iSocket->iVcc;
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM2, "EStBegin" );
 		iRCAPool.ReleaseUnlocked();
 		iCxPollRetryCount = 0; // Reset max number of poll attempts on card busy
 
@@ -3975,6 +4408,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStIdle)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM3, "EStIdle" );
 		// If this platform doesn't support an adjustable voltage PSU then there is
 		// no point in interogating the card(s) present for their supported range
 		if ( !(psu->VoltageSupported()&KMMCAdjustableOpVoltage) )
@@ -3993,6 +4427,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStFullRangeDone)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM4, "EStFullRangeDone" );
 		if( err )												// If timeout
 			{
 			iConfig.RemoveMode( KMMCModeEnableTimeOutRetry );	// There is no point to do it second time
@@ -4008,7 +4443,10 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 				{
 				// One or more card is incompatible with our h/w
 				if (iMaxCardsInStack<=1)
-					return( KMMCErrNotSupported ); // There can only be one card - we don't support it.
+				    {
+					OstTraceFunctionExitExt( DMMCSTACK_ACQUIRESTACKSM_EXIT1, this, (TInt) KMMCErrNotSupported );
+					return KMMCErrNotSupported; // There can only be one card - we don't support it.
+				    }
 				else
 					// Force the default range
 					iCurrentOpRange=(psu->VoltageSupported() & ~KMMCAdjustableOpVoltage);  
@@ -4026,6 +4464,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStSetRangeLoop)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM5, "EStSetRangeLoop" );
 		// Repeat CMD1 this time setting Current Op Range
 		s.Command().iArgument = iCurrentOpRange | KMMCOCRAccessModeHCS | KMMCOCRBusy;
 
@@ -4035,6 +4474,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStSetRangeBusyCheck)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM6, "EStSetRangeLoop" );
 		if( !err )
 			{
 			// Bit31 of the OCR response is low if the cards are still powering up.
@@ -4042,12 +4482,17 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 			const TBool isBusy = ((ocrResponse & KMMCOCRBusy) == 0);
 			__KTRACE_OPT(KPBUS1,Kern::Printf("-mmc:upd:bsy%d", isBusy));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM7, "MMC busy status=%d", isBusy );
 
 			if (isBusy)	
 				{
 				// Some cards are still busy powering up. Check if we should timeout
 				if ( ++iCxPollRetryCount > iConfig.OpCondBusyTimeout() )
-					return( KMMCErrBusTimeOut );
+				    {
+					OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM8, "Peripheral bus timeout" );
+					OstTraceFunctionExitExt( DMMCSTACK_ACQUIRESTACKSM_EXIT2, this, (TInt) KMMCErrBusTimeOut );
+					return KMMCErrBusTimeOut;
+				    }
 				m.ResetTraps();
 				SMF_INVOKES( RetryGapTimerSMST, EStSetRangeLoop )
 				}
@@ -4057,6 +4502,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 			if((ocrResponse & KMMCOCRAccessModeMask) == KMMCOCRAccessModeHCS)
 				{
 				__KTRACE_OPT(KPBUS1, Kern::Printf("Found large MMC card."));
+				OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM9, "Found large MMC card" );
 				iSpare[0] = KMMCardIsHighCapacity;
 				}
 			}
@@ -4066,12 +4512,16 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 		// All cards are now ready and notified of the voltage range - ask ASSP to set it up
 		psu->SetVoltage(iCurrentOpRange);
 		if (psu->SetState(EPsuOnFull) != KErrNone)
-			return(KMMCErrHardware);
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_ACQUIRESTACKSM_EXIT3, this, (TInt) KMMCErrHardware );
+			return KMMCErrHardware;
+		    }
 
 		iCardArray->InitNewCardScan(); // Collect new cards, one by one
 
 	SMF_STATE(EStCIDLoop)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM10, "EStCIDLoop" );
 		if ( iCardArray->NewCardCount() >= iMaxCardsInStack )
 			SMF_GOTOS( EStCIDsDone )
 
@@ -4082,6 +4532,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStSendCIDIssued)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM11, "EStSendCIDIssued" );
 		if( !err )
 			{
 			// A card responded with a CID. Create a new card entry in the card array 
@@ -4098,6 +4549,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStCIDsDone)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM12, "EStCIDsDone" );
 		// All cards are initialised; get all their CSDs
 		m.ResetTraps();				// We are no longer processing any errors
 
@@ -4109,11 +4561,13 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStCSDLoop)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM13, "EStCSDLoop" );
 		s.Command().iArgument = TMMCArgument(iCardArray->NewCardP(iCxCardCount)->iRCA);
 		SMF_INVOKES( ExecCommandSMST, EStSendCSDDone )
 
 	SMF_STATE(EStSendCSDDone)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM14, "EStSendCSDDone" );
 		// Store the CSD in the new card entry
 		TMMCard* cardP = iCardArray->NewCardP(iCxCardCount);
 		cardP->iCSD = s.ResponseP();
@@ -4138,6 +4592,7 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStMergeCards)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM15, "EStMergeCards" );
 		// Merging the old card info with newly acquired cards (we will ask each card for status
 		// to determine whether it's really present later).
 		if( SchedGetOnDFC() )
@@ -4149,10 +4604,14 @@ EXPORT_C TMMCErr DMMCStack::AcquireStackSM()
 
 	SMF_STATE(EStReMergeCards)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ACQUIRESTACKSM16, "EStReMergeCards" );
 		if( SchedGetOnDFC() )
 			SMF_WAIT
 		if ( iCardArray->MergeCards(EFalse)!=KErrNone ) // There are more cards in the stack than we can handle
-			return(KMMCErrTooManyCards);
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_ACQUIRESTACKSM_EXIT4, this, (TInt) KMMCErrTooManyCards );
+			return KMMCErrTooManyCards;
+		    }
 
 	SMF_END
 	}
@@ -4176,8 +4635,10 @@ TMMCErr DMMCStack::SwitchToLowVoltageSM()
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:SwLowVolt"));
 
 	DMMCPsu* psu=(DMMCPsu*)iSocket->iVcc;
+	OstTrace1( TRACE_INTERNALS, DMMCSTACK_SWITCHTOLOWVOLTAGESM1, "Current PSU=0x%x", psu );
 
 	SMF_BEGIN
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_SWITCHTOLOWVOLTAGESM2, "EStBegin" );
 		// turn power off
 		DoPowerDown();
 		psu->SetState(EPsuOff);
@@ -4185,15 +4646,20 @@ TMMCErr DMMCStack::SwitchToLowVoltageSM()
 		// turn power back on in low voltage mode
 		psu->SetVoltage(iCurrentOpRange);
 		if (psu->SetState(EPsuOnFull) != KErrNone)
-			return(KMMCErrHardware);
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_SWITCHTOLOWVOLTAGESM_EXIT, this, (TInt) KMMCErrHardware );
+			return KMMCErrHardware;
+		    }
 
 		SMF_INVOKES( DoPowerUpSMST, EStPoweredUp )
 
 	SMF_STATE(EStPoweredUp)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_SWITCHTOLOWVOLTAGESM3, "EStPoweredUp" );
 		// turn the clock back on
 		SMF_INVOKES( InitClockOnSMST, EStClockOn )	// Feed init clock to the bus
 
 	SMF_STATE(EStClockOn)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_SWITCHTOLOWVOLTAGESM4, "EStClockOn" );
 		// wait for 1ms and then 74 clock cycles
 		// 74 clock cylces @ 400 Khz = 74 / 400,000 = 0.000185 secs = 0.185 ms
 		// so total wait = 1.185 ms
@@ -4217,9 +4683,11 @@ inline TMMCErr DMMCStack::CIMCheckStackSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMCHECKSTACKSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMCHECKSTACKSM2, "EStBegin" );
 		// This macro works naked and must not be preempted
 		iConfig.RemoveMode( KMMCModeEnablePreemption | KMMCModeCardControlled );
 		s.iState |= KMMCSessStateInProgress;
@@ -4228,6 +4696,7 @@ inline TMMCErr DMMCStack::CIMCheckStackSM()
 
 	SMF_STATE(EStFinish)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMCHECKSTACKSM3, "EStFinish" );
 		s.iState &= ~KMMCSessStateInProgress;
 
 	SMF_END
@@ -4250,14 +4719,17 @@ inline TMMCErr DMMCStack::CheckStackSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CHECKSTACKSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKSTACKSM2, "EStBegin" );
 		iCxCardCount=-1;
 		m.SetTraps( KMMCErrResponseTimeOut );
 
 	SMF_STATE(EStLoop)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKSTACKSM3, "EStLoop" );
 		if ( ++iCxCardCount == (TInt)iMaxCardsInStack )
 			SMF_EXIT
 
@@ -4270,7 +4742,9 @@ inline TMMCErr DMMCStack::CheckStackSM()
 
 	SMF_STATE(EStCardSelectedGotStatus)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKSTACKSM4, "EStCardSelectedGotStatus" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:cssm:err%08x", err));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CHECKSTACKSM5, "err=0x%08x", err );
 
 		if(err)
 			{
@@ -4293,6 +4767,7 @@ inline TMMCErr DMMCStack::CheckStackSM()
 		SMF_INVOKES(ExecCommandSMST, EStCardDeselected)
 			
 	SMF_STATE(EStCardDeselected)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKSTACKSM6, "EStCardDeselected" );
 		SMF_GOTOS( EStLoop )
 
 	SMF_END
@@ -4325,9 +4800,11 @@ inline TMMCErr DMMCStack::CheckLockStatusSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CHECKLOCKSTATUSSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKLOCKSTATUSSM2, "EStBegin" );
 		iCxCardCount=-1;
 		m.SetTraps( KMMCErrResponseTimeOut );
 		iMinorBufLen = KMinMinorBufSize;
@@ -4346,7 +4823,9 @@ inline TMMCErr DMMCStack::CheckLockStatusSM()
 
 	SMF_STATE(EStCardSelectedGotStatus)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKLOCKSTATUSSM3, "EStCardSelectedGotStatus" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:cssm:err%08x", err));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CHECKLOCKSTATUSSM4, "err=0x%08x", err );
 		if ( !err )
 			{
 			TMMCard& card=*(iCardArray->CardP(iCxCardCount));
@@ -4400,7 +4879,9 @@ inline TMMCErr DMMCStack::CheckLockStatusSM()
 
 	SMF_STATE(EStCheckLockStatus)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKLOCKSTATUSSM5, "EStCheckLockStatus" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("-mst:cssm:err%08x", err));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CHECKLOCKSTATUSSM6, "err=0x%08x", err );
 
 		if ((err & KMMCErrUpdPswd) || 
 		   ((err & KMMCErrStatus) && (s.LastStatus().Error() == KMMCStatErrLockUnlock)))
@@ -4420,6 +4901,7 @@ inline TMMCErr DMMCStack::CheckLockStatusSM()
 		SMF_INVOKES(ExecCommandSMST, EStCardDeselected)
 			
 	SMF_STATE(EStCardDeselected)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CHECKLOCKSTATUSSM7, "EStCardDeselected" );
 		SMF_GOTOS( EStLoop )
 
 	SMF_END
@@ -4465,10 +4947,11 @@ inline TMMCErr DMMCStack::PollGapTimerSM()
 			};
 #ifdef __EPOC32__
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_POLLGAPTIMERSM1, "Current session=0x%x", &s );
 #endif
 
 	SMF_BEGIN
-
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_POLLGAPTIMERSM2, "EStBegin" );
 #ifdef __EPOC32__
 		s.SynchBlock( KMMCBlockOnPollTimer );
 		s.iPollTimer.OneShot(KMMCPollGapInMilliseconds,EFalse);
@@ -4497,10 +4980,11 @@ inline TMMCErr DMMCStack::RetryGapTimerSM()
 			};
 #ifdef __EPOC32__
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_RETRYGAPTIMERSM1, "Current session=0x%x", &s );
 #endif
 
 	SMF_BEGIN
-
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_RETRYGAPTIMERSM2, "EStBegin" );
 #ifdef __EPOC32__
 		s.SynchBlock( KMMCBlockOnRetryTimer );
 		s.iRetryTimer.OneShot(KMMCRetryGapInMilliseconds,EFalse);
@@ -4530,9 +5014,11 @@ inline TMMCErr DMMCStack::ProgramTimerSM()
 
 #ifdef __EPOC32__
 	DMMCSession &s = Session();
+	OstTrace1( TRACE_INTERNALS, DMMCSTACK_PROGRAMTIMERSM1, "Current session=0x%x", &s );
 #endif
 
 	SMF_BEGIN
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_PROGRAMTIMERSM2, "EStBegin" );
 #ifdef __EPOC32__
 		s.SynchBlock(KMMCBlockOnPgmTimer);
 		s.iProgramTimer.Cancel();
@@ -4562,9 +5048,11 @@ TMMCErr DMMCStack::LowVoltagePowerupTimerSM()
 
 #ifdef __EPOC32__
 	DMMCSession &s = Session();
+	OstTrace1( TRACE_INTERNALS, DMMCSTACK_LOWVOLTAGEPOWERUPTIMERSM1, "Current session=0x%x", &s );
 #endif
 
 	SMF_BEGIN
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_LOWVOLTAGEPOWERUPTIMERSM2, "EStBegin" );
 #ifdef __EPOC32__
 		s.SynchBlock(KMMCBlockOnRetryTimer);
 		s.iRetryTimer.OneShot(KMMCLowVoltagePowerUpTimeoutInMilliseconds,EFalse);
@@ -4616,9 +5104,11 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM1, "Current session=0x%x", &s );
 		
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM2, "EStBegin" );
 		if ( ( s.CardRCA() != 0 ) && ( (s.CardP()->iStatus.State()) == ECardStateSlp) )
 			{
 			// Currently selected media is asleep, so it must be awoken
@@ -4627,6 +5117,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 	
 	SMF_STATE(EStExecCmd)
 	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM3, "EStExecCmd" );
 		TMMCCommandDesc& cmd = s.Command();
 		// clearup some internally used flags
 		cmd.iFlags &= ~(KMMCCmdFlagExecTopBusy|KMMCCmdFlagExecSelBusy);
@@ -4634,6 +5125,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 	SMF_STATE(EStRetry)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM4, "EStRetry" );
 		TMMCCommandDesc& cmd = s.Command();
 		m.SetTraps( KMMCErrBasic & ~Command().iExecNotHandle);	// Processing all trappable errors
 
@@ -4668,15 +5160,17 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		iCxDeselectCount=iDeselectsToIssue;
 
 	SMF_STATE(EStDeselectLoop)
-
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM5, "EStDeselectLoop" );
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStDeselectEndCheck)	
 
 	SMF_STATE(EStDeselectEndCheck)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM6, "EStDeselectEndCheck" );
 		// If we got an error and this is the last de-select then give up
 		if (err && iCxDeselectCount == 1)
 			{
 			s.PopCommandStack();
+			OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT1, this, (TInt) err );
 			SMF_RETURN(err)
 			}
 
@@ -4688,6 +5182,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 	SMF_STATE(EStAnalyseCommand)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM7, "EStAnalyseCommand" );
 		TMMCCommandDesc& cmd = s.Command();
 		// Check if its un-important whether the card is in transfer state (i.e
 		// selected) or not for the command we are about to execute. Such
@@ -4695,7 +5190,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		
 		// This state machine should never send CMD55
 		if (cmd.iCommand == ECmdAppCmd)
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT2, this, (TInt) KMMCErrNotSupported );
 			SMF_RETURN (KMMCErrNotSupported)
+		    }
 
 		SMF_NEXTS( EStTestAppCommand )
 		if (cmd.iCommand == ECmdGoIdleState || cmd.iCommand == ECmdSelectCard || cmd.iCommand == ECmdSendStatus)
@@ -4717,7 +5215,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 					SMF_GOTONEXTS
 				// Get the RCA of the card
 				if ( (targetRCA = s.CardRCA()) == 0 )
+				    {
+				    OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT3, this, (TInt) KMMCErrNoCard );
 					SMF_RETURN( KMMCErrNoCard )
+				    }
 				break;
 				}
 			default:
@@ -4737,6 +5238,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 	SMF_STATE(EStSelectDone)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM8, "EStSelectDone" );
 		TMMCCommandDesc& cmd = s.Command();
 		
 		if ( err )
@@ -4748,7 +5250,8 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 			s.PopCommandStack();
 			SMF_NEXTS(EStErrRecover)
-			return(err);		// re-enter the next state with that error
+			OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT4, this, (TInt) err );
+			return err;		// re-enter the next state with that error
 			}
 
 		// Are we trying to recover from a top-level command returning busy (by de-selecting and re-selecting)
@@ -4789,10 +5292,14 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 	SMF_STATE(EStBlockCountCmdIssued)
 		
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM9, "EStBlockCountCmdIssued" );
 		const TMMCStatus status(s.ResponseP());
 		s.PopCommandStack();
 		if (status.Error())
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT5, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus)
+		    }
 
 		if(err & KMMCErrNotSupported)
 			{
@@ -4802,6 +5309,7 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		// Fall through...		
 
 	SMF_STATE(EStTestAppCommand)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM10, "EStTestAppCommand" );
 		TMMCCommandDesc& cmd = s.Command();
 		if (cmd.iSpec.iCommandClass != KMMCCmdClassApplication)
 			SMF_GOTOS( EStIssueCommand )
@@ -4811,16 +5319,19 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 		SMF_INVOKES(IssueCommandCheckResponseSMST,EStIssueAppCommandDone)
 		
 	SMF_STATE(EStIssueAppCommandDone)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM11, "EStIssueAppCommandDone" );
 		s.PopCommandStack();
 		if ( err )
 			{
 			SMF_NEXTS(EStErrRecover)
-			return(err);		// re-enter the next state with that error
+            OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT6, this, (TInt) err );
+			return err;		// re-enter the next state with that error
 			}
 
 
 	SMF_STATE(EStIssueCommand)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM12, "EStIssueCommand" );
 		TMMCCommandDesc& cmd = s.Command();
 		// If its an addressed command (rather than a selected command), then
 		// setup the argument with the RCA. (Commands requiring card to be
@@ -4829,7 +5340,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			{
 			const TRCA targetRCA = s.CardRCA();
 			if ( targetRCA == 0 )
+			    {
+			    OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT7, this, (TInt) KMMCErrNoCard );
 				SMF_RETURN( KMMCErrNoCard )
+			    }
 			cmd.iArgument.SetRCA(targetRCA);
 			}
 
@@ -4838,12 +5352,14 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 	SMF_STATE(EStCommandIssued)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM13, "EStCommandIssued" );
 		// If command was succesful then we've finished.
 		if (!err)
 			SMF_EXIT
 
 	SMF_STATE(EStErrRecover)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_EXECCOMMANDSM14, "EStErrRecover" );
 		TMMCCommandDesc& cmd = s.Command();
 		const TUint32 modes=iConfig.iModes;
 		SMF_NEXTS(EStRetry)
@@ -4863,12 +5379,16 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			if (cmd.iTotalLength < cmd.BlockLength())
 				{
 				DeselectsToIssue(1);
-				return(err);
+				OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT8, this, (TInt) err );
+				return err;
 				}
 			}
 
 		if ((modes & KMMCModeEnableRetries) == 0)
-			return( err );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT9, this, (TInt) err );
+			return err;
+		    }
 
 		const TUint32 toMask = (KMMCErrResponseTimeOut|KMMCErrDataTimeOut);
 		const TUint32 crcMask = (KMMCErrResponseCRC|KMMCErrDataCRC|KMMCErrCommandCRC);
@@ -4880,7 +5400,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 				DeselectsToIssue( 1 );						// enforce deselect before any retries
 
 				if( (modes & KMMCModeCardControlled) == 0 )
-					return( err );		// we wouldn't know what to select - no retries
+				    {
+					OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT10, this, (TInt) err );
+					return err;		// we wouldn't know what to select - no retries
+				    }
 				}
 
 			TUint32 gapEnabled = 0;
@@ -4892,7 +5415,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 
 				if( (modes & KMMCModeEnableTimeOutRetry) == 0 ||
 					cmd.iTimeOutRetries > iConfig.iTimeOutRetries )
-					return( err );
+				    {
+					OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT11, this, (TInt) err );
+					return err;
+				    }
 				}
 
 			if( err & crcMask )
@@ -4903,7 +5429,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 				if( (modes & KMMCModeEnableCRCRetry) == 0	||
 					cmd.iCRCRetries > iConfig.iCRCRetries		||
 					((err & KMMCErrDataCRC) != 0 && (modes & KMMCModeDataCRCRetry) == 0) )
-					return( err );
+				    {
+					OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT12, this, (TInt) err );
+					return err;
+				    }
 				}
 
 			if( (modes & gapEnabled) == gapEnabled )
@@ -4935,7 +5464,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			s.iGlobalRetries++;
 
 			if( s.iGlobalRetries > KMMCMaxGlobalRetries )
-				return( err );
+			    {
+				OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT13, this, (TInt) err );
+				return err;
+			    }
 
 			s.SwapMe();		// To prevent the initialiser from aborting this session
 			SMF_WAIT		// Initialiser will take over here
@@ -4952,7 +5484,10 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			if( (modes & KMMCModeEnableBusyPoll) == 0 ||
 				((modes & KMMCModeCardControlled) == 0 && cmd.iCommand != ECmdSelectCard) ||
 				cmd.iPollAttempts > iConfig.iPollAttempts )
-				return( err );
+			    {
+				OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT14, this, (TInt) err );
+				return err;
+			    }
 
 			if( modes & KMMCModeBusyPollGap )
 				{
@@ -4971,7 +5506,8 @@ inline TMMCErr DMMCStack::ExecCommandSM()
 			SMF_GOTONEXTS
 			}
 
-		return( err );
+		OstTraceFunctionExitExt( DMMCSTACK_EXECCOMMANDSM_EXIT15, this, (TInt) err );
+		return err;
 
 	SMF_END
 	}
@@ -4995,16 +5531,20 @@ TMMCErr DMMCStack::IssueCommandCheckResponseSM()
 
 		DMMCSession& s=Session();
 		TMMCCommandDesc& cmd = Command();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM2, "EStBegin" );
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:Issue %d %x",TUint(cmd.iCommand),TUint(cmd.iArgument)));
-
+		OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM3, "CMD%02d(0x%08x)", TUint(cmd.iCommand), TUint(cmd.iArgument) );
+		
 		// Stop the Controller from powering down the card due to bus inactivity
 		iSocket->ResetInactivity(0);
 
 	SMF_STATE(EStIssueCommand)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM4, "EStIssueCommand" );
 		// If command is directed at a specific card then save this command in card object
 		if (iConfig.iModes & KMMCModeCardControlled)
 			{
@@ -5028,10 +5568,14 @@ TMMCErr DMMCStack::IssueCommandCheckResponseSM()
 
 	SMF_STATE(EStCommandIssued)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM5, "EStCommandIssued" );
 #ifdef ENABLE_DETAILED_SD_COMMAND_TRACE
 		cmd.Dump(s.ResponseP(), err);
 #endif
 
+		OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM6, "MMC Protocol: CMD%02d(0x%08x)", (TInt) cmd.iCommand, (TUint) cmd.iArgument );
+		OstTraceDefExt4( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM7, "MMC Protocol: RSP%d - LEN 0x%08x - ERR 0x%08x - STAT 0x%08x", (TUint) cmd.iSpec.iResponseType, (TUint) cmd.iSpec.iResponseLength, (TUint) err, (TUint) TMMC::BigEndian32(s.ResponseP()) );
+		
 		TMMCErr exitCode=err;
 		// If we have just de-selected all cards in the stack, RCA(0) then ignore response timeout.
 		if ( cmd.iCommand==ECmdSelectCard && TRCA(cmd.iArgument)==0 )
@@ -5047,6 +5591,7 @@ TMMCErr DMMCStack::IssueCommandCheckResponseSM()
 				TMMCStatus status=s.ResponseP();
 				s.iLastStatus=status;
 				__KTRACE_OPT(KPBUS1, Kern::Printf("mmc:ec:st=%08x", TUint32(status)));
+				OstTrace1( TRACE_INTERNALS, DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM8, "status=0x%08x", TUint32(status) );
 
 				if (iConfig.iModes & KMMCModeCardControlled)
 					s.iCardP->iStatus=status;
@@ -5062,6 +5607,7 @@ TMMCErr DMMCStack::IssueCommandCheckResponseSM()
 		if (cmd.iCommand==ECmdSelectCard && exitCode==KMMCErrNone)
 			iSelectedCard=TRCA(cmd.iArgument);
 
+		OstTraceFunctionExitExt( DMMCSTACK_ISSUECOMMANDCHECKRESPONSESM_EXIT, this, ( TInt ) exitCode );
 		SMF_RETURN(exitCode)
 
 	SMF_END
@@ -5089,8 +5635,10 @@ inline TMMCErr DMMCStack::NakedSessionSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_NAKEDSESSIONSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_NAKEDSESSIONSM2, "EStBegin" );
 		s.iState |= KMMCSessStateInProgress;
 
 		if( (iConfig.iModes & KMMCModeCardControlled) != 0 )
@@ -5098,10 +5646,12 @@ inline TMMCErr DMMCStack::NakedSessionSM()
 
 	SMF_BPOINT(EStAttached)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_NAKEDSESSIONSM3, "EStAttached" );
 		SMF_INVOKES( ExecCommandSMST, EStFinish )
 
 	SMF_STATE(EStFinish)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_NAKEDSESSIONSM4, "EStFinish" );
 		s.iState &= ~KMMCSessStateInProgress;
 	SMF_END
 	}
@@ -5123,29 +5673,38 @@ inline TMMCErr DMMCStack::CIMSetupCardSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_CIMSETUPCARDSM1, "Current session=0x%x; Last status=0x%x", (TUint) &s, (TUint) s.iLastStatus );
 
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:SetupCardSM %x",TUint(s.iLastStatus)));
 
 	SMF_BEGIN
+	
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMSETUPCARDSM2, "EStBegin" );
 		s.iState |= KMMCSessStateInProgress;
 
 		SMF_INVOKES( AttachCardSMST, EStAttached )	// attachment is mandatory here
 
 	SMF_BPOINT(EStAttached)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMSETUPCARDSM3, "EStAttached" );
 		s.FillCommandDesc( ECmdSelectCard, 0 );
 		SMF_INVOKES( ExecCommandSMST, EStSelected )
 
 	SMF_STATE(EStSelected)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMSETUPCARDSM4, "EStSelected" );
 		if( !s.iCardP->IsReady() )
-			return( KMMCErrNoCard );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_CIMSETUPCARDSM_EXIT, this, (TInt) KMMCErrNoCard );
+			return KMMCErrNoCard;
+		    }
 
 		s.FillCommandDesc( ECmdSendCSD, Command().iArgument ); // NB: the card will be deselected to execute this command
 		SMF_INVOKES( ExecCommandSMST, EStGotCSD )
 
 	SMF_STATE(EStGotCSD)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMSETUPCARDSM5, "EStGotCSD" );
 		s.iCardP->iCSD = s.ResponseP();
 
 		s.iState &= ~KMMCSessStateInProgress;
@@ -5188,17 +5747,22 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM1, "Current session=0x%x; Last status=0x%x", (TUint) &s, (TUint) s.iLastStatus );
 
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:RWBlocksSM %x",TUint(s.iLastStatus)));
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM2, "EStBegin" );
 		if(s.iSessionID == ECIMWriteBlock || s.iSessionID == ECIMWriteMBlock)
 			{
 			// Check that the card supports class 4 (Write) commands
 			const TUint ccc = s.iCardP->CSD().CCC();
 			if(!(ccc & KMMCCmdClassBlockWrite))
-				return( KMMCErrNotSupported );
+			    {
+				OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT1, this, (TInt) KMMCErrNotSupported );
+				return KMMCErrNotSupported;
+			    }
 			}
 
 		s.iState |= KMMCSessStateInProgress;
@@ -5206,6 +5770,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStRestart)		// NB: ErrBypass is not processed here
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM3, "EStRestart" );
 		SMF_CALLMEWR(EStRestart) // Create a recursive call entry to recover from the errors trapped
 		m.SetTraps(KMMCErrStatus);
 		if (s.Command().iSpec.iCommandClass!=KMMCCmdClassApplication || s.Command().iCommand==ECmdAppCmd)
@@ -5216,11 +5781,15 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 	SMF_BPOINT(EStAttached)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM4, "EStAttached" );
 		TMMCCommandDesc& cmd = s.Command();
 
 		const TUint32 blockLength = cmd.BlockLength();
 		if(blockLength == 0)
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT2, this, (TInt) KMMCErrArgument );
 			return KMMCErrArgument;
+		    }
 
 		if(s.iSessionID == ECIMReadBlock	||
 		   s.iSessionID == ECIMWriteBlock	||
@@ -5231,6 +5800,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 			if(!cmd.AdjustForBlockOrByteAccess(s))
 				{
 				// unable to convert command arguments to suit the underlying block/byte access mode
+				OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT3, this, (TInt) KMMCErrArgument );
 				return KMMCErrArgument;
 				}
 			}
@@ -5248,14 +5818,19 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStLength1)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM5, "EStAttached" );
 		const TMMCStatus status(s.ResponseP());
 		s.PopCommandStack();
 		if (status.Error())
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT4, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus)
+		    }
 		s.iCardP->iSetBlockLen = s.Command().BlockLength();
 
 	SMF_STATE(EStLengthSet)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM6, "EStLengthSet" );
 		TMMCCommandDesc& cmd = s.Command();
 		TUint opType = 0;
 		const TUint kTypeWrite =	KBit0;
@@ -5316,6 +5891,8 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 				//
 				if(s.iCardP->CSD().SpecVers() >= 3)
 					{
+					OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM7, "CMD12 (STOP_TRANSMISSION) not used" );
+					
 					cmd.iSpec.iUseStopTransmission = EFalse;
 					SMF_NEXTS(EStIssueBlockCount)
 					}
@@ -5329,6 +5906,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 		SMF_GOTONEXTS
 
 	SMF_STATE(EStIssueBlockCount)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM8, "EStIssueBlockCount" );
 		//
 		// Issues SET_BLOCK_COUNT (CMD23) for MB R/W data transfers.
 		// This is only issued if MMC version >= 3.1 and the PSL
@@ -5352,10 +5930,14 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStBlockCountCmdIssued)
 		
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM9, "EStBlockCountCmdIssued" );
 		const TMMCStatus status(s.ResponseP());
 		s.PopCommandStack();
 		if (status.Error())
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT5, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus)
+		    }
 
 		if(err & KMMCErrNotSupported)
 			{
@@ -5367,13 +5949,18 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStAppCmdIssued)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM10, "EStAppCmdIssued" );
 		const TMMCStatus status(s.ResponseP());
 		s.PopCommandStack();
 		if (status.Error())
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT6, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus)
+		    }
 
 	SMF_BPOINT(EStBpoint1)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM11, "EStBpoint1" );
 		// NB We need to trap KMMCErrStatus errors, because if one occurs, 
 		// we still need to wait to exit PRG/RCV/DATA state 
 		m.SetTraps(KMMCErrStatus);
@@ -5382,6 +5969,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 
 	SMF_STATE(EStIssued)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM12, "EStIssued" );
 		// check state of card after data transfer with CMD13.
 
 		if (s.Command().Direction() != 0)
@@ -5392,6 +5980,8 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 		SMF_GOTOS(EStRWFinish);
 
 	SMF_STATE(EStWaitFinish)
+
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM13, "EStWaitFinish" );
 		// Save the status and examine it after issuing CMD13...
 		// NB We don't know where in the command stack the last response is stored (e.g. there may 
 		// have bee a Deselect/Select issued), but we do know last response is stored in iLastStatus
@@ -5402,6 +5992,7 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 		SMF_INVOKES(ExecCommandSMST, EStWaitFinish1)
 
 	SMF_STATE(EStWaitFinish1)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM14, "EStWaitFinish1" );
 		const TMMCStatus status(s.ResponseP());
 		s.PopCommandStack();
 
@@ -5414,19 +6005,28 @@ EXPORT_C TMMCErr DMMCStack::CIMReadWriteBlocksSM()
 			SMF_INVOKES(ProgramTimerSMST, EStWaitFinish);
 			}
 		if (status.Error())
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT7, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus)
+		    }
 #endif
 		
 		// Fall through if CURRENT_STATE is not PGM or DATA
 	SMF_STATE(EStRWFinish)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEBLOCKSSM15, "EStRWFinish" );
 		if (TMMCStatus(s.ResponseP()).Error() != 0)
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT8, this, (TInt) KMMCErrStatus );
 			SMF_RETURN(KMMCErrStatus);
+		    }
 
 		s.iState &= ~KMMCSessStateInProgress;
 
 		// skip over recursive entry or throw error and catch in CIMLockUnlockSM()
-		return (s.Command().iCommand == ECmdLockUnlock) ? KMMCErrUpdPswd : KMMCErrBypass;
+		TMMCErr ret = (s.Command().iCommand == ECmdLockUnlock) ? KMMCErrUpdPswd : KMMCErrBypass; 
+		OstTraceFunctionExitExt( DMMCSTACK_CIMREADWRITEBLOCKSSM_EXIT9, this, (TInt) ret );
+		return ret;
 
 	SMF_END
 	}
@@ -5453,21 +6053,28 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 			};
 
 		DMMCSession& s=Session();
+		OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_CIMERASESM1, "Current session=0x%x; Last status=0x%x", (TUint) &s, (TUint) s.iLastStatus );
+		
 
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:EraseSM %x",TUint(s.iLastStatus)));
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM2, "EStBegin" );
 		// Check that the card supports class 4 (Write) commands
 		const TUint ccc = s.iCardP->CSD().CCC();
 		if(!(ccc & KMMCCmdClassErase))
-			return( KMMCErrNotSupported );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_CIMERASESM_EXIT1, this, (TInt) KMMCErrNotSupported );
+			return KMMCErrNotSupported;
+		    }
 
 		s.iState |= KMMCSessStateInProgress;
 		m.SetTraps( KMMCErrInitContext );
 
 	SMF_STATE(EStRestart)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM3, "EStRestart" );
 		SMF_CALLMEWR(EStRestart) // Create a recursive call entry to recover from Init
 
 		s.ResetCommandStack();
@@ -5475,23 +6082,32 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 
 	SMF_BPOINT(EStAttached)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM4, "EStAttached" );
 		TMMCCommandDesc& cmd = s.Command();
 
 		if(cmd.iTotalLength == 0)
-			return( KMMCErrArgument );
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_CIMERASESM_EXIT2, this, (TInt) KMMCErrArgument );
+			return KMMCErrArgument;
+		    }
 
 		switch( s.iSessionID )
 			{
 			case ECIMEraseSector:
+				OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM5, "ECIMEraseSector" );
 				TMMCEraseInfo eraseInfo;
 				s.iCardP->GetEraseInfo(eraseInfo);
 				cmd.iBlockLength = eraseInfo.iMinEraseSectorSize;
 				cmd.iCommand = ECmdTagSectorStart;
 				break;
 			case ECIMEraseGroup:
+				OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM6, "ECIMEraseGroup" );
 				cmd.iBlockLength = s.iCardP->iCSD.EraseGroupSize();
 				if(cmd.iBlockLength == 0 || cmd.iTotalLength % cmd.iBlockLength != 0)
+				    {
+					OstTraceFunctionExitExt( DMMCSTACK_CIMERASESM_EXIT3, this, (TInt) KMMCErrArgument );
 					return KMMCErrArgument;
+				    }
 				cmd.iCommand = ECmdTagEraseGroupStart;
 				break;
 			default:
@@ -5499,7 +6115,10 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 			}
 
 		if(!cmd.AdjustForBlockOrByteAccess(s))
+		    {
+			OstTraceFunctionExitExt( DMMCSTACK_CIMERASESM_EXIT4, this, (TInt) KMMCErrArgument );
 			return KMMCErrArgument;
+		    }
 
 		iConfig.RemoveMode( KMMCModeEnablePreemption );	// erase sequence must not be pre-empted
 
@@ -5510,6 +6129,7 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 
 	SMF_STATE(EStStartTagged)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM7, "EStStartTagged" );
 		const TMMCCommandDesc& cmd = s.Command();
 
 		TMMCCommandEnum command;
@@ -5539,6 +6159,7 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 
 	SMF_STATE(EStEndTagged)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM8, "EStEndTagged" );
 		// Increase the inactivity timeout as an erase operation can potentially take a long time
 		// At the moment this is a somewhat arbitrary 30 seconds. This could be calculated more accurately
 		// using TAAC,NSAC, R2W_FACTOR etc. but that seems to yield very large values (?)
@@ -5549,20 +6170,26 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 		SMF_INVOKES( ExecCommandSMST, EStErased )
 
 	SMF_STATE(EStErased)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM9, "EStErased" );
 		m.SetTraps( KMMCErrInitContext );
 		iBody->RestoreInactivityTimeout();
 		if (err != KMMCErrNone)
+		    {
+		    OstTraceFunctionExitExt( DMMCSTACK_CIMERASESM_EXIT5, this, (TInt) err );
 			SMF_RETURN(err);
+		    }
 
 
 	SMF_STATE(EStWaitFinish)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM10, "EStWaitFinish" );
 		s.PushCommandStack();
 		s.FillCommandDesc(ECmdSendStatus, 0);
 		SMF_INVOKES(ExecCommandSMST, EStWaitFinish1)
 
 	SMF_STATE(EStWaitFinish1)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM11, "EStWaitFinish1" );
 		const TMMCStatus st(s.ResponseP());
 		s.PopCommandStack();
 
@@ -5579,8 +6206,10 @@ inline TMMCErr DMMCStack::CIMEraseSM()
 		// Fall through if CURRENT_STATE is not PGM or DATA
 	SMF_STATE(EStEraseFinish)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMERASESM12, "EStEraseFinish" );
 		s.iState &= ~KMMCSessStateInProgress;
-		return( KMMCErrBypass );		// to skip over the recursive entry
+		OstTraceFunctionExitExt( DMMCSTACK_CIMERASESM_EXIT6, this, (TInt) KMMCErrBypass );
+		return KMMCErrBypass;		// to skip over the recursive entry
 
 	SMF_END
 	}
@@ -5603,10 +6232,13 @@ inline TMMCErr DMMCStack::CIMReadWriteIOSM()
 
 		DMMCSession& s=Session();
 		TMMCCommandDesc& cmd = s.Command();
+		OstTraceExt2( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEIOSM1, "Current session=0x%x; Last status=0x%x", (TUint) &s, (TUint) s.iLastStatus );
+		
 
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:IOSM %x",TUint(s.iLastStatus)));
 
 	SMF_BEGIN
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEIOSM2, "EStBegin" );
 		s.iState |= KMMCSessStateInProgress;
 		TUint argument = (TUint(cmd.iArgument)&0x7F) << 8; // shift reg addr into a proper position
 
@@ -5628,11 +6260,13 @@ inline TMMCErr DMMCStack::CIMReadWriteIOSM()
 
 	SMF_STATE(EStReadIO)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEIOSM3, "EStReadIO" );
 		*(cmd.iDataMemoryP)++ = s.ResponseP()[3];
 		cmd.iTotalLength--;
 
 	SMF_BPOINT(EStIOLoop)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMREADWRITEIOSM4, "EStIOLoop" );
 		s.iBytesTransferred++;
 
 		if( cmd.iTotalLength == 0 )
@@ -5676,15 +6310,19 @@ inline TMMCErr DMMCStack::CIMLockUnlockSM()
 
 		DMMCSession& s=Session();
 		TMMCCommandDesc& cmd = Command();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMLOCKUNLOCKSM1, "Current session=0x%x", &s );
 
 		__KTRACE_OPT(KPBUS1, Kern::Printf("mmc:clusm"));
 
 	SMF_BEGIN
+        
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMLOCKUNLOCKSM2, "EStBegin" );
 		m.SetTraps(KMMCErrStatus | KMMCErrUpdPswd);
 		cmd.iUnlockRetries = 0;					// attempt counter
 		iCMD42CmdByte = cmd.iDataMemoryP[0];
 
 	SMF_STATE(EStRetry)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMLOCKUNLOCKSM3, "EStRetry" );
 		__KTRACE_OPT(KPBUS1, Kern::Printf("mmc:clusm:%x/%x", cmd.iUnlockRetries, (iSessionP == &iAutoUnlockSession) ? KMMCMaxAutoUnlockRetries : iConfig.iUnlockRetries));
 
 	if (iCMD42CmdByte == KMMCLockUnlockErase)
@@ -5700,6 +6338,7 @@ inline TMMCErr DMMCStack::CIMLockUnlockSM()
 		SMF_INVOKES(CIMReadWriteBlocksSMST, EStTestR1);
 	
 	SMF_STATE(EStTestR1)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMLOCKUNLOCKSM4, "EStTestR1" );
 		if (iCMD42CmdByte == KMMCLockUnlockErase)
 			{
 			m.SetTraps(KMMCErrStatus | KMMCErrUpdPswd);
@@ -5713,6 +6352,7 @@ inline TMMCErr DMMCStack::CIMLockUnlockSM()
 			
 			__KTRACE_OPT(KPBUS1, Kern::Printf("mmc:clusm:EStTestR1 [err: %08x, st:%08x] : RETRY [%d]", 
 											  err, (TInt)s.LastStatus(), cmd0.iUnlockRetries));
+			OstTraceExt3( TRACE_INTERNALS, DMMCSTACK_CIMLOCKUNLOCKSM5, "err=%08x; Last status=%d; Unlock retries=%d", (TUint) err, (TInt) s.LastStatus(), (TUint) cmd0.iUnlockRetries );
 
 			const TInt KMaxRetries = (iSessionP == &iAutoUnlockSession) ? KMMCMaxAutoUnlockRetries : iConfig.iUnlockRetries;
 			
@@ -5723,11 +6363,13 @@ inline TMMCErr DMMCStack::CIMLockUnlockSM()
 				&&	++cmd0.iUnlockRetries < KMaxRetries ))
 				{
 				__KTRACE_OPT(KPBUS1, Kern::Printf("mmc:clusm:abt"));
-
+                OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMLOCKUNLOCKSM6, "LockUnlock abort" );
+                OstTraceFunctionExitExt( DMMCSTACK_CIMLOCKUNLOCKSM_EXIT, this, (TInt) err );
 				SMF_RETURN(err);
 				}
 
 			__KTRACE_OPT(KPBUS1, Kern::Printf("mmc:clusm:retry"));
+			OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMLOCKUNLOCKSM7, "LockUnlock retry" );
 
 #ifdef __EPOC32__
 			s.SynchBlock(KMMCBlockOnRetryTimer);
@@ -5753,6 +6395,7 @@ inline TMMCErr DMMCStack::CIMLockUnlockSM()
 			}
 		else if (err != KMMCErrNone)
 			{
+			OstTraceFunctionExitExt( DMMCSTACK_CIMLOCKUNLOCKSM_EXIT2, this, (TInt) err );
 			SMF_RETURN(err);
 			}
 
@@ -5780,15 +6423,18 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 		__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:CIMAutoUnlockSM"));
 
 		DMMCSession& s=Session();
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM1, "Current session=0x%x", &s );
 
 	SMF_BEGIN
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM2, "EStBegin" );
 		iAutoUnlockIndex = -1;
 
 		m.SetTraps(KMMCErrAll);	// Trap (and ignore) all errors during auto-unlock
 
 	SMF_STATE(EStNextIndex)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM3, "EStNextIndex" );
 		if(err)
 			{
 			iSocket->PasswordControlEnd(&Session(), err);
@@ -5832,6 +6478,8 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 		//
 
 		TMMCard &cd = *(iCardArray->CardP(iAutoUnlockIndex++));
+		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM4, "Attempting to unlock card %d", cd.Number() );
+		
 		s.SetCard(&cd);
 
 		const TInt kPWD_LEN = mp->iPWD.Length();
@@ -5849,6 +6497,7 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 
 	SMF_STATE(EStInitStackAfterUnlock)
 
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM5, "EStInitStackAfterUnlock" );
 		//
 		// We've attempted to unlock all cards (successfully or not)
 		//  - Now perform second-stage initialisation that can only be performed
@@ -5860,6 +6509,7 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 		SMF_INVOKES( InitStackAfterUnlockSMST, EStDone )
 
 	SMF_STATE(EStDone)
+		OstTrace0( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM6, "EStDone" );
 
 	SMF_END
 	}
@@ -6016,6 +6666,7 @@ EXPORT_C DMMCSession* DMMCStack::AllocSession(const TMMCCallBack& aCallBack) con
 * @return A pointer to the new session
 */
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_ALLOCSESSION_ENTRY, this );
 	return new DMMCSession(aCallBack);
 	}
 
@@ -6027,11 +6678,13 @@ EXPORT_C void DMMCStack::Dummy1() {}
  */
 void DMMCStack::DoSetBusWidth(TUint32 aBusWidth)
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_DOSETBUSWIDTH_ENTRY, this );
 	if (iBody->iCurrentSelectedBusWidth != aBusWidth)
 		{
 		iBody->iCurrentSelectedBusWidth = aBusWidth;
 		SetBusWidth(aBusWidth);
 		}
+	OstTraceFunctionExit1( DMMCSTACK_DOSETBUSWIDTH_EXIT, this );
 	}
 
 /**
@@ -6044,6 +6697,7 @@ void DMMCStack::DoSetBusWidth(TUint32 aBusWidth)
  */
 void DMMCStack::DoSetClock(TUint32 aClock)
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_DOSETCLOCK_ENTRY, this );
 	iConfig.iBusConfig.iBusClock = aClock;
 
 	if (iPoweredUp&&(iBody->iCurrentSelectedClock != aClock))
@@ -6051,13 +6705,17 @@ void DMMCStack::DoSetClock(TUint32 aClock)
 		iBody->iCurrentSelectedClock = aClock;
 		SetBusConfigDefaults(iConfig.iBusConfig, aClock);
 		}
+	OstTraceFunctionExit1( DMMCSTACK_DOSETCLOCK_EXIT, this );
 	}
 
 
 TUint DMMCStack::MaxTranSpeedInKilohertz(const TMMCard& aCard) const
 	{
+	OstTraceFunctionEntry1( DMMCSTACK_MAXTRANSPEEDINKILOHERTZ_ENTRY, this );
 	TUint32 highSpeedClock = aCard.HighSpeedClock();
-	return highSpeedClock ? highSpeedClock : aCard.MaxTranSpeedInKilohertz();
+	TUint ret = highSpeedClock ? highSpeedClock : aCard.MaxTranSpeedInKilohertz(); 
+	OstTraceFunctionExitExt( DMMCSTACK_MAXTRANSPEEDINKILOHERTZ_EXIT, this, ret );
+	return ret;
 	}
 
 
@@ -6077,6 +6735,7 @@ TBusWidth DMMCStack::BusWidthEncoding(TInt aBusWidth) const
  * @return the bus width encoded as a TBusWidth
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSTACK_BUSWIDTHENCODING_ENTRY, this );
 	TBusWidth busWidth = EBusWidth1;
 
 	switch(aBusWidth)
@@ -6095,6 +6754,7 @@ TBusWidth DMMCStack::BusWidthEncoding(TInt aBusWidth) const
 			DMMCSocket::Panic(DMMCSocket::EMMCBadBusWidth);
 
 		}
+	OstTraceFunctionExitExt( DMMCSTACK_BUSWIDTHENCODING_EXIT, this, ( TUint )&( busWidth ) );
 	return busWidth;
 	}
 
@@ -6110,6 +6770,7 @@ EXPORT_C DMMCSocket::DMMCSocket(TInt aSocketNumber, TMMCPasswordStore* aPassword
 	:DPBusSocket(aSocketNumber),
 	iPasswordStore(aPasswordStore)
 	{
+	OstTraceFunctionEntryExt( DMMCSOCKET_DMMCSOCKET_ENTRY, this );
 	}
 
 TInt DMMCSocket::TotalSupportedCards()
@@ -6118,6 +6779,8 @@ TInt DMMCSocket::TotalSupportedCards()
  * @return The number of MMC slots supported by the socket
  */
 	{
+	OstTraceFunctionEntry1( DMMCSOCKET_TOTALSUPPORTEDCARDS_ENTRY, this );
+	OstTraceFunctionExitExt( DMMCSOCKET_TOTALSUPPORTEDCARDS_EXIT, this, iMachineInfo.iTotalSockets );
 	return iMachineInfo.iTotalSockets;
 	}
 
@@ -6150,6 +6813,7 @@ TInt DMMCSocket::PrepareStore(TInt aBus, TInt aFunc, TLocalDrivePasswordData &aD
  * @return KErrNone on success
  */
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCSOCKET_PREPARESTORE_ENTRY, "DMMCSocket::PrepareStore;aBus=%d;aFunc=%d;this=%x", aBus, aFunc, (TUint) this);
 	TInt r = 0;
 
 	TMMCard *card=iStack->CardP(aBus);
@@ -6196,6 +6860,7 @@ TInt DMMCSocket::PrepareStore(TInt aBus, TInt aFunc, TLocalDrivePasswordData &aD
 		break;
 		}
 
+	OstTraceFunctionExitExt( DMMCSOCKET_PREPARESTORE_EXIT, this, r );
 	return r;
 	}
 
@@ -6218,6 +6883,7 @@ TInt DMMCSocket::PasswordControlStart(const TCID &aCID, const TMediaPassword *aP
  * See PasswordControlEnd() for recovery policy.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSOCKET_PASSWORDCONTROLSTART_ENTRY, this );
 	TInt r = KErrNone;							// error code
 
 	TBool changed = EFalse;						// compress store if changed
@@ -6266,7 +6932,10 @@ TInt DMMCSocket::PasswordControlStart(const TCID &aCID, const TMediaPassword *aP
 			{
 			TMediaPassword mp;					// empty, to indicate !s
 			if ((r = iPasswordStore->InsertMapping(aCID, mp, TMapping::EStPending)) != KErrNone)
+			    {
+				OstTraceFunctionExitExt( DMMCSOCKET_PASSWORDCONTROLSTART_EXIT1, this, r );
 				return r;
+			    }
 
 			changed = ETrue;
 			}
@@ -6275,6 +6944,7 @@ TInt DMMCSocket::PasswordControlStart(const TCID &aCID, const TMediaPassword *aP
 	if (changed)
 		iPasswordStore->iStore->Compress();
 
+	OstTraceFunctionExitExt( DMMCSOCKET_PASSWORDCONTROLSTART_EXIT2, this, r );
 	return r;
 	}
 
@@ -6304,6 +6974,7 @@ void DMMCSocket::PasswordControlEnd(DMMCSession *aSessP, TInt aResult)
  * See PasswordControlStart() for details of how store set up.
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSOCKET_PASSWORDCONTROLEND_ENTRY, this );
 	// autounlock is a special case because the PasswordControlStart() will
 	// not have been called (the CID is not known in ks context.)  The mapping
 	// for this specific card is removed on failure, because it is the current
@@ -6354,6 +7025,7 @@ void DMMCSocket::PasswordControlEnd(DMMCSession *aSessP, TInt aResult)
 		TInt psn = iPasswordStore->iStore->Find(mp, iPasswordStore->iIdentityRelation);
 		if (psn == KErrNotFound)
 			{
+			OstTraceFunctionExit1( DMMCSOCKET_PASSWORDCONTROLEND_EXIT1, this );
 			return;
 			}
 		else
@@ -6386,6 +7058,7 @@ void DMMCSocket::PasswordControlEnd(DMMCSession *aSessP, TInt aResult)
 				}
 			}	// else (f)
 		}	// else if (aSessP == &iStack->iAutoUnlockSession)
+	OstTraceFunctionExit1( DMMCSOCKET_PASSWORDCONTROLEND_EXIT2, this );
 	}
 
 
@@ -6395,6 +7068,7 @@ TMMCPasswordStore::TMMCPasswordStore()
  */
 	: iIdentityRelation(TMMCPasswordStore::CompareCID)
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_TMMCPASSWORDSTORE_ENTRY, this );
 	}
 
 TInt TMMCPasswordStore::Init()
@@ -6403,10 +7077,15 @@ TInt TMMCPasswordStore::Init()
  * @return KErrNone if successful, standard error code otherwise.
  */
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_INIT_ENTRY, this );
 	// We don't have a destructor yet as this object lasts forever
 	iStore = new RArray<TMapping>(4, _FOFF(TMapping, iCID));
 	if(!iStore)
+	    {
+		OstTraceFunctionExitExt( TMMCPASSWORDSTORE_INIT_EXIT1, this, KErrNoMemory );
 		return KErrNoMemory;
+	    }
+	OstTraceFunctionExitExt( TMMCPASSWORDSTORE_INIT_EXIT2, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -6417,8 +7096,11 @@ EXPORT_C TBool TMMCPasswordStore::IsMappingIncorrect(const TCID& aCID, const TMe
  * or if cannot tell (because no valid mapping.)
  */
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_ISMAPPINGINCORRECT_ENTRY, this );
 	TMapping* pmp = FindMappingInStore(aCID);
-	return (pmp != 0 && pmp->iState == TMapping::EStValid && pmp->iPWD.Compare(aPWD) != 0);
+	TBool ret = pmp != 0 && pmp->iState == TMapping::EStValid && pmp->iPWD.Compare(aPWD) != 0;
+	OstTraceFunctionExitExt( TMMCPASSWORDSTORE_ISMAPPINGINCORRECT_EXIT, this, ret );
+	return ret;
 	}
 
 TMapping *TMMCPasswordStore::FindMappingInStore(const TCID &aCID)
@@ -6426,6 +7108,7 @@ TMapping *TMMCPasswordStore::FindMappingInStore(const TCID &aCID)
  * return pointer to aCID mapping in store or NULL if not found
  */
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_FINDMAPPINGINSTORE_ENTRY, this );
 	TMapping *pmp = NULL;
 	TMapping mp;								// 8 + 16 + 8 + 16 + 4 bytes
 	mp.iCID.SetLength(KMMCCIDLength);
@@ -6436,6 +7119,7 @@ TMapping *TMMCPasswordStore::FindMappingInStore(const TCID &aCID)
 		{
 		pmp = &(*iStore)[psn];
 		}
+	OstTraceFunctionExitExt( TMMCPASSWORDSTORE_FINDMAPPINGINSTORE_EXIT, this, ( TUint )( pmp ) );
 	return pmp;
 	}
 
@@ -6449,6 +7133,7 @@ TInt TMMCPasswordStore::InsertMapping(const TCID &aCID, const TMediaPassword &aP
  * is a binary search, otherwise it may involve kernel heap allocation.
  */
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_INSERTMAPPING_ENTRY, this );
 	TInt r = KErrNone;
 	TMapping mpN;
 	mpN.iCID.SetLength(KMMCCIDLength);
@@ -6469,6 +7154,7 @@ TInt TMMCPasswordStore::InsertMapping(const TCID &aCID, const TMediaPassword &aP
 		r = KErrNone;
 		}
 
+	OstTraceFunctionExitExt( TMMCPASSWORDSTORE_INSERTMAPPING_EXIT, this, r );
 	return r;
 	}
 
@@ -6479,6 +7165,7 @@ TInt TMMCPasswordStore::PasswordStoreLengthInBytes()
  * of the password store
  */
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_PASSWORDSTORELENGTHINBYTES_ENTRY, this );
 	TInt sz = 0;
 
 	for (TInt i = 0; i < iStore->Count(); ++i)
@@ -6488,6 +7175,7 @@ TInt TMMCPasswordStore::PasswordStoreLengthInBytes()
 			sz += KMMCCIDLength + sizeof(TInt32) + mp.iPWD.Length();
 		}
 
+	OstTraceFunctionExitExt( TMMCPASSWORDSTORE_PASSWORDSTORELENGTHINBYTES_EXIT, this, sz );
 	return sz;
 	}
 
@@ -6500,6 +7188,7 @@ TBool TMMCPasswordStore::ReadPasswordData(TDes8 &aBuf)
  * is returned and aBuf is not mutated.
  */
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_READPASSWORDDATA_ENTRY, this );
 	TInt r=KErrNone;										// error code
 
 	if (PasswordStoreLengthInBytes() > aBuf.MaxLength())
@@ -6526,6 +7215,7 @@ TBool TMMCPasswordStore::ReadPasswordData(TDes8 &aBuf)
 		r = KErrNone;
 		}
 
+	OstTraceFunctionExitExt( TMMCPASSWORDSTORE_READPASSWORDDATA_EXIT, this, r );
 	return r;
 	}
 
@@ -6536,6 +7226,7 @@ TInt TMMCPasswordStore::WritePasswordData(TDesC8 &aBuf)
  * replace current store with data from persistent representation in aBuf.
  */
 	{
+	OstTraceFunctionEntry1( TMMCPASSWORDSTORE_WRITEPASSWORDDATA_ENTRY, this );
 	// should only be called at boot up, but remove chance of duplicate entries
 	iStore->Reset();
 
@@ -6565,7 +7256,10 @@ TInt TMMCPasswordStore::WritePasswordData(TDesC8 &aBuf)
 		}
 
 	if (corrupt)
+	    {
+		OstTraceFunctionExitExt( TMMCPASSWORDSTORE_WRITEPASSWORDDATA_EXIT1, this, KErrCorrupt );
 		return KErrCorrupt;
+	    }
 
 	// Build the store from the entries in the buffer.
 	TInt r = KErrNone;							// error code
@@ -6589,6 +7283,7 @@ TInt TMMCPasswordStore::WritePasswordData(TDesC8 &aBuf)
 	if (r != KErrNone)
 		iStore->Reset();
 
+	OstTraceFunctionExitExt( TMMCPASSWORDSTORE_WRITEPASSWORDDATA_EXIT2, this, r );
 	return r;
 	}
 
@@ -6597,6 +7292,7 @@ TInt TMMCPasswordStore::CompareCID(const TMapping& aLeft, const TMapping& aRight
  * CID Comparason Functions for RArray::Find
  */
 	{
+	OstTraceFunctionEntry0( TMMCPASSWORDSTORE_COMPARECID_ENTRY );
 	return(aLeft.iCID == aRight.iCID);
 	}
 
@@ -6605,7 +7301,9 @@ void DMMCSocket::InitiatePowerUpSequence()
  * Initiates a power up sequence on the stack
  */
 	{
+	OstTraceFunctionEntry1( DMMCSOCKET_INITIATEPOWERUPSEQUENCE_ENTRY, this );
 	iStack->PowerUpStack();
+	OstTraceFunctionExit1( DMMCSOCKET_INITIATEPOWERUPSEQUENCE_EXIT, this );
 	}
 
 TBool DMMCSocket::CardIsPresent()
@@ -6614,7 +7312,10 @@ TBool DMMCSocket::CardIsPresent()
  * @return ETrue if a card is present, EFalse otherwise
  */
 	{
-	return(iStack->HasCardsPresent());
+	OstTraceFunctionEntry1( DMMCSOCKET_CARDISPRESENT_ENTRY, this );
+	TInt r = iStack->HasCardsPresent();
+	OstTraceFunctionExitExt( DMMCSOCKET_CARDISPRESENT_EXIT, this, r );
+	return r;
 	}
 
 void DMMCSocket::AdjustPartialRead(const TMMCard* aCard, TUint32 aStart, TUint32 aEnd, TUint32* aPhysStart, TUint32* aPhysEnd) const
@@ -6630,7 +7331,9 @@ void DMMCSocket::AdjustPartialRead(const TMMCard* aCard, TUint32 aStart, TUint32
  * @param aPhysEnd The adjusted end position
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSOCKET_ADJUSTPARTIALREAD_ENTRY, this );
 	iStack->AdjustPartialRead(aCard, aStart, aEnd, aPhysStart, aPhysEnd);
+	OstTraceFunctionExit1( DMMCSOCKET_ADJUSTPARTIALREAD_EXIT, this );
 	}
 
 void DMMCSocket::GetBufferInfo(TUint8** aMDBuf, TInt* aMDBufLen)
@@ -6642,7 +7345,9 @@ void DMMCSocket::GetBufferInfo(TUint8** aMDBuf, TInt* aMDBufLen)
  * @param aMDBufLen The length of the allocated buffer
  */
 	{
+	OstTraceFunctionEntryExt( DMMCSOCKET_GETBUFFERINFO_ENTRY, this );
 	iStack->GetBufferInfo(aMDBuf, aMDBufLen);
+	OstTraceFunctionExit1( DMMCSOCKET_GETBUFFERINFO_EXIT, this );
 	}
 
 void DMMCSocket::Reset1()
@@ -6653,6 +7358,7 @@ void DMMCSocket::Reset1()
  * this will occur immediately.
  */
 	{
+	OstTraceFunctionEntry1( DMMCSOCKET_RESET1_ENTRY, this );
 	if (iState == EPBusCardAbsent)
 	    {
 	    // Reset is result of card eject!
@@ -6661,6 +7367,7 @@ void DMMCSocket::Reset1()
 	
 	
 	iStack->PowerDownStack();
+	OstTraceFunctionExit1( DMMCSOCKET_RESET1_EXIT, this );
 	}
 
 void DMMCSocket::Reset2()
@@ -6679,6 +7386,7 @@ TInt DMMCSocket::Init()
  * @return KErrNotReady if no stack has been allocated, standard error code otherwise
  */
 	{
+	OstTraceFunctionEntry1( DMMCSOCKET_INIT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">MMC:Init"));
 	
 	GetMachineInfo();
@@ -6686,16 +7394,26 @@ TInt DMMCSocket::Init()
 	// We need to make sure the stack is initialised,
 	// as DPBusSocket::Init() will initiate a power up sequence
 	if(iStack == NULL)
+	    {
+		OstTraceFunctionExitExt( DMMCSOCKET_INIT_EXIT1, this, KErrNotReady );
 		return KErrNotReady;
+	    }
 
 	TInt r = iStack->Init();
 	if (r!=KErrNone)
+	    {
+		OstTraceFunctionExitExt( DMMCSOCKET_INIT_EXIT2, this, r );
 		return r;
+	    }
 
 	r = DPBusSocket::Init();
 	if (r!=KErrNone)
+	    {
+		OstTraceFunctionExitExt( DMMCSOCKET_INIT_EXIT3, this, r );
 		return r;
+	    }
 	
+	OstTraceFunctionExitExt( DMMCSOCKET_INIT_EXIT4, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -6705,6 +7423,7 @@ void DMMCSocket::GetMachineInfo()
  * @see TMMCMachineInfo
  */
 	{
+	OstTraceFunctionEntry1( DMMCSOCKET_GETMACHINEINFO_ENTRY, this );
 	// Get machine info from the stack
 	iStack->MachineInfo(iMachineInfo);
 
@@ -6713,7 +7432,10 @@ void DMMCSocket::GetMachineInfo()
 	__KTRACE_OPT(KPBUS1, Kern::Printf(">GetMI : iTotalPrimarySupplies %u", iMachineInfo.iTotalPrimarySupplies));
 	__KTRACE_OPT(KPBUS1, Kern::Printf(">GetMI : iSPIMode %u", iMachineInfo.iSPIMode));
 	__KTRACE_OPT(KPBUS1, Kern::Printf(">GetMI : iBaseBusNumber %u", iMachineInfo.iBaseBusNumber));
-
+	OstTraceDefExt5( OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCSOCKET_GETMACHINEINFO, "iTotalSockets=%d; iTotalMediaChanges=%d; iTotalPrimarySupplies=%d; iSPIMode=%d; iBaseBusNumber=%d", iMachineInfo.iTotalSockets, iMachineInfo.iTotalMediaChanges, iMachineInfo.iTotalPrimarySupplies, iMachineInfo.iSPIMode, iMachineInfo.iBaseBusNumber );
+	
+	
+	OstTraceFunctionExit1( DMMCSOCKET_GETMACHINEINFO_EXIT, this );
 	}
 
 
@@ -6725,7 +7447,7 @@ EXPORT_C void DMMCSocket::Panic(TMMCPanic aPanic)
  * @param aPanic The panic code
  */
 	{
-
+	OstTraceFunctionEntry0( DMMCSOCKET_PANIC_ENTRY );
 	_LIT(KPncNm,"PBUS-MMC");
 	Kern::PanicCurrentThread(KPncNm,aPanic);
 	}
@@ -6738,8 +7460,10 @@ EXPORT_C DMMCPsu::DMMCPsu(TInt aPsuNum, TInt aMediaChangedNum)
  */
 	: DPBusPsuBase(aPsuNum, aMediaChangedNum)
 	{
+	OstTraceFunctionEntryExt( DMMCPSU_DMMCPSU_ENTRY, this );
 	
 	iVoltageSetting=0x00ffc000; // Default voltage range - 2.6V to 3.6V (OCR reg. format).
+	OstTraceFunctionExit1( DMMCPSU_DMMCPSU_EXIT, this );
 	}
 
 EXPORT_C TInt DMMCPsu::DoCreate()
@@ -6763,6 +7487,7 @@ void DMMCPsu::SleepCheck(TAny* aPtr)
  * @Param aPtr reference to DMMCPsu Object to be acted upon.
  */
 	{	
+	OstTraceFunctionEntry0( DMMCPSU_SLEEPCHECK_ENTRY );
 	DMMCPsu& self = *static_cast<DMMCPsu*>(aPtr);
 	
 	if (
@@ -6773,6 +7498,7 @@ void DMMCPsu::SleepCheck(TAny* aPtr)
 		DMMCSocket* socket = static_cast<DMMCSocket*>(self.iSocket);
 		socket->iStack->QSleepStack();
 		}
+	OstTraceFunctionExit0( DMMCPSU_SLEEPCHECK_EXIT );
 	}
 
 EXPORT_C DMMCMediaChange::DMMCMediaChange(TInt aMediaChangeNum)
@@ -6781,7 +7507,9 @@ EXPORT_C DMMCMediaChange::DMMCMediaChange(TInt aMediaChangeNum)
  * @param aMediaChangeNum The media change number
  */
 	: DMediaChangeBase(aMediaChangeNum)
-	{}
+	{
+	OstTraceFunctionEntryExt( DMMCMEDIACHANGE_DMMCMEDIACHANGE_ENTRY, this );
+	}
 
 EXPORT_C TInt DMMCMediaChange::Create()
 /**
@@ -6792,6 +7520,9 @@ EXPORT_C TInt DMMCMediaChange::Create()
  * @return Standard Symbian OS error code.
  */
 	{
-	return DMediaChangeBase::Create();
+	OstTraceFunctionEntry1( DMMCMEDIACHANGE_CREATE_ENTRY, this );
+	TInt r = DMediaChangeBase::Create();
+	OstTraceFunctionExitExt( DMMCMEDIACHANGE_CREATE_EXIT, this, r );
+	return r;
 	}
 

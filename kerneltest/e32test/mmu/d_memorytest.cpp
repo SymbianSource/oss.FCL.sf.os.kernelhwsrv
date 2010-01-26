@@ -54,10 +54,17 @@ public:
 	struct{
 		TPhysicalPinObject* iObject;
 		TPhysAddr iPhysAddr;
-		TPhysAddr iPhysPageList[UCPageCount];
+		TPhysAddr iPhysPageList[KUCPageCount];
 		TUint 	iColour;
 		TUint32 iActualMapAttr;
 		}iPhysicalPinning;
+
+	struct{
+		TKernelMapObject* iObject;
+		TPhysAddr iPhysPageList[KUCPageCount];
+		TLinAddr iLinAddr;
+		}iKernelMapping;
+
 	TUint32 iPageSize;
 	};
 
@@ -249,7 +256,7 @@ TInt DMemoryTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 		return KErrNotSupported;
 #else
 		TInt i;
-		for (i=0;i<UCPageCount; i++)
+		for (i=0;i<KUCPageCount; i++)
 			{
 			TPhysAddr addr = Epoc::LinearToPhysical((TLinAddr)a1 + i*iPageSize);
 			if (addr==KPhysAddrInvalid) 				 return KErrGeneral;
@@ -313,6 +320,107 @@ TInt DMemoryTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 		NKern::ThreadLeaveCS();
 		return r;
 		}
+
+	case RMemoryTestLdd::ECreateKernelMapObject:
+		{
+		NKern::ThreadEnterCS();
+		r=Kern::CreateKernelMapObject(iKernelMapping.iObject, (TUint)a1);
+		NKern::ThreadLeaveCS();
+		return r;
+		}
+
+	case RMemoryTestLdd::EKernelMapMemory:
+		return Kern::MapAndPinMemory(	iKernelMapping.iObject, NULL, (TLinAddr)a1, (TUint)a2, 0,
+										iKernelMapping.iLinAddr, iKernelMapping.iPhysPageList);
+
+	case RMemoryTestLdd::EKernelMapMemoryRO:
+		return Kern::MapAndPinMemory(	iKernelMapping.iObject, NULL, (TLinAddr)a1, (TUint)a2, Kern::EKernelMap_ReadOnly,
+										iKernelMapping.iLinAddr, iKernelMapping.iPhysPageList);
+
+	case RMemoryTestLdd::EKernelMapMemoryInvalid:
+		return Kern::MapAndPinMemory(	iKernelMapping.iObject, NULL, (TLinAddr)a1, (TUint)a2, (TUint)~Kern::EKernelMap_ReadOnly,
+										iKernelMapping.iLinAddr, iKernelMapping.iPhysPageList);
+
+	case RMemoryTestLdd::EKernelMapCheckPageList:
+		{
+#ifdef __WINS__
+		return KErrNotSupported;
+#else
+		TUint i = 0;
+		for (; i < (TUint)KUCPageCount; i++)
+			{
+			// Compare the user side address to physical addresses
+			TPhysAddr addr = Epoc::LinearToPhysical((TLinAddr)a1 + i*iPageSize);
+			if (addr == KPhysAddrInvalid) 				 
+				return KErrGeneral;
+			if (addr != iKernelMapping.iPhysPageList[i]) 
+				return KErrNotFound;
+			// Compare the kernel side address to physical addresses
+			addr = Epoc::LinearToPhysical(iKernelMapping.iLinAddr + i*iPageSize);
+			if (addr == KPhysAddrInvalid) 				 
+				return KErrGeneral;
+			if (addr != iKernelMapping.iPhysPageList[i])
+				return KErrNotFound;
+			}
+		return KErrNone;
+#endif		
+		}
+
+	case RMemoryTestLdd::EKernelMapSyncMemory:
+		Cache::SyncMemoryBeforeDmaWrite(iKernelMapping.iLinAddr, KUCPageCount*iPageSize);
+		return KErrNone;
+
+	case RMemoryTestLdd::EKernelMapInvalidateMemory:
+		{
+		Cache::SyncMemoryBeforeDmaRead(iKernelMapping.iLinAddr, KUCPageCount*iPageSize);
+		Cache::SyncMemoryAfterDmaRead(iKernelMapping.iLinAddr, KUCPageCount*iPageSize);
+		return KErrNone;
+		}
+
+	case RMemoryTestLdd::EKernelMapMoveMemory:
+		{
+#ifdef __WINS__
+		return KErrNotSupported;
+#else
+		TPhysAddr newPage;
+		NKern::ThreadEnterCS();
+		r = Epoc::MovePhysicalPage(iKernelMapping.iPhysPageList[(TUint)a1], newPage);		
+		NKern::ThreadLeaveCS();
+		return r;
+#endif
+		}
+
+	case RMemoryTestLdd::EKernelMapReadModifyMemory:
+		{
+		TUint8* p = (TUint8*)iKernelMapping.iLinAddr;
+		// Verify the contents of the data when accessed via the kernel mapping.
+		TUint i = 0;
+		for (i = 0; i < KUCPageCount*iPageSize; i++)
+			{
+			if (*p++ != (TUint8)i)
+				return KErrCorrupt;
+			}
+		// Modify the data via the kernel mapping.
+		p = (TUint8*)iKernelMapping.iLinAddr;
+		for (i = 0; i < KUCPageCount*iPageSize; i++)
+			{
+			*p++ = (TUint8)(i + 1);
+			}
+		return KErrNone;
+		}
+		
+	case RMemoryTestLdd::EKernelUnmapMemory:
+		Kern::UnmapAndUnpinMemory(iKernelMapping.iObject);
+		return KErrNone;
+
+	case RMemoryTestLdd::EDestroyKernelMapObject:
+		{
+		NKern::ThreadEnterCS();
+		Kern::DestroyKernelMapObject(iKernelMapping.iObject);
+		NKern::ThreadLeaveCS();
+		return KErrNone;
+		}
+		
 	default:
 		return KErrNotSupported;
 		}

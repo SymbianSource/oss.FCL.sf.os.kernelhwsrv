@@ -890,6 +890,7 @@ class DPagingDevice;
 class DLogicalDevice;
 class DPhysicalDevice;
 class TShPoolCreateInfo;
+class TKernelMapObject;
 
 class Kern
 /**
@@ -911,6 +912,23 @@ public:
 		ETimeSet_SyncNotify = 4,	/**< Synchronously trigger change notifiers*/
 		ETimeSet_AsyncNotify = 8,	/**< Asynchronously trigger change notifiers*/
 		ETimeSet_Secure = 16		/**< Set the secure clock (implies ETimeSet_SetHwRtc)*/
+		};
+	/**
+	Attributes that can be set on new kernel mapping objects created via Kern::CreateKernelMapObject().
+
+	@see Kern::CreateKernelMapObject()
+	*/
+	enum TKernelMapAttributes
+		{
+		/**
+		Set this flag to create a read only kernel mapping object.  When set DMA 
+		operations to memory mapped by the mapping object must not write to the 
+		memory mapped, i.e. the only DMA operations must be DMA copied into H/W.
+		Setting this flag may improve the performance if the memory the 
+		kernel mapping object maps is paged out.
+		*/
+		EKernelMap_ReadOnly = 1,
+		EKernelMap_ValidMask = EKernelMap_ReadOnly,	/**<@internalComponent*/
 		};
 public:
 	IMPORT_C static void Printf(const char* aFmt, ...);
@@ -1155,7 +1173,11 @@ public:
 	IMPORT_C static TInt PinPhysicalMemory(TPhysicalPinObject* aPinObject, TLinAddr aStart, TUint aSize, TBool aReadOnly, TPhysAddr& aAddress, TPhysAddr* aPages, TUint32& aMapAttr, TUint& aColour, DThread* aThread=NULL);
 	IMPORT_C static TInt UnpinPhysicalMemory(TPhysicalPinObject* aPinObject); // prototype
 	IMPORT_C static TInt DestroyPhysicalPinObject(TPhysicalPinObject*& aPinObject); // prototype
-	
+
+	IMPORT_C static TInt CreateKernelMapObject(TKernelMapObject*& aMapObject, TUint aMaxReserveSize=0);
+	IMPORT_C static TInt MapAndPinMemory(TKernelMapObject* aMapObject, DThread* aThread, TLinAddr aStart, TUint aSize, TUint aMapAttributes, TLinAddr& aKernelAddr, TPhysAddr* aPages=NULL);
+	IMPORT_C static void UnmapAndUnpinMemory(TKernelMapObject* aMapObject);
+	IMPORT_C static void DestroyKernelMapObject(TKernelMapObject*& aMapObject);
 
 	IMPORT_C static TInt ShPoolCreate(TShPool*& aPool, TShPoolCreateInfo& aInfo, TBool aMap, TUint aFlags);
 	IMPORT_C static TInt ShPoolOpen(TShPool*& aPool, DThread* aThread, TInt aHandle, TBool aMap, TUint aFlags);

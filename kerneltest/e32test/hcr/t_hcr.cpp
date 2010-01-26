@@ -34,6 +34,13 @@ _LIT8(KTestMegaLarge2,	"megalarge2.dat");
 _LIT8(KTestClearRepos,	"");
 
 
+static const TInt KSimOwnThread = 0;
+static const TInt KSimClientThread = 1;
+static TInt gHcrThread = KSimOwnThread;
+
+//Calculation of the fraction defined by f for the number x
+#define _FRACTION(x, f)    (x>f ? x/f : x)
+
 
 RTest test(_L("T_HCR"));
 RHcrSimTestChannel HcrSimTest;
@@ -325,6 +332,16 @@ void HcrSimGetSettingsNegative(SSettingC* aRepository, TUint aNumberOfSettings)
 			r = HcrSimTest.GetData(id, dval);
 			test_Equal(KErrTooBig, r);
 			dval.Close();
+			
+			TUint8* pval;
+			pval = (TUint8*) User::Alloc(setting->iName.iLen);
+			test_NotNull(pval);
+			//
+			TUint16 actuallength;
+			r = HcrSimTest.GetData(id, (unsigned short)( setting->iName.iLen - 1), pval, actuallength);
+			test_Equal(KErrTooBig, r);
+			//
+			User::Free(pval);
 			}
 		if (setting->iName.iType != ETypeText8)
 			{
@@ -350,6 +367,16 @@ void HcrSimGetSettingsNegative(SSettingC* aRepository, TUint aNumberOfSettings)
 			r = HcrSimTest.GetString(id, dval);
 			test_Equal(KErrTooBig, r);
 			dval.Close();
+			
+			TText8* pval;
+			pval = (TText8*) User::Alloc(setting->iName.iLen);
+			test_NotNull(pval);
+			//
+			TUint16 actuallength;
+			r = HcrSimTest.GetString(id, (unsigned short)(setting->iName.iLen >> 1), pval, actuallength);
+			test_Equal(KErrTooBig, r);
+			//
+			User::Free(pval);
 			}
 		if (setting->iName.iType != ETypeArrayInt32)
 			{
@@ -370,7 +397,7 @@ void HcrSimGetSettingsNegative(SSettingC* aRepository, TUint aNumberOfSettings)
 			test_NotNull(pval);
 			//
 			TUint16 actuallength;
-			r = HcrSimTest.GetArray(id, (TUint16) (setting->iName.iLen / 2), pval, actuallength);
+			r = HcrSimTest.GetArray(id, (TUint16) (setting->iName.iLen >> 1), pval, actuallength);
 			test_Equal(KErrTooBig, r);
 			//
 			User::Free(pval);
@@ -851,152 +878,188 @@ void HcrSimNumSettingsInCategory(SSettingC* aRepository, TUint aNumberOfSettings
 	numsettings.Close();
 	}
 
+
+
 void HcrSimFindSettingsCategory(SSettingC* aRepository, TUint aNumberOfSettings)
-	{
-	test.Next(_L("FindSettingsCategory"));
-	TInt r;
-	// Build a hash table with number of settings for each category
-	RHashMap<TUint32, TInt> numsettings;
-	SSettingC* setting;
-	TInt* pV = NULL;
-	TInt value = 0;
-	for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
-		{
-		pV = numsettings.Find(setting->iName.iId.iCat);
-		if(pV)
-		    value = *pV;
-		if (!pV)
-			{
-			r = numsettings.Insert(setting->iName.iId.iCat, 1);
-			test_KErrNone(r);
-			}
-		else
-			{
-			r = numsettings.Remove(setting->iName.iId.iCat);
-			test_KErrNone(r);
-			r = numsettings.Insert(setting->iName.iId.iCat, value + 1);
-			test_KErrNone(r);
-			}
-		}
+    {
+    test.Next(_L("FindSettingsCategory"));
+    TInt r;
+    
+    // Build a hash table with number of settings for each category
+    RHashMap<TUint32, TInt> numsettings;
+    SSettingC* setting;
+    TInt* pV = NULL;
+    TInt value = 0;
+    for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+        {
+        pV = numsettings.Find(setting->iName.iId.iCat);
+        if(pV)
+            value = *pV;
+        if (!pV)
+            {
+            r = numsettings.Insert(setting->iName.iId.iCat, 1);
+            test_KErrNone(r);
+            }
+        else
+            {
+            r = numsettings.Remove(setting->iName.iId.iCat);
+            test_KErrNone(r);
+            r = numsettings.Insert(setting->iName.iId.iCat, value + 1);
+            test_KErrNone(r);
+            }
+        }
 
-	// 
-	RHashMap<TUint32, TInt>::TIter catiter(numsettings);
-	for (;;)
-		{
-		const TUint32* nextcat = catiter.NextKey();
-		if (!nextcat)
-			{
-			break;
-			}
-		test.Printf(_L("Category %08x"), *nextcat);
-		const TInt* v = numsettings.Find(*nextcat);
-		test_NotNull(v);
+    // 
+    RHashMap<TUint32, TInt>::TIter catiter(numsettings);
+    for (;;)
+        {
+        const TUint32* nextcat = catiter.NextKey();
+        if (!nextcat)
+            {
+            break;
+            }
+        test.Printf(_L("Category %08x"), *nextcat);
+        const TInt* v = numsettings.Find(*nextcat);
+        test_NotNull(v);
 
-		// Allocate memory for holding array of settings
-		TElementId* elids;
-		TSettingType* types;
-		TUint16* lens;
-		elids = (TElementId*) User::Alloc(*v * sizeof(TElementId));
-		test_NotNull(elids);
-		types = (TSettingType*) User::Alloc(*v * sizeof(TSettingType));
-		test_NotNull(types);
-		lens = (TUint16*) User::Alloc(*v * sizeof(TUint16));
-		test_NotNull(lens);
-		
-		// Try all permutations of optional values
-		TInt i;
-		for (i = 0; i < 3; i++)
-			{
-			test.Printf(_L("."));
-			Mem::Fill(elids, *v * sizeof(TElementId), 0xcc);
-			Mem::Fill(types, *v * sizeof(TSettingType), 0xcc);
-			Mem::Fill(lens, *v * sizeof(TUint16), 0xcc);
-			TUint32 numfound;
-			r = HcrSimTest.FindSettings(*nextcat,
-				*v, numfound,
-				elids,
-				i & 0x1 ? types : NULL,
-				i & 0x2 ? lens : NULL);
-			numfound = r;
-			test_Compare(0, <=, r);
-			test_Equal(*v, r);
-			
+        // Allocate memory for holding array of settings
+        TElementId* elids;
+        TSettingType* types;
+        TUint16* lens;
+        
+        TInt maxNum;
+        
+        
+        // Try all permutations of optional values
+        TInt i;
+        for (i = 0; i < 3; i++)
+            {
+            test.Printf(_L("."));
 
-			// Check returned list of element ids
-			TUint j;
-			for (j = 0; j < numfound; j++)
-				{
-				// Find current element in the test array
-				for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
-					{
-					if ((setting->iName.iId.iCat == *nextcat) && (setting->iName.iId.iKey == elids[j]))
-						{
-						break;
-						}
-					}
-				test_Compare(setting,<,aRepository+aNumberOfSettings); // Fail if element not found
-				switch (setting->iName.iType)
-					{
-					case ETypeInt32:
-					case ETypeInt16:
-					case ETypeInt8:
-					case ETypeBool:
-					case ETypeUInt32:
-					case ETypeUInt16:
-					case ETypeUInt8:
-					case ETypeLinAddr:
-						if (i & 0x1)
-							{
-							test_Equal(setting->iName.iType, types[j]);
-							}
-						if (i & 0x2)
-							{
-							test_Equal(0, lens[j]);
-							}
-						break;
-						// Fall-through
-					case ETypeBinData:
-					case ETypeText8:
-					case ETypeArrayInt32:
-					case ETypeArrayUInt32:
-					case ETypeInt64:
-					case ETypeUInt64:
-						if (i & 0x1)
-							{
-							test_Equal(setting->iName.iType, types[j]);
-							}
-						if (i & 0x2)
-							{
-							test_Equal(setting->iName.iLen, lens[j]);
-							}
-						break;
-					default:
-						test(EFalse);
-					}
-				}
-			// Check all expected elements are in the returned list of element ids
-			for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
-				{
-				if ((setting->iName.iId.iCat == *nextcat))
-					{
-					for (j = 0; j < numfound; j++)
-						{
-						if (elids[j] == setting->iName.iId.iKey)
-							{
-							break;
-							}
-						}
-					test_Compare(j, <=, numfound);
-					}
-				}
-			}
-		User::Free(elids);
-		User::Free(types);
-		User::Free(lens);
-		test.Printf(_L("\n"));
-		}
-	numsettings.Close();
-	}
+            TUint32 numfound;
+
+            //maxNum is equal:  
+            //0 - 1, the total elements from the category
+            //1 - 1/2 of total number of elements from the category
+            //2 - 1 + 1/2 of total number of element from the category
+
+            if(i == 0)
+                maxNum = *v;
+            else if(i == 1)
+                maxNum = _FRACTION((*v), 2);
+            else
+                maxNum = *v + _FRACTION((*v), 2);
+
+
+            elids = (TElementId*) User::Alloc(maxNum * sizeof(TElementId));
+            test_NotNull(elids);
+            types = (TSettingType*) User::Alloc(maxNum * sizeof(TSettingType));
+            test_NotNull(types);
+            lens = (TUint16*) User::Alloc(maxNum * sizeof(TUint16));
+            test_NotNull(lens);
+
+            Mem::Fill(elids, maxNum * sizeof(TElementId), 0xcc);
+            Mem::Fill(types, maxNum * sizeof(TSettingType), 0xcc);
+            Mem::Fill(lens,  maxNum * sizeof(TUint16), 0xcc);
+
+
+            r = HcrSimTest.FindSettings(*nextcat,
+                    maxNum, elids,
+                    i & 0x1 ? types : NULL,
+                    i & 0x2 ? lens : NULL);
+            numfound = r;
+            test_Compare(0, <=, r);
+            
+            if(i < 2)
+                {
+                //for 0 & 1 the number of settings returned must be equal maxNum
+                test_Equal(maxNum, r);
+                }
+            else
+                {
+                //for 2, it's equal the real number of settings
+                test_Equal((*v), r);
+                }
+
+
+
+            // Check returned list of element ids
+            TUint j;
+            for (j = 0; j < numfound; j++)
+                {
+                // Find current element in the test array
+                for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+                    {
+                    if ((setting->iName.iId.iCat == *nextcat) && (setting->iName.iId.iKey == elids[j]))
+                        {
+                        break;
+                        }
+                    }
+                test_Compare(setting,<,aRepository+aNumberOfSettings); // Fail if element not found
+                switch (setting->iName.iType)
+                    {
+                    case ETypeInt32:
+                    case ETypeInt16:
+                    case ETypeInt8:
+                    case ETypeBool:
+                    case ETypeUInt32:
+                    case ETypeUInt16:
+                    case ETypeUInt8:
+                    case ETypeLinAddr:
+                        if (i & 0x1)
+                            {
+                            test_Equal(setting->iName.iType, types[j]);
+                            }
+                        if (i & 0x2)
+                            {
+                            test_Equal(0, lens[j]);
+                            }
+                        break;
+                        // Fall-through
+                    case ETypeBinData:
+                    case ETypeText8:
+                    case ETypeArrayInt32:
+                    case ETypeArrayUInt32:
+                    case ETypeInt64:
+                    case ETypeUInt64:
+                        if (i & 0x1)
+                            {
+                            test_Equal(setting->iName.iType, types[j]);
+                            }
+                        if (i & 0x2)
+                            {
+                            test_Equal(setting->iName.iLen, lens[j]);
+                            }
+                        break;
+                    default:
+                        test(EFalse);
+                    }
+                }
+            // Check all expected elements are in the returned list of element ids
+            for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+                {
+                if ((setting->iName.iId.iCat == *nextcat))
+                    {
+                    for (j = 0; j < numfound; j++)
+                        {
+                        if (elids[j] == setting->iName.iId.iKey)
+                            {
+                            break;
+                            }
+                        }
+                    test_Compare(j, <=, numfound);
+                    }
+                }
+
+            User::Free(elids);
+            User::Free(types);
+            User::Free(lens);
+            }
+
+        test.Printf(_L("\n"));
+        }
+    numsettings.Close();
+    }
 
 struct TTestFindSettingsPatternArgs
 	{
@@ -1007,146 +1070,478 @@ struct TTestFindSettingsPatternArgs
 const TTestFindSettingsPatternArgs KTestFindSettingsPatternArgs[] = {
 //	 iMask	   iPattern
 	{0x00000000, 0x00000000},
-/*  {0xfffffff0, 0x00000000},
-	{0xffffffff, 0x00000001},*/
+    {0xfffffff0, 0x00000000},
+	{0xffffffff, 0x00000001}
 };
 
 void HcrSimFindSettingsPattern(SSettingC* aRepository, TUint aNumberOfSettings)
-	{
-	test.Next(_L("FindSettingsPattern"));
-	TInt r;
-	TUint i;
+    {
+    test.Next(_L("FindSettingsPattern"));
+    TInt r;
+    TUint i;
 
-	// Allocate memory for holding array of settings
-	TElementId* elids;
-	TSettingType* types;
-	TUint16* lens;
-	elids = (TElementId*) User::Alloc(aNumberOfSettings * sizeof(TElementId));
-	test_NotNull(elids);
-	types = (TSettingType*) User::Alloc(aNumberOfSettings * sizeof(TSettingType));
-	test_NotNull(types);
-	lens = (TUint16*) User::Alloc(aNumberOfSettings * sizeof(TUint16));
-	test_NotNull(lens);
+    // Allocate memory for holding array of settings
+    TElementId* elids;
+    TSettingType* types;
+    TUint16* lens;
+    TInt maxNum;
 
-	for (i = 0; i < sizeof(KTestFindSettingsPatternArgs) / sizeof(TTestFindSettingsPatternArgs); i++)
-		{
-		test.Printf(_L("iMask=0x%08x iPattern=0x%08x\n"),
-			KTestFindSettingsPatternArgs[i].iMask,
-			KTestFindSettingsPatternArgs[i].iPattern);
+    // Build a hash table with number of settings for each category
+    RHashMap<TUint32, TInt> numsettings;
+    SSettingC* setting;
+    TInt* pV = NULL;
+    TInt value = 0;
+    for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+        {
+        pV = numsettings.Find(setting->iName.iId.iCat);
+        if(pV)
+            value = *pV;
+        if (!pV)
+            {
+            r = numsettings.Insert(setting->iName.iId.iCat, 1);
+            test_KErrNone(r);
+            }
+        else
+            {
+            r = numsettings.Remove(setting->iName.iId.iCat);
+            test_KErrNone(r);
+            r = numsettings.Insert(setting->iName.iId.iCat, value + 1);
+            test_KErrNone(r);
+            }
+        }
 
-		// Test each category
-		TUint j;
-		for (j = 0; j < sizeof(KTestCategories) / sizeof(TCategoryUid); j++)
-			{
-			test.Printf(_L("Category 0x%08x: "), KTestCategories[j]);
+    // Hash map includes the number of settings of each category 
+    RHashMap<TUint32, TInt>::TIter catiter(numsettings);
+    for (;;)
+        {
+        const TUint32* nextcat = catiter.NextKey();
+        if (!nextcat)
+            {
+            break;
+            }
+        test.Printf(_L("Category %08x"), *nextcat);
+        const TInt* v = numsettings.Find(*nextcat);
+        test_NotNull(v);
 
-			// Test all possible permutations of optional arguments
-			TUint k;
-			for (k = 0; k < 3; k++)
-				{
-				TUint32 numfound;
-				// Actual API call
-				r = HcrSimTest.FindSettings(
-					KTestCategories[j],
-					aNumberOfSettings,
-					KTestFindSettingsPatternArgs[i].iMask,
-					KTestFindSettingsPatternArgs[i].iPattern,
-					numfound,
-					elids,
-					(k & 0x1 ? types : NULL),
-					(k & 0x2 ? lens : NULL));
-				test_Compare(0, <=, r);
-				
-				numfound = r;
-			
-				test.Printf(_L("%d match(es)\n"), r);
 
-				// Check that all returned element ids satisfy the conditions
-				TUint l;
-				for (l = 0; l < numfound; l++)
-					{
-					test_Assert(
-						(KTestFindSettingsPatternArgs[i].iMask & KTestFindSettingsPatternArgs[i].iPattern) ==
-						(KTestFindSettingsPatternArgs[i].iMask & elids[l]), test.Printf(_L("!!%08x!!\n"), elids[l])
-						);
-					//Somehow the macro test_Compare consider TInt32 instead TUint32
-					//as a result comparasion is done by this way:
-					//RTEST: (0x0 (0) < 0x80000000 (-2147483648)) == EFalse at line 1038
-					//althought 0x80000000 > 0, with the signed form this number will be
-					//-2147483648.
-					//test_Compare(KTestFindSettingsPatternArgs[i].iAtId, <=, elids[l]);
-					}
 
-				// Check that all elements that satisfy the conditions have been returned
-				SSettingC* setting;
-				TUint32 numsettings = 0;
-				for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
-					{
-					if ((setting->iName.iId.iCat == KTestCategories[j])
-						&& ((KTestFindSettingsPatternArgs[i].iMask & KTestFindSettingsPatternArgs[i].iPattern) ==
-							(KTestFindSettingsPatternArgs[i].iMask & setting->iName.iId.iKey)))
-						{
-						for (l = 0; l < numfound; l++)
-							{
-							if (setting->iName.iId.iKey == elids[l])
-								{
-								break;
-								}
-							}
-						test_Assert(l < numfound, test.Printf(_L("!!%08x!!\n"), elids[l]));
+        for (i = 0; i < sizeof(KTestFindSettingsPatternArgs) / sizeof(TTestFindSettingsPatternArgs); i++)
+            {
+            test.Printf(_L("iMask=0x%08x iPattern=0x%08x\n"),
+                    KTestFindSettingsPatternArgs[i].iMask,
+                    KTestFindSettingsPatternArgs[i].iPattern);
 
-						// Check type and size returned
-						switch (setting->iName.iType)
-							{
-							case ETypeInt32:
-							case ETypeInt16:
-							case ETypeInt8:
-							case ETypeBool:
-							case ETypeUInt32:
-							case ETypeUInt16:
-							case ETypeUInt8:
-							case ETypeLinAddr:
-								if (k & 0x1)
-									{
-									test_Equal(setting->iName.iType, types[l]);
-									}
-								if (k & 0x2)
-									{
-									test_Equal(0, lens[l]);
-									}
-								break;
-								// Fall-through
-							case ETypeBinData:
-							case ETypeText8:
-							case ETypeArrayInt32:
-							case ETypeArrayUInt32:
-							case ETypeInt64:
-							case ETypeUInt64:
-								if (k & 0x1)
-									{
-									test_Equal(setting->iName.iType, types[l]);
-									}
-								if (k & 0x2)
-									{
-									test_Equal(setting->iName.iLen, lens[l]);
-									}
-								break;
-							default:
-								test(EFalse);
-							}
-						numsettings++;
-						}
-					}
-				test_Equal(numsettings, numfound);
-				}
-			}
-		}
-		
-	// Free memory
-	User::Free(elids);
-	User::Free(types);
-	User::Free(lens);
+            TUint k;
+            for (k = 0; k < 3; k++)
+                {
+                TUint32 numfound;
+
+                // aMaxNum is less than the total number of settings in the 
+                // category
+                //0 - all elements from the category are requested
+                //1 - 1/2 of total number of elements from the category
+                //2 - 1 + 1/2 of total number of element from the category
+                if(k == 0)
+                    maxNum = *v;
+                else if(k == 1)
+                    maxNum = _FRACTION((*v), 2);
+                else
+                    maxNum = (*v) + _FRACTION((*v), 2);
+
+                elids = (TElementId*) User::Alloc(maxNum * sizeof(TElementId));
+                test_NotNull(elids);
+                types = (TSettingType*) User::Alloc(maxNum * sizeof(TSettingType));
+                test_NotNull(types);
+                lens = (TUint16*) User::Alloc(maxNum * sizeof(TUint16));
+                test_NotNull(lens);
+
+
+                // Actual API call
+                r = HcrSimTest.FindSettings(
+                        *nextcat,
+                        maxNum,
+                        KTestFindSettingsPatternArgs[i].iMask,
+                        KTestFindSettingsPatternArgs[i].iPattern,
+                        elids,
+                        (k & 0x1 ? types : NULL),
+                        (k & 0x2 ? lens : NULL));
+                test_Compare(0, <=, r);
+                test_Compare(maxNum, >=, r);
+
+                numfound = r;
+                test.Printf(_L("%d match(es)\n"), r);
+
+                // Check that all returned element ids satisfy the conditions
+                TUint32 l;
+                for (l = 0; l < numfound; l++)
+                    {
+                    test_Assert(
+                            (KTestFindSettingsPatternArgs[i].iMask & KTestFindSettingsPatternArgs[i].iPattern) ==
+                            (KTestFindSettingsPatternArgs[i].iMask & elids[l]), test.Printf(_L("!!%08x!!\n"), elids[l])
+                    );
+
+                    //Somehow the macro test_Compare consider TInt32 instead TUint32
+                    //as a result comparasion is done by this way:
+                    //RTEST: (0x0 (0) < 0x80000000 (-2147483648)) == EFalse at line 1038
+                    //althought 0x80000000 > 0, with the signed form this number will be
+                    //-2147483648.
+                    //test_Compare(KTestFindSettingsPatternArgs[i].iAtId, <=, elids[l]);
+                    }
+
+                // Check that all elements that satisfy the conditions have been returned
+                SSettingC* setting;
+                TUint32 numsettings = 0;
+
+                //Flag indicates that the element is found
+                TBool fFlag = EFalse;
+
+                for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+                    {
+                    if ((setting->iName.iId.iCat == *nextcat)
+                            && ((KTestFindSettingsPatternArgs[i].iMask & KTestFindSettingsPatternArgs[i].iPattern) ==
+                            (KTestFindSettingsPatternArgs[i].iMask & setting->iName.iId.iKey)))
+                        {
+                        for (l = 0; l < numfound; l++)
+                            {
+                            if (setting->iName.iId.iKey == elids[l])
+                                {
+                                fFlag = ETrue;
+                                break;
+                                }
+                            }
+
+                        if(fFlag)
+                            {
+                            test_Assert(l < numfound, test.Printf(_L("!!%08x!!\n"), elids[l]));
+
+                            // Check type and size returned
+                            switch (setting->iName.iType)
+                                {
+                                case ETypeInt32:
+                                case ETypeInt16:
+                                case ETypeInt8:
+                                case ETypeBool:
+                                case ETypeUInt32:
+                                case ETypeUInt16:
+                                case ETypeUInt8:
+                                case ETypeLinAddr:
+                                    if (k & 0x1)
+                                        {
+                                        test_Equal(setting->iName.iType, types[l]);
+                                        }
+                                     if (k & 0x2)
+                                        {
+                                        test_Equal(0, lens[l]);
+                                        }
+                                    break;
+                                    // Fall-through
+                                case ETypeBinData:
+                                case ETypeText8:
+                                case ETypeArrayInt32:
+                                case ETypeArrayUInt32:
+                                case ETypeInt64:
+                                case ETypeUInt64:
+                                    if (k & 0x1)
+                                        {
+                                        test_Equal(setting->iName.iType, types[l]);
+                                        }
+                                    if (k & 0x2)
+                                        {
+                                        test_Equal(setting->iName.iLen, lens[l]);
+                                        }
+                                    break;
+                                default:
+                                    test(EFalse);
+                                }
+                            numsettings++;
+                            fFlag = EFalse;
+                            }
+                        }
+                    }
+                
+                test_Equal(numsettings, numfound);
+
+                // Free memory
+                User::Free(elids);
+                User::Free(types);
+                User::Free(lens);
+
+                }
+            }
+        }
+    numsettings.Close();
 	}
+
+
+
+void HcrSimFindSettingsCategoryNegative(SSettingC* aRepository, TUint aNumberOfSettings)
+    {
+    
+    TInt r;
+    // Build a hash table with number of settings for each category
+    RHashMap<TUint32, TInt> numsettings;
+    SSettingC* setting;
+    TInt* pV = NULL;
+    TInt value = 0;
+    //Iterator object of the number of elements in the category
+    RHashMap<TUint32, TInt>::TIter catiter(numsettings);
+
+    
+    test.Next(_L("FindSettingsCategoryNegative invalid user parameters"));
+        for (setting = aRepository; setting < aRepository + aNumberOfSettings; setting++)
+            {
+            pV = numsettings.Find(setting->iName.iId.iCat);
+            if(pV)
+                value = *pV;
+            if (!pV)
+                {
+                r = numsettings.Insert(setting->iName.iId.iCat, 1);
+                test_KErrNone(r);
+                }
+            else
+                {
+                r = numsettings.Remove(setting->iName.iId.iCat);
+                test_KErrNone(r);
+                r = numsettings.Insert(setting->iName.iId.iCat, value + 1);
+                test_KErrNone(r);
+                }
+            }
+
+        // 
+        for (;;)
+            {
+            const TUint32* nextcat = catiter.NextKey();
+            if (!nextcat)
+                {
+                break;
+                }
+            test.Printf(_L("Category %08x"), *nextcat);
+            const TInt* v = numsettings.Find(*nextcat);
+            test_NotNull(v);
+
+            // Allocate memory for holding array of settings
+            TElementId* elids;
+            TSettingType* types;
+            TUint16* lens;
+            elids = (TElementId*) User::Alloc(*v * sizeof(TElementId));
+            test_NotNull(elids);
+            types = (TSettingType*) User::Alloc(*v * sizeof(TSettingType));
+            test_NotNull(types);
+            lens = (TUint16*) User::Alloc(*v * sizeof(TUint16));
+            test_NotNull(lens);
+
+            
+            test.Printf(_L("."));
+            Mem::Fill(elids, *v * sizeof(TElementId), 0xcc);
+            Mem::Fill(types, *v * sizeof(TSettingType), 0xcc);
+            Mem::Fill(lens, *v * sizeof(TUint16), 0xcc);
+
+            TInt i;
+            for (i = 0; i < 3; i++)
+                {
+                //Perform the following permutations:
+                // 0 - negative aMaxNum AND aElIds != NULL
+                // 1 - positive aMaxNum AND aElIds == NULL
+                // 2 - negative aMaxNum AND aElIds == NULL
+                
+                switch(i)
+                    {
+                    case 0:
+                        r = HcrSimTest.FindSettings(*nextcat,
+                                (-1)*(*v), elids, types, lens);
+
+                        test_Equal(KErrArgument, r);
+                        break;
+
+                    case 1:
+                        r = HcrSimTest.FindSettings(*nextcat,
+                                *v, NULL, types, lens);
+
+                        test_Equal(KErrArgument, r);
+                        break;
+
+                    case 2:
+                        r = HcrSimTest.FindSettings(*nextcat,
+                                (-1)*(*v), NULL, types, lens);
+
+                        test_Equal(KErrArgument, r);
+                        break;
+                    
+                    }
+                }
+
+
+                User::Free(elids);
+                User::Free(types);
+                User::Free(lens);
+                test.Printf(_L("\n"));
+            }
+        numsettings.Close();
+
+    }
+
+
+void HcrSimFindSettingsPatternNegative(TUint aNumberOfSettings)
+    {
+    
+    TInt r;
+    TUint i;
+
+    // Allocate memory for holding array of settings
+    TElementId* elids;
+    TSettingType* types;
+    TUint16* lens;
+    elids = (TElementId*) User::Alloc(aNumberOfSettings * sizeof(TElementId));
+    test_NotNull(elids);
+    types = (TSettingType*) User::Alloc(aNumberOfSettings * sizeof(TSettingType));
+    test_NotNull(types);
+    lens = (TUint16*) User::Alloc(aNumberOfSettings * sizeof(TUint16));
+    test_NotNull(lens);
+
+    test.Next(_L("FindSettingsPattern, invalid user parameters"));
+    for (i = 0; i < sizeof(KTestFindSettingsPatternArgs) / sizeof(TTestFindSettingsPatternArgs); i++)
+        {
+        test.Printf(_L("iMask=0x%08x iPattern=0x%08x\n"),
+                KTestFindSettingsPatternArgs[i].iMask,
+                KTestFindSettingsPatternArgs[i].iPattern);
+
+        // Test each category
+        TUint j;
+        for (j = 0; j < sizeof(KTestCategories) / sizeof(TCategoryUid); j++)
+            {
+            test.Printf(_L("Category 0x%08x: "), KTestCategories[j]);
+
+            // Test all possible permutations of optional arguments
+            TInt k;
+            for (k = 0; k < 3; k++)
+                {
+                //Perform the following permutations:
+                // 0 - negative aMaxNum AND aElIds != NULL
+                // 1 - positive aMaxNum AND aElIds == NULL
+                // 2 - negative aMaxNum AND aElIds == NULL
+                
+                switch(k)
+                    {
+                    case 0:
+                    // Actual API call
+                    r = HcrSimTest.FindSettings(
+                            KTestCategories[j],
+                            (-1) * static_cast<TInt>(aNumberOfSettings),
+                            KTestFindSettingsPatternArgs[i].iMask,
+                            KTestFindSettingsPatternArgs[i].iPattern,
+                            elids,
+                            types, lens);
+                    test_Equal(KErrArgument,r);
+                    break;
+
+                    
+                    case 1:
+                        // Actual API call
+                        r = HcrSimTest.FindSettings(
+                                KTestCategories[j],
+                                aNumberOfSettings,
+                                KTestFindSettingsPatternArgs[i].iMask,
+                                KTestFindSettingsPatternArgs[i].iPattern,
+                                NULL,
+                                types, lens);
+                        test_Equal(KErrArgument,r);
+                        break;
+
+                        
+                    case 2:
+                        // Actual API call
+                        r = HcrSimTest.FindSettings(
+                                KTestCategories[j],
+                                (-1) * static_cast<TInt>(aNumberOfSettings),
+                                KTestFindSettingsPatternArgs[i].iMask,
+                                KTestFindSettingsPatternArgs[i].iPattern,
+                                NULL,
+                                types, lens);
+                        test_Equal(KErrArgument,r);
+                        break;
+                
+                    }
+                
+                }
+            }
+        }
+    
+    // Free memory
+    User::Free(elids);
+    User::Free(types);
+    User::Free(lens);
+    }        
+
+         
+            
+
+void HcrSimFindSettingsPatternMemAllocFails(TUint aNumberOfSettings)
+    {
+    TInt r;
+    TUint i;
+
+    // Allocate memory for holding array of settings
+    TElementId* elids;
+    TSettingType* types;
+    TUint16* lens;
+    elids = (TElementId*) User::Alloc(aNumberOfSettings * sizeof(TElementId));
+    test_NotNull(elids);
+    types = (TSettingType*) User::Alloc(aNumberOfSettings * sizeof(TSettingType));
+    test_NotNull(types);
+    lens = (TUint16*) User::Alloc(aNumberOfSettings * sizeof(TUint16));
+    test_NotNull(lens);
+
+    test.Next(_L("FindSettingsPattern, memory allocation failure"));
+    for (i = 0; i < sizeof(KTestFindSettingsPatternArgs) / sizeof(TTestFindSettingsPatternArgs); i++)
+        {
+        test.Printf(_L("iMask=0x%08x iPattern=0x%08x\n"),
+                KTestFindSettingsPatternArgs[i].iMask,
+                KTestFindSettingsPatternArgs[i].iPattern);
+
+        // Test each category
+        TUint j;
+        for (j = 0; j < sizeof(KTestCategories) / sizeof(TCategoryUid); j++)
+            {
+            test.Printf(_L("Category 0x%08x: "), KTestCategories[j]);
+            //Memory allocation fail test. By this code we simulate the memory
+            //allocation failure at place defined by allocFactor. The loop will 
+            //continue until the next allocation is not failed. When we reached 
+            //this point it means we've gone through all possible allocations in
+            //the tested method below.
+            TInt allocFactor = 1;
+            //Memory allocation fails
+            do
+                {
+                __KHEAP_MARK;
+                __KHEAP_SETFAIL(RAllocator::EFailNext, allocFactor);
+                r = HcrSimTest.FindSettings(
+                        KTestCategories[j],
+                        aNumberOfSettings,
+                        KTestFindSettingsPatternArgs[i].iMask,
+                        KTestFindSettingsPatternArgs[i].iPattern,
+                        elids,
+                        types, lens);
+                __KHEAP_MARKEND;
+
+                __KHEAP_RESET;
+
+                //Let's arrise the memory allocation failure at another place
+                allocFactor ++;
+
+                }while(r == KErrNoMemory);
+
+            }
+        }
+
+
+
+    // Free memory
+    User::Free(elids);
+    User::Free(types);
+    User::Free(lens);
+
+    }
+
 
 void HcrSimApiNegative(const TInt aExpectedErrorCode, const TUint32 aCategory, const TUint32 aSettingId)
 	{
@@ -1260,7 +1655,6 @@ void HcrSimApiNegative(const TInt aExpectedErrorCode, const TUint32 aCategory, c
 		{
 		TSettingType type = ETypeUndefined;
 		TUint16 len = 0;
-		TUint32 numfound = 0;
 		TElementId elid = 0;
 		
 
@@ -1274,21 +1668,32 @@ void HcrSimApiNegative(const TInt aExpectedErrorCode, const TUint32 aCategory, c
 			{
 			test_Equal(0, r);
 			}
+		else
+			{
+			test_Equal(aExpectedErrorCode, r);
+			}
 		
 		//
-		r = HcrSimTest.FindSettings(id.iCat, 1, numfound, &elid, &type, &len);
+		r = HcrSimTest.FindSettings(id.iCat, 1, &elid, &type, &len);
 		if (aExpectedErrorCode == KErrNotFound)
 			{
 			test_Equal(0, r);
+			}
+		else
+			{
+			test_Equal(aExpectedErrorCode, r);
 			}
 
 		//
-		r = HcrSimTest.FindSettings(id.iCat, 1, 0, 0, numfound, &elid, &type, &len);
+		r = HcrSimTest.FindSettings(id.iCat, 1, 0, 0, &elid, &type, &len);
 		if (aExpectedErrorCode == KErrNotFound)
 			{
 			test_Equal(0, r);
 			}
-		
+		else
+			{
+			test_Equal(aExpectedErrorCode, r);
+			}
 		}
 		{
 		SSettingId settingid;
@@ -1300,18 +1705,30 @@ void HcrSimApiNegative(const TInt aExpectedErrorCode, const TUint32 aCategory, c
 		TSettingType type;
 		TInt i;
 
-		for(i = 0; i < 4; ++i)
+		for(i = 0; i < 5; ++i)
 			{
 			// test parameter combinations where aIds[], aValues[], aErrors[] are NULL
-			r = HcrSimTest.GetWordSettings(i, (i==1)?NULL:&settingid, (i==2)?NULL:&val, &type, (i==3)?NULL:&err);
-			if(r != KErrArgument)
+			r = HcrSimTest.GetWordSettings((i==1)?0:1, (i==2)?NULL:&settingid, (i==3)?NULL:&val, &type, (i==4)?NULL:&err);
+			if (aExpectedErrorCode != KErrNotFound)
 				{
+				// HCR did not initialise properly - HCR will not bother checking validity of arguments
 				test_Equal(aExpectedErrorCode, r);
+				}
+			else if (i > 0)
+				{
+				// One of the arguments is invalid
+				test_Equal(KErrArgument, r);
+				}
+			else
+				{
+				// Arguments are fine but element does not exist
+				test_Equal(0, r);
 				}
 			}	
 		}
 
 	}
+
 
 void HcrSimTestApiTests(SSettingC* aRepository, TUint aNumberOfSettings)
 	{
@@ -1324,6 +1741,11 @@ void HcrSimTestApiTests(SSettingC* aRepository, TUint aNumberOfSettings)
 		HcrSimNumSettingsInCategory(aRepository, aNumberOfSettings);
 		HcrSimFindSettingsCategory(aRepository, aNumberOfSettings);
 		HcrSimFindSettingsPattern(aRepository, aNumberOfSettings);
+		
+		HcrSimFindSettingsCategoryNegative(aRepository, aNumberOfSettings);
+		HcrSimFindSettingsPatternNegative(aNumberOfSettings);
+		if(gHcrThread == KSimOwnThread)
+		    HcrSimFindSettingsPatternMemAllocFails(aNumberOfSettings);
 		}
 
 	HcrSimApiNegative(KErrNotFound, KTestInvalidCategory, KTestInvalidSettingId);
@@ -1385,6 +1807,7 @@ void HcrSimTests(const TDesC& aDriver)
 	test.Start(_L("Load Device Driver"));
 	test.Printf(_L("%S\n"), &aDriver);
 	TInt r;
+	
 	r = User::LoadLogicalDevice(aDriver);
 	if (r == KErrAlreadyExists)
 		{
@@ -1408,6 +1831,14 @@ void HcrSimTests(const TDesC& aDriver)
 	r = HcrSimTest.InitExtension();
 	test_KErrNone(r);
 	
+	//Initialize static variable with the right HCR client type
+	if(aDriver.Compare(KTestHcrSimOwn) == 0)
+	    gHcrThread = KSimOwnThread;
+	else if(aDriver.Compare(KTestHcrSimClient) == 0)
+	    gHcrThread = KSimClientThread;
+	else
+		test(EFalse);
+	
 	test.Next(_L("Compiled"));
 	test.Start(_L("Initialisation"));
 	r = HcrSimTest.SwitchRepository(KTestClearRepos, HCRInternal::ECoreRepos);
@@ -1415,8 +1846,8 @@ void HcrSimTests(const TDesC& aDriver)
 	r = HcrSimTest.SwitchRepository(KTestClearRepos, HCRInternal::EOverrideRepos);
 	test_KErrNone(r);
 	HcrSimTestApiTests(SettingsList, sizeof(SettingsList) / sizeof(SSettingC));
-	test.End();
-
+	test.End();    
+		
 	test.Next(_L("Compiled+File"));
 	test.Start(_L("Initialisation"));
 	r = HcrSimTest.SwitchRepository(KTestFileRepos, HCRInternal::ECoreRepos);
@@ -1534,9 +1965,20 @@ void HcrSimTests(const TDesC& aDriver)
 	HcrSimTestApiTests(SettingsList7, sizeof(SettingsList7) / sizeof(SSettingC));
 	test.End();
 
+	test.Next(_L("Empty+File+Empty"));
+	test.Start(_L("Initialisation"));
+	r = HcrSimTest.SwitchRepository(KTestEmpty, HCRInternal::EOverrideRepos);
+	test_KErrNone(r);
+	r = HcrSimTest.CheckIntegrity();
+	test_KErrNone(r);
+	HcrSimTestApiTests(SettingsList7, sizeof(SettingsList7) / sizeof(SSettingC));
+	test.End();
+
 	test.Next(_L("No Repository (Empty)"));
 	test.Start(_L("Initialisation"));
 	r = HcrSimTest.SwitchRepository(KTestClearRepos, HCRInternal::ECoreRepos);
+	test_KErrNone(r);
+	r = HcrSimTest.SwitchRepository(KTestClearRepos, HCRInternal::EOverrideRepos);
 	test_KErrNone(r);
 	r = HcrSimTest.CheckIntegrity();
 	test_KErrNone(r);
@@ -1704,7 +2146,6 @@ void HcrRealSettingDiscovery()
 		test_Compare(0, <=, nosettings);
 		if (nosettings > 0)
 			{
-			TUint32 numfound;
 			TElementId* elids;
 			TSettingType* types;
 			TUint16* lens;
@@ -1714,9 +2155,9 @@ void HcrRealSettingDiscovery()
 			test_NotNull(types);
 			lens = (TUint16*) User::Alloc(nosettings * sizeof(TUint16));
 			test_NotNull(lens);
-			r = HcrSimTest.FindSettings(cat, nosettings, numfound, elids, types, lens);
+			r = HcrSimTest.FindSettings(cat, nosettings, elids, types, lens);
 			test_Equal(nosettings, r);
-			test_Equal(nosettings, numfound);
+			
 			TInt i;
 			for (i = 0; i < nosettings; i++)
 				{
@@ -1957,6 +2398,29 @@ void HcrRealTests(const TDesC& aDriver)
 		//
 		HcrRealRetrieveKernelExtensionTestResults();
 		HcrRealSettingDiscovery();
+
+		// Initialize static variable with the right HCR client type
+		if(aDriver.Compare(KTestHcrRealOwn) == 0)
+			gHcrThread = KSimOwnThread;
+		else if(aDriver.Compare(KTestHcrRealClient) == 0)
+			gHcrThread = KSimClientThread;
+		else
+			test(EFalse);
+		//
+		TBool smr;
+		TBool smrrep;
+		r = HcrSimTest.HasRepositoryInSmr(smr, smrrep);
+		test_KErrNone(r);
+		if (smrrep)
+			{
+			// File + NAND
+			HcrSimTestApiTests(SettingsList6, sizeof(SettingsList6) / sizeof(SSettingC));
+			}
+		else
+			{
+			// File
+			HcrSimTestApiTests(SettingsList7, sizeof(SettingsList7) / sizeof(SSettingC));
+			}
 		//
 		test.Next(_L("Close LDD"));
 		HcrSimTest.Close();
@@ -2131,8 +2595,7 @@ GLDEF_C TInt E32Main()
 
 	test.Title();
 	test.Start(_L("HCR Test Suite"));
-	
-	
+		
 	
 	//Order the the test lists in descend(the setting with the smallest
 	//setting Id is first)
@@ -2167,8 +2630,8 @@ GLDEF_C TInt E32Main()
 			sizeof(SettingsList7)/sizeof(SettingsList7[0]));
 	rSettingsList7.Sort(order);
 
-
-    //Functional API tests
+	
+    //Functional API test
 	RomHeaderTests();
 	HcrRealTests(KTestHcrRealOwn);
 	HcrRealTests(KTestHcrRealClient);

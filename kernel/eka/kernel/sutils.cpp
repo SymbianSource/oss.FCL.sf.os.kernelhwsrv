@@ -4210,7 +4210,7 @@ void TClientBufferRequest::CallbackFunc(TAny* aData, TUserModeCallbackReason aRe
 
 // Implementation of kernel pin APIs
 
-/*
+/**
 Create an object which can be used to pin virtual memory.
 
 @param aPinObject A reference to a pointer which is set to the newly-created object on success.
@@ -4227,7 +4227,6 @@ Create an object which can be used to pin virtual memory.
 @see Kern::DestroyVirtualPinObject()
 
 @prototype
-@internalTechnology
 */
 EXPORT_C TInt Kern::CreateVirtualPinObject(TVirtualPinObject*& aPinObject)
 	{
@@ -4235,7 +4234,7 @@ EXPORT_C TInt Kern::CreateVirtualPinObject(TVirtualPinObject*& aPinObject)
 	return M::CreateVirtualPinObject(aPinObject);
 	}
 
-/*
+/**
 Pin an area of virtual memory.
 
 The act of pinning virtual memory means that the memory in the specified virtual address range is
@@ -4265,7 +4264,6 @@ Note that this operation may fail with KErrNoMemory.
 @see Kern::UnpinVirtualMemory()
 
 @prototype
-@internalTechnology
 */
 EXPORT_C TInt Kern::PinVirtualMemory(TVirtualPinObject* aPinObject, TLinAddr aStart, TUint aSize, DThread* aThread)
 	{
@@ -4280,7 +4278,7 @@ EXPORT_C TInt Kern::PinVirtualMemory(TVirtualPinObject* aPinObject, TLinAddr aSt
 	return r;
 	}
 
-/*
+/**
 Pin an area of virtual memory.
 
 The act of pinning virtual memory means that the memory in the specified virtual address range is
@@ -4293,6 +4291,10 @@ client thread, so that when it is accessed from a different thread later on (for
 thread) there is no possibility of taking page faults.
 
 Note that this operation may fail with KErrNoMemory.
+
+Note - Instances of TVirtualPinObject are not protected from concurrent operations being performed 
+with them by separate threads i.e. it is the responsibility of the creator of a TVirtualPinObject 
+instance to ensure that it will not be pinned, unpinned or destroyed by more than one thread at a time.
 
 @param aPinObject  A virtual pin object previously created by calling Kern::CreateVirtualPinObject().
 @param aDes	       A TClientBuffer object representing a client descriptor to pin.
@@ -4309,7 +4311,6 @@ Note that this operation may fail with KErrNoMemory.
 @see Kern::UnpinVirtualMemory()
 
 @prototype
-@internalTechnology
 */
 EXPORT_C TInt Kern::PinVirtualMemory(TVirtualPinObject* aPinObject, const TClientBuffer& aDes, DThread* aThread)
 	{
@@ -4326,7 +4327,7 @@ EXPORT_C TInt Kern::PinVirtualMemory(TVirtualPinObject* aPinObject, const TClien
 	NKern::ThreadLeaveCS();
 	return r;
 	}
-/*
+/**
 Create a pin object and then pin an area of virtual memory in the current address space.  If 
 an error occurs then no pin object will exist
 
@@ -4340,6 +4341,10 @@ client thread, so that when it is accessed from a different thread later on (for
 thread) there is no possibility of taking page faults.
 
 Note that this operation may fail with KErrNoMemory.
+
+Note - Instances of TVirtualPinObject are not protected from concurrent operations being performed 
+with them by separate threads i.e. it is the responsibility of the creator of a TVirtualPinObject 
+instance to ensure that it will not be pinned, unpinned or destroyed by more than one thread at a time.
 
 @param aPinObject	A reference to a pointer which is set to the newly-created object on success.
 @param aStart		The start address of the memory to pin.
@@ -4358,7 +4363,6 @@ Note that this operation may fail with KErrNoMemory.
 @see Kern::DestroyVirtualPinObject()
 
 @prototype
-@internalTechnology
 */
 EXPORT_C TInt Kern::CreateAndPinVirtualMemory(TVirtualPinObject*& aPinObject, TLinAddr aStart, TUint aSize)
 	{
@@ -4367,7 +4371,7 @@ EXPORT_C TInt Kern::CreateAndPinVirtualMemory(TVirtualPinObject*& aPinObject, TL
 	}
 
 
-/*
+/**
 Unpin an area of memory previously pinned by calling Kern::PinVirtualMemory().
 
 @param aPinObject  The virtual pin object used to pin the memory.
@@ -4381,7 +4385,6 @@ Unpin an area of memory previously pinned by calling Kern::PinVirtualMemory().
 @see Kern::PinVirtualMemory()
 
 @prototype
-@internalTechnology
 */
 EXPORT_C void Kern::UnpinVirtualMemory(TVirtualPinObject* aPinObject)
 	{
@@ -4391,7 +4394,7 @@ EXPORT_C void Kern::UnpinVirtualMemory(TVirtualPinObject* aPinObject)
 	NKern::ThreadLeaveCS();
 	}
 
-/*
+/**
 Dispose of a virtual pin object which is no longer required.
 
 Any memory pinned by the object is unpinned first.
@@ -4409,7 +4412,6 @@ Any memory pinned by the object is unpinned first.
 @see Kern::CreateVirtualPinObject()
 
 @prototype
-@internalTechnology
 */
 EXPORT_C void Kern::DestroyVirtualPinObject(TVirtualPinObject*& aPinObject)
 	{
@@ -4418,7 +4420,11 @@ EXPORT_C void Kern::DestroyVirtualPinObject(TVirtualPinObject*& aPinObject)
 	}
 
 /**
-Creates an object which is used to pin physical memory. Suported by Kernel running flexible memory model.
+Creates an object which is used to pin physical memory. Supported by Kernel running flexible memory model.
+
+Note - Instances of TPhysicalPinObject are not protected from concurrent operations being performed 
+with them by separate threads i.e. it is the responsibility of the creator of a TPhysicalPinObject 
+instance to ensure that it will not be pinned, unpinned or destroyed by more than one thread at a time.
 
 @param aPinObject A reference to a pointer which is set to the newly-created object on success.
 
@@ -4443,10 +4449,10 @@ EXPORT_C TInt Kern::CreatePhysicalPinObject(TPhysicalPinObject*& aPinObject)
 	}
 
 /**
-Pins an area of physical memory. Suported by Kernel running flexible memory model.
+Pins an area of physical memory. Supported by Kernel running flexible memory model.
 
-The physical memory to pin is defined by its existing virtual mapping (by aLinAddr, aSize & aThread parameters).
-On return, aPhysicalAddress will hold physical address (if memory is mapped contigiously) and aPhysicalPageList
+The physical memory to pin is defined by its existing virtual mapping (by aStart, aSize & aThread parameters).
+On return, aAddress will hold physical address (if memory is mapped contigiously) and aPages
 area will be populated with the list of physical pages of the mapping. aColour will hold the mapping colour
 of the first physical page in the mapping.
 
@@ -4454,13 +4460,13 @@ This operation is provided to enable device drivers to operate DMA transfers on 
 Kernel address space (but to user client's, instead).
 
 The act of pinning physical memory means that it is guaranteed to be excluded from RAM defragmentation.
-However, it can still be the subject of data paging. Physically pinned memory is also guaranteed not to be
+However, it can still be the subject of demand paging. Physically pinned memory is also guaranteed not to be
 reused for some other purpose - even if the process owning the memory decommits it or terminates.
 
 Note that this operation may fail with KErrNoMemory.
 
 @param aPinObject		A physical pin object previously created by calling Kern::CreatePhysicalPinObject().
-@param aLinAddr			Virtual address of memory to pin.
+@param aStart			Virtual address of memory to pin.
 @param aSize			The length (in bytes) of memory to pin.
 @param aThread	   		The thread that owns the memory to pin, or NULL to use the current thread.
 @param aReadOnlyMemory  Set to ETrue if the content of physical memory is not going to change while being
@@ -4491,9 +4497,9 @@ Note that this operation may fail with KErrNoMemory.
 @pre Can be used in a device driver.
 
 @see Kern::UnpinPhysicalMemory()
-@see Cache::SyncPhysicalMemoryBeforeDmaWrite
-@see Cache::SyncPhysicalMemoryBeforeDmaRead
-@see Cache::SyncPhysicalMemoryAfterDmaRead
+@see Cache::SyncPhysicalMemoryBeforeDmaWrite()
+@see Cache::SyncPhysicalMemoryBeforeDmaRead()
+@see Cache::SyncPhysicalMemoryAfterDmaRead()
 @prototype
  */
 EXPORT_C TInt Kern::PinPhysicalMemory(TPhysicalPinObject* aPinObject, TLinAddr aStart, TUint aSize, TBool aReadOnlyMemory,
@@ -4537,7 +4543,7 @@ EXPORT_C TInt Kern::UnpinPhysicalMemory(TPhysicalPinObject* aPinObject)
 	return KErrNone;
 	}
 
-/*
+/**
 Dispose of a physical pin object which is no longer required.
 
 Any memory pinned by the object is unpinned first.
@@ -4564,4 +4570,168 @@ EXPORT_C TInt Kern::DestroyPhysicalPinObject(TPhysicalPinObject*& aPinObject)
 	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::DestroyPhysicalPinObject");
 	M::DestroyPhysicalPinObject(aPinObject);
 	return KErrNone;
+	}
+
+
+/**
+Creates an object which is used to map user side memory in the kernel address space 
+and also physically pin the memory. Supported by Kernel running the flexible memory model.
+
+When the map object will only be used to map non-demand paged memory aMaxReserveSize can be used 
+to pre-reserve the resources that would be required for Kern::MapAndPinMemory().  This will 
+prevent Kern::MapAndPinMemory() failing due to low memory and will reduce the time to execute
+Kern::MapAndPinMemory() but only when the mapping object is used to map non-demand paged memory.
+
+Note - Instances of TKernelMapObject are not protected from concurrent operations being performed 
+with them by separate threads i.e. it is the responsibility of the creator of a TKernelMapObject 
+instance to ensure that it will not be mapped, unmapped or destroyed by more than one thread at a time.
+
+@param aMapObject 		A reference to a pointer which is set to the newly created object on success.
+@param aMaxReserveSize	When set to zero (the default) the resources required to map memory will be
+						allocated when Kern::MapAndPinMemory() is invoked with the newly created map 
+						object.	 When not set to zero all resources required for the mapping object 
+						to map up to aMaxReserveSize bytes will be reserved when creating the mapping 
+						object.  When the mapping object is used to map non-demand paged memory, 
+						this will prevent Kern::MapAndPinMemory() from returning KErrNoMemory 
+						when invoked with the mapping object.  However, it will limit the mapping 
+						object to being able to map a maximum of aMaxReserveSize bytes and may also
+						waste resources if it is used to map less than aMaxReserveSize bytes.
+
+@return KErrNotSupported on memory models other then flexible.
+		KErrNone, if successful, otherwise one of the other system-wide error codes.
+
+@pre Calling thread must be in a critical section
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Suitable for use in a device driver.
+
+@see Kern::DestroyKernelMapObject()
+@see Kern::MapAndPinMemory()
+
+@prototype
+*/
+EXPORT_C TInt Kern::CreateKernelMapObject(TKernelMapObject*& aMapObject, TUint aMaxReserveSize)
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::CreateKernelMapObject");			
+	return M::CreateKernelMapObject(aMapObject, aMaxReserveSize);
+	}
+
+
+/**
+Maps an area of memory into the kernel address space and physically pins it. Supported by Kernel running 
+the flexible memory model.
+
+The memory to map and pin is defined by its existing virtual mapping (via the aStart, aSize & aThread parameters).
+On return, if aPages is not NULL, aPages will be populated with the list of physical pages mapped.
+
+This operation is provided to enable device drivers to not only operate DMA transfers on memory which was not 
+originally mapped to the kernel address space (but to user client's, instead) but also read or modify the data 
+from kernel context, e.g. a DFC.
+
+The act of mapping the memory means that it is guaranteed to be excluded from RAM defragmentation.  The new mapping 
+will also be protected from the effects of demand paging.  Once mapped the memory is also guaranteed not to be reused for 
+some other purpose - even if the process owning the memory decommits it or terminates.
+
+Note that this operation may fail with KErrNoMemory if the kernel mapping object was created with aMaxReserveSize==0
+or the memory to be mapped is demand paged.
+
+@param aMapObject		A kernel map object previously created by calling Kern::CreateKernelMapObject().
+@param aThread	   		The thread that owns the memory to map, or NULL to use the current thread.
+@param aStart			Virtual address of memory to map.
+@param aSize			The length (in bytes) of memory to map.
+@param aMapAttributes	A bit mask of TKernelMapAttributes attributes for the mapping.
+@param aKernelAddr		Set to the base linear address of the new kernel mapping.  This is the address to use when accessing
+						the memory from kernel side and to pass to cache maintence operations before and after performing
+						DMA operations.
+@param aPages			Points to area of TPhysAddr which will on exit hold the addresses of the physical pages contained
+						in the specified region. The array must be large enough to hold the whole list of pages in the region.
+						Set aPages to NULL if the physical addresses of the pages being mapped are not required.
+
+@return 				KErrNone, if successful,
+						KErrInUse if aMapObject is already mapping some memory,
+						KErrArgument if aSize is larger than the argument aMaxReserveSize of Kern::CreateKernelMapObject()
+						when creating aMapObject or aMapAttributes has invalid bits set.
+						KErrNotSupported on memory models other then flexible.
+						Otherwise one of the other system-wide error codes.
+
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+
+@see Kern::UnmapAndUnpinMemory()
+@see Cache::SyncMemoryBeforeDmaWrite()
+@see Cache::SyncMemoryBeforeDmaRead()
+@see Cache::SyncMemoryAfterDmaRead()
+@prototype
+ */
+EXPORT_C TInt Kern::MapAndPinMemory(TKernelMapObject* aMapObject, DThread* aThread, TLinAddr aStart, TUint aSize, 
+									TUint aMapAttributes, TLinAddr& aKernelAddr, TPhysAddr* aPages)
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"Kern::MapAndPinMemory");
+	if (~EKernelMap_ValidMask & aMapAttributes)
+		{// Invalid mapping attribute flags set.
+		return KErrArgument;
+		}
+	if (aThread == NULL)
+		aThread = TheCurrentThread;
+	if (aSize == 0)
+		return KErrNone;
+	NKern::ThreadEnterCS();
+	TInt r = M::MapAndPinMemory(aMapObject, aThread, aStart, aSize, aMapAttributes, aKernelAddr, aPages);
+	NKern::ThreadLeaveCS();
+	return r;
+	}
+
+
+/**
+Unmaps and unpins an area of memory previously mapped by calling Kern::MapAndPinMemory().
+
+@param aMapObject  The kernel mapping object used to map and pin the memory.
+
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+
+@see Kern::MapAndPinMemory()
+
+@prototype
+*/
+EXPORT_C void Kern::UnmapAndUnpinMemory(TKernelMapObject* aMapObject)
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"Kern::UnmapAndUnpinMemory");
+	NKern::ThreadEnterCS();
+	M::UnmapAndUnpinMemory(aMapObject);
+	NKern::ThreadLeaveCS();
+	}
+
+
+/**
+Dispose of a kernel mapping object which is no longer required.
+
+Any memory mapped and pinned by the object is unmapped and unpinned first.
+
+@param	aMapObject	A reference to a pointer to the mapping object to destroy.
+					This pointer will be set to NULL on return.
+
+@pre Calling thread must be in a critical section
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Suitable for use in a device driver.
+
+@see Kern::CreateKernelMapObject()
+
+@prototype
+*/
+EXPORT_C void Kern::DestroyKernelMapObject(TKernelMapObject*& aMapObject)
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::DestroyKernelMapObject");
+	M::DestroyKernelMapObject(aMapObject);
 	}

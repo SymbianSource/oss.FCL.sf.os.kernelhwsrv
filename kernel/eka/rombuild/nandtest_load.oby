@@ -83,3 +83,5 @@ data=extension.rofs							\rofsextension2.img
 #endif
 
 data=smr1.img								\smr1.img
+data=\epoc32\data\smr_part_102400.img		\smr2.img
+

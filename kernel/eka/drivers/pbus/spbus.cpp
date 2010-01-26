@@ -16,6 +16,15 @@
 //
 
 #include <drivers/pbus.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "spbusTraces.h"
+#endif
+
 
 const TInt KPBusSocketThreadPriority=26;
 
@@ -30,33 +39,43 @@ GLDEF_D DPBusPsuBase* TheVccCores[KMaxPBusVccs];
 EXPORT_C TPBusCallBack::TPBusCallBack()
 	:	iSocket(NULL), iFunction(NULL), iIntMask(0), iPtr(NULL)
 	{
+	OstTraceFunctionEntry0( TPBUSCALLBACK_TPBUSCALLBACK1_ENTRY );
 	iNext=NULL;
+	OstTraceFunctionExit0( TPBUSCALLBACK_TPBUSCALLBACK1_EXIT );
 	}
 
 EXPORT_C TPBusCallBack::TPBusCallBack(TPBusCallBackFn aFunction, TAny* aPtr)
 	: iSocket(NULL), iFunction(aFunction), iIntMask(0), iPtr(aPtr)
 	{
+	OstTraceFunctionEntry0( TPBUSCALLBACK_TPBUSCALLBACK2_ENTRY );
 	iNext=NULL;
+	OstTraceFunctionExit0( TPBUSCALLBACK_TPBUSCALLBACK2_EXIT );
 	}
 
 EXPORT_C TPBusCallBack::TPBusCallBack(TPBusIsr anIsr, TAny* aPtr, TUint anIntMask)
 	: iSocket(NULL), iFunction(NULL), iIntMask(anIntMask), iIsr(anIsr), iPtr(aPtr)
 	{
+	OstTraceFunctionEntry0( TPBUSCALLBACK_TPBUSCALLBACK3_ENTRY );
 	iNext=NULL;
+	OstTraceFunctionExit0( TPBUSCALLBACK_TPBUSCALLBACK3_EXIT );
 	}
 
 EXPORT_C void TPBusCallBack::Remove()
 	{
+	OstTraceFunctionEntry0( TPBUSCALLBACK_REMOVE_ENTRY );
 	TInt irq=NKern::DisableAllInterrupts();
 	if (iNext)
 		Deque();
 	iNext=NULL;
 	NKern::RestoreInterrupts(irq);
+	OstTraceFunctionExit0( TPBUSCALLBACK_REMOVE_EXIT );
 	}
 
 EXPORT_C void TPBusCallBack::SetSocket(TInt aSocket)
 	{
+	OstTraceFunctionEntryExt( TPBUSCALLBACK_SETSOCKET_ENTRY, this );
 	iSocket=TheSockets[aSocket];
+	OstTraceFunctionExit1( TPBUSCALLBACK_SETSOCKET_EXIT, this );
 	}
 
 /********************************************
@@ -73,6 +92,7 @@ EXPORT_C DMediaChangeBase::DMediaChangeBase(TInt aMediaChangeNum)
 		iReplyCount(0),
 		iDoorOpenDfc(DoorOpenDfcFn,this,Kern::DfcQue1(),1)
 	{
+	OstTraceFunctionEntryExt( DMEDIACHANGEBASE_DMEDIACHANGEBASE_ENTRY, this );
 	}
 
 
@@ -106,13 +126,22 @@ EXPORT_C TInt DMediaChangeBase::Create()
 EXPORT_C void DMediaChangeBase::DoorOpenService()
 	{
 	if (NKern::CurrentContext()==NKern::EInterrupt)
+	    {
+	    OstTrace0(TRACE_INTERNALS, DMEDIACHANGEBASE_DOOROPENSERVICE, "Interrupt driven asynchronous media change event");
 		iDoorOpenDfc.Add();
+	    }
 	else 
 		{
 		if (Kern::DfcQue1()->iThread==(NThreadBase *)NKern::CurrentThread()) 	// check if this is being called from PBUS thread
+		    {
+		    OstTrace0(TRACE_INTERNALS, DMEDIACHANGEBASE_DOOROPENSERVICE2, "Synchronous media change event");
 			MediaChangeEvent(ETrue);
+		    }
 		else
+		    {
+		    OstTrace0(TRACE_INTERNALS, DMEDIACHANGEBASE_DOOROPENSERVICE3, "Different thread is queueing request, asynchronous media change event");
 			iDoorOpenDfc.Enque();
+		    }
 		}
 	}
 
@@ -126,8 +155,10 @@ EXPORT_C void DMediaChangeBase::DoorOpenService()
  */
 void DMediaChangeBase::DoorOpenDfcFn(TAny* aPtr)
 	{
+	OstTraceFunctionEntry0( DMEDIACHANGEBASE_DOOROPENDFCFN_ENTRY );
 	DMediaChangeBase* pM=(DMediaChangeBase*)aPtr;
 	pM->MediaChangeEvent(ETrue);
+	OstTraceFunctionExit0( DMEDIACHANGEBASE_DOOROPENDFCFN_EXIT );
 	}
 
 /**
@@ -138,7 +169,9 @@ void DMediaChangeBase::DoorOpenDfcFn(TAny* aPtr)
  */
 EXPORT_C void DMediaChangeBase::DoorClosedService()
 	{
+	OstTraceFunctionEntry1( DMEDIACHANGEBASE_DOORCLOSEDSERVICE_ENTRY, this );
 	MediaChangeEvent(EFalse);
+	OstTraceFunctionExit1( DMEDIACHANGEBASE_DOORCLOSEDSERVICE_EXIT, this );
 	}
 
 /**
@@ -150,7 +183,9 @@ EXPORT_C void DMediaChangeBase::DoorClosedService()
  */
 void DMediaChangeBase::MediaChangeEvent(TBool aDoorOpened)
 	{
+	OstTraceFunctionEntry1( DMEDIACHANGEBASE_MEDIACHANGEEVENT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DMediaChangeBase(%d)::MediaChangeEvent(%d)",iMediaChangeNum,aDoorOpened));
+	OstTraceExt2(TRACE_INTERNALS, DMEDIACHANGEBASE_DMEDIACHANGEBASE, "iMediaChangeNum=%d; aDoorOpened=%d", iMediaChangeNum,aDoorOpened);
 	TInt i;
 
 	// notify all sockets affected
@@ -165,6 +200,7 @@ void DMediaChangeBase::MediaChangeEvent(TBool aDoorOpened)
 			pS->MediaChangeEvent(aDoorOpened);
 			}
 		}
+	OstTraceFunctionExit1( DMEDIACHANGEBASE_MEDIACHANGEEVENT_EXIT, this );
 	}
 
 /**
@@ -179,6 +215,7 @@ void DMediaChangeBase::MediaChangeEvent(TBool aDoorOpened)
  */
 void DMediaChangeBase::AcknowledgeEvent(TBool aDoorOpened)
 	{
+	OstTraceFunctionEntryExt( DMEDIACHANGEBASE_ACKNOWLEDGEEVENT_ENTRY, this );
 	TInt c = __e32_atomic_tas_ord32(&iReplyCount, 1, -1, 0);
 	if (c==1)
 		{
@@ -187,6 +224,7 @@ void DMediaChangeBase::AcknowledgeEvent(TBool aDoorOpened)
 		else
 			DoDoorClosed();
 		}
+	OstTraceFunctionExit1( DMEDIACHANGEBASE_ACKNOWLEDGEEVENT_EXIT, this );
 	}
 
 /********************************************
@@ -194,14 +232,18 @@ void DMediaChangeBase::AcknowledgeEvent(TBool aDoorOpened)
  ********************************************/
 void psuTick(TAny* aPtr)
 	{
+	OstTraceFunctionEntry0( _PSUTICK_ENTRY );
 	DPBusPsuBase* pP=(DPBusPsuBase*)aPtr;
 	pP->iPsuDfc.Enque();
+	OstTraceFunctionExit0( _PSUTICK_EXIT );
 	}
 	
 void psuDfc(TAny* aPtr)
 	{
+	OstTraceFunctionEntry0( _PSUDFC_ENTRY );
 	DPBusPsuBase* pP=(DPBusPsuBase*)aPtr;
 	pP->DoTickService();
+	OstTraceFunctionExit0( _PSUDFC_EXIT );
 	}
 
 /**
@@ -215,6 +257,7 @@ DPBusPsuBase::DPBusPsuBase(TInt aPsuNum, TInt aMediaChangeNum)
 	iPsuDfc(psuDfc, this, 4),
 	iPwrDownCheckFn(DoPwrDownCheck)
 	{
+	OstTraceFunctionEntryExt( DPBUSPSUBASE_DPBUSPSUBASE_ENTRY, this );
 //	iCurrLimited=EFalse;
 //	iVoltageSupported=0;
 //	iMaxCurrentInMicroAmps=0;
@@ -227,8 +270,10 @@ DPBusPsuBase::DPBusPsuBase(TInt aPsuNum, TInt aMediaChangeNum)
 
 void DPBusPsuBase::DoPwrDownCheck(TAny* aPtr)
 	{
+	OstTraceFunctionEntry0( DPBUSPSUBASE_DOPWRDOWNCHECK_ENTRY );
 	DPBusPsuBase& self = *static_cast<DPBusPsuBase*>(aPtr);
 	self.PwrDownCheck();
+	OstTraceFunctionExit0( DPBUSPSUBASE_DOPWRDOWNCHECK_EXIT );
 	}
 
 /**
@@ -244,6 +289,7 @@ Calls DoCreate to initialise the PSU.
 */
 TInt DPBusPsuBase::Create()
 	{
+	OstTraceFunctionEntry1( DPBUSPSUBASE_CREATE_ENTRY, this );
 
 	TPBusPsuInfo pi;
 	PsuInfo(pi);
@@ -256,10 +302,14 @@ TInt DPBusPsuBase::Create()
 
 	TInt r=DoCreate();
 	if (r!=KErrNone)
+	    {
+		OstTraceFunctionExitExt( DPBUSPSUBASE_CREATE_EXIT1, this, r );
 		return r;
+	    }
 	
 	iPsuDfc.SetDfcQ(&iSocket->iDfcQ);
 	
+	OstTraceFunctionExitExt( DPBUSPSUBASE_CREATE_EXIT2, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -276,7 +326,10 @@ The default implementation returns KErrNone.
 */
 EXPORT_C TInt DPBusPsuBase::DoCreate()
 	{
-	return KErrNone;
+	OstTraceFunctionEntry1( DPBUSPSUBASE_DOCREATE_ENTRY, this );
+	TInt r = KErrNone;
+	OstTraceFunctionExitExt( DPBUSPSUBASE_DOCREATE_EXIT, this, r );
+	return r;
 	}
 
 
@@ -286,8 +339,10 @@ Sets PSU state to EPsuOff.
 */
 void DPBusPsuBase::Reset()
 	{
+	OstTraceFunctionEntry1( DPBUSPSUBASE_RESET_ENTRY, this );
 	SetState(EPsuOff);
 	iCurrLimited=EFalse;
+	OstTraceFunctionExit1( DPBUSPSUBASE_RESET_EXIT, this );
 	}
 
 
@@ -320,6 +375,7 @@ Controls the power supply state.
 */
 EXPORT_C TInt DPBusPsuBase::SetState(TPBusPsuState aState)
 	{
+	OstTraceFunctionEntry1( DPBUSPSUBASE_SETSTATE_ENTRY, this );
 
 	TInt r=KErrGeneral;
 	if (aState==EPsuOff)
@@ -343,6 +399,8 @@ EXPORT_C TInt DPBusPsuBase::SetState(TPBusPsuState aState)
 		r=KErrNone;
 		}
 	__KTRACE_OPT(KPBUS2,Kern::Printf("<Psu(%d):Set(%d)-%d",iPsuNum,aState,r));
+	OstTraceExt3(TRACE_INTERNALS, DPBUSPSUBASE_SETSTATE, "iPsuNum=%d; aState=%d; retval=%d", iPsuNum, (TInt) aState, r);
+	OstTraceFunctionExit1( DPBUSPSUBASE_SETSTATE_EXIT, this );
 	return r;
 	}
 
@@ -363,6 +421,7 @@ This method is called every PSU tick.
 */
 TInt DPBusPsuBase::CheckVoltage(TUint aCheckStatus)
 	{
+	OstTraceFunctionEntryExt( DPBUSPSUBASE_CHECKVOLTAGE_ENTRY, this );
 	// Check that voltage checking is in order at this time
 	if (
 		(aCheckStatus&iVoltCheckInterval) &&
@@ -370,8 +429,10 @@ TInt DPBusPsuBase::CheckVoltage(TUint aCheckStatus)
 	   )
 		{
 		DoCheckVoltage();
+		OstTraceFunctionExitExt( DPBUSPSUBASE_CHECKVOLTAGE_EXIT, this, KErrNone );
 		return KErrNone;
 		}
+	OstTraceFunctionExitExt( DPBUSPSUBASE_CHECKVOLTAGE_EXIT2, this, KErrNotSupported );
 	return KErrNotSupported;
 	}
 
@@ -393,12 +454,15 @@ and KErrNotReady if the voltage check was not completed.
 */
 EXPORT_C void DPBusPsuBase::ReceiveVoltageCheckResult(TInt anError)
 	{
+	OstTraceFunctionEntryExt( DPBUSPSUBASE_RECEIVEVOLTAGECHECKRESULT_ENTRY, this );
 //	__KTRACE_OPT(KPBUS1,Kern::Printf("DPBusPsuBase(%d)::ReceiveVoltageCheckResult(%d)",iPsuNum,anError));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSPSUBASE_RECEVIVEVOLTAGECHECKRESULT,"iPsuNum=%d; ReceiveVoltageCheckResult=%d",iPsuNum,anError );
 	if (anError==KErrGeneral)
 		{
 		SetCurrLimited();
 		iSocket->PsuFault(KErrCorrupt);
 		}
+	OstTraceFunctionExit1( DPBUSPSUBASE_RECEIVEVOLTAGECHECKRESULT_EXIT, this );
 	}
 
 /**
@@ -410,10 +474,17 @@ Get the current power supply unit status
 */
 TPBusPsuStatus DPBusPsuBase::Status()
 	{
+	OstTraceFunctionEntry1( DPBUSPSUBASE_STATUS_ENTRY, this );
 	if (iCurrLimited)
+	    {
+		OstTraceFunctionExit1( DPBUSPSUBASE_STATUS_EXIT1, this );
 		return(EPsuStatError);
+	    }
 	else
+	    {
+	    OstTraceFunctionExit1( DPBUSPSUBASE_STATUS_EXIT2, this );
 		return( (iState==EPsuOff) ? EPsuStatOff : EPsuStatOn );
+	    }
 	}
 
 
@@ -424,12 +495,13 @@ Checks if power supply unit can be turned off.
 */
 void DPBusPsuBase::PwrDownCheck()
 	{
-
+OstTraceFunctionEntry1( DPBUSPSUBASE_PWRDOWNCHECK_ENTRY, this );
 	if (
 		(iNotLockedTimeout&&!IsLocked()&&++iNotLockedCount>iNotLockedTimeout) ||
 		(iInactivityTimeout&&++iInactivityCount>iInactivityTimeout)
 	   )
 			iSocket->PsuTimeout();
+	OstTraceFunctionExit1( DPBUSPSUBASE_PWRDOWNCHECK_EXIT, this );
 	}
 	
 	
@@ -438,9 +510,11 @@ Services the Pc Card Tick (called in timer thread).
 */
 EXPORT_C void DPBusPsuBase::DoTickService()
 	{
+	OstTraceFunctionEntry1( DPBUSPSUBASE_DOTICKSERVICE_ENTRY, this );
 	if (iPwrDownCheckFn)
 		(*iPwrDownCheckFn)(this);	
 	CheckVoltage(KPsuChkWhileOn);	// Check voltage level
+	OstTraceFunctionExit1( DPBUSPSUBASE_DOTICKSERVICE_EXIT, this );
 	}
 
 
@@ -451,16 +525,21 @@ DPBusPowerHandler::DPBusPowerHandler(DPBusSocket* aSocket)
 	:	DPowerHandler(*aSocket->iName),
 		iSocket(aSocket)
 	{
+	OstTraceFunctionEntryExt( DPBUSPOWERHANDLER_DPBUSPOWERHANDLER_ENTRY, this );
 	}
 
 void DPBusPowerHandler::PowerUp()
 	{
+	OstTraceFunctionEntry1( DPBUSPOWERHANDLER_POWERUP_ENTRY, this );
 	iSocket->iPowerUpDfc.Enque();
+	OstTraceFunctionExit1( DPBUSPOWERHANDLER_POWERUP_EXIT, this );
 	}
 
 void DPBusPowerHandler::PowerDown(TPowerState)
 	{
+	OstTraceFunctionEntry1( DPBUSPOWERHANDLER_POWERDOWN_ENTRY, this );
 	iSocket->iPowerDownDfc.Enque();
+	OstTraceFunctionExit1( DPBUSPOWERHANDLER_POWERDOWN_EXIT, this );
 	}
 
 /********************************************
@@ -468,23 +547,29 @@ void DPBusPowerHandler::PowerDown(TPowerState)
  ********************************************/
 void mediaChangeDfc(TAny* aPtr)
 	{
+	OstTraceFunctionEntry0( _MEDIACHANGEDFC_ENTRY );
 	DPBusSocket* pS=(DPBusSocket*)aPtr;
 	if (pS->iDoorOpened)
 		pS->DoorOpenEvent();
 	else
 		pS->DoorCloseEvent();
+	OstTraceFunctionExit0( _MEDIACHANGEDFC_EXIT );
 	}
 
 void powerUpDfc(TAny* aPtr)
 	{
+	OstTraceFunctionEntry0( _POWERUPDFC_ENTRY );
 	DPBusSocket* pS=(DPBusSocket*)aPtr;
 	pS->DoPowerUp();
+	OstTraceFunctionExit0( _POWERUPDFC_EXIT );
 	}
 
 void powerDownDfc(TAny* aPtr)
 	{
+	OstTraceFunctionEntry0( _POWERDOWNDFC_ENTRY );
 	DPBusSocket* pS=(DPBusSocket*)aPtr;
 	pS->DoPowerDown();
+	OstTraceFunctionExit0( _POWERDOWNDFC_EXIT );
 	}
 
 	/**
@@ -508,10 +593,16 @@ EXPORT_C void DPBusSocket::Panic(DPBusSocket::TPanic aPanic)
 	*/
 EXPORT_C TInt DPBusSocket::InCritical()
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_INCRITICAL_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::InCritical",iSocketNumber));
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_INCRITICAL, "iSocketNumber=%d",iSocketNumber );
 	if (iPostponeCount==0 && iPostponedEvents!=0)
+	    {
+		OstTraceFunctionExitExt( DPBUSSOCKET_INCRITICAL_EXIT1, this, KErrNotReady );
 		return KErrNotReady;	// we are about to do media change/power down
+	    }
 	++iPostponeCount;
+	OstTraceFunctionExitExt( DPBUSSOCKET_INCRITICAL_EXIT2, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -523,20 +614,25 @@ EXPORT_C TInt DPBusSocket::InCritical()
 	*/
 EXPORT_C void DPBusSocket::EndInCritical()
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_ENDINCRITICAL_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::EndInCritical",iSocketNumber));
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_ENDINCRITICAL1, "iSocketNumber=%d",iSocketNumber);
 	if (iPostponeCount && --iPostponeCount==0)
 		{
 		if (iPostponedEvents & EMediaChange)
 			{
 			iMediaChangeDfc.Enque();
 			__KTRACE_OPT(KPBUS1,Kern::Printf("Media change - done postponed"));
+			OstTrace0(TRACE_INTERNALS, DPBUSSOCKET_ENDINCRITICAL2, "Media change - done postponed");
 			}
 		if (iPostponedEvents & EPowerDown)
 			{
 			iPowerDownDfc.Enque();
 			__KTRACE_OPT2(KPBUS1,KPOWER,Kern::Printf("Power down - done postponed"));
+			OstTrace0(TRACE_INTERNALS, DPBUSSOCKET_ENDINCRITICAL3, "Power down - done postponed");
 			}
 		}
+	OstTraceFunctionExit1( DPBUSSOCKET_ENDINCRITICAL_EXIT, this );
 	}
 
 	/**
@@ -546,7 +642,9 @@ EXPORT_C void DPBusSocket::EndInCritical()
 	*/
 EXPORT_C void DPBusSocket::DeltaCurrentConsumption(TInt aDelta)
 	{
+	OstTraceFunctionEntryExt( DPBUSSOCKET_DELTACURRENTCONSUMPTION_ENTRY, this );
 	iPowerHandler->DeltaCurrentConsumption(aDelta);
+	OstTraceFunctionExit1( DPBUSSOCKET_DELTACURRENTCONSUMPTION_EXIT, this );
 	}
 
 	/**
@@ -561,6 +659,7 @@ DPBusSocket::DPBusSocket(TInt aSocketNumber)
 		iPowerDownDfc(powerDownDfc, this, 4),
 		iPsuDfc(psuDfc, this, 4)
 	{
+	OstTraceFunctionEntryExt( DPBUSSOCKET_DPBUSSOCKET_ENTRY, this );
 //	iPowerGroup=0;
 //	iName=NULL;
 //	iState=EPBusCardAbsent;
@@ -583,20 +682,29 @@ DPBusSocket::DPBusSocket(TInt aSocketNumber)
 	*/
 TInt DPBusSocket::Create(const TDesC* aName)
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_CREATE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::Create %lS",iSocketNumber,aName));
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_CREATE, "iSocketNumber=%d",iSocketNumber);
 	iName=aName;
 	DPBusPowerHandler* pH=new DPBusPowerHandler(this);
 	if (!pH)
+	    {
+		OstTraceFunctionExitExt( DPBUSSOCKET_CREATE_EXIT1, this, KErrNoMemory );
 		return KErrNoMemory;
+	    }
 	iPowerHandler=pH;
 	pH->Add();		// register power handler
 	TInt r=Kern::DfcQInit(&iDfcQ, KPBusSocketThreadPriority, iName);
 	if (r!=KErrNone)
+	    {
+		OstTraceFunctionExitExt( DPBUSSOCKET_CREATE_EXIT2, this, r );
 		return r;
+	    }
 	iMediaChangeDfc.SetDfcQ(&iDfcQ);
 	iPowerUpDfc.SetDfcQ(&iDfcQ);
 	iPowerDownDfc.SetDfcQ(&iDfcQ);
 	
+	OstTraceFunctionExitExt( DPBUSSOCKET_CREATE_EXIT3, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -607,19 +715,25 @@ TInt DPBusSocket::Create(const TDesC* aName)
 	*/
 TInt DPBusSocket::Init()
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_INIT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::Init",iSocketNumber));
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_INIT, "iSocketNumber=%d",iSocketNumber);
 	__PM_ASSERT(iState == EPBusCardAbsent);
 	if (MediaState()==EDoorClosed && CardIsPresent())
 		ChangeState(EPBusOff,KErrNotReady);
+	OstTraceFunctionExitExt( DPBUSSOCKET_INIT_EXIT, this, KErrNone );
 	return KErrNone;
 	}
 
 void DPBusSocket::ResetSocket(TBool aFullReset)
 	{
+	OstTraceFunctionEntryExt( DPBUSSOCKET_RESETSOCKET_ENTRY, this );
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_RESETSOCKET, "iSocketNumber=%d; aFullReset=%d", iSocketNumber, aFullReset);
 	Reset1();
 	iVcc->Reset();
 	if (aFullReset)
 		Reset2();
+	OstTraceFunctionExit1( DPBUSSOCKET_RESETSOCKET_EXIT, this );
 	}
 
 void DPBusSocket::ChangeState(TInt aState, TInt anError)
@@ -627,7 +741,9 @@ void DPBusSocket::ChangeState(TInt aState, TInt anError)
 // Change state, notifying all clients
 //
 	{
+	OstTraceFunctionEntryExt( DPBUSSOCKET_CHANGESTATE_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("Socket %d ChangeState %d to %d, err %d",iSocketNumber,iState,aState,anError));
+	OstTraceExt4(TRACE_INTERNALS, DPBUSSOCKET_CHANGESTATE , "iSocketNumber=%d; ChangeState %d to %d; anError=%d",iSocketNumber,iState,aState,anError);
 	if (iState!=aState)
 		{
 		if(iState == EPBusCardAbsent && aState == EPBusOff && anError == KErrTimedOut)
@@ -648,6 +764,7 @@ void DPBusSocket::ChangeState(TInt aState, TInt anError)
 			pC=pC->iNext;
 			}
 		}
+	OstTraceFunctionExit1( DPBUSSOCKET_CHANGESTATE_EXIT, this );
 	}
 
 void DPBusSocket::Isr(TInt anId)
@@ -655,6 +772,8 @@ void DPBusSocket::Isr(TInt anId)
 // Service a card interrupt
 //
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_ISR_ENTRY, this );
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_ISR, "iSocketNumber=%d; anId=%d", iSocketNumber, anId );
 	// notify all interested clients of interrupt
 	SDblQueLink* pC=iCallBackQ.iA.iNext;
 #ifdef _DEBUG
@@ -670,7 +789,9 @@ void DPBusSocket::Isr(TInt anId)
 		}
 #ifdef _DEBUG
 	__KTRACE_OPT(KPBUS1,Kern::Printf("!%d",n));
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_ISR2, "!%d", n);
 #endif
+	OstTraceFunctionExit1( DPBUSSOCKET_ISR_EXIT, this );
 	}
 
 	/**
@@ -680,11 +801,14 @@ void DPBusSocket::Isr(TInt anId)
 	*/
 EXPORT_C void DPBusSocket::Add(TPBusCallBack* aCallBack)
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_ADD_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf("DPBusSocket(%d)::Add(%08x) next %08x",iSocketNumber,aCallBack,aCallBack->iNext));
+	OstTraceExt3(TRACE_INTERNALS, DPBUSSOCKET_ADD, "iSocketNumber=%d; aCallBack=0x%08x; aCallBack->iNext=0x%08x",iSocketNumber, (TUint) aCallBack, (TUint) aCallBack->iNext);
 	TInt irq=NKern::DisableAllInterrupts();
 	if (!aCallBack->iNext)
 		iCallBackQ.Add(aCallBack);
 	NKern::RestoreInterrupts(irq);
+	OstTraceFunctionExit1( DPBUSSOCKET_ADD_EXIT, this );
 	}
 
 	/**
@@ -700,7 +824,9 @@ EXPORT_C void DPBusSocket::Add(TPBusCallBack* aCallBack)
 	*/
 EXPORT_C TInt DPBusSocket::PowerUp()
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_POWERUP_ENTRY, this );
 	__KTRACE_OPT2(KPBUS1,KPOWER,Kern::Printf(">DPBusSocket(%d)::PowerUp state %d",iSocketNumber,iState));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_POWERUP1, "iSocketNumber=%d; iState=%d",iSocketNumber,iState);
 	TInt r=KErrNone;
 	switch (iState)
 		{
@@ -737,6 +863,8 @@ EXPORT_C TInt DPBusSocket::PowerUp()
 			}
 		}
 	__KTRACE_OPT2(KPBUS1,KPOWER,Kern::Printf("<DPBusSocket(%d)::PowerUp ret %d, state %d",iSocketNumber,r,iState));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_POWERUP2, "iSocketNumber=%d; iState=%d",iSocketNumber,iState);
+	OstTraceFunctionExitExt( DPBUSSOCKET_POWERUP_EXIT, this, r );
 	return r;
 	}
 	/**
@@ -749,7 +877,9 @@ EXPORT_C TInt DPBusSocket::PowerUp()
 
 EXPORT_C void DPBusSocket::PowerUpSequenceComplete(TInt anError)
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_POWERUPSEQUENCECOMPLETE_ENTRY, this );
 	__KTRACE_OPT2(KPBUS1,KPOWER,Kern::Printf("DPBusSocket(%d)::PowerUpSequenceComplete state %d error %d",iSocketNumber,iState,anError));
+	OstTraceExt3(TRACE_INTERNALS, DPBUSSOCKET_POWERUPSEQUENCECOMPLETE, "iSocketNumber=%d; iState=%d; anError=%d",iSocketNumber,iState,anError);
 	if (iState!=EPBusCardAbsent && iState!=EPBusOff)
 		{
 		if (anError==KErrNone)
@@ -761,11 +891,13 @@ EXPORT_C void DPBusSocket::PowerUpSequenceComplete(TInt anError)
 		else
 			ChangeState(EPBusPsuFault,anError);
 		}
+	OstTraceFunctionExit1( DPBUSSOCKET_POWERUPSEQUENCECOMPLETE_EXIT, this );
 	}
 
 void DPBusSocket::PsuFault(TInt anError)
 	{
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::PsuFault state %d error %d",iSocketNumber,iState,anError));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_PSUFAULT, "iSocketNumber=%d; iState=%d",iSocketNumber,iState );
 	ResetSocket(ETrue);
 	ChangeState(EPBusPsuFault,anError);
 	}
@@ -773,6 +905,7 @@ void DPBusSocket::PsuFault(TInt anError)
 void DPBusSocket::PsuTimeout()
 	{
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::PsuTimeout state %d",iSocketNumber,iState));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_PSUTIMEOUT, "iSocketNumber=%d; iState=%d",iSocketNumber,iState );
 	ResetSocket(EFalse);
 	ChangeState(EPBusOff,KErrTimedOut);
 	}
@@ -782,7 +915,10 @@ void DPBusSocket::DoPowerUp()
 // Called on transition from standby
 //
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_DOPOWERUP_ENTRY, this );
+	
 	__KTRACE_OPT2(KPBUS1,KPOWER,Kern::Printf("DPBusSocket(%d)::DoPowerUp state %d",iSocketNumber,iState));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_DOPOWERUP, "iSocketNumber=%d; iState=%d",iSocketNumber,iState );
 	__PM_ASSERT(iStandby);
 	if (iState!=EPBusCardAbsent && iState!=EPBusOff && iState!=EPBusPowerUpPending)
 		Panic(EMcPowerUpInvalidState);
@@ -814,6 +950,7 @@ void DPBusSocket::DoPowerUp()
 		ChangeState(EPBusOff,KErrNotReady);
 	iStandby = EFalse;
 	iPowerHandler->PowerUpDone();
+	OstTraceFunctionExit1( DPBUSSOCKET_DOPOWERUP_EXIT, this );
 	}
 
 void DPBusSocket::DoPowerDown()
@@ -821,12 +958,15 @@ void DPBusSocket::DoPowerDown()
 // Called by DPowerManager on transition to standby
 //
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_DOPOWERDOWN_ENTRY, this );
 	__KTRACE_OPT2(KPBUS1,KPOWER,Kern::Printf("DPBusSocket(%d)::DoPowerDown state %d",iSocketNumber,iState));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_DOPOWERDOWN1, "iSocketNumber=%d; iState=%d",iSocketNumber,iState );
 	__PM_ASSERT(!iStandby);
 	if (iPostponeCount)
 		{
 		iPostponedEvents |= EPowerDown;
 		__KTRACE_OPT(KPBUS1,Kern::Printf("Power down postponed"));
+		OstTrace0(TRACE_INTERNALS, DPBUSSOCKET_DOPOWERDOWN2, "Power down postponed");
 		return;
 		}
 	iPostponedEvents &= ~EPowerDown;
@@ -850,6 +990,7 @@ void DPBusSocket::DoPowerDown()
 		iStandby = ETrue;
 		iPowerHandler->PowerDownDone();
 		}
+	OstTraceFunctionExit1( DUP1_DPBUSSOCKET_DOPOWERDOWN_EXIT, this );
 	}
 
 	/**
@@ -859,9 +1000,11 @@ void DPBusSocket::DoPowerDown()
 	*/
 EXPORT_C void DPBusSocket::RequestAsyncPowerDown()
 	{
-	__KTRACE_OPT(KPBUS1,Kern::Printf("DPBusSocket::RequestAsyncPowerDown"));	
+	__KTRACE_OPT(KPBUS1,Kern::Printf("DPBusSocket::RequestAsyncPowerDown"));
+	OstTrace0(TRACE_INTERNALS, DPBUSSOCKET_REQUESTASYNCPOWERDOWN1, "DPBusSocket::RequestAsyncPowerDown");
     __e32_atomic_add_ord32(&iRequestPowerDownCount, 1);
 	__KTRACE_OPT(KPBUS1,Kern::Printf("   >> count=%d", iRequestPowerDownCount));
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_REQUESTASYNCPOWERDOWN2, "iRequestPowerDownCount=%d", iRequestPowerDownCount);
 	}
 
 	/**
@@ -872,12 +1015,15 @@ EXPORT_C void DPBusSocket::RequestAsyncPowerDown()
 EXPORT_C void DPBusSocket::PowerDownComplete()
 	{
 	__KTRACE_OPT(KPBUS1,Kern::Printf("DPBusSocket::PowerDownComplete"));
+	OstTrace0(TRACE_INTERNALS, DPBUSSOCKET_POWERDOWNCOMPLETE, "DPBusSocket::PowerDownComplete");
 	if (__e32_atomic_tas_ord32(&iRequestPowerDownCount, 1, -1, 0) == 1)
 		{
 		__KTRACE_OPT(KPBUS1,Kern::Printf("   > Signalling Power Down (deferred)"));
+		OstTrace0(TRACE_INTERNALS, DPBUSSOCKET_POWERDOWNCOMPLETE2, "Signalling Power Down (deferred)");
 		DoPowerDown();
 		}
 	__KTRACE_OPT(KPBUS1,Kern::Printf("   >> count=%d", iRequestPowerDownCount));
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_POWERDOWNCOMPLETE3, "iRequestPowerDownCount=%d", iRequestPowerDownCount);
 	}
 	
 	/**
@@ -886,6 +1032,7 @@ EXPORT_C void DPBusSocket::PowerDownComplete()
 	*/
 EXPORT_C void DPBusSocket::ForceMediaChange()
 	{
+	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_FORCEMEDIACHANGE, "iSocketNumber=%d", iSocketNumber);
 	iMediaChange->ForceMediaChange();
 	}
 
@@ -895,6 +1042,7 @@ void DPBusSocket::MediaChangeEvent(TBool aDoorOpened)
 //
 	{
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::MediaChangeEvent %d state %d",iSocketNumber,aDoorOpened,iState));
+	OstTraceExt3(TRACE_INTERNALS, DPBUSSOCKET_MEDIACHANGEEVENT, "iSocketNumber=%d; aDoorOpened=%d; iState=%d",iSocketNumber,aDoorOpened,iState);
 	iDoorOpened=aDoorOpened;
 	iMediaChangeDfc.Enque();
 	}
@@ -904,12 +1052,16 @@ void DPBusSocket::DoorOpenEvent()
 // Called in socket thread
 //
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_DOOROPENEVENT_ENTRY, this );
+	
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::DoorOpenEvent state %d",iSocketNumber,iState));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_DOOROPENEVENT1, "iSocketNumber=%d; iState=%d",iSocketNumber,iState);
 
 	if (iPostponeCount)
 		{
 		iPostponedEvents |= EMediaChange;
 		__KTRACE_OPT(KPBUS1,Kern::Printf("Media change postponed"));
+		OstTraceFunctionExit1( DPBUSSOCKET_DOOROPENEVENT_EXIT1, this );
 		return;
 		}
 	iPostponedEvents &= ~EMediaChange;
@@ -947,14 +1099,18 @@ void DPBusSocket::DoorOpenEvent()
 #endif
 		{
 		__KTRACE_OPT(KPBUS1,Kern::Printf("At least 1 door still closed"));;
+		OstTrace0(TRACE_INTERNALS, DPBUSSOCKET_DOOROPENEVENT2 , "At least 1 door still closed");
 		ChangeState(EPBusOff,KErrNotReady);
 		}
 
+	OstTraceFunctionExit1( DPBUSSOCKET_DOOROPENEVENT_EXIT2, this );
 	}
 
 void DPBusSocket::DoorCloseEvent()
 	{
+	OstTraceFunctionEntry1( DPBUSSOCKET_DOORCLOSEEVENT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::DoorCloseEvent state %d",iSocketNumber,iState));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_DOORCLOSEEVENT , "iSocketNumber=%d; iState=%d",iSocketNumber,iState);
 
 	// NB If there are multiple doors then the bus may already be powererd up, 
 	// so it's not possible to determine the bus state.
@@ -1000,6 +1156,7 @@ void DPBusSocket::DoorCloseEvent()
 #else
 	iMediaChange->AcknowledgeEvent(EFalse);
 #endif
+	OstTraceFunctionExit1( DPBUSSOCKET_DOORCLOSEEVENT_EXIT, this );
 	}
 	/**
 	Gets pointer to the PBus Socket corresponding to the opened logical unit.
@@ -1008,8 +1165,13 @@ void DPBusSocket::DoorCloseEvent()
 	*/
 EXPORT_C DPBusSocket* DPBusSocket::SocketFromId(TInt anId)
 	{
+	OstTraceFunctionEntry0( DPBUSSOCKET_SOCKETFROMID_ENTRY );
 	if (anId>=0 && anId<KMaxPBusSockets)
+	    {
+		OstTraceFunctionExit0( DPBUSSOCKET_SOCKETFROMID_EXIT1 );
 		return TheSockets[anId];
+	    }
+	OstTraceFunctionExit0( DPBUSSOCKET_SOCKETFROMID_EXIT2 );
 	return NULL;
 	}
 
@@ -1031,6 +1193,7 @@ EXPORT_C DPBusSocket* DPBusSocket::SocketFromId(TInt anId)
 	*/
 EXPORT_C TInt DPBusSocket::ControlIO(TInt aFunction, TAny* aParam1, TAny* /*aParam2*/)
 	{
+	OstTraceExt3(TRACE_FLOW, DPBUSSOCKET_CONTROLIO_ENTRY,"DPBusSocket::ControlIO;aFunction=%d;aParam1=%d;this=%x", (TInt) aFunction, (TInt) aParam1, (TUint) this);
 	TInt err = KErrNone;
 
 	switch(aFunction)
@@ -1046,7 +1209,7 @@ EXPORT_C TInt DPBusSocket::ControlIO(TInt aFunction, TAny* aParam1, TAny* /*aPar
 			if(newState != iSimulatedMediaState)
 				{
 				iSimulatedMediaState = newState;
-
+	            OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_CONTROLIO , "iSimulatedMediaState=%d",iSimulatedMediaState);
 				switch(iSimulatedMediaState)
 					{
 					case EPeriphBusMediaNormal:
@@ -1101,6 +1264,7 @@ EXPORT_C TInt DPBusSocket::ControlIO(TInt aFunction, TAny* aParam1, TAny* /*aPar
 			break;
 		}
 
+	OstTraceFunctionExitExt( DPBUSSOCKET_CONTROLIO_EXIT, this, err );
 	return err;
 	}
 

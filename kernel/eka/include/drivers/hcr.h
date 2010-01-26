@@ -17,13 +17,14 @@
 
 /** 
 @file hcr.h
-Kernel side API for Hardware Configuration Repository (HCR). The HCR service 
-provides access to hardware settings defined for the base port.
+Kernel side client API for Hardware Configuration Repository (HCR). 
+The HCR service provides access to hardware settings defined for the base port. 
+This API is used by kernel side components such as PDDs, hardware service 
+providers and other kernel extensions.
 
 @publishedPartner
 @prototype
 */
-
 
 
 
@@ -44,13 +45,20 @@ provides access to hardware settings defined for the base port.
 
 /**
 The HCR namespace contains all the types and APIs that make up the
-Kernel side Hardware Configuration Repository (HCR).
-It provides accessor functions to settings held by the HCR and may be used by 
-kernel side clients such as physical device drivers and other services from
-thread contexts.
-The published Setting IDs available for use with this API can be found
+client API of the Kernel Hardware Configuration Repository (HCR).
+It provides accessor functions to retrieve settings held by the HCR and may be 
+called by kernel components from with in thread context. 
+
+The _published_ Setting IDs available for use with this API can be found
 in the BSP exported header 'hcrconfig.h'. This provides the top-level header
-that clients can include to gain access to all IDs for the BSP.
+that clients can include to gain access to all IDs for the BSP. IDs for settings
+that are internal to a component and not used by others are defined in a file
+private to that component.
+
+The HCR supports a number of setting repositories and searches them in a defined
+order, always returns the first setting found matching the ID or criteria.
+This allows setting values to be overriden by more recent repositories created
+during platform development and product creation.
 */
 namespace HCR
     {
@@ -75,7 +83,7 @@ namespace HCR
 		};
 		
     /** The setting Identifier type. A class used to uniquely identify a 
-    setting in the HCR. Used in calls to HCR API. 
+    setting in the HCR. Used in calls to HCR API to retrieve one setting. 
 	*/
     class TSettingId : public SSettingId
     	{
@@ -120,10 +128,11 @@ namespace HCR
 
 
 	/**
-    Retrieve settings of built in types from the HCR.
-    
-    @param aId     The setting identifier
-    @param aValue  The retrieved setting data value  
+    Retrieve a word size integer setting value from the HCR.
+    On error aValue is undefined.
+        
+    @param aId     in: The setting identifier
+    @param aValue  out: The retrieved setting data value  
     
 	@return	KErrNone if successful, output parameters valid
             KErrNotFound if aId is not a known setting ID
@@ -140,23 +149,74 @@ namespace HCR
 	IMPORT_C TInt GetInt(const TSettingId& aId, TInt32& aValue);
     IMPORT_C TInt GetInt(const TSettingId& aId, TInt64& aValue);
 	
+	/**
+    Retrieve a boolean setting value from the HCR.
+    On error aValue is undefined.
+    
+    @param aId     in: The setting identifier
+    @param aValue  out: The retrieved setting data value  
+    
+	@return	KErrNone if successful, output parameters valid
+            KErrNotFound if aId is not a known setting ID
+            KErrArgument if the setting identified is not the correct type
+            KErrNotReady if the HCR is used before it has been initialised
+            KErrCorrupt if HCR finds a repository to be corrupt
+            KErrGeneral if an internal failure occurs, see trace.
+            Otherwise one of the other system-wide error codes. 
+
+	@pre    Call from thread context, during Init1 or later
+	*/
 	IMPORT_C TInt GetBool(const TSettingId& aId, TBool& aValue);
 	
+	/**
+    Retrieve an word size unsigned integer setting value from the HCR.
+    On error aValue is undefined.
+        
+    @param aId     in: The setting identifier
+    @param aValue  out: The retrieved setting data value  
+    
+	@return	KErrNone if successful, output parameters valid
+            KErrNotFound if aId is not a known setting ID
+            KErrArgument if the setting identified is not the correct type
+            KErrNotReady if the HCR is used before it has been initialised
+            KErrCorrupt if HCR finds a repository to be corrupt
+            KErrGeneral if an internal failure occurs, see trace.
+            Otherwise one of the other system-wide error codes. 
+
+	@pre    Call from thread context, during Init1 or later
+	*/
 	IMPORT_C TInt GetUInt(const TSettingId& aId, TUint8& aValue);
     IMPORT_C TInt GetUInt(const TSettingId& aId, TUint16& aValue);
     IMPORT_C TInt GetUInt(const TSettingId& aId, TUint32& aValue);
     IMPORT_C TInt GetUInt(const TSettingId& aId, TUint64& aValue);
 
+	/**
+    Retrieve a word size linear address setting value from the HCR.
+    On error aValue is undefined.
+        
+    @param aId     in: The setting identifier
+    @param aValue  out: The retrieved setting data value  
+    
+	@return	KErrNone if successful, output parameters valid
+            KErrNotFound if aId is not a known setting ID
+            KErrArgument if the setting identified is not the correct type
+            KErrNotReady if the HCR is used before it has been initialised
+            KErrCorrupt if HCR finds a repository to be corrupt
+            KErrGeneral if an internal failure occurs, see trace.
+            Otherwise one of the other system-wide error codes. 
+
+	@pre    Call from thread context, during Init1 or later
+	*/
     IMPORT_C TInt GetLinAddr(const TSettingId& aId, TLinAddr& aValue);
     
+    
 	/**
-    Retrieve a binary data (ETypeBinData) setting from the HCR.
+    Retrieve a large binary data setting value from the HCR. The value
+	is copied into the supplied descriptor buffer. 
+	On error the descriptor and output arguments have undefined values.
 
-    @param aId     The setting identifier
-    @param aMaxLen The maximum value length that can be stored in the buffer
-    @param aValue  A pointer to the buffer or a descriptor to hold the value
-    @param aLen    Contains the length of the setting value written
-
+    @param aId     in: The setting identifier
+    @param aValue  inout: A pre-allocated descriptor to hold the value
     
 	@return	KErrNone if successful and aValue has been set
             KErrNotFound if aId is not a known setting ID
@@ -170,15 +230,39 @@ namespace HCR
 	@pre    Call from thread context, during Init1 or later
 	*/
     IMPORT_C TInt GetData(const TSettingId& aId, TDes8& aValue);
-    IMPORT_C TInt GetData(const TSettingId& aId, TUint16 aMaxLen, 
-                                    TUint8* aValue, TUint16& aLen);        
-	/**
-    Retrieve a character string (ETypeText8) setting from the HCR.
     
-    @param aId     The setting identifier
-    @param aMaxLen The maximum value length that can be stored in the buffer
-    @param aValue  A pointer to the buffer or a descriptor to hold the value
-	@param aLen    Contains the length of the setting value written    
+	/**
+    Retrieve a large binary data setting value from the HCR. The value is copied
+	into the supplied byte array buffer. 
+	On error the buffer and output arguments have undefined values.
+
+    @param aId     in: The setting identifier
+    @param aMaxLen in: The maximum value length that can be stored in the buffer
+    @param aValue  inout: The address of a pre-allocated buffer to hold the value
+    @param aLen    out: Contains the length of the setting value written
+    
+	@return	KErrNone if successful and aValue has been set
+            KErrNotFound if aId is not a known setting ID
+            KErrArgument if the setting identified is not the correct type
+            KErrNotReady if the HCR is used before it has been initialised
+            KErrCorrupt if HCR finds a repository to be corrupt
+            KErrTooBig if the setting is larger than the supplied buffer
+            KErrGeneral if an internal failure occurs, see trace
+            Otherwise one of the other system-wide error codes.
+
+	@pre    Call from thread context, during Init1 or later
+	*/
+    IMPORT_C TInt GetData(const TSettingId& aId, TUint16 aMaxLen, 
+                                    TUint8* aValue, TUint16& aLen);   
+									     
+	/**	
+    Retrieve an 8 bit character string setting from the HCR.  The value
+	is copied into the supplied descriptor buffer. Note the string is not zero
+	terminated. 
+	On error the descriptor and output arguments have undefined values.
+    
+    @param aId     in: The setting identifier
+    @param aValue  inout: A pre-allocated descriptor to hold the value
 
 	@return	KErrNone if successful and aValue has been set
             KErrNotFound if aId is not a known setting ID
@@ -192,17 +276,41 @@ namespace HCR
 	@pre    Call from thread context, during Init1 or later
 	*/
     IMPORT_C TInt GetString(const TSettingId& aId, TDes8& aValue);
+									     
+	/**	
+    Retrieve an 8 bit character string setting from the HCR.  The value
+	is copied into the byte array buffer. Note the string is not zero
+	terminated. 
+	On error the descriptor and output arguments have undefined values.
+    
+    @param aId     in: The setting identifier
+    @param aMaxLen in: The maximum value length that can be stored in the buffer
+    @param aValue  inout: The address of a pre-allocated buffer to hold the value
+	@param aLen    out: Contains the length of the setting value written    
+
+	@return	KErrNone if successful and aValue has been set
+            KErrNotFound if aId is not a known setting ID
+            KErrArgument if the setting identified is not the correct type
+            KErrNotReady if the HCR is used before it has been initialised
+            KErrCorrupt if HCR finds a repository to be corrupt
+            KErrTooBig if the setting is larger than the supplied buffer
+            KErrGeneral if an internal failure occurs, see trace
+            Otherwise one of the other system-wide error codes.
+
+	@pre    Call from thread context, during Init1 or later
+	*/
     IMPORT_C TInt GetString(const TSettingId& aId, TUint16 aMaxLen, 
                                     TText8* aValue, TUint16& aLen);
                                                                         
 	/**
-    Retrieve an array setting from the HCR. All value length paramters are 
-	measured in bytes.
+    Retrieve an array of signed integers from the HCR. The value
+	is copied into the byte array buffer. 
+	On error the descriptor and output arguments have undefined values.
 
-    @param aId     The setting identifier
-    @param aMaxLen The maximum value length that can be stored in the buffer
-    @param aValue  A pointer to the buffer to hold the value
-    @param aLen    Contains the length of the setting value written
+    @param aId     in: The setting identifier
+    @param aMaxLen in: The maximum value length that can be stored in the buffer
+    @param aValue  inout: The address of a pre-allocated word array to hold the value
+    @param aLen    out: Contains the length, in bytes of the setting value written
     
 	@return	KErrNone if successful and aValue has been set
             KErrNotFound if aId is not a known setting ID
@@ -221,26 +329,35 @@ namespace HCR
                                     TUint32* aValue, TUint16& aLen);   
 									     
     /**
-    Retrieve multiple simple settings from the Hardware Configuration 
+    Retrieve multiple word sized settings from the Hardware Configuration 
     Repository in one call. This method can be used for all settings of size 4 
-    bytes or less (i.e those with a type in 0x0000ffff).
-    
+    bytes or less (i.e those with a type less than 0x0000ffff).
+    The caller is responsible for pre-allocating the arrays supplied. Note the
+    array of setting IDs (aIds) supplied by the client must be ordered with 
+	aIds[0] containing the lowest and aIds[aNum-1] the highest. Undefined 
+	behaviour will result if this pre-condition is not met.
+	
+	On successful return the client will need to check the number found (return
+	value) matches their needs and cast each value in the aValues
+	array to the correct type before use. The correct type is either known at 
+	compile time by the caller or determined from aTypes, if supplied.
+	
+   	When an overall error is returned from the function the output arrays have 
+	undefined values.
+
     @param aNum     in: The number of settings to retrieve. It is also the 
                     size of the arrays in the following arguments
-    @param aIds     in:  An ordered array of setting identifiers to retrieve, lowest first
-    @param aValues  out: An array of values, populated on exit
-    @param aTypes   out: An optional array of type enumerations describing 
-                    the type of each setting found. May be 0 if client is 
-                    not interested
-    @param aErrors  out: A mandatory array supplied by the user which is populated by error
-	                     codes for each setting. If no error found for the setting then 
-						 KErrNone(=0) is written
-                    setting.  
-                    Possible error codes:
-                    KErrArgument     if the setting has size larger than  
-                                     four bytes
-                    KErrNotFound     if the setting is not found
-                    KErrNone         no any errors reported for this setting
+    @param aIds     in:  An ordered array of setting identifiers to retrieve
+    @param aValues  inout: An array of values, populated on exit
+    @param aTypes   inout: An optional array of type enumerations, populated on
+					exit describing the type of each setting found. 
+					May be 0 if client is not interested
+    @param aErrors  inout: An array of search errors for each setting populated 
+					on exit. If no error found for the setting then KErrNone
+					is written. Possible error codes:
+                    KErrArgument     the setting is not of a suitable type
+                    KErrNotFound     the setting is not found
+                    KErrNone         when setting found
                        
     
 	@return	Zero or positive number of settings found, -ve on error
@@ -260,11 +377,12 @@ namespace HCR
 
     /**
     Retrieve the type and size of a HCR setting. Can be used by clients to 
-    obtain the setting size if a dynamic buffer is to be used.
+    obtain the setting size should a buffer need to be allocated.
+    On error the output arguments are undefined.    
     
-    @param aId     The setting identifier
-    @param aType   The type enumeration of found setting
-    @param aLen    The length in bytes of found setting
+    @param aId     in: The setting identifier
+    @param aType   out: The type enumeration of the found setting
+    @param aLen    out: The length in bytes of the found setting
         
 	@return	KErrNone if successful, output parameters valid
             KErrNotFound if aId is not a known setting ID
@@ -279,14 +397,16 @@ namespace HCR
                                         TSettingType& aType, TUint16& aLen);
                                         
     /**
-    Retrieve the number of settings held in the HCR for one particular category.
-	It allows a client to perpare buffers for other calls to the HCR to 
-	retrieve these settings.
-	This search method will return the total number of setting records found 
-	across all HCR repositories for a given category. It does not apply the 
-	override rules of other routines meaning that it counts duplicates to
-	maintain performance.
-    
+    Retrieve the number of unique ettings held in the HCR for one particular 
+	category. It allows a client to perpare buffers for other calls to the HCR 
+	to retrieve these settings. 
+	The method carries out a search to return the total number of unique setting
+	records found across all HCR repositories for a given category. It does not 
+	count settings that are duplicate from being redefined in different 
+	repositories.
+	The function is particularly useful for open-ended categories were the 
+	run-time client can not predict the number of settings prvisioned. 
+	
     @param aCatUid	in: The setting identifier category to use in the search
         
 	@return	Zero or positive number of settings found in category, -ve on error
@@ -300,22 +420,32 @@ namespace HCR
 	IMPORT_C TInt FindNumSettingsInCategory (TCategoryUid aCatUid);
 	
 	/**
-    Retrieve all the setting ids, types and sizes in one particular
-	category. Can be used by clients to obtain the number, size and types of 
-	all the settings in a category. It allows a client to alloc buffers for 
-	other calls to the HCR to retrieve these settings should any be larger than
-	4 bytes.
-    
-    @param aCatUid	 in: The setting identifier category to use in the search
+    Retrieve details of all the settings (ids, types and sizes) in one 
+	particular category. This function can be used by clients to obtain the 
+	number of, ids, sizes and types of all the settings in a category. 
+	It allows a client to alloc buffers for other calls to the HCR to retrieve 
+	the values of these settings.
+	
+   	On successful return the client will need to check the number found (return
+	value) matches the expected number. When there are more defined in
+	the category than was able to be returned, i.e. when number found 
+	exceeded aMaxNum then aMaxNum is returned.
+	
+   	When an overall error is returned from the function the output arrays have 
+	undefined values.
+
+    @param aCat  	 in: The setting category to search for
     @param aMaxNum   in: The maximum number of settings to return. It is also 
                          the size of the arrays in the following arguments 
-    @param aKeyIds    inout: Client supplied array populated on exit. Large
+    @param aKeyIds   inout: Client supplied array populated on exit. Large
 						    enough to hold all elements in category.
     @param aTypes	 inout: Client supplied array populated with setting types 
-						    enumerations on exit. May be 0 if client is 
-                            not interested.
+						    enumerations on exit. Array address may be 0 if 
+                            client is not interested.
     @param aLens  	 inout: Client supplied array populated with setting lengths
-						    on exit. May be 0 if client is not interested.
+						    on exit for those settings with a type > 0x0000ffff. 
+							When less than this 0 is set in the aLens array element. 
+							Array address may be 0 if client is not interested.
         
 	@return	Zero or positive number of settings found in category, -ve on error
 			KErrArgument if some parameters are wrong(i.e. aErrors is a null
@@ -331,14 +461,18 @@ namespace HCR
 					TElementId aKeyIds[], TSettingType aTypes[], TUint16 aLens[]);
                                        
     /** 
-    Finds multiple settings in the Hardware Configuration Repository who's
-    setting ID matches the supplied search bit pattern. This method is useful 
-    for categories that contain structured settings i.e. row/column structured 
-    or record based categories as might be the case with hardware service
-    providers.
-    
-    The caller supplies the category to search, an element ID mask and the 
-    pattern to match. SettingIDs that satisfy this logic are returned:
+    Retrieve details of all the settings (ids, types and sizes) in one 
+	particular category who's key ID matches the supplied bit pattern/mask.
+	This function can be used by clients to obtain the number of, ids, sizes 
+	and types of all the settings in a category. It allows a client to alloc 
+	buffers for other calls to the HCR to retrieve the values of these settings. 
+	
+	This search method allows categories to contain structured settings 
+	i.e. row/column structured or record based categories as might be used
+	for configuration data of a hardware service provider.
+        
+    The caller supplies the category to search, a setting key ID mask and the 
+    pattern to match. Setting keys that satisfy this logic are returned:
     ((elementID & aElementMask) == (aPattern & aElementMask))
     
     For example, a set of driver capability structures might be encoded into
@@ -348,21 +482,31 @@ namespace HCR
     to retrieve key fields of all records supply:
         aElemMask = 0x000000ff, aPattern = 0x******01
     (* = dont care)
+    
+   	On successful return the client will need to check the number found (return
+	value) matches the expected number. When there are more defined in
+	the category than was able to be returned, i.e. when number found 
+	exceeded aMaxNum then aMaxNum is returned.
+	
+   	When an overall error is returned from the function the output arrays have 
+	undefined values.
    
     @param aCat      in: The category to retrieve settings for
     @param aMaxNum   in: The maximum number of settings to retrieve. It is also 
                          the size of the arrays in the following arguments   
-    @param aElemMask in: The bits in the Element ID to be checked against 
+    @param aMask     in: The bits in the Element ID to be checked against 
                          aPattern
     @param aPattern  in: Identified the bits that must be set for a 
                          setting to be returned in the search
-    @param aKeyIds    inout: Client supplied array populated on exit. Large
+    @param aKeyIds   inout: Client supplied array populated on exit. Large
 						    enough to hold aMaxNum element ids.
-    @param aTypes    inout: Client supplied array populated with setting types 
-						    enumerations on exit. May be 0 if client is 
-                            not interested.
-    @param aLen  	 inout: Client supplied array populated with setting lengths
-						    on exit. May be 0 if client is not interested.
+    @param aTypes	 inout: Client supplied array populated with setting types 
+						    enumerations on exit. Array address may be 0 if 
+                            client is not interested.
+    @param aLens  	 inout: Client supplied array populated with setting lengths
+						    on exit for those settings with a type > 0x0000ffff. 
+							When less than this 0 is set in the aLens array element. 
+							Array address may be 0 if client is not interested.
     
 	@return	Zero or positive number of settings found in category, -ve on error
             KErrArgument if some parameters are wrong(i.e. aErrors is a null
