@@ -30,7 +30,7 @@ add_definitions(-D__LEAVE_EQUALS_THROW__)
 add_definitions(-D__WINS__)
 #__CPU_X86 is declared by __WINS__ 
 #add_definitions(-D__CPU_X86)
-#add_definitions(-D__DLL__)
+add_definitions(-D__DLL__)
 
 
 #set(commonDefines "__VC32__; _UNICODE;")
@@ -113,15 +113,16 @@ collate.cpp unicode.cpp unitable.cpp Compare.cpp
 #define our target
 
 ### EMULATOR: used by euser and kernel for emulation
-add_library (emulator SHARED ../kernel/win32/l_entry.cpp ../euser/epoc/win32/emulator.cpp) #Compile the KLIB target entry point which is l_entry.cpp 
-target_link_libraries(emulator kernel32) #kernel32
+add_library (emulator SHARED ../euser/epoc/win32/emulator.cpp) #Compile the KLIB target entry point which is l_entry.cpp:  ../kernel/win32/l_entry.cpp
+#target_link_libraries(emulator kernel32) #kernel32
 #set_target_properties(emulator PROPERTIES COMPILE_FLAGS "/Zl") #No default library
 #set_target_properties(emulator PROPERTIES LINK_FLAGS "/ENTRY:_Win32DllMain") #Change the entry point
 
 ### EUSER: many user library
 add_library (euser SHARED ${source})
 add_dependencies(euser genexec emulator)
-set_target_properties(euser PROPERTIES COMPILE_DEFINITIONS "__DLL__")
+target_link_libraries(euser emulator)
+#set_target_properties(euser PROPERTIES COMPILE_DEFINITIONS "__DLL__")
 
 
 ### ESTUB: not sure why need that yet
