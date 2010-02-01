@@ -52,6 +52,7 @@ PRJ_MMPFILES
 // ../../drivers/medint/medint
 ../../drivers/medmmc/emmcptn
 ../../drivers/medmmc/emmcptn_lib
+../../drivers/medmmc/bgahsmmcptn
 ../../drivers/pbus/mmc/epbusmmc
 ../../drivers/medmmc/medmmc
 

@@ -1,3 +1,12 @@
+Version 2.00.2066
+=================
+(Made by vfebvre 11/01/2010)
+
+1.	necliffo
+	1.	PackageReleaseID=439017 FeatureReleaseID=439013
+		eMMC Partition Plugin compatibility with Nokia flashing tools
+
+
 Version 2.00.2065
 =================
 (Made by vfebvre 17/12/2009)
