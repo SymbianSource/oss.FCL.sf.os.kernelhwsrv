@@ -33,7 +33,7 @@ set_source_files_properties(./include/kernel/exec_kernel.h PROPERTIES GENERATED 
 add_custom_target(genexec DEPENDS ./include/exec_enum.h ./include/exec_user.h ./include/kernel/exec_kernel.h)
 
 add_subdirectory(./euser)
-add_subdirectory(./kernel)
+#add_subdirectory(./kernel)
 
 
 
