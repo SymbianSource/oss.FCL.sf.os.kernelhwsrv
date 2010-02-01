@@ -26,43 +26,54 @@
 
 // XXX - Temporary structure containing a logo to be displayed.  Remove this when
 //       changing this template into a "real" camera driver
-#include "logo.cpp"
+#include "logoyuv2.cpp"
+
+
+#define RGBtoBGR565(red, green, blue) (((blue & 0xf8) << 8) | ((green & 0xfc) << 3) | ((red & 0xf8) >> 3));
+
+#define YUVtoYUV565(luma, blueC, redC) (((luma & 0xf8) << 8) | ((blueC & 0xfc) << 3) | ((redC & 0xf8) >> 3));
 
 // Frame sizes and their associated frame rates supported by the Template sensor.  This selection was
 // obtained by observation of typical formats supported by phones already on the market;  It is arbitrary
 // and can be easily added to if desired
 static const SDevCamFrameSize FrameSizes[] =
 	{
-		{ 320, 240, 1, 30 }			// QVGA - 0.075 MP
+		{ 320, 240, 1, 30 }	,		// QVGA - 0.075 MP
 		// XXX: Although not used in this template driver, the following are suggested standard frame sizes
 		// that should be implemented in your camera driver, as well as 320 x 240 above.  Remember to change
 		// KNumFrameSizes below if you change the number of sizes defined in here!
-		//{ 640, 480, 1, 30 },		// VGA - 0.3 MP
-		//{ 800, 600, 1, 30 },		// SVGA - 0.5 MP
-		//{ 1024, 768, 1, 30 },		// XGA - 0.8 MP
-		//{ 2048, 1536, 1, 30 },	// QXGA - 3 MP
+		{ 640, 480, 1, 30 },		// VGA - 0.3 MP
+		{ 800, 600, 1, 30 },		// SVGA - 0.5 MP
+		{ 1024, 768, 1, 30 },		// XGA - 0.8 MP
+		{ 2048, 1536, 1, 15 },	// QXGA - 3 MP
 		//{ 2560, 1600, 1, 30 }		// WQXGA - 4.1 MP
 	};
 
 // This constant must be updated if the number of frame sizes listed above changes
-static const TInt KNumFrameSizes = 1;
+static const TInt KNumFrameSizes = sizeof(FrameSizes) / sizeof(SDevCamFrameSize);
 
 // Pixel formats supported by the three different capture modes.  These are mapped onto the appropriate
 // array of supported frame rates by the FrameSizeCaps() function
 static const SDevCamPixelFormat PixelFormats[] =
 	{
 		// Image pixel formats
-		{ EUidPixelFormatRGB_565, KNumFrameSizes, 2 },
+		{ EUidPixelFormatYUV_422Interleaved, KNumFrameSizes, 2 },
+		
 		// Video pixel formats
-		{ EUidPixelFormatRGB_565, KNumFrameSizes, 2 },
+		{ EUidPixelFormatYUV_422Interleaved, KNumFrameSizes, 2 },
+
 		// View finder pixel formats
-		{ EUidPixelFormatRGB_565, KNumFrameSizes, 2 }
+		{ EUidPixelFormatYUV_422Interleaved, KNumFrameSizes, 2 }
+
 	};
 
 // These constants must be updated if the number of pixel formats listed above changes
 static const TInt KNumImagePixelFormats = 1;
 static const TInt KNumVideoPixelFormats = 1;
 static const TInt KNumViewFinderPixelFormats = 1;
+
+// Alternate logo images after this many frames
+static const TInt KAlternateLogoFrameInterval = 5;
 
 static void ImageTimerCallback(TAny* aSensorIf)
 	{
@@ -85,8 +96,12 @@ TInt DSensorIf::SetConfig(const TCameraConfigV02& aConfig)
 	{
 	// Manual settings for flash mode, focus, white balance etc. are not supported by the sensor,
 	// so check for these and return KErrNotSupported if they have been requested
-	if ((aConfig.iFlashMode != ECamFlashNone) || (aConfig.iExposureMode != ECamExposureAuto) ||
-		(aConfig.iWhiteBalanceMode != ECamWBAuto) || (aConfig.iZoom != 0))
+	if ((aConfig.iFlashMode != ECamFlashNone) ||
+		(aConfig.iExposureMode != ECamExposureAuto) ||
+		(aConfig.iZoom != 0) /*||
+        (aConfig.iWhiteBalanceMode != ECamWBAuto) ||
+		(aConfig.iContrast != ECamContrastAuto) ||
+		(aConfig.iBrightness != ECamBrightnessAuto)*/)
 		{
 		// XXX: Remove this once support is addded for these modes
 		return KErrNotSupported;
@@ -111,6 +126,9 @@ DTemplateSensorIf::DTemplateSensorIf(MSensorObserver& aObserver, TDfcQue* aDFCQu
 	{
 	iObserver = &aObserver;
 	iXDirection = iYDirection = 1;
+	
+	iCounter = 0;
+	iFlipSwitch = EFalse;
 	}
 
 /**
@@ -199,11 +217,20 @@ Fills a buffer with a white background with a moving logo on top.
 void DTemplateSensorIf::FillBuffer(TLinAddr aBuffer)
 	{
 	const TUint8* LogoData = Logo.iPixelData;
+	const TUint8* LogoData2 = Logo.iPixelData2;
 	TInt index = 0;
 	TInt numPixels = (iConfig.iFrameSize.iWidth * iConfig.iFrameSize.iHeight);
-	TUint r, g, b;
+	TUint yC, uC, vC;
 	TUint16* buffer = (TUint16*) aBuffer;
 
+    // Alternate between the two logos for cheesy animation effect
+    if( ++iCounter == KAlternateLogoFrameInterval )
+         {
+         iFlipSwitch ^= 1;
+         iCounter = 0;
+         }
+	
+	
 	// Set the "photo" background to be all white
 	memset(buffer, 0xff, (numPixels * 2));
 
@@ -217,11 +244,20 @@ void DTemplateSensorIf::FillBuffer(TLinAddr aBuffer)
 			{
 			// The logo is in 24 bit BGR format so read each pixel and convert it to 16 bit BGR565
 			// before writing it into the "photo" buffer
-			b = LogoData[index];
-			g = LogoData[index + 1];
-			r = LogoData[index + 2];
-			*buffer++ = (((b & 0xf8) << 8) | ((g & 0xfc) << 3) | ((r & 0xf8) >> 3));
+			if( iFlipSwitch )
+			    {
+                yC = LogoData[index];
+                uC = LogoData[index + 1];
+                vC = LogoData[index + 2];
+			    }
+			else
+                {
+                yC = LogoData2[index];
+                uC = LogoData2[index + 1];
+                vC = LogoData2[index + 2];
+                }
 
+			*buffer++ = YUVtoYUV565(yC, uC, vC);
 			// Point to the next source pixel
 			index += 3;
 			}
@@ -280,12 +316,20 @@ will reflect the capabilities of the given capture mode and pixel format.
 							large enough to hold all of the frame sizes.
 @return Always KErrNone.
 */
-TInt DTemplateSensorIf::FrameSizeCaps(TDevCamCaptureMode aCaptureMode, TUidPixelFormat aUidPixelFormat, TDes8& aFrameSizeCapsBuf)
+TInt DTemplateSensorIf::FrameSizeCaps(TDevCamCaptureMode /*aCaptureMode*/, TUidPixelFormat /*aUidPixelFormat*/, TDes8& aFrameSizeCapsBuf)
 	{
 	TPtrC8 sourceFrameSizes((const TUint8*) FrameSizes, sizeof(FrameSizes));
 
 	// Ensure the buffer passed in from the LDD is large enough and copy the requested frame sizes
-	__ASSERT_DEBUG((aFrameSizeCapsBuf.Size() >= sourceFrameSizes.Size()), Kern::Fault("camerasc", ECapsBufferTooSmall));
+	if (aFrameSizeCapsBuf.Size() < sourceFrameSizes.Size())
+		{
+		Kern::Printf("*** ECapsBufferTooSmall: %d vs %d",
+				aFrameSizeCapsBuf.Size(),
+				sourceFrameSizes.Size());
+		Kern::Fault("camerasc", ECapsBufferTooSmall);
+		}
+	
+	//__ASSERT_DEBUG((aFrameSizeCapsBuf.Size() >= sourceFrameSizes.Size()), Kern::Fault("camerasc", ECapsBufferTooSmall));
 	aFrameSizeCapsBuf = sourceFrameSizes;
 
 	return KErrNone;
@@ -311,12 +355,13 @@ TInt DTemplateSensorIf::GetCaps(TCameraCapsV02*& aCameraCaps)
 		aCameraCaps = (TCameraCapsV02*) capsBuffer;
 
 		// No special modes are supported at the moment
-		aCameraCaps->iFlashModes = 0;
-		aCameraCaps->iExposureModes = 0;
-		aCameraCaps->iWhiteBalanceModes = 0;
+		aCameraCaps->iFlashModes = ECamFlashNone;
+		aCameraCaps->iExposureModes = ECamExposureAuto; // or None?
+		// do we still need whitebalance mode filed?
+		aCameraCaps->iWhiteBalanceModes = ECamWBAuto | ECamWBDaylight | ECamWBCloudy | ECamWBTungsten | ECamWBFluorescent | ECamWBFlash | ECamWBSnow | ECamWBBeach;
 		aCameraCaps->iMinZoom = 0;
 		aCameraCaps->iMaxZoom = 0;
-		aCameraCaps->iCapsMisc = 0;
+		aCameraCaps->iCapsMisc = KCamMiscContrast | KCamMiscBrightness | KCamMiscColorEffect;
 
 		// There isn't really such thing as inwards or outwards orientation on an SDP, but we'll pretend it's
 		// an outwards facing camera
@@ -326,6 +371,26 @@ TInt DTemplateSensorIf::GetCaps(TCameraCapsV02*& aCameraCaps)
 		aCameraCaps->iNumImagePixelFormats = KNumImagePixelFormats;
 		aCameraCaps->iNumVideoPixelFormats = KNumVideoPixelFormats;
 		aCameraCaps->iNumViewFinderPixelFormats = KNumViewFinderPixelFormats;
+
+		for (TInt i = 0; i < ECamAttributeMax; i++)
+		    {
+		    if (ECamAttributeColorEffect == (TDevCamDynamicAttribute)(i))
+		        {
+		        // WhiteBalance
+		        // In case of white balance, we shouldn't use MIN and MAX values as some of them in between MIN and MAX can be missed out.
+		        // As this is fake driver, There doesn't seem to be any major issue though.
+		        aCameraCaps->iDynamicRange[i].iMin = ECamWBAuto;
+		        aCameraCaps->iDynamicRange[i].iMax = ECamWBBeach;
+		        aCameraCaps->iDynamicRange[i].iDefault = ECamWBAuto;
+		        }
+		    else
+		        {    
+		        // TBC :: Contrast, Brightness
+		        aCameraCaps->iDynamicRange[i].iMin = 0;
+		        aCameraCaps->iDynamicRange[i].iMax = 6;
+		        aCameraCaps->iDynamicRange[i].iDefault = 3;
+		        }
+		    }
 
 		// Setup some descriptors pointing to the pixel format array and the array passed in by the LDD
 		// (located at the end of the TCameraCapsV02 structure) and copy the pixel format array
@@ -383,7 +448,7 @@ handle restarting the sensor.
 		KErrNotReady if there are no free requests to capture the image.
 		Otherwise one of the other system wide error codes.
 */
-TInt DTemplateSensorIf::CaptureNextImage(TLinAddr aLinAddr, TPhysAddr aPhysAddr)
+TInt DTemplateSensorIf::CaptureNextImage(TLinAddr aLinAddr, TPhysAddr /*aPhysAddr*/)
 	{
 	TInt r = KErrNone;
 
@@ -436,7 +501,7 @@ to start capture.
 		KErrNotSupported if the frame size and/or frame rate are out of range.
 		Otherwise one of the other system wide error codes.
 */
-TInt DTemplateSensorIf::Start(TDevCamCaptureMode aCaptureMode, TLinAddr aLinAddr, TPhysAddr aPhysAddr)
+TInt DTemplateSensorIf::Start(TDevCamCaptureMode /*aCaptureMode*/, TLinAddr aLinAddr, TPhysAddr aPhysAddr)
 	{
 	__KTRACE_CAM(Kern::Printf("> DTemplateSensorIf::Start()"));
 

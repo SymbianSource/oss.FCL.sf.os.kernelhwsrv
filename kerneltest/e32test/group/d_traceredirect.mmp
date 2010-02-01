@@ -32,3 +32,4 @@ capability		all
 start wins
 win32_headers
 end
+SMPSAFE

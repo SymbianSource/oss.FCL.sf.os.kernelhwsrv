@@ -176,10 +176,15 @@ GLDEF_C __NAKED__ void DoProcessSwitch()
 
 	// restore alias...
 	asm("got_alias:");
+	// Disable interrupts so setting the alias pde is must complete before
+	// Mmu::RemoveAliasesForPageTable() can execute the alias IPI and vice 
+	// versa.
+	__ASM_CLI();						// interrupts off
 	asm("ldr r8, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasPdePtr)-_FOFF(DThread, iNThread)) );
 	asm("ldr r7, [r3, #%a0]" : : "i" (_FOFF(DMemModelThread, iAliasPde)-_FOFF(DThread, iNThread)) );
 	asm("orr r6, r6, r4");				// put ASID into address for TLB flush later...
 	asm("str r7, [r8]");				// restore PDE for alias
+	__ASM_STI();						// interrupts back on
 	
 	CACHE_MAINTENANCE_PDE_PTE_UPDATED(r8);
 

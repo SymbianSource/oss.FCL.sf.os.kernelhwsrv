@@ -410,11 +410,11 @@ void CDisplay::FormatDriveInfoL(const TDriveInfo& aDriveInfo)
     {
     // Append battery, media and drive information to aBuffer
     // Define descriptor constants using the _LIT macro
-    _LIT(KDriveInfo1, "iType=%02x    iDriveAtt=%02x");
-    _LIT(KDriveInfo2, "iBattery=%02x iMediaAtt=%02x");
-    _LIT(KBatLow,"Battery low");
-    _LIT(KBatGood,"Battery good");
-    _LIT(KBatNotSupported,"Battery not supported");
+    _LIT(KDriveInfo1, "iType=%02x %02x iDriveAtt=%04x");
+    _LIT(KDriveInfo2, "iMediaAtt=%02x");
+    _LIT(KConnectionBusInternal,"Connection Bus Internal");
+    _LIT(KConnectionBusUsb,"Connection Bus USB");
+    _LIT(KConnectionBusUnknown,"Connection Bus Unknown");
     _LIT(KNotPresent,"No media present");
     _LIT(KFloppy,"Media is floppy disk");
     _LIT(KHard,"Media is hard disk");
@@ -423,8 +423,9 @@ void CDisplay::FormatDriveInfoL(const TDriveInfo& aDriveInfo)
     _LIT(KFlash,"Media is flash");
     _LIT(KRom,"Media is ROM");
     _LIT(KRemote,"Media is remote");
+    _LIT(KExternal,"Media is external");
     _LIT(KNANDFlash,"Media is NAND flash");
-    _LIT(KUnknown,"Media unknownl");
+    _LIT(KUnknown,"Media unknown");
     _LIT(KDriveAtts,"Drive attributes:");
     _LIT(KLocal," local");
     _LIT(KROMDrive," ROM");
@@ -443,22 +444,22 @@ void CDisplay::FormatDriveInfoL(const TDriveInfo& aDriveInfo)
 
     TLine* line;
     line = iScrollWindow->NewLineL();
-    line->Format(KDriveInfo1, TInt(aDriveInfo.iType), TInt(aDriveInfo.iDriveAtt));
+    line->Format(KDriveInfo1, TInt(aDriveInfo.iType), TInt(aDriveInfo.iConnectionBusType), TInt(aDriveInfo.iDriveAtt));
 
     line = iScrollWindow->NewLineL();
-    line->Format(KDriveInfo2, TInt(aDriveInfo.iBattery), TInt(aDriveInfo.iMediaAtt));
+    line->Format(KDriveInfo2, TInt(aDriveInfo.iMediaAtt));
 
     line = iScrollWindow->NewLineL();
-    switch (aDriveInfo.iBattery)
+    switch (aDriveInfo.iConnectionBusType)
         {
-        case EBatLow:
-            line->Append(KBatLow);
+        case EConnectionBusInternal:
+            line->Append(KConnectionBusInternal);
             break;
-        case EBatGood:
-            line->Append(KBatGood);
+        case EConnectionBusUsb:
+            line->Append(KConnectionBusUsb);
             break;
         default:
-            line->Append(KBatNotSupported);
+            line->Append(KConnectionBusUnknown);
         }
 
     line = iScrollWindow->NewLineL();
@@ -493,7 +494,6 @@ void CDisplay::FormatDriveInfoL(const TDriveInfo& aDriveInfo)
             break;
         default:
             line->Append(KUnknown);
-
         }
 
         // Drive Attributes
@@ -528,6 +528,11 @@ void CDisplay::FormatDriveInfoL(const TDriveInfo& aDriveInfo)
             {
             line = iScrollWindow->NewLineL();
             line->Append(KRemovable);
+            }
+        if (aDriveInfo.iDriveAtt & KDriveAttExternal)
+            {
+            line = iScrollWindow->NewLineL();
+            line->Append(KExternal);
             }
 
         // Media Attributes

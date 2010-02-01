@@ -44,17 +44,17 @@ LOCAL_C TInt GetUValueWordSetting (const TSettingId& aId,
     HCR_FUNC("GetUValueWordSetting");
                  
     if (HCRNotReady)
-        HCR_LOG_RETURN(KErrNotReady);
+        HCR_TRACE_RETURN(KErrNotReady);
 
     TSettingRef sref(0,0);
     TInt err = 0;
     err = HCRSingleton->FindSetting(aId, aType, sref);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
 
     err = sref.iRep->GetValue(sref, aValue);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
     
     return KErrNone;	
     }
@@ -65,17 +65,19 @@ LOCAL_C TInt GetUValueLargeSetting64 (const TSettingId& aId,
     HCR_FUNC("GetUValueLargeSetting64");
                  
     if (HCRNotReady)
-		HCR_LOG_RETURN(KErrNotReady);
+		HCR_TRACE_RETURN(KErrNotReady);
 
+    __NK_ASSERT_DEBUG(aType == ETypeInt64 || aType == ETypeUInt64);
+    
     TSettingRef sref(0,0);
     TInt err = 0;
     err = HCRSingleton->FindSetting(aId, aType, sref);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
 
     err = sref.iRep->GetLargeValue(sref, aValue);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
     
     return KErrNone;	
     }
@@ -87,22 +89,24 @@ LOCAL_C TInt GetUValueLargeSettingTDes8 (const TSettingId& aId,
     HCR_FUNC("GetUValueLargeSettingTDes8");
                  
     if (HCRNotReady)
-	    HCR_LOG_RETURN(KErrNotReady);
+	    HCR_TRACE_RETURN(KErrNotReady);
 
+    __NK_ASSERT_DEBUG(aType == ETypeBinData || aType == ETypeText8);
+    
     TSettingRef sref(0,0);
     TInt err = 0;
     err = HCRSingleton->FindSetting(aId, aType, sref);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
 
     UValueLarge value;
     err = sref.iRep->GetLargeValue(sref, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
    
     TInt len = sref.iRep->GetLength(sref);
     if (len > aValue.MaxSize())
-        HCR_LOG_RETURN(KErrTooBig);    
+        HCR_TRACE_RETURN(KErrTooBig);    
     
     if (aType == ETypeBinData)
         aValue.Copy(value.iData, len);
@@ -118,22 +122,24 @@ LOCAL_C TInt GetUValueLargeSettingTUint8 (const TSettingId& aId, TSettingType aT
     HCR_FUNC("GetUValueLargeSettingTUint8");
                  
     if (HCRNotReady)
-	    HCR_LOG_RETURN(KErrNotReady);
+	    HCR_TRACE_RETURN(KErrNotReady);
 
+    __NK_ASSERT_DEBUG(aType == ETypeBinData || aType == ETypeText8);
+    
     TSettingRef sref(0,0);
     TInt err = 0;
     err = HCRSingleton->FindSetting(aId, aType, sref);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
 
     UValueLarge value;
     err = sref.iRep->GetLargeValue(sref, value);
 	    if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
    
     aLen = sref.iRep->GetLength(sref);
     if (aLen > aMaxLen)
-        HCR_LOG_RETURN(KErrTooBig);    
+        HCR_TRACE_RETURN(KErrTooBig);    
     
     if (aType == ETypeBinData)
         memcpy (aValue, value.iData, aLen);
@@ -149,29 +155,28 @@ LOCAL_C TInt GetUValueLargeSettingArray (const TSettingId& aId, TSettingType aTy
     HCR_FUNC("GetUValueLargeSettingArray");
                  
     if (HCRNotReady)
-	    HCR_LOG_RETURN(KErrNotReady);
+	    HCR_TRACE_RETURN(KErrNotReady);
 
+	__NK_ASSERT_DEBUG(aType == ETypeArrayInt32 || aType == ETypeArrayUInt32);
+	
     TSettingRef sref(0,0);
     TInt err = 0;
     err = HCRSingleton->FindSetting(aId, aType, sref);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+        HCR_TRACE_RETURN(err);
 
     UValueLarge value;
     err = sref.iRep->GetLargeValue(sref, value);
-    if (err != KErrNone)
-        HCR_LOG_RETURN(err);
+	__NK_ASSERT_DEBUG(err == KErrNone);
    
     aLen = sref.iRep->GetLength(sref);
     if (aLen > aMaxLen)
-        HCR_LOG_RETURN(KErrTooBig);    
+        HCR_TRACE_RETURN(KErrTooBig);    
     
     if (aType == ETypeArrayInt32)
         memcpy (aValue, value.iArrayInt32, aLen);
-    else if (aType == ETypeArrayUInt32)
+    else 
         memcpy (aValue, value.iArrayUInt32, aLen);
-    else
-    	HCR_LOG_RETURN(KErrGeneral);
     
     return KErrNone;	
     }
@@ -192,12 +197,12 @@ EXPORT_C TInt HCR::GetInt(const TSettingId& aId, TInt8& aValue)
     UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeInt8, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iInt8;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -210,12 +215,12 @@ EXPORT_C TInt HCR::GetInt(const TSettingId& aId, TInt16& aValue)
     UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeInt16, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iInt16;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -228,12 +233,12 @@ EXPORT_C TInt HCR::GetInt(const TSettingId& aId, TInt32& aValue)
         UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeInt32, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iInt32;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -246,12 +251,12 @@ EXPORT_C TInt HCR::GetInt(const TSettingId& aId, TInt64& aValue)
     UValueLarge value;
     TInt err = GetUValueLargeSetting64(aId, ETypeInt64, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = *(value.iInt64);
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -264,12 +269,12 @@ EXPORT_C TInt HCR::GetBool(const TSettingId& aId, TBool& aValue)
     UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeBool, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iBool;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -282,12 +287,12 @@ EXPORT_C TInt HCR::GetUInt(const TSettingId& aId, TUint8& aValue)
     UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeUInt8, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iUInt8;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -300,12 +305,12 @@ EXPORT_C TInt HCR::GetUInt(const TSettingId& aId, TUint16& aValue)
     UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeUInt16,value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iUInt16;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -318,12 +323,12 @@ EXPORT_C TInt HCR::GetUInt(const TSettingId& aId, TUint32& aValue)
     UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeUInt32, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iUInt32;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -336,12 +341,12 @@ EXPORT_C TInt HCR::GetUInt(const TSettingId& aId, TUint64& aValue)
     UValueLarge value;
     TInt err = GetUValueLargeSetting64(aId, ETypeUInt64, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = *(value.iUInt64);
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
 
@@ -354,12 +359,12 @@ EXPORT_C TInt HCR::GetLinAddr(const TSettingId& aId, TLinAddr& aValue)
     UValueWord value;
     TInt err = GetUValueWordSetting(aId, ETypeLinAddr, value);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     aValue = value.iAddress;
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
         
@@ -372,11 +377,11 @@ EXPORT_C TInt HCR::GetData(const TSettingId& aId, TUint16 aMaxLen,
     
     TInt err = GetUValueLargeSettingTUint8(aId, ETypeBinData, aMaxLen, aValue, aLen);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -388,11 +393,11 @@ EXPORT_C TInt HCR::GetData(const TSettingId& aId, TDes8& aValue)
     
     TInt err = GetUValueLargeSettingTDes8(aId, ETypeBinData, aValue);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);  
+        HCR_TRACE_RETURN(err);  
              
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -405,11 +410,11 @@ EXPORT_C TInt HCR::GetString(const TSettingId& aId, TUint16 aMaxLen,
     
     TInt err = GetUValueLargeSettingTUint8(aId, ETypeText8, aMaxLen, aValue, aLen);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
     
@@ -421,11 +426,11 @@ EXPORT_C TInt HCR::GetString(const TSettingId& aId, TDes8& aValue)
     
     TInt err = GetUValueLargeSettingTDes8(aId, ETypeText8, aValue);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
       
@@ -437,11 +442,11 @@ EXPORT_C TInt HCR::GetArray(const TSettingId& aId, TUint16 aMaxLen,
     
     TInt err = GetUValueLargeSettingArray(aId, ETypeArrayInt32, aMaxLen, (TUint32*)aValue, aLen);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
 								       
@@ -453,77 +458,168 @@ EXPORT_C TInt HCR::GetArray(const TSettingId& aId, TUint16 aMaxLen,
     
     TInt err = GetUValueLargeSettingArray(aId, ETypeArrayUInt32, aMaxLen, aValue, aLen);
     if (err != KErrNone)
-        HCR_LOG_RETURN(err);        
+        HCR_TRACE_RETURN(err);        
     
     return KErrNone;    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
 
 
 // -- MULTIPLE GETS -----------------------------------------------------------
   
-EXPORT_C TInt HCR::GetWordSettings(TInt /*aNum*/, const SSettingId /*aIds*/[],
-        TInt32 /*aValues*/[], TSettingType /*aTypes*/[], TInt /*aErrors*/[])
+EXPORT_C TInt HCR::GetWordSettings(TInt aNum, const SSettingId aIds[],
+        TInt32 aValues[], TSettingType aTypes[], TInt aErrors[])
     {
-#ifndef MAKE_DEF_FILE
 
-    return KErrNotSupported;
+#ifndef MAKE_DEF_FILE
+    HCR_FUNC("GetWordSettings");
+    
+    if (HCRNotReady)
+        HCR_TRACE_RETURN(KErrNotReady);
+    
+    if(aNum <= 0 || aIds == NULL || aErrors == NULL || aValues == NULL)
+        HCR_TRACE_RETURN(KErrArgument);
+    
+    TInt err = KErrNone;
+
+    //Don't leave while the resources are not fully allocated/deallocated
+    NKern::ThreadEnterCS();
+
+    err = HCRSingleton->GetWordSettings(aNum, aIds, aValues, aTypes, aErrors);
+
+    //All de-allocations are done, leave a critical section
+    NKern::ThreadLeaveCS();
+
+    if(err < KErrNone)
+        HCR_TRACE_RETURN(err);
+
+    return err;
+    
 #else    
-    return KErrNotSupported;
+    HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
 
 
 // -- SETTING PROPERTIES ------------------------------------------------------
 
-EXPORT_C TInt HCR::GetTypeAndSize(const TSettingId& /*aId*/, TSettingType& /*aType*/, 
-                                        TUint16& /*aLen*/) 
+EXPORT_C TInt HCR::GetTypeAndSize(const TSettingId& aId, TSettingType& aType, 
+                                        TUint16& aLen) 
     {
 #ifndef MAKE_DEF_FILE
+    HCR_FUNC("GetTypeAndSize");
+    if (HCRNotReady)
+        HCR_TRACE_RETURN(KErrNotReady);
 
-    return KErrNotSupported;
-#else    
-    return KErrNotSupported;
-#endif // MAKE_DEF_FILE
+    TSettingRef sref(0,0);
+    TInt err = HCRSingleton->FindSettingWithType(aId, aType, sref);
+	
+    if(err == KErrNone)
+        {
+        aLen = sref.iRep->GetLength(sref);
+        }
+    else if(err == KErrNotFound)
+        {
+        aLen = 0;
+        HCR_TRACE_RETURN(KErrNotFound);
+        }
+    else
+        HCR_TRACE_RETURN(err);
+    
+    return KErrNone;
+   
+#else
+    HCR_TRACE_RETURN(KErrGeneral);
+#endif //MAKE_DEF_FILE
     }
  
 
 // -- SETTING SEARCHES --------------------------------------------------------
 
-EXPORT_C TInt HCR::FindNumSettingsInCategory (TCategoryUid /*aCatUid*/)
+EXPORT_C TInt HCR::FindNumSettingsInCategory (TCategoryUid aCatUid)
 	{
 #ifndef MAKE_DEF_FILE
 
-    return KErrNotSupported;
+	HCR_FUNC("FindNumSettingsInCategory");
+
+	if (HCRNotReady)
+	    HCR_TRACE_RETURN(KErrNotReady);
+	
+	TInt err = HCRSingleton->FindNumSettingsInCategory(aCatUid);
+  
+	if(err < 0)
+	    HCR_TRACE_RETURN(err);
+	
+	return err;
+
 #else    
-    return KErrNotSupported;
+	HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
-		
-EXPORT_C TInt HCR::FindSettings(TCategoryUid /*aCatUid*/, 
-					TInt /*aMaxNum*/, TUint32& /*aNumFound*/, 
-					TElementId* /*aElIds*/, TSettingType* /*aTypes*/, TUint16* /*aLens*/)
+
+
+EXPORT_C TInt HCR::FindSettings(TCategoryUid aCat, TInt aMaxNum,
+        TElementId aElIds[], TSettingType aTypes[], TUint16 aLens[])
 	{
 #ifndef MAKE_DEF_FILE
 
-    return KErrNotSupported;
+	HCR_FUNC("FindSettings without pattern/mask");
+	
+
+	if (HCRNotReady)
+	    HCR_TRACE_RETURN(KErrNotReady);
+
+	if(aMaxNum <= 0 || aElIds == NULL)
+	        HCR_TRACE_RETURN(KErrArgument);
+	
+	TInt err = HCRSingleton->FindSettings(aCat, aMaxNum, aElIds, 
+	        aTypes, aLens);
+    
+	if(err < 0)
+	    HCR_TRACE_RETURN(err);
+	
+	return err;
+
 #else    
-    return KErrNotSupported;
+	HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
 
-EXPORT_C TInt HCR::FindSettings(TCategoryUid /*aCat*/, 
-					TInt /*aMaxNum*/, TUint32 /*aAtId*/,
-                    TUint32 /*aMask*/, TUint32 /*aPattern*/, TUint32& /*aNumFound*/,
-                    TElementId* /*aElIds*/, TSettingType* /*aTypes*/, TUint16* /*aLens*/)
+EXPORT_C TInt HCR::FindSettings(TCategoryUid aCat, 
+					TInt aMaxNum, TUint32 aMask, TUint32 aPattern, 
+                    TElementId aElIds[], TSettingType aTypes[], TUint16 aLens[])
 	{
 #ifndef MAKE_DEF_FILE
 
-    return KErrNotSupported;
+	HCR_FUNC("FindSettings with pattern/mask");
+	
+
+	if (HCRNotReady)
+	    HCR_TRACE_RETURN(KErrNotReady);
+
+	if(aMaxNum <= 0 || aElIds == NULL)
+	    HCR_TRACE_RETURN(KErrArgument);
+
+	TInt err = KErrNone;
+
+	//Don't leave while the resources are not fully allocated/deallocated
+	NKern::ThreadEnterCS();
+	
+	err = HCRSingleton->FindSettings(aCat, aMaxNum, aMask, aPattern, 
+	       aElIds, aTypes, aLens);
+
+	//All de-allocations are done, leave a critical section
+	NKern::ThreadLeaveCS();
+
+	if(err < 0)
+	    HCR_TRACE_RETURN(err);
+
+	return err;
+	    
 #else    
-    return KErrNotSupported;
+	HCR_TRACE_RETURN(KErrGeneral);
 #endif // MAKE_DEF_FILE
     }
 						

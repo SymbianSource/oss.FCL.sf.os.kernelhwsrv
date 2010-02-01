@@ -310,4 +310,6 @@ EXPORTS
 	_ZNK14TCodePageUtils25IsLegalShortNameCharacterEji @ 309 NONAME
 	_ZNK8CMountCB10FileSystemEv @ 310 NONAME
 	_ZN8CMountCB5InitLER6TDriveP11CFileSystem @ 311 NONAME
-
+	_Z12GetDriveInfoR10TDriveInfoi @ 312 NONAME
+	_ZNK11CFileSystem9DriveInfoER10TDriveInfoi @ 313 NONAME
+	_ZNK9RFsPlugin6VolumeER11TVolumeInfoi @ 314 NONAME

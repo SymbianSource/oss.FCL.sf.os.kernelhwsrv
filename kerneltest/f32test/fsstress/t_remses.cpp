@@ -308,7 +308,7 @@ void TMultipleSessionTest::testSubst(RTest& aTest)
 	r=iFs.Volume(w,EDriveO);
 	aTest(r==KErrNone);
 	aTest(w.iDrive.iType==v.iDrive.iType);
-	aTest(w.iDrive.iBattery==v.iDrive.iBattery);
+	aTest(w.iDrive.iConnectionBusType==v.iDrive.iConnectionBusType);
 	aTest(w.iDrive.iDriveAtt==v.iDrive.iDriveAtt);
 	aTest(w.iDrive.iMediaAtt==v.iDrive.iMediaAtt);
 	aTest(w.iUniqueID==v.iUniqueID);
@@ -601,12 +601,11 @@ LOCAL_C void printDriveInfo(TInt aDrive,TDriveInfo& anInfo,RTest& aTest)
 		aTest.Printf(_L("Formattable "));
 	if (anInfo.iMediaAtt&KMediaAttWriteProtected)
 		aTest.Printf(_L("WProtected "));
-	aTest.Printf(_L("\n   BATTERY="));
-	switch(anInfo.iBattery)
+	aTest.Printf(_L("\n   CONNECTION BUS TYPE="));
+	switch(anInfo.iConnectionBusType)
 		{
-	case EBatNotSupported: aTest.Printf(_L("Not supported\n")); break;
-	case EBatGood: aTest.Printf(_L("Good\n")); break;
-	case EBatLow: aTest.Printf(_L("Low\n")); break;
+	case EConnectionBusInternal: aTest.Printf(_L("Internal\n")); break;
+	case EConnectionBusUsb: aTest.Printf(_L("USB\n")); break;
 	default:
 		aTest.Printf(_L("Unknown value\n"));
 		}
@@ -633,7 +632,7 @@ LOCAL_C void DriveInformation(TInt aDrive,TDriveInfo& anInfo,RTest& aTest)
 //
 	{
 
-	aTest(anInfo.iBattery==EBatLow || anInfo.iBattery==EBatGood || anInfo.iBattery==EBatNotSupported);
+	aTest(anInfo.iConnectionBusType==EConnectionBusInternal || anInfo.iConnectionBusType==EConnectionBusUsb);
 	
 	if (aDrive==EDriveZ)
 		{

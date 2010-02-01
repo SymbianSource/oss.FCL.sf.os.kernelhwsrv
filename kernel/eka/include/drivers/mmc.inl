@@ -1136,7 +1136,11 @@ inline TUint32 DMMCSocket::MaxDataTransferLength()
  * @internalTechnology
  */
 	{
-	return(0x20000 << ((iMachineInfo.iFlags & TMMCMachineInfo::EMaxTransferLength_16M) >> 8));
+    	TUint32 r = (iMachineInfo.iFlags & TMMCMachineInfo::EMaxTransferLength_16M) >> 8;
+	if (r)
+        	r = 0x20000 << r; 
+    
+	return r;
 	}
 
 inline TUint32 DMMCSocket::DmaAlignment()

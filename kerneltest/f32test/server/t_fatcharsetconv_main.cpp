@@ -18,6 +18,7 @@
 #define __E32TEST_EXTENSION__
 
 #include <e32test.h>
+#include <e32svr.h>
 //#include <hal.h>
 #include <f32fsys.h>
 #include <f32dbg.h>

@@ -77,8 +77,8 @@ public:
 		{ return DoCreate(KSharedChunkLddName,TVersion(),KNullUnit,NULL,NULL,EOwnerProcess,ETrue); }
 	inline TInt CreateChunk(TInt aSize, TAny** aKernelAddress=0)
 		{ return DoControl(ECreateChunk,(TAny*)aSize,aKernelAddress); }
-	inline TInt GetChunkHandle(RChunk& aChunk)
-		{ return aChunk.SetReturnedHandle(DoControl(EGetChunkHandle)); }
+	inline TInt GetChunkHandle(RChunk& aChunk, TBool aIsThreadLocal=ETrue)
+		{ return aChunk.SetReturnedHandle(DoControl(EGetChunkHandle,(TAny*)aIsThreadLocal)); }
 	inline TInt CommitMemory(TInt aOffset, TInt aSize)
 		{ return DoControl(ECommitMemory,(TAny*)aOffset,(TAny*)aSize); }
 	inline TInt CloseChunk()

@@ -32,7 +32,9 @@
 //! @SYMTestStatus          Implemented
 
 #include <f32file.h>
+#include <d32locd.h>
 #include <e32test.h>
+#include <e32svr.h>
 #include "t_server.h"
 #include <u32hal.h>
 #include <e32rom.h>

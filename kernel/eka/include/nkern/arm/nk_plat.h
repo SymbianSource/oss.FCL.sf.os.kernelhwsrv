@@ -102,12 +102,6 @@ const TUint32 KNThreadContextFlagThumbBit0=1;
 #define SP_NEXT		(SP_PC+1)		// first word on stack before reschedule
 #endif	// __INCLUDE_REG_OFFSETS__
 
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-#define USER_MEMORY_GUARD_SAVE_WORDS 2
-#else
-#define USER_MEMORY_GUARD_SAVE_WORDS 0
-#endif
-
 class TArmContextElement;
 class TArmRegSet;
 

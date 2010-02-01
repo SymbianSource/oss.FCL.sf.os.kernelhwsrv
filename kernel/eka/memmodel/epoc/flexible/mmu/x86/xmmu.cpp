@@ -572,11 +572,13 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	// Now we have the os asid check access to kernel memory.
 	if(aAddr >= KUserMemoryLimit && osAsid != (TUint)KKernelOsAsid)
 		{
+		NKern::ThreadEnterCS();
+		MmuLock::Unlock();
 		if (!iAliasLinAddr)
 			{// Close the new reference as RemoveAlias won't do as iAliasLinAddr is not set.
-			aProcess->AsyncCloseOsAsid();
+			aProcess->AsyncCloseOsAsid();	// Asynchronous close as this method should be quick.
 			}
-		MmuLock::Unlock();
+		NKern::ThreadLeaveCS();
 		return KErrBadDescriptor; // prevent access to supervisor only memory
 		}
 
@@ -586,13 +588,15 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 		// address is in global section, don't bother aliasing it...
 		if (!iAliasLinAddr)
 			{// Close the new reference as not required.
-			aProcess->AsyncCloseOsAsid();
+			NKern::ThreadEnterCS();
+			MmuLock::Unlock();
+			aProcess->AsyncCloseOsAsid();	// Asynchronous close as this method should be quick.
+			NKern::ThreadLeaveCS();
 			}
 		else
 			{// Remove the existing alias as it is not required.
-			DoRemoveAlias(iAliasLinAddr);
+			DoRemoveAlias(iAliasLinAddr);	// Releases mmulock.
 			}
-		MmuLock::Unlock();
 		aAliasAddr = aAddr;
 		TInt maxSize = KChunkSize-(aAddr&KChunkMask);
 		aAliasSize = aSize<maxSize ? aSize : maxSize;
@@ -666,9 +670,7 @@ void DMemModelThread::RemoveAlias()
 		{
 		MmuLock::Lock();
 
-		DoRemoveAlias(addr);
-
-		MmuLock::Unlock();
+		DoRemoveAlias(addr);	// Unlocks mmulock.
 		}
 	}
 
@@ -692,10 +694,16 @@ void DMemModelThread::DoRemoveAlias(TLinAddr aAddr)
 	NKern::EndFreezeCpu(iCpuRestoreCookie);
 	iCpuRestoreCookie = -1;
 #endif
-	// Must close the os asid while the mmu lock is held to prevent it being 
-	// leaked, however this requires that it is closed asynchronously as can't
-	// delete os asid with mmu lock held.
-	iAliasProcess->AsyncCloseOsAsid();
+
+	// Must close the os asid while in critical section to prevent it being 
+	// leaked.  However, we can't hold the mmu lock so we have to enter an 
+	// explict crtical section. It is ok to release the mmu lock as the 
+	// iAliasLinAddr and iAliasProcess members are only ever updated by the 
+	// current thread.
+	NKern::ThreadEnterCS();
+	MmuLock::Unlock();
+	iAliasProcess->AsyncCloseOsAsid();	// Asynchronous close as this method should be quick.
+	NKern::ThreadLeaveCS();
 	}
 
 

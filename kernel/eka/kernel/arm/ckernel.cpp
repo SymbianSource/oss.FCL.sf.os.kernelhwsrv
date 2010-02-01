@@ -476,6 +476,14 @@ GLDEF_C TInt HandleVFPOperation(TAny* aPtr)
 		{
 		DoRestoreVFP(pC->iExtraContext);	// Restore this thread's context
 		Arm::VfpThread[currentCpu] = pC;
+		for (TInt cpu = 0; cpu < NKern::NumberOfCpus(); cpu++)
+			{
+			if (cpu != currentCpu)
+				{
+				TUint32 pCcopy = (TUint32)pC;
+				__e32_atomic_cas_rlx32(&Arm::VfpThread[cpu], &pCcopy, NULL);
+				}
+			}
 		}
 #endif
 

@@ -31,3 +31,4 @@ end
 capability		all
 vendorid		0x70000001
 macro			__SECURE_API__
+SMPSAFE

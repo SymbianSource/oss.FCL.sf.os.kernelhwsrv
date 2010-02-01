@@ -73,7 +73,7 @@ GLDEF_C TInt E32Main()
 	test.Printf( _L("Check drive size: %d\r\n"),diskSize);
 //	test.Getch();
 	test(info().iType==EMediaFlash);
-	test(info().iBattery==EBatNotSupported);
+	test(info().iConnectionBusType==EConnectionBusInternal);
 	test(info().iDriveAtt==(TUint)(KDriveAttLocal|KDriveAttInternal));
 	test(info().iMediaAtt==KMediaAttFormattable);
 	test(info().iFileSystemId==KDriveFileSysLFFS);

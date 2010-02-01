@@ -363,10 +363,16 @@ CFG_FCSE_Present			SETL	{TRUE}
 CFG_ASID_Present			SETL	{TRUE}
 CFG_Cpu_Has_CLZ				SETL	{TRUE}
 CFG_TEX						SETL	{TRUE}
+	IF	CFG_MMFlexible
+; flexible memory model doesn't use Write Through memory for internal mappings. 
+CFG_WriteThroughDisabled	SETL	{TRUE}
+	ELSE
+; multiple memory model uses Write Through memory for internal mappings unless erratum 399234 prevents us to do so 
 	IF  (:LNOT: :DEF: CFG_CPU_ARM1136_ERRATUM_399234_FIXED)
 CFG_WriteThroughDisabled	SETL	{TRUE}
 	ENDIF
-
+	ENDIF
+	
 	INIT_NUMERIC_CONSTANT	InitialMMUCR,	MMUCR_A+MMUCR_W+MMUCR_SBO+MMUCR_I+MMUCR_IT+MMUCR_DT
 	INIT_NUMERIC_CONSTANT	ExtraMMUCR,		MMUCR_M+MMUCR_C+MMUCR_V+MMUCR_Z+MMUCR_XP+MMUCR_U
 

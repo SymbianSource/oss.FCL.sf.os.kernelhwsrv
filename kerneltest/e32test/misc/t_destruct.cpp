@@ -20,6 +20,8 @@
 
 #include <e32std.h>
 #include <e32std_private.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <f32file.h>
 #include <e32test.h>
 #include <e32msgqueue.h>

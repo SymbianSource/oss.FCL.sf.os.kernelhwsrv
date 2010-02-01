@@ -111,9 +111,9 @@ static const TUint32 KDef_KLeafDirCacheSize = 1;    //-- default number of the m
 _LIT8(KPN_FAT_DynamicDirCacheMin, "FAT_DirCacheSizeMin"); 
 _LIT8(KPN_FAT_DynamicDirCacheMax, "FAT_DirCacheSizeMax"); 
 static const TUint32 KDef_DynamicDirCacheMin = 128;		// default minimum fat dir cache size in KB
-static const TUint32 KDef_DynamicDirCacheMax = 128;		// default maximum fat dir cache size in KB
-//-- default value for directory cache single page maximal size Log2, 2^14 (16K) by default
-static const TUint32 KDef_MaxDynamicDirCachePageSzLog2 = 14;
+static const TUint32 KDef_DynamicDirCacheMax = 256;		// default maximum fat dir cache size in KB
+static const TUint32 KDef_MaxDynamicDirCachePageSzLog2 = 14;    // default value for directory cache single page 
+                                                                //  maximal size Log2, 2^14 (16K) by default
 
 
 

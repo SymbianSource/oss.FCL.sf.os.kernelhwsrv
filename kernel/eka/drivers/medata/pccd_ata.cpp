@@ -1779,7 +1779,7 @@ TInt DPcCardMediaDriverAta::Caps(TLocalDriveCapsV6& aInfo)
 //
 	{
 	aInfo.iType=EMediaHardDisk;
-	aInfo.iBattery=EBatNotSupported;
+	aInfo.iConnectionBusType=EConnectionBusInternal;
 	aInfo.iDriveAtt=KDriveAttLocal|KDriveAttRemovable;
 	aInfo.iMediaAtt=KMediaAttFormattable;
 	aInfo.iFileSystemId=KDriveFileSysFAT;

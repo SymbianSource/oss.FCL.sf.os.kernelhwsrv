@@ -103,7 +103,7 @@ class DKPLoggerTestHelperLDD : public DLogicalChannelBase
 		DKPLoggerTestHelperLDD();
 		
 	private:
-		TDfcQue*        iDfcQ;					///< pointer to the Kern::DfcQue0
+		TDynamicDfcQue*        iDfcQ;					///< pointer to the Kern::DfcQue0
 		TTestLogCtrl    iLogControlUserThread;	///< log parameters for testting in User-thread context mode.
 		DThread*        iClientThread;			///< pointer to the client thread for requests completion
 

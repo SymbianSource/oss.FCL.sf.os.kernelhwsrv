@@ -27,6 +27,7 @@
 #include <e32kpan.h>
 #include <u32std.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <e32event.h>
 #include <e32event_private.h>
 #include <d32locd.h>
@@ -228,6 +229,7 @@ const TUint8 KMutexOrdGeneral0			= 0xf0;
 
 
 const TUint8 KMutexOrdRamDrive			= KMutexOrdGeneral7; /**< @internalComponent */
+const TUint8 KMutexOrdDmaChannel		= 0x70; /**< @internalComponent */
 const TUint8 KMutexOrdShPool			= 0x68; /**< @internalComponent */
 const TUint8 KMutexOrdCodeSegLock		= 0x60; /**< @internalComponent */
 const TUint8 KMutexOrdPubSub2			= 0x5e; /**< @internalComponent */
@@ -1096,6 +1098,7 @@ public:
 	IMPORT_C static DCodeSeg* CodeSegFromAddress(TLinAddr aAddr, DProcess* aProcess);
 	IMPORT_C static void CodeSegGetMemoryInfo(DCodeSeg& aCodeSeg, TModuleMemoryInfo& aInfo, DProcess* aProcess);
 	IMPORT_C static TInt MakeHandleAndOpen(DThread* aThread, DObject* aObject);
+	IMPORT_C static TInt MakeHandleAndOpen(DThread* aThread, DObject* aObject, TOwnerType aType);
 	IMPORT_C static TInt CloseHandle(DThread* aThread, TInt aHandle);
 	IMPORT_C static TInt ChunkCreate(const TChunkCreateInfo& aInfo, DChunk*& aChunk, TLinAddr& aKernAddr, TUint32& iMapAttr);
 	IMPORT_C static TInt ChunkCommit(DChunk* aChunk, TInt aOffset, TInt aSize);

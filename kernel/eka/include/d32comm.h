@@ -27,6 +27,7 @@
 #define __D32COMM_H__
 #include <e32cmn.h>
 #include <e32ver.h>
+#include <d32public.h>
 
 /**
  Enumeration of number of data bits for serial port configuration.
@@ -106,12 +107,6 @@ enum TSir
 	{
 	ESIREnable,ESIRDisable,
 	};
-
-enum TFlowControl
-	{
-	EFlowControlOn,EFlowControlOff
-	};
-//
 
 const TInt KConfigMaxTerminators=4;
 // DTE Constants

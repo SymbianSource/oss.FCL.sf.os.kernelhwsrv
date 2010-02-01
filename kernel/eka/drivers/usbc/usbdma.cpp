@@ -127,35 +127,31 @@ TDmaBuf::~TDmaBuf()
 	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::~TDmaBuf()"));
 	}
 
-
-TUint8* TDmaBuf::SetBufferBase(TUint8* aBase)
-	{
-	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::SetBufferBase base=0x%08x size=0x%08x", aBase, iBufSz));
-	TUint8* bufPtr = aBase;
-	iBufBasePtr = aBase;
-	for (TInt i = 0; i < iNumberofBuffers; i++)
-		{
-		iDrainable[i] = iCanBeFreed[i] = EFalse;
-		iBuffers[i] = bufPtr;
-		iBufferPhys[i] = Epoc::LinearToPhysical((TLinAddr)bufPtr);
-		bufPtr += iBufSz;
-		__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::SetBufferBase() iBuffers[%d]=0x%08x", i, iBuffers[i]));
-		}
-	return bufPtr;
-	}
-
-
 TInt TDmaBuf::BufferTotalSize() const
 	{
 	return iBufSz * iNumberofBuffers;
 	}
 
+TInt TDmaBuf::BufferSize() const
+    {
+    return iBufSz;
+    }
 
-TUint8* TDmaBuf::BufferBase() const
-	{
-	return iBufBasePtr;
-	}
+TInt TDmaBuf::SetBufferAddr(TInt aBufInd, TUint8* aBufAddr)
+    {
+    __ASSERT_DEBUG((aBufInd < iNumberofBuffers),
+                       Kern::Fault(KUsbPanicLdd, __LINE__));
+    iDrainable[aBufInd] = iCanBeFreed[aBufInd] = EFalse;
+    iBuffers[aBufInd] = aBufAddr;
+    iBufferPhys[aBufInd] = Epoc::LinearToPhysical((TLinAddr)aBufAddr);
+    __KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::SetBufferAddr() iBuffers[%d]=0x%08x", aBufInd, iBuffers[aBufInd]));
+    return KErrNone;
+    }
 
+TInt TDmaBuf::BufferNumber() const
+    {
+    return iNumberofBuffers;
+    }
 
 void TDmaBuf::SetMaxPacketSize(TInt aSize)
 	{
@@ -950,13 +946,26 @@ TInt TDmaBuf::TxStoreData(DThread* aThread, TClientBuffer *aTcb, TInt aTxLength,
 		return KErrInUse;
 
 	__KTRACE_OPT(KUSB, Kern::Printf("TDmaBuf::TxStoreData 2"));
-	TUint8* logicalDest = iBufBasePtr;
-	TInt xferSz = Min(aTxLength, BufferTotalSize());
-	TPtr8 des(logicalDest, xferSz, xferSz);
-	TInt r = Kern::ThreadBufRead(aThread, aTcb, des, aBufferOffset,KChunkShiftBy0);
-	if(r != KErrNone)
-		Kern::ThreadKill(aThread, EExitPanic, r, KUsbLDDKillCat);
-	return r;
+	
+	TInt remainTxLength = aTxLength;
+	TUint32 bufferOffset = aBufferOffset;
+	// Store each buffer separately
+	for( TInt i=0;(i<iNumberofBuffers)&&(remainTxLength>0);i++)
+	    {
+	    TUint8* logicalDest = iBuffers[i];
+	    TInt xferSz = Min(remainTxLength, iBufSz);
+	    TPtr8 des(logicalDest, xferSz, xferSz);
+	    TInt r = Kern::ThreadBufRead(aThread, aTcb, des, bufferOffset, KChunkShiftBy0);
+	    if(r != KErrNone)
+	        {
+	        Kern::ThreadKill(aThread, EExitPanic, r, KUsbLDDKillCat);
+	        return r;
+	        }
+	    remainTxLength -= iBufSz;
+	    bufferOffset += iBufSz;
+	    }
+
+	return KErrNone;
 	}
 
 

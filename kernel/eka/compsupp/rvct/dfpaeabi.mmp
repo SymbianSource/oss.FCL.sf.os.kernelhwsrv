@@ -19,7 +19,7 @@
 target          dfpaeabi.dll
 
 start armcc
-    #if defined(ARMCC_3_1)
+    #if defined(ARMCC_3_1) || defined(ARMCC_4_0)
     ARMLIBS     fj_5s.l
 
     #else

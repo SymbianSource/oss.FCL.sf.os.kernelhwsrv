@@ -33,7 +33,7 @@ static const TOperation OperationArray[EMaxClientOperations]=
 		{	EFsNotifyChangeCancel,		ESync,					&TFsNotifyChangeCancel::Initialise,			NULL,								&TFsNotifyChangeCancel::DoRequestL			},
 		{	EFsDriveList,				ESync,					&TFsDriveList::Initialise,					NULL,								&TFsDriveList::DoRequestL					},
 		{	EFsDrive,					ESync,					&TFsDrive::Initialise,						NULL,								&TFsDrive::DoRequestL						},
-		{	EFsVolume,					0,						&TFsVolume::Initialise,						NULL,								&TFsVolume::DoRequestL						},
+		{	EFsVolume,					0,						&TFsVolume::Initialise,						NULL,								&TFsVolume::DoRequestL						, MSG0(EVolumeInfo)},
 		{	EFsSetVolume,				0,						&TFsSetVolume::Initialise,					NULL,								&TFsSetVolume::DoRequestL					},
 		{	EFsSubst,					ESync,					&TFsSubst::Initialise,						NULL,								&TFsSubst::DoRequestL						},
 		{	EFsSetSubst,				ESync | EParseSrc,		&TFsSetSubst::Initialise,					NULL,								&TFsSetSubst::DoRequestL					},

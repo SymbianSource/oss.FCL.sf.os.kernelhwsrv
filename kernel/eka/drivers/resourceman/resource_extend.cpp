@@ -133,20 +133,9 @@ TInt DStaticPowerResourceD::AddNode(SNode* aNode)
 	*/
 EXPORT_C TInt DDynamicPowerResourceD::HandleChangePropagation(TPowerRequest aRequest, TPropagation aProp, TUint aOriginatorId, const TDesC8& aOriginatorName)
 	{
-	static TUint16 clientLevelCount = 0;
-	DDynamicPowerResourceD* pDR = (DDynamicPowerResourceD*)aRequest.Resource();
 	TInt result = KErrNone;
-	TInt resState = 0;
-	TPowerRequest depRequest;
-	depRequest.ReqType() = TPowerRequest::EChange;
-	depRequest.ResourceCb() = NULL;
-	depRequest.ReturnCode() = KErrNone;
-	depRequest.RequiresChange() = EFalse;
 	static DPowerResourceController* pRC = TInterface::GetPowerResourceController();
-	DDynamicPowerResourceD* pDepRes = NULL;
-	TBool traceEnabled = EFalse;
-#ifdef PRM_INSTRUMENTATION_MACRO
-	traceEnabled = ETrue;
-#endif
-	HANDLE_CHANGE_PROPAGATION(pRC, DDynamicPowerResourceD*, traceEnabled, aOriginatorId, aOriginatorName)
+	result = pRC->HandleResourceChange(aRequest, aProp, aOriginatorId, aOriginatorName, (DStaticPowerResourceD*)this);
+	return result;
 	}
+

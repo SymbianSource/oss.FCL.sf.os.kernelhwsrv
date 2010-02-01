@@ -21,6 +21,7 @@ SOURCEPATH	../realtime
 SOURCE         t_lat2.cpp
 LIBRARY        euser.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE    ../../../userlibandfileserver/fileserver/inc
 
 capability		all
 

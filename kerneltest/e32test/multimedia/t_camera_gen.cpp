@@ -24,7 +24,13 @@
 
 _LIT(KTstLddFileName,"D_MMCSC.LDD");
 _LIT(KCamLddFileName,"ECAMERASC.LDD");
+
+#ifdef __WINSCW__
+_LIT(KCamPddFileName,"_TEMPLATE_CAMERASC.PDD");
+#else
 _LIT(KCamPddFileName,"CAMERASC.PDD");
+#endif
+
 _LIT(KCamFreePddExtension,".*");
 
 const TInt KUnit0=0;
@@ -297,7 +303,13 @@ void CCameraHandler::RunL()
 		{
 		TUint8* imgBase=iChunk[iCaptureMode].Base()+retOffset;
 		TInt r=iDispHandler[iCaptureMode].Process(imgBase);
+		
+#ifdef __WINSCW__
+		test(r==KErrNotSupported);
+#else
 		test(r==KErrNone);
+#endif
+		
 		// Release the buffer
 		test(iCamera.ReleaseBuffer(retId)==KErrNone);
 		iFrameCount++;

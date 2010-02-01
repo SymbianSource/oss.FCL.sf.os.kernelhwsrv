@@ -18,20 +18,12 @@
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
+#include "f32_test_utils.h"
 
-#if defined(__WINS__)
-#define WIN32_LEAN_AND_MEAN
-#pragma warning (disable:4201) // warning C4201: nonstandard extension used : nameless struct/union
-#pragma warning (default:4201) // warning C4201: nonstandard extension used : nameless struct/union
-#endif
+using namespace F32_Test_Utils;
+TInt gDriveNum = -1;
 
-#if defined(_UNICODE)
-#if !defined(UNICODE)
-#define UNICODE
-#endif
-#endif
-
-GLDEF_D RTest test(_L("T_RENAME"));
+RTest test(_L("T_RENAME"));
 
 TBuf8<26> alphaBuffer=_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 TPtr8 alphaPtr((TText8*)alphaBuffer.Ptr(),alphaBuffer.Size(),alphaBuffer.Size());
@@ -39,17 +31,8 @@ TPtr8 alphaPtr((TText8*)alphaBuffer.Ptr(),alphaBuffer.Size(),alphaBuffer.Size())
 TBuf8<17> BeckBuffer=_L8("A Devil's Haircut");
 TPtr8 BeckPtr((TText8*)BeckBuffer.Ptr(),BeckBuffer.Size(),BeckBuffer.Size());
 
-/*
 
-	What this test is for:
-	Tests bug fix for the bug which created two files of the same name
- 
-*/
-
-LOCAL_C void CreateTestFiles()
-//
-//
-//
+static void CreateTestFiles()
 	{
 	test.Next(_L("Create test files"));
 	TInt r=TheFs.MkDir(_L("\\F32-TST\\"));
@@ -79,31 +62,14 @@ LOCAL_C void CreateTestFiles()
 	file.Close();
 
 	}
-/*
-LOCAL_C void CleanUp()
-//
-//	Delete any files created by the tests
-//
-	{
-	TInt r=TheFs.Delete(_L("\\F32-TST\\TESTFILE"));
-	test(r==KErrNone);
-	r=TheFs.Delete(_L("\\F32-TST\\RFSFILE"));
-	test(r==KErrNone);
-	r=TheFs.Delete(_L("\\F32-TST\\EIKFILE"));
-	test(r==KErrNone);
-	r=TheFs.Delete(_L("\\F32-TST\\TEST"));
-	test(r==KErrNone);
-	r=TheFs.RmDir(_L("\\F32-TST\\SYSTEM\\"));
-	test(r==KErrNone);
-	}
-*/
 
-LOCAL_C TInt CountFiles(TPtrC aDirectory, TPtrC aFileName)
+static TInt CountFiles(TPtrC aDirectory, TPtrC aFileName)
 //
 //	Return the number of files of aFileName found in aDirectory
 //	
 	{
-	RDir dir;
+	
+    RDir dir;
 	TFileName sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
 	test(r==KErrNone);
@@ -140,7 +106,7 @@ LOCAL_C TInt CountFiles(TPtrC aDirectory, TPtrC aFileName)
 	return(fileCount);
 	}
 
-LOCAL_C void TestRFileRename()
+static void TestRFileRename()
 //
 //	Test RFile::Rename() function
 //
@@ -168,7 +134,7 @@ LOCAL_C void TestRFileRename()
 	}
 
 
-LOCAL_C void TestRFsRename()
+static void TestRFsRename()
 //
 //	Test RFs::Rename() function
 //
@@ -190,7 +156,7 @@ LOCAL_C void TestRFsRename()
 	file.Close();
 	}
 
-LOCAL_C void TestEikonRename()
+static void TestEikonRename()
 //
 //	Test EIKON style rename by creating a new file, and copying old data into new file
 //
@@ -219,7 +185,7 @@ LOCAL_C void TestEikonRename()
 	}
 
 
-LOCAL_C void TestReplaceAndRename()
+static void TestReplaceAndRename()
 //
 //	Tests the bug which allows 2 files of the same name to be created has been fixed
 //
@@ -428,36 +394,42 @@ LOCAL_C void TestReplaceAndRename()
 	test(fileCount==0);
 	test(r==KErrNone);
 
-//	Clean up
-	RFormat format;
-	TInt count;
-	TFileName sessionPath;
-	r=TheFs.SessionPath(sessionPath);
-	r=format.Open(TheFs,sessionPath,EQuickFormat,count);
-	if (r == KErrAccessDenied)
-		return;
-	test(r==KErrNone);
-	while(count && r==KErrNone)
-		r=format.Next(count);
-	format.Close();
 	}
 
 
-GLDEF_C void CallTestsL(void)
-//
-// Do all tests
-//
+void CallTestsL(void)
 	{
 	
 	test.Title();
 	test.Start(_L("Testing rename"));
 
-	TheFs.MkDir(_L("\\F32-TST\\SYSTEM\\"));
+    //-- set up console output
+    F32_Test_Utils::SetConsole(test.Console());
+
+    TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
+    test(nRes==KErrNone);
+    
+    PrintDrvInfo(TheFs, gDriveNum);
+
+    if(!Is_Win32(TheFs, gDriveNum))
+        {
+        nRes = FormatDrive(TheFs, gDriveNum, ETrue);
+        test(nRes==KErrNone);
+        }
+    
+
+	MakeDir(_L("\\F32-TST\\SYSTEM\\"));
 	CreateTestFiles();
 	TestRFsRename();
 	TestRFileRename();
 	TestEikonRename();
 	TestReplaceAndRename();
+
+    if(!Is_Win32(TheFs, gDriveNum))
+        {
+        nRes = FormatDrive(TheFs, gDriveNum, ETrue);
+        test(nRes==KErrNone);
+        }
 
 	test.End();
 	test.Close();

@@ -1247,10 +1247,10 @@ TBool TestDriveInfo()
 
 	TEST_FOR_ERROR( TheMmcDrive.Caps( DriveCaps ) );
 
-	test.Printf( _L("Caps V1:\n\tiSize=0x%lx\n\tiType=%d\n\tiBattery=%d\n\tiDriveAtt=0x%x\n\tiMediaAtt=0x%x\n\tiBaseAddress=0x%x\n\tiFileSystemId=0x%x\n\tiPartitionType=0x%x\n"),
+	test.Printf( _L("Caps V1:\n\tiSize=0x%lx\n\tiType=%d\n\tiConnectionBusType=%d\n\tiDriveAtt=0x%x\n\tiMediaAtt=0x%x\n\tiBaseAddress=0x%x\n\tiFileSystemId=0x%x\n\tiPartitionType=0x%x\n"),
 			DriveCaps().iSize,
 			DriveCaps().iType,
-			DriveCaps().iBattery,
+			DriveCaps().iConnectionBusType,
 			DriveCaps().iDriveAtt,
 			DriveCaps().iMediaAtt,
 			DriveCaps().iBaseAddress,

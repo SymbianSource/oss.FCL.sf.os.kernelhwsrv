@@ -26,6 +26,7 @@ macro		BTRACE_RESOURCE_MANAGER
 macro		RESOURCE_MANAGER_SIMULATED_PSL
 macro		PRM_INSTRUMENTATION_MACRO
 macro		PRM_ENABLE_EXTENDED_VERSION
+//macro		DEBUG_VERSION //Enable if wanted to check for Lock and critical section count checker
 
 // all exported APIs
 sourcepath	../../../kernel/eka/drivers/resourceman
@@ -48,3 +49,6 @@ capability 	all
 start wins
 win32_headers
 end
+
+macro CPU_AFFINITY_ANY
+SMPSAFE

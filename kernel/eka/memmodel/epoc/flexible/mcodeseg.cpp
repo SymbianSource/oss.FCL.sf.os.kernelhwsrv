@@ -227,7 +227,9 @@ TInt DMemModelCodeSegMemory::Loaded(TCodeSegCreateInfo& aInfo)
 			return KErrNoMemory;
 		iCopyOfExportDir = expDir;
 		TLinAddr expDirLoad = iRamInfo.iExportDir-iRamInfo.iCodeRunAddr+iRamInfo.iCodeLoadAddr;
+		UNLOCK_USER_MEMORY();
 		memcpy(expDir,(TAny*)(expDirLoad-sizeof(TLinAddr)),exportDirSize);
+		LOCK_USER_MEMORY();
 		}
 
 	// unmap code from loading process...

@@ -304,6 +304,11 @@ DECLARE_STANDARD_LDD()
 		p->AsyncDelete();
 		return NULL;
 		}
+
+#ifdef CPU_AFFINITY_ANY
+		NKern::ThreadSetCpuAffinity((NThread*)(p->iDfcQ->iThread), KCpuAffinityAny);			
+#endif
+
 	//Register client with Resource Controller
 	TBuf8<32> ClientName(_L8("Client"));
 	p->iClient.pName = HBuf::New((const TDesC&)ClientName);
@@ -518,10 +523,12 @@ TInt DTestResManLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 	TInt r = KErrNone;
 	TParameterListInfo ptr = {0, 0, 0, 0, 0};
 	//Copy parameter structure from user space.
-	if((aFunction != RTestResMan::EDeRegisterClient) && (aFunction != RTestResMan::ERequestNotificationUncond) && 
-		   (aFunction != RTestResMan::ERegisterForIdleResourcesInfo) && (aFunction != RTestResMan::EGetIdleResourcesInfo) 
-		   && (aFunction != RTestResMan::EDeRegisterClientLevelFromResource) && (aFunction != RTestResMan::ECheckPostBootLevelNotifications)
-		   && (aFunction != RTestResMan::EGetControllerVersion)
+	if((aFunction != RTestResMan::EDeRegisterClient) 
+		&& (aFunction != RTestResMan::ERequestNotificationUncond) 
+		&& (aFunction != RTestResMan::EGetIdleResourcesInfo) 
+		&& (aFunction != RTestResMan::EDeRegisterClientLevelFromResource) 
+		&& (aFunction != RTestResMan::ECheckPostBootLevelNotifications)
+		&& (aFunction != RTestResMan::EGetControllerVersion)
 #ifdef PRM_ENABLE_EXTENDED_VERSION
 		   && (aFunction != RTestResMan::ERegisterDynamicResource))
 #else
@@ -951,17 +958,20 @@ TInt DTestResManLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 				break;
 				}
 			NKern::ThreadEnterCS();
-			pBuf = HBuf::New((TUint)a2 * sizeof(SIdleResourceInfo)); //Allocate buffer for requested resources
+			pBuf = HBuf::New((TUint)ptr.iPtr1 * sizeof(SIdleResourceInfo)); //Allocate buffer for requested resources
 			NKern::ThreadLeaveCS();
 			if(!pBuf)
 				return KErrNoMemory;
-			SIdleResourceInfo* pI = (SIdleResourceInfo*)pBuf->Ptr();
-			for(TUint c = 0; c < (TUint)a2; c++)
-				pI[c].iResourceId = c+1; //Update resource id
+			r = Kern::ThreadRawRead(iClientThreadPtr, ptr.iPtr2, (TAny*)pBuf->Ptr(), (TUint)ptr.iPtr1 * sizeof(SIdleResourceInfo));
+			if(r != KErrNone)
+				{
+				Kern::Printf("RTestResMan::ERegisterForIdleResourceInfo threadRawRead failed with %d\n", r);
+				break;
+				}
 			//Below function calls RegisterForResourceIdle resource controller virtual function, 
 			//This is for testing purposes only.
 
-			r =DSimulatedPowerResourceController::CaptureIdleResourcesInfo((TUint)a1, (TUint)a2, (TPtr*)pI);
+			r =DSimulatedPowerResourceController::CaptureIdleResourcesInfo((TUint)ptr.iClientId, (TUint)ptr.iPtr1, (TPtr*)pBuf);
 			if( r == KErrInUse)
 			   delete pBuf;
 			break;

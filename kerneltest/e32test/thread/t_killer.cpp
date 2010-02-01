@@ -21,6 +21,7 @@
 #include <e32std_private.h>
 #include <e32math.h>
 #include <e32test.h>
+#include <e32ver.h>
 #include <e32panic.h>
 
 const TInt KHeapMinSize=0x1000;

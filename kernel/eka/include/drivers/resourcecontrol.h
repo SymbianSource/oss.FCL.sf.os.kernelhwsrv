@@ -226,11 +226,13 @@ _LIT8(KParentResource, "ParentResource");
 
 /* Macro definition for entry point of Power Resource Controller */
 #define DECLARE_RESOURCE_MANAGER_EXTENSION(TheController)															\
+	TDfc* resourceInitDfc = NULL;																					\
 	static void ResourceInit(TAny* aController)																		\
 		{																											\
 		TInt aReason = NKern::EThread;																				\
 		PRM_BOOTING_TRACE																							\
 		((DPowerResourceController*)aController)->InitResources();													\
+		delete resourceInitDfc;																						\
 		return;																										\
 		}																											\
 	void CreateController();																						\
@@ -259,250 +261,13 @@ _LIT8(KParentResource, "ParentResource");
 		r = Kern::InstallPhysicalDevice(device);																	\
 		if(r != KErrNone)																							\
 			return r;																								\
-		TDfc* resourceInitDfc = new TDfc(&ResourceInit,(TAny*)&TheController,Kern::SvMsgQue(),KMaxDfcPriority-1);	\
+		resourceInitDfc = new TDfc(&ResourceInit,(TAny*)&TheController,Kern::SvMsgQue(),KMaxDfcPriority-1);			\
 		if(!resourceInitDfc)																						\
 			return KErrNoMemory;																					\
 		resourceInitDfc->Enque();																					\
        	return KErrNone;																							\
 		}																											\
 		GLDEF_C void CreateController()
-
-/* Macro defintion for handling dependency resource state change. This is used only in extended version */
-#define HANDLE_CHANGE_PROPAGATION(TheController, resourceTypePointer, traceEnabled, originatorId, originatorName)																	\
-	switch(aProp)																									\
-		{																											\
-		case EChangeStart:																							\
-			{																										\
-			if(!pDR->iDependencyList) /*No dependents so change state of the resource*/								\
-				{																									\
-				aRequest.ReturnCode() = pDR->DoRequest(aRequest);													\
-				if(aRequest.ReturnCode() == KErrNone)																\
-					{																								\
-					iCachedLevel = aRequest.Level();																\
-					iLevelOwnerId = aRequest.ClientId();															\
-					if(iIdleListEntry)																				\
-						{																							\
-						iIdleListEntry->iCurrentLevel = aRequest.Level();											\
-						iIdleListEntry->iLevelOwnerId = aRequest.ClientId();										\
-						}																							\
-					TheController->CompleteNotifications(aRequest.ClientId(), pDR,									\
-							aRequest.Level(), aRequest.ReturnCode(), aRequest.ClientId());							\
-					}																								\
-					break;																							\
-				}																									\
-			depRequest.ResourceId() = aRequest.ResourceId();														\
-			depRequest.ClientId() = aRequest.ResourceId();															\
-			depRequest.Level() = aRequest.Level();																	\
-			depRequest.Resource() = pDR;																			\
-			result = pDR->HandleChangePropagation(depRequest, ECheckChangeAllowed, originatorId, originatorName);	\
-			if(result != KErrNone)																					\
-				return result;																						\
-			/*Adjust resource client level*/																		\
-			if(clientLevelCount)																					\
-				{																									\
-				result = TheController->ReserveClientLevelPoolCount(clientLevelCount);								\
-				if(result != KErrNone)																				\
-					return result;																					\
-				}																									\
-			/*Resource change of dependents */																		\
-			pDR->HandleChangePropagation(aRequest, ERequestStateChange, originatorId, originatorName);				\
-			/*Notification to dependents */																			\
-			pDR->HandleChangePropagation(aRequest, EIssueNotifications, originatorId, originatorName);				\
-			break;																									\
-			}																										\
-		case ECheckChangeAllowed:																					\
-			{																										\
-			TChangePropagationStatus status;																		\
-			for(SNode* depNode = pDR->iDependencyList; depNode != NULL; depNode = depNode->iNext)					\
-				{																									\
-				pDepRes = (resourceTypePointer)depNode->iResource;													\
-				if((aRequest.ClientId() & KIdMaskResourceWithDependencies) &&										\
-						(pDepRes->iResourceId == (TUint)aRequest.ClientId()))										\
-					continue;																						\
-				/*Resource need not change if it is already in that state, so continue with							\
-						another dependent state.*/																	\
-				if(pDepRes->iResourceId & KIdMaskDynamic)															\
-					status = ((DDynamicPowerResourceD*)pDepRes)->TranslateDependentState(aRequest.ResourceId(),		\
-																				aRequest.Level(), resState);		\
-				else																								\
-					status = ((DStaticPowerResourceD*)pDepRes)->TranslateDependentState(aRequest.ResourceId(),		\
-																					aRequest.Level(), resState);	\
-				if((status == ENoChange) || (pDepRes->iCachedLevel == resState))									\
-					{																								\
-					depNode->iRequiresChange = EFalse;																\
-					continue;																						\
-					}																								\
-				if(status == EChangeNotAccepted)																	\
-					return KErrPermissionDenied;																	\
-				depRequest.ResourceId() = pDepRes->iResourceId;														\
-				depRequest.ClientId() = aRequest.ResourceId(); /*ID of the dependent resource */					\
-				depRequest.Level() = resState;																		\
-				depRequest.Resource() = pDepRes;																	\
-				/*Check resource client list and resource list to see whether change is allowed.*/					\
-				if(pDepRes->Sense() == DStaticPowerResource::ECustom)												\
-					{																								\
-					/*Call custom function to check whether change is allowed.*/									\
-					if(pDepRes->iResourceId & KIdMaskDynamic)														\
-						depRequest.RequiresChange() = ((DDynamicPowerResourceD*)pDepRes)->iDepCustomFunction(depRequest.ClientId(),	\
-							originatorName, depRequest.ResourceId(), EClientChangeLevel, depRequest.Level(), (TAny*)&pDepRes->iClientList,		\
-									(TAny*)&((DDynamicPowerResourceD*)pDepRes)->iResourceClientList, NULL);				\
-					else																							\
-						depRequest.RequiresChange() = ((DStaticPowerResourceD*)pDepRes)->iDepCustomFunction(depRequest.ClientId(),		\
-							originatorName, depRequest.ResourceId(), EClientChangeLevel, depRequest.Level(), (TAny*)&pDepRes->iClientList,		\
-									(TAny*)&((DStaticPowerResourceD*)pDepRes)->iResourceClientList, NULL);				\
-					if(!depRequest.RequiresChange())																\
-						return KErrPermissionDenied;																\
-					}																								\
-				SPowerResourceClientLevel*pN=NULL;																	\
-				for(SDblQueLink* pNL=pDepRes->iClientList.First();pNL!=&pDepRes->iClientList.iA; pNL=pNL->iNext)	\
-					{																								\
-					pN = (SPowerResourceClientLevel*)pNL;															\
-					if(pDepRes->Sense() == DStaticPowerResource::EPositive)											\
-						{																							\
-						if(pN->iLevel > depRequest.Level())															\
-							return KErrPermissionDenied;															\
-						}																							\
-					else if(pDepRes->Sense() == DStaticPowerResource::ENegative)									\
-						{																							\
-						if(pN->iLevel < depRequest.Level())															\
-							return KErrPermissionDenied;															\
-						}																							\
-					}																								\
-																													\
-				/*check through the resource client level */														\
-				SPowerResourceClientLevel*pCL = NULL;																\
-				if(pDepRes->iResourceId & KIdMaskDynamic)															\
-					pCL = ((DDynamicPowerResourceD*)pDepRes)->iResourceClientList;									\
-				else																								\
-					pCL = ((DStaticPowerResourceD*)pDepRes)->iResourceClientList;									\
-				for(; pCL != NULL; pCL = pCL->iNextInList)															\
-					{																								\
-					if(pCL->iClientId == pDR->iResourceId)															\
-						break;																						\
-					}																								\
-				if(!pCL)																							\
-					clientLevelCount++;																				\
-				/*check dependent resource client list & resource list to see whether change is allowed */			\
-				if(pDepRes->iResourceId & KIdMaskDynamic)															\
-					result = ((DDynamicPowerResourceD*)pDepRes)->HandleChangePropagation(depRequest,				\
-																ECheckChangeAllowed, originatorId, originatorName);	\
-				else																								\
-					result = ((DStaticPowerResourceD*)pDepRes)->HandleChangePropagation(depRequest,					\
-											ECheckChangeAllowed, originatorId, originatorName);						\
-				if(result != KErrNone)																				\
-					return result;																					\
-				depNode->iPropagatedLevel = resState;																\
-				depNode->iRequiresChange = ETrue;																	\
-				}																									\
-			break;																									\
-			}																										\
-		case ERequestStateChange:																					\
-			{																										\
-			SPowerResourceClientLevel* pCL = NULL;																	\
-			for(SNode* depNode = pDR->iDependencyList; depNode != NULL; depNode = depNode->iNext)					\
-				{																									\
-				pDepRes = (resourceTypePointer)depNode->iResource;													\
-				if((!depNode->iRequiresChange) || (pDepRes->iResourceId == (TUint)aRequest.ClientId()))				\
-					continue;																						\
-				depRequest.ResourceId() = pDepRes->iResourceId;														\
-				depRequest.ClientId() = aRequest.ResourceId();														\
-				depRequest.Level() = depNode->iPropagatedLevel;														\
-				depRequest.Resource() = pDepRes;																	\
-				if(pDepRes->iResourceId & KIdMaskDynamic)															\
-					((DDynamicPowerResourceD*)pDepRes)->HandleChangePropagation(depRequest, ERequestStateChange,	\
-																					originatorId, originatorName);	\
-				else																								\
-					((DStaticPowerResourceD*)pDepRes)->HandleChangePropagation(depRequest, ERequestStateChange,		\
-																					originatorId, originatorName);	\
-				/*Update level if resource client level is already present for this resource.*/						\
-				if(pDepRes->iResourceId & KIdMaskDynamic)															\
-					pCL = ((DDynamicPowerResourceD*)pDepRes)->iResourceClientList;									\
-				else																								\
-					pCL = ((DStaticPowerResourceD*)pDepRes)->iResourceClientList;									\
-				for(; pCL != NULL; pCL = pCL->iNextInList)															\
-					{																								\
-					if(pCL->iClientId == pDR->iResourceId)															\
-						{																							\
-						pCL->iLevel = depNode->iPropagatedLevel;													\
-						break;																						\
-						}																							\
-					}																								\
-				if(!pCL) /*Create a new resource client level*/														\
-					{																								\
-					TheController->RemoveClientLevelFromPool(pCL);													\
-					pCL->iClientId = pDR->iResourceId;																\
-					pCL->iResourceId = pDepRes->iResourceId;														\
-					pCL->iLevel = depNode->iPropagatedLevel;														\
-					if(pDepRes->iResourceId & KIdMaskDynamic)														\
-						{																							\
-						LIST_PUSH(((DDynamicPowerResourceD*)pDepRes)->iResourceClientList, pCL, iNextInList);		\
-						}																							\
-					else																							\
-						{																							\
-						LIST_PUSH(((DStaticPowerResourceD*)pDepRes)->iResourceClientList, pCL, iNextInList);		\
-						}																							\
-					clientLevelCount--;																				\
-					}																								\
-				}																									\
-			if(traceEnabled && (aRequest.ClientId() & KIdMaskResourceWithDependencies))								\
-				{																									\
-				SPowerResourceClient res;																			\
-				SPowerResourceClient* pC = &res;																	\
-				pC->iClientId = aRequest.ClientId();																\
-				pC->iName = &KParentResource;																		\
-				DStaticPowerResource*pR = (DStaticPowerResource*)pDR;												\
-				TUint aResourceId = pDR->iResourceId;																\
-				TInt aNewState = aRequest.Level();																	\
-				PRM_CLIENT_CHANGE_STATE_START_TRACE																	\
-				}																									\
-			DoRequest(aRequest);																					\
-			if(traceEnabled && (aRequest.ClientId() & KIdMaskResourceWithDependencies))								\
-				{																									\
-				SPowerResourceClient res;																			\
-				SPowerResourceClient* pC = &res;																	\
-				pC->iClientId = aRequest.ClientId();																\
-				pC->iName = &KParentResource;																		\
-				DStaticPowerResource*pR = (DStaticPowerResource*)pDR;												\
-				TUint aResourceId = pDR->iResourceId;																\
-				TInt aNewState = aRequest.Level();																	\
-				TInt r = KErrNone;																					\
-				PRM_CLIENT_CHANGE_STATE_END_TRACE																	\
-				}																									\
-			pDR->iCachedLevel = aRequest.Level();																	\
-			pDR->iLevelOwnerId = aRequest.ClientId();																\
-			if(pDR->iIdleListEntry)																					\
-				{																									\
-				pDR->iIdleListEntry->iCurrentLevel = aRequest.Level();												\
-				pDR->iIdleListEntry->iLevelOwnerId = aRequest.ClientId();											\
-				}																									\
-			break;																									\
-			}																										\
-		case EIssueNotifications:																					\
-			{																										\
-			for(SNode* depNode = pDR->iDependencyList; depNode != NULL; depNode = depNode->iNext)					\
-				{																									\
-				pDepRes = (resourceTypePointer)depNode->iResource;													\
-				if((!depNode->iRequiresChange) || (pDepRes->iResourceId == (TUint)aRequest.ClientId()))				\
-					continue;																						\
-				depRequest.ResourceId() = pDepRes->iResourceId;														\
-				depRequest.ClientId() = pDepRes->iLevelOwnerId;														\
-				depRequest.Level() = pDepRes->iCachedLevel;															\
-				depRequest.Resource() = pDepRes;																	\
-				if(pDepRes->iResourceId & KIdMaskDynamic)															\
-					((DDynamicPowerResourceD*)pDepRes)->HandleChangePropagation(depRequest, EIssueNotifications,	\
-																					originatorId, originatorName);	\
-				else																								\
-					((DStaticPowerResourceD*)pDepRes)->HandleChangePropagation(depRequest, EIssueNotifications,		\
-																					originatorId, originatorName);	\
-				}																									\
-			TheController->CompleteNotifications(aRequest.ClientId(), pDR, aRequest.Level(), KErrNone,				\
-																					aRequest.ClientId());			\
-			break;																									\
-			}																										\
-		default:																									\
-			return KErrNotSupported;																				\
-		}																											\
-		return result;
 
 struct SPowerResourceClient;
 struct TPowerRequest;
@@ -697,6 +462,9 @@ public:
 	TInt ReserveClientLevelPoolCount(TUint16 aCount);
 	/**@internalComponent*/
 	void RemoveClientLevelFromPool(SPowerResourceClientLevel *&aLevelPtr);
+	/**@internalComponent*/
+	TInt HandleResourceChange(TPowerRequest &aRequest, TPropagation aProp, TUint aOriginatorId,
+									const TDesC8& aOriginatorName, DStaticPowerResourceD* aResource);
 #endif
 protected:
     //generic layer function to be called by the PSL
@@ -769,6 +537,9 @@ private:
     DStaticPowerResource** iStaticResourceArray;
     DResourceCon<SPowerResourceClient> iClientList;
     DResourceCon<SPowerResourceClient> iUserSideClientList;
+#ifdef RESOURCE_MANAGER_SIMULATED_PSL
+	RPointerArray<SPowerResourceClient> iCleanList;
+#endif
     SPowerResourceClient* iClientPool;
     SPowerRequest* iRequestPool;
     SPowerResourceClientLevel* iClientLevelPool;

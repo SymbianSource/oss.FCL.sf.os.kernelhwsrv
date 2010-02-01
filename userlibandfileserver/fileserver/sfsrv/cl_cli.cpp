@@ -644,11 +644,14 @@ Dismounts the file system from the specified drive.
 
 /**
     Gets the name of the file system mounted on the specified drive.
-
     The function can be called before calling DismountFileSystem().
 			     
     @param aName  On successful return, contains the name of the file system.
     @param aDrive The drive for which the file system name is required.
+
+    Note that the file system name, returned in the aName descriptor shall be threated as case-insensitive string. I.e. 
+    "fileSystem" and "FILESYSTEM" mean absolutely the same. Therefore, case-insensitive string methods (like TDesC::FindF(), TDesC::CompareF())
+    shall be used to deal with the names.
 
     @return KErrNone, if successful;
             KErrNotFound if aFileSystemName is not found, or the drive does not have a file	system mounted on it;
@@ -675,6 +678,10 @@ EFSRV_EXPORT_C TInt RFs::FileSystemName(TDes& aName,TInt aDrive) const
     shall be at least 2 names in the list. For example "FAT" and "exFAT". 
     If "automatic file system recognising" feature is not supported, the list will consist of just one name, and 
     this will be the name returned by RFs::FileSystemName() API.
+
+    Note that the file system name, returned in the aName descriptor shall be threated as case-insensitive string. I.e. 
+    "fileSystem" and "FILESYSTEM" mean absolutely the same. Therefore, case-insensitive string methods (like TDesC::FindF(), TDesC::CompareF())
+    shall be used to deal with the names.
 
     @param  aName           On successful return, contains the name of the file system that correspond to the aFsEnumerator value.
     m@param aDrive          The drive number 
@@ -2624,8 +2631,6 @@ to a disk is opened.
 
 
 
-
-EFSRV_EXPORT_C TInt RFs::CheckDisk(const TDesC& aDrive) const
 /**
 Checks the integrity of the disk on the specified drive.
 On FAT, this checks if a cluster number is invalid, if a cluster is allocated to
@@ -2645,11 +2650,11 @@ of an entry is invalid.
         KErrNotReady, if the specified drive is empty;
         KErrNotSupported, if the drive cannot handle this request;
         KErrPermissionDenied, if the caller doesn't have DiskAdmin capability;
-		KErrTooBig, if the drives folder depth exceeds maximum allowed. For the current FAT file system implementation this limit is 50.
         Other system wide error codes may also be returned.
 
 @capability DiskAdmin
 */
+EFSRV_EXPORT_C TInt RFs::CheckDisk(const TDesC& aDrive) const
 	{
 	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsCheckDisk, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsCheckDisk,TIpcArgs(&aDrive));
@@ -3479,26 +3484,54 @@ Release exclusive access for this session to overwrite a specific disk area.
 
 
 /**
-Sets up a pending dismount notifier, the type of which is specified by TNotifyDismountMode.
+    Controls file system dismounting on the specified drive, the way of control depends on the parameter TNotifyDismountMode. 
+    
+    This API allows interested parties to:
+        1.  Subscribe for notification of file system dismounting events.
+            This allows subscribers to commit their data to the media prior to the file system being dismounted.
+            See TNotifyDismountMode::EFsDismountRegisterClient
 
-	EFsDismountRegisterClient - Sets up a notifier to signal the client when a dismount has been requested.
-	EFsDismountNotifyClients  - Notifies all clients (who registered using EFsDismountRegisterClient) of a pending dismount, 
-					  signalling the caller when all clients have responded.
-	EFsDismountForceDismount  - Forcibly dismounts the file system without signalling any registered clients.
+        2.  Make a graceful attempt to dismount the file system by notifying the subscribers about a pending file system dismount
+            and waiting until all subscribers have finished processing the notification and have signaled that they are ready. 
+            If all clients don't respond in a reasonable time, the dismount request may be cancelled, followed by a forced dismount.
+            If some client does not subscribe for dismounting notification and keeps handles opened, then after the file system dismounting all these
+            handles will become invalid, any subsequent attempts to use them will result in KErrDismounted, and they should be closed(e.g. RFile::Close()). 
+            See TNotifyDismountMode::EFsDismountNotifyClients
 
-This API is intended to be used to allow applications and servers to commit their data to
-the media prior to the file system being dismounted.  The application forcing the dismount
-should first attempt to notify all clients.  If all clients don't respond in a a reaonable
-time, the dismount request may be cancelled, followed by a forced dismount.
+        3.  Dismount the file system by force even if there are opened handles (files, directories) on the volume being dismounted. 
+            Any clients that kept handles opened, after forced file system dismounting will have them invalidated. And any further attempts to use 
+            these handles will result in KErrDismounted, and they should be closed(e.g. RFile::Close()). 
+            See TNotifyDismountMode::EFsDismountForceDismount
 
-Any handles left open on the file system shall be disassociated from the media. Attempts to
-access these resources shall return with the KErrDismounted error code.
+        * If there are clamped files on the volume, the file system dismounting will not happen until these files are unclamped.     
+           
 
-@param aDriveNo The drive on which to request dismount
-@param aMode A TNotifyDismountMode specifying the behaviour of the notification API
-@param aStat Completed when all clients have indicated that it is safe to remove the media
+    The use case scenario:
+    A 'Master' application that wants to dismount the file system on some drive 'aDrive'
+    'Client1' and 'Client2' applications interested in file system dismount event notifications, because they need to commit their data before the file system is dismounted.
+        
+        1.  'Client1' and 'Client2' subscribe to the FS dismount notification using EFsDismountRegisterClient and start waiting on the request status objects.
+        2.  'Master' decides to dismount the file system on the drive 'aDrive'.
+            2.1 Graceful attempt: 'Master' calls RFs::NotifyDismount() with EFsDismountNotifyClients and starts waiting on 'aStat' for some time until all 'Client1' and 'Client2' respond or timeout occurs.
+        
+        3.  'Client1' and 'Client2' have their 'aStat' completed as the result of the 'Master' calling EFsDismountNotifyClients.
+            3.1 'Client1' and 'Client2' flush data and close file handles.
+            3.2 as soon as 'Client1' and 'Client2' decide that they are ready for the pending FS dismount, they signal the 'Master' that they are ready by calling RFs::AllowDismount()
+
+        4.  As soon as _all_ subscribed clients ('Client1' and 'Client2') have called RFs::AllowDismount(), the file system on drive 'aDrive' is 
+            dismounted and 'Master' has 'aStat' completed.
+
+        If, for example, 'Client2' hasn't responded in a reasonable time by calling RFs::AllowDismount(), the 'Master' can cancel the pending 'aStat' and
+        dismount the file system by force by calling this API with EFsDismountForceDismount. 
+        In this case all subsequent attempts by 'Client2' to use its opened handles will result in KErrDismounted; these handles should be closed.
+
+
+
+    @param aDriveNo The drive on which to request dismount
+    @param aMode    specifies the behaviour of the notification API
+    @param aStat    Asynchronous request state.
 */
-EFSRV_EXPORT_C void RFs::NotifyDismount(TInt aDrive, TRequestStatus& aStat, TNotifyDismountMode aMode) const
+EFSRV_EXPORT_C void RFs::NotifyDismount(TInt aDrive, TRequestStatus& aStat, TNotifyDismountMode aMode /*=EFsDismountRegisterClient*/) const
 	{
 	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismount, MODULEUID, Handle(), aDrive, &aStat, aMode);
 	aStat = KRequestPending;
@@ -3514,14 +3547,14 @@ EFSRV_EXPORT_C void RFs::NotifyDismount(TInt aDrive, TRequestStatus& aStat, TNot
 
 
 
-EFSRV_EXPORT_C void RFs::NotifyDismountCancel(TRequestStatus& aStat) const
 /**
-Cancels the oustanding dismount notifier, completing with KErrCancel.
+    Cancels the oustanding dismount notifier, completing with KErrCancel.
+ 
+    @param aStat The request status object associated with the request to be cancelled.
 
-@param aStat The request status object associated with the request to be cancelled.
-
-@see RFs::NotifyDismount
+    @see RFs::NotifyDismount
 */
+EFSRV_EXPORT_C void RFs::NotifyDismountCancel(TRequestStatus& aStat) const
 	{
 	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismountCancel1, MODULEUID, Handle(), &aStat);
 	
@@ -3533,13 +3566,12 @@ Cancels the oustanding dismount notifier, completing with KErrCancel.
 
 
 
-
-EFSRV_EXPORT_C void RFs::NotifyDismountCancel() const
 /**
-Cancel all oustanding dismount notifiers for this session, completing with KErrCancel.
+    Cancels all oustanding dismount notifiers for this session, completing with KErrCancel.
 
-@see RFs::NotifyDismount
+    @see RFs::NotifyDismount
 */
+EFSRV_EXPORT_C void RFs::NotifyDismountCancel() const
 	{
 	TRACE1(UTF::EBorder, UTraceModuleEfsrv::EFsNotifyDismountCancel2, MODULEUID, Handle());
 
@@ -3551,21 +3583,19 @@ Cancel all oustanding dismount notifiers for this session, completing with KErrC
 
 
 
-EFSRV_EXPORT_C TInt RFs::AllowDismount(TInt aDrive) const
 /**
-Used by a client to indicate that it is safe to dismount the file system.
-This should be called after receiving a pending media removal notification.
+    Used by a client to indicate that it is safe to dismount the file system. This should be called after receiving a pending media removal notification.
 
-Not calling this does not guarantee that the dismount will not occur
-as the application requesting the dismount may decide to forcibly dismount
-after a given timeout period.
+    Not calling this does not guarantee that the dismount will not occur as the application requesting the dismount may decide to forcibly dismount
+    after a given timeout period.
 
-@param aDriveNo The drive on which to allow the dismount.
+    @param aDriveNo The drive on which to allow the dismount.
 
-@return KErrNone if successful
+    @return KErrNone if successful
 
-@see RFs::NotifyDismount
+    @see RFs::NotifyDismount
 */
+EFSRV_EXPORT_C TInt RFs::AllowDismount(TInt aDrive) const
 	{
 	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EFsAllowDismount, MODULEUID, Handle(), aDrive);
 	TInt r = SendReceive(EFsAllowDismount, TIpcArgs(aDrive));
@@ -3716,24 +3746,29 @@ can effect the return value of each field within aParamInfo.
 	}
 
 
-EFSRV_EXPORT_C TInt RFs::FileSystemSubType(TInt aDrive, TDes& aName) const
 /**
-This function queries the sub type of the file system mounted on the specified volume. For example, 'FAT16' 
-of the Fat file system. 
+    This function queries the sub type of the file system mounted on the specified volume. For example, 'FAT16' of the Fat file system. 
+    TFSName is recommended as the type for aName when using this function.
 
-TFSName is recommended as the type for aName when using this function.
+    NOTE: For the file systems without a sub type (e.g. ROM file system), the  the file system name is returned (For example, 'Rom').
+    Examples:
+        "FAT"   file system; the subtypes can be "fat12", "fat16" or "fat32"
+        "ROFS"  file system; the subtype will be "ROFS"
 
-NOTE: File systems without a sub type (For example, a ROM file system), the name of the file system is 
-returned (For example, 'Rom').
+    Note also that the file system name, returned in the aName descriptor shall be threated as case-insensitive string. I.e. 
+    "fileSystem" and "FILESYSTEM" mean absolutely the same. Therefore, case-insensitive string methods (like TDesC::FindF(), TDesC::CompareF())
+    shall be used to deal with the names.
 
-@param aDrive A drive number, specifies which volume to query.
-@param aName A descriptor containing the returned sub type name or file system name.
 
-@return KErrNone if successful; KErrNotSuppoted if sub type is not supported; 
-		otherwise another system-wide error code is returned.
+    @param  aDrive  drive number, specifies which volume to query.
+    @param  aName   descriptor containing the returned sub type name or file system name.
 
-@see TFSName
+    @return KErrNone if successful; KErrNotSuppoted if sub type is not supported; 
+		    otherwise another system-wide error code is returned.
+
+    @see TFSName
 */
+EFSRV_EXPORT_C TInt RFs::FileSystemSubType(TInt aDrive, TDes& aName) const
 	{
 	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsFileSystemSubType, MODULEUID, Handle(), aDrive, aName);
 

@@ -83,7 +83,7 @@ TInt gFsDriveNumber	= -1;
 RTest test(_L("T_TBUS_DATAPAGING"));
 _LIT(KChunkName, "t_datapaging chunk");
 
-const TUint KDriveAttMask = KDriveAttLocal | KDriveAttRom | KDriveAttInternal | KDriveAttRemovable | KDriveAttRemote;
+const TUint KDriveAttMask = KDriveAttLocal | KDriveAttRom | KDriveAttRemote;
 const TUint KMediaAttMask = KMediaAttVariableSize | KMediaAttDualDensity | KMediaAttLockable | KMediaAttLocked | KMediaAttHasPassword  | KMediaAttReadWhileWrite;
 
 void CreatePagedChunk(TInt aSizeInPages, TInt aWipeByte = -1)

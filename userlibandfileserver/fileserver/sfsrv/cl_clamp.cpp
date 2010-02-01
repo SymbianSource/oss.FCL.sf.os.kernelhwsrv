@@ -16,6 +16,7 @@
 //
 
 #include <f32file.h>
+#include <e32ldr_private.h>
 
 
 EXPORT_C TInt RFileClamp::Clamp(RFile& aFile)

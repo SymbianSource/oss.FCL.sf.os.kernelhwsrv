@@ -2827,7 +2827,7 @@ void DRamAllocator::InitialCallback()
 			{
 			Panic(EZonesCallbackErr);
 			}
-		CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL, "DRamAllocator::ZoneAllocPages");
+		CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL, "DRamAllocator::InitialCallback");
 		}
 	iZoneCallbackInitSent = ETrue;
 	}

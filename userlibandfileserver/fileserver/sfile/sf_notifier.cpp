@@ -750,83 +750,148 @@ TBool CFsNotifyRequest::ValidateNotification(TInt aNotificationSize, TInt& aServ
 	TBool overflow = EFalse;
 	
 	//Check that we have not filled the buffer
-	//Also if iClientMsg is present this is the first notification
-	if (aServerTail == iClientHead && ClientMsgHandle()==0)
-		{
-		//Overflow
-		overflow = ETrue;
-		return overflow;
-		}
+    if (aServerTail == iClientHead)
+        {
+        // Buffer is empty when Client Tail = Client Head
+        if (iClientHead != iClientTail)
+        	{
+			overflow = ETrue;
+            return overflow;            
+			}
+        }
 
 	//Work out remaining size taking account of whether the end position is
 	//before or after the overflow position.
 	TInt remainingSize = (iClientHead > aServerTail)
 			? iClientHead - aServerTail 
 			: iClientBufferSize - (aServerTail - iClientHead);
-	
-	//In order to ensure that we can always fit in an overflow notification,
-	//Remove the size of an overflow notification from the total free space in the buffer
-	remainingSize -= KNotificationHeaderSize;
 
-	//Check whether there is any chance of this notification fitting in the buffer
-	if (aNotificationSize > remainingSize)
-		{
-		//Overflow
-		overflow = ETrue;
-		}
-	//Check that the notification fits in a contiguous chunk.
-	//If we've wrapped around already..
-	else if (iClientHead > aServerTail)
-		{
-		//Does it fit?
-		if ((iClientHead - aServerTail) < aNotificationSize)
-			{
-			//Overflow
-			overflow = ETrue;
-			}
-		}
-	//Else, We've not wrapped around yet.
-	//Does it fit at the end?
-	else if ((iClientBufferSize - aServerTail) < aNotificationSize)
-		{
-		//Notification won't fit in the space at the end of the buffer
-		//Fill end of buffer with KNotificationBufferFiller (if we're not at the very end already)
-		if(iServerTail != iClientBufferSize)
-			{
-			//If there is any dead space it should always be at least 1 word big
-			TPtrC8 fillerDes((TText8*) &KNotificationBufferFiller, sizeof(TUint));
-			iBufferMsg.Write(KMsgPtr0, fillerDes, aServerTail);
-			}
-
-		//It doesn't fit at the end,
-		//does it fit at the beginning?
-		if (iClientHead < aNotificationSize)
-			{
-			//Overflow
-			overflow = ETrue;
-			}
-		//Notification would fit at the beginning...		
-		else
-			{
-			//...however we need to ensure that there is
-			//still space for overflow next time.
-			if ((iClientHead - aNotificationSize) < KNotificationHeaderSize)
-				{
-				overflow = ETrue;
-				}
-			else
-				{
-				//Everything was ok, update aServerTail
-				aServerTail = 0;
-				}
-			}
-		}	
+    TInt reservedSize = aNotificationSize;
+    // + Save additional space for OVERFLOW
+    reservedSize += KNotificationHeaderSize;
 
 	//
-	//End Validation
+    // Have we wrapped around already?
+    //
+    if (iClientHead > aServerTail)
+        {
+		// Yes,
+		// Buffer looks something like this:
+		//
+        //            |CH             
+        // [5678------1234]
+        //     |ST		
+
+		//
+		//  Check if we can insert in the middle section:
+		//
+		if (remainingSize < reservedSize)
+			{
+			overflow = ETrue;
+			}	
+		//else:
+		// 	{
+		// 	We add new notification to middle 
+        //	[5678***---1234]
+        // 	}
+		//
+		return overflow;
+        }
+
+
 	//
-	return overflow;
-	}
+    // We have not wrapped around yet..
+    //
+    // Buffer looks something like this:
+    //
+    //    |CH      
+    // [--123456789--]
+    //            |ST
+    //
+
+
+	//
+    // Check up-front whether its possible for overflow to go at the beginning.
+    // If there is not enough space at the start for overflow then we need to
+    // check that's there's space for overflow at the end and must not rollover.
+    //
+    TBool canRollOver = ETrue;
+    
+    if (iClientHead < KNotificationHeaderSize)
+        {
+		//
+        //  |CH      
+        // [123456789----]
+        //          |ST
+        //
+        // No space for overflow at the beginning of buffer.
+        //
+        canRollOver = EFalse; 
+        }
+
+	//
+    // IF: Cannot rollover
+    //
+    if (!canRollOver)
+        {
+        //IF (notification + overflow) does not fit at the end overflow now.
+        if ((iClientBufferSize - aServerTail) < reservedSize)
+            {
+            overflow = ETrue;
+            }        
+        //Else
+        //	{
+		//	Add notification (**) to end [---12345678**---]
+		//	}
+
+        }
+    else 
+	// Can rollover  
+	// - need to check that notification fits at the end
+	//   or that notification+overflow fits at the beginning.
+        {
+        // If not enough space at end, rollover
+        if ((iClientBufferSize - aServerTail) < aNotificationSize)
+            {
+			//
+			// Add notification to start and fill end with Filler char 
+            // [----0123456789#]
+            //
+            
+            // IF we are not at the very end of the buffer,
+			// insert a KNotificationBufferFiller at iServerTail.
+			// When the client reads this, it sets iHead to 0 and reads from there.
+			if(iServerTail != iClientBufferSize)
+				{
+				//If there is space it will always be at least 1 word big
+				TPtrC8 fillerDes((TText8*) &KNotificationBufferFiller, sizeof(TUint));
+				iBufferMsg.Write(KMsgPtr0, fillerDes, aServerTail);
+				}
+
+            // Now that we have rolled over we need to check whether there is
+            // space at the beginning for notification + overflow
+			// We already know that overflow fits.
+            if (reservedSize > iClientHead)
+                {
+                //  [ov--0123456789-]
+                overflow = ETrue;
+                }
+			//
+			// Add notification/overflow to the beginning
+			//  	[**--0123456789(#)]
+			//
+			aServerTail = 0;
+			}
+		//
+		// else - notification fits at the end so there is nothing to do here.
+		//
+		//
+        }
+    //
+    //End Validation
+    //
+    return overflow;
+    }
 
 // Called from FsNotificationManager::HandleChange().
 // Sends notifications into the client's buffer.
@@ -988,25 +1053,29 @@ TInt CFsNotifyRequest::NotifyChange(CFsClientMessageRequest* aRequest,const TDes
 	
 	//We need to complete if this was the first 
 	//write to the client's buffer
-	if(ClientMsgHandle()!=0 && r==KErrNone)
-		{
-		__PRINT4(_L("CFsNotifyRequest::NotifyChange iClientHead(%d) iClientTail(%d) iServerTail(%d) iClientBufferSize(%d)"),iClientHead,iClientTail,iServerTail,iClientBufferSize);
-		CompleteClientRequest(KErrNone);
-		}
-	else if(!overflow)
-		{
+    if (r == KErrNone)
+        {
+		//We need to complete if this was the first 
+		//write to the client's buffer
+        if(ClientMsgHandle()!=0)
+            {
+			//RDebug::Print(_L("CFsNotifyRequest::NotifyChange iClientHead(%d) iClientTail(%d) iServerTail(%d) iClientBufferSize(%d)"),iClientHead,iClientTail,iServerTail,iClientBufferSize);
+            __PRINT4(_L("CFsNotifyRequest::NotifyChange iClientHead(%d) iClientTail(%d) iServerTail(%d) iClientBufferSize(%d)"),iClientHead,iClientTail,iServerTail,iClientBufferSize);
+            CompleteClientRequest(KErrNone);
+            }
+        else if(!overflow)
+            {
 		SetActive(CFsNotifyRequest::EOutstanding);
-		}
-	else
-		{
+            }
+        else //Overflow
+            {
 		SetActive(CFsNotifyRequest::EOutstandingOverflow);
-		}
-	
-	if(r!= KErrNone)
+            }
+        }
+	else // r!=KErrNone
 		{
 		//RDebug::Print(_L("sf_notifier.cpp line %d function = %d, r = %d"),__LINE__, aRequest->FsFunction(),r);
 		//RDebug::Print(_L("iServerTail=%d, tail=%d, iClientBufferSize=%d, overflow=%d"),iServerTail,tail,iClientBufferSize,overflow);
-		SetActive(CFsNotifyRequest::EInactive);
 		}
 	return r;
 	}

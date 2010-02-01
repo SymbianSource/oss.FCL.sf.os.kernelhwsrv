@@ -96,7 +96,7 @@ __NAKED__ void TScheduler::Reschedule()
 	GET_RWRW_TID(,r9);						// r9 = User RW Thread ID
 #ifdef __CPU_HAS_VFP
 	VFP_FMRX(,0,VFP_XREG_FPEXC);			// r0 = FPEXC
-	asm("bic r0, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) ); // Store FPEXC with VFP disabled in case this thread runs on a different core next time
+	asm("bic r0, r0, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) ); // Store FPEXC with VFP disabled in case this thread runs on a different core next time
 #else
 	asm("mov	r0, #0 ");
 #endif
@@ -676,8 +676,15 @@ EXPORT_C __NAKED__ TInt NKern::PreemptionPoint()
 __NAKED__ void VfpContextSave(void*)
 	{
 	VFP_FMRX(,1,VFP_XREG_FPEXC);
-	asm("tst	r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );	// Check to see if VFP in use
-	__JUMP(eq,	lr);										// Return immediately if not
+	asm("tst r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );		// Check to see if VFP in use
+	__JUMP(eq, lr);											// Return immediately if not
+	asm("tst r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EX) );		// Check to see if an exception has occurred
+	asm("beq 1f ");											// Skip ahead if not
+	asm("bic r1, r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EX));
+	VFP_FMXR(,VFP_XREG_FPEXC,1);							// Reset exception flag
+	asm("orr r1, r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EX));	// But store it for later
+	asm("1: ");
+
 
 	VFP_FMRX(,2,VFP_XREG_FPSCR);
 	asm("stmia	r0!, {r2} ");								// Save FPSCR
@@ -700,7 +707,7 @@ __NAKED__ void VfpContextSave(void*)
 #endif
 
 	asm("0: ");
-	asm("bic r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );
+	asm("bic r1, r1, #%a0" : : "i" ((TInt)VFP_FPEXC_EN) );
 	VFP_FMXR(,VFP_XREG_FPEXC,1);							// Disable VFP
 
 	__JUMP(,lr);

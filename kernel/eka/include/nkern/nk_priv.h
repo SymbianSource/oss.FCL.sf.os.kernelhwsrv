@@ -511,8 +511,18 @@ extern TUint32 CrashState;
 */
 TBool InterruptsStatus(TBool aRequest);
 
+//declarations for the checking of kernel preconditions
 
-//declarations for the checking of kernel precoditions
+/**
+@internalComponent
+
+PRECOND_FUNCTION_CALLER is needed for __ASSERT_WITH_MESSAGE_ALWAYS(),
+so is outside the #ifdef _DEBUG.
+*/
+#ifndef PRECOND_FUNCTION_CALLER
+#define PRECOND_FUNCTION_CALLER		0
+#endif
+
 #ifdef _DEBUG
 
 /**
@@ -548,7 +558,7 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 /**
 @internalComponent
 */
-#define CHECK_PRECONDITIONS(mask,function) CheckPreconditions(mask,function,0)
+#define CHECK_PRECONDITIONS(mask,function) CheckPreconditions(mask,function,PRECOND_FUNCTION_CALLER)
 
 #ifdef __KERNEL_APIS_CONTEXT_CHECKS_FAULT__
 
@@ -557,7 +567,7 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 */
 #define __ASSERT_WITH_MESSAGE_DEBUG(cond,message,function) \
 			__ASSERT_DEBUG( (cond), ( \
-			DEBUGPRINT("Assertion failed: %s\nFunction: %s\n",message,function),\
+			DEBUGPRINT("Assertion failed: %s\nFunction: %s; called from: %08x\n",message,function,PRECOND_FUNCTION_CALLER),\
 			NKFault(function, 0)))
 
 #else//!__KERNEL_APIS_CONTEXT_CHECKS_FAULT__
@@ -566,7 +576,7 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 */
 #define __ASSERT_WITH_MESSAGE_DEBUG(cond,message,function) \
 			__ASSERT_DEBUG( (cond), \
-			DEBUGPRINT("Assertion failed: %s\nFunction: %s\n",message,function))
+			DEBUGPRINT("Assertion failed: %s\nFunction: %s; called from: %08x\n",message,function,PRECOND_FUNCTION_CALLER))
 
 
 #endif//__KERNEL_APIS_CONTEXT_CHECKS_FAULT__
@@ -588,7 +598,7 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 */
 #define __ASSERT_WITH_MESSAGE_ALWAYS(cond,message,function) \
 			__ASSERT_ALWAYS( (cond), ( \
-			DEBUGPRINT("Assertion failed: %s\nFunction: %s\n",message,function),\
+			DEBUGPRINT("Assertion failed: %s\nFunction: %s; called from: %08x\n",message,function,PRECOND_FUNCTION_CALLER),\
 			NKFault(function, 0)))
 #else
 /**
@@ -596,7 +606,7 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 */
 #define __ASSERT_WITH_MESSAGE_ALWAYS(cond,message,function) \
 			__ASSERT_ALWAYS( (cond), \
-			DEBUGPRINT("Assertion failed: %s\nFunction: %s\n",message,function))
+			DEBUGPRINT("Assertion failed: %s\nFunction: %s; called from: %08x\n",message,function,PRECOND_FUNCTION_CALLER))
 #endif//__KERNEL_APIS_CONTEXT_CHECKS_FAULT__
 #endif//(!defined (__KERNEL_APIS_CONTEXT_CHECKS_WARNING__)&&!defined (__KERNEL_APIS_CONTEXT_CHECKS_FAULT__))
 

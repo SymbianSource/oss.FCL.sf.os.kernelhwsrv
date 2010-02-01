@@ -35,7 +35,7 @@ start armcc
     armrt
     arminc
 
-    #if defined(ARMCC_3_1)
+    #if defined(ARMCC_3_1) || defined(ARMCC_4_0)
     armlibs     c_5.l cpprt_5.l h_5.l
 
     #elif defined(ARMCC_2_2)

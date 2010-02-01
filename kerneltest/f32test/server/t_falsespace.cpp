@@ -15,6 +15,7 @@
 
 #include <f32file.h>
 #include <e32test.h>
+#include <e32svr.h>
 #include <e32math.h>
 
 #include "fat_utils.h"
@@ -914,6 +915,69 @@ static void Test7()
 	theRes.Close();
 	}
 
+LOCAL_C void TestForDEF142554()
+    {
+    test.Next(_L("Test for DEF142554: test RFile::Modified and RFile::Att when disk full"));
+    
+    Format(gTestDrive);
+    
+    TUint att;
+    TTime time;
+    
+    RFs fs;
+    TInt err = fs.Connect();
+    test(err == KErrNone);
+
+    RFile file;
+    TBuf<20> fileName;
+    fileName = KTestFile;
+    fileName[0] = (TUint16)gCh;
+    
+    err = fs.ReserveDriveSpace(gTestDrive,0x10000); 
+    test(err == KErrNone);
+
+    err = file.Replace(fs, fileName, EFileWrite);
+    test(err == KErrNone);
+
+    err = file.Write(KTestData);
+    test(err == KErrNone);
+    
+    err = file.Flush();
+    test(err == KErrNone);
+    
+    file.Close();
+    
+    err = file.Open(fs, fileName, EFileRead);
+    test(err == KErrNone);
+    
+    err = file.Att(att);
+    test(err == KErrNone);
+    
+    err = file.Modified(time);
+    test(err == KErrNone);
+    
+    file.Close();
+    
+    FillUpDisk();
+    
+    err = file.Open(fs, fileName, EFileRead);
+    test(err == KErrNone);
+    
+    TUint att1;
+    err = file.Att(att1);
+    test(err == KErrNone);
+    test(att1 == att);
+    
+    TTime time1;
+    err = file.Modified(time1);
+    test(err == KErrNone);
+    test(time1 == time);
+    
+    file.Close();
+    fs.Close();
+    
+    }
+
 
 //-----------------------------------------------------------------------------
 
@@ -1032,6 +1096,7 @@ GLDEF_C void CallTestsL()
 	Test5();
 	Test6();
 	Test7();
+	TestForDEF142554();
 	Test2();	//run this test to check reserves are being cleared correctly
 
 	TestFAT4G_Boundary();

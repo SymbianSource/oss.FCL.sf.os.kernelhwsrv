@@ -122,20 +122,12 @@ void DSimulatedSpiDevice::GetCaps(TDes8& aDes) const
 	aDes.Copy((TUint8*)&caps,size);
     }
 
-
-DSimulatedSpiDevice* gDummyDevice;
-
 // supported channels for this implementation
 static DIicBusChannel* ChannelPtrArray[NUM_CHANNELS];
-
 
 //DECLARE_EXTENSION_WITH_PRIORITY(BUS_IMPLMENTATION_PRIORITY)	
 DECLARE_STANDARD_PDD()		// SPI test driver to be explicitly loaded as an LDD, not kernel extension
 	{
-	if(gDummyDevice == NULL)
-		gDummyDevice = new DSimulatedSpiDevice;
-	if(gDummyDevice == NULL)
-		return NULL;
 	SPI_PRINT(("\n\nSPI PDD, channel creation loop follows ...\n"));
 
 #ifndef STANDALONE_CHANNEL
@@ -200,7 +192,7 @@ DECLARE_STANDARD_PDD()		// SPI test driver to be explicitly loaded as an LDD, no
 		return NULL;
 		}
 #endif
-	return gDummyDevice;
+	return new DSimulatedSpiDevice;
 	}
 
 #ifdef STANDALONE_CHANNEL

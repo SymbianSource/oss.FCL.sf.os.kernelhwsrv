@@ -1,3 +1,137 @@
+Version 2.00.2025
+=================
+(Made by vfebvre 16/12/2009)
+
+1.	MichaelCox
+	1.	MINOR_CHANGE: Improve documentation for class CFsNotify concerning how big the buffer should be
+
+2.	HaoJ
+	1.	DEFECT FIX: DEF143253 [Coverity]:DEADCODE and CHECKED_RETURN error in MSF00264 vtb101sf
+	2.	MINOR_CHANGE: Remove a build warning in arm4 and wins introduced by fix for DEF143253
+
+3.	hengrant
+	1.	DEFECT FIX: DEF143386: t_notify_perf failure of edge use cases on gekko79 
+
+4.	DmitryL
+	1.	DEFECT FIX: DEF143263 FAT CheckDisk() is too slow comparing to ScanDrive() 
+
+5.	FadhliMustaffa
+	1.	DEFECT FIX: DEF142711: RFsPlugin needs to expose a Volume() API
+
+
+Version 2.00.2024
+=================
+(Made by vfebvre 15/12/2009)
+
+1.	cnotton
+	1.	MINOR_CHANGE Added two missing public headers for case when SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT is used.
+
+
+Version 2.00.2023
+=================
+(Made by VincentF 14/12/2009)
+
+1.	cnotton
+	1.	DEF143346: Stop including platform headers in f32file.h
+
+
+Version 2.00.2022
+=================
+(Made by VincentF 10/12/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX: DEF143214 t_automounter.cpp depends on exfat which is not contributed to the foundation  
+
+2.	KaiD
+	1.	DEFECT FIX: DEF143215: 	File server requesting a large chunk
+
+
+Version 2.00.2021
+=================
+(Made by VincentF 03/12/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX: DEF142313 excessive usage of Entry() in the file server  
+	2. 	MINOR_CHANGE: placing RBitVector into common utilities file
+
+2.	HaoJ
+	1.	DEFECT FIX: DEF143222 t_notify_perf failure
+
+
+Version 2.00.2020
+=================
+(Made by VincentF 27/11/2009)
+
+1.	NicholasC
+	1.	DEFECT FIX: DEF143079: E32USER-CBASE 46 with Host Ms Thread3 in mass storage file system
+
+2.	DmitryL
+	1.	DEFECT FIX: DEF143009 T_scn32rd2 test fails on 1MB FAT volume and no call to DoRummageDirCacheL()
+
+3.	ChrisNotton
+	1.	DEFECT FIX: DEF142863: Public header files must not include platform or internal headers
+
+
+Version 2.00.2019
+=================
+(Made by Vino Jose 25/11/2009)
+
+1.	NicholasC
+	1.	DEFECT FIX: DEF142837: Enable File Server client to determine if logical drive is attached to USB bus	
+	2.	DEFECT FIX: DEF142899: t_ext1 fails on NaviEngine UREL with USB MS drive
+	3.	DEFECT FIX: DEF142900: t_dspace failing with USB Mass Storage drive
+
+2.	DmitryL
+	1.	DEFECT FIX: DEF142322 FAT: CFatMountCB::IsEndOfClusterCh() implementation is not optimal  
+	2. 	DEFECT FIX: DEF142991 Automounter FS shall comply with changes introduced in DEF142837  
+	3.	DEFECT FIX: DEF143023 FAT, exFAT: CDynamicDirCache::ReadL() can't handle bulk reads  
+
+3.	MichaelCox
+	1.	DEFECT FIX: DEF142995: F32 Plugins cannot get the filename when intercepting EFsSetEntry 
+
+
+Version 2.00.2018
+=================
+(Made by Vino Jose 05/11/2009)
+
+1.	KaiDuan
+	1.	DEF140485: ASSERT triggered in CCacheMemoryClient::Reset()
+
+Version 2.00.2017
+=================
+(Made by Vino Jose 04/11/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX:  DEF142796: exFAT: CExFatMountCB::SetVolumeClean() sometimes corrupts original boot code.  
+
+2.	NicholasC
+	1.	DEFECT FIX: DEF142538: b_fat32 hangs when using large Mass Storage devices
+	2.	DEFECT FIX: DEF141812: F32TEST T_NOTIFY_MFS on Unicore SMP (Naviengine) Image
+	3.	DEFECT FIX: DEF142590: Test hanging in usb host mass storage file system 
+
+3.	SophieY
+	1.	DEFECT FIX: DEF141402: File server trace LDD causes zombie thread to remain in existence forever 
+
+4.	FadhliMustaffa
+	1.	DEFECT FIX: DEF142406: T_FMAN and T_FSYS failing on X86 (T_fman.cpp:105 & T_fsys.cpp:570)
+	2.	MINOR_CHANGE: Correctly labelled tests in T_FMAN
+
+
+Version 2.00.2016
+=================
+(Made by Vino Jose 29/10/2009)
+
+1.	DmitryL
+	1.	DEFECT FIX:  DEF142713  RFs::NotifyDismount() has behaviour which is not documented  
+	
+2.	HaoJiang
+	1.	DEFECT FIX:  PDEF142695: unwanted disk space check when RFile::Att or RFile::Modified is called 
+
+3.	NicholasC
+	1.	MINOR CHANGE: /smassstorage/inc/cusbmassstoragescheduler.h is test file so moved to /f32test/smassstorage/inc/ 
+	2.	DEFECT FIX: DEF142701: suspend not entered with large USB mass storage device after formatting
+	3.	DEFECT FIX: DEF142703: Improve use of buffers in TBlockTransfer
+
 
 Version 2.00.2015
 =================

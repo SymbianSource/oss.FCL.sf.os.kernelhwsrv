@@ -49,7 +49,7 @@ LOCAL_C void ShowDriveCaps( const TLocalDriveCaps& aCaps )
 	{
 	RDebug::Print( _L("    size=%ld"), aCaps.iSize );
 	RDebug::Print( _L("    media type=%d"), aCaps.iType );
-	RDebug::Print( _L("    battery state=%d"), aCaps.iBattery );
+	RDebug::Print( _L("    connection bus=%d"), aCaps.iConnectionBusType );
 	RDebug::Print( _L("    drive attributes=0x%x"), aCaps.iDriveAtt );
 	RDebug::Print( _L("    media attributes=0x%x"), aCaps.iMediaAtt );
     RDebug::Print( _L("    base address=0x%x"), aCaps.iBaseAddress );
@@ -134,9 +134,9 @@ LOCAL_C void ShowVolumeInfo( const TVolumeInfo& aInfo )
 	{
 	
 	RDebug::Print( _L("    media type=%d"), aInfo.iDrive.iType );
-	RDebug::Print( _L("    battery state=%d"), aInfo.iDrive.iBattery );
 	RDebug::Print( _L("    drive attributes=0x%x"), aInfo.iDrive.iDriveAtt );
 	RDebug::Print( _L("    media attributes=0x%x"), aInfo.iDrive.iMediaAtt );
+	RDebug::Print( _L("    connection bus=%d"), aInfo.iDrive.iConnectionBusType );
 
 	RDebug::Print( _L("    UID=0x%x"), aInfo.iUniqueID );
 	RDebug::Print( _L("    size=0x%lx"), aInfo.iSize );

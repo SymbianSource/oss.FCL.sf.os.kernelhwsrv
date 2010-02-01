@@ -34,10 +34,8 @@ PRJ_EXPORTS
 
 PRJ_MMPFILES
 
-#if !defined(WINS) 
 #if !defined(X86)
 //hcr_def      // Uncomment to help build a new DEF file for hcr_implib
 hcr_implib
-#endif
 #endif
 

@@ -120,6 +120,7 @@
 
 #include <e32test.h>
 #include <e32rom.h>
+#include <e32svr.h>
 #include <u32hal.h>
 #include <f32file.h>
 #include <f32dbg.h>
@@ -127,6 +128,7 @@
 #include <e32math.h>
 #include <e32btrace.h>
 #include <d32btrace.h>
+#include <d32locd.h>
 #include <hal.h>
 
 #include "t_hash.h"
@@ -4278,14 +4280,17 @@ TBool CopyAndFragmentFiles(RFs& aFs,CFileMan* aFileMan, TPtrC aPath, ETestMediaT
 	TInt	inFileSize[FILECOUNTMAX];
 	TInt	inFilePos[FILECOUNTMAX];
 	TBool	fileOk[FILECOUNTMAX];
-	
+
 	TInt	  index;
 	TFileName newPath;
 	TFileName oldPath;
 
 	for (index = 0; index < FILECOUNTMAX; index ++)
 		{
-		fileOk[index] = ETrue;
+		inFileSize[index] = 0;
+		inFilePos[index] = 0;
+		fileOk[index] = EFalse;
+
 		if (index < PAGELDRTST_MAX_DLLS)
 			{
 			oldPath.Format(_L("%S%S%d%S"), &KRomPath, &KDllBaseName, index, &TestPlExtNames[KTestMediaBase]);
@@ -4305,86 +4310,76 @@ TBool CopyAndFragmentFiles(RFs& aFs,CFileMan* aFileMan, TPtrC aPath, ETestMediaT
 		retVal = theInFiles[index].Open(aFs, oldPath, EFileRead);
 		if (retVal != KErrNone)
 			{
-			fileOk[index] = EFalse;
-			DBGS_PRINT((_L("%S : Failed to open (%d)\n"), &oldPath, retVal));
-			break;
-			}
-		retVal = theOutFiles[index].Replace(aFs, newPath, EFileWrite);
-		if (retVal != KErrNone)
-			{
-			fileOk[index] = EFalse;
-			DBGS_PRINT((_L("%S : Failed to open (%d)\n"), &newPath, retVal));
+			DBGS_PRINT((_L("%S : Failed to open for read (%d)\n"), &oldPath, retVal));
 			break;
 			}
 		retVal = theInFiles[index].Size(inFileSize[index]);
 		if (retVal != KErrNone)
 			{
-			fileOk[index] = EFalse;
+			theInFiles[index].Close();
 			DBGS_PRINT((_L("%S : Failed to get file size (%d)\n"), &newPath, retVal));
 			break;
 			}
-		inFilePos[index] = 0;
+		retVal = theOutFiles[index].Replace(aFs, newPath, EFileWrite);
+		if (retVal != KErrNone)
+			{
+			theInFiles[index].Close();
+			DBGS_PRINT((_L("%S : Failed to open for write (%d)\n"), &newPath, retVal));
+			break;
+			}
+
+		fileOk[index] = ETrue;
 		}
 
 	const TInt KBufferSize = 3333;
 	TBuf8<KBufferSize> buffer;
+	TBool stillGoing;
 
-	TBool stillGoing = ETrue;	
-	
-	while (stillGoing)
+	do
 		{
 		stillGoing = EFalse;
 		for (index = 0; index < FILECOUNTMAX; index ++)
 			{
-			if (inFilePos[index] < inFileSize[index])
-				{
-				if (fileOk[index])
-					{
-					retVal = theInFiles[index].Read(buffer);
-					if (retVal != KErrNone)
-						{
-						DBGS_PRINT((_L("theInFiles[%d] read failed (%d)\n"), index, retVal));
-						fileOk[index] = EFalse;
-						break;
-						}
-					retVal = theOutFiles[index].Write(buffer);
-					if (retVal != KErrNone)
-						{
-						DBGS_PRINT((_L("theOutFiles[%d] Write failed (%d)\n"), index, retVal));
-						fileOk[index] = EFalse;
-						break;
-						}
-					retVal = theOutFiles[index].Flush();
-					if (retVal != KErrNone)
-						{
-						DBGS_PRINT((_L("theOutFiles[%d] flush failed (%d)\n"), index, retVal));
-						fileOk[index] = EFalse;
-						break;
-						}
-					inFilePos[index] += buffer.Length();
-					}
-				else
-					break;
-				}
-			if ((inFilePos[index] < inFileSize[index]) && (fileOk[index]))
-				{
-				stillGoing = ETrue;
-				}
-			}
 			if (!fileOk[index])
 				break;
+			if (inFilePos[index] < inFileSize[index])
+				{
+				retVal = theInFiles[index].Read(buffer);
+				if (retVal != KErrNone)
+					{
+					DBGS_PRINT((_L("theInFiles[%d] read failed (%d)\n"), index, retVal));
+					break;
+					}
+				retVal = theOutFiles[index].Write(buffer);
+				if (retVal != KErrNone)
+					{
+					DBGS_PRINT((_L("theOutFiles[%d] Write failed (%d)\n"), index, retVal));
+					break;
+					}
+				retVal = theOutFiles[index].Flush();
+				if (retVal != KErrNone)
+					{
+					DBGS_PRINT((_L("theOutFiles[%d] flush failed (%d)\n"), index, retVal));
+					break;
+					}
+				inFilePos[index] += buffer.Length();
+				if (inFilePos[index] < inFileSize[index])
+					stillGoing = ETrue;
+				}
+			}
 		}
+	while (stillGoing);
 
-	TBool allOk = ETrue;
+	TBool allOk = retVal == KErrNone;
 	for (index = 0; index < FILECOUNTMAX; index ++)
 		{
-		theInFiles[index].Close();
-		theOutFiles[index].Close();
 		if (!fileOk[index])
 			{
 			allOk = EFalse;
-			continue;
+			break;
 			}
+		theInFiles[index].Close();
+		theOutFiles[index].Close();
 		if (index < PAGELDRTST_MAX_DLLS)
 			{
 			newPath.Format(_L("%S%S%d%S"), &aPath, &KDllBaseName, index, &TestPlExtNames[aMediaType]);
@@ -4542,8 +4537,9 @@ void DoDeleteFile(CFileMan* aFileMan, TBool aSilent,TFileName& aFileName )
 	TInt retVal = aFileMan->Delete(aFileName);
 	if (retVal != KErrNone)
 		{
-		if (TestingReaper && (retVal == KErrInUse))
+		if (TestingReaper)
 			{
+			aFileMan->Attribs(aFileName, KEntryAttNormal, KEntryAttReadOnly, 0);
 			retVal = l.Delete(aFileName);
 			if (retVal != KErrNone)
 				{
@@ -4979,7 +4975,7 @@ TInt E32Main()
 
 		if (TestWeAreTheTestBase)
 			CleanupFiles(ETrue);
- 
+
 		CheckFilePresence(TestWeAreTheTestBase);
 		}
 

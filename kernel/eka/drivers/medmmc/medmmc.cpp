@@ -524,7 +524,10 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 		 * otherwise Double buffering will never be utilised because all transfers will fit into the cache.
 		 */
 		const TUint32 maxDbBlocks = iSocket->MaxDataTransferLength() >> iBlkLenLog2;
-		__ASSERT_DEBUG(iBlocksInBuffer <= (TInt)maxDbBlocks, Panic(EDBNotOptimal));
+        if (maxDbBlocks)
+            {
+            __ASSERT_DEBUG(iBlocksInBuffer <= (TInt)maxDbBlocks, Panic(EDBNotOptimal));
+            }
 #endif		
 		}
 
@@ -1129,7 +1132,7 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 				//
 				iDoPhysicalAddress = iCurrentReq->IsPhysicalAddress();
 								
-				const TInt64 medEnd = aStart + aLength;
+				TInt64 medEnd = aStart + aLength;
 		
 				TInt64 maxPslEnd = medEnd;
 				const TUint32 maxDbLength = iSocket->MaxDataTransferLength();
@@ -1180,17 +1183,21 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 						iIntBuf = ReserveWriteBlocks(aStart, iDbEnd, &iWtRBM);
 						}
 					else
-						{
-						//
-						// reserve buffers to end of first write group, or end of request range,
-						// whichever is lower.  Note that if the range already exists in the buffer,
-						// e.g. because of a previous RBM, the same range will be returned.  This
-						// means that iWtRBM can be set to zero in the callback DFC, and this code
-						// will retrieve the reserved range.
-						//
-						const TInt64 wtGpEnd = (iPhysStart + iPrWtGpLen) & ~iPrWtGpMsk;
-						const TInt64 medEnd = UMin(wtGpEnd, aStart + aLength);
-						iPhysEnd = (medEnd + iBlkMsk) & ~iBlkMsk;
+						{				
+						if ( (iPhysEnd - iPhysStart) > iMaxBufSize)
+						    {
+		                    //
+                            // reserve buffers to end of first write group, or end of request range,
+                            // whichever is lower.  Note that if the range already exists in the buffer,
+                            // e.g. because of a previous RBM, the same range will be returned.  This
+                            // means that iWtRBM can be set to zero in the callback DFC, and this code
+                            // will retrieve the reserved range.
+                            //  
+						    const TInt64 wtGpEnd = (iPhysStart + iPrWtGpLen) & ~iPrWtGpMsk;
+						    medEnd = UMin(wtGpEnd, aStart + aLength);
+						    iPhysEnd = (medEnd + iBlkMsk) & ~iBlkMsk;
+						    }
+						
 						iIntBuf = ReserveWriteBlocks(aStart, medEnd, &iWtRBM);
 						}
 					} //if (!iDoPhysicalAddress)
@@ -1552,7 +1559,7 @@ TInt DMmcMediaDriverFlash::DecodePartitionInfo()
 			}
 
 		// FAT partition ?
-		else if (pe->IsValidDosPartition() || pe->IsValidFAT32Partition())
+		else if (pe->IsValidDosPartition() || pe->IsValidFAT32Partition() || pe->IsValidExFATPartition())
 			{
 			SetPartitionEntry(&iPartitionInfo->iEntry[partitionCount],pe->iFirstSector,pe->iNumSectors);
 			__KTRACE_OPT(KLOCDPAGING, Kern::Printf("Mmc: FAT partition found at sector #%u", pe->iFirstSector));
@@ -2558,7 +2565,7 @@ TInt DMmcMediaDriverFlash::Caps(TLocDrv& aDrive, TLocalDriveCapsV6& aInfo)
 	{
 	// Fill buffer with current media caps.
 	aInfo.iType = EMediaHardDisk;
-	aInfo.iBattery = EBatNotSupported;
+	aInfo.iConnectionBusType = EConnectionBusInternal;
 	aInfo.iDriveAtt = KDriveAttLocal;
 	aInfo.iMediaAtt	= KMediaAttFormattable;
 
@@ -2665,13 +2672,15 @@ TInt DMmcMediaDriverFlash::ReadDataUntilCacheExhausted(TBool* aAllDone)
 	{
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:rdc:%x,%x", iReqCur, iReqEnd));
 	
+	if ( iCurrentReq->IsPhysicalAddress()
 #if defined(__DEMAND_PAGING__) && !defined(__WINS__)
-	if (DMediaPagingDevice::PageInRequest(*iCurrentReq))
+	     || DMediaPagingDevice::PageInRequest(*iCurrentReq)
+#endif //DEMAND_PAGING 
+        )
 		{
 		*aAllDone = EFalse;
 		return KErrNone;
 		}
-#endif //DEMAND_PAGING	
 	
 	TInt64 physStart = iReqCur & ~iBlkMsk;
 	TInt64 physEnd = Min(physStart + iMaxBufSize, (iReqEnd + iBlkMsk) & ~iBlkMsk);

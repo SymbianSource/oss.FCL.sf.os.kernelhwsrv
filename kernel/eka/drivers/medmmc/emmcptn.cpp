@@ -194,7 +194,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 			}
 
 		// FAT partition ?
-		else if (pe->IsValidDosPartition() || pe->IsValidFAT32Partition())
+		else if (pe->IsValidDosPartition() || pe->IsValidFAT32Partition() || pe->IsValidExFATPartition())
 			{
 			SetPartitionEntry(&iPartitionInfo->iEntry[partitionCount],pe->iFirstSector,pe->iNumSectors);
 			__KTRACE_OPT(KLOCDPAGING, Kern::Printf("Mmc: FAT partition found at sector #%u", pe->iFirstSector));

@@ -624,6 +624,12 @@ public:
 		return iLinAddrAndOsAsid;
 		}
 
+	FORCE_INLINE TBool IsUserMapping()
+		{
+		// Note: must be usable before the mapping has been added to an address space
+		return (PteType() & (EPteTypeUserAccess|EPteTypeGlobal)) == EPteTypeUserAccess;
+		}
+
 	/**
 	Return #iBlankPde.
 	*/

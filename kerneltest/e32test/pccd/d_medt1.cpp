@@ -228,7 +228,7 @@ void DMediaDriverTest::Caps(TDes8& aCapsBuf)
 
 	TLocalDriveCapsV2 caps;
 	caps.iType=EMediaRam;
-	caps.iBattery=EBatNotSupported;
+	caps.iConnectionBusType=EConnectionBusInternal;
 	caps.iDriveAtt=KDriveAttLocal|KDriveAttRemovable;
 	caps.iMediaAtt=KMediaAttFormattable;
 	caps.iFileSystemId=KDriveFileSysFAT;

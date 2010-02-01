@@ -45,20 +45,14 @@ RHcrTest HcrTest;
 TInt TestBasics ()
 	{
 	test.Next(_L("Switch repository test"));
-#ifdef __WINS__
-	test.Printf(_L("Skipped on the emulator"));
-#else
+
 	test_KErrNone( HcrTest.Test_SwitchRepository());
-#endif // __WINS__
 
 	// Wait for idle + async cleanup (waits for DKernelEventHandler to go away)
 	TInt r = UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)5000, 0);
 	test_KErrNone(r);
 
-    User::After(5000000);
-    
-    test.Next(_L("Free Physical Memory used for SDRs"));   
-    test_KErrNone( HcrTest.Test_ReleaseSDRs());
+    User::After(1000000);
 
     return KErrNone;
     }

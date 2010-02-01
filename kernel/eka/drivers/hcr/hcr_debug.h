@@ -12,6 +12,7 @@
 //
 // Description:
 // Hardware Configuration Repository Platform Independent Layer (PIL)
+// Contains debugging macros used in PIL and PSL source code of HCR.
 //
 
 #ifndef HCR_DEBUG_H
@@ -24,36 +25,26 @@
 #include <e32des8.h>
 #include <kernel/kernel.h>
 
-
-// Make sure release builds get a warning if 
-//#ifndef _DEBUG
-//#if (defined HCR_TRACE)
-//#warning "Use of Kern::PrintF tracing in a release build, check MMP files"
-//#endif
-//#endif
-
-
 //
-// MACROs for trace statements in client/server code.
+// MACROs for log statements in code.
 //
 
 #ifdef _DEBUG
 
-#define HCR_LOG0(_text)				Kern::Printf("=== "_text)
-#define HCR_LOG1(_text, _a1)		Kern::Printf("... "_text, (_a1))
-#define HCR_LOG_RETURN(_r1)			return (Kern::Printf("!-- HCR Function exit, error=%d (%s:%d)", (_r1), __FILE__, __LINE__), _r1)
-#define HCR_LOGMSG_RETURN(_s1, _r1)	return (Kern::Printf("!-- HCR: "_s1" (%d)", (_r1)), _r1) 
+#define HCR_LOG0(_text)				__KTRACE_OPT(KHCR, Kern::Printf("=== "_text))
+#define HCR_LOG1(_text, _a1)		__KTRACE_OPT(KHCR, Kern::Printf("... "_text, (_a1)))
 
 #else
 
 #define HCR_LOG0(_text)				
 #define HCR_LOG1(_text, _a1)		
-#define HCR_LOG_RETURN(_r1)			return (_r1)
-#define HCR_LOGMSG_RETURN(_s1, _r1)	return (_r1) 
 
 #endif
 
 
+//
+// MACROs for trace statements in code.
+//
 
 #ifdef HCR_TRACE
 
@@ -73,17 +64,18 @@
 
 
 #else
+ 
+#define HCR_TRACE0(_text)                               __KTRACE_OPT(KHCR, Kern::Printf((_text)))
+#define HCR_TRACE1(_text, _a1)                          __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1)))
+#define HCR_TRACE2(_text, _a1, _a2)                     __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2)))
+#define HCR_TRACE3(_text, _a1, _a2, _a3)                __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3)))
+#define HCR_TRACE4(_text, _a1, _a2, _a3, _a4)           __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4)))
+#define HCR_TRACE5(_text, _a1, _a2, _a3, _a4, _a5)      __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4), (_a5)))
+#define HCR_TRACE6(_text, _a1, _a2, _a3, _a4, _a5, _a6) __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4), (_a5), (_a6)))
+#define HCR_TRACE_RETURN(_r1)                           { __KTRACE_OPT(KHCR, Kern::Printf("!-- Function exit return(%d) (%s:%d)", (_r1), __FILE__, __LINE__)); return (_r1);}
+#define HCR_TRACEMSG_RETURN(_s1, _r1)                   { __KTRACE_OPT(KHCR, Kern::Printf("!-- "_s1" (%d)", (_r1))); return (_r1);}
+#define HCR_FUNC(_text)
 
-#define HCR_TRACE0(_text)			
-#define HCR_TRACE1(_text, _a1)		
-#define HCR_TRACE2(_text, _a1, _a2)
-#define HCR_TRACE3(_text, _a1, _a2, _a3)	
-#define HCR_TRACE4(_text, _a1, _a2, _a3, _a4)
-#define HCR_TRACE5(_text, _a1, _a2, _a3, _a4, _a5)
-#define HCR_TRACE6(_text, _a1, _a2, _a3, _a4, _a5, _a6)
-#define HCR_TRACE_RETURN(_r1)		return (_r1)
-#define HCR_TRACEMSG_RETURN(_r1)	return (_r1)
-#define HCR_FUNC(_text)   
 #define HCR_HEX_DUMP_ABS(_address, _length)
 #define HCR_HEX_DUMP_REL(_address, _length)
 

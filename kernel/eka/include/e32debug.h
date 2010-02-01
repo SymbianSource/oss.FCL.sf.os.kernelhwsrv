@@ -35,7 +35,7 @@ public:
     };
 //
 
-/**	@publishedPartner
+/**	@publishedAll
 	@released
 */
 class RDebug

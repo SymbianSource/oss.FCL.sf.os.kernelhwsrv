@@ -1,3 +1,355 @@
+Version 2.00.2063
+=================
+(Made by vfebvre 16/12/2009)
+
+1.	MichaelP
+	1.	DEFECT FIX: DEF143310: DMA Framework makes use of PRM difficult
+		Introduced new virtual DMA PIL function TDmaChannel::QueuedRequestCountChanged()
+		which can be overridden in a DMA PSL to implement channel/DMAC power management
+		functionality outside of any PIL mutexes. For details see the description in
+		/os/kernelhwsrv/kernel/eka/include/drivers/dma_v1.h.
+
+
+Version 2.00.2062
+=================
+(Made by vfebvre 15/12/2009)
+
+1.	cnotton
+	1.	MINOR_CHANGE Added a few missing headers for when SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT is enabled.
+
+
+Version 2.00.2061
+=================
+(Made by VincentF 14/12/2009)
+
+1.	gcochran
+	1.	DEF142419: Kernel doesn't flush prefetch buffer properly
+
+
+Version 2.00.2060
+=================
+(Made by VincentF 10/12/2009)
+
+1.	TomCosgrove
+	1.	MINOR_CHANGE: Fix function names given in various trace and precondition statements
+	2.	DEFECT FIX: DEF143168: Kernel precondition checks don't give any indication of the caller
+		Added compiler-specific macro PRECOND_FUNCTION_CALLER, defaulting to 0 if not present, and
+		use this in CHECK_PRECONDITIONS() and the various __ASSERT_WITH_MESSAGE_*() macros.  Also
+		updated CheckPreconditions() to print this address even if the function name is given (as
+		it is when called from the C macros).
+	3.	DEFECT FIX: DEF143237: SBTraceData::CheckFilter2() causes issues when executed with undefined CPU mode
+		Don't just take the CPSR & 0x03 to get the context value, since undef (etc) mode gets
+		confused with thread (normal supervisor) mode.  Instead, AND with 0x0f and set to 2 if
+		higher than 3.
+
+2.	DjordjeK
+	1.	DEFECT FIX: DEF143166: 	Default caching of page tables on 1136 flexible memory model is wrong
+		Fixed the problem with caching attributes (of page tables, code & exception vector) on 1136
+		running flexible memory model. Platforms other then 1136 are not affected.
+
+3.	kingbozhang
+	1.	DEFECT FIX: DEF142623: TKEA-7WJC4S:[OTG] A malfunctioning peripheral cannot be reported to the UI
+		This defect is some USB devices do not comply with USB2.0 spec. Because they drive VBus of
+		their upstream port, however, such behaviour is forbidden in USB2.0.
+
+4.	DaveGordon
+	1.	DEFECT FIX: DEF141546: T_CPUTIME fails on SMPPAGE/SMPDATAPAGE ROMs...
+		Improve test by making sure threads are bound to the right cores
+	2.	DEFECT FIX: DEF143303: Crash unpinning message descriptors
+		Pinning operation now uses an initialised local array to hold potential references to pin
+		objects, and then transfers them all into a heap-allocated object only if at least one
+		such reference was created, ensuring that the subsequent unpin sees only good values.
+
+5.	stmansfi
+	1.	MINOR_CHANGE Update header comments in HCR PIL files
+
+6.	vfebvre
+	1.	MINOR_CHANGE Rename Bld.inf to bld.inf (for DEF142518)
+
+7.	kunmitta
+	1.	MINOR_CHANGE Added library names in compsupp explicitly for RVCT4.0 linkage
+
+8.	cnotton
+	1.	MINOR_CHANGE Fixed T_SMPSOAKSPIN.CPP for e32svr.h.
+	2.	DEFECT FIX: DEF143216: btrace.iby does not load btracex.ldd as an extension
+
+
+Version 2.00.2059
+=================
+(Made by VincentF 03/12/2009)
+
+1.	MichaelP
+	1.	MILESTONE: GT0515, MS3.15
+		RM-RIM REQ417-52838:FEA417-62893 DMA Upgrade : Client Callback from ISR
+		Gaia Feature Release 428985 Package Release 428988
+	2.	DEFECT FIX: DEF143285: t_dma and t_dma2 test failures
+
+2.	MarkTa
+	1.	DEFECT FIX: DEF143220: Flexible memory model - Aliasing can cause the system to crash.
+		Fix various race conditions in the flexible memory model's handling of aliasing.
+
+3.	RyanHarkin
+	1.	MINOR_CHANGE: Removed SYMBIAN_BASE_USE_GCE from header.iby files as this broke the build
+	2.	MINOR_CHANGE: Tidy up naviengine.h and naviengine_priv.h
+	3.	MINOR_CHANGE: Update NaviEngine release.txt because nobody else has
+	4.	MINOR_CHANGE: Remove commented out code from csi.mmp
+	5.	MINOR_CHANGE: updated NaviEngine User Guide
+	6.	MINOR_CHANGE: Bootloader OBY file bootbinary directive fixed
+
+4.	RichardCo
+	1.	DEFECT FIX: DEF142738: T_SMPSAFE fails on SMP unicore
+
+5.	erifung
+	1.	DEFECT FIX: DEF142542: Bridge: t_dobject fails on 8500..
+
+6.	cnotton
+	1.	DEFECT FIX: DEF143224: Move TFlowControl to a published header
+
+
+Version 2.00.2058
+=================
+(Made by vinojose 03/12/2009)
+
+
+1.	ChrisNotton
+	1.	DEFECT FIX: DEF142863: Public header files must not include platform or internal headers
+
+2.	NeilClifford
+	1.	DEFECT FIX: DEF143039: MedMMC should not use Cache for Physical Address Requests
+
+3.	MarkTa
+	1.	DEFECT FIX: DEF143129: WDP - Allocating a demand paged page table can fault the system 
+		Implement on demand stealing of paged page tables when allocating paged page tables.
+
+4.	StephenSun
+	1.	DEFECT FIX: DEF142844: initialize SRP timeout
+
+5.	OliverStuart
+	1.	DEFECT FIX: DEF142840: KERN-EXEC 3 panics in T_SHBUF_PERF
+		Must use kumemget to read TPtr8 from user memory.
+
+6.	LaneRoberts
+	1.	DEFECT FIX: DEF143152: NaviEngine ARM4 ROMs cannot be built
+
+7. ChrisBeale
+	1.	DEFECT FIX: DEF143114: FMM thrashing monitor timer runs even when device is idle 
+
+8.	cnotton
+	1.	MINOR_CHANGE: Fix SMP Soak test for Header File Relocation
+	2.	DEFECT FIX: DEF143183: CTS79_MCL_wk46: TB92_200945 symbian tests compilation errors
+
+9.	lanerobe
+	1.	DEFECT FIX: DEFECT FIX: DEF141811: T_MSTIM on Unicore SMP (Naviengine) Image
+
+Version 2.00.2057
+=================
+(Made by vinojose 01/12/2009)
+
+1.	ChrisNotton
+	1.	DEFECT FIX: DEF143217: [System Build] Rom build stage unknow keyword in MSF00270
+
+
+Version 2.00.2056
+=================
+(Made by VincentF 25/11/2009)
+
+1.	IndrajeetSingh
+	1.	DEFECT FIX: DEF141945: Base Template Port build fails
+
+2.	PatrickConway
+	2.	MINOR_CHANGE: Add missing SMPSAFE keywords to mmp files (mostly test drivers)
+
+3.	ChrisNotton
+	1.	DEFECT FIX: DEF142927: BSP regressions in header relocation build
+	2.	DEFECT FIX: DEF143040: CrashMonitor public headers should not include platform headers
+	3.	DEFECT FIX: DEF143042: Public header e32test.h includes platform headers...
+	4.	DEFECT FIX: DEF143044: Public header u32std.h includes platform header files...
+	5.	DEFECT FIX: DEF143053: Public header e32event.h includes platform header...
+	6.	DEFECT FIX: DEF142880: btrace.iby does not use KERNEL_DIR for ldd
+
+4.	VincentF
+	1.	DEFECT FIX: DEF142854: Bootstrap.flm and related bld.inf changes not submitted to the MCL
+		Use FLM, rather than extension makefile, to build bootstraps on all SymTB10.1
+		baseports with SBSv2 (Raptor).
+
+5.	YiluZhu
+	1.	DEFECT FIX: DEF142969: Raptor GCCE: compsupp doesn't deal gracefully with a Raptor GCCE build
+
+6.	DaveGordon
+	1.	DEFECT FIX: DEF142684: T_TIME hangs on Ivalo waiting for absolute timer after changing secure time
+		Improve test by making sure time + secure offset settings are sane before changing secure time
+	2.	DEFECT FIX: DEF142504 T_PAGELDRTST_REAPER issues
+		Fixes KERN-EXEC panic with code EBadHandle by restructuring loops in CopyAndFragmentFiles().
+		Fixes issue with failing Attrib() leaving file unusable - now tries making file R/W if first
+		attempt at deleting it fails.
+	3.	DEFECT FIX: DEF141903 T_TIMER intermitant failure on 3430 (t_timer.cpp:633)
+		Fixes mismatch between getting time in UTC vs. setting alarm in Local time!
+		(also fixes dup PDEF136734 T_TIMER fails intermittently on SMP platforms)
+
+7.	NeilClifford
+	1.	DEFECT FIX: DEF142716: Medmmc / USB enhancement
+
+8.	Saravana Attiyap
+	1.	DEFECT FIX: DEF142896: t_drtaeabi.mmp references deprecated source directories
+	2.	DEFECT FIX: DEF142878: t_datapaging soak test fail in production environement
+
+9.	VincentF
+	1.	MINOR_CHANGE: Include missing split header files
+
+10.	JessieZh
+	1.	DEFECT FIX: DEF142437: t_iic failed to run in eshell
+
+11.	RichardCo
+	1.	DEFECT FIX: DEF142744: Missing constant KImageHWFloat_VFPv3 
+
+12.	RyanHarkin
+	1.	DEFECT FIX: DEF142549: Bridge: e32test t_timer fails on 8500
+		Added an exception, via a new Machine UID so the 8500 does not run the "Test sequential locks
+		fail over on/off" test
+		
+13:	MiguelB
+	1.	DEFECT FIX: DEF142719: WDP: Media card Passwords do not work in WDP environment 
+	2.	DEFECT FIX: DEF142819: exFAT partitions are not recognised by MMC/SD stack
+
+14.	Saravana Attiyap
+	1.	DEFECT FIX DEF142943: T_THRASH - CreatePagedChunk test method fails with KErrNoMemory on gekko77
+
+15.	SushmitaR
+	1.	MINOR CHANGE: Add SMP Soak Tests
+
+16. 	JimmyZhou
+	1.	DEFECT FIX: DEF141425: USB ONB testing steps passing rate doesn't meet test pass critiera   
+	2. 	DEFECT FIX: DEF141212: Engineering improvement  
+
+17.	DjordjeK
+	1.	DEFECT FIX: DEF142736: Bootstrap should support flexible mapping of external cache controller
+		Previously, external cache controller had to be positioned at the start of a H/W region specified in
+		bootstrap. That restriction is now removed so it can be mapped in 64KB or 1MB mappings alongside with
+		other controllers (which may save 1KB of page table & improve performance due to less TLB misses).
+
+
+Version 2.00.2055
+=================
+(Made by VincentF 24/11/2009)
+
+1.	VincentF
+	1.	DEFECT FIX: DEF143148: HCR Setting batch retrieval does not work
+
+
+Version 2.00.2054
+=================
+(Made by Vino Jose 20/11/2009)
+
+1.	VincentF
+	1.	MILESTONE: SymTB10.1, GT0472, MS3.16, DS.1714 HCR_DS2 : Complete and Tested PIL
+		PREQ2131 Hardware Configuration Repository
+		CR322 Prototype Kernel-side HCR API adjust following testing feedback
+		This change delivers the remaining HCR APIs and PIL.
+
+
+Version 2.00.2053
+=================
+(Made by Vino Jose 16/11/2009)
+
+1.	vinojose
+	1.	DEFECT FIX: DEF143037 [System Build] : Errors in GT stage 
+
+
+Version 2.00.2052
+=================
+(Made by Vino Jose 10/11/2009)
+
+1.	DaveGordon
+ 	1.	DEFECT FIX: DEF142684: T_TIME hangs on Ivalo waiting for absolute timer after changing secure time
+ 		Improve test by making sure time + secure offset settings are sane before changing secure time
+ 	2.	DEFECT FIX: DEF142504 T_PAGELDRTST_REAPER issues
+ 		Fixes KERN-EXEC panic with code EBadHandle by restructuring loops in CopyAndFragmentFiles().
+ 		Fixes issue with failing Attrib() leaving file unusable - now tries making file R/W if first
+ 		attempt at deleting it fails.
+ 
+
+
+Version 2.00.2051
+=================
+(Made by Vino Jose 05/11/2009)
+
+1.	LaneRoberts
+	1.	MINOR CHANGE: VFP doc update to include information on the latest VFPv3 and SMP support
+	2.	DEFECT FIX: DEF142855: BTrace categories need tweaking for SMP
+	3.	DEFECT FIX: DEF142898: VFP changes have incorrect syntax
+
+2.	Jeff Yoo
+	1.	DEFECT FIX: DEF141475: ECamera LDD & Template Camera PDD (BASE/CAMERA) :- Support for Effect Settings in Camera and 		LDD/PDD update based on reviews.
+
+3.	coliward
+	1.	MILESTONE: SymTB9.2 RM-RIM REQ417 SUB-REQ52733 DS.1931 WDP Safe GCE Driver
+
+
+Version 2.00.2050
+=================
+(Made by Vino Jose 04/11/2009)
+
+1.	LaneRoberts
+	1.	DEFECT FIX: DEF142567: NaviEngine VFP is not turned on
+
+2.	Saravana Attiyap
+	1.	DEFECT FIX: DEF142597:edev.mmp depends on a deprecated source folder
+
+3.	PatrickConway
+	1.	MINOR_CHANGE: Add missing SMPSAFE keywords to mmp files and unlock test driver DFC threads from core 0
+
+4	Jonco
+	1.	DEFECT FIX: DEF142749: t_implicit crashes when run on Ivalo 
+
+
+Version 2.00.2049
+=================
+(Made by Vino Jose 02/11/2009)
+
+1.	marcinmaksymiuk
+	1.	DEFECT FIX: DEF142717: Some of UTFv2-inherited enumerations duplication.
+
+
+Version 2.00.2048
+=================
+(Made by Vino Jose 01/11/2009)
+
+1.	VincentF
+	1.	MILESTONE: SymTB9.2, GT0419, MS3.41, DS.1928 417-60865: Read-Only Memory Sharing
+		PREQ1490 Flexible Memory Model
+		Introduce read-only memory chunks for the FMM (see RChunk::SetReadOnly()) and
+		add a new Kern::MakeHandleAndOpen() overload so process-local handles can be
+		created.
+
+
+Version 2.00.2047
+=================
+(Made by Vino Jose 29/10/2009)
+
+1.	Neil Clifford
+	1.	DEFECT FIX: DEF142675: T_TBUS_DATAPAGING fails on Ivalo due to test problem
+
+2.	JonCo
+	1.	MINOR CHANGE: Mark Tai's fix for t_pagemove failures on Ivalo
+
+3.	RyanHarkin
+	1.	MINOR_CHANGE: Updated MBC files, they should now be able to build the NaviEngine, at long last.
+
+4.	ChrisNotton
+	1.	DEFECT FIX: DEF142000 ROMS are not getting completed on BTB systems (TRGTEST RETURNS 7)
+
+5.	ChrisBeale
+	1. 	DEFECT FIX: DEF142535:Epoc::ClaimPhysicalRam() on the flexible memory model doesn't claim enough ram
+
+6.	DaveGordon
+	1.	MILESTONE: SymTB9.2 RM-RIM REQ417 SUB-REQ52733 DS.1926 UMG for FMM
+		This change adds the "User Memory Guard" feature to DEBUG builds on
+		all platforms using the Flexible Memory Model.
+
+7.	GayathriR
+	1.	DEFECT FIX: DEF142214: PRM: Fix the invalid memory calculation for BTRACE and client registration
+
+
 Version 2.00.2046
 =================
 (Made by Vino Jose 22/10/2009)
@@ -1304,7 +1656,7 @@ Version 2.00.1982
                 (This includes Break Request BR2705)
 	3.	DEFECT FIX: DEF133712: IIC Active wait issue for Slave channels on single-processor systems  
 	4.	DEFECT FIX: DEF133713: IIC Potential for corruption of spin lock state  
-	5.	DEFECT FIX: DEF133715: IIC Slave “Close?of client thread may be attempted from an ISR  
+	5.	DEFECT FIX: DEF133715: IIC Slave ?lose?of client thread may be attempted from an ISR  
 
 3. 	RyanHarkin
 	1.	MINOR_CHANGE: update MBC files after \f32\sftl directory removed
@@ -3137,7 +3489,7 @@ Version 2.00.1925
 	3.	DEFECT_FIX: DEF117988: LCD ROM macro usage forces redundant use of macros.
 	4.	DEFECT_FIX: DEF121284: Display configuration reported by H4 display driver is incorrect.
 	5.	DEFECT_FIX: DEF120343: RDisplayChannel::RegisterUserBuffer returns unexpected return values.
-	6.  DEFECT_FIX: DEF121284: Display configuration reported by H4 display driver is incorrect.
+	6.  DEFECT_FIX: DEF121284:?Display configuration reported by H4 display driver is incorrect.
 
 
 
@@ -5629,7 +5981,7 @@ Version 2.00.1514
 
 
 10. AndreasP
-	1. DEFECT FIX: DEF100093: template baseport has 2 mmp files generating _template_ekeyb.dll
+	1. DEFECT FIX: DEF100093:?template baseport has 2 mmp files generating _template_ekeyb.dll
 
 Version 2.00.1513
 ==========================

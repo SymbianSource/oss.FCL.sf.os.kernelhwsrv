@@ -18,23 +18,12 @@
  @internalTechnology
 */
 
+
 #include <e32base.h>
-#include <e32base_private.h>
-#include <d32usbdi.h>
 
-#include <d32usbtransfers.h>
 #include "msctypes.h"
-#include "mscutils.h"
-#include "shared.h"
-#include "msgservice.h"
-#include "botmsctypes.h"
-
-#include "mprotocol.h"
-#include "mtransport.h"
-#include "cbulkonlytransport.h"
 #include "cusbhostmslogicalunit.h"
-#include "cusbhostmsdevice.h"
-#include "cusbmssuspendresume.h"
+#include "tlogicalunitlist.h"
 
 #include "msdebug.h"
 #include "debug.h"

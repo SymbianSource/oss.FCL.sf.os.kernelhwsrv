@@ -19,8 +19,11 @@
 
 #include <f32file.h>
 #include <e32test.h>
+#include <e32hal.h>
 #include <hal.h>
 #include <e32math.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 #include "t_server.h"
 #include "../../e32test/mmu/d_sharedchunk.h"
 

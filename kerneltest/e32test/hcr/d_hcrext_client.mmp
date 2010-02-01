@@ -1,0 +1,43 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Hardware Configuration Respoitory Tests
+//
+
+macro HCRTEST_USERSIDE_INTERFACE
+macro HCRTEST_CLIENT_THREAD
+#include		<variant_test.mmh>
+#include		"kernel/kern_ext.mmh"
+
+target			VariantTarget(d_hcrext_client,ldd)
+targettype		kext
+romtarget		d_hcrext_client.ldd
+
+userinclude		../../../kernel/eka/drivers/hcr
+sourcepath		.
+source			d_hcrsim.cpp
+library			hcr.lib
+
+deffile			../../../kernel/eka/~/ldd.def
+
+epocallowdlldata
+smpsafe
+noexportlibrary
+capability		all
+
+uid				0x100000af
+vendorid		0x70000001
+
+start wins
+win32_headers
+end

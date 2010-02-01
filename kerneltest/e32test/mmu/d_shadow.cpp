@@ -222,10 +222,15 @@ TInt DShadow::Request(TInt aFunction, TAny* a1, TAny* a2)
 			}
 		case RShadow::EControlAllocPhys:
 			{
+			
 			TInt size=(TInt)a1;
 			TInt align=(TInt)a2;
 			TPhysAddr pa;
+		
+			NKern::ThreadEnterCS();
 			r=Epoc::AllocPhysicalRam(size,pa,align);
+			NKern::ThreadLeaveCS();
+			
 			if (r==KErrNone)
 				{
 				if (pa&0x0f)
@@ -233,20 +238,27 @@ TInt DShadow::Request(TInt aFunction, TAny* a1, TAny* a2)
 				else
 					r=pa>>4;
 				}
+			
 			break;
 			}
 		case RShadow::EControlFreePhys:
 			{
+			
 			TPhysAddr pa=(TPhysAddr)a1;
 			TInt size=(TInt)a2;
+			NKern::ThreadEnterCS();
 			r=Epoc::FreePhysicalRam(pa,size);
+			NKern::ThreadLeaveCS();
 			break;
 			}
 		case RShadow::EControlClaimPhys:
 			{
+			
 			TPhysAddr pa=(TPhysAddr)a1;
 			TInt size=(TInt)a2;
+			NKern::ThreadEnterCS();
 			r=Epoc::ClaimPhysicalRam(pa,size);
+			NKern::ThreadLeaveCS();
 			break;
 			}
 			

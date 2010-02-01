@@ -25,7 +25,7 @@
 #define COMMON_CONSTANTS_H
 
 
-
+#include "filesystem_utils.h"
 #include <f32fsys.h>
 #include <f32dbg.h>
 
@@ -87,19 +87,14 @@ IMPORT_C TUint32 DebugRegister();
 //-- define this macro in order to enable the DEMAND PAGING DIRECTORY CACHE.
 #define USE_DP_DIR_CACHE
 
+//-- define this macro in order to use "Rummage Dirictory Cache" feature: searching for the entry in the cache first
+#define USE_DIR_CACHE_RUMMAGE
+
 //-----------------------------------------------------------------------------
 
 typedef TUint32 TLinAddr;
 typedef TUint32 TFat32Entry;
 typedef TUint16 TFat16Entry;
-
-const TUint16 K1KiloByteLog2 = 10;
-const TUint32 K1KiloByte = 1<<10; 
-const TUint32 K1MegaByte = 1<<20; 
-
-const TUint32 K1uSec = 1;               ///< 1 misrosecond in TTimeIntervalMicroSeconds32
-const TUint32 K1mSec = 1000;            ///< 1 millisecond in TTimeIntervalMicroSeconds32
-const TUint32 K1Sec  = 1000*K1mSec;     ///< 1 second in TTimeIntervalMicroSeconds32
 
 _LIT8(KLit8ReplacementForUnconvertibleUnicodeCharacters, "_");
 _LIT8(KFileSystemName12,"FAT12   ");    ///< Name in BPB given to a Fat12 volume
@@ -118,9 +113,6 @@ const TInt KMaxFAT16Entries=0xFFF0;	    ///< Maximum number of clusters in a Fat
 const TInt KMaxFAT12Entries=0xFF0;	    ///< Maximum number of clusters in a Fat12 Fat table, 4080
 const TUint8 KBootSectorMediaDescriptor=0xF8;   ///< Media descriptor for a Fat volume, Generic disk
 const TUint8 KEntryErasedMarker=0xE5;           ///< Erased entry marker for a directory entry
-
-const TUint KDefSectorSzLog2=9;                         ///< Log2 of the default sector size for FAT
-const TUint KDefaultSectorSize = 1 << KDefSectorSzLog2; ///< Default sector size for FAT, 512 bytes
 
 
 const TInt EOF_32Bit =0x0fffffff;   ///< End of cluster chain value for Fat32
@@ -153,30 +145,26 @@ enum TFault
 	EFatBadStdFormatName,           // 5
 	EFatBadDosFormatName,           // 6
 	EFatCorrupt,                    // 7
-	EFatChkDskIllegalClusterNumber, // 8
-	EFatChkDskClusterAlreadyInUse,  // 9
-	EFatChkDskBadCluster,           // 10
-	EFatChkDskInvalidEntrySize,     // 11
-	EFatFilePosBeyondEnd,			// 12
-	EFatFileSeekIndexTooSmall,      // 13
-	EFatFileSeekIndexTooSmall2,     // 14
-	ELruCacheBadGranularity,        // 15
-	EFatRawReadTooBig,              // 16
-	EFatReadUidFailed,              // 17
-	ELruCacheFlushNotSupported,     // 18
-	EReadFileSectionFailed,         // 19
-	EBadReplacementForUnconvertibleUnicodeCharacters, // 20
+	EFatFilePosBeyondEnd,			// 8 
+	EFatFileSeekIndexTooSmall,      // 9 
+	EFatFileSeekIndexTooSmall2,     // 10
+	ELruCacheBadGranularity,        // 11
+	EFatRawReadTooBig,              // 12
+	EFatReadUidFailed,              // 13
+	ELruCacheFlushNotSupported,     // 14
+	EReadFileSectionFailed,         // 15
+	EBadReplacementForUnconvertibleUnicodeCharacters, // 16
 
-    EFatRAMDriveSizeInvalid,        // 21
-	EFatRAMDriveFreeInvalid,        // 22
-    ECheckFatIndexZero,             // 23
+    EFatRAMDriveSizeInvalid,        // 17
+	EFatRAMDriveFreeInvalid,        // 18
+    ECheckFatIndexZero,             // 19
 
-    EFatCache_BadGranularity,       // 24
-    EFatCache_DiscardingDirtyData,  // 25
-    EFatCache_NotImplemented,       // 26
-    EFatCache_BadFatType,           // 27
+    EFatCache_BadGranularity,       // 20
+    EFatCache_DiscardingDirtyData,  // 21
+    EFatCache_NotImplemented,       // 22
+    EFatCache_BadFatType,           // 23
 
-    EFatTable_InvalidIndex,         // 28
+    EFatTable_InvalidIndex,         // 24
 
 	};
 

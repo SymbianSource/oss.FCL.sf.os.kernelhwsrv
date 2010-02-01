@@ -1,7 +1,0 @@
-EXPORTS
-	?ShortDateFormatSpec@LoclRegion@@SAPBGXZ @ 1 NONAME ; unsigned short const * LoclRegion::ShortDateFormatSpec(void)
-	?LongDateFormatSpec@LoclRegion@@SAPBGXZ @ 2 NONAME ; unsigned short const * LoclRegion::LongDateFormatSpec(void)
-	?LocaleData@LoclRegion@@SAXPAUSLocaleRegion@@@Z @ 3 NONAME ; void LoclRegion::LocaleData(struct SLocaleRegion *)
-	?TimeFormatSpec@LoclRegion@@SAPBGXZ @ 4 NONAME ; unsigned short const * LoclRegion::TimeFormatSpec(void)
-	?CurrencySymbol@LoclRegion@@SAPBGXZ @ 5 NONAME ; unsigned short const * LoclRegion::CurrencySymbol(void)
-

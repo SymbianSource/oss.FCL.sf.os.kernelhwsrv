@@ -549,3 +549,50 @@ EXPORT_C TBool F32Properties::GetBool(const TDesC8& aSection, const TDesC8& aPro
 	return(EFalse);
 	}
 
+/**
+    Obtain drive information. This function is called by the default implementation of CFileSystem::DriveInfo().
+    @param  anInfo       out: drive information
+    @param  aDriveNumber drive number
+*/
+EXPORT_C void GetDriveInfo(TDriveInfo& anInfo, TInt aDriveNumber)
+    {
+	if(!IsValidLocalDriveMapping(aDriveNumber))
+		return;
+
+    TLocalDriveCapsBuf localDriveCaps;
+
+	TInt r = KErrNone;
+
+	// is the drive local?
+	if (!IsProxyDrive(aDriveNumber))
+		{
+		// if not valid local drive, use default values in localDriveCaps
+		// if valid local drive and not locked, use TBusLocalDrive::Caps() values
+		// if valid drive and locked, hard-code attributes
+		r = GetLocalDrive(aDriveNumber).Caps(localDriveCaps);
+		}
+	else
+		{
+		CExtProxyDrive* pD = GetProxyDrive(aDriveNumber);
+        __ASSERT_ALWAYS(pD != NULL,User::Panic(_L("GetDriveInfo - pProxyDrive == NULL"), -999));
+		r = pD->Caps(localDriveCaps);
+		}
+
+    TLocalDriveCaps& caps = localDriveCaps();
+	if (r != KErrLocked)
+		{
+		anInfo.iMediaAtt=caps.iMediaAtt;
+		}
+	else
+		{
+		anInfo.iMediaAtt = KMediaAttLocked | KMediaAttLockable | KMediaAttHasPassword;
+		}
+
+	anInfo.iType=caps.iType;
+	anInfo.iDriveAtt=caps.iDriveAtt;
+    anInfo.iConnectionBusType=caps.iConnectionBusType;
+    }
+
+
+
+

@@ -19,6 +19,7 @@
 #define __CFAFSHMEM_H__
 
 #include <f32file.h>
+#include <d32locd.h>
 #include <e32test.h>
 #include "t_server.h"
 

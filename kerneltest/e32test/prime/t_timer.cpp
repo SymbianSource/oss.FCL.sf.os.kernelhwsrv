@@ -33,7 +33,7 @@
 // Assumptions/Requirement/Pre-requisites:
 // Failures and causes:
 // Base Port information:
-// 
+//
 //
 
 // the following was used to help debug emulator implemenation of user mode callbacks
@@ -86,12 +86,12 @@ TBool RequestIsComplete(TRequestStatus& s)
 	return s != KRequestPending;
 	}
 
+
 LOCAL_C void testRel()
 //
 // Test relative timers.
 //
 	{
-
 	test.Start(_L("After 0"));
 	RTimer t;
 	TInt r=t.CreateLocal();
@@ -101,7 +101,7 @@ LOCAL_C void testRel()
 	test(s==KRequestPending || s==KErrNone);
 	User::WaitForRequest(s);
 	test(s==KErrNone);
-//
+
 	test.Next(_L("After 1 tenth"));
 	t.After(s,100000);
 #ifdef __WINS__
@@ -115,7 +115,7 @@ LOCAL_C void testRel()
 #endif
 	User::WaitForRequest(s);
 	test(s==KErrNone);
-//
+
 	test.Next(_L("After -1 millionth"));
 	RThread thread;
 	r=thread.Create(_L("After -1"),AfterNegative,KDefaultStackSize,NULL,&thread);
@@ -132,13 +132,13 @@ LOCAL_C void testRel()
 	test(thread.ExitType()==EExitPanic);
 	CLOSE_AND_WAIT(thread);
 	User::SetJustInTime(justInTime);
-//
+
 	test.Next(_L("After 1 second"));
 	t.After(s,1000000);
 	test(s==KRequestPending);
 	User::WaitForRequest(s);
 	test(s==KErrNone);
-//
+
 	test.Next(_L("After 1 second polling"));
 	t.After(s,1000000);
 	test(s==KRequestPending);
@@ -147,7 +147,7 @@ LOCAL_C void testRel()
 		; // poll
 	test(s==KErrNone);
 	User::WaitForRequest(s);
-//
+
 	test.Next(_L("Cancel"));
 	t.After(s,1000000);
 	test(s==KRequestPending);
@@ -155,7 +155,7 @@ LOCAL_C void testRel()
 	User::WaitForRequest(s);
 	test(s==KErrCancel);
 	t.Close();
-//
+
 	test.Next(_L("Request twice"));
 	r=thread.Create(_L("After twice"),AfterTwice,KDefaultStackSize,NULL,&thread);
 	test(r==KErrNone);
@@ -170,7 +170,7 @@ LOCAL_C void testRel()
 	test(thread.ExitType()==EExitPanic);
 	CLOSE_AND_WAIT(thread);
 	User::SetJustInTime(justInTime);
-//
+
 	test.End();
 	}
 
@@ -196,7 +196,7 @@ LOCAL_C TInt PollThread(TAny* aArg)
 
 	TInt totalComplete = 0;
 	TInt totalWaiting = 0;
-	
+
 	while(PollTestRunning)
 		{
 		for (i = 0 ; i < KMaxTimers ; ++i)
@@ -207,7 +207,7 @@ LOCAL_C TInt PollThread(TAny* aArg)
 					// do nothing
 					++totalWaiting;
 					break;
-					
+
 				case KErrNone:
 					User::WaitForRequest(statuses[i]);
 					++totalComplete;
@@ -225,7 +225,7 @@ LOCAL_C TInt PollThread(TAny* aArg)
 				}
 			}
 		}
-		
+
 	for (i = 0 ; i < KMaxTimers ; ++i)
 		{
 		User::WaitForRequest(statuses[i]);
@@ -245,7 +245,7 @@ LOCAL_C void testPoll()
 
 	RThread threads[KMaxThreads];
 	TRequestStatus statuses[KMaxThreads];
-	
+
 	test.Start(_L("Test polling"));
 
 	PollTestRunning = ETrue;
@@ -259,7 +259,7 @@ LOCAL_C void testPoll()
 		}
 
 	User::After(KSecondsToTest * 1000 * 1000);
-	
+
 	PollTestRunning = EFalse;
 
 	for (i = 0 ; i < KMaxThreads ; ++i)
@@ -269,18 +269,18 @@ LOCAL_C void testPoll()
 		test_Equal(EExitKill, threads[i].ExitType());
 		threads[i].Close();
 		}
-	
+
 	test.End();
 	}
 
 #endif
+
 
 LOCAL_C void testHomeTime()
 //
 // Test HomeTime.
 //
 	{
-
     TTime t1, t2;
     t1.HomeTime();
     for (TInt x=0;x<100;x++)
@@ -344,12 +344,12 @@ TInt AfterAt(TAny*)
 	return KErrNone;
 	}
 
+
 LOCAL_C void testAbs()
 //
 // Test absolute timers.
 //
 	{
-
 	test.Start(_L("Now -1"));
 	RTimer t;
 	TInt r=t.CreateLocal();
@@ -361,7 +361,7 @@ LOCAL_C void testAbs()
 	test(s==KErrUnderflow);  // =KRequestPending
 	User::WaitForRequest(s);
 	test(s==KErrUnderflow);
-//
+
 	TTime time2;
 	test.Next(_L("Synchronise to clock"));
 	time.UniversalTime();
@@ -395,11 +395,11 @@ LOCAL_C void testAbs()
 	// Test we are in the same second as the requested time...
 	test(delay>=TTimeIntervalMicroSeconds(0));
 	test(delay<TTimeIntervalMicroSeconds(1000000));
-//
+
 	test.Next(_L("UTC vs local"));
 	TTimeIntervalSeconds savedOffset = User::UTCOffset();
 	User::SetUTCOffset(3600);
-	
+
 	time.HomeTime();
 	time += TTimeIntervalSeconds(1);
 	t.At(s,time);
@@ -411,7 +411,7 @@ LOCAL_C void testAbs()
 	// Test we are in the same second as the requested time...
 	test(delay>=TTimeIntervalMicroSeconds(0));
 	test(delay<TTimeIntervalMicroSeconds(1000000));
-	
+
 	time.UniversalTime();
 	time += TTimeIntervalSeconds(1);
 	t.AtUTC(s,time);
@@ -423,9 +423,9 @@ LOCAL_C void testAbs()
 	// Test we are in the same second as the requested time...
 	test(delay>=TTimeIntervalMicroSeconds(0));
 	test(delay<TTimeIntervalMicroSeconds(1000000));
-	
+
 	User::SetUTCOffset(savedOffset);	
-//
+
 	test.Next(_L("Cancel"));
 	time.UniversalTime();
 	t.AtUTC(s,time+TTimeIntervalSeconds(10));
@@ -434,7 +434,7 @@ LOCAL_C void testAbs()
 	User::WaitForRequest(s);
 	test(s==KErrCancel);
 	t.Close();						
-//
+
 	test.Next(_L("Request twice"));
 	RThread thread;
 	r=thread.Create(_L("At twice"),AtTwice,KDefaultStackSize,NULL,&thread);
@@ -451,7 +451,7 @@ LOCAL_C void testAbs()
 	test(thread.ExitReason()==ETimerAlreadyPending);
 	test(thread.ExitType()==EExitPanic);
 	CLOSE_AND_WAIT(thread);
-//
+
 	r=thread.Create(_L("At After"),AtAfter,KDefaultStackSize,NULL,&thread);
 	test(r==KErrNone);
 	thread.Logon(s);
@@ -465,7 +465,7 @@ LOCAL_C void testAbs()
 	test(thread.ExitReason()==ETimerAlreadyPending);
 	test(thread.ExitType()==EExitPanic);
 	CLOSE_AND_WAIT(thread);
-//
+
 	r=thread.Create(_L("After At"),AfterAt,KDefaultStackSize,NULL,&thread);
 	test(r==KErrNone);
 	thread.Logon(s);
@@ -479,7 +479,7 @@ LOCAL_C void testAbs()
 	test(thread.ExitReason()==ETimerAlreadyPending);
 	test(thread.ExitType()==EExitPanic);
 	CLOSE_AND_WAIT(thread);
-//
+
 	test.End();
 	}
 
@@ -496,12 +496,12 @@ TInt LockTwice(TAny*)
 	return KErrNone;
 	}
 
+
 LOCAL_C void testLock()
 //
 // Test locked timers
 //
 	{
-
 	test.Start(_L("Test synchronise to ETwelveOClock"));
 	RTimer t;
 	TTime time,time2;
@@ -584,7 +584,7 @@ LOCAL_C void testLock()
 	User::WaitForRequest(stat);
 	// EThreeOClock should be more than one second away from the previous timer expiration
 	test(stat==KErrGeneral);
-//
+
 	test.Next(_L("Lock twice"));
 	RThread thread;
 	TInt r=thread.Create(_L("Lock twice"),LockTwice,KDefaultStackSize,NULL,&thread);
@@ -601,12 +601,11 @@ LOCAL_C void testLock()
 	test(thread.ExitReason()==ETimerAlreadyPending);
 	test(thread.ExitType()==EExitPanic);
 	CLOSE_AND_WAIT(thread);
-//
-	
+
 #if !(defined(__EPOC32__) && defined(__X86__))
 	TInt muid = 0;
 	HAL::Get(HAL::EMachineUid, muid);
-	if(muid!=HAL::EMachineUid_Lubbock && muid!=HAL::EMachineUid_NE1_TB)
+	if(muid!=HAL::EMachineUid_Lubbock && muid!=HAL::EMachineUid_NE1_TB && muid!=HAL::EMachineUid_STE8500)
 		{
 		test.Next(_L("Test sequential locks fail over on/off"));
 		RTimer tat;
@@ -614,7 +613,8 @@ LOCAL_C void testLock()
 		r=tat.CreateLocal();
 		TTime now;
 		now.UniversalTime();
-		tat.At(sat, now+TTimeIntervalSeconds(10)); // turn on in 10 seconds
+		tat.AtUTC(sat, now+TTimeIntervalSeconds(10)); // turn on in 10 seconds
+		test(sat==KRequestPending);
 		t.Lock(stat, ETwelveOClock);
 		User::WaitForRequest(stat);
 		test(stat==KErrGeneral);
@@ -646,7 +646,6 @@ void testChange()
 // Test locked timers abort when the system time changes
 //
 	{
-
     RTimer rr;
 	TRequestStatus stat;
     rr.CreateLocal();
@@ -657,7 +656,7 @@ void testChange()
     rrr.CreateLocal();
     rrr.After(stat, 1000000);
     User::WaitForRequest(stat);
-    
+
 	RTimer r;
 	TRequestStatus sstat;
 	TTime t;
@@ -708,11 +707,7 @@ void testChange()
 	}
 
 void testInactivity()
-//
-//
-//
 	{
-	
 	test.Start(_L("Test User::ResetInactivityTime()"));
 	RTimer t,t2;
 	TRequestStatus stat,stat2;
@@ -754,38 +749,38 @@ void testInactivity()
 	test.End();
 	}
 
+
 GLDEF_C TInt E32Main()
 //
 // Test timers.
 //
     {
-
 	test.Title();
 	TInt r=HAL::Get(HAL::EMachineUid,MachineUid);
 	test(r==KErrNone);
 	test.Start(_L("Testing relative timers"));
 	testRel();
-//
+
 #ifdef REQUEST_STATUS_POLL_SOAK_TEST
 	test.Next(_L("Testing polling"));
 	testPoll();
 #endif
-//
+
     test.Next(_L("Testing HomeTime()"));
     testHomeTime();
-//
+
 	test.Next(_L("Testing absolute timers"));
 	testAbs();
-//
+
 	test.Next(_L("Testing locked timers"));
 	testLock();
-//
+
 	test.Next(_L("Testing changing time"));
 	testChange();
-//
+
 	test.Next(_L("Testing inactivity timers"));
 	testInactivity();
-//
+
 	test.End();
 	return(KErrNone);
     }

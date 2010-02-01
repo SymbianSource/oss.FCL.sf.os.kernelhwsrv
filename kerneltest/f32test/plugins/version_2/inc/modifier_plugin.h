@@ -71,7 +71,8 @@ private:
 	void FsRenameL(TFsPluginRequest& aRequest);
 	void FsEntryL(TFsPluginRequest& aRequest);
 	void FsSetEntryL(TFsPluginRequest& aRequest);
-	
+	void FsVolumeL(TFsPluginRequest& aRequest);
+
 	void FsPluginDoRequestL(TFsPluginRequest& aRequest);
 	TInt FsPluginDoControlL(TFsPluginRequest& aRequest);
 

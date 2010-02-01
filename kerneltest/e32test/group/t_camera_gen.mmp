@@ -23,7 +23,7 @@ source			t_camera_display.cpp
 library			euser.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
-capability		all
+capability		ALL -TCB
 vendorid		0x70000001
 
 

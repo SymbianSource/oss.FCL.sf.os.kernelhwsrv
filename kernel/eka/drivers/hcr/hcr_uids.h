@@ -12,6 +12,8 @@
 //
 // Description:
 // Hardware Configuration Respoitory Platform Independent Layer (PIL)
+// Contains the registry of UIDs allocated to the HCR component from 
+// Symbian Foundation and what they are used for.
 //
 
 /**

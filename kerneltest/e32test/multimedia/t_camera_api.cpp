@@ -25,7 +25,14 @@
 
 _LIT(KTstLddFileName,"D_MMCSC.LDD");
 _LIT(KCamLddFileName,"ECAMERASC.LDD");
+
+#ifdef __WINSCW__
+_LIT(KCamPddFileName,"_TEMPLATE_CAMERASC.PDD");
+#else
 _LIT(KCamPddFileName,"CAMERASC.PDD");
+#endif
+
+
 _LIT(KCamFreePddExtension,".*");
 
 _LIT(KFrameSize, "%dx%d");
@@ -67,7 +74,8 @@ LOCAL_C TInt secondaryThread(TAny* aTestInfo)
 	stest.Title();
 
 	stest.Start(_L("Check which test to perform"));
-	SSecondaryThreadInfo& sti=*((SSecondaryThreadInfo*)aTestInfo);
+	SSecondaryThreadInfo sti =*((SSecondaryThreadInfo*)aTestInfo);
+	
 	TInt r;
 	switch(sti.iTestId)
 		{
@@ -82,7 +90,7 @@ LOCAL_C TInt secondaryThread(TAny* aTestInfo)
 			}
 		case ESecThreadTestDuplicateHandle:
 			{
-			Test.Next(_L("Duplicate channel handle test"));
+			stest.Next(_L("Duplicate channel handle test"));
 
 			// Get a reference to the main thread - which created the handle
 			RThread thread;
@@ -100,7 +108,7 @@ LOCAL_C TInt secondaryThread(TAny* aTestInfo)
 			}
 		case ESecThreadReuseHandle:
 			{
-			Test.Next(_L("Re-use channel test"));
+			stest.Next(_L("Re-use channel test"));
 			RDevCameraSc* camPtr=(RDevCameraSc*)sti.iDrvHandle;
 			TCameraConfigV02Buf camConfBuf;
 			camPtr->GetCamConfig(ECamCaptureModeImage, camConfBuf);	// This should cause a panic.
@@ -165,19 +173,19 @@ LOCAL_C void DoCamDynamicSettingsTests(RDevCameraSc& aCam, RTest& aTest)
 	TDynamicRange &clientRangeColorEffect = ((TCameraCapsV02*)(clientCopy.Ptr()))->iDynamicRange[ECamAttributeColorEffect];
 
 	aTest(driverRangeColorEffect.iMin == 0);
-	aTest(driverRangeColorEffect.iMax == 7);
+	aTest(driverRangeColorEffect.iMax == 7); // TBC::OV3640 set to 7, template driver set to 0x0040 (enum)
 	aTest(driverRangeColorEffect.iMin == clientRangeColorEffect.iMin);
 	aTest(driverRangeColorEffect.iMax == clientRangeColorEffect.iMax);
 
 	aTest.Next(_L("Test for invalid Min range."));
 	aTest(aCam.SetDynamicAttribute(ECamAttributeBrightness, driverRangeBrightness.iMin-1)==KErrArgument);
 	aTest(aCam.SetDynamicAttribute(ECamAttributeContrast, driverRangeContrast.iMin-1)==KErrArgument);
-	aTest(aCam.SetDynamicAttribute(ECamAttributeColorEffect, driverRangeColorEffect.iMin-1)==KErrNotSupported);
+	aTest(aCam.SetDynamicAttribute(ECamAttributeColorEffect, driverRangeColorEffect.iMin-1)==KErrArgument);
 
 	aTest.Next(_L("Test for invalid Max range."));
 	aTest(aCam.SetDynamicAttribute(ECamAttributeBrightness, driverRangeBrightness.iMax+1)==KErrArgument);
 	aTest(aCam.SetDynamicAttribute(ECamAttributeContrast, driverRangeContrast.iMax+1)==KErrArgument);
-	aTest(aCam.SetDynamicAttribute(ECamAttributeColorEffect, driverRangeColorEffect.iMax+1)==KErrNotSupported);
+	aTest(aCam.SetDynamicAttribute(ECamAttributeColorEffect, driverRangeColorEffect.iMax+1)==KErrArgument);
 
 	aTest.Next(_L("Test all valid settings as reported by range - Brightness"));
 	for (TUint i=driverRangeBrightness.iMin; i <= driverRangeBrightness.iMax; ++i)
@@ -194,7 +202,7 @@ LOCAL_C void DoCamDynamicSettingsTests(RDevCameraSc& aCam, RTest& aTest)
 	aTest.Next(_L("Test all valid settings as reported by range - ColorEffect"));
 	for (TUint k=driverRangeColorEffect.iMin; k <= driverRangeColorEffect.iMax; ++k)
 		{
-		aTest(aCam.SetDynamicAttribute(ECamAttributeColorEffect, k)==KErrNotSupported);
+		aTest(aCam.SetDynamicAttribute(ECamAttributeColorEffect, k)==KErrNone);
 		}
 
 	User::Free(capsBufPtr);
@@ -458,7 +466,7 @@ LOCAL_C void DoCamOpenCapTests(RTest& aTest,TInt aCameraSensorIndex)
 	cam.Close();		// Close the 1st channel
 	sti.iTestId=ESecThreadTestOpen;
 	sti.iExpectedRetVal=KErrNone;
-	r=thread.Create(_L("Thread"),secondaryThread,KDefaultStackSize,KHeapSize,KHeapSize,&sti);
+	r=thread.Create(_L("Thread02"),secondaryThread,KDefaultStackSize,KHeapSize,KHeapSize,&sti);
 	Test(r==KErrNone);
 	thread.Logon(stat);
 	thread.Resume();
@@ -476,7 +484,7 @@ LOCAL_C void DoCamOpenCapTests(RTest& aTest,TInt aCameraSensorIndex)
 	sti.iThreadId=RThread().Id();	// Get the ID of this thread
 	sti.iDrvHandle=cam.Handle();	// Pass the channel handle
 
-	r=thread.Create(_L("Thread"),secondaryThread,KDefaultStackSize,KHeapSize,KHeapSize,&sti); // Create secondary thread
+	r=thread.Create(_L("Thread03"),secondaryThread,KDefaultStackSize,KHeapSize,KHeapSize,&sti); // Create secondary thread
 	Test(r==KErrNone);
 	thread.Logon(stat);
 	thread.Resume();
@@ -489,7 +497,7 @@ LOCAL_C void DoCamOpenCapTests(RTest& aTest,TInt aCameraSensorIndex)
 	aTest.Next(_L("Re-use the same channel from 2nd thread"));
 	sti.iTestId=ESecThreadReuseHandle;
 	sti.iDrvHandle=(TInt)&cam;	// Pass a pointer to the channel
-	r=thread.Create(_L("Thread"),secondaryThread,KDefaultStackSize,KHeapSize,KHeapSize,&sti); // Create secondary thread
+	r=thread.Create(_L("Thread04"),secondaryThread,KDefaultStackSize,KHeapSize,KHeapSize,&sti); // Create secondary thread
 	Test(r==KErrNone);
 	thread.Logon(stat);
 	thread.Resume();
@@ -681,7 +689,13 @@ LOCAL_C void DoCamVideoCaptureTests(RDevCameraSc& aCam, RTest& aTest, TDevCamCap
 			aTest(retOffset>=0);
 			imgBase=chunkVideo.Base()+retOffset;
 			r=dispHand.Process(imgBase);
+			
+#ifdef __WINSCW__
+			aTest(r==KErrNotSupported);
+#else
 			aTest(r==KErrNone);
+#endif
+
 			User::After(333000);	// 0.33sec
 			}
 		}
@@ -750,7 +764,13 @@ LOCAL_C void DoCamVideoCaptureTests(RDevCameraSc& aCam, RTest& aTest, TDevCamCap
 			if (aPixelFormat.iPixelFormat!=EUidPixelFormatJPEG && aPixelFormat.iPixelFormat!=EUidPixelFormatSpeedTaggedJPEG)
 				{
 				r=dispHand.Process(imgBase);
+				
+#ifdef __WINSCW__
+				aTest(r==KErrNotSupported);
+#else
 				aTest(r==KErrNone);
+#endif
+				
 				}
 			r=aCam.ReleaseBuffer(retId);
 			aTest(r==KErrNone);
@@ -766,7 +786,13 @@ LOCAL_C void DoCamVideoCaptureTests(RDevCameraSc& aCam, RTest& aTest, TDevCamCap
 			if (aPixelFormat.iPixelFormat!=EUidPixelFormatJPEG && aPixelFormat.iPixelFormat!=EUidPixelFormatSpeedTaggedJPEG)
 				{
 				r=dispHand.Process(imgBase);
+				
+#ifdef __WINSCW__
+				aTest(r==KErrNotSupported);
+#else
 				aTest(r==KErrNone);
+#endif
+				
 				}
 			r=aCam.ReleaseBuffer(retId);
 			aTest(r==KErrNone);
@@ -862,7 +888,13 @@ LOCAL_C void DoCamImageCaptureTests(RDevCameraSc& aCam, RTest& aTest, TInt aCame
 		{
 		// Display the image received for 1s
 		r=dispHand.Process(imgBase);
-		aTest(r==KErrNone);
+		
+#ifdef __WINSCW__
+        aTest(r==KErrNotSupported);
+#else
+        aTest(r==KErrNone);
+#endif
+        
 		User::After(1000000);	// 1 sec
 		}
 
@@ -926,7 +958,13 @@ LOCAL_C void DoCamImageCaptureTests(RDevCameraSc& aCam, RTest& aTest, TInt aCame
 		// Display the image received for 1s
 		imgBase=chunkImage.Base()+retOffset;
 		r=dispHand.Process(imgBase);
-		aTest(r==KErrNone);
+		
+#ifdef __WINSCW__
+        aTest(r==KErrNotSupported);
+#else
+        aTest(r==KErrNone);
+#endif
+        
 		User::After(1000000);	// 1 sec
 		}
 
@@ -945,7 +983,13 @@ LOCAL_C void DoCamImageCaptureTests(RDevCameraSc& aCam, RTest& aTest, TInt aCame
 		// Display the image received for 1s
 		imgBase=chunkImage.Base()+retOffset;
 		r=dispHand.Process(imgBase);
-		aTest(r==KErrNone);
+		
+#ifdef __WINSCW__
+        aTest(r==KErrNotSupported);
+#else
+        aTest(r==KErrNone);
+#endif
+        
 		User::After(1000000);	// 1 sec
 		}
 
@@ -968,7 +1012,13 @@ LOCAL_C void DoCamImageCaptureTests(RDevCameraSc& aCam, RTest& aTest, TInt aCame
 			// Display the image received for 1s
 			imgBase=chunkImage.Base()+retOffset;
 			r=dispHand.Process(imgBase);
-			aTest(r==KErrNone);
+			
+#ifdef __WINSCW__
+            aTest(r==KErrNotSupported);
+#else
+            aTest(r==KErrNone);
+#endif
+            
 			User::After(1000000);	// 1 sec
 			}
 		}

@@ -51,6 +51,7 @@
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <f32dbg.h>
 #include "d_codemodifier.h"
 #include "../misc/prbs.h"

@@ -77,31 +77,45 @@ void TestAlignedAllocs()
 void TestClaimPhys()
 	{
 	TInt free=FreeRam();
+	
 	TUint32 pa=0;
-	TInt r=AllocPhysicalRam(pa,4*PageSize,0);
+	TInt r=AllocPhysicalRam(pa,4*PageSize,0);	
 	test(r==KErrNone);
 	test(FreeRam()==free-4*PageSize);
+	
 	r=FreePhysicalRam(pa,4*PageSize);
 	test(r==KErrNone);
 	test(FreeRam()==free);
-	r=ClaimPhysicalRam(pa,4*PageSize);
+	
+	r=ClaimPhysicalRam(pa,4*PageSize);	
 	test(r==KErrNone);
 	test(FreeRam()==free-4*PageSize);
+	
 	r=FreePhysicalRam(pa,3*PageSize);
 	test(r==KErrNone);
 	test(FreeRam()==free-PageSize);
+	
 	r=ClaimPhysicalRam(pa,4*PageSize);
 	test(r==KErrInUse);
 	test(FreeRam()==free-PageSize);
+	
+#ifdef MANUAL_PANIC_TEST
+//This section of the test should be run as a manual test as it results in
+// a panic due to attempting to Free an unclaimed page
 	if (HaveVirtMem())
 		{
+		test.Printf(_L("HaveVirtMem() \n"));
 		r=FreePhysicalRam(pa,4*PageSize);
+		test.Printf(_L("FreePhysicalRam() \n"));
 		test(r==KErrGeneral);
 		test(FreeRam()==free-PageSize);
 		}
+#endif
+	
 	r=FreePhysicalRam(pa+3*PageSize,PageSize);
 	test(r==KErrNone);
 	test(FreeRam()==free);
+	
 	}
 
 GLDEF_C TInt E32Main()
@@ -127,8 +141,11 @@ GLDEF_C TInt E32Main()
 	test.Next(_L("Open test LDD"));
 	r=Shadow.Open();
 	test(r==KErrNone);
-
+	
+	test.Next(_L("TestAlignedAllocs"));
 	TestAlignedAllocs();
+	
+	test.Next(_L("TestClaimPhys"));
 	TestClaimPhys();
 
 	Shadow.Close();

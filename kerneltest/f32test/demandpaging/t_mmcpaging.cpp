@@ -31,9 +31,11 @@
 RTest test(_L("T_MMCPAGING"));
 
 #include <e32rom.h>
+#include <e32svr.h>
 #include <u32hal.h>
 #include <f32file.h>
 #include <f32dbg.h>
+#include <d32locd.h>
 #include <hal.h>
 #define __TEST_PAGING_MEDIA_DRIVER__
 #include "mmcdp.h"

@@ -45,18 +45,18 @@ TInt TUsbcEndpoint::RxBytesAvailable() const
 	return iDmaBuffers->RxBytesAvailable();
 	}
 
-
-TInt TUsbcEndpoint::BufferTotalSize() const
-	{
-	return iDmaBuffers->BufferTotalSize();
-	}
-
-
-TUint8* TUsbcEndpoint::SetBufferBase(TUint8* aBase)
-	{
-	return iDmaBuffers->SetBufferBase(aBase);
-	}
-
+TInt TUsbcEndpoint::BufferSize() const
+    {
+    return iDmaBuffers->BufferSize();
+    }
+TInt TUsbcEndpoint::SetBufferAddr( TInt aBufInd, TUint8* aBufAddr)
+    {
+    return iDmaBuffers->SetBufferAddr(aBufInd, aBufAddr);
+    }
+TInt TUsbcEndpoint::BufferNumber() const
+    {
+    return iDmaBuffers->BufferNumber();
+    }
 
 void TUsbcEndpoint::SetTransferInfo(TEndpointTransferInfo* aTransferInfo)
 	{

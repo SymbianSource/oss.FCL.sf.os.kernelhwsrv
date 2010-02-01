@@ -122,6 +122,7 @@ const TLinAddr KDefragAltStackAddr		=0xC001F000u;
 const TLinAddr KDemandPagingTempAddr	=0xC0020000u;	// used by demand paging (size of region is 0x10000)
 const TLinAddr KPageInfoMap				=0xC0030000u;
 
+
 // Domain usage
 //
 // 0 All, except...
@@ -129,6 +130,13 @@ const TLinAddr KPageInfoMap				=0xC0030000u;
 // 2 IPC Alias chunk
 // 15 User memory when __USER_MEMORY_GUARDS_ENABLED__ defined
 const TInt KIPCAliasDomain = 2;
+const TInt KNumArmDomains = 16;								/**< @internalTechnology */
+
+// default domain access is client of domain 0, no access to rest
+const TUint32 KDefaultDomainAccess			 = 0x00000001u;	/**< @internalTechnology */
+const TUint32 KSupervisorInitialDomainAccess = 0x00000001u;	/**< @internalTechnology */
+
+#define	PDE_IN_DOMAIN(aPde, aDomain)	(((aPde) & ~(15 << 5)) | ((aDomain) << 5))
 
 // Constants for ARM V6 MMU
 const TInt KPageShift=12;
@@ -233,14 +241,6 @@ const TPde KPdeNotPresentEntry=0;							/**< @internalTechnology */
 const TPte KPteNotPresentEntry=0;							/**< @internalTechnology */
 const TPte KPtePresentMask=KArmV6PteTypeMask;				/**< @internalTechnology */
 const TPte KPteTypeMask=KArmV6PteTypeMask;					/**< @internalTechnology */
-
-//
-// default domain access is client of domain 0, no access to rest
-const TUint32 KDefaultDomainAccess=0x00000001u;				/**< @internalTechnology */
-const TUint32 KSupervisorInitialDomainAccess=0x00000001u;	/**< @internalTechnology */
-
-const TInt KNumArmDomains=16; /**< @internalTechnology */
-//
 
 const TUint32 KTTBRExtraBitsMask	=0x0000007f;	/**< @internalTechnology */	// Extra bits in TTBR in addition to physical address
 

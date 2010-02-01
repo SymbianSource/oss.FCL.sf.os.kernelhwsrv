@@ -127,10 +127,9 @@ const TPte KPteNotPresentEntry=0;
 const TPte KPtePresentMask=0x3;
 const TPte KPteTypeMask=0x3;
 
-//
-// default domain access is 0=manager, 1=client, 2,3=no access, 4-15=client
-const TUint32 KDefaultDomainAccess=0x55555507u;			/**< @internalComponent */
 
+// Domain usage
+//
 /** @internalComponent */
 enum TArmDomain
 	{
@@ -142,9 +141,11 @@ enum TArmDomain
 	ENumDomains=16
 	};
 
-const TUint32 KSupervisorInitialDomainAccess=0x55555557u;	/**< @internalTechnology */
+// default domain access is 0=manager, 1=client, 2,3=no access, 4-15=client
+const TUint32 KDefaultDomainAccess			 = 0x55555507u;	/**< @internalComponent */
+const TUint32 KSupervisorInitialDomainAccess = 0x55555557u;	/**< @internalTechnology */
 
-const TUint32 KManzanoTTBRExtraBits		=0x00000018;	/**< @internalTechnology On Manzano, paga table walk is L2 cachable*/
+const TUint32 KManzanoTTBRExtraBits		=0x00000018;	/**< @internalTechnology On Manzano, page table walk is L2 cachable*/
 
 const TInt KPageInfoShift = 5;
 

@@ -67,3 +67,4 @@ Win32_Library		msvcrt.lib
 END
 
 capability		all
+SMPSAFE

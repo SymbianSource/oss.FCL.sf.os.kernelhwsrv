@@ -1,0 +1,21 @@
+// e32test\group\t_smpsoakspin.mmp
+//
+// Copyright (c) 2005 Symbian Ltd. All rights reserved.
+//
+
+target			t_smpsoakspin.exe        
+targettype		exe
+sourcepath		../smpsoak
+source			t_smpsoakspin.cpp
+library			euser.lib hal.lib dptest.lib
+capability		all
+vendorid		0x70000001
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+SMPSAFE
+
+// This binary goes in rom and is not paged
+romtarget +
+unpagedcode
+unpageddata

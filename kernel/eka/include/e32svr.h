@@ -24,6 +24,7 @@
 #include <d32locd.h>
 #include <e32notif.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <e32event.h>
 #include <e32event_private.h>
 #include <e32ktran.h>

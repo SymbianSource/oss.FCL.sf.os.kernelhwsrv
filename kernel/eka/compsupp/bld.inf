@@ -46,7 +46,7 @@ compsupp.iby                /epoc32/rom/include/
 
 PRJ_MMPFILES
 
-#ifndef GCCXML
+#if !defined GCCXML && !defined GCCE
 
     symcpp/scppnwdl.mmp
     rvct/dfprvct-thunk.mmp

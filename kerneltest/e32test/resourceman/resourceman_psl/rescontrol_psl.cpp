@@ -104,6 +104,11 @@ TInt DSimulatedPowerResourceController::DoInitController()
 		Kern::Printf("DFC Queue creation failed");
 		return r;
 		}
+
+#ifdef CPU_AFFINITY_ANY
+	NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);			
+#endif
+
 	//Call the resource controller to set the DFCQ
 	SetDfcQ(iDfcQ);
 	

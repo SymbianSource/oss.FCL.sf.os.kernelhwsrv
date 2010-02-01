@@ -26,11 +26,21 @@
 #include <e32base.h>
 #endif
 
+#ifndef SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT
+// Old implementation including platform e32svr.h (which includes the several other platform headers)...
 #if !defined(__E32SVR_H__)
 #include <e32svr.h>
 #endif
-
 #include <e32ldr.h>
+#else
+// New implementation including only the public headers needed for f32file.h...
+#include <e32ldr.h>
+// And the public headers previously included via e32svr.h but otherwise not needed for f32file.h...
+#include <e32def.h>
+#include <e32event.h>
+#include <e32debug.h>
+#include <e32keys.h> 
+#endif
 
 
 /**
@@ -571,30 +581,26 @@ must be dynamically updated.
 	ENotifyDisk=0x40
 	};
 
-enum TNotifyDismountMode
 /**
-@publishedAll
-@released
+    @publishedAll
+    @released
 
-Notification modes for safe media removal notification API
+    Notification modes for safe media removal notification API
 
-@see RFs::NotifyDismount
+    @see RFs::NotifyDismount
 */
+enum TNotifyDismountMode
 	{
-	/**
-	Used by a client to register for notification of pending dismount.
-		- This is the default behaviour for RFs::NotifyDismount
-	*/
+	/** Used by a client to register for notification of pending dismount. This is the default behaviour for RFs::NotifyDismount*/
 	EFsDismountRegisterClient=0x01,
 	
-	/**
-	Used to notify clients of a pending dismount.
-	*/
+	/** 
+    Used for graceful file system dismounting with notifying clients of a pending dismount. 
+    If all clients have responded by RFs::AllowDismount(), the file system will be dismounted. 
+    */
 	EFsDismountNotifyClients=0x02,
 	
-	/**
-	Used to forcibly dismount the file system without notifying clients.
-	*/
+	/**  Used to forcibly dismount the file system without notifying clients. */
 	EFsDismountForceDismount=0x03,
 	};
 
@@ -1452,14 +1458,14 @@ public:
     The type of media mounted on the drive.
     */
 	TMediaType iType;
- 
- 
+
+
     /**
     Indicates whether the drive supports a battery, and if so, its state.
     */
     TBatteryState iBattery;
- 
- 
+
+
     /**
     The drive attributes.
     
@@ -1468,7 +1474,8 @@ public:
     @see KDriveAttRedirected
     @see KDriveAttSubsted
     @see KDriveAttInternal
-    @see KDriveAttRemovable
+    @see KDriveAttRemovable 
+    @see KDriveAttExternal 
     */
 	TUint iDriveAtt;
  
@@ -1484,11 +1491,12 @@ public:
     @see KMediaAttLocked
     */
 	TUint iMediaAtt;
-private:	
+
+
 	/**
-	Reserved for future expansion
+	The type of interface used to connect to the media.
 	*/
-	TUint32 iReserved;	
+	TConnectionBusType iConnectionBusType;
 	};
 
 

@@ -52,6 +52,7 @@ END
 
 #else
 
+
 USERINCLUDE       ../sfat
 USERINCLUDE       ../sfat/inc
 USERINCLUDE       ../sfile
@@ -70,8 +71,8 @@ USERINCLUDE   ../inc
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 LIBRARY          hal.lib
-
 #endif
+
 
 SOURCEPATH  .
 DOCUMENT         ../group/release.txt

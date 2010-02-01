@@ -245,7 +245,11 @@ TInt DLatency::DoCreate(TInt /*aUnit*/, const TDesC8* /*anInfo*/, const TVersion
 	TInt r = Kern::DynamicDfcQCreate(iRtDfcQ, KNumPriorities-1,KThreadName);
 
 	if (r != KErrNone)
-		return r; 	
+		return r;
+	
+#ifdef CPU_AFFINITY_ANY
+	NKern::ThreadSetCpuAffinity((NThread*)(iRtDfcQ->iThread), KCpuAffinityAny);			
+#endif
 
 	iMsDfc.SetDfcQ(iRtDfcQ);
 	iClient=&Kern::CurrentThread();

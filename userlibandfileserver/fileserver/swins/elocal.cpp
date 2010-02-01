@@ -374,7 +374,14 @@ void CLocalMountCB::DeleteL(const TDesC& aName)
 
 	if (IsRomDrive())
 		User::Leave(KErrAccessDenied);
-	TFileName n;
+	
+    //-- check entry attributes
+    TEntry entry;
+    EntryL(aName, entry);
+	if (entry.IsDir() ||  entry.IsReadOnly())
+	    User::Leave(KErrAccessDenied);
+
+    TFileName n;
 	MapFileNameL(n,Drive().DriveNumber(),aName);
 	BOOL b=Emulator::DeleteFile(StrPtrZL(n));
 	
@@ -947,8 +954,8 @@ void CLocalMountCB::GetShortNameL(const TDesC& aLongName,TDes& aShortName)
 	if (h==INVALID_HANDLE_VALUE)
 		User::Leave(Emulator::LastError());
 	FindClose(h);
-	if (d.cAlternateFileName[0])	// we have a dos name too
-		aShortName=(TText*)(&d.cAlternateFileName[0]);
+    if (d.cAlternateFileName[0])	// we have a dos name too
+        aShortName=(TText*)(&d.cAlternateFileName[0]);
 	else
 		aShortName=(TText*)(&d.cFileName[0]);
 	}
@@ -1411,7 +1418,7 @@ void CLocalFileCB::ReadL(TInt64 aPos,TInt& aLength,TDes8* aDes,const RMessagePtr
 	CheckPosL(aPos);
 	TInt pos=0;
 	TInt len=aLength;
-	TBuf8<0x1000> buf;
+	TBuf8<65536> buf;
 
 	if (aMessage.Handle() == KLocalMessageHandle)
 		((TPtr8* )aDes)->SetLength(0);
@@ -1471,7 +1478,7 @@ void CLocalFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aDes,const RMe
 	CheckPosL(aPos);
 	TInt pos=0;
 	TInt len=aLength;
-	TBuf8<0x1000> buf;
+	TBuf8<65536> buf;
 
 	while (len)
 		{
@@ -1713,7 +1720,7 @@ TInt CLocal::DefaultPath(TDes& aPath) const
 
 void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 //
-// Return the drive info. iBatteryState already set.
+// Return the drive info.
 //
 	{
 
@@ -1725,6 +1732,7 @@ void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 		anInfo.iType=EMediaRom;
 		anInfo.iMediaAtt=KMediaAttWriteProtected;
 		anInfo.iDriveAtt=KDriveAttRom|KDriveAttInternal;
+		anInfo.iConnectionBusType=EConnectionBusInternal;
 		return;
 		}
 	if (aDriveNumber==EDriveC)
@@ -1732,6 +1740,7 @@ void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 		anInfo.iType=EMediaHardDisk;
 		anInfo.iMediaAtt=KMediaAttVariableSize;
 		anInfo.iDriveAtt=KDriveAttLocal|KDriveAttInternal;
+		anInfo.iConnectionBusType=EConnectionBusInternal;
 		return;
 		}
 	TFileName envValue;
@@ -1739,6 +1748,7 @@ void CLocal::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 		{
 		anInfo.iType=EMediaHardDisk;
 		anInfo.iDriveAtt=KDriveAttLocal|KDriveAttInternal;
+		anInfo.iConnectionBusType=EConnectionBusInternal;
 		return;		
 		}
 	anInfo.iType=EMediaNotPresent;

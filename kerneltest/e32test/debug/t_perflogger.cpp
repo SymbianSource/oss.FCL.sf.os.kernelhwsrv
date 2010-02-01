@@ -481,6 +481,7 @@ void MainL(void)
     test(error == KErrNone);
 	
 	trace.Empty();
+	trace.SetFilter(BTrace::EThreadIdentification,0);
 	
     
     

@@ -142,7 +142,7 @@ no request is made on its TRequestStatus, or vice-versa. This panic happens
 no earlier than the next time that the active scheduler assesses which
 objects are ready to run, and may happen much later. This panic is termed 
 a 'stray event' because it indicates that some entity has sent an event 
-to this thread, but this thread is not in a state ready to handle it.
+to the active scheduler thread, but this thread is not in a state ready to handle it.
 
 @see CActive::IsActive
 @see CActive::RunL

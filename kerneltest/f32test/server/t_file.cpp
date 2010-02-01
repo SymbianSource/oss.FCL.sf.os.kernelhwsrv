@@ -3032,13 +3032,13 @@ void CallTestsL()
 
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
     test(nRes==KErrNone);
-
+    
     PrintDrvInfo(TheFs, gDriveNum);
 
     //-- FAT Supports short file names
     if(Is_Fat(TheFs, gDriveNum))
         gShortFileNamesSupported = ETrue;
-    else
+    
     if(Is_Win32(TheFs, gDriveNum)) 
     {//-- find out if this is NTFS and if it supports short names (this feature can be switched OFF)
         
@@ -3052,14 +3052,16 @@ void CallTestsL()
         
         nRes = TheFs.Delete(KLongFN);
         test(nRes==KErrNone);
+
+        DeleteTestDirectory();
+    }
+    else
+    {
+        nRes = FormatDrive(TheFs, gDriveNum, ETrue);
+        test(nRes==KErrNone);
     }
 
-
-
-
-	DeleteTestDirectory();
 	CreateTestDirectory(_L("\\F32-TST\\TFILE\\"));
-
 
 	testFileRename();
 	testSetSize();

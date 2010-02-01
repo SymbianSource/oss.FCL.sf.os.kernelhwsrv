@@ -152,12 +152,11 @@ LOCAL_C void printDriveInfo(TInt aDrive,TDriveInfo& anInfo)
 		test.Printf(_L("Formattable "));
 	if (anInfo.iMediaAtt&KMediaAttWriteProtected)
 		test.Printf(_L("WProtected "));
-	test.Printf(_L("\n   BATTERY="));
-	switch(anInfo.iBattery)
+	test.Printf(_L("\n   CONNECTION BUS="));
+	switch(anInfo.iConnectionBusType)
 		{
-	case EBatNotSupported: test.Printf(_L("Not supported\n")); break;
-	case EBatGood: test.Printf(_L("Good\n")); break;
-	case EBatLow: test.Printf(_L("Low\n")); break;
+	case EConnectionBusInternal: test.Printf(_L("Internal\n")); break;
+	case EConnectionBusUsb: test.Printf(_L("USB\n")); break;
 	default:
 		test.Printf(_L("Unknown value\n"));
 		}
@@ -285,7 +284,7 @@ LOCAL_C void testDriveInfo(TInt aDrive,TDriveInfo& anInfo)
 //
 	{
 
-	test(anInfo.iBattery==EBatLow || anInfo.iBattery==EBatGood || anInfo.iBattery==EBatNotSupported);
+	test(anInfo.iConnectionBusType==EConnectionBusInternal || anInfo.iConnectionBusType==EConnectionBusUsb);
 	
 	if (aDrive==EDriveZ)
 		{
@@ -1134,7 +1133,7 @@ LOCAL_C void testSubst()
 	r=TheFs.Volume(w,EDriveO);
 	test(r==KErrNone);
 	test(w.iDrive.iType==v.iDrive.iType);
-	test(w.iDrive.iBattery==v.iDrive.iBattery);
+	test(w.iDrive.iConnectionBusType==v.iDrive.iConnectionBusType);
 	test(w.iDrive.iDriveAtt==KDriveAttSubsted);
 	test(w.iDrive.iMediaAtt==v.iDrive.iMediaAtt);
 	test(w.iUniqueID==v.iUniqueID);
@@ -1151,7 +1150,7 @@ LOCAL_C void testSubst()
 	test(d.iDriveAtt==KDriveAttSubsted);
 	test(d.iMediaAtt==origDI.iMediaAtt);
 	test(d.iType==origDI.iType);
-	test(d.iBattery==origDI.iBattery);
+	test(d.iConnectionBusType==origDI.iConnectionBusType);
 
 
 	test.Next(_L("Test real name"));

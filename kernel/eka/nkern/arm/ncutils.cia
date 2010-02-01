@@ -364,8 +364,9 @@ __NAKED__ EXPORT_C TBool BTrace::OutX(TUint32 a0, TUint32 a1, TUint32 a2, TUint3
 	// set r2 = context id
 	asm("ldrb	r4, [lr, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
 	asm("mrs	r2, cpsr");
-	asm("and	r2, r2, #3");
+	asm("and	r2, r2, #0x0f");
 	asm("cmp	r2, #3");
+	asm("movhi	r2, #2");		// r2 = context ID => 1 for FIQ, 2 for IRQ/ABT/UND/SYS
 	asm("cmpeq	r4, #0");
 	asm("ldreq	r2, [lr, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
 
@@ -399,8 +400,9 @@ __NAKED__ EXPORT_C TBool BTrace::OutNX(TUint32 a0, TUint32 a1, TUint32 a2, const
 	// set r2 = context id
 	asm("ldrb	r4, [lr, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
 	asm("mrs	r2, cpsr");
-	asm("and	r2, r2, #3");
+	asm("and	r2, r2, #0x0f");
 	asm("cmp	r2, #3");
+	asm("movhi	r2, #2");		// r2 = context ID => 1 for FIQ, 2 for IRQ/ABT/UND/SYS
 	asm("cmpeq	r4, #0");
 	asm("ldreq	r2, [lr, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
 
@@ -423,8 +425,9 @@ __NAKED__ EXPORT_C TBool BTrace::OutBig(TUint32 a0, TUint32 a1, const TAny* aDat
 	asm("stmdb	sp!, {lr}");
 	asm("ldrb	lr, [r12, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
 	asm("mrs	r4, cpsr");
-	asm("and	r4, r4, #3");
+	asm("and	r4, r4, #0x0f");
 	asm("cmp	r4, #3");
+	asm("movhi	r4, #2");		// r4 = context ID => 1 for FIQ, 2 for IRQ/ABT/UND/SYS
 	asm("cmpeq	lr, #0");
 	asm("ldreq	r4, [r12, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
 	asm("stmdb	sp!, {r4}");
@@ -469,8 +472,9 @@ __NAKED__ TBool SBTraceData::CheckFilter2(TUint32 aUid)
 	asm("mrs	r2, cpsr");
 	// r2 = cpsr
 	asm("ldrb	lr, [r12, #%a0]" : : "i" _FOFF(TScheduler,iInIDFC));
-	asm("and	r4, r2, #3");
+	asm("and	r4, r2, #0x0f");
 	asm("cmp	r4, #3");
+	asm("movhi	r4, #2");		// r4 = context ID => 1 for FIQ, 2 for IRQ/ABT/UND/SYS
 	asm("cmpeq	lr, #0");
 	asm("ldreq	lr, [r12, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
 	asm("ldreq	r4, [r12, #%a0]" : : "i" _FOFF(TScheduler,iCurrentThread));
@@ -524,7 +528,6 @@ __NAKED__ TBool SBTraceData::CheckFilter2(TUint32 aUid)
 	asm("mov	r2, r4"); // r2 = context id
 	__POPRET("r4-r6,");
 	}
-
 
 __NAKED__ EXPORT_C TBool BTrace::OutFiltered(TUint32 a0, TUint32 a1, TUint32 a2, TUint32 a3)
 	{

@@ -125,10 +125,6 @@ void DSimulatedI2cDevice::GetCaps(TDes8& aDes) const
 	aDes.Copy((TUint8*)&caps,size);
     }
 
-
-DSimulatedI2cDevice* gDummyDevice;
-
-
 // supported channels for this implementation
 static DIicBusChannel* ChannelPtrArray[NUM_CHANNELS];
 
@@ -136,12 +132,6 @@ static DIicBusChannel* ChannelPtrArray[NUM_CHANNELS];
 //DECLARE_EXTENSION_WITH_PRIORITY(BUS_IMPLMENTATION_PRIORITY)	
 DECLARE_STANDARD_PDD()		// I2c test driver to be explicitly loaded as an LDD, not kernel extension
 	{	
-	if(gDummyDevice == NULL)
-		gDummyDevice = new DSimulatedI2cDevice;
-	if(gDummyDevice == NULL)
-		return NULL;
-	I2C_PRINT(("\n\nI2C PDD, channel creation loop follows ...\n"));
-
 #ifndef STANDALONE_CHANNEL
 	DIicBusChannel* chan=NULL;
 	for(TInt i=0; i<NUM_CHANNELS; i++)
@@ -235,7 +225,7 @@ DECLARE_STANDARD_PDD()		// I2c test driver to be explicitly loaded as an LDD, no
 		return NULL;
 		}
 #endif
-	return gDummyDevice;
+	return new DSimulatedI2cDevice;
 	}
 
 

@@ -439,7 +439,7 @@ TPde Mmu::BlankSectionPde(TMemoryAttributes aAttributes, TUint aPteType)
 	{
 	// reuse existing functions rather than duplicating the logic
 	TPde pde = BlankPde(aAttributes);
-	TPde pte = BlankPte(aAttributes, aPteType);
+	TPte pte = BlankPte(aAttributes, aPteType);
 	return PageToSectionEntry(pte, pde);
 	}
 
@@ -882,11 +882,13 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	// Now we have the os asid check access to kernel memory.
 	if(aAddr >= KUserMemoryLimit && osAsid != (TUint)KKernelOsAsid)
 		{
+		NKern::ThreadEnterCS();
+		MmuLock::Unlock();
 		if (!iAliasLinAddr)
 			{// Close the new reference as RemoveAlias won't do as iAliasLinAddr is not set.
-			aProcess->AsyncCloseOsAsid();
+			aProcess->AsyncCloseOsAsid();	// Asynchronous close as this method should be quick.
 			}
-		MmuLock::Unlock();
+		NKern::ThreadLeaveCS();
 		return KErrBadDescriptor; // prevent access to supervisor only memory
 		}
 
@@ -896,13 +898,15 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 		// address is in global section, don't bother aliasing it...
 		if (!iAliasLinAddr)
 			{// Close the new reference as not required.
-			aProcess->AsyncCloseOsAsid();
+			NKern::ThreadEnterCS();
+			MmuLock::Unlock();
+			aProcess->AsyncCloseOsAsid(); // Asynchronous close as this method should be quick.
+			NKern::ThreadLeaveCS();
 			}
 		else
 			{// Remove the existing alias as it is not required.
-			DoRemoveAlias(iAliasLinAddr);
+			DoRemoveAlias(iAliasLinAddr);	// Releases mmulock.
 			}
-		MmuLock::Unlock();
 		aAliasAddr = aAddr;
 		TInt maxSize = KChunkSize-(aAddr&KChunkMask);
 		aAliasSize = aSize<maxSize ? aSize : maxSize;
@@ -913,7 +917,7 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	TPde* pd = Mmu::PageDirectory(osAsid);
 	TInt pdeIndex = aAddr>>KChunkShift;
 	TPde pde = pd[pdeIndex];
-	pde = (pde&~(0xf<<5))|(KIPCAliasDomain<<5); // change domain for PDE
+	pde = PDE_IN_DOMAIN(pde, KIPCAliasDomain);	// change domain for PDE
 	// Get os asid, this is the current thread's process so no need for reference.
 	TUint32 local_asid = ((DMemModelProcess*)iOwningProcess)->OsAsid();
 #ifdef __SMP__
@@ -982,9 +986,7 @@ void DMemModelThread::RemoveAlias()
 		{
 		MmuLock::Lock();
 
-		DoRemoveAlias(addr);
-
-		MmuLock::Unlock();
+		DoRemoveAlias(addr);	// Unlocks mmulock.
 		}
 	}
 
@@ -993,6 +995,7 @@ void DMemModelThread::RemoveAlias()
 Remove the alias mapping.
 
 @pre Mmulock held
+@post MmuLock released.
 */
 void DMemModelThread::DoRemoveAlias(TLinAddr aAddr)
 	{
@@ -1011,10 +1014,16 @@ void DMemModelThread::DoRemoveAlias(TLinAddr aAddr)
 	NKern::EndFreezeCpu(iCpuRestoreCookie);
 	iCpuRestoreCookie = -1;
 #endif
-	// Must close the os asid while the mmu lock is held to prevent it being 
-	// leaked, however this requires that it is closed asynchronously as can't
-	// delete os asid with mmu lock held.
-	iAliasProcess->AsyncCloseOsAsid();
+
+	// Must close the os asid while in critical section to prevent it being 
+	// leaked.  However, we can't hold the mmu lock so we have to enter an 
+	// explict crtical section. It is ok to release the mmu lock as the 
+	// iAliasLinAddr and iAliasProcess members are only ever updated by the 
+	// current thread.
+	NKern::ThreadEnterCS();
+	MmuLock::Unlock();
+	iAliasProcess->AsyncCloseOsAsid(); // Asynchronous close as this method should be quick.
+	NKern::ThreadLeaveCS();
 	}
 
 

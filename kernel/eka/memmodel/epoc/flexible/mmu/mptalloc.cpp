@@ -379,7 +379,28 @@ void PageTableAllocator::TPtPageAllocator::Init2(TUint aNumInitPages)
 
 	iUpperAllocator = TBitMapAllocator::New(KMaxPageTablePages,ETrue);
 	__NK_ASSERT_ALWAYS(iUpperAllocator);
-	iUpperWaterMark = KMaxPageTablePages;
+	
+	__ASSERT_COMPILE(KMaxPageTablePages > (TUint)KMinUnpinnedPagedPtPages);	// Unlikely to be untrue.
+	iUpperWaterMark = KMaxPageTablePages - KMinUnpinnedPagedPtPages;
+	iPinnedPageTablePages = 0;	// OK to clear this without MmuLock as only one thread running so far.
+	}
+
+
+static TUint32 RandomSeed = 33333;
+
+TUint PageTableAllocator::TPtPageAllocator::RandomPagedPtPage()
+	{
+	__NK_ASSERT_DEBUG(PageTablesLockIsHeld());
+
+	// Pick an allocated page at random, from iUpperWaterMark - KMaxPageTablePages.
+	RandomSeed = RandomSeed * 69069 + 1; // next 'random' number
+	TUint allocRange = KMaxPageTablePages - iUpperWaterMark - 1;
+	TUint bit = (TUint64(RandomSeed) * TUint64(allocRange)) >> 32;
+
+	// All page table pages should be allocated or we shouldn't be stealing one at random.
+	__NK_ASSERT_DEBUG(iUpperAllocator->NotFree(bit, 1));
+
+	return KMaxPageTablePages - 1 - bit;
 	}
 
 
@@ -390,39 +411,53 @@ TInt PageTableAllocator::TPtPageAllocator::Alloc(TBool aDemandPaged)
 	if(aDemandPaged)
 		{
 		TInt bit = iUpperAllocator->Alloc();
-		if(bit<0)
-			return bit;
-		pageIndex = KMaxPageTablePages-1-bit;
-		if(pageIndex<iUpperWaterMark)
+		// There are always unpaged page tables so iUpperAllocator will always have 
+		// at least one free bit.
+		__NK_ASSERT_DEBUG(bit >= 0);
+
+		pageIndex = KMaxPageTablePages - 1 - bit;
+
+		if(pageIndex < iUpperWaterMark)
 			{
 			// new upper watermark...
-			if((pageIndex&~(KPageTableGroupSize-1))<=iLowerWaterMark)
+			if((pageIndex & ~(KPageTableGroupSize - 1)) <= iLowerWaterMark)
 				{
 				// clashes with other bitmap allocator, so fail..
 				iUpperAllocator->Free(bit);
+				TRACE(("TPtPageAllocator::Alloc too low iUpperWaterMark %d ",iUpperWaterMark));
 				return -1;
 				}
+			// Hold mmu lock so iUpperWaterMark isn't read by pinning before we've updated it.
+			MmuLock::Lock();
 			iUpperWaterMark = pageIndex;
+			MmuLock::Unlock();
 			TRACE(("TPtPageAllocator::Alloc new iUpperWaterMark=%d",pageIndex));
 			}
 		}
 	else
 		{
 		TInt bit = iLowerAllocator->Alloc();
-		if(bit<0)
+		if(bit < 0)
 			return bit;
 		pageIndex = bit;
-		if(pageIndex>iLowerWaterMark)
-			{
-			// new upper watermark...
-			if(pageIndex>=(iUpperWaterMark&~(KPageTableGroupSize-1)))
+		if(pageIndex > iLowerWaterMark)
+			{// iLowerAllocator->Alloc() should only pick the next bit after iLowerWaterMark.
+			__NK_ASSERT_DEBUG(pageIndex == iLowerWaterMark + 1);
+			MmuLock::Lock();
+			// new lower watermark...
+			if(	pageIndex >= (iUpperWaterMark & ~(KPageTableGroupSize - 1)) ||
+				AtPinnedPagedPtsLimit(iUpperWaterMark, pageIndex, iPinnedPageTablePages))
 				{
-				// clashes with other bitmap allocator, so fail..
+				// clashes with other bitmap allocator or it would reduce the amount 
+				// of available unpinned paged page tables too far, so fail..
+				MmuLock::Unlock();
 				iLowerAllocator->Free(bit);
+				TRACE(("TPtPageAllocator::Alloc iLowerWaterMark=%d",iLowerWaterMark));
 				return -1;
 				}
 			iLowerWaterMark = pageIndex;
-			TRACE(("TPtPageAllocator::Alloc new iLowerWaterMark=%d",pageIndex));
+			MmuLock::Unlock();
+			TRACE(("TPtPageAllocator::Alloc new iLowerWaterMark=%d", iLowerWaterMark));
 			}
 		}
 	return pageIndex;
@@ -461,10 +496,40 @@ TBool PageTableAllocator::AllocReserve(TSubAllocator& aSubAllocator)
 	{
 	__NK_ASSERT_DEBUG(LockIsHeld());
 
+	TBool demandPaged = aSubAllocator.iDemandPaged;
+
 	// allocate page...
-	TInt ptPageIndex = iPtPageAllocator.Alloc(aSubAllocator.iDemandPaged);
-	if(ptPageIndex<0)
-		return false;
+	TInt ptPageIndex = iPtPageAllocator.Alloc(demandPaged);
+	if (ptPageIndex < 0) 
+		{
+		if (demandPaged)
+			{
+			TInt r;
+			do
+				{
+				// Can't fail to find a demand paged page table, otherwise a page fault 
+				// could fail with KErrNoMemory.  Therefore, keep attempting to steal a 
+				// demand paged page table page until successful.
+				TUint index = iPtPageAllocator.RandomPagedPtPage();
+				MmuLock::Lock();
+				TLinAddr pageTableLin = KPageTableBase + (index << (KPtClusterShift + KPageTableShift));
+				TPhysAddr ptPhysAddr = Mmu::LinearToPhysical(pageTableLin);
+				// Page tables must be allocated otherwise we shouldn't be stealing the page.
+				__NK_ASSERT_DEBUG(ptPhysAddr != KPhysAddrInvalid);
+				SPageInfo* ptSPageInfo = SPageInfo::FromPhysAddr(ptPhysAddr);
+				r = StealPage(ptSPageInfo);
+				MmuLock::Unlock();
+				}
+			while(r != KErrCompletion);
+			// Retry the allocation now that we've stolen a page table page.
+			ptPageIndex = iPtPageAllocator.Alloc(demandPaged);
+			__NK_ASSERT_DEBUG(ptPageIndex >= 0);
+			}		
+		else
+			{
+			return EFalse;
+			}
+		}
 
 	// commit memory for page...
 	__NK_ASSERT_DEBUG(iPageTableMemory); // check we've initialised iPageTableMemory
@@ -1107,10 +1172,22 @@ TInt PageTableAllocator::MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInf
 	// We don't move page table or page table info pages, however, if this page 
 	// is demand paged then we may be able to discard it.
 	MmuLock::Lock();
-	if (!(iPtPageAllocator.IsDemandPaged(aOldPageInfo)))
+	if (aOldPageInfo->Owner() == iPageTableInfoMemory)
 		{
-		MmuLock::Unlock();
-		return KErrNotSupported;
+		if (!(iPtPageAllocator.IsDemandPagedPtInfo(aOldPageInfo)))
+			{
+			MmuLock::Unlock();
+			return KErrNotSupported;
+			}
+		}
+	else
+		{
+		__NK_ASSERT_DEBUG(aOldPageInfo->Owner() == iPageTableMemory);
+		if (!(iPtPageAllocator.IsDemandPagedPt(aOldPageInfo)))
+			{
+			MmuLock::Unlock();
+			return KErrNotSupported;
+			}
 		}
 	if (aOldPageInfo->PagedState() == SPageInfo::EPagedPinned)
 		{// The page is pinned so don't attempt to discard it as pinned pages 
@@ -1125,7 +1202,7 @@ TInt PageTableAllocator::MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInf
 	}
 
 
-void PageTableAllocator::PinPageTable(TPte* aPageTable, TPinArgs& aPinArgs)
+TInt PageTableAllocator::PinPageTable(TPte* aPageTable, TPinArgs& aPinArgs)
 	{
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	__NK_ASSERT_DEBUG(SPageTableInfo::FromPtPtr(aPageTable)->IsDemandPaged());
@@ -1135,6 +1212,12 @@ void PageTableAllocator::PinPageTable(TPte* aPageTable, TPinArgs& aPinArgs)
 	// pin page with page table in...
 	TPhysAddr pagePhys = Mmu::PageTablePhysAddr(aPageTable);
 	SPageInfo* pi = SPageInfo::FromPhysAddr(pagePhys);
+	if (!pi->PinCount())
+		{// Page is being pinned having previously been unpinned.
+		TInt r = iPtPageAllocator.PtPagePinCountInc();
+		if (r != KErrNone)
+			return r;
+		}
 	ThePager.Pin(pi,aPinArgs);
 
 	// pin page with page table info in...
@@ -1142,6 +1225,7 @@ void PageTableAllocator::PinPageTable(TPte* aPageTable, TPinArgs& aPinArgs)
 	pagePhys = Mmu::UncheckedLinearToPhysical((TLinAddr)pti,KKernelOsAsid);
 	pi = SPageInfo::FromPhysAddr(pagePhys);
 	ThePager.Pin(pi,aPinArgs);
+	return KErrNone;
 	}
 
 
@@ -1157,6 +1241,11 @@ void PageTableAllocator::UnpinPageTable(TPte* aPageTable, TPinArgs& aPinArgs)
 	pagePhys = Mmu::PageTablePhysAddr(aPageTable);
 	pi = SPageInfo::FromPhysAddr(pagePhys);
 	ThePager.Unpin(pi,aPinArgs);
+
+	if (!pi->PinCount())
+		{// This page table page is no longer pinned.
+		iPtPageAllocator.PtPagePinCountDec();
+		}
 	}
 
 

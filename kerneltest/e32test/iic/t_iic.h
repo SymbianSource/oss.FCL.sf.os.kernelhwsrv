@@ -17,6 +17,7 @@
 #ifndef __T_IIC_H__
 #define __T_IIC_H__
 
+#include <e32ver.h>
 
 const TInt KIicClientMajorVersionNumber = 1;
 const TInt KIicClientMinorVersionNumber = 0;

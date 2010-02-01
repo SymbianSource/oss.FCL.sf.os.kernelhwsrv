@@ -849,7 +849,7 @@ EXPORT_C TInt Kern::ShBufClose(TShBuf* aBuf)
 */
 EXPORT_C TInt Kern::ShBufMakeHandleAndOpen(TShBuf* aBuf, DThread* aThread)
 	{
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL, "Kern::ShPoolMakeHandleAndOpen");
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL, "Kern::ShBufMakeHandleAndOpen");
 
 	if (!aThread)
 		aThread = TheCurrentThread;

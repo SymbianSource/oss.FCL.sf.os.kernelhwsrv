@@ -24,6 +24,8 @@
 
 class MTransport;
 class MProtocol;
+class THostMassStorageConfig;
+class TReadWrite;
 
 /**
 This class represents a Logical Unit supporting SCSI Mass Storage Class. The

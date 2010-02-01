@@ -36,3 +36,4 @@ vendorid 0x70000001
 uid		0x100000af
 
 capability		all
+SMPSAFE

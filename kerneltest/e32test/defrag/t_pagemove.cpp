@@ -371,7 +371,7 @@ void TestUserData(RPageMove& pagemove, TUint8* array, TInt size, TBool aPagedDat
 		_T_PRINTF(_L("Move first array page repeatedly\n"));
 		TBool success=EFalse;
 		TUint inuse = 0;
-		array[0] = array[0];	// Ensure the page of the first entry is paged in for the first move.
+		*(volatile TUint8*)array = *array;	// Ensure the page of the first entry is paged in for the first move.
 		for (TInt i=0; i < Repitions*2; i++)
 			{
 			TInt r = pagemove.TryMovingUserPage(firstpage, ETrue);
@@ -403,7 +403,7 @@ void TestUserData(RPageMove& pagemove, TUint8* array, TInt size, TBool aPagedDat
 		// pinned non-paged memory as virtual pinning is a nop for unpaged memory.
 		test.Printf(_L("inuse test removed; inuse %d\n"),inuse);
 		//test(inuse || aPagedData || state == EVirtualPinning);
-		test(success || state == EPhysicalPinning || aPagedData);
+		test(success || state == EPhysicalPinning);
 
 		ThreadDie = ETrue;
 		EndThreads(numThreads, userDataThread, s);
@@ -457,6 +457,7 @@ void TestMovingCode(RPageMove& aPagemove, TTestFunction aFunc, TBool aPaged=EFal
 		StartThreads(numThreads, codeRunThread, s, threadFunc, threadArgs);
 
 		_T_PRINTF(_L("Move first code page repeatedly\n"));
+		test_Equal(KArbitraryNumber, aFunc());	
 		TBool inuse=EFalse, success=EFalse;
 		for (TInt i=0; i < Repitions; i++)
 			{
@@ -584,8 +585,15 @@ void TestMovingRealtime(RPageMove& aPagemove, TUint8* aArray, TInt aSize, TTestF
 			_T_PRINTF(_L("Move page repeatedly\n"));
 			TBool success=EFalse, pagedOut=EFalse;
 			TUint inuse=0;
-			if (!aCode)
-				aArray[0] = aArray[0];	// Ensure the page of the first entry is paged in for the first move.
+			if (aCode)
+				{
+				test_Equal(KArbitraryNumber, aFunc());
+				}
+			else
+				{
+				*(volatile TUint8*)aArray = *aArray;
+				}
+
 			for (TInt i=0; i < Repitions; i++)
 				{
 				TInt r = aPagemove.TryMovingUserPage(firstpage, ETrue);
@@ -616,12 +624,12 @@ void TestMovingRealtime(RPageMove& aPagemove, TUint8* aArray, TInt aSize, TTestF
 			switch (state)
 				{
 				case ENoPinning :
-					test(success || aPaged);
-					if (aPaged && realtimeState == User::ERealtimeStateOn)
+					test(success);
+					if (EExitPanic == accessThread.ExitType())
 						{
-						test_Equal(EExitPanic, accessThread.ExitType());
 						test(accessThread.ExitCategory()==_L("KERN-EXEC"));
 						test_Equal(EIllegalFunctionForRealtimeThread, accessThread.ExitReason());
+						test(aPaged && realtimeState == User::ERealtimeStateOn);
 						}
 					else
 						{
@@ -634,7 +642,9 @@ void TestMovingRealtime(RPageMove& aPagemove, TUint8* aArray, TInt aSize, TTestF
 						test_Equal(KArbitraryNumber, aFunc());
 						}
 					else
-						*aArray = *aArray;
+						{
+						*(volatile TUint8*)aArray = *aArray;
+						}
 					break;				
 				case EVirtualPinning :
 					test(!aCode || !inuse);
@@ -916,7 +926,7 @@ void TestMovingCodeChunk(RPageMove& pagemove, RChunk aChunk, TBool aPagedData)
 
 	_T_PRINTF(_L("Move code chunk page repeatedly\n"));
 	TBool success=EFalse;
-	p[0] = p[0];	// Ensure the page of the first entry is paged in for the first move.
+	*(volatile TUint8*)p = *p; // Ensure the page of the first entry is paged in for the first move.
 	for (TInt i=0; i < Repitions; i++)
 		{
 		TInt r = pagemove.TryMovingUserPage(firstpage, ETrue);
@@ -940,7 +950,7 @@ void TestMovingCodeChunk(RPageMove& pagemove, RChunk aChunk, TBool aPagedData)
 				break;
 			}
 		}
-	test(success || aPagedData);
+	test(success);
 
 	ThreadDie = ETrue;
 	User::WaitForRequest(s);

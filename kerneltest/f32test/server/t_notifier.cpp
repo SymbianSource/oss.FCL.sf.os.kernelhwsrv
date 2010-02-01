@@ -1552,7 +1552,6 @@ void HandleMultipleNotifications(RTest& aTest, SThreadPackageMultiple& aPackage,
 					    {
 					    safe_test(aTest,_pathC.Match(aFullname),__LINE__,aPackage.iLineCall);  
 					    }
-					
 					}
 				else
 					{
@@ -4273,7 +4272,7 @@ void CallTestsL()
 	// 			 and then deleted
 	//     aMaxNotifications = 1 + 2*aIterations
 	//
-	r = TestMultipleNotificationsL(_L(""),KFilename10,4,6,t_notification::EAllOps3,(TUint)TFsNotification::EAllOps,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
+	r = TestMultipleNotificationsL(_L(""),KFilename10,4,9,t_notification::EAllOps3,(TUint)TFsNotification::EAllOps,KMinNotificationBufferSize*2,(TBool)EFalse,__LINE__);
 	test(r==KErrNone);
 	//
 	// 4.	Add notification for all operations
@@ -4344,7 +4343,7 @@ void CallTestsL()
 	// and then deleted
 	//     aMaxNotifications = 1 + 2*aIterations
 	//
-	r = TestMultipleNotificationsL(_L(""),KFilename11,4,6,t_notification::EAllOps3,TFsNotification::EDelete | TFsNotification::ECreate | TFsNotification::EFileChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
+	r = TestMultipleNotificationsL(_L(""),KFilename11,4,9,t_notification::EAllOps3,TFsNotification::EDelete | TFsNotification::ECreate | TFsNotification::EFileChange,KMinNotificationBufferSize,(TBool)EFalse,__LINE__);
 	test(r==KErrNone);
 	//
 	// TFsNotification::EAttribute | TFsNotification::EDelete | TFsNotification::ECreate

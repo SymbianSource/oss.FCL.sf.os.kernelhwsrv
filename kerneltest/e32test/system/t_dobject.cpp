@@ -179,24 +179,28 @@ void TestMutexesCreated()
 	test.Next(_L("Test mutexes have been created"));
 	
 	TFullName name;
-	TFindMutex find;
+
 	for (TInt i = 0 ; i < KObjectCount ; ++i)
 		{
+		TFindMutex find(MutexName(i));
 		test(find.Next(name) == KErrNone);
 		test.Printf(_L("  %02d: found handle %08x\n"), i, find.Handle());
-		test(name == MutexName(i));
 		}
-	test(find.Next(name) == KErrNotFound);
 	}
 
 void TestMutexesDeleted()
 	{
 	test.Next(_L("Test mutexes deleted"));
 
-	TFindMutex find;
 	TFullName name;
-	test(find.Next(name) == KErrNotFound);
+
+	for (TInt i = 0 ; i < KObjectCount ; ++i)
+		{
+		TFindMutex find(MutexName(i));
+		test(find.Next(name) == KErrNotFound);
+		}
 	}
+
 
 void TestFindSpecificMutex()
 	{
@@ -275,27 +279,23 @@ void TestFindAndDeleteMutex1()
 
 	// Find and delete even mutexes
 	TFullName name;
-	TFindMutex find2(KDoubleMatch);
 	TInt i;
 	for (i = 0 ; i < KObjectCount ; i += 2)
 		{
+		TFindMutex find2(MutexName(i));
 		test(find2.Next(name) == KErrNone);
 		test.Printf(_L("  %02d: found handle %08x\n"), i, find2.Handle());
-		test(name == MutexName(i));
 		Mutexes[i].Close();
 		RMutex mutex;
 		test(mutex.Open(find2) == KErrNotFound);
 		}
-	test(find2.Next(name) == KErrNotFound);
 
 	// Check odd mutexes remaining
-	TFindMutex find;
 	for (i = 1 ; i < KObjectCount ; i += 2)
 		{
+		TFindMutex find(MutexName(i));
 		test(find.Next(name) == KErrNone);
-		test(name == MutexName(i));
 		}
-	test(find2.Next(name) == KErrNotFound);
 	}
 
 void TestFindAndDeleteMutex2()
@@ -304,29 +304,26 @@ void TestFindAndDeleteMutex2()
 
 	// Find even mutexes and delete odd
 	TFullName name;
-	TFindMutex find2(KDoubleMatch);
 	TInt i;
 	for (i = 0 ; i < KObjectCount ; i += 2)
 		{
+		TFindMutex find2(MutexName(i));
 		test(find2.Next(name) == KErrNone);
 		test.Printf(_L("  %02d: found handle %08x\n"), i, find2.Handle());
-		test(name == MutexName(i));
 		Mutexes[(i+KObjectCount-1)%KObjectCount].Close();	// -1%n = -1 or n-1, unspecified
 		RMutex mutex;
 		test(mutex.Open(find2) == KErrNone);
 		test(mutex.Name() == MutexName(i));
 		mutex.Close();
 		}
-	test(find2.Next(name) == KErrNotFound);
 
 	// Check even mutexes remaining
-	TFindMutex find;
 	for (i = 0 ; i < KObjectCount ; i += 2)
 		{
+		TFindMutex find(MutexName(i));
 		test(find.Next(name) == KErrNone);
-		test(name == MutexName(i));
 		}
-	test(find2.Next(name) == KErrNotFound);
+	
 	}
 
 void TestFindWithCreation()
@@ -334,20 +331,18 @@ void TestFindWithCreation()
 	test.Next(_L("Test finding mutexes interleaved with creation"));
 
 	TFullName name;
-	TFindMutex find;
 	
 	for (TInt i = 0 ; i < KObjectCount ; ++i)
 		{
 		test(Mutexes[i].CreateGlobal(MutexName(i)) == KErrNone);
+		TFindMutex find(MutexName(i));
 		test(find.Next(name) == KErrNone);
 		test.Printf(_L("  %02d: found handle %08x\n"), i, find.Handle());
-		test(name == MutexName(i));
 		RMutex mutex;
 		test(mutex.Open(find) == KErrNone);
 		test(mutex.Name() == MutexName(i));
 		mutex.Close();
 		}
-	test(find.Next(name) == KErrNotFound);
 	}
 
 void TestFindWithCreation2()
@@ -355,20 +350,20 @@ void TestFindWithCreation2()
 	test.Next(_L("Test finding mutexes interleaved with creation and deletion"));
 
 	TFullName name;
-	TFindMutex find;
 
 	for (TInt i = 0 ; i < KObjectCount ; ++i)
 		{
 		RMutex mutex;
 		test(mutex.CreateGlobal(MutexName(0)) == KErrNone);
+		TFindMutex find(MutexName(0));
 		test(find.Next(name) == KErrNone);
-		test.Printf(_L("  %02d: found handle %08x\n"), i, find.Handle());
 		test(name == MutexName(0));
+		test.Printf(_L("  %02d: found handle %08x\n"), i, find.Handle());
 		mutex.Close();
-		RMutex mutex2;
-		test(mutex2.Open(find) == KErrNotFound);
+
+		TFindMutex find2(MutexName(0));
+		test(find2.Next(name) == KErrNotFound);
 		}
-	test(find.Next(name) == KErrNotFound);
 	}
 
 void TestFindHandleOutOfRange()
@@ -376,12 +371,12 @@ void TestFindHandleOutOfRange()
 	test.Next(_L("Test finding mutexes when find handle index is off the end of container's array"));
 
 	TFullName name;
-	TFindMutex find;
+
 	for (TInt i = 0 ; i < KObjectCount ; ++i)
 		{
+		TFindMutex find(MutexName(i));
 		test(find.Next(name) == KErrNone);
 		test.Printf(_L("  %02d: found handle %08x\n"), i, find.Handle());
-		test(name == MutexName(i));
 		RMutex mutex;
 		test(mutex.Open(find) == KErrNone);
 		test(mutex.Name() == MutexName(i));
@@ -394,7 +389,6 @@ void TestFindHandleOutOfRange()
 				Mutexes[j].Close();
 			}
 		}
-	test(find.Next(name) == KErrNotFound);
 	}
 
 void TestFindHandles()

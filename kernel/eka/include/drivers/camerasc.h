@@ -416,6 +416,7 @@ private:
 	TInt ReAllocBufferConfigInfo(TInt aNumBuffers);
 	TInt GetSensorCaps(TAny* a1);
 	TInt GetFrameSizeCaps(TAny* a1, TAny* a2);
+	TInt GetDynamicAttribute(TInt aAttribute, TUint& aValue);
 	TInt SetDynamicAttribute(TInt aAttribute, TUint aValue);
 	inline DCameraScPdd* Pdd();
 	static void RestartDfc(TAny* aChannel);
@@ -444,6 +445,12 @@ private:
 	TDfc iPowerDownDfc;
 	/** DFC used to handle power up requests from the power manager following a transition out of system standby. */
 	TDfc iPowerUpDfc;
+	
+	// Used as a cache for values successfully set by SetDynamicAttribute().
+	TUint iBrightnessValue;
+	TUint iContrastValue;
+	TUint iColorEffectValue;
+	
 	friend class DCameraScPowerHandler;
 	friend class DBufferManager;
 	};

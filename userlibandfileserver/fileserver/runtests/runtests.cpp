@@ -475,6 +475,10 @@ void ProcessLine(const TDesC8& aLine)
 		LogMsg(_L("Test %S ERROR Could not load file, error %d"),&fullpathname,r);
 		return;
 		}
+	else
+		{
+		LogMsg(_L("Started test %S"),&fullpathname);
+		}
 	TRequestStatus ds;
 	p.NotifyDestruction(ds);	// allocate the destruction notifier early so that it doesn't get flagged as a leak by kernel heap checking in e.g., efile (DEF133800)
 	CurrTest.Set(p.FileName());

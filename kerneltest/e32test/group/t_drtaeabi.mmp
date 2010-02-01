@@ -17,13 +17,8 @@ TARGET 			t_drtaeabi.dll
 
 TARGETTYPE		dll
 
-#if defined ARMCC_2_1
-SOURCEPATH		../../../kernel/eka/compsupp/rvct2_1
-#elif defined ARMCC_2_2
-SOURCEPATH		../../../kernel/eka/compsupp/rvct2_2
-#elif defined ARMCC_3_1
-SOURCEPATH		../../../kernel/eka/compsupp/rvct3_1
-#endif
+SOURCEPATH		../../../kernel/eka/compsupp/rvct
+
 SOURCE			aeabidiv0.cpp
 SOURCE			drtaeabi.cpp
 SOURCE			type_info.cpp

@@ -20,9 +20,11 @@
 RTest test(_L("t_paginginfo"));
 
 #include <e32rom.h>
+#include <e32svr.h>
 #include <u32hal.h>
 #include <f32file.h>
 #include <f32dbg.h>
+#include <d32locd.h>
 #include "testdefs.h"
 #include <hal.h>
 

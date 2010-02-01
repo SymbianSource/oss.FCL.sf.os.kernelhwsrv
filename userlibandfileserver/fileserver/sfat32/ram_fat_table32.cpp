@@ -363,6 +363,47 @@ TInt64 CRamFatTable::DataPositionInBytes(TUint32 aCluster) const
     return(aCluster<<iOwner->ClusterSizeLog2());
     }
 
+//-----------------------------------------------------------------------------
+
+/**
+    Allocate and link a cluster chain, leaves if there are not enough free clusters.
+    Chain starts as close as possible to aNearestCluster, last cluster will be marked as EOF.
+
+    @param aNumber Number of clusters to allocate
+    @param aNearestCluster Cluster the new chain should be nearest to
+    @leave System wide error codes
+    @return The first cluster number allocated
+*/
+TUint32 CRamFatTable::AllocateClusterListL(TUint32 aNumber, TUint32 aNearestCluster)
+	{
+    __PRINT2(_L("CRamFatTable::AllocateClusterList() N:%d,NearestCL:%d"),aNumber,aNearestCluster);
+	__ASSERT_DEBUG(aNumber>0, Fault(EFatBadParameter));
+
+	if(!RequestFreeClusters(aNumber))
+    	{
+		__PRINT(_L("CRamFatTable::AllocateClusterListL - leaving KErrDirFull"));
+		User::Leave(KErrDiskFull);
+		}
+
+	//-- if this leaves for some reason, there will be no lost clusters
+    TInt firstCluster = aNearestCluster = AllocateSingleClusterL(aNearestCluster);
+	
+    
+    if (aNumber>1)
+	    {//-- if this part leaves (e.g. fail to expand the RAM drive), we will need to handle the first allocated EOC
+    	TRAPD(nRes, ExtendClusterListL(aNumber-1, (TInt&)aNearestCluster));
+        if(nRes != KErrNone)
+            {
+            __PRINT1(_L("CRamFatTable::AllocateClusterListL:ExtendClusterListL() failed with %d") ,nRes);
+            FreeClusterListL(firstCluster); //-- clean up EOC in firstCluster
+            User::Leave(nRes);
+            }
+        }
+
+
+    return firstCluster;
+	}	
+
 /**
 Allocate and mark as EOF a single cluster as close as possible to aNearestCluster,
 calls base class implementation but must Enlarge the RAM drive first. Allocated cluster RAM area will be zero-filled.
@@ -392,7 +433,7 @@ TUint32 CRamFatTable::AllocateSingleClusterL(TUint32 aNearestCluster)
 */
 void CRamFatTable::ExtendClusterListL(TUint32 aNumber, TInt& aCluster)
     {
-    __PRINT(_L("CRamFatTable::ExtendClusterListL"));
+    __PRINT2(_L("CRamFatTable::ExtendClusterListL(%d, %d)"), aNumber, aCluster);
     __ASSERT_DEBUG(aNumber>0,Fault(EFatBadParameter));
 
     iOwner->EnlargeL(aNumber<<iOwner->ClusterSizeLog2());

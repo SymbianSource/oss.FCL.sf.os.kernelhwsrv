@@ -36,3 +36,4 @@ capability          all
 macro               __SECURE_API__
 
 vendorid            0x70000001
+SMPSAFE

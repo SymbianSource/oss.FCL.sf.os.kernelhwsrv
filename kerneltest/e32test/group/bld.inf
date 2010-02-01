@@ -31,8 +31,6 @@ PRJ_EXPORTS
 
 PRJ_TESTEXPORTS
 
-../../../kernel/eka/debug/crashMonitor/inc/crashlogwalker.h				/epoc32/include/
-
 ../../../kernel/eka/include/kernel/dobject.h						/epoc32/include/kernel/			
 
 ../../../userlibandfileserver/domainmgr/inc/domainobserver.h				/epoc32/include/
@@ -154,6 +152,9 @@ d_pagingexample_2_post support
 #if defined(EPOC32) && !defined(X86)
 // Test LDD for real hardware DMA
 d_dma						support
+d_dma2						support
+d_dma_compat				support
+d_dma2_compat				support
 #endif
 
 #ifdef EPOC32
@@ -176,11 +177,12 @@ d_second_excp2				support
 
 #if !defined(WINS)
 d_demandpaging				support
+d_pagemove					support
 #endif
 
 #if !defined(WINS) && !defined(X86)
 d_ramdefrag					support
-d_pagemove					support
+d_smpsoak					support
 #endif
 
 #if !defined(X86)
@@ -585,6 +587,12 @@ t_tmout     support
 t_empty
 t_empty2
 
+#if !defined(WINS) && !defined(X86)
+t_smpsoak		
+t_smpsoakprocess support	
+t_smpsoakspin	support	
+#endif
+
 // /E32TEST/MMU tests
 t_chunk 
 t_chunk2
@@ -619,11 +627,12 @@ t_btb manual
 #endif
 
 #ifdef EPOC32
-t_ramall    support
+t_ramall
 t_pages     support
 t_mwait
 t_asid
 t_asid_dummy support
+t_alias_remove
 #endif
 
 // /E32TEST/NKERN tests
@@ -758,7 +767,6 @@ t_vidmode   support
 // DISPCHAN can change the state of the emulator GUI and currently must be run
 // AFTER t_video
 #ifndef X86
-// Run test on H4 once defects in dislay0.ldd are resolved
 t_dispchan
 #endif
 
@@ -833,6 +841,7 @@ t_context
 
 // /E32TEST/DMA tests
 t_dma       // user-side test harness for real DMA framework
+t_dma2       // user-side test harness for DMAv2 framework
 
 // Example RTOS personality
 ../personality/example/t_expers support
@@ -890,6 +899,7 @@ t_dpapi_cp
 t_dpapi_cu
 
 t_datapaging
+t_pagetable_limit
 t_svrpinning
 t_svrpinning_p
 t_svrpinning_up

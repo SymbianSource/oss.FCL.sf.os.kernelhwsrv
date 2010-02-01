@@ -422,9 +422,6 @@ bottom of the reserved region.
 @param aSize    The number of bytes committed to this chunk.
 @param aMaxSize The maximum size to which the reserved region of this chunk 
                 can grow.
-@param aType    An enumeration whose enumerators define the ownership of this 
-                chunk handle. If not explicitly specified, EOwnerProcess is
-                taken as default.
 @see RChunk::CreateLocal()
 */
 EXPORT_C void TChunkCreateInfo::SetNormal(TInt aInitialSize, TInt aMaxSize)
@@ -567,6 +564,19 @@ EXPORT_C void TChunkCreateInfo::SetPaging(const TChunkPagingAtt aPaging)
 		iAttributes |= TChunkCreate::EPaged;
 	if (aPaging == EUnpaged)
 		iAttributes |= TChunkCreate::EUnpaged;
+	}
+
+/**
+Sets the global chunk to be created to be read only. Only the creating process
+will be able to write to it, not other processes.
+
+Read-Only chunks are currently only available on the Flexible Memory Model.
+
+Chunk must be global.
+*/
+EXPORT_C void TChunkCreateInfo::SetReadOnly()
+	{
+	iAttributes |= TChunkCreate::EReadOnly;
 	}
 
 
@@ -1154,6 +1164,8 @@ Sets or removes restrictions on the ability of the chunk to change.
 For example, to adjust, commit etc
 
 @param aFlags One of the values defined by TRestrictions.
+
+@return KErrNone if successful, otherwise another of the system error codes.
 
 @see RChunk::TRestrictions()
 */
@@ -4304,7 +4316,7 @@ EXPORT_C TLocalDriveCaps::TLocalDriveCaps()
 //
 	:	iSize(0),
 		iType(EMediaNotPresent),
-		iBattery(EBatNotSupported),
+		iConnectionBusType(EConnectionBusInternal),
 		iDriveAtt(0),
 		iMediaAtt(0),
 		iBaseAddress(NULL),

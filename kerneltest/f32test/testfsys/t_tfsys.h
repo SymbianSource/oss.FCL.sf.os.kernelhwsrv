@@ -91,7 +91,6 @@ public:
 	~CTestFileSystem();
 	TInt Install();
 	TInt DefaultPath(TDes& aPath) const;
-	void DriveInfo(TDriveInfo& anInfo, TInt aDriveNumber) const;
 	TBusLocalDrive& DriveNumberToLocalDrive(TInt aDriveNumber);
 	TInt GetInterface(TInt aInterfaceId, TAny*& aInterface,TAny* aInput);
 private:

@@ -79,9 +79,10 @@ public:
  	TDmaBuf(TUsbcEndpointInfo* aEndpointInfo, TInt aBandwidthPriority);
 	~TDmaBuf();
 	TInt Construct(TUsbcEndpointInfo* aEndpointInfo);
-	TUint8* SetBufferBase(TUint8* aBase);
 	TInt BufferTotalSize() const;
-	TUint8* BufferBase() const;
+	TInt BufferSize() const;
+	TInt SetBufferAddr(TInt aBufInd, TUint8* aBufAddr);
+	TInt BufferNumber() const;
 	void SetMaxPacketSize(TInt aSize);
 	void Flush();
 	// Rx (OUT) variants
@@ -190,8 +191,11 @@ public:
 	void AbortTransfer();
 	inline TUsbcEndpointInfo* EndpointInfo();
 	inline TInt RxBytesAvailable() const;
-	inline TInt BufferTotalSize() const;
-	inline TUint8* SetBufferBase(TUint8* aBase);
+
+	inline TInt BufferSize() const;
+	inline TInt SetBufferAddr( TInt aBufInd, TUint8* aAddr);
+	inline TInt BufferNumber() const;
+
 	inline void SetTransferInfo(TEndpointTransferInfo* aTransferInfo);
 	inline void ResetTransferInfo();
 	inline void SetClientReadPending(TBool aVal);
@@ -239,6 +243,7 @@ public:
 	TUsbcAlternateSettingList* iNext;
 	TInt iNumberOfEndpoints;
 	TUint iSetting;
+	TInt iEpNumDeOrderedByBufSize[KMaxEndpointsPerClient + 1];
 	TUsbcEndpoint* iEndpoint[KMaxEndpointsPerClient + 1];
 	};
 
@@ -302,13 +307,14 @@ private:
 	TInt ProcessDeviceState(TUsbcDeviceState aDeviceState);
 	void ResetInterface(TInt aErrorCode);
 	void AbortInterface();
-	void RebaseInterfaceMemory(TUsbcAlternateSettingList* aAlternateSettingListRec, TUint8* aBase,
-							   TUint aDirection);
+	// Set buffer address of the interface
+	void ReSetInterfaceMemory(TUsbcAlternateSettingList* aAlternateSettingListRec,
+	        RArray<DPlatChunkHw*> &aHwChunks );
 	void UpdateEndpointSizes();
-	DPlatChunkHw* SetupInterfaceMemory(TInt aBufferSize, DPlatChunkHw* aHwChunk, TUint aDirection,
-									   TUint32 aCacheAttribs);
+	// Check and alloc memory for the interface
+	TInt SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks, 
+	        TUint32 aCacheAttribs );
 	void PanicClientThread(TInt aReason);
-
 	TInt PinMemory(TDesC8 *aDes, TVirtualPinObject *iPinObj); //Descriptor pinning helper.
 	void CompleteBufferRequest(DThread* aThread, TInt aReqNo, TInt aReason);
 private:
@@ -326,12 +332,10 @@ private:
 	TUsbcEndpointStatusCallback iEndpointStatusCallbackInfo;
 	TAny* iOtgFeatureChangePtr;
 	TUsbcOtgFeatureCallback iOtgFeatureCallbackInfo;
-	TUint8* iBufferBaseEp0;
-	TInt iBufferSizeEp0;
 	TInt iNumberOfEndpoints;
-	DPlatChunkHw* iHwChunkIN;
-	DPlatChunkHw* iHwChunkOUT;
-	DPlatChunkHw* iHwChunkEp0;
+    RArray<DPlatChunkHw*> iHwChunksEp0;
+    RArray<DPlatChunkHw*> iHwChunks;
+
 	TUsbcDeviceState iDeviceState;
 	TUsbcDeviceState iOldDeviceState;
 	TBool iOwnsDeviceControl;

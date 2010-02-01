@@ -18,6 +18,7 @@
 #ifndef __D_LDRTST_H__
 #define __D_LDRTST_H__
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 
 _LIT(KLdrTestLddName, "LdrTest");
 

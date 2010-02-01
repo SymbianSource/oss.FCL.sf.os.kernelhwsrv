@@ -319,6 +319,12 @@ IMPORT_C TBool KDebugNum(TInt aBitNum);
 #define KIIC 42 //0x00000400, index 1
 
 /**
+@publishedPartner
+@prototype
+*/
+#define KHCR 43 //0x00000800, index 1
+
+/**
 @internalComponent
 @released
 */
@@ -499,6 +505,8 @@ extern SBTraceData BTraceData;
 #undef BTRACE_TRAWEVENT
 #undef BTRACE_SYMBIAN_KERNEL_SYNC
 #undef BTRACE_FLEXIBLE_MEM_MODEL
+#undef BTRACE_CLIENT_SERVER
+#undef BTRACE_REQUESTS
 
 
 /**
@@ -620,6 +628,18 @@ IIC Subsystem.
 */
 #define BTRACE_IIC
 
+/**
+If defined, code for BTrace category BTrace::EClientServer is compiled into the
+kernel.
+*/
+#define BTRACE_CLIENT_SERVER
+
+/**
+If defined, code for BTrace category BTrace::ERequest is compiled into the
+kernel.
+*/
+#define BTRACE_REQUESTS
+
 #endif // _DEBUG
 
 #endif // __KERNEL_MODE__
@@ -627,10 +647,6 @@ IIC Subsystem.
 
 #if defined(BTRACE_KERNEL_PROTOTYPE)
 // Prototype trace categories...
-#undef BTRACE_CLIENT_SERVER
-#define BTRACE_CLIENT_SERVER
-#undef BTRACE_REQUESTS
-#define BTRACE_REQUESTS
 #undef BTRACE_THREAD_PRIORITY
 #define BTRACE_THREAD_PRIORITY
 #endif

@@ -1436,17 +1436,16 @@ TInt DThread::MakeHandleAndOpen(TOwnerType aType, DObject* aObj, TInt& aHandle, 
 	}
 
 /**
-Makes a handle to a kernel object and increments the access count on the object.
+Makes a thread-owned handle to a kernel object and increments the access count
+on the object.
 
 @param aThread  The thread to own the handle.
                 If this is NULL, the current thread is used.
 
 @param aObject  The object to which the handle will refer.
 
-@return The created handle (a value >0), if successful;
+@return The created handle (a value >=0), if successful;
         otherwise one of the other system wide error codes, (a value <0).
-
-@return KErrNone, if successful; otherwise one of the other system wide error codes.
 
 @pre Calling thread must be in a critical section
 @pre Interrupts must be enabled.
@@ -1455,13 +1454,46 @@ Makes a handle to a kernel object and increments the access count on the object.
 @pre Call in a thread context.
 @pre Can be used in a device driver.
 */
+
 EXPORT_C TInt Kern::MakeHandleAndOpen(DThread* aThread, DObject* aObject)
 	{
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::MakeHandleAndOpen");			
+	return MakeHandleAndOpen(aThread, aObject, EOwnerThread);
+	}
+
+/**
+Makes a handle to a kernel object and increments the access count on the object.
+
+The handle can be owned by either a thread or a process.
+
+@param aThread  The thread to own the handle, if the handle is to be owned by a
+                thread.
+                A thread owned by the process to own the handle, if the handle
+                is to be owned by a process.
+                If this is NULL, the current thread is used.
+
+@param aObject  The object to which the handle will refer.
+
+@param aType    An enumeration whose enumerators define the ownership of this
+                handle.
+
+@return The created handle (a value >=0), if successful;
+        otherwise one of the other system wide error codes, (a value <0).
+
+@pre Calling thread must be in a critical section
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+*/
+
+EXPORT_C TInt Kern::MakeHandleAndOpen(DThread* aThread, DObject* aObject, TOwnerType aType)
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::MakeHandleAndOpen");
 	if (!aThread)
 		aThread = TheCurrentThread;
 	TInt h;
-	TInt r = aThread->MakeHandleAndOpen(EOwnerThread, aObject, h);
+	TInt r = aThread->MakeHandleAndOpen(aType, aObject, h);
 	return (r == KErrNone) ? h : r;
 	}
 
@@ -1892,8 +1924,8 @@ asynchronously by another thread.
 EXPORT_C DProcess* Kern::ProcessFromId(TUint aId)
 	{
 	DObjectCon& processes=*K::Containers[EProcess];
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::ProcessFromId");				
-	__ASSERT_WITH_MESSAGE_MUTEX(processes.Lock(),"Process container mutex must be held","Kern::ThreadFromId");			
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::ProcessFromId");
+	__ASSERT_WITH_MESSAGE_MUTEX(processes.Lock(),"Process container mutex must be held","Kern::ProcessFromId");
 	//end of preconditions check
 	TInt c=processes.Count();
 	TInt i;
@@ -3001,10 +3033,17 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 		}
 	if (!m)
 		return KErrNone;
-	if (aFunction)
-		Kern::Printf("In function %s :-", aFunction);
-	else
-		Kern::Printf("At address %08x :-", aAddr);
+	if (aFunction && aAddr)
+		{
+		Kern::Printf("In function %s called from %08x :-", aFunction, aAddr);
+		}
+	else 
+		{
+		if (aFunction)
+			Kern::Printf("In function %s :-", aFunction);
+		else
+			Kern::Printf("At address %08x :-", aAddr);
+		}
 	if (m & MASK_NO_FAST_MUTEX)
 		Kern::Printf("Assertion failed: No fast mutex must be held");
 	if (m & MASK_NO_CRITICAL)
@@ -4399,7 +4438,7 @@ Creates an object which is used to pin physical memory. Suported by Kernel runni
 */
 EXPORT_C TInt Kern::CreatePhysicalPinObject(TPhysicalPinObject*& aPinObject)
 	{
-	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::CreateVirtualPinObject");			
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::CreatePhysicalPinObject");
 	return M::CreatePhysicalPinObject(aPinObject);
 	}
 

@@ -187,7 +187,7 @@ GLDEF_C TInt E32Main()
 	TUint driveSize=I64LOW(driveCaps.iSize);
 	test.Printf(_L("Drive size       = %08x (%dK)\n"),driveSize,driveSize>>10);
 	test.Printf(_L("Media type       = %d\n"),driveCaps.iType);
-	test.Printf(_L("Battery state    = %d\n"),driveCaps.iBattery);
+	test.Printf(_L("Connection Bus   = %d\n"),driveCaps.iConnectionBusType);
 	test.Printf(_L("Drive attributes = %08x\n"),driveCaps.iDriveAtt);
 	test.Printf(_L("Media attributes = %08x\n"),driveCaps.iMediaAtt);
 	test.Printf(_L("Base address     = %08x\n"),driveCaps.iBaseAddress);

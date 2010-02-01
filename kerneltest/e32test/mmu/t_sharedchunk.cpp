@@ -23,6 +23,7 @@
 // creating a chunk with a bad type, bad size and too large all fail as 
 // expected.
 // - Test and verify opening and closing chunk user handles work as expected.
+// - Test and verify thread local and process local handles work as expected
 // - Test and verify setting restrictions on RChunk if created as shared chunk are as expected.
 // - Test and verify memory access for multiply and singly shared chunks, 
 // is as expected. Including IPC, kernel, DFC and ISR reads & writes.
@@ -365,6 +366,88 @@ void TestHandles()
 	test.End();
 	}
 
+TInt HandleOwnershipThread(TAny* aArg)
+	{
+	// Use existing handle and attempt to read from chunk
+	TInt handle = (TInt) aArg;
+	RChunk chunk;
+	chunk.SetHandle(handle);
+	TInt r = *(volatile TUint8*)chunk.Base();
+	(void)r;
+	CLOSE_AND_WAIT(chunk);
+	return KErrNone;
+	}
+
+void TestHandleOwnership()
+	{
+	TUint ChunkAttribs = ChunkSize|ESingle|EOwnsMemory;
+	RThread thread;
+	TRequestStatus rs;
+
+	test.Start(_L("Create chunk"));
+	CHECK(KErrNone,==,Ldd.CreateChunk(ChunkAttribs));
+
+	test.Next(_L("Commit page to chunk"));
+	CHECK(KErrNone,==,Ldd.CommitMemory(EDiscontiguous,PageSize));
+
+	test.Next(_L("Check can access memory kernel side"));
+	KCHECK_MEMORY(ETrue, 0);
+
+	// Handle is thread-owned
+	test.Next(_L("Open user handle (thread-owned)"));
+	CHECK(0,<=,Ldd.GetChunkHandle(TheChunk, ETrue));
+
+	test.Next(_L("Get memory size info"));
+	if((MemModelAttributes&EMemModelTypeMask)!=EMemModelTypeDirect)
+		{
+		CHECK(PageSize,==,TheChunk.Size());
+		}
+	CHECK(ChunkSize,==,TheChunk.MaxSize());
+	TUint8* Base = TheChunk.Base();
+	CHECK(Base,!=,0);
+
+	test.Next(_L("Check can access memory user side"));
+	UCHECK_MEMORY(ETrue, 0);
+
+	test.Next(_L("Use handle in a new thread"));
+	CHECK(KErrNone,==,thread.Create(_L("thread1"), HandleOwnershipThread, KDefaultStackSize, KMinHeapSize, KMinHeapSize, (TAny*)TheChunk.Handle()));
+	thread.Logon(rs);
+	thread.Resume();
+	User::WaitForRequest(rs);
+	CHECK(EExitPanic,==,thread.ExitType());
+	CHECK(0,==,thread.ExitReason()); // KERN-EXEC 0
+	CLOSE_AND_WAIT(thread);
+
+	test.Next(_L("Close user handle"));
+	TheChunk.Close();
+
+	// Handle is process-owned
+	test.Next(_L("Open user handle (process-owned"));
+	CHECK(0,<=,Ldd.GetChunkHandle(TheChunk, EFalse));
+
+	test.Next(_L("Check can access memory user side"));
+	UCHECK_MEMORY(ETrue, 0);
+
+	test.Next(_L("Close kernel handle"));
+	CHECK(KErrNone,==,Ldd.CloseChunk());
+
+	test.Next(_L("Check chunk destroyed"));
+	CHECK(0,==,Ldd.IsDestroyed());
+
+	test.Next(_L("Use handle in a new thread"));
+	CHECK(KErrNone,==,thread.Create(_L("thread2"), HandleOwnershipThread, KDefaultStackSize, KMinHeapSize, KMinHeapSize, (TAny*)TheChunk.Handle()));
+	thread.Logon(rs);
+	thread.Resume();
+	User::WaitForRequest(rs);
+	CHECK(EExitKill,==,thread.ExitType());
+	CHECK(KErrNone,==,thread.ExitReason());
+	CLOSE_AND_WAIT(thread);
+
+	test.Next(_L("Check chunk destroyed"));
+	CHECK(1,==,Ldd.IsDestroyed()); // Object was deleted
+
+	test.End();
+	}
 
 void SetCreateFlags(TUint& aCreateFlags,TCommitType aCommitType)
 	{
@@ -1283,6 +1366,9 @@ TInt E32Main()
 
 	test.Next(_L("Test handles"));
 	TestHandles();
+
+	test.Next(_L("Test handle ownership"));
+	TestHandleOwnership();
 
 	test.Next(_L("Test restrictions for multiply shared chunks"));
 	TestRestrictions(EMultiple);

@@ -16,7 +16,6 @@
 // This file is part of the Template Base port
 // 
 //
-
 #include "camerasc_plat.h"
 
 _LIT(KCameraScPddName, "CameraSc.TE");
@@ -458,7 +457,11 @@ void DTemplateCameraScPdd::GetChunkCreateInfo(TChunkCreateInfo& aChunkCreateInfo
 	// Can be opened by any number of user side processes
 	aChunkCreateInfo.iType = TChunkCreateInfo::ESharedKernelMultiple;
 	// Use both L1 and L2 cache if available.  LDD will take care of pre and post DMA cache handling
+#ifdef __WINS__
+	aChunkCreateInfo.iMapAttr = 0xFF000;
+#else
 	aChunkCreateInfo.iMapAttr = EMapAttrCachedMax;
+#endif
 	// Chunk owns the memory which will be freed when the chunk is destroyed
 	aChunkCreateInfo.iOwnsMemory = ETrue;
 	// Don't queue the chunk's destruction on an DFC
@@ -515,18 +518,18 @@ TInt DTemplateCameraScPdd::NotifyImageCaptureEvent(TInt aResult, TLinAddr& aLinA
 	return r;
 	}
 
-
-TInt DTemplateCameraScPdd::SetBrightness(TUint aValue)
+TInt DTemplateCameraScPdd::SetBrightness(TUint /*aBrightness*/)
 	{
-	return KErrNotSupported;
+	return KErrNone;
 	}
 
-TInt DTemplateCameraScPdd::SetContrast(TUint aValue)
+TInt DTemplateCameraScPdd::SetContrast(TUint /*aContrast*/)
 	{
-	return KErrNotSupported;
+	return KErrNone;
 	}
 
-TInt DTemplateCameraScPdd::SetColorEffect(TUint aValue)
+TInt DTemplateCameraScPdd::SetColorEffect(TUint /*aColorEffect*/)
 	{
-	return KErrNotSupported;
+	return KErrNone;
 	}
+

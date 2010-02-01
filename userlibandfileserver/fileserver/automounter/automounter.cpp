@@ -150,55 +150,6 @@ CFormatCB* CAutoMounterFileSystem::NewFormatL() const
     return NULL;
     }
 
-//-----------------------------------------------------------------------------
-/** 
-    Return the drive info
-*/
-void CAutoMounterFileSystem::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
-    {
-    //!!!!!!!!!!!! This method shall be made the same as FAT, exFAT etc. 
-    //!! General idea: make all this code common for all filesystems and put it into the file server
-    //!! The problem: need to have another exported method. Actually, the generic code can be placed to CFileSystem::DriveInfo()
-    //!! despite it a pure virtual. 
-
-    __PRINT1(_L("#<<- CAutoMounterFileSystem::DriveInfo() [0x%x]"), this);
-
-    if(!IsValidLocalDriveMapping(aDriveNumber))
-        return;
-
-    TLocalDriveCapsV2Buf localDriveCaps;
-    
-    TInt r = KErrNone;
-
-    // is the drive local?
-    if (!IsProxyDrive(aDriveNumber))
-        {
-        // if not valid local drive, use default values in localDriveCaps
-        // if valid local drive and not locked, use TBusLocalDrive::Caps() values
-        // if valid drive and locked, hard-code attributes
-        r = GetLocalDrive(aDriveNumber).Caps(localDriveCaps);
-        }
-    else  // this need to be made a bit nicer
-        {   
-        CExtProxyDrive* pD = GetProxyDrive(aDriveNumber);
-        if(pD)
-            r = pD->Caps(localDriveCaps);
-        else
-            r = KErrNotReady;   // What should the behaviour really be here?
-        }
-
-    if (r != KErrLocked )
-        {
-        anInfo.iMediaAtt=localDriveCaps().iMediaAtt;
-        }
-    else
-        {
-        anInfo.iMediaAtt = KMediaAttLocked | KMediaAttLockable | KMediaAttHasPassword;
-        }
-
-    anInfo.iType=localDriveCaps().iType;
-    anInfo.iDriveAtt=localDriveCaps().iDriveAtt;
-    }
 
 //-----------------------------------------------------------------------------
 
@@ -303,19 +254,6 @@ TInt CAutoMounterFileSystem::GetInterface(TInt aInterfaceId, TAny*& aInterface, 
         }
     }
 
-//-----------------------------------------------------------------------------
-/**
-    @return Boolean exclusive OR between a1 and a2
-*/
-TBool BoolXOR(TBool a1, TBool a2)
-    {
-    if(!a1 && !a2)        
-        return EFalse;
-    else if(a1 && a2)
-        return EFalse;
-    else
-        return ETrue;
-    }
 
 //-----------------------------------------------------------------------------
 

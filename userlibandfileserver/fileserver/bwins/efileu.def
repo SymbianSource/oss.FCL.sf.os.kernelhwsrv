@@ -238,4 +238,6 @@ EXPORTS
 	?IsLegalShortNameCharacter@TCodePageUtils@@QBEHIH@Z @ 237 NONAME ; int TCodePageUtils::IsLegalShortNameCharacter(unsigned int, int) const
 	?FileSystem@CMountCB@@IBEPAVCFileSystem@@XZ @ 238 NONAME ; protected: class CFileSystem * __thiscall CMountCB::FileSystem(void)const 
 	?InitL@CMountCB@@QAEXAAVTDrive@@PAVCFileSystem@@@Z @ 239 NONAME ; public: void __thiscall CMountCB::InitL(class TDrive &,class CFileSystem *)
-
+	?DriveInfo@CFileSystem@@UBEXAAVTDriveInfo@@H@Z @ 240 NONAME ; void CFileSystem::DriveInfo(class TDriveInfo &, int) const
+	?GetDriveInfo@@YAXAAVTDriveInfo@@H@Z @ 241 NONAME ; void GetDriveInfo(class TDriveInfo &, int)
+	?Volume@RFsPlugin@@QBEHAAVTVolumeInfo@@H@Z @ 242 NONAME ; int RFsPlugin::Volume(class TVolumeInfo &, int) const

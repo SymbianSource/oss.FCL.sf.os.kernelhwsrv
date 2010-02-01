@@ -33,3 +33,4 @@ capability		all
 
 epocallowdlldata
 noexportlibrary
+SMPSAFE

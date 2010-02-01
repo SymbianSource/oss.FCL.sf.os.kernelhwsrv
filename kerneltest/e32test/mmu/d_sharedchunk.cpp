@@ -474,11 +474,18 @@ TInt DSharedChunkChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 
 	case RSharedChunkLdd::EGetChunkHandle:
 		{
+		TInt isThreadLocal = (TInt)a1;
+		TOwnerType ownertype;
+		if (isThreadLocal)
+			ownertype = EOwnerThread;
+		else
+			ownertype = EOwnerProcess;
+
 		NKern::ThreadEnterCS();
 		DChunk* chunk=OpenChunk();
 		if(chunk)
 			{
-			r = Kern::MakeHandleAndOpen(0,chunk);
+			r = Kern::MakeHandleAndOpen(0,chunk,ownertype);
 			chunk->Close(0);
 			}
 		else

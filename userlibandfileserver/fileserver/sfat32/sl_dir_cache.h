@@ -43,7 +43,6 @@ public:
 		EUnknown,
 		ELocked,
 		EUnlocked,
-		EActivePage,
 		};
 
 public:
@@ -115,7 +114,7 @@ class CDynamicDirCache : public CBase, public MWTCacheInterface
     {
 public:
 	~CDynamicDirCache();
-	static CDynamicDirCache* NewL(TFatDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeLog2, const TDesC& aClientName);
+	static CDynamicDirCache* NewL(TDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeLog2, const TDesC& aClientName);
 
 	//-- overloads from the base class
 	void    ReadL (TInt64 aPos, TInt aLength, TDes8& aDes);
@@ -137,7 +136,7 @@ public:
 	void Info() const;
 
 protected:
-	CDynamicDirCache(TFatDriveInterface& aDrive, TUint32 aMinSizeInBytes, TUint32 aMaxSizeInBytes, TUint32 aPageSizeInBytesLog2);
+	CDynamicDirCache(TDriveInterface& aDrive, TUint32 aMinSizeInBytes, TUint32 aMaxSizeInBytes, TUint32 aPageSizeInBytesLog2);
 	void ConstructL(const TDesC& aClientName);
 
 	void ReadDataFromSinglePageL(TInt64 aPos, TInt aLength, TDes8& aDes);
@@ -159,6 +158,8 @@ protected:
 	TDynamicDirCachePage* LookupTblFind(TInt64 aPos);
 	TInt ResetPagePos(TDynamicDirCachePage* aPage);
 	void MakePageLastLocked(TDynamicDirCachePage* aPage);
+	void DoMakePageMRU(TInt64 aPos);
+	void DoInvalidateCache(void);
 	
 private:
 	TUint32				iPageSizeLog2;		///< log2 value of cache pages size in bytes
@@ -169,10 +170,9 @@ private:
 	TUint32             iPageSizeInBytes;	///< cache page size in bytes
 	TInt64              iCacheBasePos; 		///< cache pages base position, used to align them at cluster size
 
-	TFatDriveInterface& iDrive;        		///< reference to the driver for media access
-	TUint32             iCacheDisabled : 1; ///< if not 0 the cache is disabled totally and all reads and writes go via TFatDriveInterface directly
+	TDriveInterface&    iDrive;        		///< reference to the driver for media access
+	TUint32             iCacheDisabled : 1; ///< if not 0 the cache is disabled totally and all reads and writes go via TDriveInterface directly
 
-	TDynamicDirCachePage* 	iActivePage;	///< a unique page in cache, used to read new page before make it MRU or have it replaced
 	
 	// data structures for LRU page list	
 	TCachePageList 	iLockedQ;				///< the locked queue that manages all locked pages, limited by minimum page number
@@ -186,6 +186,8 @@ private:
 	RHashSet<TLookupEntry> 			iLookupTable;	///< a lookup table that used to speed up page look up
 
 	CCacheMemoryClient*	iCacheMemoryClient;	///< interface to cache memory manager
+	TUint32 iPermanentlyAllocatedPageCount;	///< count of pages in locked queue that are never unlocked
+
     };
 
 #include"sl_dir_cache.inl"

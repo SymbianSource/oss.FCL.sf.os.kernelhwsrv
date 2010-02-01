@@ -52,5 +52,7 @@ romtarget			exmondebug.dll
 
 #endif
 
+SMPSAFE
+
 
 

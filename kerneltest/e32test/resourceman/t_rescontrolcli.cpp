@@ -2176,7 +2176,8 @@ void TestRM::TestDynamicResourceDependency()
 	//Change K to  1
 	state= 1;
 	lddChan.ChangeResourceStateAsync(Clients[2].iClientId, dynamicDepResId[3], state, req);
-	test(r == KErrNone);
+	User::WaitForRequest(req);
+	test(req.Int() == KErrNone);
 
 	GetExtendedResStateAsyncAndVerify(dynamicDepResId[2], 18, dynamicDepResId[0], EFalse);
 	GetExtendedResStateAsyncAndVerify(dynamicDepResId[3], 1, Clients[2].iClientId, EFalse);
@@ -3155,7 +3156,21 @@ void TestRM::APIValidationTest()
  	TBuf8<32> PowerController = _L8("PowerController");
 	r = lddChan.GetClientId(Clients[0].iClientId, (TDesC8&)PowerController, iPowerControllerId);
 	test(r == KErrNone);
-	r = lddChan.RegisterForIdleResourcesInfo(iPowerControllerId, 15);
+
+	RBuf8 info;
+	TUint c;
+	r = info.Create((iMaxStaticResources) * sizeof(SIdleResourceInfo));
+	test(r == KErrNone);
+	SIdleResourceInfo* pI = (SIdleResourceInfo*)info.Ptr();
+	for(c = 0; c < iMaxStaticResources; c++)
+		{
+		pI->iResourceId = Resources[c].iResourceId;
+		pI++;
+		}
+	pI = (SIdleResourceInfo*)info.Ptr();
+
+	r = lddChan.RegisterForIdleResourcesInfo(iPowerControllerId, iMaxStaticResources, (TAny*)info.Ptr());
+
 	test(r == KErrNone);
 	RmTest.GetClientName(iCurrentClientId);
 	RmTest.GetClientId(iCurrentClientId);
@@ -3168,7 +3183,6 @@ void TestRM::APIValidationTest()
 	RmTest.GetInfoOnClientsUsingResource((TUint)-1, 4);
 	RmTest.GetInfoOnClientsUsingResource(5, 3);
 	
-	TUint c;
 	for(c = 0; c < iMaxStaticResources; c++)
 		{
 		if(Resources[c].iSense == ECustom)
@@ -3290,11 +3304,10 @@ void TestRM::APIValidationTest()
 	
 	RmTest.DeRegisterClient(1);
 	RmTest.DeRegisterClient(0);
-	RBuf8 info;
 	info.Create(15 * sizeof(SIdleResourceInfo));
 	r = lddChan.GetIdleResourcesInfo(15, (TAny*)(TDes8*)&info);
 	test(r == KErrNone);
-	SIdleResourceInfo* pI = (SIdleResourceInfo*)info.Ptr();
+	pI = (SIdleResourceInfo*)info.Ptr();
 	for(c = 0; c< 15; c++)
 	{
 	   test(Resources[c].iCurrentClient == pI->iLevelOwnerId);

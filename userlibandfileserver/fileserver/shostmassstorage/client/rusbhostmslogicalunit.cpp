@@ -19,7 +19,6 @@
 */
 
 #include <e32std.h>
-#include <e32std_private.h>
 
 #include "msgservice.h"
 #include "rusbhostmsdevice.h"

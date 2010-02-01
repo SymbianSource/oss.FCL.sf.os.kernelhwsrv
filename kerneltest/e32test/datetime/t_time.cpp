@@ -89,7 +89,6 @@ public:
 	};
 
 
-
 void PrintTime(char* sz, TTime& t)
 {
 	TDateTime dateTime(t.DateTime());
@@ -101,7 +100,6 @@ void TestTTime::Test1(void)
 // Tests for TDateTime
 //
 	{
-
 	TInt year=1980; //leap year
 	TMonth month=EJanuary;
 	TInt day=0;
@@ -109,7 +107,7 @@ void TestTTime::Test1(void)
 	TInt minute=0;
 	TInt second=0;
 	TInt microSecond=10;
-	
+
 	TDateTime dateTime(year,month,day,hour,minute,second,microSecond);
 
 	test.Next(_L("Testing year ranges"));
@@ -253,7 +251,6 @@ void TestTTime::Test1(void)
 	test(dateTime.Minute()==minute);
 	test(dateTime.Second()==second);
 	test(dateTime.MicroSecond()==microSecond);
-	
 	}
 
  void TestTTime::Test2(void)
@@ -261,7 +258,6 @@ void TestTTime::Test1(void)
  // Tests for TTimeIntervalMicroSeconds
  //
 	{
-
 	test.Next(_L("Construction"));
 	TTimeIntervalMicroSeconds t1; // uninitialised
 	TTimeIntervalMicroSeconds t2(0);
@@ -270,10 +266,10 @@ void TestTTime::Test1(void)
 	test(t3.Int64()==1000000 );
 	TTimeIntervalMicroSeconds t4(-452);
 	test(t4.Int64()==-452 );				
- 
+
 	TTimeIntervalMicroSeconds  t5(MAKE_TINT64(0x7fffffff,0xffffffff));
     t5.Int64();
-  
+
 	test.Next(_L("operator ="));
 	TInt num(1234);
 	t1=num;
@@ -303,7 +299,6 @@ void TestTTime::Test1(void)
 	test((t4<=t3)!=0);
 	test((t1<=t2)!=0);
 	test((t3<=t2)==0);
-	 
 	}
 
 void TestTTime::Test3(void)
@@ -311,19 +306,18 @@ void TestTTime::Test3(void)
 // Tests for TTimeIntervaSeconds (and therefore TTimeIntervalBase)
 //
 	{
-
 	test.Next(_L("Construction"));
     TTimeIntervalSeconds s1; // uninitialised
     TTimeIntervalSeconds s2(0);
     test(s2.Int()==0 );
-  
+
     TTimeIntervalSeconds s3(1);
     test(s3.Int()==1 );
     test(s3.Int()!=0 );
-   
+
     TTimeIntervalSeconds s4(-1);
     test(s4.Int()==-1 );				
- 	
+
  	TTimeIntervalSeconds s8(2147483647);
     test(s8.Int()== 2147483647);		
 
@@ -372,7 +366,6 @@ void TestTTime::Test4()
 // Tests for all other time intervals
 //
 	{
-
 	test.Next(_L("TTimeIntervalMinutes"));
     test.Next(_L("Construction"));
     TTimeIntervalMinutes m1; // uninitialised
@@ -451,7 +444,7 @@ void TestTTime::Test4()
     TTimeIntervalMonths mo5(5),mo6;
     mo6=mo5;
     test(mo5.Int()==mo6.Int());
- 
+
     test.Next(_L("TTimeIntervalYears"));
     test.Next(_L("Construction"));
     TTimeIntervalYears y1; // uninitialised
@@ -474,7 +467,6 @@ void TestTTime::Test4()
 	test(y5.Int()!=y6.Int());
 	y5=16;
     test(y5.Int()==y6.Int());
-//
     }
 
 
@@ -483,7 +475,6 @@ void TestTTime::Test5()
 // TDateTime to TTime convertions and vice versa, very large loop, so in own function for easy removal
 //
 	{
-
 	TInt microSecond=500000;
 	TDateTime dateTime(0,EJanuary,0,0,0,0,microSecond);
     TInt year;
@@ -579,7 +570,6 @@ void TestTTime::Test6()
 // Adding and differencing
 //
 	{
-
 	TDateTime dateTime(4,EJanuary,30,0,0,0,0);
 
 	test.Next(_L("TTimeIntervalYears"));
@@ -612,7 +602,7 @@ void TestTTime::Test6()
 	TTime maxtime = Time::MaxTTime();
 	test(timeNow.YearsFrom(maxtime).Int()<0);//must be negative value
 	test(maxtime.YearsFrom(timeNow).Int()>0);//must be positive value
-	
+
 	test.Next(_L("Adding months"));
 	TTimeIntervalMonths month(1);
 	result=base+month;
@@ -670,7 +660,7 @@ void TestTTime::Test6()
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(-2));
 	test(result.DaysFrom(base)==TTimeIntervalDays(61));
 	test(base.DaysFrom(result)==TTimeIntervalDays(-61));
-															
+
 	test.Next(_L("DaysFrom"));
 	timeNow.HomeTime();
 	timeFuture=timeNow+TTimeIntervalDays(10);
@@ -971,7 +961,7 @@ void TestTTime::Test6()
 	result=base+TTimeIntervalMicroSeconds(overflow);
 	ret=result.HoursFrom(base,hour);
 	test(ret==KErrOverflow);
-    
+
 	test.Next(_L("Specific MonthsFrom() tests"));
 
 	base=TDateTime(1995,EJanuary,30,0,0,0,0);
@@ -981,11 +971,10 @@ void TestTTime::Test6()
 	base=TDateTime(1995,EJanuary,27,0,0,0,0);
 	result=TDateTime(1995,EFebruary,27,0,0,0,0);
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(1));
-	
+
 	base=TDateTime(1995,EJanuary,29,0,0,0,0);
 	result=TDateTime(1995,EFebruary,27,0,0,0,0);
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(1));
-
 
 	base=TDateTime(1995,EJanuary,30,0,0,0,0);
 	result=TDateTime(1995,EFebruary,27,0,0,0,0);
@@ -996,27 +985,27 @@ void TestTTime::Test6()
 	result=TDateTime(1995,EFebruary,27,0,0,0,0);
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(-1));
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(1));
-	
+
 	base=TDateTime(1995,EJanuary,29,0,0,0,0);
 	result=TDateTime(1995,EFebruary,27,0,0,0,0);
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(-1));
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(1));
-	
+
 	base=TDateTime(1995,EJanuary,26,0,0,0,0);
 	result=TDateTime(1995,EFebruary,27,0,0,0,0);
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(-1));
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(1));
-	
+
 	base=TDateTime(1995,EFebruary,27,0,0,0,0);
 	result=TDateTime(1995,EMarch,29,0,0,0,0);
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(-1));
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(1));
-	
+
 	base=TDateTime(1995,EFebruary,27,0,0,0,0);
 	result=TDateTime(1995,EMarch,30,0,0,0,0);
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(-1));
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(1));
-	
+
 	base=TDateTime(1995,EFebruary,27,13,0,0,0);
 	result=TDateTime(1995,EJanuary,29,12,0,0,0);
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(1));
@@ -1031,7 +1020,7 @@ void TestTTime::Test6()
 	result=TDateTime(1995,EJanuary,29,13,0,0,0);
 	test(base.MonthsFrom(result)==TTimeIntervalMonths(0));
 	test(result.MonthsFrom(base)==TTimeIntervalMonths(0));
-	
+
 	test.Next(_L("Looped MonthsFrom() test"));
 	const TTime endBase=MAKE_TINT64(74334524,25422354);
 	const TTime endResult=MAKE_TINT64(154334524,25422354);
@@ -1039,7 +1028,6 @@ void TestTTime::Test6()
 	for (base=MAKE_TINT64(3563656,3456235623u);base<endBase;base+=plus)
 		for (result=MAKE_TINT64(3563656,3456235623u);result<endResult;result+=plus)
 			test(base.MonthsFrom(result).Int()==-result.MonthsFrom(base).Int()); 
-	
 	}
 
 void TestTTime::Test7()
@@ -1047,7 +1035,6 @@ void TestTTime::Test7()
 // subtracting
 //
 	{
-
 	TDateTime dateTime(1996,EApril,3,0,0,0,0);
 	TTime base(dateTime);
 	TTime tim(base);
@@ -1168,12 +1155,9 @@ void TestTTime::Test8()
     TInt wk(0);
     for (y=1900;y<1921;y++)          // MUST BEGIN 0N 1900 (been run to 2500)
 		{
-	    
-
         dateTime.SetYear(y);
         for (m=0;m<12;m++)
             {
-    	   
             dateTime.SetMonth(TMonth(m));
             for (d=0;d<Time::DaysInMonth(y,TMonth(m));d++)
                 {
@@ -1194,7 +1178,7 @@ void TestTTime::Test8()
             dateTime.SetDay(0);
             }
         }
-	
+
 	test.Next(_L("Testing wk53 in a year with 4 days in last week"));
 	dateTime.SetYear(2009);
 	dateTime.SetMonth(EDecember);
@@ -1214,7 +1198,7 @@ void TestTTime::Test8()
 	test(tim.DayNoInYear()==4);
 	test(tim.WeekNoInYear()==1);
 	dateTime.SetHour(0);
-	
+
     test.Next(_L("Testing other week no. rules"));
 	dateTime.SetYear(1995);
 	dateTime.SetDay(14);
@@ -1269,7 +1253,7 @@ void TestTTime::Test8()
 	test(tim2.WeekNoInYear(tim,EFirstFullWeek)==30);
 	test(tim2.WeekNoInYear(tim,EFirstWeek)==30);
 	test(tim2.WeekNoInYear(tim,EFirstFourDayWeek)==30);
-    
+
     dateTime.SetYear(1904);
 	dateTime.SetMonth(EFebruary);
 	dateTime.SetDay(28);
@@ -1300,10 +1284,6 @@ void TestTTime::Test8()
     test(tim2.WeekNoInYear(tim,EFirstFullWeek)==52);
     test(tim2.WeekNoInYear(tim,EFirstWeek)==1);
     test(tim2.WeekNoInYear(tim,EFirstFourDayWeek)==1);
-
-
-
-
     }
 
 
@@ -1502,7 +1482,7 @@ void TestTTime::Test9()
 	local.SetDateFormat(EDateEuropean);
 	local.SetTimeFormat(ETime12);
 	local.Set();
-	
+
 	// Test for overload of TTime::FormatL(TDes& aDes,const TDesC& aFormat,const TLocale& aLocale);
 	// Reset Time and dates
 	aDate.Set(lyear,TMonth(lmonth),lday,lhour,lminute,lsecond,lmicroSecond);
@@ -1520,7 +1500,7 @@ void TestTTime::Test9()
 	aTimeLocale.FormatL(testString,(_L("%F%Y %D%X %N")),local); 
 	if (testString.Compare(_L("1993 04th July")))
 		test.Panic(_L("%%F%%Y %%D%%X %%N"));
-	
+
 	test.Next(_L("Times with specified locale"));
 	aTimeLocale.FormatL(testString,(_L("%*I%:1%T%A")),local);
 	if (testString.Compare(_L("1:53 pm")))
@@ -1588,7 +1568,7 @@ void TestTTime::Test9()
 	aTimeLocale.FormatL(testString,(_L("%J%:1%T%*B")),local);
 	if (testString.Compare(_L("13:53")))
 		test.Panic(_L("%%J%%:1%%T%%*B, ETime24"));
-	
+
 	test.Next(_L("Miscellaneous with specified locale"));
 	aTimeLocale.FormatL(testString,(_L("%W")),local);
 	if (testString.Compare(_L("26")))
@@ -1596,7 +1576,7 @@ void TestTTime::Test9()
 	aTimeLocale.FormatL(testString,(_L("%*Z")),local);
 	if (testString.Compare(_L("185")))
 		test.Panic(_L("%%*Z"));
-	
+
 	test.Next(_L("Junk strings with specified locale"));
 	aTimeLocale.FormatL(testString,(_L("%F %M%O%N%D%A%Y")),local);
 	if (testString.Compare(_L(" 07OJuly04 pm1993")))
@@ -1788,7 +1768,6 @@ void TestTTime::Test10()
 	dateTime=time.DateTime();
 	test.Printf(_L(" Universal Time is - %+02d/%+02d/%+04d %+02d:%+02d:%+02d.%+06d\n"),dateTime.Day()+1,dateTime.Month()+1,dateTime.Year(),dateTime.Hour(),dateTime.Minute(),dateTime.Second(),dateTime.MicroSecond());
 	test.Printf(_L("does this come out"));
- 	
 	}
 
 void TestTTime::Test11()
@@ -1796,7 +1775,6 @@ void TestTTime::Test11()
 //
 //
 	{
-	
 	TTime now;
 	now.UniversalTime();
 	TTimeIntervalSeconds offset;
@@ -1925,6 +1903,13 @@ void TestTTime::Test11()
 	test(stat[1]==KErrAbort);
 	test(stat[0]==KErrCancel);
 
+	// The platform may or may not support SecureTime, and even if it does,
+	// it may not have a secure time set. So we start this test by making
+	// sure that the NonSecureOffset is set (which may fail, if it's not
+	// supported OR if it's already set); then read and write the secure
+	// time, to make sure that it's supported and we have permission.
+	User::SetUTCTime(now);
+	HAL::Set(HAL::ETimeNonSecureOffset, 0);
 	test.Next(_L("Test absolute timers with secure time change"));
 	TTime securetime;
 	if ((r = securetime.UniversalTimeSecure()) == KErrNone)
@@ -1937,11 +1922,18 @@ void TestTTime::Test11()
 		{
 		timer[0].AtUTC(stat[0], now+TTimeIntervalSeconds(5));
 		r = User::SetUTCTimeSecure(securetime+TTimeIntervalSeconds(30));
+		test_Equal(KErrNone, r);
 		r = User::SetUTCTimeSecure(securetime-TTimeIntervalSeconds(30));
-		test(r == KErrNone);
-		// The timer should not have been aborted by the secure time change
-		User::WaitForRequest(stat[0]);
-		test(stat[0] == KErrNone);
+		test_Equal(KErrNone, r);
+		// The absolute timer should not have been aborted by the secure time change,
+		test_Equal(KRequestPending, stat[0].Int());
+
+		// The outstanding absolute timer should complete before this new relative timer
+		timer[1].After(stat[1], 20000000);
+		User::WaitForRequest(stat[0], stat[1]);
+		timer[1].Cancel();
+		test_Equal(KErrNone, stat[0].Int());
+		test_Equal(KErrCancel, stat[1].Int());
 		User::SetUTCTimeSecure(securetime+TTimeIntervalSeconds(5));
 		}
 
@@ -2356,7 +2348,6 @@ void TestTTime::TestSecureClock()
 	test(seconds_diff == TTimeIntervalSeconds(0));
 	r = now3.SecondsFrom(march2001, seconds_diff);
 	test(seconds_diff == TTimeIntervalSeconds(0));
-	
 
 	// Verify the offset changes by the right amount when the nonsecure time is changed
 	TTime time;
@@ -2407,7 +2398,7 @@ GLDEF_C TInt E32Main()
 
 	TTimeIntervalSeconds savedOffset = User::UTCOffset();
 	User::SetUTCOffset(0);
-	
+
     test.Next(_L("Testing TDateTime class"));
 	T.Test1();
 	test.Next(_L("Testing TTimeIntervalMicroSeconds"));

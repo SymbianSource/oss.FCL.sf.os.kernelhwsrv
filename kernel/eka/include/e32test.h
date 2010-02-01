@@ -30,9 +30,7 @@
 #endif
 #include <e32base.h>
 #include <e32cons.h>
-#include <e32ver.h>
 #include <e32kpan.h>
-#include <cpudefs.h>
 #include <e32debug.h>
 #ifndef SYMBIAN_ENABLE_SPLIT_HEADERS
 #include <e32def_private.h>

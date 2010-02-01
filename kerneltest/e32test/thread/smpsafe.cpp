@@ -49,41 +49,64 @@ EXPORT_C void DoNothingE() { DoNothingC(); }
 
 #else // !MAKE_DLL
 
-TInt Affinity;
+volatile TInt Affinity;
+RSemaphore Start;
+RSemaphore Stop;
 
+const TInt KLoopTries = 100;
+
+// This gets run in a low priority thread. Each time around the loop it waits to be told to go,
+// then sets Affinity to 0, then tells the other thread it's done. If we're actually locked to
+// the same processor as the main thread, however, then we won't get to run until the other thread
+// waits for the Stop semaphore, and thus Affinity will not get set to 0 until the other thread
+// checked it already.
 TInt AffinitySlave(TAny*)
 	{
-	for (;;)
+	for (TInt i = KLoopTries; i>0; --i)
 		{
-		__e32_atomic_store_rel32(&Affinity, 0); // we can't be locked if this runs
-		User::AfterHighRes(1);
+		Start.Wait();
+		Affinity = 0;
+		Stop.Signal();
 		}
+	return KErrNone;
 	}
 
 TInt CheckAffinity()
 	{
-	__e32_atomic_store_rel32(&Affinity, 1); // assume we are locked to a single cpu
-
 	RThread t;
 	TInt r = t.Create(_L("AffinitySlave"), AffinitySlave, KDefaultStackSize, NULL, NULL);
 	if (r != KErrNone)
 		return r;
+
+	Start.CreateLocal(0);
+	Stop.CreateLocal(0);
 
 	TRequestStatus s;
 	t.Logon(s);
 	t.SetPriority(EPriorityLess);
 	t.Resume();
 
-	TUint32 target = User::NTickCount() + 10;
-	while (User::NTickCount() < target) {}
-
-	r = __e32_atomic_load_acq32(&Affinity);
+	TInt a = 1;
+	for (TInt i = KLoopTries; i>0; --i)
+		{
+		Affinity = 1; // assume we are locked to a single cpu
+		Start.Signal(); // tell the other thread to run
+		TUint32 target = User::NTickCount() + 10;
+		while (User::NTickCount() < target)
+			{
+			// spin, waiting to see if the other thread actually *does* run
+			}
+		a = Affinity;
+		if (a == 0)
+			break;
+		Stop.Wait(); // We didn't see it this time, but try again in case of scheduling fluke
+		}
 
 	t.Kill(0);
 	User::WaitForRequest(s);
 	t.Close();
 
-	return r;
+	return a;
 	}
 
 #ifndef OMIT_MAIN

@@ -23,6 +23,9 @@
 #include "d_perflogger_ldd.h"
 #include <kernperflogger.h>
 
+_LIT(KDFCThreadName,"D_PL_DFC_THREAD");
+const TInt KDFCThreadPriority=27;
+
 //-----------------------------------------------------------------------------------
 
 
@@ -268,7 +271,19 @@ DKPLoggerTestHelperLDD::DKPLoggerTestHelperLDD()
 
 
     //-- initialize DFC machinery
-    iDfcQ = Kern::DfcQue0();   //-- attach to the low priority DFC queue
+    //iDfcQ = Kern::DfcQue0();   //-- attach to the low priority DFC queue
+	if (!iDfcQ)
+ 		{
+ 		TInt r = Kern::DynamicDfcQCreate(iDfcQ, KDFCThreadPriority, KDFCThreadName);
+		if (r!= KErrNone)
+			{
+			return;
+			}
+
+#ifdef CPU_AFFINITY_ANY
+		NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);			
+#endif
+ 		}	
     
     iIsrLogTicker.Construct (iClientThread, iDfcQ, NKern::EInterrupt);//-- construct ISR log ticker
     iDfcLogTicker.Construct (iClientThread, iDfcQ, NKern::EThread);   //-- construct DFC log ticker
@@ -282,7 +297,10 @@ DKPLoggerTestHelperLDD::~DKPLoggerTestHelperLDD()
     __PRINT("#KPLogTest:~DKPLoggerTestHelperLDD()");
 	
 	iClientThread->Close(NULL);
-	
+
+	if (iDfcQ)
+		iDfcQ->Destroy();
+		
 	pSelf = NULL;  //-- clear the pointer to this class instance
 	}
 

@@ -1036,4 +1036,5 @@ EXPORTS
 	__17TShPoolCreateInfoQ217TShPoolCreateInfo28TShPoolNonPageAlignedBuffersUiUiUi @ 1035 NONAME ; TShPoolCreateInfo::TShPoolCreateInfo(TShPoolCreateInfo::TShPoolNonPageAlignedBuffers, unsigned int, unsigned int, unsigned int)
 	Repeats__C9TRawEvent @ 1036 NONAME R3UNUSED ; TRawEvent::Repeats(void) const
 	SetRepeat__9TRawEventQ29TRawEvent5TTypeii @ 1037 NONAME ; TRawEvent::SetRepeat(TRawEvent::TType, int, int)
+	MakeHandleAndOpen__4KernP7DThreadP7DObject10TOwnerType @ 1038 NONAME R3UNUSED ; Kern::MakeHandleAndOpen(DThread *, DObject *, TOwnerType)
 

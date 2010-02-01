@@ -1200,11 +1200,11 @@ TInt E32Main()
 
 	if (gDataPagingSupported)
 		{
-		test.Next(_L("Test 64-bit atomic operations are atomic with paged out data"));
-		TestAtomic64();
-
 		test.Next(_L("Test reading and writing to a single page"));
 		TestOnePage();
+
+		test.Next(_L("Test 64-bit atomic operations are atomic with paged out data"));
+		TestAtomic64();
 
 		test.Next(_L("Test interaction between decommit and steal"));
 		TestDecommitAndStealInteraction(10);
@@ -1220,6 +1220,17 @@ TInt E32Main()
 
 		test.Next(_L("Soak tests"));
 		DPTest::FlushCache();
+
+		test.Next(_L("Soak test: change maximum cache size to minimal"));
+		TUint cacheOriginalMin = 0;
+		TUint cacheOriginalMax = 0;
+		TUint cacheCurrentSize = 0;
+		//store original values
+		DPTest::CacheSize(cacheOriginalMin, cacheOriginalMax, cacheCurrentSize);
+		gMaxCacheSize = 256;
+		gMinCacheSize = 64;
+		test_KErrNone(DPTest::SetCacheSize(gMinCacheSize * gPageSize, gMaxCacheSize * gPageSize));
+
 		for (TUint totalThreads = 1 ; totalThreads <= 64 ; totalThreads *= 4)
 			{
 			for (TUint processes = 1 ; processes <= 16 && processes <= totalThreads ; processes *= 4)
@@ -1229,12 +1240,16 @@ TInt E32Main()
 					{
 					for (TUint pin = 0 ; pin <= 1 ; ++pin)
 						{
-						test.Printf(_L("processes=%d threads=%d pages=%d pin=%d\r\n"),processes, threads, pages, pin);
+						test.Printf(_L("processes=%d threads=%d pages=%d maxcachesize=%d pin=%d\r\n"),processes, threads, pages, gMaxCacheSize,pin);
 						SoakTest(processes, threads, pages, pin, 3);
 						}
 					}
 				}
 			}
+
+			//Reset the cache size to normal
+			test.Next(_L("Soak test: Reset cache size to normal"));
+			test_KErrNone(DPTest::SetCacheSize(cacheOriginalMin, cacheOriginalMax)); 
 		}
 
 	test.End();

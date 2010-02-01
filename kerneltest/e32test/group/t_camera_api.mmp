@@ -24,7 +24,7 @@ source			t_camera_bitmap.cpp
 library			euser.lib hal.lib efsrv.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
-capability		all
+capability		ALL -TCB
 vendorid		0x70000001
 epocheapsize		1048576 16777216
 

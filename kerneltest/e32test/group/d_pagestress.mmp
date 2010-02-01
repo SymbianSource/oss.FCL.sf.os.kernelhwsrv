@@ -28,4 +28,5 @@ RAMTARGET +
 
 capability		all
 vendorid		0x70000001
+SMPSAFE
 

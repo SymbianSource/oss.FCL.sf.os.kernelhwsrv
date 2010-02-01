@@ -32,3 +32,4 @@ capability	all
 VENDORID 0x70000001
 
 epocallowdlldata
+SMPSAFE

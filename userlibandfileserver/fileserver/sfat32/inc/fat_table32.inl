@@ -23,10 +23,11 @@
 #define FAT_TABLE_32_INL
 
 
+
 //---------------------------------------------------------------------------------------------------------------------------------------
 
 /** @return interface to the FAT drive */
-TFatDriveInterface& CAtaFatTable::DriveInterface() const 
+TDriveInterface& CAtaFatTable::DriveInterface() const 
     {
     return iDriveInteface;
     }

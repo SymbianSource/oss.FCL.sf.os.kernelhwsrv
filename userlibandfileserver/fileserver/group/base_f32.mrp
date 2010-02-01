@@ -10,6 +10,7 @@ source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\bwins
 source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\bx86
 source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\ddesign
 source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\eabi
+source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\fs_utils
 source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\rom
 source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\runtests
 source	\sf\os\kernelhwsrv\userlibandfileserver\fileserver\sfile

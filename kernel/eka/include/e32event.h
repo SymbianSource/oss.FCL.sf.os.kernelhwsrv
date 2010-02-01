@@ -18,7 +18,9 @@
 #ifndef __E32EVENT_H__
 #define __E32EVENT_H__
 #include <e32cmn.h>
+#ifdef BTRACE_TRAWEVENT	
 #include <e32btrace.h>
+#endif
 
 /**
 @publishedAll

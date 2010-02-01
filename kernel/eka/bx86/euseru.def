@@ -1593,8 +1593,8 @@ EXPORTS
 	?SetPos@CConsoleBase@@QAEXH@Z @ 1592 NONAME ; public: void __thiscall CConsoleBase::SetPos(int)
 	?SetPos@CConsoleBase@@QAEXHH@Z @ 1593 NONAME ; public: void __thiscall CConsoleBase::SetPos(int,int)
 	?SetPriority@CActive@@QAEXH@Z @ 1594 NONAME ; public: void __thiscall CActive::SetPriority(int)
-	?SetPriority@RProcess@@QBEHW4TProcessPriority@@@Z @ 1595  NONAME ; public: int __thiscall RProcess::SetPriority(enum TProcessPriority)const 
-   	?SetPriority@RThread@@QBEXW4TThreadPriority@@@Z @ 1596 NONAME ; public: void __thiscall RThread::SetPriority(enum TThreadPriority)const 
+	?SetPriority@RProcess@@QBEHW4TProcessPriority@@@Z @ 1595 NONAME ; public: int __thiscall RProcess::SetPriority(enum TProcessPriority)const 
+	?SetPriority@RThread@@QBEXW4TThreadPriority@@@Z @ 1596 NONAME ; public: void __thiscall RThread::SetPriority(enum TThreadPriority)const 
 	?SetPriorityControl@User@@SAXH@Z @ 1597 NONAME ; public: static void __cdecl User::SetPriorityControl(int)
 	?SetProcessCritical@User@@SAHW4TCritical@1@@Z @ 1598 NONAME ; public: static int __cdecl User::SetProcessCritical(enum User::TCritical)
 	?SetProcessPriority@RMessagePtr2@@QBEHW4TProcessPriority@@@Z @ 1599 NONAME ; public: int __thiscall RMessagePtr2::SetProcessPriority(enum TProcessPriority)const 
@@ -2178,4 +2178,5 @@ EXPORTS
 	?LoadLocale@TExtendedLocale@@QAEHABVTDesC16@@00@Z @ 2177 NONAME ; int TExtendedLocale::LoadLocale(class TDesC16 const &, class TDesC16 const &, class TDesC16 const &)
 	?LoadLocaleAspect@TExtendedLocale@@QAEHABVTDesC16@@@Z @ 2178 NONAME ; int TExtendedLocale::LoadLocaleAspect(class TDesC16 const &)
 	?RegionCode@User@@SA?AW4TRegionCode@@XZ @ 2179 NONAME ; enum TRegionCode User::RegionCode(void)
+	?SetReadOnly@TChunkCreateInfo@@QAEXXZ @ 2180 NONAME ; public: void __thiscall TChunkCreateInfo::SetReadOnly(void)
 

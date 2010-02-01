@@ -22,6 +22,7 @@
 #include <f32fsys.h>
 #include <e32def.h>
 #include <e32def_private.h>
+#include <e32hal.h>
 
 // define this macro to autodetect card re-insertion
 #define __AUTO_DETECT_MEDIA_CHANGE__

@@ -17,6 +17,7 @@
 
 #include <f32file.h>
 #include <e32test.h>
+#include <e32svr.h>
 #include "t_server.h"
 
 #include "fat_utils.h"

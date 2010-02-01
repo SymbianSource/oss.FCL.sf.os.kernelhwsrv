@@ -17,7 +17,8 @@
 
 #include "t_loader_delete.h"
 #include <e32debug.h>
-
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 
 TInt E32Main()
 	{

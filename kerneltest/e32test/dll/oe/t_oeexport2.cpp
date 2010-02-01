@@ -19,6 +19,7 @@
 
 #include <e32test.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 
 RTest test(_L("T_OEEXPORT2"));
 

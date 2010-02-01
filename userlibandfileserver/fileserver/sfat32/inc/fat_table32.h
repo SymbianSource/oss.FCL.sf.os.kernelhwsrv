@@ -67,7 +67,7 @@ public:
     inline void AcquireLock() const {iDriveInteface.AcquireLock();} 
     inline void ReleaseLock() const {iDriveInteface.ReleaseLock();} 
     
-    inline TFatDriveInterface& DriveInterface() const;
+    inline TDriveInterface& DriveInterface() const;
     inline CFatMountCB* OwnerMount() const;
 
 
@@ -128,10 +128,10 @@ private:
 private:
 
     
-    CFatCacheBase*         iCache;         ///< FAT cache, fixed or LRU depending on the FAT type
-    TFatDriveInterface&    iDriveInteface; ///< reference to the drive interface
-    CFatHelperThreadBase*  ipHelperThread; ///< helper thread object pointer. NULL if it is not present
-    TState                 iState;         ///< state of this object 
+    CFatCacheBase*          iCache;         ///< FAT cache, fixed or LRU depending on the FAT type
+    TDriveInterface&        iDriveInteface; ///< reference to the drive interface
+    CFatHelperThreadBase*   ipHelperThread; ///< helper thread object pointer. NULL if it is not present
+    TState                  iState;         ///< state of this object 
 
     //-- friends
     friend TInt FAT32_ScanThread(TAny* apHostObject);
@@ -161,6 +161,7 @@ public:
     void FreeClusterListL(TUint32 aCluster);
     TUint32 AllocateSingleClusterL(TUint32 aNearestCluster);
     void ExtendClusterListL(TUint32 aNumber,TInt& aCluster);
+    TUint32 AllocateClusterListL(TUint32 aNumber,TUint32 aNearestCluster);
 
 private:
     CRamFatTable(CFatMountCB& aOwner);

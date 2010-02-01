@@ -130,6 +130,9 @@ private:
     TSpcClientInterface iSpcInterface;
     /** SCSI SBC interface methods */
     TSbcClientInterface* iSbcInterface;
+    // buffers for block manipulation (for use in iSbcInterface)
+    RBuf8 iHeadbuf;
+	RBuf8 iTailbuf;    		
 
     // Logical Unit properties
     /** LU removable */

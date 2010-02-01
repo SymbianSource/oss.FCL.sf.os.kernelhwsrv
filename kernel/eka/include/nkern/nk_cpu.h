@@ -130,7 +130,7 @@
 	#endif
 	#endif
 
-	#if (defined(__CPU_ARM1136__) && defined(__CPU_ARM1136_ERRATUM_399234_FIXED)) || (defined(__CPU_ARM11MP__) && defined (__SMP__) )
+	#if (defined(__CPU_ARM1136__) && defined(__CPU_ARM1136_ERRATUM_399234_FIXED) && !defined(__MEMMODEL_FLEXIBLE__)) || (defined(__CPU_ARM11MP__) && defined (__SMP__) )
 	// Page tables on these platforms are either uncached or write through cached.
 	#else
 	// Page/directory tables are fully cached (write-back) on these platforms. 
@@ -779,47 +779,87 @@ inline void _outpd(TUint16 port, TUint32 data)
 #endif
 #endif // end of (_DEBUG) && !(__KERNEL_APIS_DISABLE_USER_MEMORY_GUARDS__)
 
+#ifndef __USER_MEMORY_GUARDS_ENABLED__
 
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
+#define USER_MEMORY_GUARD_SAVE_WORDS			0
+#define USER_MEMORY_DOMAIN						0
 
-#define USER_MEMORY_GUARD_ON(cc,save,temp)			\
-	asm("mrc"#cc" p15, 0, "#save", c3, c0, 0 ");	\
-	asm("bic"#cc" "#temp", "#save", #0xc0000000 ");	\
-	asm("mcr"#cc" p15, 0, "#temp", c3, c0, 0 ");	\
-    __INST_SYNC_BARRIER__(save)                     // Set DACR so no access to domain 15
-
-#define USER_MEMORY_GUARD_OFF(cc,save,temp)			\
-	asm("mrc"#cc" p15, 0, "#save", c3, c0, 0 ");	\
-	asm("orr"#cc" "#temp", "#save", #0x40000000 ");	\
-	asm("mcr"#cc" p15, 0, "#temp", c3, c0, 0 ");	\
-    __INST_SYNC_BARRIER__(save)                     // Set DACR so client of domain 15
-
-#define USER_MEMORY_GUARD_RESTORE(save,temp)		\
-	asm("mrc p15, 0, "#temp", c3, c0, 0 ");			\
-	asm("and "#save", "#save", #0xc0000000 ");		\
-	asm("bic "#temp", "#temp", #0xc0000000 ");		\
-	asm("orr "#temp", "#temp", "#save );			\
-	asm("mcr p15, 0, "#temp", c3, c0, 0 ");    		\
-    __INST_SYNC_BARRIER__(save)                     // Restore domain 15 in DACR from value in 'save'
-
-#define USER_MEMORY_GUARD_ON_IF_MODE_USR(rd)		\
-	asm("mrs "#rd", spsr");							\
-	asm("tst "#rd", #0x0f ");						\
-	USER_MEMORY_GUARD_ON(eq,rd,rd)					// If spsr is mode_usr then set DACR so no access to domain 15
-
-#define USER_MEMORY_GUARD_OFF_IF_MODE_USR(rd)		\
-	asm("mrs "#rd", spsr");							\
-	asm("tst "#rd", #0x0f ");						\
-	USER_MEMORY_GUARD_OFF(eq,rd,rd)					// If spsr is mode_usr then set DACR so client of domain 15
-
-#else // !__USER_MEMORY_GUARDS_ENABLED__
-
+#define USER_MEMORY_GUARD_SAVE(save)
+#define USER_MEMORY_GUARD_RESTORE(save,temp)
 #define USER_MEMORY_GUARD_ON(cc,save,temp)
 #define USER_MEMORY_GUARD_OFF(cc,save,temp)
-#define USER_MEMORY_GUARD_RESTORE(save,temp)
-#define USER_MEMORY_GUARD_ON_IF_MODE_USR(rd)
-#define USER_MEMORY_GUARD_OFF_IF_MODE_USR(rd)
+#define USER_MEMORY_GUARD_ON_IF_MODE_USR(temp)
+#define USER_MEMORY_GUARD_OFF_IF_MODE_USR(temp)
+#define USER_MEMORY_GUARD_ASSERT_ON(temp)
+#define USER_MEMORY_GUARD_ASSERT_OFF_IF_MODE_USR(psr)
+
+#else // __USER_MEMORY_GUARDS_ENABLED__
+
+#define USER_MEMORY_GUARD_SAVE_WORDS			2
+#define USER_MEMORY_DOMAIN						15
+#define	USER_MEMORY_DOMAIN_MASK					(3 << (2*USER_MEMORY_DOMAIN))
+#define	USER_MEMORY_DOMAIN_CLIENT				(1 << (2*USER_MEMORY_DOMAIN))
+
+// Save the DACR in the named register
+#define USER_MEMORY_GUARD_SAVE(save)											\
+	asm("mrc p15, 0, "#save", c3, c0, 0");			/* save<-DACR */
+
+// Restore access to domain 15 (user pages) to the state previously saved
+// In this case, 'save' may not be the same register as 'temp'
+#define USER_MEMORY_GUARD_RESTORE(save,temp)									\
+	asm("mrc p15, 0, "#temp", c3, c0, 0");			/* temp<-DACR */			\
+	asm("bic "#temp", "#temp", #%a0" : : "i" USER_MEMORY_DOMAIN_MASK);			\
+	asm("and "#save", "#save", #%a0" : : "i" USER_MEMORY_DOMAIN_MASK);			\
+	asm("orr "#temp", "#temp", "#save );										\
+	asm("mcr p15, 0, "#temp", c3, c0, 0");			/* DACR<-temp */			\
+    __INST_SYNC_BARRIER__(temp)
+
+// Disable access to domain 15 (user pages)
+// 'save' may be the same register as 'temp', but in that case the use as
+// a temporary takes precedence and the value left in 'save' is undefined
+#define USER_MEMORY_GUARD_ON(cc,save,temp)										\
+	asm("mrc"#cc" p15, 0, "#save", c3, c0, 0");		/* save<-DACR */			\
+	asm("bic"#cc" "#temp", "#save", #%a0" : : "i" USER_MEMORY_DOMAIN_MASK);	\
+	asm("mcr"#cc" p15, 0, "#temp", c3, c0, 0");		/* DACR<-temp */			\
+    __INST_SYNC_BARRIER__(temp)
+
+// Enable access to domain 15 (user pages) as a client
+// 'save' may be the same register as 'temp', but in that case the use as
+// a temporary takes precedence and the value left in 'save' is undefined
+#define USER_MEMORY_GUARD_OFF(cc,save,temp)										\
+	asm("mrc"#cc" p15, 0, "#save", c3, c0, 0");		/* save<-DACR */			\
+	asm("orr"#cc" "#temp", "#save", #%a0" : : "i" USER_MEMORY_DOMAIN_CLIENT);	\
+	asm("mcr"#cc" p15, 0, "#temp", c3, c0, 0");		/* DACR<-temp */			\
+    __INST_SYNC_BARRIER__(temp)
+
+// Disable access to domain 15 (user pages) if SPSR indicates mode_usr
+// The specified 'temp' register is left with an undefined value
+#define USER_MEMORY_GUARD_ON_IF_MODE_USR(temp)									\
+	asm("mrs "#temp", spsr");													\
+	asm("tst "#temp", #0x0f");													\
+	USER_MEMORY_GUARD_ON(eq,temp,temp)
+
+// Enable access to domain 15 (user pages) if SPSR indicates mode_usr
+// The specified 'temp' register is left with an undefined value
+#define USER_MEMORY_GUARD_OFF_IF_MODE_USR(temp)									\
+	asm("mrs "#temp", spsr");													\
+	asm("tst "#temp", #0x0f");													\
+	USER_MEMORY_GUARD_OFF(eq,temp,temp)
+
+// Assert that access to domain 15 (user pages) is disabled
+#define USER_MEMORY_GUARD_ASSERT_ON(temp)										\
+	asm("mrc p15, 0, "#temp", c3, c0, 0");		/* temp<-DACR				*/	\
+	asm("tst "#temp", #%a0" : : "i" USER_MEMORY_DOMAIN_MASK);					\
+	asm("cdpne p15, 0, c0, c0, c0, 0");			/* fault if nonzero			*/
+
+// Assert that access to domain 15 (user pages) is enabled if the value
+// in 'psr' says we came from/are going back to user mode
+#define USER_MEMORY_GUARD_ASSERT_OFF_IF_MODE_USR(psr)							\
+	asm("tst "#psr", #0x0f");					/* check for mode_usr		*/	\
+	asm("mrceq p15, 0, "#psr", c3, c0, 0");		/* psr<-DACR				*/	\
+	asm("tsteq "#psr", #%a0" : : "i" USER_MEMORY_DOMAIN_MASK);					\
+	asm("cdpeq p15, 0, c0, c0, c0, 0");			/* fault if no access		*/
 
 #endif // end of else __USER_MEMORY_GUARDS_ENABLED__
 
-#endif // End of file
+#endif // __NK_CPU_H__

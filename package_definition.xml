@@ -50,10 +50,10 @@
       <component id="btrace" name="Kernel Trace Tool" purpose="mandatory">
         <unit bldFile="kernel/eka/drivers/trace" mrp="kernel/eka/drivers/trace/base_e32_drivers_trace.mrp"/>
       </component>
-      <component id="cameraldd" name="Camera Drivers" introduced="tb92" purpose="optional">
+      <component id="cameraldd" name="Camera Drivers" introduced="^3" purpose="optional">
         <unit bldFile="kernel/eka/drivers/camerasc" mrp="kernel/eka/drivers/camerasc/base_drivers_camerasc.mrp"/>
       </component>
-      <component id="displayldd" name="Display Drivers" introduced="tb92" purpose="optional">
+      <component id="displayldd" name="Display Drivers" introduced="^3" purpose="optional">
         <!-- owned and maintained by graphics package. To be moved there as soon as technical limitations are resolved -->
         <unit bldFile="kernel/eka/drivers/display" mrp="kernel/eka/drivers/display/base_e32_drivers_display.mrp"/>
       </component>
@@ -98,7 +98,7 @@
       <component id="usbmsfs" name="USB Mass Storage File System" filter="gt" purpose="optional" class="plugin">
         <unit bldFile="userlibandfileserver/fileserver/smassstorage" mrp="userlibandfileserver/fileserver/smassstorage/base_f32_smassstorage.mrp"/>
       </component>
-      <component id="usbhostmssrv" name="USB Host Mass Storage Server" filter="gt" introduced="tb92" purpose="optional" class="plugin">
+      <component id="usbhostmssrv" name="USB Host Mass Storage Server" filter="gt" introduced="^3" purpose="optional" class="plugin">
         <unit bldFile="userlibandfileserver/fileserver/shostmassstorage" mrp="userlibandfileserver/fileserver/shostmassstorage/base_f32_shostmassstorage.mrp"/>
       </component>
       <component id="fat32fs" name="FAT32 File System" filter="gt" purpose="optional" class="plugin">
@@ -125,12 +125,12 @@
       </component>
     </collection>
     <collection id="baseapitest" name="Base API Tests" level="test">
-      <component id="basesvs" name="Base Verification Suite" introduced="tb91" purpose="development" filter="test">
+      <component id="basesvs" name="Base Verification Suite" introduced="^2" purpose="development" filter="test">
         <unit mrp="baseapitest/basesvs/group/basesvs.mrp" bldFile="baseapitest/basesvs/group"/>
       </component>
     </collection>
     <collection id="kernelhwsrv_info" name="Kernel and Hardware Services Info" level="test">
-      <component id="kernelhwsrv_metadata" name="Kernel and Hardware Services Metadata" class="config" introduced="tb91" purpose="development" target="desktop">
+      <component id="kernelhwsrv_metadata" name="Kernel and Hardware Services Metadata" class="config" introduced="^2" purpose="development" target="desktop">
         <unit mrp="kernelhwsrv_info/kernelhwsrv_metadata/kernelhwsrv_metadata.mrp"/>
       </component>
     </collection>

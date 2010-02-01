@@ -920,4 +920,5 @@ EXPORTS
 	?ShBufPin@Kern@@SAHPAVTShBuf@@PAVTPhysicalPinObject@@HAAKPAK2AAI@Z @ 919 NONAME ; int Kern::ShBufPin(class TShBuf *, class TPhysicalPinObject *, int, unsigned long &, unsigned long *, unsigned long &, unsigned int &)
 	?Repeats@TRawEvent@@QBEHXZ @ 920 NONAME ; int TRawEvent::Repeats(void) const
 	?SetRepeat@TRawEvent@@QAEXW4TType@1@HH@Z @ 921 NONAME ; void TRawEvent::SetRepeat(enum TRawEvent::TType, int, int)
+	?MakeHandleAndOpen@Kern@@SAHPAVDThread@@PAVDObject@@W4TOwnerType@@@Z @ 922 NONAME ; public: static int __cdecl Kern::MakeHandleAndOpen(class DThread *,class DObject *,enum TOwnerType)
 

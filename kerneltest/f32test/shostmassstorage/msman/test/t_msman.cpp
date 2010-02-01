@@ -20,6 +20,7 @@
 #include <f32file.h>
 #include <e32cons.h>
 #include <e32debug.h>
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
 
 #include "tmsprintdrive.h"
@@ -30,10 +31,20 @@
 RTest test(_L("T_MSMAN"));
 RFs fsSession;
 
-
+extern CMsDrive msDrive;
 
 void DriveTestL()
     {
+    test.Start(_L("Check USB drive attributes\n"));
+    TInt driveNumber = msDrive.DriveNumber();
+
+    // Check drive Info is USB Mass Storage
+    TDriveInfo driveInfo;
+    fsSession.Drive(driveInfo, driveNumber);
+
+    test_Equal(driveInfo.iConnectionBusType, EConnectionBusUsb);
+    test_Value(driveInfo.iDriveAtt & KDriveAttExternal, KDriveAttExternal);
+    test.End();
     }
 
 

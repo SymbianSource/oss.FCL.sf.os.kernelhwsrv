@@ -29,6 +29,7 @@ ramtarget +
 smpsafe
 macro MAKE_DLL
 macro PROVIDE_D
+unpaged  // must be unpaged for CheckAffinity() to be robust
 
 capability NONE
 VENDORID 0x70000001

@@ -19,6 +19,7 @@
 #include <string.h>
 #include <emulator.h>
 #include <e32ldr.h>
+#include <e32ldr_private.h>
 #include <e32uid.h>
 
 #pragma data_seg(".data2")

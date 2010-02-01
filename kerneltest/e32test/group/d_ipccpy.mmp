@@ -32,3 +32,5 @@ VENDORID 0x70000001
 
 
 capability		all
+macro CPU_AFFINITY_ANY
+SMPSAFE

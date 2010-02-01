@@ -29,6 +29,7 @@ class CSecuritySvrAsync;
 
 #include "c_security_svr_async.h"
 #include <f32file.h>
+#include <d32locd.h>
 
 #include <rm_debug_api.h>
 

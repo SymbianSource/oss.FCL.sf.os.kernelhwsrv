@@ -47,6 +47,7 @@ RTest test(_L("T_CLAMP"));
 
 #include <f32file.h>
 #include <f32dbg.h>
+#include <e32ldr_private.h>
 RFs TheFs;
 
 _LIT(KFATName,"FAT");

@@ -1615,10 +1615,6 @@ TInt TFsFileAtt::DoRequestL(CFsRequest* aRequest)
 	{
 
 	__PRINT(_L("TFsFileAtt::DoRequestL(CFsRequest* aRequest)"));
-	
-    TInt r = CheckDiskSpace(0, aRequest);
-    if(r != KErrNone)
-        return r;
 
 	CFileShare* share=(CFileShare*)aRequest->ScratchValue();
 //	TInt att=(TInt)aRequest->FileShare()->File().Att()&KEntryAttMaskSupported;
@@ -1684,10 +1680,6 @@ TInt TFsFileModified::DoRequestL(CFsRequest* aRequest)
 //
 	{
 	__PRINT(_L("TFsFileModified::DoRequestL(CFsRequest* aRequest)"));
-
-    TInt r = CheckDiskSpace(0, aRequest);
-    if(r != KErrNone)
-        return r;
         	
 	CFileShare* share=(CFileShare*)aRequest->ScratchValue();
 	TTime mod=share->File().Modified();

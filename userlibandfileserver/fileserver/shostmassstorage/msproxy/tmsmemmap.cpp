@@ -25,9 +25,7 @@
 */
 
 #include <e32def.h>
-#include <e32def_private.h>
 #include <e32err.h>
-#include <e32debug.h>
 
 #include "tmsmemmap.h"
 #include "debug.h"

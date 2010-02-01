@@ -19,13 +19,7 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
 
-#include "msctypes.h"
-#include "shared.h"
-#include "msgservice.h"
-#include "cusbhostmslogicalunit.h"
-#include "cusbhostmsdevice.h"
 #include "cusbhostmsserver.h"
 
 static void RunServerL()

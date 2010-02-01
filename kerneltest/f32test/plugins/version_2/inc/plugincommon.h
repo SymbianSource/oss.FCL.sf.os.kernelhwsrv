@@ -16,11 +16,11 @@
 #include <f32plugin.h>
 #include <e32test.h>
 
-const TInt KPluginSetDrive = -112233;
-const TInt KPluginGetError = -112234;
-const TInt KPluginSetRemovable = -112235;
-const TInt KPluginToggleIntercepts = -112236;
-const TInt KPluginSetDirFullName = -112237;
+const TInt KPluginSetDrive			= -112233;
+const TInt KPluginGetError			= -112234;
+const TInt KPluginSetRemovable		= -112235;
+const TInt KPluginToggleIntercepts	= -112236;
+const TInt KPluginSetDirFullName	= -112237;
 
 //This is some stupid thing for making strings wide.
 //We're using this for printing out the filename.

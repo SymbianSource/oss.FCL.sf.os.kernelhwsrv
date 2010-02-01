@@ -159,6 +159,12 @@ EXPORT_C TBool CFileSystem::IsExtensionSupported() const
 	return(EFalse);
 	}
 
+EXPORT_C void CFileSystem::DriveInfo(TDriveInfo& aInfo, TInt aDriveNumber) const
+	{
+    GetDriveInfo(aInfo, aDriveNumber);
+	}
+
+
 EXPORT_C TInt CFileSystem::GetInterface(TInt /*aInterfaceId*/,TAny*& /*aInterface*/,TAny* /*aInput*/)
 	{
 	return(KErrNotSupported);

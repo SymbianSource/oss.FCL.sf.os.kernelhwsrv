@@ -104,22 +104,30 @@ TInt DMemoryMapping::Map(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TMa
 			return KErrArgument;
 		}
 
-	TLinAddr base = iAllocatedLinAddrAndOsAsid&~KPageMask;
-#ifdef _DEBUG
-	TUint osAsid = iAllocatedLinAddrAndOsAsid&KPageMask;
-#endif
+	TLinAddr base = iAllocatedLinAddrAndOsAsid & ~KPageMask;
+	TLinAddr top = base + (aCount << KPageShift);
 
 	// check user/supervisor memory partitioning...
-	if(base<KUserMemoryLimit != (bool)(aPermissions&EUser))
-		return KErrAccessDenied;
+	if (aPermissions & EUser)
+		{
+		if (base > KUserMemoryLimit || top > KUserMemoryLimit)
+			return KErrAccessDenied;
+		}
+	else
+		{
+		if (base < KUserMemoryLimit || top < KUserMemoryLimit)
+			return KErrAccessDenied;
+		}
 
-	// check mapping doesn't straddle KGlobalMemoryBase or KUserMemoryLimit...
-	__NK_ASSERT_DEBUG(TUint(KGlobalMemoryBase-base)==0 || TUint(KGlobalMemoryBase-base)>=TUint(aCount<<KPageShift));
-	__NK_ASSERT_DEBUG(TUint(KUserMemoryLimit-base)==0 || TUint(KUserMemoryLimit-base)>=TUint(aCount<<KPageShift));
+	// check that mapping doesn't straddle KUserMemoryLimit or KGlobalMemoryBase ...
+	__NK_ASSERT_DEBUG((base < KUserMemoryLimit) == (top <= KUserMemoryLimit));
+	__NK_ASSERT_DEBUG((base < KGlobalMemoryBase) == (top <= KGlobalMemoryBase));
+
+	// check that only global memory is mapped into the kernel process
+	TBool global = base >= KGlobalMemoryBase;
+	__NK_ASSERT_DEBUG(global || (iAllocatedLinAddrAndOsAsid & KPageMask) != KKernelOsAsid);
 
 	// setup attributes...
-	TBool global = base>=KGlobalMemoryBase;
-	__NK_ASSERT_DEBUG(global || osAsid!=(TInt)KKernelOsAsid); // prevent non-global memory in kernel process
 	PteType() =	Mmu::PteType(aPermissions,global);
 	iBlankPte = Mmu::BlankPte(aMemory->Attributes(),PteType());
 
@@ -285,6 +293,10 @@ TInt DCoarseMapping::DoMap()
 		else
 			{
 			TPde pde = Mmu::PageTablePhysAddr(pt)|iBlankPde;
+#ifdef	__USER_MEMORY_GUARDS_ENABLED__
+			if (IsUserMapping())
+				pde = PDE_IN_DOMAIN(pde, USER_MEMORY_DOMAIN);
+#endif
 			TRACE2(("!PDE %x=%x (was %x)",pPde,pde,*pPde));
 			if (Mmu::PdeMapsSection(*pPde))
 				{
@@ -495,19 +507,20 @@ TPte* DFineMapping::GetOrAllocatePageTable(TLinAddr aAddr, TPinArgs& aPinArgs)
 		if(pinnedPt && pinnedPt!=pt)
 			{
 			// previously pinned page table not needed...
-			PageTableAllocator::UnpinPageTable(pinnedPt,aPinArgs);
+			::PageTables.UnpinPageTable(pinnedPt,aPinArgs);
 
 			// make sure we have memory for next pin attempt...
 			MmuLock::Unlock();
 			aPinArgs.AllocReplacementPages(KNumPagesToPinOnePageTable);
-			MmuLock::Lock();
 			if(!aPinArgs.HaveSufficientPages(KNumPagesToPinOnePageTable)) // if out of memory...
 				{
 				// make sure we free any unneeded page table we allocated...
 				if(pt)
 					FreePageTable(Mmu::PageDirectoryEntry(OsAsid(),aAddr));
+				MmuLock::Lock();
 				return 0;
 				}
+			MmuLock::Lock();
 			}
 
 		if(!pt)
@@ -527,8 +540,16 @@ TPte* DFineMapping::GetOrAllocatePageTable(TLinAddr aAddr, TPinArgs& aPinArgs)
 			return pt;
 
 		// pin the page table...
+		if (::PageTables.PinPageTable(pt,aPinArgs) != KErrNone)
+			{// Couldn't pin the page table...
+			MmuLock::Unlock();
+			// make sure we free any unneeded page table we allocated...
+			FreePageTable(Mmu::PageDirectoryEntry(OsAsid(),aAddr));
+			MmuLock::Lock();
+			return 0;
+			}
+
 		pinnedPt = pt;
-		PageTableAllocator::PinPageTable(pinnedPt,aPinArgs);
 		}
 	}
 
@@ -628,6 +649,10 @@ TPte* DFineMapping::AllocatePageTable(TLinAddr aAddr, TPde* aPdeAddress, TBool a
 			pti->SetFine(aAddr&~KChunkMask,iAllocatedLinAddrAndOsAsid&KPageMask);
 
 			TPde pde = Mmu::PageTablePhysAddr(newPt)|iBlankPde;
+#ifdef	__USER_MEMORY_GUARDS_ENABLED__
+			if (IsUserMapping())
+				pde = PDE_IN_DOMAIN(pde, USER_MEMORY_DOMAIN);
+#endif
 			TRACE2(("!PDE %x=%x",aPdeAddress,pde));
 			__NK_ASSERT_DEBUG(((*aPdeAddress^pde)&~KPdeMatchMask)==0 || *aPdeAddress==KPdeUnallocatedEntry);
 			*aPdeAddress = pde;
@@ -1469,7 +1494,7 @@ void DVirtualPinMapping::UnpinPageTables(TPinArgs& aPinArgs)
 
 	MmuLock::Lock();
 	while(pPt<pPtEnd)
-		PageTableAllocator::UnpinPageTable(*pPt++,aPinArgs);
+		::PageTables.UnpinPageTable(*pPt++,aPinArgs);
 	MmuLock::Unlock();
 	iNumPinnedPageTables = 0;
 

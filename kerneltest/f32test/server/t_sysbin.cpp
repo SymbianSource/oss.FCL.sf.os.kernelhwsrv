@@ -18,6 +18,8 @@
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <f32file.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 
 _LIT(KCheckFailed,"Check failed %d != %d\n");
 

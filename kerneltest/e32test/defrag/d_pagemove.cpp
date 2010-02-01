@@ -42,9 +42,6 @@ const TInt KMajorVersionNumber=0;
 const TInt KMinorVersionNumber=1;
 const TInt KBuildVersionNumber=1;
 
-
-_LIT(KLddName,"PageMove");
-
 class DPageMove;
 
 class DPageMoveFactory : public DLogicalDevice
@@ -104,7 +101,7 @@ TInt DPageMoveFactory::Install()
 // Install the LDD - overriding pure virtual
 //
     {
-    return SetName(&KLddName);
+    return SetName(&KPageMoveLddName);
     }
 
 void DPageMoveFactory::GetCaps(TDes8& aDes) const
@@ -327,12 +324,17 @@ TInt DPageMove::DoPageMove(TLinAddr aAddr, TBool aEchoOff)
 	}
 
 
+#ifndef __MSVC6__ 	// VC6 can't cope with variable arguments in macros.
+#define KERN_PRINTF(x...) Kern::Printf(x)
+#endif
+
 //#define EXTRA_TRACE
 #ifdef EXTRA_TRACE
-#define KERN_PRINTF(x...) Kern::Printf(x)
+#define PRINTF(x)	x
 #else
-#define KERN_PRINTF(x...)
+#define PRINTF(x)
 #endif
+
 
 TInt DPageMove::KernelDataMovePerformance(void)
 {
@@ -364,7 +366,7 @@ TInt DPageMove::KernelDataMovePerformance(void)
 		heapArray[i] = i;
 		}
 
-	KERN_PRINTF("Testing Performance of Moving Kernel Data Pages");
+	PRINTF(KERN_PRINTF("Testing Performance of Moving Kernel Data Pages"));
 
 	TInt moveMode = EKMoveStack;
 	for (; moveMode < EKMoveModes; moveMode++)
@@ -379,14 +381,14 @@ TInt DPageMove::KernelDataMovePerformance(void)
 				baseAddr = pageAddr;
 				endAddr = _ALIGN_UP((TLinAddr)heapArray + heapArraySize, iPageSize);
 				actualHeapPages = (endAddr - baseAddr) / iPageSize;
-				KERN_PRINTF("heap baseAddr %x endAddr %x", baseAddr, endAddr);
+				PRINTF(KERN_PRINTF("heap baseAddr %x endAddr %x", baseAddr, endAddr));
 				break;
 
 			case EKMoveStack:
 				pageAddr = _ALIGN_DOWN((TLinAddr)stackArray, iPageSize);
 				baseAddr = pageAddr;
 				endAddr = _ALIGN_UP((TLinAddr)stackArray + KStackSize, iPageSize);
-				KERN_PRINTF("stack baseAddr %x endAddr %x", baseAddr, endAddr);
+				PRINTF(KERN_PRINTF("stack baseAddr %x endAddr %x", baseAddr, endAddr));
 				break;
 			}
 

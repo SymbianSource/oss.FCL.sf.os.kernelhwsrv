@@ -39,6 +39,8 @@
 #include <e32test.h>
 #include <e32kpan.h>
 #include <f32file.h>
+#include <e32ldr.h>
+#include <e32ldr_private.h>
 
 LOCAL_D RTest test(_L(" T_POWER "));
 

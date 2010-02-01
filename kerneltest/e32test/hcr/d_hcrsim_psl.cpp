@@ -23,6 +23,7 @@ extern HCR::SRepositoryCompiled CompiledRepository;
 extern HCR::SRepositoryCompiled CompiledEmptyRepository;
 extern HCR::SRepositoryCompiled CompiledRepositoryCorrupt1;
 extern HCR::SRepositoryCompiled CompiledRepositoryCorrupt2;
+extern HCR::SRepositoryCompiled CompiledRepositoryNullOrderedList;
 TUint32 PslConfigurationFlags = 0;
 
 class HCRTest : public HCR::MVariant
@@ -51,8 +52,11 @@ HCRTest::~HCRTest()
 TInt HCRTest::Initialise()
 	{
 	HCR_FUNC("HCRTest::Initialise");
-
-	HCR_LOG_RETURN(KErrNone);
+	if (PslConfigurationFlags & ETestInitialisationFail)
+		{
+		HCR_TRACE_RETURN(KErrBadPower); // random error code no.1
+		}
+	HCR_TRACE_RETURN(KErrNone);
 	}
 
 TInt HCRTest::GetCompiledRepositoryAddress(TAny*& aAddr)
@@ -76,17 +80,31 @@ TInt HCRTest::GetCompiledRepositoryAddress(TAny*& aAddr)
 		{
 		aAddr = static_cast<TAny*>(&CompiledRepositoryCorrupt2);
 		}
+	else if (PslConfigurationFlags & ETestNullOrderedList)
+		{
+		aAddr = static_cast<TAny*>(&CompiledRepositoryNullOrderedList);
+		}
+	else if (PslConfigurationFlags & ETestNullRepositoryKErrNone)
+		{
+		aAddr = NULL;
+		r = KErrNone; // Invalid error code: should be KErrNotSupported
+		}
+	else if (PslConfigurationFlags & ETestBadErrorCode)
+		{
+		aAddr = static_cast<TAny*>(&CompiledEmptyRepository);
+		r = KErrCommsParity; // random error code no.2
+		}
 	else
 		{
 		aAddr = static_cast<TAny*>(&CompiledRepository);
 		}
-	HCR_LOG_RETURN(r);
+	HCR_TRACE_RETURN(r);
 	}
 
 TBool HCRTest::IgnoreCoreImgRepository()
 	{
 	HCR_FUNC("HCRTest::IgnoreCoreImgRepository");
-	HCR_LOG_RETURN(PslConfigurationFlags & ETestIgnoreCoreImgRepository);
+	HCR_TRACE_RETURN(PslConfigurationFlags & ETestIgnoreCoreImgRepository);
 	}
 
 TInt HCRTest::GetOverrideRepositoryAddress(TAny*& aAddr)
@@ -98,11 +116,15 @@ TInt HCRTest::GetOverrideRepositoryAddress(TAny*& aAddr)
 		aAddr = static_cast<TAny*>(&CompiledEmptyRepository);
 		r = KErrNone;
 		}
-	HCR_LOG_RETURN(r);
+	HCR_TRACE_RETURN(r);
 	}
 
 GLDEF_C HCR::MVariant* CreateHCRVariant()
 	{
 	HCR_FUNC("CreateHCRTest");
+	if (PslConfigurationFlags & ETestVariantObjectCreateFail)
+		{
+		return NULL;
+		}
 	return new HCRTest;
 	}

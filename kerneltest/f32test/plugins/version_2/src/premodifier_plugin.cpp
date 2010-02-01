@@ -962,7 +962,7 @@ void CPreModifierPlugin::FsDeleteL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CPreModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CPreModifierPlugin::FsDeleteL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1012,7 +1012,7 @@ void CPreModifierPlugin::FsReplaceL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CPreModifierPlugin::FsReplaceL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1027,7 +1027,7 @@ void CPreModifierPlugin::FsReplaceL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CPreModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CPreModifierPlugin::FsReplaceL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1057,7 +1057,7 @@ void CPreModifierPlugin::FsRenameL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CPreModifierPlugin::FsRenameL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1072,7 +1072,7 @@ void CPreModifierPlugin::FsRenameL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CPreModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CPreModifierPlugin::FsRenameL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1099,7 +1099,7 @@ void CPreModifierPlugin::FsEntryL(TFsPluginRequest& aRequest)
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CPreModifierPlugin::FsEntryL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1114,7 +1114,7 @@ void CPreModifierPlugin::FsEntryL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CPreModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CPreModifierPlugin::FsEntryL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1136,11 +1136,11 @@ void CPreModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 		    	
 	if (aRequest.IsPostOperation())
 		{
-		_LOG(_L("CPreModifierPlugin::FsRenameL, post intercept"));
+		_LOG(_L("CPreModifierPlugin::FsSetEntryL, post intercept"));
 		RFilePlugin fileplugin2(aRequest);
 		//open a second file
 		err = fileplugin2.Open(testfilename1, EFileWrite);
-		_LOG3(_L("RFilePlugin::Open for %S returned %d"), &testfilename1, err);
+		_LOG3(_L("CPreModifierPlugin::FsSetEntryL, RFilePlugin::Open for %S returned %d"), &testfilename1, err);
 		iLastError = err;
 		iLineNumber = __LINE__;
 		if(err!=KErrNone)
@@ -1155,7 +1155,7 @@ void CPreModifierPlugin::FsSetEntryL(TFsPluginRequest& aRequest)
 
 		//close the second file
 		fileplugin2.Close();
-		_LOG2(_L("CPreModifierPlugin::FsFileWriteL, RFilePlugin::Close to the second file returned %d"), err);
+		_LOG2(_L("CPreModifierPlugin::FsSetEntryL, RFilePlugin::Close to the second file returned %d"), err);
 		}
 	else
 		{
@@ -1206,7 +1206,7 @@ void CPreModifierPlugin::FsDirReadOneL(TFsPluginRequest& aRequest)
 	
 	if (aRequest.IsPostOperation())
 		{
-		_LOG(_L("CPreModifierPlugin::FsDirReadL, post intercept"));
+		_LOG(_L("CPreModifierPlugin::FsDirReadOneL, post intercept"));
 		}
 	else
 		{

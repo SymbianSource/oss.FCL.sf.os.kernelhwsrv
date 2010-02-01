@@ -36,6 +36,8 @@ public:
 	TSbcClientInterface(MTransport& aTransport);
 	~TSbcClientInterface();
 
+    void InitBuffers(RBuf8* aHeadbuf, RBuf8* aTailbuf);
+
     TInt ModeSense6L(TUint aPageCode, TBool& aWriteProtected);
     TInt ModeSense10L(TUint aPageCode, TBool& aWriteProtected);
 	TInt Read10L(TLba aLba, TDes8& aBuffer, TInt& aLen);
@@ -43,7 +45,7 @@ public:
 	TInt StartStopUnitL(TBool aStart);
 	TInt Write10L(TLba aLba, TDesC8& aBuffer, TUint aPos, TInt& aLen);
 
-	void SetCapacity(TUint32 aBlockLength, TUint32 aLastLba);
+	void SetCapacityL(TUint32 aBlockLength, TUint32 aLastLba);
 
 public:
     /** Helper class for block boundary read/write */
@@ -55,6 +57,11 @@ private:
     };
 
 
+inline void TSbcClientInterface::InitBuffers(RBuf8* aHeadbuf, RBuf8* aTailbuf)
+    {
+    iBlockTransfer.InitBuffers(aHeadbuf, aTailbuf);
+    }
+
 
 /**
 Initialise block transfer values
@@ -62,9 +69,9 @@ Initialise block transfer values
 @param aBlockLength Block Length of the media
 @param aLastLba Last Logical Block Address of the media
 */
-inline void TSbcClientInterface::SetCapacity(TUint32 aBlockLength, TUint32 aLastLba)
+inline void TSbcClientInterface::SetCapacityL(TUint32 aBlockLength, TUint32 aLastLba)
     {
-    iBlockTransfer.SetCapacity(aBlockLength, aLastLba);
+    iBlockTransfer.SetCapacityL(aBlockLength, aLastLba);
     }
 
 #endif // TSBCCLIENTINTERFACE_H

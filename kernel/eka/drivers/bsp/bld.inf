@@ -37,6 +37,7 @@ PRJ_MMPFILES
 #if !defined(WINS) 
 #if !defined(X86)
 ../dma/dma_lib
+../dma/dma2_lib
 #endif
 #endif
 

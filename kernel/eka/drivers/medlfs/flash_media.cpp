@@ -283,7 +283,7 @@ The default implementation is synchronous, and returns KErrCompletion.
 TInt DMediaDriverFlash::Caps(TLocalDriveCapsV2& caps)
 	{
 	caps.iType=EMediaFlash;
-	caps.iBattery=EBatNotSupported;
+	caps.iConnectionBusType=EConnectionBusInternal;
 	caps.iDriveAtt=KDriveAttLocal|KDriveAttInternal;
 	caps.iMediaAtt=KMediaAttFormattable;
     caps.iBaseAddress=(TUint8*)TInternalRamDrive::Base();
@@ -292,7 +292,7 @@ TInt DMediaDriverFlash::Caps(TLocalDriveCapsV2& caps)
 	caps.iEraseBlockSize=EraseBlockSize();
 
     __KTRACE_OPT( KLOCDRV, Kern::Printf("MLFS: ) type=%d", caps.iType) );
-    __KTRACE_OPT( KLOCDRV, Kern::Printf("MLFS: ) battery=%d", caps.iBattery) );
+    __KTRACE_OPT( KLOCDRV, Kern::Printf("MLFS: ) connectionbustype=%d", caps.iConnectionBusType) );
     __KTRACE_OPT( KLOCDRV, Kern::Printf("MLFS: ) driveatt=0x%x", caps.iDriveAtt) );
     __KTRACE_OPT( KLOCDRV, Kern::Printf("MLFS: ) mediaatt=0x%x", caps.iMediaAtt) );
     __KTRACE_OPT( KLOCDRV, Kern::Printf("MLFS: ) filesystemid=0x%x", caps.iFileSystemId) );

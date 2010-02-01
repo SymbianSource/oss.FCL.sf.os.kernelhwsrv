@@ -460,7 +460,7 @@ EXPORT_C void NTimerQ::Tick()
 			// if first ordered queue entry expires in <32ms, queue the DFC to transfer
 			NTimer* pC=(NTimer*)iOrderedQ.First();
 #ifdef __EPOC32__
-			__ASSERT_WITH_MESSAGE_DEBUG(iMsCount<=pC->iTriggerTime, "iMsCount has exceeded pC->iTriggerTime; function called later than expected ","NKTimer::Tick()");
+			__ASSERT_WITH_MESSAGE_DEBUG(iMsCount<=pC->iTriggerTime, "iMsCount has exceeded pC->iTriggerTime; function called later than expected ","NTimerQ::Tick()");
 #endif
 			if (TInt(pC->iTriggerTime-iMsCount)<ENumTimerQueues)
 				doDfc=TRUE;

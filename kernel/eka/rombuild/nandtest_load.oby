@@ -81,3 +81,5 @@ data=\epoc32\rom\rofstest\fatimage.bin		\user3.img
 data=dir.rofs								\rofs1.img
 data=extension.rofs							\rofsextension2.img
 #endif
+
+data=smr1.img								\smr1.img

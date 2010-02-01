@@ -75,6 +75,12 @@ void DThrashMonitor::UpdateCount(TCount aCount, TInt aDelta)
 	c.iCount += aDelta;
 	c.iLastUpdateTime = currentTime;
 	
+	if(!iUpdateTimer.IsPending())	
+		{
+		TInt r = iUpdateTimer.OneShot(KUpdatePeriod, iUpdateDfc);
+		__NK_ASSERT_ALWAYS(r == KErrNone);
+		}
+	
 	NKern::FMSignal(&iMutex);
 	
 	__NK_ASSERT_DEBUG(c.iCount >= 0);
@@ -145,8 +151,21 @@ void DThrashMonitor::RecalculateThrashLevel()
 		}
 	
 	iLastUpdateTime = currentTime;
-	TInt r = iUpdateTimer.Again(KUpdatePeriod);
-	if (r == KErrArgument)
-		r = iUpdateTimer.OneShot(KUpdatePeriod, iUpdateDfc);
-	__NK_ASSERT_ALWAYS(r == KErrNone);
+	
+	if(iThrashLevel != 0)
+	    {
+	    NKern::FMWait(&iMutex);
+	    if(!iUpdateTimer.IsPending())
+	        {
+            TInt r = iUpdateTimer.Again(KUpdatePeriod);
+            if (r == KErrArgument)
+                {
+                r = iUpdateTimer.OneShot(KUpdatePeriod, iUpdateDfc);  
+                }
+            __NK_ASSERT_ALWAYS(r == KErrNone);
+	        }
+        NKern::FMSignal(&iMutex);    
+        
+	    }
+	
 	}

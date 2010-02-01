@@ -30,3 +30,5 @@ end
 
 capability	all
 VENDORID 0x70000001
+
+SMPSAFE

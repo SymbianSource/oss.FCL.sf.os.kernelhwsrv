@@ -131,7 +131,7 @@ GLDEF_C TInt E32Main()
 	test(theInternalDrive.Caps(infoPckg)==KErrNone);
 	TUint saveSize=I64LOW(info.iSize);
 	test(info.iType==EMediaRam);
-	test(info.iBattery==EBatNotSupported);
+	test(info.iConnectionBusType==EConnectionBusInternal);
 	test(info.iDriveAtt==(KDriveAttLocal|KDriveAttInternal));
 	test(info.iMediaAtt==(KMediaAttVariableSize|KMediaAttFormattable));
 	test(info.iFileSystemId==KDriveFileSysFAT);

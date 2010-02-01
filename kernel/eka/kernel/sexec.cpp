@@ -1396,10 +1396,27 @@ void ExecHandler::HandleInfo(TInt aHandle, THandleInfo* anInfo)
 	kumemput32(anInfo,&hinfo,sizeof(hinfo));
 	}
 
-TUint ExecHandler::HandleAttributes(TInt /*aHandle*/)
+TUint ExecHandler::HandleAttributes(TInt aHandle)
 	{
-	// NOT YET IMPLEMENTED
-	return 0x0f;
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::HandleAttributes"));
+	TUint attributes = RHandleBase::EReadAccess | RHandleBase::EDirectReadAccess;
+	NKern::LockSystem();
+	DObject* pO = K::ObjectFromHandle(aHandle);
+	if (pO->UniqueID() - 1 == EChunk)
+		{
+		DChunk* pChunk = (DChunk*) pO;
+		if (!(pChunk->iAttributes & DChunk::EReadOnly) ||
+			(TheCurrentThread->iOwningProcess->iId == pChunk->iControllingOwner))
+			{
+			attributes |= (RHandleBase::EWriteAccess | RHandleBase::EDirectWriteAccess);
+			}
+		}
+	else
+		{
+		attributes |= (RHandleBase::EWriteAccess | RHandleBase::EDirectWriteAccess);
+		}
+	NKern::UnlockSystem();
+	return attributes;
 	}
 
 TLibraryFunction ExecHandler::LibraryLookup(TInt aLibraryHandle, TInt aOrdinal)

@@ -139,7 +139,7 @@ CFileSystem* CRemote::NewL()
 
 void CRemote::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 //
-// Return the drive info iDriveAtt  && iBatteryState already set
+// Return the drive info, iDriveAtt already set
 //
 	{
 

@@ -876,6 +876,7 @@ __NAKED__ void Arm::SaveState(SFullArmRegSet&)
 	SET_CAR(,r2);
 	VFP_FMRX(,2,VFP_XREG_FPEXC);		// r2=FPEXC
 	asm("orr	r3, r2, #%a0" : : "i" ((TInt)VFP_FPEXC_EN));
+	asm("bic	r3, r3, #%a0" : : "i" ((TInt)VFP_FPEXC_EX));
 	VFP_FMXR(,VFP_XREG_FPEXC,3);		// enable VFP
 	__DATA_SYNC_BARRIER__(r4);
 	__INST_SYNC_BARRIER__(r4);

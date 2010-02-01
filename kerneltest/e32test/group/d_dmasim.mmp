@@ -35,3 +35,4 @@ capability	all
 
 macro		__DMASIM__
 VENDORID 0x70000001
+SMPSAFE

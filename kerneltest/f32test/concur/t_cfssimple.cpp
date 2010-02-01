@@ -111,8 +111,8 @@ LOCAL_C TChar MountTestFileSystem(TInt aDrive)
 	r=TheFs.Drive(info,aDrive);
 	test_KErrNone(r);
  
-	test.Printf(_L("iType=%d,iBattery=%d,iDriveAtt=%x,iMediaAtt=%x\n"),(TUint)info.iType,\
-		(TUint)info.iBattery,info.iDriveAtt,info.iMediaAtt);
+	test.Printf(_L("iType=%d,iConnctionBusType=%d,iDriveAtt=%x,iMediaAtt=%x\n"),(TUint)info.iType,\
+		(TUint)info.iConnectionBusType,info.iDriveAtt,info.iMediaAtt);
 	return c;
 	}
 

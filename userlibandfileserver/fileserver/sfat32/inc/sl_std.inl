@@ -20,21 +20,6 @@
 
 
 
-TBool IsPowerOf2(TUint32 aVal)
-    {
-	if (aVal==0)
-		return EFalse;
-
-    return !(aVal & (aVal-1));
-    }
-
-TUint32 Pow2(TUint32 aVal)
-    {
-        //ASSERT(aVal<32);
-        return 1 << aVal;
-    }
-
-
 //---------------------------------------------------------------------------------------------------------------------------------
 // class TEntryPos
 TUint32 TEntryPos::Cluster() const 
@@ -253,9 +238,9 @@ void CFatMountCB::SetState(TFatMntState aState)
     }
 
 
-TFatDriveInterface& CFatMountCB::DriveInterface() const 
+TDriveInterface& CFatMountCB::DriveInterface() const 
     {
-    return (TFatDriveInterface&)iDriverInterface; 
+    return (TDriveInterface&)iDriverInterface; 
     }
 
 const TFatConfig& CFatMountCB::FatConfig() const 
@@ -325,6 +310,34 @@ void CFatMountCB::XFileCreationHelper::SetIsNewEntryPosFound(TBool aFound)
 	}
 
 
+/**
+    Checks for "EOC" for all Fat types
+    @param  aCluster FAT table entry (cluster number) to check
+    @return ETrue    if aCluster is a EOC for the FAT type being used by CFatMountCB
+*/
+TBool CFatMountCB::IsEndOfClusterCh(TInt aCluster) const
+	{
+    ASSERT(iFatEocCode);
+
+    if((TUint32)aCluster >= iFatEocCode)
+        return ETrue;
+
+    ASSERT((TUint32)aCluster <= iFatEocCode+7);
+
+	return EFalse;
+    }
+
+/**
+    Sets "End of Cluster Chain" value in aCluster depending on the FAT type.
+    @param aCluster cluster to set to end of chain marker
+*/
+void CFatMountCB::SetEndOfClusterCh(TInt &aCluster) const
+	{
+    ASSERT(iFatEocCode);
+    aCluster = iFatEocCode+7;
+	}
+
+
 //-------  debug methods
 #ifdef  _DEBUG
 /**
@@ -367,6 +380,9 @@ void CFatMountCB::SetWriteFailError(TInt aErrorValue)
 	{iWriteFailError=aErrorValue;}
 
 #endif
+
+
+
 
 
 //---------------------------------------------------------------------------------------------------------------------------------
@@ -447,17 +463,6 @@ TUint32 CFatTable::FreeClusters() const
     return iFreeClusters;
     }
 
-TBool CFatTable::IsEof32Bit(TInt aCluster) const
-	{return(aCluster>=(TInt)0x0FFFFFF8 && aCluster<=(TInt)0x0FFFFFFF);} 
-
-TBool CFatTable::IsEof16Bit(TInt aCluster) const
-	{return(aCluster>=0xFFF8 && aCluster<=0xFFFF);}
-
-TBool CFatTable::IsEof12Bit(TInt aCluster) const
-	{return(aCluster>=0xFF8 && aCluster<=0xFFF);}
-
-TInt CFatTable::SectorSizeLog2() const
-	{return(iOwner->SectorSizeLog2());}
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
@@ -483,6 +488,23 @@ inline TBool CFatTable::IsFat32() const
 
 
 /**
+    Checks for "EOC" for all Fat types
+    @param  aCluster FAT table entry (cluster number) to check
+    @return ETrue    if aCluster is a EOC for the FAT type being used by CFatMountCB that owns the CFatTable
+*/
+inline TBool CFatTable::IsEndOfClusterCh(TUint32 aCluster) const
+    {
+    ASSERT(iFatEocCode);
+
+    if(aCluster >= iFatEocCode)
+        return ETrue;
+
+    ASSERT((TUint32)aCluster <= iFatEocCode+7);
+	return EFalse;
+    }
+
+
+/**
 @return Maximal number of addresable FAT entries. This value is taken from the owning mount
 */
 inline TUint32 CFatTable::MaxEntries() const
@@ -492,8 +514,8 @@ inline TUint32 CFatTable::MaxEntries() const
     }
 
 
-// class TFatDriveInterface
-TBool TFatDriveInterface::NotifyUser() const
+// class TDriveInterface
+TBool TDriveInterface::NotifyUser() const
 	{return(iMount->GetNotifyUser());}
 
 
@@ -513,91 +535,6 @@ MWTCacheInterface* CRawDisk::DirCacheInterface()
     }
 
 //---------------------------------------------------------------------------------------------------------------------------------	
-//-- class RBitVector
-
-/** @return size of the vector (number of bits) */
-inline TUint32 RBitVector::Size() const
-    {
-    return iNumBits;
-    } 
-
-/**
-    Get a bit by index
-    
-    @param aIndex  index in a bit vector
-    @return 0 if the bit at pos aIndex is 0, not zero otherwise
-    @panic EIndexOutOfRange if aIndex is out of range
-*/
-inline TBool RBitVector::operator[](TUint32 aIndex) const
-    {
-    __ASSERT_ALWAYS(aIndex < iNumBits, Panic(EIndexOutOfRange));
-    return (ipData[WordNum(aIndex)] & (1<<BitInWord(aIndex)));
-    }
-
-/**
-    Set a bit at pos aIndex to '1'
-    @param aIndex  index in a bit vector
-    @panic EIndexOutOfRange if aIndex is out of range
-*/
-inline void RBitVector::SetBit(TUint32 aIndex)
-    {
-    __ASSERT_ALWAYS(aIndex < iNumBits, Panic(EIndexOutOfRange));
-    ipData[WordNum(aIndex)] |= (1<<BitInWord(aIndex));
-    }
-
-/**
-    Set a bit at pos aIndex to '0'
-    @param aIndex  index in a bit vector
-    @panic EIndexOutOfRange if aIndex is out of range
-*/
-inline void RBitVector::ResetBit(TUint32 aIndex)
-    {
-    __ASSERT_ALWAYS(aIndex < iNumBits, Panic(EIndexOutOfRange));
-    ipData[WordNum(aIndex)] &= ~(1<<BitInWord(aIndex));
-    }
-
-/**
-    Invert a bit at pos aIndex
-    @param aIndex  index in a bit vector
-    @panic EIndexOutOfRange if aIndex is out of range
-*/
-inline void RBitVector::InvertBit(TUint32 aIndex)
-    {
-    __ASSERT_ALWAYS(aIndex < iNumBits, Panic(EIndexOutOfRange));
-    ipData[WordNum(aIndex)] ^= (1<<BitInWord(aIndex));
-    }
-
-/**
-    Set bit value at position aIndex
-    @param aIndex  index in a bit vector
-    @panic EIndexOutOfRange if aIndex is out of range
-*/
-inline void RBitVector::SetBitVal(TUint32 aIndex, TBool aVal)
-    {
-    if(aVal) 
-        SetBit(aIndex);
-    else 
-        ResetBit(aIndex);
-    }
-
-
-inline TUint32 RBitVector::MaskLastWord(TUint32 aVal) const
-    {
-    const TUint32 shift = (32-(iNumBits & 0x1F)) & 0x1F;
-    return (aVal << shift) >> shift; //-- mask unused high bits
-    }
-
-
-
-inline TUint32 RBitVector::WordNum(TUint32 aBitPos)  const
-    {
-    return aBitPos >> 5;
-    }
-
-inline TUint32 RBitVector::BitInWord(TUint32 aBitPos) const 
-    {
-    return aBitPos & 0x1F;
-    }
 
 /**
     Calculate offset of the page starting position in the cluster 

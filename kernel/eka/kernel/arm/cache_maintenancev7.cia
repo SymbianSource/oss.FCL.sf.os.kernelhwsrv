@@ -81,19 +81,20 @@ __NAKED__ void InternalCache::DrainBuffers()
 
 __NAKED__ void InternalCache::IMB_CacheLine(TLinAddr /*aAddr*/)
 	{
-	asm("mov r1, #0 "); //will need zero reg for coprocessor instructions
-//--Round the address down to the start of line--//
+    //--Determine base address of cache line--//
 	asm("ldr r2, __DCacheInfoPoU ");
 	asm("ldrh r3, [r2, #%a0]" : : "i" _FOFF(SCacheInfo,iLineLength));
-	asm("sub ip, r3, #1 ");		// ip=mask for offset within line
-	asm("bic r0, r0, ip ");		// r0 = cache line base
+	asm("sub ip, r3, #1");		// ip=mask for offset within line
+	asm("bic r2, r0, ip");      // r2 = cache line base
 
-	DCCMVAU(r0);				// Clean DCache line to Point-of-Unification
-	ARM_DSBSY;
-	ICIMVAU(r0);
-	BPIMVA(r0);
-	ARM_DSBSH;
-	ARM_ISBSY;
+	DCCMVAU(r2);                // Clean DCache line to Point-of-Unification
+	ARM_DSBSY;                  // Data Sync Barrier (system)
+	ICIMVAU(r2);                // Invalidate Instruction cache line to Point-of-Unification
+	BPIMVA(r0);                 // Invalidate aAddr from Branch Predictor Array
+	asm("add r0, r0, #2");
+	BPIMVA(r0);                 // Invalidate possible THUMB instuction at aAddr+2 from Branch Predictor Array
+	ARM_DSBSH;                  // Data Sync Barrier (system)
+	ARM_ISBSY;                  // Instruction Sync Barrier
 	__JUMP(,lr);
 	}
 

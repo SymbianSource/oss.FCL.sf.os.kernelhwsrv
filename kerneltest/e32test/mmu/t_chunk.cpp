@@ -37,6 +37,7 @@
 // changes in out of memory status. Verify adjusting an RChunk generates
 // the expected notifications.
 // - Test finding a global chunk by name and verify results are as expected.
+// - Check read-only global chunks cannot be written to by other processes.
 // Platforms/Drives/Compatibility:
 // All.
 // Assumptions/Requirement/Pre-requisites:
@@ -1149,17 +1150,193 @@ void TestClosure()
 	}
 	
 
-/**Returns true if 'extended' is found in the command line*/
-TBool GetExtended()
+/**Returns true if argument is found in the command line*/
+TBool IsInCommandLine(const TDesC& aArg)
 	{
-	_LIT(KExtended,"extended");
 	TBuf<64> c;
 	User::CommandLine(c);
-	if (c.FindF(KExtended) >= 0)
+	if (c.FindF(aArg) >= 0)
 		return ETrue;
 	return EFalse;
 	}
 
+_LIT(KTestChunkReadOnly, "TestReadOnlyChunk");
+_LIT(KTestSemaphoreReadOnly, "TestReadOnlySemaphore");
+_LIT(KTestParamRo, "restro");
+_LIT(KTestParamRw, "restrw");
+_LIT(KTestParamWait, "restwait");
+_LIT(KTestParamWritableChunk, "restwritable");
+
+enum TTestProcessParameters
+	{
+	ETestRw = 0x1,
+	ETestWait = 0x2,
+	ETestWritableChunk = 0x4,
+	};
+
+void TestReadOnlyProcess(TUint aParams)
+	{
+	TInt r;
+	RChunk chunk;
+	RSemaphore sem;
+
+	test.Start(_L("Open global chunk"));
+	r = chunk.OpenGlobal(KTestChunkReadOnly, EFalse);
+	test_KErrNone(r);
+
+	test(chunk.IsReadable());
+	r = chunk.Adjust(1);
+	if (aParams & ETestWritableChunk)
+		{
+		test(chunk.IsWritable());
+		test_KErrNone(r);
+		}
+	else
+		{
+		test(!chunk.IsWritable());
+		test_Equal(KErrAccessDenied, r);
+		}
+
+	if (aParams & ETestWait)
+		{
+		RProcess::Rendezvous(KErrNone);
+		test.Next(_L("Wait on semaphore"));
+		r = sem.OpenGlobal(KTestSemaphoreReadOnly);
+		test_KErrNone(r);
+		sem.Wait();
+		}
+
+	test.Next(_L("Read"));
+	TUint8 read = *(volatile TUint8*) chunk.Base();
+	(void) read;
+
+	if (aParams & ETestRw)
+		{
+		test.Next(_L("Write"));
+		TUint8* write = chunk.Base();
+		*write = 0x3d;
+		}
+
+	chunk.Close();
+	if (aParams & ETestWait)
+		{
+		sem.Close();
+		}
+	test.End();
+	}
+
+void TestReadOnly()
+	{
+	TInt r;
+	RChunk chunk;
+	RProcess process1;
+	RProcess process2;
+	RSemaphore sem;
+	TRequestStatus rs;
+	TRequestStatus rv;
+
+	// Assumption is made that any memory model from Flexible onwards that supports
+	// read-only memory also supports read-only chunks
+	if (MemModelType() < EMemModelTypeFlexible || !HaveWriteProt())
+		{
+		test.Printf(_L("Memory model is not expected to support Read-Only Chunks\n"));
+		return;
+		}
+
+	TBool jit = User::JustInTime();
+	User::SetJustInTime(EFalse);
+
+	test.Start(_L("Create writable global chunk"));
+	TChunkCreateInfo info;
+	info.SetNormal(0, 1234567);
+	info.SetGlobal(KTestChunkReadOnly);
+	r = chunk.Create(info);
+	test_KErrNone(r);
+	test(chunk.IsReadable());
+	test(chunk.IsWritable());
+
+	test.Next(_L("Adjust size"));
+	r = chunk.Adjust(1); // add one page
+	test_KErrNone(r);
+
+	test.Next(_L("Attempt read/write 1"));
+	r = process1.Create(RProcess().FileName(), KTestParamWritableChunk);
+	test_KErrNone(r);
+	process1.Logon(rs);
+	process1.Resume();
+	User::WaitForRequest(rs);
+	test_Equal(EExitKill, process1.ExitType());
+	test_KErrNone(process1.ExitReason());
+	CLOSE_AND_WAIT(process1);
+	CLOSE_AND_WAIT(chunk);
+
+	test.Next(_L("Create read-only global chunk"));
+	info.SetReadOnly();
+	r = chunk.Create(info);
+	test_KErrNone(r);
+	test(chunk.IsReadable());
+	test(chunk.IsWritable());
+	// To keep in sync with the 'process2' process
+	r = sem.CreateGlobal(KTestSemaphoreReadOnly, 0);
+	test_KErrNone(r);
+
+	test.Next(_L("Attempt read 1"));
+	r = process1.Create(RProcess().FileName(), KTestParamRo);
+	test_KErrNone(r);
+	process1.Logon(rs);
+	process1.Resume();
+	User::WaitForRequest(rs);
+	test_Equal(EExitPanic, process1.ExitType());
+	test_Equal(3, process1.ExitReason()); // KERN-EXEC 3 assumed
+	CLOSE_AND_WAIT(process1);
+	// Create second process before commiting memory and make it wait
+	r = process2.Create(RProcess().FileName(), KTestParamWait);
+	test_KErrNone(r)
+	process2.Rendezvous(rv);
+	process2.Resume();
+	User::WaitForRequest(rv);
+
+	test.Next(_L("Adjust size"));
+	r = chunk.Adjust(1); // add one page
+	test_KErrNone(r);
+
+	test.Next(_L("Attempt read 2"));
+	r = process1.Create(RProcess().FileName(), KTestParamRo);
+	test_KErrNone(r);
+	process1.Logon(rs);
+	process1.Resume();
+	User::WaitForRequest(rs);
+	test_Equal(EExitKill, process1.ExitType());
+	test_KErrNone(process1.ExitReason());
+	CLOSE_AND_WAIT(process1);
+
+	test.Next(_L("Attempt read/write 1"));
+	r = process1.Create(RProcess().FileName(), KTestParamRw);
+	test_KErrNone(r);
+	process1.Logon(rs);
+	process1.Resume();
+	User::WaitForRequest(rs);
+	test_Equal(EExitPanic, process1.ExitType());
+	test_Equal(3, process1.ExitReason()); // KERN-EXEC 3 assumed
+	CLOSE_AND_WAIT(process1);
+	// Controlling process is not affected
+	TUint8* write = chunk.Base();
+	*write = 0x77;
+
+	test.Next(_L("Attempt read/write 2"));
+	test_Equal(EExitPending, process2.ExitType());
+	process2.Logon(rs);
+	sem.Signal();
+	User::WaitForRequest(rs);
+	test_Equal(EExitPanic, process2.ExitType());
+	test_Equal(3, process2.ExitReason()); // KERN-EXEC 3 assumed
+	CLOSE_AND_WAIT(process2);
+
+	chunk.Close();
+	sem.Close();
+	test.End();
+	User::SetJustInTime(jit);
+	}
 
 TInt E32Main()
 //
@@ -1180,15 +1357,38 @@ TInt E32Main()
 	test(l.CancelLazyDllUnload()==KErrNone);
 	l.Close();
 
-	__KHEAP_MARK;
+	_LIT(KExtended,"extended");
 
-	if (GetExtended() ) 
+	if (IsInCommandLine(KExtended))
 		{
+		__KHEAP_MARK;
 		test.Printf(_L("t_chunk extended was called. Ready to call TestFullAddressSpace(Etrue) \n"));
-		TestFullAddressSpace(ETrue);	
-		}	
+		TestFullAddressSpace(ETrue);
+		__KHEAP_MARKEND;
+		}
+	else if (IsInCommandLine(KTestParamRo))
+		{
+		test_KErrNone(User::RenameProcess(KTestParamRo));
+		TestReadOnlyProcess(0);
+		}
+	else if (IsInCommandLine(KTestParamRw))
+		{
+		test_KErrNone(User::RenameProcess(KTestParamRw));
+		TestReadOnlyProcess(ETestRw);
+		}
+	else if (IsInCommandLine(KTestParamWait))
+		{
+		test_KErrNone(User::RenameProcess(KTestParamWait));
+		TestReadOnlyProcess(ETestRw | ETestWait);
+		}
+	else if (IsInCommandLine(KTestParamWritableChunk))
+		{
+		test_KErrNone(User::RenameProcess(KTestParamWritableChunk));
+		TestReadOnlyProcess(ETestWritableChunk | ETestRw);
+		}
 	else 
 		{
+		__KHEAP_MARK;
 		test.Start(_L("Testing.."));
 		testAdjustChunk();
 		test.Next(_L("Test1"));
@@ -1223,12 +1423,12 @@ TInt E32Main()
 
 		test.Next(_L("Test for race conditions in chunk closure"));
 		TestClosure();
+		test.Next(_L("Read-only chunks"));
+		TestReadOnly();
 		test.End();
-		}	
+		__KHEAP_MARKEND;
+		}
 
 	test.Close();
-	__KHEAP_MARKEND;
-	
-	
 	return(KErrNone);
 	}

@@ -231,7 +231,7 @@ SSettingC SettingsList[] = {
 	{{{ KTestCategories[3], 0x1000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64One) }}},
 	{{{ KTestCategories[3], 0x80000000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
 	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	{{{ KTestCategories[3], 0xffffffff}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
+	{{{ KTestCategories[3], 0xfffffffe}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 	};
 
 SSettingC SettingsListCorrupt1[] = {
@@ -299,7 +299,7 @@ SSettingC SettingsList2[] = {
 	{{{ KTestCategories[3], 0x1000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64One) }}},
 	{{{ KTestCategories[3], 0x80000000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
 	// {{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	// {{{ KTestCategories[3], 0xffffffff}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
+	// {{{ KTestCategories[3], 0xfffffffe}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 
 	// Existing settings override
 	{{{ KTestCategories[0], 1}, ETypeInt32, 0x0000, 0 }, {{ 444 }}},
@@ -315,9 +315,9 @@ SSettingC SettingsList2[] = {
 	{{{ KTestCategories[2], 0x8000}, ETypeArrayInt32, 0x0000, 6 * sizeof(TInt32) }, {{ reinterpret_cast<TInt32>(TestUint32Array) }}},
 	{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestInt32Array) }}},
 	{{{ KTestCategories[3], 0x0021}, ETypeInt64, 0x0000, sizeof(TInt64) }, {{ reinterpret_cast<TInt32>(&KTestI64Two) }}},
-	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
-	{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
-
+	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},	
+	{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
+	
 	// New settings
 	{{{ KTestCategories[4], 0x1000}, ETypeInt32, 0x0000, 0 }, {{ 333 }}},
 	{{{ KTestCategories[4], 0x1010}, ETypeInt16, 0x0000, 0 }, {{ 17632 }}},
@@ -380,7 +380,7 @@ SSettingC SettingsList3[] = {
 	{{{ KTestCategories[3], 0x1000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64One) }}},
 	{{{ KTestCategories[3], 0x80000000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
 	// {{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	// {{{ KTestCategories[3], 0xffffffff}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
+	// {{{ KTestCategories[3], 0xfffffffe}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 
 	// Existing settings override (Core)
 	//{{{ KTestCategories[0], 1}, ETypeInt32, 0x0000, 0 }, {{ 444 }}},
@@ -397,8 +397,8 @@ SSettingC SettingsList3[] = {
 	//{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestInt32Array) }}},
 	{{{ KTestCategories[3], 0x0021}, ETypeInt64, 0x0000, sizeof(TInt64) }, {{ reinterpret_cast<TInt32>(&KTestI64Two) }}},
 	//{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
-	//{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
-
+	//{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
+	
 	// New settings (Core)
 	{{{ KTestCategories[4], 0x1000}, ETypeInt32, 0x0000, 0 }, {{ 333 }}},
 	{{{ KTestCategories[4], 0x1010}, ETypeInt16, 0x0000, 0 }, {{ 17632 }}},
@@ -423,14 +423,14 @@ SSettingC SettingsList3[] = {
 	{{{ KTestCategories[2], 0x7000}, ETypeText8, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestString512a) }}},
 	{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 32 * sizeof(TUint32) }, {{ reinterpret_cast<TInt32>(TestUint32Array) }}},
 	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
+	{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
 	// Over File Repository
 	{{{ KTestCategories[4], 0x1020}, ETypeInt8, 0x0000, 0 }, {{ -33 }}},
 	{{{ KTestCategories[4], 0x1040}, ETypeUInt32, 0x0000, 0 }, {{ 999999 }}},
 	{{{ KTestCategories[5], 0x0080}, ETypeBinData, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestBinData) }}},
 	{{{ KTestCategories[5], 0x00d0}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64One) }}},
 	{{{ KTestCategories[5], 0xffffffff}, ETypeUInt8, 0x0000, 0 }, {{ 25 }}},
-
+	
 	// New Settings (Nand)
 	{{{ KTestCategories[6], 0x3000}, ETypeInt32, 0x0000, 0 }, {{ -987654 }}},
 	{{{ KTestCategories[6], 0x3010}, ETypeInt16, 0x0000, 0 }, {{ -12345 }}},
@@ -492,7 +492,7 @@ SSettingC SettingsList4[] = {
 	{{{ KTestCategories[3], 0x1000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64One) }}},
 	{{{ KTestCategories[3], 0x80000000}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
 	//{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	//{{{ KTestCategories[3], 0xffffffff}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
+	//{{{ KTestCategories[3], 0xfffffffe}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 	
 	// Existing Settings Override (Nand)
 	// Over Compiler Repository
@@ -501,7 +501,7 @@ SSettingC SettingsList4[] = {
 	{{{ KTestCategories[2], 0x7000}, ETypeText8, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestString512a) }}},
 	{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 32 * sizeof(TUint32) }, {{ reinterpret_cast<TInt32>(TestUint32Array) }}},
 	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
+	{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
 	// Over File Repository (will be new settings in this case)
 	{{{ KTestCategories[4], 0x1020}, ETypeInt8, 0x0000, 0 }, {{ -33 }}},
 	{{{ KTestCategories[4], 0x1040}, ETypeUInt32, 0x0000, 0 }, {{ 999999 }}},
@@ -534,7 +534,7 @@ SSettingC SettingsList5[] = {
 	{{{ KTestCategories[2], 0x7000}, ETypeText8, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestString512a) }}},
 	{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 32 * sizeof(TUint32) }, {{ reinterpret_cast<TInt32>(TestUint32Array) }}},
 	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
+	{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
 	{{{ KTestCategories[4], 0x1020}, ETypeInt8, 0x0000, 0 }, {{ -33 }}},
 	{{{ KTestCategories[4], 0x1040}, ETypeUInt32, 0x0000, 0 }, {{ 999999 }}},
 	{{{ KTestCategories[5], 0x0080}, ETypeBinData, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestBinData) }}},
@@ -574,7 +574,7 @@ SSettingC SettingsList6[] = {
 	//{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestInt32Array) }}},
 	{{{ KTestCategories[3], 0x0021}, ETypeInt64, 0x0000, sizeof(TInt64) }, {{ reinterpret_cast<TInt32>(&KTestI64Two) }}},
 	//{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
-	//{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
+	//{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
 	{{{ KTestCategories[4], 0x1000}, ETypeInt32, 0x0000, 0 }, {{ 333 }}},
 	{{{ KTestCategories[4], 0x1010}, ETypeInt16, 0x0000, 0 }, {{ 17632 }}},
 	//{{{ KTestCategories[4], 0x1020}, ETypeInt8, 0x0000, 0 }, {{ 44 }}},
@@ -598,7 +598,7 @@ SSettingC SettingsList6[] = {
 	{{{ KTestCategories[2], 0x7000}, ETypeText8, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestString512a) }}},
 	{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 32 * sizeof(TUint32) }, {{ reinterpret_cast<TInt32>(TestUint32Array) }}},
 	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Three) }}},
-	{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
+	{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 100 }}},
 	// Over File Repository
 	{{{ KTestCategories[4], 0x1020}, ETypeInt8, 0x0000, 0 }, {{ -33 }}},
 	{{{ KTestCategories[4], 0x1040}, ETypeUInt32, 0x0000, 0 }, {{ 999999 }}},
@@ -640,7 +640,7 @@ SSettingC SettingsList7[] = {
 	{{{ KTestCategories[3], 0x0020}, ETypeArrayUInt32, 0x0000, 512 }, {{ reinterpret_cast<TInt32>(TestInt32Array) }}},
 	{{{ KTestCategories[3], 0x0021}, ETypeInt64, 0x0000, sizeof(TInt64) }, {{ reinterpret_cast<TInt32>(&KTestI64Two) }}},
 	{{{ KTestCategories[3], 0xcccccccc}, ETypeUInt64, 0x0000, sizeof(TUint64) }, {{ reinterpret_cast<TInt32>(&KTestU64Two) }}},
-	{{{ KTestCategories[3], 0xffffffff}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
+	{{{ KTestCategories[3], 0xfffffffe}, ETypeInt8, 0x0000, 0 }, {{ 1 }}},
 	{{{ KTestCategories[4], 0x1000}, ETypeInt32, 0x0000, 0 }, {{ 333 }}},
 	{{{ KTestCategories[4], 0x1010}, ETypeInt16, 0x0000, 0 }, {{ 17632 }}},
 	{{{ KTestCategories[4], 0x1020}, ETypeInt8, 0x0000, 0 }, {{ 44 }}},

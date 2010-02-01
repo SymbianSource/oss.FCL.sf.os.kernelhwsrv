@@ -57,7 +57,7 @@ CWTCachePage::~CWTCachePage()
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
-CMediaWTCache::CMediaWTCache(TFatDriveInterface& aDrive)
+CMediaWTCache::CMediaWTCache(TDriveInterface& aDrive)
           :iDrive(aDrive), iPageSizeLog2(0), iAllPagesValid(EFalse)
     {
     iCacheDisabled = EFalse;
@@ -86,7 +86,7 @@ CMediaWTCache::~CMediaWTCache()
     
     @return a pointer to the created object.
 */
-CMediaWTCache* CMediaWTCache::NewL(TFatDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2)
+CMediaWTCache* CMediaWTCache::NewL(TDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2)
     {
 #ifndef ENABLE_DEDICATED_DIR_CACHE    
     //-- dedicated directory cache isn't enabled

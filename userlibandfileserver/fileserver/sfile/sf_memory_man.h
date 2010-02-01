@@ -98,8 +98,8 @@ private:
 	static TInt32 iLowMemoryThreshold;
 	};
 
-/** Default cache memory size in KBytes (32768 KBytes)*/
-const TInt 	KDefaultGlobalCacheMemorySize = (32 << 10);
+/** Default cache memory size in KBytes (8192 KBytes)*/
+const TInt 	KDefaultGlobalCacheMemorySize = (8 << 10);
 /** 
 Low memory threshold as a percentage of total RAM (10 %)
 If the amount of RAM drops below this value, attempts to allocate memory will fail

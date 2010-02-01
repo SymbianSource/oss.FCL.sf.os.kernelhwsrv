@@ -21,7 +21,7 @@ linkas          dfpaeabi.dll
 noexportlibrary
 
 start armcc
-    #if defined (ARMCC_3_1)
+    #if defined (ARMCC_3_1) || defined(ARMCC_4_0)
     armlibs     fj_5v.l
 
     #else

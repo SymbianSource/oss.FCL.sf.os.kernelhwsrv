@@ -117,3 +117,5 @@ capability			all
 #endif
 
 VENDORID 0x70000001
+
+SMPSAFE

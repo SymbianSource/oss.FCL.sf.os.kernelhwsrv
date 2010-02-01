@@ -92,34 +92,10 @@ TInt CTestFileSystem::DefaultPath(TDes& aPath) const
 
 void CTestFileSystem::DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const
 //
-// Return drive info - iDriveAtt and iBatteryState are already set
+// Return drive info
 //
 	{
-	if(!IsValidLocalDriveMapping(aDriveNumber))
-		return;
-
-    TLocalDriveCapsV2Buf localDriveCaps;
-	
-	// is the drive local?
-	if (!IsProxyDrive(aDriveNumber))
-		{
-		// if not valid local drive, use default values in localDriveCaps
-		// if valid local drive and not locked, use TBusLocalDrive::Caps() values
-		// if valid drive and locked, hard-code attributes
-		(void)GetLocalDrive(aDriveNumber).Caps(localDriveCaps);
-		}
-	else  // this need to be made a bit nicer
-		{   
-		CExtProxyDrive* pD = GetProxyDrive(aDriveNumber);
-		if(pD)
-			{
-			(void)pD->Caps(localDriveCaps);
-			}
-		}
-
-	anInfo.iMediaAtt=localDriveCaps().iMediaAtt;
-	anInfo.iType=localDriveCaps().iType;
-	anInfo.iDriveAtt=localDriveCaps().iDriveAtt;
+    CFileSystem::DriveInfo(anInfo, aDriveNumber);
 
 	// hijack the iBattery member to report back the number of times MountL() has been called
 	anInfo.iBattery = (TBatteryState) iMountAttempts;

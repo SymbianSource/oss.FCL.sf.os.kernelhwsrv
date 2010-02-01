@@ -30,6 +30,8 @@
 #include <f32file.h>
 #endif
 #include <e32atomics.h>
+#include <d32locd.h>
+
 //
 #if defined(_UNICODE)
 #define KFileSystemUidValue KFileSystemUidValue16
@@ -559,6 +561,7 @@ private:
 class CFileCB;
 class CDirCB;
 
+__ASSERT_COMPILE(sizeof(TVolFormatParam) != sizeof(TLDFormatInfo));
 
 
 
@@ -2413,8 +2416,8 @@ public:
     The function should set anInfo.iMediaAtt and anInfo.iType according to
     the specified drive number.
 
-    Note that anInfo.iDriveAtt and anInfo.iBatteryState will already have been
-    set by the calling function.
+    Note that anInfo.iDriveAtt will already have been set by the calling
+    function.
 
     The function can obtain the necessary information by calling
     the appropriate TBusLocalDrive::Caps() function using the argument aDriveNumber.
@@ -2422,7 +2425,7 @@ public:
 	@param anInfo       On return, contains the drive information.
 	@param aDriveNumber The drive number.
 	*/
-	virtual void DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const =0;
+	IMPORT_C virtual void DriveInfo(TDriveInfo& anInfo,TInt aDriveNumber) const;
 		
     virtual TInt DefaultPath(TDes& aPath) const;
 
@@ -3055,8 +3058,16 @@ Checks a given drive number is mapped to a local drive.
 */
 IMPORT_C TBool IsValidLocalDriveMapping(TInt aDrive);
 
+/** 
+@internalTechnology 
+ 
+Sets the media attributes and type in the anInfo parameter to those of the 
+specified drive. 
 
-
+@param anInfo TDriveInfo object to store the drive information.
+@param aDriveNumber The number of the drive to get the information from.
+*/
+IMPORT_C void GetDriveInfo(TDriveInfo& anInfo,TInt aDriveNumber);
 
 /**
 @publishedPartner

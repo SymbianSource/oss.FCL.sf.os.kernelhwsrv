@@ -1173,6 +1173,13 @@ TInt DChunk::Create(SChunkCreateInfo& aInfo)
 		return KErrArgument;
 		}
 
+	// Check if chunk is read-only
+	if (aInfo.iAtt & TChunkCreate::EReadOnly)
+		{
+		iAttributes |= EReadOnly;
+		iRestrictions |= EChunkPreventAdjust;
+		}
+
 	// Save the clear byte.
 	iClearByte = aInfo.iClearByte;
 
@@ -1195,11 +1202,12 @@ TInt DChunk::Create(SChunkCreateInfo& aInfo)
 TInt DChunk::AddToProcess(DProcess* aProcess)
 	{
 	__KTRACE_OPT(KEXEC,Kern::Printf("Adding chunk %O to process %O",this,aProcess));
-	TInt r=aProcess->AddChunk(this,EFalse);
-	if (r==KErrAccessDenied)
+	TBool readOnly = (iAttributes & EReadOnly) && (aProcess->iId != iControllingOwner);
+	TInt r = aProcess->AddChunk(this, readOnly);
+	if (r == KErrAccessDenied)
 		{
 		__KTRACE_OPT(KEXEC,Kern::Printf("Chunk is private - will not be mapped in to process"));
-		r=KErrNone;
+		r = KErrNone;
 		}
 	return r;
 	}
@@ -1211,7 +1219,7 @@ void DChunk::BTracePrime(TInt aCategory)
 	if (aCategory == BTrace::EChunks || aCategory == -1)
 		{
 		TKName nameBuf;
-		Name(nameBuf);				
+		Name(nameBuf);
 		BTraceN(BTrace::EChunks,BTrace::EChunkCreated,this,iMaxSize,nameBuf.Ptr(),nameBuf.Size());
 		if(iOwningProcess)
 			BTrace8(BTrace::EChunks,BTrace::EChunkOwner,this,iOwningProcess);
@@ -1658,8 +1666,8 @@ Note, this address may become invalid if the process closes then re-opens the ch
 */
 EXPORT_C TUint8* Kern::ChunkUserBase(DChunk* aChunk, DThread* aThread)
 	{
-	CHECK_PRECONDITIONS(MASK_NO_FAST_MUTEX,"Kern::ChunkUserAddress");		
-	__KTRACE_OPT(KMMU,Kern::Printf("Kern::ChunkUserAddress aChunk=%08x, aThread=%08x",  aChunk, aThread));
+	CHECK_PRECONDITIONS(MASK_NO_FAST_MUTEX,"Kern::ChunkUserBase");
+	__KTRACE_OPT(KMMU,Kern::Printf("Kern::ChunkUserBase aChunk=%08x, aThread=%08x", aChunk, aThread));
 	NKern::LockSystem();
 	TUint8* r = aChunk->Base(aThread->iOwningProcess);
 	NKern::UnlockSystem();

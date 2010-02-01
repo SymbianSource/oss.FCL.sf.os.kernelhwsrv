@@ -21,7 +21,6 @@
 */
 
 #include <e32base.h>
-#include <e32base_private.h>
 
 #include "msctypes.h"
 #include "debug.h"

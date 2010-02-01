@@ -34,7 +34,11 @@ CCacheMemoryClient::~CCacheMemoryClient()
 	{
 	const TUint32 segCnt = iTouchedRegionFlag <= iReservedRegionMarkInSegs ? 
 										iReservedRegionMarkInSegs : iTouchedRegionFlag;
-	DecommitSegments(iBase, segCnt);
+	TInt r = DecommitSegments(iBase, segCnt);
+	if (r != KErrNone)  // this 'if() {}' is to remove build warnings
+	{
+	ASSERT(0);
+	}
 	iReusablePagePool.Close();
 	delete iName;
 	}
@@ -81,6 +85,7 @@ Second phase constructor of CCacheMemoryClient
 */
 void CCacheMemoryClient::ConstructL(const TDesC& aClientName, TUint32 aOffsetInBytes)
 	{
+    __PRINT4(_L("CCacheMemoryClient::ConstructL(%S, min=%d, max=%d, base=0x%X)"), &aClientName, iMinSizeInSegs, iMaxSizeInSegs, iBase);
 	iName = HBufC::NewMaxL(aClientName.Length());
 	*iName = aClientName;
 	iSegSizeInBytesLog2 = iManager.SegmentSizeInBytesLog2();
@@ -93,7 +98,7 @@ void CCacheMemoryClient::ConstructL(const TDesC& aClientName, TUint32 aOffsetInB
 	ASSERT(r==KErrNone);
 	User::LeaveIfError(r);
 	iTouchedRegionFlag = 0;
-	__PRINT4(_L("CCacheMemoryClient::ConstructL(%S, min=%d, max=%d, base=0x%X)"), &aClientName, iMinSizeInSegs, iMaxSizeInSegs, iBase);
+	__PRINT(_L("CCacheMemoryClient::ConstructL() return 0"));
 	}
 
 /**
@@ -109,30 +114,35 @@ EXPORT_C void CCacheMemoryClient::Reset()
 	{
 	__PRINT3(_L("CCacheMemoryClient::Reset(%S, reserved=%d, touched=%d)"), iName, iReservedRegionMarkInSegs, iTouchedRegionFlag);
 	
-	// in case that client user has incorrectly decommited reserved region (normally on destruction), 
-	//	we should re-commit reserved region here to prepare the next connection.
-	TInt r = DecommitSegments(iBase, iReservedRegionMarkInSegs);
-	if (r != KErrNone)	// this 'if() {}' is to remove build warnings in debug mode, same is below
-		{
-		ASSERT(0);
-		}
+	// reset the cache memeory client to initial states: 
+	//     1. all memory that have been 'touched' should be decommitted
+	//     2. the reserved region of memory should be re-locked
 
-	r = iManager.AllocateAndLockSegments(iBase, iReservedRegionMarkInSegs);
-	if (r != KErrNone)
-		{
-		ASSERT(0);
-		}
-
-	// if we have touched more than reserved, we also need to make sure it's decommitted.
+	// if we have touched more than reserved region of memory, we shall decommit all of them 
 	if (iTouchedRegionFlag > iReservedRegionMarkInSegs)
-		{
-		TInt r = iManager.DecommitSegments(iBase + (iReservedRegionMarkInSegs << iSegSizeInBytesLog2), iTouchedRegionFlag - iReservedRegionMarkInSegs);
-		if (r != KErrNone)
-			{
-			ASSERT(0);
-			}
-		}
-	
+	    {
+	    TInt r = DecommitSegments(iBase, iTouchedRegionFlag);
+	    if (r != KErrNone)  // this 'if() {}' is to remove build warnings in debug mode, same is below
+	        {
+	        ASSERT(0);
+	        }
+	    }
+	else   // otherwise we decommit the reserved region of memory only.
+	    {
+	    TInt r = DecommitSegments(iBase, iReservedRegionMarkInSegs);
+	    if (r != KErrNone)  // this 'if() {}' is to remove build warnings in debug mode, same is below
+	        {
+	        ASSERT(0);
+	        }
+	    }
+
+    // re-lock the reserved region of memory
+	TInt r = iManager.AllocateAndLockSegments(iBase, iReservedRegionMarkInSegs);
+    if (r != KErrNone)
+        {
+        ASSERT(0);
+        }
+
 	iTouchedRegionFlag = 0;
 	iReusablePagePool.Close();
 	iReusablePagePool.Reserve(iReservedRegionMarkInSegs);
@@ -148,7 +158,7 @@ Commit an unused set of contiguous segments.
 */
 EXPORT_C TUint8* CCacheMemoryClient::AllocateAndLockSegments(TUint32 aSegmentCount)
 	{
-	__PRINT3(_L("CCacheMemoryClient::AllocateAndLockSegments(%S, reserved=%d, touched=%d)"), iName, iReservedRegionMarkInSegs, iTouchedRegionFlag);
+	__PRINT4(_L("CCacheMemoryClient::AllocateAndLockSegments(%S, segs=%d, reserved=%d, touched=%d)"), iName, aSegmentCount, iReservedRegionMarkInSegs, iTouchedRegionFlag);
 //	__PRINT2(_L("iBase = 0x%x, segcnt = %d"), iBase, aSegmentCount);
     TUint8* addr = NULL;
     // if we are walking through the reserved region first time, we should

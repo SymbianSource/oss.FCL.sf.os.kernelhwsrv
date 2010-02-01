@@ -561,7 +561,9 @@ Utility function for obtaining info on file entry requests.
 */
 LOCAL_C TInt FileEntryVars(CFsRequest* aRequest, TDes& aName)
 	{
-	__ASSERT_ALWAYS(aRequest->Operation()->Function()==EFsEntry,Fault(EBaseRequestMessage));
+	__ASSERT_ALWAYS(aRequest->Operation()->Function()==EFsEntry ||
+                    aRequest->Operation()->Function()==EFsSetEntry,
+                    Fault(EBaseRequestMessage));
 
 	aName = aRequest->Src().FullName();
 
@@ -721,6 +723,7 @@ EXPORT_C TInt GetName(TFsPluginRequest* aRequest, TDes& aName)
 			err = FileCloseVars(aRequest->Request(), aName);
 			break;
 		case EFsEntry:
+		case EFsSetEntry:
 			err = FileEntryVars(aRequest->Request(), aName);
 			break;
 		case EFsReadFileSection:

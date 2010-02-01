@@ -648,19 +648,20 @@ TPte* DCoarseMemory::DPageTables::GetOrAllocatePageTable(TUint aChunkIndex, TPin
 		if(pinnedPt && pinnedPt!=pt)
 			{
 			// previously pinned page table not needed...
-			PageTableAllocator::UnpinPageTable(pinnedPt,aPinArgs);
+			::PageTables.UnpinPageTable(pinnedPt,aPinArgs);
 
 			// make sure we have memory for next pin attempt...
 			MmuLock::Unlock();
 			aPinArgs.AllocReplacementPages(KNumPagesToPinOnePageTable);
-			MmuLock::Lock();
 			if(!aPinArgs.HaveSufficientPages(KNumPagesToPinOnePageTable)) // if out of memory...
 				{
 				// make sure we free any unneeded page table we allocated...
 				if(pt)
 					FreePageTable(aChunkIndex);
+				MmuLock::Lock();
 				return 0;
 				}
+			MmuLock::Lock();
 			}
 
 		if(!pt)
@@ -680,8 +681,16 @@ TPte* DCoarseMemory::DPageTables::GetOrAllocatePageTable(TUint aChunkIndex, TPin
 			return pt;
 
 		// pin the page table...
+		if (::PageTables.PinPageTable(pt,aPinArgs) != KErrNone)
+			{
+			// Couldn't pin the page table...
+			MmuLock::Unlock();
+			// make sure we free any unneeded page table we allocated...
+			FreePageTable(aChunkIndex);
+			MmuLock::Lock();
+			return 0;
+			}
 		pinnedPt = pt;
-		PageTableAllocator::PinPageTable(pinnedPt,aPinArgs);
 		}
 	}
 
@@ -758,6 +767,10 @@ void DCoarseMemory::DPageTables::AssignPageTable(TUint aChunkIndex, TPte* aPageT
 			TLinAddr linAddrAndOsAsid = mapping->LinAddrAndOsAsid()+start*KPageSize;
 			TPde* pPde = Mmu::PageDirectoryEntry(linAddrAndOsAsid&KPageMask,linAddrAndOsAsid);
 			TPde pde = ptPhys|mapping->BlankPde();
+#ifdef	__USER_MEMORY_GUARDS_ENABLED__
+			if (mapping->IsUserMapping())
+				pde = PDE_IN_DOMAIN(pde, USER_MEMORY_DOMAIN);
+#endif
 			TRACE2(("!PDE %x=%x",pPde,pde));
 			__NK_ASSERT_DEBUG(((*pPde^pde)&~KPdeMatchMask)==0 || *pPde==KPdeUnallocatedEntry);
 			*pPde = pde;

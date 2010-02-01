@@ -30,3 +30,4 @@ uid				0x100000af
 vendorid		0x70000001
 capability		all
 epocallowdlldata
+SMPSAFE

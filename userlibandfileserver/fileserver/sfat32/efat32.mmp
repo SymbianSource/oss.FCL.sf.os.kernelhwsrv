@@ -21,6 +21,8 @@ TARGETTYPE      fsy
 
 USERINCLUDE     ../sfile
 USERINCLUDE     ../inc
+USERINCLUDE     ../fs_utils
+
 USERINCLUDE     ../sfat32
 USERINCLUDE     ../sfat32/inc
 
@@ -35,6 +37,9 @@ SOURCE          sl_leafdir_cache.cpp sl_dir_cache.cpp
 SOURCE          sl_fatmisc32.cpp sl_bpb32.cpp fat_table32.cpp ram_fat_table32.cpp
 SOURCE          sl_scan32.cpp sl_mnt32.cpp
 SOURCE          sl_fatcache32.cpp
+
+SOURCEPATH      ../fs_utils
+SOURCE			filesystem_utils.cpp bit_vector.cpp
 
 SOURCEPATH      .
 DOCUMENT        ../group/release.txt

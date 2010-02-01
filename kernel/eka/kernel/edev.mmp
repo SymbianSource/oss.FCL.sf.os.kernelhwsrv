@@ -26,7 +26,7 @@ source			d_entryx.cpp
 source			d_entry.cia
 #elif defined(MARM)
 #if defined(ARMCC)
-sourcepath		../compsupp/rvct2_1
+sourcepath		../compsupp/rvct
 source			ucppfini.cpp
 #endif
 sourcepath		arm

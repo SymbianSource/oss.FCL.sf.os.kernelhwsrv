@@ -546,6 +546,8 @@ TInt RMessageK::PinDescriptors(DSession* aSession, TBool aPinningServer)
 	NKern::ThreadEnterCS();
 	NKern::UnlockSystem();
 	TInt r = KErrNone;
+	TBool anyPins = EFalse;
+	TPinArray pinArray = { { 0, 0, 0, 0 } };			// local, copy to heap later if used
 
 	for (TInt i = 0; descFlags != 0; ++i, argPinFlags >>= 1, descFlags >>= TIpcArgs::KBitsPerType)
  		{
@@ -561,19 +563,11 @@ TInt RMessageK::PinDescriptors(DSession* aSession, TBool aPinningServer)
 			TUint pinLength = desInfo.IsWriteable() ? desInfo.MaxLength() : desInfo.Length();
 			if (pinLength)
 				{
-				if (!iPinArray)
-					{
-					iPinArray = new TPinArray;
-					if (!iPinArray)
-						{
-						r = KErrNoMemory;
-						break;
-						}
-					}
-
 				// This will only create and pin if the descriptor data is paged.
 				// An out-of-memory error here means we fail the whole operation.
-				r = Kern::CreateAndPinVirtualMemory(iPinArray->iPinPtrs[i], desInfo.DataPtr(), pinLength);
+				r = Kern::CreateAndPinVirtualMemory(pinArray.iPinPtrs[i], desInfo.DataPtr(), pinLength);
+				if (pinArray.iPinPtrs[i])
+					anyPins = ETrue;
 				if (r == KErrNoMemory)
 					break;
 				if (r != KErrNone)
@@ -589,24 +583,27 @@ TInt RMessageK::PinDescriptors(DSession* aSession, TBool aPinningServer)
 			}
 		}
 
+	if (anyPins && r != KErrNoMemory)
+		{
+		iPinArray = new TPinArray (pinArray);
+		if (!iPinArray)
+			r = KErrNoMemory;
+		}
+
 	if (r == KErrNoMemory)
 		{
 		// Failed to pin everything so clean up any pin objects created.
 		// This will also unpin any pinned memory.
-		if (iPinArray)
-			{
-			UnpinMessageArguments(iPinArray);
-			delete iPinArray;
-			iPinArray = NULL;
-			}
+		UnpinMessageArguments(&pinArray);
 		}
 
 	NKern::LockSystem();
 
 	// Remove the access on the session.
 	if (aSession->TotalAccessDec() == DObject::EObjectDeleted)
-		{// This was the last access on the session and it has been deleted so 
-		// don't access any of its members.
+		{
+		// This was the last access on the session and it has been deleted
+		// so don't access any of its members.
 		r = KErrDisconnected;
 		}
 	NKern::ThreadLeaveCS();
@@ -917,7 +914,7 @@ TInt ExecHandler::ServerCreateWithOptions(const TDesC8* aName, TInt aMode, TInt 
 			if (nameLen)
 				r = pS->SetName(&n);
 #ifdef BTRACE_CLIENT_SERVER
-			BTraceContextN(BTrace::EClientServer, BTrace::EServerCreate, pS, 0, n.Ptr(), nameLen);
+			BTraceN(BTrace::EClientServer, BTrace::EServerCreate, pS, pS->iOwningThread, n.Ptr(), n.Size());
 #endif
 			}
 		if (r == KErrNone)
@@ -937,6 +934,18 @@ TInt ExecHandler::ServerCreateWithOptions(const TDesC8* aName, TInt aMode, TInt 
 TInt ExecHandler::ServerCreate(const TDesC8* aName, TInt aMode)
 	{
 	return ServerCreateWithOptions(aName, aMode, EServerRole_Default, 0);
+	}
+
+void DServer::BTracePrime(TInt aCategory)
+	{
+#ifdef BTRACE_CLIENT_SERVER
+	if (aCategory == BTrace::EClientServer || aCategory == -1)
+		{
+		TKName nameBuf;
+		Name(nameBuf);
+		BTraceN(BTrace::EClientServer, BTrace::EServerCreate, this, iOwningThread, nameBuf.Ptr(), nameBuf.Size());
+		}
+#endif
 	}
 
 
@@ -1304,15 +1313,20 @@ TInt DSession::Add(DServer* aSvr, const TSecurityPolicy* aSecurityPolicy)
 	iServer = aSvr;
 	aSvr->iSessionQ.Add(&iServerLink);		// Add it to the server
 	TotalAccessInc();						// give the server an access on this session
+
+	DObject* owner = NULL;
+	if (iSvrSessionType == EIpcSession_Unsharable)
+		owner = TheCurrentThread;
+	else if (iSvrSessionType == EIpcSession_Sharable)
+		owner = TheCurrentThread->iOwningProcess;
+
 #ifdef BTRACE_CLIENT_SERVER
-	BTraceContext8(BTrace::EClientServer,BTrace::ESessionAttach,this,aSvr);
+	BTraceContext12(BTrace::EClientServer, BTrace::ESessionAttach, this, iServer, owner);
 #endif
 	NKern::UnlockSystem();					// server could be deleted after this line
 
-	if (iSvrSessionType == EIpcSession_Unsharable)
-		SetOwner(TheCurrentThread);
-	else if (iSvrSessionType == EIpcSession_Sharable)
-		SetOwner(TheCurrentThread->iOwningProcess);
+	if (owner)
+		SetOwner(owner);
 	if (iSessionType == EIpcSession_GlobalSharable)
 		SetProtection(EProtected);
 	return KErrNone;
@@ -1603,6 +1617,16 @@ error:
 		K::PanicCurrentThread(panicReason);		// doesn't return!
 	NKern::UnlockSystem();
 	return r;
+	}
+
+void DSession::BTracePrime(TInt aCategory)
+	{
+#ifdef BTRACE_CLIENT_SERVER
+	if (aCategory == BTrace::EClientServer || aCategory == -1)
+		{
+		BTrace12(BTrace::EClientServer, BTrace::ESessionAttach, this, iServer, iOwner);
+		}
+#endif
 	}
 
 

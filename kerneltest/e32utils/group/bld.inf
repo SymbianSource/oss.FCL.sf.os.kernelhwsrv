@@ -99,6 +99,7 @@ otgusbmsapp
 
 #ifndef SMP
 ../d_exc/d_exc
+../sdpartition/sdpartition
 #endif
 
 ../d_exc/minkda

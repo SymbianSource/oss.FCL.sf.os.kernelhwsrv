@@ -22,6 +22,7 @@
 
 #include <e32svr.h>
 #include <e32test.h>
+#include <e32ver.h>
 #include "dlltree.h"
 #include "dllt.h"
 #include "exetifc.h"

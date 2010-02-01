@@ -139,6 +139,11 @@ class RFsNotify; //incomplete decl
 class CFsNotifyBody; //incomplete decl
 
 /*
+ * CFsNotify is a class which allows changes to file and directories to be monitored
+ *
+ * The notification framework supported by CFsNotify is able to keep track of multiple notifications,
+ * whilst ensuring that notifications cannot be missed (unlike RFs::NotifyChange which can miss changes).
+ *
  * CFsNotify encapsulates the client-side sub-session associated with
  * the file server notification framework.
  * 
@@ -172,8 +177,22 @@ class CFsNotify : public CBase
 		/*
 		 * Factory function. Creates a new CFsNotify and returns a pointer to it.
 		 *
+		 * CFsNotify stores notifications in a buffer. 
+		 * Clients of CFsNotify must specify how large this buffer should be.
+		 * 
+		 * As a guideline: Notification objects in the buffer typically have a 8byte header,
+		 * followed by a word aligned string containing the fullname of the file that has changed.
+		 * In the case of a rename notification both the original and the new fullnames are stored.
+		 *
+		 * However, clients must not assume to know the exact size of notifications when determining the size of their buffer,
+		 * as it is not possible to know how often a client will be able to read the notifications from the buffer.
+		 * In addition, if further notification types are added, then the header size or maximum data could increase.
+		 * 
+		 * Thus, clients must ensure that their notification handling code appropriately deals with an overflow notification, whereby the
+		 * buffer was not large enough to store all of the notifications.
+		 *
 		 * If aBufferSize is greater than (KMaxTInt/2) then it will return KErrArgument.
-		 * If it is less than KMinNotificationBufferSize (approximately 1KB) then aBufferSize will be 
+		 * If aBufferSize is less than KMinNotificationBufferSize (which is an internal constant but is approximately equal to 1KB) then aBufferSize will be 
 		 * set to KMinNotificationBufferSize.
 		 * 
 		 * @param aFs - RFs session. Must be connected.

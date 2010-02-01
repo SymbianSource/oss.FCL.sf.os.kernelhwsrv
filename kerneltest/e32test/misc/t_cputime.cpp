@@ -35,7 +35,7 @@ _LIT(KDown, "down");
 
 const TInt KLongWait  = 3000000;  // 3 seconds
 const TInt KShortWait =  100000;  // 0.1 seconds
-const TInt KTolerance =     500;  // 0.5 ms
+const TInt KTolerance =    1000;  // 1 ms
 const TInt numCpus = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
 
 #define FailIfError(EXPR) \
@@ -215,7 +215,7 @@ void TestThreadCpuTime()
 
 	TThreadParam threadParam;
 	FailIfError((threadParam.iSem).CreateLocal(0));
-	threadParam.iCpu = 1;
+	threadParam.iCpu = 0;				// Later tests will exercise other CPUs
 
 	RThread thread;
 	RUndertaker u;
@@ -243,7 +243,7 @@ void TestThreadCpuTime()
 	(threadParam.iSem).Signal();
 	User::After(KShortWait);
 	FailIfError(thread.GetCpuTime(time));
-	test(time > (KShortWait - 2 * KTolerance));
+	test(time > (KShortWait - KTolerance));
 
 	// Test not increased while suspended
 	thread.Suspend();
@@ -420,7 +420,7 @@ GLDEF_C TInt E32Main()
 	{
 	test.Title();
 	test.Start(_L("T_CPUTIME"));
-	
+
 	if (numCpus > 1)
 		FailIfError(SetCpuAffinity(0));
 

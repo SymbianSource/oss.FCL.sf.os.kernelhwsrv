@@ -27,15 +27,15 @@ BASEDEFAULT
 
 PRJ_EXPORTS
 
-../../../debug/crashMonitor/inc/scmonitor.h 				
-../../../debug/crashMonitor/inc/scmdatatypes.h			
-../../../debug/crashMonitor/inc/scmbytestreamutil.h		
-../../../debug/crashMonitor/inc/scmbytestreamutil.inl	
-../../../debug/crashMonitor/inc/crashlogwalker.h			
-../../../debug/crashMonitor/inc/scmconfig.h				
-../../../debug/crashMonitor/inc/scmconfigitem.h			
-../../../debug/crashmonitor/inc/scmdatasave.h			
-../../../debug/crashmonitor/inc/scmtrace.h				
+../../../debug/crashMonitor/inc/scmonitor.h              SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmonitor.h)				
+../../../debug/crashMonitor/inc/scmdatatypes.h           SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatatypes.h)
+../../../debug/crashMonitor/inc/scmbytestreamutil.h      SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmbytestreamutil.h)
+../../../debug/crashMonitor/inc/scmbytestreamutil.inl    SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmbytestreamutil.inl)
+../../../debug/crashMonitor/inc/crashlogwalker.h         SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(crashlogwalker.h)
+../../../debug/crashMonitor/inc/scmconfig.h              SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfig.h)
+../../../debug/crashMonitor/inc/scmconfigitem.h          SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfigitem.h)
+../../../debug/crashmonitor/inc/scmdatasave.h            SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatasave.h)
+../../../debug/crashmonitor/inc/scmtrace.h               SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmtrace.h)
 
 PRJ_MMPFILES
 

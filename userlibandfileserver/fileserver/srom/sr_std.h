@@ -25,6 +25,7 @@
 #include <f32fsys.h>
 #include <f32ver.h>
 #include <e32rom.h>
+#include <e32svr.h>
 
 #if defined(__EPOC32__)
 // #define __PRINT_DEBUG_INFO_SR_STD__ 1

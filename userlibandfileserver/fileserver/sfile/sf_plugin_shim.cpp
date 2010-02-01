@@ -119,6 +119,16 @@ The contents of the	file can be accessed regardless of the file's lock state.
 #endif
 	}
 
+EXPORT_C TInt RFsPlugin::Volume(TVolumeInfo &aVol, TInt aDrive) const
+/**
+Gets volume information for a formatted device.
+
+@see RFs::Volume
+*/
+	{
+	return (RFs::Volume(aVol, aDrive));
+	}
+
 TInt RFsPlugin::SendReceive(TInt aFunction,const TIpcArgs& aArgs) const
 	{
 	return iSessionHelper.SendReceive(aFunction, aArgs);
@@ -128,7 +138,7 @@ TInt RFs::SendReceive(TInt aFunction,const TIpcArgs& aArgs) const
 	{
 	if(Handle())
 		return RSessionBase::SendReceive(aFunction, aArgs);
-		
+
 	return ((RFsPlugin*) this)->SendReceive(aFunction, aArgs);
 	}
 
@@ -236,7 +246,7 @@ Closes the file.
 
 	return err;
 	}
-    
+
 EXPORT_C TInt RFilePlugin::TransferToClient()
 /**
 Closes the file.
@@ -306,7 +316,7 @@ Reads from the file at the specified offset within the file
 
 EXPORT_C TInt RFilePlugin::Read(TInt64 aPos,TDes8& aDes,TInt aLen) const
 /**
-Reads the specified number of bytes of binary data from the file at a specified 
+Reads the specified number of bytes of binary data from the file at a specified
 offset within the file.
 
 @see RFile::Read
@@ -399,7 +409,7 @@ Sets the the current file position.
 
 EXPORT_C TInt RFilePlugin::Flush()
 /**
-Commits data to the storage device and flushes internal buffers without closing 
+Commits data to the storage device and flushes internal buffers without closing
 the file.
 
 @see RFile::Flush
@@ -523,7 +533,7 @@ TInt RFile::CreateSubSession(const RSessionBase& aSession,TInt aFunction,const T
 
 void RFile::CloseSubSession(TInt aFunction)
 	{
-	if((Session().Handle() ^ CObjectIx::ENoClose) != KErrBadHandle) 
+	if((Session().Handle() ^ CObjectIx::ENoClose) != KErrBadHandle)
 		RSubSessionBase::CloseSubSession(aFunction);
 	else
 		((RFilePlugin*) this)->CloseSubSession(aFunction);
@@ -531,9 +541,9 @@ void RFile::CloseSubSession(TInt aFunction)
 
 TInt RFile::SendReceive(TInt aFunction,const TIpcArgs& aArgs) const
 	{
-	if((Session().Handle() ^ CObjectIx::ENoClose) != KErrBadHandle) 
+	if((Session().Handle() ^ CObjectIx::ENoClose) != KErrBadHandle)
 		return RSubSessionBase::SendReceive(aFunction, aArgs);
-		
+
 	return ((RFilePlugin*) this)->SendReceive(aFunction, aArgs);
 	}
 
@@ -584,7 +594,7 @@ types that will subsequently be read.
 	TPckgC<TUidType> pckgUid(uidType);
 	return(CreateSubSession(fs,EFsDirOpen,TIpcArgs(&aMatchName,anAttMask,&pckgUid)));
 	}
-    
+
 EXPORT_C void RDirPlugin::Close()
 /**
 Closes the the directory.
@@ -653,7 +663,7 @@ TInt RDirPlugin::SendReceive(TInt aFunction,const TIpcArgs& aArgs) const
 
 TInt RDir::SendReceive(TInt aFunction,const TIpcArgs& aArgs) const
 	{
-	if((Session().Handle() ^ CObjectIx::ENoClose) != KErrBadHandle) 
+	if((Session().Handle() ^ CObjectIx::ENoClose) != KErrBadHandle)
 		return RSubSessionBase::SendReceive(aFunction, aArgs);
 
 	return ((RDirPlugin*) this)->SendReceive(aFunction, aArgs);
@@ -730,7 +740,7 @@ TInt TPluginSessionHelper::Dispatch(TInt aFunction, TIpcArgs& aArgs) const
 
 	newRequest->Dispatch();
 
-	// NOTE : newRequest will be free'd by the File Server before completing the 
+	// NOTE : newRequest will be free'd by the File Server before completing the
 	//        request so it's not safe to touch the request from now on...
 	
 	return(iPlugin->WaitForRequest());

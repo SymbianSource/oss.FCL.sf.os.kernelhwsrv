@@ -38,7 +38,6 @@ extern SFullArmRegSet DefaultRegSet;
 extern "C" void btrace_irq_exit();
 extern "C" void btrace_fiq_exit();
 #endif
-
 #ifdef _DEBUG
 #define __CHECK_LOCK_STATE__
 #endif
@@ -85,7 +84,7 @@ extern "C" __NAKED__ void check_lock_state()
 
 //#define	__RECORD_STATE__
 #ifdef __RECORD_STATE__
-#define RECORD_STATE				\
+#define RECORD_STATE()				\
 	asm("ldr r3, [sp, #68] ");		\
 	asm("mov r1, sp ");				\
 	asm("bic r12, sp, #0xff ");		\
@@ -98,7 +97,7 @@ extern "C" __NAKED__ void check_lock_state()
 	asm("ldmia r1!, {r2-r9} ");		\
 	asm("stmia r12!, {r2-r9} ")
 
-#define RECORD_STATE_EXC			\
+#define RECORD_STATE_EXC()			\
 	asm("ldr r3, [sp, #92] ");		\
 	asm("mov r12, sp ");			\
 	asm("bic lr, sp, #0xff ");		\
@@ -110,8 +109,20 @@ extern "C" __NAKED__ void check_lock_state()
 	asm("ldmia r12!, {r0-r11} ");	\
 	asm("stmia lr!, {r0-r11} ");
 #else
-#define RECORD_STATE
-#define RECORD_STATE_EXC
+#define RECORD_STATE()
+#define RECORD_STATE_EXC()
+#endif
+
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+// This macro can be invoked just before a return-from-exception instruction
+// It will cause an UNDEF exception if we're about to return to user mode with UMG still on
+#define	USER_MEMORY_GUARD_CHECK()											\
+	asm("stmfd	sp!, {lr}");												\
+	asm("ldr	lr, [sp, #8]");						/* lr<-future CPSR	*/	\
+	USER_MEMORY_GUARD_ASSERT_OFF_IF_MODE_USR(lr);							\
+	asm("ldmfd	sp!, {lr}");
+#else
+#define	USER_MEMORY_GUARD_CHECK()
 #endif
 
 /******************************************************************************
@@ -169,13 +180,15 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 	asm("exec_wfar_finish: ");
 	asm("mrs	r1, spsr ");
 	asm("tst	r1, #0x0f ");
-	asm("bne	fast_swi_exit2 ");		// not returning to user mode
+	asm("bne	fast_swi_exit2 ");			// not returning to user mode; in this case we don't run callbacks
+											// and the UMG was not changed on entry so we don't reset it
+
 #ifdef __CHECK_LOCK_STATE__
 	asm("bl "	CSM_CFUNC(check_lock_state));
 #endif
-	asm("cmp	r4, #3 ");				// callbacks?
-	asm("blhs	run_user_mode_callbacks ");
-	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("cmp	r4, #3 ");					// callbacks?
+	asm("blhs	run_user_mode_callbacks ");	// run them; NB trashes most registers (R0-R12, R14)
+	USER_MEMORY_GUARD_OFF(,r12,r12);		// because we're returning to user mode
 	asm("b		fast_swi_exit2 ");
 #endif
 
@@ -183,21 +196,23 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 #if defined(__CHECK_LOCK_STATE__) || defined(__USER_MEMORY_GUARDS_ENABLED__)
 	asm("mrs	r12, spsr ");
 	asm("tst	r12, #0x0f ");
-	asm("bne	1f ");
+	asm("bne	fast_swi_exit2 ");			// not returning to user mode; in this case we don't run callbacks
+											// and the UMG was not changed on entry so we don't restore it
 #ifdef __CHECK_LOCK_STATE__
 	asm("bl "	CSM_CFUNC(check_lock_state));
 #endif
-	USER_MEMORY_GUARD_OFF(,r12,r12);
-	asm("1: ");
+	USER_MEMORY_GUARD_OFF(,r12,r12);		// because we're returning to user mode
 #endif
+
 	asm("fast_swi_exit2: ");
-	RECORD_STATE;
+	RECORD_STATE();
 	asm("ldmib	sp, {r1-r14}^ ");			// restore R1-R12, R13_usr, R14_usr
 	asm("nop ");							// don't access banked register immediately after
 	asm("add	sp, sp, #%a0" : : "i" _FOFF(SThreadExcStack,iR15));
+	USER_MEMORY_GUARD_CHECK();				// check UMG is off if returning to user mode
 	RFEIAW(13);								// restore PC and CPSR - return from Exec function
 
-	
+
 	asm("slow_swi: ");						// IRQs and FIQs off here
 	__ASM_STI();							// all interrupts on
 	asm("ldr	r4, [r9, #%a0]" : : "i" _FOFF(NThread,iSlowExecTable));
@@ -207,18 +222,18 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 	asm("add	r6, r4, r12, lsr #6 ");		// r6->dispatch table entry
 	asm("cmp	r5, r12, lsr #9 ");			// r5-SWI number
 	asm("ldmhiia r6, {r5,r6} ");			// if SWI number OK, flags into r5, function addr into r6
-	asm("ldrls	pc, [r4, #-8] ");			// if SWI number invalid, call invalid handler
+	asm("ldrls	pc, [r4, #-8] ");			// if SWI number invalid, call invalid handler, returning to slow_swi_exit below
 
 	// Acquire system lock if necessary: warning - any scratch registers modified after __ArmVectorSwi()
 	// function preamble will be restored after call to NKern::LockSystem() with stale values.
 	asm("tst	r5, #%a0" : : "i" ((TInt)KExecFlagClaim));	// claim system lock?
 	asm("beq	slow_swi_no_wait ");						// skip if not
 	asm("bl "	CSM_ZN5NKern10LockSystemEv );
-	asm("ldmia	sp, {r0-r3} ");
+	asm("ldmia	sp, {r0-r3} ");								// reload original values
 	asm("slow_swi_no_wait: ");
 
-	// Check to see if extra arguments are needed.  Needs to be placed here because NKern::LockSystem()
-	// will not preserve value of r2 and ldmia call will replace it with a stale copy.
+	// Check to see if extra arguments are needed.  Needs to be placed after call to NKern::LockSystem()
+	// above, as r2 is reloaded with its original value by the ldmia instruction above
 	asm("tst	r5, #%a0" : : "i" ((TInt)KExecFlagExtraArgMask));	// extra arguments needed?
 	asm("addne	r2, sp, #%a0" : : "i" _FOFF(SThreadExcStack,iR4));	// if so, point r2 at saved registers on stack
 
@@ -237,18 +252,22 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 	__ASM_CLI();
 	asm("ldr	r4, [r9, #%a0]" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
 	asm("tst	r11, #0x0f ");				// returning to user mode?
-	asm("bne	slow_swi_exit2 ");			// no
+	asm("bne	slow_swi_exit2 ");			// not returning to user mode; in this case we don't run callbacks
+											// and the UMG was not changed on entry so we don't reset it
+
 #ifdef __CHECK_LOCK_STATE__
 	asm("bl "	CSM_CFUNC(check_lock_state));
 #endif
 	asm("cmp	r4, #3 ");					// callbacks?
-	asm("blhs	run_user_mode_callbacks ");	// yes
-	USER_MEMORY_GUARD_OFF(,r12,r12);
+	asm("blhs	run_user_mode_callbacks ");	// run them; NB trashes most registers (R0-R12, R14)
+	USER_MEMORY_GUARD_OFF(,r12,r12);		// because we're returning to user mode
+
 	asm("slow_swi_exit2: ");
-	RECORD_STATE;
+	RECORD_STATE();
 	asm("ldmia	sp, {r0-r14}^ ");			// R0=return value, restore R1-R12, R13_usr, R14_usr
 	asm("nop ");							// don't access banked register immediately after
 	asm("add	sp, sp, #%a0" : : "i" _FOFF(SThreadExcStack,iR15));
+	USER_MEMORY_GUARD_CHECK();				// check UMG is off if returning to user mode
 	RFEIAW(13);								// restore PC and CPSR - return from Exec function
 	}
 
@@ -258,12 +277,12 @@ extern "C" __NAKED__ void __ArmVectorSwi()
  * This routine is called after the IRQ has been dispatched
  * Enter in mode_sys
  * R4->TSubScheduler, R6->GIC CPU interface
- * If user memory guards active and not nested, R8 = saved DACR
  * For nested IRQ, R0-R12, R14_sys, return address, return CPSR are on top
- *	of the mode_sys (i.e. current) stack
+ *	 of the mode_sys (i.e. current) stack
  * For non-nested IRQ, registers are saved on top of mode_svc stack and
- *	pointed to by R5 in the order:
- *	R5->R0 ... R12 R13_usr R14_usr <spare> PC CPSR
+ *	 pointed to by R5 in the order:
+ *	 R5->R0 ... R12 R13_usr R14_usr <spare> PC CPSR
+ *   and if user memory guards are active, R8 = saved DACR
  ******************************************************************************/
 
 extern "C" __NAKED__ void __ArmVectorIrq()
@@ -278,9 +297,6 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 #ifdef BTRACE_CPU_USAGE
 	asm("ldrb	r10, [r10] ");
 #endif
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("mov	r11, r8 ");
-#endif
 	asm("subs	r7, r7, #1 ");
 	asm("bpl	nested_irq_exit ");
 	asm("cmp	r0, #0 ");
@@ -289,6 +305,9 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	asm("bl		run_event_handlers ");
 
 	asm("no_event_handlers: ");
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
+	asm("mov	r11, r8 ");
+#endif
 	asm("ldr	r8, [r5, #%a0]" : : "i" _FOFF(SThreadExcStack,iCPSR));	// r8 = interrupted cpsr
 	asm("ldr	r0, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iKernLockCount));
 	__ASM_CLI();							// all interrupts off
@@ -301,6 +320,7 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	asm("bne	irq_kernel_locked_exit ");	// if neither or if kernel locked, exit immediately
 	asm("cmp	r1, #0 ");					// If not, IDFCs/reschedule pending?
 	asm("beq	irq_kernel_locked_exit ");	// if not, exit
+
 	asm("mov	r1, #1 ");
 	asm("str	r1, [r4, #%a0]" : : "i" _FOFF(TSubScheduler, iKernLockCount));	// lock the kernel
 	__ASM_STI_MODE(MODE_SVC);				// mode_svc, interrupts on
@@ -323,38 +343,41 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	asm("cmp	r12, #0 ");
 	asm("blne " CSM_CFUNC(send_accumulated_resched_ipis));
 	asm("tst	r8, #0x0f ");				// returning to user mode?
-	asm("bne	irq_post_resched_exit ");	// no - just return
+	asm("bne	irq_post_resched_exit ");	// if not, we don't check locks or run callbacks
+
 #ifdef __CHECK_LOCK_STATE__
 	asm("bl "	CSM_CFUNC(check_lock_state));
 #endif
 	asm("cmp	r4, #3 ");					// callbacks?
-	asm("blhs	run_user_mode_callbacks ");	// yes - run them
+	asm("blhs	run_user_mode_callbacks ");	// run them; NB trashes most registers (R0-R12, R14)
 
 	asm("irq_post_resched_exit: ");
-	asm("ldmfd	sp!, {r0,lr} ");			// restore UMG, lr_svc
-	USER_MEMORY_GUARD_RESTORE(r0,r12);
-	RECORD_STATE;
+	asm("ldmfd	sp!, {r11,lr} ");			// restore UMG, lr_svc
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	RECORD_STATE();
 	asm("ldmia	sp, {r0-r14}^ ");			// restore R0-R12, R13_usr, R14_usr
 	asm("nop ");							// don't access banked register immediately after
 	asm("add	sp, sp, #%a0" : : "i" _FOFF(SThreadExcStack,iR15));
-	RFEIAW(13);								// restore PC and CPSR - return from interrupt
+	USER_MEMORY_GUARD_CHECK();				// check UMG is off if returning to user mode
+	RFEIAW(13);								// restore PC and CPSR - return from Exec function
 
 	asm("irq_kernel_locked_exit: ");
 #ifdef __CHECK_LOCK_STATE__
 	asm("tst	r8, #0x0f ");
 	asm("bleq " CSM_CFUNC(check_lock_state));
 #endif
-	USER_MEMORY_GUARD_RESTORE(r11,r12);
 #ifdef BTRACE_CPU_USAGE
 	asm("cmp	r10, #0 ");
 	asm("blne	btrace_irq_exit ");
 #endif
+	USER_MEMORY_GUARD_RESTORE(r11,r12);
 	__ASM_CLI_MODE(MODE_SVC);				// mode_svc, interrupts off
-	RECORD_STATE;
+	RECORD_STATE();
 	asm("ldmia	sp, {r0-r14}^ ");			// restore R0-R12, R13_usr, R14_usr
 	asm("nop ");							// don't access banked register immediately after
 	asm("add	sp, sp, #%a0" : : "i" _FOFF(SThreadExcStack,iR15));
-	RFEIAW(13);								// restore PC and CPSR - return from interrupt
+	USER_MEMORY_GUARD_CHECK();				// check UMG is off if returning to user mode
+	RFEIAW(13);								// restore PC and CPSR - return from Exec function
 
 	asm("nested_irq_exit: ");
 	__ASM_CLI1();
@@ -364,7 +387,8 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	asm("blne	btrace_irq_exit ");
 #endif
 	asm("ldmia	sp!, {r0-r12,r14} ");		// restore r0-r12, r14_sys
-	RFEIAW(13);								// restore PC and CPSR
+	USER_MEMORY_GUARD_CHECK();				// check UMG is off if returning to user mode
+	RFEIAW(13);								// restore PC and CPSR - return from Exec function
 
 	asm("__BTraceCpuUsageFilter: ");
 	asm(".word	%a0" : : "i" ((TInt)&BTraceData.iFilter[BTrace::ECpuUsage]));
@@ -375,7 +399,9 @@ extern "C" __NAKED__ void __ArmVectorIrq()
  * FIQ Postamble
  * This routine is called after the FIQ has been dispatched
  * spsr_fiq, r0-r3 are unmodified
- * Return address is on the top of the FIQ stack
+ * Return address is on the top of the FIQ stack -- except that if user memory
+ * guards are in use, the saved DACR was pushed afterwards, so that's on top
+ * of the stack and the return address is next
  ******************************************************************************/
 
 extern "C" __NAKED__ void __ArmVectorFiq()
@@ -431,9 +457,9 @@ extern "C" __NAKED__ void __ArmVectorFiq()
 	asm("1: ");
 #endif
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("ldr	r11, [sp], #4 ");
-	USER_MEMORY_GUARD_RESTORE(r11,r12);
+	asm("ldr	r8, [sp], #4 ");
 #endif
+	USER_MEMORY_GUARD_RESTORE(r8,r12);
 	asm("ldmfd	sp!, {pc}^ ");				// return from interrupt
 
 	asm("__TheScheduler: ");
@@ -487,8 +513,9 @@ extern "C" __NAKED__ void __ArmVectorAbortData()
 	asm("ldmia	sp, {r0-r14}^ ");			// restore R0-R12, R13_usr, R14_usr
 	asm("nop ");							// don't access banked register immediately after
 	asm("add	sp, sp, #%a0" : : "i" _FOFF(SThreadExcStack,iR15));
-	RFEIAW(13);								// restore PC and CPSR - return from interrupt
+	RFEIAW(13);								// restore PC and CPSR - return from Exec function
 #endif
+
 	asm("ldr	r0, [sp, #%a0]" : : "i" _FOFF(SThreadExcStack,iCPSR));
 	asm("mrs	r12, cpsr ");
 	asm("and	r3, r0, #0x1f ");			// r3=processor mode when abort occurred
@@ -682,8 +709,8 @@ extern "C" __NAKED__ void __ArmVectorAbortData()
 	asm("mov	r0, sp ");
 	asm("bl "	CSM_CFUNC(HandleSpecialOpcode));
 	asm("cmp	r0, #0 ");
-	asm("beq	exc_dispatch ");			// if not handled, dispatch normally
-											// else return
+	asm("beq	exc_dispatch ");			// if not handled, dispatch normally, else return
+
 	// return from exception
 	// R4 points to current thread, R11->TSubScheduler, SP->TArmExcInfo
 	asm("exc_return: ");
@@ -692,16 +719,21 @@ extern "C" __NAKED__ void __ArmVectorAbortData()
 	asm("ldr	r1, [r4, #%a0]" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
 	asm("mov	r9, r4 ");
 	asm("tst	r0, #0x0f ");				// returning to user mode?
-	asm("bne	exc_return2 ");				// no
+	asm("bne	exc_return2 ");				// if not, we don't check locks or run callbacks
+
 #ifdef __CHECK_LOCK_STATE__
-	asm("bleq " CSM_CFUNC(check_lock_state));
+	asm("bl " CSM_CFUNC(check_lock_state));
 #endif
 	asm("cmp	r1, #3 ");					// callbacks?
-	asm("blhs	run_user_mode_callbacks ");	// yes - run them
-	RECORD_STATE_EXC;
-	USER_MEMORY_GUARD_RESTORE(r6,r0);
+	asm("blo	exc_return2 ");
+	asm("stmfd	sp!, {r6} ");																		\
+	asm("bl		run_user_mode_callbacks ");	// run them; NB trashes most registers (R0-R12, R14)
+	asm("ldmfd	sp!, {r6} ");																		\
 
 	asm("exc_return2: ");
+	RECORD_STATE_EXC();
+	USER_MEMORY_GUARD_RESTORE(r6,r0);
+
 	asm("add	r7, sp, #%a0" : : "i" _FOFF(TArmExcInfo,iSpsrSvc));	// r7->saved spsr_svc
 	asm("ldmia	r7!, {r0-r2,r14} ");		// r0=original spsr_svc, r2=original sp_svc, restore lr_svc
 	asm("add	r6, sp, #%a0" : : "i" _FOFF(TArmExcInfo,iR15));		// r6->saved PC, CPSR
@@ -712,7 +744,8 @@ extern "C" __NAKED__ void __ArmVectorAbortData()
 	asm("ldmia	r7, {r0-r14}^ ");			// restore R0-R12, R13_usr, R14_usr
 	asm("nop	");							// don't touch banked register immediately afterwards
 	asm("ldr	sp, [sp, #%a0]" : : "i" _FOFF(TArmExcInfo,iExcCode));	// R13_svc = original R13_svc - 8
-	RFEIAW(13);								// restore R13_svc and return from exception
+	USER_MEMORY_GUARD_CHECK();				// check UMG is off if returning to user mode
+	RFEIAW(13);								// restore PC and CPSR - return from Exec function
 
 	// get here if exception occurred in mode other than usr or svc
 	// we are in mode_abt or mode_und with IRQs disabled
@@ -902,10 +935,10 @@ extern "C" __NAKED__ void handle_crash_ipi()
  *		R9 points to current NThread
  *		We know there is at least one callback on the list
  *		Stack not necessarily 8 byte aligned
+ *		User memory guards on (if in use)
  * On return:
  *		CPU in mode_svc, interrupts disabled, kernel unlocked, thread not in CS
- *		No TUserModeCallbacks outstanding at the point where interrupts were
- *		disabled.
+ *		No TUserModeCallbacks outstanding at the point where interrupts were disabled.
  *		R0-R12,R14 modified
  ******************************************************************************/
 extern "C" __NAKED__ void DoRunUserModeCallbacks()
@@ -913,19 +946,17 @@ extern "C" __NAKED__ void DoRunUserModeCallbacks()
 	asm(".global run_user_mode_callbacks ");
 	asm("run_user_mode_callbacks: ");
 
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("mrc p15, 0, r12, c3, c0, 0 ");
-	asm("tst r12, #0xc0000000 ");
-	asm("cdpne p15, 0, c0, c0, c0, 0 ");
-#endif
+	USER_MEMORY_GUARD_ASSERT_ON(r12);
+
 #ifdef __CHECK_LOCK_STATE__
 	asm("ldr	r0,	[r9, #%a0]" : : "i" _FOFF(NThreadBase,iCsCount));
 	asm("cmp	r0, #0 ");
 	asm("beq	0f ");
 	__ASM_CRASH();
 #endif
+
 	asm("0:		");
-	__ASM_STI();
+	__ASM_STI();					// enable interrupts
 	asm("mov	r10, sp ");			// save stack pointer
 	asm("mov	r11, lr ");			// save return address
 	asm("add	r8, r9, #%a0" : : "i" _FOFF(NThreadBase,iUserModeCallbacks));
@@ -969,12 +1000,12 @@ extern "C" __NAKED__ void DoRunUserModeCallbacks()
 
 	// more callbacks have been queued so loop round and do them
 	asm("4:		");
-	__ASM_STI();
+	__ASM_STI();					// enable interrupts
 	asm("b		1b ");
 
 	// CsFunction outstanding so do it
 	asm("5:		");
-	__ASM_STI();
+	__ASM_STI();					// enable interrupts
 	asm("bl		ThreadLeaveCS__5NKern ");
 	__ASM_CLI();					// turn off interrupts
 	__DATA_MEMORY_BARRIER__(r6);

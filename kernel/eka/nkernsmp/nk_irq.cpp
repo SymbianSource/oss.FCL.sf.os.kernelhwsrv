@@ -743,7 +743,7 @@ EXPORT_C TInt NKern::InterruptUnbind(TInt aId)
 	{
 	TRACE_IRQ4(8, aId);
 	__KTRACE_OPT(KNKERN,DEBUGPRINT(">NKIU: ID=%08x", aId));
-	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"NKern::InterruptBind");
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"NKern::InterruptUnbind");
 	NIrq* pI;
 	NIrqHandler* pH;
 	TInt r = NIrq::FromHandle(aId, pI, pH);

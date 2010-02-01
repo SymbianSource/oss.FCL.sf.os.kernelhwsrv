@@ -56,6 +56,7 @@ void DMemModelProcess::Destruct()
 	DProcess::Destruct();
 	}
 
+
 TInt DMemModelProcess::TryOpenOsAsid()
 	{
 	if (__e32_atomic_tas_ord32(&iOsAsidRefCount, 1, 1, 0))
@@ -65,6 +66,7 @@ TInt DMemModelProcess::TryOpenOsAsid()
 	return KErrDied;
 	}
 
+
 void DMemModelProcess::CloseOsAsid()
 	{
 	if (__e32_atomic_tas_ord32(&iOsAsidRefCount, 1, -1, 0) == 1)
@@ -73,6 +75,7 @@ void DMemModelProcess::CloseOsAsid()
 		}
 	}
 
+
 void DMemModelProcess::AsyncCloseOsAsid()
 	{
 	if (__e32_atomic_tas_ord32(&iOsAsidRefCount, 1, -1, 0) == 1)
@@ -80,6 +83,7 @@ void DMemModelProcess::AsyncCloseOsAsid()
 		MM::AsyncAddressSpaceFree(iOsAsid);
 		}
 	}
+
 
 TInt DMemModelProcess::NewChunk(DChunk*& aChunk, SChunkCreateInfo& aInfo, TLinAddr& aRunAddr)
 	{
@@ -941,7 +945,9 @@ TInt DThread::RawRead(const TAny* aSrc, TAny* aDest, TInt aLength, TInt aFlags, 
 
 		if(aFlags&KCheckLocalAddress)
 			MM::ValidateLocalIpcAddress(dest,alias_size,ETrue);
+		UNLOCK_USER_MEMORY();
 		memcpy( (TAny*)dest, (const TAny*)alias_src, alias_size);
+		LOCK_USER_MEMORY();
 
 		src+=alias_size;
 		dest+=alias_size;
@@ -1018,7 +1024,9 @@ TInt DThread::RawWrite(const TAny* aDest, const TAny* aSrc, TInt aLength, TInt a
 
 		if(aFlags&KCheckLocalAddress)
 			MM::ValidateLocalIpcAddress(src,alias_size,EFalse);
+		UNLOCK_USER_MEMORY();
 		memcpy( (TAny*)alias_dest, (const TAny*)src, alias_size);
+		LOCK_USER_MEMORY();
 
 		src+=alias_size;
 		dest+=alias_size;

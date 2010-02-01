@@ -26,6 +26,7 @@
 #if !defined(__F32FILE_H__)
 #include <f32file.h>
 #endif
+#include <d32locd.h>
 #include "u32std.h"
 
 //

@@ -251,6 +251,7 @@ void TestVFPContextSave()
 
 TInt TestBounceCtxThread1(TAny*)
 	{
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalLockThreadToCpu, (TAny*)Max(CPUs-1, 0), 0);
 	for(TInt iter=0; iter<KMaxTInt; ++iter)
 		{
 		Vfp::SReg(0);
@@ -260,6 +261,7 @@ TInt TestBounceCtxThread1(TAny*)
 
 TInt TestBounceCtxThread2(TAny*)
 	{
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalLockThreadToCpu, (TAny*)Max(CPUs-1, 0), 0);
 	TInt start_rep = 0x00800000; // smallest single precision normal number, 1*2^-126
 	TReal32 start = *(TReal32*)&start_rep;
 	for(TInt iter=0; iter<KMaxTInt; ++iter)
@@ -283,6 +285,7 @@ TInt TestBounceCtxThread2(TAny*)
 
 void DoBounceContextSwitchTests()
 	{
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalLockThreadToCpu, 0, 0);
 	RThread t1, t2;
 	TInt r;
 	r = t1.Create(KNullDesC, &TestBounceCtxThread1, 0x1000, 0x1000, 0x1000, NULL);
@@ -1098,6 +1101,18 @@ void TestThumb()
 	test(testStep == 7);
 	}
 
+TInt TestThreadMigration(TAny* aPtr)
+	{
+	const TInt inc = (TInt)aPtr;
+	for (TInt32 switches = 0; switches < KMaxTInt; switches += inc)
+		{
+		Vfp::SetSReg(switches, switches % 16);
+		UserSvr::HalFunction(EHalGroupKernel, EKernelHalLockThreadToCpu, (TAny*)(switches % CPUs), 0);
+		test(Vfp::SRegInt(switches % 16) == switches);
+		}
+	return KErrNone;
+	}
+
 TInt E32Main()
 	{
 	test.Title();
@@ -1228,6 +1243,44 @@ TInt E32Main()
 			test.Next(_L("Test Thumb Decode"));
 			TestThumb();
 #endif
+			}
+		}
+
+	if (CPUs > 1)
+		{
+		test.Next(_L("Test SMP Thread Migration"));
+		TInt inc = 1;
+		RThread t[8];
+		TRequestStatus s[8];
+		TInt count;
+		for (count = 0; count < CPUs + 1; count++)
+			{
+			TInt r = t[count].Create(KNullDesC, &TestThreadMigration, 0x1000, NULL, (TAny*)(inc++));
+			test(r==KErrNone);
+			t[count].Logon(s[count]);
+			}
+		for (count = 0; count < CPUs + 1; count++)
+			{
+			t[count].Resume();
+			}
+		User::After(10*1000*1000);
+		for (count = 0; count < CPUs + 1; count++)
+			{
+			t[count].Kill(0);
+			}
+		for (count = 0; count < CPUs + 1; count++)
+			{
+			User::WaitForAnyRequest();
+			}
+		for (count = 0; count < CPUs + 1; count++)
+			{
+			TInt xt = t[count].ExitType();
+			TInt xr = t[count].ExitReason();
+			test(xt == EExitKill && xr == KErrNone);
+			}
+		for (count = 0; count < CPUs + 1; count++)
+			{
+			CLOSE_AND_WAIT(t[count]);
 			}
 		}
 

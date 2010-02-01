@@ -534,6 +534,15 @@ inline TInt RDisplayChannel::Version(TVersion& aVersion)
 	return (DoControl(ECtrlVersion, &aVersion));
 	}
 
+#ifdef _DEBUG
+/** Debug only function to allocate a shared chunk user buffer for testing.
+*/
+inline TInt RDisplayChannel::CreateUserBuffer(TBufferFormat& aBufferFormat, RChunk& aChunk)
+	{
+	return (aChunk.SetReturnedHandle(DoControl(ECtrlCreateUserBuffer, &aBufferFormat)));
+	}
+#endif // _DEBUG
+
 /** Constructs a resolution setting.
 
     @param aSize    The resolution size in pixels, in ERotationNormal rotation.

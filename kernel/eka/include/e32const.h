@@ -1026,6 +1026,13 @@ Defines the state of a battery, if supported.
 enum TBatteryState {EBatNotSupported,EBatGood,EBatLow};
 
 
+/**
+@publishedAll
+@released
+
+Defines the possible connection types used to interface to the media.
+*/
+enum TConnectionBusType {EConnectionBusInternal, EConnectionBusUsb};
 
 
 /**
@@ -1143,6 +1150,15 @@ Drive attribute - drive is hidden.
 A drive which has its hidden attribute set would be excluded from the list of available drives.
 */
 const TUint KDriveAttHidden=0x400; 
+
+
+/**
+@publishedAll
+@released
+
+Drive attribute - drive is external.
+*/
+const TUint KDriveAttExternal=0x800;
 
 
 /**

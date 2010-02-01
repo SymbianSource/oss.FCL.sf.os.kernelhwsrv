@@ -896,6 +896,7 @@ TInt E32Main()
 		User::SetProcessCritical(User::ESystemCritical);
 		}
 
+
 	TInt r;
 #if defined(__DMASIM__) && defined(__WINS__)
 	test.Next(_L("Loading DMA simulator"));
@@ -906,15 +907,38 @@ TInt E32Main()
 	test.Next(_L("Loading test LDD"));
 #ifdef __DMASIM__
 	r = User::LoadLogicalDevice(_L("D_DMASIM"));
+	test(r == KErrNone || r == KErrAlreadyExists);
 #else
-	r = User::LoadLogicalDevice(_L("D_DMA"));
-	if (r == KErrNotFound)
+	//load either the original test ldd, d_dma.ldd,
+	//or d_dma_compat.ldd - an ldd providing the same interface
+	//but linked against the new MHA dma framework
+	_LIT(KDma, "D_DMA.LDD");
+	r = User::LoadLogicalDevice(KDma);
+	const TBool dmaPresent = (r == KErrNone || r == KErrAlreadyExists);
+
+	_LIT(KDmaCompat, "D_DMA_COMPAT.LDD");
+	r = User::LoadLogicalDevice(KDmaCompat);
+	const TBool dmaCompatPresent = (r == KErrNone || r == KErrAlreadyExists);
+
+	if (!(dmaPresent || dmaCompatPresent))
 		{
-		test.Printf(_L("DMA not supported - test skipped\n"));
+		test.Printf(_L("DMA test driver not found - test skipped\n"));
 		return 0;
 		}
+	else if (dmaPresent && !dmaCompatPresent)
+		{
+		test.Printf(_L("Loaded %S\n"), &KDma);
+		}
+	else if (!dmaPresent && dmaCompatPresent)
+		{
+		test.Printf(_L("Loaded %S\n"), &KDmaCompat);
+		}
+	else
+		{
+		test.Printf(_L("The ROM contains %S and %S - only one should be present\n"), &KDma, &KDmaCompat);
+		test(EFalse);
+		}
 #endif
-	test(r == KErrNone || r == KErrAlreadyExists);
 
 	// Turn off evil lazy dll unloading
 	RLoader l;

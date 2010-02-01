@@ -12,7 +12,7 @@
 //
 // Description:
 // template/template_assp/dma.mmp
-// 
+//
 //
 
 #include		<variant.mmh>
@@ -27,17 +27,19 @@ linkas			dma.dll
 noexportlibrary
 
 sourcepath		../../../kernel/eka/drivers/dma
-source			dmapil.cpp
+source			dma2_pil.cpp dma2_shared.cpp
 
 sourcepath		.
 source			dmapsl.cpp
 
 library			VariantTarget(katemplate,lib)
 
-deffile			../../../kernel/eka/~/dma.def
+deffile			../../../kernel/eka/~/dma2.def
 
 epocallowdlldata
 
 capability		all
 
 VENDORID 0x70000001
+
+MACRO DMA_APIV2

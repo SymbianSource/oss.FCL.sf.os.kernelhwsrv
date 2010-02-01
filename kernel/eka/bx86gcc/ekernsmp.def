@@ -1082,4 +1082,5 @@ EXPORTS
 	_ZN7DThread16ObjectFromHandleEiiRj @ 1081 NONAME
 	_ZN9TRawEvent9SetRepeatENS_5TTypeEii @ 1082 NONAME
 	_ZNK9TRawEvent7RepeatsEv @ 1083 NONAME
+	_ZN4Kern17MakeHandleAndOpenEP7DThreadP7DObject10TOwnerType @ 1084 NONAME
 

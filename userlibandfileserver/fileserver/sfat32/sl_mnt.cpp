@@ -29,9 +29,6 @@
 
 TShortName DoGenerateShortNameL(const TDesC& aLongName,TInt& aNum,TBool aUseTildeSelectively);
 
-static void  MarkClusterVisited(RBitVector& aFatBitVec, TUint32 aCluster);
-static TBool IsClusterVisited(const RBitVector& aFatBitVec, TUint32 aCluster);
-static TInt  NextUnvisitedCluster(const RBitVector& aFatBitVec, TUint32 aCluster);
 
 //-----------------------------------------------------------------------------------------
 
@@ -81,8 +78,10 @@ TBool TFatVolParam::operator==(const TFatVolParam& aRhs) const
 CFatMountCB::CFatMountCB()
     {
     __PRINT2(_L("CFatMountCB::CFatMountCB() 0x%x, %S"), this, &KThisFsyName);
-    iFatType = EInvalid;
+
+    SetFatType(EInvalid);
     iState   = ENotMounted;
+    
     DBG_STATEMENT(iCBRecFlag = 0); //-- debug flag only
     }
 
@@ -232,7 +231,7 @@ void CFatMountCB::DoReMountL()
 /**
     Try remount this Fat volume. Checks if the volume parameters remained the same as on original MountL() call, and
     if they are, re-initialises the mount. This includes resetting all caches.
-    ! Do not call this method from TFatDriveInterface methods, like citical and non-critical notifiers ! This can lead to the
+    ! Do not call this method from TDriveInterface methods, like citical and non-critical notifiers ! This can lead to the
     recursive loops and undefined behaviour.
 
     @return KErrNone if the remount was OK
@@ -437,7 +436,7 @@ TBool CFatMountCB::ConsistentState() const
 
 /**
     Open CFatMountCB for write. I.e. perform some actions on the first write attempt.
-    This is a callback from TFatDriveInterface.
+    This is a callback from TDriveInterface.
     @return System wide error code.
 */
 TInt CFatMountCB::OpenMountForWrite()
@@ -450,12 +449,12 @@ TInt CFatMountCB::OpenMountForWrite()
     ASSERT(State() == EInit_R || State() == EFinalised);
 
     //-- Check possible recursion. This method must not be called recursively. SetVolumeCleanL() works through direct disc access and
-    //-- can not call TFatDriveInterface methods that call this method etc.
+    //-- can not call TDriveInterface methods that call this method etc.
     ASSERT(iCBRecFlag == 0);
     DBG_STATEMENT(iCBRecFlag = 1); //-- set recursion check flag
 
     //-- do here some "opening" work, like marking volme as dirty
-    //-- be careful here, as soon as this is a callback from TFatDriveInterface, writing via TFatDriveInterface may cause some unwanted recursion.
+    //-- be careful here, as soon as this is a callback from TDriveInterface, writing via TDriveInterface may cause some unwanted recursion.
 
     //-- mark the volume as dirty
     TInt nRes=KErrNone;
@@ -2251,7 +2250,9 @@ TBool CFatMountCB::DoRummageDirCacheL(const TUint anAtt, TEntryPos& aStartEntryP
         
         pDirCache->MakePageMRU(mruPos);
 
-    	// only update the leaf dir cache when the original cache index is provided
+    	//-- if the corresponding leaf directory name is cached, associate the last search positionin this directory.
+        //-- the next search in this dir. will start from this position (and will wrap around over the dir. beginning).
+        //-- the "last search position" will is the position of current VFAT entryset start. 
     	if (aLeafDir.iClusterNum)
     		{
             iLeafDirCache->UpdateMRUPos(TLeafDirData(aLeafDir.iClusterNum, aStartEntryPos));
@@ -2277,7 +2278,7 @@ void CFatMountCB::TFindHelper::InitialiseL(const TDesC& aTargetName)
      TInt count = 1;
 
      iTargetName.Set(aTargetName);
-     isLegalDosName = IsLegalDosName(aTargetName, ETrue, EFalse, EFalse, ETrue, EFalse);
+     isLegalDosName = IsLegalDosName(aTargetName, ETrue, EFalse, EFalse, ETrue, EFalse); 
 
      if(isLegalDosName)
         {//-- iShortName will contain generated short DOS name by long filename
@@ -2501,6 +2502,10 @@ TBool CFatMountCB::DoFindL(const TDesC& aTrgtName,TUint anAtt,
     //-- locate the name in the cache first to avoid reading from media
     //-- if the entry belongs to the root directory (for FAT12,16) skip the lookup, because root directory isn't aligned by cluster size boundary,
     //-- while directory cache pages are. For FAT32 it doesn't matter, because root dir is a usual file.
+    
+    //-- the "rummage dir. cache" can be swithed off. This is not affecting the functionality, only the performance.
+ #ifdef USE_DIR_CACHE_RUMMAGE
+                                                                 
     if(iRawDisk->DirCacheInterface() && trgNameFullySpecified && !IsRootDir(aDosEntryPos) && !aFileCreationHelper)
         {//-- aName is fully specified, i.e doesn't contain wildcards
 
@@ -2512,6 +2517,8 @@ TBool CFatMountCB::DoFindL(const TDesC& aTrgtName,TUint anAtt,
             return(aStartEntry.IsVFatEntry());
             }
         }
+ #endif
+
     //---------------------------------------------------
 
     // we need to scan ahead from the mru pos then come back to beginning, if startcluster is provided
@@ -2655,10 +2662,11 @@ TBool CFatMountCB::DoFindL(const TDesC& aTrgtName,TUint anAtt,
 							 found = ETrue;
 	                    	 break; //-- DOS entries match, success.
 	                    	 }
+
 	                	 }
 	                 else if (!trgNameFullySpecified)
 	                	 {//-- target name contains wildcards, we need to use MatchF with dos name
-	                     TBuf8<0x20> dosName8(DosNameFromStdFormat(aDosEntry.Name()));
+                         TBuf8<0x20> dosName8(DosNameFromStdFormat(aDosEntry.Name()));
 	                     TBuf<0x20>  dosName;
 	                     LocaleUtils::ConvertToUnicodeL(dosName, dosName8); //-- convert DOS name to unicode (implies locale settings)
 	                     if (dosName.MatchF(trgtNameNoDot)!=KErrNotFound)
@@ -2666,7 +2674,7 @@ TBool CFatMountCB::DoFindL(const TDesC& aTrgtName,TUint anAtt,
 							 found = ETrue;
 							 break;
 	                    	 }
-	                	 }
+                         }
 
 
 	                }
@@ -2763,10 +2771,12 @@ TBool CFatMountCB::DoFindL(const TDesC& aTrgtName,TUint anAtt,
     	TInt64 mruPos = MakeLinAddrL(aDosEntryPos);
         iRawDisk->DirCacheInterface()->MakePageMRU(mruPos);
 
-    	// only update the leaf dir cache when the original cache index is provided
-    	if (aLeafDirData.iClusterNum)
+    	//-- if the corresponding leaf directory name is cached, associate the last search positionin this directory.
+        //-- the next search in this dir. will start from this position (and will wrap around over the dir. beginning).
+        //-- the "last search position" will is the position of current VFAT entryset start. 
+    	if(aLeafDirData.iClusterNum)
     		{
-            iLeafDirCache->UpdateMRUPos(TLeafDirData(aLeafDirData.iClusterNum, aDosEntryPos));
+            iLeafDirCache->UpdateMRUPos(TLeafDirData(aLeafDirData.iClusterNum, aStartEntryPos));
             }
     	}
 
@@ -4110,10 +4120,12 @@ TInt CFatMountCB::GetFileUniqueId(const TDesC& aName, TInt64& aUniqueId)
     TRAPD(err,GetDosEntryFromNameL(aName,dosEntryPos,dosEntry));
     if(err!=KErrNone)
         return err;
+
     TInt startCluster=StartCluster(dosEntry);
     // Empty files will return a cluster of zero
     if(startCluster==0)
         return KErrEof;
+
     aUniqueId=MAKE_TINT64(0,startCluster);
     return KErrNone;
     }
@@ -4137,154 +4149,10 @@ TInt CFatMountCB::Spare1(TInt /*aVal*/, TAny* /*aPtr1*/, TAny* /*aPtr2*/)
 
 //-----------------------------------------------------------------------------------------
 
-//-- maximal level of recursion for the CheckDisk. i.e. the max. number of folded directories to check.
-const TInt KCheckDskMaxRecursionLevel = 50;
-
-//
-// Walks a directory cluster list then checks all the entries.
-//
-void  CFatMountCB::ChkDirL(RBitVector& aFatBitVec, TInt aDirCluster)
-    {
-    //__PRINT1(_L("### CFatMountCB::ChkDirL() level:%d"),iChkDiscRecLevel);
-
-    //-- check if we have reached the recursion limit. on hardware the stack is very limited
-    //-- and its overflow will lead to crash.
-    if(iChkDiscRecLevel++ >= KCheckDskMaxRecursionLevel)
-        {
-         __PRINT1(_L("CFatMountCB::ChkDirL() max recursion level(%d) reached. Leaving!"),iChkDiscRecLevel);
-         User::Leave(KErrTooBig);
-        }
-
-    if(/*Is32BitFat() &&*/aDirCluster != 0 && (aDirCluster == RootIndicator()))//the bit in comments maybe required
-        WalkClusterListL(aFatBitVec, RootIndicator());
-
-    TEntryPos entryPos(aDirCluster,0);
-    FOREVER
-        {
-        TFatDirEntry entry;
-        ReadDirEntryL(entryPos,entry);
-        MoveToDosEntryL(entryPos,entry);
-        if (entry.IsEndOfDirectory())
-            break;
-        if (IsRootDir(entryPos)&&(StartOfRootDirInBytes()+entryPos.iPos==(RootDirEnd()-KSizeOfFatDirEntry)))
-            {
-            if(!entry.IsErased())
-                ChkEntryL(aFatBitVec, entry);
-            break;  //  Allows maximum number of entries in root directory
-            }
-        MoveToNextEntryL(entryPos);
-        if (entry.IsParentDirectory() || entry.IsCurrentDirectory() || entry.IsErased())
-            continue;
-        ChkEntryL(aFatBitVec, entry);
-        }
-
-    iChkDiscRecLevel--;
-    }
-
-//-----------------------------------------------------------------------------------------
-
-//
-// Check FAT is valid for anEntry
-//
-void  CFatMountCB::ChkEntryL(RBitVector& aFatBitVec, const TFatDirEntry& anEntry)
-    {
-    TInt listLength=0;
-
-    if ((anEntry.Attributes()&(KEntryAttDir)) || anEntry.Size())
-        listLength=WalkClusterListL(aFatBitVec, StartCluster(anEntry));
-    else if (anEntry.StartCluster() != 0)        // zero length file
-        User::Leave(EFatChkDskInvalidEntrySize); // shouldn't have clusters
-
-    if (anEntry.Attributes()&KEntryAttDir)
-        ChkDirL(aFatBitVec, StartCluster(anEntry));
-
-    //  Check that the correct number of clusters have been allocated for the size of the file.
-
-    else if ((anEntry.Attributes()&KEntryAttVolume)==0)
-        {
-        TInt clustersForFileSize;
-        TInt clusterSize=1<<ClusterSizeLog2();
-        clustersForFileSize = (TInt) ( (TInt64(anEntry.Size()) + TInt64(clusterSize-1)) >> ClusterSizeLog2() );
-
-        if (listLength!=clustersForFileSize)
-            User::Leave(EFatChkDskInvalidEntrySize);
-        }
-    }
-
-//-----------------------------------------------------------------------------------------
-
-//
-// Walks cluster list from aCluster to EOF
-// Reports an error if an invalid cluster is found before EOF or
-// a cluster has been visited before.
-//
-TInt  CFatMountCB::WalkClusterListL(RBitVector& aFatBitVec, TInt aCluster)
-    {
-
-    TInt i=0;
-    do  {
-        i++;
-        if (!ValidClusterNumber(aCluster))
-            {
-            __PRINT1(_L("Bad Cluster number %d"),aCluster);
-            User::Leave(EFatChkDskIllegalClusterNumber);
-            }
-
-        if (IsClusterVisited(aFatBitVec, aCluster))
-            {
-            __PRINT1(_L("Cluster already in use %d"),aCluster);
-            User::Leave(EFatChkDskClusterAlreadyInUse);
-            }
-
-        MarkClusterVisited(aFatBitVec, aCluster);
-
-        } while (FAT().GetNextClusterL(aCluster));
-
-    return(i);
-    }
-
-//-----------------------------------------------------------------------------------------
-
-//
-// Checks that all unvisited clusters are marked as free in the FAT
-//
-void  CFatMountCB::CheckUnvisitedClustersL(const RBitVector& aFatBitVec) const
-    {
-
-    TInt cluster=2;
-    TInt maxCluster=cluster + UsableClusters();
-    while (cluster<maxCluster)
-        {
-        cluster=NextUnvisitedCluster(aFatBitVec, cluster); //-- move to the next unvisited cluster
-        if(cluster < 0 || cluster >= maxCluster)
-            break;
-
-        TInt clusterVal=FAT().ReadL(cluster);
-        if (clusterVal!=0 && IsEndOfClusterCh(clusterVal)==EFalse && !IsBadCluster(clusterVal))
-            {
-            __PRINT1(_L("\n*****Bad cluster Num = %d"),cluster);
-            User::Leave(EFatChkDskBadCluster);
-            }
-        }
-    }
-
-//-----------------------------------------------------------------------------------------
-
-/**
-@param  aCluster cluster number to check for validity
-@returns ETrue if aCluster is a valid cluster number
+/** 
+    Check file system for errors. 
+    @return KErrNone if no errors found, otherwise a error code hopefully describing the problem found.
 */
-TBool CFatMountCB::ValidClusterNumber(TUint32 aCluster) const
-    {
-    return (aCluster>=KFatFirstSearchCluster && aCluster<=MaxClusterNumber());
-    }
-
-//-----------------------------------------------------------------------------------------
-
-//
-// Walk the FAT, returns error if find an unterminated list or
-// lists that merge.
-//
 TInt CFatMountCB::CheckDisk()
 	{
 
@@ -4295,112 +4163,48 @@ TInt CFatMountCB::CheckDisk()
 
     //-- create a bit representation of the FAT
     const TUint32 MaxClusters = UsableClusters()+KFatFirstSearchCluster; //-- UsableClusters() doesn't count first 2 unused clusers
-
-
-    // cluster count may be zero if boot sector failed to be read (e.g. if the media is locked)
-    // or if TDrive::MountMedia(ETrue) has been called (in which case the boot sector may
     if (MaxClusters == 0)
         return KErrCorrupt;
 
-    RBitVector bitVec; //-- each bit in this vector represents a FAT cluster
+    //-- used for measuring time
+    TTime   timeStart;
+    TTime   timeEnd;
+    timeStart.UniversalTime(); //-- take start time
 
-    TInt nRes = bitVec.Create(MaxClusters);
+    TInt nRes;
+ 
+    CScanDrive* pScnDrv = NULL;
+    TRAP(nRes, pScnDrv=CScanDrive::NewL(this));
     if(nRes != KErrNone)
-        {
-        ASSERT(nRes == KErrNoMemory); //-- the only one possible reason.
-        return KErrNoMemory;
+        return nRes;
+
+    //-- start ScanDrive in "checkdisk" mode
+    TRAPD(nScnDrvRes, pScnDrv->StartL(CScanDrive::ECheckDisk));
+    
+    timeEnd.UniversalTime(); //-- take end time
+    const TInt msScanTime = (TInt)( (timeEnd.MicroSecondsFrom(timeStart)).Int64() / K1mSec);
+    (void)msScanTime;
+    __PRINT1(_L("#@@@ CheckDisk() time taken:%d ms"), msScanTime);
+ 
+    CScanDrive::TGenericError chkDskRes = pScnDrv->ProblemsDiscovered();
+    const TBool bProblemsFound = (nScnDrvRes!=KErrNone) || pScnDrv->ProblemsDiscovered();
+    
+    if(bProblemsFound && chkDskRes == CScanDrive::ENoErrors)
+        {//-- ScanDrive in this mode can leave unexpectedly without setting an error code that is returned by ProblemsDiscovered();
+         //-- leave itself means a problem
+        chkDskRes = CScanDrive::EUnknownError;
         }
 
-    iChkDiscRecLevel = 0; //-- reset CheckDisk recursion counter
-    TRAPD(r,ChkDirL(bitVec, RootIndicator())); // Check from root directory
-    if (r==KErrNone)
+    delete pScnDrv;
+
+    if(chkDskRes != KErrNone)
         {
-        TRAP(r,CheckUnvisitedClustersL(bitVec));
+        __PRINT2(_L("CFatMountCB::CheckDisk() drv:%d, result:%d"), DriveNumber(), chkDskRes);
         }
+    
+    return chkDskRes;
 
-
-    bitVec.Close();
-
-    switch(r)
-        {
-
-    case KErrNone:
-        return KErrNone;
-
-    case EFatChkDskIllegalClusterNumber:
-        return(1);
-
-    case EFatChkDskClusterAlreadyInUse:
-        return(2);
-
-    case EFatChkDskBadCluster:
-        return(3);
-
-    case EFatChkDskInvalidEntrySize:
-        return(4);
-
-    default:
-        break;
-        }
-
-    return(r);
     }
-
-
-//-----------------------------------------------------------------------------------------
-//  Helper functions for Check Disk functionality
-//-----------------------------------------------------------------------------------------
-
-/**
-    Find the next unvisited cluster number in the bit array.
-
-    @param  aBitList    bit array, where '0' bits represent unvisited clusters.
-    @param  aCluster    cluster number to start search with.
-
-    @return positive integer indicating next unvisited cluster number
-            KErrNotFound (-1) if there are no unvisited clusters
-
-*/
-static TInt  NextUnvisitedCluster(const RBitVector& aFatBitVec, TUint32 aCluster)
-{
-    __ASSERT_DEBUG(aCluster >= KFatFirstSearchCluster, Fault(EFatChkDskIllegalClusterNumber)); //-- 1st 2 FAT entries are reserved
-
-    TUint32 searchPos = aCluster; //-- bit number to start search with
-
-    //-- look for the unvisited cluster (bit '0') in the bit array from the searchPos to the right
-    if(aFatBitVec.Find(searchPos, 0, RBitVector::ERight))
-        return searchPos;
-
-    return KErrNotFound;
-}
-
-
-/**
-    Check if we have visited cluster aCluster
-
-    @param  aFatBitVec  bit array, where '0' bits represent unvisited clusters.
-    @param  aCluster    cluster number to check
-    @return ETrue if aCluster has been visited.
-*/
-static TBool IsClusterVisited(const RBitVector& aFatBitVec, TUint32 aCluster)
-{
-    __ASSERT_DEBUG(aCluster >= KFatFirstSearchCluster, Fault(EFatChkDskIllegalClusterNumber)); //-- 1st 2 FAT entries are reserved
-
-    return aFatBitVec[aCluster];
-}
-
-/**
-    Mark aCluster as visited
-    @param  aFatBitVec  bit array, where '0' bits represent unvisited clusters.
-    @param  aCluster    cluster number to mark
-*/
-static void MarkClusterVisited(RBitVector& aFatBitVec, TUint32 aCluster)
-{
-    __ASSERT_DEBUG(aCluster >= KFatFirstSearchCluster, Fault(EFatChkDskIllegalClusterNumber)); //-- 1st 2 FAT entries are reserved
-
-    aFatBitVec.SetBit(aCluster); //-- '1' bit in a bit array means that the corresponding cluster is visited
-}
-
 
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -4417,7 +4221,7 @@ TInt CFatMountCB::DoRunScanDrive()
     if(nRes != KErrNone)
         return nRes;
 
-    TRAPD(nScnDrvRes, pScnDrv->StartL());
+    TRAPD(nScnDrvRes, pScnDrv->StartL(CScanDrive::EScanAndFix));
 
     const TBool bNeedFatRemount = (nScnDrvRes!=KErrNone) || pScnDrv->ProblemsDiscovered();
     delete pScnDrv;
@@ -4434,7 +4238,7 @@ TInt CFatMountCB::DoRunScanDrive()
         return nScnDrvRes;
 
 
-    //-- if ScanDrive hasn't found anything wrong or has fixed recoverable erros, mark the volume clean
+    //-- if ScanDrive hasn't found anything wrong or has fixed recoverable errors, mark the volume clean
     if(VolCleanFlagSupported())
         {
         //-- if there is a background FAT scanning thread, we need to wait until it finishes its work.
@@ -4561,6 +4365,58 @@ TInt CFatMountCB::MntCtl_DoCheckFileSystemMountable()
 
     return nRes;
     }
+
+//-----------------------------------------------------------------------------------------
+/** 
+    Internal helper method.
+    @param      aFatType FAT type
+    @return     End Of Cluster Chain code that depend on FAT type, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
+*/
+TUint32 EocCodeByFatType(TFatType aFatType)
+    {
+    switch(aFatType)
+        {
+        case EFat32: 
+        return EOF_32Bit-7; //-- 0xffffff8
+        
+        case EFat16: 
+        return  EOF_16Bit-7; //-- 0xfff8
+        
+        case EFat12: 
+        return  EOF_12Bit-7; //-- 0xff8
+        
+        default: 
+        ASSERT(aFatType == EInvalid); 
+        return 0;
+        }
+
+    }
+
+//-----------------------------------------------------------------------------------------
+/**
+    Set FAT type that this object of CFatMountCB will be dealing with.
+*/
+void CFatMountCB::SetFatType(TFatType aFatType)
+    {
+    ASSERT(State() == ENotMounted || State() == EDismounted || State() == EMounting) ;
+    
+    iFatType = aFatType;
+    iFatEocCode = EocCodeByFatType(aFatType);
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

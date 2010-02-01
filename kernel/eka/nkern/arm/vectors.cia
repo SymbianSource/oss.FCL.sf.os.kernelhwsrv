@@ -73,11 +73,8 @@ __NAKED__ void CallUserModeCallbacks()
 
 	asm("callUserModeCallbacks2: ");
 
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("mrc p15, 0, r12, c3, c0, 0 ");
-	asm("tst r12, #0xc0000000 ");
-	asm("cdpne p15, 0, c0, c0, c0, 0 ");
-#endif
+	USER_MEMORY_GUARD_ASSERT_ON(ip);
+
 #ifdef __CHECK_LOCK_STATE__
 	asm("ldr ip, [r2, #%a0]" : : "i" _FOFF(NThread,iCsCount));
 	asm("cmp ip, #0 ");
@@ -174,6 +171,7 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 	USER_MEMORY_GUARD_OFF_IF_MODE_USR(r11);
 	ERRATUM_353494_MODE_CHANGE(,r11);
 	asm("ldmfd sp!, {r11, pc}^ ");			// return and restore cpsr
+
 	
 	asm("slow_swi: ");						// IRQs off, FIQs on here
 	asm("stmfd sp!, {r3-r10} ");			// save nonvolatile registers, r3 for 8 byte align
@@ -267,6 +265,7 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 	ERRATUM_353494_MODE_CHANGE(,r11);
 	asm("ldmfd sp!, {r3-r11,pc}^ ");		// return from EXEC function
 
+
 	// Come here if we need to wait for the system lock
 	// r9->current thread, r10=&iLock, r12=iLock.iHoldingThread
 	asm("ss_fast_mutex_held: ");
@@ -350,41 +349,37 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	{
 	// FIQs enabled here but not IRQs
 	asm("ldr r1, __TheScheduler ");
-	asm("mrs r0, spsr ");					// check interrupted mode
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("add r12, sp, #32 ");				// r12=sp_irq+8 words
-#else
-	asm("add r12, sp, #24 ");				// r12=sp_irq+6 words
-#endif
+	asm("mrs r0, spsr ");														// check interrupted mode
+	asm("add r12, sp, #%a0 " : : "i" (4*(6+USER_MEMORY_GUARD_SAVE_WORDS)));		// r12=sp_irq+6 or 8 words
 	asm("and r2, r0, #0x1f ");
-	asm("ldr r3, [r1, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));	// r3=KernCSLocked
-	asm("cmp r2, #0x10 ");					// check for mode_usr
-	asm("cmpne r2, #0x13 ");				// or mode_svc
-	asm("cmpeq r3, #0 ");					// and then check if kernel locked
-	asm("bne IrqExit0 ");					// if wrong mode or locked, return immediately
-	SET_INTS(r2, MODE_IRQ, INTS_ALL_OFF);	// disable FIQs before we check for reschedule
+	asm("ldr r3, [r1, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));			// r3=KernCSLocked
+	asm("cmp r2, #0x10 ");														// check for mode_usr
+	asm("cmpne r2, #0x13 ");													// or mode_svc
+	asm("cmpeq r3, #0 ");														// and then check if kernel locked
+	asm("bne IrqExit0 ");														// if wrong mode or locked, return immediately
+	SET_INTS(r2, MODE_IRQ, INTS_ALL_OFF);										// disable FIQs before we check for reschedule
 	asm("ldr r2, [r1, #%a0]" : : "i" _FOFF(TScheduler,iRescheduleNeededFlag));	// r2=DfcPendingFlag/RescheduleNeededFlag
 	asm("add r3, r3, #1 ");
 	SET_MODE_1(lr, MODE_SVC, INTS_ALL_ON);
-	asm("cmp r2, #0 ");						// check if reschedule needed
-	asm("beq IrqExit0 ");					// if not, return immediately
+	asm("cmp r2, #0 ");															// check if reschedule needed
+	asm("beq IrqExit0 ");														// if not, return immediately
 	asm("str r3, [r1, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));	// lock the kernel
-	SET_MODE_2(lr, MODE_SVC, INTS_ALL_ON);	// mode_svc, interrupts back on
+	SET_MODE_2(lr, MODE_SVC, INTS_ALL_ON);										// mode_svc, interrupts back on
 
-	asm("ldmdb r12!, {r1-r3} ");			// move saved registers (r0-r3,r12,pc) over to mode_svc stack
+	asm("ldmdb r12!, {r1-r3} ");												// move saved registers (r0-r3,r12,pc) over to mode_svc stack
 	asm("stmfd sp!, {r1-r3} ");
 	asm("ldmdb r12!, {r1-r3} ");
 	asm("stmfd sp!, {r1-r3} ");
-	asm("stmfd sp!, {r0,lr} ");				// store lr_svc and interrupted cpsr on current mode_svc stack
+	asm("stmfd sp!, {r0,lr} ");													// store lr_svc and interrupted cpsr on current mode_svc stack
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
 	asm("ldmdb r12, {r1-r2} ");
-	asm("stmfd sp!, {r1-r2} ");				// move user guard over to mode_svc stack
+	asm("stmfd sp!, {r1-r2} ");													// move user guard over to mode_svc stack
 #endif
 
 	SET_MODE_1(r2, MODE_SVC, INTS_ALL_ON);
-	SET_MODE(lr, MODE_IRQ, INTS_IRQ_OFF);	// mode_irq, IRQs off
-	asm("add sp, r12, #24 ");				// restore mode_irq stack balance
-	SET_MODE_2(r2, MODE_SVC, INTS_ALL_ON);	// back to mode_svc, IRQs on
+	SET_MODE(lr, MODE_IRQ, INTS_IRQ_OFF);										// mode_irq, IRQs off
+	asm("add sp, r12, #24 ");													// restore mode_irq stack balance
+	SET_MODE_2(r2, MODE_SVC, INTS_ALL_ON);										// back to mode_svc, IRQs on
 
 	// reschedule - this also switches context if necessary
 	// enter this function in mode_svc, interrupts on, kernel locked
@@ -394,46 +389,48 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	asm(".global irq_resched_return ");
 	asm("irq_resched_return: ");
 
-	SET_MODE(r2, MODE_SVC, INTS_ALL_OFF);	// all interrupts off
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("ldr r1, [sp, #8] "	);				// get interrupted cpsr, don't unbalance stack
-#else
-	asm("ldr r1, [sp] "	);					// get interrupted cpsr, don't unbalance stack
-#endif
+	SET_MODE(r2, MODE_SVC, INTS_ALL_OFF);										// all interrupts off
+	asm("ldr r1, [sp, #%a0] " : : "i" (4*USER_MEMORY_GUARD_SAVE_WORDS));		// get interrupted cpsr, don't unbalance stack
+
 #ifdef __CHECK_LOCK_STATE__
 	asm("mov r2, r12 ");
 	asm("tst r1, #0x0f ");
 	asm("bleq  " CSM_Z14CheckLockStatev);
 	asm("mov r12, r2 ");
 #endif
+
 	asm("tst r1, #0x0f ");
 	asm("mov r3, #%a0 " : : "i" (NThread::EContextUserIntrCallback));
-	asm("bleq callUserModeCallbacks ");		// call user-mode callbacks		
+	asm("bleq callUserModeCallbacks ");											// call user-mode callbacks		
 	
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("ldr r1, [sp], #8 ");
+	asm("ldr r1, [sp], #%a0 " : : "i" (4*USER_MEMORY_GUARD_SAVE_WORDS));		// pop saved DACR, adjust sp
 	USER_MEMORY_GUARD_RESTORE(r1,lr);
 #endif
-	asm("ldmfd sp!, {r1, lr} ");			// restore lr_svc
-	asm("add sp, sp, #24 ");				// restore mode_svc stack balance
-	asm("mov r12, sp ");					// r12=address of remaining saved registers
 
-	SET_MODE(r2, MODE_IRQ, INTS_ALL_OFF);	// back into mode_irq, all interrupts off
+	asm("ldmfd sp!, {r1, lr} ");												// restore lr_svc
+	asm("add sp, sp, #24 ");													// restore mode_svc stack balance
+	asm("mov r12, sp ");														// r12=address of remaining saved registers
+
+	SET_MODE(r2, MODE_IRQ, INTS_ALL_OFF);										// back into mode_irq, all interrupts off
 	
-	asm("msr spsr, r1 ");					// interrupted cpsr into spsr_irq
+	asm("msr spsr, r1 ");														// interrupted cpsr into spsr_irq
 	ERRATUM_353494_MODE_CHANGE(,r12);
-	asm("ldmdb r12, {r0-r3,r12,pc}^ ");		// return from interrupt
+	asm("ldmdb r12, {r0-r3,r12,pc}^ ");											// return from interrupt
+
 
 	asm("IrqExit0: ");
 #ifdef __CHECK_LOCK_STATE__
 	asm("tst r0, #0x0f ");
 	asm("bleq  " CSM_Z14CheckLockStatev);
 #endif
-	asm("IrqExit1: ");						// entry point for __ArmVectorIrqPostambleNoResched()
+
+	asm("IrqExit1: ");															// entry point for __ArmVectorIrqPostambleNoResched()
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("ldr lr, [sp], #8 ");
+	asm("ldr lr, [sp], #%a0 " : : "i" (4*USER_MEMORY_GUARD_SAVE_WORDS));		// pop saved DACR, adjust sp
 	USER_MEMORY_GUARD_RESTORE(lr,r12);
 #endif
+
 #ifdef BTRACE_CPU_USAGE
 	asm("ldrb r2, [r1,#%a0]" : : "i" _FOFF(TScheduler,iCpuUsageFilter));
 	asm("mov r0, #%a0" : : "i" ((TInt)4 ) );
@@ -443,7 +440,7 @@ extern "C" __NAKED__ void __ArmVectorIrq()
 	asm("ldrne pc, [r1,#%a0]" : : "i" _FOFF(TScheduler,iBTraceHandler));
 #endif
 	ERRATUM_353494_MODE_CHANGE(,r12);
-	asm("ldmfd sp!, {r0-r3,r12,pc}^ ");		// return from interrupt
+	asm("ldmfd sp!, {r0-r3,r12,pc}^ ");											// return from interrupt
 	}
 
 /***************************************************************************
@@ -477,69 +474,68 @@ extern "C" __NAKED__ void __ArmVectorFiq()
 	// r0-r7 are unaltered from when FIQ occurred
 	asm("ldr r9, __TheScheduler ");
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("ldr r12, [sp], #4 ");
+	asm("ldr r12, [sp], #4 ");													// pop saved DACR
 #endif
-	asm("mrs r8, spsr ");					// check interrupted mode
+	asm("mrs r8, spsr ");														// check interrupted mode
 	asm("and r10, r8, #0x1f ");
-	asm("cmp r10, #0x10 ");					// check for mode_usr
+	asm("cmp r10, #0x10 ");														// check for mode_usr
 	asm("ldr r11, [r9, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));
-	asm("cmpne r10, #0x13 ");				// or mode_svc
+	asm("cmpne r10, #0x13 ");													// or mode_svc
 	asm("ldreq r10, [r9, #%a0]" : : "i" _FOFF(TScheduler,iRescheduleNeededFlag));
-	asm("cmpeq r11, #0 ");					// and check if kernel locked
-	asm("bne FiqExit0 ");					// if wrong mode or kernel locked, return immediately
-	asm("cmp r10, #0 ");					// check if reschedule needed
-	asm("beq FiqExit0 ");					// if not, return from interrupt
+	asm("cmpeq r11, #0 ");														// and check if kernel locked
+	asm("bne FiqExit0 ");														// if wrong mode or kernel locked, return immediately
+	asm("cmp r10, #0 ");														// check if reschedule needed
+	asm("beq FiqExit0 ");														// if not, return from interrupt
+
 	// we interrupted mode_usr or mode_svc, kernel unlocked, reschedule needed
 	asm("add r11, r11, #1 ");
-	asm("str r11, [r9, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));	// lock the kernel
-	asm("stmfd sp!, {r1-r3} ");				// save interrupted r1-r3 on FIQ stack
-	asm("mov r1, r8 ");						// r1=interrupted cpsr
-	asm("mov r3, sp ");						// r3 points to saved registers
+	asm("str r11, [r9, #%a0]" : : "i" _FOFF(TScheduler,iKernCSLocked));			// lock the kernel
+	asm("stmfd sp!, {r1-r3} ");													// save interrupted r1-r3 on FIQ stack
+	asm("mov r1, r8 ");															// r1=interrupted cpsr
+	asm("mov r3, sp ");															// r3 points to saved registers
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("mov r2, r12 ");					// saved DACR into R2
+	asm("mov r2, r12 ");														// saved DACR into R2
 #endif
-	SET_MODE(lr, MODE_SVC, INTS_ALL_ON);	// switch to mode_svc, IRQs and FIQs back on
+	SET_MODE(lr, MODE_SVC, INTS_ALL_ON);										// switch to mode_svc, IRQs and FIQs back on
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("str r2, [sp, #-40]! ");			// save DACR and leave room for spare, cpsr, lr_svc, r0-r3, r12, pc
-	asm("ldr r2, [r3, #12] ");				// r2=return address
-	asm("str r12, [sp, #32] ");				// save r12 on mode_svc stack
-	asm("str r2, [sp, #36] ");				// save return address on mode_svc stack
-	asm("add r12, sp, #8 ");
+	asm("str r2, [sp, #%a0]! " : : "i" (-4*(8+USER_MEMORY_GUARD_SAVE_WORDS)));	// save DACR and leave room for spare, cpsr, lr_svc, r0-r3, r12, pc
 #else
-	asm("ldr r2, [r3, #12] ");				// r2=return address
-	asm("sub sp, sp, #32 ");				// make room for saved registers on mode_svc stack
-	asm("str r12, [sp, #24] ");				// save r12 on mode_svc stack
-	asm("str r2, [sp, #28] ");				// save return address on mode_svc stack
-	asm("mov r12, sp ");
+	asm("sub sp, sp, #32 ");													// make room for saved registers on mode_svc stack
 #endif
-	asm("stmia r12!, {r1,lr} ");			// save interrupted cpsr and lr_svc
-	asm("ldmia r3, {r1,r2,lr} ");			// retrieve original r1-r3 from mode_fiq stack
-	asm("stmia r12, {r0-r2,lr} ");			// save original r0-r3 - saved register order is now cpsr,lr_svc,r0-r3,r12,pc
-	SET_MODE_1(r2, MODE_SVC, INTS_ALL_ON);
-	SET_MODE(lr, MODE_FIQ, INTS_ALL_OFF);	// mode_fiq, IRQs and FIQs off
-	asm("add sp, r3, #16 ");				// restore mode_fiq stack balance
-	SET_MODE_2(r2, MODE_SVC, INTS_ALL_ON);	// back to mode_svc, IRQs on
-	asm("adr lr, irq_resched_return ");
-	asm("b  " CSM_ZN10TScheduler10RescheduleEv);		// do reschedule and return to irq_resched_return
+	asm("ldr r2, [r3, #12] ");													// r2=return address
+	asm("str r12, [sp, #%a0] " : : "i" (4*(6+USER_MEMORY_GUARD_SAVE_WORDS)));	// save r12 on mode_svc stack
+	asm("str r2, [sp, #%a0] " : : "i" (4*(7+USER_MEMORY_GUARD_SAVE_WORDS)));	// save return address on mode_svc stack
+	asm("add r12, sp, #%a0 " : : "i" (4*(USER_MEMORY_GUARD_SAVE_WORDS)));
 
-	asm("FiqExit0:");						// also entry point for __ArmVectorFiqPostambleNoResched()
+	asm("stmia r12!, {r1,lr} ");												// save interrupted cpsr and lr_svc
+	asm("ldmia r3, {r1,r2,lr} ");												// retrieve original r1-r3 from mode_fiq stack
+	asm("stmia r12, {r0-r2,lr} ");												// save original r0-r3 - saved register order is now cpsr,lr_svc,r0-r3,r12,pc
+	SET_MODE_1(r2, MODE_SVC, INTS_ALL_ON);
+	SET_MODE(lr, MODE_FIQ, INTS_ALL_OFF);										// mode_fiq, IRQs and FIQs off
+	asm("add sp, r3, #16 ");													// restore mode_fiq stack balance
+	SET_MODE_2(r2, MODE_SVC, INTS_ALL_ON);										// back to mode_svc, IRQs on
+	asm("adr lr, irq_resched_return ");
+	asm("b  " CSM_ZN10TScheduler10RescheduleEv);								// do reschedule and return to irq_resched_return
+
+	asm("FiqExit0:");															// also entry point for __ArmVectorFiqPostambleNoResched()
 	USER_MEMORY_GUARD_RESTORE(r12,lr);
+
 #ifndef BTRACE_CPU_USAGE
 	ERRATUM_353494_MODE_CHANGE(,r11);
-	asm("ldmfd sp!, {pc}^ ");				// return from interrupt
+	asm("ldmfd sp!, {pc}^ ");													// return from interrupt
 #else
 	asm("ldrb r8, [r9,#%a0]" : : "i" _FOFF(TScheduler,iCpuUsageFilter));
 	asm("mov r10, #%a0" : : "i" ((TInt)(BTrace::ECpuUsage<<BTrace::ECategoryIndex*8)+(BTrace::EFiqEnd<<BTrace::ESubCategoryIndex*8)) );
 	asm("adr lr, FiqTraceExit0");
 	asm("cmp r8, #0");
 	ERRATUM_353494_MODE_CHANGE(eq,r8);
-	asm("ldmeqfd sp!, {pc}^ ");				// return from interrupt if trace not enabled
+	asm("ldmeqfd sp!, {pc}^ ");													// return from interrupt if trace not enabled
 	asm("stmfd sp!, {r0-r3} ");
 	asm("add r0, r10, #%a0" : : "i" ((TInt)4 ) );
 	asm("ldr pc, [r9,#%a0]" : : "i" _FOFF(TScheduler,iBTraceHandler));
 	asm("FiqTraceExit0:");
 	ERRATUM_353494_MODE_CHANGE(,r3);
-	asm("ldmfd sp!, {r0-r3,pc}^ ");			// return from interrupt
+	asm("ldmfd sp!, {r0-r3,pc}^ ");												// return from interrupt
 #endif
 
 	asm("__TheScheduler: ");
@@ -562,7 +558,7 @@ extern "C" EXPORT_C __NAKED__ void __ArmVectorFiqPostambleNoResched()
 	// r0-r7 are unaltered from when FIQ occurred
 	asm("ldr r9, __TheScheduler ");
 #ifdef __USER_MEMORY_GUARDS_ENABLED__
-	asm("ldr r12, [sp], #4 ");
+	asm("ldr r12, [sp], #4 ");													// pop saved DACR
 #endif
 	asm("b FiqExit0 ");
 	}
@@ -692,38 +688,29 @@ extern "C" __NAKED__ void __ArmVectorAbortData()
 	asm("mov r3, #0xd3 ");
 	asm("msr cpsr, r3 ");					// mode_svc, all interrupts off
 	asm("msr spsr, r12 ");					// restore spsr_svc
-#ifdef __CHECK_LOCK_STATE__
-	asm("tst r0, #0x0f ");
-#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
-	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
-	asm("nop ");							// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
-#endif
-	asm("bleq  " CSM_Z14CheckLockStatev);
-#endif
 	asm("tst r0, #0x0f ");					// check if exception in mode_usr
-#ifdef __USER_MEMORY_GUARDS_ENABLED__
 #if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
 	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
 	asm("nop ");							// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
+#endif
+#ifdef __CHECK_LOCK_STATE__
+	asm("bleq  " CSM_Z14CheckLockStatev);
+	asm("tst r0, #0x0f ");					// recheck if exception in mode_usr
 #endif
 	asm("bne 1f ");
+
+#ifdef __USER_MEMORY_GUARDS_ENABLED__
 	USER_MEMORY_GUARD_ON(,lr,r12);
 	asm("tst lr, #0xc0000000 ");			// user memory enabled?
 	asm("adrne lr, 2f ");					// yes - enable it after callbacks
+#endif
 	asm("adreq lr, 1f ");					// no - leave it disabled after callbacks
 	asm("mov r3, #0 ");
 	asm("b callUserModeCallbacks2 ");		// call user-mode callbacks
 	asm("2: ");
 	USER_MEMORY_GUARD_OFF(,lr,lr);
+
 	asm("1: ");
-#else
-	asm("mov r3, #0 ");
-#if defined(__CPU_CORTEX_A9__) && !defined(__CPU_ARM_A9_ERRATUM_571622_FIXED)
-	asm("nop ");							// ARM Cortex-A9 MPCore erratum 571622 workaround
-											// Insert nops so branch doesn't occur in 2nd or 3rd position after a msr spsr
-#endif
-	asm("bleq callUserModeCallbacks2 ");	// call user-mode callbacks
-#endif
 	asm("tst r0, #0x0f ");					// check if exception in mode_usr
 	asm("mov r3, #%a0 " : : "i" ((TInt)NThread::EContextUndefined));
 	asm("streqb r3, [r2, #%a0]" : : "i" _FOFF(NThread,iSpare3)); // if so, set iUserContextType = EContextUndefined

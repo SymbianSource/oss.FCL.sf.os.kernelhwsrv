@@ -288,6 +288,49 @@ EXPORT_C void BTrace::Prime(TInt aCategory)
 		TraceContainerContents(K::Containers[ECondVar], BTrace::ESymbianKernelSync, BTrace::ECondVarCreate);
 		}
 #endif
+
+#ifdef BTRACE_CLIENT_SERVER
+	if(aCategory==BTrace::EClientServer || aCategory==-1)
+		{
+		DObjectCon* servers=Kern::Containers()[EServer];
+		if(servers)
+			{
+			NKern::ThreadEnterCS();
+			servers->Wait();
+			TInt num = servers->Count();
+			for(TInt i=0; i<num; i++)
+				{
+				DServer* server = (DServer*)(*servers)[i];
+				if (server->Open() == KErrNone)
+					{
+					server->BTracePrime(aCategory);
+					server->AsyncClose();
+					}
+				}
+			servers->Signal();
+			NKern::ThreadLeaveCS();
+			}
+
+		DObjectCon* sessions=Kern::Containers()[ESession];
+		if(sessions)
+			{
+			NKern::ThreadEnterCS();
+			sessions->Wait();
+			TInt num = sessions->Count();
+			for(TInt i=0; i<num; i++)
+				{
+				DSession* session = (DSession*)(*sessions)[i];
+				if (session->Open() == KErrNone)
+					{
+					session->BTracePrime(aCategory);
+					session->AsyncClose();
+					}
+				}
+			sessions->Signal();
+			NKern::ThreadLeaveCS();
+			}
+		}
+#endif
 	}
 
 TBool BTrace::IsSupported(TUint aCategory)
