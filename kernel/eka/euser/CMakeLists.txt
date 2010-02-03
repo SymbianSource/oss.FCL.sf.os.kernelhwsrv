@@ -137,8 +137,9 @@ add_dependencies(scppnwdl_kern euser)
 ### EPOC: emulator executable
 add_executable(epoc ../euser/epoc/win32/uc_exe.cpp ../euser/epoc/win32/uc_epoc.cpp) #Compile the EXE target entry point which is uc_exe.cpp 
 add_dependencies(epoc estub euser)
+target_link_libraries(epoc euser)
 #set_target_properties(epoc PROPERTIES LINK_FLAGS "/ENTRY:_E32Bootstrap /SUBSYSTEM:WINDOWS /NODEFAULTLIB")
-target_link_libraries(epoc msvcrt)
+#target_link_libraries(epoc msvcrt)
 #set_target_properties(epoc PROPERTIES COMPILE_FLAGS "/Zl")
 #set_target_properties(epoc PROPERTIES LINK_FLAGS "/ENTRY:mainCRTStartup /SUBSYSTEM:WINDOWS")
 #set_target_properties(epoc PROPERTIES LINK_FLAGS "/NODEFAULTLIB")

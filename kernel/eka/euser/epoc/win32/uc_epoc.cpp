@@ -19,7 +19,10 @@
 #include <e32std_private.h>
 #include <e32wins.h>
 
+#if defined __SYMC__
+
 //SL: Empty on FCL ?
+
 
 GLDEF_C TInt E32Main()
 	{
@@ -31,7 +34,12 @@ GLDEF_C TInt E32Main()
 	return KErrNone;
 	}
 
+
 TInt main()
 	{
-	return E32Main();
+	BootEpoc(ETrue);
+	return 0;
 	}
+
+#endif
+

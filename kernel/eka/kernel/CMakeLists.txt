@@ -68,6 +68,7 @@ cglobals.cpp cexec.cpp cinit.cpp
 ckernel.cpp csched.cpp
 cutils.cpp cache.cpp
 k_entry.cpp #originally from kc_exe.mmp
+#TODO: add our own entry point?
 )
 
 
@@ -117,12 +118,19 @@ mchunk.cpp mglobals.cpp minit.cpp mkernel.cpp
 mcodeseg.cpp mprocess.cpp mutils.cpp mshbuf.cpp
 )
 
+#def export
+set (sourcepath ../blike/)
+add_source(
+ekern.def
+)
 
-add_executable(ekern ${source}) 
-#add_library(ekern SHARED ${source})
+
+#add_executable(ekern ${source}) 
+add_library(ekern SHARED ${source})
 add_dependencies(ekern genexec emulator scppnwdl_kern)
-set_target_properties(ekern PROPERTIES LINK_FLAGS "/ENTRY:KernelMain /NODEFAULTLIB")
-target_link_libraries(ekern kernel32 msvcrt)
+#set_target_properties(ekern PROPERTIES LINK_FLAGS "/ENTRY:KernelMain /NODEFAULTLIB")
+#target_link_libraries(ekern kernel32 msvcrt)
+target_link_libraries(ekern kernel32 emulator)
 #set_target_properties(ekern PROPERTIES COMPILE_FLAGS "/Zl")
 #install(TARGETS ekern DESTINATION ./symbian/bin)
 
@@ -134,7 +142,7 @@ target_link_libraries(ekern kernel32 msvcrt)
 
 get_target_property(LIB_NAME ekern LOCATION)
 get_target_property(DEST_NAME epoc LOCATION)
-set(target_suffix .exe)
+set(target_suffix .dll)
 #Extract path from full filename
 string(REGEX REPLACE "(^.+)/epoc.exe" "\\1" DEST_NAME ${DEST_NAME})
 set(DEST_NAME ${DEST_NAME}/ekern${target_suffix})

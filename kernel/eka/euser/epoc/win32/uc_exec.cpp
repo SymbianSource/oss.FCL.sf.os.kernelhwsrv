@@ -36,7 +36,9 @@ static TDispatcher TheDispatcher = &LazyDispatch;
 
 TInt __fastcall LazyDispatch(TInt aFunction, TInt* aArgs)
 	{
-	HINSTANCE kernel = GetModuleHandleA("ekern.exe");
+	//SL:
+	HINSTANCE kernel = GetModuleHandleA("ekern.dll");
+	//HINSTANCE kernel = GetModuleHandleA("ekern.exe");
 	if (kernel)
 		{
 		TDispatcher dispatcher = (TDispatcher)Emulator::GetProcAddress(kernel, (LPCSTR)1);

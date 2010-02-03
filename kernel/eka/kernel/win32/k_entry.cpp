@@ -28,6 +28,9 @@ GLREF_C void BootEpoc();
 
 GLDEF_D TBool EmulRunExe;
 
+
+#ifndef __SYMC__
+
 extern "C"
 int atexit(void (__cdecl *)(void))
 	{
@@ -44,3 +47,32 @@ EXPORT_C void _E32Startup(TBool aRunExe)
 	EmulRunExe = aRunExe;
 	BootEpoc();
 	}
+
+
+#endif
+
+
+#if defined __SYMC__
+
+extern "C"
+EXPORT_C void _E32Startup(TBool aRunExe)
+//
+// Ordinal 1 - used by EXEs to boot EPOC
+//
+	{
+	//Done by CRT
+	//constructStatics();
+	//EmulRunExe = aRunExe;
+	BootEpoc();
+	}
+
+TInt main()
+	{
+	_E32Startup(ETrue);
+	}
+
+#endif
+
+
+
+

@@ -13,6 +13,7 @@ project (eka)
 
 cmake_minimum_required(VERSION 2.6)
 
+add_definitions(-D__SYMC__)
 
 #Generate the exec enum using CMAKE custom command
 #perl genexec.pl -i execs.txt -e ../include/exec_enum.h -u ../include/exec_user.h -k ../include/exec_kernel.h
