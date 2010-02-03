@@ -25,5 +25,13 @@ GLDEF_C TInt E32Main()
 	{
 	//What do we do then
 
+	CBase* base=new(ELeave) CBase();
+	delete base;
+
 	return KErrNone;
+	}
+
+TInt main()
+	{
+	return E32Main();
 	}
