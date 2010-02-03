@@ -26,6 +26,7 @@ systeminclude		../../../include
 systeminclude		../../../include/drivers
 #endif
 
+USERINCLUDE		traces
 
 sourcepath			..
 source				spbus.cpp
@@ -48,4 +49,3 @@ epocallowdlldata
 uid 				0x1000008d 0x10004087
 
 capability			all
-

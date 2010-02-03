@@ -16,17 +16,29 @@
 //
 
 #include <drivers/pbusmedia.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "pbusmediaTraces.h"
+#endif
 
 void mediaCallBack(TAny* aPtr, TInt aReason, TAny* a1, TAny* a2)
 	{
+	OstTraceFunctionEntry0( MEDIACALLBACK_ENTRY );
 	DPBusPrimaryMedia* pM=(DPBusPrimaryMedia*)aPtr;
 	__KTRACE_OPT(KLOCDRV,Kern::Printf("mediaCallBack media %d, reason %d, a1=0x%x, a2=0x%x",pM->iMediaId,aReason,a1,a2));
+	OstTraceExt4( TRACE_INTERNALS, MEDIACALLBACK, "aPtr=0x%x; aReason=%d; a1=0x%x; a2=0x%x", ( TUint )( aPtr ), aReason, ( TUint )( a1 ), ( TUint )( a2 ) );
+	
 	switch (aReason)
 		{
 		case TPBusCallBack::EPBusStateChange:
 			pM->PBusStateChange((TInt)a1,(TInt)a2);
 			break;
 		}
+	OstTraceFunctionExit0( MEDIACALLBACK_EXIT );
 	}
 
 /**
@@ -38,6 +50,7 @@ void mediaCallBack(TAny* aPtr, TInt aReason, TAny* a1, TAny* a2)
 DPBusPrimaryMedia::DPBusPrimaryMedia(DPBusSocket* aSocket)
 	:	iSocket(aSocket)
 	{
+	OstTraceFunctionEntryExt( DPBUSPRIMARYMEDIA_DPBUSPRIMARYMEDIA_ENTRY, this );
 	}
 /**
   This function install a media call back for a removable media device.
@@ -50,6 +63,8 @@ DPBusPrimaryMedia::DPBusPrimaryMedia(DPBusSocket* aSocket)
   */
 TInt DPBusPrimaryMedia::Create(TMediaDevice aDevice, TInt aMediaId, TInt aLastMediaId)
 	{
+	OstTraceExt4(TRACE_FLOW, DPBUSPRIMARYMEDIA_CREATE_ENTRY ,"DPBusPrimaryMedia::Create;aDevice=%d;aMediaId=%d;aLastMediaId=%d;this=%x", (TInt) aDevice, aMediaId, aLastMediaId, (TUint) this);
+	
 	// Permanently install a media call back if for a removable media device
 	TInt r=KErrArgument;
 	iPBusState=EPBusCardAbsent;
@@ -67,6 +82,7 @@ TInt DPBusPrimaryMedia::Create(TMediaDevice aDevice, TInt aMediaId, TInt aLastMe
 			iMsgQ.Receive();
 			}
 		}
+	OstTraceFunctionExitExt( DPBUSPRIMARYMEDIA_CREATE_EXIT, this, r );
 	return r;
 	}
 
@@ -78,10 +94,13 @@ TInt DPBusPrimaryMedia::Create(TMediaDevice aDevice, TInt aMediaId, TInt aLastMe
   */
 TInt DPBusPrimaryMedia::QuickCheckStatus()
 	{
+	OstTraceFunctionEntry1( DPBUSPRIMARYMEDIA_QUICKCHECKSTATUS_ENTRY, this );
 	TInt r=KErrNone;
 	if (iSocket && iSocket->State()==EPBusCardAbsent)
 		r=KErrNotReady;
 	__KTRACE_OPT(KLOCDRV,Kern::Printf("DPBusPrimaryMedia::QuickCheckStatus media %d returns %d",iMediaId,r));
+	OstTraceExt2(TRACE_INTERNALS, DPBUSPRIMARYMEDIA_QUICKCHECKSTATUS, "iMediaId=%d; retval=%d",iMediaId,r);
+	OstTraceFunctionExit1( DPBUSPRIMARYMEDIA_QUICKCHECKSTATUS_EXIT, this );
 	return r;
 	}
 
@@ -94,6 +113,7 @@ TInt DPBusPrimaryMedia::QuickCheckStatus()
   */
 TInt DPBusPrimaryMedia::ForceMediaChange(TInt aFlags)
 	{
+	OstTraceFunctionEntryExt( DPBUSPRIMARYMEDIA_FORCEMEDIACHANGE_ENTRY, this );
 	if ((aFlags != KMediaRemountForceMediaChange) || (iPBusState == EPBusCardAbsent))
 		{
 		TInt pbusState = iPBusState;
@@ -107,10 +127,12 @@ TInt DPBusPrimaryMedia::ForceMediaChange(TInt aFlags)
 
 		iSocket->ChangeState(pbusState == EPBusCardAbsent ? EPBusCardAbsent : EPBusOff, KErrNotReady);
 
+		OstTraceFunctionExitExt( DPBUSPRIMARYMEDIA_FORCEMEDIACHANGE_EXIT1, this, KErrCompletion );
 		return KErrCompletion;
 		}
 	
 	iSocket->ForceMediaChange();
+	OstTraceFunctionExitExt( DPBUSPRIMARYMEDIA_FORCEMEDIACHANGE_EXIT2, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -122,7 +144,10 @@ TInt DPBusPrimaryMedia::ForceMediaChange(TInt aFlags)
   */
 TInt DPBusPrimaryMedia::InitiatePowerUp()
 	{
-	return iSocket->PowerUp();
+	OstTraceFunctionEntry1( DPBUSPRIMARYMEDIA_INITIATEPOWERUP_ENTRY, this );
+	TInt r = iSocket->PowerUp();  
+	OstTraceFunctionExitExt( DPBUSPRIMARYMEDIA_INITIATEPOWERUP_EXIT, this, r );
+	return r;
 	}
 
 /**
@@ -133,7 +158,10 @@ TInt DPBusPrimaryMedia::InitiatePowerUp()
   */
 TInt DPBusPrimaryMedia::DoInCritical()
 	{
-	return iSocket->InCritical();
+	OstTraceFunctionEntry1( DPBUSPRIMARYMEDIA_DOINCRITICAL_ENTRY, this );
+	TInt r = iSocket->InCritical(); 
+	OstTraceFunctionExitExt( DPBUSPRIMARYMEDIA_DOINCRITICAL_EXIT, this, r );
+	return r;
 	}
 
 /**
@@ -144,7 +172,9 @@ TInt DPBusPrimaryMedia::DoInCritical()
   */
 void DPBusPrimaryMedia::DoEndInCritical()
 	{
+	OstTraceFunctionEntry1( DPBUSPRIMARYMEDIA_DOENDINCRITICAL_ENTRY, this );
 	iSocket->EndInCritical();
+	OstTraceFunctionExit1( DPBUSPRIMARYMEDIA_DOENDINCRITICAL_EXIT, this );
 	}
 
 /**
@@ -154,7 +184,9 @@ void DPBusPrimaryMedia::DoEndInCritical()
   */
 void DPBusPrimaryMedia::DeltaCurrentConsumption(TInt aCurrent)
 	{
+	OstTraceFunctionEntryExt( DPBUSPRIMARYMEDIA_DELTACURRENTCONSUMPTION_ENTRY, this );
 	iSocket->DeltaCurrentConsumption(aCurrent);
+	OstTraceFunctionExit1( DPBUSPRIMARYMEDIA_DELTACURRENTCONSUMPTION_EXIT, this );
 	}
 
 /**
@@ -165,9 +197,11 @@ void DPBusPrimaryMedia::DeltaCurrentConsumption(TInt aCurrent)
   */
 void DPBusPrimaryMedia::DefaultDriveCaps(TLocalDriveCapsV2& aCaps)
 	{
+	OstTraceFunctionEntry1( DPBUSPRIMARYMEDIA_DEFAULTDRIVECAPS_ENTRY, this );
 	// aCaps is zeroed beforehand
 	aCaps.iType = EMediaNotPresent;
 	aCaps.iDriveAtt = KDriveAttLocal|KDriveAttRemovable;
+	OstTraceFunctionExit1( DPBUSPRIMARYMEDIA_DEFAULTDRIVECAPS_EXIT, this );
 	}
 
 /**
@@ -177,14 +211,18 @@ void DPBusPrimaryMedia::DefaultDriveCaps(TLocalDriveCapsV2& aCaps)
   */
 TBool DPBusPrimaryMedia::IsRemovableDevice(TInt& aSocketNum)
 	{
+	OstTraceFunctionEntryExt( DPBUSPRIMARYMEDIA_ISREMOVABLEDEVICE_ENTRY, this );
 	aSocketNum=iSocket->iSocketNumber;
+	OstTraceFunctionExit1( DPBUSPRIMARYMEDIA_ISREMOVABLEDEVICE_EXIT, this );
 	return(ETrue);
 	}
 	
 void DPBusPrimaryMedia::PBusStateChange(TInt aState, TInt anError)
 	{
+	OstTraceFunctionEntryExt( DPBUSPRIMARYMEDIA_PBUSSTATECHANGE_ENTRY, this );
 	// receive power down and media change notifications
 	__KTRACE_OPT(KLOCDRV,Kern::Printf("DPBusPrimaryMedia(%d)::PBusStateChange state %d, err %d",iMediaId,aState,anError));
+	OstTraceExt3(TRACE_INTERNALS, DPBUSPRIMARYMEDIA_PBUSSTATECHANGE, "iMediaId=%d; aState=%d; anError=%d", iMediaId,aState,anError);
 	if (aState!=iPBusState)
 		{
 		TInt oldState = iPBusState;
@@ -243,5 +281,6 @@ void DPBusPrimaryMedia::PBusStateChange(TInt aState, TInt anError)
 				break;
 			}
 		}
+	OstTraceFunctionExit1( DPBUSPRIMARYMEDIA_PBUSSTATECHANGE_EXIT, this );
 	}
 

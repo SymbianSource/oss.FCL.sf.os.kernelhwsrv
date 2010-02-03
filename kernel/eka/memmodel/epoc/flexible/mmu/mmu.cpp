@@ -733,8 +733,6 @@ TInt Mmu::HandlePageFault(TLinAddr aPc, TLinAddr aFaultAddress, TUint aAccessPer
 
 	if(mapping)
 		{
-		// Pinning mappings should not be found from within an address space.
-		__NK_ASSERT_DEBUG(!mapping->IsPinned());
 		MmuLock::Lock();
 
 		// check if we need to process page fault...
@@ -747,6 +745,10 @@ TInt Mmu::HandlePageFault(TLinAddr aPc, TLinAddr aFaultAddress, TUint aAccessPer
 			}
 		else
 			{
+			// Should not be able to take a fault on a pinned mapping if accessing it 
+			// with the correct permissions.
+			__NK_ASSERT_DEBUG(!mapping->IsPinned());
+
 			// we do need to handle fault so is this a demand paging or page moving fault
 			DMemoryObject* memory = mapping->Memory();
 			if(!memory)
@@ -2161,7 +2163,7 @@ TInt M::CreateVirtualPinObject(TVirtualPinObject*& aPinObject)
 
 TInt M::PinVirtualMemory(TVirtualPinObject* aPinObject, TLinAddr aStart, TUint aSize, DThread* aThread)
 	{
-	NKern::ThreadEnterCS();
+	__ASSERT_CRITICAL;
 	TUint offsetInMapping;
 	TUint mapInstanceCount;
 	DMemoryMapping* mapping = MM::FindMappingInThread(	(DMemModelThread*)aThread, 
@@ -2205,16 +2207,14 @@ TInt M::PinVirtualMemory(TVirtualPinObject* aPinObject, TLinAddr aStart, TUint a
 				}
 			}
 		mapping->Close();
-		}
-	NKern::ThreadLeaveCS();
-	
+		}	
 	return r;
 	}
 
 TInt M::CreateAndPinVirtualMemory(TVirtualPinObject*& aPinObject, TLinAddr aStart, TUint aSize)
 	{
+	__ASSERT_CRITICAL;
 	aPinObject = 0;
-	NKern::ThreadEnterCS();
 	TUint offsetInMapping;
 	TUint mapInstanceCount;
 	DMemoryMapping* mapping = MM::FindMappingInThread(	(DMemModelThread*)&Kern::CurrentThread(), 
@@ -2264,9 +2264,7 @@ TInt M::CreateAndPinVirtualMemory(TVirtualPinObject*& aPinObject, TLinAddr aStar
 				}
 			}
 		mapping->Close();
-		}
-	NKern::ThreadLeaveCS();
-	
+		}	
 	return r;
 	}
 
@@ -2288,20 +2286,20 @@ void M::DestroyVirtualPinObject(TVirtualPinObject*& aPinObject)
 		}
 	}
 
+//
+// Physical pinning
+//
+
 TInt M::CreatePhysicalPinObject(TPhysicalPinObject*& aPinObject)
 	{
 	aPinObject = (TPhysicalPinObject*)new DPhysicalPinMapping;
 	return aPinObject != NULL ? KErrNone : KErrNoMemory;
 	}
 
-//
-// Physical pinning
-//
-
 TInt M::PinPhysicalMemory(TPhysicalPinObject* aPinObject, TLinAddr aStart, TUint aSize, TBool aReadOnly,
 				TPhysAddr& aAddress, TPhysAddr* aPages, TUint32& aMapAttr, TUint& aColour, DThread* aThread)
 	{
-	NKern::ThreadEnterCS();
+	__ASSERT_CRITICAL;
 	TUint offsetInMapping;
 	TUint mapInstanceCount;
 	DMemoryMapping* mapping = MM::FindMappingInThread(	(DMemModelThread*)aThread, 
@@ -2345,7 +2343,6 @@ TInt M::PinPhysicalMemory(TPhysicalPinObject* aPinObject, TLinAddr aStart, TUint
 			}
 		mapping->Close();
 		}
-	NKern::ThreadLeaveCS();
 	aColour = (aStart >>KPageShift) & KPageColourMask;
 	return r;
 	}
@@ -2368,6 +2365,111 @@ void M::DestroyPhysicalPinObject(TPhysicalPinObject*& aPinObject)
 		}
 	}
 
+
+//
+// Kernel map and pin.
+//
+
+TInt M::CreateKernelMapObject(TKernelMapObject*& aMapObject, TUint aMaxReserveSize)
+	{
+	DKernelPinMapping*  pinObject = new DKernelPinMapping();
+	aMapObject = (TKernelMapObject*) pinObject;
+	if (pinObject == NULL)
+		{
+		return KErrNoMemory;
+		}
+	// Ensure we reserve enough bytes for all possible alignments of the start and 
+	// end of the region to map.
+	TUint reserveBytes = aMaxReserveSize? ((aMaxReserveSize + KPageMask) & ~KPageMask) + KPageSize : 0;
+	TInt r = pinObject->Construct(reserveBytes);
+	if (r != KErrNone)
+		{// Failed so delete the kernel mapping object.
+		pinObject->Close();
+		aMapObject = NULL;
+		}
+	return r;
+	}
+
+
+TInt M::MapAndPinMemory(TKernelMapObject* aMapObject, DThread* aThread, TLinAddr aStart, 
+						TUint aSize, TUint aMapAttributes, TLinAddr& aKernelAddr, TPhysAddr* aPages)
+	{
+	__ASSERT_CRITICAL;
+	TUint offsetInMapping;
+	TUint mapInstanceCount;
+	DMemoryMapping* mapping = MM::FindMappingInThread(	(DMemModelThread*)aThread, 
+														aStart, 
+														aSize, 
+														offsetInMapping, 
+														mapInstanceCount);
+	TInt r = KErrBadDescriptor;
+	if (mapping)
+		{
+		DKernelPinMapping* kernelMap = (DKernelPinMapping*)aMapObject;
+		TInt count = (((aStart + aSize + KPageMask) & ~KPageMask) - (aStart & ~KPageMask)) >> KPageShift;
+		if (kernelMap->iReservePages && kernelMap->iReservePages < count)
+			{
+			mapping->Close();
+			return KErrArgument;
+			}
+
+		MmuLock::Lock();
+		DMemoryObject* memory = mapping->Memory();
+		if (mapInstanceCount == mapping->MapInstanceCount() && memory)
+			{
+			memory->Open();
+			MmuLock::Unlock();
+
+			TUint startInMemory = (offsetInMapping >> KPageShift) + mapping->iStartIndex;
+			TBool readOnly = aMapAttributes & Kern::EKernelMap_ReadOnly;
+			TMappingPermissions permissions =  readOnly ? ESupervisorReadOnly : ESupervisorReadWrite;
+			r = kernelMap->MapAndPin(memory, startInMemory, count, permissions);
+			if (r == KErrNone)
+				{
+				__NK_ASSERT_DEBUG(!kernelMap->IsUserMapping());
+				aKernelAddr = kernelMap->Base();
+				TPhysAddr contigAddr;	// Ignore this value as aPages will be populated 
+										// whether the memory is contiguous or not.
+				r = kernelMap->PhysAddr(0, count, contigAddr, aPages);
+				if (r>=KErrNone)
+					{
+					r = KErrNone; //Do not report discontiguous memory in return value.
+					}
+				else
+					{
+					UnmapAndUnpinMemory((TKernelMapObject*)kernelMap);
+					}
+				}
+			memory->Close();
+			}
+		else // mapping has been reused or no memory...
+			{
+			MmuLock::Unlock();
+			}
+		mapping->Close();
+		}
+	return r;
+	}
+
+
+void M::UnmapAndUnpinMemory(TKernelMapObject* aMapObject)
+	{
+	DKernelPinMapping* mapping = (DKernelPinMapping*)aMapObject;
+	if (mapping->IsAttached())
+		mapping->UnmapAndUnpin();
+	}
+
+
+void M::DestroyKernelMapObject(TKernelMapObject*& aMapObject)
+	{
+	DKernelPinMapping* mapping = (DKernelPinMapping*)__e32_atomic_swp_ord_ptr(&aMapObject, 0);
+	if (mapping)
+		{
+		if (mapping->IsAttached())
+			mapping->UnmapAndUnpin();
+		mapping->AsyncClose();
+		}
+	}
 
 
 //

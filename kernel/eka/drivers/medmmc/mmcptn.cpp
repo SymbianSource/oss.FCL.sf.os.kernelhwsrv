@@ -16,11 +16,20 @@
 //
 
 #include "sdcard.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "mmcptnTraces.h"
+#endif
 
 const TInt KDiskSectorShift = 9;
 
 LOCAL_C void SetPartitionType(const TMMCard& aCard, TMBRPartitionEntry& aPartitionEntry)
 	{
+	OstTraceFunctionEntry0( _SETPARTITIONTYPE_ENTRY );
 	if(aCard.IsHighCapacity())
 		{
 		aPartitionEntry.iPartitionType = KPartitionTypeWin95FAT32;
@@ -41,6 +50,7 @@ LOCAL_C void SetPartitionType(const TMMCard& aCard, TMBRPartitionEntry& aPartiti
 		{
 		aPartitionEntry.iPartitionType = KPartitionTypeWin95FAT32;
 		}
+	OstTraceFunctionExit0( _SETPARTITIONTYPE_EXIT );
 	}
 
 /**
@@ -48,6 +58,7 @@ Get the write block size to allow the FAT file system to calculate a suitable cl
 */
 GLDEF_C TInt BlockSize(const TMMCard* aCardP)
 	{
+	OstTraceFunctionEntry0( _BLOCKSIZE_ENTRY );
 	if ((aCardP == NULL) || ((const TSDCard *) aCardP)->IsSDCard())
 		return KMMCardHighCapBlockSize;
 
@@ -58,6 +69,7 @@ GLDEF_C TInt BlockSize(const TMMCard* aCardP)
 		512 << (extCSD.AccessSize()-1) :
 			KMMCardHighCapBlockSize;			// default write block size = 512
 
+	OstTraceFunctionExit0( _BLOCKSIZE_EXIT );
 	return blockSize;
 	}
 
@@ -66,9 +78,12 @@ Get Erase block size to allow FAT file system to align first usable cluster corr
 */
 GLDEF_C TInt EraseBlockSize(const TMMCard* aCardP)
 	{
+	OstTraceFunctionEntry0( _ERASEBLOCKSIZE_ENTRY );
 	if (aCardP == NULL)
+	    {
+		OstTraceFunctionExit0( _ERASEBLOCKSIZE_EXIT );
 		return 0;
-
+	    }
 	
 	const TUint K8KBShift = 13;
 	if (((const TSDCard *) aCardP)->IsSDCard())
@@ -78,7 +93,8 @@ GLDEF_C TInt EraseBlockSize(const TMMCard* aCardP)
 		TUint8 auSize = ((const TSDCard *) aCardP)->GetAUSize();
 		//eraseBlkSize is 2^(auSize + K8KBShift)
 		TInt eraseBlkSize = 1 << (auSize + K8KBShift) ;
-		return (eraseBlkSize);
+		OstTraceFunctionExit0( DUP1__ERASEBLOCKSIZE_EXIT );
+		return eraseBlkSize;
 		}
 
 
@@ -104,6 +120,7 @@ GLDEF_C TInt EraseBlockSize(const TMMCard* aCardP)
 	else
 		eraseBlockSize = K16KBytes;
 
+	OstTraceFunctionExit0( DUP2__ERASEBLOCKSIZE_EXIT );
 	return eraseBlockSize;
 	}
 
@@ -114,6 +131,7 @@ GLDEF_C TInt EraseBlockSize(const TMMCard* aCardP)
  */
 GLDEF_C TInt GetMediaDefaultPartitionInfo(TMBRPartitionEntry& aPartitionEntry, TUint16& aReservedSectors, const TMMCard* aCardP)
 	{
+	OstTraceFunctionEntry0( _GETMEDIADEFAULTPARTITIONINFO_ENTRY );
 	const TUint32 KTotalSectors = I64LOW(aCardP->DeviceSize64() >> KDiskSectorShift);
 
 	aPartitionEntry.iFirstSector = EraseBlockSize(aCardP) >> KDiskSectorShift;
@@ -123,6 +141,7 @@ GLDEF_C TInt GetMediaDefaultPartitionInfo(TMBRPartitionEntry& aPartitionEntry, T
 
 	aReservedSectors = 0;	// Let the filesystem decide on the appropriate value..
 
+	OstTraceFunctionExit0( _GETMEDIADEFAULTPARTITIONINFO_EXIT );
 	return(KErrNone);
 	}
 
@@ -142,23 +161,28 @@ GLDEF_C TBool MBRMandatory(const TMMCard* /*aCardP*/)
  */
 GLDEF_C TBool CreateMBRAfterFormat(const TMMCard* aCardP)
 	{
+	OstTraceFunctionEntry0( _CREATEMBRAFTERFORMAT_ENTRY );
 	if(aCardP == NULL)
 		{
+		OstTraceFunctionExit0( _CREATEMBRAFTERFORMAT_EXIT );
 		return EFalse;
 		}
 
 	// Create an MBR on high capacity (FAT32) cards and optionally on low-capacity FAT16/FAT32 MMC cards
 	if (aCardP->IsHighCapacity())
 		{
+		OstTraceFunctionExit0( DUP1__CREATEMBRAFTERFORMAT_EXIT );
 		return ETrue;
 		}
 #ifdef SYMBIAN_CREATE_MBR_ON_LOW_CAPACITY_MMC
 	if ((I64LOW(aCardP->DeviceSize64()) >> KDiskSectorShift) >= 32680)
 		{
+		OstTraceFunctionExit0( DUP2__CREATEMBRAFTERFORMAT_EXIT );
 		return ETrue;
 		}
 #endif
 	
+	OstTraceFunctionExit0( DUP3__CREATEMBRAFTERFORMAT_EXIT );
 	return EFalse;
 	}
 

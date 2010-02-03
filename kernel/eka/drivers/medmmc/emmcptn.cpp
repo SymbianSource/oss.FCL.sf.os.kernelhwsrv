@@ -16,6 +16,15 @@
 //
 
 #include <drivers/emmcptn.h>
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "emmcptnTraces.h"
+#endif
+
 
 const TInt KDiskSectorShift=9;
 
@@ -50,27 +59,34 @@ protected:
 DLegacyEMMCPartitionInfo::DLegacyEMMCPartitionInfo()
   : iSessionEndCallBack(DLegacyEMMCPartitionInfo::SessionEndCallBack, this)
 	{
+	OstTraceFunctionEntry0( DLEGACYEMMCPARTITIONINFO_DLEGACYEMMCPARTITIONINFO_ENTRY );
 	}
 
 DLegacyEMMCPartitionInfo::~DLegacyEMMCPartitionInfo()
 	{
+	OstTraceFunctionEntry0( DLEGACYEMMCPARTITIONINFO_DESTRUCTOR_ENTRY );
 	delete iSession;
+	OstTraceFunctionExit0( DLEGACYEMMCPARTITIONINFO_DESTRUCTOR_EXIT );
 	}
 
 TInt DLegacyEMMCPartitionInfo::Initialise(DMediaDriver* aDriver)
 	{
+	OstTraceFunctionEntry1( DLEGACYEMMCPARTITIONINFO_INITIALISE_ENTRY, this );
 	iDriver = aDriver;
 
 	DMMCSocket* socket = ((DMMCSocket*)((DPBusPrimaryMedia*)(iDriver->iPrimaryMedia))->iSocket);
 	if(socket == NULL)
-		return(KErrNoMemory);
+	    {
+		OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_INITIALISE_EXIT1, this, KErrNoMemory );
+		return KErrNoMemory;
+	    }
 
 	DMMCStack* stack = socket->Stack(0);
 	iCard = stack->CardP(((DPBusPrimaryMedia*)(iDriver->iPrimaryMedia))->iSlotNumber);
 	
 	iSession = stack->AllocSession(iSessionEndCallBack);
 	if (iSession == NULL)
-		return(KErrNoMemory);
+		return KErrNoMemory;
 
 	iSession->SetStack(stack);
 	iSession->SetCard(iCard);
@@ -79,11 +95,13 @@ TInt DLegacyEMMCPartitionInfo::Initialise(DMediaDriver* aDriver)
 	TInt bufLen, minorBufLen;
 	stack->BufferInfo(iIntBuf, bufLen, minorBufLen);
 
-	return(KErrNone);
+	OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_INITIALISE_EXIT2, this, KErrNone );
+	return KErrNone;
 	}
 
 TInt DLegacyEMMCPartitionInfo::PartitionInfo(TPartitionInfo& anInfo, const TMMCCallBack& aCallBack)
 	{
+	OstTraceFunctionEntry1( DLEGACYEMMCPARTITIONINFO_PARTITIONINFO_ENTRY, this );
 	iPartitionInfo = &anInfo;
 	iCallBack = aCallBack;
 	// If media driver is persistent (see EMediaDriverPersistent), 
@@ -99,11 +117,13 @@ TInt DLegacyEMMCPartitionInfo::PartitionInfo(TPartitionInfo& anInfo, const TMMCC
 	if(r != KErrNone)
 		iDriver->EndInCritical();
 	
-	return(r);
+	OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_PARTITIONINFO_EXIT, this, r );
+	return r;
 	}
 
 TInt DLegacyEMMCPartitionInfo::PartitionCaps(TLocDrv& aDrive, TDes8& aInfo)
 	{
+	 OstTraceFunctionEntry1( DLEGACYEMMCPARTITIONINFO_PARTITIONCAPS_ENTRY, this );
 	 TLocalDriveCapsV6Buf& Info = static_cast< TLocalDriveCapsV6Buf&> (aInfo);
 	
 	// is this query for the swap partition ?
@@ -129,17 +149,21 @@ TInt DLegacyEMMCPartitionInfo::PartitionCaps(TLocDrv& aDrive, TDes8& aInfo)
 		Info().iMediaAtt|= KMediaAttWriteProtected;
 		}
 	
+	OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_PARTITIONCAPS_EXIT, this, KErrNone );
 	return KErrNone;
 	}
 
 void DLegacyEMMCPartitionInfo::SessionEndCallBack(TAny* aSelf)
 	{
+	OstTraceFunctionEntry0( DLEGACYEMMCPARTITIONINFO_SESSIONENDCALLBACK_ENTRY );
 	DLegacyEMMCPartitionInfo& self = *static_cast<DLegacyEMMCPartitionInfo*>(aSelf);
 	self.DoSessionEndCallBack();
+	OstTraceFunctionExit0( DLEGACYEMMCPARTITIONINFO_SESSIONENDCALLBACK_EXIT );
 	}
 
 void DLegacyEMMCPartitionInfo::DoSessionEndCallBack()
 	{
+	OstTraceFunctionEntry1( DLEGACYEMMCPARTITIONINFO_DOSESSIONENDCALLBACK_ENTRY, this );
 	iDriver->EndInCritical();
 
 	TInt r = iSession->EpocErrorCode();
@@ -148,6 +172,7 @@ void DLegacyEMMCPartitionInfo::DoSessionEndCallBack()
 		r = DecodePartitionInfo();
 
 	iDriver->PartitionInfoComplete(r == KErrNone ? r : KErrNotReady);
+	OstTraceFunctionExit1( DLEGACYEMMCPARTITIONINFO_DOSESSIONENDCALLBACK_EXIT, this );
 	}
 
 TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
@@ -155,6 +180,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 // decode partition info that was read into internal buffer 
 //
 	{
+	OstTraceFunctionEntry1( DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_ENTRY, this );
 	TUint partitionCount=iPartitionInfo->iPartitionCount=0;
 	TInt defaultPartitionNumber=-1;
 	TMBRPartitionEntry* pe;
@@ -163,8 +189,11 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 
 	// Read of the first sector successful so check for a Master Boot Record
 	if (*(TUint16*)(&iIntBuf[KMBRSignatureOffset])!=0xAA55)
+	    {
 		// If no valid signature give up now, No way to re-format an internal drive correctly
+		OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_EXIT1, this, KErrCorrupt );
 		return KErrCorrupt;
+	    }
 
 	__ASSERT_COMPILE(KMBRFirstPartitionOffsetAligned + KMBRMaxPrimaryPartitions * sizeof(TMBRPartitionEntry) <= KMBRSignatureOffset);
 
@@ -198,6 +227,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 			{
 			SetPartitionEntry(&iPartitionInfo->iEntry[partitionCount],pe->iFirstSector,pe->iNumSectors);
 			__KTRACE_OPT(KLOCDPAGING, Kern::Printf("Mmc: FAT partition found at sector #%u", pe->iFirstSector));
+			OstTrace1(TRACE_INTERNALS, DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_FAT, "FAT partition found at sector #%x", pe->iFirstSector);
 			partitionCount++;
 			}
 
@@ -209,6 +239,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 			partitionCount++;				 
 
 			__KTRACE_OPT(KLOCDPAGING, Kern::Printf("Mmc: KPartitionTypeROM found at sector #%u", pe->iFirstSector));
+			OstTrace1(TRACE_INTERNALS, DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_ROM, "KPartitionTypeROM found at sector #%x", pe->iFirstSector);
 			}
 
 		// ROFS partition ?
@@ -220,6 +251,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 			SetPartitionEntry(&iPartitionInfo->iEntry[partitionCount],pe->iFirstSector,pe->iNumSectors);
 			partitionEntry.iPartitionType = pe->iPartitionType;
 			__KTRACE_OPT(KLOCDPAGING, Kern::Printf("Mmc: KPartitionTypeRofs found at sector #%u", pe->iFirstSector));
+			OstTrace1(TRACE_INTERNALS, DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_ROFS, "KPartitionTypeRofs found at sector #%x", pe->iFirstSector);
 			partitionCount++;
 			}
  
@@ -227,7 +259,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 		else if (pe->iPartitionType == KPartitionTypePagedData)
 			{
 			__KTRACE_OPT(KLOCDPAGING, Kern::Printf("Mmc: KPartitionTypePagedData found at sector #%u", pe->iFirstSector));
-
+			OstTrace1(TRACE_INTERNALS, DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_PAGED, "KPartitionTypeRofs found at sector #%x", pe->iFirstSector);
 			TPartitionEntry& partitionEntry = iPartitionInfo->iEntry[partitionCount];
 			SetPartitionEntry(&iPartitionInfo->iEntry[partitionCount],pe->iFirstSector,pe->iNumSectors);
 			partitionEntry.iPartitionType = pe->iPartitionType;
@@ -245,6 +277,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 		if(part.iPartitionBaseAddr + part.iPartitionLen > deviceSize)
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: MBR partition exceeds card memory space"));
+			OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_EXIT2, this, KErrCorrupt );
 			return KErrCorrupt;
 			}
 		
@@ -259,6 +292,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 				if(curr.iPartitionBaseAddr < (prev.iPartitionBaseAddr + prev.iPartitionLen))
 					{
 					__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: Overlapping partitions"));
+					OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_EXIT3, this, KErrCorrupt );
 					return KErrCorrupt;
 					}
 				}
@@ -268,6 +302,7 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 	if (defaultPartitionNumber==(-1) && partitionCount==0)
 		{
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("No Valid Partitions Found!"));
+		OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_EXIT4, this, KErrCorrupt );
 		return KErrCorrupt;
 		}
 
@@ -283,7 +318,8 @@ TInt DLegacyEMMCPartitionInfo::DecodePartitionInfo()
 	//Notify medmmc that partitioninfo is complete.
 	iCallBack.CallBack();
 	
-	return(KErrNone);
+	OstTraceFunctionExitExt( DLEGACYEMMCPARTITIONINFO_DECODEPARTITIONINFO_EXIT5, this, KErrNone );
+	return KErrNone;
 	}
 
 
@@ -292,11 +328,13 @@ void DLegacyEMMCPartitionInfo::SetPartitionEntry(TPartitionEntry* aEntry, TUint 
 // auxiliary static function to record partition information in TPartitionEntry object
 //
 	{
+	OstTraceFunctionEntryExt( DLEGACYEMMCPARTITIONINFO_SETPARTITIONENTRY_ENTRY, this );
 	aEntry->iPartitionBaseAddr=aFirstSector;
 	aEntry->iPartitionBaseAddr<<=KDiskSectorShift;
 	aEntry->iPartitionLen=aNumSectors;
 	aEntry->iPartitionLen<<=KDiskSectorShift;
 	aEntry->iPartitionType=KPartitionTypeFAT12;
+	OstTraceFunctionExit1( DLEGACYEMMCPARTITIONINFO_SETPARTITIONENTRY_EXIT, this );
 	}
 
 // End - DLegacyEMMCPartitionInfo
@@ -304,6 +342,7 @@ void DLegacyEMMCPartitionInfo::SetPartitionEntry(TPartitionEntry* aEntry, TUint 
 
 EXPORT_C DEMMCPartitionInfo* CreateEmmcPartitionInfo()
 	{
+	OstTraceFunctionEntry0( _CREATEEMMCPARTITIONINFO_ENTRY );
 	return new DLegacyEMMCPartitionInfo;
 	}
 

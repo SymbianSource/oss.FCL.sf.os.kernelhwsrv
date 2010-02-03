@@ -995,4 +995,8 @@ EXPORTS
 	?Repeats@TRawEvent@@QBEHXZ @ 994 NONAME ; int TRawEvent::Repeats(void) const
 	?SetRepeat@TRawEvent@@QAEXW4TType@1@HH@Z @ 995 NONAME ; void TRawEvent::SetRepeat(enum TRawEvent::TType, int, int)
 	?MakeHandleAndOpen@Kern@@SAHPAVDThread@@PAVDObject@@W4TOwnerType@@@Z @ 996 NONAME ; public: static int __cdecl Kern::MakeHandleAndOpen(class DThread *,class DObject *,enum TOwnerType)
+	?CreateKernelMapObject@Kern@@SAHAAPAVTKernelMapObject@@I@Z @ 997 NONAME ; public: static int __cdecl Kern::CreateKernelMapObject(class TKernelMapObject * &,unsigned int)
+	?DestroyKernelMapObject@Kern@@SAXAAPAVTKernelMapObject@@@Z @ 998 NONAME ; public: static void __cdecl Kern::DestroyKernelMapObject(class TKernelMapObject * &)
+	?MapAndPinMemory@Kern@@SAHPAVTKernelMapObject@@PAVDThread@@KIIAAKPAK@Z @ 999 NONAME ; public: static int __cdecl Kern::MapAndPinMemory(class TKernelMapObject *,class DThread *,unsigned long,unsigned int,unsigned int,unsigned long &,unsigned long *)
+	?UnmapAndUnpinMemory@Kern@@SAXPAVTKernelMapObject@@@Z @ 1000 NONAME ; public: static void __cdecl Kern::UnmapAndUnpinMemory(class TKernelMapObject *)
 

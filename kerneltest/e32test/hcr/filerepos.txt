@@ -351,7 +351,7 @@ intval: 1
 .
 
 @
-cuid: 0xffffffff
+cuid: 0xfffffff0
 eid: 32
 type: ArrayUInt32
 flags: 0x0000
@@ -486,7 +486,7 @@ arrval: 3141938928
 .
 
 @
-cuid: 0xffffffff
+cuid: 0xfffffff0
 eid: 33
 type: Int64
 flags: 0x0000
@@ -494,7 +494,7 @@ binval: 00 00 00 00 00 00 00 80
 .
 
 @
-cuid: 0xffffffff
+cuid: 0xfffffff0
 eid: 3435973836
 type: UInt64
 flags: 0x0000
@@ -502,7 +502,7 @@ binval: ff ff ff ff ff ff ff 7f
 .
 
 @
-cuid: 0xffffffff
+cuid: 0xfffffff0
 eid: 4294967294
 type: Int8
 flags: 0x0000

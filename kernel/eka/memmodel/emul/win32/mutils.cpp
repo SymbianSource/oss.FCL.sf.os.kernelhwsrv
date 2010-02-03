@@ -384,6 +384,32 @@ void M::DestroyPhysicalPinObject(TPhysicalPinObject*& aPinObject)
 		Kern::AsyncFree(object);
 	}
 
+//
+// Kernel map and pin (Not supported on the emulator).
+//
+
+TInt M::CreateKernelMapObject(TKernelMapObject*&, TUint)
+	{
+	return KErrNotSupported;
+	}
+
+
+TInt M::MapAndPinMemory(TKernelMapObject*, DThread*, TLinAddr, TUint, TUint, TLinAddr&, TPhysAddr*)
+	{
+	return KErrNotSupported;
+	}
+
+
+void M::UnmapAndUnpinMemory(TKernelMapObject*)
+	{
+	}
+
+
+void M::DestroyKernelMapObject(TKernelMapObject*&)
+	{
+	}
+
+
 // Misc DPagingDevice methods
 
 EXPORT_C void DPagingDevice::NotifyIdle()

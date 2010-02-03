@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// Helper functions for debug
+// Helper functions for HCR debug
 
 #include <e32err.h>
 #include <e32const.h>
@@ -23,16 +23,19 @@
 
 #include "hcr_debug.h"
 
+#ifdef HCR_TRACE
 /**
-Make a classic hexadecimal dump of the content of an memory region.
+Make a classic hexadecimal dump of the content of an memory region. Do not
+call directly but used the macros: HCR_HEX_DUMP_ABS(), HCR_HEX_DUMP_REL()
 
 @param 	aStartAddress	Pointer of the first byte of the region
-				aLength				Size of the region
-				aAbsolute			If it is TRUE then it displays absolute address where the aStartAddress points
-											If it is FALSE then it displays reltive address from aStartAddress
+		aLength			Size of the region
+		aAbsolute		If it is TRUE then it displays absolute address where the aStartAddress points
+						If it is FALSE then it displays reltive address from aStartAddress
 
 @pre    Call from thread context (neither NULL, DFC0, DFC1 threads)
 */    
+
 void HexDump(TUint8* aStartAddress, TUint32 aLength, TBool aAbsolute)
 	{
 	TUint32 nIndex;
@@ -96,3 +99,4 @@ void HexDump(TUint8* aStartAddress, TUint32 aLength, TBool aAbsolute)
 	Kern::Printf("%S\n", &printBuf);		
 	}
 	
+#endif // HCR_TRACE

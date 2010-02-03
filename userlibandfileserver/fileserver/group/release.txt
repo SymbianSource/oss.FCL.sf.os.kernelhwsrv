@@ -1,3 +1,12 @@
+Version 2.00.2026
+=================
+(Made by vfebvre 17/12/2009)
+
+1.	patrickconway
+	1.	DEFECT FIX: DEF143273: Mass Storage still using an obsoleted API to allocate endpoint resources
+		In cases where support for new API is detected in device capabilities, use that API to allocate endpoint resources
+
+
 Version 2.00.2025
 =================
 (Made by vfebvre 16/12/2009)

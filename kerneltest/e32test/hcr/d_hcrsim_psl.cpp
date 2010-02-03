@@ -110,6 +110,11 @@ TBool HCRTest::IgnoreCoreImgRepository()
 TInt HCRTest::GetOverrideRepositoryAddress(TAny*& aAddr)
 	{
 	HCR_FUNC("HCRTest::GetRAMRepositoryAddress");
+	// Note: the SMR feature by which we obtain the address of the override
+	// repository is only supported in the ARM bootstrap, not X86 so this test 
+	// code may in the future need conditional compilation should it need to
+	// access the SuperPage SMR field to return KErrNotSupported for __X86__ 
+	// compilations.
 	TInt r = KErrNotSupported;
 	if (PslConfigurationFlags & ETestEnableOverrideRepository)
 		{

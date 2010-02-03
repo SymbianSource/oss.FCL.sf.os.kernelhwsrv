@@ -42,5 +42,7 @@ data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat     \sys\data\
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\nandrepos.dat     \sys\data\nandrepos.dat	unpaged paging_unmovable
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\megalarge1.dat    \sys\data\megalarge1.dat	unpaged paging_unmovable
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\megalarge2.dat    \sys\data\megalarge2.dat	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos_bc0.dat     \sys\data\filerepos_bc0.dat   unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos_bc1.dat     \sys\data\filerepos_bc1.dat   unpaged paging_unmovable
 hcrdata=##BASEPATH##kernelhwsrv\kerneltest\e32test\hcr\filerepos.dat  \sys\data\hcr.dat
 #endif // __HCR_TEST_IBY__

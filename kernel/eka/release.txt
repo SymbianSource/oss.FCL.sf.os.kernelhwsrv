@@ -1,3 +1,29 @@
+Version 2.00.2065
+=================
+(Made by vfebvre 17/12/2009)
+
+1.	vfebvre
+	1.	MILESTONE: GT0515, MS3.16
+		RM-RIM REQ417-52763: HCR: Final delivery (Reference implementation and Docs)
+		Gaia Feature Release 422961 Package Release 428954
+
+
+Version 2.00.2064
+=================
+(Made by vfebvre 17/12/2009)
+
+1.	patrickconway
+	1.	MILESTONE: GT0515, MS3.31
+		RM-RIM REQ417-53000: Instrument local media subsystem and media drivers 
+		Gaia Feature Release 424355 Package Release 424358
+
+2.	MarkTa
+	1.	DEFECT FIX: DEF143438: Flexible memory model is missing an api to map any memory kernel side 
+		Add new TKernelMapObject and Kern methods that use it to allow device drivers to map and physically 
+		pin any memory.  The memory can then be accessed from kernel side for DMA operations and without 
+		the effects of ram defrag and demandpaging. 
+
+
 Version 2.00.2063
 =================
 (Made by vfebvre 16/12/2009)

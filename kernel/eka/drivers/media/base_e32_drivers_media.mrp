@@ -14,6 +14,7 @@ source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\pbusmedia.cpp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\spbus.cpp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\distribution.policy.s60
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\pccard
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\traces
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\epbusm.mmh
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\epbusmmc.mmp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\mmccd_init.cpp

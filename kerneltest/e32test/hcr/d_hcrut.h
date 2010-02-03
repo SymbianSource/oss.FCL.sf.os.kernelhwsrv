@@ -14,8 +14,8 @@
 // Hardware Configuration Respoitory Tests
 //
 
-#ifndef D_HCR_H
-#define D_HCR_H
+#ifndef D_HCRUT_H
+#define D_HCRUT_H
 
 #include <e32cmn.h>
 #include <e32ver.h>
@@ -31,6 +31,7 @@ Interface to the fast-trace memory buffer.
 */
 class RHcrTest : public RBusLogicalChannel
 	{
+	
 public:
 		
 #ifndef __KERNEL_MODE__
@@ -48,17 +49,68 @@ public:
 		{
 		return DoControl(ECtrlSanityTestLargeSettings);
 		}
-
-	inline TUint Test_ReleaseSDRs()
-		{
-		return DoControl(ECtrlFreePhyscialRam);
-		}
 		
 	inline TUint Test_SwitchRepository()
 		{
 		return DoControl(ECtrlSwitchRepository);
 		}
+	
+	inline TUint Test_FindCompiledSettingsInCategory(HCR::TCategoryUid aCatUid,
+	        TInt32* aFirst, TInt32* aLast)
+	    {
+	    TAny* args[3];
+	    args[0] = (TAny*) aCatUid;
+	    args[1] = (TAny*) aFirst;
+	    args[2] = (TAny*) aLast;
+
+	    return DoControl(ECtrlCompiledFindSettingsInCategory, (TAny*)args);
+	    }
+	
+	inline TUint Test_FindFileSettingsInCategory(HCR::TCategoryUid aCatUid,
+	        TInt32* aFirst, TInt32* aLast)
+	    {
+	    TAny* args[3];
+	    args[0] = (TAny*) aCatUid;
+	    args[1] = (TAny*) aFirst;
+	    args[2] = (TAny*) aLast;
+	    
+	    return DoControl(ECtrlFileFindSettingsInCategory, (TAny*)args);
+	    }
+	
+	inline TUint Test_SwitchFileRepository(const TText* aRepName)
+	    {
+	    TAny* args[1];
+	    args[0] = (TAny*) aRepName;
+	    return DoControl(ECtrlSwitchFileRepository, (TAny*)args);
+	    }
 		
+
+	inline TUint Test_CheckIntegrity()
+		{
+		return DoControl(ECtrlCheckOverrideReposIntegrity);
+		}
+		
+	inline TUint Test_CheckContent()
+		{
+		return DoControl(ECtrlCheckOverrideRepos102400Content);
+		}
+
+	inline TUint Test_NegativeTestsLargeValues(TInt& aExpectedError)
+  		{
+  		TAny* args[1];
+  		args[0] = (TAny*) aExpectedError;
+  		return DoControl(ECtrlNegativeTestsLargeValues, (TAny*) args);
+  		}
+  	inline TUint Test_TRepositoryGetWordValue(HCR::TCategoryUid& aCategory, HCR::TElementId& aKey,TInt& type)
+  		{
+  		TAny* args[3];
+  		args[0] = (TAny*) aCategory;
+  		args[1] = (TAny*) aKey;
+  		args[2] = (TAny*) type;
+  		return DoControl(ECtrlGetWordSetting, (TAny*) args);
+  		}
+
+
 
 #endif
 
@@ -78,8 +130,16 @@ private:
 		ECtrlGetManyLargeSettings,
 		
 		ECtrlSwitchRepository,
+
+		ECtrlNegativeTestsLargeValues, 
 		
-		ECtrlFreePhyscialRam
+		ECtrlFreePhyscialRam,
+        ECtrlCheckOverrideReposIntegrity,
+		ECtrlCheckOverrideRepos102400Content,
+
+		ECtrlSwitchFileRepository,
+		ECtrlFileFindSettingsInCategory,
+		ECtrlCompiledFindSettingsInCategory
 		};
 		
 	friend class DHcrTestChannel;
@@ -88,10 +148,8 @@ private:
 
 inline const TDesC& RHcrTest::Name()
 	{
-	_LIT(KTestDriver,"d_hcr");
+	_LIT(KTestDriver,"d_hcrut");
 	return KTestDriver;
 	}
 
-
-
-#endif // D_HCR_H
+#endif // D_HCRUT_H

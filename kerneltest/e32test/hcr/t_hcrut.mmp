@@ -21,6 +21,7 @@ capability      readdevicedata
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
+userinclude		../../../kernel/eka/drivers/hcr
 sourcepath      .
 source        	t_hcrut.cpp 
 

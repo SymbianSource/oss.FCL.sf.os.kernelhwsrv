@@ -208,6 +208,27 @@ HCR::HCRInternal::HCRInternal(HCR::MVariant* aVar)
 HCR::HCRInternal::~HCRInternal()
     {
     HCR_FUNC("~HCRInternal");
+    
+    if (iVariant)
+		{
+		delete iVariant;
+    	iVariant =0;
+    	}
+    if (iVariantStore)
+		{
+		delete iVariantStore;
+    	iVariantStore =0;
+    	}
+    if (iCoreImgStore)
+		{
+		delete iCoreImgStore;
+    	iCoreImgStore =0;
+    	}
+    if (iOverrideStore)
+		{
+		delete iOverrideStore;
+    	iOverrideStore =0;
+    	}
     }
    
 TUint32 HCR::HCRInternal::GetStatus()
@@ -396,7 +417,7 @@ TInt HCR::HCRInternal::FindSetting(const TSettingId& aId, TSettingType aType,
         TSettingRef& aSetting)
     {
     HCR_FUNC("HCRInternal::FindSetting");
-    TInt err = 0;
+    TInt err = KErrNone;
     TBool found = EFalse;
     
     HCR_TRACE3("--- Repository state: %x, %x, %x", iOverrideStore, iCoreImgStore, iVariantStore);
@@ -404,28 +425,27 @@ TInt HCR::HCRInternal::FindSetting(const TSettingId& aId, TSettingType aType,
     if (iOverrideStore && 
         ((err = iOverrideStore->FindSetting(aId, aSetting)) == KErrNone))
         found = ETrue;
-    if ((err != KErrNone) && (err != KErrNotFound))
-        HCR_TRACE_RETURN(err);
+    __NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
         
     if (!found &&
         iCoreImgStore &&
         ((err = iCoreImgStore->FindSetting(aId, aSetting)) == KErrNone))
         found = ETrue;
-    if ((err != KErrNone) && (err != KErrNotFound))
-        HCR_TRACE_RETURN(err);
+    __NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
 
     if (!found &&
         iVariantStore &&
         ((err = iVariantStore->FindSetting(aId, aSetting)) == KErrNone))
         found = ETrue;
-        
-    if ((err != KErrNone) && (err != KErrNotFound))
-        HCR_TRACE_RETURN(err);
+    __NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
 
     HCR_TRACE3("--- Search results: %d, %d, %x", found, err, aSetting.iSet);
     
-    if (!found || (aSetting.iSet == 0))
+    if (!found)
         HCR_TRACE_RETURN(KErrNotFound);
+
+    // aSetting should now point to the found setting
+    __NK_ASSERT_DEBUG(aSetting.iSet != 0);
 
     // Setting found at this point in the function
     //
@@ -436,7 +456,7 @@ TInt HCR::HCRInternal::FindSetting(const TSettingId& aId, TSettingType aType,
     
     HCR_TRACE3("--- Setting found! ID: (%d,%d) Type: %d", aId.iCat, aId.iKey, type);
     
-    return KErrNone;
+    return err;
     }
 
 
@@ -444,7 +464,7 @@ TInt HCR::HCRInternal::FindSettingWithType(const TSettingId& aId, TSettingType& 
       TSettingRef& aSetting)
     {
     HCR_FUNC("HCRInternal::FindSettingWithType");
-    TInt err = 0;
+    TInt err = KErrNone;
     TBool found = EFalse;
     
     HCR_TRACE3("--- Repository state: %x, %x, %x", iOverrideStore, iCoreImgStore, iVariantStore);
@@ -452,31 +472,30 @@ TInt HCR::HCRInternal::FindSettingWithType(const TSettingId& aId, TSettingType& 
     if (iOverrideStore && 
         ((err = iOverrideStore->FindSetting(aId, aSetting)) == KErrNone))
         found = ETrue;
-    if ((err != KErrNone) && (err != KErrNotFound))
-        HCR_TRACE_RETURN(err);
-        
+    __NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
+
     if (!found &&
         iCoreImgStore &&
         ((err = iCoreImgStore->FindSetting(aId, aSetting)) == KErrNone))
         found = ETrue;
-    if ((err != KErrNone) && (err != KErrNotFound))
-        HCR_TRACE_RETURN(err);
+    __NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
 
     if (!found &&
         iVariantStore &&
         ((err = iVariantStore->FindSetting(aId, aSetting)) == KErrNone))
         found = ETrue;
-        
-    if ((err != KErrNone) && (err != KErrNotFound))
-        HCR_TRACE_RETURN(err);
+    __NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
 
     HCR_TRACE3("--- Search results: %d, %d, %x", found, err, aSetting.iSet);
     
-    if (!found || (aSetting.iSet == 0))
+    if (!found)
         {
         aType = ETypeUndefined;
         HCR_TRACE_RETURN(KErrNotFound);
         }
+
+    // aSetting should now point to the found setting
+    __NK_ASSERT_DEBUG(aSetting.iSet != 0);
 
     // Setting found at this point in the function
     //
@@ -485,7 +504,7 @@ TInt HCR::HCRInternal::FindSettingWithType(const TSettingId& aId, TSettingType& 
     
     HCR_TRACE3("--- Setting found! ID: (%d,%d) Type: %d", aId.iCat, aId.iKey, aType);
     
-    return KErrNone;
+    return err;
     }
 
 
@@ -926,30 +945,25 @@ TInt HCR::HCRInternal::FindNumSettingsInCategory (TCategoryUid aCatUid)
                     //tion of this element in lowIndex, to narrow next search procedure
                     lowIndex = elementPos;
                     }
-                else if(err == KErrNotFound)
+                else //err == KErrNotFound
                     {
                     //if element is not found then it means it's not redefined in the 
                     //Override store and this element must be counted in the total number
                     //of elemnts in all stores
                     cCount ++;
+                    
+                    //FindSetting can only return KErrNotFound, let's assert 
+                    //we've only got KErrNotFound
+                    __NK_ASSERT_DEBUG(err == KErrNotFound);
+                    
                     }
-                else
-                    {
-                    return err;
-                    }
+                
                 }
             }
         else
             {
             cCount = cLength;
             }
-
-
-
-        //Check if the Variant store is present if it's not then just return the
-        //result
-        if(!iVariantStore)
-            return (oCount + cCount);
 
         }
 
@@ -974,10 +988,6 @@ TInt HCR::HCRInternal::FindNumSettingsInCategory (TCategoryUid aCatUid)
             //Calculate the number of elements within category, in CoreImg store
             vLength = vHighIndex - vLowIndex + 1;
 
-        if(oCount == 0 && cCount == 0)
-            {
-            return vLength;
-            }
 
         if(oCount > 0 || cCount >0)
             {
@@ -1022,15 +1032,16 @@ TInt HCR::HCRInternal::FindNumSettingsInCategory (TCategoryUid aCatUid)
                         lowIndex = elementPos;
                         isRedefined = ETrue;
                         }
-                    else if(err == KErrNotFound)
+                    else //err == KErrNotFound
                         {
                         //the element is not presented in the Override store
                         //nothing to do here
+
+                        //FindSetting can only return KErrNotFound, let's assert 
+                        //we've only got KErrNotFound
+                        __NK_ASSERT_DEBUG(err == KErrNotFound);
                         }
-                    else
-                        {
-                        return err;
-                        }
+                    
 
                     }
 
@@ -1049,15 +1060,16 @@ TInt HCR::HCRInternal::FindNumSettingsInCategory (TCategoryUid aCatUid)
                         lowIndex2 = elementPos2;
                         isRedefined = ETrue;
                         }
-                    else if(err == KErrNotFound)
+                    else //err == KErrNotFound
                         {
                         //the element is not presented in the Override store
-                                                //nothing to do here
+                        //nothing to do here
+
+                        //FindSetting can only return KErrNotFound, let's assert 
+                        //we've only got KErrNotFound
+                        __NK_ASSERT_DEBUG(err == KErrNotFound);
                         }
-                    else
-                        {
-                        return err;
-                        }
+                    
                     }
                 
 
@@ -1093,9 +1105,7 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
    
     //Error container
     TInt err = KErrNone;
-
-    //Total number of found elements
-    TInt numFound = 0;
+    
     //Number of found elements in the Override store
     TInt oNumFound = 0;
 
@@ -1163,17 +1173,18 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                             aLens  ? aLens[index]:tmpLen);
 
                     }
-                return oNumFound;
+                return aMaxNum;
                 }
             }
-        else if(err == KErrNotFound)
+        else // err == KErrNotFound
             {
             //Nothing to do here, oNumFound is set to zero already
+
+            //FindNumSettingsInCategory can only return KErrNotFound, let's  
+            //assert we've only got KErrNotFound
+            __NK_ASSERT_DEBUG(err == KErrNotFound);
             }
-        else 
-            {
-            return err;
-            }
+
         }
 
    
@@ -1226,15 +1237,16 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                         lowIndex = elementPos + 1;
                         isRedefined = ETrue;
                         }
-                    else if (err == KErrNotFound)
+                    else //err == KErrNotFound
                         {
                         //Nothing to do hear, isRedefined flag is EFalse
                         //all analysis is done later in the code
+
+                        //FindSetting can only return KErrNotFound, let's assert 
+                        //we've only got KErrNotFound
+                        __NK_ASSERT_DEBUG(err == KErrNotFound);
                         }
-                    else
-                        {
-                        return err;
-                        }
+                    
                     }
 
                 //Examine the redefined status flag
@@ -1256,13 +1268,6 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                         }
                     else
                         {
-                        //All required elements were found!
-                        //As vNumFound was used an index so it's value it runs 
-                        //from 0 to X-1, where X - number of found elements. To 
-                        //get number of elements found we need increase the last
-                        //counter value by 1.
-                        if(cNumFound != 0)
-                            cNumFound ++;
                         //It reaches the goal, all required elements are found
                         //stop here and return the result
                         break;
@@ -1273,15 +1278,16 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                     isRedefined = EFalse;
                 }
             }
-        else if (err == KErrNotFound)
+        else //err == KErrNotFound
             {
             //cNumFound is already set to zero during the initialization
             //Nothing to do here
+
+            //FindNumSettingsInCategory can only return KErrNotFound, let's  
+            //assert we've only got KErrNotFound
+            __NK_ASSERT_DEBUG(err == KErrNotFound);
             }
-        else //any other errors
-            {
-            return err;
-            }
+        
         }
 
     
@@ -1332,14 +1338,15 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                         lowIndex = elementPos + 1;
                         isRedefined = ETrue;
                         }
-                    else if (err == KErrNotFound)
+                    else //err == KErrNotFound
                         {
                         //Element is not found, nothing to proceed here
+
+                        //FindSetting can only return KErrNotFound, let's assert 
+                        //we've only got KErrNotFound
+                        __NK_ASSERT_DEBUG(err == KErrNotFound);
                         }
-                    else
-                        {
-                        return err;
-                        }
+                    
                     }
 
                 if(cNumFound > 0 && !isRedefined)
@@ -1353,14 +1360,15 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                         lowIndex2 = elementPos2 + 1;
                         isRedefined = ETrue;
                         }
-                    else if (err == KErrNotFound)
+                    else //err == KErrNotFound
                         {
                         //Element is not found, nothing to proceed here
+
+                        //FindSetting can only return KErrNotFound, let's assert 
+                        //we've only got KErrNotFound
+                        __NK_ASSERT_DEBUG(err == KErrNotFound);
                         }
-                    else
-                        {
-                        return err;
-                        }
+                    
                     }
                
                 if(!isRedefined)
@@ -1378,13 +1386,6 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                         }
                     else
                         {
-                        //All required elements were found!
-                        //As vNumFound was used an index so it's value it runs 
-                        //from 0 to X-1, where X - number of found elements. To 
-                        //get number of elements found we need increase the last
-                        //counter value by 1.
-                        if(vNumFound != 0)
-                            vNumFound ++;
                         //It reaches the goal, all required elements are found
                         //stop here and return the result
                         break;
@@ -1396,23 +1397,20 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCatUid,
                     }
                 }
             }
-        else if (err == KErrNotFound)
+        else //err == KErrNotFound
             {
             //oNumFound is already set to zero during the initialization
             //Nothing to do here
+
+            //FindNumSettingsInCategory can only return KErrNotFound, let's  
+            //assert we've only got KErrNotFound
+            __NK_ASSERT_DEBUG(err == KErrNotFound);
             }
-        else
-            {
-            return err;
-            }
-        
+                
         }
     
     //Let's prepare the final data
-    numFound = oNumFound + cNumFound + vNumFound;
-
-    //Return result to the user
-    return numFound;
+    return (oNumFound + cNumFound + vNumFound);
     }
 
 
@@ -1435,14 +1433,10 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCat, TInt aMaxNum,
     //Find the number of elements within the category
     r = FindNumSettingsInCategory(aCat);
     
-    //Analyse the returned error
-    //if r < 0 - this is an error return to the user 
-    //if r > 0 - number of found settings
-    if(r < 0)
-        {
-        HCR_TRACE_RETURN(r);
-        }
-    else if (r == 0)
+    //We don't expect any errors here
+    __NK_ASSERT_DEBUG(r >= 0);
+    
+    if (r == 0)
         //No any elements found for this category 
         return 0;
     else
@@ -1463,15 +1457,11 @@ TInt HCR::HCRInternal::FindSettings(TCategoryUid aCat, TInt aMaxNum,
     
     r = FindSettings(aCat, allInCatFound, pIds(), pTypes(), pLens());
     
-    //Exit if we've got negative result just report error
-    if(r < 0)
-        HCR_TRACE_RETURN(r);
+    //We don't expect any errors here
+    __NK_ASSERT_DEBUG(r >= 0);
     
-    //Somehow we'got less elements than it must be!!!
+    //Check either we've got less elements than it must be
     __NK_ASSERT_DEBUG(r == allInCatFound);
-    if(r < allInCatFound)
-        HCR_TRACE_RETURN(KErrGeneral);
-    
     
     //Choose the elements which satisfy this condition
     //((elementID & aElementMask) == (aPattern & aElementMask)). The total num-
@@ -1522,13 +1512,6 @@ TBool HCR::TRepository::IsLargeValue(const TSettingRef& aRef)
     {
     HCR_FUNC("TRepository::IsLargeValue");
     return ((aRef.iSet->iType & KMaskLargeTypes) != 0);
-    }
-
-void HCR::TRepository::GetId(const TSettingRef& aRef, TCategoryUid& aCat, TElementId& aKey)
-    {
-    HCR_FUNC("TRepository::GetId1");
-    aCat = aRef.iSet->iId.iCat;
-    aKey = aRef.iSet->iId.iKey;
     }
 
 void HCR::TRepository::GetId(const TSettingRef& aRef, SSettingId& aId)
@@ -1669,10 +1652,8 @@ TInt HCR::TRepositoryCompiled::FindSetting(const TSettingId& aId,
     
     __NK_ASSERT_DEBUG(iRepos != 0);
     __NK_ASSERT_DEBUG(iRepos->iHdr != 0);
-    
-    if ((iRepos->iHdr->iNumSettings == 0) || 
-        (iRepos->iOrderedSettingList == 0))
-        HCR_TRACE_RETURN(KErrNotFound);
+	__NK_ASSERT_DEBUG(iRepos->iOrderedSettingList != 0);
+	__NK_ASSERT_DEBUG(iRepos->iHdr->iNumSettings != 0);
     
     SSettingC* arr = iRepos->iOrderedSettingList;
     TInt32 low = aLow;
@@ -1713,6 +1694,10 @@ TInt HCR::TRepositoryCompiled::GetWordSettings(TInt aNum,
     
     __NK_ASSERT_DEBUG(iRepos != 0);
     __NK_ASSERT_DEBUG(iRepos->iHdr != 0);
+	__NK_ASSERT_DEBUG(aIds != NULL);
+	__NK_ASSERT_DEBUG(aValues != NULL);
+	__NK_ASSERT_DEBUG(aTypes != NULL);
+	__NK_ASSERT_DEBUG(aErrors != NULL);
     
     if ((iRepos->iHdr->iNumSettings == 0) || 
         (iRepos->iOrderedSettingList == 0))
@@ -1744,45 +1729,40 @@ TInt HCR::TRepositoryCompiled::GetWordSettings(TInt aNum,
         //This time the  scope of search is whole repository.
         err = this->FindSetting(*aIds[uIndex],settingRef, rMinIndex, 
                 0, iRepos->iHdr->iNumSettings);
+
+		__NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
+
         if(err == KErrNotFound)
             {
             *aErrors[uIndex] = err;
             *aValues[uIndex] = 0;
-            //Copy type only if user provided aTypes array
-            if(aTypes)
-                *aTypes[uIndex] = ETypeUndefined;
+            *aTypes[uIndex] = ETypeUndefined;
             
             //As FindSetting did not find the element, let's challenge with 
             //the next one from aIds[] array
             uIndex ++;
             continue;
             }
-        //fatal error here, nothing to do, just exit and return the error code
-        else if(err == KErrNotReady || err != KErrNone)
-            {
-            return err;
-            }
         else // err == KErrNone
             {
             //Get the value and type
             pSetting = (SSettingC*) settingRef.iSet;
-            //again copy the type value into the user array if it's provided
-            if(aTypes)
-                *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
-
-            //Check for the found type is this word size? If it's not then 
-            //indicate error for this setting
-            if(*aTypes[uIndex] > ETypeLinAddr)
-                {
-                *aErrors[uIndex] = KErrArgument;
-                *aValues[uIndex] = 0;
-                }
-            else
-                {
-                *aErrors[uIndex] = KErrNone;
-                *aValues[uIndex] = pSetting->iValue.iLit.iInt32;
-                }
             
+			*aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
+
+			//Check for the found type is this word size? If it's not then 
+			//indicate error for this setting
+			if(*aTypes[uIndex] > ETypeLinAddr)
+				{
+				*aErrors[uIndex] = KErrArgument;
+				*aValues[uIndex] = 0;
+				}
+			else
+				{
+				*aErrors[uIndex] = KErrNone;
+				*aValues[uIndex] = pSetting->iValue.iLit.iInt32;
+				}
+				
             //Break the loop by setting the redefined status
             isRedefined = ETrue;
             }
@@ -1811,42 +1791,38 @@ TInt HCR::TRepositoryCompiled::GetWordSettings(TInt aNum,
         //rMinIndex. This time the  scope of search is whole repository.
         err = this->FindSetting(*aIds[uIndex],settingRef, rMaxIndex, 
                 rMinIndex, iRepos->iHdr->iNumSettings);
+
+		__NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
+
         if(err == KErrNotFound)
             {
             *aErrors[uIndex] = err;
             *aValues[uIndex] = 0;
-            if(aTypes)
-                *aTypes[uIndex] = ETypeUndefined;
+            *aTypes[uIndex] = ETypeUndefined;
             
             //As FindSetting did not find the element, let's challenge with 
             //previous one, as we are moving in reverse direction
             uIndex --;
             continue;
             }
-        //fatal error here, nothing to do, just exit and return the error code
-        else if(err == KErrNotReady || err != KErrNone)
-            {
-            return err;
-            }
         else //err == KErrNone
             {
             pSetting = (SSettingC*) settingRef.iSet;
-            if(aTypes)
-                *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
+            *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
             
-            //Check for the found type is this word size? If it's not then indicate
-            //error for this setting
-            if(*aTypes[uIndex] > ETypeLinAddr)
-                {
-                *aErrors[uIndex] = KErrArgument;
-                *aValues[uIndex] = 0;
-                }
-            else
-                {
-                *aErrors[uIndex] = KErrNone;
-                *aValues[uIndex] = pSetting->iValue.iLit.iInt32;
-                }
-
+			//Check for the found type is this word size? If it's not then indicate
+			//error for this setting
+			if(*aTypes[uIndex] > ETypeLinAddr)
+				{
+				*aErrors[uIndex] = KErrArgument;
+				*aValues[uIndex] = 0;
+				}
+			else
+				{
+				*aErrors[uIndex] = KErrNone;
+				*aValues[uIndex] = pSetting->iValue.iLit.iInt32;
+				}
+				
             isRedefined = ETrue;
             }
         }
@@ -1869,41 +1845,38 @@ TInt HCR::TRepositoryCompiled::GetWordSettings(TInt aNum,
         {
         err = this->FindSetting(*aIds[uIndex],settingRef, rIndex, 
                 rMinIndex, rMaxIndex);
+
+		__NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
+
         if(err == KErrNotFound)
             {
             *aErrors[uIndex] = err;
             *aValues[uIndex] = 0;
-            if(aTypes)
-                *aTypes[uIndex] = ETypeUndefined;
+            *aTypes[uIndex] = ETypeUndefined;
 
             //As FindSetting did not find the element, let's challenge with 
             //another one
             continue;
             }
-        else if(err == KErrNotReady || err != KErrNone)
-            {
-            return err;
-            }
         else //err == KErrNone
             {
 
             pSetting = (SSettingC*) settingRef.iSet;
-            if(aTypes)
-                *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
+            *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
 
-            //Check for the found type is this word size? If it's not then indicate
-            //error for this setting
-            if(*aTypes[uIndex] > ETypeLinAddr)
-                {
-                *aErrors[uIndex] = KErrArgument;
-                *aValues[uIndex] = 0;
-                }
-            else
-                {
-                *aErrors[uIndex] = KErrNone;
-                *aValues[uIndex] = pSetting->iValue.iLit.iInt32;
-                }
-
+			//Check for the found type is this word size? If it's not then indicate
+			//error for this setting
+			if(*aTypes[uIndex] > ETypeLinAddr)
+				{
+				*aErrors[uIndex] = KErrArgument;
+				*aValues[uIndex] = 0;
+				}
+			else
+				{
+				*aErrors[uIndex] = KErrNone;
+				*aValues[uIndex] = pSetting->iValue.iLit.iInt32;
+				}
+				
             rMinIndex = rIndex + 1;
 
             }
@@ -1924,9 +1897,14 @@ TInt HCR::TRepositoryCompiled::FindNumSettingsInCategory(TCategoryUid aCatUid,
 
     __NK_ASSERT_DEBUG(iRepos != 0);
     __NK_ASSERT_DEBUG(iRepos->iHdr != 0);
-
-    if ((iRepos->iHdr->iNumSettings == 0) || (iRepos->iOrderedSettingList == 0))
+	__NK_ASSERT_DEBUG(iRepos->iOrderedSettingList != 0);
+    
+    if(iRepos->iHdr->iNumSettings == 0)
+        {
+        aFirst = 0;
+        aLast = 0;
         HCR_TRACE_RETURN(KErrNotFound);
+        }
 
     SSettingC* arr = iRepos->iOrderedSettingList;
     int low = 0;
@@ -1961,17 +1939,21 @@ TInt HCR::TRepositoryCompiled::FindNumSettingsInCategory(TCategoryUid aCatUid,
 
     //Search the first element within the category
     low = mid;
-    while(low > 0 && arr[low].iName.iId.iCat == aCatUid)
+    while(low >= 0 && arr[low].iName.iId.iCat == aCatUid)
         {
-        low --;
+        if(low > 0)
+            low --;
+        else
+            break;
         }
     //Check the boundary conditions, there are two cases when we exit the loop
     //either we found an element which category is not one we are looking for or
     //we reach the beggining of the repository. If we reach the beggining of the
     //repository we don't really know is it because this is last elment or it
     //has required aCatUid, so we check these two conditions below
-    if(low == 0 && arr[low].iName.iId.iCat == aCatUid)
+    if(arr[low].iName.iId.iCat == aCatUid)
         aFirst = low;
+
     //We finish the loop either reaching the setting which category id is not
     //what we need or this is first setting in the repository again with another
     //category, so in both case we throw this element from the account.
@@ -1980,13 +1962,16 @@ TInt HCR::TRepositoryCompiled::FindNumSettingsInCategory(TCategoryUid aCatUid,
 
     //Search the last element within the category
     high = mid;
-    while(high < iRepos->iHdr->iNumSettings && arr[high].iName.iId.iCat == aCatUid)
+    while(high <= iRepos->iHdr->iNumSettings - 1 && arr[high].iName.iId.iCat == aCatUid)
         {
-        high ++;
+        if(high < iRepos->iHdr->iNumSettings - 1)
+            high ++;
+        else
+            break;
         }
-    
+
     //Same situation as above, boundary conditions
-    if(high == (iRepos->iHdr->iNumSettings -1) && arr[high].iName.iId.iCat == aCatUid)
+    if(arr[high].iName.iId.iCat == aCatUid)
         aLast = high;
     else
         aLast = high -1;
@@ -2002,13 +1987,9 @@ void HCR::TRepositoryCompiled::GetSettingRef(TInt32 aIndex,
     {
     __NK_ASSERT_DEBUG(iRepos != 0);
     __NK_ASSERT_DEBUG(iRepos->iHdr != 0);
+    __NK_ASSERT_DEBUG(iRepos->iHdr->iNumSettings != 0 && iRepos->iOrderedSettingList != 0);
     __NK_ASSERT_DEBUG(aIndex >=0 && aIndex < iRepos->iHdr->iNumSettings);
     
-    if ((iRepos->iHdr->iNumSettings == 0) || (iRepos->iOrderedSettingList == 0))
-        {
-        aRef.iRep = NULL;
-        aRef.iSet = NULL;
-        }
 
     //Get the pointer to the repository data
     SSettingC* arr = iRepos->iOrderedSettingList;
@@ -2153,9 +2134,7 @@ TInt HCR::TRepositoryFile::FindSetting (const TSettingId& aId,
 
 
     __NK_ASSERT_DEBUG(iRepos != 0);
-
-    if (iRepos->iHdr.iNumSettings == 0)
-        HCR_TRACE_RETURN(KErrNotFound);
+    __NK_ASSERT_DEBUG(iRepos->iHdr.iNumSettings != 0);
 
     SSettingF* arr = (SSettingF*) (iRepos+1);
     TInt32 low = aLow;
@@ -2197,6 +2176,10 @@ TInt HCR::TRepositoryFile::GetWordSettings(TInt aNum,
 
 
     __NK_ASSERT_DEBUG(iRepos != 0);
+	__NK_ASSERT_DEBUG(aIds != NULL);
+	__NK_ASSERT_DEBUG(aValues != NULL);
+	__NK_ASSERT_DEBUG(aTypes != NULL);
+	__NK_ASSERT_DEBUG(aErrors != NULL);
    
     if (iRepos->iHdr.iNumSettings == 0)
         return KErrNotFound;
@@ -2226,45 +2209,40 @@ TInt HCR::TRepositoryFile::GetWordSettings(TInt aNum,
             //This time the  scope of search is whole repository.
             err = this->FindSetting(*aIds[uIndex],settingRef, rMinIndex, 
                     0, iRepos->iHdr.iNumSettings);
+
+			__NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
+
             if(err == KErrNotFound)
                 {
                 *aErrors[uIndex] = err;
                 *aValues[uIndex] = 0;
-                //Copy type only if user provided aTypes array
-                if(aTypes)
-                    *aTypes[uIndex] = ETypeUndefined;
+                *aTypes[uIndex] = ETypeUndefined;
                 
                 //As FindSetting did not find the element, let's challenge with 
                 //the next one from aIds[] array
                 uIndex ++;
                 continue;
                 }
-            //fatal error here, nothing to do, just exit and return the error code
-            else if(err == KErrNotReady || err != KErrNone)
-                {
-                return err;
-                }
             else // err == KErrNone
                 {
                 //Get the value and type
                 pSetting = (SSettingF*) settingRef.iSet;
                 //again copy the type value into the user array if it's provided
-                if(aTypes)
-                    *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
+                *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
             
-                //Check for the found type is this word size? If it's not then 
-                //indicate error for this setting
-                if(*aTypes[uIndex] > ETypeLinAddr)
-                    {
-                    *aErrors[uIndex] = KErrArgument;
-                    *aValues[uIndex] = 0;
-                    }
-                else
-                    {
-                    *aErrors[uIndex] = KErrNone;
-                    *aValues[uIndex] = pSetting->iValue.iLit.iInt32;
-                    }
-                
+				//Check for the found type is this word size? If it's not then 
+				//indicate error for this setting
+				if(*aTypes[uIndex] > ETypeLinAddr)
+					{
+					*aErrors[uIndex] = KErrArgument;
+					*aValues[uIndex] = 0;
+					}
+				else
+					{
+					*aErrors[uIndex] = KErrNone;
+					*aValues[uIndex] = pSetting->iValue.iLit.iInt32;
+					}
+					
                 //Break the loop by setting the redefined status
                 isRedefined = ETrue;
                 }
@@ -2295,42 +2273,38 @@ TInt HCR::TRepositoryFile::GetWordSettings(TInt aNum,
             //rMinIndex. This time the  scope of search is whole repository.
             err = this->FindSetting(*aIds[uIndex],settingRef, rMaxIndex, 
                     rMinIndex, iRepos->iHdr.iNumSettings);
+
+			__NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
+			
             if(err == KErrNotFound)
                 {
                 *aErrors[uIndex] = err;
                 *aValues[uIndex] = 0;
-                if(aTypes)
-                    *aTypes[uIndex] = ETypeUndefined;
+                *aTypes[uIndex] = ETypeUndefined;
                 
                 //As FindSetting did not find the element, let's challenge with 
                 //previous one
                 uIndex --;
                 continue;
                 }
-            //fatal error here, nothing to do, just exit and return the error code
-            else if(err == KErrNotReady || err != KErrNone)
-                {
-                return err;
-                }
             else //err == KErrNone
                 {
                 pSetting = (SSettingF*) settingRef.iSet;
-                if(aTypes)
-                    *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
+                *aTypes[uIndex] = static_cast<TSettingType>(settingRef.iSet->iType); 
 
-                //Check for the found type is this word size? If it's not then indicate
-                //error for this setting
-                if(*aTypes[uIndex] > ETypeLinAddr)
-                    {
-                    *aErrors[uIndex] = KErrArgument;
-                    *aValues[uIndex] = 0;
-                    }
-                else
-                    {
-                    *aErrors[uIndex] = KErrNone;
-                    *aValues[uIndex] = pSetting->iValue.iLit.iInt32;
-                    }
-                
+				//Check for the found type is this word size? If it's not then indicate
+				//error for this setting
+				if(*aTypes[uIndex] > ETypeLinAddr)
+					{
+					*aErrors[uIndex] = KErrArgument;
+					*aValues[uIndex] = 0;
+					}
+				else
+					{
+					*aErrors[uIndex] = KErrNone;
+					*aValues[uIndex] = pSetting->iValue.iLit.iInt32;
+					}
+					
                 isRedefined = ETrue;
                 }
             }
@@ -2353,20 +2327,18 @@ TInt HCR::TRepositoryFile::GetWordSettings(TInt aNum,
             {
             err = this->FindSetting(*aIds[uIndex],settingRef, rIndex, 
                     rMinIndex, rMaxIndex);
+
+			__NK_ASSERT_DEBUG(err == KErrNotFound || err == KErrNone);
+
             if(err == KErrNotFound)
                 {
                 *aErrors[uIndex] = err;
                 *aValues[uIndex] = 0;
-                if(aTypes)
-                    *aTypes[uIndex] = ETypeUndefined;
+                *aTypes[uIndex] = ETypeUndefined;
 
                 //As FindSetting did not find the element, let's challenge with 
                 //another one
                 continue;
-                }
-            else if(err == KErrNotReady || err != KErrNone)
-                {
-                return err;
                 }
             else //err == KErrNone
                 {
@@ -2374,8 +2346,7 @@ TInt HCR::TRepositoryFile::GetWordSettings(TInt aNum,
                 pSetting = (SSettingF*) settingRef.iSet;
                 
                 TSettingType type = static_cast<TSettingType>(settingRef.iSet->iType); 
-                if(aTypes != NULL)
-                    *aTypes[uIndex] = type; 
+                *aTypes[uIndex] = type; 
 
                 //Check for the found type is this word size? If it's not then indicate
                 //error for this setting
@@ -2404,13 +2375,8 @@ void HCR::TRepositoryFile::GetSettingRef(TInt32 aIndex,
          HCR::TSettingRef& aSetRef)
     {
     __NK_ASSERT_DEBUG(iRepos != 0);
+    __NK_ASSERT_DEBUG(iRepos->iHdr.iNumSettings != 0);
     __NK_ASSERT_DEBUG(aIndex >= 0 && aIndex < iRepos->iHdr.iNumSettings);
-
-    if (iRepos->iHdr.iNumSettings == 0)
-        {
-        aSetRef.iRep = NULL;
-        aSetRef.iSet = NULL;
-        }
 
     SSettingF* arr = (SSettingF*)(iRepos + 1);
     
@@ -2427,10 +2393,14 @@ TInt HCR::TRepositoryFile::FindNumSettingsInCategory(TCategoryUid aCatUid,
     HCR_FUNC("TRepositoryFile::FindNumSettingsInCategory");
 
     __NK_ASSERT_DEBUG(iRepos != 0);
-
-    if (iRepos->iHdr.iNumSettings == 0)
+    
+    if(iRepos->iHdr.iNumSettings == 0)
+        {
+        aFirst = 0;
+        aLast = 0;
         HCR_TRACE_RETURN(KErrNotFound);
-
+        }
+    
     SSettingF* arr = (SSettingF*) (iRepos+1);
     TInt32 low = 0;
     TInt32 high = iRepos->iHdr.iNumSettings-1;
@@ -2465,17 +2435,22 @@ TInt HCR::TRepositoryFile::FindNumSettingsInCategory(TCategoryUid aCatUid,
 
     //Search the first element within the category
     low = mid;
-    while(low > 0 && arr[low].iName.iId.iCat == aCatUid)
+    while(low >= 0 && arr[low].iName.iId.iCat == aCatUid)
         {
-        low --;
+        if(low > 0)
+            low --;
+        else
+            break;
         }
+
     //Check the boundary conditions, there are two cases when we exit the loop
     //either we found an element which category is not one we are looking for or
     //we reach the beggining of the repository. If we reach the beggining of the
     //repository we don't really know is it because this is last elment or it
     //has required aCatUid, so we check these two conditions below
-    if(low == 0 && arr[low].iName.iId.iCat == aCatUid)
+    if(arr[low].iName.iId.iCat == aCatUid)
         aFirst = low;
+        
     //We finish the loop either reaching the setting which category id is not
     //what we need or this is first setting in the repository again with another
     //category, so in both case we throw this element from the account.
@@ -2485,15 +2460,19 @@ TInt HCR::TRepositoryFile::FindNumSettingsInCategory(TCategoryUid aCatUid,
 
     //Search the last element within the category
     high = mid;
-    while(high < iRepos->iHdr.iNumSettings && arr[high].iName.iId.iCat == aCatUid)
+    while(high <= iRepos->iHdr.iNumSettings - 1 && arr[high].iName.iId.iCat == aCatUid)
         {
-        high ++;
+        if(high < iRepos->iHdr.iNumSettings - 1)
+            high ++;
+        else
+            break;
         }
+
     //Same situation as above, boundary conditions
-       if(high == (iRepos->iHdr.iNumSettings - 1) && arr[high].iName.iId.iCat == aCatUid)
-           aLast = high;
-       else
-           aLast = high -1;
+    if(arr[high].iName.iId.iCat == aCatUid)
+        aLast = high;
+    else
+        aLast = high - 1;
 
     return KErrNone;
     }

@@ -21,6 +21,15 @@
 #include "dmasupport.h"
 #include "dmasupport.inl"
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "dmasupportTraces.h"
+#endif
+
 #define PHYSADDR_FAULT()	Kern::Fault("TLOCDRV-PHYS-ADDR",__LINE__)
 
 //#define __DEBUG_DMASUP__
@@ -70,14 +79,17 @@ void DDmaHelper::ResetPageLists()
 
 DDmaHelper::DDmaHelper()
 	{
+	OstTraceFunctionEntry0( DDMAHELPER_DDMAHELPER_ENTRY );
 	iPageSize = Kern::RoundToPageSize(1);
 	__ASSERT_ALWAYS(IsPowerOfTwo(iPageSize), PHYSADDR_FAULT());
 	iPageSizeLog2 = Log2(iPageSize);
 	iPageSizeMsk = iPageSize-1;
+	OstTraceFunctionExit0( DDMAHELPER_DDMAHELPER_EXIT );
 	}
 
 DDmaHelper::~DDmaHelper()
 	{
+	OstTraceFunctionEntry0( DESTRUCTOR_DDMAHELPER_ENTRY );
 	delete [] iPageArray;
 	delete [] iPageList;
 	if (iPhysicalPinObject)
@@ -86,6 +98,7 @@ DDmaHelper::~DDmaHelper()
 		Kern::DestroyPhysicalPinObject(iPhysicalPinObject);
 		NKern::ThreadLeaveCS();
 		}
+	OstTraceFunctionExit0( DESTRUCTOR_DDMAHELPER_EXIT );
 	}
 
 /**
@@ -101,6 +114,7 @@ Constructs the DDmaHelper object
 */
 TInt DDmaHelper::Construct(TInt aLength, TInt aMediaBlockSize, TInt aDmaAlignment)
 	{
+	OstTraceFunctionEntry1( DDMAHELPER_CONSTRUCT_ENTRY, this );
 	__ASSERT_ALWAYS(aMediaBlockSize > 0, PHYSADDR_FAULT());
 	__ASSERT_ALWAYS(IsPowerOfTwo(aMediaBlockSize), PHYSADDR_FAULT());
 	__ASSERT_ALWAYS(aLength > 0, PHYSADDR_FAULT());
@@ -114,8 +128,11 @@ TInt DDmaHelper::Construct(TInt aLength, TInt aMediaBlockSize, TInt aDmaAlignmen
 	TUint cacheLineSize = Cache::DmaBufferAlignment();
 	__ASSERT_ALWAYS(IsPowerOfTwo(cacheLineSize), PHYSADDR_FAULT());
 	if (cacheLineSize > (TUint) aMediaBlockSize)
+	    {
+		OstTraceFunctionExitExt( DDMAHELPER_CONSTRUCT_EXIT1, this, KErrNotSupported );
 		return KErrNotSupported;
-
+	    }
+	
 	//Check whether Kernel supports physical memory pinning:
 	TInt mm = Kern::HalFunction(EHalGroupKernel, EKernelHalMemModelInfo, 0, 0) & EMemModelTypeMask;
 	if (mm >= EMemModelTypeFlexible)
@@ -132,9 +149,10 @@ TInt DDmaHelper::Construct(TInt aLength, TInt aMediaBlockSize, TInt aDmaAlignmen
 		//  - Cache::SyncPhysicalMemoryBeforeDmaRead
 		//  - Cache::SyncPhysicalMemoryAfterDmaRead
 		iPhysPinningAvailable = ETrue;
-		__KTRACE_DMA(Kern::Printf("Memory model (%d) supports physical pining\n",mm));
+		__KTRACE_DMA(Kern::Printf("Memory model (%d) supports physical pinning\n",mm));
 		NKern::ThreadEnterCS();
 		TInt r=Kern::CreatePhysicalPinObject(iPhysicalPinObject);
+		OstTraceExt2(TRACE_DMASUPPORT, DDMAHELPER_CONSTRUCT1, "Memory model=%d supports physical pinning; created Physical Pin Object with return value=%d",mm, r);
 		NKern::ThreadLeaveCS();
 		if (r) return r;
 		}
@@ -156,7 +174,8 @@ TInt DDmaHelper::Construct(TInt aLength, TInt aMediaBlockSize, TInt aDmaAlignmen
 		// As they all require linear address as input, these methods also rely on File System buffers
 		// to be in valid state during sync calls.
 		iPhysPinningAvailable = EFalse;
-		__KTRACE_DMA(Kern::Printf("Memory model (%d) doesn't support physical pining\n",mm));
+		__KTRACE_DMA(Kern::Printf("Memory model (%d) doesn't support physical pining",mm));
+		OstTrace1(TRACE_DMASUPPORT, DDMAHELPER_CONSTRUCT2, "Memory model=%d doesn't support physical pinning",mm);
 		iPhysicalPinObject = NULL;
 		}
 	
@@ -174,12 +193,14 @@ TInt DDmaHelper::Construct(TInt aLength, TInt aMediaBlockSize, TInt aDmaAlignmen
 
 			iDmaAlignment = aDmaAlignment;
 			__KTRACE_DMA(Kern::Printf("-PHYSADDR: Construct iMaxPages(%d), MediaBlocks(%d), DMAalign(%d)",iMaxPages,iMediaBlockSize,iDmaAlignment));
+			OstTraceExt3(TRACE_FLOW, DDMAHELPER_CONSTRUCT_EXIT2, "< KErrNone PHYSADDR: Construct iMaxPages %d MediaBlocks %d DMAalign %d", iMaxPages,iMediaBlockSize,iDmaAlignment );
 			return KErrNone;
 			}
 		delete [] iPageArray; iPageArray = NULL;
 		}
 	
 	iMaxPages = 0;
+	OstTraceFunctionExitExt( DDMAHELPER_CONSTRUCT_EXIT3, this, KErrNoMemory );
 	return KErrNoMemory;
 	}
 
@@ -193,15 +214,22 @@ TInt DDmaHelper::Construct(TInt aLength, TInt aMediaBlockSize, TInt aDmaAlignmen
  */
 TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
 	{
+	OstTraceFunctionEntry0( DDMAHELPER_SENDRECEIVE_ENTRY );
 	DPrimaryMediaBase& primaryMedia = *aReq.Drive()->iPrimaryMedia;
-
+	
 	TInt reqId = aReq.Id();
 	if (reqId != DLocalDrive::ERead && reqId != DLocalDrive::EWrite)
+	    {
+	    OstTrace0(TRACE_FLOW, DDMAHELPER_SENDRECEIVE_EXIT1, "< Request is not ERead or EWrite, cannot perform Direct Memory Access");
 		return aReq.SendReceive(&primaryMedia.iMsgQ);
-
+	    }
+		
 	if ((I64HIGH(aReq.Length()) > 0) || (aReq.Length() < iMediaBlockSize))
+	    {
+	    OstTrace0(TRACE_FLOW, DDMAHELPER_SENDRECEIVE_EXIT2, "< Invalid request length, cannot perform Direct Memory Access");
 		return aReq.SendReceive(&primaryMedia.iMsgQ);
-
+	    }
+	
 	// If more than one user thread tries to access the drive, then bail out as there is 
 	// only one DDmaHelper object per TLocDrv. Normally this shouldn't ever happen unless
 	// a client app accesses the drive directly using TBusLOcalDrive or the file system is 
@@ -211,6 +239,7 @@ TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
 		{
 		__KTRACE_DMA(Kern::Printf("-PHYSADDR: BUSY"));
 		__e32_atomic_add_ord32(&iLockCount, TUint32(-1));
+		OstTrace0(TRACE_FLOW, DDMAHELPER_SENDRECEIVE_EXIT3, "< DMA Busy");
 		return aReq.SendReceive(&primaryMedia.iMsgQ);
 		}
 
@@ -250,6 +279,7 @@ TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
 	do
 		{
 		__KTRACE_DMA(Kern::Printf(">PHYSADDR:SendReceive() iReqLen %d; iLenConsumed %d; fragments %d",iReqLen, iLenConsumed, fragments));
+		OstTraceExt2( TRACE_DMASUPPORT, DDMAHELPER_SENDRECEIVE1, "PHYSADDR:SendReceive() iLenConsumed=%d; fragments=%d", iLenConsumed, fragments);
 		r = RequestStart();
 		if (r != KErrNone)
 			{
@@ -261,6 +291,7 @@ TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
 				NKern::ThreadLeaveCS();
 				}
 			__KTRACE_DMA(Kern::Printf("<PHYSADDR:SendReceive()- r:%d",r));
+			OstTrace1( TRACE_FLOW, DDMAHELPER_SENDRECEIVE_EXIT4, "< PHYSADDR:SendReceive() Return code %d",r);
 			iMemoryType = EUnknown;
 			__e32_atomic_add_ord32(&iLockCount, TUint32(-1));
 			return fragments ? r : iReq->SendReceive(&primaryMedia.iMsgQ);
@@ -272,14 +303,17 @@ TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
 
 		__KTRACE_DMA(Kern::Printf("-PHYSADDR:SendReceive() rThread %08X pos %08lX, len %d addr %08X off %08X", 
 				iRemoteThread, iReq->Pos(), I64LOW(iReq->Length()), iLinAddressUser, iReqRemoteDesOffset));
+		OstTraceExt4(TRACE_DMASUPPORT, DDMAHELPER_SENDRECEIVE2, "PHYSADDR:SendReceive() position=%Ld; length=%d; address=0x%x; offset=0x%x", iReq->Pos(), (TInt) I64LOW(iReq->Length()), (TUint) iLinAddressUser, (TUint) iReqRemoteDesOffset );
 		
 		__ASSERT_DEBUG(iReq->Length() == FragLength(), PHYSADDR_FAULT());
 		__ASSERT_DEBUG(iReq->Length() != 0, PHYSADDR_FAULT());
 
 		// reinstate iValue in case overwritten by DMediaPagingDevice::CompleteRequest()
 		iReq->iValue = iReqId;
-
+		
+		OstTrace1(TRACE_DMASUPPORT, DDMAHELPER_SENDRECEIVE3, "Dma SendReceive Start iReq=%d", iReq);
 		r = iReq->SendReceive(&primaryMedia.iMsgQ);
+		OstTrace1(TRACE_DMASUPPORT, DDMAHELPER_SENDRECEIVE4, "Dma SendReceive Return iReq=%d", iReq);
 		
 		// The media driver could potentially choose to deal with the request 
 		// without accessing physical memory (e.g. if the data is already cached).
@@ -311,6 +345,7 @@ TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
 	iMemoryType = EUnknown;
 
 	__e32_atomic_add_ord32(&iLockCount, TUint32(-1));
+	OstTraceFunctionExit0( DDMAHELPER_SENDRECEIVE_EXIT5 );
 	return r;
 	}
 
@@ -336,7 +371,9 @@ TInt DDmaHelper::SendReceive(TLocDrvRequest& aReq, TLinAddr aLinAddress)
  **/
 TInt DDmaHelper::RequestStart()
 	{
+	OstTraceFunctionEntry1( DDMAHELPER_REQUESTSTART_ENTRY, this );
 	__KTRACE_DMA(Kern::Printf(">PHYSADDR:RequestStart()"));
+
 	iIndex = 0;
 
 	TLinAddr startAddr = LinAddress();
@@ -366,6 +403,7 @@ TInt DDmaHelper::RequestStart()
 		if (!IsDmaAligned(startAddr))
 			{			
 			__KTRACE_DMA(Kern::Printf("<PHYSADDR:RequestStart() - not DMA Aligned pos 0x%x addr 0x%x)",I64LOW(startPos), startAddr));
+			OstTraceExt2( TRACE_FLOW, DDMAHELPER_REQUESTSTART_EXIT1, "< KErrNotSupported Not DMA Aligned startPos %x startAddr %x", I64LOW(startPos), startAddr );
 			return KErrNotSupported;
 			}
 		}
@@ -374,6 +412,7 @@ TInt DDmaHelper::RequestStart()
 		if (!IsDmaAligned(startAddr))
 			{
 			__KTRACE_DMA(Kern::Printf("<PHYSADDR:RequestStart() - not DMA Aligned (0x%x)",startAddr));
+			OstTrace1(TRACE_FLOW, DDMAHELPER_REQUESTSTART_EXIT2, "< KErrNotSupported Not DMA Aligned startAddr %x", startAddr);
 			return KErrNotSupported;
 			}
 		}
@@ -385,6 +424,7 @@ TInt DDmaHelper::RequestStart()
 	if (mediaBlockOffset != addrBlockOffset)
 		{
 		__KTRACE_DMA(Kern::Printf("<PHYSADDR:RequestStart() - Frag / not block aligned: pos 0x%x addr 0x%x", I64LOW(startPos), startAddr));
+		OstTraceExt2(TRACE_FLOW, DDMAHELPER_REQUESTSTART_EXIT3, "< KErrNotSupported Frag / not block aligned: startPos 0x%x startAddr 0x%x", I64LOW(startPos), startAddr );
 		return KErrNotSupported;
 		}
 
@@ -413,11 +453,15 @@ TInt DDmaHelper::RequestStart()
 			NKern::ThreadLeaveCS();
 			}
 		if (r != KErrNone) 
+		    {
+			OstTraceFunctionExitExt( DDMAHELPER_REQUESTSTART_EXIT4, this, r );
 			return r;
+		    }
 
 		iMemoryType = EFileServerChunk;
 		
 		__KTRACE_DMA(Kern::Printf("-PHYSADDR:RequestStart() - EFileServerChunk"));
+		OstTrace0( TRACE_DMASUPPORT, DDMAHELPER_REQUESTSTART1, "EFileServerChunk");
 		}
 	//****************************
 	// Is it shared chunk ?
@@ -429,16 +473,21 @@ TInt DDmaHelper::RequestStart()
 				
 		TInt r = Kern::ChunkPhysicalAddress(iChunk, offset, length, iLinAddressKernel, iMapAttr, iPhysAddr, iPageArray);
 		
-		if (r < KErrNone) 
+		if (r < KErrNone)
+		    {
+			OstTraceFunctionExitExt( DDMAHELPER_REQUESTSTART_EXIT5, this, r );
 			return r;  // 0 = Contiguous Memory, 1 = Fragmented/Dis-Contiguous Memory
-		
+		    }
+			
 		iMemoryType = ESharedChunk;
 		
 		__KTRACE_DMA(Kern::Printf("-PHYSADDR:RequestStart() - ESharedChunk"));
+		OstTrace0( TRACE_DMASUPPORT, DDMAHELPER_REQUESTSTART2, "ESharedChunk");
 		}
 	else
 		{
 		__KTRACE_DMA(Kern::Printf("<PHYSADDR:RequestStart() - EUnknown"));
+		OstTraceFunctionExitExt( DDMAHELPER_REQUESTSTART_EXIT6, this, KErrNotFound );
 		return KErrNotFound;
 		}
 
@@ -463,6 +512,7 @@ TInt DDmaHelper::RequestStart()
 	// Sync memory
 	//************************************************
 	__KTRACE_DMA(Kern::Printf(">SYNC-PHYSADDR:addr 0x%x len %d", startAddr, length));
+	OstTraceExt2(TRACE_DMASUPPORT, DDMAHELPER_REQUESTSTART3, "startAddr=0x%x length=%d", (TUint) startAddr, length );
 
 	// Only sync whole blocks: it is assumed that the media driver will transfer 
 	// partial start and end blocks without DMA
@@ -498,6 +548,8 @@ TInt DDmaHelper::RequestStart()
 		}
 
 	__KTRACE_DMA(Kern::Printf("<PHYSADDR:RequestStart()"));
+
+	OstTraceFunctionExitExt( DDMAHELPER_REQUESTSTART_EXIT7, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -506,7 +558,9 @@ TInt DDmaHelper::RequestStart()
  */
 void DDmaHelper::RequestEnd()
 	{
+	OstTraceFunctionEntry0( DDMAHELPER_REQUESTEND_ENTRY );
 	__KTRACE_DMA(Kern::Printf(">PHYSADDR:RequestEnd()"));
+
 
 	__ASSERT_DEBUG(iReqId == DLocalDrive::ERead || iReqId == DLocalDrive::EWrite, PHYSADDR_FAULT());
 	__ASSERT_DEBUG(iMemoryType == ESharedChunk || iMemoryType == EFileServerChunk, PHYSADDR_FAULT());
@@ -537,6 +591,7 @@ void DDmaHelper::RequestEnd()
 
 		}
 	ReleasePages(PageAlign(startAddr));
+	OstTraceFunctionExit0( DDMAHELPER_REQUESTEND_EXIT );
 	}
 
 /**
@@ -546,9 +601,11 @@ void DDmaHelper::RequestEnd()
  */
 void DDmaHelper::ReleasePages(TLinAddr aAddr)
 	{
+	OstTraceFunctionEntry1( DDMAHELPER_RELEASEPAGES_ENTRY, this );
 	if (iMemoryType == EFileServerChunk)
 		{
 		__KTRACE_DMA(Kern::Printf(">PHYSADDR():ReleasePages thread (0x%x) aAddr(0x%08x) size(%d) iPageArray(0x%x)",iCurrentThread, aAddr, (iPageArrayCount << iPageSizeLog2), iPageArray));
+		OstTraceExt3( TRACE_DMASUPPORT, DDMAHELPER_RELEASEPAGES, "ReleasePages aAddr=0x%x; size=%d; iPageArray-0x%x", (TUint) aAddr, (iPageArrayCount << iPageSizeLog2), (TUint) iPageArray);
 
 		TInt r;
 		if (iPhysPinningAvailable)
@@ -563,6 +620,7 @@ void DDmaHelper::ReleasePages(TLinAddr aAddr)
 			}
 		__ASSERT_ALWAYS(r == KErrNone, PHYSADDR_FAULT());
 		}		
+	OstTraceFunctionExit1( DDMAHELPER_RELEASEPAGES_EXIT, this );
 	}
 
 /**
@@ -571,11 +629,13 @@ void DDmaHelper::ReleasePages(TLinAddr aAddr)
  */
 void DDmaHelper::BuildPageList()
 	{
+	OstTraceFunctionEntry1( DDMAHELPER_BUILDPAGELIST_ENTRY, this );
 	iPageListCount = 0;
 	
 	if (iPhysAddr != KPhysMemFragmented)
 		{
 		__KTRACE_DMA(Kern::Printf(">PHYSADDR:BuildPageList() - Contiguous Memory"));
+		OstTrace0( TRACE_DMASUPPORT, DDMAHELPER_BUILDPAGELIST1, "Contiguous Memory");
 		// Only one entry required.
 		iPageList[0].iAddress = iPhysAddr;
 		iPageList[0].iLength = FragLength();
@@ -584,6 +644,7 @@ void DDmaHelper::BuildPageList()
 	else
 		{
 		__KTRACE_DMA(Kern::Printf(">PHYSADDR:BuildPageList() - Dis-Contiguous Memory"));
+		OstTrace0( TRACE_DMASUPPORT, DDMAHELPER_BUILDPAGELIST2, "Dis-Contiguous Memory");
 		TInt offset;
 		
 		offset = PageOffset(iChunkOffset + iReqRemoteDesOffset+ iLenConsumed);
@@ -625,6 +686,7 @@ void DDmaHelper::BuildPageList()
 //	for (TInt m=0; m<iPageListCount; m++)
 //		__KTRACE_DMA(Kern::Printf("-PHYSADDR:BuildPageList() [%d]: %08X l:%d", m, iPageList[m].iAddress, iPageList[m].iLength));
 //#endif
+	OstTraceFunctionExit1( DDMAHELPER_BUILDPAGELIST_EXIT, this );
 	}
 
 
@@ -639,11 +701,14 @@ void DDmaHelper::BuildPageList()
  */
 TInt DDmaHelper::GetPhysicalAddress(TPhysAddr& aAddr, TInt& aLen)
 	{
+	OstTraceFunctionEntry1( DUP1_DDMAHELPER_GETPHYSICALADDRESS_ENTRY, this );
 	if (iIndex >= iPageListCount)
 		{
 		__KTRACE_DMA(Kern::Printf(">PHYSADDR:GetPhysD() [%d], PageListCount:%d", iIndex, iPageListCount));
+		OstTraceExt2(TRACE_DMASUPPORT, DDMAHELPER_GETPHYSICALADDRESS1, "GetPhysD() [%d]; iPageCountList=%d", iIndex, iPageListCount );
 		aAddr = 0;
 		aLen = 0;
+		OstTraceFunctionExitExt( DUP1_DDMAHELPER_GETPHYSICALADDRESS_EXIT1, this, KErrGeneral );
 		return KErrGeneral;
 		}
 	
@@ -653,10 +718,12 @@ TInt DDmaHelper::GetPhysicalAddress(TPhysAddr& aAddr, TInt& aLen)
 	iFragLenRemaining-= aLen;
 	
 	__KTRACE_DMA(Kern::Printf(">PHYSADDR:GetPhysD() [%d] addr:0x%08X, l:%d; Used:%d, Left:%d", iIndex, aAddr, aLen, iLenConsumed, iFragLenRemaining));
+	OstTraceExt5(TRACE_DMASUPPORT, DDMAHELPER_GETPHYSICALADDRESS2, "GetPhysD() [%d]; address=0x%x; length=%d; iLenConsumed=%d; iFragLenRemaining=%d", iIndex, (TUint) aAddr, aLen, iLenConsumed, iFragLenRemaining);
 	__ASSERT_DEBUG(aLen >= 0, PHYSADDR_FAULT());
 
 	iIndex++;  //Move index to next page
 
+	OstTraceFunctionExitExt( DDMAHELPER_GETPHYSICALADDRESS_EXIT2, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -674,6 +741,7 @@ TInt DDmaHelper::GetPhysicalAddress(TPhysAddr& aAddr, TInt& aLen)
  */
 TInt DDmaHelper::GetPhysicalAddress(TLocDrvRequest& aReq, TPhysAddr& aAddr, TInt& aLen)
 	{
+	OstTraceFunctionEntry0( DDMAHELPER_GETPHYSICALADDRESS_ENTRY );
 	__ASSERT_DEBUG( (aReq.Flags() & TLocDrvRequest::ETClientBuffer) == 0,  PHYSADDR_FAULT());
 	TLinAddr linAddr = (TLinAddr) aReq.RemoteDes();
 	TInt& offset = aReq.RemoteDesOffset();
@@ -711,7 +779,8 @@ TInt DDmaHelper::GetPhysicalAddress(TLocDrvRequest& aReq, TPhysAddr& aAddr, TInt
 
 
 	__KTRACE_DMA(Kern::Printf(">PHYSADDR:DP:GetPhysS(), linAddr %08X, physAddr %08X, len %x reqLen %x", linAddr + offset, aAddr, aLen, reqLen));
-
+	OstTraceExt4(TRACE_DEMANDPAGING, DDMAHELPER_GETPHYSICALADDRESS_DP, "linAddr=0x%x; physAddr=0x%x; length=0x%x; reqLen=0x%x", linAddr + offset, aAddr, aLen, reqLen);
+	OstTraceFunctionExit0( DDMAHELPER_GETPHYSICALADDRESS_EXIT );
 	return KErrNone;
 	}
 #endif	// (__DEMAND_PAGING__)
@@ -729,6 +798,7 @@ TInt DDmaHelper::GetPhysicalAddress(TLocDrvRequest& aReq, TPhysAddr& aAddr, TInt
 
 TInt DDmaHelper::UpdateRemoteDescriptorLength(TInt aLength)
 	{
+	OstTraceFunctionEntryExt( DDMAHELPER_UPDATEREMOTEDESCRIPTORLENGTH_ENTRY, this );
 	__KTRACE_DMA(Kern::Printf(">PHYSADDR:UpDesLen(%d)",aLength));
 
 	// Restore request Id (overwritten by KErrNone return code) to stop ASSERT in WriteRemote
@@ -744,6 +814,7 @@ TInt DDmaHelper::UpdateRemoteDescriptorLength(TInt aLength)
 	// restore return code	
 	iReq->iValue = KErrNone;
 
+	OstTraceFunctionExitExt( DDMAHELPER_UPDATEREMOTEDESCRIPTORLENGTH_EXIT, this, r );
 	return r;
 	}
 

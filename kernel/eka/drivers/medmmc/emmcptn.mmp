@@ -20,6 +20,7 @@ targettype		kext
 
 #include 		"../../kernel/kern_ext.mmh"
 userinclude		../../include/drivers
+USERINCLUDE		traces
 
 source			emmcptn.cpp
 

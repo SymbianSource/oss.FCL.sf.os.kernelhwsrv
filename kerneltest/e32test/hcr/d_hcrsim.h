@@ -21,14 +21,13 @@
 #include <e32cmn.h>
 #include <e32ver.h>
 #include <drivers/hcr.h>
-#ifndef HCRTEST_USERSIDE_INTERFACE
 #include "hcr_hai.h"
 #include "hcr_pil.h"
-#endif // HCRTEST_USERSIDE_INTERFACE
 
-#ifndef __KERNEL_MODE__
 using namespace HCR;
-#endif // __KERNEL_MODE__
+
+//Local helper macros
+#define _ABS(x)     (x > 0 ? x : -x)
 
 // Device driver names
 _LIT(KTestHcrRealOwn, "d_hcrext_own");
@@ -111,6 +110,7 @@ public:
 		EHcrCheckIntegrity,
 		// Others
 		EHcrGetInitExtensionTestResults,
+		EHcrHasRepositoryInSmr,
 		EHcrBenchmarkGetSettingInt,
 		EHcrBenchmarkGetSettingArray,
 		EHcrBenchmarkGetSettingDes,
@@ -125,11 +125,11 @@ public:
 	inline TInt GetLinAddr(const TSettingId& aId, TLinAddr& aValue);
 	inline TInt FindNumSettingsInCategory(TCategoryUid aCatUid);
 	inline TInt FindSettings(TCategoryUid aCatUid,
-							TInt aMaxNum, TUint32& aNumFound,
-							TElementId* aElIds, TSettingType* aTypes, TUint16* aLens);
+							TInt aMaxNum, TElementId* aElIds, TSettingType* aTypes,
+							TUint16* aLens);
 	inline TInt FindSettings(TCategoryUid aCat,	TInt aMaxNum,
-							TUint32 aMask, TUint32 aPattern, TUint32& aNumFound,
-							TElementId* aElIds, TSettingType* aTypes, TUint16* aLens);
+							TUint32 aMask, TUint32 aPattern, TElementId* aElIds,
+							TSettingType* aTypes, TUint16* aLens);
 	inline TInt GetTypeAndSize(const TSettingId& aId,
 							TSettingType& aType, TUint16& aLen);
 	inline TInt GetWordSettings(TInt aNum, const SSettingId aIds[],
@@ -158,6 +158,7 @@ public:
 	inline TInt SwitchRepository(const TDesC8& aFileName, HCRInternal::TReposId aId);
 	inline TInt CheckIntegrity();
 	inline TInt GetInitExtensionTestResults(TInt& aLine, TInt& aError);
+	inline TInt HasRepositoryInSmr(TBool& aHasSmr, TBool& aHasSmrRep);
 	inline TInt BenchmarkGetSettingInt(const TSettingId& aId, TUint32& aTimeMs);
 	inline TInt BenchmarkGetSettingArray(const TSettingId& aId, TUint32& aTimeMs);
 	inline TInt BenchmarkGetSettingDes(const TSettingId& aId, TUint32& aTimeMs);
@@ -176,28 +177,27 @@ inline TInt RHcrSimTestChannel::GetLinAddr(const TSettingId& aId, TLinAddr& aVal
 inline TInt RHcrSimTestChannel::FindNumSettingsInCategory(TCategoryUid aCatUid)
 	{return DoControl(EHcrFindNumSettingsInCategory, (TAny*) aCatUid);}
 inline TInt RHcrSimTestChannel::FindSettings(TCategoryUid aCatUid,
-					TInt aMaxNum, TUint32& aNumFound,
-					TElementId* aElIds, TSettingType* aTypes, TUint16* aLens)
+					TInt aMaxNum, TElementId* aElIds, TSettingType* aTypes, TUint16* aLens)
 	{
 	TAny* args[6];
 	args[0] = (TAny*) aCatUid;
 	args[1] = (TAny*) aMaxNum;
-	args[2] = (TAny*) &aNumFound;
+	args[2] =  0; //It's not used
 	args[3] = (TAny*) aElIds;
 	args[4] = (TAny*) aTypes;
 	args[5] = (TAny*) aLens;
 	return DoControl(EHcrFindSettingsCategory, (TAny*) args);
 	}
 inline TInt RHcrSimTestChannel::FindSettings(TCategoryUid aCat,	TInt aMaxNum, 
-					TUint32 aMask, TUint32 aPattern, TUint32& aNumFound,
-					TElementId* aElIds, TSettingType* aTypes, TUint16* aLens)
+					TUint32 aMask, TUint32 aPattern, TElementId* aElIds, 
+					TSettingType* aTypes, TUint16* aLens)
 	{
 	TAny* args[8];
 	args[0] = (TAny*) aCat;
 	args[1] = (TAny*) aMaxNum;
 	args[2] = (TAny*) aMask;
 	args[3] = (TAny*) aPattern;
-	args[4] = (TAny*) &aNumFound;
+	args[4] =  0; //It's not used
 	args[5] = (TAny*) aElIds;
 	args[6] = (TAny*) aTypes;
 	args[7] = (TAny*) aLens;
@@ -294,6 +294,8 @@ inline TInt RHcrSimTestChannel::CheckIntegrity()
 	{return DoControl(EHcrCheckIntegrity);}
 inline TInt RHcrSimTestChannel::GetInitExtensionTestResults(TInt& aLine, TInt& aError)
 	{return DoControl(EHcrGetInitExtensionTestResults, (TAny*) &aLine, (TAny*) &aError);}
+inline TInt RHcrSimTestChannel::HasRepositoryInSmr(TBool& aHasSmr, TBool& aHasSmrRep)
+	{return DoControl(EHcrHasRepositoryInSmr, (TAny*) &aHasSmr, (TAny*) &aHasSmrRep);}
 inline TInt RHcrSimTestChannel::BenchmarkGetSettingInt(const TSettingId& aId, TUint32& aTimeMs)
 	{return DoControl(EHcrBenchmarkGetSettingInt, (TAny*) &aId, (TAny*) &aTimeMs);}
 inline TInt RHcrSimTestChannel::BenchmarkGetSettingArray(const TSettingId& aId, TUint32& aTimeMs)

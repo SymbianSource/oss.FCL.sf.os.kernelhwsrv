@@ -19,6 +19,15 @@
 #include "pbusmedia.h"
 #include <drivers/emmcptn.h>
 
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "locmedia_ost.h"
+#ifdef __VC32__
+#pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
+#endif
+#include "medmmcTraces.h"
+#endif
+
 #if defined(__DEMAND_PAGING__)
 	// If in debug mode, enable paging stats and their retrieval using DLocalDrive::EControlIO
 	#if defined( _DEBUG)
@@ -317,19 +326,24 @@ private:
 
 DPhysicalDeviceMediaMmcFlash::DPhysicalDeviceMediaMmcFlash()
 	{
+	OstTraceFunctionEntry1( DPHYSICALDEVICEMEDIAMMCFLASH_DPHYSICALDEVICEMEDIAMMCFLASH_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:ctr"));
 
 	iUnitsMask = 0x01;
 	iVersion = TVersion(KMediaDriverInterfaceMajorVersion,KMediaDriverInterfaceMinorVersion,KMediaDriverInterfaceBuildVersion);
+	OstTraceFunctionExit1( DPHYSICALDEVICEMEDIAMMCFLASH_DPHYSICALDEVICEMEDIAMMCFLASH_EXIT, this );
 	}
 
 
 TInt DPhysicalDeviceMediaMmcFlash::Install()
 	{
+	OstTraceFunctionEntry1( DPHYSICALDEVICEMEDIAMMCFLASH_INSTALL_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:ins"));
 
 	_LIT(KDrvNm, "Media.MmcF");
-	return SetName(&KDrvNm);
+	TInt r = SetName(&KDrvNm);
+	OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_INSTALL_EXIT, this, r );
+	return r;
 	}
 
 
@@ -344,22 +358,40 @@ TInt DPhysicalDeviceMediaMmcFlash::Info(TInt aFunction, TAny* /*a1*/)
 // Return the priority of this media driver
 //
 	{
+	OstTraceExt2(TRACE_FLOW, DPHYSICALDEVICEMEDIAMMCFLASH_INFO_ENTRY ,"DPhysicalDeviceMediaMmcFlash::Info;aFunction=%d;this=%x", aFunction, (TUint) this);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:info"));
 	if (aFunction==EPriority)
+	    {
+		OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_INFO_EXIT1, this, KMediaDriverPriorityNormal );
 		return KMediaDriverPriorityNormal;
+	    }
 	// Don't close media driver when peripheral bus powers down. This avoids the need for Caps() to power up the stack.
 	if (aFunction==EMediaDriverPersistent)
+	    {
+		OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_INFO_EXIT2, this, KErrNone );
 		return KErrNone;
+	    }
+	
+	OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_INFO_EXIT3, this, KErrNotSupported );
 	return KErrNotSupported;
 	}
 								 
 TInt DPhysicalDeviceMediaMmcFlash::Validate(TInt aDeviceType, const TDesC8* /*aInfo*/, const TVersion& aVer)
 	{
+	OstTraceExt2(TRACE_FLOW, DPHYSICALDEVICEMEDIAMMCFLASH_VALIDATE_ENTRY ,"DPhysicalDeviceMediaMmcFlash::Validate;aDeviceType=%d;this=%x", aDeviceType, (TUint) this);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:validate aDeviceType %d", aDeviceType));
 	if (!Kern::QueryVersionSupported(iVersion,aVer))
+	    {
+		OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_VALIDATE_EXIT1, this, KErrNotSupported );
 		return KErrNotSupported;
+	    }
 	if (aDeviceType!=MEDIA_DEVICE_MMC)
+	    {
+		OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_VALIDATE_EXIT2, this, KErrNotSupported );
 		return KErrNotSupported;
+	    }
+
+	OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_VALIDATE_EXIT3, this, KErrNone );
 	return KErrNone;
 	}
 								 
@@ -368,10 +400,14 @@ TInt DPhysicalDeviceMediaMmcFlash::Create(DBase*& aChannel, TInt aMediaId, const
 // Create an MMC Card media driver.
 //
 	{
+	OstTraceExt2(TRACE_FLOW, DPHYSICALDEVICEMEDIAMMCFLASH_CREATE_ENTRY, "DPhysicalDeviceMediaMmcFlash::Create;aMediaId=%d;this=%x", aMediaId, (TUint) this);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:crt"));
 
 	if (!Kern::QueryVersionSupported(iVersion,aVer))
+	    {
+		OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_CREATE_EXIT1, this, KErrNotSupported );
 		return KErrNotSupported;
+	    }
 
 	DMmcMediaDriverFlash* pD = new DMmcMediaDriverFlash(aMediaId);
 	aChannel=pD;
@@ -383,6 +419,8 @@ TInt DPhysicalDeviceMediaMmcFlash::Create(DBase*& aChannel, TInt aMediaId, const
 		pD->OpenMediaDriverComplete(KErrNone);
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:mdf"));
+
+	OstTraceFunctionExitExt( DPHYSICALDEVICEMEDIAMMCFLASH_CREATE_EXIT2, this, r );
 	return r;
 	}
 
@@ -431,16 +469,22 @@ DMmcMediaDriverFlash::DMmcMediaDriverFlash(TInt aMediaId)
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:mmd"));
 	// NB aMedia Id = the media ID of the primary media, iMediaId = the media ID of this media
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("DMmcMediaDriverFlash(), iMediaId %d, aMediaId %d\n", iMediaId, aMediaId));
+	OstTraceExt2( TRACE_FLOW, DMMCMEDIADRIVERFLASH_DMMCMEDIADRIVERFLASH, "> DMmcMediaDriverFlash::DMmcMediaDriverFlash;aMediaId=%d;iMediaId=%d", (TInt) aMediaId, (TInt) iMediaId );
+	
 	}
 
 #pragma warning( default : 4355 )
 TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOCREATE_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:opn"));
 
 	iSocket = ((DMMCSocket*)((DPBusPrimaryMedia*)iPrimaryMedia)->iSocket);
 	if(iSocket == NULL)
-		return(KErrNoMemory);
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT1, this, KErrNoMemory );
+		return KErrNoMemory;
+	    }
 
 	iCardNumber = ((DPBusPrimaryMedia*)iPrimaryMedia)->iSlotNumber;
 
@@ -453,14 +497,17 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 	iInternalSlot = machineInfo.iFlags & slotFlag;
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("DMmcMediaDriverFlash::DoCreate() slotNumber %d iInternalSlot %d", iCardNumber, iInternalSlot));
-
+	OstTraceExt2(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOCREATE_SLOT, "slotNumber=%d; iInternalSlot=%d", iCardNumber, iInternalSlot);
 
 	iSessionEndDfc.SetDfcQ(&iSocket->iDfcQ);
 	iDataTransferCallBackDfc.SetDfcQ(&iSocket->iDfcQ);
 
 	// check right type of card
 	if ((iMediaType=iCard->MediaType())==EMultiMediaNotSupported)	
-		return(KErrNotReady);
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT2, this, KErrNotReady );
+		return KErrNotReady;
+	    }
 
 	// get card characteristics
 	const TCSD& csd = iCard->CSD();
@@ -479,7 +526,10 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 	// allocate and initialize session object
 	TInt r = AllocateSession();
 	if (r!= KErrNone)
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT3, this, r );
 		return r;
+	    }
 
 	// get buffer memory from EPBUS
 	TUint8* buf;
@@ -504,13 +554,17 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 	TInt bufIndex = (iCardNumber * numMedia)  + mediaIndex;
 	
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("physicalCardSlots %d, iCardNumber %d\n",  physicalCardSlots, iCardNumber));
+	OstTraceExt2(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOCREATE_VARS1, "physicalCardSlots=%d; iCardNumber=%d", physicalCardSlots, iCardNumber);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("iMediaId %d numMedia %d, mediaIndex %d, totalNumMedia %d, bufIndex %d\n", 
 			  iMediaId, numMedia, mediaIndex, totalNumMedia, bufIndex));
+	OstTraceExt5(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOCREATE_VARS2, "iMediaId=%d; numMedia=%d; mediaIndex=%d; totalNumMedia=%d; bufIndex=%d", iMediaId, numMedia, mediaIndex, totalNumMedia, bufIndex);
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("bufLen1 %08X iCacheBuf1 %08X", bufLen, iCacheBuf));
+	OstTraceExt2(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOCREATE_CACHEBUF1, "bufLen1=0x%08x; iCacheBuf1=0x%08x", (TUint) bufLen, (TUint) iCacheBuf);
 	bufLen/= totalNumMedia;
 	iCacheBuf+= bufIndex * bufLen;
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("bufLen2 %08X iCacheBuf2 %08X", bufLen, iCacheBuf));
+	OstTraceExt2(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOCREATE_CACHEBUF2, "bufLen2=0x%08x; iCacheBuf2=0x%08x", (TUint) bufLen, (TUint) iCacheBuf);
 
 	iBlocksInBuffer = bufLen >> iBlkLenLog2;	// may lose partial block
 	if(iSocket->SupportsDoubleBuffering())
@@ -537,9 +591,13 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 
 	// check the preferred write group length is a power of two
 	if(iPrWtGpLen == 0 || (iPrWtGpLen & (~iPrWtGpLen + 1)) != iPrWtGpLen)
-		return(KErrNotReady);
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT4, this, KErrNotReady );
+		return KErrNotReady;
+	    }
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("iMaxBufSize %d iPrWtGpLen %d\n", iMaxBufSize, iPrWtGpLen));
+	OstTraceExt2(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOCREATE_IPRWTGPLEN1, "iMaxBufSize=%d; iPrWtGpLen1=%d", iMaxBufSize, iPrWtGpLen);
 	// ensure the preferred write group length is as large as possible
 	// so we can write to more than one write group at once
 	while (iPrWtGpLen < (TUint32) iMaxBufSize)
@@ -551,11 +609,15 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 	iPrWtGpMsk = TInt64(iPrWtGpLen - 1);
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPrWtGpLen #2 %d\n", iPrWtGpLen));
+	OstTrace1(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOCREATE_IPRWTGPLEN2, "iPrWtGpLen2=%d", iPrWtGpLen);
 
 	// allocate index for cached blocks
 	iCachedBlocks =	KernAlloc<TInt64>(iBlocksInBuffer);
 	if (iCachedBlocks == 0)
-		return(KErrNoMemory);
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT5, this, KErrNoMemory );
+		return KErrNoMemory;
+	    }
 
 	InvalidateCache();
 	iLstUsdCchEnt = iBlocksInBuffer - 1;		// use entry 0 first
@@ -563,7 +625,10 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 	// allocate read lookup index
 	iGamma = KernAlloc<TInt>(iBlocksInBuffer);
 	if (iGamma == 0)
-		return(KErrNoMemory);
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT6, this, KErrNoMemory );
+		return KErrNoMemory;
+	    }
 
 	// get current requirements
 	iReadCurrentInMilliAmps = csd.MaxReadCurrentInMilliamps();
@@ -572,7 +637,10 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 	// get preferred erase information for format operations
 	const TInt err = iCard->GetEraseInfo(iEraseInfo);
 	if(err != KErrNone)
-		return(err);
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT7, this, err );
+		return err;
+	    }
 
 	iEraseUnitMsk = TInt64(iEraseInfo.iPreferredEraseUnitSize) - 1;
 
@@ -588,16 +656,22 @@ TInt DMmcMediaDriverFlash::DoCreate(TInt /*aMediaId*/)
 		{
 		iMmcPartitionInfo = CreateEmmcPartitionInfo();
 		if(iMmcPartitionInfo == NULL)
+		    {
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT8, this, KErrNoMemory );
 			return KErrNoMemory;
-
+		    }
 		TInt err = iMmcPartitionInfo->Initialise(this);
 		if(err != KErrNone)
+		    {
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT9, this, err );
 			return err;
+		    }
 		}
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:opn"));
 
-	return(KErrNone);
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOCREATE_EXIT10, this, KErrNone );
+	return KErrNone;
 	}
 
 void DMmcMediaDriverFlash::Close()
@@ -605,6 +679,7 @@ void DMmcMediaDriverFlash::Close()
 // Close the media driver - also called on media change
 //
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_CLOSE_ENTRY );
 	__KTRACE_OPT(KPBUSDRV,Kern::Printf("=mmd:cls"));
 	
 	EndInCritical();
@@ -612,11 +687,13 @@ void DMmcMediaDriverFlash::Close()
 	iDataTransferCallBackDfc.Cancel();
 	CompleteRequest(KErrNotReady);
 	DMediaDriver::Close();
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_CLOSE_EXIT );
 	}
 
 
 DMmcMediaDriverFlash::~DMmcMediaDriverFlash()
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_DMMCMEDIADRIVERFLASH_ENTRY );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:dtr"));
 
 	iSessionEndDfc.Cancel();
@@ -629,23 +706,36 @@ DMmcMediaDriverFlash::~DMmcMediaDriverFlash()
 	delete iMmcPartitionInfo;
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:dtr"));
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_DMMCMEDIADRIVERFLASH_EXIT );
 	}
 
 
 TInt DMmcMediaDriverFlash::AllocateSession()
 	{
+OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_ALLOCATESESSION_ENTRY, this );
+
+	
 	// already allocated ?
 	if (iSession != NULL)
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ALLOCATESESSION_EXIT1, this, KErrNone );
 		return KErrNone;
+	    }
 
 	iSession = iStack->AllocSession(iSessionEndCallBack);
 	if (iSession == NULL)
+	    {
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ALLOCATESESSION_EXIT2, this, KErrNoMemory );
 		return KErrNoMemory;
+	    }
 
 	iSession->SetStack(iStack);
 	iSession->SetCard(iCard);
 	iSession->SetDataTransferCallback(iDataTransferCallBack);
 
+
+
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ALLOCATESESSION_EXIT3, this, KErrNone );
 	return KErrNone;
 	}
 
@@ -657,13 +747,19 @@ TInt DMmcMediaDriverFlash::DoRead()
 // will be launched from the callback DFC.
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOREAD_ENTRY, this );
 	TInt r = CheckDevice(EMReqTypeNormalRd); 
-	if (r != KErrNone) return r;
+	if (r != KErrNone)
+	    {
+	    OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOREAD_EXIT1, this, r );
+	    return r;
+	    }
 	
 	const TInt64 pos(iCurrentReq->Pos());
 	TUint32 length(I64LOW(iCurrentReq->Length()));
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:dr:0x%lx,0x%x", pos, length));
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DO_READ, "Position=0x%lx; Length=0x%x", (TUint) pos, (TUint) length);
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(EDRInUse));
 	__ASSERT_DEBUG(pos < TotalSizeInBytes(), Panic(EDRStart));
 	__ASSERT_DEBUG(iCurrentReq->Length() >= 0, Panic(EDRNotPositive));
@@ -692,7 +788,11 @@ TInt DMmcMediaDriverFlash::DoRead()
 			else
 				r = LaunchRead(iReqCur, length);
 
-			if (r == KErrNone) return r;
+			if (r == KErrNone)
+			    {
+			    OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOREAD_EXIT2, this, r );
+			    return r;
+			    }
 			}
 		}
 	else
@@ -716,6 +816,7 @@ TInt DMmcMediaDriverFlash::DoRead()
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:dr:%d", r));
 	
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOREAD_EXIT3, this, r );
 	return r;
 	}
 
@@ -728,6 +829,8 @@ TInt DMmcMediaDriverFlash::LaunchRead(TInt64 aStart, TUint32 aLength)
 // assumed that before this function is called that ReadDataUntilCacheExhausted() has been used.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_LAUNCHREAD_ENTRY, this );
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHREAD, "position=0x%lx; length=0x%x", (TUint) iCurrentReq->Pos(), (TUint) I64LOW(iCurrentReq->Length()));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:lr:0x%lx,0x%x", aStart, aLength));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELRStart));
 	__ASSERT_DEBUG(aLength > 0, Panic(ELRNotPositive));
@@ -779,6 +882,7 @@ TInt DMmcMediaDriverFlash::LaunchRead(TInt64 aStart, TUint32 aLength)
 	TInt r = EngageAndSetReadRequest(EMReqRead);
 	
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:lr:%d", r));
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHREAD_EXIT, this, r );
 	return r;
 	}
 
@@ -790,7 +894,9 @@ TInt DMmcMediaDriverFlash::LaunchDBRead()
 // assumed that before this function is called that ReadDataUntilCacheExhausted() has been used.
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_LAUNCHDBREAD_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:ldbr:0x%lx,0x%x", iReqCur, I64LOW(iReqEnd - iReqCur)));
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHDBREAD, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
 	__ASSERT_DEBUG(TotalSizeInBytes() > iReqCur, Panic(ELRStart));
 	__ASSERT_DEBUG(I64LOW(iReqEnd - iReqCur) > 0, Panic(ELRNotPositive));
 	__ASSERT_DEBUG(TotalSizeInBytes() >= iReqEnd, Panic(ELREnd));
@@ -838,6 +944,7 @@ TInt DMmcMediaDriverFlash::LaunchDBRead()
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:ldbr:%d", r));
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHDBREAD_EXIT, this, r );
 	return r;
 	}
 
@@ -849,6 +956,8 @@ TInt DMmcMediaDriverFlash::LaunchPhysRead(TInt64 aStart, TUint32 aLength)
 // ReadDataUntilCacheExhausted() has been used.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_LAUNCHPHYSREAD_ENTRY, this );
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHPHYSREAD, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:physr:0x%lx,0x%x", aStart, aLength));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELRStart));
 	__ASSERT_DEBUG(aLength > 0, Panic(ELRNotPositive));
@@ -879,6 +988,7 @@ TInt DMmcMediaDriverFlash::LaunchPhysRead(TInt64 aStart, TUint32 aLength)
 	if (firstPartial)
 		{
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:physr:FirstPartial"));
+		OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCH_PHYSREAD_FP, "FirstPartial");
 		// first index does not start on block boundary
 		// iIntBuf linear address is used for IPC within DoReadDataTransferCallBack()
 		iRdROB |= KIPCWrite;
@@ -922,6 +1032,7 @@ TInt DMmcMediaDriverFlash::LaunchPhysRead(TInt64 aStart, TUint32 aLength)
 		
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:lphysr:%d", r));
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHPHYSREAD_EXIT, this, r );
 	return r;
 	}
 
@@ -933,10 +1044,12 @@ TInt DMmcMediaDriverFlash::DoWrite()
 // any sectors that are only partially modified.
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOWRITE_ENTRY, this );
 	const TInt64 pos = iCurrentReq->Pos();
 	const TUint32 length = I64LOW(iCurrentReq->Length());
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:dw:0x%lx,0x%x", pos, length));
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOWRITE, "position=0x%lx; length=0x%x", (TUint) pos, (TUint) length);
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(EDWInUse));
 	__ASSERT_DEBUG(pos < TotalSizeInBytes(), Panic(EDWStart));
 	__ASSERT_DEBUG(length > 0, Panic(EDWNotPositive));
@@ -959,16 +1072,19 @@ TInt DMmcMediaDriverFlash::DoWrite()
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:dw:%d", r));
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOWRITE_EXIT, this, r );
 	return r;
 	}
 
 
 TInt DMmcMediaDriverFlash::DoFormat()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOFORMAT_ENTRY, this );
 	const TInt64 pos = iCurrentReq->Pos();
 	const TUint32 length = I64LOW(iCurrentReq->Length());
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:df:0x%lx,0x%x", pos, length));
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOFORMAT, "position=0x%lx; length=0x%x", (TUint) pos, (TUint) length);
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(EDFInUse));
 	__ASSERT_DEBUG(pos < TotalSizeInBytes(), Panic(EDFStart));
 	__ASSERT_DEBUG(length > 0, Panic(EDFNotPositive));
@@ -997,6 +1113,7 @@ TInt DMmcMediaDriverFlash::DoFormat()
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:df:%d", r));
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOFORMAT_EXIT, this, r );
 	return r;
 	}
 
@@ -1007,6 +1124,8 @@ TInt DMmcMediaDriverFlash::LaunchFormat(TInt64 aStart, TUint32 aLength)
 // maintain the iReq* instance variables.  It sets iIntBuf, iPhysStart and iPhysEnd.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_LAUNCHFORMAT_ENTRY, this );
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHFORMAT, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:lf:0x%lx,0x%x", aStart, aLength));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELFStart));
 	__ASSERT_DEBUG((aStart & iBlkMsk) == 0, Panic(ELWFmtStAlign));
@@ -1092,6 +1211,7 @@ TInt DMmcMediaDriverFlash::LaunchFormat(TInt64 aStart, TUint32 aLength)
 		
 		r = EngageAndSetWriteRequest(EMReqFormat);
 		}
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHFORMAT_EXIT, this, r );
 		return r;
 	}
 
@@ -1103,6 +1223,8 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 // maintain the iReq* instance variables.  It sets iIntBuf, iPhysStart and iPhysEnd.
 //
 	{
+	OstTraceExt4(TRACE_FLOW, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_ENTRY, "DMmcMediaDriverFlash::LaunchWrite;aStart=%Ld;aLength=%x;aMedReq=%d;this=%x", aStart, (TUint) aLength, (TInt) aMedReq, (TUint) this);
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("\n>mmd:lw:0x%lx,%d,%d", aStart, aLength, aMedReq));
 	__ASSERT_DEBUG(aMedReq == EMReqWrite || aMedReq == EMReqFormat, Panic(ELWRequest));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELWStart));
@@ -1207,16 +1329,20 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 		if (iWtRBM & KWtRBMFst)
 			{			
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:lw: read-before-modify required on first block"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_RBMF, "Read-before-modify required on first block");
 			if (iDoPhysicalAddress)
 				iSession->SetupCIMReadBlock(I64LOW(iPhysStart >> KMMCardHighCapBlockSizeLog2), iMinorBuf, iBlkLen >> KMMCardHighCapBlockSizeLog2);
 			else
 				iSession->SetupCIMReadBlock(I64LOW(iPhysStart >> KMMCardHighCapBlockSizeLog2), iIntBuf, iBlkLen >> KMMCardHighCapBlockSizeLog2);
-			return EngageAndSetReadRequest(aMedReq);
+			r = EngageAndSetReadRequest(aMedReq);
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHWRITE_EXIT1, this, r );
+			return r;
 			}
 
 		else if (iWtRBM & KWtRBMLst)
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:lw: read-before-modify required on last block"));			
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_RBML, "Read-before-modify required on last block");
 			if(iDoDoubleBuffer || iDoPhysicalAddress)
 				{
 				//
@@ -1242,12 +1368,15 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 				}
 
 			// Kick off the RMW-read operation for the last block...
-			return EngageAndSetReadRequest(aMedReq);
+			r = EngageAndSetReadRequest(aMedReq);
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHWRITE_EXIT2, this, r );
+			return r;
 			}
 		
 		if (iWtRBM & KWtMinFst)
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:lw:Phys write-first-block-only"));			
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_FBO, "Write first block only");
 			//Overwrite first block with the new data			
 			TInt32 tlen = I64LOW(aStart & iBlkMsk);
 			TInt32 wlen = UMin(I64LOW((iBlkMsk+1) - tlen), aLength);			
@@ -1256,12 +1385,16 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 			TPtr8 tgt(&iMinorBuf[tlen], I64LOW(wlen));
 
 			if ( (r = iCurrentReq->ReadRemote(&tgt,I64LOW(usrOfst))) != KErrNone)
+			    {
+				OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHWRITE_EXIT3, this, r );
 				return r;			
+			    }
 			}
 		
 		if (iWtRBM & KWtMinLst)
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:lw:Phys write-last-block-only"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_LBO, "Write last block only");
 			iWtRBM &= ~KWtMinLst;
 			//Overwrite last block with the new data
 			const TInt64 medEnds = aStart + aLength;
@@ -1271,7 +1404,10 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 			TPtr8 tgt(iCacheBuf, I64LOW(tlen));			
 						
 			if ( (r = iCurrentReq->ReadRemote(&tgt,I64LOW(usrOfst+aLength-tlen))) !=KErrNone)
+			    {
+				OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHWRITE_EXIT4, this, r );
 				return r;			
+			    }
 			}
 		
 		// no reads required - read data from user buffer and launch write
@@ -1313,7 +1449,7 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
            		iPhysEnd = iPhysStart+physLength;
            		
            		if ((TUint32)physLength > physLen) physLength = physLen; // more memory in fragment than required!	
-           		
+           		OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_PHYSICAL, "Physical write request" );
 				iSession->SetupCIMWriteBlock(I64LOW(iPhysStart >> KMMCardHighCapBlockSizeLog2), (TUint8*) physAddr, physLen >> KMMCardHighCapBlockSizeLog2);
 				iSession->Command().iFlags|= KMMCCmdFlagPhysAddr;
 				iSession->EnableDoubleBuffering(physLength >> KDiskSectorShift);
@@ -1321,6 +1457,8 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 			else 
 				{
 				__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:lw:Phys:%d", r));
+				
+				OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHWRITE_EXIT5, this, r );
 				return r;					
 				}
 			} // if (iDoPhysicalAddress)
@@ -1334,6 +1472,7 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 				if(!iDoDoubleBuffer)
 					{
 					// EPBUSM automatically uses CMD24 instead of CMD25 for single block writes
+					OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_STANDARD, "Standard write request" );
 					iSession->SetupCIMWriteBlock(I64LOW(iPhysStart >> KMMCardHighCapBlockSizeLog2), iIntBuf, I64LOW((iPhysEnd - iPhysStart) >> KMMCardHighCapBlockSizeLog2));
 					}
 				else
@@ -1345,6 +1484,7 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 					// in 'len' above).  This is performed only once - the double-buffering 
 					// is subsequently handled within the DoDataTransferCallback function.
 					//
+					OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_DB, "Double-buffered write request" );
 					iSession->SetupCIMWriteBlock(I64LOW(iPhysStart >> KMMCardHighCapBlockSizeLog2), iIntBuf, I64LOW((((iDbEnd + iBlkMsk) & ~iBlkMsk) - iPhysStart) >> KMMCardHighCapBlockSizeLog2));
 					iSession->EnableDoubleBuffering(I64LOW((len + iBlkMsk) & ~iBlkMsk) >> KDiskSectorShift);
 	
@@ -1373,6 +1513,7 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:lw:%d", r));
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHWRITE_EXIT6, this, r );
 	return r;
 	}
 
@@ -1382,6 +1523,7 @@ TInt DMmcMediaDriverFlash::PartitionInfo(TPartitionInfo& anInfo)
 // then unlock the card before trying to read the first sector.
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_PARTITIONINFO_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:rpi"));
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(ERPIInUse));
 
@@ -1397,7 +1539,8 @@ TInt DMmcMediaDriverFlash::PartitionInfo(TPartitionInfo& anInfo)
 		if (KErrNone == r)
 			iMedReq = EMReqEMMCPtnInfo;
 		
-		return(r);
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_PARTITIONINFO_EXIT1, this, r );
+		return r;
 		}
 	
 	// Assume MBR will be present or is not required
@@ -1417,17 +1560,26 @@ TInt DMmcMediaDriverFlash::PartitionInfo(TPartitionInfo& anInfo)
 		// media subsystem, which will be updated when the media is finally unlocked.
 		r = CreateDefaultPartition();
 		if (r != KErrNone)
+		    {
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_PARTITIONINFO_EXIT2, this, r );
 			return r;
+		    }
+		
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_PARTITIONINFO_EXIT3, this, KErrLocked );
 		return KErrLocked;
 		}
 
 	// KErrNone indicates asynchronous completion
+	
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_PARTITIONINFO_EXIT4, this, r );
 	return r;
 	}
 
 TInt DMmcMediaDriverFlash::LaunchRPIUnlock(TLocalDrivePasswordData& aPasswordData)
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_LAUNCHRPIUNLOCK_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:lru:%d,%d", iCard->IsReady(), iCard->IsLocked()));
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHRPIUNLOCK_ICARD, "iCard->IsReady=%d; iCard->IsLocked=%d", iCard->IsReady(), iCard->IsLocked());
 	__ASSERT_DEBUG(iSession != NULL, Panic(ECFSessPtrNull));
 
 	TInt r = KErrNone;
@@ -1457,6 +1609,7 @@ TInt DMmcMediaDriverFlash::LaunchRPIUnlock(TLocalDrivePasswordData& aPasswordDat
 		}
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:lru:%d", r));
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHRPIUNLOCK_EXIT, this, r );
 	return r;
 	}
 
@@ -1466,6 +1619,7 @@ TInt DMmcMediaDriverFlash::LaunchRPIRead()
 // launch read request on first KDiskSectorSize (512) bytes
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_LAUNCHRPIREAD_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf((">mmd:lrr")));
 	__ASSERT_DEBUG(iSession != NULL, Panic(ECFSessPtrNull));
 
@@ -1482,12 +1636,14 @@ TInt DMmcMediaDriverFlash::LaunchRPIRead()
 		}
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:lrr:%d", r));
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHRPIREAD_EXIT, this, r );
 	return r;
 	}
 
 
 TInt DMmcMediaDriverFlash::LaunchRPIErase()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_LAUNCHRPIERASE_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:lre:%d,%d", iCard->IsReady(), iCard->IsLocked()));
 	__ASSERT_DEBUG(iSession != NULL, Panic(ECFSessPtrNull));
 
@@ -1503,6 +1659,7 @@ TInt DMmcMediaDriverFlash::LaunchRPIErase()
 		else
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:df:EMReqForceErase"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHRPIERASE_FORCE_ERASE, "Force erase");
 			iMinorBuf[0] = KMMCLockUnlockErase;
 			iSession->SetupCIMLockUnlock(1, iMinorBuf);
 			r = EngageAndSetWriteRequest(EMReqForceErase);
@@ -1510,6 +1667,7 @@ TInt DMmcMediaDriverFlash::LaunchRPIErase()
 		}
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:lru:%d", r));
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_LAUNCHRPIERASE_EXIT, this, r );
 	return r;
 	}
 
@@ -1519,6 +1677,7 @@ TInt DMmcMediaDriverFlash::DecodePartitionInfo()
 // decode partition info that was read into internal buffer 
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_ENTRY, this );
 	TInt partitionCount=iPartitionInfo->iPartitionCount=0;
 	TInt defaultPartitionNumber=-1;
 	TMBRPartitionEntry* pe;
@@ -1563,6 +1722,7 @@ TInt DMmcMediaDriverFlash::DecodePartitionInfo()
 			{
 			SetPartitionEntry(&iPartitionInfo->iEntry[partitionCount],pe->iFirstSector,pe->iNumSectors);
 			__KTRACE_OPT(KLOCDPAGING, Kern::Printf("Mmc: FAT partition found at sector #%u", pe->iFirstSector));
+			OstTrace1(TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_FS,"FAT partition found at sector #%u", pe->iFirstSector);
 			partitionCount++;
 			}
 		else
@@ -1586,6 +1746,7 @@ TInt DMmcMediaDriverFlash::DecodePartitionInfo()
 		if(part.iPartitionBaseAddr + part.iPartitionLen > deviceSize)
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: MBR partition exceeds card memory space"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_PARTCOUNT1, "MBR partition exceeds card memory space" );
 			// Adjust the partition length to card address boundary
 			part.iPartitionLen = (deviceSize - part.iPartitionBaseAddr);
 
@@ -1593,6 +1754,7 @@ TInt DMmcMediaDriverFlash::DecodePartitionInfo()
 			if(part.iPartitionLen <= 0)
 				{
 				__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: Invalid base address"));
+				OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_PARTCOUNT2, "Invalid base address" );
 				// Invalid MBR - assume the boot sector is in the first sector
 				defaultPartitionNumber =-1; 
 				partitionCount=0;
@@ -1609,6 +1771,7 @@ TInt DMmcMediaDriverFlash::DecodePartitionInfo()
 				if(curr.iPartitionBaseAddr < (prev.iPartitionBaseAddr + prev.iPartitionLen))
 					{
 					__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: Overlapping partitions"));
+					OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_PARTCOUNT3, "Overlapping partitions" );
 					// Adjust the partition length to not overlap the next partition
 					prev.iPartitionLen = (curr.iPartitionBaseAddr - prev.iPartitionBaseAddr);
 
@@ -1616,6 +1779,7 @@ TInt DMmcMediaDriverFlash::DecodePartitionInfo()
 					if(prev.iPartitionLen <= 0)
 						{
 						__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc: Invalid base address"));
+						OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_PARTCOUNT4, "Invalid base address" );
 						// Invalid MBR - assume the boot sector is in the first sector
 						defaultPartitionNumber=(-1); 
 						partitionCount=0;
@@ -1629,15 +1793,20 @@ mbr_done:
 	if (defaultPartitionNumber==(-1) && partitionCount==0)
 		{
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("Mmc:PartitionInfo no MBR"));
+		OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_MBRDONE1, "No MBR" );
 		if (MBRMandatory(iCard))
 			{
 			// If the MBR is missing AND is required, we present a default partition entry to the local
 			// media subsystem, which will be updated when the media is finally formatted
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("MBR mandatory, defining space for MBR + default partition"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_MBRDONE2, "MBR mandatory, defining space for MBR + default partition" );
 			iMbrMissing = ETrue;
 			TInt r = CreateDefaultPartition();
 			if (r != KErrNone)
+			    {
+				OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_EXIT1, this, r );
 				return r;
+			    }
 			}
 		else
 			{
@@ -1656,6 +1825,8 @@ mbr_done:
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("     Partition2 (B:%xH L:%xH)",I64LOW(iPartitionInfo->iEntry[1].iPartitionBaseAddr),I64LOW(iPartitionInfo->iEntry[1].iPartitionLen)));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("     Partition3 (B:%xH L:%xH)",I64LOW(iPartitionInfo->iEntry[2].iPartitionBaseAddr),I64LOW(iPartitionInfo->iEntry[2].iPartitionLen)));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("     Partition4 (B:%xH L:%xH)",I64LOW(iPartitionInfo->iEntry[3].iPartitionBaseAddr),I64LOW(iPartitionInfo->iEntry[3].iPartitionLen)));
+	OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_PARTINFO1, "Partition1 (B:0x%x L:0x%x); Partition2 (B:0x%x L:0x%x)", I64LOW(iPartitionInfo->iEntry[0].iPartitionBaseAddr),I64LOW(iPartitionInfo->iEntry[0].iPartitionLen),I64LOW(iPartitionInfo->iEntry[1].iPartitionBaseAddr),I64LOW(iPartitionInfo->iEntry[1].iPartitionLen));
+	OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_MMCDEBUG, DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_PARTINFO2, "Partition3 (B:0x%x L:0x%x); Partition4 (B:0x%x L:0x%x)", I64LOW(iPartitionInfo->iEntry[2].iPartitionBaseAddr),I64LOW(iPartitionInfo->iEntry[2].iPartitionLen),I64LOW(iPartitionInfo->iEntry[3].iPartitionBaseAddr),I64LOW(iPartitionInfo->iEntry[3].iPartitionLen));
 
 #ifdef _DEBUG
 	TMBRPartitionEntry cPe;
@@ -1680,7 +1851,8 @@ mbr_done:
 		}
 #endif
 
-	return(KErrNone);
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DECODEPARTITIONINFO_EXIT2, this, KErrNone );
+	return KErrNone;
 	}
 
 
@@ -1690,6 +1862,7 @@ TInt DMmcMediaDriverFlash::WritePartitionInfo()
 	@return Standard Symbian OS Error Code
  */
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_WRITEPARTITIONINFO_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:wpi"));
 	__ASSERT_DEBUG(iSession != NULL, Panic(ECFSessPtrNull));
 
@@ -1708,7 +1881,8 @@ TInt DMmcMediaDriverFlash::WritePartitionInfo()
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("    End Cyclinder    : %02xh", partitionEntry.iEndCylinder));
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("    Relative Sector  : %08xh", partitionEntry.iFirstSector));
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("    Number of Sectors: %08xh", partitionEntry.iNumSectors));
-
+		OstTraceExt5(TRACE_MMCDEBUG, DMMCMEDIADRIVERFLASH_WRITEPARTITIONINFO_PARTINFO1, "Boot ID=0x%02x; Start Head=0x%02x; Start Sector=0x%02x; Start Cyclinder=0x%02x; System ID=0x%02x", (TUint) partitionEntry.iX86BootIndicator, (TUint) partitionEntry.iStartHead, (TUint) partitionEntry.iStartSector, (TUint) partitionEntry.iStartCylinder, (TUint) partitionEntry.iPartitionType);
+		OstTraceExt5(TRACE_MMCDEBUG, DMMCMEDIADRIVERFLASH_WRITEPARTITIONINFO_PARTINFO2, "End Head=0x%02x; End Sector=0x%02x; End Cyclinder=0x%02x; Relative Sector=0x%08x; Number of Sectors=0x%08x", (TUint) partitionEntry.iEndHead, (TUint) partitionEntry.iEndSector, (TUint) partitionEntry.iEndCylinder, (TUint) partitionEntry.iFirstSector, (TUint) partitionEntry.iNumSectors);
 		//
 		// Clear all other partition entries and align the partition info into the minor buffer for writing...
 		//
@@ -1729,12 +1903,14 @@ TInt DMmcMediaDriverFlash::WritePartitionInfo()
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:wpi:%d", err));
 
-	return(err);
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_WRITEPARTITIONINFO_EXIT, this, err );
+	return err;
 	}
 
 
 TInt DMmcMediaDriverFlash::CreateDefaultPartition()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_CREATEDEFAULTPARTITION_ENTRY, this );
 	TMBRPartitionEntry defPartition;
 	TInt r = GetDefaultPartitionInfo(defPartition);
 	if (r == KErrNone)
@@ -1744,6 +1920,7 @@ TInt DMmcMediaDriverFlash::CreateDefaultPartition()
 		iPartitionInfo->iPartitionCount   = 1;
 		iPartitionInfo->iMediaSizeInBytes = TotalSizeInBytes();
 		}
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_CREATEDEFAULTPARTITION_EXIT, this, r );
 	return r;
 	}
 
@@ -1756,7 +1933,8 @@ TInt DMmcMediaDriverFlash::GetDefaultPartitionInfo(TMBRPartitionEntry& aPartitio
 	{
 	memclr(&aPartitionEntry, sizeof(TMBRPartitionEntry));
 	TUint16 reservedSectors; // Not used
-	return GetMediaDefaultPartitionInfo(aPartitionEntry, reservedSectors, iCard);
+	TInt r = GetMediaDefaultPartitionInfo(aPartitionEntry, reservedSectors, iCard);
+	return r;
 	}
 
 
@@ -1765,15 +1943,18 @@ void DMmcMediaDriverFlash::SetPartitionEntry(TPartitionEntry* aEntry, TUint aFir
 // auxiliary static function to record partition information in TPartitionEntry object
 //
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_SETPARTITIONENTRY_ENTRY );
 	aEntry->iPartitionBaseAddr=aFirstSector;
 	aEntry->iPartitionBaseAddr<<=KDiskSectorShift;
 	aEntry->iPartitionLen=aNumSectors;
 	aEntry->iPartitionLen<<=KDiskSectorShift;
 	aEntry->iPartitionType=KPartitionTypeFAT12;	
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_SETPARTITIONENTRY_EXIT );
 	}
 
 TInt DMmcMediaDriverFlash::DoPasswordOp()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOPASSWORDOP_ENTRY, this );
 	// Reconstruct password data structure in our address space
 	TLocalDrivePasswordData clientData;
 	TInt r = iCurrentReq->ReadRemoteRaw(&clientData, sizeof(TLocalDrivePasswordData));
@@ -1808,6 +1989,7 @@ TInt DMmcMediaDriverFlash::DoPasswordOp()
 	if(r != KErrNone)
 		PartitionInfoComplete(r);
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_DOPASSWORDOP_EXIT, this, KErrNone );
 	return KErrNone; // ensures to indicate asynchronoous completion
 	}
 
@@ -1819,6 +2001,7 @@ void DMmcMediaDriverFlash::PasswordControl(TInt aFunc, TLocalDrivePasswordData& 
 // LaunchRPIUnlock().
 //
 	{
+	OstTraceExt2(TRACE_FLOW, DMMCMEDIADRIVERFLASH_PASSWORDCONTROL_ENTRY ,"DMmcMediaDriverFlash::PasswordControl;aFunc=%d;this=%x", aFunc, (TUint) this);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:pc:%d", (TInt) aFunc));
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(EPCInUse));
 	__ASSERT_DEBUG(aFunc == DLocalDrive::EPasswordLock || aFunc == DLocalDrive::EPasswordClear, Panic(EPCFunc));
@@ -1902,6 +2085,7 @@ void DMmcMediaDriverFlash::PasswordControl(TInt aFunc, TLocalDrivePasswordData& 
 		CompleteRequest(r);
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:pc:%d", r));
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_PASSWORDCONTROL_EXIT, this );
 	}
 
 
@@ -1912,7 +2096,7 @@ TInt DMmcMediaDriverFlash::CheckDevice(TMediaReqType aReqType)
 // Check the device before initiating a command
 //
 	{
-	
+	OstTraceExt2(TRACE_FLOW, DMMCMEDIADRIVERFLASH_CHECKDEVICE_ENTRY, "DMmcMediaDriverFlash::CheckDevice;aReqType=%d;this=%x", (TInt) aReqType, (TUint) this);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:cd:%d",aReqType));
 
 	TInt r=KErrNone;
@@ -1949,7 +2133,8 @@ TInt DMmcMediaDriverFlash::CheckDevice(TMediaReqType aReqType)
 		r=KErrAccessDenied;
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:cd:%d", r));
-	return(r);
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_CHECKDEVICE_EXIT, this, r );
+	return r;
 	}
 
 void DMmcMediaDriverFlash::SessionEndCallBack(TAny* aMediaDriver)
@@ -1958,9 +2143,11 @@ void DMmcMediaDriverFlash::SessionEndCallBack(TAny* aMediaDriver)
 // next session or to complete client request.
 //
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_SESSIONENDCALLBACK_ENTRY );
 	DMmcMediaDriverFlash& md = *static_cast<DMmcMediaDriverFlash*>(aMediaDriver);
 	__ASSERT_DEBUG(! md.iSessionEndDfc.Queued(), Panic(ESECBQueued));
 	md.iSessionEndDfc.Enque();
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_SESSIONENDCALLBACK_EXIT );
 	}
 
 
@@ -1975,7 +2162,9 @@ void DMmcMediaDriverFlash::DoSessionEndDfc()
 // launch next session or complete client request
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOSESSIONENDDFC_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:dsed:%d", CurrentRequest()));
+	OstTrace1( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOSESSIONENDDFC_REQUEST, "Current Request=%d", CurrentRequest());
 
 	TInt r=KErrNone;
 
@@ -2217,23 +2406,29 @@ void DMmcMediaDriverFlash::DoSessionEndDfc()
 			InvalidateCache();
 
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mdf:dsed:cmp:%d", r));
+		OstTrace1( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOSESSIONENDDFC_COMPLETE, "Complete request; retval=%d", r);
 		CompleteRequest(r);
 		}
 	else
 		{
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mdf:dsed:ncmp"));
+		OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOSESSIONENDDFC_NOT_COMPLETE, "Request not complete");
 		}
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOSESSIONENDDFC_EXIT, this );
 	}
 
 void DMmcMediaDriverFlash::DataTransferCallBack(TAny* aMediaDriver)
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_DATATRANSFERCALLBACK_ENTRY );
 	DMmcMediaDriverFlash& md = *static_cast<DMmcMediaDriverFlash*>(aMediaDriver);
 	__ASSERT_DEBUG(! md.iDataTransferCallBackDfc.Queued(), Panic(EDBCBQueued));
 	md.iDataTransferCallBackDfc.Enque();
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_DATATRANSFERCALLBACK_EXIT );
 	}
 
 void DMmcMediaDriverFlash::DataTransferCallBackDfc(TAny* aMediaDriver)
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_DATATRANSFERCALLBACKDFC_ENTRY );
 	DMmcMediaDriverFlash& md = *static_cast<DMmcMediaDriverFlash*>(aMediaDriver);
 
 	if (md.iDoPhysicalAddress)
@@ -2258,10 +2453,12 @@ void DMmcMediaDriverFlash::DataTransferCallBackDfc(TAny* aMediaDriver)
 			md.DoReadDataTransferCallBack();
 			}
 		}
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_DATATRANSFERCALLBACKDFC_EXIT );
 	}
 
 void DMmcMediaDriverFlash::DoPhysWriteDataTransferCallBack()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOPHYSWRITEDATATRANSFERCALLBACK_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("++DMmcMediaDriverFlash::DoPhysWriteDataTransferCallBack()"));
 
 	TInt err = KErrNone;
@@ -2293,17 +2490,20 @@ void DMmcMediaDriverFlash::DoPhysWriteDataTransferCallBack()
 		iSession->MoreDataAvailable( (TInt)(iBlkLen >> KDiskSectorShift), iIntBuf, err);
 #endif
 		__KTRACE_OPT(KPBUSDRV, 	Kern::Printf("--iDoPhysicalAddress(KIPCSetup)"));
+		OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOPHYSWRITEDATATRANSFERCALLBACK_EXIT1, this );
 		return;
 		}
 	
 	PrepareNextPhysicalFragment();
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("--DMmcMediaDriverFlash::DoPhysWriteDataTransferCallBack()"));
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOPHYSWRITEDATATRANSFERCALLBACK_EXIT2, this );
 	}
 
 
 void DMmcMediaDriverFlash::DoPhysReadDataTransferCallBack()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOPHYSREADDATATRANSFERCALLBACK_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, 	Kern::Printf("++DMmcMediaDriverFlash::DoPhysReadTransferCallBack()"));
 
 	TInt err = KErrNone;
@@ -2348,16 +2548,19 @@ void DMmcMediaDriverFlash::DoPhysReadDataTransferCallBack()
 #endif
 		iSecondBuffer = ETrue;
 		__KTRACE_OPT(KPBUSDRV, 	Kern::Printf("--iDoPhysicalAddress(KIPCWrite)"));
+		OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOPHYSREADDATATRANSFERCALLBACK_EXIT1, this );
 		return;
 		}
 
 	PrepareNextPhysicalFragment();
 
 	__KTRACE_OPT(KPBUSDRV, 	Kern::Printf("--DMmcMediaDriverFlash::DoPhysReadTransferCallBack()"));
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOPHYSREADDATATRANSFERCALLBACK_EXIT2, this );
 	}
 
 void DMmcMediaDriverFlash::DoWriteDataTransferCallBack()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOWRITEDATATRANSFERCALLBACK_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("++DMmcMediaDriverFlash::DoWriteDataTransferCallBack()"));
 
 	TInt err = KErrNone;
@@ -2422,11 +2625,13 @@ void DMmcMediaDriverFlash::DoWriteDataTransferCallBack()
 	iSession->MoreDataAvailable(numBlocks, bufPtr, err);
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("--DMmcMediaDriverFlash::DoWriteDataTransferCallBack()"));
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOWRITEDATATRANSFERCALLBACK_EXIT, this );
 	}
 
 
 void DMmcMediaDriverFlash::DoReadDataTransferCallBack()
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DOREADDATATRANSFERCALLBACK_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, 	Kern::Printf("++DMmcMediaDriverFlash::DoReadTransferCallBack()"));
 
 	TInt err = KErrNone;
@@ -2449,6 +2654,7 @@ void DMmcMediaDriverFlash::DoReadDataTransferCallBack()
 			iSecondBuffer = EFalse;
 
 			iSession->MoreDataAvailable(numBlocks, bufPtr, KErrNone);
+			OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOREADDATATRANSFERCALLBACK_EXIT1, this );
 			return;
 			}
 		else
@@ -2489,6 +2695,7 @@ void DMmcMediaDriverFlash::DoReadDataTransferCallBack()
 	iSession->MoreDataAvailable(numBlocks, bufPtr, err);
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("--DMmcMediaDriverFlash::DoDataTransferCallBack()"));
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DOREADDATATRANSFERCALLBACK_EXIT2, this );
 	}
 
 
@@ -2497,13 +2704,19 @@ void DMmcMediaDriverFlash::DoReadDataTransferCallBack()
 
 TInt DMmcMediaDriverFlash::EngageAndSetReadRequest(DMmcMediaDriverFlash::TMediaRequest aRequest)
 	{
-	return EngageAndSetRequest(aRequest, iReadCurrentInMilliAmps);
+	OstTraceExt2(TRACE_FLOW, DMMCMEDIADRIVERFLASH_ENGAGEANDSETREADREQUEST_ENTRY, "DMmcMediaDriverFlash::EngageAndSetReadRequest;aRequest=%d;this=%x", (TInt) aRequest, (TUint) this);
+	TInt r = EngageAndSetRequest(aRequest, iReadCurrentInMilliAmps);
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ENGAGEANDSETREADREQUEST_EXIT, this, r );
+	return r;
 	}
 
 
 TInt DMmcMediaDriverFlash::EngageAndSetWriteRequest(DMmcMediaDriverFlash::TMediaRequest aRequest)
 	{
-	return EngageAndSetRequest(aRequest, iWriteCurrentInMilliAmps);
+	OstTraceExt2(TRACE_FLOW, DMMCMEDIADRIVERFLASH_ENGAGEANDSETWRITEREQUEST_ENTRY, "DMmcMediaDriverFlash::EngageAndSetReadRequest;aRequest=%d;this=%x", (TInt) aRequest, (TUint) this);
+	TInt r = EngageAndSetRequest(aRequest, iWriteCurrentInMilliAmps);
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ENGAGEANDSETWRITEREQUEST_EXIT, this, r );
+	return r;
 	}
 
 
@@ -2514,6 +2727,7 @@ TInt DMmcMediaDriverFlash::EngageAndSetRequest(DMmcMediaDriverFlash::TMediaReque
 // cleared in the corresponding call to CompleteRequest().
 //
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCMEDIADRIVERFLASH_ENGAGEANDSETREQUEST_ENTRY, "DMmcMediaDriverFlash::EngageAndSetRequest;aRequest=%d;aCurrent=%d;this=%x", (TInt) aRequest, aCurrent, (TUint) this);
 	__ASSERT_DEBUG(iSession != NULL, Panic(ECFSessPtrNull));
 
 	iMedReq = aRequest;
@@ -2534,6 +2748,7 @@ TInt DMmcMediaDriverFlash::EngageAndSetRequest(DMmcMediaDriverFlash::TMediaReque
 		EndInCritical();
 		}
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ENGAGEANDSETREQUEST_EXIT, this, r );
 	return r;
 	}
 
@@ -2543,6 +2758,7 @@ void DMmcMediaDriverFlash::CompleteRequest(TInt aReason)
 // completes the specified request
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_COMPLETEREQUEST_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:cr0x%08x,%d", iCurrentReq, aReason));
 	
 	iMedReq = EMReqIdle;
@@ -2559,10 +2775,12 @@ void DMmcMediaDriverFlash::CompleteRequest(TInt aReason)
 		iCurrentReq=NULL;
 		DMediaDriver::Complete(*pR,aReason);
 		}
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_COMPLETEREQUEST_EXIT, this );
 	}
 
 TInt DMmcMediaDriverFlash::Caps(TLocDrv& aDrive, TLocalDriveCapsV6& aInfo)
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_CAPS_ENTRY, this );
 	// Fill buffer with current media caps.
 	aInfo.iType = EMediaHardDisk;
 	aInfo.iConnectionBusType = EConnectionBusInternal;
@@ -2590,7 +2808,10 @@ TInt DMmcMediaDriverFlash::Caps(TLocDrv& aDrive, TLocalDriveCapsV6& aInfo)
 		TMBRPartitionEntry dummy;	// Not used here
 		const TInt r = GetMediaDefaultPartitionInfo(dummy, reservedSectors, iCard);
 		if(r != KErrNone)
+		    {
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_CAPS_EXIT1, this, r );
 			return r;
+		    }
 
 		aInfo.iFormatInfo.iReservedSectors = reservedSectors;
 		aInfo.iExtraInfo = ETrue;
@@ -2653,6 +2874,7 @@ TInt DMmcMediaDriverFlash::Caps(TLocDrv& aDrive, TLocalDriveCapsV6& aInfo)
 	
 	// Must return KErrCompletion to indicate that this 
 	// is a synchronous version of the function
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_CAPS_EXIT2, this, KErrCompletion );
 	return KErrCompletion;
 	}
 
@@ -2670,7 +2892,9 @@ TInt DMmcMediaDriverFlash::ReadDataUntilCacheExhausted(TBool* aAllDone)
 // This function is linear in the number of blocks in the cache.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_READDATAUNTILCACHEEXHAUSTED_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:rdc:%x,%x", iReqCur, iReqEnd));
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_READDATAUNTILCACHEEXHAUSTED, "iReqCur=0x%x; iReqEnd=0x%x", (TUint) iReqCur, (TUint) iReqEnd );
 	
 	if ( iCurrentReq->IsPhysicalAddress()
 #if defined(__DEMAND_PAGING__) && !defined(__WINS__)
@@ -2679,6 +2903,7 @@ TInt DMmcMediaDriverFlash::ReadDataUntilCacheExhausted(TBool* aAllDone)
         )
 		{
 		*aAllDone = EFalse;
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_READDATAUNTILCACHEEXHAUSTED_EXIT1, this, KErrNone );
 		return KErrNone;
 		}
 	
@@ -2710,6 +2935,7 @@ TInt DMmcMediaDriverFlash::ReadDataUntilCacheExhausted(TBool* aAllDone)
 	*aAllDone = (iReqCur >= iReqEnd);
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:rdc:%d,%d", *aAllDone, r));
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_READDATAUNTILCACHEEXHAUSTED_EXIT2, this, r );
 	return r;
 	}
 
@@ -2719,6 +2945,7 @@ TInt DMmcMediaDriverFlash::WriteDataToUser(TUint8* aBufPtr)
 // write the data from the most recent read operation to the user descriptor
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_WRITEDATATOUSER_ENTRY, this );
 	TInt r = KErrNotSupported;
 
 	// get range of data to read out of internal buffer
@@ -2729,24 +2956,37 @@ TInt DMmcMediaDriverFlash::WriteDataToUser(TUint8* aBufPtr)
 	// write data from internal buffer
 	TUint usrOfst = I64LOW(iReqCur - iReqStart);
 
+	OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_WRITEDATATOUSER_LATENCY1, "Begin writing user data" );
 #if defined(__DEMAND_PAGING__) && !defined(__WINS__)
 	if (DMediaPagingDevice::PageInRequest(*iCurrentReq))
 		r=iCurrentReq->WriteToPageHandler((TUint8 *)(&extrView[0]), len, usrOfst);
 	else
 #endif	// __DEMAND_PAGING__
 		r = iCurrentReq->WriteRemote(&extrView,usrOfst);
+	
+	OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_WRITEDATATOUSER_LATENCY2, "End writing user data" );
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_WRITEDATATOUSER_EXIT, this, r );
 	return r;
 	}
 
 TInt DMmcMediaDriverFlash::ReadDataFromUser(TDes8& aDes, TInt aOffset)
 	{
+	OstTraceExt2(TRACE_FLOW, DMMCMEDIADRIVERFLASH_READDATAFROMUSER_ENTRY ,"DMmcMediaDriverFlash::ReadDataFromUser;aOffset=%d;this=%x", aOffset, (TUint) this);
+	TInt r = KErrNotSupported;
 #ifndef __WINS__
 	if (DMediaPagingDevice::PageOutRequest(*iCurrentReq))
-		return iCurrentReq->ReadFromPageHandler((TAny*) aDes.Ptr(), aDes.MaxLength(), aOffset);
+	    {
+		r = iCurrentReq->ReadFromPageHandler((TAny*) aDes.Ptr(), aDes.MaxLength(), aOffset);
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_READDATAFROMUSER_EXIT1, this, r );
+		return r;
+	    }
 	else
 #endif // #ifndef __WINS__
-		return iCurrentReq->ReadRemote(&aDes, aOffset);
+		r = iCurrentReq->ReadRemote(&aDes, aOffset);
+	
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_READDATAFROMUSER_EXIT2, this, r );
+	return r;
 	}
 
 TInt DMmcMediaDriverFlash::AdjustPhysicalFragment(TPhysAddr &aPhysAddr, TInt &aPhysLength)
@@ -2756,6 +2996,7 @@ TInt DMmcMediaDriverFlash::AdjustPhysicalFragment(TPhysAddr &aPhysAddr, TInt &aP
 // Note the offset may encompass multiple memory fragments.
 //
 	{
+	OstTraceExt3(TRACE_FLOW, DMMCMEDIADRIVERFLASH_ADJUSTPHYSICALFRAGMENT_ENTRY, "DMmcMediaDriverFlash::AdjustPhysicalFragment;aPhysAddr=%x;aPhysLength=%d;this=%x", (TUint) aPhysAddr, aPhysLength, (TUint) this);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:APF"));
 	
 	TInt err = KErrNone;
@@ -2766,7 +3007,10 @@ TInt DMmcMediaDriverFlash::AdjustPhysicalFragment(TPhysAddr &aPhysAddr, TInt &aP
 		err = iCurrentReq->GetNextPhysicalAddress(aPhysAddr, aPhysLength);
 
 		if (err != KErrNone)
+		    {
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ADJUSTPHYSICALFRAGMENT_EXIT1, this, err );
 			return err;
+		    }
 		
 		if (offset >= aPhysLength) // more offset than in this physical chunk
 			{
@@ -2788,6 +3032,7 @@ TInt DMmcMediaDriverFlash::AdjustPhysicalFragment(TPhysAddr &aPhysAddr, TInt &aP
 	
 	if (aPhysAddr == 0)
 		{
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ADJUSTPHYSICALFRAGMENT_EXIT2, this, KErrNoMemory );
 		return KErrNoMemory;
 		}
 
@@ -2796,11 +3041,13 @@ TInt DMmcMediaDriverFlash::AdjustPhysicalFragment(TPhysAddr &aPhysAddr, TInt &aP
 	if ( (aPhysAddr & (iSocket->DmaAlignment()-1) ) )
 		{
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("mmd:lr:Memory Fragment Not Word Aligned!"));
+		OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_ADJUSTPHYSICALFRAGMENT_DMA, "Memory fragment not word aligned");
 		Panic(ENotDMAAligned);
 		}
 #endif	//_DEBUG
 	
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:APF physAddr(0x%x), physLength(%d)",aPhysAddr, aPhysLength));
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_ADJUSTPHYSICALFRAGMENT_EXIT3, this, err );
 	return err;
 	}
 
@@ -2811,6 +3058,7 @@ TInt DMmcMediaDriverFlash::PrepareFirstPhysicalFragment(TPhysAddr &aPhysAddr, TI
 // memory fragments.
 //
 	{
+	OstTraceExt4(TRACE_FLOW, DMMCMEDIADRIVERFLASH_PREPAREFIRSTPHYSICALFRAGMENT_ENTRY, "DMmcMediaDriverFlash::PrepareFirstPhysicalFragment;aPhysAddr=%x;aPhysLength=%d;aLength=%x;this=%x", (TUint) aPhysAddr, aPhysLength, (TUint) aLength, (TUint) this);
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:PFPF"));
 	TInt r = KErrNone;
 	
@@ -2822,6 +3070,7 @@ TInt DMmcMediaDriverFlash::PrepareFirstPhysicalFragment(TPhysAddr &aPhysAddr, TI
 		if ( ((TUint32)aPhysLength >= aLength) && len )
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:PFPF-end block"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_PREPAREFIRSTPHYSICALFRAGMENT_EB, "End block");
 			//next iteration will be an IPC for the end block
 			//There is enough space in physical memory to fit
 			//the extended read, but exceeds boundary for this request.
@@ -2833,6 +3082,7 @@ TInt DMmcMediaDriverFlash::PrepareFirstPhysicalFragment(TPhysAddr &aPhysAddr, TI
 		if (aPhysLength & iBlkMsk)
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:PFPF-straddles boundary"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_PREPAREFIRSTPHYSICALFRAGMENT_SB, "Straddles boundary");
 			// block must be straddling a fragment boundary
 			// Next iteration must be an IPC 
 			iRdROB |= KIPCSetup;
@@ -2844,6 +3094,7 @@ TInt DMmcMediaDriverFlash::PrepareFirstPhysicalFragment(TPhysAddr &aPhysAddr, TI
 		}
 	
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:PFPF err(%d), physAddr(0x%x), physLength(%d)",r, aPhysAddr, aPhysLength));	
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_PREPAREFIRSTPHYSICALFRAGMENT_EXIT, this, r );
 	return r;
 	}
 	
@@ -2855,6 +3106,7 @@ void DMmcMediaDriverFlash::PrepareNextPhysicalFragment()
 // memory fragments.
 //
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_PREPARENEXTPHYSICALFRAGMENT_ENTRY );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:PNPF"));
 	TInt err = KErrNone;
 	TPhysAddr physAddr = 0;
@@ -2871,6 +3123,8 @@ void DMmcMediaDriverFlash::PrepareNextPhysicalFragment()
 			if (len)
 				{
 				__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:PNPF-end block"));
+				OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_PREPARENEXTPHYSICALFRAGMENT_EB, "End block" );
+				
 				// end point not block aligned!
 				// next iteration must be an IPC call
 				iRdROB |= KIPCSetup;
@@ -2885,6 +3139,8 @@ void DMmcMediaDriverFlash::PrepareNextPhysicalFragment()
 		if (physLength & iBlkMsk)
 			{
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:PNPF-straddles boundary"));
+			OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_PREPARENEXTPHYSICALFRAGMENT_SB, "Straddles boundary" );
+			
 			// block must be straddling a fragment boundary
 			// Next iteration must be an IPC 
 			iRdROB |= KIPCSetup;
@@ -2900,6 +3156,7 @@ void DMmcMediaDriverFlash::PrepareNextPhysicalFragment()
 	iSession->MoreDataAvailable( (physLength  >> KDiskSectorShift), (TUint8*) physAddr, err);		
 	iSecondBuffer = EFalse;
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:PNPF"));
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_PREPARENEXTPHYSICALFRAGMENT_EXIT );
 	}
 
 TUint8* DMmcMediaDriverFlash::ReserveReadBlocks(TInt64 aStart, TInt64 aEnd, TUint32* aLength)
@@ -2911,6 +3168,7 @@ TUint8* DMmcMediaDriverFlash::ReserveReadBlocks(TInt64 aStart, TInt64 aEnd, TUin
 // ReadDataUntilCacheExhausted() is called from the callback DFC.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_RESERVEREADBLOCKS_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:rrb:%lx,%lx", aStart, aEnd));
 
 	__ASSERT_DEBUG((aStart & iBlkMsk) == 0, Panic(ERRBStAlign));
@@ -2960,6 +3218,8 @@ TUint8* DMmcMediaDriverFlash::ReserveReadBlocks(TInt64 aStart, TInt64 aEnd, TUin
 
 	if (blkCnt < 1) blkCnt = 1; //RBW required < 1 block to be read
 	
+	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_RESERVEREADBLOCKS_RANGE, "blocksInRange=%d; blkCnt=%d", blocksInRange, blkCnt );
+	
 	TUint32 lengthInBytes = blkCnt << iBlkLenLog2;
 	*aLength = lengthInBytes;
 	MarkBlocks(aStart, aStart + lengthInBytes, startIndex);
@@ -2968,6 +3228,7 @@ TUint8* DMmcMediaDriverFlash::ReserveReadBlocks(TInt64 aStart, TInt64 aEnd, TUin
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:rrb:%x", (TUint32) raby));
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_RESERVEREADBLOCKS_EXIT, this, ( TUint )( raby ) );
 	return raby;
 	}
 
@@ -2985,6 +3246,7 @@ TUint8* DMmcMediaDriverFlash::ReserveWriteBlocks(TInt64 aStart, TInt64 aEnd, TUi
 // information to minimize RBMs.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_RESERVEWRITEBLOCKS_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:rwb:%lx,%lx", aStart, aEnd));
 
 	TInt64 physStart = aStart & ~iBlkMsk;
@@ -3000,6 +3262,7 @@ TUint8* DMmcMediaDriverFlash::ReserveWriteBlocks(TInt64 aStart, TInt64 aEnd, TUi
 	const TBool lastPartial  = (aEnd & iBlkMsk)   != 0;
 	
 	const TInt blkCnt = I64LOW((physEnd - physStart) >> iBlkLenLog2);
+	OstTrace1( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_RESERVEWRITEBLOCKS_RANGE, "blkCnt=%d", blkCnt );
 	
 	TBool startUsed = EFalse;
 	TBool endUsed   = EFalse;
@@ -3044,6 +3307,7 @@ TUint8* DMmcMediaDriverFlash::ReserveWriteBlocks(TInt64 aStart, TInt64 aEnd, TUi
 				//Physical addressing not to be used.
 				//more efficent to use local Cache copying
 				iDoPhysicalAddress = EFalse;
+				OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_RESERVEWRITEBLOCKS_EXIT1, this, ( TUint )( raby ) );
 				return raby;
 				}
 			else
@@ -3089,6 +3353,7 @@ TUint8* DMmcMediaDriverFlash::ReserveWriteBlocks(TInt64 aStart, TInt64 aEnd, TUi
 						*aRBM |= KWtRBMLst;
 					}
 				
+				OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_RESERVEWRITEBLOCKS_EXIT2, this, ( TUint )( raby ) );
 				return raby;
 				}
 			} // if (iDoPhysicalAddress)			
@@ -3197,6 +3462,7 @@ TUint8* DMmcMediaDriverFlash::ReserveWriteBlocks(TInt64 aStart, TInt64 aEnd, TUi
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:rwb:%x", (TUint32) raby));
 
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_RESERVEWRITEBLOCKS_EXIT3, this, ( TUint )( raby ) );
 	return raby;
 	}
 
@@ -3206,6 +3472,7 @@ void DMmcMediaDriverFlash::MarkBlocks(TInt64 aStart, TInt64 aEnd, TInt aStartInd
 // the cache are already in the buffer they are invalidated.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_MARKBLOCKS_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:mb:%lx,%lx,%d", aStart, aEnd, aStartIndex));
 
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(EMBStPos));
@@ -3225,6 +3492,7 @@ void DMmcMediaDriverFlash::MarkBlocks(TInt64 aStart, TInt64 aEnd, TInt aStartInd
 		}
 
 	TInt blkCnt = I64LOW((aEnd - aStart) >> iBlkLenLog2);
+	OstTrace1( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_MARKBLOCKS_RANGE, "blkCnt=%d", blkCnt );
 	for (i = aStartIndex; i < aStartIndex + blkCnt; ++i)
 		iCachedBlocks[i] = aStart + (static_cast<TUint32>(i - aStartIndex) << iBlkLenLog2);
 
@@ -3235,6 +3503,7 @@ void DMmcMediaDriverFlash::MarkBlocks(TInt64 aStart, TInt64 aEnd, TInt aStartInd
 		}
 
 	__ASSERT_CACHE(CacheInvariant(), Panic(EMBCchInvPost));
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_MARKBLOCKS_EXIT, this );
 	}
 
 
@@ -3247,6 +3516,7 @@ void DMmcMediaDriverFlash::BuildGammaArray(TInt64 aStart, TInt64 aEnd)
 // quadratically searching through the array for each block.
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_BUILDGAMMAARRAY_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:bga:%lx,%lx", aStart, aEnd));
 
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(EBGAStPos));
@@ -3259,6 +3529,7 @@ void DMmcMediaDriverFlash::BuildGammaArray(TInt64 aStart, TInt64 aEnd)
 
 	// KNoCacheBlock = (0xff) x 4
 	TUint blocksInRange = I64LOW((aEnd - aStart) >> iBlkLenLog2);
+	OstTrace1( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_BUILDGAMMAARRAY_RANGE, "blocksInRange=%d", blocksInRange );
 	memset(iGamma, 0xff, sizeof(*iGamma) * blocksInRange);
 
 	TInt64 blkAddr = 0;
@@ -3271,20 +3542,24 @@ void DMmcMediaDriverFlash::BuildGammaArray(TInt64 aStart, TInt64 aEnd)
 			blocksInRange--;
 			}
 		}
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_BUILDGAMMAARRAY_EXIT, this );
 	}
 
 void DMmcMediaDriverFlash::InvalidateCache()
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_INVALIDATECACHE1_ENTRY );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:ich"));
 
 	// KInvalidBlock = (0xff) x 4
 	memset(iCachedBlocks, 0xff, sizeof(*iCachedBlocks) * iBlocksInBuffer);
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_INVALIDATECACHE1_EXIT );
 	}
 
 // Invalidate any cache entries from aStart to aEnd
 // This is for DMA writes and is to prevent the cache becoming inconsistent with the media.
 void DMmcMediaDriverFlash::InvalidateCache(TInt64 aStart, TInt64 aEnd)
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_INVALIDATECACHE2_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:ich:%lx,%lx", aStart, aEnd));
 
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(EBGAStPos));
@@ -3292,6 +3567,7 @@ void DMmcMediaDriverFlash::InvalidateCache(TInt64 aStart, TInt64 aEnd)
 	__ASSERT_DEBUG(TotalSizeInBytes() >= aEnd, Panic(EBGAEndPos));
 
 	const TInt blkCnt = I64LOW((aStart - aEnd) >> iBlkLenLog2);
+	OstTrace1( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_INVALIDATECACHE_RANGE, "blocksInRange=%d", blkCnt );
 
 	__ASSERT_CACHE(CacheInvariant(), Panic(EBGACchInv));
 	
@@ -3303,20 +3579,24 @@ void DMmcMediaDriverFlash::InvalidateCache(TInt64 aStart, TInt64 aEnd)
 		if (blkAddr >= aStart && blkAddr < endBlk)
 			iCachedBlocks[i] = KInvalidBlock;
 		}
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_INVALIDATECACHE2_EXIT, this );
 	}
 
 TUint8* DMmcMediaDriverFlash::IdxToCchMem(TInt aIdx) const
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_IDXTOCCHMEM_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("=mmd:icm:%d", aIdx));
 
 	__ASSERT_DEBUG(aIdx >= 0, Panic(EICMNegative));
 	__ASSERT_DEBUG(aIdx < iBlocksInBuffer, Panic(EICMOverflow));
 	
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_IDXTOCCHMEM_EXIT, this );
 	return &iCacheBuf[aIdx << iBlkLenLog2];
 	}
 
 TInt DMmcMediaDriverFlash::CchMemToIdx(TUint8* aMemP) const
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_CCHMEMTOIDX_ENTRY, this );
 	__ASSERT_DEBUG((aMemP >= iCacheBuf) && (aMemP < iCacheBuf + (iBlocksInBuffer << iBlkLenLog2)), Panic(ECMIOverflow));
 
 	return((aMemP - iCacheBuf) >> iBlkLenLog2);
@@ -3330,6 +3610,7 @@ TBool DMmcMediaDriverFlash::CacheInvariant()
 // the cache length.
 //
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_CACHEINVARIANT_ENTRY, this );
 	for (TInt i = 0; i < iBlocksInBuffer; ++i)
 		{
 		if (iCachedBlocks[i] == KInvalidBlock)
@@ -3348,12 +3629,14 @@ TBool DMmcMediaDriverFlash::CacheInvariant()
 			}
 		}
 
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_CACHEINVARIANT_EXIT, this );
 	return ETrue;
 	}
 #endif
 
 void DMmcMediaDriverFlash::NotifyPowerDown()
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_NOTIFYPOWERDOWN_ENTRY );
 	__KTRACE_OPT(KPBUSDRV,Kern::Printf(">Mmc:NotifyPowerDown"));
 
 	iSessionEndDfc.Cancel();
@@ -3367,10 +3650,12 @@ void DMmcMediaDriverFlash::NotifyPowerDown()
 
 	CompleteRequest(KErrNotReady);
 	iMedReq = EMReqIdle;
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_NOTIFYPOWERDOWN_EXIT );
 	}
 
 void DMmcMediaDriverFlash::NotifyEmergencyPowerDown()
 	{
+	OstTraceFunctionEntry0( DMMCMEDIADRIVERFLASH_NOTIFYEMERGENCYPOWERDOWN_ENTRY );
 	__KTRACE_OPT(KPBUSDRV,Kern::Printf(">Ata:NotifyEmergencyPowerDown"));
 
 	iSessionEndDfc.Cancel();
@@ -3387,17 +3672,21 @@ void DMmcMediaDriverFlash::NotifyEmergencyPowerDown()
 
 	CompleteRequest(r);
 	iMedReq = EMReqIdle;
+	OstTraceFunctionExit0( DMMCMEDIADRIVERFLASH_NOTIFYEMERGENCYPOWERDOWN_EXIT );
 	}
 
 TInt DMmcMediaDriverFlash::Request(TLocDrvRequest& aRequest)
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_REQUEST_ENTRY, this );
 	__KTRACE_OPT(KLOCDRV,Kern::Printf("MmcMd:Req %08x id %d",&aRequest,aRequest.Id()));
 	TInt r=KErrNotSupported;
 	TInt id=aRequest.Id();
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DMMCMEDIADRIVERFLASH_REQUEST_ID, "Request=0x%08x; Request ID=%d", (TUint) &aRequest, id);
 
 #if defined (__TEST_PAGING_MEDIA_DRIVER__)
 	DThread* client=aRequest.Client();
 	__KTRACE_OPT(KLOCDPAGING,Kern::Printf("Client:0x%08x",client));
+	OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DMMCMEDIADRIVERFLASH_REQUEST_CLIENT, "Request client=0x%08x", (TUint) client);
 #endif // __TEST_PAGING_MEDIA_DRIVER__
 
 	// First handle requests that can be handled without deferring
@@ -3409,6 +3698,7 @@ TInt DMmcMediaDriverFlash::Request(TLocDrvRequest& aRequest)
 		c.iSize = drive.iPartitionLen;
 		c.iPartitionType = drive.iPartitionType;	
 		c.iHiddenSectors = (TUint) (drive.iPartitionBaseAddr >> KDiskSectorShift);
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_REQUEST_EXIT1, this, r );
 		return r;
 		}
 
@@ -3425,6 +3715,8 @@ TInt DMmcMediaDriverFlash::Request(TLocDrvRequest& aRequest)
 
 		// a request is already in progress, so hold on to this one
 		__KTRACE_OPT(KLOCDRV,Kern::Printf("MmcMd:Req %08x ret 1",&aRequest));
+		OstTraceDef1( OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DMMCMEDIADRIVERFLASH_REQUEST_IN_PROGRESS, "Request in progress=0x%08x", (TUint) &aRequest);
+		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_REQUEST_EXIT2, this, KMediaDriverDeferRequest );
 		return KMediaDriverDeferRequest;
 		}
 	else
@@ -3441,11 +3733,13 @@ TInt DMmcMediaDriverFlash::Request(TLocDrvRequest& aRequest)
 			case DMediaPagingDevice::ERomPageInRequest:
 				__KTRACE_OPT(KLOCDPAGING,Kern::Printf("DMediaDriverFlash::Request(ERomPageInRequest)"));
 				BTraceContext8(BTrace::EPagingMedia,BTrace::EPagingMediaPagingMedDrvBegin,MEDIA_DEVICE_MMC,iCurrentReq);
+				OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DMMCMEDIADRIVERFLASH_REQUEST_ROM_PAGE_IN, "ROM page-in request");
 				r=DoRead();
 				break;
 			case DMediaPagingDevice::ECodePageInRequest:
 				__KTRACE_OPT(KLOCDPAGING,Kern::Printf("DMediaDriverFlash::Request(ECodePageInRequest)"));
 				BTraceContext8(BTrace::EPagingMedia,BTrace::EPagingMediaPagingMedDrvBegin,MEDIA_DEVICE_MMC,iCurrentReq);
+				OstTraceDef0( OST_TRACE_CATEGORY_RND, TRACE_REQUEST, DMMCMEDIADRIVERFLASH_REQUEST_CODE_PAGE_IN, "Code page-in request");
 				r=DoRead();
 				break;
 #endif	// __DEMAND_PAGING__
@@ -3459,12 +3753,18 @@ TInt DMmcMediaDriverFlash::Request(TLocDrvRequest& aRequest)
 				break;
 			case DLocalDrive::EWrite:
 				if (readOnly)
+				    {
+					OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_REQUEST_EXIT3, this, KErrNotSupported );
 					return KErrNotSupported;
+				    }
 				r=DoWrite();
 				break;
 			case DLocalDrive::EFormat:
 				if (readOnly)
+				    {
+					OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_REQUEST_EXIT4, this, KErrNotSupported );
 					return KErrNotSupported;
+				    }
 				r=DoFormat();
 				break;
 
@@ -3539,13 +3839,16 @@ TInt DMmcMediaDriverFlash::Request(TLocDrvRequest& aRequest)
 		SetCurrentConsumption(KIdleCurrentInMilliAmps);
 		}
 	
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_REQUEST_EXIT5, this, r );
 	return r;
 	}
 
 void DMmcMediaDriverFlash::Disconnect(DLocalDrive* aLocalDrive, TThreadMessage* aMsg)
 	{
+	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_DISCONNECT_ENTRY, this );
 	// Complete using the default implementation
 	DMediaDriver::Disconnect(aLocalDrive, aMsg);
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_DISCONNECT_EXIT, this );
 	}
 
 #ifdef _DEBUG_CACHE
@@ -3558,6 +3861,7 @@ TUint8* DMmcMediaDriverFlash::GetCachedBlock(TInt64 aMdAddr)
 // this function is o(mn), whereas BuildGammaArray() is theta(m).
 //
 	{
+	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_GETCACHEDBLOCK_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:gcb:%lx", aMdAddr));
 
 	__ASSERT_DEBUG((aMdAddr & iBlkMsk) == 0, Panic(EGCBAlign));
@@ -3570,11 +3874,13 @@ TUint8* DMmcMediaDriverFlash::GetCachedBlock(TInt64 aMdAddr)
 			{
 			TUint8* raby = IdxToCchMem(i);
 			__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:gcb:%x", (TUint32) raby));
+			OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_GETCACHEDBLOCK_EXIT1, this, ( TUint )( raby ) );
 			return raby;
 			}
 		}
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("<mmd:gcb:0"));
+	OstTraceFunctionExit1( DMMCMEDIADRIVERFLASH_GETCACHEDBLOCK_EXIT2, this );
 	return 0;
 	}
 #endif // _DEBUG_CACHE

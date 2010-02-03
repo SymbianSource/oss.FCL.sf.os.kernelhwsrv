@@ -5196,6 +5196,33 @@ void M::DestroyPhysicalPinObject(TPhysicalPinObject*& aPinObject)
 	K::Fault(K::EPhysicalPinObjectBad);
 	}
 
+
+//
+// Kernel map and pin (Not supported on the moving or multiple memory models).
+//
+
+TInt M::CreateKernelMapObject(TKernelMapObject*&, TUint)
+	{
+	return KErrNotSupported;
+	}
+
+
+TInt M::MapAndPinMemory(TKernelMapObject*, DThread*, TLinAddr, TUint, TUint, TLinAddr&, TPhysAddr*)
+	{
+	return KErrNotSupported;
+	}
+
+
+void M::UnmapAndUnpinMemory(TKernelMapObject*)
+	{
+	}
+
+
+void M::DestroyKernelMapObject(TKernelMapObject*&)
+	{
+	}
+
+
 // Misc DPagingDevice methods
 
 EXPORT_C void DPagingDevice::NotifyIdle()

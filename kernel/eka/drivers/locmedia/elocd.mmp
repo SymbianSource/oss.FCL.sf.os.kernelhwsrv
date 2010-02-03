@@ -23,6 +23,7 @@
 #include "../../kernel/kern_ext.mmh"
 
 USERINCLUDE	../../include/drivers
+USERINCLUDE traces
 
 target			elocd.ldd
 targettype		ldd

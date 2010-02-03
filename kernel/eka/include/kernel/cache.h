@@ -217,7 +217,7 @@ public:
 						  - TMappingAttributes2 object.
 						For user memory (always fully cached), EMapAttrCachedMax enum value can be passed.
 
-	@return 			KErrNotSupported on memory models other then flexible.
+	@return 			KErrNotSupported on memory models other than flexible.
 						KErrNone, on flexible memory model.
 
 	@pre Interrupts must be enabled.

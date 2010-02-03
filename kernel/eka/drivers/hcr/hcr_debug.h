@@ -26,7 +26,7 @@
 #include <kernel/kernel.h>
 
 //
-// MACROs for log statements in code.
+// MACROs for log statements in code
 //
 
 #ifdef _DEBUG
@@ -43,7 +43,7 @@
 
 
 //
-// MACROs for trace statements in code.
+// MACROs for trace statements in code
 //
 
 #ifdef HCR_TRACE
@@ -61,26 +61,6 @@
 
 #define HCR_HEX_DUMP_ABS(_address, _length)	HexDump((_address), (_length));			//Hex dump with absolute address
 #define HCR_HEX_DUMP_REL(_address, _length)	HexDump((_address), (_length), EFalse); //Hex dump with relative (from) address
-
-
-#else
- 
-#define HCR_TRACE0(_text)                               __KTRACE_OPT(KHCR, Kern::Printf((_text)))
-#define HCR_TRACE1(_text, _a1)                          __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1)))
-#define HCR_TRACE2(_text, _a1, _a2)                     __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2)))
-#define HCR_TRACE3(_text, _a1, _a2, _a3)                __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3)))
-#define HCR_TRACE4(_text, _a1, _a2, _a3, _a4)           __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4)))
-#define HCR_TRACE5(_text, _a1, _a2, _a3, _a4, _a5)      __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4), (_a5)))
-#define HCR_TRACE6(_text, _a1, _a2, _a3, _a4, _a5, _a6) __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4), (_a5), (_a6)))
-#define HCR_TRACE_RETURN(_r1)                           { __KTRACE_OPT(KHCR, Kern::Printf("!-- Function exit return(%d) (%s:%d)", (_r1), __FILE__, __LINE__)); return (_r1);}
-#define HCR_TRACEMSG_RETURN(_s1, _r1)                   { __KTRACE_OPT(KHCR, Kern::Printf("!-- "_s1" (%d)", (_r1))); return (_r1);}
-#define HCR_FUNC(_text)
-
-#define HCR_HEX_DUMP_ABS(_address, _length)
-#define HCR_HEX_DUMP_REL(_address, _length)
-
-#endif
-
 
 class TEntryExit
 {
@@ -105,6 +85,25 @@ TEntryExit::~TEntryExit()
     
 
 void HexDump(TUint8* aStartAddress, TUint32 aLength, TBool aAbsolute = ETrue);
+
+
+#else
+ 
+#define HCR_TRACE0(_text)                               __KTRACE_OPT(KHCR, Kern::Printf((_text)))
+#define HCR_TRACE1(_text, _a1)                          __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1)))
+#define HCR_TRACE2(_text, _a1, _a2)                     __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2)))
+#define HCR_TRACE3(_text, _a1, _a2, _a3)                __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3)))
+#define HCR_TRACE4(_text, _a1, _a2, _a3, _a4)           __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4)))
+#define HCR_TRACE5(_text, _a1, _a2, _a3, _a4, _a5)      __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4), (_a5)))
+#define HCR_TRACE6(_text, _a1, _a2, _a3, _a4, _a5, _a6) __KTRACE_OPT(KHCR, Kern::Printf((_text), (_a1), (_a2), (_a3), (_a4), (_a5), (_a6)))
+#define HCR_TRACE_RETURN(_r1)                           { __KTRACE_OPT(KHCR, Kern::Printf("!-- Function exit return(%d) (%s:%d)", (_r1), __FILE__, __LINE__)); return (_r1);}
+#define HCR_TRACEMSG_RETURN(_s1, _r1)                   { __KTRACE_OPT(KHCR, Kern::Printf("!-- "_s1" (%d)", (_r1))); return (_r1);}
+#define HCR_FUNC(_text)
+
+#define HCR_HEX_DUMP_ABS(_address, _length)
+#define HCR_HEX_DUMP_REL(_address, _length)
+
+#endif
 
 
 #endif // HCR_DEBUG_H
