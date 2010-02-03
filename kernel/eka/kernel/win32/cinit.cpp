@@ -44,9 +44,7 @@ TInt A::CreateVariant(const TAny* aHandle, TInt /*aMode*/)
 	HMODULE h=(HMODULE)aHandle;
 	TVariantInitialise f=(TVariantInitialise)Emulator::GetProcAddress(h, (LPCSTR)1);
 	__KTRACE_OPT(KBOOT,Kern::Printf("Calling Initialise %08x",f));
-	//SL: Fixed our linkage error
-	//Emul::TheAsic=(*f)(EmulRunExe);
-	Emul::TheAsic=(*f)(EFalse);
+	Emul::TheAsic=(*f)(EmulRunExe);
 	__KTRACE_OPT(KBOOT,Kern::Printf("Initialise returned %08x",Emul::TheAsic));
 	if (!Emul::TheAsic)
 		return KErrGeneral;
