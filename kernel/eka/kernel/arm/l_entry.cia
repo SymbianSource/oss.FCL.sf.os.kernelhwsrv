@@ -19,7 +19,7 @@
 
 extern "C" {
 
-#if defined(__ARMCC__)
+#if defined(__EABI__)
 void __DLL_Export_Table__(void);
 #endif
 
