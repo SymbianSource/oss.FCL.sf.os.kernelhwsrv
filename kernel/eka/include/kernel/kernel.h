@@ -250,6 +250,8 @@ const TUint8 KMutexOrdObjectCon2		= 0x38;	/**< @internalComponent */ // servers
 const TUint8 KMutexOrdHandle			= 0x30; /**< @internalComponent */
 const TUint8 KMutexOrdObjectCon			= 0x28; /**< @internalComponent */
 const TUint8 KMutexOrdMachineConfig		= 0x20; /**< @internalComponent */
+const TUint8 KMutexOrdEntropyPool		= 0x12; /**< @internalComponent */
+const TUint8 KMutexOrdRandNumGeneration = 0x11; /**< @internalComponent */
 const TUint8 KMutexOrdHwChunk			= 0x10; /**< @internalComponent */
 const TUint8 KMutexOrdKernelHeap		= 0x08; /**< @internalComponent */
 const TUint8 KMutexOrdRamAlloc			= 0x04; /**< @internalComponent */
@@ -1011,7 +1013,11 @@ public:
 	IMPORT_C static TSuperPage& SuperPage();
 	IMPORT_C static TMachineConfig& MachineConfig();
 	IMPORT_C static TUint32 Random();
-	IMPORT_C static void RandomSalt(TUint32 aBit);
+	IMPORT_C static void RandomSalt(TUint32 aEntropyData);
+	IMPORT_C static void RandomSalt(TUint32 aEntropyData, TUint aBitsOfEntropy);
+	IMPORT_C static void RandomSalt(TUint64 aEntropyData, TUint aBitsOfEntropy);
+	IMPORT_C static void RandomSalt(const TUint8* aEntropyData, TUint aEntropyDataLength, TUint aBitsOfEntropy);
+	IMPORT_C static TInt SecureRandom(TDes8& aRandomValue);
     IMPORT_C static void WaitForRequest(TRequestStatus& aStatus);	/**< @internalTechnology */
     IMPORT_C static TAny* Alloc(TInt aSize);
     IMPORT_C static TAny* AllocZ(TInt aSize);

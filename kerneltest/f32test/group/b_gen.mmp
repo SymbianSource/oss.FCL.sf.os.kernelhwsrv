@@ -22,8 +22,11 @@ SOURCE         b_gen.cpp
 SOURCE         t_main.cpp
 SOURCEPATH     ../fileutils/src
 SOURCE         t_chlffs.cpp
+SOURCE         f32_test_utils.cpp
+
 LIBRARY        euser.lib efsrv.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
 USERINCLUDE    ../server
 USERINCLUDE    ../fileutils/inc
 

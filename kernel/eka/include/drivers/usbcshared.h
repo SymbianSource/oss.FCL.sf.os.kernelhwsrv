@@ -1598,6 +1598,7 @@ private:
 	NTimer iReconnectTimer;									// implements USB re-enumeration delay
 	NTimer iCableStatusTimer;								// implements USB cable status detection delay
 	DUsbcPowerHandler* iPowerHandler;						// pointer to USB power handler object
+	TSpinLock iUsbLock;                                     // implement SMP for USB PDD and LDD
 
 protected:
 	TDfc iPowerUpDfc;										// queued by power handler upon power-up

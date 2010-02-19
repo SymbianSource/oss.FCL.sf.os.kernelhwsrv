@@ -91,7 +91,8 @@ struct SSuperPageBase
 	TUint32		iAPBootPageLin;				/**< @internalComponent */
 	TUint32		iAPBootPageDirPhys;			/**< @internalComponent */
 	TUint32		iSmrData;                                               /**< address of shadow memory region information block (SMRIB), optional field set by bootstrap PSL */
-	TInt		iReserved[26];											/**< reserved for the future use*/
+	TUint32     iPlatformSpecificMappings;
+	TInt		iReserved[25];											/**< reserved for the future use*/
 	};
 
 

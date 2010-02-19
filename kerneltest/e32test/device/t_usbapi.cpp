@@ -60,6 +60,7 @@ static RDevUsbcClient gPort;
 static RUsbOtgDriver gOTG;
 static TBool gSupportsOtg;
 static TBool gSupportsHighSpeed;
+static TBool gSupportResouceAllocationV2;
 static TBool gUsingHighSpeed;
 static TBool gSoak;
 static TChar gKeychar = 'a';
@@ -282,7 +283,7 @@ static void OpenChannel()
 	}
 
 
-static void TestResourceAllocation()
+static void TestResourceAllocationV1()
 	{
 	test.Start(_L("Test Endpoint Resource Allocation"));
 
@@ -347,7 +348,8 @@ static void SetupInterface()
 
 	// Global variable - we'll need this value later
 	gSupportsHighSpeed = d_caps().iHighSpeed;
-
+	gSupportResouceAllocationV2 = (d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2);
+	
 	test.Printf(_L("### USB device capabilities:\n"));
 	test.Printf(_L("Number of endpoints:                        %d\n"), n);
 	test.Printf(_L("Supports Software-Connect:                  %s\n"),
@@ -364,8 +366,7 @@ static void SetupInterface()
 				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_CableDetectWithoutPower) ?
 				_S("yes") : _S("no"));
 	test.Printf(_L("Supports endpoint resource alloc scheme V2: %s\n"),
-				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) ?
-				_S("yes") : _S("no"));
+				gSupportResouceAllocationV2 ? _S("yes") : _S("no"));
 
 	test(n >= 2);
 	test.Printf(_L("(Device has sufficient endpoints.)\n"));
@@ -446,7 +447,10 @@ static void SetupInterface()
 
 	// Some UDCs won't allow endpoint resource manipulation once the hardware has been
 	// configured and turned on. So we do it here & now:
-	TestResourceAllocation();
+	if (!gSupportResouceAllocationV2)
+		{
+		TestResourceAllocationV1();
+		}
 
 	// On the other hand, since some UDCs won't let us test many features which require
 	// register access until the USB hardware is powered up (and because it might start
@@ -504,6 +508,13 @@ static void SetupInterface()
 	r = gPort.ReleaseInterface(0);
 	test(r == KErrNone);
 
+	if (gSupportResouceAllocationV2)
+		{
+		test.Next(_L("setting resource allocation info on endpoint 1 with resource allocation scheme v2"));
+		ifc().iEndpointData[0].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DMA;
+		ifc().iEndpointData[0].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
+		}
+
 	test.Next(_L("Setting interface"));
 	r = gPort.SetInterface(0, ifc);
 	test(r == KErrNone);
@@ -536,6 +547,18 @@ static void SetupInterface()
 	// Suspend thread to let things get stable on the bus.
 	User::After(2000000);
 
+	if (gSupportResouceAllocationV2)
+		{
+			test.Next(_L("endpoint 1 resource allocation results(resource allocation V2)"));
+			TBool res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDoubleBuffering);
+			test.Printf(_L("Double Buffering on endpoint 1 %s\n"),
+						res ? _S("now allocated") : _S("not allocated"));
+
+			res = gPort.QueryEndpointResourceUse(EEndpoint1, EUsbcEndpointResourceDMA);
+			test.Printf(_L("DMA on endpoint 1 %s\n"),
+						res ? _S("still allocated") : _S("not allocated"));										
+		}
+		
 	test.End();
 	}
 

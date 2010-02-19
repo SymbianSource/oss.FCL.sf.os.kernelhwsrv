@@ -905,9 +905,6 @@ void MM::Init2()
 	// initialise address spaces...
 	DAddressSpace::Init2();
 
-	// init pager...
-	ThePager.Init2();
-
 	TheMmu.Init2Final();
 	}
 

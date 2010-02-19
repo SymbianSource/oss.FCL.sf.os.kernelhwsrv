@@ -53,6 +53,9 @@ PRJ_TESTMMPFILES
 btrace_host
 #endif
 
+//Nist statistical test suite for Secure RNG in kernel
+nistsecurerng
+
 PRJ_MMPFILES
 
 #if defined(TOOLS2)
@@ -99,7 +102,6 @@ otgusbmsapp
 
 #ifndef SMP
 ../d_exc/d_exc
-../sdpartition/sdpartition
 #endif
 
 ../d_exc/minkda
@@ -114,4 +116,5 @@ dptestcons
 #include "../testusbcldd/group/testusbcldd.inf"
 
 #endif //	!TOOLS
+
 

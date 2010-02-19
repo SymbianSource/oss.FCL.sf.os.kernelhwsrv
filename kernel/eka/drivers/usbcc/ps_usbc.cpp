@@ -672,14 +672,14 @@ EXPORT_C TInt DUsbClientController::UsbConnect()
 #ifdef USB_OTG_CLIENT
 	iClientSupportReady = ETrue;
 	const TInt r = EvaluateOtgConnectFlags();
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	if (iUsbResetDeferred) // implies (iOtgHnpHandledByHw == ETrue)
 		{
 		__KTRACE_OPT(KUSB, Kern::Printf("  Resetting USB Reset 'defer' flag"));
 		iUsbResetDeferred = EFalse;
 		(void) ProcessResetEvent(EFalse);
 		}
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 #else
 	const TInt r = UdcConnect();
 #endif // USB_OTG_CLIENT
@@ -743,9 +743,9 @@ EXPORT_C TInt DUsbClientController::RegisterForStatusChange(TUsbcStatusCallback&
 		__KTRACE_OPT(KUSB, Kern::Printf("  Error: StatusCallback @ 0x%x already registered", &aCallback));
 		return KErrGeneral;
 		}
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	iStatusCallbacks.AddLast(aCallback);
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNone;
 	}
 
@@ -761,7 +761,7 @@ EXPORT_C TInt DUsbClientController::DeRegisterForStatusChange(const DBase* aClie
 	{
 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterForStatusChange()"));
 	__ASSERT_DEBUG((aClientId != NULL), Kern::Fault(KUsbPILPanicCat, __LINE__));
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcStatusCallback> iter(iStatusCallbacks);
 	TUsbcStatusCallback* p;
 	while ((p = iter++) != NULL)
@@ -770,12 +770,12 @@ EXPORT_C TInt DUsbClientController::DeRegisterForStatusChange(const DBase* aClie
 			{
 			__KTRACE_OPT(KUSB, Kern::Printf("  removing StatusCallback @ 0x%x", p));
 			iStatusCallbacks.Remove(*p);
-			NKern::RestoreInterrupts(irq);
+		    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return KErrNone;
 			}
 		}
 	__KTRACE_OPT(KUSB, Kern::Printf("  client not found"));
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNotFound;
 	}
 
@@ -809,9 +809,9 @@ EXPORT_C TInt DUsbClientController::RegisterForEndpointStatusChange(TUsbcEndpoin
 		__KTRACE_OPT(KUSB, Kern::Printf("  Error: EpStatusCallback @ 0x%x already registered", &aCallback));
 		return KErrGeneral;
 		}
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	iEpStatusCallbacks.AddLast(aCallback);
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNone;
 	}
 
@@ -827,7 +827,7 @@ EXPORT_C TInt DUsbClientController::DeRegisterForEndpointStatusChange(const DBas
 	{
 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterForEndpointStatusChange()"));
 	__ASSERT_DEBUG((aClientId != NULL), Kern::Fault(KUsbPILPanicCat, __LINE__));
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcEndpointStatusCallback> iter(iEpStatusCallbacks);
 	TUsbcEndpointStatusCallback* p;
 	while ((p = iter++) != NULL)
@@ -836,12 +836,12 @@ EXPORT_C TInt DUsbClientController::DeRegisterForEndpointStatusChange(const DBas
 			{
 			__KTRACE_OPT(KUSB, Kern::Printf("  removing EpStatusCallback @ 0x%x", p));
 			iEpStatusCallbacks.Remove(*p);
-			NKern::RestoreInterrupts(irq);
+		    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return KErrNone;
 			}
 		}
 	__KTRACE_OPT(KUSB, Kern::Printf("  client not found"));
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNotFound;
 	}
 
@@ -1056,17 +1056,17 @@ EXPORT_C TInt DUsbClientController::SetupReadBuffer(TUsbcRequestCallback& aCallb
 			}
 		// Ep0 reads don't need to be prepared - there's always one pending
 		__KTRACE_OPT(KUSB, Kern::Printf("  adding RequestCallback @ 0x%x (ep0)", &aCallback));
-		TInt irq = NKern::DisableAllInterrupts();
+	    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 		iEp0ReadRequestCallbacks.AddLast(aCallback);
-		NKern::RestoreInterrupts(irq);
+        __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 		err = KErrNone;
 		if (iEp0_RxExtraData)
 			{
 			__KTRACE_OPT(KUSB, Kern::Printf("  iEp0_RxExtraData: trying again..."));
 			const TBool rx_data = iEp0DataReceiving;
-			const TInt irq = NKern::DisableAllInterrupts();
+		    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 			err = ProcessEp0ReceiveDone(iEp0_RxExtraCount);
-			NKern::RestoreInterrupts(irq);
+	        __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			if (err == KErrNone)
 				{
 				iEp0_RxExtraData = EFalse;
@@ -1643,9 +1643,9 @@ EXPORT_C TInt DUsbClientController::RegisterForOtgFeatureChange(TUsbcOtgFeatureC
 		__KTRACE_OPT(KUSB, Kern::Printf("  Error: OtgFeatureCallback @ 0x%x already registered", &aCallback));
 		return KErrAlreadyExists;
 		}
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	iOtgCallbacks.AddLast(aCallback);
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNone;
 	}
 
@@ -1661,7 +1661,7 @@ EXPORT_C TInt DUsbClientController::DeRegisterForOtgFeatureChange(const DBase* a
 	{
 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeRegisterForOtgFeatureChange()"));
 	__ASSERT_DEBUG((aClientId != NULL), Kern::Fault(KUsbPILPanicCat, __LINE__));
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcOtgFeatureCallback> iter(iOtgCallbacks);
 	TUsbcOtgFeatureCallback* p;
 	while ((p = iter++) != NULL)
@@ -1670,12 +1670,12 @@ EXPORT_C TInt DUsbClientController::DeRegisterForOtgFeatureChange(const DBase* a
 			{
 			__KTRACE_OPT(KUSB, Kern::Printf("  removing OtgFeatureCallback @ 0x%x", p));
 			iOtgCallbacks.Remove(*p);
-			NKern::RestoreInterrupts(irq);
+            __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return KErrNone;
 			}
 		}
 	__KTRACE_OPT(KUSB, Kern::Printf("  client not found"));
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return KErrNotFound;
 	}
 
@@ -2881,6 +2881,7 @@ DUsbClientController::DUsbClientController()
 	  iOtgCallbacks(_FOFF(TUsbcOtgFeatureCallback, iLink)),
 	  iReconnectTimer(ReconnectTimerCallback, this),
 	  iCableStatusTimer(CableStatusTimerCallback, this),
+      iUsbLock(TSpinLock::EOrderGenericIrqLow3),	  
 	  iPowerUpDfc(PowerUpDfc, this, 3),
 	  iPowerDownDfc(PowerDownDfc, this, 3),
 	  iStandby(EFalse),
@@ -3765,7 +3766,7 @@ void DUsbClientController::DeleteRequestCallback(const DBase* aClientId, TInt aE
 	// Ep0 OUT
 	if (aEndpointNum == 0)
 		{
-		const TInt irq = NKern::DisableAllInterrupts();
+	    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 		TSglQueIter<TUsbcRequestCallback> iter(iEp0ReadRequestCallbacks);
 		TUsbcRequestCallback* p;
 		while ((p = iter++) != NULL)
@@ -3778,7 +3779,7 @@ void DUsbClientController::DeleteRequestCallback(const DBase* aClientId, TInt aE
 				iEp0ReadRequestCallbacks.Remove(*p);
 				}
 			}
-		NKern::RestoreInterrupts(irq);
+        __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 		return;
 		}
 	// Other endpoints
@@ -3798,7 +3799,7 @@ void DUsbClientController::DeleteRequestCallbacks(const DBase* aClientId)
 	// aClientId being NULL means: delete all requests for *all* clients.
 	__KTRACE_OPT(KUSB, Kern::Printf("DUsbClientController::DeleteRequestCallbacks()"));
 	// Ep0 OUT
-	const TInt irq = NKern::DisableAllInterrupts();
+    const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcRequestCallback> iter(iEp0ReadRequestCallbacks);
 	TUsbcRequestCallback* p;
 	while ((p = iter++) != NULL)
@@ -3809,7 +3810,7 @@ void DUsbClientController::DeleteRequestCallbacks(const DBase* aClientId)
 			iEp0ReadRequestCallbacks.Remove(*p);
 			}
 		}
-	NKern::RestoreInterrupts(irq);
+    __SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	// Other endpoints
 	for (TInt i = 1; i < KUsbcEpArraySize; i++)
 		{
@@ -4278,7 +4279,23 @@ TInt DUsbClientController::EvaluateOtgConnectFlags()
 			// notification in any case, even if no cable and/or host are
 			// connected. The next Reset will get us out of it again.
 			iDeviceStateB4Suspend = iDeviceState;
-			NextDeviceState(EUsbcDeviceStateSuspended);
+			// Please pay attention to that the above comment now is not accurate!
+			// It's not updated according the below modification just for keeping the original comment!
+			//
+			// Moving to Suspend state arbitrarily will cause DEFECT EDHO-7Y3AAD.
+			// DEFECT EDHO-7Y3AAD: Connected to the USB Charger, the UI displayed wrongly connected as default mode
+			//                     since the iDeviceState changed wrongly from Undefined to Suspended, and keep 
+			//                     always Suspended becauseof NO Reset coming next!
+			// So, to fix this defect, the state change notification is modified to be triggerred by loop the current state again
+			// if the current state is Undefined!
+			if (EUsbcDeviceStateUndefined != iDeviceState)
+				{
+				NextDeviceState(EUsbcDeviceStateSuspended);
+				}
+			else
+				{
+				NextDeviceState(iDeviceState);
+				}
 			r = (*iEnablePullUpOnDPlus)(iOtgContext);
 			if (r != KErrNone)
 				{

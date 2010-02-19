@@ -310,18 +310,17 @@ void Test4(TInt aSize)
 	DoTest4(RCacheTestDevice::E_Normal_Cached, dC, timeNS, timeS);
 	test.Printf(_L("Normal_Cached   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
 
+    DoTest4(RCacheTestDevice::E_KernelInternal4, dC, timeNS, timeS);
+    test.Printf(_L("KernelInternal4 %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
+    DoTest4(RCacheTestDevice::E_PlatformSpecific5, dC, timeNS, timeS);
+    test.Printf(_L("PlatSpecific5   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
+    DoTest4(RCacheTestDevice::E_PlatformSpecific6, dC, timeNS, timeS);
+    test.Printf(_L("PlatSpecific6   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
+    DoTest4(RCacheTestDevice::E_PlatformSpecific7, dC, timeNS, timeS);
+    test.Printf(_L("PlatSpecific7   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
+	
 	if(CacheInfo.iMemoryRemapping)
 		{
-		DoTest4(RCacheTestDevice::E_KernelInternal4, dC, timeNS, timeS);
-		test.Printf(_L("KernelInternal4 %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
-		DoTest4(RCacheTestDevice::E_PlatformSpecific5, dC, timeNS, timeS);
-		test.Printf(_L("PlatSpecific5   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
-		DoTest4(RCacheTestDevice::E_PlatformSpecific6, dC, timeNS, timeS);
-		test.Printf(_L("PlatSpecific6   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
-		DoTest4(RCacheTestDevice::E_PlatformSpecific7, dC, timeNS, timeS);
-		test.Printf(_L("PlatSpecific7   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
-
-
 		DoTest4(RCacheTestDevice::E_InnerWT_Remapped, dC, timeNS, timeS);
 		test.Printf(_L("InnerWT_Remap   %08xH\t%7d\t%7d\n"),dC.iActualMapAttr, timeNS, timeS);
 		DoTest4(RCacheTestDevice::E_InnerWBRA_Remapped, dC, timeNS, timeS);

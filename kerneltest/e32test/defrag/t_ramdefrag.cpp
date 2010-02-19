@@ -575,6 +575,10 @@ void TestEnd()
 	UpdateRamInfo();
 	gEndRam = gFreeRam;
 	TESTDEBUG(test.Printf(_L("End RAM Free = 0x%x, End RAM Used = 0x%x\n"), gEndRam, gRamUsed));
+
+	// Ensure any asynchronous clean up operations complete before we move on 
+	// to the next test.
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
 	CheckRamDifference();
 	test.Printf(_L(" \n"));
 	}
@@ -1753,6 +1757,12 @@ TInt MultiClaimZoneThreadFunc(TAny* zoneID)
 //!		7.	Allocate discardable pages by loading pages that are demand paged. 
 //! 		Check which zone the memory has been allocated to by checking the number of 
 //! 		discardable pages before and after the allocation has taken place. 
+//!		8.	Allocate a contiguous fixed page into a zone which is full of movable or discardable pages.
+//!		9.	Allocate a large 1MB aligned chunk with as few pages as possible availiable for page tables,
+//!			then clear to every page in the chunk.  This is attempting to ensure that the chunk pages 
+//!			that have page tables associated to them are remapped correctly if the chunk pages have to be
+//!			moved so page table pages to map other pages in the chunk are allocated in the most preferable 
+//! 		ram zones.
 //! 
 //! @SYMTestExpectedResults
 //! 	1.	The memory has been allocated to the most preferred zone with the least amount of 
@@ -1765,6 +1775,9 @@ TInt MultiClaimZoneThreadFunc(TAny* zoneID)
 //! 	6.	Extra page is placed in the next preferable to the "best"zone 
 //!		7.	Memory is allocated to the most preferred zone with the least amount of 
 //! 		space accounting for the zone threshold for discardable pages. 
+//!		8.	The fixed page is allocated as it has moved or discarded a page.
+//!		9.	The chunk is cleared succesfully.
+//!
 //---------------------------------------------------------------------------------------------------------------------
 TInt TestAllocStrategies()
 	{
@@ -2468,6 +2481,37 @@ TInt TestAllocStrategies()
 	
 skipTest8:
 	TestEnd();
+
+	test.Next(_L("Test9: Allocate a large 1MB aligned chunk and touch all its pages"));
+	TestStart();
+	gChunkArray1 = new RChunk;
+	gChunkArraySize1 = 1;
+
+	GetAllPageInfo();
+	const TUint KChunkBytes = 0x100000;
+	const TUint KChunkMask = KChunkBytes - 1;
+	TUint freeBytes = gTotalPageCount.iFreePages << gPageShift;
+	TUint chunkSize = freeBytes & ~KChunkMask;
+	// Fill as much memory as possible with fixed pages while still allowing the movable allocation to succeed.
+	// This should help force the page table allocation for the chunk to need to move pages.
+	TUint fixedSize = freeBytes - chunkSize;
+	r = KErrNoMemory;
+	while (r != KErrNone && fixedSize)
+		{
+		Ldd.FreeAllFixedPages();
+		fixedSize -= gPageSize;
+		test.Printf(_L("fixedSize 0x%x\n"), fixedSize);
+		r = Ldd.AllocateFixed(fixedSize >> gPageShift);
+		if (r != KErrNone)
+			break;
+		r = AllocMovable(gChunkArray1, gChunkArraySize1, gChunkArraySize1, chunkSize);
+		}
+	if (r == KErrNone)
+		{
+		// Touch every page in the chunk.
+		memclr(gChunkArray1->Base(), chunkSize);
+		}
+	TestEnd();	// This will free any chunk and fixed pages.
 
 	test.End();
 	return KErrNone;
@@ -3804,6 +3848,8 @@ skipTest4:
 		}
 	Ldd.FreeAllFixedPages();
 	TestEnd();
+
+	PrintPageInfo();
 
 	test.Next(_L("Test7: Defrag memory filled with discardable pages when the min cache size is reached\n"));
 	TestStart();

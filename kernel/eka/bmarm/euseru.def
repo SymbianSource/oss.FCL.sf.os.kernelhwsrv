@@ -2231,4 +2231,8 @@ EXPORTS
 	LoadLocale__15TExtendedLocaleRC7TDesC16N21 @ 2230 NONAME ; TExtendedLocale::LoadLocale(TDesC16 const &, TDesC16 const &, TDesC16 const &)
 	RegionCode__4User @ 2231 NONAME R3UNUSED ; User::RegionCode(void)
 	SetReadOnly__16TChunkCreateInfo @ 2232 NONAME R3UNUSED ; TChunkCreateInfo::SetReadOnly(void)
+	RandomL__4MathR5TDes8 @ 2233 NONAME R3UNUSED ; Math::RandomL(TDes8 &)
+	RandomL__4Math @ 2234 NONAME R3UNUSED ; Math::RandomL(void)
+	Random__4MathR5TDes8 @ 2235 NONAME R3UNUSED ; Math::Random(TDes8 &)
+
 

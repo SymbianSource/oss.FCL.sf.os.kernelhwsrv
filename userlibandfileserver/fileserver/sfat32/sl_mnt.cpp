@@ -1064,6 +1064,13 @@ void CFatMountCB::DoRenameOrReplaceL(const TDesC& aOldName, const TDesC& aNewNam
     const TBool newFileExists = (nRes == KErrNone); //-- ETrue if 'aNewName' file exists.
     const TBool bNewNameIsVFAT = !IsLegalDosName(ptrNewName, EFalse, EFalse, EFalse, EFalse, ETrue);
 
+    if(!newFileExists)
+    {//-- invalidate directory iterators if aNewName doesn't exist
+        newName_VFatEntryPos.SetEndOfDir();
+        aNewName_DosEntryPos.SetEndOfDir();
+    }
+
+
     if(renameMode && newFileExists)
     	{
         if(!namesAreIdentical)
@@ -1143,7 +1150,7 @@ void CFatMountCB::DoRenameOrReplaceL(const TDesC& aOldName, const TDesC& aNewNam
 
 		    if (iFileCreationHelper.GetValidatedShortName(shortName) == KErrNotFound)
 		    	{
-		        GenerateShortNameL(aNewName_DosEntryPos.Cluster(), ptrNewName, shortName, ETrue);
+		        GenerateShortNameL(aNewName_ParentDirPos.Cluster(), ptrNewName, shortName); 
 		    	}
 
             newDosEntry.SetName(shortName);
@@ -1971,8 +1978,6 @@ TBool CFatMountCB::DoRummageDirCacheL(const TUint anAtt, TEntryPos& aStartEntryP
     TFatDirEntry    StartEntry1(aStartEntry);
     TFatDirEntry    DosEntry1(aDosEntry);
 
-    TInt64          nCachedLinPos;
-
     const TUint32 clSize = 1 << ClusterSizeLog2(); //-- media cluster size
     const TUint32 cacheSz = pDirCache->CacheSizeInBytes(); //-- cache size in bytes
     const TUint32 maxDirEntries = cacheSz >> KSizeOfFatDirEntryLog2;  //-- maximal number of dir entries that can be in the cache
@@ -2021,7 +2026,7 @@ TBool CFatMountCB::DoRummageDirCacheL(const TUint anAtt, TEntryPos& aStartEntryP
         TBool	PassedPageBoundary = EFalse;
 
         const TInt64  entryLinPos = MakeLinAddrL(DosEntryPos1); //-- linear media position of the cluster for this directory
-        const TUint32 cachePageSz = pDirCache->PosCached(entryLinPos, nCachedLinPos); //-- indicates if entryLinPos is cached
+        const TUint32 cachePageSz = pDirCache->PosCached(entryLinPos); //-- indicates if entryLinPos is cached
         if(cachePageSz)
             {//-- current page is in the directory cache
              //__PRINT2(_L("#-!! CFatMountCB::DoRummageDirCacheL() Searching cl:%d, lin Pos:%X"),DosEntryPos1.iCluster,(TUint32)entryLinPos);
@@ -3961,18 +3966,14 @@ void CFatMountCB::FindVolumeLabelFileL(TDes8& aLabel, TEntryPos& aDosEntryPos, T
 
     FOREVER
         {
-#ifdef _DEBUG
-        const TInt e= GetDirEntry(aDosEntryPos, aDosEntry, startEntry, dummyLongName);
-        __PRINT1(_L("CFatMountCB::FindVolumeLabelFileL: GetDir %d"), e);
-        User::LeaveIfError(e);
-#else
         User::LeaveIfError(GetDirEntry(aDosEntryPos, aDosEntry, startEntry, dummyLongName));
-#endif
+
         if(aDosEntry.IsEndOfDirectory())
             {
             __PRINT(_L("-CFatMountCB::FindVolumeLabelFileL: end of dir"));
             User::Leave(KErrNotFound);
             }
+
         if(IsRootDir(aDosEntryPos) && (aDosEntryPos.iPos+StartOfRootDirInBytes()==(RootDirEnd()-KSizeOfFatDirEntry)))
             {
             if(aDosEntry.IsErased())
@@ -3981,28 +3982,31 @@ void CFatMountCB::FindVolumeLabelFileL(TDes8& aLabel, TEntryPos& aDosEntryPos, T
                 User::Leave(KErrNotFound); //Allows maximum number of entries in root directory
                 }
             }
+
         if(!aDosEntry.IsCurrentDirectory() && !aDosEntry.IsParentDirectory() && !aDosEntry.IsErased() && !aDosEntry.IsGarbage())
             {
             if(aDosEntry.Attributes() & KEntryAttVolume)
                 {
                 aLabel = aDosEntry.Name();
-#ifdef _DEBUG
                 dummyLongName.Copy(aLabel);
                 __PRINT1(_L("-CFatMountCB::FindVolumeLabelFileL: found [%S]"), &dummyLongName);
-#endif
                 break;
                 }
             }
+        
         MoveToNextEntryL(aDosEntryPos);
+        
         if(IsRootDir(aDosEntryPos) && (aDosEntryPos.iPos+StartOfRootDirInBytes()>=RootDirEnd()))
             {
-            __PRINT(_L("-CFatMountCB::FindVolumeLabelFileL: passed end of root"));
+            __PRINT(_L("-CFatMountCB::FindVolumeLabelFileL: Not found"));
             User::Leave(KErrNotFound); //Allows maximum number of entries in root directory
             }
+        
         if(aDosEntryPos.iCluster && (aDosEntryPos.iPos <= previousPosition))
             {
             DoCheckFatForLoopsL(aDosEntryPos.iCluster, previousCluster, changePreviousCluster, count);
             }
+
         previousPosition=aDosEntryPos.iPos;
         }
     }

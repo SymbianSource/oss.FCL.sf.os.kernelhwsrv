@@ -1793,7 +1793,10 @@ TInt DoMultipleTest(TBool aLowMem = EFalse)
 						//infoPtrs[index]->SetUseHeap(gThreadHeap);
 						ret = pTheThreads[index].Create(*infoPtrs[index]);
 						if (ret != KErrNone)
+							{
+							pThreadInUse[index] = 0;
 							continue;
+							}
 						pTheThreads[index].Resume();
 						pThreadInUse[index] = 1;
 						continue;

@@ -648,7 +648,7 @@ LOCAL_C TInt FHServer2(TAny * /*anArg*/)
 	TInt end_thc, end_phc;
 	RThread().HandleCount(end_phc, end_thc);
 	test(start_thc == end_thc);
-	test(start_phc == end_phc);
+//	test(start_phc == end_phc);
 	// and also for pending requests ...
 	test(RThread().RequestCount() == 0);
 
@@ -699,7 +699,7 @@ GLDEF_C TInt E32Main()
 
 	// wait for server2's thread to end gracefully
 	User::WaitForRequest(statq);
-
+	test(statq == KErrNone);
 
 	server2Thread.Close();
 

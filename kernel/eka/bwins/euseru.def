@@ -2179,4 +2179,8 @@ EXPORTS
 	?LoadLocaleAspect@TExtendedLocale@@QAEHABVTDesC16@@@Z @ 2178 NONAME ; int TExtendedLocale::LoadLocaleAspect(class TDesC16 const &)
 	?RegionCode@User@@SA?AW4TRegionCode@@XZ @ 2179 NONAME ; enum TRegionCode User::RegionCode(void)
 	?SetReadOnly@TChunkCreateInfo@@QAEXXZ @ 2180 NONAME ; public: void __thiscall TChunkCreateInfo::SetReadOnly(void)
+	?RandomL@Math@@SAXAAVTDes8@@@Z @ 2181 NONAME ; void Math::RandomL(class TDes8 &)
+	?Random@Math@@SAXAAVTDes8@@@Z @ 2182 NONAME ; void Math::Random(class TDes8 &)
+ 	?RandomL@Math@@SAKXZ @ 2183 NONAME ; unsigned long Math::RandomL(void)
+
 

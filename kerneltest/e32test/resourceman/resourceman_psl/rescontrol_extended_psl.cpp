@@ -141,27 +141,21 @@ _LIT(KDMLSLGLSPDependResource, "StaticDependResourceD");
 DMLSLGLSPDependResource::DMLSLGLSPDependResource() : DStaticPowerResourceD(KDMLSLGLSPDependResource, -100), iMinLevel(-100), iMaxLevel(100), iCurrentLevel(-100)
 	{
 	iFlags = KMultiLevel | KLongLatencyGet | KLongLatencySet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSIGLSNDependResource, "StaticDependResourceA");
 DMLSIGLSNDependResource::DMLSIGLSNDependResource() : DStaticPowerResourceD(KDMLSIGLSNDependResource, -10), iMinLevel(-10), iMaxLevel(-20), iCurrentLevel(-10)
 	{
 	iFlags = KMultiLevel | KLongLatencySet | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSIGLSPDependResource, "StaticDependResourceF");
 DBSIGLSPDependResource::DBSIGLSPDependResource() : DStaticPowerResourceD(KDBSIGLSPDependResource, 0), iMinLevel(0), iMaxLevel(1), iCurrentLevel(0)
 	{
 	iFlags = KBinary | KLongLatencySet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME  + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSHIGLSPDependResource, "StaticDependResourceE");
@@ -169,36 +163,28 @@ DMLSHIGLSPDependResource::DMLSHIGLSPDependResource() : DStaticPowerResourceD(KDM
 	{
 	// Make it a Instantaneous Resource.
 	iFlags = KMultiLevel | KShared;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSHLGLSNDependResource, "StaticDependResourceC");
 DBSHLGLSNDependResource::DBSHLGLSNDependResource() : DStaticPowerResourceD(KDBSHLGLSNDependResource, 1), iMinLevel(1), iMaxLevel(0), iCurrentLevel(1)
 	{
 	iFlags = KBinary | KLongLatencyGet | KLongLatencySet | KShared | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME  + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSHLGLSNDependResource, "StaticDependResourceG");
 DMLSHLGLSNDependResource::DMLSHLGLSNDependResource() : DStaticPowerResourceD(KDMLSHLGLSNDependResource, 75), iMinLevel(75), iMaxLevel(30), iCurrentLevel(75)
 	{
 	iFlags = KMultiLevel | KLongLatencyGet | KLongLatencySet | KShared | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME  + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSHLGLSCDependResource, "DMLSHLGLSCDependResource");
 DMLSHLGLSCDependResource::DMLSHLGLSCDependResource() : DStaticPowerResourceD(KDMLSHLGLSCDependResource, -100), iMinLevel(-100), iMaxLevel(100), iCurrentLevel(-100)
 	{
 	iFlags = KMultiLevel;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 //Implementation of handle dependent state for all resources

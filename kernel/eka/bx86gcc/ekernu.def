@@ -1026,4 +1026,9 @@ EXPORTS
 	_ZN4Kern19UnmapAndUnpinMemoryEP16TKernelMapObject @ 1025 NONAME
 	_ZN4Kern21CreateKernelMapObjectERP16TKernelMapObjectj @ 1026 NONAME
 	_ZN4Kern22DestroyKernelMapObjectERP16TKernelMapObject @ 1027 NONAME
+	_ZN9Interrupt16AddTimingEntropyEv @ 1028 NONAME
+	_ZN4Kern10RandomSaltEmj @ 1029 NONAME
+	_ZN4Kern10RandomSaltEyj @ 1030 NONAME
+	_ZN4Kern10RandomSaltEPKhjj @ 1031 NONAME
+	_ZN4Kern12SecureRandomER5TDes8 @ 1032 NONAME
 

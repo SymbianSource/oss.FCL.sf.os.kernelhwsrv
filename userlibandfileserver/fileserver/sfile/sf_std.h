@@ -1511,6 +1511,7 @@ public:
 	~CDismountNotifyInfo();
 	void Initialise(TNotifyDismountMode aMode, TInt aDriveNumber,TRequestStatus* iStatus,const RMessagePtr2& aMessage,CSessionFs* aSession);
 	TBool IsMatching(TNotifyDismountMode aMode, TInt aDriveNumber, CSessionFs* aSession);
+	inline TInt DriveNumber() {return iDriveNumber;}
 private:
 	TNotifyDismountMode iMode;
 	TInt iDriveNumber;
@@ -1527,6 +1528,7 @@ protected:
 	void DoAddNotify(CNotifyInfo* aInfo);
 	TBool DoCancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus=NULL);
 	void DoCancelAll(TInt aCompletionCode);
+	CNotifyInfo* DoFindEntry(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
 	TBool IsEmpty();
 protected:
 	TDblQue<CNotifyInfo> iHeader;
@@ -1597,7 +1599,7 @@ public:
 	static void CancelChangeSession(CSessionFs* aSession,TRequestStatus* aStatus=NULL);
 	static void CancelDiskSpaceSession(CSessionFs* aSession,TRequestStatus* aStatus=NULL);
 	static void CancelDebugSession(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
-	static void CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
+	static TInt CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus=NULL);
 	static void CancelSession(CSessionFs* aSession);
 	static TBool HandlePendingDismount(CSessionFs* aSession, TInt aDriveNumber);
 	static TBool IsChangeQueEmpty(TInt aDrive);
@@ -1803,6 +1805,8 @@ extern TUint32 DebugReg;
 extern TInt UserHeapAllocFailCount;
 extern TInt KernHeapAllocFailCount;
 extern TInt MessageCount;
+extern TInt SessionCount;
+extern TInt ObjectCount;
 
 void PrintHeapSize(const TDesC& aMessage);
 

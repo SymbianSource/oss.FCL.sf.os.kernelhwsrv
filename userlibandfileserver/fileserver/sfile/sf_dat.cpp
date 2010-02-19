@@ -72,6 +72,8 @@ TCorruptNameRec* gCorruptFileNameList=NULL;
 TCorruptLogRec* gCorruptLogRecordList=NULL;
 TInt gNumberOfCorruptHits=0;
 HBufC* gCorruptFileNamesListFile=NULL;
+TInt SessionCount;  // number of CSessionFs's
+TInt ObjectCount;   // number of CFsObjects
 
 #endif
 

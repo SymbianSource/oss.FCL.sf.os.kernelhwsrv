@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -397,6 +398,83 @@ static void TestReplaceAndRename()
 	}
 
 
+//-------------------------------------------------------------------
+/**
+    Create a directory; create many files in it (the directory will become more that 1 cluster)
+    Then rename every file in this directory to a new name.
+*/
+void TestRenameManyFilesInTheSameDir()
+{
+    test.Next(_L("TestRenameManyFilesInTheSameDir"));
+    
+    if(Is_Win32(TheFs, gDriveNum))
+    {
+        test.Printf(_L("Skipping on WINS drive\n"));
+        return;
+    }
+
+    _LIT(KDir,  "\\dir1\\");
+    _LIT(KFile, "filename_long-");
+    
+    //-- the number of files is chosen the way to have the directory file at least 2 clusters long (on FAT)
+    //-- "filename_long-XXX" will correspond to 2 VFAT entries in the directory; max. cluster size of FAT is 32K
+    //--  2*32*600 = 38400 > 32K
+    const TInt KNumFiles = 600;
+    
+    TName   fName;
+    TInt    i;
+    TInt    nRes;
+
+    //-- quick format the drive 
+    nRes = FormatDrive(TheFs, gDriveNum, ETrue); 
+    test_KErrNone(nRes);
+
+    MakeDir(KDir);
+
+    //-- create a number of files in a single directory, it shall be larger than 1 cluster.
+    for(i=0; i<KNumFiles; ++i)
+        {
+        fName.Format(_L("%S%S%03d"), &KDir, &KFile, i);   
+        nRes = CreateEmptyFile(TheFs, fName, 0);
+        test_KErrNone(nRes);
+        }
+
+    //-- rename all files in the same directory
+    TName   fNameNew;
+    for(i=0; i<KNumFiles; ++i)
+        {
+        fName.Format(_L("%S%S%03d"), &KDir, &KFile, i);   
+        fNameNew.Format(_L("%S%S%03d_new"), &KDir, &KFile, i);   
+
+        nRes = TheFs.Rename(fName, fNameNew);
+        test_KErrNone(nRes);
+
+        }
+
+   fName.Format(_L("%c:"), gDriveNum+'A');
+   nRes = TheFs.CheckDisk(fName);
+   test(nRes == KErrNone || nRes == KErrNotSupported);
+
+   //-- clean up
+    for(i=0; i<KNumFiles; ++i)
+        {
+        fNameNew.Format(_L("%S%S%03d_new"), &KDir, &KFile, i);   
+        nRes = TheFs.Delete(fNameNew);
+        test_KErrNone(nRes);
+        }
+
+   fName.Format(_L("%c:"), gDriveNum+'A');
+   nRes = TheFs.CheckDisk(fName);
+   test(nRes == KErrNone || nRes == KErrNotSupported);
+
+
+   nRes = TheFs.RmDir(KDir);
+   test(nRes == KErrNone);
+
+
+}
+
+
 void CallTestsL(void)
 	{
 	
@@ -424,6 +502,7 @@ void CallTestsL(void)
 	TestRFileRename();
 	TestEikonRename();
 	TestReplaceAndRename();
+    TestRenameManyFilesInTheSameDir();
 
     if(!Is_Win32(TheFs, gDriveNum))
         {

@@ -1,3 +1,120 @@
+Version 2.00.2075
+=================
+(Made by vfebvre 26/01/2010)
+
+1.	josezhou
+	1.	DEF143803 COPY of DEF143562:No error note about connected USB HUB shown
+	2.	DEF143802 copied open for submission:EDHO-7Y3AAD, USB connection: 
+	3.	DEF143804 COPY of DEF143568:USB using an obsoleted API to allocate endpoint resource
+	4.	DEF143799 COPY of DEF142812: SMP-Panic in the TDfcQue::ThreadFunction when USB channel is
+	5.	DEF143800 COPY of DEF142888: SMP-t_usbdi test case 1231 failed
+
+2.	ange
+	1.	PDEF143797 Precondition is not met when USB OTG driver use Kernel API 
+
+3.	vfebvre
+	1.	MINOR_CHANGE Fixed test code for File Header Relocation
+
+
+Version 2.00.2074
+=================
+(Made by vfebvre 25/01/2010)
+
+1.	djkovace
+	1.	DEF143683 Fix PL310 erratum 727915
+
+2.	dogunjum
+	1.	DEF137221 NE1 PCI driver not confirmed SMPSAFE automatic test case missing
+
+3.	vfebvre
+	1.	DEF143067 BTracex_ldd causing missing file warning in CTS77 image creation - TSW Defect
+
+
+Version 2.00.2073
+=================
+(Made by vfebvre 25/01/2010)
+
+1.	mmoate
+	1.	MILESTONE: SymTB9.2, GT0660, MS3.8, DS.1456
+		REQ427:125 Cryptographically-Strong Random Number Generator [PREQ211]
+
+
+Version 2.00.2072
+=================
+(Made by vfebvre 25/01/2010)
+
+1.	vfebvre
+	1.	MINOR_CHANGE Update required to base_e32.mrp for Header Relocation
+
+
+Version 2.00.2071
+=================
+(Made by vfebvre 21/01/2010)
+
+1.	ryharkin
+	1.	PDEF143852 - TConsoleKey missing iPointerNumber
+		The text window server class TConsoleKey is missing the iPointerNumber member value
+
+
+Version 2.00.2070
+=================
+(Made by vfebvre 18/01/2010)
+
+1.	shamaden
+	1.	DEF143440  t_heap fails when KHeapMinCellSize = 16
+
+2.	necliffo
+	1.	DEF143882: SALM-7ZQN53 WDP: EMMC drive not mountable as Mass Storage
+
+3.	gcochran
+	1.	DEF143458: E32 T_CODEPAGING test is not support large page cache (TB9.2) TSW: EYGL-7T38TL
+
+4.	vfebvre
+	1.	DEF142990 Change to Make Files - Causing OS Base Build Failure
+
+
+Version 2.00.2069
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	martai
+	1.	DEF143580: t_fuzzldr crashes/hangs on FMM and Datapaged ROMs
+	2.	DEF143441: FMM: Minimise size of live list when demand paging disabled 
+
+2.	tommarti
+	1.	Fix for DEF140936: T_WDPSTRESS fails on NaviEngine SMPPAGE/SMPKERNEL
+
+
+Version 2.00.2068
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	djkovace
+	1.	PDEF143736 OOM defect in DVirtualPinMapping::New
+	2.	PDEF143812 Support platform specific mappings on 1136
+
+2.	necliffo
+	1.	DEF143340 JPLS-7XXEAC: eMMC initialisation fails with Samsung 32GB
+	2.	DEF143593 WDP: Phone does not boot if SWAP drive is corrupted
+
+3.	martai
+	1.	DEF142714: Frequent T_RAMDEFRAG failures observed on the H4 
+
+4.	vfebvre
+	1.	PDEF143659 Bootstrap.flm and related bld.inf changes not submitted to the MCL
+
+5.	marisood
+	1.	DEF143212: Missing M&FS files from Symbian Foundation due to IP classifications 
+
+
+Version 2.00.2067
+=================
+(Made by vfebvre 12/01/2010)
+
+1.	cnotton
+	1.	MINOR_CHANGE Fixed some smaller compile issues with split and relocation header changes.
+
+
 Version 2.00.2066
 =================
 (Made by vfebvre 11/01/2010)

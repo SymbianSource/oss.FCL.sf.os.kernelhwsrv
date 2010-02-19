@@ -662,12 +662,24 @@ GLDEF_C TInt E32Main()
 	test.Printf(_L("DriveCacheFlags = %08X\n"), gDriveCacheFlags);
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	test.Printf(_L("\n"));
+
+	TInt orgSessionCount;
+	r = controlIo(TheFs,theDrive, KControlIoSessionCount, orgSessionCount);
+	test(r==KErrNone);
+	test.Printf(_L("Session count start=%d\n"),orgSessionCount);
+
+	TInt orgObjectCount;
+	r = controlIo(TheFs,theDrive, KControlIoObjectCount, orgObjectCount);
+	test(r==KErrNone);
+	test.Printf(_L("Object count start=%d\n"),orgObjectCount);
+
+
 	TPckgBuf<TIOCacheValues> pkgOrgValues;
 	TIOCacheValues& orgValues=pkgOrgValues();
 	r = controlIo(TheFs,theDrive, KControlIoCacheCount, orgValues);
 	test_KErrNone(r);
 
-	test.Printf(_L("\n"));
 	test.Printf(_L("Requests on close queue at start=%d\n"),orgValues.iCloseCount);
 	test.Printf(_L("Requests on free queue at start=%d\n"),orgValues.iFreeCount);
 	test.Printf(_L("Requests dynamically allocated at start=%d\n"),orgValues.iAllocated);
@@ -702,6 +714,80 @@ GLDEF_C TInt E32Main()
 	TheFs.SetAllocFailure(gAllocFailOff);
 	
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	// Close and then re-open the main file server session to force the closure of
+	// any sub-sessions which may have been left open....
+	// NB: This won't help if the test has opened another session & left sub-sessions open.
+	TheFs.Close();
+	r=TheFs.Connect();
+	test(r==KErrNone);
+
+	// Display the file cache stats before closing the file queue
+	TFileCacheStats endFileCacheStats;
+	r = controlIo(TheFs,theDrive, KControlIoFileCacheStats, endFileCacheStats);
+	test_Value(r, r == KErrNone || r == KErrNotSupported);
+	test.Printf(_L("File cache: Cachelines (free %d, used %d), Segments(allocated %d locked %d). Closed files(%d)\n"),
+		endFileCacheStats.iFreeCount, 
+		endFileCacheStats.iUsedCount, 
+		endFileCacheStats.iAllocatedSegmentCount,
+		endFileCacheStats.iLockedSegmentCount,
+		endFileCacheStats.iFilesOnClosedQueue);
+
+
+	// Wait up to 3 seconds for all file server sessions & objects to close
+	// and then test session & object counts haven't changed
+	TInt endSessionCount = 0;
+	TInt endObjectCount = 0;
+	for (TInt n=0; n<3; n++)
+		{
+		// Flush the closed files queue as a file-cache object on the closed queue is counted as an open object
+		test.Printf(_L("Flushing close queue...\n"));
+		r = TheFs.ControlIo(theDrive, KControlIoFlushClosedFiles);
+		test_KErrNone(r);
+
+		r = controlIo(TheFs,theDrive, KControlIoSessionCount, endSessionCount);
+		test(r==KErrNone);
+		test.Printf(_L("Session count end=%d\n"),endSessionCount);
+
+		r = controlIo(TheFs,theDrive, KControlIoObjectCount, endObjectCount);
+		test(r==KErrNone);
+		test.Printf(_L("Object count end=%d\n"),endObjectCount);
+
+		if (endSessionCount == orgSessionCount && endObjectCount == orgObjectCount)
+			break;
+		
+		test.Printf(_L("Warning: Session/object count leak\n"));
+		User::After(1000000);
+		}
+
+	// some tests don't close their sessions, so this test won't work until 
+	// all the tests are fixed :
+//	test(endSessionCount == orgSessionCount);
+//	test(endObjectCount == orgObjectCount);
+
+
+	// Test that the File cache hasn't leaked ....
+	r = controlIo(TheFs,theDrive, KControlIoFileCacheStats, endFileCacheStats);
+	test_Value(r, r == KErrNone || r == KErrNotSupported);
+	test.Printf(_L("File cache: Cachelines (free %d, used %d), Segments(allocated %d locked %d). Closed files(%d)\n"),
+		endFileCacheStats.iFreeCount, 
+		endFileCacheStats.iUsedCount, 
+		endFileCacheStats.iAllocatedSegmentCount,
+		endFileCacheStats.iLockedSegmentCount,
+		endFileCacheStats.iFilesOnClosedQueue);
+	if (r == KErrNone)
+		{
+		test(startFileCacheStats.iFreeCount == endFileCacheStats.iFreeCount);
+		test(startFileCacheStats.iUsedCount == endFileCacheStats.iUsedCount);
+		test(startFileCacheStats.iAllocatedSegmentCount == endFileCacheStats.iAllocatedSegmentCount);
+		test(startFileCacheStats.iLockedSegmentCount == endFileCacheStats.iLockedSegmentCount);
+		test(startFileCacheStats.iFileCount == endFileCacheStats.iFileCount);
+		}
+#endif
+
+
+	
+#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	// Test that the request allocator hasn't leaked...
 	TPckgBuf<TIOCacheValues> pkgValues;
 	TIOCacheValues& values=pkgValues();
 	r = controlIo(TheFs,theDrive, KControlIoCacheCount, values);
@@ -723,42 +809,6 @@ GLDEF_C TInt E32Main()
 	// + 1 (because we used one request to issue KControlIoCacheCount)
 	// If this doesn't equate then this implies a request leak
 	test(values.iTotalCount == values.iCloseCount + values.iFreeCount + 1);
-
-	// File cache
-	TFileCacheStats endFileCacheStats;
-	r = controlIo(TheFs,theDrive, KControlIoFileCacheStats, endFileCacheStats);
-	test_Value(r, r == KErrNone || r == KErrNotSupported);
-
-	test.Printf(_L("File cache: Cachelines (free %d, used %d), Segments(allocated %d locked %d). Closed files(%d)\n"),
-		endFileCacheStats.iFreeCount, 
-		endFileCacheStats.iUsedCount, 
-		endFileCacheStats.iAllocatedSegmentCount,
-		endFileCacheStats.iLockedSegmentCount,
-		endFileCacheStats.iFilesOnClosedQueue);
-
-	// flush closed files queue
-	test.Printf(_L("Flushing close queue..."));
-	r = TheFs.ControlIo(theDrive, KControlIoFlushClosedFiles);
-	test_KErrNone(r);
-
-	r = controlIo(TheFs,theDrive, KControlIoFileCacheStats, endFileCacheStats);
-	test_Value(r, r == KErrNone || r == KErrNotSupported);
-	test.Printf(_L("File cache: Cachelines (free %d, used %d), Segments(allocated %d locked %d). Closed files(%d)\n"),
-		endFileCacheStats.iFreeCount, 
-		endFileCacheStats.iUsedCount, 
-		endFileCacheStats.iAllocatedSegmentCount,
-		endFileCacheStats.iLockedSegmentCount,
-		endFileCacheStats.iFilesOnClosedQueue);
-
-
-	if (r == KErrNone)
-		{
-		test(startFileCacheStats.iFreeCount == endFileCacheStats.iFreeCount);
-		test(startFileCacheStats.iUsedCount == endFileCacheStats.iUsedCount);
-		test(startFileCacheStats.iAllocatedSegmentCount == endFileCacheStats.iAllocatedSegmentCount);
-		test(startFileCacheStats.iLockedSegmentCount == endFileCacheStats.iLockedSegmentCount);
-		test(startFileCacheStats.iFileCount == endFileCacheStats.iFileCount);
-		}
 #endif
 
 	TheFs.Close();

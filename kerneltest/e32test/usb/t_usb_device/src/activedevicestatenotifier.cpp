@@ -114,28 +114,35 @@ void CActiveDeviceStateNotifier::RunL()
 		TUint8 altSetting = iDeviceState & ~KUsbAlternateSetting;
 		TUSB_PRINT2("Device State notifier: Alternate interface %d setting has changed: now %d",
 					iPortNumber, altSetting);
-
-		// 	allocate endpoint DMA and double buffering for all endpoints on interface
-		for (TUint8 ifNumber = 0; ifNumber < 128; ifNumber++)
+					
+		TUsbDeviceCaps dCaps;
+		iPort->DeviceCaps(dCaps);
+		TBool isResourceAllocationV2 = ((dCaps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) != 0);
+		if (!isResourceAllocationV2)
 			{
-			IFConfigPtr newIfPtr = gInterfaceConfig[ifNumber][altSetting];
-			if (newIfPtr)
+			// allocate endpoint DMA and double buffering for all endpoints on interface for resource allocation v1
+			// if resource allocation v2, refer to CActiveControl::ConstructL and CActiveControl::PopulateInterfaceResourceAllocation
+			for (TUint8 ifNumber = 0; ifNumber < 128; ifNumber++)
 				{
-				if (newIfPtr->iPortNumber == iPortNumber)
+				IFConfigPtr newIfPtr = gInterfaceConfig[ifNumber][altSetting];
+				if (newIfPtr)
 					{
-					// 	allocate endpoint DMA and double buffering for all endpoints on default interface
-					for (TUint8 i = 1; i <= newIfPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+					if (newIfPtr->iPortNumber == iPortNumber)
 						{
-						newIfPtr->iEpDMA[i-1] ? gActiveControl->AllocateEndpointDMA(iPort,(TENDPOINTNUMBER)i) : gActiveControl->DeAllocateEndpointDMA(iPort,(TENDPOINTNUMBER)i);
-						#ifndef USB_SC
-						newIfPtr->iEpDoubleBuff[i-1] ? gActiveControl->AllocateDoubleBuffering(iPort,(TENDPOINTNUMBER)i) : gActiveControl->DeAllocateDoubleBuffering(iPort,(TENDPOINTNUMBER)i);
-						#endif
+						// 	allocate endpoint DMA and double buffering for all endpoints on default interface
+						for (TUint8 i = 1; i <= newIfPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+							{
+							newIfPtr->iEpDMA[i-1] ? gActiveControl->AllocateEndpointDMA(iPort,(TENDPOINTNUMBER)i) : gActiveControl->DeAllocateEndpointDMA(iPort,(TENDPOINTNUMBER)i);
+							#ifndef USB_SC
+							newIfPtr->iEpDoubleBuff[i-1] ? gActiveControl->AllocateDoubleBuffering(iPort,(TENDPOINTNUMBER)i) : gActiveControl->DeAllocateDoubleBuffering(iPort,(TENDPOINTNUMBER)i);
+							#endif
+							}
+						break;				
 						}
-					break;				
 					}
 				}
-			}
-							
+			}	
+						
 		if (gAltSettingOnNotify)
 			{
 			for (TUint16 i =0; i < KMaxConcurrentTests; i++)

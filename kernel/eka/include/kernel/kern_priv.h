@@ -62,6 +62,9 @@
 #endif
 #endif
 
+// size of each buffer used to store entropy data before it is passed to the RNG
+const TUint KEntropyBufferSizeWords = 1024;// maximum size of 1024 words (32Kbit);
+
 const TInt KKernelServerDefaultPriority=16;
 const TInt KDefaultExitPriority=KKernelServerDefaultPriority;
 
@@ -2482,6 +2485,9 @@ public:
 		ECodeSegRemoveAbsent=135,
 		EPhysicalPinObjectBad=136,
 		EShBufVirtualNotDefined=137,	//< A required virtual method is not present in a shared buffer derived class (internal error)
+		ESecureRNGInitializationFailed = 138,
+		ESecureRNGInternalStateNotSecure = 139,
+		ESecureRNGOutputsInBadState = 140,
 		
 		ESystemException=0x10000000,
 		ESoftwareWarmReset=0x10000001
@@ -2562,6 +2568,10 @@ public:
 	static TKernelHookFn KernelHooks[ENumKernelHooks];
 	static TMiscNotifierMgr TheMiscNotifierMgr;
 	static TAny* VariantData[31];
+	static TUint32 EntropyBufferStatus[KMaxCpus];
+	static TUint32* EntropyBuffer[KMaxCpus];
+    static TUint32 TempEntropyBuffer[KEntropyBufferSizeWords];
+    static TDfc EntropyBufferDfc;
 public:
 	static TInt InitialiseMicrokernel();
 #ifdef __SMP__
@@ -2754,6 +2764,7 @@ public:
 	static void Init2AP();
 #endif
 	static void Init3();
+	static void Init4();
 	static TInt InitSvHeapChunk(DChunk* aChunk, TInt aSize);
 	static TInt InitSvStackChunk();
 	static TBool IsRomAddress(const TAny* aPtr);

@@ -105,6 +105,7 @@ class TLookupEntry
 
 //---------------------------------------------------------------------------------------------------------------------------------
 typedef TDblQue<TDynamicDirCachePage> TCachePageList;
+
 /**
 Dynamic directory cache.
 For now it is directly derived from MWTCacheInterface.
@@ -114,7 +115,7 @@ class CDynamicDirCache : public CBase, public MWTCacheInterface
     {
 public:
 	~CDynamicDirCache();
-	static CDynamicDirCache* NewL(TDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeLog2, const TDesC& aClientName);
+	static CDynamicDirCache* NewL(TDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeLog2, TUint32 aWrGranularityLog2, const TDesC& aClientName);
 
 	//-- overloads from the base class
 	void    ReadL (TInt64 aPos, TInt aLength, TDes8& aDes);
@@ -122,7 +123,7 @@ public:
 	void    InvalidateCache(void);
     void    InvalidateCachePage(TUint64 aPos);
 
-	TUint32 PosCached(const TInt64& aPosToSearch, TInt64& aCachedPosStart);
+	TUint32 PosCached(TInt64 aPosToSearch);
 	TUint32 CacheSizeInBytes()  const;
 	TInt    Control(TUint32 aFunction, TUint32 aParam1, TAny* aParam2);
 	void 	SetCacheBasePos(TInt64 aBasePos);
@@ -136,11 +137,12 @@ public:
 	void Info() const;
 
 protected:
-	CDynamicDirCache(TDriveInterface& aDrive, TUint32 aMinSizeInBytes, TUint32 aMaxSizeInBytes, TUint32 aPageSizeInBytesLog2);
+	CDynamicDirCache(TDriveInterface& aDrive, TUint32 aMinSizeInBytes, TUint32 aMaxSizeInBytes, TUint32 aPageSizeInBytesLog2, TUint32 aWrGranularityLog2);
 	void ConstructL(const TDesC& aClientName);
 
 	void ReadDataFromSinglePageL(TInt64 aPos, TInt aLength, TDes8& aDes);
-	void WriteDataOntoSinglePageL(TInt64 aPos, const TUint8* aData, TUint32 aDataLen);
+	TDynamicDirCachePage* WriteDataOntoSinglePageL(TInt64 aPos, const TUint8* aData, TUint32 aDataLen);
+
 	TDynamicDirCachePage* FindPageByPos(TInt64 aPos);
 	TDynamicDirCachePage* UpdateActivePageL(TInt64 aPos);
 	TDynamicDirCachePage* AllocateAndLockNewPageL(TInt64 aStartMedPos);
@@ -162,7 +164,9 @@ protected:
 	void DoInvalidateCache(void);
 	
 private:
-	TUint32				iPageSizeLog2;		///< log2 value of cache pages size in bytes
+	TUint32				iPageSizeLog2;		    ///< Log2(cache page size or read granularity unit) 
+    TUint32             iWrGranularityLog2;     ///< Log2(cache write granularity unit). Can't be > iPageSizeLog2. '0' has a special meaning - "don't use write granularity"
+
 	TUint32				iMinCacheSizeInBytes;	///< minimum cache data size
 	TUint32				iMaxCacheSizeInBytes;	///< maximum cache data size
 	TUint32				iMinSizeInPages;	///< minimum cache page number

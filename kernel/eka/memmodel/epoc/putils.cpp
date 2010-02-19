@@ -428,11 +428,6 @@ TBool P::CheckSuperPageSignature()
 static const TUint32 KMapAttrType2 = 0x80000000;
 static const TUint32 KMapAttrTypeShift 		 = 26;
 
-#if defined(__CPU_MEMORY_TYPE_REMAPPING)
-extern TUint32 PrimaryRegionRemapRegister();
-extern TUint32 NormalMemoryRemapRegister();
-#endif
-
 EXPORT_C TMappingAttributes2::TMappingAttributes2(TMemoryType	aType,
 														TBool	aUserAccess,
 														TBool	aWritable,

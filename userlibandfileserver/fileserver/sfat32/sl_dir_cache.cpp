@@ -39,11 +39,11 @@ Cache page constructor.
 @param	aStartRamAddr	the start address in the ram that this page content lives
 */
 TDynamicDirCachePage::TDynamicDirCachePage(CDynamicDirCache* aOwnerCache, TInt64 aStartMedPos, TUint8* aStartRamAddr)
-:iStartMedPos(aStartMedPos),
-iStartRamAddr(aStartRamAddr),
-iOwnerCache(aOwnerCache),
-iValid(EFalse),
-iLocked(EFalse)
+                     :iStartMedPos(aStartMedPos),
+                      iStartRamAddr(aStartRamAddr),
+                      iOwnerCache(aOwnerCache),
+                      iValid(EFalse),
+                      iLocked(EFalse)
 	{
 	//__PRINT3(_L("TDynamicDirCachePage::TDynamicDirCachePage(aStartMedPos=%lx, aStartRamAddr=0x%X, aPageSize=%u)"), aStartMedPos, aStartRamAddr, PageSizeInBytes());
 	iType = EUnknown;
@@ -104,20 +104,22 @@ Constructor of CDynamicDirCache.
 @param	aDrive	local drive interface to read/write media
 @param	aMinPageNum	the minimum page number for the cache, includes iActive page and locked pages.
 @param	aMaxPageNum	the maximum page number for the cache, includes iActive page, locked pages and unlocked pages.
-@param	aPageSizeInBytesLog2	the log2 value of page size in bytes, assumes page size is always a power of two
+    @param	aPageSizeInBytesLog2	Log2 of the page size in bytes, this is the cache read granularity
+    @param  aWrGranularityLog2      Log2(cache write granularity)
 */
-CDynamicDirCache::CDynamicDirCache(TDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeInBytesLog2)
-:iPageSizeLog2(aPageSizeInBytesLog2),
-iMinSizeInPages(aMinPageNum),
-iMaxSizeInPages(aMaxPageNum),
-iDrive(aDrive),
-iLockedQ(_FOFF(TDynamicDirCachePage, iLink)),
-iUnlockedQ(_FOFF(TDynamicDirCachePage, iLink)),
-iLockedQCount(0),
-iUnlockedQCount(0),
-iHashFunction(HashFunction),
-iIdentityFunction(IdentityFunction),
-iLookupTable(iHashFunction, iIdentityFunction)
+CDynamicDirCache::CDynamicDirCache(TDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeInBytesLog2, TUint32 aWrGranularityLog2)
+                 :iPageSizeLog2(aPageSizeInBytesLog2),
+                  iWrGranularityLog2(aWrGranularityLog2),
+                  iMinSizeInPages(aMinPageNum),
+                  iMaxSizeInPages(aMaxPageNum),
+                  iDrive(aDrive),
+                  iLockedQ(_FOFF(TDynamicDirCachePage, iLink)),
+                  iUnlockedQ(_FOFF(TDynamicDirCachePage, iLink)),
+                  iLockedQCount(0),
+                  iUnlockedQCount(0),
+                  iHashFunction(HashFunction),
+                  iIdentityFunction(IdentityFunction),
+                  iLookupTable(iHashFunction, iIdentityFunction)
 	{
 	iPageSizeInBytes = 1 << aPageSizeInBytesLog2;
 	iCacheDisabled = EFalse;
@@ -174,10 +176,10 @@ void CDynamicDirCache::ConstructL(const TDesC& aClientName)
 /**
 Static factory function of CDynamicDirCache
 */
-CDynamicDirCache* CDynamicDirCache::NewL(TDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeLog2, const TDesC& aClientName)
+CDynamicDirCache* CDynamicDirCache::NewL(TDriveInterface& aDrive, TUint32 aMinPageNum, TUint32 aMaxPageNum, TUint32 aPageSizeLog2, TUint32 aWrGranularityLog2, const TDesC& aClientName)
     {
     __PRINT3(_L("CDynamicDirCache::NewL(MinPageNum=%u, MaxPageNum=%u, page=%u)"), aMinPageNum, aMaxPageNum, 1<<aPageSizeLog2);
-    CDynamicDirCache* pSelf = new (ELeave) CDynamicDirCache(aDrive, aMinPageNum, aMaxPageNum, aPageSizeLog2);
+    CDynamicDirCache* pSelf = new (ELeave) CDynamicDirCache(aDrive, aMinPageNum, aMaxPageNum, aPageSizeLog2, aWrGranularityLog2);
     CleanupStack::PushL(pSelf);
     pSelf->ConstructL(aClientName);
     CleanupStack::Pop();
@@ -338,7 +340,7 @@ first, then write data through iActive page.
 @param	aDataLen	the length of the content to be written.
 @pre	aDataLen	should be no more than page size.
 */
-void CDynamicDirCache::WriteDataOntoSinglePageL(TInt64 aPos, const TUint8* aData, TUint32 aDataLen)
+TDynamicDirCachePage* CDynamicDirCache::WriteDataOntoSinglePageL(TInt64 aPos, const TUint8* aData, TUint32 aDataLen)
 	{
 	ASSERT(aDataLen <= iPageSizeInBytes);
     //-- the data section is in the cache page entirely, take data directly from the cache
@@ -378,7 +380,8 @@ void CDynamicDirCache::WriteDataOntoSinglePageL(TInt64 aPos, const TUint8* aData
 
 	// always make writting events MRU
 	DoMakePageMRU(aPos);
-    return;
+    
+    return pPage;
 	}
 
 /**
@@ -407,11 +410,37 @@ void CDynamicDirCache::WriteL(TInt64 aPos,const TDesC8& aDes)
 //    __PRINT5(_L("CDynamicDirCache::WriteL: aPos=%lx, aLength=%x, page:%lx, pageSz:%x, bytesToPageEnd=%x"), aPos, dataLen, pageStartMedPos, PageSz, bytesToPageEnd);
 
     if(dataLen <= bytesToPageEnd)
-        {
-        WriteDataOntoSinglePageL(aPos, pData, dataLen);
+        {//-- make small write a multiple of a write granularity size (if it is used at all)
+         //-- this is not the best way to use write granularity, but we would need to refactor cache pages code to make it normal
+        
+        TDynamicDirCachePage* pPage = WriteDataOntoSinglePageL(aPos, pData, dataLen);
+        TPtrC8 desBlock(aDes);
+
+        if(iWrGranularityLog2)
+            {//-- write granularity is used
+            const TInt64  newPos = (aPos >> iWrGranularityLog2)  << iWrGranularityLog2; //-- round position down to the granularity unit size
+            TUint32 newLen = (TUint32)(aPos - newPos)+dataLen;
+            newLen = RoundUp(newLen, iWrGranularityLog2);
+
+            const TUint8* pd = pPage->PtrInPage(newPos);
+            desBlock.Set(pd, newLen);
+            aPos = newPos;
+            
+            }
+
+        //-- write data to the media
+        const TInt nErr = iDrive.WriteCritical(aPos, desBlock);
+        if(nErr != KErrNone)
+            {//-- some serious problem occured during writing, invalidate cache.
+            InvalidateCache();
+            User::Leave(nErr);
+            }
+
+
         }
     else
-        {
+        {//-- Data to be written cross cache page boundary or probably we have more than 1 page to write
+         //-- this is a very rare case.   
         __PRINT(_L("CDynamicDirCache::WriteL() CROSS PAGE!"));
 
         //-- Data to be written cross cache page boundary or probably we have more than 1 page to write
@@ -439,8 +468,6 @@ void CDynamicDirCache::WriteL(TInt64 aPos,const TDesC8& aDes)
             {
             WriteDataOntoSinglePageL(currMediaPos, pData, dataLen);
             }
-        }// else(dataLen <= bytesToPageEnd)
-
 
     //-- write data to the media
     const TInt nErr = iDrive.WriteCritical(aPos,aDes);
@@ -449,6 +476,11 @@ void CDynamicDirCache::WriteL(TInt64 aPos,const TDesC8& aDes)
         InvalidateCache();
         User::Leave(nErr);
         }
+
+
+        }// else(dataLen <= bytesToPageEnd)
+
+
 	}
 
 /**
@@ -518,7 +550,7 @@ void CDynamicDirCache::InvalidateCachePage(TUint64 /*aPos*/)
 Implementation of pure virtual function.
 @see	MWTCacheInterface::PosCached()
 */
-TUint32 CDynamicDirCache::PosCached(const TInt64& aPos, TInt64& aCachedPosStart)
+TUint32 CDynamicDirCache::PosCached(TInt64 aPos)
 	{
 	const TInt64 pageStartMedPos = CalcPageStartPos(aPos);
 
@@ -535,7 +567,6 @@ TUint32 CDynamicDirCache::PosCached(const TInt64& aPos, TInt64& aCachedPosStart)
 //			__PRINT1(_L("CDynamicDirCache::PosCached: page(0x%lx) found on Unlocked Queue!"), aPos);
 			// have to unlock it before returning, otherwise there will be memory leak
 			UnlockPage(pPage);
-    	    aCachedPosStart = pPage->StartPos();
 			return pPage->PageSizeInBytes();
 			}
 		else	// if the unlocked page is not valid anymore, remove it
@@ -551,7 +582,6 @@ TUint32 CDynamicDirCache::PosCached(const TInt64& aPos, TInt64& aCachedPosStart)
 	else if (pPage)
 		{
 		__PRINT1(_L("CDynamicDirCache::PosCached: page(0x%lx) on Locked Queue!"), aPos);
-	    aCachedPosStart = pPage->StartPos();
 		return pPage->PageSizeInBytes();
 		}
 

@@ -506,9 +506,17 @@ DCoarseMemory::DPageTables* DCoarseMemory::DPageTables::New(DCoarseMemory* aMemo
 	if(self)
 		{
 		new (self) DPageTables(aMemory,numPts,aPteType);
+		// Add this page tables object to the memory object before we update any 
+		// page table entries. To ensure that if any of aMemory's pages with 
+		// corresponding page table entries in self are moved during Construct(), 
+		// DCoarseMemory::RemapPage() will be able to find the page table entries 
+		// to update via iPageTables.
+		__NK_ASSERT_DEBUG(!aMemory->iPageTables[aPteType]);
+		aMemory->iPageTables[aPteType] = self;
 		TInt r = self->Construct();
 		if(r!=KErrNone)
 			{
+			aMemory->iPageTables[aPteType] = 0;
 			self->Close();
 			self = 0;
 			}
@@ -1689,11 +1697,6 @@ DCoarseMemory::DPageTables* DCoarseMemory::GetOrAllocatePageTables(TUint aPteTyp
 		{
 		// allocate a new one if required...
 		tables = DPageTables::New(this, iSizeInPages, aPteType);
-		if (tables)
-			{
-			__NK_ASSERT_DEBUG(!iPageTables[aPteType]);
-			iPageTables[aPteType] = tables;
-			}
 		}		
 
 	return tables;

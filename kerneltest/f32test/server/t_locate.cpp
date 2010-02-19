@@ -162,7 +162,7 @@ LOCAL_C void CreateFilesInRemovableDrive()
             err = TheFs.Drive(info, i);
             test( err == KErrNone ); 
                         
-            if( info.iDriveAtt  & KDriveAttRemovable )  
+            if(( info.iDriveAtt  & KDriveAttRemovable ) && !( info.iDriveAtt  & KDriveAttLogicallyRemovable ))  
             	{
 								
 				if ( ( info.iType != EMediaNotPresent) && (info.iType != EMediaUnknown) && (info.iType != EMediaCdRom) )

@@ -1,3 +1,57 @@
+Version 2.00.2031
+=================
+(Made by vfebvre 26/01/2010)
+
+1.	famustaf
+	1.	MINOR_CHANGE Add documentation to 'Copy' in Text Shell (TB9.2)
+		Added documentation to state that ShellFunction::Copy will overwrite existing file(s)
+
+
+Version 2.00.2030
+=================
+(Made by vfebvre 21/01/2010)
+
+1.	dlyokhin
+	1.	PDEF143791 FAT: renaming many files in a directory corrupts short file names
+
+
+Version 2.00.2029
+=================
+(Made by vfebvre 19/01/2010)
+
+1.	necliffo
+	1.	PDEF143913 WDP: T_locate fails on VASCO 
+
+
+Version 2.00.2028
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	niccox
+	1.	PDEF143832 t_falsespace should not be run on drive if media type is EMediaRAM
+
+
+Version 2.00.2027
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	niccox
+	1.	PDEF143508 Host USB ModeSense10 command does not decode ModeDataLength
+	2.	MINOR_CHANGE usbtestclient corrections
+	3.	MINOR_CHANGE hostusbmsapp support for different screen sizes
+	4.	DEF143785 USB Host MS does not handle non-mass-storage drive correctly
+
+2.	kaduan
+	1.	DEF143211 File system caching should be turned off on the S60 emulator
+	2.	DEF136627:  T_HANDSHARE failed on NE1_TB_ARMV5.UDEB.SMPPAGE image 
+
+3.	migubarr
+	1.	DEF143592: t_ms_mountstart fails on H4 and VASCO 
+
+4.	dlyokhin
+	1.	PDEF143794  FAT: deleting VFAT entryset is not optimal
+
+
 Version 2.00.2026
 =================
 (Made by vfebvre 17/12/2009)

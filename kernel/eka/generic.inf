@@ -22,9 +22,9 @@ PRJ_EXTENSIONS
 start		extension		base/genexec
 
 #ifdef SYMBIAN_OLD_EXPORT_LOCATION
-option INC_PATH   /epoc32/include
+option INC_PATH   $(EPOCROOT)epoc32/include
 #else
-option INC_PATH  /epoc32/include/platform
+option INC_PATH  $(EPOCROOT)epoc32/include/platform
 #endif
 
 

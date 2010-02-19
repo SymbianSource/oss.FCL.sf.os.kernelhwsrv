@@ -125,10 +125,9 @@ EXPORT_C CCacheMemoryClient* CCacheMemoryManager::ConnectClientL(const TDesC& aC
 
 	// if it is a new drive/file system who wants to connect, create a new client for it
 	// parameter validation
-	ASSERT(iSizeInBytes > iCurrentOffsetMark + (aMaxSizeInSegs << SegmentSizeInBytesLog2()));
 	if (iSizeInBytes < iCurrentOffsetMark + (aMaxSizeInSegs << SegmentSizeInBytesLog2()))
 		{
-		ASSERT(0);
+		__PRINT1(_L("CCacheMemoryManager::ConnectClientL([%S]) failed, please check \"GlobalCacheMemorySize\" setting!!!"), &aClientName);
 		User::Leave(KErrArgument);
 		}
 	
@@ -140,7 +139,6 @@ EXPORT_C CCacheMemoryClient* CCacheMemoryManager::ConnectClientL(const TDesC& aC
 	TInt err = iRegisteredClients.Append(client);
 	if (err != KErrNone)
 		{
-		ASSERT(0);
 		delete client;
 		client = NULL;
 		User::Leave(err);
@@ -289,7 +287,10 @@ Global factory function of CCacheMemoryManager.
 */
 void CCacheMemoryManagerFactory::CreateL()
 	{
-	iCacheMemoryManager = CCacheMemoryManager::NewL(TGlobalCacheMemorySettings::CacheSize());
+	if (TGlobalCacheMemorySettings::CacheSize() > 0)
+	    iCacheMemoryManager = CCacheMemoryManager::NewL(TGlobalCacheMemorySettings::CacheSize());
+	else
+	    __PRINT(_L("\"GlobalCacheMemorySize\" set <= 0, CCacheMemoryManager is not created!!!"));
 	}
 
 /**

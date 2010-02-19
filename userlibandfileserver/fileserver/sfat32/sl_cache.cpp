@@ -28,19 +28,12 @@
 CWTCachePage* CWTCachePage::NewL(TUint32 aPageSizeLog2)
     {
     CWTCachePage* pSelf = new (ELeave)CWTCachePage;
-    pSelf->ConstructL(aPageSizeLog2);
+    
+    pSelf->iData.CreateMaxL(1 << aPageSizeLog2);
 
     return pSelf;
     }
 
-/**
-    2nd stage constructor.
-    @param  aPageSizeLog2 Log2(cache page size in bytes)
-*/
-void CWTCachePage::ConstructL(TUint32 aPageSizeLog2)
-    {
-    iData.CreateMaxL(1 << aPageSizeLog2);
-    }
 
 CWTCachePage::CWTCachePage()
     {
@@ -82,46 +75,45 @@ CMediaWTCache::~CMediaWTCache()
 
     @param  aDrive  reference to the driver for media access.
     @param  aNumPages     number of cache pages to be created
-    @param  aPageSizeLog2 Log2 of the page size in bytes
+    @param  aPageSizeLog2       Log2 of the page size in bytes, this is the cache read granularity
+    @param  aWrGranularityLog2  Log2(cache write granularity)
     
     @return a pointer to the created object.
 */
-CMediaWTCache* CMediaWTCache::NewL(TDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2)
+CMediaWTCache* CMediaWTCache::NewL(TDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2, TUint32 aWrGranularityLog2)
     {
-#ifndef ENABLE_DEDICATED_DIR_CACHE    
-    //-- dedicated directory cache isn't enabled
-    (void)aDrive; //-- supress compiler's warning
-    (void)aClusterSizeLog2;
-    return NULL;
-#else    
-
-    //-- dedicated directory cache is enabled, create it
-    ASSERT(aPageSizeLog2);
-    ASSERT(aNumPages);
 
     CMediaWTCache* pSelf = new (ELeave) CMediaWTCache(aDrive);
     
     CleanupStack::PushL(pSelf);
-    pSelf->ConstructL(aNumPages, aPageSizeLog2);
+    pSelf->InitialiseL(aNumPages, aPageSizeLog2, aWrGranularityLog2);
     CleanupStack::Pop();
 
     return pSelf;
-
-#endif
     }
 
 /**
     2nd stage constructor.
     @param  aNumPages number of pages in the directory cache.
-    @param  aPageSizeLog2 Log2(single cache page size in bytes)
+    @param  aPageSizeLog2       Log2 of the page size in bytes, this is the cache read granularity
+    @param  aWrGranularityLog2  Log2(cache write granularity)
 */
-void CMediaWTCache::ConstructL(TUint32 aNumPages, TUint32 aPageSizeLog2)
+void CMediaWTCache::InitialiseL(TUint32 aNumPages, TUint32 aPageSizeLog2, TUint32 aWrGranularityLog2)
     {
     ASSERT(aNumPages && aPageSizeLog2);
     
-    __PRINT2(_L("#CMediaWTCache::CreateL() Pages=%d, PageSize=%d"), aNumPages, 1<<aPageSizeLog2);
+    __PRINT3(_L("#CMediaWTCache::InitialiseL() Pages=%d, PageSzLog2=%d, WrGrLog2:%d"), aNumPages, aPageSizeLog2, aWrGranularityLog2);
+
+    ASSERT(aNumPages);
+    ASSERT(aPageSizeLog2);
+    
+    if(aWrGranularityLog2)
+        {
+        ASSERT(aWrGranularityLog2 >= KDefSectorSzLog2 && aWrGranularityLog2 <= aPageSizeLog2);
+        }
     
     iPageSizeLog2 = aPageSizeLog2; 
+    iWrGranularityLog2 = aWrGranularityLog2;
 
     //-- create cache pages
     for(TUint cnt=0; cnt<aNumPages; ++cnt)
@@ -369,14 +361,12 @@ TUint32 CMediaWTCache::FindOrGrabReadPageL(TInt64 aPos)
     
     @return 0 if aPosToSearch isn't cached, otherwise  cache page size in bytes (see also aCachedPosStart).
 */
-TUint32 CMediaWTCache::PosCached(const TInt64& aPosToSearch, TInt64& aCachedPosStart)
+TUint32 CMediaWTCache::PosCached(TInt64 aPosToSearch)
     {
     TInt nPage = FindPageByPos(aPosToSearch);
     if(nPage <0 )
         return 0; //-- cache page containing aPos not found
 
-    aCachedPosStart = iPages[nPage]->iStartPos;
-    
     return PageSize();
     }
 
@@ -483,9 +473,35 @@ void CMediaWTCache::WriteL(TInt64 aPos,const TDesC8& aDes)
     if(dataLen <= bytesToPageEnd)
         {//-- data section completely fits to the cache page
         Mem::Copy(pPage->PtrInCachePage(aPos), pData, dataLen);   //-- update cache
+
+        //-- make small write a multiple of a write granularity size (if it is used at all)
+        //-- this is not the best way to use write granularity, but we would need to refactor cache pages code to make it normal
+        TPtrC8 desBlock(aDes);
+        
+        if(iWrGranularityLog2)
+            {//-- write granularity is used
+            const TInt64  newPos = (aPos >> iWrGranularityLog2) << iWrGranularityLog2; //-- round position down to the write granularity size
+            TUint32 newLen = (TUint32)(aPos - newPos)+dataLen;  //-- round block size up to the write granularity size
+            newLen = RoundUp(newLen, iWrGranularityLog2);
+       
+            const TUint8* pd = pPage->PtrInCachePage(newPos);
+            desBlock.Set(pd, newLen);
+            aPos = newPos;
+            }
+
+
+        //-- write data to the media
+        const TInt nErr = iDrive.WriteCritical(aPos, desBlock); 
+        if(nErr != KErrNone)
+            {//-- some serious problem occured during writing, invalidate cache.
+            InvalidateCache();
+            User::Leave(nErr);
+            }
+
         }
     else
         {//-- Data to be written cross cache page boundary or probably we have more than 1 page to write
+         //-- this is a very rare case.   
 
         TInt64  currMediaPos(aPos); //-- current media position
 
@@ -523,9 +539,6 @@ void CMediaWTCache::WriteL(TInt64 aPos,const TDesC8& aDes)
             Mem::Copy(pPage->PtrInCachePage(currMediaPos), pData, dataLen);
             }
 
-        }// else(dataLen <= bytesToPageEnd)
-
-    
     //-- write data to the media
     const TInt nErr = iDrive.WriteCritical(aPos,aDes); 
     if(nErr != KErrNone)
@@ -533,6 +546,10 @@ void CMediaWTCache::WriteL(TInt64 aPos,const TDesC8& aDes)
         InvalidateCache();
         User::Leave(nErr);
         }
+
+        }// else(dataLen <= bytesToPageEnd)
+
+    
 
     MakePageLRU(nPage); //-- push the page to the top of the priority list
     }

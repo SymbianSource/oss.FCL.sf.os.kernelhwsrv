@@ -17,6 +17,7 @@
 
 #include <kernel/kern_priv.h>
 #include "kern_test.h"
+#include "securerng.h"
 
 #ifdef _DEBUG
 class TTestCallback: public TUserModeCallback
@@ -60,9 +61,9 @@ EXPORT_C TInt KernTest::Test(TTestFunction aFunc, TAny* a1, TAny* a2, TAny* a3)
 	TInt r = KErrNotSupported;
 	(void)aFunc; (void)a1; (void)a2; (void)a3;
 
-#ifdef _DEBUG
 	switch(aFunc)
 		{
+#ifdef _DEBUG
 	case EUserModeCallbackSleep:
 			{
 			// a1 is a DThread*. We add a user mode callback to that thread
@@ -85,8 +86,18 @@ EXPORT_C TInt KernTest::Test(TTestFunction aFunc, TAny* a1, TAny* a2, TAny* a3)
 			NKern::ThreadLeaveCS();
 			break;
 			}
-		}
 #endif
+	case ERNGReseedHook:
+			{
+			// a1 is a function which wants to be called with arg a2 when the RNG is reseeded.
+			// Used to test if reseeds are sufficiently frequent.
+			SecureRNG->SetReseedHook((void(*)(TAny*))a1, a2);
+			break;
+			}
+	default:
+		// To stop compiler warnings about unhandled enum cases in release builds
+		break;
+		}
 
 	return r;
 	}	

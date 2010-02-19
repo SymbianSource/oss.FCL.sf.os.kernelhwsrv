@@ -503,6 +503,11 @@ enum TKernelPanic
 	An invalid parameter was passed to a shared buffers exec call handler.
 	*/
 	EShBufExecBadParameter=65,
+
+    /**
+	An entropy estimate passed to an entropy buffer was outside the allowed range.
+	*/
+	EEntropyEstimateOutOfRange=66,
 	};
 
 #endif

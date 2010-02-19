@@ -17,7 +17,6 @@
 #ifndef OST_IBY
 #define OST_IBY
 
-#include <btrace.iby>
 
 //Put kernel side DLLs in the core image on NAND configurations 
 //since that's where the majority of the client code will also be.
