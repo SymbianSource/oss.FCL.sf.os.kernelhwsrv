@@ -23,8 +23,6 @@ source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\stack.cpp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\stackbody.cpp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\stackbody.h
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\distribution.policy.s60
-source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\Obtaining_PSL_Software_Source_Code.txt
-source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\distribution.policy.s60
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\sdcard.cpp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\epbussd.mmp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\sdcard3c\distribution.policy.s60
