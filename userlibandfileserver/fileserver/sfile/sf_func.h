@@ -918,8 +918,11 @@ class TFsAddCompositeMount
 public:
 	static TInt Initialise(CFsRequest* aRequest);
 	static TInt DoRequestL(CFsRequest* aRequest);
-#ifndef __GCC32__  || __GCCE__// GCC does not like AddFsToCompositeMountL() being private 
+	
+#ifndef __GCCE__ // GCC does not like AddFsToCompositeMountL() being private 
+#ifndef __GCC32__ // GCC does not like AddFsToCompositeMountL() being private 
 private:
+#endif
 #endif
 	static void AddFsToCompositeMountL(TInt aDriveNumber, CFileSystem& aFileSystem, TInt aLocalDriveNumber);
 	};
