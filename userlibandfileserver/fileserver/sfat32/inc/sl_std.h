@@ -1073,7 +1073,7 @@ calculates the number of VFat directory entries for a given file/directory name 
 @param the length in characters of the name
 @return the number of VFat entries required
 */
-TInt NumberOfVFatEntries(TInt aNameLength);
+TUint NumberOfVFatEntries(TUint aNameLength);
 /**
 Calculates the check sum for a standard directory entry
 

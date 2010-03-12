@@ -526,6 +526,9 @@ void Mmu::Init2FinalCommon()
 
 	// update this to stop assert triggering in RamAllocLock::Lock()
 	iRamAllocInitialFreePages = maxFreePages;
+
+	// Get the allocator to signal to the variant which RAM zones are in use so far
+	iRamPageAllocator->InitialCallback();
 	}
 
  

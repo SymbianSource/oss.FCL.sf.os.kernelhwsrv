@@ -18,6 +18,9 @@
 #ifdef EPOC32
 
 #include <variant.mmh>
+#ifdef MEMORY_MODEL_OPTIONS
+#include <memmodel.mmh>
+#endif
 
 #define INCLUDE_EKERN_LIB
 #include "kern_int.mmh"
@@ -108,7 +111,11 @@ epocallowdlldata
 noexportlibrary
 linkas				exmoncommon.dll
 
+#ifdef MEMORY_MODEL_OPTIONS
+target				MemoryModelTarget(exmoncommon,dll)
+#else
 target				VariantTarget(exmoncommon,dll)
+#endif
 
 deffile				exmoncommon.def
 

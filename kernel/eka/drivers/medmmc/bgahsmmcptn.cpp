@@ -157,46 +157,57 @@ TInt DBB5PartitionInfo::DecodePartitionInfo()
 	BGAHSMMCPTN_PI_STR *partitionTable = (BGAHSMMCPTN_PI_STR*)(&iIntBuf[0]);
 
 	// Verify that this is the Nokia partition table
-	if( memcompare( (TUint8*)&(partitionTable->id[0]), sizeof(BGAHSMMCPTN_PI_ID), (TUint8*)BGAHSMMCPTN_PI_ID, sizeof(BGAHSMMCPTN_PI_ID)) == 0 )
+	if( memcompare( (TUint8*)&(partitionTable->iId[0]), sizeof(BGAHSMMCPTN_PI_ID), (TUint8*)BGAHSMMCPTN_PI_ID, sizeof(BGAHSMMCPTN_PI_ID)) == 0 )
 		{
 		__KTRACE_OPT(KPBUSDRV, Kern::Printf("Nokia partition structure found"));
-		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->id..............: %s", partitionTable->id ));
-		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->sector_size.....: %d = 0x%x", partitionTable->sector_size, partitionTable->sector_size));
-		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->major_ver.......: %d", partitionTable->major_ver));
-		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->minor_ver.......: %d", partitionTable->minor_ver));
-		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->partition_amount: %d", partitionTable->partition_amount));
+		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->id..............: %s", partitionTable->iId ));
+		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->sector_size.....: %d = 0x%x", partitionTable->iSector_size, partitionTable->iSector_size));
+		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->major_ver.......: %d", partitionTable->iMajor_ver));
+		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->minor_ver.......: %d", partitionTable->iMinor_ver));
+		__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionTable->partition_amount: %d", partitionTable->iPartition_amount));
 		
-		for( TUint8 index = 0; (index < partitionTable->partition_amount) && (index < BGAHSMMCPTN_LAST_DRIVE); index++ )
-			{
-			if( (partitionTable->partitions[index].size > 0) &&
-				( PartitionIsFAT(partitionTable->partitions[index].partition_id) ||
-				  PartitionIsFAT32(partitionTable->partitions[index].partition_id) ||
-				  (KPartitionTypePagedData == partitionTable->partitions[index].partition_id && !foundSwap) ) )
-				{
-				iPartitionInfo->iEntry[partitionCount].iPartitionType	  = partitionTable->partitions[index].partition_id;
-				iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr = (Int64) partitionTable->partitions[index].start_sector << KDiskSectorShift;
-				iPartitionInfo->iEntry[partitionCount].iPartitionLen	  = (Int64) partitionTable->partitions[index].size << KDiskSectorShift;
-				iPartitionAttributes[partitionCount]					  = partitionTable->partitions[index].partition_attributes;
-
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("Registering partition #%d:", partitionCount));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionCount....: %d", partitionCount));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("startSector.......: 0x%x", partitionTable->partitions[index].start_sector ));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionBaseAddr: 0x%lx (sectors: %d)", iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr, (TUint32)(iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr >> KDiskSectorShift)));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("size..............: 0x%lx", partitionTable->partitions[index].size ));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionLen.....: 0x%lx (sectors: %d)", iPartitionInfo->iEntry[partitionCount].iPartitionLen, iPartitionInfo->iEntry[partitionCount].iPartitionLen >> KDiskSectorShift));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionType....: %d", iPartitionInfo->iEntry[partitionCount].iPartitionType));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionAttribs.: 0x%x", iPartitionAttributes[partitionCount]));
-				__KTRACE_OPT(KPBUSDRV, Kern::Printf(" "));
-
-				if(KPartitionTypePagedData == partitionTable->partitions[index].partition_id)
-					{
-					foundSwap = ETrue;
-					}
-
-				partitionCount++;
-				}
-			}
-		}
+		
+		TUint8 PartitionType = 0;		
+		// Check Supported Version is present
+		if (partitionTable->iMajor_ver <= BGAHSMMCPTN_PI_VER_MAJOR)
+		    {
+            for( TUint8 index = 0; (index < partitionTable->iPartition_amount) && (index < BGAHSMMCPTN_LAST_DRIVE); index++ )
+                {
+                if (partitionTable->iMinor_ver >= BGAHSMMCPTN_PART_TYPE_SUPP_VER_MINOR)
+                    PartitionType = partitionTable->iPartitions[index].iPartition_type;
+                else                    
+                    PartitionType = partitionTable->iPartitions[index].iPartition_id;
+            
+                if( (partitionTable->iPartitions[index].iSize > 0) &&
+                    ( PartitionIsFAT(PartitionType) ||
+                      PartitionIsFAT32(PartitionType) ||
+                     (KPartitionTypePagedData == PartitionType && !foundSwap) ) )
+                    {                   
+                    iPartitionInfo->iEntry[partitionCount].iPartitionType	  = PartitionType;                    
+                    iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr = (Int64) partitionTable->iPartitions[index].iStart_sector << KDiskSectorShift;
+                    iPartitionInfo->iEntry[partitionCount].iPartitionLen	  = (Int64) partitionTable->iPartitions[index].iSize << KDiskSectorShift;
+                    iPartitionAttributes[partitionCount]					  = partitionTable->iPartitions[index].iPartition_attributes;
+    
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("Registering partition #%d:", partitionCount));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("partitionCount....: %d", partitionCount));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("startSector.......: 0x%x", partitionTable->iPartitions[index].iStart_sector ));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionBaseAddr: 0x%lx (sectors: %d)", iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr, (TUint32)(iPartitionInfo->iEntry[partitionCount].iPartitionBaseAddr >> KDiskSectorShift)));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("size..............: 0x%lx", partitionTable->iPartitions[index].iSize ));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionLen.....: 0x%lx (sectors: %d)", iPartitionInfo->iEntry[partitionCount].iPartitionLen, iPartitionInfo->iEntry[partitionCount].iPartitionLen >> KDiskSectorShift));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionType....: %d", iPartitionInfo->iEntry[partitionCount].iPartitionType));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf("iPartitionAttribs.: 0x%x", iPartitionAttributes[partitionCount]));
+                    __KTRACE_OPT(KPBUSDRV, Kern::Printf(" "));
+    
+                    if(KPartitionTypePagedData == PartitionType)
+                        {
+                        foundSwap = ETrue;
+                        }
+    
+                    partitionCount++;
+                    }
+                }
+            } 
+		} 
 
 	// Validate partition address boundaries
 	if(partitionCount == 0)

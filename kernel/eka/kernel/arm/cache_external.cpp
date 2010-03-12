@@ -558,7 +558,7 @@ void ExternalCache::Maintain_All(TInt* aCtrlReg)
 		for (index = 0 ; index <indexNo ; index++)
 			{
 		    L220_COMMAND_PREAMBLE;
-            *ctrlReg = (way<<29) | (index<<5); //this will clean,purge or flush cache line
+		    *ctrlReg = (way<<ARML2C_WayShift) | (index<<ARML2C_IndexShift); //this will maintain a single cache line
             L220_COMMAND_POSTAMBLE;
 			PL310_SPIN_FLASH;
 			}

@@ -243,21 +243,6 @@ TBool DReferenceCountedObject::CheckCloseIsSafe()
 	}
 
 
-TBool DReferenceCountedObject::CheckAsyncCloseIsSafe()
-	{
-	__ASSERT_CRITICAL
-#ifdef _DEBUG
-	NFastMutex* fm = NKern::HeldFastMutex();
-	if(fm)
-		{
-		Kern::Printf("DReferenceCountedObject[0x%08x]::AsyncClose() fast mutex violation %M",this,fm);
-		return false;
-		}
-#endif
-	return true;
-	}
-
-
 void DReferenceCountedObject::Close()
 	{
 	__ASSERT_CRITICAL
@@ -271,7 +256,6 @@ void DReferenceCountedObject::Close()
 void DReferenceCountedObject::AsyncClose()
 	{
 	__ASSERT_CRITICAL
-	__NK_ASSERT_DEBUG(CheckAsyncCloseIsSafe());
 	__NK_ASSERT_DEBUG(iReferenceCount>0);
 	if (__e32_atomic_tas_ord32(&iReferenceCount, 1, -1, 0) == 1)
 		AsyncDelete();

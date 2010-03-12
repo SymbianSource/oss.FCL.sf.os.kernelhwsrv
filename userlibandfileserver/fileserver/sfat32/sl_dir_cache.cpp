@@ -159,7 +159,8 @@ void CDynamicDirCache::ConstructL(const TDesC& aClientName)
 	// allocate as many permanently locked pages as there are threads - plus one
 	// otherwise DoMakePageMRU() won't work properly with only one thread
     //-- At present moment the size of TDrive thread pool is 1 (1 drive thread in a pool)
-	iPermanentlyAllocatedPageCount = 1; 
+	const TUint KThreadCount = 1;
+	iPermanentlyAllocatedPageCount = KThreadCount + 1; 
 
 	if (iPermanentlyAllocatedPageCount > iMinSizeInPages)
 		iMinSizeInPages = iPermanentlyAllocatedPageCount;
@@ -679,6 +680,9 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 	{
 //	__PRINT1(_L("MakePageMRU (%lx)"), aPos);
 //	__PRINT4(_L("Current Cache State: iLockedQCount=%d, iUnlockedQCount=%d, iLookupTbl=%d, iMaxSizeInPages=%d"), iLockedQCount, iUnlockedQCount, iLookupTable.Count(), iMaxSizeInPages);
+	// check there are at least two locked pages
+	ASSERT(iLockedQCount > 1);
+	
 	// check the MRU page first, if it is already the MRU page, we can return immediately
 	TInt64 pageStartMedPos = CalcPageStartPos(aPos);
 	if (!iLockedQ.IsEmpty())
@@ -949,46 +953,49 @@ Dump cache content, only enabled in debug mode.
 @see CDynamicDirCache::Control()
 */
 void CDynamicDirCache::Dump()
-	{
-	__PRINT(_L("======== CDynamicDirCache::Dump ========="));
-	if (!iLockedQ.IsEmpty())
-		{
-		TDblQueIter<TDynamicDirCachePage> q(iLockedQ);
-		q.SetToFirst();
-		TInt i = 0;
-		while((TDynamicDirCachePage*)q)
-			{
-			TDynamicDirCachePage* pP = q++;
-			__PRINT5(_L("=== CDynamicDirCache::iLockedQ\t[%4d](pos=%lx, locked=%d, valid=%d, size=%u)"), i++, pP->StartPos(), pP->IsLocked(), pP->IsValid(), pP->PageSizeInBytes());
-			}
-		}
-	if (!iUnlockedQ.IsEmpty())
-		{
-		TDblQueIter<TDynamicDirCachePage> q(iUnlockedQ);
-		q.SetToFirst();
-		TInt i = 0;
-		while((TDynamicDirCachePage*)q)
-			{
-			TDynamicDirCachePage* pP = q++;
-			__PRINT5(_L("=== CDynamicDirCache::iUnlockedQ\t[%4d](pos=%lx, locked=%d, valid=%d, size=%u)"), i++, pP->StartPos(), pP->IsLocked(), pP->IsValid(), pP->PageSizeInBytes());
-			}
-		}
+    {
+    __PRINT(_L("======== CDynamicDirCache::Dump ========="));
+    if (!iLockedQ.IsEmpty())
+        {
+        TDblQueIter<TDynamicDirCachePage> q(iLockedQ);
+        q.SetToFirst();
+        TInt i = 0;
+        while((TDynamicDirCachePage*)q)
+            {
+            TDynamicDirCachePage* pP = q++;
+            __PRINT5(_L("=== CDynamicDirCache::iLockedQ      [%4d](pos=%lx, locked=%d, valid=%d, size=%u)"), i++, pP->StartPos(), pP->IsLocked(), pP->IsValid(), pP->PageSizeInBytes());
+            }
+        }
+    __PRINT(_L("=== CDynamicDirCache:: --------------------"));
 
-	if (iLookupTable.Count())
-		{
-		TInt i = 0;
-		THashSetIter<TLookupEntry> iter(iLookupTable);
-		TLookupEntry* pEntry;
-		pEntry = (TLookupEntry*) iter.Next();
-		while(pEntry)
-			{
-			TDynamicDirCachePage* pP = pEntry->iPage;
-			__PRINT5(_L("=== CDynamicDirCache::iLookupTable\t[%4d](pos=%lx, locked=%d, valid=%d, size=%u)"), i++, pP->StartPos(), pP->IsLocked(), pP->IsValid(), pP->PageSizeInBytes());
-			pEntry = (TLookupEntry*) iter.Next();
-			};
-		}
-	__PRINT(_L("===========================================\n"));
-	}
+    if (!iUnlockedQ.IsEmpty())
+        {
+        TDblQueIter<TDynamicDirCachePage> q(iUnlockedQ);
+        q.SetToFirst();
+        TInt i = 0;
+        while((TDynamicDirCachePage*)q)
+            {
+            TDynamicDirCachePage* pP = q++;
+            __PRINT5(_L("=== CDynamicDirCache::iUnlockedQ    [%4d](pos=%lx, locked=%d, valid=%d, size=%u)"), i++, pP->StartPos(), pP->IsLocked(), pP->IsValid(), pP->PageSizeInBytes());
+            }
+        }
+    __PRINT(_L("=== CDynamicDirCache:: --------------------"));
+
+    if (iLookupTable.Count())
+        {
+        TInt i = 0;
+        THashSetIter<TLookupEntry> iter(iLookupTable);
+        TLookupEntry* pEntry;
+        pEntry = (TLookupEntry*) iter.Next();
+        while(pEntry)
+            {
+            TDynamicDirCachePage* pP = pEntry->iPage;
+            __PRINT5(_L("=== CDynamicDirCache::iLookupTable  [%4d](pos=%lx, locked=%d, valid=%d, size=%u)"), i++, pP->StartPos(), pP->IsLocked(), pP->IsValid(), pP->PageSizeInBytes());
+            pEntry = (TLookupEntry*) iter.Next();
+            };
+        }
+    __PRINT(_L("===========================================\n"));
+    }
 #endif //_DEBUG
 
 /**

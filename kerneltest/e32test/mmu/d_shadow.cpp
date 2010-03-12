@@ -27,6 +27,15 @@ const TInt KBuildVersionNumber=1;
 
 _LIT(KLddName,"Shadow");
 
+#ifdef __CPU_X86
+const TUint KPageDirectorySize = 1024;
+const TUint KMaxNumberOfPageDirectories = 1024;
+const TUint KPsudoX86TTBCR = 512;
+#else 
+const TUint KPageDirectorySize = 4096;  // Full size (ttbr0+ttbr1)
+const TUint KMaxNumberOfPageDirectories = 256;
+#endif
+
 class DShadow;
 
 class DShadowFactory : public DLogicalDevice
@@ -52,6 +61,11 @@ public:
 protected:
 	virtual TInt DoCreate(TInt aUnit, const TDesC8* anInfo, const TVersion& aVer);
 	virtual TInt Request(TInt aFunction, TAny* a1, TAny* a2);
+
+	// Memory model specific values will be initialised when the channel is created.
+	TUint iPageDirectoryBase;
+	TUint iPageTableBase;
+	TMemModel  iMemoryModel;
 	};
 
 DECLARE_STANDARD_LDD()
@@ -111,6 +125,30 @@ TInt DShadow::DoCreate(TInt /*aUnit*/, const TDesC8* /*anInfo*/, const TVersion&
 
     if (!Kern::QueryVersionSupported(TVersion(KMajorVersionNumber,KMinorVersionNumber,KBuildVersionNumber),aVer))
     	return KErrNotSupported;
+	// Set memory model specific values.
+	TUint32 memoryModelAttrib = (TUint32)Kern::HalFunction(EHalGroupKernel,EKernelHalMemModelInfo,0,0);    
+	switch (memoryModelAttrib & EMemModelTypeMask)
+		{
+		case EMemModelTypeMoving:
+			iPageDirectoryBase = 0x61000000;
+			iPageTableBase = 0x62000000;
+			iMemoryModel = EMemModelMoving;
+			break;
+		case EMemModelTypeMultiple:
+			iPageDirectoryBase = 0xC1000000;
+			iPageTableBase = 0xC2000000;
+			iMemoryModel = EMemModelMultiple;
+			break;
+		case EMemModelTypeFlexible:
+			iPageDirectoryBase = 0xF4000000u;
+			iPageTableBase = 0xF8000000u;
+			iMemoryModel = EMemModelFlexible;
+			break;
+		default:
+			iPageDirectoryBase = 0x00000000;
+			iPageTableBase = 0x00000000;
+			iMemoryModel = EMemModelOther;
+		}
 	return KErrNone;
 	}
 
@@ -291,14 +329,13 @@ TInt DShadow::Request(TInt aFunction, TAny* a1, TAny* a2)
 						 
 #ifdef __EPOC32__
 
-#if defined(__MEMMODEL_MULTIPLE__) || defined(__MEMMODEL_FLEXIBLE__)
-			numPds = KMaxNumberOfPageDirectories;
-#else
-			numPds = 0;								
-#endif			
-			r = KMemoryModel;
+			if (iMemoryModel == EMemModelFlexible || iMemoryModel == EMemModelMultiple)
+				numPds = KMaxNumberOfPageDirectories;
+			else
+				numPds = 0;	
+			r = iMemoryModel;
 #endif
-			pageTable = KPageTableBase;			
+			pageTable = iPageTableBase;			
 
 			kumemput(a1, &pageTable, sizeof(TUint));
 			kumemput(a2, &numPds, sizeof(TUint));
@@ -317,39 +354,38 @@ TInt DShadow::Request(TInt aFunction, TAny* a1, TAny* a2)
 
 			r=KErrNoPageTable;
 
-#if defined(__MEMMODEL_MOVING__)
-
-			if (pd==KGlobalPageDirectory)
+			if (iMemoryModel == EMemModelMoving)
 				{
-				pdSize=KPageDirectorySize;
-				pdBase=KPageDirectoryBase;
-				r = KErrNone;
+				if (pd==KGlobalPageDirectory)
+					{
+					pdSize=KPageDirectorySize;
+					pdBase=iPageDirectoryBase;
+					r = KErrNone;
+					}
 				}
-
-#elif defined(__MEMMODEL_MULTIPLE__) || defined(__MEMMODEL_FLEXIBLE__)
-
+			else if(iMemoryModel == EMemModelFlexible || iMemoryModel == EMemModelMultiple)
+				{
 #ifdef __CPU_X86
-			TUint ttbcr = KPsudoX86TTBCR;
+				TUint ttbcr = KPsudoX86TTBCR;
 #else
-			TUint ttbcr = KPageDirectorySize >> GetTTBCR();
-#endif
+				TUint ttbcr = KPageDirectorySize >> GetTTBCR();
+#endif // __CPU_X86
 
-			if (pd==KGlobalPageDirectory)
-				{
-				pdSize=KPageDirectorySize - ttbcr;
-				pdBase=KPageDirectoryBase + ttbcr*4;
-				r = ttbcr & KPageOffsetMask;
-				}
-			else
-				{
-				pdSize = ttbcr;
-				pdBase=KPageDirectoryBase + pd * KPageDirectorySize * 4;
+				if (pd==KGlobalPageDirectory)
+					{
+					pdSize=KPageDirectorySize - ttbcr;
+					pdBase=iPageDirectoryBase + ttbcr*4;
+					r = ttbcr & KPageOffsetMask;
+					}
+				else
+					{
+					pdSize = ttbcr;
+					pdBase=iPageDirectoryBase + pd * KPageDirectorySize * 4;
 
-				TPhysAddr phys=Epoc::LinearToPhysical((TLinAddr)pdBase);				
-				r = (phys==KPhysAddrInvalid) ? KErrNoPageTable : KErrNone;
+					TPhysAddr phys=Epoc::LinearToPhysical((TLinAddr)pdBase);				
+					r = (phys==KPhysAddrInvalid) ? KErrNoPageTable : KErrNone;
+					}
 				}
-			
-#endif  //memmodel
 
 			if ((r & KErrNoPageTable) == 0)
 				{

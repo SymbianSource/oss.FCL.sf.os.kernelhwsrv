@@ -916,6 +916,7 @@ public:
 		/**
 		Overriding DReferenceCountedObject::AsyncClose.
 		This removes the linkage with #iMemory if this object is deleted.
+		@pre No fast mutex must be held.  Unlike DReferenceCountedObject::AsyncClose().
 		*/
 		void AsyncClose();
 

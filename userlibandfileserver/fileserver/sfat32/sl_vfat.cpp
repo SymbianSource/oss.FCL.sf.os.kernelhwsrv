@@ -573,6 +573,9 @@ TBool CFatMountCB::GenerateShortNameL(TInt aDirCluster,const TDesC& aName,TShort
 */
 void TFatDirEntry::SetVFatEntry(const TDesC& aName, TUint aLen, TUint8 aCheckSum)
 	{
+    //-- LFN in the last entry must be padded with FFs
+    Mem::Fill(iData,sizeof(iData),0xFF);
+
     //-- initialise some VFAT entry specific fields
 	iData[0x0B]=0x0F;
 	iData[0x0C]=0x00; iData[0x0D]=aCheckSum;
@@ -660,10 +663,13 @@ void CFatMountCB::WriteDirEntryL(TEntryPos& aPos, const TFatDirEntry& aDosEntry,
         startPos = aPos;
         TBool movedCluster = EFalse;
 
+        TUint nRemLen = KMaxVFatEntryName*(numEntries-1);
+
         while(numEntries)
             {
             TFatDirEntry* pEntry = (TFatDirEntry*)(&scratchBuf[posInBuf]);
-            pEntry->SetVFatEntry(aLongName, KMaxVFatEntryName*(numEntries-1), cksum); //KMaxVFatEntryName=13  
+            
+            pEntry->SetVFatEntry(aLongName, nRemLen, cksum);  
 
             posInBuf += KSizeOfFatDirEntry;
             MoveToNextEntryL(aPos);
@@ -673,6 +679,9 @@ void CFatMountCB::WriteDirEntryL(TEntryPos& aPos, const TFatDirEntry& aDosEntry,
             
             if(!numEntries || movedCluster)
                 break; //-- VFAT entryset is completed
+            
+            ASSERT(nRemLen >= (TUint)KMaxVFatEntryName);
+            nRemLen -= KMaxVFatEntryName;
             }
     
         if(movedCluster)

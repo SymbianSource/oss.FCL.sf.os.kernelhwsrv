@@ -541,24 +541,29 @@ LOCAL_C void Test4()
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("FILE.AAA"))!=KErrNotFound);
 	delete dir;
+	
 	r=finder.FindWildByPath(_L("*FILE.AAA"), &gPath1, dir);
 	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("FILE.AAA"))!=KErrNotFound);
 	delete dir;
+	
 	r=finder.FindWildByPath(_L("FILE.AAA*"), &gPath1, dir);
 	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("FILE.AAA"))!=KErrNotFound);
 	delete dir;
+
+    
 	r=finder.FindWildByPath(_L("CONFUSED.DOG"), &gPath1, dir);
 	test(r==KErrNone);
 	test(dir->Count()==1);
 	entry=(*dir)[0];
 	test(entry.iName.MatchF(_L("CONFUSED.DOG"))!=KErrNotFound);
 	delete dir;
+
 	r=finder.FindWildByPath(_L("*CONFUSED.DOG"), &gPath1, dir);
 	test(r==KErrNone);
 	test(dir->Count()==1);
@@ -993,10 +998,119 @@ LOCAL_C void Test9()
 
 	}
 
+//---------------------------------------------------------------------------------------
+/**
+    Test that callinng TFindFile methods that allocate CDir objects doesn't lead to memory leaks if some error occurs.
+*/
+void TestFailures()
+    {
+
+	test.Next(_L("Test TFindFile failures\n"));	
+
+#ifndef _DEBUG
+    test.Printf(_L("This test can't be performed in UREL mode, skipping\n"));
+    return;	
+#else
+
+	TFindFile finder(TheFs);
+	CDir* pDir;
+	TInt nRes;
+    TInt cnt=0;
+
+    _LIT(KPath, "\\F32-TST\\LOCTEST\\");
+
+    const TInt KMyError = -756; //-- specific error code we will simulate
+    
+    //------------------------------------
+    test.Printf(_L("Test FindWildByPath failures\n"));	
+    
+    __UHEAP_MARK;
+    nRes = finder.FindWildByPath(_L("*"), &gPath1, pDir);
+    test(nRes == KErrNone);
+    test(pDir && pDir->Count() > 1);
+    delete pDir;
+
+ 
+    for(cnt = 0; ;cnt++)
+        {
+        nRes =TheFs.SetErrorCondition(KMyError, cnt);
+        test(nRes == KErrNone);
+
+        pDir = (CDir*)0xaabbccdd;
+        nRes = finder.FindWildByPath(_L("*"), &gPath1, pDir);
+        
+        //-- on error the memory allocated internally for CDir shall be freed and the pointer CDir* shall be set to NULL 
+        if(nRes == KErrNone)
+            {
+            test.Printf(_L("Test FindWildByPath->FindWild() failures\n"));	
+            test(pDir && pDir->Count() > 1);
+            delete pDir;
+            pDir = (CDir*)0xaabbccdd;
+
+            TheFs.SetErrorCondition(KMyError);
+            nRes = finder.FindWild(pDir);
+            test(nRes != KErrNone);
+            test(pDir == NULL); 
+            
+            break;
+            }
+        else
+            {
+            test(pDir == NULL);
+            }
+
+        }
+
+   __UHEAP_MARKEND;
+   TheFs.SetErrorCondition(KErrNone);
 
 
+   //------------------------------------
+   test.Printf(_L("Test FindWildByDir failures\n"));	
+    
+   __UHEAP_MARK;
+   nRes = finder.FindWildByDir(_L("*"), KPath, pDir);
+   test(nRes == KErrNone);
+   test(pDir && pDir->Count() > 1);
+   delete pDir;
+   
+   for(cnt = 0; ;cnt++)
+        {
+        nRes =TheFs.SetErrorCondition(KMyError, cnt);
+        test(nRes == KErrNone);
 
-GLDEF_C void CallTestsL()
+        pDir = (CDir*)0xaabbccdd;
+        nRes = finder.FindWildByDir(_L("*"), KPath, pDir);
+        
+        //-- on error the memory allocated internally for CDir shall be freed and the pointer CDir* shall be set to NULL  
+        if(nRes == KErrNone)
+            {
+            test.Printf(_L("Test FindWildByDir->FindWild() failures\n"));	
+            test(pDir && pDir->Count() > 1);
+            delete pDir;
+            pDir = (CDir*)0xaabbccdd;
+
+            TheFs.SetErrorCondition(KMyError);
+            nRes = finder.FindWild(pDir);
+            test(nRes != KErrNone);
+            test(pDir == NULL);
+            
+            break;
+            }
+        else
+            {
+            test(pDir == NULL);
+            }
+
+        }
+
+   __UHEAP_MARKEND;
+   TheFs.SetErrorCondition(KErrNone);
+#endif
+}
+
+//---------------------------------------------------------------------------------------
+void CallTestsL()
 //
 // Do all tests
 //
@@ -1026,6 +1140,8 @@ GLDEF_C void CallTestsL()
 
 		CreateTestDirectory(_L("\\F32-TST\\LOCTEST\\"));
 		MakeLocateTestDirectoryStructure();
+		
+        TestFailures();
 		Test1();
 		Test2();
 		Test3();

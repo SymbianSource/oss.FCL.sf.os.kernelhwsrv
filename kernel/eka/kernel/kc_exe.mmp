@@ -14,11 +14,17 @@
 // e32/kernel/kc_exe.mmp
 // 
 //
-
 #include		<variant.mmh>
+
+#ifdef MEMORY_MODEL_OPTIONS
+#include		<memmodel.mmh>
+target			MemoryModelTarget(kc_exe,lib)
+#else
+target			VariantTarget(kc_exe,lib)
+#endif
+
 #include		"kern_int.mmh"
 
-target			VariantTarget(kc_exe,lib)
 targettype		klib
 
 #if defined(MARM)

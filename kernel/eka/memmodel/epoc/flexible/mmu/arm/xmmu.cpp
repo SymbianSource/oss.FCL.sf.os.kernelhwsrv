@@ -928,13 +928,11 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	// Now we have the os asid check access to kernel memory.
 	if(aAddr >= KUserMemoryLimit && osAsid != (TUint)KKernelOsAsid)
 		{
-		NKern::ThreadEnterCS();
-		MmuLock::Unlock();
 		if (!iAliasLinAddr)
 			{// Close the new reference as RemoveAlias won't do as iAliasLinAddr is not set.
 			aProcess->AsyncCloseOsAsid();	// Asynchronous close as this method should be quick.
 			}
-		NKern::ThreadLeaveCS();
+		MmuLock::Unlock();
 		return KErrBadDescriptor; // prevent access to supervisor only memory
 		}
 
@@ -944,10 +942,8 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 		// address is in global section, don't bother aliasing it...
 		if (!iAliasLinAddr)
 			{// Close the new reference as not required.
-			NKern::ThreadEnterCS();
-			MmuLock::Unlock();
 			aProcess->AsyncCloseOsAsid(); // Asynchronous close as this method should be quick.
-			NKern::ThreadLeaveCS();
+			MmuLock::Unlock();
 			}
 		else
 			{// Remove the existing alias as it is not required.
@@ -1061,15 +1057,9 @@ void DMemModelThread::DoRemoveAlias(TLinAddr aAddr)
 	iCpuRestoreCookie = -1;
 #endif
 
-	// Must close the os asid while in critical section to prevent it being 
-	// leaked.  However, we can't hold the mmu lock so we have to enter an 
-	// explict crtical section. It is ok to release the mmu lock as the 
-	// iAliasLinAddr and iAliasProcess members are only ever updated by the 
-	// current thread.
-	NKern::ThreadEnterCS();
-	MmuLock::Unlock();
+	// Must close the os asid while holding MmuLock so we are in an implicit critical section.
 	iAliasProcess->AsyncCloseOsAsid(); // Asynchronous close as this method should be quick.
-	NKern::ThreadLeaveCS();
+	MmuLock::Unlock();
 	}
 
 

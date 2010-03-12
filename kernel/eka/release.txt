@@ -1,3 +1,88 @@
+Version 2.00.2083
+=================
+(Made by vfebvre 10/02/2010)
+
+1.	martai
+	1.	PackageReleaseID=457064 FeatureReleaseID=457058
+		REQ 417-65372 Enabling and validation of WDP in TB9.2
+
+
+Version 2.00.2082
+=================
+(Made by vfebvre 08/02/2010)
+
+1.	jimmzhou
+	1.	DEF144308 XLII-7ZNH37: Phone crashes when running usbmsapp test with usbcsc.ldd
+
+2.	martai
+	1.	DEF144290: FMM handles IPC aliasing inefficiently 
+
+
+Version 2.00.2081
+=================
+(Made by vfebvre 05/02/2010)
+
+1.	cnotton
+	1.	DEF144265: eslm-82cags locmedia_ost.h is missing in wk05 NCP79 build
+
+
+Version 2.00.2080
+=================
+(Made by vfebvre 04/02/2010)
+
+1.	djkovace
+	1.	DEF144258: [SymTB9.2]  PL310 maintenance by IndexWay misses some ways
+
+
+Version 2.00.2079
+=================
+(Made by vfebvre 03/02/2010)
+
+1.	migubarr
+	1.	DEF143959: MMC stack initialisation enables DMA when ESupportsDoubleBuffering specified 
+
+2.	gcochran
+	1.	DEF143479: t_perflogger tests fails at kern perf logger tests on production hw79/vasco
+
+
+Version 2.00.2078
+=================
+(Made by vfebvre 02/02/2010)
+
+1.	virodion
+	1.	DEF144163 E32 T_VIDEOMEMORY test failed at line 124
+		Defect fix for TSW: EYGL-7SPCS3
+
+2.	cnotton
+	1.	DEF144062 HAL header files can now been returned to platform...
+
+3.	martai
+	1.	PDEF144201 FMM: The RAM zone callback function ERamZoneOp_Init isn't invoked in the FMM
+
+
+Version 2.00.2077
+=================
+(Made by vfebvre 01/02/2010)
+
+1.	mipetzol
+	1.	DEF144066 DMA: PIL detection of missed interrupts can fail
+		The method whereby the DMA PIL tried to detect missed PSL DMA interrupts
+		could yield false positives resulting in spurious missed interrupts which
+		ultimately led to the DMA driver crashing. The detection condition has been
+		corrected to rule out the false positives.
+
+
+Version 2.00.2076
+=================
+(Made by vfebvre 29/01/2010)
+
+1.	necliffo
+	1.	PDEF144095: BGAHSMMCPTN does not check for partition table version
+
+2.	mmoate
+	1.	DEF144102 Missing distribution.policy.s60 file in TB92SF_1021
+
+
 Version 2.00.2075
 =================
 (Made by vfebvre 26/01/2010)

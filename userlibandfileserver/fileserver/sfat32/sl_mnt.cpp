@@ -3040,12 +3040,17 @@ TBool CFatMountCB::DoGetDirEntryL(TEntryPos& aPos, TFatDirEntry& aDosEntry, TFat
 
     const TUint8 entryCheckSum = aDosEntry.CheckSum(); //-- check sum from the 1st VFat entry
 
+    TUint nameChunkOffset = KMaxVFatEntryName*(count-1);
+
     while (count--)
         {
-        TPtr fileNamePtr(&aLongFileName[0]+KMaxVFatEntryName*count,aLongFileName.Length()-KMaxVFatEntryName*count);
+        TPtr fileNamePtr(&aLongFileName[0]+nameChunkOffset, aLongFileName.Length()-nameChunkOffset);
         fileNamePtr.Copy(vBuf);
         if (count==0)
             break; //-- all VFat entries read, only DOS entry remained
+        
+        ASSERT(nameChunkOffset >= (TUint)KMaxVFatEntryName);
+        nameChunkOffset-=KMaxVFatEntryName;
 
         MoveToNextEntryL(aPos);
         ReadDirEntryL(aPos,aDosEntry);

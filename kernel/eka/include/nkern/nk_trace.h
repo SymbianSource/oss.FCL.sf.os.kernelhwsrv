@@ -574,7 +574,7 @@ This BTrace category is only supported on the multiple and moving memory models.
 @publishedPartner
 @released 9.4
 */
-#if defined(__MEMMODEL_MOVING__) || defined (__MEMMODEL_MULTIPLE__)
+#if !defined(__MEMMODEL_DIRECT__) && !defined (__MEMMODEL_EMUL_SINGLE_HOST_PROCESS__)
 #define BTRACE_RAM_ALLOCATOR
 #endif
 
@@ -620,7 +620,9 @@ the kernel.
 
 This BTrace category is only supported on the flexible memory model.
 */
+#ifdef __MEMMODEL_FLEXIBLE__
 #define BTRACE_FLEXIBLE_MEM_MODEL
+#endif
 
 /**
 If defined, code for BTrace category BTrace::EIic is compiled into the

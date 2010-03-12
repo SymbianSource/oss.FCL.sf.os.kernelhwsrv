@@ -142,37 +142,49 @@ TInt  CFatFormatCB::InitFormatDataForFixedSizeDiskNormal(TInt aDiskSizeInSectors
 		
 		}
 
+	const TFatType fatType = SuggestFatType();
+
 	// Ensure cluster size is a multiple of the block size
 	TInt blockSizeInSectors = aCaps.iBlockSize >> iSectorSizeLog2;
 	__PRINT1(_L("blockSizeInSectors: %d"),blockSizeInSectors);
 	ASSERT(blockSizeInSectors == 0 || IsPowerOf2(blockSizeInSectors));
 	if (blockSizeInSectors != 0 && IsPowerOf2(blockSizeInSectors))
 		{
-		__PRINT1(_L("iSectorsPerCluster	(old): %d"),iSectorsPerCluster);
+		__PRINT1(_L("iSectorsPerCluster    (old): %d"),iSectorsPerCluster);
 		AdjustClusterSize(blockSizeInSectors);
-		__PRINT1(_L("iSectorsPerCluster	(new): %d"),iSectorsPerCluster);
+		__PRINT1(_L("iSectorsPerCluster    (new): %d"),iSectorsPerCluster);
 		}
 
-	// Align first data sector on an erase block boundary if
-	// (1) the iEraseBlockSize is specified
-	// (2) the start of the partition is already aligned to an erase block boundary, 
-	//     i.e. iHiddenSectors is zero or a multiple of iEraseBlockSize
-	__PRINT1(_L("iHiddenSectors: %d"),iHiddenSectors);
-	TInt eraseblockSizeInSectors = aCaps.iEraseBlockSize >> iSectorSizeLog2;
-	__PRINT1(_L("eraseblockSizeInSectors: %d"),eraseblockSizeInSectors);
-	ASSERT(eraseblockSizeInSectors == 0 || IsPowerOf2(eraseblockSizeInSectors));	
-	ASSERT(eraseblockSizeInSectors == 0 || eraseblockSizeInSectors >= blockSizeInSectors);
-	if ((eraseblockSizeInSectors != 0) &&
-		(iHiddenSectors % eraseblockSizeInSectors == 0) &&	
-		(IsPowerOf2(eraseblockSizeInSectors)) &&
-		(eraseblockSizeInSectors >= blockSizeInSectors))
+
+	for (; iSectorsPerCluster>1; iSectorsPerCluster>>= 1)
 		{
-		TInt r = AdjustFirstDataSectorAlignment(eraseblockSizeInSectors);
-		ASSERT(r == KErrNone);
-		(void) r;
+		// Align first data sector on an erase block boundary if
+		// (1) the iEraseBlockSize is specified
+		// (2) the start of the partition is already aligned to an erase block boundary, 
+		//     i.e. iHiddenSectors is zero or a multiple of iEraseBlockSize
+		__PRINT1(_L("iHiddenSectors: %d"),iHiddenSectors);
+		TInt eraseblockSizeInSectors = aCaps.iEraseBlockSize >> iSectorSizeLog2;
+		__PRINT1(_L("eraseblockSizeInSectors: %d"),eraseblockSizeInSectors);
+		ASSERT(eraseblockSizeInSectors == 0 || IsPowerOf2(eraseblockSizeInSectors));	
+		ASSERT(eraseblockSizeInSectors == 0 || eraseblockSizeInSectors >= blockSizeInSectors);
+		if ((eraseblockSizeInSectors != 0) &&
+			(iHiddenSectors % eraseblockSizeInSectors == 0) &&	
+			(IsPowerOf2(eraseblockSizeInSectors)) &&
+			(eraseblockSizeInSectors >= blockSizeInSectors))
+			{
+			TInt r = AdjustFirstDataSectorAlignment(eraseblockSizeInSectors);
+			ASSERT(r == KErrNone);
+			(void) r;
+			}
+		__PRINT1(_L("iReservedSectors: %d"),iReservedSectors);
+		__PRINT1(_L("FirstDataSector: %d"), FirstDataSector());
+
+		// If we've shrunk the number of clusters by so much that it's now invalid for this FAT type
+		// then we need to decrease the cluster size and try again, otherwise we're finshed.
+		if (SuggestFatType() == fatType)
+			break;
 		}
-	__PRINT1(_L("iReservedSectors: %d"),iReservedSectors);
-	__PRINT1(_L("FirstDataSector: %d"), FirstDataSector());
+	__PRINT1(_L("iSectorsPerCluster  (final): %d"),iSectorsPerCluster);
 
     return KErrNone;
 	}

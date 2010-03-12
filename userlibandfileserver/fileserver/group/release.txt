@@ -1,3 +1,50 @@
+Version 2.00.2036
+=================
+(Made by vfebvre 09/02/2010)
+
+1.	kaduan
+	1.	PDEF144352:  Unwanted directory cache change caused performance regression 
+
+2.	dlyokhin
+	1.	DEF144134 potential memory leak in TFindFile::FindWildByDir()  
+
+
+Version 2.00.2035
+=================
+(Made by vfebvre 05/02/2010)
+
+1.	niccox
+	1.	DEF144268 Add ModeSense10 support to USB MS Client
+
+
+Version 2.00.2034
+=================
+(Made by vfebvre 03/02/2010)
+
+1.	migubarr
+	1.	DEF144172: Small FAT32 partitions on large media can sometimes be formatted incorrectly 
+
+
+Version 2.00.2033
+=================
+(Made by vfebvre 01/02/2010)
+
+1.	jsucksmi
+	1.	DEF144003 Emulated removable drive X is not present in tb10.1(MSF00326) and tb9.2(1014) 
+
+
+Version 2.00.2032
+=================
+(Made by vfebvre 28/01/2010)
+
+1.	famustaf
+	1.	PDEF144033 Change tests in t_fman to use __E32TEST_EXTENSION__
+
+2.	hengrant
+	1.	PDEF144090 New Memory & File Server Coverity Defects
+		3 Coverity Fixes
+
+
 Version 2.00.2031
 =================
 (Made by vfebvre 26/01/2010)

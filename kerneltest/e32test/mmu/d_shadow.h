@@ -37,45 +37,6 @@ enum TCpu
 	ECpuArm,
 	ECpuX86
 	};
-	
-	
-#ifdef __KERNEL_MODE__
-
-// Memory Model Architecture
-
-#ifdef __CPU_X86
-	const TUint KPageDirectorySize = 1024;
-	const TUint KMaxNumberOfPageDirectories = 1024;
-	const TUint KPsudoX86TTBCR = 512;
-
-#else 
-	const TUint KPageDirectorySize = 4096;  // Full size (ttbr0+ttbr1)
-	const TUint KMaxNumberOfPageDirectories = 256;
-#endif
-
-#if defined(__MEMMODEL_MOVING__)
-	const TUint KPageDirectoryBase = 0x61000000;
-	const TUint KPageTableBase = 0x62000000;
-	const TMemModel  KMemoryModel = EMemModelMoving;
-	
-#elif defined(__MEMMODEL_MULTIPLE__)
-	const TUint KPageDirectoryBase = 0xC1000000;
-	const TUint KPageTableBase = 0xC2000000;
-	const TMemModel  KMemoryModel = EMemModelMultiple;
-
-#elif defined(__MEMMODEL_FLEXIBLE__)
-	const TUint KPageDirectoryBase = 0xF4000000u;
-	const TUint KPageTableBase = 0xF8000000u;
-	const TMemModel  KMemoryModel = EMemModelFlexible;
-	
-#else // other memory model
-	const TUint KPageDirectoryBase = 0x00000000;
-	const TUint KPageTableBase = 0x00000000;
-	const TMemModel  KMemoryModel = EMemModelOther;
-#endif
-
-#endif
-
 
 
 class TCapsShadowV01

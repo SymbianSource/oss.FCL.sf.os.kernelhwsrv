@@ -13,6 +13,8 @@
 // Description:
 //
 
+#define __E32TEST_EXTENSION__
+
 #include <f32file.h>
 #include <e32test.h>
 #include <hal.h>
@@ -57,8 +59,8 @@ MFileManObserver::TControl CFileManObserver::NotifyFileManEnded()
 		TFileName fileName=iFileMan->CurrentEntry().iName;
 		if (gAsynch==EFalse)
 			test.Printf(_L("CurrentEntry is %S\n"),&fileName);
-		test(lastError==KErrAlreadyExists);
-		test(fileName.MatchF(_L("PIPE1.PLP"))!=KErrNotFound || fileName.MatchF(_L("FOUR"))!=KErrNotFound || fileName.MatchF(_L("File*.TXT"))!=KErrNotFound  || fileName.MatchF(_L("ah"))!=KErrNotFound || fileName.MatchF(_L("a"))!=KErrNotFound);
+		test_Equal(KErrAlreadyExists, lastError);
+		test_Value(KErrNotFound, fileName.MatchF(_L("PIPE1.PLP"))!=KErrNotFound || fileName.MatchF(_L("FOUR"))!=KErrNotFound || fileName.MatchF(_L("File*.TXT"))!=KErrNotFound  || fileName.MatchF(_L("ah"))!=KErrNotFound || fileName.MatchF(_L("a"))!=KErrNotFound);
 		}
 	return(MFileManObserver::EContinue);
 	}
@@ -78,7 +80,7 @@ LOCAL_C void WaitForResult(TInt aResult)
 //
 	{
 	User::WaitForRequest(gStat);
-	test(gStat==aResult);
+	test_Value(aResult, gStat==aResult);
 	}
 
 LOCAL_C void TestResult(TInt aReturnVal, TInt aExpectedAsynchReturnStatus=KErrNone, TInt aExpectedSynchReturn=KErrNone)
@@ -87,10 +89,12 @@ LOCAL_C void TestResult(TInt aReturnVal, TInt aExpectedAsynchReturnStatus=KErrNo
 //
 	{
 	if (!gAsynch)
-		test(aReturnVal==aExpectedAsynchReturnStatus);
+		{
+		test_Equal(aExpectedAsynchReturnStatus, aReturnVal);
+		}
 	else
 		{
-		test(aReturnVal==aExpectedSynchReturn);
+		test_Equal(aExpectedSynchReturn, aReturnVal);
 		WaitForResult(aExpectedAsynchReturnStatus);
 		}
 	}
@@ -102,7 +106,7 @@ LOCAL_C void RmDir(const TDesC& aDirName)
 	{
 	gFileMan->Attribs(aDirName, 0, KEntryAttReadOnly, 0, CFileMan::ERecurse);
 	TInt r=gFileMan->RmDir(aDirName);
-	test(r==KErrNone || r==KErrNotFound || r==KErrPathNotFound);
+	test_Value(r, r==KErrNone || r==KErrNotFound || r==KErrPathNotFound);
 	}
 
 LOCAL_C void Compare(const TDesC& aDir1,const TDesC& aDir2)
@@ -174,25 +178,25 @@ LOCAL_C void SetupDirectories(TBool aCreateFiles, TFileName* aDestOtherDrive)
 		*aDestOtherDrive = gSessionPath[0] == 'C' ? _L("Y:\\F32-TST\\TFMAN\\dest\\") : _L("C:\\F32-TST\\TFMAN\\dest\\");
 #endif
 		err = TheFs.MkDirAll(*aDestOtherDrive);
-		test(err == KErrNone || err == KErrAlreadyExists);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 		}
 
 	err = TheFs.MkDirAll(sourceName);
-	test(err == KErrNone || err == KErrAlreadyExists);
+	test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 
 	err = TheFs.MkDirAll(sourceCompare);
-	test(err == KErrNone || err == KErrAlreadyExists);
+	test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 
 	err = TheFs.MkDirAll(destSameDrive);
-	test(err == KErrNone || err == KErrAlreadyExists);
+	test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 
 	if(aCreateFiles)
 		{
 		err = TheFs.MkDirAll(sourceNameSubDir);
-		test(err == KErrNone || err == KErrAlreadyExists);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 
 		err = TheFs.MkDirAll(sourceCompareSubDir);
-		test(err == KErrNone || err == KErrAlreadyExists);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 		
 		for(TInt i=0; i<5; i++)
 			{
@@ -204,7 +208,7 @@ LOCAL_C void SetupDirectories(TBool aCreateFiles, TFileName* aDestOtherDrive)
 
 			RFile file;
 			err = file.Create(TheFs,name,EFileRead|EFileWrite);
-			test(err == KErrNone || err == KErrAlreadyExists);
+			test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 			file.Close();
 
 			// ...and another to compare against
@@ -214,7 +218,7 @@ LOCAL_C void SetupDirectories(TBool aCreateFiles, TFileName* aDestOtherDrive)
 			name.Append(_L(".TXT"));
 
 			err = file.Create(TheFs,name,EFileRead|EFileWrite);
-			test(err == KErrNone || err == KErrAlreadyExists);
+			test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 			file.Close();
 			}
 		}
@@ -233,7 +237,7 @@ TBool CheckIfShortPathsAreSupported()
 		buf.Insert(0, _L("\\"));
 		buf.Append(_L("\\file"));
 		err = TheFs.Delete(buf);
-		test(err == KErrNone);
+		test_KErrNone(err);
   		ret = ETrue;
 		}
 	RmDir(_L("\\longname1\\"));
@@ -276,7 +280,7 @@ _LIT(KInvalidLongPath, "\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\
 		MakeFile(_L("\\TEST\\LONG\\NAME\\ABCDE\\FILEFILE01FILEFILE02FILEFILE03FILEFILE04"));
 		TFileName name1(KLongName1);
 		r=gFileMan->Rename(_L("\\TEST\\LONG"),name1,CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 	//	Two long directory names - makes paths invalid
 		MakeDir(_L("\\TEST\\LONG\\NAME\\FGHIJ"));
 		MakeDir(_L("\\TEST\\LONG\\NAME\\FGHIJ\\DIRECTORY1DIRECTORY2DIRECTORY3DIRECTORY4\\"));
@@ -285,14 +289,14 @@ _LIT(KInvalidLongPath, "\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\
 		
 		// Testing invalid long file name (i.e. >256) 
 		r=gFileMan->Rename(_L("\\TEST\\LONG"),KInvalidLongName,CFileMan::EOverWrite);
-		test(r==KErrBadName);
+		test_Equal(KErrBadName, r);
 		
 		// Testing invalid long path (i.e. >256)
 		r=gFileMan->Rename(_L("\\TEST\\LONG"),KInvalidLongPath,CFileMan::EOverWrite);
-		test(r==KErrBadName);
+		test_Equal(KErrBadName, r);
 
 		r=gFileMan->Rename(_L("\\TEST\\LONG"),_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	//testing invalid source path at the beginning:
@@ -337,10 +341,10 @@ _LIT(KInvalidLongPath, "\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\
 			TFileName name1(KLongName1);
 			name1+=_L("\\NAME\\ABCDE\\*.*");
 			r=gFileMan->Delete(name1);	
-			test(r==KErrNone);
+			test_KErrNone(r);
 
 			r=gFileMan->Delete(_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds\\NAME\\FGHIJ\\*.*"));	
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		}
 	else
@@ -353,11 +357,11 @@ _LIT(KInvalidLongPath, "\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\
 			name1+=_L("\\NAME\\ABCDE\\*.*");
 			r=gFileMan->Delete(name1,0,gStat);	
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 		
 			r=gFileMan->Delete(_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds\\NAME\\FGHIJ\\*.*"),0,gStat);	
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		}
 
@@ -372,7 +376,7 @@ _LIT(KInvalidLongPath, "\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\
 	if (testingInvalidPathLengths)
 		{
 		r=gFileMan->RmDir(_L("\\TEST\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	/**
@@ -383,25 +387,25 @@ _LIT(KInvalidLongPath, "\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\
 	*/ 
 	TInt theDrive; 
 	r=TheFs.CharToDrive(gDriveToTest,theDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
     TFSName f;
 	r = TheFs.FileSystemName(f, theDrive);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r == KErrNone || r == KErrNotFound);
     if (f.FindF(_L("Fat")) == 0 )
     	{
 		test.Next(_L("Test wild card matching in short file names"));
     	MakeFile(_L("abcdefghi.txt"));
     	TInt err = gFileMan->Delete(_L("ABCDEF~*"));
-    	test(err == KErrNone);
+    	test_KErrNone(err);
     	MakeFile(_L("abcdefghi.txt"));
     	err = gFileMan->Delete(_L("ABCDEF~*.TXT"));
-    	test(err == KErrNone);
+    	test_KErrNone(err);
     	MakeFile(_L("abcdefghi.txt"));
     	err = gFileMan->Delete(_L("ABCDEF~*.?XT"));
-    	test(err == KErrNone);
+    	test_KErrNone(err);
     	MakeFile(_L("abcdefghi.txt"));
     	err = gFileMan->Delete(_L("ABCDEF~1.*"));
-    	test(err == KErrNone);
+    	test_KErrNone(err);
     	}
 	}
 
@@ -441,7 +445,7 @@ LOCAL_C void TestCopy()
 		MakeFile(_L("\\START\\LONG\\DINOSAUR01DINOSAUR02DINOSAUR03DINOSAUR04.txt"));
 		MakeFile(_L("\\START\\LONG\\FILEFILE01FILEFILE02FILEFILE03FILEFILE04.txt"));
 		r=gFileMan->Rename(_L("\\START\\LONG"),_L("\\START\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		MakeDir(_L("\\START\\ASDFFDSA\\"));
 		}
 
@@ -533,35 +537,35 @@ LOCAL_C void TestCopy()
 	if (!gAsynch)
 		{
 		r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\DELDIR\\*.TXT"),_L("\\F32-TST\\TFMAN\\COPYDIR\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		if (testingInvalidPathLengths)
 			{
 			test.Next(_L("Test invalid length paths"));
 			r=gFileMan->Copy(_L("\\START\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\*.*"),_L("\\FINISH\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\START\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\FINISH\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		}
 	else
 		{
 		r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\DELDIR\\*.TXT"),_L("\\F32-TST\\TFMAN\\COPYDIR\\"),0,gStat);
 		WaitForSuccess();
-		test(r==KErrNone);
+		test_KErrNone(r);
 		if (testingInvalidPathLengths)
 			{
 			test.Next(_L("Test invalid length paths (Asynch)"));
 			r=gFileMan->Copy(_L("\\START\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\*.*"),_L("\\FINISH\\"),0,gStat);
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\START\\"),gStat);
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\FINISH\\"),gStat);
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		}
 	
@@ -593,23 +597,27 @@ LOCAL_C void TestCopy()
 
 	TEntry entry;
 	r=TheFs.Entry(_L("\\F32-TST\\TFMAN\\COPYDIR\\T_FSRV.CPP"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName.MatchF(_L("T_FSRV.CPP"))!=KErrNotFound);
 #if defined (__WINS__)
-	test(entry.iAtt==KEntryAttArchive);
+	test_Equal(KEntryAttArchive, entry.iAtt);
 #else
 	if (!IsTestingLFFS())
-		test(entry.iAtt==KEntryAttReadOnly);
+		{
+	    test_Equal(KEntryAttReadOnly, entry.iAtt);
+		}
 	else
+		{
 		test(entry.iAtt&KEntryAttReadOnly); // ???
+		}
 #endif
 	r=TheFs.SetAtt(_L("\\F32-TST\\TFMAN\\COPYDIR\\T_FSRV.CPP"),0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\AFTER\\RUMBA?.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\DELDIR\\RUMBA?.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void TestDEF121663_Setup(TFileName& aSrcPath)
@@ -1017,7 +1025,7 @@ LOCAL_C void TestMove()
 		MakeFile(_L("\\START\\LONG\\DINOSAUR01DINOSAUR02DINOSAUR03DINOSAUR04.txt"));
 		MakeFile(_L("\\START\\LONG\\FILEFILE01FILEFILE02FILEFILE03FILEFILE04.txt"));
 		r=gFileMan->Rename(_L("\\START\\LONG"),_L("\\START\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 
 		//	Two long directory names - makes paths invalid
 		MakeDir(_L("\\TEST\\LONG\\NAME\\FGHIJ"));
@@ -1025,7 +1033,7 @@ LOCAL_C void TestMove()
 		MakeFile(_L("\\TEST\\LONG\\NAME\\FGHIJ\\ELEPHANT01ELEPHANT02ELEPHANT03ELEPHANT04"));
 		MakeFile(_L("\\TEST\\LONG\\NAME\\FGHIJ\\FILEFILE01FILEFILE02FILEFILE03FILEFILE04"));
 		r=gFileMan->Rename(_L("\\TEST\\LONG"),_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 	
 		MakeDir(_L("\\START\\ASDFFDSA\\"));
 		}
@@ -1106,30 +1114,30 @@ LOCAL_C void TestMove()
 	if ((!gAsynch)&&(testingInvalidPathLengths))
 		{
 		r=gFileMan->Move(_L("\\START\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\*.*"),_L("\\FINISH\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		
 		r=gFileMan->Move(_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds\\*.*"),_L("\\FINISH\\"), CFileMan::EOverWrite | CFileMan::ERecurse);
-		test(r==KErrNone);
+		test_KErrNone(r);
 
 		r=gFileMan->RmDir(_L("\\START\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=gFileMan->RmDir(_L("\\FINISH\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	if ((gAsynch)&&(testingInvalidPathLengths))
 		{
 		r=gFileMan->Move(_L("\\START\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\*.*"),_L("\\FINISH\\"),CFileMan::EOverWrite,gStat);
 		User::WaitForRequest(gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=gFileMan->Move(_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds\\*.*"),_L("\\FINISH\\"), CFileMan::EOverWrite | CFileMan::ERecurse,gStat);
 		User::WaitForRequest(gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=gFileMan->RmDir(_L("\\START\\"),gStat);
 		WaitForSuccess();
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=gFileMan->RmDir(_L("\\FINISH\\"),gStat);
 		WaitForSuccess();
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	if (!gAsynch)
@@ -1157,7 +1165,7 @@ LOCAL_C void TestMove()
 		r=gFileMan->Move(_L("\\F32-TST\\TFMAN\\DELDIR\\FILE1.TXT"),_L("\\F32-TST\\TFMAN\\MoveDIR\\FILE1.TXT"),0,gStat);
 	TestResult(r,KErrAlreadyExists);
 	r=TheFs.Delete(_L("\\F32-TST\\TFMAN\\DELDIR\\FILE1.TXT"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Check files have been moved"));
 	RmDir(_L("\\F32-TST\\TFMAN\\AFTER\\*"));
@@ -1176,7 +1184,7 @@ LOCAL_C void TestMove()
 	if (testingInvalidPathLengths)
 		{
 		r=gFileMan->RmDir(_L("\\TEST\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	
 	TestDEF121663(); // Test moving directory to its subdirectory
@@ -1207,9 +1215,9 @@ LOCAL_C void TestSimultaneous()
 	CFileMan* fman=CFileMan::NewL(TheFs);
 	TRequestStatus stat1;
 	TInt r=fman->Delete(_L("\\F32-TST\\TFMAN\\FMAN1\\*.*"),0,stat1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->Rename(_L("\\F32-TST\\TFMAN\\FMAN2\\*.TXT"),_L("\\F32-TST\\TFMAN\\FMAN2\\*.EXT"),0,gStat);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	FOREVER
 		{
 		if (stat1!=KRequestPending && gStat!=KRequestPending)
@@ -1243,11 +1251,11 @@ LOCAL_C void TestDEF092084()
 	MakeFile(_L("\\DEF092084\\FILE1.TXT"));
 	
 	TInt r = gFileMan->Rename(_L("\\DEF092084\\*.TXT"),_L("\\DEF092084\\*.DDB"), CFileMan::EOverWrite);
-	test(r==KErrNone); 
+	test_KErrNone(r); 
 	CheckFileExists(_L("\\DEF092084\\FILE1.DDB"), KErrNone);
 	
 	r = gFileMan->Rename(_L("\\DEF092084\\?*.DD?"),_L("\\DEF092084\\?*.TXT"), CFileMan::EOverWrite);
-	test(r==KErrNone); 
+	test_KErrNone(r); 
 	CheckFileExists(_L("\\DEF092084\\FILE1.TXT"), KErrNone);
 	
 	RmDir(_L("\\DEF092084\\"));  
@@ -1316,44 +1324,44 @@ LOCAL_C void TestINC111038()
 	test.Printf(_L("1: Create Test File\n"));
 	RFile testFile;
 	r = testFile.Create(TheFs, KTestFile, EFileRead | EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("2: Populate testFile1 Data\n"));
 	r = testFile.Write(_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("3: Get Initial Attributes\n"));
 	TUint atts = 0;
 	r = testFile.Att(atts);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("   Attributes: %08x"), atts);
 
 	test.Printf(_L("4: Set KEntryAttHidden Attribute\n"));
 	r = testFile.SetAtt(KEntryAttHidden, 0);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("5: Verify KEntryAttHidden Attribute is set for testFile1\n"));
 	r = testFile.Att(atts);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(atts & KEntryAttHidden);
 
 	test.Printf(_L("6: Read Data from beginning of file testFile1\n"));
 	TBuf8<4> data;
 	r = testFile.Read(0, data);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("7: Close all the testFiles\n"));
 	testFile.Close();
 	
 	test.Printf(_L("8: Verify KEntryAttHidden is present\n"));
 	r = TheFs.Att(KTestFile, atts);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("  Finally, attributes are : %08x\n"), atts);
 	test(atts & KEntryAttHidden);
 	
 	test.Printf(_L("9: Delete Test File\n"));
 	r = TheFs.Delete(KTestFile);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r == KErrNone || r == KErrNotFound);
 	}
 	
 LOCAL_C void TestDEF113299()
@@ -1413,7 +1421,7 @@ LOCAL_C void TestRename()
 		MakeFile(_L("\\LONGNAME\\DINOSAUR01DINOSAUR02DINOSAUR03DINOSAUR04.txt"));
 		MakeFile(_L("\\LONGNAME\\FILEFILE01FILEFILE02FILEFILE03FILEFILE04.bin"));
 		r=gFileMan->Rename(_L("\\LONGNAME"),_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 
 	//	Two long directory names - makes paths invalid
 		MakeDir(_L("\\TEST\\LONG\\NAME\\FGHIJ"));
@@ -1421,7 +1429,7 @@ LOCAL_C void TestRename()
 		MakeFile(_L("\\TEST\\LONG\\NAME\\FGHIJ\\ELEPHANT01ELEPHANT02ELEPHANT03ELEPHANT.txt"));
 		MakeFile(_L("\\TEST\\LONG\\NAME\\FGHIJ\\FILEFILE01FILEFILE02FILEFILE03FILEFILE.txt"));
 		r=gFileMan->Rename(_L("\\TEST\\LONG"),_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	//testing invalid source path at the beginning:
@@ -1494,28 +1502,28 @@ LOCAL_C void TestRename()
 	if (!gAsynch)
 		{
 		r=gFileMan->Rename(_L("\\F32-TST\\TFMAN\\RENAME\\SRC\\*.TXT"),_L("\\F32-TST\\TFMAN\\RENAME\\DEST\\*.DDB"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		if (testingInvalidPathLengths)
 			{
 			r=gFileMan->Rename(_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\elephant01elephant02elephant03elephant04.txt"),_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\elephant01elephant02elephant03elephant04.bin"));
-			test(r==KErrBadName);
+			test_Equal(KErrBadName, r);
 			r=gFileMan->Rename(_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff"),_L("\\Shortened"),CFileMan::EOverWrite);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->Rename(_L("\\Shortened\\*.txt"),_L("\\Shortened\\*.cat"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\Shortened\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 
 			r=gFileMan->Rename(_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds"),_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\NotSoShortened"),CFileMan::EOverWrite);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->Rename(_L("\\TEST"),_L("\\OXO!"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->Rename(_L("\\OXO!\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as"),_L("\\OXO!\\Shorter"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->Rename(_L("\\OXO!\\Shorter\\NotSoShortened\\NAME\\FGHIJ\\*.txt"),_L("\\TEST\\Shorter\\NotSoShortened\\NAME\\FGHIJ\\*.cat"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\OXO!\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 
 			}
 		}
@@ -1526,7 +1534,7 @@ LOCAL_C void TestRename()
 		if (testingInvalidPathLengths)
 			{
 			r=gFileMan->Rename(_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\elephant01elephant02elephant03elephant04.txt"),_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\elephant01elephant02elephant03elephant04.bin"));
-			test(r==KErrBadName);
+			test_Equal(KErrBadName, r);
 			r=gFileMan->Rename(_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff"),_L("\\Shortened"),CFileMan::EOverWrite,gStat);
 			WaitForSuccess();
 			r=gFileMan->Rename(_L("\\Shortened\\*.txt"),_L("\\Shortened\\*.bin"),0,gStat);
@@ -1536,20 +1544,20 @@ LOCAL_C void TestRename()
 
 			r=gFileMan->Rename(_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\fdsa21asdffds"),_L("\\TEST\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as\\NotSoShortened"),CFileMan::EOverWrite,gStat);
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->Rename(_L("\\TEST"),_L("\\OXO!"),CFileMan::EOverWrite,gStat);
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->Rename(_L("\\OXO!\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20as"),_L("\\OXO!\\Shorter"),CFileMan::EOverWrite,gStat);
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->Rename(_L("\\OXO!\\Shorter\\NotSoShortened\\NAME\\FGHIJ\\*.txt"),_L("\\TEST\\Shorter\\NotSoShortened\\NAME\\FGHIJ\\*.cat"),CFileMan::EOverWrite,gStat);
 			WaitForSuccess();
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\OXO!\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=gFileMan->RmDir(_L("\\TEST\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		}
 	RmDir(_L("\\F32-TST\\TFMAN\\after\\"));
@@ -1598,28 +1606,28 @@ LOCAL_C void TestRename()
 	// For this, default should be session path
 	TFileName sessionPath;
 	TInt err=TheFs.SessionPath(sessionPath);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
 	SetupDirectories(ETrue, NULL);
 	err=TheFs.SetSessionPath(_L("\\F32-TST\\TFMAN\\dest\\"));
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	err = gFileMan->Rename(_L("\\F32-TST\\TFMAN\\source"), _L(""));
-	test(err == KErrNone);
+	test_KErrNone(err);
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\source\\*"));
 
 	RmDir(_L("\\F32-TST\\TFMAN\\dest\\"));
 	RmDir(_L("\\F32-TST\\TFMAN\\source\\"));
 	SetupDirectories(ETrue, NULL);
 	err=TheFs.SetSessionPath(_L("\\F32-TST\\TFMAN\\source\\"));
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	err = gFileMan->Rename(_L(""), _L("\\F32-TST\\TFMAN\\dest\\"));
-	test(err == KErrNone);
+	test_KErrNone(err);
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\*"));
 		
 	err=TheFs.SetSessionPath(sessionPath);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	
 	TestINC109754(); // Test empty source directory should exist after contents being renamed
 	TestDEF092084(); // Test wildcards are replaced with letters from the matched file
@@ -1641,12 +1649,12 @@ LOCAL_C void TestAttribs()
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\ATTRIBS\\AT*.AT"),setMask,clearMask,TTime(0));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\ATTRIBS\\AT*.AT"),setMask,clearMask,TTime(0),0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		}
 	
@@ -1655,13 +1663,13 @@ LOCAL_C void TestAttribs()
 	CDir* entryList;
 	scan->NextL(entryList);
 	TInt count=entryList->Count();
-	test(count==2);
+	test_Equal(2, count);
 	TEntry entry=(*entryList)[0];
 	test(entry.iName.MatchF(_L("attrib1.AT"))!=KErrNotFound);
-	test(entry.iAtt==KEntryAttReadOnly);
+	test_Equal(KEntryAttReadOnly, entry.iAtt);
 	entry=(*entryList)[1];
 	test(entry.iName.MatchF(_L("attrib2.AT"))!=KErrNotFound);
-	test(entry.iAtt==KEntryAttReadOnly);
+	test_Equal(KEntryAttReadOnly, entry.iAtt);
 	delete entryList;
 
 	TDateTime dateTime(1990,ENovember,20,9,5,0,0);
@@ -1670,22 +1678,22 @@ LOCAL_C void TestAttribs()
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\ATTRIBS\\AT*.AT"),0,legalAttMask,time);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\ATTRIBS\\AT*.AT"),0,legalAttMask,time,0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		}
 	
 	scan->SetScanDataL(_L("\\F32-TST\\TFMAN\\ATTRIBS\\*"),KEntryAttMaskSupported,ESortByName);
 	scan->NextL(entryList);
 	count=entryList->Count();
-	test(count==2);
+	test_Equal(2, count);
 	entry=(*entryList)[0];
 	test(entry.iName.MatchF(_L("attrib1.AT"))!=KErrNotFound);
-	test(entry.iAtt==0);
+	test_Equal(0, entry.iAtt);
 	TDateTime dt=(entry.iModified).DateTime();
 	test(dt.Year()==dateTime.Year());
 	test(dt.Month()==dateTime.Month());
@@ -1696,7 +1704,7 @@ LOCAL_C void TestAttribs()
 	test(entry.iModified==time);
 	entry=(*entryList)[1];
 	test(entry.iName.MatchF(_L("attrib2.AT"))!=KErrNotFound);
-	test(entry.iAtt==0);
+	test_Equal(0, entry.iAtt);
 	test(entry.iModified==time);
 	delete entryList;
 	delete scan;
@@ -1727,10 +1735,10 @@ LOCAL_C void  TestINC091841()
 	if(oldname.Length() >= KMaxFileName-5) // if not, it means that we won't be calling ShrinkNames !!
 		{
 		TInt r = gFileMan->Rename(_L("\\12345678\\Book\\12345678"),_L("\\INC091841\\Book\\012-235-abcd"),0);
-		test(r==KErrNone);  
+		test_KErrNone(r);  
 		CDir* dir;
 		r = TheFs.GetDir(_L("\\INC091841\\Book\\012-235-abcd\\"), KEntryAttNormal, ESortNone, dir);
-		test(r==KErrNone);   
+		test_KErrNone(r);   
 		r = KErrNotFound;
 		TInt dirlen = sizeof("\\INC091841\\Book\\012-235-abcd\\");
 		for(TInt i=0; r==KErrNotFound && i<dir->Count(); i++)
@@ -1741,9 +1749,9 @@ LOCAL_C void  TestINC091841()
 				}
 			}
 		delete dir;
-		test(r==KErrNone);  
+		test_KErrNone(r);  
 		r = gFileMan->RmDir(_L("\\INC091841\\"));
-		test(r==KErrNone);  
+		test_KErrNone(r);  
 		}
 	RmDir(_L("\\12345678\\"));
 	}
@@ -1774,7 +1782,7 @@ LOCAL_C void TestRmDir()
 		MakeFile(_L("\\LONGNAMETEST\\ELEPHANT01ELEPHANT02ELEPHANT03ELEPHANT04"));
 		MakeFile(_L("\\LONGNAMETEST\\FILEFILE01FILEFILE02FILEFILE03FILEFILE04"));
 		r=gFileMan->Rename(_L("\\LONGNAMETEST"),_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	//testing invalid source path at the beginning:
@@ -1813,72 +1821,72 @@ LOCAL_C void TestRmDir()
 	if (!gAsynch)
 		{
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\RMDIR\\*.AT"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 			if (testingInvalidPathLengths)
 			{
 			r=gFileMan->RmDir(_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\"));
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		}
 	else
 		{
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\RMDIR\\*.AT"),gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		if (testingInvalidPathLengths)
 			{
 			r=gFileMan->RmDir(_L("\\asdffdsa01asdffdsa02asdffdsa03asdffdsa04asdffdsa05asdffdsa06asdffdsa07asdffdsa08asdffdsa09asdffdsa10asdffdsa11asdffdsa12asdffdsa13asdffdsa14asdffdsa15asdffdsa16asdffdsa17asdffdsa18asdffdsa19asdffdsa20asdffdsa21asdffdsa22asdff\\"),gStat);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			WaitForSuccess();
 			}
 		}
 
 	TEntry entry;
 	r=TheFs.Entry(_L("\\F32-TST\\TFMAN\\RMDIR"),entry);
-	test(r==KErrNotFound);
+	test_Equal(KErrNotFound, r);
 
 	MakeDir(_L("\\F32-TST\\TFMAN\\READONLY\\"));
 	r=TheFs.SetAtt(_L("\\F32-TST\\TFMAN\\READONLY\\"),KEntryAttReadOnly,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	if (!gAsynch)
 		{
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\READONLY\\"));
-		test(r==KErrAccessDenied);
+		test_Equal(KErrAccessDenied, r);
 		}
 	else
 		{
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\READONLY\\"),gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrAccessDenied);
 		}
 
 	r=TheFs.SetAtt(_L("\\F32-TST\\TFMAN\\READONLY\\"),0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\READONLY\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	// Test behaviour for omitted parameters
 	// For this, default should be session path
 	TFileName sessionPath;
 	r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	SetupDirectories(ETrue, NULL);
 	r=TheFs.SetSessionPath(_L("\\F32-TST\\TFMAN\\source\\"));
 
 	// Default removal of session path
 	r=gFileMan->RmDir(_L(""));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.SetSessionPath(sessionPath);
 	
 	r = gFileMan->Rename(_L("\\F32-TST\\TFMAN\\source\\subdir"), _L("\\F32-TST\\TFMAN\\source\\tofail"), CFileMan::ERecurse);
-	test(r == KErrPathNotFound);
+	test_Equal(KErrPathNotFound, r);
 	
 	r = gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	MakeDir(_L("\\F32-TST\\TFMAN\\"));
 	
 	if(testingInvalidPathLengths)
@@ -1905,28 +1913,28 @@ LOCAL_C void TestRmDir()
 
 	RFile file;
 	r = file.Open(TheFs,_L("\\F32-TST\\TFMAN\\OPENFILE\\FILE.TXT"), EFileRead | EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	if (!gAsynch)
 		{
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\OPENFILE\\"));
-		test(r==KErrInUse);
+		test_Equal(KErrInUse, r);
 		
 		file.Close();
 		
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\OPENFILE\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\OPENFILE\\"), gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrInUse);
 
 		file.Close();
 
 		r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\OPENFILE\\"), gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrNone);
 		}
 
@@ -1976,7 +1984,7 @@ LOCAL_C void TestRecursiveCopy()
 	// For this, default should be session path
 	TFileName sessionPath;
 	r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RmDir(_L("\\F32-TST\\TFMAN\\COPYDIR\\"));
 	MakeDir(_L("\\F32-TST\\TFMAN\\COPYDIR\\"));
@@ -2005,7 +2013,7 @@ LOCAL_C void TestRecursiveCopy()
 	RmDir(_L("\\F32-TST\\TFMAN\\COPYDIR\\"));
 	RmDir(_L("\\F32-TST\\TFMAN\\DELDIR\\"));
 	r=TheFs.SetSessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 	
 LOCAL_C void TestRecursiveAttribs()
@@ -2021,12 +2029,12 @@ LOCAL_C void TestRecursiveAttribs()
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\"),KEntryAttReadOnly,0,TTime(0),CFileMan::ERecurse);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\"),KEntryAttReadOnly,0,TTime(0),CFileMan::ERecurse,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		}
 
@@ -2035,32 +2043,44 @@ LOCAL_C void TestRecursiveAttribs()
 	scan->SetScanDataL(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\*"),KEntryAttMaskSupported,ESortByName);
 	scan->NextL(entryList);
 	TInt count=entryList->Count();
-	test(count==3);
+	test_Equal(3, count);
 	TEntry entry=(*entryList)[0];
 	test(entry.iName.MatchF(_L("ATTRIB1.AT"))!=KErrNotFound);
 	if (!IsTestingLFFS())
-		test(entry.iAtt==(KEntryAttReadOnly|KEntryAttArchive));
+		{
+		test_Equal((KEntryAttReadOnly|KEntryAttArchive), entry.iAtt);
+		}
 	else
+		{
 		test(entry.iAtt&KEntryAttReadOnly); // ???
+		}
 	entry=(*entryList)[1];
 	test(entry.iName.MatchF(_L("ATTRIB2.AT"))!=KErrNotFound);
 	if (!IsTestingLFFS())
-		test(entry.iAtt==(KEntryAttReadOnly|KEntryAttArchive));
+		{
+		test_Equal((KEntryAttReadOnly|KEntryAttArchive), entry.iAtt);
+		}
 	else
+		{
 		test(entry.iAtt&KEntryAttReadOnly); // ???
+		}
 	entry=(*entryList)[2];
 	test(entry.iName.MatchF(_L("SUBDIR"))!=KErrNotFound);
 	delete entryList;
 
 	scan->NextL(entryList);
 	count=entryList->Count();
-	test(count==1);
+	test_Equal(1, count);
 	entry=(*entryList)[0];
 	test(entry.iName.MatchF(_L("ATFILE.TXT"))!=KErrNotFound);
 	if (!IsTestingLFFS())
-		test(entry.iAtt==(KEntryAttReadOnly|KEntryAttArchive));
+		{
+		test_Equal((KEntryAttReadOnly|KEntryAttArchive), entry.iAtt);
+		}
 	else
+		{
 		test(entry.iAtt&KEntryAttReadOnly); // ???
+		}
 	delete entryList;
 
 	scan->NextL(entryList);
@@ -2069,35 +2089,35 @@ LOCAL_C void TestRecursiveAttribs()
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\"),0,KEntryAttReadOnly|KEntryAttArchive,TTime(0),CFileMan::ERecurse);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		TInt r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\"),0,KEntryAttReadOnly|KEntryAttArchive,TTime(0),CFileMan::ERecurse,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		}
 
 	scan->SetScanDataL(_L("\\F32-TST\\TFMAN\\RECATTRIBS\\*"),KEntryAttMaskSupported,ESortByName);
 	scan->NextL(entryList);
 	count=entryList->Count();
-	test(count==3);
+	test_Equal(3, count);
 	entry=(*entryList)[0];
 	test(entry.iName.MatchF(_L("ATTRIB1.AT"))!=KErrNotFound);
-	test(entry.iAtt==KEntryAttNormal);
+	test_Equal(KEntryAttNormal, entry.iAtt);
 	entry=(*entryList)[1];
 	test(entry.iName.MatchF(_L("ATTRIB2.AT"))!=KErrNotFound);
-	test(entry.iAtt==KEntryAttNormal);
+	test_Equal(KEntryAttNormal, entry.iAtt);
 	entry=(*entryList)[2];
 	test(entry.iName.MatchF(_L("SUBDIR"))!=KErrNotFound);
 	delete entryList;
 
 	scan->NextL(entryList);
 	count=entryList->Count();
-	test(count==1);
+	test_Equal(1, count);
 	entry=(*entryList)[0];
 	test(entry.iName.MatchF(_L("ATFILE.TXT"))!=KErrNotFound);
-	test(entry.iAtt==KEntryAttNormal);
+	test_Equal(KEntryAttNormal, entry.iAtt);
 	delete entryList;
 
 	scan->NextL(entryList);
@@ -2119,12 +2139,12 @@ LOCAL_C void TestRecursiveDelete()
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\RECDELETE\\*.PLP"),CFileMan::ERecurse);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		TInt r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\RECDELETE\\*.PLP"),CFileMan::ERecurse,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		}
 
@@ -2230,7 +2250,7 @@ LOCAL_C void TestINC108401()
 		err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\INC108401\\src"), _L("\\F32-TST\\TFMAN\\INC108401\\dest\\"), 0, gStat);
 	test.Next(_L("Test INC108401 : SAME DRIVE with 0"));
 	TestResult(err);
-	// test(err==KErrNone);
+	// test_KErrNone(err);
 	RmDir(_L("\\F32-TST\\TFMAN\\INC108401\\"));
 	
 	// case for gFileMan->Move(_L("\\F32-TST\\TFMAN\\INC108401\\src"), _L("\\F32-TST\\TFMAN\\INC108401\\dest\\"), CFileMan::EOverWrite);
@@ -2247,7 +2267,7 @@ LOCAL_C void TestINC108401()
 		err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\INC108401\\src"), _L("\\F32-TST\\TFMAN\\INC108401\\dest\\"), CFileMan::EOverWrite, gStat);
 	test.Next(_L("Test INC108401 : SAME DRIVE with CFileMan::EOverWrite"));
 	TestResult(err);
-	// test(err==KErrNone);
+	// test_KErrNone(err);
 	RmDir(_L("\\F32-TST\\TFMAN\\INC108401\\"));
 	
 	// case for gFileMan->Move(_L("\\F32-TST\\TFMAN\\INC108401\\src"), _L("\\F32-TST\\TFMAN\\INC108401\\dest\\"), CFileMan::EOverWrite|CFileMan::ERecurse);
@@ -2268,7 +2288,7 @@ LOCAL_C void TestINC108401()
 		err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\INC108401\\src"), _L("\\F32-TST\\TFMAN\\INC108401\\dest\\"), CFileMan::ERecurse|CFileMan::EOverWrite, gStat);
 	test.Next(_L("Test INC108401 : SAME DRIVES with CFileMan::ERecurse|CFileMan::EOverWrite"));
 	TestResult(err);
-	// test(err==KErrNone);
+	// test_KErrNone(err);
 	RmDir(_L("\\F32-TST\\TFMAN\\INC108401\\"));
 	
 	// cleanup for the current drive
@@ -2295,13 +2315,13 @@ LOCAL_C void TestINC089638()
 	MakeFile(_L("\\INC089638\\source\\subdir2\\file5"));
 	MakeFile(_L("\\INC089638\\source\\subdir2\\file6"));
 	MakeDir(_L("\\INC089638\\dest\\"));
-	test(TheFs.SetAtt(_L("\\INC089638\\source\\subdir1"), KEntryAttHidden, 0) == KErrNone);
-	test(TheFs.SetAtt(_L("\\INC089638\\source\\subdir2"), KEntryAttReadOnly, 0) == KErrNone);
+	test_KErrNone(TheFs.SetAtt(_L("\\INC089638\\source\\subdir1"), KEntryAttHidden, 0));
+	test_KErrNone(TheFs.SetAtt(_L("\\INC089638\\source\\subdir2"), KEntryAttReadOnly, 0));
 	
 	TInt r = gFileMan->Move(_L("\\INC089638\\source\\"), _L("\\INC089638\\dest\\"), CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = TheFs.RmDir(_L("\\INC089638\\source\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	RmDir(_L("\\INC089638\\"));
   }
@@ -2325,7 +2345,7 @@ void TestINC101379()
 		err = gFileMan->Move(KSourceDir, dest, CFileMan::ERecurse|CFileMan::EOverWrite);
 	else
 		err = gFileMan->Move(KSourceDir, dest, CFileMan::ERecurse|CFileMan::EOverWrite, gStat);
-	test(err==KErrInUse); // Recursive move prohibited
+	test_Equal(KErrInUse, err); // Recursive move prohibited
 	if (gAsynch)
 		WaitForResult(KErrInUse);
 	CheckFileContents(KFile1, _L8("qwerty"));
@@ -2386,43 +2406,43 @@ void TestINC101379()
 
 	TEntry entry;
 	r = gFileMan->Move(src, KDest, 0); // ahsx\ah
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNotFound);
+	test_Equal(KErrNotFound, r);
 
 	src.SetLength(src.Length()-1); // ahsx\a
 	r = gFileMan->Move(src, KDest, 0);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNotFound);
+	test_Equal(KErrNotFound, r);
 	
 	src.SetLength(src.Length()-3); // ahs
 	r = gFileMan->Move(src, KDest, 0);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNotFound);
+	test_Equal(KErrNotFound, r);
 	
 	src.SetLength(src.Length()-1); // ah
 	r = gFileMan->Move(src, KDest, 0);
-	test(r == KErrAlreadyExists);
+	test_Equal(KErrAlreadyExists, r);
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = gFileMan->Move(src, KDest, CFileMan::EOverWrite); // ah
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNotFound);
+	test_Equal(KErrNotFound, r);
 
 	src.SetLength(src.Length()-1); // a
 	r = gFileMan->Move(src, KDest, 0);
-	test(r == KErrAlreadyExists);
+	test_Equal(KErrAlreadyExists, r);
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = gFileMan->Move(src, KDest, CFileMan::EOverWrite); // a
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNotFound);
+	test_Equal(KErrNotFound, r);
 
 	RmDir(source);
 	RmDir(KDest);
@@ -2537,25 +2557,25 @@ LOCAL_C void TestRecursiveMove()
 	SetupDirectories(EFalse, NULL);
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), _L("\\F32-TST\\TFMAN\\dest\\"), CFileMan::ERecurse);
-	test(err == KErrNotFound);	// Expected - directory is empty
+	test_Equal(KErrNotFound, err);	// Expected - directory is empty
 
 	// Test that all directories are still present
 	TEntry entry;
 	err = TheFs.Entry(_L("\\F32-TST\\TFMAN\\source\\"), entry);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	err = TheFs.Entry(_L("\\F32-TST\\TFMAN\\dest\\"), entry);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	SetupDirectories(EFalse, NULL);
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source"), _L("\\F32-TST\\TFMAN\\dest\\"), CFileMan::ERecurse);
-	test(err == KErrNone);		// Expected - should move (or rename) directory
+	test_KErrNone(err);		// Expected - should move (or rename) directory
 
 	// Test directory has been moved
 	err = TheFs.Entry(_L("\\F32-TST\\TFMAN\\dest\\source\\"), entry);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	err = TheFs.Entry(_L("\\F32-TST\\TFMAN\\source\\"), entry);
-	test(err == KErrNotFound);
+	test_Equal(KErrNotFound, err);
 
 	RmDir(_L("\\F32-TST\\TFMAN\\dest\\source\\"));
 
@@ -2566,7 +2586,7 @@ LOCAL_C void TestRecursiveMove()
 
 	SetupDirectories(ETrue, NULL);
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), _L("\\F32-TST\\TFMAN\\dest\\"), CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\*"));
 
@@ -2587,7 +2607,7 @@ LOCAL_C void TestRecursiveMove()
 	RmDir(_L("\\F32-TST\\TFMAN\\dest\\"));
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), _L("\\F32-TST\\TFMAN\\dest\\"), CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\*"));
 
@@ -2596,7 +2616,7 @@ LOCAL_C void TestRecursiveMove()
 	RmDir(_L("\\F32-TST\\TFMAN\\dest\\"));
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), _L("\\F32-TST\\TFMAN\\dest"), CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\*"));
 
@@ -2605,7 +2625,7 @@ LOCAL_C void TestRecursiveMove()
 	RmDir(_L("\\F32-TST\\TFMAN\\dest\\"));
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source"), _L("\\F32-TST\\TFMAN\\dest\\"), CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	MakeDir(_L("\\F32-TST\\TFMAN\\compare\\subdir\\"));
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\source\\*"));
@@ -2616,7 +2636,7 @@ LOCAL_C void TestRecursiveMove()
 	RmDir(_L("\\F32-TST\\TFMAN\\dest\\"));
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), _L("\\F32-TST\\TFMAN\\dest\\"), CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), KErrNotFound, ETrue);
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\dest\\File1.TXT"),   KErrNone,     ETrue);
@@ -2628,28 +2648,28 @@ LOCAL_C void TestRecursiveMove()
 	// For this, default should be session path
 	TFileName sessionPath;
 	err=TheFs.SessionPath(sessionPath);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
 	SetupDirectories(ETrue, NULL);
 	err=TheFs.SetSessionPath(_L("\\F32-TST\\TFMAN\\dest\\"));
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source"), _L(""), CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\source\\*"));
 
 	RmDir(_L("\\F32-TST\\TFMAN\\dest\\"));
 	RmDir(_L("\\F32-TST\\TFMAN\\source\\"));
 	SetupDirectories(ETrue, NULL);
 	err=TheFs.SetSessionPath(_L("\\F32-TST\\TFMAN\\source\\"));
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	err = gFileMan->Move(_L(""), _L("\\F32-TST\\TFMAN\\dest\\"), CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), _L("\\F32-TST\\TFMAN\\dest\\*"));
 		
 	err=TheFs.SetSessionPath(sessionPath);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
 	//--------------------------------------------- 
 	//! @SYMTestCaseID			PBASE-T_FMAN-0520
@@ -2813,14 +2833,14 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	SetupDirectories(EFalse, &destOtherDrive);
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse);
-	test(err == KErrNotFound);	// Expected - directory is empty
+	test_Equal(KErrNotFound, err);	// Expected - directory is empty
 
 	// Test that all directories are still present
 	TEntry entry;
 	err = TheFs.Entry(_L("\\F32-TST\\TFMAN\\source\\"), entry);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	err = TheFs.Entry(destOtherDrive, entry);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	//--------------------------------------------- 
 	//! @SYMTestCaseID			PBASE-T_FMAN-0571
@@ -2863,7 +2883,7 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 
 	SetupDirectories(ETrue, &destOtherDrive);
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	destOtherDrive.Append(_L("*"));
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
@@ -2885,7 +2905,7 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	RmDir(destOtherDrive);
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\"), destOtherDrive, CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	Compare(_L("\\F32-TST\\TFMAN\\compare\\*"), destOtherDrive);
 
@@ -2894,7 +2914,7 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	RmDir(destOtherDrive);
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source"), destOtherDrive, CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	MakeDir(_L("\\F32-TST\\TFMAN\\compare\\subdir\\"));
 	destOtherDrive.Append(_L("source\\"));
@@ -2906,7 +2926,7 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	RmDir(destOtherDrive);
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), destOtherDrive, CFileMan::ERecurse);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\source\\File1.TXT"), KErrNotFound, ETrue);
 	destOtherDrive.Append(_L("File1.TXT"));
@@ -2926,11 +2946,11 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	for(level=0; level < KNumFiles; level++)
 		{
 		err = TheFs.MkDirAll(complexFile[level]);
-		test(err == KErrNone || err == KErrAlreadyExists);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 
 		RFile file;
 		err = file.Create(TheFs, complexFile[level], EFileRead | EFileWrite);
-		test(err == KErrNone || err == KErrAlreadyExists || err == KErrBadName);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists || err == KErrBadName);
 		file.Close();
 		}
 
@@ -2942,16 +2962,16 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	//
 
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\complex\\dir1"), _L("\\F32-TST\\TFMAN\\complex\\dir12\\"), CFileMan::ERecurse);
-	test(err == KErrAlreadyExists);
+	test_Equal(KErrAlreadyExists, err);
 
 	for(level=0; level < KNumFilesResult1; level++)
 		{
 		err = TheFs.MkDirAll(complexResult1[level]);
-		test(err == KErrNone || err == KErrAlreadyExists);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 
 		RFile file;
 		err = file.Create(TheFs, complexResult1[level], EFileRead | EFileWrite);
-		test(err == KErrNone || err == KErrAlreadyExists || err == KErrBadName);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists || err == KErrBadName);
 		file.Close();
 		}
 
@@ -2961,16 +2981,16 @@ LOCAL_C void TestRecursiveMoveAcrossDrives()
 	// Move directory 'dir1' into 'dir12' *with* overwrite flag set
 	//
 	err = gFileMan->Move(_L("\\F32-TST\\TFMAN\\complex\\dir1"), _L("\\F32-TST\\TFMAN\\complex\\dir12\\"), CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	for(level=0; level < KNumFilesResult2; level++)
 		{
 		err = TheFs.MkDirAll(complexResult2[level]);
-		test(err == KErrNone || err == KErrAlreadyExists);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists);
 
 		RFile file;
 		err = file.Create(TheFs, complexResult2[level], EFileRead | EFileWrite);
-		test(err == KErrNone || err == KErrAlreadyExists || err == KErrBadName);
+		test_Value(err, err == KErrNone || err == KErrAlreadyExists || err == KErrBadName);
 		file.Close();
 		}
 
@@ -3107,7 +3127,7 @@ MFileManObserver::TControl CFileManObserverOverWrite::NotifyFileManEnded()
 	TInt lastError=iFileMan->GetLastError();
 	if (lastError!=KErrNone)
 		{
-		test(lastError==KErrAlreadyExists);
+		test_Equal(KErrAlreadyExists, lastError);
 		if (gAsynch==EFalse)
 			{
 			TFileName fileName=iFileMan->CurrentEntry().iName;
@@ -3139,40 +3159,40 @@ LOCAL_C void TestOverWrite()
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG"),0);
-		test(r==KErrAlreadyExists);
+		test_Equal(KErrAlreadyExists, r);
 		}
 	else
 		{
 		TInt r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG"),0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrAlreadyExists);
 		}
 
 	RFile f;
 	TInt r=f.Open(TheFs,_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\FILE1.TXT"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<128> data;
 	r=f.Read(data);
-	test(r==KErrNone);
-	test(data.Length()==0);
+	test_KErrNone(r);
+	test_Equal(0, data.Length());
 	f.Close();
 
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		TInt r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG"),CFileMan::EOverWrite,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		}
 
 	r=f.Open(TheFs,_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\FILE1.TXT"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(data);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(data==contentsFile1);
 	f.Close();
 
@@ -3183,38 +3203,38 @@ LOCAL_C void TestOverWrite()
 	if (!gAsynch)
 		{
 	TInt r=gFileMan->Rename(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC\\*"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\*"),0);
-		test(r==KErrAlreadyExists);
+		test_Equal(KErrAlreadyExists, r);
 		}
 	else
 		{
 		TInt r=gFileMan->Rename(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC\\*"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\*"),0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrAlreadyExists);
 		}
 
 	r=f.Open(TheFs,_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\FILE2.TXT"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(data);
-	test(r==KErrNone);
-	test(data.Length()==0);
+	test_KErrNone(r);
+	test_Equal(0, data.Length());
 	f.Close();
 
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Rename(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC\\*"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\*"),CFileMan::EOverWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	else
 		{
 		TInt r=gFileMan->Rename(_L("\\F32-TST\\TFMAN\\OVERWRITE\\SRC\\*"),_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\*"),CFileMan::EOverWrite,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForSuccess();
 		}
 
 	r=f.Open(TheFs,_L("\\F32-TST\\TFMAN\\OVERWRITE\\TRG\\FILE2.TXT"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(data);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(data==contentsFile2);
 	f.Close();
 	gFileMan->SetObserver(gObserver);
@@ -3230,12 +3250,12 @@ LOCAL_C void TestErrorHandling()
 	if (!gAsynch)
 		{
 		TInt r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\BADPATH\\*"));
-		test(r==KErrPathNotFound);
+		test_Equal(KErrPathNotFound, r);
 		}
 	else
 		{
 		TInt r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\BADPATH\\*"),0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrPathNotFound);
 		}
 
@@ -3252,7 +3272,7 @@ LOCAL_C void TestErrorHandling()
 			TBuf<16> bad(KBad);
 			bad[0] = TUint16('A'+drvNum);
 			TInt r=fMan->Delete(bad);
-			test(r==KErrNotReady);
+			test_Equal(KErrNotReady, r);
 			break;
 			}
 		}
@@ -3266,28 +3286,28 @@ LOCAL_C void TestErrorHandling()
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\*"),_L("\\ONE\\TWO\\THREE\\"),CFileMan::ERecurse);
 	else
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\*"),_L("\\ONE\\TWO\\THREE\\"),CFileMan::ERecurse,gStat);
-	test(r==KErrArgument);
+	test_Equal(KErrArgument, r);
 
 	test.Next(_L("Test src name == trg name"));
 	if (!gAsynch)
 		{
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\FOUR"),_L("\\ONE\\TWO\\FOUR")); // default aSwitch=EOverWrite
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\FOUR"),_L("\\ONE\\TWO\\FOUR"), 0);
-		test(r==KErrAlreadyExists);
+		test_Equal(KErrAlreadyExists, r);
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\FOUR"),_L("\\ONE\\TWO\\FOUR"),CFileMan::ERecurse);
-		test(r==KErrAlreadyExists);
+		test_Equal(KErrAlreadyExists, r);
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\F*R"),_L("\\ONE\\TWO\\FOUR"),CFileMan::ERecurse);
-		test(r==KErrAlreadyExists);
+		test_Equal(KErrAlreadyExists, r);
 		}
 	else
 		{
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\*.TXT"),_L("\\ONE\\TWO\\*.TXT"),0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrAlreadyExists);
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\FOUR"),_L("\\ONE\\TWO\\F*R"),CFileMan::ERecurse,gStat);
-		test(r==KErrNone);
-		WaitForResult(KErrNone);
+		test_KErrNone(r);
+        WaitForResult(KErrNone);
 		}
 	RmDir(_L("\\ONE\\"));
 
@@ -3295,17 +3315,17 @@ LOCAL_C void TestErrorHandling()
 	if (!gAsynch)
 		{
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\XXXYYY"),_L("\\ONE\\TWO\\asdfsadf"));
-		test(r==KErrPathNotFound);
+		test_Equal(KErrPathNotFound, r);
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\XXXYYY"),_L("\\ONE\\TWO\\asdfsadf"),CFileMan::ERecurse);
-		test(r==KErrPathNotFound);
+		test_Equal(KErrPathNotFound, r);
 		}
 	else
 		{
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\*.TXT"),_L("\\ONE\\TWO\\*.YYY"),0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrPathNotFound);
 		r=gFileMan->Copy(_L("\\ONE\\TWO\\XXXYYY"),_L("\\ONE\\TWO\\asdfsadf"),CFileMan::ERecurse,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrPathNotFound);
 		}
 		
@@ -3313,17 +3333,17 @@ LOCAL_C void TestErrorHandling()
 	if (!gAsynch)
 		{
 		r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\*.LPQ"),_L("\\ONE\\TWO\\*.YYY"));
-		test(r==KErrNotFound);
+		test_Equal(KErrNotFound, r);
 		r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\XXXYYY"),_L("\\ONE\\TWO\\asdfsadf"),CFileMan::ERecurse);
-		test(r==KErrNotFound);
+		test_Equal(KErrNotFound, r);
 		}
 	else
 		{
 		r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\XXXYYY"),_L("\\ONE\\TWO\\asdfsadf"),0,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrNotFound);
 		r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\XXXYYY"),_L("\\ONE\\TWO\\asdfsadf"),CFileMan::ERecurse,gStat);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		WaitForResult(KErrNotFound);
 		}
 		
@@ -3335,27 +3355,27 @@ LOCAL_C void TestErrorHandling()
  	if (!gAsynch)
  		{
  		r=gFileMan->Copy(_L("\\EMPTYSRC\\"),_L("\\EMPTYTRG\\"));
- 		test(r==KErrNotFound);
+ 		test_Equal(KErrNotFound, r);
  		r=gFileMan->Copy(_L("\\EMPTYSRC\\"),_L("\\EMPTYTRG\\"), CFileMan::ERecurse);
- 		test(r==KErrNotFound);
+ 		test_Equal(KErrNotFound, r);
  		r=gFileMan->Copy(_L("\\EMPTYSRC"),_L("\\EMPTYTRG\\"));
- 		test(r==KErrNotFound);
+ 		test_Equal(KErrNotFound, r);
  		r=gFileMan->Copy(_L("\\EMPTYSRC"),_L("\\EMPTYTRG\\"), CFileMan::ERecurse);
- 		test(r==KErrNotFound);
+ 		test_Equal(KErrNotFound, r);
  		}
  	else
  		{
  		r=gFileMan->Copy(_L("\\EMPTYSRC\\"),_L("\\EMPTYTRG\\"), 0, gStat);
- 		test(r==KErrNone);
+ 		test_KErrNone(r);
  		WaitForResult(KErrNotFound);
  		r=gFileMan->Copy(_L("\\EMPTYSRC\\"),_L("\\EMPTYTRG\\"), CFileMan::ERecurse, gStat);
- 		test(r==KErrNone);
+ 		test_KErrNone(r);
  		WaitForResult(KErrNotFound);
  		r=gFileMan->Copy(_L("\\EMPTYSRC"),_L("\\EMPTYTRG\\"), 0, gStat);
- 		test(r==KErrNone);
+ 		test_KErrNone(r);
  		WaitForResult(KErrNotFound);
  		r=gFileMan->Copy(_L("\\EMPTYSRC"),_L("\\EMPTYTRG\\"), CFileMan::ERecurse, gStat);
- 		test(r==KErrNone);
+ 		test_KErrNone(r);
  		WaitForResult(KErrNotFound);
  		}
  	RmDir(_L("\\EMPTYSRC\\"));
@@ -3365,48 +3385,48 @@ LOCAL_C void TestErrorHandling()
 	MakeFile(_L("Dummyfile"));
 	test.Next(_L("Test illegal names"));
 	r=gFileMan->Attribs(_L(":C:"),0,0,TTime(0),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Copy(_L(":C:"),_L("newname"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Copy(_L("Dummyfile"),_L(":C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Delete(_L(":C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Move(_L(":C:"),_L("newname"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Move(_L("dummyFile"),_L(":C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Rename(_L(":C:"),_L("newname"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Rename(_L("DummyFile"),_L(":C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->RmDir(_L("\\:C:\\"));
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 
 	r=gFileMan->Attribs(_L("::C:"),0,0,TTime(0),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Copy(_L("::C:"),_L("newname"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Copy(_L("Dummyfile"),_L("::C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Delete(_L("::C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Move(_L("::C:"),_L("newname"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Move(_L("dummyFile"),_L("::C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Rename(_L("::C:"),_L("newname"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->Rename(_L("DummyFile"),_L("::C:"),0);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=gFileMan->RmDir(_L("::C:"));
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=TheFs.Delete(_L("DummyFile"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	// test copying two files with identical names that do not exist
 	_LIT(KNonExistent,"\\azzzz.txt");
 	r=gFileMan->Copy(KNonExistent,KNonExistent,0);
-	test(r==KErrNotFound);
+	test_Equal(KErrNotFound, r);
 	}
 
 LOCAL_C void TestNameMangling()
@@ -3427,10 +3447,10 @@ LOCAL_C void TestNameMangling()
 	MakeFile(_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\SRC\\zyx.abcdefghijk.defgh"));
 
 	TInt r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\SRC\\*.*"),_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\TRG\\*.*"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	Compare(_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\SRC\\*"),_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\TRG\\*"));
 	r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\NAMEMANGLER\\TRG\\*.*"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void TestLongNames()
@@ -3460,7 +3480,7 @@ LOCAL_C void TestLongNames()
 	longRootDirNameA+=longFileNameA;
 	longRootDirNameA+=_L("\\");
 	TInt r=TheFs.MkDir(longRootDirNameA);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
 	// Second folder
 	TFileName longFileNameB;
 	longFileNameB.SetLength(longFileLength);
@@ -3469,7 +3489,7 @@ LOCAL_C void TestLongNames()
 	longRootDirNameB+=longFileNameB;
 	longRootDirNameB+=_L("\\");
 	r=TheFs.MkDir(longRootDirNameB);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
 	
 	TInt longFilePtrLength = KMaxFileName-3; // We do not want the trailing backslash
 	TPtrC ptrLongFileA(longRootDirNameA.Ptr(),longFilePtrLength);
@@ -3480,42 +3500,42 @@ LOCAL_C void TestLongNames()
 	// This test will return KErrGeneral because the new path will exceed the maximum length
 	// See KMaxFileName
 	r=gFileMan->Move(ptrLongFileA,ptrLongFileB);
-	test(r==KErrGeneral);
+	test_Equal(KErrGeneral, r);
 	
 	r=gFileMan->RmDir(longRootDirNameA);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->Rename(ptrLongFileB,ptrLongFileA);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->RmDir(longRootDirNameB);
-	test(r==KErrPathNotFound);
+	test_Equal(KErrPathNotFound, r);
 	r=gFileMan->RmDir(longRootDirNameA);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TFileName longSubDirName=_L("\\Files\\");
 	TPtrC longSubDirFileName(longFileNameA.Ptr(),longFilePtrLength-longSubDirName.Length());
 	longSubDirName+=longSubDirFileName;
 	longSubDirName+=_L("\\");
 	r=TheFs.MkDirAll(longSubDirName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CDir* dirList;
 	r=TheFs.GetDir(longSubDirName,KEntryAttMaskSupported,0,dirList);
-	test(r==KErrNone);
-	test(dirList->Count()==0);
+	test_KErrNone(r);
+	test_Equal(0, dirList->Count());
 	delete dirList;
 
 	TPtrC ptrLongSubDirSrc(longSubDirName.Ptr(),longSubDirName.Length()-1);
 	TPtrC ptrLongSubDirTrg(longRootDirNameA.Ptr(),longRootDirNameA.Length()-1);
 	r=gFileMan->Copy(ptrLongSubDirSrc,ptrLongSubDirTrg);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDir(longRootDirNameB);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->Move(ptrLongSubDirSrc,longRootDirNameB);
-	test(r==KErrBadName);
+	test_Equal(KErrBadName, r);
 	r=TheFs.RmDir(longRootDirNameB);
-	test(r==KErrNone);
-	test(TheFs.RmDir(longSubDirName) == KErrNone);
-	test(TheFs.RmDir(_L("\\Files\\")) == KErrNone);
+	test_KErrNone(r);
+	test_KErrNone(TheFs.RmDir(longSubDirName));
+	test_KErrNone(TheFs.RmDir(_L("\\Files\\")));
 	gFileMan->SetObserver(gObserver);
 	}
 
@@ -3533,14 +3553,14 @@ LOCAL_C void TestFileAttributes()
 	MakeFile(_L("\\F32-TST\\TFMAN\\FILEATT\\SRC\\systemarchive.def"),KEntryAttArchive|KEntryAttSystem);
 
 	TInt r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\FILEATT\\SRC\\*.*"),_L("\\F32-TST\\TFMAN\\FILEATT\\TRG\\*.*"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	Compare(_L("\\F32-TST\\TFMAN\\FILEATT\\SRC\\*.*"),_L("\\F32-TST\\TFMAN\\FILEATT\\TRG\\*"));
 	r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\FILEATT\\SRC\\*"),0,KEntryAttReadOnly,TTime(0));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->Attribs(_L("\\F32-TST\\TFMAN\\FILEATT\\TRG\\*"),0,KEntryAttReadOnly,TTime(0));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\FILEATT\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}	
 
 class CFileManObserverContinue : public CBase, public MFileManObserver
@@ -3589,30 +3609,30 @@ LOCAL_C void TestCopyOpenFile()
 	MakeFile(_L("\\F32-TST\\TFMAN\\FILECOPY\\asdf.asdf"),bufPtr);
 	RFile f;
 	TInt r=f.Open(TheFs,_L("\\F32-TST\\TFMAN\\FILECOPY\\asdf.asdf"),EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\FILECOPY\\asdf.asdf"),_L("\\F32-TST\\TFMAN\\FILECOPY\\xxxx.xxxx"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=f.Open(TheFs,_L("\\F32-TST\\TFMAN\\FILECOPY\\xxxx.xxxx"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<256*sizeof(TText)> temp;
 	r=f.Read(temp);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(temp==bufPtr);
 	r=f.Read(temp);
-	test(r==KErrNone);
-	test(temp.Length()==0);
+	test_KErrNone(r);
+	test_Equal(0, temp.Length());
 	f.Close();
 
 	r=f.Open(TheFs,_L("\\F32-TST\\TFMAN\\FILECOPY\\asdf.asdf"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\FILECOPY\\asdf.asdf"),_L("\\F32-TST\\TFMAN\\FILECOPY\\xxxx.xxxx"));
-	test(r==KErrInUse);
+	test_Equal(KErrInUse, r);
 	f.Close();
 
 	gFileMan->SetObserver(gObserver);
 	r=gFileMan->RmDir(_L("\\F32-TST\\TFMAN\\FILECOPY\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	delete fManObserver;
 	}
 
@@ -3651,41 +3671,41 @@ void TestINC101844()
 
 	// Move directory containing files and subdirs with different attributes
 	r = gFileMan->Move(source, KDest, 0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	// Check that the files and subdirs have moved and have the correct attributes
 	TEntry entry;
 	src = KDest;
 	src.Append(_L("file1"));
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(entry.iAtt&KEntryAttReadOnly);
 
 	src = KDest;
 	src.Append(_L("file2"));
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(entry.iAtt&KEntryAttHidden);
 
 	src = KDest;
 	src.Append(_L("file3"));
 	r = TheFs.Entry(src, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(entry.iAtt&KEntryAttSystem);
 
 	src = source;
 	src.Append(_L("subdir1\\"));
 	r = gFileMan->Move(src, source, 0);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = TheFs.RmDir(src);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	src = source;
 	src.Append(_L("file4"));
 	r = TheFs.Delete(src);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = TheFs.RmDir(source);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RmDir(KDest);	
 	}
 
@@ -3739,7 +3759,7 @@ LOCAL_C void TestMoveAcrossDrives()
 	CheckFileExists(trgDirFile,KErrNone);
 
 	RmDir(trgDir);
-	test(TheFs.Delete(trgFile) == KErrNone);	
+	test_KErrNone(TheFs.Delete(trgFile));	
 
 	TestINC101844(); // Test move files and subdirs with different attributes
 	}
@@ -3782,15 +3802,15 @@ MFileManObserver::TControl CFileManObserverCopyAbort::NotifyFileManEnded()
 //
 	{
 	TInt lastError = iFileMan->GetLastError();
-	test(lastError == KErrNone);
+	test_KErrNone(lastError);
 
 	TFileName srcfile;
 	iFileMan->GetCurrentSource(srcfile);
 	
 	TInt action = iFileMan->CurrentAction();
-	test(action == CFileMan::EMove   ||
-		 action == CFileMan::EDelete ||
-		 action == CFileMan::ERmDir);
+	test_Value(action,  action == CFileMan::EMove   ||
+                        action == CFileMan::EDelete ||
+                        action == CFileMan::ERmDir);
 		
 	iCurrentStep--;
 	return(iCurrentStep ? MFileManObserver::EContinue : MFileManObserver::EAbort);
@@ -3927,30 +3947,30 @@ LOCAL_C void TestCopyAndRename()
 	MakeFile(_L("\\F32-TST\\TFMAN\\CPMV\\TWO.BAD"));
 
 	TInt r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\TWO.*"), _L("\\F32-TST\\TFMAN\\THREE.*"), CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\CPMV\\THREE.TXT"), KErrNone);
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\CPMV\\THREE.GOD"), KErrNone);
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\CPMV\\THREE.BAD"), KErrNone);
 	r=gFileMan->Delete(_L("\\F32-TST\\TFMAN\\CPMV\\THREE.*"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeFile(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\TWO__1.TXT"));
 	MakeFile(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\TWO__2.TXT"));
 
 	// copy and rename dir
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE"), CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	Compare(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE\\*"));
 
 	// copy and move into another dir
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE\\TWO"), CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	Compare(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE\\TWO\\*"));
 
 	// copy and rename files and dirs in current dir
 	r=gFileMan->Copy(_L("\\F32-TST\\TFMAN\\CPMV\\TWO*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE*"), CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	//	Compare(_L("\\F32-TST\\TFMAN\\CPMV\\TWO2\\*"), _L("\\F32-TST\\TFMAN\\CPMV\\THREE2\\*"));
 
 	CheckFileExists(_L("\\F32-TST\\TFMAN\\CPMV\\ONE\\THREEO.TWO"), KErrNone);
@@ -4002,33 +4022,33 @@ void TestStackUsage(TInt aLevel, TThreadStackInfo& aStack)
 	gFileMan->SetObserver(NULL);
 	// Attribs
 	r = gFileMan->Attribs(KDir, 0, 0, 0, CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Move
 	r = gFileMan->Move(KFile1, KFile2, CFileMan::ERecurse);
-	test(r==KErrAlreadyExists);
+	test_Equal(KErrAlreadyExists, r);
 
 	r = gFileMan->Move(KFile1, KFile2, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Copy
 	r = gFileMan->Copy(KFile2, KFile1, CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Rename
 	r = gFileMan->Rename(KFile1, KFile2, 0);
-	test(r==KErrAlreadyExists);
+	test_Equal(KErrAlreadyExists, r);
 
 	r = gFileMan->Rename(KFile1, KFile2, CFileMan::EOverWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Delete
 	r = gFileMan->Delete(KFile2, CFileMan::ERecurse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// RmDir
 	r = gFileMan->RmDir(KDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	gFileMan->SetObserver(gObserver);
 	}
@@ -4158,11 +4178,11 @@ LOCAL_C void TestPDEF112148()
 	// Verify src contents after move operation
 	CDir *dir = NULL;
 	err = TheFs.GetDir(srcPath, KEntryAttMaskSupported, ESortNone, dir);
-	test(6 == dir->Count());
+	test_Equal(6, dir->Count());
 	delete dir;
 	// Verify dest contents after move operation
 	err = TheFs.GetDir(trgPath, KEntryAttMaskSupported, ESortNone, dir);
-	test(3 == dir->Count());
+	test_Equal(3, dir->Count());
 	delete dir;
 	
 	// Recursive move with "\\" at the end of srcPath
@@ -4179,11 +4199,11 @@ LOCAL_C void TestPDEF112148()
 	
 	// Verify src has no content
 	err = TheFs.GetDir(srcPath, KEntryAttMaskSupported, ESortNone, dir);
-	test(0 == dir->Count());
+	test_Equal(0, dir->Count());
 	delete dir;
 	// Verify dest contents after move operation
 	err = TheFs.GetDir(trgPath, KEntryAttMaskSupported, ESortNone, dir);
-	test(9 == dir->Count());
+	test_Equal(9, dir->Count());
 	delete dir;
 	
 	// Recursive move without "\\" at the end of srcPath
@@ -4204,10 +4224,10 @@ LOCAL_C void TestPDEF112148()
 	srcPath.Append(KPathDelimiter);
 	// Verify src doesnt not exist
 	err = gFileMan->RmDir(srcPath);
-	test(err==KErrPathNotFound); // KErrPathNotFound expected as src has been moved to dest
+	test_Equal(KErrPathNotFound, err); // KErrPathNotFound expected as src has been moved to dest
 	// Verify dest after move operation
 	err = TheFs.GetDir(trgPath, KEntryAttMaskSupported, ESortNone, dir);
-	test(1 == dir->Count());
+	test_Equal(1, dir->Count());
 	delete dir;
 		
 	// clean up before leaving
@@ -4310,7 +4330,7 @@ GLDEF_C void CallTestsL()
 	TheFs.SetAllocFailure(gAllocFailOff);
 
 	TInt uid;
-	test(HAL::Get(HAL::EMachineUid,uid)==KErrNone);
+	test_KErrNone(HAL::Get(HAL::EMachineUid,uid));
 	TBool doTargetTests =  (!IsTestingLFFS() && 
 							uid!=HAL::EMachineUid_Cogent && 
 							uid!=HAL::EMachineUid_IQ80310 && 
@@ -4384,12 +4404,12 @@ GLDEF_C void CallTestsL()
 #ifndef __WINS__
 	RThread t;
 	TThreadStackInfo stack;
-	test(t.StackInfo(stack)==KErrNone);
+	test_KErrNone(t.StackInfo(stack));
 	TestStackUsage(0, stack);
 #endif
 
 	Cleanup();
 	DeleteTestDirectory();
-	test(TheFs.RmDir(_L("\\F32-TST\\")) == KErrNone);
+	test_KErrNone(TheFs.RmDir(_L("\\F32-TST\\")));
 	}
 

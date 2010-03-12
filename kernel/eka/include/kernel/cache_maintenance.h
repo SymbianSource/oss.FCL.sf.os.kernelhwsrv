@@ -375,6 +375,12 @@ const TUint ARML2C_CleanInvalidateByIndexWay = 0x7f8;
 const TUint ARML2C_CleanByWay = 0x7bc;
 const TUint ARML2C_InvalidateByWay = 0x77c;
 const TUint ARML2C_CleanInvalidateByWay = 0x7fc;
+#if defined (__ARM_PL310_CACHE__)
+    const TUint ARML2C_WayShift = 28;
+#else
+    const TUint ARML2C_WayShift = 29;
+#endif
+    const TUint ARML2C_IndexShift = 5;
 
 /*
  * A set of static utility functions for external cache memory.

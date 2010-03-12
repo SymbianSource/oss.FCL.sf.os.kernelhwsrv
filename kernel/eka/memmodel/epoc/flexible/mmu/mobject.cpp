@@ -587,7 +587,16 @@ void DCoarseMemory::DPageTables::Close()
 
 void DCoarseMemory::DPageTables::AsyncClose()
 	{
-	__NK_ASSERT_DEBUG(CheckAsyncCloseIsSafe());
+	__ASSERT_CRITICAL
+#ifdef _DEBUG
+	NFastMutex* fm = NKern::HeldFastMutex();
+	if(fm)
+		{
+		Kern::Printf("DCoarseMemory::DPageTables::[0x%08x]::AsyncClose() fast mutex violation %M",this,fm);
+		__NK_ASSERT_DEBUG(0);
+		}
+#endif
+
 	MmuLock::Lock();
 	if (__e32_atomic_tas_ord32(&iReferenceCount, 1, -1, 0) != 1)
 		{

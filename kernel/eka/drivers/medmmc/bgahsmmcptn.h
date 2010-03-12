@@ -28,32 +28,36 @@
 
 /* Partition information version */
 #define BGAHSMMCPTN_PI_VER_MAJOR	1
-#define BGAHSMMCPTN_PI_VER_MINOR	0
+#define BGAHSMMCPTN_PI_VER_MINOR	1
+
+/* Partition type field supported from version 1.1 onwards */
+#define BGAHSMMCPTN_PART_TYPE_SUPP_VER_MINOR    1
 
 #define BGAHSMMCPTN_LAST_DRIVE		7 /* MMC1_DRIVECOUNT - defined in variantmediadef.h */
 
 typedef struct
 {
-	TUint32 start_sector;			/* Partition start sector */
-	TUint32 size;					/* Partition size in sectors */
-	TUint32 attributes;				/* RO, RW attributes (bitmask) */
-	TUint8  partition_id;			/* Partition number */
-	TUint8  reserved1[3];			/* Reserved (padding for compiler alignment)*/
-	TUint32 partition_attributes;	/* Partition attributes (see e32const.h) */
-	TUint8  reserved2[8];			/* Reserved */
+	TUint32 iStart_sector;			/* Partition start sector */
+	TUint32 iSize;					/* Partition size in sectors */
+	TUint32 iAttributes;			/* RO, RW attributes (bitmask) */
+	TUint8  iPartition_id;			/* Partition number - v1.0 - partition type v1.1 - drive number*/
+	TUint8  iPartition_type;         /* Partition Type - v1.1 onwards */
+	TUint8  iReserved1[2];			/* Reserved (padding for compiler alignment)*/
+	TUint32 iPartition_attributes;	/* Partition attributes (see e32const.h) */
+	TUint8  iReserved2[8];			/* Reserved */
 /* = 28 bytes */
 } BGAHSMMCPTN_PART_STR;
 
 typedef struct
 {
-	TUint8 id[BGAHSMMCPTN_PI_ID_SIZE];	/* Partition information version */
-	TUint32 sector_size;			/* Used sector size */
-	TUint16 major_ver;				/* Major version number */
-	TUint16 minor_ver;				/* Minor version number */
-	TUint16 partition_amount;		/* The amount of partitions */
-	TUint8 reserved[42];			/* Reserved */
+	TUint8  iId[BGAHSMMCPTN_PI_ID_SIZE];	/* Partition information version */
+	TUint32 iSector_size;			/* Used sector size */
+	TUint16 iMajor_ver;				/* Major version number */
+	TUint16 iMinor_ver;				/* Minor version number */
+	TUint16 iPartition_amount;		/* The amount of partitions */
+	TUint8  iReserved[42];			/* Reserved */
 /* = 64 bytes */
-	BGAHSMMCPTN_PART_STR partitions[BGAHSMMCPTN_LAST_DRIVE];
+	BGAHSMMCPTN_PART_STR iPartitions[BGAHSMMCPTN_LAST_DRIVE];	
 } BGAHSMMCPTN_PI_STR;
 
 #define BGAHSMMCPTN_PI_STR_SIZE sizeof( BGAHSMMCPTN_PI_STR )

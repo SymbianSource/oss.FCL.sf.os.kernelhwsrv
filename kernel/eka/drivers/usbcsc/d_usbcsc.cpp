@@ -3026,7 +3026,13 @@ void DLddUsbcScChannel::StatusChangeCallback(TAny* aDLddUsbcScChannel)
 			{
 			dUsbc->ProcessDeviceState(deviceState);
 			// Send Status to EP0 buffer.		
-			dUsbc->iBuffers[dUsbc->iEP0OutBuff].SendEp0StatusPacket(deviceState);
+			// Before the client calls RDevUsbcScClient::FinalizeInterface(),
+			// this function might be called.
+			// So we add a guard for dUsbc->iBuffers
+			if( dUsbc->iBuffers )
+				{
+				dUsbc->iBuffers[dUsbc->iEP0OutBuff].SendEp0StatusPacket(deviceState);
+				}
 			}
 
 		// Only queue if userside is interested
