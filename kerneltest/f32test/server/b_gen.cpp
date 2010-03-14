@@ -20,12 +20,10 @@
 #include "t_server.h"
 #include "t_chlffs.h"
 
-#ifdef __VC32__
-    // Solve compilation problem caused by non-English locale
-    #pragma setlocale("english")
-#endif
+#include "f32_test_utils.h"
+using namespace F32_Test_Utils;
 
-GLDEF_D RTest test(_L("B_GEN"));
+RTest test(_L("B_GEN"));
 //
 // File test - general test of local filing system routines
 //             (finishes with formating current device).
@@ -37,67 +35,64 @@ GLDEF_D RTest test(_L("B_GEN"));
 // GLREF_D P_DEVICE p_file;
 // GLREF_D P_DEVICE p_wind,p_screen,p_cons;
 
-GLDEF_D TBuf<0x100> gNameBuf;
-GLDEF_D	TBuf<0x100> gNameOut;
-GLDEF_D RFile gFile;
-GLDEF_D RFile gFileErr;
-GLDEF_D RFile gFile2;
-GLDEF_D RDir gDir;
-GLDEF_D RFormat gFormat;
-//GLDEF_D void *chan1,*chan2;
-GLDEF_D TFileName fBuf;
-//GLDEF_D TUint8 fBuf[P_FNAMESIZE];
+TBuf<0x100> gNameBuf;
+TBuf<0x100> gNameOut;
+RFile gFile;
+RFile gFileErr;
+RFile gFile2;
+RDir gDir;
+RFormat gFormat;
+TFileName fBuf;
+TInt gDriveNum = -1;
 
 
-LOCAL_D TBuf8<0x4000> gDataBuf;
-LOCAL_D TEntry gFileEntry;
-// LOCAL_D P_DINFO volInfo;
-LOCAL_D TVolumeInfo volInfo;
-// LOCAL_D P_NINFO nInfo;
-LOCAL_D TFileName pathBuf;
+static TBuf8<0x4000> gDataBuf;
+static TEntry gFileEntry;
+static TVolumeInfo volInfo;
+static TFileName pathBuf;
 
 
-LOCAL_D TInt NameErr=KErrBadName;
-LOCAL_D TInt DirErr=KErrPathNotFound;
-LOCAL_D TInt AccessErr=KErrAccessDenied;
-LOCAL_D TInt LockedErr=KErrInUse;
-LOCAL_D TInt ExistsErr=KErrAlreadyExists;
-LOCAL_D TInt NotExistsErr=KErrNotFound;
-LOCAL_D TInt EofErr=KErrEof;
-LOCAL_D TInt DeviceErr=KErrNotReady;
+const TInt NameErr=KErrBadName;
+const TInt DirErr=KErrPathNotFound;
+const TInt AccessErr=KErrAccessDenied;
+const TInt LockedErr=KErrInUse;
+const TInt ExistsErr=KErrAlreadyExists;
+const TInt NotExistsErr=KErrNotFound;
+const TInt EofErr=KErrEof;
+const TInt DeviceErr=KErrNotReady;
 //LOCAL_D TInt NoFileSystemErr=KErrNotReady;
 //LOCAL_D TInt NotSupportedErr=KErrNotSupported;
-LOCAL_D TInt ReadOnlyErr=KErrAccessDenied;
+const TInt ReadOnlyErr=KErrAccessDenied;
 
-LOCAL_D TInt P_FASTREAM=EFileStream;
-LOCAL_D TInt P_FAEXEC=0;
-LOCAL_D TInt P_FAMOD=KEntryAttArchive;
-LOCAL_D TInt P_FAREAD=KEntryAttReadOnly;
+const TInt P_FASTREAM=EFileStream;
+const TInt P_FAEXEC=0;
+const TInt P_FAMOD=KEntryAttArchive;
+const TInt P_FAREAD=KEntryAttReadOnly;
 //LOCAL_D TInt P_FAHIDDEN=KEntryAttHidden;
 //LOCAL_D TInt P_FASYSTEM=KEntryAttSystem;
-//LOCAL_C TInt P_FAVOLUME=KEntryAttVolume;
-LOCAL_C TInt P_FADIR=KEntryAttDir;
-LOCAL_C TInt P_FRANDOM=0;
-LOCAL_C TInt P_FABS=ESeekStart;
+//static TInt P_FAVOLUME=KEntryAttVolume;
+const TInt P_FADIR=KEntryAttDir;
+const TInt P_FRANDOM=0;
+const TInt P_FABS=ESeekStart;
 
-LOCAL_C TInt P_FUPDATE=EFileWrite;
+const TInt P_FUPDATE=EFileWrite;
 
 
-LOCAL_C void doError(const TDesC &aMess, TInt anErr, TInt line)
+static void doError(const TDesC &aMess, TInt anErr, TInt line)
 	{ 
     test.Printf(_L("%S failed at line %d. Error %d\n"),&aMess, line, anErr);
     test(0);
 	}
 #define Error(aMess, anErr) doError(aMess, anErr, __LINE__)
 
-LOCAL_C void doError2(const TDesC &aMess, TInt anErr, TInt line, TInt callLine)
+static void doError2(const TDesC &aMess, TInt anErr, TInt line, TInt callLine)
 	{ 
     test.Printf(_L("%S failed at line %d. Error %d. Called from line %d\n"),&aMess, line, anErr, callLine); \
     test(0);
 	}
 #define Error2(aMess, anErr, line) doError2(aMess, anErr, __LINE__, line)
 
-LOCAL_C void testWrite(const TDesC& aName,TInt aLen,TInt32 aSize,TBool aShouldChange)
+static void testWrite(const TDesC& aName,TInt aLen,TInt32 aSize,TBool aShouldChange)
 //
 // Write to a file
 //
@@ -123,7 +118,7 @@ LOCAL_C void testWrite(const TDesC& aName,TInt aLen,TInt32 aSize,TBool aShouldCh
 		Error(_L("Size check 602"),0);
     }
 
-LOCAL_C void testSetEof(const TDesC& aName,TUint32 aPos,TBool aShouldChange)
+static void testSetEof(const TDesC& aName,TUint32 aPos,TBool aShouldChange)
 //
 // Set the end of a file
 //
@@ -148,7 +143,7 @@ LOCAL_C void testSetEof(const TDesC& aName,TUint32 aPos,TBool aShouldChange)
 	}
 
 
-LOCAL_C void testDir(const TDesC& aDirName)
+static void testDir(const TDesC& aDirName)
 //
 // Create a directory
 //
@@ -173,7 +168,7 @@ LOCAL_C void testDir(const TDesC& aDirName)
 
 
 /*
-LOCAL_C void testNodeInfo(const TDesC& aName,TInt type,TInt anErr)
+static void testNodeInfo(const TDesC& aName,TInt type,TInt anErr)
 //
 // Test p_ninfo.
 //
@@ -193,7 +188,7 @@ LOCAL_C void testNodeInfo(const TDesC& aName,TInt type,TInt anErr)
     }
 */
 
-LOCAL_C void testDeviceInfo(const TDesC& aDeviceName,TInt anErr)
+static void testDeviceInfo(const TDesC& aDeviceName,TInt anErr)
 //
 // Test p_dinfo.
 //
@@ -218,7 +213,7 @@ LOCAL_C void testDeviceInfo(const TDesC& aDeviceName,TInt anErr)
 		}
     }
 
-LOCAL_C void testFileInfo(const TDesC& aFileName,TInt anErr)
+static void testFileInfo(const TDesC& aFileName,TInt anErr)
 //
 // Test entry info
 //
@@ -247,7 +242,7 @@ LOCAL_C void testFileInfo(const TDesC& aFileName,TInt anErr)
 		}
 	}
 
-LOCAL_C void testRenameFromRoot(const TDesC& aRName,const TDesC& aDName)
+static void testRenameFromRoot(const TDesC& aRName,const TDesC& aDName)
 //
 //
 //
@@ -263,7 +258,7 @@ LOCAL_C void testRenameFromRoot(const TDesC& aRName,const TDesC& aDName)
 		Error(_L("Delete 92"),c);
 	}
 
-LOCAL_C void testRenameToRoot(const TDesC& pName,const TDesC& rName)
+static void testRenameToRoot(const TDesC& pName,const TDesC& rName)
 //
 //
 //
@@ -282,7 +277,7 @@ LOCAL_C void testRenameToRoot(const TDesC& pName,const TDesC& rName)
 		Error(_L("Delete 91"),c);
 	}
 
-LOCAL_C void verifyTestPat1()
+static void verifyTestPat1()
 //
 //
 //
@@ -320,7 +315,7 @@ void TestINC103141() // PDEF104017
 	test(err == KErrNone);
 	}
 	
-LOCAL_C void testRename()
+static void testRename()
 //
 // Test TheFs.Rename function.
 //
@@ -475,7 +470,7 @@ LOCAL_C void testRename()
 	TestINC103141();  // PDEF104017
 	}    
 
-LOCAL_C void testDelete()
+static void testDelete()
 //
 // Test RFs::Delete function.
 //
@@ -501,7 +496,7 @@ LOCAL_C void testDelete()
 		Error(_L("Delete 504"),c);
 	}
 
-LOCAL_C void testUnique(TUint fileFormat)
+static void testUnique(TUint fileFormat)
 //
 // Test RFile::Temp
 //
@@ -525,7 +520,7 @@ LOCAL_C void testUnique(TUint fileFormat)
 		Error(_L("Delete"),c);
 	}
 
-LOCAL_C void testFileName(const TDesC& aFileName,TInt res)
+static void testFileName(const TDesC& aFileName,TInt res)
 //
 //
 //
@@ -556,8 +551,7 @@ LOCAL_C void testFileName(const TDesC& aFileName,TInt res)
 		}
 	}
 
-#if defined(_UNICODE)
-LOCAL_C void testFileName(const TDesC8& aFileName,TInt res)
+static void testFileName(const TDesC8& aFileName,TInt res)
 //
 // Defined to cope with all the instances of testFileName(gDataBuf,...)
 //
@@ -565,9 +559,8 @@ LOCAL_C void testFileName(const TDesC8& aFileName,TInt res)
 	TPtrC gDataBuf16((TText*)aFileName.Ptr(),gDataBuf.Size()/sizeof(TText8));
 	testFileName(gDataBuf16,res);
 	}
-#endif
 
-LOCAL_C void testVolumeName(const TDesC& aVolumeName,TInt aResultExpected)
+static void testVolumeName(const TDesC& aVolumeName,TInt aResultExpected)
 //
 //
 //
@@ -605,7 +598,7 @@ LOCAL_C void testVolumeName(const TDesC& aVolumeName,TInt aResultExpected)
 	}
 
 #define testMakeDir(aDirName, res) TestMakeDirLine(aDirName, res, __LINE__)
-LOCAL_C void TestMakeDirLine(const TDesC& aDirName,TInt res, TInt line)
+static void TestMakeDirLine(const TDesC& aDirName,TInt res, TInt line)
 //
 //
 //
@@ -663,8 +656,8 @@ LOCAL_C void TestMakeDirLine(const TDesC& aDirName,TInt res, TInt line)
     	}
 	}
 
-#if defined(_UNICODE)
-LOCAL_C void TestMakeDirLine(const TDesC8& aDirName, TInt res, TInt line)
+
+static void TestMakeDirLine(const TDesC8& aDirName, TInt res, TInt line)
 //
 // Defined to cope with all the instances of testMakeDir(gDataBuf,...)
 //
@@ -674,10 +667,10 @@ LOCAL_C void TestMakeDirLine(const TDesC8& aDirName, TInt res, TInt line)
     //	Not sizeof(TText16) since gDataBuf is a TBuf*!	
     TestMakeDirLine(gDataBuf16, res, line);
 }
-#endif
+
 
 #ifdef  TEST_MEDIA
-LOCAL_C void testMedia(const TDesC& instructions,TInt anErr)
+static void testMedia(const TDesC& instructions,TInt anErr)
 //
 //
 //
@@ -713,11 +706,25 @@ LOCAL_C void testMedia(const TDesC& instructions,TInt anErr)
 	}
 #endif
 
-GLDEF_C void CallTestsL()
-//
-// Do All tests
-//
+void CallTestsL()
     {
+
+    //-- set up console output
+    F32_Test_Utils::SetConsole(test.Console());
+
+    TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
+    test(nRes==KErrNone);
+    
+    PrintDrvInfo(TheFs, gDriveNum);
+
+    //-- quick format the drive, if it isn't the emulator's C:  
+    if(!Is_Win32(TheFs, gDriveNum))
+    {
+        nRes = FormatDrive(TheFs, gDriveNum, ETrue); 
+        test(nRes==KErrNone);
+    }
+
+    //-----------------------------------
 	TInt c;
 	TInt i,count;
 	TInt pos;
@@ -1452,37 +1459,15 @@ GLDEF_C void CallTestsL()
 		if (c==LockedErr || c==AccessErr)
 			{
 			test.Printf(_L("Format: locked, no test\n"));
-			goto noFormat;
 			}
+		    else
+            {
 		Error(_L("Format lock check"),c);
 		}
+		}
 
-//	if ((c=p_read(chan2,&count,2))<0)
-//		{
-//		if (c==NotSupportedErr)
-//			{
-//			test.Printf(_L("Format: not supported, no test\n"));
-//			goto noFormatClose;
-//			}
-//		Error(_L("Read format count"),c);
-//		}
-//	for (i=1;;i++)
-//		{
-//		if ((c=g(chan2,&val,2))<0)
-//			{
-//			if (c==EofErr)
-//			break;
-//			Error(_L("Format"),c);
-//			}
-//		test.Printf(_L("\r%05u %05u\n"),i,val);
-//		}
-//	if ((i-1)!=count)
-//		Error(_L("Format count"),i);
-// noFormatClose:
-//	if ((c=p_close(chan2))!=KErrNone)
-//		Error(_L("Close"),c);
-noFormat:
 	gFormat.Close();
+	
 	DeleteTestDirectory();
 	
 	}

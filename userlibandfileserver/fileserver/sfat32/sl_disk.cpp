@@ -126,7 +126,7 @@ void CAtaDisk::ConstructL()
     const TUint32 KUidCachePageSzLog2 = 9; //-- 512 bytes in page 
     const TUint32 KUidCachePages = 64;     //-- 64 pages; total cache size is 32K 
 
-    iUidCache = CMediaWTCache::NewL(iDrive, KUidCachePages, KUidCachePageSzLog2);
+    iUidCache = CMediaWTCache::NewL(iDrive, KUidCachePages, KUidCachePageSzLog2, 0);
 
 
     //=========================== create directory cache
@@ -185,7 +185,7 @@ void CAtaDisk::ConstructL()
 	    TBuf<0x20> clientName = _L("CACHE_MEM_CLIENT:");
 		clientName.Append('A'+iFatMount->DriveNumber());
 
-		TRAPD(err, ipDirCache = CDynamicDirCache::NewL(iDrive, CacheSizeMinInPages, CacheSizeMaxInPages, PageDataSizeLog2, clientName));
+		TRAPD(err, ipDirCache = CDynamicDirCache::NewL(iDrive, CacheSizeMinInPages, CacheSizeMaxInPages, PageDataSizeLog2, KDefSectorSzLog2, clientName));
 		if (err == KErrNone)
 	    	return;
 		
@@ -197,7 +197,7 @@ void CAtaDisk::ConstructL()
     //=========================== create legacy type of the directory cache
     ASSERT(!ipDirCache);
 
-    ipDirCache = CMediaWTCache::NewL(iDrive, numPages, pageSzLog2);
+    ipDirCache = CMediaWTCache::NewL(iDrive, numPages, pageSzLog2, KDefSectorSzLog2);
     __PRINT3(_L("CDirCache::NewL(drive: %C, NumPages=%d, PageSize=%u)"), 'A'+iFatMount->DriveNumber(), numPages, 1<<pageSzLog2);
     
     }

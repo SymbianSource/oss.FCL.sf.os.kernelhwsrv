@@ -1830,6 +1830,8 @@ protected:
 	#define EFSRV_IMPORT_C IMPORT_C
 #endif
 	
+// forward declarations from e32ldr_private.h
+class RFileClamp;
 
 class RFs : public RSessionBase
 /**
@@ -2167,7 +2169,6 @@ private:
     }; 
 
 __ASSERT_COMPILE(_FOFF(TVolFormatParam, iUId) == 0);
-__ASSERT_COMPILE(sizeof(TVolFormatParam) != sizeof(TLDFormatInfo));
 
 
 /** package buffer for the objects of class TVolFormatParamBuf */

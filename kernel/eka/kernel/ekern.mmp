@@ -139,6 +139,7 @@ source					 sglobals.cpp device.cpp eventq.cpp
 source					 sexec.cpp sinit.cpp skernel.cpp
 source					 scodeseg.cpp sipc.cpp notifier.cpp 
 source					 object.cpp power.cpp server.cpp
+source					 sha256.cpp securerng.cpp
 source					 stimer.cpp sutils.cpp random.cpp
 source					 sprocess.cpp sthread.cpp 
 source 					 smqueue.cpp
@@ -150,6 +151,7 @@ source					 objectix.cpp
 source					 sbtrace.cpp
 source					 stest.cpp
 source					 sshbuf.cpp smap.cpp
+source					 srandombuff.cpp
 
 sourcepath				../klib
 source					dbase.cpp kdes8.cpp

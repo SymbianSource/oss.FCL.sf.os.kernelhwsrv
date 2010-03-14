@@ -4947,8 +4947,10 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 
 		if (r != KErrNone)
 		    {
-            OstTrace1(TRACE_FLOW, LOCRV_REGISTERPAGINGDEVICE_EXIT9, "< retval=%d",r);
-			return r;
+            OstTrace1(TRACE_FLOW, LOCRV_REGISTERPAGINGDEVICE_EXIT9, "< Caps::retval=%d - return KErrNotSupported",r);
+            // Media driver failure; media maybe recoverable after boot.
+            // Can't register any page drives so return not supported.
+			return KErrNotSupported;
 		    }
 
 		TLocDrv* drive;
@@ -5012,7 +5014,7 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 	Kern::Printf("iRomPagingDriveNumber 0x%x\n", pagingDevice->iRomPagingDriveNumber);
 	Kern::Printf("iDataPagingDriveNumber 0x%x\n", pagingDevice->iDataPagingDriveNumber);
 	Kern::Printf("iSwapSize 0x%x\n", pagingDevice->iSwapSize);
-	#endif
+#endif
 
 
 	// This table is indexed by DPagingDevice::TType

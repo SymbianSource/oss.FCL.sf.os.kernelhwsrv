@@ -43,12 +43,15 @@ TBool TDriveInterface::Init(CFatMountCB* aMount)
 }
 
 /**
-    pseudo-destructor. 
+    Close the interface to the media driver
 */
 void TDriveInterface::Close()
 {
 	 if(iMount)
+		{
 		iMount->LocalDrive()->SetMount(NULL);
+        }
+
      iMount = NULL;
 }
 

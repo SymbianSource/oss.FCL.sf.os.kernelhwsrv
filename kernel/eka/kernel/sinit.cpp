@@ -21,6 +21,7 @@
 #include <kernel/emi.h>
 #include <kernel/sshbuf.h>
 #include "platform.h"
+#include "securerng.h"
 
 #ifdef __VC32__
     #pragma setlocale("english")
@@ -46,6 +47,7 @@ const TInt KMaxEventQueue=40;
 
 TInt SupervisorThread(TAny*);
 TInt DebuggerInit();
+extern TInt InitialiseEntropyBuffers();
 
 extern const SNThreadHandlers EpocThreadHandlers;
 
@@ -392,6 +394,7 @@ TInt SupervisorThread(TAny*)
 		K::Fault(K::EInit3Failed);
 
 	P::StartExtensions();
+	M::Init4();
 	K::StartKernelServer();
 	return 0;
 	}
@@ -442,6 +445,14 @@ TInt K::Init3()
 	r=K::StartTickQueue();
 	if (r!=KErrNone)
 		return r;
+	
+	// Initilize the Secure RNG.
+	SecureRNG = new DSecureRNG;
+	
+	// Initialise entropy buffers for secure RNG
+	r=InitialiseEntropyBuffers();
+    if (r!=KErrNone)
+		return r;
 
 	// Third phase initialisation of ASIC/Variant
 	// This enables the system tick and millisecond timer
@@ -449,9 +460,6 @@ TInt K::Init3()
 
 	// Mark the super page signature valid
 	P::SetSuperPageSignature();
-
-	// Initialise the random pool
-	K::Randomize();
 
 	return KErrNone;
 	}

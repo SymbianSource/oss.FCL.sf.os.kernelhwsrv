@@ -1,0 +1,40 @@
+#
+# Copyright (c) 2009 Symbian.  All rights reserved.
+#
+
+# macro for all the rules
+define rom
+
+FINAL::	
+ifeq ($(OSTYPE),unix)
+	$(call startrule,rom) \
+	echo "This is not supported currently"; \
+	$(call endrule,rom)
+else
+	$(call startrule,rom) \
+	$(PERL) $(EPOCROOT)/sf/os/kernelhwsrv/kernel/eka/rombuild/rom_sbs.pl --variant=$(REE_TARGET) --inst=$(PLATFORM) --build=$(CFG) --type=$(TYPE) --clean --name=$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img \
+	$(call endrule,rom)
+endif
+
+FINAL::	
+	$(call startrule,copy) \
+	mv rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_rom.oby; \
+	mv ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_ROMBUILD.LOG; \
+	mv $(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img $(EPOCROOT)/epoc32/rom/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img; \
+	$(call endrule,copy)
+
+endef
+
+# expand
+$(eval $(rom))
+
+# The items produced by this FLM:
+RELEASEABLES:=$(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img
+
+## What targets -- declare the files produced here
+$(eval $(call whatmacro, $(RELEASEABLES)))
+## Clean up
+$(eval $(call GenerateStandardCleanTarget, $(RELEASEABLES)))
+
+
+

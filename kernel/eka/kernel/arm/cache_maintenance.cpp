@@ -31,6 +31,12 @@ SCacheInfo InternalCache::Info[KNumCacheInfos];
 TInt InternalCache::DmaBufferAlignementLog2; 
 #endif
 
+#if !defined(__CPU_MEMORY_TYPE_REMAPPING)
+TUint32 InternalCache::iPrimaryRegionRemapRegister;
+TUint32 InternalCache::iNormalMemoryRemapRegister;
+#endif
+
+
 void CacheMaintenance::Init1()
 	{
 	InternalCache::Init1();
@@ -826,7 +832,26 @@ void InternalCache::Init1()
 		__KTRACE_OPT(KBOOT,Kern::Printf("DCache:\n"));
 		DumpCacheInfo(Info[KCacheInfoD]);
 #endif
+#if !defined(__CPU_MEMORY_TYPE_REMAPPING)
+	// Simulate PRRR & NRRR MMU registers on platforms without memory remap feature.  
+	// "Magic" numbers come from the description of ARM core's remap registers.  
+	TUint32 platformSpecificMappings = TheSuperPage().iPlatformSpecificMappings;
+	iPrimaryRegionRemapRegister	= KDefaultPrimaryRegionRemapRegister | ((platformSpecificMappings&0x3f)<<10);
+	iNormalMemoryRemapRegister = KDefaultNormalMemoryRemapRegister | (platformSpecificMappings&0xfc00fc00);	
+#endif //!defined(__CPU_MEMORY_TYPE_REMAPPING)
 	}
+
+#if !defined(__CPU_MEMORY_TYPE_REMAPPING)
+TUint32 InternalCache::PrimaryRegionRemapRegister()
+    {
+    return iPrimaryRegionRemapRegister;
+    }
+
+TUint32 InternalCache::NormalMemoryRemapRegister()
+    {
+    return iNormalMemoryRemapRegister;
+    }
+#endif //!defined(__CPU_MEMORY_TYPE_REMAPPING)
 
 #endif //else defined(__CPU_ARMV7)
 
@@ -995,8 +1020,7 @@ void InternalCache::CleanPoU(TLinAddr aBase, TUint aSize)
 
 
 TUint32 InternalCache::TypeToCachingAttributes(TMemoryType aType)
-	{
-	
+	{	
 	TUint32 attr = 0;
 	switch (aType)
 		{
@@ -1010,7 +1034,6 @@ TUint32 InternalCache::TypeToCachingAttributes(TMemoryType aType)
 		case EMemAttPlatformSpecific6:
 		case EMemAttPlatformSpecific7:
 			{
-			#if defined(__CPU_MEMORY_TYPE_REMAPPING)
 			// The mapping of these types are defined in bootstrap.
 			// Read remap registers and set mapping attributes accordingly.
 			// "Magic" numbers come from the description of ARM core's remap registers.  
@@ -1044,9 +1067,6 @@ TUint32 InternalCache::TypeToCachingAttributes(TMemoryType aType)
 				default:
 					CACHEFAULT(); //unsupported value (3) in Primary Region Remap Register
 				}
-			#else  //defined(__CPU_MEMORY_TYPE_REMAPPING)
-				CACHEFAULT(); // memory types 4-7 are not supported on these platforms
-			#endif
 			}
 			break;
 		default: 

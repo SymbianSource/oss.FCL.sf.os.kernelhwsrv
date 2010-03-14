@@ -31,8 +31,13 @@
 #include "cdisplay.h"
 
 // Display positions and test constants
+
+// Available drives
+static const TInt KStartRow_AvailableDrives = 1;
+_LIT(KAvailDriveMsg, "Drives: ");
+
 // Number of attached devices
-static const TInt KRow_DevicesNumber = 13;
+static const TInt KRow_DevicesNumber = 2;
 _LIT(KMsg_DevicesAttached, "USB Devices Attached = %d");
 
 // Device Map
@@ -41,45 +46,46 @@ static const TInt KMaxRows_DeviceMap = 4;
 _LIT(KMsg_DeviceMap_DriveList, "%d: ");          // [drive index]
 _LIT(KMsg_DeviceMap_DriveLunEntry, "%c ");       // [drive letter]
 
-
 // Drive Map
 static const TInt KStartRow_DriveMap = KStartRow_DeviceMap + KMaxRows_DeviceMap;
 static const TInt KMaxRows_DriveMap = 4;
+
+// Drive info
+static const TInt KStartRow_MsgWindow = KStartRow_DriveMap + KMaxRows_DriveMap + 2;
+
 _LIT(KMsg_DriveMap_EntryLetter, "%c token = %d");           // [drive letter] [token]
 _LIT(KDbgMsg_DriveMap_EntryLetter, "*** %c token = %d");    // [drive letter] [token]
+                                                            
+static const TInt KRowScrollWindowStart = KStartRow_MsgWindow;    
 
 // System Status
-static const TInt KStartRow_UpTime = 28;
+static TPoint KPointSystemStatus(5, 0);
 _LIT(KMsg_UpTime, "up time     : %dh:%dm:%ds   ");	// use trailing space to overwrite any leftover chars in line
 
-static const TInt KStartRow_MemoryFree = 29;
+//static const TInt KStartRow_MemoryFree = 1 + KStartRow_SystemStatus;
+static TPoint KPointMemoryFree(5, 1);
 _LIT(KMsg_MemoryFree, "mem (bytes) : 0x%X");
 
 // User Keys
-static const TInt KStartRow_UserKeys = 25;
+static const TPoint KPointUser1Keys(5,2);
 _LIT(KMsgUser1Keys, "[Esc]=Quit [A-Z]=DriveInfo");
-_LIT(KMsgUser2Keys, "[F5]=Hub update");
+static const TPoint KPointUser2Keys(5,3);
+_LIT(KMsgUser2Keys, "[F5|SPACE]=Hub update");
 
 
 // Scroll Window status
 _LIT(KScrollWindowStatus, "Page %d of %d");
 
-// Available drives
-static const TInt KStartRow_AvailableDrives = 1;
-_LIT(KAvailDriveMsg, "Drives: ");
 
 _LIT(KDriveAtts,"DriveList %c: %02x ");
 
-// Drive info
-static const TInt KStartRow_MsgWindow = 3;
-static const TInt KStartRow_DriveInfo = KStartRow_MsgWindow;
 
 // ****************************************************************************
 
 
-CScrollWindow* CScrollWindow::NewL(CConsoleBase& aConsole)
+CScrollWindow* CScrollWindow::NewL(CConsoleBase& aConsole, TInt aStartRow, TInt aEndRow)
     {
-	CScrollWindow* r = new (ELeave) CScrollWindow(aConsole);
+	CScrollWindow* r = new (ELeave) CScrollWindow(aConsole, aStartRow, aEndRow);
 	CleanupStack::PushL(r);
 	r->ConstructL();
     CleanupStack::Pop(r);
@@ -89,13 +95,17 @@ CScrollWindow* CScrollWindow::NewL(CConsoleBase& aConsole)
 
 void CScrollWindow::ConstructL()
     {
-
     }
 
+_LIT(KTxtPanic,"HUSBCONSAPP");
 
-CScrollWindow::CScrollWindow(CConsoleBase& aConsole)
-:   iConsole(aConsole)
+CScrollWindow::CScrollWindow(CConsoleBase& aConsole, TInt aStartRow, TInt aEndRow)
+:   iConsole(aConsole),
+    iStartRow(aStartRow),
+    iEndRow(aEndRow),
+    iPageLength(iEndRow - iStartRow)
     {
+    __ASSERT_ALWAYS(iEndRow > iStartRow, User::Panic(KTxtPanic, -1));
     }
 
 CScrollWindow::~CScrollWindow()
@@ -130,12 +140,12 @@ TLine* CScrollWindow::NewLineL()
 
 void CScrollWindow::Update()
     {
-    TInt line = iPage * KPageLength;
+    TInt line = iPage * iPageLength;
 
-    TInt row = KStartRow_DriveInfo;
+    TInt row = iStartRow;
     do
         {
-        iConsole.SetPos(0, row + line%KPageLength);
+        iConsole.SetPos(0, row + line%iPageLength);
         if (line < iLineArray.Count())
             {
             iConsole.Printf(iLineArray[line]);
@@ -143,14 +153,15 @@ void CScrollWindow::Update()
         iConsole.ClearToEndOfLine();
         line++;
         }
-    while (((line-1)%KPageLength) != (KPageLength - 1));
-    iConsole.SetPos(0, KStartRow_DriveInfo + KPageLength);
-    iConsole.Printf(KScrollWindowStatus, iPage + 1, iLineArray.Count()/KPageLength + 1);
+    while (((line-1)%iPageLength) != (iPageLength - 1));
+
+    iConsole.SetPos(0, iStartRow + iPageLength);
+    iConsole.Printf(KScrollWindowStatus, iPage + 1, iLineArray.Count()/iPageLength + 1);
     }
 
 void CScrollWindow::PageInc()
     {
-    TInt lastPage = iLineArray.Count()/KPageLength;
+    TInt lastPage = iLineArray.Count()/iPageLength;
     if (iPage == lastPage)
         {
         iPage = 0;
@@ -166,7 +177,7 @@ void CScrollWindow::PageDec()
     {
     if (iPage == 0)
         {
-        TInt lastPage = iLineArray.Count()/KPageLength;
+        TInt lastPage = iLineArray.Count()/iPageLength;
         iPage = lastPage;
         }
     else
@@ -174,7 +185,6 @@ void CScrollWindow::PageDec()
         iPage--;
         }
     }
-
 
 
 CDisplay* CDisplay::NewLC(RFs& aFs, CConsoleBase& aConsole)
@@ -187,8 +197,8 @@ CDisplay* CDisplay::NewLC(RFs& aFs, CConsoleBase& aConsole)
 
 
 void CDisplay::ConstructL()
-    {
-    iScrollWindow = CScrollWindow::NewL(iConsole);
+    {    
+    iScrollWindow = CScrollWindow::NewL(iConsole, KRowScrollWindowStart, iScreenSize.iHeight - iFooterY - 4);
     }
 
 
@@ -197,6 +207,9 @@ CDisplay::CDisplay(RFs& aFs, CConsoleBase& aConsole)
     iConsole(aConsole)
     {
     iConsole.ClearScreen();
+    iScreenSize = iConsole.ScreenSize();
+    // Origin of footer
+    iPointFooter = TPoint(iFooterX, iScreenSize.iHeight - iFooterY - 2);
     }
 
 
@@ -208,9 +221,9 @@ CDisplay::~CDisplay()
 
 void CDisplay::Menu()
     {
-    iConsole.SetPos(0, KStartRow_UserKeys);
+    SetFooterPos(KPointUser1Keys);
     iConsole.Printf(KMsgUser1Keys);
-    iConsole.SetPos(0, KStartRow_UserKeys + 1);
+    SetFooterPos(KPointUser2Keys);
     iConsole.Printf(KMsgUser2Keys);
     iCursorPos = iConsole.CursorPos();
     }
@@ -592,7 +605,6 @@ void CDisplay::FormatVolumeInfoL(const TVolumeInfo& aVolumeInfo)
     line->Format(KFree, aVolumeInfo.iFree);
     line = iScrollWindow->NewLineL();
     line->Format(KVolName, &aVolumeInfo.iName);
-
     }
 
 
@@ -600,14 +612,15 @@ void CDisplay::UpTime(TUint aUpTime) const
     {
     TUint totalMins = aUpTime/60;
     TUint totalHrs = totalMins/60;
-    iConsole.SetPos(0, KStartRow_UpTime);
+    
+    SetFooterPos(KPointSystemStatus);    
     iConsole.Printf(KMsg_UpTime, totalHrs, totalMins%60, aUpTime%60);
     CursorHome();
     }
 
 void CDisplay::MemoryFree(TInt aBytes) const
     {
-	iConsole.SetPos(0, KStartRow_MemoryFree);
+    SetFooterPos(KPointMemoryFree);	
 	iConsole.Printf(KMsg_MemoryFree, aBytes);
     CursorHome();
     }
@@ -684,6 +697,7 @@ void CMessageKeyProcessor::ProcessKeyPressL(TKeyCode aKeyCode)
 TBool CMessageKeyProcessor::HandleKeyL(TKeyCode aKeyCode)
     {
     TBool done = EFalse;
+
     if (TChar(aKeyCode).IsAlpha())
         {
         iDisplay.GetDriveInfoL(aKeyCode);
@@ -694,6 +708,7 @@ TBool CMessageKeyProcessor::HandleKeyL(TKeyCode aKeyCode)
     switch (aKeyCode)
         {
         case EKeyF5:
+        case EKeySpace:
             {
             // Update USB status
             iUsbOtgSession.DeviceInserted();
@@ -703,11 +718,13 @@ TBool CMessageKeyProcessor::HandleKeyL(TKeyCode aKeyCode)
 
         case EKeyUpArrow:
         case EKeyPageUp:
+        case '[':
             iDisplay.PageDec();
             iDisplay.DriveInfo();
             break;
         case EKeyDownArrow:
         case EKeyPageDown:
+        case ']':
             iDisplay.PageInc();
             iDisplay.DriveInfo();
             break;

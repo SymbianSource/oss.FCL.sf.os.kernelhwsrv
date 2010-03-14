@@ -97,8 +97,7 @@ public:
     inline void  SetRuggedFatEntryId(TUint16 aId);
 
 public:
-    void InitializeAsVFat(TUint8 aCheckSum);
-    void SetVFatEntry(const TDesC& aName,TInt aRemainderLen);
+    void SetVFatEntry(const TDesC& aName, TUint aRemainderLen, TUint8 aCheckSum);
     void ReadVFatEntry(TDes16& aVBuf) const;
     inline TBool IsLongNameStart() const;
     inline TBool IsVFatEntry() const;
@@ -110,6 +109,8 @@ public:
     TUint8 iData[KSizeOfFatDirEntry]; ///< The directory entry data
     };
 
+__ASSERT_COMPILE((sizeof(TFatDirEntry) == KSizeOfFatDirEntry));
+__ASSERT_COMPILE((sizeof(SFatDirEntry) == KSizeOfFatDirEntry));
 
 
 #endif //FAT_DIR_ENTRY_H

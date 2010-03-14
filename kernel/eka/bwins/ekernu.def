@@ -925,4 +925,8 @@ EXPORTS
 	?MapAndPinMemory@Kern@@SAHPAVTKernelMapObject@@PAVDThread@@KIIAAKPAK@Z @ 924 NONAME ; int Kern::MapAndPinMemory(class TKernelMapObject *, class DThread *, unsigned long, unsigned int, unsigned int, unsigned long &, unsigned long *)
 	?CreateKernelMapObject@Kern@@SAHAAPAVTKernelMapObject@@I@Z @ 925 NONAME ; int Kern::CreateKernelMapObject(class TKernelMapObject * &, unsigned int)
 	?DestroyKernelMapObject@Kern@@SAXAAPAVTKernelMapObject@@@Z @ 926 NONAME ; void Kern::DestroyKernelMapObject(class TKernelMapObject * &)
+	?RandomSalt@Kern@@SAXKI@Z @ 927 NONAME ; public: static void __cdecl Kern::RandomSalt(unsigned long,unsigned int)
+	?RandomSalt@Kern@@SAX_KI@Z @ 928 NONAME ; public: static void __cdecl Kern::RandomSalt(unsigned __int64,unsigned int)
+	?RandomSalt@Kern@@SAXPBEII@Z @ 929 NONAME ; void Kern::RandomSalt(unsigned char const *, unsigned int, unsigned int)
+	?SecureRandom@Kern@@SAHAAVTDes8@@@Z @ 930 NONAME ; int Kern::SecureRandom(class TDes8 &)
 

@@ -1435,7 +1435,7 @@ DVirtualPinMapping* DVirtualPinMapping::New(TUint aMaxCount)
 	{
 	TRACE(("DVirtualPinMapping::New(0x%x)",aMaxCount));
 	DVirtualPinMapping* self = new DVirtualPinMapping;
-	if(aMaxCount)
+	if(self && aMaxCount)
 		{
 		// pages have been reserved for our use.
 

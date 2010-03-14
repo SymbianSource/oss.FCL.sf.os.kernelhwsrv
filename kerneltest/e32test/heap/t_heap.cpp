@@ -529,7 +529,12 @@ void TestRHeap::Test5(void)
 	for(TInt aSize2=(TInt)pHeap->AllocLen(aCell); aSize2>=0; aSize2--)
 		{
 		test(pHeap->ReAlloc(aCell, aSize2)!=NULL);
-		test(((TInt)pHeap->AllocLen(aCell)>=aSize2)&&((TInt)pHeap->AllocLen(aCell)<=aSize2+KMinFreeSize));
+
+		test((TInt)pHeap->AllocLen(aCell)>=aSize2);		
+
+		TInt aTmpSize2 = Max(_ALIGN_UP(aSize2 + RHeap::EAllocCellSize, KAlign), KMinFreeSize);
+
+		test((TInt)pHeap->AllocLen(aCell)<=aTmpSize2+KMinFreeSize);		
 		}
   
 	pHeap->Check();

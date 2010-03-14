@@ -18,7 +18,7 @@
 #include <drivers/pbus.h>
 #include "OstTraceDefinitions.h"
 #ifdef OST_TRACE_COMPILER_IN_USE
-#include "locmedia_ost.h"
+#include "../../include/drivers/locmedia_ost.h"
 #ifdef __VC32__
 #pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
 #endif

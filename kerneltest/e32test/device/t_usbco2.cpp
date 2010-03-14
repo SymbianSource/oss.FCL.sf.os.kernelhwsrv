@@ -31,7 +31,7 @@ _LIT(KUsbDeviceName, "Usbc");
 _LIT(KFileName, "\\T_USBFILE.BIN");
 _LIT(KActivePanic, "T_USB");
 
-static const TUint32 KTusbVersion = 20070524;				// just an edit date really
+static const TUint32 KTusbVersion = 20091224;				// just an edit date really
 static const TUint8 KUsbrflctVersionMajor = 1;				// the version we're compatible with
 static const TUint8 KUsbrflctVersionMinor = 5;
 static const TUint8 KUsbrflctVersionMicro = 0;
@@ -52,9 +52,12 @@ CActiveConsole::CActiveConsole(CConsoleBase* aConsole, TBool aVerboseOutput)
 	  iBufferSizeChosen(EFalse),
 	  iBandwidthPriorityChosen(EFalse),
 	  iDMAChosen(EFalse),
+	  iAllocateDma(EFalse),
 	  iDoubleBufferingChosen(EFalse),
+	  iAllocateDoubleBuffering(EFalse),
 	  iSoftwareConnect(EFalse),
 	  iHighSpeed(EFalse),
+	  iResourceAllocationV2(EFalse),
 	  iOtg(EFalse),
 	  iVerbose(aVerboseOutput)
 	{}
@@ -112,7 +115,18 @@ void CActiveConsole::ConstructL()
 		return;
 		}
 	TUSB_PRINT("Created reader/writer");
-
+	
+	// check for endpoint resource allocation v2 support
+	TUsbDeviceCaps d_caps;
+	r = iPort.DeviceCaps(d_caps);
+	if (r != KErrNone)
+		{
+		TUSB_PRINT1("Error %d on querying device capabilities", r);
+		User::Leave(-1);
+		return;
+		}
+	iResourceAllocationV2 = ((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) != 0);
+		
 	// Check for OTG support
 	TBuf8<KUsbDescSize_Otg> otg_desc;
 	r = iPort.GetOtgDescriptor(otg_desc);
@@ -373,14 +387,17 @@ void CActiveConsole::ProcessKeyPressL(TChar aChar)
 			}
 		TUSB_PRINT1("(Set to 0x%08X)", iBandwidthPriority);
 		iBandwidthPriorityChosen = ETrue;
-
-		TUSB_PRINT("Configuring interface...");
-		TInt r = SetupInterface();
-		if (r != KErrNone)
+		
+		if (!iResourceAllocationV2)
 			{
-			TUSB_PRINT1("Error: %d. Stopping active scheduler...", r);
-			CActiveScheduler::Stop();
-			return;
+			TUSB_PRINT("Configuring interface...");
+			TInt r = SetupInterface();
+			if (r != KErrNone)
+				{
+				TUSB_PRINT1("Error: %d. Stopping active scheduler...", r);
+				CActiveScheduler::Stop();
+				return;
+				}
 			}
 		}
 	else if (!iDMAChosen)
@@ -389,15 +406,27 @@ void CActiveConsole::ProcessKeyPressL(TChar aChar)
 		switch (aChar)
 			{
 		case '1':
+			{
 			TUSB_PRINT("- Trying to deallocate endpoint DMA:\n");
-			DeAllocateEndpointDMA(EEndpoint1);
-			DeAllocateEndpointDMA(EEndpoint2);
+			if (!iResourceAllocationV2)
+				{
+				DeAllocateEndpointDMA(EEndpoint1);
+				DeAllocateEndpointDMA(EEndpoint2);
+				}
+			iAllocateDma = EFalse;
 			break;
+			}
 		case '2':
+			{
 			TUSB_PRINT("- Trying to allocate endpoint DMA:\n");
-			AllocateEndpointDMA(EEndpoint1);
-			AllocateEndpointDMA(EEndpoint2);
+			if (!iResourceAllocationV2)
+				{
+				AllocateEndpointDMA(EEndpoint1);
+				AllocateEndpointDMA(EEndpoint2);
+				}
+			iAllocateDma = ETrue;
 			break;
+			}
 		default:
 			TUSB_PRINT1("Not a valid input character: %c", aChar.operator TUint());
 			goto request_char;
@@ -410,20 +439,44 @@ void CActiveConsole::ProcessKeyPressL(TChar aChar)
 		switch (aChar)
 			{
 		case '1':
+			{
 			TUSB_PRINT("- Trying to deallocate Double Buffering:\n");
-			DeAllocateDoubleBuffering(EEndpoint1);
-			DeAllocateDoubleBuffering(EEndpoint2);
+			if (!iResourceAllocationV2)
+				{
+				DeAllocateDoubleBuffering(EEndpoint1);
+				DeAllocateDoubleBuffering(EEndpoint2);
+				}
+			iAllocateDoubleBuffering = EFalse;
 			break;
+			}
 		case '2':
+			{
 			TUSB_PRINT("- Trying to allocate Double Buffering:\n");
-			AllocateDoubleBuffering(EEndpoint1);
-			AllocateDoubleBuffering(EEndpoint2);
+			if (!iResourceAllocationV2)
+				{
+				AllocateDoubleBuffering(EEndpoint1);
+				AllocateDoubleBuffering(EEndpoint2);
+				}
+			iAllocateDoubleBuffering = ETrue;
 			break;
+			}
 		default:
 			TUSB_PRINT1("Not a valid input character: %c", aChar.operator TUint());
 			goto request_char;
 			}
 		iDoubleBufferingChosen = ETrue;
+		
+		if (iResourceAllocationV2)
+		{
+		TUSB_PRINT("Configuring interface...");
+		TInt r = SetupInterface();
+		if (r != KErrNone)
+			{
+			TUSB_PRINT1("Error: %d. Stopping active scheduler...", r);
+			CActiveScheduler::Stop();
+			return;
+			}
+		}
 
 		// Everything chosen, so let's re-enumerate...
 		TUSB_PRINT("Enumeration...");
@@ -680,6 +733,20 @@ TInt CActiveConsole::QueryUsbClientL()
 		{
 		TUSB_PRINT1("No suitable endpoints found", r);
 		return KErrGeneral;
+		}
+
+	if (iResourceAllocationV2)
+		{
+			if (iAllocateDma)
+				{
+				ifc().iEndpointData[0].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DMA;
+				ifc().iEndpointData[1].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DMA;
+				}
+			if (iAllocateDoubleBuffering)
+				{
+				ifc().iEndpointData[0].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
+				ifc().iEndpointData[1].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DoubleBuffering;					
+				}
 		}
 
 	_LIT16(ifcname, "T_USB Test Interface (Default Setting 0)");
@@ -1775,6 +1842,7 @@ void CActiveDeviceStateNotifier::RunL()
 		TUSB_PRINT1("Device State notifier: Alternate interface setting has changed: now %d",
 					iDeviceState & ~KUsbAlternateSetting);
 		}
+
 	Activate();
 	}
 

@@ -136,8 +136,13 @@
  * 			  different master ports.
  * 		Status:
  * 			Not fixed in Kernel as there is no software workaround for this erratum.
+ * 
+ *  - 727915: Background Clean & Invalidate by Way operation can cause data corruption
+ *      Status:
+ *          There was no need to fix anything as PL310 cache maintenance doesn't use any 
+ *          _Maintain_ByWay operation. (It is only used in ExternalCache::AtomicSync on
+ *          L210 & L220.)
  */
-
 
 #include <arm.h>
 #include "cache_maintenance.h"
@@ -314,6 +319,7 @@ void ExternalCache::AtomicSync()
 #if defined(__ARM_PL310_CACHE__)
 	// On Pl310, we hold the lock while maintaining cache. Therefore, we cannot
 	// do that on a way basis as it takes too long to complete.
+	// This will also ensure that PL310 erratum 727915 is sorted out.
 
 #if defined(__ARM_PL310_ERRATUM_588369_FIXED)
 	Maintain_All((TInt*)(Base+ARML2C_CleanInvalidateByIndexWay));

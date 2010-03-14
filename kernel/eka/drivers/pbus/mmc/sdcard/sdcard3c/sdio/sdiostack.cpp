@@ -165,6 +165,14 @@ in Version 1.10f of the the SDIO Card Specification.
 			{
 			SMF_GOTOS(EStCheckNextCard)
 			}
+		
+        iCxCardType = CardType(MMCSocket()->iSocketNumber, iCxCardCount);
+        
+        if (iCxCardType!=ESDCardTypeUnknown)
+            {
+            // Skip the SDIO Protocol Seq.
+            SMF_GOTOS(EStInitMemoryCard);
+            }
 
 		TRACE2(TTraceContext(EBorder), UTraceModuleEPBusSDIO::ESDIODSDIOStackPSLCalledAddressCard, reinterpret_cast<TUint32>(this), iCxCardCount); // @SymTraceDataPublishedTvk
 		AddressCard(iCxCardCount);

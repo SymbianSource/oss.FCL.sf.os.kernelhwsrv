@@ -84,6 +84,11 @@ void M::Init3()
 	// Third phase MMU initialisation
 	}
 
+void M::Init4()
+    {
+    // Fourth phase MMU initialisation - Not required on this memory model.
+    }
+
 TInt M::InitSvHeapChunk(DChunk* aChunk, TInt aSize)
 	{
 	DMemModelChunk* pC=(DMemModelChunk*)aChunk;

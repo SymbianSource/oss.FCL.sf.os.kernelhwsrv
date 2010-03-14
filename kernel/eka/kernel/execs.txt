@@ -640,7 +640,6 @@ slow {
 	name = MathRandom
 	return = TUint32
 	kernel = Kern::Random
-	lock
 }
 
 slow {
@@ -2431,6 +2430,14 @@ slow {
 	norelease
 }
 
+
+slow {
+	name = MathSecureRandom
+	return = TInt
+	arg1 = TDes8&
+}
+
+
 /******************************************************************************
  * End of normal executive functions
  ******************************************************************************/
@@ -2460,4 +2467,5 @@ slow {
 	kernel = ::CalcKernelHeapUsed
 	return = TInt
 }
+
 

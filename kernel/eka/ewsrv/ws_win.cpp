@@ -2170,6 +2170,7 @@ void CWsWindow::QueueWindowRawEvent(TRawEvent& anEvent)
 		case TRawEvent::EButton3Down:
 		case TRawEvent::EButton3Up:
 			pS->iMousePos=anEvent.Pos();
+			pS->iPointerNumber = anEvent.PointerNumber();
 			break;
 		case TRawEvent::EKeyUp:
 		case TRawEvent::EKeyDown:
@@ -2433,6 +2434,7 @@ void CWsWindow::DrainReadRequest()
 		
 		k.iModifiers=KeyTranslator->GetModifierState();
 
+		k.iPointerNumber = pS->iPointerNumber;
         k.iType=pS->iType;
         k.iMousePos=pS->iMousePos;
 

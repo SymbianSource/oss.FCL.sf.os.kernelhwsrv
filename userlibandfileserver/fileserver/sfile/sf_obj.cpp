@@ -156,7 +156,9 @@ reference count is reduced to zero.
 */
 EXPORT_C CFsObject::CFsObject()
 	{
-
+#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	__e32_atomic_add_ord32(&ObjectCount, 1);
+#endif
 //	iContainer=NULL;
 //	iName=NULL;
 	iAccessCount=1;
@@ -179,6 +181,9 @@ EXPORT_C  CFsObject::~CFsObject()
 	__ASSERT_ALWAYS(!iContainer,Fault(EObjDestructorContainer));
 	if(iName)
 		User::Free(iName);
+#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	__e32_atomic_add_ord32(&ObjectCount, (TUint32) -1);
+#endif
 	}
 
 

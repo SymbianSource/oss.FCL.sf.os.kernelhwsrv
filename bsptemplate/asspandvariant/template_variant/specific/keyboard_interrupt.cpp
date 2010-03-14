@@ -182,6 +182,10 @@ void DKeyboardTemplate::Isr(TAny* aPtr)
 	{
 	DKeyboardTemplate& k=*(DKeyboardTemplate*)aPtr;
 	Interrupt::Disable(KIntIdKeyboard);
+
+    // Add the timing of key interrupts as entropy data for the RNG
+	Interrupt::AddTimingEntropy();
+
 	k.iEventDfc.Add();
 	}
 

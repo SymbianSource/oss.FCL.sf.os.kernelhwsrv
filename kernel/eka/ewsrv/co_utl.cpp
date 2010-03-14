@@ -44,6 +44,14 @@ EXPORT_C TInt TConsoleKey::Modifiers() const
 	return((*((TConsoleKey *)this))().iModifiers);
 	}
 
+EXPORT_C TUint8 TConsoleKey::PointerNumber() const
+//
+// Return the pointer number
+//
+	{
+	return((*((TConsoleKey *)this))().iPointerNumber);
+	}
+
 EXPORT_C TInt TConsoleKey::Type() const
 //
 // Return the key type

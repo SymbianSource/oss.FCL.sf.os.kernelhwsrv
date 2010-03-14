@@ -35,8 +35,6 @@ PRJ_EXPORTS
 
 ../profiler/profiler.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(profiler.h)
 
-../analyse/profiler.rtf	/epoc32/engdoc/profiler/profiler.rtf
-
 ../d_exc/printstk.pl /epoc32/rom/tools/printstk.pl
 ../d_exc/printsym.pl /epoc32/rom/tools/printsym.pl
 
@@ -52,6 +50,9 @@ PRJ_TESTMMPFILES
 #if defined(TOOLS2)
 btrace_host
 #endif
+
+//Nist statistical test suite for Secure RNG in kernel
+nistsecurerng
 
 PRJ_MMPFILES
 
@@ -99,7 +100,6 @@ otgusbmsapp
 
 #ifndef SMP
 ../d_exc/d_exc
-../sdpartition/sdpartition
 #endif
 
 ../d_exc/minkda
@@ -114,4 +114,5 @@ dptestcons
 #include "../testusbcldd/group/testusbcldd.inf"
 
 #endif //	!TOOLS
+
 

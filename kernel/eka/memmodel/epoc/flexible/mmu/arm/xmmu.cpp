@@ -503,8 +503,54 @@ TPte Mmu::BlankPte(TMemoryAttributes aAttributes, TUint aPteType)
 		case EMemAttNormalCached:
 			texcb = KArmV6MemAttWBWAWBWA;
 			break;
-		default:
-			__NK_ASSERT_ALWAYS(0);		// undefined memory type
+		case EMemAttKernelInternal4:
+		case EMemAttPlatformSpecific5:
+        case EMemAttPlatformSpecific6:
+        case EMemAttPlatformSpecific7:
+            {
+			TUint32 cachingAttr = InternalCache::TypeToCachingAttributes((TMemoryType)(attr&EMemoryAttributeTypeMask));
+		    switch (cachingAttr)
+		        {
+		        case EMapAttrFullyBlocking:
+		            texcb = KArmV6MemAttSO;
+		            break;
+		        case EMapAttrBufferedNC:
+	                texcb = KArmV6MemAttSD;
+		            break;
+		        default:
+		            {
+		            //attr describes normal mapping
+		            //set texcb to b1BBAA where AA is internal and BB is external caching
+		            // TYPE       AA/BB
+		            // uncached   0
+                    // WBWA       1
+		            // WTRA       2
+		            // WBRA       3
+		            texcb = 0x10;
+                    switch (cachingAttr&EMapAttrL1CacheMask)
+                        {
+                        case EMapAttrL1Uncached:  break;
+                        #if defined(__CPU_ARM1136_ERRATUM_399234_FIXED)
+                        case EMapAttrCachedWTRA:  texcb |= 2;break; // It is OK to use WT memory
+                        #else
+                        case EMapAttrCachedWTRA:;break; // Erratum not fixed. Use uncached memory instead
+                        #endif
+                        case EMapAttrCachedWBRA:  texcb |= 3; break;
+                        default: texcb |= 1;//fully cached (WBWA)
+                        }
+                    switch (cachingAttr&EMapAttrL2CacheMask)
+                        {
+                        case EMapAttrL2Uncached:  break;
+                        case EMapAttrL2CachedWTRA:  texcb |= 8;break;
+                        case EMapAttrL2CachedWBRA:  texcb |= 0xc; break;
+                        default: texcb |= 4;//fully cached (WBWA)
+                        }
+		            }
+		        }
+            }
+            break;
+        default:
+		    __NK_ASSERT_ALWAYS(0);		// undefined memory type
 			texcb = KArmV6MemAttSO;
 			break;
 			}

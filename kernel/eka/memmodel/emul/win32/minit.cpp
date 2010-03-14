@@ -67,6 +67,11 @@ void M::Init3()
 	__KTRACE_OPT2(KBOOT,KMMU,Kern::Printf("M::Init3"));
 	}
 
+void M::Init4()
+    {
+    // Fourth phase MMU initialisation - Not required on this memory model.
+    }
+
 // kernel heap construction
 
 void P::KernelInfo(TProcessCreateInfo& aInfo, TAny*& aStack, TAny*& aHeap)

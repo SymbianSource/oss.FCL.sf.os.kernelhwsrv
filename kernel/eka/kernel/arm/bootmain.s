@@ -1299,7 +1299,16 @@ _CountPt
 	ENDIF	; CFG_MMUPresent
 	ENDIF	; CFG_DebugBootRom
 
-
+	IF :LNOT: CFG_MemoryTypeRemapping
+		; Pass BPR_Platform_Specific_Mappings to Kernel on platforms
+		; with no memory type remapping feature. Kernel will emulate them
+		; in order to support TMemoryType values 4-7
+		MOV		r0, #BPR_Platform_Specific_Mappings
+		BOOTCALL	BTF_Params				; r0 = BPR_Platform_Specific_Mappings
+		MOVMI	r0, #0						; r0 = 0, if parameter not defined in table.
+		STR		r0, [r10, #SSuperPageBase_iPlatformSpecificMappings]
+	ENDIF
+	
 	IF :DEF: CFG_HasL210Cache
 		;Enable L2 cache. Enabling L220 & PL310 is baseport specific due to security extension (TrustZone).
 		LDR     r0, [r10, #SSuperPageBase_iArmL2CacheBase]

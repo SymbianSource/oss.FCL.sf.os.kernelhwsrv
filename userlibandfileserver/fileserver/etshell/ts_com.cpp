@@ -43,7 +43,7 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
 	TShellCommand(_L("CD"),_L("Change the current directory for a drive"),_L("[path] [/d]\n\n  /d - Change drive"),TShellCommand::EDSwitch,ShellFunction::Cd),
 	TShellCommand(_L("CHKDEPS"),_L("Check the dependencies of an executable or a Dll (ARM only)"),_L("[Filename.EXE] or [Filename.DLL]"),0,ShellFunction::ChkDeps),
 	TShellCommand(_L("CHKDSK"),_L("Check disk for corruption"),_L("[drive:] [/s][/f|/u]\n\n/s - start ScanDrive instead of CheckDisk\n/f - finalise drive\n/u - unfinalise drive"),TShellCommand::ESSwitch|TShellCommand::EFSwitch|TShellCommand::EUSwitch,ShellFunction::ChkDsk),
-	TShellCommand(_L("COPY"),_L("Copy one (or more) file(s)"),_L("source [destination]"),TShellCommand::ESSwitch,ShellFunction::Copy),
+	TShellCommand(_L("COPY"),_L("Copy one (or more) file(s), overwriting existing one(s)"),_L("source [destination]"),TShellCommand::ESSwitch,ShellFunction::Copy),
 	TShellCommand(_L("DEL"),_L("Delete one file"),_L("[drive:][path][filename]"),TShellCommand::ESSwitch,ShellFunction::Del),
 	TShellCommand(_L("DIR"),_L("Show directory contents"),_L("[drive:][path][filename] [/p][/w]\n\n  /p - Pause after each screen of information\n  /w - Wide format"),TShellCommand::EPSwitch|TShellCommand::EWSwitch|TShellCommand::EASwitch,ShellFunction::Dir),
 //	TShellCommand(_L("EDLIN"),_L("Edit a text file"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information"),TShellCommand::EPSwitch,ShellFunction::Edit),
@@ -403,6 +403,8 @@ TInt ShellFunction::Copy(TDes& aPath,TUint aSwitches)
 // To append files, specify a single file for destination, but multiple files
 // for source (using wildcards or file1+file2+file3 format).
 //
+// Overwrites existing file(s).
+//
 // My spec:
 //
 // COPY source [destination]
@@ -461,6 +463,7 @@ TInt ShellFunction::Copy(TDes& aPath,TUint aSwitches)
 			}
 
 		TBool recursive=((aSwitches&TShellCommand::ESSwitch)!=0);
+		// Automatically overwrites existing file(s)
 		TUint switches=(recursive) ? CFileMan::EOverWrite|CFileMan::ERecurse : CFileMan::EOverWrite;
 		r=CShell::TheFileMan->Copy(dirPath.FullName(),destination,switches);
 		if (r==KErrNone)

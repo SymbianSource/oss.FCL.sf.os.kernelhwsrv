@@ -29,8 +29,13 @@ class DPager
 	{
 public:
 	DPager();
-	void Init2();
+	void InitCache();
 	void Init3();
+
+	FORCE_INLINE TBool CacheInitialised()
+		{
+		return iYoungOldRatio && iMinimumPageLimit;
+		}
 
 	FORCE_INLINE TUint NumberOfFreePages()
 		{

@@ -40,9 +40,10 @@ typedef void (*TIsr)(TAny*);
 A class that exports interrupt functionality to device drivers and
 other kernel-side code.
 
-Although Symbian OS defines this class, it does not implement it;
-an implementation for each of the functions defined by this class must
-be provided by the Variant in the baseport.
+Although Symbian OS defines this class, it does not implement the majority
+of it; an implementation for each of the functions defined by this class, 
+with the exception of AddTimingEntropy, must be provided by the Variant in 
+the baseport.
 
 Note that the class only provides the public API for using interrupts,
 not for dispatching them.
@@ -145,6 +146,16 @@ public:
                 are not supported.
     */
 	IMPORT_C static TInt SetPriority(TInt anId, TInt aPriority);
+    
+    /**
+    This function is implemented by the kernel. It adds the current, highest 
+    resolution timestamp to the secure RNG's entropy pool.
+    
+    It should be called from the ISR of any device where the timing of interrupts
+    would be considered random, for example the keyboard or digitiser drivers.
+    */
+
+    IMPORT_C static void AddTimingEntropy();
 	};
 
 struct SInterruptHandler

@@ -38,9 +38,28 @@ TBool TEntryPos::operator==(const TEntryPos& aRhs) const
     return (iCluster == aRhs.iCluster && iPos == aRhs.iPos);
     }
 
+/** set "end of directory" indicator*/
+void TEntryPos::SetEndOfDir()
+    {
+    iCluster = EOF_32Bit;
+    }
+
 
 //---------------------------------------------------------------------------------------------------------------------------------
 // class CFatMountCB
+
+
+/** @return ETrue if the value of aClusterNo is valid*/
+inline TBool CFatMountCB::ClusterNumberValid(TUint32 aClusterNo) const 
+    {   
+    ASSERT(ConsistentState()); 
+            
+    if(!aClusterNo && !Is32BitFat())
+        return ETrue; //-- root dir. cluster for FAT12/16
+
+    return (aClusterNo >= KFatFirstSearchCluster) && (aClusterNo < UsableClusters()+KFatFirstSearchCluster); 
+    }
+
 
 inline TInt CFatMountCB::RootDirectorySector() const
     {return iVolParam.RootDirectorySector();}
@@ -159,17 +178,33 @@ TBool CFatMountCB::IsBadCluster(TInt aCluster) const
 
 /**
 Returns whether the current mount is running as rugged Fat or not, this is held in the file system object
-@return Is rugged fat flag
+    @return ETrue if this is Rugged FAT
 */
 TBool CFatMountCB::IsRuggedFSys() const
-	{return Drive().IsRugged();}
+	{
+    return Drive().IsRugged();
+    }
 
 /**
 Sets the rugged flag in the file system object
 @param Flag to set or clear the rugged flag
 */
 void CFatMountCB::SetRuggedFSys(TBool aVal)
-	{Drive().SetRugged(aVal);}
+	{
+    Drive().SetRugged(aVal);
+    }
+
+/**
+    @return Log2(Meida atomic write granularity).
+    This is mostly to be used in Rugged FAT mode, see IsRuggedFSys(). For Rugged FAT the media shall support atomic writes.
+    By default this is the sector (512 bytes)
+
+*/
+TUint32 CFatMountCB::AtomicWriteGranularityLog2() const
+    {
+    return KDefSectorSzLog2;    
+    }
+
 
 /** @return the usable clusters count for a volume */
 TUint32 CFatMountCB::UsableClusters() const
@@ -336,6 +371,21 @@ void CFatMountCB::SetEndOfClusterCh(TInt &aCluster) const
     ASSERT(iFatEocCode);
     aCluster = iFatEocCode+7;
 	}
+
+
+CFatMountCB::TEntrySetChunkInfo::TEntrySetChunkInfo()
+                                :iNumEntries(KMaxTUint) 
+    {
+    }
+
+
+TBool CFatMountCB::TEntrySetChunkInfo::operator==(const TEntrySetChunkInfo& aRhs)
+    {
+    ASSERT(&aRhs != this);
+    return (iNumEntries == aRhs.iNumEntries) && (iEntryPos==aRhs.iEntryPos);
+    }
+
+
 
 
 //-------  debug methods

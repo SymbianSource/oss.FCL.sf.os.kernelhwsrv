@@ -130,7 +130,10 @@ private:
 		TCaseSteps iCaseStep;
 
 		TThreadPriority iPriority;
-
+		
+public:
+        TBool iInterface0Resumed;
+		
 private:
 		/**
 		 The functor for this test case for the factory

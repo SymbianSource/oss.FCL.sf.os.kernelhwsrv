@@ -18,6 +18,9 @@
 #include "mmboot.h"
 
 #include "cache_maintenance.h"
+#include "mmu/mmu.h"
+#include "mmu/mpager.h"
+
 
 extern void DoProcessSwitch();
 
@@ -51,6 +54,12 @@ void M::Init3()
 	// Third phase MMU initialisation
 	MM::Init3();
 	}
+
+void M::Init4()
+    {
+    // Fourth phase MMU initialisation
+    ThePager.InitCache();
+    }
 
 
 TInt M::InitSvHeapChunk(DChunk* aChunk, TInt aSize)

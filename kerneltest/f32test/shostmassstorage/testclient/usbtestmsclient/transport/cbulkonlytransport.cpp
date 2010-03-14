@@ -928,7 +928,7 @@ void CBulkOnlyTransport::DecodeCbwL()
                     DataOutReadRequest(deviceDataLength);
                     }
 #else
-				DataOutRead(deviceDataLength);
+				DataOutReadRequest(deviceDataLength);
 #endif
 				return;
 				}

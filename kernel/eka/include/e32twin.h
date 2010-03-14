@@ -56,6 +56,7 @@ struct SConsoleKey
 	TUint iModifiers;
     TPoint iMousePos;
     TInt iType;
+    TUint8 iPointerNumber;
 	};
 
 /** @internalTechnology */
@@ -66,6 +67,7 @@ public:
 	IMPORT_C TInt Modifiers() const;
     IMPORT_C TInt Type() const;
     IMPORT_C TPoint MousePos() const;
+    IMPORT_C TUint8 PointerNumber() const;
 	};
 
 /** @internalTechnology */

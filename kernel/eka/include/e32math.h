@@ -475,6 +475,9 @@ public:
 	IMPORT_C static TInt Rand(TInt64 &aSeed);
 	IMPORT_C static TReal FRand(TInt64 &aSeed) __SOFTFP;
 	IMPORT_C static TUint32 Random();
+	IMPORT_C static void Random(TDes8& aRandomValue);
+	IMPORT_C static void RandomL(TDes8& aRandomValue);
+	IMPORT_C static TUint32 RandomL();
 	IMPORT_C static TInt Round(TReal &aTrg,const TReal &aSrc,TInt aDecimalPlaces);
 	IMPORT_C static TInt Sin(TReal &aTrg,const TReal &aSrc); 
 	IMPORT_C static TInt Sqrt(TReal &aTrg,const TReal &aSrc);

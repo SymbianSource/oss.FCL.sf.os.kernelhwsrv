@@ -34,11 +34,7 @@ CCacheMemoryClient::~CCacheMemoryClient()
 	{
 	const TUint32 segCnt = iTouchedRegionFlag <= iReservedRegionMarkInSegs ? 
 										iReservedRegionMarkInSegs : iTouchedRegionFlag;
-	TInt r = DecommitSegments(iBase, segCnt);
-	if (r != KErrNone)  // this 'if() {}' is to remove build warnings
-	{
-	ASSERT(0);
-	}
+	DecommitSegments(iBase, segCnt);
 	iReusablePagePool.Close();
 	delete iName;
 	}
@@ -95,7 +91,6 @@ void CCacheMemoryClient::ConstructL(const TDesC& aClientName, TUint32 aOffsetInB
 	iBase = iManager.Base() + aOffsetInBytes;
 	iReservedRegionMarkInSegs = iMinSizeInSegs;
 	TInt r = iManager.AllocateAndLockSegments(iBase, iReservedRegionMarkInSegs);
-	ASSERT(r==KErrNone);
 	User::LeaveIfError(r);
 	iTouchedRegionFlag = 0;
 	__PRINT(_L("CCacheMemoryClient::ConstructL() return 0"));

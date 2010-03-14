@@ -119,7 +119,7 @@ TInt DBB5PartitionInfo::PartitionCaps(TLocDrv& aDrive, TDes8& aInfo)
 		}
 	else if ( PartitionIsFAT(aDrive.iPartitionType) || PartitionIsFAT32(aDrive.iPartitionType)	)
 		{		
-		Info().iDriveAtt = iPartitionAttributes[aDrive.iPartitionNumber];
+		Info().iDriveAtt |= iPartitionAttributes[aDrive.iPartitionNumber];
 		}
 
 	return KErrNone;

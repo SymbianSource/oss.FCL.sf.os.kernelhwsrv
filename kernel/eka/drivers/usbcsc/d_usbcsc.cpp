@@ -1208,6 +1208,7 @@ DLddUsbcScChannel::~DLddUsbcScChannel()
 	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcScChannel::~DLddUsbcScChannel()"));
 	if (iController)
 		{
+		iController->DeRegisterClient(this);
 		iStatusCallbackInfo.Cancel();
 		iEndpointStatusCallbackInfo.Cancel();
 	    iOtgFeatureCallbackInfo.Cancel();
@@ -1218,7 +1219,6 @@ DLddUsbcScChannel::~DLddUsbcScChannel()
 			iController->ReleaseDeviceControl(this);
 			iOwnsDeviceControl = EFalse;
 			}
-		iController->DeRegisterClient(this);
 		iController=NULL;
 		DestroyEp0();
 		if (iStatusFifo!=NULL)

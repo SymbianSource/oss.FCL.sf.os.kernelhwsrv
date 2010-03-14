@@ -579,6 +579,19 @@ TInt TFsControlIo::DoRequestL(CFsRequest* aRequest)
 			EnableFatUtilityFunctions = ETrue;
 			return KErrNone;
 			}
+        case KControlIoSessionCount:
+            {
+            TPckgBuf<TInt> pkgBuf(SessionCount);
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+            }
+        case KControlIoObjectCount:
+            {
+            TPckgBuf<TInt> pkgBuf(ObjectCount);
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+            }
+		
 		}
 #endif
 

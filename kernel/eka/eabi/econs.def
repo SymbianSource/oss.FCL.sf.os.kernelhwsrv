@@ -31,4 +31,5 @@ EXPORTS
 	_ZNK8RConsole10ScreenSizeER5TSize @ 30 NONAME ; RConsole::ScreenSize(TSize&) const
 	_ZNK8RConsole4SizeER5TSize @ 31 NONAME ; RConsole::Size(TSize&) const
 	_ZNK8RConsole9CursorPosER6TPoint @ 32 NONAME ; RConsole::CursorPos(TPoint&) const
+	_ZNK11TConsoleKey13PointerNumberEv @ 33 NONAME
 

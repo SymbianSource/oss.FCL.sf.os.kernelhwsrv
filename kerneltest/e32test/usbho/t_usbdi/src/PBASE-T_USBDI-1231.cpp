@@ -40,7 +40,7 @@ namespace NUnitTesting_USBDI
 		}
 
 	CUT_PBASE_T_USBDI_1231::CUT_PBASE_T_USBDI_1231(TBool aHostRole) :
-		CBaseTestCase(KTestCaseId, aHostRole)
+		CBaseTestCase(KTestCaseId, aHostRole), iInterface0Resumed(EFalse)
 		{
 		}
 
@@ -148,7 +148,9 @@ namespace NUnitTesting_USBDI
 		LOG_FUNC
 
 		RDebug::Printf("====> DeviceInsertedL entry priority = %d", RThread().Priority());
-
+		
+		iInterface0Resumed = EFalse;
+		
 		Cancel(); // Cancel the timer
 		TInt err(KErrNone);
 		iDeviceHandle = aDeviceHandle;
@@ -244,6 +246,7 @@ namespace NUnitTesting_USBDI
 		TInt testStep = self->iCaseStep;
 		RDebug::Printf(" -watcher 0 iStatus = %d <teststep %d>",completionCode, testStep);
            
+		self->iInterface0Resumed = ETrue;
 		
 		switch (self->iCaseStep)
 			{
@@ -339,8 +342,15 @@ namespace NUnitTesting_USBDI
 				if (aNewState == RUsbDevice::EDeviceActive)
 					{
 					RDebug::Printf("Device resume!");
-					iCaseStep = EValidResumeWhenSuspending;
-					
+					if (!iInterface0Resumed)
+                        {
+                        iCaseStep = EValidResumeWhenSuspending;
+                        }
+					else
+					    {
+					    iCaseStep = EPassed;
+					    SendEp0Request();
+					    }
 					}
 				else
 					{					

@@ -32,15 +32,15 @@ source	\sf\os\kernelhwsrv\kernel\eka\distribution.policy.s60
 binary	\sf\os\kernelhwsrv\kernel\eka all
 exports	\sf\os\kernelhwsrv\kernel\eka
 
--export_file \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec.zip     \epoc32\include\exec_enum.h
--export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec.zip     \epoc32\include\exec_user.h
--export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec.zip     \epoc32\include\kernel\exec_kernel.h
+-export_file \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec_hr.zip     \epoc32\include\platform\exec_enum.h
+-export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec_hr.zip     \epoc32\include\platform\exec_user.h
+-export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec_hr.zip     \epoc32\include\platform\kernel\exec_kernel.h
 
 notes_source	\component_defs\release.src
 
-binary \epoc32\include\exec_enum.h
-binary \epoc32\include\exec_user.h
-binary \epoc32\include\kernel\exec_kernel.h
+binary \epoc32\include\platform\exec_enum.h
+binary \epoc32\include\platform\exec_user.h
+binary \epoc32\include\platform\kernel\exec_kernel.h
 
 ipr D 
 ipr D \sf\os\kernelhwsrv\kernel\eka\include\memmodel\epoc\multiple\arm

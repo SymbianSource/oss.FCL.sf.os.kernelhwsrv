@@ -599,6 +599,9 @@ void DTemplateDigitiser::PenInterrupt()
 
 	Interrupt::Disable(KIntIdDigitiser);		// do NOT disable the capability to generate interrupts at the source
 
+    // Add the timing of pen interrupts as entropy data for the RNG
+	Interrupt::AddTimingEntropy();
+
 	if (KPenDownDelayTime>0)					// need to check this config param as it might be zero!
 		iTimerInt.OneShot(KPenDownDelayTime);	// start a debounce timer which will queue a DFC to process the interrupt
 	else

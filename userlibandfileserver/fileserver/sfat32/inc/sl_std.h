@@ -63,12 +63,13 @@ Represents the position of a directory entery in terms of a cluster and off set 
 class TEntryPos
 	{
 public:
-	TEntryPos() {}
+	TEntryPos() : iCluster(EOF_32Bit), iPos(0) {}
 	TEntryPos(TInt aCluster,TUint aPos) : iCluster(aCluster), iPos(aPos) {}
 
     inline TUint32 Cluster() const;
     inline TUint32 Pos() const;
     inline TBool operator==(const TEntryPos& aRhs) const;
+    inline void SetEndOfDir();
 
 public:
 	TInt iCluster;
@@ -110,8 +111,13 @@ public:
 
 protected:
     TDriveInterface();
+   ~TDriveInterface() {Close();}
+
+    //-- outlawed
     TDriveInterface(const TDriveInterface&);
     TDriveInterface& operator=(const TDriveInterface&);
+    void* operator new(TUint); //-- disable creating objets of this class on the heap.
+    void* operator new(TUint, void*);
 
     TBool Init(CFatMountCB* aMount);
     void Close(); 
@@ -491,14 +497,12 @@ protected:
 
     /** 
         A wrapper around TDriveInterface providing its instantination and destruction.
-        You must not create objects of this class, use DriveInterface() instead.
+        You must not create objects of this class, use DriveInterface() method for obtaining the reference to the driver interface.
     */
     class XDriveInterface: public TDriveInterface
         {
       public:
-        XDriveInterface() : TDriveInterface() {}
-        ~XDriveInterface() {Close();}
-        TBool Init(CFatMountCB* aMount) {return TDriveInterface::Init(aMount);}
+        using TDriveInterface::Init;
         };
 
 
@@ -538,9 +542,13 @@ public:
 	inline TInt ClusterRelativePos(TInt aPos) const;
 	inline TUint StartOfRootDirInBytes() const;
 	inline TUint32 UsableClusters() const;
+    inline TBool ClusterNumberValid(TUint32 aClusterNo) const;
 	inline TBool IsBadCluster(TInt aCluster) const;
+	
 	inline TBool IsRuggedFSys() const;
 	inline void SetRuggedFSys(TBool aVal);
+	inline TUint32 AtomicWriteGranularityLog2() const;
+
 	
 	inline TInt RootIndicator() const;
 	
@@ -662,6 +670,24 @@ private:
 	        RArray<TShortName>  iShortNameCandidates;
 	    };
 
+   
+    /** a helper class that describes a continuous chunk of diectory entries*/
+    class TEntrySetChunkInfo
+        {
+     public:
+        inline TEntrySetChunkInfo();
+        inline TBool operator==(const TEntrySetChunkInfo& aRhs);
+
+        //-- FAT entryset can't span more than 3 clusters/sectors
+        enum {KMaxChunks = 3};
+
+     public:   
+        TEntryPos iEntryPos;    ///< entryset chunk dir. starting position
+        TUint     iNumEntries;  ///< number of entries in the chunk
+        };
+
+    
+    void DoEraseEntrySetChunkL(const TEntrySetChunkInfo& aEntrySetChunk);
 	
 
 	TBool DoRummageDirCacheL(TUint anAtt,TEntryPos& aStartEntryPos,TFatDirEntry& aStartEntry,TEntryPos& aDosEntryPos,TFatDirEntry& aDosEntry,TDes& aFileName, const TFindHelper& aAuxParam, XFileCreationHelper* aFileCreationHelper, const TLeafDirData& aLeafDir) const;

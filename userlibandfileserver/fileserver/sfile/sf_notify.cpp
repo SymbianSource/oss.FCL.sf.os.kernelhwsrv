@@ -333,6 +333,18 @@ TBool TBaseQue::DoCancelSession(CSessionFs* aSession,TInt aCompletionCode, TRequ
 	return(isFound);
 	}
 
+CNotifyInfo* TBaseQue::DoFindEntry(CSessionFs* aSession, TRequestStatus* aStatus)
+	{
+	TDblQueIter<CNotifyInfo> q(iHeader);
+	CNotifyInfo* info;
+	while((info=q++)!=NULL)
+		{
+		if(info->Session()==aSession && (!aStatus || aStatus==info->Status()))
+			return info;
+		}
+	return NULL;
+	}
+
 void TBaseQue::DoCancelAll(TInt aCompletionCode)
 //
 // Cancel all notifications
@@ -654,13 +666,20 @@ TInt TDismountNotifyQue::AddNotify(CNotifyInfo* aInfo)
 
 TInt TDismountNotifyQue::CancelSession(CSessionFs* aSession,TInt aCompletionCode,TRequestStatus* aStatus)
 //
-//
+// Returns the drive number or KErrNotFound
 //
 	{
 	iQLock.Wait();
-	TBool isFound=TBaseQue::DoCancelSession(aSession,aCompletionCode,aStatus);
+
+	// return the drive number
+	CDismountNotifyInfo* info = (CDismountNotifyInfo*) DoFindEntry(aSession, aStatus);
+	TInt driveNumber = info ? info->DriveNumber() : KErrNotFound;
+
+	TBaseQue::DoCancelSession(aSession,aCompletionCode,aStatus);
+
 	iQLock.Signal();
-	return(isFound);
+
+	return(driveNumber);
 	}
 
 void TDismountNotifyQue::CancelAll(TInt aCompletionCode)
@@ -929,14 +948,15 @@ void FsNotify::CancelDebugSession(CSessionFs* aSession, TRequestStatus* aStatus)
 	iDebugQue.CancelSession(aSession,KErrCancel,aStatus);
 	}
 
-void FsNotify::CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus)
+TInt FsNotify::CancelDismountNotifySession(CSessionFs* aSession, TRequestStatus* aStatus)
 //
 // Cancel all media removal notification(s) setup by aSession (if aStatus == NULL)
-// else cancels all oustanding notifications(s) for the session
+// else cancels all outstanding notifications(s) for the session
 //
 	{
 	__PRINT2(_L("FsNotify::CancelDismountNotifySession() aSession=0x%x aStatus=0x%x"),aSession,aStatus);
-	iDismountNotifyQue.CancelSession(aSession,KErrCancel,aStatus);
+	TInt drive = iDismountNotifyQue.CancelSession(aSession,KErrCancel,aStatus);
+	return drive;
 	}
 
 void FsNotify::CancelSession(CSessionFs* aSession)

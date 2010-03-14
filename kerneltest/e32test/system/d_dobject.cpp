@@ -665,10 +665,10 @@ TInt DObjectTest::RObjectIxInvalidHandleLookupTest(TInt aSize)
 		//	Bit 30		thread local flag (ignored)
 		//	Bit 31		special handle flag (should be 0)
 		//
-		NKern::LockSystem();
 		TInt  randomHandle = Kern::Random() & 0x3fff7fff;
 		TInt  uniqueID = 0;		// any object type!
-				
+		
+        NKern::LockSystem();
 		object = myIx.At(randomHandle, uniqueID);
 		NKern::UnlockSystem();
 

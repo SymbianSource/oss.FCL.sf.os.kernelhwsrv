@@ -50,14 +50,26 @@ DPager ThePager;
 
 DPager::DPager()
 	: iMinimumPageCount(0), iMaximumPageCount(0), iYoungOldRatio(0),
-	  iYoungCount(0),iOldCount(0),iNumberOfFreePages(0)
+	  iYoungCount(0),iOldCount(0),
+#ifdef _USE_OLDEST_LISTS
+	  iOldestCleanCount(0),
+#endif
+	  iNumberOfFreePages(0), iReservePageCount(0), iMinimumPageLimit(0)
 	{
 	}
 
 
-void DPager::Init2()
+void DPager::InitCache()
 	{
-	TRACEB(("DPager::Init2()"));
+	//
+	// This routine doesn't acquire any mutexes because it should be called before the system
+	// is fully up and running. I.e. called before another thread can preempt this.
+	//
+	TRACEB(("DPager::InitCache()"));
+	// If any pages have been reserved then they will have already been allocated and 
+	// therefore should be counted as part of iMinimumPageCount.
+	__NK_ASSERT_DEBUG(iReservePageCount == iMinimumPageCount);
+	__NK_ASSERT_DEBUG(!CacheInitialised());
 
 #if defined(__CPU_ARM)
 
@@ -104,85 +116,92 @@ void DPager::Init2()
 
 	__NK_ASSERT_DEBUG(KMinOldPages<=iAbsoluteMinPageCount/2);
 
-	// initialise live list...
-	TUint minimumPageCount = 0;
-	TUint maximumPageCount = 0;
-
+	// Read any paging config data.
 	SDemandPagingConfig config = TheRomHeader().iDemandPagingConfig;
 
-	iMinimumPageCount = KDefaultMinPages;
-	if(minimumPageCount)
-		iMinimumPageCount = minimumPageCount;
-	if(config.iMinPages)
-		iMinimumPageCount = config.iMinPages;
-	if(iMinimumPageCount<iAbsoluteMinPageCount)
-		iMinimumPageCount = iAbsoluteMinPageCount;
-	iInitMinimumPageCount = iMinimumPageCount;
-
-	iMaximumPageCount = KMaxTInt;
-	if(maximumPageCount)
-		iMaximumPageCount = maximumPageCount;
-	if(config.iMaxPages)
-		iMaximumPageCount = config.iMaxPages;
-	if (iMaximumPageCount > KAbsoluteMaxPageCount)
-		iMaximumPageCount = KAbsoluteMaxPageCount;
-	iInitMaximumPageCount = iMaximumPageCount;
-
+	// Set the list ratios...
 	iYoungOldRatio = KDefaultYoungOldRatio;
 	if(config.iYoungOldRatio)
 		iYoungOldRatio = config.iYoungOldRatio;
-	TInt ratioLimit = (iMinimumPageCount-KMinOldPages)/KMinOldPages;
-	if(iYoungOldRatio>ratioLimit)
-		iYoungOldRatio = ratioLimit;
-
 #ifdef _USE_OLDEST_LISTS
 	iOldOldestRatio = KDefaultOldOldestRatio;
 	if(config.iSpare[2])
 		iOldOldestRatio = config.iSpare[2];
 #endif
 
-	iMinimumPageLimit = (iMinYoungPages * (1 + iYoungOldRatio)) / iYoungOldRatio;
-	if(iMinimumPageLimit<iAbsoluteMinPageCount)
+	// Set the minimum page counts...
+	iMinimumPageLimit = iMinYoungPages * (1 + iYoungOldRatio) / iYoungOldRatio
+									   + DPageReadRequest::ReservedPagesRequired();
+	
+	if(iMinimumPageLimit < iAbsoluteMinPageCount)
 		iMinimumPageLimit = iAbsoluteMinPageCount;
 
-	TRACEB(("DPager::Init2() live list min=%d max=%d ratio=%d",iMinimumPageCount,iMaximumPageCount,iYoungOldRatio));
+	if (K::MemModelAttributes & (EMemModelAttrRomPaging | EMemModelAttrCodePaging | EMemModelAttrDataPaging))
+	    iMinimumPageCount = KDefaultMinPages; 
+	else
+		{// No paging is enabled so set the minimum cache size to the minimum
+		// allowable with the current young old ratio.
+	    iMinimumPageCount = iMinYoungPages * (iYoungOldRatio + 1);
+		}
 
-	if(iMaximumPageCount<iMinimumPageCount)
-		__NK_ASSERT_ALWAYS(0);
+	if(config.iMinPages)
+		iMinimumPageCount = config.iMinPages;
+	if(iMinimumPageCount < iAbsoluteMinPageCount)
+		iMinimumPageCount = iAbsoluteMinPageCount;
+	if (iMinimumPageLimit + iReservePageCount > iMinimumPageCount)
+		iMinimumPageCount = iMinimumPageLimit + iReservePageCount;
 
-	//
-	// This routine doesn't acquire any mutexes because it should be called before the system
-	// is fully up and running. I.e. called before another thread can preempt this.
-	//
+	iInitMinimumPageCount = iMinimumPageCount;
 
-	// Calculate page counts
+	// Set the maximum page counts...
+	iMaximumPageCount = KMaxTInt;
+	if(config.iMaxPages)
+		iMaximumPageCount = config.iMaxPages;
+	if (iMaximumPageCount > KAbsoluteMaxPageCount)
+		iMaximumPageCount = KAbsoluteMaxPageCount;
+	iInitMaximumPageCount = iMaximumPageCount;
+
+
+	TRACEB(("DPager::InitCache() live list min=%d max=%d ratio=%d",iMinimumPageCount,iMaximumPageCount,iYoungOldRatio));
+
+	// Verify the page counts are valid.
+	__NK_ASSERT_ALWAYS(iMaximumPageCount >= iMinimumPageCount);
 	TUint minOldAndOldest = iMinimumPageCount / (1 + iYoungOldRatio);
-	if(minOldAndOldest < KMinOldPages)
-		__NK_ASSERT_ALWAYS(0);
-	if (iMinimumPageCount < minOldAndOldest)
-		__NK_ASSERT_ALWAYS(0);
+	__NK_ASSERT_ALWAYS(minOldAndOldest >= KMinOldPages);
+	__NK_ASSERT_ALWAYS(iMinimumPageCount >= minOldAndOldest);
+
+	// Need at least iMinYoungPages pages mapped to execute worst case CPU instruction
 	TUint minYoung = iMinimumPageCount - minOldAndOldest;
-	if(minYoung < iMinYoungPages)
-		__NK_ASSERT_ALWAYS(0); // Need at least iMinYoungPages pages mapped to execute worst case CPU instruction
+	__NK_ASSERT_ALWAYS(minYoung >= iMinYoungPages);
+
+	// Verify that the young old ratio can be met even when there is only the 
+	// minimum number of old pages.
+	TInt ratioLimit = (iMinimumPageCount-KMinOldPages)/KMinOldPages;
+	__NK_ASSERT_ALWAYS(iYoungOldRatio <= ratioLimit);
+
 #ifdef _USE_OLDEST_LISTS
 	// There should always be enough old pages to allow the oldest lists ratio.
 	TUint oldestCount = minOldAndOldest / (1 + iOldOldestRatio);
-	if (!oldestCount)
-		__NK_ASSERT_ALWAYS(0);
+	__NK_ASSERT_ALWAYS(oldestCount);
 #endif
+
 	iNumberOfFreePages = 0;
 	iNumberOfDirtyPages = 0;
 
-	// Allocate RAM pages and put them all on the old list
+	// Allocate RAM pages and put them all on the old list.
+	// Reserved pages have already been allocated and already placed on the
+	// old list so don't allocate them again.
 	RamAllocLock::Lock();
 	iYoungCount = 0;
-	iOldCount = 0;
 #ifdef _USE_OLDEST_LISTS
-	iOldestCleanCount = 0;
+	iOldCount = 0;
 	iOldestDirtyCount = 0;
+	__NK_ASSERT_DEBUG(iOldestCleanCount == iReservePageCount);
+#else
+	__NK_ASSERT_DEBUG(iOldCount == iReservePageCount);
 #endif
 	Mmu& m = TheMmu;
-	for(TUint i=0; i<iMinimumPageCount; i++)
+	for(TUint i = iReservePageCount; i < iMinimumPageCount; i++)
 		{
 		// Allocate a single page
 		TPhysAddr pagePhys;
@@ -197,10 +216,11 @@ void DPager::Init2()
 		}
 	RamAllocLock::Unlock();
 
+	__NK_ASSERT_DEBUG(CacheInitialised());
 #ifdef _USE_OLDEST_LISTS
-	TRACEB(("DPager::Init2() end with young=%d old=%d oldClean=%d oldDirty=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iOldestCleanCount,iOldestDirtyCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
+	TRACEB(("DPager::InitCache() end with young=%d old=%d oldClean=%d oldDirty=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iOldestCleanCount,iOldestDirtyCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
 #else
-	TRACEB(("DPager::Init2() end with young=%d old=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
+	TRACEB(("DPager::InitCache() end with young=%d old=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
 #endif
 	}
 
@@ -1688,6 +1708,8 @@ TInt DPager::ResizeLiveList()
 TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 	{
 	TRACE(("DPager::ResizeLiveList(%d,%d) current young=%d old=%d min=%d free=%d max=%d",aMinimumPageCount,aMaximumPageCount,iYoungCount,iOldCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
+	__NK_ASSERT_DEBUG(CacheInitialised());
+
 	if(!aMaximumPageCount)
 		{
 		aMinimumPageCount = iInitMinimumPageCount;
@@ -1704,6 +1726,8 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 	RamAllocLock::Lock();
 
 	MmuLock::Lock();
+
+	__NK_ASSERT_ALWAYS(iYoungOldRatio!=0);
 
 	// Make sure aMinimumPageCount is not less than absolute minimum we can cope with...
 	iMinimumPageLimit = iMinYoungPages * (1 + iYoungOldRatio) / iYoungOldRatio
@@ -2190,11 +2214,6 @@ TInt DPageReadRequest::Construct()
 		return r;
 	iBuffer = MM::MappingBase(bufferMapping);
 
-	// ensure there are enough young pages to cope with new request object...
-	r = ThePager.ResizeLiveList();
-	if(r!=KErrNone)
-		return r;
-
 	return r;
 	}
 
@@ -2406,6 +2425,7 @@ EXPORT_C TInt Kern::InstallPagingDevice(DPagingDevice* aDevice)
 	{
 	TRACEB(("Kern::InstallPagingDevice(0x%08x) name='%s' type=%d",aDevice,aDevice->iName,aDevice->iType));
 
+	__NK_ASSERT_DEBUG(!ThePager.CacheInitialised());
 	__NK_ASSERT_ALWAYS(aDevice->iReadUnitShift <= KPageShift);
 
 	TInt r = KErrNotSupported;	// Will return this if unsupported device type is installed

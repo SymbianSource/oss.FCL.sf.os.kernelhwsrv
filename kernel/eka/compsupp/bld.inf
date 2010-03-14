@@ -29,20 +29,6 @@ symcpp/symcpp.h SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(symcpp.h)
 
 compsupp.iby                /epoc32/rom/include/
 
-// Unzip runtimes not being built
-
-#if !defined(ARMCC_2_2)
-:zip rt_2_2_export.zip
-#endif
-
-#if !defined(ARMCC_3_1)
-:zip rt_3_1_export.zip
-#endif
-
-#if !defined(ARMCC_4_0)
-:zip rt_4_0_export.zip
-#endif
-
 
 PRJ_MMPFILES
 
@@ -71,5 +57,22 @@ PRJ_MMPFILES
 
     #endif
 
+PRJ_EXTENSIONS
+
+// Unzip RVCT3.1 runtime if being built with RVCT2.2 or RVCT4.0
+
+start extension tools/compsupp
+
+#if defined(ARMCC_2_2) || defined(ARMCC_4_0)
+option  FILE  $(EXTENSION_ROOT)/rt_3_1.zip
+#elif defined(ARMCC_3_1)
+option  FILE  $(EXTENSION_ROOT)/rt_2_2.zip
 #endif
+
+option  TODIR $(EPOCROOT)epoc32/release
+
+end
+
+#endif // #if !defined GCCXML && !defined GCCE
+
 

@@ -37,10 +37,10 @@ PRJ_TESTEXPORTS
 
 ../dll/d_ldrtst.h					/epoc32/include/
 
-../nkernsa/interrupts.h				/epoc32/include/nktest/	//
-../nkernsa/nkutils.h				/epoc32/include/nktest/	//
-../nkernsa/utils.h					/epoc32/include/nktest/	//
-../nkernsa/diag.h					/epoc32/include/nktest/	//
+../nkernsa/interrupts.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/interrupts.h)	//
+../nkernsa/nkutils.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/nkutils.h)	//
+../nkernsa/utils.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/utils.h)	//
+../nkernsa/diag.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/diag.h)	//
 
 ../../../kernel/eka/include/e32huffman.h				/epoc32/include/
 
@@ -69,6 +69,7 @@ platsec.settings        /epoc32/data/defaulttest.ini
 ../dll/oe/eabi/urel/t_oeexport1.exe     /epoc32/release/armv5/urel/t_oeexport1.exe
 
 ../demandpaging/d_pagestress.h		/epoc32/include/
+../pci/t_pci.h						/epoc32/include/e32test/t_pci.h
 
 ../iic/iic_psl/i2c.h			/epoc32/include/e32test/
 ../iic/iic_psl/spi.h			/epoc32/include/e32test/
@@ -117,6 +118,7 @@ d_medch						support
 d_shbuf_client				support
 d_shbuf_own					support
 d_asid						support
+d_entropysources			support
 
 #ifdef GENERIC_MARM
 d_schedhook					support
@@ -481,6 +483,11 @@ t_heap
 t_heap2
 t_heapdb
 t_kheap
+
+// Secure RNG tests
+t_securerng
+t_sha256
+t_entropysources
 
 // /E32TEST/LFFS tests
 t_lfsdrv2       manual
@@ -999,3 +1006,6 @@ t_camera_gen		manual
 d_mmcsc			support
 
 #include "../hcr/hcr.inf"
+
+//pci tests
+t_pci

@@ -31,4 +31,5 @@ EXPORTS
 	?Type@TConsoleKey@@QBEHXZ @ 30 NONAME ; public: int __thiscall TConsoleKey::Type(void)const 
 	?Version@RConsole@@QAE?AVTVersion@@XZ @ 31 NONAME ; public: class TVersion  __thiscall RConsole::Version(void)
 	?Write@RConsole@@QAEHABVTDesC16@@@Z @ 32 NONAME ; public: int __thiscall RConsole::Write(class TDesC16 const &)
+	?PointerNumber@TConsoleKey@@QBEEXZ @ 33 NONAME ; public: unsigned char __thiscall TConsoleKey::PointerNumber(void)const 
 
