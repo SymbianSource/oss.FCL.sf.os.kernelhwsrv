@@ -1009,7 +1009,7 @@ Asynchronously delete a DBase-derived object.
 */
 EXPORT_C void DBase::AsyncDelete()
 	{
-	CHECK_PRECONDITIONS(MASK_KERNEL_UNLOCKED | MASK_INTERRUPTS_ENABLED | MASK_NOT_ISR | MASK_NOT_IDFC | MASK_CRITICAL, "DObject::AsyncDelete");
+	CHECK_PRECONDITIONS(MASK_NO_KILL_OR_SUSPEND | MASK_INTERRUPTS_ENABLED | MASK_NOT_ISR | MASK_NOT_IDFC, "DObject::AsyncDelete");
 	__KTRACE_OPT(KSERVER,Kern::Printf("DBase::AsyncDelete() %08x",this));
 	
 	DBase* oldHead = K::AsyncDeleteHead;
@@ -1039,22 +1039,14 @@ EXPORT_C void Kern::AsyncFree(TAny* aPtr)
 // Asynchronously free a kernel heap cell (must be >=4 bytes in length)
 //
 	{
-	CHECK_PRECONDITIONS(MASK_KERNEL_UNLOCKED | MASK_INTERRUPTS_ENABLED | MASK_NOT_ISR | MASK_NOT_IDFC | MASK_CRITICAL, "Kern::AsyncFree");
+	CHECK_PRECONDITIONS(MASK_NO_KILL_OR_SUSPEND | MASK_INTERRUPTS_ENABLED | MASK_NOT_ISR | MASK_NOT_IDFC, "Kern::AsyncFree");
 	__KTRACE_OPT(KSERVER,Kern::Printf("Kern::AsyncFree(%08x)",aPtr));
-	DThread* pT=TheCurrentThread;
-
-	// if we are already running in the kernel server, just free the cell now
-	if (pT==K::TheKernelThread)
-		Kern::Free(aPtr);
-	else
-		{
-		TAny* oldHead = K::AsyncFreeHead;
-		do	{
-			*(TAny**)aPtr = oldHead;	// use first word of cell as link field
-			} while (!__e32_atomic_cas_rel_ptr(&K::AsyncFreeHead, &oldHead, aPtr));
-		if (!oldHead)
-			K::AsyncFreeDfc.Enque();
-		}
+	TAny* oldHead = K::AsyncFreeHead;
+	do	{
+		*(TAny**)aPtr = oldHead;	// use first word of cell as link field
+		} while (!__e32_atomic_cas_rel_ptr(&K::AsyncFreeHead, &oldHead, aPtr));
+	if (!oldHead)
+		K::AsyncFreeDfc.Enque();
 	}
 
 

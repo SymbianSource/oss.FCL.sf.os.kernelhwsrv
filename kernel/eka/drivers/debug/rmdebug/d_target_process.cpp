@@ -16,7 +16,7 @@
 // each process being debugged.
 // Note: Although TheDProcessTracker object is a global, it should be unique
 // as only the Debug Security Server should load and use this driver.
-// 
+//
 //
 
 #include <e32def.h>
@@ -101,12 +101,12 @@ const TPtr8& DTargetProcess::ProcessName(void)
 DDebugAgent* DTargetProcess::Agent(TUint64 aAgentId)
 	{
 	for(TInt i = 0; i < iAgentList.Count(); i++)
-	{
-		if (iAgentList[i]->Id() == aAgentId)
 		{
+		if (iAgentList[i]->Id() == aAgentId)
+			{
 			return iAgentList[i];
+			}
 		}
-	}
 
 	// what do we return if we don't have any agents?
 	return NULL;
@@ -115,8 +115,11 @@ DDebugAgent* DTargetProcess::Agent(TUint64 aAgentId)
 // Adds aAgentId as a tracking agent for this process.
 TInt DTargetProcess::AddAgent(TUint64 aAgentId)
 	{
-	LOG_MSG("DTargetProcess::AddAgent()");
+	
 	DDebugAgent* agent = DDebugAgent::New(aAgentId);
+	LOG_MSG4("DTargetProcess::AddAgent(), agentId=%d, curr iAgentList.Count=%d, new agent=0x%08x",
+		I64LOW(aAgentId), iAgentList.Count(), agent );
+
 	if(agent == NULL)
 		{
 		LOG_MSG("DTargetProcess::AddAgent() couldn't allocate memory for DDebugAgent");
@@ -172,19 +175,19 @@ TInt DTargetProcess::ResumeThread(DThread* aThread)
 	//if resuming the suspended thread failed for an obscure reason return it
 	if((err1 != KErrNotFound) && (err1 != KErrNone))
 		{
-		LOG_MSG2("DTargetProcess::ResumeThread() unexpected exit, err1: %d", err1);
+		LOG_MSG2("DTargetProcess::ResumeThread() BUG : unexpected exit, err1: %d", err1);
 		return err1;
 		}
 	//if resuming the frozen thread failed for an obscure reason return it
 	if((err2 != KErrNotFound) && (err2 != KErrNone))
 		{
-		LOG_MSG2("DTargetProcess::ResumeThread() unexpected exit, err2: %d", err2);
+		LOG_MSG2("DTargetProcess::ResumeThread() BUG : unexpected exit, err2: %d", err2);
 		return err2;
 		}
 	// if resuming the suspended thread succeeded in both cases, we have a consistency problem
 	if ((err1 == KErrNone) && (err2 == KErrNone))
 		{
-		LOG_MSG("DTargetProcess::ResumeThread() unexpected exit, err1 == err2 == KErrNone");
+		LOG_MSG("DTargetProcess::ResumeThread() BUG : unexpected exit, err1 == err2 == KErrNone");
 		}
 
 	//if the thread was in neither list return KErrNotFound, otherwise KErrNone
@@ -232,7 +235,7 @@ TInt DTargetProcess::ResumeSuspendedThread(DThread* aThread)
 		if(iSuspendedThreads[i] == threadId)
 			{
 			iSuspendedThreads.Remove(i);
-			LOG_MSG2("DTargetProcess::ResumeSuspendedThread()> Kern::ThreadResume() 0x%x", aThread);
+			LOG_MSG2("DTargetProcess::ResumeSuspendedThread()> Kern::ThreadResume() 0x%08x", aThread);
 			Kern::ThreadResume(*aThread);
 			return KErrNone;
 			}
@@ -292,7 +295,8 @@ TInt DTargetProcess::FreezeThread()
 	NFastSemaphore* sem = new NFastSemaphore();
 	NKern::ThreadLeaveCS();
 	sem->iOwningThread = &(Kern::CurrentThread().iNThread);
-	LOG_EVENT_MSG2("DTargetProcess::FreezeThread(): new NFastSemaphore() curr thread=0x%x", sem->iOwningThread);
+	LOG_MSG3("DTargetProcess::FreezeThread(): new NFastSemaphore() owning thread==curr NThread=0x%08x, DThread=0x%08x", 
+		sem->iOwningThread, &(Kern::CurrentThread()) );
 	return iFrozenThreadSemaphores.Append(sem);
 	}
 
@@ -322,6 +326,7 @@ TInt DTargetProcess::DoSuspendThread(DThread* aThread)
 	TInt err = iSuspendedThreads.Append(threadId);
 	if(err == KErrNone)
 		{
+		LOG_MSG2("DTargetProcess::DoSuspendThread >Kern::ThreadSuspend() 0x%08x", aThread ); 
 		Kern::ThreadSuspend(*aThread, 1);
 		}
 	return err;
@@ -341,13 +346,13 @@ TInt DTargetProcess::DoSuspendThread(DThread* aThread)
  */
 void DTargetProcess::FSWait()
 	{
-	LOG_MSG2("DTargetProcess::NotifyEvent(): number of attached agents: %d", AgentCount());
-	NThread* currentThread = &(Kern::CurrentThread().iNThread);
+	NThread* currentNThread = &(Kern::CurrentThread().iNThread);	
 	for(TInt i=0; i<iFrozenThreadSemaphores.Count(); i++)
 		{
-		if(iFrozenThreadSemaphores[i]->iOwningThread == currentThread)
+		if(iFrozenThreadSemaphores[i]->iOwningThread == currentNThread)
 			{
-			LOG_MSG3("DTargetProcess::FSWait(): > FSWait frozen sem %d, curr thread=0x%x", i, currentThread);
+			LOG_MSG4("DTargetProcess::FSWait(): > FSWait frozen sem %d, currentNThread=0x%08x, id=0x%x", 
+				i, currentNThread, Kern::CurrentThread().iId );
 			NKern::FSWait(iFrozenThreadSemaphores[i]);
 			return;
 			}
@@ -399,7 +404,8 @@ TBool DTargetProcess::HasSuspendedThreads() const
 void DTargetProcess::NotifyEvent(const TDriverEventInfo& aEventInfo)
 	{
 	// Stuff the event info into all the tracking agents event queues
-	LOG_MSG2("DTargetProcess::NotifyEvent(): number of attached agents: %d", AgentCount());
+	LOG_MSG4("DTargetProcess::NotifyEvent(): num attached agents: %d, iEventType=%d, this=0x%08x", 
+		AgentCount(), aEventInfo.iEventType, this);
 
 	for(TInt i = 0; i < AgentCount(); i++)
 		{

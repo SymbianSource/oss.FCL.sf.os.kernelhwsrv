@@ -46,15 +46,15 @@ DRMDStepping::DRMDStepping(DRM_DebugChannel* aChannel)
 // DRMDStepping::~DRM_DebugChannel
 //
 DRMDStepping::~DRMDStepping()
-{
+	{
 	// to do
-}
+	}
 
 //
 // DRMDStepping::IsExecuted
 //
 TBool DRMDStepping::IsExecuted(TUint8 aCondition ,TUint32 aStatusRegister)
-{
+	{
 	LOG_MSG("DRMDStepping::IsExecuted()");
 
 	TBool N = ((aStatusRegister >> 28) & 0x0000000F) & 0x00000008;
@@ -63,7 +63,7 @@ TBool DRMDStepping::IsExecuted(TUint8 aCondition ,TUint32 aStatusRegister)
 	TBool V = ((aStatusRegister >> 28) & 0x0000000F) & 0x00000001;
 
 	switch(aCondition)
-	{
+		{
 		case 0:
 			return Z;
 		case 1:
@@ -95,16 +95,16 @@ TBool DRMDStepping::IsExecuted(TUint8 aCondition ,TUint32 aStatusRegister)
 		case 14:
 		case 15:
 			return ETrue;
-	}
+		}
 	
 	return EFalse;
-}
+	}
 
 //
 // DRMDStepping::IsPreviousInstructionMovePCToLR
 //
 TBool DRMDStepping::IsPreviousInstructionMovePCToLR(DThread *aThread)
-{
+	{
 	LOG_MSG("DRMDStepping::IsPreviousInstructionMovePCToLR()");
 
 	TInt err = KErrNone;
@@ -122,114 +122,114 @@ TBool DRMDStepping::IsPreviousInstructionMovePCToLR(DThread *aThread)
 	TUint32 address = 0;
 	err = iChannel->ReadKernelRegisterValue(aThread, PC_REGISTER, address);
 	if(err != KErrNone)
-	{
+		{
 		LOG_MSG2("Non-zero error code discarded: %d", err);
-	}
+		}
 	address -= 4;
 
 	TBuf8<4> previousInstruction;
 	err = iChannel->DoReadMemory(aThread, address, 4, previousInstruction);
 	if (KErrNone != err)
-	{
+		{
 		LOG_MSG2("Error %d reading memory at address %x", address);
 		return EFalse;
-	}
+		}
 
 	const TUint32 movePCToLRIgnoringCondition = 0x01A0E00F;
 
 	TUint32 inst = *(TUint32 *)previousInstruction.Ptr();
 	
 	if ((inst & 0x0FFFFFFF) == movePCToLRIgnoringCondition)
-	{
+		{
 		return ETrue;
-	}
+		}
 		
 	return EFalse;
-}
+	}
 
 //
 // DRMDStepping::DecodeDataProcessingInstruction
 //
 void DRMDStepping::DecodeDataProcessingInstruction(TUint8 aOpcode, TUint32 aOp1, TUint32 aOp2, TUint32 aStatusRegister, TUint32 &aBreakAddress)
-{
+	{
 	LOG_MSG("DRMDStepping::DecodeDataProcessingInstruction()");
 
 	switch(aOpcode)
-	{
-		case 0:
 		{
+		case 0:
+			{
 			// AND
 			aBreakAddress = aOp1 & aOp2;
 			break;
-		}
+			}
 		case 1:
-		{
+			{
 			// EOR
 			aBreakAddress = aOp1 ^ aOp2;
 			break;
-		}
+			}
 		case 2:
-		{
+			{
 			// SUB
 			aBreakAddress = aOp1 - aOp2;
 			break;
-		}
+			}
 		case 3:
-		{
+			{
 			// RSB
 			aBreakAddress = aOp2 - aOp1;
 			break;
-		}
+			}
 		case 4:
-		{
+			{
 			// ADD
 			aBreakAddress = aOp1 + aOp2;
 			break;
-		}
+			}
 		case 5:
-		{
+			{
 			// ADC
 			aBreakAddress = aOp1 + aOp2 + (aStatusRegister & arm_carry_bit()) ? 1 : 0;
 			break;
-		}
+			}
 		case 6:
-		{
+			{
 			// SBC
 			aBreakAddress = aOp1 - aOp2 - (aStatusRegister & arm_carry_bit()) ? 0 : 1;
 			break;
-		}
+			}
 		case 7:
-		{
+			{
 			// RSC
 			aBreakAddress = aOp2 - aOp1 - (aStatusRegister & arm_carry_bit()) ? 0 : 1;
 			break;
-		}
+			}
 		case 12:
-		{
+			{
 			// ORR
 			aBreakAddress = aOp1 | aOp2;
 			break;
-		}
+			}
 		case 13:
-		{
+			{
 			// MOV
 			aBreakAddress = aOp2;
 			break;
-		}
+			}
 		case 14:
-		{
+			{
 			// BIC
 			aBreakAddress = aOp1 & ~aOp2;
 			break;
-		}
+			}
 		case 15:
-		{
+			{
 			// MVN
 			aBreakAddress = ~aOp2;
 			break;
+			}
 		}
 	}
-}
 
 //
 // DRMDStepping::CurrentInstruction
@@ -315,7 +315,7 @@ TInt DRMDStepping::CurrentArchMode(const TUint32 aCpsr, Debug::TArchitectureMode
 // to remove obsolete parameters.
 //
 TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurrentPC, TUint32 aStatusRegister, TInt aInstSize, /*TBool aStepInto,*/ TUint32 &aNewRangeEnd, TBool &aChangingModes)
-{
+	{
 	LOG_MSG("DRMDStepping::PCAfterInstructionExecutes()");
 
 	// by default we will set the breakpoint at the next instruction
@@ -324,12 +324,12 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 	TInt err = KErrNone;
 
 	// determine the architecture
-    TUint32 cpuid;
-   	asm("mrc p15, 0, cpuid, c0, c0, 0 ");
+	TUint32 cpuid;
+	asm("mrc p15, 0, cpuid, c0, c0, 0 ");
 	LOG_MSG2("DRMDStepping::PCAfterInstructionExecutes() - cpuid = 0x%08x\n",cpuid);
 
-    cpuid >>= 8;
-    cpuid &= 0xFF;
+	cpuid >>= 8;
+	cpuid &= 0xFF;
 
 	// determine the architecture mode for the current instruction
 	TArchitectureMode mode = EArmMode;	// Default assumption is ARM 
@@ -345,9 +345,9 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 	// Decode instruction based on current CPU mode
 	switch(mode)
-	{
-		case Debug::EArmMode:
 		{
+		case Debug::EArmMode:
+			{
 			// Obtain the current instruction bit pattern
 			TUint32 inst;
 			ReturnIfError(CurrentInstruction(aThread,inst));
@@ -356,64 +356,64 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 			// check the conditions to see if this will actually get executed
 			if (IsExecuted(((inst>>28) & 0x0000000F), aStatusRegister)) 
-			{
-				switch(arm_opcode(inst)) // bits 27-25
 				{
-					case 0:
+				switch(arm_opcode(inst)) // bits 27-25
 					{
-						switch((inst & 0x00000010) >> 4) // bit 4
+					case 0:
 						{
-							case 0:
+						switch((inst & 0x00000010) >> 4) // bit 4
 							{
-								switch((inst & 0x01800000) >> 23) // bits 24-23
+							case 0:
 								{
-									case 2:
+								switch((inst & 0x01800000) >> 23) // bits 24-23
 									{
+									case 2:
+										{
 										// move to/from status register.  pc updates not allowed
 										// or TST, TEQ, CMP, CMN which don't modify the PC
 										break;
-									}
+										}
 									default:
-									{
+										{
 										// Data processing immediate shift
 										if (arm_rd(inst) == PC_REGISTER)
-										{
+											{
 											TUint32 rn = aCurrentPC + 8;
 											if (arm_rn(inst) != PC_REGISTER) // bits 19-16
-											{
+												{
 												err = iChannel->ReadKernelRegisterValue(aThread, arm_rn(inst), rn);
 												if(err != KErrNone)
-												{
+													{
 													LOG_MSG2("Non-zero error code discarded: %d", err);
+													}
 												}
-											}
 
 											TUint32 shifter = ShiftedRegValue(aThread, inst, aCurrentPC, aStatusRegister);
 
 											DecodeDataProcessingInstruction(((inst & 0x01E00000) >> 21), rn, shifter, aStatusRegister, breakAddress);
-										}
+											}
 										break;
+										}
 									}
-								}
 								break;
-							}					
+								}
 							case 1:
-							{
-								switch((inst & 0x00000080) >> 7) // bit 7
 								{
-									case 0:
+								switch((inst & 0x00000080) >> 7) // bit 7
 									{
-										switch((inst & 0x01900000) >> 20) // bits 24-23 and bit 20
+									case 0:
 										{
-											case 0x10:
+										switch((inst & 0x01900000) >> 20) // bits 24-23 and bit 20
 											{
+											case 0x10:
+												{
 												// from figure 3-3
 												switch((inst & 0x000000F0) >> 4) // bits 7-4
-												{
-													case 1:
 													{
-														if (((inst & 0x00400000) >> 22) == 0) // bit 22
+													case 1:
 														{
+														if (((inst & 0x00400000) >> 22) == 0) // bit 22
+															{
 															// BX
 															// this is a strange case.  normally this is used in the epilogue to branch the the link
 															// register.  sometimes it is used to call a function, and the LR is stored in the previous
@@ -421,324 +421,319 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 															// we need to read the previous instruction to see what we should do
 															err = iChannel->ReadKernelRegisterValue(aThread, (inst & 0x0000000F), breakAddress);
 															if(err != KErrNone)
-															{
+																{
 																LOG_MSG2("Non-zero error code discarded: %d", err);
-															}
+																}
 
 															if ((breakAddress & 0x00000001) == 1)
-															{
+																{
 																aChangingModes = ETrue;
-															}
+																}
 
 															breakAddress &= 0xFFFFFFFE;
-														}
+															}
 														break;
-													}
+														}
 													case 3:
-													{
-														// BLX
 														{
+														// BLX
+															{
 															err = iChannel->ReadKernelRegisterValue(aThread, (inst & 0x0000000F), breakAddress);
 															if(err != KErrNone)
-															{
+																{
 																LOG_MSG2("Non-zero error code discarded: %d", err);
-															}
+																}
 
 															if ((breakAddress & 0x00000001) == 1)
-															{
+																{
 																aChangingModes = ETrue;
-															}
+																}
 															
 															breakAddress &= 0xFFFFFFFE;
-														}
+															}
 														break;
-													}
+														}
 													default:
-													{
+														{
 														// either doesn't modify the PC or it is illegal to
 														break;
+														}
 													}
-												}
 												break;
-											}
+												}
 											default:
-											{
+												{
 												// Data processing register shift
 												if (((inst & 0x01800000) >> 23) == 2) // bits 24-23
-												{
+													{
 													// TST, TEQ, CMP, CMN don't modify the PC
-												}
+													}
 												else if (arm_rd(inst) == PC_REGISTER)
-												{
+													{
 													// destination register is the PC
 													TUint32 rn = aCurrentPC + 8;
 													if (arm_rn(inst) != PC_REGISTER) // bits 19-16
-													{
+														{
 														err = iChannel->ReadKernelRegisterValue(aThread, arm_rn(inst), rn);
 														if(err != KErrNone)
-														{
+															{
 															LOG_MSG2("Non-zero error code discarded: %d", err);
+															}
 														}
-													}
 													
 													TUint32 shifter = ShiftedRegValue(aThread, inst, aCurrentPC, aStatusRegister);
 													
 													DecodeDataProcessingInstruction(((inst & 0x01E00000) >> 21), rn, shifter, aStatusRegister, breakAddress);
-												}
+													}
 												break;
+												}
 											}
-										}
 										break;
-									}
+										}
 									default:
-									{
+										{
 										// from figure 3-2, updates to the PC illegal
 										break;
+										}
 									}
-								}
 								break;
+								}
 							}
-						}
 						break;
-					}
+						}
 					case 1:
-					{
-						if (((inst & 0x01800000) >> 23) == 2) // bits 24-23
 						{
+						if (((inst & 0x01800000) >> 23) == 2) // bits 24-23
+							{
 							// cannot modify the PC
 							break;
-						}
+							}
 						else if (arm_rd(inst) == PC_REGISTER)
-						{
+							{
 							// destination register is the PC
 							TUint32 rn;
 							err = iChannel->ReadKernelRegisterValue(aThread, arm_rn(inst), rn); // bits 19-16
 							if(err != KErrNone)
-							{
+								{
 								LOG_MSG2("Non-zero error code discarded: %d", err);
-							}
+								}
 							TUint32 shifter = ((arm_data_imm(inst) >> arm_data_rot(inst)) | (arm_data_imm(inst) << (32 - arm_data_rot(inst)))) & 0xffffffff;
 
 							DecodeDataProcessingInstruction(((inst & 0x01E00000) >> 21), rn, shifter, aStatusRegister, breakAddress);
-						}
+							}
 						break;
-					}
+						}
 					case 2:
-					{
+						{
 						// load/store immediate offset
 						if (arm_load(inst)) // bit 20
-						{
+							{
 							// loading a register from memory
 							if (arm_rd(inst) == PC_REGISTER)
-							{
+								{
 								// loading the PC register
 								TUint32 base;
 								err = iChannel->ReadKernelRegisterValue(aThread, arm_rn(inst), base);
 								if(err != KErrNone)
-								{
+									{
 									LOG_MSG2("Non-zero error code discarded: %d", err);
-								}
+									}
 
 								/* Note: At runtime the PC would be 8 further on
 								 */
 								if (arm_rn(inst) == PC_REGISTER)
-								{
+									{
 									base = aCurrentPC + 8;
-								}
+									}
 
 								TUint32 offset = 0;
-					    		
-					    		if (arm_single_pre(inst))
-					    		{
-					    			// Pre-indexing
-					    			offset = arm_single_imm(inst);
-									
+
+								if (arm_single_pre(inst))
+									{
+									// Pre-indexing
+									offset = arm_single_imm(inst);
+
 									if (arm_single_u(inst))
-									{
-							    		base += offset;
-									}
+										{
+										base += offset;
+										}
 									else
-									{
-							    		base -= offset;
+										{
+										base -= offset;
+										}
 									}
-								}
 
 								TBuf8<4> destination;
 								err = iChannel->DoReadMemory(aThread, base, 4, destination);
 								
 								if (KErrNone == err)
-								{
-									breakAddress = *(TUint32 *)destination.Ptr();
-								
-									if ((breakAddress & 0x00000001) == 1)
 									{
+									breakAddress = *(TUint32 *)destination.Ptr();
+
+									if ((breakAddress & 0x00000001) == 1)
+										{
 										aChangingModes = ETrue;
-									}								
+										}
 									breakAddress &= 0xFFFFFFFE;
-								}
+									}
 								else
-								{
+									{
 									LOG_MSG("Error reading memory in decoding step instruction");
+									}
 								}
 							}
-						}	
 						break;
-					}
+						}
 					case 3:
-					{
-						if (((inst & 0xF0000000) != 0xF0000000) && ((inst & 0x00000010) == 0))
 						{
+						if (((inst & 0xF0000000) != 0xF0000000) && ((inst & 0x00000010) == 0))
+							{
 							// load/store register offset
 							if (arm_load(inst)) // bit 20
-							{
+								{
 								// loading a register from memory
 								if (arm_rd(inst) == PC_REGISTER)
-								{
+									{
 									// loading the PC register
 									TUint32 base = 0;
 									if(arm_rn(inst) == PC_REGISTER)
-									{
+										{
 										base = aCurrentPC + 8;
-									}
+										}
 									else
-									{
+										{
 										err = iChannel->ReadKernelRegisterValue(aThread, arm_rn(inst), base);
 										if(err != KErrNone)
-										{
+											{
 											LOG_MSG2("Non-zero error code discarded: %d", err);
+											}
 										}
-									}
 
 									TUint32 offset = 0;
 
 									if (arm_single_pre(inst))
-									{
+										{
 										offset = ShiftedRegValue(aThread, inst, aCurrentPC, aStatusRegister);
 
 										if (arm_single_u(inst))
-										{
+											{
 											base += offset;
-										}
+											}
 										else
-										{
+											{
 											base -= offset;
+											}
 										}
-									}
 
 									TBuf8<4> destination;
 									err = iChannel->DoReadMemory(aThread, base, 4, destination);
 
 									if (KErrNone == err)
-									{
+										{
 										breakAddress = *(TUint32 *)destination.Ptr();
 
 										if ((breakAddress & 0x00000001) == 1)
-										{
+											{
 											aChangingModes = ETrue;
-										}								
+											}
 										breakAddress &= 0xFFFFFFFE;
-									}
+										}
 									else
-									{
+										{
 										LOG_MSG("Error reading memory in decoding step instruction");
+										}
 									}
 								}
-							}	
-						}
+							}
 						break;
-					}
+						}
 					case 4:
-					{
-						if ((inst & 0xF0000000) != 0xF0000000)
 						{
+						if ((inst & 0xF0000000) != 0xF0000000)
+							{
 							// load/store multiple
 							if (arm_load(inst)) // bit 20
-							{
+								{
 								// loading a register from memory
 								if (((inst & 0x00008000) >> 15))
-								{
+									{
 									// loading the PC register
 									TInt offset = 0;	
 									if (arm_block_u(inst))
-									{
+										{
 										TUint32 reglist = arm_block_reglist(inst);
 										offset = iChannel->Bitcount(reglist) * 4 - 4;
 										if (arm_block_pre(inst))
 											offset += 4;
-									}
+										}
 									else if (arm_block_pre(inst))
-									{
+										{
 										offset = -4;
-									}
-										
+										}
+
 									TUint32 temp = 0;
 									err = iChannel->ReadKernelRegisterValue(aThread, arm_rn(inst), temp);
 									if(err != KErrNone)
-									{
+										{
 										LOG_MSG2("Non-zero error code discarded: %d", err);
-									}
-									
+										}
+
 									temp += offset;
 
 									TBuf8<4> destination;
 									err = iChannel->DoReadMemory(aThread, temp, 4, destination);
-									
+
 									if (KErrNone == err)
-									{
+										{
 										breakAddress = *(TUint32 *)destination.Ptr();
 										if ((breakAddress & 0x00000001) == 1)
-										{
+											{
 											aChangingModes = ETrue;
-										}
+											}
 										breakAddress &= 0xFFFFFFFE;
-									}
+										}
 									else
-									{
+										{
 										LOG_MSG("Error reading memory in decoding step instruction");
+										}
 									}
 								}
-							}					
-						}
-						break;
-					}
-					case 5:
-					{
-						if ((inst & 0xF0000000) == 0xF0000000)
-						{
-							// BLX
-							{
-								breakAddress = (TUint32)arm_instr_b_dest(inst, aCurrentPC);
-
-								// Unconditionally change into Thumb mode
-								aChangingModes = ETrue;
-								
-								breakAddress &= 0xFFFFFFFE;
 							}
+						break;
 						}
-						else
+					case 5:
 						{
-							if ((inst & 0x01000000)) // bit 24
+						if ((inst & 0xF0000000) == 0xF0000000)
 							{
-								// BL
+							// BLX
+							breakAddress = (TUint32)arm_instr_b_dest(inst, aCurrentPC);
+
+							// Unconditionally change into Thumb mode
+							aChangingModes = ETrue;
+							breakAddress &= 0xFFFFFFFE;
+							}
+						else
+							{
+							if ((inst & 0x01000000)) // bit 24
 								{
+								// BL
 									breakAddress = (TUint32)arm_instr_b_dest(inst, aCurrentPC);
 								}
-							}
 							else
-							{
+								{
 								// B
 								breakAddress = (TUint32)arm_instr_b_dest(inst, aCurrentPC);
+								}
 							}
-						}
 						break;
-					}
-				}	
-			}
-		}
+						} // case 5
+					} //switch(arm_opcode(inst)) // bits 27-25
+				} // if (IsExecuted(((inst>>28) & 0x0000000F), aStatusRegister)) 
+			} // case Debug::EArmMode:
 		break;
 
 		case Debug::EThumbMode:
-		{
+			{
 			// Thumb Mode
 			//
 			// Notes: This now includes the extra code
@@ -758,22 +753,21 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 			// v6T2 instructions
 
-// Note: v6T2 decoding is only enabled for DEBUG builds or if using an
-// an ARM_V6T2 supporting build system. At the time of writing, no
-// ARM_V6T2 supporting build system exists, so the stepping code cannot
-// be said to be known to work. Hence it is not run for release builds
+			// Note: v6T2 decoding is only enabled for DEBUG builds or if using an
+			// an ARM_V6T2 supporting build system. At the time of writing, no
+			// ARM_V6T2 supporting build system exists, so the stepping code cannot
+			// be said to be known to work. Hence it is not run for release builds
 
 			TBool use_v6t2_decodings = EFalse;
 
 #if defined(DEBUG) || defined(__ARMV6T2__)
 			use_v6t2_decodings = ETrue;
-
 #endif
 			// coverity[dead_error_line]
 			if (use_v6t2_decodings)
-			{
+				{
 				// 16-bit encodings
-	 
+
 				// A6.2.5 Misc 16-bit instructions
 				// DONE Compare and branch on zero (page A8-66)
 				// If then hints
@@ -782,7 +776,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				//
 				// Compare and branch on Nonzero and Compare and Branch on Zero.
 				if ((inst & 0xF500) == 0xB100)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.27 CBNZ, CBZ");
 
 					// Decoding as per ARM ARM description
@@ -821,7 +815,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				//
 				// If Then instruction
 				if ((inst & 0xFF00) == 0xBF00)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.50 IT");
 
 					// Decoding as per ARM ARM description
@@ -829,18 +823,18 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					TUint32 mask = inst & 0x000F;
 
 					if (firstcond == 0xF)
-					{
+						{
 						// unpredictable
 						LOG_MSG("ARM ARM DDI0406A - section A8.6.50 IT - Unpredictable");
 						break;
-					}
+						}
 
 					if ((firstcond == 0xE) && (BitCount(mask) != 1))
-					{
+						{
 						// unpredictable
 						LOG_MSG("ARM ARM DDI0406A - section A8.6.50 IT - Unpredictable");
 						break;
-					}
+						}
 
 					// should check if 'in-it-block'
 					LOG_MSG("Cannot step IT instructions.");
@@ -861,7 +855,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					// perhaps we can just totally ignore this state, and always do the two-instruction
 					// breakpoint thing? Not if there is any possibility that the address target
 					// would be invalid for the non-taken branch address...
-				}
+					}
 
 
 				// 32-bit encodings.
@@ -873,12 +867,12 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 				// ARM ARM DDI0406A - section A8.6.26
 				if (inst32 & 0xFFF0FFFF == 0xE3C08F00)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.26 - BXJ is not supported");
 
 					// Decoding as per ARM ARM description
 					// TUint32 Rm = inst32 & 0x000F0000;	// not needed yet
-				}
+					}
 
 				// return from exception... SUBS PC,LR. page b6-25
 				//
@@ -886,7 +880,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				//
 				// Encoding T1
 				if (inst32 & 0xFFFFFF00 == 0xF3DE8F00)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section B6.1.13 - SUBS PC,LR Encoding T1");
 
 					// Decoding as per ARM ARM description
@@ -906,13 +900,13 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					TUint32 result = lrVal - operand2;
 					
 					breakAddress = result;
-				}
-				
+					}
+
 				// ARM ARM DDI0406A - section A8.6.16 - B
 				//
 				// Branch Encoding T3
 				if (inst32 & 0xF800D000 == 0xF0008000)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.16 - B Encoding T3");
 
 					// Decoding as per ARM ARM description
@@ -931,13 +925,13 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					imm32 = (imm32 << 1) | 0;
 
 					breakAddress = aCurrentPC + imm32;
-				}
+					}
 
 				// ARM ARM DDI0406A - section A8.6.16 - B
 				//
 				// Branch Encoding T4
 				if (inst32 & 0xF800D000 == 0xF0009000)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.16 - B");
 
 					// Decoding as per ARM ARM description
@@ -959,14 +953,14 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					imm32 = (imm32 << 1) | 0;
 
 					breakAddress = aCurrentPC + imm32;
-				}
+					}
 
 
 				// ARM ARM DDI0406A - section A8.6.225 - TBB, TBH
 				//
 				// Table Branch Byte, Table Branch Halfword
 				if (inst32 & 0xFFF0FFE0 == 0xE8D0F000)
-				{
+						{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.225 TBB,TBH Encoding T1");
 
 					// Decoding as per ARM ARM description
@@ -976,10 +970,10 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Unpredictable?
 					if (Rm == 13 || Rm == 15)
-					{
+						{
 						LOG_MSG("ARM ARM DDI0406A - section A8.6.225 TBB,TBH Encoding T1 - Unpredictable");
 						break;
-					}
+						}
 
 					TUint32 halfwords;
 					TUint32 address;
@@ -989,26 +983,25 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					ReturnIfError(RegisterValue(aThread,Rm,offset));
 
 					if (H)
-					{
-
+						{
 						address += offset << 1;
-					}
+						}
 					else
-					{
+						{
 						address += offset;
-					}
+						}
 
 					ReturnIfError(ReadMem32(aThread,address,halfwords));
 
 					breakAddress = aCurrentPC + 2*halfwords;
 					break;
-				}
+					}
 
 				// ARM ARM DDI0406A - section A8.6.55 - LDMDB, LDMEA
 				//
 				// LDMDB Encoding T1
 				if (inst32 & 0xFFD02000 == 0xE9100000)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406 - section A8.6.55 LDMDB Encoding T1");
 
 					// Decoding as per ARM ARM description
@@ -1022,10 +1015,10 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Unpredictable?
 					if (Rn == 15 || BitCount(registers) < 2 || ((P == 1) && (M==1)))
-					{
+						{
 						LOG_MSG("ARM ARM DDI0406 - section A8.6.55 LDMDB Encoding T1 - Unpredictable");
 						break;
-					}
+						}
 
 					TUint32 address;
 					ReturnIfError(RegisterValue(aThread,Rn,address));
@@ -1033,28 +1026,28 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					address -= 4*BitCount(registers);
 
 					for(TInt i=0; i<15; i++)
-					{
-						if (IsBitSet(registers,i))
 						{
+						if (IsBitSet(registers,i))
+							{
 							address +=4;
+							}
 						}
-					}
 
 					if (IsBitSet(registers,15))
-					{
+						{
 						TUint32 RnVal = 0;
 						ReturnIfError(ReadMem32(aThread,address,RnVal));
 
 						breakAddress = RnVal;
-					}
+						}
 					break;
-				}
+					}
 
 				// ARM ARM DDI0406A - section A8.6.121 POP
 				//
 				// POP.W Encoding T2
 				if (inst32 & 0xFFFF2000 == 0xE8BD0000)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.121 POP Encoding T2");
 
 					// Decoding as per ARM ARM description
@@ -1064,33 +1057,33 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Unpredictable?
 					if ( (BitCount(registers)<2) || ((P == 1)&&(M == 1)) )
-					{
+						{
 						LOG_MSG("ARM ARM DDI0406A - section A8.6.121 POP Encoding T2 - Unpredictable");
 						break;
-					}
+						}
 
 					TUint32 address;
 					ReturnIfError(RegisterValue(aThread,13,address));
 					
 					for(TInt i=0; i< 15; i++)
-					{
-						if (IsBitSet(registers,i))
 						{
+						if (IsBitSet(registers,i))
+							{
 							address += 4;
+							}
 						}
-					}
 
 					// Is the PC written?
 					if (IsBitSet(registers,15))
-					{
+						{
 						// Yes
 						ReturnIfError(ReadMem32(aThread,address,breakAddress));
+						}
 					}
-				}
 
 				// POP Encoding T3
 				if (inst32 & 0xFFFF0FFFF == 0xF85D0B04)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.121 POP Encoding T3");
 
 					// Decoding as per ARM ARM description
@@ -1099,37 +1092,37 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Unpredictable?
 					if (Rt == 13 || Rt == 15)
-					{
+						{
 						LOG_MSG("ARM ARM DDI0406A - section A8.6.121 POP Encoding T3 - Unpredictable");
 						break;
-					}
+						}
 					
 					TUint32 address;
 					ReturnIfError(RegisterValue(aThread,13,address));
 					
 					for(TInt i=0; i< 15; i++)
-					{
-						if (IsBitSet(registers,i))
 						{
+						if (IsBitSet(registers,i))
+							{
 							address += 4;
+							}
 						}
-					}
 
 					// Is the PC written?
 					if (IsBitSet(registers,15))
-					{
+						{
 						// Yes
 						ReturnIfError(ReadMem32(aThread,address,breakAddress));
-					}
+						}
 
 					break;
-				}
+					}
 
 				// ARM ARM DDI0406A - section A8.6.53 LDM
 				//
 				// Load Multiple Encoding T2 
 				if ((inst32 & 0xFFD02000) == 0xE8900000)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.53 LDM Encoding T2");
 
 					// Decoding as per ARM ARM description
@@ -1142,17 +1135,17 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				
 					// POP?
 					if ( (W == 1) && (Rn == 13) )
-					{
+						{
 						// POP instruction
 						LOG_MSG("ARM ARM DDI0406A - section A8.6.53 LDM Encoding T2 - POP");
-					}
+						}
 
 					// Unpredictable?
 					if (Rn == 15 || BitCount(register_list) < 2 || ((P == 1) && (M == 1)) )
-					{
+						{
 						LOG_MSG("ARM ARM DDI0406A - section A8.6.53 LDM Encoding T2 - Unpredictable");
 						break;
-					}
+						}
 					
 					TUint32 RnVal;
 					ReturnIfError(RegisterValue(aThread,Rn,RnVal));
@@ -1161,28 +1154,28 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Calculate offset of address
 					for(TInt i = 0; i < 15; i++)
-					{
+						{
 						if (IsBitSet(registers,i))
 						{
 							address += 4;
 						}
-					}
+						}
 
 					// Does it load the PC?
 					if (IsBitSet(registers,15))
-					{
+						{
 						// Obtain the value loaded into the PC
 						ReturnIfError(ReadMem32(aThread,address,breakAddress));
-					}
+						}
 					break;
 
-				}
+					}
 
 				// ARM ARM DDI0406A - section B6.1.8 RFE
 				//
 				// Return From Exception Encoding T1 RFEDB
 				if ((inst32 & 0xFFD0FFFF) == 0xE810C000)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section B6.1.8 RFE Encoding T1");
 
 					// Decoding as per ARM ARM description
@@ -1195,11 +1188,11 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Do calculation
 					if (Rn == 15)
-					{
+						{
 						// Unpredictable 
 						LOG_MSG("ARM ARM DDI0406A - section B6.1.8 RFE Encoding T1 - Unpredictable");
 						break;
-					}
+						}
 
 					TUint32 RnVal = 0;
 					ReturnIfError(RegisterValue(aThread,Rn,RnVal));
@@ -1208,22 +1201,22 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					ReturnIfError(ReadMem32(aThread,RnVal,address));
 
 					if (increment)
-					{
+						{
 						address -= 8;
-					}
+						}
 
 					if (wordhigher)
-					{
+						{
 						address += 4;
-					}				
+						}
 
 					breakAddress = address;
 					break;
-				}
+					}
 
 				// Return From Exception Encoding T2 RFEIA
 				if ((inst32 & 0xFFD0FFFF) == 0xE990C000)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section B6.1.8 RFE Encoding T2");
 
 					// Decoding as per ARM ARM description
@@ -1236,11 +1229,11 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Do calculation
 					if (Rn == 15)
-					{
+						{
 						// Unpredictable 
 						LOG_MSG("ARM ARM DDI0406A - section B6.1.8 RFE Encoding T2 - Unpredictable");
 						break;
-					}
+						}
 
 					TUint32 RnVal = 0;
 					ReturnIfError(RegisterValue(aThread,Rn,RnVal));
@@ -1249,22 +1242,22 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					ReturnIfError(ReadMem32(aThread,RnVal,address));
 
 					if (increment)
-					{
+						{
 						address -= 8;
-					}
+						}
 
 					if (wordhigher)
-					{
+						{
 						address += 4;
-					}				
+						}
 
 					breakAddress = RnVal;
 					break;
-				}
+					}
 
 				// Return From Exception Encoding A1 RFE<amode>
 				if ((inst32 & 0xFE50FFFF) == 0xF8100A00)
-				{
+					{
 					LOG_MSG("ARM ARM DDI0406A - section B6.1.8 RFE Encoding A1");
 
 					// Decoding as per ARM ARM description
@@ -1279,11 +1272,11 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 					// Do calculation
 					if (Rn == 15)
-					{
+						{
 						// Unpredictable 
 						LOG_MSG("ARM ARM DDI0406A - section B6.1.8 RFE Encoding A1 - Unpredictable");
 						break;
-					}
+						}
 
 					TUint32 RnVal = 0;
 					ReturnIfError(RegisterValue(aThread,Rn,RnVal));
@@ -1292,94 +1285,94 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					ReturnIfError(ReadMem32(aThread,RnVal,address));
 
 					if (increment)
-					{
+						{
 						address -= 8;
-					}
+						}
 
 					if (wordhigher)
-					{
+						{
 						address += 4;
-					}				
+						}
 
 					breakAddress = address;
 					break;
+					}
 				}
-			}
 
 			// v4T/v5T/v6T instructions
 			switch(thumb_opcode(inst))
-			{		
-				case 0x08:
 				{
+				case 0x08:
+					{
 					// Data-processing. See ARM ARM DDI0406A, section A6-8, A6.2.2.
 
 					if ((thumb_inst_7_15(inst) == 0x08F))
-					{
+						{
 						// BLX(2)
 						err = iChannel->ReadKernelRegisterValue(aThread, ((inst & 0x0078) >> 3), breakAddress);
 						if(err != KErrNone)
-						{
+							{
 							LOG_MSG2("Non-zero error code discarded: %d", err);
-						}
+							}
 
 						if ((breakAddress & 0x00000001) == 0)
-						{
+							{
 							aChangingModes = ETrue;
-						}
-						
+							}
+
 						breakAddress &= 0xFFFFFFFE;
 
 						// Report how we decoded this instruction
 						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as BLX (2)");
-					}
+						}
 					else if (thumb_inst_7_15(inst) == 0x08E)
-					{
+						{
 						// BX
 						err = iChannel->ReadKernelRegisterValue(aThread, ((inst & 0x0078) >> 3), breakAddress);
 						if(err != KErrNone)
-						{
+							{
 							LOG_MSG2("Non-zero error code discarded: %d", err);
-						}
+							}
 
 						if ((breakAddress & 0x00000001) == 0)
-						{
+							{
 							aChangingModes = ETrue;
-						}
+							}
 						
 						breakAddress &= 0xFFFFFFFE;
 
 						// Report how we decoded this instruction
 						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as BX");
-					}
+						}
 					else if ((thumb_inst_8_15(inst) == 0x46) && ((inst & 0x87) == 0x87))
-					{
+						{
 						// MOV with PC as the destination
 						err = iChannel->ReadKernelRegisterValue(aThread, ((inst & 0x0078) >> 3), breakAddress);
 						if(err != KErrNone)
-						{
+							{
 							LOG_MSG2("Non-zero error code discarded: %d", err);
-						}
+							}
 
 						// Report how we decoded this instruction
 						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as MOV with PC as the destination");
-					}
+						}
 					else if ((thumb_inst_8_15(inst) == 0x44) && ((inst & 0x87) == 0x87))
-					{
+						{
 						// ADD with PC as the destination
 						err = iChannel->ReadKernelRegisterValue(aThread, ((inst & 0x0078) >> 3), breakAddress);
 						if(err != KErrNone)
-						{
+							{
 							LOG_MSG2("Non-zero error code discarded: %d", err);
-						}
+							}
 						breakAddress += aCurrentPC + 4; // +4 because we need to use the PC+4 according to ARM ARM DDI0406A, section A6.1.2.
 
 						// Report how we decoded this instruction
 						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as ADD with PC as the destination");
-					}
+						}
 					break;
-				}
+					}
 				case 0x13:
-				{
+					{
 					// Load/Store single data item. See ARM ARM DDI0406A, section A6-10
 
 					//This instruction doesn't modify the PC.
@@ -1393,81 +1386,81 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					// Report how we decoded this instruction
 					LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as This instruction doesn't modify the PC.");
 					break;
-				}
+					}
 				case 0x17:
-				{	
+					{
 					// Misc 16-bit instruction. See ARM ARM DDI0406A, section A6-11
 
 					if (thumb_inst_8_15(inst) == 0xBD)
-					{
+						{
 						// POP with the PC in the list
 						TUint32 regList = (inst & 0x00FF);
 						TInt offset = 0;
 						err = iChannel->ReadKernelRegisterValue(aThread,  SP_REGISTER, (T4ByteRegisterValue&)offset);
 						if(err != KErrNone)
-						{
+							{
 							LOG_MSG2("Non-zero error code discarded: %d", err);
-						}
+							}
 						offset += (iChannel->Bitcount(regList) * 4);
 
 						TBuf8<4> destination;
 						err = iChannel->DoReadMemory(aThread, offset, 4, destination);
 						
 						if (KErrNone == err)
-						{
+							{
 							breakAddress = *(TUint32 *)destination.Ptr();
 
 							if ((breakAddress & 0x00000001) == 0)
-							{
+								{
 								aChangingModes = ETrue;
-							}
+								}
 
 							breakAddress &= 0xFFFFFFFE;
-						}
+							}
 						else
-						{
+							{
 							LOG_MSG("Error reading memory in decoding step instruction");
-						}
+							}
 
 						// Report how we decoded this instruction
 						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as POP with the PC in the list");
-					}
+						}
 					break;
-				}
+					}
 				case 0x1A:
 				case 0x1B:
-				{	
+					{
 					// Conditional branch, and supervisor call. See ARM ARM DDI0406A, section A6-13
 
 					if (thumb_inst_8_15(inst) < 0xDE)
-					{
+						{
 						// B(1) conditional branch
 						if (IsExecuted(((inst & 0x0F00) >> 8), aStatusRegister))
-						{
+							{
 							TUint32 offset = ((inst & 0x000000FF) << 1);
 							if (offset & 0x00000100)
-							{
+								{
 								offset |= 0xFFFFFF00;
-							}
+								}
 							
 							breakAddress = aCurrentPC + 4 + offset;
 
 							// Report how we decoded this instruction
 							LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as B(1) conditional branch");
+							}
 						}
-					}
 					break;
-				}
+					}
 				case 0x1C:
-				{
+					{
 					// Unconditional branch, See ARM ARM DDI0406A, section A8-44.
 
 					// B(2) unconditional branch
 					TUint32 offset = (inst & 0x000007FF) << 1;
 					if (offset & 0x00000800)
-					{
+						{
 						offset |= 0xFFFFF800;
-					}
+						}
 					
 					breakAddress = aCurrentPC + 4 + offset;
 
@@ -1475,114 +1468,111 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as B(2) unconditional branch");
 
 					break;
-				}
+					}
 				case 0x1D:
-				{
-					if (!(inst & 0x0001))
 					{
+					if (!(inst & 0x0001))
+						{
 						// BLX(1)
 						err = iChannel->ReadKernelRegisterValue(aThread, LINK_REGISTER, breakAddress);
 						if(err != KErrNone)
-						{
+							{
 							LOG_MSG2("Non-zero error code discarded: %d", err);
-						}
+							}
 						breakAddress +=  ((inst & 0x07FF) << 1);
 						if ((breakAddress & 0x00000001) == 0)
-						{
+							{
 							aChangingModes = ETrue;
-						}
+							}
 
 						breakAddress &= 0xFFFFFFFC;
 
 						// Report how we decoded this instruction
 						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as BLX(1)");
 
-					}
+						}
 					break;
-				}
+					}
 				case 0x1E:
-				{
-                    // Check for ARMv7 CPU
-                    if(cpuid == 0xC0)
-                    {
-    					// BL/BLX 32-bit instruction
-	    				aNewRangeEnd += 4;
+					{
+					// Check for ARMv7 CPU
+					if(cpuid == 0xC0)
+						{
+						// BL/BLX 32-bit instruction
+						aNewRangeEnd += 4;
 
 						breakAddress = (TUint32)thumb_instr_b_dest(inst32, aCurrentPC);
 
-            			if((inst32 >> 27) == 0x1D)
-            			{
-            			    // BLX(1)
-    						if ((breakAddress & 0x00000001) == 0)
-	    					{
-		    					aChangingModes = ETrue;
-			    			}
-    
-	    					breakAddress &= 0xFFFFFFFC;
+						if((inst32 >> 27) == 0x1D)
+							{
+							// BLX(1)
+							if ((breakAddress & 0x00000001) == 0)
+								{
+								aChangingModes = ETrue;
+								}
 
-    						// Report how we decoded this instruction
-	    					LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as 32-bit BLX(1)");
-                        }
-                        else
-                        {                            
-    					    // Report how we decoded this instruction
-	        				LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: 32-bit BL instruction");
-                        }
-        				LOG_MSG2(" 32-bit BL/BLX instruction: breakAddress = 0x%X", breakAddress);
-                    }            
-                    else
-                    {
-					    // BL/BLX prefix - destination is encoded in this and the next instruction
-					    aNewRangeEnd += 2;
+							breakAddress &= 0xFFFFFFFC;
 
-					    // Report how we decoded this instruction
-					    LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: BL/BLX prefix - destination is encoded in this and the next instruction");
-                    }
-
-
-					break;
-				}
-				case 0x1F:
-				{
-					{
-						// BL
-						err = iChannel->ReadKernelRegisterValue(aThread, LINK_REGISTER, breakAddress);
-						if(err != KErrNone)
+							// Report how we decoded this instruction
+							LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as 32-bit BLX(1)");
+							}
+						else
+							{
+							// Report how we decoded this instruction
+							LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: 32-bit BL instruction");
+							}
+						LOG_MSG2(" 32-bit BL/BLX instruction: breakAddress = 0x%X", breakAddress);
+						} // if(cpuid == 0xC0)
+					else
 						{
-							LOG_MSG2("Non-zero error code discarded: %d", err);
-						}
-						breakAddress += ((inst & 0x07FF) << 1);
+						// BL/BLX prefix - destination is encoded in this and the next instruction
+						aNewRangeEnd += 2;
 
 						// Report how we decoded this instruction
-						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as BL");
-					}
+						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: BL/BLX prefix - destination is encoded in this and the next instruction");
+						}
+
 					break;
-				}
+					}
+				case 0x1F:
+					{
+					// BL
+					err = iChannel->ReadKernelRegisterValue(aThread, LINK_REGISTER, breakAddress);
+					if(err != KErrNone)
+						{
+						LOG_MSG2("Non-zero error code discarded: %d", err);
+						}
+					breakAddress += ((inst & 0x07FF) << 1);
+
+					// Report how we decoded this instruction
+					LOG_MSG("DRMDStepping::PCAfterInstructionExecutes: Decoded as BL");
+					break;
+					}
 				default:
 					{
-						// Don't know any better at this point!
-						LOG_MSG("DRMDStepping::PCAfterInstructionExecutes:- default to next instruction");
+					// Don't know any better at this point!
+					LOG_MSG("DRMDStepping::PCAfterInstructionExecutes:- default to next instruction");
 					}
 					break;
-			}
-		}
+				} // switch(thumb_opcode(inst))
+			} // case Debug::EThumbMode:
 		break;
-		
+
 		case Debug::EThumb2EEMode:
-		{
+			{
 			// Not yet supported
 			LOG_MSG("DRMDStepping::PCAfterInstructionExecutes - Debug::EThumb2Mode is not supported");
 
-		}
-		break;
+			}
+			break;
 
 		default:
 			LOG_MSG("DRMDStepping::PCAfterInstructionExecutes - Cannot determine CPU mode architecture");
-	}	
+		} // switch(mode)
 
 	LOG_MSG2("DRMDStepping::PCAfterInstructionExecutes : return 0x%08x",breakAddress);
 	return breakAddress;
-}
+	}
 
 // Obtain a 32-bit memory value with minimum fuss
 TInt DRMDStepping::ReadMem32(DThread* aThread, const TUint32 aAddress, TUint32& aValue)
@@ -1646,7 +1636,7 @@ TInt DRMDStepping::RegisterValue(DThread *aThread, const TUint32 aKernelRegister
 
 // Encodings from ARM ARM DDI0406A, section 9.2.1
 enum TThumb2EEOpcode
-{
+	{
 	EThumb2HDP,		// Handler Branch with Parameter
 	EThumb2UNDEF,	// UNDEFINED
 	EThumb2HB,		// Handler Branch, Handler Branch with Link
@@ -1656,76 +1646,76 @@ enum TThumb2EEOpcode
 	EThumb2LDRL,	// Load Register from a literal pool
 	EThumb2LDRA,	// Load Register (array operations)
 	EThumb2STR		// Store Register to a frame
-};
+	};
 
 //
 // DRMDStepping::ShiftedRegValue
 //
 TUint32 DRMDStepping::ShiftedRegValue(DThread *aThread, TUint32 aInstruction, TUint32 aCurrentPC, TUint32 aStatusRegister)
-{
-	LOG_MSG("DRM_DebugChannel::ShiftedRegValue()");
+	{
+	LOG_MSG("DRMDStepping::ShiftedRegValue()");
 
 	TUint32 shift = 0;
 	if (aInstruction & 0x10)	// bit 4
-	{
+		{
 		shift = (arm_rs(aInstruction) == PC_REGISTER ? aCurrentPC + 8 : aStatusRegister) & 0xFF;
-	}
+		}
 	else
-	{
+		{
 		shift = arm_data_c(aInstruction);
-	}
+		}
 	
 	TInt rm = arm_rm(aInstruction);
 	
 	TUint32 res = 0;
 	if(rm == PC_REGISTER)
-	{
+		{
 		res = aCurrentPC + ((aInstruction & 0x10) ? 12 : 8);
-	}
+		}
 	else
-	{
+		{
 		TInt err = iChannel->ReadKernelRegisterValue(aThread, rm, res);
 		if(err != KErrNone)
-		{
+			{
 			LOG_MSG2("DRMDStepping::ShiftedRegValue - Non-zero error code discarded: %d", err);
+			}
 		}
-	}
 
 	switch(arm_data_shift(aInstruction))
-	{
-		case 0:			// LSL
 		{
+		case 0:			// LSL
+			{
 			res = shift >= 32 ? 0 : res << shift;
 			break;
-		}
+			}
 		case 1:			// LSR
-		{
+			{
 			res = shift >= 32 ? 0 : res >> shift;
 			break;
-		}
+			}
 		case 2:			// ASR
-		{
+			{
 			if (shift >= 32)
 			shift = 31;
 			res = ((res & 0x80000000L) ? ~((~res) >> shift) : res >> shift);
 			break;
-		}
+			}
 		case 3:			// ROR/RRX
-		{
+			{
 			shift &= 31;
 			if (shift == 0)
-			{
+				{
 				res = (res >> 1) | ((aStatusRegister & arm_carry_bit()) ? 0x80000000L : 0);
-			}
+				}
 			else
-			{
+				{
 				res = (res >> shift) | (res << (32 - shift));
-			}
+				}
 			break;
-    	}
-    }
+			}
+		}
 
-  	return res & 0xFFFFFFFF;
+	return res & 0xFFFFFFFF;
 }
 
 //

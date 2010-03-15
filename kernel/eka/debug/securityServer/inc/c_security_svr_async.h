@@ -53,15 +53,39 @@ protected:
 	virtual TInt RunError(TInt aError);
 
 private:
-	RMessagePtr2 iMessage;			// The last GetEvent message details. Needed for completion by RunL()
 
-	Debug::TEventInfo iInfo;				// Temporary storage area for rm_debug.ldd to return data asynchronously.
+    /*
+     * The last GetEvent message details. Needed for completion by RunL()
+     */
+    RMessagePtr2 iMessage;			
 
-	CSecuritySvrSession* iSession;	// Identity of this server session. Used for completing iMessage
+    /*
+     * Temporary storage area for rm_debug.ldd to return data asynchronously
+     */
+	Debug::TEventInfo iInfo;
 
-	RBuf8 iProcessName;				// Name of the process being debugged associated with this AO
+	/*
+	 * Identity of this server session. Used for completing iMessage
+	 */
+	CSecuritySvrSession* iSession;
 
-	TProcessId iAgentId;				// Debug Agent Id
+	/*
+	 * Name of the process being debugged associated with this AO
+	 */
+	RBuf8 iProcessName;
+
+	/*
+	 * Debug Agent Id
+	 */
+	TProcessId iAgentId;
+	
+	/*
+	 * Balance between event requests and event deliveries.
+	 * @see GetEvent()
+	 * @see NotifyEvent()
+	 * @see DoCancel()
+	 */
+	TInt iEventBalance;
 };
  
 #endif	// C_SECURITY_SVR_ASYNC_H

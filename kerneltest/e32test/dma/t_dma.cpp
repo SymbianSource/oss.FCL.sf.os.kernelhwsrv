@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -193,6 +193,30 @@ public:
 	const TInt iTotalTransferSize;
 	};
 
+/**
+Test that it is possible to close a channel from a callback
+*/
+class CCloseInCb : public CTest
+	{
+public:
+	CCloseInCb()
+		: CTest(NULL, 1), iTransferSize(4 * KKilo)
+		{}
+
+	TInt virtual DoRunTest();
+
+	virtual void AnnounceTest(TDes& aDes)
+		{
+		aDes.AppendFormat(_L("CCloseInCb"));
+		CTest::AnnounceTest(aDes);
+		}
+
+	CTest* Clone() const
+		{return new CCloseInCb(*this);}
+private:
+	const TInt iTransferSize;
+
+	};
 
 //
 // Active object used to create a tester thread, log on to it and
@@ -346,6 +370,44 @@ TInt CDefaultFragTest::DoRunTest()
 	return KErrNone;
 	}
 
+TInt CCloseInCb::DoRunTest()
+	{
+	TInt r = KErrNone;
+	RTest test(_L("CCloseInCb test"));
+
+	r = OpenChannel(1);
+	test_KErrNone(r);
+
+	const TInt KRequest = 0;
+	const TInt KSrcBuf = 0;
+	const TInt KDestBuf = 1;
+
+	const TInt size = Min(iTransferSize, Info.iMaxTransferSize);
+
+	r = iChannel.AllocBuffer(KSrcBuf, size);
+	test_KErrNone(r);
+	iChannel.FillBuffer(KSrcBuf, 'A');
+	r = iChannel.AllocBuffer(KDestBuf, size);
+	test_KErrNone(r);
+	iChannel.FillBuffer(KDestBuf, '\0');
+
+	TRequestStatus rs = KRequestPending;
+	r = iChannel.Fragment(KRequest, KSrcBuf, KDestBuf, size, &rs);
+	test_KErrNone(r);
+
+	// "X" will cause channel to be closed during callback
+	r = iChannel.Execute(_L8("QX0"));
+	test_KErrNone(r);
+
+	User::WaitForRequest(rs);
+	test_KErrNone(rs.Int());
+
+	test(iChannel.CheckBuffer(KDestBuf, 'A'));
+	iChannel.FreeAllBuffers();
+
+	test.Close();
+	return KErrNone;
+	}
 
 // Called when thread completed.
 void CTesterThread::RunL()
@@ -964,6 +1026,13 @@ TInt E32Main()
 	test.Next(_L("Getting channel info"));
 	GetChannelInfo();
 
+	test.Next(_L("Test that channel can be closed from callback"));
+	test.Next(_L("sb"));
+	RunSbTest(maxchannel, new CCloseInCb() );
+	test.Next(_L("db"));
+	RunDbTest(maxchannel, new CCloseInCb() );
+	test.Next(_L("sg"));
+	RunSgTest(maxchannel, new CCloseInCb() );
 	// Size for the single transfer test
 	TInt totalTransferSize = 64 * KKilo;
 

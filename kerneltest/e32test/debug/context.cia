@@ -72,9 +72,9 @@ __NAKED__ void SetRegs()
 __NAKED__ TInt ThreadContextHwExc(TAny*)
 	{
 	asm("stmdb sp!, {r4-r11,lr} ");
-	asm("mov r1, #0x80000000");
+	asm("mov r1, #0x00000000");
 	asm("bl SetRegs");
-	asm("ldr r0,[r13, #1]");   // Cause alignment fault
+	asm("ldr r0,[r0]");        // Cause data abort with null access, SetRegs will have set r0=0	
 	asm("ThreadContextHwExc_pc:");
 	asm("mov r0, #0 ");
 	asm("ldmia sp!, {r4-r11,pc} ");

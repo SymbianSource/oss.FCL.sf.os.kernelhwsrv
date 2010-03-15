@@ -422,7 +422,7 @@ TInt TListManager::GetGlobalCodeSegList(TDes8& aBuffer, TUint32& aDataSize) cons
 				}
 			//calculate data values
 			TFileName fileName(codeSeg->iFileName->Ptr());
-			TBool isXip = (codeSeg->iXIP) ? ETrue : EFalse;
+			TBool isXip = (TBool)(codeSeg->iXIP);
 
 			//get the code seg type, can ignore error as have already checked codeSeg is not NULL
 			TCodeSegType type = EUnknownCodeSegType;
@@ -535,7 +535,7 @@ TInt TListManager::GetCodeSegListForProcess(TDes8& aBuffer, TUint32& aDataSize, 
 				}
 
 			TFileName fileName(codeSeg->iFileName->Ptr());
-			TBool isXip = (codeSeg->iXIP) ? ETrue : EFalse;
+			TBool isXip = (TBool)(codeSeg->iXIP);
 
 			//get the code seg type, can ignore error as have already checked codeSeg is not NULL
 			TCodeSegType type = EUnknownCodeSegType;

@@ -1,0 +1,4 @@
+EXPORTS
+	_Z21GetAddressOfDataProxyRiRPvS1_ @ 1 NONAME
+	_Z23CheckWritableStaticDatav @ 2 NONAME
+

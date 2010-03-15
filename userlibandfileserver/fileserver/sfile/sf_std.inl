@@ -310,12 +310,19 @@ TRequestStatus* CNotifyInfo::Status()
 
 #if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
 // Class RequestAllocator
-/** returns number of dynamically allocated requests  */
-TInt RequestAllocator::AllocatedCount()
-{ return iAllocated;}
 /** returns number of permanently & dynamically allocated requests  */
-TInt RequestAllocator::TotalCount()
-{ return iAllocated + iAllocNum;}
+TInt RequestAllocator::RequestCount()
+	{ return iRequestCount;}
+TInt RequestAllocator::RequestCountPeak()
+	{ return iRequestCountPeak;}
+
+TInt OperationAllocator::FreeCount()
+	{ return iFreeCount;}
+TInt OperationAllocator::RequestCount()
+	{ return iRequestCount;}
+TInt OperationAllocator::RequestCountPeak()
+	{ return iRequestCountPeak;}
+
 #endif
 
 //---------------------------------------------------------------------------------------------------------------------

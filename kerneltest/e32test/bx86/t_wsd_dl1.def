@@ -1,0 +1,4 @@
+EXPORTS
+	?ExportedData@@3JA @ 1 NONAME ; TInt32 ExportedData
+	?CheckExportedDataAddress@@YAHPAX@Z @2 NONAME ; void CheckExportedDataAddress(void* aDataAddr)
+

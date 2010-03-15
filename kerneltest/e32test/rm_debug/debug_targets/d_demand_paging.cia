@@ -1,0 +1,57 @@
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// 
+//
+
+
+#include <u32std.h>
+
+// unused function that contains enough padding that the test function
+// RMDebugDemandPagingTest starts in a new page.
+__NAKED__ TInt RMDebugDemandPagingPaddingBefore()
+	{
+	asm("movs       r2,r0");
+	asm("adds       r0,r2,r1");
+	asm("bx         lr");
+	// add padding to make this function 4kb in size.
+	// The 4084 corresponds to 2^12 (=4096) - 12,
+	// the 12 being the total size of the movs, adds and bx instructions.
+	asm(".space     4084");
+	}
+
+// test function which is in a page by itself
+__NAKED__ TInt RMDebugDemandPagingTest()
+	{
+	asm("movs       r2,r0");
+	asm("adds       r0,r2,r1");
+	asm("bx         lr");
+	// add padding to make this function 4kb in size.
+	// The 4084 corresponds to 2^12 (=4096) - 12,
+	// the 12 being the total size of the movs, adds and bx instructions.
+	asm(".space     4084");
+	}
+
+// unused function that contains enough padding to ensure that no used code
+// is in the same page as RMDebugDemandPagingTest
+__NAKED__ TInt RMDebugDemandPagingPaddingAfter()
+	{
+	asm("movs       r2,r0");
+	asm("adds       r0,r2,r1");
+	asm("bx         lr");
+	// add padding to make this function 4kb in size.
+	// The 4084 corresponds to 2^12 (=4096) - 12,
+	// the 12 being the total size of the movs, adds and bx instructions.
+	asm(".space     4084");
+	}
+

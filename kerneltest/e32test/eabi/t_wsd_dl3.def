@@ -1,0 +1,7 @@
+EXPORTS
+	_Z16GetAddressOfDataRiRPvS1_ @ 1 NONAME
+	TestDataSize @ 2 NONAME DATA 4
+	WritableTestData @ 3 NONAME DATA 65536
+	PointerToStaticData @ 4 NONAME DATA 4
+	PointerToWritableData @ 5 NONAME DATA 4
+

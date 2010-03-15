@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -861,7 +861,11 @@ void TDmaChannel::DoDfc()
 		// release threads doing CancelAll()
 		waiters->Signal();
 		}
-	else if (!error && iController->IsIdle(*this) && !iReqQ.IsEmpty() && !iDfc.Queued())
+	// (iController may be NULL here if the channel was closed in the client callback.)
+	else if (!error &&
+			 iController && iController->IsIdle(*this) &&
+			 !iReqQ.IsEmpty() &&
+			 !iDfc.Queued())
 		{
 		// Wait for a bit. If during that time the condition goes away then it
 		// was a 'spurious missed interrupt', in which case we just do nothing.

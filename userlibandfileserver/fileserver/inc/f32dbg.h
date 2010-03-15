@@ -194,10 +194,17 @@ GLREF_D TInt DebugNCNotifier;
 class TIOCacheValues
 	{ 
 public:
-	TInt iFreeCount;	// number of requests on free queue
-	TInt iCloseCount;	// number of requests on close queue
-	TInt iAllocated;	// number of dynamically allocated requests
-	TInt iTotalCount;	// number of permanently & dynamically allocated requests
+	TInt iFreeCount;	// current number of requests on free queue
+	TInt iCloseCount;	// current number of requests on close queue
+	TInt iAllocated;	// no longer used
+	TInt iTotalCount;	// current number of requests
+	TInt iRequestCountPeak;	// peak number of requests, i.e. peak value reached by iTotalCount
+
+
+	// the same again but for the OperationAllocator
+	TInt iOpFreeCount;
+	TInt iOpRequestCount;
+	TInt iOpRequestCountPeak;
 	};
 
 class TFileCacheStats

@@ -1,3 +1,30 @@
+Version 2.00.2039
+=================
+(Made by vfebvre 23/02/2010)
+
+1.	niccox
+	1.	DEF144323 remove redundant bootsector code from smassstorage
+
+
+Version 2.00.2038
+=================
+(Made by vfebvre 18/02/2010)
+
+1.	famustaf
+	1.	PDEF144438 Optimise TParseBase::AddDir() to not use TFileName
+
+2.	migubarr
+	1.	DEF144407: File Server request cache is not big enough for S60
+
+
+Version 2.00.2037
+=================
+(Made by vfebvre 11/02/2010)
+
+1.	dlyokhin
+	1.	DEF144356 VFAT interoperability: LFN entries padding is wrong
+
+
 Version 2.00.2036
 =================
 (Made by vfebvre 09/02/2010)

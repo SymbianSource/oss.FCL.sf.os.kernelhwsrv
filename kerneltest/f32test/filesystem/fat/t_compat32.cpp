@@ -156,7 +156,7 @@ static void DoFiddleWithFileNames(TNameCase aCase)
 // Replace a 8.3 filename with upper and lower case letters which is, actually out of FAT specs.
 // I.e. VFAT entries are valid, but DOS entry has a lower case symbol, which is wrong.
 //
-LOCAL_C void Test1(TNameCase aCase)
+static void Test1(TNameCase aCase)
 	{
 	test.Next(_L("Replace a file with a wrong DOS entry"));
 	QuickFormat();
@@ -190,7 +190,7 @@ LOCAL_C void Test1(TNameCase aCase)
 // Renaming a 8.3 filename with upper and lower case letters which is, actually out of FAT specs.
 // I.e. VFAT entries are valid, but DOS entry has a lower case symbol, which is wrong.
 //
-LOCAL_C void Test2(TNameCase aCase)
+static void Test2(TNameCase aCase)
 	{
 	test.Next(_L("Rename a file with a wrong DOS entry"));
 	QuickFormat();
@@ -520,11 +520,89 @@ void TestReplaceByShortName()
 
 }
 
+//---------------------------------------------
+/**
+    Test that the created VFAT entryset corresponds to what Windows creates in the 
+    same situation
+*/
+void TestVFatEntryInterop()
+{
+    test.Next(_L("Testind VFAT entries interoperability\n"));
+    QuickFormat();
 
-GLDEF_C void CallTestsL()
-//
-// Call tests that may leave
-//
+    TInt nRes;
+    _LIT(KFName, "\\longfilename12345678");
+    
+    //-- 1. create a file with long FN that isn't multiple of 13 (max unicode characters in VFAT entry)
+    const TUint KFileSize = 24;
+    nRes = CreateEmptyFile(TheFs, KFName, KFileSize);
+    test(nRes == KErrNone);
+
+    //-- 2. verify that the dir. entries are the same what Windows creates.
+	nRes = TheDisk.Open(TheFs,CurrentDrive());
+	test(nRes == KErrNone);
+
+    //-- read 1st dir. entry from the root dir and check it.
+    //-- this is the rest of the LFN 
+    TInt64 posEntry = gBootSector.RootDirStartSector() << KDefaultSectorLog2; //-- dir entry1 position
+
+    TFatDirEntry fatEntry;
+	TPtr8 ptrEntry((TUint8*)&fatEntry, KSizeOfFatDirEntry);
+
+    nRes = TheDisk.Read(posEntry, ptrEntry);
+    test(nRes == KErrNone);
+
+    //-- the expected entry #1 contents (what Windows places there). 
+    const TUint8 KEntry1[KSizeOfFatDirEntry] = {0x42, 0x32, 0x00, 0x33, 0x00, 0x34, 0x00, 0x35, 0x00, 0x36, 0x00, 0x0F, 0x00, 0xF7, 0x37, 0x00,
+                                                0x38, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF };
+
+    nRes = Mem::Compare(fatEntry.iData, KSizeOfFatDirEntry, KEntry1, KSizeOfFatDirEntry);
+    test(nRes == KErrNone);
+
+    //-- read 2nd dir. entry from the root dir and check it.
+    //-- this is the beginning of the LFN 
+
+    posEntry += KSizeOfFatDirEntry;
+    nRes = TheDisk.Read(posEntry, ptrEntry);
+    test(nRes == KErrNone);
+
+    //-- the expected entry #2 contents (what Windows places there). 
+    const TUint8 KEntry2[KSizeOfFatDirEntry] = { 0x01, 0x6C, 0x00, 0x6F, 0x00, 0x6E, 0x00, 0x67, 0x00, 0x66, 0x00, 0x0F, 0x00, 0xF7, 0x69, 0x00,
+                                                 0x6C, 0x00, 0x65, 0x00, 0x6E, 0x00, 0x61, 0x00, 0x6D, 0x00, 0x00, 0x00, 0x65, 0x00, 0x31, 0x00 };
+
+    nRes = Mem::Compare(fatEntry.iData, KSizeOfFatDirEntry, KEntry2, KSizeOfFatDirEntry);
+    test(nRes == KErrNone);
+
+    //-- read the last, 3rd entry from the root dir and check it.
+    //-- this is the DOS entry
+
+    posEntry += KSizeOfFatDirEntry;
+    nRes = TheDisk.Read(posEntry, ptrEntry);
+    test(nRes == KErrNone);
+
+    //-- first 13 bytes of DOS entry SFN, attributes and DIR_NTRes field
+    const TUint8 KEntry3[13] = {'L','O','N','G','F','I','~','1',' ',' ',' ', 0x20, 0x00 };
+    nRes = Mem::Compare(fatEntry.iData, 13, KEntry3, 13);
+    test(nRes == KErrNone);
+
+    //-- skip file time stamps, they are not consistent
+
+    //-- test file size and start cluster of the file
+    test(fatEntry.StartCluster() != gBootSector.RootClusterNum() && fatEntry.StartCluster() != 0);
+    test(fatEntry.Size() == KFileSize);
+
+    //-- goto the next entry, this must be the end of directory
+    posEntry += KSizeOfFatDirEntry;
+    nRes = TheDisk.Read(posEntry, ptrEntry);
+    test(nRes == KErrNone);
+    test(fatEntry.IsEndOfDirectory());
+
+    TheDisk.Close();
+
+}
+
+
+void CallTestsL()
 	{
 
 	TInt drvNum;
@@ -546,6 +624,8 @@ GLDEF_C void CallTestsL()
 
 	GetBootInfo();
 
+    TestVFatEntryInterop();
+
 	Test1(EUpper); // Test directory entries with 8.3 uppercase (no VFAT entries expected)
 	Test1(ELower); // Test directory entries with 8.3 lowercase (   VFAT entries expected)
 	Test1(EMixed); // Test directory entries with 8.3 mixed     (   VFAT entries expected)
@@ -559,7 +639,6 @@ GLDEF_C void CallTestsL()
 	TestPDEF116912();
 
     TestReplaceByShortName();
-
 	}
 
 

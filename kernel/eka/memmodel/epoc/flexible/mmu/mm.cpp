@@ -204,17 +204,18 @@ DReferenceCountedObject::~DReferenceCountedObject()
 
 void DReferenceCountedObject::Open()
 	{
-	__ASSERT_CRITICAL
-	TBool ok = __e32_atomic_tas_ord32(&iReferenceCount, 1, 1, 0);
-	__NK_ASSERT_ALWAYS(ok);
+	CHECK_PRECONDITIONS(MASK_NO_KILL_OR_SUSPEND, "DReferenceCountedObject::Open");
+	TInt orig = __e32_atomic_tas_ord32(&iReferenceCount, 1, 1, 0);
+	if (orig <= 0)
+		__crash();
 	}
 
 
 TBool DReferenceCountedObject::TryOpen()
 	{
-	__ASSERT_CRITICAL
-	TBool ok = __e32_atomic_tas_ord32(&iReferenceCount, 1, 1, 0);
-	return ok;
+	CHECK_PRECONDITIONS(MASK_NO_KILL_OR_SUSPEND, "DReferenceCountedObject::Open");
+	TInt orig = __e32_atomic_tas_ord32(&iReferenceCount, 1, 1, 0);
+	return (orig>0);
 	}
 
 
@@ -245,20 +246,23 @@ TBool DReferenceCountedObject::CheckCloseIsSafe()
 
 void DReferenceCountedObject::Close()
 	{
-	__ASSERT_CRITICAL
 	__NK_ASSERT_DEBUG(CheckCloseIsSafe());
-	__NK_ASSERT_DEBUG(iReferenceCount>0);
-	if (__e32_atomic_tas_ord32(&iReferenceCount, 1, -1, 0) == 1)
+	TInt orig = __e32_atomic_tas_ord32(&iReferenceCount, 1, -1, 0);
+	if (orig == 1)
 		delete this;
+	else if (orig <= 0)
+		__crash();
 	}
 
 
 void DReferenceCountedObject::AsyncClose()
 	{
-	__ASSERT_CRITICAL
-	__NK_ASSERT_DEBUG(iReferenceCount>0);
-	if (__e32_atomic_tas_ord32(&iReferenceCount, 1, -1, 0) == 1)
+	CHECK_PRECONDITIONS(MASK_NO_KILL_OR_SUSPEND, "DReferenceCountedObject::AsyncClose");
+	TInt orig = __e32_atomic_tas_ord32(&iReferenceCount, 1, -1, 0);
+	if (orig == 1)
 		AsyncDelete();
+	else if (orig <= 0)
+		__crash();
 	}
 
 

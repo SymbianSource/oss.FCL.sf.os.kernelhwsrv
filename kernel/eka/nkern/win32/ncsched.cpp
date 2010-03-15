@@ -835,6 +835,61 @@ EXPORT_C TInt NKern::CurrentContext()
 
 #include <winnt.h>
 
+// Uncomment the following line to turn on tracing when we examine the call stack
+// #define DUMP_STACK_BACKTRACE
+
+#ifdef DUMP_STACK_BACKTRACE
+
+#include <psapi.h>
+
+typedef BOOL (WINAPI GMIFunc)(HANDLE hProcess, HMODULE hModule, LPMODULEINFO lpmodinfo, DWORD cb);
+typedef BOOL (WINAPI EPMFunc)(HANDLE hProcess, HMODULE *lphModule, DWORD cb, LPDWORD lpcbNeeded);
+typedef DWORD (WINAPI GMBNFunc)(HANDLE hProcess, HMODULE hModule, LPSTR lpBaseName, DWORD nSize);
+
+void PrintAllModuleInfo()
+	{
+	HMODULE psapiLibrary = LoadLibraryA("psapi.dll");
+	__NK_ASSERT_ALWAYS(psapiLibrary != NULL);
+
+	EPMFunc* epmFunc = (EPMFunc*)GetProcAddress(psapiLibrary, "EnumProcessModules");
+	__NK_ASSERT_ALWAYS(epmFunc != NULL);
+	
+	GMIFunc* gmiFunc = (GMIFunc*)GetProcAddress(psapiLibrary, "GetModuleInformation");
+	__NK_ASSERT_ALWAYS(gmiFunc != NULL);
+	
+	GMBNFunc* gmbnFunc = (GMBNFunc*)GetProcAddress(psapiLibrary, "GetModuleBaseNameA");
+	__NK_ASSERT_ALWAYS(gmbnFunc != NULL);
+
+	const TInt maxModules = 256;
+	HMODULE modules[maxModules];
+
+	DWORD spaceNeeded;
+	BOOL r = epmFunc(GetCurrentProcess(), modules, sizeof(HMODULE) * maxModules, &spaceNeeded);
+	__NK_ASSERT_ALWAYS(r);
+	__NK_ASSERT_ALWAYS(spaceNeeded <= sizeof(HMODULE) * maxModules);
+
+	for (TUint i = 0 ; i < spaceNeeded / sizeof(HMODULE) ; ++i)
+		{
+		HMODULE library = modules[i];
+		
+		const TUint maxNameLen = 64;
+		char name[maxNameLen];
+		WORD len = gmbnFunc(GetCurrentProcess(), library, name, sizeof(name));
+		__NK_ASSERT_ALWAYS(len > 0 && len < maxNameLen);
+		
+		MODULEINFO info;
+		r = gmiFunc(GetCurrentProcess(), library, &info, sizeof(info));
+		__NK_ASSERT_ALWAYS(r);
+		
+		DEBUGPRINT("Module %s found at %08x to %08x", name, (TUint)info.lpBaseOfDll, (TUint)info.lpBaseOfDll + info.SizeOfImage);
+		}
+
+	r = FreeLibrary(psapiLibrary);
+	__NK_ASSERT_ALWAYS(r);
+	}
+
+#endif
+
 const TInt KWin32NonPreemptibleFunctionCount = 2;
 
 struct TWin32FunctionInfo
@@ -845,14 +900,37 @@ struct TWin32FunctionInfo
 
 static TWin32FunctionInfo Win32NonPreemptibleFunctions[KWin32NonPreemptibleFunctionCount];
 
-TWin32FunctionInfo Win32FindExportedFunction(const char* aModuleName, const char* aFunctionName)
+HMODULE GetFirstLoadedModuleHandleA(const char* aModuleName1, const char* aModuleName2)
 	{
-	HMODULE library = GetModuleHandleA(aModuleName);
-	__NK_ASSERT_ALWAYS(library != NULL);
+	HMODULE result = GetModuleHandleA(aModuleName1);
+	return result ? result : GetModuleHandleA(aModuleName2);
+	}
 
+TWin32FunctionInfo Win32FindExportedFunction(const char* aFunctionName, ...)
+	{
+	const char *libname;
+	HMODULE library = NULL;
+
+	va_list arg;
+	va_start(arg, aFunctionName);
+
+	// Loop through arguments until we find a library we can get a handle to.  List of library names
+	// is NULL-terminated.
+	while ((libname = va_arg(arg, const char *)) != NULL)
+		{
+		library = GetModuleHandleA(libname);
+		if (library != NULL)
+			break;
+		}
+
+	va_end(arg);
+
+	// Make sure we did get a valid library
+	__NK_ASSERT_ALWAYS(library != NULL);
+	
 	// Find the start address of the function
 	TUint start = (TUint)GetProcAddress(library, aFunctionName);
-	__NK_ASSERT_ALWAYS(start);
+	__NK_ASSERT_ALWAYS(start != 0);
 
 	// Now have to check all other exports to find the end of the function
 	TUint end = 0xffffffff;
@@ -867,15 +945,26 @@ TWin32FunctionInfo Win32FindExportedFunction(const char* aModuleName, const char
 		++i;
 		}
 	__NK_ASSERT_ALWAYS(end != 0xffffffff);
-
+	
 	TWin32FunctionInfo result = { start, end - start };
+	
+#ifdef DUMP_STACK_BACKTRACE
+	DEBUGPRINT("Function %s found at %08x to %08x", aFunctionName, start, end);
+#endif
+	
 	return result;
 	}
 
 void Win32FindNonPreemptibleFunctions()
 	{
-	Win32NonPreemptibleFunctions[0] = Win32FindExportedFunction("kernel32.dll", "RaiseException");
-	Win32NonPreemptibleFunctions[1] = Win32FindExportedFunction("ntdll.dll", "KiUserExceptionDispatcher");
+#ifdef DUMP_STACK_BACKTRACE
+	PrintAllModuleInfo();
+#endif
+
+	TUint i = 0;
+	Win32NonPreemptibleFunctions[i++] = Win32FindExportedFunction("RaiseException", "kernelbase.dll", "kernel32.dll", NULL);
+	Win32NonPreemptibleFunctions[i++] = Win32FindExportedFunction("KiUserExceptionDispatcher", "ntdll.dll", NULL);
+	__NK_ASSERT_ALWAYS(i == KWin32NonPreemptibleFunctionCount);
 	}
 	
 TBool Win32IsThreadInNonPreemptibleFunction(HANDLE aWinThread, TLinAddr aStackTop)
@@ -892,9 +981,17 @@ TBool Win32IsThreadInNonPreemptibleFunction(HANDLE aWinThread, TLinAddr aStackTo
 	TUint ebp = c.Ebp;
 	TUint lastEbp = c.Esp;
 
+	#ifdef DUMP_STACK_BACKTRACE
+	DEBUGPRINT("Stack backtrace for thread %x", aWinThread);
+	#endif	
+
 	// Walk the call stack
 	for (TInt i = 0 ; i < KMaxSearchDepth ; ++i)
 		{
+		#ifdef DUMP_STACK_BACKTRACE
+		DEBUGPRINT("  %08x", eip);
+		#endif
+		
 		for (TInt j = 0 ; j < KWin32NonPreemptibleFunctionCount ; ++j)
 			{
 			const TWin32FunctionInfo& info = Win32NonPreemptibleFunctions[j];

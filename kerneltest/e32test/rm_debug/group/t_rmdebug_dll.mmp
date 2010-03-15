@@ -1,0 +1,38 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// 
+//
+
+ALWAYS_BUILD_AS_ARM
+
+target         t_rmdebug_dll.dll
+targettype     dll
+
+DEFFILE        ../../~/t_rmdebug_dll.def
+
+sourcepath	   	../debug_targets
+
+source        	t_rmdebug_dll.cpp 
+
+library		euser.lib
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+capability PowerMgmt AllFiles ReadUserData
+
+UID            0x0 0x0
+SECUREID       0x0
+VENDORID       0x70000001
+
+SMPSAFE

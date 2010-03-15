@@ -44,7 +44,6 @@ DRM_DebugEventHandler::DRM_DebugEventHandler()
 	iEventHandlers[EEventUserTrace] = &DRM_DebugChannel::HandleUserTrace;
 	iEventHandlers[EEventRemoveLibrary] = &DRM_DebugChannel::RemoveLibrary;
 	iEventHandlers[EEventAddLibrary] = &DRM_DebugChannel::AddLibrary;
-	iEventHandlers[EEventRemoveProcess] = &DRM_DebugChannel::RemoveProcess;
 	iEventHandlers[EEventStartThread] = &DRM_DebugChannel::StartThread;
 	iEventHandlers[EEventSwExc] = &DRM_DebugChannel::HandleSwException;
 	iEventHandlers[EEventHwExc] = &DRM_DebugChannel::HandleHwException;
@@ -55,7 +54,7 @@ DRM_DebugEventHandler::DRM_DebugEventHandler()
 
 TInt DRM_DebugEventHandler::Create(DLogicalDevice* aDevice, DLogicalChannel* aChannel, DThread* aClient)
 {
-	LOG_MSG("DRM_DebugEventHandler::Create()");
+	LOG_MSG3("DRM_DebugEventHandler::Create(), aClientthread=0x%08x id=%d", aClient, aClient->iId);
 
 	TInt err;
 	err = aDevice->Open();
@@ -71,7 +70,7 @@ TInt DRM_DebugEventHandler::Create(DLogicalDevice* aDevice, DLogicalChannel* aCh
 	iClientThread = aClient;
 
 	// Use a semaphore to protect our data structures from concurrent access.
-	err = Kern::SemaphoreCreate(iLock, _L("RM_DebugEventHandlerLock"), 1 /* Initial count */);
+	err = Kern::SemaphoreCreate(iProtectionLock, _L("RM_DebugEventHandlerLock"), 1 /* Initial count */);
 	if (err != KErrNone)
 		return err;
 
@@ -84,8 +83,8 @@ DRM_DebugEventHandler::~DRM_DebugEventHandler()
 {
 	LOG_MSG("DRM_DebugEventHandler::~DRM_DebugEventHandler()");
 
-	if (iLock)
-		iLock->Close(NULL);
+	if (iProtectionLock)
+		iProtectionLock->Close(NULL);
 	
 	if (iDevice)
 		iDevice->Close(NULL);	
@@ -125,11 +124,23 @@ TUint DRM_DebugEventHandler::EventHandler(TKernelEvent aType, TAny* a1, TAny* a2
 
 TUint DRM_DebugEventHandler::HandleEvent(TKernelEvent aType, TAny* a1, TAny* a2)
 	{
-	if((!iTracking) || (aType > (TUint32)EEventLimit))
+	
+	/*
+	 * Check if we are tracking things at all OR 
+	 * this event is beyond the limit of known events OR 
+	 * this event is from the debug thread itself (don't want to debug ourselves) OR
+	 * this event has a handler (there is no point in proceeding without a handler)
+	 */
+	if( (!iTracking) || 
+			(aType > (TUint32)EEventLimit) ||
+			(iClientThread == &Kern::CurrentThread()) ||
+	    (iEventHandlers[aType] == &DRM_DebugChannel::HandleUnsupportedEvent) )
 		{
 		return ERunNext;
 		}
+	
 	return HandleSpecificEvent(aType,a1,a2) ? EExcHandled : ERunNext;
+
 	}
 
 TBool DRM_DebugEventHandler::HandleSpecificEvent(TKernelEvent aType, TAny* a1, TAny* a2)
@@ -137,14 +148,14 @@ TBool DRM_DebugEventHandler::HandleSpecificEvent(TKernelEvent aType, TAny* a1, T
 	TBool ret = EFalse;
 
 	NKern::ThreadEnterCS();
-	Kern::SemaphoreWait(*iLock);
-	
+	LockDataAccess();
+
+
 	if (iChannel)
 		{
 		ret = (iChannel->*(iEventHandlers[aType]))(a1, a2);
 		}
-
-	Kern::SemaphoreSignal(*iLock);
+	ReleaseDataAccess();
 	NKern::ThreadLeaveCS();
 
 	switch(aType)

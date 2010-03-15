@@ -191,14 +191,18 @@ TInt DWin32Process::MapCodeSeg(DCodeSeg* aSeg)
 	
 	TInt count=0;
 	TInt err = KErrNone;
-	data.iDataCopy = Kern::Alloc(seg->iRealDataSize);
-	data.iBssCopy = Kern::Alloc(seg->iRealBssSize);
+
+	// Scheduling must be disabled while we are allocating memory from Windows' heap
+	NKern::Lock();
+	data.iDataCopy = GlobalAlloc(GMEM_FIXED, seg->iRealDataSize);
+	data.iBssCopy = GlobalAlloc(GMEM_FIXED, seg->iRealBssSize);
+	NKern::Unlock();
 	if (!data.iDataCopy || !data.iBssCopy)
 		{
 		err = KErrNoMemory;
 		goto failed;
 		}
-		
+
 	memcpy(data.iDataCopy, seg->iDataCopy, seg->iRealDataSize);	// start with init data
 	memclr(data.iBssCopy, seg->iRealBssSize);					// initialized to zeros
 
@@ -215,8 +219,11 @@ TInt DWin32Process::MapCodeSeg(DCodeSeg* aSeg)
 	return KErrNone;	
 
 failed:
-	Kern::Free(data.iDataCopy);
-	Kern::Free(data.iBssCopy);
+	// Scheduling must be disabled while we are freeing memory from Windows' heap
+	NKern::Lock();
+	GlobalFree(data.iDataCopy);
+	GlobalFree(data.iBssCopy);
+	NKern::Unlock();
 
 	return err;
 	}
@@ -245,9 +252,13 @@ void DWin32Process::UnmapCodeSeg(DCodeSeg* aSeg)
 	
 	if (ix < 0)
 		return;
-	
-	Kern::Free(data.iDataCopy);
-	Kern::Free(data.iBssCopy);
+
+	// Scheduling must be disabled while we are freeing memory from Windows' heap
+	NKern::Lock();
+	GlobalFree(data.iDataCopy);
+	GlobalFree(data.iBssCopy);
+	NKern::Unlock();
+
 	__KTRACE_OPT(KDLL,Kern::Printf("Process %O UnmapCodeSeg(%C)", this, aSeg));
 	}
 
@@ -261,10 +272,10 @@ void DWin32Process::RemoveDllData()
 		NKern::Lock();
 		if (data.iCodeSeg->iLiveProcess == this)
 			data.iCodeSeg->iLiveProcess = NULL;
-		NKern::Unlock();
 		iDllData.Remove(ii);
-		Kern::Free(data.iDataCopy);
-		Kern::Free(data.iBssCopy);
+		GlobalFree(data.iDataCopy);
+		GlobalFree(data.iBssCopy);
+		NKern::Unlock();
 		}
 	}
 

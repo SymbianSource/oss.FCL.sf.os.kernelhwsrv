@@ -180,11 +180,13 @@ EXPORT_C void DUsbClientController::DisableClientStack()
 		}
 	DeActivateHardwareController();					 // turn off UDC altogether
 	iStackIsActive = EFalse;
-	// Complete all pending requests, returning KErrDisconnected
-	RunClientCallbacks();
 	// Notify registered clients on the user side about a USB device state
 	// change event and a transition to the "Undefined" state.
+	// Note: the state should be changed to "Undefined" before calling RunClientCallbacks(), 
+	//       otherwise the "Undefined" state will probably be lost.
 	NextDeviceState(EUsbcDeviceStateUndefined);
+	// Complete all pending requests, returning KErrDisconnected
+	RunClientCallbacks();
 	}
 
 

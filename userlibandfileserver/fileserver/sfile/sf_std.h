@@ -1398,9 +1398,10 @@ private:
 	TRequestStatus iStatus;
 	TBool iIsAllocated;
 	};
-const TInt KMaxRequestAllocated		= 45;
-const TInt KMaxOperationAllocated	= KMaxRequestAllocated * 2;
-const TInt KAllocReqBlock=15;
+
+// If the number of requests on the free queue reaches this value then completed requests 
+// are returned to the heap rather than being added to thefree queue
+const TInt KFreeCountMax = 64;
 
 class TParseCon
 	{
@@ -1413,34 +1414,53 @@ public:
 class RequestAllocator
 	{
 public:
+	static TInt Initialise();
+
 	static TInt GetMessageRequest(const TOperation& aOperation,const RMessage2& aMessage,CFsClientMessageRequest* &aRequest);
-	static void FreeRequest(CFsClientMessageRequest* aRequest); // Use the one from cache
+	static void FreeRequest(CFsClientMessageRequest* aRequest);
 	static void OpenSubFailed(CSessionFs* aSession); 
-	static TInt AllocRequest(TInt aNum);
 
-	static TInt AllocOperation();
-	static TInt GetOperation(TMsgOperation* &aOperation);
-	static void FreeOperation(TMsgOperation* aOperation);
-
-
-	static void Initialise();
 #if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-	inline static TInt TotalCount();
+	inline static TInt RequestCount();
+	inline static TInt RequestCountPeak();
 	static TInt CloseCount();
 	static TInt FreeCount();
-	inline static TInt AllocatedCount();
-private:
-	static TInt iAllocated;
 #endif
-public:
-	static RFastLock iCacheLock;
+
 private:
-	static TInt iAllocNum;
+	static CFsClientMessageRequest* GetRequest();
+
+private:
+	static RFastLock iCacheLock;
 	static CFsClientMessageRequest* iFreeHead;				
 	static CFsClientMessageRequest* iCloseHead;
 
-	static TInt iAllocNumOperation;
-	static TMsgOperation* iFreeHeadSupOp;
+	static TInt iRequestCount;			// current number of requests
+	static TInt iFreeCount;				// current number of requests on free queue
+	static TInt iRequestCountPeak;				// maximum value of requests reached
+	};
+
+class OperationAllocator
+	{
+public:
+	static TInt Initialise();
+
+	static TInt GetOperation(TMsgOperation* &aOperation);
+	static void FreeOperation(TMsgOperation* aOperation);
+
+#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	inline static TInt RequestCount();
+	inline static TInt RequestCountPeak();
+	inline static TInt FreeCount();
+#endif
+
+private:
+	static RFastLock iCacheLock;
+	static TMsgOperation* iFreeHead;
+
+	static TInt iRequestCount;			// current number of requests
+	static TInt iFreeCount;				// current number of requests on free queue
+	static TInt iRequestCountPeak;				// maximum value of requests reached
 	};
 
 

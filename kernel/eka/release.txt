@@ -1,3 +1,96 @@
+Version 2.00.2091
+=================
+(Made by vfebvre 25/02/2010)
+
+1.	gcochran
+	1.	DEF144355  t_context locks up on Vasco/HW79
+
+2.	davegord
+	1.	DEF144641 Data import/export across DLL boundaries doesn't work in all cases
+		Implements REQ417-62614 "Data exports across DLL boundaries"
+
+
+Version 2.00.2090
+=================
+(Made by vfebvre 24/02/2010)
+
+1.	jcoppear
+	1.	PDEF144517: Emulator crashes when run under Carbide debugger on Windows 7
+
+2.	hengrant
+	1.	DEF144604 Incorrect trace metadata included in medsd.mmp
+
+
+Version 2.00.2089
+=================
+(Made by vfebvre 23/02/2010)
+
+1.	vfebvre
+	1.	DEF142659 T_SHBUF failures on X86GCC/FMM (t_shbuf:2835)
+
+
+Version 2.00.2088
+=================
+(Made by vfebvre 22/02/2010)
+
+1.	kingzhan
+	1.	DEF144531 for submission: TSW defect TSW TRLM-82BCNG
+		TSW TRLM-82BCNG: t_usb_device test fails
+
+
+2.	mipetzol
+	1.	DEF144549: Rapu Base Port DMA tests failing
+		The DMA channel DFC now takes into account that the channel might get
+		closed by the client in the transfer completion callback.
+
+3.	martai
+	1.	DEF144546: DBase Reference counting contains incorrect debug assertions
+
+
+Version 2.00.2087
+=================
+(Made by vfebvre 22/02/2010)
+
+1.	vfebvre
+	1.	DEF144532 [System Build]: Build failed for TB92SF_1052 due to missing .mrp change  
+
+
+Version 2.00.2086
+=================
+(Made by vfebvre 18/02/2010)
+
+1.	jimhofe
+	1.	MINOR_CHANGE: Removing obsolete txt file
+
+
+Version 2.00.2085
+=================
+(Made by vfebvre 15/02/2010)
+
+1.	ferporta
+	1.	DEF142026 Core Dump Server not getting events after attaching to more than one executable
+	2.	PDEF143992 E32TEST T_RMDEBUG2_OEM fails on Navi-Engine with WDP enabled 
+	3.	DEF143480 t_rmdebug2_oem, t_rmdebug2 test fails on production hw79/vasco with debug server
+
+2.	paconway
+	1.	DEF144234 SD mounting issue due to postponed door-open media change
+
+
+Version 2.00.2084
+=================
+(Made by vfebvre 11/02/2010)
+
+1.	kingzhan
+	1.	DEF144402 - for base submission: fix defect YXIO-824BQL RUsb::DeviceStateNotification doesn'
+		TSW YXIO-824BQL:RUsb::DeviceStateNotification doesn't notify any device status
+		change after failing to TryStart USB stack
+
+2.	coliward
+	1.	DEF144164: WSD data is allocated incorrectly on the kernel heap
+		WSD was being allocated on the kernel heap, which was causing large Qt
+		programs to fail to start up, given that the kernel heap is limited to 16 MB.
+
+
 Version 2.00.2083
 =================
 (Made by vfebvre 10/02/2010)

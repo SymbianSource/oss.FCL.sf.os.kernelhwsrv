@@ -468,6 +468,29 @@ d_wsdextension	support
 t_wsdextension	support
 #endif
 
+// t_wsd_* suffixes:
+//   x => XIP; runs from ROM
+//   c => code loads & runs in RAM
+//   p => pagedcode
+//   u => unpagedcode
+t_wsd_dl3_xp	support
+t_wsd_dl3_xu	support
+t_wsd_dl2_xp	support
+t_wsd_dl2_xu	support
+t_wsd_dl1_xp	support
+t_wsd_dl1_xu	support
+t_wsd_tst_xp
+t_wsd_tst_xu
+
+t_wsd_dl3_cp	support
+t_wsd_dl3_cu	support
+t_wsd_dl2_cp	support
+t_wsd_dl2_cu	support
+t_wsd_dl1_cp	support
+t_wsd_dl1_cu	support
+t_wsd_tst_cp
+t_wsd_tst_cu
+
 // /e32test/ethernet
 ../ethernet/pump/etherpump  manual
 ../ethernet/macset/macset   manual
@@ -963,22 +986,41 @@ t_oeexport2
 #endif
 
 #if defined(MARM_ARMV5) || defined(MARM_ARMV4)
-t_trkdummyapp
+../rm_debug/group/t_trkdummyapp
 #endif
 
 #if defined(MARM_ARMV5)
-t_rmdebug_dll support
-t_rmdebug_security0 support
-t_rmdebug_security1 support
-t_rmdebug_security2 support
-t_rmdebug_security3 support
-t_rmdebug_app support
-t_rmdebug2
-t_rmdebug2_oem
-t_rmdebug2_oemtoken support
-t_rmdebug2_oem2
-t_rmdebug2_oemtoken2 support
-t_crashmonitor_lib
+../rm_debug/group/t_rmdebug_dll support
+../rm_debug/group/t_rmdebug_security0 support
+../rm_debug/group/t_rmdebug_security1 support
+../rm_debug/group/t_rmdebug_security2 support
+../rm_debug/group/t_rmdebug_security3 support
+../rm_debug/group/t_rmdebug_app support
+../rm_debug/group/t_rmdebug2
+../rm_debug/group/t_rmdebug2_oem
+../rm_debug/group/t_rmdebug2_oemtoken support
+../rm_debug/group/t_rmdebug2_oem2
+../rm_debug/group/t_rmdebug2_oemtoken2 support
+../rm_debug/group/t_crashmonitor_lib
+
+../rm_debug/group/t_rmdebug_app1 support
+../rm_debug/group/t_rmdebug_app2 support
+../rm_debug/group/t_rmdebug_app3 support
+../rm_debug/group/t_rmdebug_app4 support
+../rm_debug/group/t_rmdebug_app5 support
+../rm_debug/group/t_rmdebug_app6 support
+../rm_debug/group/t_rmdebug_app7 support
+../rm_debug/group/t_rmdebug_app8 support
+../rm_debug/group/t_rmdebug_app9 support
+../rm_debug/group/t_rmdebug_app10 support
+
+../rm_debug/group/t_rmdebug_target_launcher support
+../rm_debug/group/t_rmdebug_multi_target
+
+../rm_debug/group/t_rmdebug_multi_agent support
+../rm_debug/group/t_multi_agent_launcher
+
+
 #endif
 
 t_stacksize

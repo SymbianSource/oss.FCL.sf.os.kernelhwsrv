@@ -680,10 +680,8 @@ GLDEF_C TInt E32Main()
 	r = controlIo(TheFs,theDrive, KControlIoCacheCount, orgValues);
 	test_KErrNone(r);
 
-	test.Printf(_L("Requests on close queue at start=%d\n"),orgValues.iCloseCount);
-	test.Printf(_L("Requests on free queue at start=%d\n"),orgValues.iFreeCount);
-	test.Printf(_L("Requests dynamically allocated at start=%d\n"),orgValues.iAllocated);
-	test.Printf(_L("Requests in total at start=%d\n"),orgValues.iTotalCount);
+	test.Printf(_L("Requests at start: CloseQ %d FreeQ %d total %d peak %d\n"), 
+		orgValues.iCloseCount, orgValues.iFreeCount, orgValues.iTotalCount, orgValues.iRequestCountPeak);
 
 	// File cache
 
@@ -793,10 +791,10 @@ GLDEF_C TInt E32Main()
 	r = controlIo(TheFs,theDrive, KControlIoCacheCount, values);
 	test_KErrNone(r);
 	
-	test.Printf(_L("Requests on close queue at end=%d\n"),values.iCloseCount);
-	test.Printf(_L("Requests on free queue at end=%d\n"),values.iFreeCount);
-	test.Printf(_L("Requests dynamically allocated at end=%d\n"),values.iAllocated);
-	test.Printf(_L("Requests in total at end=%d\n"),values.iTotalCount);
+	test.Printf(_L("Requests at end: CloseQ %d FreeQ %d total %d peak %d\n"), 
+		values.iCloseCount, values.iFreeCount, values.iTotalCount, values.iRequestCountPeak);
+	test.Printf(_L("Operations at end: FreeQ %d total %d peak=%d\n"),
+		values.iOpFreeCount, values.iOpRequestCount, values.iOpRequestCountPeak);
 	
 	test(orgValues.iCloseCount==values.iCloseCount);
 	test(orgValues.iAllocated == values.iAllocated);

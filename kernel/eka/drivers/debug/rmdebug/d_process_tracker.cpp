@@ -76,24 +76,30 @@ TInt DProcessTracker::AttachProcess(const TDesC8& aProcessName,TUint64 aAgentId)
 		{
 		return KErrNoMemory;
 		}
-
+	LOG_MSG2(" AttachProcess: < new DTargetProcess=0x%08x", tmpProcess );
+	
 	// Set the name
 	TInt err = KErrNone;
 	err = tmpProcess->SetProcessName(aProcessName);
 	if (err != KErrNone)
 		{
+		LOG_MSG2(" AttachProcess: < SetProcessName returned %d", err );
 		return err;
 		}
 
 	// Is this process being debugged (ie already attached?)
 	TInt index;
 	TBool found = EFalse;
-	for(index=0;index<iProcesses.Count();index++)
+	
+	TInt numberOfProcesses = iProcesses.Count();
+	for(index=0; index<numberOfProcesses; index++)
 		{
 		const TPtr8& tmpPtr8(iProcesses[index]->ProcessName() );
 
 		if ( tmpPtr8.CompareF(aProcessName) == 0)
 			{
+			LOG_MSG3(" Proc count=%d, found proc in iProcesses at %d. Count=%d",
+				index, iProcesses.Count() );
 			found = ETrue;
 			break;
 			}
@@ -104,6 +110,8 @@ TInt DProcessTracker::AttachProcess(const TDesC8& aProcessName,TUint64 aAgentId)
 		// Yes, it is being debugged
 
 		// Add the agent to the list of agents for this process
+		LOG_MSG3(" > AddAgent(agent id %d) to existing iProcesses[%d]", I64LOW(aAgentId), index ); 
+
 		iProcesses[index]->AddAgent(aAgentId);
 
 		return KErrNone;
@@ -113,6 +121,8 @@ TInt DProcessTracker::AttachProcess(const TDesC8& aProcessName,TUint64 aAgentId)
 		// No, it is not being debugged
 			
 		// Add the agent to the list of agents for this process
+		LOG_MSG2(" > AddAgent(agent %d) to new proc at index 0", I64LOW(aAgentId) ); 
+
 		tmpProcess->AddAgent(aAgentId);
 
 		// Add the process to the list of processes being debugged
@@ -143,7 +153,9 @@ TInt DProcessTracker::DetachProcess(const TDesC8& aProcessName, TUint64 aAgentId
 	TInt i;
 	TBool found = EFalse;
 	DTargetProcess* foundProcess = 0;
-	for(i=0;i<iProcesses.Count();i++)
+
+	TInt numberOfProcesses = iProcesses.Count();
+	for(i=0; i<numberOfProcesses; i++)
 		{
 		foundProcess = iProcesses[i];
 
@@ -186,7 +198,8 @@ TInt DProcessTracker::DetachProcess(const TDesC8& aProcessName, TUint64 aAgentId
 TInt DProcessTracker::DetachAgent(const TUint64 aAgentId)
 	{
 	// Remove this agent from all the processes being tracked.
-	for(TInt i=0;i<iProcesses.Count();i++)
+	TInt numberOfProcesses = iProcesses.Count();
+	for(TInt i=0; i<numberOfProcesses; i++)
 		{
 		// remove the agent from the process (we don't care about the return code)
 		iProcesses[i]->RemoveAgent(aAgentId);
@@ -226,13 +239,15 @@ DTargetProcess* DProcessTracker::FindProcess(const TDesC8& aProcessName)
 	if (aProcessName.Length() < 1 || aProcessName.Length() >= KMaxPath)
 		{
 		return 0;	// not found
-		};
+		}
 
 	// Can we find this in the array?
 	TInt i;
 	TBool found = EFalse;
 	DTargetProcess* foundProcess = 0;
-	for(i=0;i<iProcesses.Count();i++)
+
+	TInt numberOfProcesses = iProcesses.Count();
+	for(i=0; i<numberOfProcesses; i++)
 		{
 		foundProcess = iProcesses[i];
 
@@ -247,6 +262,7 @@ DTargetProcess* DProcessTracker::FindProcess(const TDesC8& aProcessName)
 
 	if (found == EFalse)
 		{
+		LOG_EVENT_MSG("DProcessTracker::FindProcess, not found" );
 		return 0;	// not found
 		}
 
@@ -272,73 +288,58 @@ DTargetProcess* DProcessTracker::FindProcess(const TDesC8& aProcessName)
  */
 DTargetProcess*	DProcessTracker::FuzzyFindProcess(const TDesC8& aProcessName)
 	{
-
 	// Valid ProcessName?
 	if (aProcessName.Length() < 1 || aProcessName.Length() >= KMaxPath)
 		{
 		return 0;	// not found
-		};
+		}
 
 	// Can we find this in the array?
-	TInt i;
 	TBool found = EFalse;
 	DTargetProcess* foundProcess = 0;
-	for(i=0;i<iProcesses.Count();i++)
+	const TChar KBackSlash('\\');
+
+	TInt numberOfProcesses = iProcesses.Count();
+	for(TInt i=0; i < numberOfProcesses; i++)
 		{
 		foundProcess = iProcesses[i];
 
-		const TPtr8& tmpPtr8( foundProcess->ProcessName() );
-
-		if ( tmpPtr8.CompareF(aProcessName) == 0)
+		TInt procListBackSlash = foundProcess->ProcessName().LocateReverse( KBackSlash );
+		if( procListBackSlash == KErrNotFound )
 			{
-			found = ETrue;
-			break;
+			procListBackSlash = 0;
 			}
 		else
 			{
-			// need to compare centre of this string
-			//
-			// e.g. 
-			//		z:\sys\bin\foobar.exe
-			// might be seen as:
-			//		foobar.exe
-			//
-			// Algorithm is start at the right side of foundProcess->ProcessName
-			// move left until we have some backslash, then finish.
-			TInt right= tmpPtr8.Size() - 1;
-			TInt left = right;
+			//Now move to the char after the backlash
+			procListBackSlash++;
+			}
 
-			// search for the rightmost backslash
-			while(left > 0)
-				{
-				if(tmpPtr8[left] == (TUint8)'\\')
-					break;
-				
-				--left;	// move left one character
-				}
-			// now we have
-			// left = index of rightmost backslash in foundProcess->ProcessName()
-			// right = index of rightmost character in foundProcess->ProcessName()
+		TInt eventBackSlash = aProcessName.LocateReverse( KBackSlash );
+		if( eventBackSlash == KErrNotFound )
+			{
+			eventBackSlash = 0;
+			}
+		else
+			{
+			//Now move to the char after the backlash
+			eventBackSlash++;
+			}
 
-			// We must expect that the size of names matches
-			TInt foundSize = right - left;	// == sizeof("foobar.exe")
-			TInt suppliedSize = aProcessName.Size();		
+		if( ( procListBackSlash == 0 ) && ( eventBackSlash == 0 ) )
+			{
+			//There were no backslashes on either name, so no point in continuing
+			break;
+			}
 
-			if (foundSize != suppliedSize)
-				{
-				// must be something else
-				break;
-				}
+		TPtrC8 eventCleanName( aProcessName.Mid( eventBackSlash ) );		
+		TPtrC8 procListCleanName( foundProcess->ProcessName().Mid( procListBackSlash ) );
 
-			for(TInt i=0;i< foundSize;i++)
-				{
-				if (tmpPtr8[left+i] != aProcessName[1+i])
-					{
-					break;
-					}
-				}
-			// All the characters match if we get here
+		if ( eventCleanName.CompareF( procListCleanName ) == 0 )
+			{
+			LOG_MSG2("DProcessTracker::FuzzyFindProcess() found a match : process list[%d]", i );
 			found = ETrue;
+			break;
 			}
 		}
 
@@ -360,7 +361,8 @@ TBool DProcessTracker::CheckSuspended(DThread* aTargetThread) const
 		}
 
 	//iterate through the processes trying to match the name, and check suspended if found
-	for(TInt i=0; i<iProcesses.Count(); i++)
+	TInt numberOfProcesses = iProcesses.Count();
+	for(TInt i=0; i < numberOfProcesses; i++)
 		{
 		if(iProcesses[i]->ProcessName().CompareF(*name) == 0)
 			{
@@ -407,7 +409,8 @@ TInt DProcessTracker::SuspendThread(DThread* aTargetThread, TBool aFreezeThread)
 		}
 
 	//iterate through the processes trying to match the name, try to suspend the thread if found
-	for(TInt i=0; i<iProcesses.Count(); i++)
+	TInt numberOfProcesses = iProcesses.Count();
+	for(TInt i=0; i < numberOfProcesses; i++)
 		{
 		if(iProcesses[i]->ProcessName().CompareF(*name) == 0)
 			{
@@ -421,7 +424,8 @@ TInt DProcessTracker::SuspendThread(DThread* aTargetThread, TBool aFreezeThread)
 
 void DProcessTracker::FSWait()
 	{
-	for(TInt i=0; i<iProcesses.Count(); i++)
+	TInt numberOfProcesses = iProcesses.Count();
+	for(TInt i=0; i < numberOfProcesses; i++)
 		{
 		iProcesses[i]->FSWait();
 		}
@@ -447,7 +451,8 @@ TInt DProcessTracker::ResumeThread(DThread* aTargetThread)
 		}
 
 	//iterate through the processes trying to match the name, try to resume the thread if found
-	for(TInt i=0; i<iProcesses.Count(); i++)
+	TInt numberOfProcesses = iProcesses.Count();
+	for(TInt i=0; i < numberOfProcesses; i++)
 		{
 		if(iProcesses[i]->ProcessName().CompareF(*name) == 0)
 			{

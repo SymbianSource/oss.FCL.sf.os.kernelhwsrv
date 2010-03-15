@@ -1,0 +1,4 @@
+EXPORTS
+	ExportedData @ 1 NONAME DATA 4 ; TInt32 ExportedData
+	_Z24CheckExportedDataAddressPv @ 2 NONAME ; void CheckExportedDataAddress(void* aDataAddr)
+

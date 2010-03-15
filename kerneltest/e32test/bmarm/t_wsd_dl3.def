@@ -1,0 +1,7 @@
+EXPORTS
+	GetAddressOfData__FRiRPvT1 @ 1 NONAME R3UNUSED ; GetAddressOfData(int &, void *&, void *&)
+	TestDataSize @ 2 NONAME ; (null)
+	WritableTestData @ 3 NONAME ; (null)
+	PointerToStaticData @ 4 NONAME ; (null)
+	PointerToWritableData @ 5 NONAME ; (null)
+

@@ -1,0 +1,4 @@
+EXPORTS
+	ExportedData @ 1 NONAME ; TInt32 ExportedData
+	CheckExportedDataAddress__FPv @ 2 NONAME ; void CheckExportedDataAddress(void* aDataAddr)
+

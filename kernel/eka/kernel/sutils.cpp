@@ -2967,12 +2967,17 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 		else if (!nt || nt->iCsCount==0)
 			m &= ~MASK_NO_CRITICAL;
 		}
-	if (m & MASK_CRITICAL)
+	if (m & (MASK_CRITICAL|MASK_NO_KILL_OR_SUSPEND))
 		{
 		if (t && (t->iThreadType!=EThreadUser || nt->iCsCount>0))
-			m &= ~MASK_CRITICAL;
+			m &= ~(MASK_CRITICAL|MASK_NO_KILL_OR_SUSPEND);
 		else if (!nt || nt->iCsCount>0)
-			m &= ~MASK_CRITICAL;
+			m &= ~(MASK_CRITICAL|MASK_NO_KILL_OR_SUSPEND);
+		}
+	if (m & MASK_NO_KILL_OR_SUSPEND)
+		{
+		if (!nt || NKern::KernelLocked() || NKern::HeldFastMutex())
+			m &= ~MASK_NO_KILL_OR_SUSPEND;
 		}
 	if (m & MASK_KERNEL_LOCKED)
 		{
@@ -3074,6 +3079,8 @@ extern "C" TInt CheckPreconditions(TUint32 aConditionMask, const char* aFunction
 		Kern::Printf("Assertion failed");
 	if (m & MASK_NO_RESCHED)
 		Kern::Printf("Assertion failed: Don't call from thread with kernel unlocked");
+	if (m & MASK_NO_KILL_OR_SUSPEND)
+		Kern::Printf("Assertion failed: Must not be suspended or killed here");
 
 #ifdef __KERNEL_APIS_CONTEXT_CHECKS_FAULT__
 	if (aFunction)

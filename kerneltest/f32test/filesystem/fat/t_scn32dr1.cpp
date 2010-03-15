@@ -597,7 +597,7 @@ GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
             RDebug::Print(_L("%5d: ------------- end of directory"), aNum);
         return EFalse;
         }
-    else if ((d->Attributes() & KDirAttrLongMask) == KDirAttrLongName)
+    else if (((TInt)d->Attributes() & KDirAttrLongMask) == KDirAttrLongName)
         {
         TBuf16<15> name;
         ExtractNameString(name, aEntry);
@@ -795,7 +795,7 @@ LOCAL_C TInt GetStartCluster(TInt aCluster, TInt aEntry)
     TheRawDisk.Close();
     RDebug::Print(_L("Cluster %d @ 0x%08X:"), aCluster, ClusterToByte(aCluster));
     TFatDirEntry* d = (TFatDirEntry*)ptr.Ptr() + aEntry;
-    while ((d->Attributes() & KDirAttrLongMask) == KDirAttrLongName && aEntry < gEntriesPerCluster)
+    while (((TInt)d->Attributes() & KDirAttrLongMask) == KDirAttrLongName && aEntry < gEntriesPerCluster)
         {
         if (d->IsErased() || d->IsEndOfDirectory())
             break;
@@ -807,7 +807,7 @@ LOCAL_C TInt GetStartCluster(TInt aCluster, TInt aEntry)
         start = -1;
     else if (d->IsEndOfDirectory())
         start = -1;
-    else if ((d->Attributes() & KDirAttrLongMask) == KDirAttrLongName)
+    else if (((TInt)d->Attributes() & KDirAttrLongMask) == KDirAttrLongName)
         start = -1;
     else if (!IsValidDirEntry(d))
         start = -1;

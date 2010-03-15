@@ -63,15 +63,16 @@ static TInt gEndOfChain;        // for FAT12/16/32
 
 const TInt KMaxFatEntries  = 2048;
 const TInt KMaxFatSize     = KMaxFatEntries * 4;
-const TInt KDirAttrReadOnly  = 0x01;
-const TInt KDirAttrHidden    = 0x02;
-const TInt KDirAttrSystem    = 0x04;
-const TInt KDirAttrVolumeId  = 0x08;
-const TInt KDirAttrDirectory = 0x10;
-const TInt KDirAttrArchive   = 0x20;
-const TInt KDirAttrLongName  = KDirAttrReadOnly | KDirAttrHidden | KDirAttrSystem | KDirAttrVolumeId;
-const TInt KDirAttrLongMask  = KDirAttrLongName | KDirAttrDirectory | KDirAttrArchive;
-const TInt KDirLastLongEntry = 0x40;
+
+const TUint KDirAttrReadOnly  = 0x01;
+const TUint KDirAttrHidden    = 0x02;
+const TUint KDirAttrSystem    = 0x04;
+const TUint KDirAttrVolumeId  = 0x08;
+const TUint KDirAttrDirectory = 0x10;
+const TUint KDirAttrArchive   = 0x20;
+const TUint KDirAttrLongName  = KDirAttrReadOnly | KDirAttrHidden | KDirAttrSystem | KDirAttrVolumeId;
+const TUint KDirAttrLongMask  = KDirAttrLongName | KDirAttrDirectory | KDirAttrArchive;
+const TUint KDirLastLongEntry = 0x40;
 
 void CreateFatEntry(const TDesC& aDir, TBool aVFatEntry, TDes *apFileName=NULL);
 
@@ -1495,7 +1496,7 @@ static  void TestClusterAllocation()
     }
 
 
-static  void TestMakeDir(const TDesC& aName,TInt aNewClust,TInt aParentClust)
+static  void TestMakeDir(const TDesC& aName, TUint aNewClust, TUint aParentClust)
 //
 // Test make dir
 //
@@ -1526,7 +1527,7 @@ static  void TestMakeDir(const TDesC& aName,TInt aNewClust,TInt aParentClust)
     pE++;
     if (pE->Name()[0]!='.' || pE->Name()[1]!='.')
         Error(_L("Second entry is not '..'"),KErrNone);
-    if (pE->StartCluster() != ((aParentClust==gRootCluster)?0:aParentClust))
+    if (pE->StartCluster() != ((aParentClust==(TUint)gRootCluster)?0:aParentClust))
         Error(_L("Start cluster of .. is not parent directory"),KErrNone);
     }
 

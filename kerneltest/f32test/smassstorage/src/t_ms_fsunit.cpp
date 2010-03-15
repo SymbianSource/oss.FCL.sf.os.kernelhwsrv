@@ -21,11 +21,8 @@
 */
 
 #include <f32file.h>
+#include <f32fsys.h>
 #include <e32test.h>
-#include <e32std.h>
-#include <e32std_private.h>
-#include <e32svr.h>
-#include <hal.h>
 #include "t_ms_main.h"
 #include "t_ms_common.h"
 #include "cmassstoragefilesystem.h"
@@ -268,7 +265,6 @@ EXPORT_C CLocDrvMountCB::CLocDrvMountCB() {}
 EXPORT_C CLocDrvMountCB::~CLocDrvMountCB()
 
 	{
-	__PRINT1(_L("CLocDrvMountCB::~CLocDrvMountCB() 0x%x"),this);
 	if(iProxyDrive)
 		delete(iProxyDrive);
 	}

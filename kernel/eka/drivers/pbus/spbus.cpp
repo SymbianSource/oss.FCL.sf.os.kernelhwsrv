@@ -1111,6 +1111,9 @@ void DPBusSocket::DoorCloseEvent()
 	OstTraceFunctionEntry1( DPBUSSOCKET_DOORCLOSEEVENT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::DoorCloseEvent state %d",iSocketNumber,iState));
 	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_DOORCLOSEEVENT , "iSocketNumber=%d; iState=%d",iSocketNumber,iState);
+	
+	if (iPostponedEvents & EMediaChange)
+		iPostponedEvents &= ~EMediaChange;
 
 	// NB If there are multiple doors then the bus may already be powererd up, 
 	// so it's not possible to determine the bus state.

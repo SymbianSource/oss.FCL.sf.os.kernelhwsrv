@@ -2819,6 +2819,11 @@ void NegativeTestsUser()
 	test_KErrNone(r);
 	r = HAL::Get(HAL::EMemoryRAM, ram);
 	test_KErrNone(r);
+	test_Compare(ram, >, 0);
+	// Total system RAM returned by EMemoryRAM should always be < 2GB anyway
+	TUint uram = (TUint) ram;
+	test.Printf(_L("Total system RAM: %u bytes\n"), uram);
+	test.Printf(_L("Page size: %d bytes\n"), pagesize);
 
 	RShPool pool;
 	{ TShPoolCreateInfo inf(TShPoolCreateInfo::EPageAlignedBuffer, 0, 0); r = pool.Create(inf,KDefaultPoolHandleFlags); test_Equal(KErrArgument, r); }
@@ -2835,9 +2840,7 @@ void NegativeTestsUser()
 	{ TShPoolCreateInfo inf(TShPoolCreateInfo::EPageAlignedBuffer, 4096, 10); inf.SetExclusive(); r = pool.Create(inf, KDefaultPoolHandleFlags); test_Equal(KErrNotSupported, r); pool.Close(); }
 	{ TShPoolCreateInfo inf(TShPoolCreateInfo::ENonPageAlignedBuffer, 4096, 10, 12); r = pool.Create(inf, KDefaultPoolHandleFlags); test_Equal(KErrNone, r); pool.Close(); }
 	{ TShPoolCreateInfo inf(TShPoolCreateInfo::ENonPageAlignedBuffer, 4096, 10, 12); inf.SetExclusive(); r = pool.Create(inf, KDefaultPoolHandleFlags); test_Equal(KErrArgument, r); pool.Close(); }
-#ifndef __WINS__
-	{ TShPoolCreateInfo inf(TShPoolCreateInfo::EPageAlignedBuffer, 128 * pagesize, (ram / (128 * pagesize)) + 1); r = pool.Create(inf,KDefaultPoolHandleFlags); test_Equal(KErrNoMemory, r); }
-#endif
+	{ TShPoolCreateInfo inf(TShPoolCreateInfo::EPageAlignedBuffer, 128 * pagesize, (uram / (128 * pagesize)) + 1); r = pool.Create(inf,KDefaultPoolHandleFlags); test_Equal(KErrNoMemory, r); }
 	{ TShPoolCreateInfo inf(TShPoolCreateInfo::ENonPageAlignedBuffer, 0, 0, 0); r = pool.Create(inf,KDefaultPoolHandleFlags); test_Equal(KErrArgument, r); }
 	{ TShPoolCreateInfo inf(TShPoolCreateInfo::ENonPageAlignedBuffer, 100, 0, 0); r = pool.Create(inf,KDefaultPoolHandleFlags); test_Equal(KErrArgument, r); }
 	{ TShPoolCreateInfo inf(TShPoolCreateInfo::ENonPageAlignedBuffer, 0, 100, 0); r = pool.Create(inf,KDefaultPoolHandleFlags); test_Equal(KErrArgument, r); }

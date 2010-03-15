@@ -563,7 +563,7 @@ GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
 		}
 	else if (d->IsEndOfDirectory())
 		return EFalse;
-	else if ((d->Attributes() & KDirAttrLongMask) == KDirAttrLongName)
+	else if (((TInt)d->Attributes() & KDirAttrLongMask) == KDirAttrLongName)
 		{
 		TBuf16<15> name;
 		ExtractNameString(name, aEntry);

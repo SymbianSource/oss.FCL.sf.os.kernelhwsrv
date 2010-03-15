@@ -59,41 +59,41 @@ using namespace Debug;
 // DRM_DebugDriverFactory constructor
 //
 DRM_DebugDriverFactory::DRM_DebugDriverFactory()
-{
+	{
 	iVersion = TVersion(KMajorVersionNumber,KMinorVersionNumber,KBuildVersionNumber);
-}
+	}
 
 //
 // DRM_DebugDriverFactory::Create
 //
 TInt DRM_DebugDriverFactory::Create(DLogicalChannelBase*& aChannel)
-{
+	{
 	if (iOpenChannels != 0)
 		return KErrInUse; // a channel is already open
 
 	aChannel = new DRM_DebugChannel(this);
 
 	return aChannel ? KErrNone : KErrNoMemory;
-}
+	}
 
 //
 // DRM_DebugDriverFactory::Install
 //
 TInt DRM_DebugDriverFactory::Install()
-{
-    return(SetName(&KRM_DebugDriverName));
-}
+	{
+	return(SetName(&KRM_DebugDriverName));
+	}
 
 //
 // DRM_DebugDriverFactory::Install
 //
 void DRM_DebugDriverFactory::GetCaps(TDes8& aDes) const
-{
-    TCapsRM_DebugDriver b;
-    b.iVersion = TVersion(KMajorVersionNumber, KMinorVersionNumber, KBuildVersionNumber);
+	{
+	TCapsRM_DebugDriver b;
+	b.iVersion = TVersion(KMajorVersionNumber, KMinorVersionNumber, KBuildVersionNumber);
 
 	Kern::InfoCopy(aDes,(TUint8*)&b,sizeof(b));
-}
+	}
 
 /////////////////////////////////////////////////////////////////////////
 //
@@ -106,37 +106,41 @@ void DRM_DebugDriverFactory::GetCaps(TDes8& aDes) const
 //
 DRM_DebugChannel::DRM_DebugChannel(DLogicalDevice* aLogicalDevice)
 	: iExcludedROMAddressStart(ROM_LINEAR_BASE),
-      iExcludedROMAddressEnd(0),
-   	  iPageSize(0x1000),
-	  iBreakManager(0),
-	  iStepper(0),
-	  iStepLock(0),
-  	  iDfcQ(NULL),
-	  iInitialisedCodeModifier(0),
-	  iAsyncGetValueRequest(NULL)
-{
+	iExcludedROMAddressEnd(0),
+	iPageSize(0x1000),
+	iBreakManager(0),
+	iStepper(0),
+	iStepLock(0),
+	iDfcQ(NULL),
+	iInitialisedCodeModifier(0),
+	iAsyncGetValueRequest(NULL)
+	{
 	LOG_MSG("DRM_DebugChannel::DRM_DebugChannel()");
 
 	iDevice = aLogicalDevice;
 
-	iClientThread = &Kern::CurrentThread();
+	iClientThread = &Kern::CurrentThread();	
 	iClientThread->Open();
 
+	LOG_MSG3("DRM_DebugChannel::DRM_DebugChannel() clientThread = 0x%08x, id=%d", 
+	            iClientThread, iClientThread->iId );
+
+
 	iPageSize = Kern::RoundToPageSize(1);
-}
+	}
 
 //
 // DRM_DebugChannel destructor
 //
 DRM_DebugChannel::~DRM_DebugChannel()
-{
+	{
 	LOG_MSG("DRM_DebugChannel::~DRM_DebugChannel()");
 
 	if (iAsyncGetValueRequest)
-	{
+		{
 		Kern::QueueRequestComplete(iClientThread, iAsyncGetValueRequest, KErrCancel); // does nothing if request not pending
 		Kern::DestroyClientRequest(iAsyncGetValueRequest);
-	}
+		}
 
 	NKern::ThreadEnterCS();
 	Kern::SafeClose((DObject*&)iClientThread, NULL);
@@ -144,19 +148,19 @@ DRM_DebugChannel::~DRM_DebugChannel()
 
 	// Close breakpoint manager
 	if (iBreakManager)
-	{
+		{
 		NKern::ThreadEnterCS();
 		delete iBreakManager;
 		NKern::ThreadLeaveCS();
-	}
+		}
 
 	// Close stepping manager
 	if (iStepper)
-	{
+		{
 		NKern::ThreadEnterCS();
 		delete iStepper;
 		NKern::ThreadLeaveCS();
-	}
+		}
 
 	//close the debug process list
 	iDebugProcessList.Close();
@@ -165,10 +169,10 @@ DRM_DebugChannel::~DRM_DebugChannel()
 
 	//close the code modifier
 	if (iInitialisedCodeModifier)
-	{
+		{
 		DebugSupport::CloseCodeModifier();
+		}
 	}
-}
 
 void DRM_DebugChannel::DestroyDfcQ()
 	{
@@ -185,47 +189,45 @@ void DRM_DebugChannel::DestroyDfcQ()
 // DRM_DebugChannel::DoCreate
 //
 TInt DRM_DebugChannel::DoCreate(TInt /*aUnit*/, const TDesC* anInfo, const TVersion& aVer)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoCreate()");
 	TInt err = Kern::CreateClientDataRequest(iAsyncGetValueRequest);
 	if(err != KErrNone)
 		return err;
 
-  	if (!Kern::QueryVersionSupported(TVersion(KMajorVersionNumber, KMinorVersionNumber, KBuildVersionNumber), aVer))
+	if (!Kern::QueryVersionSupported(TVersion(KMajorVersionNumber, KMinorVersionNumber, KBuildVersionNumber), aVer))
 		return KErrNotSupported;
 
-  	// Do the security check here so that any arbitrary application doesn't make
-  	// use of Trk kernel driver.
-  	if (!DoSecurityCheck())
-  	{
+	// Do the security check here so that any arbitrary application doesn't make
+	// use of Trk kernel driver.
+	if (!DoSecurityCheck())
+		{
 		LOG_MSG("DRM_DebugChannel::DoCreate() - permission denied!");
-  		return KErrPermissionDenied;
-  	}
+			return KErrPermissionDenied;
+		}
 
-  	if (anInfo)
-  	{
-  		// this is the end address of the user library.
-  		// this doesn't seem to be valid for EKA2.
-  		// right now we dont need this for EKA2 since we are not worried
-  		// about kernel being stopped as kernel is multithreaded.
-  		// just retaining this for future use.
+	if (anInfo)
+		{
+		// this is the end address of the user library.
+		// this doesn't seem to be valid for EKA2.
+		// right now we dont need this for EKA2 since we are not worried
+		// about kernel being stopped as kernel is multithreaded.
+		// just retaining this for future use.
 		TBuf8<32> buf;
 		TInt err = Kern::ThreadRawRead(iClientThread, anInfo, &buf, 32);
 		if(err != KErrNone)
 			return err;
-
-		//iExcludedROMAddressEnd = *(TUint32 *)(&(buf.Ptr()[20]));
-	}
+		}
 
 	// Allocate a D_RMD_Breakpoints class as a breakpoint manager
 	NKern::ThreadEnterCS();
 	iBreakManager = new D_RMD_Breakpoints(this);
 	NKern::ThreadLeaveCS();
 	if (iBreakManager == NULL)
-	{
+		{
 		LOG_MSG("DRM_DebugChannel::DRM_DebugChannel - could not construct breakpoint manager");
 		return KErrNoMemory;
-	}
+		}
 
 	// Initialise the new breakpoint manager object
 	iBreakManager->Init();
@@ -235,10 +237,10 @@ TInt DRM_DebugChannel::DoCreate(TInt /*aUnit*/, const TDesC* anInfo, const TVers
 	iStepper = new DRMDStepping(this);
 	NKern::ThreadLeaveCS();
 	if (iStepper == NULL)
-	{
+		{
 		LOG_MSG("DRM_DebugChannel::DRM_DebugChannel - could not construct stepper manager");
 		return KErrNoMemory;
-	}
+		}
 
 	// Initialize the code modifier for managing breakpoints.
 	TUint caps; //ignored for now
@@ -246,13 +248,13 @@ TInt DRM_DebugChannel::DoCreate(TInt /*aUnit*/, const TDesC* anInfo, const TVers
 	//if code modifier initializer failed,
 	//return here, since we can't set an breakpoints
 	if(err != KErrNone)
-	{
+		{
 		return err;
-	}
+		}
 	else
-	{
+		{
 		iInitialisedCodeModifier = ETrue;
-	}
+		}
 
 	//create and set the driver's Dfc queue
 	err = CreateDfcQ();
@@ -273,15 +275,29 @@ TInt DRM_DebugChannel::DoCreate(TInt /*aUnit*/, const TDesC* anInfo, const TVers
 
 	//return KErrNone;
 	return iEventHandler->Start();
-}
+	}
 
-//
-// DRM_DebugChannel::SendMsg
-//
+/**
+Forward call to either synch or asynch methods while serialising all calls via lock.
+ 
+Protect access via a the event handler lock to 
+serialise all calls and protect concurrent access to data structures
+
+@param aMsg pointer to a TMessageBase object 
+
+@return error returned by called methods
+
+@see DRM_DebugEventHandler::HandleSpecificEvent where lock is also used
+@see DRM_DebugEventHandler::iProtectionLock
+
+*/
 TInt DRM_DebugChannel::SendMsg(TMessageBase* aMsg)
 	{
-	LOG_MSG("DRM_DebugChannel::SendMsg()");
+	DThread * currThread = &Kern::CurrentThread();
+	LOG_MSG3("DRM_DebugChannel::SendMsg() currThread = 0x%08x, iClientThread=0x%08x", currThread, iClientThread );
 
+	iEventHandler->LockDataAccess();
+	
 	TThreadMessage& m = *(TThreadMessage*)aMsg;
 	TInt id = m.iValue;
 	TInt err = KErrNone;
@@ -298,6 +314,8 @@ TInt DRM_DebugChannel::SendMsg(TMessageBase* aMsg)
 		{
 		err = DLogicalChannel::SendMsg(aMsg);
 		}
+	
+	iEventHandler->ReleaseDataAccess();
 	return err;
 	}
 
@@ -330,7 +348,8 @@ TInt DRM_DebugChannel::SendRequest(TMessageBase* aMsg)
 //
 TInt DRM_DebugChannel::PreAsyncGetValue(TEventInfo* aValue, TRequestStatus* aStatus)
 	{
-	LOG_MSG("DRM_DebugChannel::PreAsyncGetValue()");
+	LOG_MSG3("DRM_DebugChannel::PreAsyncGetValue() TEventInfo=0x%08x, TRequestStatus=0x%08x",
+		aValue, aStatus );
 	
 	iAsyncGetValueRequest->Reset();
 	
@@ -364,89 +383,93 @@ TInt DRM_DebugChannel::CreateDfcQ()
 // to a user-side struct defining the cancellation
 //
 void DRM_DebugChannel::DoCancel(TInt aReqNo)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoCancel()");
 
 	TRMD_DebugCancelInfo info;
 
 	TInt err = Kern::ThreadRawRead(iClientThread,(TAny*)aReqNo,(TAny*)&info,sizeof(info));
 	if (err != KErrNone)
-	{
+		{
 		// How do we cancel something we know nothing about???
 		LOG_MSG("DRM_DebugChannel::DoCancel - bad arguments");
 		return;
-	}
+		}
 
 	// Find the process
 	DTargetProcess* pProcess = TheDProcessTracker.FindProcess(info.iProcessName);
 	if (pProcess == NULL)
-	{
+		{
 		// We are doomed. We don't know which event to cancel..
 		LOG_MSG2("Cannot determine which process is being debugged: %S", &(info.iProcessName));
 
 		return;
-	}
+		}
 
 	// Find the agent
 	DDebugAgent* debugAgent = pProcess->Agent(info.iAgentId);
 	if (debugAgent == NULL)
-	{
+		{
 		// Bad agent means there is no tracking agent
 		LOG_MSG2("Cannot locate debug agent with pid 0x%0x16lx",info.iAgentId);
 		return;
-	}
+		}
 
 	// Agent completes/pends the request as appropriate.
 	debugAgent->CancelGetEvent();
 
-}
+	}
 
 //
 // DRM_DebugChannel::DoRequest
 //
 void DRM_DebugChannel::DoRequest(TInt aReqNo, TRequestStatus* aStatus, TAny* a1, TAny* a2)
-{
-	LOG_MSG("DRM_DebugChannel::DoRequest()");
+	{
+	LOG_MSG4("DRM_DebugChannel::DoRequest(), iClientThread=0x%08x, tid=0x%08x, TRequestStatus=0x%08x", 
+		iClientThread, I64LOW(iClientThread->iId), aStatus);
 
 	switch(aReqNo)
-	{
-		case RRM_DebugDriver::ERequestGetEvent:
 		{
+		case RRM_DebugDriver::ERequestGetEvent:
+			{
 			TEventMetaData eventMetaData;
 			TInt err = Kern::ThreadRawRead(iClientThread, a2, (TUint8 *)&eventMetaData, sizeof(TEventMetaData) );
 			if (err != KErrNone)
-			{
+				{
 				LOG_MSG("Error: could not read argument data from the DSS (TEventMetaData)");
 
 				// We could not read information from the user, so the a2 argument is probably wrong
 				Kern::RequestComplete(iClientThread, aStatus, KErrArgument);
 				return;
-			}
+				}
 
 			// Find the process
 			DTargetProcess* pProcess = TheDProcessTracker.FindProcess(eventMetaData.iTargetProcessName);
 			if (pProcess == NULL)
-			{
+				{
 				LOG_MSG("Cannot identify process being debugged");
 
 				// We could not locate the process, so the user asked for the wrong one.
 				Kern::RequestComplete(iClientThread, aStatus, KErrArgument);
 				return;
-			}
+				}
 
 			// Find the agent
 			DDebugAgent* debugAgent = pProcess->Agent(eventMetaData.iDebugAgentProcessId);
+			LOG_MSG5(" For agent pid=%d, DTargetProcess=0x%08x, Agent=0x%08x, iAsyncGetValueRequest0x%08x", 
+				I64LOW(eventMetaData.iDebugAgentProcessId), pProcess, debugAgent, iAsyncGetValueRequest );
+
 			if (debugAgent == NULL)
-			{
+				{
 				// Bad agent means there is no tracking agent
 				LOG_MSG2("Cannot locate debug agent with pid 0x%0x16lx",eventMetaData.iDebugAgentProcessId);
 				return;
-			}
+				}
 			// Agent completes/pends the request as appropriate.
-			debugAgent->GetEvent(iAsyncGetValueRequest, (TEventInfo*)a1, iClientThread);
+			debugAgent->GetEvent(iAsyncGetValueRequest, iClientThread);
 
 			break;
-		}
+			}
 		default:
 			{
 			// Don't know what to do, should not get here!
@@ -454,14 +477,14 @@ void DRM_DebugChannel::DoRequest(TInt aReqNo, TRequestStatus* aStatus, TAny* a1,
 
 			Kern::RequestComplete(iClientThread, aStatus, KErrNotSupported);
 			}
+		}
 	}
-}
 
 //
 // DRM_DebugChannel::DoControl
 //
 TInt DRM_DebugChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoControl()");
 
 	LOG_MSG2("DoControl Function %d", aFunction);
@@ -470,121 +493,121 @@ TInt DRM_DebugChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 	DThread* threadObj = NULL;
 
 	switch(aFunction)
-	{
+		{
 		/* Security first */
 		case RRM_DebugDriver::EControlIsDebuggable:
-		{
+			{
 			err = IsDebuggable((TUint32)a1);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlSetBreak:
-		{
+			{
 			err = SetBreak((TSetBreakInfo*)a1);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlClearBreak:
-		{
+			{
 			err = iBreakManager->DoClearBreak((TInt32)a1);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlModifyBreak:
-		{
+			{
 			err = iBreakManager->DoModifyBreak((TModifyBreakInfo*)a1);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlModifyProcessBreak:
-		{
+			{
 			err = iBreakManager->DoModifyProcessBreak((TModifyProcessBreakInfo*)a1);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlBreakInfo:
-		{
+			{
 			err = iBreakManager->DoBreakInfo((TGetBreakInfo*)a1);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlSuspendThread:
-		{
+			{
 			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
 			if (threadObj)
 			{
 				err = DoSuspendThread(threadObj);
 			}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlResumeThread:
-		{
+			{
 			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
 			if (threadObj)
-			{
+				{
 				err = DoResumeThread(threadObj);
+				}
+			break;
 			}
-			break;
-		}
 		case RRM_DebugDriver::EControlStepRange:
-		{
-           threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
-           if (threadObj)
-           {
-   			err = StepRange(threadObj, (TRM_DebugStepInfo*)a2);
-           }
+			{
+			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
+			if (threadObj)
+				{
+				err = StepRange(threadObj, (TRM_DebugStepInfo*)a2);
+				}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlReadMemory:
-		{
-           threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
-           if (threadObj)
-           {
-   			err = ReadMemory(threadObj, (TRM_DebugMemoryInfo*)a2);
-           }
+			{
+			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
+			if (threadObj)
+				{
+				err = ReadMemory(threadObj, (TRM_DebugMemoryInfo*)a2);
+				}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlWriteMemory:
-		{
-           threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
-           if (threadObj)
-           {
-   			err = WriteMemory(threadObj, (TRM_DebugMemoryInfo*)a2);
-           }
+			{
+			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
+			if (threadObj)
+				{
+				err = WriteMemory(threadObj, (TRM_DebugMemoryInfo*)a2);
+				}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlReadRegistersLegacy:
-		{
-           threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
-           if (threadObj)
-           {
-   			err = ReadRegistersLegacy(threadObj, (TRM_DebugRegisterInfo*)a2);
-           }
+			{
+			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
+			if (threadObj)
+				{
+				err = ReadRegistersLegacy(threadObj, (TRM_DebugRegisterInfo*)a2);
+				}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlWriteRegistersLegacy:
-		{
-           threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
-           if (threadObj)
-           {
-   			err = WriteRegistersLegacy(threadObj, (TRM_DebugRegisterInfo*)a2);
-           }
+			{
+			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
+			if (threadObj)
+				{
+				err = WriteRegistersLegacy(threadObj, (TRM_DebugRegisterInfo*)a2);
+				}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlReadRegisters:
-		{
-           threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
-           if (threadObj)
-           {
-   			err = ReadRegisters(threadObj, (TRM_DebugRegisterInformation*)a2);
-           }
+			{
+			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
+			if (threadObj)
+				{
+				err = ReadRegisters(threadObj, (TRM_DebugRegisterInformation*)a2);
+				}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlWriteRegisters:
-		{
-           threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
-           if (threadObj)
-           {
-   			err = WriteRegisters(threadObj, (TRM_DebugRegisterInformation*)a2);
-           }
+			{
+			threadObj = DebugUtils::OpenThreadHandle((TUint32)a1);
+			if (threadObj)
+				{
+				err = WriteRegisters(threadObj, (TRM_DebugRegisterInformation*)a2);
+				}
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlGetDebugFunctionalityBufSize:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlGetDebugFunctionalityBufSize\n");
 
 			TDebugFunctionality df;
@@ -594,9 +617,9 @@ TInt DRM_DebugChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			// Return size to user-side in a safe manner
 			err = Kern::ThreadRawWrite(iClientThread, a1, (TUint8*)&size, sizeof(TUint), iClientThread);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlGetDebugFunctionality:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlGetDebugFunctionality\n");
 
 			TDebugFunctionality df;
@@ -608,64 +631,64 @@ TInt DRM_DebugChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			TUint8* dfbuffer = (TUint8*)Kern::AllocZ(dfsize);
 			NKern::ThreadLeaveCS();
 			if (dfbuffer==NULL)
-			{
+				{
 				LOG_MSG2("Could not allocate memory for %d bytes\n",dfsize);
 
 				// could not allocate memory
 				return KErrNoMemory;
-			}
+				}
 
 			// Temporary descriptor to hold DF data
 			TPtr8 tmpPtr(dfbuffer,0,dfsize);
 
 			// Obtain the DF data
 			if (df.GetDebugFunctionality(tmpPtr) )
-			{
+				{
 				// Return the DF data to the user-side
 				err = Kern::ThreadDesWrite(iClientThread, a1, tmpPtr, 0, KChunkShiftBy0, iClientThread);
-			}
+				}
 			else
-			{
+				{
 				// Failed.
 				err = KErrGeneral;
-			}
+				}
 
 			// Free tmp buffer
 			NKern::ThreadEnterCS();
 			Kern::Free(dfbuffer);
 			NKern::ThreadLeaveCS();
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlAttachProcess:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlAttachProcess");
 
 			err = AttachProcess(a1,a2);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlDetachProcess:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlDetachProcess");
 
 			err = DetachProcess(a1,a2);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlDetachAgent:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlDetachAgent");
 
 			err = DetachAgent(a1,a2);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlSetEventAction:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlSetEventAction");
 
 			err = SetEventAction(a1,a2);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlGetMemoryOperationMaxBlockSize:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlGetMemoryOperationMaxBlockSize\n");
 
 			TUint32 maxSize = TDebugFunctionality::GetMemoryOperationMaxBlockSize();
@@ -673,95 +696,95 @@ TInt DRM_DebugChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			// Return size to user-side in a safe manner
 			err = Kern::ThreadRawWrite(iClientThread, a1, (TUint8*)&maxSize, sizeof(TUint32), iClientThread);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlGetList:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlGetList\n");
 			err = GetList((TListInformation*)a1);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlStep:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlStep\n");
 
 			err = Step((TUint32)a1,(TUint32)a2);
 			break;
-		}
+			}
 		case RRM_DebugDriver::EControlKillProcess:
-		{
+			{
 			LOG_MSG("RRM_DebugDriver::EControlKillProcess\n");
 
 			err = KillProcess((TUint32)a1,(TUint32)a2);
 			break;
-		}
+			}
 		default:
-		{
+			{
 			err = KErrGeneral;
+			}
 		}
-	}
 
 	if (KErrNone != err)
-	{
+		{
 		LOG_MSG2("Error %d from control function", err);
-	}
+		}
 
-   if (threadObj)
-   {
-       // Close the thread handle which has been opened by DebugUtils::OpenThreadHandle
-       threadObj->Close(NULL);
-   }
+	if (threadObj)
+		{
+		// Close the thread handle which has been opened by DebugUtils::OpenThreadHandle
+		threadObj->Close(NULL);
+		}
 
 	return err;
-}
+	}
 
 void DRM_DebugChannel::HandleMsg(TMessageBase* aMsg)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::HandleMsg()");
 
 	TThreadMessage& m = *(TThreadMessage*)aMsg;
 	TInt id = m.iValue;
 
 	if (id == (TInt)ECloseMsg)
-	{
-		if (iEventHandler)
 		{
+		if (iEventHandler)
+			{
 			iEventHandler->Stop();
 			iEventHandler->Close();
 			iEventHandler = NULL;
-		}
+			}
 		m.Complete(KErrNone, EFalse);
 		return;
-	}
+		}
 
 	if (id == KMaxTInt)
-	{
+		{
 		// DoCancel
 		DoCancel(m.Int0());
 		m.Complete(KErrNone, ETrue);
 		return;
-	}
+		}
 
 	if (id < 0)
-	{
+		{
 		// DoRequest
 		TRequestStatus* pStatus = (TRequestStatus*)m.Ptr0();
 		DoRequest(~id, pStatus, m.Ptr1(), m.Ptr2());
 		m.Complete(KErrNone, ETrue);
-	}
+		}
 	else
-	{
+		{
 		// DoControl
 		TInt err = DoControl(id, m.Ptr0(), m.Ptr1());
 		m.Complete(err, ETrue);
+		}
 	}
-}
 
 //
 // DRM_DebugChannel::RemoveProcess
 //
 TBool DRM_DebugChannel::RemoveProcess(TAny* a1, TAny* a2)
 	{
-	LOG_EVENT_MSG("DRM_DebugChannel::RemoveProcess()");
+	LOG_MSG("DRM_DebugChannel::RemoveProcess()");
 
 	DProcess *aProcess = (DProcess*)a1;
 
@@ -797,7 +820,6 @@ TBool DRM_DebugChannel::RemoveProcess(TAny* a1, TAny* a2)
 			{
 			LOG_MSG2("Error in getting memory info: %d", err);
 			}
-
 		}
 
 	if (!codeAddress || !codeSize)
@@ -831,7 +853,7 @@ TBool DRM_DebugChannel::RemoveProcess(TAny* a1, TAny* a2)
 // DRM_DebugChannel::StartThread
 //
 TBool DRM_DebugChannel::StartThread(TAny* a1, TAny* a2)
-{
+	{
 	LOG_EVENT_MSG("DRM_DebugChannel::StartThread()");
 
 	DThread *aThread = (DThread*)a1;
@@ -881,13 +903,13 @@ TBool DRM_DebugChannel::StartThread(TAny* a1, TAny* a2)
 			}
 		}
 	return EFalse;
-}
+	}
 
 //
 // DRM_DebugChannel::HandleAddProcessEvent
 //
 TBool DRM_DebugChannel::HandleAddProcessEvent(TAny* a1, TAny* a2)
-{
+	{
 	LOG_EVENT_MSG("DRM_DebugChannel::AddProcess()");
 
 	DProcess *aProcess = (DProcess*)a1;
@@ -905,7 +927,7 @@ TBool DRM_DebugChannel::HandleAddProcessEvent(TAny* a1, TAny* a2)
 	info.iEventType = EEventsAddProcess;
 	info.iProcessId = aProcess->iId;
 
-    info.iCreatorThreadId  = aThread ? aThread->iId : 0;
+	info.iCreatorThreadId  = aThread ? aThread->iId : 0;
 	info.iProcessIdValid = ETrue;
 
 	// Copy TUids
@@ -945,14 +967,14 @@ TBool DRM_DebugChannel::HandleAddProcessEvent(TAny* a1, TAny* a2)
 		}
 
 	return EFalse;
-}
+	}
 
 //
 // DRM_DebugChannel::HandleRemoveProcessEvent
 //
 TBool DRM_DebugChannel::HandleRemoveProcessEvent(TAny* a1, TAny* a2)
-{
-	LOG_EVENT_MSG("DRM_DebugChannel::RemoveProcess()");
+	{
+	LOG_MSG("DRM_DebugChannel::HandleRemoveProcessEvent()");
 
 	DProcess *aProcess = (DProcess*)a1;
 	if(!aProcess)
@@ -1004,13 +1026,13 @@ TBool DRM_DebugChannel::HandleRemoveProcessEvent(TAny* a1, TAny* a2)
 		}
 
 	return EFalse;
-}
+	}
 
 //
 // DRM_DebugChannel::AddLibrary
 //
 TBool DRM_DebugChannel::AddLibrary(TAny* a1, TAny* a2)
-{
+	{
 	LOG_EVENT_MSG("DRM_DebugChannel::AddLibrary()");
 
 	DLibrary *aLibrary = (DLibrary*)a1;
@@ -1018,24 +1040,24 @@ TBool DRM_DebugChannel::AddLibrary(TAny* a1, TAny* a2)
 
 	// sanity check
 	if (!aLibrary)
-	{
+		{
 		LOG_EVENT_MSG("DRM_DebugChannel::AddLibrary called with no library specified");
 		return EFalse;
-	}
+		}
 
 	if (!aThread)
-	{
+		{
 		LOG_EVENT_MSG("DRM_DebugChannel::AddLibrary called with no thread specified");
 		return EFalse;
-	}
+		}
 
 	LOG_EVENT_MSG2(("Lib loaded: %S"), aLibrary->iName);
 
 	if (aThread)
-	{
+		{
 		// make sure this is not the debugger thread
 		if ((aThread != iClientThread) && (aThread->iOwningProcess->iId != iClientThread->iOwningProcess->iId))
-		{
+			{
 			TDriverEventInfo info;
 
 			info.iEventType = EEventsAddLibrary;
@@ -1047,10 +1069,10 @@ TBool DRM_DebugChannel::AddLibrary(TAny* a1, TAny* a2)
 			//get the code address
 			DCodeSeg* codeSeg = aLibrary->iCodeSeg;
 			if (!codeSeg)
-			{
+				{
 				LOG_EVENT_MSG2("Code segment not available for library %S", aLibrary->iName);
 				return EFalse;
-			}
+				}
 
 			// Uid3
 			info.iUids = codeSeg->iUids;
@@ -1059,10 +1081,10 @@ TBool DRM_DebugChannel::AddLibrary(TAny* a1, TAny* a2)
 			TModuleMemoryInfo memoryInfo;
 			TInt err = codeSeg->GetMemoryInfo(memoryInfo, NULL); //NULL for DProcess should be ok;
 			if (err != KErrNone)
-			{
+				{
 				LOG_EVENT_MSG2("Error in getting memory info: %d", err);
 				return EFalse;
-			}
+				}
 
 			info.iCodeAddress = memoryInfo.iCodeBase;
 			info.iDataAddress = memoryInfo.iInitialisedDataBase;
@@ -1073,11 +1095,11 @@ TBool DRM_DebugChannel::AddLibrary(TAny* a1, TAny* a2)
 			info.iArg1 = a1;
 			info.iArg2 = a2;
 			NotifyEvent(info);
-		}
+			}
 
-	}
+		}
 	return EFalse;
-}
+	}
 
 //
 // DRM_DebugChannel::RemoveLibrary
@@ -1164,16 +1186,17 @@ TBool DRM_DebugChannel::RemoveLibrary(TAny* a1, TAny* a2)
 // DRM_DebugChannel::HandleEventKillThread
 //
 TBool DRM_DebugChannel::HandleEventKillThread(TAny* a1, TAny* a2)
-{
-	LOG_EVENT_MSG("DRM_DebugChannel::HandleEventKillThread");
+	{
+
+	LOG_MSG2("DRM_DebugChannel::HandleEventKillThread(Thread a1=0x%08x)", a1 );
 
 	DThread* currentThread = &Kern::CurrentThread();
 	if (!currentThread)
-	{
+		{
 		LOG_MSG("Error getting current thread");
 		__NK_ASSERT_DEBUG(currentThread);
 		return EFalse;
-	}
+		}
 
 	// a1 should point to the current thread, check this to make sure it does
 	__NK_ASSERT_DEBUG((DThread*)a1 == currentThread);
@@ -1187,14 +1210,14 @@ TBool DRM_DebugChannel::HandleEventKillThread(TAny* a1, TAny* a2)
 	// 14 should probably be replaced by PC_REGISTER, for some reason PC_REGISTER had been replaced with 14 in the code
 	TInt err = ReadKernelRegisterValue(currentThread, 14, info.iCurrentPC);
 	if(err != KErrNone)
-	{
+		{
 		LOG_EVENT_MSG2("DRM_DebugChannel::HandleEventKillThread - Non-zero error code discarded: %d", err);
-	}
+		}
 
 	if (currentThread->iExitType == EExitPanic)
-	{
+		{
 		info.iPanicCategory.Copy(currentThread->iExitCategory);
-	}
+		}
 	info.iExceptionNumber = currentThread->iExitReason;
 	info.iExitType = currentThread->iExitType;
 	info.iEventType = EEventsKillThread;
@@ -1226,13 +1249,13 @@ TBool DRM_DebugChannel::HandleEventKillThread(TAny* a1, TAny* a2)
 	NotifyEvent(info);
 
 	return ETrue;
-}
+	}
 
 //
 // DRM_DebugChannel::HandleSwException
 //
 TBool DRM_DebugChannel::HandleSwException(TAny* a1, TAny* a2)
-{
+	{
 	LOG_EVENT_MSG("DRM_DebugChannel::HandleSwException");
 	TExcType aExcType = (TExcType)(TInt)a1;
 
@@ -1240,11 +1263,11 @@ TBool DRM_DebugChannel::HandleSwException(TAny* a1, TAny* a2)
 
 	DThread* currentThread = &Kern::CurrentThread();
 	if (!currentThread)
-	{
+		{
 		LOG_MSG("Error getting current thread");
 		__NK_ASSERT_DEBUG(currentThread);
 		return EFalse;
-	}
+		}
 
 	info.iProcessId = currentThread->iOwningProcess->iId;
 	info.iProcessIdValid = ETrue;
@@ -1252,9 +1275,9 @@ TBool DRM_DebugChannel::HandleSwException(TAny* a1, TAny* a2)
 	info.iThreadIdValid = ETrue;
 	TInt err = ReadKernelRegisterValue(currentThread, PC_REGISTER, info.iCurrentPC);
 	if(err != KErrNone)
-	{
+		{
 		LOG_EVENT_MSG2("DRM_DebugChannel::HandleSwException - Non-zero error code discarded: %d", err);
-	}
+		}
 	info.iExceptionNumber = aExcType;
 	info.iEventType = EEventsSwExc;
 	info.iArg1 = a1;
@@ -1263,35 +1286,33 @@ TBool DRM_DebugChannel::HandleSwException(TAny* a1, TAny* a2)
 	NotifyEvent(info);
 
 	return EFalse;
-}
+	}
 
 //
 // DRM_DebugChannel::HandleHwException
 //
 TBool DRM_DebugChannel::HandleHwException(TAny* a1, TAny* a2)
-{
-	LOG_EVENT_MSG("DRM_DebugChannel::HandleHwException()");
+	{
 	TArmExcInfo* aExcInfo = (TArmExcInfo*)a1;
 
 	// sanity check
 	if (!aExcInfo)
-	{
+		{
 		LOG_MSG("DRM_DebugChannel::HandleHwException called with no aExcInfo");
 		__NK_ASSERT_DEBUG(aExcInfo);
 		return EFalse;
-	}
+		}
 
 	TDriverEventInfo info;
 
 	DThread* currentThread = &Kern::CurrentThread();
-	LOG_EVENT_MSG2("DRM_DebugChannel::HandleHwException current thread = 0x%x", currentThread);
 
 	if (!currentThread)
-	{
+		{
 		LOG_MSG("Error getting current thread");
 		__NK_ASSERT_DEBUG(currentThread);
 		return EFalse;
-	}
+		}
 
 	info.iProcessId = currentThread->iOwningProcess->iId;
 	info.iProcessIdValid = ETrue;
@@ -1299,8 +1320,10 @@ TBool DRM_DebugChannel::HandleHwException(TAny* a1, TAny* a2)
 	info.iThreadIdValid = ETrue;
 	info.iRmdArmExcInfo.iFaultAddress= aExcInfo->iFaultAddress;
 	info.iRmdArmExcInfo.iFaultStatus= aExcInfo->iFaultStatus;
-	LOG_EVENT_MSG3("DRM_DebugChannel::HandleHwException iFaultAddress=0x%x, iFaultStatus=0x%x",
-			aExcInfo->iFaultAddress, aExcInfo->iFaultStatus);
+
+	LOG_MSG5("DRM_DebugChannel::HandleHwException current thread = 0x%08x, CritSect count=%d,\n"
+		" iFaultAddress=0x%08x, iFaultStatus=0x%08x",
+		currentThread, currentThread->iNThread.iCsCount, aExcInfo->iFaultAddress, aExcInfo->iFaultStatus);
 
 	info.iRmdArmExcInfo.iR0= aExcInfo->iR0;
 	info.iRmdArmExcInfo.iR1= aExcInfo->iR1;
@@ -1320,18 +1343,16 @@ TBool DRM_DebugChannel::HandleHwException(TAny* a1, TAny* a2)
 	info.iRmdArmExcInfo.iR13= aExcInfo->iR13;
 	info.iRmdArmExcInfo.iR14= aExcInfo->iR14;
 	info.iRmdArmExcInfo.iR15= aExcInfo->iR15;
-	LOG_EVENT_MSG5(" R12=0x%x, R13=0x%x, R14=0x%x, R15=0x%x ",
-			aExcInfo->iR12, aExcInfo->iR13, aExcInfo->iR14, aExcInfo->iR15);
 
 	info.iRmdArmExcInfo.iCpsr= aExcInfo->iCpsr;
 	info.iRmdArmExcInfo.iR13Svc= aExcInfo->iR13Svc;
 	info.iRmdArmExcInfo.iR14Svc= aExcInfo->iR14Svc;
 	info.iRmdArmExcInfo.iSpsrSvc= aExcInfo->iSpsrSvc;
-	LOG_EVENT_MSG5(" iCpsr=0x%x, iR13Svc=0x%x, iR14Svc=0x%x, iSpsrSvc=0x%x ",
-			aExcInfo->iCpsr, aExcInfo->iR13Svc, aExcInfo->iR14Svc, aExcInfo->iSpsrSvc);
+	LOG_MSG5(" iCpsr=0x%x, iExcCode=0x%x, R14=0x%x, R15=0x%x",
+			aExcInfo->iCpsr, aExcInfo->iExcCode, aExcInfo->iR14, aExcInfo->iR15);
 
 	switch (aExcInfo->iExcCode)
-	{
+		{
 		case 0:
 			info.iExceptionNumber = EExcCodeAbort;
 			LOG_EVENT_MSG(" iExcCode == 0 => EExcCodeAbort");
@@ -1348,8 +1369,8 @@ TBool DRM_DebugChannel::HandleHwException(TAny* a1, TAny* a2)
 			// new event? Something gone wrong?
 			__NK_ASSERT_DEBUG(EFalse);
 			return EFalse;
+		}
 
-	}
 	info.iEventType = EEventsHwExc;
 
 	info.iArg1 = a1;
@@ -1362,22 +1383,22 @@ TBool DRM_DebugChannel::HandleHwException(TAny* a1, TAny* a2)
 
 	NotifyEvent(info);
 	return EFalse;
-}
+	}
 
 //
 // DRM_DebugChannel::HandUserTrace
 //
 TBool DRM_DebugChannel::HandleUserTrace(TAny* a1, TAny* a2)
-{
+	{
 	LOG_EVENT_MSG("DRM_DebugChannel::HandleUserTrace()");
 
 	DThread* currentThread = &Kern::CurrentThread();
 	if (!currentThread)
-	{
+		{
 		LOG_EVENT_MSG("Error getting current thread");
 		__NK_ASSERT_DEBUG(currentThread);
 		return EFalse;
-	}
+		}
 
 	TDriverEventInfo info;
 	info.iProcessId = currentThread->iOwningProcess->iId;
@@ -1402,14 +1423,14 @@ TBool DRM_DebugChannel::HandleUserTrace(TAny* a1, TAny* a2)
 	NotifyEvent(info);
 
 	return EFalse;
-}
+	}
 
 //
 // DRM_DebugChannel::HandleException
 //
 TBool DRM_DebugChannel::HandleInvalidOpCodeException(TDriverEventInfo& aEventInfo, DThread* aCurrentThread)
-{
-	LOG_EVENT_MSG("DRM_DebugChannel::HandleInvalidOpCodeException()");
+	{
+	LOG_MSG("DRM_DebugChannel::HandleInvalidOpCodeException()");
 
 	TInt err = KErrNone;
 
@@ -1420,38 +1441,39 @@ TBool DRM_DebugChannel::HandleInvalidOpCodeException(TDriverEventInfo& aEventInf
 	TUint32 regValue;
 	err = ReadKernelRegisterValue(aCurrentThread, STATUS_REGISTER, regValue);
 	if(err != KErrNone)
-	{
-		LOG_EVENT_MSG2("DRM_DebugChannel::HandleInvalidOpCodeException - Non-zero error code discarded: %d", err);
-	}
+		{
+		LOG_MSG2("DRM_DebugChannel::HandleInvalidOpCodeException - Non-zero error code discarded: %d", err);
+		}
+
 	if (regValue & ECpuThumb)
-	{
+		{
 		inst = KThumbBreakPoint;
 		instSize = 2;
-	}
+		}
 
 	TUint32 instruction = 0;
 	err = Kern::ThreadRawRead(aCurrentThread, (TUint32 *)aEventInfo.iRmdArmExcInfo.iR15, (TUint8 *)&instruction, instSize);
 
 	if (KErrNone != err)
-		LOG_EVENT_MSG2("Error reading instruction at currentpc: %d", err);
+		LOG_MSG2("Error reading instruction at currentpc: %d", err);
 
 	if (!memcompare((TUint8 *)&inst, instSize, (TUint8 *)&instruction, instSize))
-	{
+		{
 		TInt err = DoSuspendThread(aCurrentThread);
 		if(! ((KErrNone == err) || (KErrAlreadyExists == err)) )
 			{
-			LOG_EVENT_MSG2("DRM_DebugChannel::HandleInvalidOpCodeException() Thread with id 0x%08x could not be suspended.", aCurrentThread->iId);
+			LOG_MSG2("DRM_DebugChannel::HandleInvalidOpCodeException() Thread with id 0x%08x could not be suspended.", aCurrentThread->iId);
 			return EFalse;
 			}
 
 		// the exception was a breakpoint instruction.  see if we have a breakpoint at that address
 		TBreakEntry* breakEntry = NULL;
 		do
-		{
+			{
 			breakEntry = iBreakManager->GetNextBreak(breakEntry);
 			if (breakEntry && ((breakEntry->iThreadSpecific && breakEntry->iId == aEventInfo.iThreadId) || (!breakEntry->iThreadSpecific && breakEntry->iId == aEventInfo.iProcessId)) && breakEntry->iAddress == aEventInfo.iRmdArmExcInfo.iR15)
-			{
-				LOG_EVENT_MSG2("Breakpoint with Id %d has been hit", breakEntry->iBreakId);
+				{
+				LOG_MSG2("Breakpoint with Id %d has been hit", breakEntry->iBreakId);
 
 				TBreakEntry tempBreakEntry = *breakEntry;
 
@@ -1465,7 +1487,7 @@ TBool DRM_DebugChannel::HandleInvalidOpCodeException(TDriverEventInfo& aEventInf
 
 				// see if this is a temp breakpoint
 				if (iBreakManager->IsTemporaryBreak(*breakEntry))
-				{
+					{
 					// this was a temp breakpoint, so we need to clear it now
 					err = iBreakManager->DoClearBreak(breakEntry->iBreakId);
 					if (KErrNone != err)
@@ -1476,36 +1498,36 @@ TBool DRM_DebugChannel::HandleInvalidOpCodeException(TDriverEventInfo& aEventInf
 					// reduce the number of steps to complete by 1
 					tempBreakEntry.iNumSteps--;
 
-					LOG_EVENT_MSG2("There are %d steps remaining\n", tempBreakEntry.iNumSteps);
+					LOG_MSG2("There are %d steps remaining\n", tempBreakEntry.iNumSteps);
 
 					// New. If we have not finished do all the steps, continue stepping and don't notify event
 					if (tempBreakEntry.iNumSteps)
-					{
-						LOG_EVENT_MSG("Continuing stepping...not telling the agent yet\n");
+						{
+						LOG_MSG("Continuing stepping...not telling the agent yet\n");
 						err = DoStepRange(aCurrentThread, aEventInfo.iRmdArmExcInfo.iR15, aEventInfo.iRmdArmExcInfo.iR15, ETrue, tempBreakEntry.iResumeOnceOutOfRange /*EFalse*/, tempBreakEntry.iNumSteps, ETrue);
 						if (err != KErrNone)
-						{
+							{
 							LOG_EVENT_MSG("Failed to continue stepping\n");
 
 							// what do we do? might as well stop here and tell the user
 							NotifyEvent(aEventInfo);
 
 							return ETrue;
-						}
+							}
 
 						// continue as though no event occured. No need to suspend/resume anything...
-						LOG_EVENT_MSG("Continuing to step\n");
+						LOG_MSG("Continuing to step\n");
 						return ETrue;
-					}
+						}
 
 					// Is this a case where we just want to continue?
 					if (tempBreakEntry.iResumeOnceOutOfRange)
-					{
-					LOG_EVENT_MSG("PC is out of range, continuing thread");
+						{
+						LOG_MSG("PC is out of range, continuing thread");
 						DoResumeThread(aCurrentThread);
 
 						return ETrue;
-    					}
+						}
 					}
 
 				// if the breakpoint is thread specific, make sure it's the right thread
@@ -1517,49 +1539,49 @@ TBool DRM_DebugChannel::HandleInvalidOpCodeException(TDriverEventInfo& aEventInf
 					(!tempBreakEntry.iThreadSpecific && tempBreakEntry.iId != aEventInfo.iProcessId);
 
 				if (needToResume)
-				{
-					LOG_EVENT_MSG("breakpoint does not match threadId, calling DoResumeThread");
+					{
+					LOG_MSG("breakpoint does not match threadId, calling DoResumeThread");
 					err = DoResumeThread(aCurrentThread);
 					if (KErrNone != err)
-						LOG_EVENT_MSG2("Error in DoResumeThread: %d", err);
+						LOG_MSG2("Error in DoResumeThread: %d", err);
 
 					return EFalse;
-				}
+					}
 
 				//normal user break point, just notify the event
 				break;
-			}
-		} while(breakEntry);
-	}
+				}
+			} while(breakEntry);
+		}
 
 	NotifyEvent(aEventInfo);
 
 	return (aEventInfo.iEventType == EEventsBreakPoint) || (aEventInfo.iEventType == EEventsProcessBreakPoint);
-}
+	}
 
 //
 // DRM_DebugChannel::SetBreak
 //
 TInt DRM_DebugChannel::SetBreak(TSetBreakInfo* aBreakInfo)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::SetBreak()");
 
 	TInt err = KErrNone;
 
 	if (!aBreakInfo)
-	{
+		{
 		LOG_MSG("DRM_DebugChannel::SetBreak() was passed a NULL argument");
 		return KErrArgument;
-	}
+		}
 
 	//User side memory is not accessible directly
 	TSetBreakInfo info;
 	err = Kern::ThreadRawRead(iClientThread, aBreakInfo, (TUint8*)&info, sizeof(TSetBreakInfo));
 	if (err != KErrNone)
-	{
+		{
 		LOG_MSG("DRM_DebugChannel::SetBreak() was passed a bad argument");
 		return err;
-	}
+		}
 
 	DProcess* process = NULL;
 	if(info.iThreadSpecific)
@@ -1583,11 +1605,13 @@ TInt DRM_DebugChannel::SetBreak(TSetBreakInfo* aBreakInfo)
 		{
 		process = DebugUtils::OpenProcessHandle(info.iId);
 		}
+
 	if(!process)
 		{
 		LOG_MSG2("DRM_DebugChannel::SetBreak() Process with id 0x%08x not found", process->iId);
 		return KErrNotFound;
 		}
+
 	TBool found = EFalse;
 	for(TInt i=0; i<iDebugProcessList.Count(); i++)
 		{
@@ -1596,6 +1620,7 @@ TInt DRM_DebugChannel::SetBreak(TSetBreakInfo* aBreakInfo)
 			found = ETrue;
 			}
 		}
+
 	if(!found)
 		{
 		DCodeSeg* codeSeg = process->iCodeSeg;
@@ -1623,24 +1648,25 @@ TInt DRM_DebugChannel::SetBreak(TSetBreakInfo* aBreakInfo)
 		return KErrArgument;
 
 	if (err == KErrNone)
-	{
+		{
 		TInt32 iBreakId;
 
 		err = iBreakManager->DoSetBreak(iBreakId, info.iId, info.iThreadSpecific, info.iAddress, info.iMode );
 
 		if (err == KErrNone)
-		{
+			{
 			err = Kern::ThreadRawWrite(iClientThread, (TUint8 *)info.iBreakId, &iBreakId, sizeof(TInt32), iClientThread);
+			}
 		}
-	}
+
 	return err;
-}
+	}
 
 //
 // DRM_DebugChannel::StepRange
 //
 TInt DRM_DebugChannel::StepRange(DThread* aThread, TRM_DebugStepInfo* aStepInfo)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::StepRange()");
 
 	TInt err = KErrNone;
@@ -1663,7 +1689,7 @@ TInt DRM_DebugChannel::StepRange(DThread* aThread, TRM_DebugStepInfo* aStepInfo)
 	err = DoStepRange(aThread, info.iStartAddress, info.iStopAddress, info.iStepInto, EFalse, ETrue);
 
 	return err;
-}
+	}
 
 /**
 Read memory from a target thread and return the data to the client. If the
@@ -1680,7 +1706,7 @@ returned data
         or another of the system wide error codes
 */
 TInt DRM_DebugChannel::ReadMemory(DThread* aThread, TRM_DebugMemoryInfo* aMemoryInfo)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::ReadMemory()");
 
 	TInt err = KErrNone;
@@ -1700,9 +1726,9 @@ TInt DRM_DebugChannel::ReadMemory(DThread* aThread, TRM_DebugMemoryInfo* aMemory
 	TUint8 *data = (TUint8*)Kern::Alloc(info.iLength);
 	NKern::ThreadLeaveCS();
 	if (!data)
-	{
+		{
 		return KErrNoMemory;
-	}
+		}
 
 	TPtr8 dataDes(data, info.iLength);
 
@@ -1717,7 +1743,7 @@ TInt DRM_DebugChannel::ReadMemory(DThread* aThread, TRM_DebugMemoryInfo* aMemory
 	NKern::ThreadLeaveCS();
 
 	return err;
-}
+	}
 
 /**
 Attempt to write memory to aThread's address space
@@ -1734,7 +1760,7 @@ Attempt to write memory to aThread's address space
 	or another of the system wide error codes
 */
 TInt DRM_DebugChannel::WriteMemory(DThread* aThread, TRM_DebugMemoryInfo* aMemoryInfo)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::WriteMemory()");
 
 	TInt err = KErrNone;
@@ -1754,30 +1780,30 @@ TInt DRM_DebugChannel::WriteMemory(DThread* aThread, TRM_DebugMemoryInfo* aMemor
 	TUint8 *data = (TUint8*)Kern::Alloc(info.iLength);
 	NKern::ThreadLeaveCS();
 	if (!data)
-	{
+		{
 		return KErrNoMemory;
-	}
+		}
 
 	TPtr8 dataDes(data, info.iLength);
 
 	err = Kern::ThreadDesRead(iClientThread, info.iData, dataDes, 0);
 	if (err == KErrNone)
-	{
+		{
 		err = DoWriteMemory(aThread, info.iAddress, info.iLength, dataDes);
-	}
+		}
 
 	NKern::ThreadEnterCS();
 	Kern::Free(data);
 	NKern::ThreadLeaveCS();
 
 	return err;
-}
+	}
 
 //
 // DRM_DebugChannel::ReadRegisters
 //
 TInt DRM_DebugChannel::ReadRegistersLegacy(DThread* aThread, TRM_DebugRegisterInfo* aRegisterInfo)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::ReadRegistersLegacy()");
 
 	TInt err = KErrNone;
@@ -1799,24 +1825,24 @@ TInt DRM_DebugChannel::ReadRegistersLegacy(DThread* aThread, TRM_DebugRegisterIn
 	TUint8 *values = (TUint8*)Kern::Alloc(length);
 	NKern::ThreadLeaveCS();
 	if (!values)
-	{
+		{
 		return KErrNoMemory;
-	}
+		}
 
 	TPtr8 valuesDes(values, length);
 
 	err = DoReadRegisters(aThread, info.iFirstRegister, info.iLastRegister, valuesDes);
 	if (err == KErrNone)
-	{
+		{
 		err = Kern::ThreadDesWrite(iClientThread, info.iValues, valuesDes, 0, KChunkShiftBy0, iClientThread);
-	}
+		}
 
 	NKern::ThreadEnterCS();
 	Kern::Free(values);
 	NKern::ThreadLeaveCS();
 
 	return err;
-}
+	}
 
 /**
 Get listing information.
@@ -1922,6 +1948,7 @@ TInt DRM_DebugChannel::GetList(TListInformation* aListInformation) const
 		//if no error then write the buffer back
 		err = Kern::ThreadDesWrite(iClientThread, info.iBuffer, buffer, 0, KChunkShiftBy0, iClientThread);
 		}
+
 	//write back the size of the data regardless of any error
 	TInt writeErr = Kern::ThreadRawWrite(iClientThread, info.iDataSize, (TUint8*)&dataSize, sizeof(TUint32), iClientThread);
 	if(writeErr != KErrNone)
@@ -1956,7 +1983,7 @@ Read registers and store register data in aRegisterInfo
         KErrDied, if the thread with thread ID aThreadId is dead
 */
 TInt DRM_DebugChannel::ReadRegisters(DThread* aThread, TRM_DebugRegisterInformation* aRegisterInfo) const
-{
+	{
 	LOG_MSG("DRM_DebugChannel::ReadRegisters()");
 
 	TInt err = KErrNone;
@@ -1978,11 +2005,11 @@ TInt DRM_DebugChannel::ReadRegisters(DThread* aThread, TRM_DebugRegisterInformat
 	if(err != KErrNone)
 		{
 		if(err == KErrNoMemory)
-		{
+			{
 			NKern::ThreadEnterCS();
 			Kern::Free((TAny*)ids.Ptr());
 			NKern::ThreadLeaveCS();
-		}
+			}
 		return err;
 		}
 
@@ -1992,10 +2019,12 @@ TInt DRM_DebugChannel::ReadRegisters(DThread* aThread, TRM_DebugRegisterInformat
 	if(err != KErrNone)
 		{
 		if(err == KErrNoMemory)
-		{	NKern::ThreadEnterCS();
+			{
+			NKern::ThreadEnterCS();
 			Kern::Free((TAny*)values.Ptr());
 			NKern::ThreadLeaveCS();
-		}
+			}
+
 		NKern::ThreadEnterCS();
 		Kern::Free((TAny*)ids.Ptr());
 		NKern::ThreadLeaveCS();
@@ -2008,11 +2037,11 @@ TInt DRM_DebugChannel::ReadRegisters(DThread* aThread, TRM_DebugRegisterInformat
 	if(err != KErrNone)
 		{
 		if(err == KErrNoMemory)
-		{
+			{
 			NKern::ThreadEnterCS();
 			Kern::Free((TAny*)flags.Ptr());
 			NKern::ThreadLeaveCS();
-		}
+			}
 		NKern::ThreadEnterCS();
 		Kern::Free((TAny*)ids.Ptr());
 		Kern::Free((TAny*)values.Ptr());
@@ -2037,13 +2066,13 @@ TInt DRM_DebugChannel::ReadRegisters(DThread* aThread, TRM_DebugRegisterInformat
 	NKern::ThreadLeaveCS();
 
 	return err;
-}
+	}
 
 /**
 @deprecated use DRM_DebugChannel::WriteRegisters(DThread* aThread, TRM_DebugRegisterInformation* aRegisterInfo) instead
 */
 TInt DRM_DebugChannel::WriteRegistersLegacy(DThread* aThread, const TRM_DebugRegisterInfo* aRegisterInfo)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::WriteRegistersLegacy()");
 
 	TInt err = KErrNone;
@@ -2065,24 +2094,24 @@ TInt DRM_DebugChannel::WriteRegistersLegacy(DThread* aThread, const TRM_DebugReg
 	TUint8 *values = (TUint8*)Kern::Alloc(length);
 	NKern::ThreadLeaveCS();
 	if (!values)
-	{
+		{
 		return KErrNoMemory;
-	}
+		}
 
 	TPtr8 valuesDes(values, length);
 
 	err = Kern::ThreadDesRead(iClientThread, info.iValues, valuesDes, 0);
 	if (err == KErrNone)
-	{
+		{
 		err = DoWriteRegisters(aThread, info.iFirstRegister, info.iLastRegister, valuesDes);
-	}
+		}
 
 	NKern::ThreadEnterCS();
 	Kern::Free(values);
 	NKern::ThreadLeaveCS();
 
 	return err;
-}
+	}
 
 /**
 Write registers and store flags data in aRegisterInfo
@@ -2103,7 +2132,7 @@ Write registers and store flags data in aRegisterInfo
         KErrDied, if the thread with thread ID aThreadId is dead
 */
 TInt DRM_DebugChannel::WriteRegisters(DThread* aThread, TRM_DebugRegisterInformation* aRegisterInfo) const
-{
+	{
 	LOG_MSG("DRM_DebugChannel::WriteRegisters()");
 
 	TInt err = KErrNone;
@@ -2181,7 +2210,7 @@ TInt DRM_DebugChannel::WriteRegisters(DThread* aThread, TRM_DebugRegisterInforma
 	NKern::ThreadLeaveCS();
 
 	return err;
-}
+	}
 
 /**
 Suspends execution of the specified thread.
@@ -2239,6 +2268,7 @@ TInt DRM_DebugChannel::DoResumeThread(DThread *aThread)
 				}
 			}
 		} while(breakEntry);
+
 	return TheDProcessTracker.ResumeThread(aThread);
 	}
 
@@ -2246,7 +2276,7 @@ TInt DRM_DebugChannel::DoResumeThread(DThread *aThread)
 // DRM_DebugChannel::DoStepRange
 //
 TInt DRM_DebugChannel::DoStepRange(DThread *aThread, const TUint32 aStartAddress, const TUint32 aStopAddress, TBool aStepInto, TBool aResumeOnceOutOfRange, const TUint32 aNumSteps, TBool aUserRequest)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoStepRange()");
 
 	if (!aThread)
@@ -2285,7 +2315,7 @@ TInt DRM_DebugChannel::DoStepRange(DThread *aThread, const TUint32 aStartAddress
 	LOG_MSG("DRM_DebugChannel::DoStepRange() - resuming thread\n");
 
 	return TheDProcessTracker.ResumeThread(aThread);
-}
+	}
 
 /**
 Read memory from the specified addres into the aData descriptor. If there is a
@@ -2382,7 +2412,7 @@ TInt DRM_DebugChannel::DoWriteMemory(DThread *aThread, const TUint32 aAddress, c
 	TInt err = KErrNone;
 
 	// trap exceptions in case the address is invalid
-	XTRAPD(r, XT_DEFAULT,  err = TryToWriteMemory(aThread, (TAny *)aAddress, (TAny *)aData.Ptr(), aLength));
+	XTRAPD(r, XT_DEFAULT, err = TryToWriteMemory(aThread, (TAny *)aAddress, (TAny *)aData.Ptr(), aLength));
 
 	err = (KErrNone == r) ? err : r;
 
@@ -2436,8 +2466,8 @@ TInt DRM_DebugChannel::DoWriteMemory(DThread *aThread, const TUint32 aAddress, c
 // DRM_DebugChannel::DoReadRegisters
 //
 TInt DRM_DebugChannel::DoReadRegisters(DThread *aThread, const TInt16 aFirstRegister, const TInt16 aLastRegister, TDes8 &aValues)
-{
-	LOG_MSG("DRM_DebugChannel::DoReadRegisters()");
+	{
+	LOG_EVENT_MSG("DRM_DebugChannel::DoReadRegisters()");
 
 	// make sure the parameters are valid
 	if (!aThread || (aFirstRegister < 0) || (aLastRegister >= (TInt16)(sizeof(TArmRegSet)/sizeof(TArmReg))))
@@ -2448,19 +2478,19 @@ TInt DRM_DebugChannel::DoReadRegisters(DThread *aThread, const TInt16 aFirstRegi
 		return KErrArgument;
 
 	TArmRegSet regSet;
-    TUint32 unused;
+	TUint32 unused;
 
 	NKern::ThreadGetUserContext(&aThread->iNThread, &regSet, unused);
 
 	LOG_MSG2( "DRM_DebugChannel::DoReadRegistersLegacy() : unused = 0x%X\n", unused );
 
-    TArmReg *reg = &regSet.iR0;
+	TArmReg *reg = &regSet.iR0;
 
 	if (!reg)
 		return KErrGeneral;
 
-    for (TInt16 i = aFirstRegister; i <= aLastRegister; i++)
-    	aValues.Append((TUint8 *)&reg[i], sizeof(TArmReg));
+	for (TInt16 i = aFirstRegister; i <= aLastRegister; i++)
+		aValues.Append((TUint8 *)&reg[i], sizeof(TArmReg));
 
 	return KErrNone;
 }
@@ -2510,7 +2540,7 @@ indicating which registers could be read in aRegisterFlags
         KErrGeneral if there was a problem initialising the register set
 */
 TInt DRM_DebugChannel::DoReadRegisters(DThread *aThread, const TDesC8 &aRegisterIds, TDes8 &aRegisterValues, TDes8& aRegisterFlags) const
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoReadRegisters()");
 
 	// make sure the parameters are valid
@@ -2613,13 +2643,13 @@ TInt DRM_DebugChannel::DoReadRegisters(DThread *aThread, const TDesC8 &aRegister
 			}
 		}
 	return KErrNone;
-}
+	}
 
 //
 // DRM_DebugChannel::DoWriteRegisters
 //
 TInt DRM_DebugChannel::DoWriteRegisters(DThread *aThread, const TInt16 aFirstRegister, const TInt16 aLastRegister, TDesC8 &aValues)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoWriteRegisters()");
 
 	// make sure the parameters are valid
@@ -2643,7 +2673,7 @@ TInt DRM_DebugChannel::DoWriteRegisters(DThread *aThread, const TInt16 aFirstReg
 	NKern::ThreadSetUserContext(&aThread->iNThread, &regSet);
 
 	return KErrNone;
-}
+	}
 
 /**
 Write registers and store flags indicating which registers could be read in
@@ -2662,7 +2692,7 @@ aRegisterFlags
         KErrGeneral if there was a problem initialising the register set
 */
 TInt DRM_DebugChannel::DoWriteRegisters(DThread *aThread, const TDesC8 &aRegisterIds, TDesC8 &aRegisterValues, TDes8 &aRegisterFlags) const
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoWriteRegisters()");
 
 	// make sure the parameters are valid
@@ -2765,23 +2795,23 @@ TInt DRM_DebugChannel::DoWriteRegisters(DThread *aThread, const TDesC8 &aRegiste
 // DRM_DebugChannel::DoSecurityCheck
 //
 TBool DRM_DebugChannel::DoSecurityCheck()
-{
+	{
 	LOG_MSG("DRM_DebugChannel::DoSecurityCheck");
 	DProcess* clientProcess = iClientThread->iOwningProcess;
 	if (clientProcess)
-	{
+		{
 		SSecurityInfo secureInfo = clientProcess->iS;
 
 		LOG_MSG2("DoSecurityCheck - client secure id is 0x%08x",secureInfo.iSecureId);
 
 		// Ensure we really are communicating with the Debug Security Server
 		if (secureInfo.iSecureId == KUidDebugSecurityServer.iUid )
-		{
+			{
 			return ETrue;
+			}
 		}
-	}
 	return EFalse;
-}
+	}
 
 /**
 Attempt to read memory from aThread's address space
@@ -2795,7 +2825,7 @@ Attempt to read memory from aThread's address space
 	or another of the system wide error codes
 */
 TInt DRM_DebugChannel::TryToReadMemory(const DThread *aThread, const TAny *aSrc, TAny *aDest, const TUint32 aLength) const
-{
+	{
 	LOG_MSG("DRM_DebugChannel::TryToReadMemory()");
 
 	// make sure the parameters are valid
@@ -2814,7 +2844,7 @@ TInt DRM_DebugChannel::TryToReadMemory(const DThread *aThread, const TAny *aSrc,
 
 	LOG_MSG2("Using Kern::ThreadRawRead to read memory at address %x", aSrc);
 	return Kern::ThreadRawRead((DThread *)aThread, aSrc, aDest, aLength);
-}
+	}
 
 /**
 Attempt to write memory to aThread's address space
@@ -2828,7 +2858,7 @@ Attempt to write memory to aThread's address space
         error codes
 */
 TInt DRM_DebugChannel::TryToWriteMemory(const DThread *aThread, TAny *aDest, const TAny *aSrc, const TUint32 aLength)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::TryToWriteMemory()");
 
 	//check that the thread is suspended before writing the memory
@@ -2840,30 +2870,30 @@ TInt DRM_DebugChannel::TryToWriteMemory(const DThread *aThread, TAny *aDest, con
 
 	LOG_MSG2("Using Kern::ThreadRawWrite to write memory at address %x", (TUint32)aDest);
 	return Kern::ThreadRawWrite((DThread *)aThread, aDest, aSrc, aLength, iClientThread);
-}
+	}
 
 /**
 @deprecated use DRM_DebugChannel::ReadKernelRegisterValue(DThread *aThread, const TArmReg aKernelRegisterId, T4ByteRegisterValue &aValue) instead
 */
 TInt32 DRM_DebugChannel::ReadRegister(DThread *aThread, TInt aNum)
-{
+	{
 	LOG_MSG("DRM_DebugChannel::ReadRegister()");
 
 	if (!aThread || (aNum < 0) || (aNum >= (TInt16)(sizeof(TArmRegSet)/sizeof(TArmReg))))
-	{
+		{
 		LOG_MSG2("Invalid register number (%d) passed to ReadRegister", aNum);
 		return 0;
-	}
+		}
 
 	TArmRegSet regSet;
-    TUint32 unused;
+	TUint32 unused;
 
 	NKern::ThreadGetUserContext(&aThread->iNThread, &regSet, unused);
 
-    TArmReg *reg = &regSet.iR0;
+	TArmReg *reg = &regSet.iR0;
 
 	return ((TUint32 *)reg)[aNum];
-}
+	}
 
 /**
 Given a TArmReg register ID, read the value of the register. The register value
@@ -2879,7 +2909,7 @@ will be stored in aValue if the register could be read.
         or a return value from DRM_DebugChannel::ReadDebugRegisterValue()
 */
 TInt32 DRM_DebugChannel::ReadKernelRegisterValue(DThread *aThread, const TArmReg aKernelRegisterId, T4ByteRegisterValue &aValue) const
-{
+	{
 	//get register ID as a TRegisterInfo ID
 	TRegisterInfo regId;
 	TInt err = GetDebugRegisterId(aKernelRegisterId, regId);
@@ -2906,33 +2936,34 @@ register value will be stored in aValue if the register could be read.
         or a return value from DRM_DebugChannel::DoReadRegisters
 */
 TInt32 DRM_DebugChannel::ReadDebugRegisterValue(DThread *aThread, const TRegisterInfo aDebugRegisterId, T4ByteRegisterValue &aValue) const
-{
+	{
 	//allocate temporary buffers to store data
 	NKern::ThreadEnterCS();
 	TUint8* id = (TUint8*)Kern::Alloc(sizeof(TRegisterInfo));
 	NKern::ThreadLeaveCS();
 	if(id == NULL)
-	{
+		{
 		return KErrNoMemory;
-	}
+		}
+
 	TPtr8 idPtr(id, sizeof(TRegisterInfo));
 
 	NKern::ThreadEnterCS();
 	TUint8* value = (TUint8*)Kern::Alloc(sizeof(T4ByteRegisterValue));
 	NKern::ThreadLeaveCS();
 	if(value == NULL)
-	{
+		{
 		return KErrNoMemory;
-	}
+		}
 	TPtr8 valuePtr(value, sizeof(T4ByteRegisterValue));
 
 	NKern::ThreadEnterCS();
 	TUint8* flag = (TUint8*)Kern::Alloc(sizeof(TUint8));
 	NKern::ThreadLeaveCS();
 	if(flag == NULL)
-	{
+		{
 		return KErrNoMemory;
-	}
+		}
 	TPtr8 flagPtr(flag, sizeof(TUint8));
 
 	//store register id in buffer
@@ -2941,18 +2972,18 @@ TInt32 DRM_DebugChannel::ReadDebugRegisterValue(DThread *aThread, const TRegiste
 	//read registers
 	TInt err = DoReadRegisters(aThread, idPtr, valuePtr, flagPtr);
 	if(err == KErrNone)
-	{
-		if(*flag == EValid)
 		{
+		if(*flag == EValid)
+			{
 			//register could be read so store value
 			aValue = *(T4ByteRegisterValue*)value;
-		}
+			}
 		else
-		{
+			{
 			//register couldn't be read for some reason
 			err = *flag;
+			}
 		}
-	}
 
 	//free memory
 	NKern::ThreadEnterCS();
@@ -2962,13 +2993,13 @@ TInt32 DRM_DebugChannel::ReadDebugRegisterValue(DThread *aThread, const TRegiste
 	NKern::ThreadLeaveCS();
 
 	return err;
-}
+	}
 
 //
 // DRM_DebugChannel::NotifyEvent
 //
 void DRM_DebugChannel::NotifyEvent(const TDriverEventInfo& aEventInfo)
-{
+	{
 	LOG_EVENT_MSG("DRM_DebugChannel::NotifyEvent()");
 
 	// Look for the relevant DTargetProcess
@@ -3016,7 +3047,7 @@ void DRM_DebugChannel::NotifyEvent(const TDriverEventInfo& aEventInfo)
 		}
 
 	foundProcess->NotifyEvent(aEventInfo);
-}
+	}
 
 #ifndef __LAUNCH_AS_EXTENSION__
 DECLARE_STANDARD_LDD()
@@ -3112,23 +3143,23 @@ DECLARE_STANDARD_EXTENSION()
  * to both co-exist and exist independantly of the existing one *
  */
 DDebuggerInfo::DDebuggerInfo():
-    iObjectOffsetTable(NULL),
-    iObjectOffsetTableCount(NULL),
-    iThreadContextTable(NULL),
-    iStopModeExtension(new DStopModeExtension()),
-    iContainers(NULL),
-    iCodeSegLock(NULL),
-    iCodeSegGlobalList(NULL),
-    iScheduler(NULL),
-    iShadowPages(NULL),
-    iShadowPageCount(0),
-    iCurrentThread(NULL),
-    iEventMask(),
-    iEventHandlerBreakpoint(0),
-    iMemModelObjectOffsetTable(NULL),
-    iMemModelObjectOffsetTableCount(0)
-    {
-    }
+	iObjectOffsetTable(NULL),
+	iObjectOffsetTableCount(NULL),
+	iThreadContextTable(NULL),
+	iStopModeExtension(new DStopModeExtension()),
+	iContainers(NULL),
+	iCodeSegLock(NULL),
+	iCodeSegGlobalList(NULL),
+	iScheduler(NULL),
+	iShadowPages(NULL),
+	iShadowPageCount(0),
+	iCurrentThread(NULL),
+	iEventMask(),
+	iEventHandlerBreakpoint(0),
+	iMemModelObjectOffsetTable(NULL),
+	iMemModelObjectOffsetTableCount(0)
+	{
+	}
 
 /**
  * Installs the stop-mode debugger extension
@@ -3136,9 +3167,9 @@ DDebuggerInfo::DDebuggerInfo():
  * existence in the superpage
 */
 void DStopModeExtension::Install(DStopModeExtension* aExt)
-    {
-    Kern::SuperPage().iDebuggerInfo->iStopModeExtension = aExt;
-    }
+	{
+	Kern::SuperPage().iDebuggerInfo->iStopModeExtension = aExt;
+	}
 
 #endif
 
@@ -3342,7 +3373,7 @@ to the aIndex bit of aFlags being non-zero.
 */
 TBool DRM_DebugChannel::GetFlagAtOffset(const TUint32 aFlags, const TArmReg aIndex) const
 	{
-	return ( aFlags & (1<<aIndex) ) ? ETrue : EFalse;
+	return aFlags & (1<<aIndex);
 	}
 
 /* Register the attachment of a debug agent to a process to be debugged
@@ -3475,38 +3506,38 @@ TInt DRM_DebugChannel::DetachProcess(TAny* a1, TAny* a2)
 	TUint8* buffer = (TUint8*)Kern::AllocZ(length);
 	NKern::ThreadLeaveCS();
 	if (buffer==NULL)
-	{
+		{
 		// Out of memory
 		return KErrNoMemory;
-	}
+		}
 
 	TPtr8 targetProcessName(buffer,length,length);
 
 	// Read the user-side data into targetProcessName
 	err = Kern::ThreadDesRead(iClientThread,a1,targetProcessName,0,KChunkShiftBy0);
 	if (err != KErrNone)
-	{
+		{
 		// Something bad happened so free the memory and return
 		NKern::ThreadEnterCS();
 		Kern::Free(buffer);
 		NKern::ThreadLeaveCS();
 
 		return err;
-	}
+		}
 
 	// Obtain the AgentId
 	TUint64 debugAgentId = 0;
 
 	err = Kern::ThreadRawRead(iClientThread,a2,&debugAgentId,sizeof(debugAgentId));
 	if (err != KErrNone)
-	{
+		{
 		// Something bad happened so free the memory and return
 		NKern::ThreadEnterCS();
 		Kern::Free(buffer);
 		NKern::ThreadLeaveCS();
 
 		return err;
-	}
+		}
 
 	// Remove the process from our list of tracked processes
 	err = TheDProcessTracker.DetachProcess(targetProcessName, debugAgentId);
@@ -3531,9 +3562,9 @@ TInt DRM_DebugChannel::DetachAgent(TAny* a1, TAny* a2)
 
 	TInt err = Kern::ThreadRawRead(iClientThread,a1,&debugAgentId,sizeof(debugAgentId));
 	if (err != KErrNone)
-	{
+		{
 		return err;
-	}
+		}
 
 	// Remove the process from our list of tracked processes
 	return TheDProcessTracker.DetachAgent(debugAgentId);
@@ -3578,30 +3609,30 @@ TInt DRM_DebugChannel::SetEventAction(TAny* a1, TAny* a2)
 	TUint8* buffer = (TUint8*)Kern::AllocZ(length);
 	NKern::ThreadLeaveCS();
 	if (buffer==NULL)
-	{
+		{
 		// Out of memory
 		return KErrNoMemory;
-	}
+		}
 	TPtr8 targetProcessName(buffer,length,length);
 
 	// Read the user-side data into targetProcessName
 	err = Kern::ThreadDesRead(iClientThread,a1,targetProcessName,0,KChunkShiftBy0);
 	if (err != KErrNone)
-	{
+		{
 		// Something bad happened so free the memory and return
 		NKern::ThreadEnterCS();
 		Kern::Free(buffer);
 		NKern::ThreadLeaveCS();
 
 		return err;
-	}
+		}
 
 	// Read the Event and Action from the user-side
 	TRM_DebugEventActionInfo info(0,0,0);
 
 	err = Kern::ThreadRawRead(iClientThread, a2, &info, sizeof(info));
 	if (err != KErrNone)
-	{
+		{
 		// Could not read event action data from the user-side
 
 		// Free memory used for targetProcessName
@@ -3610,12 +3641,12 @@ TInt DRM_DebugChannel::SetEventAction(TAny* a1, TAny* a2)
 		NKern::ThreadLeaveCS();
 
 		return err;
-	}
+		}
 
 	// Find the target process
 	DTargetProcess* pProcess = TheDProcessTracker.FindProcess(targetProcessName);
 	if (pProcess == NULL)
-	{
+		{
 		// Could not find this process
 
 		// Free memory used for targetProcessName
@@ -3624,14 +3655,14 @@ TInt DRM_DebugChannel::SetEventAction(TAny* a1, TAny* a2)
 		NKern::ThreadLeaveCS();
 
 		return KErrArgument;
-	}
+		}
 
 	TUint64 debugAgentId = info.iAgentId;
 
 	// Find the agent
 	DDebugAgent* debugAgent = pProcess->Agent(debugAgentId);
 	if (debugAgent == NULL)
-	{
+		{
 		// Bad agent means there is no tracking agent
 		LOG_MSG2("Cannot locate debug agent with pid 0x%0x16lx",info.iAgentId);
 
@@ -3641,7 +3672,7 @@ TInt DRM_DebugChannel::SetEventAction(TAny* a1, TAny* a2)
 		NKern::ThreadLeaveCS();
 
 		return KErrGeneral;
-	}
+		}
 
 	// Set the event action
 	debugAgent->SetEventAction((TEventType)info.iEvent,(TKernelEventAction)info.iAction);
@@ -3752,9 +3783,9 @@ TInt DRM_DebugChannel::IsDebuggable(const TUint32 aProcessId)
 		}
 
 	if (err == KErrNone)
-	{
+		{
 		LOG_MSG2("DRM_DebugChannel::IsDebuggable(aProcessId 0x%08x) - Yes it is debuggable\n",aProcessId);
-	}
+		}
 
 	return err;
 	}

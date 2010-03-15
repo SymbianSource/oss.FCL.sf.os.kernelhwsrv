@@ -202,14 +202,33 @@ TInt E32Image::AllocateRelocationData(E32RelocSection* aSection, TUint32 aAreaSi
 #ifdef _DEBUG
 	__IF_DEBUG(Printf("processed reloc table (size=%d,pageCount=%d)", iCodeRelocTableSize, pageCount));
 
-	// dump the import fixup table if loader tracing enabled
-	const TUint16* table16 = (const TUint16*)table;
-	const TInt halfWordsInTable = iCodeRelocTableSize / 2;
-	for(i = 0; i < halfWordsInTable; i += 4)
+	// Dump the processed reloc table if loader tracing enabled. The dump is in
+	// two parts; first, the page indexes (1 word per page), then the entries
+	// describing the items to be relocated on each of these pages, formatted
+	// with up to 8 entries per line but starting a new line for each page.
+	// Each of these entries has the relocation type in the first nibble, and
+	// the offset within the page in the remaining 3 nibbles.
+	const TUint32* table32 = (const TUint32*)table;
+	for (i = 0; i <= pageCount; ++i)
+		__IF_DEBUG(Printf("%04x: %08x", i*4, table32[i]));
+
+	for (i = 0; i < pageCount; ++i)
 		{
-		__IF_DEBUG(Printf(
-			"reloc %04x: %04x %04x %04x %04x",
-			i * 2, table16[i+0], table16[i+1], table16[i+2], table16[i+3]));
+		TUint start = table32[i];
+		TInt nbytes = table32[i+1] - start;
+		while (nbytes)
+			{
+			TBuf8<0x100> buf;
+			buf.Format(_L8("%04x:"), start);
+
+			const TUint16* p = (const TUint16*)(table+start);
+			TInt n = nbytes <= 16 ? nbytes : 16;
+			for (nbytes -= n, start += n; n > 0; n -= 2)
+				buf.AppendFormat(_L8(" %04x"), *p++);
+
+			buf.AppendFormat(_L8("\r\n"));
+			__IF_DEBUG(RawPrint(buf));
+			}
 		}
 #endif
 	return KErrNone;
@@ -268,6 +287,18 @@ void InitExecuteInSupervisorMode()
 		}
 	}
 
+// A version that will work in user or supervisor mode
+void MyPrintf(const char* aFmt, ...)
+	{
+	VA_LIST list;
+	VA_START(list, aFmt);
+	TPtrC8 fmt((const TText8*)aFmt);
+	TBuf8<0x100> buf;
+	buf.AppendFormatList(fmt, list);
+	buf.AppendFormat(_L8("\r\n"));
+	RDebug::RawPrint(buf);
+	VA_END(list);
+	}
 
 /**
 Arguments for svRelocateSection.
@@ -340,29 +371,80 @@ TInt svRelocateSection(TAny* aPtr)
 
 /**
 Fix up the export directory
-Only performed on PE images.  ELF image's exports are marked
-as relocatable and therefore relocated by svRelocateSection when the 
-text section is relocated up
+Only performed on PE images.  ELF image's exports are marked as relocatable
+and therefore relocated by svRelocateSection along with the text section
 */
 TInt svRelocateExports(TAny* aPtr)
 	{
-	E32Image* pI=(E32Image*)aPtr;
-	TUint32* destExport=(TUint32*)pI->iExportDirLoad;
-	TInt i=pI->iExportDirCount;
-	TUint32 codeBase=pI->iCodeRunAddress;
-	while (i-->0)
-		*destExport+++=codeBase;
+	E32Image& exporter = *(E32Image*)aPtr;
+
+	// Dump everything potentially useful that we know about the exporter ...
+	__LDRTRACE(MyPrintf("RelocateExports: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
+						exporter.iUseCodePaging, exporter.iRomImageHeader, exporter.iHeader));
+	__LDRTRACE(MyPrintf("  iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
+						exporter.iCodeLoadAddress, exporter.iCodeRunAddress,
+						exporter.iCodeSize, exporter.iTextSize))
+	__LDRTRACE(MyPrintf("  iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
+						exporter.iDataLoadAddress, exporter.iDataRunAddress,
+						exporter.iDataSize, exporter.iBssSize, exporter.iTotalDataSize));
+	__LDRTRACE(MyPrintf("  iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
+						exporter.iCodeDelta, exporter.iDataDelta, exporter.iExportDirEntryDelta));
+
+	// It turns out that very little of the exporter info is useful! For
+	// example, the required code and data deltas are NOT those provided
+	// by the exporter, nor are the load addresses relevant ... :(
+	//
+	// In the case of a PE-derived image, the entries in the export table
+	// are expressed in terms of offsets into the image file, rather than
+	// locations in memory. Each therefore needs to be relocated by the
+	// difference between its file offset and its run address.
+	//
+	// It is assumed that the code segment appears before the data segment
+	// in the file; therefore, export table entries with values between 0
+	// and (exporter.iCodeSize) refer to the text segment, while higher
+	// values represent references to data addresses. Since the run addresses
+	// of code and data segments may be different, each type of export must
+	// be relocated with respect to the correct section.
+	//
+	// The following express the start and finish of each section in terms of
+	// file offsets and then derive the required adjustments to the entries
+	// in the export table ...
+	TUint32 codeStart = 0;							// compiler whinges if this is 'const' :(
+	const TUint32 codeFinish = codeStart + exporter.iCodeSize;
+	const TUint32 dataStart = codeFinish;
+	const TUint32 dataFinish = dataStart + exporter.iTotalDataSize;
+	const TUint32 codeDelta = exporter.iCodeRunAddress - codeStart;
+	const TUint32 dataDelta = exporter.iDataRunAddress - dataStart;
+
+	TUint32* destExport = (TUint32*)exporter.iExportDirLoad;
+	for (TInt i = exporter.iExportDirCount; --i >= 0; )
+		{
+		TUint32 relocAddr = *destExport;
+		TUint32 newValue;
+		if (relocAddr >= codeStart && relocAddr < codeFinish)
+			newValue = relocAddr + codeDelta;		// points to text/rdata section
+		else if (relocAddr >= dataStart && relocAddr < dataFinish)
+			newValue = relocAddr + dataDelta;		// points to data/bss section
+		else
+			newValue = relocAddr;					// unknown - just leave it alone
+		*destExport++ = newValue;
+
+		__LDRTRACE(MyPrintf("RelocateExports: export %d %08x => %08x %c",
+							exporter.iExportDirCount-i, relocAddr, newValue,
+							(relocAddr >= codeStart && relocAddr < codeFinish) ? 'C' :
+							(relocAddr >= dataStart && relocAddr < dataFinish) ? 'D' : 'X'));
+		}
+
 	return 0;
 	}
 
 
 struct SFixupImportAddressesInfo
 	{
-	TUint32* iIat;
-	TUint32* iExportDir;
-	TUint32 iExportDirEntryDelta;
-	TInt iNumImports;
-	E32Image* iExporter;
+	TUint32* iIat;					// Next part of IAT to be fixed up
+	E32Image* iExporter;			// Module from which we're importing
+	TInt iNumImports;				// Number of imports from this exporter
+
 	/**
 	For demand paging, this points to the buffer which is populated
 	so each page can be fixed up as it is loaded in.
@@ -378,52 +460,104 @@ struct SFixupImportAddressesInfo
 Fix up the import address table, used for 'PE derived' executables.
 @param aPtr Pointer to function arguments (SFixupImportAddressesInfo structure).
 			SFixupImportAddressesInfo::iIat is updated by this function.
+
+For a given importer, this function will be called once for each image from which
+objects are imported, and each time it will update the relevant portion of the
+importer's IAT, until all imports from all exporters have been processed.
 */
 TInt svFixupImportAddresses(TAny* aPtr)
 	{
 	SFixupImportAddressesInfo& info = *(SFixupImportAddressesInfo*)aPtr;
+	E32Image& exporter = *info.iExporter;
 
-	TUint32 maxOrdinal = (TUint32)info.iExporter->iExportDirCount;
-	TUint32 absentOrdinal = (TUint32)info.iExporter->iFileEntryPoint;
+#ifdef _DEBUG
+	__LDRTRACE(MyPrintf(">svFixupImportAddresses %d imports, code@%08x, fixup@%08x exporter@%08x",
+						info.iNumImports, info.iCodeLoadAddress, info.iFixup64, info.iExporter));
 
-	TUint32* exp_dir = info.iExportDir - KOrdinalBase; // address of 0th ordinal
-	TUint32 exp_delta = info.iExportDirEntryDelta;
+	// Dump everything potentially useful that we know about the exporter ...
+	__LDRTRACE(MyPrintf("%S: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
+						&exporter.iFileName, exporter.iUseCodePaging,
+						exporter.iRomImageHeader, exporter.iHeader));
+	__LDRTRACE(MyPrintf("iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
+						exporter.iCodeLoadAddress, exporter.iCodeRunAddress,
+						exporter.iCodeSize, exporter.iTextSize))
+	__LDRTRACE(MyPrintf("iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
+						exporter.iDataLoadAddress, exporter.iDataRunAddress,
+						exporter.iDataSize, exporter.iBssSize, exporter.iTotalDataSize));
+	__LDRTRACE(MyPrintf("iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
+						exporter.iCodeDelta, exporter.iDataDelta, exporter.iExportDirEntryDelta));
 
-	TUint32* iat = info.iIat;
-	TUint32* iatE = iat+info.iNumImports;
-	for(; iat<iatE; ++iat)
+	if (exporter.iRomImageHeader)
 		{
-		TUint32 imp = *iat;
-		if(imp>maxOrdinal)
-			return KErrNotSupported;
-
-		TUint32 writeValue;
-		if(imp==0 && !(info.iExporter->iAttr&ECodeSegAttNmdExpData))
-			{
-			// attempt to import ordinal zero (symbol name data) from an executable
-			// which doesn't export this information, use NULL for imported value in this case...
-			writeValue = NULL;
-			}
-		else
-			{
-			// get imported value from exporter...
-			TUint32 exp_addr = exp_dir[imp];
-			if(exp_addr==0 || exp_addr==absentOrdinal)
-				return KErrNotSupported;
-			writeValue = exp_addr + exp_delta;
-			}
-
-		// if not code paging then directly fix up the import...
-		if (info.iFixup64 == 0)
-			*iat = writeValue;
-		else
-		// ...otherwise defer until the page is fixed up
-			{
-			TUint64 iat64 = reinterpret_cast<TUint64>(iat);
-			*info.iFixup64++ = (iat64 << 32) | writeValue;
-			}
+		const TRomImageHeader& rh = *exporter.iRomImageHeader;
+		__LDRTRACE(MyPrintf("ROM: iCodeAddress %08x, iCodeSize %x, iTextSize %x",
+							rh.iCodeAddress, rh.iCodeSize, rh.iTextSize));
+		__LDRTRACE(MyPrintf("ROM: iDataAddress %08x, iDataSize %x, iBssSize %x",
+							rh.iDataAddress, rh.iDataSize, rh.iBssSize));
+		__LDRTRACE(MyPrintf("ROM: iDataBssLinearBase %08x, iTotalDataSize %x",
+							rh.iDataBssLinearBase, rh.iTotalDataSize));
 		}
 
+	if (exporter.iHeader)
+		{
+		const E32ImageHeader& ih = *exporter.iHeader;
+		__LDRTRACE(MyPrintf("HEAD: iCodeBase %08x, iCodeSize %x, iTextSize %x",
+							ih.iCodeBase, ih.iCodeSize, ih.iTextSize));
+		__LDRTRACE(MyPrintf("HEAD: iDataBase %08x, iDataSize %x, iBssSize %x",
+							ih.iDataBase, ih.iDataSize, ih.iBssSize));
+		}
+#endif // _DEBUG
+
+	// 'exportDir' points to the address of the 0th ordinal (symbol name data);
+	// ordinary exports start from ordinal 1
+	const TUint32* const exportDir = (TUint32*)exporter.iExportDirLoad - KOrdinalBase;
+	const TUint32 maxOrdinal = (TUint32)exporter.iExportDirCount;
+	const TUint32 absentOrdinal = (TUint32)exporter.iFileEntryPoint;
+
+	TUint32* iat = info.iIat;
+	TUint32* const iatEnd = iat + info.iNumImports;
+	for (; iat < iatEnd; ++iat)
+		{
+		// Each IAT slot contains the ordinal number of the export to be imported from
+		// the exporter. We use that index to locate the address of the export itself.
+		TUint32 ordinal = *iat;
+		if (ordinal > maxOrdinal)
+			return KErrNotSupported;
+
+		// If the import number is 0 (symbol name data), and the exporter doesn't provide
+		// this, we don't regard it as an error; we just skip this block, leaving the
+		// address set to 0. For all other valid cases, we index the export directory to
+		// find the exported object's address (which has already been relocated) ...
+		TUint32 newValue = 0;
+		if (ordinal > 0 || (exporter.iAttr & ECodeSegAttNmdExpData))
+			{
+			TUint32 expAddr = exportDir[ordinal];
+			if (expAddr == 0 || expAddr == absentOrdinal)
+				return KErrNotSupported;
+			// The new value is just the address of the export, no adjustment needed
+			newValue = expAddr;
+			}
+
+		__LDRTRACE(MyPrintf("svFixupImportAddresses: import[%d]@%08x is export[%d] == %08x",
+							iat - info.iIat, iat, ordinal, newValue));
+
+		// In non-paged code, we can simply replace the ordinals in the IAT with the
+		// object addresses to which they refer once and for all. However, in a code
+		// paging system, the IAT may be thrown away and later reloaded from the code
+		// image; therefore, we need to save the updates in the buffer pointed to by
+		// 'iFixup64' so that they can be reapplied each time the code page(s)
+		// containing (parts of the) IAT are reloaded. The fixup entries are in the
+		// form of 64-bit words, with the 32-bit address-to-be-fixed-up in the upper
+		// half and the value-to-be-stored-there in the lower half -- the multiple
+		// casts are needed to stop some compilers whinging about converting a
+		// pointer to a 64-bit integral type :(
+		if (!info.iFixup64)
+			*iat = newValue;
+		else
+			*info.iFixup64++ = ((TUint64)(TUintPtr)iat << 32) | newValue;
+		}
+
+	// Finally, update 'info.iIat' to show which imports have been processed
 	info.iIat = iat;
 	return KErrNone;
 	}
@@ -436,50 +570,155 @@ Fix up the import addresses, used for 'elf derived' executables.
 TInt svElfDerivedFixupImportAddresses(TAny* aPtr)
 	{
 	SFixupImportAddressesInfo& info = *(SFixupImportAddressesInfo*)aPtr;
-	TUint32 maxOrdinal = (TUint32)info.iExporter->iExportDirCount;
-	TUint32 absentOrdinal = (TUint32)info.iExporter->iFileEntryPoint;
+	E32Image& exporter = *info.iExporter;
 
-	TUint32* exp_dir = info.iExportDir - KOrdinalBase; // address of 0th ordinal
-	TUint32 exp_delta = info.iExportDirEntryDelta;
-	TUint32 code = info.iCodeLoadAddress;
+#ifdef _DEBUG
+	__LDRTRACE(MyPrintf(">svElfDerivedFixupImportAddresses %d imports, code@%08x, fixup@%08x exporter@%08x",
+						info.iNumImports, info.iCodeLoadAddress, info.iFixup64, info.iExporter));
+
+	// Dump everything potentially useful that we know about the exporter ...
+	__LDRTRACE(MyPrintf("%S: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
+						&exporter.iFileName, exporter.iUseCodePaging,
+						exporter.iRomImageHeader, exporter.iHeader));
+	__LDRTRACE(MyPrintf("iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
+						exporter.iCodeLoadAddress, exporter.iCodeRunAddress,
+						exporter.iCodeSize, exporter.iTextSize))
+	__LDRTRACE(MyPrintf("iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
+						exporter.iDataLoadAddress, exporter.iDataRunAddress,
+						exporter.iDataSize, exporter.iBssSize, exporter.iTotalDataSize));
+	__LDRTRACE(MyPrintf("iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
+						exporter.iCodeDelta, exporter.iDataDelta, exporter.iExportDirEntryDelta));
+
+	if (exporter.iRomImageHeader)
+		{
+		const TRomImageHeader& rh = *exporter.iRomImageHeader;
+		__LDRTRACE(MyPrintf("ROM: iCodeAddress %08x, iCodeSize %x, iTextSize %x",
+							rh.iCodeAddress, rh.iCodeSize, rh.iTextSize));
+		__LDRTRACE(MyPrintf("ROM: iDataAddress %08x, iDataSize %x, iBssSize %x",
+							rh.iDataAddress, rh.iDataSize, rh.iBssSize));
+		__LDRTRACE(MyPrintf("ROM: iDataBssLinearBase %08x, iTotalDataSize %x",
+							rh.iDataBssLinearBase, rh.iTotalDataSize));
+		}
+
+	if (exporter.iHeader)
+		{
+		const E32ImageHeader& ih = *exporter.iHeader;
+		__LDRTRACE(MyPrintf("HEAD: iCodeBase %08x, iCodeSize %x, iTextSize %x",
+							ih.iCodeBase, ih.iCodeSize, ih.iTextSize));
+		__LDRTRACE(MyPrintf("HEAD: iDataBase %08x, iDataSize %x, iBssSize %x",
+							ih.iDataBase, ih.iDataSize, ih.iBssSize));
+		}
+#endif // _DEBUG
+
+	// Here we calculate the bounds of each section of the exporter, as
+	// code and data exports may have to be offset by different amounts.
+	// Unfortunately, the required information seems to be in several
+	// different places, depending on whether the code is ROM or RAM, etc
+	TUint32 codeStart = exporter.iCodeRunAddress;
+	TUint32 codeEnd = codeStart + exporter.iCodeSize;
+	TUint32 dataStart = exporter.iDataRunAddress;
+	TUint32 dataEnd = dataStart + exporter.iTotalDataSize;
+
+	if (exporter.iRomImageHeader)
+		{
+		const TRomImageHeader& rh = *exporter.iRomImageHeader;
+		codeStart = rh.iCodeAddress;
+		codeEnd = codeStart + rh.iCodeSize;
+		dataStart = rh.iDataBssLinearBase;
+		dataEnd = dataStart + rh.iTotalDataSize;
+		}
+
+	if (exporter.iHeader)
+		{
+		const E32ImageHeader& ih = *exporter.iHeader;
+		codeStart = ih.iCodeBase;
+		codeEnd = codeStart + ih.iCodeSize;
+		dataStart = ih.iDataBase;
+		dataEnd = dataStart + ih.iDataSize + ih.iBssSize;
+		}
+
+	// 'exportDir' points to the address of the 0th ordinal (symbol name data);
+	// ordinary exports start from ordinal 1
+	const TUint32* const exportDir = (TUint32*)exporter.iExportDirLoad - KOrdinalBase;
+	const TUint32 maxOrdinal = (TUint32)exporter.iExportDirCount;
+	const TUint32 absentOrdinal = (TUint32)exporter.iFileEntryPoint;
+
+	const TUint32 codeDelta = exporter.iCodeDelta;
+	const TUint32 dataDelta = exporter.iDataDelta;
+	const TUint32 dirDelta = exporter.iExportDirEntryDelta;
+	TUint8* const codeBase = (TUint8*)info.iCodeLoadAddress;
 
 	TUint32* iol = info.iImportOffsetList;
-	TUint32* iolE = iol+info.iNumImports;
-	for(; iol<iolE; ++iol)
+	TUint32* const iolEnd = iol + info.iNumImports;
+	for(; iol < iolEnd; ++iol)
 		{
-		TUint32* impPtr = (TUint32*)(code+*iol);
-		TUint32 impd = *impPtr;
-		TUint32 imp = impd & 0xffff;
-		TUint32 offset = impd >> 16;
-		if(imp>maxOrdinal)
+		// Whereas the PE format's IAT contains ordinals to be imported, the ELF IOL
+		// (Import Offset List) is a list of offsets (within the importer's code) of
+		// the locations that contain references to imported objects.
+		//
+		// At the start of this process, each such location contains a composite value,
+		// of which the low 16 bits indicate the ordinal to be imported from the
+		// exporter's directory, and the upper 16 provide an optional adjustment to
+		// be added to the imported value.
+		//
+		// This composite value has to be replaced by the actual address of the
+		// object being imported (plus the adjustment factor, if any).
+		TUint32 codeOffset = *iol;
+		TUint32* codePtr = (TUint32*)(codeBase+codeOffset);
+		TUint32 importInfo = *codePtr;
+		TUint32 ordinal = importInfo & 0xffff;
+		TUint32 adjustment = importInfo >> 16;
+		if(ordinal > maxOrdinal)
 			return KErrNotSupported;
 
-		TUint32 writeValue;
-		if(imp==0 && !(info.iExporter->iAttr&ECodeSegAttNmdExpData))
+		// If the import number is 0 (symbol name data), and the exporter doesn't provide
+		// this, we don't regard it as an error; we just skip this block, leaving the
+		// address set to 0. For all other valid cases, we index the export directory to find
+		// the exported object's address (which may OR MAY NOT have already been relocated)
+		TUint32 expAddr = 0;
+		TUint32 newValue = 0;
+		if (ordinal > 0 || (exporter.iAttr & ECodeSegAttNmdExpData))
 			{
-			// attempt to import ordinal zero (symbol name data) from an executable
-			// which doesn't export this information, use NULL for imported value in this case...
-			writeValue = NULL;
-			}
-		else
-			{
-			// get imported value from exporter...
-			TUint32 exp_addr = exp_dir[imp];
-			if(exp_addr==0 || exp_addr==absentOrdinal)
+			expAddr = exportDir[ordinal];
+			if(expAddr == 0 || expAddr == absentOrdinal)
 				return KErrNotSupported;
-			writeValue = exp_addr + exp_delta + offset;
+
+			// If the exporter does not use code paging, then the entries in the export
+			// table will already have been relocated along with its text section. In
+			// the paged case, however, the relocation will have been deferred until the
+			// relevant pages are (re)loaded; therefore, we have to deduce here whether
+			// each export is code or data so that we can apply the correct delta ...
+			TUint32 sectionDelta;
+			if (!exporter.iUseCodePaging)
+				sectionDelta = dirDelta;
+			else if (expAddr >= codeStart && expAddr < codeEnd)
+				sectionDelta = codeDelta;			// points to text/rdata section
+			else if (expAddr >= dataStart && expAddr < dataEnd)
+				sectionDelta = dataDelta;			// points to data/bss section
+			else
+				sectionDelta = dirDelta;			// unknown - assume nonpaged?
+			newValue = expAddr + sectionDelta + adjustment;
 			}
 
-		// if not code paging then directly fix up the import...
-		if (info.iFixup64 == 0)
-			*impPtr = writeValue;
-		// ...otherwise defer until the page is fixed up
+		__LDRTRACE(MyPrintf("svElfDerivedFixupImportAddresses: import[%d] (%08x:%08x) is export[%d] %08x+%08x => %08x",
+							iol - info.iImportOffsetList, codePtr, importInfo, ordinal, expAddr, adjustment, newValue));
+
+		// In non-paged code, we can simply replace the ordinals in the IAT with the
+		// object addresses to which they refer once and for all. However, in a code
+		// paging system, the IAT may be thrown away and later reloaded from the code
+		// image; therefore, we need to save the updates in the buffer pointed to by
+		// 'iFixup64' so that they can be reapplied each time the code page(s)
+		// containing (parts of the) IAT are reloaded. The fixup entries are in the
+		// form of 64-bit words, with the 32-bit address-to-be-fixed-up in the upper
+		// half and the value-to-be-stored-there in the lower half -- the multiple
+		// casts are needed to stop some compilers whinging about converting a
+		// pointer to a 64-bit integral type :(
+		if (!info.iFixup64)
+			*codePtr = newValue;
 		else
-			{
-			TUint64 impPtr64 = reinterpret_cast<TUint64>(impPtr);
-			*info.iFixup64++ = (impPtr64 << 32) | writeValue;
-			}
+			*info.iFixup64++ = ((TUint64)(TUintPtr)codePtr << 32) | newValue;
 		}
+
 	return KErrNone;
 	}
 
@@ -2834,8 +3073,9 @@ TInt E32Image::LoadDlls(RImageArray& aArray)
 			//	on "new" dlls
 			if (e->iDepCount && !e->iAlreadyLoaded && e->iIsDll)
 				{
-				__IF_DEBUG(Printf("****Go recursive****"));
+				__IF_DEBUG(Printf("****Going recursive****"));
 				r = e->LoadDlls(aArray);
+				__IF_DEBUG(Printf("****Returned from recursion****"));
 				if (r!=KErrNone)
 					{
 					return r;
@@ -2956,8 +3196,6 @@ TInt E32Image::FixupDlls(RImageArray& aArray)
 			r = exp->ReadExportDirLoad();
 			if (r != KErrNone)
 				return r;
-			info.iExportDir = (TUint32*)exp->iExportDirLoad;
-			info.iExportDirEntryDelta = exp->iExportDirEntryDelta;
 			info.iNumImports = block->iNumberOfImports;
 			info.iExporter = exp;
 
@@ -2976,10 +3214,14 @@ TInt E32Image::FixupDlls(RImageArray& aArray)
 			if (impfmt == KImageImpFmt_ELF)
 				{
 				info.iImportOffsetList = (TUint32*)(block+1);
+				__IF_DEBUG(Printf("Import format ELF (%08x); info@%08x", impfmt, &info));
 				r = ExecuteInSupervisorMode(&svElfDerivedFixupImportAddresses, &info);
 				}
 			else
+				{
+				__IF_DEBUG(Printf("Import format PE (%08x); info@%08x", impfmt, &info));
 				r = ExecuteInSupervisorMode(&svFixupImportAddresses, &info);
+				}
 
 			if (r != KErrNone)
 				{
@@ -3058,7 +3300,18 @@ and iImportFixupTable is a cell containing the table.
 */
 TInt E32Image::BuildImportFixupTable()
 	{
-	__IF_DEBUG(Printf(">BuildImportFixupTable,0x%08x,%d", iFixups, iFixupCount));
+	__IF_DEBUG(Printf(">BuildImportFixupTable,%d@%08x,%08x", iFixupCount, iFixups, iCodeLoadAddress));
+
+#ifdef _DEBUG
+	// Dump the incoming fixup table if loader tracing enabled. Each item is an
+	// (address, value) pair, where the address and the value are 32 bits each.
+	TInt i;
+	for (i = 0; i < iFixupCount; ++i)
+		{
+		TUint64 x = iFixups[i];
+		__IF_DEBUG(Printf("%04x: %08x %08x", i*sizeof(TUint64), I64HIGH(x), I64LOW(x)));
+		}
+#endif	// DEBUG
 
 	// sort the array in address order, to organize by page
 	RArray<TUint64> fixup64ToSort(sizeof(TUint64), iFixups, iFixupCount);
@@ -3070,7 +3323,7 @@ TInt E32Image::BuildImportFixupTable()
 	// to the word at offset XXX.  (See PREQ1110 Design Sketch v1.0 S3.1.1.2.3.2.)
 
 	TUint32 pageCount = SizeToPageCount(iCodeSize);
-	iImportFixupTableSize = (pageCount+1) * sizeof(TUint32) + iFixupCount * 3 * sizeof(TUint16);
+	iImportFixupTableSize = (pageCount+1)*sizeof(TUint32) + 3*iFixupCount*sizeof(TUint16);
 	iImportFixupTable = (TUint32*) User::Alloc(iImportFixupTableSize);
 	__IF_DEBUG(Printf("iImportFixupTable=0x%08x", iImportFixupTable));
 	if (iImportFixupTable == 0)
@@ -3121,18 +3374,20 @@ TInt E32Image::BuildImportFixupTable()
 	while (++lastPage <= pageCount)
 		iImportFixupTable[lastPage] = iImportFixupTableSize;
 
-	__IF_DEBUG(Printf("processed table (size=%d,pageCount=%d)", iImportFixupTableSize, pageCount));
-
 #ifdef _DEBUG
-	// dump the import fixup table if loader tracing enabled
+	__IF_DEBUG(Printf("processed fixup table (size=%d,pageCount=%d)", iImportFixupTableSize, pageCount));
+
+	// Dump the processed fixup table if loader tracing enabled. The dump is in two
+	// parts; first, the page indexes (1 word per page), then the entries describing
+	// the items to be relocated, each of which is a 16-bit offset-within-page and a
+	// 32-bit value to be stored there.
+	for (i = 0; i <= (TInt)pageCount; ++i)
+		__IF_DEBUG(Printf("%04x: %08x", i*4, iImportFixupTable[i]));
+
 	const TUint16* table16 = (const TUint16*)iImportFixupTable;
 	const TInt halfWordsInTable = iImportFixupTableSize / 2;
-	for (TInt i = 0; i < halfWordsInTable; i += 4)
-		{
-		__IF_DEBUG(Printf(
-			"%04x: %04x %04x %04x %04x",
-			i * 2, table16[i+0], table16[i+1], table16[i+2], table16[i+3]));
-		}
+	for (i *= 2; i < halfWordsInTable; i += 3)
+		__IF_DEBUG(Printf("%04x: %04x %04x%04x", i*2, table16[i+0], table16[i+2], table16[i+1]));
 #endif
 
 	User::Free(iFixups);

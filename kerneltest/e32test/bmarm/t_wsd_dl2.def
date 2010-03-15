@@ -1,0 +1,4 @@
+EXPORTS
+	GetAddressOfDataProxy__FRiRPvT1 @ 1 NONAME R3UNUSED ; GetAddressOfDataProxy(int &, void *&, void *&)
+	CheckWritableStaticData__Fv @ 2 NONAME ; CheckWritablStaticData(void)
+
