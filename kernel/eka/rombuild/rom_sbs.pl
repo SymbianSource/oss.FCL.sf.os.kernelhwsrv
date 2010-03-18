@@ -312,7 +312,7 @@ if($opts{'build'}=~/^u/i) {
 	# Unicode build
 	$cppcmd = "$Epoc32Path/gcc/bin/cpp $cppflags -D UNICODE $defines rom1.tmp rom2.tmp";
 } else {
-	$cppcmd = "cpp $cppflags $defines rom1.tmp rom2.tmp";
+	$cppcmd = "$Epoc32Path/gcc/bin/cpp $cppflags $defines rom1.tmp rom2.tmp";
 }
 print "Executing CPP:\n\t$cppcmd\n" if $debug;
 $ret = system($cppcmd);
