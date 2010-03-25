@@ -568,7 +568,6 @@ EOT
 }
 
 sub cleanup($$$) {
-print "What's going on!\n";
 	my ($in, $out, $k) = @_;
 	my ($line, $lastblank);
 
