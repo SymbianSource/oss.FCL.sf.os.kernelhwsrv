@@ -64,7 +64,7 @@ static const TUint32 KDef_FAT16_UseCleanShutDownBit = 1;           //-- paramete
 
 
 //=======================================================================================================================
-//-- FAT directory cache settings
+//-- plain old FAT directory cache settings
 //=======================================================================================================================
 //-- FAT_DirCache <CacheSizeKB>,<Log2(max page size)>
 //-- e.g:   FAT_DirCache 16,12
@@ -102,10 +102,10 @@ static const TUint32 KDef_FAT32_LruCache_Write_Granularity_LOG2 = 9;    //-- wri
 //=======================================================================================================================
 //-- A leaf directory cache for Fat volumes
 _LIT8(KPN_FAT_LeafDirCache, "FAT_LeafDirCacheSize"); 
-static const TUint32 KDef_KLeafDirCacheSize = 1;    //-- default number of the most recently visited leaf dirs to be cached
+static const TUint32 KDef_KLeafDirCacheSize = 32;    //-- default number of the most recently visited leaf dirs to be cached
 
 //=======================================================================================================================
-//-- New directory cache settings
+//-- DP directory cache settings
 //=======================================================================================================================
 //-- New directory cache uses the global cache memory manager for dynamic size allocation
 _LIT8(KPN_FAT_DynamicDirCacheMin, "FAT_DirCacheSizeMin"); 
@@ -114,12 +114,6 @@ static const TUint32 KDef_DynamicDirCacheMin = 128;		// default minimum fat dir 
 static const TUint32 KDef_DynamicDirCacheMax = 256;		// default maximum fat dir cache size in KB
 static const TUint32 KDef_MaxDynamicDirCachePageSzLog2 = 14;    // default value for directory cache single page 
                                                                 //  maximal size Log2, 2^14 (16K) by default
-
-
-
-
-
-
 
 
 //########################################################################################################################
@@ -358,6 +352,7 @@ void TFatConfig::DumpParameters() const
 #ifdef _DEBUG
 
     ASSERT(iInitialised);
+    __PRINT(_L("\n\n"));
     __PRINT(_L("#>- TFatConfig parameters:\n"));
 
     DoDumpUintParam(KPN_ScanDrvSkipFinalisedVolume, iScanDrvSkipFinalisedVolume);
@@ -375,6 +370,12 @@ void TFatConfig::DumpParameters() const
     DoDumpUintParam(_L8("FAT_32Cache Size, KB"),  iFat32LRUCacheSizeKB);
     DoDumpUintParam(_L8("FAT_32Cache RdGr Log2"), iFat32LRUCacheReadGrLog2);
     DoDumpUintParam(_L8("FAT_32Cache WrGr Log2"), iFat32LRUCacheWriteGrLog2);
+
+    
+    DoDumpUintParam(KPN_FAT_LeafDirCache,       iLeafDirCacheSize);
+    DoDumpUintParam(KPN_FAT_DynamicDirCacheMin, iDynamicDirCacheSizeMinKB);
+    DoDumpUintParam(KPN_FAT_DynamicDirCacheMax, iDynamicDirCacheSizeMaxKB);
+    DoDumpUintParam(_L8("DynamicDirCacheMaxPageSizeLog2"), iDynamicDirCacheMaxPageSizeLog2);
 
     __PRINT(_L("#>------ end -------<#\n\n"));
 

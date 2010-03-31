@@ -1263,14 +1263,14 @@ void M::BTracePrime(TUint aCategory)
 #endif
 
 #ifdef BTRACE_RAM_ALLOCATOR
-	// Must check for -1 as that is the default value of aCategroy for
+	// Must check for -1 as that is the default value of aCategory for
 	// BTrace::Prime() which is intended to prime all categories that are 
 	// currently enabled via a single invocation of BTrace::Prime().
 	if(aCategory==BTrace::ERamAllocator || (TInt)aCategory == -1)
 		{
 		NKern::ThreadEnterCS();
 		Mmu::Wait();
-		Mmu::Get().iRamPageAllocator->SendInitialBtraceLogs();
+		Mmu::Get().iRamPageAllocator->DoBTracePrime();
 		Mmu::Signal();
 		NKern::ThreadLeaveCS();
 		}
@@ -2683,8 +2683,8 @@ void RamCache::DonateRamCachePage(SPageInfo* aPageInfo)
 	SPageInfo::TType type = aPageInfo->Type();
 	if(type==SPageInfo::EChunk)
 		{
-		//Must not donate locked page. An example is DMA trasferred memory.
-		__NK_ASSERT_DEBUG(0 == aPageInfo->LockCount());
+		// Must not donate locked page. An example is DMA transferred memory.
+		__NK_ASSERT_DEBUG(!aPageInfo->LockCount());
 
 		aPageInfo->Change(SPageInfo::EPagedCache,SPageInfo::EStatePagedYoung);
 		iPageList.Add(&aPageInfo->iLink);
@@ -3698,8 +3698,8 @@ void DemandPaging::DonateRamCachePage(SPageInfo* aPageInfo)
 	SPageInfo::TType type = aPageInfo->Type();
 	if(type==SPageInfo::EChunk)
 		{
-		//Must not donate locked page. An example is DMA trasferred memory.
-		__NK_ASSERT_DEBUG(0 == aPageInfo->LockCount());
+		// Must not donate locked page. An example is DMA transferred memory.
+		__NK_ASSERT_DEBUG(!aPageInfo->LockCount());
 		
 		aPageInfo->Change(SPageInfo::EPagedCache,SPageInfo::EStatePagedYoung);
 

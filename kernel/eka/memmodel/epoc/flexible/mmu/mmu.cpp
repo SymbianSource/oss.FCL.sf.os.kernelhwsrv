@@ -312,7 +312,8 @@ void Mmu::Init1Common()
 	}
 
 
-#if 0
+#ifdef FMM_VERIFY_RAM
+// Attempt to write to each unused RAM page and verify the contents.
 void Mmu::VerifyRam()
 	{
 	Kern::Printf("Mmu::VerifyRam() pass 1");
@@ -474,6 +475,10 @@ void Mmu::Init2Common()
 					__ASSERT_ALWAYS(r==KErrNone || r==KErrAlreadyExists, Panic(EBadMappedPageAfterBoot));
 					if(pi->Type()==SPageInfo::EUnused)
 						pi->SetFixed();
+#ifdef BTRACE_KERNEL_MEMORY
+					if(r == KErrNone)
+						++Epoc::KernelMiscPages;
+#endif
 					}
 				}
 			}
@@ -500,21 +505,24 @@ void Mmu::Init2Common()
 	r = K::MutexCreate(iPhysMemSyncMutex, KLitPhysMemSync, NULL, EFalse, KMutexOrdSyncPhysMem);
 	if(r!=KErrNone)
 		Panic(EPhysMemSyncMutexCreateFailed);
-//	VerifyRam();
+
+#ifdef FMM_VERIFY_RAM
+	VerifyRam();
+#endif
 	}
 
 
 void Mmu::Init2FinalCommon()
 	{
 	__KTRACE_OPT2(KBOOT,KMMU,Kern::Printf("Mmu::Init2FinalCommon"));
-	// hack, reduce free memory to <2GB...
+	// Reduce free memory to <2GB...
 	while(FreeRamInPages()>=0x80000000/KPageSize)
 		{
 		TPhysAddr dummyPage;
 		TInt r = iRamPageAllocator->AllocRamPages(&dummyPage,1, EPageFixed);
 		__NK_ASSERT_ALWAYS(r==KErrNone);
 		}
-	// hack, reduce total RAM to <2GB...
+	// Reduce total RAM to <2GB...
 	if(TheSuperPage().iTotalRamSize<0)
 		TheSuperPage().iTotalRamSize = 0x80000000-KPageSize;
 
@@ -539,6 +547,27 @@ void Mmu::Init3()
 		Panic(EDefragAllocFailed);
 	iDefrag->Init3(TheMmu.iRamPageAllocator);
 	}
+
+
+void Mmu::BTracePrime(TUint aCategory)
+	{
+	(void)aCategory;
+
+#ifdef BTRACE_RAM_ALLOCATOR
+	// Must check for -1 as that is the default value of aCategory for
+	// BTrace::Prime() which is intended to prime all categories that are 
+	// currently enabled via a single invocation of BTrace::Prime().
+	if(aCategory==BTrace::ERamAllocator || (TInt)aCategory == -1)
+		{
+		NKern::ThreadEnterCS();
+		RamAllocLock::Lock();
+		iRamPageAllocator->DoBTracePrime();
+		RamAllocLock::Unlock();
+		NKern::ThreadLeaveCS();
+		}
+#endif
+	}
+
 
 //
 // Utils
@@ -619,18 +648,7 @@ TInt Mmu::ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aNum
 		PagesAllocated(aPageList, aNumPages, (Mmu::TRamAllocFlags)EMemAttStronglyOrdered);
 
 		// update page infos...
-		TUint flash = 0;
-		TPhysAddr* pageEnd = aPageList + aNumPages;
-		MmuLock::Lock();
-		TPhysAddr* page = aPageList;
-		while (page < pageEnd)
-			{
-			MmuLock::Flash(flash,KMaxPageInfoUpdatesInOneGo/2);
-			TPhysAddr pagePhys = *page++;
-			__NK_ASSERT_DEBUG(pagePhys != KPhysAddrInvalid);
-			SPageInfo::FromPhysAddr(pagePhys)->SetPhysAlloc();
-			}
-		MmuLock::Unlock();
+		SetAllocPhysRam(aPageList, aNumPages);
 		}
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ZoneAllocPhysicalRam returns %d",r));
 	return r;
@@ -963,19 +981,7 @@ TInt Mmu::AllocPhysicalRam(TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlag
 		return r;
 
 	// update page infos...
-	TPhysAddr* pages = aPages;
-	TPhysAddr* pagesEnd = pages+aCount;
-	MmuLock::Lock();
-	TUint flash = 0;
-	while(pages<pagesEnd)
-		{
-		MmuLock::Flash(flash,KMaxPageInfoUpdatesInOneGo/2);
-		TPhysAddr pagePhys = *pages++;
-		__NK_ASSERT_DEBUG(pagePhys!=KPhysAddrInvalid);
-		SPageInfo* pi = SPageInfo::FromPhysAddr(pagePhys);
-		pi->SetPhysAlloc();
-		}
-	MmuLock::Unlock();
+	SetAllocPhysRam(aPages, aCount);
 
 	return KErrNone;
 	}
@@ -1004,6 +1010,19 @@ void Mmu::FreePhysicalRam(TPhysAddr* aPages, TUint aCount)
 	MmuLock::Unlock();
 
 	iRamPageAllocator->FreeRamPages(aPages,aCount, EPageFixed);
+
+#ifdef BTRACE_KERNEL_MEMORY
+	if (BTrace::CheckFilter(BTrace::EKernelMemory))
+		{// Only loop round each page if EKernelMemory tracing is enabled
+		pages = aPages;
+		pagesEnd = aPages + aCount;
+		while (pages < pagesEnd)
+			{
+			BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysFree, KPageSize, *pages++);
+			Epoc::DriverAllocdPhysRam -= KPageSize;
+			}
+		}
+#endif
 	}
 
 
@@ -1015,17 +1034,7 @@ TInt Mmu::AllocPhysicalRam(TPhysAddr& aPhysAddr, TUint aCount, TUint aAlign, TRa
 		return r;
 
 	// update page infos...
-	SPageInfo* pi = SPageInfo::FromPhysAddr(aPhysAddr);
-	SPageInfo* piEnd = pi+aCount;
-	TUint flash = 0;
-	MmuLock::Lock();
-	while(pi<piEnd)
-		{
-		MmuLock::Flash(flash,KMaxPageInfoUpdatesInOneGo);
-		pi->SetPhysAlloc();
-		++pi;
-		}
-	MmuLock::Unlock();
+	SetAllocPhysRam(aPhysAddr, aCount);
 
 	return KErrNone;
 	}
@@ -1050,7 +1059,13 @@ void Mmu::FreePhysicalRam(TPhysAddr aPhysAddr, TUint aCount)
 		}
 	MmuLock::Unlock();
 
-	iRamPageAllocator->FreePhysicalRam(aPhysAddr, aCount << KPageShift);
+	TUint bytes = aCount << KPageShift;
+	iRamPageAllocator->FreePhysicalRam(aPhysAddr, bytes);
+
+#ifdef BTRACE_KERNEL_MEMORY
+	BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysFree, bytes, aPhysAddr);
+	Epoc::DriverAllocdPhysRam -= bytes;
+#endif
 	}
 
 
@@ -1058,25 +1073,11 @@ TInt Mmu::ClaimPhysicalRam(TPhysAddr aPhysAddr, TUint aCount, TRamAllocFlags aFl
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ClaimPhysicalRam(0x%08x,0x%x,0x%08x)",aPhysAddr,aCount,aFlags));
 	aPhysAddr &= ~KPageMask;
-	TInt r = iRamPageAllocator->ClaimPhysicalRam(aPhysAddr,(aCount << KPageShift));
-	if(r!=KErrNone)
+	TInt r = iRamPageAllocator->ClaimPhysicalRam(aPhysAddr, aCount << KPageShift);
+	if(r != KErrNone)
 		return r;
 
-	PagesAllocated((TPhysAddr*)(aPhysAddr|1), aCount, aFlags);
-
-	// update page infos...
-	SPageInfo* pi = SPageInfo::FromPhysAddr(aPhysAddr);
-	SPageInfo* piEnd = pi+aCount;
-	TUint flash = 0;
-	MmuLock::Lock();
-	while(pi<piEnd)
-		{
-		MmuLock::Flash(flash,KMaxPageInfoUpdatesInOneGo);
-		pi->SetPhysAlloc();
-		++pi;
-		}
-	MmuLock::Unlock();
-
+	AllocatedPhysicalRam(aPhysAddr, aCount, aFlags);
 	return KErrNone;
 	}
 
@@ -1088,17 +1089,59 @@ void Mmu::AllocatedPhysicalRam(TPhysAddr aPhysAddr, TUint aCount, TRamAllocFlags
 	PagesAllocated((TPhysAddr*)(aPhysAddr|1), aCount, aFlags);
 
 	// update page infos...
+	SetAllocPhysRam(aPhysAddr, aCount);
+	}
+
+
+void Mmu::SetAllocPhysRam(TPhysAddr aPhysAddr, TUint aCount)
+	{
 	SPageInfo* pi = SPageInfo::FromPhysAddr(aPhysAddr);
 	SPageInfo* piEnd = pi+aCount;
 	TUint flash = 0;
 	MmuLock::Lock();
 	while(pi<piEnd)
 		{
-		MmuLock::Flash(flash,KMaxPageInfoUpdatesInOneGo);
+		MmuLock::Flash(flash, KMaxPageInfoUpdatesInOneGo);
 		pi->SetPhysAlloc();
 		++pi;
 		}
 	MmuLock::Unlock();
+
+#ifdef BTRACE_KERNEL_MEMORY
+	TUint bytes = aCount << KPageShift;
+	BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysAlloc, bytes, aPhysAddr);
+	Epoc::DriverAllocdPhysRam += bytes;
+#endif
+	}
+
+
+void Mmu::SetAllocPhysRam(TPhysAddr* aPageList, TUint aNumPages)
+	{
+	TPhysAddr* page = aPageList;
+	TPhysAddr* pageEnd = aPageList + aNumPages;
+	TUint flash = 0;
+	MmuLock::Lock();
+	while (page < pageEnd)
+		{
+		MmuLock::Flash(flash, KMaxPageInfoUpdatesInOneGo / 2);
+		TPhysAddr pagePhys = *page++;
+		__NK_ASSERT_DEBUG(pagePhys != KPhysAddrInvalid);
+		SPageInfo::FromPhysAddr(pagePhys)->SetPhysAlloc();
+		}
+	MmuLock::Unlock();
+
+#ifdef BTRACE_KERNEL_MEMORY
+	if (BTrace::CheckFilter(BTrace::EKernelMemory))
+		{// Only loop round each page if EKernelMemory tracing is enabled
+		TPhysAddr* pAddr = aPageList;
+		TPhysAddr* pAddrEnd = aPageList + aNumPages;
+		while (pAddr < pAddrEnd)
+			{
+			BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysAlloc, KPageSize, *pAddr++);
+			Epoc::DriverAllocdPhysRam += KPageSize;
+			}
+		}
+#endif
 	}
 
 
@@ -1187,19 +1230,9 @@ TLinAddr Mmu::TTempMapping::Map(TPhysAddr aPage, TUint aColour)
 	__NK_ASSERT_DEBUG(iSize>=1);
 	__NK_ASSERT_DEBUG(iCount==0);
 
-	TUint colour = aColour&KPageColourMask;
-	TLinAddr addr = iLinAddr+(colour<<KPageShift);
-	TPte* pPte = iPtePtr+colour;
-	iColour = colour;
-
-	__ASSERT_DEBUG(*pPte==KPteUnallocatedEntry,MM::Panic(MM::ETempMappingAlreadyInUse));
-	*pPte = (aPage&~KPageMask) | iBlankPte;
-	CacheMaintenance::SinglePteUpdated((TLinAddr)pPte);
-	InvalidateTLBForPage(addr|KKernelOsAsid);
-
-	iCount = 1;
-	return addr;
+	return Map(aPage, aColour, iBlankPte);
 	}
+
 
 /**
 Map a single physical page into this temporary mapping using the given page table entry (PTE) value.
@@ -1215,16 +1248,17 @@ TLinAddr Mmu::TTempMapping::Map(TPhysAddr aPage, TUint aColour, TPte aBlankPte)
 	{
 	__NK_ASSERT_DEBUG(iSize>=1);
 	__NK_ASSERT_DEBUG(iCount==0);
+	__NK_ASSERT_DEBUG(!(aBlankPte & ~KPageMask));
 
-	TUint colour = aColour&KPageColourMask;
-	TLinAddr addr = iLinAddr+(colour<<KPageShift);
-	TPte* pPte = iPtePtr+colour;
+	TUint colour = aColour & KPageColourMask;
+	TLinAddr addr = iLinAddr + (colour << KPageShift);
+	TPte* pPte = iPtePtr + colour;
 	iColour = colour;
 
-	__ASSERT_DEBUG(*pPte==KPteUnallocatedEntry,MM::Panic(MM::ETempMappingAlreadyInUse));
-	*pPte = (aPage&~KPageMask) | aBlankPte;
+	__ASSERT_DEBUG(*pPte == KPteUnallocatedEntry, MM::Panic(MM::ETempMappingAlreadyInUse));
+	*pPte = (aPage & ~KPageMask) | aBlankPte;
 	CacheMaintenance::SinglePteUpdated((TLinAddr)pPte);
-	InvalidateTLBForPage(addr|KKernelOsAsid);
+	InvalidateTLBForPage(addr | KKernelOsAsid);
 
 	iCount = 1;
 	return addr;
@@ -1290,19 +1324,16 @@ void Mmu::TTempMapping::Unmap()
 	TUint colour = iColour;
 	TLinAddr addr = iLinAddr+(colour<<KPageShift);
 	TPte* pPte = iPtePtr+colour;
-	TUint count = iCount;
 
-	while(count)
+	while(iCount)
 		{
 		*pPte = KPteUnallocatedEntry;
 		CacheMaintenance::SinglePteUpdated((TLinAddr)pPte);
 		InvalidateTLBForPage(addr|KKernelOsAsid);
 		addr += KPageSize;
 		++pPte;
-		--count;
+		--iCount;
 		}
-
-	iCount = 0;
 	}
 
 #ifdef __SMP__

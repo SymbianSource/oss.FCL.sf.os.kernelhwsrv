@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -371,7 +371,13 @@ void DmacSim::StartEmulation()
 
 void DmacSim::StopEmulation()
 	{
-	Timer.Cancel();
+	// Ensure that timer really is cancelled.
+	TBool cancelled = EFalse;
+	do
+		{
+		cancelled = Timer.Cancel();
+		}
+	while(!cancelled);
 	}
 
 void DmacSim::TickCB(TAny*)

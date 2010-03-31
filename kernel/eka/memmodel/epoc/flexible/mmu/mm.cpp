@@ -394,7 +394,7 @@ void MM::MemoryFree(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
 	}
 
 
-TInt MM::MemoryAddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages)
+TInt MM::MemoryAddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages)
 	{
 	TRACE(("MM::MemoryAddPages(0x%08x,0x%08x,0x%08x,?)",aMemory,aIndex,aCount));
 	MemoryObjectLock::Lock(aMemory);

@@ -79,6 +79,7 @@ const TInt KTestBufLen=256;
 
 LOCAL_D RFs TheFs;
 TInt gFsDriveNumber	= -1;
+TBool gMediaIsRam = EFalse;
 	
 RTest test(_L("T_TBUS_DATAPAGING"));
 _LIT(KChunkName, "t_datapaging chunk");
@@ -698,6 +699,8 @@ TInt FindFsDriveNumber(TInt aLocalDriveNumber)
 			continue;
 
 		TPtrC mediaType = GetMediaType(di.iType);
+		if (di.iType == EMediaRam)
+			gMediaIsRam = ETrue;
 		test.Printf(_L("Drive %C Type %S DriveAtt 0x%x MediaAtt 0x%x FileSysId %S SerialNum %S\n"), 
 			'A' + n, &mediaType, di.iDriveAtt, di.iMediaAtt, &fsName, &GetSerialNumber(serialNum));
 
@@ -794,11 +797,13 @@ TInt E32Main()
 	__DECLARE_VAR_IN_CHUNK(TBusLocalDrive, &drive)
 	TInt driveSize = TestDriveConnectAndCaps(drive, fatDriveNumber);
 	
-	TestDriveSizeRelatedMethods(drive, 0x00001000, driveSize);
+	if (!gMediaIsRam) // If media is RAM then the tests are invalid
+		TestDriveSizeRelatedMethods(drive, 0x00001000, driveSize);
 	
 	TestWriteReadRelatedMethods(drive);
 	
-	TestFormatRelatedMethods(drive, driveSize);
+	if (!gMediaIsRam)
+		TestFormatRelatedMethods(drive, driveSize);
 	
 	if(callPasswordRelated)
 		{

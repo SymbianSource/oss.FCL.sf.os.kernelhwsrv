@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -1955,20 +1955,6 @@ void TDmaChannel::DoDfc()
 		stop = __e32_atomic_load_acq32(&iIsrDfc) & (TUint32)KCancelFlagMask;
 		}
 
-	// Some interrupts may be missed (double-buffer and scatter-gather
-	// controllers only) if two or more transfers complete while interrupts are
-	// disabled in the CPU. If this happens, the framework will go out of sync
-	// and leave some orphaned requests in the queue.
-	//
-	// To ensure correctness we handle this case here by checking that the request
-	// queue is empty when all transfers have completed and, if not, cleaning up
-	// and notifying the client of the completion of the orphaned requests.
-	//
-	// Note that if some interrupts are missed and the controller raises an
-	// error while transferring a subsequent fragment, the error will be reported
-	// on a fragment which was successfully completed.  There is no easy solution
-	// to this problem, but this is okay as the only possible action following a
-	// failure is to flush the whole queue.
 	if (stop)
 		{
 		// If another thread set the cancel flag, it should have
@@ -1988,66 +1974,6 @@ void TDmaChannel::DoDfc()
 
 		// release threads doing CancelAll()
 		waiters->Signal();
-		}
-	else if (!error && !iReqQ.IsEmpty() && iController->IsIdle(*this))
-		{
-#ifdef __SMP__
-		// On an SMP system we must call stop transfer, it will block until
-		// any ISRs have completed so that the system does not spuriously
-		// attempt to recover from a missed interrupt.
-		//
-		// On an SMP system it is possible for the code here to execute
-		// concurrently with the DMA ISR. It is therefore possible that at this
-		// point the previous transfer has already completed (so that IsIdle
-		// reports true), but that the ISR has not yet queued a DFC. Therefore
-		// we must wait for the ISR to complete.
-		//
-		// StopTransfer should have no other side effect, given that the
-		// channel is already idle.
-		iController->StopTransfer(*this); // should block till ISR completion
-#endif
-
-		const TBool cleanup = !iDfc.Queued();
-		if(cleanup)
-			{
-			__KTRACE_OPT(KDMA, Kern::Printf("Missed interrupt(s) - draining request queue"));
-			ResetStateMachine();
-
-			// Move orphaned requests to temporary queue so channel queue can
-			// accept new requests.
-			SDblQue q;
-			q.MoveFrom(&iReqQ);
-
-			SDblQueLink* pL;
-			while ((pL = q.GetFirst()) != NULL)
-				{
-				DDmaRequest* const pR = _LOFF(pL, DDmaRequest, iLink);
-				__KTRACE_OPT(KDMA, Kern::Printf("Removing request from queue and notifying client"));
-				pR->OnDeque();
-				// Old style callback
-				DDmaRequest::TCallback const cb = pR->iCb;
-				if (cb)
-					{
-					TAny* const arg = pR->iCbArg;
-					Signal();
-					(*cb)(DDmaRequest::EOk, arg);
-					Wait();
-					}
-				else
-					{
-					// New style callback
-					TDmaCallback const ncb = pR->iDmaCb;
-					if (ncb)
-						{
-						TAny* const arg = pR->iDmaCbArg;
-						Signal();
-						(*ncb)(EDmaCallbackRequestCompletion, EDmaResultOK, arg, NULL);
-						Wait();
-						}
-					}
-				}
-			}
-		Signal();
 		}
 	else
 		Signal();

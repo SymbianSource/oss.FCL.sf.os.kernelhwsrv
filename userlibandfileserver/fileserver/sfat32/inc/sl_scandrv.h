@@ -82,6 +82,9 @@ public:
         EClusterAlreadyInUse,   ///< 2  cross-linked cluster chain
         EBadClusterValue,       ///< 3  also means "lost cluster"
         EInvalidEntrySize,      ///< 4  size of file/directory does not correspond to the cluster chain length
+        EEntrySetIncomplete,    ///< 5  incomplete VFAT entryset
+        EEntryBadAtt,           ///< 6  incorrect entry attributes
+
         
         EUnknownError = 95,     ///< unknown error
 
@@ -116,12 +119,12 @@ private:
 
 	TUint32 ReadFatL(TUint aClusterNum) ;
 	void FindSameStartClusterL();
-	TInt FindStartClusterL(TInt aDirCluster);
+	TInt FindStartClusterL(TUint32 aDirCluster);
 	void CheckDirStructureL();
 	void CheckDirL(TUint32 aCluster);
 	void ProcessEntryL(const TFatDirEntry& aEntry);
 	TInt CheckEntryClusterL(const TFatDirEntry& aEntry, const TEntryPos& aEntryPos);
-	void RecordClusterChainL(TInt aCluster,TUint aSizeInBytes);
+	void RecordClusterChainL(TUint32 aCluster,TUint aSizeInBytes);
 	TBool MoveToVFatEndL(TEntryPos& aPos,TFatDirEntry& aEntry,TInt& aDirLength);
 	TBool IsValidVFatEntry(const TFatDirEntry& aEntry,TInt prevNum)const;
 	TBool IsDosEntry(const TFatDirEntry& aEntry)const;

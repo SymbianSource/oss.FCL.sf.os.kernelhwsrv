@@ -1110,8 +1110,30 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 	//-- Print out information about file system installed
 	if(aFlags & EFSInfo)
     {
+        //-- print out drive properties
+        Buf.Format(_L("\nDrive %c: No:%d"), 'A'+aDrvNum, aDrvNum);
         
-        apConsole->Printf(_L("\nDrive %c: number:%d\n"), 'A'+aDrvNum, aDrvNum);
+        //-- find out if the drive is synchronous / asynchronous
+        TPckgBuf<TBool> drvSyncBuf;
+        nRes = aFs.QueryVolumeInfoExt(aDrvNum, EIsDriveSync, drvSyncBuf);
+        if(nRes == KErrNone)
+        {
+            Buf.AppendFormat(_L(", Sync:%d"), drvSyncBuf() ? 1:0);        
+        }
+
+        //-- find out if drive runs a rugged FS (debug mode only)
+        const TInt KControlIoIsRugged=4;
+        TUint8 ruggedFS;
+        TPtr8 pRugged(&ruggedFS, 1, 1);
+        nRes=aFs.ControlIo(aDrvNum, KControlIoIsRugged, pRugged);
+        if(nRes == KErrNone)
+        {
+            Buf.AppendFormat(_L(", Rugged:%d"), ruggedFS ? 1:0);        
+        }
+
+        Buf.Append(_L("\n"));
+        apConsole->Printf(Buf);
+
 
 	    //-- print the FS name
 	    if(aFs.FileSystemName(Buf, aDrvNum) == KErrNone)
@@ -1154,19 +1176,36 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 
 
 
-            //-- print out FileSystem volume finalisation info
+            
             if(bVolumeOK && (aFlags & EFSInfoEx))
             {
+                Buf.Zero();
 
+                //-- print out FileSystem volume finalisation info
                 TPckgBuf<TBool> boolPckg;
                 nRes = aFs.QueryVolumeInfoExt(aDrvNum, EIsDriveFinalised, boolPckg);
                 if(nRes == KErrNone)
                 {
                     if(boolPckg() >0)
-                        apConsole->Printf(_L("Volume Finalised\n"));
+                        Buf.Copy(_L("Volume: Finalised"));
                     else
-                        apConsole->Printf(_L("Volume Not finalised\n"));
+                        Buf.Copy(_L("Volume: Not finalised"));
                 }
+
+                //-- print out cluster size that FS reported
+                TVolumeIOParamInfo volIoInfo;
+                nRes = aFs.VolumeIOParam(aDrvNum, volIoInfo);
+                if(nRes == KErrNone && volIoInfo.iClusterSize >= 512)
+                {
+                    Buf.AppendFormat(_L(", Cluster Sz:%d"), volIoInfo.iClusterSize);
+                }
+
+                if(Buf.Length())
+                {
+                    Buf.Append(_L("\n"));
+                    apConsole->Printf(Buf);    
+                }
+
             }
 	    }
     }//if(aFlags & EFSInfo)

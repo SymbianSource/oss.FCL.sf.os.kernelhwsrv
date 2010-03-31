@@ -287,7 +287,7 @@ TUint8* CRamFatTable::MemCopy(TAny* aTrg,const TAny* aSrc,TInt aLength)
 
 /**
     Copy memory with filling the source buffer with zeroes. Target and source buffers can overlap.
-    Used on RAMDrive srinking in order to wipe data from the file that is being deleted.
+    Used on RAMDrive shrinking in order to wipe data from the file that is being deleted.
     
     @param   aTrg       pointer to the target address
     @param   aSrc       pointer to the destination address
@@ -391,7 +391,7 @@ TUint32 CRamFatTable::AllocateClusterListL(TUint32 aNumber, TUint32 aNearestClus
     
     if (aNumber>1)
 	    {//-- if this part leaves (e.g. fail to expand the RAM drive), we will need to handle the first allocated EOC
-    	TRAPD(nRes, ExtendClusterListL(aNumber-1, (TInt&)aNearestCluster));
+    	TRAPD(nRes, ExtendClusterListL(aNumber-1, aNearestCluster));
         if(nRes != KErrNone)
             {
             __PRINT1(_L("CRamFatTable::AllocateClusterListL:ExtendClusterListL() failed with %d") ,nRes);
@@ -431,7 +431,7 @@ TUint32 CRamFatTable::AllocateSingleClusterL(TUint32 aNearestCluster)
     @param aCluster     starting cluster number / ending cluster number after
     @leave KErrDiskFull + system wide error codes
 */
-void CRamFatTable::ExtendClusterListL(TUint32 aNumber, TInt& aCluster)
+void CRamFatTable::ExtendClusterListL(TUint32 aNumber, TUint32& aCluster)
     {
     __PRINT2(_L("CRamFatTable::ExtendClusterListL(%d, %d)"), aNumber, aCluster);
     __ASSERT_DEBUG(aNumber>0,Fault(EFatBadParameter));
@@ -479,8 +479,8 @@ void CRamFatTable::FreeClusterListL(TUint32 aCluster)
         return; // File has no cluster allocated
 
     const TInt clusterShift=iOwner->ClusterSizeLog2();
-    TInt startCluster=aCluster;
-    TInt endCluster=0;
+    TUint32 startCluster=aCluster;
+    TUint32 endCluster=0;
     TInt totalFreed=0;
     TLinAddr srcEnd=0;
 
@@ -626,6 +626,28 @@ void CRamFatTable::UpdateIndirectionTable(TUint32 aStart,TUint32 anEnd,TInt aClu
             *entry=TUint16(cluster-aClusterShift);
         }
 #endif
+    }
+
+TUint32 CRamFatTable::CountContiguousClustersL(TUint32 aStartCluster, TUint32& aEndCluster, TUint32 aMaxCount) const
+	{
+	__PRINT2(_L("CRamFatTable::CountContiguousClustersL() start:%d, max:%d"),aStartCluster, aMaxCount);
+	TUint32 clusterListLen=1;
+	TUint32 endCluster=aStartCluster;
+	TInt64 endClusterPos=DataPositionInBytes(endCluster);
+	while (clusterListLen<aMaxCount)
+		{
+		TInt oldCluster=endCluster;
+		TInt64 oldClusterPos=endClusterPos;
+		if (GetNextClusterL(endCluster)==EFalse || (endClusterPos=DataPositionInBytes(endCluster))!=(oldClusterPos+(1<<iOwner->ClusterSizeLog2())))
+			{
+			endCluster=oldCluster;
+			break;
+			}
+		clusterListLen++;
+		}
+	aEndCluster=endCluster;
+	
+    return(clusterListLen);
     }
 
 

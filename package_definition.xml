@@ -3,7 +3,7 @@
   <package id="kernelhwsrv" name="Kernel and Hardware Services" levels="hw-if adaptation framework test">
     <collection id="brdbootldr" name="Board Boot Loader" level="hw-if">
       <component id="ubootldr" name="Boot Loader" introduced="9.2" purpose="optional">
-        <unit mrp="brdbootldr/ubootldr/base_ubootldr.mrp"/>
+        <unit bldFile="brdbootldr/ubootldr" mrp="brdbootldr/ubootldr/base_ubootldr.mrp"/>
       </component>
     </collection>
     <collection id="bsptemplate" name="Board Support Package Template" level="hw-if">

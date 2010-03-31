@@ -41,6 +41,8 @@
 #include <rvemuboard.h>
 #elif defined(__NE1_TB__)
 #include <upd35001_timer.h>
+#elif defined(__MRAP__)
+#include <rap.h>
 #endif
 #include "d_mstim.h"
 #include "../misc/prbs.h"
@@ -93,6 +95,11 @@ inline TCounter TIMER()
 inline TCounter TIMER()
 	{ return NETimer::Timer(2).iTimerCount; }
 #endif
+#ifdef __MRAP__
+inline TCounter TIMER()
+	{ TRap::SetRegister32(1, KRapRegRTC001_TRIGGER);
+	return  TRap::Register32(KRapRegRTC001_LONGCOUNT); }
+#endif
 #if defined(__EPOC32__) && defined(__CPU_X86)
 TCounter TIMER();
 void SetUpTimerChannel2();
@@ -136,6 +143,10 @@ TDelta TimeDelta(TUint initial, TUint final)
 #ifdef __NE1_TB__
 inline TDelta TimeDelta(TCounter initial, TCounter final)
 	{ return final - initial; }
+#endif
+#if defined(__MRAP__)
+inline TDelta TimeDelta(TCounter initial, TCounter final)
+	{ return final-initial; }				// RAP RTC timer counts up
 #endif
 #ifdef __WINS__
 inline TDelta TimeDelta(TCounter initial, TCounter final)
@@ -196,6 +207,15 @@ TInt TicksToMicroseconds(TDelta aTicks)
 	x += TInt64(f>>1);
 	x /= TInt64(f);
 	return (TInt)x;
+#endif
+#if defined(__MRAP__)
+    // RTC runs with 32.768 kHz -> one tick is 
+    const TUint KRTCClockHz = 32768;
+    Int64 ticks(aTicks);
+    ticks*=(1000000);
+	ticks+=KRTCClockHz/2;		// 32.768 kHz tick
+	ticks/=KRTCClockHz;
+	return (TInt)ticks;
 #endif
 #if defined(__EPOC32__) && defined(__CPU_X86)
 	TInt x = aTicks;

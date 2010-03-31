@@ -396,8 +396,17 @@ TUint32 CFat16FixedCache::ReadEntryL(TUint32 aIndex)
     //__PRINT1(_L("#-CFat16FixedCache::ReadEntryL() FAT idx:%d"), aIndex);
     ASSERT(aIndex >= KFatFirstSearchCluster &&  aIndex < (FatSize() >> KFat16EntrySzLog2));
 
-    //-- calculate page index in the array
-    const TInt pgIdx = aIndex >> (PageSizeLog2()-KFat16EntrySzLog2);
+    //-- calculate page index in the array. Theoretically, aIndex can't be wrong because it is checked by the caller;
+    //-- but in some strange situations (malformed volume ?) aIndex might get bigger than number of usable clusters.
+    const TUint pgIdx = aIndex >> (PageSizeLog2()-KFat16EntrySzLog2);
+    
+    if(pgIdx >= (TUint)iPages.Count())
+        {
+        __PRINT1(_L("#-CFat16FixedCache::ReadEntryL() FAT idx:%d #1"), aIndex);
+        ASSERT(0);
+        User::Leave(KErrCorrupt);
+        }
+    
     CFat16FixedCachePage *pPage = iPages[pgIdx];
     
     TUint32 entry = KMaxTUint;
@@ -436,8 +445,17 @@ void CFat16FixedCache::WriteEntryL(TUint32 aIndex, TUint32 aEntry)
 
     SetDirty(ETrue);
 
-    //-- calculate page index in the array
-    const TInt pgIdx = aIndex >> (PageSizeLog2()-KFat16EntrySzLog2);
+    //-- calculate page index in the array. Theoretically, aIndex can't be wrong because it is checked by the caller;
+    //-- but in some strange situations (malformed volume ?) aIndex might get bigger than number of usable clusters.
+    const TUint pgIdx = aIndex >> (PageSizeLog2()-KFat16EntrySzLog2);
+    
+    if(pgIdx >= (TUint)iPages.Count())
+        {
+        __PRINT2(_L("#-CFat16FixedCache::WriteEntryL() FAT idx:%d, val:%d #1"), aIndex, aEntry);
+        ASSERT(0);
+        User::Leave(KErrCorrupt);
+        }
+
     CFat16FixedCachePage *pPage = iPages[pgIdx];
 
     if(!pPage)

@@ -25,7 +25,7 @@
 
 _LIT(KMemoryTestLddName,"d_memorytest");
 
-const TInt KUCPageCount = 4;//Page count of user chunk used in physical pinning tests.
+const TInt KUCPageCount = 16;//Page count of user chunk used in physical pinning tests.
 
 class RMemoryTestLdd : public RBusLogicalChannel
 	{

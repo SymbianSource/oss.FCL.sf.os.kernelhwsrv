@@ -256,7 +256,7 @@ void CFatMountCB::SetVolumeCleanL(TBool aClean)
 
         if(tmp != fatEntry)
             {//-- write FAT[1] entry to all available FATs
-                for(TInt i=0; i<NumberOfFats(); ++i)
+                for(TUint32 i=0; i<NumberOfFats(); ++i)
                 {
                 const TInt64 pos = StartOfFatInBytes()+KFatEntrySize+(FatSizeInBytes()*i);
                 User::LeaveIfError(LocalDrive()->Write(pos, ptrFatEntry)); //write FAT32[1] entry
@@ -287,7 +287,7 @@ void CFatMountCB::SetVolumeCleanL(TBool aClean)
 
             if(tmp != fatEntry)
                 {//-- write FAT[1] entry to all available FATs
-                for(TInt i=0; i<NumberOfFats(); ++i)
+                for(TUint32 i=0; i<NumberOfFats(); ++i)
                     {
                     const TInt64 pos = StartOfFatInBytes()+KFatEntrySize+(FatSizeInBytes()*i);
                     User::LeaveIfError(LocalDrive()->Write(pos, ptrFatEntry)); //write FAT16[1] entry
@@ -367,7 +367,7 @@ void CFatMountCB::MountL(TBool aForceMount)
 
     const TInt driveNo = Drive().DriveNumber();
     
-    __PRINT2(_L("CFatMountCB::MountL() drv:%d, forceMount=%d\n"),driveNo,aForceMount);
+    __PRINT3(_L("CFatMountCB::MountL() drv:%d, forceMount=%d, RuggedFAT:%d\n"), driveNo, aForceMount, IsRuggedFSys());
 
     ASSERT(State() == ENotMounted || State() == EDismounted);
     SetState(EMounting);
@@ -476,13 +476,13 @@ void CFatMountCB::InitializeL(const TLocalDriveCaps& aLocDrvCaps, TBool aIgnoreF
 
 
 	    {//-- check if volume geometry looks valid
-        const TInt usableSectors=TotalSectors()-(iFirstFreeByte>>SectorSizeLog2());
+        const TUint32 usableSectors = TotalSectors()-(iFirstFreeByte>>SectorSizeLog2());
 	    iUsableClusters=usableSectors>>(ClusterSizeLog2()-SectorSizeLog2());
 
         const TUint32 KMinClusters = 32; //-- absolute minimum number of clusters on the volume
         const TUint32 KMaxClusters=(TotalSectors()-FirstFatSector()-NumberOfFats()*(FatSizeInBytes()>>SectorSizeLog2())) >> (ClusterSizeLog2()-SectorSizeLog2());
         
-        if(usableSectors <=0 || iUsableClusters < KMinClusters || iUsableClusters > KMaxClusters)
+        if(iUsableClusters < KMinClusters || iUsableClusters > KMaxClusters)
             {
             __PRINT(_L("CFatMountCB::InitializeL() Wrong number of usable cluster/sectors on the volume!"));
             User::Leave(KErrCorrupt);
@@ -493,6 +493,7 @@ void CFatMountCB::InitializeL(const TLocalDriveCaps& aLocDrvCaps, TBool aIgnoreF
 	//-- CFatMountCB parameters might have changed, e.g. after formatting. Reconstruct directory cache with new parameters
 	
     delete iRawDisk;
+    iRawDisk = NULL;
 	iRawDisk=CRawDisk::NewL(*this, aLocDrvCaps);
     iRawDisk->InitializeL();
 
@@ -538,6 +539,7 @@ void CFatMountCB::InitializeL(const TLocalDriveCaps& aLocDrvCaps, TBool aIgnoreF
     //========== create and initialise FAT table 
 	
     delete iFatTable;
+    iFatTable = NULL;
     iFatTable=CFatTable::NewL(*this, aLocDrvCaps);
 
     //-- mount the FAT table. Depending on mount parameters and configuration this method 
@@ -550,19 +552,17 @@ void CFatMountCB::InitializeL(const TLocalDriveCaps& aLocDrvCaps, TBool aIgnoreF
     //-- make a callback, telling FileServer about free space discovered.
     const TInt64 freeSpace = ((TInt64)FAT().NumberOfFreeClusters()) << ClusterSizeLog2();
     SetDiskSpaceChange(freeSpace);
-    //========== create and setup leaf direcotry cache if cache limit is set bigger than one 
 
-	const TUint32 cacheLimit = iFatConfig.LeafDirCacheSize();
-	if (cacheLimit > 1)
+    //========== create and setup leaf direcotry cache
 		{
-		// destroy the old leaf dir cache to avoid memory leak.
+	const TUint32 cacheLimit = Max(iFatConfig.LeafDirCacheSize(), 1lu);
+	
 		delete iLeafDirCache;
+        iLeafDirCache = NULL;
 		iLeafDirCache = CLeafDirCache::NewL(cacheLimit);
 		}
-	else
-		{
-		iLeafDirCache = NULL;
-		}
+
+
     
     __PRINT3(_L("#- CFatMountCB::InitializeL() done. drv:%d, Free clusters:%d, 1st Free cluster:%d"),DriveNumber(), FAT().NumberOfFreeClusters(), FAT().FreeClusterHint());
 
@@ -881,6 +881,7 @@ TInt CFatMountCB::MountControl(TInt aLevel, TInt aOption, TAny* aParam)
         nRes = IsFinalised(bFinalised);
         if(nRes == KErrNone)
             {
+            ASSERT(aParam);
             *((TBool*)aParam) = bFinalised;
             }
         
@@ -1047,7 +1048,7 @@ void CFatMountCB::ReadSection64L(const TDesC& aName, TInt64 aPos, TAny* aTrg, TI
     TInt cluster=StartCluster(dosEntry);	
 	TInt64 pos = aPos;
 	
-    TInt endCluster;
+    TUint32 endCluster;
     TInt clusterSize=1<<ClusterSizeLog2();      //  Size of file clusters
 	TInt readTotal = 0;
 	

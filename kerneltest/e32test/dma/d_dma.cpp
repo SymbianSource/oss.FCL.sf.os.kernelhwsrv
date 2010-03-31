@@ -440,8 +440,15 @@ TInt DDmaTestChannel::Execute(const TDesC8& aDes)
 			break;
 			}
 		case 'C':
+			{
 			iChannel->CancelAll();
+			for(TInt i=0; i<KMaxRequests; ++i)
+				{
+				if(iClientRequests[i]->IsReady())
+					iClientRequests[i]->Reset();
+				}
 			break;
+			}
 		default:
 			Kern::PanicCurrentThread(KClientPanicCat, __LINE__);
 			}

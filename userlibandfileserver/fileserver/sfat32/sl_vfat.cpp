@@ -439,14 +439,12 @@ TBool CFatMountCB::FindShortNameL(const TShortName& aName,TEntryPos& anEntryPos)
 /**
     Returns ETrue if aName is unique, EFalse if a matching name is found.
 */
-TBool CFatMountCB::IsUniqueNameL(const TShortName& aName,TInt aDirCluster)
+TBool CFatMountCB::IsUniqueNameL(const TShortName& aName, TUint32 aDirCluster)
 	{
 
 	__PRINT(_L("CFatMountCB::IsUniqueNameL"));	
 	TEntryPos entryPos(aDirCluster,0);
-	if (FindShortNameL(aName,entryPos))
-		return(EFalse);
-	return(ETrue);
+	return ! FindShortNameL(aName,entryPos);
 	}
 
 //-----------------------------------------------------------------------------
@@ -478,12 +476,11 @@ void CFatMountCB::ReplaceClashingNameL(const TShortName& aNewName,const TEntryPo
 		}
 	}
 
-//-----------------------------------------------------------------------------
 /**
     Generate a legal dos filename as an alias for aName.
     @return ETrue if aName is a legal dos name.
 */
-TBool CFatMountCB::GenerateShortNameL(TInt aDirCluster,const TDesC& aName,TShortName& aGeneratedName, TBool aForceRandomize)
+TBool CFatMountCB::GenerateShortNameL(TUint32 aDirCluster,const TDesC& aName,TShortName& aGeneratedName, TBool aForceRandomize)
 	{
 
 	__PRINT1(_L("CFatMountCB::GenerateShortNameL() cl:%d"), aDirCluster);

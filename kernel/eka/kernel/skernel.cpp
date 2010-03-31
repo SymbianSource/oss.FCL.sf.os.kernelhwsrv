@@ -1750,7 +1750,7 @@ This will also lock the pages to prevent them of being moved by ram defrag.
 @see Kern::ReleaseMemoryFromDMA
 
 @param aThread          The thread in whose process the given address lies. If zero, the current thread is used.
-@param aAddress         An address in the given threads process.
+@param aAddress         An address in the given thread's process.
 @param aSize            The size of the region.
 @param aPageList        Points to an array of TUint32 (or TPhysAddr) objects. The length of the array must
 						be at least aSize/MMU_page_size+1, where MMU_page_size = Kern::RoundToPageSize(1).
@@ -1759,7 +1759,7 @@ This will also lock the pages to prevent them of being moved by ram defrag.
                         (they are a multiple of the physical page size), therefore the byte corresponding
                         to aOffset is at physical address aPageList[0]+aOffset%MMU_page_size.
 
-@return 0 				 if successful.
+@return KErrNone		 if successful.
         KErrAccessDenied if any part of region doesn't belong to "trusted" chunk.
         Other			 if memory region is invalid, or mapped in 1MB sections or large pages.
 
@@ -1779,16 +1779,16 @@ EXPORT_C TInt Kern::PrepareMemoryForDMA(DThread* aThread, TAny* aAddress, TInt a
 
 /**
 Unlocks the physical pages that have been locked by PrepareMemoryForDMA.
-All input paramemers are the same as those in PrepareMemoryForDMA.
+All input parameters are the same as those in PrepareMemoryForDMA.
 
 @see Kern::PrepareMemoryForDMA
 
 @param aThread          The thread in whose process the given address lies. If zero, the current thread is used.
-@param aAddress         An address in the given threads process.
+@param aAddress         An address in the given thread's process.
 @param aSize            The size of the region.
 @param aPageList        Points to the list of pages returned by PrepareMemoryForDMA.
 
-@return 0 				if successful.
+@return KErrNone		if successful.
         KErrArgument	if the list of physical pages is invalid.
         
 @pre	Calling thread must be in critical section.

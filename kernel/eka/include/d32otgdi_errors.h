@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -35,6 +35,9 @@ of numbers derived from the basic USB+Host set (-6670 -> -6699)
 const TInt KErrUsbOtgEventQueueOverflow			= -6670;
 const TInt KErrUsbOtgStateQueueOverflow			= -6671;
 const TInt KErrUsbOtgMessageQueueOverflow		= -6672;
+
+const TInt KErrUsbOtgBadDeviceAttached 			= -6673;
+const TInt KEventUsbOtgBadDeviceDetached 		= -6674;
 
 const TInt KErrUsbOtgBadState					= -6675;
 

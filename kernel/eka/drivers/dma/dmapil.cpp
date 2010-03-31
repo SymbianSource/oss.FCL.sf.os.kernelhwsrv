@@ -861,6 +861,7 @@ void TDmaChannel::DoDfc()
 		// release threads doing CancelAll()
 		waiters->Signal();
 		}
+#ifndef DISABLE_MISSED_IRQ_RECOVERY
 	// (iController may be NULL here if the channel was closed in the client callback.)
 	else if (!error &&
 			 iController && iController->IsIdle(*this) &&
@@ -919,6 +920,7 @@ void TDmaChannel::DoDfc()
 		req_count_after = iQueuedRequests;
 		Signal();
 		}
+#endif  // #ifndef DISABLE_MISSED_IRQ_RECOVERY
 	else
 		{
 		req_count_after = iQueuedRequests;

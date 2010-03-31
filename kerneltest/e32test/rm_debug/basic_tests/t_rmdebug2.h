@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -42,7 +42,7 @@ public:
 	};
 
 //number of test functions that we have
-const TInt KMaxTests = 28;
+const TInt KMaxTests = 29; 
 
 //
 // class CRunModeAgent
@@ -86,6 +86,8 @@ private:
 	void DoTestBreakInfo(TBool aThreadSpecific);
 	void TestRunToBreak();
 	void DoTestRunToBreak(TBool aThreadSpecific);
+	void TestBreakPointsInLoop();
+	void DoTestBreakPointsInLoop(TBool aThreadSpecific);
 	void TestRegisterAccess();
 	void TestAttachExecutable();
 	void TestDebugFunctionality();

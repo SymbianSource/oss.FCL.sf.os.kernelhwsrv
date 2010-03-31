@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -862,6 +862,32 @@ private:
 
 
 //////////////////////////////////////////////////////////////////////////////
+
+// Trace macros intended for use by the DMA PSL
+#define DMA_PRINTF(MSG) __KTRACE_OPT(KDMA, Kern::Printf((MSG)))
+#define DMA_PRINTF1(MSG, ARG1) __KTRACE_OPT(KDMA, Kern::Printf((MSG), (ARG1)))
+#define DMA_PRINTF2(MSG, ARG1, ARG2) __KTRACE_OPT(KDMA, Kern::Printf((MSG), (ARG1), (ARG2)))
+
+#define DMA_PSL_MESG "DMA PSL: "
+
+// General PSL tracing
+#define DMA_PSL_TRACE(MSG) DMA_PRINTF(DMA_PSL_MESG MSG)
+#define DMA_PSL_TRACE1(MSG, ARG1) DMA_PRINTF1(DMA_PSL_MESG MSG, (ARG1))
+#define DMA_PSL_TRACE2(MSG, ARG1, ARG2) DMA_PRINTF2(DMA_PSL_MESG MSG, (ARG1), (ARG2))
+
+
+#define DMA_PSL_CHAN_MESG DMA_PSL_MESG "ChanId %d: "
+#define DMA_PSL_CHAN_ARGS(CHAN) ((CHAN).PslId())
+
+// For channel specific tracing (where CHAN is a TDmaChannel)
+#define DMA_PSL_CHAN_TRACE_STATIC(CHAN, MSG) DMA_PRINTF1(DMA_PSL_CHAN_MESG MSG, DMA_PSL_CHAN_ARGS(CHAN))
+#define DMA_PSL_CHAN_TRACE_STATIC1(CHAN, MSG, ARG1) DMA_PRINTF2(DMA_PSL_CHAN_MESG MSG, DMA_PSL_CHAN_ARGS(CHAN), (ARG1))
+
+// For channel specific tracing, for use within methods of TDmaChannel derived
+// class
+#define DMA_PSL_CHAN_TRACE(MSG) DMA_PSL_CHAN_TRACE_STATIC(*this, MSG)
+#define DMA_PSL_CHAN_TRACE1(MSG, ARG1) DMA_PSL_CHAN_TRACE_STATIC1(*this, MSG, (ARG1))
+
 
 
 #include <drivers/dma_hai.inl>

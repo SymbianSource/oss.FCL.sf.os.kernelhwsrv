@@ -1,3 +1,82 @@
+Version 2.00.2048
+=================
+(Made by vfebvre 15/03/2010)
+
+1.	niccox
+	1.	DEF144933 Improper Mass Storage Error Code for Empty Drive case
+
+
+Version 2.00.2047
+=================
+(Made by vfebvre 12/03/2010)
+
+1.	famustaf
+	1.	MINOR_CHANGE Updated RFs::ScanDrive and RFs::CheckDisk Documentation
+
+
+Version 2.00.2046
+=================
+(Made by vfebvre 10/03/2010)
+
+1.	frhofman
+	1.	PDEF144910: Revert IsFileOpen() behaviour to perform file existance check
+	2.	DEF144911: SALM-82WCVK: efile.exe crashes in dynamic dir cache code when out-of-memory
+
+
+Version 2.00.2045
+=================
+(Made by vfebvre 08/03/2010)
+
+1.	shamaden
+	1.	DEF144753 Crash when usb memory is dismounted during copy
+
+2.	dlyokhin
+	1.	DEF144750 FAT: unable to mount volume larger than 1TB  
+
+
+Version 2.00.2044
+=================
+(Made by vfebvre 05/03/2010)
+
+1.	niccox
+	1.	DEF144749 Transcend flash drive not recognised 
+
+
+Version 2.00.2043
+=================
+(Made by vfebvre 04/03/2010)
+
+1.	dlyokhin
+	1.	DEF144779 exFAT: T_chkUID test failure  
+
+
+Version 2.00.2042
+=================
+(Made by vfebvre 03/03/2010)
+
+1.	niccox
+	1.	DEF144548 Initialisation of MaxLun if USB device stalls request
+
+
+Version 2.00.2041
+=================
+(Made by vfebvre 02/03/2010)
+
+1.	dlyokhin
+	1.	DEF144598 FAT leaf directory cache should be enabled by default  
+
+
+Version 2.00.2040
+=================
+(Made by vfebvre 26/02/2010)
+
+1.	famustaf
+	1.	DEF144608 Missing Trap in a non-leaving function.
+
+2.	dlyokhin
+	1.	PDEF144630 Better checks in CFat16FixedCache code 
+
+
 Version 2.00.2039
 =================
 (Made by vfebvre 23/02/2010)

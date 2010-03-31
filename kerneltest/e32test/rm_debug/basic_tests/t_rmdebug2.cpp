@@ -41,6 +41,7 @@
 
 #ifdef __MARM_ARMV5__
 #include "d_rmdebug_step_test.h"
+#include "d_rmdebug_bkpt_test.h"
 #endif
 
 #include "d_demand_paging.h"
@@ -1613,6 +1614,142 @@ void CRunModeAgent::DoTestRunToBreak(TBool aThreadSpecific)
 	test(KErrNone == iServSession.DetachExecutable(iFileName));
 	}
 
+//---------------------------------------------
+//! @SYMTestCaseID KBASE-rmdebug2-2704
+//! @SYMTestType
+//! @SYMPREQ PREQ1426
+//! @SYMTestCaseDesc Test breakpoints in a loop
+//! @SYMTestActions Several calls to register to verify breakpoints are stopping at correct address
+//! @SYMTestExpectedResults All tests should pass and the target thread should be left unaffected
+//! @SYMTestPriority High
+//! @SYMTestStatus Implemented
+//---------------------------------------------
+void CRunModeAgent::TestBreakPointsInLoop()
+	{
+	test.Next(_L("TestBreakPointsInLoop\n"));
+
+	DoTestBreakPointsInLoop(ETrue);
+	DoTestBreakPointsInLoop(EFalse);
+	}
+
+void CRunModeAgent::DoTestBreakPointsInLoop(TBool aThreadSpecific)
+	{
+	test.Printf(_L("DoTestBreakPointsInLoop: aThreadSpecific: %d\n"), aThreadSpecific?1:0);
+
+	TInt err = KErrNone;
+	TProcessId processId = RProcess().Id(); 
+
+	test(KErrNone == iServSession.AttachExecutable(iFileName, EFalse));
+	
+	// We should suspend the thread first, then set the breakpoint
+	err = iServSession.SuspendThread(iThreadID);
+	test (err == KErrNone);
+
+	// 2 breakpoints are sufficient to find issues with hitting breakpoints in a loop
+	const TInt numOfBreakPointsInLoop = 2;
+
+	TBreakId armBreakId[numOfBreakPointsInLoop];
+	TUint32 address[numOfBreakPointsInLoop];
+   	
+	TUint32 entryAddress = (TUint32)(&RMDebug_Bkpt_Test_Entry);
+	TBreakId entryArmBreakId;
+
+	// Copy breakpoint address's in array
+	address[0] = (TUint32)(&RMDebug_Bkpt_Test_Loop_Break_1);
+	address[1] = (TUint32)(&RMDebug_Bkpt_Test_Loop_Break_2);
+
+	err = aThreadSpecific
+		? iServSession.SetBreak(entryArmBreakId,iThreadID,entryAddress,EArmMode)
+		: iServSession.SetProcessBreak(entryArmBreakId, processId, entryAddress, EArmMode);
+	test(err == KErrNone);
+
+	// Try to set the breakpoints inside loop
+	for (TInt i = 0; i < numOfBreakPointsInLoop; i++)
+		{
+		err = aThreadSpecific
+			? iServSession.SetBreak(armBreakId[i],iThreadID,address[i],EArmMode)
+			: iServSession.SetProcessBreak(armBreakId[i], processId, address[i], EArmMode);
+		test(err == KErrNone);
+		}
+
+	err = aThreadSpecific
+		? iServSession.SetEventAction(iFileName,EEventsBreakPoint, EActionContinue)
+		: iServSession.SetEventAction(iFileName,EEventsProcessBreakPoint, EActionContinue);
+	test (err == KErrNone);
+
+	// Continue the thread
+	err = iServSession.ResumeThread(iThreadID);
+	test (err == KErrNone);
+
+	// Wait for the breakpoint to be hit
+	TEventInfo info;
+	TRequestStatus status;
+
+	TPtr8 infoPtr((TUint8*)&info,0,sizeof(TEventInfo));
+	iServSession.GetEvent(iFileName,status,infoPtr);
+
+	// Wait for notification of breakpoint event
+	User::WaitForRequest(status);
+	test(status==KErrNone);
+
+	// Info should now be filled with the details
+	test(info.iEventType == (aThreadSpecific ? EEventsBreakPoint : EEventsProcessBreakPoint));
+
+	// Have we stopped at the correct breakpoint?
+	test(info.iThreadBreakPointInfo.iRmdArmExcInfo.iR15 == entryAddress);
+	test(info.iProcessIdValid);
+	test(info.iThreadIdValid);
+
+	// Don't require the entry breakpoint anymore
+	err = iServSession.ClearBreak(entryArmBreakId);
+	test(err == KErrNone);
+	
+	// Stress the system by setting loop count to 100
+	const TUint32 loopCount = 100;
+
+	for (TInt i = 0; i < loopCount; i++)
+		{
+		// Continue the thread
+		err = iServSession.ResumeThread(iThreadID);
+		test (err == KErrNone);
+
+		// Wait for the breakpoint to be hit
+		iServSession.GetEvent(iFileName,status,infoPtr);
+		
+		// Wait for notification of the breakpoint hit event
+		User::WaitForRequest(status);
+		test(status==KErrNone);
+		
+		// Info should now be filled with the details
+		test(info.iEventType == (aThreadSpecific ? EEventsBreakPoint : EEventsProcessBreakPoint));
+		
+		// Have we stopped at the correct breakpoint?
+		test(info.iThreadBreakPointInfo.iRmdArmExcInfo.iR15 == address[i%numOfBreakPointsInLoop]);
+		
+		// Check process and thread id too
+		test(info.iProcessIdValid);
+		test(info.iThreadIdValid);
+		}
+
+	// Not interested in breakpoint events any more
+	err = aThreadSpecific
+		? iServSession.SetEventAction(iFileName,EEventsBreakPoint, EActionIgnore)
+		: iServSession.SetEventAction(iFileName, EEventsProcessBreakPoint, EActionIgnore);
+	test (err == KErrNone);
+
+	// Clear breakpoints
+	for (TInt i = 0; i < numOfBreakPointsInLoop; i++)
+		{
+		err = iServSession.ClearBreak(armBreakId[i]);
+		test(err == KErrNone);
+		}
+	
+	// Continue the thread again
+	err = iServSession.ResumeThread(iThreadID);
+	test (err == KErrNone);
+	test(KErrNone == iServSession.DetachExecutable(iFileName));
+	}
+
 //----------------------------------------------------------------------------------------------
 //! @SYMTestCaseID      KBase-T-RMDEBUG2-0440
 //! @SYMTestType
@@ -2790,7 +2927,8 @@ void CRunModeAgent::TestDriverSecurity(void)
 //! @SYMTestCaseDesc    Tests Debug driver can only be access via the DSS. Also tests DSS cannot
 //!						be subverted. Tests functionality of two representative OEM Debug Tokens.
 //! @SYMTestActions     Tries to open rm_debug.ldd (should fail). Tries to debug various processes
-//!						(only debuggable one should succeed).
+//!						(only debuggable one should succeed). Checks that DSS behaves correctly
+//!						when different versions are passed in to Connect().
 //!
 //! @SYMTestExpectedResults KErrPermissionDenied.
 //! @SYMTestPriority        High
@@ -2820,6 +2958,17 @@ void CRunModeAgent::TestSecurity(void)
 	err = kernelDriver.Open(driverInfo);
 	test(err == KErrInUse);
 
+	// Try requesting an unsupported version of DSS
+	test.Next(_L("TestSecurity - requesting unsupported versions of DSS\n"));
+	RSecuritySvrSession dss;
+	err = dss.Connect(TVersion(999999, 0, 0));
+	test(err == KErrNotSupported); // Prior to DEF142018 this would crash, causing a KErrServerTerminated
+	err = dss.Connect(TVersion(KDebugServMajorVersionNumber, 999999, 0));
+	test(err == KErrNotSupported); // Explicitly asking for a minor version should give KErrNotSupported too if it's newer than what's running.
+	err = dss.Connect(TVersion(KDebugServMajorVersionNumber, 0, 0));
+	test(err == KErrNone); // But the correct major version and no explicit minor version should always succeed
+	dss.Close();
+	
 	//
 	// Attach to the Debug Security Server (passive)
 	//
@@ -4184,28 +4333,30 @@ void CRunModeAgent::FillArray()
 	iTestArray[15].iFunctionName = _L("TestBreakInfo");
 	iTestArray[16].iFunctionPtr = &CRunModeAgent::TestRunToBreak;
 	iTestArray[16].iFunctionName = _L("TestRunToBreak");
-	iTestArray[17].iFunctionPtr = &CRunModeAgent::TestRegisterAccess;
-	iTestArray[17].iFunctionName = _L("TestRegisterAccess");
-	iTestArray[18].iFunctionPtr = &CRunModeAgent::TestStep;
-	iTestArray[18].iFunctionName = _L("TestStep");
-	iTestArray[19].iFunctionPtr = &CRunModeAgent::TestDemandPaging;
-	iTestArray[19].iFunctionName = _L("TestDemandPaging");
-	iTestArray[20].iFunctionPtr = &CRunModeAgent::TestEventsForExternalProcess;
-	iTestArray[20].iFunctionName = _L("TestEventsForExternalProcess");
-	iTestArray[21].iFunctionPtr = &CRunModeAgent::TestEvents;
-	iTestArray[21].iFunctionName = _L("TestEvents");
-	iTestArray[22].iFunctionPtr = &CRunModeAgent::TestKillProcess;
-	iTestArray[22].iFunctionName = _L("TestKillProcess");
-	iTestArray[23].iFunctionPtr = &CRunModeAgent::TestProcessBreakPoints;
-	iTestArray[23].iFunctionName = _L("TestProcessBreakPoints");
-	iTestArray[24].iFunctionPtr = &CRunModeAgent::TestMultipleTraceEvents;
-	iTestArray[24].iFunctionName = _L("TestMultipleTraceEvents");
-	iTestArray[25].iFunctionPtr = &CRunModeAgent::TestAddRemoveProcessEvents;
-	iTestArray[25].iFunctionName = _L("TestAddRemoveProcessEvents");
-	iTestArray[26].iFunctionPtr = &CRunModeAgent::TestCrashFlash;
-	iTestArray[26].iFunctionName = _L("TestCrashFlash");
-	iTestArray[27].iFunctionPtr = &CRunModeAgent::TestProcessKillBreakpoint;
-	iTestArray[27].iFunctionName = _L("TestProcessKillBreakpoint");
+	iTestArray[17].iFunctionPtr = &CRunModeAgent::TestBreakPointsInLoop;
+	iTestArray[17].iFunctionName = _L("TestBreakPointsInLoop");
+	iTestArray[18].iFunctionPtr = &CRunModeAgent::TestRegisterAccess;
+	iTestArray[18].iFunctionName = _L("TestRegisterAccess");
+	iTestArray[19].iFunctionPtr = &CRunModeAgent::TestStep;
+	iTestArray[19].iFunctionName = _L("TestStep");
+	iTestArray[20].iFunctionPtr = &CRunModeAgent::TestDemandPaging;
+	iTestArray[20].iFunctionName = _L("TestDemandPaging");
+	iTestArray[21].iFunctionPtr = &CRunModeAgent::TestEventsForExternalProcess;
+	iTestArray[21].iFunctionName = _L("TestEventsForExternalProcess");
+	iTestArray[22].iFunctionPtr = &CRunModeAgent::TestEvents;
+	iTestArray[22].iFunctionName = _L("TestEvents");
+	iTestArray[23].iFunctionPtr = &CRunModeAgent::TestKillProcess;
+	iTestArray[23].iFunctionName = _L("TestKillProcess");
+	iTestArray[24].iFunctionPtr = &CRunModeAgent::TestProcessBreakPoints;
+	iTestArray[24].iFunctionName = _L("TestProcessBreakPoints");
+	iTestArray[25].iFunctionPtr = &CRunModeAgent::TestMultipleTraceEvents;
+	iTestArray[25].iFunctionName = _L("TestMultipleTraceEvents");
+	iTestArray[26].iFunctionPtr = &CRunModeAgent::TestAddRemoveProcessEvents;
+	iTestArray[26].iFunctionName = _L("TestAddRemoveProcessEvents");
+	iTestArray[27].iFunctionPtr = &CRunModeAgent::TestCrashFlash;
+	iTestArray[27].iFunctionName = _L("TestCrashFlash");
+	iTestArray[28].iFunctionPtr = &CRunModeAgent::TestProcessKillBreakpoint;
+	iTestArray[28].iFunctionName = _L("TestProcessKillBreakpoint");
 	};
 
 GLDEF_C TInt E32Main()

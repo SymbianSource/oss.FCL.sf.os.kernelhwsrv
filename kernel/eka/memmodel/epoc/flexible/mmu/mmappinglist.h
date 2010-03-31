@@ -206,23 +206,15 @@ public:
 	/**
 	Update the page table entry for a specified page in all mappings in the list that contain it.
 
-	@param aPages				The page array entry of the page in a memory object. 
+	@param aPageArray			The page array entry of the page in a memory object. 
 								Only array entries which have a target state of 
 								RPageArray::ECommitted should be mapped into the 
 								mapping's page tables.
-
 	@param aIndex				The index of the page in the memory object.
-
-	@param aMapInstanceCount	The instance of this mapping which is to be updated.
-								Whenever this no longer matches the current #MapInstanceCount
-								the function must not update any more of the mapping's
-								page table entries, (but must still return KErrNone).
-
-	@param	aInvalidateTLB		Set to ETrue when the TLB entries associated with this page
+	@param aInvalidateTLB		Set to ETrue when the TLB entries associated with this page
 								should be invalidated.  This must be done when there is 
 								already a valid pte for this page, i.e. if the page is still 
 								mapped.
-
 	@see #DMemoryMappingBase::RemapPage
 	*/
 	void RemapPage(TPhysAddr& aPageArray, TUint aIndex, TBool aInvalidateTLB);	

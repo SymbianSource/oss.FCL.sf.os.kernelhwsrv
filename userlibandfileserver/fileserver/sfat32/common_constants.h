@@ -115,12 +115,12 @@ const TUint8 KBootSectorMediaDescriptor=0xF8;   ///< Media descriptor for a Fat 
 const TUint8 KEntryErasedMarker=0xE5;           ///< Erased entry marker for a directory entry
 
 
-const TInt EOF_32Bit =0x0fffffff;   ///< End of cluster chain value for Fat32
-const TInt EOF_16Bit =0xffff;       ///< End of cluster chain value for Fat16
-const TInt EOF_12Bit =0xfff;        ///< End of cluster chain value for Fat12
-const TInt KBad_32Bit=0x0ffffff7;   ///< Bad cluster value for Fat32
-const TInt KBad_16Bit=0xfff7;       ///< Bad cluster value for Fat16
-const TInt KBad_12Bit=0xff7;        ///< bad cluster value for Fat12
+const TUint EOF_32Bit =0x0fffffff;   ///< End of cluster chain value for Fat32
+const TUint EOF_16Bit =0xffff;       ///< End of cluster chain value for Fat16
+const TUint EOF_12Bit =0xfff;        ///< End of cluster chain value for Fat12
+const TUint KBad_32Bit=0x0ffffff7;   ///< Bad cluster value for Fat32
+const TUint KBad_16Bit=0xfff7;       ///< Bad cluster value for Fat16
+const TUint KBad_12Bit=0xff7;        ///< bad cluster value for Fat12
 
 const TUint   KSpareCluster = 0;          ///< FAT entry value for the spare cluster
 const TUint32 KFatFirstSearchCluster = 2; ///< FAT usable clusters start from 2; FAT[0] and FAT[1] are reserved

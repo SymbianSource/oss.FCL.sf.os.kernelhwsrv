@@ -134,7 +134,14 @@ TInt PageDirectoryAllocator::Alloc(TUint aOsAsid, TPhysAddr& aPageDirectory)
 	RamAllocLock::Lock();
 	TInt r = m.AllocContiguousRam(pdPhys, KLocalPdPages, KLocalPdShift-KPageShift, iPageDirectoryMemory->RamAllocFlags());
 	if(r==KErrNone)
+		{
 		AssignPages(offset>>KPageShift,KLocalPdPages,pdPhys);
+
+#ifdef BTRACE_KERNEL_MEMORY
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscAlloc, KLocalPdPages << KPageShift);
+		Epoc::KernelMiscPages += KLocalPdPages;
+#endif
+		}
 	RamAllocLock::Unlock();
 
 	if(r==KErrNone)
@@ -147,6 +154,11 @@ TInt PageDirectoryAllocator::Alloc(TUint aOsAsid, TPhysAddr& aPageDirectory)
 			{
 			RamAllocLock::Lock();
 			m.FreeContiguousRam(pdPhys,KLocalPdPages);
+
+#ifdef BTRACE_KERNEL_MEMORY
+			BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscFree, KLocalPdPages << KPageShift);
+			Epoc::KernelMiscPages -= KLocalPdPages;
+#endif
 			RamAllocLock::Unlock();
 			}
 		else
@@ -206,6 +218,11 @@ void PageDirectoryAllocator::Free(TUint aOsAsid)
 	Mmu& m = TheMmu;
 	// Page directories are fixed.
 	m.FreeRam(pages, KLocalPdPages, EPageFixed);
+
+#ifdef BTRACE_KERNEL_MEMORY
+	BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscFree, KLocalPdPages << KPageShift);
+	Epoc::KernelMiscPages -= KLocalPdPages;
+#endif
 	RamAllocLock::Unlock();
 	}
 

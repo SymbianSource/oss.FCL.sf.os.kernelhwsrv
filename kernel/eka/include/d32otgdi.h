@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -348,7 +348,13 @@ public:
 		EMessageVbusPowerDownNotPermitted	= KErrUsbOtgVbusPowerDownNotPermitted,
 		EMessageVbusClearErrorNotPermitted	= KErrUsbOtgVbusClearErrorNotPermitted,
 		EMessageHnpNotResponding			= KErrUsbOtgHnpNotResponding,
-		EMessageHnpBusDrop					= KErrUsbOtgHnpBusDrop
+		EMessageHnpBusDrop					= KErrUsbOtgHnpBusDrop,
+		
+		/**
+		Bad device attach/detach message
+		*/
+		EMessageBadDeviceAttached 			= KErrUsbOtgBadDeviceAttached,
+		EMessageBadDeviceDetached 			= KEventUsbOtgBadDeviceDetached
 		};
 
 public:

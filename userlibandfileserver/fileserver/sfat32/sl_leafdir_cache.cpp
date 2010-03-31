@@ -235,6 +235,7 @@ Constructor of CLeafDirTree
 CLeafDirTree::CLeafDirTree(TUint32 aSize)
 :iSize(aSize)
 	{
+	__PRINT2(_L("CLeafDirTree created[0x%x] sz:%d"), this, aSize);
 	}
 
 _LIT(KRootDirPath, "\\");
@@ -254,6 +255,8 @@ Destructor of CLeafDirTree
 */
 CLeafDirTree::~CLeafDirTree()
 	{
+	__PRINT1(_L("~CLeafDirTree[0x%x]"), this);
+
 	Reset();
 	delete iRoot;
 	iLruList.Close();

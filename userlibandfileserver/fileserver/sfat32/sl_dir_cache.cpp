@@ -27,9 +27,9 @@ TDynamicDirCachePage::~TDynamicDirCachePage()
 The static cache page creation function.
 Cache page objects are not supposed to be created on the stack, so this factory function is required.
 */
-TDynamicDirCachePage* TDynamicDirCachePage::NewL(CDynamicDirCache* aOwnerCache, TInt64 aStartMedPos, TUint8* aStartRamAddr)
+TDynamicDirCachePage* TDynamicDirCachePage::CreateCachePage(CDynamicDirCache* aOwnerCache, TInt64 aStartMedPos, TUint8* aStartRamAddr)
 	{
-	return new(ELeave) TDynamicDirCachePage(aOwnerCache, aStartMedPos, aStartRamAddr);
+	return new TDynamicDirCachePage(aOwnerCache, aStartMedPos, aStartRamAddr);
 	}
 
 /**
@@ -158,7 +158,7 @@ void CDynamicDirCache::ConstructL(const TDesC& aClientName)
 
 	// allocate as many permanently locked pages as there are threads - plus one
 	// otherwise DoMakePageMRU() won't work properly with only one thread
-    //-- At present moment the size of TDrive thread pool is 1 (1 drive thread in a pool)
+	//-- At present moment the size of TDrive thread pool is 1 (1 drive thread in a pool)
 	const TUint KThreadCount = 1;
 	iPermanentlyAllocatedPageCount = KThreadCount + 1; 
 
@@ -167,7 +167,10 @@ void CDynamicDirCache::ConstructL(const TDesC& aClientName)
 
 	for (TUint n=0; n<iPermanentlyAllocatedPageCount; n++)
 		{
-		TDynamicDirCachePage* pPage = AllocateAndLockNewPageL(0);
+		TDynamicDirCachePage* pPage = AllocateAndLockNewPage(0);
+		ASSERT(pPage);
+		if (!pPage)
+			User::Leave(KErrNoMemory);
 		AddFirstOntoQueue(pPage, TDynamicDirCachePage::ELocked);
 		LookupTblAdd(pPage);
 		}
@@ -694,47 +697,45 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 		}
 
 	TDynamicDirCachePage* pPage = FindPageByPos(aPos);
-    if (pPage)
-    	{
-    	ASSERT(pPage->IsValid());
+	if (pPage)
+		{
+		ASSERT(pPage->IsValid());
 		// lock page before make it MRU
-    	if (pPage->PageType() == TDynamicDirCachePage::EUnlocked)
-    		{
-    		ASSERT(!pPage->IsLocked());
-        	if (LockPage(pPage) == NULL)
-        		{
-        		DeQueue(pPage);
-        		LookupTblRemove(pPage->StartPos());
-        		DecommitPage(pPage);
-        		delete pPage;
-        		pPage = NULL;
-        		}
-    		}
-    	else
-    		{
-    		// error checking: page should either be locked or active
-    		ASSERT(LockPage(pPage) != NULL);
-    		}
-    	}
+		if (pPage->PageType() == TDynamicDirCachePage::EUnlocked)
+			{
+			ASSERT(!pPage->IsLocked());
+			if (LockPage(pPage) == NULL)
+				{
+				DeQueue(pPage);
+				LookupTblRemove(pPage->StartPos());
+				DecommitPage(pPage);
+				delete pPage;
+				pPage = NULL;
+				}
+			}
+		else
+			{
+			// error checking: page should either be locked or active
+			ASSERT(LockPage(pPage) != NULL);
+			}
+		}
+	// if page not found or page data not valid anymore, use active page to read data
+	if (!pPage)
+		{
+		TRAPD(err, pPage = UpdateActivePageL(aPos));
+		if (err != KErrNone)
+			{
+			// problem occurred reading active page, return immediately.
+			return;
+			}
+		}
 
-    // if page not found or page data not valid anymore, use active page to read data
-    if (!pPage)
-    	{
-        TRAPD(err, pPage = UpdateActivePageL(aPos));
-        if (err != KErrNone)
-        	{
-        	// problem occurred reading active page, return immediately.
-        	return;
-        	}
-    	}
-
-    // by now, the page is either locked or active page
+	// by now, the page is either locked or active page
 	ASSERT(pPage && pPage->IsValid() && pPage->IsLocked());
 
 
-
-	TBool allocateNewPage = pPage == iLockedQ.Last() && !CacheIsFull();
-
+	// if we used the active page (last on the queue), try to grow the cache.
+	TBool growCache = pPage == iLockedQ.Last();
 
 	switch (pPage->PageType())
 		{
@@ -762,24 +763,24 @@ void CDynamicDirCache::DoMakePageMRU(TInt64 aPos)
 			ASSERT(0);
 		}
 
-	if (allocateNewPage)
-		{
-		TDynamicDirCachePage* nPage = NULL;
-		TRAPD(err, nPage = AllocateAndLockNewPageL(0));
-		if (err == KErrNone)
-			{
+	if (CacheIsFull() || !growCache)
+		return;
 
-			// about to add a page to end of locked queue, so lie about iLockedQCount
-			iLockedQCount++;
-			CheckThresholds();
-			iLockedQCount--;
+	// attempt to grow the cache by appending a clean, new page at the end of the LRU list.
+	// This can fail when out of memory; the LRU mechanism then makes sure the oldest page will be re-used.
+	TDynamicDirCachePage* nPage = AllocateAndLockNewPage(0);
+	if (!nPage)
+		return;
 
-			iLockedQ.AddLast(*nPage);
-			nPage->SetPageType(TDynamicDirCachePage::ELocked);
-			++iLockedQCount;
-			LookupTblAdd(nPage);
-			}
-		}
+	// about to add a page to end of locked queue, so lie about iLockedQCount
+	iLockedQCount++;
+	CheckThresholds();
+	iLockedQCount--;
+
+	iLockedQ.AddLast(*nPage);
+	nPage->SetPageType(TDynamicDirCachePage::ELocked);
+	++iLockedQCount;
+	LookupTblAdd(nPage);
 	}
 
 /**
@@ -821,7 +822,7 @@ TDynamicDirCachePage* CDynamicDirCache::UpdateActivePageL(TInt64 aPos)
 		return activePage;
 		}
 
-	__PRINT2(_L("CDynamicDirCache::UpdateActivePageL(aPos=%lx, active=%lx)"), aPos, activePage->StartPos());
+	//__PRINT2(_L("CDynamicDirCache::UpdateActivePageL(aPos=%lx, active=%lx)"), aPos, activePage->StartPos());
 
 	activePage->Deque();
 	LookupTblRemove(activePage->StartPos());
@@ -898,22 +899,30 @@ when creating iActive page or making a page MRU (which might result in page evic
 @param	aStartMedPos	the starting media address of the page to be created.
 @pre	aStartMedPos should not already be existing in the cache.
 */
-TDynamicDirCachePage* CDynamicDirCache::AllocateAndLockNewPageL(TInt64 aStartMedPos)
+TDynamicDirCachePage* CDynamicDirCache::AllocateAndLockNewPage(TInt64 aStartMedPos)
 	{
-	__PRINT1(_L("CDynamicDirCache::AllocateAndLockNewPageL(aStartMedPos=%lx)"), aStartMedPos);
+	__PRINT1(_L("CDynamicDirCache::AllocateAndLockNewPage(aStartMedPos=%lx)"), aStartMedPos);
 
 	TUint8* startRamAddr = iCacheMemoryClient->AllocateAndLockSegments(PageSizeInSegs());
-	if (startRamAddr)
+
+	if (!startRamAddr)
+		return NULL;
+
+	TDynamicDirCachePage* pPage = TDynamicDirCachePage::CreateCachePage(this, aStartMedPos, startRamAddr);
+
+	// Failure would mean the cache chunk was able to grow but we've run out of heap.
+	// This seems extremely unlikely, but decommit the now-unmanageable cache segment just in case.
+	if (!pPage)
 		{
-		// create new page and return
-		TDynamicDirCachePage* pPage = TDynamicDirCachePage::NewL(this, aStartMedPos, startRamAddr);
-		pPage->SetLocked(ETrue);
-		pPage->SetValid(EFalse);
-		return pPage;
+		iCacheMemoryClient->DecommitSegments(startRamAddr, PageSizeInSegs());
+		return NULL;
 		}
 
-	return NULL;
+	pPage->SetLocked(ETrue);
+	pPage->SetValid(EFalse);
+	return pPage;
 	}
+
 
 #ifdef _DEBUG
 /**

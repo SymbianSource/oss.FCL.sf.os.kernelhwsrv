@@ -462,13 +462,24 @@ TInt TFsIsFileOpen::DoRequestL(CFsRequest* aRequest)
 
 	__PRINT(_L("TFsIsFileOpen::DoRequestL(CFsRequest* aRequest)"));
 	CFileCB* file;
-	TInt r=aRequest->Drive()->IsFileOpen(aRequest->Src().FullName().Mid(2),file);
-	if (r!=KErrNone)
-		return(r);
-	TBool isOpen = file?(TBool)ETrue:(TBool)EFalse;
+	TInt r = aRequest->Drive()->IsFileOpen(aRequest->Src().FullName().Mid(2), file);
+	if (r != KErrNone)
+		return (r);
+	TBool isOpen = file ? (TBool)ETrue : (TBool)EFalse;
+	if (!isOpen)
+		{
+		// perform the existance check to retain compatibility with old-style clients
+		TEntry e;
+		r = aRequest->Drive()->Entry(aRequest->Src().FullName().Mid(2), e);
+		if (r == KErrNone && e.IsDir())
+			r = KErrArgument;
+		}
+	if (r != KErrNone)
+		return (r);
+
 	TPtrC8 pA((TUint8*)&isOpen,sizeof(TBool));
 	aRequest->WriteL(KMsgPtr1,pA);
-	return(KErrNone);
+	return (KErrNone);
 	}
 
 TInt TFsIsFileOpen::Initialise(CFsRequest* aRequest)

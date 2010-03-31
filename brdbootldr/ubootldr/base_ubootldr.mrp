@@ -3,8 +3,9 @@
 component	base_ubootldr
 source	\sf\os\kernelhwsrv\brdbootldr\ubootldr
 
-notes_source	\component_defs\release.src
+binary	\sf\os\kernelhwsrv\brdbootldr\ubootldr all
 
+notes_source	\component_defs\release.src
 
 ipr E 
 ipr T \sf\os\kernelhwsrv\brdbootldr\ubootldr\inc

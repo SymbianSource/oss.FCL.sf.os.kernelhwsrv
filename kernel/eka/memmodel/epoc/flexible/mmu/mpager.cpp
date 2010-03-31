@@ -86,7 +86,7 @@ void DPager::InitCache()
 
 #elif defined(__CPU_X86)
 
-/*	Need at least 6 mapped pages to guarantee to be able to execute all ARM instructions,
+/*	Need at least 6 mapped pages to guarantee to be able to execute all X86 instructions,
 	plus enough pages for 6 page tables to map those pages, plus enough pages for the
 	page table info structures of those page tables.
 	(Worst case is (?) a MOV [X],[Y] instruction with instruction, 'X' and 'Y' all
@@ -208,8 +208,7 @@ void DPager::InitCache()
 		TInt r = m.AllocRam(&pagePhys, 1, 
 							(Mmu::TRamAllocFlags)(EMemAttNormalCached|Mmu::EAllocNoWipe|Mmu::EAllocNoPagerReclaim), 
 							EPageDiscard);
-		if(r!=KErrNone)
-			__NK_ASSERT_ALWAYS(0);
+		__NK_ASSERT_ALWAYS(r == KErrNone);
 		MmuLock::Lock();
 		AddAsFreePage(SPageInfo::FromPhysAddr(pagePhys));
 		MmuLock::Unlock();
@@ -226,50 +225,61 @@ void DPager::InitCache()
 
 
 #ifdef _DEBUG
+#ifdef FMM_PAGER_CHECK_LISTS
+TBool CheckList(SDblQueLink* aHead, TUint aCount)
+	{
+	SDblQueLink* link = aHead;
+	while(aCount--)
+		{
+		link = link->iNext;
+		if(link == aHead)
+			return EFalse;
+		}
+	link = link->iNext;
+	if(link != aHead)
+		return EFalse;
+	return ETrue;
+	}
+#endif // #ifdef FMM_PAGER_CHECK_LISTS
+
 TBool DPager::CheckLists()
 	{
-#if 0
+#ifdef FMM_PAGER_CHECK_LISTS
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
-	SDblQueLink* head = &iOldList.iA;
-	TInt n = iOldCount;
-	SDblQueLink* link = head;
-	while(n--)
-		{
-		link = link->iNext;
-		if(link==head)
-			return false;
-		}
-	link = link->iNext;
-	if(link!=head)
-		return false;
+	if (!CheckList(&iOldList.iA, iOldCount))
+		return EFalse;
+	if (!CheckList(&iYoungList.iA, iYoungCount))
+		return EFalse;
 
-	head = &iYoungList.iA;
-	n = iYoungCount;
-	link = head;
-	while(n--)
-		{
-		link = link->iNext;
-		if(link==head)
-			return false;
-		}
-	link = link->iNext;
-	if(link!=head)
-		return false;
-
-//	TRACEP(("DP: y=%d o=%d f=%d",iYoungCount,iOldCount,iNumberOfFreePages));
-#endif
-//	TraceCounts();
+#ifdef _USE_OLDEST_LISTS
+	if (!CheckList(&iOldestCleanList.iA, iOldestCleanCount))
+		return EFalse;
+	if (!CheckList(&iOldestDirtyList.iA, iOldestDirtyCount))
+		return EFalse;
+	TRACEP(("DP: y=%d o=%d oc=%d od=%d f=%d", iYoungCount, iOldCount, 
+			iOldestCleanCount, iOldestDirtyCount, iNumberOfFreePages));
+#else
+	TRACEP(("DP: y=%d o=%d f=%d", iYoungCount, iOldCount, iNumberOfFreePages));
+#endif //#ifdef _USE_OLDEST_LISTS
+	TraceCounts();
+#endif // #ifdef FMM_PAGER_CHECK_LISTS
 	return true;
 	}
 
 void DPager::TraceCounts()
 	{
+#ifdef _USE_OLDEST_LISTS
+	TRACEP(("DP: y=%d o=%d oc=%d od=%d f=%d min=%d max=%d ml=%d res=%d",
+		iYoungCount, iOldCount, iOldestCleanCount, iOldestDirtyCount, 
+		iNumberOfFreePages, iMinimumPageCount, iMaximumPageCount,
+		iMinimumPageLimit, iReservePageCount));
+#else
 	TRACEP(("DP: y=%d o=%d f=%d min=%d max=%d ml=%d res=%d",
-		iYoungCount,iOldCount,iNumberOfFreePages,iMinimumPageCount,
-		iMaximumPageCount,iMinimumPageLimit,iReservePageCount));
+		iYoungCount, iOldCount, iNumberOfFreePages, iMinimumPageCount,
+		iMaximumPageCount, iMinimumPageLimit, iReservePageCount));
+#endif //#ifdef _USE_OLDEST_LISTS
 	}
-
-#endif
+#endif //#ifdef _DEBUG
 
 
 TBool DPager::HaveTooManyPages()
@@ -1740,9 +1750,8 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 		aMaximumPageCount=aMinimumPageCount;
 
 	// Increase iMaximumPageCount?
-	TInt extra = aMaximumPageCount-iMaximumPageCount;
-	if(extra>0)
-		iMaximumPageCount += extra;
+	if(aMaximumPageCount > iMaximumPageCount)
+		iMaximumPageCount = aMaximumPageCount;
 
 	// Reduce iMinimumPageCount?
 	TInt spare = iMinimumPageCount-aMinimumPageCount;
@@ -2158,7 +2167,7 @@ FORCE_INLINE TBool DPagingRequest::IsCollision(DMemoryObject* aMemory, TUint aIn
 	TUint count = iUseRegionCount;
 	// note, this comparison would fail if either region includes page number KMaxTUint,
 	// but it isn't possible to create a memory object which is > KMaxTUint pages...
-	return memory == aMemory && index+count > aIndex && index < aIndex+aCount;
+	return (memory == aMemory) && ((index + count) > aIndex) && (index < (aIndex + aCount));
 	}
 
 
@@ -2524,15 +2533,15 @@ EXPORT_C void DDemandPagingLock::Free()
 EXPORT_C TInt DDemandPagingLock::Lock(DThread* aThread, TLinAddr aStart, TInt aSize)
 	{
 //	TRACEP(("DDemandPagingLock[0x%08x]::Lock(0x%08x,0x%08x,0x%08x)",this,aThread,aStart,aSize));
-	if(iLockedPageCount)
-		__NK_ASSERT_ALWAYS(0); // lock already used
+	__NK_ASSERT_ALWAYS(!iLockedPageCount); // lock already used
 
 	// calculate the number of pages that need to be locked...
 	TUint mask=KPageMask;
 	TUint offset=aStart&mask;
 	TInt numPages = (aSize+offset+mask)>>KPageShift;
-	if(numPages>iMaxPageCount)
-		__NK_ASSERT_ALWAYS(0);
+
+	// Should never be asked to lock more pages than are allocated to this object.
+	__NK_ASSERT_ALWAYS(numPages <= iMaxPageCount);
 
 	NKern::ThreadEnterCS();
 

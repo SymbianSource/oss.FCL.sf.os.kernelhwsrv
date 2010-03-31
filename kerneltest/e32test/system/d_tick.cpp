@@ -37,6 +37,8 @@
 #include <rvemuboard.h>
 #elif defined(__NE1_TB__)
 #include <upd35001_timer.h>
+#elif defined(__MRAP__)
+#include <rap.h>
 #endif
 #include <kernel/kern_priv.h>
 #include "d_tick.h"
@@ -78,6 +80,11 @@ inline TCounter TIMER()
 inline TCounter TIMER()
 	{ return NETimer::Timer(2).iTimerCount; }
 #endif
+#ifdef __MRAP__
+inline TCounter TIMER()
+	{ TRap::SetRegister32(1, KRapRegRTC001_TRIGGER);
+	return  TRap::Register32(KRapRegRTC001_LONGCOUNT); }
+#endif
 #if defined(__EPOC32__) && defined(__CPU_X86)
 TCounter TIMER();
 void SetUpTimerChannel2();
@@ -89,6 +96,12 @@ inline TCounter TIMER()
 	QueryPerformanceCounter(&c);
 	return c.QuadPart;
 	}
+#endif
+#if defined(__MRAP__)
+inline TDelta TimeDelta(TCounter initial, TCounter final)
+	{ return final-initial; }				// RAP RTC timer counts up
+inline TInt LongTimeDelta(TCounter initial, TCounter final, TUint, TUint)
+	{ return final-initial; }				// RAP RTC timer counts up
 #endif
 
 #if defined(__MISA__) || defined(__MCOT__)

@@ -226,14 +226,14 @@ EXPORT_C TInt CLocDrvMountCB::CreateDrive(TInt aDriveNumber)
 /** Create drive
 	Ascertain if the drive is mapped to a local drive or a proxy drive, and create the drive
 	as appropriate
-	@param aDriveNumer drive number
-	@return KErrNone on success
-		     KErrArgument is the drive is not mapped to a proxy or a local drive or if the number
-		     is invalid
+	@param	aDriveNumber	drive number
+	@return	KErrNone		on success
+			KErrArgument	if the drive is not mapped to a proxy or a local drive or if the number
+							is invalid
 */
 	{
 	// dunno why we are using TInts instead of TUints here
-	__PRINT(_L("CLocDrvMountCB::CreateLocalDrive()"));
+	__PRINT(_L("CLocDrvMountCB::CreateDrive()"));
 
 	if (aDriveNumber<0 || aDriveNumber>=KMaxDrives) return KErrArgument;
 	TInt r = KErrNone;
@@ -246,10 +246,10 @@ EXPORT_C TInt CLocDrvMountCB::CreateDrive(TInt aDriveNumber)
 	else
 		{
 		CExtProxyDrive* pProxyDrive = LocalDrives::GetProxyDrive(aDriveNumber);
-		__ASSERT_ALWAYS(pProxyDrive != NULL,User::Panic(_L("CreateDrive - pProxyDrive == NULL"), -999));
+		__ASSERT_ALWAYS(pProxyDrive != NULL,User::Panic(_L("CreateDrive() - pProxyDrive == NULL"), -999));
 
-		iProxyDrive = CreateProxyDriveL(pProxyDrive, this);
-		__ASSERT_ALWAYS(iProxyDrive != NULL,User::Panic(_L("CreateDrive - CreateProxyDrive returned NULL"), -999));
+		TRAP(r, iProxyDrive = CreateProxyDriveL(pProxyDrive,this));
+		__ASSERT_ALWAYS(r == KErrNone,User::Panic(_L("CreateDrive() - CreateProxyDriveL error"), -999));
 
 		r = InitLocalDrive();
 		}

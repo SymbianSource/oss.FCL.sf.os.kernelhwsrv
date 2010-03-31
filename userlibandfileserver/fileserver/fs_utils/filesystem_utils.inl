@@ -54,7 +54,10 @@ inline TUint64 Pow2_64(TUint32 aVal)
 inline TBool IsPowerOf2(TUint32 aVal)
     {
     if (aVal==0)
+        {
+        ASSERT(0);
         return EFalse;
+        }
 
     return !(aVal & (aVal-1));
     }
@@ -67,7 +70,10 @@ inline TBool IsPowerOf2(TUint32 aVal)
 inline TBool IsPowerOf2_64(TUint64 aVal)
     {
     if (aVal==0)
+        {
+        ASSERT(0);
         return EFalse;
+        }
 
     return !(aVal & (aVal-1));
 

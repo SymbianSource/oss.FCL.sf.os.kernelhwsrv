@@ -42,6 +42,8 @@
 #include <e32test.h>
 #include <e32svr.h>
 #include <nkern/nk_trace.h>
+#include <e32hal.h>
+#include <hal.h>
 
 LOCAL_D RTest test(_L("T_SUSER"));
 
@@ -946,21 +948,26 @@ void TestEvents()
 	test(logonStatus==KErrPermissionDenied);
 	CLOSE_AND_WAIT(process);
 
-	test.Next(_L("Calling UserSvr::AddEvent(ESwitchOff) with ECapabilityPowerMgmt & ECapabilitySwEvent"));
-	TRequestStatus absstatus;
-	RTimer abstimer;
-	TInt r = abstimer.CreateLocal();
-	test (r == KErrNone);
-	SetAbsoluteTimeout(abstimer, 5000000, absstatus); // 5 sec
-	process.Create((1u<<ECapabilitySwEvent)|(1u<<ECapabilityPowerMgmt),ETestProcessAddEventESwitchOff);
-	process.Logon(logonStatus);
-	process.Resume();
-	User::WaitForRequest(absstatus);
-	abstimer.Close();
-	User::WaitForRequest(logonStatus);
-	test(process.ExitType()==EExitKill);
-	test(logonStatus==KErrNone);
-	CLOSE_AND_WAIT(process);
+	TInt muid = 0;
+	HAL::Get(HAL::EMachineUid, muid);
+	if(muid==HAL::EMachineUid_OmapH2 || muid==HAL::EMachineUid_OmapH4 || muid==HAL::EMachineUid_OmapH6 || muid==HAL::EMachineUid_NE1_TB || muid==HAL::EMachineUid_X86PC || muid==HAL::EMachineUid_Win32Emulator)
+		{
+		test.Next(_L("Calling UserSvr::AddEvent(ESwitchOff) with ECapabilityPowerMgmt & ECapabilitySwEvent"));
+		TRequestStatus absstatus;
+		RTimer abstimer;
+		TInt r = abstimer.CreateLocal();
+		test (r == KErrNone);
+		SetAbsoluteTimeout(abstimer, 5000000, absstatus); // 5 sec
+		process.Create((1u<<ECapabilitySwEvent)|(1u<<ECapabilityPowerMgmt),ETestProcessAddEventESwitchOff);
+		process.Logon(logonStatus);
+		process.Resume();
+		User::WaitForRequest(absstatus);
+		abstimer.Close();
+		User::WaitForRequest(logonStatus);
+		test(process.ExitType()==EExitKill);
+		test(logonStatus==KErrNone);
+		CLOSE_AND_WAIT(process);
+		}
 
 	test.End();
 	}

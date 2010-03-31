@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -75,7 +75,7 @@ void CBulkOnlyTransport::ConstructL(TUint aInterfaceId)
     {
     __MSFNSLOG
 	User::LeaveIfError(iInterface.Open(aInterfaceId));
-	iUsbInterfaceHandler = CUsbInterfaceHandler::NewL(iInterface);
+	iUsbInterfaceHandler = CUsbInterfaceHandler::NewL(iInterface, iBulkPipeIn);
 	InitialiseTransport();
     }
 
@@ -342,14 +342,22 @@ TInt CBulkOnlyTransport::SendControlCmdL(const MClientCommandServiceReq* aComman
 	r = ProcessInTransferL(dataReceived);
     if (!r)
         {
-
+        TRAP(r, aResp->DecodeL(data));
         if (dataReceived == 0)
             {
-            __BOTPRINT1(_L("Warning: No data received"), dataReceived);
-            return KErrCommandNotSupported;
-            }
 
-        TRAP(r, aResp->DecodeL(data));
+            // Some devices are found not to support DataResidue and return zero
+            // bytes received. This state is NOT treated as an error condition
+            // and we assume that all bytes are valid. For SCSI command set
+            // applicable to Mass Storage a device must always return data so
+            // the zero byte condition is not possible with compliant devices.
+            //
+            // List of known non-compliant devices:
+            // 1 Transcend JetFlashV30 VendorID=JetFlash ProductID=TS#GJFV30
+            // (# is device size in G)
+
+            __BOTPRINT1(_L("Warning: No data received"), dataReceived);
+            }
         }
 	return r;
 	}

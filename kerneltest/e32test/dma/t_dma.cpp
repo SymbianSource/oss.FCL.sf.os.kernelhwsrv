@@ -69,7 +69,7 @@ CPeriodic* Bipper;											// display dots during tests to detect lock-ups
 _LIT(KTestFailure, "XTEST");
 static void TestPanic(TInt aLine, TUint32 a1, TUint32 a2, TUint32 a3)
 	{
-	RDebug::Printf("Line %d test failed a1=%08x a2=%08x a3=%08x", aLine, a1, a2, a3);
+	RDebug::Printf("Line %d test failed a1=%08x (%d) a2=%08x (%d) a3=%08x (%d)", aLine, a1, a1, a2, a2, a3, a3);
 	RThread().Panic(KTestFailure, aLine);
 	}
 #define XTEST(e)				if (!(e)) TestPanic(__LINE__, 0, 0, 0)
@@ -216,6 +216,47 @@ public:
 private:
 	const TInt iTransferSize;
 
+	};
+
+/**
+Perform multiple transfers with different fragment counts and with smaller
+and smaller fragment size
+
+This checks that the PSL's ISR(s) are properly written, and do not miss interrupts
+or notify the PIL spuriously.
+*/
+class CFragSizeRange : public CTest
+	{
+public:
+	CFragSizeRange(TInt aMaxIter, TInt aFragCount, TInt aInitialFragmentSize, TInt aInnerIteraions)
+		: CTest(NULL, aMaxIter), iMaxFragCount(aFragCount), iFragCount(1), iInitialFragmentSize(aInitialFragmentSize),
+		iInnerIterations(aInnerIteraions)
+		{}
+
+	TInt virtual DoRunTest();
+
+	virtual void AnnounceTest(TDes& aDes)
+		{
+		aDes.AppendFormat(_L("CFragSizeRange: Fragments %d, intital frag size %d, inner iters %d "), iFragCount, iInitialFragmentSize, iInnerIterations);
+		CTest::AnnounceTest(aDes);
+		}
+
+	CTest* Clone() const
+		{return new CFragSizeRange(*this);}
+
+private:
+	/**
+	Run the transfer
+	*/
+	TInt Transfer(TInt aFragSize);
+
+
+	TInt iMaxFragCount;
+	TInt iFragCount;
+	const TInt iInitialFragmentSize;
+	const TInt iInnerIterations;
+
+	RTimer iTimer;
 	};
 
 //
@@ -409,6 +450,102 @@ TInt CCloseInCb::DoRunTest()
 	return KErrNone;
 	}
 
+TInt CFragSizeRange::DoRunTest()
+	{
+	const TInt initialFragmentSize = Min(iInitialFragmentSize, Info.iMaxTransferSize);
+
+	TInt r = KErrNone;
+	RTest test(_L("CFragSizeRange test"));
+
+	r = iTimer.CreateLocal();
+	test_KErrNone(r);
+
+
+	TInt fragSize = initialFragmentSize;
+	TInt step = 0;
+	do
+		{
+		fragSize -= step;
+		// make sure size is aligned
+		fragSize = fragSize & ~Info.iMemAlignMask;
+
+		r = OpenChannel(iMaxFragCount, fragSize);
+		test_KErrNone(r);
+
+		for(iFragCount=1; iFragCount <= iMaxFragCount; iFragCount++)
+			{
+			test.Printf(_L("Fragment size %d bytes, %d fragments\nIter: "), fragSize, iFragCount);
+			for(TInt i=0; i<iInnerIterations; i++)
+				{
+
+				test.Printf(_L("%d "), i);
+				r = Transfer(fragSize);
+				test_KErrNone(r);
+
+				}
+			test.Printf(_L("\n"));
+			}
+		iChannel.Close();
+		// Reduce frag size by an eigth each iteration
+		step = (fragSize/8);
+		} while (step > 0);
+
+	iTimer.Close();
+
+	test.Close();
+	return r;
+	}
+
+TInt CFragSizeRange::Transfer(TInt aFragmentSize)
+	{
+	const TInt KRequest = 0;
+	const TInt KSrcBuf = 0;
+	const TInt KDestBuf = 1;
+
+	const TInt size = aFragmentSize * iFragCount;
+
+	TInt r = iChannel.AllocBuffer(KSrcBuf, size);
+	test_KErrNone(r);
+	iChannel.FillBuffer(KSrcBuf, 'A');
+	r = iChannel.AllocBuffer(KDestBuf, size);
+	XTEST2(r == KErrNone, r, size);
+	iChannel.FillBuffer(KDestBuf, '\0');
+
+	// Test simple transfer
+	TRequestStatus rs = KRequestPending;
+	r = iChannel.Fragment(KRequest, KSrcBuf, KDestBuf, size, &rs);
+	test_KErrNone(r);
+
+	test(iChannel.FragmentCheck(KRequest, iFragCount));
+	r = iChannel.Execute(_L8("Q0"));
+	test_KErrNone(r);
+
+	const TInt microSecTimeout = 1000000; // 1s
+	TRequestStatus timerStatus;
+	iTimer.After(timerStatus, microSecTimeout);
+
+	User::WaitForRequest(rs, timerStatus);
+	if(rs.Int() == KRequestPending)
+		{
+		RDebug::Print(_L("Transfer timed out!"));
+		// timed out
+		test(EFalse);
+		}
+	iTimer.Cancel();
+	test_KErrNone(rs.Int());
+	test(iChannel.CheckBuffer(KDestBuf, 'A'));
+
+	// Queue, then cancel request - Checks
+	// that there there is no spurious callback
+	// to the PIL
+	r = iChannel.Execute(_L8("Q0C"));
+	test_KErrNone(r);
+
+	iChannel.FreeAllBuffers();
+	return KErrNone;
+	}
+
+
 // Called when thread completed.
 void CTesterThread::RunL()
 	{
@@ -476,7 +613,6 @@ void RunTest(TUint32 aChannelIds[], TInt aMaxThread, CTest* aTest)
 
 	if (aMaxThread == 0)
 		{
-		delete aTest;
 		test.Printf(_L("transfer mode not supported - skipped\n"));
 		return;
 		}
@@ -506,9 +642,6 @@ void RunTest(TUint32 aChannelIds[], TInt aMaxThread, CTest* aTest)
 		test(new CTesterThread(i, dmaTest) != NULL);
 		dmaTest = NULL; //ownership transferred to CTesterThread
 		}
-	//the orginal isn't needed
-	delete aTest;
-	aTest = NULL;
 
 	const TTimeIntervalMicroSeconds32 KPeriod = 1000000;	// 1s
 	Bipper->Start(KPeriod, KPeriod, Bip);
@@ -521,17 +654,29 @@ void RunTest(TUint32 aChannelIds[], TInt aMaxThread, CTest* aTest)
 
 inline void RunSbTest(TInt aMaxThread, CTest* aTest)
 	{
+	RunTest(Info.iSbChannels, Min(1,Info.iMaxSbChannels), aTest);
 	RunTest(Info.iSbChannels, Min(aMaxThread,Info.iMaxSbChannels), aTest);
+
+	//the orginal isn't needed
+	delete aTest;
 	}
 
 inline void RunDbTest(TInt aMaxThread, CTest* aTest)
 	{
+	RunTest(Info.iDbChannels, Min(1,Info.iMaxDbChannels), aTest);
 	RunTest(Info.iDbChannels, Min(aMaxThread,Info.iMaxDbChannels), aTest);
+
+	//the orginal isn't needed
+	delete aTest;
 	}
 
 inline void RunSgTest(TInt aMaxThread, CTest* aTest)
 	{
+	RunTest(Info.iSgChannels, Min(1,Info.iMaxSgChannels), aTest);
 	RunTest(Info.iSgChannels, Min(aMaxThread,Info.iMaxSgChannels), aTest);
+
+	//the orginal isn't needed
+	delete aTest;
 	}
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1033,6 +1178,28 @@ TInt E32Main()
 	RunDbTest(maxchannel, new CCloseInCb() );
 	test.Next(_L("sg"));
 	RunSgTest(maxchannel, new CCloseInCb() );
+
+	test.Next(_L("Testing different fragment sizes"));
+
+	const TInt rangeFragSize = 4096;
+#ifdef __DMASIM__
+	// Use fewer iterations on the emulator
+	// since it is slower. Also this test is really
+	// intended to find errors in PSL implmentations
+	const TInt iterPerFragSize = 1;
+#else
+	const TInt iterPerFragSize = 30;
+#endif
+	const TInt rangeMaxFragCount = 8;
+
+	test.Next(_L("sb"));
+	RunSbTest(maxchannel, new CFragSizeRange(1, rangeMaxFragCount, rangeFragSize, iterPerFragSize));
+	test.Next(_L("db"));
+	RunDbTest(maxchannel, new CFragSizeRange(1, rangeMaxFragCount, rangeFragSize, iterPerFragSize));
+	test.Next(_L("sg"));
+	RunSgTest(maxchannel, new CFragSizeRange(1, rangeMaxFragCount, rangeFragSize, iterPerFragSize));
+
+
 	// Size for the single transfer test
 	TInt totalTransferSize = 64 * KKilo;
 

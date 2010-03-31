@@ -605,7 +605,7 @@ LOCAL_C void testLock()
 #if !(defined(__EPOC32__) && defined(__X86__))
 	TInt muid = 0;
 	HAL::Get(HAL::EMachineUid, muid);
-	if(muid!=HAL::EMachineUid_Lubbock && muid!=HAL::EMachineUid_NE1_TB && muid!=HAL::EMachineUid_STE8500)
+	if(muid==HAL::EMachineUid_OmapH2 || muid==HAL::EMachineUid_OmapH4 || muid==HAL::EMachineUid_OmapH6)
 		{
 		test.Next(_L("Test sequential locks fail over on/off"));
 		RTimer tat;

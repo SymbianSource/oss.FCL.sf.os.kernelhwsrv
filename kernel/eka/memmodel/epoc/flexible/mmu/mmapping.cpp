@@ -1307,7 +1307,7 @@ TInt DKernelPinMapping::MapAndPin(DMemoryObject* aMemory, TUint aIndex, TUint aC
 											EMappingCreateDefault, 
 											KKernelOsAsid, 
 											0, 
-											aCount, 
+											aCount << KPageShift, 
 											0);
 		if (r != KErrNone)
 			return r;

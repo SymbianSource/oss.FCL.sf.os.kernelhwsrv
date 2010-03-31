@@ -618,11 +618,11 @@ TInt DDataPagedMemoryManager::WritePages(DMemoryObject* aMemory, TUint aIndex, T
 
 TInt DDataPagedMemoryManager::CleanPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TPhysAddr*& aPageArrayEntry)
 	{
-	if(aPageInfo->IsDirty()==false)
+	if(!aPageInfo->IsDirty())
 		return KErrNone;
 
 	// shouldn't be asked to clean a page which is writable...
-	__NK_ASSERT_DEBUG(aPageInfo->IsWritable()==false);
+	__NK_ASSERT_DEBUG(!aPageInfo->IsWritable());
 
 	// mark page as being modified by us...
 	TUint modifierInstance; // dummy variable used only for it's storage address on the stack

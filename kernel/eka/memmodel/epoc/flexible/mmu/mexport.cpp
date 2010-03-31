@@ -16,7 +16,7 @@
 #include "memmodel.h"
 #include "mm.h"
 #include "mmu.h"
-
+#include "mpager.h"
 #include "mrom.h"
 
 /**	Returns the amount of free RAM currently available.
@@ -607,13 +607,29 @@ TInt M::PageSizeInBytes()
 	}
 
 
-#ifdef BTRACE_KERNEL_MEMORY
 void M::BTracePrime(TUint aCategory)
 	{
-	// TODO:
-	}
-#endif
+	(void)aCategory;
 
+#ifdef BTRACE_KERNEL_MEMORY
+	// Must check for -1 as that is the default value of aCategory for
+	// BTrace::Prime() which is intended to prime all categories that are 
+	// currently enabled via a single invocation of BTrace::Prime().
+	if(aCategory == BTrace::EKernelMemory || (TInt)aCategory == -1)
+		{
+		NKern::ThreadEnterCS();
+		RamAllocLock::Lock();
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryInitialFree, TheSuperPage().iTotalRamSize);
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryCurrentFree, Kern::FreeRamInBytes());
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscAlloc, Epoc::KernelMiscPages << KPageShift);
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryDemandPagingCache, ThePager.MinimumPageCount() << KPageShift);
+		BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysAlloc, Epoc::DriverAllocdPhysRam, -1);
+		RamAllocLock::Unlock();
+		NKern::ThreadLeaveCS();
+		}
+#endif
+	TheMmu.BTracePrime(aCategory);
+	}
 
 
 //

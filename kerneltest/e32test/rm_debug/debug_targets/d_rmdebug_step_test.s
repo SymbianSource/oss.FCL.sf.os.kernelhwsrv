@@ -14,7 +14,8 @@
 ; 
 ;
 
-        AREA |d-rmdebug-bkpt$$Code|, CODE, READONLY, ALIGN=6
+        
+		AREA |d-rmdebug-step$$Code|, CODE, READONLY, ALIGN=6
 
 	CODE32
 
@@ -264,4 +265,4 @@ RMDebug_StepTest_ARM_Step_Multiple_1
 
 	END
 
-; End of file - d_rmdebug_bkpt.s
+; End of file - d_rmdebug_step_test.s

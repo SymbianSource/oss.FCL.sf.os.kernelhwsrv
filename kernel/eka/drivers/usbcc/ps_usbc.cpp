@@ -3714,7 +3714,17 @@ void DUsbClientController::DeleteInterfaceSet(TInt aIfcSet)
 		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: interface not found in array"));
 		return;
 		}
+	//Add this mutex to protect the interface set data structure
+	if (NKern::CurrentContext() == EThread)
+	    {
+        NKern::FMWait(&iMutex);
+	    }
+	
 	iConfigs[0]->iInterfaceSets.Remove(idx);
+	if (NKern::CurrentContext() == EThread)
+	    {
+        NKern::FMSignal(&iMutex);	
+	    }
 	delete ifcset_ptr;
 	}
 
@@ -3733,15 +3743,25 @@ void DUsbClientController::DeleteInterface(TInt aIfcSet, TInt aIfc)
 		__KTRACE_OPT(KPANIC, Kern::Printf("  Error: invalid interface setting: %d", aIfc));
 		return;
 		}
+	//Add this mutex to protect the interface set data structure
+	if (NKern::CurrentContext() == EThread)
+	    {
+        NKern::FMWait(&iMutex);
+	    }	
 	TUsbcInterface* const ifc_ptr = ifcset_ptr->iInterfaces[aIfc];
 	// Always first remove, then delete (see ~TUsbcLogicalEndpoint() for the reason why)
 	ifcset_ptr->iInterfaces.Remove(aIfc);
-	delete ifc_ptr;
+
 	if (aIfc == ifcset_ptr->iCurrentInterface)
 		{
 		__KTRACE_OPT(KUSB, Kern::Printf(" > Warning: deleting current interface setting"));
 		ifcset_ptr->iCurrentInterface = 0;
 		}
+	if (NKern::CurrentContext() == EThread)
+	    {
+        NKern::FMSignal(&iMutex);
+	    }	
+	delete ifc_ptr;
 	}
 
 

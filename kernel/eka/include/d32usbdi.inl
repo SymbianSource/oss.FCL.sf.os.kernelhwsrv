@@ -414,11 +414,12 @@ TInt RUsbInterface::GetBusId(TUsbBusId& aBusId)
 /**
 Returns the size of pages used by the HCD.
 @internalComponent
-@return The HCD's page size.
+@param aHcdPageSize on success provides the HCD's page size.
+@return KErrNone on success, otherwise a system-wide error code.
 */
-TInt RUsbInterface::HcdPageSize()
+TInt RUsbInterface::GetHcdPageSize(TInt& aHcdPageSize)
 	{
-	return DoControl(EHcdPageSize);
+	return DoControl(EHcdPageSize, &aHcdPageSize);
 	}
 
 /**

@@ -131,35 +131,35 @@ Returns the sectors per cluster ratio
 
 @return iSectorsPerCluster
 */
-inline TInt TFatBootSector::SectorsPerCluster() const
+inline TUint8 TFatBootSector::SectorsPerCluster() const
 	{return iSectorsPerCluster;}
 /**
 Returns the number of reserved sectors on the volume
 
 @return iReservedSectors
 */
-inline TInt TFatBootSector::ReservedSectors() const
+inline TUint16 TFatBootSector::ReservedSectors() const
 	{return iReservedSectors;}
 /**
 Returns the number of Fats on the volume
 
 @return iNumberOfFats
 */
-inline TInt TFatBootSector::NumberOfFats() const
+inline TUint8 TFatBootSector::NumberOfFats() const
 	{return iNumberOfFats;}
 /**
 Returns the number of entries allowed in the root directory, specific to Fat12/16, zero for FAT32
 
 @return iRootDirEntries
 */
-inline TInt TFatBootSector::RootDirEntries() const
+inline TUint16 TFatBootSector::RootDirEntries() const
 	{return iRootDirEntries;}
 /**
 Returns the total sectors on the volume, zero for FAT32
 
 @return iTotalSectors
 */
-inline TInt TFatBootSector::TotalSectors() const
+inline TUint16 TFatBootSector::TotalSectors() const
 	{return iTotalSectors;}
 /**
 Returns the media descriptor
@@ -173,49 +173,49 @@ Returns sectors used for the Fat table, zero for FAT32
 
 @return iFatSectors
 */
-inline TInt TFatBootSector::FatSectors() const
+inline TUint16 TFatBootSector::FatSectors() const
 	{return iFatSectors;}
 /**
 Returns sectors per track
 
 @return iSectorsPerTrack
 */
-inline TInt TFatBootSector::SectorsPerTrack() const
+inline TUint16 TFatBootSector::SectorsPerTrack() const
 	{return iSectorsPerTrack;}
 /**
 Returns the number of heads 
 
 @return iNumberOfHeads
 */
-inline TInt TFatBootSector::NumberOfHeads() const
+inline TUint16 TFatBootSector::NumberOfHeads() const
 	{return iNumberOfHeads;}
 /**
 Returns the number of hidden sectors in the volume
 
 @return iHiddenSectors
 */
-inline TInt TFatBootSector::HiddenSectors() const
+inline TUint32 TFatBootSector::HiddenSectors() const
 	{return iHiddenSectors;}
 /**
 Returns total sectors in the volume, Used if totalSectors > 65535
 
 @return iHugeSectors
 */
-inline TInt TFatBootSector::HugeSectors() const
+inline TUint32 TFatBootSector::HugeSectors() const
 	{return iHugeSectors;}
 /**
 Returns the physical drive number, not used in Symbian OS
 
 @return iPhysicalDriveNumber
 */
-inline TInt TFatBootSector::PhysicalDriveNumber() const
+inline TUint8 TFatBootSector::PhysicalDriveNumber() const
 	{return iPhysicalDriveNumber;}
 /**
 Returns the extended boot signiture
 
 @return iExtendedBootSignature
 */
-inline TInt TFatBootSector::ExtendedBootSignature() const
+inline TUint8 TFatBootSector::ExtendedBootSignature() const
 	{return iExtendedBootSignature;}
 /**
 Returns the unique volume ID
@@ -243,7 +243,7 @@ Returns the boot sector signiture
 
 @return KBootSectorSignature
 */
-inline TInt TFatBootSector::BootSectorSignature() const
+inline TUint16 TFatBootSector::BootSectorSignature() const
 	{return KBootSectorSignature;}
 /**
 Set the jump instruction 
@@ -266,17 +266,17 @@ Sets the bytes per sector
 
 @param aBytesPerSector Number of bytes per sector
 */
-inline void TFatBootSector::SetBytesPerSector(TInt aBytesPerSector)
+inline void TFatBootSector::SetBytesPerSector(TUint16 aBytesPerSector)
 	{
 	__ASSERT_DEBUG(!(aBytesPerSector&~KMaxTUint16),Fault(EFatBadBootSectorParameter));
-	iBytesPerSector=(TUint16)aBytesPerSector;
+	iBytesPerSector=aBytesPerSector;
 	}
 /**
 Set the sectors per cluster ratio
 
 @param aSectorsPerCluster Number of sectors per cluster
 */
-inline void TFatBootSector::SetSectorsPerCluster(TInt aSectorsPerCluster)
+inline void TFatBootSector::SetSectorsPerCluster(TUint aSectorsPerCluster)
 	{
 	__ASSERT_DEBUG(!(aSectorsPerCluster&~KMaxTUint8),Fault(EFatBadBootSectorParameter));
 	iSectorsPerCluster=(TUint8)aSectorsPerCluster;
@@ -286,7 +286,7 @@ Sets the number of reserved sectors on the volume
 
 @param aReservedSectors Number of reserved sectors
 */
-inline void TFatBootSector::SetReservedSectors(TInt aReservedSectors)
+inline void TFatBootSector::SetReservedSectors(TUint aReservedSectors)
 	{
 	__ASSERT_DEBUG(!(aReservedSectors&~KMaxTUint16),Fault(EFatBadBootSectorParameter));
 	iReservedSectors=(TUint16)aReservedSectors;
@@ -296,27 +296,27 @@ Sets the number of Fats on the volume
 
 @param aNumberOfFats Number of fats
 */
-inline void TFatBootSector::SetNumberOfFats(TInt aNumberOfFats)
+inline void TFatBootSector::SetNumberOfFats(TUint8 aNumberOfFats)
 	{
 	__ASSERT_DEBUG(!(aNumberOfFats&~KMaxTUint8),Fault(EFatBadBootSectorParameter));
-	iNumberOfFats=(TUint8)aNumberOfFats;
+	iNumberOfFats=aNumberOfFats;
 	}
 /**
 Number of entries allowed in the root directory, specific to Fat12/16, zero for FAT32
 
 @param aRootDirEntries
 */
-inline void TFatBootSector::SetRootDirEntries(TInt aRootDirEntries)
+inline void TFatBootSector::SetRootDirEntries(TUint16 aRootDirEntries)
 	{
 	__ASSERT_DEBUG(!(aRootDirEntries&~KMaxTUint16),Fault(EFatBadBootSectorParameter));
-	iRootDirEntries=(TUint16)aRootDirEntries;
+	iRootDirEntries=aRootDirEntries;
 	}
 /**
 Total sectors on the volume, zero for FAT32
 
 @param aTotalSectors Total number of sectors
 */
-inline void TFatBootSector::SetTotalSectors(TInt aTotalSectors)
+inline void TFatBootSector::SetTotalSectors(TUint aTotalSectors)
 	{
 	__ASSERT_DEBUG(!(aTotalSectors&~KMaxTUint16),Fault(EFatBadBootSectorParameter));
 	iTotalSectors=(TUint16)aTotalSectors;
@@ -333,7 +333,7 @@ Sectors used for the Fat table, zero for FAT32
 
 @param aFatSectors Number of Fat sectors
 */
-inline void TFatBootSector::SetFatSectors(TInt aFatSectors)
+inline void TFatBootSector::SetFatSectors(TUint aFatSectors)
 	{
 	__ASSERT_DEBUG(!(aFatSectors&~KMaxTUint16),Fault(EFatBadBootSectorParameter));
 	iFatSectors=(TUint16)aFatSectors;
@@ -343,20 +343,20 @@ Set the sectors per track
 
 @param aSectorsPerTrack Number of sectors per track
 */
-inline void TFatBootSector::SetSectorsPerTrack(TInt aSectorsPerTrack)
+inline void TFatBootSector::SetSectorsPerTrack(TUint16 aSectorsPerTrack)
 	{
 	__ASSERT_DEBUG(!(aSectorsPerTrack&~KMaxTUint16),Fault(EFatBadBootSectorParameter));
-	iSectorsPerTrack=(TUint16)aSectorsPerTrack;
+	iSectorsPerTrack=aSectorsPerTrack;
 	}
 /**
 Set the number of heads
 
 @param aNumberOfHeads Number of heads
 */
-inline void TFatBootSector::SetNumberOfHeads(TInt aNumberOfHeads)
+inline void TFatBootSector::SetNumberOfHeads(TUint16 aNumberOfHeads)
 	{
 	__ASSERT_DEBUG(!(aNumberOfHeads&~KMaxTUint16),Fault(EFatBadBootSectorParameter));
-	iNumberOfHeads=(TUint16)aNumberOfHeads;
+	iNumberOfHeads=aNumberOfHeads;
 	}
 /**
 Set the number of hidden sectors in the volume
@@ -373,7 +373,9 @@ Set the total sectors in the volume, Used if totalSectors > 65535
 @param aHugeSectors
 */
 inline void TFatBootSector::SetHugeSectors(TUint32 aHugeSectors)
-	{iHugeSectors=aHugeSectors;}
+	{
+    iHugeSectors=aHugeSectors;
+    }
 /**
 Physical drive number, not used in Symbian OS
 
@@ -390,16 +392,19 @@ Set the reserved byte value
 @param aReservedByte Value for reserved byte
 */
 inline void TFatBootSector::SetReservedByte(TUint8 aReservedByte)
-	{iReserved=aReservedByte;}
+	{
+    iReserved=aReservedByte;
+    }
+
 /**
 Set the extended boot signiture
 
 @param anExtendedBootSignature The extended boot signiture
 */
-inline void TFatBootSector::SetExtendedBootSignature(TInt anExtendedBootSignature)
+inline void TFatBootSector::SetExtendedBootSignature(TUint8 anExtendedBootSignature)
 	{
 	__ASSERT_DEBUG(!(anExtendedBootSignature&~KMaxTUint8),Fault(EFatBadBootSectorParameter));
-	iExtendedBootSignature=(TUint8)anExtendedBootSignature;
+	iExtendedBootSignature=anExtendedBootSignature;
 	}
 /**
 Set the unique volume ID

@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -22,6 +22,7 @@
 #include "d_rmdebugthread2.h"
 
 #include "d_rmdebug_step_test.h"
+#include "d_rmdebug_bkpt_test.h"
 #include "d_demand_paging.h"
 
 EXPORT_C TBuf8<SYMBIAN_RMDBG_MEMORYSIZE> gMemoryAccessBytes;
@@ -153,6 +154,9 @@ GLDEF_C TInt CDebugServThread::ThreadFunction(TAny*)
 
 				// multiple step test
 				RMDebug_StepTest_ARM_Step_Multiple();
+
+				// Breakpoints in loop test
+				RMDebug_Bkpt_Test_Entry();
 
 				TestData++;
 

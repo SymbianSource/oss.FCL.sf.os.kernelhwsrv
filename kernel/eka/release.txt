@@ -1,3 +1,126 @@
+Version 2.00.2102
+=================
+(Made by vfebvre 17/03/2010)
+
+1.	sattiyap
+	1.	DEF144982 Support rapu variant specific e32tests
+
+
+Version 2.00.2101
+=================
+(Made by vfebvre 12/03/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#293062 A malfunctioning peripheral still cannot be reported to the UI, breaking the "no silent failures" policy of USB OTG
+		TSW: TKEA-836MEU
+
+2.	necliffo
+	1.	DEF144967 EMOL-83CGYT: SPB 10.1: Device freeze when corrupted memory card is used.
+
+
+Version 2.00.2100
+=================
+(Made by vfebvre 11/03/2010)
+
+1.	jimmzhou
+	1.	DEF144628: for submission: TSW defect TSW YXIO-82ZBPL
+
+2.	martai
+	1.	DEF144914: FMM - BTrace messages EKernelMemory are missing from the flexible memory model
+
+3.	gcochran
+	1.	DEF144931 MMEG-83F9A8 - Misleading error message in ExecHandler::ThreadRequestSignal
+
+
+Version 2.00.2099
+=================
+(Made by vfebvre 11/03/2010)
+
+1.	vfebvre
+	1.	DEF144925 base_ubootldr component CBR stage failed in TB92SF_1073
+
+
+Version 2.00.2098
+=================
+(Made by vfebvre 09/03/2010)
+
+1.	lanerobe
+	1.	DEF144710 bootloader component not built in KHS package
+
+2.	martai
+	1.	DEF144800: FMM - The virtual address space manager allocates incorrect size heap cells
+
+
+Version 2.00.2097
+=================
+(Made by vfebvre 08/03/2010)
+
+1.	seolney
+	1.	DEF140598 Assertion failure in DMA PIL 
+		Improved t_dma. Missed interrupt cleanup is cofigurable (with macro
+		DISABLE_MISSED_IRQ_RECOVERY) in DMA PIL v1 and is removed from PIL v2
+
+2.	jimmzhou
+	1.	DEF144618: ARAN-82PGM3: Connecting empty cable causes error, after connecting/disconnecting
+
+
+Version 2.00.2096
+=================
+(Made by vfebvre 04/03/2010)
+
+1.	martai
+	1.	DEF144781: MMEG-8369AQ RThread::Create documentation doesn't mention the minimum stack size 
+
+2.	s40li
+	1.	DEF144533 USB PIL Crash after MTP server panic
+
+
+Version 2.00.2095
+=================
+(Made by vfebvre 03/03/2010)
+
+1	paconway
+	1.	PDEF144746 Coverity defect in onbl2.cpp (UNINIT) 
+
+2.	y153liu
+	1.	DEF144620: Extra KErrUsbOtgPeriphNotSupported Event for Peripheral Requires More power
+
+
+Version 2.00.2094
+=================
+(Made by vfebvre 02/03/2010)
+
+1.	jimhofe
+	1.	MINOR_CHANGE: Changing kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/eabi/sdcard3c policyid to 7
+	2.	MINOR_CHANGE: Changing policyId from 1 to 7 for kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\XXXX\sdcard3c
+
+2.	gayarama
+	1.	DEF144267 t_tbus_datapaging test fails on Vasco/TB9.2 due to fileserver api issue
+
+3.	martai
+	1.	DEF144639: ArmMmu::ReleasePagesFromDMA() may hold system lock for unbounded time periods 
+
+
+Version 2.00.2093
+=================
+(Made by vfebvre 01/03/2010)
+
+1.	vfebvre
+	1.	PDEF144682 E32TEST T_PIN test failures on x86gcc.fmm (t_pin.cpp:688)
+
+2.	ferporta
+	1.	DEF142018 Debug Sec Srv crashes if asked for an incompat srv version
+	2.	DEF143491 Breakpoints in looping code can be missed when inserting/deleting and stepping
+
+
+Version 2.00.2092
+=================
+(Made by vfebvre 26/02/2010)
+
+1.	lforynsk
+	1.	PDEF144647:Occasional T_CHNOT failures on SMP configurations 
+
+
 Version 2.00.2091
 =================
 (Made by vfebvre 25/02/2010)

@@ -758,7 +758,7 @@ void ExecHandler::ThreadRequestSignal(DThread* aThread)
 
 	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ThreadRequestSignal"));
 	if(aThread->iOwningProcess!=TheCurrentThread->iOwningProcess)
-		K::ProcessIsolationFailure(__PLATSEC_DIAGNOSTIC_STRING("Attempt to use RThread::RequestComplete on a thread in another process"));
+		K::ProcessIsolationFailure(__PLATSEC_DIAGNOSTIC_STRING("Attempt to use RThread::RequestComplete or RThread::RequestSignal on a thread in another process"));
 	NKern::ThreadRequestSignal(&aThread->iNThread, SYSTEM_LOCK);
 	}
 
