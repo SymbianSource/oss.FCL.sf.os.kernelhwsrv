@@ -23,7 +23,7 @@
 #if defined(_DEBUG) && defined(__DEMAND_PAGING__)
 #define __CONCURRENT_PAGING_INSTRUMENTATION__
 #endif
-#if defined(_DEBUG) && defined(__DEMAND_PAGING__)
+#ifdef __DEMAND_PAGING__
 #define __DEMAND_PAGING_BENCHMARKS__
 #endif
 

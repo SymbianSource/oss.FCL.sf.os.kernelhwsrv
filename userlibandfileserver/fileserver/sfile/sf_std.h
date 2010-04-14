@@ -235,7 +235,8 @@ private:
 
 enum TFsPanic
 	{
-	ELdrImportedOrdinalDoesNotExist
+	ELdrImportedOrdinalDoesNotExist,
+	ELdrHeapCorruptionOnRemove
 	};
 //
 enum TFsFault

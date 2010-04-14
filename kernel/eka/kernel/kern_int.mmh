@@ -61,10 +61,6 @@ macro			__MEMMODEL_MOVING__
 macro __SUPPORT_DEMAND_PAGING_EMULATION__
 #endif
 
-#if defined(DEMAND_PAGING) && defined(DEMAND_PAGING_BENCHMARKS)
-macro __DEMAND_PAGING_BENCHMARKS__
-#endif
-
 #ifdef SYMBIAN_OLD_EXPORT_LOCATION
 systeminclude		../include/kernel
 #endif

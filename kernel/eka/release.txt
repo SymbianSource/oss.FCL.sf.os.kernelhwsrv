@@ -1,3 +1,69 @@
+Version 2.00.2109
+=================
+(Made by vfebvre 29/03/2010)
+
+1.	mmoate
+	1.	DEF145151 \e32utils\nistsecurerng\* has incorrect distribution.policy.s60 ID 
+
+
+Version 2.00.2108
+=================
+(Made by vfebvre 26/03/2010)
+
+1.	seolney
+	1.	DEF144784 Fault possible if client deletes DMA request in callback 
+
+2.	jimmzhou
+	1.	ou1cimx1#320637[kernel92]Phone Crash when USB MobileTV device CU-14A is connected
+
+3.	gcochran
+	1.	DEF145128 TRLM-83EGSL Paging HAL stats not visible in TB92
+
+
+Version 2.00.2107
+=================
+(Made by vfebvre 24/03/2010)
+
+1.	lanerobe
+	1.	DEF144929 KHS Documentation is not contributed to the Symbian Foundation
+
+
+Version 2.00.2106
+=================
+(Made by vfebvre 23/03/2010)
+
+1.	lanerobe
+	1.	DEF144874 Intermittent E32TEST T_MSTIM test failures on the H4 (line 371)
+
+
+Version 2.00.2105
+=================
+(Made by vfebvre 22/03/2010)
+
+1.	josezhou
+	1.	ou1cimx1#312934 : RUsbHubDriver interface can only be called by FDF, but multiple clients might have conflict requests to the interfaces 
+
+2.	ferporta
+	1.	PDEF145131 System Crash Monitor contains memory model dependent #defines
+	2.	DEF144875 E32TEST T_RMDEBUG2_OEM failing on UREL SMP configurations
+
+
+Version 2.00.2104
+=================
+(Made by vfebvre 19/03/2010)
+
+1.	lanerobe
+	1.	DEF144712 Symbian Foundation build error due to missing usb components
+
+
+Version 2.00.2103
+=================
+(Made by vfebvre 18/03/2010)
+
+1.	genwei
+	1.	ou1cimx1#301151: The device under test exits the high-speed host electrical test mode without operator action
+
+
 Version 2.00.2102
 =================
 (Made by vfebvre 17/03/2010)

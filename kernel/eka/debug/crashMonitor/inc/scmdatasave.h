@@ -43,6 +43,7 @@ IMPORT_C TInt64 CrashTime();
 
 
 _LIT8(KKernelHeapChunkName, "ekern.exe::SvHeap");
+_LIT8(KKernelProcessName, "ekern.exe");
 
 
 /**

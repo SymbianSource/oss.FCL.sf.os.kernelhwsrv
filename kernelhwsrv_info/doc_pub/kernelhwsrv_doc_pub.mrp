@@ -1,0 +1,11 @@
+# component name "Kernel and Hardware Services Documentation"
+
+component	kernelhwsrv_doc_pub
+
+source	\sf\os\kernelhwsrv\kernelhwsrv_info\doc_pub\
+
+notes_source	\component_defs\release.src
+
+
+ipr E 
+

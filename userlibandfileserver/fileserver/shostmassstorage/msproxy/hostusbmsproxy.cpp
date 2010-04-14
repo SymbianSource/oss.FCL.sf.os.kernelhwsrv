@@ -40,14 +40,19 @@ CUsbHostMsProxyDrive::~CUsbHostMsProxyDrive()
 TInt CUsbHostMsProxyDrive::InitialiseOffset(TCapsInfo& aCapsInfo)
 	{
 	__MSFNSLOG
-    const TInt KPartitionInfoSize = TMsDataMemMap::KSectorSize;
-	TBuf8<KPartitionInfoSize> partitionInfo;
-	TInt r;
+    RBuf8 partitionInfo;
+    TInt r;
+    TRAP(r, partitionInfo.CreateL(aCapsInfo.iBlockLength));
+    if (r != KErrNone)
+        {
+        return r;
+        }
 
-	r = iUsbHostMsLun.Read(0 , KPartitionInfoSize, (TDes8 &) partitionInfo);
+	r = iUsbHostMsLun.Read(0, aCapsInfo.iBlockLength, partitionInfo);
 	if (r != KErrNone)
         {
 		__PXYPRINT1(_L("!! Reading medium failed with %d !!"), r);
+        partitionInfo.Close();
 		return r;
         }
 	TUint8 *iIntBuf = (TUint8 *) partitionInfo.Ptr();
@@ -104,21 +109,27 @@ TInt CUsbHostMsProxyDrive::InitialiseOffset(TCapsInfo& aCapsInfo)
             TMBRPartitionEntry& partitionEntry = pe[partitionIndex];
 
 			iMsDataMemMap.InitDataArea(partitionEntry.iFirstSector,
-                                       partitionEntry.iNumSectors);
+                                       partitionEntry.iNumSectors,
+                                       aCapsInfo.iBlockLength);
 			__PXYPRINT2(_L("paritioncount = %d defaultpartition = %d"),
 						partitionCount, partitionIndex);
-			__PXYPRINT2(_L("iFirstSector = x%x iNumSectors = x%x"),
+			__PXYPRINT3(_L("iFirstSector = x%x iNumSectors = x%x iSectorSize = x%x"),                         
 						partitionEntry.iFirstSector,
-						partitionEntry.iNumSectors);
+						partitionEntry.iNumSectors,
+                        aCapsInfo.iBlockLength);
 			}
 		else
 			{
             __PXYPRINT(_L("No partition found"));
-			iMsDataMemMap.InitDataArea(0, aCapsInfo.iNumberOfBlocks);
-			__PXYPRINT2(_L("iFirstSector = x%x iNumSectors = x%x"),
-						0, aCapsInfo.iNumberOfBlocks);
+			iMsDataMemMap.InitDataArea(0, aCapsInfo.iNumberOfBlocks, aCapsInfo.iBlockLength);
+			__PXYPRINT3(_L("iFirstSector = x%x iNumSectors = x%x iSectorSize = x%x"),
+						0, 
+                        aCapsInfo.iNumberOfBlocks,
+                        aCapsInfo.iBlockLength);
 			}
 		}
+
+    partitionInfo.Close();
 	return KErrNone;
 	}
 
@@ -558,6 +569,12 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
             {
             c.iMediaAtt |= KMediaAttWriteProtected;
             }
+            
+        static const TInt K512ByteSectorSize = 0x200; // 512
+        if(K512ByteSectorSize != capsInfo.iBlockLength)
+        	{
+	        c.iMediaAtt &= ~KMediaAttFormattable;
+        	}
         __HOSTPRINT4(_L("<<< HOST Caps Block[num=0x%x size=0x%x] Media[size=0x%lx WP=0x%x]"),
                     capsInfo.iNumberOfBlocks, capsInfo.iBlockLength,
 		            caps().iSize, caps().iMediaAtt);
@@ -571,6 +588,7 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
     else
         {
         __HOSTPRINT(_L("<<< HOST Caps Unknown Error"));
+        c.iType = EMediaUnknown;
 		r = KErrUnknown;
         }
 	anInfo = caps.Left(Min(caps.Length(),anInfo.MaxLength()));
@@ -629,7 +647,7 @@ TInt CUsbHostMsProxyDrive::Format(TFormatInfo& aInfo)
 	{
 	__MSFNSLOG
 
-    const TInt KDefaultMaxBytesPerFormat = 0x100 * TMsDataMemMap::KSectorSize;  // 128K
+    const TInt KDefaultMaxBytesPerFormat = 0x100 * iMsDataMemMap.BlockLength();  // 128K
 
     if (aInfo.i512ByteSectorsFormatted < 0)
         return KErrArgument;
@@ -648,14 +666,14 @@ TInt CUsbHostMsProxyDrive::Format(TFormatInfo& aInfo)
         iMsDataMemMap.InitDataArea(caps().iSize);
         }
 
-    TInt64 pos = static_cast<TInt64>(aInfo.i512ByteSectorsFormatted) << TMsDataMemMap::KFormatSectorShift;
+    TInt64 pos = static_cast<TInt64>(aInfo.i512ByteSectorsFormatted) << iMsDataMemMap.FormatSectorShift();
     TInt length = aInfo.iMaxBytesPerFormat;
     TInt r = Erase(pos, length);
 
     if (r == KErrNone)
         {
-        length += TMsDataMemMap::KSectorSize - 1;
-        length >>= TMsDataMemMap::KFormatSectorShift;
+        length += iMsDataMemMap.BlockLength() - 1;
+        length >>= iMsDataMemMap.FormatSectorShift();
         aInfo.i512ByteSectorsFormatted += length;
         }
 

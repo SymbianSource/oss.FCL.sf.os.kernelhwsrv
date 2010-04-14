@@ -129,7 +129,10 @@ void CFsObjectConIx::Remove(CFsObjectCon* aCon)
 			if (newAlloc!=iAllocated)
 				{
 				if (newAlloc)
+				    {
 					iContainers=(CFsObjectCon**)User::ReAlloc(iContainers,newAlloc*sizeof(CFsObjectCon*));
+					__ASSERT_DEBUG(iContainers,User::Panic(_L("FS_LDR panic"),ELdrHeapCorruptionOnRemove));
+				    }
 				else
 					{
 					delete iContainers;
@@ -489,7 +492,10 @@ void CFsObjectIx::Remove(TInt aHandle,TBool aLock)
 		if (newAlloc!=iAllocated)
 			{
 			if (newAlloc)
+			    {
 				iObjects=(SFsObjectIxRec*)User::ReAlloc(iObjects,newAlloc*sizeof(SFsObjectIxRec));
+				__ASSERT_DEBUG(iObjects,User::Panic(_L("FS_LDR panic"),ELdrHeapCorruptionOnRemove));
+			    }
 			else
 				{
 				delete iObjects;
@@ -679,7 +685,10 @@ void CFsObjectCon::Remove(CFsObject *anObj,TBool aLock)
 			if (newAlloc!=iAllocated)
 				{
 				if (newAlloc)
+				    {
 					iObjects=(CFsObject**)User::ReAlloc(iObjects,newAlloc*sizeof(CFsObject*));
+					__ASSERT_DEBUG(iObjects,User::Panic(_L("FS_LDR panic"),ELdrHeapCorruptionOnRemove));
+				    }
 				else
 					{
 					delete iObjects;

@@ -71,7 +71,7 @@ private:
 	void TestGetXipLibrariesList();
 	void TestGetListInvalidData();
 
-	void DoTestGetThreadList(const TBool aShouldPass, const Debug::TListScope aListScope, const TUint64 aTargetId=0);
+	TBool DoTestGetThreadList(const TBool aShouldPass, const Debug::TListScope aListScope, const TUint64 aTargetId=0);
 	void DoTestGetCodeSegsList(const TBool aShouldPass, const Debug::TListScope aListScope, const TUint64 aTargetId=0);
 
 	void DoGetList(const Debug::TListId aListId, const Debug::TListScope aListScope, RBuf8& aBuffer, TUint32& aSize, const TUint64 aTargetId=0);

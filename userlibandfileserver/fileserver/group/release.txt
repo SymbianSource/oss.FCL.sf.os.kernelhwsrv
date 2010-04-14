@@ -1,3 +1,19 @@
+Version 2.00.2050
+=================
+(Made by vfebvre 24/03/2010)
+
+1.	fagortz
+	1.	DEF145067: TTPA-83EAYU: Partition handling for USB drives with 4K block size is incorrect
+
+
+Version 2.00.2049
+=================
+(Made by vfebvre 22/03/2010)
+
+1.	michcox
+	1.	DEF145080 SMAD-83NJMP: File server does not check return result of some User::ReAlloc()'s
+
+
 Version 2.00.2048
 =================
 (Made by vfebvre 15/03/2010)

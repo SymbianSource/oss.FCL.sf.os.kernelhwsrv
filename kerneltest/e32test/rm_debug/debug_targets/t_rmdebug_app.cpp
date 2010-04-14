@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -352,6 +352,8 @@ void PrintHelp()
 
 TInt E32Main()
 	{
+		
+	RDebug::Printf("t_rmdebug_app tid=%d,pid=%d", I64LOW(RThread().Id().Id()), I64LOW(RProcess().Id().Id()) ) ;
 	// setup heap checking and clean up trap
 	__UHEAP_MARK;
 	CTrapCleanup* cleanup=CTrapCleanup::New();

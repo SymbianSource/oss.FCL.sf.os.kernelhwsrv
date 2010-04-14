@@ -41,6 +41,8 @@ const TInt KEventUsbOtgBadDeviceDetached 		= -6674;
 
 const TInt KErrUsbOtgBadState					= -6675;
 
+const TInt KErrUsbOtgInOPTTestingMode              = -6676;
+
 const TInt KErrUsbOtgStackNotStarted			= -6680;
 const TInt KErrUsbOtgVbusAlreadyRaised			= -6681;
 const TInt KErrUsbOtgSrpForbidden				= -6682;
