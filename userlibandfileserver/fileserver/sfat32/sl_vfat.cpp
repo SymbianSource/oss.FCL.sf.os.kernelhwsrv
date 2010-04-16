@@ -30,10 +30,14 @@ const TUint8 KLeadingE5Replacement = 0x05;
 const TUint KExtendedCharStart=0x80;
 const TUint KExtendedCharEnd=0xff;
 
-LOCAL_C TBool IsLegalChar(TChar aCharacter,TBool aAllowWildChars,TBool aUseExtendedChars=EFalse,TBool aInScanDrive=EFalse)
-//
-// Returns ETrue if aCharacter is legal inside a dos filename
-//
+const TUint KMaxVFatEntries = 21; ///< Max possible number of entries in the VFAT entryset
+
+
+//-----------------------------------------------------------------------------
+/**
+    Returns ETrue if aCharacter is legal inside a dos filename
+*/
+static TBool IsLegalChar(TChar aCharacter,TBool aAllowWildChars,TBool aUseExtendedChars=EFalse,TBool aInScanDrive=EFalse)
 	{
 	if ((aCharacter==KMatchOne) || (aCharacter==KMatchAny))
 		return(aAllowWildChars);
@@ -46,7 +50,8 @@ LOCAL_C TBool IsLegalChar(TChar aCharacter,TBool aAllowWildChars,TBool aUseExten
 	return LocaleUtils::IsLegalShortNameCharacter(aCharacter,aUseExtendedChars);
 	}
 
-LOCAL_C void ReplaceFirstCharacterIfClashesWithE5L(TDes8& aShortName)
+//-----------------------------------------------------------------------------
+static void ReplaceFirstCharacterIfClashesWithE5L(TDes8& aShortName)
 	{
 	if (0 < aShortName.Length() && aShortName[0] == KEntryErasedMarker)
 		{
@@ -54,7 +59,8 @@ LOCAL_C void ReplaceFirstCharacterIfClashesWithE5L(TDes8& aShortName)
 		}
 	}
 
-LOCAL_C void ReplaceIllegalCharactersL(TDes& aLongName, TUint aCharacterToReplaceWith)
+//-----------------------------------------------------------------------------
+static void ReplaceIllegalCharactersL(TDes& aLongName, TUint aCharacterToReplaceWith)
 	{
 	TBool alreadyFoundExtensionDelimiter=EFalse;
 
@@ -130,10 +136,11 @@ LOCAL_C void ReplaceIllegalCharactersL(TDes& aLongName, TUint aCharacterToReplac
 		}
 	}
 
+//-----------------------------------------------------------------------------
+/**
+    Create a legal shortname from aLongName
+*/
 TShortName DoGenerateShortNameL(const TDesC& aLongName,TInt& aNum,TBool aUseTildeSelectively)
-//
-// Create a legal shortname from aLongName
-//
 	{
 
 	TFileName longName(aLongName);
@@ -259,7 +266,7 @@ TShortName DoGenerateShortNameL(const TDesC& aLongName,TInt& aNum,TBool aUseTild
 	return shortName;
 	}
 
-
+//-----------------------------------------------------------------------------
 /**
 Check whether a Dos name is legal or not.
 
@@ -271,7 +278,6 @@ Check whether a Dos name is legal or not.
 
 @return ETrue if the name is a legal DOS one.
 */
-
 static TBool DoCheckLegalDosName(const TDesC& aName, TBool anAllowWildCards, TBool aUseExtendedChars, TBool aInScanDrive, TBool aAllowLowerCase, TBool aIsForFileCreation)
 	{
     const TInt count=aName.Length();
@@ -388,6 +394,7 @@ static TBool DoCheckLegalDosName(const TDesC& aName, TBool anAllowWildCards, TBo
 	return ETrue;
 	}
 
+//-----------------------------------------------------------------------------
 /**
     Check whether a Dos name is legal or not. Unicode version
     parameters and return value absolutely the same as in DoCheckLegalDosName()
@@ -395,18 +402,19 @@ static TBool DoCheckLegalDosName(const TDesC& aName, TBool anAllowWildCards, TBo
 TBool IsLegalDosName(const TDesC16& aName, TBool anAllowWildCards, TBool aUseExtendedChars, TBool aInScanDrive, TBool aAllowLowerCase, TBool aIsForFileCreation)
 	{
 
-	__PRINT(_L("IsLegalDosName 16"));
+	//__PRINT(_L("IsLegalDosName 16"));
 
     return DoCheckLegalDosName(aName, anAllowWildCards, aUseExtendedChars, aInScanDrive, aAllowLowerCase, aIsForFileCreation);	
 	}
 
+//-----------------------------------------------------------------------------
+/**
+    Returns ETrue and the entryPos of aName if found or EFalse
+*/
 TBool CFatMountCB::FindShortNameL(const TShortName& aName,TEntryPos& anEntryPos)
-//
-// Returns ETrue and the entryPos of aName if found or EFalse
-//
 	{
 	
-	__PRINT(_L("VFAT::CFatMountCB::FindShortNameL"));	
+	__PRINT(_L("CFatMountCB::FindShortNameL"));	
 	TFatDirEntry fatEntry;
 	TInt count=0;
 	FOREVER
@@ -428,27 +436,27 @@ TBool CFatMountCB::FindShortNameL(const TShortName& aName,TEntryPos& anEntryPos)
 	return EFalse;
 	}
 	
-TBool CFatMountCB::IsUniqueNameL(const TShortName& aName,TInt aDirCluster)
-//
-// Returns ETrue if aName is unique, EFalse if a matching name is found.
-//
+//-----------------------------------------------------------------------------
+/**
+    Returns ETrue if aName is unique, EFalse if a matching name is found.
+*/
+TBool CFatMountCB::IsUniqueNameL(const TShortName& aName, TUint32 aDirCluster)
 	{
 
-	__PRINT(_L("VFAT::CFatMountCB::IsUniqueNameL"));	
+	__PRINT(_L("CFatMountCB::IsUniqueNameL"));	
 	TEntryPos entryPos(aDirCluster,0);
-	if (FindShortNameL(aName,entryPos))
-		return(EFalse);
-	return(ETrue);
+	return ! FindShortNameL(aName,entryPos);
 	}
 
+//-----------------------------------------------------------------------------
+/**
+    A legal dos name has been typed that clashes with a computer generated shortname
+    Change the shortname to something else.
+*/
 void CFatMountCB::ReplaceClashingNameL(const TShortName& aNewName,const TEntryPos& anEntryPos)
-//
-// A legal dos name has been typed that clashes with a computer generated shortname
-// Change the shortname to something else.
-//
 	{
 
-	__PRINT(_L("VFAT::CFatMountCB::ReplaceClashingNameL"));	
+	__PRINT(_L("CFatMountCB::ReplaceClashingNameL"));	
 	TFatDirEntry entry;
 	ReadDirEntryL(anEntryPos,entry);
 	__ASSERT_ALWAYS(entry.IsEndOfDirectory()==EFalse,User::Leave(KErrCorrupt));
@@ -469,14 +477,21 @@ void CFatMountCB::ReplaceClashingNameL(const TShortName& aNewName,const TEntryPo
 		}
 	}
 
-TBool CFatMountCB::GenerateShortNameL(TInt aDirCluster,const TDesC& aName,TShortName& aGeneratedName, TBool aForceRandomize)
-//
-// Generate a legal dos filename as an alias for aName.
-// Returns ETrue if aName is a legal dos name.
-//
+/**
+    Generate a legal dos filename as an alias for aName.
+    @return ETrue if aName is a legal dos name.
+*/
+TBool CFatMountCB::GenerateShortNameL(TUint32 aDirCluster,const TDesC& aName,TShortName& aGeneratedName, TBool aForceRandomize)
 	{
 
-	__PRINT(_L("VFAT::CFatMountCB::GenerateShortNameL"));
+	__PRINT1(_L("CFatMountCB::GenerateShortNameL() cl:%d"), aDirCluster);
+
+    if(!ClusterNumberValid(aDirCluster))
+        {
+        ASSERT(0);
+        User::Leave(KErrCorrupt);
+        }
+
 	// Given the long file-name "ABCDEFGHI.TXT", EPOC used to generate short 
 	// file-names in the following pecking order:
 	//     "ABCDEFGH.TXT",
@@ -546,142 +561,316 @@ TBool CFatMountCB::GenerateShortNameL(TInt aDirCluster,const TDesC& aName,TShort
 
 	}
 
-void TFatDirEntry::InitializeAsVFat(TUint8 aCheckSum)
-//
-// Initialize a FAT entry as a VFAT filename
-//
-	{
 
-	Mem::Fill(this,sizeof(SFatDirEntry),0xFF);
+//-----------------------------------------------------------------------------
+/**
+    Write up to KMaxVFatEntryName unicode chars from aName to the entry
+    @param  aName       long file name part that will be converted into the VFAT entryset
+    @param  aLen        length of the remaining name
+    @param  aCheckSum   DOS entry name checksum.
+*/
+void TFatDirEntry::SetVFatEntry(const TDesC& aName, TUint aLen, TUint8 aCheckSum)
+	{
+    //-- LFN in the last entry must be padded with FFs
+    Mem::Fill(iData,sizeof(iData),0xFF);
+
+    //-- initialise some VFAT entry specific fields
 	iData[0x0B]=0x0F;
 	iData[0x0C]=0x00; iData[0x0D]=aCheckSum;
 	iData[0x1A]=0x00; iData[0x1B]=0x00;
-	}
-
-void TFatDirEntry::SetVFatEntry(const TDesC& aName,TInt aLen)
-//
-// Write up to KMaxVFatEntryName unicode chars from aName to the entry
-//
-	{
 
 	TInt rem=aName.Length()-aLen;
 	TPtrC section(aName.Ptr()+aLen,Min(rem,KMaxVFatEntryName));
 	TBuf16<KMaxVFatEntryName> buf16;
 	buf16.Copy(section);
+	
 	if (rem<KMaxVFatEntryName)
 		{
 		rem++;
 		buf16.ZeroTerminate();
 		buf16.SetLength(rem); // Zero termination doesn't increase the buf length
 		}
+
 	TUint8 orderNo=(TUint8)(aLen/KMaxVFatEntryName+1);
 	TInt s=Min(rem,5);
 	Mem::Copy(&iData[0x01],buf16.Ptr(),s*2);//Copy up to 10 bytes of buf16 into iData
+	
 	TInt offset=s;
 	rem-=s;
 	s=Min(rem,6);
 	Mem::Copy(&iData[0x0E],buf16.Ptr()+offset,s*2);
+	
 	offset+=s;
 	rem-=s;
+	
 	s=Min(rem,2);
 	Mem::Copy(&iData[0x1C],buf16.Ptr()+offset,s*2);
 	rem-=s;
+
 	if (rem==0)
 		orderNo|=0x40;
+
 	iData[0]=orderNo;
 	}
 
-void TFatDirEntry::ReadVFatEntry(TDes16& aBuf) const
-//
-// Read KMaxVFatEntryName unicode chars from the entry
-//
-	{
 
+//-----------------------------------------------------------------------------
+/**
+    Read KMaxVFatEntryName unicode chars from the entry
+*/
+void TFatDirEntry::ReadVFatEntry(TDes16& aBuf) const
+	{
 	aBuf.SetLength(KMaxVFatEntryName);
 	Mem::Copy(&aBuf[0],&iData[0x01],5*2);
 	Mem::Copy(&aBuf[5],&iData[0x0E],6*2);
 	Mem::Copy(&aBuf[11],&iData[0x1C],2*2);
 	}
 
-void CFatMountCB::WriteDirEntryL(TEntryPos& aPos,const TFatDirEntry& aFatDirEntry,const TDesC& aLongName)
-//
-// Write a VFAT directory entry to disk at position aPos - leave aPos refering to the dos entry
-// Assumes sufficient space has been created for it by AddDirEntry.
-//
-	{
+//-----------------------------------------------------------------------------
+/**
+    Write a VFAT directory entry set to disk at position aPos - leave aPos refering to the dos entry
+    Assumes sufficient space has been created for it by AddDirEntry.
+    For Rugged FAT mode bulk writing of the whole entryset is OK. If the entryset fits into media atomic write unit, the 
+    write is transactional anyway. if the entryset is split between media atomic write units, the part of it with the DOS
+    entry is written last; if this write operation fails, the artifact would be just several orphaned VFAT entries; 
 
-	__PRINT(_L("VFAT::CFatMountCB::WriteDirEntryL"));	
+    @param  aPos            in: specifies the entryste start position. out: points to the last (DOS) entry in the created entryset
+    @param  aFatDirEntry    aDosEntry DOS entry
+    @param  aLongName       VFAT entry long name
+*/
+void CFatMountCB::WriteDirEntryL(TEntryPos& aPos, const TFatDirEntry& aDosEntry, const TDesC& aLongName)
+    {
+    __PRINT2(_L("CFatMountCB::WriteDirEntryL() cl:%d, pos:%d"), aPos.Cluster(), aPos.Pos());   
 	__ASSERT_DEBUG(aLongName.Length(),Fault(EVFatNoLongName));
-	TEntryPos startPos(aPos.iCluster,aPos.iPos);
-	TUint8  localBuf[KDefaultSectorSize];
-	TUint8 cksum=CalculateShortNameCheckSum(aFatDirEntry.Name());
-	TInt numEntries=NumberOfVFatEntries(aLongName.Length())-1; // Excluding dos entry
-	// see if all entries written to one sector
-	// single sector writes not supported if sector size>default size 
-	TInt dosOffset=numEntries<<KSizeOfFatDirEntryLog2;
-	TInt absolutePos=(aPos.iCluster<<ClusterSizeLog2())+ClusterRelativePos(aPos.iPos);
-	TBool isSameSector=(((absolutePos^(absolutePos+dosOffset))>>SectorSizeLog2())==0 && ((TUint)(1<<SectorSizeLog2())<=KDefaultSectorSize));
-	TFatDirEntry vFatEntry;
-	vFatEntry.InitializeAsVFat(cksum);
-	TInt offset=0;
+
+    //-- scratch buffer for whole VFAT entryset. Max number of entries in it is 21 entry or 672 bytes. 
+    //-- in the worst case the entryset can span across 3 clusters (512 bytes per cluster)
+    //-- Using the scratch buffer is not ideal, but write-back directory cache isn't in place yet
+    const TUint KBufSize = 680;
+    TUint8  scratchBuf[KBufSize];
+
+    const TUint8    cksum=CalculateShortNameCheckSum(aDosEntry.Name());
+    TUint           numEntries=NumberOfVFatEntries(aLongName.Length())-1; // Excluding dos entry
+
+    ASSERT(KBufSize >= ((numEntries+1)<<KSizeOfFatDirEntryLog2));
+    TEntryPos startPos;
+
+    for(;;)
+        {
+        TInt posInBuf = 0;
+        startPos = aPos;
+        TBool movedCluster = EFalse;
+
+        TUint nRemLen = KMaxVFatEntryName*(numEntries-1);
+
+        while(numEntries)
+            {
+            TFatDirEntry* pEntry = (TFatDirEntry*)(&scratchBuf[posInBuf]);
+            
+            pEntry->SetVFatEntry(aLongName, nRemLen, cksum);  
+
+            posInBuf += KSizeOfFatDirEntry;
+            MoveToNextEntryL(aPos);
+
+            numEntries--;
+            movedCluster = (startPos.Cluster() != aPos.Cluster()); //-- if moved to another cluser, need to flush buffer
+            
+            if(!numEntries || movedCluster)
+                break; //-- VFAT entryset is completed
+            
+            ASSERT(nRemLen >= (TUint)KMaxVFatEntryName);
+            nRemLen -= KMaxVFatEntryName;
+            }
+    
+        if(movedCluster)
+            {
+            DirWriteL(startPos, TPtrC8(&scratchBuf[0], posInBuf));
+            continue;
+            }    
+
+        if(!numEntries)
+            {//-- need to append DOS entry
+            Mem::Copy(&scratchBuf[posInBuf], &aDosEntry, KSizeOfFatDirEntry);    
+            posInBuf+= KSizeOfFatDirEntry;
+            DirWriteL(startPos, TPtrC8(&scratchBuf[0], posInBuf));
+            break;
+            }
+    
+        }//for(;;)
+    }
+
+
+
+//---------------------------------------------------------------------------------
+
+void CFatMountCB::DoEraseEntrySetChunkL(const TEntrySetChunkInfo& aEntrySetChunk)
+    {
+
+    //-- scratch buffer for whole VFAT entryset. Max number of entries in it is 21 entry or 672 bytes. 
+    //-- in the worst case the entryset can span across 3 clusters (512 bytes per cluster)
+    //-- Using the scratch buffer is not ideal, but write-back directory cache isn't in place yet
+
+    const TUint KBufSize = 680;
+    TBuf8<KBufSize> scratchBuf;
+
+    TUint numEntries = aEntrySetChunk.iNumEntries;
+
+    ASSERT(numEntries >0 && numEntries <= KMaxVFatEntries);
+    const TUint32 KChunkLen = numEntries << KSizeOfFatDirEntryLog2;
+
+    DirReadL(aEntrySetChunk.iEntryPos, KChunkLen, scratchBuf);
+    
+    TInt posInBuf = 0;
 	while (numEntries--)
 		{
-		vFatEntry.SetVFatEntry(aLongName,KMaxVFatEntryName*numEntries);//	KMaxVFatEntryName=13
-		if(isSameSector)
-			{
-			Mem::Copy(&localBuf[offset],&vFatEntry,KSizeOfFatDirEntry);
-			offset+=KSizeOfFatDirEntry;
-			MoveToNextEntryL(aPos);
-			}
-		else
-			{
-			WriteDirEntryL(aPos,vFatEntry);
-			MoveToNextEntryL(aPos);
-			}
-		}
-	if(isSameSector)
-		{
-		Mem::Copy(&localBuf[offset],&aFatDirEntry,KSizeOfFatDirEntry);
-		
-        //-- use special interface to access FAT directory file
-        DirWriteL(startPos,TPtrC8(&localBuf[0],dosOffset+KSizeOfFatDirEntry));
+        TFatDirEntry* pEntry = (TFatDirEntry*)(scratchBuf.Ptr()+posInBuf);
+        pEntry->SetErased();
+        posInBuf += KSizeOfFatDirEntry;
         }
-	else
-		WriteDirEntryL(aPos,aFatDirEntry);
-	}
+            
+    DirWriteL(aEntrySetChunk.iEntryPos, scratchBuf);
+    }
 
+//---------------------------------------------------------------------------------
+/**
+    Erase whole VFAT entryset. 
+    For Rugged FAT the situation is more complicated: we need firstly delete the DOS entry _atomically_ i.e. if this operation fails,
+    the whole VFAT entryset won't be broken.  Deleting VFAT entries doesn't require the atomic media writes; DOS entry contains necessary
+    information about data stream.
+    
+    @param aPos         position of the entryset start in the directory.
+    @param aFirstEntry  first entry in the entryset, it can be DOS entry
+    
+*/
 void CFatMountCB::EraseDirEntryL(TEntryPos aPos,const TFatDirEntry& aFirstEntry)
-//
-// Mark all entries in a VFat directory entry as erased
-//
 	{
-	__PRINT(_L("VFAT::CFatMountCB::EraseDirEntryL"));
-	TInt numEntries=0;
+    __PRINT2(_L("CFatMountCB::EraseDirEntryL() cl:%d, offset:%d"), aPos.Cluster(), aPos.Pos());
+
+    TUint numEntries=0;
 	if (aFirstEntry.IsVFatEntry())
+        {
 		numEntries=aFirstEntry.NumFollowing();
-	if(IsRuggedFSys()&&numEntries)
-		{
-		TInt count=numEntries;
-		TEntryPos pos=aPos;
-		while(count--)
-			MoveToNextEntryL(pos);
-		EraseDirEntryL(pos);
-		numEntries--;
+        numEntries++; //-- take into account the last DOS entry
 		}
-	FOREVER
-		{
+    else
+        {//-- we are deleting a single DOS entry. This is an atomic operation.
 		EraseDirEntryL(aPos);
-		if (!numEntries--)
-			break;
+        return;        
+        }
+
+    ASSERT(numEntries > 1 && numEntries <= KMaxVFatEntries);
+
+    TEntrySetChunkInfo chunksInfo[TEntrySetChunkInfo::KMaxChunks];
+
+    //-- 1. check if the entryset fits into a unit of write ganularity. This will be 1 sector for rugged FAT or 1 cluster otherwise
+
+    TUint32 MaxWriteGranularityLog2;
+    
+    if(IsRuggedFSys())
+        {
+        MaxWriteGranularityLog2 = AtomicWriteGranularityLog2();
+        }
+    else if(IsRootDir(aPos))
+        {//-- root dir. for FAT12/16 is a special case, it is not made of clusters. it's unit is 1 sector.
+        MaxWriteGranularityLog2 = KDefSectorSzLog2;
+        }
+    else
+        {//-- minimal unit size will be a cluster
+        MaxWriteGranularityLog2 = ClusterSizeLog2();
+        }
+    
+
+        {
+        const TUint64 KEntrySetStartPos = MakeLinAddrL(aPos);
+        const TUint64 KEntrySetLogicalEndPos = KEntrySetStartPos + (numEntries << KSizeOfFatDirEntryLog2);
+ 
+        const TUint64 KBlockEndPos = ((KEntrySetLogicalEndPos-1) >> MaxWriteGranularityLog2) << MaxWriteGranularityLog2;
+        const TUint64 KBlockStartPos = (KEntrySetStartPos >> MaxWriteGranularityLog2) << MaxWriteGranularityLog2;
+        
+        if(KBlockEndPos == KBlockStartPos)
+            {//-- whole entryet is in the same block; the whole entryset erase operation will be atomic for Rugged/non-rugged FAT
+            chunksInfo[0].iEntryPos = aPos;
+            chunksInfo[0].iNumEntries = numEntries;
+            DoEraseEntrySetChunkL(chunksInfo[0]);
+            return;
+            }
+
+        }
+
+    //-- the entryset is split on max. 3 parts between units of write granularity (see MaxWriteGranularityLog2).
+    ASSERT(numEntries > 1 && numEntries <= KMaxVFatEntries);
+
+    TInt cntChunk = 1; //-- there is at least 1 entries chunk
+    TEntrySetChunkInfo* pChunkInfo = chunksInfo;
+
+    //-- collect information about dir. entry chunks that reside in different units of write granularity
+    for(;;)
+        {
+        TBool movedUnit = EFalse;
+
+        pChunkInfo->iEntryPos   = aPos;
+        pChunkInfo->iNumEntries = 0;
+        
+        const TUint64 KChunkStartPos = MakeLinAddrL(aPos);
+        const TUint64 KChunkBlockStartPos = (KChunkStartPos >> MaxWriteGranularityLog2) << MaxWriteGranularityLog2;
+        const TUint64 KChunkBlockEndPos   = (KChunkBlockStartPos-1) + (1<<MaxWriteGranularityLog2);
+
+        while(numEntries)
+            {
+            pChunkInfo->iNumEntries++;
 		MoveToNextEntryL(aPos);
-		}
-	}
+            
+            numEntries--;
+            const TUint64 currPos = MakeLinAddrL(aPos);
+            movedUnit = !(currPos >= KChunkBlockStartPos && currPos <= KChunkBlockEndPos); 
 
+            if(!numEntries || movedUnit)
+                {
+                break; 
+                }
 
+            }
+
+        if(movedUnit && numEntries)
+            {//-- move to the next unit of write granularity
+            ++pChunkInfo;
+            ++cntChunk;
+            ASSERT(cntChunk <= TEntrySetChunkInfo::KMaxChunks);
+            continue;
+            }    
+
+        
+        ASSERT(!numEntries);
+        break;
+        }
+
+    //-- now do bulk deletion, write data based on collected entries chunks.
+    ASSERT(cntChunk > 0);
+ 
+    //-- if it is a rugged FAT, we need to delete DOS entry first; it will be in the last chunk.
+    if(IsRuggedFSys())
+        {
+        const TInt dosEntryChunk = cntChunk-1;
+        DoEraseEntrySetChunkL(chunksInfo[dosEntryChunk]);
+        cntChunk--;
+        }
+
+    //-- it is also possible to joint entryset chunks together here if they belong to the same cluster. 
+    //-- the atomic write here is not required. 
+
+    //-- erase the rest of entries in reamining chunks.
+    for(TInt i=0; i<cntChunk; ++i)
+        {
+        DoEraseEntrySetChunkL(chunksInfo[i]);
+        }
+
+}
+
+//---------------------------------------------------------------------------------
+/**
+    Convert the volume label using the algorithm specified in the current locale-DLL.
+*/
 void  LocaleUtils::ConvertFromUnicodeL(TDes8& aForeign, const TDesC16& aUnicode, TFatUtilityFunctions::TOverflowAction aOverflowAction)
-//
-// Convert the volume label using the algorithm specified in the current locale-DLL.
-//
 	{
 	if(aOverflowAction == TFatUtilityFunctions::EOverflowActionLeave)
 		{
@@ -692,11 +881,11 @@ void  LocaleUtils::ConvertFromUnicodeL(TDes8& aForeign, const TDesC16& aUnicode,
 		GetCodePage().ConvertFromUnicodeL(aForeign, aUnicode, TCodePageUtils::EOverflowActionTruncate);
 		}
 	}
-
+//---------------------------------------------------------------------------------
+/**
+    Convert the volume label using the algorithm specified in the current locale-DLL.
+*/
 void  LocaleUtils::ConvertToUnicodeL(TDes16& aUnicode, const TDesC8& aForeign, TFatUtilityFunctions::TOverflowAction aOverflowAction)
-//
-// Convert the volume label using the algorithm specified in the current locale-DLL.
-//
 	{
 	if(aOverflowAction == TFatUtilityFunctions::EOverflowActionLeave)
 		{
@@ -708,10 +897,20 @@ void  LocaleUtils::ConvertToUnicodeL(TDes16& aUnicode, const TDesC8& aForeign, T
 		}
 	}
 
+//---------------------------------------------------------------------------------
+/**
+    Convert the volume label using the algorithm specified in the current locale-DLL.
+*/
 TBool LocaleUtils::IsLegalShortNameCharacter(TUint aCharacter,TBool aUseExtendedChars)
-//
-// Convert the volume label using the algorithm specified in the current locale-DLL.
-//
 	{
 	return GetCodePage().IsLegalShortNameCharacter(aCharacter, aUseExtendedChars);
 	}
+
+
+
+
+
+
+
+
+

@@ -151,7 +151,7 @@ public:
 	IMPORT_C virtual TMMCErr AcquireStackSM();
 	IMPORT_C virtual TMMCErr CIMReadWriteBlocksSM();
 	IMPORT_C virtual DMMCSession* AllocSession(const TMMCCallBack& aCallBack) const;
-
+	
 	virtual void AddressCard(TInt aCardNumber) = 0;
 
 	inline TSDCardArray& CardArray() const;
@@ -175,8 +175,10 @@ protected:
 
 private:
 	TInt iSpare;
+protected:
 	enum TSDCardType {ESDCardTypeUnknown, ESDCardTypeIsMMC, ESDCardTypeIsSD};
 	TSDCardType iCxCardType; 			// Used when detecting whether an SD Memory card is present.
+private:
 	TUint8 iACMD22[KSDACMD22BlockLen];
 
 private:
@@ -185,7 +187,11 @@ private:
     IMPORT_C virtual void Dummy1();
     IMPORT_C virtual void Dummy2();
     IMPORT_C virtual void Dummy3();
-    IMPORT_C virtual void Dummy4();
+
+public: 
+    IMPORT_C virtual DSDStack::TSDCardType CardType(TInt aSocket, TInt aCardNumber);
+
+private:    
     //
     // Reserved members to maintain binary compatibility
     TInt iReserved[68];

@@ -102,28 +102,23 @@ GLDEF_C TInt E32Main()
 
 	test.Next(_L("Find internal drive"));
 	
-	TDriveInfoV1Buf driveInfoBuf;
-	UserHal::DriveInfo(driveInfoBuf);
-	TDriveInfoV1& driveInfo = driveInfoBuf();
-
-	TInt drive = 0;
-	for ( ; drive < driveInfo.iTotalSupportedDrives; ++drive)
+	TInt drive;
+	for (drive = 0; drive < KMaxLocalDrives; drive++)
 		{
 		TBool changedFlag;
-		theInternalDrive.Connect(drive, changedFlag);
+		if (theInternalDrive.Connect(drive, changedFlag) != KErrNone)
+			continue;
 
 		TLocalDriveCapsV2 info;
 		TPckg<TLocalDriveCapsV2> infoPckg(info);
 		theInternalDrive.Caps(infoPckg);
 
 		if (info.iType == EMediaRam)
-			{
-			break;
-			}
+			break;						// found it
 
 		theInternalDrive.Disconnect();
 		}
-	test(drive < driveInfo.iTotalSupportedDrives);
+	test(drive < KMaxLocalDrives);		// iterated over all, found none
 
 	test.Next(_L("Capabilities"));
 	TLocalDriveCapsV2 info;

@@ -1,3 +1,201 @@
+Version 2.00.3020
+=================
+(Made by vfebvre 08/03/2010)
+
+1.	niccox
+	1.	PDEF144805 Transcend flash drive not recognised 
+
+2.	dlyokhin
+	1.	PDEF144751 FAT: unable to mount volume larger than 1TB  
+
+
+Version 2.00.3019
+=================
+(Made by vfebvre 04/03/2010)
+
+1.	dlyokhin
+	1.	PDEF144780  exFAT: T_chkUID test failure  
+
+
+Version 2.00.3018
+=================
+(Made by vfebvre 03/03/2010)
+
+1.	niccox
+	1.	DEF144738 Initialisation of MaxLun if USB device stalls request
+
+
+Version 2.00.3017
+=================
+(Made by vfebvre 02/03/2010)
+
+1.	dlyokhin
+	1.	DEF144683 TUint32 overflow in CFatFileCB::DoExpandFileL()
+
+
+Version 2.00.3016
+=================
+(Made by vfebvre 26/02/2010)
+
+1.	famustaf
+	1.	PDEF144638 Missing Trap in a non-leaving function.
+
+2.	frhofman
+	1.	DEF144651: Revert IsFileOpen() behaviour to perform file existance check
+
+3.	dlyokhin
+	1.	PDEF144599 FAT leaf directory cache should be enabled by default  
+	2.	DEF144629 Better checks in CFat16FixedCache code  
+
+
+Version 2.00.3015
+=================
+(Made by vfebvre 25/02/2010)
+
+1.	niccox
+	1.	DEF144571 remove redundant bootsector code from smassstorage
+
+
+Version 2.00.3014
+=================
+(Made by vfebvre 23/02/2010)
+
+1.	jsucksmi
+	1.	PDEF144223:Emulated removable drive X is not present in tb10.1(MSF00326) and tb9.2(1014) 
+
+
+Version 2.00.3013
+=================
+(Made by vfebvre 19/02/2010)
+
+1.	dlyokhin
+	1.	DEF144487: FAT FS should allow skipping file timestamp update on data flushing
+
+
+Version 2.00.3012
+=================
+(Made by vfebvre 18/02/2010)
+
+1.	famustaf
+	1.	DEF144437 Optimise TParseBase::AddDir() to not use TFileName
+
+2.	migubarr
+	1.	PDEF144408: File Server request cache is not big enough for S60 
+
+
+Version 2.00.3011
+=================
+(Made by vfebvre 11/02/2010)
+
+1.	dlyokhin
+	1.	PDEF144357 VFAT interoperability: LFN entries padding is wrong
+
+
+Version 2.00.3010
+=================
+(Made by vfebvre 09/02/2010)
+
+1.	kaduan
+	1.	DEF144138:  Unwanted directory cache change caused performance regression 
+
+2.	dlyokhin
+	1.	PDEF144270 potential memory leak in TFindFile::FindWildByDir()  
+
+
+Version 2.00.3009
+=================
+(Made by vfebvre 05/02/2010)
+
+1.	niccox
+	1.	PDEF144293 Add ModeSense10 support to USB MS Client
+
+
+Version 2.00.3008
+=================
+(Made by vfebvre 03/02/2010)
+
+1.	migubarr
+	1.	PDEF144173: Small FAT32 partitions on large media can sometimes be formatted incorrectly 
+
+
+Version 2.00.3007
+=================
+(Made by vfebvre 28/01/2010)
+
+1.	famustaf
+	1.	DEF144032 Change tests in t_fman to use __E32TEST_EXTENSION__
+
+2.	hengrant
+	1.	DEFECT FIX: DEF144005 New Memory & File Server Coverity Defects
+		Fix 3 Coverity Issues
+
+
+Version 2.00.3006
+=================
+(Made by vfebvre 21/01/2010)
+
+1.	dlyokhin
+	1.	PDEF143792 FAT: renaming many files in a directory corrupts short file names  
+
+
+Version 2.00.3005
+=================
+(Made by vfebvre 19/01/2010)
+
+1.	necliffo
+	1.	DEF143911 WDP: T_locate fails on VASCO 
+
+
+Version 2.00.3004
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	niccox
+	1.	PDEF143832 t_falsespace should not be run on drive if media type is EMediaRAM
+
+
+Version 2.00.3003
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	niccox
+	1.	DEF143785 USB Host MS does not handle non-mass-storage drive correctly
+	2.	MINOR_CHANGE hostusbmsapp support for different screen sizes
+
+2.	kaduan
+	1.	PDEF143820: File system caching should be turned off on the S60 emulator 
+
+3.	migubarr
+	1.	PDEF143787: t_ms_mountstart fails on H4 and VASCO
+
+
+Version 2.00.3002
+=================
+(Made by vfebvre 13/01/2010)
+
+1.	kaduan
+	1.	PDEF143778 T_HANDSHARE failed on NE1_TB_ARMV5.UDEB.SMPPAGE image
+
+2.	dlyokhin
+	1.	DEF143404 FAT: deleting VFAT entryset is not optimal
+
+
+Version 2.00.3001
+=================
+(Made by vfebvre 12/01/2010)
+
+1.	niccox
+	1.	MINOR_CHANGE usbtestclient corrections
+
+
+Version 2.00.3000
+=================
+(Made by vfebvre 07/01/2010)
+
+1.	niccox
+	1.	DEF143508 Host USB ModeSense10 command does not decode ModeDataLength
+
+
 Version 2.00.2026
 =================
 (Made by vfebvre 17/12/2009)

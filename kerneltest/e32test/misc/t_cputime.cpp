@@ -228,6 +228,7 @@ void TestThreadCpuTime()
 	test(s==KRequestPending);
 
 	TTimeIntervalMicroSeconds time, time2;
+	TUint us;
 	
 	// Test time is initially zero
 	FailIfError(thread.GetCpuTime(time));
@@ -237,13 +238,22 @@ void TestThreadCpuTime()
 	thread.Resume();
 	User::After(KShortWait);
 	FailIfError(thread.GetCpuTime(time));
+	us = I64LOW(time.Int64());
+	test.Printf(_L("Time %dus\n"), us);
 	test(time < KTolerance); // wait happens in less than 0.5ms
 
 	// Test increases when thread allowed to run
 	(threadParam.iSem).Signal();
 	User::After(KShortWait);
 	FailIfError(thread.GetCpuTime(time));
+	us = I64LOW(time.Int64());
+	test.Printf(_L("Time %dus\n"), us);
 	test(time > (KShortWait - KTolerance));
+	User::After(KLongWait);
+	FailIfError(thread.GetCpuTime(time2));
+	us = I64LOW(time2.Int64());
+	test.Printf(_L("Time %dus\n"), us);
+	test(time2.Int64() - time.Int64() > (KLongWait - KTolerance));
 
 	// Test not increased while suspended
 	thread.Suspend();

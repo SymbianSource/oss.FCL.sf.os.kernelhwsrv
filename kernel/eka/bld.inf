@@ -115,6 +115,7 @@ include/kernel/kpower.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 include/kernel/sproperty.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 include/kernel/kernboot.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 include/kernel/kbma.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+include/kernel/kerncorestats.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
 
 // Export a stub localisation header under the old name. This just inclides "localise.h" ...
 include/kernel/ls_std.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
@@ -214,8 +215,8 @@ include/drivers/iic.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic_channel.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic_channel.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic_trace.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/iic_transaction.h				drivers/						//
-include/drivers/iic_transaction.inl				drivers/
+include/drivers/iic_transaction.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/iic_transaction.inl				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
 include/drivers/gpio.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/mmccd_ifc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)

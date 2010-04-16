@@ -698,7 +698,7 @@ TInt GetLocDrvNumber(TUint16 aDrive)
 	r=file.BlockMap(info,start, -1,ETestDebug);
 
 	if (r!=KErrNone && r!=KErrCompletion)
-		test.Printf(_L("Error %d: could not obtain block map\n"),r);
+		test.Printf(_L("Error %d: could not obtain block map for file %S\n"),r, &libname);
 	test(r==KErrNone || r==KErrCompletion);
 	TInt locDriveNumber=info.iLocalDriveNumber;
 
@@ -1746,7 +1746,18 @@ void MainProcess()
 	l.Close();
 
 	CopyDllsToSupportedDrives();
-
+	
+	// Set Code Paging Cache to a known size compatable with this test
+	TInt pageSize = 0;
+	test_noError(UserHal::PageSizeInBytes(pageSize));
+	TUint cacheOriginalMin = 0, cacheOriginalMax = 0, cacheCurrentSize = 0;
+	const TUint kCacheNewMin = 64, kCacheNewMax = 256;
+	test.Printf(_L("Change cache size to Min:%d, Max:%d pages for duration of test\n"), kCacheNewMin, kCacheNewMax );
+	
+	//store original values
+	DPTest::CacheSize(cacheOriginalMin, cacheOriginalMax, cacheCurrentSize);
+	test_KErrNone(DPTest::SetCacheSize(kCacheNewMin*pageSize, kCacheNewMax*pageSize));
+		
 	Initialise();
 
 	StartOtherProcess(2, OtherProcess);
@@ -1755,6 +1766,11 @@ void MainProcess()
 
 	OtherProcess.Kill();
 	OtherProcess.Close();
+	
+	//Restore the cache size to original values
+	test.Printf(_L("Reset cache size to original values Min:%d Max:%d pages\n"), cacheOriginalMin/pageSize, cacheOriginalMax/pageSize);
+	test_KErrNone(DPTest::SetCacheSize(cacheOriginalMin, cacheOriginalMax));
+	
 	test.End();
 	}
 

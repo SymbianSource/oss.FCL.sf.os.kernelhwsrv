@@ -605,8 +605,10 @@
 
 // Causes undefined instruction exception on both ARM and THUMB
 #define __ASM_CRASH()					asm(".word 0xe7ffdeff ")
-#if defined(__GNUC__)
+#if defined(__GNUC__)  
 #define	__crash()						asm(".word 0xe7ffdeff " : : : "memory")
+#elif defined(__GCCXML__)
+#define __crash()						(*((TInt *) 0x0) = 0xd1e)
 #elif defined(__ARMCC__)
 // RVCT doesn't let us inline an undefined instruction
 // use a CDP to CP15 instead - doesn't work on THUMB but never mind
@@ -638,8 +640,10 @@
 #define	EXC_TRAP_CTX_SZ		10		// ebx, esp, ebp, esi, edi, ds, es, fs, gs, eip
 
 // Causes exception
-#if defined(__VC32__) || defined(__CW32__)
-#define	__crash()						do { _asm int 0ffh } while(0)
+#if defined(__VC32__)
+#define	__crash()						do { _asm int 255 } while(0)
+#elif defined(__CW32__)
+#define	__crash()						do { *(volatile TInt*)0 = 0; } while(0)
 #else
 #define	__crash()						asm("int 0xff " : : : "memory")
 #endif

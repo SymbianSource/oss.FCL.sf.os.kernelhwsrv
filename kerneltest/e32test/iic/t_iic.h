@@ -217,7 +217,7 @@ enum TChannelDuplex
 // 27:23 - Reserved
 // 22:20 - Bus type
 // 19:15 - Channel number
-// 14:10 - Transaction speed
+// 14:10 - Transaction speed	// deprecated
 //  9:0  - Slave address
 #define HS_MASTER_ADDR_SHIFT 29
 #define HS_MASTER_ADDR_MASK 0x7
@@ -227,8 +227,8 @@ enum TChannelDuplex
 #define BUS_TYPE_MASK 0x7
 #define CHANNEL_NO_SHIFT 15
 #define CHANNEL_NO_MASK 0x1F
-#define TRANS_SPEED_SHIFT 10
-#define TRANS_SPEED_MASK 0x1F
+//#define TRANS_SPEED_SHIFT 10
+//#define TRANS_SPEED_MASK 0x1F
 #define SLAVE_ADDR_SHIFT 0
 #define SLAVE_ADDR_MASK 0x3FF
 //
@@ -244,8 +244,8 @@ enum TChannelDuplex
 #define SET_BUS_TYPE(aBusId,aBusType) SET_CONFIG_FIELD(aBusId,aBusType,BUS_TYPE_MASK,BUS_TYPE_SHIFT)
 #define GET_CHAN_NUM(aBusId) GET_CONFIG_FIELD(aBusId,CHANNEL_NO_MASK,CHANNEL_NO_SHIFT)
 #define SET_CHAN_NUM(aBusId,aChanNum) SET_CONFIG_FIELD(aBusId,aChanNum,CHANNEL_NO_MASK,CHANNEL_NO_SHIFT)
-#define SET_TRANS_SPEED(aBusId,aTransSpeed) SET_CONFIG_FIELD(aBusId,aTransSpeed,TRANS_SPEED_MASK,TRANS_SPEED_SHIFT)
-#define GET_TRANS_SPEED(aBusId) GET_CONFIG_FIELD(aBusId,TRANS_SPEED_MASK,TRANS_SPEED_SHIFT)
+//#define SET_TRANS_SPEED(aBusId,aTransSpeed) SET_CONFIG_FIELD(aBusId,aTransSpeed,TRANS_SPEED_MASK,TRANS_SPEED_SHIFT)
+//#define GET_TRANS_SPEED(aBusId) GET_CONFIG_FIELD(aBusId,TRANS_SPEED_MASK,TRANS_SPEED_SHIFT)
 #define SET_SLAVE_ADDR(aBusId,aSlaveAddr) SET_CONFIG_FIELD(aBusId,aSlaveAddr,SLAVE_ADDR_MASK,SLAVE_ADDR_SHIFT)
 #define GET_SLAVE_ADDR(aBusId) GET_CONFIG_FIELD(aBusId,SLAVE_ADDR_MASK,SLAVE_ADDR_SHIFT)
 
@@ -375,7 +375,7 @@ class RBusDevIicClient : public RBusLogicalChannel
 	inline TInt ReleaseChannel(TInt aChannelId){return(DoControl(EReleaseChan,(TAny*)aChannelId,NULL));};
 	inline TInt RegisterRxBuffer(TInt aChannelId, TInt8 aBufGranularity, TInt8 aNumWords, TInt8 aOffset){TInt8 parms[3]; parms[0]=aBufGranularity; parms[1]=aNumWords; parms[2]=aOffset;return(DoControl(ERegisterRxBuffer,(TAny*)aChannelId,(TAny*)(&parms[0])));};
 	inline TInt RegisterTxBuffer(TInt aChannelId, TInt8 aBufGranularity, TInt8 aNumWords, TInt8 aOffset){TInt8 parms[3]; parms[0]=aBufGranularity; parms[1]=aNumWords; parms[2]=aOffset;return(DoControl(ERegisterTxBuffer,(TAny*)aChannelId,(TAny*)(&parms[0])));};
-	inline TInt SetNotificationTrigger(TInt aChannelId, TInt aTrigger, TRequestStatus* aStatus){TInt parms[2]; parms[0]=aChannelId; parms[1]=aTrigger;return(DoControl(ESetNotifTrigger,(TAny*)aStatus,(TAny*)(&parms[0])));};
+	inline TInt SetNotificationTrigger(TInt aChannelId, TInt aTrigger, TRequestStatus* aStatus){TInt parms[2]; parms[0]=aChannelId; parms[1]=aTrigger; *aStatus=KRequestPending; return(DoControl(ESetNotifTrigger,(TAny*)aStatus,(TAny*)(&parms[0])));};
 
 	// ControlIO functions follow
 	inline TInt BlockReqCompletion(TInt aBusId) {return(DoControl(ECtlIoBlockReqCompletion,(TAny*)aBusId));}

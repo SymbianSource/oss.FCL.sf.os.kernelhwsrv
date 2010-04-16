@@ -21,7 +21,7 @@
 files=
 
 #ifdef PAGED_ROM
-data=gentestpaged.txt			Test\test_paged.cpp
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt					Test\test_paged.cpp
 #endif
 
 #include <rom\##VARIANT##\kernel.iby>
@@ -53,18 +53,18 @@ data=gentestpaged.txt			Test\test_paged.cpp
 // !!! Disable platform security tests until we get the new APIs
 // #include "##BASEPATH##f32test\loader\security\ldrtest.iby"
 
-data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe		\sys\bin\t_ldrtst.exe
-data=EPOCROOT##epoc32\Release\##MAIN##\##BUILD##\d_exc.exe			\sys\bin\d_exc.exe
-data=EPOCROOT##epoc32\Release\##KMAIN##\##BUILD##\minkda.ldd			\sys\bin\minkda.ldd
+data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe						\sys\bin\t_ldrtst.exe
+data=EPOCROOT##epoc32\Release\##MAIN##\##BUILD##\d_exc.exe							\sys\bin\d_exc.exe
+data=EPOCROOT##epoc32\Release\##KMAIN##\##BUILD##\minkda.ldd						\sys\bin\minkda.ldd
 
 #ifdef PAGED_ROM
-data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt				Test\test_unpaged.cpp	unpaged
 #endif
 
 #if defined(SMPSOAK)
-data=autoexec_smpsoak.bat			\autoexec.bat
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\autoexec_smpsoak.bat				\autoexec.bat
 #else
-data=autoexec_smpsoak.bat			Test\smpsoak.bat
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\autoexec_smpsoak.bat				Test\smpsoak.bat
 #endif
 
 data=##BASEPATH##kernelhwsrv\kerneltest\e32test\smp_demo\war_and_peace_ch1.txt		test\war_and_peace_ch1.txt

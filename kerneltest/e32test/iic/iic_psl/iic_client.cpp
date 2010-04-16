@@ -90,7 +90,7 @@ LOCAL_C TInt8 AssignChanNumI2c()
 class DIicClientChan : public DBase
 	{
 public:
-	DIicClientChan(DIicBusChannel* aChan, TInt8 aChanNum, TUint8 aChanType):iChan(aChan),iChanNumber(aChanNum),iChanType(aChanType){};
+	DIicClientChan(DIicBusChannel* aChan, TInt8 aChanNum, TUint8 aChanType):iChanNumber(aChanNum),iChanType(aChanType),iChan(aChan){};
 	~DIicClientChan();
 	TInt GetChanNum()const {return iChanNumber;};
 	TUint8 GetChanType()const {return iChanType;};
@@ -499,7 +499,7 @@ DDeviceIicClient::DDeviceIicClient()
 // Constructor
     {
 	CLIENT_PRINT(("> DDeviceIicClient::DDeviceIicClient()"));
-    __KTRACE_OPT(KRESMANAGER, Kern::Printf("> DDeviceIicClient::DDeviceIicClient()"));
+    __KTRACE_OPT(KIIC, Kern::Printf("> DDeviceIicClient::DDeviceIicClient()"));
     iParseMask=0;		// No info, no PDD, no Units
     iUnitsMask=0;
     iVersion=TVersion(KIicClientMajorVersionNumber,
@@ -529,7 +529,7 @@ RPointerArray<DIicClientChan> ChannelArray;
 DDeviceIicClient::~DDeviceIicClient()
     {
 	CLIENT_PRINT(("> DDeviceIicClient::~DDeviceIicClient()"));
-    __KTRACE_OPT(KRESMANAGER, Kern::Printf("> DDeviceIicClient::~DDeviceIicClient()"));
+    __KTRACE_OPT(KIIC, Kern::Printf("> DDeviceIicClient::~DDeviceIicClient()"));
 #ifdef STANDALONE_CHANNEL
     //For Standalone Channel, the client is responsible for channel destroy
     ChannelArray.ResetAndDestroy();
@@ -540,7 +540,7 @@ TInt DDeviceIicClient::Install()
 // Install the device driver.
     {
 	CLIENT_PRINT(("> DDeviceIicClient::Install()"));
-    __KTRACE_OPT(KRESMANAGER, Kern::Printf("> DDeviceIicClient::Install()"));
+    __KTRACE_OPT(KIIC, Kern::Printf("> DDeviceIicClient::Install()"));
     return(SetName(&KLddRootName));
     }
 
@@ -763,7 +763,7 @@ DECLARE_STANDARD_LDD()
 	DIicClientChan* aClientChan;
 	TInt r = KErrNone;
 	DIicBusChannel *chan = NULL, *chanM = NULL, *chanS = NULL;
-	TInt i;
+	TUint i;
 	for(i=0; i<NUM_CHANNELS_SPI; i++)
 		{
 		CLIENT_PRINT(("\n"));
@@ -1019,7 +1019,7 @@ DChannelIicClient::~DChannelIicClient()
 // Destructor
     {
 	CLIENT_PRINT(("> DChannelIicClient::~DChannelIicClient()"));
-    __KTRACE_OPT(KRESMANAGER, Kern::Printf("> DChannelIicClient::~DChannelIicClient()"));
+    __KTRACE_OPT(KIIC, Kern::Printf("> DChannelIicClient::~DChannelIicClient()"));
     delete iNotif;
     iArrayMutex->Close(NULL);
     iChanArrWrtSem->Close(NULL);
@@ -2075,7 +2075,6 @@ void DChannelIicClient::CleanupTransaction(TIicBusTransaction*& aTrans)
 	delete iI2cBuf;
 	iI2cBuf=NULL;
 	TIicBusTransfer* currTfer = iTfer;
-	TIicBusTransfer* nextTfer = NULL;
 	while(currTfer)
 		{
 		TIicBusTransfer* nextTfer = (TIicBusTransfer*)(currTfer->Next());
@@ -2087,7 +2086,6 @@ void DChannelIicClient::CleanupTransaction(TIicBusTransaction*& aTrans)
 		};
 	iTfer=NULL;
 	currTfer = iFdTfer;
-	nextTfer = NULL;
 	while(currTfer)
 		{
 		TIicBusTransfer* nextTfer = (TIicBusTransfer*)(currTfer->Next());

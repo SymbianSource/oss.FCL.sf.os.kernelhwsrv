@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -325,7 +325,7 @@ namespace IsrAndDfc
 	//will only have one fragment
 	const TInt size = 0x40000;
 	TDmaTransferArgs dfcTransfer(0, size, size, KDmaMemAddr);
-	TDmaTransferArgs isrTransfer(size, 2 * size, size, KDmaMemAddr, KDmaSyncAuto, KDmaRequestCallbackFromIsr);
+	TDmaTransferArgs isrTransfer(2*size, 3*size, size, KDmaMemAddr, KDmaSyncAuto, KDmaRequestCallbackFromIsr);
 
 	const TResultSet success = TResultSet();
 	TResultSet queueFailure = TResultSet().

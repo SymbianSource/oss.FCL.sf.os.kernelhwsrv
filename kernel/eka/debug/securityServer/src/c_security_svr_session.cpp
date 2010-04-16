@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1040,7 +1040,7 @@ void CSecuritySvrSession::AttachProcessL(const RMessage2& aMessage)
 	{
 	LOG_MSG( "CSecuritySvrSession::AttachProcessL()\n" );
 
-	TBool aPassive = aMessage.Int0() ? ETrue : EFalse;
+	const TBool passive = aMessage.Int0();
 
 	TInt deslen = aMessage.GetDesLengthL(1);
 
@@ -1142,7 +1142,7 @@ void CSecuritySvrSession::AttachProcessL(const RMessage2& aMessage)
 		IsDebuggableL(processName);
 		}
 
-	User::LeaveIfError(Server().AttachProcessL(processName, processId, aPassive));
+	User::LeaveIfError(Server().AttachProcessL(processName, processId, passive));
 
 	// Inform the kernel driver about the attachment, so that it
 	// can track per-agent data about the process.
@@ -1361,10 +1361,16 @@ void CSecuritySvrSession::ConnectCrashPartitionL (void)
 		}
 	if ( i == KMaxLocalDrives)
 		{
-			LOG_MSG("No crash log partition found with valid crash log signature found.  Exiting...");
-			User::Leave (KErrNotFound);
+		LOG_MSG("No crash log partition found with valid crash log signature found.  Exiting...");
+		User::Leave (KErrNotFound);
 		}
-	
+
+	// Nand Flash not currently supported.
+	if (iCaps.iType == EMediaNANDFlash)
+		{
+		LOG_MSG( "CSecuritySvrSession::ConnectCrashPartitionL()  Nand Flash not currently supported\n" );
+		User::Leave (KErrNotSupported);
+		}
 	}
 /** Checks that aHeaderData contains enough data to cast it to the
   appropriate header type.

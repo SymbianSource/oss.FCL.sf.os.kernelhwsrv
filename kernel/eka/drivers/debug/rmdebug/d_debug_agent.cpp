@@ -31,23 +31,24 @@
 #include "d_debug_agent.h"
 #include "debug_utils.h"
 
+#include "d_debug_agent.inl"
+
 using namespace Debug;
 
-#define NUMBER_OF_EVENTS_TO_QUEUE 100
-#define CRITICAL_BUFFER_SIZE (NUMBER_OF_EVENTS_TO_QUEUE - 50)
-
 // ctor
-DDebugAgent::DDebugAgent(TUint64 aId)
-: iId(aId),
-  iEventInfo(NULL),
-  iEventQueue(NUMBER_OF_EVENTS_TO_QUEUE, 0),
-  iRequestGetEventStatus(NULL),
-  iClientThread(0),
-  iHead(0),
-  iTail(0),
-  iIgnoringTrace(EFalse)
+DDebugAgent::DDebugAgent(TUint64 aId) :
+	iId(aId),
+	iRequestGetEventStatus(NULL),
+	iClientThread(0),
+	iEventQueue(KNumberOfEventsToQueue, 0),
+	iHead(0),
+	iTail(0),
+	iEventQueueLock(NULL),
+	iFreeSlots(KNumberOfEventsToQueue),
+	iIgnoringTrace(EFalse),
+	iEventBalance(0)
 	{
-	LOG_MSG("DDebugAgent::DDebugAgent() ");
+	LOG_MSG2("DDebugAgent::DDebugAgent(), this=0x%x ", this);
 
 	// Initialize all the Event Actions to Ignore
 	for(TInt i=0; i<EEventsLast; i++)
@@ -69,32 +70,59 @@ DDebugAgent* DDebugAgent::New(TUint64 aId)
 		delete agent;
 		return (NULL);
 		}
+
+	// Use a semaphore to serialise access
+	TInt err = Kern::SemaphoreCreate(agent->iEventQueueLock, _L("RM_DebugAgentQueueLock"), 1 /* Initial count */);
+	if (err != KErrNone)
+		return NULL;
+
 	return agent;
 	}
 
+/** Standard contructor.
+ * Fills event queue with empty events
+ * @return : standard system error code
+ */
 TInt DDebugAgent::Construct()
 	{
 	// Empty the event queue
 	LOG_MSG("DDebugAgent::Construct()");
 	TDriverEventInfo emptyEvent;
+	TInt err = KErrNone;
 
-	for (TInt i=0; i<NUMBER_OF_EVENTS_TO_QUEUE; i++)
+	for (TInt i=0; i<KNumberOfEventsToQueue; i++)
 		{
-		TInt err = iEventQueue.Append(emptyEvent);
-		if (KErrNone != err)
+		err = iEventQueue.Append(emptyEvent);
+		if (err != KErrNone)
 			{
 			LOG_MSG("Error appending blank event entry");
 			return err;
 			}
 		}
-	return KErrNone;
-	}
 
+	err = Kern::CreateClientDataRequest(iRequestGetEventStatus);
+	if(err != KErrNone)
+		{
+		LOG_MSG("Error creating TClientDataRequest");
+		return err;
+		}
+
+	LOG_MSG2("DDebugAgent::Construct() iRequestGetEventStatus=0x%08x", iRequestGetEventStatus);
+
+	return err;
+	}
 
 // dtor
 DDebugAgent::~DDebugAgent()
 	{
 	iEventQueue.Reset();
+
+	if (iEventQueueLock)
+		iEventQueueLock->Close(NULL);
+	
+	if(iRequestGetEventStatus)
+		Kern::DestroyClientRequest(iRequestGetEventStatus);
+	
 	}
 
 // Associate an action with a particular kernel event
@@ -112,9 +140,9 @@ TInt DDebugAgent::SetEventAction(TEventType aEvent, TKernelEventAction aEventAct
 	return KErrNone;
 	}
 
-/* Get the aEventAction associated with aEvent
+/** Get the aEventAction associated with aEvent
  *
- * Returns : aEventAction (always +ve), or KErrArgument.
+ * @return : aEventAction (always +ve), or KErrArgument.
  */
 TInt DDebugAgent::EventAction(TEventType aEvent)
 	{
@@ -129,90 +157,110 @@ TInt DDebugAgent::EventAction(TEventType aEvent)
 	return iEventActions[aEvent];
 	}
 
-// Obtain the details of the latest kernel event (if it exists) and place the details in aEventInfo
-// If there is no event in the queue for this process+agent combination, store the details
-// so that it can be notified later when an event actually occurs.
-//
-// @param aAsyncGetValueRequest - TClientDataRequest object used for pinning user memory
-// @param aEventInfo - Address of TEventInfo structure to place event data when available
-// @param aClientThread - The ThreadId of the requesting user-side process. In this case the DSS.
-void DDebugAgent::GetEvent(TClientDataRequest<TEventInfo>* aAsyncGetValueRequest, TEventInfo* aEventInfo, DThread* aClientThread)
+/** Obtain the details of the latest kernel event (if it exists) and place the details in aEventInfo
+ * If there is no event in the queue for this process+agent combination, store the details
+ * so that it can be notified later when an event actually occurs.
+ * 
+ * @param aAsyncGetValueRequest - TClientDataRequest object used for pinning user memory
+ * @param aClientThread - The ThreadId of the requesting user-side process. In this case the DSS.
+ */
+void DDebugAgent::GetEvent(TClientDataRequest<TEventInfo>* aAsyncGetValueRequest, DThread* aClientThread)
 	{
-	iClientThread = aClientThread;
+	LockEventQueue();
 
+	iRequestGetEventStatus->Reset();
+	TInt err = iRequestGetEventStatus->SetStatus( aAsyncGetValueRequest->StatusPtr() );
+	if (err != KErrNone)
+		{
+		LOG_MSG2("Error :iRequestGetEventStatus->SetStatus ret %d", err);
+		return;
+		}
+	
+	iRequestGetEventStatus->SetDestPtr( aAsyncGetValueRequest->DestPtr() );
+
+	iEventBalance++;
+	
+	LOG_MSG4("DDebugAgent::GetEvent: this=0x%08x, iRequestGetEventStatus=0x%08x, iEventBalance=%d", 
+		this, iRequestGetEventStatus, iEventBalance );
+	
+	iClientThread = aClientThread;
+	
 	if (BufferEmpty())
 		{
-		LOG_MSG("no events available");
-
-		// store the pointer so we can modify it later
-		iEventInfo = (TEventInfo *)aEventInfo;
-		iRequestGetEventStatus = aAsyncGetValueRequest;
+		LOG_MSG2("Event buffer empty, iEventBalance=%d", iEventBalance);		
+		UnlockEventQueue();
 		return;
 		}
 
-	LOG_MSG("Event available");
+	LOG_MSG2("Event already available at queue pos=%d", iTail);
 
 	// returning the event to the client
-	TInt err = iEventQueue[iTail].WriteEventToClientThread(aAsyncGetValueRequest,iClientThread);
-	if (KErrNone != err)
+	err = iEventQueue[iTail].WriteEventToClientThread(iRequestGetEventStatus,iClientThread);
+	if (err != KErrNone)
 		{
 		LOG_MSG2("Error writing event info: %d", err);
+		UnlockEventQueue();
 		return;
 		}
 
 	// signal the DSS thread
-	Kern::QueueRequestComplete(iClientThread, aAsyncGetValueRequest, KErrNone);
+	Kern::QueueRequestComplete(iClientThread, iRequestGetEventStatus, KErrNone);
+	iEventBalance--;
 
 	iEventQueue[iTail].Reset();
 
 	// move to the next slot
-	IncrementPosition(iTail);
+	IncrementTailPosition();
+
+	UnlockEventQueue();
 	}
 
-// Stop waiting for an event to occur. This means events will be placed in the iEventQueue
-// until GetEvent is called.
+/**
+ * Stop waiting for an event to occur. This means events will be placed 
+ * in the iEventQueue (by setting iEventBalance to 0) until GetEvent is called. 
+ */ 
 TInt DDebugAgent::CancelGetEvent(void)
 	{
+	LOG_MSG2("DDebugAgent::CancelGetEvent. iEventBalance=%d. > QueueRequestComplete", iEventBalance);
 	Kern::QueueRequestComplete(iClientThread, iRequestGetEventStatus, KErrCancel);
-	iEventInfo = NULL;
-    iRequestGetEventStatus = 0;
+	iEventBalance=0;
 	iClientThread = 0;
-
 	return KErrNone;
 	}
 
-// Signal a kernel event to the user-side DSS when it occurs, or queue it for later
-// if the user-side has not called GetEvent (see above).
-//
-// @param aEventInfo - the details of the event to queue.
+/** Signal a kernel event to the user-side DSS when it occurs, or queue it for later
+ * if the user-side has not called GetEvent (see above).
+ * 
+ * @param aEventInfo - the details of the event to queue.
+ */
 void DDebugAgent::NotifyEvent(const TDriverEventInfo& aEventInfo)
 	{
-	LOG_MSG("DDebugAgent::NotifyEvent()");
-	// Action depends on the TKernelEvent type in aEventInfo.iType
-	
-	// Added to fix the pass by value issue seen in Coverity.  
-	// Function is changed to pass by reference but temp object is explicitly created.
-	TDriverEventInfo eventInfo = aEventInfo;
 
 	if(aEventInfo.iEventType >= EEventsLast)
 		{
-		// unknown event type so return
+		LOG_MSG3("DDebugAgent::NotifyEvent(),iEventType %d, this=0x%x. Ignoring since > EEventsLast", aEventInfo.iEventType, this);
 		return;
 		}
 
-	TKernelEventAction action = iEventActions[eventInfo.iEventType];
+	LockEventQueue();
+
+	DThread* currentThread = &Kern::CurrentThread();
+	
+	LOG_MSG5("DDebugAgent::NotifyEvent(), iEventType %d, this=0x%x currThrd=0x%08x, iEventBalance=%d",
+		aEventInfo.iEventType, this, currentThread, iEventBalance );
+	TKernelEventAction action = iEventActions[aEventInfo.iEventType];
 
 	switch (action)
 		{
 		case EActionSuspend:
 			{
 			LOG_MSG("DDebugAgent::NotifyEvent() Suspend thread");
-			DThread* currentThread = &Kern::CurrentThread();
-			switch(eventInfo.iEventType)
+
+			switch(aEventInfo.iEventType)
 				{
 				case EEventsAddLibrary:
 				case EEventsRemoveLibrary:
-					currentThread = DebugUtils::OpenThreadHandle(eventInfo.iThreadId);
+					currentThread = DebugUtils::OpenThreadHandle(aEventInfo.iThreadId);
 					if(currentThread)
 						{
 						currentThread->Close(NULL);
@@ -221,8 +269,8 @@ void DDebugAgent::NotifyEvent(const TDriverEventInfo& aEventInfo)
 				default:
 					break;
 				}
-			TInt err = TheDProcessTracker.SuspendThread(currentThread, eventInfo.FreezeOnSuspend());
-			if(!( (err == KErrNone) || (err == KErrAlreadyExists) ))
+			TInt err = TheDProcessTracker.SuspendThread(currentThread, aEventInfo.FreezeOnSuspend());
+			if((err != KErrNone) && (err != KErrAlreadyExists))
 				{
 				// Is there anything we can do in the future to deal with this error having happened?
 				LOG_MSG2("DDebugAgent::NotifyEvent() Problem while suspending thread: %d", err);
@@ -232,41 +280,61 @@ void DDebugAgent::NotifyEvent(const TDriverEventInfo& aEventInfo)
 			// the debug agent of the event
 			}
 		case EActionContinue:
-			LOG_MSG("DDebugAgent::NotifyEvent() Continue");
-
-			// Tell the user about this event
-			if (iEventInfo && iClientThread)
 			{
-				LOG_MSG("Completing event\r\n");
+			// Queue this event
+			QueueEvent(aEventInfo);
 
-				// returning the event to the client
-				TInt err = eventInfo.WriteEventToClientThread(iRequestGetEventStatus,iClientThread);
-				if (KErrNone != err)
+			// Tell the user about the oldest event in the queue
+			if ( iClientThread )
 				{
-					LOG_MSG2("Error writing event info: %d", err);
+				if( iRequestGetEventStatus && (iEventBalance > 0) )
+					{
+					// Fill the event data
+					TInt err = iEventQueue[iTail].WriteEventToClientThread(iRequestGetEventStatus,iClientThread);
+					if (err != KErrNone)
+						{
+						LOG_MSG2("Error writing event info: %d", err);
+						}
+
+					// signal the debugger thread 
+					LOG_MSG4("> QueueRequestComplete iRequestGetEventStatus=0x%08x, iEventBalance=%d, iTail=%d",
+						iRequestGetEventStatus->iStatus, iEventBalance, iTail );
+					Kern::QueueRequestComplete(iClientThread, iRequestGetEventStatus, KErrNone);
+
+					iEventBalance--;
+
+					iEventQueue[iTail].Reset();
+
+					// move to the next slot
+					IncrementTailPosition();
+					}
+				else
+					{
+					if( !iRequestGetEventStatus )
+						{
+						LOG_MSG("iRequestGetEventStatus is NULL so not signalling client" );
+						}
+					else
+						{
+						LOG_MSG2("Queued event. iEventBalance=%d (unbalanced event requests vs notifications)", 
+							iEventBalance );
+						}
+					}
 				}
-
-				// clear this since we've completed the request
-				iEventInfo = NULL;
-
-				// signal the debugger thread
-				Kern::QueueRequestComplete(iClientThread, iRequestGetEventStatus, KErrNone);
-			}
 			else
-			{
-				LOG_MSG("Queuing event\r\n");
-
-				QueueEvent(eventInfo);
-
-			}
+				{
+				 LOG_MSG("DDebugAgent::NotifyEvent() : Not informing client since its thread is NULL");
+				}
 			break;
-
+			}
 		case EActionIgnore:
 		default:
-			LOG_MSG("DDebugAgent::NotifyEvent() fallen through to default case");
+			LOG_EVENT_MSG("DDebugAgent::NotifyEvent() fallen through to default case");
 			// Ignore everything we don't understand.
-			return;
+
 		}
+
+	UnlockEventQueue();
 
 	}
 
@@ -276,93 +344,77 @@ TUint64 DDebugAgent::Id(void)
 	return iId;
 	}
 
-// Used to add an event to the event queue for this debug agent
-void DDebugAgent::QueueEvent(TDriverEventInfo& aEventInfo)
+/**
+ * Used to add an event to the event queue for this debug agent if event 
+ * queue is not at critical level. If it is at critical and it is trace event, 
+ * we start ignoring trace events and insert a lost trace event.
+ * If the buffer cannot store an event, only insert a buffer full event.
+ * @see EEventsBufferFull
+ * @see EEventsUserTracesLost
+ * @see TDriverEventInfo
+ * @see iEventQueue
+ */
+void DDebugAgent::QueueEvent(const TDriverEventInfo& aEventInfo)
 	{
 	// Have we caught the tail?
 	if(BufferFull())
 		{
+		LOG_MSG("DDebugAgent::QueueEvent : BufferFull. Not queueing");
 		return;
 		}
-	
-	//check to see if we wish to ignore this event - we dump trace events as they are lower priority than the other events
-	if(BufferAtCriticalLevel())
+
+	// Assert if we think there is space but the slot is not marked empty
+	__NK_ASSERT_DEBUG(iEventQueue[iHead].iEventType == EEventsUnknown);
+
+	const TBool bufferAtCritical = BufferAtCriticalLevel();
+
+	if(!bufferAtCritical)
 		{
+		//reset the iIgnoringTrace flag as we are not at 
+		//critical level and can store event
+		iIgnoringTrace = EFalse; 
+		
+		// Insert the event into the ring buffer at iHead
+		iEventQueue[iHead] = aEventInfo;
+		IncrementHeadPosition();
+		}
+	else if(bufferAtCritical && BufferCanStoreEvent())
+		{
+		LOG_MSG("DDebugAgent::QueueEvent : BufferCritical");
 		if(aEventInfo.iEventType == EEventsUserTrace)
 			{
 			if(!iIgnoringTrace)
 				{
-				//if this is the first time we are ignoring trace events, we need to issue a EEventsUserTracesLost event
-				aEventInfo.Reset();
-				aEventInfo.iEventType = EEventsUserTracesLost;
-				
+				//if this is the first time we are ignoring trace events, 
+				//we need to issue a EEventsUserTracesLost event
+				iEventQueue[iHead].Reset();
+				iEventQueue[iHead].iEventType = EEventsUserTracesLost;
+				IncrementHeadPosition();
+
 				iIgnoringTrace = ETrue;
 				}
 			else
 				{
 				//otherwise, ignore this event
-				return;
+				LOG_MSG("DDebugAgent::QueueEvent : Ignore EEventsUserTrace event");
 				}
+			}
+		else
+			{
+			// Store the event since its not a trace event
+			iEventQueue[iHead] = aEventInfo;
+			IncrementHeadPosition();
 			}
 		}
 	else
 		{
-		//reset the iIgnoringTrace flag as we are not at critical level
-		iIgnoringTrace = EFalse; 
-		}	
-
-	// only one space left so store a EEventsBufferFull event
-	if(!BufferCanStoreEvent())
-		{
-		aEventInfo.Reset();
-		aEventInfo.iEventType = EEventsBufferFull;
+		//At critical level and cannot store new events, so 
+		//only one space left. Store a EEventsBufferFull event
+		LOG_MSG("DDebugAgent::QueueEvent : Event Buffer Full, ignoring event");
+		iEventQueue[iHead].Reset();
+		iEventQueue[iHead].iEventType = EEventsBufferFull;
+		IncrementHeadPosition();
 		}
-
-	__NK_ASSERT_DEBUG(iEventQueue[iHead].iEventType == EEventsUnknown); // we think there is space but the slot is not marked empty
-
-	// Insert the event into the ring buffer at iHead
-	iEventQueue[iHead] = aEventInfo;
-	IncrementPosition(iHead);
 	}
 
-// Checks whether the event queue is empty
-TBool DDebugAgent::BufferEmpty() const
-	{
-	return (NumberOfEmptySlots() == NUMBER_OF_EVENTS_TO_QUEUE);
-	}
-
-// Checks whether the event queue is full
-TBool DDebugAgent::BufferFull() const
-	{
-	return (NumberOfEmptySlots() == 0);
-	}
-
-// Checks whether there is room in the event queue to store an event (i.e. at least two free slots)
-TBool DDebugAgent::BufferCanStoreEvent() const
-	{
-	return (NumberOfEmptySlots() > 1);
-	}
-
-//This looks to see if the buffer is close to being full and should only accept higher priority debug events (user trace is the only low priority event) 
-TBool DDebugAgent::BufferAtCriticalLevel() const
-	{
-	return (NumberOfEmptySlots() < NUMBER_OF_EVENTS_TO_QUEUE - CRITICAL_BUFFER_SIZE);
-	}
-
-// increments aPosition, wrapping at NUMBER_OF_EVENTS_TO_QUEUE if necessary
-void DDebugAgent::IncrementPosition(TInt& aPosition)
-	{
-	aPosition = (aPosition + 1) % NUMBER_OF_EVENTS_TO_QUEUE;
-	}
-
-// finds the number of empty slots in the event queue
-TInt DDebugAgent::NumberOfEmptySlots() const
-	{
-	if(iHead < iTail)
-		{
-		return (iTail - iHead) - 1;
-		}
-	// iHead >= iTail
-	return NUMBER_OF_EVENTS_TO_QUEUE - (iHead - iTail);
-	}
-
+// End of file - d_debug_agent.cpp

@@ -13,18 +13,6 @@
 // Description:
 //
 
-//#include <d32usbdi.h>
-//#include <d32otgdi.h>
-//#include <d32usbdescriptors.h>
-//#include <d32usbtransfers.h>
-
-
-//#include "rusbhostmslogicalunit.h"
-//
-//
-//
-//
-
 #include <e32base.h>
 #include <f32file.h>
 #include <d32usbdi_hubdriver.h>

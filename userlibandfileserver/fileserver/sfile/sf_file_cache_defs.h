@@ -26,7 +26,12 @@
 
 // Global file-cache settings 
 const TBool KDefaultGlobalCacheEnabled			= ETrue; 
+#ifdef __WINS__
+// Reduce impact on S60 emulator memory budget
+const TInt KDefaultGlobalCacheSize				= ( 8*1024);	//  8192 K =  8 MBytes - the maximum for all files
+#else
 const TInt KDefaultGlobalCacheSize				= (32*1024);	// 32768 K = 32 MBytes - the maximum for all files
+#endif
 // The maximum amount of locked data allowed for all files
 const TInt KDefaultGlobalCacheMaxLockedSize	= (1*1024);		// 1 Mb maximum locked data
 // Low memory threshold as a percentage of total RAM.

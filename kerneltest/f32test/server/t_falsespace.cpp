@@ -1062,13 +1062,6 @@ GLDEF_C void CallTestsL()
 	{
     //-- set up console output 
     Fat_Test_Utils::SetConsole(test.Console()); 
-
-
-	if (gSessionPath[0]=='C')	//only test on non C drives
-		{
-		test.Printf(_L("TEST NOT RUN FOR THIS DRIVE"));
-		return;
-		}
 	
 	if (UserSvr::DebugMask(2)&0x00000002) // TESTFAST mode set? (for automated test builds)
 		if(IsTestingLFFS())
@@ -1085,6 +1078,23 @@ GLDEF_C void CallTestsL()
 
 	r=RFs::DriveToChar(gTestDrive,gCh);
 	test(r==KErrNone);
+
+    TDriveInfo drv;
+    r = TheFs.Drive(drv, gTestDrive);
+    test(r == KErrNone);
+
+    if (Is_Win32(TheFs, gTestDrive))
+        {
+        test.Printf(_L("Skipping on emulator %C: drive\n"), gSessionPath[0]);
+        return;
+        }
+
+    // do not run this test on RAM drive
+    if (drv.iType == EMediaRam)
+        {
+        test.Printf(_L("Test can't run on RAM drive %C:\n"), gSessionPath[0]);
+        return;
+        }
 
     //-- print drive information
     PrintDrvInfo(TheFs, gTestDrive);

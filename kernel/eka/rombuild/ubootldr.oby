@@ -29,4 +29,4 @@ bootbinary=\Epoc32\Release\##KMAIN##\_##VARIANT##_bootloader_bootrom.bin
 
 file=\Epoc32\Release\##MAIN##\##BUILD##\_##VARIANT##_bootldr.exe			Sys\Bin\bootldr.exe
 device[VARID]=\epoc32\release\##KMAIN##\##BUILD##\_##VARIANT##_ubootldr.ldd	Sys\Bin\ubootldr.ldd
-data=ubootldr.autoexec.bat												autoexec.bat
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\ubootldr.autoexec.bat												autoexec.bat

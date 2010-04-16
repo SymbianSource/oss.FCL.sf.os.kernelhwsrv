@@ -221,12 +221,17 @@ TInt DMemModelCodeSegMemory::Loaded(TCodeSegCreateInfo& aInfo)
 	TInt exportDirSize = iRamInfo.iExportDirCount * sizeof(TLinAddr);
 	if(exportDirSize > 0 || (exportDirSize==0 && (iCodeSeg->iAttr&ECodeSegAttNmdExpData)) )
 		{
+		TLinAddr expDirLoad = iRamInfo.iExportDir - iRamInfo.iCodeRunAddr + iRamInfo.iCodeLoadAddr;
+		if (expDirLoad < iRamInfo.iCodeLoadAddr ||
+			expDirLoad + exportDirSize > iRamInfo.iCodeLoadAddr + iRamInfo.iCodeSize)
+			{// Invalid export section but the loader should have checked this.
+			return KErrCorrupt;
+			}
 		exportDirSize += sizeof(TLinAddr);
 		TLinAddr* expDir = (TLinAddr*)Kern::Alloc(exportDirSize);
 		if(!expDir)
 			return KErrNoMemory;
 		iCopyOfExportDir = expDir;
-		TLinAddr expDirLoad = iRamInfo.iExportDir-iRamInfo.iCodeRunAddr+iRamInfo.iCodeLoadAddr;
 		UNLOCK_USER_MEMORY();
 		memcpy(expDir,(TAny*)(expDirLoad-sizeof(TLinAddr)),exportDirSize);
 		LOCK_USER_MEMORY();

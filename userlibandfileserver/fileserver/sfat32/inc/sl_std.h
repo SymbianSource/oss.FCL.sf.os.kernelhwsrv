@@ -63,16 +63,17 @@ Represents the position of a directory entery in terms of a cluster and off set 
 class TEntryPos
 	{
 public:
-	TEntryPos() {}
-	TEntryPos(TInt aCluster,TUint aPos) : iCluster(aCluster), iPos(aPos) {}
+	TEntryPos() : iCluster(EOF_32Bit), iPos(0) {}
+	TEntryPos(TUint aCluster,TUint aPos) : iCluster(aCluster), iPos(aPos) {}
 
     inline TUint32 Cluster() const;
     inline TUint32 Pos() const;
     inline TBool operator==(const TEntryPos& aRhs) const;
+    inline void SetEndOfDir();
 
 public:
-	TInt iCluster;
-	TUint iPos;
+	TUint32 iCluster;
+	TUint32 iPos;
 	};
 
 
@@ -110,8 +111,13 @@ public:
 
 protected:
     TDriveInterface();
+   ~TDriveInterface() {Close();}
+
+    //-- outlawed
     TDriveInterface(const TDriveInterface&);
     TDriveInterface& operator=(const TDriveInterface&);
+    void* operator new(TUint); //-- disable creating objets of this class on the heap.
+    void* operator new(TUint, void*);
 
     TBool Init(CFatMountCB* aMount);
     void Close(); 
@@ -198,7 +204,7 @@ public:
     virtual void InvalidateCacheL(TInt64 /*aPos*/,TUint32 /*aLength*/) {};
 
 	virtual void FreeClusterListL(TUint32 aCluster);
-	virtual void ExtendClusterListL(TUint32 aNumber,TInt& aCluster);
+	virtual void ExtendClusterListL(TUint32 aNumber, TUint32& aCluster);
 	
     virtual TUint32 AllocateSingleClusterL(TUint32 aNearestCluster);
 	virtual TUint32 AllocateClusterListL(TUint32 aNumber,TUint32 aNearestCluster);
@@ -212,13 +218,15 @@ public:
     virtual void InitializeL();
     virtual TBool ConsistentState() const {return ETrue;} //-- dummy
 
+    virtual TUint32 CountContiguousClustersL(TUint32 aStartCluster, TUint32& anEndCluster, TUint32 aMaxCount) const;
+
     //-----------------------------------------------------------------
     //-- non-virtual interface
-    TBool GetNextClusterL(TInt& aCluster) const;
+    TBool GetNextClusterL(TUint32& aCluster) const;
     void WriteFatEntryEofL(TUint32 aFatIndex);
 
     void MarkAsBadClusterL(TUint32 aCluster);
-    TInt CountContiguousClustersL(TUint32 aStartCluster,TInt& anEndCluster, TUint32 aMaxCount) const;
+    
     
     inline TUint32 MaxEntries() const;
     
@@ -491,14 +499,12 @@ protected:
 
     /** 
         A wrapper around TDriveInterface providing its instantination and destruction.
-        You must not create objects of this class, use DriveInterface() instead.
+        You must not create objects of this class, use DriveInterface() method for obtaining the reference to the driver interface.
     */
     class XDriveInterface: public TDriveInterface
         {
       public:
-        XDriveInterface() : TDriveInterface() {}
-        ~XDriveInterface() {Close();}
-        TBool Init(CFatMountCB* aMount) {return TDriveInterface::Init(aMount);}
+        using TDriveInterface::Init;
         };
 
 
@@ -512,17 +518,17 @@ public:
 
 	inline TBool ReadOnly(void) const;
     inline void  SetReadOnly(TBool aReadOnlyMode);
-	inline TInt StartCluster(const TFatDirEntry & anEntry) const;
+	inline TUint32 StartCluster(const TFatDirEntry & anEntry) const;
 	inline CRawDisk& RawDisk() const;
 	inline CFatFileSystem& FatFileSystem() const;
 	inline CFatTable& FAT() const;
-	inline TInt ClusterSizeLog2() const;
-	inline TInt SectorSizeLog2() const;
-	inline TInt TotalSectors() const;
-	inline TInt SectorsPerCluster() const;
-	inline TInt ClusterBasePosition() const;
-    inline TInt RootDirectorySector() const;
-    inline TUint RootDirEnd() const;
+	inline TUint32 ClusterSizeLog2() const;
+	inline TUint32 SectorSizeLog2() const;
+	inline TUint32 TotalSectors() const;
+	inline TUint32 SectorsPerCluster() const;
+	inline TUint32 ClusterBasePosition() const;
+    inline TUint32 RootDirectorySector() const;
+    inline TUint32 RootDirEnd() const;
     inline TUint32 RootClusterNum() const;
 
 	inline TFatType FatType() const;
@@ -530,29 +536,33 @@ public:
     inline TBool Is32BitFat() const;
 
 	inline TUint32 MaxClusterNumber() const;
-	inline TInt StartOfFatInBytes() const;
+	inline TUint32 StartOfFatInBytes() const;
     inline TUint32 FirstFatSector() const;
 
-	inline TInt NumberOfFats() const;
-	inline TInt FatSizeInBytes() const;
-	inline TInt ClusterRelativePos(TInt aPos) const;
-	inline TUint StartOfRootDirInBytes() const;
+	inline TUint32 NumberOfFats() const;
+	inline TUint32 FatSizeInBytes() const;
+	inline TUint32 ClusterRelativePos(TUint32 aPos) const;
+	inline TUint32 StartOfRootDirInBytes() const;
 	inline TUint32 UsableClusters() const;
-	inline TBool IsBadCluster(TInt aCluster) const;
+    inline TBool ClusterNumberValid(TUint32 aClusterNo) const;
+	inline TBool IsBadCluster(TUint32 aCluster) const;
+	
 	inline TBool IsRuggedFSys() const;
 	inline void SetRuggedFSys(TBool aVal);
+	inline TUint32 AtomicWriteGranularityLog2() const;
+
 	
-	inline TInt RootIndicator() const;
+	inline TUint32 RootIndicator() const;
 	
     inline TBool IsRootDir(const TEntryPos &aEntry) const;
 	inline CAsyncNotifier* Notifier() const;
 	inline TDriveInterface& DriveInterface() const;
 
-    inline TBool IsEndOfClusterCh(TInt aCluster) const;
-	inline void SetEndOfClusterCh(TInt &aCluster) const;
+    inline TBool IsEndOfClusterCh(TUint32 aCluster) const;
+	inline void SetEndOfClusterCh(TUint32 &aCluster) const;
 
     
-    void ReadUidL(TInt aCluster,TEntry& anEntry) const;
+    void ReadUidL(TUint32 aCluster,TEntry& anEntry) const;
 	
     void ReadDirEntryL(const TEntryPos& aPos,TFatDirEntry& aDirEntry) const;
 	void WriteDirEntryL(const TEntryPos& aPos,const TFatDirEntry& aDirEntry);
@@ -561,7 +571,8 @@ public:
     void DirWriteL(const TEntryPos& aPos,const TDesC8& aDes);
 
 	void ReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset) const;
-	void WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TInt& aBadcluster, TInt &aGoodcluster);
+    void WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint& aBadcluster, TUint& aGoodcluster);
+	
 	void MoveToNextEntryL(TEntryPos& aPos) const;
 	void MoveToDosEntryL(TEntryPos& aPos,TFatDirEntry& anEntry) const;
 	void EnlargeL(TInt aSize);
@@ -662,6 +673,24 @@ private:
 	        RArray<TShortName>  iShortNameCandidates;
 	    };
 
+   
+    /** a helper class that describes a continuous chunk of diectory entries*/
+    class TEntrySetChunkInfo
+        {
+     public:
+        inline TEntrySetChunkInfo();
+        inline TBool operator==(const TEntrySetChunkInfo& aRhs);
+
+        //-- FAT entryset can't span more than 3 clusters/sectors
+        enum {KMaxChunks = 3};
+
+     public:   
+        TEntryPos iEntryPos;    ///< entryset chunk dir. starting position
+        TUint     iNumEntries;  ///< number of entries in the chunk
+        };
+
+    
+    void DoEraseEntrySetChunkL(const TEntrySetChunkInfo& aEntrySetChunk);
 	
 
 	TBool DoRummageDirCacheL(TUint anAtt,TEntryPos& aStartEntryPos,TFatDirEntry& aStartEntry,TEntryPos& aDosEntryPos,TFatDirEntry& aDosEntry,TDes& aFileName, const TFindHelper& aAuxParam, XFileCreationHelper* aFileCreationHelper, const TLeafDirData& aLeafDir) const;
@@ -671,14 +700,16 @@ private:
     void FindEntryStartL(const TDesC& aName,TUint anAtt,TFatDirEntry& anEntry,TEntryPos& aPos) const;
 
 	void CheckFatForLoopsL(const TFatDirEntry& anEntry) const;
-	void DoCheckFatForLoopsL(TInt aCluster,TInt& aPreviousCluster,TInt& aChangePreviousCluster,TInt& aCount) const;
+	void DoCheckFatForLoopsL(TUint32 aCluster, TUint32& aPreviousCluster, TUint32& aChangePreviousCluster, TUint32& aCount) const;
     void InitializeL(const TLocalDriveCaps& aLocDrvCaps, TBool aIgnoreFSInfo=EFalse);
+
 	void DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset) const;
-	void DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TInt aLastcluster, TInt& aBadcluster, TInt& aGoodcluster);
-	TBool IsUniqueNameL(const TShortName& aName,TInt aDirCluster);
+    void DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint aLastcluster, TUint& aBadcluster, TUint& aGoodcluster);
+
+	TBool IsUniqueNameL(const TShortName& aName, TUint32 aDirCluster);
 	TBool FindShortNameL(const TShortName& aName,TEntryPos& anEntryPos);
 	void ReplaceClashingNameL(const TShortName& aNewName,const TEntryPos& anEntryPos);
-    TBool GenerateShortNameL(TInt aDirCluster,const TDesC& aLongName,TShortName& aShortName, TBool aForceRandomize=EFalse);
+    TBool GenerateShortNameL(TUint32 aDirCluster,const TDesC& aLongName,TShortName& aShortName, TBool aForceRandomize=EFalse);
     TInt FindLeafDirL(const TDesC& aName, TLeafDirData& aLeafDir) const;
 	
 	TInt GetDirEntry(TEntryPos& aPos,TFatDirEntry& aDosEntry,TFatDirEntry& aStartEntry,TDes& aLongFileName) const;
@@ -687,9 +718,9 @@ private:
 	void WriteDirEntryL(TEntryPos& aPos,const TFatDirEntry& aFatDirEntry,const TDesC& aLongFileName);
 	void EraseDirEntryL(TEntryPos aPos,const TFatDirEntry& anEntry);
 	void EraseDirEntryL(const TEntryPos& aPos);
-	void InitializeFirstDirClusterL(TInt aCluster,TInt aParentCluster);
+	void InitializeFirstDirClusterL(TUint32 aCluster, TUint32 aParentCluster);
 	void AddDirEntryL(TEntryPos& aPos,TInt aNameLength);
-	void ZeroDirClusterL(TInt aCluster);
+	void ZeroDirClusterL(TUint32 aCluster);
 	
     TInt DoWriteBootSector(TInt64 aMediaPos, const TFatBootSector& aBootSector) const;
 	TInt DoReadBootSector(TInt64 aMediaPos, TFatBootSector& aBootSector) const;
@@ -698,8 +729,8 @@ private:
     TInt WriteFSInfoSector(TInt64 aMediaPos, const TFSInfo& aFSInfo) const;
 	TInt ReadFSInfoSector(TInt64 aMediaPos, TFSInfo& aFSInfo) const;
 
-    TBool IsDirectoryEmptyL(TInt aCluster);
-	void ExtendClusterListZeroedL(TInt aNumber,TInt& aCluster);
+    TBool IsDirectoryEmptyL(TUint32 aCluster);
+	void ExtendClusterListZeroedL(TUint32 aNumber, TUint32& aCluster);
 	void WritePasswordData();
 	
     void WriteVolumeLabelL(const TDesC8& aVolumeLabel) const;
@@ -742,12 +773,10 @@ private:
     TUint32  iFatEocCode;       ///< End Of Cluster Chain code, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
 
     CLeafDirCache* iLeafDirCache;	///< A cache for most recently visited directories, only valid when limit is set bigger than 1
-    HBufC* iLastLeafDir;        	///< The last visited directory, only valid when limit of iLeafDirCache is less than 1 
-    TInt iLastLeafDirCluster;   	///< Cluster number of the last visited cluster, only valid when limit of iLeafDirCache is less than 1
 
 	TFatVolParam iVolParam;         ///< FAT volume parameters, populated form the boot sector values.
     
-	TInt iFirstFreeByte;            ///< First free byte in media (start of the data area on the volume)
+	TUint32 iFirstFreeByte;         ///< First free byte in media (start of the data area on the volume)
 	TUint32 iUsableClusters;        ///< Number of usable cluster on the volume 
 	
     CFatTable* iFatTable;           ///< Pointer to the volume Fat 
@@ -756,7 +785,6 @@ private:
     CAsyncNotifier* iNotifier;  ///< Async notifier for notifying user of Fat error conditions 
 
     XDriveInterface iDriverInterface; ///< the object representing interface to the drive, provides read/write access and notifiers
-    TInt            iChkDiscRecLevel; ///< Check disk recursion level counter. A temporary measure. 
 	TFatConfig      iFatConfig;       ///< FAT parametrers from estart.txt
 
 	XFileCreationHelper iFileCreationHelper;
@@ -788,7 +816,7 @@ friend class TDriveInterface;
 	};
 
 
-
+//---------------------------------------------------------------------------------------------------------------------------------
 
 /**
 Fat file system file subsession implmentation, provides all that is required of a plug in
@@ -809,10 +837,7 @@ public:
 	void FlushAllL();
 public:
 	void CheckPosL(TUint aPos);
-	void SetL(const TFatDirEntry& aFatDirEntry,TShare aShare,const TEntryPos& aPos);
-	void CreateSeekIndex();
-	
-    inline TBool IsSeekIndex() const;	
+	void SetupL(const TFatDirEntry& aFatDirEntry, const TEntryPos& aFileDosEntryPos);
 	
 	// from MBlockMapInterface
 	TInt BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPos);
@@ -833,26 +858,58 @@ private:
 
 
     void FlushStartClusterL();
-	TInt SeekToPosition(TInt aNewCluster,TInt aClusterOffset);
-	void SetSeekIndexValueL(TInt aFileCluster,TInt aStoredCluster);
+	TInt SeekToPosition(TUint aNewCluster, TUint aClusterOffset);
+	void SetSeekIndexValueL(TUint aFileCluster,TUint aStoredCluster);
 	void ResizeIndex(TInt aNewMult,TUint aNewSize);
 	TInt CalcSeekIndexSize(TUint aSize);
 	TBool IsSeekBackwards(TUint aPos);
 	void ClearIndex(TUint aNewSize);
-	void DoSetSizeL(TUint aSize,TBool aIsSizeWrite);
+	void DoSetSizeL(TUint aSize, TBool aForceCachesFlush);
 	void WriteFileSizeL(TUint aSize);
+
+    //----------------------------
+    inline TUint32 FCB_StartCluster() const;
+    inline TUint32 FCB_FileSize() const; 
+
+    inline void  FCB_SetStartCluster(TUint32 aVal);
+    inline void  FCB_SetFileSize(TUint32 aVal);  
+
+    inline TBool FileAttModified() const;
+    inline void  IndicateFileAttModified(TBool aModified);
+    
+    inline TBool FileSizeModified() const;
+    inline void  IndicateFileSizeModified(TBool aModified);
+
+    inline TBool FileTimeModified() const;
+    inline void  IndicateFileTimeModified(TBool aModified);
+
+    //----------------------------
+
+	void CreateSeekIndex();
+
+    void DoShrinkFileToZeroSizeL();
+    void DoShrinkFileL(TUint32  aNewSize, TBool aForceCachesFlush);
+    void DoExpandFileL(TUint32 aNewSize, TBool aForceCachesFlush);
+
 
 private:
 
 	TUint32* iSeekIndex;    ///< Seek index into file
 	TInt iSeekIndexSize;    ///< size of seek index
-	TInt iStartCluster;     ///< Start cluster number of file
+	
+    TUint     iStartCluster;     ///< Start cluster number of file
 	TEntryPos iCurrentPos;  ///< Current position in file data
-	TEntryPos iFileDirPos;  ///< File directory entry position
-	TBool iFileSizeModified; 
+	
+    TEntryPos iFileDosEntryPos;  ///< File DOS dir. entry position
+	
+    TBool iFileSizeModified :1;  ///< flag, indicating that file size was modified and needs to be flushed onto the media (see FlushL())
+    TBool iFileTimeModified :1;  ///< flag, indicating that file modification time was modified and needs to be flushed onto the media (see FlushL())
+
 	};
 
 
+
+//---------------------------------------------------------------------------------------------------------------------------------
 /**
 Fat file system directory subsession implmentation, provides all that is required of a plug in
 file system directory as well as Fat specific functionality
@@ -906,12 +963,12 @@ private:
 	void InitializeFormatDataL();
 	void DoZeroFillMediaL(TInt64 aStartPos, TInt64 aEndPos);
 
-    TInt InitFormatDataForVariableSizeDisk(TInt aDiskSizeInSectors);
-	TInt InitFormatDataForFixedSizeDiskNormal(TInt aDiskSizeInSectors, const TLocalDriveCapsV6& aCaps);
+    TInt InitFormatDataForVariableSizeDisk(TUint aDiskSizeInSectors);
+	TInt InitFormatDataForFixedSizeDiskNormal(TUint aDiskSizeInSectors, const TLocalDriveCapsV6& aCaps);
 	TInt InitFormatDataForFixedSizeDiskCustom(const TLDFormatInfo& aFormatInfo);
-    TInt InitFormatDataForFixedSizeDiskUser(TInt aDiskSizeInSectors);
-	void AdjustClusterSize(TInt aRecommendedSectorsPerCluster);
-	TInt AdjustFirstDataSectorAlignment(TInt aBlockSize);
+    TInt InitFormatDataForFixedSizeDiskUser(TUint aDiskSizeInSectors);
+	void AdjustClusterSize(TUint aRecommendedSectorsPerCluster);
+	TInt AdjustFirstDataSectorAlignment(TUint aBlockSize);
 	TInt FirstDataSector() const;
 
 	TInt HandleCorrupt(TInt aError);
@@ -919,9 +976,11 @@ private:
     void TranslateL();
     TInt DoTranslate(TPtr8& aBuf, RArray<TInt>& aArray);
     void RecordOldInfoL();
-	TInt MaxFat12Sectors() const;
-	TInt MaxFat16Sectors() const;
-	TUint32 MaxFat32Sectors() const;
+	
+    TUint MaxFat12Sectors() const;
+	TUint MaxFat16Sectors() const;
+	TUint MaxFat32Sectors() const;
+	
 	inline TBool Is16BitFat() const;
 	inline TBool Is32BitFat() const;
 	inline CFatMountCB& FatMount();
@@ -931,19 +990,20 @@ private:
 private:
 	
     TBool   iVariableSize;      ///< Flag to indicat if we are dealing with a variable size volume
-	TInt    iBytesPerSector;    ///< Byte per sector of media
+	
+    TUint16 iBytesPerSector;    ///< Byte per sector of media
     TInt    iSectorSizeLog2;    ///< Sector size in log2
-	TInt    iNumberOfFats;      ///< Number of Fats the volume will contain
-	TInt    iReservedSectors;   ///< Number of reserved sectors in the volume
-	TInt    iRootDirEntries;    ///< Nummer of root directory entries the root dir will have, specific to Fat12/16 volumes
-	TInt    iSectorsPerCluster; ///< Sector per cluster ration the volume will be formatted with
-	TInt    iSectorsPerFat;     ///< Number of sectors the Fat uses
-	TInt    iMaxDiskSectors;    ///< number of sectors the volume has
+	TUint8  iNumberOfFats;      ///< Number of Fats the volume will contain
+	TUint   iReservedSectors;   ///< Number of reserved sectors in the volume
+	TUint16 iRootDirEntries;    ///< Nummer of root directory entries the root dir will have, specific to Fat12/16 volumes
+	TUint   iSectorsPerCluster; ///< Sector per cluster ration the volume will be formatted with
+	TUint   iSectorsPerFat;     ///< Number of sectors the Fat uses
+	TUint32 iMaxDiskSectors;    ///< number of sectors the volume has
 	TFormatInfo iFormatInfo;    ///< format information for a custom format
 	TBuf8<16>   iFileSystemName;///< Buffer to contain the volume name 
 	TInt    iHiddenSectors;     ///< Number of hidden sectors in the volume
-	TInt    iNumberOfHeads;     ///< Number of heads the media device has, not used so far as only used on solid state media.
-	TInt    iSectorsPerTrack;   ///< Number of sectors the media device has, not used so far as only used on solid state media.
+	TUint16 iNumberOfHeads;     ///< Number of heads the media device has, not used so far as only used on solid state media.
+	TUint16 iSectorsPerTrack;   ///< Number of sectors the media device has, not used so far as only used on solid state media.
 	TUint32 iRootClusterNum;    ///< cluster number used for root directory, Fat32 specific
 	TUint32 iCountOfClusters;   ///< Count of clusters on the media
     RArray<TInt> iBadClusters;  ///< Array of bad cluster numbers
@@ -1047,7 +1107,7 @@ calculates the number of VFat directory entries for a given file/directory name 
 @param the length in characters of the name
 @return the number of VFat entries required
 */
-TInt NumberOfVFatEntries(TInt aNameLength);
+TUint NumberOfVFatEntries(TUint aNameLength);
 /**
 Calculates the check sum for a standard directory entry
 

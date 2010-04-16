@@ -5332,6 +5332,45 @@ The "HighRes timer" counter stops during power-down (the same as "after timer").
 
 
 
+/**
+Requests an event at a specified time after the last expiry of the this
+timer object, to a resolution of 1ms. If the last usage of this timer object
+was not via either this function or RTimer::HighRes(), this call behaves the
+same as RTimer::HighRes().
+The "HighRes timer" counter stops during power-down (the same as "after timer"). 
+
+@param aStatus    On completion, contains the status of the request.
+                  This is KErrNone if the timer completed normally at the
+                  requested time, otherwise another of the
+                  system-wide error codes. In particular KErrArgument indicates
+				  that the requested expiry time has already passed.
+
+@param aInterval  The time interval, in microseconds, after which an event
+                  is to occur, measured from the last expiry time (or intended
+				  expiry time in the case where the timer was cancelled) of this
+				  timer object.
+				  Note that the interval is allowed to be negative. To see why
+				  this might be useful consider the following sequence of timer
+				  operations:
+					1. Timer expires at time T
+					2. AgainHighRes(1000000) - timer is queued for T + 1 sec
+					3. Cancel() - timer is not queued but last scheduled expiry
+									is still at T + 1 second
+					4. AgainHighRes(-500000)
+					5. Timer expires at time T + 0.5 second
+
+@panic KERN-EXEC 15, if this function is called while a request for a timer
+       event is still outstanding.
+*/
+EXPORT_C void RTimer::AgainHighRes(TRequestStatus &aStatus,TTimeIntervalMicroSeconds32 aInterval)
+	{
+	aStatus=KRequestPending;
+	Exec::TimerAgainHighRes(iHandle,aStatus,aInterval.Int());
+	}
+
+
+
+
 EXPORT_C void RTimer::At(TRequestStatus &aStatus,const TTime &aTime)
 //
 // Request an absolute timer.
@@ -6358,7 +6397,14 @@ EXPORT_C void RDebug::RawPrint(const TDesC16& aDes)
 
 EXPORT_C TUint32 Math::Random()
 /**
-Gets 32 random bits from the kernel's random pool.
+Gets 32 random bits from the kernel's random number generator.
+
+The returned random data may or may not be cryptographically secure but should be of a high quality for
+non-cryptographic purposes.
+
+This function uses a cryptographically strong random number generator to generate the random data, which can
+be slower than insecure generators. If security is not important, a faster generator may be used such as
+Math::Rand().
 
 @return The 32 random bits.
 */
@@ -6367,6 +6413,62 @@ Gets 32 random bits from the kernel's random pool.
 	return Exec::MathRandom();
 	}
 
+EXPORT_C void Math::Random(TDes8& aRandomValue)
+/**
+Fills the provided descriptor with random data up to its current length. The number of random bytes required
+should be specified by setting the length of the descriptor that is passed to this function.
+
+The returned random data may or may not be cryptographically secure but should be of a high quality for
+non-cryptographic purposes.
+
+This function uses a cryptographically strong random number generator to generate the random data, which can
+be slower than insecure generators. If security is not important, a faster generator may be used such as
+Math::Rand().
+
+@param aRandomValue on return, the descriptor is filled with the requested number of random bytes.
+*/
+	{
+	Exec::MathSecureRandom(aRandomValue);
+    }
+
+
+EXPORT_C void Math::RandomL(TDes8& aRandomValue)
+/**
+Fills the provided descriptor with random data up to its current length. The number of random bytes required
+should be specified by setting the length of the descriptor that is passed to the function.
+
+If the returned random data cannot be guaranteed to be cryptographically secure, the function will leave with
+KErrNotReady to indicate that the returned data should not be used for cryptographic purposes.
+
+The security strength of the cryptographically strong random number generator is 256 bits.
+
+@param aRandomValue  on return, the descriptor is filled with the requested number of random bytes.
+
+@leave KErrNotReady  if the returned random data cannot be guaranteed to be cryptographically secure.
+*/
+	{
+	User::LeaveIfError(Exec::MathSecureRandom(aRandomValue));
+	}
+
+EXPORT_C TUint32 Math::RandomL()
+/**
+Gets 32 random bits from the kernel's random number generator.
+
+If the returned random data could not be guaranteed to be cryptographically secure, the function will instead
+leave with KErrNotReady to indicate that data was not available.
+
+The security strength of the cryptographically strong random number generator is 256 bits.
+
+@leave KErrNotReady  if no data was returned as it could not be guaranteed to be cryptographically secure.
+
+@return The 32 random bits.
+*/
+	{
+	TBuf8<sizeof(TUint32)> randomBuffer;
+	randomBuffer.SetMax();
+	User::LeaveIfError(Exec::MathSecureRandom(randomBuffer));
+	return *(TUint32*)(randomBuffer.Ptr());
+	}
 
 
 EXPORT_C void User::IMB_Range(TAny* aStart, TAny* aEnd)

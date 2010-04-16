@@ -412,13 +412,6 @@ TInt DTestResManLddFactory::Create(DLogicalChannelBase*& aChannel)
 	{
    	if (iOpenChannels != 0) //A Channel is already open
 		return KErrInUse;
-	//Deregister the client registered in ldd init. 
-	TInt r = PowerResourceManager::DeRegisterClient(DTestResManLddFactory::iClient.iClientId);
-	if(r != KErrNone)
-		Kern::Fault("PRM CLIENT DEREGISTER FAILED", __LINE__);
-	delete DTestResManLddFactory::iClient.pName;
-	DTestResManLddFactory::iClient.pName = NULL;
-	DTestResManLddFactory::iClient.iClientId = 0;
 	aChannel = new DTestResManLdd;
 	if(!aChannel)
 		return KErrNoMemory;
@@ -514,7 +507,17 @@ void DTestResManLdd::HandleMsg(TMessageBase* aMsg)
 		}
 	}
 
-
+/** 
+	Function used for polling the PostBoot Notification status. 
+*/
+TBool PollingPostBootStatus(TAny* aLddFactory)
+	{
+	if(aLddFactory)
+		if(((DTestResManLddFactory *)aLddFactory)->iPostBootNotiCount == EXPECTED_POST_NOTI_COUNT)
+			return ETrue;
+	return EFalse;
+	}
+	
 /**
   Process synchronous 'control' requests
 */
@@ -990,12 +993,9 @@ TInt DTestResManLdd::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 			}
 		case RTestResMan::ECheckPostBootLevelNotifications:
 			{
-				if(DTestResManLddFactory::iPostBootNotiCount != EXPECTED_POST_NOTI_COUNT)
-				{
-				r = KErrUnderflow;
-				break;
-				}
-			r = KErrNone;
+			//aPollPeriodMs = 3ms (3rd argument)
+			//aMaxPoll = 1000 (in total ~3000 ms timeout)
+			r = Kern::PollingWait(PollingPostBootStatus, (TAny*)iDevice, 3, 1000);
 			break;
 			}
 		case RTestResMan::EGetControllerVersion:
@@ -1335,6 +1335,17 @@ void DTestResManLddFactory::PostBootNotificationFunc(TUint /*aClientId*/, TUint 
 	iPostBootNotiCount++;
 	DPowerResourceNotification *ptr = (DPowerResourceNotification*)aParam;
 	TInt r = PowerResourceManager::CancelNotification(iClient.iClientId, aResId, *ptr);
-	if(r == KErrNone)
+	if(r == KErrCancel)
+		{
 		delete ptr;
+		if(iPostBootNotiCount == EXPECTED_POST_NOTI_COUNT)
+			{
+			r = PowerResourceManager::DeRegisterClient(DTestResManLddFactory::iClient.iClientId);
+			if(r != KErrNone)
+				Kern::Fault("PRM CLIENT DEREGISTER FAILED", __LINE__);
+			delete DTestResManLddFactory::iClient.pName;
+			DTestResManLddFactory::iClient.pName = NULL;
+			DTestResManLddFactory::iClient.iClientId = 0;
+			}
+		}
 	}

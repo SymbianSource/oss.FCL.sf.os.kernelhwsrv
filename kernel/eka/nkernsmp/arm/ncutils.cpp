@@ -23,7 +23,15 @@
 
 extern "C" {
 extern SVariantInterfaceBlock* VIB;
+
+extern TUint KernCoreStats_EnterIdle(TUint aCore);
+extern void KernCoreStats_LeaveIdle(TInt aCookie,TUint aCore);
+
+extern void DetachComplete();
+extern void send_irq_ipi(TSubScheduler*, TInt);
 }
+
+
 
 /******************************************************************************
  * Spin lock
@@ -90,28 +98,58 @@ void NKern::Init0(TAny* a)
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGicDistAddr=%08x", VIB->iGicDistAddr));
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGicCpuIfcAddr=%08x", VIB->iGicCpuIfcAddr));
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("iLocalTimerAddr=%08x", VIB->iLocalTimerAddr));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGlobalTimerAddr=%08x", VIB->iGlobalTimerAddr));
 
 	TScheduler& s = TheScheduler;
-	s.i_ScuAddr = (TAny*)VIB->iScuAddr;
-	s.i_GicDistAddr = (TAny*)VIB->iGicDistAddr;
-	s.i_GicCpuIfcAddr = (TAny*)VIB->iGicCpuIfcAddr;
-	s.i_LocalTimerAddr = (TAny*)VIB->iLocalTimerAddr;
-	s.i_TimerMax = (TAny*)(VIB->iMaxTimerClock / 1);		// use prescaler value of 1
+	s.iSX.iScuAddr = (ArmScu*)VIB->iScuAddr;
+	s.iSX.iGicDistAddr = (GicDistributor*)VIB->iGicDistAddr;
+	s.iSX.iGicCpuIfcAddr = (GicCpuIfc*)VIB->iGicCpuIfcAddr;
+	s.iSX.iLocalTimerAddr = (ArmLocalTimer*)VIB->iLocalTimerAddr;
+	s.iSX.iTimerMax = (VIB->iMaxTimerClock / 1);		// use prescaler value of 1
+#ifdef	__CPU_ARM_HAS_GLOBAL_TIMER_BLOCK
+	s.iSX.iGlobalTimerAddr = (ArmGlobalTimer*)VIB->iGlobalTimerAddr;
+#endif
 
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)
 		{
 		TSubScheduler& ss = TheSubSchedulers[i];
-		ss.i_TimerMultF = (TAny*)KMaxTUint32;
-		ss.i_TimerMultI = (TAny*)0x01000000u;
-		ss.i_CpuMult = (TAny*)KMaxTUint32;
-		ss.i_LastTimerSet = (TAny*)KMaxTInt32;
-		ss.i_TimestampError = (TAny*)0;
-		ss.i_TimerGap = (TAny*)16;
-		ss.i_MaxCorrection = (TAny*)64;
-		VIB->iTimerMult[i] = (volatile STimerMult*)&ss.i_TimerMultF;
-		VIB->iCpuMult[i] = (volatile TUint32*)&ss.i_CpuMult;
+		ss.iSSX.iCpuFreqM = KMaxTUint32;
+		ss.iSSX.iCpuFreqS = 0;
+		ss.iSSX.iCpuPeriodM = 0x80000000u;
+		ss.iSSX.iCpuPeriodS = 31;
+		ss.iSSX.iNTimerFreqM = KMaxTUint32;
+		ss.iSSX.iNTimerFreqS = 0;
+		ss.iSSX.iNTimerPeriodM = 0x80000000u;
+		ss.iSSX.iNTimerPeriodS = 31;
+		ss.iSSX.iTimerFreqM = KMaxTUint32;
+		ss.iSSX.iTimerFreqS = 0;
+		ss.iSSX.iTimerPeriodM = 0x80000000u;
+		ss.iSSX.iTimerPeriodS = 31;
+		ss.iSSX.iLastSyncTime = 0;
+		ss.iSSX.iTicksSinceLastSync = 0;
+		ss.iSSX.iLastTimerSet = 0;
+		ss.iSSX.iGapEstimate = 10<<16;
+		ss.iSSX.iGapCount = 0;
+		ss.iSSX.iTotalTicks = 0;
+		ss.iSSX.iDitherer = 1;
+		ss.iSSX.iFreqErrorEstimate = 0;
+		ss.iSSX.iFreqErrorLimit = 0x00100000;
+		ss.iSSX.iErrorIntegrator = 0;
+		ss.iSSX.iRefAtLastCorrection = 0;
+		ss.iSSX.iM = 4;
+		ss.iSSX.iN = 18;
+		ss.iSSX.iD = 3;
+		VIB->iTimerMult[i] = 0;
+		VIB->iCpuMult[i] = 0;
+		UPerCpuUncached* u = VIB->iUncached[i];
+		ss.iUncached = u;
+		u->iU.iDetachCount = 0;
+		u->iU.iAttachCount = 0;
+		u->iU.iPowerOffReq = FALSE;
+		u->iU.iDetachCompleteFn = &DetachComplete;
 		}
+	__e32_io_completion_barrier();
 	InterruptInit0();
 	}
 
@@ -151,6 +189,21 @@ EXPORT_C void Arm::SetIrqHandler(TLinAddr aHandler)
 EXPORT_C void Arm::SetFiqHandler(TLinAddr aHandler)
 	{
 	ArmInterruptInfo.iFiqHandler=aHandler;
+	}
+
+/** Register the global Idle handler
+	Called by the base port at boot time to register a handler containing a pointer to
+	a function that is called by the Kernel when each core reaches idle.
+	Should not be called at any other time.
+
+	@param	aHandler Pointer to idle handler function
+	@param	aPtr Idle handler function argument
+ */
+EXPORT_C void Arm::SetIdleHandler(TCpuIdleHandlerFn aHandler, TAny* aPtr)
+	{
+	ArmInterruptInfo.iCpuIdleHandler.iHandler = aHandler;
+	ArmInterruptInfo.iCpuIdleHandler.iPtr = aPtr;
+	ArmInterruptInfo.iCpuIdleHandler.iPostambleRequired = EFalse;
 	}
 
 extern void initialiseState(TInt aCpu, TSubScheduler* aSS);
@@ -231,11 +284,15 @@ TUint32 NKern::IdleGenerationCount()
 	return TheScheduler.iIdleGenerationCount;
 	}
 
-void NKern::Idle()
+void NKern::DoIdle()
 	{
 	TScheduler& s = TheScheduler;
 	TSubScheduler& ss = SubScheduler();	// OK since idle thread locked to CPU
+	SPerCpuUncached* u0 = &((UPerCpuUncached*)ss.iUncached)->iU;
 	TUint32 m = ss.iCpuMask;
+	TUint32 retire = 0;
+	TBool global_defer = FALSE;
+	TBool event_kick = FALSE;
 	s.iIdleSpinLock.LockIrq();
 	TUint32 orig_cpus_not_idle = __e32_atomic_and_acq32(&s.iCpusNotIdle, ~m);
 	if (orig_cpus_not_idle == m)
@@ -255,22 +312,184 @@ void NKern::Idle()
 			return;
 			}
 		}
+	TBool shutdown_check = !((s.iThreadAcceptCpus|s.iCCReactivateCpus) & m);
+	if (shutdown_check)
+		{
+		// check whether this CPU is ready to be powered off
+		s.iGenIPILock.LockOnly();
+		ss.iEventHandlerLock.LockOnly();
+		if ( !((s.iThreadAcceptCpus|s.iCCReactivateCpus) & m) && !ss.iDeferShutdown && !ss.iNextIPI && !ss.iEventHandlersPending)
+			{
+			for(;;)
+				{
+				if (s.iCCDeferCount)
+					{
+					global_defer = TRUE;
+					break;
+					}
+				if (s.iPoweringOff)
+					{
+					// another CPU might be in the process of powering off
+					SPerCpuUncached* u = &((UPerCpuUncached*)s.iPoweringOff->iUncached)->iU;
+					if (u->iDetachCount == s.iDetachCount)
+						{
+						// still powering off so we must wait
+						global_defer = TRUE;
+						break;
+						}
+					}
+				TUint32 more = s.CpuShuttingDown(ss);
+				retire = SCpuIdleHandler::ERetire;
+				if (more)
+					retire |= SCpuIdleHandler::EMore;
+				s.iPoweringOff = &ss;
+				s.iDetachCount = u0->iDetachCount;
+				break;
+				}
+			}
+		ss.iEventHandlerLock.UnlockOnly();
+		s.iGenIPILock.UnlockOnly();
+		}
+	if (!retire && ss.iCurrentThread->iSavedSP)
+		{
+		// rescheduled between entry to NKern::Idle() and here
+		// go round again to see if any more threads to pull from other CPUs
+		__e32_atomic_ior_ord32(&s.iCpusNotIdle, m);	// we aren't idle after all
+		s.iIdleSpinLock.UnlockIrq();
+		return;
+		}
+	if (global_defer)
+		{
+		// Don't WFI if we're only waiting for iCCDeferCount to reach zero or for
+		// another CPU to finish powering down since we might not get another IPI.
+		__e32_atomic_ior_ord32(&s.iCpusNotIdle, m);	// we aren't idle after all
+		s.iIdleSpinLock.UnlockIrq();
+		__snooze();
+		return;
+		}
 
 	// postamble happens here - interrupts cannot be reenabled
+	TUint32 arg = orig_cpus_not_idle & ~m;
+	if (arg == 0)
+		s.AllCpusIdle();
 	s.iIdleSpinLock.UnlockOnly();
-	NKIdle(orig_cpus_not_idle & ~m);
+
+	//TUint cookie = KernCoreStats::EnterIdle((TUint8)ss.iCpuNum);
+	TUint cookie = KernCoreStats_EnterIdle((TUint8)ss.iCpuNum);
+
+	arg |= retire;
+	NKIdle(arg);
+
+	//KernCoreStats::LeaveIdle(cookie, (TUint8)ss.iCpuNum);
+	KernCoreStats_LeaveIdle(cookie, (TUint8)ss.iCpuNum);
+
 
 	// interrupts have not been reenabled
 	s.iIdleSpinLock.LockOnly();
-	__e32_atomic_ior_ord32(&s.iCpusNotIdle, m);
+
+	if (retire)
+		{
+		// we just came back from power down
+		SPerCpuUncached* u = &((UPerCpuUncached*)ss.iUncached)->iU;
+		u->iPowerOnReq = 0;
+		__e32_io_completion_barrier();
+		s.iGenIPILock.LockOnly();
+		ss.iEventHandlerLock.LockOnly();
+		s.iIpiAcceptCpus |= m;
+		s.iCCReactivateCpus |= m;
+		s.iCpusGoingDown &= ~m;
+		if (s.iPoweringOff == &ss)
+			s.iPoweringOff = 0;
+		if (ss.iEventHandlersPending)
+			event_kick = TRUE;
+		ss.iEventHandlerLock.UnlockOnly();
+		s.iGenIPILock.UnlockOnly();
+		}
+
+	TUint32 ci = __e32_atomic_ior_ord32(&s.iCpusNotIdle, m);
 	if (ArmInterruptInfo.iCpuIdleHandler.iPostambleRequired)
 		{
 		ArmInterruptInfo.iCpuIdleHandler.iPostambleRequired = FALSE;
-		NKIdle(-1);
+		NKIdle(ci|m|SCpuIdleHandler::EPostamble);
+		}
+	if (ci == 0)
+		s.FirstBackFromIdle();
+
+	if (retire)
+		{
+		s.iCCReactivateDfc.RawAdd();	// kick load balancer to give us some work
+		if (event_kick)
+			send_irq_ipi(&ss, EQueueEvent_Kick);	// so that we will process pending events
 		}
 	s.iIdleSpinLock.UnlockIrq();	// reenables interrupts
 	}
 
+TBool TSubScheduler::Detached()
+	{
+	SPerCpuUncached* u = &((UPerCpuUncached*)iUncached)->iU;
+	return u->iDetachCount != u->iAttachCount;
+	}
+
+TBool TScheduler::CoreControlSupported()
+	{
+	return VIB->iCpuPowerUpFn != 0;
+	}
+
+void TScheduler::CCInitiatePowerUp(TUint32 aCores)
+	{
+	TCpuPowerUpFn pUp = VIB->iCpuPowerUpFn;
+	if (pUp && aCores)
+		{
+		TInt i;
+		for (i=0; i<KMaxCpus; ++i)
+			{
+			if (aCores & (1u<<i))
+				{
+				TSubScheduler& ss = TheSubSchedulers[i];
+				SPerCpuUncached& u = ((UPerCpuUncached*)ss.iUncached)->iU;
+				u.iPowerOnReq = TRUE;
+				__e32_io_completion_barrier();
+				pUp(i, &u);
+
+				// wait for core to reattach
+				while (u.iDetachCount != u.iAttachCount)
+					{
+					__snooze();
+					}
+				}
+			}
+		}
+	}
+
+void TScheduler::CCIndirectPowerDown(TAny*)
+	{
+	TCpuPowerDownFn pDown = VIB->iCpuPowerDownFn;
+	if (pDown)
+		{
+		TInt i;
+		for (i=0; i<KMaxCpus; ++i)
+			{
+			TSubScheduler& ss = TheSubSchedulers[i];
+			SPerCpuUncached& u = ((UPerCpuUncached*)ss.iUncached)->iU;
+			if (u.iPowerOffReq)
+				{
+				pDown(i, &u);
+				__e32_io_completion_barrier();
+				u.iPowerOffReq = FALSE;
+				__e32_io_completion_barrier();
+				}
+			}
+		}
+	}
+
+// Called on any CPU which receives an indirect power down IPI
+extern "C" void handle_indirect_powerdown_ipi()
+	{
+	TScheduler& s = TheScheduler;
+	TSubScheduler& ss = SubScheduler();
+	if (s.iIpiAcceptCpus & ss.iCpuMask)
+		s.iCCPowerDownDfc.Add();
+	}
 
 EXPORT_C TUint32 NKern::CpuTimeMeasFreq()
 	{
@@ -288,7 +507,7 @@ EXPORT_C TUint32 NKern::CpuTimeMeasFreq()
  */
 EXPORT_C TInt NKern::TimesliceTicks(TUint32 aMicroseconds)
 	{
-	TUint32 mf32 = (TUint32)TheScheduler.i_TimerMax;
+	TUint32 mf32 = TheScheduler.iSX.iTimerMax;
 	TUint64 mf(mf32);
 	TUint64 ticks = mf*TUint64(aMicroseconds) + UI64LIT(999999);
 	ticks /= UI64LIT(1000000);
@@ -299,6 +518,20 @@ EXPORT_C TInt NKern::TimesliceTicks(TUint32 aMicroseconds)
 	}
 
 
+#if defined(__NKERN_TIMESTAMP_USE_LOCAL_TIMER__)
+	// Assembler
+#elif defined(__NKERN_TIMESTAMP_USE_SCU_GLOBAL_TIMER__)
+	// Assembler
+#elif defined(__NKERN_TIMESTAMP_USE_INLINE_BSP_CODE__)
+#define __DEFINE_NKERN_TIMESTAMP_CPP__
+#include <variant_timestamp.h>
+#undef __DEFINE_NKERN_TIMESTAMP_CPP__
+#elif defined(__NKERN_TIMESTAMP_USE_BSP_CALLOUT__)
+	// Assembler
+#else
+#error No definition for NKern::Timestamp()
+#endif
+
 /** Get the frequency of counter queried by NKern::Timestamp().
 
 @publishedPartner
@@ -306,6 +539,19 @@ EXPORT_C TInt NKern::TimesliceTicks(TUint32 aMicroseconds)
 */
 EXPORT_C TUint32 NKern::TimestampFrequency()
 	{
-	return (TUint32)TheScheduler.i_TimerMax;
+#if defined(__NKERN_TIMESTAMP_USE_LOCAL_TIMER__)
+	// Use per-CPU local timer in Cortex A9 or ARM11MP
+	return TheScheduler.iSX.iTimerMax;
+#elif defined(__NKERN_TIMESTAMP_USE_SCU_GLOBAL_TIMER__)
+	// Use global timer in Cortex A9 r1p0
+	return TheScheduler.iSX.iTimerMax;
+#elif defined(__NKERN_TIMESTAMP_USE_INLINE_BSP_CODE__)
+	// Use code in <variant_timestamp.h> supplied by BSP
+	return KTimestampFrequency;
+#elif defined(__NKERN_TIMESTAMP_USE_BSP_CALLOUT__)
+	// Call function defined in variant
+#else
+#error No definition for NKern::TimestampFrequency()
+#endif
 	}
 

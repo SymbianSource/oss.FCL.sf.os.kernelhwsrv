@@ -1175,4 +1175,16 @@ EXPORTS
 	_ZN4Kern19UnmapAndUnpinMemoryEP16TKernelMapObject @ 1174 NONAME
 	_ZN4Kern21CreateKernelMapObjectERP16TKernelMapObjectj @ 1175 NONAME
 	_ZN4Kern22DestroyKernelMapObjectERP16TKernelMapObject @ 1176 NONAME
+	_ZN9Interrupt16AddTimingEntropyEv @ 1177 NONAME
+	_ZN4Kern10RandomSaltEmj @ 1178 NONAME
+	_ZN4Kern10RandomSaltEyj @ 1179 NONAME
+	_ZN4Kern10RandomSaltEPKhjj @ 1180 NONAME
+	_ZN4Kern12SecureRandomER5TDes8 @ 1181 NONAME
+	_ZN13DPagingDevice16NotificationLockEv @ 1182 NONAME
+	_ZN13KernCoreStats5StatsEPv @ 1183 NONAME
+	_ZN13KernCoreStats6EngageEi @ 1184 NONAME
+	_ZN13KernCoreStats6RetireEii @ 1185 NONAME
+	_ZN13KernCoreStats9ConfigureEj @ 1186 NONAME
+	_ZN5NKern21SetNumberOfActiveCpusEi @ 1187 NONAME
+	_ZN3Arm14SetIdleHandlerEPFvPvmPVvES0_ @ 1188 NONAME
 

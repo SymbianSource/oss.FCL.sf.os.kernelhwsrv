@@ -90,7 +90,7 @@ __NAKED__ TUint32 __get_local_timer_address()
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");
-	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLocalTimerAddr));
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");
@@ -103,7 +103,7 @@ __NAKED__ TUint32 __get_local_timer_count()
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");
-	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLocalTimerAddr));
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");
@@ -118,7 +118,7 @@ __NAKED__ TUint32 __set_local_timer_count()
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");
-	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLocalTimerAddr));
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");
@@ -133,7 +133,7 @@ __NAKED__ TUint32 __swp_local_timer_count()
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");
-	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_LocalTimerAddr));
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLocalTimerAddr));
 	asm("nop ");
 	asm("nop ");
 	asm("nop ");

@@ -27,23 +27,46 @@
 #define __NK_X86_H__
 #include <nk_cpu.h>
 
+class TSubScheduler;
+class TScheduler;
+struct TX86Tss;
+
 // TSubScheduler member data
-#define	i_IrqCount			iExtras[9]		// count of interrupts handled
-#define	i_ExcInfo			iExtras[10]		// pointer to exception info for crash debugger
-#define	i_CrashState		iExtras[11]		// 0=normal, 1=this CPU faulted, 2=this CPU has received an NMI and halted
-#define	i_APICID			iExtras[12]		// Local APIC ID for this CPU (starts at -1)
-#define	i_IrqNestCount		iExtras[13]		// IRQ nest count for this CPU (starts at -1)
-#define	i_IrqStackTop		iExtras[14]		// Top of IRQ stack for this CPU
-#define	i_Tss				iExtras[15]		// Address of TSS for this CPU
-#define	i_TimerMultF		iExtras[16]		// Timer frequency / Max Timer frequency * 2^32
-#define	i_TimerMultI		iExtras[17]		// Max Timer frequency / Timer frequency * 2^24
-#define	i_CpuMult			iExtras[18]		// CPU frequency / Max CPU frequency * 2^32
-#define	i_TimestampOffset	iExtras[20]		// 64 bit value to add to CPU TSC to give NKern::Timestamp()
-#define	i_TimestampOffsetL	iExtras[20]		// 
-#define	i_TimestampOffsetH	iExtras[21]		// 
+struct TSubSchedulerX
+	{
+	TUint32				iSSXP[9];
+	volatile TUint32	iIrqCount;				// count of interrupts handled
+	TAny*				iExcInfo;				// pointer to exception info for crash debugger
+	volatile TInt		iCrashState;			// 0=normal, 1=this CPU faulted, 2=this CPU has received an NMI and halted
+	TUint32				iAPICID;				// Local APIC ID for this CPU (starts at -1)
+	volatile TInt		iIrqNestCount;			// IRQ nest count for this CPU (starts at -1)
+	TLinAddr			iIrqStackTop;			// Top of IRQ stack for this CPU
+	TX86Tss*			iTss;					// Address of TSS for this CPU
+	volatile TUint32	iCpuFreqM;				// CPU frequency / Max CPU frequency (mantissa, bit 31=1) f/fmax=M/2^(S+32) <=1
+	volatile TInt		iCpuFreqS;				// CPU frequency / Max CPU frequency (shift)
+	volatile TUint32	iCpuPeriodM;			// Max CPU frequency / CPU frequency (mantissa, bit 31=1) fmax/f=M/2^S >=1
+	volatile TInt		iCpuPeriodS;			// Max CPU frequency / CPU frequency (shift)
+	volatile TUint32	iNTimerFreqM;			// Nominal Timer frequency / Max Timer frequency (mantissa, bit 31=1) f/fmax=M/2^(S+32) <=1
+	volatile TInt		iNTimerFreqS;			// Nominal Timer frequency / Max Timer frequency (shift)
+	volatile TUint32	iNTimerPeriodM;			// Nominal Max Timer frequency / Timer frequency (mantissa, bit 31=1) fmax/f=M/2^S >=1
+	volatile TInt		iNTimerPeriodS;			// Nominal Max Timer frequency / Timer frequency (shift)
+	volatile TUint32	iTimerFreqM;			// Timer frequency / Max Timer frequency (mantissa, bit 31=1) f/fmax=M/2^(S+32) <=1
+	volatile TInt		iTimerFreqS;			// Timer frequency / Max Timer frequency (shift)
+	volatile TUint32	iTimerPeriodM;			// Max Timer frequency / Timer frequency (mantissa, bit 31=1) fmax/f=M/2^S >=1
+	volatile TInt		iTimerPeriodS;			// Max Timer frequency / Timer frequency (shift)
+	volatile TUint64HL	iTimestampOffset;		// 64 bit value to add to CPU TSC to give NKern::Timestamp()
+
+	TUint32				iSSXP2[32];
+	TUint64				iSSXP3;					// one 64 bit value to guarantee alignment
+	};
 
 // TScheduler member data
-#define	i_TimerMax		iExtras[16]		// Maximum per-CPU timer frequency (after prescaling)
+struct TSchedulerX
+	{
+	TUint64				iTimerMax;				// Maximum per-CPU timer frequency (after prescaling)
+	TUint32				iSXP[14];
+	};
+
 
 #define CRASH_IPI_VECTOR			0x27
 #define RESCHED_IPI_VECTOR			0x28
@@ -68,8 +91,7 @@ class NThread : public NThreadBase
 	{
 public:
 	TInt Create(SNThreadCreateInfo& anInfo, TBool aInitial);
-	inline void Stillborn()
-		{}
+	void Stillborn();
 	void GetUserContext(TX86RegSet& aContext, TUint32& aAvailRegMask);
 	void SetUserContext(const TX86RegSet& aContext, TUint32& aRegMask);
 	void GetSystemContext(TX86RegSet& aContext, TUint32& aAvailRegMask);
@@ -186,6 +208,11 @@ GLREF_D TUint64 DefaultCoprocessorState[64];
 #endif
 #define smp_mb()	mb()
 
+
+/**
+@internalComponent
+*/
+extern "C" void send_resched_ipis(TUint32 aMask);
 
 
 // End of file

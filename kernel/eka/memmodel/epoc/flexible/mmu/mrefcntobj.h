@@ -97,12 +97,6 @@ protected:
 	*/
 	TBool CheckCloseIsSafe();
 
-	/**
-	Return true if the preconditions for #AsyncClose are met.
-	This is for use by derived classes which overload the #AsyncClose method.
-	*/
-	TBool CheckAsyncCloseIsSafe();
-
 protected:
 
 	/**

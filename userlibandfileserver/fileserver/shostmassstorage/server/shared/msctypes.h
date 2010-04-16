@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -47,9 +47,7 @@ enum TTransportType
 /** Transport layer error code */
 const TInt KErrCommandFailed = 0x100;
 /** Transport layer error code */
-const TInt KErrCommandNotSupported = 0x101;
-/** Transport layer error code */
-const TInt KErrCommandStalled = 0x102;
+const TInt KErrCommandStalled = 0x101;
 
 
 /**

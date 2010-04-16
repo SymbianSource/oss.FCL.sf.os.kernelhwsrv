@@ -29,7 +29,7 @@
 files=
 
 #ifdef PAGED_ROM
-data=gentestpaged.txt			Test\test_paged.cpp paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged.cpp paging_unmovable
 #endif
 
 #include <rom\##VARIANT##\kernel.iby>
@@ -37,7 +37,7 @@ data=gentestpaged.txt			Test\test_paged.cpp paging_unmovable
 #include <rom\hal\hal.iby>
 #include <rom\f32\f32.iby>
 
-data=gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
 
 // scripts
 #if !defined(MANUALROM)
@@ -46,7 +46,7 @@ data=EPOCROOT##epoc32\rom\h4hrp\usbtest.autoexec.bat				autoexec.bat
 
 #ifdef WITH_COMP
 #ifdef PAGED_ROM
-data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
 #endif
 
 #ifdef MULTIPLEROFS
@@ -71,7 +71,7 @@ data=EPOCROOT##epoc32\Release\##MAIN##\##BUILD##\minkda.ldd			\sys\bin\minkda.ld
 
 #ifndef WITH_COMP
 #ifdef PAGED_ROM
-data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
 #endif
 #endif
 

@@ -18,7 +18,7 @@
 #include <drivers/pbus.h>
 #include "OstTraceDefinitions.h"
 #ifdef OST_TRACE_COMPILER_IN_USE
-#include "locmedia_ost.h"
+#include "../../include/drivers/locmedia_ost.h"
 #ifdef __VC32__
 #pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
 #endif
@@ -1111,6 +1111,9 @@ void DPBusSocket::DoorCloseEvent()
 	OstTraceFunctionEntry1( DPBUSSOCKET_DOORCLOSEEVENT_ENTRY, this );
 	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::DoorCloseEvent state %d",iSocketNumber,iState));
 	OstTraceExt2(TRACE_INTERNALS, DPBUSSOCKET_DOORCLOSEEVENT , "iSocketNumber=%d; iState=%d",iSocketNumber,iState);
+	
+	if (iPostponedEvents & EMediaChange)
+		iPostponedEvents &= ~EMediaChange;
 
 	// NB If there are multiple doors then the bus may already be powererd up, 
 	// so it's not possible to determine the bus state.

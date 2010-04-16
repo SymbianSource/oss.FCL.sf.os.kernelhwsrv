@@ -26,7 +26,6 @@
 #include <f32file.h>
 
 #include "rusbhostmsdevice.h"
-#include "rusbhostmslogicalunit.h"
 
 #include <d32usbdi_hubdriver.h>
 #include "usbtypes.h"

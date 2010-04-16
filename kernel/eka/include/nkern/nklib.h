@@ -75,6 +75,14 @@ Defines a 64-bit time value.
 typedef Int64 TTimeK;
 
 
+/**
+@internalComponent
+*/
+union TUint64HL
+	{
+	TUint64		i64;
+	TUint32		i32[2];
+	};
 
 
 #if defined(__VC32__) || defined(__CW32__)
@@ -108,6 +116,12 @@ inline TAny* operator new[](TUint /*aSize*/, TAny* aBase) __NO_THROW
 inline void operator delete[](TAny* /*aPtr*/, TAny* /*aBase*/) __NO_THROW
 	{}
 #endif //__PLACEMENT_VEC_NEW_INLINE
+
+/******************************************************************************
+ *
+ * SIMPLE DOUBLY-LINKED CIRCULAR LIST
+ *
+ ******************************************************************************/
 
 /**
 	Macro to offset a SDblQueLink pointer back to the base of a class containing it
@@ -213,7 +227,7 @@ struct SDblQueLink
 	
 	@return True, if this is the only link item in the list; false, otherwise.
     */
-	inline TBool Alone() const
+	FORCE_INLINE TBool Alone() const
 		{ return (iNext==iPrev); }
     
     
@@ -363,6 +377,334 @@ struct SDblQue
 
 
 
+/******************************************************************************
+ *
+ * ITERABLE DOUBLY-LINKED CIRCULAR LIST
+ *
+ ******************************************************************************/
+
+/**
+@internalComponent
+
+An object that forms part of an iterable doubly linked list.
+
+SIterDQLink can also be embedded within another object so that that object
+can form part of the doubly linked list.
+
+@see SIterDQ
+*/
+struct SIterDQ;
+struct SIterDQIterator;
+struct SIterDQLink
+	{
+	
+    /**
+    Default constructor; only defined for debug builds.
+    
+    It initialises the link pointers.
+    */
+	FORCE_INLINE SIterDQLink() {iNext=iPrev=0;}
+
+	enum
+		{
+		ENonAddressMask=3u,
+		EIterator=1u,
+		EAnchor=2u,
+		};
+
+	FORCE_INLINE SIterDQLink* Next() const
+		{ return (SIterDQLink*)(iNext & ~ENonAddressMask); }
+
+	FORCE_INLINE SIterDQLink* Prev() const
+		{ return (SIterDQLink*)(iPrev & ~ENonAddressMask); }
+
+	FORCE_INLINE TBool IsObject() const
+		{ return !(iNext & ENonAddressMask); }
+
+	FORCE_INLINE TBool IsIterator() const
+		{ return iNext & EIterator; }
+
+	FORCE_INLINE TBool IsAnchor() const
+		{ return iNext & EAnchor; }
+
+	FORCE_INLINE void SetNext(SIterDQLink* aNext)
+		{ iNext = (iNext & ENonAddressMask) | (TUintPtr(aNext) & ~ENonAddressMask); }
+
+	FORCE_INLINE void SetPrev(SIterDQLink* aPrev)
+		{ iPrev = (iPrev & ENonAddressMask) | (TUintPtr(aPrev) & ~ENonAddressMask); }
+
+    /**
+    Removes this link item from the doubly linked list.
+    
+    @return A pointer to this link item.
+    */
+	FORCE_INLINE SIterDQLink* Deque()
+		{
+		SIterDQLink* next = Next();
+		SIterDQLink* prev = Prev();
+		next->SetPrev(prev);
+		prev->SetNext(next);
+#ifdef _DEBUG
+		SetNext((SIterDQLink*)4);
+		SetPrev((SIterDQLink*)4);
+#endif
+		return this;
+		}
+
+
+    /**
+    Inserts this link item into the list so that it precedes the specified link item.
+    
+    @param aL A pointer to the link item which is to follow this link item.
+    */
+	FORCE_INLINE void InsertBefore(SIterDQLink* aL)
+		{
+		SIterDQLink* prev = aL->Prev();
+		SetNext(aL);
+		SetPrev(prev);
+		prev->SetNext(this);
+		aL->SetPrev(this);
+		}
+	
+		
+	/**
+	Inserts this link item into the list so that it follows the specified link item.
+    
+    @param aL A pointer to the link item which is to precede this link item.
+    */
+	FORCE_INLINE void InsertAfter(SIterDQLink* aL)
+		{
+		SIterDQLink* next = aL->Next();
+		SetPrev(aL);
+		SetNext(next);
+		next->SetPrev(this);
+		aL->SetNext(this);
+		}
+	
+	
+	/**
+	Tests whether this is the only link item in the list.
+	
+	@return True, if this is the only link item in the list; false, otherwise.
+    */
+	FORCE_INLINE TBool Alone() const
+		{ return (iNext==iPrev); }
+    
+private:
+	/**
+	Bits 2-31 = Address of the next link item in the list.
+	Bit 0 = 1 for iterator, 0 for object
+	*/
+	TUintPtr iNext;
+
+	/**
+	Bits 2-31 = Address of the previous link item in the list.
+	Bit 0 = 1 for iterator, 0 for object
+	*/
+	TUintPtr iPrev;
+
+	friend struct SIterDQ;
+	friend struct SIterDQIterator;
+	};
+
+
+
+
+/**
+@internalComponent
+
+Anchor for an iterable circular doubly linked list of SIterDQLink items.
+
+@see SIterDQLink
+*/
+struct SIterDQ
+	{
+	
+	/**
+	Default constructor.
+	*/
+	FORCE_INLINE SIterDQ()
+		{ iA.iNext = iA.iPrev = TUintPtr(&iA)|SIterDQLink::EAnchor; }
+		
+	
+	/**
+	Moves link items from the specified list onto this list, and clears the specified list
+	
+	@param aQ The source linked list. This list must not be empty.
+	*/	
+	inline SIterDQ(SIterDQ* aQ, TInt)		// move entries from aQ onto this queue and clear aQ - aQ must not be empty
+		{ iA.iNext=aQ->iA.iNext; iA.iPrev=aQ->iA.iPrev; First()->SetPrev(&iA); Last()->SetNext(&iA); new (aQ) SIterDQ; }
+		
+		
+	/**
+	Tests whether this doubly linked list is empty.
+	
+	@return True, if the list is empty; false, otherwise.
+	*/
+	FORCE_INLINE TBool IsEmpty() const
+		{ return (iA.iNext &~ SIterDQLink::ENonAddressMask) == TUintPtr(&iA); }
+	
+		
+    /**
+    Gets a pointer to the first item in this doubly linked list.
+    
+    @return A pointer to the first item.
+    */		
+	FORCE_INLINE SIterDQLink* First() const
+		{ return iA.Next(); }
+	
+		
+    /**
+    Gets a pointer to the last item in this doubly linked list.
+    
+    @return A pointer to the last item.
+    */		
+	FORCE_INLINE SIterDQLink* Last() const
+		{ return iA.Prev(); }
+	
+		
+	/**
+	Adds the specified link item onto the end of this doubly linked list.
+	
+	@param aL A pointer to the link item to be added.
+	*/
+	FORCE_INLINE void Add(SIterDQLink* aL)
+		{
+		aL->InsertBefore(&iA);
+		}
+	
+		
+	/**
+	Adds the specified link item onto the front of this doubly linked list.
+	
+	@param aL A pointer to the link item to be added.
+	*/
+	FORCE_INLINE void AddHead(SIterDQLink* aL)
+		{
+		aL->InsertAfter(&iA);
+		}
+	
+		
+	/**
+	Gets the first link item in the linked list.
+	
+	@return The first link item in the list; NULL, if the list is empty.
+	*/
+	inline SIterDQLink* GetFirst()
+		{ if (IsEmpty()) return NULL; else return First()->Deque(); }
+
+
+	/**
+	Gets the last link item in the linked list.
+	
+	@return The last link item in the list; NULL, if the list is empty.
+	*/
+	inline SIterDQLink* GetLast()
+		{ if (IsEmpty()) return NULL; else return Last()->Deque(); }
+
+
+	/**
+	Appends entries from the specified linked list onto this list, and clears
+	the specified link list anchor.
+	
+	@param aQ The source linked list.
+	*/
+	inline void MoveFrom(SIterDQ* aQ)	// append entries from aQ onto this queue and clear aQ
+		{ if (!aQ->IsEmpty())
+			{
+			SIterDQLink* last = Last();		// last current
+			SIterDQLink* fx = aQ->First();	// first extra
+			SIterDQLink* lx = aQ->Last();	// last extra
+			last->SetNext(fx);
+			fx->SetPrev(last);
+			iA.SetPrev(lx);
+			lx->SetNext(&iA);
+			new (aQ) SIterDQ;
+			}
+		}
+
+private:
+    /**
+    The anchor point for the doubly linked list.
+    */
+	SIterDQLink	iA;
+	};
+
+
+#ifdef __VC32__
+#pragma warning( disable : 4127 )	// conditional expression is constant
+#endif
+
+/**
+@internalComponent
+
+Iterator for an iterable circular doubly linked list of SIterDQLink items.
+
+@see SIterDQLink
+@see SIterDQ
+*/
+struct SIterDQIterator : public SIterDQLink
+	{
+
+	/**
+	Default constructor.
+
+	Iterator starts out not attached to any queue
+	*/
+	FORCE_INLINE SIterDQIterator()
+		{ iNext = iPrev = SIterDQLink::EIterator; }
+
+	/**
+	Destructor ensures iterator detached before destruction
+	*/
+	FORCE_INLINE ~SIterDQIterator()
+		{
+#ifdef _DEBUG
+		if (iNext != SIterDQLink::EIterator) { __crash(); }
+#endif
+		}
+
+	/**
+	Detach the iterator if it is currently attached to a queue
+	*/
+	FORCE_INLINE void Detach()
+		{ if (Next()) {Deque(); SetNext(0);} }
+
+	/**
+	Attach the iterator to a queue at the beginning.
+	*/
+	FORCE_INLINE void Attach(SIterDQ* aQ)
+		{
+#ifdef _DEBUG
+		if (iNext != SIterDQLink::EIterator) { __crash(); }
+#endif
+		aQ->AddHead(this);
+		}
+
+	/**
+	Step the iterator over the next object.
+	Return KErrNone if we stepped over an object.
+	Return KErrEof if we reached the end of the list.
+	Return KErrGeneral if we stepped over aMaxSteps other iterators.
+	In first case aObj is set to point to the object stepped over.
+	In other cases aObj is set to NULL.
+	*/
+	TInt Step(SIterDQLink*& aObj, TInt aMaxSteps=0);	// 0 means use default value
+
+	};
+
+#ifdef __VC32__
+#pragma warning( default : 4127 )	// conditional expression is constant
+#endif
+
+
+
+/******************************************************************************
+ *
+ * ORDERED DOUBLY-LINKED CIRCULAR LIST
+ *
+ ******************************************************************************/
+
 /**
 @publishedPartner
 @released
@@ -381,8 +723,6 @@ struct SOrdQueLink : public SDblQueLink
 	*/
 	TInt iKey;
 	};
-
-
 
 
 /**
@@ -416,6 +756,11 @@ struct SOrdQue : public SDblQue
 
 
 
+/******************************************************************************
+ *
+ * DELTA-ORDERED DOUBLY-LINKED CIRCULAR LIST
+ *
+ ******************************************************************************/
 
 /**
 @publishedPartner
@@ -539,6 +884,11 @@ struct SDeltaQue : public SDblQue
 
 
 
+/******************************************************************************
+ *
+ * O(1) PRIORITY ORDERED LIST
+ *
+ ******************************************************************************/
 
 /**
 @publishedPartner

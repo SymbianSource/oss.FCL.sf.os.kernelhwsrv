@@ -1223,7 +1223,9 @@ TInt TFsNotifyDismountCancel::DoRequestL(CFsRequest* aRequest)
 //
 	{
 	CSessionFs* session = aRequest->Session();
-	FsNotify::CancelDismountNotifySession(session, (TRequestStatus*)aRequest->Message().Ptr0());
+	TInt drive = FsNotify::CancelDismountNotifySession(session, (TRequestStatus*)aRequest->Message().Ptr0());
+	if (drive >= 0)
+		TheDrives[drive].SetDismountDeferred(EFalse);
 	return KErrNone;
 	}
 

@@ -77,22 +77,22 @@ TInt FormatFatDrive(RFs &aFs, TInt aDrive, TBool aQuickFormat, const TFatFormatP
 
 
 //-----------------------------------------------------------------------------
-const TInt KFatFirstSearchCluser    =2;     ///< FAT usable clusters start from 2; FAT[0] and FAT[1] are reserved
+const TUint KFatFirstSearchCluser   =2;     ///< FAT usable clusters start from 2; FAT[0] and FAT[1] are reserved
 const TInt KFatDirNameSize			=11;    ///< Dos directory/File name length
-const TInt KFatDirReserved1Size		=8;     ///< Size of reserved area one in a directory enrty
+const TUint KFatDirReserved1Size	=8;     ///< Size of reserved area one in a directory enrty
 const TInt KVolumeLabelSize			=11;    ///< Volume lable size
 const TInt KFileSysTypeSize			=8;     ///< File system type parameter size
 const TInt KVendorIdSize			=8;     ///< Vendor ID parameter size
-const TInt KVFatEntryAttribute		=0x0F;  ///< VFat entry attribute setting
-const TInt KBootSectorSignature		=0xAA55;///< File system Boot sector signiture
+const TUint KVFatEntryAttribute		=0x0F;  ///< VFat entry attribute setting
+const TUint KBootSectorSignature	=0xAA55;///< File system Boot sector signiture
 const TUint8 KDotEntryByte			=0x2e;  ///< Dot value for self and parent pointer directory entries
 const TUint8 KBlankSpace			=0x20;  ///< Blank space in a directory entry
-const TInt KSizeOfFatDirEntry		=32;    ///< Size in bytes of a Fat directry entry 
-const TInt KSizeOfFatDirEntryLog2	=5;     ///< Log2 of size in bytes of a Fat directry entry 
-const TInt KFat16VolumeLabelPos 	=43;    ///< Position of volume lable in BPB for Fat12/16
-const TInt KFat32VolumeLabelPos		=71;    ///< Position of volume lable in BPB for Fat32
-const TInt KReservedIdOldEntry		=1;	    ///< used for TFatDirEntry::SetReserved2(..)
-const TInt KReservedIdNewEntry		=0;
+const TUint  KSizeOfFatDirEntry		=32;    ///< Size in bytes of a Fat directry entry 
+const TUint  KSizeOfFatDirEntryLog2	=5;     ///< Log2 of size in bytes of a Fat directry entry 
+const TUint  KFat16VolumeLabelPos 	=43;    ///< Position of volume lable in BPB for Fat12/16
+const TUint  KFat32VolumeLabelPos	=71;    ///< Position of volume lable in BPB for Fat32
+const TUint  KReservedIdOldEntry	=1;	    ///< used for TFatDirEntry::SetReserved2(..)
+const TUint  KReservedIdNewEntry	=0;
 const TInt KSizeOfFatBootSector     =90;    ///< Size in bytes of Boot sector parameter block (BPB) 
 
 const TUint32 KBootSectorNum        =0;     ///< Main Boot Sector number (always 0)
@@ -325,9 +325,9 @@ public:
     void InitZ();
 
     const TPtrC8 Name() const;
-    TInt Attributes() const;
+    TUint Attributes() const;
     TTime Time() const;
-    TInt StartCluster() const;
+    TUint32 StartCluster() const;
     TUint32 Size() const;
     TBool IsErased() const;
     TBool IsCurrentDirectory() const;
@@ -335,10 +335,10 @@ public:
     TBool IsEndOfDirectory() const;
     TBool IsGarbage() const;
     void SetName(const TDesC8& aDes);
-    void SetAttributes(TInt anAtt);
+    void SetAttributes(TUint anAtt);
     void SetTime(TTime aTime);
     void SetCreateTime(TTime aTime);
-    void SetStartCluster(TInt aStartCluster);
+    void SetStartCluster(TUint32 aStartCluster);
     void SetSize(TUint32 aFilesize);
     void SetErased();
     void SetCurrentDirectory();

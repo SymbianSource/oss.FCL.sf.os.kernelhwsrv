@@ -79,6 +79,7 @@ struct SWsKey
 	{
 	TKeyData iKeyData;
     TInt iType;
+    TUint8 iPointerNumber;
     TPoint iMousePos;
 	TSglQueLink iLink;
 	};

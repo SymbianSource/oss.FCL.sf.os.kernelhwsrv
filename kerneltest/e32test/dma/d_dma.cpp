@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -185,6 +185,8 @@ private:
 	TInt Execute(const TDesC8& aDes);
 	static void Dfc(DDmaRequest::TResult aResult, TAny* aArg);
 	TInt DoGetInfo(TAny* aInfo);
+	void FreeDmaRequests();
+	void FreeClientRequests();
 private:
 	TUint32 iCookie;
 	TBufferMgr iBufMgr;
@@ -193,6 +195,7 @@ private:
 	DDmaRequest* iRequests[KMaxRequests];
 	TClientRequest* iClientRequests[KMaxRequests];
 	DDmaTestChannel* iMap[KMaxRequests];
+	TBool iCloseInCb[KMaxRequests];
 	TUint32 iMemMemPslInfo;
 	DThread* iClient;
 	TDynamicDfcQue* iDfcQ;
@@ -277,6 +280,8 @@ TInt DDmaTestChannel::DoCreate(TInt /*aUnit*/, const TDesC8* aInfo, const TVersi
 				}
 			if (! iRequests[i])
 				return KErrNoMemory;
+
+			iCloseInCb[i] = EFalse;
 			}
 		return KErrNone;
 		}
@@ -288,18 +293,32 @@ DDmaTestChannel::~DDmaTestChannel()
 	if (iChannel)
 		{
 		iChannel->CancelAll();
-		TInt i;
-		for (i=0; i<KMaxRequests; ++i)
-			delete iRequests[i];
+		FreeDmaRequests();
 		iChannel->Close();
-		for (i=0; i<KMaxRequests; ++i)
-			Kern::DestroyClientRequest(iClientRequests[i]);
 		}
+	FreeClientRequests();
 	if (iDfcQ)
 		{
 		iDfcQ->Destroy();
 		}
 	iBufMgr.FreeAll();
+	}
+
+void DDmaTestChannel::FreeDmaRequests()
+	{
+	for (TInt i=0; i<KMaxRequests; ++i)
+		{
+		delete iRequests[i];
+		iRequests[i] = NULL;
+		}
+	}
+
+void DDmaTestChannel::FreeClientRequests()
+	{
+	for (TInt i=0; i<KMaxRequests; ++i)
+		{
+		Kern::DestroyClientRequest(iClientRequests[i]);
+		}
 	}
 
 
@@ -401,14 +420,35 @@ TInt DDmaTestChannel::Execute(const TDesC8& aDes)
 			{
 		case 'Q':
 			{
-			TInt arg = *p++ - '0';
-			__ASSERT_DEBUG(0 <= arg && arg < KMaxRequests, Kern::PanicCurrentThread(KClientPanicCat, __LINE__));
-			iRequests[arg]->Queue();
+			__ASSERT_DEBUG(p < pEnd, Kern::PanicCurrentThread(KClientPanicCat, __LINE__));
+			TInt nextChar = *p++;
+			TInt channel = -1;
+
+			if(nextChar == 'X')
+				{
+				// Channel should be closed in callback
+				__ASSERT_DEBUG(p < pEnd, Kern::PanicCurrentThread(KClientPanicCat, __LINE__));
+				channel = *p++ - '0';
+				iCloseInCb[channel] = ETrue;
+				}
+			else
+				{
+				channel = nextChar - '0';
+				}
+			__ASSERT_DEBUG(0 <= channel && channel < KMaxRequests, Kern::PanicCurrentThread(KClientPanicCat, __LINE__));
+			iRequests[channel]->Queue();
 			break;
 			}
 		case 'C':
+			{
 			iChannel->CancelAll();
+			for(TInt i=0; i<KMaxRequests; ++i)
+				{
+				if(iClientRequests[i]->IsReady())
+					iClientRequests[i]->Reset();
+				}
 			break;
+			}
 		default:
 			Kern::PanicCurrentThread(KClientPanicCat, __LINE__);
 			}
@@ -424,6 +464,17 @@ void DDmaTestChannel::Dfc(DDmaRequest::TResult aResult, TAny* aArg)
 	TInt i = ppC - pC->iMap;
 	TClientRequest* req = pC->iClientRequests[i];
 	TInt r = (aResult==DDmaRequest::EOk) ? KErrNone : KErrGeneral;
+
+	if(pC->iCloseInCb[i])
+		{
+		pC->iCloseInCb[i] = EFalse;
+		__KTRACE_OPT(KDMA, Kern::Printf("Close channel in callback"));
+
+		pC->FreeDmaRequests();
+		pC->iChannel->Close();
+		pC->iChannel = NULL;
+		}
+
 	if (req->IsReady())
 		Kern::QueueRequestComplete(pC->iClient, req, r);
 	}

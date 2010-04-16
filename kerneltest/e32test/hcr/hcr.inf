@@ -48,6 +48,7 @@ SMR_PART_102400.img	/epoc32/data/smr_part_102400.img
 // The emulator test data exported next must match that included into a
 // ROM for the HCR Test suite. See hcr_tests.iby
 
+filerepos_cds.dat     /epoc32/release/wins/udeb/z/sys/data/filerepos_cds.dat
 filerepos_bc0.dat     /epoc32/release/wins/udeb/z/sys/data/filerepos_bc0.dat
 filerepos_bc1.dat     /epoc32/release/wins/udeb/z/sys/data/filerepos_bc1.dat
 filerepos.dat         /epoc32/release/wins/udeb/z/sys/data/filerepos.dat
@@ -59,6 +60,8 @@ megalarge1.dat        /epoc32/release/wins/udeb/z/sys/data/megalarge1.dat
 megalarge2.dat        /epoc32/release/wins/udeb/z/sys/data/megalarge2.dat
 filerepos.dat         /epoc32/release/wins/udeb/z/sys/data/hcr.dat
 
+
+filerepos_cds.dat     /epoc32/release/wins/urel/z/sys/data/filerepos_cds.dat
 filerepos_bc0.dat     /epoc32/release/wins/urel/z/sys/data/filerepos_bc0.dat
 filerepos_bc1.dat     /epoc32/release/wins/urel/z/sys/data/filerepos_bc1.dat
 filerepos.dat         /epoc32/release/wins/urel/z/sys/data/filerepos.dat
@@ -70,6 +73,8 @@ megalarge1.dat        /epoc32/release/wins/urel/z/sys/data/megalarge1.dat
 megalarge2.dat        /epoc32/release/wins/urel/z/sys/data/megalarge2.dat
 filerepos.dat         /epoc32/release/wins/urel/z/sys/data/hcr.dat
 
+
+filerepos_cds.dat     /epoc32/release/winscw/udeb/z/sys/data/filerepos_cds.dat
 filerepos_bc0.dat     /epoc32/release/winscw/udeb/z/sys/data/filerepos_bc0.dat
 filerepos_bc1.dat     /epoc32/release/winscw/udeb/z/sys/data/filerepos_bc1.dat
 filerepos.dat         /epoc32/release/winscw/udeb/z/sys/data/filerepos.dat
@@ -81,6 +86,8 @@ megalarge1.dat        /epoc32/release/winscw/udeb/z/sys/data/megalarge1.dat
 megalarge2.dat        /epoc32/release/winscw/udeb/z/sys/data/megalarge2.dat
 filerepos.dat         /epoc32/release/winscw/udeb/z/sys/data/hcr.dat
 
+
+filerepos_cds.dat     /epoc32/release/winscw/urel/z/sys/data/filerepos_cds.dat
 filerepos_bc0.dat     /epoc32/release/winscw/urel/z/sys/data/filerepos_bc0.dat
 filerepos_bc1.dat     /epoc32/release/winscw/urel/z/sys/data/filerepos_bc1.dat
 filerepos.dat         /epoc32/release/winscw/urel/z/sys/data/filerepos.dat

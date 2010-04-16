@@ -132,72 +132,72 @@ void DUsbClientController::ResetEp0DataOutVars()
 
 TBool DUsbClientController::IsInTheRequestList(const TUsbcRequestCallback& aCallback)
 	{
-	const TInt irq = NKern::DisableAllInterrupts();
+    	const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcRequestCallback> iter(iEp0ReadRequestCallbacks);
 	TUsbcRequestCallback* p;
 	while ((p = iter++) != NULL)
 		{
 		if (p == &aCallback)
 			{
-			NKern::RestoreInterrupts(irq);
+			__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return ETrue;
 			}
 		}
-	NKern::RestoreInterrupts(irq);
+    	__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return EFalse;
 	}
 
 
 TBool DUsbClientController::IsInTheStatusList(const TUsbcStatusCallback& aCallback)
 	{
-	const TInt irq = NKern::DisableAllInterrupts();
+    	const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcStatusCallback> iter(iStatusCallbacks);
 	TUsbcStatusCallback* p;
 	while ((p = iter++) != NULL)
 		{
 		if (p == &aCallback)
 			{
-			NKern::RestoreInterrupts(irq);
+            		__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return ETrue;
 			}
 		}
-	NKern::RestoreInterrupts(irq);
+    	__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return EFalse;
 	}
 
 
 TBool DUsbClientController::IsInTheEpStatusList(const TUsbcEndpointStatusCallback& aCallback)
 	{
-	const TInt irq = NKern::DisableAllInterrupts();
+    	const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcEndpointStatusCallback> iter(iEpStatusCallbacks);
 	TUsbcEndpointStatusCallback* p;
 	while ((p = iter++) != NULL)
 		{
 		if (p == &aCallback)
 			{
-			NKern::RestoreInterrupts(irq);
+		    	__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return ETrue;
 			}
 		}
-	NKern::RestoreInterrupts(irq);
+    	__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return EFalse;
 	}
 
 
 TBool DUsbClientController::IsInTheOtgFeatureList(const TUsbcOtgFeatureCallback& aCallback)
 	{
-	const TInt irq = NKern::DisableAllInterrupts();
+    	const TInt irq = __SPIN_LOCK_IRQSAVE(iUsbLock);
 	TSglQueIter<TUsbcOtgFeatureCallback> iter(iOtgCallbacks);
 	TUsbcOtgFeatureCallback* p;
 	while ((p = iter++) != NULL)
 		{
 		if (p == &aCallback)
 			{
-			NKern::RestoreInterrupts(irq);
+		    	__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 			return ETrue;
 			}
 		}
-	NKern::RestoreInterrupts(irq);
+    	__SPIN_UNLOCK_IRQRESTORE(iUsbLock, irq);
 	return EFalse;
 	}
 

@@ -44,9 +44,10 @@
 #include "../mmu/d_memorytest.h"
 #include "../mmu/paging_info.h"
 
-RTest test(_L("T_DATAPAGING"));
-
 _LIT(KChunkName, "t_datapaging chunk");
+
+RTest test(_L("T_DATAPAGING"));
+SVMSwapInfo InitialSwapInfo;
 
 class TRandom
 	{
@@ -330,8 +331,8 @@ TBool TestReadWord(TUint32* aPtr, TUint32 aExpected, TInt aThread, TInt aPage, T
 	if (aActual != aExpected)
 		{
 		StopSoakTest(aMsgQueue);
-		RDebug::Printf("  thread %d failure reading page %d at iteration %d address %08x: expected %08x but got %08x",
-					   aThread, aPage, aIteration, aPtr, aExpected, aActual);
+		RDebug::Printf("  thread %d failure reading page %d at iteration %d address %08x line %d: expected %08x but got %08x",
+					   aThread, aPage, aIteration, aPtr, aLine, aExpected, aActual);
 		return EFalse;
 		}
 	return ETrue;
@@ -341,7 +342,6 @@ TInt SoakTestFunc(TAny* aArg)
 	{
 	SSoakTestArgs* args = (SSoakTestArgs*)aArg;
 
-	
 	RMsgQueue<TInt> msgQueue;
 	TInt r = msgQueue.OpenGlobal(KMsgQueueName, EOwnerThread);
 	if (r != KErrNone)
@@ -595,41 +595,35 @@ void TestSwapHal()
 	test(swapInfo.iSwapFree <= swapInfo.iSwapSize);
 	test.Printf(_L("  Swap size == 0x%x bytes\n"), swapInfo.iSwapSize);
 	test.Printf(_L("  Swap free == 0x%x bytes\n"), swapInfo.iSwapFree);
-	if (!gDataPagingSupported)
-		{
-		test_Equal(0, swapInfo.iSwapSize);
-		}
-	else
-		{
-		test(swapInfo.iSwapSize != 0);
+	test(swapInfo.iSwapSize != 0);
+	InitialSwapInfo = swapInfo;
 		
-		CommitPage(chunk, 0);
-		SVMSwapInfo swapInfo2;
-		test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
-		test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
-		test_Equal(swapInfo.iSwapFree - gPageSize, swapInfo2.iSwapFree);
+	CommitPage(chunk, 0);
+	SVMSwapInfo swapInfo2;
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
+	test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
+	test_Equal(swapInfo.iSwapFree - gPageSize, swapInfo2.iSwapFree);
 		
-		DecommitPage(chunk, 0);
-		test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
-		test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
-		test_Equal(swapInfo.iSwapFree, swapInfo2.iSwapFree);
+	DecommitPage(chunk, 0);
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
+	test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
+	test_Equal(swapInfo.iSwapFree, swapInfo2.iSwapFree);
 
-		// Test that closing the chunk releases the swap page.
-		CommitPage(chunk, 0);
-		test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
-		test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
-		test_Equal(swapInfo.iSwapFree - gPageSize, swapInfo2.iSwapFree);
+	// Test that closing the chunk releases the swap page.
+	CommitPage(chunk, 0);
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
+	test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
+	test_Equal(swapInfo.iSwapFree - gPageSize, swapInfo2.iSwapFree);
 		
-		chunk.Close();
-		test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
-		test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
-		test_Equal(swapInfo.iSwapFree, swapInfo2.iSwapFree);
+	chunk.Close();
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo2, 0));
+	test_Equal(swapInfo.iSwapSize, swapInfo2.iSwapSize);
+	test_Equal(swapInfo.iSwapFree, swapInfo2.iSwapFree);
 
-		// Chunk must be created for rest of testing.
-		test_KErrNone(chunk.Create(createInfo));
-		if (gDataPagingSupported)
-			test(chunk.IsPaged());
-		}
+	// Chunk must be created for rest of testing.
+	test_KErrNone(chunk.Create(createInfo));
+	if (gDataPagingSupported)
+		test(chunk.IsPaged());
 	
 	//	EVMHalSetSwapThresholds,
 	test.Next(_L("Test EVMHalSetSwapThresholds"));
@@ -688,6 +682,16 @@ void TestSwapHal()
 	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalSetSwapThresholds, &thresholds, 0));
 
 	CLOSE_AND_WAIT(chunk);
+	}
+
+void TestSwapInfoUnchanged()
+	{
+	SVMSwapInfo swapInfo;
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetSwapInfo, &swapInfo, 0));
+	test.Printf(_L("  Swap size == 0x%x bytes\n"), swapInfo.iSwapSize);
+	test.Printf(_L("  Swap free == 0x%x bytes\n"), swapInfo.iSwapFree);
+	test_Equal(InitialSwapInfo.iSwapSize, swapInfo.iSwapSize);
+	test_Equal(InitialSwapInfo.iSwapFree, swapInfo.iSwapFree);
 	}
 
 void TestSwapHalNotSupported()
@@ -1241,15 +1245,18 @@ TInt E32Main()
 					for (TUint pin = 0 ; pin <= 1 ; ++pin)
 						{
 						test.Printf(_L("processes=%d threads=%d pages=%d maxcachesize=%d pin=%d\r\n"),processes, threads, pages, gMaxCacheSize,pin);
-						SoakTest(processes, threads, pages, pin, 3);
+						SoakTest(processes, threads, pages, pin, 5);
 						}
 					}
 				}
 			}
 
-			//Reset the cache size to normal
-			test.Next(_L("Soak test: Reset cache size to normal"));
-			test_KErrNone(DPTest::SetCacheSize(cacheOriginalMin, cacheOriginalMax)); 
+		//Reset the cache size to normal
+		test.Next(_L("Soak test: Reset cache size to normal"));
+		test_KErrNone(DPTest::SetCacheSize(cacheOriginalMin, cacheOriginalMax)); 
+
+		test.Next(_L("Check we haven't leaked any swap in the course of the test"));
+		TestSwapInfoUnchanged();
 		}
 
 	test.End();

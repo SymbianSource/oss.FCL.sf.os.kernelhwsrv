@@ -1102,6 +1102,15 @@ public:
 	IMPORT_C TCjkWidth GetCjkWidth() const;
 	IMPORT_C static TBool Compose(TUint& aResult,const TDesC16& aSource);
 	IMPORT_C TBool Decompose(TPtrC16& aResult) const;
+	
+	// surrogate specific ones
+	inline static TBool IsSupplementary(TUint aChar);
+	inline static TBool IsSurrogate(TText16 aInt16);
+	inline static TBool IsHighSurrogate(TText16 aInt16);
+	inline static TBool IsLowSurrogate(TText16 aInt16);
+	inline static TUint JoinSurrogate(TText16 aHighSurrogate, TText16 aLowSurrogate);
+	inline static TText16 GetHighSurrogate(TUint aChar);
+	inline static TText16 GetLowSurrogate(TUint aChar);
 
 protected:
 	inline void SetChar(TUint aChar);
@@ -3877,12 +3886,12 @@ ordering useful for class layout rather than number generation.
 @param i4 The fourth TUint8
 @internalComponent
 */
-#define FOUR_TUINT8(i1,i2,i3,i4) \
-	(TUint32)(				\
-		(TUint8)i1 		 | 	\
-		(TUint8)i2 << 8  | 	\
-		(TUint8)i3 << 16 | 	\
-		(TUint8)i4 << 24	\
+#define FOUR_TUINT8(i1,i2,i3,i4)		  \
+	(									  \
+		(TUint32)((i1) & 0xFF)			| \
+		(TUint32)((i2) & 0xFF) << 8		| \
+		(TUint32)((i3) & 0xFF) << 16	| \
+		(TUint32)((i4) & 0xFF) << 24	  \
 	)
 
 

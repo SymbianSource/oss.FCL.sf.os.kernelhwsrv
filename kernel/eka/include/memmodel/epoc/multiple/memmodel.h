@@ -24,8 +24,8 @@
 
 #ifdef __SMP__
 // SubScheduler fields for each processor
-#define	i_AliasLinAddr			iExtras[0]
-#define	i_AliasPdePtr			iExtras[1]
+#define	i_AliasLinAddr			iSubSchedScratch[0]
+#define	i_AliasPdePtr			iSubSchedScratch[1]
 #endif
 
 /********************************************
@@ -45,6 +45,19 @@
  * RAM Defrag Page Table Moving Support
  ********************************************/
 
+#ifdef __SMP__
+/**
+@internalComponent
+*/
+#define AliasRemapOld					((TPhysAddr&)TheScheduler.iSchedScratch[1])
+
+/**
+@internalComponent
+*/
+#define AliasRemapNew					((TPhysAddr&)TheScheduler.iSchedScratch[2])
+
+#else
+
 /**
 @internalComponent
 */
@@ -54,6 +67,7 @@
 @internalComponent
 */
 #define AliasRemapNew					((TPhysAddr&)TheScheduler.iExtras[2])
+#endif
 
 /********************************************
  * Thread Control Block

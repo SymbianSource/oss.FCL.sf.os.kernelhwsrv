@@ -43,7 +43,7 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
 	TShellCommand(_L("CD"),_L("Change the current directory for a drive"),_L("[path] [/d]\n\n  /d - Change drive"),TShellCommand::EDSwitch,ShellFunction::Cd),
 	TShellCommand(_L("CHKDEPS"),_L("Check the dependencies of an executable or a Dll (ARM only)"),_L("[Filename.EXE] or [Filename.DLL]"),0,ShellFunction::ChkDeps),
 	TShellCommand(_L("CHKDSK"),_L("Check disk for corruption"),_L("[drive:] [/s][/f|/u]\n\n/s - start ScanDrive instead of CheckDisk\n/f - finalise drive\n/u - unfinalise drive"),TShellCommand::ESSwitch|TShellCommand::EFSwitch|TShellCommand::EUSwitch,ShellFunction::ChkDsk),
-	TShellCommand(_L("COPY"),_L("Copy one (or more) file(s)"),_L("source [destination]"),TShellCommand::ESSwitch,ShellFunction::Copy),
+	TShellCommand(_L("COPY"),_L("Copy one (or more) file(s), overwriting existing one(s)"),_L("source [destination]"),TShellCommand::ESSwitch,ShellFunction::Copy),
 	TShellCommand(_L("DEL"),_L("Delete one file"),_L("[drive:][path][filename]"),TShellCommand::ESSwitch,ShellFunction::Del),
 	TShellCommand(_L("DIR"),_L("Show directory contents"),_L("[drive:][path][filename] [/p][/w]\n\n  /p - Pause after each screen of information\n  /w - Wide format"),TShellCommand::EPSwitch|TShellCommand::EWSwitch|TShellCommand::EASwitch,ShellFunction::Dir),
 //	TShellCommand(_L("EDLIN"),_L("Edit a text file"),_L("[drive:][path][filename] [/p]\n\n  /p - Pause after each screen of information"),TShellCommand::EPSwitch,ShellFunction::Edit),
@@ -403,6 +403,8 @@ TInt ShellFunction::Copy(TDes& aPath,TUint aSwitches)
 // To append files, specify a single file for destination, but multiple files
 // for source (using wildcards or file1+file2+file3 format).
 //
+// Overwrites existing file(s).
+//
 // My spec:
 //
 // COPY source [destination]
@@ -461,6 +463,7 @@ TInt ShellFunction::Copy(TDes& aPath,TUint aSwitches)
 			}
 
 		TBool recursive=((aSwitches&TShellCommand::ESSwitch)!=0);
+		// Automatically overwrites existing file(s)
 		TUint switches=(recursive) ? CFileMan::EOverWrite|CFileMan::ERecurse : CFileMan::EOverWrite;
 		r=CShell::TheFileMan->Copy(dirPath.FullName(),destination,switches);
 		if (r==KErrNone)
@@ -1107,8 +1110,30 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 	//-- Print out information about file system installed
 	if(aFlags & EFSInfo)
     {
+        //-- print out drive properties
+        Buf.Format(_L("\nDrive %c: No:%d"), 'A'+aDrvNum, aDrvNum);
         
-        apConsole->Printf(_L("\nDrive %c: number:%d\n"), 'A'+aDrvNum, aDrvNum);
+        //-- find out if the drive is synchronous / asynchronous
+        TPckgBuf<TBool> drvSyncBuf;
+        nRes = aFs.QueryVolumeInfoExt(aDrvNum, EIsDriveSync, drvSyncBuf);
+        if(nRes == KErrNone)
+        {
+            Buf.AppendFormat(_L(", Sync:%d"), drvSyncBuf() ? 1:0);        
+        }
+
+        //-- find out if drive runs a rugged FS (debug mode only)
+        const TInt KControlIoIsRugged=4;
+        TUint8 ruggedFS;
+        TPtr8 pRugged(&ruggedFS, 1, 1);
+        nRes=aFs.ControlIo(aDrvNum, KControlIoIsRugged, pRugged);
+        if(nRes == KErrNone)
+        {
+            Buf.AppendFormat(_L(", Rugged:%d"), ruggedFS ? 1:0);        
+        }
+
+        Buf.Append(_L("\n"));
+        apConsole->Printf(Buf);
+
 
 	    //-- print the FS name
 	    if(aFs.FileSystemName(Buf, aDrvNum) == KErrNone)
@@ -1151,19 +1176,36 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 
 
 
-            //-- print out FileSystem volume finalisation info
+            
             if(bVolumeOK && (aFlags & EFSInfoEx))
             {
+                Buf.Zero();
 
+                //-- print out FileSystem volume finalisation info
                 TPckgBuf<TBool> boolPckg;
                 nRes = aFs.QueryVolumeInfoExt(aDrvNum, EIsDriveFinalised, boolPckg);
                 if(nRes == KErrNone)
                 {
                     if(boolPckg() >0)
-                        apConsole->Printf(_L("Volume Finalised\n"));
+                        Buf.Copy(_L("Volume: Finalised"));
                     else
-                        apConsole->Printf(_L("Volume Not finalised\n"));
+                        Buf.Copy(_L("Volume: Not finalised"));
                 }
+
+                //-- print out cluster size that FS reported
+                TVolumeIOParamInfo volIoInfo;
+                nRes = aFs.VolumeIOParam(aDrvNum, volIoInfo);
+                if(nRes == KErrNone && volIoInfo.iClusterSize >= 512)
+                {
+                    Buf.AppendFormat(_L(", Cluster Sz:%d"), volIoInfo.iClusterSize);
+                }
+
+                if(Buf.Length())
+                {
+                    Buf.Append(_L("\n"));
+                    apConsole->Printf(Buf);    
+                }
+
             }
 	    }
     }//if(aFlags & EFSInfo)

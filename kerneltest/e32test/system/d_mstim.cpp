@@ -91,7 +91,7 @@ inline TCounter TIMER()
 #endif
 #ifdef __NE1_TB__
 inline TCounter TIMER()
-	{ return NETimer::Timer(2).iTimerCount; }
+	{ return NETimer::Timer(5).iTimerCount; }
 #endif
 #if defined(__EPOC32__) && defined(__CPU_X86)
 TCounter TIMER();
@@ -188,8 +188,8 @@ TInt TicksToMicroseconds(TDelta aTicks)
 	return aTicks*500;					// 2kHz tick
 #endif
 #if defined(__NE1_TB__)
-	NETimer& T2 = NETimer::Timer(2);
-	TUint prescale = __e32_find_ms1_32(T2.iPrescaler & 0x3f);
+	NETimer& T5 = NETimer::Timer(5);
+	TUint prescale = __e32_find_ms1_32(T5.iPrescaler & 0x3f);
 	TInt f = 66666667 >> prescale;
 	TInt64 x = I64LIT(1000000);
 	x *= TInt64(aTicks);
@@ -264,7 +264,24 @@ void InitTimer()
 	TRvEmuBoard::EnableTimer(KHwCounterTimer1, TRvEmuBoard::EEnable);
 #endif
 #if defined(__NE1_TB__)
-	// nothing to do since variant has already set up timer
+    // set up timer 5
+    NETimer& T5 = NETimer::Timer(5);
+
+	T5.iTimerCtrl = 0;						// stop and reset timer 5
+	T5.iGTICtrl = 0;						// disable timer 5 capture modes
+	__e32_io_completion_barrier();
+	T5.iPrescaler = KNETimerPrescaleBy32;	// Timer 5 prescaled by 32 (=2.0833MHz)
+	__e32_io_completion_barrier();
+	T5.iGTInterruptEnable = 0;
+	__e32_io_completion_barrier();
+	T5.iGTInterrupt = KNETimerGTIInt_All;
+	__e32_io_completion_barrier();
+	T5.iTimerCtrl = KNETimerCtrl_CE;		// deassert reset for timer 5, count still stopped
+	__e32_io_completion_barrier();
+	T5.iTimerReset = 0xffffffffu;			// timer 5 wraps after 2^32 counts
+	__e32_io_completion_barrier();
+	T5.iTimerCtrl = KNETimerCtrl_CE | KNETimerCtrl_CAE;	// start timer 5
+	__e32_io_completion_barrier();		
 #endif
 #if defined(__EPOC32__) && defined(__CPU_X86)
 	// Set up timer channel 2 as free running counter at 14318180/12 Hz

@@ -306,7 +306,7 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 	else
 		{
 		// Type mask != KUsbRequestType_TypeStd => class- or vendor-specific request
-		iEp0ReceivedNonStdRequest = ETrue;
+        iEp0ReceivedNonStdRequest = ETrue;
 		const DBase* client = NULL;
 		switch (packet.iRequestType & KUsbRequestType_DestMask)
 			{ // Recipient
@@ -314,6 +314,11 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 			client = iEp0DeviceControl;
 			break;
 		case KUsbRequestType_DestIfc:
+		    //Add this mutex to protect the interface set data structure
+		    if (NKern::CurrentContext() == EThread)
+		        {
+		        NKern::FMWait(&iMutex);
+		        }
 			if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 				{
 				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
@@ -322,7 +327,10 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 				{
 				const TUsbcInterfaceSet* const ifcset_ptr =
 					InterfaceNumber2InterfacePointer(packet.iIndex);
-				if (ifcset_ptr)
+				//In some rare case, ifcset_ptr is not NULL but the ifcset_ptr->iInterfaces.Count() is 0,
+				//so panic will happen when excute the following line. so I add the conditon
+				//0 != ifcset_ptr->iInterfaces.Count() here.
+				if (ifcset_ptr && 0 != ifcset_ptr->iInterfaces.Count())
 					{
 					if (ifcset_ptr->CurrentInterface()->iNoEp0Requests)
 						{
@@ -339,8 +347,17 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 													  packet.iIndex));
 					}
 				}
+	        if (NKern::CurrentContext() == EThread)
+	            {
+                NKern::FMSignal(&iMutex);
+	            }
 			break;
 		case KUsbRequestType_DestEp:
+		    //Add this mutex to protect the interface set data structure
+	        if (NKern::CurrentContext() == EThread)
+	            {
+                NKern::FMWait(&iMutex);
+	            }
 			if (iTrackDeviceState && iDeviceState < EUsbcDeviceStateConfigured)
 				{
 				__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Invalid device state"));
@@ -364,6 +381,10 @@ TInt DUsbClientController::ProcessEp0SetupReceived(TInt aCount)
 					client = ifcset_ptr->iClientId;
 					}
 				}
+            if (NKern::CurrentContext() == EThread)
+                {
+                NKern::FMSignal(&iMutex);
+                }
 			break;
 		default:
 			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Other or Unknown recipient"));
@@ -1231,7 +1252,17 @@ void DUsbClientController::InterfaceSetTeardown(TUsbcInterfaceSet* aIfcSet)
 	if (aIfcSet->CurrentInterface() != 0)
 		{
 		__KTRACE_OPT(KUSB, Kern::Printf("  Resetting alternate interface setting to 0"));
+		//Add this mutex to protect the interface set data structure
+		if (NKern::CurrentContext() == EThread)
+		    {
+            NKern::FMWait(&iMutex);
+		    }
+        
 		aIfcSet->iCurrentInterface = 0;
+	    if (NKern::CurrentContext() == EThread)
+	        {
+            NKern::FMSignal(&iMutex);
+	        }		
 		}
 	return;
 	}

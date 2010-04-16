@@ -669,6 +669,18 @@ do not read back correctly, but instead always return 0.
 
 #define	__chill()
 
+#ifdef 	__CPU_ARM_HAS_WFE_SEV
+
+extern "C" void __arm_wfe();
+extern "C" void __arm_sev();
+
+#define	__snooze()	__arm_wfe()
+#define	__holler()	__arm_sev()
+#else
+#define	__snooze()
+#define	__holler()
+#endif
+
 #if defined(__SMP__) && !defined(__CPU_ARM_HAS_LDREX_STREX_V6K)
 #error SMP not allowed without v6K
 #endif
@@ -695,6 +707,9 @@ do not read back correctly, but instead always return 0.
 #else
 #error Unknown x86 compiler
 #endif
+
+#define	__snooze()	__chill()
+#define	__holler()
 
 #if defined(__cplusplus)
 extern "C" {

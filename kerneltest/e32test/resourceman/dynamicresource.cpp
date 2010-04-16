@@ -34,27 +34,21 @@ _LIT(KDMLIGLSSHNDynamicResource, "DynamicResource2");
 DMLIGLSSHNDynamicResource::DMLIGLSSHNDynamicResource() : DDynamicPowerResource(KDMLIGLSSHNDynamicResource, -5), iMinLevel(-5), iMaxLevel(-10), iCurrentLevel(-5)
 	{
 	iFlags = KMultiLevel | KLongLatencySet | KShared | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBLGLSSHNDynamicResource, "DynamicResource3");
 DBLGLSSHNDynamicResource::DBLGLSSHNDynamicResource() : DDynamicPowerResource(KDBLGLSSHNDynamicResource, 1), iMinLevel(1), iMaxLevel(0), iCurrentLevel(1)
 	{
 	iFlags = KBinary | KLongLatencySet | KLongLatencyGet | KShared | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLLGLSSHPDynamicResource, "DynamicResource4");
 DMLLGLSSHPDynamicResource::DMLLGLSSHPDynamicResource() : DDynamicPowerResource(KDMLLGLSSHPDynamicResource, 10), iMinLevel(10), iMaxLevel(20), iCurrentLevel(10)
 	{
 	iFlags = KMultiLevel | KLongLatencySet | KLongLatencyGet | KShared;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 //Constructors for dynamic dependent resources
@@ -63,36 +57,28 @@ DDynamicResourceD01::DDynamicResourceD01() : DDynamicPowerResourceD(KDDynamicRes
 	{
 	// Make it a Instantaneous Resource.
 	iFlags = KMultiLevel;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDDynamicResourceD02, "DynamicDependResourceDI");
 DDynamicResourceD02::DDynamicResourceD02() : DDynamicPowerResourceD(KDDynamicResourceD02, 0), iMinLevel(0), iMaxLevel(1), iCurrentLevel(0)
 	{
 	iFlags = KBinary | KLongLatencySet | KLongLatencyGet | KShared;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDDynamicResourceD03, "DynamicDependResourceDJ");
 DDynamicResourceD03::DDynamicResourceD03() : DDynamicPowerResourceD(KDDynamicResourceD03, 19), iMinLevel(19), iMaxLevel(9), iCurrentLevel(19)
 	{
 	iFlags = KMultiLevel | KLongLatencySet | KShared | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDDynamicResourceD04, "DynamicDependResourceDK");
 DDynamicResourceD04::DDynamicResourceD04() : DDynamicPowerResourceD(KDDynamicResourceD04, 0), iMinLevel(0), iMaxLevel(1), iCurrentLevel(0)
 	{
 	iFlags = KBinary | KLongLatencySet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 //Get info implementation for dynamic resources

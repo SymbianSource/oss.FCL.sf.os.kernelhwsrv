@@ -34,6 +34,7 @@
 
 // -- FUNCTIONS ---------------------------------------------------------------
 
+
 #ifndef MAKE_DEF_FILE
 namespace HCR 
 {
@@ -373,6 +374,9 @@ EXPORT_C TInt HCR::GetData(const TSettingId& aId, TUint16 aMaxLen,
 #ifndef MAKE_DEF_FILE
     HCR_FUNC("HCR::GetDataTUint8");
     
+    if(aValue == NULL || aMaxLen == 0)
+        HCR_TRACE_RETURN(KErrArgument);
+    
     TInt err = GetUValueLargeSettingTUint8(aId, ETypeBinData, aMaxLen, aValue, aLen);
     if (err != KErrNone)
         HCR_TRACE_RETURN(err);        
@@ -388,6 +392,9 @@ EXPORT_C TInt HCR::GetData(const TSettingId& aId, TDes8& aValue)
     {
 #ifndef MAKE_DEF_FILE
     HCR_FUNC("HCR::GetDataTDes8");
+    
+    if(aValue.MaxLength()==0)
+        HCR_TRACE_RETURN(KErrArgument);
     
     TInt err = GetUValueLargeSettingTDes8(aId, ETypeBinData, aValue);
     if (err != KErrNone)
@@ -406,6 +413,9 @@ EXPORT_C TInt HCR::GetString(const TSettingId& aId, TUint16 aMaxLen,
 #ifndef MAKE_DEF_FILE
     HCR_FUNC("HCR::GetStringTUint8");
     
+    if(aValue == NULL || aMaxLen == 0)
+            HCR_TRACE_RETURN(KErrArgument);
+    
     TInt err = GetUValueLargeSettingTUint8(aId, ETypeText8, aMaxLen, aValue, aLen);
     if (err != KErrNone)
         HCR_TRACE_RETURN(err);        
@@ -422,6 +432,9 @@ EXPORT_C TInt HCR::GetString(const TSettingId& aId, TDes8& aValue)
 #ifndef MAKE_DEF_FILE
     HCR_FUNC("HCR::GetStringTUint8");
     
+    if(aValue.MaxLength() == 0)
+            HCR_TRACE_RETURN(KErrArgument);
+        
     TInt err = GetUValueLargeSettingTDes8(aId, ETypeText8, aValue);
     if (err != KErrNone)
         HCR_TRACE_RETURN(err);        
@@ -438,6 +451,9 @@ EXPORT_C TInt HCR::GetArray(const TSettingId& aId, TUint16 aMaxLen,
 #ifndef MAKE_DEF_FILE
     HCR_FUNC("HCR::GetArrayTInt32");
     
+    if(aValue == NULL || aMaxLen == 0)
+                HCR_TRACE_RETURN(KErrArgument);
+        
     TInt err = GetUValueLargeSettingArray(aId, ETypeArrayInt32, aMaxLen, (TUint32*)aValue, aLen);
     if (err != KErrNone)
         HCR_TRACE_RETURN(err);        
@@ -453,6 +469,9 @@ EXPORT_C TInt HCR::GetArray(const TSettingId& aId, TUint16 aMaxLen,
     {
 #ifndef MAKE_DEF_FILE
     HCR_FUNC("HCR::GetArrayTUInt32");
+    
+    if(aValue == NULL || aMaxLen == 0)
+                HCR_TRACE_RETURN(KErrArgument);
     
     TInt err = GetUValueLargeSettingArray(aId, ETypeArrayUInt32, aMaxLen, aValue, aLen);
     if (err != KErrNone)
@@ -481,6 +500,21 @@ EXPORT_C TInt HCR::GetWordSettings(TInt aNum, const SSettingId aIds[],
         HCR_TRACE_RETURN(KErrArgument);
     
     TInt err = KErrNone;
+    
+    //Only UDEB, check is the user provided array aIds ordered?    
+#ifdef _DEBUG
+    for(TInt cursor = 0; cursor < aNum - 1; cursor ++)
+        {
+    //Check the element at cursor position and one above 
+    err = CompareSSettingIds(aIds[cursor], aIds[cursor+1]);
+    //if next element is less than previous one then array is not ordered.
+    //Critical error, report to user
+    if(err >= 0)
+        HCR_TRACE_RETURN(KErrArgument);
+        }
+#endif
+
+
 
     //Don't leave while the resources are not fully allocated/deallocated
     NKern::ThreadEnterCS();

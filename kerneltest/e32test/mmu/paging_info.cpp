@@ -36,6 +36,7 @@ const TUint8* BenchmarkNames[] =
 	(const TUint8*)"Del notify data page",
 	(const TUint8*)"Read media data page",
 	(const TUint8*)"Write media data page",
+	(const TUint8*)"Rejuvenate page",
 	};
 
 __ASSERT_COMPILE(sizeof(BenchmarkNames)/sizeof(TUint8*) == EMaxPagingBm);

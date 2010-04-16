@@ -160,8 +160,10 @@ public:
     TInt64 DataPositionInBytes(TUint32 aCluster) const;
     void FreeClusterListL(TUint32 aCluster);
     TUint32 AllocateSingleClusterL(TUint32 aNearestCluster);
-    void ExtendClusterListL(TUint32 aNumber,TInt& aCluster);
+    void ExtendClusterListL(TUint32 aNumber, TUint32& aCluster);
     TUint32 AllocateClusterListL(TUint32 aNumber,TUint32 aNearestCluster);
+    
+    virtual TUint32 CountContiguousClustersL(TUint32 aStartCluster, TUint32& anEndCluster, TUint32 aMaxCount) const;
 
 private:
     CRamFatTable(CFatMountCB& aOwner);

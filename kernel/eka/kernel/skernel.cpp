@@ -375,7 +375,7 @@ TInt DMutex::Wait()
 		// return value is set at the point where the thread is released from its wait
 		// condition). However we can still detect this situation since the thread will
 		// have been placed into the EReady state when the mutex was reset.
-		TInt r=NKern::Block(0,NKern::ERelease|NKern::EClaim,SYSTEM_LOCK);
+		TInt r=NKern::Block(0, NKern::ERelease|NKern::EClaim|NKern::EObstruct, SYSTEM_LOCK);
 		if (r==KErrNone && pC->iMState==DThread::EReady)
 			r = KErrGeneral;	// mutex has been reset
 		if (r!=KErrNone)		// if we get an error here...
@@ -825,6 +825,9 @@ TInt DCondVar::Wait(DMutex* aMutex, TInt aTimeout)
 				m.iCleanup.ChangePriority(p);
 			}
 		TInt tmout = pC->iMState==DThread::EWaitCondVar ? aTimeout : 0;
+		TUint mode = NKern::ERelease|NKern::EClaim;
+		if (pC->iMState == DThread::EWaitMutex)
+			mode |= NKern::EObstruct;
 		BTRACE_KS2(BTrace::ECondVarBlock, this, &m);
 
 		// The following possibilities exist here:
@@ -841,7 +844,7 @@ TInt DCondVar::Wait(DMutex* aMutex, TInt aTimeout)
 		//		s=KErrNone, thread state EReady
 		// 6.	Thread killed while waiting for mutex or condition variable
 		//		Function doesn't return since exit handler runs instead.
-		TInt s = NKern::Block(tmout, NKern::ERelease|NKern::EClaim, SYSTEM_LOCK);
+		TInt s = NKern::Block(tmout, mode, SYSTEM_LOCK);
 		if (s==KErrNone && pC->iMState==DThread::EReady)
 			s = KErrGeneral;
 		if (s!=KErrNone && s!=KErrTimedOut)	// if we get an error here...
@@ -1750,7 +1753,7 @@ This will also lock the pages to prevent them of being moved by ram defrag.
 @see Kern::ReleaseMemoryFromDMA
 
 @param aThread          The thread in whose process the given address lies. If zero, the current thread is used.
-@param aAddress         An address in the given threads process.
+@param aAddress         An address in the given thread's process.
 @param aSize            The size of the region.
 @param aPageList        Points to an array of TUint32 (or TPhysAddr) objects. The length of the array must
 						be at least aSize/MMU_page_size+1, where MMU_page_size = Kern::RoundToPageSize(1).
@@ -1759,7 +1762,7 @@ This will also lock the pages to prevent them of being moved by ram defrag.
                         (they are a multiple of the physical page size), therefore the byte corresponding
                         to aOffset is at physical address aPageList[0]+aOffset%MMU_page_size.
 
-@return 0 				 if successful.
+@return KErrNone		 if successful.
         KErrAccessDenied if any part of region doesn't belong to "trusted" chunk.
         Other			 if memory region is invalid, or mapped in 1MB sections or large pages.
 
@@ -1779,16 +1782,16 @@ EXPORT_C TInt Kern::PrepareMemoryForDMA(DThread* aThread, TAny* aAddress, TInt a
 
 /**
 Unlocks the physical pages that have been locked by PrepareMemoryForDMA.
-All input paramemers are the same as those in PrepareMemoryForDMA.
+All input parameters are the same as those in PrepareMemoryForDMA.
 
 @see Kern::PrepareMemoryForDMA
 
 @param aThread          The thread in whose process the given address lies. If zero, the current thread is used.
-@param aAddress         An address in the given threads process.
+@param aAddress         An address in the given thread's process.
 @param aSize            The size of the region.
 @param aPageList        Points to the list of pages returned by PrepareMemoryForDMA.
 
-@return 0 				if successful.
+@return KErrNone		if successful.
         KErrArgument	if the list of physical pages is invalid.
         
 @pre	Calling thread must be in critical section.

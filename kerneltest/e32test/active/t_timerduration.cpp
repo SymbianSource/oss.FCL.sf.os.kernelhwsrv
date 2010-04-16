@@ -52,6 +52,48 @@ TInt TimeRawMS[KMaxTimeMeasurements];//Holds the ROW time in Kernel ticks
 TInt* TimeValue;
 TInt TimeMin[KMaxTimeValues];
 TInt TimeMax[KMaxTimeValues];
+
+RTimer TheTimer;
+
+void After(TInt aTime)
+	{
+	TRequestStatus s;
+	TheTimer.HighRes(s, aTime);
+	User::WaitForRequest(s);
+	}
+
+TInt Again(TInt aTime)
+	{
+	TRequestStatus s;
+	TheTimer.AgainHighRes(s, aTime);
+	User::WaitForRequest(s);
+	return s.Int();
+	}
+
+void WaitInSteps(TUint aWait, TUint aPeriod, TUint aSteps)
+	{
+	TUint total_ticks = aWait / aPeriod;
+	TUint remain = total_ticks;
+	TUint steps = aSteps > remain ? remain : aSteps;
+	TUint carry = 0;
+	TUint step = 0;
+	while (remain)
+		{
+		TUint stepLength = remain / steps;
+		carry += stepLength;
+		TUint us = carry * aPeriod;
+		TInt r = KErrNone;
+		if (step==0)
+			After(us);
+		else
+			r = Again(us);
+		if (r==KErrNone)
+			carry = 0;
+		++step;
+		--steps;
+		remain -= stepLength;
+		}
+	}
 	
 void calcStats(TInt i)
 	{
@@ -66,20 +108,20 @@ void calcStats(TInt i)
 
 void printStats()
 	{
-	test.Printf(_L("Value\tMin\tMax"));
+	test.Printf(_L("  Value     Min      Max\n"));
 	for (TInt i=0;i<KMaxTimeValues;++i)
 		{
 		if (TimeValue[i]<0) break;
-		test.Printf(_L("%d\t%d\t%d"),TimeValue[i],TimeMin[i],TimeMax[i]);
+		test.Printf(_L("%8d %8d %8d\n"),TimeValue[i],TimeMin[i],TimeMax[i]);
 		}
 	}
 
 #define __BEFORE_WAIT__ \
-	test.Printf(_L("Measuring value(%d measurements at each value):"), MaxTimeMeasurements);\
+	test.Printf(_L("Measuring value(%d measurements at each value):\n"), MaxTimeMeasurements);\
 	for (i=0;i<KMaxTimeValues;++i)\
 		{\
 		if (TimeValue[i]<0) break;\
-		test.Printf(_L("%d microseconds ..."),TimeValue[i]);\
+		test.Printf(_L("%8d microseconds ...\n"),TimeValue[i]);\
 		value = TimeValue[i];\
 		for (j=0; j<MaxTimeMeasurements; ++j)\
 			{\
@@ -102,12 +144,13 @@ GLDEF_C TInt E32Main()
 	test.Title();
 	test.Start(_L("Timer resolution test"));
 	test.SetLogged(ETrue);
+	test(TheTimer.CreateLocal()==KErrNone);
 	RThread This;
 	This.SetPriority(EPriorityRealTime);
 	TUint tick1,tick2;
 	TInt value, tickPeriod;
 	HAL::Get(HAL::ENanoTickPeriod, tickPeriod);
-	test.Printf(_L("tickPeriod=%d"),tickPeriod);
+	test.Printf(_L("tickPeriod=%d\n"),tickPeriod);
 ///////////////////////////////////////////
 	test.Next(_L("Calibrate"));
 	MaxTimeMeasurements = KMaxTimeMeasurements;
@@ -172,6 +215,45 @@ GLDEF_C TInt E32Main()
 		}
 #endif
 ///////////////////////////////////////////
+	test.Next(_L("RTimer::AgainHighRes (2 steps)"));
+	MaxTimeMeasurements = KMaxTimeMeasurements;
+	TInt TimeValues5[KMaxTimeValues]={2000,4000,8000,16000,32000,64000,128000,-1};
+	TimeValue = &TimeValues5[0];
+	__BEFORE_WAIT__
+	__MEASURE1__
+			WaitInSteps(value, tickPeriod, 2);
+	__MEASURE2__
+	__AFTER_WAIT__
+#if defined(__EPOC32__)
+	//Check that RTimer::AgainHighRes() calls completed within boundaries
+	for (k = 0; k<KMaxTimeValues; k++)
+		{
+		if (TimeValue[k] == -1) break;
+		test(TimeValue[k] <= TimeMin[k]);
+		test((TimeValue[k] + 2*tickPeriod) >= TimeMax[k]);
+		}
+#endif
+///////////////////////////////////////////
+	test.Next(_L("RTimer::AgainHighRes (5 steps)"));
+	MaxTimeMeasurements = KMaxTimeMeasurements;
+	TInt TimeValues6[KMaxTimeValues]={4000,8000,16000,32000,64000,128000,-1};
+	TimeValue = &TimeValues6[0];
+	__BEFORE_WAIT__
+	__MEASURE1__
+			WaitInSteps(value, tickPeriod, 5);
+	__MEASURE2__
+	__AFTER_WAIT__
+#if defined(__EPOC32__)
+	//Check that RTimer::AgainHighRes() calls completed within boundaries
+	for (k = 0; k<KMaxTimeValues; k++)
+		{
+		if (TimeValue[k] == -1) break;
+		test(TimeValue[k] <= TimeMin[k]);
+		test((TimeValue[k] + 2*tickPeriod) >= TimeMax[k]);
+		}
+#endif
+///////////////////////////////////////////
+	TheTimer.Close();
 	test.End();
 	return(KErrNone);
 	}

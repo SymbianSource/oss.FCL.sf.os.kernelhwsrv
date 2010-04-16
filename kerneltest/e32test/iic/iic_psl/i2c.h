@@ -48,6 +48,8 @@ const TInt KI2cThreadPriority = 5; // Arbitrary, can be 0-7, 7 highest
 
 const TInt16 KI2cSlaveChannelIdBase = 0x1D00;	// Arbitrary
 
+const TInt KI2cSlaveAsyncDelaySim = 20;	// Arbitrary delay, for timer to simulate asynchronous processing
+
 #ifdef MASTER_MODE
 class DSimulatedIicBusChannelMasterI2c : public DIicBusChannelMaster
 	{
@@ -110,6 +112,16 @@ public:
 
 	inline void SetChanNum(TInt8 aChanNum) {iChannelNumber = aChanNum;};
 
+	enum TAsyncEvent
+		{
+		ENoEvent = 0,
+		EAsyncChanCapture,
+		ERxWords,
+		ETxWords,
+		ERxTxWords
+		};
+	inline void ChanNotifyClient(TInt aTrigger) {NotifyClient(aTrigger);}
+
 	protected:
 		virtual void SendBusErrorAndReturn() {return;} // Not implemented in simulated PSL
 
@@ -132,7 +144,11 @@ public:
 		TInt iBlockedTrigger;
 		TBool iBlockNotification;
 
+		TAsyncEvent iAsyncEvent;
+		TInt iRxTxTrigger;
+
 		NTimer iSlaveTimer; // Used to simulate an asynchronous capture operation
+		TSpinLock iEventSpinLock; // To serialise simulated bus events - Rx, Tx or Rx+Tx
 		};
 #endif/*SLAVE_MODE*/
 

@@ -25,10 +25,11 @@ using namespace Debug;
 
 // ctor
 CSecuritySvrAsync::CSecuritySvrAsync(CSecuritySvrSession* aSession, TProcessId aAgentId)
-: CActive(CActive::EPriorityStandard),
-  iSession(aSession),
-  iProcessName(NULL),
-  iAgentId(aAgentId)
+	: CActive(CActive::EPriorityStandard),
+	iSession(aSession),
+	iProcessName(NULL),
+	iAgentId(aAgentId),
+	iEventBalance(0)
 	{
 	LOG_MSG("CSecuritySvrAsync::CSecuritySvrAsync()");
 	CActiveScheduler::Add(this);
@@ -72,7 +73,9 @@ void CSecuritySvrAsync::ConstructL(const TDesC8& aProcessName)
 // RunL() completes a previously issued call (currently only GetEvent() completion)
 void CSecuritySvrAsync::RunL()
 	{
-	LOG_MSG("CSecuritySvrAsync::RunL()");
+
+	LOG_MSG3("CSecuritySvrAsync::RunL() &iInfo=0x%08x, iEventBalance=%d", (TUint8*)&iInfo, iEventBalance);
+
 	// Something bad happened in the driver
 	User::LeaveIfError(iStatus.Int());
 
@@ -96,44 +99,54 @@ void CSecuritySvrAsync::RunL()
 	iMessage.WriteL(1,data,0);
 
 	iMessage.Complete(KErrNone);
+	--iEventBalance;
 	}
 
 // Cancels the oustanding GetEvent call. May cope with other async calls in future.
 void CSecuritySvrAsync::DoCancel()
 	{
-	LOG_MSG("CSecuritySvrAsync::DoCancel()");
+	LOG_MSG2("CSecuritySvrAsync::DoCancel() iEventBalance=%d", iEventBalance);
 	iSession->Server().iKernelDriver.CancelGetEvent(iProcessName,iAgentId.Id());
 
 	iMessage.Complete(KErrCancel);
+	iEventBalance=0;
 	}
 
 // Report any leave to the client if possible.
 TInt CSecuritySvrAsync::RunError(TInt aError)
 	{
-	LOG_MSG("CSecuritySvrAsync::RunError()");
+	LOG_MSG2("CSecuritySvrAsync::RunError()=%d", aError);
 	iMessage.Complete(aError);
 
 	return KErrNone;
 	}
 
-// Start an Asynchronous GetEvent call to the rm_debug.ldd driver
-// and activate this Active Object.
+/*
+ * Start an asynchronous GetEvent call to the debug driver
+ * and activates this active object. 
+ */
 void CSecuritySvrAsync::GetEvent(const RMessage2& aMessage)
 	{
-	LOG_MSG("CSecuritySvrAsync::GetEvent()");
 	iMessage = aMessage;
 
-	iSession->Server().iKernelDriver.GetEvent(iProcessName,iAgentId.Id(),iStatus,iInfo);
+	iEventBalance++;
+	LOG_MSG5("CSecuritySvrAsync::GetEvent() this = 0x%08x, iInfo=0x%08x, iStatus=0x%08x \
+		iEventBalance=%d : >SetActive() > GetEvent() ",
+		this, &iInfo, &iStatus, iEventBalance );
 
+	/* 
+	SetActive is called before sending the message to the driver so 
+	that we do not get stray signal panics, since the driver may complete immediately
+ 	*/
 	SetActive();
+	iSession->Server().iKernelDriver.GetEvent(iProcessName,iAgentId.Id(),iStatus,iInfo);
 	}
 
 // Used for identifying which AO is associated with a debugged process
 const TDesC8& CSecuritySvrAsync::ProcessName(void)
-{
-	LOG_MSG("CSecuritySvrAsync::ProcessName()");
+	{
 	return iProcessName;
-}
+	}
 
 // End of file - c_security_svr_async.cpp
 

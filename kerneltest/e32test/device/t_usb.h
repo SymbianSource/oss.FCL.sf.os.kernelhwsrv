@@ -86,10 +86,13 @@ private:
 	TBool iBufferSizeChosen;
 	TBool iBandwidthPriorityChosen;
 	TBool iDMAChosen;
+	TBool iAllocateDma;
 	TBool iDoubleBufferingChosen;
+	TBool iAllocateDoubleBuffering;
 	TUint32 iBandwidthPriority;
 	TBool iSoftwareConnect;
 	TBool iHighSpeed;
+	TBool iResourceAllocationV2;
 	TBool iOtg;
 	TBool iVerbose;
 	};

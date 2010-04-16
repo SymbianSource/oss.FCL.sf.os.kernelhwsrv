@@ -526,6 +526,7 @@ SConvKeyData TConvTable::Convert(TUint aScanCode, const TInt &aModifiers) const
 	SConvKeyData returnVal;
 	returnVal.keyCode=EKeyNull;
 	returnVal.modifiers=0;
+	returnVal.filler = 0;
 
 	for (TUint i=0; i<iConvTable.numNodes; i++)
         {

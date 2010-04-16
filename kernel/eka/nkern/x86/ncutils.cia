@@ -23,7 +23,7 @@ EXPORT_C __NAKED__ TUint64 X86::Timestamp()
 	asm("ret");
 	}
 
-extern "C" __NAKED__ void NKIdle(TInt)
+extern "C" __NAKED__ void NKIdle(TUint32)
 	{
 	asm("hlt");
 	asm("ret");

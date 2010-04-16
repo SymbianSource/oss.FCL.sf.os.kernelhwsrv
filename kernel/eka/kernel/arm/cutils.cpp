@@ -157,7 +157,7 @@ extern "C" void NKCrashHandler(TInt aPhase, const TAny* a0, TInt a1)
 		return;
 		}
 #ifdef __SMP__
-	SFullArmRegSet* regs = (SFullArmRegSet*)SubScheduler().i_Regs;
+	SFullArmRegSet* regs = SubScheduler().iSSX.iRegs;
 #else
 	SFullArmRegSet* regs = (SFullArmRegSet*)TheScheduler.i_Regs;
 #endif

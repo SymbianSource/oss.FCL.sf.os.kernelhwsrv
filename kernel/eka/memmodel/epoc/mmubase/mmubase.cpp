@@ -2683,8 +2683,8 @@ void RamCache::DonateRamCachePage(SPageInfo* aPageInfo)
 	SPageInfo::TType type = aPageInfo->Type();
 	if(type==SPageInfo::EChunk)
 		{
-		//Must not donate locked page. An example is DMA trasferred memory.
-		__NK_ASSERT_DEBUG(0 == aPageInfo->LockCount());
+		// Must not donate locked page. An example is DMA transferred memory.
+		__NK_ASSERT_DEBUG(!aPageInfo->LockCount());
 
 		aPageInfo->Change(SPageInfo::EPagedCache,SPageInfo::EStatePagedYoung);
 		iPageList.Add(&aPageInfo->iLink);
@@ -3698,8 +3698,8 @@ void DemandPaging::DonateRamCachePage(SPageInfo* aPageInfo)
 	SPageInfo::TType type = aPageInfo->Type();
 	if(type==SPageInfo::EChunk)
 		{
-		//Must not donate locked page. An example is DMA trasferred memory.
-		__NK_ASSERT_DEBUG(0 == aPageInfo->LockCount());
+		// Must not donate locked page. An example is DMA transferred memory.
+		__NK_ASSERT_DEBUG(!aPageInfo->LockCount());
 		
 		aPageInfo->Change(SPageInfo::EPagedCache,SPageInfo::EStatePagedYoung);
 
@@ -5224,6 +5224,12 @@ void M::DestroyKernelMapObject(TKernelMapObject*&)
 
 
 // Misc DPagingDevice methods
+
+EXPORT_C NFastMutex* DPagingDevice::NotificationLock()
+	{
+	// use the system lock
+	return &TheScheduler.iLock;
+	}
 
 EXPORT_C void DPagingDevice::NotifyIdle()
 	{

@@ -368,6 +368,30 @@ enum THalFunctionGroup
 	};
 
 
+/**
+@internalComponent
+*/
+struct SCpuStates
+	{
+	TUint32	iTA;
+	TUint32 iIA;
+	TUint32	iCU;
+	TUint32	iGD;
+	TInt	iDC;
+	TUint32	iSC;
+	TUint32	iRC;
+	TUint32	iCCS;
+	TUint8	iPO;
+	TUint8	iSpare1;
+	TUint8	iSpare2;
+	TUint8	iSpare3;
+	TUint32	iPODC;
+	TInt	iDS[8];
+	TUint32	iUDC[8];
+	TUint32	iUAC[8];
+	TUint32	iOP[8];
+	TUint32	iF[8];
+	};
 
 
 /**
@@ -396,6 +420,8 @@ enum TKernelHalFunction
 	EKernelHalFloatingPointSystemId,
 	EKernelHalLockThreadToCpu,
 	EKernelHalConfigFlags,
+	EKernelHalCpuStates,
+	EKernelHalSetNumberOfCpus,
 	};
 
 
@@ -2868,6 +2894,7 @@ enum TPagingBenchmark
 	EPagingBmDeleteNotifyDataPage,
 	EPagingBmReadDataMedia,
 	EPagingBmWriteDataMedia,
+	EPagingBmRejuvenate,  // only implemented on FMM
 		
 	EMaxPagingBm
 	};

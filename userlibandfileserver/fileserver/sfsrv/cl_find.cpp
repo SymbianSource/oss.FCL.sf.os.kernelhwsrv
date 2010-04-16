@@ -20,93 +20,104 @@
 #define gPathDelimiter TChar(';')
 enum TMode {EFindByDrives,EFindByDrivesInPath,EFindByPath};
 
-TInt TFindFile::DoFindInDir()
+
 //
 // Look for aFileName in aDir
 //
+TInt TFindFile::DoFindInDir()
 	{
 
-	if (iDir==NULL)
+	if (!iDir)
 		{
 		TEntry entry;
 		TInt r=iFs->Entry(iFile.FullName(),entry);
-		if (r==KErrNone /*|| r==KErrAccessDenied*/)
-			return(KErrNone);
-		else if (r==KErrNoMemory)
+
+		if (r != KErrNone && r != KErrNoMemory && r != KErrPermissionDenied)
+			r = KErrNotFound;
+
 			return r;
-		else if (r==KErrPermissionDenied)
-			return (KErrPermissionDenied);
-		else
-			return(KErrNotFound);
 		}
+	
 	TInt r=iFs->GetDir(iFile.FullName(),KEntryAttMaskSupported|KEntryAttAllowUid,ESortByName,*iDir);
-	if (r==KErrNoMemory)
-		return r;
-	else if (r==KErrPermissionDenied)
-		return r;
-	else if (r!=KErrNone)
-		return(KErrNotFound);
-	if ((*iDir)->Count()==0)
+
+    if(r == KErrNone)
+        {
+        if(!(*iDir)->Count())
+            r = KErrNotFound; //-- empty directory
+        }
+    else if(r != KErrNoMemory && r != KErrPermissionDenied)
+        {
+            r = KErrNotFound;        
+        }
+
+	if (r != KErrNone && iDir)
 		{
 		delete (*iDir);
 		*iDir=NULL;
-		return(KErrNotFound);
 		}
-	else
-		return(KErrNone);
+
+	return r; 
 	}
 
-TInt TFindFile::DoFindNextInPath()
+
 //
 // Look for aFileName along the path and increment aPathPos
 //
+TInt TFindFile::DoFindNextInPath()
 	{
 
 	if (iMode==EFindByDrivesInPath)
 		{
 		TInt r=DoFindNextInDriveList();
-		if (r==KErrNone)
-			return(KErrNone);
 		if (r!=KErrNotFound)
 			return(r);
+
 		iMode=EFindByPath;
 		}
+
 	FOREVER
 		{
 		if (iPath->Length()<iPathPos)
 			return(KErrNotFound);
+
 		TPtrC path(iPath->Ptr()+iPathPos,iPath->Length()-iPathPos);
+
 		TInt r=path.Locate(gPathDelimiter);
+
 		if (r==KErrNotFound)
 			r=path.Length();
+
 		path.Set(path.Ptr(),r);
 		iPathPos+=r+1;
 		TFileName fileName=iFile.NameAndExt();
 		iFile.Set(fileName,&path,NULL);
+
 		if (iFile.FullName().Length()>=2 && iFile.FullName()[1]==KDriveDelimiter)
 			{
 			TInt r=DoFindInDir();
-			if (r==KErrNone)
-				return(KErrNone);
-			if (r!=KErrNotFound)
-				return(r);
+			if (r == KErrNotFound)
 			continue;
+			
+            return(r);
 			}
+		
 		iMode=EFindByDrivesInPath;
 		
 		r=FindByDir(fileName,path);
-		if (r==KErrNone)
-			return(KErrNone);
-		if (r!=KErrNotFound)
+		
+        if (r == KErrNotFound)
+			continue;
+		
 			return(r);
 		}
 
 	}
 
-TInt TFindFile::DoFindNextInDriveList()
+
 //
 // Look for aFileName in all available drives in order
 //
+TInt TFindFile::DoFindNextInDriveList()
 	{
 	
 	TInt found;	
@@ -235,9 +246,12 @@ TInt TFindFile::DoFindNextInDriveList()
 		TPtrC path(iFile.Path());
 		fileName.Set(nameAndExt,&path,&drive);
 		iFile=fileName;
+		
 		TInt r=DoFindInDir();
+		
 		if (r==KErrNone)
 			return(KErrNone);
+		
 		if (r!=KErrNotFound)
 			return(r);
 		}	
@@ -246,15 +260,14 @@ TInt TFindFile::DoFindNextInDriveList()
 
 
 
-EXPORT_C TFindFile::TFindFile(RFs& aFs)
-	: iFs(&aFs), iPathPos(0), iCurrentDrive(0), iMode(-1), iMatchMask(0)
 /**
 Constructor taking a file server session.
 
 @param aFs File server session.
 */
+EXPORT_C TFindFile::TFindFile(RFs& aFs)
+	               :iFs(&aFs), iPathPos(0), iCurrentDrive(0), iMode(-1), iDir(NULL), iMatchMask(0)
 	{
-	
 	iFile.Set(_L(""),NULL,NULL);
 	}
 
@@ -274,29 +287,25 @@ TInt TFindFile::DoFindByPath(const TDesC& aFileName,const TDesC* aPath)
 	TInt r=iFile.Set(aFileName,NULL,NULL);
 	if (r!=KErrNone)
 		return(r);
+
 	iPath=aPath;
 	iPathPos=0;
 	iMode=EFindByPath;
 	r=DoFindInDir();	
 	
-	
-	if (r==KErrNone)
-		return(KErrNone);
-	if (r!=KErrNotFound)
-		return(r);
-	if ((iPath==NULL) || (iPath->Length()==0))
-		return(KErrNotFound);
-	
-	
+	// if it's not in the current dir and a search path was specified, look there.
+	if (r == KErrNotFound && iPath && iPath->Length())
 	r=DoFindNextInPath();
+
 	return(r);
 	}
 
-TInt TFindFile::DoFindByDir(const TDesC& aFileName,const TDesC& aDir)
+
 //
 // Look for aFileName in aDir on each connected drive
 // Make initial check for aFileName in aDir on current drive
 //
+TInt TFindFile::DoFindByDir(const TDesC& aFileName,const TDesC& aDir)
 	{
 		
 	if (aFileName.Length() <= 0) 
@@ -305,23 +314,24 @@ TInt TFindFile::DoFindByDir(const TDesC& aFileName,const TDesC& aDir)
 	TInt r=iFs->Parse(aFileName,aDir,iFile);
 	if (r!=KErrNone)
 		return(r);
-	TInt searchResult=DoFindInDir();
-	if(searchResult==KErrNoMemory)                       
-		return(searchResult);
 	
-	if(searchResult==KErrPermissionDenied)
-		return (KErrPermissionDenied);
+	TInt searchResult=DoFindInDir();
+	if(searchResult == KErrNoMemory || searchResult == KErrPermissionDenied)
+		return(searchResult);
 	
 	r=iFs->DriveList(iDrvList,KDriveAttAll);
 	if (r!=KErrNone)
 		return(r);
+	
 	TInt drive;
 	r=RFs::CharToDrive(iFile.Drive()[0],drive);
 	if (r!=KErrNone)
 		return(r);
+
 	iDrvList[drive]=0; // Drive 'drive' has already been searched
 	iCurrentDrive=EDriveY;
 	iMode=EFindByDrives;
+	
 	if (searchResult==KErrNone)
 		return(KErrNone);
 	
@@ -329,10 +339,21 @@ TInt TFindFile::DoFindByDir(const TDesC& aFileName,const TDesC& aDir)
 	return(DoFindNextInDriveList());
 	}
 
+/**
+    internal helper method that deletes the (*iDir) object in the case of errors and assigns NULL to the client's pointer top it.
+*/
+TInt TFindFile::CallSafe(TInt aResult)
+	{
+	if (aResult != KErrNone && iDir)
+		{
+		delete *iDir;
+		*iDir = NULL;
+		iDir = NULL;
+		}
+	return aResult;
+	}
 
 
-
-EXPORT_C TInt TFindFile::FindByPath(const TDesC& aFileName,const TDesC* aPath)
 /**
 Searches for a file/directory in one or more directories in the path.
 
@@ -367,16 +388,16 @@ Notes:
 @see TFindFile::File
 @see TFindFile::Find
 */
+EXPORT_C TInt TFindFile::FindByPath(const TDesC& aFileName,const TDesC* aPath)
 	{
 
 	iDir=NULL;
-	return(DoFindByPath(aFileName,aPath));
+	return CallSafe(DoFindByPath(aFileName,aPath));
 	}
 
 
 
 
-EXPORT_C TInt TFindFile::FindByDir(const TDesC& aFileName,const TDesC& aDir)
 /**
 Searches for a file/directory in a directory on all available drives.
 
@@ -416,51 +437,50 @@ Notes:
 @see TFindFile::Find()
 @see TFindFile::SetFindMask()
 */
+EXPORT_C TInt TFindFile::FindByDir(const TDesC& aFileName,const TDesC& aDir)
 	{
 
 	iDir=NULL;
-	return(DoFindByDir(aFileName,aDir));
+	return CallSafe(DoFindByDir(aFileName,aDir));
 	}
 
 
 
 
-EXPORT_C TInt TFindFile::FindWildByPath(const TDesC& aFileName,const TDesC* aPath,CDir*& aDir)
+
 /**
-Searches for one or more files/directories in the directories contained in a
-path list.
+Searches for one or more files/directories in the directories contained in a path list.
 
-Wildcard characters can be specified. The search ends when one or more
-filenames matching aFileName is found, or when every
-directory in the path list has been unsuccessfully searched.
-To begin searching again after a successful match has been made,
-use FindWild().
+Wildcard characters can be specified. The search ends when one or more filenames matching aFileName is found, or when every
+directory in the path list has been unsuccessfully searched. To begin searching again after a successful match has been made, use FindWild().
 
-Using function SetFindMask it is possible to specify a combination of 
-attributes that the drives to be searched must match.
+Using function SetFindMask it is possible to specify a combination of  attributes that the drives to be searched must match.
 
 Notes:
 
-1. The caller of the function is responsible for deleting
-   aDir after the function has returned.
+1. The function sets aDir to NULL, then allocates memory for it before appending entries to the list. Therefore, 
+   aDir should have no memory allocated to it before this function is called, otherwise this memory will become orphaned.
 
-2. Calling TFindFile::File() after a successful search gets the drive letter
-   and directory containing the file(s). The filenames can be retrieved via
-   the array of TEntry::iName objects contained in aDir. If you want to
-   retrieve the fully qualified path of a file, you need to parse the path and
-   the filename.
+2. The caller of the function is responsible for deleting aDir after the function has returned. On error this pointer will be set NULL,
+   thus safe to delete.     
+
+3. Calling TFindFile::File() after a successful search gets the drive letter and directory containing the file(s). 
+   The filenames can be retrieved via the array of TEntry::iName objects contained in aDir. If you want to  retrieve the fully 
+   qualified path of a file, you need to parse the path and the filename.
    
-@param aFileName The filename to search for. May contain wildcards. If
-                 it specifies a directory as well as a filename, then that
+@param aFileName The filename to search for. May contain wildcards. If it specifies a directory as well as a filename, then that
                  directory is searched first.
-@param aPath     List of directories to search. Paths in this list must be
-                 separated by a semicolon character, but a semicolon is not
-                 required after the final path. The directories are searched
-                 in the order in which they occur in the list.
-                 Directories must be fully qualified, including
-                 a drive letter, and the name must end with a backslash.
-@param aDir      On return, contains the entries for all files matching
-				 aFileName in the first directory in which a match occurred.
+
+@param aPath     List of directories to search. Paths in this list must be separated by a semicolon character, but a semicolon is not
+                 required after the final path. The directories are searched in the order in which they occur in the list.
+                 Directories must be fully qualified, including a drive letter, and the name must end with a backslash.
+
+@param aDir      in: a reference to the pointer that will be modified by this method.
+                 
+                 out: On success a pointer to the internally allocated by this method CDir object, which in turn contains the entries for 
+                 all files matching aFileName in the first directory in which a match occurred. In this case this API caller is responsible
+                 for deleting aDir.
+                 If some error occured (including KErrNotFound meaning that nothing found) this pointer will be set to NULL, which is also safe to delete.
 
 @return KErrNone, if one or more matching files was	found;
         KErrNotFound, if no matching file was found in any of the directories.
@@ -471,79 +491,80 @@ Notes:
 @see TEntry::iName
 @see TFindFile::SetFindMask()
 */
+EXPORT_C TInt TFindFile::FindWildByPath(const TDesC& aFileName,const TDesC* aPath,CDir*& aDir)
 	{
 
 	iDir=&aDir;
-	return(DoFindByPath(aFileName,aPath));
+	*iDir=NULL;
+
+	return CallSafe(DoFindByPath(aFileName,aPath));
 	}
 
 
 
 
-EXPORT_C TInt TFindFile::FindWildByDir(const TDesC& aFileName,const TDesC& aDirPath,CDir*& aDir)
+
 /**
-Searches, using wildcards, for one or more files/directories in a specified
-directory.
+Searches, using wildcards, for one or more files/directories in a specified directory.
 
-If no matching file is found in that directory, all available drives are
-searched in descending alphabetical order, from Y: to A:, and ending
-with the Z: drive.Using function SetFindMask it is possible to specify a 
-combination of attributes that the drives to be searched must match.
+If no matching file is found in that directory, all available drives are searched in descending alphabetical order, from Y: to A:, and ending
+with the Z: drive.Using function SetFindMask it is possible to specify a combination of attributes that the drives to be searched must match.
 
-The search ends when one or more matching filenames are found, or when every 
-available drive has been unsuccessfully searched. To begin searching again 
-after a successful match has been made, use FindWild(). Wildcards may be
-specified in the filename.
+The search ends when one or more matching filenames are found, or when every  available drive has been unsuccessfully searched. 
+To begin searching again after a successful match has been made, use FindWild(). Wildcards may be specified in the filename.
 
 Notes:
 
-1. A drive letter may be specified in aDirPath (or in aFileName). If a drive 
-   is specified, that drive is searched first, followed by the other available 
-   drives, in descending alphabetical order. If no drive is specified, the drive 
-   contained in the session path is searched first.
+1. A drive letter may be specified in aDirPath (or in aFileName). If a drive  is specified, that drive is searched first, 
+   followed by the other available drives, in descending alphabetical order. If no drive is specified, the drive contained in the session 
+   path is searched first.
 
-2. The function sets aDir to NULL, then allocates memory for it before appending 
-   entries to the list. Therefore, aDir should have no memory allocated to it 
-   before this function is called, otherwise this memory will become orphaned.
+2. The function sets aDir to NULL, then allocates memory for it before appending entries to the list. Therefore, 
+   aDir should have no memory allocated to it before this function is called, otherwise this memory will become orphaned.
 
-3. The caller of this function is responsible for deleting aDir after the function 
-   has returned.
+3. The caller of the function is responsible for deleting aDir after the function has returned. On error this pointer will be set NULL,
+   thus safe to delete.     
 
-4. Calling TFindFile::File() after a successful search returns the drive letter 
-   and directory containing the file(s). Filenames may be retrieved via the array 
-   of TEntry::iNames contained in aDir. If you want to retrieve the fully 
+
+4. Calling TFindFile::File() after a successful search returns the drive letter and directory containing the file(s). 
+   Filenames may be retrieved via the array of TEntry::iNames contained in aDir. If you want to retrieve the fully 
    qualified path of a file, you will need to parse the path and the filename.
 
-@param aFileName The filename to search for. May contain wildcards. If a path 
-                 is specified, it overrides the path specified in aDirPath.
-                 If no path is specified, the path contained in aDirPath is
-                 used in the search.
+@param aFileName The filename to search for. May contain wildcards. If a path is specified, it overrides the path specified in aDirPath.
+                 If no path is specified, the path contained in aDirPath is used in the search.
+
 @param aDirPath  Path indicating a directory to search on each drive.
-@param aDir      On return, contains the entries for all files
-                 matching aFileName.
+
+@param aDir      in: a reference to the pointer that will be modified by this method.
+                 
+                 out: On success a pointer to the internally allocated by this method CDir object, which in turn contains the entries for 
+                 all files matching aFileName in the first directory in which a match occurred. In this case this API caller is responsible
+                 for deleting aDir.
+                 If some error occured (including KErrNotFound meaning that nothing found) this pointer will be set to NULL, which is also safe to delete.
                  
 @return KErrNone if one or more matching files was found;
-        KErrNotFound if no matching file was found in the directory on any 
-        of the drives.
+        KErrNotFound if no matching file was found in the directory on any of the drives.
         KErrArgument, if the filename is empty. 
                 
 @see TFindFile::FindWild
 @see TFindFile::File
 @see TFindFile::SetFindMask()
 */
+EXPORT_C TInt TFindFile::FindWildByDir(const TDesC& aFileName,const TDesC& aDirPath,CDir*& aDir)
 	{
-
 	iDir=&aDir;
-	return(DoFindByDir(aFileName,aDirPath));
+    *iDir=NULL;
+	
+	return CallSafe(DoFindByDir(aFileName,aDirPath));
 	}
 
 
 
 
-TInt TFindFile::DoFind()
 //
 // Find the next match
 //
+TInt TFindFile::DoFind()
 	{
 
 	TInt ret=KErrNone;
@@ -565,7 +586,7 @@ TInt TFindFile::DoFind()
 
 
 
-EXPORT_C TInt TFindFile::Find()
+
 /**
 Searches for the next file/directory.
 
@@ -589,6 +610,7 @@ Note:
 @see TFindFile::SetFindMask()
 
 */
+EXPORT_C TInt TFindFile::Find()
 	{
 
 //	iDir=NULL;
@@ -598,7 +620,7 @@ Note:
 
 
 
-EXPORT_C TInt TFindFile::FindWild(CDir*& aDir)
+
 /**
 Searches for the next file/directory.
 
@@ -609,21 +631,25 @@ combination of attributes that the drives to be searched must match.
 
 Notes:
 
-1. The caller of this function is responsible for deleting aDir after
-   the function has returned 
+1. The function sets aDir to NULL, then allocates memory for it before appending entries to the list. Therefore, 
+   aDir should have no memory allocated to it before this function is called, otherwise this memory will become orphaned.
 
-2. Calling TFindFile::File() after a successful search, will return
-   the drive letter and the directory containing the file(s).
-   The filenames may be retrieved via the array of TEntry::iName objects
-   contained in aDir. If you want to retrieve the fully qualified
-   path of a file, you will need to parse the path and the filename using
-   the TParse class or derived classes.
+2. The caller of the function is responsible for deleting aDir after the function has returned. On error this pointer will be set NULL,
+   thus safe to delete.     
 
-@param aDir On return, contains the entries for all matching files found in
-            the next directory.
+3. Calling TFindFile::File() after a successful search, will return the drive letter and the directory containing the file(s).
+   The filenames may be retrieved via the array of TEntry::iName objects contained in aDir. If you want to retrieve the fully qualified
+   path of a file, you will need to parse the path and the filename using the TParse class or derived classes.
+
+@param aDir      in: a reference to the pointer that will be modified by this method.
+                 
+                 out: On success a pointer to the internally allocated by this method CDir object, which in turn contains the entries for 
+                 all files matching aFileName in the first directory in which a match occurred. In this case this API caller is responsible
+                 for deleting aDir.
+                 If some error occured (including KErrNotFound meaning that nothing found) this pointer will be set to NULL, which is also safe to delete.
             
-@return KErrNone, if further occurrences were found;
-        KErrNotFound, if no more matching files were found.
+@return KErrNone      if further occurrences were found;
+        KErrNotFound  if no more matching files were found.
 
 
 @see TParse
@@ -633,15 +659,18 @@ Notes:
 @see TFindFile::FindWildByDir
 @see TFindFile::SetFindMask()
 */
+EXPORT_C TInt TFindFile::FindWild(CDir*& aDir)
 	{
 
 	iDir=&aDir;
-	return(DoFind());
+    *iDir=NULL;
+
+	return CallSafe(DoFind());
 	}
 
 
 
-EXPORT_C TInt TFindFile::SetFindMask(TUint aMask)
+
 /**
 Can be used in order to specify a combination of drive attributes that the drives 
 to be searched must match. When searching without specifying a mask, all drives, except the 
@@ -653,6 +682,7 @@ remote ones will be returned.
         KErrArgument, if the mask supplied is invalid.
 */
 
+EXPORT_C TInt TFindFile::SetFindMask(TUint aMask)
 	 {	
 	 TInt r =ValidateMatchMask(aMask);
 	 if(r!=KErrNone) 
@@ -667,8 +697,5 @@ remote ones will be returned.
 	 	return KErrNone;
 	 	
 	 	}
-	 
-	
-											
 	 }
 

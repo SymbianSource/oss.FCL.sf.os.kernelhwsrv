@@ -2146,18 +2146,23 @@ void ExecHandler::DllFileName(TInt aHandle, TDes8& aFileName)
 	}
 
 #ifdef MONITOR_THREAD_CPU_TIME
-TInt ExecHandler::ThreadGetCpuTime(DThread* aThread, Int64& aTime)
+TInt ExecHandler::ThreadGetCpuTime(TInt aThreadHandle, Int64& aTime)
 	{
-#ifndef __SMP__
-	TInt64 time = (1000000 * aThread->iNThread.iTotalCpuTime) / NKern::FastCounterFrequency();
-	NKern::UnlockSystem();
-	kumemput32(&aTime, &time, sizeof(TInt64));
-#else
-	TUint64 t = NKern::ThreadCpuTime(&aThread->iNThread);
-	NKern::UnlockSystem();
+	TUint64 t = 0;
+	if (aThreadHandle == KCurrentThreadHandle)
+		{
+		t = NKern::ThreadCpuTime(NKern::CurrentThread());
+		}
+	else
+		{
+		NKern::LockSystem();
+		DThread* pT = (DThread*)K::ObjectFromHandle(aThreadHandle, EThread);
+		t = NKern::ThreadCpuTime(&pT->iNThread);
+		NKern::UnlockSystem();
+		}
 	TUint32 f = NKern::CpuTimeMeasFreq();
 	TUint64 t2 = t>>32;
-	t = ((t<<32)>>32)*1000000;
+	t = (t & KMaxTUint32)*1000000;
 	t2 *= 1000000;
 	t2 += (t>>32);
 	t &= TUint64(KMaxTUint32);
@@ -2167,13 +2172,11 @@ TInt ExecHandler::ThreadGetCpuTime(DThread* aThread, Int64& aTime)
 	TUint64 q = t/f;
 	q += (q2<<32);
 	kumemput32(&aTime, &q, sizeof(TInt64));
-#endif
 	return KErrNone;
 	}
-#else		
-TInt ExecHandler::ThreadGetCpuTime(DThread* /*aThread*/, Int64& /*aTime*/)
+#else
+TInt ExecHandler::ThreadGetCpuTime(TInt /*aThreadHandle*/, Int64& /*aTime*/)
 	{
-	NKern::UnlockSystem();
 	return KErrNotSupported;
 	}
 #endif

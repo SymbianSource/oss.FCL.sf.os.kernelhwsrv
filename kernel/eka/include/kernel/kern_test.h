@@ -34,7 +34,8 @@ public:
 	enum TTestFunction
 		{
 		EUserModeCallbackSleep,
-		EUserModeCallbackSpin,
+		EUserModeCallbackSpin,		
+		ERNGReseedHook,
 		};
 
 	IMPORT_C static TInt Test(TTestFunction aFunc, TAny* a1 = NULL, TAny* a2 = NULL, TAny* a3 = NULL);

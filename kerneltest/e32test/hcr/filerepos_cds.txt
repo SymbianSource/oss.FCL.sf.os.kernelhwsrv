@@ -1,0 +1,580 @@
+#Accelerometer device capabilities
+#-------------------------------------------------------------------------------
+#ColumnId   0x0001      0x0002      0x0003      0x0004      0x0005      0x0006
+#-------------------------------------------------------------------------------
+#Name       ManufId     DeviceId    DevName     DataRate    Resol.      Scale
+#-------------------------------------------------------------------------------
+#RowId
+#0x0001     0x12003335  0x2001    "KISemiInc8g" 20          8           8
+#0x0002     0x72103301  0x0012    "SPE Co 4g"   50          16          4
+   
+############################### 
+# KI SemiInc 8g Accelerometer #
+###############################
+# Manafacturer Id
+@
+cuid: 0x00000001
+eid: 65537 
+type: UInt32
+flags: 0x0000
+hexval: 0x12003335 
+.
+
+# Device Id
+@
+cuid: 0x00000001
+eid: 65538 
+type: UInt16
+flags: 0x0000
+hexval: 0x2001 
+.
+
+#Friendly Name
+@
+cuid: 0x00000001
+eid: 65539 
+type: Text8
+flags: 0x0000
+strval: "KI Semi Inc 8g Accelerometer"
+.
+
+# Data Rate(Hz)
+@
+cuid: 0x00000001
+eid: 65540 
+type: UInt16
+flags: 0x0000
+intval: 20 
+.
+
+# Resolution(bits)
+@
+cuid: 0x00000001
+eid: 65541 
+type: UInt16
+flags: 0x0000
+intval: 8 
+.
+
+# Scale g
+@
+cuid: 0x00000001
+eid: 65542 
+type: UInt16
+flags: 0x0000
+intval: 8 
+.
+
+############################### 
+# SPE Co 4g Accelerometer     #
+###############################
+# Manafacturer Id
+@
+cuid: 0x00000001
+eid: 131073 
+type: UInt32
+flags: 0x0000
+hexval: 0x72103301 
+.
+
+# Device Id
+@
+cuid: 0x00000001
+eid: 131074 
+type: UInt16
+flags: 0x0000
+hexval: 0x0012
+.
+
+#Friendly Name
+@
+cuid: 0x00000001
+eid: 131075 
+type: Text8
+flags: 0x0000
+strval: "SPE Co 4g Accelerometer"
+.
+
+# Data Rate(Hz)
+@
+cuid: 0x00000001
+eid: 131076 
+type: UInt16
+flags: 0x0000
+intval: 50 
+.
+
+# Resolution(bits)
+@
+cuid: 0x00000001
+eid: 131077 
+type: UInt16
+flags: 0x0000
+intval: 16 
+.
+
+# Scale g
+@
+cuid: 0x00000001
+eid: 131078 
+type: UInt16
+flags: 0x0000
+intval: 4 
+.
+#############################################
+
+@
+cuid: 0x00000002
+eid: 2
+type: UInt32
+flags: 0x0000
+intval: 555555
+.
+
+@
+cuid: 0x00000002
+eid: 5
+type: UInt16
+flags: 0x0000
+intval: 60000
+.
+
+@
+cuid: 0x00000002
+eid: 8
+type: UInt8
+flags: 0x0000
+intval: 11
+.
+
+@
+cuid: 0x00000002
+eid: 12
+type: LinAddr
+flags: 0x0000
+hexval: 0x0faece50
+.
+
+@
+cuid: 0x000003e8
+eid: 4096
+type: BinData
+flags: 0x0000
+binval: 18 a1 0b bc 61 41 de c9 cd d2 f9 3b ba 99 e5 e2
+binval: fa e0 13 fe 8f d4 e3 50 1a 5e a3 32 39 34 1f 16
+binval: 9a a8 b3 61 1d 7d 7f fd b1 58 af 91 53 f7 76 c4
+binval: da dd
+
+.
+
+@
+cuid: 0x000003e8
+eid: 28672
+type: Text8
+flags: 0x0000
+strval: "These two strings walk up to a bar. The first string walks in and orders and the bartender throws him out and yells 'I don't serve strings in this bar'. The other string ruffs himself up on the street and curls up and orders. The bartender shouts, 'Hey, didn't you hear what I told your buddy?'. The string says 'Yeah.' The bartender says, 'aren't you a string?' The string says, 'No, I'm a frayed knot...'*********************************************************************************************************?"
+.
+
+@
+cuid: 0x000003e8
+eid: 32768
+type: ArrayInt32
+flags: 0x0000
+arrval: 2034128484
+arrval: 358489471
+arrval: -1196607986
+arrval: -1223123619
+arrval: -643073403
+arrval: -1330549099
+.
+
+@
+cuid: 0x10000001
+eid: 4096
+type: Int32
+flags: 0x0000
+intval: 333
+.
+
+@
+cuid: 0x10000001
+eid: 4112
+type: Int16
+flags: 0x0000
+intval: 17632
+.
+
+@
+cuid: 0x10000001
+eid: 4128
+type: Int8
+flags: 0x0000
+intval: 44
+.
+
+@
+cuid: 0x10000001
+eid: 4144
+type: Bool
+flags: 0x0000
+intval: 1
+.
+
+@
+cuid: 0x10000001
+eid: 4160
+type: UInt32
+flags: 0x0000
+intval: 3123123123
+.
+
+@
+cuid: 0x10000001
+eid: 4176
+type: UInt16
+flags: 0x0000
+intval: 18
+.
+
+@
+cuid: 0x10000001
+eid: 4192
+type: UInt8
+flags: 0x0000
+intval: 80
+.
+
+@
+cuid: 0x10000001
+eid: 4208
+type: LinAddr
+flags: 0x0000
+hexval: 0xdeadbeef
+.
+
+@
+cuid: 0x10000002
+eid: 128
+type: BinData
+flags: 0x0000
+binval: 18 a1 0b bc 61 41 de c9 cd d2 f9 3b ba 99 e5 e2
+binval: fa e0 13 fe 8f d4 e3 50 1a 5e a3 32 39 34 1f 16
+binval: 9a a8 b3 61 1d 7d 7f fd b1 58 af 91 53 f7 76 c4
+binval: da dd
+
+.
+
+@
+cuid: 0x10000002
+eid: 147
+type: Text8
+flags: 0x0000
+strval: "A termite walks into a bar and says, 'Is the bar tender here?' #"
+.
+
+@
+cuid: 0x10000002
+eid: 160
+type: ArrayInt32
+flags: 0x0000
+arrval: 2034128484
+arrval: 358489471
+arrval: -1196607986
+arrval: -1223123619
+arrval: -643073403
+arrval: -1330549099
+.
+
+@
+cuid: 0x10000002
+eid: 177
+type: ArrayUInt32
+flags: 0x0000
+arrval: 2034128484
+arrval: 358489471
+arrval: 3098359310
+arrval: 3071843677
+arrval: 3651893893
+arrval: 2964418197
+arrval: 2696294136
+arrval: 1696227301
+arrval: 1516067404
+arrval: 1171111215
+arrval: 45904065
+arrval: 3152352058
+arrval: 204038089
+arrval: 3427962251
+arrval: 3455401965
+arrval: 1362098275
+arrval: 2253564637
+arrval: 3426182366
+arrval: 173516448
+arrval: 3814089518
+arrval: 136723162
+arrval: 2036722935
+arrval: 4113668927
+arrval: 1744493008
+arrval: 2493449248
+arrval: 3579645660
+arrval: 567353362
+arrval: 882914186
+arrval: 386211010
+arrval: 3553761645
+arrval: 2569035486
+arrval: 508738370
+arrval: 2156711458
+arrval: 1917508866
+arrval: 4265921673
+arrval: 2570997289
+arrval: 3925131413
+arrval: 3804548107
+arrval: 2789297085
+arrval: 3612835159
+arrval: 2938836477
+arrval: 2656050096
+arrval: 3214230399
+arrval: 3908414061
+arrval: 2565375854
+arrval: 2461262451
+arrval: 1843121370
+arrval: 3664914997
+arrval: 3998453453
+arrval: 956775374
+arrval: 3966551413
+arrval: 3687801665
+arrval: 2761783920
+arrval: 3143394259
+arrval: 2885547835
+arrval: 1464987787
+arrval: 1940297660
+arrval: 257153229
+arrval: 1950234869
+arrval: 404798999
+arrval: 4170795976
+arrval: 449084638
+arrval: 2206107629
+arrval: 1726753423
+arrval: 3649910521
+arrval: 3495736484
+arrval: 2906992014
+arrval: 696657641
+arrval: 3811005607
+arrval: 1429964498
+arrval: 2130501125
+arrval: 126113280
+arrval: 657988026
+arrval: 412465877
+arrval: 1468324572
+arrval: 2212639033
+arrval: 526226762
+arrval: 4199939442
+arrval: 2447247776
+arrval: 580919075
+arrval: 3399586879
+arrval: 1773665383
+arrval: 2596675710
+arrval: 2204277779
+arrval: 3440949747
+arrval: 2163247371
+arrval: 374652132
+arrval: 2265994439
+arrval: 2525472208
+arrval: 751154667
+arrval: 60655135
+arrval: 1819822599
+arrval: 1996296943
+arrval: 1160968304
+arrval: 3511898622
+arrval: 4008505154
+arrval: 3363107771
+arrval: 3003598970
+arrval: 2321824624
+arrval: 1793148977
+arrval: 192387216
+arrval: 2391359999
+arrval: 3986410788
+arrval: 4170387316
+arrval: 112839256
+arrval: 957431730
+arrval: 2403276842
+arrval: 2443299891
+arrval: 3871206705
+arrval: 2309718684
+arrval: 4239645330
+arrval: 749665729
+arrval: 1567563783
+arrval: 3770371262
+arrval: 3625425678
+arrval: 3724751159
+arrval: 3335150391
+arrval: 1301676466
+arrval: 4209560974
+arrval: 4214040856
+arrval: 1115066926
+arrval: 2972142156
+arrval: 2476797414
+arrval: 882703343
+arrval: 3596997643
+arrval: 3633196855
+arrval: 1247060582
+arrval: 3141938928
+.
+
+@
+cuid: 0x10000002
+eid: 194
+type: Int64
+flags: 0x0000
+binval: ff ff ff ff ff ff ff ff
+.
+
+@
+cuid: 0x10000002
+eid: 208
+type: UInt64
+flags: 0x0000
+binval: 00 00 00 00 00 00 00 00
+.
+
+@
+cuid: 0x10000002
+eid: 4294967295
+type: Int8
+flags: 0x0000
+intval: 1
+.
+
+@
+cuid: 0xffffffff
+eid: 32
+type: ArrayUInt32
+flags: 0x0000
+arrval: 2034128484
+arrval: 358489471
+arrval: 3098359310
+arrval: 3071843677
+arrval: 3651893893
+arrval: 2964418197
+arrval: 2696294136
+arrval: 1696227301
+arrval: 1516067404
+arrval: 1171111215
+arrval: 45904065
+arrval: 3152352058
+arrval: 204038089
+arrval: 3427962251
+arrval: 3455401965
+arrval: 1362098275
+arrval: 2253564637
+arrval: 3426182366
+arrval: 173516448
+arrval: 3814089518
+arrval: 136723162
+arrval: 2036722935
+arrval: 4113668927
+arrval: 1744493008
+arrval: 2493449248
+arrval: 3579645660
+arrval: 567353362
+arrval: 882914186
+arrval: 386211010
+arrval: 3553761645
+arrval: 2569035486
+arrval: 508738370
+arrval: 2156711458
+arrval: 1917508866
+arrval: 4265921673
+arrval: 2570997289
+arrval: 3925131413
+arrval: 3804548107
+arrval: 2789297085
+arrval: 3612835159
+arrval: 2938836477
+arrval: 2656050096
+arrval: 3214230399
+arrval: 3908414061
+arrval: 2565375854
+arrval: 2461262451
+arrval: 1843121370
+arrval: 3664914997
+arrval: 3998453453
+arrval: 956775374
+arrval: 3966551413
+arrval: 3687801665
+arrval: 2761783920
+arrval: 3143394259
+arrval: 2885547835
+arrval: 1464987787
+arrval: 1940297660
+arrval: 257153229
+arrval: 1950234869
+arrval: 404798999
+arrval: 4170795976
+arrval: 449084638
+arrval: 2206107629
+arrval: 1726753423
+arrval: 3649910521
+arrval: 3495736484
+arrval: 2906992014
+arrval: 696657641
+arrval: 3811005607
+arrval: 1429964498
+arrval: 2130501125
+arrval: 126113280
+arrval: 657988026
+arrval: 412465877
+arrval: 1468324572
+arrval: 2212639033
+arrval: 526226762
+arrval: 4199939442
+arrval: 2447247776
+arrval: 580919075
+arrval: 3399586879
+arrval: 1773665383
+arrval: 2596675710
+arrval: 2204277779
+arrval: 3440949747
+arrval: 2163247371
+arrval: 374652132
+arrval: 2265994439
+arrval: 2525472208
+arrval: 751154667
+arrval: 60655135
+arrval: 1819822599
+arrval: 1996296943
+arrval: 1160968304
+arrval: 3511898622
+arrval: 4008505154
+arrval: 3363107771
+arrval: 3003598970
+arrval: 2321824624
+arrval: 1793148977
+arrval: 192387216
+arrval: 2391359999
+arrval: 3986410788
+arrval: 4170387316
+arrval: 112839256
+arrval: 957431730
+arrval: 2403276842
+arrval: 2443299891
+arrval: 3871206705
+arrval: 2309718684
+arrval: 4239645330
+arrval: 749665729
+arrval: 1567563783
+arrval: 3770371262
+arrval: 3625425678
+arrval: 3724751159
+arrval: 3335150391
+arrval: 1301676466
+arrval: 4209560974
+arrval: 4214040856
+arrval: 1115066926
+arrval: 2972142156
+arrval: 2476797414
+arrval: 882703343
+arrval: 3596997643
+arrval: 3633196855
+arrval: 1247060582
+arrval: 3141938928
+.

@@ -62,7 +62,7 @@ TBool TFatBootSector::IsValid() const
         if(TotalSectors() >0 && HugeSectors() >0 )
             goto Invalid; //-- values clash
 
-        const TUint32 totSectors = Max(TotalSectors(), HugeSectors());
+        const TUint32 totSectors = Max((TUint32)TotalSectors(), HugeSectors());
         const TUint32 rootDirStartSec =  ReservedSectors() + FatSectors()*NumberOfFats(); //-- root directory start sector
 
         if(FatSectors() < 1 || rootDirStartSec < 3 || RootDirEntries() < 1 || totSectors < 5)
@@ -228,11 +228,11 @@ void TFatBootSector::PrintDebugInfo() const
     __PRINT1(_L("FatSectors:%d"),FatSectors());
     __PRINT1(_L("SectorsPerTrack:%d"),SectorsPerTrack());
     __PRINT1(_L("NumberOfHeads:%d"),NumberOfHeads());
-    __PRINT1(_L("HugeSectors:%d"),HugeSectors());
-    __PRINT1(_L("Fat32 Sectors:%d"),FatSectors32());
+    __PRINT1(_L("HugeSectors:%u"),HugeSectors());
+    __PRINT1(_L("Fat32 Sectors:%u"),FatSectors32());
     __PRINT1(_L("Fat32 Flags:%d"),FATFlags());
     __PRINT1(_L("Fat32 Version Number:%d"),VersionNumber());
-    __PRINT1(_L("Root Cluster Number:%d"),RootClusterNum());
+    __PRINT1(_L("Root Cluster Number:%u"),RootClusterNum());
     __PRINT1(_L("FSInfo Sector Number:%d"),FSInfoSectorNum());
     __PRINT1(_L("Backup Boot Rec Sector Number:%d"),BkBootRecSector());
     __PRINT1(_L("PhysicalDriveNumber:%d"),PhysicalDriveNumber());
@@ -256,7 +256,7 @@ TFatType TFatBootSector::FatType(void) const
     {
 
     //-- check iBytesPerSector validity; it shall be one of: 512,1024,2048,4096
-    if(!IsPowerOf2(iBytesPerSector) || iBytesPerSector < 512 ||  iBytesPerSector > 4096)
+    if(iBytesPerSector < 512 ||  iBytesPerSector > 4096 || !IsPowerOf2(iBytesPerSector))
         return EInvalid; //-- invalid iBytesPerSector value
 
     //-- check iSectorsPerCluster validity, it shall be one of: 1,2,4,8...128
@@ -326,14 +326,14 @@ TInt TFatBootSector::FirstDataSector() const
 TUint32 TFatBootSector::VolumeTotalSectorNumber() const
 {
     __ASSERT_DEBUG(IsValid(), Fault(EFatBadBootSectorParameter));
-    return TotalSectors() >0 ? (TUint32)TotalSectors() : (TUint32)HugeSectors();
+    return TotalSectors() >0 ? TotalSectors() : HugeSectors();
 }
 
 /** @return FAT-type independent number of sectors in one FAT */
 TUint32 TFatBootSector::TotalFatSectors() const
 {
     __ASSERT_DEBUG(IsValid(), Fault(EFatBadBootSectorParameter));
-    return FatSectors() >0 ? (TUint32)FatSectors() : FatSectors32();
+    return FatSectors() >0 ? FatSectors() : FatSectors32();
 }
 
 

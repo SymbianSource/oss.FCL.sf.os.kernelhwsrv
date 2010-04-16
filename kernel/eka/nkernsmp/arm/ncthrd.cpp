@@ -36,7 +36,7 @@ extern void initialiseState(TInt aCpu, TSubScheduler* aSS);
 extern "C" void ExcFault(TAny*);
 
 extern TUint32 __mpid();
-extern void InitAPTimestamp(SNThreadCreateInfo& aInfo);
+extern void InitTimestamp(TSubScheduler* aSS, SNThreadCreateInfo& aInfo);
 
 TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 	{
@@ -44,19 +44,22 @@ TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 	__NK_ASSERT_ALWAYS((aInfo.iParameterBlockSize&0x80000007)==0);
 	__NK_ASSERT_ALWAYS(aInfo.iStackBase && aInfo.iStackSize>=aInfo.iParameterBlockSize+KNThreadMinStackSize);
 	TInt cpu = -1;
+	TSubScheduler* ss = 0;
 	new (this) NThread;
 	if (aInitial)
 		{
 		cpu = __e32_atomic_add_ord32(&TheScheduler.iNumCpus, 1);
 		aInfo.iCpuAffinity = cpu;
 		// OK since we can't migrate yet
-		TSubScheduler& ss = TheSubSchedulers[cpu];
-		ss.iCurrentThread = this;
-		iRunCount64 = UI64LIT(1);
-		__KTRACE_OPT(KBOOT,DEBUGPRINT("Init: cpu=%d ss=%08x", cpu, &ss));
+		ss = &TheSubSchedulers[cpu];
+		ss->iCurrentThread = this;
+		ss->iDeferShutdown = 0;
+		iRunCount.i64 = UI64LIT(1);
+		iActiveState = 1;
+		__KTRACE_OPT(KBOOT,DEBUGPRINT("Init: cpu=%d ss=%08x", cpu, ss));
 		if (cpu)
 			{
-			initialiseState(cpu,&ss);
+			initialiseState(cpu,ss);
 
 			ArmLocalTimer& T = LOCAL_TIMER;
 			T.iWatchdogDisable = E_ArmTmrWDD_1;
@@ -69,9 +72,10 @@ TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 			NIrq::HwInit2AP();
 			T.iTimerCtrl = E_ArmTmrCtrl_IntEn | E_ArmTmrCtrl_Reload | E_ArmTmrCtrl_Enable;
 
-			__e32_atomic_ior_ord32(&TheScheduler.iActiveCpus1, 1<<cpu);
-			__e32_atomic_ior_ord32(&TheScheduler.iActiveCpus2, 1<<cpu);
+			__e32_atomic_ior_ord32(&TheScheduler.iThreadAcceptCpus, 1<<cpu);
+			__e32_atomic_ior_ord32(&TheScheduler.iIpiAcceptCpus, 1<<cpu);
 			__e32_atomic_ior_ord32(&TheScheduler.iCpusNotIdle, 1<<cpu);
+			__e32_atomic_add_ord32(&TheScheduler.iCCRequestLevel, 1);
 			__KTRACE_OPT(KBOOT,DEBUGPRINT("AP MPID=%08x",__mpid()));
 			}
 		else
@@ -132,10 +136,11 @@ TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		ArmLocalTimer& T = LOCAL_TIMER;
 		T.iTimerCtrl = E_ArmTmrCtrl_IntEn | E_ArmTmrCtrl_Reload | E_ArmTmrCtrl_Enable;
 
-		// synchronize AP's timestamp with BP's
-		if (cpu>0)
-			InitAPTimestamp(aInfo);
+		// Initialise timestamp
+		InitTimestamp(ss, aInfo);
 		}
+	AddToEnumerateList();
+	InitLbInfo();
 #ifdef BTRACE_THREAD_IDENTIFICATION
 	BTrace4(BTrace::EThreadIdentification,BTrace::ENanoThreadCreate,this);
 #endif
@@ -184,7 +189,7 @@ void DumpExcInfo(TArmExcInfo& a)
 	TInt irq = NKern::DisableAllInterrupts();
 	TSubScheduler& ss = SubScheduler();
 	NThreadBase* ct = ss.iCurrentThread;
-	TInt inc = TInt(ss.i_IrqNestCount);
+	TInt inc = TInt(ss.iSSX.iIrqNestCount);
 	TInt cpu = ss.iCpuNum;
 	TInt klc = ss.iKernLockCount;
 	NKern::RestoreInterrupts(irq);
@@ -652,7 +657,7 @@ void NThread::GetUserContext(TArmRegSet& aContext, TUint32& aAvailRegistersMask)
 	if (pC != this)
 		{
 		AcqSLock();
-		if (iWaitState.ThreadIsDead())
+		if (iWaitState.ThreadIsDead() || i_NThread_Initial)
 			{
 			RelSLock();
 			aAvailRegistersMask = 0;
@@ -840,7 +845,7 @@ void NThread::SetUserContext(const TArmRegSet& aContext, TUint32& aRegMask)
 	if (pC != this)
 		{
 		AcqSLock();
-		if (iWaitState.ThreadIsDead())
+		if (iWaitState.ThreadIsDead() || i_NThread_Initial)
 			{
 			RelSLock();
 			aRegMask = 0;
@@ -1057,36 +1062,14 @@ extern "C" TInt HandleSpecialOpcode(TArmExcInfo* aContext, TInt aType)
 	return 0;
 	}
 
-/** Return the total CPU time so far used by the specified thread.
-
-	@return The total CPU time in units of 1/NKern::CpuTimeMeasFreq().
-*/
-EXPORT_C TUint64 NKern::ThreadCpuTime(NThread* aThread)
-	{
-	TSubScheduler* ss = 0;
-	NKern::Lock();
-	aThread->AcqSLock();
-	if (aThread->i_NThread_Initial)
-		ss = &TheSubSchedulers[aThread->iLastCpu];
-	else if (aThread->iReady && aThread->iParent->iReady)
-		ss = &TheSubSchedulers[aThread->iParent->iReady & NSchedulable::EReadyCpuMask];
-	if (ss)
-		ss->iReadyListLock.LockOnly();
-	TUint64 t = aThread->iTotalCpuTime64;
-	if (aThread->iCurrent || (aThread->i_NThread_Initial && !ss->iCurrentThread))
-		t += (NKern::Timestamp() - ss->iLastTimestamp64);
-	if (ss)
-		ss->iReadyListLock.UnlockOnly();
-	aThread->RelSLock();
-	NKern::Unlock();
-	return t;
-	}
 
 TInt NKern::QueueUserModeCallback(NThreadBase* aThread, TUserModeCallback* aCallback)
 	{
 	__e32_memory_barrier();
 	if (aCallback->iNext != KUserModeCallbackUnqueued)
 		return KErrInUse;
+	if (aThread->i_NThread_Initial)
+		return KErrArgument;
 	TInt result = KErrDied;
 	NKern::Lock();
 	TUserModeCallback* listHead = aThread->iUserModeCallbacks;

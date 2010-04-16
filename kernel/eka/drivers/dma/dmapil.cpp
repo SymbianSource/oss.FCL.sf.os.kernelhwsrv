@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -861,35 +861,66 @@ void TDmaChannel::DoDfc()
 		// release threads doing CancelAll()
 		waiters->Signal();
 		}
-	else if (!error && !iDfc.Queued() && !iReqQ.IsEmpty() && iController->IsIdle(*this))
+#ifndef DISABLE_MISSED_IRQ_RECOVERY
+	// (iController may be NULL here if the channel was closed in the client callback.)
+	else if (!error &&
+			 iController && iController->IsIdle(*this) &&
+			 !iReqQ.IsEmpty() &&
+			 !iDfc.Queued())
 		{
-		__KTRACE_OPT(KDMA, Kern::Printf("Missed interrupt(s) - draining request queue"));
-		ResetStateMachine();
-
-		// Move orphaned requests to temporary queue so channel queue can
-		// accept new requests.
-		SDblQue q;
-		q.MoveFrom(&iReqQ);
-
-		SDblQueLink* pL;
-		while ((pL = q.GetFirst()) != NULL)
+		// Wait for a bit. If during that time the condition goes away then it
+		// was a 'spurious missed interrupt', in which case we just do nothing.
+		TBool spurious = EFalse;
+		const TUint32 nano_secs_per_loop = 1000 * 1000;			// 1ms
+		for (TInt i = 5; i > 0; i--)
 			{
-			iQueuedRequests--;
-			DDmaRequest* pR = _LOFF(pL, DDmaRequest, iLink);
-			__KTRACE_OPT(KDMA, Kern::Printf("Removing request from queue and notifying client"));
-			pR->OnDeque();
-			DDmaRequest::TCallback cb = pR->iCb;
-			TAny* arg = pR->iCbArg;
-			if (cb)
+			if (!iController->IsIdle(*this))
 				{
-				Signal();
-				(*cb)(DDmaRequest::EOk, arg);
-				Wait();
+				__KTRACE_OPT(KDMA, Kern::Printf("DMAC no longer idle (i = %d)", i));
+				spurious = ETrue;
+				break;
+				}
+			else if (iDfc.Queued())
+				{
+				__KTRACE_OPT(KDMA, Kern::Printf("DFC now queued (i = %d)", i));
+				spurious = ETrue;
+				break;
+				}
+			Kern::NanoWait(nano_secs_per_loop);
+			}
+		if (!spurious)
+			{
+			__KTRACE_OPT(KDMA,
+						 Kern::Printf("Missed interrupt(s) - draining request queue on ch %d",
+									  PslId()));
+			ResetStateMachine();
+
+			// Move orphaned requests to temporary queue so channel queue can
+			// accept new requests.
+			SDblQue q;
+			q.MoveFrom(&iReqQ);
+
+			SDblQueLink* pL;
+			while ((pL = q.GetFirst()) != NULL)
+				{
+				iQueuedRequests--;
+				DDmaRequest* pR = _LOFF(pL, DDmaRequest, iLink);
+				__KTRACE_OPT(KDMA, Kern::Printf("Removing request from queue and notifying client"));
+				pR->OnDeque();
+				DDmaRequest::TCallback cb = pR->iCb;
+				TAny* arg = pR->iCbArg;
+				if (cb)
+					{
+					Signal();
+					(*cb)(DDmaRequest::EOk, arg);
+					Wait();
+					}
 				}
 			}
 		req_count_after = iQueuedRequests;
 		Signal();
 		}
+#endif  // #ifndef DISABLE_MISSED_IRQ_RECOVERY
 	else
 		{
 		req_count_after = iQueuedRequests;

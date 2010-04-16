@@ -67,7 +67,7 @@ LOCAL_C TInt8 AssignChanNumI2c()
 class DIicSlaveClientChan : public DBase
 	{
 public:
-	DIicSlaveClientChan(DIicBusChannel* aChan, TInt8 aChanNum, TInt aChanType):iChan(aChan),iChanNumber(aChanNum),iChanType(aChanType){};
+	DIicSlaveClientChan(DIicBusChannel* aChan, TInt8 aChanNum, TInt aChanType):iChanNumber(aChanNum),iChanType(aChanType),iChan(aChan){};
 	~DIicSlaveClientChan();
 	TInt GetChanNum()const {return iChanNumber;};
 	TInt GetChanType()const {return iChanType;};
@@ -207,7 +207,7 @@ class DChannelIicSlaveClient : public DLogicalChannel
 	TInt iFullDuplexReq;
 	TInt iBlockedTrigger;
 
-	typedef enum TTestOverUnderState
+	enum TTestOverUnderState
 		{
 		EStartState  = 0x1,
 		ERxOverrun_1,
@@ -1416,7 +1416,6 @@ TInt DChannelIicSlaveClient::DoControl(TInt aId, TAny* a1, TAny* a2)
 				iExpectedTrigger |= tempTrigger;
 			else
 				iBlockedTrigger |= tempTrigger;
-
 			// The bytes "transmitted" are stored in the simulated bus' iTxCheckBuf
 			// Since the simulated bus channel is also in the kernel process it shares the same address space
 			// Get the address of the buffer
@@ -1468,7 +1467,6 @@ TInt DChannelIicSlaveClient::DoControl(TInt aId, TAny* a1, TAny* a2)
 				iExpectedTrigger |= tempTrigger;
 			else
 				iBlockedTrigger |= tempTrigger;
-
 			// The bytes "transmitted" are stored in the simulated bus' iTxCheckBuf
 			// Since the simulated bus channel is also in the kernel process it shares the same address space
 			// Get the address of the buffer

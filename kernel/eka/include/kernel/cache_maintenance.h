@@ -43,6 +43,12 @@ const TInt KCacheInfoI=0;		// InternalCache info for ICache. On ARMv7, this appl
 const TInt KCacheInfoD=1;		// InternalCache info for DCache. On ARMv7, this applies to the point-of-coherency.
 const TInt KCacheInfoD_PoU=2;	// InternalCache info for ARMv7 DCache for the point-of-unification.
 
+#if !defined(__CPU_MEMORY_TYPE_REMAPPING) && defined(__CPU_ARM)
+// These constants must be dthe same as DefaultPRRR & DefaultNMRR in bootcpu.inc
+const TUint32 KDefaultPrimaryRegionRemapRegister = 0x000a00a4;
+const TUint32 KDefaultNormalMemoryRemapRegister  = 0x00400040;
+#endif
+
 /* 
  * Cache info of particular cache type or level.
  */
@@ -100,7 +106,6 @@ public:
 /*
  * @return	Internal and external cache attributes (orred TMappingAttributes enums)
  * 			that match aType memory type.
- * @panic:	If aType 4-7 is specified on platform with no __CPU_MEMORY_TYPE_REMAPPING.
  */
 	static TUint32 TypeToCachingAttributes(TMemoryType aType);
 
@@ -323,7 +328,6 @@ private:
 	static void ParseCacheSizeInfo(TUint32 aValue, SCacheInfo& aInfo);
 #endif	
 	
-#if defined(__CPU_MEMORY_TYPE_REMAPPING)
 /* 
  * @return The content of Primary Region Remap Register.
  */
@@ -333,10 +337,17 @@ private:
  * @return The content of Normal Memory Remap Register.
  */
 	static TUint32 NormalMemoryRemapRegister();
-#endif // defined(__CPU_MEMORY_TYPE_REMAPPING)
 	
 #if defined(__CPU_ARMV7)
 	static TInt DmaBufferAlignementLog2;	// Holds the alignement requirement for DMA buffers. 
+#endif
+
+#if !defined(__CPU_MEMORY_TYPE_REMAPPING) && defined(__CPU_ARM)
+	/**
+	 * On platforms with no memory type remapping, we have to simulate TMemoryType values 4-7
+	 */
+	static TUint32 iPrimaryRegionRemapRegister;
+    static TUint32 iNormalMemoryRemapRegister;
 #endif
 	};
 
@@ -364,6 +375,12 @@ const TUint ARML2C_CleanInvalidateByIndexWay = 0x7f8;
 const TUint ARML2C_CleanByWay = 0x7bc;
 const TUint ARML2C_InvalidateByWay = 0x77c;
 const TUint ARML2C_CleanInvalidateByWay = 0x7fc;
+#if defined (__ARM_PL310_CACHE__)
+    const TUint ARML2C_WayShift = 28;
+#else
+    const TUint ARML2C_WayShift = 29;
+#endif
+    const TUint ARML2C_IndexShift = 5;
 
 /*
  * A set of static utility functions for external cache memory.

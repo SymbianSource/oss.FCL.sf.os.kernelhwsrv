@@ -39,12 +39,12 @@ Calculate the FAT size in sectors for a Fat32 volume
 
 @return The number of sectors
 */
-TUint32 CFatFormatCB::MaxFat32Sectors() const
+TUint CFatFormatCB::MaxFat32Sectors() const
 	{
 	TUint32 calc1 = iMaxDiskSectors - iReservedSectors;
 	TUint32 calc2 = (256 * iSectorsPerCluster) + iNumberOfFats;
 	calc2 = calc2 >> 1;
-	return (calc1 + (calc2 - 1))/calc2;
+	return ((calc1 + (calc2 - 1))/calc2);
 	}
 
 
@@ -76,7 +76,7 @@ Setting set to adhere to Rules of Count of clusters for FAT type
 @param  aDiskSizeInSectors Size of volume in sectors
 @return system-wide error code
 */
-TInt  CFatFormatCB::InitFormatDataForFixedSizeDiskNormal(TInt aDiskSizeInSectors, const TLocalDriveCapsV6& aCaps)
+TInt  CFatFormatCB::InitFormatDataForFixedSizeDiskNormal(TUint aDiskSizeInSectors, const TLocalDriveCapsV6& aCaps)
 	{
 	__PRINT1(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskNormal() sectors:%d"), aDiskSizeInSectors);
     
@@ -117,11 +117,13 @@ TInt  CFatFormatCB::InitFormatDataForFixedSizeDiskNormal(TInt aDiskSizeInSectors
 	else if(aDiskSizeInSectors<1048576) // >= 16Mb - FAT16   < (1048576) 512MB
 		{
 		iFileSystemName=KFileSystemName16;
-		TInt minSectorsPerCluster=(aDiskSizeInSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
+		TUint minSectorsPerCluster=(aDiskSizeInSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
 		iRootDirEntries=512;
 		iSectorsPerCluster=1;
+		
 		while (minSectorsPerCluster>iSectorsPerCluster)
 			iSectorsPerCluster<<=1;
+
 		iSectorsPerFat=MaxFat16Sectors();
 		}
 	else	//use FAT32
@@ -142,37 +144,49 @@ TInt  CFatFormatCB::InitFormatDataForFixedSizeDiskNormal(TInt aDiskSizeInSectors
 		
 		}
 
+	const TFatType fatType = SuggestFatType();
+
 	// Ensure cluster size is a multiple of the block size
 	TInt blockSizeInSectors = aCaps.iBlockSize >> iSectorSizeLog2;
 	__PRINT1(_L("blockSizeInSectors: %d"),blockSizeInSectors);
 	ASSERT(blockSizeInSectors == 0 || IsPowerOf2(blockSizeInSectors));
 	if (blockSizeInSectors != 0 && IsPowerOf2(blockSizeInSectors))
 		{
-		__PRINT1(_L("iSectorsPerCluster	(old): %d"),iSectorsPerCluster);
+		__PRINT1(_L("iSectorsPerCluster    (old): %d"),iSectorsPerCluster);
 		AdjustClusterSize(blockSizeInSectors);
-		__PRINT1(_L("iSectorsPerCluster	(new): %d"),iSectorsPerCluster);
+		__PRINT1(_L("iSectorsPerCluster    (new): %d"),iSectorsPerCluster);
 		}
 
-	// Align first data sector on an erase block boundary if
-	// (1) the iEraseBlockSize is specified
-	// (2) the start of the partition is already aligned to an erase block boundary, 
-	//     i.e. iHiddenSectors is zero or a multiple of iEraseBlockSize
-	__PRINT1(_L("iHiddenSectors: %d"),iHiddenSectors);
-	TInt eraseblockSizeInSectors = aCaps.iEraseBlockSize >> iSectorSizeLog2;
-	__PRINT1(_L("eraseblockSizeInSectors: %d"),eraseblockSizeInSectors);
-	ASSERT(eraseblockSizeInSectors == 0 || IsPowerOf2(eraseblockSizeInSectors));	
-	ASSERT(eraseblockSizeInSectors == 0 || eraseblockSizeInSectors >= blockSizeInSectors);
-	if ((eraseblockSizeInSectors != 0) &&
-		(iHiddenSectors % eraseblockSizeInSectors == 0) &&	
-		(IsPowerOf2(eraseblockSizeInSectors)) &&
-		(eraseblockSizeInSectors >= blockSizeInSectors))
+
+	for (; iSectorsPerCluster>1; iSectorsPerCluster>>= 1)
 		{
-		TInt r = AdjustFirstDataSectorAlignment(eraseblockSizeInSectors);
-		ASSERT(r == KErrNone);
-		(void) r;
+		// Align first data sector on an erase block boundary if
+		// (1) the iEraseBlockSize is specified
+		// (2) the start of the partition is already aligned to an erase block boundary, 
+		//     i.e. iHiddenSectors is zero or a multiple of iEraseBlockSize
+		__PRINT1(_L("iHiddenSectors: %d"),iHiddenSectors);
+		TInt eraseblockSizeInSectors = aCaps.iEraseBlockSize >> iSectorSizeLog2;
+		__PRINT1(_L("eraseblockSizeInSectors: %d"),eraseblockSizeInSectors);
+		ASSERT(eraseblockSizeInSectors == 0 || IsPowerOf2(eraseblockSizeInSectors));	
+		ASSERT(eraseblockSizeInSectors == 0 || eraseblockSizeInSectors >= blockSizeInSectors);
+		if ((eraseblockSizeInSectors != 0) &&
+			(iHiddenSectors % eraseblockSizeInSectors == 0) &&	
+			(IsPowerOf2(eraseblockSizeInSectors)) &&
+			(eraseblockSizeInSectors >= blockSizeInSectors))
+			{
+			TInt r = AdjustFirstDataSectorAlignment(eraseblockSizeInSectors);
+			ASSERT(r == KErrNone);
+			(void) r;
+			}
+		__PRINT1(_L("iReservedSectors: %d"),iReservedSectors);
+		__PRINT1(_L("FirstDataSector: %d"), FirstDataSector());
+
+		// If we've shrunk the number of clusters by so much that it's now invalid for this FAT type
+		// then we need to decrease the cluster size and try again, otherwise we're finshed.
+		if (SuggestFatType() == fatType)
+			break;
 		}
-	__PRINT1(_L("iReservedSectors: %d"),iReservedSectors);
-	__PRINT1(_L("FirstDataSector: %d"), FirstDataSector());
+	__PRINT1(_L("iSectorsPerCluster  (final): %d"),iSectorsPerCluster);
 
     return KErrNone;
 	}
@@ -183,34 +197,36 @@ TInt CFatFormatCB::FirstDataSector() const
     return iHiddenSectors + iReservedSectors + iNumberOfFats*iSectorsPerFat + rootDirSectors;
 	}
 
-void CFatFormatCB::AdjustClusterSize(TInt aRecommendedSectorsPerCluster)
+void CFatFormatCB::AdjustClusterSize(TUint aRecommendedSectorsPerCluster)
 	{
-    const TInt KMaxSecPerCluster = 64;	// 32K
+    const TUint KMaxSecPerCluster = 64;	// 32K
+
 	while (aRecommendedSectorsPerCluster > iSectorsPerCluster && iSectorsPerCluster <= (KMaxSecPerCluster/2))
 		iSectorsPerCluster<<= 1;
+
 	}
 
 // AdjustFirstDataSectorAlignment()
 // Attempts to align the first data sector on an erase block boundary by modifying the
 // number of reserved sectors.
-TInt CFatFormatCB::AdjustFirstDataSectorAlignment(TInt aEraseBlockSizeInSectors)
+TInt CFatFormatCB::AdjustFirstDataSectorAlignment(TUint aEraseBlockSizeInSectors)
 	{
 	const TBool bFat16 = Is16BitFat();
     const TBool bFat32 = Is32BitFat();
 
 	// Save these 2 values in the event of a convergence failure; this should 
 	// hopefully never happen, but we will cater for this in release mode to be safe,
-	TInt reservedSectorsSaved = iReservedSectors;
-	TInt sectorsPerFatSaved = iSectorsPerFat;
+	TUint reservedSectorsSaved = iReservedSectors;
+	TUint sectorsPerFatSaved = iSectorsPerFat;
 
-	TInt reservedSectorsOld = 0;
+	TUint reservedSectorsOld = 0;
 
 	// zero for FAT32
-	TInt rootDirSectors = (iRootDirEntries * KSizeOfFatDirEntry + (iBytesPerSector-1)) / iBytesPerSector;
-	TInt fatSectors = 0;
+	TUint rootDirSectors = (iRootDirEntries * KSizeOfFatDirEntry + (iBytesPerSector-1)) / iBytesPerSector;
+	TUint fatSectors = 0;
 
-	TInt KMaxIterations = 10;
-	TInt n;
+	TUint KMaxIterations = 10;
+	TUint n;
 	for (n=0; n<KMaxIterations && reservedSectorsOld != iReservedSectors; n++)
 		{
 		reservedSectorsOld = iReservedSectors;
@@ -225,7 +241,7 @@ TInt CFatFormatCB::AdjustFirstDataSectorAlignment(TInt aEraseBlockSizeInSectors)
 		iReservedSectors = (nBlocks * aEraseBlockSizeInSectors) - rootDirSectors - fatSectors;
 		}
 	
-	ASSERT(iReservedSectors >= (TInt) (bFat32 ? KDefFat32ResvdSec : KDefFatResvdSec));
+	ASSERT(iReservedSectors >= (bFat32 ? KDefFat32ResvdSec : KDefFatResvdSec));
 
 	if ((FirstDataSector() & (aEraseBlockSizeInSectors-1)) == 0)
 		{
@@ -302,7 +318,7 @@ void CFatFormatCB::CreateBootSectorL()
 		bootSector.SetFatSectors(iSectorsPerFat);
 		bootSector.SetRootDirEntries(iRootDirEntries);
 
-		if (iMaxDiskSectors<=(TInt)KMaxTUint16)
+		if (iMaxDiskSectors<=KMaxTUint16)
 			{
 			bootSector.SetTotalSectors(iMaxDiskSectors);
 			bootSector.SetHugeSectors(0);
@@ -556,7 +572,7 @@ void CFatFormatCB::DoFormatStepL()
     @param  aDiskSizeInSectors disk size in sectors
     @return system-wide error code
 */
-TInt CFatFormatCB::InitFormatDataForFixedSizeDiskUser(TInt aDiskSizeInSectors)
+TInt CFatFormatCB::InitFormatDataForFixedSizeDiskUser(TUint aDiskSizeInSectors)
 	{
     __PRINT1(_L("CFatFormatCB::InitFormatDataForFixedSizeDiskUser() sectors:%d"), aDiskSizeInSectors);
     Dump_TLDFormatInfo(iSpecialInfo());
@@ -579,8 +595,8 @@ TInt CFatFormatCB::InitFormatDataForFixedSizeDiskUser(TInt aDiskSizeInSectors)
         iReservedSectors = iSpecialInfo().iReservedSectors;
 
 
-    const TInt KMaxSecPerCluster    = 64; 
-	const TInt KDefaultSecPerCluster= 8;   //-- default value, if the iSpecialInfo().iSectorsPerCluster isn't specified
+    const TUint KMaxSecPerCluster    = 64; 
+	const TUint KDefaultSecPerCluster= 8;   //-- default value, if the iSpecialInfo().iSectorsPerCluster isn't specified
 
     iSectorsPerCluster = iSpecialInfo().iSectorsPerCluster;
     if(iSectorsPerCluster <= 0)
@@ -601,23 +617,23 @@ TInt CFatFormatCB::InitFormatDataForFixedSizeDiskUser(TInt aDiskSizeInSectors)
         }
 	else if (aDiskSizeInSectors < 8192) // < 4MB
         {
-        iSectorsPerCluster = Min(iSectorsPerCluster, 2);
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)2);
 		iRootDirEntries = 256;
         }
 	else if (aDiskSizeInSectors < 32768) // < 16MB
         {
-        iSectorsPerCluster = Min(iSectorsPerCluster, 4);
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)4);
 		iRootDirEntries = 512;
         }
 	else if (aDiskSizeInSectors < 1048576) // < 512MB
         {
-        iSectorsPerCluster = Min(iSectorsPerCluster, 8);
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)8);
 		iRootDirEntries = 512;
         }
     else // FAT32
 		{
         iRootDirEntries = 512;
-        iSectorsPerCluster = Min(iSectorsPerCluster, KMaxSecPerCluster);
+        iSectorsPerCluster = Min((TUint32)iSectorsPerCluster, (TUint32)KMaxSecPerCluster);
         }
 
 
@@ -807,14 +823,15 @@ TInt CFatFormatCB::BadSectorToCluster()
 		sizeofFatAndRootDir = iSectorsPerFat*iNumberOfFats + ((iRootDirEntries*KSizeOfFatDirEntry+(1<<iSectorSizeLog2)-1)>>iSectorSizeLog2);
     else
         sizeofFatAndRootDir = (iRootClusterNum-2) * iSectorsPerCluster;
-    TInt firstFreeSector = iReservedSectors + sizeofFatAndRootDir;
+
+    TUint firstFreeSector = iReservedSectors + sizeofFatAndRootDir;
 
     // Check in rare case that corrupt in critical area
     // which includes bootsector, FAT table, (and root dir if not FAT32)
     TInt i, r;
     for (i=0; i<iBadSectors.Count(); ++i)
         {
-        TInt badSector = iBadSectors[i];
+        const TUint badSector = iBadSectors[i];
         // Check in rare case that corrupt in critical area
         // which includes bootsector, FAT table, (and root dir if not FAT32)
         if (firstFreeSector > badSector)

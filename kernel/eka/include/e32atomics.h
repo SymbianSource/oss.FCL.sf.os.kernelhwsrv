@@ -26,6 +26,93 @@
 /**	@file e32atomics.h
 	@publishedAll
 	@prototype
+
+	General purpose atomic operations and utility functions
+	All functions in this header are available on both user and kernel side.
+
+Atomic operations:
+	__e32_atomic_xxx_yyy8() should be used for 8 bit atomic variables
+	__e32_atomic_xxx_yyy16() should be used for 16 bit atomic variables
+	__e32_atomic_xxx_yyy32() should be used for 32 bit atomic variables
+	__e32_atomic_xxx_yyy64() should be used for 64 bit atomic variables
+	__e32_atomic_xxx_yyy_ptr() should be used for atomic updates to pointers
+
+	xxx specifies the operation performed
+		load	read memory atomically
+		store	write memory atomically
+		swp		write to a memory location and return the original value of the
+				memory location
+		add		add a value to a memory location and return the original value
+				of the memory location
+		and		bitwise AND a value with a memory location and return the
+				original value of the memory location
+		ior		bitwise OR a value with a memory location and return the
+				original value of the memory location
+		xor		bitwise XOR a value with a memory location and return the
+				original value of the memory location
+		axo		atomic { orig_v = *p; *p = (orig_v & u) ^ v; } return orig_v;
+		cas		if the value of a memory location matches a specified expected
+				value, write a specified new value and return TRUE, otherwise
+				update the expected value with the actual value seen and return
+				FALSE.
+		tau		if the value of a memory location is >= a specified threshold,
+				considered as an unsigned integer, add a specified value to it
+				otherwise add a different specified	value to it; return the
+				original value of the memory location
+		tas		if the value of a memory location is >= a specified threshold,
+				considered as a signed integer, add a specified value to it
+				otherwise add a different specified	value to it; return the
+				original value of the memory location
+				
+	yyy specifies the memory ordering:
+		rlx = relaxed memory ordering
+				there is no guarantee on the order in which the atomic operation
+				is observed relative to preceding or following memory accesses
+		acq = acquire semantics
+				the atomic operation is guaranteed to be observed before any
+				following memory accesses
+		rel = release semantics
+				the atomic operation is guaranteed to be observed after any
+				preceding memory accesses
+		ord = fully ordered
+				the atomic operation is guaranteed to be observed after any
+				preceding memory accesses and before any following memory
+				accesses
+
+	Note that these operations should only be used on normal memory regions
+	since they are implemented in terms of LDREX/STREX and so multiple reads
+	can occur before the operation completes. Also __e32_atomic_load_yyy64()
+	can't be used on read-only memory regions since it uses LDREXD/STREXD to
+	guarantee atomicity.
+	Atomic operations may only be used on naturally aligned memory (i.e. *16()
+	operations on an even address, *32() operations on an address which is a
+	multiple of 4 and *64() operations on an address which is a multiple of 8).
+	This applies even if you have (unwisely) decided to turn off alignment
+	checking.
+
+Barrier operations:
+	Two barrier functions are provided:
+	__e32_memory_barrier() - this ensures all preceding explicit memory accesses
+				are observed before any following explicit memory accesses.
+				Equates to the ARM DMB instruction.
+	__e32_io_completion_barrier() - this ensures all preceding explicit memory
+				accesses complete before any following instructions execute.
+				For example, it ensures that writes to I/O devices have actually
+				occurred before execution continues.
+				Equates to the ARM DSB instruction.
+
+Utility functions:
+	__e32_find_ms1_32	Return bit position of most significant 1 in a 32 bit
+						argument, or -1 if the argument is zero.
+	__e32_find_ls1_32	Return bit position of least significant 1 in a 32 bit
+						argument, or -1 if the argument is zero.
+	__e32_bit_count_32	Return the count of bits set to 1 in a 32 bit argument.
+	__e32_find_ms1_64	Return bit position of most significant 1 in a 64 bit
+						argument, or -1 if the argument is zero.
+	__e32_find_ls1_64	Return bit position of least significant 1 in a 64 bit
+						argument, or -1 if the argument is zero.
+	__e32_bit_count_64	Return the count of bits set to 1 in a 64 bit argument.
+
 */
 
 

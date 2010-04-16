@@ -33,11 +33,11 @@ typedef TBuf<KLineLength> TLine;
 class CScrollWindow: public CBase
 {
 public:
-    static CScrollWindow* NewL(CConsoleBase& aConsole);
+    static CScrollWindow* NewL(CConsoleBase& aConsole, TInt aStartRow, TInt aEndRow);
     ~CScrollWindow();
 
 private:
-    CScrollWindow(CConsoleBase& aConsole);
+    CScrollWindow(CConsoleBase& aConsole, TInt aStartRow, TInt aEndRow);
     void ConstructL();
 
 public:
@@ -56,7 +56,9 @@ private:
 
     RArray<TLine> iLineArray;
     TInt iPage;
-    static const TInt KPageLength = 8;
+    const TInt iStartRow;
+    const TInt iEndRow;
+    const TInt iPageLength;
 };
 
 
@@ -100,11 +102,19 @@ private:
 
     void CursorHome() const;
 
-private:
+    void SetFooterPos(TPoint iPos) const;
+
+private:    
+    static const TInt iFooterX = 0;
+    static const TInt iFooterY = 4;
+
     RFs& iFs;
     CConsoleBase& iConsole;
 
+    TSize iScreenSize;
     TPoint iCursorPos;
+
+    TPoint iPointFooter;
 
     CScrollWindow* iScrollWindow;
     };
@@ -115,7 +125,11 @@ inline void CDisplay::CursorHome() const
     iConsole.SetPos(iCursorPos.iX, iCursorPos.iY);
     }
 
-
+inline void CDisplay::SetFooterPos(TPoint iPos) const
+    {
+    TPoint pos = iPos + iPointFooter;
+    iConsole.SetPos(pos.iX, pos.iY);
+    }
 
 class CMessageKeyProcessor : public CActive
 	{

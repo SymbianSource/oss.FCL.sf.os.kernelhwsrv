@@ -302,9 +302,9 @@ there is one.
 	TInt pos=aName.Locate(KPathDelimiter);
 	if (pos!=KErrNotFound)
 		return(KErrBadName);
-	TFileName n=aName;
-	n.Append(KPathDelimiter);
-	NameBuf().Insert(iField[EName].pos,n);
+	
+	NameBuf().Insert(iField[EName].pos,aName);
+	NameBuf().Insert(iField[EName].pos + aName.Length(),TPtrC16((const TUint16*)(&KPathDelimiter),1));
 	iField[EPath].len=(TUint8)(iField[EPath].len+len);
 	iField[EName].pos=(TUint8)(iField[EName].pos+len);
 	iField[EExt].pos=(TUint8)(len+iField[EExt].pos);

@@ -1246,6 +1246,7 @@ void ThreadGroupTest1(TInt aCount, TBool aJoin, TBool aMigrate, TBool aReJoin)
 	NThreadGroup* group = aJoin ? &TG1 : 0;
 	SNThreadGroupCreateInfo ginfo;
 	ginfo.iCpuAffinity = 0xffffffff;
+	ginfo.iDestructionDfc = 0;	//FIXME
 	TInt r = KErrNone;
 	if (group)
 		r = NKern::GroupCreate(group, ginfo);

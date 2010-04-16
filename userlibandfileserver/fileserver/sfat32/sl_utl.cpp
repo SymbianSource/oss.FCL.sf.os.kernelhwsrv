@@ -117,23 +117,16 @@ TBuf8<12> DosNameFromStdFormat(const TDesC8& aStdFormatName)
 	return result;
 	}
 
-TInt NumberOfVFatEntries(TInt aNameLength)
-//
-// Return the number of VFat entries required to describe a filename of length aNameLength
-//
+/**
+    @param  aNameLength file name length
+    @return the number of VFat entries required to describe a filename of length aNameLength
+*/
+TUint NumberOfVFatEntries(TUint aNameLength)
 	{
-	TInt numberOfEntries=0;
-	if (aNameLength%KMaxVFatEntryName)
-		aNameLength++;	//	Include a zero terminator
-//	If aNameLength is a exact multiple of KMaxVFatEntryName, don't bother
-//	with a zero terminator - it just adds an unnecessary directory entry		
-	
-	numberOfEntries=(1+(aNameLength/KMaxVFatEntryName));	
-	
-	if (aNameLength%KMaxVFatEntryName)
-		numberOfEntries++;
-	
-	return(numberOfEntries);
+    ASSERT(aNameLength);
+    //-- 1 compulsory DOS entry included
+    const TUint numberOfEntries=1+(aNameLength + KMaxVFatEntryName - 1) / KMaxVFatEntryName;	
+	return numberOfEntries;
 	}
 
 //-----------------------------------------------------------------------------

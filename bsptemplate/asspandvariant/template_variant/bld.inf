@@ -108,12 +108,29 @@ hal/hal
 //
 
 PRJ_EXTENSIONS
-start		extension		base/bootstrap
+
+#ifdef SBSV2 // If using SBSv2 with bootstrap FLM, MEMMODEL MUST begin with a capital letter
+
+start		extension		base.bootstrap bootstrap
+
+option		NAME			_template_bootrom
+option		CPU				arm
+option		MEMMODEL		Multiple
+option		SOURCES			./bootstrap/template.s
+option		EXTRA_SRC_PATH	./bootstrap
+option		INCLUDES		./config.inc
+option		E32PATH			../../../kernel/eka/../.
+
+end
+
+#else // !SBSV2
+
+start		extension		base/bootstrap bootstrap
 
 #ifdef SYMBIAN_OLD_EXPORT_LOCATION
-option INC_PATH   /epoc32/include
+option INC_PATH   $(EPOCROOT)epoc32/include
 #else
-option INC_PATH  /epoc32/include/platform
+option INC_PATH  $(EPOCROOT)epoc32/include/platform
 #endif
 
 option		NAME			_template_bootrom
@@ -126,3 +143,4 @@ option		E32PATH			$(EXTENSION_ROOT)/../../../kernel/eka/../.
 
 end
 
+#endif // !SBSV2

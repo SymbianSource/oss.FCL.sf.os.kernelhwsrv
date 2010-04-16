@@ -132,6 +132,15 @@ public:
 	IMPORT_C HBufC16 *Alloc() const;
 	IMPORT_C HBufC16 *AllocL() const;
 	IMPORT_C HBufC16 *AllocLC() const;
+
+	// surrogate-aware ones
+	IMPORT_C TInt FindCorruptSurrogate() const;
+	IMPORT_C TInt Locate2(TChar aChar) const;
+	IMPORT_C TInt LocateF2(TChar aChar) const;
+	IMPORT_C TInt LocateReverse2(TChar aChar) const;
+	IMPORT_C TInt LocateReverseF2(TChar aChar) const;
+	IMPORT_C TInt Match2(const TDesC16 &aDes) const;
+
 protected:
 	inline TDesC16() {}
 	inline TDesC16(TInt aType,TInt aLength);
@@ -335,6 +344,28 @@ public:
 	IMPORT_C void AppendFormat(TRefByValue<const TDesC16> aFmt,...);
 	IMPORT_C void AppendFormatList(const TDesC16 &aFmt,VA_LIST aList,TDes16Overflow *aOverflowHandler=NULL);
 	IMPORT_C TPtr8 Collapse();
+	
+	// surrogate-aware ones
+	IMPORT_C void Append2(TChar aChar);
+	IMPORT_C void Fill2(TChar aChar);
+	IMPORT_C void Fill2(TChar aChar, TInt aLength);
+	IMPORT_C void AppendFill2(TChar aChar, TInt aLength);
+	IMPORT_C void Justify2(const TDesC16 &aDes, TInt aWidth, TAlign anAlignment, TChar aFill);
+	IMPORT_C void AppendJustify2(const TDesC16 &aDes, TInt aWidth, TAlign anAlignment, TChar aFill);
+	IMPORT_C void AppendJustify2(const TDesC16 &aDes, TInt aLength, TInt aWidth, TAlign anAlignment, TChar aFill);
+	IMPORT_C void AppendJustify2(const TUint16 *aString, TInt aWidth, TAlign anAlignment, TChar aFill);
+	IMPORT_C void AppendJustify2(const TUint16 *aString, TInt aLength, TInt aWidth, TAlign anAlignment, TChar aFill);
+	IMPORT_C void Fold2();
+	IMPORT_C void Collate2();
+	IMPORT_C void LowerCase2();
+	IMPORT_C void UpperCase2();
+	IMPORT_C void Capitalize2();
+	IMPORT_C void CopyF2(const TDesC16 &aDes);
+	IMPORT_C void CopyC2(const TDesC16 &aDes);
+	IMPORT_C void CopyLC2(const TDesC16 &aDes);
+	IMPORT_C void CopyUC2(const TDesC16 &aDes);
+	IMPORT_C void CopyCP2(const TDesC16 &aDes);
+	
 protected:
 	inline TDes16() {}
 	inline TDes16(TInt aType,TInt aLength,TInt aMaxLength);

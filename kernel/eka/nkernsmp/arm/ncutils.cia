@@ -190,26 +190,28 @@ __NAKED__ void initialiseState(TInt /*aCpu*/, TSubScheduler* /*aSS*/)
 	{
 	SET_RWNO_TID(,r1);
 	__ASM_CLI_MODE(MODE_ABT);
-	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_AbtStackTop));
+	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iAbtStackTop));
 	asm("mvn	r3, #0 ");
 	asm("str	r3, [sp, #%a0]" : : "i" _FOFF(SFullArmRegSet, iExcCode));
-	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqNestCount));
+	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqNestCount));
 	__ASM_CLI_MODE(MODE_UND);
-	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_UndStackTop));
+	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iUndStackTop));
 	__ASM_CLI_MODE(MODE_FIQ);
-	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_FiqStackTop));
+	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iFiqStackTop));
 	__ASM_CLI_MODE(MODE_IRQ);
-	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_IrqStackTop));
+	asm("str	sp, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iIrqStackTop));
 	__ASM_CLI_MODE(MODE_SVC);
 	asm("ldr	r2, __TheScheduler ");
-	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, i_ScuAddr));
-	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_ScuAddr));
-	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, i_GicDistAddr));
-	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));
-	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, i_GicCpuIfcAddr));
-	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicCpuIfcAddr));
-	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, i_LocalTimerAddr));
-	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, i_LocalTimerAddr));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, iSX.iScuAddr));
+	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iScuAddr));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, iSX.iGicDistAddr));
+	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, iSX.iGicCpuIfcAddr));
+	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicCpuIfcAddr));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, iSX.iLocalTimerAddr));
+	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iLocalTimerAddr));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, iSX.iGlobalTimerAddr));
+	asm("str	r3, [r1, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGlobalTimerAddr));
 	asm("mov	r3, #0 ");
 	SET_RWRO_TID(,r3);
 	SET_RWRW_TID(,r3);
@@ -238,7 +240,7 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	GET_RWNO_TID(,r0);
 	asm("cmp	r0, #0 ");
 	asm("ldreq	r0, __SS0 ");
-	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_Regs));
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iRegs));
 	asm("cmp	r0, #0 ");
 	asm("ldreq	r0, __DefaultRegs ");
 	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(SFullArmRegSet, iExcCode));
@@ -275,8 +277,8 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	asm("streq	r2, [r1] ");
 	asm("beq	skip_other_cores ");		// If subscheduler not yet set, don't bother with other cores
 	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iCpuMask));
-	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicCpuIfcAddr));
-//	asm("ldr	r4, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,i_Regs));
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicCpuIfcAddr));
+//	asm("ldr	r4, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iRegs));
 	asm("bic	sp, sp, #4 ");				// align stack to multiple of 8
 
 	__DATA_MEMORY_BARRIER_Z__(r6);
@@ -293,7 +295,7 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	// we weren't first to crash, so wait here for a crash IPI
 	// disable all interrupts except for CRASH_IPI
 	GET_RWNO_TID(,r0);
-	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicCpuIfcAddr));
+	asm("ldr	r0, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicCpuIfcAddr));
 	asm("mov	r1, #0 ");
 	asm("1: ");
 	asm("add	r1, r1, #1 ");
@@ -312,9 +314,9 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	asm("first_to_crash: ");
 	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iScheduler));
 	asm("ldr	r7, __CrashStateOut ");
-	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, iActiveCpus1));
+	asm("ldr	r3, [r2, #%a0]" : : "i" _FOFF(TScheduler, iIpiAcceptCpus));
 	asm("str	r3, [r7] ");			// mask of CPUs pending
-	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, i_GicDistAddr));
+	asm("ldr	r5, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));
 	asm("ldr	r1, __CrashIPIWord ");
 	__DATA_SYNC_BARRIER_Z__(r6);
 	asm("str	r1, [r5, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// send CRASH_IPI to all other CPUs
@@ -1034,6 +1036,51 @@ __NAKED__ void Arm::RestoreState(SFullArmRegSet&)
 __NAKED__ EXPORT_C TBool BTrace::OutFilteredPcFormatBig(TUint32 a0, TUint32 aModuleUid, TUint32 aPc, TUint16 aFormatId, const TAny* aData, TInt aDataSize)
 	{
 	asm("mov	r0, #0"); //Kernel side not implemented yet
+	}
+
+#ifdef 	__CPU_ARM_HAS_WFE_SEV
+
+extern "C" __NAKED__ void __arm_wfe()
+	{
+	ARM_WFE;
+	__JUMP(,	lr);
+	}
+
+extern "C" __NAKED__ void __arm_sev()
+	{
+	ARM_SEV;
+	__JUMP(,	lr);
+	}
+
+#endif
+
+// Called by a CPU which has completed its detach sequence and should now be powered off
+// Doesn't return - just waits for power to be removed
+// CPU will come back up via the reset vector when it next wakes up.
+// NOTE: On entry the CPU caches are disabled and the CPU does not participate in coherency
+// SO BE VERY CAREFUL
+extern "C" __NAKED__ void DetachComplete()
+	{
+	GET_RWNO_TID(,r0);
+	asm("ldr	r1, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iUncached));
+	asm("ldr	r2, [r1, #%a0]" : : "i" _FOFF(SPerCpuUncached, iDetachCompleteCpus));
+	asm("ldr	r3, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));
+	__DATA_SYNC_BARRIER_Z__(r12);		// need DSB before sending any IPI
+	asm("mov	r2, r2, lsl #16 ");
+	asm("orr	r2, r2, #%a0" : : "i" ((TInt)INDIRECT_POWERDOWN_IPI_VECTOR));
+	asm("str	r2, [r3, #%a0]" : : "i" _FOFF(GicDistributor, iSoftIrq));	// trigger IPIs
+
+	asm("wait_forever: ");
+	__DATA_SYNC_BARRIER__(r12);
+	ARM_WFE;
+	__DATA_SYNC_BARRIER__(r12);
+	asm("ldr	r2, [r1, #%a0]" : : "i" _FOFF(SPerCpuUncached, iPowerOnReq));
+	__DATA_SYNC_BARRIER__(r12);
+	asm("cmp	r2, #0xF000000F ");		// for 'fake' power down
+	asm("bne	wait_forever ");
+
+	asm("0:		");
+	__JUMP(,lr);
 	}
 
 

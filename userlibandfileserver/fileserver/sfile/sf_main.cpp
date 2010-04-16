@@ -474,7 +474,9 @@ void commonInitialize()
 	KernHeapAllocFailCount=-1;
 #endif
 	
-	TInt r= RequestAllocator::iCacheLock.CreateLocal();
+	TInt r = RequestAllocator::Initialise();
+	__ASSERT_ALWAYS(r==KErrNone,Fault(EFsCacheLockFailure));
+	r = OperationAllocator::Initialise();
 	__ASSERT_ALWAYS(r==KErrNone,Fault(EFsCacheLockFailure));
 	
 	// initialise the TParse pool lock object
@@ -492,7 +494,6 @@ void commonInitialize()
 	r=FsThreadManager::CreateDisconnectThread();
 	__ASSERT_ALWAYS(r==KErrNone,Fault(EMainDisconnectThread));
 
-	RequestAllocator::Initialise();
 
 	//
 	// Install a trap handler

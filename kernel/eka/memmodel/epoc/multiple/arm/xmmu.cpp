@@ -365,14 +365,18 @@ TInt ArmMmu::LinearToPhysical(TLinAddr aLinAddr, TInt aSize, TPhysAddr& aPhysica
 		}
 	}
 
+
 TInt ArmMmu::PreparePagesForDMA(TLinAddr aLinAddr, TInt aSize, TInt aOsAsid, TPhysAddr* aPhysicalPageList)
 //Returns the list of physical pages belonging to the specified memory space.
 //Checks these pages belong to a chunk marked as being trusted. 
-//Locks these pages so they can not be moved by e.g. ram defragmenation.
+//Locks these pages so they can not be moved by e.g. ram defragmentation.
 	{
 	SPageInfo* pi = NULL;
 	DChunk* chunk = NULL;
 	TInt err = KErrNone;
+
+	__NK_ASSERT_DEBUG(MM::MaxPagesInOneGo == 32);	// Needs to be a power of 2.
+	TUint flashMask = MM::MaxPagesInOneGo - 1;
 	
 	__KTRACE_OPT(KMMU2,Kern::Printf("ArmMmu::PreparePagesForDMA %08x+%08x, asid=%d",aLinAddr,aSize,aOsAsid));
 
@@ -388,6 +392,10 @@ TInt ArmMmu::PreparePagesForDMA(TLinAddr aLinAddr, TInt aSize, TInt aOsAsid, TPh
 	MmuBase::Wait(); 	// RamAlloc Mutex for accessing page/directory tables.
 	NKern::LockSystem();// SystemlLock for accessing SPageInfo objects.
 
+	// Get the page directory entry that maps aLinAddr.
+	// If the address is in the global region check whether this asid maps
+	// global pdes (i.e. the LSB of iAsidInfo is set), if not find the pde from 
+	// the kernel's initial page directory.
 	TPde* pdePtr = (pdeIndex<(iLocalPdSize>>2) || (iAsidInfo[aOsAsid]&1)) ? PageDirectory(aOsAsid) : ::InitPageDirectory;
 	pdePtr += pdeIndex;//This points to the first pde 
 
@@ -399,41 +407,66 @@ TInt ArmMmu::PreparePagesForDMA(TLinAddr aLinAddr, TInt aSize, TInt aOsAsid, TPh
 		
 		pagesLeft -= pagesLeftInChunk;
 
-		TPte* pt = SafePageTableFromPde(*pdePtr++);
-		if(!pt) { err = KErrNotFound; goto fail; }// Cannot get page table.
+		TPte* pPte = SafePageTableFromPde(*pdePtr++);
+		if(!pPte) 
+			{// Cannot get page table. 
+			err = KErrNotFound; 
+			goto fail; 
+			}
 		
-		pt += pageIndex;
+		pPte += pageIndex;
 
 		for(;pagesLeftInChunk--;)
-			{
-			TPhysAddr phys = (*pt++ & KPteSmallPageAddrMask);
+			{// This pte must be of type ArmV6 small page, the pde type will 
+			// have already been checked by SafePageTableFromPde().
+			__NK_ASSERT_DEBUG((*pPte & KArmV6PteTypeMask) >= KArmV6PteSmallPage);
+			TPhysAddr phys = (*pPte++ & KPteSmallPageAddrMask);
 			pi =  SPageInfo::SafeFromPhysAddr(phys);
-			if(!pi)	{ err = KErrNotFound; goto fail; }// Invalid address
+			if(!pi)	
+				{// Invalid address
+				err = KErrNotFound; 
+				goto fail; 
+				}
 			
 			__KTRACE_OPT(KMMU2,Kern::Printf("PageInfo: PA:%x T:%x S:%x O:%x C:%x",phys, pi->Type(), pi->State(), pi->Owner(), pi->LockCount()));
-			if (chunk==NULL)
+			if (chunk == NULL)
 				{//This is the first page. Check 'trusted' bit.
 				if (pi->Type()!= SPageInfo::EChunk)
-					{ err = KErrAccessDenied; goto fail; }// The first page do not belong to chunk.	
+					{// The first page does not belong to a chunk.
+					err = KErrAccessDenied;
+					goto fail;
+					}
 
 				chunk = (DChunk*)pi->Owner();
-				if ( (chunk == NULL) || ((chunk->iAttributes & DChunk::ETrustedChunk)== 0) )
-					{ err = KErrAccessDenied; goto fail; }// Not a trusted chunk
+				if ((chunk == NULL) || ((chunk->iAttributes & DChunk::ETrustedChunk) == 0))
+					{// Not a trusted chunk
+					err = KErrAccessDenied;
+					goto fail;
+					}
 				}
 			pi->Lock();
 
 			*pageList++ = phys;
-			if ( (++pagesInList&127) == 0) //release system lock temporarily on every 512K
+
+			if(!(++pagesInList & flashMask))
+				{
 				NKern::FlashSystem();
+				}
 			}
 		pageIndex = 0;
 		}
 
-	if (pi->Type()!= SPageInfo::EChunk)
-		{ err = KErrAccessDenied; goto fail; }// The last page do not belong to chunk.	
+	if (pi->Type() != SPageInfo::EChunk)
+		{// The last page does not belong to a chunk.
+		err = KErrAccessDenied;
+		goto fail;
+		}
 
 	if (chunk && (chunk != (DChunk*)pi->Owner()))
-		{ err = KErrArgument; goto fail; }//The first & the last page do not belong to the same chunk.
+		{//The first & the last page do not belong to the same chunk.
+		err = KErrArgument;
+		goto fail;
+		}
 
 	NKern::UnlockSystem();
 	MmuBase::Signal();
@@ -447,6 +480,7 @@ fail:
 	return err;
 	}
 
+
 TInt ArmMmu::ReleasePagesFromDMA(TPhysAddr* aPhysicalPageList, TInt aPageCount)
 // Unlocks physical pages.
 // @param aPhysicalPageList - points to the list of physical pages that should be released.
@@ -455,6 +489,7 @@ TInt ArmMmu::ReleasePagesFromDMA(TPhysAddr* aPhysicalPageList, TInt aPageCount)
 	NKern::LockSystem();
 	__KTRACE_OPT(KMMU2,Kern::Printf("ArmMmu::ReleasePagesFromDMA count:%d",aPageCount));
 
+	TUint flashMask = MM::MaxPagesInOneGo - 1;
 	while (aPageCount--)
 		{
 		SPageInfo* pi =  SPageInfo::SafeFromPhysAddr(*aPhysicalPageList++);
@@ -465,10 +500,16 @@ TInt ArmMmu::ReleasePagesFromDMA(TPhysAddr* aPhysicalPageList, TInt aPageCount)
 			}
 		__KTRACE_OPT(KMMU2,Kern::Printf("PageInfo: T:%x S:%x O:%x C:%x",pi->Type(), pi->State(), pi->Owner(), pi->LockCount()));
 		pi->Unlock();
+
+		if(!(aPageCount & flashMask))
+			{
+			NKern::FlashSystem();
+			}
 		}
 	NKern::UnlockSystem();
 	return KErrNone;
 	}
+
 
 TPhysAddr ArmMmu::LinearToPhysical(TLinAddr aLinAddr, TInt aOsAsid)
 //

@@ -49,6 +49,11 @@ void M::Init3()
 	m.Init3();
 	}
 
+void M::Init4()
+    {
+    // Fourth phase MMU initialisation - Not required on this memory model.
+    }
+
 TInt M::InitSvHeapChunk(DChunk* aChunk, TInt aSize)
 	{
 	TInt r;

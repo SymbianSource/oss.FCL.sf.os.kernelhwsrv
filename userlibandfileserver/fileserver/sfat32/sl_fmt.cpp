@@ -51,24 +51,24 @@ CFatFormatCB::~CFatFormatCB()
 	iBadClusters.Close();
 	}
 
-TInt CFatFormatCB::MaxFat16Sectors() const
-//
-// Calculate the size of a 16 bit FAT
-//
+/**
+    Calculate the size of a 16 bit FAT
+*/
+TUint CFatFormatCB::MaxFat16Sectors() const
 	{
-	
-	TInt fatSizeInBytes=(2*iMaxDiskSectors)/iSectorsPerCluster+(iBytesPerSector-1);
+	const TUint32 fatSizeInBytes=(2*iMaxDiskSectors)/iSectorsPerCluster+(iBytesPerSector-1);
 	return(fatSizeInBytes/iBytesPerSector);
 	}
 
-TInt CFatFormatCB::MaxFat12Sectors() const
-//
-// Calculate the size of a 12 bit FAT
-//
+
+/**
+    Calculate the size of a 12 bit FAT
+*/
+TUint CFatFormatCB::MaxFat12Sectors() const
 	{
+	const TUint32 maxDiskClusters=iMaxDiskSectors/iSectorsPerCluster;
+	const TUint32 fatSizeInBytes=maxDiskClusters+(maxDiskClusters>>1)+(iBytesPerSector-1);
 	
-	TInt maxDiskClusters=iMaxDiskSectors/iSectorsPerCluster;
-	TInt fatSizeInBytes=maxDiskClusters+(maxDiskClusters>>1)+(iBytesPerSector-1);
 	return(fatSizeInBytes/iBytesPerSector);
 	}
 
@@ -205,15 +205,17 @@ void CFatFormatCB::InitializeFormatDataL()
     @param  aDiskSizeInSectors volume size in sectors
     @return standard error code
 */
-TInt  CFatFormatCB::InitFormatDataForVariableSizeDisk(TInt aDiskSizeInSectors)
+TInt  CFatFormatCB::InitFormatDataForVariableSizeDisk(TUint aDiskSizeInSectors)
 	{
 	iNumberOfFats=2; // 1 FAT 1 Indirection table (FIT)
 	iReservedSectors=1;
 	iRootDirEntries=2*(4*KDefaultSectorSize)/sizeof(SFatDirEntry);
-	TInt minSectorsPerCluster=(aDiskSizeInSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
+	TUint minSectorsPerCluster=(aDiskSizeInSectors+KMaxFAT16Entries-1)/KMaxFAT16Entries;
 	iSectorsPerCluster=1;
+
 	while (minSectorsPerCluster>iSectorsPerCluster)
 		iSectorsPerCluster<<=1;
+
 	__PRINT1(_L("iSectorsPerCluster = %d"),iSectorsPerCluster);
 	iSectorsPerFat=MaxFat16Sectors();
 	__PRINT1(_L("iSectorsPerFat = %d"),iSectorsPerFat);
@@ -277,7 +279,10 @@ void CFatFormatCB::TranslateL()
     TPtr8 readBufPtr(readBuf, size);
     RArray<TInt> newArray;
     TInt r = DoTranslate(readBufPtr, newArray);
+    
     delete[] readBuf;
+    readBuf = NULL;
+
     newArray.Close();
     User::LeaveIfError(r);
     }

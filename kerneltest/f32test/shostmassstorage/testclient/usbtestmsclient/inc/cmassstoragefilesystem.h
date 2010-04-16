@@ -35,7 +35,6 @@ public:
     };
 
 
-
 /**
 Mass Storage Filesystem class.
 Only supports creating a new mount. Calling NewFileL, NewDirL and NewFormatL
@@ -82,8 +81,6 @@ private:
 	CUsbMassStorageController* iMassStorageController;
 	TBool iRunning;
     TLunToDriveMap iDriveMap;
-
-
 	};
 
 #endif // __CMASSSTORAGEFILESYSTEM_H__

@@ -105,6 +105,7 @@ void GetParseRecordData(RBTrace& aTrace, const TTestLogCtrl* apControlStruct = N
 	{
     TUint8*         record;
     TTraceLayout    traceLayout;
+	TInt    		nRecords = 0;
 	
 	for(TInt i=0; ;++i)
 		{
@@ -134,7 +135,6 @@ void GetParseRecordData(RBTrace& aTrace, const TTestLogCtrl* apControlStruct = N
 		
         TUint8* end = record+dataSize;
         TUint8* currPos = record;
-        TInt    nRecords = 0;
 		TUint nBytes = 0;
 		
         //-- parser the record, print out fields and optionally check the correspondence to the fields of the control structure.
@@ -168,16 +168,17 @@ void GetParseRecordData(RBTrace& aTrace, const TTestLogCtrl* apControlStruct = N
 				}
             
 			}
-		
-        //-- check number of trace records obtained
-        if(apControlStruct)
-			{
-            test(nRecords == apControlStruct->iLogsNum);
-			}
-		
-        //-- release data buffer.
-        aTrace.DataUsed();
+				
+		//-- release data buffer.
+		aTrace.DataUsed();
 		}
+		
+	//-- check number of trace records obtained
+	if(apControlStruct)
+		{
+		test(nRecords == apControlStruct->iLogsNum);
+		}
+
 	}
 
 

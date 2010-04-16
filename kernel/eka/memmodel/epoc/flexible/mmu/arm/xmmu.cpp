@@ -503,8 +503,54 @@ TPte Mmu::BlankPte(TMemoryAttributes aAttributes, TUint aPteType)
 		case EMemAttNormalCached:
 			texcb = KArmV6MemAttWBWAWBWA;
 			break;
-		default:
-			__NK_ASSERT_ALWAYS(0);		// undefined memory type
+		case EMemAttKernelInternal4:
+		case EMemAttPlatformSpecific5:
+        case EMemAttPlatformSpecific6:
+        case EMemAttPlatformSpecific7:
+            {
+			TUint32 cachingAttr = InternalCache::TypeToCachingAttributes((TMemoryType)(attr&EMemoryAttributeTypeMask));
+		    switch (cachingAttr)
+		        {
+		        case EMapAttrFullyBlocking:
+		            texcb = KArmV6MemAttSO;
+		            break;
+		        case EMapAttrBufferedNC:
+	                texcb = KArmV6MemAttSD;
+		            break;
+		        default:
+		            {
+		            //attr describes normal mapping
+		            //set texcb to b1BBAA where AA is internal and BB is external caching
+		            // TYPE       AA/BB
+		            // uncached   0
+                    // WBWA       1
+		            // WTRA       2
+		            // WBRA       3
+		            texcb = 0x10;
+                    switch (cachingAttr&EMapAttrL1CacheMask)
+                        {
+                        case EMapAttrL1Uncached:  break;
+                        #if defined(__CPU_ARM1136_ERRATUM_399234_FIXED)
+                        case EMapAttrCachedWTRA:  texcb |= 2;break; // It is OK to use WT memory
+                        #else
+                        case EMapAttrCachedWTRA:;break; // Erratum not fixed. Use uncached memory instead
+                        #endif
+                        case EMapAttrCachedWBRA:  texcb |= 3; break;
+                        default: texcb |= 1;//fully cached (WBWA)
+                        }
+                    switch (cachingAttr&EMapAttrL2CacheMask)
+                        {
+                        case EMapAttrL2Uncached:  break;
+                        case EMapAttrL2CachedWTRA:  texcb |= 8;break;
+                        case EMapAttrL2CachedWBRA:  texcb |= 0xc; break;
+                        default: texcb |= 4;//fully cached (WBWA)
+                        }
+		            }
+		        }
+            }
+            break;
+        default:
+		    __NK_ASSERT_ALWAYS(0);		// undefined memory type
 			texcb = KArmV6MemAttSO;
 			break;
 			}
@@ -882,13 +928,11 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 	// Now we have the os asid check access to kernel memory.
 	if(aAddr >= KUserMemoryLimit && osAsid != (TUint)KKernelOsAsid)
 		{
-		NKern::ThreadEnterCS();
-		MmuLock::Unlock();
 		if (!iAliasLinAddr)
 			{// Close the new reference as RemoveAlias won't do as iAliasLinAddr is not set.
 			aProcess->AsyncCloseOsAsid();	// Asynchronous close as this method should be quick.
 			}
-		NKern::ThreadLeaveCS();
+		MmuLock::Unlock();
 		return KErrBadDescriptor; // prevent access to supervisor only memory
 		}
 
@@ -898,10 +942,8 @@ TInt DMemModelThread::Alias(TLinAddr aAddr, DMemModelProcess* aProcess, TInt aSi
 		// address is in global section, don't bother aliasing it...
 		if (!iAliasLinAddr)
 			{// Close the new reference as not required.
-			NKern::ThreadEnterCS();
-			MmuLock::Unlock();
 			aProcess->AsyncCloseOsAsid(); // Asynchronous close as this method should be quick.
-			NKern::ThreadLeaveCS();
+			MmuLock::Unlock();
 			}
 		else
 			{// Remove the existing alias as it is not required.
@@ -1015,15 +1057,9 @@ void DMemModelThread::DoRemoveAlias(TLinAddr aAddr)
 	iCpuRestoreCookie = -1;
 #endif
 
-	// Must close the os asid while in critical section to prevent it being 
-	// leaked.  However, we can't hold the mmu lock so we have to enter an 
-	// explict crtical section. It is ok to release the mmu lock as the 
-	// iAliasLinAddr and iAliasProcess members are only ever updated by the 
-	// current thread.
-	NKern::ThreadEnterCS();
-	MmuLock::Unlock();
+	// Must close the os asid while holding MmuLock so we are in an implicit critical section.
 	iAliasProcess->AsyncCloseOsAsid(); // Asynchronous close as this method should be quick.
-	NKern::ThreadLeaveCS();
+	MmuLock::Unlock();
 	}
 
 

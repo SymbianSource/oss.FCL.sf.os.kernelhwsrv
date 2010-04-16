@@ -18,6 +18,9 @@
 #ifdef EPOC32
 
 #include <variant.mmh>
+#ifdef MEMORY_MODEL_OPTIONS
+#include <memmodel.mmh>
+#endif
 
 #define INCLUDE_EKERN_LIB
 #include "kern_int.mmh"
@@ -29,6 +32,13 @@ USERINCLUDE		../include/drivers
 
 sourcepath			../kernel
 source				smonitor.cpp
+
+#ifdef SMP
+sourcepath			../nkernsmp
+#else
+sourcepath			../nkern
+#endif
+source				nk_mon.cpp
 
 #if defined(MARM)
 #ifdef SMP
@@ -108,7 +118,11 @@ epocallowdlldata
 noexportlibrary
 linkas				exmoncommon.dll
 
+#ifdef MEMORY_MODEL_OPTIONS
+target				MemoryModelTarget(exmoncommon,dll)
+#else
 target				VariantTarget(exmoncommon,dll)
+#endif
 
 deffile				exmoncommon.def
 

@@ -37,7 +37,7 @@ extern "C" {
 /** @internalComponent */
 IMPORT_C void NKFault(const char* file, TInt line);
 /** @internalComponent */
-void NKIdle(TInt aStage);
+void NKIdle(TUint32 aStage);
 }
 
 /**
@@ -144,6 +144,7 @@ public:
 		EOrderThread			=0x91u,		// Thread locks
 		EOrderFastMutex			=0x98u,		// Fast mutex locks
 		EOrderEventHandlerTied	=0x9Cu,		// Event handler tied lock
+		EOrderEnumerate			=0x9Du,		// Thread/Group enumeration lists
 		EOrderGenericPreHigh0	=0x9Eu,		// Device driver spin locks, high range
 		EOrderGenericPreHigh1	=0x9Fu,		// Device driver spin locks, high range
 
@@ -810,13 +811,15 @@ struct SSlowExecTable
 	};
 
 // Thread iAttributes Constants
-const TUint8 KThreadAttImplicitSystemLock=1;	/**< @internalComponent */
-const TUint8 KThreadAttAddressSpace=2;			/**< @internalComponent */
-const TUint8 KThreadAttLoggable=4;				/**< @internalComponent */
+const TUint8 KThreadAttImplicitSystemLock=1;		/**< @internalComponent */
+const TUint8 KThreadAttAddressSpace=2;				/**< @internalComponent */
+const TUint8 KThreadAttLoggable=4;					/**< @internalComponent */
 
 
 // Thread CPU
-const TUint32 KCpuAffinityAny=0xffffffffu;		/**< @internalComponent */
+const TUint32 KCpuAffinityAny=0xffffffffu;			/**< @internalComponent */
+const TUint32 KCpuAffinityPref=0x40000000u;			/**< @internalComponent */
+const TUint32 KCpuAffinityTransient=0x20000000u;	/**< @internalComponent */
 
 /** Information needed for creating a nanothread.
 
@@ -849,6 +852,7 @@ struct SNThreadCreateInfo
 struct SNThreadGroupCreateInfo
 	{
 	TUint32 iCpuAffinity;
+	TDfc* iDestructionDfc;
 	};
 
 /**	Constant for use with NKern:: functions which release a fast mutex as well
@@ -859,27 +863,37 @@ struct SNThreadGroupCreateInfo
 */
 #define	SYSTEM_LOCK		(NFastMutex*)0
 
-
 /** Idle handler function
 	Pointer to a function which is called whenever a CPU goes idle
 
 	@param	aPtr	The iPtr stored in the SCpuIdleHandler structure
-	@param	aStage	If positive, the number of processors still active
-					If zero, indicates all processors are now idle
-					-1 indicates that postamble processing is required after waking up
+	@param	aStage	Bits 0-7 give a bitmask of CPUs now active, i.e. 0 means all processors now idle
+					Bit 31 set indicates that the current core can now be powered down
+					Bit 30 set indicates that other cores still remain to be retired
+					Bit 29 set indicates that postamble processing is required after waking up
+	@param	aU		Points to some per-CPU uncached memory used for handshaking during power down/power up
 
-	@publishedPartner
-	@prototype
+	@internalComponent
 */
-typedef void (*TCpuIdleHandlerFn)(TAny* aPtr, TInt aStage);
+typedef void (*TCpuIdleHandlerFn)(TAny* aPtr, TUint32 aStage, volatile TAny* aU);
 
 /** Idle handler structure
 
-	@publishedPartner
-	@prototype
+	@internalComponent
 */
 struct SCpuIdleHandler
 	{
+	/**
+	Defined flag bits in aStage parameter
+	*/
+	enum
+		{
+		EActiveCpuMask=0xFFu,
+		EPostamble=1u<<29,		// postamble needed
+		EMore=1u<<30,			// more cores still to be retired
+		ERetire=1u<<31,			// this core can now be retired
+		};
+
 	TCpuIdleHandlerFn	iHandler;
 	TAny*				iPtr;
 	volatile TBool		iPostambleRequired;
@@ -988,6 +1002,7 @@ public:
 	IMPORT_C static void ThreadRelease(NThread* aThread, TInt aReturnValue, NFastMutex* aMutex);
 	IMPORT_C static void ThreadSetPriority(NThread* aThread, TInt aPriority);
 	IMPORT_C static void ThreadSetPriority(NThread* aThread, TInt aPriority, NFastMutex* aMutex);
+	static void ThreadSetNominalPriority(NThread* aThread, TInt aPriority);
 	IMPORT_C static void ThreadRequestSignal(NThread* aThread);
 	IMPORT_C static void ThreadRequestSignal(NThread* aThread, NFastMutex* aMutex);
 	IMPORT_C static void ThreadRequestSignal(NThread* aThread, TInt aCount);
@@ -1013,6 +1028,7 @@ public:
 	static TInt QueueUserModeCallback(NThreadBase* aThread, TUserModeCallback* aCallback);	/**< @internalComponent */
 	static void MoveUserModeCallbacks(NThreadBase* aSrcThread, NThreadBase* aDestThread);	/**< @internalComponent */
 	static void CancelUserModeCallbacks();												/**< @internalComponent */
+	static void JumpTo(TInt aCpu);														/**< @internalComponent */
 
 	// Thread Groups
 	IMPORT_C static TInt GroupCreate(NThreadGroup* aGroup, SNThreadGroupCreateInfo& aInfo);
@@ -1104,6 +1120,7 @@ public:
 	IMPORT_C static NThread* CurrentThread();
 	IMPORT_C static TInt CurrentCpu();										/**< @internalComponent */
 	IMPORT_C static TInt NumberOfCpus();									/**< @internalComponent */
+	IMPORT_C static void SetNumberOfActiveCpus(TInt aNumber);
 	IMPORT_C static void LockSystem();
 	IMPORT_C static void UnlockSystem();
 	IMPORT_C static TBool FlashSystem();
@@ -1130,7 +1147,8 @@ public:
 	static TInt BootAP(volatile SAPBootInfo* aInfo);
 	IMPORT_C static TBool KernelLocked(TInt aCount=0);						/**< @internalTechnology */
 	IMPORT_C static NFastMutex* HeldFastMutex();							/**< @internalTechnology */
-	static void Idle();	
+	static void Idle();
+	static void DoIdle();
 	IMPORT_C static SCpuIdleHandler* CpuIdleHandler();						/**< @internalTechnology */
 	static void NotifyCrash(const TAny* a0, TInt a1);						/**< @internalTechnology */
 	IMPORT_C static TBool Crashed();
@@ -1231,6 +1249,28 @@ public:
 public:
 	volatile TInt iFlag;
 	};
+
+
+/**
+@internalComponent
+*/
+class TCoreCycler
+	{
+public:
+	TCoreCycler();
+	TInt Next();
+private:
+	void Init();
+private:
+	TUint32			iCores;
+	TUint32			iRemain;
+	TInt			iInitialCpu;
+	TInt			iCurrentCpu;
+	NThreadGroup*	iG;
+	TInt			iFrz;
+	};
+
+
 
 #include <ncern.h>
 #endif

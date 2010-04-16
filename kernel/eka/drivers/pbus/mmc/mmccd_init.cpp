@@ -296,7 +296,7 @@ By default, All MMC derivatives register at least an MMC driver
 				break;
 			}
 
-		if (mi.iFlags & TMMCMachineInfo::ESupportsDMA)
+		if ((mi.iFlags & TMMCMachineInfo::ESupportsDMA) == TMMCMachineInfo::ESupportsDMA)
 			{
 			err = LocDrv::RegisterDmaDevice(pMedia,
 											KMMCardHighCapBlockSize, 

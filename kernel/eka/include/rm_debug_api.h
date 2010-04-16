@@ -1638,7 +1638,7 @@ system wide error codes
 inline TInt RSecuritySvrSession::Connect(const TVersion aVersion)
 	{
 	// default message slots for the server
-	const TUint KDefaultMessageSlots = 4;
+	const TUint KDefaultMessageSlots = 32;
 	TInt retry=2;
 	for (;;)
 		{

@@ -1830,6 +1830,8 @@ protected:
 	#define EFSRV_IMPORT_C IMPORT_C
 #endif
 	
+// forward declarations from e32ldr_private.h
+class RFileClamp;
 
 class RFs : public RSessionBase
 /**
@@ -2167,7 +2169,6 @@ private:
     }; 
 
 __ASSERT_COMPILE(_FOFF(TVolFormatParam, iUId) == 0);
-__ASSERT_COMPILE(sizeof(TVolFormatParam) != sizeof(TLDFormatInfo));
 
 
 /** package buffer for the objects of class TVolFormatParamBuf */
@@ -3028,7 +3029,7 @@ friend void RenameInvalidEntryL(RFs& aFs,TParse& aSrcFile);
 
 
 
-class TFindFile
+
 /**
 @publishedAll
 @released
@@ -3055,6 +3056,7 @@ possible to specify a combination of drive attributes(aMask) that the drives to
 be searched must match.  
  
 */
+class TFindFile
 	{
 public:
 	IMPORT_C TFindFile(RFs& aFs);
@@ -3073,6 +3075,7 @@ private:
 	TInt DoFindInDir();
 	TInt DoFindNextInPath();
 	TInt DoFindNextInDriveList();
+    TInt CallSafe(TInt aResult);
 private:
 	RFs* const iFs;
 	TParse iFile;

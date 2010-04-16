@@ -127,6 +127,7 @@ CActiveControl::CActiveControl(CConsoleBase* aConsole, TDes * aConfigFile, TDes 
 	: CActive(EPriorityNormal),
 	  iConsole(aConsole),
 	  iSoftwareConnect(EFalse),
+	  iSupportResourceAllocationV2(EFalse),
 	  iHighSpeed(EFalse),
 	  iConfigFileName(aConfigFile),
 	  iScriptFileName(aScriptFile),
@@ -219,7 +220,12 @@ void CActiveControl::ConstructL()
 				}
 
 			test_NotNull(ifPtr);
-
+			
+			if (iSupportResourceAllocationV2)
+				{
+				PopulateInterfaceResourceAllocation(ifPtr, portNumber);
+				}
+				
 			IFConfigPtr defaultIfPtr = ifPtr;
 			SetupInterface(&ifPtr,portNumber);
 					
@@ -228,15 +234,17 @@ void CActiveControl::ConstructL()
 			test_KErrNone(iPort[portNumber].FinalizeInterface(tChunk));
 			#endif
 
-			// 	allocate endpoint DMA and double buffering for all endpoints on default interface
-			for (TUint8 i = 1; i <= defaultIfPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+			if (!iSupportResourceAllocationV2)
 				{
-				defaultIfPtr->iEpDMA[i-1] ? AllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i);
-				#ifndef USB_SC
-				defaultIfPtr->iEpDoubleBuff[i-1] ? AllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i);
-				#endif
-				}				
-
+				// 	allocate endpoint DMA and double buffering for all endpoints on default interface when using resource allocation v1 api
+				for (TUint8 i = 1; i <= defaultIfPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+					{
+					defaultIfPtr->iEpDMA[i-1] ? AllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i);
+					#ifndef USB_SC
+					defaultIfPtr->iEpDoubleBuff[i-1] ? AllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i);
+					#endif
+					}				
+				}
 			}
 	
 		iTotalChannels += lddPtr->iNumChannels;
@@ -369,14 +377,17 @@ void CActiveControl::ReConnect()
 			RChunk *tChunk = &gChunk;
 			test_KErrNone(iPort[portNumber].FinalizeInterface(tChunk));
 			#endif
-
-			// 	allocate endpoint DMA and double buffering for all endpoints on default interface
-			for (TUint8 i = 1; i <= defaultIfPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+			
+			if (!iSupportResourceAllocationV2)
 				{
-				defaultIfPtr->iEpDMA[i-1] ? AllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i);
-				#ifndef USB_SC
-				defaultIfPtr->iEpDoubleBuff[i-1] ? AllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i);
-				#endif
+				// 	allocate endpoint DMA and double buffering for all endpoints on default interface with resource allocation v1 api
+				for (TUint8 i = 1; i <= defaultIfPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+					{
+					defaultIfPtr->iEpDMA[i-1] ? AllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i);
+					#ifndef USB_SC
+					defaultIfPtr->iEpDoubleBuff[i-1] ? AllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i);
+					#endif
+					}
 				}				
 			}
 	
@@ -421,6 +432,59 @@ void CActiveControl::ReConnect()
 		}
 	
 	test.End();
+	}
+
+void CActiveControl::FillEndpointsResourceAllocation(IFConfigPtr aIfCfg)
+	{
+	
+	#ifdef USB_SC
+		TUsbcScInterfaceInfo* iInfoPtr = aIfCfg->iInfoPtr;
+	#else
+		TUsbcInterfaceInfo* iInfoPtr = aIfCfg->iInfoPtr;
+	#endif
+	
+	// 	fill resource allocation info in the endpoint info with resource allocation v2
+	for (TUint8 i = 1; i <= iInfoPtr->iTotalEndpointsUsed; i++)
+		{
+		if (aIfCfg->iEpDMA[i-1])
+			{
+			iInfoPtr->iEndpointData[i-1].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DMA;
+			}
+		else
+			{
+			iInfoPtr->iEndpointData[i-1].iFeatureWord1 &= (~KUsbcEndpointInfoFeatureWord1_DMA);
+			}
+		#ifndef USB_SC
+		if (aIfCfg->iEpDoubleBuff[i-1])
+			{
+			iInfoPtr->iEndpointData[i-1].iFeatureWord1 |= KUsbcEndpointInfoFeatureWord1_DoubleBuffering;
+			}
+		else
+			{
+			iInfoPtr->iEndpointData[i-1].iFeatureWord1 &= (~KUsbcEndpointInfoFeatureWord1_DoubleBuffering);
+			}
+		#endif
+		}	
+	}
+
+// all alternative settings of the interface 'aFirstIfCfg' will be populated
+void CActiveControl::PopulateInterfaceResourceAllocation(IFConfigPtr aFirstIfCfg, TInt aPortNumber)
+	{
+	FillEndpointsResourceAllocation(aFirstIfCfg);
+	
+	IFConfigPtr ifCfgPtr = aFirstIfCfg->iPtrNext;
+	while (ifCfgPtr != NULL)
+		{
+		if (ifCfgPtr->iAlternateSetting)
+			{
+			FillEndpointsResourceAllocation(ifCfgPtr);
+			ifCfgPtr = ifCfgPtr->iPtrNext;
+			}
+		else
+			{
+			ifCfgPtr = NULL;
+			}
+		}
 	}
 	
 void CActiveControl::SetupInterface(IFConfigPtr* aIfPtr, TInt aPortNumber)
@@ -1397,11 +1461,16 @@ void CActiveControl::QueryUsbClientL(LDDConfigPtr aLddPtr, RDEVCLIENT* aPort)
 	TUSB_PRINT1("Supports unpowered cable detection: %s\n",
 				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_CableDetectWithoutPower) ?
 				_S("yes") : _S("no"));
+	TUSB_PRINT1("Supports endpoint resource allocation v2 scheme: %s\n",
+				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) ?
+				_S("yes") : _S("no"));					
 	TUSB_PRINT("");
 
 	iSoftwareConnect = d_caps().iConnect;					// we need to remember this
 	test_Equal(aLddPtr->iSoftConnect,iSoftwareConnect);
 
+	iSupportResourceAllocationV2 = ((d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) != 0);
+	
 	// only check capabilities if set; therefore allowing them to be disabled
 	if (aLddPtr->iSelfPower)
 		{

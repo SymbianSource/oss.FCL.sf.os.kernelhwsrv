@@ -67,7 +67,7 @@ file=\Epoc32\Release\##MAIN##\##BUILD##\eka1_entry_stub.dll				\sys\bin\eka1_ent
 #endif
 
 
-#ifndef USE_CUSTOM_MMC_PARTITION
+#if !(defined(INST_X86) || defined(INST_X86GCC)) && !defined(USE_CUSTOM_MMC_PARTITION)
 extension[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\EMMCPTN.DLL                   \Sys\Bin\EMMCPTN.DLL
 #endif
 

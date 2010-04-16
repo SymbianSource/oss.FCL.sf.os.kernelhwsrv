@@ -21,6 +21,8 @@
 */
 
 #include <f32file.h>
+#include <f32ver.h>
+#include "cusbmassstoragecontroller.h"
 #include "cmassstoragefilesystem.h"
 #include "cmassstoragemountcb.h"
 #include "massstoragedebug.h"

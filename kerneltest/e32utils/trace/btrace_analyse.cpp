@@ -433,6 +433,7 @@ const char* CategoryName(TUint8 aCategory)
 		CASE_CAT_NAME(EProfiling);
 		CASE_CAT_NAME(ESymbianKernelSync);
 		CASE_CAT_NAME(EFlexibleMemModel);
+		CASE_CAT_NAME(EHSched);
 		CASE_CAT_NAME(ETest1);
 		CASE_CAT_NAME(ETest2);
 		default:
@@ -629,6 +630,12 @@ const char* SubCategoryName(TUint8 aCategory, TUint8 aSubCategory)
 			}
 		break;
 
+	case BTrace::EHSched:
+		switch((BTrace::THSched)aSubCategory)
+			{
+		CASE_CAT_NAME(ELbDone);
+			}
+		break;
 		}
 	return UnknownNames[aSubCategory];
 	}
@@ -1390,7 +1397,7 @@ void PreProcessThreadIdentification(TraceRecord& aTrace)
 		{
 	case BTrace::ENanoThreadCreate:
 		CHECK_TRACE_DATA_WORDS(1);
-		thread = Thread::FindOrCreate(aTrace,0);
+		Thread::FindOrCreate(aTrace,0);
 		break;
 
 	case BTrace::ENanoThreadDestroy:
@@ -1430,7 +1437,7 @@ void PreProcessThreadIdentification(TraceRecord& aTrace)
 		CHECK_TRACE_DATA_WORDS(2);
 		if(aTrace.iData[0])
 			{
-			thread = Thread::FindOrCreate(aTrace,0);
+			Thread::FindOrCreate(aTrace,0);
 			process = Process::Find(aTrace.iData[1]);
 			if(!process || (process->iNameLength && !process->IsName(aTrace.iData+2,aTrace.iDataSize-2*4)))
 				{
@@ -1450,13 +1457,13 @@ void PreProcessThreadIdentification(TraceRecord& aTrace)
 	case BTrace::EThreadId:
 		CHECK_TRACE_DATA_WORDS(2);
 		thread = Thread::FindOrCreate(aTrace,0);
-		process = Process::FindOrCreate(aTrace,1);
+		Process::FindOrCreate(aTrace,1);
 		thread->iId = aTrace.iData[2];
 		break;
 
 	case BTrace::EProcessCreate:
 		CHECK_TRACE_DATA_WORDS(1);
-		process = Process::FindOrCreate(aTrace,0);
+		Process::FindOrCreate(aTrace,0);
 		break;
 
 	case BTrace::EProcessDestroy:
@@ -1887,7 +1894,7 @@ void PreProcessCodeSegs(TraceRecord& aTrace)
 
 	case BTrace::ECodeSegMapped:
 		CHECK_TRACE_DATA_WORDS(2);
-		codeseg = CodeSeg::FindOrCreate(aTrace,0);
+		CodeSeg::FindOrCreate(aTrace,0);
 		Process::FindOrCreate(aTrace,1);
 		break;
 
@@ -2535,6 +2542,22 @@ void ReportSampleProfiling()
 	printf("\n");
 	}
 
+
+void PreProcessHSched(TraceRecord& aTrace)
+	{
+	switch((BTrace::THSched)aTrace.iSubCategory)
+		{
+		case BTrace::ELbDone:
+			{
+			CHECK_TRACE_DATA_WORDS(2);
+			Thread::Find(aTrace, 0);
+			break;
+			}
+		}
+	}
+
+
+
 //
 // Trace processing
 //
@@ -2724,6 +2747,8 @@ TBool PreProcessTrace(TraceRecord& aTrace, const TUint8* aData)
 		PreProcessProfiling(aTrace); break;
 	case BTrace::ESymbianKernelSync:
 		PreProcessSymbianKernelSync(aTrace); break;
+	case BTrace::EHSched:
+		PreProcessHSched(aTrace); break;
 	default:
 		break;
 		}

@@ -16,7 +16,7 @@
 #include <drivers/sdcard.h>
 #include "OstTraceDefinitions.h"
 #ifdef OST_TRACE_COMPILER_IN_USE
-#include "locmedia_ost.h"
+#include "../../../../include/drivers/locmedia_ost.h"
 #ifdef __VC32__
 #pragma warning(disable: 4127) // disabling warning "conditional expression is constant"
 #endif
@@ -594,8 +594,16 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 
 	SMF_BEGIN
 
-		OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM1, "EStBegin" );
-		iCxCardType = ESDCardTypeUnknown;
+	OstTrace0( TRACE_INTERNALS, DSDSTACK_INITIALISEMEMORYCARDSM1, "EStBegin" );
+
+	iCxCardType = CardType(MMCSocket()->iSocketNumber, iCxCardCount);
+        
+        if (iCxCardType==ESDCardTypeIsMMC)
+            {
+            // Skip the SD Protocol Seq.
+            SMF_INVOKES(GoIdleSMST, EStCheckVoltage);
+            }
+                
 		s.iCardP = NULL;	// This stops ExecCommandSM() from setting old RCA when sending CMD55
 
 		// Send CMD0 to initialise memory
@@ -1623,7 +1631,22 @@ EXPORT_C DMMCSession* DSDStack::AllocSession(const TMMCCallBack& aCallBack) cons
 	return new DSDSession(aCallBack);
 	}
 
+EXPORT_C DSDStack::TSDCardType DSDStack::CardType(TInt /*aSocket*/, TInt /*aCardNumber*/)
+/**
+ * This method allows a preset card type to be specified for a given slot/socket.
+ * The SD protocol stack attempts to identify card types (SD or MMC) through protocol responses; 
+ * For embedded media (eMMC or eSD) this is unnecessary as the media type is already known and cannot change. 
+ * Licensee may override this function to specify the preset card type.
+ * @param aSocket Socket to be queried for card type.
+ * @param aCardNumber Card number attached to Socket to be queried for card type.
+ * @return Preset card type
+ */
+    {
+    // Default implmentation.
+    return DSDStack::ESDCardTypeUnknown;
+    }
+
+
 EXPORT_C void DSDStack::Dummy1() {}
 EXPORT_C void DSDStack::Dummy2() {}
 EXPORT_C void DSDStack::Dummy3() {}
-EXPORT_C void DSDStack::Dummy4() {}

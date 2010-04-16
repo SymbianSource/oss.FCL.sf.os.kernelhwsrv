@@ -101,7 +101,7 @@ __NAKED__ void RHeap::DoFree(SCell* /*pC*/)
 	asm("add r5, r1, r4 ");					// r5=pN=pC + pC->len (cell after pC)
 	asm("cmp r5, r3 ");						// compare pN with pE
 	asm("ldmeqia r3, {r5, r12} ");			// if pN==pE, r5=pE->len, r12=pE->next
-	asm("bhi " CSM_Z22RHeap_PanicBadNextCellv );	// if pN>pE, panic
+	asm("blhi " CSM_Z22RHeap_PanicBadNextCellv );	// if pN>pE, panic
 	asm("strne r3, [r1, #4] ");				// if pN<pE, pC->next=pE
 	asm("addeq r4, r4, r5 ");				// if pN==pE r4 = pC->len + pE->len
 	asm("stmeqia r1, {r4,r12} ");			// if pN==pE pC->len+=pE->len, pC->next=pE->next
@@ -110,7 +110,7 @@ __NAKED__ void RHeap::DoFree(SCell* /*pC*/)
 	asm("sub r5, r1, r2 ");					// r5=pC-pP (gap between preceding free cell and this one)
 	asm("cmp r5, r3 ");						// compare gap with predecessor length
 	asm("ldreq r12, [r1, #4] ");			// if predecessor is adjacent, r12=pC->next
-	asm("blo RHeap_PanicBadPrevCell__Fv ");	// if predecessor overlaps, panic
+	asm("bllo RHeap_PanicBadPrevCell__Fv ");	// if predecessor overlaps, panic
 	asm("addeq r4, r4, r3 ");				// if predecessor is adjacent, r4=pC->len + pP->len
 	asm("stmeqia r2, {r4,r12} ");			// if predecessor is adjacent, pP->len+=pC->len, pP->next=pC->next
 	asm("strne r1, [r2, #4] ");				// else pP->next = pC

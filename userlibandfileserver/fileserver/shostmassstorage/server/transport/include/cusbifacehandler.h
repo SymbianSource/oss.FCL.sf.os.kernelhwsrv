@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,14 +24,14 @@
 class CUsbInterfaceHandler : public CActive
 	{
 public:
-	CUsbInterfaceHandler(RUsbInterface &aInterface);
+    static CUsbInterfaceHandler* NewL(RUsbInterface &aInterface, RUsbPipe& aBulkPipeIn);
+	CUsbInterfaceHandler(RUsbInterface &aInterface, RUsbPipe& aBulkPipeIn);
 	~CUsbInterfaceHandler();
-	void GetMaxLun(TLun* aReceiveData, const RMessage2& aMessage);
-	static CUsbInterfaceHandler* NewL(RUsbInterface &aInterface);
 
+	void GetMaxLun(TLun* aReceiveData, const RMessage2& aMessage);
+	
 private:
 	void RunL();
-	void Reset();
 	void DoCancel();
 
     enum TState
@@ -47,6 +47,7 @@ private:
 	TLun* ipGetMaxLun;
 
 	RUsbInterface& iInterface;
+    RUsbPipe& iBulkPipeIn;
 	TBuf8<1> iBuffer;
 	};
 

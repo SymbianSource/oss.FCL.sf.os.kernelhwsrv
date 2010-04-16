@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -335,7 +335,9 @@ instance in the PSL compiled repository static data.
 
 /**
 Global macro for use in setting the length attribute of a SSettingC 
-instance in the PSL compiled repository static data.
+instance in the PSL compiled repository static data. Used when the setting is
+a word sized setting and the size field is Not Applicable. Not to be used 
+for large data settings i.e. where size > 4bytes, i.e. type > 0xffff.
 
 @see HCR::MVariant
 @see HCR::SRepositoryCompiled

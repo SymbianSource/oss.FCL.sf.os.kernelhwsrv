@@ -21,6 +21,7 @@
 #include <kernel/emi.h>
 #include <kernel/sshbuf.h>
 #include "platform.h"
+#include "securerng.h"
 
 #ifdef __VC32__
     #pragma setlocale("english")
@@ -44,8 +45,14 @@ const TInt KDfcThread0Priority=27;
 const TInt KDfcThread1Priority=48;
 const TInt KMaxEventQueue=40;
 
+#ifdef __SMP__
+_LIT(KRebalanceName, "LB");
+const TInt KRebalancePriority=26;
+#endif
+
 TInt SupervisorThread(TAny*);
 TInt DebuggerInit();
+extern TInt InitialiseEntropyBuffers();
 
 extern const SNThreadHandlers EpocThreadHandlers;
 
@@ -392,6 +399,14 @@ TInt SupervisorThread(TAny*)
 		K::Fault(K::EInit3Failed);
 
 	P::StartExtensions();
+
+	M::Init4();
+
+#ifdef __SMP__
+	TheScheduler.InitLB();
+	TheScheduler.StartPeriodicBalancing();
+#endif
+
 	K::StartKernelServer();
 	return 0;
 	}
@@ -432,6 +447,18 @@ TInt K::Init3()
 	if (r!=KErrNone)
 		return r;
 
+#ifdef __SMP__
+	// create thread and DFC queue for load balancing
+	TScheduler& s = TheScheduler;
+	r = Kern::DfcQCreate(s.iRebalanceDfcQ, KRebalancePriority, &KRebalanceName);
+	if (r!=KErrNone)
+		return r;
+	NThread* nt = TScheduler::LBThread();
+	NKern::ThreadSetCpuAffinity(nt, KCpuAffinityAny);
+	pT = _LOFF(nt, DThread, iNThread);
+	pT->iFlags |= KThreadFlagSystemPermanent;
+#endif
+
 	// Initialise the RAM drive
 	K::InitNvRam();
 
@@ -442,6 +469,14 @@ TInt K::Init3()
 	r=K::StartTickQueue();
 	if (r!=KErrNone)
 		return r;
+	
+	// Initilize the Secure RNG.
+	SecureRNG = new DSecureRNG;
+	
+	// Initialise entropy buffers for secure RNG
+	r=InitialiseEntropyBuffers();
+    if (r!=KErrNone)
+		return r;
 
 	// Third phase initialisation of ASIC/Variant
 	// This enables the system tick and millisecond timer
@@ -449,9 +484,6 @@ TInt K::Init3()
 
 	// Mark the super page signature valid
 	P::SetSuperPageSignature();
-
-	// Initialise the random pool
-	K::Randomize();
 
 	return KErrNone;
 	}

@@ -1782,7 +1782,7 @@ EXPORT_C TInt Kern::ProcessCreate(DProcess*& aProcess, TProcessCreateInfo& aInfo
 				// must remove thread
 				DThread* pT=_LOFF(aProcess->iThreadQ.First()->Deque(),DThread,iProcessLink);
 				pT->iProcessLink.iNext=NULL;
-				pT->Release();
+				pT->Stillborn();
 				}
 			aProcess->Release();
 			}

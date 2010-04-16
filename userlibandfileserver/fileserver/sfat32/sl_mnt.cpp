@@ -304,11 +304,6 @@ void CFatMountCB::InvalidateLeafDirCache()
     	{
         iLeafDirCache->Reset();
     	}
-    else
-    	{
-        User::Free(iLastLeafDir);
-        iLastLeafDir=NULL;
-    	}
 	}
 
 //-------------------------------------------------------------------------------------------------------------------
@@ -843,7 +838,7 @@ void CFatMountCB::MkDirL(const TDesC& aName)
     @param  aStartCluster   this entry start cluster number
     @param  aParentCluster  parent entry start cluster number
 */
-void CFatMountCB::InitializeFirstDirClusterL(TInt aStartCluster,TInt aParentCluster)
+void CFatMountCB::InitializeFirstDirClusterL(TUint32 aStartCluster, TUint32 aParentCluster)
     {
     const TUint32 KClusterSz= 1<<ClusterSizeLog2();
     const TUint32 KMaxBufSz = KClusterSz;           //-- max. nuffer size is a cluster
@@ -1064,6 +1059,13 @@ void CFatMountCB::DoRenameOrReplaceL(const TDesC& aOldName, const TDesC& aNewNam
     const TBool newFileExists = (nRes == KErrNone); //-- ETrue if 'aNewName' file exists.
     const TBool bNewNameIsVFAT = !IsLegalDosName(ptrNewName, EFalse, EFalse, EFalse, EFalse, ETrue);
 
+    if(!newFileExists)
+    {//-- invalidate directory iterators if aNewName doesn't exist
+        newName_VFatEntryPos.SetEndOfDir();
+        aNewName_DosEntryPos.SetEndOfDir();
+    }
+
+
     if(renameMode && newFileExists)
     	{
         if(!namesAreIdentical)
@@ -1143,7 +1145,7 @@ void CFatMountCB::DoRenameOrReplaceL(const TDesC& aOldName, const TDesC& aNewNam
 
 		    if (iFileCreationHelper.GetValidatedShortName(shortName) == KErrNotFound)
 		    	{
-		        GenerateShortNameL(aNewName_DosEntryPos.Cluster(), ptrNewName, shortName, ETrue);
+		        GenerateShortNameL(aNewName_ParentDirPos.Cluster(), ptrNewName, shortName); 
 		    	}
 
             newDosEntry.SetName(shortName);
@@ -1355,7 +1357,7 @@ void CFatMountCB::SetEntryL(const TDesC& aName,const TTime& aTime,TUint aSetAttM
 
 //-----------------------------------------------------------------------------------------
 
-void CFatMountCB::DoCheckFatForLoopsL(TInt aCluster, TInt& aPreviousCluster, TInt& aChangePreviousCluster, TInt& aCount) const
+void CFatMountCB::DoCheckFatForLoopsL(TUint32 aCluster, TUint32& aPreviousCluster, TUint32& aChangePreviousCluster, TUint32& aCount) const
 //
 // Check one fat cluster for loops.
 //
@@ -1381,13 +1383,13 @@ void CFatMountCB::CheckFatForLoopsL(const TFatDirEntry& anEntry) const
 //
     {
 
-    TInt cluster=StartCluster(anEntry);
+    TUint32 cluster = StartCluster(anEntry);
     if (cluster==0 && anEntry.Size()==0)
         return;
 
-    TInt previousCluster=cluster;
-    TInt changePreviousCluster=1;
-    TInt count=0;
+    TUint32 previousCluster=cluster;
+    TUint32 changePreviousCluster=1;
+    TUint32 count=0;
 
 
     for(;;)
@@ -1499,14 +1501,13 @@ void CFatMountCB::FileOpenL(const TDesC& aName,TUint aMode,TFileOpen anOpen,CFil
         }
 
     CFatFileCB& file=(*((CFatFileCB*)aFile));
-    file.SetL(firstEntry,(TShare)(aMode&KFileShareMask),firstEntryPos);
+    file.SetupL(firstEntry, firstEntryPos);
+
     if (anOpen==EFileReplace && file.Size())
         {
         file.SetSizeL(0);
-        file.SetSize(0);
         }
-    if (file.IsSeekIndex()==EFalse)
-        file.CreateSeekIndex();
+
     if (anOpen==EFileReplace || anOpen==EFileCreate)
         file.SetArchiveAttribute();
 
@@ -1575,10 +1576,10 @@ void CFatMountCB::DirOpenL(const TDesC& aName,CDirCB* aDir)
 
 //-----------------------------------------------------------------------------------------
 
-TBool CFatMountCB::IsDirectoryEmptyL(TInt aCluster)
 //
 // Check aCluster contains no directory entries other than . and ..
 //
+TBool CFatMountCB::IsDirectoryEmptyL(TUint32 aCluster)
     {
 
     __PRINT(_L("CFatMountCB::IsDirectoryEmptyL"));
@@ -1606,13 +1607,13 @@ LoopEnd:
 /**
     Overwrite as many contiguous file clusters as possible.
 */
-void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TInt aLastcluster, TInt &aBadcluster, TInt &aGoodcluster)
+void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint aLastcluster, TUint& aBadcluster, TUint& aGoodcluster)
     {
 
     __PRINT(_L("CFatMountCB::DoWriteToClusterListL"));
     __ASSERT_ALWAYS(aPos.Cluster()>=KFatFirstSearchCluster,User::Leave(KErrCorrupt));
 
-    TInt endCluster=0;
+    TUint32 endCluster=0;
 
     const TInt clusterRelativePos=ClusterRelativePos(aPos.iPos);
     const TInt maxClusters=((aLength+clusterRelativePos-1)>>ClusterSizeLog2())+1;
@@ -1638,11 +1639,11 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
     if(r == KErrNone && errinf().iReasonCode == TErrorInfo::EBadSector) // GetLastErrorInfo succeded and Last Error was caused by bad sector
         {
 
-        const TInt badcluster = (TInt)(((dataStart + errinf().iErrorPos) - ClusterBasePosition())>>ClusterSizeLog2())+KFatFirstSearchCluster;
-              TInt goodcluster = FAT().AllocateSingleClusterL(badcluster);
+        const TUint32 badcluster = (TInt)(((dataStart + errinf().iErrorPos) - ClusterBasePosition())>>ClusterSizeLog2())+KFatFirstSearchCluster;
+              TUint32 goodcluster = FAT().AllocateSingleClusterL(badcluster);
 
         //Calculate cluster number to check whether this write started at the beginning of new cluster or middle of previous cluster.
-        TInt cluster = aPos.iCluster;
+        TUint32 cluster = aPos.iCluster;
         if ( (aPos.iPos) && ((aPos.iPos)==((aPos.iPos >> ClusterSizeLog2())<<ClusterSizeLog2())))
             cluster--;
 
@@ -1735,7 +1736,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
 
 //-----------------------------------------------------------------------------------------
 
-void CFatMountCB::WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TInt &aBadcluster, TInt& aGoodcluster)
+void CFatMountCB::WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint& aBadcluster, TUint& aGoodcluster)
 //
 // Overwrite cluster list.
 //
@@ -1780,7 +1781,7 @@ void CFatMountCB::DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny
 
     __PRINT(_L("CFatMountCB::DoReadFromClusterListL"));
 
-    TInt endCluster=0;
+    TUint32 endCluster=0;
 
     const TInt clusterRelativePos=ClusterRelativePos(aPos.iPos);
     const TInt maxClusters=((aLength+clusterRelativePos-1)>>ClusterSizeLog2())+1;
@@ -1853,33 +1854,20 @@ TInt CFatMountCB::FindLeafDirL(const TDesC& aName, TLeafDirData& aLeafDir) const
 //
     {
 
-    __PRINT(_L("CFatMountCB::FindLeafDirL"));
+    __PRINT2(_L("CFatMountCB::FindLeafDirL drv:%d, dir:%S"),DriveNumber() ,&aLeafDir);
 
     TLex lex(aName);
     TInt r;
     TEntryPos entryPos(RootIndicator(),0);
 
-    if (iLeafDirCache == NULL)
-    	{
-        TInt leaflen=(iLastLeafDir) ? iLastLeafDir->Length() : 0;
-        TInt namelen=aName.Length();
-        if (leaflen>1 && namelen>=leaflen && *iLastLeafDir==aName.Left(leaflen))
-            {
-            if (leaflen==namelen)
-                return(iLastLeafDirCluster);
-            lex.Inc(leaflen-1);
-            entryPos.iCluster=iLastLeafDirCluster;
-            }
-    	}
-    else
-    	{
-        // Skip root directory
+    ASSERT(iLeafDirCache);
+
         if (iLeafDirCache->CacheCount() > 0 && aName.Length() > 1)
         	{
-        	TInt err = iLeafDirCache->FindInCache(aName, aLeafDir);
+        const TInt err = iLeafDirCache->FindInCache(aName, aLeafDir);
         	if (err == KErrNone)
         		{
-        		ASSERT(aLeafDir.iClusterNum > 0);
+        	ASSERT(ClusterNumberValid(aLeafDir.iClusterNum)); 
         		return aLeafDir.iClusterNum;
         		}
         	else if (err != KErrNotFound)
@@ -1887,23 +1875,27 @@ TInt CFatMountCB::FindLeafDirL(const TDesC& aName, TLeafDirData& aLeafDir) const
         		User::LeaveIfError(err);
         		}
         	}
-    	}
 
-    FOREVER
+    TFatDirEntry entry;
+    TFileName fileName;
+    TEntryPos startPos;
+    TFatDirEntry startEntry;
+
+    for(;;)
         {
         lex.Inc(); // Skip path delimiter
         lex.Mark();
         r=lex.Remainder().Locate(KPathDelimiter);
+        
         if (r==KErrNotFound)
             r=lex.Remainder().Length();
+        
         if (r==0) // End of the path
             break;
+        
         lex.Inc(r); // Set the token length
-        TFatDirEntry entry;
-
-        TFileName fileName;
-        TEntryPos startPos;
-        TFatDirEntry startEntry;
+        
+        
         DoFindL(lex.MarkedToken(),
         		KEntryAttMatchMask|KEntryAttMatchExclusive,
         		startPos, startEntry, entryPos, entry,
@@ -1914,21 +1906,13 @@ TInt CFatMountCB::FindLeafDirL(const TDesC& aName, TLeafDirData& aLeafDir) const
 
         entryPos.iCluster=StartCluster(entry);
         entryPos.iPos=0;
-        }
+        }// for(;;)
 
-    if (iLeafDirCache == NULL)
-    	{
-        AllocBufferL(((CFatMountCB*)this)->iLastLeafDir,aName);
-        ((CFatMountCB*)this)->iLastLeafDirCluster=entryPos.iCluster;
-    	}
-    else
-    	{
         if (aName.Length() > 1)
         	{
         	aLeafDir = TLeafDirData(entryPos.iCluster);
             iLeafDirCache->AddToCacheL(aName, aLeafDir);
         	}
-    	}
 
     return entryPos.iCluster;
     }
@@ -1971,8 +1955,6 @@ TBool CFatMountCB::DoRummageDirCacheL(const TUint anAtt, TEntryPos& aStartEntryP
     TFatDirEntry    StartEntry1(aStartEntry);
     TFatDirEntry    DosEntry1(aDosEntry);
 
-    TInt64          nCachedLinPos;
-
     const TUint32 clSize = 1 << ClusterSizeLog2(); //-- media cluster size
     const TUint32 cacheSz = pDirCache->CacheSizeInBytes(); //-- cache size in bytes
     const TUint32 maxDirEntries = cacheSz >> KSizeOfFatDirEntryLog2;  //-- maximal number of dir entries that can be in the cache
@@ -1990,7 +1972,7 @@ TBool CFatMountCB::DoRummageDirCacheL(const TUint anAtt, TEntryPos& aStartEntryP
 
 	TInt numFound = 0;
 	TEntryPos startPos = DosEntryPos1;
-	TInt clusterNum = DosEntryPos1.iCluster;
+	TUint32 clusterNum = DosEntryPos1.iCluster;
 
     for(TUint32 entryCnt=0; entryCnt < maxDirEntries; ++entryCnt)
         {//-- walk through directory cluster list. The loop is limited by maximal number of dir entries
@@ -2021,7 +2003,7 @@ TBool CFatMountCB::DoRummageDirCacheL(const TUint anAtt, TEntryPos& aStartEntryP
         TBool	PassedPageBoundary = EFalse;
 
         const TInt64  entryLinPos = MakeLinAddrL(DosEntryPos1); //-- linear media position of the cluster for this directory
-        const TUint32 cachePageSz = pDirCache->PosCached(entryLinPos, nCachedLinPos); //-- indicates if entryLinPos is cached
+        const TUint32 cachePageSz = pDirCache->PosCached(entryLinPos); //-- indicates if entryLinPos is cached
         if(cachePageSz)
             {//-- current page is in the directory cache
              //__PRINT2(_L("#-!! CFatMountCB::DoRummageDirCacheL() Searching cl:%d, lin Pos:%X"),DosEntryPos1.iCluster,(TUint32)entryLinPos);
@@ -2036,7 +2018,7 @@ TBool CFatMountCB::DoRummageDirCacheL(const TUint anAtt, TEntryPos& aStartEntryP
             for(;;)
                 {
                 StartEntryPos1 = DosEntryPos1;
-                TInt clSave = DosEntryPos1.iCluster; //-- need to save current cluster number because GetDirEntry() & MoveToNextEntryL() can change it
+                TUint32 clSave = DosEntryPos1.iCluster; //-- need to save current cluster number because GetDirEntry() & MoveToNextEntryL() can change it
 
                 //-- get directory entry from the cache. We know that the DosEntryPos1 is cached.
                 nErr = GetDirEntry(DosEntryPos1, DosEntry1, StartEntry1, aFileName);
@@ -2455,10 +2437,10 @@ TBool CFatMountCB::DoFindL(const TDesC& aTrgtName,TUint anAtt,
 
     __PRINT2(_L("CFatMountCB::DoFindL() drv:%d, %S"),Drive().DriveNumber(),&aTrgtName);
 
-    TInt previousCluster=aDosEntryPos.iCluster;
+    TUint32 previousCluster=aDosEntryPos.iCluster;
     TUint previousPosition=aDosEntryPos.iPos;
-    TInt changePreviousCluster=1;
-    TInt count=0;
+    TUint32 changePreviousCluster=1;
+    TUint32 count=0;
 
     TBool trgNameIsWildCard     = EFalse; //-- ETrue if the name we are looking for is a wildcard
     TBool trgNameFullySpecified = ETrue;  //-- ETrue if the name we are looking for doesn't contain wildcards
@@ -2943,7 +2925,7 @@ void CFatMountCB::AddDirEntryL(TEntryPos& aPos,TInt aNumOfEntries)
     Zero fill a cluster
     @param  aCluster cluster number to zero-fill
 */
-void CFatMountCB::ZeroDirClusterL(TInt aCluster)
+void CFatMountCB::ZeroDirClusterL(TUint32 aCluster)
     {
 
     __PRINT1(_L("CFatMountCB::ZeroDirClusterL %d"),aCluster);
@@ -3035,12 +3017,17 @@ TBool CFatMountCB::DoGetDirEntryL(TEntryPos& aPos, TFatDirEntry& aDosEntry, TFat
 
     const TUint8 entryCheckSum = aDosEntry.CheckSum(); //-- check sum from the 1st VFat entry
 
+    TUint nameChunkOffset = KMaxVFatEntryName*(count-1);
+
     while (count--)
         {
-        TPtr fileNamePtr(&aLongFileName[0]+KMaxVFatEntryName*count,aLongFileName.Length()-KMaxVFatEntryName*count);
+        TPtr fileNamePtr(&aLongFileName[0]+nameChunkOffset, aLongFileName.Length()-nameChunkOffset);
         fileNamePtr.Copy(vBuf);
         if (count==0)
             break; //-- all VFat entries read, only DOS entry remained
+        
+        ASSERT(nameChunkOffset >= (TUint)KMaxVFatEntryName);
+        nameChunkOffset-=KMaxVFatEntryName;
 
         MoveToNextEntryL(aPos);
         ReadDirEntryL(aPos,aDosEntry);
@@ -3155,12 +3142,12 @@ void CFatMountCB::MoveToDosEntryL(TEntryPos& aPos,TFatDirEntry& anEntry) const
 //-----------------------------------------------------------------------------------------
 
 /** Read the Uid of the entry starting at aCluster */
-void CFatMountCB::ReadUidL(TInt aCluster,TEntry& anEntry) const
+void CFatMountCB::ReadUidL(TUint32 aCluster,TEntry& anEntry) const
     {
 
     __PRINT1(_L("CFatMountCB::ReadUidL(%d)"), aCluster);
 
-    if((TUint)aCluster < KFatFirstSearchCluster || (TUint)aCluster >= UsableClusters()+KFatFirstSearchCluster)
+    if(aCluster < KFatFirstSearchCluster || aCluster >= UsableClusters()+KFatFirstSearchCluster)
         User::Leave(KErrCorrupt);
 
     TBuf8<sizeof(TCheckedUid)> uidBuf;
@@ -3217,10 +3204,10 @@ void CFatMountCB::ReadSectionL(const TDesC& aName,TInt aPos,TAny* aTrg,TInt aLen
     if ((TUint)(aPos+aLength)>fileSize)
         aLength=fileSize-aPos;
 
-    TInt cluster=StartCluster(dosEntry);
+    TUint32 cluster=StartCluster(dosEntry);
 	TInt pos = aPos;
 
-    TInt endCluster;
+    TUint32 endCluster;
     TInt clusterSize=1<<ClusterSizeLog2();      //  Size of file clusters
 	TInt readTotal = 0;
 
@@ -3336,14 +3323,16 @@ void CFatMountCB::DirReadL(const TEntryPos& aPos, TInt aLength, TDes8& aDes) con
 
 //-----------------------------------------------------------------------------------------
 
+/**
+    Write a FAT directory entry to disk. Assumes sufficient space has been created for it by AddDirEntry.
+
+    @param  aPos        dir. entry position 
+    @param  aDirEntry   entry data
+*/
 void CFatMountCB::WriteDirEntryL(const TEntryPos& aPos,const TFatDirEntry& aDirEntry)
-//
-// Write a FAT directory entry to disk.
-// Assumes sufficient space has been created for it by AddDirEntry.
-//
     {
 
-    __PRINT(_L("CFatMountCB::WriteDirEntryL"));
+    __PRINT2(_L("CFatMountCB::WriteDirEntryL cl:%d, pos:%d"), aPos.Cluster(), aPos.Pos());
 
     //-- use special interface to access FAT directory file
     DirWriteL(aPos,TPtrC8((TUint8*)&aDirEntry,KSizeOfFatDirEntry));
@@ -3351,15 +3340,13 @@ void CFatMountCB::WriteDirEntryL(const TEntryPos& aPos,const TFatDirEntry& aDirE
 
 //-----------------------------------------------------------------------------------------
 
+/**
+    Mark a dir entry as erased
+    @param  aPos dir. entry position 
+*/
 void CFatMountCB::EraseDirEntryL(const TEntryPos& aPos)
-//
-// Mark a dir entry as erased
-//
     {
-
-    __PRINT(_L("CFatMountCB::EraseDirEntryL"));
-    if(!iLeafDirCache && iLastLeafDir)
-        iLastLeafDir->Des().SetLength(0);
+    __PRINT2(_L("CFatMountCB::EraseDirEntryL cl:%d, pos:%d"), aPos.Cluster(), aPos.Pos());
 
     //-- use special interface to access FAT directory file
     DirWriteL(aPos,TPtrC8((TUint8*)&KEntryErasedMarker,sizeof(TUint8)));
@@ -3367,10 +3354,12 @@ void CFatMountCB::EraseDirEntryL(const TEntryPos& aPos)
 
 //-----------------------------------------------------------------------------------------
 
+/**
+    Read a FAT directory entry 
+    @param  aPos        dir. entry position 
+    @param  aDirEntry   entry data
+*/
 void CFatMountCB::ReadDirEntryL(const TEntryPos& aPos,TFatDirEntry& aDirEntry) const
-//
-// Read a FAT directory entry to disk
-//
     {
 
 //  __PRINT(_L("CFatMountCB::ReadDirEntryL"));
@@ -3515,7 +3504,7 @@ void CFatMountCB::GetLongNameL(const TDesC& aShortName,TDes& aLongName)
     This method is called for rugged FAT only.
     for parameters see CFatTable::ExtendClusterListL
 */
-void CFatMountCB::ExtendClusterListZeroedL(TInt aNumber,TInt& aCluster)
+void CFatMountCB::ExtendClusterListZeroedL(TUint32 aNumber, TUint32& aCluster)
     {
     __PRINT(_L("CFatMountCB::ExtendClusterListZeroedL"));
     __ASSERT_DEBUG(aNumber>0,Fault(EFatBadParameter));
@@ -3951,28 +3940,24 @@ void CFatMountCB::FindVolumeLabelFileL(TDes8& aLabel, TEntryPos& aDosEntryPos, T
         User::Leave(KErrNotFound); // Allows maximum number of entries in root directory
         }
 
-    TInt previousCluster= aDosEntryPos.iCluster;
+    TUint32 previousCluster= aDosEntryPos.iCluster;
     TUint previousPosition= aDosEntryPos.iPos;
-    TInt changePreviousCluster=1;
-    TInt count=0;
+    TUint32 changePreviousCluster=1;
+    TUint32 count=0;
 
     TFatDirEntry startEntry;
     TFileName dummyLongName;
 
     FOREVER
         {
-#ifdef _DEBUG
-        const TInt e= GetDirEntry(aDosEntryPos, aDosEntry, startEntry, dummyLongName);
-        __PRINT1(_L("CFatMountCB::FindVolumeLabelFileL: GetDir %d"), e);
-        User::LeaveIfError(e);
-#else
         User::LeaveIfError(GetDirEntry(aDosEntryPos, aDosEntry, startEntry, dummyLongName));
-#endif
+
         if(aDosEntry.IsEndOfDirectory())
             {
             __PRINT(_L("-CFatMountCB::FindVolumeLabelFileL: end of dir"));
             User::Leave(KErrNotFound);
             }
+
         if(IsRootDir(aDosEntryPos) && (aDosEntryPos.iPos+StartOfRootDirInBytes()==(RootDirEnd()-KSizeOfFatDirEntry)))
             {
             if(aDosEntry.IsErased())
@@ -3981,28 +3966,31 @@ void CFatMountCB::FindVolumeLabelFileL(TDes8& aLabel, TEntryPos& aDosEntryPos, T
                 User::Leave(KErrNotFound); //Allows maximum number of entries in root directory
                 }
             }
+
         if(!aDosEntry.IsCurrentDirectory() && !aDosEntry.IsParentDirectory() && !aDosEntry.IsErased() && !aDosEntry.IsGarbage())
             {
             if(aDosEntry.Attributes() & KEntryAttVolume)
                 {
                 aLabel = aDosEntry.Name();
-#ifdef _DEBUG
                 dummyLongName.Copy(aLabel);
                 __PRINT1(_L("-CFatMountCB::FindVolumeLabelFileL: found [%S]"), &dummyLongName);
-#endif
                 break;
                 }
             }
+        
         MoveToNextEntryL(aDosEntryPos);
+        
         if(IsRootDir(aDosEntryPos) && (aDosEntryPos.iPos+StartOfRootDirInBytes()>=RootDirEnd()))
             {
-            __PRINT(_L("-CFatMountCB::FindVolumeLabelFileL: passed end of root"));
+            __PRINT(_L("-CFatMountCB::FindVolumeLabelFileL: Not found"));
             User::Leave(KErrNotFound); //Allows maximum number of entries in root directory
             }
+        
         if(aDosEntryPos.iCluster && (aDosEntryPos.iPos <= previousPosition))
             {
             DoCheckFatForLoopsL(aDosEntryPos.iCluster, previousCluster, changePreviousCluster, count);
             }
+
         previousPosition=aDosEntryPos.iPos;
         }
     }
@@ -4045,7 +4033,7 @@ void CFatMountCB::BlockMapReadFromClusterListL(TEntryPos& aPos, TInt aLength, SB
     TUint i = 0;
     TInt clusterRelativePos;
     TInt maxClusters;
-    TInt endCluster;
+    TUint32 endCluster;
     TInt clusterListLen;
     TInt readLength;
     TInt temp;
@@ -4196,6 +4184,7 @@ TInt CFatMountCB::CheckDisk()
         }
 
     delete pScnDrv;
+    pScnDrv = NULL;
 
     if(chkDskRes != KErrNone)
         {
@@ -4225,7 +4214,7 @@ TInt CFatMountCB::DoRunScanDrive()
 
     const TBool bNeedFatRemount = (nScnDrvRes!=KErrNone) || pScnDrv->ProblemsDiscovered();
     delete pScnDrv;
-
+    pScnDrv = NULL;
 
     if(bNeedFatRemount)
         {//-- ScanDrive found and probably fixed some errors.

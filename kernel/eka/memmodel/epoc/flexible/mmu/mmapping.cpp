@@ -1307,7 +1307,7 @@ TInt DKernelPinMapping::MapAndPin(DMemoryObject* aMemory, TUint aIndex, TUint aC
 											EMappingCreateDefault, 
 											KKernelOsAsid, 
 											0, 
-											aCount, 
+											aCount << KPageShift, 
 											0);
 		if (r != KErrNone)
 			return r;
@@ -1435,7 +1435,7 @@ DVirtualPinMapping* DVirtualPinMapping::New(TUint aMaxCount)
 	{
 	TRACE(("DVirtualPinMapping::New(0x%x)",aMaxCount));
 	DVirtualPinMapping* self = new DVirtualPinMapping;
-	if(aMaxCount)
+	if(self && aMaxCount)
 		{
 		// pages have been reserved for our use.
 

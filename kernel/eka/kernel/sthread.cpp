@@ -455,6 +455,7 @@ void DThread::SetDefaultPriority(TInt aDefaultPriority)
 		aDefaultPriority = 1;
 #endif
 	iDefaultPriority=aDefaultPriority;
+	NKern::ThreadSetNominalPriority(&iNThread, aDefaultPriority);
 	K::PINestLevel=0;
 	SetRequiredPriority();
 	}
@@ -637,12 +638,49 @@ TDfc* DThread::EpocThreadExitHandler(NThread* aThread)
 	return &pT->iKillDfc;	// NKERN will queue this before terminating this thread
 	}
 
+#if defined(__SMP__) && defined(KTIMING)
+TUint64 tix2us(TUint64 aTicks, TUint32 aFreq)
+	{
+	TUint64 e6(1000000);
+	aTicks *= e6;
+	aTicks += TUint64(aFreq>>1);
+	aTicks /= TUint64(aFreq);
+	TUint64 us = aTicks % e6;
+	TUint64 sec = aTicks / e6;
+	return (sec<<32)|us;
+	}
+#endif
+
 void DThread::Exit()
 //
 // This function runs in the context of the exiting thread
 // Enter and leave with system unlocked
 //
 	{
+#if defined(__SMP__) && defined(KTIMING)
+	if (KDebugNum(KTIMING))
+		{
+		TUint64 rc = iNThread.iRunCount.i64;
+		NSchedulable::SCpuStats stats;
+		NKern::Lock();
+		iNThread.GetCpuStats(NSchedulable::E_RunTime|NSchedulable::E_ActiveTime, stats);
+		NKern::Unlock();
+		TUint64 cputime = stats.iRunTime;
+		TUint64 acttime = stats.iActiveTime;
+		TUint32 f = NKern::CpuTimeMeasFreq();
+		TUint64 avgcpu = rc ? cputime / rc : 0;
+		TUint64 ratio = (acttime*100)/cputime;
+		TUint64 cpud = tix2us(cputime, f);
+		TUint64 actd = tix2us(acttime, f);
+		TUint64 avgd = tix2us(avgcpu, f);
+		Kern::Printf("Thread %O RC=%u CPU=%u.%06us ACT=%u.%06us AVG=%u.%06us RATIO=%d%%",
+						this, TUint32(rc),
+						I64HIGH(cpud), I64LOW(cpud),
+						I64HIGH(actd), I64LOW(actd),
+						I64HIGH(avgd), I64LOW(avgd),
+						TUint32(ratio));
+		}
+#endif
 #ifdef KPANIC
 	if (iExitType==EExitPanic)
 		{

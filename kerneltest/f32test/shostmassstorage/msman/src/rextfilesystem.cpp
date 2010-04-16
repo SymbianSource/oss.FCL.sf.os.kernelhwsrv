@@ -16,7 +16,6 @@
 #include <f32file.h>
 
 #include "rusbhostmsdevice.h"
-#include "rusbhostmslogicalunit.h"
 #include "rextfilesystem.h"
 #include "tmslog.h"
 

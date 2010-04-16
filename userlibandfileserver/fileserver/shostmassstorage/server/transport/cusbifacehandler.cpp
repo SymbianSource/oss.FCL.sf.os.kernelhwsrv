@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -33,14 +33,15 @@
 #include "debug.h"
 #include "msdebug.h"
 
-CUsbInterfaceHandler* CUsbInterfaceHandler::NewL(RUsbInterface &aInterface)
+CUsbInterfaceHandler* CUsbInterfaceHandler::NewL(RUsbInterface &aInterface, RUsbPipe& aBulkPipeIn)
 	{
-	return new (ELeave) CUsbInterfaceHandler(aInterface);
+	return new (ELeave) CUsbInterfaceHandler(aInterface, aBulkPipeIn);
 	}
 
-CUsbInterfaceHandler::CUsbInterfaceHandler(RUsbInterface &aInterface)
+CUsbInterfaceHandler::CUsbInterfaceHandler(RUsbInterface &aInterface, RUsbPipe& aBulkPipeIn)
 :	CActive(EPriorityStandard),
-	iInterface(aInterface)
+	iInterface(aInterface),
+    iBulkPipeIn(aBulkPipeIn)
 	{
     __MSFNLOG
 	CActiveScheduler::Add(this);
@@ -75,25 +76,19 @@ void CUsbInterfaceHandler::RunL()
 
 	if (error == KErrUsbStalled && iState == EGetMaxLun)
         {
-		__BOTPRINT(_L("...KErrUsbStalled"));
-		iState = EReset;
-		Reset();
-		return;
+        // Devices that do not support multiple LUNs may STALL this command
+		__BOTPRINT(_L("...KErrUsbStalled"));		
+        iBulkPipeIn.ClearRemoteStall();
+        error = KErrNone;     
         }
 
-	if (error == KErrNone)
+	else if (error == KErrNone)
         {
 		__BOTPRINT(_L("...KErrNone"));
-
 		if (iState == EGetMaxLun)
             {
 			__BOTPRINT(_L("...sending GetMaxLun response"));
 			*ipGetMaxLun = iBuffer[0];
-            }
-		else
-            {
-			__BOTPRINT(_L("...defaulting to 0"));
-			*ipGetMaxLun = 0;
             }
         }
     else
@@ -117,6 +112,7 @@ void CUsbInterfaceHandler::GetMaxLun(TLun* aMaxLun, const RMessage2& aMessage)
 	iBotGetMaxLun = aMessage;
 	iState = EGetMaxLun;
 	ipGetMaxLun = aMaxLun;
+    *ipGetMaxLun = 0;       // default response is MaxLUN=0
 
 	reqDetails.iRequestType = 0xA1;
 	reqDetails.iRequest = 0xFE;
@@ -129,19 +125,3 @@ void CUsbInterfaceHandler::GetMaxLun(TLun* aMaxLun, const RMessage2& aMessage)
 	SetActive();
 	}
 
-
-void CUsbInterfaceHandler::Reset()
-	{
-    __MSFNLOG
-	RUsbInterface::TUsbTransferRequestDetails reqDetails;
-	_LIT8(KNullDesC8,"");
-
-	reqDetails.iRequestType = 0x21;
-	reqDetails.iRequest = 0xFF;
-	reqDetails.iValue = 0x0000;
-	reqDetails.iIndex = 0x0000;
-	reqDetails.iFlags = 0x04;		// Short transfer OK
-
-	iInterface.Ep0Transfer(reqDetails, KNullDesC8, (TDes8 &) KNullDesC8, iStatus);
-    SetActive();
-	}

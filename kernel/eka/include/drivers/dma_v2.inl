@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0""
@@ -26,20 +26,28 @@
 
 inline void TDmaChannel::Wait()
 	{
-	NKern::ThreadEnterCS();
-	Kern::MutexWait(*iMutex);
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Wait thread %O channel - %d",
+									&Kern::CurrentThread(), iPslId));
+	NKern::FMWait(&iLock);
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Wait thread %O channel - %d Acq",
+									&Kern::CurrentThread(), iPslId));
 	}
 
 inline void TDmaChannel::Signal()
 	{
-	Kern::MutexSignal(*iMutex);
-	NKern::ThreadLeaveCS();
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Signal thread %O channel - %d",
+									&Kern::CurrentThread(), iPslId));
+	NKern::FMSignal(&iLock);
 	}
 
-inline void TDmaChannel::Flash()
+inline TBool TDmaChannel::Flash()
 	{
-	Kern::MutexSignal(*iMutex);
-	Kern::MutexWait(*iMutex);
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Flash thread %O channel - %d",
+									&Kern::CurrentThread(), iPslId));
+	const TBool r = NKern::FMFlash(&iLock);
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Flash thread %O channel - %d Acq (%d)",
+									&Kern::CurrentThread(), iPslId, r));
+	return r;
 	}
 
 inline TBool TDmaChannel::IsOpened() const

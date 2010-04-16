@@ -69,6 +69,7 @@ void TScheduler::TimesliceTick()
 void TScheduler::Remove(NThreadBase* aThread)
 	{
 	__NK_ASSERT_DEBUG(!aThread->iHeldFastMutex);	// can't block while holding fast mutex
+	iMadeUnReadyCounter++;
 	aThread->iTime=aThread->iTimeslice;		// thread has blocked so it gets a fresh timeslice for next time
 	TPriListBase::Remove(aThread);
 	}

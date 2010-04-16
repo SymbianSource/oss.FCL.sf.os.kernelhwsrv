@@ -1,0 +1,30 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/t_wsd_dl1.mmh
+
+targettype			dll
+sourcepath			../mmu
+source				t_wsd_dl1.cpp
+deffile				t_wsd_dl1.def
+nostrictdef
+capability			all
+vendorid			0x70000001
+library				euser.lib
+
+macro T_WSD_DL1
+epocallowdlldata
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+UNPAGEDDATA
+SMPSAFE

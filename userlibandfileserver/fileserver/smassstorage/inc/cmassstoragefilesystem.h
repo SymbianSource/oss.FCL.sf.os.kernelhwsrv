@@ -23,11 +23,9 @@
 #ifndef __CMASSSTORAGEFILESYSTEM_H__
 #define __CMASSSTORAGEFILESYSTEM_H__
 
-#include <f32fsys.h>
-#include <f32ver.h>
-#include <f32file.h>
-#include "cusbmassstoragecontroller.h"
 
+//Forward Declaration
+class CUsbMassStorageController;
 
 /**
 Mass Storage Filesystem class.
@@ -75,8 +73,6 @@ private:
 	CUsbMassStorageController* iMassStorageController;
 	TBool iRunning;
 	RArray<TInt> iMsDrives;
-	
-			
 	};
 
 #endif // __CMASSSTORAGEFILESYSTEM_H__

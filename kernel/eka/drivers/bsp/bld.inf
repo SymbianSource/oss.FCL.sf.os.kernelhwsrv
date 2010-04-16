@@ -28,6 +28,8 @@ BASEDEFAULT
 
 #include "../hcr/hcr.inf"
 
+PRJ_EXPORTS
+../../include/drivers/smppower/idlehelper.h      SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(smppower/idlehelper.h)
 
 PRJ_MMPFILES
 
@@ -48,7 +50,10 @@ PRJ_MMPFILES
 ../resourceman/resman_extended_lib
 ../resmanus/resmanus
 ../resmanus/resmanusextended
-../resmanus/resmanusextendedcore
+
+../power/smppower/idlehelper_lib.mmp
+../power/smppower/sample_idlehandler/smpidlehandler_lib.mmp
+
 #endif
 
 #if !defined(X86)

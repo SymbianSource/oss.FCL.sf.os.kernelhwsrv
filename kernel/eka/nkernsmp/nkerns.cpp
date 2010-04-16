@@ -47,10 +47,15 @@ NSchedulable::NSchedulable()
 	iReady = 0;
 	iCurrent = 0;
 	iLastCpu = 0;
-	iNSchedulableSpare1 = 0;
 	iPauseCount = 0;
 	iSuspended = 0;
-	iNSchedulableSpare2 = 0;
+	iACount = 0;
+	iPreferredCpu = 0;
+	iActiveState = 0;
+	i_NSchedulable_Spare2 = 0;
+	iTransientCpu = 0;
+	iForcedCpu = 0;
+	iLbState = ELbState_Inactive;
 	iCpuChange = 0;
 	iStopping = 0;
 	iFreezeCpu = 0;
@@ -58,14 +63,41 @@ NSchedulable::NSchedulable()
 	iCpuAffinity = 0;
 	new (i_IDfcMem) TDfc(&DeferredReadyIDfcFn, this);
 	iEventState = 0;
-	iTotalCpuTime64 = 0;
+	iRunCount.i64 = 0;
+	iLastRunTime.i64 = 0;
+	iTotalCpuTime.i64 = 0;
+	iLastActivationTime.i64 = 0;
+	iTotalActiveTime.i64 = 0;
+	iSavedCpuTime.i64 = 0;
+	iSavedActiveTime.i64 = 0;
+	iLbLink.iNext = 0;
+	memclr(&iLbInfo, EMaxLbInfoSize);
 	}
+
+void NSchedulable::AddToEnumerateList()
+	{
+	TScheduler& s = TheScheduler;
+	SIterDQ& dq = iParent ? s.iAllThreads : s.iAllGroups;
+	NKern::Lock();
+	s.iEnumerateLock.LockOnly();
+	dq.Add(&iEnumerateLink);
+	TUint32 active = s.iThreadAcceptCpus;
+	TUint32 cpus = active & iCpuAffinity;
+	if (!cpus)
+		cpus = active;	// can't run on any currently active CPU, just pick an active one until it becomes ready
+	TInt ecpu = __e32_find_ls1_32(cpus);
+	iEventState = (ecpu<<EEventCpuShift) | (ecpu<<EThreadCpuShift);
+	s.iEnumerateLock.UnlockOnly();
+	NKern::Unlock();
+	}
+
 
 /******************************************************************************
  * NThreadGroup
  ******************************************************************************/
 NThreadGroup::NThreadGroup()
 	{
+	iACount = 1;
 	iParent = 0;
 	iThreadCount = 0;
 	new (&iSSpinLock) TSpinLock(TSpinLock::EOrderThreadGroup);
@@ -79,7 +111,10 @@ NThreadGroup::NThreadGroup()
 EXPORT_C TInt NKern::GroupCreate(NThreadGroup* aGroup, SNThreadGroupCreateInfo& aInfo)
 	{
 	new (aGroup) NThreadGroup();
-	aGroup->iCpuAffinity = aInfo.iCpuAffinity;
+	aGroup->iDestructionDfc = aInfo.iDestructionDfc;
+	aGroup->iCpuAffinity = NSchedulable::PreprocessCpuAffinity(aInfo.iCpuAffinity);
+	aGroup->AddToEnumerateList();
+	aGroup->InitLbInfo();
 	return KErrNone;
 	}
 
@@ -98,6 +133,13 @@ EXPORT_C void NKern::GroupDestroy(NThreadGroup* aGroup)
 	{
 	NKern::ThreadEnterCS();
 	aGroup->DetachTiedEvents();
+	NKern::Lock();
+	aGroup->AcqSLock();
+	if (aGroup->iLbLink.iNext)
+		aGroup->LbUnlink();
+	aGroup->RelSLock();
+	aGroup->DropRef();
+	NKern::Unlock();
 	NKern::ThreadLeaveCS();
 	}
 
@@ -136,10 +178,10 @@ NThreadBase::NThreadBase()
 	iWaitLink.iPriority = 0;
 	iBasePri = 0;
 	iMutexPri = 0;
-	i_NThread_Initial = 0;
+	iNominalPri = 0;
 	iLinkedObjType = EWaitNone;
 	i_ThrdAttr = 0;
-	iNThreadBaseSpare10 = 0;
+	i_NThread_Initial = 0;
 	iFastMutexDefer = 0;
 	iRequestSemaphore.iOwningThread = (NThreadBase*)this;
 	iTime = 0;
@@ -160,14 +202,15 @@ NThreadBase::NThreadBase()
 	iStackSize = 0;
 	iExtraContext = 0;
 	iExtraContextSize = 0;
+	iCoreCycling = 0;
+	iRebalanceAttr = 0;
+	iNThreadBaseSpare4c = 0;
+	iNThreadBaseSpare4d = 0;
+	iNThreadBaseSpare5 = 0;
 	iNThreadBaseSpare6 = 0;
 	iNThreadBaseSpare7 = 0;
 	iNThreadBaseSpare8 = 0;
 	iNThreadBaseSpare9 = 0;
-
-	// KILL
-	iTag = 0;
-	iVemsData = 0;
 	}
 
 TInt NThreadBase::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
@@ -185,7 +228,8 @@ TInt NThreadBase::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 	iTime=iTimeslice;
 	iPriority=TUint8(aInfo.iPriority);
 	iBasePri=TUint8(aInfo.iPriority);
-	iCpuAffinity = aInfo.iCpuAffinity;
+	iNominalPri=TUint8(aInfo.iPriority);
+	iCpuAffinity = NSchedulable::PreprocessCpuAffinity(aInfo.iCpuAffinity);
 	iHandlers = aInfo.iHandlers ? aInfo.iHandlers : &NThread_Default_Handlers;
 	iFastExecTable=aInfo.iFastExecTable?aInfo.iFastExecTable:&DefaultFastExecTable;
 	iSlowExecTable=(aInfo.iSlowExecTable?aInfo.iSlowExecTable:&DefaultSlowExecTable)->iEntries;
@@ -198,8 +242,9 @@ TInt NThreadBase::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		iCurrent = iReady;
 		iCpuAffinity = iLastCpu;
 		iEventState = (iLastCpu<<EEventCpuShift) | (iLastCpu<<EThreadCpuShift);
-		ss.Add(this);
+		ss.SSAddEntry(this);
 		i_NThread_Initial = TRUE;
+		iACount = 1;
 		ss.iInitialThread = (NThread*)this;
 		NKern::Unlock();		// now that current thread is defined
 		}
@@ -207,16 +252,7 @@ TInt NThreadBase::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		{
 		iSuspendCount = 1;
 		iSuspended = 1;
-		TInt ecpu;
-		if (iCpuAffinity & NTHREADBASE_CPU_AFFINITY_MASK)
-			{
-			ecpu = __e32_find_ls1_32(iCpuAffinity);
-			if (ecpu >= TheScheduler.iNumCpus)
-				ecpu = 0;	// FIXME: Inactive CPU?
-			}
-		else
-			ecpu = iCpuAffinity;
-		iEventState = (ecpu<<EEventCpuShift) | (ecpu<<EThreadCpuShift);
+		iEventState = 0;
 		if (aInfo.iGroup)
 			{
 			NKern::Lock();
@@ -247,6 +283,19 @@ void NThread_Default_Exception_Handler(TAny* aContext, NThread*)
 	ExcFault(aContext);
 	}
 
+//
+// Destroy a thread before it has ever run
+// Must be called before first resumption of thread
+//
+void NThread::Stillborn()
+	{
+	__NK_ASSERT_ALWAYS(iACount==0);	// ensure thread has never been resumed
+	NKern::Lock();
+	RemoveFromEnumerateList();
+	NKern::Unlock();
+	}
+
+
 
 /** Create a nanothread.
 
@@ -270,8 +319,10 @@ EXPORT_C TInt NKern::ThreadCreate(NThread* aThread, SNThreadCreateInfo& aInfo)
 	return aThread->Create(aInfo,FALSE);
 	}
 
-// User-mode callbacks
 
+/******************************************************************************
+ * User-mode callbacks
+ ******************************************************************************/
 TUserModeCallback::TUserModeCallback(TUserModeCallbackFunc aFunc)
 	:	iNext(KUserModeCallbackUnqueued),
 		iFunc(aFunc)
@@ -328,6 +379,7 @@ void NKern::MoveUserModeCallbacks(NThreadBase* aDestThread, NThreadBase* aSrcThr
 		} while (!__e32_atomic_cas_ord_ptr(&aDestThread->iUserModeCallbacks, &destListStart, sourceListStart));
 	NKern::Unlock();
 	}
+
 
 /** Initialise the null thread
 	@internalComponent
@@ -478,3 +530,14 @@ EXPORT_C TSpinLock* BTrace::LockPtr()
 	return 0;
 #endif
 	}
+
+TDfcQue* TScheduler::RebalanceDfcQ()
+	{
+	return TheScheduler.iRebalanceDfcQ;
+	}
+
+NThread* TScheduler::LBThread()
+	{
+	return (NThread*)(TheScheduler.iRebalanceDfcQ->iThread);
+	}
+

@@ -701,6 +701,8 @@ LOCAL_C void doComponentTest()
    		fs.NotifyDismount(removalDrvNo, trsClientComplete, EFsDismountNotifyClients);
 		test(trsClientComplete == KRequestPending);
 
+		fs.NotifyDismountCancel(trsClientComplete);
+
 		fs.Close();
 		dismountFs1.Close();
 	}

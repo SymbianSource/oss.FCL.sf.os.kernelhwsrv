@@ -3143,6 +3143,7 @@ public:
 	IMPORT_C void Lock(TRequestStatus& aStatus,TTimerLockSpec aLock);
 	IMPORT_C void Inactivity(TRequestStatus& aStatus, TTimeIntervalSeconds aSeconds);
 	IMPORT_C void HighRes(TRequestStatus& aStatus,TTimeIntervalMicroSeconds32 anInterval);
+	IMPORT_C void AgainHighRes(TRequestStatus& aStatus,TTimeIntervalMicroSeconds32 anInterval);
 	};
 
 

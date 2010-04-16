@@ -15,7 +15,7 @@
 // Public header for power management
 // 
 // WARNING: This file contains some APIs which are internal and are subject
-//          to change without notice. Such APIs should therefore not be used
+//          to change without noticed. Such APIs should therefore not be used
 //          outside the Kernel and Hardware Services package.
 //
 
@@ -27,7 +27,7 @@
 #include <kernel/kernel.h>
 
 /**
-@internalTechnology
+@internalComponent
 */
 #define __PM_ASSERT(aCond) \
 	__ASSERT_DEBUG( (aCond), \
@@ -37,7 +37,7 @@
 		) )
 
 /**
-@internalTechnology
+@internalComponent
 */
 #define __PM_PANIC(aMsg) \
 	(\
@@ -159,7 +159,7 @@ public:
 
 #ifndef __X86__
 /**
-@internalTechnology
+@internalComponent
 @prototype 9.5
 */
 class TPowerController
@@ -172,7 +172,7 @@ public:
 #endif
 
 /**
-@internalTechnology
+@internalComponent
 */
 class DBatteryMonitor
 	{
@@ -185,7 +185,7 @@ public:
 	};
 
 /**
-@internalTechnology
+@internalComponent
 */
 class DPowerHal : public DBase
 	{

@@ -259,7 +259,7 @@ SSettingC SettingsListCorrupt2[] = {
 	{{{ KTestCategories[0], 2}, ETypeInt32, 0x0000, 0 }, {{ 0 }}},
 	};
 #if !defined(__KERNEL_MODE__) || defined(HCRTEST_USERSIDE_INTERFACE)
-const TUint32 KTestInvalidCategory = 1234;
+const TUint32 KTestInvalidCategory = 0;
 const TUint32 KTestInvalidSettingId = 5678;
 
 // The following repositories are only used for reference by the test application

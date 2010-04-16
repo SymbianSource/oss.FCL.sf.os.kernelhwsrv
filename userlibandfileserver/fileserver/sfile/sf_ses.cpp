@@ -27,6 +27,9 @@ CSessionFs::CSessionFs()
           iReservedDriveAccess(KReservedDriveAccessArrayGranularity, _FOFF(TReservedDriveAccess, iDriveNumber)),
 	       iId(0)
 	{
+#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+    __e32_atomic_add_ord32(&SessionCount, 1);
+#endif
 	}
 
 CSessionFs *CSessionFs::NewL()
@@ -64,6 +67,10 @@ CSessionFs::~CSessionFs()
 	iSessionFlagsLock.Close();
 	if(iDisconnectRequest)
 		delete(iDisconnectRequest);
+
+#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+    __e32_atomic_add_ord32(&SessionCount, (TUint32) -1);
+#endif
 	}
 
 void CSessionFs::CreateL()

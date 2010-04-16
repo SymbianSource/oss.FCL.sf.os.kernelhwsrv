@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -27,14 +27,24 @@ class DRM_DebugEventHandler : public DKernelEventHandler
 		TInt Start();
 		TInt Stop();
 		
+		inline void DRM_DebugEventHandler::LockDataAccess()
+		    {
+		    Kern::SemaphoreWait(*iProtectionLock);
+		    }
+
+		inline void DRM_DebugEventHandler::ReleaseDataAccess()
+		    {
+		    Kern::SemaphoreSignal(*iProtectionLock);
+		    }
+		
 	private:
 		static TUint EventHandler(TKernelEvent aEvent, TAny* a1, TAny* a2, TAny* aThis);
 		TUint HandleEvent(TKernelEvent aType, TAny* a1, TAny* a2);
 		TBool HandleSpecificEvent(TKernelEvent aType, TAny* a1, TAny* a2);
 		
 	private:
-		/** Lock serialising calls to event handler */
-		DSemaphore* iLock;
+		/** Used to serialise access data structures */
+		DSemaphore* iProtectionLock;
 
 		TBool iTracking;
 

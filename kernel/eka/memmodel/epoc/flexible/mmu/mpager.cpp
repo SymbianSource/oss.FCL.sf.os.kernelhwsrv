@@ -27,14 +27,14 @@
 #include "mpagearray.h"
 #include "mswap.h"
 #include "mthrash.h"
+#include "mpagecleaner.h"
+
 #include "cache_maintenance.inl"
 
 
 const TUint16 KDefaultYoungOldRatio = 3;
 const TUint16 KDefaultMinPages = 256;
-#ifdef _USE_OLDEST_LISTS
 const TUint16 KDefaultOldOldestRatio = 3;
-#endif
 
 const TUint KMinOldPages = 1;
 
@@ -43,21 +43,39 @@ const TUint KMinOldPages = 1;
 */
 const TUint	KAbsoluteMaxPageCount = (1u<<(32-KPageShift))-1u;
 
+/*
+Limit the maximum number of oldest pages to bound the time taken by SelectPagesToClean(), which is
+called with the MmuLock held.
+*/
+const TUint KMaxOldestPages = 32;
 
+static DMutex* ThePageCleaningLock = NULL;
 
 DPager ThePager;
 
 
 DPager::DPager()
 	: iMinimumPageCount(0), iMaximumPageCount(0), iYoungOldRatio(0),
-	  iYoungCount(0),iOldCount(0),iNumberOfFreePages(0)
+	  iYoungCount(0), iOldCount(0), iOldestCleanCount(0),
+	  iNumberOfFreePages(0), iReservePageCount(0), iMinimumPageLimit(0)
+#ifdef __DEMAND_PAGING_BENCHMARKS__
+	, iBenchmarkLock(TSpinLock::EOrderGenericIrqHigh3)
+#endif	  
 	{
 	}
 
 
-void DPager::Init2()
+void DPager::InitCache()
 	{
-	TRACEB(("DPager::Init2()"));
+	//
+	// This routine doesn't acquire any mutexes because it should be called before the system
+	// is fully up and running. I.e. called before another thread can preempt this.
+	//
+	TRACEB(("DPager::InitCache()"));
+	// If any pages have been reserved then they will have already been allocated and 
+	// therefore should be counted as part of iMinimumPageCount.
+	__NK_ASSERT_DEBUG(iReservePageCount == iMinimumPageCount);
+	__NK_ASSERT_DEBUG(!CacheInitialised());
 
 #if defined(__CPU_ARM)
 
@@ -90,13 +108,8 @@ void DPager::Init2()
 
 #ifdef __SMP__
 	// Adjust min page count so that all CPUs are guaranteed to make progress.
-	// NOTE: Can't use NKern::NumberOfCpus here because we haven't finished booting yet and will
-	// always have only one CPU running at this point...
-
-	// TODO: Before we can enable this the base test configuration needs
-	// updating to have a sufficient minimum page size...
-	//
-	// iMinYoungPages *= KMaxCpus;
+	TInt numberOfCpus = NKern::NumberOfCpus();
+	iMinYoungPages *= numberOfCpus;
 #endif
 
 	// A minimum young/old ratio of 1 means that we need at least twice iMinYoungPages pages...
@@ -104,85 +117,83 @@ void DPager::Init2()
 
 	__NK_ASSERT_DEBUG(KMinOldPages<=iAbsoluteMinPageCount/2);
 
-	// initialise live list...
-	TUint minimumPageCount = 0;
-	TUint maximumPageCount = 0;
-
+	// Read any paging config data.
 	SDemandPagingConfig config = TheRomHeader().iDemandPagingConfig;
 
-	iMinimumPageCount = KDefaultMinPages;
-	if(minimumPageCount)
-		iMinimumPageCount = minimumPageCount;
+	// Set the list ratios...
+	iYoungOldRatio = KDefaultYoungOldRatio;
+	if(config.iYoungOldRatio)
+		iYoungOldRatio = config.iYoungOldRatio;
+	iOldOldestRatio = KDefaultOldOldestRatio;
+	if(config.iSpare[2])
+		iOldOldestRatio = config.iSpare[2];
+
+	// Set the minimum page counts...
+	iMinimumPageLimit = iMinYoungPages * (1 + iYoungOldRatio) / iYoungOldRatio
+									   + DPageReadRequest::ReservedPagesRequired();
+	
+	if(iMinimumPageLimit < iAbsoluteMinPageCount)
+		iMinimumPageLimit = iAbsoluteMinPageCount;
+
+	if (K::MemModelAttributes & (EMemModelAttrRomPaging | EMemModelAttrCodePaging | EMemModelAttrDataPaging))
+	    iMinimumPageCount = KDefaultMinPages; 
+	else
+		{// No paging is enabled so set the minimum cache size to the minimum
+		// allowable with the current young old ratio.
+	    iMinimumPageCount = iMinYoungPages * (iYoungOldRatio + 1);
+		}
+
 	if(config.iMinPages)
 		iMinimumPageCount = config.iMinPages;
-	if(iMinimumPageCount<iAbsoluteMinPageCount)
+	if(iMinimumPageCount < iAbsoluteMinPageCount)
 		iMinimumPageCount = iAbsoluteMinPageCount;
+	if (iMinimumPageLimit + iReservePageCount > iMinimumPageCount)
+		iMinimumPageCount = iMinimumPageLimit + iReservePageCount;
+
 	iInitMinimumPageCount = iMinimumPageCount;
 
+	// Set the maximum page counts...
 	iMaximumPageCount = KMaxTInt;
-	if(maximumPageCount)
-		iMaximumPageCount = maximumPageCount;
 	if(config.iMaxPages)
 		iMaximumPageCount = config.iMaxPages;
 	if (iMaximumPageCount > KAbsoluteMaxPageCount)
 		iMaximumPageCount = KAbsoluteMaxPageCount;
 	iInitMaximumPageCount = iMaximumPageCount;
 
-	iYoungOldRatio = KDefaultYoungOldRatio;
-	if(config.iYoungOldRatio)
-		iYoungOldRatio = config.iYoungOldRatio;
-	TInt ratioLimit = (iMinimumPageCount-KMinOldPages)/KMinOldPages;
-	if(iYoungOldRatio>ratioLimit)
-		iYoungOldRatio = ratioLimit;
+	TRACEB(("DPager::InitCache() live list min=%d max=%d ratio=%d",iMinimumPageCount,iMaximumPageCount,iYoungOldRatio));
 
-#ifdef _USE_OLDEST_LISTS
-	iOldOldestRatio = KDefaultOldOldestRatio;
-	if(config.iSpare[2])
-		iOldOldestRatio = config.iSpare[2];
-#endif
-
-	iMinimumPageLimit = (iMinYoungPages * (1 + iYoungOldRatio)) / iYoungOldRatio;
-	if(iMinimumPageLimit<iAbsoluteMinPageCount)
-		iMinimumPageLimit = iAbsoluteMinPageCount;
-
-	TRACEB(("DPager::Init2() live list min=%d max=%d ratio=%d",iMinimumPageCount,iMaximumPageCount,iYoungOldRatio));
-
-	if(iMaximumPageCount<iMinimumPageCount)
-		__NK_ASSERT_ALWAYS(0);
-
-	//
-	// This routine doesn't acquire any mutexes because it should be called before the system
-	// is fully up and running. I.e. called before another thread can preempt this.
-	//
-
-	// Calculate page counts
+	// Verify the page counts are valid.
+	__NK_ASSERT_ALWAYS(iMaximumPageCount >= iMinimumPageCount);
 	TUint minOldAndOldest = iMinimumPageCount / (1 + iYoungOldRatio);
-	if(minOldAndOldest < KMinOldPages)
-		__NK_ASSERT_ALWAYS(0);
-	if (iMinimumPageCount < minOldAndOldest)
-		__NK_ASSERT_ALWAYS(0);
+	__NK_ASSERT_ALWAYS(minOldAndOldest >= KMinOldPages);
+	__NK_ASSERT_ALWAYS(iMinimumPageCount >= minOldAndOldest);
+
+	// Need at least iMinYoungPages pages mapped to execute worst case CPU instruction
 	TUint minYoung = iMinimumPageCount - minOldAndOldest;
-	if(minYoung < iMinYoungPages)
-		__NK_ASSERT_ALWAYS(0); // Need at least iMinYoungPages pages mapped to execute worst case CPU instruction
-#ifdef _USE_OLDEST_LISTS
+	__NK_ASSERT_ALWAYS(minYoung >= iMinYoungPages);
+
+	// Verify that the young old ratio can be met even when there is only the 
+	// minimum number of old pages.
+	TInt ratioLimit = (iMinimumPageCount-KMinOldPages)/KMinOldPages;
+	__NK_ASSERT_ALWAYS(iYoungOldRatio <= ratioLimit);
+
 	// There should always be enough old pages to allow the oldest lists ratio.
 	TUint oldestCount = minOldAndOldest / (1 + iOldOldestRatio);
-	if (!oldestCount)
-		__NK_ASSERT_ALWAYS(0);
-#endif
+	__NK_ASSERT_ALWAYS(oldestCount);
+
 	iNumberOfFreePages = 0;
 	iNumberOfDirtyPages = 0;
 
-	// Allocate RAM pages and put them all on the old list
+	// Allocate RAM pages and put them all on the old list.
+	// Reserved pages have already been allocated and already placed on the
+	// old list so don't allocate them again.
 	RamAllocLock::Lock();
 	iYoungCount = 0;
 	iOldCount = 0;
-#ifdef _USE_OLDEST_LISTS
-	iOldestCleanCount = 0;
 	iOldestDirtyCount = 0;
-#endif
+	__NK_ASSERT_DEBUG(iOldestCleanCount == iReservePageCount);
 	Mmu& m = TheMmu;
-	for(TUint i=0; i<iMinimumPageCount; i++)
+	for(TUint i = iReservePageCount; i < iMinimumPageCount; i++)
 		{
 		// Allocate a single page
 		TPhysAddr pagePhys;
@@ -197,11 +208,8 @@ void DPager::Init2()
 		}
 	RamAllocLock::Unlock();
 
-#ifdef _USE_OLDEST_LISTS
-	TRACEB(("DPager::Init2() end with young=%d old=%d oldClean=%d oldDirty=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iOldestCleanCount,iOldestDirtyCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
-#else
-	TRACEB(("DPager::Init2() end with young=%d old=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
-#endif
+	__NK_ASSERT_DEBUG(CacheInitialised());
+	TRACEB(("DPager::InitCache() end with young=%d old=%d oldClean=%d oldDirty=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iOldestCleanCount,iOldestDirtyCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
 	}
 
 
@@ -290,15 +298,9 @@ void DPager::AddAsFreePage(SPageInfo* aPageInfo)
 	__NK_ASSERT_DEBUG(aPageInfo->PagedState()==SPageInfo::EUnpaged);
 
 	// add as oldest page...
-#ifdef _USE_OLDEST_LISTS
 	aPageInfo->SetPagedState(SPageInfo::EPagedOldestClean);
 	iOldestCleanList.Add(&aPageInfo->iLink);
 	++iOldestCleanCount;
-#else
-	aPageInfo->SetPagedState(SPageInfo::EPagedOld);
-	iOldList.Add(&aPageInfo->iLink);
-	++iOldCount;
-#endif
 
 	Event(EEventPageInFree,aPageInfo);
 	}
@@ -326,7 +328,6 @@ TInt DPager::PageFreed(SPageInfo* aPageInfo)
 		--iOldCount;
 		break;
 
-#ifdef _USE_OLDEST_LISTS
 	case SPageInfo::EPagedOldestClean:
 		__NK_ASSERT_DEBUG(iOldestCleanCount);
 		aPageInfo->iLink.Deque();
@@ -338,7 +339,6 @@ TInt DPager::PageFreed(SPageInfo* aPageInfo)
 		aPageInfo->iLink.Deque();
 		--iOldestDirtyCount;
 		break;
-#endif
 
 	case SPageInfo::EPagedPinned:
 		// this can occur if a pinned mapping is being unmapped when memory is decommitted.
@@ -361,18 +361,15 @@ TInt DPager::PageFreed(SPageInfo* aPageInfo)
 
 	// Update the dirty page count as required...
 	if (aPageInfo->IsDirty())
+		{
+		aPageInfo->SetReadOnly();
 		SetClean(*aPageInfo);
+		}
 
 	// add as oldest page...
-#ifdef _USE_OLDEST_LISTS
 	aPageInfo->SetPagedState(SPageInfo::EPagedOldestClean);
 	iOldestCleanList.Add(&aPageInfo->iLink);
 	++iOldestCleanCount;
-#else
-	aPageInfo->SetPagedState(SPageInfo::EPagedOld);
-	iOldList.Add(&aPageInfo->iLink);
-	++iOldCount;
-#endif
 
 	return KErrNone;
 	}
@@ -399,7 +396,6 @@ void DPager::RemovePage(SPageInfo* aPageInfo)
 		--iOldCount;
 		break;
 
-#ifdef _USE_OLDEST_LISTS
 	case SPageInfo::EPagedOldestClean:
 		__NK_ASSERT_DEBUG(iOldestCleanCount);
 		aPageInfo->iLink.Deque();
@@ -411,7 +407,6 @@ void DPager::RemovePage(SPageInfo* aPageInfo)
 		aPageInfo->iLink.Deque();
 		--iOldestDirtyCount;
 		break;
-#endif
 
 	case SPageInfo::EPagedPinned:
 		__NK_ASSERT_DEBUG(0);
@@ -482,52 +477,253 @@ void DPager::ReplacePage(SPageInfo& aOldPageInfo, SPageInfo& aNewPageInfo)
 	}
 
 
-SPageInfo* DPager::StealOldestPage()
+TInt DPager::TryStealOldestPage(SPageInfo*& aPageInfoOut)
 	{
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 
+	// find oldest page in list...
+	SDblQueLink* link;
+	if (iOldestCleanCount)
+		{
+		__NK_ASSERT_DEBUG(!iOldestCleanList.IsEmpty());
+		link = iOldestCleanList.Last();
+		}
+	else if (iOldestDirtyCount)
+		{
+		__NK_ASSERT_DEBUG(!iOldestDirtyList.IsEmpty());
+		link = iOldestDirtyList.Last();
+		}
+	else if (iOldCount)
+		{
+		__NK_ASSERT_DEBUG(!iOldList.IsEmpty());
+		link = iOldList.Last();
+		}
+	else
+		{
+		__NK_ASSERT_DEBUG(iYoungCount);
+		__NK_ASSERT_ALWAYS(!iYoungList.IsEmpty());
+		link = iYoungList.Last();
+		}
+	SPageInfo* pageInfo = SPageInfo::FromLink(link);
+
+	if (pageInfo->IsDirty() && !PageCleaningLock::IsHeld())
+		return 1;
+
+	// try to steal it from owning object...
+	TInt r = StealPage(pageInfo);	
+	if (r == KErrNone)
+		{
+		BalanceAges();
+		aPageInfoOut = pageInfo;
+		}
+	
+	return r;
+	}
+
+
+SPageInfo* DPager::StealOldestPage()
+	{
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+	TBool pageCleaningLockHeld = EFalse;
 	for(;;)
 		{
-		// find oldest page in list...
-		SDblQueLink* link;
-#ifdef _USE_OLDEST_LISTS
-		if (iOldestCleanCount)
+		SPageInfo* pageInfo = NULL;
+		TInt r = TryStealOldestPage(pageInfo);
+		
+		if (r == KErrNone)
 			{
-			__NK_ASSERT_DEBUG(!iOldestCleanList.IsEmpty());
-			link = iOldestCleanList.Last();
+			if (pageCleaningLockHeld)
+				{
+				MmuLock::Unlock();
+				PageCleaningLock::Unlock();
+				MmuLock::Lock();
+				}
+			return pageInfo;
 			}
-		else if (iOldestDirtyCount)
+		else if (r == 1)
 			{
-			__NK_ASSERT_DEBUG(!iOldestDirtyList.IsEmpty());
-			link = iOldestDirtyList.Last();
+			__NK_ASSERT_ALWAYS(!pageCleaningLockHeld);
+			MmuLock::Unlock();
+			PageCleaningLock::Lock();
+			MmuLock::Lock();
+			pageCleaningLockHeld = ETrue;
 			}
-		else if (iOldCount)
-#else
-		if (iOldCount)
-#endif
-			{
-			__NK_ASSERT_DEBUG(!iOldList.IsEmpty());
-			link = iOldList.Last();
-			}
-		else
-			{
-			__NK_ASSERT_DEBUG(iYoungCount);
-			__NK_ASSERT_ALWAYS(!iYoungList.IsEmpty());
-			link = iYoungList.Last();
-			}
-		SPageInfo* pageInfo = SPageInfo::FromLink(link);
-
-		// steal it from owning object...
-		TInt r = StealPage(pageInfo);
-
-		BalanceAges();
-
-		if(r==KErrNone)
-			return pageInfo; // done
-
-		// loop back and try again
+		// else retry...
 		}
+	}
+
+#ifdef __CPU_CACHE_HAS_COLOUR
+
+template <class T, TInt maxObjects> class TSequentialColourSelector
+	{
+public:
+	static const TInt KMaxLength = maxObjects;
+	static const TInt KArrayLength = _ALIGN_UP(KMaxLength, KPageColourCount);
+	
+	FORCE_INLINE TSequentialColourSelector()
+		{
+		memclr(this, sizeof(*this));
+		}
+
+	FORCE_INLINE TBool FoundLongestSequence()
+		{
+		return iLongestLength >= KMaxLength;
+		}
+
+	FORCE_INLINE void AddCandidate(T* aObject, TInt aColour)
+		{
+		// allocate objects to slots based on colour
+		for (TInt i = aColour ; i < KArrayLength ; i += KPageColourCount)
+			{
+			if (!iSlot[i])
+				{
+				iSlot[i] = aObject;
+				iSeqLength[i] = i == 0 ? 1 : iSeqLength[i - 1] + 1;
+				TInt j = i + 1;
+				while(j < KArrayLength && iSeqLength[j])
+					iSeqLength[j++] += iSeqLength[i];
+				TInt currentLength = iSeqLength[j - 1];
+				if (currentLength > iLongestLength)
+					{
+					iLongestLength = currentLength;
+					iLongestStart = j - currentLength;
+					}
+				break;
+				}
+			}
+		}
+
+	FORCE_INLINE TInt FindLongestRun(T** aObjectsOut)
+		{
+		if (iLongestLength == 0)
+			return 0;
+
+		if (iLongestLength < KMaxLength && iSlot[0] && iSlot[KArrayLength - 1])
+			{
+			// check possibility of wrapping
+
+			TInt i = 1;
+			while (iSlot[i]) ++i;  // find first hole
+			TInt wrappedLength = iSeqLength[KArrayLength - 1] + iSeqLength[i - 1];
+			if (wrappedLength > iLongestLength)
+				{
+				iLongestLength = wrappedLength;
+				iLongestStart = KArrayLength - iSeqLength[KArrayLength - 1];
+				}
+			}		
+
+		iLongestLength = Min(iLongestLength, KMaxLength);
+
+		__NK_ASSERT_DEBUG(iLongestStart >= 0 && iLongestStart < KArrayLength);
+		__NK_ASSERT_DEBUG(iLongestStart + iLongestLength < 2 * KArrayLength);
+
+		TInt len = Min(iLongestLength, KArrayLength - iLongestStart);
+		wordmove(aObjectsOut, &iSlot[iLongestStart], len * sizeof(T*));
+		wordmove(aObjectsOut + len, &iSlot[0], (iLongestLength - len) * sizeof(T*));
+		
+		return iLongestLength;
+		}
+
+private:
+	T* iSlot[KArrayLength];
+	TInt8 iSeqLength[KArrayLength];
+	TInt iLongestStart;
+	TInt iLongestLength;
+	};
+
+TInt DPager::SelectPagesToClean(SPageInfo** aPageInfosOut)
+	{
+	// select up to KMaxPagesToClean oldest dirty pages with sequential page colours
+	
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+
+	TSequentialColourSelector<SPageInfo, KMaxPagesToClean> selector;
+
+	SDblQueLink* link = iOldestDirtyList.Last();
+	while (link != &iOldestDirtyList.iA)
+		{
+		SPageInfo* pi = SPageInfo::FromLink(link);
+		if (!pi->IsWritable())  
+			{
+			// the page may be in the process of being restricted, stolen or decommitted, but don't
+			// check for this as it will occur infrequently and will be detected by CheckModified
+			// anyway
+			TInt colour = pi->Index() & KPageColourMask;
+			selector.AddCandidate(pi, colour);
+			if (selector.FoundLongestSequence())
+				break;
+			}
+		link = link->iPrev;
+		}
+	
+	return selector.FindLongestRun(aPageInfosOut);
+	}
+
+#else
+
+TInt DPager::SelectPagesToClean(SPageInfo** aPageInfosOut)
+	{
+	// no page colouring restrictions, so just take up to KMaxPagesToClean oldest dirty pages
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+	TInt pageCount = 0;
+	SDblQueLink* link = iOldestDirtyList.Last();
+	while (link != &iOldestDirtyList.iA && pageCount < KMaxPagesToClean)
+		{
+		SPageInfo* pi = SPageInfo::FromLink(link);
+		if (!pi->IsWritable())
+			{
+			// the page may be in the process of being restricted, stolen or decommitted, but don't
+			// check for this as it will occur infrequently and will be detected by CheckModified
+			// anyway
+			aPageInfosOut[pageCount++] = pi;
+			}
+		link = link->iPrev;
+		}
+	return pageCount;
+	}
+
+#endif
+
+
+TInt DPager::CleanSomePages(TBool aBackground)
+	{
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+	__NK_ASSERT_DEBUG(PageCleaningLock::IsHeld());
+	// ram alloc lock may or may not be held
+
+	SPageInfo* pageInfos[KMaxPagesToClean];
+	TInt pageCount = SelectPagesToClean(&pageInfos[0]);
+	
+	if (pageCount == 0)
+		return 0;
+	
+	TheDataPagedMemoryManager->CleanPages(pageCount, pageInfos, aBackground);
+
+	for (TInt i = 0 ; i < pageCount ; ++i)
+		{
+		SPageInfo* pi = pageInfos[i];
+		if (pi)
+			{
+			__NK_ASSERT_DEBUG(pi->PagedState() == SPageInfo::EPagedOldestDirty && iOldestDirtyCount);
+			__NK_ASSERT_DEBUG(!pi->IsDirty() && !pi->IsWritable());
+		
+			pi->iLink.Deque();
+			iOldestCleanList.AddHead(&pi->iLink);
+			--iOldestDirtyCount;
+			++iOldestCleanCount;
+			pi->SetPagedState(SPageInfo::EPagedOldestClean);
+			}
+		}
+
+	return pageCount;
+	}
+
+
+TBool DPager::HasPagesToClean()
+	{
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+	return iOldestDirtyCount > 0;
 	}
 
 
@@ -608,97 +804,144 @@ TInt DPager::StealPage(SPageInfo* aPageInfo)
 	}
 
 
+static TBool DiscardCanStealPage(SPageInfo* aOldPageInfo, TBool aBlockRest)
+	{
+ 	// If the page is pinned or if the page is dirty and a general defrag is being performed then
+	// don't attempt to steal it
+	return aOldPageInfo->Type() == SPageInfo::EUnused ||
+		(aOldPageInfo->PagedState() != SPageInfo::EPagedPinned && (!aBlockRest || !aOldPageInfo->IsDirty()));	
+	}
+
+
 TInt DPager::DiscardPage(SPageInfo* aOldPageInfo, TUint aBlockZoneId, TBool aBlockRest)
 	{
+	// todo: assert MmuLock not released
+	
+	TRACE(("> DPager::DiscardPage %08x", aOldPageInfo));
+	
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 
-	TInt r;
-	// If the page is pinned or if the page is dirty and a general defrag is being 
-	// performed then don't attempt to steal it.
-	if (aOldPageInfo->Type() != SPageInfo::EUnused && 
-		(aOldPageInfo->PagedState() == SPageInfo::EPagedPinned ||
-		(aBlockRest && aOldPageInfo->IsDirty())))
-		{// The page is pinned or is dirty and this is a general defrag so move the page.
+	if (!DiscardCanStealPage(aOldPageInfo, aBlockRest))
+		{
+		// The page is pinned or is dirty and this is a general defrag so move the page.
 		DMemoryObject* memory = aOldPageInfo->Owner();
 		// Page must be managed if it is pinned or dirty.
 		__NK_ASSERT_DEBUG(aOldPageInfo->Type()==SPageInfo::EManaged);
 		__NK_ASSERT_DEBUG(memory);
 		MmuLock::Unlock();
 		TPhysAddr newAddr;
-		return memory->iManager->MovePage(memory, aOldPageInfo, newAddr, aBlockZoneId, aBlockRest);
+		TRACE2(("DPager::DiscardPage delegating pinned/dirty page to manager"));
+		TInt r = memory->iManager->MovePage(memory, aOldPageInfo, newAddr, aBlockZoneId, aBlockRest);
+		TRACE(("< DPager::DiscardPage %d", r));
+		return r;
 		}
 
-	if (!iNumberOfFreePages)
+	TInt r = KErrNone;
+	SPageInfo* newPageInfo = NULL;
+	TBool havePageCleaningLock = EFalse;
+
+	TBool needNewPage;
+	TBool needPageCleaningLock;
+	while(needNewPage = (iNumberOfFreePages == 0 && newPageInfo == NULL),
+		  needPageCleaningLock = (aOldPageInfo->IsDirty() && !havePageCleaningLock),
+		  needNewPage || needPageCleaningLock)
 		{
-		// Allocate a new page for the live list as it has reached its minimum size.
 		MmuLock::Unlock();
-		SPageInfo* newPageInfo = GetPageFromSystem((Mmu::TRamAllocFlags)(EMemAttNormalCached|Mmu::EAllocNoWipe),
-													aBlockZoneId, aBlockRest);
-		 if (!newPageInfo)
-			return KErrNoMemory;
+
+		if (needNewPage)
+			{
+			// Allocate a new page for the live list as it has reached its minimum size.
+			TUint flags = EMemAttNormalCached | Mmu::EAllocNoWipe;
+			newPageInfo = GetPageFromSystem((Mmu::TRamAllocFlags)flags, aBlockZoneId, aBlockRest);
+			if (!newPageInfo)
+				{
+				TRACE(("< DPager::DiscardPage KErrNoMemory"));
+				r = KErrNoMemory;
+				MmuLock::Lock();
+				break;
+				}
+			}
+
+		if (needPageCleaningLock)
+			{
+			// Acquire the page cleaning mutex so StealPage can clean it
+			PageCleaningLock::Lock();
+			havePageCleaningLock = ETrue;
+			}
 
 		// Re-acquire the mmulock and re-check that the page is not pinned or dirty.
 		MmuLock::Lock();
-		if (aOldPageInfo->Type() != SPageInfo::EUnused && 
-			(aOldPageInfo->PagedState() == SPageInfo::EPagedPinned ||
-			(aBlockRest && aOldPageInfo->IsDirty())))
-			{// Page is now pinned or dirty so give up as it is inuse.
-			ReturnPageToSystem(*newPageInfo);
-			MmuLock::Unlock();
-			return KErrInUse;
-			}
-
-		// Attempt to steal the page
-		r = StealPage(aOldPageInfo);
-		__NK_ASSERT_DEBUG(MmuLock::IsHeld());
-
-		if (r == KErrCompletion)
-			{// This was a page table that has been freed but added to the 
-			// live list as a free page.  Remove from live list and continue.
-			__NK_ASSERT_DEBUG(!aOldPageInfo->IsDirty());
-			RemovePage(aOldPageInfo);
-			r = KErrNone;
-			}
-
-		if (r == KErrNone)
-			{// Add the new page to the live list as discarding the old page 
-			// will reduce the live list below the minimum.
-			AddAsFreePage(newPageInfo);
-			// We've successfully discarded the page so return it to the free pool.
-			ReturnPageToSystem(*aOldPageInfo);
-			BalanceAges();
-			}
-		 else
+		if (!DiscardCanStealPage(aOldPageInfo, aBlockRest))
 			{
-			// New page not required so just return it to the system.  This is safe as 
-			// iNumberOfFreePages will have this page counted but as it is not on the live list
-			// noone else can touch it.
-			ReturnPageToSystem(*newPageInfo);
+			// Page is now pinned or dirty so give up as it is in use.
+			r = KErrInUse;
+			break;
 			}
 		}
-	else
+
+	if (r == KErrNone)
 		{
 		// Attempt to steal the page
-		r = StealPage(aOldPageInfo);
+		r = StealPage(aOldPageInfo);  // temporarily releases MmuLock if page is dirty
+		}
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 
-		__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+	if (r == KErrCompletion)
+		{// This was a page table that has been freed but added to the 
+		// live list as a free page.  Remove from live list and continue.
+		__NK_ASSERT_DEBUG(!aOldPageInfo->IsDirty());
+		RemovePage(aOldPageInfo);
+		r = KErrNone;
+		}
 
-		if (r == KErrCompletion)
-			{// This was a page table that has been freed but added to the 
-			// live list as a free page.  Remove from live list.
-			__NK_ASSERT_DEBUG(!aOldPageInfo->IsDirty());
-			RemovePage(aOldPageInfo);
-			r = KErrNone;
+	if (r == KErrNone && iNumberOfFreePages == 0)
+		{
+		if (newPageInfo)
+			{
+			// Add a new page to the live list if we have one as discarding the old page will reduce
+			// the live list below the minimum.
+			AddAsFreePage(newPageInfo);
+			newPageInfo = NULL;
 			}
-
-		if (r == KErrNone)
-			{// We've successfully discarded the page so return it to the free pool.
-			ReturnPageToSystem(*aOldPageInfo);
-			BalanceAges();
+		else
+			{
+			// Otherwise the live list shrank when page was being cleaned so have to give up
+			AddAsFreePage(aOldPageInfo);
+			BalanceAges();                  // temporarily releases MmuLock
+			r = KErrInUse;
 			}
 		}
+
+	if (r == KErrNone)
+		{
+		// We've successfully discarded the page and ensured the live list is large enough, so
+		// return it to the free pool.
+		ReturnPageToSystem(*aOldPageInfo);  // temporarily releases MmuLock
+		BalanceAges();                      // temporarily releases MmuLock
+		}
+
+	if (newPageInfo)
+		{
+		// New page not required so just return it to the system.  This is safe as
+		// iNumberOfFreePages will have this page counted but as it is not on the live list noone
+		// else can touch it.
+		if (iNumberOfFreePages == 0)
+			AddAsFreePage(newPageInfo);
+		else
+			ReturnPageToSystem(*newPageInfo);   // temporarily releases MmuLock
+		}
+
+	if (havePageCleaningLock)
+		{
+		// Release the page cleaning mutex
+		MmuLock::Unlock();
+		PageCleaningLock::Unlock();
+		MmuLock::Lock();
+		}	
+	
 	MmuLock::Unlock();
+	TRACE(("< DPager::DiscardPage returns %d", r));
 	return r;	
 	}
 
@@ -754,6 +997,9 @@ void DPager::ReturnPageToSystem(SPageInfo& aPageInfo)
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 
+	// should be unpaged at this point, otherwise Mmu::FreeRam will just give it back to us
+	__NK_ASSERT_DEBUG(aPageInfo.PagedState() == SPageInfo::EUnpaged);
+
 	__NK_ASSERT_DEBUG(iNumberOfFreePages>0);
 	--iNumberOfFreePages;
 
@@ -768,28 +1014,22 @@ void DPager::ReturnPageToSystem(SPageInfo& aPageInfo)
 
 SPageInfo* DPager::PageInAllocPage(Mmu::TRamAllocFlags aAllocFlags)
 	{
+	TBool pageCleaningLockHeld = EFalse;
 	SPageInfo* pageInfo;
 	TPhysAddr pagePhys;
-
+	TInt r = KErrGeneral;
+	
 	RamAllocLock::Lock();
 	MmuLock::Lock();
 
+find_a_page:
 	// try getting a free page from our live list...
-#ifdef _USE_OLDEST_LISTS
 	if (iOldestCleanCount)
 		{
 		pageInfo = SPageInfo::FromLink(iOldestCleanList.Last());
 		if(pageInfo->Type()==SPageInfo::EUnused)
-			goto get_oldest;
+			goto try_steal_oldest_page;
 		}
-#else
-	if(iOldCount)
-		{
-		pageInfo = SPageInfo::FromLink(iOldList.Last());
-		if(pageInfo->Type()==SPageInfo::EUnused)
-			goto get_oldest;
-		}
-#endif
 
 	// try getting a free page from the system pool...
 	if(!HaveMaximumPages())
@@ -801,14 +1041,62 @@ SPageInfo* DPager::PageInAllocPage(Mmu::TRamAllocFlags aAllocFlags)
 		MmuLock::Lock();
 		}
 
+	// try stealing a clean page...
+	if (iOldestCleanCount)
+		goto try_steal_oldest_page;
+
+	// see if we can clean multiple dirty pages in one go...
+	if (KMaxPagesToClean > 1 && iOldestDirtyCount > 1)
+		{
+		// if we don't hold the page cleaning mutex then temporarily release ram alloc mutex and
+		// acquire page cleaning mutex; if we hold it already just proceed
+		if (!pageCleaningLockHeld)
+			{
+			MmuLock::Unlock();
+			RamAllocLock::Unlock();
+			PageCleaningLock::Lock();			
+			MmuLock::Lock();
+			}
+		
+		// there may be clean pages now if we've waited on the page cleaning mutex, if so don't
+		// bother cleaning but just restart
+		if (iOldestCleanCount == 0)
+			CleanSomePages(EFalse);
+		
+		if (!pageCleaningLockHeld)
+			{
+			MmuLock::Unlock();
+			PageCleaningLock::Unlock();			
+			RamAllocLock::Lock();
+			MmuLock::Lock();
+			}
+		
+		if (iOldestCleanCount > 0)
+			goto find_a_page;
+		}
+
 	// as a last resort, steal a page from the live list...
-get_oldest:
-#ifdef _USE_OLDEST_LISTS
+	
+try_steal_oldest_page:
 	__NK_ASSERT_ALWAYS(iOldestCleanCount|iOldestDirtyCount|iOldCount|iYoungCount);
-#else
-	__NK_ASSERT_ALWAYS(iOldCount|iYoungCount);
-#endif
-	pageInfo = StealOldestPage();
+	r = TryStealOldestPage(pageInfo);
+	// if this fails we restart whole process
+	if (r < KErrNone)
+		goto find_a_page;
+
+	// if we need to clean, acquire page cleaning mutex for life of this function
+	if (r == 1)
+		{
+		__NK_ASSERT_ALWAYS(!pageCleaningLockHeld);
+		MmuLock::Unlock();
+		PageCleaningLock::Lock();
+		MmuLock::Lock();
+		pageCleaningLockHeld = ETrue;
+		goto find_a_page;		
+		}
+
+	// otherwise we're done!
+	__NK_ASSERT_DEBUG(r == KErrNone);
 	MmuLock::Unlock();
 
 	// make page state same as a freshly allocated page...
@@ -816,7 +1104,10 @@ get_oldest:
 	TheMmu.PagesAllocated(&pagePhys,1,aAllocFlags);
 
 done:
+	if (pageCleaningLockHeld)
+		PageCleaningLock::Unlock();
 	RamAllocLock::Unlock();
+
 	return pageInfo;
 	}
 
@@ -873,10 +1164,8 @@ void DPager::DonatePages(TUint aCount, TPhysAddr* aPages)
 
 		case SPageInfo::EPagedYoung:
 		case SPageInfo::EPagedOld:
-#ifdef _USE_OLDEST_LISTS
 		case SPageInfo::EPagedOldestDirty:
 		case SPageInfo::EPagedOldestClean:
-#endif
 			continue; // discard already been allowed
 
 		case SPageInfo::EPagedPinned:
@@ -935,10 +1224,8 @@ TInt DPager::ReclaimPages(TUint aCount, TPhysAddr* aPages)
 
 		case SPageInfo::EPagedYoung:
 		case SPageInfo::EPagedOld:
-#ifdef _USE_OLDEST_LISTS
 		case SPageInfo::EPagedOldestClean:
 		case SPageInfo::EPagedOldestDirty:
-#endif
 			changeType = ETrue;
 			break; // remove from live list
 
@@ -1004,6 +1291,7 @@ void DPager::Init3()
 	TheCodePagedMemoryManager->Init3();
 	TInt r = Kern::AddHalEntry(EHalGroupVM, VMHalFunction, 0);
 	__NK_ASSERT_ALWAYS(r==KErrNone);
+	PageCleaningLock::Init();
 	}
 
 
@@ -1018,12 +1306,8 @@ void DPager::BalanceAges()
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	TBool restrictPage = EFalse;
 	SPageInfo* pageInfo = NULL;
-#ifdef _USE_OLDEST_LISTS
 	TUint oldestCount = iOldestCleanCount + iOldestDirtyCount;
 	if((iOldCount + oldestCount) * iYoungOldRatio < iYoungCount)
-#else
-	if (iOldCount * iYoungOldRatio < iYoungCount)
-#endif
 		{
 		// Need more old pages so make one young page into an old page...
 		__NK_ASSERT_DEBUG(!iYoungList.IsEmpty());
@@ -1042,9 +1326,9 @@ void DPager::BalanceAges()
 		restrictPage = ETrue;
 		}
 
-#ifdef _USE_OLDEST_LISTS
 	// Check we have enough oldest pages.
-	if (oldestCount * iOldOldestRatio < iOldCount)
+	if (oldestCount < KMaxOldestPages &&
+		oldestCount * iOldOldestRatio < iOldCount)
 		{
 		__NK_ASSERT_DEBUG(!iOldList.IsEmpty());
 		__NK_ASSERT_DEBUG(iOldCount);
@@ -1057,6 +1341,7 @@ void DPager::BalanceAges()
 			oldestPageInfo->SetPagedState(SPageInfo::EPagedOldestDirty);
 			iOldestDirtyList.AddHead(link);
 			++iOldestDirtyCount;
+			PageCleaner::NotifyPagesToClean();
 			Event(EEventPageAgedDirty,oldestPageInfo);
 			}
 		else
@@ -1067,7 +1352,7 @@ void DPager::BalanceAges()
 			Event(EEventPageAgedClean,oldestPageInfo);
 			}
 		}
-#endif
+
 	if (restrictPage)
 		{
 		// Make the recently aged old page inaccessible.  This is done last as it 
@@ -1102,10 +1387,8 @@ void DPager::RejuvenatePageTable(TPte* aPt)
 		{
 	case SPageInfo::EPagedYoung:
 	case SPageInfo::EPagedOld:
-#ifdef _USE_OLDEST_LISTS
 	case SPageInfo::EPagedOldestClean:
 	case SPageInfo::EPagedOldestDirty:
-#endif
 		RemovePage(pi);
 		AddAsYoungestPage(pi);
 		BalanceAges();
@@ -1124,6 +1407,7 @@ void DPager::RejuvenatePageTable(TPte* aPt)
 		break;
 		}
 	}
+
 
 TInt DPager::PteAndInfoFromLinAddr(	TInt aOsAsid, TLinAddr aAddress, DMemoryMappingBase* aMapping, 
 									TUint aMapInstanceCount, TPte*& aPte, SPageInfo*& aPageInfo)
@@ -1150,11 +1434,13 @@ TInt DPager::PteAndInfoFromLinAddr(	TInt aOsAsid, TLinAddr aAddress, DMemoryMapp
 	return KErrNone;
 	}
 
+
 TInt DPager::TryRejuvenate(	TInt aOsAsid, TLinAddr aAddress, TUint aAccessPermissions, TLinAddr aPc,
 							DMemoryMappingBase* aMapping, TUint aMapInstanceCount, DThread* aThread, 
 							TAny* aExceptionInfo)
 	{
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+	START_PAGING_BENCHMARK;
 
 	SPageInfo* pi;
 	TPte* pPte;
@@ -1250,12 +1536,8 @@ TInt DPager::TryRejuvenate(	TInt aOsAsid, TLinAddr aAddress, TUint aAccessPermis
 	Event(EEventPageRejuvenate,pi,aPc,aAddress,aAccessPermissions);
 
 	TBool balance = false;
-#ifdef _USE_OLDEST_LISTS
 	if(	state==SPageInfo::EPagedYoung || state==SPageInfo::EPagedOld || 
 		state==SPageInfo::EPagedOldestClean || state==SPageInfo::EPagedOldestDirty)
-#else
-	if(state==SPageInfo::EPagedYoung || state==SPageInfo::EPagedOld)
-#endif
 		{
 		RemovePage(pi);
 		AddAsYoungestPage(pi);
@@ -1276,6 +1558,7 @@ TInt DPager::TryRejuvenate(	TInt aOsAsid, TLinAddr aAddress, TUint aAccessPermis
 	if(balance)
 		BalanceAges();
 
+	END_PAGING_BENCHMARK(EPagingBmRejuvenate);
 	return KErrNone;
 	}
 
@@ -1307,10 +1590,8 @@ void DPager::PageInFreePages(TPhysAddr* aPages, TUint aCount)
 			{
 		case SPageInfo::EPagedYoung:
 		case SPageInfo::EPagedOld:
-#ifdef _USE_OLDEST_LISTS
 		case SPageInfo::EPagedOldestClean:
 		case SPageInfo::EPagedOldestDirty:
-#endif
 			RemovePage(pi);
 			// fall through...
 		case SPageInfo::EUnpaged:
@@ -1344,10 +1625,8 @@ void DPager::PagedIn(SPageInfo* aPageInfo)
 		{
 	case SPageInfo::EPagedYoung:
 	case SPageInfo::EPagedOld:
-#ifdef _USE_OLDEST_LISTS
 	case SPageInfo::EPagedOldestClean:
 	case SPageInfo::EPagedOldestDirty:
-#endif
 		RemovePage(aPageInfo);
 		AddAsYoungestPage(aPageInfo);
 		BalanceAges();
@@ -1404,7 +1683,6 @@ void DPager::Pin(SPageInfo* aPageInfo, TPinArgs& aPinArgs)
 		__NK_ASSERT_DEBUG(aPageInfo->PinCount()==1);
 		break;
 
-#ifdef _USE_OLDEST_LISTS
 	case SPageInfo::EPagedOldestClean:
 		__NK_ASSERT_DEBUG(iOldestCleanCount);
 		aPageInfo->iLink.Deque();
@@ -1418,7 +1696,6 @@ void DPager::Pin(SPageInfo* aPageInfo, TPinArgs& aPinArgs)
 		--iOldestDirtyCount;
 		__NK_ASSERT_DEBUG(aPageInfo->PinCount()==1);
 		break;
-#endif
 
 	case SPageInfo::EPagedPinned:
 		// nothing more to do...
@@ -1688,6 +1965,8 @@ TInt DPager::ResizeLiveList()
 TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 	{
 	TRACE(("DPager::ResizeLiveList(%d,%d) current young=%d old=%d min=%d free=%d max=%d",aMinimumPageCount,aMaximumPageCount,iYoungCount,iOldCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
+	__NK_ASSERT_DEBUG(CacheInitialised());
+
 	if(!aMaximumPageCount)
 		{
 		aMinimumPageCount = iInitMinimumPageCount;
@@ -1704,6 +1983,8 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 	RamAllocLock::Lock();
 
 	MmuLock::Lock();
+
+	__NK_ASSERT_ALWAYS(iYoungOldRatio!=0);
 
 	// Make sure aMinimumPageCount is not less than absolute minimum we can cope with...
 	iMinimumPageLimit = iMinYoungPages * (1 + iYoungOldRatio) / iYoungOldRatio
@@ -1789,6 +2070,7 @@ void DPager::FlushAll()
 	{
 	NKern::ThreadEnterCS();
 	RamAllocLock::Lock();
+	PageCleaningLock::Lock();
 
 	TRACE(("DPager::FlushAll() live list young=%d old=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
 
@@ -1811,12 +2093,8 @@ void DPager::FlushAll()
 			do
 				{
 				SPageInfo::TPagedState state = pi->PagedState();
-#ifdef _USE_OLDEST_LISTS
 				if (state==SPageInfo::EPagedYoung || state==SPageInfo::EPagedOld ||
 					state==SPageInfo::EPagedOldestClean || state==SPageInfo::EPagedOldestDirty)
-#else
-				if(state==SPageInfo::EPagedYoung || state==SPageInfo::EPagedOld)
-#endif
 					{
 					if (pi->Type() != SPageInfo::EUnused)
 						{
@@ -1842,6 +2120,7 @@ void DPager::FlushAll()
 
 	TRACE(("DPager::FlushAll() end with young=%d old=%d min=%d free=%d max=%d",iYoungCount,iOldCount,iMinimumPageCount,iNumberOfFreePages,iMaximumPageCount));
 
+	PageCleaningLock::Unlock();
 	RamAllocLock::Unlock();
 	NKern::ThreadLeaveCS();
 	}
@@ -2016,9 +2295,8 @@ TInt VMHalFunction(TAny*, TInt aFunction, TAny* a1, TAny* a2)
 		TUint index = (TInt) a1;
 		if (index >= EMaxPagingBm)
 			return KErrNotFound;
-		NKern::LockSystem();
-		SPagingBenchmarkInfo info = ThePager.iBenchmarkInfo[index];
-		NKern::UnlockSystem();
+		SPagingBenchmarkInfo info;
+		ThePager.ReadBenchmarkData((TPagingBenchmark)index, info);
 		kumemput32(a2,&info,sizeof(info));
 		}		
 		return KErrNone;
@@ -2028,9 +2306,7 @@ TInt VMHalFunction(TAny*, TInt aFunction, TAny* a1, TAny* a2)
 		TUint index = (TInt) a1;
 		if (index >= EMaxPagingBm)
 			return KErrNotFound;
-		NKern::LockSystem();
 		ThePager.ResetBenchmarkData((TPagingBenchmark)index);
-		NKern::UnlockSystem();
 		}
 		return KErrNone;
 #endif
@@ -2046,27 +2322,38 @@ TInt VMHalFunction(TAny*, TInt aFunction, TAny* a1, TAny* a2)
 void DPager::ResetBenchmarkData(TPagingBenchmark aBm)
     {
     SPagingBenchmarkInfo& info = iBenchmarkInfo[aBm];
+	__SPIN_LOCK_IRQ(iBenchmarkLock);
     info.iCount = 0;
     info.iTotalTime = 0;
     info.iMaxTime = 0;
     info.iMinTime = KMaxTInt;
+	__SPIN_UNLOCK_IRQ(iBenchmarkLock);
     }
  
-void DPager::RecordBenchmarkData(TPagingBenchmark aBm, TUint32 aStartTime, TUint32 aEndTime)
+void DPager::RecordBenchmarkData(TPagingBenchmark aBm, TUint32 aStartTime, TUint32 aEndTime, TUint aCount)
     {
     SPagingBenchmarkInfo& info = iBenchmarkInfo[aBm];
-    ++info.iCount;
 #if !defined(HIGH_RES_TIMER) || defined(HIGH_RES_TIMER_COUNTS_UP)
     TInt64 elapsed = aEndTime - aStartTime;
 #else
     TInt64 elapsed = aStartTime - aEndTime;
 #endif
+	__SPIN_LOCK_IRQ(iBenchmarkLock);
+    info.iCount +=  aCount;
     info.iTotalTime += elapsed;
     if (elapsed > info.iMaxTime)
         info.iMaxTime = elapsed;
     if (elapsed < info.iMinTime)
         info.iMinTime = elapsed;
+	__SPIN_UNLOCK_IRQ(iBenchmarkLock);
     }
+
+void DPager::ReadBenchmarkData(TPagingBenchmark aBm, SPagingBenchmarkInfo& aDataOut)
+	{
+	__SPIN_LOCK_IRQ(iBenchmarkLock);
+	aDataOut = iBenchmarkInfo[aBm];
+	__SPIN_UNLOCK_IRQ(iBenchmarkLock);
+	}
 
 #endif //__DEMAND_PAGING_BENCHMARKS__
 
@@ -2079,62 +2366,86 @@ void DPager::RecordBenchmarkData(TPagingBenchmark aBm, TUint32 aStartTime, TUint
 // DPagingRequest
 //
 
-DPagingRequest::DPagingRequest(DPagingRequestPool::TGroup& aPoolGroup)
-	: iPoolGroup(aPoolGroup), iUseRegionMemory(0), iUseRegionIndex(0), iUseRegionCount(0)
+DPagingRequest::DPagingRequest()
+	: iMutex(NULL), iUseRegionCount(0)
 	{
 	}
 
 
-FORCE_INLINE void DPagingRequest::SetUse(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
+void DPagingRequest::SetUseContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
 	{
 	__ASSERT_SYSTEM_LOCK;
-	iUseRegionMemory = aMemory;
-	iUseRegionIndex = aIndex;
+	__NK_ASSERT_DEBUG(iUseRegionCount == 0);
+	__NK_ASSERT_DEBUG(aCount > 0 && aCount <= EMaxPages);
+	for (TUint i = 0 ; i < aCount ; ++i)
+		{
+		iUseRegionMemory[i] = aMemory;
+		iUseRegionIndex[i] = aIndex + i;		
+		}
 	iUseRegionCount = aCount;
 	}
 
 
-TBool DPagingRequest::CheckUse(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
-	{
-	return aMemory==iUseRegionMemory
-		&& TUint(aIndex-iUseRegionIndex) < iUseRegionCount
-		&& TUint(iUseRegionCount-TUint(aIndex-iUseRegionIndex)) <= aCount;
-	}
-
-
-void DPagingRequest::Release()
-	{
-	NKern::LockSystem();
-	SetUse(0,0,0);
-	Signal();
-	}
-
-
-void DPagingRequest::Wait()
+void DPagingRequest::SetUseDiscontiguous(DMemoryObject** aMemory, TUint* aIndex, TUint aCount)
 	{
 	__ASSERT_SYSTEM_LOCK;
-	++iUsageCount;
-	TInt r = iMutex->Wait();
-	__NK_ASSERT_ALWAYS(r == KErrNone);
+	__NK_ASSERT_DEBUG(iUseRegionCount == 0);
+	__NK_ASSERT_DEBUG(aCount > 0 && aCount <= EMaxPages);
+	for (TUint i = 0 ; i < aCount ; ++i)
+		{
+		iUseRegionMemory[i] = aMemory[i];
+		iUseRegionIndex[i] = aIndex[i];
+		}
+	iUseRegionCount = aCount;
 	}
 
 
-void DPagingRequest::Signal()
+void DPagingRequest::ResetUse()
 	{
 	__ASSERT_SYSTEM_LOCK;
-	iPoolGroup.Signal(this);
+	__NK_ASSERT_DEBUG(iUseRegionCount > 0);
+	iUseRegionCount = 0;
 	}
 
 
-FORCE_INLINE TBool DPagingRequest::IsCollision(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
+TBool DPagingRequest::CheckUseContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
 	{
+	if (iUseRegionCount != aCount)
+		return EFalse;
+	for (TUint i = 0 ; i < iUseRegionCount ; ++i)
+		{
+		if (iUseRegionMemory[i] != aMemory || iUseRegionIndex[i] != aIndex + i)
+			return EFalse;
+		}
+	return ETrue;
+	}
+
+
+TBool DPagingRequest::CheckUseDiscontiguous(DMemoryObject** aMemory, TUint* aIndex, TUint aCount)
+	{
+	if (iUseRegionCount != aCount)
+		return EFalse;
+	for (TUint i = 0 ; i < iUseRegionCount ; ++i)
+		{
+		if (iUseRegionMemory[i] != aMemory[i] || iUseRegionIndex[i] != aIndex[i])
+			return EFalse;
+		}
+	return ETrue;
+	}
+
+
+ TBool DPagingRequest::IsCollisionContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
+	{
+	// note this could be optimised as most of the time we will be checking read/read collusions,
+	// both of which will be contiguous
 	__ASSERT_SYSTEM_LOCK;
-	DMemoryObject* memory = iUseRegionMemory;
-	TUint index = iUseRegionIndex;
-	TUint count = iUseRegionCount;
-	// note, this comparison would fail if either region includes page number KMaxTUint,
-	// but it isn't possible to create a memory object which is > KMaxTUint pages...
-	return memory == aMemory && index+count > aIndex && index < aIndex+aCount;
+	for (TUint i = 0 ; i < iUseRegionCount ; ++i)
+		{
+		if (iUseRegionMemory[i] == aMemory &&
+			TUint(iUseRegionIndex[i] - aIndex) < aCount)
+			return ETrue;
+		}
+	return EFalse;
 	}
 
 
@@ -2151,12 +2462,51 @@ void DPagingRequest::UnmapPages(TBool aIMBRequired)
 	iTempMapping.Unmap(aIMBRequired);
 	}
 
+//
+// DPoolPagingRequest
+//
+
+DPoolPagingRequest::DPoolPagingRequest(DPagingRequestPool::TGroup& aPoolGroup) :
+	iPoolGroup(aPoolGroup)
+	{
+	}
+
+
+void DPoolPagingRequest::Release()
+	{
+	NKern::LockSystem();
+	ResetUse();
+	Signal();
+	}
+
+
+void DPoolPagingRequest::Wait()
+	{
+	__ASSERT_SYSTEM_LOCK;
+	++iUsageCount;
+	TInt r = iMutex->Wait();
+	__NK_ASSERT_ALWAYS(r == KErrNone);
+	}
+
+
+void DPoolPagingRequest::Signal()
+	{
+	__ASSERT_SYSTEM_LOCK;
+	iPoolGroup.Signal(this);
+	}
 
 //
 // DPageReadRequest
 //
 
 TInt DPageReadRequest::iAllocNext = 0;
+
+DPageReadRequest::DPageReadRequest(DPagingRequestPool::TGroup& aPoolGroup) :
+	DPoolPagingRequest(aPoolGroup)
+	{
+	// allocate space for mapping pages whilst they're being loaded...
+	iTempMapping.Alloc(EMaxPages);
+	}
 
 TInt DPageReadRequest::Construct()
 	{
@@ -2168,9 +2518,6 @@ TInt DPageReadRequest::Construct()
 	TInt r = K::MutexCreate(iMutex, mutexName, NULL, EFalse, KMutexOrdPageIn);
 	if(r!=KErrNone)
 		return r;
-
-	// allocate space for mapping pages whilst they're being loaded...
-	iTempMapping.Alloc(EMaxPages);
 
 	// create memory buffer...
 	TUint bufferSize = EMaxPages+1;
@@ -2190,11 +2537,6 @@ TInt DPageReadRequest::Construct()
 		return r;
 	iBuffer = MM::MappingBase(bufferMapping);
 
-	// ensure there are enough young pages to cope with new request object...
-	r = ThePager.ResizeLiveList();
-	if(r!=KErrNone)
-		return r;
-
 	return r;
 	}
 
@@ -2203,23 +2545,20 @@ TInt DPageReadRequest::Construct()
 // DPageWriteRequest
 //
 
-TInt DPageWriteRequest::iAllocNext = 0;
 
-TInt DPageWriteRequest::Construct()
+DPageWriteRequest::DPageWriteRequest()
 	{
-	// allocate id and mutex...
-	TUint id = (TUint)__e32_atomic_add_ord32(&iAllocNext, 1);
-	_LIT(KLitPagingRequest,"PageWriteRequest-");
-	TBuf<sizeof("PageWriteRequest-")+10> mutexName(KLitPagingRequest);
-	mutexName.AppendNum(id);
-	TInt r = K::MutexCreate(iMutex, mutexName, NULL, EFalse, KMutexOrdPageOut);
-	if(r!=KErrNone)
-		return r;
-
+	iMutex = ThePageCleaningLock;
 	// allocate space for mapping pages whilst they're being loaded...
-	iTempMapping.Alloc(EMaxPages);
+	iTempMapping.Alloc(KMaxPagesToClean);
+	}
 
-	return r;
+
+void DPageWriteRequest::Release()
+	{
+	NKern::LockSystem();
+	ResetUse();
+	NKern::UnlockSystem();
 	}
 
 
@@ -2227,11 +2566,10 @@ TInt DPageWriteRequest::Construct()
 // DPagingRequestPool
 //
 
-DPagingRequestPool::DPagingRequestPool(TUint aNumPageReadRequest,TUint aNumPageWriteRequest)
-	: iPageReadRequests(aNumPageReadRequest), iPageWriteRequests(aNumPageWriteRequest)
+DPagingRequestPool::DPagingRequestPool(TUint aNumPageReadRequest, TBool aWriteRequest)
+	: iPageReadRequests(aNumPageReadRequest)
 	{
 	TUint i;
-
 	for(i=0; i<aNumPageReadRequest; ++i)
 		{
 		DPageReadRequest* req = new DPageReadRequest(iPageReadRequests);
@@ -2242,14 +2580,10 @@ DPagingRequestPool::DPagingRequestPool(TUint aNumPageReadRequest,TUint aNumPageW
 		iPageReadRequests.iFreeList.Add(req);
 		}
 
-	for(i=0; i<aNumPageWriteRequest; ++i)
+	if (aWriteRequest)
 		{
-		DPageWriteRequest* req = new DPageWriteRequest(iPageWriteRequests);
-		__NK_ASSERT_ALWAYS(req);
-		TInt r = req->Construct();
-		__NK_ASSERT_ALWAYS(r==KErrNone);
-		iPageWriteRequests.iRequests[i] = req;
-		iPageWriteRequests.iFreeList.Add(req);
+		iPageWriteRequest = new DPageWriteRequest();
+		__NK_ASSERT_ALWAYS(iPageWriteRequest);
 		}
 	}
 
@@ -2264,24 +2598,23 @@ DPageReadRequest* DPagingRequestPool::AcquirePageReadRequest(DMemoryObject* aMem
 	{
 	NKern::LockSystem();
 
-	DPagingRequest* req;
-
-	// if we collide with page write operation...
-	req = iPageWriteRequests.FindCollision(aMemory,aIndex,aCount);
-	if(req)
+	DPoolPagingRequest* req;
+	
+	// check for collision with existing write
+	if(iPageWriteRequest && iPageWriteRequest->IsCollisionContiguous(aMemory,aIndex,aCount))
 		{
-		// wait until write completes...
-		req->Wait();
-		req->Signal();
+		NKern::UnlockSystem();
+		PageCleaningLock::Lock();
+		PageCleaningLock::Unlock();
 		return 0; // caller expected to retry if needed
 		}
 
 	// get a request object to use...
 	req = iPageReadRequests.GetRequest(aMemory,aIndex,aCount);
 
-	// check no new requests collide with us...
-	if(iPageWriteRequests.FindCollision(aMemory,aIndex,aCount)
-		|| iPageReadRequests.FindCollision(aMemory,aIndex,aCount))
+	// check no new read or write requests collide with us...
+	if ((iPageWriteRequest && iPageWriteRequest->IsCollisionContiguous(aMemory,aIndex,aCount)) ||
+		iPageReadRequests.FindCollisionContiguous(aMemory,aIndex,aCount))
 		{
 		// another operation is colliding with this region, give up and retry...
 		req->Signal();
@@ -2289,61 +2622,57 @@ DPageReadRequest* DPagingRequestPool::AcquirePageReadRequest(DMemoryObject* aMem
 		}
 
 	// we have a request object which we can use...
-	req->SetUse(aMemory,aIndex,aCount);
+	req->SetUseContiguous(aMemory,aIndex,aCount);
 
 	NKern::UnlockSystem();
 	return (DPageReadRequest*)req;
 	}
 
 
-DPageWriteRequest* DPagingRequestPool::AcquirePageWriteRequest(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
+DPageWriteRequest* DPagingRequestPool::AcquirePageWriteRequest(DMemoryObject** aMemory, TUint* aIndex, TUint aCount)
 	{
+	__NK_ASSERT_DEBUG(iPageWriteRequest);
+	__NK_ASSERT_DEBUG(PageCleaningLock::IsHeld());
+
 	NKern::LockSystem();
 
-	DPagingRequest* req;
-
-	for(;;)
-		{
-		// get a request object to use...
-		req = iPageWriteRequests.GetRequest(aMemory,aIndex,aCount);
-
-		if(iPageWriteRequests.FindCollision(aMemory,aIndex,aCount))
-			{
-			// another write operation is colliding with this region, give up and retry...
-			req->Signal();
-			// Reacquire the system lock as Signal() above will release it.
-			NKern::LockSystem();
-			continue;
-			}
-
-		break;
-		}
-
-	// we have a request object which we can use...
-	req->SetUse(aMemory,aIndex,aCount);
-
+	// Collision with existing read requests is not possible here.  For a page to be read it must
+	// not be present, and for it to be written it must be present and dirty.  There is no way for a
+	// page to go between these states without an intervening read on an uninitialised (freshly
+	// committed) page, which will wait on the first read request.  In other words something like
+	// this:
+	//
+	//   read (blocks), decommit, re-commit, read (waits on mutex), write (now no pending reads!)
+	//
+	// Note that a read request can be outstanding and appear to collide with this write, but only
+	// in the case when the thread making the read has blocked just after acquiring the request but
+	// before it checks whether the read is still necessasry.  This makes it difficult to assert
+	// that no collisions take place.
+	
+	iPageWriteRequest->SetUseDiscontiguous(aMemory,aIndex,aCount);
 	NKern::UnlockSystem();
-	return (DPageWriteRequest*)req;
+	
+	return iPageWriteRequest;
 	}
 
 
 DPagingRequestPool::TGroup::TGroup(TUint aNumRequests)
 	{
 	iNumRequests = aNumRequests;
-	iRequests = new DPagingRequest*[aNumRequests];
+	iRequests = new DPoolPagingRequest*[aNumRequests];
 	__NK_ASSERT_ALWAYS(iRequests);
 	}
 
 
-DPagingRequest* DPagingRequestPool::TGroup::FindCollision(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
+DPoolPagingRequest* DPagingRequestPool::TGroup::FindCollisionContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
 	{
 	__ASSERT_SYSTEM_LOCK;
-	DPagingRequest** ptr = iRequests;
-	DPagingRequest** ptrEnd = ptr+iNumRequests;
+	DPoolPagingRequest** ptr = iRequests;
+	DPoolPagingRequest** ptrEnd = ptr+iNumRequests;
 	while(ptr<ptrEnd)
 		{
-		DPagingRequest* req = *ptr++;
-		if(req->IsCollision(aMemory,aIndex,aCount))
+		DPoolPagingRequest* req = *ptr++;
+		if(req->IsCollisionContiguous(aMemory,aIndex,aCount))
 			return req;
 		}
 	return 0;
@@ -2352,16 +2681,16 @@ DPagingRequest* DPagingRequestPool::TGroup::FindCollision(DMemoryObject* aMemory
 
 static TUint32 RandomSeed = 33333;
 
-DPagingRequest* DPagingRequestPool::TGroup::GetRequest(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
+DPoolPagingRequest* DPagingRequestPool::TGroup::GetRequest(DMemoryObject* aMemory, TUint aIndex, TUint aCount)
 	{
 	__NK_ASSERT_DEBUG(iNumRequests > 0);
 
 	// try using an existing request which collides with this region...
-	DPagingRequest* req  = FindCollision(aMemory,aIndex,aCount);
+	DPoolPagingRequest* req  = FindCollisionContiguous(aMemory,aIndex,aCount);
 	if(!req)
 		{
 		// use a free request...
-		req = (DPagingRequest*)iFreeList.GetFirst();
+		req = (DPoolPagingRequest*)iFreeList.GetFirst();
 		if(req)
 			{
 			// free requests aren't being used...
@@ -2384,7 +2713,7 @@ DPagingRequest* DPagingRequestPool::TGroup::GetRequest(DMemoryObject* aMemory, T
 	}
 
 
-void DPagingRequestPool::TGroup::Signal(DPagingRequest* aRequest)
+void DPagingRequestPool::TGroup::Signal(DPoolPagingRequest* aRequest)
 	{
 	// if there are no threads waiting on the mutex then return it to the free pool...
 	__NK_ASSERT_DEBUG(aRequest->iUsageCount > 0);
@@ -2406,13 +2735,14 @@ EXPORT_C TInt Kern::InstallPagingDevice(DPagingDevice* aDevice)
 	{
 	TRACEB(("Kern::InstallPagingDevice(0x%08x) name='%s' type=%d",aDevice,aDevice->iName,aDevice->iType));
 
+	__NK_ASSERT_DEBUG(!ThePager.CacheInitialised());
 	__NK_ASSERT_ALWAYS(aDevice->iReadUnitShift <= KPageShift);
 
 	TInt r = KErrNotSupported;	// Will return this if unsupported device type is installed
 
 	// create the pools of page out and page in requests...
-	const TInt writeReqs = (aDevice->iType & DPagingDevice::EData) ? KPagingRequestsPerDevice : 0;
-	aDevice->iRequestPool = new DPagingRequestPool(KPagingRequestsPerDevice,writeReqs);
+	const TBool writeReq = (aDevice->iType & DPagingDevice::EData) != 0;
+	aDevice->iRequestPool = new DPagingRequestPool(KPagingRequestsPerDevice, writeReq);
 	if(!aDevice->iRequestPool)
 		{
 		r = KErrNoMemory;
@@ -2442,6 +2772,9 @@ EXPORT_C TInt Kern::InstallPagingDevice(DPagingDevice* aDevice)
 
  	if (K::MemModelAttributes & (EMemModelAttrRomPaging | EMemModelAttrCodePaging | EMemModelAttrDataPaging))
 		TheThrashMonitor.Start();
+	
+ 	if (K::MemModelAttributes & EMemModelAttrDataPaging)
+		PageCleaner::Start();
 
 exit:
 	TRACEB(("Kern::InstallPagingDevice returns %d",r));
@@ -2591,3 +2924,32 @@ EXPORT_C void DDemandPagingLock::DoUnlock()
 	}
 
 
+
+//
+// PageCleaningLock
+//
+
+_LIT(KLitPageCleaningLock,"PageCleaningLock");
+
+void PageCleaningLock::Init()
+	{
+	__NK_ASSERT_DEBUG(!ThePageCleaningLock);
+	TInt r = Kern::MutexCreate(ThePageCleaningLock, KLitPageCleaningLock, KMutexOrdPageOut);
+	__NK_ASSERT_ALWAYS(r == KErrNone);
+	}
+
+void PageCleaningLock::Lock()
+	{
+	Kern::MutexWait(*ThePageCleaningLock);
+	}
+
+
+void PageCleaningLock::Unlock()
+	{
+	Kern::MutexSignal(*ThePageCleaningLock);
+	}
+
+TBool PageCleaningLock::IsHeld()
+	{
+	return ThePageCleaningLock->iCleanup.iThread == &Kern::CurrentThread();
+	}

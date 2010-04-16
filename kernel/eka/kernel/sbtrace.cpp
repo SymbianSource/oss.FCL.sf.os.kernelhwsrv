@@ -445,6 +445,11 @@ TBool BTrace::IsSupported(TUint aCategory)
 		return ETrue;
 #endif
 
+#ifdef __SMP__
+	case EHSched:
+		return ETrue;
+#endif
+
 	default:
 		return aCategory>=128; // all categories >=128 are 'supported'
 		}

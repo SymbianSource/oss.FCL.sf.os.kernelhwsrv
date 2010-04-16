@@ -1041,4 +1041,16 @@ EXPORTS
 	DestroyKernelMapObject__4KernRP16TKernelMapObject @ 1040 NONAME R3UNUSED ; Kern::DestroyKernelMapObject(TKernelMapObject *&)
 	MapAndPinMemory__4KernP16TKernelMapObjectP7DThreadUlUiUiRUlPUl @ 1041 NONAME ; Kern::MapAndPinMemory(TKernelMapObject *, DThread *, unsigned long, unsigned int, unsigned int, unsigned long &, unsigned long *)
 	UnmapAndUnpinMemory__4KernP16TKernelMapObject @ 1042 NONAME R3UNUSED ; Kern::UnmapAndUnpinMemory(TKernelMapObject *)
+	AddTimingEntropy__9Interrupt @ 1043 NONAME R3UNUSED ; Interrupt::AddTimingEntropy(void)
+	RandomSalt__4KernUlUi @ 1044 NONAME R3UNUSED ; Kern::RandomSalt(unsigned long, unsigned int)
+	RandomSalt__4KernUxUi @ 1045 NONAME ; Kern::RandomSalt(unsigned long long, unsigned int)
+	RandomSalt__4KernPCUcUiUi @ 1046 NONAME R3UNUSED ; Kern::RandomSalt(unsigned char const *, unsigned int, unsigned int)
+	SecureRandom__4KernR5TDes8 @ 1047 NONAME R3UNUSED ; Kern::SecureRandom(TDes8 &)
+	NotificationLock__13DPagingDevice @ 1048 NONAME R3UNUSED ; DPagingDevice::NotificationLock(void)
+	Configure__13KernCoreStatsUi @ 1049 NONAME R3UNUSED ; KernCoreStats::Configure(unsigned int)
+	Engage__13KernCoreStatsi @ 1050 NONAME R3UNUSED ; KernCoreStats::Engage(int)
+	Retire__13KernCoreStatsii @ 1051 NONAME R3UNUSED ; KernCoreStats::Retire(int, int)
+	Stats__13KernCoreStatsPv @ 1052 NONAME R3UNUSED ; KernCoreStats::Stats(void *)
+	SetNumberOfActiveCpus__5NKerni @ 1053 NONAME
+	SetIdleHandler__3ArmPFPvUlPVv_vPv @ 1054 NONAME R3UNUSED ; Arm::SetIdleHandler(void (*)(void *, unsigned long, void volatile *), void *)
 

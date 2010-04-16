@@ -57,7 +57,7 @@ void TScsiClientModeSense6Resp::DecodeL(const TDesC8& aPtr)
         }
 
     TInt modeDataLength = aPtr[0];
-    if (aPtr.Length() - 1 < modeDataLength)
+    if (aPtr.Length() - 1 > modeDataLength)
         {
         User::Leave(KErrGeneral);
         }
@@ -121,8 +121,8 @@ void TScsiClientModeSense10Resp::DecodeL(const TDesC8& aPtr)
         User::Leave(KErrGeneral);
         }
     
-    TInt modeDataLength = BigEndian::Get32(&aPtr[0]);
-    if (aPtr.Length() - 2 < modeDataLength)
+    TInt modeDataLength = BigEndian::Get16(&aPtr[0]);
+    if (aPtr.Length() - 2 > modeDataLength)
         {
         User::Leave(KErrGeneral);
         }

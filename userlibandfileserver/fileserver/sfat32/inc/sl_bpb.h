@@ -30,7 +30,7 @@ typedef TFatSubType TFatType;
 const TInt KVolumeLabelSize			=11;    ///< Volume lable size
 const TInt KFileSysTypeSize			=8;     ///< File system type parameter size
 const TInt KVendorIdSize			=8;     ///< Vendor ID parameter size
-const TInt KBootSectorSignature		=0xAA55;///< File system Boot sector signiture
+const TUint16 KBootSectorSignature	=0xAA55;///< File system Boot sector signiture
 const TInt KFat16VolumeLabelPos 	=43;    ///< Position of volume lable in BPB for Fat12/16
 const TInt KFat32VolumeLabelPos		=71;    ///< Position of volume lable in BPB for Fat32
 const TInt KSizeOfFatBootSector     = 90;   ///< Size in bytes of Boot sector parameter block (BPB) 
@@ -57,23 +57,23 @@ public:
 	//-- simple getters / setters
     inline const TPtrC8 VendorId() const;
 	inline TUint16 BytesPerSector() const;
-	inline TInt SectorsPerCluster() const;
-	inline TInt ReservedSectors() const;
-	inline TInt NumberOfFats() const;
-	inline TInt RootDirEntries() const;
-	inline TInt TotalSectors() const;
+	inline TUint8 SectorsPerCluster() const;
+	inline TUint16 ReservedSectors() const;
+	inline TUint8 NumberOfFats() const;
+	inline TUint16 RootDirEntries() const;
+	inline TUint16 TotalSectors() const;
 	inline TUint8 MediaDescriptor() const;
-	inline TInt FatSectors() const;
-	inline TInt SectorsPerTrack() const;
-	inline TInt NumberOfHeads() const;
-	inline TInt HiddenSectors() const;
-	inline TInt HugeSectors() const;
-	inline TInt PhysicalDriveNumber() const;
-	inline TInt ExtendedBootSignature() const;
+	inline TUint16 FatSectors() const;
+	inline TUint16 SectorsPerTrack() const;
+	inline TUint16 NumberOfHeads() const;
+	inline TUint32 HiddenSectors() const;
+	inline TUint32 HugeSectors() const;
+	inline TUint8 PhysicalDriveNumber() const;
+	inline TUint8 ExtendedBootSignature() const;
 	inline TUint32 UniqueID() const;
 	inline const TPtrC8 VolumeLabel() const;
 	inline const TPtrC8 FileSysType() const;
-	inline TInt BootSectorSignature() const;
+	inline TUint16 BootSectorSignature() const;
 	inline TUint32 FatSectors32() const;	
 	inline TUint16 FATFlags() const;		
 	inline TUint16 VersionNumber() const;		
@@ -83,21 +83,21 @@ public:
 
 	inline void SetJumpInstruction();
 	inline void SetVendorID(const TDesC8& aDes);
-	inline void SetBytesPerSector(TInt aBytesPerSector);
-	inline void SetSectorsPerCluster(TInt aSectorsPerCluster);
-	inline void SetReservedSectors(TInt aReservedSectors);
-	inline void SetNumberOfFats(TInt aNumberOfFats);
-	inline void SetRootDirEntries(TInt aRootDirEntries);
-	inline void SetTotalSectors(TInt aTotalSectors);
+	inline void SetBytesPerSector(TUint16 aBytesPerSector);
+	inline void SetSectorsPerCluster(TUint aSectorsPerCluster);
+	inline void SetReservedSectors(TUint aReservedSectors);
+	inline void SetNumberOfFats(TUint8 aNumberOfFats);
+	inline void SetRootDirEntries(TUint16 aRootDirEntries);
+	inline void SetTotalSectors(TUint aTotalSectors);
 	inline void SetMediaDescriptor(TUint8 aMediaDescriptor);
-	inline void SetFatSectors(TInt aFatSectors);
-	inline void SetSectorsPerTrack(TInt aSectorsPerTrack);
-	inline void SetNumberOfHeads(TInt aNumberOfHeads);
+	inline void SetFatSectors(TUint aFatSectors);
+	inline void SetSectorsPerTrack(TUint16 aSectorsPerTrack);
+	inline void SetNumberOfHeads(TUint16 aNumberOfHeads);
 	inline void SetHiddenSectors(TUint32 aHiddenSectors);
 	inline void SetHugeSectors(TUint32 aTotalSectors);
 	inline void SetPhysicalDriveNumber(TInt aPhysicalDriveNumber);
 	inline void SetReservedByte(TUint8 aReservedByte);
-	inline void SetExtendedBootSignature(TInt anExtendedBootSignature);
+	inline void SetExtendedBootSignature(TUint8 anExtendedBootSignature);
 	inline void SetUniqueID(TUint32 anUniqueID);
 	inline void SetVolumeLabel(const TDesC8& aDes);
 	inline void SetFileSysType(const TDesC8& aDes);

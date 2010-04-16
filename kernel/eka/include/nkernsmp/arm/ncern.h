@@ -75,6 +75,27 @@ struct SArmAPBootInfo : public SAPBootInfo
 	TLinAddr	iInitR13Und;		// initial value for R13_und
 	};
 
+typedef void (*TDetachComplete)(void);
+
+struct SPerCpuUncached
+	{
+	volatile TUint32	iDetachCount;		// Number of times core has detached from SMP cluster
+	volatile TUint32	iAttachCount;		// Number of times core has reattached to SMP cluster
+	volatile TBool		iPowerOffReq;		// TRUE if core needs to be powered off
+	volatile TBool		iPowerOnReq;		// TRUE if core needs to be powered on
+	TDetachComplete		iDetachCompleteFn;	// idle handler jumps to this to request power down if necessary
+											// after cleaning and disabling caches, detaching from SMP cluster
+											// and saving state required to bring the core back up again
+	volatile TUint32	iDetachCompleteCpus;
+	};
+
+union UPerCpuUncached
+	{
+	SPerCpuUncached		iU;
+	volatile TUint64	i__Dummy[8];
+	};
+
+__ASSERT_COMPILE(sizeof(SPerCpuUncached) <= 8*sizeof(TUint64));
 
 /** Timer frequency specification
 
@@ -90,6 +111,18 @@ struct STimerMult
 	TUint32		iInverse;					// 2^24/(iFreq/2^32) = 2^56/iFreq
 	};
 
+/** Function to power up a CPU
+@publishedPartner
+@prototype
+*/
+typedef void (*TCpuPowerUpFn)(TInt aCpu, SPerCpuUncached* aU);
+
+/** Function to power down a CPU
+@publishedPartner
+@prototype
+*/
+typedef void (*TCpuPowerDownFn)(TInt aCpu, SPerCpuUncached* aU);
+
 /** Variant interface block
 @internalTechnology
 @prototype
@@ -104,8 +137,12 @@ struct SVariantInterfaceBlock : public SInterfaceBlockBase
 	TLinAddr	iGicDistAddr;				// address of GIC Distributor
 	TLinAddr	iGicCpuIfcAddr;				// address of GIC CPU interface (must be same for all CPUs)
 	TLinAddr	iLocalTimerAddr;			// address of per-CPU timer (must be same for all CPUs)
-	volatile STimerMult* iTimerMult[KMaxCpus];	// timer[i] frequency / iMaxTimerClock * 2^32
-	volatile TUint32* iCpuMult[KMaxCpus];	// CPU[i] frequency / iMaxCpuClock * 2^32
+	TLinAddr	iGlobalTimerAddr;			// address of global timer if it exists
+	volatile STimerMult*	iTimerMult[KMaxCpus];	// timer[i] frequency / iMaxTimerClock * 2^32
+	volatile TUint32*		iCpuMult[KMaxCpus];		// CPU[i] frequency / iMaxCpuClock * 2^32
+	UPerCpuUncached*		iUncached[KMaxCpus];	// Pointer to uncached memory for each CPU
+	TCpuPowerUpFn			iCpuPowerUpFn;			// function used to power up a retired CPU (NULL if core control not supported)
+	TCpuPowerDownFn			iCpuPowerDownFn;		// function used to power down a CPU (NULL if power down done within idle handler itself)
 	};
 
 // End of file

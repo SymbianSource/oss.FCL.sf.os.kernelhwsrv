@@ -1517,7 +1517,9 @@ TInt DSession::SendSync(TInt aHandle, TInt aFunction, const TInt* aPtr, TRequest
 	DSession* session = (DSession*)K::ObjectFromHandle(aHandle, ESession);
 	RMessageK* m = TheCurrentThread->iSyncMsgPtr;
 	__ASSERT_ALWAYS(m->IsFree(), K::PanicCurrentThread(ESyncMsgSentTwice));
-	return session->Send(m, aFunction, aPtr ? &msgArgs : NULL, aStatus);
+	TInt r = session->Send(m, aFunction, aPtr ? &msgArgs : NULL, aStatus);
+	NKern::YieldTimeslice();
+	return r;
 	}
 
 TInt DSession::Send(RMessageK* aMsg, TInt aFunction, const RMessageK::TMsgArgs* aArgs, TRequestStatus* aStatus)

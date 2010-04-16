@@ -1,3 +1,18 @@
+#
+# Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description: 
+#
 # component name "Kernel Architecture 2"
 
 component	base_e32
@@ -32,15 +47,15 @@ source	\sf\os\kernelhwsrv\kernel\eka\distribution.policy.s60
 binary	\sf\os\kernelhwsrv\kernel\eka all
 exports	\sf\os\kernelhwsrv\kernel\eka
 
--export_file \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec.zip     \epoc32\include\exec_enum.h
--export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec.zip     \epoc32\include\exec_user.h
--export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec.zip     \epoc32\include\kernel\exec_kernel.h
+-export_file \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec_hr.zip     \epoc32\include\platform\exec_enum.h
+-export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec_hr.zip     \epoc32\include\platform\exec_user.h
+-export_file  \sf\os\kernelhwsrv\kernel\eka\include\dummy_genexec_hr.zip     \epoc32\include\platform\kernel\exec_kernel.h
 
 notes_source	\component_defs\release.src
 
-binary \epoc32\include\exec_enum.h
-binary \epoc32\include\exec_user.h
-binary \epoc32\include\kernel\exec_kernel.h
+binary \epoc32\include\platform\exec_enum.h
+binary \epoc32\include\platform\exec_user.h
+binary \epoc32\include\platform\kernel\exec_kernel.h
 
 ipr D 
 ipr D \sf\os\kernelhwsrv\kernel\eka\include\memmodel\epoc\multiple\arm

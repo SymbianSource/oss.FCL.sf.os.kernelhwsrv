@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -243,9 +243,13 @@ TBool CScsiProtocol::DecodePacket(TPtrC8& aData, TUint aLun)
 			HandleInquiry(aData, aLun);
 			break;
 
-		case EModeSense:
-			HandleModeSense(aData, aLun);
+		case EModeSense6:
+			HandleModeSense6(aData, aLun);
 			break;
+
+        case EModeSense10:
+            HandleModeSense10(aData, aLun);
+            break;
 
 		case EStartStopUnit:
 			HandleStartStopUnit(aData, aLun);
@@ -1224,14 +1228,12 @@ Command Parser for the MODE SENSE(06) command (0x1A)
 
 @return ETrue if successful.
 */
-TBool CScsiProtocol::HandleModeSense(TPtrC8& aData, TUint aLun)
+TBool CScsiProtocol::HandleModeSense6(TPtrC8& aData, TUint aLun)
 	{
-	__FNLOG("CScsiProtocol::HandleModeSense");
+	__FNLOG("CScsiProtocol::HandleModeSense6");
 
 	TInt pageCode = aData[3] & 0x3F;
 	TUint8 pageControl= static_cast<TUint8>(aData[3] >>6);
-
-	// reserve 4 bytes for Length, Media type, Device-specific parameter and Block descriptor length
 
 	if (pageCode != KAllPages || pageControl == KChangeableValues) 
 		{
@@ -1240,9 +1242,10 @@ TBool CScsiProtocol::HandleModeSense(TPtrC8& aData, TUint aLun)
 		return EFalse;
 		}
 
+	// reserve 4 bytes for Length, Media type, Device-specific parameter and Block descriptor length
 	TPtr8 writeBuf(NULL, 0);
-	iTransport->GetCommandBufPtr(writeBuf, KModeSenseCommandLength);
-	writeBuf.FillZ(KModeSenseCommandLength);
+	iTransport->GetCommandBufPtr(writeBuf, KModeSense6CommandLength);
+	writeBuf.FillZ(KModeSense6CommandLength);
 
 	if (pageControl != KDefaultValues)
 		{
@@ -1277,5 +1280,65 @@ TBool CScsiProtocol::HandleModeSense(TPtrC8& aData, TUint aLun)
 
 	return (iSenseInfo.SenseOk());
 	}
+
+
+/**
+Command Parser for the MODE SENSE(10) command (0x5A)
+
+@return ETrue if successful.
+*/
+TBool CScsiProtocol::HandleModeSense10(TPtrC8& aData, TUint aLun)
+	{
+	__FNLOG("CScsiProtocol::HandleModeSense10");
+
+	TInt pageCode = aData[3] & 0x3F;
+	TUint8 pageControl= static_cast<TUint8>(aData[3] >>6);
+
+	if (pageCode != KAllPages || pageControl == KChangeableValues) 
+		{
+		__PRINT(_L("TSenseInfo::EIllegalRequest,TSenseInfo::EInvalidFieldInCdb"));
+		iSenseInfo.SetSense(TSenseInfo::EIllegalRequest,TSenseInfo::EInvalidFieldInCdb);
+		return EFalse;
+		}
+
+	// reserve 8 bytes for Length, Media type, Device-specific parameter and Block descriptor length
+	TPtr8 writeBuf(NULL, 0);
+	iTransport->GetCommandBufPtr(writeBuf, KModeSense10CommandLength);
+	writeBuf.FillZ(KModeSense10CommandLength);
+
+	if (pageControl != KDefaultValues)
+		{
+		//check if drive write protected
+		CMassStorageDrive* drive=GetCheckDrive(aLun);
+		if (drive == NULL)
+			{
+			__PRINT(_L("drive == null"));
+			return EFalse;
+			}
+
+		TLocalDriveCapsV4 driveInfo;
+		TInt err = drive->Caps(driveInfo);
+		if (err != KErrNone)
+			{
+			__PRINT(_L("TSenseInfo::ENotReady"));
+			iSenseInfo.SetSense(TSenseInfo::ENotReady, TSenseInfo::EMediaNotPresent);
+			return EFalse ;
+			}
+
+		if (driveInfo.iMediaAtt & KMediaAttWriteProtected)
+			{
+			writeBuf[3] = 1<<7;  // set SWP bit at the Device Specific parameters
+			}
+		}
+
+	writeBuf[1]=6;  //Sending only Mode parameter header
+
+	TPtrC8 writeBuf1 = writeBuf;
+
+	iTransport->SetupWriteData(writeBuf1);
+
+	return (iSenseInfo.SenseOk());
+	}
+
 
 

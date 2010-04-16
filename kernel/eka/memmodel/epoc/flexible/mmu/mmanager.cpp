@@ -108,12 +108,10 @@ TInt DMemoryManager::RestrictPage(DMemoryObject* /*aMemory*/, SPageInfo* /*aPage
 	}
 
 
-TInt DMemoryManager::CleanPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TPhysAddr*& /*aPageArrayEntry*/)
+void DMemoryManager::CleanPages(TUint aPageCount, SPageInfo** aPageInfos, TBool /*aBackground*/)
 	{
-	if(aPageInfo->IsDirty()==false)
-		return KErrNone;
-	__NK_ASSERT_DEBUG(0);
-	return KErrNotSupported;
+	for (TUint i = 0 ; i < aPageCount ; ++i)
+		__NK_ASSERT_DEBUG(!aPageInfos[i]->IsDirty());
 	}
 
 
@@ -1039,6 +1037,9 @@ TInt DDiscardableMemoryManager::StealPage(DMemoryObject* aMemory, SPageInfo* aPa
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	__UNLOCK_GUARD_START(MmuLock);
 
+	// must always hold the PageCleaningLock if the page needs to be cleaned
+	__NK_ASSERT_DEBUG(!aPageInfo->IsDirty() || PageCleaningLock::IsHeld());
+
 	TUint index = aPageInfo->Index();
 	TInt r;
 
@@ -1096,10 +1097,11 @@ TInt DDiscardableMemoryManager::StealPage(DMemoryObject* aMemory, SPageInfo* aPa
 			// page successfully unmapped...
 			aPageInfo->SetReadOnly(); // page not mapped, so must be read-only
 
-			// if the page can be made clean...
-			r = aMemory->iManager->CleanPage(aMemory,aPageInfo,p);
+			// attempt to clean the page if it is dirty...
+			if (aPageInfo->IsDirty())
+				aMemory->iManager->CleanPages(1, &aPageInfo, EFalse);
 
-			if(r==KErrNone)
+			if(aPageInfo)
 				{
 				// page successfully stolen...
 				__NK_ASSERT_DEBUG((*p^page)<(TUint)KPageSize); // sanity check, page should still be allocated to us
@@ -1111,13 +1113,10 @@ TInt DDiscardableMemoryManager::StealPage(DMemoryObject* aMemory, SPageInfo* aPa
 				__NK_ASSERT_ALWAYS((pagerInfo&(RPageArray::EFlagsMask|RPageArray::EStateMask)) == RPageArray::ENotPresent);
 
 				TheMmu.PageFreed(aPageInfo);
+				r = KErrNone;
 				}
 			else
-				{
-				// only legitimate reason for failing the clean is if the page state was changed
-				// by a page fault or by pinning, this should return KErrInUse...
-				__NK_ASSERT_DEBUG(r==KErrInUse);
-				}
+				r = KErrInUse;
 			}
 		}
 
@@ -2030,14 +2029,6 @@ TInt DPagedMemoryManager::AcquirePageWriteRequest(DPageWriteRequest*& aRequest, 
 	__NK_ASSERT_ALWAYS(0);
 	return KErrNotSupported;
 	}
-
-
-TInt DPagedMemoryManager::WritePages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages, DPageWriteRequest* aRequest)
-	{
-	__NK_ASSERT_ALWAYS(0);
-	return KErrNotSupported;
-	}
-
 TZonePageType DPagedMemoryManager::PageType()
 	{// Paged manager's pages should be discardable and will actaully be freed by 
 	// the pager so this value won't be used.

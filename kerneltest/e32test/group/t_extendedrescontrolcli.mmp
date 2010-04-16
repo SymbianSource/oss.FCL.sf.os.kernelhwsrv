@@ -25,7 +25,7 @@ OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 
 capability		all
-
+epocstacksize	0x8000
 vendorid 0x70000001
 
 start wins

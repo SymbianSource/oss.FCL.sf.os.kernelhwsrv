@@ -36,7 +36,7 @@ void NThreadBase::OnExit()
 extern void __ltr(TInt /*aSelector*/);
 
 extern "C" TUint __tr();
-extern void InitAPTimestamp(SNThreadCreateInfo& aInfo);
+extern void InitTimestamp(TSubScheduler* aSS, SNThreadCreateInfo& aInfo);
 
 TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 	{
@@ -44,6 +44,7 @@ TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		return KErrArgument;
 	new (this) NThread;
 	TInt cpu = -1;
+	TSubScheduler* ss = 0;
 	if (aInitial)
 		{
 		cpu = __e32_atomic_add_ord32(&TheScheduler.iNumCpus, 1);
@@ -52,20 +53,22 @@ TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		aInfo.iCpuAffinity = cpu;
 		// OK since we can't migrate yet
 		TUint32 apicid = *(volatile TUint32*)(X86_LOCAL_APIC_BASE + X86_LOCAL_APIC_OFFSET_ID) >> 24;
-		TSubScheduler& ss = TheSubSchedulers[cpu];
-		ss.i_APICID = (TAny*)(apicid<<24);
-		ss.iCurrentThread = this;
-		SubSchedulerLookupTable[apicid] = &ss;
-		ss.iLastTimestamp64 = NKern::Timestamp();
-		iRunCount64 = UI64LIT(1);
-		__KTRACE_OPT(KBOOT,DEBUGPRINT("Init: cpu=%d APICID=%08x ss=%08x", cpu, apicid, &ss));
+		ss = &TheSubSchedulers[cpu];
+		ss->iSSX.iAPICID = apicid << 24;
+		ss->iCurrentThread = this;
+		ss->iDeferShutdown = 0;
+		SubSchedulerLookupTable[apicid] = ss;
+		iRunCount.i64 = UI64LIT(1);
+		iActiveState = 1;
+		__KTRACE_OPT(KBOOT,DEBUGPRINT("Init: cpu=%d APICID=%08x ss=%08x", cpu, apicid, ss));
 		if (cpu)
 			{
 			__ltr(TSS_SELECTOR(cpu));
 			NIrq::HwInit2AP();
-			__e32_atomic_ior_ord32(&TheScheduler.iActiveCpus1, 1<<cpu);
-			__e32_atomic_ior_ord32(&TheScheduler.iActiveCpus2, 1<<cpu);
+			__e32_atomic_ior_ord32(&TheScheduler.iThreadAcceptCpus, 1<<cpu);
+			__e32_atomic_ior_ord32(&TheScheduler.iIpiAcceptCpus, 1<<cpu);
 			__e32_atomic_ior_ord32(&TheScheduler.iCpusNotIdle, 1<<cpu);
+			__e32_atomic_add_ord32(&TheScheduler.iCCRequestLevel, 1);
 			__KTRACE_OPT(KBOOT,DEBUGPRINT("AP TR=%x",__tr()));
 			}
 		}
@@ -124,10 +127,11 @@ TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		{
 		NKern::EnableAllInterrupts();
 
-		// synchronize AP's timestamp with BP's
-		if (cpu>0)
-			InitAPTimestamp(aInfo);
+		// Initialise timestamp
+		InitTimestamp(ss, aInfo);
 		}
+	AddToEnumerateList();
+	InitLbInfo();
 #ifdef BTRACE_THREAD_IDENTIFICATION
 	BTrace4(BTrace::EThreadIdentification,BTrace::ENanoThreadCreate,this);
 #endif
@@ -149,7 +153,7 @@ void DumpExcInfo(TX86ExcInfo& a)
 	TInt irq = NKern::DisableAllInterrupts();
 	TSubScheduler& ss = SubScheduler();
 	NThreadBase* ct = ss.iCurrentThread;
-	TInt inc = TInt(ss.i_IrqNestCount);
+	TInt inc = TInt(ss.iSSX.iIrqNestCount);
 	TInt cpu = ss.iCpuNum;
 	NKern::RestoreInterrupts(irq);
 	DEBUGPRINT("Thread %T, CPU %d, KLCount=%08x, IrqNest=%d",ct,cpu,ss.iKernLockCount,inc);
@@ -228,7 +232,7 @@ void NThread::GetUserContext(TX86RegSet& aContext, TUint32& aAvailRegistersMask)
 	if (pC != this)
 		{
 		AcqSLock();
-		if (iWaitState.ThreadIsDead())
+		if (iWaitState.ThreadIsDead() || i_NThread_Initial)
 			{
 			RelSLock();
 			aAvailRegistersMask = 0;
@@ -279,7 +283,7 @@ void TGetContextIPI::Isr(TGenericIPI* aPtr)
 	TGetContextIPI& ipi = *(TGetContextIPI*)aPtr;
 	TX86RegSet& a = *ipi.iContext;
 	TSubScheduler& ss = SubScheduler();
-	TUint32* irqstack = (TUint32*)ss.i_IrqStackTop;
+	TUint32* irqstack = (TUint32*)ss.iSSX.iIrqStackTop;
 	SThreadExcStack* txs = (SThreadExcStack*)irqstack[-1];	// first word pushed on IRQ stack points to thread supervisor stack
 	GetContextAfterExc(a, txs, *ipi.iAvailRegsMask, TRUE);
 	}
@@ -390,7 +394,7 @@ void NThread::SetUserContext(const TX86RegSet& aContext, TUint32& aRegMask)
 	if (pC != this)
 		{
 		AcqSLock();
-		if (iWaitState.ThreadIsDead())
+		if (iWaitState.ThreadIsDead() || i_NThread_Initial)
 			{
 			RelSLock();
 			aRegMask = 0;
@@ -567,31 +571,6 @@ EXPORT_C void NKern::ThreadSetUserContext(NThread* aThread, TAny* aContext)
 	}
 
 
-/** Return the total CPU time so far used by the specified thread.
-
-	@return The total CPU time in units of 1/NKern::CpuTimeMeasFreq().
-*/
-EXPORT_C TUint64 NKern::ThreadCpuTime(NThread* aThread)
-	{
-	TSubScheduler* ss = 0;
-	NKern::Lock();
-	aThread->AcqSLock();
-	if (aThread->i_NThread_Initial)
-		ss = &TheSubSchedulers[aThread->iLastCpu];
-	else if (aThread->iReady && aThread->iParent->iReady)
-		ss = &TheSubSchedulers[aThread->iParent->iReady & NSchedulable::EReadyCpuMask];
-	if (ss)
-		ss->iReadyListLock.LockOnly();
-	TUint64 t = aThread->iTotalCpuTime64;
-	if (aThread->iCurrent || (aThread->i_NThread_Initial && !ss->iCurrentThread))
-		t += (NKern::Timestamp() - ss->iLastTimestamp64);
-	if (ss)
-		ss->iReadyListLock.UnlockOnly();
-	aThread->RelSLock();
-	NKern::Unlock();
-	return t;
-	}
-
 extern "C" void __fastcall add_dfc(TDfc* aDfc)
 	{
 	aDfc->Add();
@@ -603,6 +582,8 @@ TInt NKern::QueueUserModeCallback(NThreadBase* aThread, TUserModeCallback* aCall
 	__e32_memory_barrier();
 	if (aCallback->iNext != KUserModeCallbackUnqueued)
 		return KErrInUse;
+	if (aThread->i_NThread_Initial)
+		return KErrArgument;
 	TInt result = KErrDied;
 	NKern::Lock();
 	TUserModeCallback* listHead = aThread->iUserModeCallbacks;

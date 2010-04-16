@@ -549,6 +549,14 @@ EXPORT_C TInt RTest::CloseHandleAndWaitForDestruction(RHandleBase& aH)
 		User::AfterHighRes(period);
 		}
 	User::WaitForRequest(s);
+
+	// There is a potential race condition, if the calling thread runs on a different CPU
+	// than the Supervisor thread, which can result in this thread being signaled
+	// before the RHandleBase gets fully closed (see DChangeNotifier::Complete()).
+	// For that reason, wait until Supervisor thread gets to idle, which is the indication
+	// that Complete() function has returned (DThread::Close() was called releasing memory),
+	// in the case that Kernel heap was checked just after current method returns.
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)timeout, NULL);
 	return r;
 	}
 

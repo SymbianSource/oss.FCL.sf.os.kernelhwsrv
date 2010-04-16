@@ -108,6 +108,38 @@ public:
 		EEdgeBoth
 		};
 
+	/**
+	 Enumeration TGpioBaseId defines the highest 16 bits of 32 bit GPIO Id 
+	 to identify the GPIO hardware block:
+     - EInternalId    - The SOC GPIO hardware block (and any extender that is 
+                        covered by the vendor supplied implementation) supports
+	                    pin ids from 0-65535
+	 - EExtender0-15  - Up to 16 3rd party extenders (each supporting up
+	                                to 65536 pins) can be used.
+	 */
+	enum TGpioBaseId
+	    {
+	    EInternalId = 0x00000000,
+	    EExtender0  = 0x00010000,        
+	    EExtender1  = 0x00020000,
+	    EExtender2  = 0x00040000,
+	    EExtender3  = 0x00080000,
+	    EExtender4  = 0x00100000,
+	    EExtender5  = 0x00200000,
+	    EExtender6  = 0x00400000,
+	    EExtender7  = 0x00800000,
+	    EExtender8  = 0x01000000,
+	    EExtender9  = 0x02000000,
+	    EExtender10 = 0x04000000,
+	    EExtender11 = 0x08000000,
+	    EExtender12 = 0x10000000,
+	    EExtender13 = 0x20000000,
+	    EExtender14 = 0x40000000,
+	    EExtender15 = 0x80000000
+	    };
+
+
+	
     /**
     Sets the pin mode.
     
@@ -458,7 +490,6 @@ public:
             KErrArgument, if aId is invalid.
             KErrNotSupported, if reading the state asynchronously is not supported.
 
-	This API should be used with off-chip GPIO modules only;
 	The result of the read operation and the state of the input pin will be passed as an argument to the callback function;
     */
 	IMPORT_C static TInt GetInputState(TInt aId, TGpioCallback* aCb);
@@ -474,7 +505,7 @@ public:
 			KErrArgument, if aId is invalid;
             KErrNotSupported, if setting its state asynchronously is not supported.
 
-    This API should be used with off-chip GPIO modules only;
+
 	The result of the set operation will be passed as an argument to the callback function;
     */
 	IMPORT_C static TInt SetOutputState(TInt aId, TGpioState aState, TGpioCallback* aCb);

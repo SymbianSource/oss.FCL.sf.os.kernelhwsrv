@@ -25,13 +25,12 @@ const TInt KFirstClusterNum=2;
 
 CFatFileCB::CFatFileCB()
 	{
-
 	__PRINT1(_L("CFatFileCB created 0x%x"),this);
 	}
 
 CFatFileCB::~CFatFileCB()
 	{
-	__PRINT1(_L("CFatFileCB deleted 0x%x"),this);
+	__PRINT1(_L("~CFatFileCB deleted 0x%x"),this);
 
     //-- a nasty trick to find out if the CFatFileCB is in consistent state on the moment of destruction.
     //-- Because of OOM conditions CFatFileCB might not be fully constructed and to be deleted, while FlushAll()
@@ -39,8 +38,11 @@ CFatFileCB::~CFatFileCB()
     const CMountCB* pMount  = &Mount();
     if(pMount)
         {//-- do some finalisation work if CMountCB is valid
-        if (iAtt&KEntryAttModified)
+        if(FileAttModified())
+            {
+            IndicateFileTimeModified(ETrue); //-- this will force writing file modification time to the media on Flush
             TRAP_IGNORE(FlushAllL());
+        }
         }
 
     delete[] iSeekIndex;
@@ -59,10 +61,10 @@ void CFatFileCB::CreateSeekIndex()
 
 	Mem::FillZ(iSeekIndex, sizeof(TUint32) * KSeekIndexSize);
 
-	iSeekIndexSize=CalcSeekIndexSize(Size());
+	iSeekIndexSize=CalcSeekIndexSize(FCB_FileSize());
 	}
 
-TInt CFatFileCB::SeekToPosition(TInt aNewRelCluster,TInt aClusterOffset)
+TInt CFatFileCB::SeekToPosition(TUint aNewRelCluster, TUint aClusterOffset)
 //
 // Use the seek index to set iCurrentPos.iCluster as close as possible to aNewRelCluster
 // Return aNewRelCluster-aCurrentPos.iCluster
@@ -81,7 +83,7 @@ TInt CFatFileCB::SeekToPosition(TInt aNewRelCluster,TInt aClusterOffset)
 		return(aClusterOffset);
 	if (seekPos<0)
 		{
-		iCurrentPos.iCluster=iStartCluster;
+		iCurrentPos.iCluster=FCB_StartCluster();
 		return(aNewRelCluster);
 		}
 
@@ -89,7 +91,7 @@ TInt CFatFileCB::SeekToPosition(TInt aNewRelCluster,TInt aClusterOffset)
 	return(aNewRelCluster-((seekPos+1)<<iSeekIndexSize));
 	}
 
-void CFatFileCB::SetSeekIndexValueL(TInt aRelCluster,TInt aStoredCluster)
+void CFatFileCB::SetSeekIndexValueL(TUint aRelCluster, TUint aStoredCluster)
 //
 // Sets a value in the seekindex
 //
@@ -122,19 +124,22 @@ void CFatFileCB::CheckPosL(TUint aPos)
 	__PRINT1(_L("CFatFileCB::CheckPosL(%d)"), aPos);
 	if (aPos==iCurrentPos.iPos)
 		return;
-    __ASSERT_DEBUG(aPos <= (TUint)Size(), Fault(EFatFilePosBeyondEnd));
+    __ASSERT_DEBUG(aPos <= FCB_FileSize(), Fault(EFatFilePosBeyondEnd));
 
-	if (iFileSizeModified && IsSeekBackwards(aPos))
+	if (FileSizeModified() && IsSeekBackwards(aPos))
 		FlushDataL(); 
 	
 	TUint newRelCluster=aPos>>ClusterSizeLog2();
 	if ( aPos && (aPos==(newRelCluster<<ClusterSizeLog2())) )
 		newRelCluster--;
 	TUint oldRelCluster=iCurrentPos.iPos>>ClusterSizeLog2();
+	
 	if ( iCurrentPos.iPos && (iCurrentPos.iPos==(oldRelCluster<<ClusterSizeLog2())) )
 		oldRelCluster--;	
+	
 	TInt clusterOffset=newRelCluster-oldRelCluster;
-	TInt oldCluster=iCurrentPos.iCluster;
+	TUint32 oldCluster=iCurrentPos.iCluster;
+
 	iCurrentPos.iPos=aPos;
 	if (clusterOffset==0)
 		return;
@@ -147,7 +152,7 @@ void CFatFileCB::CheckPosL(TUint aPos)
 		}
 	if (clusterOffset==-1 && seekOffset!=1)
 		{ // Check previous cluster
-		TInt cluster=oldCluster-1;
+		TUint32 cluster=oldCluster-1;
 		if (FAT().GetNextClusterL(cluster) && cluster==oldCluster)
 			{
             iCurrentPos.iCluster=oldCluster-1;
@@ -157,7 +162,7 @@ void CFatFileCB::CheckPosL(TUint aPos)
 	if (seekOffset<0)
 		{
 		seekOffset=newRelCluster;
-		iCurrentPos.iCluster=iStartCluster;
+		iCurrentPos.iCluster=FCB_StartCluster();
 		}
 	while (seekOffset--)
 		{
@@ -172,30 +177,60 @@ void CFatFileCB::CheckPosL(TUint aPos)
 		}
 	}
 
-void CFatFileCB::SetL(const TFatDirEntry& aFatDirEntry,TShare aShare,const TEntryPos& aPos)
-//
-// Initialize FileCB from entry data
-//
+//-----------------------------------------------------------------------------
+/** 
+    Initialize FileCB from file's entry data.
+    
+    @param  aFatDirEntry        this file DOS dir entry.
+    @param  aFileDosEntryPos    this file DOS entry dir. iterator in the parent directory.
+*/
+void CFatFileCB::SetupL(const TFatDirEntry& aFatDirEntry, const TEntryPos& aFileDosEntryPos)
 	{
+	__PRINT1(_L("CFatFileCB::SetupL[0x%x]"), this);
+	
 
-	__PRINT(_L("CFatFileCB::SetL"));
-	SetSize(aFatDirEntry.Size()); 
+    //-- set up a file control block
 	iCurrentPos.iCluster= FatMount().StartCluster(aFatDirEntry);
-	iStartCluster=iCurrentPos.iCluster;
 	iCurrentPos.iPos=0;
-	iAtt=aFatDirEntry.Attributes();
-	iModified= aFatDirEntry.Time(FatMount().TimeOffset());
-	iShare=aShare;
-	iFileDirPos=aPos;
+	
+    SetAtt(aFatDirEntry.Attributes());
+	SetModified(aFatDirEntry.Time(FatMount().TimeOffset()));
+    
+    FCB_SetStartCluster(iCurrentPos.iCluster);
+    FCB_SetFileSize(aFatDirEntry.Size()); 
+
+	iFileDosEntryPos = aFileDosEntryPos;
 
     SetMaxSupportedSize(KMaxSupportedFatFileSize);
+
+    //-- create seek index
+    ASSERT(!iSeekIndex);
+    CreateSeekIndex();
+    if(!iSeekIndex)
+        User::Leave(KErrNoMemory);
+
+    
+    IndicateFileAttModified(EFalse);
+    IndicateFileSizeModified(EFalse);
+    IndicateFileTimeModified(EFalse);
 	}
 
 //-----------------------------------------------------------------------------
-// from CFileCB::MExtendedFileInterface
+/**
+    Read data from the file.
+    
+    @param  aFilePos    start read position within a file
+    @param  aLength     how many bytes to read; on return will be how many bytes actually read
+    @param  aDes        local buffer desctriptor
+    @param  aMessage    from file server, used to write data to the buffer in different address space.
+    @param  aDesOffset  offset within data descriptor where the data will be copied
+
+    @leave on media read error
+
+*/
 void CFatFileCB::ReadL(TInt64 aPos,TInt& aLength, TDes8* aDes, const RMessagePtr2& aMessage, TInt aOffset)
 	{
-	__PRINT2(_L("CFatFileCB::ReadL aFilePos=%LU aLength=%d"),aPos,aLength);
+	__PRINT3(_L("CFatFileCB::ReadL[0x%x] pos=%LU len=%d"), this, aPos, aLength);
 	
     if((TUint64)aPos > KMaxSupportedFatFileSize-1)
         User::Leave(KErrNotSupported);  //-- max. position in the file is 0xFFFFFFFE
@@ -205,7 +240,7 @@ void CFatFileCB::ReadL(TInt64 aPos,TInt& aLength, TDes8* aDes, const RMessagePtr
 	CheckPosL(I64LOW(aPos));
 	
 	const TUint startPos = iCurrentPos.iPos;
-	const TUint curSize  = (TUint)Size();
+	const TUint curSize  = FCB_FileSize();
 	const TUint length   = (TUint)aLength;
 	
 	if((startPos + length > curSize) || (startPos > startPos + length) )
@@ -222,10 +257,22 @@ void CFatFileCB::ReadL(TInt aFilePos,TInt& aLength,const TAny* aTrg,const RMessa
 	}
 
 //-----------------------------------------------------------------------------
-// from CFileCB::MExtendedFileInterface
+/**
+    Write data to the file.
+    
+    @param  aFilePos    start write position within a file
+    @param  aLength     how many bytes to write; on return contain amount of data actually written
+    @param  aDes        local buffer desctriptor
+    @param  aMessage    from file server, used to write data to the media from different address space.
+    @param  aDesOffset  offset within data descriptor 
+
+    @leave on media read error
+
+*/
 void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMessagePtr2& aMessage, TInt aOffset)
 	{
-	__PRINT2(_L("CFatFileCB::WriteL aFilePos=%LU aLength=%d"),aPos,aLength);
+	__PRINT3(_L("CFatFileCB::WriteL[0x%x] pos=%LU len=%d"), this, aPos, aLength);
+
 	// FAT supports 32 bits only for file size
    	TUint64 endPos = aPos + aLength;
    	if(endPos > KMaxSupportedFatFileSize)
@@ -236,17 +283,17 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
     const TUint pos = I64LOW(aPos);
   	CheckPosL(pos);
   	
-	const TUint startCluster = (TUint)iStartCluster;
+	const TUint startCluster = FCB_StartCluster();
 	const TUint length       = (TUint)aLength;
 	
 	endPos = iCurrentPos.iPos + length; 
-	if ((endPos           > (TUint)Size()) ||
+	if ((endPos           > FCB_FileSize()) ||
 	    (iCurrentPos.iPos > endPos)         ) // Overflow condition 
 		DoSetSizeL(iCurrentPos.iPos+length,EFalse);
    	
 	TUint startPos=iCurrentPos.iPos;
-	TInt badcluster=0;
-	TInt goodcluster=0;
+	TUint badcluster=0;
+	TUint goodcluster=0;
    	
 	TRAPD(ret, FatMount().WriteToClusterListL(iCurrentPos,aLength,aSrc,aMessage,aOffset,badcluster, goodcluster));
    	
@@ -254,9 +301,11 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
 		{
         if(startCluster == 0)
 			{ //Empty File, revert all the clusters allocated.
-			TInt cluster = iStartCluster;
-			iStartCluster = 0;
-			SetSize(0);
+			const TUint32 cluster = FCB_StartCluster();
+			FCB_SetStartCluster(0);
+			FCB_SetFileSize(0);
+			IndicateFileSizeModified(ETrue);
+            
 			FlushAllL();
 
 			iCurrentPos.iCluster = 0;
@@ -267,14 +316,14 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
 			}
 		else
 			{ //Calculate the clusters required based on file size, revert extra clusters if allocated.
-			const TUint curSize = (TUint)Size();
+			const TUint curSize = FCB_FileSize();
 			TUint ClustersNeeded = curSize >> ClusterSizeLog2();
 			if(curSize > (ClustersNeeded << ClusterSizeLog2()))
 				{
 				ClustersNeeded++;
 				}
 
-			TInt cluster = iStartCluster;
+			TUint32 cluster = FCB_StartCluster();
 			while(--ClustersNeeded)
 				{
 				FAT().GetNextClusterL(cluster);
@@ -296,14 +345,14 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
 
 	if(badcluster != 0)
 		{
-		if(iStartCluster == badcluster)
+		if(FCB_StartCluster() == badcluster)
 			{
-			iStartCluster = goodcluster;
+            FCB_SetStartCluster(goodcluster);
 			FlushStartClusterL();
 			}
 		else
 			{
-			TInt aCluster = iStartCluster;
+			TUint32 aCluster = FCB_StartCluster();
 			do
 				{
                 if((TUint)badcluster == FAT().ReadL(aCluster))
@@ -318,7 +367,7 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
 		}
 	aLength=iCurrentPos.iPos-startPos;
 
-	if(FatMount().IsRuggedFSys() && pos+(TUint)aLength>(TUint)Size())
+	if(FatMount().IsRuggedFSys() && pos+(TUint)aLength > FCB_FileSize())
 		{
 		WriteFileSizeL(pos+aLength);
 		}
@@ -441,169 +490,228 @@ TInt CFatFileCB::CalcSeekIndexSize(TUint aSize)
 	}
 
 //-----------------------------------------------------------------------------
-
+/**
+    Set file size.
+    @param aSize new file size.
+*/
 void CFatFileCB::SetSizeL(TInt64 aSize)
 	{
-	__PRINT(_L("CFatFileCB::SetSizeL"));
+	__PRINT2(_L("CFatFileCB::SetSizeL[0x%x] sz=%LU"), this, aSize);
 	
-	// FAT supports 32 bits only for file size
+	//-- max. file size for FAT is 4GB-1
 	if (I64HIGH(aSize))
 		User::Leave(KErrNotSupported);
 
-	if(FatMount().IsRuggedFSys())
-		DoSetSizeL(I64LOW(aSize),ETrue);
-	else
-		DoSetSizeL(I64LOW(aSize),EFalse);
+    DoSetSizeL(I64LOW(aSize), FatMount().IsRuggedFSys());
 	}
 
 
 void CFatFileCB::SetSizeL(TInt aSize)
-//
-// Envelope function around DoSetSizeL to enable aSize to
-// be written to disk for rugged fat file system
-//
 	{
 	SetSizeL(TInt64(aSize));
 	}
 
-void CFatFileCB::DoSetSizeL(TUint aSize,TBool aIsSizeWrite)
-//
-// Extend or truncate the file.
-// Expects the modified attribute and iSize are set afterwards.
-// Does not alter iCurrentPos, the current file position.
-// Writes size of file to disk if aIsSizeWrite set
-//
+//-----------------------------------------------------------------------------
+/**
+    Shrink file to zero size.
+*/
+void CFatFileCB::DoShrinkFileToZeroSizeL()
+    {
+	    ASSERT(FCB_FileSize());
+        ASSERT(FileSizeModified());
+        
+            ClearIndex(0); //-- clear seek index array
+		
+        //-- update file dir. entry
+        const TUint32 cluster = FCB_StartCluster();
+		FCB_SetStartCluster(0);
+		FCB_SetFileSize(0);
+			FlushAllL();
+		
+        //-- free cluster list. 
+			CheckPosL(0);
+			FAT().FreeClusterListL(cluster);
+			FAT().FlushL();
+			}
+
+//-----------------------------------------------------------------------------
+/*
+    Shrink file to smaller size, but > 0
+
+    @param aNewSize new file size
+    @param aForceCachesFlush if ETrue, all file/FAT caches will be flushed 
+*/
+void CFatFileCB::DoShrinkFileL(TUint32 aNewSize, TBool aForceCachesFlush)
+		{
+    ASSERT(FileSizeModified());
+    ASSERT(FCB_FileSize() > aNewSize && aNewSize);
+	
+    if(aForceCachesFlush)		
+        WriteFileSizeL(aNewSize); //-- write file size directly to its dir. entry
+
+	CheckPosL(aNewSize);
+	
+    TUint32 cluster=iCurrentPos.iCluster;
+		if (FAT().GetNextClusterL(cluster))
+	    {//-- truncate the cluster chain
+			FAT().WriteFatEntryEofL(iCurrentPos.iCluster);
+			FAT().FreeClusterListL(cluster);
+			}
+		
+    ClearIndex(aNewSize);
+		FAT().FlushL();
+		}
+	
+//-----------------------------------------------------------------------------
+/**
+    Expand a file.
+	
+    @param aNewSize new file size.
+    @param aForceCachesFlush if ETrue, all file/FAT caches will be flushed
+*/
+void CFatFileCB::DoExpandFileL(TUint32 aNewSize, TBool aForceCachesFlush)
+		{
+    ASSERT(FCB_FileSize() < aNewSize);
+    ASSERT(FileSizeModified());
+
+    const TUint32 KClusterSzLog2  = ClusterSizeLog2();
+    const TUint32 newSizeClusters = (TUint32)(((TUint64)aNewSize + Pow2(KClusterSzLog2) - 1) >> KClusterSzLog2);
+
+
+	//-- expanding a file
+	if (FCB_StartCluster() == 0)
+		{//-- the initial file size is 0 (no cluster chain)
+         
+        ClearIndex(0); //-- clear seek index array
+        //-- FAT().FreeClusterHint() will give us a hint of the last free cluster
+        const TUint32 tempStartCluster=FAT().AllocateClusterListL(newSizeClusters, FAT().FreeClusterHint()); 
+		FAT().FlushL();
+
+		iCurrentPos.iCluster=tempStartCluster;
+		FCB_SetStartCluster(tempStartCluster);
+		FCB_SetFileSize(aNewSize);
+		FlushAllL();
+		}
+	else
+		{
+		const TUint curSize = FCB_FileSize(); 
+	    const TUint32 oldSizeClusters = ((curSize + Pow2(KClusterSzLog2) - 1) >> KClusterSzLog2);
+        ASSERT(newSizeClusters >= oldSizeClusters);
+		const TUint newClusters = newSizeClusters-oldSizeClusters;	//-- Number of clusters we need to append to the existing cluster chain
+		if (newClusters)
+			{
+			TEntryPos currentPos=iCurrentPos;
+			CheckPosL(FCB_FileSize());
+			FAT().ExtendClusterListL(newClusters,iCurrentPos.iCluster);
+			iCurrentPos=currentPos;
+			}
+	
+		FAT().FlushL();
+		
+        if(aForceCachesFlush)			// write file size if increasing
+			WriteFileSizeL(aNewSize);
+		}
+
+	}
+
+//-----------------------------------------------------------------------------
+/**
+    Set file size. This can involve extending/truncating file's cluster chain.
+    @param  aSize               new file size
+    @param  aForceCachesFlush   if ETrue, all changes in metadata will go to the media immediately. 
+                                it is used in Rugged FAT mode.
+*/
+void CFatFileCB::DoSetSizeL(TUint aSize, TBool aForceCachesFlush)
 	{
-	__PRINT2(_L("CFatFileCB::DoSetSizeL sz:%d, fileWrite=%d"),aSize ,aIsSizeWrite);
+	__PRINT4(_L("CFatFileCB::DoSetSizeL[0x%x] sz:%d, oldSz:%d, flush:%d"), this, aSize, FCB_FileSize(), aForceCachesFlush);
 
     FatMount().CheckStateConsistentL();
     FatMount().CheckWritableL();
 
 	
 	// Can not change the file size if it is clamped
-	if(Mount().IsFileClamped(MAKE_TINT64(0,iStartCluster)) > 0)
+	if(Mount().IsFileClamped(MAKE_TINT64(0,FCB_StartCluster())) > 0)
 		User::Leave(KErrInUse);
 	
-	iFileSizeModified=ETrue;
+	if(aSize == FCB_FileSize())
+        return;
+
+    IndicateFileSizeModified(ETrue);
 
 	TInt newIndexMult=CalcSeekIndexSize(aSize);
 	if (iSeekIndex!=NULL && newIndexMult!=iSeekIndexSize)
 		ResizeIndex(newIndexMult,aSize);
-	if (aSize == 0)
+
+	//-------------------------------------------
+    //-- shrinking file to 0 size
+    if(aSize == 0)
+        {
+        DoShrinkFileToZeroSizeL();
+        return;
+        }
+
+    //-------------------------------------------
+	//-- shrinking file to non-zero size
+    if (aSize < FCB_FileSize())
 		{
-		if (Size() != 0)
-			{
-            ClearIndex(0); //-- clear seek index array
-			TInt cluster=iStartCluster;
-			iStartCluster = 0;
-			SetSize(0);
-			FlushAllL();
-			CheckPosL(0);
-			FAT().FreeClusterListL(cluster);
-			FAT().FlushL();
-			}
-		return;
-		}
-	if (aSize<(TUint)Size())
-		{
-		if(aIsSizeWrite)		// write file size if decreasing
-				WriteFileSizeL(aSize);
-		CheckPosL(aSize);
-		TInt cluster=iCurrentPos.iCluster;
-		if (FAT().GetNextClusterL(cluster))
-			{
-			FAT().WriteFatEntryEofL(iCurrentPos.iCluster);
-			FAT().FreeClusterListL(cluster);
-			}
-		ClearIndex(aSize);
-		FAT().FlushL();
-		return;
-		}
-	
-	TUint newSize=aSize>>ClusterSizeLog2();	//	Number of clusters we now need
-	if (aSize > (newSize<<ClusterSizeLog2()))
-		newSize++;	//	File size is not an exact multiple of cluster size
-					//	Increment the number of clusters required to accomodate tail
-	
-	if (iStartCluster==0)
-		{
-        //-- FAT().FreeClusterHint() will give us a hint of the last free cluster
-        ClearIndex(0); //-- clear seek index array
-        TInt tempStartCluster=FAT().AllocateClusterListL(newSize, FAT().FreeClusterHint());
-		FAT().FlushL();
-		iCurrentPos.iCluster=tempStartCluster;
-		iStartCluster=tempStartCluster;
-		SetSize(aSize);
-		FlushAllL();
-		}
-	else
-		{
-		const TUint curSize = (TUint)Size(); 
-		TUint oldSize=curSize>>ClusterSizeLog2();	//	Number of clusters we had previously
-		if (curSize>(oldSize<<ClusterSizeLog2()))
-			oldSize++;
-	
-		TInt newClusters=newSize-oldSize;	//	Number of clusters we need to prepare
-		if (newClusters)
-			{
-			TEntryPos currentPos=iCurrentPos;
-			CheckPosL(Size());
-			FAT().ExtendClusterListL(newClusters,iCurrentPos.iCluster);
-			iCurrentPos=currentPos;
-			}
-		FAT().FlushL();
-		if(aIsSizeWrite)			// write file size if increasing
-			WriteFileSizeL(aSize);
-		}
+        DoShrinkFileL(aSize, aForceCachesFlush);
+        return;
+        }
+    
+    //-------------------------------------------
+	//-- expanding a file
+    DoExpandFileL(aSize, aForceCachesFlush);
+
 	}
 
 //-----------------------------------------------------------------------------
 /**
-    Set the entry's attributes and modified time.
+    Set file entry details, like file attributes and modified time
+    This method doesn't write data to the media immediately, instead, all modified data are cached and can be flushed later 
+    in FlushAllL()
+
+    @param  aTime           file modification time (and last access as well)
+    @param  aSetAttMask     file attributes OR mask
+    @param  aClearAttMask   file attributes AND mask
+
 */
 void CFatFileCB::SetEntryL(const TTime& aTime,TUint aSetAttMask,TUint aClearAttMask)
 	{
-	__PRINT(_L("CFatFileCB::SetEntryL"));
+	__PRINT1(_L("CFatFileCB::SetEntryL[0x%x]"), this);
     
     FatMount().CheckStateConsistentL();
     FatMount().CheckWritableL();
 
-	TUint setAttMask=aSetAttMask&KEntryAttMaskSupported;
+    //-- change file attributes
+    const TUint setAttMask = (aSetAttMask & KEntryAttMaskSupported); //-- supported attributes to set
+    TUint newAtt = Att();
+
 	if (setAttMask|aClearAttMask)
 		{
-		iAtt|=setAttMask;
-		iAtt&=(~aClearAttMask);
+        newAtt |= setAttMask;
+        newAtt &= ~aClearAttMask;
+        SetAtt(newAtt);
+        IndicateFileAttModified(ETrue); //-- indicate that file attributes have changed
 		}
+    
+    //-- set file entry modification time if required
 	if (aSetAttMask&KEntryAttModified)
-		iModified=aTime;
-	iAtt|=KEntryAttModified;
+	{
+        SetModified(aTime);        //-- set file modified time
+        IndicateFileAttModified(ETrue); //-- indicate that file attributes have changed
+        IndicateFileTimeModified(ETrue); //-- this will force writing file mod. time to the media on Flush
+        }
+
 	}
 
-/**
-    This is a RuggedFAT - specific method. Writes file size to the corresponding field of this
-    file direcrory entry.
-*/
-void CFatFileCB::WriteFileSizeL(TUint aSize)
-	{
-	__PRINT(_L("CFatFileCB::WriteFileSizeL"));
-	TEntryPos entryPos=iFileDirPos;
-	entryPos.iPos+=_FOFF(SFatDirEntry,iSize);
-	TPtrC8 size((TUint8*)&aSize,sizeof(TUint));
-	
-    //-- use directory cache when dealing with directories
-    FatMount().DirWriteL(entryPos,size);
-	iFileSizeModified=EFalse;
-    }
 
 //-----------------------------------------------------------------------------
 /** 
-    Flush file size, attributes, time etc. to the media.
-    It doesn't matter if whole directory entry is being written of only part of it. Anyway, a single DOS
-    dir. entry always fits into 1 sector.
+    The same as FlushAllL(). This method is called from RFile::Flush()
 */
 void CFatFileCB::FlushDataL()
 	{
-	__PRINT(_L("CFatFileCB::FlushDataL"));
+	__PRINT1(_L("CFatFileCB::FlushDataL[0x%x]"), this);
     FlushAllL();
 	}
 
@@ -613,7 +721,13 @@ void CFatFileCB::FlushDataL()
 */
 void CFatFileCB::FlushAllL()
 	{
-	__PRINT(_L("CFatFileCB::FlushAllL()"));
+
+    //-- define this symbol in order to enable legacy behaviour, i.e. compulsory updating file dir. entry on flush.
+    //-- otherwise the FlushAllL() will update the file dir. entry only if it differs from what is on the media, i.e.
+    //-- file size, start cluster, attributes and modification timestamp
+    #define ALWAYS_UPDATE_ENTRY_ON_FLUSH
+
+	__PRINT1(_L("CFatFileCB::FlushAllL[0x%x]"), this);
 
     if (Mount().IsCurrentMount()==EFalse)
 		User::Leave(KErrDisMounted);
@@ -621,21 +735,58 @@ void CFatFileCB::FlushAllL()
     FatMount().CheckStateConsistentL();
     FatMount().CheckWritableL();
 
-	TFatDirEntry entry;
-	FatMount().ReadDirEntryL(iFileDirPos,entry);
-	__ASSERT_ALWAYS(entry.IsEndOfDirectory()==EFalse,User::Leave(KErrCorrupt));
-	entry.SetAttributes(iAtt&KEntryAttMaskSupported);
-	entry.SetSize(Size());
-	entry.SetTime(iModified, FatMount().TimeOffset());
-	entry.SetStartCluster(iStartCluster);
+	if(!FileSizeModified() && !FileAttModified() && !FileTimeModified())
+        return; //-- nothing has changed in the file entry at all
 
-	TBool setNotify = FatMount().GetNotifyUser();
+
+    //-- read file dir. entry
+	TFatDirEntry entry;
+	FatMount().ReadDirEntryL(iFileDosEntryPos,entry);
+	__ASSERT_ALWAYS(entry.IsEndOfDirectory()==EFalse,User::Leave(KErrCorrupt));
+
+    //-- the problem with KEntryAttModified here is that the file server uses this flag to 
+    //-- deal with dirty file data. This means that this flag can be set even if there were no changes
+    //-- in file time and attributes. Just check if any of the entry field has changed at all
+    
+    TBool bUpdateDirEntry = ETrue;
+    const TTimeIntervalSeconds  timeOffset = FatMount().TimeOffset();
+
+#ifndef ALWAYS_UPDATE_ENTRY_ON_FLUSH
+    
+    TBool bTimeModified = FileTimeModified();  //-- check if file modifiication time has been changed explicitly
+    if(bTimeModified)
+        {//-- additional check; for FAT entry modification time has 2 sec. granularity.
+        bTimeModified = !entry.IsTimeTheSame(iModified, timeOffset);
+        }
+
+    if(!bTimeModified)
+      if(//-- TS is the same as on the media, check other entry fields
+        (entry.Attributes() == (Att() & KEntryAttMaskSupported)) && //-- file attributes have not changed
+        (entry.Size() == FCB_FileSize()) &&                         //-- file size hasn't changed
+        (entry.StartCluster() == FCB_StartCluster())                //-- file start cluster hasn't changed 
+        )               
+        {
+        bUpdateDirEntry = EFalse; //-- no need to update file dir. entry
+        }
+
+#endif //#ifndef ALWAYS_UPDATE_ENTRY_TS_ON_FLUSH
+
+    if(bUpdateDirEntry)
+        {//-- write entry to the media
+	    __PRINT(_L("  CFatFileCB::FlushAllL #1"));
+        entry.SetAttributes(Att() & KEntryAttMaskSupported);
+	    entry.SetSize(FCB_FileSize());
+	    entry.SetTime(iModified, timeOffset);
+	    
+        entry.SetStartCluster(FCB_StartCluster());
+
+	    const TBool setNotify = FatMount().GetNotifyUser();
 	if(setNotify)
 		{
 		FatMount().SetNotifyOff();	// do not launch a notifier
 		}
 
-	TRAPD(ret, FatMount().WriteDirEntryL(iFileDirPos,entry));
+	    TRAPD(ret, FatMount().WriteDirEntryL(iFileDosEntryPos,entry));
 	
 	if(setNotify)
 		{
@@ -643,8 +794,14 @@ void CFatFileCB::FlushAllL()
 		}
 
 	User::LeaveIfError(ret);
-	iAtt&=(~KEntryAttModified);
-	iFileSizeModified=EFalse;
+
+        IndicateFileSizeModified(EFalse);
+        IndicateFileTimeModified(EFalse);
+	    }
+
+
+        //-- KEntryAttModified must be reset anyway
+        IndicateFileAttModified(EFalse); 
 	}
 
 //-----------------------------------------------------------------------------
@@ -663,7 +820,7 @@ void CFatFileCB::RenameL(const TDesC& aNewName)
     const TPtrC fileName = RemoveTrailingDots(aNewName); //-- remove trailing dots from the name
 
 
-	FatMount().DoRenameOrReplaceL(*iFileName, fileName, CFatMountCB::EModeRename,iFileDirPos);
+	FatMount().DoRenameOrReplaceL(*iFileName, fileName, CFatMountCB::EModeRename, iFileDosEntryPos);
 	
     AllocBufferL(iFileName, fileName);
 	
@@ -712,7 +869,7 @@ TInt CFatFileCB::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPo
 	aInfo.iBlockStartOffset = fatMount.ClusterRelativePos(iCurrentPos.iPos);
 	aInfo.iBlockGranularity = 1 << FatMount().ClusterSizeLog2();
 	const TUint myStartPos = iCurrentPos.iPos;
-	if ( myStartPos + length > (TUint)Size())
+	if ( myStartPos + length > FCB_FileSize())
 		return KErrArgument;
 
 	TRAP(r, FatMount().BlockMapReadFromClusterListL(iCurrentPos, length, aInfo));
@@ -720,7 +877,7 @@ TInt CFatFileCB::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPo
 		return r;
 
 	aStartPos = iCurrentPos.iPos;
-	if ((I64LOW(aStartPos) == (TUint)Size()) || ( I64LOW(aStartPos) == (myStartPos + length)))
+	if ((I64LOW(aStartPos) == FCB_FileSize()) || ( I64LOW(aStartPos) == (myStartPos + length)))
 		return KErrCompletion;
 	else
 		return KErrNone;
@@ -756,15 +913,35 @@ TInt CFatFileCB::GetInterface(TInt aInterfaceId,TAny*& aInterface,TAny* aInput)
 */
 void CFatFileCB::FlushStartClusterL()
 	{
-	__PRINT(_L("CFatFileCB::FlushStartClusterL"));
+	__PRINT1(_L("CFatFileCB::FlushStartClusterL[0x%x]"), this);
 
     CFatMountCB& mount = FatMount();
     TFatDirEntry dirEntry;
     
-    mount.ReadDirEntryL(iFileDirPos, dirEntry);      //-- read this file's dir. entry
-    dirEntry.SetStartCluster(iStartCluster);         //-- set new start cluster
-    mount.WriteDirEntryL(iFileDirPos, dirEntry);//-- write the entry back
+    mount.ReadDirEntryL(iFileDosEntryPos, dirEntry); //-- read this file's dir. entry
+    dirEntry.SetStartCluster(FCB_StartCluster());    //-- set new start cluster
+    mount.WriteDirEntryL(iFileDosEntryPos, dirEntry);//-- write the entry back
 	}
+
+
+/**
+    This is a RuggedFAT - specific method. Writes file size to the corresponding field of its file directory entry.
+*/
+void CFatFileCB::WriteFileSizeL(TUint aSize)
+	{
+	__PRINT2(_L("CFatFileCB::WriteFileSizeL[0x%x], sz:%d"), this, aSize);
+
+    CFatMountCB& mount = FatMount();
+    TFatDirEntry dirEntry;
+
+    mount.ReadDirEntryL(iFileDosEntryPos, dirEntry); //-- read this file's dir. entry
+    dirEntry.SetSize(aSize);                         //-- set new size
+    mount.WriteDirEntryL(iFileDosEntryPos, dirEntry);//-- write the entry back
+
+    IndicateFileSizeModified(EFalse);
+    }
+
+
 
 
 

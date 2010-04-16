@@ -23,7 +23,6 @@
 
 #include "usbtypes.h"
 #include "rusbhostmsdevice.h"
-#include "rusbhostmslogicalunit.h"
 #include "rextfilesystem.h"
 #include "cusbmsmountmanager.h"
 

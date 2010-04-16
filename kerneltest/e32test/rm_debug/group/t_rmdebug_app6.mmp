@@ -1,0 +1,36 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Target application to be debugged
+// 
+//
+
+target             t_rmdebug_app6.exe
+targettype         exe
+
+sourcepath         ../debug_targets
+source             t_rmdebug_app.cpp 
+source             d_rmdebugthreadasm2.cia
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+library            euser.lib hal.lib
+
+uid                0x0 0x0
+capability         none
+
+always_build_as_arm
+pagedcode
+
+DEBUGGABLE
+
+SMPSAFE

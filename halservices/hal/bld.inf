@@ -26,9 +26,9 @@ PRJ_PLATFORMS
 BASEUSERDEFAULT
 
 PRJ_EXPORTS
-inc/hal_int.h						SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(kernel/)
-inc/hal_data.h						SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(hal_data.h)
-inc/hal.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(hal.h)
+inc/hal_int.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+inc/hal_data.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(hal_data.h)
+inc/hal.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(hal.h)
 rom/hal.iby		/epoc32/rom/hal/	//
 rom/hal.hby		/epoc32/rom/hal/	//
 

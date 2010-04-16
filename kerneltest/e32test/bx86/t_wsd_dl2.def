@@ -1,0 +1,4 @@
+EXPORTS
+	?GetAddressOfDataProxy@@YAPAPAXAAHAAPAX1@Z @ 1 NONAME ; void * * GetAddressOfDataProxy(int &, void * &, void * &)
+	?CheckWritableStaticData@@YAHXZ @ 2 NONAME ; void CheckWritablStaticData(void)
+

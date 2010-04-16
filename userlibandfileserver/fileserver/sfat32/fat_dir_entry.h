@@ -29,7 +29,7 @@
 
 
 const TInt      KFatDirNameSize         = 11;   ///< Dos directory/File name length
-const TInt      KVFatEntryAttribute     = 0x0F;  ///< VFat entry attribute setting
+const TUint     KVFatEntryAttribute     = 0x0F;  ///< VFat entry attribute setting
 const TUint8    KDotEntryByte           = 0x2e;  ///< Dot value for self and parent pointer directory entries
 const TUint8    KBlankSpace             = 0x20;  ///< Blank space in a directory entry
 const TInt      KSizeOfFatDirEntryLog2  = 5;     ///< Log2 of size in bytes of a Fat directry entry 
@@ -74,42 +74,57 @@ public:
     inline void InitZ();
 
     inline const TPtrC8 Name() const;
-    inline TInt Attributes() const;
-    inline TTime Time(TTimeIntervalSeconds aOffset) const;
-    inline TInt StartCluster() const;
-    inline TUint32 Size() const;
-    inline TBool IsErased() const;
-    inline TBool IsCurrentDirectory() const;
-    inline TBool IsParentDirectory() const;
-    inline TBool IsEndOfDirectory() const;
-    inline TBool IsGarbage() const;
     inline void SetName(const TDesC8& aDes);
-    inline void SetAttributes(TInt anAtt);
+
+    inline TUint Attributes() const;
+    inline void SetAttributes(TUint anAtt);
+
+    inline TTime Time(TTimeIntervalSeconds aOffset) const;
     inline void SetTime(TTime aTime, TTimeIntervalSeconds aOffset);
-    inline void SetCreateTime(TTime aTime, TTimeIntervalSeconds aOffset);
-    inline void SetStartCluster(TInt aStartCluster);
+    inline TBool IsTimeTheSame(TTime aTime, TTimeIntervalSeconds aOffset) const; 
+    
+
+    inline TUint32 StartCluster() const;
+    inline void SetStartCluster(TUint32 aStartCluster);
+
+    inline TUint32 Size() const;
     inline void SetSize(TUint32 aFilesize);
+
+    inline TBool IsErased() const;
     inline void SetErased();
+
+    inline TBool IsCurrentDirectory() const;
     inline void SetCurrentDirectory();
+
+    inline TBool IsParentDirectory() const;
     inline void SetParentDirectory();
+
+    inline TBool IsEndOfDirectory() const;
     inline void SetEndOfDirectory();
-    inline TUint RuggedFatEntryId() const;
+
+    inline TBool IsGarbage() const;
+    
+    inline void SetCreateTime(TTime aTime, TTimeIntervalSeconds aOffset);
+
+    inline TUint16 RuggedFatEntryId() const;
     inline void  SetRuggedFatEntryId(TUint16 aId);
 
-public:
-    void InitializeAsVFat(TUint8 aCheckSum);
-    void SetVFatEntry(const TDesC& aName,TInt aRemainderLen);
-    void ReadVFatEntry(TDes16& aVBuf) const;
-    inline TBool IsLongNameStart() const;
-    inline TBool IsVFatEntry() const;
     inline TInt NumFollowing() const;
     inline TUint8 CheckSum() const;
+
+    void SetVFatEntry(const TDesC& aName, TUint aRemainderLen, TUint8 aCheckSum);
+    void ReadVFatEntry(TDes16& aVBuf) const;
+    
+    inline TBool IsLongNameStart() const;
+    inline TBool IsVFatEntry() const;
 
 
 public:
     TUint8 iData[KSizeOfFatDirEntry]; ///< The directory entry data
     };
 
+__ASSERT_COMPILE((sizeof(TFatDirEntry) == KSizeOfFatDirEntry));
+__ASSERT_COMPILE((sizeof(SFatDirEntry) == KSizeOfFatDirEntry));
 
 
 #endif //FAT_DIR_ENTRY_H

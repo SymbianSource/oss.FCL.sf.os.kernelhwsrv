@@ -38,47 +38,70 @@ TBool TEntryPos::operator==(const TEntryPos& aRhs) const
     return (iCluster == aRhs.iCluster && iPos == aRhs.iPos);
     }
 
+/** set "end of directory" indicator*/
+void TEntryPos::SetEndOfDir()
+    {
+    iCluster = EOF_32Bit;
+    }
+
 
 //---------------------------------------------------------------------------------------------------------------------------------
 // class CFatMountCB
 
-inline TInt CFatMountCB::RootDirectorySector() const
-    {return iVolParam.RootDirectorySector();}
 
-inline TUint CFatMountCB::RootDirEnd() const
-    {return iVolParam.RootDirEnd();}
+/** @return ETrue if the value of aClusterNo is valid*/
+inline TBool CFatMountCB::ClusterNumberValid(TUint32 aClusterNo) const 
+    {   
+    ASSERT(ConsistentState()); 
+            
+    if(!aClusterNo && !Is32BitFat())
+        return ETrue; //-- root dir. cluster for FAT12/16
+
+    return (aClusterNo >= KFatFirstSearchCluster) && (aClusterNo < UsableClusters()+KFatFirstSearchCluster); 
+    }
+
+
+inline TUint32 CFatMountCB::RootDirectorySector() const
+    {
+    return iVolParam.RootDirectorySector();
+    }
+
+inline TUint32 CFatMountCB::RootDirEnd() const
+    {
+    return iVolParam.RootDirEnd();
+    }
 
 inline TUint32 CFatMountCB::RootClusterNum() const
-    {return iVolParam.RootClusterNum(); }        
+    {
+    return iVolParam.RootClusterNum();
+    }        
 
 
-inline TInt CFatMountCB::StartCluster(const TFatDirEntry & anEntry) const
+inline TUint32 CFatMountCB::StartCluster(const TFatDirEntry & anEntry) const
 	{
 	if(Is32BitFat())	
 		return anEntry.StartCluster();
 	else
-		return 0xFFFF&anEntry.StartCluster();
+		return anEntry.StartCluster() & 0xFFFF;
 	}
 
 /**
 returns true for root dir on Fat12/16 (fixed root dir versions of Fat) false on fat32 
 this function is used to handle special cases for reading/writing the root directory on FAT via the use of cluster zero.
 
-@param aEntry position on volume being queried
-@return Whether Root dir position or not
+    @param entryPos     directory entry position
+    @return ETrue       if entryPos belongs to the FAT12/16 root directory
 */
-TBool CFatMountCB::IsRootDir(const TEntryPos &aEntry) const
+TBool CFatMountCB::IsRootDir(const TEntryPos &entryPos) const
 	{
-	if(Is32BitFat())
-		return EFalse;
-	else
-		return((aEntry.iCluster==0) ? (TBool)ETrue : (TBool)EFalse);	
+	//-- for FAT12/16 cluster 0 means "root directory"
+    return !(Is32BitFat() || entryPos.iCluster);
 	}
 /**
 Indicates the root directory cluster, For Fat12/16 root is always indicated by cluster number zero, on Fat32 the is a root cluster number
 @return The root cluster indicator
 */
-TInt CFatMountCB::RootIndicator() const
+TUint32 CFatMountCB::RootIndicator() const
 	{
 	if(Is32BitFat())
         return iVolParam.RootClusterNum();
@@ -88,24 +111,34 @@ TInt CFatMountCB::RootIndicator() const
 
 
 /** @return Log2 of cluster size on volume */
-TInt CFatMountCB::ClusterSizeLog2() const
-    {return(iVolParam.ClusterSizeLog2());}
+TUint32 CFatMountCB::ClusterSizeLog2() const
+    {
+    return(iVolParam.ClusterSizeLog2());
+    }
 
 /** @return Log2 of media sector size  */
-TInt CFatMountCB::SectorSizeLog2() const
-    {return(iVolParam.SectorSizeLog2());}
+TUint32 CFatMountCB::SectorSizeLog2() const
+    {
+    return(iVolParam.SectorSizeLog2());
+    }
 
 /** @return sector per cluster */
-TInt CFatMountCB::SectorsPerCluster() const
-    {return(1<<(iVolParam.ClusterSizeLog2()-iVolParam.SectorSizeLog2()));}
+TUint32 CFatMountCB::SectorsPerCluster() const
+    {
+    return(1<<(iVolParam.ClusterSizeLog2()-iVolParam.SectorSizeLog2()));
+    }
 
 /** @return the base position of a cluster */
-TInt CFatMountCB::ClusterBasePosition() const
-	{return(iFirstFreeByte);}
+TUint32 CFatMountCB::ClusterBasePosition() const
+	{
+    return(iFirstFreeByte);
+    }
 
 /** @return the offset into a cluster of a byte address */
-TInt CFatMountCB::ClusterRelativePos(TInt aPos) const
-	{return(aPos&((1<<ClusterSizeLog2())-1));}
+TUint32 CFatMountCB::ClusterRelativePos(TUint32 aPos) const
+	{
+    return(aPos & ((1<<ClusterSizeLog2())-1));
+    }
 
 /**
 Calculates the maximum number of clusters
@@ -115,29 +148,42 @@ TUint32 CFatMountCB::MaxClusterNumber() const
     {return(TotalSectors()>>(ClusterSizeLog2()-SectorSizeLog2()));}
 
 /** @return the the total sectors on volume */
-TInt CFatMountCB::TotalSectors() const
-    {return iVolParam.TotalSectors();}
+TUint32 CFatMountCB::TotalSectors() const
+    {
+    return iVolParam.TotalSectors();
+    }
 
 /** @return total size of a Fat in bytes */
-TInt CFatMountCB::FatSizeInBytes() const
-    {return iVolParam.FatSizeInBytes();}
+TUint32 CFatMountCB::FatSizeInBytes() const
+    {
+    return iVolParam.FatSizeInBytes();
+    }
 
 /** @return first sector of the Fat */
 TUint32 CFatMountCB::FirstFatSector() const
-    {return iVolParam.FirstFatSector();}
+    {
+    return iVolParam.FirstFatSector();
+    }
 
 /** @return the byte offset of the Fat */
-TInt CFatMountCB::StartOfFatInBytes() const
-	{return(FirstFatSector()<<SectorSizeLog2());}
+TUint32 CFatMountCB::StartOfFatInBytes() const
+	{
+    return(FirstFatSector()<<SectorSizeLog2());
+    }
 
 /** @return Number of Fats used by the volume */
-TInt CFatMountCB::NumberOfFats() const
-    {return iVolParam.NumberOfFats();}
+TUint32 CFatMountCB::NumberOfFats() const
+    {
+    return iVolParam.NumberOfFats();
+    }
 
 
 /** @return refrence to the fat table owned by the mount */
 CFatTable& CFatMountCB::FAT() const
-	{return(*iFatTable);}
+	{
+    return(*iFatTable);
+    }
+
 /**
     @return refrence to the file system object that has produced this CFatMountCB
 */
@@ -154,30 +200,52 @@ CRawDisk& CFatMountCB::RawDisk() const
 /**
 @return ETrue if aCluster value is bad cluster marker defined in FAT specification
 */
-TBool CFatMountCB::IsBadCluster(TInt aCluster) const
-	{return Is32BitFat() ? aCluster==0xFFFFFF7 : Is16BitFat() ? aCluster==0xFFF7 : aCluster==0xFF7;}
+TBool CFatMountCB::IsBadCluster(TUint32 aCluster) const
+	{
+    return Is32BitFat() ? aCluster==0xFFFFFF7 : Is16BitFat() ? aCluster==0xFFF7 : aCluster==0xFF7;
+    }
 
 /**
 Returns whether the current mount is running as rugged Fat or not, this is held in the file system object
-@return Is rugged fat flag
+    @return ETrue if this is Rugged FAT
 */
 TBool CFatMountCB::IsRuggedFSys() const
-	{return Drive().IsRugged();}
+	{
+    return Drive().IsRugged();
+    }
 
 /**
 Sets the rugged flag in the file system object
 @param Flag to set or clear the rugged flag
 */
 void CFatMountCB::SetRuggedFSys(TBool aVal)
-	{Drive().SetRugged(aVal);}
+	{
+    Drive().SetRugged(aVal);
+    }
+
+/**
+    @return Log2(Media atomic write granularity).
+    This is mostly to be used in Rugged FAT mode, see IsRuggedFSys(). For Rugged FAT the media shall support atomic writes.
+    By default this is the sector (512 bytes)
+
+*/
+TUint32 CFatMountCB::AtomicWriteGranularityLog2() const
+    {
+    return KDefSectorSzLog2;    
+    }
+
 
 /** @return the usable clusters count for a volume */
 TUint32 CFatMountCB::UsableClusters() const
-	{return(iUsableClusters);}
+    {
+    return(iUsableClusters);
+    }
 
 
-TUint CFatMountCB::StartOfRootDirInBytes() const
-    {return iVolParam.RootDirectorySector()<<SectorSizeLog2();}
+TUint32 CFatMountCB::StartOfRootDirInBytes() const
+    {
+    return iVolParam.RootDirectorySector()<<SectorSizeLog2();
+    }
 
 
 /** @return FAT type for this mount */
@@ -199,7 +267,9 @@ TBool CFatMountCB::Is32BitFat() const
 }
 
 CAsyncNotifier* CFatMountCB::Notifier() const
-	{return iNotifier;}	
+	{
+    return iNotifier;
+    }	
 
 
 
@@ -315,27 +385,38 @@ void CFatMountCB::XFileCreationHelper::SetIsNewEntryPosFound(TBool aFound)
     @param  aCluster FAT table entry (cluster number) to check
     @return ETrue    if aCluster is a EOC for the FAT type being used by CFatMountCB
 */
-TBool CFatMountCB::IsEndOfClusterCh(TInt aCluster) const
+TBool CFatMountCB::IsEndOfClusterCh(TUint32 aCluster) const
 	{
     ASSERT(iFatEocCode);
+    ASSERT((TUint32)aCluster <= iFatEocCode+7); //-- aCluster value is always masked accordingly.
 
-    if((TUint32)aCluster >= iFatEocCode)
-        return ETrue;
-
-    ASSERT((TUint32)aCluster <= iFatEocCode+7);
-
-	return EFalse;
+    return (aCluster >= iFatEocCode);
     }
 
 /**
     Sets "End of Cluster Chain" value in aCluster depending on the FAT type.
     @param aCluster cluster to set to end of chain marker
 */
-void CFatMountCB::SetEndOfClusterCh(TInt &aCluster) const
+void CFatMountCB::SetEndOfClusterCh(TUint32 &aCluster) const
 	{
     ASSERT(iFatEocCode);
     aCluster = iFatEocCode+7;
 	}
+
+
+CFatMountCB::TEntrySetChunkInfo::TEntrySetChunkInfo()
+                                :iNumEntries(KMaxTUint) 
+    {
+    }
+
+
+TBool CFatMountCB::TEntrySetChunkInfo::operator==(const TEntrySetChunkInfo& aRhs)
+    {
+    ASSERT(&aRhs != this);
+    return (iNumEntries == aRhs.iNumEntries) && (iEntryPos==aRhs.iEntryPos);
+    }
+
+
 
 
 //-------  debug methods
@@ -434,12 +515,72 @@ Returns Log2 of cluster size from mount
 TInt CFatFileCB::ClusterSizeLog2()
 	{return(FatMount().ClusterSizeLog2());}
 
-/*
- Note: this replaces SeekIndex() which was only used in sl_mnt
- to verify whether the seek index had been created/initialised
+
+//---------------------------------------------------------------------------------------------------------------------------------
+TBool CFatFileCB::FileSizeModified() const 
+    {
+    return iFileSizeModified;
+    }  
+
+void CFatFileCB::IndicateFileSizeModified(TBool aModified) 
+    {
+    iFileSizeModified = aModified;
+    }
+
+//-----------------------------------------------------------------------------
+/** @return ETrue if file attributes' 'Modified' flag is set*/
+TBool CFatFileCB::FileAttModified() const 
+    {
+    return (Att() & KEntryAttModified);
+    }   
+
+/** 
+    Set or reset a flag indicating that file attributes had beed modified
+    @param aModified ETrue means that attributes are modified
 */
-inline TBool CFatFileCB::IsSeekIndex() const
-{return (iSeekIndex==NULL?(TBool)EFalse:(TBool)ETrue); }
+
+void  CFatFileCB::IndicateFileAttModified(TBool aModified)
+    {
+    if(aModified)
+        iAtt |= KEntryAttModified;
+    else
+        iAtt &= ~KEntryAttModified;
+    }
+
+TUint32 CFatFileCB::FCB_StartCluster() const
+    {
+    return iStartCluster;
+    }
+
+
+void CFatFileCB::FCB_SetStartCluster(TUint32 aVal)
+    {
+    ASSERT(aVal == 0 || (aVal >= KFatFirstSearchCluster));
+    iStartCluster = aVal;
+    }
+
+/** @return file size from CFileCB */
+TUint32 CFatFileCB::FCB_FileSize() const
+    {
+    return Size();
+    } 
+
+/** set file size in the CFileCB*/
+void CFatFileCB::FCB_SetFileSize(TUint32 aVal)
+    {
+    SetSize(aVal);
+    } 
+
+TBool CFatFileCB::FileTimeModified() const 
+    {
+    return iFileTimeModified;
+    }
+
+void  CFatFileCB::IndicateFileTimeModified(TBool aModified)
+    {
+    iFileTimeModified = aModified;
+    }
+
 
 
 //---------------------------------------------------------------------------------------------------------------------------------

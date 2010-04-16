@@ -80,5 +80,43 @@ enum TArmTimerWDDisable
 	};
 
 
+#ifdef	__CPU_ARM_HAS_GLOBAL_TIMER_BLOCK
+
+// r1p0 and later A9s have an additional Global Timer
+struct ArmGlobalTimer
+	{
+	volatile TUint32	iTimerCountLow;			// 00 Timer counter low word
+	volatile TUint32	iTimerCountHigh;		// 04 Timer counter high word
+	volatile TUint32	iTimerCtrl;				// 08 Timer control register
+	volatile TUint32	iTimerStatus;			// 0C Timer status register
+	volatile TUint32	iComparatorLow;			// 10 Comparator value low word (per-CPU register)
+	volatile TUint32	iComparatorHigh;		// 14 Comparator value high word (per-CPU register)
+	volatile TUint32	iComparatorInc;			// 18 Comparator autoincrement value (per-CPU register)
+	volatile TUint32	i_Spare2[57];			// 1C unused
+	};
+
+__ASSERT_COMPILE(sizeof(ArmGlobalTimer)==0x100);
+
+// Global Timer Control Register Bits
+enum TArmGlobalTimerCtrl
+	{
+	E_ArmGTmrCtrl_TmrEnb		=1u,			// when set, timer counts up
+	E_ArmGTmrCtrl_CmpEnb		=2u,			// when set, comparator matching is enabled (per-CPU)
+	E_ArmGTmrCtrl_IntEn			=4u,			// when set enables comparator match interrupt (per-CPU)
+	E_ArmGTmrCtrl_AutoInc		=8u,			// when set enables comparator auto increment (per-CPU)
+	E_ArmGTmrCtrl_PrescaleShift	=8u,
+	E_ArmGTmrCtrl_PrescaleMask	=0xff00u,		// bits 8-15 = prescale value - divides by (P+1)
+												// input to prescaler is PERIPHCLK (=CPUCLK/2 on NE1, CPUCLK/N in general, N>=2)
+	};
+
+enum TArmGlobalTimerStatus
+	{
+	E_ArmGTmrStatus_Event		=1u				// set when timer count value matches comparator value (per-CPU)
+	};
+
+#endif
+
+
+
 
 #endif	// 	__ARM_TMR_H__

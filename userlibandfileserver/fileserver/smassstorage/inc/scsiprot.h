@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -135,7 +135,8 @@ inline TBool TSenseInfo::SenseOk()
 	}
 
 
-const TUint KModeSenseCommandLength = 4;
+const TUint KModeSense6CommandLength = 4;
+const TUint KModeSense10CommandLength = 8;
 const TUint KReadCapacityCommandLength = 8;
 const TUint KReadFormatCapacitiesCommandLength = 12;
 const TUint KRequestSenseCommandLength = 18;
@@ -156,7 +157,7 @@ public:
 	ETestUnitReady			= 0x00,
 	ERequestSense			= 0x03,
 	EInquiry 				= 0x12,
-	EModeSense				= 0x1A,
+	EModeSense6				= 0x1A,
 	EStartStopUnit			= 0x1B,
 	EPreventMediaRemoval	= 0x1E,
 	EReadFormatCapacities	= 0x23,
@@ -164,6 +165,7 @@ public:
 	ERead10 				= 0x28,
 	EWrite10				= 0x2A,
 	EVerify10				= 0x2f,
+    EModeSense10			= 0x5A,
 	EUndefinedCommand		= 0xFF
 	};
 
@@ -197,7 +199,8 @@ private:
 	TBool HandleRead10(TPtrC8& aData, TUint aLun);
 	TBool HandleWrite10(TPtrC8& aData, TUint aLun);
 	TBool HandleVerify10(TPtrC8& aData, TUint aLun);
-	TBool HandleModeSense(TPtrC8& aData, TUint aLun);
+	TBool HandleModeSense6(TPtrC8& aData, TUint aLun);
+    TBool HandleModeSense10(TPtrC8& aData, TUint aLun);
 	TBool HandleReadFormatCapacities(TUint aLun);
 
 private:

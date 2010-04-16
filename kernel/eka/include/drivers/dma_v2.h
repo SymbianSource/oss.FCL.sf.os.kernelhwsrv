@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0""
@@ -1036,14 +1036,39 @@ protected:
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aSrcCompletedHdr,
 					   SDmaDesHdr*& aDstCompletedHdr);
 
-	virtual ~TDmaChannel();
+	/** This function allows the Platform Specific Layer (PSL) to control the
+		power management of the channel or its controller by overriding the
+		PIL's default implementation (which does nothing) and making
+		appropriate use of the Power Resource Manager (PRM).
+
+		The function gets called by the PIL whenever the channel's queued
+		requests count has changed in a significant way, either before the
+		channel's Transfer() method is invoked for a request on a previously
+		empty request queue, or immediately after the request count has become
+		zero because of request cancellation or completion.
+
+		Depending on the current value of iQueuedRequests, the PSL may power
+		down or power up the channel. Note that iQueuedRequests gets accessed
+		and changed by different threads, so the PSL needs to take the usual
+		precautions when evaluating the variable's value.
+
+		None of the internal DMA framework mutexes is being held by the PIL
+		when calling this function.
+
+		@see iQueuedRequests
+	*/
+	virtual void QueuedRequestCountChanged();
+
+#if defined(__CPU_ARM) && !defined(__EABI__)
+	inline virtual ~TDmaChannel() {}	// kill really annoying warning
+#endif
 
 private:
 	static void Dfc(TAny*);
 	void DoDfc();
 	inline void Wait();
 	inline void Signal();
-	inline void Flash();
+	inline TBool Flash();
 	void ResetStateMachine();
 
 protected:
@@ -1052,7 +1077,7 @@ protected:
 	TUint32 iPslId;			 // unique identifier provided by PSL
 	TBool iDynChannel;		 // this is a dynamically allocated channel
 	TUint iPriority;		 // hardware priority of this channel
-	DMutex* iMutex;			 // for data accessed in both client & DFC context
+	NFastMutex iLock;		 // for data accessed in both client & DFC context
 	SDmaDesHdr* iCurHdr;	 // fragment being transferred or NULL
 	SDmaDesHdr** iNullPtr;	 // Pointer to NULL pointer following last fragment
 	TDfc iDfc;				  // transfer completion/failure DFC
@@ -1064,6 +1089,7 @@ protected:
 	enum {KDfcCountMask = 0x3FFFFFFF};	   // bits 0-29 - number of queued DFCs
 	SDblQue iReqQ;				 // being/about to be transferred request queue
 	TInt iReqCount;				 // number of requests attached to this channel
+	TInt iQueuedRequests; // number of requests currently queued on this channel
 private:
 	TDmaCancelInfo* iCancelInfo; // ...
 	TBool iRedoRequest;			 // client ISR callback wants a redo of request

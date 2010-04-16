@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -113,17 +113,18 @@ CSession2* CSecuritySvrServer::NewSessionL(const TVersion& aRequiredVersion, con
 // Session constructor
 //
 	{
-	LOG_MSG("CSecuritySvrServer::NewSessionL()\n");
+	LOG_ARGS("version=%d.%d.%d", aRequiredVersion.iMajor, aRequiredVersion.iMinor, aRequiredVersion.iBuild);
 
 	//assert compatible version
 	TVersion currentVersion(KDebugServMajorVersionNumber, KDebugServMinorVersionNumber, KDebugServPatchVersionNumber);
 	if(!User::QueryVersionSupported(currentVersion, aRequiredVersion))
 		{
-		return NULL;
+		LOG_MSG("Requested version not compatible with this version. Asked for %d.%d.%d but this is %d.%d.%d", aRequiredVersion.iMajor, aRequiredVersion.iMinor, aRequiredVersion.iBuild, KDebugServMajorVersionNumber, KDebugServMinorVersionNumber, KDebugServPatchVersionNumber);
+		User::Leave(KErrNotSupported);
 		}
 
 	//create session
-	LOG_MSG( "  About to call new(ELeave) CSecuritySvrSession()\n" );
+	LOG_MSG("About to call new(ELeave) CSecuritySvrSession()");
 	CSecuritySvrSession* servSession = new(ELeave) CSecuritySvrSession();
 
 	CleanupStack::PushL(servSession);

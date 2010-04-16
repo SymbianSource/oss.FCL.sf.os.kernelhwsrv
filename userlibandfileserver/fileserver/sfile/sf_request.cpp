@@ -27,81 +27,25 @@ RMessage2 dummyM;
 
 CFsClientMessageRequest* RequestAllocator::iFreeHead;				
 CFsClientMessageRequest* RequestAllocator::iCloseHead;
-TInt RequestAllocator::iAllocNum;
-TInt RequestAllocator::iAllocNumOperation;
-TMsgOperation* RequestAllocator::iFreeHeadSupOp;
-
-#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-TInt RequestAllocator::iAllocated;
-#endif
+TInt RequestAllocator::iRequestCount;
+TInt RequestAllocator::iFreeCount;
+TInt RequestAllocator::iRequestCountPeak;
 RFastLock RequestAllocator::iCacheLock;
 
-void RequestAllocator::Initialise()
+TMsgOperation* OperationAllocator::iFreeHead;				
+TInt OperationAllocator::iRequestCount;
+TInt OperationAllocator::iFreeCount;
+TInt OperationAllocator::iRequestCountPeak;
+RFastLock OperationAllocator::iCacheLock;
+
+TInt RequestAllocator::Initialise()
 	{	
-	iFreeHead=NULL;  
-	iCloseHead=NULL; 
-	iAllocNum=0; 
-#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-	iAllocated=0;
-#endif
-	iAllocNumOperation=0;
-	iFreeHeadSupOp=NULL;
-	}
-
-TInt RequestAllocator::AllocRequest(TInt aNum)
-//
-//	Allocates a group of request objects
-//
-	{
-    TInt i;
-	if(iAllocNum < KMaxRequestAllocated)
-		{
-		__CACHE_PRINT(_L("RequestAllocator::AllocRequest() Not reached the limit"));
-		CFsClientMessageRequest* list;
-		CFsClientMessageRequest* start;
-		list = new CFsClientMessageRequest[KAllocReqBlock];
-		start = list;
-		if(!list)
-			return KErrNoMemory;
-		
-		// Make sure the constructors are called for every element in the array
-		// - some compilers don't do this
-		for(TInt j=0; j<KAllocReqBlock; j++)
-			{
-			CFsClientMessageRequest* request = &list[j];
-			new(request) CFsClientMessageRequest();
-			}
-
-		iAllocNum += KAllocReqBlock;
-		CFsClientMessageRequest* last;
-		for(i=1;i<KAllocReqBlock;i++)
-			{
-			last = list;
-			list++;
-			last->iNext = list;
-			}
-		list->iNext = iFreeHead;
-		iFreeHead = start;
-		return KErrNone;
-		}
-	else
-		{
-		__CACHE_PRINT1(_L("RequestAllocator::AllocRequest() Limit exceeded Count = %d"),aNum);
-		CFsClientMessageRequest* request;
-		for(i=0;i<aNum;i++)
-			{
-			request=new CFsClientMessageRequest;
-			if(!request)
-				return KErrNoMemory;
-#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-			iAllocated++;
-#endif
-			request->SetAllocated();
-			request->iNext=iFreeHead;
-			iFreeHead=request;
-			}
-		return KErrNone;
-		}
+	iFreeHead = NULL;  
+	iCloseHead = NULL; 
+	iRequestCount = 0; 
+	iFreeCount = 0;
+	iRequestCountPeak = 0;
+	return iCacheLock.CreateLocal();
 	}
 
 void RequestAllocator::FreeRequest(CFsClientMessageRequest* aRequest)
@@ -109,28 +53,28 @@ void RequestAllocator::FreeRequest(CFsClientMessageRequest* aRequest)
 //free request 
 //
 	{
-	__CACHE_PRINT1(_L("PLUGIN: RequestAllocator::FreeRequest for %x"), aRequest);
-	if(aRequest->IsAllocated())
-		{
-		__CACHE_PRINT(_L("RequestAllocator::FreeRequest() Allocated request"));
-		delete(aRequest);
-#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-		iAllocated--;
-#endif
-		return;
-		}
-	
-	__CACHE_PRINT(_L("RequestAllocator::FreeRequest() returning to free list"));
+	__CACHE_PRINT1(_L("RequestAllocator::FreeRequest for %x"), aRequest);
+	ASSERT(aRequest != NULL);
 	iCacheLock.Wait();
-	aRequest->iNext = iFreeHead;
-	iFreeHead=aRequest;
-	aRequest->SetSubstedDrive(NULL);
+	if (iFreeCount >= KFreeCountMax)
+		{
+		delete aRequest;
+		ASSERT(iRequestCount > 0);
+		iRequestCount--;
+		}
+	else
+		{
+		aRequest->SetSubstedDrive(NULL);
+		aRequest->iNext = iFreeHead;
+		iFreeHead=aRequest;
+		iFreeCount++;
+		}
 	iCacheLock.Signal();
 	}
 
 void RequestAllocator::OpenSubFailed(CSessionFs* aSession)
 //
-//	Move requst from closed list to free list
+//	Move request from closed list to free list
 //
 	{
 	__ASSERT_DEBUG(iCloseHead!=NULL,Fault(ERequestAllocatorOpenSubFailed)); // On arriving here Close Queue is supposed to be empty
@@ -142,34 +86,39 @@ void RequestAllocator::OpenSubFailed(CSessionFs* aSession)
 	iCacheLock.Wait();
 	CFsClientMessageRequest* rp = iCloseHead;
 	iCloseHead = rp->iNext;
+	iCacheLock.Signal();
 	
 	// dec the number of closed requests owned by this session
 	aSession->CloseRequestCountDec();
 
-	rp->iNext = NULL;
-	if(rp->IsAllocated())
+	__CACHE_PRINT1(_L("RequestAllocator::OpenSubFailed() IsAllocated %d"), rp->IsAllocated());
+	FreeRequest(rp);
+	}
+
+CFsClientMessageRequest* RequestAllocator::GetRequest()
+//
+// Get request from the free queue
+//
+	{
+	CFsClientMessageRequest* request;
+	if (iFreeHead == NULL)
 		{
-		__CACHE_PRINT(_L("RequestAllocator::OpenSubFailed() Allocated request"));
-		delete(rp);
-#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-		iAllocated--;
-#endif
+		request = new CFsClientMessageRequest;
+		if (request)
+			{
+			iRequestCount++;
+			iRequestCountPeak = Max(iRequestCountPeak, iRequestCount);
+			}
 		}
 	else
 		{
-		__CACHE_PRINT(_L("RequestAllocator::OpenSubFailed()"));
-		if(iFreeHead)
-			{
-			rp->iNext = iFreeHead;
-			}
-		else
-			{
-			rp->iNext = NULL;
-			}
-
-		iFreeHead = rp;		
+		request = iFreeHead;
+		iFreeHead = iFreeHead->iNext;
+		request->iNext = NULL;
+		iFreeCount--;
+		ASSERT(iFreeCount >= 0);
 		}
-	iCacheLock.Signal();
+	return request;
 	}
 
 TInt RequestAllocator::GetMessageRequest(const TOperation& aOperation,const RMessage2& aMessage,CFsClientMessageRequest* &aRequest)
@@ -181,27 +130,20 @@ TInt RequestAllocator::GetMessageRequest(const TOperation& aOperation,const RMes
 		{
 		__CACHE_PRINT(_L("++RequestAllocator::GetMessageRequest() Open sub-sess"));
 		iCacheLock.Wait();
-		if(iFreeHead == NULL || iFreeHead->iNext == NULL)
-			{
-			if(AllocRequest(2)!= KErrNone)
-				{
-				iCacheLock.Signal();
-				return KErrNoMemory;
-				}
-			}
-		aRequest= iFreeHead;						//get our request from free head
-		iFreeHead = iFreeHead->iNext->iNext;	//set next but one as new free head read for next
 
-		aRequest->iNext->iNext = NULL;				//seperate our request and close from free list
-		CFsClientMessageRequest* CRp = aRequest->iNext;
-		aRequest->iNext = NULL;
-		if(iCloseHead)
+		aRequest = GetRequest();
+		CFsClientMessageRequest* closeRequest = GetRequest();
+		
+		if (aRequest == NULL || closeRequest == NULL)
 			{
-			CRp->iNext = iCloseHead;		//set second one as a reserved (tail) close request
-			iCloseHead = CRp;
+			delete aRequest;
+			delete closeRequest;
+			iCacheLock.Signal();
+			return KErrNoMemory;
 			}
-		else
-			iCloseHead = CRp;
+
+		closeRequest->iNext = iCloseHead;		//set second one as a reserved (tail) close request
+		iCloseHead = closeRequest;
 		
 		((CSessionFs*) aMessage.Session())->CloseRequestCountInc();
 		}
@@ -272,6 +214,7 @@ TInt RequestAllocator::GetMessageRequest(const TOperation& aOperation,const RMes
 			}
 
 		iCacheLock.Wait();
+		ASSERT(iCloseHead);
 		aRequest = iCloseHead;
 		iCloseHead = aRequest->iNext;
 		((CSessionFs*) aMessage.Session())->CloseRequestCountDec();
@@ -289,17 +232,12 @@ TInt RequestAllocator::GetMessageRequest(const TOperation& aOperation,const RMes
 		{
 		__CACHE_PRINT(_L("++RequestAllocator::GetMessageRequest() "));
 		iCacheLock.Wait();
-		if(!iFreeHead)
+		aRequest = GetRequest();
+		if (aRequest == NULL)
 			{
-			if(AllocRequest(1) != KErrNone)
-				{
-				iCacheLock.Signal();
-				return KErrNoMemory; 
-				}
+			iCacheLock.Signal();
+			return KErrNoMemory; 
 			}
-		aRequest = iFreeHead;						
-		iFreeHead = aRequest->iNext;
-		aRequest->iNext= NULL;
 		}
 
 	aRequest->Init();
@@ -322,125 +260,102 @@ TInt RequestAllocator::GetMessageRequest(const TOperation& aOperation,const RMes
 #if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
 TInt RequestAllocator::CloseCount()
 	{TInt count=0;
+	iCacheLock.Wait();
+
 	CFsClientMessageRequest* list=iCloseHead;
 	while(list!=NULL)
 		{
 		count++;
 		list=list->iNext;
 		}
+
+	iCacheLock.Signal();
 	return(count);
 	} 
 TInt RequestAllocator::FreeCount()
 	{
 	TInt count=0;
+	iCacheLock.Wait();
 	CFsClientMessageRequest* list=iFreeHead;
 	while(list!=NULL)
 		{
 		count++;
 		list=list->iNext;
 		}
-	return(count);}
+	ASSERT(count == iFreeCount);
+	iCacheLock.Signal();
+	return(count);
+	}
 #endif
 
-TInt RequestAllocator::AllocOperation()
-//
-//	Allocates a group of TMsgOperation objects
-//
-// Must be called with iCacheLock held
-	{
-    TInt i;
-	if(iAllocNumOperation < KMaxOperationAllocated)
-		{
-		__CACHE_PRINT(_L("RequestAllocator::AllocOperation() Not reached the limit"));
-		TMsgOperation* list;
-		TMsgOperation* start;
-		list = new TMsgOperation[KAllocReqBlock];
-		start = list;
-		if(!list)
-			return KErrNoMemory;
-		
-		for(TInt j=0; j<KAllocReqBlock; j++)
-			{
-			TMsgOperation* request = &list[j];
-			request->iIsAllocated = EFalse;
-			}
+TInt OperationAllocator::Initialise()
+	{	
+	iFreeHead = NULL;  
+	iRequestCount = 0; 
+	iFreeCount = 0;
+	return iCacheLock.CreateLocal();
+	}
 
-		iAllocNumOperation += KAllocReqBlock;
-		TMsgOperation* last;
-		for(i=1;i<KAllocReqBlock;i++)
-			{
-			last = list;
-			list++;
-			last->iNext = list;
-			}
-		list->iNext = iFreeHeadSupOp;
-		iFreeHeadSupOp = start;
-		return KErrNone;
+void OperationAllocator::FreeOperation(TMsgOperation* aOperation)
+//
+// free Operation
+//
+	{
+	__CACHE_PRINT1(_L("RequestAllocator::FreeOperation() returning %x to free list"), aOperation);
+	ASSERT(aOperation != NULL);
+	iCacheLock.Wait();
+	if (iFreeCount >= KFreeCountMax)
+		{
+		delete aOperation;
+		ASSERT(iRequestCount > 0);
+		iRequestCount--;
 		}
 	else
 		{
-		__CACHE_PRINT(_L("RequestAllocator::AllocOperation() Limit exceeded"));
-		TMsgOperation* request;
-
-		request=new TMsgOperation;
-		if(!request)
-			return KErrNoMemory;
-#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-		iAllocated++;
-#endif
-		request->iIsAllocated = ETrue;
-		request->iNext=iFreeHeadSupOp;
-		iFreeHeadSupOp=request;
-
-		return KErrNone;
+		aOperation->iNext = iFreeHead;
+		iFreeHead = aOperation;
+		iFreeCount++;
 		}
+
+	iCacheLock.Signal();
 	}
-TInt RequestAllocator::GetOperation(TMsgOperation* &aOperation)
+
+TInt OperationAllocator::GetOperation(TMsgOperation* &aOperation)
 //
 //	tries to get a pre allocated subop from the cache. Failing that allocates one individualy 
 //	
 	{
 
 	__CACHE_PRINT(_L("RequestAllocator::GetOperation() "));
+
 	iCacheLock.Wait();
-	if(!iFreeHeadSupOp)
+
+	TInt r = KErrNone;
+	if (iFreeHead == NULL)
 		{
-		if(AllocOperation() != KErrNone)
+		aOperation = new TMsgOperation;
+		if (aOperation == NULL)
+			r = KErrNoMemory; 
+		else
 			{
-			iCacheLock.Signal();
-			return KErrNoMemory; 
+			iRequestCount++;
+			iRequestCountPeak = Max(iRequestCountPeak, iRequestCount);
 			}
 		}
-	aOperation = iFreeHeadSupOp;						
-	iFreeHeadSupOp = aOperation->iNext;
-	aOperation->iNext = aOperation->iPrev = NULL;
-
-	iCacheLock.Signal();
-	return KErrNone;
-	}	
-
-void RequestAllocator::FreeOperation(TMsgOperation* aOperation)
-//
-// free Operation
-//
-	{
-	if(aOperation->iIsAllocated)
+	else
 		{
-		__CACHE_PRINT(_L("RequestAllocator::FreeOperation() Allocated subop"));
-		delete(aOperation);
-#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
-		iAllocated--;
-#endif
-		return;
+		aOperation = iFreeHead;
+		iFreeHead = iFreeHead->iNext;
+		iFreeCount--;
+		ASSERT(iFreeCount >= 0);
 		}
-	
-	__CACHE_PRINT(_L("RequestAllocator::FreeOperation() returning to free list"));
-	iCacheLock.Wait();
-	aOperation->iNext = iFreeHeadSupOp;	// NB backward link only used when request in in use
-	iFreeHeadSupOp = aOperation;
+
+	if (aOperation)
+		aOperation->iNext = aOperation->iPrev = NULL;
 
 	iCacheLock.Signal();
-	}
+	return r;
+	}	
 
 
 CFsRequest::CFsRequest()
@@ -1821,7 +1736,7 @@ void CFsMessageRequest::SetOperationFunc(TInt aFunction)
 TInt CFsMessageRequest::PushOperation(TFsRequestFunc aCallback, TInt aNextState, TInt aFunction)
 	{
 	TMsgOperation* nextOperation;
-	TInt r = RequestAllocator::GetOperation(nextOperation);
+	TInt r = OperationAllocator::GetOperation(nextOperation);
 	if (r != KErrNone)
 		return r;
 
@@ -1949,7 +1864,7 @@ void CFsMessageRequest::PopOperation()
 			SetOperationFunc(iCurrentOperation->iFunction);
 		}
 
-	RequestAllocator::FreeOperation(currentOperation);
+	OperationAllocator::FreeOperation(currentOperation);
 	}
 
 TMsgOperation& CFsMessageRequest::CurrentOperation()

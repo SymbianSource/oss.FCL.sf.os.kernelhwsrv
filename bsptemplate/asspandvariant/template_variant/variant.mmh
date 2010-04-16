@@ -153,6 +153,3 @@ macro __DEBUGGER_SUPPORT__
 library	VariantTarget(katemplate,lib)
 #endif
 
-// Uncomment the following if IIC Controller is required
-// library		iic.lib  // commented out as this iic.lib is now included from iic_channel.mmh
-

@@ -138,12 +138,16 @@ Note: Memory mapping for TEX[0]:C:B=110 is IMPLEMENTATION DEFINED. Check ARM cor
 
 /**
 The most common values for BPR_Platform_Specific_Mappings boot parameter. Any *_Mapping5 value can be orred with any
-*_Mapping6 or *_Mapping7. For example:
+*_Mapping6 and/or *_Mapping7. For example:
 @code
 ParameterTable
-		DCD 	BPR_Platform_Specific_Mappings, E_WT_WT_Mapping5 | E_FC_NC_Mapping6 | E_NC_FC_Mapping7
+		DCD 	BPR_Platform_Specific_Mappings, E_WT_WT_Mapping5+E_FC_NC_Mapping6+E_NC_FC_Mapping7
 @codeend
-Where stated, "maximum caching" refers to write back read/write allocate if supported by platform.
+specifies:
+ - EMemAttPlatformSpecific5 to be write-through mapping in both inner and outer cache.
+ - EMemAttPlatformSpecific6 to be fully cached (write-back) in inner cache and not cached in outer cache.
+ - EMemAttPlatformSpecific7 to be not cached in inner cache and fully cached (write-back) in outer cache.
+
 @see BPR_Platform_Specific_Mappings
 @publishedPartner
 @released
@@ -151,14 +155,20 @@ Where stated, "maximum caching" refers to write back read/write allocate if supp
 enum TPlatformSpecificMappings
 	{
 	E_WT_WT_Mapping5 = 0x08000802, /**Write Through caching on both levels for mapping #5.*/
+    E_WT_NC_Mapping5 = 0x00000802, /**Write Through caching at level 1, not cached at level 2 for mapping #5.*/
+    E_NC_WT_Mapping5 = 0x08000002, /**Not cached at level 1, Write Through cached at level for mapping #5.*/
 	E_FC_NC_Mapping5 = 0x00000402, /**Maximum caching at level 1, not cached at level 2 for mapping #5.*/
 	E_NC_FC_Mapping5 = 0x04000002, /**Not cached at level 1, maximum caching at level 2 for mapping #5.*/
 
 	E_WT_WT_Mapping6 = 0x20002008, /**Write Through caching on both levels for mapping #6.*/
+    E_WT_NC_Mapping6 = 0x00002008, /**Write Through caching at level 1, not cached at level 2 for mapping #6.*/
+    E_NC_WT_Mapping6 = 0x20000008, /**Not cached at level 1, Write Through cached at level for mapping #6.*/
 	E_FC_NC_Mapping6 = 0x00001008, /**Maximum caching at level 1, not cached at level 2 for mapping #6.*/
 	E_NC_FC_Mapping6 = 0x10000008, /**Not cached at level 1, maximum caching at level 2 for mapping #6.*/
 
 	E_WT_WT_Mapping7 = 0x80008020, /**Write Through caching on both levels for mapping #7.*/
+    E_WT_NC_Mapping7 = 0x00008020, /**Write Through caching at level 1, not cached at level 2 for mapping #7.*/
+    E_NC_WT_Mapping7 = 0x80000020, /**Not cached at level 1, Write Through cached at level for mapping #7.*/
 	E_FC_NC_Mapping7 = 0x00004020, /**Maximum caching at level 1, not cached at level 2 for mapping #7.*/
 	E_NC_FC_Mapping7 = 0x40000020, /**Not cached at level 1, maximum caching at level 2 for mapping #7.*/
 	};

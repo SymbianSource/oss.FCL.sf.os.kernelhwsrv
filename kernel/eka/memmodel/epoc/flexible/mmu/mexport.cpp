@@ -823,11 +823,3 @@ TBool M::CheckPagingSafe(TBool aDataPaging, TLinAddr aStartAddr, TUint aLength)
 	}
 
 
-
-EXPORT_C void DPagingDevice::NotifyIdle()
-	{
-	}
-
-EXPORT_C void DPagingDevice::NotifyBusy()
-	{
-	}

@@ -74,8 +74,9 @@ EXPORT_C __NAKED__ TUint64 NKern::Timestamp()
 	asm("test cl, 3 ");
 	asm("jnz short use_tsc_only ");
 	asm("rdtsc ");
-	asm("add eax, [ecx+80+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
-	asm("adc edx, [ecx+84+%0]" : : "i" _FOFF(TSubScheduler, iExtras));
+	asm("lea ecx, [ecx+%0]" : : "i" _FOFF(TSubScheduler, iSSX.iTimestampOffset));
+	asm("add eax, [ecx] ");
+	asm("adc edx, [ecx+4] ");
 	asm("popfd ");
 	asm("ret ");
 
@@ -133,7 +134,7 @@ extern "C" __NAKED__ void spin_lock_entry_check()
 	asm("slec_preemption: ");
 	asm("cmp cl, 0xff ");
 	asm("je short slec_1 ");			/* EOrderNone - don't check interrupts or preemption */
-	asm("cmp dword ptr [edx+52+%0], 0" : : "i"_FOFF(TSubScheduler, iExtras));
+	asm("cmp dword ptr [edx+%0], 0" : : "i"_FOFF(TSubScheduler, iSSX.iIrqNestCount));
 	asm("jge short slec_preemption_die ");	/* If called from ISR, die */
 	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
 	asm("jnz short slec_1 ");			/* Preemption disabled - OK */
@@ -484,7 +485,7 @@ extern "C" __NAKED__ void rwspin_rlock_entry_check()
 	asm("rwrlec_preemption: ");
 	asm("cmp cl, 0xff ");
 	asm("je short rwrlec_1 ");			/* EOrderNone - don't check interrupts or preemption */
-	asm("cmp dword ptr [edx+52+%0], 0" : : "i"_FOFF(TSubScheduler, iExtras));
+	asm("cmp dword ptr [edx+%0], 0" : : "i"_FOFF(TSubScheduler, iSSX.iIrqNestCount));
 	asm("jge short rwrlec_preemption_die ");	/* If called from ISR, die */
 	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
 	asm("jnz short rwrlec_1 ");			/* Preemption disabled - OK */
@@ -641,7 +642,7 @@ extern "C" __NAKED__ void rwspin_wlock_entry_check()
 	asm("rwwlec_preemption: ");
 	asm("cmp cl, 0xff ");
 	asm("je short rwwlec_1 ");			/* EOrderNone - don't check interrupts or preemption */
-	asm("cmp dword ptr [edx+52+%0], 0" : : "i"_FOFF(TSubScheduler, iExtras));
+	asm("cmp dword ptr [edx+%0], 0" : : "i"_FOFF(TSubScheduler, iSSX.iIrqNestCount));
 	asm("jge short rwwlec_preemption_die ");	/* If called from ISR, die */
 	asm("cmp dword ptr [edx+%0], 0" : : "i" _FOFF(TSubScheduler, iKernLockCount));
 	asm("jnz short rwwlec_1 ");			/* Preemption disabled - OK */

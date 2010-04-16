@@ -1148,10 +1148,6 @@ LOCAL_C TInt SlaveRxTxNotificationTests()
 	gTest.Printf(_L("BlockNotification\n"));
 	r=gChanSlaveI2c.BlockNotification(busIdI2c, chanId);
 	gTest(r==KErrNone);
-	// Now instruct the bus implementation to represent the bus master attempting to read the required number of words
-	gTest.Printf(_L("\nStarting SimulateTxNWords\n"));
-	r=gChanSlaveI2c.SimulateTxNWords(busIdI2c, chanId, 12);
-	gTest(r==KErrNone);
 	//
 	// Wait for the notification
 	User::WaitForRequest(status);
@@ -1162,6 +1158,10 @@ LOCAL_C TInt SlaveRxTxNotificationTests()
 		gTest(r==KErrNone);
 		}
 	gTest.Printf(_L("Blocked notification test completed OK\n"));
+    // Now instruct the bus implementation to represent the bus master attempting to read the required number of words
+    gTest.Printf(_L("\nStarting SimulateTxNWords\n"));
+    r=gChanSlaveI2c.SimulateTxNWords(busIdI2c, chanId, 12);
+    gTest(r==KErrNone);
 	// Re-set the notification trigger - for the 'blocked' Tx
 	// This is required because, in the event of a bus error, the set of requested Rx,Tx
 	// flags are cleared

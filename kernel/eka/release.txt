@@ -1,10 +1,529 @@
-Version 2.00.2066
+Version 2.00.3040
+=================
+(Made by vfebvre 09/03/2010)
+
+1.	lforynsk
+	1.	DEF144742: T_Cputime failing on winscw and HREF
+
+2.	lanerobe
+	1.	DEF144710 bootloader component not built in KHS package
+
+
+Version 2.00.3039
+=================
+(Made by vfebvre 08/03/2010)
+
+1.	jimmzhou
+	1.	PDEF144619: ARAN-82PGM3: Connecting empty cable causes error, after connecting/disconnecting
+
+2.	y153liu
+	1.	PDEF144726: Extra KErrUsbOtgPeriphNotSupported Event for Peripheral Requires More power
+
+3.	davegord
+	1.	DEF144818 Moving Model version of ReadAndParseDesHeader() can reference uninitialised data 
+
+
+Version 2.00.3038
+=================
+(Made by vfebvre 04/03/2010)
+
+1.	ahiron
+	1.	DEF144450 DIicBusChannel timeouts are handled incorrectly
+		Relates to Break Request in Polonium:
+		#455 - IIC: access to iTimeoutTimer and macros GET_TRANS_SPEED, SET_TRANS_SPEED
+	2.	DEF144748 iic_transaction.h, .inl should be exported with the appropriate macros
+	3.	DEF144488 IIC interface for setting up transaction speed is confusing
+		Relates to Break Request in Polonium:
+		#455 - IIC: access to iTimeoutTimer and macros GET_TRANS_SPEED, SET_TRANS_SPEED
+
+2.	martai
+	1.	PDEF144757 ArmMmu::ReleasePagesFromDMA() may hold system lock for unbounded time periods
+	2.	PDEF144572: DBase Reference counting contains incorrect debug assertions 
+
+3.	jessiezh
+	1.	DEF144709:T_IIC should not be limited to execution on the Emulator
+		iic build warnings and errors fix
+
+4.	genwei
+	1.	PDEF144770 USB PIL Crash after MTP server panic
+
+
+Version 2.00.3037
+=================
+(Made by vfebvre 03/03/2010)
+
+1.	cnotton
+	1.	REQ 417-52765 SMP: Product Quality SMP Kernel for Bridge
+		PackageReleaseID=451110 FeatureReleaseID=440027
+
+
+Version 2.00.3036
+=================
+(Made by vfebvre 03/03/2010)
+
+1.	mipetzol
+	1.	DEF144291 DMA: Apply fix for DEF143310 (PRM) also to DMAv2
+
+2.	marisood
+	1.	DEF144635 Coverity defect in eka/ewsrv/ky_tran.cpp (UNINIT)
+
+3.	ferporta
+	1.	DEF143491 Breakpoints in looping code can be missed when inserting/deleting and stepping
+	2.	DEF142018 Debug Sec Srv crashes if asked for an incompat srv version
+	3.	DEF143991 E32TEST T_RMDEBUG2_OEM fails on Navi-Engine with WDP enabled
+
+4.	paconway
+	1.	DEF144633 Coverity defect in onbl2.cpp (UNINIT) 
+
+
+Version 2.00.3035
+=================
+(Made by vfebvre 02/03/2010)
+
+1.	seolney
+	1.	PDEF144695 Assertion failure in DMA PIL
+		Improved t_dma. Missed interrupt cleanup is cofigurable (with macro
+		DISABLE_MISSED_IRQ_RECOVERY) in DMA PIL v1 and is removed from PIL v2
+
+2.	jimhofe
+	1.	MINOR_CHANGE: Changing policy Id to 7 for os\kernelhwsrv\kernel\eka\drivers\pbus\mmc\sdcard\XXXX\sdcard3c
+
+
+Version 2.00.3034
+=================
+(Made by vfebvre 01/03/2010)
+
+1.	vfebvre
+	1.	DEF144564 E32TEST T_PIN test failures on x86gcc.fmm (t_pin.cpp:688)
+	2.	DEF144687 OSTv2 doesn't provide a standarised way for instrumentors to add UDEB only trace
+
+2.	jimmzhou
+	1.	PDEF144575 for submission: TSW defect TSW TRLM-82BCNG: t_usb_device test fails
+	2.	PDEF144581 - for base submission: fix defect YXIO-824BQL RUsb::DeviceStateNotification doesn'
+
+
+Version 2.00.3033
+=================
+(Made by vfebvre 26/02/2010)
+
+1.	frhofman
+	1.	DEF142944: T_IDRV - fails with test drive count is more than the supportedsrives on gekko77
+
+2.	marisood
+	1.	DEF144627:Coverity defects in btrace_analyse.cpp 
+
+
+Version 2.00.3032
+=================
+(Made by vfebvre 25/02/2010)
+
+1.	davegord
+	1.	REQ417-62614 Data exports across DLL boundaries
+		PackageReleaseID=450554 FeatureReleaseID=450540
+		PNUN-7T4E35 efile/loader: Writable DLL data across DLL boundary does not work
+
+
+Version 2.00.3031
+=================
+(Made by vfebvre 25/02/2010)
+
+1.	mipetzol
+	1.	PDEF144567: Rapu Base Port DMA tests failing
+
+2.	jcoppear
+	1.	DEF144597 WDP: WDP only writes one page to swap at a time
+
+3.	gcochran
+	1.	DEF144355 - t_context locks up on Vasco/HW79 
+
+4.	hengrant
+	1.	PDEF144605 Incorrect trace metadata included in medsd.mmp
+
+
+Version 2.00.3030
+=================
+(Made by vfebvre 25/02/2010)
+
+1.	martai
+	1.	REQ 417-68452 Provide a WDP configuration for Atlantis
+		PackageReleaseID=463461 FeatureReleaseID=463452
+
+
+Version 2.00.3029
+=================
+(Made by vfebvre 23/02/2010)
+
+1.	lforynsk
+	1.	DEF144416: Occasional T_CHNOT failures on SMP configurations
+		There is a potential race condition, if the calling thread runs on a different
+		CPU than the Supervisor thread, which can result this thread being signalled
+		before the RHandleBase is fully closed.
+
+		Used EKernelHalSupervisorBarrier to wait until the Supervisor thread gets to
+		idle which is the indication that the DChangeNotifier::Complete() function has
+		returned and the Kernel memory was released (DThread object was closed)
+
+2.	vfebvre
+	1.	PDEF144553 T_SHBUF failures on X86GCC/FMM (t_shbuf:2835)
+
+3.	jcoppear
+	1.	PDEF144518 Emulator crashes when run under Carbide debugger on Windows 7
+
+
+Version 2.00.3028
+=================
+(Made by vfebvre 19/02/2010)
+
+1.	jimhofe
+	1.	MINOR_CHANGE: Removing obsolete files
+
+2.	cnotton
+	1.	DEF144396 h2.arm4.udeb.f32test.page ROMs are not built on devcedar builds
+
+
+Version 2.00.3027
+=================
+(Made by vfebvre 18/02/2010)
+
+1.	shamaden
+	1.	MINOR_CHANGE: SFL to EPL copyrights
+
+2.	vfebvre
+	1.	DEF144065 boostrap.flm is broken
+
+3.	amironen
+	1.	MINOR_CHANGE Adding GPIO Extenders support has been added
+		This project target is introducing support for GPIO Extender by introducing
+		new 32-bit pin id which consists of two parts highest 16-bit defines the GPIO
+		device(SOC or 0-15 GPIO extenders) and the lowest 16-bit defines the 65K of
+		SOC or GPIO extender pins. 
+
+4.	paconway
+	1.	PDEF144501 SD mounting issue due to postponed door-open media change
+
+
+Version 2.00.3026
+=================
+(Made by vfebvre 17/02/2010)
+
+1.	sakhghos
+	1.	PDEF144158 IMPORT_C missing from declaration of StopModeDebug::ExitPoint() RVCT4.0
+
+
+Version 2.00.3025
+=================
+(Made by vfebvre 15/02/2010)
+
+1.	tommarti
+	1.	MINOR_CHANGE Remove outdated comments from mpager.cpp
+
+
+Version 2.00.3024
+=================
+(Made by vfebvre 11/02/2010)
+
+1.	tommarti
+	1.	DEF144393 SMP: Minimum page cache size not set correctly on SMP systems
+
+
+Version 2.00.3023
+=================
+(Made by vfebvre 10/02/2010)
+
+1.	mmoate
+	1.	PackageReleaseID=446093 FeatureReleaseID=445992
+		Cryptographically-Strong Random Number Generator
+
+
+Version 2.00.3022
+=================
+(Made by vfebvre 09/02/2010)
+
+1.	cnotton
+	1.	PDEF144259: HAL header files can now been returned to platform...
+	2.	MINOR_CHANGE Fixed T_RMDEBUG_MULTI_AGENT compile issue with SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT.
+
+
+Version 2.00.3021
+=================
+(Made by vfebvre 08/02/2010)
+
+1.	cnotton
+	1.	MINOR_CHANGE Fixed RM_DEBUG test code issue for SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT.
+	2.	PDEF144300 eslm-82cags locmedia_ost.h is missing in wk05 NCP79 build
+
+2.	martai
+	1.	PDEF144330: FMM handles IPC aliasing inefficiently
+
+
+Version 2.00.3020
+=================
+(Made by vfebvre 05/02/2010)
+
+1.	cnotton
+	1.	MINOR_CHANGE Fixed RM_DEBUG test code issue for SYMBIAN_ENABLE_PUBLIC_PLATFORM_HEADER_SPLIT.
+
+2.	tocosgro
+	1.	DEFECT FIX: DEF144243 JHWG-822NAG FOUR_TUINT8 macro in e32cmn.h caused compiling warning in RVCT4
+		Cast to TUint32 before shift to avoid RVCT4 compiler warning.
+
+3.	coliward
+	1.	PDEF144269 WSD data is allocated incorrectly on the kernel heap
+		WSD was being allocated on the kernel heap, which was causing large Qt programs
+		to fail to start up, given that the kernel heap is limited to 16 MB.
+
+
+Version 2.00.3019
+=================
+(Made by vfebvre 05/02/2010)
+
+1.	lforynsk
+	1.	DEF144007 New Platform Independent Coverity Defect
+
+2.	djkovace
+	1.	PDEF144260:  [SymTB10.1] PL310 maintenance by IndexWay misses some ways
+
+3.	mipetzol
+	1.	PDEF144193 DMA: PIL detection of missed interrupts can fail
+		The method whereby the DMA PIL tried to detect missed PSL DMA interrupts could
+		yield false positives resulting in spurious missed interrupts which ultimately
+		led to the DMA driver crashing. The detection condition has been reworked to
+		rule out those false positives.
+
+4.	tocosgro
+	1.	MINOR_CHANGE: Use blhi rather than bhi to a panic, for call stack
+		Change bhi to blhi and blo to bllo so that LR is set for stack trace
+
+5.	gcochran
+	1.	DEF144239: t_perflogger tests fails at kern perf logger tests on production hw79/vasco
+
+
+Version 2.00.3018
+=================
+(Made by vfebvre 03/02/2010)
+
+1.	migubarr
+	1.	PDEF143960: MMC stack initialisation enables DMA when ESupportsDoubleBuffering specified 
+
+
+Version 2.00.3017
+=================
+(Made by vfebvre 02/02/2010)
+
+1.	martai
+	1.	DEF144198 FMM: The RAM zone callback function ERamZoneOp_Init isn't invoked in the FMM 
+
+
+Version 2.00.3016
+=================
+(Made by vfebvre 29/01/2010)
+
+1.	vfebvre
+	1.	PDEF144097 BTracex_ldd causing missing file warning in CTS77 image creation - TSW Defect
+
+
+Version 2.00.3015
+=================
+(Made by vfebvre 28/01/2010)
+
+1.	necliffo
+	1.	DEF144094: BGAHSMMCPTN does not check for partition table version
+		Modified BGAHSMMCPTN to check version of table is supported.
+
+
+Version 2.00.3014
+=================
+(Made by vfebvre 27/01/2010)
+
+1.	famustaf
+	1.	MINOR_CHANGE Add documentation to 'Copy' in Text Shell
+		Added documentation to state that ShellFunction::Copy will overwrite existing file(s)
+
+2.	stmansfi
+	1.	MINOR_CHANGE Improved HCR HAI in-source documentation
+
+3.	amironen
+	1.	DEF144028 HCR Get large settings API does not check for invalid arguments
+	2.	MINOR_CHANGE HCR: Add test scenarios from User Guide and improve robustness
+
+
+Version 2.00.3013
+=================
+(Made by vfebvre 27/01/2010)
+
+1.	cnotton
+	1.	MINOR_CHANGE Fixed test code for File Header Relocation
+
+
+Version 2.00.3012
+=================
+(Made by vfebvre 25/01/2010)
+
+1.	djkovace
+	1.	PDEF144004 Fix PL310 erratum 727915
+
+2.	x120li
+	1.	DEF143955 Submit UTF-16 descriptor APIs to TB101
+		Submit remaining part of PREQ2471
+
+
+Version 2.00.3011
+=================
+(Made by vfebvre 25/01/2010)
+
+1.	vfebvre
+	1.	MINOR_CHANGE Update required to base_e32.mrp for Header Relocation
+
+
+Version 2.00.3010
+=================
+(Made by vfebvre 19/01/2010)
+
+1.	gcochran
+	1.	DEF143458 E32 T_CODEPAGING test is not support large page cache TSW: EYGL-7T38TL
+
+2.	vfebvre
+	1.	MINOR_CHANGE Fix copyright notices in newly submitted files
+
+
+Version 2.00.3009
+=================
+(Made by vfebvre 18/01/2010)
+
+1.	shamaden
+	1.	DEF143830:  Memory model information missing from overnight test logs
+
+2.	necliffo
+	1.	PDEF143883: SALM-7ZQN53 WDP: EMMC drive not mountable as Mass Storage 
+
+
+Version 2.00.3008
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	martai
+	1.	PDEF143818:  t_fuzzldr crashes/hangs on FMM and Datapaged ROMs
+
+2.	tommarti
+	1.	DEF140936: T_WDPSTRESS fails on NaviEngine SMPPAGE/SMPKERNEL
+
+
+Version 2.00.3007
+=================
+(Made by vfebvre 15/01/2010)
+
+1.	shamaden
+	1.	PDEF143831 t_heap fails when KHeapMinCellSize = 16 for IVAL (WDP)
+
+2.	djkovace
+	1.	DEF143786 Support platform specific mappings on 1136
+
+
+Version 2.00.3006
+=================
+(Made by vfebvre 13/01/2010)
+
+1.	vfebvre
+	1.	DEF142854 Bootstrap.flm and related bld.inf changes not submitted to the MCL
+		Update the Base Port Template so the bootstrap is built using the new
+		bootstrap FLM with Raptor.
+
+
+Version 2.00.3005
+=================
+(Made by vfebvre 12/01/2010)
+
+1.	ryharkin
+	1.	DEF143738 TConsoleKey missing iPointerNumber
+		Integrating changes from Kernel Extentions team to add iPointerNumber to TConsoleKey
+
+2.	ange
+	1.	DEF143703 Precondition is not met when USB OTG driver use Kernel API
+
+
+Version 2.00.3004
 =================
 (Made by vfebvre 11/01/2010)
+
+1.	prbetage
+	1.	DEF142990 Change to Make Files - Causing OS Base Build Failure
+
+2.	djkovace
+	1.	DEF143620 OOM defect in DVirtualPinMapping::New
+
+3.	jimmzhou
+	1.	DEF142812 SMP-Panic in the TDfcQue::ThreadFunction when USB channel is closing
+	2.	DEF142888 SMP-t_usbdi test case 1231 failed
+
+4.	cnotton
+	1.	MINOR_CHANGE Fixed test export locations for Header Relocation
+
+
+Version 2.00.3003
+=================
+(Made by vfebvre 07/01/2010)
+
+1.	necliffo
+	1.	DEF143593 WDP: Phone does not boot if SWAP drive is corrupted
+
+
+Version 2.00.3002
+=================
+(Made by vfebvre 06/01/2010)
+
+1.	kingzhan
+	1.	DEF143562 ForBaseSubmission(TSW JHAA-7YAEKV): No error note about connected USB HUB shown
+		TSW defect: JHAA-7YAEKV No error note about connected USB HUB shown.
+
+2.	wuda
+	1.	DEF143561 open for submission:EDHO-7Y3AAD, USB connection:
+		TSW Defect EDHO-7Y3AAD: USB connection: USB connection state changes after connecting the USB charger.
+
+3.	dogunjum
+	1.	DEF137221 NE1 PCI driver not confirmed SMPSAFE automatic test case missing
+
+4.	marisood
+	1.	DEF143212 Missing M&FS files from Symbian Foundation due to IP classifications
+
+5.	martai
+	1.	DEF143441 FMM: Minimise size of live list when demand paging disabled
+
+6.	shenzhou
+	1.	DEF143568 open for submission - USB using an obsoleted API to allocate endpoint resource
+
+
+Version 2.00.3001
+=================
+(Made by vfebvre 05/01/2010)
 
 1.	necliffo
 	1.	PackageReleaseID=439017 FeatureReleaseID=439013
 		eMMC Partition Plugin compatibility with Nokia flashing tools
+
+
+Version 2.00.3000
+=================
+(Made by vfebvre 29/12/2009)
+
+1.	vfebvre
+	1.	DEF142026 Core Dump Server not getting events after attaching to more than one executable
+	2.	MINOR_CHANGE Copyright header correction
+
+2.	djkovace
+	1.	MINOR_CHANGE Fix Kernel builds with  __FLUSH_PT_INTO_RAM__
+		Kerrnel doesn't build if __FLUSH_PT_INTO_RAM__ is defined in variant.mmh. The fix is quite trivial.
+
+3.	cnotton
+	1.	MINOR_CHANGE Fixed some smaller compile issues with split and relocation header changes.		
+
+4.	necliffo
+	1.	DEF143340 JPLS-7XXEAC: eMMC initialisation fails with Samsung 32GB
+
+5.	marisood
+	1.	DEF142934 Bridge: t_rescontrolcli and t_extendedrescontrolcli fail on 8500 board.
+
+6.	martai
+	1.	DEF142714 Frequent T_RAMDEFRAG failures observed on the H4
 
 
 Version 2.00.2065

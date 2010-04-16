@@ -37,10 +37,10 @@ PRJ_TESTEXPORTS
 
 ../dll/d_ldrtst.h					/epoc32/include/
 
-../nkernsa/interrupts.h				/epoc32/include/nktest/	//
-../nkernsa/nkutils.h				/epoc32/include/nktest/	//
-../nkernsa/utils.h					/epoc32/include/nktest/	//
-../nkernsa/diag.h					/epoc32/include/nktest/	//
+../nkernsa/interrupts.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/interrupts.h)	//
+../nkernsa/nkutils.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/nkutils.h)	//
+../nkernsa/utils.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/utils.h)	//
+../nkernsa/diag.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/diag.h)	//
 
 ../../../kernel/eka/include/e32huffman.h				/epoc32/include/
 
@@ -69,6 +69,7 @@ platsec.settings        /epoc32/data/defaulttest.ini
 ../dll/oe/eabi/urel/t_oeexport1.exe     /epoc32/release/armv5/urel/t_oeexport1.exe
 
 ../demandpaging/d_pagestress.h		/epoc32/include/
+../pci/t_pci.h						/epoc32/include/e32test/t_pci.h
 
 ../iic/iic_psl/i2c.h			/epoc32/include/e32test/
 ../iic/iic_psl/spi.h			/epoc32/include/e32test/
@@ -82,6 +83,7 @@ PRJ_TESTMMPFILES
  positive check ( #ifdef SMP ), however these binaries will not be included in BTB 
  autotest images for SMP platforms. Refer to DTW-KHS BTB00055 for more details.
  ******************************************************************************/
+d_kerncorestats				support
 d_implicit					support
 d_emitest					support
 d_ldd						support
@@ -117,6 +119,7 @@ d_medch						support
 d_shbuf_client				support
 d_shbuf_own					support
 d_asid						support
+d_entropysources			support
 
 #ifdef GENERIC_MARM
 d_schedhook					support
@@ -186,7 +189,6 @@ d_smpsoak					support
 #endif
 
 #if !defined(X86)
-#if defined(WINS)
 ../iic/iic_psl/iic_testpsl			support
 ../iic/iic_psl/spi					support
 ../iic/iic_psl/i2c					support
@@ -197,7 +199,6 @@ d_smpsoak					support
 ../iic/iic_psl/i2c_ctrless			support
 ../iic/iic_psl/d_iic_client_ctrless		support
 ../iic/iic_psl/d_iic_slaveclient_ctrless	support
-#endif
 #endif
 
 #if !defined(WINS) && !defined(X86)
@@ -218,6 +219,8 @@ d_crazyints support
 #ifdef EPOC32
 //T_ROMCHK      // check the ROM is OK before starting tests
 #endif
+
+t_printsysinfo		/* t_printsysinfo is the first test to run because it logs the system information */
 
 // todo: t_shadow tests currently need to run before any ROM pages get shadowed so do this first
 // for now
@@ -466,6 +469,29 @@ d_wsdextension	support
 t_wsdextension	support
 #endif
 
+// t_wsd_* suffixes:
+//   x => XIP; runs from ROM
+//   c => code loads & runs in RAM
+//   p => pagedcode
+//   u => unpagedcode
+t_wsd_dl3_xp	support
+t_wsd_dl3_xu	support
+t_wsd_dl2_xp	support
+t_wsd_dl2_xu	support
+t_wsd_dl1_xp	support
+t_wsd_dl1_xu	support
+t_wsd_tst_xp
+t_wsd_tst_xu
+
+t_wsd_dl3_cp	support
+t_wsd_dl3_cu	support
+t_wsd_dl2_cp	support
+t_wsd_dl2_cu	support
+t_wsd_dl1_cp	support
+t_wsd_dl1_cu	support
+t_wsd_tst_cp
+t_wsd_tst_cu
+
 // /e32test/ethernet
 ../ethernet/pump/etherpump  manual
 ../ethernet/macset/macset   manual
@@ -481,6 +507,11 @@ t_heap
 t_heap2
 t_heapdb
 t_kheap
+
+// Secure RNG tests
+t_securerng
+t_sha256
+t_entropysources
 
 // /E32TEST/LFFS tests
 t_lfsdrv2       manual
@@ -536,6 +567,9 @@ t_vfp
 
 t_duid      support
 t_uid
+#ifdef EPOC32
+ccthrash	support
+#endif
 cpumeter    support
 crash       support
 reboot		support
@@ -561,6 +595,7 @@ t_proc3a    support
 t_mem       support
 t_unzip     support
 t_ymodem    support
+ymodemtx	support
 t_ymodemz   support
 t_lbk       support
 t_forever   support
@@ -575,6 +610,8 @@ drvdump     support
 drvread     support
 eject       support
 t_pcreat    support
+
+t_loadsim	support
 
 #if !defined(WINS)
 t_zip       manual
@@ -946,9 +983,7 @@ t_prmacctstsim
 
 // /E32TEST/IIC tests
 #if !defined(X86)
-#if defined(WINS)
 ../iic/t_iic
-#endif
 #endif
 
 #if defined(MARM_ARMV5)
@@ -956,28 +991,47 @@ t_oeexport2
 #endif
 
 #if defined(MARM_ARMV5) || defined(MARM_ARMV4)
-t_trkdummyapp
+../rm_debug/group/t_trkdummyapp
 #endif
 
 #if defined(MARM_ARMV5)
-t_rmdebug_dll support
-t_rmdebug_security0 support
-t_rmdebug_security1 support
-t_rmdebug_security2 support
-t_rmdebug_security3 support
-t_rmdebug_app support
-t_rmdebug2
-t_rmdebug2_oem
-t_rmdebug2_oemtoken support
-t_rmdebug2_oem2
-t_rmdebug2_oemtoken2 support
-t_crashmonitor_lib
+../rm_debug/group/t_rmdebug_dll support
+../rm_debug/group/t_rmdebug_security0 support
+../rm_debug/group/t_rmdebug_security1 support
+../rm_debug/group/t_rmdebug_security2 support
+../rm_debug/group/t_rmdebug_security3 support
+../rm_debug/group/t_rmdebug_app support
+../rm_debug/group/t_rmdebug2
+../rm_debug/group/t_rmdebug2_oem
+../rm_debug/group/t_rmdebug2_oemtoken support
+../rm_debug/group/t_rmdebug2_oem2
+../rm_debug/group/t_rmdebug2_oemtoken2 support
+../rm_debug/group/t_crashmonitor_lib
+
+../rm_debug/group/t_rmdebug_app1 support
+../rm_debug/group/t_rmdebug_app2 support
+../rm_debug/group/t_rmdebug_app3 support
+../rm_debug/group/t_rmdebug_app4 support
+../rm_debug/group/t_rmdebug_app5 support
+../rm_debug/group/t_rmdebug_app6 support
+../rm_debug/group/t_rmdebug_app7 support
+../rm_debug/group/t_rmdebug_app8 support
+../rm_debug/group/t_rmdebug_app9 support
+../rm_debug/group/t_rmdebug_app10 support
+
+../rm_debug/group/t_rmdebug_target_launcher support
+../rm_debug/group/t_rmdebug_multi_target
+
+../rm_debug/group/t_rmdebug_multi_agent support
+../rm_debug/group/t_multi_agent_launcher
+
+
 #endif
 
 t_stacksize
 
 #if !defined(WINS) && !defined(X86)
-t_crazyints	
+t_crazyints
 #endif
 
 #endif	// SMP
@@ -998,4 +1052,13 @@ t_camera_api		manual
 t_camera_gen		manual
 d_mmcsc			support
 
+t_kerncorestats		support
+
 #include "../hcr/hcr.inf"
+
+//pci tests
+t_pci
+// timestamp or fastcounter test
+t_timestamp
+d_timestamp		support
+

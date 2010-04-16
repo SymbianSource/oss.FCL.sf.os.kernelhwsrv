@@ -184,6 +184,9 @@ const TInt KControlIoEnableFatUtilityFunctions=KMaxTInt-18;
 const TInt KControlIoFileCacheConfig=KMaxTInt-19;
 const TInt KControlIoSimulateFileCacheWriteFailure=KMaxTInt-20;
 
+const TInt KControlIoSessionCount=KMaxTInt-21;
+const TInt KControlIoObjectCount=KMaxTInt-22;
+
 const TInt KNCDebugNotifierValue=-500000;	// between 0 and 1 second
 
 GLREF_D TInt DebugNCNotifier;
@@ -191,10 +194,17 @@ GLREF_D TInt DebugNCNotifier;
 class TIOCacheValues
 	{ 
 public:
-	TInt iFreeCount;	// number of requests on free queue
-	TInt iCloseCount;	// number of requests on close queue
-	TInt iAllocated;	// number of dynamically allocated requests
-	TInt iTotalCount;	// number of permanently & dynamically allocated requests
+	TInt iFreeCount;	// current number of requests on free queue
+	TInt iCloseCount;	// current number of requests on close queue
+	TInt iAllocated;	// no longer used
+	TInt iTotalCount;	// current number of requests
+	TInt iRequestCountPeak;	// peak number of requests, i.e. peak value reached by iTotalCount
+
+
+	// the same again but for the OperationAllocator
+	TInt iOpFreeCount;
+	TInt iOpRequestCount;
+	TInt iOpRequestCountPeak;
 	};
 
 class TFileCacheStats

@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -169,6 +169,10 @@ public:
 
 	TInt DoGetBreakList(TUint32* aBuffer, const TUint32 aBufSize, const TUint32 aElement, TUint32& aLastElement);
 
+	// Useful helper functions for debugging breakpoint issues
+	inline void print_BreakpointsDisabledForStep();
+	inline void print_BreakpointsList();
+
 private:
 	// Locked versions of public functions
 	TInt priv_DoSetBreak(TInt32 &aBreakId, const TUint64 aId,  const TBool aThreadSpecific, const TUint32 aAddress, const Debug::TArchitectureMode aMode );
@@ -203,5 +207,7 @@ private:
 
 	TBool iInitialised;
 };
+
+#include "d_rmd_breakpoints_debug.inl" 
 
 #endif

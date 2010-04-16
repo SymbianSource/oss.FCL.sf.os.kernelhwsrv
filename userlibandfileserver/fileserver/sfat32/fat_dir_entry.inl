@@ -53,7 +53,7 @@ inline const TPtrC8 TFatDirEntry::Name() const
 /**
 @return The attributes for the Directory entry
 */
-inline TInt TFatDirEntry::Attributes() const
+inline TUint TFatDirEntry::Attributes() const
     {return pDir->iAttributes;}
 /**
 @param aOffset This offset will be subtracted from the returned time.
@@ -67,7 +67,7 @@ inline TTime TFatDirEntry::Time(TTimeIntervalSeconds aOffset) const
 /**
 @return The Start cluster for the file or directory for this entry 
 */
-inline TInt TFatDirEntry::StartCluster() const      
+inline TUint32 TFatDirEntry::StartCluster() const      
     {
     const TUint16 KStClustMaskHi = 0x0FFF;  
     return ((pDir->iStartClusterHi & KStClustMaskHi) << 16) | pDir->iStartClusterLo;
@@ -77,7 +77,10 @@ inline TInt TFatDirEntry::StartCluster() const
 @return The size of file or directory for this entry 
 */
 inline TUint32 TFatDirEntry::Size() const
-    {return pDir->iSize;}
+    {
+    return pDir->iSize;
+    }
+
 /**
 @return True if the entry is erased
 */
@@ -114,7 +117,7 @@ Set the file or directory attributes for this entry
 
 @param anAtts The file or directory attributes
 */
-inline void TFatDirEntry::SetAttributes(TInt anAtts)
+inline void TFatDirEntry::SetAttributes(TUint anAtts)
     {
     __ASSERT_DEBUG(!(anAtts&~KMaxTUint8),Fault(EFatBadDirEntryParameter));
     pDir->iAttributes=(TUint8)anAtts;
@@ -144,7 +147,7 @@ Set the start cluster number of the file or directory refered to by the entry
 
 @param aStartCluster The start cluster number
 */
-inline void TFatDirEntry::SetStartCluster(TInt aStartCluster)
+inline void TFatDirEntry::SetStartCluster(TUint32 aStartCluster)
     {
     pDir->iStartClusterLo=(TUint16)(aStartCluster);
     pDir->iStartClusterHi=(TUint16)(aStartCluster >> 16);
@@ -155,39 +158,41 @@ Set the size of the file or directory refered to by the entry
 @param aFileSize Size of the file
 */
 inline void TFatDirEntry::SetSize(TUint32 aFileSize)
-    {pDir->iSize=aFileSize;}
-/**
-Set the directory entry as erased
-*/
+    {
+    pDir->iSize=aFileSize;
+    }
+
+/** Set the directory entry as erased */
 inline void TFatDirEntry::SetErased()
-    {iData[0]=KEntryErasedMarker;}
-/**
-Set the current entry to refer to the current directory
-*/
+    {
+    iData[0]=KEntryErasedMarker;
+    }
+
+/** Set the current entry to refer to the current directory */
 inline void TFatDirEntry::SetCurrentDirectory()
     {
     iData[0]='.';
     Mem::Fill(&iData[1],KFatDirNameSize-1,' ');
     }
-/**
-Set the current entry to refer to the parent directory
-*/
+ 
+/** Set the current entry to refer to the parent directory */
 inline void TFatDirEntry::SetParentDirectory()
     {
     iData[0]='.';iData[1]='.';
     Mem::Fill(&iData[2],KFatDirNameSize-2,' ');
     }
-/**
-Set the current entry to be the end of directory marker
-*/
+
+/** Set the current entry to be the end of directory marker */
 inline void TFatDirEntry::SetEndOfDirectory()
-    {Mem::FillZ(&iData[0],KFatDirNameSize);}
+    {
+    Mem::FillZ(&iData[0],KFatDirNameSize);
+    }
 
 /**
     Get VFAT entry ID. Uset by Rugged FAT and Scan Drive to fix broken entries
     Uses 1 byte from "Last Access Date" field, offset 19. Hack.
 */
-TUint TFatDirEntry::RuggedFatEntryId() const
+TUint16 TFatDirEntry::RuggedFatEntryId() const
     {
     return pDir->iReserved2;
     }
@@ -202,21 +207,23 @@ void  TFatDirEntry::SetRuggedFatEntryId(TUint16 aId)
     }
 
 
-/**
-@return True if the entry is the start of a long name set of entries
-*/
+/** @return True if the entry is the start of a long name set of entries */
 inline TBool TFatDirEntry::IsLongNameStart() const
-    {return (TBool)((iData[0]&0x40) != 0);}
-/**
-@return True is the Entry is a VFat entry
-*/
+    {
+    return (iData[0] & 0x40);
+    }
+
+/** @return True is the Entry is a VFat entry */
 inline TBool TFatDirEntry::IsVFatEntry() const
-    {return (TBool)(Attributes()==KVFatEntryAttribute && IsEndOfDirectory()==EFalse);}
-/**
-@return The number of following VFat entries
-*/
+    {
+    return (Attributes()==KVFatEntryAttribute && IsEndOfDirectory() == EFalse);
+    }
+
+/** @return The number of following VFat entries */
 inline TInt TFatDirEntry::NumFollowing() const
-    {return (iData[0]&0x3F);}
+    {
+    return (iData[0]&0x3F);
+    }
 
 
 inline TUint8 TFatDirEntry::CheckSum() const
@@ -224,7 +231,6 @@ inline TUint8 TFatDirEntry::CheckSum() const
         ASSERT(IsVFatEntry());
         return iData[13];
     }
-
 
 
 /**
@@ -235,6 +241,28 @@ inline TBool TFatDirEntry::IsGarbage() const
     return (iData[0]==0xFF);
     }
 
+
+
+//-----------------------------------------------------------------------------
+/**
+    Checks if the entry has the same "modification time" as given (with 2 seconds granularity precision, see FAT specs). 
+    
+    @param  aTime   time to check
+    @param  aOffset time offset
+
+    @return ETrue if the given time+offset is the same (with 2 second granularity) as the one set in the entry.
+*/
+inline TBool TFatDirEntry::IsTimeTheSame(TTime aTime, TTimeIntervalSeconds aOffset) const
+    {
+    aTime+=aOffset;
+
+    const TUint16 time = (TUint16)DosTimeFromTTime(aTime);
+    if(time != pDir->iTime)
+        return EFalse;
+
+    const TUint16 date = (TUint16)DosDateFromTTime(aTime);
+    return (date == pDir->iDate);
+    }
 
 
 #endif //FAT_DIR_ENTRY_INL

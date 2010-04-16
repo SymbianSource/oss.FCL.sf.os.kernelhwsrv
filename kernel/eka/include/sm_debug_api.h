@@ -237,7 +237,7 @@ namespace Debug
 				IMPORT_C static TInt TestAPI(const TListItem* aItem);
 
 			public:	
-				static TInt ExitPoint(const TInt aReturnValue);
+				IMPORT_C static TInt ExitPoint(const TInt aReturnValue);
 
 			private:
 				/** Code segment list routines */

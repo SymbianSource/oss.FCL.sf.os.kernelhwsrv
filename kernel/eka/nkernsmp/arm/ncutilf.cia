@@ -20,7 +20,9 @@
 #include <arm_gic.h>
 #include <arm_tmr.h>
 
-
+extern "C" {
+extern SVariantInterfaceBlock* VIB;
+}
 
 __NAKED__ void Arm::GetUserSpAndLr(TAny*) 
 	{
@@ -287,37 +289,71 @@ __NAKED__ TUint32 Arm::MmuTTBR0()
 #endif
 
 
+#if defined(__NKERN_TIMESTAMP_USE_LOCAL_TIMER__)
+#error Use of local timer for NKern::Timestamp() no longer supported
 
-/** Get the current value of the system timestamp
+#elif defined(__NKERN_TIMESTAMP_USE_SCU_GLOBAL_TIMER__)
+// Code to access global timer in Cortex A9 r1p0
 
-@publishedPartner
-@prototype
-*/
+#ifndef	__CPU_ARM_HAS_GLOBAL_TIMER_BLOCK
+#error NKern::Timestamp() wants global timer, but global timer not present.
+#endif
+
 EXPORT_C __NAKED__ TUint64 NKern::Timestamp()
 	{
 	asm("ldr	r3, __TheScheduler ");
 	asm("mrs	r12, cpsr ");				// r12 = saved interrupt mask
-	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TScheduler,i_LocalTimerAddr));	// r2 points to local timer
+	asm("stmfd	sp!, {r4-r7} ");
+	asm("ldr	r5, [r3, #%a0]" : : "i" _FOFF(TScheduler,iSub[0]));						// r5->subscheduler for CPU0
+	asm("ldr	r4, [r3, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGlobalTimerAddr));		// r4 points to global timer
 	__ASM_CLI();							// disable all interrupts
-	GET_RWNO_TID(,r3);						// r3 -> TSubScheduler
-	asm("ldr	r1, [r2, #%a0]" : : "i" _FOFF(ArmLocalTimer,iTimerCount));		// r1 = current timer counter
-	asm("ldr	r0, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,i_LastTimerSet));	// r0 = last value written to timer counter
-	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,i_TimerMultI));		// r2 = scaling factor
-	asm("sub	r0, r0, r1 ");				// elapsed timer ticks since last timestamp sync
-	asm("umull	r1, r2, r0, r2 ");			// r2:r1 = elapsed ticks * scaling factor
-	asm("ldr	r0, [r3, #%a0]!" : : "i" _FOFF(TSubScheduler,iLastTimestamp64));	// r0 = last timestamp sync point, low word
-	asm("ldr	r3, [r3, #4] ");			// r3 = last timestamp sync point, high word
-	asm("adds	r1, r1, #0x00800000 ");		// add 2^23 (rounding)
-	asm("adcs	r2, r2, #0 ");
-	asm("mov	r1, r1, lsr #24 ");			// divide by 2^24
-	asm("orr	r1, r1, r2, lsl #8 ");		// r1 = elapsed time since last timestamp sync
+	asm("ldr	r6, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iTicksSinceLastSync));	// r6 = count value of last frequency change (low)
+	asm("ldr	r7, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLastTimerSet));		// r7 = count value of last frequency change (high)
+	asm("ldr	r2, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountHigh));			// r2 = current timer counter high word
+
+	// To read 64 bit timer value, read high, low, high
+	// If two high values match -> OK, else repeat
+	asm("1:		");
+	asm("mov	r1, r2 ");					// r1 = previous value of timer counter high word
+	asm("ldr	r0, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountLow));			// r0 = current timer counter low word
+	asm("ldr	r2, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountHigh));			// r2 = current timer counter high word
+	asm("cmp	r1, r2 ");					// high word changed?
+	asm("bne	1b ");						// if so, retry
+
+	// Now have R1:R0 = 64 bit global timer count
+	asm("ldr	r3, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iNTimerPeriodM));		// r3 = period multiplier
+	asm("ldr	r4, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iNTimerPeriodS));		// r4 = period multiplier shift
+	asm("subs	r6, r0, r6 ");				// r7:r6 = ticks from last frequency change
+	asm("sbcs	r7, r1, r7 ");
+	asm("umull	r0, r1, r6, r3 ");
+	asm("mov	r2, #0 ");
+	asm("umlal	r1, r2, r7, r3 ");			// r2:r1:r0 = delta * period multiplier
+	asm("rsb	r3, r4, #32 ");
+	asm("ldr	r6, [r5, #%a0]!" : : "i" _FOFF(TSubScheduler,iSSX.iLastSyncTime));		// r6 = timestamp at last freq change (low)
+	asm("ldr	r7, [r5, #4] ");														// r7 = timestamp at last freq change (high)
 	asm("msr	cpsr, r12 ");				// restore interrupts
-	asm("adds	r0, r0, r1 ");				// r1:r0 = last timestamp sync point + elapsed time since last timestamp sync
-	asm("adcs	r1, r3, #0 ");
+	asm("movs	r0, r0, lsr r4 ");			// rounding bit into C
+	asm("orr	r0, r0, r1, lsl r3 ");
+	asm("mov	r1, r1, lsr r4 ");
+	asm("orr	r1, r1, r2, lsl r3 ");		// r1:r0 = (delta * period multiplier) >> period multiplier shift
+	asm("adcs	r0, r0, r6 ");				// scaled delta + timestamp at last freq change
+	asm("adcs	r1, r1, r7 ");
+	asm("ldmfd	sp!, {r4-r7} ");
 	__JUMP(,lr);
+
 	asm("__TheScheduler: ");
 	asm(".word	%a0" : : "i" ((TInt)&TheScheduler));
 	}
+
+#elif defined(__NKERN_TIMESTAMP_USE_INLINE_BSP_CODE__)
+#define __DEFINE_NKERN_TIMESTAMP_ASM__
+#include <variant_timestamp.h>
+#undef __DEFINE_NKERN_TIMESTAMP_ASM__
+#elif defined(__NKERN_TIMESTAMP_USE_BSP_CALLOUT__)
+// Code to call function defined in variant
+#else
+#error No definition for NKern::Timestamp()
+#endif
 
 
 extern "C" __NAKED__ TLinAddr get_sp_svc()
@@ -359,7 +395,7 @@ EXPORT_C __NAKED__ TLinAddr Arm::IrqReturnAddress()
 
 	asm("1:		");
 	GET_RWNO_TID(,r3);
-	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,i_FiqStackTop));	// if so, r2->top of FIQ stack
+	asm("ldr	r2, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iFiqStackTop));	// if so, r2->top of FIQ stack
 	asm("ldr	r0, [r2, #-4] ");			// get return address
 	asm("msr	cpsr, r1 ");
 	__JUMP(,	lr);
@@ -594,9 +630,15 @@ __NAKED__ EXPORT_C void TSpinLock::LockIrq()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldrb r1, [r0, #0] ");				/* read out count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldrb	r1, [r0, #0] ");			/* read out count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TSpinLock::UnlockIrq()
@@ -615,7 +657,7 @@ __NAKED__ EXPORT_C void TSpinLock::UnlockIrq()
 __NAKED__ EXPORT_C TBool TSpinLock::FlashIrq()
 	{
 	GET_RWNO_TID(,r12);						/* r12 -> TSubScheduler */
-	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,i_GicCpuIfcAddr));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iGicCpuIfcAddr));
 	asm("ldrh r1, [r0, #0] ");
 	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(GicCpuIfc,iHighestPending));
 	asm("sub r1, r1, r1, lsr #8 ");			/* r1 low byte = (out - in) mod 256 */
@@ -655,9 +697,15 @@ __NAKED__ EXPORT_C void TSpinLock::LockOnly()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldrb r1, [r0, #0] ");				/* read out count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldrb	r1, [r0, #0] ");			/* read out count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TSpinLock::UnlockOnly()
@@ -713,9 +761,15 @@ __NAKED__ EXPORT_C TInt TSpinLock::LockIrqSave()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldrb r1, [r0, #0] ");				/* read out count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldrb	r1, [r0, #0] ");			/* read out count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TSpinLock::UnlockIrqRestore(TInt)
@@ -737,7 +791,7 @@ __NAKED__ EXPORT_C void TSpinLock::UnlockIrqRestore(TInt)
 __NAKED__ EXPORT_C TBool TSpinLock::FlashIrqRestore(TInt)
 	{
 	GET_RWNO_TID(,r12);						/* r12 -> TSubScheduler */
-	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,i_GicCpuIfcAddr));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iGicCpuIfcAddr));
 	asm("ldrh r2, [r0, #0] ");
 	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(GicCpuIfc,iHighestPending));
 	asm("sub r2, r2, r2, lsr #8 ");			/* r2 low byte = (out - in) mod 256 */
@@ -779,6 +833,9 @@ __NAKED__ EXPORT_C TBool TSpinLock::FlashPreempt()
 	asm("bl " CSM_ZN9TSpinLock8LockOnlyEv);
 	asm("mov r0, #1 ");
 	asm("ldr pc, [sp], #4 ");
+
+	asm("__CrashState: ");
+	asm(".word	%a0" : : "i" ((TInt)&CrashState));
 	}
 
 
@@ -1161,9 +1218,15 @@ __NAKED__ EXPORT_C void TRWSpinLock::LockIrqR()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldr r1, [r0, #0] ");				/* read out.w count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldr	r1, [r0, #0] ");			/* read out.w count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqR()
@@ -1185,7 +1248,7 @@ __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqR()
 __NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqR()
 	{
 	GET_RWNO_TID(,r12);						/* r12 -> TSubScheduler */
-	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,i_GicCpuIfcAddr));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iGicCpuIfcAddr));
 	asm("ldr r2, [r0, #0] ");
 	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(GicCpuIfc,iHighestPending));
 	asm("eor r2, r2, r2, lsr #16 ");		/* r2 low byte = out.w ^ in.w = 0 if no writers waiting */
@@ -1230,9 +1293,15 @@ __NAKED__ EXPORT_C void TRWSpinLock::LockIrqW()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldr r1, [r0, #0] ");				/* read out count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldr	r1, [r0, #0] ");			/* read out count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqW()
@@ -1251,7 +1320,7 @@ __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqW()
 __NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqW()
 	{
 	GET_RWNO_TID(,r12);						/* r12 -> TSubScheduler */
-	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,i_GicCpuIfcAddr));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iGicCpuIfcAddr));
 	asm("ldr r2, [r0, #0] ");
 	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(GicCpuIfc,iHighestPending));
 	asm("add r2, r2, #0x00010000 ");		/* increment out.w */
@@ -1300,9 +1369,15 @@ __NAKED__ EXPORT_C void TRWSpinLock::LockOnlyR()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldr r1, [r0, #0] ");				/* read out.w count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldr	r1, [r0, #0] ");			/* read out.w count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TRWSpinLock::UnlockOnlyR()
@@ -1362,9 +1437,15 @@ __NAKED__ EXPORT_C void TRWSpinLock::LockOnlyW()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldr r1, [r0, #0] ");				/* read out count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldr	r1, [r0, #0] ");			/* read out count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TRWSpinLock::UnlockOnlyW()
@@ -1428,9 +1509,15 @@ __NAKED__ EXPORT_C TInt TRWSpinLock::LockIrqSaveR()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldr r1, [r0, #0] ");				/* read out.w count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldr	r1, [r0, #0] ");			/* read out.w count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqRestoreR(TInt)
@@ -1455,7 +1542,7 @@ __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqRestoreR(TInt)
 __NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqRestoreR(TInt)
 	{
 	GET_RWNO_TID(,r12);						/* r12 -> TSubScheduler */
-	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,i_GicCpuIfcAddr));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iGicCpuIfcAddr));
 	asm("ldr r2, [r0, #0] ");
 	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(GicCpuIfc,iHighestPending));
 	asm("eor r2, r2, r2, lsr #16 ");		/* r2 low byte = out.w ^ in.w = 0 if no writers waiting */
@@ -1502,9 +1589,15 @@ __NAKED__ EXPORT_C TInt TRWSpinLock::LockIrqSaveW()
 	__JUMP(,lr);
 
 	asm("2: ");
+	asm("ldr	r1, __CrashState ");
 	ARM_WFE;
-	asm("ldr r1, [r0, #0] ");				/* read out count again */
-	asm("b 3b ");
+	asm("ldr	r1, [r1] ");				/* check for system crash while we were waiting */
+	asm("cmp	r1, #0 ");
+	asm("bne	9f ");
+	asm("ldr	r1, [r0, #0] ");			/* read out count again */
+	asm("b		3b ");
+	asm("9:		");
+	__ASM_CRASH();							/* system crashed while we were waiting */
 	}
 
 __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqRestoreW(TInt)
@@ -1526,7 +1619,7 @@ __NAKED__ EXPORT_C void TRWSpinLock::UnlockIrqRestoreW(TInt)
 __NAKED__ EXPORT_C TBool TRWSpinLock::FlashIrqRestoreW(TInt)
 	{
 	GET_RWNO_TID(,r12);						/* r12 -> TSubScheduler */
-	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,i_GicCpuIfcAddr));
+	asm("ldr r12, [r12, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iGicCpuIfcAddr));
 	asm("ldr r2, [r0, #0] ");
 	asm("ldr r3, [r12, #%a0]" : : "i" _FOFF(GicCpuIfc,iHighestPending));
 	asm("add r2, r2, #0x00010000 ");		/* increment out.w */

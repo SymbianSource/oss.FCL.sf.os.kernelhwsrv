@@ -40,7 +40,7 @@
 files=
 
 #ifdef PAGED_ROM
-data=gentestpaged.txt			Test\test_paged.cpp paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged.cpp paging_unmovable
 #endif
 
 #include <rom\##VARIANT##\kernel.iby>
@@ -70,7 +70,7 @@ data=gentestpaged.txt			Test\test_paged.cpp paging_unmovable
 data=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_ldrtst.exe			sys\bin\t_ldrtst.exe
 
 #ifdef PAGED_ROM
-data=gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
 #endif
 
 #endif // #ifndef EXCLUDE_TESTS
@@ -78,7 +78,7 @@ data=gentestpaged.txt			Test\test_paged1.cpp paging_unmovable
 // scripts
 #if !defined(MANUALROM)
 #if defined(RAMSTRESS)
-data=ramstress_autoexec.bat			\autoexec.bat
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\ramstress_autoexec.bat			\autoexec.bat
 #define RAMSTRESS_SUFFFIX	_ramstress
 #else
 #define RAMSTRESS_SUFFFIX	
@@ -109,7 +109,7 @@ data=EPOCROOT##epoc32\rom\##VARIANT##\nandtest_test_autoexec.bat			\autoexec##RA
 
 #ifdef WITH_COMP
 #ifdef PAGED_ROM
-data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
 #endif
 
 #ifdef MULTIPLEROFS
@@ -149,7 +149,7 @@ data=EPOCROOT##Epoc32\Release\##KMAIN##\##BUILD##\minkda.ldd			\sys\bin\minkda.l
 
 #ifndef WITH_COMP
 #ifdef PAGED_ROM
-data=gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
+data=##BASEPATH##kernelhwsrv\kernel\eka\rombuild\gentestnonpaged.txt			Test\test_unpaged.cpp	unpaged paging_unmovable
 #endif
 #endif
 

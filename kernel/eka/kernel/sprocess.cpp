@@ -342,7 +342,6 @@ void DProcess::Release()
 	if (iSMPUnsafeGroup)
 		{
 		NKern::GroupDestroy(iSMPUnsafeGroup);
-		Kern::Free(iSMPUnsafeGroup);
 		}
 #endif
 
@@ -726,6 +725,11 @@ void DProcess::BTracePrime(TInt aCategory)
 	}
 
 #ifdef __SMP__
+void SMPUnsafeGroupDestroyFn(TAny* aGroup)
+	{
+	Kern::Free(aGroup);
+	}
+
 TInt DProcess::UpdateSMPSafe()
 	{
 	TUint32 config = TheSuperPage().KernelConfigFlags();
@@ -739,10 +743,21 @@ TInt DProcess::UpdateSMPSafe()
 		{
 		SNThreadGroupCreateInfo info;
 		info.iCpuAffinity = KCpuAffinityAny;
-		iSMPUnsafeGroup = (NThreadGroup*)Kern::Alloc(sizeof(NThreadGroup));
+		NThreadGroup* g = (NThreadGroup*)Kern::Alloc(sizeof(NThreadGroup));
 		r = KErrNoMemory;
-		if (iSMPUnsafeGroup)
-			r = NKern::GroupCreate(iSMPUnsafeGroup, info);
+		if (g)
+			{
+			info.iDestructionDfc = new TDfc(&SMPUnsafeGroupDestroyFn, g, K::SvMsgQ, 2);
+			if (info.iDestructionDfc)
+				r = NKern::GroupCreate(g, info);
+			if (r != KErrNone)
+				{
+				delete info.iDestructionDfc;
+				Kern::Free(g);
+				g = 0;
+				}
+			iSMPUnsafeGroup = g;
+			}
 		}
 	if (r==KErrNone)
 		{

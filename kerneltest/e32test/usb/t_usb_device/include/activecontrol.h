@@ -80,7 +80,10 @@ private:
 	TInt ReEnumerate();
 	TInt ProcessEp0ControlPacket();
 	void PrintHostLog();
-
+	
+	void FillEndpointsResourceAllocation(IFConfigPtr aIfCfg);
+	void PopulateInterfaceResourceAllocation(IFConfigPtr aFirstIfCfg, TInt aPortNumber);
+	
 private:
 	CConsoleBase* iConsole;											// a console to read from
 	CActiveStallNotifier* iStallNotifier[KMaxInterfaces];
@@ -91,6 +94,7 @@ private:
 	TInt iNumInterfaceSettings[KMaxInterfaces];
 	TInt iTotalChannels;
 	TBool iSoftwareConnect;
+	TBool iSupportResourceAllocationV2;
 	TBool iHighSpeed;
 	RFs iFs;
 	RFile iConfigFile;

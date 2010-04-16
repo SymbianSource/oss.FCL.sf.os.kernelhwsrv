@@ -450,8 +450,15 @@ TInt TFsControlIo::DoRequestL(CFsRequest* aRequest)
 			TIOCacheValues cacheValues;
 			cacheValues.iCloseCount= RequestAllocator::CloseCount();
 			cacheValues.iFreeCount= RequestAllocator::FreeCount();
-			cacheValues.iAllocated=	RequestAllocator::AllocatedCount();
-			cacheValues.iTotalCount= RequestAllocator::TotalCount();
+			cacheValues.iAllocated=	0;	// no longer used
+			cacheValues.iTotalCount= RequestAllocator::RequestCount();
+			cacheValues.iRequestCountPeak = RequestAllocator::RequestCountPeak();
+
+			cacheValues.iOpFreeCount= OperationAllocator::FreeCount();
+			cacheValues.iOpRequestCount= OperationAllocator::RequestCount();
+			cacheValues.iOpRequestCountPeak = OperationAllocator::RequestCountPeak();
+
+
 			TPckgBuf<TIOCacheValues> pkgBuf(cacheValues);
 
 			// ensure we only write what the client buffer can hold -
@@ -579,6 +586,19 @@ TInt TFsControlIo::DoRequestL(CFsRequest* aRequest)
 			EnableFatUtilityFunctions = ETrue;
 			return KErrNone;
 			}
+        case KControlIoSessionCount:
+            {
+            TPckgBuf<TInt> pkgBuf(SessionCount);
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+            }
+        case KControlIoObjectCount:
+            {
+            TPckgBuf<TInt> pkgBuf(ObjectCount);
+            TInt r=aRequest->Write(2,pkgBuf);
+            return r;
+            }
+		
 		}
 #endif
 

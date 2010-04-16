@@ -456,45 +456,35 @@ _LIT(KDMLSLGLSPResource, "DMLSLGLSPResource");
 DMLSLGLSPResource::DMLSLGLSPResource() : DStaticPowerResource(KDMLSLGLSPResource, 75), iMinLevel(10), iMaxLevel(75), iCurrentLevel(75), iPolled(EFalse)
 	{
 	iFlags = KMultiLevel | KLongLatencySet | KLongLatencyGet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSLGISNResource, "DBSLGISNResource");
 DBSLGISNResource::DBSLGISNResource() : DStaticPowerResource(KDBSLGISNResource, E_ON), iMinLevel(E_ON), iMaxLevel(E_OFF), iCurrentLevel(E_ON), iPolled(ETrue)
 	{
 	iFlags = KLongLatencyGet | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSLGISNResource, "DMLSLGISNResource");
 DMLSLGISNResource::DMLSLGISNResource() : DStaticPowerResource(KDMLSLGISNResource, 75), iMinLevel(75), iMaxLevel(10), iCurrentLevel(75), iPolled(EFalse)
 	{
 	iFlags = KMultiLevel | KLongLatencyGet | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSIGLSPResource, "DBSIGLSPResource");
 DBSIGLSPResource::DBSIGLSPResource() : DStaticPowerResource(KDBSIGLSPResource, E_ON), iMinLevel(E_OFF), iMaxLevel(E_ON), iCurrentLevel(E_ON), iPolled(ETrue)
 	{
 	iFlags = KBinary | KLongLatencySet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSIGLSPResource, "DMLSIGLSPResource");
 DMLSIGLSPResource::DMLSIGLSPResource() : DStaticPowerResource(KDMLSIGLSPResource, 75), iMinLevel(10), iMaxLevel(100), iCurrentLevel(75), iPolled(EFalse)
 	{
 	iFlags = KMultiLevel | KLongLatencySet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSHIGISPResource, "DBSHIGISPResource");
@@ -525,54 +515,42 @@ _LIT(KDBSHLGLSPResource, "DBSHLGLSPResource");
 DBSHLGLSPResource::DBSHLGLSPResource() : DStaticPowerResource(KDBSHLGLSPResource, E_ON), iMinLevel(E_OFF), iMaxLevel(E_ON), iCurrentLevel(E_ON), iPolled(ETrue)
 	{
 	iFlags = KBinary | KShared | KLongLatencySet | KLongLatencyGet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSHLGLSPResource, "DMLSHLGLSPResource");
 DMLSHLGLSPResource::DMLSHLGLSPResource() : DStaticPowerResource(KDMLSHLGLSPResource, 70), iMinLevel(5), iMaxLevel(70), iCurrentLevel(70), iPolled(EFalse)
 	{
 	iFlags = KMultiLevel | KShared | KLongLatencySet | KLongLatencyGet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSHLGISNResource, "DBSHLGISNResource");
 DBSHLGISNResource::DBSHLGISNResource() : DStaticPowerResource(KDBSHLGISNResource, E_ON), iMinLevel(E_ON), iMaxLevel(E_OFF), iCurrentLevel(E_ON), iPolled(ETrue)
 	{
 	iFlags = KBinary | KShared | KLongLatencyGet | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSHLGISNResource, "DMLSHLGISNResource");
 DMLSHLGISNResource::DMLSHLGISNResource() : DStaticPowerResource(KDMLSHLGISNResource, 75), iMinLevel(75), iMaxLevel(10), iCurrentLevel(75), iPolled(EFalse)
 	{
 	iFlags = KMultiLevel | KShared | KLongLatencySet | KSenseNegative;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSHIGLSPResource, "DBSHIGLSPResource");
 DBSHIGLSPResource::DBSHIGLSPResource() : DStaticPowerResource(KDBSHIGLSPResource, E_ON), iMinLevel(E_OFF), iMaxLevel(E_ON), iCurrentLevel(E_ON), iPolled(ETrue)
 	{
 	iFlags = KBinary | KShared | KLongLatencySet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDMLSHIGLSPResource, "DMLSHIGLSPResource");
 DMLSHIGLSPResource::DMLSHIGLSPResource() : DStaticPowerResource(KDMLSHIGLSPResource, 75), iMinLevel(10), iMaxLevel(75), iCurrentLevel(75), iPolled(EFalse)
 	{
 	iFlags = KMultiLevel | KShared | KLongLatencySet;
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 _LIT(KDBSHLGLSCResource, "KDBSHLGLSCResource");
@@ -580,9 +558,7 @@ DBSHLGLSCResource::DBSHLGLSCResource() : DStaticPowerResource(KDBSHLGLSCResource
 	{
 	iFlags = KMultiLevel | KShared | KLongLatencySet | KSenseCustom;
 	SetCustomFunction(CustomFunction);
-	NKern::LockSystem();
 	iBlockTime = MIN_BLOCK_TIME + Kern::Random() % MAX_BLOCK_TIME;
-	NKern::UnlockSystem();
 	}
 
 //DoRequest implementation of all functions

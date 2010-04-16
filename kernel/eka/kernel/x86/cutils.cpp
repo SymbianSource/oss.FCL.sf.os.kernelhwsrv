@@ -106,7 +106,7 @@ extern "C" void NKCrashHandler(TInt aPhase, const TAny* a0, TInt a1)
 		return;
 		}
 #ifdef __SMP__
-	SFullX86RegSet* regs = &(((SCpuData*)SubScheduler().i_Tss)->iRegs);
+	SFullX86RegSet* regs = &(((SCpuData*)SubScheduler().iSSX.iTss)->iRegs);
 #else
 	SFullX86RegSet* regs = &X86_Regs;
 #endif
@@ -119,7 +119,7 @@ extern "C" void NKCrashHandler(TInt aPhase, const TAny* a0, TInt a1)
 void A::StartCrashDebugger(const TAny* a0, TInt a1)
 	{
 #ifdef __SMP__
-	SFullX86RegSet* regs = &(((SCpuData*)SubScheduler().i_Tss)->iRegs);
+	SFullX86RegSet* regs = &(((SCpuData*)SubScheduler().iSSX.iTss)->iRegs);
 #else
 	SFullX86RegSet* regs = &X86_Regs;
 #endif
@@ -150,8 +150,8 @@ EXPORT_C void Kern::Restart(TInt aMode)
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)
 		{
-		TheSubSchedulers[i].i_CrashState = (TAny*)f;
-		TheSubSchedulers[i].i_ExcInfo = (TAny*)aMode;
+		TheSubSchedulers[i].iSSX.iCrashState = f;
+		TheSubSchedulers[i].iSSX.iExcInfo = (TAny*)aMode;
 		}
 	write_apic_reg(ICRH, 0);
 	write_apic_reg(ICRL, 0xC4400);	// send NMI to all processors other than this one - will call vector

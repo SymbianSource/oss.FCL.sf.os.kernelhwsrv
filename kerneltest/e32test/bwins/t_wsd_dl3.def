@@ -1,0 +1,7 @@
+EXPORTS
+	?GetAddressOfData@@YAPAPAXAAHAAPAX1@Z @ 1 NONAME ; void * * GetAddressOfData(int &, void * &, void * &)
+	?TestDataSize@@3JA @ 2 NONAME ; long TestDataSize
+	?WritableTestData@@3PAPAXA @ 3 NONAME ; void * * WritableTestData
+	?PointerToStaticData@@3PBQBXB @ 4 NONAME ; void const * * PointerToStaticData
+	?PointerToWritableData@@3PAPAXA @ 5 NONAME ; void * * PointerToWritableData
+

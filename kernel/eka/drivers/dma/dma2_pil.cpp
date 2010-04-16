@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -1186,6 +1186,14 @@ EXPORT_C TInt DDmaRequest::Queue()
 	// Append request to queue and link new descriptor list to existing one.
 	iChannel.Wait();
 
+	TUint32 req_count = iChannel.iQueuedRequests++;
+	if (req_count == 0)
+		{
+		iChannel.Signal();
+		iChannel.QueuedRequestCountChanged();
+		iChannel.Wait();
+		}
+
 	TInt r = KErrGeneral;
 	const TBool ch_isr_cb = __e32_atomic_load_acq32(&iChannel.iIsrCbRequest);
 	if (ch_isr_cb)
@@ -1195,6 +1203,13 @@ EXPORT_C TInt DDmaRequest::Queue()
 		// that the channel's Transfer() function is not called by both the ISR
 		// and the client thread at the same time.
 		__KTRACE_OPT(KPANIC, Kern::Printf("An ISR cb request exists - not queueing"));
+		// Undo the request count increment...
+		req_count = --iChannel.iQueuedRequests;
+		iChannel.Signal();
+		if (req_count == 0)
+			{
+			iChannel.QueuedRequestCountChanged();
+			}
 		}
 	else if (iIsrCb && !iChannel.IsQueueEmpty())
 		{
@@ -1203,10 +1218,24 @@ EXPORT_C TInt DDmaRequest::Queue()
 		// the ISR callback doesn't get executed together with the DFC(s) of
 		// any previous request(s).
 		__KTRACE_OPT(KPANIC, Kern::Printf("Request queue not empty - not queueing"));
+		// Undo the request count increment...
+		req_count = --iChannel.iQueuedRequests;
+		iChannel.Signal();
+		if (req_count == 0)
+			{
+			iChannel.QueuedRequestCountChanged();
+			}
 		}
 	else if (iChannel.iIsrDfc & (TUint32)TDmaChannel::KCancelFlagMask)
 		{
 		__KTRACE_OPT(KPANIC, Kern::Printf("Channel requests cancelled - not queueing"));
+		// Someone is cancelling all requests - undo the request count increment...
+		req_count = --iChannel.iQueuedRequests;
+		iChannel.Signal();
+		if (req_count == 0)
+			{
+			iChannel.QueuedRequestCountChanged();
+			}
 		}
 	else
 		{
@@ -1228,8 +1257,8 @@ EXPORT_C TInt DDmaRequest::Queue()
 			}
 		iChannel.DoQueue(const_cast<const DDmaRequest&>(*this));
 		r = KErrNone;
+		iChannel.Signal();
 		}
-	iChannel.Signal();
 
 	__DMA_INVARIANT();
 	return r;
@@ -1491,8 +1520,6 @@ void DDmaRequest::Invariant()
 //////////////////////////////////////////////////////////////////////////////
 // TDmaChannel
 
-_LIT(KDmaChannelMutex, "DMA-Channel");
-
 TDmaChannel::TDmaChannel()
 	: iController(NULL),
 	  iDmacCaps(NULL),
@@ -1507,24 +1534,13 @@ TDmaChannel::TDmaChannel()
 	  iIsrDfc(0),
 	  iReqQ(),
 	  iReqCount(0),
+	  iQueuedRequests(0),
 	  iCancelInfo(NULL),
 	  iRedoRequest(EFalse),
 	  iIsrCbRequest(EFalse)
 	{
-	const TInt r = Kern::MutexCreate(iMutex, KDmaChannelMutex, KMutexOrdDmaChannel);
-	__DMA_ASSERTA(r == KErrNone);
-
-#ifndef __WINS__
-	// On the emulator this code is called from within the codeseg mutex.
-	// The invariant tries to hold the dma channel mutex, but this is not allowed
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::TDmaChannel"));
 	__DMA_INVARIANT();
-#endif
-	}
-
-
-TDmaChannel::~TDmaChannel()
-	{
-	Kern::SafeClose((DObject*&)iMutex, NULL);
 	}
 
 
@@ -1580,6 +1596,8 @@ EXPORT_C void TDmaChannel::Close()
 	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Close %d iReqCount=%d", iPslId, iReqCount));
 	__DMA_ASSERTD(IsQueueEmpty());
 	__DMA_ASSERTD(iReqCount == 0);
+
+	__DMA_ASSERTD(iQueuedRequests == 0);
 
 	// Descriptor leak? -> bug in request code
 	__DMA_ASSERTD(iAvailDesCount == iMaxDesCount);
@@ -1642,7 +1660,7 @@ EXPORT_C void TDmaChannel::CancelAll()
 
 	NKern::ThreadEnterCS();
 	Wait();
-
+	const TUint32 req_count_before = iQueuedRequests;
 	NThreadBase* const dfc_nt = iDfc.Thread();
 	// Shouldn't be NULL (i.e. an IDFC)
 	__DMA_ASSERTD(dfc_nt);
@@ -1663,6 +1681,7 @@ EXPORT_C void TDmaChannel::CancelAll()
 		SDblQueLink* pL;
 		while ((pL = iReqQ.GetFirst()) != NULL)
 			{
+			iQueuedRequests--;
 			DDmaRequest* pR = _LOFF(pL, DDmaRequest, iLink);
 			pR->OnDeque();
 			}
@@ -1695,6 +1714,8 @@ EXPORT_C void TDmaChannel::CancelAll()
 		iDfc.Enque();
 		}
 
+	const TUint32 req_count_after = iQueuedRequests;
+
 	Signal();
 
 	if (waiters)
@@ -1707,6 +1728,14 @@ EXPORT_C void TDmaChannel::CancelAll()
 		}
 
  	NKern::ThreadLeaveCS();
+
+	// Only call PSL if there were requests queued when we entered AND there
+	// are now no requests left on the queue.
+	if ((req_count_before != 0) && (req_count_after == 0))
+		{
+		QueuedRequestCountChanged();
+		}
+
 	__DMA_INVARIANT();
 	}
 
@@ -1878,8 +1907,10 @@ void TDmaChannel::DoDfc()
 	TUint32 count = w & KDfcCountMask;
 	const TBool error = w & (TUint32)KErrorFlagMask;
 	TBool stop = w & (TUint32)KCancelFlagMask;
-	__DMA_ASSERTD((count > 0) || stop);
+	const TUint32 req_count_before = iQueuedRequests;
+	TUint32 req_count_after = 0;
 
+	__DMA_ASSERTD((count > 0) || stop);
 	__DMA_ASSERTD(!iRedoRequest); // We shouldn't be here if this is true
 
 	while (count && !stop)
@@ -1908,6 +1939,7 @@ void TDmaChannel::DoDfc()
 				{
 				pCompletedReq = pCurReq;
 				pCurReq->iLink.Deque();
+				iQueuedRequests--;
 				if (iReqQ.IsEmpty())
 					iNullPtr = &iCurHdr;
 				pCompletedReq->OnDeque();
@@ -1947,28 +1979,13 @@ void TDmaChannel::DoDfc()
 					}
 				}
 			}
-		else
+		// Allow another thread in, in case they are trying to cancel
+		if (pCompletedReq || Flash())
 			{
-			// Allow another thread in, in case they are trying to cancel
-			Flash();
+			stop = __e32_atomic_load_acq32(&iIsrDfc) & (TUint32)KCancelFlagMask;
 			}
-		stop = __e32_atomic_load_acq32(&iIsrDfc) & (TUint32)KCancelFlagMask;
 		}
 
-	// Some interrupts may be missed (double-buffer and scatter-gather
-	// controllers only) if two or more transfers complete while interrupts are
-	// disabled in the CPU. If this happens, the framework will go out of sync
-	// and leave some orphaned requests in the queue.
-	//
-	// To ensure correctness we handle this case here by checking that the request
-	// queue is empty when all transfers have completed and, if not, cleaning up
-	// and notifying the client of the completion of the orphaned requests.
-	//
-	// Note that if some interrupts are missed and the controller raises an
-	// error while transferring a subsequent fragment, the error will be reported
-	// on a fragment which was successfully completed.  There is no easy solution
-	// to this problem, but this is okay as the only possible action following a
-	// failure is to flush the whole queue.
 	if (stop)
 		{
 		// If another thread set the cancel flag, it should have
@@ -1984,73 +2001,25 @@ void TDmaChannel::DoDfc()
 		// reset the ISR count - new requests can now be processed
 		__e32_atomic_store_rel32(&iIsrDfc, 0);
 
+		req_count_after = iQueuedRequests;
 		Signal();
 
 		// release threads doing CancelAll()
 		waiters->Signal();
 		}
-	else if (!error && !iReqQ.IsEmpty() && iController->IsIdle(*this))
+	else
 		{
-#ifdef __SMP__
-		// On an SMP system we must call stop transfer, it will block until
-		// any ISRs have completed so that the system does not spuriously
-		// attempt to recover from a missed interrupt.
-		//
-		// On an SMP system it is possible for the code here to execute
-		// concurrently with the DMA ISR. It is therefore possible that at this
-		// point the previous transfer has already completed (so that IsIdle
-		// reports true), but that the ISR has not yet queued a DFC. Therefore
-		// we must wait for the ISR to complete.
-		//
-		// StopTransfer should have no other side effect, given that the
-		// channel is already idle.
-		iController->StopTransfer(*this); // should block till ISR completion
-#endif
-
-		const TBool cleanup = !iDfc.Queued();
-		if(cleanup)
-			{
-			__KTRACE_OPT(KDMA, Kern::Printf("Missed interrupt(s) - draining request queue"));
-			ResetStateMachine();
-
-			// Move orphaned requests to temporary queue so channel queue can
-			// accept new requests.
-			SDblQue q;
-			q.MoveFrom(&iReqQ);
-
-			SDblQueLink* pL;
-			while ((pL = q.GetFirst()) != NULL)
-				{
-				DDmaRequest* const pR = _LOFF(pL, DDmaRequest, iLink);
-				__KTRACE_OPT(KDMA, Kern::Printf("Removing request from queue and notifying client"));
-				pR->OnDeque();
-				// Old style callback
-				DDmaRequest::TCallback const cb = pR->iCb;
-				if (cb)
-					{
-					TAny* const arg = pR->iCbArg;
-					Signal();
-					(*cb)(DDmaRequest::EOk, arg);
-					Wait();
-					}
-				else
-					{
-					// New style callback
-					TDmaCallback const ncb = pR->iDmaCb;
-					if (ncb)
-						{
-						TAny* const arg = pR->iDmaCbArg;
-						Signal();
-						(*ncb)(EDmaCallbackRequestCompletion, EDmaResultOK, arg, NULL);
-						Wait();
-						}
-					}
-				}
-			}
+		req_count_after = iQueuedRequests;
 		Signal();
 		}
-	else
-		Signal();
+
+	// Only call PSL if there were requests queued when we entered AND there
+	// are now no requests left on the queue (after also having executed all
+	// client callbacks).
+	if ((req_count_before != 0) && (req_count_after == 0))
+		{
+		QueuedRequestCountChanged();
+		}
 
 	__DMA_INVARIANT();
 	}
@@ -2100,6 +2069,20 @@ void TDmaChannel::DoDfc(const DDmaRequest& /*aCurReq*/, SDmaDesHdr*& /*aSrcCompl
 	// which it isn't appropriate (and which therefore don't override it) we
 	// put this check in here.
 	__DMA_CANT_HAPPEN();
+	}
+
+
+/** PSL may override */
+void TDmaChannel::QueuedRequestCountChanged()
+	{
+#ifdef _DEBUG
+	Wait();
+	__KTRACE_OPT(KDMA,
+				 Kern::Printf("TDmaChannel::QueuedRequestCountChanged() %d",
+							  iQueuedRequests));
+	__DMA_ASSERTA(iQueuedRequests >= 0);
+	Signal();
+#endif
 	}
 
 

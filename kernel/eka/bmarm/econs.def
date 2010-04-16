@@ -31,4 +31,5 @@ EXPORTS
 	Type__C11TConsoleKey @ 30 NONAME ; TConsoleKey::Type(void) const
 	Version__8RConsole @ 31 NONAME ; RConsole::Version(void)
 	ClearScreen__8RConsole @ 32 NONAME ; RConsole::ClearScreen(void)
+	PointerNumber__C11TConsoleKey @ 33 NONAME ; TConsoleKey::PointerNumber(void) const
 

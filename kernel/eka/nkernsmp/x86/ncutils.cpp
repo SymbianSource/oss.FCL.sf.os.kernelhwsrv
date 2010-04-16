@@ -32,7 +32,7 @@ TUint32 NKern::IdleGenerationCount()
 	return TheScheduler.iIdleGenerationCount;
 	}
 
-void NKern::Idle()
+void NKern::DoIdle()
 	{
 	TScheduler& s = TheScheduler;
 	TSubScheduler& ss = SubScheduler();	// OK since idle thread is locked to CPU
@@ -57,8 +57,19 @@ void NKern::Idle()
 			return;
 			}
 		}
+	if (ss.iCurrentThread->iSavedSP)
+		{
+		// rescheduled between entry to NKern::Idle() and here
+		// go round again to see if any more threads to pull from other CPUs
+		__e32_atomic_ior_ord32(&s.iCpusNotIdle, m);	// we aren't idle after all
+		s.iIdleSpinLock.UnlockIrq();
+		return;
+		}
+
 	s.iIdleSpinLock.UnlockOnly();	// leave interrupts disabled
+
 	NKIdle(0);
+	
 	}
 
 TUint32 ContextId()
@@ -324,13 +335,23 @@ void NKern::Init0(TAny* a)
 	for (i=0; i<KMaxCpus; ++i)
 		{
 		TSubScheduler& ss = TheSubSchedulers[i];
-		ss.i_TimerMultF = (TAny*)KMaxTUint32;
-		ss.i_TimerMultI = (TAny*)0x01000000u;
-		ss.i_CpuMult = (TAny*)KMaxTUint32;
-		VIB->iTimerMult[i] = (volatile STimerMult*)&ss.i_TimerMultF;
-		VIB->iCpuMult[i] = (volatile TUint32*)&ss.i_CpuMult;
+		ss.iSSX.iCpuFreqM = KMaxTUint32;
+		ss.iSSX.iCpuFreqS = 0;
+		ss.iSSX.iCpuPeriodM = 0x80000000u;
+		ss.iSSX.iCpuPeriodS = 31;
+		ss.iSSX.iNTimerFreqM = KMaxTUint32;
+		ss.iSSX.iNTimerFreqS = 0;
+		ss.iSSX.iNTimerPeriodM = 0x80000000u;
+		ss.iSSX.iNTimerPeriodS = 31;
+		ss.iSSX.iTimerFreqM = KMaxTUint32;
+		ss.iSSX.iTimerFreqS = 0;
+		ss.iSSX.iTimerPeriodM = 0x80000000u;
+		ss.iSSX.iTimerPeriodS = 31;
+		ss.iSSX.iTimestampOffset.i64 = 0;
+		VIB->iTimerMult[i] = 0;
+		VIB->iCpuMult[i] = 0;
 		}
-	TheScheduler.i_TimerMax = (TAny*)(VIB->iMaxTimerClock / 128);
+	TheScheduler.iSX.iTimerMax = (VIB->iMaxTimerClock / 128);
 	InitFpu();
 	InterruptInit0();
 	}
@@ -351,7 +372,7 @@ EXPORT_C TUint32 NKern::CpuTimeMeasFreq()
  */
 EXPORT_C TInt NKern::TimesliceTicks(TUint32 aMicroseconds)
 	{
-	TUint32 mf32 = (TUint32)TheScheduler.i_TimerMax;
+	TUint32 mf32 = (TUint32)TheScheduler.iSX.iTimerMax;
 	TUint64 mf(mf32);
 	TUint64 ticks = mf*TUint64(aMicroseconds) + UI64LIT(999999);
 	ticks /= UI64LIT(1000000);
@@ -359,5 +380,23 @@ EXPORT_C TInt NKern::TimesliceTicks(TUint32 aMicroseconds)
 		return KMaxTInt;
 	else
 		return (TInt)ticks;
+	}
+
+TBool TSubScheduler::Detached()
+	{
+	return FALSE;
+	}
+
+TBool TScheduler::CoreControlSupported()
+	{
+	return FALSE;
+	}
+
+void TScheduler::CCInitiatePowerUp(TUint32 /*aCores*/)
+	{
+	}
+
+void TScheduler::CCIndirectPowerDown(TAny*)
+	{
 	}
 

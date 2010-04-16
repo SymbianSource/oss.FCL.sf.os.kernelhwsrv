@@ -19,6 +19,7 @@
 #define __INCLUDE_NTHREADBASE_DEFINES__
 
 #include <arm.h>
+#include <arm_tmr.h>
 
 extern "C" void NewThreadTrace(NThread* a)
 	{
@@ -157,5 +158,57 @@ extern "C" void __DebugMsgNKFMFlash(NFastMutex* a)
 	__ASSERT_WITH_MESSAGE_DEBUG(a->HeldByCurrentThread(),"The calling thread holds the mutex","NKern::FMFlash");
 	}
 
+#endif
+
+#if !defined(__UTT_MACHINE_CODED__)
+void TSubScheduler::UpdateThreadTimes(NThreadBase* aOld, NThreadBase* aNew)
+	{
+	if (!aOld)
+		aOld = iInitialThread;
+	if (!aNew)
+		aNew = iInitialThread;
+	if (aNew!=aOld || aNew->iTime<=0)
+		{
+		TUint32 tmrval = 0x7fffffffu;
+		if (aNew->iTime > 0)
+			{
+			TUint64 x = TUint64(aNew->iTime) * TUint64(iSSX.iTimerFreqM);
+			tmrval = I64HIGH(x);
+			if (iSSX.iTimerFreqS)
+				{
+				tmrval += ((1u<<iSSX.iTimerFreqS)-1);
+				tmrval >>= iSSX.iTimerFreqS;
+				}
+			else if (I64LOW(x) & 0x80000000u)
+				++tmrval;
+			}
+		iSSX.iLastTimerSet = tmrval;
+		iSSX.iLocalTimerAddr->iTimerCount = tmrval;
+		}
+	if (aNew!=aOld)
+		{
+		TUint64 now = NKern::Timestamp();
+		TUint64 delta = now - iLastTimestamp.i64;
+		iLastTimestamp.i64 = now;
+		aOld->iLastRunTime.i64 = now;
+		aOld->iTotalCpuTime.i64 += delta;
+		++iReschedCount.i64;
+		++aNew->iRunCount.i64;
+		if (!aOld->iActiveState)
+			aOld->iTotalActiveTime.i64 += (now - aOld->iLastActivationTime.i64);
+		NSchedulable* parent = aOld->iParent;
+		if (parent != aOld)
+			{
+			parent->iLastRunTime.i64 = now;
+			if (!parent->iActiveState)
+				parent->iTotalActiveTime.i64 += (now - parent->iLastActivationTime.i64);
+			if (parent != aNew->iParent)
+				parent->iTotalCpuTime.i64 += (now - parent->iLastStartTime.i64);
+			}
+		NSchedulable* np = aNew->iParent;
+		if (np!=aNew && np!=parent)
+			np->iLastStartTime.i64 = now;
+		}
+	}
 #endif
 

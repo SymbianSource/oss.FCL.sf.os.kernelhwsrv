@@ -27,8 +27,6 @@
 //---------------------------------------------------------------------------------------------------------------------------------
 //-- dedicated FAT directory cache related stuff
 
-//-- if defined, a dedicated cache will be used for FAT directories
-#define ENABLE_DEDICATED_DIR_CACHE
 
 //---------------------------------------------------------------------------------------------------------------------------------
 
@@ -64,13 +62,10 @@ public:
         
         /**
         Finds out if the media position "aPosToSearch" is in the cache and returns cache page information in this case.
-        
         @param  aPosToSearch    linear media position to lookup in the cache
-        @param  aCachedPosStart if "aPosToSearch" is cached, here will be media position of this page start
-          
         @return 0 if aPosToSearch isn't cached, otherwise  cache page size in bytes (see also aCachedPosStart).
         */
-        virtual TUint32  PosCached(const TInt64& aPosToSearch, TInt64& aCachedPosStart) = 0;
+        virtual TUint32  PosCached(TInt64 aPosToSearch) = 0;
         
         /**
         @return size of the cache in bytes. Can be 0.
@@ -116,7 +111,6 @@ class CWTCachePage
 public:   
         
         static CWTCachePage* NewL(TUint32 aPageSizeLog2);
-        void ConstructL(TUint32 aPageSizeLog2);
         
         ~CWTCachePage();
         
@@ -148,9 +142,7 @@ class CMediaWTCache : public CBase, public MWTCacheInterface
 public:
         ~CMediaWTCache();
         
-        static CMediaWTCache* NewL(TDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2);
-
-        void ConstructL(TUint32 aNumPages, TUint32 aPageSizeLog2);
+        static CMediaWTCache* NewL(TDriveInterface& aDrive, TUint32 aNumPages, TUint32 aPageSizeLog2, TUint32 aWrGranularityLog2);
         
         //-- overloads from the base class
         void    ReadL (TInt64 aPos,TInt aLength,TDes8& aDes);
@@ -159,7 +151,7 @@ public:
         void    InvalidateCachePage(TUint64 aPos);
 
 
-        TUint32 PosCached(const TInt64& aPosToSearch, TInt64& aCachedPosStart);
+        TUint32 PosCached(TInt64 aPosToSearch);
         TUint32 CacheSizeInBytes()  const;
         void 	MakePageMRU(TInt64 aPos);
         TUint32 PageSizeInBytesLog2()	const;
@@ -171,6 +163,8 @@ protected:
         CMediaWTCache();
         CMediaWTCache(TDriveInterface& aDrive);
         
+        void InitialiseL(TUint32 aNumPages, TUint32 aPageSizeLog2, TUint32 aWrGranularityLog2);
+
         inline TInt64  CalcPageStartPos(TInt64 aPos) const;
         inline TUint32 PageSize() const;
         
@@ -183,10 +177,14 @@ protected:
         
 protected:
         TDriveInterface& iDrive;        ///< reference to the driver for media access
-        TUint32             iPageSizeLog2; ///< Log2 (cache page size)
+        
+        TUint32             iPageSizeLog2;      ///< Log2(cache page size or read granularity unit) 
+        TUint32             iWrGranularityLog2; ///< Log2(cache write granularity unit). Can't be > iPageSizeLog2. '0' has a special meaning - "don't use write granularity"
+
         mutable TBool       iAllPagesValid;///< ETrue if all cache pages have valid data
         TInt64              iCacheBasePos; ///< Cache pages base position, used to align them at cluster size
         RPointerArray<CWTCachePage> iPages; ///< array of pointers to the cache pages. Used for organising LRU list
+        
         TUint32             iCacheDisabled :1; ///< if not 0 the cache is disabled totally and all reads and writes go via TDriveInterface directly
     };
 

@@ -264,35 +264,39 @@ void CFatTable::CountFreeClustersL()
 //-----------------------------------------------------------------------------
 
 /**
-Count the number of contiguous cluster from a start cluster
+    Count the number of continuous cluster from a start cluster in FAT table.
 
 @param aStartCluster cluster to start counting from
-@param anEndCluster contains the end cluster number upon return
+    @param  aEndCluster     contains the end cluster number upon return
 @param aMaxCount Maximum cluster required
-@leave System wide error values
-@return Number of contiguous clusters from aStartCluster.
+    @return Number of continuous clusters from aStartCluster.
 */
-TInt CFatTable::CountContiguousClustersL(TUint32 aStartCluster,TInt& anEndCluster,TUint32 aMaxCount) const
+TUint32 CFatTable::CountContiguousClustersL(TUint32 aStartCluster, TUint32& aEndCluster, TUint32 aMaxCount) const
 	{
 	__PRINT2(_L("CFatTable::CountContiguousClustersL() start:%d, max:%d"),aStartCluster, aMaxCount);
-	TUint32 clusterListLen=1;
-	TInt endCluster=aStartCluster;
-	TInt64 endClusterPos=DataPositionInBytes(endCluster);
-	while (clusterListLen<aMaxCount)
-		{
-		TInt oldCluster=endCluster;
-		TInt64 oldClusterPos=endClusterPos;
-		if (GetNextClusterL(endCluster)==EFalse || (endClusterPos=DataPositionInBytes(endCluster))!=(oldClusterPos+(1<<iOwner->ClusterSizeLog2())))
-			{
-			endCluster=oldCluster;
-			break;
-			}
-		clusterListLen++;
-		}
-	anEndCluster=endCluster;
-	return(clusterListLen);
-	}	
 
+    ASSERT(ClusterNumberValid(aStartCluster));
+
+    TUint32 currClusterNo = aStartCluster;
+    
+    TUint32 clusterListLen;
+    for(clusterListLen=1; clusterListLen < aMaxCount; ++clusterListLen)
+        {
+        TUint32 nextClusterNo = currClusterNo;
+
+        if(!GetNextClusterL(nextClusterNo))
+            break; //-- end of cluster chain
+            
+        if(nextClusterNo != currClusterNo+1)
+            break; //-- not the next cluster
+      
+        currClusterNo = nextClusterNo;
+        }
+
+    aEndCluster = aStartCluster+clusterListLen-1;
+
+    return clusterListLen;
+	}	
 //-----------------------------------------------------------------------------
 
 /**
@@ -303,7 +307,7 @@ TInt CFatTable::CountContiguousClustersL(TUint32 aStartCluster,TInt& anEndCluste
 
     @leave KErrDiskFull + system wide error codes
 */
-void CFatTable::ExtendClusterListL(TUint32 aNumber,TInt& aCluster)
+void CFatTable::ExtendClusterListL(TUint32 aNumber, TUint32& aCluster)
 	{
 	__PRINT2(_L("CFatTable::ExtendClusterListL() num:%d, clust:%d"), aNumber, aCluster);
 	__ASSERT_DEBUG(aNumber>0,Fault(EFatBadParameter));
@@ -385,9 +389,9 @@ TUint32 CFatTable::AllocateClusterListL(TUint32 aNumber, TUint32 aNearestCluster
 		User::Leave(KErrDiskFull);
 		}
 
-	TInt firstCluster = aNearestCluster = AllocateSingleClusterL(aNearestCluster);
+	TUint32 firstCluster = aNearestCluster = AllocateSingleClusterL(aNearestCluster);
 	if (aNumber>1)
-		ExtendClusterListL(aNumber-1, (TInt&)aNearestCluster);
+		ExtendClusterListL(aNumber-1, aNearestCluster);
 
     return(firstCluster);
 	}	
@@ -491,7 +495,7 @@ void CFatTable::FreeClusterListL(TUint32 aCluster)
     TUint32 cntFreedClusters = 0;
 
     TUint32 currCluster = aCluster;
-    TInt    nextCluster = aCluster;
+    TUint32 nextCluster = aCluster;
 
     for(;;)
     {
@@ -1740,7 +1744,7 @@ TUint32 CAtaFatTable::FindClosestFreeClusterL(TUint32 aCluster)
     @param aCluster number to read, contains next cluster upon return
     @return False if end of cluster chain
 */
-TBool CFatTable::GetNextClusterL(TInt& aCluster) const
+TBool CFatTable::GetNextClusterL(TUint32& aCluster) const
     {
 	__PRINT1(_L("CAtaFatTable::GetNextClusterL(%d)"), aCluster);
     

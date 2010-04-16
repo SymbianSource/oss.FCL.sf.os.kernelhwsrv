@@ -1149,7 +1149,7 @@ const TPtrC8 TFatDirEntry::Name() const
 	{return TPtrC8((TUint8*)&(pDir->iName),KFatDirNameSize);}
 
 /** @return The attributes for the Directory entry */
-TInt TFatDirEntry::Attributes() const
+TUint TFatDirEntry::Attributes() const
 	{return pDir->iAttributes;}
 
 /** @return Time of file creation */
@@ -1157,7 +1157,7 @@ TTime TFatDirEntry::Time() const
 	{return DosTimeToTTime(pDir->iTime,pDir->iDate);}
 
 /** @return The Start cluster for the file or directory for this entry  */
-TInt TFatDirEntry::StartCluster() const		
+TUint32 TFatDirEntry::StartCluster() const		
 	{
     const TUint16 KStClustMaskHi = 0x0FFF;	
     return ((pDir->iStartClusterHi&KStClustMaskHi)<<16) | pDir->iStartClusterLo;
@@ -1198,7 +1198,7 @@ void TFatDirEntry::SetName(const TDesC8& aDes)
 Set the file or directory attributes for this entry 
 @param anAtts The file or directory attributes
 */
-void TFatDirEntry::SetAttributes(TInt anAtts)
+void TFatDirEntry::SetAttributes(TUint anAtts)
 	{
 	ASSERT(!(anAtts&~KMaxTUint8));
 	pDir->iAttributes=(TUint8)anAtts;
@@ -1224,7 +1224,7 @@ void TFatDirEntry::SetCreateTime(TTime aTime)
 Set the start cluster number of the file or directory refered to by the entry
 @param aStartCluster The start cluster number
 */
-void TFatDirEntry::SetStartCluster(TInt aStartCluster)
+void TFatDirEntry::SetStartCluster(TUint32 aStartCluster)
 	{
 	const TUint32 KHalfWordMask	= 0x0000FFFF;
     pDir->iStartClusterLo=(TUint16)(aStartCluster & KHalfWordMask);

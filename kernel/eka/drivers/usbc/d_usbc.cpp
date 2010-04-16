@@ -153,6 +153,7 @@ DLddUsbcChannel::~DLddUsbcChannel()
 	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcChannel::~DLddUsbcChannel()"));
 	if (iController)
 		{
+		iController->DeRegisterClient(this);
 		iStatusCallbackInfo.Cancel();
 		iEndpointStatusCallbackInfo.Cancel();
         iOtgFeatureCallbackInfo.Cancel();
@@ -164,7 +165,6 @@ DLddUsbcChannel::~DLddUsbcChannel()
 			iController->ReleaseDeviceControl(this);
 			iOwnsDeviceControl = EFalse;
 			}
-		iController->DeRegisterClient(this);
 		DestroyEp0();
 		delete iStatusFifo;
 		Kern::DestroyClientRequest(iStatusChangeReq);
@@ -1959,7 +1959,12 @@ TInt DLddUsbcChannel::SetupInterfaceMemory(RArray<DPlatChunkHw*> &aHwChunks,
             // Parcel out the memory between endpoints
             TUint8* newAddr = reinterpret_cast<TUint8*>(chunk->LinearAddress());
             __KTRACE_OPT(KUSB, Kern::Printf("SetupInterfaceMemory alloc new chunk=0x%x, size=%d", newAddr,bufSizes[chunkInd]));
-            chunkChanged = (newAddr != oldAddr);
+            // The check is important to avoid chunkChanged to be corrupted.
+            // This code change is to fix the problem that one chunk is used by multiple interfaces.
+            if(!chunkChanged)
+            	{
+            	chunkChanged = (newAddr != oldAddr);
+            	}            
             aHwChunks[chunkInd] = chunk;
             }
         chunkInd++;

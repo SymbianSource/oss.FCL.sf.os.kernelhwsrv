@@ -61,7 +61,7 @@ Check whether two CProcessPair objects are equal
 
 @param aProcessPair a CProcessPair object to match with this one
 
-@return ETrue is process id and name match, EFalse otherwise
+@return 0 if process ids and names do not match, non-zero if they do
 */
 TBool CProcessPair::operator==(const CProcessPair &aProcessPair) const
 	{
@@ -74,7 +74,7 @@ Check whether this CProcessPair object has these values set
 @param aProcessName process name to check
 @param aProcessId process id to check
 
-@return ETrue is process id and name match, EFalse otherwise
+@return 0 if process ids and names do not match, non-zero if they do
 */
 TBool CProcessPair::Equals(const TDesC& aProcessName, const TProcessId aProcessId) const
 	{
@@ -86,7 +86,7 @@ Check whether the process ids of two objects match
 
 @param aProcessPair a CProcessPair object to compare with this one
 
-@return ETrue is process id matches, EFalse otherwise
+@return 0 if process ids do not match, non-zero if they do
 */
 TBool CProcessPair::ProcessIdMatches(const CProcessPair &aProcessPair) const
 	{
@@ -98,7 +98,7 @@ Check whether two process ids match
 
 @param aProcessId a process ID to compare with this pair's process ID
 
-@return ETrue is process id matches, EFalse otherwise
+@return 0 if process ids do not match, non-zero if they do
 */
 TBool CProcessPair::ProcessIdMatches(const TProcessId &aProcessId) const
 	{
@@ -110,7 +110,7 @@ Check whether the process names of two objects match in-case-sensitively
 
 @param aProcessPair a CProcessPair object to compare with this one
 
-@return ETrue is process names match, EFalse otherwise
+@return 0 if process names do not match, non-zero if they do
 */
 TBool CProcessPair::ProcessNameMatches(const CProcessPair &aProcessPair) const
 	{
@@ -122,11 +122,10 @@ Check whether two strings match in-case-sensitively
 
 @param aProcessName a process name to compare with this pair's process name
 
-@return ETrue is process names match, EFalse otherwise
+@return 0 if process names do not match, non-zero if they do
 */
 TBool CProcessPair::ProcessNameMatches(const TDesC& aProcessName) const
 	{
-	TInt equal = iProcessName->CompareF(aProcessName);
-	return (equal == 0) ? ETrue : EFalse;
+	return iProcessName->CompareF(aProcessName) == 0;
 	}
 

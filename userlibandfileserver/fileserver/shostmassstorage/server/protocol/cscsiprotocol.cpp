@@ -353,13 +353,13 @@ TInt CScsiProtocol::MsInquiryL()
     if (info.iPeripheralQualifier != 0 && info.iPeripheralQualifier != 1)
         {
         __HOSTPRINT(_L("Peripheral Qualifier[Unknown device type]\n"))
-        return KErrNotSupported;
+        return KErrUnknown;
         }
 
     if (info.iPeripheralDeviceType != 0)
         {
         __HOSTPRINT(_L("Peripheral Device Type[Unsupported device type]\n"))
-        return KErrNotSupported;
+        return KErrUnknown;
         }
 
     iRemovableMedia = info.iRemovable;

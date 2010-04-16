@@ -16,7 +16,7 @@
 //
 
 sourcepath				../nkernsmp
-source					nkern.cpp nkerns.cpp sched.cpp dfcs.cpp nk_timer.cpp nk_irq.cpp
+source					nkern.cpp nkerns.cpp sched.cpp dfcs.cpp nk_timer.cpp nk_irq.cpp nk_bal.cpp
 
 #ifdef MARM
 sourcepath				../common/arm
