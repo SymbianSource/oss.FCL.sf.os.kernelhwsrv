@@ -166,6 +166,46 @@ public:
 class TLocDrvRequest;
 class DPrimaryMediaBase;
 
+/* 
+TCallBackLink
+
+@internalComponent
+
+Internal class which allows a list of callbacks to be linked together.
+*/
+
+NONSHARABLE_CLASS(TCallBackLink)
+	{
+public:
+	enum TObjectType
+		{
+		EDLocalDriveObject, // object containing this TCallBackLink is a DLocalDrive
+		ETLocDrvObject,		// object containing this TCallBackLink is a TLocDrv
+		};
+
+public:
+	TCallBackLink();
+	TCallBackLink(TInt (*aFunction)(TAny* aPtr, TInt aParam),TAny* aPtr, TObjectType aObjectType);
+	TInt CallBack(TInt aParam) const;
+public:
+	/**
+	A pointer to the callback function.
+	*/
+	TInt (*iFunction)(TAny* aPtr, TInt aParam);
+	
+	
+	/**
+	A pointer that is passed to the callback function when
+	the function is called.
+	*/
+	TAny* iPtr;
+
+	TObjectType iObjectType;
+
+	SDblQueLink iLink;
+	};
+
+
 /**
 @publishedPartner
 @released
@@ -275,18 +315,21 @@ public:
 		Query device 
 		*/
 		EQueryDevice=32,
-
 		};
 public:
 	DLocalDrive(); 
 	~DLocalDrive();
-public:
+
 	virtual TInt DoCreate(TInt aUnit, const TDesC8* anInfo, const TVersion& aVer); /**< @internalComponent */
 	virtual TInt Request(TInt aFunction, TAny* a1, TAny* a2);                      /**< @internalComponent */
-public:
-	void NotifyChange(DPrimaryMediaBase& aPrimaryMedia, TBool aMediaChange);
-public:
+
+	void NotifyChange();
+
 	inline void Deque();                 /**< @internalComponent */
+
+	static TInt MediaChangeCallback(TAny* aLocalDrive, TInt aNotifyType);	/**< @internalComponent */
+
+	IMPORT_C static TInt Caps(TInt aDriveNumber, TDes8& aCaps);
 
 private:
 #ifdef __DEMAND_PAGING__
@@ -296,10 +339,10 @@ private:
 	TInt ReadPasswordData(TLocDrvRequest& aReq, TLocalDrivePasswordData& aPswData, TMediaPassword& aOldPasswd, TMediaPassword& aNewPasswd);
 
 public:
-	TLocDrv* iDrive;							/**< @internalComponent */
-	SDblQueLink iLink;							/**< @internalComponent */
+	TLocDrv* iDrive;									/**< @internalComponent */
+	TCallBackLink iMediaChangeObserver;					/**< @internalComponent */
 	TClientDataRequest<TBool>* iNotifyChangeRequest;	/**< @internalComponent */
-	TLocalDriveCleanup iCleanup;				 /**< @internalComponent */
+	TLocalDriveCleanup iCleanup;						/**< @internalComponent */
 	};
 
 /**
@@ -341,7 +384,7 @@ public:
 		ECodePaging=0x20,			// a code paging request
 		EDataPaging=0x40,			// a data paging request
 		ETClientBuffer=0x80,		// RemoteDes() points to a TClientBuffer
-		EKernelBuffer=0x100,		// RemoteDes() points to a kernel-side buffer
+		EKernelBuffer=0x100,		// RemoteDes() points to a kernel-side buffer : set for all paging requests and media extension requests
 		};
 public:
     
@@ -493,7 +536,7 @@ public:
 @internalComponent
 */
 inline void DLocalDrive::Deque()
-	{ iLink.Deque(); }
+	{ iMediaChangeObserver.iLink.Deque(); }
 
 
 
@@ -647,6 +690,7 @@ public:
 	inline TInt Connect(DLocalDrive* aLocalDrive);
 	inline void Disconnect(DLocalDrive* aLocalDrive);
 	inline TInt Request(TLocDrvRequest& aRequest);
+	static TInt MediaChangeCallback(TAny* aLocDrv, TInt aNotifyType);
 public:
 	TInt iDriveNumber;
 	DMedia* iMedia;
@@ -661,6 +705,14 @@ public:
 	TUint8 iSpare3;
 #endif
 	DDmaHelper* iDmaHelper;
+
+	// Media extension stuff:
+
+	/** ptr to the next TLocDrv object in the chain. Null if not a media extension */
+	TLocDrv* iNextDrive;
+
+	/** media change callback - called when the next media in the chain has a media change */
+	TCallBackLink iMediaChangeObserver;
 	};
 
 /**
@@ -827,7 +879,7 @@ public:
 
 public:
 	IMPORT_C DPrimaryMediaBase();
-public:
+
 	// provided by implementation
 	IMPORT_C virtual TInt Create(TMediaDevice aDevice, TInt aMediaId, TInt aLastMediaId);
 	IMPORT_C virtual TInt Connect(DLocalDrive* aLocalDrive);
@@ -841,7 +893,7 @@ public:
 	IMPORT_C virtual void DeltaCurrentConsumption(TInt aCurrent);
 	IMPORT_C virtual void DefaultDriveCaps(TLocalDriveCapsV2& aCaps);
 	IMPORT_C virtual TBool IsRemovableDevice(TInt& aSocketNum);
-public:
+
 	// used by implementation
 	IMPORT_C void NotifyMediaChange();
 	IMPORT_C void NotifyPowerDown();
@@ -849,7 +901,7 @@ public:
 	IMPORT_C void NotifyPsuFault(TInt anError);
 	IMPORT_C void NotifyMediaPresent();
 	IMPORT_C void PowerUpComplete(TInt anError);
-public:
+
 	IMPORT_C virtual void HandleMsg(TLocDrvRequest& aRequest);
 	IMPORT_C virtual TInt DoRequest(TLocDrvRequest& aRequest);
 	TInt OpenMediaDriver();
@@ -862,7 +914,10 @@ public:
 	void CompleteRequest(TLocDrvRequest& aMsg, TInt aResult);
 	IMPORT_C void RunDeferred();
 	void SetClosed(TInt anError);
-	void NotifyClients(TBool aMediaChange,TLocDrv* aLocDrv=NULL);
+	
+	enum TNotifyType {EMediaChange, EMediaPresent};
+	void NotifyClients(TNotifyType aNotifyType, TLocDrv* aLocDrv=NULL);
+
 	TInt InCritical();
 	void EndInCritical();
 	void UpdatePartitionInfo();
@@ -881,6 +936,13 @@ public:
 	void RequestCountInc();
 	void RequestCountDec();
 #endif
+
+	// called by LocDrv::RegisterMediaDevice() for media extensions
+	TInt Connect(TLocDrv* aLocDrv);
+
+	void MediaChange();
+	TInt HandleMediaNotPresent(TLocDrvRequest& aReq);
+
 
 public:
 	TInt iLastMediaId;					/**< @internalComponent */
@@ -1148,6 +1210,7 @@ public:
 	virtual void NotifyEmergencyPowerDown()=0;
 public:
 	IMPORT_C void SetTotalSizeInBytes(Int64 aTotalSizeInBytes, TLocDrv* aLocDrv=NULL);
+	IMPORT_C void SetTotalSizeInBytes(TLocalDriveCapsV4& aCaps);
 	IMPORT_C Int64 TotalSizeInBytes();
 	IMPORT_C void SetCurrentConsumption(TInt aValue);
 	IMPORT_C TInt InCritical();
@@ -1162,6 +1225,74 @@ public:
 	DPrimaryMediaBase* iPrimaryMedia;/**< @internalComponent */
 	TBool iCritical;                 /**< @internalComponent */
 	TMountInfoData* iMountInfo;      /**< @internalComponent */
+	};
+
+
+/**
+@internalTechnology
+@prototype
+
+An abstract base class for media driver 'extensions' within the local media subsystem
+*/
+class DMediaDriverExtension : public DMediaDriver
+	{
+public:
+	IMPORT_C DMediaDriverExtension(TInt aMediaId);
+	IMPORT_C virtual ~DMediaDriverExtension();
+	IMPORT_C virtual void Close();
+
+	virtual TInt Request(TLocDrvRequest& aRequest) = 0;
+	
+	virtual TInt PartitionInfo(TPartitionInfo &anInfo) = 0;
+
+	IMPORT_C virtual void NotifyPowerDown();
+
+	IMPORT_C virtual void NotifyEmergencyPowerDown();
+
+	/**
+	Retrieve partition info from all the attached drives
+	*/
+	IMPORT_C TInt DoDrivePartitionInfo(TPartitionInfo &anInfo);
+	/**
+	Forward a request to the next attached drive
+	*/
+	IMPORT_C TInt ForwardRequest(TLocDrvRequest& aRequest);
+
+	/**
+	Read from the specified attached drive
+	*/
+	IMPORT_C TInt Read(TInt aDriveNumber, TInt64 aPos, TLinAddr aData, TUint aLen);
+
+	/**
+	Write to the specified attached drive
+	*/
+	IMPORT_C TInt Write(TInt aDriveNumber, TInt64 aPos, TLinAddr aData, TUint aLen);
+
+	/**
+	Get the Caps from the specified attached drive
+	*/
+	IMPORT_C TInt Caps(TInt aDriveNumber, TDes8& aCaps);
+
+	/**
+	Return whether the media is busy i.e. if it has any pending requests or DFCs
+	*/
+	IMPORT_C TBool MediaBusy(TInt aDriveNumber);
+
+#ifdef __DEMAND_PAGING__
+	/**
+	Send a paging read request to the specified attached drive
+	*/
+	IMPORT_C TInt ReadPaged(TInt aDriveNumber, TInt64 aPos, TLinAddr aData, TUint aLen);
+
+	/**
+	Send a paging write request to the specified attached drive
+	*/
+	IMPORT_C TInt WritePaged(TInt aDriveNumber, TInt64 aPos, TLinAddr aData, TUint aLen);
+#endif
+
+private:
+	TInt SendRequest(TInt aReqId, TBool aPagingRequest, TInt aDriveNumber, TInt64 aPos, TLinAddr aData, TUint aLen);
+
 	};
 
 

@@ -175,6 +175,7 @@ if not exist %EPOCROOT%epoc32\data\epoc.ini (
 	echo FlashResumeTime 0 >>%EPOCROOT%epoc32\data\epoc.ini
 	echo FlashWriteTime 0 >>%EPOCROOT%epoc32\data\epoc.ini
 	echo NandDriverType=XSR >>%EPOCROOT%epoc32\data\epoc.ini
+	echo MediaExtensionDriver=?medtestnfe.pdd >>%EPOCROOT%epoc32\data\epoc.ini
 	if exist %BASEPATH%e32\rombuild\platsec.settings (
 		type %BASEPATH%e32\rombuild\platsec.settings >>%EPOCROOT%epoc32\data\epoc.ini
 	) else (

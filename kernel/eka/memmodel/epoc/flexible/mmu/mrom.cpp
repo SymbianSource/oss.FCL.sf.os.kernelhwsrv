@@ -502,6 +502,8 @@ TInt DRomMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 		}
 
 	TAny* null = 0;
+	if(aDevice->iType & DPagingDevice::EMediaExtension)
+		__e32_atomic_store_ord_ptr(&iDevice, null);
 	if(!__e32_atomic_cas_ord_ptr(&iDevice, &null, aDevice)) // set iDevice=aDevice if it was originally 0
 		{
 		// ROM paging device already registered...
@@ -969,6 +971,11 @@ TInt DShadowPage::Construct(DMemoryObject* aMemory, TUint aIndex, DMemoryMapping
 		MmuLock::Lock();
 		SPageInfo::FromPhysAddr(iNewPage)->SetShadow(aIndex,aMemory->PageInfoFlags());
 		MmuLock::Unlock();
+
+#ifdef BTRACE_KERNEL_MEMORY
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscAlloc, KPageSize);
+		++Epoc::KernelMiscPages;
+#endif
 		}
 
 	RamAllocLock::Unlock();
@@ -992,6 +999,11 @@ void DShadowPage::Destroy()
 		{
 		RamAllocLock::Lock();
 		TheMmu.FreeRam(&iNewPage, 1, EPageFixed);
+
+#ifdef BTRACE_KERNEL_MEMORY
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscFree, KPageSize);
+		--Epoc::KernelMiscPages;
+#endif
 		RamAllocLock::Unlock();
 		}
 	if(IsAttached())

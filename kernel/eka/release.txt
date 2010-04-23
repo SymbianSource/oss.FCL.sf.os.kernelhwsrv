@@ -1,3 +1,23 @@
+Version 2.00.3066
+=================
+(Made by vfebvre 15/04/2010)
+
+1.	migubarr
+	1.	REQ 415-7212 NFE drive encryption on Demand Paging-enabled device
+		PackageReleaseID=453228 FeatureReleaseID=447937
+
+
+Version 2.00.3065
+=================
+(Made by vfebvre 15/04/2010)
+
+1.	ahiron
+	1.	DEF145202: E32TEST T_IIC test failure investigation (KERN-EXEC 17) 
+
+2.	vfebvre
+	1.	MINOR_CHANGE Temporarily disable crash-prone test T_SOUND2 until it is fixed (DEF144934)
+
+
 Version 2.00.3064
 =================
 (Made by vfebvre 14/04/2010)

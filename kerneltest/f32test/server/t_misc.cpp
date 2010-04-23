@@ -15,9 +15,15 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
+
+// If there is an NFE media driver present, then because of the way EDeleteNotify requests work,
+// the data retrieved from a deleted file will not be a buffer full of zero's, but instead a buffer
+// full of decrypted zero's
+#define __NFE_MEDIA_DRIVER_PRESENT__
 
 #ifdef __VC32__
     // Solve compilation problem caused by non-English locale
@@ -25,6 +31,8 @@
 #endif
 
 GLDEF_D RTest test(_L("T_MISC"));
+
+const TUint KBufLength = 0x100;
 
 LOCAL_C void Test1()
 //
@@ -34,19 +42,19 @@ LOCAL_C void Test1()
 
 	test.Next(_L("Open, write to and read from a file"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile file;
 	r=file.Create(TheFs,_L("Hello.Wld"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(_L8("Hello World"),11);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r=file.Open(TheFs,_L("Hello.Wld"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<256> buf;
 	r=file.Read(buf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(buf==_L8("Hello World"));
 	file.Close();
 	}
@@ -59,17 +67,17 @@ LOCAL_C void Test2()
 
 	test.Next(_L("Open and read from a file"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile file;
 	r=file.Open(TheFs,_L("Hello.Wld"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<256> buf;
 	r=file.Read(buf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(buf==_L8("Hello World"));
 	file.Close();
 	r=TheFs.Delete(_L("HELLO.WLD"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void Test3()
@@ -80,25 +88,25 @@ LOCAL_C void Test3()
 
 	test.Next(_L("Create nested directories"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TheFs.ResourceCountMarkStart();
 //
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\A.B"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\RIGHT\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 //
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\ONE\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\TWO\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\THREE\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\TWO\\BOTTOM\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 //
 	r=TheFs.MkDirAll(_L("\\F32-TST\\RIGHT\\TOP\\MID\\BOT\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	}
 
 LOCAL_C void Test4()
@@ -109,58 +117,58 @@ LOCAL_C void Test4()
 
 	test.Next(_L("Test returned error values"));
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TheFs.ResourceCountMarkStart();
 //
 	r=TheFs.MkDir(_L("\\"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\LEFT"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\"));
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=TheFs.MkDir(_L("\\F32-TST\\LEFT\\..\\NEWDIR\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.MkDir(_L("\\F32-TST\\NEWDIR\\SUBDIR\\"));
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 //
 	r=TheFs.RmDir(_L("\\"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\PROG"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=TheFs.RmDir(_L("\\F32-TST\\"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 
 	RDir dir;
 	r=dir.Open(TheFs,_L("V:\\asdf"),KEntryAttNormal);
-	test(r==KErrNone || r==KErrNotReady || r==KErrNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotReady || r==KErrNotFound);
 	if (r==KErrNone)
 		dir.Close();
 	r=dir.Open(TheFs,_L("L:\\asdf"),KEntryAttNormal);
-	test(r==KErrNone || r==KErrNotReady || r==KErrNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotReady || r==KErrNotFound);
 	dir.Close();
 //
 	TEntry entry;
 	r=TheFs.Entry(_L("z:\\NOTEXiSTS\\file.txt"),entry);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Entry(_L("z:\\NOTEXiSTS\\"),entry);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Entry(_L("z:\\SYSTEM\\"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("z:\\SYS\\BIN\\ESHELL.EXE"):_L("z:\\SYSTEM\\BIN\\ESHELL.EXE"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=dir.Open(TheFs,_L("\\*"),NULL);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TEntry dirEntry;
 	r=dir.Read(dirEntry);
-	test(r==KErrNone || r==KErrEof);
+	test_Value(r, r == KErrNone || r==KErrEof);
 	if (r==KErrNone)
 		test.Printf(_L("%S\n"),&dirEntry.iName);
 	dir.Close();
 
 	r=dir.Open(TheFs,_L("A:\\*"),NULL);
-	test(r==KErrNotReady || r==KErrNone);
+	test_Value(r, r == KErrNotReady || r==KErrNone);
 	dir.Close();
 	}
 
@@ -181,13 +189,13 @@ LOCAL_C void Test5()
 		{
 		RFile f;
 		r=f.Open(TheFs,KTFileCpp,EFileRead);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=f.Seek(ESeekAddress,pos);
 		TText8* ptrPos=*(TText8**)&pos;
-		test(r==KErrNone);
+		test_KErrNone(r);
 		TBuf8<1024> readBuf;
 		r=f.Read(readBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(readBuf.Length()==readBuf.MaxLength());
 		TPtrC8 memBuf(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -195,10 +203,10 @@ LOCAL_C void Test5()
 		ptrPos+=9913;
 		pos=9913;
 		r=f.Seek(ESeekStart,pos);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		readBuf.SetLength(0);
 		r=f.Read(readBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -207,16 +215,16 @@ LOCAL_C void Test5()
 		pos=10;
 		r=f2.Open(TheFs,KTFsrvCpp,EFileRead);
 
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=f2.Seek(ESeekAddress,pos);
 		ptrPos=*(TText8**)&pos;
-		test(r==KErrNone);
+		test_KErrNone(r);
 		readBuf.SetLength(0);
 		pos=10;
 		r=f2.Seek(ESeekStart,pos);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=f2.Read(readBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -224,10 +232,10 @@ LOCAL_C void Test5()
 		ptrPos+=2445;
 		pos=10+2445;
 		r=f2.Seek(ESeekStart,pos);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		readBuf.SetLength(0);
 		r=f2.Read(readBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -235,13 +243,13 @@ LOCAL_C void Test5()
 		pos=0;
 		r=f.Seek(ESeekAddress,pos);
 		ptrPos=*(TText8**)&pos;
-		test(r==KErrNone);
+		test_KErrNone(r);
 		readBuf.SetLength(0);
 		pos=0;
 		r=f.Seek(ESeekStart,pos);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=f.Read(readBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -249,10 +257,10 @@ LOCAL_C void Test5()
 		ptrPos+=5245;
 		pos=5245;
 		r=f.Seek(ESeekStart,pos);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		readBuf.SetLength(0);
 		r=f.Read(readBuf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(readBuf.Length()==readBuf.MaxLength());
 		memBuf.Set(ptrPos,readBuf.Length());
 		test(memBuf==readBuf);
@@ -271,14 +279,14 @@ LOCAL_C void Test6()
 
 	RFile f;
 	TInt r=f.Replace(TheFs,_L("Z:\\Test\\T_Fsrv.Cpp"),EFileRead);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	r=f.Create(TheFs,_L("Z:\\Test\\newT_Fsrv.Cpp"),EFileRead);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	r=f.Open(TheFs,_L("Z:\\Test\\T_Fsrv.Cpp"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	r=f.Open(TheFs,_L("Z:\\Test\\T_Fsrv.Cpp"),EFileRead|EFileWrite);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	}
 
 LOCAL_C void Test7()
@@ -295,7 +303,7 @@ LOCAL_C void Test7()
 
 	TEntry entry;
 	TInt r=TheFs.Entry(file1,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iType==uid1);
 
 	TUidType uid2(TUid::Uid(4),TUid::Uid(5),TUid::Uid(6));
@@ -303,19 +311,19 @@ LOCAL_C void Test7()
 	TPtrC8 uidData((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	RFile f;
 	r=f.Open(TheFs,file1,EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(uidData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = f.Flush();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.Entry(file1,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iType==uid2);
 
 	f.Close();
 	r=TheFs.Entry(file1,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iType==uid2);
 	}
 
@@ -538,7 +546,7 @@ LOCAL_C void Test9()
 
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	TInt r=fMan->Copy(_L("Z:\\TEST\\T_FILE.CPP"),_L("C:\\T_FILE.CPP"));
-	test(r==KErrNone || r==KErrAccessDenied);
+	test_Value(r, r == KErrNone || r==KErrAccessDenied);
 	delete fMan;
 	TUint8* addr=TheFs.IsFileInRom(_L("C:\\ESHELL.EXE"));
 	test(addr==NULL);
@@ -567,7 +575,7 @@ LOCAL_C void Test10()
 	for(i=0;i<KMaxDrives;i++)
 		{
 		TInt r=TheFs.GetDriveName(i,driveName);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		if (driveName.Length())
 			test.Printf(_L("Default name of %c: == %S\n"),'A'+i,&driveName);
 		}
@@ -577,32 +585,32 @@ LOCAL_C void Test10()
 	TBuf<64> drive17=_L("Flibble");
 	TBuf<64> drive25=_L("RAMDRIVE");
 	TInt r=TheFs.SetDriveName(0,drive0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetDriveName(4,drive4);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetDriveName(17,drive17);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetDriveName(25,drive25);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.GetDriveName(0,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive0);
 	r=TheFs.GetDriveName(4,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive4);
 	r=TheFs.GetDriveName(17,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive17);
 	r=TheFs.GetDriveName(25,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive25);
 
 	drive0=_L("askdjflsdfourewoqiuroiuaksjdvx,cvsdhwjhjhalsjhfshfkjhslj");
 	r=TheFs.SetDriveName(0,drive0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.GetDriveName(0,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive0);
 
 //	Test with illegal characters in drive name
@@ -612,13 +620,13 @@ LOCAL_C void Test10()
 	drive25=_L("RAMD//RIVE");
 
 	r=TheFs.SetDriveName(0,drive0);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.SetDriveName(4,drive4);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.SetDriveName(17,drive17);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.SetDriveName(25,drive25);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 
 //	Test that it is OK to set the name to no characters
 
@@ -628,25 +636,25 @@ LOCAL_C void Test10()
 	drive25=_L("");
 
 	r=TheFs.SetDriveName(0,drive0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetDriveName(4,drive4);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetDriveName(17,drive17);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetDriveName(25,drive25);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.GetDriveName(0,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive0);
 	r=TheFs.GetDriveName(4,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive4);
 	r=TheFs.GetDriveName(17,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive17);
 	r=TheFs.GetDriveName(25,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(driveName==drive25);
 
 
@@ -662,11 +670,11 @@ LOCAL_C void Test11()
 	TVolumeInfo vol;
 	TInt r=TheFs.Volume(vol);
 	test.Printf(_L("VolumeName = %S\n"),&vol.iName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\asdfasdf.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.MkDir(_L("\\asdfasdf.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	}
 
 LOCAL_C void Test12()
@@ -697,23 +705,23 @@ LOCAL_C void Test13()
 	test.Next(_L("Test RFs::Volume"));
 	TVolumeInfo vol;
 	TInt r=TheFs.Volume(vol,EDriveB);
-	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
+	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveB returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveC);
-	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
+	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveC returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveD);
-	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
+	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveD returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveE);
-	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
+	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveE returned %d\n"),r);
 
 	r=TheFs.Volume(vol,EDriveF);
-	test(r==KErrNotReady || r==KErrNone || KErrPathNotFound);
+	test_Value(r, r == KErrNotReady || r==KErrNone || r == KErrPathNotFound);
 	test.Printf(_L("RFs::Volume EDriveF returned %d\n"),r);
 	}
 
@@ -722,7 +730,9 @@ void    DoTest14(TInt aDrvNum);
 TInt    CreateStuffedFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize);
 TInt    CreateEmptyFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize);
 TBool   CheckFileContents(RFs& aFs, const TDesC& aFileName);
+#ifndef __NFE_MEDIA_DRIVER_PRESENT__
 TBool   CheckBufferContents(const TDesC8& aBuffer, TUint aPrintBaseAddr=0);
+#endif
 
 /**
 Testing unallocated data initialization vulnerability in RFile
@@ -740,7 +750,7 @@ LOCAL_C void Test14()
 
 	//-- 1. get drives list
 	nRes=TheFs.DriveList(driveList);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
 	//-- 2. walk through all drives, performing the test only on suitable ones
 	for (TInt drvNum=0; drvNum<KMaxDrives; ++drvNum)
@@ -826,15 +836,17 @@ void DoTest14(TInt aDrvNum)
 
     //-- 1. create an empty file
     nRes = CreateEmptyFile(TheFs, fileName, KFileSize);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
+#ifndef __NFE_MEDIA_DRIVER_PRESENT__	// can't easily check for illegitimate information if drive is encrypted
     //-- 1.1  check that this file doesn't contain illegitimate information.
     nRes = CheckFileContents(TheFs, fileName);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
+#endif
 
     //-- 1.2 delete the empty file
     nRes = TheFs.Delete(fileName);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //==============================
     //== Scenario 2.
@@ -847,18 +859,18 @@ void DoTest14(TInt aDrvNum)
 
     //-- 2. create file filled with some data pattern
     nRes = CreateStuffedFile(TheFs, fileName, KFileSize);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 2.1 delete this file
     TheFs.Delete(fileName);
 
     //-- 2.1 create an empty file on the place of just deleted one (hopefully)
     nRes = CreateEmptyFile(TheFs, fileName, KFileSize);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 2.2  check that this file doesn't contain illegitimate information.
     nRes = CheckFileContents(TheFs, fileName);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- 2.3 delete this file
     TheFs.Delete(fileName);
@@ -1162,11 +1174,11 @@ void TestGetMediaSerialNumber()
 	test.Next(_L("Test RFs::GetMediaSerialNumber"));	
     TInt theDrive;
     TInt r = TheFs.CharToDrive(gDriveToTest,theDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
     TMediaSerialNumber serNum;
     r = TheFs.GetMediaSerialNumber(serNum, theDrive);
 	if (r) test.Printf(_L("RFs::GetMediaSerialNumber returned error %d"), r);
-    test(r == KErrNotSupported || r == KErrNotReady || r == KErrNone);
+    test_Value(r, r == KErrNotSupported || r == KErrNotReady || r == KErrNone);
     if (r == KErrNotSupported)
         {
         test.Printf(_L("MediaSerialNumber: Not Supported\n"));
@@ -1238,7 +1250,6 @@ TInt CreateStuffedFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize)
     RFile   file;
 
 	//-- create a buffer with some data
-	const TUint KBufLength = 0x100;
 	TBuf8<KBufLength> buffer;
 	buffer.SetLength(KBufLength);
 
@@ -1289,13 +1300,12 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
 	TInt    nRes = KErrNone;
     RFile   file;
 
-	const TInt KBufLength = 0x100;
 	TBuf8<KBufLength> buffer;
     buffer.SetLength(0);
 
     //-- open the file
     nRes = file.Open(aFs, aFileName, EFileRead);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     //-- check file contents
     TUint nFilePos=0;
@@ -1303,7 +1313,7 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
     {
         //-- read data from the file into the buffer
         nRes = file.Read(buffer);
-        test(nRes == KErrNone);
+        test_KErrNone(nRes);
 
         if(buffer.Length() == 0)
         {
@@ -1311,6 +1321,18 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
             break; //EOF
         }
 
+#ifdef __NFE_MEDIA_DRIVER_PRESENT__
+		// check the buffer doesn't contain the same pattern written to it by CreateStuffedFile()
+		TUint i;
+		for(i = 0; i < KBufLength; i++)
+			if (buffer[i] != static_cast<TUint8> (i))
+				break;
+		if (i == KBufLength)
+			{
+            nRes = KErrCorrupt; //-- indicate that the read buffer contains illegitimate information
+            break; //-- comment this out if you need a full dump of the file
+			}
+#else
         //-- check if the buffer contains only allowed data (RAM page initialisation data, etc. e.g. 0x00, 0xff, 0x03, 0xcc)
         if(!CheckBufferContents(buffer, nFilePos))
         {
@@ -1318,6 +1340,7 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
             nRes = KErrCorrupt; //-- indicate that the read buffer contains illegitimate information
             break; //-- comment this out if you need a full dump of the file
         }
+#endif
 
         nFilePos+=buffer.Length();
     }

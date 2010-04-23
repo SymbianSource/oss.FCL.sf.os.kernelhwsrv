@@ -64,7 +64,7 @@ public:
 	*/
 	static DCodePagedMemoryManager TheManager;
 
-	friend DPagingDevice* CodePagingDevice(TInt aDiveNum);
+	friend DPagingDevice* CodePagingDevice(TInt aDriveNum);
 	};
 
 
@@ -131,6 +131,8 @@ TInt DCodePagedMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 			{
 			TRACEB(("DCodePagedMemoryManager::InstallPagingDevice drive=%d",i));
 			TAny* null = 0;
+			if(aDevice->iType & DPagingDevice::EMediaExtension)
+				__e32_atomic_store_ord_ptr(&iDevice[i], null);
 			if(!__e32_atomic_cas_ord_ptr(&iDevice[i], &null, aDevice)) // set iDevice[i]=aDevice if it was originally 0
 				{
 				// paging device already registered...
@@ -207,11 +209,11 @@ void DCodePagedMemoryManager::Free(DMemoryObject* aMemory, TUint aIndex, TUint a
 
 TInt DCodePagedMemoryManager::CleanPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TPhysAddr*& aPageArrayEntry)
 	{
-	if(aPageInfo->IsDirty()==false)
+	if(!aPageInfo->IsDirty())
 		return KErrNone;
 
 	// shouldn't be asked to clean a page which is writable...
-	__NK_ASSERT_DEBUG(aPageInfo->IsWritable()==false);
+	__NK_ASSERT_DEBUG(!aPageInfo->IsWritable());
 
 	// Note, memory may have been modified by the CodeModifier class.
 

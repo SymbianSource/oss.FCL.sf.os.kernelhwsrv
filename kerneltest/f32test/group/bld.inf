@@ -31,6 +31,8 @@ PRJ_TESTEXPORTS
 ../../../userlibandfileserver/fileserver/inc/runtests.h                         /epoc32/include/
 
 PRJ_TESTMMPFILES
+../../e32test/mediaext/t_nfe
+
 // These tests must be run early on so they do not time out on LFFS disks.
 
 #ifdef WINS
@@ -259,6 +261,7 @@ t_swapfsys manual
 t_plugin_v2beta.mmp
 
 t_localtime 
+
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 t_file64bit manual
 fhserver64bit       support

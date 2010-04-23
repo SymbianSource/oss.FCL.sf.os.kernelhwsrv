@@ -1522,6 +1522,8 @@ GLDEF_C TInt E32Main()
 	gChanSlaveI2c.Close();
 	
 	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+// Not safe to assume that heap clean-up has completed for the channels just closed, so insert a delay.(DEF145202)
+	User::After(20 * 1000);
 	__KHEAP_MARKEND;
 
 	gTest.Next(_L("Free kernel-side proxy IIC client"));
@@ -1598,6 +1600,8 @@ GLDEF_C TInt E32Main()
 	gChanSlaveI2c.Close();
 
 	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+// Not safe to assume that heap clean-up has completed for the channels just closed, so insert a delay.(DEF145202)
+	User::After(20 * 1000);
 	__KHEAP_MARKEND;
 
 	gTest.Next(_L("Free kernel-side proxy IIC client"));

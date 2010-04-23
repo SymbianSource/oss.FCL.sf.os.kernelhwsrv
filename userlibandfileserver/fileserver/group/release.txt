@@ -1,3 +1,12 @@
+Version 2.00.3031
+=================
+(Made by vfebvre 15/04/2010)
+
+1.	migubarr
+	1.	REQ 415-7212 NFE drive encryption on Demand Paging-enabled device, kernelhwsrv/MCL
+		PackageReleaseID=453228 FeatureReleaseID=447937
+
+
 Version 2.00.3030
 =================
 (Made by vfebvre 14/04/2010)
