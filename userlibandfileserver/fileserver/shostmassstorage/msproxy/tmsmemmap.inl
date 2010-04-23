@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,9 +26,9 @@ inline void TMsDataMemMap::Reset()
     }
 
 
-inline TInt TMsDataMemMap::BlockLength() const
+inline TUint32 TMsDataMemMap::BlockLength() const
     {
-    return KSectorSize;
+    return iSectorSize;
     }
 
 
@@ -37,11 +37,20 @@ inline TUint64 TMsDataMemMap::DataSize() const
     return iSize - iDataOffset;
     }
 
-inline void TMsDataMemMap::InitDataArea(TUint32 aFirstDataSector, TUint32 aNumSectors)
-    {
-    iDataOffset = static_cast<TInt64>(aFirstDataSector) * KSectorSize;
-    iSize = static_cast<TInt64>(aNumSectors) * KSectorSize;
-    }
+inline void TMsDataMemMap::InitDataArea(TUint32 aFirstDataSector, TUint32 aNumSectors, TUint32 aSectorSize)
+	{
+	iSectorSize = aSectorSize;
+
+	iFormatSectorShift = 0;
+	while(aSectorSize)
+		{
+		++iFormatSectorShift;
+		aSectorSize >>= 1;
+		}
+
+	iDataOffset = static_cast<TInt64>(aFirstDataSector) * iSectorSize;
+	iSize = static_cast<TInt64>(aNumSectors) * iSectorSize;
+	}
 
 
 inline void TMsDataMemMap::InitDataArea(TUint64 aSize)
@@ -54,4 +63,9 @@ inline TInt64 TMsDataMemMap::GetDataPos(TInt64 aPos) const
     {
     return aPos + iDataOffset;
     }
+
+inline TInt TMsDataMemMap::FormatSectorShift() const
+	{
+	return iFormatSectorShift;
+	}
 
