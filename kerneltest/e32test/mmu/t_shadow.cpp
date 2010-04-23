@@ -338,6 +338,9 @@ void TestInteractionWithPinning(TLinAddr aPageAddr)
 const TUint KChunkShift = 20;
 const TUint KChunkSize = 1 << KChunkShift;
 
+const TUint KRomSizeAlign = 16;  // This should match CFG_RomSizeAlign defined in bootcpu.inc
+const TUint KRomSizeAlignMask = (1 << KRomSizeAlign) - 1;
+
 void TestRomIsSectionMapped()
 	{
 	test.Start(_L("Test ROM is section mapped"));
@@ -350,13 +353,24 @@ void TestRomIsSectionMapped()
 	test_KErrNone(Shadow.GetPdInfo(KGlobalPageDirectory, pdSize, pdBase, offset));
 	test.Printf(_L("pd base == %08x, pd size == %08x, pd offset == %08x\n"), pdBase, pdSize, offset);
 
-	for (TLinAddr addr = RomUnpagedStart ; addr <= RomUnpagedEnd ; addr += KChunkSize)
+	TUint romSize = RomUnpagedEnd - RomUnpagedStart;	
+	test.Printf(_L("rom size == %x\n"), romSize);
+	if (RomPagedStart == RomPagedEnd)
 		{
+		// If rom is not paged then we must round the ROM size up to a mutiple of 64KB (or whatever
+		// the CFG_RomSizeAlign settings is), because that's how the bootstrap maps it
+		romSize = (romSize + KRomSizeAlignMask) & ~KRomSizeAlignMask;
+		test.Printf(_L("rom size rounded up to %x\n"), romSize);
+		}
+	
+	for (TUint pos = 0 ; pos < romSize ; pos += KChunkSize)
+		{
+		TLinAddr addr = RomUnpagedStart + pos;
 		TUint i = (addr >> KChunkShift) - offset;
 		TUint pde = Shadow.Read(pdBase + i*4);
 		test.Printf(_L("  %08x: PDE %08x\n"), addr, pde);
 
-		TUint expectedPdeType = (RomUnpagedEnd - addr) >= KChunkSize ? 2 : 1;
+		TUint expectedPdeType = (romSize - pos) >= KChunkSize ? 2 : 1;
 		test_Equal(expectedPdeType, pde & 3);
 		}
 #else

@@ -1,3 +1,11 @@
+Version 2.00.3064
+=================
+(Made by vfebvre 14/04/2010)
+
+1.	jcoppear
+	1.	PDEF144022: T_SHADOW failing test that ROM is section mapped (t_shadow.cpp:360)
+
+
 Version 2.00.3063
 =================
 (Made by vfebvre 13/04/2010)

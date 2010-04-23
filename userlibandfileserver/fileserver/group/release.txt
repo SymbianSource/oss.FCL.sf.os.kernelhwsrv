@@ -1,3 +1,13 @@
+Version 2.00.3030
+=================
+(Made by vfebvre 14/04/2010)
+
+1.	famustaf
+	1.	DEF145043 F32TEST T_FSYS test failure investigation
+		Added the KMediaRemountForceMediaChange flag in the call to RemountDrive() to
+		simulate ejecting and re-inserting the media.
+
+
 Version 2.00.3029
 =================
 (Made by vfebvre 12/04/2010)
