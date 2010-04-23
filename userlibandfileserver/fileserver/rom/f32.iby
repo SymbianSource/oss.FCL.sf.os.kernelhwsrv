@@ -80,7 +80,7 @@ file=\Epoc32\Release\##SMAIN##\##BUILD##\ecomp.fsy  sys\bin\ecomp.fsy
 file=\Epoc32\Release\##SMAIN##\##BUILD##\erofs.fsy  sys\bin\erofs.fsy
 #endif
 
-#ifdef SYMBIAN_EXCLUDE_USB
+#ifndef __USB
 REM Feature USB is not included in this ROM
 #else
 #ifdef WITH_MASS_STORAGE
@@ -95,4 +95,4 @@ file=\epoc32\release\##MAIN##\##BUILD##\usbhostmsclient.dll     sys\bin\usbhostm
 file=\epoc32\release\##MAIN##\##BUILD##\usbhostmssrv.exe    sys\bin\usbhostmssrv.exe
 #endif //SYMBIAN_INCLUDE_USB_OTG_HOST
 #endif //WITH_MASS_STORAGE
-#endif //SYMBIAN_EXCLUDE_USB
+#endif //__USB
