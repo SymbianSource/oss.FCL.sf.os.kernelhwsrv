@@ -413,7 +413,7 @@ void DoTimesliceTest2(TInt aCpu, TInt aSpin1, TInt aSpin2, TInt aSpin3, TBool aU
 				}
 			}
 		}
-	TEST_RESULT(RANGE_CHECK(0, pointA, delta), "pointA");
+	TEST_RESULT(RANGE_LQ(pointA, delta), "pointA");
 	if (aCpu != this_cpu)
 		{
 		TEST_RESULT(RANGE_CHECK(TUint32(aSpin1), pointB, TUint32(aSpin1)+delta), "pointB");

@@ -20,7 +20,6 @@
 #include "../misc/prbs.h"
 
 RTest test(_L("T_CHUNK3"));
-const TInt KHeapSize=4096;
 
 GLDEF_C TInt E32Main()
 	{

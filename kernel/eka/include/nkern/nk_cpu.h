@@ -812,8 +812,8 @@ inline void _outpd(TUint16 port, TUint32 data)
 
 #define USER_MEMORY_GUARD_SAVE_WORDS			2
 #define USER_MEMORY_DOMAIN						15
-#define	USER_MEMORY_DOMAIN_MASK					(3 << (2*USER_MEMORY_DOMAIN))
-#define	USER_MEMORY_DOMAIN_CLIENT				(1 << (2*USER_MEMORY_DOMAIN))
+#define	USER_MEMORY_DOMAIN_MASK					(3U << (2*USER_MEMORY_DOMAIN))
+#define	USER_MEMORY_DOMAIN_CLIENT				(1U << (2*USER_MEMORY_DOMAIN))
 
 // Save the DACR in the named register
 #define USER_MEMORY_GUARD_SAVE(save)											\

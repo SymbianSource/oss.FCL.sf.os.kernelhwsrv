@@ -70,9 +70,8 @@ LOCAL_C TInt AdjustChunk(TUint32 aIters, TUint32 aSize)
 	return KErrNone;
 	}
 
-LOCAL_C TInt AllocateChunk(TUint32 aIters, TUint32 aSize)
+LOCAL_C TInt AllocateChunk(TUint32 /*aIters*/, TUint32 aSize)
 	{
-	aIters = aSize;
 	return TheChunk.Adjust(aSize * 0x00100000);
 	}
 

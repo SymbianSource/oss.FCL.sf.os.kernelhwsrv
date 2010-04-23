@@ -1359,7 +1359,14 @@ GLDEF_C void TestTBuf<T,S,DESTEMPLATE>::Test14()
 #if !(defined(__GCC32__) && defined(__X86__))
 	const TAny* const zeroTerminatedString=(sizeof(S)==2)? (const TAny*)_S16(":-)E"): (const TAny*)_S8(":-)E");
 	const TInt dummyParameter=0;
+#ifdef __ARMCC__
+#pragma push
+#pragma diag_suppress 1446 
+#endif
 	Test14_ReorderedParameterFormatting(dummyParameter, 0x20ac, 11, 3, 13.89543, zeroTerminatedString, '!', TInt64(199), 2, &b, 6, 30005, TRealX(0.125), 0x8bdd);
+#ifdef __ARMCC__
+#pragma pop
+#endif
 #endif
 
 	test.Next(_L("Print some numbers"));
@@ -1568,6 +1575,10 @@ LOCAL_C void testFormat()
 
 // Cannot do these on GCC (X86) because of "Cannot pass objects of non-POD type through '...'. Call will abort at runtime".
 #if !(defined(__GCC32__) && defined(__X86__))
+#ifdef __ARMCC__
+#pragma push
+#pragma diag_suppress 1446 
+#endif
 	aa.Format(_L("x%- 5Fx"), TRealX(6.2345678));
 	test(aa==_L("x6.234568x"));
 	aa.Format(_L("x%+ 5Fx"), TRealX(6.2345678));
@@ -1598,6 +1609,9 @@ LOCAL_C void testFormat()
 	test(aa==_L("x         1.012345679x"));
 	aa.Format(_L("x%5.1Fx"), TRealX(1.99));
 	test(aa==_L("x  2.0x"));
+#ifdef __ARMCC__	
+#pragma pop
+#endif
 #endif
 
 	aa.Format(_L("x%- 5ex"), 6.2345678);

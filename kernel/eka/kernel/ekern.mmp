@@ -50,6 +50,7 @@ newlib					scppnwdl_kern.lib
 // we have to keep this here, and not in kern_int.mmh, because media drivers
 // use the same macro name for different puposes...
 macro __DEMAND_PAGING__
+macro __DEMAND_PAGING_BENCHMARKS__
 #endif
 
 

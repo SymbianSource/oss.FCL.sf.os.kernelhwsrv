@@ -132,12 +132,11 @@ GLDEF_C TInt E32Main()
 	RandomSignalInterval = interval;
 	RandomSignalCount = interval;
 
-	FOREVER
+	volatile TInt forever = 1;
+	while(forever)
 		{
 		test.Printf(_L("Total: %8d Timeout: %8d Bad: %4d Bad0: %4d Bad1: %4d\n"), TotalCount, TimeoutCount, BadCount, Bad0Count, Bad1Count);
 		User::After(1000000);
 		}
-
-
 	return 0;
 	}

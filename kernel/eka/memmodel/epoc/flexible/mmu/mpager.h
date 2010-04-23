@@ -21,6 +21,7 @@
 #ifndef MPAGER_H
 #define MPAGER_H
 
+#include "mmu.h"
 #include <kern_priv.h>
 
 /**
@@ -56,6 +57,11 @@ public:
 		ret = iNumberOfDirtyPages;
 		MmuLock::Unlock();
 		return ret;
+		}
+
+	FORCE_INLINE TUint MinimumPageCount()
+		{
+		return iMinimumPageCount;
 		}
 	
 	FORCE_INLINE void SetWritable(SPageInfo& aPageInfo)
@@ -141,6 +147,20 @@ public:
 	This reduces the live page list to a minimum.
 	*/
 	void FlushAll();
+
+	/**
+	Flush demand paged pages in a specified region.
+
+	The memory must reside in a single memory object.
+	
+	@param aProcess The process containing the pages to flush.
+	@param aStart   The start address of the region.
+	@param aSize    The size of the region in bytes.
+
+	@return KErrBadDescriptor If the memory region is invalid or spans more than one memory object,
+	                          otherwise KErrNone.
+	*/
+	TInt FlushRegion(DMemModelProcess* aProcess, TLinAddr aStartAddress, TUint aSize);
 
 	/**
 	Give pages to paging system for managing.

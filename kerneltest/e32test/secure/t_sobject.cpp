@@ -55,6 +55,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <e32msgqueue.h>
 #include <f32file.h>
@@ -238,11 +239,6 @@ CTestSession::CTestSession()
 	{
 	}
 
-const TInt KTestDataMaxLength8 = 20;
-const TInt KTestDataMaxLength16 = 40;
-_LIT8(KTestData8,"12345678");
-_LIT16(KTestData16,"1234567890123456");
-_LIT(KTestPanicCategory,"TEST PANIC");
 
 void CTestSession::ServiceL(const RMessage2& aMessage)
 	{
@@ -288,7 +284,6 @@ void CTestSession::ServiceL(const RMessage2& aMessage)
 			object.Close();
 			return;
 			}
-			break;
 
 		case CTestSession::ETestSemaphore:
 			{
@@ -318,7 +313,6 @@ void CTestSession::ServiceL(const RMessage2& aMessage)
 			object.Close();
 			return;
 			}
-			break;
 
 		case CTestSession::ETestMsgQueue:
 			{
@@ -348,7 +342,7 @@ void CTestSession::ServiceL(const RMessage2& aMessage)
 			object.Close();
 			return;
 			}
-			break;
+
 
 		case CTestSession::ETestCondVar:
 			{
@@ -378,7 +372,7 @@ void CTestSession::ServiceL(const RMessage2& aMessage)
 			object.Close();
 			return;
 			}
-			break;
+
 
 		case CTestSession::ETestChunk:
 			{
@@ -408,7 +402,7 @@ void CTestSession::ServiceL(const RMessage2& aMessage)
 			object.Close();
 			return;
 			}
-			break;
+
 
 		case CTestSession::ETestChunkAdjust:
 			{
@@ -624,15 +618,13 @@ TInt StartServerInThread(TServerName aName)
 void TestPhysicalDevices()
 	{
 	TFullName name;
-	TInt r;
-
 	test.Start(_L("Test find named object"));
 	TFindPhysicalDevice find(_L("*"));
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Try open found object"));
 	RTestHandle testObject;
-	test((r=testObject.Open(find))==PlatSecProcessIsolationError);
+	test((testObject.Open(find))==PlatSecProcessIsolationError);
 	testObject.Close();
 
 	test.End();
@@ -642,27 +634,26 @@ void TestPhysicalDevices()
 
 void TestLogicalDevices()
 	{
-	TFullName name;
-	TInt r;
+	TFullName name;	
 	RDevice device;
 
 	test.Start(_L("Test find named object"));
 	TFindLogicalDevice find(_L("*"));
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Test open found object"));
-	test((r=device.Open(find))==KErrNone);
+	test((device.Open(find))==KErrNone);
 
 	test.Next(_L("Test duplicate object in other thread"));
-	test((r=DuplicateInOtherThread(device))==KErrNone);
+	test((DuplicateInOtherThread(device))==KErrNone);
 
 	test.Next(_L("Test duplicate object in other process"));
-	test((r=DuplicateInOtherProcess(device))==KErrNone);
+	test((DuplicateInOtherProcess(device))==KErrNone);
 
 	device.Close();
 
 	test.Next(_L("Test open device by name"));
-	test((r=device.Open(name))==KErrNone);
+	test((device.Open(name))==KErrNone);
 	device.Close();
 
 	test.End();
@@ -673,15 +664,13 @@ void TestLogicalDevices()
 void TestLibraries()
 	{
 	TFullName name;
-	TInt r;
-
 	test.Start(_L("Test find named object"));
 	TFindLibrary find(_L("*"));
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Try open found object"));
 	RTestHandle testObject;
-	test((r=testObject.Open(find))==PlatSecProcessIsolationError);
+	test((testObject.Open(find))==PlatSecProcessIsolationError);
 	testObject.Close();
 
 	test.End();
@@ -692,28 +681,27 @@ void TestLibraries()
 void TestServers()
 	{
 	TFullName name;
-	TInt r;
 	RServer2 localObject(Servers[EAnonymousServer]);
 
 	test.Start(_L("Test find named object"));
 	TFindServer find(ServerName(EMainServer));
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Try open found object"));
 	RTestHandle testObject;
-	test((r=testObject.Open(find))==KErrPermissionDenied);
+	test((testObject.Open(find))==KErrPermissionDenied);
 
 	test.Next(_L("Test duplicate named server in other thread"));
-	test((r=Session.Send(CTestSession::ETestServerDuplicateInThread))==KErrNone);
+	test((Session.Send(CTestSession::ETestServerDuplicateInThread))==KErrNone);
 
 	test.Next(_L("Try duplicate named server in other process"));
-	test((r=Session.Send(CTestSession::ETestServerDuplicateInProcess))==KErrPermissionDenied);
+	test((Session.Send(CTestSession::ETestServerDuplicateInProcess))==KErrPermissionDenied);
 
 	test.Next(_L("Test duplicate unnamed server in other thread"));
-	test((r=DuplicateInOtherThread(localObject))==KErrNone);
+	test((DuplicateInOtherThread(localObject))==KErrNone);
 
 	test.Next(_L("Try duplicate unnamed server in other process"));
-	test((r=DuplicateInOtherProcess(localObject))==KErrPermissionDenied);
+	test((DuplicateInOtherProcess(localObject))==KErrPermissionDenied);
 
 	test.End();
 	}
@@ -722,32 +710,31 @@ void TestServers()
 
 void TestProcesses()
 	{
-	TFullName name;
-	TInt r;
+	TFullName name;	
 	RProcess process;
 
 	test.Start(_L("Test find named object"));
 	TFindProcess find(_L("EKern*"));
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Test open found object"));
-	test((r=process.Open(find))==KErrNone);
+	test((process.Open(find))==KErrNone);
 
 	test.Next(_L("Test duplicate object in other thread"));
-	test((r=DuplicateInOtherThread(process))==KErrNone);
+	test((DuplicateInOtherThread(process))==KErrNone);
 
 	test.Next(_L("Test duplicate object in other process"));
-	test((r=DuplicateInOtherProcess(process))==KErrNone);
+	test((DuplicateInOtherProcess(process))==KErrNone);
 
 	process.Close();
 
 	test.Next(_L("Test open process by name"));
-	test((r=process.Open(name))==KErrNone);
+	test((process.Open(name))==KErrNone);
 	TProcessId id=process.Id();
 	process.Close();
 
 	test.Next(_L("Test open process by id"));
-	test((r=process.Open(id))==KErrNone);
+	test((process.Open(id))==KErrNone);
 	test(name==process.FullName());
 	process.Close();
 
@@ -759,64 +746,63 @@ void TestProcesses()
 void TestThreads()
 	{
 	TFullName name;
-	TInt r;
-
+	
 	test.Start(_L("Creating threads"));
 	RThread globalObject;
 	RThread localObject;
 	RThread testObject;
-	test((r=globalObject.Create(_L("T_SOBJECT-test-global-thread"),TestThreadDuplicate,KDefaultStackSize,KDefaultStackSize,KDefaultStackSize,NULL))==KErrNone);
-	test((r=localObject.Create(_L(""),TestThreadDuplicate,KDefaultStackSize,KDefaultStackSize,KDefaultStackSize,NULL))==KErrNone);
+	test((globalObject.Create(_L("T_SOBJECT-test-global-thread"),TestThreadDuplicate,KDefaultStackSize,KDefaultStackSize,KDefaultStackSize,NULL))==KErrNone);
+	test((localObject.Create(_L(""),TestThreadDuplicate,KDefaultStackSize,KDefaultStackSize,KDefaultStackSize,NULL))==KErrNone);
 
 	test.Next(_L("Test find named thread"));
 	TFindThread find(globalObject.FullName());
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Test open found object"));
-	test((r=testObject.Open(find))==KErrNone);
+	test((testObject.Open(find))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't find unnamed thread"));
 	TName objectName(localObject.FullName());
 	find.Find(objectName);
-	test((r=find.Next(name))==PlatSecFindError);
+	test((find.Next(name))==PlatSecFindError);
 
 	test.Next(_L("Test open named thread by name"));
-	test((r=testObject.Open(globalObject.FullName()))==KErrNone);
+	test((testObject.Open(globalObject.FullName()))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't open unnamed thread by name"));
-	test((r=testObject.Open(localObject.FullName()))==PlatSecFindError);
+	test((testObject.Open(localObject.FullName()))==PlatSecFindError);
 	testObject.Close();
 
 	test.Next(_L("Check can't open with no name"));
-	test((r=testObject.Open(KNullDesC))==KErrNotFound);
+	test((testObject.Open(KNullDesC))==KErrNotFound);
 	testObject.Close();
 
 	test.Next(_L("Test open named thread by id (in same process)"));
-	test((r=testObject.Open(globalObject.Id()))==KErrNone);
+	test((testObject.Open(globalObject.Id()))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Test open named thread by id (in other process)"));
-	test((r=OpenThreadByIdInOtherProcess(globalObject.Id()))==KErrNone);
+	test((OpenThreadByIdInOtherProcess(globalObject.Id()))==KErrNone);
 
 	test.Next(_L("Test open unnamed thread by id (in same process)"));
-	test((r=testObject.Open(localObject.Id()))==KErrNone);
+	test((testObject.Open(localObject.Id()))==KErrNone);
 
 	test.Next(_L("Check can't open unnamed thread by id (in other process)"));
-	test((r=OpenThreadByIdInOtherProcess(localObject.Id()))==PlatSecProcessIsolationError);
+	test((OpenThreadByIdInOtherProcess(localObject.Id()))==PlatSecProcessIsolationError);
 
 	test.Next(_L("Test duplicate named thread in other process"));
-	test((r=DuplicateInOtherProcess(globalObject))==KErrNone);
+	test((DuplicateInOtherProcess(globalObject))==KErrNone);
 
 	test.Next(_L("Check can't duplicate unnamed thread in other process"));
-	test((r=DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
+	test((DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
 
 	test.Next(_L("Test duplicate named thread in other thread"));
-	test((r=DuplicateInOtherThread(globalObject))==KErrNone);
+	test((DuplicateInOtherThread(globalObject))==KErrNone);
 
 	test.Next(_L("Test duplicate unnamed thread in other thead"));
-	test((r=DuplicateInOtherThread(localObject))==KErrNone);
+	test((DuplicateInOtherThread(localObject))==KErrNone);
 
 	test.Next(_L("Closing threads"));
 	globalObject.Close();
@@ -830,59 +816,58 @@ void TestThreads()
 void TestChunks()
 	{
 	TFullName name;
-	TInt r;
-
+	
 	test.Start(_L("Creating chunks"));
 	RChunk globalObject;
 	RChunk localObject;
 	RChunk testObject;
-	test((r=globalObject.CreateGlobal(_L("T_SOBJECT-test-global-chunk"),4096,1024*1024))==KErrNone);
-	test((r=localObject.CreateLocal(4096,1024*1024))==KErrNone);
+	test((globalObject.CreateGlobal(_L("T_SOBJECT-test-global-chunk"),4096,1024*1024))==KErrNone);
+	test((localObject.CreateLocal(4096,1024*1024))==KErrNone);
 
 	test.Next(_L("Test find global object"));
 	TFindChunk find(globalObject.FullName());
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Test open found object"));
-	test((r=testObject.Open(find))==KErrNone);
+	test((testObject.Open(find))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't find local object"));
 	TName objectName(localObject.FullName());
 	find.Find(objectName);
-	test((r=find.Next(name))==PlatSecFindError);
+	test((find.Next(name))==PlatSecFindError);
 
 	test.Next(_L("Test open with null name"));
-	test((r=testObject.OpenGlobal(KNullDesC,ETrue))==KErrNotFound);
+	test((testObject.OpenGlobal(KNullDesC,ETrue))==KErrNotFound);
 	testObject.Close();
 
 	test.Next(_L("Test open global object by name"));
-	test((r=testObject.OpenGlobal(globalObject.FullName(),ETrue))==KErrNone);
+	test((testObject.OpenGlobal(globalObject.FullName(),ETrue))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't open local object by name"));
-	test((r=testObject.OpenGlobal(localObject.FullName(),ETrue))==PlatSecFindError);
+	test((testObject.OpenGlobal(localObject.FullName(),ETrue))==PlatSecFindError);
 	testObject.Close();
 
 	test.Next(_L("Test duplicate global object in other process"));
-	test((r=DuplicateInOtherProcess(globalObject))==KErrNone);
+	test((DuplicateInOtherProcess(globalObject))==KErrNone);
 
 	test.Next(_L("Check can't duplicate local object in other process"));
-	test((r=DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
+	test((DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
 
 	test.Next(_L("Test duplicate global object in other thread"));
-	test((r=DuplicateInOtherThread(globalObject))==KErrNone);
+	test((DuplicateInOtherThread(globalObject))==KErrNone);
 
 	test.Next(_L("Test duplicate local object in other thead"));
-	test((r=DuplicateInOtherThread(localObject))==KErrNone);
+	test((DuplicateInOtherThread(localObject))==KErrNone);
 
 	test.Next(_L("Test Chunk protection"));
 	{
 	RChunk protectedChunk;
-	test((r=protectedChunk.CreateGlobal(KNullDesC,0x1000,0x100000,EOwnerProcess))==KErrNone);
-	test((r=Session.Send(CTestSession::ETestChunkAdjust,TIpcArgs(protectedChunk)))==KErrNone);
+	test((protectedChunk.CreateGlobal(KNullDesC,0x1000,0x100000,EOwnerProcess))==KErrNone);
+	test((Session.Send(CTestSession::ETestChunkAdjust,TIpcArgs(protectedChunk)))==KErrNone);
 	protectedChunk.SetRestrictions(RChunk::EPreventAdjust);
-	test((r=Session.Send(CTestSession::ETestChunkAdjust,TIpcArgs(protectedChunk)))==KErrAccessDenied);
+	test((Session.Send(CTestSession::ETestChunkAdjust,TIpcArgs(protectedChunk)))==KErrAccessDenied);
 	protectedChunk.Close();
 	}
 
@@ -898,51 +883,50 @@ void TestChunks()
 void TestSemaphores()
 	{
 	TFullName name;
-	TInt r;
-
+	
 	test.Start(_L("Creating semaphores"));
 	RSemaphore globalObject;
 	RSemaphore localObject;
 	RSemaphore testObject;
-	test((r=globalObject.CreateGlobal(_L("T_SOBJECT-test-global-semaphore"),1))==KErrNone);
-	test((r=localObject.CreateLocal(1))==KErrNone);
+	test((globalObject.CreateGlobal(_L("T_SOBJECT-test-global-semaphore"),1))==KErrNone);
+	test((localObject.CreateLocal(1))==KErrNone);
 
 	test.Next(_L("Test find global object"));
 	TFindSemaphore find(globalObject.FullName());
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Test open found object"));
-	test((r=testObject.Open(find))==KErrNone);
+	test((testObject.Open(find))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't find local object"));
 	TName objectName(localObject.FullName());
 	find.Find(objectName);
-	test((r=find.Next(name))==PlatSecFindError);
+	test((find.Next(name))==PlatSecFindError);
 
 	test.Next(_L("Test open with null name"));
-	test((r=testObject.OpenGlobal(KNullDesC))==KErrNotFound);
+	test((testObject.OpenGlobal(KNullDesC))==KErrNotFound);
 	testObject.Close();
 
 	test.Next(_L("Test open global object by name"));
-	test((r=testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
+	test((testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't open local object by name"));
-	test((r=testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
+	test((testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
 	testObject.Close();
 
 	test.Next(_L("Test duplicate global object in other process"));
-	test((r=DuplicateInOtherProcess(globalObject))==KErrNone);
+	test((DuplicateInOtherProcess(globalObject))==KErrNone);
 
 	test.Next(_L("Check can't duplicate local object in other process"));
-	test((r=DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
+	test((DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
 
 	test.Next(_L("Test duplicate global object in other thread"));
-	test((r=DuplicateInOtherThread(globalObject))==KErrNone);
+	test((DuplicateInOtherThread(globalObject))==KErrNone);
 
 	test.Next(_L("Test duplicate local object in other thead"));
-	test((r=DuplicateInOtherThread(localObject))==KErrNone);
+	test((DuplicateInOtherThread(localObject))==KErrNone);
 
 	test.Next(_L("Closing Semaphores"));
 	globalObject.Close();
@@ -956,51 +940,50 @@ void TestSemaphores()
 void TestMutexes()
 	{
 	TFullName name;
-	TInt r;
-
+	
 	test.Start(_L("Creating mutexes"));
 	RMutex globalObject;
 	RMutex localObject;
 	RMutex testObject;
-	test((r=globalObject.CreateGlobal(_L("T_SOBJECT-test-global-mutex")))==KErrNone);
-	test((r=localObject.CreateLocal())==KErrNone);
+	test((globalObject.CreateGlobal(_L("T_SOBJECT-test-global-mutex")))==KErrNone);
+	test((localObject.CreateLocal())==KErrNone);
 
 	test.Next(_L("Test find global object"));
 	TFindMutex find(globalObject.FullName());
-	test((r=find.Next(name))==KErrNone);
+	test((find.Next(name))==KErrNone);
 
 	test.Next(_L("Test open found object"));
-	test((r=testObject.Open(find))==KErrNone);
+	test((testObject.Open(find))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't find local object"));
 	TName objectName(localObject.FullName());
 	find.Find(objectName);
-	test((r=find.Next(name))==PlatSecFindError);
+	test((find.Next(name))==PlatSecFindError);
 
 	test.Next(_L("Test open with null name"));
-	test((r=testObject.OpenGlobal(KNullDesC))==KErrNotFound);
+	test((testObject.OpenGlobal(KNullDesC))==KErrNotFound);
 	testObject.Close();
 
 	test.Next(_L("Test open global object by name"));
-	test((r=testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
+	test((testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't open local object by name"));
-	test((r=testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
+	test((testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
 	testObject.Close();
 
 	test.Next(_L("Test duplicate global object in other process"));
-	test((r=DuplicateInOtherProcess(globalObject))==KErrNone);
+	test((DuplicateInOtherProcess(globalObject))==KErrNone);
 
 	test.Next(_L("Check can't duplicate local object in other process"));
-	test((r=DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
+	test((DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
 
 	test.Next(_L("Test duplicate global object in other thread"));
-	test((r=DuplicateInOtherThread(globalObject))==KErrNone);
+	test((DuplicateInOtherThread(globalObject))==KErrNone);
 
 	test.Next(_L("Test duplicate local object in other thead"));
-	test((r=DuplicateInOtherThread(localObject))==KErrNone);
+	test((DuplicateInOtherThread(localObject))==KErrNone);
 
 	test.Next(_L("Closing mutexes"));
 	globalObject.Close();
@@ -1013,38 +996,36 @@ void TestMutexes()
 
 void TestMessageQueues()
 	{
-	TInt r;
-
 	test.Start(_L("Creating message queues"));
 	RMsgQueue<TInt> globalObject;
 	RMsgQueue<TInt> localObject;
 	RMsgQueue<TInt> testObject;
-	test((r=globalObject.CreateGlobal(_L("T_SOBJECT-test-global-msgqueue"),1))==KErrNone);
-	test((r=localObject.CreateLocal(1))==KErrNone);
+	test((globalObject.CreateGlobal(_L("T_SOBJECT-test-global-msgqueue"),1))==KErrNone);
+	test((localObject.CreateLocal(1))==KErrNone);
 
 	test.Next(_L("Test open with null name"));
-	test((r=testObject.OpenGlobal(KNullDesC))==KErrNotFound);
+	test((testObject.OpenGlobal(KNullDesC))==KErrNotFound);
 	testObject.Close();
 
 	test.Next(_L("Test open global object by name"));
-	test((r=testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
+	test((testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't open local object by name"));
-	test((r=testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
+	test((testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
 	testObject.Close();
 
 	test.Next(_L("Test duplicate global object in other process"));
-	test((r=DuplicateInOtherProcess(globalObject))==KErrNone);
+	test((DuplicateInOtherProcess(globalObject))==KErrNone);
 
 	test.Next(_L("Check can't duplicate local object in other process"));
-	test((r=DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
+	test((DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
 
 	test.Next(_L("Test duplicate global object in other thread"));
-	test((r=DuplicateInOtherThread(globalObject))==KErrNone);
+	test((DuplicateInOtherThread(globalObject))==KErrNone);
 
 	test.Next(_L("Test duplicate local object in other thead"));
-	test((r=DuplicateInOtherThread(localObject))==KErrNone);
+	test((DuplicateInOtherThread(localObject))==KErrNone);
 
 	test.Next(_L("Closing message queues"));
 	globalObject.Close();
@@ -1056,39 +1037,37 @@ void TestMessageQueues()
 
 
 void TestConditionVariables()
-	{
-	TInt r;
-
+	{	
 	test.Start(_L("Creating condition variables"));
 	RCondVar globalObject;
 	RCondVar localObject;
 	RCondVar testObject;
-	test((r=globalObject.CreateGlobal(_L("T_SOBJECT-test-global-condvar")))==KErrNone);
-	test((r=localObject.CreateLocal())==KErrNone);
+	test((globalObject.CreateGlobal(_L("T_SOBJECT-test-global-condvar")))==KErrNone);
+	test((localObject.CreateLocal())==KErrNone);
 
 	test.Next(_L("Test open with null name"));
-	test((r=testObject.OpenGlobal(KNullDesC))==KErrNotFound);
+	test((testObject.OpenGlobal(KNullDesC))==KErrNotFound);
 	testObject.Close();
 
 	test.Next(_L("Test open global object by name"));
-	test((r=testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
+	test((testObject.OpenGlobal(globalObject.FullName()))==KErrNone);
 	testObject.Close();
 
 	test.Next(_L("Check can't open local object by name"));
-	test((r=testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
+	test((testObject.OpenGlobal(localObject.FullName()))==PlatSecFindError);
 	testObject.Close();
 
 	test.Next(_L("Test duplicate global object in other process"));
-	test((r=DuplicateInOtherProcess(globalObject))==KErrNone);
+	test((DuplicateInOtherProcess(globalObject))==KErrNone);
 
 	test.Next(_L("Check can't duplicate local object in other process"));
-	test((r=DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
+	test((DuplicateInOtherProcess(localObject))==PlatSecProcessIsolationError);
 
 	test.Next(_L("Test duplicate global object in other thread"));
-	test((r=DuplicateInOtherThread(globalObject))==KErrNone);
+	test((DuplicateInOtherThread(globalObject))==KErrNone);
 
 	test.Next(_L("Test duplicate local object in other thead"));
-	test((r=DuplicateInOtherThread(localObject))==KErrNone);
+	test((DuplicateInOtherThread(localObject))==KErrNone);
 
 	test.Next(_L("Closing message queues"));
 	globalObject.Close();
@@ -1104,7 +1083,7 @@ void TestIPCHandles()
 	RTestProcess server;
 	TRequestStatus rendezvous;
 	TInt r;
-
+	
 	test.Next(_L("Test sending LogicalChannel handles"));
 	{
 	RLddTest localLdd;
@@ -1400,7 +1379,6 @@ GLDEF_C TInt E32Main()
 
 
 	test.Title();
-	TInt r;
 	
 	test.Start(_L("Starting test servers"));
 	RTestProcess server;
@@ -1413,10 +1391,10 @@ GLDEF_C TInt E32Main()
 	User::WaitForRequest(rendezvous);
 	test(rendezvous==KServerRendezvous);
 	server.Close();
-	test((r=StartServerInThread(EAnonymousServer))==KErrNone);
+	test((StartServerInThread(EAnonymousServer))==KErrNone);
 
 	test.Next(_L("Openning server session"));
-	test((r=Session.Connect())==KErrNone);
+	test((Session.Connect())==KErrNone);
 
 	test.Next(_L("Test Find and Open PhysicalDevices"));
 	TestPhysicalDevices();

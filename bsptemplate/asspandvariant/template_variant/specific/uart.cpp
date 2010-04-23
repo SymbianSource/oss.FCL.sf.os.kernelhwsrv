@@ -82,6 +82,8 @@ enum TUartDataLength
 	EUartDataLength8/* =bitmask for eight data bits */
 	};
 
+//Remove the #if block if this code needs to be used or referenced.
+#if 0	//RVCT40 warning
 //
 // TO DO: (mandatory)
 //
@@ -106,6 +108,7 @@ static const TUartBaudRate BaudRate[19] =
 // Lookup table to convert EPOC parity settings into hardware-specific values
 //
 // EXAMPLE ONLY
+
 static const TUartParity Parity[3] =
 	{
 	EUartParityNone,EUartParityEven,EUartParityOdd
@@ -117,6 +120,7 @@ static const TUartParity Parity[3] =
 // Lookup table to convert EPOC stop bit values into hardware-specific values
 //
 // EXAMPLE ONLY
+
 static const TUartStopBit StopBit[2] =
 	{
 	EUartStopBitOne,EUartStopBitTwo
@@ -128,12 +132,14 @@ static const TUartStopBit StopBit[2] =
 // Lookup table to convert EPOC data bit settings into hardware-specific values
 //
 // EXAMPLE ONLY
+
 static const TUartDataLength DataLength[4] =
 	{
 	EUartDataLength5,EUartDataLength6,	
 	EUartDataLength7,EUartDataLength8
 	};
 
+#endif	//RVCT40 warning
 
 
 class DDriverComm : public DPhysicalDevice

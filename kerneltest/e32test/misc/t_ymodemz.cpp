@@ -211,7 +211,6 @@ GLDEF_C TInt E32Main()
 			r=Initialise(z);
 			CHECK(r);
 			test.Printf(_L("Read header\n"));
-			TUint32 c=0;
 			RThread t;
 			t.SetHandle(z.iThreadHandle);
 			while (z.iRemain && z.iThreadStatus==KRequestPending)
@@ -228,7 +227,6 @@ GLDEF_C TInt E32Main()
 					{
 					// after reading first block, process the header
 					ProcessHeader(z);
-					c=User::NTickCount();
 					}
 				}
 			test.Printf(_L("\nWait for thread to exit\n"));

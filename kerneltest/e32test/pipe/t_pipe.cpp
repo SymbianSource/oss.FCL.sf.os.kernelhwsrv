@@ -789,7 +789,6 @@ _LIT(KProcessRCap, "t_pipe5.exe");
 
 // My VID and SID
 _LIT_VENDOR_ID(MyVID,0x70000001);
-
 void TestPipesPermissionCheck() {
 
 		RProcess			proc;

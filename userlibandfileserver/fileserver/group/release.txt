@@ -1,3 +1,12 @@
+Version 2.00.3029
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	kmetherm
+	1.	REQ 417-57581 RVCT 4 compatible software codebase (SSS)
+		PackageReleaseID=476546 FeaturePlanID=444184
+
+
 Version 2.00.3028
 =================
 (Made by vfebvre 09/04/2010)

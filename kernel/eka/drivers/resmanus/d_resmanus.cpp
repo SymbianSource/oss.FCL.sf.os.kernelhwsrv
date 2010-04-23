@@ -473,7 +473,7 @@ TInt DChannelResManUs::SendRequest(TMessageBase* aMsg)
 	TInt r = KErrNone;
 	TTrackingBuffer *trackBuf = NULL;
 	TUint parms[4];
-	TPowerResourceCb *callBack;
+	TPowerResourceCb *callBack = NULL;
 	DPowerResourceNotification *prn;
 
 	switch(id)

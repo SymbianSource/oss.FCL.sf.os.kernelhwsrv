@@ -35,7 +35,7 @@
 #include <e32const_private.h>
 #include <e32des8_private.h>
 #include <e32event_private.h>
-
+#include <kernel/heap_hybrid.h>
 
 #ifndef __MINIMUM_MACHINE_CODE__
 #ifdef __MARM__
@@ -1522,10 +1522,10 @@ public:
 		};
 	enum TMask
 		{
-		EMaskFail = ETypeFail << KCSPBitsFree, 
-		EMaskCapsOnly = ETypeCapsOnly << KCSPBitsFree,
-		EMaskSecureId = ETypeSecureId << KCSPBitsFree,
-		EMaskVendorId = ETypeVendorId << KCSPBitsFree,
+		EMaskFail = TUint32 (ETypeFail) << KCSPBitsFree, 
+		EMaskCapsOnly = TUint32 (ETypeCapsOnly) << KCSPBitsFree,
+		EMaskSecureId = TUint32 (ETypeSecureId) << KCSPBitsFree,
+		EMaskVendorId = TUint32 (ETypeVendorId) << KCSPBitsFree,
 		};
 	TInt Set(const TSecurityPolicy& aPolicy);
 #ifndef __REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
@@ -2262,7 +2262,7 @@ public:
 /********************************************
  * Kernel heap
  ********************************************/
-class RHeapK : public RHeap
+class RHeapK : public RHybridHeap
 	{
 public:
 	static RHeapK* FixedHeap(TAny* aBase, TInt aMaxLength);
@@ -2280,36 +2280,17 @@ public:
 	static void CheckThreadState();
 	static void Fault(TInt aFault);
 	inline TBool CheckForSimulatedAllocFail()
-		{ return RHeap::CheckForSimulatedAllocFail(); }
+	    { return RHybridHeap::CheckForSimulatedAllocFail(); }	
 	inline DMutex* Mutex() const; /**< @internalComponent */
 public:
 	friend class Monitor;
 	};
-
-inline void RHeap::Lock() const
-	{
-	DMutex* m = *(DMutex**)&iLock;
-	if (m)
-		Kern::MutexWait(*m);
-	}
-
-inline void RHeap::Unlock() const
-	{
-	DMutex* m = *(DMutex**)&iLock;
-	if (m)
-		Kern::MutexSignal(*m);
-	}
 
 /**
 @internalComponent
 */
 inline DMutex* RHeapK::Mutex() const
 	{ return *(DMutex**)&iLock;	}
-
-inline TInt RHeap::SetBrk(TInt aBrk)
-	{
-	return ((DChunk*)iChunkHandle)->Adjust(aBrk);
-	}
 
 enum TSecureClockStatusFlags 
 	{

@@ -16,6 +16,7 @@
 //
 
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32ldr.h>
 #include <e32ldr_private.h>
@@ -42,8 +43,6 @@ void DeleteTestDirectory();
 void TestCompatibility();
 void TestINC126563();
 
-// Codepage dll name
-_LIT(KCP932Name,"T_CP932");
 
 TInt LoadCodePageDll(const TDesC& aCodePageDllName)
 	{
@@ -95,7 +94,8 @@ void CallTestsL(void)
 	test.Start(_L("Starting T_CP_PLUGIN tests"));
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
-
+	// Codepage dll name
+	_LIT(KCP932Name,"T_CP932");
 	// Test only runs on Fat file systems
 	TheFs.SessionPath(gSessionPath);
 	TInt driveNum = CurrentDrive();
@@ -111,13 +111,13 @@ void CallTestsL(void)
 			{
 			TBuf<16> CodepageDllName(KCP932Name);
 			r = LoadCodePageDll(CodepageDllName);
-			test(r == KErrNone || r == KErrAlreadyExists);
+			test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 
 			if(r == KErrNone)
 				{
 				// should not allow loading again codepage dll.
 				r = LoadCodePageDll(CodepageDllName);
-				test(r == KErrAlreadyExists);
+				test_Value(r, r == KErrAlreadyExists);
 
 				}
 
@@ -129,7 +129,7 @@ void CallTestsL(void)
 
 			// Disables codepage dll implementation of LocaleUtils functions for other base tests
 			r = TheFs.ControlIo(driveNum, KControlIoDisableFatUtilityFunctions);
-			test(r == KErrNone);
+			test_KErrNone(r);
 			}
 		}
 	else

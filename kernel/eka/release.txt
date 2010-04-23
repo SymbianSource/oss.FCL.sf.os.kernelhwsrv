@@ -1,3 +1,24 @@
+Version 2.00.3063
+=================
+(Made by vfebvre 13/04/2010)
+
+1.	vfebvre
+	1.	MINOR_CHANGE Re-add changes reverted by DEF145318
+	2.	MINOR_CHANGE Reinstate temporarily commented out code in t_rescontrolcli.cpp to avoid warnings
+
+
+Version 2.00.3062
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	kmetherm
+	1.	REQ 417-57581 RVCT 4 compatible software codebase (SSS)
+		PackageReleaseID=476546 FeaturePlanID=444184
+
+2.	jcoppear
+	1.	DEF145150: WDP: No support for testing whether device drivers are WDP safe
+
+
 Version 2.00.3061
 =================
 (Made by vfebvre 12/04/2010)

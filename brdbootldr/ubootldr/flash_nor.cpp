@@ -28,7 +28,7 @@
 #include <u32hal.h>
 #include "flash_nor.h"
 
-const TUint KFlashRetries = 1000000;
+#define KFlashRetries 1000000
 
 #ifdef __SUPPORT_FLASH_REPRO__
 _LIT(KLitThreadName,"Flash");

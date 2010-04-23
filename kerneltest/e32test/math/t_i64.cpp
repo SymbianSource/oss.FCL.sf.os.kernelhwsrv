@@ -138,7 +138,7 @@ LOCAL_C void SlowDivMod(const TInt64& aA, const TInt64& aB, TInt64& aDiv, TInt64
 			{
 			while (aMod >= (t << 31))
 				{
-				aDiv += static_cast<TUint32>(1 << 31);
+				aDiv += static_cast<TUint32>(1U << 31);
 				aMod -= t << 31;
 				}
 			}
