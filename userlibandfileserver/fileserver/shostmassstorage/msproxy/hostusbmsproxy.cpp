@@ -154,7 +154,7 @@ TInt CUsbHostMsProxyDrive::Initialise()
 	TCapsInfo capsInfo;
 	TInt err = iUsbHostMsLun.Caps(capsInfo);
 
-    if (err == KErrNone)
+    if (err == KErrNone && capsInfo.iMediaType == EMediaHardDisk)
         {
         err = InitialiseOffset(capsInfo);
         }
@@ -538,13 +538,12 @@ Get the proxy drive's capabilities information.
 TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
 	{
 	__MSFNSLOG
-    __HOSTPRINT(_L("\n>>> HOST Caps"));
+    __HOSTPRINT(_L(">>> HOST Caps"));
 	TLocalDriveCapsV6Buf caps;
     caps.FillZ();
 
     TLocalDriveCapsV6& c = caps();
 
-	c.iType = EMediaHardDisk;
     c.iConnectionBusType = EConnectionBusUsb;
 	c.iDriveAtt = KDriveAttLocal | KDriveAttRemovable | KDriveAttExternal;
 	c.iMediaAtt = KMediaAttFormattable;
@@ -552,32 +551,50 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
 
 	TCapsInfo capsInfo;
 	TInt r = iUsbHostMsLun.Caps(capsInfo);
+
 	if (KErrNone == r)
 		{
-        c.iBlockSize = capsInfo.iBlockLength;
-        TUint64 size = iMsDataMemMap.DataSize();
-        if (size == 0)
-            {
-            // No valid partitions so specify the size of the disk
-            size = static_cast<TUint64>(capsInfo.iNumberOfBlocks) * capsInfo.iBlockLength;
-            }
-        c.iSize = size;
+        c.iType = capsInfo.iMediaType;
 
-        c.iEraseBlockSize = 0;
-
-        if (capsInfo.iWriteProtect)
+        if (capsInfo.iMediaType == EMediaHardDisk)
             {
-            c.iMediaAtt |= KMediaAttWriteProtected;
+            c.iBlockSize = capsInfo.iBlockLength;
+            TUint64 size = iMsDataMemMap.DataSize();
+    
+            if (size == 0)
+                {
+                // No valid partitions so specify the size of the disk
+                size = static_cast<TUint64>(capsInfo.iNumberOfBlocks) * capsInfo.iBlockLength;
+                }
+            c.iSize = size;
+    
+            c.iEraseBlockSize = 0;
+    
+            if (capsInfo.iWriteProtect)
+                {
+                c.iMediaAtt |= KMediaAttWriteProtected;
+                }
+                
+            static const TInt K512ByteSectorSize = 0x200; // 512
+            if(K512ByteSectorSize != capsInfo.iBlockLength)
+                {
+                // not formattable if sector size is not 512
+                c.iMediaAtt &= ~KMediaAttFormattable;
+                }
+            __HOSTPRINT4(_L("<<< HOST Caps Block[num=0x%x size=0x%x] Media[size=0x%lx WP=0x%x]"),
+                        capsInfo.iNumberOfBlocks, capsInfo.iBlockLength,
+                        caps().iSize, caps().iMediaAtt);
             }
-            
-        static const TInt K512ByteSectorSize = 0x200; // 512
-        if(K512ByteSectorSize != capsInfo.iBlockLength)
-        	{
-	        c.iMediaAtt &= ~KMediaAttFormattable;
-        	}
-        __HOSTPRINT4(_L("<<< HOST Caps Block[num=0x%x size=0x%x] Media[size=0x%lx WP=0x%x]"),
-                    capsInfo.iNumberOfBlocks, capsInfo.iBlockLength,
-		            caps().iSize, caps().iMediaAtt);
+        else if (capsInfo.iMediaType == EMediaCdRom)
+            {
+            // not formattable
+            c.iMediaAtt &= ~KMediaAttFormattable;
+            __HOSTPRINT(_L(">>> HOST Caps MediaType = EMediaCdRom"));
+            }
+        else
+            {
+            // do nothing
+            }
 		}
 	else if (KErrNotReady)
         {

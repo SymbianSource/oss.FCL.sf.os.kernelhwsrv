@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -25,7 +25,8 @@
 #include <e32debug.h>
 #endif
 
-// #define _USBMS_DEBUG_PRINT_
+// #define _USBMS_DEBUG_PRINT_ 
+// #define _MSDEVICE_DEBUG_PRINT_
 
 #if defined(_USBMS_DEBUG_PRINT_) && (defined(_DEBUG) || defined(_DEBUG_RELEASE))
 /** Trace - format string  */
@@ -74,5 +75,16 @@ class TMSLogFn
 /** NULL definition */
 #define __FNLOG(name)
 #endif
+
+
+#if defined (_MSDEVICE_DEBUG_PRINT_) && (defined(_DEBUG) || defined(_DEBUG_RELEASE))
+#define __MSDEVPRINT(t) {RDebug::Print(t);}
+#define __MSDEVPRINT1(t,a) {RDebug::Print(t,a);}
+#define __MSDEVPRINT2(t,a,b) {RDebug::Print(t,a,b);}
+#else
+#define __MSDEVPRINT(t)
+#define __MSDEVPRINT1(t,a)
+#define __MSDEVPRINT2(t,a,b)
+#endif // _MSDEVICE_DEBUG_PRINT_
 
 #endif // DEBUG_H
