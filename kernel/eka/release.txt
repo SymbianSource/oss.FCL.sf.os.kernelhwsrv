@@ -1,3 +1,11 @@
+Version 2.00.3061
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#343350 Changed unistore policyId from 2 to 1455
+
+
 Version 2.00.3060
 =================
 (Made by vfebvre 12/04/2010)
