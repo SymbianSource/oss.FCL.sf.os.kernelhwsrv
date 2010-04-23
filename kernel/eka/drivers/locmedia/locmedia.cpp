@@ -2500,6 +2500,14 @@ It handles the drive request encapsulated in TLocDrvRequest depending on the mes
 			{
 			TUint flags = (TUint) m.Pos();
 
+#ifdef __DEMAND_PAGING__
+			// if this is a paging media (ROM,code or data), turn off the KMediaRemountForceMediaChange flag 
+			// as this normally results in a call to DPBusSocket::ForceMediaChange() which effectively disables 
+			// the media for a small time period - which would be disasterous if a paging request arrived
+			if (iBody->iPagingDevice)
+				flags&= ~KMediaRemountForceMediaChange;
+#endif
+
 			// For media extension drivers, send a copy of the request to the next drive in the chain and wait for it. 
 			TLocDrv* drv = m.Drive();
 			if (drv->iNextDrive)
@@ -6150,14 +6158,22 @@ EXPORT_C TInt DMediaDriverExtension::DoDrivePartitionInfo(TPartitionInfo& aInfo)
 			TLocDrvRequest m;
 			memclr(&m, sizeof(m));
 
+			// Get the Caps from the device. NB for MMC/SD we may need to retry as there may have been an earlier 
+			// EForceMediaChange request which can result in the cancellation of requests already in the queue
 			TBuf8<KMaxLocalDriveCapsLength> capsBuf;
-			capsBuf.SetMax();
-			capsBuf.FillZ();
-			m.Drive() = attachedDrive;
-			m.Id() = DLocalDrive::ECaps;
-			m.RemoteDes() = (TAny*)capsBuf.Ptr();
-			m.Length() = KMaxLocalDriveCapsLength;
-			TInt r = attachedDrive->iPrimaryMedia->Request(m);
+			TInt i;
+			const TInt KRetries = 5;
+			TInt r = KErrNotReady;
+			for (i=0; r == KErrNotReady && i < KRetries; i++)
+				{
+				capsBuf.SetMax();
+				capsBuf.FillZ();
+				m.Drive() = attachedDrive;
+				m.Id() = DLocalDrive::ECaps;
+				m.RemoteDes() = (TAny*)capsBuf.Ptr();
+				m.Length() = KMaxLocalDriveCapsLength;
+				r = attachedDrive->iPrimaryMedia->Request(m);
+				}
 
 			__KTRACE_OPT2(KBOOT,KLOCDPAGING, Kern::Printf("DMediaDriverExtension::PartitionInfo(ECaps: i %d: r %d ", driveIter.Index(), r));
 			

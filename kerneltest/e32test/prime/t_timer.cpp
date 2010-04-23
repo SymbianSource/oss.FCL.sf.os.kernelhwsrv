@@ -290,16 +290,17 @@ LOCAL_C void testHomeTime()
             t2.HomeTime();
             }
         while (t2==t1);
-#if defined(_DEBUG)
-		TDateTime dt=t2.DateTime();
-		test.Printf(_L("%d:%d\r\n"),dt.Second(),dt.MicroSecond());
-#endif
-        test(t2>t1);
+
+		if (t2 <= t1 && t1.MicroSecondsFrom(t2) > TTimeIntervalMicroSeconds(1000)) // HomeTime() only operates at ms precision
+			{
+			test.Printf(_L("Time comparison failed\r\n"));
+			test.Printf(_L("Before: 0x%lx\r\n"), t1.Int64());
+			test.Printf(_L("After:  0x%lx\r\n"), t2.Int64());
+			test(t2>t1);
+			}
+
         t1=t2;
         }
-#if defined(_DEBUG)
-	test.Printf(_L("\r\n"));
-#endif
     }
 
 TInt AtTwice(TAny*)

@@ -491,20 +491,20 @@ EXPORT_C void DDmaRequest::Queue()
 		*iChannel.iNullPtr = iFirstHdr;
 		iChannel.iNullPtr = &(iLastHdr->iNext);
 		iChannel.DoQueue(*this);
+		__DMA_INVARIANT();
 		iChannel.Signal();
 		}
 	else
 		{
 		// Someone is cancelling all requests...
 		req_count = --iChannel.iQueuedRequests;
+		__DMA_INVARIANT();
 		iChannel.Signal();
 		if (req_count == 0)
 			{
 			iChannel.QueuedRequestCountChanged();
 			}
 		}
-
-	__DMA_INVARIANT();
 	}
 
 EXPORT_C TInt DDmaRequest::ExpandDesList(TInt aCount)
@@ -574,7 +574,15 @@ EXPORT_C void DDmaRequest::FreeDesList()
 
 void DDmaRequest::Invariant()
 	{
-	iChannel.Wait();
+	// This invariant may be called either with,
+	// or without the channel lock already held
+	TBool channelLockAquired=EFalse;
+	if(!iChannel.iLock.HeldByCurrentThread())
+		{
+		iChannel.Wait();
+		channelLockAquired = ETrue;
+		}
+
 	__DMA_ASSERTD(iChannel.IsOpened());
 	__DMA_ASSERTD(0 <= iMaxTransferSize);
 	__DMA_ASSERTD(0 <= iDesCount && iDesCount <= iChannel.iMaxDesCount);
@@ -588,7 +596,11 @@ void DDmaRequest::Invariant()
 		__DMA_ASSERTD(iChannel.iController->IsValidHdr(iFirstHdr));
 		__DMA_ASSERTD(iChannel.iController->IsValidHdr(iLastHdr));
 		}
-	iChannel.Signal();
+
+	if(channelLockAquired)
+		{
+		iChannel.Signal();
+		}
 	}
 
 #endif

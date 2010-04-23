@@ -873,6 +873,9 @@ TInt DMediaDriverNFE::PartitionInfo(TPartitionInfo& aInfo)
 
 		di.iDriveFinalised = EFalse;	// a remount clears the finalised state
 
+		// Make sure we haven't lost the swap partition
+		__ASSERT_ALWAYS(!(di.iEntry.iPartitionType == KPartitionTypePagedData && aInfo.iEntry[i].iPartitionType != KPartitionTypePagedData), NFE_FAULT());
+
 		// Make a copy of the TPartitionEntry
 		di.iEntry = aInfo.iEntry[i];
 

@@ -1205,6 +1205,7 @@ EXPORT_C TInt DDmaRequest::Queue()
 		__KTRACE_OPT(KPANIC, Kern::Printf("An ISR cb request exists - not queueing"));
 		// Undo the request count increment...
 		req_count = --iChannel.iQueuedRequests;
+		__DMA_INVARIANT();
 		iChannel.Signal();
 		if (req_count == 0)
 			{
@@ -1220,6 +1221,7 @@ EXPORT_C TInt DDmaRequest::Queue()
 		__KTRACE_OPT(KPANIC, Kern::Printf("Request queue not empty - not queueing"));
 		// Undo the request count increment...
 		req_count = --iChannel.iQueuedRequests;
+		__DMA_INVARIANT();
 		iChannel.Signal();
 		if (req_count == 0)
 			{
@@ -1231,6 +1233,7 @@ EXPORT_C TInt DDmaRequest::Queue()
 		__KTRACE_OPT(KPANIC, Kern::Printf("Channel requests cancelled - not queueing"));
 		// Someone is cancelling all requests - undo the request count increment...
 		req_count = --iChannel.iQueuedRequests;
+		__DMA_INVARIANT();
 		iChannel.Signal();
 		if (req_count == 0)
 			{
@@ -1257,10 +1260,10 @@ EXPORT_C TInt DDmaRequest::Queue()
 			}
 		iChannel.DoQueue(const_cast<const DDmaRequest&>(*this));
 		r = KErrNone;
+		__DMA_INVARIANT();
 		iChannel.Signal();
 		}
 
-	__DMA_INVARIANT();
 	return r;
 	}
 
@@ -1477,7 +1480,15 @@ inline void DDmaRequest::OnDeque()
 #ifdef _DEBUG
 void DDmaRequest::Invariant()
 	{
-	iChannel.Wait();
+	// This invariant may be called either with,
+	// or without the channel lock already held
+	TBool channelLockAquired=EFalse;
+	if(!iChannel.iLock.HeldByCurrentThread())
+		{
+		iChannel.Wait();
+		channelLockAquired = ETrue;
+		}
+
 	__DMA_ASSERTD(LOGICAL_XOR(iCb, iDmaCb));
 	if (iChannel.iDmacCaps->iAsymHwDescriptors)
 		{
@@ -1512,7 +1523,11 @@ void DDmaRequest::Invariant()
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iLastHdr));
 			}
 		}
-	iChannel.Signal();
+
+	if(channelLockAquired)
+			{
+			iChannel.Signal();
+			}
 	}
 #endif
 

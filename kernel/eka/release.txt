@@ -1,3 +1,30 @@
+Version 2.00.3072
+=================
+(Made by vfebvre 22/04/2010)
+
+1.	migubarr
+	1.	ou1cimx1#356834 Execution of the kernelhwsrv test suites on H4HRP.ARMV5.U*.FMM.MMCPAGE does not complete
+
+
+Version 2.00.3071
+=================
+(Made by vfebvre 21/04/2010)
+
+1.	davegord
+	1.	ou1cimx1#353902 MCL DownloadServerMgr.exe causes phone crash
+
+
+Version 2.00.3070
+=================
+(Made by vfebvre 20/04/2010)
+
+1.	seolney
+	1.	PDEF145220 Fault possible if client deletes DMA request in callback
+
+2.	lanerobe
+	1.	ou1cimx1#352938 E32TEST T_TIMER test failure investigation
+
+
 Version 2.00.3069
 =================
 (Made by vfebvre 20/04/2010)
