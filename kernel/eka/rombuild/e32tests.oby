@@ -28,6 +28,7 @@ files=
 // And now the tests
 
 #include <rom##E32PATH##\kernelhwsrv\kerneltest\e32test\group\##MAIN##test.iby>
+
 #if defined(SYMBIAN_INCLUDE_USB_OTG_HOST)
 #include "t_usbdi_helper.iby"
 #include "t_otgdi_helper.iby"
@@ -35,10 +36,11 @@ files=
 #include <rom##E32PATH##\kernelhwsrv\kerneltest\e32test\usbho\t_usbdi\##MAIN##test.iby>
 #endif
 
+/*
 #ifndef VARIANT_PATH
 #include <rom##E32PATH##\##VARIANT##\test\##MAIN##test.iby>
 #else
 #define inc(a,b,c) <a\\b\\c>
 #include inc(rom##E32PATH##,VARIANT_PATH,\test\##MAIN##test.iby)
 #endif
-
+*/

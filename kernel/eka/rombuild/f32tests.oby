@@ -33,15 +33,17 @@ data=gentestpaged.txt			Test\test_paged.cpp
 // Include e32 and f32 tests
 
 #include <rom##E32PATH##\kernelhwsrv\kerneltest\e32test\group\##MAIN##test.iby>
+/*
 #ifndef VARIANT_PATH
 #include <rom##E32PATH##\##VARIANT##\test\##MAIN##test.iby>
 #else
 #define inc(a,b,c) <a\\b\\c>
 #include inc(rom##E32PATH##,VARIANT_PATH,\test\##MAIN##test.iby)
 #endif
+*/
 
 #include <rom##E32PATH##\kernelhwsrv\kerneltest\f32test\group\##MAIN##test.iby>
-#include <rom##E32PATH##\kernelhwsrv\kerneltest\f32test\rofs\##MAIN##test.iby>
+//#include <rom##E32PATH##\kernelhwsrv\kerneltest\f32test\rofs\##MAIN##test.iby>
 
 // Required for t_pageldrtst
 data=EPOCROOT##Epoc32\Release\##MAIN##\##BUILD##\d_exc.exe			\sys\bin\d_exc.exe

@@ -59,19 +59,29 @@ PRJ_MMPFILES
 
 PRJ_EXTENSIONS
 
-// Unzip RVCT3.1 runtime if being built with RVCT2.2 or RVCT4.0
+// Export the compiler-specific support files built by this component
+// when using the other versions of RVCT
 
+#if !defined(ARMCC_2_2)
 start extension tools/compsupp
-
-#if defined(ARMCC_2_2) || defined(ARMCC_4_0)
-option  FILE  $(EXTENSION_ROOT)/rt_3_1.zip
-#elif defined(ARMCC_3_1)
-option  FILE  $(EXTENSION_ROOT)/rt_2_2.zip
+option  FILE  $(EXTENSION_ROOT)/rt_2_2_export.zip
+option  TODIR $(EPOCROOT)
+end
 #endif
 
-option  TODIR $(EPOCROOT)epoc32/release
-
+#if !defined(ARMCC_3_1)
+start extension tools/compsupp
+option  FILE  $(EXTENSION_ROOT)/rt_3_1_export.zip
+option  TODIR $(EPOCROOT)
 end
+#endif
+
+#if !defined(ARMCC_4_0)
+start extension tools/compsupp
+option  FILE  $(EXTENSION_ROOT)/rt_4_0_export.zip
+option  TODIR $(EPOCROOT)
+end
+#endif
 
 #endif // #if !defined GCCXML && !defined GCCE
 

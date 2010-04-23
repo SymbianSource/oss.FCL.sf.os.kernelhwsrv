@@ -80,7 +80,7 @@ GLDEF_C __NAKED__ void _E32Startup(TLinAddr /*aRomHeader*/, TLinAddr /*aSuperPag
 	asm("__CtorList: ");
 	asm(".word __CTOR_LIST__ ");
 	}
-#elif defined(__ARMCC__)
+#elif defined(__EABI__)
 void __DLL_Export_Table__(void);
 void __cpp_initialize__aeabi_();
   
@@ -89,7 +89,7 @@ void __cpp_initialize__aeabi_();
 void __record_needed_destruction (void * d){}
 // 2.1 calls __aeabi_atexit passing __dso_handle. This can be a dummy (i.e. just a label)
 
-__asm void __dso_handle(void) {}
+__NAKED__  void __dso_handle(void) {}
 void __aeabi_atexit(void *object, void (*dtor)(void *), void *handle){}
 
 void _E32Startup_Body(TLinAddr aRomHeader, TLinAddr aSuperPage);
