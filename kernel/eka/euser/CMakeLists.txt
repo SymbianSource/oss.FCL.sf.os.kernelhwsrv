@@ -94,9 +94,17 @@ um_sqrt.cpp um_tan.cpp um_utl.cpp
 set (sourcepath ../euser/epoc/win32/)
 add_source(
 uc_i64.cpp uc_realx.cpp
-uc_trp.cpp uc_utl.cpp uc_exec.cpp
+uc_trp.cpp uc_utl.cpp 
 uc_dll.cpp
+#uc_exec.cpp
 )
+
+#Adding the sources from epoc/symc
+set (sourcepath ../euser/epoc/symc/)
+add_source(
+uc_exec.cpp
+)
+
 
 #Adding the sources from epoc
 set (sourcepath ../euser/epoc/)
