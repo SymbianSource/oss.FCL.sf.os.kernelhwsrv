@@ -27,8 +27,10 @@
 GLDEF_C TInt E32Main()
 	{
 	//What do we do then
+	User::InitProcess();
 
-	CBase* base=new(ELeave) CBase();
+	//CBase* base=new(ELeave) CBase();
+	CBase* base=new CBase();
 	delete base;
 
 	return KErrNone;
@@ -37,7 +39,9 @@ GLDEF_C TInt E32Main()
 
 TInt main()
 	{
-	BootEpoc(ETrue);
+	//BootEpoc(ETrue);
+	E32Main();
+
 	return 0;
 	}
 

@@ -16,7 +16,7 @@
 //
 
 
-#define __GEN_USER_EXEC_CODE__
+//#define __GEN_USER_EXEC_CODE__
 
 #include "../win32/uc_std.h"
 #include <e32svr.h>
@@ -328,6 +328,12 @@ void ExitCurrentThread(TExitType aType, TInt aReason, const TDesC8* aCategory)
 
 //
 #ifndef __GEN_USER_EXEC_CODE__
+
+class CProcess : public CBase
+	{
+
+	};
+
 
 
 //RHeap gAllocator;
@@ -1248,9 +1254,14 @@ __EXECDECL__ TInt E32Loader::LibraryAttached(TInt)
 	SLOW_EXEC1(EExecLibraryAttached);
 	}
 
-__EXECDECL__ TInt E32Loader::StaticCallList(TInt&, TLinAddr*)
+__EXECDECL__ TInt E32Loader::StaticCallList(TInt& aEntryPointCount, TLinAddr* /*aUnused*/)
 	{
 	SLOW_EXEC2(EExecStaticCallList);
+	//SL: We hijack this function for initializing our process see User::InitProcess
+	//aEntryPointCount=0; //Tell the caller we don't have any DLL entry point
+	//__asm ret;
+	
+	//return KErrNone;
 	}
 
 __EXECDECL__ TInt E32Loader::LibraryDetach(TInt&, TLinAddr*)
