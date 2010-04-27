@@ -36,6 +36,24 @@ public:
 	IMPORT_C static void UnTrap();
 	};
 
+
+#ifdef __SYMC__
+
+EXPORT_C TInt TTrap::Trap(TInt&)
+	{
+		/*
+	TTrapHandler* h = Exec::PushTrapFrame(this);
+	if (h != NULL)
+		h->Trap();
+*/
+	return 0;
+	}
+
+EXPORT_C void TTrap::UnTrap()
+	{
+	}
+
+#else
 EXPORT_C TInt TTrap::Trap(TInt&)
 	{
 	return 0;
@@ -44,6 +62,7 @@ EXPORT_C TInt TTrap::Trap(TInt&)
 EXPORT_C void TTrap::UnTrap()
 	{
 	}
+#endif
 
 #endif
 

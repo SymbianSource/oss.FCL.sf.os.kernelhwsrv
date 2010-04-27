@@ -91,6 +91,16 @@ EXPORT_C TInt XLeaveException::GetReason() const
 	return KErrNone;
 #endif //__SUPPORT_CPP_EXCEPTIONS__
 	}
+#elif defined(__LEAVE_EQUALS_THROW__) && defined(__SYMC__)
+EXPORT_C TInt XLeaveException::GetReason() const
+	{
+#ifdef __SUPPORT_CPP_EXCEPTIONS__
+	Exec::LeaveEnd();
+	return iR;
+#else // !__SUPPORT_CPP_EXCEPTIONS__
+	return KErrNone;
+#endif //__SUPPORT_CPP_EXCEPTIONS__
+	}
 #endif	// !defined(__LEAVE_EQUALS_THROW__) || !defined(__WINS__)
 
 EXPORT_C void User::LeaveNoMemory()

@@ -32,7 +32,8 @@ Symbian compatibility executive panics
 enum TSymcExecPanic
 	{
 	ESymcExecPanicHeapAlreadyExists,
-	ESymcExecPanicCreateHeapFailed
+	ESymcExecPanicCreateHeapFailed,
+	ESymcExecPanicNotUsed
 	};
 
 void Panic(TInt aReason)
@@ -368,8 +369,8 @@ public:
 	CActiveScheduler* iActiveScheduler; //Current active scheduler for this thread. Used.
 	TTrapHandler* iHandler; //This is our cleanup stack. Used.
 	//No idea why we need that trap stack
-	TTrap* iTrapStack[KTrapStackSize];
-	TInt iTrapCount;
+	//TTrap* iTrapStack[KTrapStackSize];
+	//TInt iTrapCount;
 	};
 
 /*
@@ -391,7 +392,7 @@ public:
 
 void TProcess::CreateHeap()
 	{
-	iThread.iTrapCount=0;
+	//iThread.iTrapCount=0;
 	//Define the size of our heap
 	const TInt KHeapMaxSize=1024*1024*10; // 10 Mo for now
 	__ASSERT_ALWAYS(iAllocator==NULL && iBase==NULL,Panic(ESymcExecPanicHeapAlreadyExists));	
@@ -433,17 +434,21 @@ __EXECDECL__ RAllocator* Exec::HeapSwitch(RAllocator*)
 
 __EXECDECL__ TTrapHandler* Exec::PushTrapFrame(TTrap* aTrap)
 	{
+	Panic(ESymcExecPanicNotUsed);
+	return NULL;
 	//FAST_EXEC1(EFastExecPushTrapFrame);
-	ASSERT(gProcess.iThread.iTrapCount<=KTrapStackSize);
-	gProcess.iThread.iTrapStack[gProcess.iThread.iTrapCount++]=aTrap;
-	return gProcess.iThread.iHandler;
+	//ASSERT(gProcess.iThread.iTrapCount<=KTrapStackSize);
+	//gProcess.iThread.iTrapStack[gProcess.iThread.iTrapCount++]=aTrap;
+	//return gProcess.iThread.iHandler;
 	}
 
 __EXECDECL__ TTrap* Exec::PopTrapFrame()
 	{
+	Panic(ESymcExecPanicNotUsed);
+	return NULL;
 	//FAST_EXEC0(EFastExecPopTrapFrame);
-	ASSERT(gProcess.iThread.iTrapCount>0);
-	return gProcess.iThread.iTrapStack[gProcess.iThread.iTrapCount--];
+	//ASSERT(gProcess.iThread.iTrapCount>0);
+	//return gProcess.iThread.iTrapStack[gProcess.iThread.iTrapCount--];
 	}
 
 __EXECDECL__ CActiveScheduler* Exec::ActiveScheduler()

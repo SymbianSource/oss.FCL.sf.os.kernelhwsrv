@@ -5884,7 +5884,7 @@ are assigned within that remaining code are not defined.
 
 #else //__LEAVE_EQUALS_THROW__
 
-#ifdef __WINS__
+#if defined(__WINS__) && !defined(__SYMC__)
 /** @internalComponent */
 #define __WIN32SEHTRAP		TWin32SEHTrap __trap; __trap.Trap();
 /** @internalComponent */

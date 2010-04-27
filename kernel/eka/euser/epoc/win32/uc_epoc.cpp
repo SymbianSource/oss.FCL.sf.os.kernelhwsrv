@@ -28,11 +28,21 @@
 //For now we use this for basic testing on our SYMC implementation
 
 
-GLDEF_C void MainL()
+class CBaseTest: public CBase
 	{
 
+	};
+
+
+GLDEF_C void MainL()
+	{
+	
+	CBase* other=new(ELeave) CBase();
+	CleanupStack::PushL(other);
 	CBase* base=new(ELeave) CBase();
-	delete base;
+	CleanupStack::PushL(base);
+	CleanupStack::PopAndDestroy(2,other);
+	//delete base;
 	
 	//Testing cleanup stack
 	TRAPD(err,
@@ -50,7 +60,10 @@ GLDEF_C void MainL()
 	);
 
 	ASSERT(err==KErrNoMemory);
-
+	
+	//Testing unbalanced cleanup stack
+	//base=new(ELeave) CBase();
+	//CleanupStack::PushL(base);
 	}
 
 
@@ -64,6 +77,15 @@ GLDEF_C TInt E32Main()
 	CBase* base=new CBase();
 	delete base;
 
+	CBaseTest* baseTest=new CBaseTest();
+	delete baseTest;
+
+	HBufC* buf=HBufC::New(10);
+	delete buf;
+
+	CArrayFix<TInt>* active=new CArrayFixFlat<TInt>(10);
+	delete active;
+
 	TUint8* test=new TUint8[1024*9];
 	delete[] test;
 
@@ -73,7 +95,8 @@ GLDEF_C TInt E32Main()
 		return KErrNoMemory;
 		}
 
-	TRAPD(err,MainL());
+	TInt err=KErrNone;
+	TRAP(err,MainL());
 
 	delete cleanupStack;
 
