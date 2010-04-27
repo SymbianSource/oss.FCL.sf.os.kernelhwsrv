@@ -36,7 +36,11 @@
 #define	EXEC_TIME		TInt64
 #endif
 
+#ifdef __SYMC__
+#define __EXECDECL__
+#else
 #define __EXECDECL__	__NAKED__
+#endif
 
 #if defined(__WINS__)
 

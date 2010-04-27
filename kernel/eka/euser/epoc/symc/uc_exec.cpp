@@ -22,6 +22,31 @@
 #include <e32svr.h>
 #include <emulator.h>
 
+//
+#include <stdlib.h>
+#include <stdio.h>
+
+/*
+Symbian compatibility executive panics
+*/
+enum TSymcExecPanic
+	{
+	ESymcExecPanicHeapAlreadyExists,
+	ESymcExecPanicCreateHeapFailed
+	};
+
+void Panic(TInt aReason)
+	{
+	_LIT(KCategory,"SYMC-Exec");
+	User::Panic(KCategory,aReason);
+	}
+
+
+
+
+//
+
+
 typedef TInt (__fastcall *TDispatcher)(TInt, TInt*);
 TInt __fastcall LazyDispatch(TInt aFunction, TInt* aArgs);
 
@@ -329,10 +354,37 @@ void ExitCurrentThread(TExitType aType, TInt aReason, const TDesC8* aCategory)
 //
 #ifndef __GEN_USER_EXEC_CODE__
 
-class CProcess : public CBase
+/*
+Object used to store process globals for our pseudo kernel.
+*/
+class TProcess
 	{
+public:
+	void CreateHeap();
+	void Free();
 
+public:
+	RHeap* iAllocator;
+	TAny* iBase;
 	};
+
+void TProcess::CreateHeap()
+	{
+	__ASSERT_ALWAYS(iAllocator==NULL && iBase==NULL,Panic(ESymcExecPanicHeapAlreadyExists));	
+	iBase=malloc(1024*10);
+	__ASSERT_ALWAYS(iBase!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
+	iAllocator=UserHeap::FixedHeap(iBase,1024*10);
+	__ASSERT_ALWAYS(iAllocator!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
+	}
+
+void TProcess::Free()
+	{
+	free(iBase);
+	}
+
+
+
+TProcess gProcess;
 
 
 
@@ -344,9 +396,9 @@ __EXECDECL__ void Exec::WaitForAnyRequest()
 	}
 
 __EXECDECL__ RAllocator* Exec::Heap()
-	{
-	
-	FAST_EXEC0(EFastExecHeap);
+	{	
+	//FAST_EXEC0(EFastExecHeap);
+	return gProcess.iAllocator;
 	}
 
 __EXECDECL__ RAllocator* Exec::HeapSwitch(RAllocator*)
@@ -839,9 +891,20 @@ __EXECDECL__ TInt Exec::AddEvent(const TRawEvent&)
 	SLOW_EXEC1(EExecAddEvent);
 	}
 
-__EXECDECL__ TAny* Exec::DllTls(TInt, TInt)
+__EXECDECL__ TAny* Exec::DllTls(TInt aHandle, TInt aDllUid)
 	{
-	SLOW_EXEC2(EExecDllTls);
+	//SLOW_EXEC2(EExecDllTls);
+	if (aHandle==-1 && aDllUid==-1)
+		{
+		//No TGlobalDestructorFunc ATM
+		return NULL;
+		}
+	else
+		{
+		//No sure what to do here
+		__BREAKPOINT();
+		}
+
 	}
 
 __EXECDECL__ TInt Exec::HalFunction(TInt, TInt, TAny*, TAny*)
@@ -1024,9 +1087,29 @@ __EXECDECL__ TInt Exec::ProcessOpenById(TUint, TOwnerType)
 	SLOW_EXEC2(EExecProcessOpenById);
 	}
 
-__EXECDECL__ void Exec::ThreadKill(TInt, TExitType, TInt, const TDesC8*)
+__EXECDECL__ void Exec::ThreadKill(TInt aThreadHandle, TExitType aType, TInt aReason, const TDesC8* aCategory)
 	{
-	SLOW_EXEC4(EExecThreadKill);
+	//SLOW_EXEC4(EExecThreadKill);
+	if (aThreadHandle!=KCurrentThreadHandle)
+		{
+		//Not sure how to do that yet
+		__BREAKPOINT();
+		return;
+		}
+
+	if (aType==EExitPanic)
+		{
+		//Display message
+#ifdef _WINDOWS
+		TBuf8<256> buf;
+		buf.Copy(*aCategory);	
+		char errstr[256]; sprintf(errstr, "Category: %s\nReason: %d",buf.PtrZ(),aReason);
+		MessageBoxA(NULL,errstr, "PANIC", MB_OK | MB_ICONERROR);	
+#endif
+		__BREAKPOINT();
+		}
+	
+	exit(aType);
 	}
 
 __EXECDECL__ void Exec::ThreadLogon(TInt, TRequestStatus*, TBool)
@@ -1256,12 +1339,13 @@ __EXECDECL__ TInt E32Loader::LibraryAttached(TInt)
 
 __EXECDECL__ TInt E32Loader::StaticCallList(TInt& aEntryPointCount, TLinAddr* /*aUnused*/)
 	{
-	SLOW_EXEC2(EExecStaticCallList);
+	//SLOW_EXEC2(EExecStaticCallList);
 	//SL: We hijack this function for initializing our process see User::InitProcess
-	//aEntryPointCount=0; //Tell the caller we don't have any DLL entry point
-	//__asm ret;
+	aEntryPointCount=0; //Tell the caller we don't have any DLL entry point
 	
-	//return KErrNone;
+	gProcess.CreateHeap();
+
+	return KErrNone;
 	}
 
 __EXECDECL__ TInt E32Loader::LibraryDetach(TInt&, TLinAddr*)
@@ -1276,7 +1360,9 @@ __EXECDECL__ TInt E32Loader::LibraryDetached()
 
 __EXECDECL__ TInt Exec::LastThreadHandle()
 	{
-	SLOW_EXEC0(EExecLastThreadHandle);
+	//SLOW_EXEC0(EExecLastThreadHandle);
+	//Not sure what to do with that returning 0 seams appropriate for now
+	return 0;
 	}
 
 __EXECDECL__ void Exec::ThreadRendezvous(TInt)
@@ -1664,9 +1750,18 @@ __EXECDECL__ void Exec::RegisterTrustedChunk(TInt)
 	SLOW_EXEC1(EExecRegisterTrustedChunk);
 	}
 
-__EXECDECL__ TBool Exec::UserThreadExiting(TInt)
+/*
+Notify the kernel a thread is exiting.
+
+@param Exit reason
+@return ETrue if this is the last thread in the process, EFalse otherwise.
+*/
+__EXECDECL__ TBool Exec::UserThreadExiting(TInt aReason)
 	{
-	SLOW_EXEC1(EExecUserThreadExiting);
+	//SLOW_EXEC1(EExecUserThreadExiting);
+	gProcess.Free();
+
+	return ETrue; //No thread support ATM so we are always the last thread
 	}
 
 __EXECDECL__ TBool Exec::ChunkIsPaged(TInt)

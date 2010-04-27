@@ -239,9 +239,12 @@ add_library (emulator SHARED ../euser/epoc/win32/emulator.cpp) #Compile the KLIB
 #set_target_properties(emulator PROPERTIES COMPILE_FLAGS "/Zl") #No default library
 #set_target_properties(emulator PROPERTIES LINK_FLAGS "/ENTRY:_Win32DllMain") #Change the entry point
 
+###
+add_library (scppnwdl STATIC ../euser/epoc/win32/scppnwdl.cpp)
+
 ### EUSER: many user library
 add_library (euser SHARED ${source})
-add_dependencies(euser genexec emulator)
+add_dependencies(euser genexec emulator scppnwdl)
 target_link_libraries(euser emulator)
 set_target_properties(euser PROPERTIES COMPILE_DEFINITIONS "__DLL__")
 

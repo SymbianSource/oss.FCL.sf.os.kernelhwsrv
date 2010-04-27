@@ -19,6 +19,9 @@
 #include <e32std_private.h>
 #include <e32wins.h>
 
+//#include <e32cmn.h>
+#include <nwdl.h>
+
 #if defined __SYMC__
 
 //SL: Empty on FCL ?
@@ -27,11 +30,17 @@
 GLDEF_C TInt E32Main()
 	{
 	//What do we do then
-	User::InitProcess();
+	
+	__UHEAP_MARK;
 
 	//CBase* base=new(ELeave) CBase();
 	CBase* base=new CBase();
 	delete base;
+
+	TUint8* test=new TUint8[1024*9];
+	delete[] test;
+
+	__UHEAP_MARKEND;
 
 	return KErrNone;
 	}
@@ -39,9 +48,11 @@ GLDEF_C TInt E32Main()
 
 TInt main()
 	{
+	User::InitProcess();
 	//BootEpoc(ETrue);
 	E32Main();
 
+	User::Exit(0);
 	return 0;
 	}
 
