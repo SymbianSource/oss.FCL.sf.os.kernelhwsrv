@@ -1,3 +1,11 @@
+Version 2.00.2051
+=================
+(Made by vfebvre 09/04/2010)
+
+1.	niccox
+	1.	DEF145248 Error in mass storage note when connecting SanDisk 16GB stick to phone
+
+
 Version 2.00.2050
 =================
 (Made by vfebvre 24/03/2010)

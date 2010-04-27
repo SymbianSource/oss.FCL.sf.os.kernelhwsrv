@@ -102,7 +102,7 @@ TInt TLogicalUnitList::FindLu(TLun aLun) const
     TInt index;
     for (index = 0; index < iLu.Count(); index++)
         {
-        __HOSTPRINT2(_L("search %d : interface id = %d\n"), aLun, iLu[index]->Lun());
+        __HOSTPRINT2(_L("search LUN=%d : interface id = %d"), aLun, iLu[index]->Lun());
         if (iLu[index]->Lun() == aLun)
             {
             break;

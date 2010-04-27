@@ -98,7 +98,7 @@ TInt CommitEnd;
 TInt PageSize;
 TInt NoFreeRam;
 RTimer Timer;
-
+TBool gFmm;
 
 
 void FillPage(TUint aOffset)
@@ -308,18 +308,44 @@ void Tests(TInt aOffset)
 	test_KErrNone(r);
 
 	test.Next(_L("Check Decommit on unlocked pages"));
+	// Get orignal page cache size
+	TUint minCache = 0;
+	TUint maxCache = 0;
+	TUint oldCache = 0;
+	TUint newCache = 0;
+	if (gFmm)
+		{
+		r = DPTest::CacheSize(minCache, maxCache, oldCache);
+		test_KErrNone(r);
+		}
 	r = TestChunk.Unlock(aOffset,PageSize*4);
 	test_KErrNone(r);
+
+	TUint spareCache = maxCache - oldCache;
+	if (gFmm && spareCache)
+		{// Cache wasn't at maximum so should have grown when unlocked pages were added.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		TUint extraCache = (spareCache > (TUint)PageSize*4)? PageSize*4 : spareCache;
+		test_Equal(oldCache + extraCache, newCache);
+		}
 	test(FreeRam() >= NoFreeRam+PageSize*4);
 	r=TestChunk.Decommit(aOffset, PageSize*4);
 	test_KErrNone(r);
 	freeRam = FreeRam();
 	test_Compare(freeRam, >=, NoFreeRam+PageSize*4);
 	test_Equal(origChunkSize - PageSize*4, TestChunk.Size());
+
+	if (gFmm)
+		{// Cache should have shrunk after pages were decommited.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		test_Equal(oldCache, newCache);
+		}
 	// Restore chunk back to original state
 	r = TestChunk.Commit(aOffset, PageSize*4);
 	test_KErrNone(r);
-	test(FreeRam() == NoFreeRam);
+	test_Equal(NoFreeRam, FreeRam());
 
 	test.Next(_L("Check Decommit on unlocked and reclaimed pages"));
 	r = TestChunk.Unlock(aOffset,PageSize*4);
@@ -350,6 +376,44 @@ void Tests(TInt aOffset)
 	freeRam = FreeRam();
 	test(freeRam==NoFreeRam);
 	test_Equal(origChunkSize, TestChunk.Size());
+
+	test.Next(_L("Check Decommit on a mixture of locked and unlocked pages"));
+	// Get orignal page cache size
+	if (gFmm)
+		{
+		r = DPTest::CacheSize(minCache, maxCache, oldCache);
+		test_KErrNone(r);
+		}
+	r = TestChunk.Unlock(aOffset,PageSize);
+	test_KErrNone(r);
+	r = TestChunk.Unlock(aOffset + PageSize*2, PageSize);
+	test_KErrNone(r);
+
+	spareCache = maxCache - oldCache;
+	if (gFmm && spareCache)
+		{// Cache wasn't at maximum so should have grown when unlocked pages were added.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		TUint extraCache = (spareCache > (TUint)PageSize*2)? PageSize*2 : spareCache;
+		test_Equal(oldCache + extraCache, newCache);
+		}
+	test(FreeRam() >= NoFreeRam+PageSize*2);
+	r=TestChunk.Decommit(aOffset, PageSize*4);
+	test_KErrNone(r);
+	freeRam = FreeRam();
+	test_Compare(freeRam, >=, NoFreeRam+PageSize*4);
+	test_Equal(origChunkSize - PageSize*4, TestChunk.Size());
+
+	if (gFmm)
+		{// Cache should have shrunk after pages were decommited.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		test_Equal(oldCache, newCache);
+		}
+	// Restore chunk back to original state
+	r = TestChunk.Commit(aOffset, PageSize*4);
+	test_KErrNone(r);
+	test_Equal(NoFreeRam, FreeRam());
 
 	test.End();
 	}
@@ -450,6 +514,10 @@ TInt E32Main()
 		test.Printf(_L("This test requires an MMU\n"));
 		return KErrNone;
 		}
+	// See if were running on the Flexible Memory Model or newer.
+  	TUint32 memModelAttrib = (TUint32)UserSvr::HalFunction(EHalGroupKernel, EKernelHalMemModelInfo, NULL, NULL);	
+	gFmm = (memModelAttrib & EMemModelTypeMask) >= EMemModelTypeFlexible;
+
 	test.Start(_L("Initialise test"));
 	test.Next(_L("Load gobbler LDD"));
 	TInt r = User::LoadLogicalDevice(KGobblerLddFileName);

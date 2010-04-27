@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -152,8 +152,8 @@ void CUsbHostMsDevice::RemoveLunL(TLun aLun)
 void CUsbHostMsDevice::InitLunL(TLun aLun)
 	{
     __MSFNLOG
-	SetLunL(aLun);
-    iLuList.GetLuL(aLun).InitL();
+	CUsbHostMsLogicalUnit& lu = SetLunL(aLun);
+    lu.InitL();
 	}
 
 
@@ -174,7 +174,7 @@ void CUsbHostMsDevice::SuspendLunL(TLun aLun)
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
 		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
-		SetLunL(lu.Lun());
+		SetLunL(lu);
 		lu.SuspendL();
 		}
 
@@ -217,19 +217,29 @@ CUsbHostMsLogicalUnit& CUsbHostMsDevice::GetLuL(TInt aLunNum) const
     return iLuList.GetLuL(aLunNum);
     }
 
-void CUsbHostMsDevice::SetLunL(TLun aLun)
+
+void CUsbHostMsDevice::SetLunL(CUsbHostMsLogicalUnit& aLu)
 	{
     __MSFNLOG
-	if (aLun <= iMaxLun)
+    TLun lun = aLu.Lun();
+	if (lun <= iMaxLun)
         {
-        __HOSTPRINT1(_L("SetLun %d"), aLun);
-        iTransport->SetLun(aLun);
-        CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(aLun);
-		if (lu.IsReadyToSuspend())
+        __HOSTPRINT1(_L("SetLun %d"), lun);
+        iTransport->SetLun(lun);
+		if (aLu.IsReadyToSuspend())
 			{
-			lu.CancelReadyToSuspend();
+			aLu.CancelReadyToSuspend();
 			}
 		}
+	}
+
+
+CUsbHostMsLogicalUnit& CUsbHostMsDevice::SetLunL(TLun aLun)
+	{
+    __MSFNLOG
+    CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(aLun);
+    SetLunL(lu);
+    return lu;
 	}
 
 /**
@@ -290,7 +300,7 @@ void CUsbHostMsDevice::DoLunReadyCheckEventL()
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
 		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
-		SetLunL(lu.Lun());
+		SetLunL(lu);
 		TRAP(err, lu.DoLunReadyCheckL());
 		}
 	}
@@ -318,7 +328,7 @@ void CUsbHostMsDevice::DoHandleRemoteWakeupL()
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
 		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
-		SetLunL(lu.Lun());
+		SetLunL(lu);
 		lu.SuspendL();
 		}
 
@@ -332,7 +342,7 @@ void CUsbHostMsDevice::DoResumeLogicalUnitsL()
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
 		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
-		SetLunL(lu.Lun());
+		SetLunL(lu);
 		lu.ResumeL();
 		}
 	}

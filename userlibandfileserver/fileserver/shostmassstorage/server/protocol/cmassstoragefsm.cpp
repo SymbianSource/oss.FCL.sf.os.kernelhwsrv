@@ -321,6 +321,7 @@ Run FSM to connect device.
 TInt CMassStorageFsm::ConnectLogicalUnitL()
     {
 	__MSFNLOG
+    __HOSTPRINT(_L("CMassStorageFsm::ConnectLogicalUnitL()"));        
     TInt err = KErrNone;
     for (;;)
          {
@@ -340,6 +341,7 @@ Run FSM to disconnect the device.
 TInt CMassStorageFsm::DisconnectLogicalUnitL()
     {
 	__MSFNLOG
+    __HOSTPRINT(_L("CMassStorageFsm::DisconnectLogicalUnitL()"));
     TInt err = KErrNone;
     for (;;)
          {
@@ -370,6 +372,7 @@ TInt CMassStorageFsm::ProcessStateL()
     TRAPD(err,  event = EntryL());
     if (err == KErrNotSupported)
         {
+        __HOSTPRINT(_L("FSM ProcessState returning with KErrNotSupported"));
         return KErrNotSupported;
         }
     User::LeaveIfError(err);
@@ -557,7 +560,11 @@ TInt TNotReadyState::ScsiCommandPassed(CMassStorageFsm& aFsm)
             aFsm.SetState(TMassStorageState::EReadCapacityState);
         }
     else
-        aFsm.SetState(TMassStorageState::EInquiryState);
+        {
+        __HOSTPRINT(_L("SBC is not set !!"));
+        aFsm.SetState(TMassStorageState::EReadCapacityState);
+        }
+        
     return KErrNone;
     }
 

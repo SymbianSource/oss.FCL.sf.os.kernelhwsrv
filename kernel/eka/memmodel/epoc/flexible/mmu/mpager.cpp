@@ -336,6 +336,7 @@ void DPager::AddAsFreePage(SPageInfo* aPageInfo)
 
 TInt DPager::PageFreed(SPageInfo* aPageInfo)
 	{
+	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	__NK_ASSERT_DEBUG(CheckLists());
 
@@ -382,7 +383,7 @@ TInt DPager::PageFreed(SPageInfo* aPageInfo)
 		// This page was pinned when it was moved but it has not been returned 
 		// to the free pool yet so make sure it is...
 		aPageInfo->SetPagedState(SPageInfo::EUnpaged);	// Must be unpaged before returned to free pool.
-		return KErrNotFound;
+		return KErrCompletion;
 
 	default:
 		__NK_ASSERT_DEBUG(0);
@@ -393,6 +394,14 @@ TInt DPager::PageFreed(SPageInfo* aPageInfo)
 	if (aPageInfo->IsDirty())
 		SetClean(*aPageInfo);
 
+	if (iNumberOfFreePages > 0)
+		{// The paging cache is not at the minimum size so safe to let the 
+		// ram allocator free this page.
+		iNumberOfFreePages--;
+		aPageInfo->SetPagedState(SPageInfo::EUnpaged);
+		return KErrCompletion;
+		}
+	// Need to hold onto this page as have reached the page cache limit.
 	// add as oldest page...
 #ifdef _USE_OLDEST_LISTS
 	aPageInfo->SetPagedState(SPageInfo::EPagedOldestClean);
@@ -449,8 +458,8 @@ void DPager::RemovePage(SPageInfo* aPageInfo)
 #ifdef _DEBUG
 		if (!IsPageTableUnpagedRemoveAllowed(aPageInfo))
 			__NK_ASSERT_DEBUG(0);
-		break;
 #endif
+		break;
 	default:
 		__NK_ASSERT_DEBUG(0);
 		return;
@@ -787,6 +796,9 @@ void DPager::ReturnPageToSystem(SPageInfo& aPageInfo)
 	__NK_ASSERT_DEBUG(iNumberOfFreePages>0);
 	--iNumberOfFreePages;
 
+	// The page must be unpaged, otherwise it wasn't successfully removed 
+	// from the live list.
+	__NK_ASSERT_DEBUG(aPageInfo.PagedState() == SPageInfo::EUnpaged);
 	MmuLock::Unlock();
 
 	TPhysAddr pagePhys = aPageInfo.PhysAddr();
@@ -1861,7 +1873,12 @@ void DPager::FlushAll()
 					}
 				++pi;
 				if(((TUint)pi&(0xf<<KPageInfoShift))==0)
-					MmuLock::Flash(); // every 16 page infos
+					{
+					MmuLock::Unlock(); // every 16 page infos
+					RamAllocLock::Unlock();
+					RamAllocLock::Lock();
+					MmuLock::Lock();
+					}
 				}
 			while(pi<piEnd);
 			}

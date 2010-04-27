@@ -890,20 +890,31 @@ void Mmu::FreeRam(TPhysAddr* aPages, TUint aCount, TZonePageType aZonePageType)
 		SPageInfo* pi = SPageInfo::FromPhysAddr(pagePhys);
 		PageFreed(pi);
 
-		// If this is an old page of a page being moved that was previously pinned
-		// then make sure it is freed as discardable otherwise despite DPager::DonatePages()
-		// having marked it as discardable it would be freed as movable.
-		__NK_ASSERT_DEBUG(pi->PagedState() != SPageInfo::EPagedPinnedMoved || aCount == 1);
-		if (pi->PagedState() == SPageInfo::EPagedPinnedMoved)
-			aZonePageType = EPageDiscard;
-
-		if(ThePager.PageFreed(pi)==KErrNone)
-			--aCount; // pager has dealt with this page, so one less for us
-		else
+		switch (ThePager.PageFreed(pi))
 			{
-			// All paged pages should have been dealt with by the pager above.
-			__NK_ASSERT_DEBUG(pi->PagedState() == SPageInfo::EUnpaged);
-			*pagesOut++ = pagePhys; // store page address for freeing later
+			case KErrNone: 
+				--aCount; // pager has dealt with this page, so one less for us
+				break;
+			case KErrCompletion:
+				// This was a pager controlled page but it is no longer required.
+				__NK_ASSERT_DEBUG(aZonePageType == EPageMovable || aZonePageType == EPageDiscard);
+				__NK_ASSERT_DEBUG(pi->PagedState() == SPageInfo::EUnpaged);
+				if (aZonePageType == EPageMovable)
+					{// This page was donated to the pager so have to free it here
+					// as aZonePageType is incorrect for this page but aPages may 
+					// contain a mixture of movable and discardable pages.
+					MmuLock::Unlock();
+					iRamPageAllocator->FreeRamPages(&pagePhys, 1, EPageDiscard);
+					aCount--; // We've freed this page here so one less to free later
+					flash = 0;	// reset flash count as we released the mmulock.
+					MmuLock::Lock();
+					break;
+					}
+				// fall through..
+			default:
+				// Free this page..
+				__NK_ASSERT_DEBUG(pi->PagedState() == SPageInfo::EUnpaged);
+				*pagesOut++ = pagePhys; // store page address for freeing later
 			}
 		}
 	MmuLock::Unlock();
@@ -922,21 +933,23 @@ TInt Mmu::AllocContiguousRam(TPhysAddr& aPhysAddr, TUint aCount, TUint aAlign, T
 		__KTRACE_OPT(KMMU,Kern::Printf("Mmu::AllocContiguousRam returns simulated OOM %d",KErrNoMemory));
 		return KErrNoMemory;
 		}
-	// Only the page sets EAllocNoPagerReclaim and it shouldn't allocate contiguous ram.
+	// Only the pager sets EAllocNoPagerReclaim and it shouldn't allocate contiguous ram.
 	__NK_ASSERT_DEBUG(!(aFlags&EAllocNoPagerReclaim));
 #endif
 	TInt r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, EPageFixed, aAlign+KPageShift);
 	if(r==KErrNoMemory && aCount > KMaxFreeableContiguousPages)
 		{
 		// flush paging cache and retry...
+		RamAllocLock::Unlock();
 		ThePager.FlushAll();
+		RamAllocLock::Lock();
 		r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, EPageFixed, aAlign+KPageShift);
 		}
 	if(r!=KErrNone)
 		iRamAllocFailed = ETrue;
 	else
 		PagesAllocated((TPhysAddr*)(aPhysAddr|1), aCount, aFlags);
-	__KTRACE_OPT(KMMU,Kern::Printf("AllocContiguouseRam returns %d and aPhysAddr=0x%08x",r,aPhysAddr));
+	__KTRACE_OPT(KMMU,Kern::Printf("AllocContiguousRam returns %d and aPhysAddr=0x%08x",r,aPhysAddr));
 	return r;
 	}
 
