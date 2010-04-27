@@ -1,3 +1,11 @@
+Version 2.00.3035
+=================
+(Made by vfebvre 23/04/2010)
+
+1.	niccox
+	1.	ou1cimx1#357492 Disconnecting memory card reader/writer from phone causes phone crash
+
+
 Version 2.00.3034
 =================
 (Made by vfebvre 20/04/2010)

@@ -596,12 +596,18 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
             // do nothing
             }
 		}
-	else if (KErrNotReady)
+	else if (KErrNotReady == r)
         {
         __HOSTPRINT(_L("<<< HOST Caps Media Not Present"));
 		c.iType = EMediaNotPresent;		
 		r = KErrNone;
         }
+	else if (KErrGeneral == r)
+        {
+        RDebug::Print(_L("<<< HOST Caps Unable to communicate with media"));
+		c.iType = EMediaUnknown;		
+        }
+
     else
         {
         __HOSTPRINT(_L("<<< HOST Caps Unknown Error"));

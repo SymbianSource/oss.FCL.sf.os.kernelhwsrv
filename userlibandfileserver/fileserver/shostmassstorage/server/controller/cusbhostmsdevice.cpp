@@ -166,14 +166,14 @@ void CUsbHostMsDevice::SuspendLunL(TLun aLun)
     // interface suspension to the transport layer
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
-		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
+		CUsbHostMsLogicalUnit& lu = iLuList.GetLu(i);
 	   	if (!lu.IsReadyToSuspend() && lu.IsConnected())
 	   		return;
 		}
 
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
-		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
+		CUsbHostMsLogicalUnit& lu = iLuList.GetLu(i);
 		SetLunL(lu);
 		lu.SuspendL();
 		}
@@ -299,7 +299,7 @@ void CUsbHostMsDevice::DoLunReadyCheckEventL()
 	TInt err;
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
-		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
+		CUsbHostMsLogicalUnit& lu = iLuList.GetLu(i);
 		SetLunL(lu);
 		TRAP(err, lu.DoLunReadyCheckL());
 		}
@@ -315,7 +315,7 @@ void CUsbHostMsDevice::DoHandleRemoteWakeupL()
     // interface suspension to the transport layer
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
-		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
+		CUsbHostMsLogicalUnit& lu = iLuList.GetLu(i);
 		// Has any of the logical units have got its state changed?
 	   	if ( (lu.IsReadyToSuspend() && !lu.IsConnected()) ||
 				(!lu.IsReadyToSuspend() && lu.IsConnected()) )
@@ -327,7 +327,7 @@ void CUsbHostMsDevice::DoHandleRemoteWakeupL()
 
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
-		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
+		CUsbHostMsLogicalUnit& lu = iLuList.GetLu(i);
 		SetLunL(lu);
 		lu.SuspendL();
 		}
@@ -341,7 +341,7 @@ void CUsbHostMsDevice::DoResumeLogicalUnitsL()
     __MSFNLOG
 	for (TInt i = 0; i < iLuList.Count(); i++)
 		{
-		CUsbHostMsLogicalUnit& lu = iLuList.GetLuL(i);
+		CUsbHostMsLogicalUnit& lu = iLuList.GetLu(i);
 		SetLunL(lu);
 		lu.ResumeL();
 		}
