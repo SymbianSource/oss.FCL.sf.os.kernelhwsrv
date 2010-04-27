@@ -36,7 +36,7 @@ add_custom_target(dogenexec DEPENDS ./include/exec_enum.h ./include/exec_user.h 
 add_custom_target(genexec)
 
 add_subdirectory(./euser)
-add_subdirectory(./kernel)
+#add_subdirectory(./kernel)
 
 
 

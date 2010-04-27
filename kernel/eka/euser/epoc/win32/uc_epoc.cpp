@@ -25,6 +25,33 @@
 #if defined __SYMC__
 
 //SL: Empty on FCL ?
+//For now we use this for basic testing on our SYMC implementation
+
+
+GLDEF_C void MainL()
+	{
+
+	CBase* base=new(ELeave) CBase();
+	delete base;
+	
+	//Testing cleanup stack
+	TRAPD(err,
+	base=new(ELeave) CBase();
+	CleanupStack::PushL(base);
+	User::Leave(KErrCancel);
+	);
+
+	ASSERT(err==KErrCancel);
+
+	//Testing alloc failure
+	TRAP(err,
+	TUint8* test=new(ELeave) TUint8[1024*1024*10];
+	delete[] test;
+	);
+
+	ASSERT(err==KErrNoMemory);
+
+	}
 
 
 GLDEF_C TInt E32Main()
@@ -40,9 +67,19 @@ GLDEF_C TInt E32Main()
 	TUint8* test=new TUint8[1024*9];
 	delete[] test;
 
+	CTrapCleanup* cleanupStack = CTrapCleanup::New();
+	if (!cleanupStack)
+		{
+		return KErrNoMemory;
+		}
+
+	TRAPD(err,MainL());
+
+	delete cleanupStack;
+
 	__UHEAP_MARKEND;
 
-	return KErrNone;
+	return err;
 	}
 
 

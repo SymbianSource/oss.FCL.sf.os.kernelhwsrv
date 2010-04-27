@@ -27,6 +27,7 @@ endmacro(add_source)
 add_definitions(-D__VC32__)
 add_definitions(-D_UNICODE)
 add_definitions(-D__LEAVE_EQUALS_THROW__)
+add_definitions(-D__SUPPORT_CPP_EXCEPTIONS__)
 add_definitions(-D__WINS__)
 #__CPU_X86 is declared by __WINS__ 
 #add_definitions(-D__CPU_X86)
@@ -77,6 +78,7 @@ mem.cpp secure.cpp
 set (sourcepath ../common/win32/)
 add_source(
 atomics.cpp
+seh.cpp
 )
 
 #Adding the sources from maths
@@ -94,7 +96,8 @@ um_sqrt.cpp um_tan.cpp um_utl.cpp
 set (sourcepath ../euser/epoc/win32/)
 add_source(
 uc_i64.cpp uc_realx.cpp
-uc_trp.cpp uc_utl.cpp 
+uc_trp.cpp
+uc_utl.cpp 
 uc_dll.cpp
 #uc_exec.cpp
 )
@@ -246,7 +249,14 @@ add_library (scppnwdl STATIC ../euser/epoc/win32/scppnwdl.cpp)
 add_library (euser SHARED ${source})
 add_dependencies(euser genexec emulator scppnwdl)
 target_link_libraries(euser emulator)
-set_target_properties(euser PROPERTIES COMPILE_DEFINITIONS "__DLL__")
+#set_target_properties(euser PROPERTIES COMPILE_DEFINITIONS "__DLL__")
+
+set_property(
+   TARGET euser
+   PROPERTY COMPILE_DEFINITIONS __DLL__
+   )
+
+
 
 
 ### ESTUB: not sure why need that yet

@@ -354,8 +354,27 @@ void ExitCurrentThread(TExitType aType, TInt aReason, const TDesC8* aCategory)
 //
 #ifndef __GEN_USER_EXEC_CODE__
 
+const TInt KTrapStackSize=256;
+
+/*
+
+*/
+class TThread
+	{
+public:
+	
+public:
+	RSemaphore iRequestSemaphore;
+	CActiveScheduler* iActiveScheduler; //Current active scheduler for this thread. Used.
+	TTrapHandler* iHandler; //This is our cleanup stack. Used.
+	//No idea why we need that trap stack
+	TTrap* iTrapStack[KTrapStackSize];
+	TInt iTrapCount;
+	};
+
 /*
 Object used to store process globals for our pseudo kernel.
+That's typically going to be a singleton.
 */
 class TProcess
 	{
@@ -366,14 +385,20 @@ public:
 public:
 	RHeap* iAllocator;
 	TAny* iBase;
+	TThread iThread; //Single thread for now
 	};
+
 
 void TProcess::CreateHeap()
 	{
+	iThread.iTrapCount=0;
+	//Define the size of our heap
+	const TInt KHeapMaxSize=1024*1024*10; // 10 Mo for now
 	__ASSERT_ALWAYS(iAllocator==NULL && iBase==NULL,Panic(ESymcExecPanicHeapAlreadyExists));	
-	iBase=malloc(1024*10);
+	iBase=malloc(KHeapMaxSize);
 	__ASSERT_ALWAYS(iBase!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
-	iAllocator=UserHeap::FixedHeap(iBase,1024*10);
+	//TODO: is there anyway we could use variable size heap?
+	iAllocator=UserHeap::FixedHeap(iBase,KHeapMaxSize);
 	__ASSERT_ALWAYS(iAllocator!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
 	}
 
@@ -406,14 +431,19 @@ __EXECDECL__ RAllocator* Exec::HeapSwitch(RAllocator*)
 	FAST_EXEC1(EFastExecHeapSwitch);
 	}
 
-__EXECDECL__ TTrapHandler* Exec::PushTrapFrame(TTrap*)
+__EXECDECL__ TTrapHandler* Exec::PushTrapFrame(TTrap* aTrap)
 	{
-	FAST_EXEC1(EFastExecPushTrapFrame);
+	//FAST_EXEC1(EFastExecPushTrapFrame);
+	ASSERT(gProcess.iThread.iTrapCount<=KTrapStackSize);
+	gProcess.iThread.iTrapStack[gProcess.iThread.iTrapCount++]=aTrap;
+	return gProcess.iThread.iHandler;
 	}
 
 __EXECDECL__ TTrap* Exec::PopTrapFrame()
 	{
-	FAST_EXEC0(EFastExecPopTrapFrame);
+	//FAST_EXEC0(EFastExecPopTrapFrame);
+	ASSERT(gProcess.iThread.iTrapCount>0);
+	return gProcess.iThread.iTrapStack[gProcess.iThread.iTrapCount--];
 	}
 
 __EXECDECL__ CActiveScheduler* Exec::ActiveScheduler()
@@ -433,12 +463,16 @@ __EXECDECL__ TTimerLockSpec Exec::LockPeriod()
 
 __EXECDECL__ TTrapHandler* Exec::TrapHandler()
 	{
-	FAST_EXEC0(EFastExecTrapHandler);
+	//FAST_EXEC0(EFastExecTrapHandler);
+	return gProcess.iThread.iHandler;
 	}
 
-__EXECDECL__ TTrapHandler* Exec::SetTrapHandler(TTrapHandler*)
-	{
-	FAST_EXEC1(EFastExecSetTrapHandler);
+__EXECDECL__ TTrapHandler* Exec::SetTrapHandler(TTrapHandler* aHandler)
+	{	
+	//FAST_EXEC1(EFastExecSetTrapHandler);
+	TTrapHandler* prev=gProcess.iThread.iHandler;
+	gProcess.iThread.iHandler=aHandler;
+	return prev;
 	}
 
 __EXECDECL__ TUint32 Exec::DebugMask()
@@ -1657,12 +1691,13 @@ __EXECDECL__ TBool Exec::MutexIsHeld(TInt)
 
 __EXECDECL__ TTrapHandler* Exec::LeaveStart()
 	{
-	SLOW_EXEC0(EExecLeaveStart);
+	//SLOW_EXEC0(EExecLeaveStart);
+	return gProcess.iThread.iHandler;
 	}
 
 __EXECDECL__ void Exec::LeaveEnd()
 	{
-	SLOW_EXEC0(EExecLeaveEnd);
+	//SLOW_EXEC0(EExecLeaveEnd);	
 	}
 
 __EXECDECL__ void Exec::SetDebugMaskIndex(TUint32, TUint)
