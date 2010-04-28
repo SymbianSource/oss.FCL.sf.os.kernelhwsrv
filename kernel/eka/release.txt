@@ -1,3 +1,11 @@
+Version 2.00.3073
+=================
+(Made by vfebvre 26/04/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#352019 [kernelmcl]Can't recieve USB data after Host call SetConfiguraion
+
+
 Version 2.00.3072
 =================
 (Made by vfebvre 22/04/2010)

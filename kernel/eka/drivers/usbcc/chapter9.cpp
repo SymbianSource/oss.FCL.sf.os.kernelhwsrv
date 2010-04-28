@@ -1136,8 +1136,19 @@ void DUsbClientController::ChangeConfiguration(TUint16 aValue)
 	// New configuration is the same as the old one (but not 0)
 	if (iCurrentConfig == aValue)
 		{
-		// no-op
 		__KTRACE_OPT(KUSB, Kern::Printf("  Configuration: New == Old == %d --> exiting", aValue));
+
+		// From the spec 9.1.1.5, Data toggle is reset to zero here when 
+		// setconfiguration(x->x)(x!=0) received, although we only support
+		// single configuration currently.
+		TInt num = 0;
+		TInt ret = DoForEveryEndpointInUse(&DUsbClientController::ResetDataToggle, num);
+		if(ret != KErrNone)
+			{
+			__KTRACE_OPT(KPANIC, Kern::Printf("  Error: Endpoint data toggle reset failed"));
+			}
+		__KTRACE_OPT(KUSB, Kern::Printf("  Called ResetDataToggle()for %d endpoints", num));	
+	
 		return;
 		}
 	// Device is already configured
