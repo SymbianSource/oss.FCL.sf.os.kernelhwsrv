@@ -116,6 +116,7 @@ typedef unsigned short __TText;
 // __NAKED__ from cpudefs.h
 #define __NAKED__ __asm
 #define ____ONLY_USE_NAKED_IN_CIA____ __asm
+#define __WEAK__  __attribute__((weak))
 
 // Int64 and Uint64 from nkern\nklib.h
 typedef long long Int64;

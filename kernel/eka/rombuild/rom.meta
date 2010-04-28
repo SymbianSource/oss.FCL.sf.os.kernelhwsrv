@@ -1,0 +1,10 @@
+# Meta information for the syborg extension template
+#
+# Copyright (c) 2009 Symbian Foundation Ltd.  All rights reserved.
+#
+
+platform	armv5
+makefile 	gnumake
+techstream	base
+
+
