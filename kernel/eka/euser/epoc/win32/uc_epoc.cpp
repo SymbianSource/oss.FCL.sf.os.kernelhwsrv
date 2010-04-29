@@ -28,6 +28,7 @@
 //For now we use this for basic testing on our SYMC implementation
 
 
+
 class CBaseTest: public CBase
 	{
 
@@ -35,8 +36,7 @@ class CBaseTest: public CBase
 
 
 GLDEF_C void MainL()
-	{
-	
+	{	
 	CBase* other=new(ELeave) CBase();
 	CleanupStack::PushL(other);
 	CBase* base=new(ELeave) CBase();
@@ -70,6 +70,7 @@ GLDEF_C void MainL()
 GLDEF_C TInt E32Main()
 	{
 	//What do we do then
+	//SetReturnedHandle
 	
 	__UHEAP_MARK;
 
@@ -95,9 +96,17 @@ GLDEF_C TInt E32Main()
 		return KErrNoMemory;
 		}
 
+	CActiveScheduler* activeScheduler = new CActiveScheduler;
+	if (!activeScheduler)
+		{
+		return KErrNoMemory;
+		}
+	CActiveScheduler::Install(activeScheduler);
+
 	TInt err=KErrNone;
 	TRAP(err,MainL());
-
+	
+	delete activeScheduler;
 	delete cleanupStack;
 
 	__UHEAP_MARKEND;

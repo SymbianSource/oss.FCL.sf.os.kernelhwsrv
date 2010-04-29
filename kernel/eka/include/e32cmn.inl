@@ -3166,6 +3166,7 @@ and the negative value is returned.
 @return KErrNone, if aHandle is a handle-number; the value of aHandleOrError, otherwise.
 */
 	{
+#ifndef __SYMC__
 	if(aHandleOrError>=0)
 		{
 		iHandle = aHandleOrError;
@@ -3173,6 +3174,19 @@ and the negative value is returned.
 		}
 	iHandle = 0;
 	return aHandleOrError;
+#elif defined(_WIN32)
+	//Our problem is that win32 handles can be negative
+	if (aHandleOrError==NULL)
+		{
+		//TODO: check GetLastError and return proper error code
+		return KErrUnknown;
+		}
+	//Valid handle
+	iHandle = aHandleOrError;
+	return KErrNone;
+#else
+#error "Platform not supported"
+#endif
 	}
 
 

@@ -31,6 +31,7 @@ Symbian compatibility executive panics
 */
 enum TSymcExecPanic
 	{
+	ESymcExecPanicNotSupported,
 	ESymcExecPanicHeapAlreadyExists,
 	ESymcExecPanicCreateHeapFailed,
 	ESymcExecPanicNotUsed
@@ -42,6 +43,64 @@ void Panic(TInt aReason)
 	User::Panic(KCategory,aReason);
 	}
 
+
+const TInt KTrapStackSize=256;
+
+/*
+TODO: should we use CObject?
+*/
+class TThread
+	{
+public:
+	
+public:
+	RSemaphore iRequestSemaphore;
+	CActiveScheduler* iActiveScheduler; //Current active scheduler for this thread. Used.
+	TTrapHandler* iHandler; //This is our cleanup stack. Used.
+	//No idea why we need that trap stack
+	//TTrap* iTrapStack[KTrapStackSize];
+	//TInt iTrapCount;
+	};
+
+/*
+TODO: should we use CObject?
+Object used to store process globals for our pseudo kernel.
+That's typically going to be a singleton.
+*/
+class TProcess
+	{
+public:
+	void CreateHeap();
+	void Free();
+
+public:
+	RHeap* iAllocator;
+	TAny* iBase;
+	TThread iThread; //Single thread for now
+	};
+
+
+void TProcess::CreateHeap()
+	{
+	//iThread.iTrapCount=0;
+	//Define the size of our heap
+	const TInt KHeapMaxSize=1024*1024*10; // 10 Mo for now
+	__ASSERT_ALWAYS(iAllocator==NULL && iBase==NULL,Panic(ESymcExecPanicHeapAlreadyExists));	
+	iBase=malloc(KHeapMaxSize);
+	__ASSERT_ALWAYS(iBase!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
+	//TODO: is there anyway we could use variable size heap?
+	iAllocator=UserHeap::FixedHeap(iBase,KHeapMaxSize);
+	__ASSERT_ALWAYS(iAllocator!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
+	}
+
+void TProcess::Free()
+	{
+	free(iBase);
+	}
+
+
+
+TProcess gProcess;
 
 
 
@@ -63,7 +122,8 @@ static TDispatcher TheDispatcher = &LazyDispatch;
 
 TInt __fastcall LazyDispatch(TInt aFunction, TInt* aArgs)
 	{
-	//SL:
+	Panic(ESymcExecPanicNotSupported);
+	//
 	HINSTANCE kernel = GetModuleHandleA("ekern.dll");
 	//HINSTANCE kernel = GetModuleHandleA("ekern.exe");
 	if (kernel)
@@ -271,17 +331,11 @@ EXPORT_C TBool BTrace::OutFilteredPcFormatBig(TUint32 aHeader, TUint32 aModuleUi
 	return Exec::BTraceOut(aHeader,aModuleUid,ext,aDataSize);
 	}
 
-__NAKED__ void ExecRequestComplete(TInt /*aHandle*/, TRequestStatus*& /*aStatus*/, TInt /*aReason*/)
+__NAKED__ void ExecRequestComplete(TInt aHandle, TRequestStatus*& aStatus, TInt aReason)
 	{
-	_asm mov ecx, [esp+8]			// ecx = TRequestStatus**
-	_asm xor eax, eax				//
-	_asm lock xchg eax, [ecx]		// eax=TRequestStatus*, zero TRequestStatus*
-	_asm cmp eax, 0					//
-	_asm je ExecRequestComplete_ret
-	_asm mov ecx, [esp+12]			// ecx = aReason
-	_asm mov [eax], ecx				// store aReason in request status
-	__DISPATCH(EExecThreadRequestSignal|EXECUTIVE_SLOW)
-	_asm ExecRequestComplete_ret: ret
+	//TODO: look our thread per handle
+	*aStatus=aReason;
+	gProcess.iThread.iRequestSemaphore.Signal();
 	}
 
 
@@ -355,66 +409,7 @@ void ExitCurrentThread(TExitType aType, TInt aReason, const TDesC8* aCategory)
 //
 #ifndef __GEN_USER_EXEC_CODE__
 
-const TInt KTrapStackSize=256;
 
-/*
-
-*/
-class TThread
-	{
-public:
-	
-public:
-	RSemaphore iRequestSemaphore;
-	CActiveScheduler* iActiveScheduler; //Current active scheduler for this thread. Used.
-	TTrapHandler* iHandler; //This is our cleanup stack. Used.
-	//No idea why we need that trap stack
-	//TTrap* iTrapStack[KTrapStackSize];
-	//TInt iTrapCount;
-	};
-
-/*
-Object used to store process globals for our pseudo kernel.
-That's typically going to be a singleton.
-*/
-class TProcess
-	{
-public:
-	void CreateHeap();
-	void Free();
-
-public:
-	RHeap* iAllocator;
-	TAny* iBase;
-	TThread iThread; //Single thread for now
-	};
-
-
-void TProcess::CreateHeap()
-	{
-	//iThread.iTrapCount=0;
-	//Define the size of our heap
-	const TInt KHeapMaxSize=1024*1024*10; // 10 Mo for now
-	__ASSERT_ALWAYS(iAllocator==NULL && iBase==NULL,Panic(ESymcExecPanicHeapAlreadyExists));	
-	iBase=malloc(KHeapMaxSize);
-	__ASSERT_ALWAYS(iBase!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
-	//TODO: is there anyway we could use variable size heap?
-	iAllocator=UserHeap::FixedHeap(iBase,KHeapMaxSize);
-	__ASSERT_ALWAYS(iAllocator!=NULL,Panic(ESymcExecPanicCreateHeapFailed));	
-	}
-
-void TProcess::Free()
-	{
-	free(iBase);
-	}
-
-
-
-TProcess gProcess;
-
-
-
-//RHeap gAllocator;
 
 __EXECDECL__ void Exec::WaitForAnyRequest()
 	{
@@ -453,12 +448,14 @@ __EXECDECL__ TTrap* Exec::PopTrapFrame()
 
 __EXECDECL__ CActiveScheduler* Exec::ActiveScheduler()
 	{
-	FAST_EXEC0(EFastExecActiveScheduler);
+	//FAST_EXEC0(EFastExecActiveScheduler);
+	return gProcess.iThread.iActiveScheduler;
 	}
 
-__EXECDECL__ void Exec::SetActiveScheduler(CActiveScheduler*)
+__EXECDECL__ void Exec::SetActiveScheduler(CActiveScheduler* aActiveScheduler)
 	{
-	FAST_EXEC1(EFastExecSetActiveScheduler);
+	//FAST_EXEC1(EFastExecSetActiveScheduler);
+	gProcess.iThread.iActiveScheduler=aActiveScheduler;
 	}
 
 __EXECDECL__ TTimerLockSpec Exec::LockPeriod()
@@ -1111,9 +1108,29 @@ __EXECDECL__ TInt Exec::MutexCreate(const TDesC8*, TOwnerType)
 	SLOW_EXEC2(EExecMutexCreate);
 	}
 
-__EXECDECL__ TInt Exec::SemaphoreCreate(const TDesC8*, TInt, TOwnerType)
+__EXECDECL__ TInt Exec::SemaphoreCreate(const TDesC8* aName, TInt aCount, TOwnerType aType)
 	{
-	SLOW_EXEC3(EExecSemaphoreCreate);
+	//SLOW_EXEC3(EExecSemaphoreCreate);
+#ifdef _WINDOWS
+	HANDLE semaphore = CreateSemaphore( 
+		NULL,								// default security attributes
+		aCount,
+		KMaxTInt,
+		//TODO: use the name
+		NULL);								// unnamed mutex
+
+	if (semaphore)
+		{
+		//success
+		return (TInt)semaphore;
+		}
+
+	//failure
+	return NULL;
+#else
+	//TODO: pthread implementation
+	Panic(ESymcExecPanicNotSupported);
+#endif
 	}
 
 __EXECDECL__ TInt Exec::ThreadOpenById(TUint, TOwnerType)
@@ -1686,7 +1703,9 @@ __EXECDECL__ TLinAddr Exec::ExceptionDescriptor(TLinAddr)
 
 __EXECDECL__ void Exec::ThreadRequestSignal(TInt)
 	{
-	SLOW_EXEC1(EExecThreadRequestSignal);
+	//SLOW_EXEC1(EExecThreadRequestSignal);
+	//TODO: look our thread per handle
+	gProcess.iThread.iRequestSemaphore.Signal();
 	}
 
 __EXECDECL__ TBool Exec::MutexIsHeld(TInt)
