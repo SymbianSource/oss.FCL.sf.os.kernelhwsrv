@@ -1,3 +1,11 @@
+Version 2.00.3074
+=================
+(Made by vfebvre 28/04/2010)
+
+1.	necliffo
+	1.	ou1cimx1#357516 eMMC with DDR-mode support is not used in 4-bit mode
+
+
 Version 2.00.3073
 =================
 (Made by vfebvre 26/04/2010)
