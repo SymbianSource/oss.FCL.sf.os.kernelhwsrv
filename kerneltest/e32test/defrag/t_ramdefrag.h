@@ -139,6 +139,7 @@ public:
 		EZoneAllocToMany2,
 		EAllocContiguous,
 		EFreeZone,
+		EFreeZoneId,
 		EFreeFromAllZones,
 		EFreeFromAddr, 
 		ECheckCancel,
@@ -224,6 +225,8 @@ public:
 	inline TInt FreeFromAllZones()
 		{ return DoControl(EFreeFromAllZones,(TAny*)NULL, (TAny*)NULL); }
 
+	inline TInt FreeZoneId(TUint aZoneId)
+		{ return DoControl(EFreeZoneId, (TAny*)aZoneId); }
 
 	inline TInt CheckCancel(TInt aDefragType, TUint aID = 0)
 		{ 

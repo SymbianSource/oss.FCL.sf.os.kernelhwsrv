@@ -680,6 +680,15 @@ enum TQueryVolumeInfoExtCmd
     ETrue value means that the drive is finalised
     */
     EIsDriveFinalised,
+    
+    /**
+    Query the volume to ascertain whether File system extensions
+    are supported on this volume.
+    A boolean value is returned within the buffer defined as TPckgBuf<TBool>. 
+    ETrue value means that extensions are supported.
+    EFalse means they are not supported.
+     */
+    EFSysExtensionsSupported,
 	};
 
 /**

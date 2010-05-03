@@ -66,7 +66,7 @@ TInt DMemoryManager::Wipe(DMemoryObject* /*aMemory*/)
 	}
 
 
-TInt DMemoryManager::AddPages(DMemoryObject* /*aMemory*/, TUint /*aIndex*/, TUint /*aCount*/, TPhysAddr* /*aPages*/)
+TInt DMemoryManager::AddPages(DMemoryObject* /*aMemory*/, TUint /*aIndex*/, TUint /*aCount*/, const TPhysAddr* /*aPages*/)
 	{
 	return KErrNotSupported;
 	}
@@ -1161,7 +1161,7 @@ class DHardwareMemoryManager : public DMemoryManager
 public:
 	// from DMemoryManager...
 	virtual void Destruct(DMemoryObject* aMemory);
-	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages);
+	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages);
 	virtual TInt AddContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr aPhysAddr);
 	virtual TInt RemovePages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages);
 	virtual TInt Pin(DMemoryObject* aMemory, DMemoryMappingBase* aMapping, TPinArgs& aPinArgs);
@@ -1226,14 +1226,14 @@ void DHardwareMemoryManager::Destruct(DMemoryObject* aMemory)
 	}
 
 
-TInt DHardwareMemoryManager::AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages)
+TInt DHardwareMemoryManager::AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages)
 	{
 	TRACE2(("DHardwareMemoryManager::AddPages(0x%08x,0x%x,0x%x,?)",aMemory, aIndex, aCount));
 	__NK_ASSERT_DEBUG(MemoryObjectLock::IsHeld(aMemory));
 
 	// validate arguments...
-	TPhysAddr* pages = aPages;
-	TPhysAddr* pagesEnd = aPages+aCount;
+	const TPhysAddr* pages = aPages;
+	const TPhysAddr* pagesEnd = aPages+aCount;
 	TPhysAddr checkMask = 0;
 	do checkMask |= *pages++;
 	while(pages<pagesEnd);

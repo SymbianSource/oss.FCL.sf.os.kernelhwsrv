@@ -153,7 +153,7 @@ public:
 	TInt GetZonePageCount(TUint aId, SRamZonePageCount& aPageData);
 	void ChangePageType(SPageInfo* aPageInfo, TZonePageType aOldType, TZonePageType aNewType);
 #ifdef BTRACE_RAM_ALLOCATOR
-	void SendInitialBtraceLogs(void);
+	void DoBTracePrime(void);
 #endif
 	TInt GetZoneAddress(TUint aZoneId, TPhysAddr& aPhysBase, TUint& aNumPages);
 	TInt HalFunction(TInt aFunction, TAny* a1, TAny* a2);

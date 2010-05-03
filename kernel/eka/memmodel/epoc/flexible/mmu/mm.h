@@ -84,6 +84,9 @@ enum TMemoryObjectType
 	EMemoryObjectMovable but with the additional option of marking pages as
 	'discardable'. Discardable pages may be reclaimed (remove) by the system at
 	any time, this state is controlled using the functions:
+	- MM::MemoryAlloc
+	- MM::MemoryAllocContiguous
+	- MM::MemoryFree
 	- MM::MemoryAllowDiscard
 	- MM::MemoryDisallowDiscard
 	*/
@@ -485,7 +488,7 @@ public:
 			KErrNotSupported, if the memory object doesn't support this operation;
 			otherwise another of the system wide error codes.
 	*/
-	static TInt MemoryAddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages);
+	static TInt MemoryAddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages);
 
 	/**
 	Add a contiguous range of pages to a region in a memory object.

@@ -192,6 +192,8 @@ void MainL()
            }
        }
 
+    launchMutex.Wait( 500000 );
+
     CleanupStack::PopAndDestroy( &launchMutex );
 
     if( commandLine )
@@ -202,6 +204,8 @@ void MainL()
 
 GLDEF_C TInt E32Main()
 	{
+	RProcess thisProcess;
+	thisProcess.Rendezvous(KErrNone);
 	RDebug::Printf( ">Launcher Process()" );
 
 	CTrapCleanup* trap = CTrapCleanup::New();

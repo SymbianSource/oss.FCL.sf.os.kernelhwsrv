@@ -3469,16 +3469,17 @@ NOTE - TThreadCreateInfo::SetCreateHeap() or TThreadCreateInfo::SetUseHeap() mus
 be invoked on this TThreadCreateInfo to set the type of the thread to be created
 before being passed as a paramter to RThread::Create().
 
-@param aName        The name to be assigned to the thread.
+@param aName		The name to be assigned to the thread.
 					KNullDesC, to create an anonymous thread.
-@param aFunction    A pointer to a function. Control passes to this function
-                    when the thread is first resumed, i.e. when the thread
-                    is initially scheduled to run.
-@param aStackSize   The size of the new thread's stack.
-@param aPtr         A pointer to data to be passed as a parameter to
-                    the thread function when the thread is initially scheduled
-                    to run. If the thread function does not need any data then
-                    this pointer can be NULL.
+@param aFunction	A pointer to a function. Control passes to this function
+					when the thread is first resumed, i.e. when the thread
+					is initially scheduled to run.
+@param aStackSize	The size of the new thread's stack.  This must be at least
+					512 bytes, otherwise RThread::Create() will fail with KErrArgument.
+@param aPtr			A pointer to data to be passed as a parameter to
+					the thread function when the thread is initially scheduled
+					to run. If the thread function does not need any data then
+					this pointer can be NULL.
 */
 EXPORT_C TThreadCreateInfo::TThreadCreateInfo(const TDesC &aName, TThreadFunction aFunction, 
 											TInt aStackSize, TAny* aPtr) :
@@ -3604,25 +3605,27 @@ the second parameter to this function.
 If KNullDesC is specified for the name, then an anonymous thread will be created.
 Anonymous threads are not global, and cannot be opened by other processes.
 
-@param aName        The name to be assigned to this thread.
+@param aName		The name to be assigned to this thread.
 					KNullDesC, to create an anonymous thread.
-@param aFunction    A pointer to a function.. Control passes to this function
-                    when the thread is first resumed, i.e. when the thread
-                    is initially scheduled to run.
-@param aStackSize   The size of the new thread's stack.
+@param aFunction	A pointer to a function.. Control passes to this function
+					when the thread is first resumed, i.e. when the thread
+					is initially scheduled to run.
+@param aStackSize	The size of the new thread's stack.  This must be at least
+					512 bytes, otherwise this method will fail with KErrArgument.
 @param aHeapMinSize The minimum size for the new thread's heap.
 @param aHeapMaxSize The maximum size for the new thread's heap.
-@param aPtr         A pointer to data to be passed as a parameter to
-                    the thread function when the thread is initially scheduled
-                    to run. If the thread function does not need any data then
-                    this pointer can be NULL. It must be ensured that the memory 
-                    pointed to by this pointer is still valid when accessed by 
-                    the new thread, e.g. if aPtr points to data on the stack.
-@param aType        An enumeration whose enumerators define the ownership of
-                    this thread handle. If not explicitly specified,
-                    EOwnerProcess is taken as default.
+@param aPtr			A pointer to data to be passed as a parameter to
+					the thread function when the thread is initially scheduled
+					to run. If the thread function does not need any data then
+					this pointer can be NULL. It must be ensured that the memory 
+					pointed to by this pointer is still valid when accessed by 
+					the new thread, e.g. if aPtr points to data on the stack.
+@param aType		An enumeration whose enumerators define the ownership of
+					this thread handle. If not explicitly specified,
+					EOwnerProcess is taken as default.
 
 @return KErrNone if successful, otherwise one of the other system-wide error codes.
+		KErrArgument if aStackSize is less than 512 bytes.
         KErrAlreadyExists will be returned if there is another thread in this process with the
         specified name.
 
@@ -3630,7 +3633,10 @@ Anonymous threads are not global, and cannot be opened by other processes.
 @panic USER 110 if aHeapMinSize is less than KMinHeapSize.
 @panic USER 111 if aHeapMaxSize is less than aHeapMinSize.
 */
-	{
+	{// This must be true otherwise the comment on aStackSize will be incorrect and BC 
+	// break will occur.  See ExecHandler::ThreadCreate() for details.
+	__ASSERT_COMPILE(KMaxThreadCreateInfo == 256);
+
 	TThreadCreateInfo createInfo(aName, aFunction, aStackSize, aPtr);
 	createInfo.SetOwner(aType);
 	createInfo.SetCreateHeap(aHeapMinSize, aHeapMaxSize);
@@ -3655,25 +3661,27 @@ parameter to this function.
 If KNullDesC is specified for the name, then an anonymous thread will be created.
 Anonymous threads are not global, and cannot be opened by other processes.
 
-@param aName      The name to be assigned to this thread.
-				  KNullDesC, to create an anonymous thread.
-@param aFunction  A pointer to a function. Control passes to this function when 
-	              the thread is first resumed, i.e. when the thread is
-	              initially scheduled to run.
-@param aStackSize The size of the new thread's stack.
-@param aAllocator A pointer to the handle of the heap belonging to another thread 
-                  which this thread is to use.
-@param aPtr       A pointer to data to be passed as a parameter to the thread
-                  function when the thread is initially scheduled to run.
-                  If the thread function does not need any data,
-                  then this pointer can be NULL. It must be ensured that the 
-                  memory pointed to by this pointer is still valid when accessed 
-                  by the new thread, e.g. if aPtr points to data on the stack.
-@param aType      An enumeration whose enumerators define the ownership of this 
-                  thread handle. If not explicitly specified, EOwnerProcess is
-                  taken as default.
+@param aName		The name to be assigned to this thread.
+					KNullDesC, to create an anonymous thread.
+@param aFunction	A pointer to a function. Control passes to this function when 
+					the thread is first resumed, i.e. when the thread is
+					initially scheduled to run.
+@param aStackSize	The size of the new thread's stack.  This must be at least
+					512 bytes, otherwise this method will fail with KErrArgument.
+@param aAllocator	A pointer to the handle of the heap belonging to another thread 
+					which this thread is to use.
+@param aPtr			A pointer to data to be passed as a parameter to the thread
+					function when the thread is initially scheduled to run.
+					If the thread function does not need any data,
+					then this pointer can be NULL. It must be ensured that the 
+					memory pointed to by this pointer is still valid when accessed 
+					by the new thread, e.g. if aPtr points to data on the stack.
+@param aType		An enumeration whose enumerators define the ownership of this 
+					thread handle. If not explicitly specified, EOwnerProcess is
+					taken as default.
 
 @return KErrNone if successful otherwise one of the other system-wide error codes.
+		KErrArgument if aStackSize is less than 512 bytes.
         KErrAlreadyExists will be returned if there is another thread in this process with the
         specified name.
 

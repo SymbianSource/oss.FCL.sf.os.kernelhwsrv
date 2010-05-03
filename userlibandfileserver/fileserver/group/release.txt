@@ -1,3 +1,44 @@
+Version 2.00.3024
+=================
+(Made by vfebvre 22/03/2010)
+
+1.	migubarr
+	1.	DEF144423 Frequent T_RCACHE failures on the H2/H6 (line 1556)
+
+2.	michcox
+	1.	PDEF145110 File server does not check return result of some User::ReAlloc()'s 
+
+
+Version 2.00.3023
+=================
+(Made by vfebvre 15/03/2010)
+
+1.	niccox
+	1.	DEF145021 Improper Mass Storage Error Code for Empty Drive case
+
+2.	shamaden
+	1.	PDEF144922 TRAI-82RJFS Crash when usb memory is dismounted during copy 
+
+
+Version 2.00.3022
+=================
+(Made by vfebvre 12/03/2010)
+
+1.	famustaf
+	1.	MINOR_CHANGE Updated RFs::ScanDrive and RFs::CheckDisk Documentation
+
+2.	michcox
+	1.	DEF144912 T_EXT1 fails under platsim as it doesn't support fsys extensions 
+
+
+Version 2.00.3021
+=================
+(Made by vfebvre 11/03/2010)
+
+1.	frhofman
+	1.	PDEF144919: SALM-82WCVK: efile.exe crashes in dynamic dir cache code when out-of-memory
+
+
 Version 2.00.3020
 =================
 (Made by vfebvre 08/03/2010)

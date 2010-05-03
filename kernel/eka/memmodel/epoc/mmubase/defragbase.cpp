@@ -405,7 +405,7 @@ TInt Defrag::ClaimRamZone(TRamDefragRequest* aRequest)
 		BTrace4(BTrace::ERamAllocator, BTrace::ERamAllocClaimZone, zone->iId);
 #endif
 
-#ifdef BTRACE_KERNEL_MEMORY
+#if defined(BTRACE_KERNEL_MEMORY) && !defined(__MEMMODEL_FLEXIBLE__)
 		TUint size = zone->iPhysPages << M::PageShift();
 		BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysAlloc, size, zone->iPhysBase);
 		Epoc::DriverAllocdPhysRam += size;

@@ -180,7 +180,7 @@ public:
 	// Some utility functions
 	//
 	inline TInt GetBusId(TUsbBusId& aBusId);
-	inline TInt HcdPageSize();
+	inline TInt GetHcdPageSize(TInt& aHcdPageSize);
 	inline TInt GetDeviceSpeed(TDeviceSpeed& aDeviceSpeed);
 
 private:

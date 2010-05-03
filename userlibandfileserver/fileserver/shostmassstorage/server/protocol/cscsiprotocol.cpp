@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,8 +26,6 @@
 #include "shared.h"
 #include "msgservice.h"
 
-#include "mscutils.h"
-
 #include "mtransport.h"
 #include "mprotocol.h"
 #include "tscsiclientreq.h"
@@ -43,7 +41,6 @@
 #include "cscsiprotocol.h"
 
 #include "usbmshostpanic.h"
-
 
 
 /**
@@ -68,8 +65,8 @@ CScsiProtocol* CScsiProtocol::NewL(TLun aLun, MTransport& aTransport)
 void CScsiProtocol::ConstructL(TLun aLun)
     {
 	__MSFNLOG
+	// iState = EEntry;
     iFsm = CMassStorageFsm::NewL(*this);
-	iState = EDisconnected;
 
     const TInt blockLength = 0x200;
 
@@ -99,6 +96,7 @@ CScsiProtocol::~CScsiProtocol()
 void CScsiProtocol::InitialiseUnitL()
     {
 	__MSFNLOG
+    iState = EDisconnected;
 
 	// A device may take time to mount the media. If the device fails attempt to
 	// retry the connection for a number of seconds
@@ -107,10 +105,9 @@ void CScsiProtocol::InitialiseUnitL()
         {
         retryCounter--;
         iFsm->ConnectLogicalUnitL();
-        iState = iFsm->IsConnected() ? EConnected: EDisconnected;
-
-        if (iState == EConnected)
+        if (iFsm->IsConnected())
             {
+            iState = EConnected;
             break;
             }
         User::After(1000 * 200);    // 200 mS
@@ -162,8 +159,7 @@ void CScsiProtocol::BlockReadL(TPos aPos, TDes8& aCopybuf, TInt aLen)
     if (err)
         {
         __SCSIPRINT1(_L("READ(10) Err=%d"), err);
-        DoCheckConditionL();
-        User::LeaveIfError(KErrAbort);
+        User::LeaveIfError(DoCheckConditionL());
         }
 
     // handle residue
@@ -189,8 +185,7 @@ void CScsiProtocol::BlockReadL(TPos aPos, TDes8& aCopybuf, TInt aLen)
         TInt err = iSbcInterface->Read10L(aPos/blockLen, aCopybuf, len);
         if (err)
             {
-            DoCheckConditionL();
-            User::LeaveIfError(KErrAbort);
+            User::LeaveIfError(DoCheckConditionL());
             }
         }
     }
@@ -217,8 +212,7 @@ void CScsiProtocol::BlockWriteL(TPos aPos, TDesC8& aCopybuf, TUint aOffset, TInt
 	TInt err = iSbcInterface->Write10L(aPos/blockLen, aCopybuf, aOffset, len);
     if (err)
         {
-        DoCheckConditionL();
-        User::LeaveIfError(KErrAbort);
+        User::LeaveIfError(DoCheckConditionL());
         }
 
     while (len != aLen)
@@ -242,8 +236,7 @@ void CScsiProtocol::BlockWriteL(TPos aPos, TDesC8& aCopybuf, TUint aOffset, TInt
         TInt err = iSbcInterface->Write10L(aPos/blockLen, buf, aOffset, len);
         if (err)
             {
-            DoCheckConditionL();
-            User::LeaveIfError(KErrAbort);
+            User::LeaveIfError(DoCheckConditionL());
             }
         }
     }
@@ -268,15 +261,11 @@ void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
         err = iSbcInterface->ReadCapacity10L(lastLba, blockLength);
         } while (err == KErrCommandStalled && stallCounter-- > 0);
 
-
     if (err)
         {
-        if (err == KErrCommandFailed)
-            {
-            // Clear sense error
-            DoCheckConditionL();
-            }
-        User::LeaveIfError(KErrAbort);
+        // DoCheckConditionL clears sense error
+        // Media not present will return KErrNotReady so leave here
+        User::LeaveIfError(DoCheckConditionL());
         }
 
     // update iWriteProtect
@@ -286,14 +275,24 @@ void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
         if (err == KErrCommandFailed)
             {
             // Clear sense error
-            DoCheckConditionL();
+            err = DoCheckConditionL();
+            // ignore error if unsupported
+            if (err != KErrUnknown)
+                {
+                User::LeaveIfError(err);
+                }
             }
 
         err = MsModeSense6L();
         if (err == KErrCommandFailed)
             {
             // Clear sense error
-            DoCheckConditionL();
+            err = DoCheckConditionL();
+            // ignore error if unsupported
+            if (err != KErrUnknown)
+                {
+                User::LeaveIfError(err);
+                }
             }           
         }
 
@@ -481,10 +480,12 @@ TInt CScsiProtocol::MsPreventAllowMediaRemovalL(TBool aPrevent)
     }
 
 
-void CScsiProtocol::DoCheckConditionL()
+TInt CScsiProtocol::DoCheckConditionL()
     {
 	__MSFNLOG
     User::LeaveIfError(MsRequestSenseL());
+
+    TInt err;
 
     // Check if init is needed
     if (iSenseInfo.iSenseCode == TSenseInfo::ENotReady &&
@@ -492,22 +493,36 @@ void CScsiProtocol::DoCheckConditionL()
         iSenseInfo.iQualifier == TSenseInfo::EAscqInitializingCommandRequired)
         {
         // start unit
-        TInt err = iSbcInterface->StartStopUnitL(ETrue);
-
+        err = iSbcInterface->StartStopUnitL(ETrue);
         if (err)
             {
             User::LeaveIfError(MsRequestSenseL());
             }
-
         }
 
-    TInt r = GetSystemWideSenseError(iSenseInfo);
+    err = GetSystemWideSenseError(iSenseInfo);
 
-    if (((r == KErrNotReady) && (iState == EConnected)) ||
-        r == KErrDisconnected)
-	    {
-        CompleteNotifyChangeL();
+    TScsiState nextState = iState;
+    if (err == KErrDisconnected)
+        {
+        nextState = EDisconnected;
         }
+    else if (err == KErrNotReady)
+        {
+        nextState = EMediaNotPresent;
+        }
+    else
+        {
+        // no state change;
+        }
+
+    if (nextState != iState)
+        {
+        iMediaChangeNotifier.DoNotifyL();
+        iState = nextState;
+        }
+           
+    return err;
     }
 
 
@@ -730,7 +745,7 @@ void CScsiProtocol::DoScsiReadyCheckEventL()
     __MSFNLOG
 	TInt err = KErrNone;
 
-	if(iFsm->IsRemovableMedia() || iState == EDisconnected)
+	if(iFsm->IsRemovableMedia() || iState != EConnected)
         {
 		iFsm->SetStatusCheck();
 		TRAP(err, iFsm->ConnectLogicalUnitL());
@@ -760,18 +775,6 @@ void CScsiProtocol::DoScsiReadyCheckEventL()
         }
 	}
 
-void CScsiProtocol::CompleteNotifyChangeL()
-	{
-    __MSFNLOG
-    if (!iFsm->IsStatusCheck())
-		{
-		if (iState == EConnected)
-			{
-			iState = EDisconnected;
-            iMediaChangeNotifier.DoNotifyL();
-			}
-		}
-	}
 
 RMediaChangeNotifier::RMediaChangeNotifier()
 :   iRegistered(EFalse)

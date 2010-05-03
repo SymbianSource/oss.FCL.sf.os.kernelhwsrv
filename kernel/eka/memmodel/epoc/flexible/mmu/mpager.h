@@ -57,6 +57,11 @@ public:
 		MmuLock::Unlock();
 		return ret;
 		}
+
+	FORCE_INLINE TUint MinimumPageCount()
+		{
+		return iMinimumPageCount;
+		}
 	
 	FORCE_INLINE void SetWritable(SPageInfo& aPageInfo)
 		{

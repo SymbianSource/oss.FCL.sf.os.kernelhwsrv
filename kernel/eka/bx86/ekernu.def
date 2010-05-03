@@ -955,4 +955,5 @@ EXPORTS
 	?LeaveIdle@KernCoreStats@@SAXI@Z @ 954 NONAME	;  public: static void KernCoreStats::LeaveIdle(unsigned int)
 	?Retire@KernCoreStats@@SAHHH@Z @ 955 NONAME	;  public: static int KernCoreStats::Retire(int, int)
 	?Stats@KernCoreStats@@SAHPAX@Z @ 956 NONAME	;  public: static int KernCoreStats::Stats(void *)
+	?FreeRamZone@Epoc@@SAHI@Z @ 957 NONAME ; public: static int Epoc::FreeRamZone(unsigned int)
 

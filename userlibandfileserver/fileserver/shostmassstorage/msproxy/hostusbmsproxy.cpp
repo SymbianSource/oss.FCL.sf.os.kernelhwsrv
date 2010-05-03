@@ -1,24 +1,18 @@
-/*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
-* All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of the License "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
-*
-* Initial Contributors:
-* Nokia Corporation - initial contribution.
-*
-* Contributors:
-*
-* Description:
-*
-*/
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
 //
-// hostusbmsproxy.cpp
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
 //
-// This file system extension provides a way to access a drive on the MS system in "raw format".
-// It can be used to test large files / drives
+// Contributors:
+//
+// Description:
+// This file system extension provides a way to access a drive on the MS system
+// in "raw format". It can be used to test large files / drives
 //
 
 /** @file
@@ -486,6 +480,7 @@ TInt CUsbHostMsProxyDrive::Write(TInt64 aPos, TInt aLength,
 	return KErrNone;
 	}
 
+
 /**
 Write to the proxy drive and pass flags to driver
 
@@ -520,6 +515,7 @@ TInt CUsbHostMsProxyDrive::Write(TInt64 aPos,const TDesC8& aSrc)
                  aPos, aPos/KBlockSize, aSrc.Length());
 	return iUsbHostMsLun.Write(iMsDataMemMap.GetDataPos(aPos), aSrc.Length(), aSrc);
 	}
+
 
 /**
 Get the proxy drive's capabilities information.
@@ -566,17 +562,20 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
                     capsInfo.iNumberOfBlocks, capsInfo.iBlockLength,
 		            caps().iSize, caps().iMediaAtt);
 		}
-	else
+	else if (KErrNotReady)
         {
         __HOSTPRINT(_L("<<< HOST Caps Media Not Present"));
-		c.iType = EMediaNotPresent;
-		if(r != KErrNotReady)
-			r = KErrUnknown;
+		c.iType = EMediaNotPresent;		
+		r = KErrNone;
+        }
+    else
+        {
+        __HOSTPRINT(_L("<<< HOST Caps Unknown Error"));
+		r = KErrUnknown;
         }
 	anInfo = caps.Left(Min(caps.Length(),anInfo.MaxLength()));
 	return r;
 	}
-
 
 
 /**

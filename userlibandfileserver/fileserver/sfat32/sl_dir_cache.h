@@ -47,7 +47,7 @@ public:
 
 public:
 	~TDynamicDirCachePage();
-	static TDynamicDirCachePage* NewL(CDynamicDirCache* aOwnerCache, TInt64 aStartMedPos, TUint8* aStartRamAddr);
+	static TDynamicDirCachePage* CreateCachePage(CDynamicDirCache* aOwnerCache, TInt64 aStartMedPos, TUint8* aStartRamAddr);
 	
 	inline void	SetLocked(TBool);
 	inline TBool	IsLocked() const;
@@ -145,7 +145,7 @@ protected:
 
 	TDynamicDirCachePage* FindPageByPos(TInt64 aPos);
 	TDynamicDirCachePage* UpdateActivePageL(TInt64 aPos);
-	TDynamicDirCachePage* AllocateAndLockNewPageL(TInt64 aStartMedPos);
+	TDynamicDirCachePage* AllocateAndLockNewPage(TInt64 aStartMedPos);
 	TUint8* LockPage(TDynamicDirCachePage* aPage);
 	TInt 	UnlockPage(TDynamicDirCachePage* aPage);
 	TInt 	DecommitPage(TDynamicDirCachePage* aPage);

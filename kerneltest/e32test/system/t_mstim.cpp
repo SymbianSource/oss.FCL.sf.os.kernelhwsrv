@@ -84,7 +84,7 @@ TInt GetOneShotTime(TInt aId)
 	TInt r=mstim.GetInfo(aId,info);
 	CHECK(r);
 	TEST(info.iCount==1);
-	return info.iMin/1000;
+	return (info.iMin+500)/1000;
 	}
 
 GLDEF_C TInt E32Main()

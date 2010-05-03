@@ -688,7 +688,7 @@ FORCE_INLINE RVirtualAllocSlabSet::RVirtualAllocSlabSet(RVirtualAllocator* aAllo
 
 RVirtualAllocSlabSet* RVirtualAllocSlabSet::New(RVirtualAllocator* aAllocator, TUint aNumSlabTypes, DMutex*& aWriteLock)
 	{
-	TUint size = sizeof(RVirtualAllocSlabSet)+sizeof(((RVirtualAllocSlabSet*)0x100)->iSlabs)*(aNumSlabTypes-1);
+	TUint size = sizeof(RVirtualAllocSlabSet) + sizeof(SDblQue) * (aNumSlabTypes - 1);
 	RVirtualAllocSlabSet* set = (RVirtualAllocSlabSet*)Kern::AllocZ(size);
 	if(set)
 		new (set) RVirtualAllocSlabSet(aAllocator,aNumSlabTypes,aWriteLock);
@@ -764,8 +764,9 @@ TInt RVirtualAllocSlabSet::Alloc(TLinAddr& aAddr, TUint aSizeShift, TUint aSlabT
 		if(!slab)
 			return KErrNoMemory;
 		TLinAddr addr = slab->Alloc(aSizeShift);
-		if(!addr)
-			return KErrNoMemory;
+		// Shouldn't ever fail as we've just allocated an empty slab and we can't 
+		// attempt to allocate more than a whole slab.
+		__NK_ASSERT_DEBUG(addr);
 		aAddr = addr;
 		return KErrNone;
 		}
@@ -830,8 +831,8 @@ RVirtualAllocator::RVirtualAllocator()
 RVirtualAllocator::~RVirtualAllocator()
 	{
 	__NK_ASSERT_DEBUG(iAllocator==0 || iAllocator->iAvail==iAllocator->iSize); // should be empty
-	Kern::Free(iAllocator);
-	Kern::Free(iSlabSet);
+	delete iAllocator;
+	delete iSlabSet;
 	}
 
 

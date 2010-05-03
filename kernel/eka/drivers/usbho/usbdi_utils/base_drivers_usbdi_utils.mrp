@@ -1,0 +1,27 @@
+#
+# Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description: 
+#
+# component name "USB DI Utils"
+
+component	base_drivers_usbdi_utils
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdi_utils
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdi_utils all
+
+notes_source	\component_defs\release.src
+
+ipr E
+

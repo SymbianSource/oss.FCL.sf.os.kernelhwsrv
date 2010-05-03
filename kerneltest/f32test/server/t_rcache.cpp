@@ -1446,7 +1446,7 @@ static TInt64 TicksToMsec(TUint32 aInitTicks, TUint32 aFinalTicks, TInt aFastCou
 
 */
 LOCAL_C void TestReadAhead()
-{
+	{
 	TInt r = 0,tcreate;
 	RFile fileRead;
 	HBufC8* dummy = NULL;
@@ -1454,28 +1454,6 @@ LOCAL_C void TestReadAhead()
 
 	TUint32 initTicks = 0;
 	TUint32 finalTicks = 0;
-	TTimeIntervalMicroSeconds timeTakenReadFirst(0);
-	TTimeIntervalMicroSeconds timeTakenReadSubsequent(0);
-
-	// On NAND/FAT and NOR/LFFS drives, due to the lack of DMA support, the read-ahead is likely to happen
-	// BEFORE control is returned to this test app - for NAND this could be fixed by adding
-	// "FileCacheReadAsync OFF" to the estart.txt file, but we can't do this on the integrator as it has no
-	// estart.txt file. Also, we can't set "FileCacheReadAsync OFF" for LFFS as it kills the LFFS background
-	// processing (!)
-	// So... it's only really worth testing on MMC.
-	_LIT(KFATName,"FAT");
-	TDriveInfo driveInfo;
-	test(TheFs.Drive(driveInfo, gDrive) == KErrNone);
-	TFileName fileSystem;
-	r = TheFs.FileSystemName(fileSystem, gDrive);
-	fileSystem.UpperCase();
-	test((r==KErrNone)||(r==KErrNotFound));
-	// ONLY test on MMC
-	if ((driveInfo.iType != EMediaHardDisk) || (fileSystem.Compare(KFATName) != 0))
-		{
-		test.Printf(_L("Skipping read-ahead testing (drive is not MMC)...\n"));
-		return;
-		}
 
 	//--Find out if the drive is sync/async at this point and print information
     TPckgBuf<TBool> drvSyncBuf;
@@ -1514,82 +1492,81 @@ LOCAL_C void TestReadAhead()
 	r = fileRead.Open(TheFs,gFirstFile,EFileShareAny|EFileRead|EFileReadBuffered|EFileReadAheadOn);
 	test_KErrNone(r);
 
-	// Read #1
-	test.Printf(_L("Issuing read #1...\n"));
-	initTicks = User::FastCounter();
-	r = fileRead.Read(dummyPtr);
-	finalTicks = User::FastCounter();
+#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	TFileCacheStats fileCacheStats;
+	r = controlIo(TheFs,gDrive, KControlIoFileCacheStats, fileCacheStats);
 	test_KErrNone(r);
-
-	timeTakenReadFirst = TicksToMsec(initTicks, finalTicks, fastCounterFreq);
-	test.Printf(_L("first read time %d \n"), I64LOW(timeTakenReadFirst.Int64()));
-
-	// Read #2
-	test.Printf(_L("Issuing read #2...\n"));
-	r = fileRead.Read(dummyPtr);
-
-	// Read #3
-	test.Printf(_L("Issuing read #3......resulting in read-ahead #1\n"));
-	r = fileRead.Read(dummyPtr);
-
-	// Wait for the read ahead #1 to be done - this should be approx the same size as previous read (KReadLen)
-	test.Printf(_L("Wait for read-ahead #1...\n"));
-	User::After(I64LOW(timeTakenReadFirst.Int64()) * 3 / 2);
-
-
-	test.Printf(_L("Issuing read #4...resulting in read-ahead #2\n"));
-	initTicks = User::FastCounter();
-	r = fileRead.Read(dummyPtr);
-	finalTicks = User::FastCounter();
-	test_KErrNone(r);
-	timeTakenReadSubsequent = TicksToMsec(initTicks, finalTicks, fastCounterFreq);
-
-	test.Printf(_L("read time:  %d \n"), I64LOW(timeTakenReadSubsequent.Int64()));
-
-#if !defined(__WINS__)
-	// NB the read-ahead on LFFS occurs "synchronously" i.e. it occurs before control is returned
-	// to the caller. However it's not a good idea to mark the drive as synchronous (FileCacheReadAsync OFF)
-	// as this causes the drive thread's priority to be lowered which kills the LFFS background processing (!)
-	if (gPagedRom)
-		test.Printf(_L("Skipping timing test on paged ROM\n"));
-	else
-		test(timeTakenReadSubsequent.Int64() < timeTakenReadFirst.Int64());
+	TInt totalBytesRead = fileCacheStats.iUncachedBytesRead;
+	test.Printf(_L("totalBytesRead %d\n"), totalBytesRead);
+	TInt bytesRead = 0;
+	TInt filePos = 0;
 #endif
 
-	// The read ahead #2 should now be in progress - this should be approx KReadLen * 2
-	// so this read will take result in the next read taking longer than normal (about double)
-	test.Printf(_L("Issuing read #5......resulting in read-ahead #3\n"));
-	initTicks = User::FastCounter();
-	r = fileRead.Read(dummyPtr);
-	finalTicks = User::FastCounter();
-	test_KErrNone(r);
-	timeTakenReadSubsequent = TicksToMsec(initTicks, finalTicks, fastCounterFreq);
-	test.Printf(_L("read time:  %d\n"), I64LOW(timeTakenReadSubsequent.Int64()));
+	const TInt KReadCount = 6;
+	#define	PAGE_ROUND_UP(x) ((x + 4095) & (-4096))
+	TInt expectedBytesRead[KReadCount] = 
+		{
+		PAGE_ROUND_UP(KReadLen),	// read #0 from media
+		PAGE_ROUND_UP(KReadLen),	// read #1 from media
+		PAGE_ROUND_UP(KReadLen*2),	// read #2 from media, read-ahead #1 of length KReadLen
+		PAGE_ROUND_UP(KReadLen*2),	// read #3 from cache, read-ahead #2 of length KReadLen * 2
+		PAGE_ROUND_UP(KReadLen*4),	// read #4 from cache, read-ahead #3 of length KReadLen * 4
+		0,							// read #5 from cache, no read-ahead
+		};
+	TTimeIntervalMicroSeconds readTimes[KReadCount];
 
+	for (TInt n=0; n<KReadCount; n++)
+		{
 
-	// this read should take a long time, so don't test
-//#if !defined(__WINS__)
-//	test(gTimeTakenReadBlockFile.Int64() < gTimeTakenBigFile.Int64());
-//#endif
+		initTicks = User::FastCounter();
+		r = fileRead.Read(dummyPtr);
+		finalTicks = User::FastCounter();
+		test_KErrNone(r);
 
-	// The third read should be very quick as the previous read-ahead should have already buffered the data
-	test.Printf(_L("Issuing read #6......resulting in read-ahead #4\n"));
-	initTicks = User::FastCounter();
-	r = fileRead.Read(dummyPtr);
-	finalTicks = User::FastCounter();
-	test_KErrNone(r);
-	timeTakenReadSubsequent = TicksToMsec(initTicks, finalTicks, fastCounterFreq);
-	test.Printf(_L("read time:  %d\n"), I64LOW(timeTakenReadSubsequent.Int64()));
+		readTimes[n] = TicksToMsec(initTicks, finalTicks, fastCounterFreq);
+		test.Printf(_L("%d: read time %d \n"), n, I64LOW(readTimes[n].Int64()));
 
+		TInt readAheadTime = I64LOW(readTimes[0].Int64()) * expectedBytesRead[n] / expectedBytesRead[0];
+		// Wait for the read ahead to be done 
+		if (n >= 2)
+			{
+			test.Printf(_L("Wait %u uS for read-ahead ...\n"), readAheadTime);
+			User::After(readAheadTime);
+			}
 
-#if !defined(__WINS__)
-	if (gPagedRom)
-		test.Printf(_L("Skipping timing test on paged ROM\n"));
-	else
-		test(timeTakenReadSubsequent.Int64() < timeTakenReadFirst.Int64());
+#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
+		// check the number of bytes read from the media is as expected. i.e. including the read-ahead length
+		// Keep waiting if it's not for up to 10 seconds
+		const TInt KMaxWaitTime = 10000000;	// 10 secs
+		TInt waitTime;
+		for (waitTime=0; waitTime <KMaxWaitTime; waitTime+= readAheadTime)
+			{
+			r = controlIo(TheFs,gDrive, KControlIoFileCacheStats, fileCacheStats);
+			test_KErrNone(r);
+			bytesRead = fileCacheStats.iUncachedBytesRead - totalBytesRead;
+			TInt bytesReadExpected = Min(gFirstFileSize - filePos, expectedBytesRead[n]);
+
+			test.Printf(_L("bytesRead %d, bytesReadExpected %d\n"), bytesRead, bytesReadExpected);
+
+			if (bytesRead == bytesReadExpected)
+				break;
+			User::After(readAheadTime);
+			}
+		test(waitTime < KMaxWaitTime);
+		totalBytesRead+= bytesRead;
+		filePos += bytesRead;
 #endif
 
-
+#if !defined(__WINS__)
+		// Read #3 should be able to be satisfied entirely from the cache, so should be quicker. If it's not quicker,
+		// display a warning rather than failing, because the read-ahead might be hogging the CPU, delaying the read from the cache.
+		if (n >= 3)
+			{
+			if (readTimes[n].Int64() >= readTimes[0].Int64())
+				test.Printf(_L("WARNING: Subsequent read not faster despite read-ahead !!!\n"));
+			}
+#endif
+		}
 	fileRead.Close();
 
 	r = DeleteAll(gSessionPath);
@@ -1597,8 +1574,7 @@ LOCAL_C void TestReadAhead()
 
 	delete dummy;
 	test.End();
-
-}
+	}
 
 /** Main tests function
 */
