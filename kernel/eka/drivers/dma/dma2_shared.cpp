@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -137,9 +137,9 @@ TDmaTransferArgs::TDmaTransferArgs()
 	  iFlags(0),
 	  iChannelPriority(KDmaPriorityNone),
 	  iPslRequestInfo(0),
+	  iChannelCookie(0),
 	  iDelta(~0u),
 	  iReserved1(0),
-	  iChannelCookie(0),
 	  iReserved2(0)
 	{
 	}
@@ -202,9 +202,9 @@ TDmaTransferArgs::TDmaTransferArgs(
 	  iFlags(aFlags),
 	  iChannelPriority(aChannelPriority),
 	  iPslRequestInfo(aPslRequestInfo),
+	  iChannelCookie(0),
 	  iDelta(~0u),
 	  iReserved1(0),
-	  iChannelCookie(0),
 	  iReserved2(0)
 	{
 	}

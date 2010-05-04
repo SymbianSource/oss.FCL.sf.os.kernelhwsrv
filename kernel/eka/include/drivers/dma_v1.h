@@ -158,6 +158,15 @@ public:
     The request can be uninitialised or may have been fragmented previously.  The
     previous configuration if any is lost whether or not the function succeeds.
 
+    The client must ensure that any memory buffers involved in the transfer
+    have been suitably prepared for DMA. For memory allocated on the kernel
+    side or in a shared chunk this amounts to ensuring cache consistency
+    before Queue() is called. However for memory that was allocated on the
+    user side the client must also ensure that the memory is protected from
+    both data paging and RAM defragmentation before Fragment() is called
+    @see Kern::MapAndPinMemory(). Note however, that this function is only
+    available if the flexible memory model (FMM) is in use.
+
     @param aSrc     Source memory buffer linear address or peripheral magic cookie.
     @param aDest    Destination memory buffer linear address or peripheral magic cookie.
     @param aCount   Number of bytes to transfer.

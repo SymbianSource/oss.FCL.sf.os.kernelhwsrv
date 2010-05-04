@@ -24,24 +24,121 @@ const TCallbackRecord threadCallback(TCallbackRecord::EThread,1);
 const TCallbackRecord isrCallback(TCallbackRecord::EIsr,1);
 
 const TInt size = 128 * KKilo;
+const TInt trans64K_1 = ((64 * KKilo) -1); // 65535
+
+//----------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2571
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test verifies the correct behavior of CancelAll API in the new DMA 
+//!					framework 
+//!
+//! TestActions     
+//!						1.	Open a DMA channel for a transfer.
+//!						2.  Queue multiple request on the DMA channel.
+//!						3.	Call CancelAll () on the DMA channel.
+//!						4.  Verify that all transfers have been cancelled.
+//!						5   Open a DMA channel for a transfer. This channel should support pause and resume.
+//!						6.  Call Pause () on the channel.
+//!						7.	Queue multiple request on the DMA channel.
+//!						8.	Call CancelAll () on the channel.
+//!						9.	Verify that all transfers have been cancelled.
+//!
+//!
+//! TestExpectedResults 1.  DMA channel opens and KErrNone returned.
+//!						2.  DMA queue request created and KErrNone returned.
+//!						3.  CancelAll () cancels all queued request.
+//!						4.  All queued request are cancelled
+//!						5.	DMA Request completes
+//!
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace CancelAllTest
+	{
+	const TInt size = 2 * KMega;
+	const TDmaTransferArgs transferArgArray[] = {
+		TDmaTransferArgs(0, size, size, KDmaMemAddr),
+		TDmaTransferArgs(2 * size, 3 * size, size, KDmaMemAddr)
+	};
+
+	TResultSet noTransferExpected = TResultSet()
+		.PostTransferResult(KErrNone)
+		.CallbackRecord(TCallbackRecord::Empty());
+
+	const TResultSet expected[] =
+		{
+		TResultSet(noTransferExpected),
+		TResultSet(noTransferExpected)
+		};
+
+	// Test that 2 requests can be queued on a paused channel
+	// then cleared using CancelAll.
+	// It is expected that no data will have been transferred to the
+	// destination buffer.
+	CCancelAllTest testcancelall =
+		CCancelAllTest(_L("CancelAllTest : Cancel and verify cancellation of requests"), 1, transferArgArray, expected, ARRAY_LENGTH(transferArgArray))
+			.SetPreTransferTest(&KPreTransferIncrBytes)
+			.SetPostTransferTest(&KCheckNoTransfer);
+
+	TTestCase testCase(&testcancelall,EFalse,capAboveV1,pauseRequired_skip);
+	}
+
 //--------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2560
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    Simple DMA transfer test using CSingleTransferTest and New DMA APIs
+//! TestCaseID      KBASE-DMA-2569
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test verifies the correct behavior of Pause and Resume API in the new DMA 
+//!					framework 
 //!
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestActions     
+//!						1.	Open a DMA channel for a transfer.
+//!						2.  Setup a DMA request and time how long the transfer takes
+//!						3.	Pause the DMA channel
+//!						4.  Repeat DMA transfer (queued asynchronously)
+//!						5.  Resume DMA Channel
+//! 
+//!	TestExpectedResults 1.  DMA channel opens and KErrNone returned.
+//!						2.  DMA request created and KErrNone returned.
+//!						3.  DMA channel Paused.
+//!						4.  Request queued and waits until Resume is called
+//!						5.	DMA Request completes
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace PauseResumeApiTest
+	{
+	const TInt srcAddr		= 0;
+	const TInt desAddr		= 2 * KMega;	
+	const TInt transferSize = 1 * KMega;	
+
+	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize, KDmaMemAddr);
+	const TResultSet expectedResults(threadCallback);
+	CPauseResumeTest testPauseResume = CPauseResumeTest(_L("Pause and Resume Test"), 1, transferArgs, expectedResults); 
+	TTestCase testCasePauseResume(&testPauseResume, EFalse, capAboveV1,pauseRequired_skip);	
+	}
+
+//--------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2560
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Simple DMA transfer test using CSingleTransferTest and New DMA APIs
+//!
+//! TestActions     
+//!						1.	Open a DMA channel for a transfer.
+//!						2.	Create single transfer test and run test
+//!				
 //!
 //!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
+//! TestExpectedResults 
+//!						1.  DMA channel opens and KErrNone returned.
+//!						2.	DMA transfer completes with no errors.
 //!							
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace Simple_1
 	{
@@ -51,60 +148,29 @@ namespace Simple_1
 
 	CSingleTransferTest simpleTest(_L("Simple Test - New DMA APIs"), 1, transferArgs, expectedResults);
 
-	TTestCase testCase(&simpleTest, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&simpleTest, ETrue, capAboveV1);
+	TTestCase testCase(new (ELeave) CMultiVersionTest(&simpleTest), EFalse);
+	TTestCase testCaseConcurrent(new (ELeave) CMultiVersionTest(&simpleTest), ETrue);
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2561
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    Simple DMA transfer test using CSingleTransferTest and OLD DMA APIs
+//! TestCaseID      KBASE-DMA-2573
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    DMA ISR Callback test (Isr Callback - use old request Ctor)
 //!
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestActions     
+//!						1.	Setup DMA transfer to request a callback from ISR using old style DDmaRequest.
+//!						2.	Create single transfer test and run test
+//!						3.	Verify that DDmaRequest request fails
 //!
+//! TestExpectedResults 
+//!						1.  DMA channel opens and KErrNone returned.
+//!						2.	DMA transfer created with no errors.
+//!						3.	DDmaRequest request fails. 
+//!						
 //!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.						
-//!							
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace Simple_2
-	{
-	TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr);
-
-	const TResultSet expectedResults(threadCallback);
-
-	CSingleTransferTest simpleTest = CSingleTransferTest(_L("Simple Test - Old DMA APIs"), 1, transferArgs, expectedResults, 0).
-		UseNewDmaApi(EFalse);
-
-	TTestCase testCase(&simpleTest, EFalse);
-	TTestCase testCaseConcurrent(&simpleTest, ETrue);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2573
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    DMA ISR Callback test (Isr Callback - use old request Ctor)
-//!
-//! @SYMTestActions     
-//!						1.
-//!						2.	
-//!
-//!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
-//!							
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace Callback
 	{
@@ -131,23 +197,25 @@ namespace Callback
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2574,KBASE-DMA-2575
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    DMA ISR Reque test
+//! TestCaseID      KBASE-DMA-2574,KBASE-DMA-2575
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    DMA ISR Reque test
 //!
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestActions     
+//!					1.	Setup DMA transfer to request a callback from ISR.
+//!					2.	Set up ISR to requeue the DMA request on the same channel and adjust its transfer parameters.
+//!					3.	Create single transfer test and run test
+//!					4.	Verify a client can queue the just completed DMA request from within an ISR callback.
 //!
-//!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
+//! TestExpectedResults 
+//!					
+//!					DMA transfer completes and just completed request can be requeued from within an ISR 
+//!					callback on the same channel. Requeued DMA request completes successfully
 //!							
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace ISR_Reque
 	{
@@ -156,6 +224,9 @@ namespace ISR_Reque
 
 	const TRequestResults requestResult(KErrNone, 1); // request must be in a single fragment
 
+	//-------------------------------------------------------------
+	//This case requeues 4 transfers at the end of an ISR callback
+	//-------------------------------------------------------------
 	namespace endOnIsrCb
 		{
 		TIsrRequeArgs requeArgs[] = {
@@ -174,6 +245,9 @@ namespace ISR_Reque
 		TTestCase testCase(new (ELeave) CIsrRequeTest(_L("4 Requeues - end on isr cb"), 1, tferArgs, requeArgs, count, expected, &KPreTransferIncrBytes, &KCompareSrcDst), ETrue, capAboveV1);
 		}
 
+	//---------------------------------------------------------------
+	///This case requeues 4 transfers at the end of a thread callback
+	//---------------------------------------------------------------
 	namespace endOnThreadCb
 		{
 		TIsrRequeArgs requeArgs[] = {
@@ -189,7 +263,10 @@ namespace ISR_Reque
 
 		TTestCase testCase(new (ELeave) CIsrRequeTest(_L("4 Requeues - end on thread cb"), 1, tferArgs, requeArgs, count, expected, &KPreTransferIncrBytes, &KCompareSrcDst), ETrue, capAboveV1);
 		}
-
+	
+	//----------------------------------------------------------------------------------------------
+	// This case requeues a transfer from within an thread callback after changing the transfer size
+	//----------------------------------------------------------------------------------------------
 	namespace changeSize
 		{
 		TIsrRequeArgs requeArgs[] = {
@@ -203,10 +280,13 @@ namespace ISR_Reque
 		TTestCase testCase(new (ELeave) CIsrRequeTest(_L("1 Requeues - change transfer size"), 1, tferArgs, requeArgs, count, expected, &KPreTransferIncrBytes, &KCompareSrcDst), ETrue, capAboveV1);
 		}
 
+	//--------------------------------------------------------------------------------------------
+	// This case requeues a just completed request from within an ISR callback 
+	//--------------------------------------------------------------------------------------------
 	namespace endOnRedo
 		{
-		// TODO have made this bigger than 4k so that we don't miss the second interrupt when tracing enabled
-		// this indicates the PSL's interrupt handler misses an interrupt if it occurs during the interrupt.
+		// The transfer size has been made bigger than 4K so that we do not miss the second interrupt when tracing 
+		// enabled is. This indicates the PSL's interrupt handler misses an interrupt if it occurs during the interrupt.
 		const TInt size = 0x10000;
 		TDmaTransferArgs tferArgs(0, 2*size, size, KDmaMemAddr, KDmaSyncAuto, KDmaRequestCallbackFromIsr);
 
@@ -222,6 +302,9 @@ namespace ISR_Reque
 		TTestCase testCase(new (ELeave) CIsrRequeTest(_L("2 Requeues - Isr redo request repeated"), 1, tferArgs, requeArgs, count, expected, &KPreTransferIncrBytes, &KCompareSrcDst), EFalse, capAboveV1);
 		}
 
+	//--------------------------------------------------------------------------------------------
+	// This case requeues a request from within an ISR callback using invalid requeue parameters
+	//--------------------------------------------------------------------------------------------
 	namespace invalidAddresses
 		{
 		TIsrRequeArgs requeArgs[] = {
@@ -235,41 +318,51 @@ namespace ISR_Reque
 		// pre and post test would fail because of bad requeue parameters
 		TTestCase testCase(new (ELeave) CIsrRequeTest(_L("Requeue with matching addresses"), 1, tferArgs, requeArgs, count, expected, NULL, NULL), ETrue, capAboveV1);
 		}
-
+	//--------------------------------------------------------------------------------------------
+	// This case requeues a request containing more than 1 fragment from within an ISR callback
+	// 
+	//		
+	// This test case is currently caught by a FAULT instead of a return code
+	// as expected. Currently, the facility to return an error code to the test
+	// framework is not yet supported.
+	//
+	// It has been implemented to expect an error code of KErrGeneral as requeues for request that
+	// contains more than one fragments are not allowed. 
+	//--------------------------------------------------------------------------------------------
 	namespace multipleFragments
 		{
 		TIsrRequeArgs requeArgs[] = {
 			TIsrRequeArgs()
 		};
 		const TInt count = ARRAY_LENGTH(requeArgs);
+		const TRequestResults isrequestResult(KErrNone, 2); // request contains 2 fragments
 
-		const TCallbackRecord callbackRecord = TCallbackRecord(TCallbackRecord::EThread, count + 1).IsrRedoResult(KErrNone);
-
-		TRequestResults results2Fragments = TRequestResults(requestResult).FragmentCount(2);
+		const TCallbackRecord callbackRecord = TCallbackRecord(TCallbackRecord::EIsr, 1).IsrRedoResult(KErrGeneral);
+		TRequestResults results2Fragments = TRequestResults(isrequestResult).FragmentCount(2); 
 		const TResultSet expected(KErrNone, results2Fragments, KErrNone, callbackRecord);
 
 		TTestCase testCase(new (ELeave) CIsrRequeTest(_L("Attempt to Requeue 2 fragment request"), 1, tferArgs, requeArgs, count, expected, &KPreTransferIncrBytes, &KCompareSrcDst, size/2), ETrue, capAboveV1);
 
 		}
-	}
+	}	
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      PBASE-DMA-FUNC-xxx
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    DMA Multiple transfer test
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestCaseID      PBASE-DMA-FUNC-2586
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    DMA Multiple transfer test
+//! TestActions     
+//!						1.Setup DMA transfer to using muliple transfers.
+//!						2.Create multipart transfer test and run test.	
 //!
 //!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
+//! TestExpectedResults 
+//!						1.  DMA tranfer set up with no errors. 
+//!						2.	Multipart transfer tests completes with no issues.		
 //!							
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace Multipart
 	{
@@ -278,7 +371,7 @@ namespace Multipart
 	const TInt size = 2 * KMega;
 	const TDmaTransferArgs transferArgArray[] = {
 		TDmaTransferArgs(0, size, size, KDmaMemAddr),
-		TDmaTransferArgs(size, 2 * size, size, KDmaMemAddr)
+		TDmaTransferArgs(2 * size, 3 * size, size, KDmaMemAddr)
 	};
 
 	const TResultSet expected[] =
@@ -286,7 +379,6 @@ namespace Multipart
 		TResultSet(),
 		TResultSet()
 		};
-	const TResultSet expectedResults(isrCallback);
 
 	CMultiTransferTest multipart =
 		CMultiTransferTest(_L("Sg request concatination"), 1, transferArgArray, expected, ARRAY_LENGTH(transferArgArray))
@@ -297,32 +389,32 @@ namespace Multipart
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2580
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    These tests attempt to queue ISR cb requests while the queue is not 
-//!						empty and queing normal requests when an ISR cb is pending
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestCaseID      KBASE-DMA-2580
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    These tests attempt to queue ISR cb requests while the queue is not 
+//!					empty and queing normal requests when an ISR cb is pending
+//! TestActions     
+//!				
+//!					1.	Setup DMA transfer to request a callback from ISR.
+//!					2.	Create single transfer test and run test
+//!					3.	Queue another request using Queue()before ISR Callback completion
+//!					4.	Verify a DMA framework flags an error.
 //!
 //!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
-//!							
+//! TestExpectedResults 
+//!					DMA framework flags an error  if ISR callback has not been executed 
+//!					for the last time without re-queueing the initial transfer request		
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace IsrAndDfc
 	{
-	// need long transfer, so that 1st request is still queued
-	// when the second one is queued
-	// TODO pause is the better way to ensure this
-	//const TInt size = 2 * KMega;
-	//TODO have changed size to ensure that the first isr callback request in IsrBeforeDfc
-	//will only have one fragment
+	// This test case needs a long transfer so that 1st request is still queued when the second 
+	// one is queued. The use of Pause is recommended in order to guarantee this. For this case, 
+	// the size has been selected to ensure that the first isr callback request in IsrBeforeDfc
+	// will only have one fragment
 	const TInt size = 0x40000;
 	TDmaTransferArgs dfcTransfer(0, size, size, KDmaMemAddr);
 	TDmaTransferArgs isrTransfer(2*size, 3*size, size, KDmaMemAddr, KDmaSyncAuto, KDmaRequestCallbackFromIsr);
@@ -348,8 +440,9 @@ namespace IsrAndDfc
 		CMultiTransferTest dfcBeforeIsr =
 			CMultiTransferTest(_L("DFC cb req before ISR cb req "), 1, transferArgArray, expected, ARRAY_LENGTH(transferArgArray))
 				.SetPreTransferTest(&KPreTransferIncrBytes)
-				.SetPostTransferTest(&KCompareSrcDst);
-		TTestCase testCase(&dfcBeforeIsr, EFalse, hwDesWanted_skip);
+				.SetPostTransferTest(&KCompareSrcDst)
+				.PauseWhileQueuing();
+		TTestCase testCase(&dfcBeforeIsr, EFalse, pauseRequired_skip, capAboveV1);
 		}
 
 	namespace IsrBeforeDfc
@@ -368,30 +461,32 @@ namespace IsrAndDfc
 		CMultiTransferTest dfcBeforeIsr =
 			CMultiTransferTest(_L("ISR cb req before DFC cb req "), 1, transferArgArray, expected, ARRAY_LENGTH(transferArgArray))
 				.SetPreTransferTest(&KPreTransferIncrBytes)
-				.SetPostTransferTest(&KCompareSrcDst);
-		TTestCase testCase(&dfcBeforeIsr, EFalse, hwDesWanted_skip);
+				.SetPostTransferTest(&KCompareSrcDst)
+				.PauseWhileQueuing();
+		TTestCase testCase(&dfcBeforeIsr, EFalse, pauseRequired_skip, capAboveV1);
 		}
 
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      PBASE-DMA-FUNC-xxx
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    DMA 2D transfer test
+//! TestCaseID      PBASE-DMA-FUNC-2587
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    DMA 2D transfer test
 //!
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestActions     
+//!						1. Set up DMA transfer using TDmaTransArgs parameters specified in order to
+//!						   rotate an image by 90 degrees clockwise.
+//!						2. Verify that destination buffer gets transformed according to the DMA
+//!						   transfer arguments after transfer.
 //!
-//!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
+//! TestExpectedResults 
+//!						1. DMA tranfer set up with no errors. 
+//!						2. Destination buffer gets transformed accordingly.
 //!							
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace _2D_Test
 	{
@@ -429,23 +524,25 @@ namespace _2D_Test
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2565
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    DMA Fragmentation count test
+//! TestCaseID      KBASE-DMA-2565
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    DMA Fragmentation count test
 //!
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestActions     
+//!					1.	Set up the arguments for Fragment using the setting in the test scenario table below.
+//!					2.	Create single transfer test and run test
+//!					3.	Verify that FragmentCount API returns the expected value and framework responds correctly
+//!					4.	Repeat steps 1 to 3 above until all the settings in the scenario table below have been used.
 //!
-//!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
+//! TestExpectedResults 
+//!					On calling FragmentCount (), the number of fragments (descriptors / pseudo descriptors) that
+//!					the transfer request has been split into is returned. 
+//!					
 //!							
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace FragmentationCount
 	{
@@ -454,32 +551,42 @@ namespace FragmentationCount
 	const TRequestResults requestResult(KErrNone, 128);
 	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
 	CSingleTransferTest test1(_L("Fragmentation Count - 128 fragments"), 1, transferArgs, expectedResults, KKilo);
-	TTestCase testCase(&test1, EFalse);
+	TTestCase testCase(new (ELeave) CMultiVersionTest(&test1), EFalse);
 
 	const TRequestResults requestResult2(KErrNone, 4);
 	const TResultSet expectedResults2(KErrNone, requestResult2, KErrNone, threadCallback);
 	CSingleTransferTest test2(_L("Fragmentation Count - 4 fragments"), 1, transferArgs, expectedResults2, 32*KKilo);
-	TTestCase testCase2(&test2, EFalse);
+	TTestCase testCase2(new (ELeave) CMultiVersionTest(&test2), EFalse);
+
+	// Also specifying an element size to get the PIL to further adjust the
+	// fragment size(s): element size = 32, transfer length = 128KB, max
+	// transfer length = 6500 bytes, # of fragments expected = 21 (20 with 6496
+	// bytes each + 1 with 1152 bytes).
+	TDmaTransferArgs transferArgs3(0, size, size, KDmaMemAddr, KDmaSyncAuto, 0, KDmaAddrModePostIncrement, 32);
+	const TRequestResults requestResult3(KErrNone, 21);
+	const TResultSet expectedResults3(KErrNone, requestResult3, KErrNone, threadCallback);
+	CSingleTransferTest test3(_L("Fragmentation Count - 21 fragments"),
+							  1, transferArgs3, expectedResults3, 6500);
+	TTestCase testCase3(new (ELeave) CMultiVersionTest(&test3), EFalse);
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2584,KBASE-DMA-2585
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    DMA Benchmark tests
+//! TestCaseID      KBASE-DMA-2584,KBASE-DMA-2585
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    DMA Benchmark tests
+//!					To compare the speed of request fragmentation for a given transfer
+//!					between the new and old frameworks on the NaviEngine platform.
+//! TestActions     
+//!				1.	Fragment a memory to memory dma transfer of 4Mb, where both source and destination are physically contiguous. 
+//!				2.	Fragment using the default element size, and also with a 4K limit.
+//!				3.	Carry out for a channel using pseudo descriptors and for a scatter gather channel.
 //!
-//! @SYMTestActions     
-//!						1.
-//!						2.	
+//! TestExpectedResults 
+//!				 The results obtained for both framework versions should  be comparable.							
 //!
-//!
-//! @SYMTestExpectedResults 
-//!						1.  
-//!						2.		
-//!							
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //-----------------------------------------------------------------------------------------------
 namespace Benchmark
 	{
@@ -489,8 +596,8 @@ namespace Benchmark
 		const TInt size = 1 * KMega;
 		TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr);
 
-		TTestCase testCase_256k(new (ELeave) CDmaBmFragmentation(_L("1 Mb transfer - 256k frag size"), bmIters, transferArgs, 256 * KKilo), EFalse);
-		TTestCase testCase_8k(new (ELeave) CDmaBmFragmentation(_L("1 Mb transfer - 8k frag size"), bmIters, transferArgs, 8 * KKilo), EFalse);
+		TTestCase testCase_256K(new (ELeave) CDmaBmFragmentation(_L("1 MB transfer - 256K frag size"), bmIters, transferArgs, 256 * KKilo), EFalse);
+		TTestCase testCase_8K(new (ELeave) CDmaBmFragmentation(_L("1 MB transfer - 8K frag size"), bmIters, transferArgs, 8 * KKilo), EFalse);
 		}
 
 	namespace Transfer
@@ -509,16 +616,16 @@ namespace Benchmark
 			TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr);
 
 			TTestCase testCase_128(new (ELeave) CDmaBmTransfer(_L("128 K - 128K frag size"), bmIters, transferArgs, 128 * KKilo), EFalse);
-			TTestCase testCase_16(new (ELeave) CDmaBmTransfer(_L("128 K - 16k frag size"), bmIters, transferArgs, 16 * KKilo), EFalse);
-			TTestCase testCase_4(new (ELeave) CDmaBmTransfer(_L("128 K - 4k frag size"), bmIters, transferArgs, 4 * KKilo), EFalse);
-			TTestCase testCase_1(new (ELeave) CDmaBmTransfer(_L("128 K - 1k frag size"), bmIters, transferArgs, 1 * KKilo), EFalse);
+			TTestCase testCase_16(new (ELeave) CDmaBmTransfer(_L("128 K - 16K frag size"), bmIters, transferArgs, 16 * KKilo), EFalse);
+			TTestCase testCase_4(new (ELeave) CDmaBmTransfer(_L("128 K - 4K frag size"), bmIters, transferArgs, 4 * KKilo), EFalse);
+			TTestCase testCase_1(new (ELeave) CDmaBmTransfer(_L("128 K - 1K frag size"), bmIters, transferArgs, 1 * KKilo), EFalse);
 			}
-		namespace _4Mb
+		namespace _4MB
 			{
 			const TInt size = 4 * KMega;
 			TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr);
 
-			CDmaBmTransfer bmTest(_L("4 Mb"), bmIters, transferArgs, 0);
+			CDmaBmTransfer bmTest(_L("4 MB"), bmIters, transferArgs, 0);
 			TTestCase testCase(&bmTest, EFalse);
 			}
 		}
@@ -544,7 +651,7 @@ namespace Benchmark
 				CDmaBmTransfer bmTest = CDmaBmTransfer(_L("4 bytes DFC cb"), iterations, transferArgs, 0).
 					UseNewDmaApi(ETrue).
 					ExpectedResults(expected);
-				TTestCase testCase(&bmTest, EFalse);
+				TTestCase testCase(&bmTest, EFalse, capAboveV1);
 				}
 			namespace _4K
 				{
@@ -553,7 +660,7 @@ namespace Benchmark
 				CDmaBmTransfer bmTest = CDmaBmTransfer(_L("4K DFC cb"), iterations, transferArgs, 0).
 					UseNewDmaApi(ETrue).
 					ExpectedResults(expected);
-				TTestCase testCase(&bmTest, EFalse);
+				TTestCase testCase(&bmTest, EFalse, capAboveV1);
 				}
 			}
 
@@ -569,7 +676,7 @@ namespace Benchmark
 				CDmaBmTransfer bmTest = CDmaBmTransfer(_L("4 bytes Isr cb"), iterations, transferArgs, 0).
 					UseNewDmaApi(ETrue).
 					ExpectedResults(expected);
-				TTestCase testCase(&bmTest, EFalse);
+				TTestCase testCase(&bmTest, EFalse, capAboveV1);
 				}
 			namespace _4K
 				{
@@ -578,20 +685,21 @@ namespace Benchmark
 				CDmaBmTransfer bmTest = CDmaBmTransfer(_L("4K Isr cb"), iterations, transferArgs, 0).
 					UseNewDmaApi(ETrue).
 					ExpectedResults(expected);
-				TTestCase testCase(&bmTest, EFalse);
+				TTestCase testCase(&bmTest, EFalse, capAboveV1);
 				}
 			}
 		}
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2560
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleFragment using CSingleTransferTest
+//! TestCaseID      KBASE-DMA-2560
+//! TestCaseID      KBASE-DMA-2561
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Test new & old style fragment using CSingleTransferTest
 //!						Test Scenario 1 - DstAddr > SrcAddr & TransferSize=32K & Location is 
 //!						address of a memory buffer
-//! @SYMTestActions     
+//! TestActions     
 //!						1.	Set up the arguments for aTransfeArgs using the settings below.
 //!							
 //!							SrcAddr		 = 4 * KKilo;
@@ -602,15 +710,15 @@ namespace Benchmark
 //!						2.	Setup expected result.
 //!						3.	Create single transfer test and run test
 //!
-//! @SYMTestExpectedResults 
+//! TestExpectedResults 
 //!						1.  TransfeArgs set up in DMA framework
 //!						2.	Expected results set up in DMA framework					
 //!						3.	Fragment request completes and KErrNone returned
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
-namespace TestNewStyleFragment_1
+namespace Fragment_1
 	{	
 	const TInt srcAddr = 4 * KKilo;
 	const TInt desAddr = 64 * KKilo;
@@ -622,59 +730,18 @@ namespace TestNewStyleFragment_1
 	const TRequestResults requestResult(KErrNone, 32); 
 	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
 
-	CSingleTransferTest testscenario_1(_L("TestNewStyleFragment - Test Scenario 1"), 1, transferArgs, expectedResults,KKilo);
+	CMultiVersionTest multiVersion(new (ELeave) CSingleTransferTest(_L("Fragment - Scenario 1"), 1, transferArgs, expectedResults,KKilo));
 
-	TTestCase testCase(&testscenario_1, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_1, ETrue, capAboveV1);
+	TTestCase testCase(&multiVersion, EFalse);
+	TTestCase testCaseConcurrent(&multiVersion, ETrue);
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2560
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleFragment using CSingleTransferTest
-//!						Test Scenario 2 -  SrcAddr	== DstAddr   					
-//!		
-//!						1.	Set up the arguments for aTransfeArgs using the settings below.
-//!							
-//!							SrcAddr	 = 4 * KKilo;
-//!							desAddr	 = 4 * KKilo;
-//!							transferSize = 32 * KKilo;	
-//!							iFlags		 = KDmaMemAddr;
-//!
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework					
-//!						3.	Fragment passes and KErrNone returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace TestNewStyleFragment_2
-	{
-	const TInt srcAddr = 4 * KKilo;
-	const TInt desAddr = 4 * KKilo;
-	const TInt transferSize =  32 * KKilo;
-
-	TDmaTransferArgs transferArgs(srcAddr,desAddr, transferSize, KDmaMemAddr);
-	const TRequestResults requestResult(KErrNone, 32); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_2(_L("TestNewStyleFragment - Test Scenario 2"), 1, transferArgs, expectedResults,KKilo);
-
-	TTestCase testCase(&testscenario_2, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_2, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2560
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleFragment using CSingleTransferTest
+//! TestCaseID      KBASE-DMA-2560
+//! TestCaseID      KBASE-DMA-2561
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Test new & old style fragment using CSingleTransferTest
 //!						Test Scenario 3 -  TransferSize=0   
 //!
 //!						1.	Set up the arguments for aTransfeArgs using the settings below.
@@ -688,36 +755,38 @@ namespace TestNewStyleFragment_2
 //!						3.	Create single transfer test and run test
 //!
 //!
-//! @SYMTestExpectedResults 
+//! TestExpectedResults 
 //!
 //!						1.  TransfeArgs set up in DMA framework
 //!						2.	Expected results set up in DMA framework			
 //!						3.	Fragment request fails and KErrArgument returned
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
-namespace TestNewStyleFragment_3
+namespace Fragment_2
 	{
 	const TInt srcAddr = 32 * KKilo;
 	const TInt desAddr = 64 * KKilo;
 	const TInt transferSize = 0;
 	
 	TDmaTransferArgs transferArgs( srcAddr, desAddr, transferSize,KDmaMemAddr);
-	const TRequestResults requestResult(KErrArgument, 0); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
+	const TRequestResults requestResult(KErrNone, 0, KErrArgument, KErrUnknown); 
+	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, TCallbackRecord::Empty());
 
-	CSingleTransferTest testscenario_3(_L("TestNewStyleFragment - Test Scenario 3"), 1, transferArgs, expectedResults);
 
-	TTestCase testCase(&testscenario_3, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_3, ETrue, capAboveV1);
+	CMultiVersionTest multiVersion(new (ELeave) CSingleTransferTest(_L("Fragment - Scenario 3"), 1, transferArgs, expectedResults));
+
+	TTestCase testCase(&multiVersion, EFalse);
+	TTestCase testCaseConcurrent(&multiVersion, ETrue);
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2560
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleFragment using CSingleTransferTest
+//! TestCaseID      KBASE-DMA-2560
+//! TestCaseID      KBASE-DMA-2561
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Test new & old style fragment using CSingleTransferTest
 //!						Test Scenario 4 -  TransferSize=1Byte   
 //!
 //!						1.	Set up the arguments for aTransfeArgs using the settings below.
@@ -730,16 +799,16 @@ namespace TestNewStyleFragment_3
 //!						2.	Setup expected result.
 //!						3.	Create single transfer test and run test
 //!
-//! @SYMTestExpectedResults 
+//! TestExpectedResults 
 //!
 //!						1.  TransfeArgs set up in DMA framework
 //!						2.	Expected results set up in DMA framework			
 //!						3.	Fragment request completes and KErrNone returned
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
-namespace TestNewStyleFragment_4
+namespace Fragment_3
 	{	
 	const TInt srcAddr = 32 * KKilo;
 	const TInt desAddr = 64 * KKilo;
@@ -749,17 +818,18 @@ namespace TestNewStyleFragment_4
 	const TRequestResults requestResult(KErrNone, 1);
 	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
 
-	CSingleTransferTest testscenario_4(_L("TestNewStyleFragment - Test Scenario 4"), 1, transferArgs, expectedResults);
+	CMultiVersionTest multiVersion(new (ELeave) CSingleTransferTest(_L("Fragment - Scenario 4"), 1, transferArgs, expectedResults));
 
-	TTestCase testCase(&testscenario_4, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_4, ETrue, capAboveV1);
+	TTestCase testCase(&multiVersion, EFalse);
+	TTestCase testCaseConcurrent(&multiVersion, ETrue);
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2560
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleFragment using CSingleTransferTest
+//! TestCaseID      KBASE-DMA-2560
+//! TestCaseID      KBASE-DMA-2561
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Test new & old style fragment using CSingleTransferTest
 //!						Test Scenario 5 -  TransferSize=128KB    
 //!
 //!						1.	Set up the arguments for aTransfeArgs using the settings below.
@@ -772,18 +842,17 @@ namespace TestNewStyleFragment_4
 //!						2.	Setup expected result.
 //!						3.	Create single transfer test and run test
 //!
-//! @SYMTestExpectedResults 
+//! TestExpectedResults 
 //!
 //!						1.  TransfeArgs set up in DMA framework
 //!						2.	Expected results set up in DMA framework			
 //!						3.	Fragment request completes and KErrNone returned
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
-namespace TestNewStyleFragment_5
+namespace Fragment_4
 	{
-	
 	const TInt srcAddr		= 16 * KKilo;
 	const TInt desAddr		= 2 * KMega;	
 	const TInt transferSize = 1 * KMega;
@@ -792,17 +861,18 @@ namespace TestNewStyleFragment_5
 	const TRequestResults requestResult(KErrNone); 
 	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
 
-	CSingleTransferTest testscenario_5(_L("TestNewStyleFragment - Test Scenario 5"), 1, transferArgs, expectedResults);
+	CMultiVersionTest multiVersion(new (ELeave) CSingleTransferTest(_L("Fragment - Scenario 5"), 1, transferArgs, expectedResults));
 
-	TTestCase testCase(&testscenario_5, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_5, ETrue, capAboveV1);
+	TTestCase testCase(&multiVersion, EFalse);
+	TTestCase testCaseConcurrent(&multiVersion, ETrue);
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2560
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleFragment using CSingleTransferTest
+//! TestCaseID      KBASE-DMA-2560
+//! TestCaseID      KBASE-DMA-2561
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Test new & old style fragment using CSingleTransferTest
 //!						Test Scenario 6 -  TransferSize=3MB   
 //!
 //!						1.	Set up the arguments for aTransfeArgs using the settings below.
@@ -815,451 +885,122 @@ namespace TestNewStyleFragment_5
 //!						2.	Setup expected result.
 //!						3.	Create single transfer test and run test
 //!
-//! @SYMTestExpectedResults 
+//! TestExpectedResults 
 //!
 //!						1.  TransfeArgs set up in DMA framework
 //!						2.	Expected results set up in DMA framework			
 //!						3.	Fragment request completes and KErrNone returned
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
-namespace TestNewStyleFragment_6
+namespace Fragment_5
 	{
 	const TInt srcAddr = 16 * KKilo;
 	const TInt desAddr = 4 * KMega;
 	const TInt transferSize = 3 * KMega;
 
 	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize, KDmaMemAddr);
-	const TRequestResults requestResult(KErrNone); 
+	const TRequestResults requestResult(KErrNone);
 	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
 
-	CSingleTransferTest testscenario_6(_L("TestNewStyleFragment - Test Scenario 6"), 1, transferArgs, expectedResults);
+	CMultiVersionTest multiVersion(new (ELeave) CSingleTransferTest(_L("Fragment - Scenario 6"), 1, transferArgs, expectedResults));
 
-	TTestCase testCase(&testscenario_6, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_6, ETrue, capAboveV1);
+	TTestCase testCase(&multiVersion, EFalse);
+	TTestCase testCaseConcurrent(&multiVersion, ETrue);
 	}
 
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2561
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldstyleFragment using CSingleTransferTest
-//!						Test Scenario 1 - DstAddr > SrcAddr & TransferSize=32K & Location is 
-//!						address of a memory buffer
-//!
-//!						1.	Set up the arguments for aTransfeArgs using the settings below.
-//!							
-//!							SrcAddr		 = 4 * KKilo;
-//!							desAddr		 = 64 * KKilo;
-//!							transferSize = 32 * KKilo;	
-//!							iFlags		 = KDmaMemAddr;
 
+//----------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2562
+//! TestCaseID      KBASE-DMA-2563
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Test new and old style DDmaRequest using CSingleTransferTest
+//!						Test Scenario 1 -  aMaxTransferSize=0
+//!
+//!						1.	Set up the DDmaRequest using  aMaxTransferSize set to 0.
 //!						2.	Setup expected result.
 //!						3.	Create single transfer test and run test
 //!
-//! @SYMTestExpectedResults 
+//! TestExpectedResults
 //!
 //!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework					
-//!						3.	Fragment request completes and KErrNone returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace TestOldStyleFragment_1
-	{	
-	const TInt srcAddr = 4 * KKilo;
-	const TInt desAddr = 64 * KKilo;
-	const TInt transferSize =  32 * KKilo;
-	
-	TDmaTransferArgs transferArgs( srcAddr, desAddr, transferSize, KDmaMemAddr);
-
-	const TRequestResults requestResult(KErrNone,32); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_1 = CSingleTransferTest(_L("TestOldStyleFragment - Test Scenario 1"), 1, transferArgs, expectedResults,KKilo).
-		UseNewDmaApi(EFalse);
-
-	TTestCase testCase(&testscenario_1, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_1, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2561
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldstyleFragment using CSingleTransferTest
-//!						Test Scenario 2 - DstAddr == SrcAddr
-//!
-//!						1.	Set up the arguments for aTransfeArgs using the settings below.
-//!							
-//!							SrcAddr	 = 4 * KKilo;
-//!							desAddr	 = 4 * KKilo;
-//!							transferSize = 4 * KKilo
-//!							iFlags		 = KDmaMemAddr;
-//!
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
-//!						3.	Fragment passes and KErrNone returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace TestOldStyleFragment_2
-	{
-	const TInt srcAddr = 4 * KKilo;
-	const TInt desAddr = 4 * KKilo;
-	const TInt transferSize =  4 * KKilo;
-
-	TDmaTransferArgs transferArgs(srcAddr,desAddr, transferSize, KDmaMemAddr);
-	const TRequestResults requestResult(KErrNone, 4);  
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_2 = CSingleTransferTest(_L("TestOldStyleFragment - Test Scenario 2"), 1, transferArgs, expectedResults,KKilo)
-		.UseNewDmaApi(EFalse);
-
-	TTestCase testCase(&testscenario_2, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_2, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2561
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldstyleFragment using CSingleTransferTest
-//!						Test Scenario 3 -  TransferSize=0  
-//!
-//!						1.	Set up the arguments for aTransfeArgs using the settings below.
-//!							
-//!							SrcAddr	 = 32K
-//!							desAddr	 = 64K;
-//!							transferSize = 0
-//!							iFlags		 = KDmaMemAddr;
-//!
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
-//!						3.	Fragment request Fails and KErrArgument returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace TestOldStyleFragment_3
-	{
-
-	const TInt srcAddr = 32 * KKilo;
-	const TInt desAddr = 64 * KKilo;
-	const TInt transferSize = 0;
-	
-	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize,KDmaMemAddr);
-	const TRequestResults requestResult(KErrArgument, 0); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_3 = CSingleTransferTest(_L("TestOldStyleFragment - Test Scenario 3"), 1, transferArgs, expectedResults).
-		UseNewDmaApi(EFalse);
-
-	TTestCase testCase(&testscenario_3, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_3, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2561
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldstyleFragment using CSingleTransferTest
-//!						Test Scenario 4 -  TransferSize=1Byte   
-//!
-//!						1.	Set up the arguments for aTransfeArgs using the settings below.
-//!							
-//!	
-//!							SrcAddr		 = 32K;
-//!							desAddr		 = 64K;
-//!							transferSize = 1 byte	
-//!							iFlags		 = KDmaMemAddr;
-//!
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
-//!						3.	Fragment request completes and KErrNone returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//------------------------------------------------------------------------------------------------
-namespace TestOldStyleFragment_4
-	{	
-	const TInt srcAddr = 32 * KKilo;
-	const TInt desAddr = 64 * KKilo;
-	const TInt transferSize = 1;
-	
-	TDmaTransferArgs transferArgs( srcAddr, desAddr, transferSize, KDmaMemAddr);
-	const TRequestResults requestResult(KErrNone, 1); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_4 = CSingleTransferTest(_L("TestOldStyleFragment - Test Scenario 4"), 1, transferArgs, expectedResults).
-		UseNewDmaApi(EFalse);
-
-	TTestCase testCase(&testscenario_4, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_4, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2561
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldstyleFragment using CSingleTransferTest
-//!						Test Scenario 5 -  TransferSize=1MB
-//!
-//!						1.	Set up the arguments for aTransfeArgs using the settings below.
-//!							
-//!							SrcAddr		 = 16K;
-//!							desAddr		 = 2MB;
-//!							transferSize = 1MB	
-//!							iFlags		 = KDmaMemAddr;
-//!
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
-//!						3.	Fragment request completes and KErrNone returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace TestOldStyleFragment_5
-	{
-	const TInt srcAddr = 16 * KKilo;	
-	const TInt desAddr = 2 * KMega;
-	const TInt transferSize = 1 *  KMega;
-
-	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize, KDmaMemAddr);
-
-	const TRequestResults requestResult(KErrNone); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_5 = CSingleTransferTest(_L("TestOldStyleFragment - Test Scenario 5"), 1, transferArgs, expectedResults).
-		UseNewDmaApi(EFalse);
-
-	TTestCase testCase(&testscenario_5, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_5, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2561
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldstyleFragment using CSingleTransferTest
-//!						Test Scenario 6 -  TransferSize=3MB     
-//!
-//!						1.	Set up the arguments for aTransfeArgs using the settings below.
-//!							
-//!							SrcAddr	 = 16K
-//!							desAddr	 = 4MB;
-//!							transferSize = 3MB  
-//!							iFlags		 = KDmaMemAddr;
-//!
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
-//!						3.	Fragment request completes and KErrNone returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace TestOldStyleFragment_6
-	{
-	const TInt srcAddr = 16 * KKilo;
-	const TInt desAddr = 4 * KMega;
-	const TInt transferSize = 3 * KMega; 
-	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize, KDmaMemAddr);
-
-	const TRequestResults requestResult(KErrNone); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_6 = CSingleTransferTest(_L("TestOldStyleFragment - Test Scenario 6"), 1, transferArgs, expectedResults).
-		UseNewDmaApi(EFalse);
-
-	TTestCase testCase(&testscenario_6, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_6, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2562
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldStyleDDmaRequest using CSingleTransferTest
-//!						Test Scenario 1 -  aMaxTransferSize=0 
-//!
-//!						1.	Set up the DDmaRequest using  aMaxTransferSize set to 0. 
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
+//!						2.	Expected results set up in DMA framework
 //!						3.	DDmaRequest constructor behaves as expected and KErrArgument returned
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //------------------------------------------------------------------------------------------------
-namespace TestOldStyleDDmaRequest_1
+namespace DDmaRequest_1
 	{
 	const TInt desAddr = 4 * KKilo;
 	const TInt transferSize = 4 * KKilo;
 	TDmaTransferArgs transferArgs(0, desAddr, transferSize, KDmaMemAddr);
 
-	const TRequestResults requestResult(KErrNone, 0); 
+	const TRequestResults requestResult(KErrNone, 0);
 	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
 
-	CSingleTransferTest testscenario_1 = CSingleTransferTest(_L("TestOldStyleDDmaRequest - Test Scenario 1"), 1, transferArgs, expectedResults,0).
-		UseNewDmaApi(EFalse);
+	CMultiVersionTest multiVersion(new (ELeave) CSingleTransferTest(_L("DDmaRequest - Scenario 1"), 1, transferArgs, expectedResults,0));
 
-	TTestCase testCase(&testscenario_1, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_1, ETrue, capAboveV1);
+	TTestCase testCase(&multiVersion, EFalse);
+	TTestCase testCaseConcurrent(&multiVersion, ETrue);
 	}
 
 //!-------------------------------------------------------------------------------------------------
-//! @SYMTestCaseID       KBASE-DMA-2562
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestOldStyleDDmaRequest using CSingleTransferTest
-//!						Test Scenario 2 -  aMaxTransferSize= 65535   
+//! TestCaseID      KBASE-DMA-2562
+//! TestCaseID      KBASE-DMA-2563
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    Test new and old style DDmaRequest using CSingleTransferTest
+//!						Test Scenario 2 -  aMaxTransferSize= (64K - 1)   // 65535
 //!
-//!						1.	Set up the arguments for DDmaRequest using aMaxTransferSize set to 65535.
+//!						1.	Set up the arguments for DDmaRequest using aMaxTransferSize set to (64K - 1).
 //!						2.	Setup expected result.
 //!						3.	Create single transfer test and run test
 //!
-//! @SYMTestExpectedResults 
+//! TestExpectedResults
 //!
 //!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
+//!						2.	Expected results set up in DMA framework
 //!						3.	DDmaRequest constructor behaves as expected and KErrArgument returned
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //---------------------------------------------------------------------------------------------------
-namespace TestOldStyleDDmaRequest_2
+namespace DDmaRequest_2
 	{
 	const TInt desAddr = 4 * KKilo;
 	const TInt transferSize = 4 * KKilo;
 	TDmaTransferArgs transferArgs(0, desAddr, transferSize, KDmaMemAddr);
 
-	const TRequestResults requestResult(KErrNone, 1); 
+	const TRequestResults requestResult(KErrNone, 1);
 	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
 
-	CSingleTransferTest testscenario_2 = CSingleTransferTest(_L("TestOldStyleDDmaRequest - Test Scenario 2"), 1, transferArgs, expectedResults, 65535).
-		UseNewDmaApi(EFalse);
+	CMultiVersionTest multiVersion(new (ELeave) CSingleTransferTest(_L("DDmaRequest - Scenario 2"), 1, transferArgs, expectedResults, trans64K_1));
 
-	TTestCase testCase(&testscenario_2, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_2, ETrue, capAboveV1);
+	TTestCase testCase(&multiVersion, EFalse);
+	TTestCase testCaseConcurrent(&multiVersion, ETrue);
 	}
 
 //----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2563
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleDDmaRequest using CSingleTransferTest
-//!						Test Scenario 1 -  aMaxTransferSize=0 
-//!
-//!						1.	Set up the DDmaRequest using  aMaxTransferSize set to 0. 
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
-//!						3.	DDmaRequest constructor behaves as expected and KErrArgument returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//----------------------------------------------------------------------------------------------
-namespace TestNewStyleDDmaRequest_1
-	{
-	const TInt desAddr = 4 * KKilo;
-	const TInt transferSize = 4 * KKilo;
-	TDmaTransferArgs transferArgs(0, desAddr, transferSize, KDmaMemAddr);
-
-	const TRequestResults requestResult(KErrNone, 0); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_1(_L("TestNewStyleDDmaRequest - Test Scenario 1"), 1, transferArgs, expectedResults,0);
-
-	TTestCase testCase(&testscenario_1, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_1, ETrue, capAboveV1);
-	}
-
-//!-------------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      KBASE-DMA-2563
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    TestNewStyleDDmaRequest using CSingleTransferTest
-//!						Test Scenario 2 -  aMaxTransferSize= 65535   
-//!
-//!						1.	Set up the arguments for DDmaRequest using aMaxTransferSize set to 65535.
-//!						2.	Setup expected result.
-//!						3.	Create single transfer test and run test
-//!
-//! @SYMTestExpectedResults 
-//!
-//!						1.  TransfeArgs set up in DMA framework
-//!						2.	Expected results set up in DMA framework			
-//!						3.	DDmaRequest constructor behaves as expected and KErrArgument returned
-//!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
-//---------------------------------------------------------------------------------------------------
-namespace TestNewStyleDDmaRequest_2
-	{
-	const TInt desAddr = 4 * KKilo;
-	const TInt transferSize = 4 * KKilo;
-	TDmaTransferArgs transferArgs(0, desAddr, transferSize, KDmaMemAddr);
-
-	const TRequestResults requestResult(KErrNone, 1); 
-	const TResultSet expectedResults(KErrNone, requestResult, KErrNone, threadCallback);
-
-	CSingleTransferTest testscenario_2(_L("TestNewStyleDDmaRequest - Test Scenario 2"), 1, transferArgs, expectedResults, 65535);
-
-	TTestCase testCase(&testscenario_2, EFalse, capAboveV1);
-	TTestCase testCaseConcurrent(&testscenario_2, ETrue, capAboveV1);
-	}
-
-//----------------------------------------------------------------------------------------------
-//! @SYMTestCaseID      PBASE-DMA-FUNC-xxx
-//! @SYMTestType        CIT
-//! @SYMPREQ            REQ
-//! @SYMTestCaseDesc    SmallFrags: This test provokes the failure seen in DEF140598
+//! TestCaseID      KBASE-DMA-2585
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    SmallFrags: This test provokes the failure seen in DEF140598
 //!						The test checks that requests with small fragments
 //!						do not trigger a spurious missed interrupt clean up
 //!
-//! @SYMTestExpectedResults 
+//! TestActions     
+//!						1.	Open a DMA channel for a transfer.
+//!						2.	Create single transfer test using small frags and run test
 //!
-//!						1.  		
-//!						2.	
+//! TestExpectedResults 
+//!						1.  DMA channel opens and KErrNone returned.
+//!						2.	DMA transfer completes with no errors.
 //!
-//! @SYMTestPriority        High
-//! @SYMTestStatus          Implemented
+//! TestPriority        High
+//! TestStatus          Implemented
 //----------------------------------------------------------------------------------------------
 namespace SmallFrags
 	{
@@ -1269,19 +1010,205 @@ namespace SmallFrags
 	const TResultSet expectedResults(threadCallback);
 
 	TTestCase testCase(
-			new (ELeave) CSingleTransferTest(_L("8 * 4byte frags"), 10, transferArgs, expectedResults, 4),
-			EFalse, capAboveV1);
+			new (ELeave) CMultiVersionTest(new (ELeave) CSingleTransferTest(_L("8 * 4byte frags"), 10, transferArgs, expectedResults, 4)),
+			EFalse);
+	}
+
+//----------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2568
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test checks the correct behaviour of Close API in the new DMA framework
+//!
+//! TestActions     
+//!						1.  Open a DMA channel
+//!						2.	Open DMA Channel again
+//!						3	Close the DMA channel.
+//!						4	Open DMA channel to verify that the DMA channel closed.						
+//!
+//! TestExpectedResults 
+//!						1.  DMA channel opens and KErrNone returned.
+//!						2.	DMA Framework returns KErrInUse as channel is already open.					
+//!						3.	DMA channel closes and KErrNone returned.
+//!						4.	DMA channel opens and KErrNone returned.						
+//!							
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace CloseApiTest
+	{
+	COpenCloseTest testCloseApi = COpenCloseTest(_L("Close API Test"), 1).RunOpenApiTest(EFalse); 
+	TTestCase testCaseCloseApi(&testCloseApi, EFalse, capAboveV1);
+	}
+
+//----------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2564
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test checks the correct behaviour of Open API in the new DMA framework
+//!
+//! TestActions     
+//!						1.  Open a DMA channel
+//!						2.	Verify that channel is really open by closing DMA channel
+//!
+//! TestExpectedResults 
+//!						1.  DMA channel opens and KErrNone returned
+//!						2.  DMA channel closes again returns KErrNone.
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace OpenApiTest
+	{
+	COpenCloseTest testOpenApi = COpenCloseTest(_L("Open API Test"), 1).RunOpenApiTest(ETrue); 
+	TTestCase testCaseOpenApi(&testOpenApi, EFalse, capAboveV1);
+	}
+
+//----------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2567
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test verifies the correct behavior of TBool IsQueueEmpty() in the new DMA 
+//!					framework and check its return value 
+//!
+//! TestActions     
+//!						1.	Open a single DMA channel for a transfer.
+//!						2.	Setup a DMA request and Fragment the request.
+//!						3.	Call IsQueueEmpty().
+//!						4.	Queue the DMA request.
+//!						5.	Call IsQueueEmpty().
+//! TestExpectedResults 
+//!						1.  DMA channel opens and KErrNone returned.
+//!						2.  DMA request created and fragmented and KErrNone returned.
+//!						3.  IsQueueEmpty() returns ETrue.
+//!						4.  Request queued and KErrNone returned
+//!						5.	IsQueueEmpty() returns EFalse.
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace IsQueueEmptyTest
+	{
+	const TInt size = 2 * KMega;
+	const TDmaTransferArgs transferArgArray[] = {
+		TDmaTransferArgs(0, size, size, KDmaMemAddr),
+		TDmaTransferArgs(2 * size, 3 * size, size, KDmaMemAddr)
+	};
+
+	const TResultSet expected[] =
+		{
+		TResultSet(),
+		TResultSet()
+		};
+	const TResultSet expectedResults(isrCallback);
+
+	CIsQueueEmptyTest isQueueEmpty =
+		CIsQueueEmptyTest(_L("IsQueueEmptyTest using muliple frags"), 1, transferArgArray, expected, ARRAY_LENGTH(transferArgArray))
+			.SetPreTransferTest(&KPreTransferIncrBytes)
+			.SetPostTransferTest(&KCompareSrcDst);
+
+	TTestCase testCase(&isQueueEmpty,EFalse,capAboveV1,pauseRequired_skip);
 	}
 
 
-//TODO TTestCase could automatically be added to aray by ctor
-//
+static TTestCase* StaticSimpleTestArray[] = {
+	&Simple_1::testCase,
+	&Simple_1::testCaseConcurrent,
+};
+
+static TTestCase* StaticCallbackTestArray[] = {
+	&Callback::testCase,
+	&Callback::testCaseOldRequest,	
+};
+
+static TTestCase* StaticIsrRequeTestArray[] = {
+	&ISR_Reque::endOnRedo::testCase,
+	&ISR_Reque::endOnIsrCb::testCase,
+	&ISR_Reque::endOnThreadCb::testCase,
+	&ISR_Reque::changeSize::testCase,
+#ifdef _DEBUG
+	&ISR_Reque::invalidAddresses::testCase, // addresses only checked in UDEB
+#endif
+#ifdef _REMOVEDTEST
+	// This test case is currently caught by a FAULT instead of a return code
+	// as expected. Currently, the facility to return an error code to the test
+	// framework is not yet supported.
+	&ISR_Reque::multipleFragments::testCase, 
+#endif
+};
+
+static TTestCase* StaticMultipartTestArray[] = {
+	&Multipart::testCase,
+};
+
+static TTestCase* StaticIsrAndDfcTestArray[] = {
+	&IsrAndDfc::DfcBeforeIsr::testCase,
+	&IsrAndDfc::IsrBeforeDfc::testCase,
+};
+
+static TTestCase* Static2DTestArray[] = {
+	&_2D_Test::testCase2d
+};
+
+static TTestCase* StaticFragmentTestArray[] = {
+	&FragmentationCount::testCase,
+	&FragmentationCount::testCase2,
+	&SmallFrags::testCase,
+	&Fragment_1::testCase,
+	&Fragment_1::testCaseConcurrent,
+	&Fragment_2::testCase,
+	&Fragment_2::testCaseConcurrent,
+	&Fragment_3::testCase,
+	&Fragment_3::testCaseConcurrent,
+	&Fragment_4::testCase,
+	&Fragment_4::testCaseConcurrent,
+	&Fragment_5::testCase,
+	&Fragment_5::testCaseConcurrent,
+};
+
+static TTestCase* StaticBenchmarkTestArray[] = {
+	// Benchmarks are only really meaningful
+	// on UREL builds
+	&Benchmark::Frag::testCase_256K,
+	&Benchmark::Frag::testCase_8K,
+	&Benchmark::Transfer::_128K::testCase_128,
+	&Benchmark::Transfer::_128K::testCase_16,
+	&Benchmark::Transfer::_128K::testCase_4,
+	&Benchmark::Transfer::_128K::testCase_1,
+	&Benchmark::Transfer::_4Bytes::testCase,
+	&Benchmark::Transfer::_4MB::testCase,
+	&Benchmark::CompareIsrDfcCb::Dfc::_4Bytes::testCase,
+	&Benchmark::CompareIsrDfcCb::Isr::_4Bytes::testCase,
+	&Benchmark::CompareIsrDfcCb::Dfc::_4K::testCase,
+	&Benchmark::CompareIsrDfcCb::Isr::_4K::testCase,
+};
+
+static TTestCase* StaticRequestTestArray[] = {
+	&DDmaRequest_1::testCase,
+	&DDmaRequest_1::testCaseConcurrent,
+	&DDmaRequest_2::testCase,
+	&DDmaRequest_2::testCaseConcurrent,
+};
+
+static TTestCase* StaticChannelTestArray[] = {
+	&CloseApiTest::testCaseCloseApi,
+	&OpenApiTest::testCaseOpenApi,
+};
+
+static TTestCase* StaticSuspendTestArray[] = {
+	&PauseResumeApiTest::testCasePauseResume,  
+};
+
+static TTestCase* StaticQueueTestArray[] = {
+	&CancelAllTest::testCase, 
+	&IsQueueEmptyTest::testCase,	
+};
+
 //Append new test cases here
 static TTestCase* StaticTestArray[] = {
 	&Simple_1::testCase,
-	&Simple_1::testCaseConcurrent,
-	&Simple_2::testCase,
-	&Simple_2::testCaseConcurrent,
+	&Simple_1::testCaseConcurrent,	
 	&Callback::testCase,
 	&Callback::testCaseOldRequest,
 	&ISR_Reque::endOnRedo::testCase,
@@ -1291,62 +1218,67 @@ static TTestCase* StaticTestArray[] = {
 #ifdef _DEBUG
 	&ISR_Reque::invalidAddresses::testCase, // addresses only checked in UDEB
 #endif
-	//&ISR_Reque::multipleFragments::testCase, // This error condition is currently caught by a FAULT instead of a return code
+#ifdef _REMOVEDTEST
+	// This test case is currently caught by a FAULT instead of a return code
+	// as expected. Currently, the facility to return an error code to the test
+	// framework is not yet supported.
+	&ISR_Reque::multipleFragments::testCase, 
+#endif
 	&Multipart::testCase,
 	&IsrAndDfc::DfcBeforeIsr::testCase,
 	&IsrAndDfc::IsrBeforeDfc::testCase,
 	&_2D_Test::testCase2d,
 	&FragmentationCount::testCase,
 	&FragmentationCount::testCase2,
+	&FragmentationCount::testCase3,
 	&SmallFrags::testCase,
 #ifndef _DEBUG
 	// Benchmarks are only really meaningful
 	// on UREL builds
-	&Benchmark::Frag::testCase_256k,
-	&Benchmark::Frag::testCase_8k,
+	&Benchmark::Frag::testCase_256K,
+	&Benchmark::Frag::testCase_8K,
 	&Benchmark::Transfer::_128K::testCase_128,
 	&Benchmark::Transfer::_128K::testCase_16,
 	&Benchmark::Transfer::_128K::testCase_4,
 	&Benchmark::Transfer::_128K::testCase_1,
 	&Benchmark::Transfer::_4Bytes::testCase,
-	&Benchmark::Transfer::_4Mb::testCase,
+	&Benchmark::Transfer::_4MB::testCase,
 	&Benchmark::CompareIsrDfcCb::Dfc::_4Bytes::testCase,
 	&Benchmark::CompareIsrDfcCb::Isr::_4Bytes::testCase,
 	&Benchmark::CompareIsrDfcCb::Dfc::_4K::testCase,
 	&Benchmark::CompareIsrDfcCb::Isr::_4K::testCase,
 #endif
-	&TestNewStyleFragment_1::testCase,
-	&TestNewStyleFragment_1::testCaseConcurrent,
-	&TestNewStyleFragment_2::testCase,
-	&TestNewStyleFragment_2::testCaseConcurrent,
-	//&TestNewStyleFragment_3::testCase,
-	//&TestNewStyleFragment_3::testCaseConcurrent,
-	&TestNewStyleFragment_4::testCase,
-	&TestNewStyleFragment_4::testCaseConcurrent,
-	&TestNewStyleFragment_5::testCase,
-	&TestNewStyleFragment_5::testCaseConcurrent,
-	&TestNewStyleFragment_6::testCase,
-	&TestNewStyleFragment_6::testCaseConcurrent,
-	&TestOldStyleFragment_1::testCase,
-	&TestOldStyleFragment_1::testCaseConcurrent,
-	&TestOldStyleFragment_2::testCase,
-	&TestOldStyleFragment_2::testCaseConcurrent,
-	//&TestOldStyleFragment_3::testCase,
-	//&TestOldStyleFragment_3::testCaseConcurrent,
-	&TestOldStyleFragment_4::testCase,
-	&TestOldStyleFragment_4::testCaseConcurrent,
-	&TestOldStyleFragment_5::testCase,
-	&TestOldStyleFragment_5::testCaseConcurrent,
-	&TestOldStyleFragment_6::testCase,
-	&TestOldStyleFragment_6::testCaseConcurrent,
-	&TestOldStyleDDmaRequest_1::testCase,
-	&TestOldStyleDDmaRequest_1::testCaseConcurrent,
-	&TestOldStyleDDmaRequest_2::testCase,
-	&TestOldStyleDDmaRequest_2::testCaseConcurrent,
-	&TestNewStyleDDmaRequest_1::testCase,
-	&TestNewStyleDDmaRequest_1::testCaseConcurrent,
-	&TestNewStyleDDmaRequest_2::testCase,
-	&TestNewStyleDDmaRequest_2::testCaseConcurrent,
+	&Fragment_1::testCase,
+	&Fragment_1::testCaseConcurrent,
+	&Fragment_2::testCase,
+	&Fragment_2::testCaseConcurrent,
+	&Fragment_3::testCase,
+	&Fragment_3::testCaseConcurrent,
+	&Fragment_4::testCase,
+	&Fragment_4::testCaseConcurrent,
+	&Fragment_5::testCase,
+	&Fragment_5::testCaseConcurrent,	
+	&DDmaRequest_1::testCase,
+	&DDmaRequest_1::testCaseConcurrent,
+	&DDmaRequest_2::testCase,
+	&DDmaRequest_2::testCaseConcurrent,
+	&CloseApiTest::testCaseCloseApi,
+	&OpenApiTest::testCaseOpenApi,
+	&PauseResumeApiTest::testCasePauseResume,  
+	&CancelAllTest::testCase,
+	&IsQueueEmptyTest::testCase,	
 };
 
 RPointerArray<TTestCase> TestArray(StaticTestArray, ARRAY_LENGTH(StaticTestArray));
+RPointerArray<TTestCase> TestArrayIsrAndDfc(StaticIsrAndDfcTestArray, ARRAY_LENGTH(StaticIsrAndDfcTestArray));
+RPointerArray<TTestCase> TestArraySimple(StaticSimpleTestArray, ARRAY_LENGTH(StaticSimpleTestArray));
+RPointerArray<TTestCase> TestArrayQueue(StaticQueueTestArray, ARRAY_LENGTH(StaticQueueTestArray));
+RPointerArray<TTestCase> TestArrayChannel(StaticChannelTestArray, ARRAY_LENGTH(StaticChannelTestArray));
+RPointerArray<TTestCase> TestArraySuspend(StaticSuspendTestArray, ARRAY_LENGTH(StaticSuspendTestArray));
+RPointerArray<TTestCase> TestArrayFragment(StaticFragmentTestArray, ARRAY_LENGTH(StaticFragmentTestArray));
+RPointerArray<TTestCase> TestArrayBenchmark(StaticBenchmarkTestArray, ARRAY_LENGTH(StaticBenchmarkTestArray));
+RPointerArray<TTestCase> TestArray2DTest(Static2DTestArray, ARRAY_LENGTH(Static2DTestArray));
+RPointerArray<TTestCase> TestArrayMultiPart(StaticMultipartTestArray, ARRAY_LENGTH(StaticMultipartTestArray));
+RPointerArray<TTestCase> TestArrayIsrReque(StaticIsrRequeTestArray, ARRAY_LENGTH(StaticIsrRequeTestArray));
+RPointerArray<TTestCase> TestArrayCallback(StaticCallbackTestArray, ARRAY_LENGTH(StaticCallbackTestArray));
+RPointerArray<TTestCase> TestArrayRequest(StaticRequestTestArray, ARRAY_LENGTH(StaticRequestTestArray));

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -88,23 +88,24 @@ private:
 class CTest : public CBase, public TFunctor
 	{
 public:
-	~CTest();
+	virtual ~CTest();
 
 	virtual void operator()();
 	virtual void RunTest() = 0;
 	virtual CTest* Clone() const = 0;
 
+	virtual void SetupL();
+
 	/**
 	Prints a formatted description of the test
 	*/
-	void Announce() const;
+	virtual void Announce() const;
 
 	const TDesC& Name() const;
 
 	/**
 	Should print the type of test, with no newlines.
 	eg. "Transfer", "Fragmentation"
-	TODO drop the function, just add a test type member
 	*/
 	virtual void PrintTestType() const = 0;
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -34,6 +34,8 @@ static inline TUint32 RequestFlags2SrcConfigFlags(TUint aFlags)
 	{
 	TUint32 flags = (aFlags & KDmaMemSrc) ? KDmaMemAddr : 0;
 	flags |= (aFlags & KDmaPhysAddrSrc) ? KDmaPhysAddr : 0;
+	if ((flags & KDmaMemAddr) && (flags & KDmaPhysAddr))
+		flags |= KDmaMemIsContiguous;
 	return flags;
 	}
 
@@ -41,6 +43,8 @@ static inline TUint32 RequestFlags2DstConfigFlags(TUint aFlags)
 	{
 	TUint32 flags = (aFlags & KDmaMemDest) ? KDmaMemAddr : 0;
 	flags |= (aFlags & KDmaPhysAddrDest) ? KDmaPhysAddr : 0;
+	if ((flags & KDmaMemAddr) && (flags & KDmaPhysAddr))
+		flags |= KDmaMemIsContiguous;
 	return flags;
 	}
 

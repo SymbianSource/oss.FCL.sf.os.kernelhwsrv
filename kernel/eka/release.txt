@@ -1,3 +1,12 @@
+Version 2.00.3075
+=================
+(Made by vfebvre 29/04/2010)
+
+1.	seolney
+	1.	REQ417-52838 Upgrade DMA API to support advanced addressing modes
+		PackageReleaseID=485812 FeaturePlanID=428985
+
+
 Version 2.00.3074
 =================
 (Made by vfebvre 28/04/2010)

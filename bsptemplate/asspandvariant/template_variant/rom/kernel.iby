@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of the License "Eclipse Public License v1.0"
@@ -30,7 +30,11 @@ variant[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_ECUST.DLL		\sy
 extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EXMONCOMMON.DLL \sys\bin\exmoncommon.dll
 extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EXMONDEBUG.DLL \sys\bin\exmondebug.dll
 extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_POWER.DLL		\sys\bin\power.dll
-extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_DMA.DLL		\sys\bin\DMA.DLL
+#ifdef SYMBIAN_USE_DMA_V2
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_DMA_V2.DLL		\sys\bin\dma.dll
+#else
+extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_DMA.DLL		\sys\bin\dma.dll
+#endif
 //
 // TO DO: (mandatory)
 //
@@ -46,7 +50,11 @@ file[VARID]=		\Epoc32\Release\##MAIN##\##BUILD##\_##VARIANT##_EKDATA.DLL		\sys\b
 extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EXYIN.DLL		\sys\bin\exyin.dll
 device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EUART.PDD		\sys\bin\euart.pdd
 // SYM_BRANCH: Delete old sound driver
+#ifdef SYMBIAN_USE_DMA_V2
+device[VARID]= 		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_SOUNDSC_V2.PDD		\sys\bin\soundsc.pdd
+#else
 device[VARID]= 		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_SOUNDSC.PDD    	\sys\bin\soundsc.pdd
+#endif
 extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\ELOCD.LDD					\sys\bin\elocd.ldd
 extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_MEDINT.PDD		\sys\bin\medint.pdd
 //extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_EPBUS.DLL		\sys\bin\epbus.dll
@@ -84,10 +92,15 @@ extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_USBCC.DLL		\s
 // Include optional test drivers for e32test
 
 // Include if platform supports the standard Symbian DMA framework
-//device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_dma.ldd					\sys\bin\d_dma.ldd
+#ifdef SYMBIAN_USE_DMA_V2
+device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_dma2.ldd					\sys\bin\d_dma2.ldd
+device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_dma_compat.ldd			\sys\bin\d_dma_compat.ldd
+#else
+device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_dma.ldd					\sys\bin\d_dma.ldd
+device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_dma2_compat.ldd			\sys\bin\d_dma2_compat.ldd
+#endif
 
 // Include if platform supports MMC
 //device[VARID]=		\epoc32\release\##KMAIN##\##BUILD##\d_medch.ldd					\sys\bin\d_medch.ldd
 
 #endif
-

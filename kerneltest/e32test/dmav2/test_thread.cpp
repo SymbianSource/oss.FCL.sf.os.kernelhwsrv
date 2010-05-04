@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -38,7 +38,6 @@ TTestThread::TTestThread(const TDesC& aName, TFunctor& aFunctor, TBool aAutoResu
 
 TTestThread::~TTestThread()
 	{
-	//RTest::CloseHandleAndWaitForDestruction(iThread);
 	iThread.Close();
 	}
 
@@ -90,6 +89,10 @@ CTest::~CTest()
 	iName.Close();
 	}
 
+void CTest::SetupL()
+	{
+	}
+
 void CTest::operator()()
 	{
 	for(TInt i=0; i<iIterations; i++)
@@ -139,7 +142,7 @@ void MultipleTestRun(RTest& test, const CTest& aTest, TInt aNumberOfThreads)
 
 	for(TInt i=0; i<aNumberOfThreads; i++)
 		{
-		//test.Next(_L("Create test thread"));
+		test.Next(_L("Create test thread"));
 		CTest* newTest = aTest.Clone();
 		test_NotNull(newTest);
 

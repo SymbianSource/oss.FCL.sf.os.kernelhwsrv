@@ -800,7 +800,7 @@ void TDmaChannel::DoDfc()
 		// If an error occurred it must have been reported on the last interrupt since transfers are
 		// suspended after an error.
 		DDmaRequest::TResult res = (count==0 && error) ? DDmaRequest::EError : DDmaRequest::EOk;
-		__DMA_ASSERTD(!iReqQ.IsEmpty());
+		__DMA_ASSERTA(!iReqQ.IsEmpty());
 		DDmaRequest* pCompletedReq = NULL;
 		DDmaRequest* pCurReq = _LOFF(iReqQ.First(), DDmaRequest, iLink);
 		DDmaRequest::TCallback cb = 0;

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -49,9 +49,32 @@ void RDmaSession::SelfTest()
 	Print(testInfo);
 	}
 
-	test.Next(_L("Channel open"));
+	// Self test just needs 1 channel
+	// The real test will test all available ones
+	test.Next(_L("Select test channel"));
+	TUint testChannel = 0;
+	if(testInfo.iMaxSbChannels > 0)
+		{
+		testChannel = testInfo.iSbChannels[0];
+		}
+	else if(testInfo.iMaxDbChannels > 0)
+		{
+		testChannel = testInfo.iDbChannels[0];
+		}
+	else if(testInfo.iMaxSgChannels > 0)
+		{
+		testChannel = testInfo.iSgChannels[0];
+		}
+	else
+		{
+		test.Printf(_L("Driver exposes no channels to test"));
+		test(EFalse);
+		}
+
+	test.Printf(_L("using PSL cookie %d (0x%08x)\n"), testChannel, testChannel);
+	test.Next(_L("Open channel"));
 	TUint channelCookie=0;
-	r = session.ChannelOpen(16, channelCookie);
+	r = session.ChannelOpen(testChannel, channelCookie);
 	test.Printf(_L("cookie recived = 0x%08x\n"), channelCookie);
 	test_KErrNone(r);
 
@@ -99,7 +122,7 @@ void RDmaSession::SelfTest()
 
 	test.Next(_L("Create Dma request - max fragment size 32K"));
 	TUint reqCookie=0;
-	r = session.RequestCreate(channelCookie, reqCookie, 32 * KKilo);
+	r = session.RequestCreateOld(channelCookie, reqCookie, 32 * KKilo);
 	test.Printf(_L("cookie recived = 0x%08x\n"), reqCookie);
 	test_KErrNone(r);
 
@@ -107,7 +130,7 @@ void RDmaSession::SelfTest()
 		{
 		test.Next(_L("Create Dma request (with new-style callback)"));
 		TUint reqCookieNewStyle=0;
-		r = session.RequestCreateNew(channelCookie, reqCookieNewStyle);
+		r = session.RequestCreate(channelCookie, reqCookieNewStyle);
 		test.Printf(_L("cookie recived = 0x%08x\n"), reqCookieNewStyle );
 		test_KErrNone(r);
 
@@ -271,50 +294,6 @@ const TDmacTestCaps KDmacTestCapsV2(KTestCapSet, 2);
 void TDmaCapability::SelfTest()
 	{
 	test.Start(_L("Unit test_Value of TDmaCapability::CompareToDmaCaps\n"));
-
-	{
-	test.Next(_L("ENone\n"));
-	TResult t = none.CompareToDmaCaps(KTestCapSet);
-	test_Value(t, t == ERun);
-	}
-
-	{
-	test.Next(_L("EChannelPauseAndResume - wanted\n"));
-	TResult t = pauseRequired.CompareToDmaCaps(KTestCapSet);
-	test_Value(t, t == EFail);
-	}
-	{
-	test.Next(_L("EChannelPauseAndResume - wanted - Allow skip\n"));
-	TResult t = pauseRequired_skip.CompareToDmaCaps(KTestCapSet);
-	test_Value(t, t == ESkip);
-	}
-	{
-	test.Next(_L("EChannelPauseAndResume - not wanted\n"));
-	TResult t = pauseNotWanted.CompareToDmaCaps(KTestCapSet);
-	test_Value(t, t == ERun);
-	}
-
-	{
-	test.Next(_L("EHwDescriptors - not wanted\n"));
-	TResult t = hwDesNotWanted.CompareToDmaCaps(KTestCapSet);
-	test_Value(t, t == EFail);
-	}
-
-	{
-	test.Next(_L("EHwDescriptors - not wanted - Allow skip\n"));
-	TResult t = hwDesNotWanted_skip.CompareToDmaCaps(KTestCapSet);
-	test_Value(t, t == ESkip);
-	}
-
-	{
-	test.Next(_L("EHwDescriptors - wanted\n"));
-	TResult t = hwDesWanted.CompareToDmaCaps(KTestCapSet);
-	test_Value(t, t == ERun);
-	}
-
-
-//TODO use this macro for the above tests
-
 // Note: The construction of the test description message
 // is horribly confusing. The _L macro will make the
 // *first* string token wide, but not the next two.
@@ -328,6 +307,13 @@ void TDmaCapability::SelfTest()
 	test_Equal(EXPCT, t);\
 	}
 
+	CAP_TEST(none, KTestCapSet, ERun);
+	CAP_TEST(pauseRequired, KTestCapSet, EFail);
+	CAP_TEST(pauseRequired_skip, KTestCapSet, ESkip);
+	CAP_TEST(pauseNotWanted, KTestCapSet, ERun);
+	CAP_TEST(hwDesNotWanted, KTestCapSet, EFail);	
+	CAP_TEST(hwDesNotWanted_skip, KTestCapSet, ESkip);
+	CAP_TEST(hwDesWanted, KTestCapSet, ERun);
 
 	CAP_TEST(capEqualV1, KDmacTestCapsV1, ERun);
 	CAP_TEST(capEqualV2, KDmacTestCapsV2, ERun);
@@ -345,56 +331,39 @@ void TDmaCapability::SelfTest()
 
 void TTestCase::SelfTest()
 	{
-	//TODO should use macros for these tests
 	test.Start(_L("Unit test of TTestCase::TestCaseValid\n"));
 
-	TTestCase testCase(NULL, EFalse, pauseRequired, hwDesNotWanted);
-	test.Next(_L("pauseRequired, hwDesNotWanted\n"));
-	TResult t = testCase.TestCaseValid(KTestCapSet);
-	test_Value(t, t == EFail);
+// Create a TTestCase with paramaters CAP1 and CAP2
+// call TTestCase::TestCaseValid against CAPSET
+// Expected result is EXPCT
+#define TEST_TEST_CASE(CAP1, CAP2, CAPSET, EXPCT)\
+	{\
+	test.Next(_L(#CAP1 L", " L ## #CAP2 L" -- Against: " L ## #CAPSET L", Expect: " L ## #EXPCT));\
+	TTestCase testCase(NULL, EFalse, CAP1, CAP2);\
+	testCase.iChannelCaps[0] = (CAP1);\
+	TResult t = testCase.TestCaseValid(CAPSET);\
+	test_Equal(EXPCT, t);\
+	}
 
-	test.Next(_L("pauseRequired_skip, hwDesNotWanted\n"));
-	testCase.iChannelCaps[0] = pauseRequired_skip;
-	t = testCase.TestCaseValid(KTestCapSet);
-	test_Value(t, t == EFail);
+	TEST_TEST_CASE(pauseRequired, hwDesNotWanted, KTestCapSet, EFail);
+	TEST_TEST_CASE(pauseRequired_skip, hwDesNotWanted, KTestCapSet, EFail);
+	TEST_TEST_CASE(pauseRequired_skip, hwDesNotWanted_skip, KTestCapSet, ESkip);
+	TEST_TEST_CASE(pauseNotWanted, hwDesNotWanted_skip, KTestCapSet, ESkip);
+	TEST_TEST_CASE(pauseNotWanted, hwDesWanted, KTestCapSet, ERun);
+    TEST_TEST_CASE(pauseNotWanted, none, KTestCapSet, ERun);
 
-	test.Next(_L("pauseRequired_skip, hwDesNotWanted_skip\n"));
-	testCase.iChannelCaps[1] = hwDesNotWanted_skip;
-	t = testCase.TestCaseValid(KTestCapSet);
-	test_Value(t, t == ESkip);
+	TEST_TEST_CASE(pauseNotWanted, capAboveV1, KDmacTestCapsV1, ESkip);
+	TEST_TEST_CASE(pauseNotWanted, capAboveV1, KDmacTestCapsV2, ERun);
 
-	test.Next(_L("pauseNotWanted, hwDesNotWanted_skip\n"));
-	testCase.iChannelCaps[0] = pauseNotWanted;
-	t = testCase.TestCaseValid(KTestCapSet);
-	test_Value(t, t == ESkip);
+	TEST_TEST_CASE(pauseNotWanted, capBelowV2, KDmacTestCapsV1, ERun);
+	TEST_TEST_CASE(pauseNotWanted, capBelowV2, KDmacTestCapsV2, ESkip);
 
-	test.Next(_L("pauseNotWanted, hwDesWanted\n"));
-	testCase.iChannelCaps[1] = hwDesWanted;
-	t = testCase.TestCaseValid(KTestCapSet);
-	test_Value(t, t == ERun);
+	// contradictory requirements
+	TEST_TEST_CASE(capAboveV1, capBelowV2, KDmacTestCapsV2, ESkip);
+	TEST_TEST_CASE(capBelowV2, capAboveV1, KDmacTestCapsV2, ESkip);
 
-	test.Next(_L("pauseNotWanted\n"));
-	testCase.iChannelCaps[1] = none;
-	t = testCase.TestCaseValid(KTestCapSet);
-	test_Value(t, t == ERun);
-
-	test.Next(_L("pauseNotWanted + V1 PIL required\n"));
-	testCase.iChannelCaps[1] = capAboveV1;
-	test.Next(_L("Against KDmacTestCapsV1"));
-	t = testCase.TestCaseValid(KDmacTestCapsV1);
-	test_Equal(ESkip, t);
-	test.Next(_L("Against KDmacTestCapsV2"));
-	t = testCase.TestCaseValid(KDmacTestCapsV2);
-	test_Equal(ERun, t);
-
-	test.Next(_L("pauseNotWanted + >V1 PIL required\n"));
-	testCase.iChannelCaps[1] = capBelowV2;
-	test.Next(_L("Against KDmacTestCapsV1"));
-	t = testCase.TestCaseValid(KDmacTestCapsV1);
-	test_Equal(ERun, t);
-	test.Next(_L("Against KDmacTestCapsV2"));
-	t = testCase.TestCaseValid(KDmacTestCapsV2);
-	test_Equal(ESkip, t);
+	TEST_TEST_CASE(capAboveV1, capBelowV2, KDmacTestCapsV1, ESkip);
+	TEST_TEST_CASE(capBelowV2, capAboveV1, KDmacTestCapsV1, ESkip);
 
 	test.End();
 	test.Close();
@@ -461,7 +430,7 @@ void TTransferIter::SelfTest()
 
 void TCallbackRecord::SelfTest()
 	{
-	test.Start(_L("SeltTest of TCallbackRecord"));
+	test.Start(_L("SelfTest of TCallbackRecord"));
 
 	test.Next(_L("create default TCallbackRecord record, record2"));
 	TCallbackRecord record;
@@ -559,6 +528,7 @@ void CDmaBenchmark::SelfTest()
 	test.Start(_L("SelfTest of CDmaBenchmark"));
 	test.Next(_L("MeanResult()"));
 
+	// The mean of these numbers is 10
 	TUint64 results[] = {8, 12, 1, 19, 3, 17, 10};
 	const TInt count = ARRAY_LENGTH(results);
 
@@ -612,6 +582,18 @@ void TAddrRange::SelfTest()
 
 	test(!a.Contains(b));
 	test(!b.Contains(a));
+
+	test.Next(_L("Test IsFilled()"));
+	TUint8 buffer[] = {0,0,0,0};
+	TAddrRange range((TUint)buffer, 4);
+	test(range.IsFilled(0));
+	buffer[3] = 1;
+	test(!range.IsFilled(0));
+	buffer[2] = 1;
+	buffer[1] = 1;
+	buffer[0] = 1;
+	test(range.IsFilled(1));
+
 	test.End();
 	}
 
@@ -649,6 +631,187 @@ void TAddressParms::SelfTest()
 	test.End();
 	}
 
+void TIsrRequeArgsSet::SelfTest()
+	{
+	test.Start(_L("Selftest of TIsrRequeArgsSet"));
+
+	TUint size = 0x1000;
+	TDmaTransferArgs tferArgs(0, 1*size, size, KDmaMemAddr, KDmaSyncAuto, KDmaRequestCallbackFromIsr);
+
+	TIsrRequeArgs requeArgArray[] = {
+		TIsrRequeArgs(),									// Repeat
+		TIsrRequeArgs(KPhysAddrInvalidUser, 2*size, 0),		// Change destination
+		TIsrRequeArgs(),									// Repeat
+		TIsrRequeArgs(3*size, KPhysAddrInvalidUser, 0),		// Change source
+		TIsrRequeArgs(),									// Repeat
+	};
+	TIsrRequeArgsSet argSet(requeArgArray, ARRAY_LENGTH(requeArgArray));
+
+	test.Next(_L("Test that Substitute updates transfer args in order"));
+	argSet.Substitute(tferArgs);
+
+	TAddressParms expectedFinal(3*size, 2*size, size);
+	if(!(expectedFinal == argSet.iRequeArgs[4]))
+		{
+		TBuf<0x100> out;
+
+		out += _L("substitue: ");
+		GetAddrParms(tferArgs).AppendString(out);
+		test.Printf(out);
+
+		out.Zero();
+		out += _L("\nexpected final: ");
+		expectedFinal.AppendString(out);
+		test.Printf(out);
+
+		out.Zero();
+		out += _L("\nactual: ");
+		argSet.iRequeArgs[4].AppendString(out);
+		test.Printf(out);
+
+		test(EFalse);
+		}
+
+	TIsrRequeArgs requeArgArray2[] = {
+		TIsrRequeArgs(),									// Repeat
+		TIsrRequeArgs(KPhysAddrInvalidUser, 2*size, 0),		// Change destination
+		TIsrRequeArgs(KPhysAddrInvalidUser, 1*size, 0),		// Change destination back
+	};
+	argSet = TIsrRequeArgsSet(requeArgArray2, ARRAY_LENGTH(requeArgArray2));
+
+	test.Next(_L("CheckRange(), negative"));
+
+	test(!argSet.CheckRange(0, (2 * size) - 1, tferArgs));
+	test(!argSet.CheckRange(0, (2 * size) + 1, tferArgs));
+	test(!argSet.CheckRange(0, (2 * size), tferArgs));
+
+	test(!argSet.CheckRange(1 ,(3 * size), tferArgs));
+	test(!argSet.CheckRange(1 ,(3 * size) + 1, tferArgs));
+
+	test(!argSet.CheckRange(1 * size , 2 * size, tferArgs));
+
+	test.Next(_L("CheckRange(), positive"));
+	test(argSet.CheckRange(0, 3 * size, tferArgs));
+	test(argSet.CheckRange(0, 3 * size+1, tferArgs));
+	test(argSet.CheckRange(0, 4 * size, tferArgs));
+
+
+	test.End();
+	}
+
+void RArrayCopyTestL()
+	{
+	test.Start(_L("Selftest of RArray CopyL"));
+
+	RArray<TInt> orig;
+	TInt i;													// VC++
+	for(i=0; i<10; i++)
+		{
+		orig.AppendL(i);
+		}
+
+	RArray<TInt> newArray;
+	CopyL(orig, newArray);
+
+	test_Equal(10, newArray.Count());
+
+	for(i=0; i<10; i++)
+		{
+		test_Equal(orig[i], newArray[i])
+		}
+
+	orig.Close();
+	newArray.Close();
+	test.End();
+	}
+
+void RArrayInsertLTest()
+	{
+	test.Start(_L("Selftest of RArray InsertL"));
+
+	RArray<TInt> array;
+	TInt numbers[10] = {0,1,2,3,4,5,6,7,8,9};
+	ArrayAppendL(array, &numbers[0], numbers + ARRAY_LENGTH(numbers));
+
+	test_Equal(10, array.Count());
+	for(TInt i=0; i<10; i++)
+		{
+		test_Equal(numbers[i], array[i])
+		}
+
+	array.Close();
+	test.End();
+	}
+
+/**
+Run check buffers on the supplied TAddressParms array
+*/
+TBool DoTferParmTestL(const TAddressParms* aParms, TInt aCount, TBool aAllowRepeat, TBool aPositive)
+	{
+	_LIT(KPositive, "positive");
+	_LIT(KNegative, "negative");
+	test.Printf(_L("CheckBuffers %S test: %d args, repeats allowed %d\n"),
+			(aPositive ? &KPositive : &KNegative), aCount, aAllowRepeat);
+	RArray<const TAddressParms> array;
+	ArrayAppendL(array, aParms, aParms + aCount);
+	TPreTransferIncrBytes preTran;
+	TBool r = preTran.CheckBuffers(array, aAllowRepeat);
+	array.Close();
+	return r;
+	}
+
+void TPreTransferIncrBytes::SelfTest()
+	{
+	// Test that TPreTransferIncrBytes::CheckBuffers can identify
+	// overlapping buffers
+	test.Start(_L("Selftest of TPreTransferIncrBytes"));
+
+// Macro generates test for 2 element array
+#define TPARM_TEST2(EXPECT, ALLOW_REPEAT, EL0, EL1)\
+		{\
+		TAddressParms set[2] = {EL0, EL1}; \
+		const TBool r = DoTferParmTestL(set, 2, ALLOW_REPEAT, EXPECT);\
+		test_Equal(EXPECT, r);\
+		}
+
+// Generate positive 2 element test
+#define TPARM_TEST2_POSITIVE(ALLOW_REPEAT, EL0, EL1) TPARM_TEST2(ETrue, ALLOW_REPEAT, EL0, EL1)
+// Generate negative 2 element test
+#define TPARM_TEST2_NEG(ALLOW_REPEAT, EL0, EL1) TPARM_TEST2(EFalse, ALLOW_REPEAT, EL0, EL1)
+
+// Macro generates test for 3 element array
+#define TPARM_TEST3(EXPECT, ALLOW_REPEAT, EL0, EL1, EL2)\
+		{\
+		TAddressParms set[3] = {EL0, EL1, EL2}; \
+		const TBool r = DoTferParmTestL(set, 3, ALLOW_REPEAT, EXPECT);\
+		test_Equal(EXPECT, r);\
+		}
+
+// Generate positive 3 element test
+#define TPARM_TEST3_POSITIVE(ALLOW_REPEAT, EL0, EL1, EL2) TPARM_TEST3(ETrue, ALLOW_REPEAT, EL0, EL1, EL2)
+// Generate negative 3 element test
+#define TPARM_TEST3_NEG(ALLOW_REPEAT, EL0, EL1, EL2) TPARM_TEST3(EFalse, ALLOW_REPEAT, EL0, EL1, EL2)
+
+	TPARM_TEST2_POSITIVE(EFalse, TAddressParms(0,16,16), TAddressParms(32, 48, 16));
+	TPARM_TEST2_POSITIVE(ETrue, TAddressParms(0, 16, 16), TAddressParms(0, 16, 16)); // both overlap (repeat allowed)
+
+	TPARM_TEST2_NEG(EFalse, TAddressParms(0,16,16), TAddressParms(24, 40, 16)); // second source depends on first destination
+	TPARM_TEST2_NEG(EFalse, TAddressParms(0,16,16), TAddressParms(16, 0, 16)); // second dest overwrites first source
+	TPARM_TEST2_NEG(EFalse, TAddressParms(0, 16, 16), TAddressParms(0, 16, 16)); // both overlap (repeat not allowed)
+	TPARM_TEST2_NEG(ETrue, TAddressParms(0, 16, 16), TAddressParms(0, 20, 16)); // exact repeat allowed, but overlap is only partial
+	TPARM_TEST2_NEG(ETrue, TAddressParms(0, 16, 16), TAddressParms(32, 16, 16)); // exact repeat allowed, but 2nd overwrites first dest
+
+
+	TPARM_TEST3_POSITIVE(EFalse, TAddressParms(0,16,16), TAddressParms(32, 48, 16), TAddressParms(64, 128, 64)); // no overlaps
+	TPARM_TEST3_POSITIVE(ETrue, TAddressParms(0, 16, 16), TAddressParms(0, 16, 16), TAddressParms(0, 16, 16)); // all overlap (repeat allowed)
+	TPARM_TEST3_POSITIVE(EFalse, TAddressParms(0,16,16), TAddressParms(0, 32, 16), TAddressParms(0, 48, 16)); // no overlaps (1 src to 3 dsts)
+
+	TPARM_TEST3_NEG(EFalse, TAddressParms(0,16,16), TAddressParms(128, 256, 128), TAddressParms(24, 40, 16)); // 3rd source depends on first destination
+	TPARM_TEST3_NEG(EFalse, TAddressParms(0,16,16), TAddressParms(128, 256, 128), TAddressParms(16, 0, 16)); // 3rd dest overwrites first source
+	TPARM_TEST3_NEG(EFalse, TAddressParms(0, 16, 16), TAddressParms(0, 16, 16), TAddressParms(0, 16, 16)); // all overlap (repeat not allowed)
+	test.Next(_L("CheckBuffers(RArray<TAddressParms>)"));
+	}
+
 void SelfTests()
 	{
 	test.Next(_L("Running framework unit tests"));
@@ -660,6 +823,10 @@ void SelfTests()
 	CDmaBmFragmentation::SelfTest();
 	TAddrRange::SelfTest();
 	TAddressParms::SelfTest();
+	TIsrRequeArgsSet::SelfTest();
+	RArrayCopyTestL();
+	RArrayInsertLTest();
+	TPreTransferIncrBytes::SelfTest();
 	test.End();
 	test.Close();
 	}
