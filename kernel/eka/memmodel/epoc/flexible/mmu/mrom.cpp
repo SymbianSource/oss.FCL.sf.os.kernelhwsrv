@@ -969,6 +969,11 @@ TInt DShadowPage::Construct(DMemoryObject* aMemory, TUint aIndex, DMemoryMapping
 		MmuLock::Lock();
 		SPageInfo::FromPhysAddr(iNewPage)->SetShadow(aIndex,aMemory->PageInfoFlags());
 		MmuLock::Unlock();
+
+#ifdef BTRACE_KERNEL_MEMORY
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscAlloc, KPageSize);
+		++Epoc::KernelMiscPages;
+#endif
 		}
 
 	RamAllocLock::Unlock();
@@ -992,6 +997,11 @@ void DShadowPage::Destroy()
 		{
 		RamAllocLock::Lock();
 		TheMmu.FreeRam(&iNewPage, 1, EPageFixed);
+
+#ifdef BTRACE_KERNEL_MEMORY
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscFree, KPageSize);
+		--Epoc::KernelMiscPages;
+#endif
 		RamAllocLock::Unlock();
 		}
 	if(IsAttached())

@@ -94,7 +94,7 @@ void CScanDrive::ConstructL(CFatMountCB* aMount)
 //----------------------------------------------------------------------------------------------------
 /**
     FAT type-agnostic parser. Reads whole FAT and sets up a bit vector.
-    for FAT12/16 it's OK, because the FAT12/16 is fully cached.
+    For FAT12/16 it's OK, because the FAT12/16 is fully cached.
 */
 void CScanDrive::DoParseFatL()
     {
@@ -255,8 +255,9 @@ void CScanDrive::IndicateErrorsFound(TGenericError aError)
 
 //----------------------------------------------------------------------------------------------------
 /**
-    Start the scanner. The this calss description about what it actually does.
-    @param  aMode specifies the operational mode.
+    Starts the scanner.
+    
+    @param	aMode	Specifies the operational mode.
 */
 void CScanDrive::StartL(TScanDriveMode aMode)
 	{
@@ -945,7 +946,6 @@ void CScanDrive::CompareAndFixFatsL()
 /**
     Read the "Rugged FAT" ID, stored in reserved2 in the Dos entry or associated with the Dos entry of the 
     Entry at the position passed in. This is used to find which version of two matching entries should be kept.
-
 
     @param aVFatPos Position of an entry to read ID from
     @leave System wide error codes

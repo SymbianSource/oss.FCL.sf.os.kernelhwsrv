@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -36,7 +36,7 @@ public:
     void DoCancelL();
 
 private:
-	void CompleteNotifierL(TInt);
+	void CompleteNotifierL(TInt aReason);
 
 private:
     /** Notification service */
@@ -55,6 +55,8 @@ public:
    /** SCSI state */
    enum TScsiState
         {
+        EEntry,
+        EMediaNotPresent,
         EConnected,
         EDisconnected
         };
@@ -88,8 +90,8 @@ public:
 	void NotifyChange(const RMessage2& aMessage);
     void ForceCompleteNotifyChangeL();
     void CancelChangeNotifierL();
-	void CompleteNotifyChangeL();
-	void SuspendL();
+
+    void SuspendL();
 	void ResumeL();
     TBool IsConnected();
 
@@ -116,7 +118,7 @@ public:
 private:
     void ResetSbc();
 
-    void DoCheckConditionL();
+    TInt DoCheckConditionL();
 
 	TInt GetSystemWideSenseError(const TSenseInfo& aSenseInfo);
 	TInt ProcessAsCodes(const TSenseInfo& aSenseInfo);

@@ -177,6 +177,14 @@ TInt DPageTableMemoryManager::Alloc(DMemoryObject* aMemory, TUint aIndex, TBool 
 	else
 		{// Allocate fixed paged as page tables aren't movable.
 		r = TheMmu.AllocRam(&pagePhys, 1, aMemory->RamAllocFlags(), EPageFixed);
+
+#ifdef BTRACE_KERNEL_MEMORY
+		if (r == KErrNone)
+			{
+			BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscAlloc, KPageSize);
+			++Epoc::KernelMiscPages;
+			}
+#endif
 		}
 	RamAllocLock::Unlock();
 
@@ -241,7 +249,14 @@ TInt DPageTableMemoryManager::Free(DMemoryObject* aMemory, TUint aIndex, TBool a
 		if(aDemandPaged)
 			ThePager.PageInFreePages(&pagePhys,1);
 		else
+			{
 			TheMmu.FreeRam(&pagePhys, 1, EPageFixed);
+
+#ifdef BTRACE_KERNEL_MEMORY
+			BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscFree, KPageSize);
+			--Epoc::KernelMiscPages;
+#endif
+			}
 		r = 1;
 		}
 
@@ -362,11 +377,8 @@ void PageTableAllocator::TSubAllocator::Init2(PageTableAllocator* aAllocator, TU
 	{
 	iReserveCount = aReserveCount;
 	iDemandPaged = aDemandPaged;
-	while(iFreeCount<aReserveCount)
-		if(!aAllocator->AllocReserve(*this))
-			{
-			__NK_ASSERT_ALWAYS(0);
-			}
+	while(iFreeCount < aReserveCount)
+		__NK_ASSERT_ALWAYS(aAllocator->AllocReserve(*this));
 	}
 
 

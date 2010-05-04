@@ -1050,3 +1050,4 @@ EXPORTS
 	Retire__13KernCoreStatsii @ 1049 NONAME R3UNUSED ; KernCoreStats::Retire(int, int)
 	Stats__13KernCoreStatsPv @ 1050 NONAME R3UNUSED ; KernCoreStats::Stats(void *)
 	SetIdleHandler__3ArmPFPvUl_vPv @ 1051 NONAME R3UNUSED ; Arm::SetIdleHandler(void (*)(void *, unsigned long), void *)
+	FreeRamZone__4EpocUi @ 1052 NONAME R3UNUSED ; Epoc::FreeRamZone(unsigned int)

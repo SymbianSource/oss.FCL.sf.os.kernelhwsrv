@@ -978,11 +978,11 @@ TInt SCMDataSave::FindKernelHeap(TInt32& aHeapLocation, TInt32& aHeapSize)
 	{
 	LOG_CONTEXT
 	
-	//Get Chunk object container
-	DObjectCon* objectContainer = Kern::Containers()[EChunk];
+	//Get process object container
+	DObjectCon* objectContainer = Kern::Containers()[EProcess];
 	if(objectContainer == NULL)
 		{		
-		CLTRACE("\tFailed to get object container for the chunks");
+		CLTRACE("\tFailed to get object container for the processes");
 		return KErrNotFound;
 		}
 	
@@ -995,7 +995,39 @@ TInt SCMDataSave::FindKernelHeap(TInt32& aHeapLocation, TInt32& aHeapSize)
 	
 	TInt numObjects = objectContainer->Count();	
 	
-	for(TInt cnt = 0; cnt< numObjects; cnt ++)
+	DProcess* kernelProcess = NULL;
+	for(TInt cnt = 0; cnt < numObjects; cnt ++)
+		{		
+		DProcess* candidateProcess = (DProcess*)(*objectContainer)[cnt];
+		
+		//Get the objects name
+		TBuf8<KMaxKernelName> name;
+		candidateProcess->TraceAppendFullName(name,EFalse);		
+		if(name == KKernelProcessName)
+			{
+			kernelProcess = candidateProcess;
+			}
+		}
+	if (!kernelProcess)
+		return KErrNotFound;
+
+	//Get chunk object container
+	objectContainer = Kern::Containers()[EChunk];
+	if(objectContainer == NULL)
+		{		
+		CLTRACE("\tFailed to get object container for the chunks");
+		return KErrNotFound;
+		}
+	
+	//Must check the mutex on this is ok otherwise the data will be in an inconsistent state
+	if(objectContainer->Lock()->iHoldCount)
+		{
+		CLTRACE("\tChunk Container is in an inconsistant state");
+		return KErrCorrupt;
+		}	
+	
+	numObjects = objectContainer->Count();
+	for(TInt cnt = 0; cnt < numObjects; cnt ++)
 		{		
 		DChunk* candidateHeapChunk = (DChunk*)(*objectContainer)[cnt];
 		
@@ -1005,14 +1037,8 @@ TInt SCMDataSave::FindKernelHeap(TInt32& aHeapLocation, TInt32& aHeapSize)
 		
 		if(name == KKernelHeapChunkName)
 			{
-			#ifndef __MEMMODEL_FLEXIBLE__
-				aHeapLocation = (TInt32)candidateHeapChunk->iBase;
-			#else
-				aHeapLocation = (TInt32)candidateHeapChunk->iFixedBase;
-			#endif
-				
-				aHeapSize = candidateHeapChunk->iSize;
-				
+			aHeapLocation = (TInt32)candidateHeapChunk->Base(kernelProcess);
+			aHeapSize = candidateHeapChunk->iSize;
 			return KErrNone;
 			}
 		}

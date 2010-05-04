@@ -352,6 +352,8 @@ void PrintHelp()
 
 TInt E32Main()
 	{
+		
+	RDebug::Printf("t_rmdebug_app tid=%d,pid=%d", I64LOW(RThread().Id().Id()), I64LOW(RProcess().Id().Id()) ) ;
 	// setup heap checking and clean up trap
 	__UHEAP_MARK;
 	CTrapCleanup* cleanup=CTrapCleanup::New();

@@ -543,7 +543,7 @@ public:
 		@param aCount		The number of pages to add.
 		@param aPages		Pointer to list of \a aCount physical page addresses to add.
 		*/
-		void Add(TUint aCount, TPhysAddr* aPages);
+		void Add(TUint aCount, const TPhysAddr* aPages);
 
 		/**
 		Add contiguous pages to the array, setting each entry state as ECommitted.

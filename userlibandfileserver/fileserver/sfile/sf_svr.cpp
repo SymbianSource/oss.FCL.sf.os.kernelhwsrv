@@ -1314,8 +1314,13 @@ TInt TFsQueryVolumeInfoExt::DoRequestL(CFsRequest* aRequest)
 
                 return KErrNone;
             }
-
-            
+            case EFSysExtensionsSupported:
+            {
+                TBool supported = pDrive->GetFSys()->IsExtensionSupported();
+                TPckgBuf<TBool> data(supported);
+                aRequest->WriteL(KMsgPtr2,data);
+                return KErrNone;
+            }
 		default:
 			{
 			return KErrNotSupported;

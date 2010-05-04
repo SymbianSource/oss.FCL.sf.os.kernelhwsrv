@@ -44,6 +44,7 @@ const TUint32 KSDCheckFunctionHighSpeed	 = 0x00FFFF01;
 const TUint32 KSDSwitchFunctionHighSpeed = 0x80FFFF01;
 
 const TUint32 KSDCardIsSDCard			 = KBit16;	// KMMCardFirstCustomFlag
+const TUint32 KSDCardIsCorrupt           = KBit17;
 const TUint32 KSDCardFirstCustomFlag	 = KBit24;
 
 const TUint   KSDDTClk25MHz				 = 25000; //25000KHz

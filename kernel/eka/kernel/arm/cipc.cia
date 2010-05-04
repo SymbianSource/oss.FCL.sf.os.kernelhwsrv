@@ -57,7 +57,7 @@ extern "C" void __SendDiscMsg(DSession*);
 
 __NAKED__ void ExecHandler::MessageComplete(RMessageK* /*aMsg*/, TInt /*aReason*/)
 	{
-	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(RMessageK, iFunction));		// get iFunction, as per preprocessor
+	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(RMessageK, iFunction));				// get iFunction, as per preprocessor
 
 	// Subroutine MessageComplete
 	// Complete an IPC message
@@ -69,65 +69,73 @@ __NAKED__ void ExecHandler::MessageComplete(RMessageK* /*aMsg*/, TInt /*aReason*
 
 #ifdef BTRACE_CLIENT_SERVER
 	asm("stmfd sp!,{r0,r1,ip,lr}");
-	asm("mov r2,r1");							// arg2 = aReason
-	asm("mov r1,r0");							// arg1 = aMsg
-	asm("ldr r0,_messageCompleteTraceHeader");	// arg0 = header
+	asm("mov r2,r1");															// arg2 = aReason
+	asm("mov r1,r0");															// arg1 = aMsg
+	asm("ldr r0,_messageCompleteTraceHeader");									// arg0 = header
 	asm("bl " CSM_ZN6BTrace4OutXEmmmm);
 	asm("ldmfd sp!,{r0,r1,ip,lr}");
 #endif
 
 	asm("cmp ip, #%a0" : : "i" (RMessage2::EDisConnect));
 	asm("ldreq r0, [r0, #%a0]" : : "i" _FOFF(RMessageK,iSession));
-	asm("beq " CSM_ZN8DSession19CloseFromDisconnectEv );	// if disconnect, do it in C++
-	asm("mov r2, r1 ");					// r2=aReason
-	ASM_DEBUG2(Complete,r0,r2);
-	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(RMessageK, iSession)); 	// r3=iSession
-	
-	asm("subs r1, ip, #%a0" : : "i" (RMessage2::EConnect));		// (m.iFunction == RMessage2::EConnect)?
-	asm("streq r1, [r3, #%a0] " : : "i" _FOFF(DSession, iConnectMsgPtr));	// iSession->iConnectMsgPtr = NULL
+	asm("beq " CSM_ZN8DSession19CloseFromDisconnectEv );						// if disconnect, do it in C++
 
-	asm("ldr r1, [r3, #%a0]" : : "i" _FOFF(DSession,iAccessCount));	// r1=iSession->iAccessCount	
-	asm("cmp r1, #0 ");					// iAccessCount = 0?
+	asm("mov r2, r1 ");															// r2 = aReason
+	ASM_DEBUG2(Complete,r0,r2);
+	asm("ldr r3, [r0, #%a0]" : : "i" _FOFF(RMessageK, iSession)); 				// r3 = iSession
+	asm("subs r1, ip, #%a0" : : "i" (RMessage2::EConnect));						// (m.iFunction == RMessage2::EConnect)?
+	asm("streq r1, [r3, #%a0] " : : "i" _FOFF(DSession, iConnectMsgPtr));		// iSession->iConnectMsgPtr = NULL
+	asm("ldr r1, [r3, #%a0]" : : "i" _FOFF(DSession,iAccessCount));				// r1 = iSession->iAccessCount	
+	asm("cmp r1, #0 ");															// iAccessCount = 0?
 	asm("beq 2f ");
 
-	// if (!s->IsClosing())
-	asm("mov r1, r0");					// r1 = RMessageK ptr
-	asm("ldr r0, [r0, #%a0] " : : "i" _FOFF(RMessageK,iClient));    // r0=iClient
+	// !s->IsClosing()
+	asm("mov r1, r0");															// r1 = RMessageK ptr
+	asm("ldr r0, [r0, #%a0] " : : "i" _FOFF(RMessageK,iClient));    			// r0 = iClient
+	asm("ldrb ip, [r0, #%a0] " : : "i" _FOFF(DThread,iMState));    				// ip = iClient->iMState
+	asm("cmp ip, #%a0" : : "i" (DThread::EDead));								// (iMState == EDead)?
+	asm("beq 1f ");
+
+	// if (!s->IsClosing() && m.iClient->iMState != DThread::EDead)
 	asm("mov ip, #1");
-	asm("str ip, [r1, #%a0]" : : "i" _FOFF(RMessageK, iServerLink.iNext));	// iServerLink.iNext=1
-	asm("b " CSM_ZN4Kern20QueueRequestCompleteEP7DThreadP14TClientRequesti);
+	asm("str ip, [r1, #%a0]" : : "i" _FOFF(RMessageK, iServerLink.iNext));		// iServerLink.iNext=1
+	asm("b " CSM_ZN4Kern20QueueRequestCompleteEP7DThreadP14TClientRequesti);	// tail call
 
-	// if (s->IsClosing())
+	// m.iClient->iMState == DThread::EDead
+	asm("1: ");																	// shuffle RMessageK and iFunction back to expected registers
+	asm("ldr ip, [r1, #%a0]" : : "i" _FOFF(RMessageK, iFunction));				// refetch iFunction
+	asm("mov r0, r1");															// r0 = RMessageK ptr
+
+	// else (closing or dead)
 	asm("2: ");
-	asm("cmp ip, #%a0" : : "i" (RMessage2::EConnect));	// (m.iFunction == RMessage2::EConnect)?
-	asm("beq 4f ");
-	asm("3: ");
-	asm("stmfd sp!, {r0,lr} ");
-	asm("bl " CSM_ZN14TClientRequest5ResetEv);
-	asm("ldmfd sp!, {r0,lr} ");
-	asm("b " CSM_ZN9RMessageK8CloseRefEv);
+	asm("cmp ip, #%a0" : : "i" (RMessage2::EConnect));							// (m.iFunction == RMessage2::EConnect)?
+	asm("bne 3f ");
 
-	asm("4: ");
-	// if closing & connect msg
-	asm("ldr r2, [r3, #%a0] " : : "i" _FOFF(DSession, iSessionCookie));	// r2=iSession->iSessionCookie
+	// (closing or dead) and it's a connect msg
+	asm("ldr r2, [r3, #%a0] " : : "i" _FOFF(DSession, iSessionCookie));			// r2=iSession->iSessionCookie
 	asm("teq r2, #0");
 #ifdef _DEBUG
 	asm("beq nosession ");
-	asm("ldr r1, [r3, #%a0] " : : "i" _FOFF(DSession, iServer));		// r1=iSession->iServer
+	asm("ldr r1, [r3, #%a0] " : : "i" _FOFF(DSession, iServer));				// r1=iSession->iServer
 	asm("cmp r1, #0 ");
  	asm("beq noserver ");
-	asm("ldr r2, [r3, #%a0] " : : "i" (_FOFF(DSession, iDisconnectMsgPtr)));  // r2=iSession->iDisconnectMsgPtr
+	asm("ldr r2, [r3, #%a0] " : : "i" (_FOFF(DSession, iDisconnectMsgPtr)));	// r2=iSession->iDisconnectMsgPtr
 	asm("ldr r2, [r2, #%a0] " : : "i" (_FOFF(RMessageK, iServerLink.iNext)));	// r2=iDisconnectMsgPtr->iServerLink.iNext
 	asm("cmp r2, #0 ");
-	asm("beq __FaultMsgCompleteDiscNotSent ");	// die if a session has been created and no disc msg sent
-	asm("ldr r2, [r3, #%a0] " : : "i" _FOFF(DSession, iSessionCookie));	// r2=iSession->iSessionCookie
+	asm("beq __FaultMsgCompleteDiscNotSent ");									// tail call to die if a session has been created and no disc msg sent
+	asm("ldr r2, [r3, #%a0] " : : "i" _FOFF(DSession, iSessionCookie));			// r2=iSession->iSessionCookie
 	asm("noserver: ");
 	asm("teq r2, #0");
 	asm("nosession: ");
 #endif //_DEBUG
 	asm("moveq r0, r3 ");
-	asm("beq __SendDiscMsg ");	// if no session object to clean up, send disc msg in C++
-	asm("b 3b ");				// return
+	asm("beq __SendDiscMsg ");													// if no session object to clean up, tail call to send disc msg in C++
+
+	asm("3: ");
+	asm("stmfd sp!, {r0,lr} ");
+	asm("bl " CSM_ZN14TClientRequest5ResetEv);
+	asm("ldmfd sp!, {r0,lr} ");
+	asm("b " CSM_ZN9RMessageK8CloseRefEv);										// tail call
 
 #ifdef BTRACE_CLIENT_SERVER
 	asm("_messageCompleteTraceHeader:");

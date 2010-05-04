@@ -235,7 +235,7 @@ private:
 
 enum TFsPanic
 	{
-	ELdrImportedOrdinalDoesNotExist
+	ELdrImportedOrdinalDoesNotExist	
 	};
 //
 enum TFsFault
@@ -443,7 +443,8 @@ enum TFsFault
 	ETraceLddLoadFailure,				//200
 	ETooManyDrivesPerSocket,
 	ENotificationFault,
-	EFsObjectOpen
+	EFsObjectOpen,
+	EContainerHeapCorruptionOnRemove
 	};
 
 

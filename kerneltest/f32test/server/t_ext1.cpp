@@ -448,6 +448,19 @@ GLDEF_C void CallTestsL()
 	test.Start(_L("Starting Test - T_EXT1"));
 	test(err==KErrNone);
 
+	// Check that the drive supports extensions.
+	TBool extensionsSupported = EFalse;
+	TPckg<TBool> dataBuf(extensionsSupported);
+	err = TheFs.QueryVolumeInfoExt(drive,EFSysExtensionsSupported,dataBuf);
+	test(err==KErrNone);
+	if(!extensionsSupported)
+	    {
+        test.Printf(_L("Drive %d does not support file sys extensions. Skipping test."), drive);
+        test.End();
+        test.Close();
+        return;
+	    }
+	
     PrintDrvInfo(TheFs, drive);
 
 //Do not run this test on the NAND drive, as

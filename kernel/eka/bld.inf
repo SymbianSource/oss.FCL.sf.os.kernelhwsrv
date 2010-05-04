@@ -386,20 +386,20 @@ include/e32utrace_basic_types.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utr
 include/e32utrace.mmh							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(e32utrace.mmh)
 
 //Open System Trace API
-include/opensystemtrace.h					/epoc32/include/platform/
-include/opensystemtrace.inl					/epoc32/include/platform/
-include/opensystemtrace_types.h					/epoc32/include/platform/
-include/opensystemtrace.mmh					/epoc32/include/platform/
+include/opensystemtrace.h                       SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace.h)
+include/opensystemtrace.inl                     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace.inl)
+include/opensystemtrace_types.h                 SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace_types.h)
+include/opensystemtrace.mmh                     SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(opensystemtrace.mmh)
 
 // ROM building scripts
-rombuild/base.iby								/epoc32/rom/include/			//
-rombuild/PlatSecEnforcement.oby					/epoc32/rom/include/			//
-rombuild/PlatSecDiagnostics.oby					/epoc32/rom/include/			//
-rombuild/btrace.iby								/epoc32/rom/include/			//
+rombuild/base.iby								/epoc32/rom/include/
+rombuild/PlatSecEnforcement.oby					/epoc32/rom/include/
+rombuild/PlatSecDiagnostics.oby					/epoc32/rom/include/
+rombuild/btrace.iby								/epoc32/rom/include/
 rombuild/kernel.hby								/epoc32/rom/include/
 rombuild/rm_debug_svr.iby						/epoc32/rom/include/			// Run mode debug driver
-rombuild/utrace.iby								/epoc32/rom/include/			//utrace
-rombuild/ost.iby								/epoc32/rom/include/			//ost
+rombuild/utrace.iby								/epoc32/rom/include/
+rombuild/ost.iby								/epoc32/rom/include/
 
 // Byte pair compressor
 include/byte_pair_compress.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(byte_pair_compress.h)

@@ -2630,29 +2630,37 @@ to a disk is opened.
 	}
 
 
-
 /**
-Checks the integrity of the disk on the specified drive.
-On FAT, this checks if a cluster number is invalid, if a cluster is allocated to
-more than one file entry, if an unallocated cluster is not set free, and if size
-of an entry is invalid.
+Checks the integrity of the File System mounted on the specified drive.
+The behaviour of this API and return codes are File System specific,
+dependent on how the File System implements its CheckDisk functionality.
+Note that CheckDisk does not fix any errors that may be found,
+it just reports the first problem it has found.
 
-@param aDrive Path indicating the drive which contains the disk to be checked. If the drive 
-        information is not specified the current session drive is taken by default.
-		Checkdisk is performed on the requested drive irrespective of the correctness or
-		existance of the given path.
+@param	aDrive	Path containing the drive to be checked.
+				If the drive letter is not specified, the current session drive is taken by default.
 
-@return KErrNone, if successful;
-		1, if successful but a file cluster contains a bad value;
-		2, if successful but two files are linked to the same cluster;
-		3, if successful but an unallocated cluster contains a value;
-		4, if successful but the size of a file is not equal to the number of clusters in chain;
-        KErrNotReady, if the specified drive is empty;
-        KErrNotSupported, if the drive cannot handle this request;
-        KErrPermissionDenied, if the caller doesn't have DiskAdmin capability;
-        Other system wide error codes may also be returned.
+@return	KErrNone				If CheckDisk has not found any errors it knows about.
+        KErrNotReady			If the specified drive is not ready.
+        KErrNotSupported		If this functionality is not supported.
+        KErrPermissionDenied	If the caller does not have DiskAdmin capability.
+        Other system-wide error codes.
 
-@capability DiskAdmin
+@capability	DiskAdmin
+
+FAT File System specific information:
+
+CheckDisk checks for a limited amount of possible corruption cases such as
+invalid cluster numbers in the FAT table, lost and cross-linked cluster chains,
+various errors within the directory entry etc.
+
+If CheckDisk returns KErrNone, this means that there are no errors that CheckDisk on FAT is aware of.
+
+Error codes returned by the FAT version of CheckDisk include: 
+		1	Bad cluster value in FAT table detected.
+		2	Cross-linked cluster chain detected.
+		3	Lost cluster chain detected.
+		4	File size does not correspond to the number of clusters reported in the FAT table.
 */
 EFSRV_EXPORT_C TInt RFs::CheckDisk(const TDesC& aDrive) const
 	{
@@ -2668,24 +2676,42 @@ EFSRV_EXPORT_C TInt RFs::CheckDisk(const TDesC& aDrive) const
 
 EFSRV_EXPORT_C TInt RFs::ScanDrive(const TDesC& aDrive) const
 /**
-Checks the specified drive for errors and corrects them. Specifically, it
-checks if long file name entries' IDs are in sequence and short name is valid,
-and file's allocated clusters are not used by other files.
+Checks the integrity of the File System mounted on the specified drive
+and attempts to correct some known File System errors.
+The behaviour of this API and return codes are File System specific,
+dependent on how the File System implements its ScanDrive functionality.
 
-This does not run on the internal RAM drive, and only applies to a
-FAT file system.
+ScanDrive will not run on drives that have files or directories opened.
 
-@param aDrive Path indicating the drive which contains the disk to be checked. If the drive 
-        information is not specified the current session drive is taken by default.
-		ScanDrive is performed on the requested drive irrespective of the correctness or
-		existance of the given path.
+@param	aDrive	Path indicating the drive which contains the disk to be checked.
+				If the drive letter is not specified, the current session drive is taken by default.
 
-@return KErrNone if successful,
-        KErrPermissionDenied if caller doesn't have capability DiskAdmin,
-        KErrInUse if drive is in use,
-        otherwise one of the other system-wide error codes
+@return KErrNone				On success.
+		KErrInUse				If drive is in use (i.e. if there are files and/or directories opened in the drive).
+		KErrCorrupt				If ScanDrive has detected a file system corruption that it cannot fix.
+        KErrNotSupported		If this functionality is not supported.
+        KErrPermissionDenied	If the caller does not have DiskAdmin capability.
+		Other system-wide error codes.
 
-@capability DiskAdmin
+@capability	DiskAdmin
+
+FAT File System specific information:
+
+ScanDrive is intended to be run ONLY on "Rugged-FAT" file system
+which is applicable to internal non-removable drives.
+Internal RAM drives are not supported.
+
+The "Rugged FAT" file system is designed in such a way that only a limited number
+of known cases of corruption can be caused by sudden power loss.
+All of these known cases can be corrected by ScanDrive.
+Hence, running ScanDrive on "Rugged FAT" file system will result in:
+		KErrNone	If there was no File System corruption or ScanDrive has successfully repaired the File System.
+		KErrCorrupt If ScanDrive has found a File System error that it cannot repair.
+		Other system-wide error codes, see above.
+
+Running ScanDrive on removable media or media that has FAT file system not in
+"Rugged FAT" mode is not practical, because ScanDrive is not designed for this.
+Therefore, do not treat ScanDrive on removable media as a generic "disk repair utility".
 */
 	{
 	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsScanDrive, MODULEUID, Handle(), aDrive);

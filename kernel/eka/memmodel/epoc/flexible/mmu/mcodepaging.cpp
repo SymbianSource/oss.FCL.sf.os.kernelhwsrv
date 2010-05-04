@@ -64,7 +64,7 @@ public:
 	*/
 	static DCodePagedMemoryManager TheManager;
 
-	friend DPagingDevice* CodePagingDevice(TInt aDiveNum);
+	friend DPagingDevice* CodePagingDevice(TInt aDriveNum);
 	};
 
 
@@ -207,11 +207,11 @@ void DCodePagedMemoryManager::Free(DMemoryObject* aMemory, TUint aIndex, TUint a
 
 TInt DCodePagedMemoryManager::CleanPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TPhysAddr*& aPageArrayEntry)
 	{
-	if(aPageInfo->IsDirty()==false)
+	if(!aPageInfo->IsDirty())
 		return KErrNone;
 
 	// shouldn't be asked to clean a page which is writable...
-	__NK_ASSERT_DEBUG(aPageInfo->IsWritable()==false);
+	__NK_ASSERT_DEBUG(!aPageInfo->IsWritable());
 
 	// Note, memory may have been modified by the CodeModifier class.
 

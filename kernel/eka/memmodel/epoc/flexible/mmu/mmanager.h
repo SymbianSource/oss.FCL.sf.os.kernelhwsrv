@@ -153,7 +153,7 @@ public:
 			KErrNotSupported if the manager doesn't support this function,
 			otherwise one of the system wide error codes.
 	*/
-	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages);
+	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages);
 
 	/**
 	Add a contiguous range of physical memory pages to a region of a memory object.

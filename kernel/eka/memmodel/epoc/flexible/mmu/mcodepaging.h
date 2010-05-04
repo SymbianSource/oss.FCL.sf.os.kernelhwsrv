@@ -21,6 +21,6 @@
 #ifndef MCODEPAGING_H
 #define MCODEPAGING_H
 
-extern DPagingDevice* CodePagingDevice(TInt aDiveNum);
+extern DPagingDevice* CodePagingDevice(TInt aDriveNum);
 
 #endif

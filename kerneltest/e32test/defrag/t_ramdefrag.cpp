@@ -7073,16 +7073,20 @@ skipTest9 :
 //! @SYMPREQ					PREQ308
 //! @SYMTestPriority			High
 //! @SYMTestActions				
-//! 	1.	Allocate fixed pages and call function to free all fixed pages allocated.  
+//! 	1.	Allocate fixed pages and call function to free all fixed pages allocated.
+//!		2.	Claim a RAM zone and then free it via Epoc::FreeRamZone().
+//!		3.	Invoke Epoc::FreeRamZone() with an invalid RAM zone ID.
 //! 
 //! @SYMTestExpectedResults
 //! 	1.	KErrNone
+//!		2.	KErrNone
+//!		3.	KErrArgument
 //---------------------------------------------------------------------------------------------------------------------
 TInt TestFreeZone()
 	{
 	TInt r = 0;
 	TUint zoneID = 0;
-	test.Start(_L("Test1: Free allocated pages"));	
+	test.Start(_L("Test1: Freeing allocated pages"));	
 	TestStart();	
 	
 	TInt pages = 50;
@@ -7128,7 +7132,58 @@ TInt TestFreeZone()
 			}
 		}
 	TestEnd();
+	test.End();
 
+	test.Start(_L("Test2: Epoc::FreeRamZone() on a claimed RAM zone"));
+	TestStart();
+	GetAllPageInfo();
+	TUint zoneIndex = 0;
+	while (zoneIndex < gZoneCount)
+		{
+		if (gZoneUtilArray[zoneIndex].iFreePages == gZoneUtilArray[zoneIndex].iPhysPages)
+			break;
+		zoneIndex++;
+		}
+	if (zoneIndex >= gZoneCount)
+		{
+		test.Printf(_L("Cannot find zone to perform test, Skipping test step...\n"));
+		goto Test2End;
+		}
+	zoneID = gZoneConfigArray[zoneIndex].iZoneId;
+	r = Ldd.CallDefrag(DEFRAG_TYPE_CLAIM, DEFRAG_VER_SYNC, zoneID);
+	if (r != KErrNone)
+		{
+		test.Printf(_L("Fail: r = %d, expected = %d\n"), r, KErrNone);
+		TEST_FAIL;
+		}
+	GetAllPageInfo();
+	if (gZoneUtilArray[zoneIndex].iPhysPages != gZoneUtilArray[zoneIndex].iAllocFixed)
+		{
+		test.Printf(_L("Fail: RAM zone ID %d not claimed successfully"), zoneID);
+		TEST_FAIL;
+		}
+	r = Ldd.FreeZoneId(zoneID);
+	GetAllPageInfo();
+	if (r != KErrNone ||
+		gZoneUtilArray[zoneIndex].iPhysPages != gZoneUtilArray[zoneIndex].iFreePages)
+		{
+		test.Printf(_L("Fail: RAM zone ID %d not freed successfully r=%d"), zoneID, r);
+		TEST_FAIL;
+		}
+Test2End:
+	TestEnd();
+	test.End();
+
+	test.Start(_L("Test2: Epoc::FreeRamZone() on an invalid RAM zone"));
+	TestStart();
+	r = Ldd.FreeZoneId(KInvalidZoneID);
+	if (r != KErrArgument)
+		{
+		test.Printf(_L("Fail: Error RAM zone ID %d r=%d"), KInvalidZoneID, r);
+		TEST_FAIL;
+		}
+	
+	TestEnd();
 	test.End();
 	return KErrNone;
 	}

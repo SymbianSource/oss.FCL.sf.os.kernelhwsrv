@@ -110,14 +110,16 @@ void CMultiTargetAgent::ClientAppL()
 // Performs each test in turn
 //
   {
+  test.Start(_L("ClientAppL"));
   TInt err = iServSession.Connect(securityServerVersion);
   if (err != KErrNone)
       {
       User::Panic(_L("Can't open server session"), err);
       }
-
+  SetupDebugServerL();
   LaunchTargetsInOrderL();
   RDebug::Printf( "returning from CMultiTargetAgent::ClientAppL" );
+  test.End();
   }
 
 /**
@@ -158,7 +160,7 @@ TInt CMultiTargetAgent::LaunchProcess(RProcess& aProcess, TDesC & aExeName, TDes
 void CMultiTargetAgent::SetupDebugServerL()
     {
     RDebug::Printf( "CMultiTargetAgent::SetupDebugServerL" );
-
+    test.Next(_L("SetupDebugServerL\n"));
     iTargets.ReserveL( KNumApps );
 
     RBuf targetName;
@@ -235,8 +237,7 @@ TInt CMultiTargetAgent::LaunchTargetsInOrderL()
     
     TBool thisLaunchCompleted; 
 
-    SetupDebugServerL();
-   
+    test.Next(_L("LaunchTargetsInOrderL\n"));
     for( TInt numLaunches = KNumLaunches; numLaunches > 0; numLaunches-- )
         {
         for( TInt numApps = KNumApps; numApps > 0; numApps-- )
@@ -362,17 +363,19 @@ TInt CMultiTargetAgent::LaunchTargetsInOrderL()
             }
         }    
 
-        CleanupStack::PopAndDestroy( &launchSemaphore ); // launchSemaphore
-      
-        for( TInt i = iTargets.Count()-1; i>=0; i-- )
-            {
-            RDebug::Printf( "Closing target %d", i );
-            iTargets[ i ].Close();
-            }
+    launchSemaphore.Signal();
+    
+	CleanupStack::PopAndDestroy( &launchSemaphore ); // launchSemaphore
+  
+	for( TInt i = iTargets.Count()-1; i>=0; i-- )
+		{
+		RDebug::Printf( "Closing target %d", i );
+		iTargets[ i ].Close();
+		}
 
-        iTargets.Close();
-        
-        return KErrNone;
+	iTargets.Close();
+	
+	return KErrNone;
     }
 
 

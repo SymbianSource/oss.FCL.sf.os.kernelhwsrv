@@ -2852,7 +2852,7 @@ traces.
 It outputs the zone configuration and the base addresses of any contiguous block
 of allocated pages.
 */
-void DRamAllocator::SendInitialBtraceLogs(void)
+void DRamAllocator::DoBTracePrime(void)
 	{
 	M::RamAllocIsLocked();
 	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL, "DRamAllocator::SendInitialBtraceLogs");

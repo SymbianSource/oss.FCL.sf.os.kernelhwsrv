@@ -619,7 +619,14 @@ TInt TDmaBuf::RxCopyDataToClient(DThread* aThread, TClientBuffer *aTcb, TInt aLe
 			{
 			if (iEndpointType == KUsbEpTypeBulk)
 				{
-				isShortPacket = (size < iMaxPacketSize) || (size & maxPacketSizeMask);
+                if(iExtractOffset & maxPacketSizeMask)
+                	{
+                    isShortPacket = ((size+iExtractOffset) < iMaxPacketSize) || ((size+iExtractOffset) & maxPacketSizeMask);
+                	}
+                else
+                	{
+                    isShortPacket = (size < iMaxPacketSize) || (size & maxPacketSizeMask);
+                	}
 				}
 			else
 				{
@@ -830,17 +837,7 @@ TBool TDmaBuf::ShortPacketExists()
 		if (iEndpointType == KUsbEpTypeBulk)
 			{
 			const TInt mask = iMaxPacketSize - 1;
-			if (iTotalRxBytesAvail & mask)
-				return ETrue;
 
-			// residue==0; this can be because
-			// zlps exist, or short packets combine to n * max_packet_size
-			// This means spadework
-			const TInt s = iCurrentPacketSizeArray[iCurrentPacket] - iExtractOffset;
-			if ((s == 0) || (s & mask))
-				{
-				return ETrue;
-				}
 
 			for (TInt i = 0; i < iNumberofBuffers; i++)
 				{

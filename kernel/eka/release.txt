@@ -1,3 +1,155 @@
+Version 2.00.3053
+=================
+(Made by vfebvre 26/03/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#320634 [kernelmcl]Phone Crash when USB MobileTV device CU-14A is connected
+
+2.	kmetherm
+	1.	REQ 417-57581 RVCT 4 compatible software codebase (SSS)
+		PackageReleaseID=476546 FeaturePlanID=444184
+
+
+Version 2.00.3052
+=================
+(Made by vfebvre 25/03/2010)
+
+1.	gavguo
+	1.	REQ:417-57581:RVCT 4 compatible software codebase
+		PackageReleaseID=462344 FeaturePlanID=444184
+
+
+Version 2.00.3051
+=================
+(Made by vfebvre 25/03/2010)
+
+1.	lanerobe
+	1.	PDEF145143 KHS Documentation is not contributed to the Symbian Foundation
+
+
+Version 2.00.3050
+=================
+(Made by vfebvre 23/03/2010)
+
+1.	josezhou
+	1.	ou1cimx1#312908 : RUsbHubDriver interface can only be called by FDF, but multiple clients might have conflict requests to the interfaces 
+
+2.	lanerobe
+	1.	DEF145040 E32TEST T_THREAD test failure investigation
+
+
+Version 2.00.3049
+=================
+(Made by vfebvre 22/03/2010)
+
+1.	lanerobe
+	1.	DEF145041 E32TEST T_TIMER test failure investigation
+
+
+Version 2.00.3048
+=================
+(Made by vfebvre 22/03/2010)
+
+1.	lanerobe
+	1.	DEF145039 E32TEST T_SDRIVERS test failure investigation
+	2.	PDEF144928 Symbian Foundation build error due to missing usb components
+
+
+Version 2.00.3047
+=================
+(Made by vfebvre 19/03/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#310882: BELS-7YXDRY RDevUsbcClient::ReadUntilShort complete unexpected
+
+2.	lanerobe
+	1.	DEF144874 Intermittent E32TEST T_MSTIM test failures on the H4 (line 371)
+
+3.	fagortz
+	1.	DEF144667 WDP: t_medch crashes the system if a page out happens
+
+
+Version 2.00.3046
+=================
+(Made by vfebvre 18/03/2010)
+
+1.	lanerobe
+	1.	DEF145036 T_CONTEXT test failure investigation 
+
+2.	ferporta
+	1.	DEF145026 Remove SCM memory model dependency
+	2.	DEF144875 E32TEST T_RMDEBUG2_OEM failing on UREL SMP configurations
+
+3.	genwei
+	1.	ou1cimx1#301181: The device under test exits the high-speed host electrical test mode without operator action
+
+
+Version 2.00.3045
+=================
+(Made by vfebvre 17/03/2010)
+
+1.	lanerobe
+	1.	MINOR_CHANGE Fix copyright notices on power management code
+
+2.	martai
+	1.	PDEF145027 FMM - BTrace messages EKernelMemory are missing from the flexible memory model
+
+
+Version 2.00.3044
+=================
+(Made by vfebvre 15/03/2010)
+
+1.	jimmzhou
+	1.	CR ou1cimx1#300759: kernel_mcl: A malfunctioning peripheral still cannot be reported to the UI, breaking the "no silent failures" policy of USB OTG
+		TKEA-836MEU
+
+2.	martai
+	1.	PDEF144923 FMM - The virtual address space manager allocates incorrect size heap cells
+	2.	DEF144936 It is not possible to free a RAM zone via its ID
+
+
+Version 2.00.3043
+=================
+(Made by vfebvre 12/03/2010)
+
+1.	seolney
+	1.	DEF144850 E32TEST T_DMASIM fails on x86pc (level 012) 
+
+2.	necliffo
+	1.	PDEF144977 EMOL-83CGYT: SPB 10.1: Device freeze when corrupted memory card is used.
+
+3.	mmaksymi
+	1.	DEF144804 OST Kernel Code Doesn't Comply with Header Relocation Rules
+
+
+Version 2.00.3042
+=================
+(Made by vfebvre 11/03/2010)
+
+1.	jimmzhou
+	1.	DEF144836: for submission to MCL: TSW defect TSW YXIO-82ZBP
+
+2.	gcochran
+	1.	PDEF144935 MMEG-83F9A8 - Misleading error message in ExecHandler::ThreadRequestSignal
+
+3.	tommarti
+	1.	DEF144920 Wrong license in some FMM source files
+
+
+Version 2.00.3041
+=================
+(Made by vfebvre 10/03/2010)
+
+1.	gayarama
+	1.	PDEF144756 t_tbus_datapaging test fails on Vasco/TB9.2 due to fileserver api issue
+
+2.	martai
+	1.	DEF144781: MMEG-8369AQ RThread::Create documentation doesn't mention the minimum stack size 
+
+3.	davegord
+	1.	DEF144743 Kernel Message Pool corrupted by delayed DeadClientCleanup 
+
+
 Version 2.00.3040
 =================
 (Made by vfebvre 09/03/2010)

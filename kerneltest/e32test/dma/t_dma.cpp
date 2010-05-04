@@ -348,7 +348,7 @@ CTesterThread::CTesterThread(TInt aIdx, CTest* aTest)
 	TBuf<16> name;
 	name = _L("TESTER-");
 	name.AppendNum(aIdx);
-	test(iThread.Create(name, ThreadFunction, 0x1000, NULL, this) == KErrNone);
+	test(iThread.Create(name, ThreadFunction, 0x2000, NULL, this) == KErrNone);
 	iThread.SetPriority(EPriorityLess);
 	iThread.Logon(iStatus);
 	SetActive();
