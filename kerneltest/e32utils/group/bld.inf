@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -30,20 +30,19 @@ BASEDEFAULT
 
 PRJ_EXPORTS
 
-
-
+../nandboot/coreldr/bootstrap_smrif.h 		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(bootstrap_smrif.h)
 
 ../profiler/profiler.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(profiler.h)
 
-../analyse/profiler.rtf	/epoc32/engdoc/profiler/profiler.rtf
+../analyse/profiler.rtf						/epoc32/engdoc/profiler/profiler.rtf
 
-../d_exc/printstk.pl /epoc32/rom/tools/printstk.pl
-../d_exc/printsym.pl /epoc32/rom/tools/printsym.pl
+../d_exc/printstk.pl 						/epoc32/rom/tools/printstk.pl
+../d_exc/printsym.pl 						/epoc32/rom/tools/printsym.pl
 
-../setcap/setcap.iby  /epoc32/rom/include/setcap.iby
+../setcap/setcap.iby						/epoc32/rom/include/setcap.iby
 
 ../demandpaging/dptest.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(dptest.h)
-../demandpaging/dptestcons.oby /epoc32/rom/include/dptestcons.oby
+../demandpaging/dptestcons.oby 				/epoc32/rom/include/dptestcons.oby
 
 PRJ_TESTEXPORTS
 ../trace/btracevw.pl /epoc32/tools/btracevw.pl

@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -119,7 +119,14 @@ EXPORT_C TInt HAL::GetAll(TInt& aNumEntries, SEntry*& aData)
 			{
 			TInt offset = device*(TInt)ENumHalAttributes + i;
 			TInt properties=HalInternal::Properties[i];
-			if (properties & HAL::EValid)
+			// Exclusion of the EDisplayMemoryHandle attribute is a work around
+			// to avoid the handle and resources related to it from being 
+			// allocated. Callers of this API (halsettings - to save modifiable 
+			// atrributes) need to avoid this resource overhead. Clients of 
+			// this attribute need to use HAL::Get() directly.
+			// HAL should not be used for handle opening and this
+			// attribute should be replaced with a better API.
+			if ((properties & HAL::EValid) && (i != EDisplayMemoryHandle))
 				{
 				THalImplementation f=HalInternal::Implementation[i];
 				if (f)

@@ -1,0 +1,28 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// HAL Test Applications
+//
+
+#ifndef __HALTESTS_IBY__
+#define __HALTESTS_IBY__
+
+
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_haldefect.exe 	\sys\bin\t_haldefect.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\t_newhal.exe 		\sys\bin\t_newhal.exe
+file=\Epoc32\Release\##MAIN##\##BUILD##\savehal.exe 		\sys\bin\savehal.exe
+
+data=\epoc32\rom\include\haltests.auto.bat					\haltests.auot.bat
+
+
+#endif // __HALTESTS_IBY__

@@ -1,18 +1,3 @@
-#
-# Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
-# All rights reserved.
-# This component and the accompanying materials are made available
-# under the terms of "Eclipse Public License v1.0"
-# which accompanies this distribution, and is available
-# at the URL "http://www.eclipse.org/legal/epl-v10.html".
-#
-# Initial Contributors:
-# Nokia Corporation - initial contribution.
-#
-# Contributors:
-#
-# Description: 
-#
 # component name "E32 Utilities"
 
 component	base_e32utils
@@ -32,6 +17,7 @@ source	\sf\os\kernelhwsrv\kerneltest\e32utils\testusbcldd
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\trace
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\usbmsapp
 source	\sf\os\kernelhwsrv\kerneltest\e32utils\sdpartition	
+source	\sf\os\kernelhwsrv\kerneltest\e32utils\nandboot\coreldr\bootstrap_smrif.h
 	
 #MattD: Reltools 2.67 don't understand 'cwtools' are the CW equivelent of 'tools' and try to do '-what cwtools udeb' instead of '-what cwtools deb'.
 #binary	\sf\os\kernelhwsrv\kerneltest\e32utils\group cwtools

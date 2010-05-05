@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -124,14 +124,17 @@ public:
     Gets all HAL attributes, and their properties.
 
     For attributes that are not meaningful on this device (ie. those which have
-	not been defined in the config.hcf file),
-	the attribute value and its associated property value are set to zero in
-	the returned array.
+	not been defined in the config.hcf file), the attribute value and its 
+	associated property value are set to zero in the returned array.
 
 	Attributes for which multiple values can be retrieved
 	ie. EDisplayIsPalettized, EDisplayBitsPerPixel, EDisplayOffsetToFirstPixel,
 	EDisplayOffsetBetweenLines, and EDisplayPaletteEntry will also be zero in
 	the returned array.
+	
+	Attributes that allocate resources and open handles are also not returned 
+	by this API. Their value and property values will be set to zero in the
+	returned array. Use HAL::Get() for these attributes.
 
     @param aNumEntries On successful return, contains the total number
                        of HAL attributes.

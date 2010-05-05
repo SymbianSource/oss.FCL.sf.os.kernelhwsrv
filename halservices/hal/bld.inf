@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -25,16 +25,30 @@ PRJ_PLATFORMS
 
 BASEUSERDEFAULT
 
+
 PRJ_EXPORTS
-inc/hal_int.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
-inc/hal_data.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(hal_data.h)
-inc/hal.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(hal.h)
-rom/hal.iby		/epoc32/rom/hal/	//
-rom/hal.hby		/epoc32/rom/hal/	//
+
+inc/hal_int.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(kernel/)
+inc/hal_data.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(hal_data.h)
+inc/hal.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(hal.h)
+
+rom/hal.iby				/epoc32/rom/hal/	//
+rom/hal.hby				/epoc32/rom/hal/	//
+
+
+PRJ_TESTEXPORTS
+
+rom/haltests.iby		/epoc32/rom/include/haltests.iby
+rom/haltests.auto.bat	/epoc32/rom/include/haltests.auto.bat
+
+rom/tshell_haltests.oby	 ../../kernel/eka/rombuild/tshell_haltests.oby
+
+
 
 PRJ_MMPFILES
 src/hal_lib
 
 PRJ_TESTMMPFILES
-tsrc/t_newhal
-tsrc/savehal
+tsrc/t_newhal		manual
+tsrc/savehal		manual
+tsrc/t_haldefect
