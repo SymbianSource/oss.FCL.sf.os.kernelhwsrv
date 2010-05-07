@@ -119,18 +119,16 @@ BEGIN {
 	my @path = split(/\\/, $cwd);
 	shift(@path);
 	$toroot = ('..\\') x @path;
-	$toroot =~ s/\\$//;
-	#e32path supposed to be = to "\sf\os"
 	$e32path = $fp0;
-	$e32path =~ s/\\kernelhwsrv\\kernel\\eka\\rombuild\\rom_sbs\.pl$//i;
+	$e32path =~ s/\\kernelhwsrv\\kernel\\eka\\rombuild\\rom\.pl$//i;
 	$e32path =~ s/^[A-Za-z]://;
-	$rombuildpath = $toroot."\\sf\\os\\kernelhwsrv\\kernel\\eka\\rombuild";
+	$rombuildpath = $toroot."sf\\os\\kernelhwsrv\\kernel\\eka\\rombuild";
 	$Epoc32Path = $toroot;
 	$Epoc32Path =~ s/\\$//;
 	$Epoc32Path .= $EpocRoot . "epoc32";
 	$toolpath = "$Epoc32Path\\tools\\";
 	push @INC, $toolpath;
-	$BasePath = $toroot . $e32path."\\";
+	$BasePath = $toroot . $e32path;
 }
 
 use E32Plat;
@@ -239,7 +237,6 @@ open(OUT, "> rom1.tmp") || die "Can't open output file, $!";
 
 # First output the ROM name
 print OUT "\nromname=$romname\n";
-# Go through the iby file passed as parameter of this script and replace flags by proper values before copying the line in rom1.tmp.
 while(<X>) {
 	s/\#\#ASSP\#\#/$opts{'assp'}/;
 	s/\#\#VARIANT\#\#/$opts{'variant'}/;
@@ -315,7 +312,7 @@ if($opts{'build'}=~/^u/i) {
 	# Unicode build
 	$cppcmd = "$Epoc32Path/gcc/bin/cpp $cppflags -D UNICODE $defines rom1.tmp rom2.tmp";
 } else {
-	$cppcmd = "$Epoc32Path/gcc/bin/cpp $cppflags $defines rom1.tmp rom2.tmp";
+	$cppcmd = "cpp $cppflags $defines rom1.tmp rom2.tmp";
 }
 print "Executing CPP:\n\t$cppcmd\n" if $debug;
 $ret = system($cppcmd);
@@ -596,10 +593,6 @@ sub cleanup($$$) {
 			if ($k and $line=~/^\s*kerneltrace/i) {
 				$line = "kerneltrace $k\n";
 			}
-			
-			# This next line is about converting all the / to \ to make sure that we are using the right format for the build generation	
-			$line =~ s/\//\\/g;
-			
 			print OUTPUT_FILE $line if !($line=~/^\s*REM\s+/i);
 		}
 	}
