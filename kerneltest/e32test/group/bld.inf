@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -387,7 +387,8 @@ t_tldd
 t_newldd
 t_lddpowerseqtest
 t_ldddigitisertest
-t_traweventdigitiser
+t_userdigitisertest
+t_userdigitisernocaps
 t_persistrestart	manual
 halsettings	support
 
@@ -506,6 +507,11 @@ t_hcomp     support
 t_heap
 t_heap2
 t_heapdb
+t_heapdl
+t_heapslab
+t_heapstress		manual
+t_heapcheck
+t_heappagealloc
 t_kheap
 
 // Secure RNG tests
@@ -867,7 +873,7 @@ t_ipcsafety
 t_logtofile         manual
 t_eventtracker      manual
 t_traceredirect     support
-t_heapcorruption	support
+t_heapcorruption    support
 t_btrace
 t_perflogger
 

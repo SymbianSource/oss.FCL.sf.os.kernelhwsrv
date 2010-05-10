@@ -1,3 +1,40 @@
+Version 2.00.3079
+=================
+(Made by vfebvre 07/05/2010)
+
+1.	mipetzol
+	1.	MINOR_CHANGE: Updated comment in dma_v1.h
+	2.	MINOR_CHANGE: Updated comment in dma_v2.h
+
+
+Version 2.00.3078
+=================
+(Made by vfebvre 05/05/2010)
+
+1.	cnotton
+	1.	ou1cimx1#345137 idlehelper_lib & Power DLL don't build for ARM4SMP (kernelhwsrv)
+
+2.	jimmzhou
+	1.	ou1cimx1#366912 [kernelmcl][[Internal]t_usbapi test is not ready to run on production phone environment Vasco/hw79
+
+3.	ricoles
+	1.	PDEF144020 SMP known test failures
+
+4.	y153liu
+	1.	ou1cimx1#355904 MCL_Music playback is not correct after resuming the playback from the USB headset AD-83 after long pause
+
+
+Version 2.00.3077
+=================
+(Made by vfebvre 04/05/2010)
+
+1.	martai
+	1.	ou1cimx1#337920 WDP:Potential system impact of flushing the entire page cache is unacceptable
+
+2.	shubmurt
+	1.	PDEF145383 E32TEST T_DATAPAGING occasionally reports KERN-EXEC 17 on SMPDATAPAGE configs
+
+
 Version 2.00.3076
 =================
 (Made by vfebvre 30/04/2010)

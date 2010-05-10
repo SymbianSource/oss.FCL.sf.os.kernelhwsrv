@@ -2787,6 +2787,7 @@ public:
 	static TUint NumberOfFreeDpPages();
 	static TUint NumberOfDirtyDpPages();
 	static TInt MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlockRest);
+	static TInt MoveAndAllocPage(TPhysAddr aAddr, TZonePageType aPageType);
 	static TInt DiscardPage(TPhysAddr aAddr, TUint aBlockZoneId, TBool aBlockRest);
 	static void RamZoneClaimed(SZone* aZone);
 	static TInt RamDefragFault(TAny* aExceptionInfo);

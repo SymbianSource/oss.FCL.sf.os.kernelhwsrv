@@ -307,6 +307,7 @@ void DPager::AddAsFreePage(SPageInfo* aPageInfo)
 
 TInt DPager::PageFreed(SPageInfo* aPageInfo)
 	{
+	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	__NK_ASSERT_DEBUG(CheckLists());
 
@@ -351,7 +352,7 @@ TInt DPager::PageFreed(SPageInfo* aPageInfo)
 		// This page was pinned when it was moved but it has not been returned 
 		// to the free pool yet so make sure it is...
 		aPageInfo->SetPagedState(SPageInfo::EUnpaged);	// Must be unpaged before returned to free pool.
-		return KErrNotFound;
+		return KErrCompletion;
 
 	default:
 		__NK_ASSERT_DEBUG(0);
@@ -365,6 +366,14 @@ TInt DPager::PageFreed(SPageInfo* aPageInfo)
 		SetClean(*aPageInfo);
 		}
 
+	if (iNumberOfFreePages > 0)
+		{// The paging cache is not at the minimum size so safe to let the 
+		// ram allocator free this page.
+		iNumberOfFreePages--;
+		aPageInfo->SetPagedState(SPageInfo::EUnpaged);
+		return KErrCompletion;
+		}
+	// Need to hold onto this page as have reached the page cache limit.
 	// add as oldest page...
 	aPageInfo->SetPagedState(SPageInfo::EPagedOldestClean);
 	iOldestCleanList.Add(&aPageInfo->iLink);
@@ -413,8 +422,8 @@ void DPager::RemovePage(SPageInfo* aPageInfo)
 #ifdef _DEBUG
 		if (!IsPageTableUnpagedRemoveAllowed(aPageInfo))
 			__NK_ASSERT_DEBUG(0);
-		break;
 #endif
+		break;
 	default:
 		__NK_ASSERT_DEBUG(0);
 		return;
@@ -803,6 +812,20 @@ TInt DPager::StealPage(SPageInfo* aPageInfo)
 	}
 
 
+TInt DPager::DiscardAndAllocPage(SPageInfo* aPageInfo, TZonePageType aPageType)
+	{
+	TInt r = DiscardPage(aPageInfo, KRamZoneInvalidId, EFalse);
+	if (r == KErrNone)
+		{
+		TheMmu.MarkPageAllocated(aPageInfo->PhysAddr(), aPageType);
+		}
+	// Flash the ram alloc lock as we may have had to write a page out to swap.
+	RamAllocLock::Unlock();
+	RamAllocLock::Lock();
+	return r;
+	}
+
+
 static TBool DiscardCanStealPage(SPageInfo* aOldPageInfo, TBool aBlockRest)
 	{
  	// If the page is pinned or if the page is dirty and a general defrag is being performed then
@@ -1002,6 +1025,9 @@ void DPager::ReturnPageToSystem(SPageInfo& aPageInfo)
 	__NK_ASSERT_DEBUG(iNumberOfFreePages>0);
 	--iNumberOfFreePages;
 
+	// The page must be unpaged, otherwise it wasn't successfully removed 
+	// from the live list.
+	__NK_ASSERT_DEBUG(aPageInfo.PagedState() == SPageInfo::EUnpaged);
 	MmuLock::Unlock();
 
 	TPhysAddr pagePhys = aPageInfo.PhysAddr();
@@ -2068,6 +2094,7 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 	}
 
 
+// WARNING THIS METHOD MAY HOLD THE RAM ALLOC LOCK FOR EXCESSIVE PERIODS.  DON'T USE THIS IN ANY PRODUCTION CODE.
 void DPager::FlushAll()
 	{
 	NKern::ThreadEnterCS();
@@ -2108,7 +2135,9 @@ void DPager::FlushAll()
 					}
 				++pi;
 				if(((TUint)pi&(0xf<<KPageInfoShift))==0)
+					{
 					MmuLock::Flash(); // every 16 page infos
+					}
 				}
 			while(pi<piEnd);
 			}

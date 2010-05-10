@@ -1049,7 +1049,7 @@ static void TestFAT4G_Boundary()
 	test_KErrNone(nRes);
     for(i=0; i<MaxDummyFiles; ++i)
 	    {
-        nRes = DeleteFileX(KBaseFN, i); 
+        nRes = DeleteFileX(KBaseFN, i);
         test_KErrNone(nRes);
 		}
 	}
@@ -1084,6 +1084,70 @@ void TestRAMDriveNotification()
 	}
 
 
+//-----------------------------------------------------------------------------
+/**
+    Test that the reserving some drive space does not takes more space than required.
+*/
+void Test0()
+{
+    test.Next(_L("test ReserveDriveSpace threshold"));
+
+    TInt nRes;
+    TVolumeIOParamInfo volIop;
+    TInt64 freespace=0;
+
+    //-- 1. format the volume
+    FormatDrive();
+
+    GetFreeDiskSpace(freespace);
+    const TInt64 freeSpace1 = freespace; //-- initial amount of free space on the volume
+
+    nRes = TheFs.VolumeIOParam(gTestDrive, volIop);
+    test_KErrNone(nRes);
+    const TInt KClusterSz = volIop.iClusterSize;
+    if(!IsPowerOf2(KClusterSz))
+        {
+        test.Next(_L("The FS hasn't reported a cluster size. The test is inconsistent, skipping"));
+        return;
+        }
+
+    //-- reserve exactly 1 cluster worth drive space.
+    nRes = TheFs.ReserveDriveSpace(gTestDrive, KClusterSz);
+    test_KErrNone(nRes);
+
+    GetFreeDiskSpace(freespace);
+    const TInt64 freeSpace2 = freespace;
+    test((freeSpace1 - freeSpace2) == KClusterSz);
+
+    //-- fill up a drive (it has a reserved space)
+    FillUpDisk();
+
+    //-- delete 1 file; 
+    nRes = DeleteFileX(KBaseName, 0);
+    test_KErrNone(nRes);
+
+    //-- try to create a file with the size that is exacly the same as free space; it should succeed
+    GetFreeDiskSpace(freespace);
+    
+    nRes = CreateEmptyFile(TheFs, _L("\\aaa1"), freespace);
+    test_KErrNone(nRes);
+
+    GetFreeDiskSpace(freespace);
+    test(freespace == 0);
+
+    //-- return the drive space to the system
+	nRes = TheFs.ReserveDriveSpace(gTestDrive,0);
+	test_KErrNone(nRes); 
+
+    //-- release drive space
+    nRes = TheFs.ReleaseReserveAccess(gTestDrive);
+    test_KErrNone(nRes);
+
+    GetFreeDiskSpace(freespace);
+    test(freespace == KClusterSz);
+
+    FormatDrive();
+}
 
 //-----------------------------------------------------------------------------
 
@@ -1092,9 +1156,9 @@ GLDEF_C void CallTestsL()
 // Do tests relative to session path
 //
 	{
-	//-- set up console output 
-	Fat_Test_Utils::SetConsole(test.Console()); 
-	
+	//-- set up console output
+	Fat_Test_Utils::SetConsole(test.Console());
+
 	// If TESTFAST mode (for automated test builds) is set, don't run LFFS tests.
 	if ((UserSvr::DebugMask(2) & 0x00000002) && IsTestingLFFS())
 		{
@@ -1133,6 +1197,7 @@ GLDEF_C void CallTestsL()
 		return;
 		}
 
+    Test0();
 	Test1();	// General test for new APIs
 	Test2();	// Test to ensure drive and session reserve limits are not exceeded
 	Test3();
@@ -1144,6 +1209,6 @@ GLDEF_C void CallTestsL()
 	Test2();	// run this test to check reserves are being cleared correctly
 
 	TestFAT4G_Boundary();
-    
+
 	TurnAllocFailureOff();
 	}

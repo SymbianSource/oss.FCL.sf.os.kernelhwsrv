@@ -277,7 +277,6 @@ void testWriteMain()
 					Drive.ControlIO(KNandGetDeferStats,statsBuf,0);
 					test.Printf(_L("PG %d PO %d(%d%%) NG %d NO %d\n"),stats.iPageGarbage,  stats.iPageOther, (TInt) ((stats.iPageOther*100)/cCount), stats.iNormalGarbage,  stats.iNormalOther);
 
-					test(stats.iPageOther>0);
 				 	pageGarbageCount+=stats.iPageGarbage; 
 				 	pageOtherCount+=stats.iPageOther;			 	
 				 	normalGarbageCount+=stats.iNormalGarbage; 
@@ -301,6 +300,7 @@ void testWriteMain()
 			{
 			test.Printf(_L("\nTotals: Avg %2d %d%% CC=%4d \n"), fullTot/fullcCount, (TInt)(totChangeCount*100)/fullcCount, totChangeCount);
 			test.Printf(_L("PG %d PO %d(%d%%) NG %d NO %d\n"),pageGarbageCount,  pageOtherCount,(TInt) (pageOtherCount*100/fullcCount), normalGarbageCount,  normalOtherCount );
+			test(pageOtherCount > 0);	// Ensure at least one paging conflict occurred during the test.
 			}
 
 		// If totChangeCount does not change, nand maybe busy waiting.
@@ -511,15 +511,14 @@ LOCAL_C TInt CausePage(TAny*)
 	TUint8* start = (TUint8*)romHeader+romHeader->iPageableRomStart;
 	TUint size = romHeader->iPageableRomSize;
 	TUint8* addr=NULL;
-	TBool flush;
 	while (Testing)
 		{
 			PageSemaphore.Wait(); // wait for main thread to want paging.
-			flush = (PagesBeingPaged==0);
 			addr=start+((TInt64(Random())*TInt64(size))>>32);	
-			PageDoneSemaphore.Signal(); // Acknolage request.
+			PageDoneSemaphore.Signal(); // Acknowledge request.
 
 			PageMutex.Wait();
+			TBool flush = (PagesBeingPaged==0);	// Ensure only one thread is flushing the cache at a time.
 			PagesBeingPaged++;
 			PageMutex.Signal();
 

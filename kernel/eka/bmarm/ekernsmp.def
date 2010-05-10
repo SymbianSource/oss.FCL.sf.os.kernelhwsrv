@@ -1053,4 +1053,6 @@ EXPORTS
 	Stats__13KernCoreStatsPv @ 1052 NONAME R3UNUSED ; KernCoreStats::Stats(void *)
 	SetNumberOfActiveCpus__5NKerni @ 1053 NONAME
 	SetIdleHandler__3ArmPFPvUlPVv_vPv @ 1054 NONAME R3UNUSED ; Arm::SetIdleHandler(void (*)(void *, unsigned long, void volatile *), void *)
+	FreeRamZone__4EpocUi @ 1055 NONAME R3UNUSED ; Epoc::FreeRamZone(unsigned int)
+	SelectiveAlloc__16TBitMapAllocatorii @ 1056 NONAME R3UNUSED ; TBitMapAllocator::SelectiveAlloc(int, int)
 

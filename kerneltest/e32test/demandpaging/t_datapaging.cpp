@@ -236,7 +236,7 @@ void TestKillThread(TThreadFunction aFunc, TInt aIterations)
 		CLOSE_AND_WAIT(thread);
 		}
 	CLOSE_AND_WAIT(gChunk);
-	User::After(1000000);
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
 	__KHEAP_MARKEND;
 	}
 
@@ -783,6 +783,9 @@ void TestDecommitAndStealInteraction(TInt aSeconds)
 	test_KErrNone(timeoutStatus.Int());
 	
 	CLOSE_AND_WAIT(gChunk);
+	
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+	
 	__KHEAP_MARKEND;
 	}
 

@@ -33,6 +33,7 @@ RTest test(_L("T_RAMDEFRAG"));
 #include <e32math.h>
 #include <hal.h>
 #include "testdefs.h"
+#include "..\mmu\mmudetect.h"
 
 
 #include <dptest.h>
@@ -128,6 +129,7 @@ LOCAL_D RFile gFile[KNumFilesOrig];
 LOCAL_D TInt* gCandList1;											// Array of zones that have the same preference and the same
 LOCAL_D TInt* gCandList2;											// amount of free pages
 const TInt KInvalidCandIndex = -1;
+LOCAL_D TUint gMemModel;
 
 //
 // GetDrive
@@ -489,6 +491,8 @@ TInt TestSetup()
 									currentCacheSize >> gPageShift));
 		}
 
+	// Get the memory model of the kernel that this test is running on.
+	gMemModel = MemModelType();
 	return KErrNone;
 	}
 
@@ -1536,7 +1540,7 @@ TInt VerifyMovDisAlloc()
 		}
 
 	if (totalMorePrefInUse > requiredMovDis)
-		{// There enough allocatable pages in the RAM zones below the currently 
+		{// There are enough allocatable pages in the RAM zones below the currently 
 		// least preferable RAM in use.
 		test.Printf(_L("Memory is spread out totalMorePref 0x%x required 0x%x\n"), totalMorePrefInUse, requiredMovDis);
 		if (verifySpread)
@@ -7073,16 +7077,20 @@ skipTest9 :
 //! @SYMPREQ					PREQ308
 //! @SYMTestPriority			High
 //! @SYMTestActions				
-//! 	1.	Allocate fixed pages and call function to free all fixed pages allocated.  
+//! 	1.	Allocate fixed pages and call function to free all fixed pages allocated.
+//!		2.	Claim a RAM zone and then free it via Epoc::FreeRamZone().
+//!		3.	Invoke Epoc::FreeRamZone() with an invalid RAM zone ID.
 //! 
 //! @SYMTestExpectedResults
 //! 	1.	KErrNone
+//!		2.	KErrNone
+//!		3.	KErrArgument
 //---------------------------------------------------------------------------------------------------------------------
 TInt TestFreeZone()
 	{
 	TInt r = 0;
 	TUint zoneID = 0;
-	test.Start(_L("Test1: Free allocated pages"));	
+	test.Start(_L("Test1: Freeing allocated pages"));	
 	TestStart();	
 	
 	TInt pages = 50;
@@ -7128,7 +7136,58 @@ TInt TestFreeZone()
 			}
 		}
 	TestEnd();
+	test.End();
 
+	test.Start(_L("Test2: Epoc::FreeRamZone() on a claimed RAM zone"));
+	TestStart();
+	GetAllPageInfo();
+	TUint zoneIndex = 0;
+	while (zoneIndex < gZoneCount)
+		{
+		if (gZoneUtilArray[zoneIndex].iFreePages == gZoneUtilArray[zoneIndex].iPhysPages)
+			break;
+		zoneIndex++;
+		}
+	if (zoneIndex >= gZoneCount)
+		{
+		test.Printf(_L("Cannot find zone to perform test, Skipping test step...\n"));
+		goto Test2End;
+		}
+	zoneID = gZoneConfigArray[zoneIndex].iZoneId;
+	r = Ldd.CallDefrag(DEFRAG_TYPE_CLAIM, DEFRAG_VER_SYNC, zoneID);
+	if (r != KErrNone)
+		{
+		test.Printf(_L("Fail: r = %d, expected = %d\n"), r, KErrNone);
+		TEST_FAIL;
+		}
+	GetAllPageInfo();
+	if (gZoneUtilArray[zoneIndex].iPhysPages != gZoneUtilArray[zoneIndex].iAllocFixed)
+		{
+		test.Printf(_L("Fail: RAM zone ID %d not claimed successfully"), zoneID);
+		TEST_FAIL;
+		}
+	r = Ldd.FreeZoneId(zoneID);
+	GetAllPageInfo();
+	if (r != KErrNone ||
+		gZoneUtilArray[zoneIndex].iPhysPages != gZoneUtilArray[zoneIndex].iFreePages)
+		{
+		test.Printf(_L("Fail: RAM zone ID %d not freed successfully r=%d"), zoneID, r);
+		TEST_FAIL;
+		}
+Test2End:
+	TestEnd();
+	test.End();
+
+	test.Start(_L("Test2: Epoc::FreeRamZone() on an invalid RAM zone"));
+	TestStart();
+	r = Ldd.FreeZoneId(KInvalidZoneID);
+	if (r != KErrArgument)
+		{
+		test.Printf(_L("Fail: Error RAM zone ID %d r=%d"), KInvalidZoneID, r);
+		TEST_FAIL;
+		}
+	
+	TestEnd();
 	test.End();
 	return KErrNone;
 	}
@@ -9384,6 +9443,14 @@ SkipTest4:
 
 	test.Next(_L("Test5: Filling the FS Cache and allocating more than 16 contiguous fixed pages"));	
 	TestStart();
+
+	if (gMemModel >= EMemModelTypeFlexible)
+		{// The flexible memory model won't flush the whole paging cache for 
+		// contiguous allocations >16 pages so skip the next test.
+		test.Printf(_L("This memory model won't flush the cache - Skipping...\n"));
+		goto SkipTest5;
+		}
+
 	// TestEnd() will have reduced any cache pages to minimum so just get current 
 	// count of discardable pages.
 	GetAllPageInfo();

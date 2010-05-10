@@ -41,6 +41,11 @@ DSMPIdleHandler::DSMPIdleHandler ()
       }
 
 
+DSMPIdleHandler::~DSMPIdleHandler()
+	{
+	}
+
+
 /**
    To be called after construction in a thread context with interrupts enabled. Power extension entry point ideal
    @pre thread context ints enable no kernel locks or fast mutexes

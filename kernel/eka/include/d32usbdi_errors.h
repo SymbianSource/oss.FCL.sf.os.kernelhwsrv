@@ -201,6 +201,7 @@ namespace UsbdiFaults
 		EUsbDevMonDeviceAttachDenied					= 41,
 		EUsbHubDriverZeroInterfaceTokenProduced			= 42,
 		EUsbInterfaceSuccessfulPipeOpenWithNoPipe		= 43,
+		EFailedToLockHostStackInWaitDeviceStateMutex    = 44,
 		};
 
 	_LIT(KUsbDescFaultCat, "USBDesc-Fault");

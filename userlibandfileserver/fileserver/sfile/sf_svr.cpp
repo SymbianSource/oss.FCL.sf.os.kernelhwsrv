@@ -590,7 +590,7 @@ TInt TFsSetVolume::DoRequestL(CFsRequest* aRequest)
 // Set the volume name.
 //
 	{
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1314,8 +1314,13 @@ TInt TFsQueryVolumeInfoExt::DoRequestL(CFsRequest* aRequest)
 
                 return KErrNone;
             }
-
-            
+            case EFSysExtensionsSupported:
+            {
+                TBool supported = pDrive->GetFSys()->IsExtensionSupported();
+                TPckgBuf<TBool> data(supported);
+                aRequest->WriteL(KMsgPtr2,data);
+                return KErrNone;
+            }
 		default:
 			{
 			return KErrNotSupported;

@@ -37,7 +37,10 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
+#include <u32std.h>
+#include <e32svr.h>
 
 RMutex M1;
 RMutex M2;
@@ -62,8 +65,8 @@ RTest test(_L("T_SEMUTX2"));
 //#define MCOUNT(m,c)	test((m).Count() ==(c))
 // mutex count value is not visible for user any more
 #define MCOUNT(m,c) (void)(1)
-#define IDCHECK(x) test(GetNextId()==(x))
-#define NUMCHECK(x)	test(NumIdsPending()==(x))
+#define IDCHECK(x) test_Equal((x), GetNextId())
+#define NUMCHECK(x)	test_Equal((x), NumIdsPending())
 
 #define id0		id[0]
 #define id1		id[1]
@@ -153,38 +156,38 @@ void Test0()
 	TInt count=0;
 	TRequestStatus s;
 	TInt r=t.Create(_L("Test0"),Test0Thread,0x1000,NULL,&count);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	t.Logon(s);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	User::After(10000);		// make sure we have a full timeslice
 	t.Resume();
 
-	test(count==0);			// t shouldn't have run yet
+	test_Equal(0, count);			// t shouldn't have run yet
 	RThread().SetPriority(EPriorityMuchMore);	// shouldn't reschedule (priority unchanged)
-	test(count==0);
+	test_Equal(0, count);
 	RThread().SetPriority(EPriorityMore);	// shouldn't reschedule (priority decreasing, but not enough)
-	test(count==0);
+	test_Equal(0, count);
 	RThread().SetPriority(EPriorityMuchMore);	// shouldn't reschedule (priority increasing)
-	test(count==0);
+	test_Equal(0, count);
 	RThread().SetPriority(EPriorityNormal);	// should reschedule (we go behind t)
-	test(count==1);
+	test_Equal(1, count);
 	RThread().SetPriority(EPriorityLess);	// should reschedule (priority decreasing to below t)
-	test(count==2);
+	test_Equal(2, count);
 	t.SetPriority(EPriorityMuchMore);		// shouldn't reschedule (round-robin, timeslice not expired)
-	test(count==2);
+	test_Equal(2, count);
 	t.SetPriority(EPriorityNormal);			// shouldn't reschedule (t's priority decreasing)
-	test(count==2);
+	test_Equal(2, count);
 	t.SetPriority(EPriorityNormal);			// shouldn't reschedule (t's priority unchanged)
-	test(count==2);
+	test_Equal(2, count);
 	BusyWait(100000);		// use up our timeslice
 	t.SetPriority(EPriorityMuchMore);		// should reschedule (round-robin, timeslice expired)
-	test(count==3);
-	test(s==KRequestPending);
-	test(t.ExitType()==EExitPending);
+	test_Equal(3, count);
+	test_Equal(KRequestPending, s.Int());
+	test_Equal(EExitPending, t.ExitType());
 	t.SetPriority(EPriorityRealTime);		// should reschedule (t increases above current)
-	test(count==4);
-	test(s==KErrNone);						// t should have exited
-	test(t.ExitType()==EExitKill);
+	test_Equal(4, count);
+	test_KErrNone(s.Int());						// t should have exited
+	test_Equal(EExitKill, t.ExitType());
 	User::WaitForRequest(s);
 	RThread().SetPriority(EPriorityMuchMore);
 	t.Close();
@@ -201,11 +204,11 @@ void Test1()
 	{
 	test.Start(_L("Test signalling from wrong thread"));
 	TInt r=M1.CreateLocal();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	M1.Wait();
 	RThread t;
 	r=t.Create(_L("Test1"),Test1Thread,0x1000,NULL,NULL);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TRequestStatus s;
 	t.Logon(s);
 	t.Resume();
@@ -213,9 +216,9 @@ void Test1()
 	User::SetJustInTime(EFalse);
 	User::WaitForRequest(s);
 	User::SetJustInTime(jit);
-	test(s==EAccessDenied);
-	test(t.ExitType()==EExitPanic);
-	test(t.ExitReason()==EAccessDenied);
+	test_Equal(EAccessDenied, s.Int());
+	test_Equal(EExitPanic, t.ExitType());
+	test_Equal(EAccessDenied, t.ExitReason());
 	test(t.ExitCategory()==_L("KERN-EXEC"));
 	t.Close();
 	M1.Close();
@@ -273,13 +276,13 @@ void TestMutex1()
 
 	test.Next(_L("Create mutex"));
 	TInt r=M1.CreateLocal();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Create low priority thread"));
 	TInt lowcount=0;
 	RThread low;
 	r=low.Create(_L("low"),LowThread,0x1000,NULL,&lowcount);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	low.SetPriority(EPriorityMuchLess);
 	test(Exists(_L("low")));
 
@@ -287,42 +290,42 @@ void TestMutex1()
 	TInt medcount=0;
 	RThread med;
 	r=med.Create(_L("med"),MedThread,0x1000,NULL,&medcount);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	med.SetPriority(EPriorityNormal);
 	test(Exists(_L("med")));
 
 	test.Next(_L("Start low priority thread"));
 	low.Resume();
 	User::AfterHighRes(KTestDelay/10);
-	test(lowcount==1);
+	test_Equal(1, lowcount);
 //	MCOUNT(M1,0);
 
 	test.Next(_L("Start medium priority thread"));
 	med.Resume();
 	User::AfterHighRes(KTestDelay/10);
-	test(medcount==1);
+	test_Equal(1, medcount);
 	Kick(med);
 	User::AfterHighRes(KTestDelay/10);
-	test(medcount==2);
+	test_Equal(2, medcount);
 	Kick(med);
 
 	M1.Wait();
-	test(lowcount==1);
-	test(medcount==2);
+	test_Equal(1, lowcount);
+	test_Equal(2, medcount);
 	test.Next(_L("Wait, check medium runs"));
 	User::AfterHighRes(KTestDelay/10);
-	test(medcount==3);
+	test_Equal(3, medcount);
 	M1.Signal();
 
 	test.Next(_L("Create mutex 2"));
 	r=M2.CreateLocal();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Create high priority thread"));
 	TInt highcount=0;
 	RThread high;
 	r=high.Create(_L("high"),HighThread,0x1000,NULL,&highcount);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	high.SetPriority(EPriorityMore);
 	test(Exists(_L("high")));
 
@@ -336,15 +339,15 @@ void TestMutex1()
 	User::AfterHighRes(KTestDelay/10);
 //	MCOUNT(M2,0);
 //	MCOUNT(M1,-1);
-	test(highcount==1);
+	test_Equal(1, highcount);
 
 	M2.Wait();
-	test(lowcount==2);
-	test(medcount==3);
-	test(highcount==2);
+	test_Equal(2, lowcount);
+	test_Equal(3, medcount);
+	test_Equal(2, highcount);
 	test.Next(_L("Wait, check medium runs"));
 	User::AfterHighRes(KTestDelay/10);
-	test(medcount==4);
+	test_Equal(4, medcount);
 	M2.Signal();
 
 	test.Next(_L("Kill threads"));
@@ -401,7 +404,7 @@ TUint CreateThread(RThread& t, TInt n, TAny* aPtr)
 	TBuf<4> b;
 	b.Num(n);
 	TInt r=t.Create(b,ThreadFunction,0x1000,NULL,aPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	t.Resume();
 	TUint id=t.Id();
 	test.Printf(_L("id=%d\n"),id);
@@ -516,7 +519,7 @@ void TestMutex2()
 	Count=0;
 	test.Next(_L("Create mutex"));
 	TInt r=M1.CreateLocal();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	MCOUNT(M1,1);
 	MutexWait();
 	MCOUNT(M1,0);
@@ -624,7 +627,7 @@ void TestMutex2()
 	User::After(50000);		// let threads claim mutex
 	MutexWait();
 	MCOUNT(M1,0);			// check no threads waiting
-	test(t[2].ExitType()==EExitKill);	// check t2 has exited
+	test_Equal(EExitKill, t[2].ExitType());	// check t2 has exited
 	t[2].Close();
 	test(!Exists(2));
 	IDCHECK(id2);			// check they ran in order t2,t3,t4,t5,t1
@@ -942,12 +945,12 @@ void TestMutex2()
 		{
 		if (i==3 || i==6 || i==7)
 			{
-			test(t[i].ExitType()==EExitPending);
+			test_Equal(EExitPending, t[i].ExitType());
 			}
 		else
 			{
-			test(t[i].ExitType()==EExitPanic);
-			test(t[i].ExitReason()==EBadHandle);
+			test_Equal(EExitPanic, t[i].ExitType());
+			test_Equal(EBadHandle, t[i].ExitReason());
 			test(t[i].ExitCategory()==_L("KERN-EXEC"));
 			t[i].Close();
 			test(!Exists(i));
@@ -963,8 +966,8 @@ void TestMutex2()
 		{
 		if (i==3 || i==6 || i==7)
 			{
-			test(t[i].ExitType()==EExitPanic);
-			test(t[i].ExitReason()==EBadHandle);
+			test_Equal(EExitPanic, t[i].ExitType());
+			test_Equal(EBadHandle, t[i].ExitReason());
 			test(t[i].ExitCategory()==_L("KERN-EXEC"));
 			t[i].Close();
 			test(!Exists(i));
@@ -1008,11 +1011,11 @@ void TestMutexSpeed()
 	test.Start(_L("Test mutex speed"));
 	TInt count=0;
 	TInt r=M1.CreateLocal();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RThread t;
 	r=t.Create(_L("Speed"),MutexSpeed,0x1000,NULL,&count);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	t.SetPriority(EPriorityRealTime);
 	t.Resume();
 	User::AfterHighRes(1000000);
@@ -1023,7 +1026,7 @@ void TestMutexSpeed()
 
 	TInt count2=0;
 	r=t.Create(_L("Speed2"),MutexSpeed2,0x1000,NULL,&count2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	t.SetPriority(EPriorityRealTime);
 	t.Resume();
 	User::AfterHighRes(1000000);
@@ -1074,7 +1077,7 @@ TUint CreateSemThread(RThread& t, TInt n, TAny* aPtr)
 	TBuf<4> b;
 	b.Num(n);
 	TInt r=t.Create(b,SemThreadFunction,0x1000,NULL,aPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	t.Resume();
 	TUint id=t.Id();
 	return id;
@@ -1147,7 +1150,7 @@ void TestSemaphore()
 	Count=0;
 	test.Next(_L("Create semaphore"));
 	TInt r=S.CreateLocal(2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	MCOUNT(S,2);
 	SemWait();
 	MCOUNT(S,1);
@@ -1312,20 +1315,20 @@ void TestSemaphore()
 		{
 		if (i==3 || i==7 || i==10)
 			{
-			test(t[i].ExitType()==EExitPending);
+			test_Equal(EExitPending, t[i].ExitType());
 			}
 		else if (i!=5)
 			{
-			test(t[i].ExitType()==EExitPanic);
-			test(t[i].ExitReason()==EBadHandle);
+			test_Equal(EExitPanic, t[i].ExitType());
+			test_Equal(EBadHandle, t[i].ExitReason());
 			test(t[i].ExitCategory()==_L("KERN-EXEC"));
 			t[i].Close();
 			test(!Exists(i));
 			}
 		else
 			{
-			test(t[i].ExitType()==EExitKill);
-			test(t[i].ExitReason()==0);
+			test_Equal(EExitKill, t[i].ExitType());
+			test_Equal(0, t[i].ExitReason());
 			t[i].Close();
 			test(!Exists(i));
 			}
@@ -1340,8 +1343,8 @@ void TestSemaphore()
 		{
 		if (i==3 || i==7 || i==10)
 			{
-			test(t[i].ExitType()==EExitPanic);
-			test(t[i].ExitReason()==EBadHandle);
+			test_Equal(EExitPanic, t[i].ExitType());
+			test_Equal(EBadHandle, t[i].ExitReason());
 			test(t[i].ExitCategory()==_L("KERN-EXEC"));
 			t[i].Close();
 			test(!Exists(i));
@@ -1371,11 +1374,11 @@ void TestSemSpeed()
 	test.Start(_L("Test semaphore speed"));
 	TInt count=0;
 	TInt r=S.CreateLocal(1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RThread t;
 	r=t.Create(_L("SemSpeed"),SemSpeed,0x1000,NULL,&count);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	t.SetPriority(EPriorityRealTime);
 	t.Resume();
 	User::AfterHighRes(1000000);
@@ -1391,12 +1394,22 @@ void TestSemSpeed()
 
 GLDEF_C TInt E32Main()
 	{
+	TInt cpus = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
+	if (cpus != 1)
+		{
+		test(cpus>1);
+		// This test will require compatibility mode (and probably other changes)
+		// to work on SMP - it depends on explicit scheduling order.
+		test.Printf(_L("T_SEMUTX2 skipped, does not work on SMP\n"));
+		return KErrNone;
+		}	
+	
 	test.Title();
 
 	test.Start(_L("Test mutexes and semaphores"));
 	RThread().SetPriority(EPriorityMuchMore);
 	TInt r=Main.Duplicate(RThread());
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	Test0();
 	Test1();

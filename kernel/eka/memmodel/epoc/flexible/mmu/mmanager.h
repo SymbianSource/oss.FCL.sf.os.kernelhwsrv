@@ -153,7 +153,7 @@ public:
 			KErrNotSupported if the manager doesn't support this function,
 			otherwise one of the system wide error codes.
 	*/
-	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages);
+	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages);
 
 	/**
 	Add a contiguous range of physical memory pages to a region of a memory object.
@@ -359,9 +359,35 @@ public:
 	virtual void Unpin(DMemoryObject* aMemory, DMemoryMappingBase* aMapping, TPinArgs& aPinArgs) =0;
 
 	/**
-	@todo
+	Attempt to move the page specified to a new physical location.  The new physical
+	location for the page to be moved to is allocated by this method.  However,
+	aBlockZoneId and aBlockRest can be used to control which RAM zone the new
+	location is in.
+
+	@param aMemory		The memory object that owns the page.
+	@param aOldPageInfo	The page info for the physical page to move.
+	@param aNewPage 	On success this will hold the physical address of the new 
+						location for the page.
+	@param aBlockZoneId The ID of a RAM zone not to allocate the new page into.
+	@param aBlockRest 	When set to ETrue the search for a new page will stop if it 
+						ever needs to look at aBlockZoneId.
+	@return KErrNone on success, KErrInUse if the page couldn't be moved, 
+			or KErrNoMemory if it wasn't possible to allocate a new page.
 	*/
 	virtual TInt MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInfo, TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest);
+
+	/**
+	Move the page specified to a new physical location and mark the page as 
+	allocated as type aPageType.
+	
+	@param aMemory		The memory object that owns the page.
+	@param aPageInfo	The page info for the physical page to move.
+	@param aPageType	The type of the page to allocate into the orignal physical 
+						location of the page to move.
+	@return KErrNone on success, KErrInUse if the page couldn't be moved, 
+			or KErrNoMemory if it wasn't possible to allocate a new page.
+	*/
+	virtual TInt MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType);
 
 	/**
 	Return the TZonePageType of the pages that the memory manager can allocate and free.

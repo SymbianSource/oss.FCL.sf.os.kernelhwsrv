@@ -66,7 +66,7 @@ TInt DMemoryManager::Wipe(DMemoryObject* /*aMemory*/)
 	}
 
 
-TInt DMemoryManager::AddPages(DMemoryObject* /*aMemory*/, TUint /*aIndex*/, TUint /*aCount*/, TPhysAddr* /*aPages*/)
+TInt DMemoryManager::AddPages(DMemoryObject* /*aMemory*/, TUint /*aIndex*/, TUint /*aCount*/, const TPhysAddr* /*aPages*/)
 	{
 	return KErrNotSupported;
 	}
@@ -133,6 +133,13 @@ TInt DMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPageInfo,
 	{
 	return KErrNotSupported;
 	}
+
+
+TInt DMemoryManager::MoveAndAllocPage(DMemoryObject*, SPageInfo*, TZonePageType)
+	{
+	return KErrNotSupported;
+	}
+
 
 TZonePageType DMemoryManager::PageType()
 	{// This should not be invoked on memory managers that do not use the methods
@@ -721,6 +728,7 @@ class DMovableMemoryManager : public DUnpagedMemoryManager
 public:
 	// from DMemoryManager...
 	virtual TInt MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInfo, TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest);
+	virtual TInt MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType);
 	virtual TInt HandleFault(	DMemoryObject* aMemory, TUint aIndex, DMemoryMapping* aMapping, 
 								TUint aMapInstanceCount, TUint aAccessPermissions);
 	virtual TZonePageType PageType();
@@ -883,6 +891,18 @@ remap:
 	RPageArray::MovePageEnd(*movingPageArrayPtr);
 	MmuLock::Unlock();
 
+	return r;
+	}
+
+
+TInt DMovableMemoryManager::MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType)
+	{
+	TPhysAddr newPage;
+	TInt r = MovePage(aMemory, aPageInfo, newPage, KRamZoneInvalidId, EFalse);
+	if (r == KErrNone)
+		{
+		TheMmu.MarkPageAllocated(aPageInfo->PhysAddr(), aPageType);
+		}
 	return r;
 	}
 
@@ -1161,7 +1181,7 @@ class DHardwareMemoryManager : public DMemoryManager
 public:
 	// from DMemoryManager...
 	virtual void Destruct(DMemoryObject* aMemory);
-	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages);
+	virtual TInt AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages);
 	virtual TInt AddContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr aPhysAddr);
 	virtual TInt RemovePages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages);
 	virtual TInt Pin(DMemoryObject* aMemory, DMemoryMappingBase* aMapping, TPinArgs& aPinArgs);
@@ -1226,14 +1246,14 @@ void DHardwareMemoryManager::Destruct(DMemoryObject* aMemory)
 	}
 
 
-TInt DHardwareMemoryManager::AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages)
+TInt DHardwareMemoryManager::AddPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, const TPhysAddr* aPages)
 	{
 	TRACE2(("DHardwareMemoryManager::AddPages(0x%08x,0x%x,0x%x,?)",aMemory, aIndex, aCount));
 	__NK_ASSERT_DEBUG(MemoryObjectLock::IsHeld(aMemory));
 
 	// validate arguments...
-	TPhysAddr* pages = aPages;
-	TPhysAddr* pagesEnd = aPages+aCount;
+	const TPhysAddr* pages = aPages;
+	const TPhysAddr* pagesEnd = aPages+aCount;
 	TPhysAddr checkMask = 0;
 	do checkMask |= *pages++;
 	while(pages<pagesEnd);

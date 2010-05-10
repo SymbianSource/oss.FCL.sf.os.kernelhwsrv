@@ -410,6 +410,7 @@ public:
 	TInt ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aNumPages, TPhysAddr* aPageList);
 	TInt FreePhysicalRam(TPhysAddr aPhysAddr, TInt aSize);
 	TInt FreePhysicalRam(TInt aNumPages, TPhysAddr* aPageList);
+	TInt FreeRamZone(TUint aZoneId, TPhysAddr& aZoneBase, TUint& aZoneBytes);
 	TInt ClaimPhysicalRam(TPhysAddr aPhysAddr, TInt aSize);
 	TInt GetPageTableId(TPhysAddr aPtPhys);
 	void MapRamPage(TLinAddr aAddr, TPhysAddr aPage, TPte aPtePerm);
@@ -525,8 +526,8 @@ public:
 public:
 	TInt AllocRamPages(TPhysAddr* aPageList, TInt aNumPages, TZonePageType aPageType, TUint aBlockedZoneId=KRamZoneInvalidId, TBool aBlockRest=EFalse);
 	TInt ZoneAllocRamPages(TUint* aZoneIdList, TUint aZoneIdCount, TPhysAddr* aPageList, TInt aNumPages, TZonePageType aPageType);
-	TInt AllocContiguousRam(TInt aSize, TPhysAddr& aPhysAddr, TZonePageType aPageType, TInt aAlign, TUint aBlockedZoneId=KRamZoneInvalidId, TBool aBlockRest=EFalse);
-	TInt ZoneAllocContiguousRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TZonePageType aPageType, TInt aAlign);
+	TInt AllocContiguousRam(TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign);
+	TInt ZoneAllocContiguousRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign);
 
 public:
 	TInt iPageSize;				// page size in bytes

@@ -349,27 +349,66 @@ protected:
 	virtual void DoUnlink(SDmaDesHdr& aHdr);
 	virtual void DoDfc(DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr) = 0;
 	/**
-	   This function allows the Platform Specific Layer (PSL) to control the
-	   power management of the channel or its controller by overriding the
-	   PIL's default implementation (which does nothing) and making appropriate
-	   use of the Power Resource Manager (PRM).
+		This function allows the Platform Specific Layer (PSL) to control the
+		power management of the channel or its controller by overriding the
+		PIL's default implementation (which does nothing) and making
+		appropriate use of the Power Resource Manager (PRM).
 
-	   The function gets called by the PIL whenever the channel's queued
-	   requests count has changed in a significant way, either before the
-	   channel's Transfer() method is invoked for a request on a previously
-	   empty request queue, or immediately after the request count has become
-	   zero because of request cancellation or completion.
+		The function gets called by the PIL whenever the channel's queued
+		requests count has changed in a significant way, either before the
+		channel's Transfer() method is invoked for a request on a previously
+		empty request queue, or immediately after the request count has become
+		zero because of request cancellation or completion.
 
-	   Depending on the current value of iQueuedRequests, the PSL may power
-	   down or power up the channel. Note that iQueuedRequests gets accessed
-	   and changed by different threads, so the PSL needs to take the usual
-	   precautions when evaluating the variable's value.
+		Depending on the current and previous observed values of
+		iQueuedRequests, the PSL may power down or power up the channel.
 
-	   None of the internal DMA framework mutexes is being held by the PIL when
-	   calling this function.
+		Note that iQueuedRequests gets accessed and changed by different
+		threads, so the PSL needs to take the usual precautions when evaluating
+		the variable's value. Also, due to the multithreaded framework
+		architecture, there is no guarantee that the function calls always
+		arrive at the PSL level in the strict chronological order of
+		iQueuedRequests being incremented/decremented in the PIL, i.e. it might
+		happen that the PSL finds iQueuedRequests to have the same value in two
+		or more consecutive calls (that's why the previous observed value needs
+		to be locally available and taken into account). It is however promised
+		that before any actual transfer commences the PSL will find the request
+		count to be greater than zero and that after the last request has
+		finished it will be found to be zero.
 
-	   @see iQueuedRequests
-	 */
+		None of the internal DMA framework mutexes is being held by the PIL
+		when calling this function.
+
+		Here is an example implementation for a derived channel class:
+
+		@code
+
+		class TFooDmaChannel : public TDmaSgChannel
+			{
+			DMutex* iDmaMutex;
+			TInt iPrevQueuedRequests;
+			virtual void QueuedRequestCountChanged();
+			};
+
+		void TFooDmaChannel::QueuedRequestCountChanged()
+			{
+			Kern::MutexWait(*iDmaMutex);
+			if ((iQueuedRequests > 0) && (iPrevQueuedRequests == 0))
+				{
+				IncreasePowerCount(); // Base port specific
+				}
+			else if ((iQueuedRequests == 0) && (iPrevQueuedRequests > 0))
+				{
+				DecreasePowerCount(); // Base port specific
+				}
+			iPrevQueuedRequests = iQueuedRequests;
+			Kern::MutexSignal(*iDmaMutex);
+			}
+
+		@endcode
+
+		@see iQueuedRequests
+	*/
 	virtual void QueuedRequestCountChanged();
 #if defined(__CPU_ARM) && !defined(__EABI__)
 	inline virtual ~TDmaChannel() {}	// kill really annoying warning

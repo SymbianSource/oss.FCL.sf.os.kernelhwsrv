@@ -20,6 +20,7 @@
 #include <e32test.h>
 #include <e32uid.h>
 #include <e32hal.h>
+#include <dptest.h>
 #include "d_shadow.h"
 #include "mmudetect.h"
 #include "freeram.h"
@@ -32,6 +33,18 @@ TInt PageSize;
 TInt PageShift;
 RShadow Shadow;
 TInt InitFreeRam;
+RChunk Chunk;
+TUint ChunkCommitEnd;
+RThread TouchThread;
+TRequestStatus TouchStatus;
+TBool TouchDataStop;
+RThread FragThread;
+TRequestStatus FragStatus;
+TBool FragThreadStop;
+TBool ManualTest;
+TBool CacheSizeAdjustable;
+TUint OrigMinCacheSize;
+TUint OrigMaxCacheSize;
 
 TInt AllocPhysicalRam(TUint32& aAddr, TInt aSize, TInt aAlign)
 	{
@@ -118,6 +131,334 @@ void TestClaimPhys()
 	
 	}
 
+
+struct SPhysAllocData
+	{
+	TUint iSize;
+	TUint iAlign;
+	TBool iCheckMaxAllocs;
+	TBool iCheckFreeRam;
+	};
+
+
+TInt FillPhysicalRam(TAny* aArgs)
+	{
+	SPhysAllocData& allocData = *((SPhysAllocData*)aArgs);
+	TUint maxAllocs = FreeRam() / allocData.iSize;
+	TUint32* physAddrs = new TUint32[maxAllocs + 1];
+	if (!physAddrs)
+		return KErrNoMemory;
+	TUint32* pa = physAddrs;
+	TUint32 alignMask = (1 << allocData.iAlign) - 1;
+	TUint initialFreeRam = FreeRam();
+	TInt r = KErrNone;
+	TUint allocations = 0;
+	for(; allocations <= maxAllocs; ++allocations)
+		{
+		TUint freeRam = FreeRam();			
+		r = AllocPhysicalRam(*pa, allocData.iSize, allocData.iAlign);
+		if (r != KErrNone)
+			break;
+		if (*pa++ & alignMask)
+			{
+			r = KErrGeneral;
+			RDebug::Printf("Error alignment phys addr 0x%08x", *(pa - 1));
+			break;
+			}
+		if (allocData.iCheckFreeRam && freeRam - allocData.iSize != (TUint)FreeRam())
+			{
+			r = KErrGeneral;
+			RDebug::Printf("Error in free ram 0x%08x orig 0x%08x", FreeRam(), freeRam);
+			break;
+			}
+		}
+
+	TUint32* physEnd = pa;
+	TBool failFrees = EFalse;
+	for (pa = physAddrs; pa < physEnd; pa++)
+		{
+		if (FreePhysicalRam(*pa, allocData.iSize) != KErrNone)
+			failFrees = ETrue;
+		}
+	if (failFrees)
+		r = KErrNotFound;
+	if (allocData.iCheckMaxAllocs && allocations > maxAllocs)
+		{
+		r = KErrOverflow;
+		RDebug::Printf("Error able to allocate too many pages");
+		}
+	if (allocData.iCheckFreeRam && initialFreeRam != (TUint)FreeRam())
+		{
+		r = KErrGeneral;
+		RDebug::Printf("Error in free ram 0x%08x initial 0x%08x", FreeRam(), initialFreeRam);
+		}
+	delete[] physAddrs;
+	if (r != KErrNone && r != KErrNoMemory)
+		return r;
+	TUint possibleAllocs = initialFreeRam / allocData.iSize;
+	if (allocData.iCheckMaxAllocs && possibleAllocs != allocations)
+		{
+		RDebug::Printf("Error in number of allocations possibleAllocs %d allocations %d", possibleAllocs, allocations);
+		return KErrGeneral;
+		}
+	return allocations;
+	}
+
+
+void TestMultipleContiguousAllocations(TUint aNumThreads, TUint aSize, TUint aAlign)
+	{
+	test.Printf(_L("TestMultiContig threads %d size 0x%x, align %d\n"), aNumThreads, aSize, aAlign);
+	SPhysAllocData allocData;
+	allocData.iSize = aSize;
+	allocData.iAlign = aAlign;
+	allocData.iCheckMaxAllocs = EFalse;
+	allocData.iCheckFreeRam = EFalse;
+	// Start several threads all contiguous allocating memory.
+	RThread* threads = new RThread[aNumThreads];
+	TRequestStatus* status = new TRequestStatus[aNumThreads];
+	TUint i = 0;
+	for (; i < aNumThreads; i++)
+		{// Need enough heap to store addr of every possible allocation + 1.
+		TUint requiredHeapMax = Max(PageSize, ((InitFreeRam / aSize) / sizeof(TUint32)) + sizeof(TUint32));
+		TInt r = threads[i].Create(KNullDesC, FillPhysicalRam, KDefaultStackSize, PageSize, requiredHeapMax, (TAny*)&allocData);
+		test_KErrNone(r);
+		threads[i].Logon(status[i]);
+		}
+	for (i = 0; i < aNumThreads; i++)
+		{
+		threads[i].Resume();
+		}
+	for (i = 0; i < aNumThreads; i++)
+		{
+		User::WaitForRequest(status[i]);
+		test_Equal(EExitKill, threads[i].ExitType());
+		TInt exitReason = threads[i].ExitReason();
+		test_Value(exitReason, exitReason >= 0 || exitReason == KErrNoMemory);
+		threads[i].Close();
+		}
+	delete[] status;
+	delete[] threads;
+	}
+
+struct STouchData
+	{
+	TUint iSize;
+	TUint iFrequency;
+	}TouchData;
+
+
+TInt TouchMemory(TAny*)
+	{
+	while (!TouchDataStop)
+		{
+		TUint8* p = Chunk.Base();
+		TUint8* pEnd = p + ChunkCommitEnd;
+		TUint8* fragPEnd = p + TouchData.iFrequency;
+		for (TUint8* fragP = p + TouchData.iSize; fragPEnd < pEnd;)
+			{
+			TUint8* data = fragP;
+			for (; data < fragPEnd; data += PageSize)
+				{
+				*data = (TUint8)(data - fragP);
+				}
+			for (data = fragP; data < fragPEnd; data += PageSize)
+				{
+				if (*data != (TUint8)(data - fragP))
+					{
+					RDebug::Printf("Error unexpected data 0x%x read from 0x%08x", *data, data);
+					return KErrGeneral;
+					}
+				}
+			fragP = fragPEnd + TouchData.iSize;
+			fragPEnd += TouchData.iFrequency;
+			}
+		}
+	return KErrNone;
+	}
+
+struct SFragData
+	{
+	TUint iSize;
+	TUint iFrequency;
+	TUint iDiscard;
+	TBool iFragThread;
+	}FragData;
+
+void FragmentMemoryFunc()
+	{
+	ChunkCommitEnd = 0;
+	TInt r;
+	while(KErrNone == (r = Chunk.Commit(ChunkCommitEnd,PageSize)) && !FragThreadStop)
+		{
+		ChunkCommitEnd += PageSize;
+		}
+	if (FragThreadStop)
+		return;
+	test_Equal(KErrNoMemory, r);
+	TUint freeBlocks = 0;
+	for (	TUint offset = 0; 
+			(offset + FragData.iSize) < ChunkCommitEnd; 
+			offset += FragData.iFrequency, freeBlocks++)
+		{
+		test_KErrNone(Chunk.Decommit(offset, FragData.iSize));
+		}
+	if (!FragData.iFragThread)
+		test_Equal(FreeRam(), freeBlocks * FragData.iSize);
+
+	if (FragData.iDiscard && CacheSizeAdjustable && !FragThreadStop)
+		{
+		TUint minCacheSize = FreeRam();
+		TUint maxCacheSize = minCacheSize;
+		TUint currentCacheSize;
+		test_KErrNone(DPTest::CacheSize(OrigMinCacheSize, OrigMaxCacheSize, currentCacheSize));
+		test_KErrNone(DPTest::SetCacheSize(minCacheSize, maxCacheSize));
+		test_KErrNone(DPTest::SetCacheSize(OrigMinCacheSize, maxCacheSize));
+		}
+	}
+
+
+void UnfragmentMemoryFunc()
+	{
+	if (FragData.iDiscard && CacheSizeAdjustable)
+		test_KErrNone(DPTest::SetCacheSize(OrigMinCacheSize, OrigMaxCacheSize));
+	Chunk.Decommit(0, Chunk.MaxSize());
+	}
+
+
+TInt FragmentMemoryThreadFunc(TAny*)
+	{
+	while (!FragThreadStop)
+		{
+		FragmentMemoryFunc();
+		UnfragmentMemoryFunc();
+		}
+	return KErrNone;
+	}
+
+
+void FragmentMemory(TUint aSize, TUint aFrequency, TBool aDiscard, TBool aTouchMemory, TBool aFragThread)
+	{
+	test_Value(aTouchMemory, !aTouchMemory || !aFragThread);
+	test_Value(aSize, aSize < aFrequency);
+	FragData.iSize = aSize;
+	FragData.iFrequency = aFrequency;
+	FragData.iDiscard = aDiscard;
+	FragData.iFragThread = aFragThread;
+
+	TChunkCreateInfo chunkInfo;
+	chunkInfo.SetDisconnected(0, 0, FreeRam());
+	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	test_KErrNone(Chunk.Create(chunkInfo));
+
+	if (aFragThread)
+		{
+		TInt r = FragThread.Create(KNullDesC, FragmentMemoryThreadFunc, KDefaultStackSize, PageSize, PageSize, NULL);
+		test_KErrNone(r);
+		FragThread.Logon(FragStatus);
+		FragThreadStop = EFalse;
+		FragThread.Resume();
+		}
+	else
+		{
+		FragmentMemoryFunc();
+		}
+	if (aTouchMemory && !ManualTest)
+		{
+		TouchData.iSize = aSize;
+		TouchData.iFrequency = aFrequency;
+		TInt r = TouchThread.Create(KNullDesC, TouchMemory, KDefaultStackSize, PageSize, PageSize, NULL);
+		test_KErrNone(r);
+		TouchThread.Logon(TouchStatus);
+		TouchDataStop = EFalse;
+		TouchThread.Resume();
+		}
+	}
+
+
+void UnfragmentMemory(TBool aDiscard, TBool aTouchMemory, TBool aFragThread)
+	{
+	test_Value(aTouchMemory, !aTouchMemory || !aFragThread);
+	if (aTouchMemory && !ManualTest)
+		{
+		TouchDataStop = ETrue;
+		User::WaitForRequest(TouchStatus);
+		test_Equal(EExitKill, TouchThread.ExitType());
+		test_KErrNone(TouchThread.ExitReason());
+		CLOSE_AND_WAIT(TouchThread);
+		}
+	if (aFragThread)
+		{
+		FragThreadStop = ETrue;
+		User::WaitForRequest(FragStatus);
+		test_Equal(EExitKill, FragThread.ExitType());
+		test_KErrNone(FragThread.ExitReason());
+		CLOSE_AND_WAIT(FragThread);
+		}
+	else
+		UnfragmentMemoryFunc();
+	CLOSE_AND_WAIT(Chunk);
+	}
+
+
+void TestFillPhysicalRam(TUint aFragSize, TUint aFragFreq, TUint aAllocSize, TUint aAllocAlign, TBool aDiscard, TBool aTouchMemory)
+	{
+	test.Printf(_L("TestFillPhysicalRam aFragSize 0x%x aFragFreq 0x%x aAllocSize 0x%x aAllocAlign %d dis %d touch %d\n"),
+				aFragSize, aFragFreq, aAllocSize, aAllocAlign, aDiscard, aTouchMemory);
+	FragmentMemory(aFragSize, aFragFreq, aDiscard, aTouchMemory, EFalse);
+	SPhysAllocData allocData;
+	// Only check free all ram could be allocated in manual tests as fixed pages may be fragmented.
+	allocData.iCheckMaxAllocs = (ManualTest && !aTouchMemory && !aAllocAlign)? ETrue : EFalse;
+	allocData.iCheckFreeRam = ETrue;
+	allocData.iSize = aAllocSize;
+	allocData.iAlign = aAllocAlign;
+	FillPhysicalRam(&allocData);
+	UnfragmentMemory(aDiscard, aTouchMemory, EFalse);
+	}
+
+
+void TestFragmentedAllocation()
+	{
+	// Test every other page free.
+	TestFillPhysicalRam(PageSize, PageSize * 2, PageSize, 0, EFalse, EFalse);
+	if (ManualTest)
+		{
+		TestFillPhysicalRam(PageSize, PageSize * 2, PageSize * 2, 0, EFalse, EFalse);
+		TestFillPhysicalRam(PageSize, PageSize * 2, PageSize, 0, EFalse, ETrue);
+		}
+	TestFillPhysicalRam(PageSize, PageSize * 2, PageSize * 2, 0, EFalse, ETrue);
+	// Test every 2 pages free.
+	TestFillPhysicalRam(PageSize * 2, PageSize * 4, PageSize * 8, 0, EFalse, EFalse);
+	if (ManualTest)
+		TestFillPhysicalRam(PageSize * 2, PageSize * 4, PageSize * 8, 0, EFalse, ETrue);
+	// Test 10 pages free then 20 pages allocated, allocate 256 pages (1MB in most cases).
+	if (ManualTest)
+		TestFillPhysicalRam(PageSize * 10, PageSize * 30, PageSize * 256, 0, EFalse, EFalse);
+	TestFillPhysicalRam(PageSize * 10, PageSize * 30, PageSize * 256, 0, EFalse, ETrue);
+
+	if (CacheSizeAdjustable)
+		{// It is possible to adjust the cache size so test phyiscally contiguous 
+		// allocations discard and move pages when required.
+		test.Next(_L("TestFragmentedAllocations with discardable data no true free memory"));
+		// Test every other page free.
+		TestFillPhysicalRam(PageSize, PageSize * 2, PageSize, 0, ETrue, EFalse);
+		if (ManualTest)
+			{
+			TestFillPhysicalRam(PageSize, PageSize * 2, PageSize, 0, ETrue, ETrue);
+			TestFillPhysicalRam(PageSize, PageSize * 2, PageSize * 2, 0, ETrue, EFalse);
+			}
+		TestFillPhysicalRam(PageSize, PageSize * 2, PageSize * 2, 0, ETrue, ETrue);
+		// Test every 2 pages free.
+		TestFillPhysicalRam(PageSize * 2, PageSize * 4, PageSize * 8, 0, ETrue, EFalse);
+		if (ManualTest)
+			TestFillPhysicalRam(PageSize * 2, PageSize * 4, PageSize * 8, 0, ETrue, ETrue);
+		// Test 10 pages free then 20 pages allocated, allocate 256 pages (1MB in most cases).
+		if (ManualTest)
+			TestFillPhysicalRam(PageSize * 10, PageSize * 30, PageSize * 256, 0, ETrue, EFalse);
+		TestFillPhysicalRam(PageSize * 10, PageSize * 30, PageSize * 256, 0, ETrue, ETrue);
+		}
+	}
+
+
 GLDEF_C TInt E32Main()
 //
 // Test RAM allocation
@@ -135,6 +476,28 @@ GLDEF_C TInt E32Main()
 	PageShift=-1;
 	for (; psz; psz>>=1, ++PageShift);
 
+	TUint currentCacheSize;
+	CacheSizeAdjustable = DPTest::CacheSize(OrigMinCacheSize, OrigMaxCacheSize, currentCacheSize) == KErrNone;
+
+	TUint memodel = UserSvr::HalFunction(EHalGroupKernel, EKernelHalMemModelInfo, NULL, NULL) & EMemModelTypeMask;
+
+	TInt cmdLineLen = User::CommandLineLength();
+	if(cmdLineLen)
+		{
+		_LIT(KManual, "manual");
+		RBuf cmdLine;
+		test_KErrNone(cmdLine.Create(cmdLineLen));
+		User::CommandLine(cmdLine);
+		cmdLine.LowerCase();
+		ManualTest = cmdLine.Find(KManual) != KErrNotFound;
+		}
+
+	// Turn off lazy dll unloading so the free ram checking isn't affected.
+	RLoader l;
+	test(l.Connect()==KErrNone);
+	test(l.CancelLazyDllUnload()==KErrNone);
+	l.Close();
+
 	InitFreeRam=FreeRam();
 	test.Printf(_L("Free RAM=%08x, Page size=%x, Page shift=%d\n"),InitFreeRam,PageSize,PageShift);
 
@@ -148,8 +511,54 @@ GLDEF_C TInt E32Main()
 	test.Next(_L("TestClaimPhys"));
 	TestClaimPhys();
 
+	if (memodel >= EMemModelTypeFlexible)
+		{
+		test.Next(_L("TestFragmentedAllocation"));
+		TestFragmentedAllocation();
+
+		test.Next(_L("TestMultipleContiguousAllocations"));
+		TestMultipleContiguousAllocations(20, PageSize * 16, 0);
+		TestMultipleContiguousAllocations(20, PageSize * 16, PageShift + 1);
+		TestMultipleContiguousAllocations(20, PageSize * 128, PageShift + 2);
+
+		FragmentMemory(PageSize, PageSize * 2, EFalse, EFalse, EFalse);
+		TestMultipleContiguousAllocations(20, PageSize * 128, PageShift + 2);
+		UnfragmentMemory(EFalse, EFalse, EFalse);
+
+		test.Next(_L("TestMultipleContiguousAllocations while accessing memory"));
+		FragmentMemory(PageSize, PageSize * 2, EFalse, ETrue, EFalse);
+		TestMultipleContiguousAllocations(20, PageSize * 128, PageShift + 2);
+		UnfragmentMemory(EFalse, ETrue, EFalse);
+		FragmentMemory(PageSize, PageSize * 2, ETrue, ETrue, EFalse);
+		TestMultipleContiguousAllocations(50, PageSize * 256, PageShift + 5);
+		UnfragmentMemory(ETrue, ETrue, EFalse);
+		FragmentMemory(PageSize * 16, PageSize * 32, ETrue, ETrue, EFalse);
+		TestMultipleContiguousAllocations(10, PageSize * 512, PageShift + 8);
+		UnfragmentMemory(ETrue, ETrue, EFalse);
+		FragmentMemory(PageSize * 32, PageSize * 64, ETrue, ETrue, EFalse);
+		TestMultipleContiguousAllocations(10, PageSize * 1024, PageShift + 10);
+		UnfragmentMemory(ETrue, ETrue, EFalse);
+
+		test.Next(_L("TestMultipleContiguousAllocations with repeated movable and discardable allocations"));
+		FragmentMemory(PageSize, PageSize * 2, EFalse, EFalse, ETrue);
+		TestMultipleContiguousAllocations(20, PageSize * 2, PageShift);
+		UnfragmentMemory(EFalse, EFalse, ETrue);
+		FragmentMemory(PageSize, PageSize * 2, EFalse, EFalse, ETrue);
+		TestMultipleContiguousAllocations(20, PageSize * 128, PageShift + 2);
+		UnfragmentMemory(EFalse, EFalse, ETrue);
+		FragmentMemory(PageSize, PageSize * 2, ETrue, EFalse, ETrue);
+		TestMultipleContiguousAllocations(50, PageSize * 256, PageShift + 5);
+		UnfragmentMemory(ETrue, EFalse, ETrue);
+		FragmentMemory(PageSize * 16, PageSize * 32, ETrue, EFalse, ETrue);
+		TestMultipleContiguousAllocations(20, PageSize * 512, PageShift + 8);
+		UnfragmentMemory(ETrue, EFalse, ETrue);
+		FragmentMemory(PageSize * 32, PageSize * 64, ETrue, EFalse, ETrue);
+		TestMultipleContiguousAllocations(20, PageSize * 1024, PageShift + 10);
+		UnfragmentMemory(ETrue, EFalse, ETrue);
+		}
+
 	Shadow.Close();
+	test.Printf(_L("Free RAM=%08x at end of test\n"),FreeRam());
 	test.End();
 	return(KErrNone);
     }
-

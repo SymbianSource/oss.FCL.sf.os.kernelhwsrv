@@ -1849,6 +1849,29 @@ static void TestEndpointStallStatus()
 	{
 	test.Start(_L("Test Endpoint Stall Status"));
 
+#ifdef BSW_USB_DRC
+	// The MACRO comes from ncp adaptation to indicate that otg is built in.
+	// Newly added code for defect ou1cimx1#267421. When otg is built in and the device is not 
+	// in peripheral role, the ncp adaptation will return a dummy endpoint for the stall operation.
+	// The solution is to check if the device is in peripheral mode, if not, skip the stall
+	// operation. A problem is now we can't find a good solution to check the current role of the device.
+	// For the test environement, it's ok to use the USB state to confirm and from the test result,
+	// it works fine. Later when we find accurate method, we will change the confirmation logic.
+	TInt ret = KErrNone;
+
+	TUsbcDeviceState devstate = EUsbcDeviceStateUndefined;
+	ret = gPort.DeviceStatus(devstate);
+	test(ret == KErrNone);
+
+	if( EUsbcDeviceStateUndefined==devstate )
+		{
+		test.Printf( _L("Device not connected, state EUsbcDeviceStateUndefined.\n")  );
+		test.Printf( _L("Skipping endpoint stall status tests.\n") );
+		test.End();
+		return;
+		}
+#endif
+
 	if (!SupportsEndpointStall())
 		{
 		test.Printf(_L("*** Not supported - skipping endpoint stall status tests\n"));

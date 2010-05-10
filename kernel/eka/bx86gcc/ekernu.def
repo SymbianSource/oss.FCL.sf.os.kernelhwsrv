@@ -1038,4 +1038,6 @@ EXPORTS
 	_ZN13KernCoreStats9ConfigureEj @ 1037 NONAME
 	_ZN13KernCoreStats9EnterIdleEv @ 1038 NONAME
 	_ZN13KernCoreStats9LeaveIdleEj @ 1039 NONAME
+	_ZN4Epoc11FreeRamZoneEj @ 1040 NONAME
+	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1041 NONAME
 

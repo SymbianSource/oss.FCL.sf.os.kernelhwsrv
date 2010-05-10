@@ -1067,6 +1067,8 @@ TInt CheckDiskSpace(TInt64 aThreshold, CFsRequest* aRequest)
 	if(KReservedSpace == 0 || KDriveNumber == EDriveZ)
 	    return KErrNone;
 
+    ASSERT(aThreshold);
+
     //-- if the drive has a reserved space, take it into account
 	CSessionFs* session=aRequest->Session(); 
 
@@ -1074,8 +1076,7 @@ TInt CheckDiskSpace(TInt64 aThreshold, CFsRequest* aRequest)
         aThreshold += KReservedSpace;
 
     //-- ask the corresponding file system if there is aThreshold bytes available.
-    //-- for some reason it's required to be strictly > than aThreshold
-    return aRequest->Drive()->RequestFreeSpaceOnMount(aThreshold+1);
+    return aRequest->Drive()->RequestFreeSpaceOnMount(aThreshold);
 	}								
 
 

@@ -1010,4 +1010,6 @@ EXPORTS
 	?Retire@KernCoreStats@@SAHHH@Z @ 1009 NONAME	;  public: static int KernCoreStats::Retire(int, int)
 	?Stats@KernCoreStats@@SAHPAX@Z @ 1010 NONAME	;  public: static int KernCoreStats::Stats(void *)
 	?SetNumberOfActiveCpus@NKern@@SAXH@Z @ 1011 NONAME ; public: static void __cdecl NKern::SetNumberOfActiveCpus(int)
+	?FreeRamZone@Epoc@@SAHI@Z @ 1012 NONAME ; public: static int Epoc::FreeRamZone(unsigned int)
+	?SelectiveAlloc@TBitMapAllocator@@QAEIHH@Z @ 1013 NONAME ; public: unsigned int __thiscall TBitMapAllocator::SelectiveAlloc(int,int)
 

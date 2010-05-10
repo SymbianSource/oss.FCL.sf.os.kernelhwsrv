@@ -241,7 +241,7 @@ LOCAL_C TInt FsFileOpenL(CFsRequest* aRequest, TFileOpen anOpen)
     TUint32 mode=aRequest->Message().Int1();
 	if (anOpen==EFileCreate || anOpen==EFileReplace)
 		{
-		r = CheckDiskSpace(0, aRequest);
+		r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
 		if(r != KErrNone)
             return r;
         
@@ -601,7 +601,7 @@ TInt TFsFileTemp::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileTemp::DoRequestL(CFsRequest* aRequest)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 	
@@ -1652,7 +1652,7 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSetAtt::DoRequestL(CSessionFs* aSession)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1717,7 +1717,7 @@ TInt TFsFileSetModified::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSetModified::DoRequestL(CFsRequest* aRequest)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1757,7 +1757,7 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSet::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1830,26 +1830,13 @@ TInt TFsFileChangeMode::DoRequestL(CFsRequest* aRequest)
 		// check if an attempt is made to change the share mode to EFileShareExclusive
 		// while the file has multiple readers
 	if (newMode == EFileShareExclusive && (currentMode & KFileShareMask) != EFileShareExclusive)
-		{ 
-		// Check no other CFileCB is reading the file.
-		FileShares->Lock();
-		TInt count=FileShares->Count();
-		TBool found=EFalse;
-		while(count--)
-			{
-			CFileShare* fileShare=(CFileShare*)(*FileShares)[count];
-			if (&fileShare->File()==&share->File())
-				{
-				if (found)
-					{
-					FileShares->Unlock();
-					return(KErrAccessDenied);
-					}
-				found=ETrue;
-				}
-			}
-		FileShares->Unlock();
+		{
+		// Check that this is the file's only fileshare/client
+		TDblQue<CFileShare>& aShareList = (&share->File())->FileShareList();
+		if (!(aShareList.IsFirst(share) && aShareList.IsLast(share)))
+			return KErrAccessDenied;
 		}
+	
 	share->iMode&=~KFileShareMask;
 	share->iMode|=newMode;
 	share->File().SetShare(newMode);
@@ -1882,7 +1869,7 @@ TInt TFsFileRename::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileRename::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -2451,14 +2438,18 @@ void CFileCB::RemoveLocks(CFileShare* aFileShare)
 
 
 void CFileCB::PromoteShare(CFileShare* aShare)
-//
-// Manages share promotion after the share has been added to the FilsShares container.
-//
-//  - Assumes the share has already been validated using ValidateShare()
-//
-//  - The count of promoted shares (ie - non-EFileShareReadersOrWriters) is incremented
-//	  to allow the share mode to be demoted when the last promoted share is closed.
-//
+/**
+	Manages share promotion and checks the EFileSequential file mode
+	after the share has been added to the FileShares container.
+	
+	It assumes the share has already been validated using ValidateShare().
+	
+	The count of promoted shares (ie - non-EFileShareReadersOrWriters) is incremented
+	to allow the share mode to be demoted when the last promoted share is closed.
+	
+	Similarly, the count of non-EFileSequential file modes is incremented to allow
+	the file mode to be enabled when the last non-EFileSequential share is closed.
+ */
 	{
 	TShare reqShare = (TShare)(aShare->iMode & KFileShareMask);
 	if(reqShare != EFileShareReadersOrWriters)
@@ -2466,29 +2457,48 @@ void CFileCB::PromoteShare(CFileShare* aShare)
 		iBody->iPromotedShares++;
 		iShare = reqShare;
 		}
+	
+	// If the file mode is not EFileSequential, then disable the 'Sequential' flag
+	if(!(aShare->iMode & EFileSequential))
+		{
+		iBody->iNonSequentialFileModes++;
+		SetSequentialMode(EFalse);
+		__PRINT(_L("CFileCB::PromoteShare - FileSequential mode is off"));
+		}
 	}
 
 
 void CFileCB::DemoteShare(CFileShare* aShare)
-//
-// Manages share demotion after the share has been removed from the FileShares container.
-//
-//  - If the share being removed is not EFileShareReadersOrWriters, then the current
-//	  share mode may require demotion back to EFileShareReadersOrWriters.
-//
-//	- This is determined by the iPromotedShares count, incremented in PromoteShare()
-//
+/**
+	Manages share demotion and checks the EFileSequential file mode
+	after the share has been removed from the FileShares container.
+	
+	If the share being removed is not EFileShareReadersOrWriters, then the current
+	share mode may require demotion back to EFileShareReadersOrWriters.
+	This is determined by the iPromotedShares count, incremented in PromoteShare().
+	
+	Similarly, if the share being removed is non-EFileSequential,
+	then the EFileSequential flag may need to be enabled,
+	which is determined by the iNonSequentialFileModes count.
+ */
 	{
-	if((aShare->iMode & KFileShareMask) != EFileShareReadersOrWriters)
+	if((aShare->iMode & KFileShareMask) != EFileShareReadersOrWriters
+		&& --iBody->iPromotedShares == 0)
 		{
-		if(--iBody->iPromotedShares == 0)
-			{
-			// Don't worry if the file has never been opened as EFileShareReadersOrWriters
-			//  - in this case the CFileCB object is about to be closed anyway.
-			iShare = EFileShareReadersOrWriters;
-			}
+		// Don't worry if the file has never been opened as EFileShareReadersOrWriters
+		//  - in this case the CFileCB object is about to be closed anyway.
+		iShare = EFileShareReadersOrWriters;
 		}
-	__ASSERT_DEBUG(iBody->iPromotedShares>=0,Fault(EFileShareBadPromoteCount));
+	__ASSERT_DEBUG(iBody->iPromotedShares>=0, Fault(EFileShareBadPromoteCount));
+	
+	if(!(aShare->iMode & EFileSequential) && --iBody->iNonSequentialFileModes == 0)
+		{
+		// As above, if the file has never been opened as EFileSequential,
+		// it implies that the CFileCB object is about to be closed anyway.
+		SetSequentialMode(ETrue);
+		__PRINT(_L("CFileCB::PromoteShare - FileSequential mode is enabled"));
+		}
+	__ASSERT_DEBUG(iBody->iNonSequentialFileModes>=0, Fault(EFileShareBadPromoteCount));
 	}
 
 
@@ -2723,7 +2733,8 @@ void CFileCB::SetCachedSize64(TInt64 aSize)
 
 /**
 Constructor.
-Locks the mount resource to which the shared file resides.
+Locks the mount resource to which the shared file resides
+and adds the share to the file's FileShare List.
 
 @param aFileCB File to be shared.
 */
@@ -2731,12 +2742,14 @@ CFileShare::CFileShare(CFileCB* aFileCB)
 	: iFile(aFileCB)
 	{
 	AddResource(iFile->Mount());
+	iFile->AddShare(*this);
 	}
 
 /**
 Destructor.
 
 Frees mount resource to which the shared file resides,
+removes the share from the file's FileShare List,
 removes share status from the shared file and finally closes
 the file.
 */
@@ -2746,6 +2759,7 @@ CFileShare::~CFileShare()
 	__ASSERT_DEBUG(iCurrentRequest == NULL, Fault(ERequestQueueNotEmpty));
 
 	RemoveResource(iFile->Mount());
+	iShareLink.Deque();
 	iFile->RemoveLocks(this);
 	iFile->DemoteShare(this);
 	iFile->CancelAsyncReadRequest(this, NULL);
@@ -3027,6 +3041,7 @@ TInt CFileCB::GetInterfaceTraced(TInt aInterfaceId, TAny*& aInterface, TAny* aIn
 CFileBody::CFileBody(CFileCB* aFileCB, CFileCB::MExtendedFileInterface* aExtendedFileInterface)
   : iFileCB(aFileCB),
 	iExtendedFileInterface(aExtendedFileInterface ? aExtendedFileInterface : this),
+	iShareList(_FOFF(CFileShare,iShareLink)),
 	iSizeHigh(0)
 	{
 	iFairSchedulingLen = TFileCacheSettings::FairSchedulingLen(iFileCB->DriveNumber());
@@ -3583,6 +3598,45 @@ TInt CFileCB::CheckLock64(CFileShare* aFileShare,TInt64 aPos,TInt64 aLength)
 		}
 
     return KErrNone;
+	}
+
+
+//---------------------------------------------------------------------------------------------------------------------
+/**
+Gets the 'Sequential' mode of the file.
+
+@return	ETrue, if the file is in 'Sequential' mode
+*/
+EXPORT_C TBool CFileCB::IsSequentialMode() const
+	{
+	return iBody->iSequential;
+	}
+
+/**
+Sets the 'Sequential' mode of the file.
+ */
+void CFileCB::SetSequentialMode(TBool aSequential)
+	{
+	iBody->iSequential = aSequential;
+	}
+
+//---------------------------------------------------------------------------------------------------------------------
+/**
+Gets the list containing the shares associated with the file.
+
+@return	The FileShare List
+*/
+TDblQue<CFileShare>& CFileCB::FileShareList() const
+	{
+	return iBody->iShareList;
+	}
+
+/**
+Adds the share to the end of the FileShare List.
+*/
+void CFileCB::AddShare(CFileShare& aFileShare)
+	{
+	iBody->iShareList.AddLast(aFileShare);
 	}
 
 

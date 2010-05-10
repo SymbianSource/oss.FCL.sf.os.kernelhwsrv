@@ -84,7 +84,8 @@ struct SPageInfo
 		Page is in an indeterminate state.
 
 		A page is placed into this state by Mmu::PagesAllocated when it is
-		allocated (ceases to be #EUnused). Once the page
+		allocated (ceases to be #EUnused). Once the page has been assigned to 
+		its new use its type will be updated.
 		*/
 		EUnknown,
 
@@ -218,7 +219,7 @@ private:
 		{
 		/**
 		The memory object which owns this page.
-		Used for always set for #EManaged pages and can be set for #PhysAlloc pages.
+		Always set for #EManaged pages and can be set for #PhysAlloc pages.
 		*/
 		DMemoryObject* iOwner;
 
@@ -297,7 +298,7 @@ public:
 	*/
 	FORCE_INLINE static SPageInfo* FromLink(SDblQueLink* aLink)
 		{
-		return (SPageInfo*)((TInt)aLink-_FOFF(SPageInfo,iLink));
+		return _LOFF(aLink, SPageInfo, iLink);
 		}
 
 	//
@@ -483,7 +484,7 @@ public:
 		}
 
 	/**
-	Reutrns a pointer to the SPageInfo of the page that this page is shadowing.
+	Returns a pointer to the SPageInfo of the page that this page is shadowing.
 
 	@return	A pointer to the SPageInfo that this page is shadowing
 
@@ -570,7 +571,7 @@ public:
 		}
 
 	/**
-	The the pages #iModifier value.
+	Set the page's #iModifier value.
 
 	#iModifier is cleared to zero whenever the usage or paging state of the page
 	changes. So if a thread sets this to a suitable unique value (e.g. the address
@@ -1433,7 +1434,7 @@ public:
 	*/
 	FORCE_INLINE static SPageTableInfo* FromFreeLink(SDblQueLink* aLink)
 		{
-		return (SPageTableInfo*)((TInt)aLink-_FOFF(SPageTableInfo,iUnused));
+		return _LOFF(aLink, SPageTableInfo, iUnused);
 		}
 
 	/**
@@ -1710,9 +1711,9 @@ public:
 	*/
 	static FORCE_INLINE void UnlockGuardStart()
 		{
-		#ifdef _DEBUG
-			++UnlockGuardNest;
-		#endif
+#ifdef _DEBUG
+		++UnlockGuardNest;
+#endif
 		}
 
 	/**
@@ -1721,18 +1722,18 @@ public:
 
 	@see UnlockGuardStart
 
-	@return True if the MmuLock was released between a previous #UnlockGuardStart
+	@return EFalse if the MmuLock was released between a previous #UnlockGuardStart
 			and the call this function.
 	*/
 	static FORCE_INLINE TBool UnlockGuardEnd()
 		{
-		#ifdef _DEBUG
-			__NK_ASSERT_DEBUG(UnlockGuardNest);
-			--UnlockGuardNest;
-			return UnlockGuardFail==0;
-		#else
-			return true;
-		#endif
+#ifdef _DEBUG
+		__NK_ASSERT_DEBUG(UnlockGuardNest);
+		--UnlockGuardNest;
+		return UnlockGuardFail==0;
+#else
+		return ETrue;
+#endif
 		}
 
 private:
@@ -1742,10 +1743,10 @@ private:
 	*/
 	static FORCE_INLINE void UnlockGuardCheck()
 		{
-		#ifdef _DEBUG
-			if(UnlockGuardNest)
-				UnlockGuardFail = true;
-		#endif
+#ifdef _DEBUG
+		if(UnlockGuardNest)
+			UnlockGuardFail = ETrue;
+#endif
 		}
 
 public:
@@ -1950,6 +1951,8 @@ public:
 	void Init2FinalCommon();
 	void Init3();
 
+	void BTracePrime(TUint aCategory);
+
 	static void Panic(TPanic aPanic);
 
 	static TInt HandlePageFault(TLinAddr aPc, TLinAddr aFaultAddress, TUint aAccessPermissions, TAny* aExceptionInfo);
@@ -1959,6 +1962,7 @@ public:
 
 	TInt AllocRam(	TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags, TZonePageType aZonePageType, 
 					TUint aBlockZoneId=KRamZoneInvalidId, TBool aBlockRest=EFalse);
+	void MarkPageAllocated(TPhysAddr aPhysAddr, TZonePageType aZonePageType);
 	void FreeRam(TPhysAddr* aPages, TUint aCount, TZonePageType aZonePageType);
 	TInt AllocContiguousRam(TPhysAddr& aPhysAddr, TUint aCount, TUint aAlign, TRamAllocFlags aFlags);
 	void FreeContiguousRam(TPhysAddr aPhysAddr, TUint aCount);
@@ -1971,6 +1975,7 @@ public:
 	TInt ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aNumPages, TPhysAddr* aPageList);
 	TInt RamHalFunction(TInt aFunction, TAny* a1, TAny* a2);	
 	void ChangePageType(SPageInfo* aPageInfo, TZonePageType aOldPageType, TZonePageType aNewPageType);
+	TInt FreeRamZone(TUint aZoneId);
 
 	TInt AllocPhysicalRam(TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags);
 	void FreePhysicalRam(TPhysAddr* aPages, TUint aCount);
@@ -1978,7 +1983,11 @@ public:
 	void FreePhysicalRam(TPhysAddr aPhysAddr, TUint aCount);
 	TInt ClaimPhysicalRam(TPhysAddr aPhysAddr, TUint aCount, TRamAllocFlags aFlags);
 	void AllocatedPhysicalRam(TPhysAddr aPhysAddr, TUint aCount, TRamAllocFlags aFlags);
+private:
+	void SetAllocPhysRam(TPhysAddr aPhysAddr, TUint aCount);
+	void SetAllocPhysRam(TPhysAddr* aPageList, TUint aNumPages);
 
+public:
 	TLinAddr MapTemp(TPhysAddr aPage, TUint aColour, TUint aSlot=0);
 	void UnmapTemp(TUint aSlot=0);
 	void RemoveAliasesForPageTable(TPhysAddr aPageTable);
@@ -2131,8 +2140,11 @@ private:
 	TUint iRamAllocInitialFreePages;
 
 	friend class RamAllocLock;
+
+#ifdef FMM_VERIFY_RAM
 private:
 	void VerifyRam();
+#endif
 	};
 
 /**

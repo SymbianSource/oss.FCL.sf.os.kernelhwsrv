@@ -934,4 +934,5 @@ EXPORTS
 	?Engage@KernCoreStats@@SAHH@Z @ 933 NONAME	;  public: static int KernCoreStats::Engage(int)
 	?Retire@KernCoreStats@@SAHHH@Z @ 934 NONAME	;  public: static int KernCoreStats::Retire(int, int)
 	?Stats@KernCoreStats@@SAHPAX@Z @ 935 NONAME	;  public: static int KernCoreStats::Stats(void *)
+	?SelectiveAlloc@TBitMapAllocator@@QAEIHH@Z @ 936 NONAME ; public: unsigned int __thiscall TBitMapAllocator::SelectiveAlloc(int,int)
 

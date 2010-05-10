@@ -1,3 +1,22 @@
+Version 2.00.3039
+=================
+(Made by vfebvre 06/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#372432 CFileMan malfunctioning in copying
+
+2.	dlyokhin
+	1.	ou1cimx1#372220 File server may request more free space on the volume than necessary
+
+
+Version 2.00.3038
+=================
+(Made by vfebvre 05/05/2010)
+
+1.	niccox
+	1.	ou1cimx1#371028 shostmassstorage capabilities are too high
+
+
 Version 2.00.3037
 =================
 (Made by vfebvre 30/04/2010)

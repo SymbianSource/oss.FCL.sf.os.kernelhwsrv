@@ -1098,4 +1098,6 @@ EXPORTS
 	_ZN13KernCoreStats6RetireEii @ 1097 NONAME
 	_ZN13KernCoreStats9ConfigureEj @ 1098 NONAME
 	_ZN5NKern21SetNumberOfActiveCpusEi @ 1099 NONAME
+	_ZN4Epoc11FreeRamZoneEj @ 1100 NONAME
+	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1101 NONAME
 
