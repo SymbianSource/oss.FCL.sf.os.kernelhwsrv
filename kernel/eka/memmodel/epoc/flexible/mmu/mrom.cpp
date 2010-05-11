@@ -530,15 +530,18 @@ void DRomMemoryManager::Destruct(DMemoryObject* aMemory)
 
 TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages, DPageReadRequest* aRequest)
 	{
-	__NK_ASSERT_DEBUG(aRequest->CheckUse(aMemory,aIndex,aCount));
+	__NK_ASSERT_DEBUG(aRequest->CheckUseContiguous(aMemory,aIndex,aCount));
+	__ASSERT_CRITICAL;
 
 	TLinAddr linAddr = aRequest->MapPages(aIndex,aCount,aPages);
 	TInt r = KErrNone;
+	TThreadMessage message;
 
 	const TInt readUnitShift = iDevice->iReadUnitShift;
 
 	for(; aCount; ++aIndex, --aCount, linAddr+=KPageSize)
 		{
+		
 		START_PAGING_BENCHMARK;
 		if(!iRomPageIndex)
 			{
@@ -548,7 +551,7 @@ TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aC
 			// by readUnitShift.
 			const TInt dataOffset = aIndex << KPageShift;
 			START_PAGING_BENCHMARK;
-			r = iDevice->Read(	const_cast<TThreadMessage*>(&aRequest->iMessage), 
+			r = iDevice->Read(	&message, 
 								linAddr, dataOffset >> readUnitShift, 
 								KPageSize >> readUnitShift, DPagingDevice::EDriveRomPaging);
 			__NK_ASSERT_DEBUG(r!=KErrNoMemory); // not allowed to allocated memory, therefore can't fail with KErrNoMemory
@@ -571,13 +574,12 @@ TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aC
 				__NK_ASSERT_ALWAYS(romPageInfo->iPagingAttributes & SRomPageInfo::EPageable);
 
 				// Read data for page...
-				TThreadMessage* msg = const_cast<TThreadMessage*>(&aRequest->iMessage);
 				const TLinAddr buffer = aRequest->iBuffer;
 				const TUint readStart = dataOffset >> readUnitShift;
 				const TUint readSize = ((dataOffset + dataSize - 1) >> readUnitShift) - readStart + 1;
 				__NK_ASSERT_DEBUG((readSize << readUnitShift) <= (DPageReadRequest::EMaxPages << KPageShift));
 				START_PAGING_BENCHMARK;
-				r = iDevice->Read(msg, buffer, readStart, readSize, DPagingDevice::EDriveRomPaging);
+				r = iDevice->Read(&message, buffer, readStart, readSize, DPagingDevice::EDriveRomPaging);
 				__NK_ASSERT_DEBUG(r!=KErrNoMemory); // not allowed to allocated memory, therefore can't fail with KErrNoMemory
 				END_PAGING_BENCHMARK(EPagingBmReadMedia);
 				if(r==KErrNone)

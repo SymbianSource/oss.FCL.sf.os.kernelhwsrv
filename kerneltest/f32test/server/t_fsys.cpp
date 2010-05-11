@@ -933,38 +933,57 @@ static void TestRemountFSWithOpenedObjects()
     //-- 2. open this file
     nRes = file.Open(TheFs, KFile, EFileRead);
     test_KErrNone(nRes);
+    
+    const TInt drvNumber = CurrentDrive();
 
     //-- 2.1 try to dismount the FS, it must fail because of the opened object.
     TBuf<40> fsName;
-    nRes = TheFs.FileSystemName(fsName, CurrentDrive());
+    nRes = TheFs.FileSystemName(fsName, drvNumber);
     test_KErrNone(nRes);
 
-    nRes = TheFs.DismountFileSystem(fsName, CurrentDrive());
-    test(nRes == KErrInUse);
+    nRes = TheFs.DismountFileSystem(fsName, drvNumber);
+    test_Value(nRes, nRes == KErrInUse);
 
-
+    // Flag from locmedia.h to simulate ejecting and re-inserting the media.
+    const TUint KMediaRemountForceMediaChange = 0x00000001;
+    TRequestStatus changeStatus;
+    TheFs.NotifyChange(ENotifyAll, changeStatus);
+    TDriveInfo driveInfo;
+    
     //-- 3. forcedly remount the drive
-    nRes = TheFs.RemountDrive(CurrentDrive());
+    nRes = TheFs.RemountDrive(drvNumber, NULL, KMediaRemountForceMediaChange);
+    
     if(nRes == KErrNotSupported)
-    {//-- this feature is not supported and the test is inconsistent.
+    	{//-- this feature is not supported and the test is inconsistent.
         test.Printf(_L("RemountDrive() is not supported, the test is inconsistent!"));
         
         //-- remounting must work at least on MMC drives
-        const TBool isFAT = Is_Fat(TheFs, CurrentDrive());
+        const TBool isFAT = Is_Fat(TheFs, drvNumber);
 
-        TDriveInfo  driveInfo;
-        nRes = TheFs.Drive(driveInfo, CurrentDrive());
+        nRes = TheFs.Drive(driveInfo, drvNumber);
         test_KErrNone(nRes);
 
-        test(!isFAT || (!(driveInfo.iDriveAtt & KDriveAttRemovable)));
-
-    }
+        test_Value(driveInfo.iDriveAtt, !isFAT || (!(driveInfo.iDriveAtt & KDriveAttRemovable)));
+    	}
     else
-    {
-        test_KErrNone(nRes);
-    }
-
-    User::After(500*K1mSec);
+    	{
+		test_Value(nRes, nRes == KErrNotReady || nRes == KErrNone);
+		
+		//-- 3.1 wait for media change to complete
+		do
+			{
+			// Waiting for media change...
+			User::WaitForRequest(changeStatus);
+			nRes = TheFs.Drive(driveInfo, drvNumber);
+			TheFs.NotifyChange(ENotifyAll, changeStatus);
+			}
+		while (nRes == KErrNotReady);
+		
+		test_KErrNone(nRes);
+		User::After(1000*K1mSec);	// Wait 1 sec (needed by certain platforms)
+    	}
+    
+    TheFs.NotifyChangeCancel(changeStatus);
 
     //-- 4. read this file. The FS will be remounted and the read must be OK.
     TBuf8<40> buf;

@@ -622,7 +622,7 @@ TInt Mmu::ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aByt
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ZoneAllocPhysicalRam(?,%d,%d,?,%d)", aZoneIdCount, aBytes, aPhysAddr, aAlign));
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 
-	TInt r = iRamPageAllocator->ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aBytes, aPhysAddr, EPageFixed, aAlign);
+	TInt r = iRamPageAllocator->ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aBytes, aPhysAddr, aAlign);
 	if(r!=KErrNone)
 		iRamAllocFailed = ETrue;
 	else
@@ -871,6 +871,22 @@ TInt Mmu::AllocRam(	TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags, TZon
 	}
 
 
+/**
+Mark a page as being allocated to a particular page type.
+
+NOTE - This page should not be used until PagesAllocated() has been invoked on it.
+
+@param aPhysAddr		The physical address of the page to mark as allocated.
+@param aZonePageType	The type of the page to mark as allocated.
+*/
+void Mmu::MarkPageAllocated(TPhysAddr aPhysAddr, TZonePageType aZonePageType)
+	{
+	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::MarkPageAllocated(0x%x, %d)", aPhysAddr, aZonePageType));
+	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
+	iRamPageAllocator->MarkPageAllocated(aPhysAddr, aZonePageType);
+	}
+
+
 void Mmu::FreeRam(TPhysAddr* aPages, TUint aCount, TZonePageType aZonePageType)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::FreeRam(?,%d)",aCount));
@@ -936,15 +952,7 @@ TInt Mmu::AllocContiguousRam(TPhysAddr& aPhysAddr, TUint aCount, TUint aAlign, T
 	// Only the pager sets EAllocNoPagerReclaim and it shouldn't allocate contiguous ram.
 	__NK_ASSERT_DEBUG(!(aFlags&EAllocNoPagerReclaim));
 #endif
-	TInt r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, EPageFixed, aAlign+KPageShift);
-	if(r==KErrNoMemory && aCount > KMaxFreeableContiguousPages)
-		{
-		// flush paging cache and retry...
-		RamAllocLock::Unlock();
-		ThePager.FlushAll();
-		RamAllocLock::Lock();
-		r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, EPageFixed, aAlign+KPageShift);
-		}
+	TInt r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, aAlign+KPageShift);
 	if(r!=KErrNone)
 		iRamAllocFailed = ETrue;
 	else

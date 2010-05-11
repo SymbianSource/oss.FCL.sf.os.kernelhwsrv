@@ -21,8 +21,6 @@
 #ifndef __MMU_H__
 #define __MMU_H__
 
-#define _USE_OLDEST_LISTS
-
 #include "mm.h"
 #include "mmboot.h"
 #include <mmtypes.h>
@@ -146,7 +144,7 @@ struct SPageInfo
 	enum TPagedState
 		{
 		/**
-		Page is not being managed for demand paging purposes, is has been transiently
+		Page is not being managed for demand paging purposes, or has been transiently
 		removed from the demand paging live list.
 		*/
 		EUnpaged 			= 0x0,
@@ -172,7 +170,6 @@ struct SPageInfo
 		// NOTE - This must be the same value as EStatePagedLocked as defined in mmubase.h
 		EPagedPinned 		= 0x4,
 
-#ifdef _USE_OLDEST_LISTS
 		/**
 		Page is in the live list as one of oldest pages that is clean.
 		*/
@@ -181,8 +178,7 @@ struct SPageInfo
 		/**
 		Page is in the live list as one of oldest pages that is dirty.
 		*/
-		EPagedOldestDirty 	= 0x6
-#endif
+		EPagedOldestDirty 	= 0x6	
 		};
 
 
@@ -678,7 +674,7 @@ public:
 
 	/**
 	Flag this page as 'dirty', indicating that its contents may no longer match those saved
-	to a backing store. This sets the flag #EWritable.
+	to a backing store. This sets the flag #EDirty.
 
 	This is used in the management of demand paged memory.
 
@@ -687,12 +683,13 @@ public:
 	FORCE_INLINE void SetDirty()
 		{
 		CheckAccess("SetDirty");
+		__NK_ASSERT_DEBUG(IsWritable());
 		iFlags |= EDirty;
 		}
 
 	/**
 	Flag this page as 'clean', indicating that its contents now match those saved
-	to a backing store. This clears the flag #EWritable.
+	to a backing store. This clears the flag #EDirty.
 
 	This is used in the management of demand paged memory.
 
@@ -701,6 +698,7 @@ public:
 	FORCE_INLINE void SetClean()
 		{
 		CheckAccess("SetClean");
+		__NK_ASSERT_DEBUG(!IsWritable());
 		iFlags &= ~EDirty;
 		}
 
@@ -1751,11 +1749,12 @@ private:
 #endif
 		}
 
-private:
+public:
 	/** The lock */
 	static NFastMutex iLock;
 
 #ifdef _DEBUG
+private:
 	static TUint UnlockGuardNest;
 	static TUint UnlockGuardFail;
 #endif
@@ -1963,6 +1962,7 @@ public:
 
 	TInt AllocRam(	TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags, TZonePageType aZonePageType, 
 					TUint aBlockZoneId=KRamZoneInvalidId, TBool aBlockRest=EFalse);
+	void MarkPageAllocated(TPhysAddr aPhysAddr, TZonePageType aZonePageType);
 	void FreeRam(TPhysAddr* aPages, TUint aCount, TZonePageType aZonePageType);
 	TInt AllocContiguousRam(TPhysAddr& aPhysAddr, TUint aCount, TUint aAlign, TRamAllocFlags aFlags);
 	void FreeContiguousRam(TPhysAddr aPhysAddr, TUint aCount);

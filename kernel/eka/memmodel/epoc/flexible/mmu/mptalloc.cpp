@@ -54,10 +54,6 @@ Memory for page tables and page table info objects is managed by
 uses memory from #ThePager which will reclaim paged memory if necessary.
 Providing the live list always has #DPager::iMinYoungPages, this guarantees that
 handling page faults can never fail by running out of memory.
-
-TODO: In really pathological situations page table allocation can fail due to
-being out of virtual address space to map the table, this needs to be prevented
-from happening when handling demand paging faults.
 */
 
 

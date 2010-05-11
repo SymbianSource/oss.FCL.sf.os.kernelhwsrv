@@ -257,8 +257,8 @@ const TUint8 KMutexOrdKernelHeap		= 0x08; /**< @internalComponent */
 const TUint8 KMutexOrdRamAlloc			= 0x04; /**< @internalComponent */
 #if defined(__MEMMODEL_FLEXIBLE__)
 const TUint8 KMutexOrdSyncPhysMem		= 0x03; /**< @internalComponent */
-#endif
 const TUint8 KMutexOrdPageOut			= 0x02; /**< @internalComponent */
+#endif
 const TUint8 KMutexOrdResourceManager	= 0x01; /**< @internalComponent */
 
 
@@ -2837,6 +2837,12 @@ public:
 	*/
 	inline virtual TInt DeleteNotify(TThreadMessage* aReq,TUint aOffset,TUint aSize);
 
+	/**
+	Return the lock that should be used to synchronise calculation of the idle/busy state and
+	subsequent calls to #NotifyIdle and #NotifyBusy.
+	*/
+	IMPORT_C NFastMutex* NotificationLock();
+	
 	/**
 	Called by the paging device to notify the kernel that the device has just become idle and is not
 	currently processing any requests.

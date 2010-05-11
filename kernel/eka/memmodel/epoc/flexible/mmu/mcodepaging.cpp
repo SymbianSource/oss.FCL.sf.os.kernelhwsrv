@@ -239,7 +239,8 @@ TInt DCodePagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 	{
 	TRACE2(("DCodePagedMemoryManager::ReadPage(0x%08x,0x%08x,0x%08x,?,?)",aMemory,aIndex,aCount));
 
-	__NK_ASSERT_DEBUG(aRequest->CheckUse(aMemory,aIndex,aCount));
+	__NK_ASSERT_DEBUG(aRequest->CheckUseContiguous(aMemory,aIndex,aCount));
+	__ASSERT_CRITICAL;
 
 	START_PAGING_BENCHMARK;
 
@@ -256,6 +257,7 @@ TInt DCodePagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 
 	TLinAddr linAddr = aRequest->MapPages(aIndex,aCount,aPages);
 	TInt r = KErrNone;
+	TThreadMessage message;
 
 	if(!info.iCodeSize)
 		{
@@ -292,7 +294,7 @@ TInt DCodePagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 												device.iReadUnitShift,
 												ReadFunc,
 												(TAny*)info.iCodeLocalDrive,
-												(TAny*)&aRequest->iMessage);
+												(TAny*)&message);
 
 		if(bufferStart<0)
 			{
@@ -332,7 +334,7 @@ done:
 
 	pagedCodeInfo->AsyncClose();
 
-	END_PAGING_BENCHMARK(EPagingBmReadCodePage);
+	END_PAGING_BENCHMARK_N(EPagingBmReadCodePage, aCount);
 	return r;
 	}
 

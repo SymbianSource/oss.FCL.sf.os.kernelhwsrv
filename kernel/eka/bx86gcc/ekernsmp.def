@@ -1092,4 +1092,12 @@ EXPORTS
 	_ZN4Kern10RandomSaltEyj @ 1091 NONAME
 	_ZN4Kern10RandomSaltEPKhjj @ 1092 NONAME
 	_ZN4Kern12SecureRandomER5TDes8 @ 1093 NONAME
+	_ZN13DPagingDevice16NotificationLockEv @ 1094 NONAME
+	_ZN13KernCoreStats5StatsEPv @ 1095 NONAME ABSENT
+	_ZN13KernCoreStats6EngageEi @ 1096 NONAME ABSENT
+	_ZN13KernCoreStats6RetireEii @ 1097 NONAME ABSENT
+	_ZN13KernCoreStats9ConfigureEj @ 1098 NONAME ABSENT
+	_ZN5NKern21SetNumberOfActiveCpusEi @ 1099 NONAME ABSENT
+	_ZN4Epoc11FreeRamZoneEj @ 1100 NONAME ABSENT
+	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1101 NONAME
 

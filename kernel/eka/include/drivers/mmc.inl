@@ -190,6 +190,19 @@ inline TUint TExtendedCSD::BootConfig() const {return iData[EBootConfigIndex];}
 inline TUint TExtendedCSD::BootBusWidth() const {return iData[EBootBusWidthIndex];}
 inline TUint TExtendedCSD::EraseGroupDef() const {return iData[EEraseGroupDefIndex];}
 
+/*
+ * MMC v4.3 specification states the only valid values for CardType are 0x01 or 0x03
+ */
+inline TBool TExtendedCSD::IsSupportedCardType() const        
+        {
+        switch (CardType()&ECardTypeMsk)
+            {
+            case 0x01:
+            case 0x03: return ETrue;
+            default: return EFalse;
+            }
+        }
+
 //	--------  class TMMCStatus  --------
  /**
  * Constructor for TMMCStatus.

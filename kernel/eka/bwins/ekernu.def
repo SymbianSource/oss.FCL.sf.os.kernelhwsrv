@@ -929,4 +929,10 @@ EXPORTS
 	?RandomSalt@Kern@@SAX_KI@Z @ 928 NONAME ; public: static void __cdecl Kern::RandomSalt(unsigned __int64,unsigned int)
 	?RandomSalt@Kern@@SAXPBEII@Z @ 929 NONAME ; void Kern::RandomSalt(unsigned char const *, unsigned int, unsigned int)
 	?SecureRandom@Kern@@SAHAAVTDes8@@@Z @ 930 NONAME ; int Kern::SecureRandom(class TDes8 &)
+	?NotificationLock@DPagingDevice@@QAEPAVNFastMutex@@XZ @ 931 NONAME ; public: class NFastMutex * __thiscall DPagingDevice::NotificationLock(void)
+	?Configure@KernCoreStats@@SAHI@Z @ 932 NONAME ABSENT ; public: static int KernCoreStats::Configure(unsigned int)
+	?Engage@KernCoreStats@@SAHH@Z @ 933 NONAME ABSENT ; public: static int KernCoreStats::Engage(int)
+	?Retire@KernCoreStats@@SAHHH@Z @ 934 NONAME ABSENT ; public: static int KernCoreStats::Retire(int, int)
+	?Stats@KernCoreStats@@SAHPAX@Z @ 935 NONAME ABSENT ; public: static int KernCoreStats::Stats(void *)
+	?SelectiveAlloc@TBitMapAllocator@@QAEIHH@Z @ 936 NONAME ; public: unsigned int __thiscall TBitMapAllocator::SelectiveAlloc(int,int)
 

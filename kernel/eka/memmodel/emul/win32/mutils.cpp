@@ -412,6 +412,12 @@ void M::DestroyKernelMapObject(TKernelMapObject*&)
 
 // Misc DPagingDevice methods
 
+EXPORT_C NFastMutex* DPagingDevice::NotificationLock()
+	{
+	// use the system lock
+	return &TheScheduler.iLock;
+	}
+
 EXPORT_C void DPagingDevice::NotifyIdle()
 	{
 	// Not used on this memory model

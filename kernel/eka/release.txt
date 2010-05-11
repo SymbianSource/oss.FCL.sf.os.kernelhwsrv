@@ -1,3 +1,61 @@
+Version 2.00.2117
+=================
+(Made by vfebvre 28/04/2010)
+
+1.	necliffo
+	1.	ou1cimx1#358999 eMMC with DDR-mode support is not used in 4-bit mode
+
+2.	martai
+	1.	ou1cimx1#354860 WDP:Potential system impact of flushing the entire page cache is unacceptable
+
+3.	y153liu
+	1.	ou1cimx1#355901 Music playback is not correct after resuming the playback from the USB headset AD-83 after long pause
+
+
+Version 2.00.2116
+=================
+(Made by vfebvre 28/04/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#361073 [System Build]: Advisory notes related to cat x in TB92SF_1116 and MSF00398
+
+2	shubmurt
+	1.	DEF144601 E32TEST T_DATAPAGING occasionally reports KERN-EXEC 17 on SMPDATAPAGE configs
+
+
+Version 2.00.2115
+=================
+(Made by vfebvre 26/04/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#351997 [kernel92]Can't recieve USB data after Host call SetConfiguraion
+
+
+Version 2.00.2114
+=================
+(Made by vfebvre 21/04/2010)
+
+1.	davegord
+	1.	ou1cimx1#353731 DownloadServerMgr.exe causes phone crash
+
+
+Version 2.00.2113
+=================
+(Made by vfebvre 16/04/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#342085 [kernel92]Logitech USB desktop microphone is not recogonized.
+
+
+Version 2.00.2112
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	jcoppear
+	1.	PDEF145321: WDP: WDP only writes one page to swap at a time
+	2.	DEF143737: T_SHADOW failing test that ROM is section mapped (t_shadow.cpp:360)
+
+
 Version 2.00.2111
 =================
 (Made by vfebvre 09/04/2010)

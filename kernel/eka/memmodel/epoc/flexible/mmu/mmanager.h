@@ -242,6 +242,7 @@ public:
 			otherwise one of the system wide error codes.
 
  	@pre RamAllocLock held.
+	@pre If the page is dirty the PageCleaning lock must be held.
 	@pre MmuLock held.
 	*/
 	virtual TInt StealPage(DMemoryObject* aMemory, SPageInfo* aPageInfo);
@@ -265,31 +266,31 @@ public:
 	virtual TInt RestrictPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TRestrictPagesType aRestriction);
 
 	/**
-	Clean a page of RAM by saving any modifications to it out to backing store.
+	Clean multiple pages of RAM by saving any modifications to it out to backing store.
 
-	This function must only be called when there are no writable MMU mappings of the page.
+	This function must only be called when there are no writable MMU mappings of the pages.
 
-	The function must only return a success after determining no writable MMU mappings
-	were created for the page, in which case it should also mark the page as clean using
-	SPageInfo::SetClean.
+	The function takes an array of SPageInfo pointers indicating the pages to clean.  On return, the
+	elements of this array are unchanged if the page was successfully cleaned, or set to NULL if
+	cleaning was abandoned (by the page being written to, for example).
 
-	This is only intended for use by #StealPage.
+	The pages passed must be sequential in their page colour (index & KPageColourMask).
 
-	@param aMemory			A memory object associated with this manager.
-	@param aPageInfo		The page information structure of the page to be cleaned.
-							This must be owned by \a aMemory.
-	@param aPageArrayEntry	Reference to the page's page array entry in \a aMemory->iPages.
+	Those pages that are successfully cleaned are marked as clean using SPageInfo::SetClean.
 
-	@return KErrNone if successful,
-			KErrInUse if the page state changed, e.g. became pinned or was subject to a page fault making it writable,
-			KErrNotSupported if the manager doesn't support this function,
-			otherwise one of the system wide error codes.
+	This is intended for use by #StealPage and #CleanSomePages.
+
+	@param aPageCount		Number of pages to clean.
+	@param aPageInfos		Pointer to an array of aPageCount page info pointers.
+	@param aBackground      Whether the activity should be ignored when determining whether the
+	                        paging device is busy.
 
 	@pre MmuLock held
+	@pre PageCleaning lock held
 	@pre The memory page must not have any writeable MMU mappings.
 	@post MmuLock held (but may have been released by this function)
 	*/
-	virtual TInt CleanPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TPhysAddr*& aPageArrayEntry);
+	virtual void CleanPages(TUint aPageCount, SPageInfo** aPageInfos, TBool aBackground);
 
 	/**
 	Process a page fault in memory associated with this manager.
@@ -358,9 +359,35 @@ public:
 	virtual void Unpin(DMemoryObject* aMemory, DMemoryMappingBase* aMapping, TPinArgs& aPinArgs) =0;
 
 	/**
-	@todo
+	Attempt to move the page specified to a new physical location.  The new physical
+	location for the page to be moved to is allocated by this method.  However,
+	aBlockZoneId and aBlockRest can be used to control which RAM zone the new
+	location is in.
+
+	@param aMemory		The memory object that owns the page.
+	@param aOldPageInfo	The page info for the physical page to move.
+	@param aNewPage 	On success this will hold the physical address of the new 
+						location for the page.
+	@param aBlockZoneId The ID of a RAM zone not to allocate the new page into.
+	@param aBlockRest 	When set to ETrue the search for a new page will stop if it 
+						ever needs to look at aBlockZoneId.
+	@return KErrNone on success, KErrInUse if the page couldn't be moved, 
+			or KErrNoMemory if it wasn't possible to allocate a new page.
 	*/
 	virtual TInt MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInfo, TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest);
+
+	/**
+	Move the page specified to a new physical location and mark the page as 
+	allocated as type aPageType.
+	
+	@param aMemory		The memory object that owns the page.
+	@param aPageInfo	The page info for the physical page to move.
+	@param aPageType	The type of the page to allocate into the orignal physical 
+						location of the page to move.
+	@return KErrNone on success, KErrInUse if the page couldn't be moved, 
+			or KErrNoMemory if it wasn't possible to allocate a new page.
+	*/
+	virtual TInt MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType);
 
 	/**
 	Return the TZonePageType of the pages that the memory manager can allocate and free.
@@ -565,25 +592,6 @@ protected:
 			otherwise one of the system wide error codes.
 	*/
 	virtual TInt ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages, DPageReadRequest* aRequest) =0;
-
-	/**
-	Save the data content of a specified region of a memory object by writing it to
-	storage media. This is intended for use by an implementation of #CleanPage.
-
-	The memory region must be the same as, or a subset of, the region used when obtaining
-	the request object \a aRequest.
-
-	@param aMemory	A memory object associated with this manager.
-	@param aIndex	Page index for the start of the region.
-	@param aCount	Number of pages in the region.
-	@param aPages	Pointer to array of pages to read into. This must contain \a aCount
-					number of physical page addresses which are each page aligned.
-	@param aRequest	A request object previously obtained with #AcquirePageWriteRequest.
-
-	@return KErrNone if successful,
-			otherwise one of the system wide error codes.
-	*/
-	virtual TInt WritePages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TPhysAddr* aPages, DPageWriteRequest* aRequest);
 
 	/**
 	Check if a region of a memory object has been allocated. E.g. that #Alloc

@@ -102,6 +102,7 @@ source			mmanager.cpp maddressspace.cpp mcleanup.cpp
 source			mpager.cpp mrom.cpp mdatapaging.cpp mcodepaging.cpp
 source			mexport.cpp mthrash.cpp
 source			mdefrag.cpp mlargemappings.cpp
+source			mpagecleaner.cpp
 sourcepath		../memmodel/epoc/mmubase
 source			kblockmap.cpp ramalloc.cpp defragbase.cpp
 

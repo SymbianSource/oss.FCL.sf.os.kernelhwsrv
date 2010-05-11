@@ -22,7 +22,7 @@
 #ifndef PXY_DEBUG_H
 #define PXY_DEBUG_H
 
-//#define _HOST_DEBUG_PRINT_
+// #define _HOST_DEBUG_PRINT_
 // #define _PROXY_DEBUG_PRINT_
 // #define _PROXY_FN_TRACE_
 

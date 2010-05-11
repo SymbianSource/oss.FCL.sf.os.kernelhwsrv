@@ -3615,15 +3615,19 @@ TInt DPrimaryMediaBase::OpenMediaDriver()
 void DPrimaryMediaBase::RequestCountInc()
 	{
 	__ASSERT_DEBUG(iBody, LOCM_FAULT());
-	TInt oldVal = (TInt) __e32_atomic_add_ord32(&iBody->iRequestCount, (TUint) 1);
-//Kern::Printf("RCINC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
-	
-	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTINC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
-	
-	if (oldVal == 0 && iBody->iPagingDevice)
+	if (iBody->iPagingDevice)
 		{
-//Kern::Printf("RCINC: NotifyBusy()");
-		iBody->iPagingDevice->NotifyBusy();
+		NFastMutex* lock = iBody->iPagingDevice->NotificationLock();
+		NKern::FMWait(lock);
+		TInt oldVal = iBody->iRequestCount++;
+		//Kern::Printf("RCINC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
+		OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTINC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
+		if (oldVal == 0)
+			{
+			//Kern::Printf("RCINC: NotifyBusy()");
+			iBody->iPagingDevice->NotifyBusy();
+			}
+		NKern::FMSignal(lock);
 		}
 	}
 
@@ -3635,17 +3639,21 @@ void DPrimaryMediaBase::RequestCountInc()
 void DPrimaryMediaBase::RequestCountDec()
 	{
 	__ASSERT_DEBUG(iBody, LOCM_FAULT());
-	TInt oldVal = (TInt) __e32_atomic_add_ord32(&iBody->iRequestCount, (TUint) -1);
-//Kern::Printf("RCDEC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
-	
-	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTDEC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
-	
-	if (oldVal == 1 && iBody->iPagingDevice)
+	if (iBody->iPagingDevice)
 		{
-//Kern::Printf("RCDEC: NotifyIdle()");
-		iBody->iPagingDevice->NotifyIdle();
+		NFastMutex* lock = iBody->iPagingDevice->NotificationLock();
+		NKern::FMWait(lock);
+		TInt oldVal = iBody->iRequestCount--;
+		//Kern::Printf("RCDEC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
+		OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTDEC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
+		if (oldVal == 1)
+			{
+			//Kern::Printf("RCDEC: NotifyIdle()");
+			iBody->iPagingDevice->NotifyIdle();
+			}		
+		NKern::FMSignal(lock);
+		__ASSERT_DEBUG(iBody->iRequestCount >= 0, LOCM_FAULT());
 		}
-	__ASSERT_DEBUG(iBody->iRequestCount >= 0, LOCM_FAULT());
 	}
 #endif	// __DEMAND_PAGING__
 

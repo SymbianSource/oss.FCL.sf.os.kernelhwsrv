@@ -1,3 +1,27 @@
+Version 2.00.2054
+=================
+(Made by vfebvre 23/04/2010)
+
+1.	michcox
+	1.	ou1cimx1#357507 TB92 Maps 3.04: File mode EFileWrite (defined in f32file.h) corrupts memory of other processes under certain conditions on 5.0 devices
+
+
+Version 2.00.2053
+=================
+(Made by vfebvre 22/04/2010)
+
+1.	niccox
+	1.	ou1cimx1#356808 Disconnecting memory card reader/writer from phone causes phone crash
+
+
+Version 2.00.2052
+=================
+(Made by vfebvre 14/04/2010)
+
+1.	famustaf
+	1.	PDEF145305 F32TEST T_FSYS test failure investigation
+
+
 Version 2.00.2051
 =================
 (Made by vfebvre 09/04/2010)

@@ -39,6 +39,7 @@ public:
 	IMPORT_C void Free(TInt aPos);
 	IMPORT_C void Alloc(TInt aStart, TInt aLength);
 	IMPORT_C void Free(TInt aStart, TInt aLength);
+	IMPORT_C TUint SelectiveAlloc(TInt aStart, TInt aLength);
 	IMPORT_C void SelectiveFree(TInt aStart, TInt aLength);
 	IMPORT_C TBool NotFree(TInt aStart, TInt aLength) const;
 	IMPORT_C TBool NotAllocated(TInt aStart, TInt aLength) const;

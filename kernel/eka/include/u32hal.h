@@ -2868,6 +2868,7 @@ enum TPagingBenchmark
 	EPagingBmDeleteNotifyDataPage,
 	EPagingBmReadDataMedia,
 	EPagingBmWriteDataMedia,
+	EPagingBmRejuvenate,  // only implemented on FMM
 		
 	EMaxPagingBm
 	};

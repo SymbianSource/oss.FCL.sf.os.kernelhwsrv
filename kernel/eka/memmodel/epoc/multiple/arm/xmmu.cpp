@@ -1615,7 +1615,7 @@ TInt ArmMmu::NewPageDirectory(TInt aOsAsid, TBool aSeparateGlobal, TPhysAddr& aP
 	if (aNumPages>1)
 		{
 		TInt align=aSeparateGlobal ? KPageDirectoryShift : KPageDirectoryShift-1;
-		r=AllocContiguousRam(aNumPages<<KPageShift, aPhysAddr, EPageFixed, align);
+		r=AllocContiguousRam(aNumPages<<KPageShift, aPhysAddr, align);
 		}
 	else
 		r=AllocRamPages(&aPhysAddr,1, EPageFixed);
