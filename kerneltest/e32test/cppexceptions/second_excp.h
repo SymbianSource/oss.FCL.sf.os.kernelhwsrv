@@ -41,7 +41,11 @@ NONSHARABLE_CLASS(VB2) : virtual public MySecondException {};
 
 class MyFourthException : public VB1 , public VB2 {
 public:
+#if defined(__ARMCC__) && __ARMCC_VERSION >= 400000
+  EXPORT_C MyFourthException(int x) { iVal = x; iVal2=x+2;};
+#else
   MyFourthException(int x) { iVal = x; iVal2=x+2;};
+#endif
   int iVal2;
 };
 

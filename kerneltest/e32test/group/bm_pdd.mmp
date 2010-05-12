@@ -68,6 +68,10 @@ SYMBIAN_BASE_SYSTEMINCLUDE(assp/naviengine)
 source			bm_ne1_pdd.cpp
 #endif
 
+#if defined(NCP_COMMON_RAPU_FAMILY)
+SYMBIAN_BASE_SYSTEMINCLUDE(assp/rapu)
+source			bm_rapu_pdd.cpp
+#endif
 start wins
 win32_library	kernel32.lib
 end

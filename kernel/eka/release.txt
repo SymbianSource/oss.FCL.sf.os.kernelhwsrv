@@ -1,3 +1,32 @@
+Version 2.00.3081
+=================
+(Made by vfebvre 11/05/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#367892 Changing MedSD3c PolicyId from 2 to 1461
+
+2.	martai
+	1.	PDEF145025 Support rapu variant specific e32tests 
+
+3.	kmetherm
+	1.	PR457093 RVCT 4 compatible software codebase (SSS)
+
+
+Version 2.00.3080
+=================
+(Made by vfebvre 10/05/2010)
+
+1.	necliffo
+	1.	ou1cimx1#378256 eMMC reliable Write can increase wear of eMMC devices
+
+2.	jessiezh
+	1.	MINOR_CHANGE Re-enable T_SOUND2 test
+	2.	ou1cimx1#367177 E32TEST T_DOMAIN test failure investigation
+
+3.	gcochran
+	1.	ou1cimx1#367939 MCL: Undefined Symbol error with the header "e32math.h"
+
+
 Version 2.00.3079
 =================
 (Made by vfebvre 07/05/2010)
