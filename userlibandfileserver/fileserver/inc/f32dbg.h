@@ -187,6 +187,8 @@ const TInt KControlIoSimulateFileCacheWriteFailure=KMaxTInt-20;
 const TInt KControlIoSessionCount=KMaxTInt-21;
 const TInt KControlIoObjectCount=KMaxTInt-22;
 
+const TInt KControlIoIsFileSequential=KMaxTInt-23;
+
 const TInt KNCDebugNotifierValue=-500000;	// between 0 and 1 second
 
 GLREF_D TInt DebugNCNotifier;

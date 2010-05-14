@@ -1188,11 +1188,11 @@ void TestMainWithDLLL(TTestSwitches& aSwitches)
 	{
 	// Enables codepage dll implementation of LocaleUtils functions for this test only
 	TInt r = TheFs.ControlIo(CurrentDrive(), KControlIoEnableFatUtilityFunctions);
-	test(r == KErrNone);
+	test_KErrNone(r);
 		
 	test.Printf(_L("Load the Code Page DLL"));
 	r = UserSvr::ChangeLocale(KTestLocale);
-	test(r == KErrNone);
+	test_KErrNone(r);
 			
 	test.Next(_L("Test Unitary APIs with only Sync Variant with DLL"));
 	gLogFailureData.iFuncName = KDoAllBasicUnitaryTestsL;
@@ -1204,7 +1204,7 @@ void TestMainWithDLLL(TTestSwitches& aSwitches)
 	
 	// Disables codepage dll implementation of LocaleUtils functions for other base tests
 	r = TheFs.ControlIo(CurrentDrive(), KControlIoDisableFatUtilityFunctions);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 	
 void TestMainWithoutDLLL(TTestSwitches& aSwitches)
@@ -1213,7 +1213,7 @@ void TestMainWithoutDLLL(TTestSwitches& aSwitches)
 
 	// Disables codepage dll implementation of LocaleUtils functions
 	TInt r = TheFs.ControlIo(CurrentDrive(), KControlIoDisableFatUtilityFunctions);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	gLogFailureData.iFuncName = KDoAllBasicUnitaryTestsL;
 	DoAllBasicUnitaryTestsL(gBasicUnitaryTestCases, aSwitches, EFalse);
@@ -1410,10 +1410,10 @@ LOCAL_C void DoTests(TInt aDrive, TTestSwitches& aSwitches)
 	gSessionPath=_L("?:\\F32-TST\\");
 	TChar driveLetter;
 	TInt r=TheFs.DriveToChar(aDrive,driveLetter);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	gSessionPath[0]=(TText)driveLetter;
 	r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("gSessionPath = \"%S\"\n"), &gSessionPath);
 
 // !!! Disable platform security tests until we get the new APIs
@@ -1429,7 +1429,7 @@ LOCAL_C void DoTests(TInt aDrive, TTestSwitches& aSwitches)
 		{
 		Format(aDrive);
 		r=TheFs.MkDirAll(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	if (r!=KErrNone && r!=KErrAlreadyExists)
 		{
@@ -1469,7 +1469,7 @@ GLDEF_C TInt E32Main()
 	ParseCommandArguments(testSwitches);
 
 	r=TheFs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TheFs.SetAllocFailure(gAllocFailOn);
 
 	TTime timerC;
@@ -1477,13 +1477,13 @@ GLDEF_C TInt E32Main()
 
 	TInt theDrive;
 	r=TheFs.CharToDrive(gDriveToTest,theDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 	TPckgBuf<TIOCacheValues> pkgOrgValues;
 	TIOCacheValues& orgValues=pkgOrgValues();
 	r = controlIo(TheFs,theDrive, KControlIoCacheCount, orgValues);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("\n"));
 	test.Printf(_L("Requests on close queue at start=%d\n"),orgValues.iCloseCount);
@@ -1498,7 +1498,7 @@ GLDEF_C TInt E32Main()
 	endTimeC.HomeTime();
 	TTimeIntervalSeconds timeTakenC;
 	r=endTimeC.SecondsFrom(timerC,timeTakenC);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("Time taken for test = %d seconds\n"),timeTakenC.Int());
 	TheFs.SetAllocFailure(gAllocFailOff);
@@ -1507,7 +1507,7 @@ GLDEF_C TInt E32Main()
 	TPckgBuf<TIOCacheValues> pkgValues;
 	TIOCacheValues& values=pkgValues();
 	r = controlIo(TheFs,theDrive, KControlIoCacheCount, values);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	test.Printf(_L("Requests on close queue at end=%d\n"),values.iCloseCount);
 	test.Printf(_L("Requests on free queue at end=%d\n"),values.iFreeCount);

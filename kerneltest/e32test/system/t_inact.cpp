@@ -198,13 +198,12 @@ void InitialiseL()
 
 void TestNonPositiveTimeout()
 	{
-	TInt ret;
 	TRequestStatus x1,x2;
 	RTimer rt1,rt2;
 
 	test.Next(_L("Test RTimer::Inactivity() with zero timeout"));
-	ret=rt1.CreateLocal();
-	ret=rt2.CreateLocal();
+	rt1.CreateLocal();
+	rt2.CreateLocal();
 
 	rt1.Inactivity(x1, 2);
 	User::After(500000);

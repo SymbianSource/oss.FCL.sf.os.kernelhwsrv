@@ -155,13 +155,6 @@ to be less than the longer.
 
 
 
-// class RHeap
-inline TInt RHeap::SetBrk(TInt aBrk)
-	{ return ((RChunk*)&iChunkHandle)->Adjust(aBrk); }
-
-
-
-
 // class TChar
 #ifndef __KERNEL_MODE__
 inline void TChar::SetChar(TUint aChar)

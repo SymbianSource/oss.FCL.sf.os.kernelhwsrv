@@ -1,7 +1,7 @@
 // Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
-// under the terms of the License "Eclipse Public License v1.0"
+// under the terms of "Eclipse Public License v1.0"
 // which accompanies this distribution, and is available
 // at the URL "http://www.eclipse.org/legal/epl-v10.html".
 //
@@ -30,8 +30,8 @@ _LIT(KThreadName, "PageCleaner");
 
 const TInt KThreadPriority = 25;
 
-/// The length of time the paging device is idle before we decide to use it for cleaning dirty
-/// pages, in milliseconds.
+// The length of time the paging device is idle before we decide to use it for cleaning dirty
+// pages, in milliseconds.
 const TInt KIdleDelayInMillis = 2;
 
 class DPageCleaner
@@ -63,13 +63,13 @@ private:
 
 	// All state below is accessed with the MmuLock held.
 
-	/// Whether the paging device is currently idle.
+	// Whether the paging device is currently idle.
 	TBool iPagingDeviceIdle;
 
-	/// Whether the paging device has been idle for longer than the wait period.
+	// Whether the paging device has been idle for longer than the wait period.
 	TBool iIdleForAWhile;
 	
-	/// Whether the page cleaner is currently running.
+	// Whether the page cleaner is currently running.
 	TBool iCleaningInProgress;	
 	};
 

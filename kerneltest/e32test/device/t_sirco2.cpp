@@ -44,7 +44,6 @@
 
 #define FIND_NAME _L("Comm.*")
 
-const TInt KUnit0=0;
 const TInt KUnit1=1;
 const TInt KUnit2=2;
 

@@ -15,6 +15,7 @@
 //
 //
 
+#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32math.h>
@@ -148,10 +149,10 @@ static  TInt ClusterToByte(TInt aCluster)
         {
         pos += TheBootSector.ReservedSectors() * TheBootSector.BytesPerSector();
         TInt r=TheDisk.Open(TheFs,gSessionPath[0]-'A');
-        test(r==KErrNone);
+        test_KErrNone(r);
         TPtr8 buf(&data[0], 4);
         r=TheDisk.Read(pos, buf);
-        test(r==KErrNone);
+        test_KErrNone(r);
         TheDisk.Close();
         }
 
@@ -185,15 +186,15 @@ static  TInt ClusterToByte(TInt aCluster)
     pos += TheBootSector.ReservedSectors() * TheBootSector.BytesPerSector();
 
     TInt r=TheDisk.Open(TheFs,gSessionPath[0]-'A');
-    test(r==KErrNone);
+    test_KErrNone(r);
     TUint8  data[4];
     TPtr8 buf(&data[0], 4);
     r=TheDisk.Read(pos, buf);
-    test(r==KErrNone);
+    test_KErrNone(r);
     data[3] &= 0x0F;
     data[3] |= 0xA0;
     r=TheDisk.Write(pos, buf);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TheDisk.Close();
         }
 
@@ -468,9 +469,9 @@ static  TInt ClusterToByte(TInt aCluster)
             test(buf!=NULL);
             TPtr8 ptr=buf->Des();
             TInt r=TheDisk.Open(TheFs,gSessionPath[0]-'A');
-            test(r==KErrNone);
+            test_KErrNone(r);
             r=TheDisk.Read(ClusterToByte(cluster), ptr);
-            test(r==KErrNone);
+            test_KErrNone(r);
             TheDisk.Close();
             RDebug::Print(_L("Cluster %d @ 0x%08X:"), cluster, ClusterToByte(cluster));
             DumpDirCluster(ptr.Ptr());
@@ -499,12 +500,12 @@ static  TInt ClusterToByte(TInt aCluster)
         test(buf!=NULL);
         TPtr8 ptr=buf->Des();
         TInt r=TheDisk.Open(TheFs,gSessionPath[0]-'A');
-        test(r==KErrNone);
+        test_KErrNone(r);
         RDebug::Print(_L("--------------- ROOT DIR ------------------"));
         for (TInt i = 0; i < num; i++)
             {
             r=TheDisk.Read(pos, ptr);
-            test(r==KErrNone);
+            test_KErrNone(r);
             if (!DumpDirEntry(ent, ptr.Ptr()))
                 break;
             pos += KSizeOfFatDirEntry;
@@ -763,7 +764,7 @@ static  void FatWrite(TInt aCluster,TInt aValue)
         }
 
     TInt r=TheDisk.Open(TheFs,CurrentDrive());
-    test(r==KErrNone);
+    test_KErrNone(r);
     test(ReadWriteDWord(pos,mask,aValue)==KErrNone);
     TheDisk.Close();
     }
@@ -1083,7 +1084,7 @@ static  void TestLoopedFile()
         Error(_L("Error deleting file"),r);
     RDebug::Print(_L("File removed"));
     r=TheFs.CheckDisk(gSessionPath);
-    test(r==KErrNone);
+    test_KErrNone(r);
     }
 
 static  void TestFatEntry(TUint16 aFileSize,TInt aCorruptFatCluster)
@@ -1096,22 +1097,22 @@ static  void TestFatEntry(TUint16 aFileSize,TInt aCorruptFatCluster)
     FormatPack();
 
     r=TheFile.Replace(TheFs,_L("\\CORRUPT2.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TheBuffer.SetLength(aFileSize);
     Mem::Fill(&TheBuffer[0],aFileSize,'A');
     r=TheFile.Write(TheBuffer);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TheFile.Close();
 
     FatWrite(gFirstDataCluster,aCorruptFatCluster);
 
     TInt pos=0;
     r=TheFile.Open(TheFs,_L("\\CORRUPT2.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone || r==KErrCorrupt);
+    test_Value(r, r == KErrNone || r==KErrCorrupt);
     if (r==KErrNone)
         {
         r=TheFile.Seek(ESeekStart,pos);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=TheFile.Write(TheBuffer);
 
         if ((gDriveCacheFlags & EFileCacheWriteOn) && (r == KErrNone))
@@ -1129,9 +1130,9 @@ static  void TestFatEntry(TUint16 aFileSize,TInt aCorruptFatCluster)
 
     pos=0;
     r=TheFile.Open(TheFs,_L("\\CORRUPT2.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFile.Seek(ESeekStart,pos);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFile.Write(TheBuffer);
 
     if ((gDriveCacheFlags & EFileCacheWriteOn) && (r == KErrNone))
@@ -1171,15 +1172,15 @@ static  void TestDirEntry(TInt anInitialSize,TInt aWriteLen,TInt aCorruptStartCl
     TheBuffer.SetLength(anInitialSize);
     Mem::Fill(&TheBuffer[0],anInitialSize,'A');
     r=TheFile.Write(TheBuffer);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TheFile.Close();
 
     r=TheDisk.Open(TheFs,CurrentDrive());
-    test(r==KErrNone);
+    test_KErrNone(r);
     TPtr8 sectorBuf((TUint8*)pBuffer1->Ptr(),TheBootSector.BytesPerSector());
     TInt pos = gRootDirStart;
     r=TheDisk.Read(pos,sectorBuf);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TFatDirEntry* pE=(TFatDirEntry*)pBuffer1->Ptr();
     while (pE->IsVFatEntry())   //  UNICODE entries are VFat by definition
         pE++;
@@ -1193,16 +1194,16 @@ static  void TestDirEntry(TInt anInitialSize,TInt aWriteLen,TInt aCorruptStartCl
     //-- the data
     TheDisk.Close();
     r=TheDisk.Open(TheFs,CurrentDrive());
-    test(r==KErrNone);
+    test_KErrNone(r);
 
 
     pos=0;
     TPtr8 buffer1(pBuffer1->Des());
     r=TheDisk.Read(pos,buffer1);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TheDisk.Close();
     r=TheFs.Entry(_L("\\CORRUPT1.TMP"),TheEntry);
-    test(r==KErrNone || r==KErrCorrupt);
+    test_Value(r, r == KErrNone || r==KErrCorrupt);
     TTime saveTime=TheEntry.iModified;
     if (r!=KErrNone)
         saveTime.HomeTime();
@@ -1221,11 +1222,11 @@ static  void TestDirEntry(TInt anInitialSize,TInt aWriteLen,TInt aCorruptStartCl
         }
 
     r=TheDisk.Open(TheFs,CurrentDrive());
-    test(r==KErrNone);
+    test_KErrNone(r);
     pos=0;
     TPtr8 buffer2(pBuffer2->Des());
     r=TheDisk.Read(pos,buffer2);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     //-- this bit is dodgy. The buffers may differ because of volume finalisation stuff
     //-- FAT[1] and FSInfo sectors
@@ -1233,9 +1234,9 @@ static  void TestDirEntry(TInt anInitialSize,TInt aWriteLen,TInt aCorruptStartCl
     TheDisk.Close();
 
     r=TheFs.SetModified(_L("\\CORRUPT1.TMP"),saveTime);
-    test(r==KErrNone || r==KErrCorrupt);
+    test_Value(r, r == KErrNone || r==KErrCorrupt);
     r=TheFs.Entry(_L("\\CORRUPT1.TMP"),TheEntry);
-    test(r==KErrNone || r==KErrCorrupt);
+    test_Value(r, r == KErrNone || r==KErrCorrupt);
     }
 
 static  void TestBounds()
@@ -1247,7 +1248,7 @@ static  void TestBounds()
     test(TheFs.Volume(TheVolumeInfo,CurrentDrive())==KErrNone);
     TInt64 size=TheVolumeInfo.iSize;
     TInt r=TheDisk.Open(TheFs,CurrentDrive());
-    test(r==KErrNone);
+    test_KErrNone(r);
     TPtr8 buffer(pBuffer1->Des());
     TInt64 pos=size - 2*buffer.MaxLength();
     TInt inc=buffer.MaxLength();
@@ -1256,7 +1257,7 @@ static  void TestBounds()
         TPtr8 tempbuf((TUint8*)pBuffer1->Ptr(),inc);
         r=TheDisk.Read(pos,tempbuf);
         test.Printf(_L("Read %08X:%08X len %d r %d\r"), I64HIGH(pos),I64LOW(pos), inc, r);
-        test(r==KErrNone || r==KErrCorrupt);
+        test_Value(r, r == KErrNone || r==KErrCorrupt);
         if (r==KErrNone)
             pos+=inc;
         else
@@ -1294,7 +1295,7 @@ static  void TestBounds()
                 TInt expect = (lpos+bsize-1 < maxpos ? KErrNone : KErrCorrupt);
                 r=TheDisk.Read(lpos, temp);
                 RDebug::Print(_L("Read %08X:%08X result %d     \r"), I64HIGH(lpos), I64LOW(lpos), r);
-                test(r==expect);
+                test_Value(r, r == expect);
                 }
             }
         }
@@ -1390,37 +1391,37 @@ static  void TestClusterAllocation()
     TInt r;
 
     r=f.Replace(TheFs,_L("\\GOBLIN.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.SetSize(4*gBytesPerCluster); // 4 Clusters
     f.Close();
 
     r=f.Replace(TheFs,_L("\\WIZARD.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.SetSize(5*gBytesPerCluster); // 5 Clusters
     f.Close();
 
     r=f.Replace(TheFs,_L("\\TROLL.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.SetSize(3*gBytesPerCluster); // 3 Clusters
     f.Close();
 
     r=f.Replace(TheFs,_L("\\GNOME.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.SetSize(10*gBytesPerCluster); // 10 Clusters
     f.Close();
 
     r=f.Replace(TheFs,_L("\\CYCLOPS.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.SetSize(gBytesPerCluster); // 1 Cluster
     f.Close();
 
     r=f.Replace(TheFs,_L("\\PIXIE.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.SetSize(gBytesPerCluster); // 1 Cluster
     f.Close();
 
     r=TheDisk.Open(TheFs,CurrentDrive());
-    test(r==KErrNone);
+    test_KErrNone(r);
     TPtr8 sectorBuf((TUint8*)pBuffer1->Ptr(),TheBootSector.BytesPerSector());
     TInt pos = gRootDirStart;
     test(TheDisk.Read(pos,sectorBuf)==KErrNone);
@@ -1479,17 +1480,17 @@ static  void TestClusterAllocation()
     test(name==_L8("PIXIE   TMP"));
 
     r=TheFs.Delete(_L("\\GOBLIN.TMP"));
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFs.Delete(_L("\\WIZARD.TMP"));
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFs.Delete(_L("\\TROLL.TMP"));
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFs.Delete(_L("\\GNOME.TMP"));
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFs.Delete(_L("\\CYCLOPS.TMP"));
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFs.Delete(_L("\\PIXIE.TMP"));
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     FormatPack();
 
@@ -1504,7 +1505,7 @@ static  void TestMakeDir(const TDesC& aName, TUint aNewClust, TUint aParentClust
     test.Printf(_L("Checking cluster %02d, parent %d: \"%S\"\n"), aNewClust, aParentClust, &aName);
 
     TInt r=TheFs.MkDir(aName);
-    test(r==KErrNone || r==KErrAlreadyExists);
+    test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
     TInt pos=ClusterToByte(aNewClust);
     TPtr8 sectorBuf((TUint8*)pBuffer1->Ptr(),gBytesPerCluster);
@@ -1670,7 +1671,7 @@ static  void TestRoot()
         }
 
     r = f.Create(TheFs, _L("\\123456.78"), EFileRead|EFileWrite);
-    test(r==KErrDirFull);
+    test_Value(r, r == KErrDirFull);
     f.Close();
 
 
@@ -1678,22 +1679,22 @@ static  void TestRoot()
     for (i=0;i<KMaxFiles;i++)
         {
         r=TheFs.Delete(fileName[i]);
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
 
     r=TheFs.SetSessionPath(_L("\\"));
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     TInt nameLength=(KMaxFiles-1)*13;   // -1 for zero terminator
     CreateLongName(tempName,gSeed,nameLength*2);
     r=f.Create(TheFs,tempName,0);       //  Needs 9 free entries - there are only 5 available
-    test(r==KErrDirFull);
+    test_Value(r, r == KErrDirFull);
     tempName.SetLength(nameLength+1);
     r=f.Create(TheFs,tempName,0);       //  Needs 6 free entries - there are only 5 available
-    test(r==KErrDirFull);
+    test_Value(r, r == KErrDirFull);
     tempName.SetLength(nameLength);
     r=f.Create(TheFs,tempName,0);       //  Needs 5 free entries - there are 5 available
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.Close();
 
 #if 0       // This is the old test that assumed UNICODE builds
@@ -1702,54 +1703,54 @@ static  void TestRoot()
     for (i=0;i<KMaxFiles-2;i++)
         {
         r=TheFs.Delete(fileName[i]);    //  UNICODE build - free 6 entries (delete 3 files)
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
 
     r=TheFs.SetSessionPath(_L("\\"));
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     TInt vFatUnitNameSize=13;
     TInt nameLength=(KMaxFiles-1)*vFatUnitNameSize-1;   //
     CreateLongName(tempName,gSeed,nameLength*2);
     r=f.Create(TheFs,tempName,0);                       //  Needs 9 free entries
-    test(r==KErrDirFull);
+    test_Value(r, r == KErrDirFull);
 
     nameLength=(KMaxFiles)*vFatUnitNameSize;
     tempName.SetLength(nameLength+1);
     r=f.Create(TheFs,tempName,0);                       //  Needs 7 free entries
-    test(r==KErrDirFull);
+    test_Value(r, r == KErrDirFull);
     tempName.SetLength(nameLength);
     r=f.Create(TheFs,tempName,0);                       //  Needs 6 free entries
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.Close();
 #endif
 
     TheFs.Delete(tempName);
     tempName.SetLength(nameLength-7);
     r=f.Create(TheFs,tempName,0);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.Close();
 
     r=f.Create(TheFs,_L("ASDF"),0);
-    test(r==KErrDirFull);
+    test_Value(r, r == KErrDirFull);
 
     TheFs.Delete(tempName);
     tempName.SetLength(nameLength-15);
     r=f.Create(TheFs,tempName,0);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.Close();
 
     tempName=_L("testname");
     r=f.Create(TheFs,tempName,0);
-    test(r==KErrDirFull);
+    test_Value(r, r == KErrDirFull);
     tempName.UpperCase();
     r=f.Create(TheFs,tempName,0);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.Close();
 
 
     r=TheFs.SetSessionPath(gSessionPath);
-    test(r==KErrNone);
+    test_KErrNone(r);
     }
 
 static  void TestVolumeSize()
@@ -1762,7 +1763,7 @@ static  void TestVolumeSize()
 
     TVolumeInfo volInfo;
     TInt r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TInt64 calcsize = MAKE_TINT64(0, gClusterCount)*gBytesPerCluster;
     if (volInfo.iSize > calcsize)
         {
@@ -1794,7 +1795,7 @@ static  void TestVolumeSize()
         fileName=_L("\\File");
         fileName.AppendNum(i);
         r=f[i].Create(TheFs,fileName,0);
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
 
     TInt maxTotalSize=1048576;
@@ -1807,7 +1808,7 @@ static  void TestVolumeSize()
             {
             TInt randSize=Math::Rand(gSeed)%maxFileSize;
             r=f[i].SetSize(randSize);
-            test(r==KErrNone);
+            test_KErrNone(r);
             }
         test.Printf(_L("Countdown .. %d   \r"),maxIterations);
         }
@@ -1820,12 +1821,12 @@ static  void TestVolumeSize()
         {
         TInt size=0;
         r=f[i].Size(size);
-        test(r==KErrNone);
+        test_KErrNone(r);
         totalSize+=((size+gBytesPerCluster-1)/gBytesPerCluster)*gBytesPerCluster;
         }
 
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     if (gDiskType == EFat32)
         volInfo.iSize -= gBytesPerCluster; // root dir is part of the 'size'
     if (volInfo.iSize-volInfo.iFree!=totalSize)
@@ -1846,13 +1847,13 @@ static  void TestVolumeSize()
         fileName=_L("\\File");
         fileName.AppendNum(i);
         r=TheFs.Delete(fileName);
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
 
     r=TheFs.Volume(volInfo);
     if (gDiskType == EFat32)
         volInfo.iSize -= gBytesPerCluster; // root dir is part of the 'size'
-    test(r==KErrNone);
+    test_KErrNone(r);
     test(volInfo.iSize-volInfo.iFree==0);
 
     MakeDir(gSessionPath);
@@ -1870,7 +1871,7 @@ static  void TestVolumeSize()
 
 
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     if (gDiskType == EFat32)
         volInfo.iSize -= gBytesPerCluster; // root dir is part of the 'size'
     test.Printf(_L("volInfo.iSize = %ld\n"), volInfo.iSize);
@@ -1886,7 +1887,7 @@ static  void TestVolumeSize()
     CreateFatEntry(gSessionPath, EFalse);
 
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     if (gDiskType == EFat32)
         volInfo.iSize -= gBytesPerCluster; // root dir is part of the 'size'
     test.Printf(_L("volInfo.iSize = %ld\n"), volInfo.iSize);
@@ -1900,10 +1901,10 @@ static  void TestVolumeSize()
 
     CFileMan* fMan=CFileMan::NewL(TheFs);
     r=fMan->RmDir(gSessionPath);
-    test(r==KErrNone);
+    test_KErrNone(r);
     delete fMan;
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     if (gDiskType == EFat32)
         volInfo.iSize -= gBytesPerCluster; // root dir is part of the 'size'
     if (volInfo.iSize-volInfo.iFree!=0)
@@ -1935,22 +1936,22 @@ static  void TestUnicodeEntry()
     buffer.Replace(0,11,_L8("TEST1      "));
 
     TInt r=TheDisk.Open(TheFs,CurrentDrive());
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheDisk.Write(pos,buffer);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TheDisk.Close();
 
     r=TheDir.Open(TheFs,_L("\\"),KEntryAttMaskSupported);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheDir.Read(TheEntry);
-    test(r==KErrNone);
+    test_KErrNone(r);
     test(TheEntry.iName==_L("TEST1"));
     r=TheDir.Read(TheEntry);
-    test(r==KErrEof);
+    test_Value(r, r == KErrEof);
     TheDir.Close();
 
     r=TheFs.SetSessionPath(_L("\\"));
-    test(r==KErrNone);
+    test_KErrNone(r);
     TEntry e;
     r=TheFs.Entry(_L("TEST1"),e);
     if(e.iName!=_L("TEST1"))
@@ -1985,9 +1986,9 @@ static  void TestDiskIntegrity(TBool aTestOnly=EFalse)
     TInt r=TheDisk.Open(TheFs,CurrentDrive());
     if (r != KErrNone)
         test.Printf(_L("Error %d opening on %C"), r, (TUint)gDriveToTest);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheDisk.Read(0, boot);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TUint32 val = GetValue(boot, 510, 2);
     RDebug::Print(_L("BPB magic number = 0x%X\n"), val);
     test(aTestOnly || val == 0xAA55);
@@ -2113,7 +2114,7 @@ static  void TestFATTableEntries()
     for(i=0; i<=20; i++)
         {
         r = TheFile.Write(TheBuffer);
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
 
     TheFile.Close();
@@ -2470,7 +2471,7 @@ void TestFirstDataSectorAlignment()
             testVal.iSectorsPerCluster,
             testVal.iRootDirEntries);
         TInt r = fatAlignment.AdjustFirstDataSectorAlignment(testVal.iBlockSize);
-        test (r == KErrNone);
+        test_KErrNone(r);
         fatAlignment.Display();
         }
 
@@ -2583,7 +2584,7 @@ static void TestZeroLengthFile()
 
     TVolumeInfo volInfo;
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     TInt64 spaceToUse = volInfo.iFree - gBytesPerCluster; // whole disk except 1 cluster
 
@@ -2597,42 +2598,42 @@ static void TestZeroLengthFile()
         {
         TFileName tempName;
         r=f.Temp(TheFs,_L("\\"),tempName,EFileRead|EFileWrite);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r=f.SetSize(K1GigaByte);
-        test(r==KErrNone);
+        test_KErrNone(r);
         f.Close();
         spaceToUse -= K1GigaByte;
         tempfiles++;
         }
 
     r=f.Replace(TheFs,_L("\\USESPACE.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=f.SetSize((TInt)spaceToUse);
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.Close();
 
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     test.Printf(_L("After fill, volInfo.iSize %ld volInfo.iFree %ld\n"), volInfo.iSize, volInfo.iFree);
 
     test(volInfo.iFree==gBytesPerCluster); // check we have 1 cluster free
 
     r=f.Replace(TheFs,_L("\\FILE.TMP"),EFileRead|EFileWrite);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=f.SetSize(2*gBytesPerCluster); // 2 clusters (will fail since there's not space)
-    test(r==KErrDiskFull);
+    test_Value(r, r == KErrDiskFull);
     f.Close();
 
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     test(volInfo.iFree==gBytesPerCluster); // check we still have 1 cluster free
 
     r=f.Replace(TheFs,_L("\\USESPACE.TMP"),EFileRead|EFileWrite); // truncate file to 0
-    test(r==KErrNone);
+    test_KErrNone(r);
     f.Close();
 
     r=TheFs.Volume(volInfo);
-    test(r==KErrNone);
+    test_KErrNone(r);
     test(volInfo.iFree==(spaceToUse+gBytesPerCluster)); // check we've freed up the space from USESPACE plus one cluster
 
     
@@ -2642,7 +2643,7 @@ static void TestZeroLengthFile()
     
     //-- read 1 sector of the root dir.
     r = MediaRawRead(TheFs, CurrentDrive(), rootDirpos, TheBootSector.BytesPerSector(), TheBuffer);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     const TFatDirEntry* pE=(TFatDirEntry*)TheBuffer.Ptr();
     while (tempfiles-- > 0)
@@ -2689,7 +2690,7 @@ void CallTestsL()
 
     TInt drvNum;
     TInt r=TheFs.CharToDrive(gDriveToTest,drvNum);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     if (!Is_Fat(TheFs,drvNum))
         {
@@ -2704,7 +2705,7 @@ void CallTestsL()
     // check this is not the internal ram drive
     TVolumeInfo v;
     r=TheFs.Volume(v, drvNum);
-    test(r==KErrNone);
+    test_KErrNone(r);
     TBool isRamDrive = v.iDrive.iMediaAtt&KMediaAttVariableSize;
 
     gSessionPath[0] = (TText)gDriveToTest;

@@ -445,7 +445,15 @@ scheduler functionality.
  */
 #define KCRAZYSCHEDDELAY 69 //0x00000020, index 2
 
+/**
+Force page faults on kernel access to paged user-side data in a remote thread.
 
+This is designed to help show up problems with device drivers that are not paging safe.
+
+@internalComponent
+@prototype
+*/
+#define KFORCEKUPAGEFAULTS		70 //0x00000040, index 2
 
 /* Word 3 of debug mask : configures user library behaviour */
 

@@ -19,6 +19,7 @@
 
 #define BASE_ROM
 #define REBOOT_DRIVER
+#define MMCLOADER_ROM
 
 #include <rom\##VARIANT##\header.iby>
 

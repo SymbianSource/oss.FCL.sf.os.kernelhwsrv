@@ -27,8 +27,12 @@ const TUint KHtCustomRestartShift = 8;
 const TUint KHtCustomRestartMask  = KHtCustomRestartMax << KHtCustomRestartShift; 
 
 const TUint KHtRestartStartupModesMax = 0xf; // Variable, platform dependant 
+
+#undef USE_MODE_SHIFT_MASK
+#ifdef USE_MODE_SHIFT_MASK
 const TUint KHtRestartStartupModesShift = 16; // Variable, platform dependant 
 const TUint KHtRestartStartupModesMask = KHtRestartStartupModesMax << KHtRestartStartupModesShift;
+#endif
 
 void TemplateVariantFault(TInt aLine)
 	{
@@ -430,8 +434,11 @@ TInt Template::VariantHal(TInt aFunction, TAny* a1, TAny* a2)
 			// TO DO: (optional)
 			//
 			// Read the restart startup mode, e.g:
-			// TInt startup = (Kern::SuperPage().iHwStartupReason & KHtRestartStartupModesMask) >> KHtRestartStartupModesShift;
-			// kumemput32(a1, &startup, sizeof(TInt));
+#undef USE_MODE_SHIFT_MASK
+#ifdef USE_MODE_SHIFT_MASK
+			TInt startup = (Kern::SuperPage().iHwStartupReason & KHtRestartStartupModesMask) >> KHtRestartStartupModesShift;
+			kumemput32(a1, &startup, sizeof(TInt));
+#endif
 			break; 			
 			}
 

@@ -434,7 +434,7 @@ LOCAL_C void WriteFileAsync(RFs& fs, RFile& aFileWrite, TDes16& aFile, TInt aSiz
 
 	// delete file first to ensure it's contents are not in the cache (file may be be on the closed file queue)
 	r = fs.Delete(aFile);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r == KErrNone || r == KErrNotFound);
 
 	r = aFileWrite.Replace(fs,aFile,EFileShareAny|EFileWrite|EFileReadDirectIO|EFileWriteDirectIO);
 	test_KErrNone(r);
@@ -556,7 +556,7 @@ LOCAL_C TInt ReadAsyncTestFile(TDes16& aFile, TInt aSize)
 	RFile file;
 
 	TInt r = fs.Connect();
-	test (r == KErrNone);
+	test_KErrNone(r);
 
 	startTime.HomeTime();
 
@@ -695,7 +695,7 @@ LOCAL_C void TestSimpleRead()
 #endif
 
 	r = DeleteAll(gSessionPath);
-	test(r == KErrNone || r == KErrInUse);
+	test_Value(r, r == KErrNone || r == KErrInUse);
 
 	// Simple case filling/reading the cache from different threads
 	test.Next(_L("File fits in: read sync (another thread) + read sync + read async\n"));
@@ -715,7 +715,7 @@ LOCAL_C void TestSimpleRead()
 
 	buf = _L("Read File");
 	r = gThread2.Create(buf,ReadFileT,KDefaultStackSize,KHeapSize,KMaxHeapSize,NULL);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	gThread2.Resume();
 	client.Wait();
@@ -737,7 +737,7 @@ LOCAL_C void TestSimpleRead()
 #endif
 
 	r = DeleteAll(gSessionPath);
-	test(r == KErrNone || r == KErrInUse);
+	test_Value(r, r == KErrNone || r == KErrInUse);
 
 
 	test.Next(_L("File doesn't fit in: read sync + read sync + read async\n"));
@@ -760,7 +760,7 @@ LOCAL_C void TestSimpleRead()
 
 
 	r = DeleteAll(gSessionPath);
-	test(r == KErrNone || r == KErrInUse);
+	test_Value(r, r == KErrNone || r == KErrInUse);
 
 
 	test.Next(_L("File doesn't fit in: read sync (another thread) + read sync + read async\n"));
@@ -780,7 +780,7 @@ LOCAL_C void TestSimpleRead()
 
 	buf = _L("Read Big File");
 	r = gThread2.Create(buf,ReadFileT,KDefaultStackSize,KHeapSize,KMaxHeapSize,NULL);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	gThread2.Resume();
 	client.Wait();
@@ -802,7 +802,7 @@ LOCAL_C void TestSimpleRead()
 	#endif
 
 	r = DeleteAll(gSessionPath);
-	test(r == KErrNone || r == KErrInUse);
+	test_Value(r, r == KErrNone || r == KErrInUse);
 
 	test.End();
 }
@@ -823,13 +823,13 @@ LOCAL_C TInt ReadAnotherEntry(TAny* )
 	test(res2 == KErrNone && lBufSec != NULL);
 	lBufReadPtr.Set(lBufSec->Des());
 
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = fs.SetSessionPath(gSessionPath);
 
 
 	// delete file first to ensure it's contents are not in the cache (file may be be on the closed file queue)
 	r = fs.Delete(gFirstFile);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r == KErrNone || r == KErrNotFound);
 
 	r = file.Create(fs,gFirstFile,EFileShareAny|EFileWrite|EFileReadDirectIO|EFileWriteDirectIO);
 
@@ -944,7 +944,7 @@ LOCAL_C void TestConcurrent()
 
 	TBuf<20> buf2 = _L("Write Two Files 2");
 	r = gThread2.Create(buf2,WriteFileT2,KDefaultStackSize*2,KHeapSize,KMaxHeapSize,NULL);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	gThread1.Resume();
 	gThread2.Resume();
@@ -984,10 +984,10 @@ LOCAL_C TInt CreateFile(TAny* )
 	RTest test(_L("T_RCACHE"));
 	RFs fs;
 	TInt r = fs.Connect();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = fs.SetSessionPath(gSessionPath);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = WriteFile(fs, gSecondFile, gSecondFileSize, KBlockSize, gBufWritePtr, EThreadSignal);
 	test_KErrNone(r);
@@ -1069,7 +1069,7 @@ LOCAL_C TInt CorruptSecondFile()
 	TPtr8 dummyPtr(NULL, 0);
 
 	TRAPD(res,dummy = HBufC8::NewL(4));
-	test(res == KErrNone && dummy != NULL);
+	test_Value(res, res== KErrNone && dummy != NULL);
 
 	dummyPtr.Set(dummy->Des());
 	FillBuffer(dummyPtr, 4, '1');
@@ -1297,7 +1297,7 @@ LOCAL_C void CreateFiles(TInt aFiles, TInt aFileSize)
 	HBufC8* bigBuf = NULL;
 	const TInt KBigBifferSize = 32 * 1024;
 	TRAPD(res,bigBuf = HBufC8::NewL(KBigBifferSize));
-	test(res == KErrNone && bigBuf != NULL);
+	test_Value(res, res== KErrNone && bigBuf != NULL);
 
 	TPtr8 bigBufWritePtr(NULL, 0);
 	bigBufWritePtr.Set(bigBuf->Des());
@@ -1315,7 +1315,7 @@ LOCAL_C void CreateFiles(TInt aFiles, TInt aFileSize)
 
 		// delete file first to ensure it's contents are not in the cache (file may be on the closed file queue)
 		r = TheFs.Delete(path);
-		test(r == KErrNone || r == KErrNotFound);
+		test_Value(r, r == KErrNone || r == KErrNotFound);
 
 		r = file.Create(TheFs,path,EFileShareAny|EFileWrite|EFileReadDirectIO|EFileWriteDirectIO);
 		if(r == KErrAlreadyExists)
@@ -1353,7 +1353,7 @@ LOCAL_C void FillCache(RFile aFile[KFilesNeededToFillCache], TInt aFiles, TInt a
 	TPtr8 bufPtr(NULL, 0);
 
 	TRAPD(res,buf = HBufC8::NewL(2));
-	test(res == KErrNone && buf != NULL);
+	test_Value(res, res== KErrNone && buf != NULL);
 	bufPtr.Set(buf->Des());
 
 	directory = gSessionPath;
@@ -1399,7 +1399,7 @@ LOCAL_C void TestFillCache()
 		// get number of items on Page Cache
 		TFileCacheStats startPageCacheStats;
 		TInt r = controlIo(TheFs,gDrive, KControlIoFileCacheStats, startPageCacheStats);
-		test(r==KErrNone || r == KErrNotSupported);
+		test_Value(r, r == KErrNone || r == KErrNotSupported);
 		test.Printf(_L("Number of page cache lines on free list at beginning=%d\n"),startPageCacheStats.iFreeCount);
 		test.Printf(_L("Number of page cache lines on used list at beginning=%d\n"),startPageCacheStats.iUsedCount);
 		test.Printf(_L("Number of files on closed queue=%d\n"),startPageCacheStats.iFilesOnClosedQueue);
@@ -1409,7 +1409,7 @@ LOCAL_C void TestFillCache()
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 		// get number of items on Page Cache
 		r = controlIo(TheFs,gDrive, KControlIoFileCacheStats, startPageCacheStats);
-		test(r==KErrNone || r == KErrNotSupported);
+		test_Value(r, r == KErrNone || r == KErrNotSupported);
 		test.Printf(_L("Number of page cache lines on free list at end=%d\n"),startPageCacheStats.iFreeCount);
 		test.Printf(_L("Number of page cache lines on used list at end=%d\n"),startPageCacheStats.iUsedCount);
 		test.Printf(_L("Number of files on closed queue=%d\n"),startPageCacheStats.iFilesOnClosedQueue);
@@ -1458,7 +1458,7 @@ LOCAL_C void TestReadAhead()
 	//--Find out if the drive is sync/async at this point and print information
     TPckgBuf<TBool> drvSyncBuf;
     r = TheFs.QueryVolumeInfoExt(gDrive, EIsDriveSync, drvSyncBuf);
-    test(r == KErrNone);
+    test_KErrNone(r);
 	const TBool bDrvSync = drvSyncBuf();
     if(bDrvSync)
 		test.Printf(_L("Drive D: is synchronous\n"));
@@ -1468,7 +1468,7 @@ LOCAL_C void TestReadAhead()
 	// use a fast counter as this is more accurate than using TTime
 	TInt fastCounterFreq;
 	r = HAL::Get(HAL::EFastCounterFrequency, fastCounterFreq);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("HAL::EFastCounterFrequency %d\n"), fastCounterFreq);
 
 	// Bind this thread to CPU 0. This is so that timer deltas don't drift from
@@ -1479,7 +1479,7 @@ LOCAL_C void TestReadAhead()
 	const TInt KReadLen = 28 * KOneK;
 
 	TRAPD(res,dummy = HBufC8::NewL(KReadLen));
-	test(res == KErrNone && dummy != NULL);
+	test_Value(res, res== KErrNone && dummy != NULL);
 
 	dummyPtr.Set(dummy->Des());
 
@@ -1585,7 +1585,7 @@ GLDEF_C void CallTestsL()
 	// turn OFF lock failure mode
 	TBool simulatelockFailureMode = EFalse;
 	TInt r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-	test (r == KErrNone);
+	test_KErrNone(r);
 #endif
 
 	TBuf16<45> dir;
@@ -1605,7 +1605,7 @@ GLDEF_C void CallTestsL()
 
 
 	TRAPD(res,gBuf = HBufC8::NewL(KBlockSize+1));
-	test(res == KErrNone && gBuf != NULL);
+	test_Value(res, res== KErrNone && gBuf != NULL);
 
 	gBufWritePtr.Set(gBuf->Des());
 	FillBuffer(gBufWritePtr, KBlockSize, 'A');
@@ -1640,7 +1640,7 @@ GLDEF_C void CallTestsL()
 	// turn lock failure mode back ON (if enabled)
 	simulatelockFailureMode = ETrue;
 	r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-	test (r == KErrNone);
+	test_KErrNone(r);
 #endif
 
 	}

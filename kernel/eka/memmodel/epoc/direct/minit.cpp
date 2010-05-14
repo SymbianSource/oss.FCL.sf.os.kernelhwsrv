@@ -20,7 +20,6 @@
 
 _LIT(KLitRamAlloc,"RamAlloc");
 
-const TInt KMaxSupervisorStackSpace=0x200000;
 
 void M::Init1()
 	{

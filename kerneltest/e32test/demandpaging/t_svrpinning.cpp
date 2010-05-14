@@ -260,7 +260,7 @@ TInt CTestSession::CheckArgsPresent(const RMessage2& aMessage, TBool arg0Present
 	return r;
 	}
 
-void CTestSession::ServiceL(const RMessage2& aMessage)
+EXPORT_C void CTestSession::ServiceL(const RMessage2& aMessage)
 //
 // Virtual message-handler
 //

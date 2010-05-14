@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -149,7 +149,13 @@ macro __DEBUGGER_SUPPORT__
 // For the status of errata of L210 & L220 cache, see the header of source file:
 // e32\kernel\arm\cachel2.cpp
 
-#if defined(__USING_USING_ASSP_REGISTER_API__) || defined(__USING_INTERRUPT_API__) || defined(__USING_ASSP_REGISTER_API__)
+// Modular Hardware Adaptation - Service API library macros
+// MMP files define the relevant macro to add the library statement
+// 
+#if defined(__USING_ASSP_INTERRUPT_API__) || defined(__USING_ASSP_REGISTER_API__)
 library	VariantTarget(katemplate,lib)
 #endif
 
+#if defined(__USING_MHA_GPIO_API__)
+library	VariantTarget(gpio,lib)
+#endif

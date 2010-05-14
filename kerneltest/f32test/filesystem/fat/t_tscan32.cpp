@@ -11,9 +11,10 @@
 // Contributors:
 //
 // Description:
-// f32test\scndrv\t_tscan32.cpp
+// f32test\filesystem\fat\t_tscan32.cpp
 // 
-//
+
+#define __E32TEST_EXTENSION__
 
 #include <f32file.h>
 #include <e32test.h>
@@ -36,9 +37,9 @@ GLDEF_D TFileName StartupExeName=_L(""); // initialised at run time
 
 #ifdef _DEBUG
 GLREF_D RTest test;
-GLDEF_D TInt TheFunctionNumber;
-GLDEF_D TInt TheOpNumber;
-GLDEF_D TInt TheFailCount;
+GLDEF_D TInt TheFunctionNumber;	// Indicates which test to run
+GLDEF_D TInt TheOpNumber;		// Indicates which file operation to be tested
+GLDEF_D TInt TheFailCount;		
 GLDEF_D TBool IsReset;
 GLDEF_D TFileName TestExeName=_L("?:\\T_SCANDR.EXE"); //Renaming it to fit in one root dir entry.
 GLDEF_D TFileName LogFileName=_L("?:\\T_SCANDR.LOG"); //Renaming it to fit in one root dir entry.
@@ -56,8 +57,8 @@ const TInt KDirAttrLongName  = KDirAttrReadOnly | KDirAttrHidden | KDirAttrSyste
 const TInt KDirAttrLongMask  = KDirAttrLongName | KDirAttrDirectory | KDirAttrArchive;
 const TInt KDirLastLongEntry = 0x40;
 
-GLDEF_D TInt WriteFailValue;
-
+GLDEF_D TInt WriteFailValue;	// Indicates what error should return from a write failure
+								// Value assigned in t_scn32dr2 and t_scn32dr3
 LOCAL_C TFatBootSector BootSector;	
 LOCAL_D RRawDisk TheRawDisk;
 
@@ -79,7 +80,13 @@ LOCAL_D TInt gClusterCount;
 LOCAL_D HBufC8* gFatBuf  = NULL;
 LOCAL_D TInt    gFatAddr = -1;
 
-enum TFatChain {EChainStd,EChainAlternate,EChainBackwards,EChainForwards};
+enum TFatChain
+	{
+	EChainStd,			// Cluster chain grows contiguously
+	EChainAlternate,	// Cluster chain grows forward but not contiguously
+	EChainBackwards,	// Cluster chain first goes backwards(up to 3.5kb for fat16 file) and then forwards
+	EChainForwards		// Cluster chain first goes forward (upto 3.5kb for fat16 file) and then backwards
+	};
 
 LOCAL_C TBool IsInternalRam()
 //
@@ -88,7 +95,7 @@ LOCAL_C TBool IsInternalRam()
 	{
 	TVolumeInfo v;
 	TInt r=TheFs.Volume(v,gSessionPath[0]-'A');
-	test(r==KErrNone);
+	test_KErrNone(r);
 	return(v.iDrive.iMediaAtt&KMediaAttVariableSize);
 	}
 
@@ -102,10 +109,10 @@ LOCAL_C void WriteLogFile()
 	TInt r=log.Open(TheFs,LogFileName,EFileShareExclusive|EFileWrite);
 	if(r!=KErrNone)
 		test.Printf(_L("error=%d\n"),r);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt size;
 	r=log.Size(size);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<16> buf;
 	buf.SetLength(4);
 	buf[0]=(TUint8)TheFunctionNumber;
@@ -113,7 +120,7 @@ LOCAL_C void WriteLogFile()
 	buf[2]=(TUint8)TheFailCount;
 	buf[3]='\n';
 	r=log.Write(size,buf,buf.Length());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("Written func=%d,op=%d,fail=%d\n"),TheFunctionNumber,TheOpNumber,TheFailCount);
 	log.Close();
 	}
@@ -141,8 +148,8 @@ GLDEF_C void ReadLogFile()
 	TInt r=log.Open(TheFs,LogFileName,EFileShareExclusive);
 	if(r!=KErrNone)
 		test.Printf(_L("error in ReadLogFile()=%d\n"),r);
-	test(r==KErrNone);
-	test(r==KErrNone);
+	test_KErrNone(r);
+	
 	TInt fileSize;
 	r=log.Size(fileSize);
 	if(fileSize==0)
@@ -187,7 +194,7 @@ LOCAL_C TInt ClusterToByte(TInt aCluster)
 */
 static void DoZeroFillMedia(TInt64 aStartPos, TInt64 aEndPos, RRawDisk& aWriter)
 {
-    test(aStartPos >=0 && aEndPos >=0 && aStartPos < aEndPos);
+	test(aStartPos >=0 && aEndPos >=0 && aStartPos < aEndPos);
     
     if(aStartPos == aEndPos)
         return;
@@ -198,7 +205,7 @@ static void DoZeroFillMedia(TInt64 aStartPos, TInt64 aEndPos, RRawDisk& aWriter)
     const TUint32 KBufSz=65536*2; //-- buffer with zeroes
     
     nRes = buf.CreateMax(KBufSz);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     buf.FillZ();
 
@@ -209,7 +216,7 @@ static void DoZeroFillMedia(TInt64 aStartPos, TInt64 aEndPos, RRawDisk& aWriter)
     
         TPtrC8 ptr(buf.Ptr(), bytesToWrite);
         nRes = aWriter.Write(aStartPos, ptr);
-        test(nRes == KErrNone || nRes == KErrDiskFull);
+        test_Value(nRes, nRes == KErrNone || nRes == KErrDiskFull);
 
         aStartPos+=bytesToWrite;
         rem-=bytesToWrite;
@@ -227,7 +234,7 @@ LOCAL_C void ClearDiskData()
 	{
 
 	TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TUint32 startPos = gDataStartBytes;
 	if (gDiskType == EFat32)
@@ -269,7 +276,7 @@ static void DoReadBootSector()
 	{
 	
     TInt nRes = ReadBootSector(TheFs, CurrentDrive(), KBootSectorNum<<KDefaultSectorLog2, BootSector);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
     if(!BootSector.IsValid())
         {
@@ -323,7 +330,7 @@ GLDEF_C TUint32 GetFatEntry(TUint32 aIndex, const TUint8* aFat=NULL)
 	if (!gFatBuf)
 		{
 		gFatBuf=HBufC8::New(gBytesPerCluster);
-		test(gFatBuf!=NULL);
+		test_NotNull(gFatBuf);
 		gFatAddr = -1;
 		}
 
@@ -339,10 +346,10 @@ GLDEF_C TUint32 GetFatEntry(TUint32 aIndex, const TUint8* aFat=NULL)
 		if (gFatAddr < 0 || pos < gFatAddr || pos >= gFatAddr + gBytesPerCluster)
 			{
 			TPtr8 ptr=gFatBuf->Des();
-		TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-			test(r==KErrNone);
+			TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
+			test_KErrNone(r);
 			r=TheRawDisk.Read(pos, ptr);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			TheRawDisk.Close();
 			gFatAddr = pos;
 			}
@@ -550,6 +557,18 @@ GLDEF_C void ExtractNameString(TDes16& aName, const TUint8* aEntry)
 	aName.SetLength(i);
 	}
 
+TDes& MakePrintable(TDes& aDes)
+	{
+	TInt len = aDes.Length();
+
+	for (TInt i=0; i<len; i++)
+		{
+		if ((TUint8) aDes[i] < 0x20)
+			aDes[i] = '?';
+		}
+	return aDes;
+	}
+
 GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
 // 
 // Dump a single directory entry to the log.  Return false if it was end of
@@ -569,9 +588,9 @@ GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
 		ExtractNameString(name, aEntry);
 		TInt ord = aEntry[0];
 		if (ord & KDirLastLongEntry)
-			RDebug::Print(_L("%5d: %-15S #%-2d LAST"), aNum, &name, ord & ~KDirLastLongEntry);
+			RDebug::Print(_L("%5d: %-15S #%-2d LAST"), aNum, &MakePrintable(name), ord & ~KDirLastLongEntry);
 		else
-			RDebug::Print(_L("%5d: %-15S #%-2d"), aNum, &name, ord & ~KDirLastLongEntry);
+			RDebug::Print(_L("%5d: %-15S #%-2d"), aNum, &MakePrintable(name), ord & ~KDirLastLongEntry);
 		}
 	else if (!IsValidDirEntry(d))
 		return EFalse;
@@ -580,7 +599,7 @@ GLDEF_C TBool DumpDirEntry(TInt aNum, const TUint8* aEntry)
 		TBuf<11> name;
 		name.Copy(d->Name());
 		RDebug::Print(_L("%5d: '%S'  %S  cluster %d"),
-					  aNum, &name, DirAttributes(d->Attributes()), d->StartCluster());
+					  aNum, &MakePrintable(name), DirAttributes(d->Attributes()), d->StartCluster());
 		}
 	return ETrue;
 	}
@@ -619,12 +638,12 @@ GLDEF_C void DumpData(const TUint8* aFat, TInt aStart, TInt aEnd)
 		if (GetFatEntry(cluster, aFat) != 0)
 			{
 			HBufC8* buf=HBufC8::New(gBytesPerCluster);
-			test(buf!=NULL);
+			test_NotNull(buf);
 			TPtr8 ptr=buf->Des();
 			TInt r=TheRawDisk.Open(TheFs,gSessionPath[0]-'A');
-			test(r==KErrNone);
+			test_KErrNone(r);
 			r=TheRawDisk.Read(ClusterToByte(cluster), ptr);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			TheRawDisk.Close();
 			RDebug::Print(_L("Cluster %d @ 0x%08X:"), cluster, ClusterToByte(cluster));
 			DumpDirCluster(ptr.Ptr());
@@ -708,7 +727,7 @@ LOCAL_C void FillUpRootDir(TInt aFree=0)
 		dir[1]=TUint16(count/26+'a');
 		dir[2]=TUint16(count%26+'a');
 		r=TheFs.MkDir(dir);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		entriesSoFar+=2;
 		++count;
 		}
@@ -733,7 +752,7 @@ LOCAL_C void UnFillUpRootDir(TInt aFree=0)
 		dir[1]=TUint16(count/26+'a');
 		dir[2]=TUint16(count%26+'a');
 		r=TheFs.RmDir(dir);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		entriesSoFar-=2;
 		++count;
 		}
@@ -755,7 +774,7 @@ LOCAL_C TBool EntryExists(const TDesC& aName)
 	{
 	TEntry entry;
 	TInt r=TheFs.Entry(aName,entry);
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	return(r==KErrNone?(TBool)ETrue:(TBool)EFalse);
 	}
 
@@ -794,7 +813,7 @@ LOCAL_C void GetEntryDetails(const TDesC& aName,TEntry& aEntry)
 //
 	{
 	TInt r=TheFs.Entry(aName,aEntry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C TBool IsSameEntryDetails(TEntry aOldEntry,TEntry aNewEntry)
@@ -817,9 +836,9 @@ LOCAL_C void CreateAlternate(const TDesC& aNameOne,const TDesC& aNameTwo)
 	TInt size1,size2;
 	size1=size2=0;
 	TInt r=file1.Create(TheFs,aNameOne,EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file2.Create(TheFs,aNameTwo,EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	// one entry for file1 for every 40 entries for file2
 	// if file 1 subseqently deleted then 7 entries available
 	// in that fat sector - ~3.5kb file size - for fat16
@@ -831,15 +850,15 @@ LOCAL_C void CreateAlternate(const TDesC& aNameOne,const TDesC& aNameTwo)
 			{
 			size1+=gBytesPerCluster;
 			r=file1.SetSize(size1);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			first=EFalse;
 			--entries;
 			}
 		else
 			{
 			size2+=gBytesPerCluster*ratio;
-			r=file1.SetSize(size1);
-			test(r==KErrNone);
+			r=file2.SetSize(size2);
+			test_KErrNone(r);
 			first=ETrue;
 			entries-=ratio;
 			}
@@ -892,7 +911,7 @@ LOCAL_C void CleanDirectory(const TDesC& aName,TInt aClusters)
 		TFileName fullName(aName);
 		fullName.Append(fn);
 		TInt r = TheFs.Delete(fullName);
-		test(r == KErrNone);
+		test_KErrNone(r);
 		entry += 1 + (fn.Length() + 12) / 13;
 		}
 	RDebug::Print(_L("CleanDirectory(%S, %d)"), &aName, aClusters);
@@ -927,7 +946,7 @@ LOCAL_C void ExpandDirectory(const TDesC& aName,TInt aClusters)
 		fullName.Append(fn);
 		RFile file;
 		TInt r = file.Create(TheFs,fullName,EFileShareAny);
-		test(r == KErrNone);
+		test_KErrNone(r);
 		file.Close();
 		entry += 1 + (fn.Length() + 12) / 13;
 		}
@@ -942,7 +961,7 @@ LOCAL_C TInt DeleteAlternateEntry(const TDesC& aName,TBool aIsDir)
 //
 	{
 	TInt r=TheFs.Delete(_L("\\fat\\file2"));
-	test(r==KErrNone||KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	if(aIsDir)
 		return(TheFs.RmDir(aName));
 	else
@@ -956,7 +975,7 @@ LOCAL_C TInt CreateAlternateEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 //
 	{
 	TInt r=DeleteAlternateEntry(aName,aIsDir);
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	RFile file;
 	if(aIsDir)
 		{
@@ -970,17 +989,17 @@ LOCAL_C TInt CreateAlternateEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 		if(r!=KErrNone)
 			return(r);
 		r=file.SetSize(1); //ensure file allocated a start cluster
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	CreateAlternate(_L("\\fat\\file1"),_L("\\fat\\file2"));
 	r=TheFs.Delete(_L("\\fat\\file1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if(aIsDir)
 		ExpandDirectory(aName,aSize);
 	else
 		{
 		r=file.SetSize(aSize);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		file.Close();
 		}
 	return(KErrNone);
@@ -992,11 +1011,11 @@ LOCAL_C TInt DeleteForwardEntry(const TDesC& aName,TBool aIsDir)
 //
 	{
 	TInt r=TheFs.Delete(_L("\\fat\\file2"));
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	r=TheFs.Delete(_L("\\fat\\file4"));
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	r=TheFs.Delete(_L("\\fat\\file5"));
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	if(aIsDir)
 		r=TheFs.RmDir(aName);
 	else
@@ -1011,16 +1030,16 @@ LOCAL_C TInt CreateForwardEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 //	
 	{
 	TInt r=DeleteForwardEntry(aName,aIsDir);
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	RFile file1,file2,entry;
 	r=file1.Create(TheFs,_L("\\fat\\file1"),EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.SetSize(EntriesPerFatSector()*gBytesPerCluster);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file2.Create(TheFs,_L("\\fat\\file2"),EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file2.SetSize(EntriesPerFatSector()*gBytesPerCluster);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if(aIsDir)
 		{
 		r=TheFs.MkDir(aName);
@@ -1033,27 +1052,27 @@ LOCAL_C TInt CreateForwardEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 		if(r!=KErrNone)
 			return(r);
 		r=entry.SetSize(1);	// ensure entry has start cluster allocated
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	CreateAlternate(_L("\\fat\\file3"),_L("\\fat\\file4"));
 	RFile file5;
 	r=file5.Create(TheFs,_L("\\fat\\file5"),EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file5.SetSize(EntriesPerFatSector()*gBytesPerCluster*2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 	file2.Close();
 	file5.Close();
 	r=TheFs.Delete(_L("\\fat\\file1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\fat\\file3"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if(aIsDir)
 		ExpandDirectory(aName,aSize);
 	else
 		{
 		r=entry.SetSize(aSize);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		entry.Close();
 		}
 	return(KErrNone);
@@ -1065,9 +1084,9 @@ LOCAL_C TInt DeleteBackwardEntry(const TDesC& aName,TBool aIsDir)
 //
 	{
 	TInt r=TheFs.Delete(_L("\\fat\\file2"));
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	r=TheFs.Delete(_L("\\fat\\file3"));
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	if(aIsDir)
 		r=TheFs.RmDir(aName);
 	else
@@ -1082,7 +1101,7 @@ LOCAL_C TInt CreateBackwardEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 //
 	{
 	TInt r=DeleteBackwardEntry(aName,aIsDir);
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	CreateAlternate(_L("\\fat\\file1"),_L("\\fat\\file2"));
 	RFile entry;
 	if(aIsDir)
@@ -1097,22 +1116,22 @@ LOCAL_C TInt CreateBackwardEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 		if(r!=KErrNone)
 			return(r);
 		r=entry.SetSize(1);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	RFile file3;
 	r=file3.Create(TheFs,_L("\\fat\\file3"),EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file3.SetSize(EntriesPerFatSector()*gBytesPerCluster);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\fat\\file1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file3.Close();
 	if(aIsDir)
 		ExpandDirectory(aName,aSize);
 	else
 		{
 		r=entry.SetSize(aSize);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		entry.Close();
 		}
 	return(KErrNone);	
@@ -1135,7 +1154,7 @@ LOCAL_C TInt CreateStdEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 //
 	{
 	TInt r=DeleteStdEntry(aName,aIsDir);
-	test(r==KErrNone||r==KErrNotFound);
+	test_Value(r, r==KErrNone||r==KErrNotFound);
 	if(aIsDir)
 		{
 		r=TheFs.MkDir(aName);
@@ -1150,12 +1169,12 @@ LOCAL_C TInt CreateStdEntry(const TDesC& aName,TBool aIsDir,TInt aSize)
 		if(r==KErrNone)
 			{
 			r=file.SetSize(aSize);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		else if(r==KErrAlreadyExists)
 			{
 			TInt res =file.Open(TheFs,aName,EFileShareAny);
-			test(res==KErrNone);
+			test_KErrNone(res);
 			}
 		else
 			return(r);
@@ -1206,28 +1225,28 @@ LOCAL_C void TestRFsDelete(const TDesC& aName,TFatChain aChain,TInt aFileSize)
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=CreateEntry(aName,EFalse,aChain,aFileSize);
-		test(r==KErrNone||r==KErrAlreadyExists);
+		test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 		if(IsReset)
 			{
 			++TheFailCount;
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.Delete(aName);
 		if(r==KErrNone)
 			break;
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		++failCount;
 		}
 	r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(!EntryExists(aName));
 	++TheOpNumber;
 	TheFailCount=0;
@@ -1262,18 +1281,18 @@ LOCAL_C void TestRFsRmDir(const TDesC& aName,TFatChain aChain,TInt aDirSize)
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=CreateEntry(aName,ETrue,aChain,aDirSize);
-		test(r==KErrNone||r==KErrAlreadyExists);
+		test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 		if(IsReset)
 			{
 			++TheFailCount;
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.RmDir(aName);
 		if(r==KErrNone)
 			break;
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
 		RDebug::Print(_L("%6d: ScanDrive = %d"), __LINE__, r);
 		if (r != KErrNone)
@@ -1282,16 +1301,16 @@ LOCAL_C void TestRFsRmDir(const TDesC& aName,TFatChain aChain,TInt aDirSize)
 			DumpFat();
 			DumpData(NULL, 0, 200);
 		}
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
 		RDebug::Print(_L("%6d: CheckDisk = %d"), __LINE__, r);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		++failCount;
 		}
 	r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(!EntryExists(aName));
 	++TheOpNumber;
 	TheFailCount=0;
@@ -1309,31 +1328,31 @@ LOCAL_C void TestRFsMkDir(const TDesC& aName)
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=DeleteEntry(aName,ETrue,EChainStd);
-		test(r==KErrNone||r==KErrNotFound);
+		test_Value(r, r==KErrNone||r==KErrNotFound);
 		if(IsReset)
 			{
 			++TheFailCount;
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.MkDir(aName);
 		if(r==KErrNone)
 			break;
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		++failCount;
 		}
 	r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(EntryExists(aName));
 	r=DeleteEntry(aName,ETrue,EChainStd);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	++TheOpNumber;
 	TheFailCount=0;
 	}
@@ -1351,9 +1370,9 @@ LOCAL_C void TestRFsRename(const TDesC& aOldName,const TDesC& aNewName,TBool aIs
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=CreateEntry(aOldName,aIsDir,aChain,aSize);
-		test(r==KErrNone||r==KErrAlreadyExists);
+		test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 		r=DeleteEntry(aNewName,aIsDir,aChain);
-		test(r==KErrNone||r==KErrNotFound);
+		test_Value(r, r==KErrNone||r==KErrNotFound);
 		GetEntryDetails(aOldName,oldEntryInfo);
 		if(IsReset)
 			{
@@ -1361,34 +1380,29 @@ LOCAL_C void TestRFsRename(const TDesC& aOldName,const TDesC& aNewName,TBool aIs
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.Rename(aOldName,aNewName);
 		if(r==KErrNone)
 			break;
-		if(r!=WriteFailValue)
-			{
-			test.Printf(_L("r=%d\n"),r);
-			test(EFalse);
-			}
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		// no start cluster if aSize==0
 		if(aSize!=0)
 			test(OneEntryExists(aOldName,aNewName));
 		++failCount;
 		}
 	r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(EntryExists(aNewName) && !EntryExists(aOldName));
 	GetEntryDetails(aNewName,newEntryInfo);
 	test(IsSameEntryDetails(oldEntryInfo,newEntryInfo));
 	r=DeleteEntry(aNewName,aIsDir,aChain);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	++TheOpNumber;
 	TheFailCount=0;
 	}
@@ -1410,16 +1424,16 @@ LOCAL_C void TestRFsReplace(const TDesC& aOldName, const TDesC& aNewName,TBool a
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=CreateEntry(aOldName,EFalse,aChain,aFileSize);
-		test(r==KErrNone||r==KErrAlreadyExists);
+		test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 		if(aBothExist)
 			{
 			r=CreateEntry(aNewName,EFalse,aChain,aFileSize);
-			test(r==KErrNone||r==KErrAlreadyExists);
+			test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 			}
 		else
 			{
 			r=DeleteEntry(aNewName,EFalse,aChain);
-			test(r==KErrNone||r==KErrNotFound);
+			test_Value(r, r==KErrNone||r==KErrNotFound);
 			}
 		GetEntryDetails(aOldName,oldEntryInfo);
 		if(IsReset)
@@ -1428,15 +1442,15 @@ LOCAL_C void TestRFsReplace(const TDesC& aOldName, const TDesC& aNewName,TBool a
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.Replace(aOldName,aNewName);
 		if(r==KErrNone)
 			break;
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		if(!aBothExist && aFileSize!=0)
 			test(OneEntryExists(aOldName,aNewName));
 		else if(aBothExist)
@@ -1444,14 +1458,14 @@ LOCAL_C void TestRFsReplace(const TDesC& aOldName, const TDesC& aNewName,TBool a
 		++failCount;
 		}
 	r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(EntryExists(aNewName) && !EntryExists(aOldName));
 	GetEntryDetails(aNewName,newEntryInfo);
 	test(IsSameEntryDetails(oldEntryInfo,newEntryInfo));
 	r=DeleteEntry(aNewName,EFalse,aChain);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	++TheOpNumber;
 	TheFailCount=0;
 	}
@@ -1468,35 +1482,35 @@ LOCAL_C void TestRFileCreate(const TDesC& aName)
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=DeleteEntry(aName,EFalse,EChainStd);
-		test(r==KErrNone||r==KErrNotFound);
+		test_Value(r, r==KErrNone||r==KErrNotFound);
 		if(IsReset)
 			{
 			++TheFailCount;
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		RFile file;
 		r=file.Create(TheFs,aName,EFileShareAny);
 		if(r==KErrNone)
 			{
 			r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			file.Close();
 			break;
 			}
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		++failCount;
 		}
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(EntryExists(aName));
 	r=DeleteEntry(aName,EFalse,EChainStd);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	++TheOpNumber;
 	TheFailCount=0;
 	}
@@ -1519,28 +1533,28 @@ LOCAL_C void TestRFileTemp(const TDesC& aPath)
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		RFile file;
  		r=file.Temp(TheFs,aPath,temp,EFileShareAny);
 		if(r==KErrNone)
 			{
 			r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			file.Close();
 			break;
 			}
 		test(r==WriteFailValue);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		++failCount;
 		}
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(EntryExists(temp));
 	r=DeleteEntry(temp,EFalse,EChainStd);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	++TheOpNumber;
 	TheFailCount=0;
 	}
@@ -1558,9 +1572,9 @@ LOCAL_C void TestRFileRename(const TDesC& aOldName, const TDesC& aNewName,TFatCh
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=CreateEntry(aOldName,EFalse,aChain,aFileSize);
-		test(r==KErrNone||r==KErrAlreadyExists);
+		test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 		r=DeleteEntry(aNewName,EFalse,aChain);
-		test(r==KErrNone||r==KErrNotFound);
+		test_Value(r, r==KErrNone||r==KErrNotFound);
 		GetEntryDetails(aOldName,oldEntryInfo);
 		if(IsReset)
 			{
@@ -1569,34 +1583,34 @@ LOCAL_C void TestRFileRename(const TDesC& aOldName, const TDesC& aNewName,TFatCh
 			}
 		RFile file;
 		r=file.Open(TheFs,aOldName,EFileShareExclusive|EFileWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file.Rename(aNewName);
 		if(r==KErrNone)
 			{
 			r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			file.Close();
 			break;
 			}
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		file.Close();
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		if(aFileSize)
 			test(OneEntryExists(aOldName,aNewName));
 		++failCount;
 		}
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(EntryExists(aNewName) && !EntryExists(aOldName));
 	GetEntryDetails(aNewName,newEntryInfo);
 	test(IsSameEntryDetails(oldEntryInfo,newEntryInfo));
 	r=DeleteEntry(aNewName,EFalse,aChain);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	++TheOpNumber;
 	TheFailCount=0;
 	}
@@ -1615,12 +1629,12 @@ LOCAL_C void TestRFileReplace(const TDesC& aName,TBool aAlreadyExists,TFatChain 
 		if(aAlreadyExists)
 			{
 			r=CreateEntry(aName,EFalse,aChain,aFileSize);
-			test(r==KErrNone||r==KErrAlreadyExists);
+			test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 			}
 		else
 			{
 			r=DeleteEntry(aName,EFalse,aChain);
-			test(r==KErrNone||r==KErrNotFound);
+			test_Value(r, r==KErrNone||r==KErrNotFound);
 			}
 		if(IsReset)
 			{
@@ -1628,28 +1642,28 @@ LOCAL_C void TestRFileReplace(const TDesC& aName,TBool aAlreadyExists,TFatChain 
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		RFile file;
 		r=file.Replace(TheFs,aName,EFileShareAny);
 		if(r==KErrNone)
 			{
 			r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			file.Close();
 			break;
 			}
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		++failCount;
 		}
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(EntryExists(aName));
 	r=DeleteEntry(aName,EFalse,aChain);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if(!aAlreadyExists)
 		{
 		++TheOpNumber;
@@ -1675,54 +1689,54 @@ LOCAL_C void TestRFileSetSize(const TDesC& aName,TFatChain aChain,TInt aOldFileS
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=CreateEntry(aName,EFalse,aChain,aOldFileSize);
-		test(r==KErrNone||r==KErrAlreadyExists);
+		test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 		if(IsReset)
 			{
 			++TheFailCount;
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		RFile file;
 		r=file.Open(TheFs,aName,EFileShareAny|EFileWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file.SetSize(aNewFileSize);
 		// close the file before testing the return value!
 		file.Close();
 		if(r==KErrNone)
 			{
 			r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			file.Close();
 			break;
 			}
 		file.Close();
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file.Open(TheFs,aName,EFileShareAny|EFileWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		TInt size;
 		r=file.Size(size);
-		test(r==KErrNone);
-		test(size==aNewFileSize||size==aOldFileSize);
+		test_KErrNone(r);
+		test_Value(size, size==aNewFileSize||size==aOldFileSize);
 		file.Close();
 		++failCount;
 		}
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile file;
 	r=file.Open(TheFs,aName,EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt fileSize;
 	r=file.Size(fileSize);
-	test(r==KErrNone);
-	test(aNewFileSize==fileSize);
+	test_KErrNone(r);
+	test_Equal(aNewFileSize,fileSize);
 	file.Close();
 	r=DeleteEntry(aName,EFalse,aChain);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	++TheFunctionNumber;
 	TheFailCount=0;
 	}
@@ -1739,7 +1753,7 @@ LOCAL_C void TestRFileWrite(const TDesC& aName,TFatChain aChain,TInt aFileSize,T
 	TInt newSize=(aFileSize>=aPos+aLength)?aFileSize:aPos+aLength;
 	HBufC8* desPtr;
 	desPtr=HBufC8::New(aLength);
-	test(desPtr!=NULL);
+	test_NotNull(desPtr);
 	TPtr8 des=desPtr->Des();
 	des.SetLength(aLength);
 	InitialiseWriteBuffer(des);
@@ -1747,64 +1761,64 @@ LOCAL_C void TestRFileWrite(const TDesC& aName,TFatChain aChain,TInt aFileSize,T
 		{
 		test.Printf(_L("failCount=%d\n"),failCount);
 		r=CreateEntry(aName,EFalse,aChain,aFileSize);
-		test(r==KErrNone||r==KErrAlreadyExists);
+		test_Value(r, r==KErrNone||r==KErrAlreadyExists);
 		if(IsReset)
 			{
 			++TheFailCount;
 			WriteLogFile();
 			}
 		r=SetWriteFailOn(failCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		RFile file;
 		r=file.Open(TheFs,aName,EFileShareAny|EFileWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file.Write(aPos,des,aLength);
 		if(r==KErrNone)
 			{
 			r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoWriteFailOff);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			file.Close();
 			break;
 			}
-		test(r==WriteFailValue);
+		test_Equal(WriteFailValue,r);
 		file.Close();
 		r=TheFs.ScanDrive(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.CheckDisk(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		file.Open(TheFs,aName,EFileShareAny);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		TInt fileSize;
 		r=file.Size(fileSize);
 		// with fair scheduling enabled it's possible for the file 
 		// size to grow even if the write appears to have failed...
-//		test(fileSize==aFileSize||fileSize==newSize);
-		test(fileSize>=aFileSize && fileSize <= newSize);
+//		test_Value(fileSize, fileSize==aFileSize||fileSize==newSize);
+		test_Value(fileSize, fileSize>=aFileSize && fileSize <= newSize);
 
 		file.Close();
 		++failCount;
 		}
 	r=TheFs.CheckDisk(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RFile file;
 	r=file.Open(TheFs,aName,EFileShareAny);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt fileSize;
 	r=file.Size(fileSize);
-	test(r==KErrNone);
-	test(newSize==fileSize);
+	test_KErrNone(r);
+	test_Equal(newSize,fileSize);
 	HBufC8* desPtr2;
 	desPtr2=HBufC8::New(aLength);
-	test(desPtr2!=NULL);
+	test_NotNull(desPtr2);
 	TPtr8 des2=desPtr2->Des();
 	des2.SetLength(aLength);
 	r=file.Read(aPos,des2,des2.Length());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=des2.Compare(des);
-	test(r==0);
+	test_KErrNone(r);
 	file.Close();
 	r=DeleteEntry(aName,EFalse,aChain);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	delete desPtr;
 	delete desPtr2;
 	++TheFunctionNumber;
@@ -1973,7 +1987,7 @@ GLDEF_C void DoTests()
 	ClearDiskData();
 
 	r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	switch(TheFunctionNumber)
 		{
@@ -1981,15 +1995,15 @@ GLDEF_C void DoTests()
 		case(1):{
 				TestOperation1();
 				r=TheFs.MkDir(_L("\\fat\\"));
-				test(r==KErrNone);
+				test_KErrNone(r);
 				r=TheFs.MkDir(_L("\\test\\"));
-				test(r==KErrNone);
+				test_KErrNone(r);
 				r=TheFs.MkDir(_L("\\ANother\\"));
-				test(r==KErrNone);
+				test_KErrNone(r);
 				r=TheFs.MkDir(_L("\\test\\subdir1\\"));
-				test(r==KErrNone);
+				test_KErrNone(r);
 				r=TheFs.MkDir(_L("\\test\\subdir2\\"));
-				test(r==KErrNone);}
+				test_KErrNone(r);}
 		case(2):{
 				TestOperation2();
 				// add some filler files
@@ -2037,15 +2051,15 @@ GLDEF_C void DoTests()
 	DeleteEntry(_L("\\test\\subdir1\\FillerTwo"),EFalse,EChainStd);
 	DeleteEntry(_L("\\test\\subdir1\\FillerOne"),EFalse,EChainStd);
 	r=TheFs.RmDir(_L("\\test\\subdir2\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\test\\subdir1\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\ANother\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\test\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(_L("\\fat\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (gFatBuf)
 		{
 		delete gFatBuf;

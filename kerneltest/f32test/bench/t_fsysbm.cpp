@@ -31,63 +31,69 @@
 //#define SYMBIAN_TEST_COPY					// read from one drive and write to another
 
 
-GLDEF_D RTest test(_L("File System Benchmarks"));
+RTest test(_L("File System Benchmarks"));
 
 static const TUint K1K = 1024;								// 1K
 static const TUint K1M = 1024 * 1024;						// 1M
 static const TUint K2M = 2 * K1M;						    // 2M
 
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
-const TInt64 KGb  	= 1 << 30;
-const TInt64 K3GB   = 3 * KGb;
-const TInt64 K4GB   = 4 * KGb;
+const TInt64 KGb  	= 1 << 30;								// 1GB
+const TInt64 K3GB   = 3 * KGb;								// 3GB
+const TInt64 K4GB   = 4 * KGb;								// 4GB
 #endif //SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 
 #if defined(__WINS__)
-LOCAL_D TInt KMaxFileSize = 256 * K1K;						// 256K
-//LOCAL_D TInt KMaxFileSize = K1M;							// 1M
+static TInt KMaxFileSize = 256 * K1K;					// 256K
+//static TInt KMaxFileSize = K1M;						// 1M
 #else
-//LOCAL_D TInt KMaxFileSize = 256 * K1K;					// 256K
-//LOCAL_D TInt KMaxFileSize = K1M;							// 1M
-LOCAL_D TInt KMaxFileSize = K2M;							// 2M
+//static TInt KMaxFileSize = 256 * K1K;					// 256K
+//static TInt KMaxFileSize = K1M;						// 1M
+static TInt KMaxFileSize = K2M;							// 2M
 #endif
 
 const TTimeIntervalMicroSeconds32 KFloatingPointTestTime = 10000000;	// 10 seconds
-LOCAL_D const TInt KHeapSize = 0x4000;
+static const TInt KHeapSize = 0x4000;
 
-LOCAL_D TPtr8 DataBuf(NULL, KMaxFileSize,KMaxFileSize);
-LOCAL_D HBufC8* DataBufH = NULL;
+static TPtr8 DataBuf(NULL, KMaxFileSize,KMaxFileSize);
+static HBufC8* DataBufH = NULL;
 
-LOCAL_D RSharedChunkLdd Ldd;
-LOCAL_D RChunk TheChunk;
-LOCAL_D TInt PageSize;
+static RSharedChunkLdd Ldd;
+static RChunk TheChunk;
+static TInt PageSize;
 const TUint ChunkSize = KMaxFileSize;
 
 
-LOCAL_D RFile File, File2;
-LOCAL_D TChar gDriveToTest2;
+static RFile File, File2;
+#if defined SYMBIAN_TEST_COPY
+static TChar gDriveToTest2;
+#endif
 
 // if enabled, Read and Write operations are not boundary aligned.
-LOCAL_D TBool gMisalignedReadWrites = EFalse;
+static TBool gMisalignedReadWrites = EFalse;
 
-// read & write caching enabled flags - may be overriden by +/-r +/-w command line switches
-LOCAL_D TBool gReadCachingOn  = EFalse;
-LOCAL_D TBool gWriteCachingOn = EFalse;
+// read & write caching enabled flags - may be overridden by +/-r +/-w command line switches
+static TBool gReadCachingOn  = EFalse;
+static TBool gWriteCachingOn = EFalse;
 
 // if enabled, timings are for write AND flush
-LOCAL_D TBool gFlushAfterWrite = ETrue;
+static TBool gFlushAfterWrite = ETrue;
 
 // if enabled, contiguous shared memory is used for Data buffer
-LOCAL_D TBool gSharedMemory = EFalse;
+static TBool gSharedMemory = EFalse;
 
 // if enabled, fragmented shared memory is used for Data buffer
-LOCAL_D TBool gFragSharedMemory = EFalse;
+static TBool gFragSharedMemory = EFalse;
 
-LOCAL_D TInt gFastCounterFreq;
+// if enabled, file is opened in EFileSequential (non-Rugged) file mode for write tests
+// - may be overridden by +/-q command line switches
+static TBool gFileSequentialModeOn = EFalse;
+
+static TInt gFastCounterFreq;
 
 
 
-LOCAL_C void RecursiveRmDir(const TDesC& aDes)
+static void RecursiveRmDir(const TDesC& aDes)
 //
 // Delete directory contents recursively
 //
@@ -98,7 +104,7 @@ LOCAL_C void RecursiveRmDir(const TDesC& aDes)
 	TInt r=TheFs.GetDir(n,KEntryAttMaskSupported,EDirsLast,pD);
 	if (r==KErrNotFound || r==KErrPathNotFound)
 		return;
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=pD->Count();
 	TInt i=0;
 	while (i<count)
@@ -115,30 +121,30 @@ LOCAL_C void RecursiveRmDir(const TDesC& aDes)
 			TFileName fileName;
 			fileName.Format(_L("%S%S"),&aDes,&e.iName);
 			r=TheFs.Delete(fileName);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		}
 	delete pD;
 	r=TheFs.RmDir(aDes);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 
-void LOCAL_C ClearSessionDirectory()
+void static ClearSessionDirectory()
 //
 // Delete the contents of F32-TST
 //
 	{
 	TParse sessionPath;
 	TInt r=TheFs.Parse(_L("\\F32-TST\\"),_L(""),sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RecursiveRmDir(sessionPath.FullName());
 	r=TheFs.MkDir(sessionPath.FullName());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 
-LOCAL_C void DoTestFileRead(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBool aReRead = EFalse)
+static void DoTestFileRead(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBool aReRead = EFalse)
 //
 // Do Read Test
 //
@@ -154,7 +160,7 @@ LOCAL_C void DoTestFileRead(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBoo
 	// To allow this test to run on a non-preq914 branch :
 	enum {EFileWriteDirectIO = 0x00001000};
 	TInt r = File.Create(TheFs, _L("READTEST"), EFileStream | EFileWriteDirectIO);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	TInt count = aFileSize / DataBuf.Length();
 	while (count--)
 		File.Write(DataBuf);
@@ -163,7 +169,7 @@ LOCAL_C void DoTestFileRead(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBoo
 
 	enum {EFileReadBuffered = 0x00002000, EFileReadDirectIO = 0x00004000};
 	r = File.Open(TheFs, _L("READTEST"), EFileStream | (gReadCachingOn ? EFileReadBuffered : EFileReadDirectIO));
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 //	const TInt maxReadCount = aFileSize / aBlockSize;
 	TUint functionCalls = 0;
@@ -172,7 +178,7 @@ LOCAL_C void DoTestFileRead(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBoo
 	// To allow this test to run on a non-preq914 branch :
 	enum {EFileWriteDirectIO = 0x00001000};
 	TInt r = File2.Replace(TheFs, _L("WRITETEST"), EFileStream | EFileWriteDirectIO);
-	test(r == KErrNone);
+	test_KErrNone(r);
 #endif
 
 	TTime startTime(0);
@@ -209,14 +215,14 @@ LOCAL_C void DoTestFileRead(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBoo
 //				test.Printf(_L("%d"),DataBuf[a]);
 
 			TInt r = File.Read(DataBuf, readLen);
-			test (r == KErrNone);
+			test_KErrNone(r);
 
 			if (DataBuf.Length() == 0)
 				break;
 
 #if defined SYMBIAN_TEST_COPY
 			r = File2.Write(DataBuf, readLen);
-			test (r == KErrNone);
+			test_KErrNone(r);
 #endif
 			functionCalls++;
 
@@ -254,12 +260,12 @@ LOCAL_C void DoTestFileRead(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBoo
 
 	File.Close();
 	r = TheFs.Delete(_L("READTEST"));
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return;
 	}
 
 
-LOCAL_C void TestFileRead(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadWrites = EFalse, TBool aReRead = EFalse)
+static void TestFileRead(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadWrites = EFalse, TBool aReRead = EFalse)
 //
 // Benchmark read method
 //
@@ -292,8 +298,10 @@ LOCAL_C void TestFileRead(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadWr
 	DoTestFileRead(64 * 1024+misalignedOffset, aFileSize, aReRead);
 	DoTestFileRead(128 * 1024+misalignedOffset, aFileSize, aReRead);
 	DoTestFileRead(256 * 1024+misalignedOffset, aFileSize, aReRead);
+#ifndef __WINS__	// Block sizes are too large for the emulator
 	DoTestFileRead(512 * 1024+misalignedOffset, aFileSize, aReRead);
 	DoTestFileRead(1024 * 1024+misalignedOffset, aFileSize, aReRead);
+#endif
 #else
 	DoTestFileRead(16+misalignedOffset, aFileSize, aReRead);
 	DoTestFileRead(512+misalignedOffset, aFileSize, aReRead);
@@ -306,7 +314,7 @@ LOCAL_C void TestFileRead(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadWr
 	}
 
 
-LOCAL_C TInt FloatingPointLoop(TAny* funcCount)
+static TInt FloatingPointLoop(TAny* funcCount)
 	{
 	TUint& count = *(TUint*) funcCount;
 	TReal eq = KPi;
@@ -320,7 +328,7 @@ LOCAL_C TInt FloatingPointLoop(TAny* funcCount)
 	}
 
 
-LOCAL_C void DoTestFileReadCPU(TInt aBlockSize)
+static void DoTestFileReadCPU(TInt aBlockSize)
 //
 // Benchmark CPU utilisation for Read method
 //
@@ -330,7 +338,7 @@ LOCAL_C void DoTestFileReadCPU(TInt aBlockSize)
 	{
 	enum {EFileReadBuffered = 0x00002000, EFileReadDirectIO = 0x00004000};
 	TInt r = File.Open(TheFs, _L("READCPUTEST"), EFileStream | (gReadCachingOn ? EFileReadBuffered : EFileReadDirectIO));
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	TInt pos = 0;
 
@@ -363,7 +371,7 @@ LOCAL_C void DoTestFileReadCPU(TInt aBlockSize)
 	for (TInt i = 0; reqStat==KRequestPending; i++)
 		{
 		TInt r = File.Read(pos, DataBuf, aBlockSize);
-		test (r == KErrNone);
+		test_KErrNone(r);
 
 		pos += aBlockSize;
 		if (pos > KMaxFileSize-aBlockSize)
@@ -398,7 +406,7 @@ LOCAL_C void DoTestFileReadCPU(TInt aBlockSize)
 	}
 
 
-LOCAL_C void TestFileReadCPU(TBool aMisalignedReadWrites = EFalse)
+static void TestFileReadCPU(TBool aMisalignedReadWrites = EFalse)
 //
 // Benchmark CPU utilisation for Read method
 //
@@ -414,7 +422,7 @@ LOCAL_C void TestFileReadCPU(TBool aMisalignedReadWrites = EFalse)
 	DataBuf.SetLength(KMaxFileSize);
 
 	TInt r = File.Create(TheFs, _L("READCPUTEST"), EFileStream | EFileWriteDirectIO);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	File.Write(DataBuf);
 
@@ -440,16 +448,17 @@ LOCAL_C void TestFileReadCPU(TBool aMisalignedReadWrites = EFalse)
 	DoTestFileReadCPU(64 * 1024+misalignedOffset);
 	DoTestFileReadCPU(128 * 1024+misalignedOffset);
 	DoTestFileReadCPU(256 * 1024+misalignedOffset);
+#ifndef __WINS__	// Block sizes are too large for the emulator
 	DoTestFileReadCPU(512 * 1024+misalignedOffset);
 	DoTestFileReadCPU(K1M+misalignedOffset);
-
+#endif
 
 	r = TheFs.Delete(_L("READCPUTEST"));
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 
-LOCAL_C void DoTestFileWrite(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBool aUpdate = EFalse)
+static void DoTestFileWrite(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBool aUpdate = EFalse)
 //
 // Do Write benchmark
 //
@@ -460,17 +469,17 @@ LOCAL_C void DoTestFileWrite(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBo
 	TFileName testDir(_L("?:\\F32-TST\\"));
 	testDir[0] = (TText) gDriveToTest;
 	TInt r = TheFs.MkDir(testDir);
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 
 	TFileName fileName;
-	enum {EFileWriteDirectIO = 0x00001000, EFileWriteBuffered = 0x00000800};
-	r = File.Temp(TheFs, testDir, fileName, EFileWrite | (gWriteCachingOn ? EFileWriteBuffered : EFileWriteDirectIO));
-	test(r == KErrNone);
+	r = File.Temp(TheFs, testDir, fileName, EFileWrite | (gFileSequentialModeOn ? EFileSequential : 0) 
+											| (gWriteCachingOn ? EFileWriteBuffered : EFileWriteDirectIO));
+	test_KErrNone(r);
 
 	if (aUpdate)
 		{
 		TInt r = File.SetSize(aFileSize);
-		test(r == KErrNone);
+		test_KErrNone(r);
 		}
 
 	TUint functionCalls = 0;
@@ -534,7 +543,7 @@ LOCAL_C void DoTestFileWrite(TInt aBlockSize, TInt aFileSize = KMaxFileSize, TBo
 	}
 
 
-LOCAL_C void TestFileWrite(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadWrites = EFalse, TBool aUpdate = EFalse)
+static void TestFileWrite(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadWrites = EFalse, TBool aUpdate = EFalse)
 //
 // Benchmark write method
 //
@@ -568,8 +577,10 @@ LOCAL_C void TestFileWrite(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadW
 	DoTestFileWrite(64 * 1024+misalignedOffset, aFileSize, aUpdate);
 	DoTestFileWrite(128 * 1024+misalignedOffset, aFileSize, aUpdate);
 	DoTestFileWrite(256 * 1024+misalignedOffset, aFileSize, aUpdate);
+#ifndef __WINS__	// Block sizes are too large for the emulator
 	DoTestFileWrite(512 * 1024+misalignedOffset, aFileSize, aUpdate);
 	DoTestFileWrite(1024 * 1024+misalignedOffset, aFileSize, aUpdate);
+#endif
 #else
 	DoTestFileWrite(16+misalignedOffset, aFileSize, aUpdate);
 	DoTestFileWrite(512+misalignedOffset, aFileSize, aUpdate);
@@ -582,7 +593,7 @@ LOCAL_C void TestFileWrite(TInt aFileSize = KMaxFileSize, TBool aMisalignedReadW
 
 
 
-LOCAL_C void DoTestFileWriteCPU(TInt aBlockSize)
+static void DoTestFileWriteCPU(TInt aBlockSize)
 //
 // Benchmark CPU utilisation for Write method
 //
@@ -595,12 +606,12 @@ LOCAL_C void DoTestFileWriteCPU(TInt aBlockSize)
 	TFileName testDir(_L("?:\\F32-TST\\"));
 	testDir[0] = (TText) gDriveToTest;
 	TInt r = TheFs.MkDir(testDir);
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 
 	TFileName fileName;
-	enum {EFileWriteDirectIO = 0x00001000, EFileWriteBuffered = 0x00000800};
-	r = File.Temp(TheFs, testDir, fileName, EFileWrite | (gWriteCachingOn ? EFileWriteBuffered : EFileWriteDirectIO));
-	test(r == KErrNone);
+	r = File.Temp(TheFs, testDir, fileName, EFileWrite | (gFileSequentialModeOn ? EFileSequential : 0)
+											| (gWriteCachingOn ? EFileWriteBuffered : EFileWriteDirectIO));
+	test_KErrNone(r);
 
 	TUint functionCalls = 0;
 	TUint fltPntCalls = 0;
@@ -664,7 +675,7 @@ LOCAL_C void DoTestFileWriteCPU(TInt aBlockSize)
 	}
 
 
-LOCAL_C void TestFileWriteCPU(TBool aMisalignedReadWrites = EFalse)
+static void TestFileWriteCPU(TBool aMisalignedReadWrites = EFalse)
 //
 // Benchmark CPU utilisation for Write method
 //
@@ -694,12 +705,14 @@ LOCAL_C void TestFileWriteCPU(TBool aMisalignedReadWrites = EFalse)
 	DoTestFileWriteCPU(64 * 1024+misalignedOffset);
 	DoTestFileWriteCPU(128 * 1024+misalignedOffset);
 	DoTestFileWriteCPU(256 * 1024+misalignedOffset);
+#ifndef __WINS__	// Block sizes are too large for the emulator
 	DoTestFileWriteCPU(512 * 1024+misalignedOffset);
 	DoTestFileWriteCPU(K1M+misalignedOffset);
+#endif
 	}
 
 
-LOCAL_C void TestFileSeek()
+static void TestFileSeek()
 //
 // Benchmark file seek method
 //
@@ -714,7 +727,7 @@ LOCAL_C void TestFileSeek()
 	TBuf8<1024> testdata(1024);
 	RFile f;
 	TInt r=f.Create(TheFs,_L("SEEKTEST"),EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=64;
 	while (count--)
 		f.Write(testdata);
@@ -741,7 +754,7 @@ LOCAL_C void TestFileSeek()
 
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 
-LOCAL_C void CreateManyLargFiles(TInt aNumber)
+static void CreateManyLargFiles(TInt aNumber)
 //
 // Make a directory with aNumber entries
 //
@@ -753,7 +766,7 @@ LOCAL_C void CreateManyLargFiles(TInt aNumber)
 
 	TFileName sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDir(_L("\\F32-TST\\"));
 	test((r==KErrNone)||(r==KErrAlreadyExists));
 	r=TheFs.MkDir(_L("\\F32-TST\\BENCH_DELETE\\"));
@@ -764,11 +777,11 @@ LOCAL_C void CreateManyLargFiles(TInt aNumber)
 		TFileName baseName=_L("\\F32-TST\\BENCH_DELETE\\FILE");
 		baseName.AppendNum(i);
 		r=f.Replace(TheFs,baseName,EFileWrite);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r = f.SetSize(K3GB);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=f.Write((K3GB-30),WriteData);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		f.Flush();
 		f.Close();
 		}
@@ -784,12 +797,12 @@ LOCAL_C void CreateManyLargFiles(TInt aNumber)
 		TInt r=f.Open(TheFs,baseName,EFileRead);
 		if (r!=KErrNone)
 			{
-			test(r==KErrNotFound && j==maxEntry);
+			test_Value(r, r == KErrNotFound && j==maxEntry);
 			return;
 			}
 		ReadData.FillZ();
 		r=f.Read((K3GB-30),ReadData);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(f.Size(Size)==KErrNone);
 		test(K3GB == Size);
 		test(ReadData==WriteData);
@@ -798,7 +811,7 @@ LOCAL_C void CreateManyLargFiles(TInt aNumber)
 	}
 
 
-LOCAL_C void TestLargeFileDelete()
+static void TestLargeFileDelete()
 //
 // This test require MMC/SD card size >=4GB-2 in size
 //
@@ -817,9 +830,14 @@ LOCAL_C void TestLargeFileDelete()
     TInt r;
 
     r = TheFs.Volume(volInfo);
-    test(r == KErrNone);
-
+    test_KErrNone(r);
+    
 	TInt numberOfFiles = (TUint)(volInfo.iFree/(K4GB -2));
+#ifdef __WINS__
+	// Fix a maximum number of large files to create on the emulator
+	if (numberOfFiles > 5)
+		numberOfFiles = 5;
+#endif
 	test.Printf(_L("Number of large files =%d \n"),numberOfFiles);
 
 	if(numberOfFiles<=0)
@@ -844,7 +862,7 @@ LOCAL_C void TestLargeFileDelete()
 			baseName.AppendNum(index);
 
 			TInt r=TheFs.Delete(baseName);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 
 		TTime endTime;
@@ -877,7 +895,7 @@ LOCAL_C void TestLargeFileDelete()
 		for (TInt index=0;index<numberOfFiles;index++)
 			{
 			TInt r=fMan->Delete(_L("\\F32-TST\\BENCH_DELETE\\FILE*"));
-			test(r==KErrNone || r==KErrNotFound);
+			test_Value(r, r == KErrNone || r==KErrNotFound);
 			}
 
 		TTime endTime;
@@ -898,7 +916,7 @@ LOCAL_C void TestLargeFileDelete()
 #endif //SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 
 
-LOCAL_C void CreateManyFiles(TInt aNumber)
+static void CreateManyFiles(TInt aNumber)
 //
 // Make a directory with aNumber entries
 //
@@ -910,7 +928,7 @@ LOCAL_C void CreateManyFiles(TInt aNumber)
 
 	TFileName sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDir(_L("\\F32-TST\\"));
 	test((r==KErrNone)||(r==KErrAlreadyExists));
 	r=TheFs.MkDir(_L("\\F32-TST\\BENCH_DELETE\\"));
@@ -921,9 +939,9 @@ LOCAL_C void CreateManyFiles(TInt aNumber)
 		TFileName baseName=_L("\\F32-TST\\BENCH_DELETE\\FILE");
 		baseName.AppendNum(i);
 		r=f.Replace(TheFs,baseName,EFileRead);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=f.Write(_L8("Wibble"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		f.Close();
 		}
 
@@ -935,19 +953,19 @@ LOCAL_C void CreateManyFiles(TInt aNumber)
 		TInt r=f.Open(TheFs,baseName,EFileRead);
 		if (r!=KErrNone)
 			{
-			test(r==KErrNotFound && j==maxEntry);
+			test_Value(r, r == KErrNotFound && j==maxEntry);
 			return;
 			}
 		TBuf8<16> data;
 		r=f.Read(data);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(data==_L8("Wibble"));
 		f.Close();
 		}
 	}
 
 
-LOCAL_C void TestFileDelete()
+static void TestFileDelete()
 //
 //
 //
@@ -976,7 +994,7 @@ LOCAL_C void TestFileDelete()
 			baseName.AppendNum(index);
 
 			TInt r=TheFs.Delete(baseName);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 
 		TTime endTime;
@@ -1009,7 +1027,7 @@ LOCAL_C void TestFileDelete()
 		for (TInt index=0;index<numberOfFiles;index++)
 			{
 			TInt r=fMan->Delete(_L("\\F32-TST\\BENCH_DELETE\\FILE*"));
-			test(r==KErrNone || r==KErrNotFound);
+			test_Value(r, r == KErrNone || r==KErrNotFound);
 			}
 
 		TTime endTime;
@@ -1030,7 +1048,7 @@ LOCAL_C void TestFileDelete()
 
 /*
 TInt maxDirEntry=200;
-LOCAL_C void TestDirRead()
+static void TestDirRead()
 //
 // Benchmark directory read method
 //
@@ -1080,7 +1098,7 @@ LOCAL_C void TestDirRead()
 	}
 
 
-void LOCAL_C PrintDirResults()
+void static PrintDirResults()
 //
 // Print results of Directory Benchmark
 //
@@ -1095,7 +1113,7 @@ void LOCAL_C PrintDirResults()
 */
 
 
-LOCAL_C void TestMkDir()
+static void TestMkDir()
 	{
 	test.Next(_L("Benchmark MkDir"));
 	ClearSessionDirectory();
@@ -1112,7 +1130,7 @@ LOCAL_C void TestMkDir()
 		dirName.AppendNum(n);
 		dirName.Append(_L("\\"));
 		TInt r = TheFs.MkDir(dirName);
-		test(r == KErrNone);
+		test_KErrNone(r);
 		}
 
 	endTime.HomeTime();
@@ -1138,15 +1156,15 @@ void AllocateBuffers()
 
 		test.Printf(_L("Initialise\n"));
 		TInt r = UserHal::PageSizeInBytes(PageSize);
-		test(r==KErrNone);
+		test_KErrNone(r);
 
 		test.Printf(_L("Loading test driver\n"));
 		r = User::LoadLogicalDevice(KSharedChunkLddName);
-		test(r==KErrNone || r==KErrAlreadyExists);
+		test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
 		test.Printf(_L("Opening channel\n"));
 		r = Ldd.Open();
-		test(r==KErrNone);
+		test_KErrNone(r);
 
 		test.Printf(_L("Create chunk\n"));
 
@@ -1157,13 +1175,13 @@ void AllocateBuffers()
 
 		TUint ChunkAttribs = TotalChunkSize|aCreateFlags;
 		r = Ldd.CreateChunk(ChunkAttribs);
-		test(r==KErrNone);
+		test_KErrNone(r);
 
 		if (gSharedMemory)
 			{
 		    test.Printf(_L("Commit Contigouos Memory\n"));
 		    r = Ldd.CommitMemory(aCommitType,TotalChunkSize);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 		else
 			{
@@ -1176,14 +1194,14 @@ void AllocateBuffers()
 				i-=PageSize;
 				test.Printf(_L("Commit %d\n"), i);
 				r = Ldd.CommitMemory(aCommitType|i,PageSize);
-				test(r==KErrNone);
+				test_KErrNone(r);
 				}while (i>0);
 /*
 			for (TInt i = (ChunkSize-PageSize); i>=0; )
 				{
 				test.Printf(_L("Commit %d\n"), i);
 				r = Ldd.CommitMemory(aCommitType|i,PageSize);
-				test(r==KErrNone);
+				test_KErrNone(r);
 				i-=PageSize;
 				}
 */
@@ -1191,7 +1209,7 @@ void AllocateBuffers()
 
 		test.Printf(_L("\nOpen user handle\n"));
 		r = Ldd.GetChunkHandle(TheChunk);
-		test(r==KErrNone);
+		test_KErrNone(r);
 
 		DataBuf.Set(TheChunk.Base(),KMaxFileSize, KMaxFileSize);
 		}
@@ -1218,11 +1236,11 @@ void DeAllocateBuffers()
 
 		test.Printf(_L("Close kernel chunk handle\n"));
 		TInt r = Ldd.CloseChunk();
-		test(r==1);
+		test_Value(r, r == 1);
 
 		test.Printf(_L("Check chunk is destroyed\n"));
 		r = Ldd.IsDestroyed();
-		test(r==1);
+		test_Value(r, r == 1);
 
 		test.Printf(_L("Close test driver\n"));
 		Ldd.Close();
@@ -1294,6 +1312,17 @@ void ParseCommandLine()
 			gFragSharedMemory = ETrue;
 			continue;
 			}
+		
+		if (token.CompareF(_L("+q"))== 0)
+			{
+			gFileSequentialModeOn = ETrue;
+			continue;
+			}
+		if (token.CompareF(_L("-q"))== 0)
+			{
+			gFileSequentialModeOn = EFalse;
+			continue;
+			}
 
 		test.Printf(_L("CLP=%S\n"),&token);
 
@@ -1337,10 +1366,11 @@ GLDEF_C void CallTestsL(void)
 	RProcess().SetPriority(EPriorityBackground);
 
 	TInt r = HAL::Get(HAL::EFastCounterFrequency, gFastCounterFreq);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("HAL::EFastCounterFrequency %d\n"), gFastCounterFreq);
 
-	test.Printf(_L("gReadCachingOn %d  gWriteCachingOn %d gFlushAfterWrite %d\n"), gReadCachingOn, gWriteCachingOn, gFlushAfterWrite);
+	test.Printf(_L("gReadCachingOn %d  gWriteCachingOn %d gFlushAfterWrite %d gFileSequentialModeOn %d\n"),
+				gReadCachingOn, gWriteCachingOn, gFlushAfterWrite, gFileSequentialModeOn);
 
 	TestFileSeek();
 

@@ -1480,7 +1480,7 @@ void CAtaFatTable::CountFreeClustersL()
                 {//-- test property for this drive is defined
                     if(nMntDebugFlags & KMntDisable_FatBkGndScan)
                     {
-                    __PRINT(_L("#- FAT32 BkGnd scan is disabled is disabled by debug interface."));
+                    __PRINT(_L("#- FAT32 BkGnd scan is disabled by debug interface."));
                     bFat32BkGndScan = EFalse;
                     }
             

@@ -15,6 +15,7 @@
 //
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -37,67 +38,67 @@ LOCAL_C void CreateUidTestFiles()
     // Create \\gSessionPath\\UIDCHKNO.SHT - no uid, zero length
 	RFile file;
 	TInt r=file.Replace(TheFs,_L("UIDCHKNO.SHT"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
     // Create \\gSessionPath\\UIDCHKNO.LNG - no uid, long length
 	r=file.Replace(TheFs,_L("UIDCHKNO.LNG"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(_L8("Hello World needs to be over 16 bytes"));
 	file.Close();
 
     // Create \\gSessionPath\\UIDCHK.BLG - with uid no data
 	r=file.Replace(TheFs,_L("UIDCHK.BLG"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TUidType uidType(TUid::Uid('U'),TUid::Uid('I'),TUid::Uid('D'));
 	TCheckedUid checkedUid(uidType);
 	TPtrC8 buf((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	r=file.Write(buf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
     // Create \\gSessionPath\\UIDCHK.MSG - with uid and data
 	r=file.Replace(TheFs,_L("UIDCHK.MSG"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TUidType uidType2(TUid::Uid('X'),TUid::Uid('Y'),TUid::Uid('Z'));
 	checkedUid.Set(uidType2);
 	buf.Set((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	r=file.Write(buf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(_L8("More file data"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
     // Create \\gSessionPath\\UIDCHK.DAT - uid stored only in the file
 	r=file.Replace(TheFs,_L("UIDCHK.DAT"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TUidType uidType3(TUid::Uid('D'),TUid::Uid('A'),TUid::Uid('T'));
 	checkedUid.Set(uidType3);
 	buf.Set((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	r=file.Write(buf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(_L8("More file data"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
     // Create \\gSessionPath\\UIDCHK.PE - uid stored in WINS PE file header
 	r=file.Replace(TheFs,_L("UIDWINS.PE"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 #if defined(__WINS__)
     if (!IsTestingLFFS())
         {
 	    RFile fileSource;
 	    r=fileSource.Open(TheFs,_L("Z:\\TEST\\T_CHKUID.EXE"),EFileShareReadersOnly|EFileRead);
-	    test(r==KErrNone);
+	    test_KErrNone(r);
 
 	    TBuf8<0x100> buffer;
 	    do
 		    {
 		    r=fileSource.Read(buffer);
-		    test(r==KErrNone);
+		    test_KErrNone(r);
 		    r=file.Write(buffer);
-		    test(r==KErrNone);
+		    test_KErrNone(r);
 		    }
 	    while (buffer.Length()==buffer.MaxLength());
 
@@ -106,11 +107,11 @@ LOCAL_C void CreateUidTestFiles()
     else
         {
 	    r=file.Write(_L8("Some zany stuff here!"));
-	    test(r==KErrNone);
+	    test_KErrNone(r);
         }
 #else
 	r=file.Write(_L8("Some zany stuff here!"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 #endif
 	file.Close();
 	}
@@ -125,7 +126,7 @@ LOCAL_C void Test1()
 	CDir* dum=NULL;
 	TInt r=TheFs.GetDir(_L("UID*"),KEntryAttAllowUid,ESortByName,dum);
 	CDir& dir=*dum;
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=dir.Count();
 	test(count==6);
 
@@ -180,7 +181,7 @@ LOCAL_C void Test2()
 	CDir* dum=NULL;
 	TInt r=TheFs.GetDir(_L("UID*"),0,ESortByName,dum);
 	CDir& dir=*dum;
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=dir.Count();
 	test(count==6);
 
@@ -219,35 +220,35 @@ LOCAL_C void Test3()
 	test.Next(_L("Use RFs::EntryL() to check files"));
 	TEntry entry;
 	TInt r=TheFs.Entry(_L("UIDCHKNO.SHT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHKNO.SHT"));
 	test(entry.IsTypeValid()==EFalse);
 
 	r=TheFs.Entry(_L("UIDCHKNO.LNG"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHKNO.LNG"));
 	test(entry.IsTypeValid()==EFalse);
 
 	r=TheFs.Entry(_L("UIDCHK.MSG"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.MSG"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('X') && entry.iType[1]==TUid::Uid('Y') && entry.iType[2]==TUid::Uid('Z'));
 
 	r=TheFs.Entry(_L("UIDCHK.BLG"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.BLG"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('U') && entry.iType[1]==TUid::Uid('I') && entry.iType[2]==TUid::Uid('D'));
 
 	r=TheFs.Entry(_L("UIDCHK.DAT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.DAT"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('D') && entry.iType[1]==TUid::Uid('A') && entry.iType[2]==TUid::Uid('T'));
 
 	r=TheFs.Entry(_L("UIDWINS.PE"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDWINS.PE"));
 #if defined(__WINS__)
 	TFileName sessionPath;
@@ -278,34 +279,34 @@ LOCAL_C void Test4()
 	RFile f;
 	TEntry entry;
 	TInt r=f.Open(TheFs,_L("UIDCHK.DAT"),EFileShareExclusive|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("UIDCHK.DAT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.DAT"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('D') && entry.iType[1]==TUid::Uid('A') && entry.iType[2]==TUid::Uid('T'));
 	f.Close();
 
 	r=f.Open(TheFs,_L("UIDCHK.DAT"),EFileShareExclusive|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("UIDCHK.DAT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.DAT"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('D') && entry.iType[1]==TUid::Uid('A') && entry.iType[2]==TUid::Uid('T'));
 
 	r=f.SetSize(256);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<16> des;
 	r=TheFs.ReadFileSection(_L("UIDCHK.DAT"),0,des,16);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	f.Close();
 
 	r=f.Open(TheFs,_L("UIDCHK.DAT"),EFileShareReadersOnly|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("UIDCHK.DAT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.DAT"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('D') && entry.iType[1]==TUid::Uid('A') && entry.iType[2]==TUid::Uid('T'));
@@ -314,27 +315,27 @@ LOCAL_C void Test4()
 //	EFileShareReadersOnly|EFileWrite is illegal
 
 	r=f.Open(TheFs,_L("UIDCHK.DAT"),EFileShareAny|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(_L("UIDCHK.DAT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.DAT"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('D') && entry.iType[1]==TUid::Uid('A') && entry.iType[2]==TUid::Uid('T'));
 	f.Close();
 
 	r=f.Open(TheFs,_L("UIDCHK.DAT"),EFileShareAny|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile secondFile;
 	r=secondFile.Open(TheFs,_L("UIDCHK.DAT"),EFileShareAny|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile thirdFile;
 	r=thirdFile.Open(TheFs,_L("UIDCHK.DAT"),EFileShareAny|EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.Entry(_L("UIDCHK.DAT"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDCHK.DAT"));
 	test(entry.IsTypeValid());
 	test(entry.iType[0]==TUid::Uid('D') && entry.iType[1]==TUid::Uid('A') && entry.iType[2]==TUid::Uid('T'));
@@ -343,10 +344,10 @@ LOCAL_C void Test4()
 	thirdFile.Close();
 
 	r=f.Open(TheFs,_L("UIDWINS.PE"),EFileShareAny|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.Entry(_L("UIDWINS.PE"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName==_L("UIDWINS.PE"));
 #if defined(__WINS__)
 	TFileName sessionPath;
@@ -379,7 +380,7 @@ LOCAL_C void TestZ()
 		test.Printf(_L("Error: Unable to open Z:\n"));
 		return;
 		}
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CDir& dir=*dum;
 	TInt count=dir.Count();
 	if (count==0)
@@ -413,7 +414,7 @@ GLDEF_C void CallTestsL(void)
 	TFileName sessionPath;
 
 	TInt r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TChar driveLetter=sessionPath[0];
 	b.Format(_L("Testing filesystem on %c:"),(TText)driveLetter);
 	test.Next(b);

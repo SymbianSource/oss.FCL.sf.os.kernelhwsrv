@@ -578,7 +578,8 @@ GLDEF_C TInt E32Main()
 // Override heap creation for this process
 // This function runs at the beginning of every thread
 // Initial heap is shared but subsequent heaps are single threaded
-TInt UserHeap::SetupThreadHeap(TBool aNotFirst, SStdEpocThreadCreateInfo& aInfo)
+
+EXPORT_C TInt UserHeap::SetupThreadHeap(TBool aNotFirst, SStdEpocThreadCreateInfo& aInfo)
 	{
 	TInt r = KErrNone;
 	if (!aInfo.iAllocator && aInfo.iHeapInitialSize>0)

@@ -58,7 +58,7 @@ class CFatMountCB;
 class CFatFileSystem;
 
 /**
-Represents the position of a directory entery in terms of a cluster and off set into it
+Represents the position of a directory entry in terms of a cluster and offset into it
 */
 class TEntryPos
 	{
@@ -428,7 +428,7 @@ class CLeafDirCache;
 
 
 /**
-Fat file system mount implmentation, provides all that is required of a plug in
+Fat file system mount implementation, provides all that is required of a plug in
 file system mount as well as Fat mount specific functionality 
 */
 class CFatMountCB : public CLocDrvMountCB, 
@@ -900,10 +900,10 @@ private:
     TUint     iStartCluster;     ///< Start cluster number of file
 	TEntryPos iCurrentPos;  ///< Current position in file data
 	
-    TEntryPos iFileDosEntryPos;  ///< File DOS dir. entry position
+    TEntryPos iFileDosEntryPos;	///< File DOS dir. entry position
 	
-    TBool iFileSizeModified :1;  ///< flag, indicating that file size was modified and needs to be flushed onto the media (see FlushL())
-    TBool iFileTimeModified :1;  ///< flag, indicating that file modification time was modified and needs to be flushed onto the media (see FlushL())
+    TBool iFileSizeModified :1;	///< flag, indicating that file size was modified and needs to be flushed onto the media (see FlushL())
+    TBool iFileTimeModified :1;	///< flag, indicating that file modification time was modified and needs to be flushed onto the media (see FlushL())
 
 	};
 

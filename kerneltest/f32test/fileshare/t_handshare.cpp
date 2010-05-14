@@ -15,6 +15,7 @@
 // 
 //
 
+#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -41,49 +42,49 @@ GLDEF_C void RequestFileDeprecatedAdopt()
 		r=handsvr.Connect();
 		}
 		while(r==KErrNotFound);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=handsvr.SetTestDrive(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt ssh;
 	RFs fs1;
 	TInt fsh = handsvr.GetFileHandle(ssh, EFileRead);
 
 	r = fs1.SetReturnedHandle(fsh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	RFile file;
 	r=file.Adopt(fs1,ssh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TBuf8<100> rbuf;
 	r=file.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=rbuf.CompareF(KTestData1());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file.Write(KTestData());
-	test(r==KErrAccessDenied);
+	test_Value(r, r==KErrAccessDenied);
 	
 	r=file.ChangeMode(EFileWrite);
-	test(r==KErrArgument);
+	test_Value(r, r==KErrArgument);
 	
 	r=file.Rename(_L("\\newname.txt"));
-	test(r==KErrPermissionDenied || r==KErrAccessDenied);
+	test_Value(r, r==KErrPermissionDenied || r==KErrAccessDenied);
 
 	file.Close();
 
 	fsh = handsvr.GetFileHandle(ssh, EFileRead);
 	r = fs1.SetReturnedHandle(fsh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Adopt a bad sub-session handle
 
 	r=file.Adopt(fs1, KNullHandle);
-	test(r==KErrBadHandle);
+	test_Value(r, r==KErrBadHandle);
 
 	r=file.Adopt(fs1, -1);
-	test(r==KErrBadHandle);
+	test_Value(r, r==KErrBadHandle);
 
 
 	handsvr.Close();
@@ -101,43 +102,43 @@ GLDEF_C void Duplicate()
 
 	RFs fs;
 	TInt r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Value(resCount, resCount == 0);
 
 	// create a file & fill it with data	
 	RFile file1;
 	r=file1.Replace(fs,KCliFileName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Write(KTestData());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	// open the file for read
 	r = file1.Open(fs,KCliFileName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<100> rbuf;
 	r = file1.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	// clone the file
 	RFile file2;
 	r = file2.Duplicate(file1);
-	test(r==0);
+	test_Value(r, r==0);
 
 	// make sure file positions are the same
 	TInt pos1 = 0;
 	r = file1.Seek(ESeekCurrent, pos1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt pos2 = 0;
 	r = file2.Seek(ESeekCurrent, pos2);
-	test(r==KErrNone);
-	test(pos1 == pos2);
+	test_KErrNone(r);
+	test_Value(pos1, pos1 == pos2);
 
 	// change the position on the duplcated file handle & 
 	// verify that the original file handle's position is unchanged
@@ -146,25 +147,25 @@ GLDEF_C void Duplicate()
 	const TInt newPos2 = 5;
 	pos2 = newPos2;
 	r = file2.Seek(ESeekStart, pos2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	pos1 = 0;
 	r = file1.Seek(ESeekCurrent, pos1);
-	test(r==KErrNone);
-	test(pos1 == oldPos1);
+	test_KErrNone(r);
+	test_Value(pos1, pos1 == oldPos1);
 	
 	pos2 = 0;
 	r = file2.Seek(ESeekCurrent, pos2);
-	test(r==KErrNone);
-	test(pos2 == newPos2);
-	test(pos1 != pos2);
+	test_KErrNone(r);
+	test_Value(pos2, pos2 == newPos2);
+	test_Value(pos1, pos1 != pos2);
 
 	// close the parent file and check we can still use the duplicated one.
 	file1.Close();
 
 	// Check the number of open file handles - should be 1 (the duplicated one)
 	resCount = fs.ResourceCount();
-	test(resCount == 1);
+	test_Value(resCount, resCount == 1);
 
 	fs.Close();
 
@@ -173,36 +174,36 @@ GLDEF_C void Duplicate()
 	// reset to pos 0
 	pos2 = 0;
 	r = file2.Seek(ESeekStart, pos2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file2.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file2.Close();
 
 	// start again - this time we're going to close the duplicated file first
 	// and check we can still use the parent file
 
 	r = fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Make a note of the number of open resources
 	fs.ResourceCountMarkStart();
 
 	// open the file for read
 	r = file1.Open(fs,KCliFileName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	// clone the file & check we can read it
 	r = file2.Duplicate(file1, EOwnerThread);
-	test(r==0);
+	test_Value(r, r==0);
 	rbuf.FillZ();
 	r = file2.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	// close the duplicated file and check we can still use the parent one.
@@ -212,9 +213,9 @@ GLDEF_C void Duplicate()
 
 	// check we can read the parent file
 	r=file1.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// close the parent
 	file1.Close();
@@ -222,7 +223,7 @@ GLDEF_C void Duplicate()
 	// Check the number of open file handles
 	fs.ResourceCountMarkEnd();
 	resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Value(resCount, resCount == 0);
 
 	fs.Close();
 	}
@@ -239,10 +240,10 @@ GLDEF_C void RequestFileWrite()
 		r=handsvr.Connect();
 		}
 	while(r==KErrNotFound);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=handsvr.SetTestDrive(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TInt ssh;
 	TInt fsh = handsvr.GetFileHandle2(ssh, EFileWrite);
@@ -260,57 +261,57 @@ GLDEF_C void RequestFileWrite()
 
 	RFile file;
 	r=file.AdoptFromServer(fsh, ssh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TBuf8<100> rbuf;
 	r=file.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// server should write KTestData1 ("Server Write Server Write") to file
 	r=rbuf.CompareF(KTestData1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// reset to pos 0
 	TInt pos = 0;
 	r = file.Seek(ESeekStart, pos);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	// overwrite with KTestData ("Client Write Client Write") to file
 	r=file.Write(KTestData());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	rbuf.FillZ();
 	r=file.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 // !!! Disable platform security tests until we get the new APIs
 //	r=file.Rename(_L("\\newname.txt"));
-//	test(r==KErrPermissionDenied);
+//	test_Value(r, r==KErrPermissionDenied);
 
 	test.Next(_L("RFile::Name()"));
 
 	// retrieve the file name from the server
 	TFileName name;
 	r = file.Name(name);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = name.Compare(KSvrFileName());
-	test(r==0);
+	test_Value(r, r==0);
 	
 
 	test.Next(_L("RFile::Duplicate()"));
 	RFile file2;
 	r = file2.Duplicate(file);
-	test(r==0);
+	test_Value(r, r==0);
 
 
 	TInt pos1 = 0;
 	r = file.Seek(ESeekCurrent, pos1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt pos2 = 0;
 	r = file2.Seek(ESeekCurrent, pos2);
-	test(r==KErrNone);
-	test(pos1 == pos2);
+	test_KErrNone(r);
+	test_Value(pos1, pos1 == pos2);
 
 	// close the parent file and check we can still use the duplicated one.
 	file.Close();
@@ -320,12 +321,12 @@ GLDEF_C void RequestFileWrite()
 	// reset to pos 0
 	pos2 = 0;
 	r = file2.Seek(ESeekStart, pos2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file2.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file2.Close();
 	}
 
@@ -339,9 +340,9 @@ void RequestFileTest()
 
 	RFs fs;
 	r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs.ShareProtected();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	
 	// define a filename in our private path
@@ -352,7 +353,7 @@ void RequestFileTest()
 	newFileName.Append(_L("newname.txt"));
 	
 	r=fs.CreatePrivatePath(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs.SetSessionToPrivate(drivenum);
 
 	RFileHandleSharer handsvr;
@@ -361,10 +362,10 @@ void RequestFileTest()
 		r=handsvr.Connect();
 		}
 	while(r==KErrNotFound);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=handsvr.SetTestDrive(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Next verify that we can copy a file retrieved from the server
 	// using CFileMan::Copy()
@@ -377,35 +378,35 @@ void RequestFileTest()
 
 	RFile file;
 	r=file.AdoptFromServer(fsh, ssh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	CFileMan* fileMan = NULL;
 	TRAP(r, fileMan = CFileMan::NewL(fs));
-	test(r == KErrNone && fileMan != NULL);
+	test_Value(r, r ==  KErrNone && fileMan != NULL);
 
 	// copy to file, overwrite 
 	r = fileMan->Copy(file, newFileName, CFileMan::EOverWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// copy to file, don't overwrite 
 	r = fileMan->Copy(file, newFileName, 0);	
-	test(r == KErrAlreadyExists);
+	test_Value(r, r ==  KErrAlreadyExists);
 
 	// copy to file, overwrite
 	r = fileMan->Copy(file, newFileName, CFileMan::EOverWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// copy to path
 	r = fileMan->Copy(file, newPath, CFileMan::EOverWrite);	
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// copy to file, overwrite, asynchnonous
 	TRequestStatus status(KRequestPending);
 	r = fileMan->Copy(file, newFileName, CFileMan::EOverWrite, status);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	User::WaitForRequest(status);
-	test(status == KErrNone);
+	test_KErrNone(status.Int());
 
 
 	// Negative tests...
@@ -418,7 +419,7 @@ void RequestFileTest()
 	for (len=newLongPath.Length(); len< KMaxPath -4; len = newLongPath.Length())
 		newLongPath.Append(_L("x\\"));
 	r = fileMan->Copy(file, newLongPath, CFileMan::EOverWrite);	
-	test(r == KErrBadName);
+	test_Value(r, r ==  KErrBadName);
 
 	// copy to very long but valid path (no filename) which will overflow
 	// when drive letter is pre-pended to it
@@ -426,25 +427,25 @@ void RequestFileTest()
 	for (len=newLongPath.Length(); len< KMaxPath -2; len = newLongPath.Length())
 		newLongPath.Append(_L("x\\"));
 	r = fileMan->Copy(file, newLongPath, CFileMan::EOverWrite);	
-	test(r == KErrBadName);
+	test_Value(r, r ==  KErrBadName);
 
 	// copy to very long but valid path and filename which will overflow
 	// when drive letter is pre-pended to it
 	newLongPath.Append(_L("y"));
 	r = fileMan->Copy(file, newLongPath, CFileMan::EOverWrite);	
-	test(r == KErrBadName);
+	test_Value(r, r ==  KErrBadName);
 
 	// copy to badly formed path 
 	newLongPath = newPath;
 	newLongPath.Append(_L("\\y"));
 	r = fileMan->Copy(file, newLongPath, CFileMan::EOverWrite);	
-	test(r == KErrBadName);
+	test_Value(r, r ==  KErrBadName);
 
 	// copy to correctly formed path which doesn't exist
 	newLongPath = newPath;
 	newLongPath.Append(_L("x\\y\\z"));
 	r = fileMan->Copy(file, newLongPath, CFileMan::EOverWrite);	
-	test(r == KErrPathNotFound);
+	test_Value(r, r ==  KErrPathNotFound);
 
 	delete fileMan; fileMan = NULL;
 
@@ -461,17 +462,17 @@ void RequestFileTest()
 
 	// adopt the file handle from FHServer
 	r=file.AdoptFromServer(fsh, ssh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Rename(_L("newname.txt"));
-	test(r==KErrPermissionDenied || r==KErrAccessDenied);
+	test_Value(r, r==KErrPermissionDenied || r==KErrAccessDenied);
 
 	// delete the file before we try to rename anything to it
 	r = fs.Delete(newFileName);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r ==  KErrNone || r == KErrNotFound);
 
 	r=file.Rename(newFileName);
-	test(r==KErrPermissionDenied || r==KErrAccessDenied);
+	test_Value(r, r==KErrPermissionDenied || r==KErrAccessDenied);
 
 	file.Close();
 
@@ -485,14 +486,14 @@ void RequestFileTest()
 	test (fsh >= 0);
 
 	r=file.AdoptFromServer(fsh, ssh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// delete the file before we try to rename anything to it
 	r = fs.Delete(newFileName);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r ==  KErrNone || r == KErrNotFound);
 
 	r=file.Rename(newFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 
@@ -500,7 +501,7 @@ void RequestFileTest()
 	// have been moved to our private directory)
 	test.Next(_L("RFs::Delete()"));
 	r = fs.Delete(newFileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	handsvr.Close();
 
@@ -515,25 +516,25 @@ GLDEF_C void PassFile()
 	{
 	RFs fs;
 	TInt r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Value(resCount, resCount == 0);
 
 	r=fs.ShareProtected();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.CreatePrivatePath(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs.SetSessionToPrivate(drivenum);
 	
 	
 	RFile file1;
 	r=file1.Replace(fs,KCliFileName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Write(KTestData());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	RFileHandleSharer handsvr;
@@ -542,16 +543,16 @@ GLDEF_C void PassFile()
 		r=handsvr.Connect();
 		}
 	while(r==KErrNotFound);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=handsvr.SetTestDrive(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.SetSessionToPrivate(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file1.Open(fs,KCliFileName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	// pass the file handle to FHServer
 	test.Next(_L("RFile::TransferToServer()"));
@@ -565,13 +566,13 @@ GLDEF_C void PassFile()
 	// verify that the original file handle's position is unchanged
 	TInt pos = 0;
 	r = file1.Seek(ESeekCurrent, pos);
-	test(r==KErrNone);
-	test(pos == 0);
+	test_KErrNone(r);
+	test_Value(pos, pos == 0);
 
 	// make sure we can still use it
 	TBuf8<100> rbuf;
 	r=file1.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Close the file
 	file1.Close();	
@@ -579,11 +580,11 @@ GLDEF_C void PassFile()
 	handsvr.Close();
 
 	r=fs.MkDir(_L("C:\\mdir"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
 	
 	// Check the number of open file handles
 	resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Value(resCount, resCount == 0);
 
 	fs.Close();
 	}
@@ -598,25 +599,25 @@ GLDEF_C void PassInvalidFile()
 
 	RFs fs;
 	TInt r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Value(resCount, resCount == 0);
 
 	r=fs.ShareProtected();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.CreatePrivatePath(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs.SetSessionToPrivate(drivenum);
 	
 	
 	RFile file1;
 	r=file1.Replace(fs,KCliFileName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Write(KTestData());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	RFileHandleSharer handsvr;
@@ -625,20 +626,20 @@ GLDEF_C void PassInvalidFile()
 		r=handsvr.Connect();
 		}
 	while(r==KErrNotFound);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=handsvr.SetTestDrive(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.SetSessionToPrivate(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file1.Open(fs,KCliFileName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	// check the resoure count - there should be 1 open file handle
 	resCount = fs.ResourceCount();
-	test(resCount == 1);
+	test_Value(resCount, resCount == 1);
 
 	// pass an invalid file handle to FHServer
 	// by overwriting the IPC slots
@@ -651,35 +652,35 @@ GLDEF_C void PassInvalidFile()
 
 	// check the resoure count - there should be 2 open file handles
 	resCount = fs.ResourceCount();
-	test(resCount == 2);
+	test_Value(resCount, resCount == 2);
 
 	ipcArgs.Set(0, 0);	// invalidate the RFs handle
 	r = handsvr.PassInvalidFileHandle(ipcArgs);
-	test (r == KErrBadHandle);
+	test_Value(r, r == KErrBadHandle);
 
 	// Pass a bad RFile handle
 	file1.TransferToServer(ipcArgs, 0, 1);
 
 	// check the resoure count - there should be 3 open file handles
 	resCount = fs.ResourceCount();
-	test(resCount == 3);
+	test_Value(resCount, resCount == 3);
 
 	ipcArgs.Set(1, 0);	// invalidate the RFile handle
 	r = handsvr.PassInvalidFileHandle(ipcArgs);
-	test (r == KErrBadHandle);
+	test_Value(r, r == KErrBadHandle);
 
 	// Pass bad RFs and RFile handles
 	file1.TransferToServer(ipcArgs, 0, 1);
 
 	// check the resoure count - there should be 4 open file handles
 	resCount = fs.ResourceCount();
-	test(resCount == 4);
+	test_Value(resCount, resCount == 4);
 
 
 	ipcArgs.Set(0, 0);	// invalidate the RFs handle
 	ipcArgs.Set(1, 0);	// invalidate the RFile handle
 	r = handsvr.PassInvalidFileHandle(ipcArgs);
-	test (r == KErrBadHandle);
+	test_Value(r, r == KErrBadHandle);
 
 	// Close the file
 	handsvr.Close();
@@ -687,7 +688,7 @@ GLDEF_C void PassInvalidFile()
 
 	// Check the number of open file handles
 	resCount = fs.ResourceCount();
-	test(resCount == 3);
+	test_Value(resCount, resCount == 3);
 
 	fs.Close();
 	}
@@ -702,30 +703,30 @@ GLDEF_C void PassFile(RProcess& aProcess)
 	
 	RFs fs;
 	TInt r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
-	test(resCount == 0);
+	test_Value(resCount, resCount == 0);
 
 	r=fs.ShareProtected();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.CreatePrivatePath(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs.SetSessionToPrivate(drivenum);
 	
 	
 	RFile file1;
 	r=file1.Replace(fs,KCliFileName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Write(KTestData());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	r=file1.Open(fs, KCliFileName, EFileWrite);
 
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	// NB slot 0 is reserved for the command line
 
@@ -734,26 +735,26 @@ GLDEF_C void PassFile(RProcess& aProcess)
 	r = file1.TransferToProcess(aProcess, 1, 2);
 
 	r = aProcess.SetParameter(3, drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.SetSessionToPrivate(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// make sure we can still read from the file
 	TBuf8<100> rbuf;
 	r=file1.Read(0,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	r=fs.MkDir(_L("C:\\mdir"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
 	
 	// Check the number of open file handles - 
 	// should be 1 (the one duplicated for the other process)
 	resCount = fs.ResourceCount();
-	test(resCount == 1);
+	test_Value(resCount, resCount == 1);
 
 	fs.Close();
 
@@ -769,15 +770,15 @@ GLDEF_C void PassFile(RProcess& aProcess)
 		r=handsvr.Connect();
 		}
 	while(r==KErrNotFound);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	r=handsvr.SetTestDrive(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// wait for server to read the file
 	r = handsvr.PassFileHandleProcess();
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	handsvr.Close();
 	}
@@ -791,12 +792,12 @@ GLDEF_C void CallTestsL(void)
 	// make sure the session path exists
 	RFs fs;
 	TInt r = fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TFileName sessionp;
 	fs.SessionPath(sessionp);
 	r = fs.MkDirAll(sessionp);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
 	fs.Close();
 
 	// Remember the number of open handles. Just for a sanity check ....
@@ -807,7 +808,7 @@ GLDEF_C void CallTestsL(void)
 	//create test server
 	RProcess p;
 	r = p.Create(_L("FHServer.exe"), KNullDesC);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// RFile::Duplicate() tests
 	Duplicate();
@@ -825,7 +826,6 @@ GLDEF_C void CallTestsL(void)
 	// Get an open writeable file from FHServer2 via FHServer 
 	// using RFile::AdoptFromServer()
 	RequestFileWrite();
-
 	// Deprecated RFile::Adopt() test
 	RequestFileDeprecatedAdopt();
 
@@ -842,19 +842,19 @@ GLDEF_C void CallTestsL(void)
 	// stop the servers
 	RFileHandleSharer handsvr;
 	r=handsvr.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = handsvr.Exit();
-	test(r == KErrNone);
+	test_KErrNone(r);
 	handsvr.Close();
 	
 	// delete the test file
 	RFs cleanupfs;
 	r=cleanupfs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=cleanupfs.SetSessionToPrivate(drivenum);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=cleanupfs.Delete(KCliFileName);
-	test(r==KErrNone || r==KErrNotFound);
+	test_Value(r, r==KErrNone || r==KErrNotFound);
 	cleanupfs.Close();
 
 
@@ -872,11 +872,11 @@ GLDEF_C void CallTestsL(void)
 	RThread().HandleCount(end_phc, end_thc);
 	test.Printf(_L("Handles: end_phc %d, end_thc %d\n"), end_phc, end_thc);
 
-	test(start_thc == end_thc);
-	test(start_phc == end_phc);
+	test_Value(start_thc, start_thc == end_thc);
+	test_Value(start_phc, start_phc == end_phc);
 	
 	// and also for pending requests ...
-	test(RThread().RequestCount() == 0);
+	test_Value(RThread().RequestCount(), RThread().RequestCount() == 0);
 	
 	
 	RDebug::Print(_L("End Of Tests"));

@@ -34,6 +34,7 @@
 //
 
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
@@ -168,27 +169,27 @@ void OpenAndRead2GBMinusOne()
 	test.Next(_L("2GBMinusOne File: Open"));
 
 	r = f.Open(TheFs, fname, EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	testSize = K2GbMinusOne;
 	
 	test.Next(_L("2GBMinusOne File: Read"));
 
 	r=f.Size((TInt&) size);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(size == testSize);
 	
 	r = TheFs.Entry(fname, entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test ((TUint) entry.iSize == testSize);
 
 	// seek to just below 2GB
 	testPos = (K2GbMinusOne - K1Kb) & KPosMask;
 	r = f.Seek(ESeekStart, (TInt&) testPos);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r = f.Read(bufPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TUint posRead =  * ((TUint*) &bufPtr[0]);
 	test.Printf(_L("position read %08X, expected %08X\n"), posRead, testPos);
@@ -221,13 +222,13 @@ void Open2GB()
 
 	test.Next(_L("2GB File: Test the size with RFs::Entry"));
 	r = TheFs.Entry(fname, entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test ((TUint) entry.iSize == testSize);
 
 	test.Next(_L("2GB File: Attempt to open (should fail with KErrToBig)"));
 
 	r = f.Open(TheFs, fname, EFileRead);
-	test(r==KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	}
 
 //----------------------------------------------------------------------------------------------
@@ -254,13 +255,13 @@ void Open3GB()
 
 	test.Next(_L("3GB File: Test the size with RFs::Entry"));
 	r = TheFs.Entry(fname, entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test ((TUint) entry.iSize == testSize);
 
 	test.Next(_L("3GB File: Attempt to open (should fail with KErrToBig)"));
 
 	r = f.Open(TheFs, fname, EFileRead);
-	test(r==KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	}
 
 //----------------------------------------------------------------------------------------------
@@ -288,13 +289,13 @@ void Open4GB()
 	test.Next(_L("4GB File: Test the size with RFs::Entry"));
 	r = TheFs.Entry(fname, entry);
 	
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test ((TUint) entry.iSize == testSize);
 
 	test.Next(_L("4GB File: Attempt to open (should fail with KErrToBig)"));
 
 	r = f.Open(TheFs, fname, EFileRead);
-	test(r==KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	}
 
 //----------------------------------------------------------------------------------------------
@@ -324,27 +325,27 @@ void Extend2GBMinusOne()
 	test.Next(_L("2GBMinusOne File: Open"));
 
 	r = f.Open(TheFs, fname, EFileRead | EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	
 	test.Next(_L("2GBMinusOne File: Attempt to extend"));
 
 	r=f.Size((TInt&) size);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(size == testSize);
 	
 	r = TheFs.Entry(fname, entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test ((TUint) entry.iSize == testSize);
 
 	// seek to end
 	testPos = 0;
 	r = f.Seek(ESeekEnd, (TInt&) testPos);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	bufPtr.SetLength(1);
 	r = f.Write(bufPtr);
-	test(r==KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 
 	f.Close();
 	}
@@ -365,7 +366,7 @@ void DeleteLargeFile(const TDesC& aFileName)
 	test.Printf(_L("Deleting %S\n"), &aFileName);
 
 	TInt r = TheFs.Delete(aFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CheckDisk();
 	}
@@ -388,11 +389,11 @@ void ReadDirectory()
 
 	RDir dir;
 	TInt r = dir.Open(TheFs, _L("*.*"), KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	TEntryArray entryArray;
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 
 	test(entryArray.Count() == gFilesInDirectory);
 
@@ -425,7 +426,7 @@ void ReadDirectory()
 	test.Next(_L("Read a directory containing large files using CDir & sort by size"));
 	CDir* dirList;
 	r=TheFs.GetDir(_L("*.*"), KEntryAttMaskSupported, ESortBySize, dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dirList->Count() == gFilesInDirectory);
 	for (n=0; n<dirList->Count(); n++)
 		{
@@ -483,16 +484,16 @@ void MoveDirectory()
 	TPath filePathNew =	_L("?:\\TEST\\");
 	TChar driveLetter;
 	TInt r=TheFs.DriveToChar(gDrive,driveLetter);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	filePathNew[0] = (TText) driveLetter;
 
 	// move to new directory
 	r = fileMan->Move(filePathOld, filePathNew, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// then move back again
 	r = fileMan->Move(filePathNew, filePathOld);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	delete fileMan;
 	}
@@ -522,7 +523,7 @@ void CopyDirectory()
 	TPath filePathNew =	_L("?:\\TEST\\");
 	TChar driveLetter;
 	TInt r = TheFs.DriveToChar(gDrive,driveLetter);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	filePathNew[0] = (TText) driveLetter;
 
 	// create some small files in the source directory 
@@ -532,47 +533,47 @@ void CopyDirectory()
 	_LIT(KFileSmall2, "FileSmallTwo.txt");
 	_LIT(KFileSmall3, "FileSmallThree.txt");
 	r = file.Create(TheFs, KFileSmall1(), EFileWrite | EFileShareAny);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file.Write(_L8("1"));
-	test(r == KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r = file.Create(TheFs, KFileSmall2(), EFileWrite | EFileShareAny);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file.Write(_L8("12"));
-	test(r == KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r = file.Create(TheFs, KFileSmall3(), EFileWrite | EFileShareAny);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file.Write(_L8("123"));
-	test(r == KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	// copy to new directory
 	r = fileMan->Copy(filePathOld, filePathNew, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(r == KErrNone || r == KErrTooBig);
+	test_Value(r, r == KErrNone || r == KErrTooBig);
 
 
 	// check SMALL files have been copied
 	RDir dir;
 	r = dir.Open(TheFs, filePathNew, KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	TEntryArray entryArray;
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 	test(entryArray.Count() == 3);
 	dir.Close();
 	
 	// then delete the new directory
 	r = fileMan->Delete(filePathNew);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	
 	// attempt to copy to new directory again - this time with an observer
 	fileMan->SetObserver(observer);
 	r = fileMan->Copy(filePathOld, filePathNew, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(r == KErrNone || r == KErrTooBig);
+	test_Value(r, r == KErrNone || r == KErrTooBig);
 	
 	// test that 3 small files were copied and 1 or 2 large files failed to copy
 	// (For 8 GB disk, the 4GB file is missing)
@@ -581,15 +582,15 @@ void CopyDirectory()
 
 	// check SMALL files have been copied
 	r = dir.Open(TheFs, filePathNew, KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 	test(entryArray.Count() == 3);
 	dir.Close();
 	
 	// then delete the new directory
 	r = fileMan->Delete(filePathNew);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	delete observer;
 	delete fileMan;
@@ -612,17 +613,17 @@ TInt ScanDir(const TDesC& aName, CDirScan::TScanDirection aDirection, TInt aErro
 
 	CDirScan* scanner = NULL;
 	TRAP(r, scanner = CDirScan::NewL(TheFs));
-	test(r == KErrNone && scanner);
+	test_Value(r, r == KErrNone && scanner);
 
 	TRAP(r, scanner->SetScanDataL(aName,KEntryAttDir,ESortByName|EAscending,aDirection));
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	CDir *entryList=NULL;
 	TInt filesFound = 0;
 	for (;;)
 		{
 		TRAP(r, scanner->NextL(entryList));
-		test(r == aError);
+		test_Value(r, r == aError);
 		if (entryList==NULL)
 			break;
 		TInt count = entryList->Count();
@@ -669,11 +670,11 @@ GLDEF_C void CallTestsL()
 	TInt r;
 
 	r = TheFs.CharToDrive(gDriveToTest, gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 #ifdef __MOUNT_RAW_EXT__
 	r=TheFs.FileSystemName(gOldFsName, gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	if (gOldFsName.CompareF(KFATName) != 0)
 		{
@@ -682,9 +683,9 @@ GLDEF_C void CallTestsL()
 		}
 
     r = TheFs.AddExtension(KExtName);
-    test(r==KErrNone || r==KErrAlreadyExists);
+    test_Value(r, r == KErrNone || r==KErrAlreadyExists);
     r = TheFs.MountExtension(KExtName, gDrive);
-    test(r==KErrNone || r==KErrAlreadyExists);
+    test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 #endif
 
 	TVolumeInfo vi;
@@ -715,7 +716,7 @@ GLDEF_C void CallTestsL()
 		
 		test.Next(_L("Scan Drive"));
 		r = TheFs.ScanDrive(gSessionPath);
-		test (r == KErrNone);
+		test_KErrNone(r);
 
 		// NB the 4GB file will not be present unless the disk is > 8GB (because it doesn't fit)
 		if (!FilePresent(KFile4GBMinusOne()))
@@ -761,10 +762,10 @@ GLDEF_C void CallTestsL()
 
 #ifdef __MOUNT_RAW_EXT__
 	r = TheFs.DismountExtension(KExtName, gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r = TheFs.RemoveExtension(KExtName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 #endif
 

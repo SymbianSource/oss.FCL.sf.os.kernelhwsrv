@@ -24,10 +24,9 @@ LOCAL_C void FormatLFFS(TDes &drive)
 
     RFormat format;
     TInt    count;
-    TInt    r;
     
     RDebug::Print(_L("Format LFFS drive %S\r\n"), &drive);
-    r = format.Open(TheFs, drive, EHighDensity, count);
+	format.Open(TheFs, drive, EHighDensity, count);
     
     while (count)
 		{

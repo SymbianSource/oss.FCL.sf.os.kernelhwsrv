@@ -475,7 +475,7 @@ TInt CTestSession::ReadWrite(const RMessage2& aMessage, TBool aRead, TBool aWrit
 	}
 
 
-void CTestSession::ServiceL(const RMessage2& aMessage)
+EXPORT_C void CTestSession::ServiceL(const RMessage2& aMessage)
 //
 // Virtual message-handler
 //

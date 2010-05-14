@@ -15,6 +15,7 @@
 //
 //
 
+#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
@@ -74,23 +75,23 @@ LOCAL_C void OverrideEShell(void)
             tempDirName = _L("?:\\SYSTEM\\BIN\\");
         tempDirName[0] = gSessionPath[0];
         r=TheFs.MkDirAll(tempDirName);
-        test(r==KErrNone||r==KErrAlreadyExists);
+        test_Value(r, r == KErrNone||r==KErrAlreadyExists);
         CFileMan* fileMan=NULL;
         TRAP(r,fileMan = CFileMan::NewL(TheFs));
-        test(r==KErrNone);
+        test_KErrNone(r);
         //Copy the test from Z drive.
         TFileName temp=_L("Z:\\SYS\\BIN\\T_SCN32DR3.EXE");
         r = fileMan->Copy(temp, TestExeName, CFileMan::EOverWrite);
-        test(r==KErrNone);
+        test_KErrNone(r);
         r = fileMan->Copy(TestExeName, StartupExeName, CFileMan::EOverWrite);
-        test(r == KErrNone);
+        test_KErrNone(r);
         //Mask read attribute. Fix for DEF081323
         r = fileMan->Attribs(StartupExeName, 0, KEntryAttReadOnly, 0);
-        test(r == KErrNone);
+        test_KErrNone(r);
         r = fileMan->Attribs(TestExeName, 0, KEntryAttReadOnly, 0);
-        test(r == KErrNone);
+        test_KErrNone(r);
         r = logFile.Replace(TheFs,LogFileName,EFileShareExclusive|EFileWrite);
-        test(r == KErrNone);
+        test_KErrNone(r);
         logFile.Close();
         delete fileMan;
         }
@@ -123,11 +124,11 @@ GLDEF_C void CallTestsL()
     TUint8 oldFsys;
     TPtr8 pRugged(&oldFsys,1,1);
     r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoIsRugged,pRugged);
-    test(r==KErrNone);
+    test_KErrNone(r);
     if(oldFsys==0)
         {
         r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoRuggedOn);
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
     TheFunctionNumber=0;
     TheOpNumber=0;
@@ -138,14 +139,14 @@ GLDEF_C void CallTestsL()
     OverrideEShell();
     ReadLogFile();
     r=TheFs.ScanDrive(gSessionPath);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFs.CheckDisk(gSessionPath);
-    test(r==KErrNone);
+    test_KErrNone(r);
     DoTests();
     r=TheFs.Delete(LogFileName);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=TheFs.Delete(StartupExeName);
-    test(r==KErrNone);
+    test_KErrNone(r);
     // return file system to original state
     if(oldFsys==0)
         r=TheFs.ControlIo(gSessionPath[0]-'A',KControlIoRuggedOff);

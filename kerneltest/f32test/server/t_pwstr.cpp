@@ -18,6 +18,7 @@
 
 //#include <p32mmc.h>
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <f32fsys.h>
 #include <e32def.h>
@@ -389,9 +390,13 @@ LOCAL_C void TestStaticStore()
 		wStore.SetLength(i);
 		TInt r(TBLD.WritePasswordData(wStore));
 		if (i == 0 || i == mapSizes[0][0] || i == mapSizes[0][0] + mapSizes[1][1])
-			test(r == KErrNone);
+			{
+			test_KErrNone(r);
+			}
 		else
-			test(r == KErrCorrupt && TBLD.PasswordStoreLengthInBytes() == 0);
+			{
+			test_Value(r, r == KErrCorrupt && TBLD.PasswordStoreLengthInBytes() == 0);
+			}
 		}
 
 	test.Next(_L("Exceeding password store size"));	
@@ -409,9 +414,13 @@ LOCAL_C void TestStaticStore()
 		const TInt r = TBLD.WritePasswordData(wStore);
 		test.Printf(_L("WritePasswordData() --> ret=%d\n"), r);
 	 	if(n==KMaxNumOfStoreEntries)
-	 		test(r == KErrOverflow);
+			{
+	 		test_Value(r, r == KErrOverflow);
+			}
 	 	else
-	 		test(r == KErrNone);	
+			{
+	 		test_KErrNone(r);
+			}
 		}
 
 
@@ -461,7 +470,7 @@ LOCAL_C void TestStaticStore()
 
 				if ((r = TBLD.WritePasswordData(wStore)) != KErrNone)
 					{
-					test(r == KErrNoMemory);
+					test_Value(r, r == KErrNoMemory);
 					test(TBLD.PasswordStoreLengthInBytes() == 0);
 					}
 				else
@@ -600,7 +609,7 @@ LOCAL_C void ParseStore(const TDesC8 &aSt, CArrayFixSeg<TTestMapping> *aMP)
 		mp.iCIDIdx = cidIdx;
 		mp.iPWDIdx = pwdIdx;
 		TRAP(r, aMP->InsertL(0, mp));
-		test(r == KErrNone);
+		test_KErrNone(r);
 
 		iBIdx += KMMCCIDLength + sizeof(TInt32) + pwd_len;
 		}
@@ -743,7 +752,7 @@ LOCAL_C void AttemptToUnlock(TMediaPassword &aPWD, TBool aStore)
 	TInt r = AccessDisk();
 	if (r != KErrLocked)
 		test.Printf(_L("AccessDisk() returned %d\n"), r);
-	test(r == KErrLocked);
+	test_Value(r, r == KErrLocked);
 	test(TBLD.Unlock(aPWD, aStore) == KErrNone);
 	}
 
@@ -1316,7 +1325,7 @@ LOCAL_C void TestFormatErase()
 	r = fs.LockDrive(RFsDNum, nulPWrd, oldPWrd, EFalse);
 	if (r != KErrNone)
 		test.Printf(_L("RFs::LockDrive() returned %d\n"), r);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	RemountMedia();		// card is now locked
 
@@ -1329,7 +1338,7 @@ LOCAL_C void TestFormatErase()
 	r = fmt.Open(fs, driveName, EHighDensity, stepPkg());
 	if (r != KErrLocked)
 		test.Printf(_L("RFormat::Next() returned %d\n"), r);
-	test(r == KErrLocked);
+	test_Value(r, r == KErrLocked);
 
 	test.Printf(_L("\n"));
 	fmt.Close();
@@ -1339,7 +1348,7 @@ LOCAL_C void TestFormatErase()
 	r = fmt.Open(fs, driveName, EHighDensity | EForceErase, stepPkg());
 	if (r != KErrNone)
 		test.Printf(_L("RFormat::Open() returned %d\n"), r);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	while (stepPkg() > 0)
 		{
@@ -1388,7 +1397,7 @@ LOCAL_C void TestWriteToPasswordStoreUnlocksCard()
 	test.Next(_L("lock card"));
 	test.Next(_L("assign test password"));
 	r = TBLD.SetPassword(nulPWrd, testPassword, EFalse);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	RemountMedia();		// card is now locked
 
@@ -1399,7 +1408,7 @@ LOCAL_C void TestWriteToPasswordStoreUnlocksCard()
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("Caps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) != 0);
 
 	// Write correct password to store
@@ -1413,14 +1422,14 @@ LOCAL_C void TestWriteToPasswordStoreUnlocksCard()
 
 	test.Printf(_L("WritePasswordData() returned %d\n"), r);
 	
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// test Caps() reports that card is unlocked
 	test.Next(_L("test card is unlocked"));
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("Caps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) == 0);
 
 	// Clear the password, remount and test card is unlocked
@@ -1433,7 +1442,7 @@ LOCAL_C void TestWriteToPasswordStoreUnlocksCard()
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("Caps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) == 0);
 
 
@@ -1604,7 +1613,7 @@ TBool TestLocked(RFs& aFs, TInt aTheMemoryCardDrive)
     TDriveInfo info;
 
 	TInt r = aFs.Drive(info, aTheMemoryCardDrive);
-	test (r == KErrNone);
+	test_KErrNone(r);
 
 	return (info.iMediaAtt & KMediaAttLocked)?(TBool)ETrue:(TBool)EFalse;
 	}
@@ -1657,7 +1666,7 @@ LOCAL_C void TestPowerDownStatus()
 
 	test.Next(_L("Locking card (Successful)"))	;
 	r = TestLockCard(fs, RFsDNum, oldpassword, password, ETrue);
-	test(r == KErrNone); 
+	test_KErrNone(r); 
 		
 	test(!TestLocked(fs, RFsDNum));	// not locked yet as stack hasn't powered down
 
@@ -1665,7 +1674,7 @@ LOCAL_C void TestPowerDownStatus()
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("\tCaps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) == 0);
 
 	WaitForPowerDownUnlock(fs, RFsDNum);
@@ -1674,19 +1683,19 @@ LOCAL_C void TestPowerDownStatus()
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("\tCaps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) == 0);
 	
 	test.Next(_L("Clear password (Successful)"));
 	r = TestClearPassword(fs, RFsDNum, password);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 // Lock card (without password in store)
 	test.Next(_L("Locking card - Password NOT Stored"));
 
 	test.Next(_L("Locking card (Successful)"));
 	r = TestLockCard(fs, RFsDNum, oldpassword, password, EFalse);
-	test(r == KErrNone); 
+	test_KErrNone(r); 
 		
 	test(!TestLocked(fs, RFsDNum));	// not locked yet as stack hasn't powered down
 	
@@ -1694,7 +1703,7 @@ LOCAL_C void TestPowerDownStatus()
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("\tCaps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) == 0);
 
 	WaitForPowerDownLock(fs, RFsDNum);
@@ -1703,7 +1712,7 @@ LOCAL_C void TestPowerDownStatus()
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("\tCaps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) != 0);
 	
 // Unlock card
@@ -1711,14 +1720,14 @@ LOCAL_C void TestPowerDownStatus()
 	
 	test.Next(_L("Unlocking card (Successful)"))	;
 	r = TestUnlockCard(fs, RFsDNum, password, ETrue);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test (!TestLocked(fs, RFsDNum)); // not locked as stack hasn't powered down
 	
 	test.Next(_L("Card reports unlocked - before PowerDown"));
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("\tCaps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) == 0);
 
 	WaitForPowerDownUnlock(fs, RFsDNum);
@@ -1727,12 +1736,12 @@ LOCAL_C void TestPowerDownStatus()
 	r = TBLD.Caps(driveCapsPkg);
 	test.Printf(_L("\tCaps() returned %d , iMediaAtt %08x\n"), r, driveCaps.iMediaAtt);
 
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test ((driveCaps.iMediaAtt & KMediaAttLocked) == 0);
 	
 	test.Next(_L("Clearing Password (Successful)"));
 	r = TestClearPassword(fs, RFsDNum, password);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	fs.Close();
 	
@@ -1757,22 +1766,22 @@ LOCAL_C void TestFsLockUnlock()
 	TMediaPassword wrongpwd = (TUint8*) "failtest";
 
 	r = TestLockCard(fs, RFsDNum, oldpassword, newpassword, EFalse);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(!TestLocked(fs, RFsDNum));	// not locked yet as stack hasn't powered down
 
 	test.Next(_L("test unlocking fails if still powered up"));
 	r = TestUnlockCard(fs, RFsDNum, newpassword, EFalse);
-	test(r == KErrAlreadyExists);		// already unlocked (as stack won't have powered down yet)
+	test_Value(r, r == KErrAlreadyExists);		// already unlocked (as stack won't have powered down yet)
 	test (!TestLocked(fs, RFsDNum));
 
 	test.Next(_L("test clearing succeeds if still powered up"));
 	r = TestClearPassword(fs, RFsDNum, newpassword);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(!TestLocked(fs, RFsDNum));
 	
 	test.Next(_L("test locking card again"));
 	r = TestLockCard(fs, RFsDNum, oldpassword, newpassword, EFalse);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(!TestLocked(fs, RFsDNum));	// not locked yet as stack hasn't powered down
 
 	WaitForPowerDownLock(fs, RFsDNum);
@@ -1788,17 +1797,17 @@ LOCAL_C void TestFsLockUnlock()
 	sessionPath=_L("?:\\");
 	TChar driveLetter;
 	r = fs.DriveToChar(RFsDNum,driveLetter);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	sessionPath[0]=(TText)driveLetter;
 	r = fs.CheckDisk(sessionPath);
-	test(r == KErrNone || r == KErrLocked);
+	test_Value(r, r == KErrNone || r == KErrLocked);
 	WaitForPowerDownLock(fs, RFsDNum);
 
 
 	// DEF111700: Formatting a locked SD/MMC leaves it in a bad state (causes panics later)
 	// This was caused by format calling TDrive::MountMedia(ETrue) and then not dismounting
 	r = fs.RemountDrive(RFsDNum);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	RFormat fmt;
 	TPckgBuf<TInt> stepPkg;
 	TDriveUnit driveUnit(RFsDNum);
@@ -1807,63 +1816,63 @@ LOCAL_C void TestFsLockUnlock()
 	r = fmt.Open(fs, driveName, EHighDensity, stepPkg());
 	if (r != KErrLocked)
 		test.Printf(_L("RFormat::Next() returned %d\n"), r);
-	test(r == KErrLocked);
+	test_Value(r, r == KErrLocked);
 	test.Printf(_L("\n"));
 	fmt.Close();
 	r = fs.CheckDisk(sessionPath);
-	test(r == KErrLocked);
+	test_Value(r, r == KErrLocked);
 
 
 	test.Next(_L("test unlocking fails after powered down & unlocked with wrong password"));
 	r = TestUnlockCard(fs, RFsDNum, wrongpwd, EFalse);
-	test(r == KErrAccessDenied);		// unlocked should now fail
+	test_Value(r, r == KErrAccessDenied);		// unlocked should now fail
 
 	test.Next(_L("test unlocking succeeds for correct password after powered down & locked"));
 	r = TestUnlockCard(fs, RFsDNum, newpassword, EFalse);
-	test(r == KErrNone);		// unlocked should now succeed
+	test_KErrNone(r);		// unlocked should now succeed
 
 	test.Next(_L("test unlocking fails after successful unlock"));
 	r = TestUnlockCard(fs, RFsDNum, wrongpwd, EFalse);
-	test(r == KErrAlreadyExists);		// unlocked should now succeed
+	test_Value(r, r == KErrAlreadyExists);		// unlocked should now succeed
 	test(!TestLocked(fs, RFsDNum));	// not locked yet as stack hasn't powered down
 
 	test.Next(_L("test locking card with new password (with wrong password as old password)"));
 	r = TestLockCard(fs, RFsDNum, wrongpwd, newpassword, EFalse);
-	test(r == KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	test(!TestLocked(fs, RFsDNum));	// not locked yet as stack hasn't powered down
 
 	test.Next(_L("test locking card with new password (with right password as old password)"));
 	r = TestLockCard(fs, RFsDNum, newpassword, wrongpwd, EFalse);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(!TestLocked(fs, RFsDNum));	// not locked yet as stack hasn't powered down
 
 	WaitForPowerDownLock(fs, RFsDNum);
 	
 	test.Next(_L("test clearing fails with wrong password if powered down & locked"));
 	r = TestClearPassword(fs, RFsDNum, newpassword); // Note: we have set the wrong password as the new password
-	test(r == KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	test(TestLocked(fs, RFsDNum));
 
 	test.Next(_L("test clearing succeeds with right password if powered down & locked"));
 	r = TestClearPassword(fs, RFsDNum, wrongpwd);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(!TestLocked(fs, RFsDNum));
 
 	test.Next(_L("test locking card again"));
 	r = TestLockCard(fs, RFsDNum, oldpassword, newpassword, EFalse);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(!TestLocked(fs, RFsDNum));		// not locked yet as stack hasn't powered down
 
 	test.Next(_L("test forced erase fails if still powered up"));
 	r = ExecuteForcedEraseTestL(fs, RFsDNum);
-	test(r == KErrAccessDenied);		// fails because card is not yet locked
+	test_Value(r, r == KErrAccessDenied);		// fails because card is not yet locked
 
 	WaitForPowerDownLock(fs, RFsDNum);
 
 
 	test.Next(_L("test forced erase succeeds if powered down & locked"));
 	r = ExecuteForcedEraseTestL(fs, RFsDNum);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	fs.Close();
 	test.End();
@@ -1884,16 +1893,16 @@ void TestUnlockDriveNotifyChange()
 	sessionPath=_L("?:\\");
 	TChar driveLetter;
 	TInt r=fs.DriveToChar(RFsDNum,driveLetter);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	sessionPath[0]=(TText)driveLetter;
 	r=fs.SetSessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
     
 	TInt nRes;
     TDriveInfo dInfo;
 
     nRes = fs.Drive(dInfo, RFsDNum);
-	test(nRes == KErrNone);
+	test_KErrNone(nRes);
 	if (!(dInfo.iMediaAtt & KMediaAttLockable))
 		{
 		test.Printf(_L("Drive %d is not lockable %d\n"), RFsDNum);
@@ -1905,7 +1914,7 @@ void TestUnlockDriveNotifyChange()
 	TMediaPassword oldPassword;
 	TMediaPassword newPassword = (TUint8*) "salasana";
     nRes = fs.LockDrive(RFsDNum, oldPassword, newPassword, EFalse );
-	test(nRes == KErrNone);
+	test_KErrNone(nRes);
 
 	WaitForPowerDownLock(fs, RFsDNum);
 
@@ -1924,7 +1933,7 @@ void TestUnlockDriveNotifyChange()
     test(reqStatNotify1.Int() == KErrNone);
 
 	r = TestClearPassword(fs, RFsDNum, newPassword);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(!TestLocked(fs, RFsDNum));
 	
 	

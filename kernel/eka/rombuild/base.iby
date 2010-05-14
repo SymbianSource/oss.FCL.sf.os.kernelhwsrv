@@ -161,7 +161,7 @@ file=ABI_DIR\DEBUG_DIR\usbhostms.pxy    sys\bin\usbhostms.pxy
 file=ABI_DIR\DEBUG_DIR\usbhostmsclient.dll  sys\bin\usbhostmsclient.dll
 file=ABI_DIR\DEBUG_DIR\usbhostmssrv.exe     sys\bin\usbhostmssrv.exe
 #endif
-#endif //#if defined(SYMBIAN_ENABLE_USB_OTG_HOST) && defined(SYMBIAN_INCLUDE_USB_OTG_HOST) && !defined(SYMBIAN_EXCLUDE_USB)
+#endif //#if defined(SYMBIAN_ENABLE_USB_OTG_HOST) && defined(SYMBIAN_INCLUDE_USB_OTG_HOST) && defined(__USB)
 
 #if defined(_NAND) || defined(_NAND2) || defined(_ONENAND) || defined (WITH_INTERNAL_MMC)
 #if !defined PAGED_ROM || defined EFFICIENT_ROM_PAGING || defined CODE_PAGING_FROM_ROFS

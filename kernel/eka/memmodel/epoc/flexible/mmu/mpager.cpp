@@ -1291,6 +1291,10 @@ void DPager::Init3()
 	TInt r = Kern::AddHalEntry(EHalGroupVM, VMHalFunction, 0);
 	__NK_ASSERT_ALWAYS(r==KErrNone);
 	PageCleaningLock::Init();
+#ifdef __DEMAND_PAGING_BENCHMARKS__
+	for (TInt i = 0 ; i < EMaxPagingBm ; ++i)
+		ResetBenchmarkData((TPagingBenchmark)i);
+#endif
 	}
 
 
@@ -2121,6 +2125,100 @@ void DPager::FlushAll()
 	PageCleaningLock::Unlock();
 	RamAllocLock::Unlock();
 	NKern::ThreadLeaveCS();
+	}
+
+
+TInt DPager::FlushRegion(DMemModelProcess* aProcess, TLinAddr aStartAddress, TUint aSize)
+	{
+	if (aSize == 0)
+		return KErrNone;
+
+	// find mapping
+	NKern::ThreadEnterCS();
+	TUint offsetInMapping;
+	TUint mapInstanceCount;
+	DMemoryMapping* mapping = MM::FindMappingInProcess(aProcess, aStartAddress, aSize,
+													   offsetInMapping, mapInstanceCount);
+	if (!mapping)
+		{
+		NKern::ThreadLeaveCS();
+		return KErrBadDescriptor;
+		}
+
+	// check whether memory is demand paged
+	MmuLock::Lock();
+	DMemoryObject* memory = mapping->Memory();
+	if(mapInstanceCount != mapping->MapInstanceCount() || memory == NULL || !memory->IsDemandPaged())
+		{
+		MmuLock::Unlock();
+		mapping->Close();
+		NKern::ThreadLeaveCS();
+		return KErrNone;
+		}
+
+	TRACE(("DPager::FlushRegion: %O %08x +%d", aProcess, aStartAddress, aSize));
+	if (!K::Initialising)
+		TRACE2(("  context %T %d", NCurrentThread(), NKern::CurrentContext()));
+
+	// why did we not get assertion failures before I added this?
+	__NK_ASSERT_DEBUG(!Kern::CurrentThread().IsRealtime());
+
+	// acquire necessary locks
+	MmuLock::Unlock();
+	RamAllocLock::Lock();
+	PageCleaningLock::Lock();
+	MmuLock::Lock();
+
+	// find region in memory object
+	TUint startPage = (offsetInMapping >> KPageShift) + mapping->iStartIndex;
+	TUint sizeInPages = ((aStartAddress & KPageMask) + aSize - 1) >> KPageShift;
+	TUint endPage = startPage + sizeInPages;
+	TRACE2(("DPager::FlushRegion: page range is %d to %d", startPage, endPage));
+	
+	// attempt to flush each page
+	TUint index = startPage;
+	while (mapping->MapInstanceCount() == mapInstanceCount &&
+		   mapping->Memory() && index <= endPage)
+		{
+		TRACE2(("DPager::FlushRegion: flushing page %d", index));
+		TPhysAddr physAddr = memory->iPages.PhysAddr(index);
+		
+		if (physAddr != KPhysAddrInvalid)
+			{
+			TRACE2(("DPager::FlushRegion: phys addr is %08x", physAddr));
+			SPageInfo* pi = SPageInfo::SafeFromPhysAddr(physAddr);
+			if (pi)
+				{
+				__NK_ASSERT_DEBUG(pi->Type() == SPageInfo::EManaged);
+				SPageInfo::TPagedState state = pi->PagedState();
+				if (state==SPageInfo::EPagedYoung || state==SPageInfo::EPagedOld ||
+					state==SPageInfo::EPagedOldestClean || state==SPageInfo::EPagedOldestDirty)
+					{
+					TRACE2(("DPager::FlushRegion: attempt to steal page"));
+					TInt r = StealPage(pi);
+					if(r==KErrNone)
+						{
+						TRACE2(("DPager::FlushRegion: attempt to page out %08x", physAddr));
+						AddAsFreePage(pi);
+						TRACE2(("DPager::FlushRegion: paged out %08x", physAddr));
+						}
+					else
+						TRACE2(("DPager::FlushRegion: page out %08x failed with %d", physAddr, r));
+					}
+				}
+			}
+		
+		MmuLock::Flash();
+		++index;
+		}
+	
+	MmuLock::Unlock();
+	PageCleaningLock::Unlock();
+	RamAllocLock::Unlock();
+	mapping->Close();
+	NKern::ThreadLeaveCS();
+	TRACE2(("DPager::FlushRegion: done"));
+	return KErrNone;
 	}
 
 

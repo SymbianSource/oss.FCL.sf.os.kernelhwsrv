@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -74,18 +75,18 @@ LOCAL_C void Test1()
 	RFile file1,file2,file3;
 	
 	TInt r=file1.Open(TheFs,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file2.Open(TheFs,filename2,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file3.Open(TheFs,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	CFileList* list=NULL;
 	TOpenFileScan fileScan(TheFs);
 	TRAP(r,fileScan.NextL(list));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	if (gRunByBatch)
 		{
@@ -133,24 +134,24 @@ LOCAL_C void Test2()
 
 	RFs fs1,fs2,fs3,fs4;
 	TInt r=fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs3.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs4.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile file1,file2,file3;
 	
 	r=file1.Open(fs2,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file2.Open(fs2,filename2,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file3.Open(fs2,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -203,33 +204,33 @@ LOCAL_C void Test3()
 
 	RFs fs1,fs2,fs3,fs4;
 	TInt r=fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs3.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs4.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile file1,file2,file3;
 	
 	r=file1.Open(fs2,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file2.Open(fs2,filename2,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file3.Open(fs2,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file1.Open(fs4,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file2.Open(fs4,filename2,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file3.Open(fs4,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -296,41 +297,41 @@ LOCAL_C void Test4()
 
 	RFs fs1,fs2,fs3,fs4;
 	TInt r=fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs3.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs4.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RDir dir1,dir2,dir3,dir4;
 	r=dir1.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir2.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir3.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir4.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile file1,file2,file3;
 	r=file1.Open(fs2,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file2.Open(fs2,filename2,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file3.Open(fs2,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	RDir dir5,dir6,dir7,dir8;
 	r=dir5.Open(fs4,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir6.Open(fs4,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir7.Open(fs4,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir8.Open(fs4,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -385,21 +386,21 @@ LOCAL_C void Test5()
 
 	RFile file1,file2,file3;
 	TInt r=file1.Open(TheFs,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file2.Open(TheFs,filename2,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file3.Open(TheFs,filename1,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	RDir dir1,dir2,dir3,dir4;
 	r=dir1.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir2.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir3.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir4.Open(TheFs,dirname1,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);

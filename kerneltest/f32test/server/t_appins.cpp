@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <hal.h>
@@ -53,11 +54,11 @@ LOCAL_C void Test1()
 	path=_L("?:\\F32-TST\\T_APPINS\\");
 		
 	TInt r=TheNotifyFs.SessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TChar driveChar;
 	r=RFs::DriveToChar(RemovableDrive,driveChar);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	if (gSessionPath[0]=='C')
 		(gSessionPath[0] == (TText)gDriveToTest)? (path[0] = (TText)driveChar):(path[0] = (TText)gDriveToTest);
@@ -76,7 +77,7 @@ LOCAL_C void Test1()
 	TRequestStatus statWilder(KRequestPending);
 
 	r=TheFs.RmDir(path);
-	test((r==KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
 
 	test.Printf(_L("Notify Session Path %S\n"),&gSessionPath);
 
@@ -89,7 +90,7 @@ LOCAL_C void Test1()
 	TheNotifyFs.NotifyChange(ENotifyEntry,statWilder,_L("*:\\"));
 
 	r=TheFs.MkDir(path);	
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	User::WaitForAnyRequest();
 	test(statEntry==KErrNone);
 	test(statFile==KErrNone);
@@ -112,7 +113,7 @@ LOCAL_C void Test1()
 	r=file.Replace(TheFs,filePath,EFileRead|EFileWrite);
 	file.Close();
 	User::WaitForAnyRequest();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
 	test(statDir==KRequestPending);
@@ -127,7 +128,7 @@ LOCAL_C void Test1()
 	TheNotifyFs.NotifyChange(ENotifyEntry,statWilder,_L("*:\\"));
 	
 	r=TheFs.Delete(filePath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
@@ -143,7 +144,7 @@ LOCAL_C void Test1()
 	TheNotifyFs.NotifyChange(ENotifyFile,statWilder,_L("*:\\"));
 
 	r=TheFs.RmDir(path);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KRequestPending);
@@ -166,7 +167,7 @@ LOCAL_C void Test2()
 		
 	TChar driveChar;
 	TInt err=RFs::DriveToChar(RemovableDrive,driveChar);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
 	if (gSessionPath[0]=='C')
 		(gSessionPath[0] == (TText)gDriveToTest)? (sessionPath[0] = (TText)driveChar):(sessionPath[0] = (TText)gDriveToTest);
@@ -179,13 +180,13 @@ LOCAL_C void Test2()
 		//return;
 	
 	TInt r=TheFs.SetSessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TFileName path;
 	path=_L("\\F32-TST\\T_APPINS\\");	//	Takes drive implicitly from associated session path
 						
 	r=TheFs.RmDir(path);
-	test((r==KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
 	
 	TRequestStatus statEntry(KRequestPending);
 	TRequestStatus statFile(KRequestPending);
@@ -206,7 +207,7 @@ LOCAL_C void Test2()
 	TheNotifyFs.NotifyChange(ENotifyAll,statWilder,_L("*:\\"));
 
 	r=TheFs.MkDir(path);										//	Creates the directory on the drive
-	test((r==KErrNone)||(r==KErrAlreadyExists));				//	associated with TheFs session path
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));				//	associated with TheFs session path
 	test (statEntry==KRequestPending);
 	test(statFile==KRequestPending);
 	test(statDir==KRequestPending);	//	No notification because it's watching a different drive!
@@ -224,7 +225,7 @@ LOCAL_C void Test2()
 	RFile file;
 	r=file.Replace(TheFs,filePath,EFileRead|EFileWrite);
 	file.Close();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test (statEntry==KRequestPending);	//	No notification!
 	test(statFile==KRequestPending);
@@ -237,7 +238,7 @@ LOCAL_C void Test2()
 	TheNotifyFs.NotifyChange(ENotifyDir,statWilder,_L("*:\\"));
 
 	r=TheFs.Delete(filePath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 //	Still no notification	
 	test (statEntry==KRequestPending);
 	test(statFile==KRequestPending);
@@ -250,7 +251,7 @@ LOCAL_C void Test2()
 	TheNotifyFs.NotifyChange(ENotifyDir,statWild,_L("?:\\F32-TST\\T_APPINS\\"));
 //	TheNotifyFs.NotifyChange(ENotifyDir,statWilder,_L("*:\\"));
 	r=TheFs.RmDir(path);
-	test(r==KErrNone);
+	test_KErrNone(r);
 //	Still no notification	
 	test (statEntry==KRequestPending);
 	test(statFile==KRequestPending);
@@ -271,7 +272,7 @@ LOCAL_C void Test3()
 	TFileName path;
 	path=_L("\\F32-TST\\T_APPINS\\");
 	TInt r=TheFs.RmDir(path);
-	test((r==KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
 	
 	TRequestStatus statEntry(KRequestPending);
 	TRequestStatus statFile(KRequestPending);
@@ -283,7 +284,7 @@ LOCAL_C void Test3()
 //	Set the session path of the session	which creates the file/directory to be
 //	the same as the notification session's session path
 	r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	Submit notify change requests (requesting ahead)
 	test.Printf(_L("Create a directory %S\n"),&path);
@@ -294,7 +295,7 @@ LOCAL_C void Test3()
 	TheNotifyFs.NotifyChange(ENotifyEntry,statWilder,_L("*:\\"));
 
 	r=TheFs.MkDir(path);	
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
@@ -318,7 +319,7 @@ LOCAL_C void Test3()
 	r=file.Replace(TheFs,filePath,EFileRead|EFileWrite);
 	file.Close();
 	User::WaitForAnyRequest();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
 	test(statDir==KRequestPending);	
@@ -333,7 +334,7 @@ LOCAL_C void Test3()
 	TheNotifyFs.NotifyChange(ENotifyEntry,statWilder,_L("*:\\"));
 
 	r=TheFs.Delete(filePath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
@@ -349,7 +350,7 @@ LOCAL_C void Test3()
 	TheNotifyFs.NotifyChange(ENotifyEntry,statWilder,_L("*:\\"));
 
 	r=TheFs.RmDir(path);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KRequestPending);
@@ -374,7 +375,7 @@ LOCAL_C void Test4()
 	
 	TChar driveChar;
 	TInt r=RFs::DriveToChar(RemovableDrive,driveChar);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	if (gDriveToTest =='C')
 		pathBuf[0]=driveChar;
@@ -383,21 +384,21 @@ LOCAL_C void Test4()
 	
 	path = pathBuf;
 	r=TheFs.RmDir(path);
-	test((r==KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNone)||(r==KErrNotFound)||(r==KErrPathNotFound));
 		
 	TInt result;
 	result=TheFs.MkDir(_L("C:\\SILLY\\"));
-	test((result==KErrNone)||(result==KErrAlreadyExists));
+	test_Value(result, (result == KErrNone)||(result==KErrAlreadyExists));
 	result=TheFs.MkDir(_L("C:\\SILLY\\SILLIER\\"));
-	test((result==KErrNone)||(result==KErrAlreadyExists));
+	test_Value(result, (result == KErrNone)||(result==KErrAlreadyExists));
 	result=TheFs.MkDir(_L("C:\\SILLY\\SILLIER\\SILLIEST\\"));
-	test((result==KErrNone)||(result==KErrAlreadyExists));
+	test_Value(result, (result == KErrNone)||(result==KErrAlreadyExists));
 
 	result=TheNotifyFs.SetSessionPath(_L("C:\\SILLY\\SILLIER\\SILLIEST\\"));
-	test(result==KErrNone);
+	test_KErrNone(result);
 	
 	result=TheNotifyFs.SessionPath(gSessionPath);
-	test(result==KErrNone);
+	test_KErrNone(result);
 	test.Printf(_L("Session Path %S\n"),&gSessionPath);
 
 	TRequestStatus statEntry(KRequestPending);
@@ -411,7 +412,7 @@ LOCAL_C void Test4()
 	TheNotifyFs.NotifyChange(ENotifyDir,statDir,path);
 
 	r=TheFs.MkDir(path);	
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
@@ -430,7 +431,7 @@ LOCAL_C void Test4()
 	r=file.Replace(TheFs,filePath,EFileRead|EFileWrite);
 	file.Close();
 	User::WaitForAnyRequest();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
 	test(statDir==KRequestPending);
@@ -441,7 +442,7 @@ LOCAL_C void Test4()
 	TheNotifyFs.NotifyChange(ENotifyFile,statFile,path);
 	
 	r=TheFs.Delete(filePath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KErrNone);
@@ -452,18 +453,18 @@ LOCAL_C void Test4()
 	TheNotifyFs.NotifyChange(ENotifyEntry,statEntry,path);
 	TheNotifyFs.NotifyChange(ENotifyFile,statFile,path);
 	r=TheFs.RmDir(path);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	User::WaitForAnyRequest();
 	test (statEntry==KErrNone);
 	test(statFile==KRequestPending);
 	test(statDir==KErrNone);
 
 	result=TheFs.RmDir(_L("C:\\SILLY\\SILLIER\\SILLIEST\\"));
-	test((result==KErrNone)||(result==KErrAlreadyExists));
+	test_Value(result, (result == KErrNone)||(result==KErrAlreadyExists));
 	result=TheFs.RmDir(_L("C:\\SILLY\\SILLIER\\"));
-	test((result==KErrNone)||(result==KErrAlreadyExists));
+	test_Value(result, (result == KErrNone)||(result==KErrAlreadyExists));
 	result=TheFs.RmDir(_L("C:\\SILLY\\"));
-	test((result==KErrNone)||(result==KErrAlreadyExists));	
+	test_Value(result, (result == KErrNone)||(result==KErrAlreadyExists));	
 	}
 
 #endif
@@ -498,7 +499,7 @@ GLDEF_D void CallTestsL(void)
 
 	test.Start(_L("Testing filesystem"));
 	TInt r=TheNotifyFs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TFileName sessionPath;
 	TInt uid;
 	test(HAL::Get(HAL::EMachineUid,uid)==KErrNone);
@@ -511,7 +512,7 @@ GLDEF_D void CallTestsL(void)
 #if !defined(__WINS__)
 //	MARM TESTS
 	r=TheFs.MkDir(_L("C:\\F32-TST\\"));
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 
 	if(KErrNone == TheFs.DriveList(drvList))
 		{
@@ -543,7 +544,7 @@ GLDEF_D void CallTestsL(void)
 		}
 	
 	r=RFs::DriveToChar(RemovableDrive,driveChar);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	if(gDriveToTest == 'C')
 		dirBuf[0] = (TText)driveChar;
@@ -558,12 +559,12 @@ GLDEF_D void CallTestsL(void)
 		//test.Getch();
 		r=TheFs.MkDir(dirBuf);
 		}
-	test((r==KErrNone)||(r==KErrAlreadyExists));	
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));	
 		
 //	Set the notification session path to the test directory on C drive
 	sessionPath=_L("C:\\F32-TST\\");
 	r=TheNotifyFs.SetSessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 //	Run tests
 	TRAP(r,DoTests());
 	if (r!=KErrNone)
@@ -579,9 +580,9 @@ GLDEF_D void CallTestsL(void)
 		
 
 	r=TheNotifyFs.SetSessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TRAP(r,DoTests());
 	if (r!=KErrNone)
 		test.Printf(_L("Error: %d\n"),r);
@@ -589,12 +590,12 @@ GLDEF_D void CallTestsL(void)
 	CheckDisk();
 #elif defined (__WINS__)
 	r=TheFs.MkDir(_L("X:\\F32-TST\\"));
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	r=TheFs.MkDir(_L("Y:\\F32-TST\\"));
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 //	Set session path to test directory on Y drive
 	r=TheNotifyFs.SetSessionPath(_L("Y:\\F32-TST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TRAP(r,DoTests());
 	if (r!=KErrNone)
 		test.Printf(_L("Error: %d\n"),r);
@@ -604,7 +605,7 @@ GLDEF_D void CallTestsL(void)
 	//we have no X drive on eka2 yet
 //	Set session path to test directory on X drive	
 //	r=TheNotifyFs.SetSessionPath(_L("X:\\F32-TST\\"));
-//	test(r==KErrNone);
+//	test_KErrNone(r);
 //	TRAP(r,DoTests());
 
 	if (r!=KErrNone)

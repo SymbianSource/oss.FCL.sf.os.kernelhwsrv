@@ -4770,6 +4770,7 @@ public:
     IMPORT_C static void __DbgMarkCheck(TBool aKernel, TBool aCountAll, TInt aCount, const TUint8* aFileName, TInt aLineNum);
     IMPORT_C static TUint32 __DbgMarkEnd(TBool aKernel, TInt aCount);
     IMPORT_C static void __DbgSetAllocFail(TBool aKernel, RAllocator::TAllocFail aFail, TInt aRate);
+    IMPORT_C static RAllocator::TAllocFail __DbgGetAllocFail(TBool aKernel);
     IMPORT_C static void __DbgSetBurstAllocFail(TBool aKernel, RAllocator::TAllocFail aFail, TUint aRate, TUint aBurst);
 	IMPORT_C static TUint __DbgCheckFailure(TBool aKernel);
 	IMPORT_C static void PanicUnexpectedLeave(); /**< @internalComponent */

@@ -242,8 +242,8 @@ TInt NThreadBase::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		iCurrent = iReady;
 		iCpuAffinity = iLastCpu;
 		iEventState = (iLastCpu<<EEventCpuShift) | (iLastCpu<<EThreadCpuShift);
-		ss.SSAddEntry(this);
-		i_NThread_Initial = TRUE;
+		i_NThread_Initial = TRUE; // must set as initial before 
+		ss.SSAddEntry(this);      // adding to subsched list
 		iACount = 1;
 		ss.iInitialThread = (NThread*)this;
 		NKern::Unlock();		// now that current thread is defined

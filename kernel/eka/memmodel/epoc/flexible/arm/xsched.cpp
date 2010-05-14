@@ -14,6 +14,7 @@
 //
 
 #include "arm_mem.h"
+#include "mpager.h"
 
 #define iMState		iWaitLink.iSpare1
 
@@ -30,6 +31,18 @@ void DThread::RequestComplete(TRequestStatus*& aStatus, TInt aReason)
 	DThread* thread = TheCurrentThread;
 	TRequestStatus* status = aStatus;
 	aStatus = NULL;
+
+#ifdef _DEBUG
+	if (KDebugNum(KFORCEKUPAGEFAULTS))
+		{
+		NKern::UnlockSystem();
+		TInt r = ThePager.FlushRegion((DMemModelProcess*)thread->iOwningProcess,
+									  (TLinAddr)status, sizeof(TRequestStatus));
+		(void)r; // ignore errors
+		NKern::LockSystem();
+		}
+#endif
+	
 	TInt pagingFault;
 	do
 		{

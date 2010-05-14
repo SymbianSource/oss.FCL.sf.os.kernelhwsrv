@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <f32tracedef.h>
 #include <e32test.h>
@@ -76,7 +77,7 @@ void TestRFileReplace()
 	Trace.Empty();
 
 	TInt r = file.Replace(TheFs,testFileName,EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	TBool funcInFound = EFalse;
@@ -226,13 +227,13 @@ void TestRFsRename()
 	TheFs.Delete(testFileName2);
 
 	TInt r = file.Replace(TheFs,testFileName1,EFileStreamText);
-	test(r==KErrNone || KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	file.Close();
 
 	Trace.Empty();
 
 	r = TheFs.Rename(testFileName1, testFileName2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	TBool funcInFound = EFalse;
@@ -379,7 +380,7 @@ void CallTestsL()
 
 	test.Start(_L("Open LDD"));
 	r = Trace.Open();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 
 	TUint32 OldTraceFilter[8] = {0};

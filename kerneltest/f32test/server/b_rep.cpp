@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -42,43 +43,43 @@ void DoTest()
 
         // Replace file and write data
 		r=TheFile.Replace(TheFs,nameBuf1,EFileStream);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFile.Write(testPat1);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		
 		Mem::Copy(&buf[0],&numb,sizeof(TInt));
 		r=TheFile.Write(buf);
-		test(r==KErrNone);
+		test_KErrNone(r);
 
         // Seek to 0 and check data
 		TInt pos=0; 
 		r=TheFile.Seek(ESeekStart,pos);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(pos==0);
 		r=TheFile.Read(chkPat1,len);
-        test(r==KErrNone);
+        test_KErrNone(r);
         test(chkPat1==testPat1);
 		r=TheFile.Read(testBuf,sizeof(TInt));
-        test(r==KErrNone);
+        test_KErrNone(r);
 		TInt chkNumb=*((TInt*)testBuf.Ptr());
         test(chkNumb==numb);
 
         // Close, then re-open file and check data
 		TheFile.Close();
 		r=TheFile.Open(TheFs,nameBuf1,EFileStream);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFile.Read(chkPat1,len);
-        test(r==KErrNone);
+        test_KErrNone(r);
         test(chkPat1==testPat1);
 		r=TheFile.Read(testBuf,sizeof(TInt));
-        test(r==KErrNone);
+        test_KErrNone(r);
 		chkNumb=*((TInt*)testBuf.Ptr());
         test(chkNumb==numb);
 		TheFile.Close();
 		}
 	test.Printf(_L("\n"));
 	r=TheFs.Delete(nameBuf1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 GLDEF_C void CallTestsL(void)
@@ -101,9 +102,9 @@ GLDEF_C void CallTestsL(void)
 	test.Next(_L("Subdirectory"));
 	gSessionPath=_L("\\F32-TST\\TEST1\\");
 	TInt r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDirAll(gSessionPath);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
 	DoTest();
 

@@ -697,11 +697,11 @@ EXPORTS
 	_ZN5RHeap5ResetEv @ 696 NONAME ; RHeap::Reset()
 	_ZN5RHeap7ReAllocEPvii @ 697 NONAME ; RHeap::ReAlloc(void*, int, int)
 	_ZN5RHeap8CompressEv @ 698 NONAME ; RHeap::Compress()
-	_ZN5RHeapC1Eiii @ 699 NONAME ; RHeap::RHeap(int, int, int)
-	_ZN5RHeapC1Eiiiiiii @ 700 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
-	_ZN5RHeapC2Eiii @ 701 NONAME ; RHeap::RHeap(int, int, int)
-	_ZN5RHeapC2Eiiiiiii @ 702 NONAME ; RHeap::RHeap(int, int, int, int, int, int, int)
-	_ZN5RHeapnwEjPv @ 703 NONAME ; RHeap::operator new(unsigned int, void*)
+	_ZN5RHeapC1Eiii @ 699 NONAME ABSENT ; RHeap::RHeap(int, int, int)
+	_ZN5RHeapC1Eiiiiiii @ 700 NONAME ABSENT ; RHeap::RHeap(int, int, int, int, int, int, int)
+	_ZN5RHeapC2Eiii @ 701 NONAME ABSENT ; RHeap::RHeap(int, int, int)
+	_ZN5RHeapC2Eiiiiiii @ 702 NONAME ABSENT ; RHeap::RHeap(int, int, int, int, int, int, int)
+	_ZN5RHeapnwEjPv @ 703 NONAME ABSENT ; RHeap::operator new(unsigned int, void*)
 	_ZN5RTest3EndEv @ 704 NONAME ; RTest::End()
 	_ZN5RTest4NextERK7TDesC16 @ 705 NONAME ; RTest::Next(TDesC16 const&)
 	_ZN5RTest5CloseEv @ 706 NONAME ; RTest::Close()
@@ -1601,7 +1601,7 @@ EXPORTS
 	_ZNK4TUid4NameEv @ 1600 NONAME ; TUid::Name() const
 	_ZNK4TUideqERKS_ @ 1601 NONAME ; TUid::operator==(TUid const&) const
 	_ZNK4TUidneERKS_ @ 1602 NONAME ; TUid::operator!=(TUid const&) const
-	_ZNK5RHeap10GetAddressEPKv @ 1603 NONAME ; RHeap::GetAddress(void const*) const
+	_ZNK5RHeap10GetAddressEPKv @ 1603 NONAME ABSENT ; RHeap::GetAddress(void const*) const
 	_ZNK5RHeap8AllocLenEPKv @ 1604 NONAME ; RHeap::AllocLen(void const*) const
 	_ZNK5RHeap9AllocSizeERi @ 1605 NONAME ; RHeap::AllocSize(int&) const
 	_ZNK5RHeap9AvailableERi @ 1606 NONAME ; RHeap::Available(int&) const
@@ -2530,4 +2530,11 @@ EXPORTS
 	_ZNK7TDesC167Locate2E5TChar @ 2529 NONAME
 	_ZNK7TDesC168LocateF2E5TChar @ 2530 NONAME
 	_ZN6RTimer12AgainHighResER14TRequestStatus27TTimeIntervalMicroSeconds32 @ 2531 NONAME ; RTimer::AgainHighRes(TRequestStatus&, TTimeIntervalMicroSeconds32)
+	_ZNK10RAllocator4BaseEv @ 2532 NONAME
+	_ZNK10RAllocator4SizeEv @ 2533 NONAME
+	_ZNK10RAllocator5AlignEPv @ 2534 NONAME
+	_ZNK10RAllocator5AlignEi @ 2535 NONAME
+	_ZNK10RAllocator9MaxLengthEv @ 2536 NONAME
+	_ZN10RAllocator17__DbgGetAllocFailEv @ 2537 NONAME
+	_ZN4User17__DbgGetAllocFailEi @ 2538 NONAME
 

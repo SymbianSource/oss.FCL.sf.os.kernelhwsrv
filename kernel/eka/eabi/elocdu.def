@@ -64,4 +64,23 @@ EXPORTS
 	_ZTI10DDmaHelper @ 63 NONAME ; #<TI>#
 	_ZTV10DDmaHelper @ 64 NONAME ; #<VT>#
 	_ZN14TLocDrvRequest19ReadFromPageHandlerEPvii @ 65 NONAME
+	_ZN21DMediaDriverExtension14ForwardRequestER14TLocDrvRequest @ 66 NONAME
+	_ZN21DMediaDriverExtension15NotifyPowerDownEv @ 67 NONAME
+	_ZN21DMediaDriverExtension20DoDrivePartitionInfoER14TPartitionInfo @ 68 NONAME
+	_ZN21DMediaDriverExtension24NotifyEmergencyPowerDownEv @ 69 NONAME
+	_ZN21DMediaDriverExtension4CapsEiR5TDes8 @ 70 NONAME
+	_ZN21DMediaDriverExtension4ReadEixmj @ 71 NONAME
+	_ZN21DMediaDriverExtension5CloseEv @ 72 NONAME
+	_ZN21DMediaDriverExtension5WriteEixmj @ 73 NONAME
+	_ZN21DMediaDriverExtension9MediaBusyEi @ 74 NONAME
+	_ZN21DMediaDriverExtensionC2Ei @ 75 NONAME
+	_ZN21DMediaDriverExtensionD0Ev @ 76 NONAME
+	_ZN21DMediaDriverExtensionD1Ev @ 77 NONAME
+	_ZN21DMediaDriverExtensionD2Ev @ 78 NONAME
+	_ZTI21DMediaDriverExtension @ 79 NONAME
+	_ZTV21DMediaDriverExtension @ 80 NONAME
+	_ZN12DMediaDriver19SetTotalSizeInBytesER17TLocalDriveCapsV4 @ 81 NONAME
+	_ZN21DMediaDriverExtension10WritePagedEixmj @ 82 NONAME
+	_ZN21DMediaDriverExtension9ReadPagedEixmj @ 83 NONAME
+	_ZN11DLocalDrive4CapsEiR5TDes8 @ 84 NONAME
 

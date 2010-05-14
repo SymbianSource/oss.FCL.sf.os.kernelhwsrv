@@ -17,7 +17,7 @@
 
 #ifndef T_FATCHARSETCONV_AUX_H
 #define T_FATCHARSETCONV_AUX_H
-
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <hal.h>

@@ -13,6 +13,7 @@
 // Description:
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32math.h>
@@ -136,7 +137,7 @@ static void testDir(const TDesC& aDirName)
 	TChar drive(aDirName[0]);
 	TInt driveNo;
 	c=RFs::CharToDrive(drive,driveNo);
-	test(c==KErrNone);
+	test_KErrNone(c);
 	if ((c=TheFs.Volume(volInfo,driveNo))!=KErrNone)
 		Error(_L("Device info 1000"),c);
     }
@@ -175,7 +176,7 @@ static void testDeviceInfo(const TDesC& aDeviceName,TInt anErr)
 	if (aDeviceName.Length())
 		{
 		c=RFs::CharToDrive(aDeviceName[0],drive);
-		test(c==KErrNone);
+		test_KErrNone(c);
 		}		
 	if ((c=TheFs.Volume(volInfo,drive))!=anErr)
 		Error(_L("Device info"),c);
@@ -283,11 +284,11 @@ void TestINC103141() // PDEF104017
 	dirname.Append(KPathDelimiter);
 	MakeDir(dirname);
 	TInt err = TheFs.Rename(KDir1, KDir2);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	err = TheFs.RmDir(dirname);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	err = TheFs.RmDir(KDir1);
-	test(err == KErrNone);
+	test_KErrNone(err);
 	}
 	
 static void testRename()
@@ -592,7 +593,7 @@ static void TestMakeDirLine(const TDesC& aDirName,TInt res, TInt line)
 		{
         TParse parse;
         c=TheFs.Parse(aDirName,parse);
-        test(c==KErrNone);
+        test_KErrNone(c);
         buf=parse.Path();
         buf.Append(_L("*"));
         if (buf.Length()<=64)
@@ -688,7 +689,7 @@ void CallTestsL()
     F32_Test_Utils::SetConsole(test.Console());
 
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
-    test(nRes==KErrNone);
+    test_KErrNone(nRes);
     
     PrintDrvInfo(TheFs, gDriveNum);
 
@@ -696,7 +697,7 @@ void CallTestsL()
     if(!Is_Win32(TheFs, gDriveNum))
     {
         nRes = FormatDrive(TheFs, gDriveNum, ETrue); 
-        test(nRes==KErrNone);
+        test_KErrNone(nRes);
     }
 
     //-----------------------------------
@@ -1251,11 +1252,11 @@ void CallTestsL()
          //-- This behaviour can be an optimisation to reduce number of media writes due to updating file timestamps.
          gFile.Close();
          nRes = gFile.Open(TheFs, gNameOut, EFileWrite);
-         test(nRes == KErrNone);
+         test_KErrNone(nRes);
          //-- restore the expected position in the file
          TInt pos1 = 0;
          nRes = gFile.Seek(ESeekEnd, pos1);
-         test(nRes == KErrNone);
+         test_KErrNone(nRes);
          //------------------------------------ 
          */
 

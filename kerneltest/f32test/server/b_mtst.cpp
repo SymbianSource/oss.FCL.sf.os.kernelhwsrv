@@ -16,6 +16,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -52,20 +53,20 @@ LOCAL_C void checkPattern()
     {
     test.Printf(_L("Opening: %S\n"),&nameBuf1);
     TInt r=file1.Open(TheFs,nameBuf1,EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Opening: %S\n"),&nameBuf2);
 	r=file2.Open(TheFs,nameBuf2,EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Checking test pattern...\n"));
 	for (TInt i=0 ; i<nTimes ; i++)
         {
         r=file1.Read(buf,len1);
-		test(r==KErrNone);
+		test_KErrNone(r);
         TInt j;
 		for (j=0 ; j< len1 ; j++)
             test(buf[j]==j);
         r=file2.Read(buf,len2);
-		test(r==KErrNone);
+		test_KErrNone(r);
         for (j=0 ; j< len2 ; j++)
             test(buf[j]=='A');
         }
@@ -91,34 +92,34 @@ GLDEF_C void CallTestsL(void)
         buf5.Append('D');       
 
     TInt r=file1.Create(TheFs,nameBuf1,EFileStream|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Created: %S\n"),&nameBuf1);
     r=file2.Create(TheFs,nameBuf2,EFileStream|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Created: %S\n"),&nameBuf2);
     r=file3.Create(TheFs,nameBuf3,EFileStream|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Created: %S\n"),&nameBuf3);
     r=file4.Create(TheFs,nameBuf4,EFileStream|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Created: %S\n"),&nameBuf4);
     r=file5.Create(TheFs,nameBuf5,EFileStream|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Created: %S\n"),&nameBuf5);
     
     test.Next(_L("Writing test pattern..."));
     for (i=0 ; i<nTimes ; i++)
         {
         r=file1.Write(buf1,len1);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file2.Write(buf2,len2);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file3.Write(buf3,len3);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file4.Write(buf4,len4);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=file5.Write(buf5,len5);
-		test(r==KErrNone);
+		test_KErrNone(r);
         }
     file1.Close();
 	file2.Close();
@@ -129,10 +130,10 @@ GLDEF_C void CallTestsL(void)
     test.Next(_L("Delete"));
     test.Printf(_L("Deleting: %S\n"),&nameBuf1);
     r=TheFs.Delete(nameBuf1);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Deleting: %S\n"),&nameBuf2);
 	r=TheFs.Delete(nameBuf2);
-	test(r==KErrNone);
+	test_KErrNone(r);
     
     file3.Close();
     file4.Close();
@@ -140,13 +141,13 @@ GLDEF_C void CallTestsL(void)
     
     test.Printf(_L("Deleting: %S\n"),&nameBuf3);
     r=TheFs.Delete(nameBuf3);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Deleting: %S\n"),&nameBuf4);
 	r=TheFs.Delete(nameBuf4);
-	test(r==KErrNone);
+	test_KErrNone(r);
     test.Printf(_L("Deleting: %S\n"),&nameBuf5);
 	r=TheFs.Delete(nameBuf5);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	test.Close();
     }

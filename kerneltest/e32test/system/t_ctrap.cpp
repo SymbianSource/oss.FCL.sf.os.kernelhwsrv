@@ -55,9 +55,11 @@
 #include <e32def.h>
 #include <e32def_private.h>
 
+#if defined(_DEBUG)
+	const TInt KInitialCount=2;
+	const TInt KInitialCountAll=3;
+#endif
 
-const TInt KInitialCount=2;
-const TInt KInitialCountAll=3;
 const TInt KLeaveValue=0x12345678;
 const TInt KMaxAlloc=6;	
 
@@ -106,12 +108,10 @@ LOCAL_D CBufFlat* gP2;
 
 LOCAL_C void ReallocateStackL()
 	{
-	TInt n = 0;
 	for(TInt i = 0; i < KMaxAlloc; ++i)
 		{
-		HBufC *p1 = HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
+		(void)HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
 									   //into the cleanup stack
-		n = p1->Length();			   //include this line to avoid warnigs for unused "p1" variable
 		}
 	test.Printf(_L("ReallocateStackL(): PopAndDestroy KMaxAlloc pointers\n"));
 	CleanupStack::PopAndDestroy(KMaxAlloc);
@@ -130,12 +130,10 @@ CTest3::~CTest3()
 	{
 	RDebug::Printf("~CTest3(): Modify Cleanup stack by pushing items");
 	
-	TInt n = 0;
 	for(TInt i = 0; i < KMaxAlloc; ++i)
 		{
-		HBufC *p1 = HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
+		HBufC::NewLC(4);   //Stack re-allocation will be performed due to the additional objects pushed
 									   //into the cleanup stack
-		n = p1->Length();			   //include this line to avoid warnigs for unused "p1" variable
 		}
 	}
 
@@ -148,12 +146,10 @@ LOCAL_C void ModifyStack()
 	CleanupStack::PopAndDestroy();
 	}
 
-LOCAL_C TInt PanicStackModifiedFn(TAny* aNopFn)
+LOCAL_C TInt PanicStackModifiedFn(TAny* /*aNopFn*/)
 	{
 	__UHEAP_MARK;
 	CTrapCleanup* cleanup = CTrapCleanup::New();
-
-	aNopFn = NULL;		//avoid warnings for unused "aNopFn" variable
 
 	TInt err = KErrNoMemory;
 
@@ -1091,9 +1087,11 @@ LOCAL_C void testSpecialCaseCleanup()
 // when we do the cleanup. This test only works in debug mode.
 //
 	__UHEAP_FAILNEXT(1);
-	TRAPD(r,pC->PushL(p6));
 #if defined(_DEBUG)
+	TRAPD(r,pC->PushL(p6));
 	test(r==KErrNoMemory);
+#else
+	TRAP_IGNORE(pC->PushL(p6));
 #endif
 	__UHEAP_CHECK(KInitialCount+6);
 	pC->PopAndDestroyAll();
@@ -1300,7 +1298,7 @@ LOCAL_C void reentrantCleanup(TAny*)
 // A cleanup operation which uses a trap harness and the cleanup stack
 //
 	{
-	TRAPD(ignore,useCleanupStackL())
+	TRAP_IGNORE(useCleanupStackL());
 	}
 
 LOCAL_C void addReentrantItemL()
@@ -1424,7 +1422,7 @@ LOCAL_C void testAutoClose()
 	test.Next(_L("Check the object has closed"));
 	__KHEAP_CHECK(0);
 
-	TRAPD(r, testAutoCloseL());
+	TRAP_IGNORE(testAutoCloseL());
 	test.Next(_L("Check object has been closed and cleaned up after leave"));
 	__KHEAP_MARKEND;
 	test.End();

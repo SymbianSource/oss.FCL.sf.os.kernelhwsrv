@@ -49,7 +49,6 @@
 void DoUndefinedInstruction();
 
 const TInt KHeapSize=0x200;
-const TInt KThreadReturnValue=9999;
 
 _LIT(KLitKernExec,"KERN-EXEC");
 
@@ -426,7 +425,6 @@ void StartRequestCompleteThread(RThread& aThread, TRequestStatus** aStatus)
 	User::WaitForRequest(s);
 	}
 
-_LIT(KLitUserCBase,"E32USER-CBase");
 GLDEF_C TInt E32Main()
 //
 // Main

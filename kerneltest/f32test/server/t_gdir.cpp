@@ -13,6 +13,7 @@
 // Description:
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -110,13 +111,13 @@ LOCAL_C void createFile(const TUidFile& aFileName)
 	TPtrC fileName(aFileName.iFileName);
 	TAutoClose<RFile> file;
 	TInt r=file.iObj.Replace(TheFs,fileName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TPtrC8 uidBuf((TUint8*)&checkedUid,sizeof(TCheckedUid));
 	r=file.iObj.Write(uidBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TPtrC8 contents(aFileName.iContents);
 	r=file.iObj.Write(contents);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void createFile(TInt anIndex)
@@ -134,11 +135,11 @@ LOCAL_C void createFile(TInt anIndex)
 //
 	TAutoClose<RFile> file;
 	TInt r=file.iObj.Replace(TheFs,fName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<36> b((TUint8*)"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ");
 	b.SetLength(anIndex+1);
 	r=file.iObj.Write(b);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void createDir(TInt anIndex)
@@ -155,7 +156,7 @@ LOCAL_C void createDir(TInt anIndex)
     test.Next(mes);
 //
 	TInt r=TheFs.MkDir(dName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void testSetup()
@@ -167,7 +168,7 @@ LOCAL_C void testSetup()
 	test.Next(_L("Remove test directory"));
 	CDir* pD;
 	TInt r=TheFs.GetDir(test_dir_1,KEntryAttMaskSupported,EDirsLast,pD);
-	test(r==KErrNone || r==KErrNotFound || r==KErrPathNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotFound || r==KErrPathNotFound);
 	if (r==KErrNone)
 		{
 		TInt count=pD->Count();
@@ -180,14 +181,14 @@ LOCAL_C void testSetup()
 				TFileName name;
 				name.Format(_L("%S%S\\"),&test_dir,&e.iName);
 				r=TheFs.RmDir(name);
-				test(r==KErrNone);
+				test_KErrNone(r);
 				}
 			else
 				{
 				TFileName name;
 				name.Format(_L("%S%S"),&test_dir,&e.iName);
 				r=TheFs.Delete(name);
-				test(r==KErrNone);
+				test_KErrNone(r);
 				}
 			}
 		}
@@ -216,28 +217,28 @@ LOCAL_C void testDir()
 	test.Next(_L("Test directory handling"));
 	CDir* pD;
 	TInt r=TheFs.GetDir(test_dir_1,KEntryAttMaskSupported,EDirsLast,pD);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	displayDir(*pD,dCount,fCount);
 	test(dCount==4 && fCount==9);
 	delete pD;
 //
 	test.Next(_L("Attributes: NULL"));
 	r=TheFs.GetDir(test_dir_1,NULL,EDirsLast,pD);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	displayDir(*pD,dCount,fCount);
 	test(dCount==0 && fCount==9);
 	delete pD;
 //
 	test.Next(_L("Attributes: KEntryAttDir & EDescending sort"));
 	r=TheFs.GetDir(test_dir_1,KEntryAttDir,ESortByName|EDescending,pD);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	displayDir(*pD,dCount,fCount);
 	test(dCount==4 && fCount==9);
 	delete pD;
 //	
 	test.Next(_L("Attributes: Excl,Dir"));
 	r=TheFs.GetDir(test_dir_1,KEntryAttMatchExclusive|KEntryAttDir,ESortByName|EDescending,pD);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	displayDir(*pD,dCount,fCount);
 	test(dCount==4 && fCount==0);
 	delete pD;
@@ -246,7 +247,7 @@ LOCAL_C void testDir()
 //
 	test.Next(_L("Test split directories and files"));
 	r=TheFs.GetDir(test_dir_1,KEntryAttMaskSupported,ESortByName,pD,pD2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("FileList:\n"));
 	displayDir(*pD,dCount,fCount);
 	test(dCount==4 && fCount==9);
@@ -258,7 +259,7 @@ LOCAL_C void testDir()
 //
 	test.Next(_L("Attributes: NULL"));
 	r=TheFs.GetDir(test_dir_1,NULL,ESortByName,pD,pD2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("FileList:\n"));
 	displayDir(*pD,dCount,fCount);
 	test(dCount==0 && fCount==9);
@@ -270,7 +271,7 @@ LOCAL_C void testDir()
 //
 	test.Next(_L("Attributes: KEntryAttDir"));
 	r=TheFs.GetDir(test_dir_1,KEntryAttDir,ESortByName,pD,pD2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("FileList:\n"));
 	displayDir(*pD,dCount,fCount);
 	test(dCount==4 && fCount==9);
@@ -282,7 +283,7 @@ LOCAL_C void testDir()
 //
 	test.Next(_L("Attributes: Excl,Dir"));
 	r=TheFs.GetDir(test_dir_1,KEntryAttMatchExclusive|KEntryAttDir,ESortByName,pD,pD2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("FileList:\n"));
 	displayDir(*pD,dCount,fCount);
 	test(dCount==4 && fCount==0);
@@ -303,7 +304,7 @@ LOCAL_C void testZDirectory()
 	TInt dCount,fCount;
 	CDir* pD;
 	TInt r=TheFs.GetDir(_L("Z:\\*"),KEntryAttMaskSupported,EDirsFirst,pD);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	displayDir(*pD,dCount,fCount);
 	delete pD;
 	}
@@ -317,7 +318,7 @@ LOCAL_C void testDisplayFiles()
 	test.Next(_L("Display contents of current directory"));
 	CDir* pD;
 	TInt r=TheFs.GetDir(gSessionPath,KEntryAttMaskSupported,EDirsFirst,pD);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt dCount,fCount;
 	displayDir(*pD,dCount,fCount);
 	delete pD;
@@ -327,7 +328,7 @@ LOCAL_C void testDisplayFiles()
 	TBuf<16> noName=_L("asdf.idd");
 	parser.Set(session.Drive(),&noName,NULL);
 	r=TheFs.GetDir(parser.FullName(),KEntryAttMaskSupported,EDirsFirst,pD);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(pD->Count()==0);
 	delete pD;
 	}
@@ -349,14 +350,14 @@ LOCAL_C void MatchUidFile(TInt aUidFile,TInt anEntryNum,const CDir* aFileList)
 
 	RFile f;
 	TInt r=f.Open(TheFs,entry.iName,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<256> contents;
 	r=f.Read(sizeof(TCheckedUid),contents);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TPtrC8 uidFileContents(uidFiles[aUidFile].iContents);
 	test(contents==uidFileContents);
 	r=f.Read(contents);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(contents.Length()==0);
 	f.Close();
 	}
@@ -389,7 +390,7 @@ LOCAL_C void testGetDirByUid()
 	TUidType matchUid(TUid::Null(),TUid::Uid(2),TUid::Null());
 	CDir* fileList;
 	TInt r=TheFs.GetDir(matchName,matchUid,EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=fileList->Count();
 	test(count==1);
 	MatchUidFile(0,0,fileList);
@@ -398,7 +399,7 @@ LOCAL_C void testGetDirByUid()
 	matchName=_L("*.*");
 	matchUid=TUidType(TUid::Uid(1),TUid::Uid(2),TUid::Uid(731));
 	r=TheFs.GetDir(matchName,matchUid,EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=fileList->Count();
 	test(count==1);
 	MatchUidFile(0,0,fileList);
@@ -407,7 +408,7 @@ LOCAL_C void testGetDirByUid()
 	matchName=_L("*.*");
 	matchUid=TUidType(TUid::Null(),TUid::Uid(2),TUid::Null());
 	r=TheFs.GetDir(matchName,matchUid,ESortByName|EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=fileList->Count();
 	test(count==3);
 	MatchUidFile(0,2,fileList);
@@ -418,7 +419,7 @@ LOCAL_C void testGetDirByUid()
 	matchName=_L("*.*");
 	matchUid=TUidType(TUid::Null(),TUid::Null(),TUid::Uid(731));
 	r=TheFs.GetDir(matchName,matchUid,ESortByName|EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=fileList->Count();
 	test(count==3);
 	MatchUidFile(2,0,fileList);
@@ -428,7 +429,7 @@ LOCAL_C void testGetDirByUid()
 
 	matchName=_L("*.*");
 	r=TheFs.GetDir(matchName,KEntryAttNormal,ESortByUid|EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=fileList->Count();
 	MatchUidFile(4,0,fileList);
 	MatchUidFile(1,1,fileList);
@@ -457,7 +458,7 @@ LOCAL_C void testZGetDirByUid()
 	TUidType matchUid(TUid::Null(),TUid::Uid(0x1000008c),TUid::Null());
 	CDir* fileList;
 	TInt r=TheFs.GetDir(PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("Z:\\SYS\\BIN\\"):_L("Z:\\SYSTEM\\BIN\\"),matchUid,EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=fileList->Count();
 #if defined(__WINS__)
 	test(count==0);
@@ -490,7 +491,7 @@ LOCAL_C void testGetFilesExcept()
 	TUint onlyRO=KEntryAttReadOnly|KEntryAttMatchExclusive;
 	CDir* fileList;
 	TInt r=TheFs.GetDir(_L("\\F32-TST\\GDIR\\*.CCC"),onlyRO,EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=fileList->Count();
 	test(count==2);
 
@@ -504,7 +505,7 @@ LOCAL_C void testGetFilesExcept()
 	test.Next(_L("Can match everything except read only files"));
 	TUint excludeRO=KEntryAttReadOnly|KEntryAttMatchExclude;
 	r=TheFs.GetDir(_L("\\F32-TST\\GDIR\\*.CCC"),excludeRO,EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=fileList->Count();
 	test(count==4);
 
@@ -521,7 +522,7 @@ LOCAL_C void testGetFilesExcept()
 	test.Next(_L("Can match everything except system and readonly files"));
 	TUint excludeSystemAndRO=KEntryAttReadOnly|KEntryAttSystem|KEntryAttMatchExclude;
 	r=TheFs.GetDir(_L("\\F32-TST\\GDIR\\*.CCC"),excludeSystemAndRO,EAscending,fileList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=fileList->Count();
 	test(count==2);
 
@@ -532,9 +533,9 @@ LOCAL_C void testGetFilesExcept()
 	delete fileList;
 
 	r=TheFs.SetAtt(_L("\\F32-TST\\GDIR\\RONLY1.CCC"),0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetAtt(_L("\\F32-TST\\GDIR\\RONLY2.CCC"),0,KEntryAttReadOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void testGetHidden()
@@ -554,22 +555,22 @@ LOCAL_C void testGetHidden()
 	MakeDir(_L("\\F32-TST\\GDIR\\Dirhiddensystem.qqq\\"));
 
 	TInt r=TheFs.SetAtt(_L("FileHidden.qqq"),KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetAtt(_L("Filesystem.qqq"),KEntryAttSystem,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetAtt(_L("FilehiddenSystem.qqq"),KEntryAttSystem|KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetAtt(_L("dirhidden.qqq"),KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetAtt(_L("dirsystem.qqq"),KEntryAttSystem,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetAtt(_L("dirhiddensystem.qqq"),KEntryAttSystem|KEntryAttHidden,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 // Files and directories not hidden or system
 	CDir* dir;
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttDir,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=dir->Count();
 	test(count==2);
 	TEntry entry;
@@ -581,7 +582,7 @@ LOCAL_C void testGetHidden()
 	
 // Files only
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttNormal,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==1);
 	entry=(*dir)[0];
@@ -590,7 +591,7 @@ LOCAL_C void testGetHidden()
 
 // Directories only
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttDir|KEntryAttMatchExclusive,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==1);
 	entry=(*dir)[0];
@@ -599,7 +600,7 @@ LOCAL_C void testGetHidden()
 
 // Files + hidden
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttHidden,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==2);
 	entry=(*dir)[0];
@@ -610,7 +611,7 @@ LOCAL_C void testGetHidden()
 
 // Files + system
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttHidden,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==2);
 	entry=(*dir)[0];
@@ -621,7 +622,7 @@ LOCAL_C void testGetHidden()
 
 // Files + hidden + system
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttHidden|KEntryAttSystem,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==4);
 	entry=(*dir)[0];
@@ -636,7 +637,7 @@ LOCAL_C void testGetHidden()
 
 // Dirs + hidden
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttHidden|KEntryAttDir|KEntryAttMatchExclusive,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==2);
 	entry=(*dir)[0];
@@ -647,7 +648,7 @@ LOCAL_C void testGetHidden()
 
 // Dirs + system
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttSystem|KEntryAttDir|KEntryAttMatchExclusive,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==2);
 	entry=(*dir)[0];
@@ -658,7 +659,7 @@ LOCAL_C void testGetHidden()
 
 // Dirs + hidden + system
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttHidden|KEntryAttSystem|KEntryAttDir|KEntryAttMatchExclusive,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==4);
 	entry=(*dir)[0];
@@ -674,7 +675,7 @@ LOCAL_C void testGetHidden()
 
 // Files + Dirs + hidden
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttHidden|KEntryAttDir,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==4);
 	entry=(*dir)[0];
@@ -689,7 +690,7 @@ LOCAL_C void testGetHidden()
 
 // Files + Dirs + system
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttSystem|KEntryAttDir,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==4);
 	entry=(*dir)[0];
@@ -704,7 +705,7 @@ LOCAL_C void testGetHidden()
 
 // Files + Dirs + hidden + system
 	r=TheFs.GetDir(_L("*.qqq"),KEntryAttHidden|KEntryAttSystem|KEntryAttDir,ESortByName,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dir->Count();
 	test(count==8);
 	entry=(*dir)[0];
@@ -781,7 +782,7 @@ LOCAL_C void testDirDescending()
 	CDir* dir;
 	TUint sortOrder=ESortByName|EDirsFirst|EDescending;
 	TInt r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 //	TBuf8<16> result=_L("2,1,0,3,4,5");
 	TBuf<16> result=_L("2,1,0,3,4,5");
 
@@ -790,7 +791,7 @@ LOCAL_C void testDirDescending()
 // Test DirFirst - EAscending
 	sortOrder=ESortByName|EDirsFirst;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("3,4,5,0,1,2");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
@@ -798,14 +799,14 @@ LOCAL_C void testDirDescending()
 // Test DirLast - EDescending
 	sortOrder=ESortByName|EDirsLast|EDescending;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("3,4,5,2,1,0");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
 // Test DirLast - EAscending
 	sortOrder=ESortByName|EDirsLast;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("0,1,2,3,4,5");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
@@ -813,14 +814,14 @@ LOCAL_C void testDirDescending()
 // Test DirFirst - EDirDescending
 	sortOrder=ESortByName|EDirsFirst|EDirDescending;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("5,4,3,0,1,2");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
 // Test DirLast - EDirDescending
 	sortOrder=ESortByName|EDirsLast|EDirDescending;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("0,1,2,5,4,3");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
@@ -828,14 +829,14 @@ LOCAL_C void testDirDescending()
 // Test DirFirst - EDescending|EDirDescending
 	sortOrder=ESortByName|EDirsFirst|EDescending|EDirDescending;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("2,1,0,5,4,3");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
 // Test DirLast - EDescending|EDirDescending
 	sortOrder=ESortByName|EDirsLast|EDirDescending|EDescending;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("5,4,3,2,1,0");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
@@ -843,21 +844,21 @@ LOCAL_C void testDirDescending()
 // Test DirNoOrder - EDescending|EDirDescending
 	sortOrder=ESortByName|EDescending|EDirDescending;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("5,2,4,1,3,0");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
 // Test DirNoOrder - EDescending
 	sortOrder=ESortByName|EDescending;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("5,2,4,1,3,0");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
 // Test DirNoOrder - EAscending
 	sortOrder=ESortByName;
 	r=TheFs.GetDir(gDirDescendingBaseName,KEntryAttMaskSupported,sortOrder,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	result=_L("0,3,1,4,2,5");
 	TestDirDescendingOrder(result,*dir);
 	delete dir;
@@ -881,7 +882,7 @@ void TestDEF122894()
 	MakeFile(_L("\\F32-TST\\GDIR\\DEF122894\\Xxxxxxxx1.dat"));
 	CDir* dir;
 	TInt r=TheFs.GetDir(_L("\\F32-TST\\GDIR\\DEF122894\\"),KEntryAttMaskSupported,ESortByName|EAscending,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dir->Count() == 2);
 	TEntry entry1, entry2;
 	entry1 = (*dir)[0];

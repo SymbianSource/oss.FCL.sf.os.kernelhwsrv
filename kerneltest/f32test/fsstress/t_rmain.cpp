@@ -19,6 +19,7 @@
 #include <f32file.h>
 #endif
 #if !defined(__E32TEST_H__)
+#define	__E32TEST_EXTENSION__
 #include <e32test.h>
 #endif
 #if !defined(__E32HAL_H__)
@@ -77,11 +78,11 @@ GLDEF_C void Format(TInt aDrive)
 	RFormat format;
 	TInt count;
 	TInt r=format.Open(TheFs,driveBuf,EHighDensity,count);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	while(count)
 		{
 		TInt r=format.Next(count);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	format.Close();
 	}
@@ -107,12 +108,12 @@ LOCAL_C void DoTests(TInt aDrive)
 	gSessionPath=_L("?:\\F32-TST\\");
 	TChar driveLetter;
 	TInt r=TheFs.DriveToChar(aDrive,driveLetter);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	gSessionPath[0]=(TText)driveLetter;
 	r=TheFs.SetSessionPath(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDirAll(gSessionPath);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	TheFs.ResourceCountMarkStart();
 	
 	switch(aDrive)
@@ -269,7 +270,7 @@ GLDEF_C TInt E32Main()
 	test.Title();
 	test.Start(_L("Starting tests..."));
 	r=TheFs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 //	TheFs.SetAllocFailure(gAllocFailOn);
 
 //	Default drive testing
@@ -278,7 +279,7 @@ GLDEF_C TInt E32Main()
 //	Remote drive testing
 	RThread clientThreadQ;
 	r=clientThreadQ.Create(_L("TestRemoteDrive"), TestRemoteDrive, KDefaultStackSize,KHeapSize,KHeapSize,NULL);	
-	test(r==KErrNone);	
+	test_KErrNone(r);	
 	TRequestStatus statq;
 	clientThreadQ.Logon(statq);
 	test.Next(_L("Resume clientThreadQ"));	
@@ -287,7 +288,7 @@ GLDEF_C TInt E32Main()
 //	MARM CF card drive testing (WINS emulates CF card on X)
 	RThread clientThreadX;
 	r=clientThreadX.Create(_L("TestXDrive"), TestXDrive, KDefaultStackSize,KHeapSize,KHeapSize,NULL);	
-	test(r==KErrNone);	
+	test_KErrNone(r);	
 	TRequestStatus statx;
 	clientThreadX.Logon(statx);
 	test.Next(_L("Resume clientThreadX"));	
@@ -296,7 +297,7 @@ GLDEF_C TInt E32Main()
 //	MARM RAM drive testing (WINS emulates FAT filesystem on Y)  	
 	RThread clientThreadY;
 	r=clientThreadY.Create(_L("TestYDrive"), TestYDrive, KDefaultStackSize,KHeapSize,KHeapSize,NULL);	
-	test(r==KErrNone);	
+	test_KErrNone(r);	
 	TRequestStatus staty;
 	clientThreadY.Logon(staty);
 	test.Next(_L("Resume clientThreadY"));	

@@ -51,7 +51,7 @@ TInt StringLength(const TUint8* aPtr);
 #define __KERNEL_CHECK_RADIX(r)		__ASSERT_ALWAYS(((r)==EDecimal)||((r)==EHex),Panic(EInvalidRadix))
 #define	APPEND_BUF_SIZE				10
 #define	APPEND_BUF_SIZE_64			20
-#define	HEAP_PANIC(r)				RHeapK::Fault(r)
+#define	HEAP_PANIC(r)				Kern::Printf("HEAP CORRUPTED %s %d", __FILE__, __LINE__), RHeapK::Fault(r)
 #define	GET_PAGE_SIZE(x)			x = M::PageSizeInBytes()
 #define	DIVISION_BY_ZERO()			FAULT()
 
@@ -71,7 +71,7 @@ TInt StringLength(const TUint8* aPtr);
 #define __KERNEL_CHECK_RADIX(r)
 #define	APPEND_BUF_SIZE				32
 #define	APPEND_BUF_SIZE_64			64
-#define	HEAP_PANIC(r)				Panic(r)
+#define	HEAP_PANIC(r)				RDebug::Printf("HEAP CORRUPTED %s %d", __FILE__, __LINE__), Panic(r)
 #define	GET_PAGE_SIZE(x)			UserHal::PageSizeInBytes(x)
 #define	DIVISION_BY_ZERO()			User::RaiseException(EExcIntegerDivideByZero)
 #define	__CHECK_THREAD_STATE

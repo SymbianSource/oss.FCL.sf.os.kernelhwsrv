@@ -2093,8 +2093,8 @@ TInt TUsbcDescriptorPool::GetDeviceDescriptor(TInt aIndex) const
 		}
 	return iDescriptors[aIndex]->GetDescriptorData(iEp0_TxBuf, KUsbcBufSz_Ep0Tx);
 	}
-
-
+	
+	
 //
 // Put the current Configuration or Other_Speed_Configuration descriptor + all the following
 // descriptors in the Ep0 Tx buffer.
@@ -2112,22 +2112,46 @@ TInt TUsbcDescriptorPool::GetConfigurationDescriptor(TInt aIndex) const
 		__KTRACE_OPT(KPANIC, Kern::Printf("  Warning: Descriptor %d requested but not available", aIndex));
 		return 0;
 		}
-	const TInt count = iDescriptors.Count();
+		
+	const TInt count = iDescriptors.Count();	
 	TInt copied = 0;
 	TUint8* buf = iEp0_TxBuf;
-	for (TInt i = aIndex; i < count; i++)
+	// pos == count is used so that otg descriptor is added to the end of returned descriptors
+	for (TInt pos = aIndex; pos < count + 1; pos++)
 		{
-		TUsbcDescriptorBase* const ptr = iDescriptors[i];
-		if ((aIndex == KDescPosition_OtherSpeedConfig) && (i == KDescPosition_Config))
+			
+		if ((aIndex == KDescPosition_OtherSpeedConfig) && (pos == KDescPosition_Config))
 			{
 			// Skip Config descriptor when returning Other_Speed_Config
 			continue;
 			}
-		if ((i == KDescPosition_Otg) && (iDescriptors[i] == NULL))
+			
+		if (pos == KDescPosition_Otg) 
 			{
-			__KTRACE_OPT(KUSB, Kern::Printf("  no OTG descriptor -> next"));
+			// Skip otg descriptor just now. add it when pos is count, so that OTG are added at the end
 			continue;
 			}
+						
+		TUsbcDescriptorBase* ptr = NULL;	
+		if (pos == count)
+			{
+				if (iDescriptors[KDescPosition_Otg] == NULL)
+					{
+					// Skip since there is no otg descriptor
+					__KTRACE_OPT(KUSB, Kern::Printf("  no otg descriptor"));
+					continue;				
+					}
+				else
+					{
+					// add otg to the end of returned descriptors
+					ptr = iDescriptors[KDescPosition_Otg];
+					}
+			}
+		else
+			{
+			ptr = iDescriptors[pos];
+			}
+
 		// We need to edit endpoint descriptors on the fly because we have only one copy
 		// of each and that copy has to contain different information, depending on the
 		// current speed and the type of descriptor requested.
@@ -2143,11 +2167,13 @@ TInt TUsbcDescriptorPool::GetConfigurationDescriptor(TInt aIndex) const
 				ptr->UpdateFs();
 				}
 			}
+
 		__KTRACE_OPT(KUSB, Kern::Printf("  desc[%02d]: type = 0x%02x size = %d ",
-										i, ptr->Type(), ptr->Size()));
+										pos, ptr->Type(), ptr->Size()));				
 		const TInt size = ptr->GetDescriptorData(buf, KUsbcBufSz_Ep0Tx - copied);
 		if (size == 0)
 			{
+			
 			__KTRACE_OPT(KPANIC,
 						 Kern::Printf("  Error: No Tx buffer space to copy this descriptor -> exiting"));
 			break;
@@ -2161,6 +2187,8 @@ TInt TUsbcDescriptorPool::GetConfigurationDescriptor(TInt aIndex) const
 			}
 		buf += size;
 		}
+		
+		
 	__KTRACE_OPT(KUSB, Kern::Printf("  copied %d bytes", copied));
 	return copied;
 	}

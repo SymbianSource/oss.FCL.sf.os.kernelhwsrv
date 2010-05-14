@@ -401,7 +401,7 @@ enum TMemModelAttributes
 	};
 
 /** @test */
-enum TKernelHeapDebugFunction {EDbgMarkStart,EDbgMarkCheck,EDbgMarkEnd,EDbgSetAllocFail,EDbgSetBurstAllocFail,EDbgCheckFailure};
+enum TKernelHeapDebugFunction {EDbgMarkStart,EDbgMarkCheck,EDbgMarkEnd,EDbgSetAllocFail,EDbgSetBurstAllocFail,EDbgCheckFailure,EDbgGetAllocFail};
 
 /** @test */
 class TKernelHeapMarkCheckInfo

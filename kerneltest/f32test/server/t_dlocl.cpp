@@ -73,7 +73,7 @@ void testChangeKeyData()
 
     RLibrary testLib;
     TInt res=testLib.Load(EKDATA);
-    test(res==KErrNone);
+    test_KErrNone(res);
     THandleInfo handleInfo;
     testLib.HandleInfo(&handleInfo);
     test(handleInfo.iNumOpenInThread==2);
@@ -81,16 +81,16 @@ void testChangeKeyData()
 
     test.Printf(_L("Change to unknown dll \n"));                // Test with non keydata type dll
     res=KeyTranslator->ChangeKeyData(DUMMYDLL);
-    test(res==KErrArgument);
+    test_Value(res, res == KErrArgument);
     
     res=testLib.Load(EKDATA);
-    test(res==KErrNone);
+    test_KErrNone(res);
     testLib.HandleInfo(&handleInfo);
     test(handleInfo.iNumOpenInThread==2);
     testLib.Close();
 
     res=testLib.Load(DUMMYDLL);
-    test(res==KErrNone);
+    test_KErrNone(res);
     testLib.HandleInfo(&handleInfo);
     test(handleInfo.iNumOpenInThread==1);
     testLib.Close();
@@ -106,15 +106,15 @@ void testChangeKeyData()
     //
     test.Printf(_L("Change to EKDATA.dll\n"));
     res=KeyTranslator->ChangeKeyData(EKDATA);
-    test(res==KErrNone);
+    test_KErrNone(res);
     
     res=testLib.Load(EKDATA);
-    test(res==KErrNone);
+    test_KErrNone(res);
     testLib.HandleInfo(&handleInfo);
     test(handleInfo.iNumOpenInThread==2);
     testLib.Close();
     res=testLib.Load(DUMMYDLL);
-    test(res==KErrNone);
+    test_KErrNone(res);
     testLib.HandleInfo(&handleInfo);
     test(handleInfo.iNumOpenInThread==1);
     testLib.Close();
@@ -134,16 +134,16 @@ void testChangeKeyData()
 
     test.Printf(_L("Change back to Default KeyData\n"));
     res=KeyTranslator->ChangeKeyData(_L(""));
-    test(res==KErrNone);
+    test_KErrNone(res);
     
     res=testLib.Load(EKDATA);
-    test(res==KErrNone);
+    test_KErrNone(res);
     testLib.HandleInfo(&handleInfo);
     test(handleInfo.iNumOpenInThread==2);
     testLib.Close();
 
     res=testLib.Load(DUMMYDLL);
-    test(res==KErrNone);
+    test_KErrNone(res);
     testLib.HandleInfo(&handleInfo);
     test(handleInfo.iNumOpenInThread==1);
     testLib.Close();
@@ -280,7 +280,7 @@ static void SubscribeToSystemChangeNotification(RChangeNotifier& aNotifier, TReq
         test.Printf(_L("SubscribeToSystemChangeNotification(0x%x), attempt:%d\n"), aEventMask, i);   
 
         TInt nRes = aNotifier.Logon(aStatus);
-        test(nRes==KErrNone);
+        test_KErrNone(nRes);
 
         if(aStatus.Int() == KRequestPending)
             break;
@@ -322,11 +322,11 @@ void testChangeLocale()
     
     RChangeNotifier notifier;
     TInt res=notifier.Create();
-    test(res==KErrNone);
+    test_KErrNone(res);
     TRequestStatus stat;
     
     res=notifier.Logon(stat);
-    test(res==KErrNone);
+    test_KErrNone(res);
 	// initial value of stat already tested by t_chnot
 
     SubscribeToSystemChangeNotification(notifier, stat, EChangesLocale);
@@ -334,7 +334,7 @@ void testChangeLocale()
         test.Printf(_L("Change to US Locale\n"));   
         res=UserSvr::ChangeLocale(ELOCLUS);
         test.Printf(_L("res=%d\n"),res);
-        test(res==KErrNone);
+        test_KErrNone(res);
 
     WaitForSystemChange(notifier, stat, EChangesLocale);
     test(stat.Int() & EChangesLocale);
@@ -350,7 +350,7 @@ void testChangeLocale()
         test.Printf(_L("Change to GE Locale\n"));
         res=UserSvr::ChangeLocale(ELOCLGE);
         test.Printf(_L("res=%d\n"),res);
-        test(res==KErrNone);
+        test_KErrNone(res);
 
     WaitForSystemChange(notifier, stat, EChangesLocale);
     test(stat.Int() & EChangesLocale);
@@ -367,7 +367,7 @@ void testChangeLocale()
         test.Printf(_L("Load non ELOCL type DLL\n"));    
         res=UserSvr::ChangeLocale(DUMMYDLL);
         test.Printf(_L("res=%d\n"),res);
-        test(res == KErrNotSupported);
+        test_Value(res, res == KErrNotSupported);
     
     //-- ensure that there wasn't locale change
     const TInt KMaxAttempts = 100;
@@ -396,7 +396,7 @@ void testChangeLocale()
         test.Printf(_L("Change to US1 Locale\n"));  
         res=UserSvr::ChangeLocale(ELOCLUS1);
         test.Printf(_L("res=%d\n"),res);
-        test(res==KErrNone);
+        test_KErrNone(res);
     
     WaitForSystemChange(notifier, stat, EChangesLocale);
     test(stat.Int() & EChangesLocale);
@@ -437,7 +437,7 @@ void testChangeLocale()
         test.Printf(_L("Back to default UK Locale\n"));
         res=UserSvr::ChangeLocale(ELOCL_DEFAULT);
         test.Printf(_L("res=%d\n"),res);
-        test(res==KErrNone);
+        test_KErrNone(res);
     
     WaitForSystemChange(notifier, stat, EChangesLocale);
     test(stat.Int() & EChangesLocale);
@@ -459,12 +459,12 @@ void testChangeLocale()
         _LIT(KTestFile, "TEST.TXT");
         RFile file;
         res = file.Replace(TheFs, KTestFile, 0);
-        test(res == KErrNone);
+        test_KErrNone(res);
 
 
         res=UserSvr::ChangeLocale(ELOCLUS);
         test.Printf(_L("res=%d\n"),res);
-        test(res==KErrNone);
+        test_KErrNone(res);
 
 
     WaitForSystemChange(notifier, stat, EChangesLocale);
@@ -477,14 +477,14 @@ void testChangeLocale()
 
         _LIT8(KTestData, "Arsenal");
         res = file.Write(KTestData);
-        test(res==KErrNone);
+        test_KErrNone(res);
         file.Close();
 
         res = file.Open(TheFs, KTestFile, 0);
-        test(res == KErrNone);
+        test_KErrNone(res);
         file.Close();
         res = TheFs.Delete(KTestFile);
-        test(res==KErrNone);
+        test_KErrNone(res);
 
     //************************************************
 
@@ -650,11 +650,11 @@ void testExtendedLocale()
     TExtendedLocale locale;
     locale.LoadLocale(ELOCLUS);
     TInt r = locale.SaveSystemSettings();
-    test(r == KErrNone);
+    test_KErrNone(r);
     testExtendedUS(ELocaleLanguageSettings | ELocaleCollateSetting | ELocaleLocaleSettings | ELocaleTimeDateSettings, locale);
 
     r = locale.SetCurrencySymbol(TPtrC(_S("Leu")));
-    test(r == KErrNone);
+    test_KErrNone(r);
     TCurrencySymbol symbol;
     symbol.Set();
     test(symbol.Compare(TPtrC(_S("Leu"))) == 0);
@@ -668,35 +668,35 @@ void testExtendedLocale()
     eloclus.Copy(ELOCLUS);
     eloclus.Append(TPtrC(KDLLExtension));
     r = locale.GetLocaleDllName(ELocaleLanguageSettings, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test.Printf(_L("dllName looking for %s (%s)\n"), dllName.Ptr(), eloclus.Ptr());
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleCollateSetting, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleLocaleSettings, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleTimeDateSettings, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.LoadLocaleAspect(ELocaleLocaleSettings | ELocaleTimeDateSettings, ELOCLGE);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     r = locale.SaveSystemSettings();
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     testExtendedUS(ELocaleLanguageSettings | ELocaleCollateSetting, locale);
 
@@ -719,25 +719,25 @@ void testExtendedLocale()
     eloclge.Copy(ELOCLGE);
     eloclge.Append(KDLLExtension);
     r = locale.GetLocaleDllName(ELocaleLanguageSettings, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleCollateSetting, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleLocaleSettings, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test(dllName.Find(eloclge) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleTimeDateSettings, dllName);
-    test(r == KErrNone);
+    test_KErrNone(r);
     test(dllName.Find(eloclge) != KErrNotFound);
     
     dllName.FillZ();

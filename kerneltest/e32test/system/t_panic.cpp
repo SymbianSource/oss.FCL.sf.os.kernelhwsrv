@@ -27,7 +27,9 @@ GLDEF_C TInt E32Main()
 	RUndertaker u;
 	TInt r=u.Create();
 	test(r==KErrNone);
-	FOREVER
+	//to avoid RVCT4 warning of unreachable statement.
+	volatile TInt forever = 0;
+	while(forever)
 		{
 		TInt h;
 		TRequestStatus s;

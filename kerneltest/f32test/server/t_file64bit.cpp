@@ -25,6 +25,7 @@
 //
 
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
@@ -57,7 +58,7 @@ TInt GenerateBigFileContents()
     RBuf8 buf;
     
     r = buf.CreateMax(KBufSize);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     RFile64 file;
 	TFileName fileName;
@@ -65,10 +66,10 @@ TInt GenerateBigFileContents()
 	fileName.Append(KTestPath);
 	fileName.Append(_L("File4GBMinusOne.txt"));
 	r = file.Replace(TheFs,fileName, EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
     r = file.SetSize(K4GBMinusOne);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	TInt64 nNumberOfBytesToWrite = 0;
 	TInt64 nNumberOfBytesWritten = 0;
@@ -89,7 +90,7 @@ TInt GenerateBigFileContents()
 		}
 	
 	r = file.Flush();
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("\nFile writing is completed!!"));
 	
 	
@@ -177,7 +178,7 @@ RFsTest& RFsTest::Replace(const TDesC &anOldName, const TDesC &aNewName)
 	{
 	test.Printf(_L("%S File Replaced with %S\n"),&anOldName,&aNewName);\
 	TInt r = TheFs.Replace(anOldName,aNewName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 	
@@ -190,20 +191,9 @@ RFsTest& RFsTest::ReadFileSection(const TDesC& aName, TInt64 aPos,TDes8& aBuffer
 	TInt r = TheFs.ReadFileSection(aName,aPos,aBuffer,aLen);
 	TInt len = aBuffer.Length();
 	
-	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
-		{
-		if(aPos < K4GB) 
-			test(r == KErrNone);
-		else
-			{
-			test(r == KErrNone);
-			test(len == 0);				
-			}
-		}
-	else
-		{
-		test (r == KErrNone);	
-		}
+	test_KErrNone(r);
+	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse && aPos >= K4GB) 
+		test(len == 0);
 	return(*this);
 	}
 	
@@ -215,7 +205,7 @@ RFsTest& RFsTest::GetDir(const TDesC &aName, TUint anEntryAttMask, TUint anEntry
 	{
 	test.Printf(_L("Name of the directory for which listing is required %S\n"),&aName);	
 	TInt r = TheFs.GetDir(aName,anEntryAttMask,anEntrySortKey,anEntryList);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -226,7 +216,7 @@ RFsTest& RFsTest::GetDir(const TDesC& aName,TUint anEntryAttMask,TUint anEntrySo
 	{
 	test.Printf(_L("Name of the directory for which directory and file listing is required %S\n"),&aName);	
 	TInt r = TheFs.GetDir(aName,anEntryAttMask,anEntrySortKey,anEntryList,aDirList);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -237,7 +227,7 @@ RFsTest& RFsTest::GetDir(const TDesC& aName,const TUidType& anEntryUid,TUint anE
 	{
 	test.Printf(_L("Name of the directory for which listing is required %S\n"),&aName);	
 	TInt r = TheFs.GetDir(aName,anEntryUid,anEntrySortKey,aFileList);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);	
 	}
 		
@@ -256,7 +246,7 @@ RFileTest& RFileTest::Create(const TDesC& aName, TUint aFileMode)
 	{
 	test.Printf(_L("%S create %S in %d Mode\n"),&iName,&aName,aFileMode);
 	TInt r = RFile64::Create(TheFs,aName,aFileMode);
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	return(*this);		
 	}
 	
@@ -268,7 +258,7 @@ RFileTest& RFileTest::Replace(const TDesC& aName)
 	{
 	test.Printf(_L("%S replace %S\n"),&iName,&aName);
 	TInt r = RFile64::Replace(TheFs,aName,EFileStream|EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -280,10 +270,7 @@ RFileTest& RFileTest::Replace(const TDesC& aName, TUint aFileMode)
 	{
 	test.Printf(_L("%S replace %S in %d Mode\n"),&iName,&aName, aFileMode);
 	TInt r = RFile64::Replace(TheFs,aName,aFileMode);
-	if (r == KErrNone)
-		test(r == KErrNone);
-	else
-		test(r == KErrBadName);
+	test_Value(r, r == KErrNone || r == KErrBadName);
 	return(*this);		
 	}
 	
@@ -294,7 +281,7 @@ RFileTest& RFileTest::Open(const TDesC& aName)
 	{
 	test.Printf(_L("%S open %S\n"),&iName,&aName);
 	TInt r = RFile64::Open(TheFs,aName,EFileWrite|EFileShareAny);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -305,7 +292,7 @@ RFileTest& RFileTest::Open(const TDesC& aName, TUint aFileMode)
 	{
 	test.Printf(_L("%S open %S in %d Mode\n"),&iName,&aName, aFileMode);
 	TInt r = RFile64::Open(TheFs,aName,aFileMode);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -316,7 +303,7 @@ RFileTest& RFileTest::Temp(const TDesC& aPath,TFileName& aName,TUint aFileMode)
 	{
 	test.Printf(_L("%S Temp file %S in %d Mode\n"),&iName,&aName, aFileMode);
 	TInt r = RFile64::Temp(TheFs,aPath,aName,aFileMode);	
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 	
@@ -335,7 +322,7 @@ RFileTest& RFileTest::Lock(TInt64 aPos, TInt64 aLen)
 	{
 	test.Printf(_L("%S lock   0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Lock(aPos,aLen);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -346,7 +333,7 @@ RFileTest& RFileTest::LockE(TInt64 aPos, TInt64 aLen)
 	{
 	test.Printf(_L("%S lockE  0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Lock(aPos,aLen);
-	test(r == KErrLocked);
+	test_Value(r, r == KErrLocked);
 	return(*this);
 	}
 
@@ -357,7 +344,7 @@ RFileTest& RFileTest::UnLock(TInt64 aPos, TInt64 aLen)
 	{
 	test.Printf(_L("%S ulock  0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::UnLock(aPos,aLen);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -368,7 +355,7 @@ RFileTest& RFileTest::UnLockE(TInt64 aPos, TInt64 aLen)
 	{
 	test.Printf(_L("%S ulockE 0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::UnLock(aPos,aLen);
-	test(r == KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	return(*this);
 	}
 
@@ -391,13 +378,17 @@ RFileTest& RFileTest::Write(const TDesC8& aDes)
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if((seekPos + aDes.Length()) < K4GB)
-			test(r == KErrNone);
+			{
+			test_KErrNone(r);
+			}
 		else
-			test(r == KErrNotSupported);
+			{
+			test_Value(r, r == KErrNotSupported);
+			}
 		}
 	else
 		{
-		test (r == KErrNone);	
+		test_KErrNone(r);	
 		}
 	return(*this);
 	}
@@ -423,10 +414,13 @@ RFileTest& RFileTest::Write(const TDesC8 &aDes, TRequestStatus &aStatus)
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if((seekPos + aDes.Length()) < K4GB)
+			{
 			test(aStatus.Int() == KErrNone);
+			}
 		else
+			{
 			test(aStatus.Int() == KErrNotSupported);
-		
+			}
 		}
 	else
 		{
@@ -452,13 +446,17 @@ RFileTest& RFileTest::Write(const TDesC8& aDes, TInt aLength)
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if((seekPos + aLength) < K4GB)
-			test(r == KErrNone);
+			{
+			test_KErrNone(r);
+			}
 		else
-			test(r == KErrNotSupported);
+			{
+			test_Value(r, r == KErrNotSupported);
+			}
 		}
 	else
 		{
-		test(r == KErrNone);
+		test_KErrNone(r);
 		}
 	return(*this);	
 	}	
@@ -508,13 +506,17 @@ RFileTest& RFileTest::WriteP(TInt64 aPos, const TDesC8& aDes)
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if ((aPos + aDes.Length()) < K4GB)
-			test(r == KErrNone);
+			{
+			test_KErrNone(r);
+			}
 		else
-			test(r == KErrNotSupported);
+			{
+			test_Value(r, r == KErrNotSupported);
+			}
 		}
 	else
 		{
-		test(r == KErrNone);
+		test_KErrNone(r);
 		}
 	return(*this);
 	}
@@ -529,7 +531,7 @@ RFileTest& RFileTest::WriteU(TUint aPos, const TDesC8& aDes)
 	TInt r = RFile64::Write(aPos,aDes);
 	if( KErrNone == r)	// this is to ensure that the written data is committed and not cached.
 		r = RFile64::Flush();
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -548,19 +550,29 @@ RFileTest& RFileTest::Write(TInt64 aPos, const TDesC8& aDes, TInt aLen)
 		if ((aPos + aLen) < K4GB)
 			{
 			if (aLen < 0)
-				test(r == KErrArgument);
+				{
+				test_Value(r, r == KErrArgument);
+				}
 			else
-				test(r == KErrNone);
+				{
+				test_KErrNone(r);
+				}
 			}
 		else
-			test(r == KErrNotSupported);
+			{
+			test_Value(r, r == KErrNotSupported);
+			}
 		}
 	else
 		{
 		if (aLen < 0)
-			test(r == KErrArgument);
+			{
+			test_Value(r, r == KErrArgument);
+			}
 		else
-			test(r == KErrNone);
+			{
+			test_KErrNone(r);
+			}
 		}
 	return(*this);
 	}
@@ -575,7 +587,7 @@ RFileTest& RFileTest::WriteU(TUint aPos, const TDesC8& aDes, TInt aLen)
 	TInt r = RFile64::Write(aPos,aDes,aLen);
 	if( KErrNone == r)	// this is to ensure that the written data is committed and not cached.
 		r = RFile64::Flush();
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -587,10 +599,7 @@ RFileTest& RFileTest::WriteE(TInt64 aPos, const TDesC8& aDes, TInt aLen)
 	{
 	test.Printf(_L("%S writeE 0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Write(aPos,aDes,aLen);
-	if (aLen < 0)
-		test(r == KErrArgument);
-	else
-		test(r == KErrLocked);
+	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrLocked);
 	return(*this);
 	}
 
@@ -701,7 +710,7 @@ RFileTest& RFileTest::Read(TDes8& aDes)
 	{
 	test.Printf(_L("%S read \n"),&iName);
 	TInt r = RFile64::Read(aDes);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);
 	}
 
@@ -770,10 +779,7 @@ RFileTest& RFileTest::Read(TDes8 &aDes, TInt aLen)
 	{
 	test.Printf(_L("%S read 0x%08x bytes\n"),&iName,aLen);
 	TInt r = RFile64::Read(aDes,aLen);
-	if(aLen < 0)
-		test(r == KErrArgument);
-	else
-		test(r == KErrNone);
+	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrNone);
 	return(*this);
 	}
 	
@@ -785,10 +791,7 @@ RFileTest& RFileTest::Read(TInt64 aPos, TDes8& aDes, TInt aLen)
 	test.Printf(_L("%S read   0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Read(aPos,aDes,aLen);
 	TInt len = aDes.Length();
-	if(aLen < 0)
-		test(r == KErrArgument);
-	else 
-		test(r == KErrNone);
+	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrNone);
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{	
 		if(aPos >= K4GB) 
@@ -804,7 +807,7 @@ RFileTest& RFileTest::ReadE(TInt64 aPos, TDes8& aDes, TInt aLen)
 	{
 	test.Printf(_L("%S readE  0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Read(aPos,aDes,aLen);
-	test(r == KErrLocked);
+	test_Value(r, r == KErrLocked);
 	return(*this);
 	}
 
@@ -836,7 +839,7 @@ RFileTest& RFileTest::ReadP(TInt64 aPos, TDes8& aDes)
 	{
 	test.Printf(_L("%S read   0x%lx\n"),&iName,aPos);
 	TInt r = RFile64::Read(aPos,aDes);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);	
 	}
 
@@ -848,7 +851,7 @@ RFileTest& RFileTest::ReadU(TUint aPos, TDes8& aDes)
 	{
 	test.Printf(_L("%S read   0x%lx\n"),&iName,aPos);
 	TInt r = RFile64::Read(aPos,aDes);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	return(*this);	
 	}
 
@@ -873,10 +876,7 @@ RFileTest& RFileTest::ReadU(TUint aPos, TDes8& aDes, TInt aLen)
 	{
 	test.Printf(_L("%S read   0x%lx-0x%lx\n"),&iName,aPos,aPos+aLen-1);
 	TInt r = RFile64::Read(aPos,aDes,aLen);
-	if(aLen < 0)
-		test(r == KErrArgument);
-	else 
-		test(r == KErrNone);
+	test_Value(r, r == (aLen < 0) ? KErrArgument : KErrNone);
 	return(*this);
 	}
 
@@ -919,13 +919,17 @@ RFileTest& RFileTest::SetSize(TInt64 aSize)
 	if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if(aSize < K4GB)
-			test(r == KErrNone);
+			{
+			test_KErrNone(r);
+			}
 		else
-			test(r == KErrNotSupported);
+			{
+			test_Value(r, r == KErrNotSupported);
+			}
 		}
 	else
 		{
-		test(r == KErrNone);
+		test_KErrNone(r);
 		}
 	return(*this);
 	}
@@ -937,7 +941,7 @@ RFileTest& RFileTest::SetSizeE(TInt64 aSize)
 	{
 	test.Printf(_L("%S sizeE: 0x%lx\n"),&iName,aSize);
 	TInt r = RFile64::SetSize(aSize);
-	test(r == KErrLocked);
+	test_Value(r, r == KErrLocked);
 	return(*this);
 	}
 
@@ -952,13 +956,17 @@ RFileTest& RFileTest::Size(TInt64& aSize)
     if(KFileSizeMaxLargerThan4GBMinusOne == EFalse)
 		{
 		if(aSize < K4GB)
-			test(r == KErrNone);
+			{
+			test_KErrNone(r);
+			}
 		else
-			test(r == KErrTooBig);
+			{
+			test_Value(r, r == KErrTooBig);
+			}
 		}
 	else
 		{
-		test(r == KErrNone);
+		test_KErrNone(r);
 		}
 	return(*this);	
 
@@ -970,10 +978,7 @@ RFileTest& RFileTest::Seek(TSeek aMode, TInt64& aPos)
 	{
 	test.Printf(_L("Seek to pos %LD in %d Mode\n"),aPos, aMode);
 	TInt r = RFile64::Seek(aMode, aPos);
-	if(aPos < 0)
-		test(r == KErrArgument);
-	else
-		test(r == KErrNone);
+	test_Value(r, r == (aPos < 0) ? KErrArgument : KErrNone);
 	return(*this);	
 	}
 
@@ -1012,7 +1017,7 @@ void TestOpen2GB()
 	
 	test.Next(_L("2GB File: Open"));
 	TInt r = TheFs.Entry(fileName, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test((TUint) entry.iSize == testSize);
 
     TestRFile1.Open(fileName, EFileRead);
@@ -1023,7 +1028,7 @@ void TestOpen2GB()
 	
 	TestRFile1.Close();
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -1060,7 +1065,7 @@ void TestOpen3GB()
 		
 	test.Next(_L("3GB File: Open"));
 	r = TheFs.Entry(fileName, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test((TUint) entry.iSize == testSize);
 	
 	TestRFile1.Open(fileName,EFileRead);
@@ -1070,7 +1075,7 @@ void TestOpen3GB()
 	TestRFile1.Close();
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -1107,7 +1112,7 @@ void TestOpen4GBMinusOne()
 	
 	test.Next(_L("4GB-1 File: Open"));
 	r = TheFs.Entry(fileName, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test((TUint) entry.iSize == testSize);
 	
@@ -1119,7 +1124,7 @@ void TestOpen4GBMinusOne()
 	TestRFile1.Close();
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 	
 /**
@@ -1156,7 +1161,7 @@ void TestOpen4GB()
 	
 	test.Next(_L("4GB File: Open"));
 	r = TheFs.Entry(fileName, entry);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	if ((TUint) entry.iSize == testSize)
 		{
@@ -1167,7 +1172,7 @@ void TestOpen4GB()
 		}
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 		
 	}	
 	
@@ -1254,10 +1259,10 @@ void TestOpenMoreThan2GB()
 	
 	RFile64 file64;
 	TInt r = file64.Open(TheFs,fileName,EDeleteOnClose);
-	test (r == KErrArgument);
+	test_Value(r, r == KErrArgument);
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	}
 
@@ -1310,7 +1315,7 @@ void TestOpenRFileRFile64()
 	
 	test.Start(_L("Test opening a file using RFile and RFile64 in file sharing mode\n"));
 	TInt r = file.Replace(TheFs,fileName,EFileShareAny|EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	TBuf8<100> writeBuf;
 	TBuf8<100> readBuf;
@@ -1322,11 +1327,11 @@ void TestOpenRFileRFile64()
 		
    	test.Next(_L("Write 100 bytes to the file\n"));
 	r = file.Write(0, writeBuf, 100);	
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Read 100 bytes from position 0"));
 	r = file.Read(0, readBuf, 100); 
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Compare the read data to the written data"));
 	test(readBuf == writeBuf);
@@ -1340,13 +1345,13 @@ void TestOpenRFileRFile64()
 	
 	test.Next(_L("Query the file size using Rfile::Size()\n"));
 	r = file.Size(size);
-	test (r == KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	
 	test.Next(_L("Seek to the file position using 2GB+5 using RFile::Seek()\n"));
 	TUint seekPos1 = K2GB + 5;
 	TInt seekPos  = (TInt)seekPos1;
 	r = file.Seek(ESeekStart,seekPos);
-	test(r == KErrArgument);
+	test_Value(r, r == KErrArgument);
 	
 	test.Next(_L("Get the file size using RFile64::Size()\n"));
 	TestRFile1.Size(size64);
@@ -1374,14 +1379,14 @@ void TestOpenRFileRFile64()
 	
 	test.Next(_L("Open the file using Rfile::Open()\n"));
 	r = file.Open(TheFs,fileName,EFileShareAny|EFileWrite);
-	test(r == KErrTooBig);
+	test_Value(r, r == KErrTooBig);
 	
 	test.Next(_L("Open the file using Rfile64::Open() and close\n"));
 	TestRFile1.Open(fileName,EFileShareAny|EFileWrite);
 	TestRFile1.Close();
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -1425,7 +1430,7 @@ void TestCreateTempFile()
 	testDir.Append(KTestPath);
 	
 	TInt r = TheFs.MkDir(testDir);
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	
 	TFileName fileName;
 	TestRFile1.Temp(testDir, fileName, EFileWrite|EDeleteOnClose);
@@ -1486,7 +1491,7 @@ void TestCreateTempFile()
 	
 	test.Next(_L("Delete the temporary file\n"));
 	r = TheFs.Delete(fileName);
-	test(r == KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	
 	test.Next(_L("Create a temporary file using RFile64::Temp without EDeleteOnClose flag\n"));
 	TestRFile1.Temp(testDir, fileName, EFileWrite);
@@ -1496,7 +1501,7 @@ void TestCreateTempFile()
 	
 	test.Next(_L("Delete the temporary the file\n"));	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	}
 
@@ -1625,10 +1630,10 @@ void TestCreateRFile64()
 	test.Next(_L("create a file with InvalidPath and fileName\n"));	
 	RFile64 file64;
 	TInt r = file64.Create(TheFs, _L("C:\\InvalidPathName\\FileName"),EFileWrite);
-	test(r == KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}	
 	
 /**
@@ -1775,10 +1780,10 @@ void TestReplaceRFile64()
 	test.Next(_L("Replace a file FileLargeOne.txt with invalid path\n"));	
 	RFile64 file64;
 	TInt r = file64.Replace(TheFs,_L("C:\\InvalidPath\\FileLargeOne.Txt"),EFileWrite);
-	test (r == KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -1870,7 +1875,7 @@ void TestReplaceRFile64RFs()
 	test.Next(_L("Close the file and delete\n"));
 	TestRFile1.Close();
 	TInt r = TheFs.Delete(fileNameReplace);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -1901,39 +1906,39 @@ void TestRFile64AdoptFromClient()
 
 	RProcess p;
 	TInt r = p.Create(_L("FHServer64Bit.exe"), KNullDesC);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	
 	test.Next(_L("Connect to the File server \n"));
 	RFs fs;
 	r = fs.Connect();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
 	test(resCount == 0);
 
 	r = fs.ShareProtected();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = fs.CreatePrivatePath(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = fs.SetSessionToPrivate(gDrive);
 	
 	test.Next(_L("Create a file and set the file size to 4GB-1\n"));
 	RFile64 file1;
 	r = file1.Replace(fs,KClientFileName,EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file1.SetSize(K4GB-1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Write few bytes to the location 4GB-10, length = 9bytes\n"));
 	r = file1.Write(K4GB-10,KTestData3(),9);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	r = p.SetParameter(3, gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	p.Resume();
 	
@@ -1945,39 +1950,39 @@ void TestRFile64AdoptFromClient()
 		r = handsvr.Connect();
 		}
 	while(r == KErrNotFound);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = handsvr.SetTestDrive(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = fs.SetSessionToPrivate(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = file1.Open(fs,KClientFileName,EFileRead);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	// pass the file handle to FHServer
 	test.Next(_L("RFile::TransferToServer()"));
 
 	TIpcArgs ipcArgs;
 	r = file1.TransferToServer(ipcArgs, 0, 1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Adopt the already open file from a client using RFile64::AdoptFromClient()\n"));
 	r = handsvr.PassFileHandleProcessLargeFileClient(ipcArgs);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// verify that the original file handle's position is unchanged
 	TInt64 pos = 0;
 	r = file1.Seek(ESeekCurrent, pos);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(pos == 0);
 	// make sure we can still use it
 
 	test.Next(_L("Read the file from position 4GB-10 and compare the data\n"));
 	TBuf8<9> rbuf;
 	r = file1.Read(K4GB-10,rbuf);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test (rbuf == KTestData3);
 
 	// Close the file
@@ -1985,14 +1990,14 @@ void TestRFile64AdoptFromClient()
 	handsvr.Exit();
 	handsvr.Close();
 	r = fs.MkDir(_L("C:\\mdir"));
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 		
 	// Check the number of open file handles
 	resCount = fs.ResourceCount();
 	test(resCount == 0);
 
 	r = fs.Delete(KClientFileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	fs.Close();
 	}
 
@@ -2031,39 +2036,39 @@ void TestRFile64AdoptFromCreator()
 	test.Next(_L("Create a process named FHServer64Bit.exe\n"));
 	RProcess p;
 	r = p.Create(_L("FHServer64Bit.exe"), KNullDesC);
-	test(r == KErrNone);
+	test_KErrNone(r);
 		
 	test.Next(_L("Connect to the file server\n"));
 	RFs fs;
 	r = fs.Connect();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
 	test(resCount == 0);
 
 	r = fs.ShareProtected();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = fs.CreatePrivatePath(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = fs.SetSessionToPrivate(gDrive);
 	
 	test.Next(_L("Create a file and set the file size to 4GB-1\n"));
 	RFile64 file1;
 	r = file1.Replace(fs,KClientFileName,EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file1.SetSize(K4GB-1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Write few bytes to the location 4GB-10, length = 3bytes\n"));
 	r = file1.Write(K4GB-10,KTestData2(),3);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	r = file1.Open(fs, KClientFileName, EFileWrite);
 
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	// NB slot 0 is reserved for the command line
 
@@ -2072,21 +2077,21 @@ void TestRFile64AdoptFromCreator()
 	r = file1.TransferToProcess(p, 1, 2);
 
 	r = p.SetParameter(3, gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = fs.SetSessionToPrivate(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// make sure we can still read from the file
 	TBuf8<3> rbuf;
 	r = file1.Read(K4GB-10,rbuf,3);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = rbuf.CompareF(KTestData2());
-	test(r == KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 
 	r = fs.MkDir(_L("C:\\mdir"));
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	
 	// Check the number of open file handles - 
 	// should be 1 (the one duplicated for the other process)
@@ -2106,13 +2111,13 @@ void TestRFile64AdoptFromCreator()
 		r = handsvr.Connect();
 		}
 	while(r == KErrNotFound);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = handsvr.SetTestDrive(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// wait for server to read the file
 	r = handsvr.PassFileHandleProcessLargeFileCreator();
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	
 	// cleanup	
@@ -2151,37 +2156,37 @@ void TestRFile64AdoptFromServer()
 	test.Next(_L("Connect to the file server\n"));
 	RFs fs;
 	r = fs.Connect();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// Check the number of open file handles
 	TInt resCount = fs.ResourceCount();
 	test(resCount == 0);
 
 	r = fs.ShareProtected();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = fs.CreatePrivatePath(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = fs.SetSessionToPrivate(gDrive);
 	
 	test.Next(_L("Create a file and set the file size to 4GB-1\n"));
 	RFile64 file1;
 	r = file1.Replace(fs,KClientFileName,EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file1.SetSize(K4GB-1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	
 	r = file1.Write(K4GB-10,KTestData3(),9);
-	test(r == KErrNone);
+	test_KErrNone(r);
 		
 	file1.Close();
 	r = fs.Delete(KClientFileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	RProcess p;
 	r = p.Create(_L("FHServer64Bit.exe"), KNullDesC);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	// Request an open file (write mode) from the server
 	// using RFile64::AdoptFromServer()
 	
@@ -2193,10 +2198,10 @@ void TestRFile64AdoptFromServer()
 		r = handsvr.Connect();
 		}
 	while(r == KErrNotFound);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	r = handsvr.SetTestDrive(gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	TInt ssh;
 	TInt fsh = handsvr.GetFileHandleLargeFile2(ssh, EFileWrite);
@@ -2215,30 +2220,30 @@ void TestRFile64AdoptFromServer()
 
 	RFile64 file;
 	r = file.AdoptFromServer(fsh, ssh);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Read the file from position 4GB-10 and compare the data\n"));
 	TBuf8<9> rbuf;
 	r = file.Read(K4GB-10,rbuf);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	// server should write KTestData1 ("Server!!!") to file
 	test (rbuf == KTestData4);
 
 	TFileName fileName;
 	r = file.FullName(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	file.Close();
 	//cleanup
 	r = fs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 		
 	TFileName sessionPath;
 	r = fs.SessionPath(sessionPath);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	r = fs.RmDir(sessionPath);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	fs.Close();
 	
@@ -2271,7 +2276,7 @@ void TestOpenAndReadSyncLargeFile()
 	TBuf8<KBufSize> readBuf2;
 	TUint i;
 	TInt r = GenerateBigFileContents();
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Open & Read Synchronously Large File From Diff Offset:"));
 
@@ -2901,7 +2906,7 @@ void TestOpenAndReadAsyncLargeFileWithLen()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}	
 
 /**
@@ -3038,7 +3043,7 @@ void TestOpenAndWriteSyncLargeFile()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -3177,7 +3182,7 @@ void TestOpenAndWriteAsyncLargeFile()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -3342,7 +3347,7 @@ void TestOpenAndWriteSyncLargeFileWithLen()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 		
 /**
@@ -3522,7 +3527,7 @@ void TestOpenAndWriteAsyncLargeFileWithLen()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 			
 /**
@@ -3594,7 +3599,7 @@ void TestFileLock()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 
@@ -3703,7 +3708,7 @@ void TestFileUnlock()
 
     TestRFile2.Close();
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -3797,7 +3802,7 @@ void TestFileSeek()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -3904,7 +3909,7 @@ void TestFileSeekBigFile()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 }
 
 /**
@@ -4011,7 +4016,7 @@ void TestSetsize()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 /**
@@ -4048,9 +4053,9 @@ void TestReadFilesection()
 	fileName.Append(_L("File4GBMinusOne.txt"));
 	
 	TInt r = file.Replace(TheFs,fileName,EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file.SetSize(K4GBMinusOne);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 	test.Next(_L("Read from a big file using RFs::ReadFileSection() from position 3GB-1,52byte lengths of data\n"));
@@ -4081,7 +4086,7 @@ void TestReadFilesection()
 		}
 		
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 	
 /**
@@ -4145,11 +4150,11 @@ void TestGetDirectory()
 	test.Next(_L("Get the directory listing, sort by size\n"));
 	RDir dir;
 	TInt r = dir.Open(TheFs, dirName, KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	TEntryArray entryArray;
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 
 	test.Next(_L("Check the files count in the directory. Number of files in a directory is 4\n"));
 	test(entryArray.Count() == gFilesInDirectory);
@@ -4297,12 +4302,12 @@ void TestReadDirectory()
 	test.Next(_L("Open the directory containing large file, using RDir open()\n"));
 	RDir dir;
 	TInt r = dir.Open(TheFs, dirName, KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Read the directory entry using TEntryArray as parameter\n"));
 	TEntryArray entryArray;
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 	
 	test.Next(_L("Check the count\n"));
 	test(entryArray.Count() == gFilesInDirectory);
@@ -4341,7 +4346,7 @@ void TestSortDirectory()
 	testDir0.Append(_L("F32-TEST"));
 	
 	TInt r = TheFs.MkDir(testDir0);
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	
 	test.Next(_L("Sort with number of entries =0\n"));
 	TestRFs.GetDir(testDir0, KEntryAttMaskSupported, ESortBySize, anEntryList);
@@ -4468,13 +4473,13 @@ void TestAddLDirectory()
 	file3GB.Append(_L("File3GB.txt"));
 	
 	TInt r = TheFs.Delete(file4GBMinusOne);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Delete(file2GBMinusOne);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Delete(file2GB);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Delete(file3GB);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 	
 /**
@@ -4521,20 +4526,20 @@ void TestTFileText()
 	
 	test.Next(_L("Open test file and get the file size using RFile64::Size() and set the file handle to TFileText object\n"));
 	r = file64.Replace(TheFs,fileName,EFileRead|EFileWrite);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = file64.SetSize(sizeK3GB);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	TFileText fileText;
 	fileText.Set(file64);
 	
 	test.Next(_L("Seek to the file end using TFileText::Seek()\n"));
 	r = fileText.Seek(ESeekEnd);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Get current file position using RFile64::Seek() and verify it is at file end.\n"));
 	TInt64 pos = 0;
 	r = file64.Seek(ESeekCurrent, pos);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test(pos == sizeK3GB);
 	
 	test.Next(_L("Write data to the file using RFile64::Write\n"));
@@ -4544,7 +4549,7 @@ void TestTFileText()
 	TPtrC8 bufPtr;
 	bufPtr.Set((TUint8*)record->Ptr(),record->Size()); // Size() returns length in bytes
 	r = file64.Write(pos,bufPtr);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Read data using TFileText::Read\n"));
 	TBuf<20> fileTextReadBuf;
@@ -4554,26 +4559,26 @@ void TestTFileText()
 	
 	test.Next(_L("Seek to the file end using TFileText::Seek(ESeekEnd)\n"));
 	r = fileText.Seek(ESeekEnd);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Write known data using TFileText::Write\n"));
 	TBuf<20> fileTextWriteBuf(_L("AAAAAAAAAA"));
 	pos = 0;
 	r = file64.Seek(ESeekCurrent,pos);
 	r = fileText.Write(fileTextWriteBuf);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	test.Next(_L("Read the data using RFile64::Read\n"));
 	TBuf8<20> file64ReadBuf;
 	file64ReadBuf.Zero();
 	r = file64.Read(pos,file64ReadBuf);
 	r = bufPtr.Compare(file64ReadBuf);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	file64.Close();
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	User::Free(record);
 	}
 
@@ -4666,7 +4671,7 @@ void TestReadWriteLock()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.End();
 	}
 
@@ -4746,13 +4751,13 @@ void TestUnLock()
 	fileName1.Append(_L("File2GB.txt"));
 	RFile64 file;
 	TInt r = file.Replace(TheFs, fileName1, EFileWrite);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	file.SetSize(K2GB);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	TestRFs.ReadFileSection(fileName1,0,readBuf,100);
 	r = TheFs.Delete(fileName1);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	test.Next(_L("Creating test pattern"));
 	
 	TBuf8<0x63> writeBuf63;
@@ -4786,7 +4791,7 @@ void TestUnLock()
 	TestRFile1.Close();
 	
 	r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.End();
 	}
 
@@ -4937,7 +4942,7 @@ void TestSeekReadWrite()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.End();	
 	}	
 
@@ -5076,7 +5081,7 @@ void TestSeekAsyncReadWrite()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.End();	
 	}	
 
@@ -5223,7 +5228,7 @@ void TestSeekReadWriteLen()
 	TestRFile1.Close();
 	
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.End();	
 	}	
 /**
@@ -5375,7 +5380,7 @@ void TestSeekAsyncReadWriteLen()
 		}
 	TestRFile1.Close();
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.End();	
 	}	
 /**
@@ -5459,7 +5464,7 @@ void TestFileReSize()
 		}
 	TestRFile1.Close();
 	TInt r = TheFs.Delete(fileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 /**
 @SYMTestCaseID      PBASE-T_FILE64BIT-2354
@@ -5587,20 +5592,20 @@ void TestCopyDirectory()
 
 	test.Next(_L("Copy the files from one folder to another using CFileMan::Copy()\n"));
 	TInt r = fileMan->Copy(filePathOld, filePathNew, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(r == KErrNone || r == KErrTooBig);
+	test_Value(r, r == KErrNone || r == KErrTooBig);
 
 	test.Next(_L("Get the directory entry and find how many files are copied\n"));
 	// check SMALL and LARGE files have been copied
 	r = dir.Open(TheFs, filePathNew, KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 	test(entryArray.Count() == gFilesInDirectory);
 	dir.Close();
 	
 	// then delete the new directory
 	r = fileMan->Delete(filePathNew);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Set file man observer\n"));
 	// attempt to copy to new directory again - this time with an observer
@@ -5608,7 +5613,7 @@ void TestCopyDirectory()
 	
 	test.Next(_L("Copy the files from one folder to another, source folder has 3 small files and a large file\n"));
 	r = fileMan->Copy(filePathOld, filePathNew, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(r == KErrNone || r == KErrTooBig);
+	test_Value(r, r == KErrNone || r == KErrTooBig);
 	
 	test.Next(_L("Check observer for number of successful copy and failed copy\n"));
 	// test that 3 small files and 1 large file were copied
@@ -5619,28 +5624,28 @@ void TestCopyDirectory()
 	test.Next(_L("Get the directory entry and find how many files copied\n"));
 	// check SMALL files have been copied
 	r = dir.Open(TheFs, filePathNew, KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 
 	test(entryArray.Count() == gFilesInDirectory); 
 	dir.Close();
 	
 	// then delete the new directory
 	r = fileMan->Delete(filePathNew);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	delete observer;
 	delete fileMan;
 	
 	r = TheFs.Delete(fileSmall1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Delete(fileSmall2);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Delete(fileSmall3);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.Delete(fileLarge1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 /**
 @SYMTestCaseID      PBASE-T_FILE64BIT-2355
@@ -5718,21 +5723,21 @@ void TestMoveDirectory()
 
 	// move to new directory
 	TInt r = fileMan->Move(filePathOld, filePathNew, CFileMan::ERecurse | CFileMan::EOverWrite);
-	test(r == KErrNone || r == KErrTooBig);
+	test_Value(r, r == KErrNone || r == KErrTooBig);
 
 	// check SMALL and LARGE files have been moved
 	RDir dir;
 	r = dir.Open(TheFs, filePathNew, KEntryAttNormal);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	TEntryArray entryArray;
 	r = dir.Read(entryArray);
-	test (r == KErrEof);
+	test_Value(r, r == KErrEof);
 	test(entryArray.Count() == 4);
 	dir.Close();
 	
 	// then delete the new directory
 	r = fileMan->Delete(filePathNew);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	delete fileMan;
 	}
 
@@ -5756,13 +5761,13 @@ static void TestAdoptFiles()
 	TInt r;
 	RFs fs;
 	r = fs.Connect();
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = fs.ShareProtected();
-	test(r == KErrNone);
+	test_KErrNone(r);
 	TFileName sessionp;
 	fs.SessionPath(sessionp);
 	r = fs.MkDirAll(sessionp);
-	test(r == KErrNone || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	fs.Close();
 	TestRFile64AdoptFromCreator();
 	TestRFile64AdoptFromClient();
@@ -5902,11 +5907,11 @@ static void TestRFile64NegLen()
 	
 	// If a zero length is passed into the Write function, KErrNone should be returned. 
 	r=aFile.Write(aPos,gBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	// If the length is a negative, KErrArgument should be returned. 
 	r=aFile.Write(aPos,gBuf,aLen);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	
 	// Test the asynchronous requests
 	aFile.Write(aPos,gBuf,aLen,status1);
@@ -5918,7 +5923,7 @@ static void TestRFile64NegLen()
 	
 	aFile.Close();
 	r = TheFs.Delete(_L("\\testRFile64NegLen.txt"));
-	test(r == KErrNone);
+	test_KErrNone(r);
 	test.End();	
 	}
 //-------------------------------------------------------------------------------------------------------------------
@@ -5980,7 +5985,7 @@ void CallTestsL()
 	{
 	TInt r;
 	r = RFs::CharToDrive(gDriveToTest, gDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
     //-- set up console output 
     F32_Test_Utils::SetConsole(test.Console()); 
@@ -6029,7 +6034,7 @@ void CallTestsL()
 	dirName.Append(gDriveToTest);
 	dirName.Append(KTestPath);
 	r = TheFs.RmDir(dirName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	}
 
 

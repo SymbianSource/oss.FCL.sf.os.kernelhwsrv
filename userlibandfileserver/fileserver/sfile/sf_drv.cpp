@@ -233,7 +233,7 @@ TInt TDrive::CheckMount()
 
 	if (iReason==KErrNone && CurrentMount().LockStatus() > 0)
 	    {
-    	//-- this meand that the mount has drive access objetcs opened (RFormat or RRawDisk)
+    	//-- this means that the mount has drive access objects opened (RFormat or RRawDisk)
         __PRINT1(_L("TDrive::CheckMount() Mount is locked! LockStaus:%d"), CurrentMount().LockStatus());
         return KErrInUse;
 	    }	
@@ -547,6 +547,19 @@ TInt TDrive::FinaliseMount(TInt aOperation, TAny* aParam1/*=NULL*/, TAny* aParam
 	TRAP(r,CurrentMount().FinaliseMountL(aOperation, aParam1, aParam2));
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFinaliseMount2Ret, EF32TraceUidFileSys, r);
 	
+	// Pass FinaliseDrive notification down to media driver
+	TInt driveNumber = DriveNumber();
+	if (LocalDrives::IsValidDriveMapping(driveNumber) && !LocalDrives::IsProxyDrive(driveNumber))
+		{
+		TBusLocalDrive& drv = LocalDrives::GetLocalDrive(driveNumber);
+
+		TLocalDriveFinaliseInfoBuf finaliseBuf;
+		finaliseBuf().iMode = aOperation;
+
+		// notify local drive, ignore the error
+		drv.QueryDevice(RLocalDrive::EQueryFinaliseDrive, finaliseBuf);	
+		}
+
     return r;
 	}
 
@@ -815,7 +828,7 @@ TInt TDrive::ValidateShare(CFileCB& aFile, TShare aReqShare)
 // Check that the sharing rules are obeyed.
 //
 	{
-
+	// Check the correct share modes are passed in
 	switch (aReqShare)
 		{
 	case EFileShareExclusive:
@@ -824,47 +837,46 @@ TInt TDrive::ValidateShare(CFileCB& aFile, TShare aReqShare)
 	case EFileShareReadersOrWriters:
 		break;
 	default:
-		return(KErrArgument);
+		return KErrArgument;
 		}
+	
+	// Check the share mode of the file
 	switch (aFile.iShare)
 		{
 	case EFileShareExclusive:
-		return(KErrInUse);
+		return KErrInUse;
 
 	case EFileShareReadersOnly:
 	case EFileShareAny:
 		if (aReqShare != aFile.iShare && aReqShare != EFileShareReadersOrWriters)
-			return(KErrInUse);
+		    {
+            return KErrInUse;
+		    }
 		break;
 
 	case EFileShareReadersOrWriters:
-		if (aReqShare==EFileShareExclusive)
-			return(KErrInUse);
+		if (aReqShare == EFileShareExclusive)
+		    {
+            return KErrInUse;
+		    }
 		//
-		// If the file is currently open as EFileShareReadersOrWriters then
+		// If the file is currently opened as EFileShareReadersOrWriters then
 		// promote the share to the requested share mode.
+		// 
+		// If the requested share is EFileShareReadersOnly, verify that no
+		// other share has the file opened for writing.
 		//
-		// If the requested share is EFileShareReadersOnly, verfiy that no
-		// other share has the file open for writing.
-		//
-
 		if (aReqShare == EFileShareReadersOnly)
 			{
-			FileShares->Lock();
-			TInt count = FileShares->Count();
-			while(count--)
+			TDblQueIter<CFileShare> fileShareIter(aFile.FileShareList());
+			CFileShare* pFileShare;
+			while ((pFileShare = fileShareIter++) != NULL)
 				{
-				CFileShare* share = (CFileShare*)(*FileShares)[count];
-				if (&share->File() == &aFile)
+				if(pFileShare->iMode & EFileWrite)
 					{
-					if(share->iMode & EFileWrite)
-						{
-						FileShares->Unlock();
-						return KErrInUse;
-						}
+					return KErrInUse;
 					}
 				}
-			FileShares->Unlock();
 			}
 		break;
     
@@ -872,7 +884,8 @@ TInt TDrive::ValidateShare(CFileCB& aFile, TShare aReqShare)
 		Fault(EDrvIllegalShareValue);
         break;
 		}
-	return(KErrNone);
+
+	return KErrNone;
 	}
 
 void TDrive::DriveInfo(TDriveInfo& anInfo)
@@ -1332,88 +1345,90 @@ void TDrive::FileOpenL(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUi
 	if ((aMode & EDeleteOnClose) && (anOpen!=EFileCreate))
 		User::Leave(KErrArgument);
 
-	CFileCB* pF=LocateFile(aName);
+	CFileCB* pFile=LocateFile(aName);
 	CFileCache* pFileCache = NULL;
-	TBool openFile=EFalse;
-	if (pF!=NULL)
+	TBool openFile=EFalse;	// True if file is being opened for the first time
+	if (pFile!=NULL)		// File is already opened on the drive
 		{
-		if (pF->iShare==EFileShareReadersOnly && (aMode&EFileWrite)!=0)
+		if (pFile->iShare==EFileShareReadersOnly && (aMode&EFileWrite))
 			User::Leave(KErrInUse);
 		if (anOpen==EFileCreate)
 			User::Leave(KErrAlreadyExists);
-		TInt r=ValidateShare(*pF,share);
+		TInt r=ValidateShare(*pFile,share);
 		if (r!=KErrNone)
 			User::Leave(r);
-		if ((r=pF->Open())!=KErrNone)
+		if ((r=pFile->Open())!=KErrNone)
 			User::Leave(r);
-		aFileCB=pF;
-		pFileCache = pF->FileCache();
+		
+		aFileCB=pFile;
+		pFileCache = pFile->FileCache();
 		}
 	else
 		{
 		TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewFileL, EF32TraceUidFileSys, &FSys(), DriveNumber());
 
         //-- construct CFileCB object, belonging to the corresponding mount
-        pF = aFileCB = CurrentMount().NewFileL();
+        pFile = aFileCB = CurrentMount().NewFileL();
 
-		TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewFileLRet, EF32TraceUidFileSys, r, pF);
+		TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewFileLRet, EF32TraceUidFileSys, r, pFile);
 		TDrive* createdDrive=!aRequest->SubstedDrive() ? this : aRequest->SubstedDrive();
 
     	HBufC* fileName = CreateFileNameL(aName);
 
-        pF->InitL(this, createdDrive, fileName);
+        pFile->InitL(this, createdDrive, fileName);
 
-
-		pF->iShare = share;
+		pFile->iShare = share;
+		pFile->SetSequentialMode(aMode & EFileSequential);
 		openFile=ETrue;
-		CurrentMount().iMountQ.AddLast(*pF);
-		Files->AddL(pF,ETrue);
+		CurrentMount().iMountQ.AddLast(*pFile);
+		Files->AddL(pFile,ETrue);
+		__PRINT1(_L("TDrive::FileOpenL - CFileCB->IsSequentialMode = %d"), pFile->IsSequentialMode());
 		}
 	
-    CFileShare* pS=aFileShare=new(ELeave) CFileShare(pF);
+    CFileShare* pFileShare=aFileShare=new(ELeave) CFileShare(pFile);
 
 	// We need to call CFileCB::PromoteShare immediately after the CFileShare 
 	// instance is created since the destructor calls CFileCB::DemoteShare()
 	// which checks the share count is non-zero
-	pS->iMode=aMode;
-	pF->PromoteShare(pS);
+	pFileShare->iMode=aMode;
+	pFile->PromoteShare(pFileShare);
 
-	pS->InitL();
+	pFileShare->InitL();
 	aFileCB=NULL; 
-	FileShares->AddL(pS,ETrue);
-	aHandle=aRequest->Session()->Handles().AddL(pS,ETrue);
+	FileShares->AddL(pFileShare,ETrue);
+	aHandle=aRequest->Session()->Handles().AddL(pFileShare,ETrue);
 
 
 	if (openFile)
 		{
-		TRACEMULT5(UTF::EBorder, UTraceModuleFileSys::ECMountCBFileOpenL, EF32TraceUidFileSys, DriveNumber(), aName, aMode, (TUint) anOpen, (TUint) pF);
-		CurrentMount().FileOpenL(aName,aMode,anOpen,pF);
+		TRACEMULT5(UTF::EBorder, UTraceModuleFileSys::ECMountCBFileOpenL, EF32TraceUidFileSys, DriveNumber(), aName, aMode, (TUint) anOpen, (TUint) pFile);
+		CurrentMount().FileOpenL(aName,aMode,anOpen,pFile);
 		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFileOpenLRet, EF32TraceUidFileSys, KErrNone);
 
 		// Delete on close may now be safely flagged if required.
 		// The file did not exist on the media prior to the
 		// CMountCB::FileOpenL() call for the case of a create.
 		if ((aMode & EDeleteOnClose) && (anOpen==EFileCreate))
-			pF->SetDeleteOnClose();
+			pFile->SetDeleteOnClose();
 
-		TBool localBufferSuppport = (CurrentMount().LocalBufferSupport(pF) == KErrNone)?(TBool)ETrue:(TBool)EFalse;
-		pF->SetLocalBufferSupport(localBufferSuppport);
+		TBool localBufferSuppport = (CurrentMount().LocalBufferSupport(pFile) == KErrNone)?(TBool)ETrue:(TBool)EFalse;
+		pFile->SetLocalBufferSupport(localBufferSuppport);
 		if (localBufferSuppport)
 			{
-			// if file exists on closed queue resurrect it or discard it,
+			// If file exists on closed queue resurrect it or discard it,
 			// depending on the file open mode
 			pFileCache = LocateClosedFile(aName, anOpen == EFileOpen?(TBool)ETrue:(TBool)EFalse);
 			if (pFileCache)
 				{
-				pFileCache = pFileCache->ReNewL(*pS);	// NB may return NULL if caching not enabled
+				pFileCache = pFileCache->ReNewL(*pFileShare);	// NB may return NULL if caching not enabled
 				}
 			else
 				{
-				pFileCache = CFileCache::NewL(*pS);		// NB may return NULL if caching not enabled
+				pFileCache = CFileCache::NewL(*pFileShare);		// NB may return NULL if caching not enabled
 				}
 			if (pFileCache)
-				// set the cached size to be the same as the uncached size
-				pF->SetCachedSize64(pF->Size64());
+				// Set the cached size to be the same as the uncached size
+				pFile->SetCachedSize64(pFile->Size64());
 			}
 		else
 			{
@@ -1421,9 +1436,9 @@ void TDrive::FileOpenL(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUi
 			}
 		}
 
-	// initialize share mode flags
+	// Initialize share mode flags
 	if (pFileCache != NULL)
-		pFileCache->Init(*pS);
+		pFileCache->Init(*pFileShare);
 	}
 
 TInt TDrive::FileOpen(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUint aMode,TFileOpen anOpen)
@@ -1435,7 +1450,7 @@ TInt TDrive::FileOpen(CFsRequest* aRequest,TInt& aHandle,const TDesC& aName,TUin
 	CFileCB* pF=NULL;
 	CFileShare* pS=NULL;
 	aHandle=0;
-	TRAPD(r,FileOpenL(aRequest,aHandle,aName,aMode,anOpen,pF,pS))
+	TRAPD(r,FileOpenL(aRequest,aHandle,aName,aMode,anOpen,pF,pS));
 
 	// Allow files > 2GB-1 to be opened only if EFileBigFile is specified in iMode
 	if (r == KErrNone && pS && ((TUint64)pS->File().Size64() > KMaxLegacyFileSize) && (!(pS->IsFileModeBig())))

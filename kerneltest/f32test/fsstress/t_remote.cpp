@@ -19,6 +19,7 @@
 #include <f32file.h>
 #endif
 #if !defined(__E32TEST_H__)
+#define	__E32TEST_EXTENSION__
 #include <e32test.h>
 #endif
 #if !defined(__T_STD_H__)
@@ -108,15 +109,15 @@ LOCAL_C void Test1()
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	TInt r=file1.Open(TheFs,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
 	r=file2.Open(TheFs,fn,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file3.Open(TheFs,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -164,28 +165,28 @@ LOCAL_C void Test2()
 
 	RFs fs1,fs2,fs3,fs4;
 	TInt r=fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs3.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs4.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile file1,file2,file3;
 	TFileName fn;
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file1.Open(fs2,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
 	r=file2.Open(fs2,fn,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file3.Open(fs2,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -237,39 +238,39 @@ LOCAL_C void Test3()
 
 	RFs fs1,fs2,fs3,fs4;
 	TInt r=fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs3.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs4.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile file1,file2,file3;
 	TFileName fn;
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file1.Open(fs2,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
 	r=file2.Open(fs2,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file3.Open(fs2,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=file1.Open(fs4,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
 	r=file2.Open(fs4,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file3.Open(fs4,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -337,51 +338,51 @@ LOCAL_C void Test4()
 	RFs fs1,fs2,fs3,fs4;
 	TFileName fn;
 	TInt r=fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs3.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs4.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RDir dir1,dir2,dir3,dir4;
 	fn = _L("Z:\\TEST\\*.XDE");
 	fn[0] = gExeFileName[0];
 	r=dir1.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir2.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir3.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir4.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile file1,file2,file3;
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file1.Open(fs2,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
 	r=file2.Open(fs2,fn,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file3.Open(fs2,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	RDir dir5,dir6,dir7,dir8;
 	fn = _L("Z:\\TEST\\*.XDE");
 	fn[0] = gExeFileName[0];
 	r=dir5.Open(fs4,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir6.Open(fs4,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir7.Open(fs4,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir8.Open(fs4,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -439,27 +440,27 @@ LOCAL_C void Test5()
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	TInt r=file1.Open(TheFs,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
 	r=file2.Open(TheFs,fn,EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fn = _L("Z:\\TEST\\T_FSRV.CPP");
 	fn[0] = gExeFileName[0];
 	r=file3.Open(TheFs,fn,EFileRead|EFileShareReadersOnly);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	RDir dir1,dir2,dir3,dir4;
 	fn = _L("Z:\\TEST\\*.XDE");
 	fn[0] = gExeFileName[0];
 	r=dir1.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir2.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir3.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=dir4.Open(TheFs,fn,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CFileList* list;
 	TOpenFileScan fileScan(TheFs);
@@ -525,7 +526,7 @@ LOCAL_C void MultipleSessions(TInt aDrive, RTest& aTest)
 	for (; i<maxNumberSessions; i++)
 		{
 		r=session[i].Connect();
-		test(r==KErrNone);
+		test_KErrNone(r);
 		testObject[i].Initialise(session[i]);
 		testObject[i].SetSessionPath(aDrive);
 		testObject[i].RunTests(aTest);		//	Run the set of tests for each session
@@ -551,7 +552,7 @@ LOCAL_C void MultipleSessions(TInt aDrive, RTest& aTest)
 		testObject[i+1].testDriveList(aTest);
 	//	Reconnect session[i]	
 		r=session[i].Connect();
-		test(r==KErrNone);
+		test_KErrNone(r);
 		testObject[i].Initialise(session[i]);
 		testObject[i].SetSessionPath(aDrive);
 		testObject[i].testSetVolume(aTest);
@@ -569,7 +570,7 @@ LOCAL_C void MultipleSessions(TInt aDrive, RTest& aTest)
 		testObject[i].testDriveList(aTest);
 	//	Reconnect session[i+1]	
 		r=session[i+1].Connect();
-		test(r==KErrNone);
+		test_KErrNone(r);
 		testObject[i+1].Initialise(session[i+1]);
 		testObject[i+1].SetSessionPath(aDrive);
 		testObject[i].testSetVolume(aTest);

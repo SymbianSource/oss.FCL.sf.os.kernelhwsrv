@@ -366,8 +366,8 @@ EXPORT_C __NAKED__ RMessageK* RMessageK::MessageK(TInt /*aMsgHandle*/)
 #endif
 	asm("ldr r1, [r1, #%a0]" : : "i" (_FOFF(DThread,iOwningProcess)-_FOFF(DThread,iNThread)));	// r1->process to check
 	asm("bl do_messagek ");
-	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(RMessageK,iFunction));		// ip = function
 	asm("bcc 0f ");														// if bad handle, panic
+	asm("ldr ip, [r0, #%a0]" : : "i" _FOFF(RMessageK,iFunction));		// ip = function
 	asm("cmp ip, #%a0" : : "i" ((TInt)RMessage2::EDisConnect));			// check iFunction != RMessage2::EDisConnect
 	asm("ldmnefd sp!, {r4,pc} ");										// if not, return OK
 	asm("0: ");

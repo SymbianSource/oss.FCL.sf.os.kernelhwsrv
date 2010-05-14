@@ -379,6 +379,8 @@ include/dispchannel.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(dispchannel.
 include/d32resmanus.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32resmanus.h)
 include/d32resmanus.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32resmanus.inl)
 
+include/heap_hybrid.h							SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(kernel/)
+
 //Unified Trace Framework API
 include/e32utf.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utf.h)
 include/e32utrace.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(e32utrace.inl)

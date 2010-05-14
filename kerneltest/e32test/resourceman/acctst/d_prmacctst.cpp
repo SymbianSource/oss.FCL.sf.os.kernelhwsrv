@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -151,11 +151,12 @@ TInt DPrmIfChannel::DoCreate(TInt /* aUnit */, const TDesC8* /* aInfo */, const 
 	TDynamicDfcQue* dfcQ;
 	TInt r = Kern::DynamicDfcQCreate(dfcQ, KTestDfcQuePrority, KTestDfcQueBaseName);
 	TEST_KERRNONE(r);
-	iDfcQ = dfcQ;
 	if (r != KErrNone)
 		{
 		return r;
 		}
+	dfcQ->SetRealtimeState(ERealtimeStateOff);
+	iDfcQ = dfcQ;
 	SetDfcQ(iDfcQ);
 	iMsgQ.Receive();
 	return KErrNone;

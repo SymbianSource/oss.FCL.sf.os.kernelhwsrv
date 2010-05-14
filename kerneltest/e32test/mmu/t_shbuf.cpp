@@ -39,6 +39,8 @@ const TInt BufferSize[] = {128, 853, 4096, 5051, 131072, 1, 0}; // Last element 
 
 const TInt* PtrBufSize;
 
+static TInt ThreadCounter = 0;
+
 RShBufTestChannel Ldd;
 
 _LIT(KTestSlave, "SLAVE");
@@ -1872,9 +1874,9 @@ TInt ThreadLowSpacePanic(TAny* aArg)
  */
 void RequestLowSpacePanic(RShPool& aPool, TUint aThreshold1, TUint aThreshold2, TTestLowSpaceType aType, TInt aLine)
 	{
-	static TInt count = 0;
-	count++;
-	test.Printf(_L("RequestLowSpacePanic@%d(%d)\n"), aLine, count);
+	TBuf<40> threadname;
+	threadname.Format(_L("ThreadLowSpacePanic%d"), ++ThreadCounter);
+	test.Printf(_L("RequestLowSpacePanic@%d(%S)\n"), aLine, &threadname);
 	TBool jit = User::JustInTime();
 	User::SetJustInTime(EFalse);
 	TInt expectedpaniccode = KErrNone;	// Initialised to silence compiler warnings
@@ -1897,8 +1899,6 @@ void RequestLowSpacePanic(RShPool& aPool, TUint aThreshold1, TUint aThreshold2, 
 	RThread threadpanic;
 	TRequestStatus threadpanicrs;
 	TInt r;
-	TBuf<30> threadname;
-	threadname.Format(_L("ThreadLowSpacePanic%d"), count);
 	r = threadpanic.Create(threadname, ThreadLowSpacePanic, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &targs);
 	test_KErrNone(r);
 	threadpanic.Logon(threadpanicrs);
@@ -1925,7 +1925,10 @@ void NotificationRequests(RShPool& aPool)
 	test_KErrNone(r);
 	RThread thread;
 	TRequestStatus threadrs;
-	r = thread.Create(_L("ThreadNotifications"), ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
+	TBuf<40> threadname;
+	threadname.Format(_L("ThreadNotifications%d"), ++ThreadCounter);
+	test.Printf(_L("Create %S\n"), &threadname);
+	r = thread.Create(threadname, ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
 	test_KErrNone(r);
 	thread.SetPriority(EPriorityMore);
 	thread.Logon(threadrs);
@@ -2077,9 +2080,13 @@ void CancelNotificationRequests(RShPool& aPool)
 	RSemaphore sem;
 	r = sem.CreateGlobal(KTestLowSpaceSemaphore, 0);
 	test_KErrNone(r);
+
+	TBuf<40> threadname;
+	threadname.Format(_L("ThreadCancelNotifications%d"), ++ThreadCounter);
+	test.Printf(_L("Create %S\n"), &threadname);
 	RThread thread;
 	TRequestStatus threadrs;
-	r = thread.Create(_L("ThreadCancelNotifications"), ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
+	r = thread.Create(threadname, ThreadNotifications, KDefaultStackSize, KMinHeapSize, 1 << 20, (TAny*) &aPool);
 	test_KErrNone(r);
 	thread.SetPriority(EPriorityLess);
 	thread.Logon(threadrs);

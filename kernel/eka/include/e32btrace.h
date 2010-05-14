@@ -260,7 +260,7 @@ public:
 		/**
 		Masks out the bits for the CPU ID for SMP systems (zero if present on non SMP systems)
 		*/
-		ECpuIdMask			= 0xfff<<20,
+		ECpuIdMask			= 0xfffU<<20,
 		};
 
 	/**

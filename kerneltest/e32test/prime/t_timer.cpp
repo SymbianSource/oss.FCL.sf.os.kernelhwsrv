@@ -291,7 +291,7 @@ LOCAL_C void testHomeTime()
             }
         while (t2==t1);
 
-		if (t2 <= t1)
+		if (t2 <= t1 && t1.MicroSecondsFrom(t2) > TTimeIntervalMicroSeconds(1000)) // HomeTime() only operates at ms precision
 			{
 			test.Printf(_L("Time comparison failed\r\n"));
 			test.Printf(_L("Before: 0x%lx\r\n"), t1.Int64());

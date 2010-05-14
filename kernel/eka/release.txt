@@ -1,13 +1,214 @@
+Version 2.00.3072
+=================
+(Made by vfebvre 22/04/2010)
+
+1.	migubarr
+	1.	ou1cimx1#356834 Execution of the kernelhwsrv test suites on H4HRP.ARMV5.U*.FMM.MMCPAGE does not complete
+
+
+Version 2.00.3071
+=================
+(Made by vfebvre 21/04/2010)
+
+1.	davegord
+	1.	ou1cimx1#353902 MCL DownloadServerMgr.exe causes phone crash
+
+
+Version 2.00.3070
+=================
+(Made by vfebvre 20/04/2010)
+
+1.	seolney
+	1.	PDEF145220 Fault possible if client deletes DMA request in callback
+
+2.	lanerobe
+	1.	ou1cimx1#352938 E32TEST T_TIMER test failure investigation
+
+
+Version 2.00.3069
+=================
+(Made by vfebvre 20/04/2010)
+
+1.	vfebvre
+	1.	REQ417-62711 Sirocco: Build and Test Systems Migration
+		PackageReleaseID=487623 FeaturePlanID=457782
+
+
+Version 2.00.3068
+=================
+(Made by vfebvre 16/04/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#342082 Logitech USB desktop microphone is not recogonized
+
+
+Version 2.00.3067
+=================
+(Made by vfebvre 16/04/2010)
+
+1.	vfebvre
+	1.	No change
+
+
+Version 2.00.3066
+=================
+(Made by vfebvre 15/04/2010)
+
+1.	migubarr
+	1.	REQ 415-7212 NFE drive encryption on Demand Paging-enabled device
+		PackageReleaseID=453228 FeatureReleaseID=447937
+
+
+Version 2.00.3065
+=================
+(Made by vfebvre 15/04/2010)
+
+1.	ahiron
+	1.	DEF145202: E32TEST T_IIC test failure investigation (KERN-EXEC 17) 
+
+2.	vfebvre
+	1.	MINOR_CHANGE Temporarily disable crash-prone test T_SOUND2 until it is fixed (DEF144934)
+
+
+Version 2.00.3064
+=================
+(Made by vfebvre 14/04/2010)
+
+1.	jcoppear
+	1.	PDEF144022: T_SHADOW failing test that ROM is section mapped (t_shadow.cpp:360)
+
+
+Version 2.00.3063
+=================
+(Made by vfebvre 13/04/2010)
+
+1.	vfebvre
+	1.	MINOR_CHANGE Re-add changes reverted by DEF145318
+	2.	MINOR_CHANGE Reinstate temporarily commented out code in t_rescontrolcli.cpp to avoid warnings
+
+
+Version 2.00.3062
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	kmetherm
+	1.	REQ 417-57581 RVCT 4 compatible software codebase (SSS)
+		PackageReleaseID=476546 FeaturePlanID=444184
+
+2.	jcoppear
+	1.	DEF145150: WDP: No support for testing whether device drivers are WDP safe
+
+
+Version 2.00.3061
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#343350 Changed unistore policyId from 2 to 1455
+
+
+Version 2.00.3060
+=================
+(Made by vfebvre 12/04/2010)
+
+1.	vfebvre
+	1.	DEF145318 [System Build]:CBR stage errors in MSF00392 vtb101sf and vfuture builds
+
+
+Version 2.00.3059
+=================
+(Made by vfebvre 09/04/2010)
+
+1.	seolney
+	1.	ou1cimx1#339838 t_dma times out on SMP datapaged system
+		Reduce number of test iterations and different fragment sizes tested
+
+2.	cnotton
+	1.	ou1cimx1#341002 Wrong copyright header under sf\os\kernelhwsrv\kernel\eka\drivers\power\smppower
+
+
+Version 2.00.3058
+=================
+(Made by vfebvre 09/04/2010)
+
+1.	stmansfi
+	1.	DEF145294 Update HCR API comments and documentation
+
+2.	vfebvre
+	1.	DEF145224 Change distribution policy ID of hcr/documents to 1
+
+3.	marisood
+	1.	PDEF145242 E32TEST T_PRMACCTSTSIM fails on NE1_TB.ARMV5.UDEB.DATAPAGE
+
+
+Version 2.00.3057
+=================
+(Made by vfebvre 08/04/2010)
+
+1.	lforynsk
+	1.	DEF144907: T_CPUTIME fails on several platforms 
+
+2.	stmansfi
+	1.	DEF145153 GPIO template implementation should use VARIANT.MMH to specify its .LIB file to
+
+3.	shenzhou
+	1.	ou1cimx1#335116:change_otg_descriptor_returned_location
+
+4.	jcoppear
+	1.	PDEF144022: T_SHADOW failing test that ROM is section mapped (t_shadow.cpp:360)
+
+5.	shubmurt
+	1.	DEF145149 WDP: paging benchmarks minimum value incorrectly reported
+
+
+Version 2.00.3056
+=================
+(Made by vfebvre 08/04/2010)
+
+1.	mmoate
+	1.	REQ 417-52840 Upgrade memory allocator to a higher performance allocator
+		PackageReleaseID=413335 FeaturePlanID=413327
+		CR503 RHeap hybrid heap reimplementation
+
+
+Version 2.00.3055
+=================
+(Made by vfebvre 08/04/2010)
+
+1.	garciato
+	1.	MINOR CHANGE Moving headers to EPL for kern core stats test code
+
+
+Version 2.00.3054
+=================
+(Made by vfebvre 29/03/2010)
+
+1.	vfebvre
+	1.	DEF145148 E32TEST T_SHBUF_OWN test failure investigation (t_shbuf.cpp:2083)
+
+2.	garciato
+	1.	DEF144785 t_timerduration sporadically fails on builds with load balancer and idle code
+
+3.	dogunjum
+	1.	DEF145185 TEventModifier in e32keys.h does not support QT Key Event Handling
+		New key event modifiers added to TEventModifier in e32keys.h. EModifierLongKey = 0x20000000
+		for Long key press and EModiferExternalKey = 0x40000000 for Accessory key event. EAllModifiers
+		a member of TEventModifier  changed to support the addition of the new key event modifiers.
+		i.e. EAllModifiers=0x1fffffff changed to EAllModifiers=0xffffffff.
+
+4.	gcochran
+	1.	PDEF145132 TRLM-83EGSL Paging HAL stats not visible
+
+5.	mmoate
+	1.	PDEF145152 \e32utils\nistsecurerng\* has incorrect distribution.policy.s60 ID
+
+
 Version 2.00.3053
 =================
 (Made by vfebvre 26/03/2010)
 
 1.	jimmzhou
 	1.	ou1cimx1#320634 [kernelmcl]Phone Crash when USB MobileTV device CU-14A is connected
-
-2.	kmetherm
-	1.	REQ 417-57581 RVCT 4 compatible software codebase (SSS)
-		PackageReleaseID=476546 FeaturePlanID=444184
 
 
 Version 2.00.3052

@@ -104,7 +104,11 @@ void CScsiProtocol::InitialiseUnitL()
     do
         {
         retryCounter--;
-        iFsm->ConnectLogicalUnitL();
+        TInt err = iFsm->ConnectLogicalUnitL();
+        if (err == KErrNotSupported)
+            {
+            break;
+            }
         if (iFsm->IsConnected())
             {
             iState = EConnected;
@@ -133,6 +137,10 @@ void CScsiProtocol::ReadL(TPos aPos,
                           TInt aLength)
     {
 	__MSFNLOG
+
+    if (!iSbcInterface)
+        User::Leave(KErrNotSupported);
+
     if(!IsConnected())
 		User::Leave(KErrNotReady);
     iSbcInterface->iBlockTransfer.ReadL(*this, aPos, aLength, aBuf);
@@ -142,6 +150,9 @@ void CScsiProtocol::ReadL(TPos aPos,
 void CScsiProtocol::BlockReadL(TPos aPos, TDes8& aCopybuf, TInt aLen)
     {
 	__MSFNLOG
+    if (!iSbcInterface)
+        User::Leave(KErrNotSupported);
+
 	__ASSERT_DEBUG(aPos % iSbcInterface->iBlockTransfer.BlockLength() == 0,
                    User::Panic(KUsbMsHostPanicCat, EBlockDevice));
 
@@ -196,6 +207,9 @@ void CScsiProtocol::WriteL(TPos aPosition,
                            TInt aLength)
     {
 	__MSFNLOG
+    if (!iSbcInterface)
+        User::Leave(KErrNotSupported);
+
     if(!IsConnected())
 		User::Leave(KErrNotReady);
     iSbcInterface->iBlockTransfer.WriteL(*this, aPosition, aLength, aBuf);
@@ -205,6 +219,9 @@ void CScsiProtocol::WriteL(TPos aPosition,
 void CScsiProtocol::BlockWriteL(TPos aPos, TDesC8& aCopybuf, TUint aOffset, TInt aLen)
     {
 	__MSFNLOG
+    if (!iSbcInterface)
+        User::Leave(KErrNotSupported);
+
 	__ASSERT_DEBUG(aPos % iSbcInterface->iBlockTransfer.BlockLength() == 0,
                    User::Panic(KUsbMsHostPanicCat, EBlockDevice));
     const TInt blockLen = iSbcInterface->iBlockTransfer.BlockLength();
@@ -249,6 +266,17 @@ void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
         {
         DoScsiReadyCheckEventL();
         }
+
+    if (!iSbcInterface)
+        {
+        aCapsInfo.iMediaType = EMediaCdRom;
+        aCapsInfo.iNumberOfBlocks = 0;
+        aCapsInfo.iBlockLength = 0;
+        aCapsInfo.iWriteProtect = ETrue;
+        return;
+        }
+
+    aCapsInfo.iMediaType = EMediaHardDisk;
 
 	TLba lastLba;
 	TUint32 blockLength;
@@ -351,23 +379,38 @@ TInt CScsiProtocol::MsInquiryL()
 
     if (info.iPeripheralQualifier != 0 && info.iPeripheralQualifier != 1)
         {
-        __HOSTPRINT(_L("Peripheral Qualifier[Unknown device type]\n"))
-        return KErrUnknown;
+        __HOSTPRINT(_L("Peripheral Qualifier[Unknown device type]"))
+        err = KErrUnknown;
         }
-
-    if (info.iPeripheralDeviceType != 0)
+    else if (info.iPeripheralDeviceType == 0)
         {
-        __HOSTPRINT(_L("Peripheral Device Type[Unsupported device type]\n"))
-        return KErrUnknown;
+        // SCSI SBC Direct access device
+        iRemovableMedia = info.iRemovable;
+    
+        // SCSI Block device
+        iSbcInterface = new (ELeave) TSbcClientInterface(iSpcInterface.Transport());
+        iSbcInterface->InitBuffers(&iHeadbuf, &iTailbuf);
+        err = KErrNone;
+        }
+    else if (info.iPeripheralDeviceType == 5)
+        {
+        // SCSI MMC-2 CD-ROM device
+        __HOSTPRINT(_L("Peripheral Device Type[CD-ROM]"))
+        iRemovableMedia = info.iRemovable;
+
+        // MMC-2 is not supported. A SCSI interface call will return 
+        // KErrNotSupported. If SCSI support is extended in future then
+        // TSbcInterface class should be replaced with a proper interface class.
+        iSbcInterface = NULL;
+        err = KErrNone;
+        }
+    else
+        {
+        __HOSTPRINT(_L("Peripheral Device Type[Unsupported device type]"))
+        err = KErrUnknown;    
         }
 
-    iRemovableMedia = info.iRemovable;
-
-    // SCSI Block device
-    iSbcInterface = new (ELeave) TSbcClientInterface(iSpcInterface.Transport());
-    iSbcInterface->InitBuffers(&iHeadbuf, &iTailbuf);
-
-    return KErrNone;
+    return err;
     }
 
 
@@ -400,6 +443,11 @@ device status error, KErrCommandStalled to indicate a device stall
 TInt CScsiProtocol::MsReadCapacityL()
     {
 	__MSFNLOG
+    if (!iSbcInterface)
+        {
+        User::Leave(KErrNotSupported);
+        }
+
     // READ CAPACITY
     TUint32 blockSize;
     TUint32 lastLba;
@@ -420,6 +468,9 @@ device status error, KErrCommandStalled to indicate a device stall
 TInt CScsiProtocol::MsModeSense10L()
     {
 	__MSFNLOG
+    if (!iSbcInterface)
+        User::Leave(KErrNotSupported);
+
     TBool writeProtected;
     TInt err = iSbcInterface->ModeSense10L(TSbcClientInterface::EReturnAllModePages, writeProtected);
 
@@ -441,6 +492,9 @@ device status error, KErrCommandStalled to indicate a device stall
 TInt CScsiProtocol::MsModeSense6L()
     {
 	__MSFNLOG
+    if (!iSbcInterface)
+        User::Leave(KErrNotSupported);
+
     TBool writeProtected;
     TInt err = iSbcInterface->ModeSense6L(TSbcClientInterface::EReturnAllModePages, writeProtected);
 
@@ -462,6 +516,9 @@ device status error
 TInt CScsiProtocol::MsStartStopUnitL(TBool aStart)
     {
 	__MSFNLOG
+    if (!iSbcInterface)
+        User::Leave(KErrNotSupported);
+
     return iSbcInterface->StartStopUnitL(aStart);
     }
 
@@ -492,12 +549,15 @@ TInt CScsiProtocol::DoCheckConditionL()
         iSenseInfo.iAdditional == TSenseInfo::EAscLogicalUnitNotReady &&
         iSenseInfo.iQualifier == TSenseInfo::EAscqInitializingCommandRequired)
         {
-        // start unit
-        err = iSbcInterface->StartStopUnitL(ETrue);
-        if (err)
-            {
-            User::LeaveIfError(MsRequestSenseL());
-            }
+		if (iSbcInterface)
+			{
+	        // start unit
+			err = iSbcInterface->StartStopUnitL(ETrue);
+	        if (err)
+		        {
+			    User::LeaveIfError(MsRequestSenseL());
+				}			
+			}
         }
 
     err = GetSystemWideSenseError(iSenseInfo);
@@ -745,7 +805,7 @@ void CScsiProtocol::DoScsiReadyCheckEventL()
     __MSFNLOG
 	TInt err = KErrNone;
 
-	if(iFsm->IsRemovableMedia() || iState != EConnected)
+	if(iRemovableMedia || iState != EConnected)
         {
 		iFsm->SetStatusCheck();
 		TRAP(err, iFsm->ConnectLogicalUnitL());

@@ -11,9 +11,10 @@
 // Contributors:
 //
 // Description:
-// f32test\scndrv\t_scn32dr2.cpp
+// f32test\filesystem\fat\t_scn32dr2.cpp
 //
-//
+
+#define __E32TEST_EXTENSION__
 
 #include <f32file.h>
 #include <e32test.h>
@@ -71,7 +72,7 @@ GLDEF_C void CallTestsL()
     TInt gDriveNumber;
 
     TInt r = TheFs.CharToDrive( gSessionPath[0], gDriveNumber );
-    test( KErrNone == r );
+    test_KErrNone(r);
 
     //-- set up console output
     Fat_Test_Utils::SetConsole(test.Console());
@@ -95,18 +96,18 @@ GLDEF_C void CallTestsL()
     TUint8 oldFsys;
     TPtr8 pRugged(&oldFsys,1,1);
     r=TheFs.ControlIo(gDriveNumber,KControlIoIsRugged,pRugged);
-    test(r==KErrNone);
+    test_KErrNone(r);
     if(oldFsys==0)
         {
         r=TheFs.ControlIo(gDriveNumber,KControlIoRuggedOn);
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
     DoTests();
     // if nec, set filing system back to !rugged
     if(oldFsys==0)
         {
         r=TheFs.ControlIo(gDriveNumber,KControlIoRuggedOff);
-        test(r==KErrNone);
+        test_KErrNone(r);
         }
 
     return;

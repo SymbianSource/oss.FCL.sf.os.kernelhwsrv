@@ -666,12 +666,12 @@ GLDEF_C TInt E32Main()
 
 	TInt orgSessionCount;
 	r = controlIo(TheFs,theDrive, KControlIoSessionCount, orgSessionCount);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("Session count start=%d\n"),orgSessionCount);
 
 	TInt orgObjectCount;
 	r = controlIo(TheFs,theDrive, KControlIoObjectCount, orgObjectCount);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("Object count start=%d\n"),orgObjectCount);
 
 
@@ -717,7 +717,7 @@ GLDEF_C TInt E32Main()
 	// NB: This won't help if the test has opened another session & left sub-sessions open.
 	TheFs.Close();
 	r=TheFs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Display the file cache stats before closing the file queue
 	TFileCacheStats endFileCacheStats;
@@ -743,11 +743,11 @@ GLDEF_C TInt E32Main()
 		test_KErrNone(r);
 
 		r = controlIo(TheFs,theDrive, KControlIoSessionCount, endSessionCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("Session count end=%d\n"),endSessionCount);
 
 		r = controlIo(TheFs,theDrive, KControlIoObjectCount, endObjectCount);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("Object count end=%d\n"),endObjectCount);
 
 		if (endSessionCount == orgSessionCount && endObjectCount == orgObjectCount)

@@ -1594,17 +1594,13 @@ void CFileCache::Purge(TBool aPurgeDirty)
 
 void CFileCache::PropagateFlushErrorToAllFileShares()
 	{
-	FileShares->Lock();
-	TInt count = FileShares->Count();
-	while(count--)
+	ASSERT(IsDriveThread());
+	TDblQueIter<CFileShare> fileShareIter(iFileCB->FileShareList());
+	CFileShare* pFileShare;
+	while ((pFileShare = fileShareIter++) != NULL)
 		{
-		CFileShare* share = (CFileShare*)(*FileShares)[count];
-		if (&share->File() == iFileCB)
-			{
-			share->iFlushError = iFlushError;
-			}
+		pFileShare->iFlushError = iFlushError;
 		}
-	FileShares->Unlock();
 	}
 
 /**

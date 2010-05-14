@@ -4241,6 +4241,10 @@ GLDEF_C TInt E32Main()
 	{
 	test.Title();
 	test.Start(_L("Testing Resource Manager...\n"));
+	//
+	test.Printf(_L("TEST SKIPPED UNTIL FIX FOR DEF145087 IS AVAILABLE TO PREVENT CRASHING\n"));
+	test(0);
+	//
 	test.Next(_L("Load Physical device"));
 #ifndef PRM_ENABLE_EXTENDED_VERSION
 	r = User::LoadPhysicalDevice(KPddFileName);

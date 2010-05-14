@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -204,6 +204,7 @@ EXPORT_C TInt RUsbHostMsDevice::GetNumLun(TUint32& aNumLuns)
 EXPORT_C TInt RUsbHostMsDevice::MountLun(TUint32 aLunId, TInt aDriveNum)
 	{
 	__FNLOG("RUsbHostMsDevice::MountLun");
+    __MSDEVPRINT2(_L(">>> RUsbHostMsDevice::MountLun Drv=%d LUN=%d"), aDriveNum, aLunId);
 	RFs TheFs;
 	TInt r = TheFs.Connect();
 	if(r == KErrNone)
@@ -212,11 +213,12 @@ EXPORT_C TInt RUsbHostMsDevice::MountLun(TUint32 aLunId, TInt aDriveNum)
 		unitPkg().iLunID = aLunId;
 
 		r = TheFs.MountProxyDrive(aDriveNum, _L("usbhostms"), &unitPkg, *this);
+        __MSDEVPRINT1(_L("MountProxyDrive %d"), r);
 		if(r >= KErrNone)
 			{
 			r = TheFs.MountFileSystem(KFileSystem, aDriveNum);
-
-			if(r != KErrNone && r != KErrNotReady && r != KErrCorrupt)
+            __MSDEVPRINT1(_L("MountFileSystem %d"), r);
+			if(r != KErrNone && r != KErrNotReady && r != KErrCorrupt && r != KErrNotSupported)
 				{
 				TheFs.DismountFileSystem(KFileSystem, aDriveNum);
 				TheFs.DismountProxyDrive(aDriveNum);
@@ -230,6 +232,7 @@ EXPORT_C TInt RUsbHostMsDevice::MountLun(TUint32 aLunId, TInt aDriveNum)
 EXPORT_C TInt RUsbHostMsDevice::DismountLun(TInt aDriveNum)
 	{
 	__FNLOG("RUsbHostMsDevice::DismountLun");
+    __MSDEVPRINT1(_L(">>> RUsbHostMsDevice::DismountLun Drv=%d"), aDriveNum);
 	RFs TheFs;
 	TInt r;
 	r = TheFs.Connect();

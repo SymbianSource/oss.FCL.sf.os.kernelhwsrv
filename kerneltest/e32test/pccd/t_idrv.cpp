@@ -44,7 +44,9 @@
 
 const TInt KTestDriveLen=0x00040000;	//256K
 const TInt KSmallDriveInc=0x00000400;	//1K
+#if defined (__WINS__)
 const TInt KBigDriveLen=0x00100000;		//1M - WINS
+#endif
 const TInt KTestBufLen=256;
 
 

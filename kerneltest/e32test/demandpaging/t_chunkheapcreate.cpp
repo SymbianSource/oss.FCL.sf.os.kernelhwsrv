@@ -64,10 +64,9 @@ TInt UserHeapAtt(TBool aPaged, TChunkHeapCreateInfo& aCreateInfo)
 	UpdatePaged(aPaged);
 	
 	RHeap* heap = UserHeap::ChunkHeap(aCreateInfo);
-
 	test_NotNull(heap);
 	RChunk chunk;
-	chunk.SetHandle(heap->ChunkHandle());
+	chunk.SetHandle(((TestHybridHeap*) heap)->ChunkHandle());
 	TBool paged = chunk.IsPaged();
 	chunk.Close();
 	return (aPaged == paged);
@@ -215,8 +214,8 @@ void TestChunkHeapCreate(TInt aTestType)
 			{
 			test.Printf(_L("RHeap not created\n"));
 			}
-		test.Printf(_L("chunkHandle = %d heapHandle = %d\n"),chunky.Handle(), heap->ChunkHandle());
-		test_Equal(chunky.Handle(), heap->ChunkHandle());
+		test.Printf(_L("chunkHandle = %d heapHandle = %d\n"),chunky.Handle(), ((TestHybridHeap*) heap)->ChunkHandle());
+		test_Equal(chunky.Handle(), ((TestHybridHeap*) heap)->ChunkHandle());
 		heap->Close();
 		}
 
@@ -238,9 +237,9 @@ void TestChunkHeapCreate(TInt aTestType)
 			{
 			test.Printf(_L("RHeap not created\n"));
 			}
-		test.Printf(_L("chunkHandle = %d heapHandle = %d\n"),chunky.Handle(), heap->ChunkHandle());
+		test.Printf(_L("chunkHandle = %d heapHandle = %d\n"),chunky.Handle(), ((TestHybridHeap*) heap)->ChunkHandle());
 		TBool isSame = EFalse;
-		if (chunky.Handle() == heap->ChunkHandle())
+		if (chunky.Handle() == ((TestHybridHeap*) heap)->ChunkHandle())
 			isSame = ETrue;
 		test_Equal(EFalse, isSame);
 		heap->Close();
@@ -304,7 +303,7 @@ void TestChunkHeapCreate(TInt aTestType)
 		heap = (RHeap*)UserHeap::ChunkHeap(createInfo);
 		test_NotNull(heap);
 		RChunk chunk;
-		chunk.SetHandle(heap->ChunkHandle());
+		chunk.SetHandle(((TestHybridHeap*) heap)->ChunkHandle());
 		TInt* numBuf = new TInt[gPageSize];
 		test_NotNull(numBuf);
 		test.Printf(_L("chunkSize = %d\n"), chunk.Size());
@@ -323,7 +322,7 @@ void TestChunkHeapCreate(TInt aTestType)
 		heap = (RHeap*)UserHeap::ChunkHeap(createInfo);
 		test_NotNull(heap);
 		RChunk chunk;
-		chunk.SetHandle(heap->ChunkHandle());
+		chunk.SetHandle(((TestHybridHeap*) heap)->ChunkHandle());
 		TInt* numBuf = new TInt[gPageSize];
 		test_Equal(NULL, numBuf);
 
@@ -342,7 +341,7 @@ void TestChunkHeapCreate(TInt aTestType)
 		heap = (RHeap*)UserHeap::ChunkHeap(createInfo);
 		TInt heapAddr = (TInt)heap;
 		RChunk chunk;
-		chunk.SetHandle(heap->ChunkHandle());
+		chunk.SetHandle(((TestHybridHeap*) heap)->ChunkHandle());
 		test_Equal((TInt)chunk.Base() + 8, heapAddr);
 		test_NotNull(heap);
 		heap->Close();

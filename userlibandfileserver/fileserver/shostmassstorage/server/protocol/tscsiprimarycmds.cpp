@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -84,7 +84,6 @@ void TScsiClientRequestSenseResp::DecodeL(const TDesC8& aPtr)
 void TScsiClientInquiryResp::DecodeInquiry(const TDesC8& aPtr)
     {
 	__MSFNSLOG
-    __SCSIPRINT(_L("--> SCSI INQUIRY"));
     iPeripheralInfo.iRemovable = (aPtr[1] & 0x80) ? ETrue : EFalse;
 
     iPeripheralInfo.iPeripheralQualifier = aPtr[0] >> 5;

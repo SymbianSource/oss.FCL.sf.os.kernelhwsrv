@@ -3926,7 +3926,7 @@ LOCAL_C void TestMoveEmptyDirectory()
 	MakeDir(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\"));
 	TInt r=gFileMan->Move(_L("C:\\F32-TST\\TFMAN\\DRIVEMOVE\\*"),trgDrive,CFileMan::ERecurse);
 	test.Printf(_L("TestMoveEmptyDirectory(),gFileMan->Move(),r=%d\n"),r);
-	test (r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	}
 
 LOCAL_C void TestCopyAndRename()

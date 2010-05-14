@@ -496,16 +496,19 @@ t_wsd_tst_cu
 ../ethernet/pump/etherpump  manual
 ../ethernet/macset/macset   manual
 
-// /E32TEST/HEAP tests
-t_fail
-
+// /e32test/heap tests
 #ifdef EPOC32
-t_hcomp     support
+t_hcomp			support
 #endif
-
+t_fail
 t_heap
 t_heap2
 t_heapdb
+t_heapdl
+t_heapslab
+t_heapstress		manual
+t_heapcheck
+t_heappagealloc
 t_kheap
 
 // Secure RNG tests
@@ -867,7 +870,7 @@ t_ipcsafety
 t_logtofile         manual
 t_eventtracker      manual
 t_traceredirect     support
-t_heapcorruption	support
+t_heapcorruption    support
 t_btrace
 t_perflogger
 

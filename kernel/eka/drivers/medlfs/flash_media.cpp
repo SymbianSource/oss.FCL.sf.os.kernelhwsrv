@@ -163,10 +163,11 @@ TInt DMediaDriverFlash::Request(TLocDrvRequest& m)
 	__KTRACE_OPT(KLOCDRV,Kern::Printf(">DMediaDriverFlash::Request %d",id));
 	if (id==DLocalDrive::ECaps)
 		{
-  		TLocalDriveCapsV2& c=*(TLocalDriveCapsV2*)m.RemoteDes();
+  		TLocalDriveCapsV4& c=*(TLocalDriveCapsV4*)m.RemoteDes();
 		r=Caps(c);
 		c.iSize=m.Drive()->iPartitionLen;
 		c.iPartitionType=m.Drive()->iPartitionType;
+		SetTotalSizeInBytes(c);
 		return r;
 		}
 	switch (id)

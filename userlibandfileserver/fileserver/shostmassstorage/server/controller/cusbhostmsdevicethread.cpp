@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -419,6 +419,7 @@ void CUsbHostMsDeviceThread::RegisterLogicalUnitL(const RMessage2& aMessage)
 	TPtrC8 pLun((TUint8*)&iLunId, sizeof(TUint32));
 	aMessage.WriteL(3, pLun);
 	iLunId -= 1;	// We represent LunId in MSC from 0 to MaxLun-1 as represented in BOT
+    __HOSTPRINT1(_L("RegisterLogicalUnitL LUN=%d "), iLunId);
 	iUsbHostMsDevice->AddLunL(iLunId);
 	iUsbHostMsDevice->InitLunL(iLunId);
 	}

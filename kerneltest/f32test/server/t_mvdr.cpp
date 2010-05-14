@@ -19,6 +19,7 @@
 //
 
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <f32file.h>
 
@@ -50,7 +51,7 @@ GLDEF_C TInt E32Main()
 
 	CFileMan *fm = 0;
 	TRAPD(r, fm = CFileMan::NewL(TheFs));
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	const TInt KMaxDirs = 32;
 
@@ -79,7 +80,7 @@ GLDEF_C TInt E32Main()
 			srcDirName.SetLength(srcDirName.Length() - 1);
 			dstDirName.SetLength(dstDirName.Length() - 1);
 			r = fm->Move(srcDirName, dstDirName);
-			test(r == KErrNone);
+			test_KErrNone(r);
 			}
 		}
 

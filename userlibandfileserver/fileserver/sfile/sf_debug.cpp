@@ -598,6 +598,33 @@ TInt TFsControlIo::DoRequestL(CFsRequest* aRequest)
             TInt r=aRequest->Write(2,pkgBuf);
             return r;
             }
+        // Check if the file is in 'file sequential/non-rugged file' mode
+        case KControlIoIsFileSequential:
+        	{
+        	TDrive* drive = aRequest->Drive();
+        	if(!drive)
+        		return KErrNotSupported;
+        	
+        	// RFs::ControlIO uses narrow descriptors, so convert narrow back to wide
+        	TBuf8<KMaxPath> fileNameNarrow;
+        	TInt r = aRequest->Read(2, fileNameNarrow);
+        	if (r != KErrNone)
+        		return r;
+        	TFileName fileNameWide;
+        	fileNameWide.Copy(fileNameNarrow);
+        	
+        	// Locate the file
+        	CFileCB* file = drive->LocateFile(fileNameWide);
+        	if(!file)
+        		return KErrNotFound;
+        	
+        	// isFileSequential = 1 or 0 for EFileSequential mode enabled or disabled respectively
+        	TUint8 isFileSequential = (file->IsSequentialMode() != 0);
+        	TPtr8 pkgBuf(&isFileSequential,1,1);
+        	aRequest->Write(3, pkgBuf);
+        	
+        	return KErrNone;
+        	}
 		
 		}
 #endif

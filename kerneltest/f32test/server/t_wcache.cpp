@@ -810,7 +810,7 @@ LOCAL_C TInt CorruptSecondFile()
 	TPtr8 dummyPtr(NULL, 0);	
 
 	TRAPD(res,dummy = HBufC8::NewL(4));
-	test(res == KErrNone && dummy != NULL);
+	test_Value(res, res == KErrNone && dummy != NULL);
 		
 	dummyPtr.Set(dummy->Des());
 	FillBuffer(dummyPtr, 4, '1');
@@ -893,7 +893,7 @@ TInt CreateFilesThread(TAny *)
 	TInt KBigBifferSize = 32 * KOneK;
 	
 	TRAPD(res,bigBuf = HBufC8::NewL(KBigBifferSize));
-	test(res == KErrNone && bigBuf != NULL);
+	test_Value(res, res == KErrNone && bigBuf != NULL);
 		
 	TPtr8 bigBufWritePtr(NULL, 0);	
 	bigBufWritePtr.Set(bigBuf->Des());
@@ -959,7 +959,7 @@ void CreateFiles(TInt aFiles, TInt aFileSize)
 	HBufC8* bigBuf = NULL;
 	const TInt KBigBifferSize = 32 * 1024;
 	TRAPD(res,bigBuf = HBufC8::NewL(KBigBifferSize));
-	test(res == KErrNone && bigBuf != NULL);
+	test_Value(res, res == KErrNone && bigBuf != NULL);
 		
 	TPtr8 bigBufWritePtr(NULL, 0);	
 	bigBufWritePtr.Set(bigBuf->Des());
@@ -1016,7 +1016,7 @@ void FillCache(RFile aFile[KFilesNeededToFillCache], TInt aFiles, TInt aFileSize
 	TPtr8 bufPtr(NULL, 0);	
 	
 	TRAPD(res,buf = HBufC8::NewL(2));
-	test(res == KErrNone && buf != NULL);
+	test_Value(res, res == KErrNone && buf != NULL);
 	bufPtr.Set(buf->Des());
 	
 	directory = gSessionPath;
@@ -1214,7 +1214,7 @@ void TestRemoval()
 
 
 	TRAPD(res,gBuf = HBufC8::NewL(KBlockSize+1));
-	test(res == KErrNone && gBuf != NULL);
+	test_Value(res, res == KErrNone && gBuf != NULL);
 		
 	gBufWritePtr.Set(gBuf->Des());
 	FillBuffer(gBufWritePtr, KBlockSize, 'A');
@@ -1299,7 +1299,7 @@ void CallTestsL()
 
 
 	TRAPD(res,gBuf = HBufC8::NewL(KBlockSize+1));
-	test(res == KErrNone && gBuf != NULL);
+	test_Value(res, res == KErrNone && gBuf != NULL);
 		
 	gBufWritePtr.Set(gBuf->Des());
 	FillBuffer(gBufWritePtr, KBlockSize, 'A');

@@ -797,17 +797,8 @@ TInt DMmcMediaDriverFlash::DoRead()
 		}
 	else
 		{
-#if defined(__DEMAND_PAGING__) && !defined(__WINS__)
-		if (DMediaPagingDevice::PageInRequest(*iCurrentReq))
-			{
-			r = iCurrentReq->WriteToPageHandler(NULL, 0, 0);
-			}
-		else
-#endif	// __DEMAND_PAGING__
-			{
-			TPtrC8 zeroDes(NULL, 0);
-			r = iCurrentReq->WriteRemote(&zeroDes,0);
-			}
+		TPtrC8 zeroDes(NULL, 0);
+		r = iCurrentReq->WriteRemote(&zeroDes,0);
 		}
 
 	// error occurred or read all from cache so complete immediately
@@ -2957,12 +2948,7 @@ TInt DMmcMediaDriverFlash::WriteDataToUser(TUint8* aBufPtr)
 	TUint usrOfst = I64LOW(iReqCur - iReqStart);
 
 	OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_WRITEDATATOUSER_LATENCY1, "Begin writing user data" );
-#if defined(__DEMAND_PAGING__) && !defined(__WINS__)
-	if (DMediaPagingDevice::PageInRequest(*iCurrentReq))
-		r=iCurrentReq->WriteToPageHandler((TUint8 *)(&extrView[0]), len, usrOfst);
-	else
-#endif	// __DEMAND_PAGING__
-		r = iCurrentReq->WriteRemote(&extrView,usrOfst);
+	r = iCurrentReq->WriteRemote(&extrView,usrOfst);
 	
 	OstTrace0( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_WRITEDATATOUSER_LATENCY2, "End writing user data" );
 
@@ -2973,19 +2959,10 @@ TInt DMmcMediaDriverFlash::WriteDataToUser(TUint8* aBufPtr)
 TInt DMmcMediaDriverFlash::ReadDataFromUser(TDes8& aDes, TInt aOffset)
 	{
 	OstTraceExt2(TRACE_FLOW, DMMCMEDIADRIVERFLASH_READDATAFROMUSER_ENTRY ,"DMmcMediaDriverFlash::ReadDataFromUser;aOffset=%d;this=%x", aOffset, (TUint) this);
-	TInt r = KErrNotSupported;
-#ifndef __WINS__
-	if (DMediaPagingDevice::PageOutRequest(*iCurrentReq))
-	    {
-		r = iCurrentReq->ReadFromPageHandler((TAny*) aDes.Ptr(), aDes.MaxLength(), aOffset);
-		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_READDATAFROMUSER_EXIT1, this, r );
-		return r;
-	    }
-	else
-#endif // #ifndef __WINS__
-		r = iCurrentReq->ReadRemote(&aDes, aOffset);
-	
-	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_READDATAFROMUSER_EXIT2, this, r );
+
+	TInt r = iCurrentReq->ReadRemote(&aDes, aOffset);
+
+	OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_READDATAFROMUSER_EXIT1, this, r );
 	return r;
 	}
 
@@ -3698,6 +3675,7 @@ TInt DMmcMediaDriverFlash::Request(TLocDrvRequest& aRequest)
 		c.iSize = drive.iPartitionLen;
 		c.iPartitionType = drive.iPartitionType;	
 		c.iHiddenSectors = (TUint) (drive.iPartitionBaseAddr >> KDiskSectorShift);
+		SetTotalSizeInBytes(c);
 		OstTraceFunctionExitExt( DMMCMEDIADRIVERFLASH_REQUEST_EXIT1, this, r );
 		return r;
 		}

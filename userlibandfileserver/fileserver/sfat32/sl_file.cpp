@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// f32\sfat\sl_file.cpp
+// f32\sfat32\sl_file.cpp
 // 
 //
 
@@ -367,7 +367,7 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
 		}
 	aLength=iCurrentPos.iPos-startPos;
 
-	if(FatMount().IsRuggedFSys() && pos+(TUint)aLength > FCB_FileSize())
+	if(!IsSequentialMode() && FatMount().IsRuggedFSys() && pos+(TUint)aLength > FCB_FileSize())
 		{
 		WriteFileSizeL(pos+aLength);
 		}
@@ -379,7 +379,6 @@ void CFatFileCB::WriteL(TInt aFilePos,TInt& aLength,const TAny* aSrc,const RMess
 	{
 	WriteL(TInt64(aFilePos),aLength,(TDesC8*) aSrc,aMessage, 0);
 	}
-
 
 
 //-----------------------------------------------------------------------------
@@ -502,7 +501,7 @@ void CFatFileCB::SetSizeL(TInt64 aSize)
 	if (I64HIGH(aSize))
 		User::Leave(KErrNotSupported);
 
-    DoSetSizeL(I64LOW(aSize), FatMount().IsRuggedFSys());
+	DoSetSizeL(I64LOW(aSize), FatMount().IsRuggedFSys());
 	}
 
 
@@ -520,7 +519,7 @@ void CFatFileCB::DoShrinkFileToZeroSizeL()
 	    ASSERT(FCB_FileSize());
         ASSERT(FileSizeModified());
         
-            ClearIndex(0); //-- clear seek index array
+        ClearIndex(0); // Clear seek index array
 		
         //-- update file dir. entry
         const TUint32 cluster = FCB_StartCluster();
@@ -608,8 +607,8 @@ void CFatFileCB::DoExpandFileL(TUint32 aNewSize, TBool aForceCachesFlush)
 	
 		FAT().FlushL();
 		
-        if(aForceCachesFlush)			// write file size if increasing
-			WriteFileSizeL(aNewSize);
+        if(!IsSequentialMode() && aForceCachesFlush)	// Write file size directly to its dir. entry if a cache flush
+			WriteFileSizeL(aNewSize);				// is needed and rugged FAT is not ignored by client
 		}
 
 	}
@@ -884,7 +883,6 @@ TInt CFatFileCB::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPo
 	}
 
 
-
 TInt CFatFileCB::GetInterface(TInt aInterfaceId,TAny*& aInterface,TAny* aInput)
 	{
 	switch(aInterfaceId)
@@ -904,8 +902,6 @@ TInt CFatFileCB::GetInterface(TInt aInterfaceId,TAny*& aInterface,TAny* aInput)
 			return CFileCB::GetInterface(aInterfaceId,aInterface,aInput);
 		}
 	}
-
-
 
 
 /**

@@ -368,21 +368,21 @@
 #define __END_ARM
 #endif
 
-#define CC_EQ	0
-#define	CC_NE	1
-#define CC_CS	2
-#define CC_CC	3
-#define CC_MI	4
-#define CC_PL	5
-#define CC_VS	6
-#define CC_VC	7
-#define CC_HI	8
-#define CC_LS	9
-#define CC_GE	10
-#define CC_LT	11
-#define CC_GT	12
-#define CC_LE	13
-#define	CC_AL	14
+#define CC_EQ	0U
+#define	CC_NE	1U
+#define CC_CS	2U
+#define CC_CC	3U
+#define CC_MI	4U
+#define CC_PL	5U
+#define CC_VS	6U
+#define CC_VC	7U
+#define CC_HI	8U
+#define CC_LS	9U
+#define CC_GE	10U
+#define CC_LT	11U
+#define CC_GT	12U
+#define CC_LE	13U
+#define	CC_AL	14U
 
 #ifdef __CPU_ARM_HAS_CLZ
 #if __ARM_ASSEMBLER_ISA__ >= 5

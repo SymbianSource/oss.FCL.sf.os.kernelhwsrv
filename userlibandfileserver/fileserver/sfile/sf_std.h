@@ -1868,6 +1868,7 @@ private:
 	TInt iFairSchedulingLen;
 	TBool iNotifyAsyncReadersPending;
 	TBool iDeleteOnClose;
+	TDblQue<CFileShare> iShareList;	// A list containing the CFileShare objects associated with the file
 
 protected:
 	TInt iPromotedShares;
@@ -1877,11 +1878,14 @@ protected:
 
     /** 
     maximum file size supported by the filesystem that instantiates the CFileCB, associated with this object.
-    For example, FAT32 supports files not larger than 4GB-1. Other file systems can support larger files. 
+    For example, FAT32 supports files not larger than 4GB-1. Other file systems can support larger files.
     This member allows file server to know maximum allowed position in the file.
     The default value is KMaxTUint64
     */
-    TUint64 iMaxSupportedFileSize; 
+    TUint64 iMaxSupportedFileSize;
+    
+    TInt iNonSequentialFileModes;	// Count of clients without the 'Sequential' mode enabled
+	TBool iSequential;				// Indicates whether the file is in 'Sequential' mode
 
 public:
 	// Provides support for large file size ( file size > 4GB - 1)

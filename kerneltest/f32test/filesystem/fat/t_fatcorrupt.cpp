@@ -28,6 +28,7 @@
 //! @See EFat and EFat32 components
 //! @file f32test\server\t_fatcorrupt.cpp
 
+#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32math.h>
@@ -102,9 +103,9 @@ void RestoreEnv()
     test.Printf(_L("RestoreEnv()\n"));
 
     TInt r = TheFs.DismountExtension(KExtName, gDrive);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r = TheFs.RemoveExtension(KExtName);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     if(gExtExists)      // remount existing secondary extension
         {
@@ -114,7 +115,7 @@ void RestoreEnv()
 
     //-- We need a full format, because quick format preserves bad sectors marked in FAT
     r = FormatFatDrive(TheFs, gDrive, EFalse);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     }
 
@@ -126,7 +127,7 @@ TBool PrepareMount()
     test.Printf(_L("PrepareMountL(), drive:%d \n"),gDrive);
 
     TInt r = TheFs.AddExtension(KExtName);
-    test(r==KErrNone || r==KErrAlreadyExists);
+    test_Value(r, r == KErrNone || r==KErrAlreadyExists);
     r = TheFs.ExtensionName(gExtName,gDrive,0);
     if (r == KErrNone)              // an extension already exists -> dismount it
         {
@@ -138,14 +139,14 @@ TBool PrepareMount()
             test(TheFs.RemoveExtension(KExtName) == KErrNone);
             return EFalse;
             }
-        test(r==KErrNone);
+        test_KErrNone(r);
         gExtExists=ETrue;
         }
-    test(r == KErrNone || r==KErrNotFound);
+    test_Value(r, r == KErrNone || r==KErrNotFound);
     r = TheFs.MountExtension(KExtName, gDrive);
     if (r != KErrNone)
         test(TheFs.RemoveExtension(KExtName) == KErrNone);
-    test(r==KErrNone);
+    test_KErrNone(r);
     return ETrue;
     }
 
@@ -560,7 +561,7 @@ void DoTestRootClusterUpdate()
     RRawDisk rawDisk;
 
     TInt r=rawDisk.Open(TheFs,gSessionPath[0]-'A');
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     //Mark Cluster 2  & 3 as bad
     const TInt fatStartPos = BootSector.FirstFatSector() * BootSector.BytesPerSector();
@@ -573,17 +574,17 @@ void DoTestRootClusterUpdate()
     data[3] = 0x0F;
 
     r=rawDisk.Write(pos, data);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     pos += 4;
     r = rawDisk.Write(pos, data);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     rawDisk.Close();
 
     //-- quick format the drive
     r = FormatFatDrive(TheFs, gDrive, ETrue);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     const TUint oldClusterNum = BootSector.RootClusterNum();
     ReadBootSector();
@@ -608,14 +609,14 @@ void ChangeVersionNumberAndMountL()
     WriteVersionNumber();
 
     TInt r = TheFs.FileSystemName(name, gDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     r = DismountFileSystem(TheFs, name, gDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     r = MountFileSystem(TheFs, name, gDrive);
 
-    test(r == KErrCorrupt);
+    test_Value(r, r == KErrCorrupt);
 
 }
 
@@ -635,22 +636,22 @@ void DoTestVersionNumber()
     // Test quick format
     RFormat formatQuick;
     TInt r = formatQuick.Open(TheFs, gDriveName, EQuickFormat, count);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     r = DoFormatSteps(formatQuick, count);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     formatQuick.Close();
 
     ReadBootSector();
     r = TheFs.FileSystemName(name, gDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     r = DismountFileSystem(TheFs, name, gDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     r = MountFileSystem(TheFs, name, gDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
 }
 
@@ -734,10 +735,10 @@ void DoTestL()
 
     //Mini SD cards works properly only with ESpecialFormat. Fix for Defect DEF091659
     TInt r = formatFull.Open(TheFs, gDriveName, ESpecialFormat, count);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     r = DoFormatSteps(formatFull, count);
-    test(r == KErrNone);
+    test_KErrNone(r);
 
     formatFull.Close();
 
@@ -762,7 +763,7 @@ void CallTestsL()
     // Only test FAT filesystem
     TInt r;
     r = TheFs.CharToDrive(gDriveToTest, gDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
     gDriveName[0] = (TText)gDriveToTest;
     gDriveName[1] = ':';
 
@@ -781,7 +782,7 @@ void CallTestsL()
     // No need for variable size disk
     TDriveInfo info;
     r = TheFs.Drive(info, gDrive);
-    test(r == KErrNone);
+    test_KErrNone(r);
     if (info.iMediaAtt & KMediaAttVariableSize)
         {
         test.Printf(_L("Drive %d is variable-size disk, skip\n"),gDrive);

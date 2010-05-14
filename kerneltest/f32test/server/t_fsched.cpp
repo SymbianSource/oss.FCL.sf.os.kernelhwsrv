@@ -1277,7 +1277,7 @@ void CallTestsL()
 	
 	TBool simulatelockFailureMode = EFalse;
 	r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-	test (r == KErrNone  ||  r == KErrNotSupported);
+	test_Value(r, r == KErrNone  ||  r == KErrNotSupported);
 #endif
 
 	// FileNames/File generation
@@ -1366,7 +1366,7 @@ void CallTestsL()
 	// turn lock failure mode back ON (if cache is enabled)
 	simulatelockFailureMode = ETrue;
 	r = controlIo(TheFs, gDrive, KControlIoSimulateLockFailureMode, simulatelockFailureMode);
-    test (r == KErrNone  ||  r == KErrNotSupported);
+    test_Value(r, r == KErrNone  ||  r == KErrNotSupported);
 #endif
 
 	test.End();

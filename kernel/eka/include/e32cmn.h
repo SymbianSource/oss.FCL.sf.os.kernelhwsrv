@@ -1971,6 +1971,10 @@ public:
 Structure for compile-time definition of a secure ID
 @internalComponent
 */
+#if defined(__ARMCC__) && __ARMCC_VERSION >= 400000
+#pragma push
+#pragma diag_suppress 430 
+#endif
 class SSecureId
 	{
 public:
@@ -1981,7 +1985,9 @@ public:
 public:
 	TUint32 iId;
 	};
-
+#if defined(__ARMCC__) && __ARMCC_VERSION >= 400000	
+#pragma pop 	
+#endif
 
 	
 	
@@ -1989,6 +1995,10 @@ public:
 Structure for compile-time definition of a vendor ID
 @internalComponent
 */
+#if defined(__ARMCC__) && __ARMCC_VERSION >= 400000
+#pragma push
+#pragma diag_suppress 430 
+#endif
 class SVendorId
 	{
 public:
@@ -1999,7 +2009,9 @@ public:
 public:
 	TUint32 iId;
 	};
-
+#if defined(__ARMCC__) && __ARMCC_VERSION >= 400000	
+#pragma pop 	
+#endif
 
 
 
@@ -2639,135 +2651,130 @@ Base class for heaps.
 class RAllocator : public MAllocator
 	{
 public:
+	/**
+	A set of heap allocation failure flags.
 
+	This enumeration indicates how to simulate heap allocation failure.
 
-    /**
-    A set of heap allocation failure flags.
-    
-    This enumeration indicates how to simulate heap allocation failure.
+	@see RAllocator::__DbgSetAllocFail()
+	*/
+	enum TAllocFail
+		{
+		/**
+		Attempts to allocate from this heap fail at a random rate;
+		however, the interval pattern between failures is the same
+		every time simulation is started.
+		*/
+		ERandom,
 
-    @see RAllocator::__DbgSetAllocFail()
-    */
-	enum TAllocFail {
-                    /**
-                    Attempts to allocate from this heap fail at a random rate;
-                    however, the interval pattern between failures is the same
-                    every time simulation is started.
-                    */
-	                ERandom,
-	                
-	                
-                  	/**
-                  	Attempts to allocate from this heap fail at a random rate.
-                  	The interval pattern between failures may be different every
-                  	time the simulation is started.
-                  	*/
-	                ETrueRandom,
-	                
-	                
-                    /**
-                    Attempts to allocate from this heap fail at a rate aRate;
-                    for example, if aRate is 3, allocation fails at every
-                    third attempt.
-                    */
-	                EDeterministic,
+		/**
+		Attempts to allocate from this heap fail at a random rate.
+		The interval pattern between failures may be different every
+		time the simulation is started.
+		*/
+		ETrueRandom,
 
-	                
-	                /**
-	                Cancels simulated heap allocation failure.
-	                */
-	                ENone,
-	                
-	                
-	                /**
-	                An allocation from this heap will fail after the next aRate - 1 
-					allocation attempts. For example, if aRate = 1 then the next 
-					attempt to allocate from this heap will fail.
-	                */
-	                EFailNext,
-	                
-	                /**
-	                Cancels simulated heap allocation failure, and sets
-	                the nesting level for all allocated cells to zero.
-	                */
-	                EReset,
+		/**
+		Attempts to allocate from this heap fail at a rate aRate;
+		for example, if aRate is 3, allocation fails at every
+		third attempt.
+		*/
+		EDeterministic,
 
-                    /**
-                    aBurst allocations from this heap fail at a random rate;
-                    however, the interval pattern between failures is the same
-                    every time the simulation is started.
-                    */
-	                EBurstRandom,
-	                
-	                
-                  	/**
-                  	aBurst allocations from this heap fail at a random rate.
-                  	The interval pattern between failures may be different every
-                  	time the simulation is started.
-                  	*/
-	                EBurstTrueRandom,
-	                
-	                
-                    /**
-                    aBurst allocations from this heap fail at a rate aRate.
-                    For example, if aRate is 10 and aBurst is 2, then 2 allocations
-					will fail at every tenth attempt.
-                    */
-	                EBurstDeterministic,
+		/**
+		Cancels simulated heap allocation failure.
+		*/
+		ENone,
 
-	                /**
-	                aBurst allocations from this heap will fail after the next aRate - 1 
-					allocation attempts have occurred. For example, if aRate = 1 and 
-					aBurst = 3 then the next 3 attempts to allocate from this heap will fail.
-	                */
-	                EBurstFailNext,
+		/**
+		An allocation from this heap will fail after the next aRate - 1
+		allocation attempts. For example, if aRate = 1 then the next
+		attempt to allocate from this heap will fail.
+		*/
+		EFailNext,
 
-					/**
-					Use this to determine how many times the current debug 
-					failure mode has failed so far.
-					@see RAllocator::__DbgCheckFailure()
-					*/
-					ECheckFailure,
-	                };
-	                
-	                
-    /**
-    Heap debug checking type flag.
-    */
-	enum TDbgHeapType {
-                      /**
-                      The heap is a user heap.
-                      */
-	                  EUser,
-	                  
-                      /**
-                      The heap is the Kernel heap.
-                      */	                  
-	                  EKernel
-	                  };
-	                  
-	                  
-	enum TAllocDebugOp {ECount, EMarkStart, EMarkEnd, ECheck, ESetFail, ECopyDebugInfo, ESetBurstFail};
-	
-	
+		/**
+		Cancels simulated heap allocation failure, and sets
+		the nesting level for all allocated cells to zero.
+		*/
+		EReset,
+
+		/**
+		aBurst allocations from this heap fail at a random rate;
+		however, the interval pattern between failures is the same
+		every time the simulation is started.
+		*/
+		EBurstRandom,
+
+		/**
+		aBurst allocations from this heap fail at a random rate.
+		The interval pattern between failures may be different every
+		time the simulation is started.
+		*/
+		EBurstTrueRandom,
+
+		/**
+		aBurst allocations from this heap fail at a rate aRate.
+		For example, if aRate is 10 and aBurst is 2, then 2 allocations
+		will fail at every tenth attempt.
+		*/
+		EBurstDeterministic,
+
+		/**
+		aBurst allocations from this heap will fail after the next aRate - 1
+		allocation attempts have occurred. For example, if aRate = 1 and
+		aBurst = 3 then the next 3 attempts to allocate from this heap will fail.
+		*/
+		EBurstFailNext,
+
+		/**
+		Use this to determine how many times the current debug
+		failure mode has failed so far.
+		@see RAllocator::__DbgCheckFailure()
+		*/
+		ECheckFailure,
+		};
+
+	/**
+	Heap debug checking type flag.
+	*/
+	enum TDbgHeapType
+		{
+		/**
+		The heap is a user heap.
+		*/
+		EUser,
+
+		/**
+		The heap is the Kernel heap.
+		*/
+		EKernel
+		};
+
+	enum TAllocDebugOp
+		{
+		ECount, EMarkStart, EMarkEnd, ECheck, ESetFail, ECopyDebugInfo, ESetBurstFail, EGetFail,
+		EGetSize=48, EGetMaxLength, EGetBase, EAlignInteger, EAlignAddr
+		};
+
 	/**
 	Flags controlling reallocation.
 	*/
-	enum TReAllocMode {
-	                  /**
-	                  A reallocation of a cell must not change
-	                  the start address of the cell.
-	                  */
-	                  ENeverMove=1,
-	                  
-	                  /**
-	                  Allows the start address of the cell to change
-	                  if the cell shrinks in size.
-	                  */
-	                  EAllowMoveOnShrink=2
-	                  };
-	                  
-	                  
+	enum TReAllocMode
+		{
+		/**
+		A reallocation of a cell must not change
+		the start address of the cell.
+		*/
+		ENeverMove=1,
+
+		/**
+		Allows the start address of the cell to change
+		if the cell shrinks in size.
+		*/
+		EAllowMoveOnShrink=2
+		};
+
 	enum TFlags {ESingleThreaded=1, EFixedSize=2, ETraceAllocs=4, EMonitorMemory=8,};
 	struct SCheckInfo {TBool iAll; TInt iCount; const TDesC8* iFileName; TInt iLineNum;};
 #ifndef SYMBIAN_ENABLE_SPLIT_HEADERS
@@ -2795,26 +2802,37 @@ public:
 	UIMPORT_C TInt __DbgMarkCheck(TBool aCountAll, TInt aCount, const TDesC8& aFileName, TInt aLineNum);
 	inline void __DbgMarkCheck(TBool aCountAll, TInt aCount, const TUint8* aFileName, TInt aLineNum);
 	UIMPORT_C void __DbgSetAllocFail(TAllocFail aType, TInt aRate);
+	UIMPORT_C TAllocFail __DbgGetAllocFail();
 	UIMPORT_C void __DbgSetBurstAllocFail(TAllocFail aType, TUint aRate, TUint aBurst);
 	UIMPORT_C TUint __DbgCheckFailure();
+	UIMPORT_C TInt Size() const;
+	UIMPORT_C TInt MaxLength() const;
+	UIMPORT_C TUint8* Base() const;
+	UIMPORT_C TInt Align(TInt a) const;
+	UIMPORT_C TAny* Align(TAny* a) const;
+
 protected:
 	UIMPORT_C virtual TInt Extension_(TUint aExtensionId, TAny*& a0, TAny* a1);
 #ifndef __KERNEL_MODE__
 	IMPORT_C virtual void DoClose();
 #endif
+
 protected:
-	TInt iAccessCount;
-	TInt iHandleCount;
-	TInt* iHandles;
-	TUint32 iFlags;
-	TInt iCellCount;
-	TInt iTotalAllocSize;
+	TInt	iAccessCount;		// Value of the allocator's access count (ie. Number of times RAllocator::Open() has been called)
+	TInt	iHandleCount;		// Number of handles in the iHandles array
+	TInt*	iHandles;			// Array of handles to chunks used by the heap implementation
+	TUint32	iFlags;				// Flags describing attributes of the heap; see RAllocator::TFlags
+	TInt	iCellCount;			// Internal debugger use only; use MAllocator::AllocSize() instead
+	TInt	iTotalAllocSize;	// Internal debugger use only; use MAllocator::AllocSize() instead
 	};
 
-
-
-
 class UserHeap;
+
+// This #define is for tools such as MemSpy that need to work across different versions of
+// Symbian and need to know whether they are working with the new or old heap
+
+#define __SYMBIAN_KERNEL_HYBRID_HEAP__
+
 /**
 @publishedAll
 @released
@@ -2823,127 +2841,20 @@ Represents the default implementation for a heap.
 
 The default implementation uses an address-ordered first fit type algorithm.
 
-The heap itself is contained in a chunk and may be the only occupant of the 
+The heap itself is contained in a chunk and may be the only occupant of the
 chunk or may share the chunk with the program stack.
 
-The class contains member functions for allocating, adjusting, freeing individual 
+The class contains member functions for allocating, adjusting, freeing individual
 cells and generally managing the heap.
 
-The class is not a handle in the same sense that RChunk is a handle; i.e. 
+The class is not a handle in the same sense that RChunk is a handle; i.e.
 there is no Kernel object which corresponds to the heap.
 */
+
 class RHeap : public RAllocator
 	{
 public:
-    /**
-    The structure of a heap cell header for a heap cell on the free list.
-    */
-	struct SCell {
-	             /**
-	             The length of the cell, which includes the length of
-	             this header.
-	             */
-	             TInt len; 
-	             
-	             
-	             /**
-	             A pointer to the next cell in the free list.
-	             */
-	             SCell* next;
-	             };
 
-
-	/**
-    The structure of a heap cell header for an allocated heap cell in a debug build.
-    */             
-	struct SDebugCell {
-	                  /**
-	                  The length of the cell, which includes the length of
-                      this header.
-	                  */
-	                  TInt len;
-	                  
-	                  
-	                  /**
-	                  The nested level.
-	                  */
-	                  TInt nestingLevel;
-	                  
-	                  
-	                  /**
-	                  The cumulative number of allocated cells
-	                  */
-	                  TInt allocCount;
-	                  };
-
-	/**
-    @internalComponent
-    */
-	struct SHeapCellInfo { RHeap* iHeap; TInt iTotalAlloc;	TInt iTotalAllocSize; TInt iTotalFree; TInt iLevelAlloc; SDebugCell* iStranded; };
-
-	/**
-	@internalComponent
-	*/
-	struct _s_align {char c; double d;};
-
-	/** 
-	The default cell alignment.
-	*/
-	enum {ECellAlignment = sizeof(_s_align)-sizeof(double)};
-	
-	/**
-	Size of a free cell header.
-	*/
-	enum {EFreeCellSize = sizeof(SCell)};
-
-
-#ifdef _DEBUG
-    /**
-    Size of an allocated cell header in a debug build.
-    */
-	enum {EAllocCellSize = sizeof(SDebugCell)};
-#else
-    /**
-    Size of an allocated cell header in a release build.
-    */
-	enum {EAllocCellSize = sizeof(SCell*)};
-#endif
-
-
-    /**
-    @internalComponent
-    */
-	enum TDebugOp {EWalk=128};
-	
-	
-    /**
-    @internalComponent
-    */
-	enum TCellType
-		{EGoodAllocatedCell, EGoodFreeCell, EBadAllocatedCellSize, EBadAllocatedCellAddress,
-		EBadFreeCellAddress, EBadFreeCellSize};
-
-		
-    /**
-    @internalComponent
-    */
-	enum TDebugHeapId {EUser=0, EKernel=1};
-    
-    /**
-    @internalComponent
-    */
-    enum TDefaultShrinkRatios {EShrinkRatio1=256, EShrinkRatioDflt=512};
-
-#ifndef SYMBIAN_ENABLE_SPLIT_HEADERS
-	/**
-    @internalComponent
-    */
-#else
-private:
-#endif
-    typedef void (*TWalkFunc)(TAny*, TCellType, TAny*, TInt);
-
-public:
 	UIMPORT_C virtual TAny* Alloc(TInt aSize);
 	UIMPORT_C virtual void Free(TAny* aPtr);
 	UIMPORT_C virtual TAny* ReAlloc(TAny* aPtr, TInt aSize, TInt aMode=0);
@@ -2957,71 +2868,119 @@ public:
 	UIMPORT_C virtual TInt DebugFunction(TInt aFunc, TAny* a1=NULL, TAny* a2=NULL);
 protected:
 	UIMPORT_C virtual TInt Extension_(TUint aExtensionId, TAny*& a0, TAny* a1);
+	inline RHeap() { }
+
 public:
-	UIMPORT_C RHeap(TInt aMaxLength, TInt aAlign=0, TBool aSingleThread=ETrue);
-	UIMPORT_C RHeap(TInt aChunkHandle, TInt aOffset, TInt aMinLength, TInt aMaxLength, TInt aGrowBy, TInt aAlign=0, TBool aSingleThread=EFalse);
-	UIMPORT_C TAny* operator new(TUint aSize, TAny* aBase) __NO_THROW;
-	inline void operator delete(TAny* aPtr, TAny* aBase);
-	inline TUint8* Base() const;
-	inline TInt Size() const;
-	inline TInt MaxLength() const;
-	inline TInt Align(TInt a) const;
-	inline const TAny* Align(const TAny* a) const;
-	inline TBool IsLastCell(const SCell* aCell) const;
-	inline void Lock() const;
-	inline void Unlock() const;
-	inline TInt ChunkHandle() const;
+
+	/**
+	@internalComponent
+
+	The structure of a heap cell header for an allocated heap cell in a debug build.
+	*/
+	struct SDebugCell
+		{
+		/**
+		The nested level.
+		*/
+		TInt nestingLevel;
+
+		/**
+		The cumulative number of allocated cells
+		*/
+		TInt allocCount;
+		};
+
+	/**
+	@internalComponent
+	*/
+	struct SHeapCellInfo { RHeap* iHeap; TInt iTotalAlloc;	TInt iTotalAllocSize; TInt iTotalFree; TInt iLevelAlloc; SDebugCell* iStranded; };
+
+	/**
+	Size of a free cell header.
+	*/
+	enum { EDebugHdrSize = sizeof(SDebugCell) };
+
+	/**
+	The default cell alignment.
+	*/
+	enum { ECellAlignment = 8 };
+
+	/**
+	Size of a free cell header.
+	*/
+	enum { EFreeCellSize = 4 };
+
+#ifdef _DEBUG
+	/**
+	Size of an allocated cell header in a debug build.
+	*/
+	enum { EAllocCellSize = (4 + EDebugHdrSize) };
+#else
+	/**
+	Size of an allocated cell header in a release build.
+	*/
+	enum { EAllocCellSize = 4 };
+#endif
+
+	/**
+	@internalComponent
+	*/
+	enum TDebugOp { EWalk = 128, EHybridHeap };
+
+	/**
+	@internalComponent
+	*/
+	enum TCellType
+		{
+		EGoodAllocatedCell, EGoodFreeCell, EBadAllocatedCellSize, EBadAllocatedCellAddress,
+		EBadFreeCellAddress, EBadFreeCellSize
+		};
+
+	/**
+	@internalComponent
+	*/
+	enum TDebugHeapId { EUser = 0, EKernel = 1 };
+
+	/**
+	@internalComponent
+	*/
+	enum TDefaultShrinkRatios { EShrinkRatio1 = 256, EShrinkRatioDflt = 512 };
+
+	/**
+	@internalComponent
+	*/
+	typedef void (*TWalkFunc)(TAny*, TCellType, TAny*, TInt);
+
 protected:
-	inline RHeap();
-	void Initialise();
-	SCell* DoAlloc(TInt aSize, SCell*& aLastFree);
-	void DoFree(SCell* pC);
-	TInt TryToGrowHeap(TInt aSize, SCell* aLastFree);
-	inline void FindFollowingFreeCell(SCell* aCell, SCell*& pPrev, SCell*& aNext);
-	TInt TryToGrowCell(SCell* pC, SCell* pP, SCell* pE, TInt aSize);
-	TInt Reduce(SCell* aCell);
-	UIMPORT_C SCell* GetAddress(const TAny* aCell) const;
-	void CheckCell(const SCell* aCell) const;
-	void Walk(TWalkFunc aFunc, TAny* aPtr);
-	static void WalkCheckCell(TAny* aPtr, TCellType aType, TAny* aCell, TInt aLen);
-	TInt DoCountAllocFree(TInt& aFree);
-	TInt DoCheckHeap(SCheckInfo* aInfo);
-	void DoMarkStart();
-	TUint32 DoMarkEnd(TInt aExpected);
-	void DoSetAllocFail(TAllocFail aType, TInt aRate);
-	TBool CheckForSimulatedAllocFail();
-	inline TInt SetBrk(TInt aBrk);
-	inline TAny* ReAllocImpl(TAny* aPtr, TInt aSize, TInt aMode);
-	void DoSetAllocFail(TAllocFail aType, TInt aRate, TUint aBurst);
-protected:
-	TInt iMinLength;
-	TInt iMaxLength;
-	TInt iOffset;
-	TInt iGrowBy;
-	TInt iChunkHandle;
-	RFastLock iLock;
-	TUint8* iBase;
-	TUint8* iTop;
-	TInt iAlign;
-	TInt iMinCell;
-	TInt iPageSize;
-	SCell iFree;
-protected:
-	TInt iNestingLevel;
-	TInt iAllocCount;
-	TAllocFail iFailType;
-	TInt iFailRate;
-	TBool iFailed;
-	TInt iFailAllocCount;
-	TInt iRand;
-	TAny* iTestData;
+
+	// These variables are present only for downwards binary compatibility.  Most are unused,
+	// but some must be present so that previously inline functions continue to work.  These
+	// old inline functions are now replaced with non inline versions so recompiling existing
+	// code will automatically switch to the new versions and you should no longer access any
+	// of the variables in here.
+	//
+	// These variables should now all be considered private and should NOT be accessed directly!
+	//
+	TInt		iUnused1;		// Present for binary compatibility reasons only
+	TInt		iMaxLength;		// Use RAllocator::MaxLength() to get this information now
+	TInt		iUnused2;		// Present for binary compatibility reasons only
+	TInt		iUnused3;		// Present for binary compatibility reasons only
+	// These next two variables must remain in this order for correct object destruction
+	TInt		iChunkHandle;	// Do not use; consider undocumented
+	RFastLock	iLock;			// Do not use; consider undocumented
+	TUint8*		iBase;			// Use RAllocator::Base() to get this information now
+	TUint8*		iTop;			// Do not use; consider undocumented
+	TInt		iAlign;			// Use RAllocator::Align() to get this information now
+
+	// These variables are temporary to prevent source breaks from req417-52840.  They are deprecated in
+	// favour of non hacky ways of determining this information but are required during the switchover to
+	// this method
+	TAllocFail	iFailType;		// Use RAllocator::__DbgGetAllocFail() to get this information now
+	TInt		iNestingLevel;	// Do not use; consider undocumented
+	TAny*		iTestData;		// Do not use; consider undocumented
 
 	friend class UserHeap;
 	};
-
-
-
-
 
 class OnlyCreateWithNull;
 

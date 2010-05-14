@@ -32,7 +32,6 @@
 const TInt KAtaSectorSize=512;
 const TInt KMaxSectors=8;
 const TInt KMaxRdWrBufLen=(KAtaSectorSize*KMaxSectors); // 4K
-const TInt KHeapSize=0x4000;
 const TInt KMaxErr=8;
 
 #if defined (USE_F32_ACCESS)

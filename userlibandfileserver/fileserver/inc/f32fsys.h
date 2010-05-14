@@ -556,6 +556,10 @@ private:
 	
 	friend class LocalDrives;			// for access to iChanged flag
 	friend class CExtNotifyMediaChange; // for access to iChanged flag
+	
+#if defined(_USE_CONTROLIO) || defined(_DEBUG) || defined(_DEBUG_RELEASE)
+	friend class TFsControlIo;			// for access to LocateDrives()
+#endif
 	};
 
 class CFileCB;
@@ -1614,7 +1618,6 @@ public:
 	TBool DeleteOnClose() const;
  
 	
-
 	void SetNotifyAsyncReadersPending(TBool aNotifyAsyncReadersPending);
 	TBool NotifyAsyncReadersPending() const;
 	TInt CancelAsyncReadRequest(CFileShare* aShareP, TRequestStatus* aStatusP);
@@ -1637,6 +1640,17 @@ public:
 	TInt AddLock64(CFileShare* aFileShare,TInt64 aPos,TInt64 aLength);
 	TInt RemoveLock64(CFileShare* aFileShare,TInt64 aPos,TInt64 aLength);
 	TInt CheckLock64(CFileShare* aFileShare,TInt64 aPos,TInt64 aLength);
+
+	/** Sequential mode */
+	
+	IMPORT_C TBool IsSequentialMode() const;
+	void SetSequentialMode(TBool aSequential);
+
+	/**
+	The FileShare List contains the file shares of an open file.
+	*/
+	TDblQue<CFileShare>& FileShareList() const;
+	void AddShare(CFileShare& aFileShare);
 
     /**
     Renames the file with the full file name provided.
@@ -1954,12 +1968,12 @@ protected:
 public:
 
 	/**
-	The full name of the file, including drive and extensions.
+	The full name of the file, including its extension.
 	*/
 	HBufC* iFileName;
 
 	/**
-	The full name of the file, including drive and extensions - Folded.
+	The full name of the file, including its extension - Folded.
 	*/
 	HBufC* iFileNameF;
 
@@ -1968,11 +1982,9 @@ private:
 	TDrive*             iCreatedDrive;
 	TDrive*             iDrive;
 	CMountCB*           iMount;
-	TFileLocksArray*    iFileLocks; ///< an array of file position locks
+	TFileLocksArray*    iFileLocks;		// An array of file position locks
 	TDblQueLink         iMountLink;
-	
-private:
-	CFileBody* iBody;
+	CFileBody*			iBody;
 
 	friend class TDrive;
 	friend class CMountCB;
@@ -2025,7 +2037,7 @@ public:
 	void InitL();
 	inline CFileCB& File();
 
-	// For serialising aync requests 
+	// For serialising async requests 
 	TBool RequestStart(CFsMessageRequest* aRequest);
 	void RequestEnd(CFsMessageRequest* aRequest);
 	TBool RequestInProgress() const;
@@ -2050,8 +2062,13 @@ private:
 
 	// A pointer to the current request. Used for serializing client 
 	// async read/write requests which might otherwise be processed out
-	// of order due to fair scheduling
-	CFsMessageRequest* iCurrentRequest;	
+	// of order due to fair scheduling.
+	CFsMessageRequest* iCurrentRequest;
+	
+	// The FileShare List link object.
+	TDblQueLink iShareLink;
+
+friend class CFileBody;	// For access to iShareLink
 	};
 
 

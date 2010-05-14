@@ -17,6 +17,7 @@
 
 //! @file f32test\concur\t_cfsbench.cpp
 
+#define	__E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <f32dbg.h>
@@ -82,7 +83,7 @@ LOCAL_C TBool DriveIsOK(TChar c)
 		return EFalse;
 	TDriveInfo info;
 	r=TheFs.Drive(info,drv);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	return (info.iDriveAtt != 0 && !(info.iDriveAtt & KDriveAttRom));
 	}
 
@@ -95,19 +96,19 @@ LOCAL_C TChar MountTestFileSystem(TInt aDrive)
 	TBuf<64> b;
 	TChar c;
 	r=TheFs.DriveToChar(aDrive,c);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	b.Format(_L("Mount test file system on %c:"),(TUint)c);
 	test.Next(b);
 
 	r=TheFs.AddFileSystem(KFsFile);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	
 	r=TheFs.FileSystemName(gOldFsName,aDrive);
-	test(r==KErrNone || r==KErrNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotFound);
 
 	TDriveInfo drv;
 	r = TheFs.Drive(drv, aDrive);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	gNoMedia = (drv.iType == EMediaUnknown || drv.iType == EMediaNotPresent);
 
@@ -115,14 +116,14 @@ LOCAL_C TChar MountTestFileSystem(TInt aDrive)
 		{
 		TTest::Printf(_L("Dismount %C: %S"), (TUint)c, &gOldFsName);
 		r=TheFs.DismountFileSystem(gOldFsName,aDrive);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	r=TheFs.MountFileSystem(KFsName,aDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.FileSystemName(gNewFsName,aDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(gNewFsName.CompareF(KFsName)==0);
 	return c;
 	}
@@ -132,9 +133,9 @@ LOCAL_C void UnmountFileSystem(TInt aDrive)
 	{
 	TChar c;
 	TInt r=TheFs.DriveToChar(aDrive,c);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.DismountFileSystem(gNewFsName,aDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	// if there's no media present, don't try to mount it
 	if (gNoMedia)
 		{
@@ -144,7 +145,7 @@ LOCAL_C void UnmountFileSystem(TInt aDrive)
 		{
 		test.Printf(_L("Mount    %C: %S"), (TUint)c, &gOldFsName);
 		r=TheFs.MountFileSystem(gOldFsName,aDrive);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 	if (r != KErrNone)
 		test.Printf(_L("Error %d remounting %S on %C\n"), r, &gOldFsName, (TUint)c);
@@ -159,7 +160,7 @@ LOCAL_C void RemountFileSystem(TInt aDrive, TBool aSync)
 	TChar c;
 	TInt r=TheFs.DriveToChar(aDrive,c);
 	r=TheFs.FileSystemName(gFsName, aDrive);
-	test(r==KErrNone || r==KErrNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotFound);
 
 	if (gFsName.Length() > 0)
 		{
@@ -183,7 +184,7 @@ LOCAL_C void RemountFileSystem(TInt aDrive, TBool aSync)
 	r=TheFs.MountFileSystem(gFsName, aDrive);
 #endif
 
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 enum TOper
@@ -357,7 +358,7 @@ TInt RFileOps::Open(TOper aOper)
 
 		TInt sizeFile = 0;
 		r = iF.Size(sizeFile);
-		test(r == KErrNone);
+		test_KErrNone(r);
         if (gVerbose)
 			{
 			test.Printf(_L("File Size = %d, %d buffers of size %d\n"), sizeFile, iMax, iBufSize);
@@ -468,10 +469,7 @@ TInt RFileOps::CreateReadFile()
 	for (TInt pos=0; pos<iFileSize; pos+= buf->Length())
 		{
 		r = iF.Write(pos, bufptr);
-		if (r != KErrNone)
-			test.Printf(_L("Write() returned %d\n"), r);
-
-		test(r == KErrNone);
+		test_KErrNone(r);
 		}
 	delete buf; buf = NULL;
 
@@ -652,15 +650,15 @@ LOCAL_C TInt testAsyncAccess(
 
 
 	r = TheFs.DriveToChar(aDrive1, dc1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.DriveToChar(aDrive2, dc2);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	// allocate buffers
 	r = f1.Init(dc1, aBufSize1);
-		test(r == KErrNone);
+	test_KErrNone(r);
 	r = f2.Init(dc2, aBufSize2);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	
 	_LIT(KSync, " sync");
@@ -686,21 +684,21 @@ LOCAL_C TInt testAsyncAccess(
 		if (aBufSize1 > 0)
 			{
 			r = f1.CreateReadFile();
-			test(r == KErrNone);
+			test_KErrNone(r);
 			}
 		if (aBufSize2 > 0)
 			{
 			r = f2.CreateReadFile();
-			test(r == KErrNone);
+			test_KErrNone(r);
 			}
 
 		if (aBufSize1 > 0)
 			r = f1.Open(RFileOps::ERead);
-		test(r == KErrNone);
+		test_KErrNone(r);
 		
 		if (aBufSize2 > 0)
 			r = f2.Open(RFileOps::ERead);
-		test(r == KErrNone);
+		test_KErrNone(r);
 
 
 		timer.After(tstat, KTimeBM * KSecond);
@@ -740,13 +738,13 @@ LOCAL_C TInt testAsyncAccess(
 		if (aBufSize1 > 0)
 			{
 			r = f1.Open(RFileOps::EWrite);
-			test(r == KErrNone);
+			test_KErrNone(r);
 			}
 	
 		if (aBufSize2 > 0)
 			{
 			r = f2.Open(RFileOps::EWrite);
-			test(r == KErrNone);
+			test_KErrNone(r);
 			}
 
 		timer.After(tstat, KTimeBM * KSecond);
@@ -904,7 +902,7 @@ LOCAL_C void PrintResults(RESULTS& aResults, TChar aDrvCh, TChar aDrvCh2)
 GLDEF_C void CallTestsL()
 	{
 	TInt r = TTest::Init();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	TChar drvch1 = 0;
 	TChar drvch2 = 0;
@@ -963,14 +961,14 @@ GLDEF_C void CallTestsL()
 		}
 
 	r = TheFs.CharToDrive(drvch1, drive1);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r = TheFs.CharToDrive(drvch2, drive2);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	
 	r = TheFs.FileSystemName(gFsName1, drive1);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r == KErrNone || r == KErrNotFound);
 	r = TheFs.FileSystemName(gFsName2, drive2);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r == KErrNone || r == KErrNotFound);
 
 	if (testFs)
 		{
@@ -1051,7 +1049,7 @@ GLDEF_C void CallTestsL()
 		UnmountFileSystem(drive1);
 		UnmountFileSystem(drive2);
 		}
-	test(r == 0);
+	test_Value(r, r == 0);
 	}
 
 
@@ -1069,7 +1067,7 @@ GLDEF_C TInt E32Main()
     test.Start(_L("Starting tests..."));
 
     r=TheFs.Connect();
-    test(r==KErrNone);
+    test_KErrNone(r);
 
     // TheFs.SetAllocFailure(gAllocFailOn);
     TTime timerC;
@@ -1084,7 +1082,7 @@ GLDEF_C TInt E32Main()
     endTimeC.HomeTime();
     TTimeIntervalSeconds timeTakenC;
     r=endTimeC.SecondsFrom(timerC,timeTakenC);
-    test(r==KErrNone);
+    test_KErrNone(r);
     test.Printf(_L("Time taken for test = %d seconds\n"),timeTakenC.Int());
     // TheFs.SetAllocFailure(gAllocFailOff);
     TheFs.Close();

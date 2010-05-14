@@ -1615,6 +1615,15 @@ void ExecHandler::KernelHeapDebug(TInt aFunction, TInt a1, TAny* a2)
 			break;
 			}
 
+		case EDbgGetAllocFail:
+			{
+			NKern::ThreadEnterCS();
+			TInt allocFail = K::Allocator->__DbgGetAllocFail();
+			NKern::ThreadLeaveCS();
+			kumemput32(a2, (TAny*)&allocFail, sizeof(TInt));
+			break;
+			}
+
 		default:
 			panic=EBadKernelHeapDebugFunction;
 			break;
