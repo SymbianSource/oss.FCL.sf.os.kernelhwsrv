@@ -34,8 +34,6 @@ PRJ_EXPORTS
 
 ../profiler/profiler.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(profiler.h)
 
-../analyse/profiler.rtf						/epoc32/engdoc/profiler/profiler.rtf
-
 ../d_exc/printstk.pl 						/epoc32/rom/tools/printstk.pl
 ../d_exc/printsym.pl 						/epoc32/rom/tools/printsym.pl
 
