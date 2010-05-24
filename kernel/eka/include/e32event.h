@@ -254,7 +254,41 @@ public:
 		/**
 		Represents a device restart event.
 		*/
-		ERestartSystem
+		ERestartSystem,
+		
+		/* Caused by "Tap" Gesture Event from pointing device directry */
+		EGestureTap = 0x0080,
+		/* Caused by "LongPress" Gesture Event from pointing device directry */
+		EGesturePress,
+		/* Caused by "FlickUp" Gesture Event from pointing device directry */
+		EGestureFlickup,
+		/* Caused by "FlickDown" Gesture Event from pointing device directry */
+		EGestureFlickDown,
+		/* Caused by "FlickLeft" Gesture Event from pointing device directry */
+		EGestureFlickLeft,
+		/* Caused by "FlickRight" Gesture Event from pointing device directry */
+		EGestureFlickRight,
+		/* Caused by General "Flick" Gesture Event from pointing device directry */
+		EGestureFlick,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom1,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom2,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom3,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom4,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom5,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom6,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom7,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom8,
+		/* Caused by Custom Gesture Event from pointing device directry (for Reserved) */
+		EGestureCustom9,
+
 		};
 public:
 
