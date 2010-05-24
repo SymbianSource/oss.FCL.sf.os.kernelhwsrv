@@ -66,8 +66,8 @@ void DumpWin32CodeSeg(DWin32CodeSeg& a)
 	Kern::Printf("iAccessCount = %d", a.iAccessCount);
 	Kern::Printf("iEntryPtVeneer = %08x", a.iEntryPtVeneer);
 	Kern::Printf("iFileEntryPoint = %08x", a.iFileEntryPoint);
-	Kern::Printf("iFileName = %lS", a.iFileName);
-	Kern::Printf("iRootName = %lS", &a.iRootName);
+	Kern::Printf("iFileName = %S", a.iFileName);
+	Kern::Printf("iRootName = %S", &a.iRootName);
 	Kern::Printf("iExtOffset = %d", a.iExtOffset);
 	Kern::Printf("iModuleVersion = %08x", a.iModuleVersion);
 	Kern::Printf("iUids = %08x %08x %08x", uid[0], uid[1], uid[2]);
@@ -1111,7 +1111,7 @@ _LIT(KRomSysBin, "Z:\\sys\\bin");
 // in order to make them appear to be in z:\system\libs
 void P::NormalizeExecutableFileName(TDes& a)
 	{
-	__KTRACE_OPT(KDLL, Kern::Printf("NormalizeExecutableFileName %lS", &a));
+	__KTRACE_OPT(KDLL, Kern::Printf("NormalizeExecutableFileName %S", &a));
 	if (a.Length()<3 || a[1]!=':' || a[2]!='\\')
 		{
 		// don't have a drive so assume in 'ROM'
@@ -1120,7 +1120,7 @@ void P::NormalizeExecutableFileName(TDes& a)
 		if (initial.Length()==0 || initial[0]!='\\')
 			a.Append('\\');
 		a+=initial;
-		__KTRACE_OPT(KDLL, Kern::Printf("NormalizeExecutableFileName -> %lS", &a));
+		__KTRACE_OPT(KDLL, Kern::Printf("NormalizeExecutableFileName -> %S", &a));
 		}
 	}
 

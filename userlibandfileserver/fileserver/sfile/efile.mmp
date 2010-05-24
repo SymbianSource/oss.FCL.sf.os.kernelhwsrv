@@ -11,8 +11,8 @@
 // Contributors:
 //
 // Description:
-// f32/group/efile.mmp
-// efile_instrumented.exe Instrumented version of the File Server
+// f32/sfile/efile.mmp
+// efile.exe File Server
 // 
 //
 
@@ -21,17 +21,22 @@
 */
 
 
-TARGET			efile_instrumented.exe
+TARGET			efile.exe
 
 #include "f32caps.mmh"  // Capabilities of File Server process
 #include "f32.mmh"  	// Generic definitions for the whole f32 component
 
 MACRO			SYMBIAN_PRIVATE_EFSRV
 
+// By default, tracepoints are compiled in to UDEB version only
 #ifdef SYMBIAN_TRACE_SYSTEM_INCLUDE
-	macro SYMBIAN_FTRACE_ENABLE_UDEB
-	macro SYMBIAN_FTRACE_ENABLE_UREL
+macro SYMBIAN_FTRACE_ENABLE_UDEB
+//macro SYMBIAN_FTRACE_ENABLE_UREL
 #endif
 
 #include "efile.mmh"
+
+
+
+
 

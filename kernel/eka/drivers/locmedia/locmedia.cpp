@@ -2878,9 +2878,10 @@ Then it completes the kernel thread message and the reference count of the threa
 			}
 		else
 #endif
-
-		CompleteRequest(m, s);
-		OstTraceDefExt3( OST_TRACE_CATEGORY_RND, TRACE_INTERNALS, DPRIMARYMEDIABASE_DOREQUEST_RETURN, "Return req Id=%d; Remote Thread=0x%x; retval=%d", (TInt) m.Id(), (TUint) m.RemoteThread(), (TInt) s);
+			{
+			CompleteRequest(m, s);
+			OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_INTERNALS, DPRIMARYMEDIABASE_DOREQUEST_RETURN, "Return Remote Thread=0x%x; retval=%d", (TUint) m.RemoteThread(), (TInt) s);
+			}
 		}
 
 	iCurrentReq=NULL;
@@ -4956,7 +4957,7 @@ EXPORT_C TInt LocDrv::RegisterMediaDevice(TMediaDevice aDevice, TInt aDriveCount
 	{
 	OstTraceFunctionEntry0( LOCDRV_REGISTERMEDIADEVICE_ENTRY );
 	// Create TLocDrv / DMedia objects to handle a media device
-	__KTRACE_OPT(KBOOT,Kern::Printf("RegisterMediaDevice %lS dev=%1d #drives=%d 1st=%d PM=%08x #media=%d",&aName,aDevice,aDriveCount,*aDriveList,aPrimaryMedia,aNumMedia));
+	__KTRACE_OPT(KBOOT,Kern::Printf("RegisterMediaDevice %S dev=%1d #drives=%d 1st=%d PM=%08x #media=%d",&aName,aDevice,aDriveCount,*aDriveList,aPrimaryMedia,aNumMedia));
 	OstTraceExt5( TRACE_INTERNALS, LOCDRV_REGISTERMEDIADEVICE1, "aDevice=%d; aDriveCount=%d; aDriveList=%d; aPrimaryMedia=0x%08x; aNumMedia=%d", (TInt) aDevice, (TInt) aDriveCount, (TInt) *aDriveList, (TUint) aPrimaryMedia, (TInt) aNumMedia );
 
 	if (UsedMedia+aNumMedia>KMaxLocalDrives)
@@ -5331,7 +5332,7 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 			drive = TheDrives[i];
 			if(drive && drive->iPrimaryMedia == aPrimaryMedia)
 				{
-				__KTRACE_OPT2(KBOOT,KLOCDPAGING, Kern::Printf("RegisterPagingDevice: local drive %d, partition type %x base %lx size %lx name %lS", i, drive->iPartitionType, drive->iPartitionBaseAddr, drive->iPartitionLen, DriveNames[i] ? DriveNames[i] : &KNullDesC8));
+				__KTRACE_OPT2(KBOOT,KLOCDPAGING, Kern::Printf("RegisterPagingDevice: local drive %d, partition type %x base %lx size %lx name %S", i, drive->iPartitionType, drive->iPartitionBaseAddr, drive->iPartitionLen, DriveNames[i] ? DriveNames[i] : &KNullDesC8));
 				// ROM partition ?
 				if ((romPagingDriveNumber == KErrNotFound) && 
 					(drive->iPartitionType == KPartitionTypeROM) &&
@@ -5388,7 +5389,7 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 
 #ifdef __DEBUG_DEMAND_PAGING__
 	Kern::Printf("PagingDevice :");
-	Kern::Printf("Name %lS", firstLocalDriveNumber >= 0 && DriveNames[firstLocalDriveNumber] ? DriveNames[firstLocalDriveNumber] : &KNullDesC8);
+	Kern::Printf("Name %S", firstLocalDriveNumber >= 0 && DriveNames[firstLocalDriveNumber] ? DriveNames[firstLocalDriveNumber] : &KNullDesC8);
 	Kern::Printf("iType 0x%x", pagingDevice->iType);
 	Kern::Printf("iReadUnitShift 0x%x", pagingDevice->iReadUnitShift);
 	Kern::Printf("iFirstLocalDriveNumber 0x%x", pagingDevice->iFirstLocalDriveNumber);
@@ -5612,7 +5613,7 @@ void GetDriveInfo(TDriveInfoV1& info)
 				if (!(sock_mask & (1<<sockNum)))
 					{
 					info.iSocketName[sockNum]=*DriveNames[i];
-					__KTRACE_OPT(KLOCDRV,Kern::Printf("Socket %d device %d name %lS", sockNum, pM->iDevice, DriveNames[i]));
+					__KTRACE_OPT(KLOCDRV,Kern::Printf("Socket %d device %d name %S", sockNum, pM->iDevice, DriveNames[i]));
 					OstTraceExt2( TRACE_INTERNALS, GETDRIVEINFO1, "Socket=%d; device=%d", sockNum, (TUint) pM->iDevice );
 					if ( (sockNum + 1) > sockets )
 						sockets = sockNum + 1;
@@ -5620,7 +5621,7 @@ void GetDriveInfo(TDriveInfoV1& info)
 				sock_mask |= (1<<sockNum);
 				}
 			info.iDriveName[i]=*DriveNames[i];
-			__KTRACE_OPT(KLOCDRV,Kern::Printf("Drive %d device %d name %lS",i,pM->iDevice,DriveNames[i]));
+			__KTRACE_OPT(KLOCDRV,Kern::Printf("Drive %d device %d name %S",i,pM->iDevice,DriveNames[i]));
 			OstTraceExt2( TRACE_INTERNALS, GETDRIVEINFO2, "Drive=%d; device=%d", i, (TUint) pM->iDevice );
 			
 			info.iRegisteredDriveBitmask |= (0x01 << i);

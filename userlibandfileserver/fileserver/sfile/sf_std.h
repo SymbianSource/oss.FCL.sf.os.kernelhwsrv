@@ -34,7 +34,6 @@
 #include "sf_func.h"
 #include <F32plugin.h>
 #include "f32trace.h"
-#include <utraceefile.h>
 
 #define __PRINT1TEMP_ALWAYS(t,a) {{TBuf<KMaxFileName>temp(a);RDebug::Print(t,&temp);}}
 #define __PRINT2TEMP_ALWAYS(t,a,b) {{TBuf<KMaxFileName>temp(b);RDebug::Print(t,a,&temp);}}
@@ -1712,7 +1711,6 @@ extern CServerFs* TheFileServer;
 extern HBufC* TheDriveNames[];
 extern TDrive TheDrives[KMaxDrives];
 extern TFileName TheDefaultPath;
-extern RFTrace TheFtrace;
 
 extern SCapabilitySet AllCapabilities;
 extern SCapabilitySet DisabledCapabilities;

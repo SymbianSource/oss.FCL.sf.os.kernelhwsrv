@@ -441,7 +441,7 @@ EXPORT_C void DObject::TraceAppendFullName(TDes8& aFullName, TBool aLock)
 EXPORT_C TInt DObject::SetName(const TDesC* aName)
 	{
 	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"DObject::SetName");		
-	__KTRACE_OPT(KOBJECT,Kern::Printf("SetName %O (%lS)",this,aName));
+	__KTRACE_OPT(KOBJECT,Kern::Printf("SetName %O (%S)",this,aName));
 	TAny* pN=NULL;
 	if (aName)
 		{
@@ -456,7 +456,7 @@ EXPORT_C TInt DObject::SetName(const TDesC* aName)
 	pN = __e32_atomic_swp_ord_ptr(&iName, pN);
 	if (iName)
 		{
-		__KTRACE_OPT(KOBJECT,Kern::Printf("Name is now %lS",iName));
+		__KTRACE_OPT(KOBJECT,Kern::Printf("Name is now %S",iName));
 		}
 	else
 		{
@@ -1164,7 +1164,7 @@ DObjectCon* DObjectCon::New(TInt aUniqueID)
 			__KTRACE_OPT(KOBJECT,Kern::Printf("Container %d created OK",pC->UniqueID()));
 			return pC;
 			}
-		__KTRACE_OPT(KOBJECT,Kern::Printf("Error %d creating mutex %lS",r,&n));
+		__KTRACE_OPT(KOBJECT,Kern::Printf("Error %d creating mutex %S",r,&n));
 		}
 	return NULL;
 	}

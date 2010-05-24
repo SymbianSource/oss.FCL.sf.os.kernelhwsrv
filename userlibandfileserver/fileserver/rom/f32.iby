@@ -17,8 +17,6 @@
 secondary=\Epoc32\Release\##MAIN##\##BUILD##\efile.exe  sys\bin\efile.exe  FIXED HEAPMAX(0x80000)
 file=\Epoc32\Release\##MAIN##\##BUILD##\efsrv.dll       sys\bin\efsrv.dll
 
-device[VARID]=\Epoc32\Release\##KMAIN##\##BUILD##\d_ftrace.ldd          sys\bin\d_ftrace.ldd
-
 #ifdef WITH_EXFAT
 file=\Epoc32\Release\##MAIN##\##BUILD##\exfat.fsy       sys\bin\exfat.fsy
 #endif

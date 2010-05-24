@@ -683,7 +683,7 @@ DPBusSocket::DPBusSocket(TInt aSocketNumber)
 TInt DPBusSocket::Create(const TDesC* aName)
 	{
 	OstTraceFunctionEntry1( DPBUSSOCKET_CREATE_ENTRY, this );
-	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::Create %lS",iSocketNumber,aName));
+	__KTRACE_OPT(KPBUS1,Kern::Printf(">DPBusSocket(%d)::Create %S",iSocketNumber,aName));
 	OstTrace1(TRACE_INTERNALS, DPBUSSOCKET_CREATE, "iSocketNumber=%d",iSocketNumber);
 	iName=aName;
 	DPBusPowerHandler* pH=new DPBusPowerHandler(this);

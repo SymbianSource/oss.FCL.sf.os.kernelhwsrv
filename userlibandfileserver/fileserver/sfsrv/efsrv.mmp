@@ -11,8 +11,8 @@
 // Contributors:
 //
 // Description:
-// f32/group/efile.mmp
-// efile.exe File Server
+// f32/sfsrv/efsrv.mmp
+// efsrv.dll File Server client-side library
 // 
 //
 
@@ -21,21 +21,15 @@
 */
 
 
-TARGET			efile.exe
+TARGET			efsrv.dll
 
-#include "f32caps.mmh"  // Capabilities of File Server process
 #include "f32.mmh"  	// Generic definitions for the whole f32 component
 
-MACRO			SYMBIAN_PRIVATE_EFSRV
-
+// By default, tracepoints are compiled in to UDEB version only
 #ifdef SYMBIAN_TRACE_SYSTEM_INCLUDE
 	macro SYMBIAN_FTRACE_ENABLE_UDEB
 //	macro SYMBIAN_FTRACE_ENABLE_UREL
 #endif
 
-#include "efile.mmh"
 
-
-
-
-
+#include "efsrv.mmh"

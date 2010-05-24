@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,24 +11,11 @@
 // Contributors:
 //
 // Description:
-// f32/group/efsrv.mmp
-// efsrv.dll File Server client-side library
-// 
-//
 
-/**
- @file
-*/
-
-
-TARGET			efsrv.dll
-
-#include "f32.mmh"  	// Generic definitions for the whole f32 component
-
-#ifdef SYMBIAN_TRACE_SYSTEM_INCLUDE
-	macro SYMBIAN_FTRACE_ENABLE_UDEB
-//	macro SYMBIAN_FTRACE_ENABLE_UREL
+#ifndef __OSTTRACEDEFINITIONS_H__
+#define __OSTTRACEDEFINITIONS_H__
+// OST_TRACE_COMPILER_IN_USE flag has been added by Trace Compiler
+// REMOVE BEFORE CHECK-IN TO VERSION CONTROL
+//#define OST_TRACE_COMPILER_IN_USE
+#include <OpenSystemTrace.h>
 #endif
-
-
-#include "efsrv.mmh"

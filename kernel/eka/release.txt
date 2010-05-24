@@ -1,3 +1,32 @@
+Version 2.00.3083
+=================
+(Made by vfebvre 13/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#380321 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+
+2.	cnotton
+	1.	ou1cimx1#380725 Public headers in bt are including platform headers
+
+
+Version 2.00.3082
+=================
+(Made by vfebvre 12/05/2010)
+
+1.	mipetzol
+	1.	MINOR_CHANGE Update to DMAv2 Porting Guide
+
+2.	lanerobe
+	1.	ou1cimx1#378811 Change kernel use of %lS to %S
+	2.	ou1cimx1#378808 MCL Stop ExecHandler accessing user descriptors directly
+
+3.	migubarr
+	1.	ou1cimx1#377322 New T_FILECACHE test failures (t_filecache.cpp:356)
+
+4.	hengrant
+	1.	ou1cimx1#370931 Memory card gets locked by itself MCL
+
+
 Version 2.00.3081
 =================
 (Made by vfebvre 11/05/2010)

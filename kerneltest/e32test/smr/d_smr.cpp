@@ -19,7 +19,7 @@
 
 #include "d_trace.h"
 
-#include <memmodel\epoc\platform.h>
+#include <memmodel/epoc/platform.h>
 #include <bootdefs.h>
 #include <kernel/kernboot.h>
 #include <kernel/kern_priv.h>

@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,28 +11,11 @@
 // Contributors:
 //
 // Description:
-//
 
-#include "kernel/kern_ext.mmh"
-#include "f32.mmh"
-
-USERINCLUDE		../inc
-
-TARGET         d_ftrace.ldd
-TARGETTYPE     LDD
-SOURCEPATH	../ftrace
-SOURCE         d_ftrace.cpp
-
-epocallowdlldata
-
-OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-
-start wins
-win32_headers
-end
-
-capability	all
-VENDORID 0x70000001
-
-UNPAGED
-SMPSAFE
+#ifndef __OSTTRACEDEFINITIONS_H__
+#define __OSTTRACEDEFINITIONS_H__
+// OST_TRACE_COMPILER_IN_USE flag has been added by Trace Compiler
+// REMOVE BEFORE CHECK-IN TO VERSION CONTROL
+//#define OST_TRACE_COMPILER_IN_USE
+#include <OpenSystemTrace.h>
+#endif

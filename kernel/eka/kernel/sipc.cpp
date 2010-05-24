@@ -1144,7 +1144,7 @@ void DSession::Detach(TInt aReason)
 
 		if(m->IsDelivered() || m->IsAccepted())
 			{
-			if (!IsClosing())
+			if (!IsClosing() && t->iMState != DThread::EDead)
 				{
 				m->SetCompleting();
 				Kern::QueueRequestComplete(t, m, aReason);
@@ -1752,7 +1752,7 @@ void ExecHandler::MessageComplete(RMessageK* aMsg, TInt aReason)
 		s->iConnectMsgPtr = NULL;
 
 	__KTRACE_OPT(KIPC,Kern::Printf("MsgCo: M:%d r:%d %O->%O", m.iFunction, aReason, TheCurrentThread, m.iClient));
-	if (!s->IsClosing())
+	if (!s->IsClosing() && m.iClient->iMState != DThread::EDead)
 		{
 		m.SetCompleting();
 		Kern::QueueRequestComplete(m.iClient, &m, aReason);
@@ -2044,7 +2044,7 @@ void ExecHandler::MessageKill(TInt aHandle, TExitType aType, TInt aReason, const
 	TBuf<KMaxExitCategoryName> cat;
 	if (aType==EExitPanic && aCategory)
 		GetCategory(cat,*aCategory);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::MessageKill %d,%d,%lS",aType,aReason,&cat));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::MessageKill %d,%d,%S",aType,aReason,&cat));
 	K::CheckKernelUnlocked();
 	NKern::LockSystem();
 	RMessageK* pM = RMessageK::MessageK(aHandle);

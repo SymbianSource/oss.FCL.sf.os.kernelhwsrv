@@ -15,21 +15,10 @@
 
 #include "cl_std.h"
 
-#define RETURNIFERROR(a,b,t)  					\
-	{											\
-	if ((a=b)!=KErrNone)						\
-		{										\
-		if(iStatus)								\
-			User::RequestComplete(iStatus,a);	\
-		TInt _t = t;							\
-		if (_t)	{TRACE1(UTF::EBorder, t, MODULEUID, a);}	\
-		return(a);								\
-		}										\
-	}
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cl_fmanTraces.h"
+#endif
 
-#define RETURNIFERRORD(a,b,t)  		 			\
-	TInt a; 									\
-	RETURNIFERROR(a,b,t)
 
 const TUint KRecurseFlag	=	0x40000000;
 const TUint KScanDownFlag	=	0x20000000;
@@ -528,14 +517,14 @@ Constructs and allocates memory for a new CFileMan object.
 @return Newly created CFileMan object.
 */
 	{
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManNewL1, MODULEUID, aFs.Handle());
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANNEWL1, "sess %x", aFs.Handle());
 
 	CFileMan* fileMan=new(ELeave) CFileMan(aFs);
 	CleanupStack::PushL(fileMan);
 	fileMan->CFileBase::ConstructL();
 	CleanupStack::Pop();
 
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManNewL1Return, MODULEUID, fileMan);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANNEWL1RETURN, "CFileMan* %x", fileMan);
 	return fileMan;
 	}
 
@@ -552,7 +541,7 @@ Constructs and allocates memory for a new CFileMan object with an observer.
 @return Newly created CFileMan object.
 */
 	{
-	TRACE2(UTF::EBorder, UTraceModuleEfsrv::ECFileManNewL2, MODULEUID, aFs.Handle(), anObserver);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANNEWL2, "sess %x anObserver %x", (TUint) aFs.Handle(), (TUint) anObserver);
 
 	CFileMan* fileMan=new(ELeave) CFileMan(aFs);
 	CleanupStack::PushL(fileMan);
@@ -560,7 +549,7 @@ Constructs and allocates memory for a new CFileMan object with an observer.
 	CleanupStack::Pop();
 	fileMan->SetObserver(anObserver);
 
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManNewL2Return, MODULEUID, fileMan);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANNEWL2RETURN, "CFileMan* %x", fileMan);
 	return fileMan;
 	}
 
@@ -576,9 +565,9 @@ CFileMan::CFileMan(RFs& aFs)
 	}
 CFileMan::~CFileMan()
 	{
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManDestructor, MODULEUID, this);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANDESTRUCTOR, "this %x", this);
 
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::ECFileManDestructorReturn, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_ECFILEMANDESTRUCTORRETURN, "");
 	}
 
 
@@ -589,7 +578,7 @@ Gets the action which CFileMan is currently carrying out.
 @return The action which CFileMan is carrying out.
 */
 	{
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCurrentAction, MODULEUID, this);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCURRENTACTION, "this %x", this);
 
 	TAction action = ENone;
 
@@ -628,7 +617,7 @@ Gets the action which CFileMan is currently carrying out.
 		Panic(EFManUnknownAction);
 		}
 
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCurrentActionReturn, MODULEUID, action);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCURRENTACTIONRETURN, "action %d", action);
 	return (action);
 	}
 
@@ -646,11 +635,12 @@ This function is relevant when copying, moving or renaming files.
                 the current CFileMan operation
 */
 	{
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManGetCurrentTarget, MODULEUID, this);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANGETCURRENTTARGET, "this %x", this);
 
 	GetSrcAndTrg(iTmpParse, aTrgName);
 
-	TRACEMULT1(UTF::EBorder, UTraceModuleEfsrv::ECFileManGetCurrentTargetReturn, MODULEUID, aTrgName);
+	OstTrace0(TRACE_BORDER, EFSRV_ECFILEMANGETCURRENTTARGETRETURN, "");
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANGETCURRENTTARGET_EFILENAME, "FileName %S", aTrgName.Ptr(), aTrgName.Length()<<1);
 	}
 
 
@@ -667,13 +657,14 @@ The source is the file or directory which is being copied, moved or deleted.
                 CFileMan operation.
 */
 	{
-	TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManGetCurrentSource, MODULEUID, this);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANGETCURRENTSOURCE, "this %x", this);
 
     TPtrC fullPath(FullPath());
 	iTmpParse.Set(CurrentEntry().iName, &fullPath, NULL);
 	aSrcName = iTmpParse.FullName();
 
-	TRACEMULT1(UTF::EBorder, UTraceModuleEfsrv::ECFileManGetCurrentSourceReturn, MODULEUID, aSrcName);
+	OstTrace0(TRACE_BORDER, EFSRV_ECFILEMANGETCURRENTSOURCERETURN, "");
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANGETCURRENTSOURCE_EFILENAME, "FileName %S", aSrcName.Ptr(), aSrcName.Length()<<1);
 	}
 
 void CFileMan::GetSrcAndTrg(TParse& aSrcName,TFileName& aTrgName)
@@ -734,7 +725,7 @@ and may be used to support the increment of progress bars.
 @return The number of bytes transferred.
 */
 	{
-	TRACE2(UTF::EBorder, UTraceModuleEfsrv::ECFileManBytesTransferredByCopyStep, MODULEUID, this, iBytesTransferred);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANBYTESTRANSFERREDBYCOPYSTEP, "this %x BytesTransferred %d", (TUint) this, (TUint) iBytesTransferred);
 
 	return(iBytesTransferred);
 	}
@@ -904,8 +895,9 @@ Its behaviour is the same as the synchronous overload.
 
 */
 	{
-	TRACEMULT8(UTF::EBorder, UTraceModuleEfsrv::ECFileManAttribs1, MODULEUID,
-		(TUint) this, aName, aSetMask, aClearMask, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()), aSwitches, (TUint) &aStatus);
+	OstTraceExt5(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS1A, "this %x aSetMask %x aClearMask %x aSwitches %d status %x", (TUint) this, (TUint) aSetMask, (TUint) aClearMask, (TUint) aSwitches, (TUint) &aStatus);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS1B, "aTime %x:%x ", (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()));
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS1A_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 
 	TInt r;
 	if (iSwitches&KFManBusyFlag)
@@ -918,7 +910,8 @@ Its behaviour is the same as the synchronous overload.
 		r = Attribs(aName,aSetMask,aClearMask,aTime,aSwitches);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManAttribs1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS1RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -974,8 +967,9 @@ Notes:
 
 */
 	{
-	TRACEMULT7(UTF::EBorder, UTraceModuleEfsrv::ECFileManAttribs2, MODULEUID,
-		(TUint) this, aName, aSetMask, aClearMask, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()), aSwitches);
+	OstTraceExt4(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS2A, "this %x aSetMask %x aClearMask %x aSwitches %x", (TUint) this, (TUint) aSetMask, (TUint) aClearMask, (TUint) aSwitches);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS2B, "aTime %x:%x ", (TUint) I64HIGH(aTime.Int64()), (TUint) I64LOW(aTime.Int64()));
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS2A_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 
 	TInt ret;
 	if (iSwitches&KFManBusyFlag)
@@ -985,7 +979,15 @@ Notes:
 	else
 		{
 		SetFlags(aSwitches&EOverWrite,aSwitches&ERecurse,ETrue,EFalse);
-		RETURNIFERRORD(r,iFs.Parse(aName,iSrcFile),UTraceModuleEfsrv::ECFileManAttribs2Return);
+		TInt r;
+		if ((r = iFs.Parse(aName,iSrcFile)) != KErrNone)
+			{
+			if(iStatus)
+				User::RequestComplete(iStatus,r);
+			OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS2RETURN1, "r %d", r);
+			return r;
+			}
+
 		iSetMask=aSetMask;
 		iClearMask=aClearMask;
 		iTime=aTime;
@@ -997,7 +999,8 @@ Notes:
 		DoSynchronize(r);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManAttribs2Return, MODULEUID, ret);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANATTRIBS2RETURN2, "r %d", ret);
+
 	return(ret);
 	}
 
@@ -1037,8 +1040,9 @@ Its behaviour is the same as the synchronous overload.
 
 */
 	{
-	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy1, MODULEUID,
-		(TUint) this, anOld, aNew, aSwitches, (TUint) &aStatus);
+	OstTraceExt3(TRACE_BORDER, EFSRV_ECFILEMANCOPY1, "this %x aSwitches %x status %x", (TUint) this, (TUint) aSwitches, (TUint) &aStatus);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANCOPY1_EOLDNAME, "OldName %S", anOld.Ptr(), anOld.Length()<<1);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANCOPY1_ENEWNAME, "NewName %S", aNew.Ptr(), aNew.Length()<<1);
 
 	TInt r;
 	if (iSwitches&KFManBusyFlag)
@@ -1049,7 +1053,8 @@ Its behaviour is the same as the synchronous overload.
 		r = Copy(anOld,aNew,aSwitches);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY1RETURN, "r %d", r);
+
 	return(r);
 	}
 
@@ -1178,21 +1183,38 @@ will return KErrPathNotFound.
 
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy2, MODULEUID, (TUint) this, anOld, aNew, aSwitches);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANCOPY2, "this %x aSwitches %d", (TUint) this, (TUint) aSwitches);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANCOPY2_EOLDNAME, "OldName %S", anOld.Ptr(), anOld.Length()<<1);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANCOPY2_ENEWNAME, "NewName %S", aNew.Ptr(), aNew.Length()<<1);
 
 	if (iSwitches&KFManBusyFlag)
 		{
-		TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy2Return, MODULEUID, KErrInUse);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY2RETURN1, "r %d", KErrInUse);
 		return(KErrInUse);
 		}
 	SetFlags(aSwitches&EOverWrite,aSwitches&ERecurse,ETrue,EFalse);
-	RETURNIFERRORD(r,iFs.Parse(anOld,iSrcFile),UTraceModuleEfsrv::ECFileManCopy2Return);
-	RETURNIFERROR(r,iFs.Parse(aNew,_L("*"),iTrgFile),UTraceModuleEfsrv::ECFileManCopy2Return);
+	TInt r;
+	if ((r = iFs.Parse(anOld,iSrcFile)) != KErrNone)
+		{
+		if(iStatus)
+			User::RequestComplete(iStatus,r);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY2RETURN2, "r %d", r);
+		return r;
+		}
+
+	if ((r = iFs.Parse(aNew,_L("*"),iTrgFile)) != KErrNone)
+		{
+		if(iStatus)
+			User::RequestComplete(iStatus,r);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY2RETURN3, "r %d", r);
+		return r;
+		}
+
 	CheckForDirectory();
 
 	if((iSwitches&KRecurseFlag) && iTrgFile.DriveAndPath().MatchF(iSrcFile.FullName()) != KErrNotFound)
 		{
-		TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy2Return, MODULEUID, KErrArgument);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY2RETURN4, "r %d", KErrArgument);
 		return(KErrArgument);
 		}
 
@@ -1203,7 +1225,8 @@ will return KErrPathNotFound.
 	TInt ret=(r==KErrNone) ? iLastError : r;
 	DoSynchronize(r);
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy2Return, MODULEUID, ret);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY2RETURN5, "r %d", ret);
+
 	return(ret);
 	}
 
@@ -1243,7 +1266,8 @@ Its behaviour is the same as the synchronous overload.
 @see KNullDesC
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::ECFileManDelete1, MODULEUID, (TUint) this, aName, aSwitches, (TUint) &aStatus);
+	OstTraceExt3(TRACE_BORDER, EFSRV_ECFILEMANDELETE1, "this %x aSwitches %x status %x", (TUint) this, (TUint) aSwitches, (TUint) &aStatus);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANDELETE1_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 
 	TInt r;
 	if (iSwitches&KFManBusyFlag)
@@ -1256,7 +1280,8 @@ Its behaviour is the same as the synchronous overload.
 		r = Delete(aName,aSwitches);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManDelete1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANDELETE1RETURN, "r %d", r);
+
 	return(r);
 	}
 
@@ -1303,7 +1328,8 @@ Error codes may be retrieved using CFileBase::GetLastError().
 @see KNullDesC
 */
 	{
-	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::ECFileManDelete2, MODULEUID, (TUint) this, aName, aSwitches);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANDELETE2, "this %x aSwitches %d", (TUint) this, (TUint) aSwitches);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANDELETE2_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 
 	TInt ret;
 	if (iSwitches&KFManBusyFlag)
@@ -1313,7 +1339,15 @@ Error codes may be retrieved using CFileBase::GetLastError().
 	else
 		{
 		SetFlags(aSwitches&EOverWrite,aSwitches&ERecurse,ETrue,EFalse);
-		RETURNIFERRORD(r,iFs.Parse(aName,iSrcFile),UTraceModuleEfsrv::ECFileManDelete2Return);
+		TInt r;
+		if ((r = iFs.Parse(aName,iSrcFile)) != KErrNone)
+			{
+			if(iStatus)
+				User::RequestComplete(iStatus,r);
+			OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANDELETE2RETURN1, "() r %d", r);
+			return r;
+			}
+
 		iAction = EInternalDelete;
 		iMatchEntry=KEntryAttHidden|KEntryAttMatchExclude|KEntryAttDir;
 	//	Exclude directories and system files - include hidden files
@@ -1323,7 +1357,8 @@ Error codes may be retrieved using CFileBase::GetLastError().
 		DoSynchronize(r);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManDelete2Return, MODULEUID, ret);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANDELETE2RETURN2, "() r %d", ret);
+
 	return(ret);
 	}
 
@@ -1367,8 +1402,9 @@ Its behaviour is the same as the synchronous overload.
 
 */
 	{
-	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::ECFileManMove1, MODULEUID,
-		(TUint) this, anOld, aNew, aSwitches, (TUint) &aStatus);
+	OstTraceExt3(TRACE_BORDER, EFSRV_ECFILEMANMOVE1, "this %x aSwitches %x status %x", (TUint) this, (TUint) aSwitches, (TUint) &aStatus);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANMOVE1_EOLDNAME, "OldName %S", anOld.Ptr(), anOld.Length()<<1);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANMOVE1_ENEWNAME, "NewName %S", aNew.Ptr(), aNew.Length()<<1);
 
 	TInt r;
 	if (iSwitches&KFManBusyFlag)
@@ -1381,7 +1417,8 @@ Its behaviour is the same as the synchronous overload.
 		r = Move(anOld,aNew,aSwitches);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManMove1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANMOVE1RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -1521,20 +1558,36 @@ Notes:
 @see CFileBase::GetLastError()
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::ECFileManMove2, MODULEUID,
-		(TUint) this, anOld, aNew, aSwitches);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANMOVE2, "this %x aSwitches %d", (TUint) this, (TUint) aSwitches);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANMOVE2_EOLDNAME, "OldName %S", anOld.Ptr(), anOld.Length()<<1);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANMOVE2_ENEWNAME, "NewName %S", aNew.Ptr(), aNew.Length()<<1);
 
 
 	if (iSwitches&KFManBusyFlag)
 		{
-		TRACE1(UTF::EBorder, UTraceModuleEfsrv::ECFileManMove2Return, MODULEUID, KErrInUse);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANMOVE2RETURN1, "r %d", KErrInUse);
 		return(KErrInUse);
 		}
 
 	iNumberOfFilesProcessed = 0;
 
-	RETURNIFERRORD(r,iFs.Parse(anOld,iSrcFile),UTraceModuleEfsrv::ECFileManMove2Return);
-	RETURNIFERROR(r,iFs.Parse(aNew,_L("*"),iTrgFile),UTraceModuleEfsrv::ECFileManMove2Return);
+	TInt r;
+	if ((r = iFs.Parse(anOld,iSrcFile)) != KErrNone)
+		{
+		if(iStatus)
+			User::RequestComplete(iStatus,r);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANMOVE2RETURN2, "r %d", r);
+		return r;
+		}
+
+	if ((r = iFs.Parse(aNew,_L("*"),iTrgFile)) != KErrNone)
+		{
+		if(iStatus)
+			User::RequestComplete(iStatus,r);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANMOVE2RETURN3, "r %d", r);
+		return r;
+		}
+
 
 	TInt ret = KErrNone;
 	TBool aComplete = EFalse;
@@ -1553,7 +1606,7 @@ Notes:
 			{
 			User::RequestComplete(iStatus, ret);
 			}
-		TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManMove2Return, MODULEUID, ret);
+		OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANMOVE2RETURN4, "r %d", ret);
 		return(ret);
 		}
 
@@ -1568,7 +1621,8 @@ Notes:
 	ret = (r==KErrNone) ? iLastError : r;
 	DoSynchronize(r);
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManMove2Return, MODULEUID, ret);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANMOVE2RETURN5, "r %d", ret);
+
 	return(ret);
 	}
 
@@ -1915,8 +1969,9 @@ Its behaviour is the same as the synchronous overload.
 
 */
 	{
-	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::ECFileManRename1, MODULEUID,
-		(TUint) this, aName, aNewName, aSwitches, (TUint) &aStatus);
+	OstTraceExt3(TRACE_BORDER, EFSRV_ECFILEMANRENAME1, "this %x aSwitches %x status %x", (TUint) this, (TUint) aSwitches, (TUint) &aStatus);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANRENAME1_EOLDNAME, "OldName %S", aName.Ptr(), aName.Length()<<1);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANRENAME1_ENEWNAME, "NewName %S", aNewName.Ptr(), aNewName.Length()<<1);
 
 	TInt r;
 	if (iSwitches&KFManBusyFlag)
@@ -1929,7 +1984,8 @@ Its behaviour is the same as the synchronous overload.
 		r = Rename(aName,aNewName,aSwitches);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManRename1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRENAME1RETURN, "r %d", r);
+
 	return(r);
 	}
 
@@ -2095,8 +2151,9 @@ that file, as retrieved by CFileBase::GetLastError().
 
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::ECFileManRename2, MODULEUID,
-		(TUint) this, aName, aNewName, aSwitches);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANRENAME2, "this %x aSwitches %d", (TUint) this, (TUint) aSwitches);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANRENAME2_EOLDNAME, "OldName %S", aName.Ptr(), aName.Length()<<1);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANRENAME2_ENEWNAME, "NewName %S", aNewName.Ptr(), aNewName.Length()<<1);
 
 	TInt ret;
 	if (iSwitches&KFManBusyFlag)
@@ -2106,8 +2163,22 @@ that file, as retrieved by CFileBase::GetLastError().
 	else
 		{
 		SetFlags(aSwitches&EOverWrite,EFalse,ETrue,EFalse);
-		RETURNIFERRORD(r,iFs.Parse(aName,iSrcFile),UTraceModuleEfsrv::ECFileManRename2Return);
-		RETURNIFERROR(r,iFs.Parse(aNewName,_L("*"),iTrgFile),UTraceModuleEfsrv::ECFileManRename2Return);
+		TInt r;
+		if ((r = iFs.Parse(aName,iSrcFile)) != KErrNone)
+			{
+			if(iStatus)
+				User::RequestComplete(iStatus,r);
+			OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRENAME2RETURN1, "r %d", r);
+			return r;
+			}
+
+		if ((r = iFs.Parse(aNewName,_L("*"),iTrgFile)) != KErrNone)
+			{
+			if(iStatus)
+				User::RequestComplete(iStatus,r);
+			OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRENAME2RETURN2, "r %d", r);
+			return r;
+			}
 
 		iAction = EInternalRename;
 		iMatchEntry=KEntryAttMaskSupported;
@@ -2117,7 +2188,8 @@ that file, as retrieved by CFileBase::GetLastError().
 		DoSynchronize(r);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManRename2Return, MODULEUID, ret);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRENAME2RETURN3, "r %d", ret);
+
 	return(ret);
 	}
 
@@ -2147,7 +2219,8 @@ as is documented in its synchronous overload.
 
 */
 	{
-	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::ECFileManRmDir1, MODULEUID, (TUint) this, aDirName, (TUint) &aStatus);
+	OstTraceExt2(TRACE_BORDER, EFSRV_ECFILEMANRMDIR1, "this %x status %x", (TUint) this, (TUint) &aStatus);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANRMDIR1_EDIRNAME, "Dir %S", aDirName.Ptr(), aDirName.Length()<<1);
 
 	TInt r;
 	if (iSwitches&KFManBusyFlag)
@@ -2160,7 +2233,8 @@ as is documented in its synchronous overload.
 		r = RmDir(aDirName);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManRmDir1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRMDIR1RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -2195,7 +2269,8 @@ Note:
 
 */
 	{
-	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::ECFileManRmDir2, MODULEUID, (TUint) this, aDirName);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRMDIR2, "this %x", (TUint) this);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANRMDIR2_EDIRNAME, "Dir %S", aDirName.Ptr(), aDirName.Length()<<1);
 
 	TInt ret;
 	if (iSwitches&KFManBusyFlag)
@@ -2205,7 +2280,15 @@ Note:
 	else
 		{
 		SetFlags(ETrue,ETrue,EFalse,EFalse);
-		RETURNIFERRORD(r,iFs.Parse(aDirName,iTrgFile),UTraceModuleEfsrv::ECFileManRmDir2Return);
+		TInt r;
+		if ((r = iFs.Parse(aDirName,iTrgFile)) != KErrNone)
+			{
+			if(iStatus)
+				User::RequestComplete(iStatus,r);
+			OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRMDIR2RETURN1, "r %d", r);
+			return r;
+			}
+
 		iSrcFile.Set(iTrgFile.DriveAndPath(),NULL,NULL);
 		iAction = EInternalRmDir;
 		iMatchEntry=KEntryAttMaskSupported;
@@ -2215,7 +2298,8 @@ Note:
 		ret = (r!=KErrNone) ? iLastError : KErrNone;
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManRmDir2Return, MODULEUID, ret);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANRMDIR2RETURN2, "r %d", ret);
+
 	return ret;
 	}
 
@@ -2613,8 +2697,8 @@ Notes:
 @capability Dependent If the path for aNew begins with /Resource then Tcb capability is required.
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy3, MODULEUID,
-		(TUint) this, anOld.SubSessionHandle(), aNew, aSwitches);
+	OstTraceExt3(TRACE_BORDER, EFSRV_ECFILEMANCOPY3, "this %x anOldSubs %x aSwitches %x", (TUint) this, (TUint) anOld.SubSessionHandle(), (TUint) aSwitches);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANCOPY3_ENEWNAME, "NewName %S", aNew.Ptr(), aNew.Length()<<1);
 
 	TInt ret;
 	if (iSwitches&KFManBusyFlag)
@@ -2636,11 +2720,23 @@ Notes:
 		iSwitches|= KCopyFromHandle;
 
 		TInt r;
-		RETURNIFERROR(r, iFs.Parse(aNew, iTrgFile),UTraceModuleEfsrv::ECFileManCopy3Return);
+		if ((r = iFs.Parse(aNew, iTrgFile)) != KErrNone)
+			{
+			if(iStatus)
+				User::RequestComplete(iStatus,r);
+			OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY3RETURN1, "r %d", r);
+			return r;
+			}
 
 		// Need to duplicate the RFile handle so that any threads owned
 		// by this process can use it - i.e. the worker thread
-		RETURNIFERROR(r, iSrcFileHandle.Duplicate(anOld, EOwnerProcess),UTraceModuleEfsrv::ECFileManCopy3Return);
+		if ((r = iSrcFileHandle.Duplicate(anOld, EOwnerProcess)) != KErrNone)
+			{
+			if(iStatus)
+				User::RequestComplete(iStatus,r);
+			OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY3RETURN2, "r %d", r);
+			return r;
+			}
 
 		iAction = EInternalCopyFromHandle;
 		iNumberOfFilesProcessed = 0;
@@ -2649,7 +2745,8 @@ Notes:
 		DoSynchronize(r);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy3Return, MODULEUID, ret);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY3RETURN3, "r %d", ret);
+
 	return(ret);
 	}
 
@@ -2685,8 +2782,8 @@ Its behaviour is the same as the synchronous overload.
 @capability Dependent If the path for aNew begins with /Resource then Tcb capability is required.
 */
 	{
-	TRACEMULT5(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy4, MODULEUID,
-		(TUint) this, anOld.SubSessionHandle(), aNew, aSwitches, (TUint) &aStatus);
+	OstTraceExt4(TRACE_BORDER, EFSRV_ECFILEMANCOPY4, "this %x anOldSubs %x aSwitches %dstatus %x", (TUint) this, (TUint) anOld.SubSessionHandle(), (TUint) aSwitches, (TUint) &aStatus);
+	OstTraceData(TRACE_BORDER, EFSRV_ECFILEMANCOPY4_ENEWNAME, "NewName %S", aNew.Ptr(), aNew.Length()<<1);
 
 	TInt r;
 	if (iSwitches&KFManBusyFlag)
@@ -2699,7 +2796,8 @@ Its behaviour is the same as the synchronous overload.
 		r = Copy(anOld,aNew,aSwitches);
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::ECFileManCopy4Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_ECFILEMANCOPY4RETURN, "r %d", r);
+
 	return(r);
 	}
 
@@ -2761,8 +2859,21 @@ TInt CFileMan::DoCopy(const RFile64& aSrcFile, RFile64& aDstFile, TInt& aRet)
 	{
 	TInt64 rem;
 #endif
-	RETURNIFERRORD(r,aSrcFile.Size(rem),EFalse);
-	RETURNIFERROR(r, aDstFile.SetSize(rem),EFalse);
+	TInt r;
+	if ((r = aSrcFile.Size(rem)) != KErrNone)
+		{
+		if(iStatus)
+			User::RequestComplete(iStatus,r);
+		return r;
+		}
+
+
+	if ((r = aDstFile.SetSize(rem)) != KErrNone)
+		{
+		if(iStatus)
+			User::RequestComplete(iStatus,r);
+		return r;
+		}
 
 	HBufC8* bufPtr = NULL;
 	bufPtr = AllocateBuffer(rem);

@@ -1,3 +1,31 @@
+Version 2.00.3042
+=================
+(Made by vfebvre 14/05/2010)
+
+1.	migubarr
+	1.	REQ 428-1297 Migrate File Server Tracing from UTF to OST
+		PackageReleaseID=495120
+
+
+Version 2.00.3041
+=================
+(Made by vfebvre 13/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#380321 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+
+
+Version 2.00.3040
+=================
+(Made by vfebvre 12/05/2010)
+
+1.	cnotton
+	1.	MINOR_CHANGE Corrected MRP comment text
+
+2.	hengrant
+	1.	ou1cimx1#370931 Memory card gets locked by itself MCL
+
+
 Version 2.00.3039
 =================
 (Made by vfebvre 06/05/2010)

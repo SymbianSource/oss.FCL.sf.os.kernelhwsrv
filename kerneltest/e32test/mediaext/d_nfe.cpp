@@ -21,7 +21,7 @@
 #include "nfe.h"
 
 #if defined(_DEBUG)
-	#define TRACE_ENABLED
+//	#define TRACE_ENABLED
 #else
 #endif
 
@@ -782,7 +782,6 @@ TInt DMediaDriverNFE::Request(TLocDrvRequest& aReq)
 			break;
 
 		case DLocalDrive::EWrite:
-			WriteEncryptionStatusToBootSector(di, EFalse);	// a write to the drive clears the finalised state
 			r=HandleWrite(aReq);
 			break;
 
@@ -1471,8 +1470,7 @@ TInt DMediaDriverNFE::WriteEncryptionStatusToBootSector(TNfeDriveInfo &aDi, TBoo
 	if (!aDi.IsUDADrive())
 		return KErrNone;
 
-	if (aDi.iDriveFinalised == aFinalised)
-		return KErrNone;
+	aDi.iDriveFinalised = aFinalised;
 
 	TNfeDiskStatus status = aDi.Status();
 

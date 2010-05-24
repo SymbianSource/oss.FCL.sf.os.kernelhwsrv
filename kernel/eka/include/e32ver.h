@@ -28,7 +28,7 @@
 
 const TInt KE32MajorVersionNumber=2;
 const TInt KE32MinorVersionNumber=0;
-const TInt KE32BuildVersionNumber=3081;
+const TInt KE32BuildVersionNumber=3083;
 
 const TInt KMachineConfigurationMajorVersionNumber=1;
 const TInt KMachineConfigurationMinorVersionNumber=0;
