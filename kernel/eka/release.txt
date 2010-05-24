@@ -1,3 +1,27 @@
+Version 2.00.3085
+=================
+(Made by vfebvre 18/05/2010)
+
+1.	gayarama
+	1.	ou1cimx1#382130 DEV HCR settings to be used by PRM and its clients
+
+2.	mipetzol
+	1.	MINOR_CHANGE Updated comments in dma_v2.h
+
+
+Version 2.00.3084
+=================
+(Made by vfebvre 17/05/2010)
+
+1.	indrasin
+	1.	MINOR_CHANGE: TITANIUM (SIROCCO MIGRATION): submitting build.config.xml for sirocco migration to identify components to be build
+
+2.	shubmurt
+	1.	DEF144569 t_datapaging passes when data paging is not enabled
+		t_datapaging should fail if data paging is not reported in a ROM that is meant to be be data paged
+	2.	ou1cimx1#361046 T_WSD* test set fails to compile / run when built with RVCT4.0 compiler
+
+
 Version 2.00.3083
 =================
 (Made by vfebvre 13/05/2010)

@@ -70,7 +70,7 @@
 
 	Some peripherals may require a post-increment address mode.
 
-	@see DDmaRequest::Fragment
+	@see DDmaRequest::Fragment()
 
 	Note: This enum is only required for backwards compatibility with the old
 	DMA framework, it can be removed once this is no longer needed.
@@ -337,10 +337,11 @@ public:
 		Works like ExpandDesList except that it uses the iSrcFirstHdr and
 		iSrcLastHdr fields.
 
-		@see ExpandDesList
+		@see ExpandDesList()
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will just return KErrGeneral.
+		This function should only be used if SDmacCaps::iAsymHwDescriptors is
+		reported as true, as only then the framework will actually use the
+		allocated descriptors.
 
 		@param aCount Number of descriptors to append.
 
@@ -357,10 +358,11 @@ public:
 		Works like ExpandDesList except that it uses the iDstFirstHdr and
 		iDstLastHdr fields.
 
-		@see ExpandDesList
+		@see ExpandDesList()
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will just return KErrGeneral.
+		This function should only be used if SDmacCaps::iAsymHwDescriptors is
+		reported as true, as only then the framework will actually use the
+		allocated descriptors.
 
 		@param aCount Number of descriptors to append.
 
@@ -373,7 +375,9 @@ public:
 
 	/** Free resources associated with this request.
 
-		Assume the request is not being transferred or pending.
+		Assumes the request is not being transferred or pending.
+
+		@see ExpandDesList()
 
 		@released
 	*/
@@ -383,10 +387,9 @@ public:
 	/** Free resources associated with this request. This function variant
 		operates on the source port descriptor chain.
 
-		@see FreeDesList
+		Assumes the request is not being transferred or pending.
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will do nothing.
+		@see ExpandSrcDesList()
 
 		@prototype
 	*/
@@ -396,10 +399,9 @@ public:
 	/** Free resources associated with this request. This function variant
 		operates on the destination port descriptor chain.
 
-		@see FreeDesList
+		Assumes the request is not being transferred or pending.
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will do nothing.
+		@see ExpandDstDesList()
 
 		@prototype
 	*/

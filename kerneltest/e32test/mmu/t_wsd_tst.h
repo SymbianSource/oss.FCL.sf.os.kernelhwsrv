@@ -47,7 +47,7 @@
 // Exports of DLL1
 #ifdef	T_WSD_DL1
 #else
-IMPORT_D TInt32 ExportedData;
+IMPORT_D extern TInt32 ExportedData;
 IMPORT_C TInt CheckExportedDataAddress(void *aDataAddr);
 #endif	// T_WSD_DL1
 
@@ -65,10 +65,10 @@ IMPORT_C TInt CheckWritableStaticData(void);
 #ifdef	T_WSD_DL3
 #else
 IMPORT_C void** GetAddressOfData(TInt& aSize, void*& aCodeAddr, void*& aDataAddr);
-IMPORT_D TInt32 TestDataSize;
-IMPORT_D void* WritableTestData[1 /* refer TestDataSize */];
-IMPORT_D const void* const* PointerToStaticData;
-IMPORT_D void** PointerToWritableData;
+IMPORT_D extern TInt32 TestDataSize;
+IMPORT_D extern void* WritableTestData[1 /* refer TestDataSize */];
+IMPORT_D extern const void* const* PointerToStaticData;
+IMPORT_D extern void** PointerToWritableData;
 #endif	// T_WSD_DL3
 
 #endif	// __T_WSD_TST_H__
