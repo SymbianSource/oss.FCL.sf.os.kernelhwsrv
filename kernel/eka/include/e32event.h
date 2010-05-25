@@ -9,6 +9,7 @@
 // Nokia Corporation - initial contribution.
 //
 // Contributors:
+// Sharp Corporation - contribution of modification for Enhancement of Pointer Event.
 //
 // Description:
 // e32\include\e32event.h
