@@ -605,7 +605,8 @@
 
 // Causes undefined instruction exception on both ARM and THUMB
 #define __ASM_CRASH()					asm(".word 0xe7ffdeff ")
-#if defined(__GNUC__)  
+// We need to use RVCT assembler when running armcc with the --gnu option
+#if defined(__GNUC__) && !defined(__ARMCC__)  
 #define	__crash()						asm(".word 0xe7ffdeff " : : : "memory")
 #elif defined(__GCCXML__)
 #define __crash()						(*((TInt *) 0x0) = 0xd1e)
