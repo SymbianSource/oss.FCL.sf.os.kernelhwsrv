@@ -26,8 +26,11 @@
 
 /**
 Maximum number of pages to attempt to clean in one go.
+
+If a paging device sets a preferred write size greater than this then it will fail to install with
+KErrArgument.
 */
-const TInt KMaxPagesToClean = 4;
+const TUint KMaxPagesToClean = 16;
 
 struct SVMCacheInfo;
 class DMemModelThread;
@@ -334,14 +337,16 @@ public:
 	
 	@param aOldPageInfo	The page info of the page to discard.
 	@param aBlockZoneId	The ID of the RAM zone not to allocate any required new page into.
-	@param aBlockRest	Set to ETrue when we don't want the allocator to search for new pages if the RAM 
-						zone with ID==aBlockZoneId is encountered, i.e. a general RAM defrag operation.
+	@param aMoveDisFlags 	Flags that control the discarding of the page, should be a mask of 
+							values from M::TMoveDiscardFlags
 	*/
-	TInt DiscardPage(SPageInfo* aOldPageInfo, TUint aBlockZoneId, TBool aBlockRest);
+	TInt DiscardPage(SPageInfo* aOldPageInfo, TUint aBlockZoneId, TUint aMoveDisFlags);
 
 	/**
 	Attempt to discard the specified page and then allocate a page of type aPageType
 	in its place.
+	
+	Note - This will always attempt to move dirty pages rather than write them to swap.
 	
 	@param aPageInfo	The page info of the page to discard.
 	@param aPageType 	The new page type to allocate into aPageInfo's physical address.
@@ -371,6 +376,34 @@ public:
 	*/
 	void FreePinReplacementPages(TUint aNumPages);
 
+	//
+	// following public members for use by DDataPagedMemoryManager...
+	//
+	
+	/**
+	Called by the data paged memory manager to set the number of pages the pager should attempt to
+	clean at once.
+
+	This also adjusts the maximum size of the oldest list if it is too small to contain the
+	specified number of pages.
+
+	@param aPagesToClean     Number of pages the pager should attempt to clean in one go
+	*/
+	void SetPagesToClean(TUint aPagesToClean);
+
+	/**
+	Get the number of pages the pager attempts to clean at once.
+	*/
+	TUint PagesToClean();
+
+	/**
+	Called by the data paged memory manager to set whether pages cleaned must have sequential page
+	colour.
+
+	@param aCleanInSequence  Whether pages must have sequential page colour
+	*/
+	void SetCleanInSequence(TBool aCleanInSequence);
+
 private:
 	/**
 	Add a page to the head of the live page list. I.e. make it the 'youngest' page.
@@ -399,8 +432,18 @@ private:
 	void RemovePage(SPageInfo* aPageInfo);
 
 	/**
-	Try to remove the oldest page from the live page list and perform #StealPage.
+	Attempt to steal the oldest page on the live list.
 
+	If the oldest page is an oldest dirty page, this attempts to clean multiple pages by calling
+	#CleanSomePages and then returns without stealing any page.  This allows the caller to restart
+	their operation after the lengthy cleaning process, which may no longer need to call this
+	function.
+
+	If the oldest page is on any other list (i.e. is an old or young page) this will steal it,
+	aquiring the page cleaning mutex first if it is dirty.
+
+	Called from #PageInAllocPage.
+	
 	@param aPageInfoOut Set to the SPageInfo pointer for the stolen page if any.
 	
 	@return KErrNone on success, KErrInUse if stealing failed or 1 to indicate the the oldest page
@@ -410,14 +453,6 @@ private:
 	@post MmuLock left unchanged.
 	*/
 	TInt TryStealOldestPage(SPageInfo*& aPageInfoOut);
-
-	/**
-	Remove the oldest page from the live page list and perform #StealPage.
-
-	@pre MmuLock held
-	@post MmuLock held (but may have been released by this function)
-	*/
-	SPageInfo* StealOldestPage();
 
 	/**
 	Steal a page from the memory object (if any) which is using the page.
@@ -465,7 +500,7 @@ private:
 
 	@pre RamAllocLock held.
 	*/
-	void ReturnPageToSystem();
+	TBool TryReturnOldestPageToSystem();
 
 	/**
 	Put a specific page back on the system's free pool.
@@ -484,11 +519,11 @@ private:
 	SPageInfo* PageInAllocPage(Mmu::TRamAllocFlags aAllocFlags);
 
 	/**
-	Called by CleanSomePages() to determine which pages should be cleaned.
+	Called by CleanSomePages() to select the pages be cleaned.
 
-	This deals with the complexity of page colouring, which means that pages can only be mapped at
-	certain locations.  When cleaning multiple pages at once we need to find a set of pages that we
-	can map in memory sequentially.
+	This function finds a set of pages that can be mapped sequentially in memory when page colouring
+	restrictions are in effect.  It is only called on systems with page colouring restrictions where
+	the paging media driver does not support writing by phyiscal address.
 
 	@pre MmuLock held
 	
@@ -497,7 +532,22 @@ private:
 	
 	@return The numnber of pages to clean.
 	*/
-	TInt SelectPagesToClean(SPageInfo** aPageInfosOut);
+	TInt SelectSequentialPagesToClean(SPageInfo** aPageInfosOut);
+
+	/**
+	Called by CleanSomePages() to select the pages be cleaned.
+
+	This funciton selects the oldest dirty pages.  It is called on systems without page colouring
+	restrictions or where the paging media driver supports writing by phyiscal address.
+
+	@pre MmuLock held
+	
+	@param aPageInfosOut Pointer to an array of SPageInfo pointers, which must be at least
+	KMaxPagesToClean long.  This will be filled in to indicate the pages to clean.
+	
+	@return The numnber of pages to clean.
+	*/
+	TInt SelectOldestPagesToClean(SPageInfo** aPageInfosOut);
 
 	/**
 	If the number of young pages exceeds that specified by iYoungOldRatio then a
@@ -573,6 +623,7 @@ private:
 	*/
 	TInt PteAndInfoFromLinAddr(	TInt aOsAsid, TLinAddr aAddress, DMemoryMappingBase* aMapping, 
 								TUint aMapInstanceCount, TPte*& aPte, SPageInfo*& aPageInfo);
+	
 #ifdef _DEBUG
 	/**
 	Check consistency of live list.
@@ -598,6 +649,7 @@ private:
 	SDblQue iOldestDirtyList;	/**< Head of 'oldestDirty' page list. */
 	TUint iOldestDirtyCount;	/**< Number of 'oldestDirty' pages */
 	TUint16 iOldOldestRatio;	/**< Ratio of old pages to oldest to clean and dirty in the live page list*/
+	TUint iMaxOldestPages;      /**< Maximum number of oldest pages. */
 	TUint iNumberOfFreePages;
 	TUint iNumberOfDirtyPages;	/**< The total number of dirty pages in the paging cache. Protected by MmuLock */
 	TUint iInitMinimumPageCount;/**< Initial value for iMinimumPageCount */
@@ -605,6 +657,9 @@ private:
 	TUint iReservePageCount;	/**< Number of pages reserved for locking */
 	TUint iMinimumPageLimit;	/**< Minimum size for iMinimumPageCount, not including locked pages.
 								     iMinimumPageCount >= iMinimumPageLimit + iReservePageCount */
+	TUint iPagesToClean;        /**< Preferred number of pages to attempt to clean in one go. */
+	TBool iCleanInSequence;     /**< Pages to be cleaned must have sequential page colour. */
+
 	SVMEventInfo iEventInfo;
 
 #ifdef __DEMAND_PAGING_BENCHMARKS__
@@ -772,7 +827,6 @@ Multiplier for number of request objects in pool per drive that supports paging.
 const TInt KPagingRequestsPerDevice = 2;
 
 
-class DPoolPagingRequest;
 class DPageReadRequest;
 class DPageWriteRequest;
 
@@ -792,110 +846,98 @@ private:
 		{
 	public:
 		TGroup(TUint aNumRequests);
-		DPoolPagingRequest* FindCollisionContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
-		DPoolPagingRequest* GetRequest(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
-		void Signal(DPoolPagingRequest* aRequest);
+		DPageReadRequest* FindCollisionContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
+		DPageReadRequest* GetRequest(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
 	public:
 		TUint iNumRequests;
-		DPoolPagingRequest** iRequests;
+		DPageReadRequest** iRequests;
 		SDblQue iFreeList;
 		};
 	TGroup iPageReadRequests;
 	DPageWriteRequest* iPageWriteRequest;
 
-	friend class DPoolPagingRequest;
 	friend class DPageReadRequest;
-	friend class DPageWriteRequest;
 	};
 
 
 /**
-Resources needed to service a paging request.
+Common resources needed to service a paging request.
 */
-class DPagingRequest : public SDblQueLink
+class DPagingRequestBase : public DBase
 	{
+public:
+	TLinAddr MapPages(TUint aColour, TUint aCount, TPhysAddr* aPages);
+	void UnmapPages(TBool aIMBRequired);
+public:  // for DPagingRequestPool
+	DMutex*			iMutex;		/**< A mutex for synchronisation and priority inheritance. */
+protected:
+	Mmu::TTempMapping	iTempMapping;
+	};
+
+
+/**
+Resources needed to service a page in request.
+*/
+class DPageReadRequest : public DPagingRequestBase
+	{
+public:
+	static TUint ReservedPagesRequired();
+private:
+	static TInt iAllocNext;
+
 public:
 	enum
 		{
 		EMaxPages = 4
 		};
-	DPagingRequest();
-	TLinAddr MapPages(TUint aColour, TUint aCount, TPhysAddr* aPages);
-	void UnmapPages(TBool aIMBRequired);
-	void SetUseContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
-	void SetUseDiscontiguous(DMemoryObject** aMemory, TUint* aIndex, TUint aCount);
-	void ResetUse();
-	TBool CheckUseContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
-	TBool CheckUseDiscontiguous(DMemoryObject** aMemory, TUint* aIndex, TUint aCount);
-	TBool IsCollisionContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
-public:
-	DMutex*			iMutex;		/**< A mutex for synchronisation and priority inheritance. */
-protected:
-	Mmu::TTempMapping	iTempMapping;
-private:
-	// used to identify memory request is used for...
-	TUint			iUseRegionCount;
-	DMemoryObject*	iUseRegionMemory[EMaxPages];
-	TUint			iUseRegionIndex[EMaxPages];
-	};
-
-
-__ASSERT_COMPILE(DPagingRequest::EMaxPages >= KMaxPagesToClean);
-
-
-/**
-A paging request that is part of a pool of similar request objects.
-*/
-class DPoolPagingRequest : public DPagingRequest
-	{
-public:
-	DPoolPagingRequest(DPagingRequestPool::TGroup& aPoolGroup);
+	DPageReadRequest(DPagingRequestPool::TGroup& aPoolGroup);
+	TInt Construct();
  	void Release();
 	void Wait();
 	void Signal();
-public:
-	TInt			iUsageCount;	/**< How many threads are using or waiting for this object. */	
+	void SetUseContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
+	void ResetUse();
+	TBool CheckUseContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
+	TBool IsCollisionContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
+	TLinAddr Buffer() { return iBuffer; }
+	TUint ThreadsWaiting() { return iUsageCount; }
 private:
+	~DPageReadRequest() { }  // can't delete
+public:  // for DPagingRequestPool
+	SDblQueLink iLink;  /**< Link into list of free requests. */
+private:
+	TInt iUsageCount;	/**< How many threads are using or waiting for this object. */	
+	TLinAddr iBuffer;	/**< A buffer of size EMaxPages+1 pages to read compressed data into. */
 	DPagingRequestPool::TGroup& iPoolGroup;
+	DMemoryObject* iMemory;
+	TUint iIndex;
+	TUint iCount;
 	};
-
-	
-/**
-Resources needed to service a page in request.
-*/
-class DPageReadRequest : public DPoolPagingRequest
-	{
-public:
-	DPageReadRequest(DPagingRequestPool::TGroup& aPoolGroup);
-	TInt Construct();
-	static TUint ReservedPagesRequired();
-private:
-	~DPageReadRequest(); // can't delete
-public:
-	TLinAddr		iBuffer;	/**< A buffer to read compressed data into. Size is EMaxPages+1 pages.*/
-private:
-	DMemoryObject*	iMemory;
-private:
-	static TInt iAllocNext;
-	};
-
-
-FORCE_INLINE TUint DPageReadRequest::ReservedPagesRequired()
-	{
-	return iAllocNext*EMaxPages;
-	}
 
 
 /**
 Resources needed to service a page out request.
 */
-class DPageWriteRequest : public DPagingRequest
+class DPageWriteRequest : public DPagingRequestBase
 	{
 public:
+	enum
+		{
+		EMaxPages = KMaxPagesToClean
+		};
 	DPageWriteRequest();
  	void Release();
+	void SetUseDiscontiguous(DMemoryObject** aMemory, TUint* aIndex, TUint aCount);
+	void ResetUse();
+	TBool CheckUseContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
+	TBool IsCollisionContiguous(DMemoryObject* aMemory, TUint aIndex, TUint aCount);
 private:
-	~DPageWriteRequest(); // can't delete
+	~DPageWriteRequest() { }  // can't delete	
+private:
+	// used to identify the memory the request is used for...
+	TUint			iUseRegionCount;
+	DMemoryObject*	iUseRegionMemory[EMaxPages];
+	TUint			iUseRegionIndex[EMaxPages];
 	};
 
 

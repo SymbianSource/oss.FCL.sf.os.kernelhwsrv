@@ -50,10 +50,10 @@ inline void M::RamAllocIsLocked()
 	}
 
 
-inline TInt M::DiscardPage(TPhysAddr aAddr, TUint aBlockZoneId, TBool aBlockRest)
+inline TInt M::DiscardPage(TPhysAddr aAddr, TUint aBlockZoneId, TUint aMoveDisFlags)
 	{
 	TPhysAddr newAddr;
-	return MovePage(aAddr, newAddr, aBlockZoneId, aBlockRest);
+	return MovePage(aAddr, newAddr, aBlockZoneId, aMoveDisFlags);
 	}
 
 
@@ -74,4 +74,10 @@ inline void M::RamZoneClaimed(SZone* aZone)
 	TheMmu.AllocatedPhysicalRam(aZone->iPhysBase, 
 								aZone->iPhysPages,
 								(Mmu::TRamAllocFlags)EMemAttStronglyOrdered);
+	}
+
+
+inline TBool M::GetFreePages(TUint aNumPages)
+	{
+	return ThePager.GetFreePages(aNumPages);
 	}

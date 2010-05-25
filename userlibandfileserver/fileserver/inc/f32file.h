@@ -699,27 +699,28 @@ class TVolumeIOParamInfo
 	{
 public:
 	/**
-	The size of a block in bytes.
-	
-	Reads and writes that are aligned on block boundaries are up to twice as fast as when 
-	mis-aligned.	
-	
-	Read and write operations on certain underlying media is done in blocks.
-	A write operation that modifies only part of a block is less efficient, in general, than
-	one that modifies an entire block. Data throughput degrades linearly for reads and writes in smaller
-	sized units. 
+	The size of a media block in bytes. This is a physical property of a media and returned by the corresponding media driver.
+	This value is usually at least 512 bytes and always a power of 2. For some media types the meaning of this value is 
+    "the min. size of the aligned data buffer which write onto the media doesn't lead to read-modify-write operation."
+    Therefore, reads and writes that are aligned on block boundaries and with lenght of a multiple block size can be much faster.	
+	Read and write operations on certain underlying media is done in blocks. A write operation that modifies only part of a block is less efficient, 
+    in general, than one that modifies an entire block. Data throughput degrades linearly for reads and writes in smaller sized units. 
 	*/
 	TInt iBlockSize;
+	
 	/**
-	The size in bytes of a single disk cluster.
-	
-	Read and write operations that are aligned on cluster boundaries are more efficient.
-	
-	The file system organises and allocates the file data on the disk in clusters where each cluster is
-	one or more blocks. Files that are not zero length occupy at least one cluster of the disk, 
-	so large numbers of very small files use up more disk space than expected. 
+	The size in bytes of a single file system cluster. This is a logical property of the file system. 
+	The file system organises and allocates the data on the disk in clusters where each cluster usually consists of one or more blocks. 
+    Cluster is a minimal unit that the file system allocates on the volume. Thus, a file of 1 byte length occupies 1 cluster.
+
+	Read and write operations that are aligned on cluster boundaries are more efficient from the file system point of view.
+    In some circumstances cluster size can be less than a block size, but it is very inefficient.
+
+    This value is reported by a file system. The value less than 0 indicates a error.
 	*/
 	TInt iClusterSize;
+
+
 	/**
 	The recommended buffer size for optimised reading performance. 
 	
@@ -754,7 +755,7 @@ public:
 
     /** 
     The maximum file size that is supported by the file system mounted on this volume. 
-    Not all file system may provide this parameter;  The value KMaxTUint64 (0xffffffffffffffff) means that this particular file system hasn't 
+    Not all file system may report this parameter;  The value KMaxTUint64 (0xffffffffffffffff) means that this particular file system hasn't 
     provided this information.
     */
     TUint64 iMaxSupportedFileSize;

@@ -19,6 +19,7 @@
 
 #include <e32test.h>
 #include <e32uid.h>
+#include <hal.h>
 #include <e32hal.h>
 #include <dptest.h>
 #include "d_shadow.h"
@@ -32,7 +33,7 @@ _LIT(KLddFileName,"D_SHADOW.LDD");
 TInt PageSize;
 TInt PageShift;
 RShadow Shadow;
-TInt InitFreeRam;
+TInt TotalRam;
 RChunk Chunk;
 TUint ChunkCommitEnd;
 RThread TouchThread;
@@ -153,7 +154,7 @@ TInt FillPhysicalRam(TAny* aArgs)
 	TUint initialFreeRam = FreeRam();
 	TInt r = KErrNone;
 	TUint allocations = 0;
-	for (; allocations <= maxAllocs + 1; allocations++)
+	for(; allocations <= maxAllocs; ++allocations)
 		{
 		TUint freeRam = FreeRam();			
 		r = AllocPhysicalRam(*pa, allocData.iSize, allocData.iAlign);
@@ -165,15 +166,11 @@ TInt FillPhysicalRam(TAny* aArgs)
 			RDebug::Printf("Error alignment phys addr 0x%08x", *(pa - 1));
 			break;
 			}
-		if (allocData.iCheckFreeRam && freeRam - allocData.iSize != (TUint)FreeRam())
+		TUint newFreeRam = FreeRam();
+		if (allocData.iCheckFreeRam && freeRam - allocData.iSize != newFreeRam)
 			{
 			r = KErrGeneral;
-			RDebug::Printf("Error in free ram 0x%08x orig 0x%08x", FreeRam(), freeRam);
-			}
-		if (allocData.iCheckMaxAllocs && allocations > maxAllocs && r == KErrNone)
-			{
-			r = KErrOverflow;
-			RDebug::Printf("Error able to allocate too many pages");
+			RDebug::Printf("Error in free ram 0x%08x orig 0x%08x", newFreeRam, freeRam);
 			break;
 			}
 		}
@@ -187,10 +184,16 @@ TInt FillPhysicalRam(TAny* aArgs)
 		}
 	if (failFrees)
 		r = KErrNotFound;
-	if (allocData.iCheckFreeRam && initialFreeRam != (TUint)FreeRam())
+	if (allocData.iCheckMaxAllocs && allocations > maxAllocs)
+		{
+		r = KErrOverflow;
+		RDebug::Printf("Error able to allocate too many pages");
+		}
+	TUint finalFreeRam = FreeRam();
+	if (allocData.iCheckFreeRam && initialFreeRam != finalFreeRam)
 		{
 		r = KErrGeneral;
-		RDebug::Printf("Error in free ram 0x%08x initial 0x%08x", FreeRam(), initialFreeRam);
+		RDebug::Printf("Error in free ram 0x%08x initial 0x%08x", finalFreeRam, initialFreeRam);
 		}
 	delete[] physAddrs;
 	if (r != KErrNone && r != KErrNoMemory)
@@ -218,8 +221,9 @@ void TestMultipleContiguousAllocations(TUint aNumThreads, TUint aSize, TUint aAl
 	TRequestStatus* status = new TRequestStatus[aNumThreads];
 	TUint i = 0;
 	for (; i < aNumThreads; i++)
-		{
-		TInt r = threads[i].Create(KNullDesC, FillPhysicalRam, KDefaultStackSize, PageSize, PageSize, (TAny*)&allocData);
+		{// Need enough heap to store addr of every possible allocation + 1.
+		TUint requiredHeapMax = Max(PageSize, ((TotalRam / aSize) * sizeof(TUint32)) + sizeof(TUint32));
+		TInt r = threads[i].Create(KNullDesC, FillPhysicalRam, KDefaultStackSize, PageSize, requiredHeapMax, (TAny*)&allocData);
 		test_KErrNone(r);
 		threads[i].Logon(status[i]);
 		}
@@ -248,6 +252,7 @@ struct STouchData
 
 TInt TouchMemory(TAny*)
 	{
+	RThread::Rendezvous(KErrNone);	// Signal that this thread has started running.
 	while (!TouchDataStop)
 		{
 		TUint8* p = Chunk.Base();
@@ -301,8 +306,6 @@ void FragmentMemoryFunc()
 		{
 		test_KErrNone(Chunk.Decommit(offset, FragData.iSize));
 		}
-	if (!FragData.iFragThread)
-		test_Equal(FreeRam(), freeBlocks * FragData.iSize);
 
 	if (FragData.iDiscard && CacheSizeAdjustable && !FragThreadStop)
 		{
@@ -326,6 +329,7 @@ void UnfragmentMemoryFunc()
 
 TInt FragmentMemoryThreadFunc(TAny*)
 	{
+	RThread::Rendezvous(KErrNone);	// Signal that this thread has started running.
 	while (!FragThreadStop)
 		{
 		FragmentMemoryFunc();
@@ -345,7 +349,7 @@ void FragmentMemory(TUint aSize, TUint aFrequency, TBool aDiscard, TBool aTouchM
 	FragData.iFragThread = aFragThread;
 
 	TChunkCreateInfo chunkInfo;
-	chunkInfo.SetDisconnected(0, 0, FreeRam());
+	chunkInfo.SetDisconnected(0, 0, TotalRam);
 	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
 	test_KErrNone(Chunk.Create(chunkInfo));
 
@@ -355,7 +359,11 @@ void FragmentMemory(TUint aSize, TUint aFrequency, TBool aDiscard, TBool aTouchM
 		test_KErrNone(r);
 		FragThread.Logon(FragStatus);
 		FragThreadStop = EFalse;
+		TRequestStatus threadInitialised;
+		FragThread.Rendezvous(threadInitialised);
 		FragThread.Resume();
+		User::WaitForRequest(threadInitialised);
+		test_KErrNone(threadInitialised.Int());
 		}
 	else
 		{
@@ -369,7 +377,11 @@ void FragmentMemory(TUint aSize, TUint aFrequency, TBool aDiscard, TBool aTouchM
 		test_KErrNone(r);
 		TouchThread.Logon(TouchStatus);
 		TouchDataStop = EFalse;
+		TRequestStatus threadInitialised;
+		TouchThread.Rendezvous(threadInitialised);
 		TouchThread.Resume();
+		User::WaitForRequest(threadInitialised);
+		test_KErrNone(threadInitialised.Int());
 		}
 	}
 
@@ -410,7 +422,8 @@ void TestFillPhysicalRam(TUint aFragSize, TUint aFragFreq, TUint aAllocSize, TUi
 	allocData.iCheckFreeRam = ETrue;
 	allocData.iSize = aAllocSize;
 	allocData.iAlign = aAllocAlign;
-	FillPhysicalRam(&allocData);
+	TInt r = FillPhysicalRam(&allocData);
+	test_Value(r, r >= 0);
 	UnfragmentMemory(aDiscard, aTouchMemory, EFalse);
 	}
 
@@ -491,8 +504,17 @@ GLDEF_C TInt E32Main()
 		ManualTest = cmdLine.Find(KManual) != KErrNotFound;
 		}
 
-	InitFreeRam=FreeRam();
-	test.Printf(_L("Free RAM=%08x, Page size=%x, Page shift=%d\n"),InitFreeRam,PageSize,PageShift);
+	// Turn off lazy dll unloading and ensure any supervisor clean up has completed 
+	// so the free ram checking isn't affected.
+	RLoader l;
+	test(l.Connect()==KErrNone);
+	test(l.CancelLazyDllUnload()==KErrNone);
+	l.Close();
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+
+	test_KErrNone(HAL::Get(HAL::EMemoryRAM, TotalRam));
+
+	test.Printf(_L("Free RAM=%08x, Page size=%x, Page shift=%d\n"),FreeRam(),PageSize,PageShift);
 
 	test.Next(_L("Open test LDD"));
 	r=Shadow.Open();

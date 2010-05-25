@@ -433,6 +433,49 @@ EXPORT_C void TBitMapAllocator::SelectiveFree(TInt aStart, TInt aLength)
 	}
 
 
+/**	Allocates a specific range of bit positions.
+	
+	The specified range must lie within the total range for this allocator but it is
+	not necessary that all the positions are currently free.
+
+	@param	aStart	First position to allocate.
+	@param	aLength	Number of consecutive positions to allocate, must be >0.
+	@return The number of previously free positions that were allocated.
+ */
+EXPORT_C TUint TBitMapAllocator::SelectiveAlloc(TInt aStart, TInt aLength)
+	{
+	__ASSERT_ALWAYS(TUint(aStart) < TUint(iSize), TBMA_FAULT());
+	__ASSERT_ALWAYS(TUint(aStart + aLength) >= TUint(aStart), TBMA_FAULT());
+	__ASSERT_ALWAYS(TUint(aStart + aLength) <= TUint(iSize), TBMA_FAULT());
+	TInt wix = aStart >> 5;
+	TInt sbit = aStart & 31;
+	TUint32* pW = iMap + wix;
+	iAvail -= aLength;	// update free count assuming no positions already allocated
+	TInt ebit = sbit + aLength;
+	if (ebit < 32)
+		{
+		TUint32 b = ((0xffffffffu >> aLength) >> sbit) | ~(0xffffffffu >> sbit);
+		TUint32 w = *pW;
+		*pW = w & b;	// mark all positions allocated
+		TUint allocated = __e32_bit_count_32(~w & ~b);
+		iAvail += allocated;	// increase free count by number of positions already allocated
+		return aLength - allocated;
+		}
+	TUint32 b = ~(0xffffffffu >> sbit);
+	while (ebit > 0)
+		{
+		TUint32 w = *pW;
+		*pW++ = w & b;		// mark all positions allocated
+		TUint allocated = __e32_bit_count_32(~w & ~b);
+		iAvail += allocated;	// increase free count by number of positions already allocated
+		aLength -= allocated;
+		ebit -= 32;
+		b = (ebit >= 32)? 0 : 0xffffffff >> ebit;
+		}
+	return aLength;
+	}
+
+
 /**	Tests whether a specific range of bit positions are all free.
 
 	The specified range must lie within the total range for this allocator.
@@ -759,49 +802,6 @@ EXPORT_C TInt TBitMapAllocator::AllocAligned(TInt aLength, TInt aAlign, TInt aBa
 	else
 		r=((r+aBase+alignmask)&~alignmask)-aBase;
 	return r;
-	}
-
-
-/**	Allocates a specific range of bit positions.
-	
-	The specified range must lie within the total range for this allocator but it is
-	not necessary that all the positions are currently free.
-
-	@param	aStart	First position to allocate.
-	@param	aLength	Number of consecutive positions to allocate, must be >0.
-	@return The number of previously free positions that were allocated.
- */
-EXPORT_C TUint TBitMapAllocator::SelectiveAlloc(TInt aStart, TInt aLength)
-	{
-	__ASSERT_ALWAYS(TUint(aStart) < TUint(iSize), TBMA_FAULT());
-	__ASSERT_ALWAYS(TUint(aStart + aLength) >= TUint(aStart), TBMA_FAULT());
-	__ASSERT_ALWAYS(TUint(aStart + aLength) <= TUint(iSize), TBMA_FAULT());
-	TInt wix = aStart >> 5;
-	TInt sbit = aStart & 31;
-	TUint32* pW = iMap + wix;
-	iAvail -= aLength;	// update free count assuming no positions already allocated
-	TInt ebit = sbit + aLength;
-	if (ebit < 32)
-		{
-		TUint32 b = ((0xffffffffu >> aLength) >> sbit) | ~(0xffffffffu >> sbit);
-		TUint32 w = *pW;
-		*pW = w & b;	// mark all positions allocated
-		TUint allocated = __e32_bit_count_32(~w & ~b);
-		iAvail += allocated;	// increase free count by number of positions already allocated
-		return aLength - allocated;
-		}
-	TUint32 b = ~(0xffffffffu >> sbit);
-	while (ebit > 0)
-		{
-		TUint32 w = *pW;
-		*pW++ = w & b;		// mark all positions allocated
-		TUint allocated = __e32_bit_count_32(~w & ~b);
-		iAvail += allocated;	// increase free count by number of positions already allocated
-		aLength -= allocated;
-		ebit -= 32;
-		b = (ebit >= 32)? 0 : 0xffffffff >> ebit;
-		}
-	return aLength;
 	}
 
 

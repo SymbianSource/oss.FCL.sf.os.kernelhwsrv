@@ -1089,6 +1089,31 @@ If recursive operation is set, all intermediate directories will be created,
 including any directories in the path specified by aNew which do not
 already exist.
 
+If the source (anOld) is a file and the recursive operation is set,
+then all the files with the same name as anOld in the source directory
+including those in subdirectories will be copied to the destination.
+
+For example, the initial directory structure is as follows:
+C:\dir1\file.txt
+C:\dir1\subdirA\file.txt
+C:\dir1\subdirB\file.txt
+
+@code
+CFileMan* fm(CFileMan::NewL(iFs));	// Where iFs is an RFs handle
+fm->Copy(_L("C:\\dir1\\file.txt"), _L("C:\\dir2\\file.txt"), CFileMan::ERecurse);
+// OR without specifying the filename in aNew:
+fm->Copy(_L("C:\\dir1\\file.txt"), _L("C:\\dir2\\"), CFileMan::ERecurse);
+@endcode
+
+Because of the recursive behaviour, the final directory structure after
+either one of the copy operations above will be as follows:
+C:\dir1\file.txt
+C:\dir1\subdirA\file.txt
+C:\dir1\subdirB\file.txt
+C:\dir2\file.txt
+C:\dir2\subdirA\file.txt
+C:\dir2\subdirB\file.txt
+
 If recursive operation is not set, only the matching files located in
 the single directory specified in anOld are copied.
 No intermediate directories will be created; if any directories in
@@ -1122,13 +1147,13 @@ will return KErrPathNotFound.
  1.2	If there is no file to operate on i.e. if source directory is empty, the
  	function will do nothing and return error code KErrNotFound.
 
- 2. Files can be copied across drives.
+ 2.	Files can be copied across drives.
 
- 3. Open files can be copied if they have been opened using
-      the EFileShareReadersOnly file share mode.
+ 3.	Open files can be copied if they have been opened using
+	the EFileShareReadersOnly file share mode.
 
- 4. Read-only, hidden and system files can be copied and
-   the source file's attributes are preserved in the target file.
+ 4.	Read-only, hidden and system files can be copied and
+	the source file's attributes are preserved in the target file.
 
 @param anOld     Path indicating the file(s) to be copied.
                  Any path components which are not specified here will be
@@ -1393,7 +1418,7 @@ of a trailing backslash ("\") character on the end of the source path:
   recursively by default and moves both the last directory level and all of its content.
   Notice that no trailing backslash ("\") implies moving files recursively automatically.
 
-For example, if the directory level "b" contains the files F1,F2 and F3, then:
+For example, if the directory level "b" contains the files F1, F2 and F3, then:
 @code
 CFileMan* fm(CFileMan::NewL(iFs)); // Where iFs is an RFs handle
 ...
@@ -1421,7 +1446,7 @@ If there is no trailing backslash character and the switch is not set, i.e.
 0 is passed as an argument, the operation behaves the same way as by passing
 CFileMan::ERecurse flag.
 
-for example:
+For example:
 @code
 CFileMan* fm(CFileMan::NewL(iFs)); // Where iFs is an RFs handle
 ...
@@ -1436,6 +1461,31 @@ CFileMan* fm(CFileMan::NewL(iFs)); // Where iFs is an RFs handle
 fm->Move(_L("C:\\a\\b"), _L("C:\\x\\y\\"), CFileMan::ERecurse);
 @endcode
 
+If the source (anOld) is a file and the recursive operation is set,
+then all the files with the same name as anOld in the source directory
+including those in subdirectories will be moved to the destination.
+
+For example, the initial directory structure is as follows:
+C:\src\file.txt
+C:\src\subdirA\file.txt
+C:\src\subdirB\file.txt
+
+@code
+CFileMan* fm(CFileMan::NewL(iFs));	// Where iFs is an RFs handle
+fm->Move(_L("C:\\src\\file.txt"), _L("C:\\dest\\file.txt"), CFileMan::ERecurse);
+// OR without specifying the filename in aNew:
+fm->Move(_L("C:\\src\\file.txt"), _L("C:\\dest\\"), CFileMan::ERecurse);
+@endcode
+
+Because of the recursive behaviour, the final directory structure after
+either one of the move operations above will be as follows:
+C:\src\
+C:\src\subdirA\
+C:\src\subdirB\
+C:\dest\file.txt
+C:\dest\subdirA\file.txt
+C:\dest\subdirB\file.txt
+
 Notes:
 
 -# Read-only, hidden and system files can be moved and the source file's
@@ -1443,7 +1493,7 @@ Notes:
    be moved. Attempting to move an open file will return an error for
    that file, as retrieved by CFileBase::GetLastError().
 
-@param anOld	 Path indicating the files to be moved. May be either a full path, or
+@param anOld	 Path indicating the directory/files to be moved. May be either a full path, or
 				 relative to the session path. Note that if you specify a directory level,
 				 then the behaviour of the move operation is sensitive to the presence
 				 (or absence) of a trailing backslash ("\") character. Any path components

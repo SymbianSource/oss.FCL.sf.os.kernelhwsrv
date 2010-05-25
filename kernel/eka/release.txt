@@ -1,3 +1,58 @@
+Version 2.00.2122
+=================
+(Made by vfebvre 11/05/2010)
+
+1.	martai
+	1.	ou1cimx1#378868 Contiguous memory allocations do not use multi-page write support
+
+2.	jimhofe
+	1.	ou1cimx1#367891: Changing MedSD3c PolicyId from 2 to 1461
+
+
+Version 2.00.2121
+=================
+(Made by vfebvre 10/05/2010)
+
+1.	necliffo
+	1.	ou1cimx1#375835: eMMC reliable Write can increase wear of eMMC devices
+
+
+Version 2.00.2120
+=================
+(Made by vfebvre 07/05/2010)
+
+1.	mipetzol
+	1.	ou1cimx1#374045 DMA V2 should be removed from TB9.2
+
+2.	jcoppear
+	1.	ou1cimx1#37212: WDP: Non aligned swap writes increase media wear
+
+
+Version 2.00.2119
+=================
+(Made by vfebvre 05/05/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#366904 [kernel92][[Internal]t_usbapi test is not ready to run on production phone environment Vasco/hw79
+
+2.	gcochran
+	1.	ou1cimx1#367933 TB9.2 - Undefined Symbol error with the header "e32math.h"
+
+3.	ricoles
+	1.	DEF139990 SMP known test failures 
+
+
+Version 2.00.2118
+=================
+(Made by vfebvre 30/04/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#361784 HAL GetAll() returns handle based attributes leading to unnecessary resource allocation
+
+2.	jimhofe
+	1.	ou1cimx1#366068 Change unistore II policyId from 2 to 1455
+
+
 Version 2.00.2117
 =================
 (Made by vfebvre 28/04/2010)

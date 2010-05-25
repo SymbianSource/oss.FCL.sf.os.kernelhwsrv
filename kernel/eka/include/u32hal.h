@@ -2748,6 +2748,59 @@ enum TVMHalFunction
 	@see TChanges
 	*/ 
 	EVMHalSetThrashThresholds,
+
+	/**
+	Indicate whether the data paging media driver supports access by physical address.
+
+	@return 1 if it does, 0 if it does not and KErrNotSupported if data paging is not enabled.
+	*/
+	EVMHalGetPhysicalAccessSupported,
+
+	/**
+	Indicate whether the data paging media driver currently uses physical access for writing out
+	dirty data pages to swap.
+
+	@return 1 if it does, 0 if it does not and KErrNotSupported if data paging is not enabled.
+	*/
+	EVMHalGetUsePhysicalAccess,
+
+	/**
+	Set whether physical access is used for writing out dirty data pages to swap.
+
+	The first argument (a1) should contain zero or one to indicate whether to disable or enable
+	physical access respectively.
+	
+	@return KErrNone if successful, KErrNotSupported if data paging is not enabled.
+	*/
+	EVMHalSetUsePhysicalAccess,
+
+	/**
+	Get the data paging media driver's preferred write size.
+
+	@return Log2 of the preferred write size in pages, or KErrNotSupported if data paging is not
+	enabled.
+	*/
+	EVMHalGetPreferredDataWriteSize,
+
+	/**
+	Get the number of pages that the pager attempts to write at a time when paging out dirty pages
+	to swap.
+
+	@return Log2 of the current write size in pages, or KErrNotSupported if data paging is not
+	enabled.
+	*/
+	EVMHalGetDataWriteSize,
+
+	/**
+	Set the number of pages that the pager attempts to write at a time when paging out dirty pages
+	to swap.
+	
+	The first argument (a1) should contain log2 of the write size in pages.
+
+	@return KErrArgument if the value is out of range, or KErrNotSupported if data paging is not
+	enabled.
+	*/
+	EVMHalSetDataWriteSize,
 	};
 
 

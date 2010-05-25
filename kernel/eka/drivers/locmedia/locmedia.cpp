@@ -76,6 +76,7 @@ public:
 #ifdef __DEMAND_PAGING__
 	DMediaPagingDevice* iPagingDevice;
 	TInt iPageSizeMsk;			// Mask of page size (e.g. 4096-1 -> 4095)
+	TInt iPageSizeLog2;        // LOG2 of page size (i.e. 4096 -> 12)
 	TInt iMediaChanges;
 #endif
 	};
@@ -258,7 +259,6 @@ void DPinObjectAllocator::ReleasePinObject(SVirtualPinContainer* aPinContainer)
 	}
 
 #endif	// __DEMAND_PAGING__
-
 
 /********************************************
  * Local drive device base class
@@ -1377,6 +1377,10 @@ TInt TLocDrvRequest::ProcessMessageData(TAny* aPtr)
 	RemoteDes()=(TAny*)d.iPtr;
 	RemoteDesOffset()=d.iOffset;
 	DriverFlags()=d.iFlags;
+	
+	// EPhysAddrOnly should not be set for client requests
+	Flags() &= ~TLocDrvRequest::EPhysAddrOnly;
+	
 	if (Pos()<0 || Length()<0)
 	    {
 		OstTraceFunctionExitExt( TLOCDRVREQUEST_PROCESSMESSAGEDATA_EXIT2, this, KErrArgument );
@@ -1640,6 +1644,7 @@ Calls DMedia::Create()
 #ifdef __DEMAND_PAGING__
 	TInt pageSize = Kern::RoundToPageSize(1);
 	iBody->iPageSizeMsk = pageSize-1;
+	iBody->iPageSizeLog2 = __e32_find_ms1_32(pageSize);
 #endif
 
 	iLastMediaId=aLastMediaId;
@@ -3615,19 +3620,15 @@ TInt DPrimaryMediaBase::OpenMediaDriver()
 void DPrimaryMediaBase::RequestCountInc()
 	{
 	__ASSERT_DEBUG(iBody, LOCM_FAULT());
-	if (iBody->iPagingDevice)
+	TInt oldVal = (TInt) __e32_atomic_add_ord32(&iBody->iRequestCount, (TUint) 1);
+//Kern::Printf("RCINC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
+	
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTINC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
+	
+	if (oldVal == 0 && iBody->iPagingDevice)
 		{
-		NFastMutex* lock = iBody->iPagingDevice->NotificationLock();
-		NKern::FMWait(lock);
-		TInt oldVal = iBody->iRequestCount++;
-		//Kern::Printf("RCINC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
-		OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTINC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
-		if (oldVal == 0)
-			{
-			//Kern::Printf("RCINC: NotifyBusy()");
-			iBody->iPagingDevice->NotifyBusy();
-			}
-		NKern::FMSignal(lock);
+//Kern::Printf("RCINC: NotifyBusy()");
+		iBody->iPagingDevice->NotifyBusy();
 		}
 	}
 
@@ -3639,21 +3640,17 @@ void DPrimaryMediaBase::RequestCountInc()
 void DPrimaryMediaBase::RequestCountDec()
 	{
 	__ASSERT_DEBUG(iBody, LOCM_FAULT());
-	if (iBody->iPagingDevice)
+	TInt oldVal = (TInt) __e32_atomic_add_ord32(&iBody->iRequestCount, (TUint) -1);
+//Kern::Printf("RCDEC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
+	
+	OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTDEC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
+	
+	if (oldVal == 1 && iBody->iPagingDevice)
 		{
-		NFastMutex* lock = iBody->iPagingDevice->NotificationLock();
-		NKern::FMWait(lock);
-		TInt oldVal = iBody->iRequestCount--;
-		//Kern::Printf("RCDEC: this %x cnt %d, old %d", this, iBody->iRequestCount, oldVal);
-		OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DPRIMARYMEDIABASE_REQUESTCOUNTDEC, "new count=%d; old count=%d", iBody->iRequestCount, oldVal );
-		if (oldVal == 1)
-			{
-			//Kern::Printf("RCDEC: NotifyIdle()");
-			iBody->iPagingDevice->NotifyIdle();
-			}		
-		NKern::FMSignal(lock);
-		__ASSERT_DEBUG(iBody->iRequestCount >= 0, LOCM_FAULT());
+//Kern::Printf("RCDEC: NotifyIdle()");
+		iBody->iPagingDevice->NotifyIdle();
 		}
+	__ASSERT_DEBUG(iBody->iRequestCount >= 0, LOCM_FAULT());
 	}
 #endif	// __DEMAND_PAGING__
 
@@ -3776,19 +3773,23 @@ void DMediaPagingDevice::SendToMainQueueDfcAndBlock(TThreadMessage* aMsg)
 	TInt len = I64LOW(m.Length());
 
 	TBool needSyncAfterRead = EFalse;
-	if (m.Drive()->iDmaHelper)
-		{
-		m.Flags() |= TLocDrvRequest::EPhysAddr;
-		if (m.Id() == DLocalDrive::EWrite)
-			{
-			Cache::SyncMemoryBeforeDmaWrite(addr, len);
-			}
-		else
-			{
-			Cache::SyncMemoryBeforeDmaRead(addr, len);
-			needSyncAfterRead = ETrue;
-			}
-		}
+    if (m.Drive()->iDmaHelper)
+        {        
+        m.Flags() |= TLocDrvRequest::EPhysAddr;
+        // don't cache sync for zero mapping...
+        if (!(m.Flags() & TLocDrvRequest::EPhysAddrOnly))
+            {
+            if (m.Id() == DLocalDrive::EWrite)
+                {
+                Cache::SyncMemoryBeforeDmaWrite(addr, len);
+                }
+            else
+                {
+                Cache::SyncMemoryBeforeDmaRead(addr, len);
+                needSyncAfterRead = ETrue;
+                }
+            }
+	    }
 
 	// Count the number of outstanding requests if this is the data-paging media, so that
 	// we can call DPagingDevice::NotifyBusy() / DPagingDevice::NotifyIdle()
@@ -3845,6 +3846,17 @@ void DMediaPagingDevice::CompleteRequest(TThreadMessage* aMsg, TInt aResult)
 	}
 
 TInt DMediaPagingDevice::Read(TThreadMessage* aReq,TLinAddr aBuffer,TUint aOffset,TUint aSize,TInt aDrvNumber)
+    {
+    return BaseRead(aReq,(TUint32)aBuffer,aOffset,aSize,aDrvNumber,EFalse);
+    }
+
+TInt DMediaPagingDevice::ReadPhysical(TThreadMessage* aReq, TPhysAddr* aPageArray, TUint aPageCount, TUint aOffset, TInt aDrvNumber)
+    {    
+    TUint adjSize = (aPageCount << iPrimaryMedia->iBody->iPageSizeLog2) >> iReadUnitShift; // translate to Read Units
+    return BaseRead(aReq,(TUint32)aPageArray,aOffset,adjSize,aDrvNumber,ETrue);
+    }
+
+TInt DMediaPagingDevice::BaseRead(TThreadMessage* aReq,TUint32 aBuffer,TUint aOffset,TUint aSize,TInt aDrvNumber, TBool aPhysAddr)
 	{
 	OstTraceFunctionEntry1( DMEDIAPAGINGDEVICE_READ_ENTRY, this );
 	__ASSERT_ALWAYS(NKern::CurrentThread()!=iPrimaryMedia->iDfcQ->iThread,LOCM_FAULT());	// that would lock up the system, thus better die now
@@ -3993,7 +4005,10 @@ TInt DMediaPagingDevice::Read(TThreadMessage* aReq,TLinAddr aBuffer,TUint aOffse
 		m.Length()=Int64(size);
 		m.RemoteDes()=(TAny*)aBuffer;
 		m.RemoteDesOffset()=0;		// pre-aligned
-		m.DriverFlags()=0;
+		m.DriverFlags() = 0;
+		if (aPhysAddr)
+		    m.Flags() |= TLocDrvRequest::EPhysAddrOnly;
+
 		__KTRACE_OPT2(KLOCDRV,KLOCDPAGING,Kern::Printf("ReqId=%d, Pos=0x%lx, Len=0x%lx, remote Des 0x%x",m.Id(),m.Pos(),m.Length(),m.RemoteDes()));
 		OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DMEDIAPAGINGDEVICE_READ2, "reqId=%d; position=0x%lx; length=0x%x; remote Des=0x%x", (TInt) m.Id(), (TUint) m.Pos(), (TUint) m.Length(), (TUint) m.RemoteDes());
 		
@@ -4041,7 +4056,18 @@ TInt DMediaPagingDevice::Read(TThreadMessage* aReq,TLinAddr aBuffer,TUint aOffse
 	}
 
 TInt DMediaPagingDevice::Write(TThreadMessage* aReq,TLinAddr aBuffer,TUint aOffset,TUint aSize,TBool aBackground)
+    {
+    return BaseWrite(aReq,(TUint32)aBuffer,aOffset,aSize,aBackground,EFalse);
+    }
+
+TInt DMediaPagingDevice::WritePhysical(TThreadMessage* aReq, TPhysAddr* aPageArray, TUint aPageCount, TUint aOffset, TBool aBackground)
 	{
+    TUint adjSize = (aPageCount << iPrimaryMedia->iBody->iPageSizeLog2) >> iReadUnitShift; // translate to Read Units
+    return BaseWrite(aReq,(TUint32)aPageArray,aOffset,adjSize,aBackground,ETrue);
+	}
+
+TInt DMediaPagingDevice::BaseWrite(TThreadMessage* aReq,TUint32 aBuffer,TUint aOffset,TUint aSize,TBool aBackground, TBool aPhysAddr)
+    {
 	OstTraceFunctionEntry1( DMEDIAPAGINGDEVICE_WRITE_ENTRY, this );
 	__ASSERT_ALWAYS(NKern::CurrentThread()!=iPrimaryMedia->iDfcQ->iThread,LOCM_FAULT());	// that would lock up the system, thus better die now
 	__ASSERT_ALWAYS(aReq,LOCM_FAULT());
@@ -4101,7 +4127,10 @@ TInt DMediaPagingDevice::Write(TThreadMessage* aReq,TLinAddr aBuffer,TUint aOffs
 	TInt retVal = KErrGeneral;
 	for (TInt i=0; retVal != KErrNone && i < KPageOutRetries; i++)
 		{
-		m.Flags() = TLocDrvRequest::EPaging | TLocDrvRequest::EDataPaging | (aBackground ? TLocDrvRequest::EBackgroundPaging : 0);
+		m.Flags() = TLocDrvRequest::EPaging | 
+                    TLocDrvRequest::EDataPaging | 
+                    (aBackground ? TLocDrvRequest::EBackgroundPaging : 0) |
+                    (aPhysAddr ? TLocDrvRequest::EPhysAddrOnly : 0);
 
 		m.Id() = DLocalDrive::EWrite;
 		m.Drive() = TheDrives[iDataPagingDriveNumber];
@@ -4111,7 +4140,8 @@ TInt DMediaPagingDevice::Write(TThreadMessage* aReq,TLinAddr aBuffer,TUint aOffs
 		m.Length()=Int64(size);
 		m.RemoteDes()=(TAny*)aBuffer;
 		m.RemoteDesOffset()=0;		// pre-aligned
-		m.DriverFlags()=0;
+		m.DriverFlags() = 0;        
+
 		__KTRACE_OPT2(KLOCDRV,KLOCDPAGING,Kern::Printf("ReqId=%d, Pos=0x%lx, Len=0x%lx, remote Des 0x%x",m.Id(),m.Pos(),m.Length(),m.RemoteDes()));
 		OstTraceDefExt4(OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, DMEDIAPAGINGDEVICE_WRITE2, "reqId=%d; position=0x%lx; length=0x%lx; remote Des=0x%x", (TInt) m.Id(), (TUint) m.Pos(), (TUint) m.Length(), (TUint) m.RemoteDes());
 		
@@ -4820,8 +4850,6 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 		return KErrArgument;
 		}
 
-
-
 	for(i=0; i<KMaxLocalDrives; i++)
 		{
 		if (ThePagingDevices[i] == NULL)
@@ -4899,6 +4927,8 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 
 	TInt dataPagingDriveNumber = KErrNotFound;
 	TInt swapSize = 0;
+	TInt blockSize = 0;
+	TUint16 flags = 0;
 
 	// find the local drive assocated with the primary media
 	for (i=0; i<KMaxLocalDrives; ++i)
@@ -4929,9 +4959,10 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 
 
 		TLocDrvRequest m;
+        TBuf8<KMaxLocalDriveCapsLength> capsBuf;
+        
 		memclr(&m, sizeof(m));
 		
-
 		// Get the Caps from the device. NB for MMC/SD we may need to retry as some PSLs start up
 		// in "door open" or "media not present" state which can result in the cancellation of requests
 		TInt i;
@@ -4939,7 +4970,6 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 		TInt r = KErrNotReady;
 		for (i=0; r == KErrNotReady && i < KRetries; i++)
 			{
-			TBuf8<KMaxLocalDriveCapsLength> capsBuf;
 			capsBuf.SetMax();
 			capsBuf.FillZ();
 			m.Drive() = TheDrives[firstLocalDriveNumber];
@@ -4961,6 +4991,9 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 			return KErrNotSupported;
 		    }
 
+		TLocalDriveCapsV6& caps = *(TLocalDriveCapsV6*)capsBuf.Ptr();
+		blockSize = caps.iBlockSize;
+		
 		TLocDrv* drive;
 		for (i=0; i<KMaxLocalDrives; ++i)
 			{
@@ -4982,6 +5015,10 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 					OstTraceDefExt2( OST_TRACE_CATEGORY_RND, TRACE_DEMANDPAGING, LOCDRV_REGISTERPAGINGDEVICE6, "Found SWAP partition on local drive=%d; size=0x%x", (TInt) i, (TUint) I64LOW(drive->iPartitionLen) );			
 					dataPagingDriveNumber = i;
 					swapSize = drive->iPartitionLen >> aReadShift;
+					
+			        // Mark Paging Device capable of utilising physical addresss only accesses
+			        if (drive->iDmaHelper)
+			            flags |= DPagingDevice::ESupportsPhysicalAccess;  
 					}
 				}
 			}
@@ -5006,6 +5043,7 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 		}
 
 	pagingDevice->iType = aPagingType;
+	pagingDevice->iFlags = flags;
 	pagingDevice->iReadUnitShift = aReadShift;
 
 	pagingDevice->iFirstLocalDriveNumber = firstLocalDriveNumber;
@@ -5013,15 +5051,19 @@ EXPORT_C TInt LocDrv::RegisterPagingDevice(DPrimaryMediaBase* aPrimaryMedia, con
 
 	pagingDevice->iDataPagingDriveNumber = dataPagingDriveNumber;
 	pagingDevice->iSwapSize = swapSize;
+		
+	pagingDevice->iPreferredWriteShift = (blockSize) ? __e32_find_ms1_32(blockSize) : 0;
 
 #ifdef __DEBUG_DEMAND_PAGING__
 	Kern::Printf("PagingDevice :");
 	Kern::Printf("iType 0x%x\n", pagingDevice->iType);
+	Kern::Printf("iFlags 0x%x\n", pagingDevice->iFlags);
 	Kern::Printf("iReadUnitShift 0x%x\n", pagingDevice->iReadUnitShift);
 	Kern::Printf("iFirstLocalDriveNumber 0x%x\n", pagingDevice->iFirstLocalDriveNumber);
 	Kern::Printf("iRomPagingDriveNumber 0x%x\n", pagingDevice->iRomPagingDriveNumber);
 	Kern::Printf("iDataPagingDriveNumber 0x%x\n", pagingDevice->iDataPagingDriveNumber);
 	Kern::Printf("iSwapSize 0x%x\n", pagingDevice->iSwapSize);
+	Kern::Printf("iPreferredWriteShift 0x%x\n", pagingDevice->iPreferredWriteShift);
 #endif
 
 

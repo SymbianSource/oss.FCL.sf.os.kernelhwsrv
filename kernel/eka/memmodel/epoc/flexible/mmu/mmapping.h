@@ -237,13 +237,19 @@ public:
 	*/
 	FORCE_INLINE TBool IsPinned()
 		{ return Flags()&EPinned; }
-		
+
 	/**
 	Return true if this mapping physically pins the memory it maps.
 	*/
 	FORCE_INLINE TBool IsPhysicalPinning()
 		{ return Flags()&EPhysicalPinningMapping; }
 
+	/**
+	Return true if this mapping has beed successfully attached to a memory object, pinning its pages.
+	*/
+	FORCE_INLINE TBool PagesPinned()
+		{ return Flags()&EPagesPinned; }		
+		
 	/**
 	Return the access permissions which this mapping uses to maps memory.
 	*/

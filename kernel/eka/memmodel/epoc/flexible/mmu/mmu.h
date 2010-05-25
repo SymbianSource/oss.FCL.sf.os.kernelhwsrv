@@ -571,6 +571,23 @@ public:
 		}
 
 	/**
+	Mark this page as an oldest old page.
+
+	This does not mark the object as modified as conceptually it's still an oldest page.  This means
+	that if a page goes from young -> old -> oldest the second transition will not interrupt the
+	page restriction that happens on the first.
+
+	@pre #MmuLock held.
+	*/
+	FORCE_INLINE void SetOldestPage(TPagedState aPagedState)
+		{
+		CheckAccess("SetPagedState");
+		__NK_ASSERT_DEBUG(iPagedState==EPagedOld);
+		__NK_ASSERT_DEBUG(aPagedState==EPagedOldestClean || aPagedState==EPagedOldestDirty);
+		iPagedState = aPagedState;
+		}
+
+	/**
 	Set the page's #iModifier value.
 
 	#iModifier is cleared to zero whenever the usage or paging state of the page

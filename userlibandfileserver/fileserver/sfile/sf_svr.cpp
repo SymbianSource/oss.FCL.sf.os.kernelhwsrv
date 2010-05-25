@@ -590,7 +590,7 @@ TInt TFsSetVolume::DoRequestL(CFsRequest* aRequest)
 // Set the volume name.
 //
 	{
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 

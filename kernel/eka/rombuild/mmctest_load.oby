@@ -18,6 +18,7 @@
 // depends on the mmctest_test being built first (it includes it)
 
 #define BASE_ROM
+#define MMCLOADER_ROM
 #define REBOOT_DRIVER
 
 #include <rom\##VARIANT##\header.iby>

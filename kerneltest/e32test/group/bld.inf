@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -154,9 +154,6 @@ d_pagingexample_2_post support
 #if defined(EPOC32) && !defined(X86)
 // Test LDD for real hardware DMA
 d_dma						support
-d_dma2						support
-d_dma_compat				support
-d_dma2_compat				support
 #endif
 
 #ifdef EPOC32
@@ -871,7 +868,6 @@ t_context
 
 // /E32TEST/DMA tests
 t_dma       // user-side test harness for real DMA framework
-t_dma2       // user-side test harness for DMAv2 framework
 
 // Example RTOS personality
 ../personality/example/t_expers support

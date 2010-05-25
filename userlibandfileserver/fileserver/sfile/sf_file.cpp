@@ -241,7 +241,7 @@ LOCAL_C TInt FsFileOpenL(CFsRequest* aRequest, TFileOpen anOpen)
     TUint32 mode=aRequest->Message().Int1();
 	if (anOpen==EFileCreate || anOpen==EFileReplace)
 		{
-		r = CheckDiskSpace(0, aRequest);
+		r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
 		if(r != KErrNone)
             return r;
         
@@ -601,7 +601,7 @@ TInt TFsFileTemp::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileTemp::DoRequestL(CFsRequest* aRequest)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 	
@@ -1652,7 +1652,7 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSetAtt::DoRequestL(CSessionFs* aSession)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1717,7 +1717,7 @@ TInt TFsFileSetModified::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSetModified::DoRequestL(CFsRequest* aRequest)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1757,7 +1757,7 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSet::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1882,7 +1882,7 @@ TInt TFsFileRename::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileRename::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 

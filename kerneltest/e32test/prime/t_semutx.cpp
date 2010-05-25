@@ -38,7 +38,10 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
+#include <u32std.h>
+#include <e32svr.h>
 
 const TInt KMaxBufferSize=10;
 const TInt KMaxArraySize=10;
@@ -221,7 +224,7 @@ TInt WaitSemThread(TAny* a)
 void StartWaitSemThread(RThread& aT, SWaitSem& aW, TThreadPriority aP=EPriorityLess)
 	{
 	TInt r = aT.Create(KNullDesC, &WaitSemThread, 0x1000, 0x1000, 0x1000, &aW);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	aT.SetPriority(aP);
 	aT.Resume();
 	}
@@ -231,9 +234,9 @@ void WaitForWaitSemThread(RThread& aT, TInt aResult)
 	TRequestStatus s;
 	aT.Logon(s);
 	User::WaitForRequest(s);
-	test(aT.ExitType()==EExitKill);
-	test(aT.ExitReason()==aResult);
-	test(s.Int()==aResult);
+	test_Equal(EExitKill, aT.ExitType());
+	test_Equal(aResult, aT.ExitReason());
+	test_Equal(aResult, s.Int());
 	CLOSE_AND_WAIT(aT);
 	}
 
@@ -251,7 +254,7 @@ void TestSemaphore2()
 	TTime final;
 	TInt elapsed=0;
 	TInt r = ws.iSem.CreateLocal(0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RThread().SetPriority(EPriorityAbsoluteVeryLow);
 	TInt threadcount=0;
@@ -259,7 +262,7 @@ void TestSemaphore2()
 	while (elapsed<1000000)
 		{
 		r = t.Create(KNullDesC, &DummyThread, 0x1000, NULL, NULL);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		t.SetPriority(EPriorityMore);
 		t.Resume();
 		t.Close();
@@ -307,7 +310,7 @@ void TestSemaphore2()
 	User::After(200000);
 	t.Resume();
 	WaitForWaitSemThread(t, KErrTimedOut);
-	test(ws.iSem.Wait(1)==KErrNone);
+	test_KErrNone(ws.iSem.Wait(1));
 
 	ws.iTimeout=100000;
 	StartWaitSemThread(t, ws, EPriorityMore);
@@ -316,7 +319,7 @@ void TestSemaphore2()
 	User::After(50000);
 	t.Resume();
 	WaitForWaitSemThread(t, KErrNone);
-	test(ws.iSem.Wait(1)==KErrTimedOut);
+	test_Equal(KErrTimedOut, ws.iSem.Wait(1));
 
 	RThread t2;
 	ws.iTimeout=100000;
@@ -324,12 +327,12 @@ void TestSemaphore2()
 	StartWaitSemThread(t2, ws, EPriorityMore);
 	t.Suspend();
 	ws.iSem.Signal();
-	test(t2.ExitType()==EExitKill);
-	test(t.ExitType()==EExitPending);
+	test_Equal(EExitKill, t2.ExitType());
+	test_Equal(EExitPending, t.ExitType());
 	t.Resume();
 	WaitForWaitSemThread(t, KErrTimedOut);
 	WaitForWaitSemThread(t2, KErrNone);
-	test(ws.iSem.Wait(1)==KErrTimedOut);
+	test_Equal(KErrTimedOut, ws.iSem.Wait(1));
 
 	ws.iTimeout=1000000;
 	initial.HomeTime();
@@ -376,11 +379,11 @@ void TestSemaphore2()
 	initial.HomeTime();
 	StartWaitSemThread(t, ws, EPriorityMore);
 	StartWaitSemThread(t2, ws, EPriorityMuchMore);
-	test(t.ExitType()==EExitPending);
-	test(t2.ExitType()==EExitPending);
+	test_Equal(EExitPending, t.ExitType());
+	test_Equal(EExitPending, t2.ExitType());
 	ws.iSem.Close();
-	test(t.ExitType()==EExitKill);
-	test(t2.ExitType()==EExitKill);
+	test_Equal(EExitKill, t.ExitType());
+	test_Equal(EExitKill, t2.ExitType());
 	WaitForWaitSemThread(t2, KErrGeneral);
 	WaitForWaitSemThread(t, KErrGeneral);
 	final.HomeTime();
@@ -414,23 +417,23 @@ void TestSemaphore()
 	test.Next(_L("Producer/Consumer scenario"));
 	// Test Rsemaphore with the producer/consumer scenario	RThread thread1, thread2;
 	TRequestStatus stat1, stat2;
-	test(mutex.CreateLocal()==KErrNone);
-	test(slotAvailable.CreateLocal(KMaxBufferSize)==KErrNone);
-	test(itemAvailable.CreateLocal(0)==KErrNone);
-	test(thread1.Create(_L("Thread1"),Producer,KDefaultStackSize,0x200,0x200,NULL)==KErrNone);
-	test(thread2.Create(_L("Thread2"),Consumer,KDefaultStackSize,0x200,0x200,NULL)==KErrNone);
+	test_KErrNone(mutex.CreateLocal());
+	test_KErrNone(slotAvailable.CreateLocal(KMaxBufferSize));
+	test_KErrNone(itemAvailable.CreateLocal(0));
+	test_KErrNone(thread1.Create(_L("Thread1"),Producer,KDefaultStackSize,0x200,0x200,NULL));
+	test_KErrNone(thread2.Create(_L("Thread2"),Consumer,KDefaultStackSize,0x200,0x200,NULL));
 	thread1.Logon(stat1);
 	thread2.Logon(stat2);
-	test(stat1==KRequestPending);
-	test(stat2==KRequestPending);
+	test_Equal(KRequestPending, stat1.Int());
+	test_Equal(KRequestPending, stat2.Int());
 	thread1.Resume(); 
 	thread2.Resume();
 	User::WaitForRequest(stat1);
 	User::WaitForRequest(stat2);
-	test(stat1==KErrNone);
-	test(stat2==KErrNone);
+	test_KErrNone(stat1.Int());
+	test_KErrNone(stat2.Int());
 	for(TInt jj=0;jj<KNumProducerItems;jj++)
-		test(consumerArray[jj]==jj);		
+		test_Equal(jj, consumerArray[jj]);		
 	
 	test.Next(_L("Close"));
 	mutex.Close();
@@ -443,7 +446,7 @@ void TestMutex2()
 	{
 	RMutex m;
 	test.Start(_L("Create"));
-	test(m.CreateLocal()==KErrNone);
+	test_KErrNone(m.CreateLocal());
 
 	// Test RMutex::IsHeld()
 	test.Next(_L("IsHeld ?"));
@@ -463,7 +466,7 @@ void TestMutex2()
 void TestMutex()
 	{
 	test.Start(_L("Create"));
-	test(mutex.CreateLocal()==KErrNone);
+	test_KErrNone(mutex.CreateLocal());
 	
 	test.Next(_L("Threads writing to arrays test"));
 //
@@ -477,19 +480,19 @@ void TestMutex()
 //
 	arrayIndex=0;
 	RThread thread1,thread2;	
-	test(thread1.Create(_L("Thread1"),MutexThreadEntryPoint1,KDefaultStackSize,0x2000,0x2000,NULL)==KErrNone);
-	test(thread2.Create(_L("Thread2"),MutexThreadEntryPoint2,KDefaultStackSize,0x2000,0x2000,NULL)==KErrNone);			 
+	test_KErrNone(thread1.Create(_L("Thread1"),MutexThreadEntryPoint1,KDefaultStackSize,0x2000,0x2000,NULL));
+	test_KErrNone(thread2.Create(_L("Thread2"),MutexThreadEntryPoint2,KDefaultStackSize,0x2000,0x2000,NULL));			 
 	TRequestStatus stat1,stat2;
 	thread1.Logon(stat1);
 	thread2.Logon(stat2);
-	test(stat1==KRequestPending);
-	test(stat2==KRequestPending);
+	test_Equal(KRequestPending, stat1.Int());
+	test_Equal(KRequestPending, stat2.Int());
 	thread1.Resume(); 
 	thread2.Resume();
 	User::WaitForRequest(stat1);
 	User::WaitForRequest(stat2);
-	test(stat1==KErrNone);
-	test(stat2==KErrNone); 
+	test_KErrNone(stat1.Int());
+	test_KErrNone(stat2.Int()); 
 	TInt thread1ActualCount=0; 
 	TInt thread2ActualCount=0;
 	TInt ii=0;
@@ -502,10 +505,10 @@ void TestMutex()
 		ii++;
 		}
 	test.Printf(_L("T1 %d T1ACT %d T2 %d T2ACT %d"),thread1Count,thread1ActualCount,thread2Count,thread2ActualCount);
-	test(thread1ActualCount==thread1Count);
-	test(thread2ActualCount==thread2Count);
-	test(thread1Count==thread2Count);
-	test(thread1Count==(KMaxArraySize>>1));
+	test_Equal(thread1Count, thread1ActualCount);
+	test_Equal(thread2Count, thread2ActualCount);
+	test_Equal(thread2Count, thread1Count);
+	test_Equal((KMaxArraySize>>1), thread1Count);
 	
 	test.Next(_L("Close"));
 	CLOSE_AND_WAIT(thread1);
@@ -521,7 +524,7 @@ void TestCriticalSection()
 	{
 	
 	test.Start(_L("Create"));
-	test(criticalSn.CreateLocal()==KErrNone);
+	test_KErrNone(criticalSn.CreateLocal());
 
 /***************** TO DO ***********************
 
@@ -551,19 +554,19 @@ void TestCriticalSection()
 //
 	arrayIndex=0;
 	RThread thread1,thread2;	
-	test(thread1.Create(_L("Thread1"),CriticalSnThreadEntryPoint1,KDefaultStackSize,0x2000,0x2000,NULL)==KErrNone);
-	test(thread2.Create(_L("Thread2"),CriticalSnThreadEntryPoint2,KDefaultStackSize,0x2000,0x2000,NULL)==KErrNone);			 
+	test_KErrNone(thread1.Create(_L("Thread1"),CriticalSnThreadEntryPoint1,KDefaultStackSize,0x2000,0x2000,NULL));
+	test_KErrNone(thread2.Create(_L("Thread2"),CriticalSnThreadEntryPoint2,KDefaultStackSize,0x2000,0x2000,NULL));			 
 	TRequestStatus stat1,stat2;
 	thread1.Logon(stat1);
 	thread2.Logon(stat2);
-	test(stat1==KRequestPending);
-	test(stat2==KRequestPending);
+	test_Equal(KRequestPending, stat1.Int());
+	test_Equal(KRequestPending, stat2.Int());
 	thread1.Resume(); 
 	thread2.Resume();
 	User::WaitForRequest(stat1);
 	User::WaitForRequest(stat2);
-	test(stat1==KErrNone);
-	test(stat2==KErrNone); 
+	test_KErrNone(stat1.Int());
+	test_KErrNone(stat2.Int()); 
 	TInt thread1ActualCount=0; 
 	TInt thread2ActualCount=0;
 	TInt ii=0;
@@ -575,10 +578,10 @@ void TestCriticalSection()
 			thread2ActualCount++;
 		ii++;
 		}
-	test(thread1ActualCount==thread1Count);
-	test(thread2ActualCount==thread2Count);
-	test(thread1Count==thread2Count);
-	test(thread1Count==(KMaxArraySize>>1));
+	test_Equal(thread1Count, thread1ActualCount);
+	test_Equal(thread2Count, thread2ActualCount);
+	test_Equal(thread2Count, thread1Count);
+	test_Equal((KMaxArraySize>>1), thread1Count);
 
 	test.Next(_L("Close"));
 	CLOSE_AND_WAIT(thread1);
@@ -590,6 +593,16 @@ void TestCriticalSection()
 
 GLDEF_C TInt E32Main()
 	{	
+	TInt cpus = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
+	if (cpus != 1)
+		{
+		test(cpus>1);
+		// This test will require compatibility mode (and probably other changes)
+		// to work on SMP - it depends on explicit scheduling order.
+		test.Printf(_L("T_SEMUTX skipped, does not work on SMP\n"));
+		return KErrNone;
+		}	
+	
 
 	test.Title();
  	__UHEAP_MARK;

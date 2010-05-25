@@ -56,6 +56,7 @@
 #include <e32ldr.h>
 #include <e32def.h>
 #include <e32def_private.h>
+#include <u32std.h>
 
 RTest test(_L("T_CONDVAR"));
 RMutex M1;
@@ -527,6 +528,16 @@ TInt SecondaryProcess(RCondVar aCV)
 
 TInt E32Main()
 	{
+	TInt cpus = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
+	if (cpus != 1)
+		{
+		test(cpus>1);
+		// This test will require compatibility mode (and probably other changes)
+		// to work on SMP - it depends on explicit scheduling order.
+		test.Printf(_L("T_CONDVAR skipped, does not work on SMP\n"));
+		return KErrNone;
+		}	
+	
 	__KHEAP_MARK;
 	__UHEAP_MARK;
 

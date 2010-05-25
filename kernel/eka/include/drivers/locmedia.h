@@ -342,6 +342,7 @@ public:
 		EDataPaging=0x40,			// a data paging request
 		ETClientBuffer=0x80,		// RemoteDes() points to a TClientBuffer
 		EKernelBuffer=0x100,		// RemoteDes() points to a kernel-side buffer
+		EPhysAddrOnly=0x200,        // No virtual address is available. Data Paging requests Only. 
 		};
 public:
     
@@ -977,6 +978,12 @@ public:
 	inline static TBool PageInRequest(TLocDrvRequest& aReq);
 	inline static TBool PageOutRequest(TLocDrvRequest& aReq);
 	inline static TBool PagingRequest(TLocDrvRequest& aReq);
+		
+	virtual TInt WritePhysical(TThreadMessage* aReq, TPhysAddr* aPageArray, TUint aPageCount, TUint aOffset, TBool aBackground);
+	virtual TInt ReadPhysical(TThreadMessage* aReq, TPhysAddr* aPageArray, TUint aPageCount, TUint aOffset, TInt aDrvNumber);
+private:    
+    virtual TInt BaseRead(TThreadMessage* aReq,TUint32 aBuffer,TUint aOffset,TUint aSize,TInt aDrvNumber,TBool aPhysAddr);
+    virtual TInt BaseWrite(TThreadMessage* aReq,TUint32 aBuffer,TUint aOffset,TUint aSize, TBool aBackground,TBool aPhysAddr); 
 public:
 	TMessageQue iMainQ;
 	TMessageQue iDeferredQ;

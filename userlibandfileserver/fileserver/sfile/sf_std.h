@@ -144,6 +144,13 @@ const TUint64 KMaxLegacyFileSize    = 0x7fffffff;
 //-- absolute maximum file size that file server supports
 const TUint64 KMaxSupportedFileSize = KMaxTUint64;
 
+//-- this is a speculative value of a min. amount of free space on the volume necessary to create a file, directory etc.
+//-- it is used mostly in "reserve drive space" functionality, which is, actually, fundamentally flawed.
+//-- the problem is that the file server can't know exactly how much space is required to create some fs object on the volume, 
+//-- so, it has to guess. This is a default "sector size" value; the file system can round it up internally to its cluster size if any.
+const TInt KMinFsCreateObjTreshold = KDefaultVolumeBlockSize;
+
+
 //__DATA_CAGING__
 const TUint SHA1_LBLOCK=16;
 const TUint SHA1_HASH=20;
@@ -1838,10 +1845,6 @@ extern HBufC* gCorruptFileNamesListFile;
 #endif
 
 typedef TPckgBuf<TMediaPswdReplyNotifyInfoV1> TMediaPswdReplyNotifyInfoV1Buf;
-
-#if defined(__WINS__)
- TInt MapWindowsFileName(TDes& aBuffer,const TDesC& aFileName);
-#endif
 
 enum TDllFindMethod {EFindInPath, EFindInSystemLibs, EFindInSystemBin, EFindExhausted};
 

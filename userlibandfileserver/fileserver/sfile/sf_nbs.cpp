@@ -22,7 +22,7 @@ TInt TFsMkDir::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsMkDir::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -143,7 +143,7 @@ TInt TFsRename::DoRequestL(CFsRequest* aRequest)
 //
 	{
 	__PRINT(_L("TFsRename::DoRequestL(CFsRequest* aRequest)"));
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 	
@@ -182,7 +182,7 @@ TInt TFsReplace::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsReplace::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -261,7 +261,7 @@ TInt TFsSetEntry::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsSetEntry::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -892,7 +892,7 @@ TInt TFsCreatePrivatePath::DoRequestL(CFsRequest* aRequest)
 //	create the private path unless it already exists
 //
 	{
-    TInt ret = CheckDiskSpace(0, aRequest);
+    TInt ret = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(ret != KErrNone)
         return ret;
 

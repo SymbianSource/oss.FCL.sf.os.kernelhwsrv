@@ -115,14 +115,14 @@ EXPORT_C TInt Epoc::MovePhysicalPage(TPhysAddr aOld, TPhysAddr& aNew, TRamDefrag
 	RamAllocLock::Lock();
 
 	// Move the page to any RAM zone.
-	r = M::MovePage(aOld, aNew, KRamZoneInvalidId, EFalse);
+	r = M::MovePage(aOld, aNew, KRamZoneInvalidId, 0);
 
 	RamAllocLock::Unlock();
 	return r;
 	}
 
 
-TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlockRest)
+TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TUint aMoveDisFlags)
 	{
 	// Returns this when page is not paged or managed or free but is a real RAM page.
 	TInt r = KErrNotSupported;
@@ -130,12 +130,12 @@ TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlo
 	// get memory object corresponding to the page...
 	DMemoryObject* memory = 0;
 	MmuLock::Lock();
-	SPageInfo* pi = SPageInfo::SafeFromPhysAddr(aOld&~KPageMask);
-	if(pi)
+	SPageInfo* pi = SPageInfo::SafeFromPhysAddr(aOld & ~KPageMask);
+	if (pi)
 		{
 		if (pi->PagedState() != SPageInfo::EUnpaged)
 			{// The page is paged so let the pager handle it.
-			return ThePager.DiscardPage(pi, aBlockZoneId, aBlockRest);
+			return ThePager.DiscardPage(pi, aBlockZoneId, aMoveDisFlags);
 			}
 		switch (pi->Type())
 			{
@@ -149,7 +149,8 @@ TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlo
 				// i.e. we don't need to Open() the memory object.
 				MmuLock::Unlock();
 				// move page...
-				r = memory->iManager->MovePage(memory, pi, aNew, aBlockZoneId, aBlockRest);
+				r = memory->iManager->MovePage(	memory, pi, aNew, aBlockZoneId, 
+												(aMoveDisFlags & M::EMoveDisBlockRest)!=0);
 				break;
 			case SPageInfo::EUnused:
 				r = KErrNotFound;	// This page is free so nothing to do.

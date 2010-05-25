@@ -667,7 +667,7 @@ void TestDistribution(TRandom& aRandom, TInt aSamples)
 	delete [] data;
 	}
 
-void BenchmarkReplacement()
+void TestDistributions()
 	{
  	test.Next(_L("Test uniform distribution"));
 	TUniformRandom rand1;
@@ -678,6 +678,49 @@ void BenchmarkReplacement()
 	TNormalRandom rand2;
 	rand2.SetParams(100, 25);
 	TestDistribution(rand2, 10000);
+	}
+
+void BenchmarkReplacement()
+	{
+	// Report block write and physical access settings
+	test.Next(_L("Report media physical access and preferred write size settings"));
+	TInt physAccessSupported = UserSvr::HalFunction(EHalGroupVM, EVMHalGetPhysicalAccessSupported, 0, 0);
+	test(physAccessSupported == 0 || physAccessSupported == 1);
+	if (physAccessSupported)
+ 		test.Printf(_L("Physical access supported\n"));
+	else
+ 		test.Printf(_L("Physical access not supported\n"));
+
+	TInt preferredWriteSize = UserSvr::HalFunction(EHalGroupVM, EVMHalGetPreferredDataWriteSize, 0, 0);
+	test(preferredWriteSize >= 0);
+	test.Printf(_L("Preferred write size %d pages\n"), 1 << preferredWriteSize);
+
+	for (TInt physAccess = 0 ; physAccess <= physAccessSupported ; ++physAccess)
+		{
+		test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalSetUsePhysicalAccess, (TAny*)physAccess, 0));
+		test_Equal(physAccess, UserSvr::HalFunction(EHalGroupVM, EVMHalGetUsePhysicalAccess, 0, 0));
+		TInt writeSize = 0;
+		for (;;)
+			{
+			test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalSetDataWriteSize, (TAny*)writeSize, 0));
+			TInt writeSizeSet = UserSvr::HalFunction(EHalGroupVM, EVMHalGetDataWriteSize, 0, 0);
+			test (writeSizeSet >= 0);
+			if (writeSizeSet != writeSize)
+				break;  // stop loop when we reach limit of supported write size
+
+			TBuf<128> title;
+			title.AppendFormat(_L("Thrash test: single thread, normal random workload 2, phys access %d, write size %dKB"),
+							   physAccess, 1 << (writeSize - 2));
+			ThrashTest(title, 1, ETrue, EWorkloadNormalRandom2, (2 * gMaxCacheSize) / 3, 2 * gMaxCacheSize, 0);
+
+			++writeSize;
+			}
+		}
+
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalSetUsePhysicalAccess, (TAny*)physAccessSupported, 0));
+	test_Equal(physAccessSupported, UserSvr::HalFunction(EHalGroupVM, EVMHalGetUsePhysicalAccess, 0, 0));
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalSetDataWriteSize, (TAny*)preferredWriteSize, 0));
+	test_Equal(preferredWriteSize, UserSvr::HalFunction(EHalGroupVM, EVMHalGetDataWriteSize, 0, 0));
 
 	ThrashTest(_L("Thrash test: single thread, normal random workload 1"),
 			   1, ETrue, EWorkloadNormalRandom1, (2 * gMaxCacheSize) / 3, 2 * gMaxCacheSize, 0);
@@ -853,6 +896,7 @@ TInt E32Main()
 	if (actions & EActionBenchmarks)
 		{	
 		test.Next(_L("Benchmarking page replacement"));
+		TestDistributions();
 		BenchmarkReplacement();
 		}
 

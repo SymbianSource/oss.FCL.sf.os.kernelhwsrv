@@ -1091,6 +1091,14 @@ template <class T>
 FORCE_INLINE void FlagClear(T& a,const T b,const T c,const T d)
 	{ a = (T)(a&~b&~c&~d); }
 
+/// Utility function to calculate the minimum of two unsigned integers
+FORCE_INLINE TUint MinU(TUint a, TUint b)
+	{ return a <= b ? a : b; }
+
+/// Utility function to calculate the maximum of two unsigned integers
+FORCE_INLINE TUint MaxU(TUint a, TUint b)
+	{ return a >= b ? a : b; }
+
 
 #include <memmodel/epoc/mmubase/kblockmap.h>
 

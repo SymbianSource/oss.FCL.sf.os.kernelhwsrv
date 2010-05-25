@@ -1494,7 +1494,8 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 					}
 				}
 			}
-	
+
+#ifdef _ENABLE_EMMC_RELIABLE_WRITE_		
 			//Reliable Write only supported by v4.3+ MMC media
 			if (iCard->ExtendedCSD().ExtendedCSDRev() >= 3)
 				{
@@ -1506,6 +1507,7 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 					iSession->Command().iFlags|= KMMCCmdFlagReliableWrite;
 					}
 				}
+#endif //_ENABLE_EMMC_RELIABLE_WRITE_			
 		
 			// Engage the data transfer session...
 			r = EngageAndSetWriteRequest(aMedReq);

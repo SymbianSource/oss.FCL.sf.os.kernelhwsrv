@@ -1,4 +1,4 @@
-// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -21,16 +21,15 @@
 #include <template_assp.h>									// /assp/template_assp/
 
 #include <drivers/dma.h>
-#include <drivers/dma_hai.h>
 
 
 // Debug support
 static const char KDmaPanicCat[] = "DMA PSL - " __FILE__;
 
-static const TInt KMaxTransferLen = 0x1FE0;	// max transfer length for this DMAC
-static const TInt KMemAlignMask = 7; // memory addresses passed to DMAC must be multiple of 8
-static const TInt KChannelCount = 16;			// we got 16 channels
-static const TInt KDesCount = 160;				// Initial DMA descriptor count
+static const TInt KMaxTransferLen = 0x1FE0;					// max transfer length for this DMAC
+static const TInt KMemAlignMask = 7;				  // memory addresses passed to DMAC must be multiple of 8
+static const TInt KChannelCount = 16;						// we got 16 channels
+static const TInt KDesCount = 1024;							// DMA descriptor count
 
 
 class TDmaDesc
@@ -77,26 +76,6 @@ EXPORT_C const TDmaTestInfo& DmaTestInfo()
 	return TestInfo;
 	}
 
-/**
-TO DO: Fill in to provide information to the V2 test harness (t_dma2.exe)
-*/
-TDmaV2TestInfo TestInfov2 =
-	{
-	0,
-	0,
-	0,
-	0,
-	{0},
-	0,
-	{0},
-	0,
-	{0}
-	};
-
-EXPORT_C const TDmaV2TestInfo& DmaTestInfoV2()
-	{
-	return TestInfov2;
-	}
 
 //////////////////////////////////////////////////////////////////////////////
 // Helper Functions
@@ -111,14 +90,14 @@ inline TBool IsHwDesAligned(TAny* aDes)
 	}
 
 
-static TUint32 DmaCmdReg(TUint aCount, TUint aFlags, TUint32 aSrcPslInfo, TUint32 aDstPslInfo)
+static TUint32 DcmdReg(TInt aCount, TUint aFlags, TUint32 aPslInfo)
 //
 // Returns value to set in DMA command register or in descriptor command field.
 //
 	{
 	// TO DO: Construct CMD word from input values.
 	// The return value should reflect the actual control word.
-	return (aCount | aFlags | aSrcPslInfo | aDstPslInfo);
+	return (aCount | aFlags | aPslInfo);
 	}
 
 
@@ -145,15 +124,14 @@ public:
 	TInt Create();
 private:
 	// from TDmac (PIL pure virtual)
+	virtual void Transfer(const TDmaChannel& aChannel, const SDmaDesHdr& aHdr);
 	virtual void StopTransfer(const TDmaChannel& aChannel);
 	virtual TBool IsIdle(const TDmaChannel& aChannel);
-	virtual TUint MaxTransferLength(TDmaChannel& aChannel, TUint aSrcFlags,
-									TUint aDstFlags, TUint32 aPslInfo);
-	virtual TUint AddressAlignMask(TDmaChannel& aChannel, TUint aSrcFlags,
-								   TUint aDstFlags, TUint32 aPslInfo);
+	virtual TInt MaxTransferSize(TDmaChannel& aChannel, TUint aFlags, TUint32 aPslInfo);
+	virtual TUint MemAlignMask(TDmaChannel& aChannel, TUint aFlags, TUint32 aPslInfo);
 	// from TDmac (PIL virtual)
-	virtual void Transfer(const TDmaChannel& aChannel, const SDmaDesHdr& aHdr);
-	virtual TInt InitHwDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aTransferArgs);
+	virtual void InitHwDes(const SDmaDesHdr& aHdr, TUint32 aSrc, TUint32 aDest, TInt aCount,
+ 						   TUint aFlags, TUint32 aPslInfo, TUint32 aCookie);
 	virtual void ChainHwDes(const SDmaDesHdr& aHdr, const SDmaDesHdr& aNextHdr);
 	virtual void AppendHwDes(const TDmaChannel& aChannel, const SDmaDesHdr& aLastHdr,
 							 const SDmaDesHdr& aNewHdr);
@@ -173,10 +151,11 @@ static TTemplateDmac Controller;
 
 const TDmac::SCreateInfo TTemplateDmac::KInfo =
 	{
-	ETrue,													// iCapsHwDes
-	KDesCount,												// iDesCount
-	sizeof(TDmaDesc),										// iDesSize
-	EMapAttrSupRw | EMapAttrFullyBlocking					// iDesChunkAttribs
+	KChannelCount,
+	KDesCount,
+	TDmac::KCapsBitHwDes,
+	sizeof(TDmaDesc),
+	EMapAttrSupRw | EMapAttrFullyBlocking
 	};
 
 
@@ -201,7 +180,7 @@ TInt TTemplateDmac::Create()
 			{
 			TDmaDesc* pD = HdrToHwDes(*iFreeHdr);
 			iChannels[i].iTmpDes = pD;
-			iChannels[i].iTmpDesPhysAddr = HwDesLinToPhys(pD);
+			iChannels[i].iTmpDesPhysAddr = DesLinToPhys(pD);
 			iFreeHdr = iFreeHdr->iNext;
 			}
 		r = Interrupt::Bind(EAsspIntIdDma, Isr, this);
@@ -265,10 +244,9 @@ TBool TTemplateDmac::IsIdle(const TDmaChannel& aChannel)
 	}
 
 
-TUint TTemplateDmac::MaxTransferLength(TDmaChannel& /*aChannel*/, TUint /*aSrcFlags*/,
-									   TUint /*aDstFlags*/, TUint32 /*aPslInfo*/)
+TInt TTemplateDmac::MaxTransferSize(TDmaChannel& /*aChannel*/, TUint /*aFlags*/, TUint32 /*aPslInfo*/)
 //
-// Returns the maximum transfer length in bytes for a given transfer.
+// Returns the maximum transfer size for a given transfer.
 //
 	{
 	// TO DO: Determine the proper return value, based on the arguments.
@@ -278,8 +256,7 @@ TUint TTemplateDmac::MaxTransferLength(TDmaChannel& /*aChannel*/, TUint /*aSrcFl
 	}
 
 
-TUint TTemplateDmac::AddressAlignMask(TDmaChannel& aChannel, TUint /*aSrcFlags*/,
-									  TUint /*aDstFlags*/, TUint32 /*aPslInfo*/)
+TUint TTemplateDmac::MemAlignMask(TDmaChannel& /*aChannel*/, TUint /*aFlags*/, TUint32 /*aPslInfo*/)
 //
 // Returns the memory buffer alignment restrictions mask for a given transfer.
 //
@@ -291,7 +268,8 @@ TUint TTemplateDmac::AddressAlignMask(TDmaChannel& aChannel, TUint /*aSrcFlags*/
 	}
 
 
-TInt TTemplateDmac::InitHwDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aTransferArgs)
+void TTemplateDmac::InitHwDes(const SDmaDesHdr& aHdr, TUint32 aSrc, TUint32 aDest, TInt aCount,
+							  TUint aFlags, TUint32 aPslInfo, TUint32 /*aCookie*/)
 //
 // Sets up (from a passed in request) the descriptor with that fragment's
 // source and destination address, the fragment size, and the (driver/DMA
@@ -306,15 +284,12 @@ TInt TTemplateDmac::InitHwDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aT
 	// Unaligned descriptor? Bug in generic layer!
 	__DMA_ASSERTD(IsHwDesAligned(pD));
 
-	const TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
-	const TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
-	pD->iSrcAddr  = (src.iFlags & KDmaPhysAddr) ? src.iAddr : Epoc::LinearToPhysical(src.iAddr);
-	pD->iDestAddr = (dst.iFlags & KDmaPhysAddr) ? dst.iAddr : Epoc::LinearToPhysical(dst.iAddr);
-	pD->iCmd = DmaCmdReg(aTransferArgs.iTransferCount, aTransferArgs.iFlags,
-					   src.iPslTargetInfo, dst.iPslTargetInfo);
+	pD->iSrcAddr = (aFlags & KDmaPhysAddrSrc) ? aSrc : Epoc::LinearToPhysical(aSrc);
+	__DMA_ASSERTD(pD->iSrcAddr != KPhysAddrInvalid);
+	pD->iDestAddr = (aFlags & KDmaPhysAddrDest) ? aDest : Epoc::LinearToPhysical(aDest);
+	__DMA_ASSERTD(pD->iDestAddr != KPhysAddrInvalid);
+	pD->iCmd = DcmdReg(aCount, aFlags, aPslInfo);
 	pD->iDescAddr = TDmaDesc::KStopBitMask;
-
-	return KErrNone;
 	}
 
 
@@ -334,7 +309,7 @@ void TTemplateDmac::ChainHwDes(const SDmaDesHdr& aHdr, const SDmaDesHdr& aNextHd
 
 	// TO DO: Modify pD->iCmd so that no end-of-transfer interrupt gets raised any longer.
 
-	pD->iDescAddr = HwDesLinToPhys(pN);
+	pD->iDescAddr = DesLinToPhys(pN);
 	}
 
 
@@ -354,7 +329,7 @@ void TTemplateDmac::AppendHwDes(const TDmaChannel& aChannel, const SDmaDesHdr& a
 	// Unaligned descriptor? Bug in generic layer!
 	__DMA_ASSERTD(IsHwDesAligned(pL) && IsHwDesAligned(pN));
 
-	TPhysAddr newPhys = HwDesLinToPhys(pN);
+	TPhysAddr newPhys = DesLinToPhys(pN);
 
 	const TInt irq = NKern::DisableAllInterrupts();
 	StopTransfer(aChannel);
@@ -398,7 +373,7 @@ void TTemplateDmac::Isr(TAny* aThis)
 
 	// TO DO: Implement the behaviour described above, call HandleIsr().
 
-	HandleIsr(me.iChannels[5], EDmaCallbackRequestCompletion, ETrue); // Example
+	HandleIsr(me.iChannels[5], 0);							// Example
 
 	}
 
@@ -416,7 +391,7 @@ inline TDmaDesc* TTemplateDmac::HdrToHwDes(const SDmaDesHdr& aHdr)
 // Channel Opening/Closing (Channel Allocator)
 //////////////////////////////////////////////////////////////////////////////
 
-TDmaChannel* DmaChannelMgr::Open(TUint32 aOpenId, TBool /*aDynChannel*/, TUint /*aPriority*/)
+TDmaChannel* DmaChannelMgr::Open(TUint32 aOpenId)
 //
 //
 //
@@ -469,10 +444,5 @@ DECLARE_STANDARD_EXTENSION()
 	{
 	__KTRACE_OPT2(KBOOT, KDMA, Kern::Printf("Starting DMA Extension"));
 
-	const TInt r = DmaChannelMgr::Initialise();
-	if (r != KErrNone)
-		{
-		return r;
-		}
 	return Controller.Create();
 	}

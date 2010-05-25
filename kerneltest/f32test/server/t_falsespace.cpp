@@ -13,6 +13,7 @@
 // Description:
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
@@ -67,7 +68,7 @@ void FormatDrive()
 
     #endif
 
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 }
 
 void SynchronousClose(RFs &aSession)
@@ -149,11 +150,11 @@ static void FillUpDisk()
 
 	test.Start(_L("Fill disk to capacity"));
 	TInt r=TheFs.MkDirAll(KBasePath);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	gCount=0;
 	TFileName sessionPath;
 	r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf<128> fileName=KBaseName();
 	
 	TInt64 freespace=0;
@@ -179,7 +180,7 @@ static void FillUpDisk()
 				else
 					fillfilesize=fillfilesize/2;
 				}
-			test(r==KErrNone || r==KErrDiskFull);
+			test_Value(r, r == KErrNone || r==KErrDiskFull);
 			if(r==KErrNone)
 				gCount++;
 			}
@@ -222,7 +223,7 @@ static void GetFreeDiskSpace(TInt64 &aFree)
 	TVolumeInfo v;
 
 	TInt r=TheFs.Volume(v,gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	aFree=v.iFree;
 	}
 
@@ -242,31 +243,31 @@ static void Test1()
 	TInt64 diff;
 
 	r=TheFs.GetReserveAccess(gTestDrive);
-	test(r==KErrPermissionDenied);
+	test_Value(r, r == KErrPermissionDenied);
 	
 	//make sure nothing odd happens if we didnt already have access
 	r=TheFs.ReleaseReserveAccess(gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	
 	GetFreeDiskSpace(free2);
 
 	r=TheFs.ReserveDriveSpace(gTestDrive,0x1000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	GetFreeDiskSpace(free1);
 	diff = free2 - free1;
 	test(I64INT(diff) > 0xfe0 && I64INT(diff) < 0x1100); 
 	
 	r=TheFs.GetReserveAccess(gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	GetFreeDiskSpace(free1);
 	TInt64 temp = free2-free1;
 	test(I64INT(temp)>(-0x90) && I64INT(temp)<0x90);
 	
 	r=TheFs.ReleaseReserveAccess(gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	GetFreeDiskSpace(free1);
 
 	diff = free2 - free1;
@@ -275,24 +276,24 @@ static void Test1()
 	
 	//test reallocation of reserved space is possible
 	r=TheFs.ReserveDriveSpace(gTestDrive,0x2000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	//test upper limit of reserved space 
 	r=TheFs.ReserveDriveSpace(gTestDrive,0x2000000);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 
 	r=TheFs.ReserveDriveSpace(gTestDrive,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=TheFs.GetReserveAccess(gTestDrive);
-	test(r==KErrPermissionDenied);
+	test_Value(r, r == KErrPermissionDenied);
 
 	//make sure nothing odd happens if we didnt already have access
 	r=TheFs.ReleaseReserveAccess(gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=TheFs.ReserveDriveSpace(gTestDrive,-45);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	}
 
 
@@ -315,12 +316,12 @@ static void Test2()
 	for(i=0; i<17; i++)
 		{
 		r = sessions[i].Connect();
-		test(r==KErrNone);
+		test_KErrNone(r);
 		}
 
 	test.Next(_L("Test breaching sesson reserve limit"));
 	r=sessions[0].ReserveDriveSpace(gTestDrive,0x10001);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 
 	//Get Volume Free Space
 	r = sessions[0].Volume(v, gTestDrive);
@@ -332,12 +333,12 @@ static void Test2()
 		for (i=0; i<16; i++)
 			{
 			r=sessions[i].ReserveDriveSpace(gTestDrive,0x10000);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 
 		//The straw
 		r=sessions[16].ReserveDriveSpace(gTestDrive,0x10);
-		test(r==KErrTooBig);
+		test_Value(r, r == KErrTooBig);
 		}
 	else
 		{
@@ -347,12 +348,12 @@ static void Test2()
 		for(i=0; (v.iFree -= 0x10000) >= 0; i++)
 			{
 			r=sessions[i].ReserveDriveSpace(gTestDrive,0x10000);
-			test(r==KErrNone);
+			test_KErrNone(r);
 			}
 
 		//The straw
 		r=sessions[i].ReserveDriveSpace(gTestDrive,0x10000);
-		test(r==KErrDiskFull);
+		test_Value(r, r == KErrDiskFull);
 		}
 
 	//Close Sessions
@@ -379,16 +380,16 @@ static void Test3()
 	
 	TInt r=0;
 	r = fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	GetFreeDiskSpace(free1);
 
 	r=fs1.ReserveDriveSpace(gTestDrive,0x10000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.ReserveDriveSpace(gTestDrive,0x10000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	GetFreeDiskSpace(free2);
 	diff = free1 - free2;
@@ -401,14 +402,14 @@ static void Test3()
 	test(I64INT(diff)>0xFA00 && I64INT(diff)<0x103C4); 
 
 	r = fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	GetFreeDiskSpace(free1);
 	diff= free1-free2;
 	test(I64INT(diff)== 0 || I64INT(diff)<0xFA0 ); 
 
 	r=fs1.ReserveDriveSpace(gTestDrive,0x10000);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	GetFreeDiskSpace(free2);
 	diff = free1 - free2;
@@ -416,16 +417,16 @@ static void Test3()
 
 	// Make sure no reserve space is allocated
 	r=fs1.ReserveDriveSpace(gTestDrive,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.ReserveDriveSpace(gTestDrive,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// Now fill up the disk
 	FillUpDisk();
 	
 	// Should fail as there is no space
 	r=fs1.ReserveDriveSpace(gTestDrive,0x10000);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	SynchronousClose(fs1);
 	SynchronousClose(fs2);
@@ -452,7 +453,7 @@ static void Test4()
 
 	RFs fs;
 	TInt r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt64 freeA(0);
 	TInt64 freeB(0);
 	RFile file;
@@ -465,140 +466,140 @@ static void Test4()
 	buf[0]=(TUint16)gCh;
 
 	r=file.Replace(fs, buf, EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Write(KTestData());
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 
 	r=fs.ReserveDriveSpace(gTestDrive,0x10000);		//reserve some disk space
-	test(r==KErrNone);
+	test_KErrNone(r);
 		
 	FillUpDisk();									//fill up the disk
 
 	TVolumeInfo v;									//get disk space
 	r=fs.Volume(v,gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	freeA=v.iFree;
 
 	r=fs.GetReserveAccess(gTestDrive);				//get access to reserve space
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.Volume(v,gTestDrive);						//get disk space
-	test(r==KErrNone);
+	test_KErrNone(r);
 	freeB=v.iFree;
 	
 	r=fs.ReleaseReserveAccess(gTestDrive);			//release reserve space
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	test(freeA == (freeB - 0x10000));				//test difference in space is equal to the amount reserved
 
 	r=fs.Volume(v,gTestDrive);						//get disk space
-	test(r==KErrNone);
+	test_KErrNone(r);
 	freeB=v.iFree;
 	test(freeA == freeB);							//check reading is still correct
 	
 	TBuf <20> dir = KDir();
 	dir[0]=(TUint16)gCh;
 	r=fs.MkDir(dir);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=fs.MkDirAll(dir);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	TFileName temp;
 	TBuf<5> drv = KDrv();
 	drv[0]=(TUint16)gCh;
 	r=file.Temp(fs, drv, temp, EFileWrite);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=file.Replace(fs, buf, EFileWrite);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=file.Create(fs, buf, EFileWrite);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=file.Open(fs, buf, EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Write(128, KTestData());
 
 	if ((gDriveCacheFlags & EFileCacheWriteOn) && (r == KErrNone))
 		r = file.Flush();
 	
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=file.SetSize(0x1000);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=file.SetAtt(KEntryAttHidden,0); 
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	TTime dtime;
 	r=file.SetModified(dtime); 
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=file.Set(dtime,KEntryAttHidden,0);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=file.Rename(buf);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	file.Close();
 
 
 	// Test that we can create a temporary file & write to it after acquiring reserved access, 
 	r=fs.GetReserveAccess(gTestDrive);				//get access to reserve space
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.Volume(v,gTestDrive);						//get disk space
-	test(r==KErrNone);
+	test_KErrNone(r);
 	freeA = v.iFree;
 
 	r=file.Temp(fs, drv, temp, EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r = file.Write(KTestData());
-	test (r == KErrNone);
+	test_KErrNone(r);
 
 	// If write caching is enabled, call RFs::Entry() to flush the file "anonymously"
 	if ((gDriveCacheFlags & EFileCacheWriteOn) && (r == KErrNone))
 		{
 		r = file.Flush();
-		test (r == KErrNone);
+		test_KErrNone(r);
 		}
 
 	r=fs.Volume(v,gTestDrive);						//get disk space
-	test(r==KErrNone);
+	test_KErrNone(r);
 	freeB = v.iFree;
 	test (freeB < freeA);
 
 	file.Close();
 
 	r=fs.ReleaseReserveAccess(gTestDrive);			//release reserve space
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 
 	TBuf<20> newname =KNewName();
 	newname[0]=(TUint16)gCh;
 	r=fs.Rename(buf, newname);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=fs.Replace(buf, newname);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=fs.SetEntry(buf, dtime, KEntryAttHidden, 0);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=fs.CreatePrivatePath(gTestDrive);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=fs.SetVolumeLabel(_L("Moooo"), gTestDrive);
-	test(r==KErrDiskFull);	
+	test_Value(r, r == KErrDiskFull);	
 
 	r=fs.SetModified(buf, dtime);
-	test(r==KErrDiskFull);	
+	test_Value(r, r == KErrDiskFull);	
 
 	SynchronousClose(fs);
 	}
@@ -626,41 +627,41 @@ static void Test5()
 	TInt r=KErrNone;
 
 	r=fs1.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs2.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	FormatDrive();
 
 	r=fs1.ReserveDriveSpace(gTestDrive,0x10000);		
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs2.ReserveDriveSpace(gTestDrive,0x10000);		
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	FillUpDisk();									
 
 	r=fs1.GetReserveAccess(gTestDrive);				
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TBuf<20> dir = KDir();
 	dir[0]=(TUint16)gCh;
 
 
 	r=fs2.MkDir(dir);
-	test(r==KErrDiskFull);
+	test_Value(r, r == KErrDiskFull);
 
 	r=fs1.ReserveDriveSpace(gTestDrive,0); //can not release reserve space while you have reserve access
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	r=fs1.ReleaseReserveAccess(gTestDrive);				
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs1.ReserveDriveSpace(gTestDrive,0); 
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs2.MkDir(dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	SynchronousClose(fs1);
 	SynchronousClose(fs2);
@@ -741,19 +742,19 @@ static void Test6()
 	TRequestStatus tStat[KNumberThreads];
 
 	r=fsess.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	FormatDrive();
 
 	r= fsess.ShareAuto();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	GetFreeDiskSpace(free1);
 
 	fsess.ReserveDriveSpace(gTestDrive,0x1000);
 		
 	r = t[0].Create(_L("Sub_Thread1"),RsrvSpaceThread,KDefaultStackSize,KHeapSize,KHeapSize,&fsess); 
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	t[0].Rendezvous(tStat[0]);
 	t[0].Resume();
@@ -764,7 +765,7 @@ static void Test6()
 	test(tStat[0]==KErrNone);
 
 	r = t[1].Create(_L("Sub_Thread2"),SessCloseThread,KDefaultStackSize,KHeapSize,KHeapSize,&fsess); 
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	t[1].Rendezvous(tStat[1]);
 	t[1].Resume();
@@ -820,12 +821,12 @@ static void Test7()
 	fileName[0] = (TUint16)gCh;
 
 	err = theTestSession.Connect();
-	test(err == KErrNone);
+	test_KErrNone(err);
 
 	// determine the cluster size
 	RFile theFile;
 	err=theFile.Replace(theTestSession, fileName, EFileShareAny | EFileWrite);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
 	// Neither notifier should be triggered here
 	err = theFile.SetSize(1);
@@ -876,7 +877,7 @@ static void Test7()
 	// "Normal" notifier to trigger but not the "Reserved" notifier
 	//
 	err=theFile.Replace(theTestSession, fileName, EFileShareAny | EFileWrite);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	test((statNrm == KRequestPending) && (statRes == KRequestPending));
 
 	// Neither notifier should be triggered here
@@ -901,7 +902,7 @@ static void Test7()
 	err = theTestSession.ReserveDriveSpace(gTestDrive, resSpace * 3);
 	if (err != KErrArgument)	// will have exceeded limit if resSpace = 32K
 		{
-		test(err == KErrNone);
+		test_KErrNone(err);
 		test((statNrm == KErrNone) && (statRes == KRequestPending));
 		}
 
@@ -926,7 +927,7 @@ LOCAL_C void TestForDEF142554()
     
     RFs fs;
     TInt err = fs.Connect();
-    test(err == KErrNone);
+    test_KErrNone(err);
 
     RFile file;
     TBuf<20> fileName;
@@ -934,43 +935,43 @@ LOCAL_C void TestForDEF142554()
     fileName[0] = (TUint16)gCh;
     
     err = fs.ReserveDriveSpace(gTestDrive,0x10000); 
-    test(err == KErrNone);
+    test_KErrNone(err);
 
     err = file.Replace(fs, fileName, EFileWrite);
-    test(err == KErrNone);
+    test_KErrNone(err);
 
     err = file.Write(KTestData);
-    test(err == KErrNone);
+    test_KErrNone(err);
     
     err = file.Flush();
-    test(err == KErrNone);
+    test_KErrNone(err);
     
     file.Close();
     
     err = file.Open(fs, fileName, EFileRead);
-    test(err == KErrNone);
+    test_KErrNone(err);
     
     err = file.Att(att);
-    test(err == KErrNone);
+    test_KErrNone(err);
     
     err = file.Modified(time);
-    test(err == KErrNone);
+    test_KErrNone(err);
     
     file.Close();
     
     FillUpDisk();
     
     err = file.Open(fs, fileName, EFileRead);
-    test(err == KErrNone);
+    test_KErrNone(err);
     
     TUint att1;
     err = file.Att(att1);
-    test(err == KErrNone);
+    test_KErrNone(err);
     test(att1 == att);
     
     TTime time1;
     err = file.Modified(time1);
-    test(err == KErrNone);
+    test_KErrNone(err);
     test(time1 == time);
     
     file.Close();
@@ -1000,7 +1001,7 @@ static void TestFAT4G_Boundary()
     TVolumeInfo volInfo;
 	
 	TInt nRes = TheFs.Volume(volInfo,gTestDrive);
-	test(nRes == KErrNone);
+	test_KErrNone(nRes);
 	
     if(volInfo.iSize < K4Gig+K1MegaByte)
 		{
@@ -1014,7 +1015,7 @@ static void TestFAT4G_Boundary()
     //-- find out media position of the data region start
     TFatBootSector bootSector;
     nRes = ReadBootSector(TheFs, gTestDrive, 0, bootSector);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     test(bootSector.IsValid());
 
     const TInt64 dataStartPos = bootSector.FirstDataSector() << KDefaultSectorLog2;
@@ -1031,89 +1032,183 @@ static void TestFAT4G_Boundary()
     for(i=0; i<MaxDummyFiles; ++i)
 		{
         nRes = CreateFileX(KBaseFN, i, DummyFileLen); 
-        test(nRes == KErrNone);
+        test_KErrNone(nRes);
 		}
 
     //-- 3. create a real file that crosses 4G boundary
     nRes = CreateCheckableStuffedFile(TheFs, KBaseFN, 5*K1MegaByte);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
     
     test.Printf(_L("Verifying the file that crosses 4G boundary.\n"));
 
     nRes = VerifyCheckableFile(TheFs, KBaseFN);
-    test(nRes == KErrNone);
+    test_KErrNone(nRes);
 
 	
 	nRes = TheFs.Delete(KBaseFN);
-	test(nRes == KErrNone);
+	test_KErrNone(nRes);
     for(i=0; i<MaxDummyFiles; ++i)
 	    {
         nRes = DeleteFileX(KBaseFN, i); 
-        test(nRes == KErrNone);
+        test_KErrNone(nRes);
 		}
 	}
 
-//-----------------------------------------------------------------------------
+void TestRAMDriveNotification()
+	{
+	test.Next(_L("Verifying RFs::ReserveDriveSpace() triggers RFs::NotifyDiskSpace() events"));
 
-GLDEF_C void CallTestsL()
+	TInt64 freeSpace;
+	GetFreeDiskSpace(freeSpace);
+	test.Printf(_L("free space: 0x%Lx bytes\n"), freeSpace);
+
+	// set a notification on half the amount we plan to reserve
+	TInt reserve = 4096;
+	TInt64 trigger = freeSpace - 2048;
+	test.Printf(_L("setting notification for space to fall below: 0x%Lx bytes ... "), trigger);
+	TRequestStatus stat;
+	TheFs.NotifyDiskSpace(trigger, gTestDrive, stat);
+	test_Value(stat.Int(), stat == KRequestPending);
+	test.Printf(_L("ok\n"));
+
+	// reserve the space and validate that this triggers the notification
+	test.Printf(_L("reserving 0x%x bytes ..."), reserve);
+	TInt r = TheFs.ReserveDriveSpace(gTestDrive, reserve);
+	test_KErrNone(r);
+	test.Printf(_L("ok\n"));
+
+	test.Printf(_L("validating that the disk space notification triggered ... "));
+	User::After(2000000);	// 2 seconds should be enough to cause the trigger
+	test_Value(stat.Int(), stat == KErrNone);
+	test.Printf(_L("ok\n"));
+	}
+
+
+
+//-----------------------------------------------------------------------------
+/**
+    Test that the reserving some drive space does not takes more space than required.
+*/
+void Test0()
+{
+    test.Next(_L("test ReserveDriveSpace threshold"));
+
+    TInt nRes;
+    TVolumeIOParamInfo volIop;
+    TInt64 freespace=0;
+
+    //-- 1. format the volume
+    FormatDrive();
+
+    GetFreeDiskSpace(freespace);
+    const TInt64 freeSpace1 = freespace; //-- initial amount of free space on the volume
+
+    nRes = TheFs.VolumeIOParam(gTestDrive, volIop);
+    test_KErrNone(nRes);
+    const TInt KClusterSz = volIop.iClusterSize;
+    if(!IsPowerOf2(KClusterSz))
+        {
+        test.Next(_L("The FS hasn't reported a cluster size. The test is inconsistent, skipping"));
+        return;
+        }
+
+    //-- reserve exactly 1 cluster worth drive space.
+    nRes = TheFs.ReserveDriveSpace(gTestDrive, KClusterSz);
+    test_KErrNone(nRes);
+
+    GetFreeDiskSpace(freespace);
+    const TInt64 freeSpace2 = freespace;
+    test((freeSpace1 - freeSpace2) == KClusterSz);
+
+    //-- fill up a drive (it has a reserved space)
+    FillUpDisk();
+
+    //-- delete 1 file; 
+    nRes = DeleteFileX(KBaseName, 0);
+    test_KErrNone(nRes);
+
+    //-- try to create a file with the size that is exacly the same as free space; it should succeed
+    GetFreeDiskSpace(freespace);
+    
+    nRes = CreateEmptyFile(TheFs, _L("\\aaa1"), freespace);
+    test_KErrNone(nRes);
+
+    GetFreeDiskSpace(freespace);
+    test(freespace == 0);
+
+    //-- return the drive space to the system
+	nRes = TheFs.ReserveDriveSpace(gTestDrive,0);
+	test_KErrNone(nRes); 
+
+    //-- release drive space
+    nRes = TheFs.ReleaseReserveAccess(gTestDrive);
+    test_KErrNone(nRes);
+
+    GetFreeDiskSpace(freespace);
+    test(freespace == KClusterSz);
+
+    FormatDrive();
+}
+
+//-----------------------------------------------------------------------------
+void CallTestsL()
 //
 // Do tests relative to session path
 //
 	{
-    //-- set up console output 
-    Fat_Test_Utils::SetConsole(test.Console()); 
+	//-- set up console output 
+	Fat_Test_Utils::SetConsole(test.Console()); 
 	
-	if (UserSvr::DebugMask(2)&0x00000002) // TESTFAST mode set? (for automated test builds)
-		if(IsTestingLFFS())
-			{
-			// Don't run on LFFS (to increase speed of automated testing)
-			test.Printf(_L("TEST NOT RUN FOR THIS DRIVE"));
-			return;
-			}
+	// If TESTFAST mode (for automated test builds) is set, don't run LFFS tests.
+	if ((UserSvr::DebugMask(2) & 0x00000002) && IsTestingLFFS())
+		{
+		test.Printf(_L("TEST NOT RUN FOR LFFS DRIVE"));
+		return;
+		}
 
 	//get the number of the drive we are currently testing
 	TInt r=0;
 	r=RFs::CharToDrive(gSessionPath[0],gTestDrive);
-    test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=RFs::DriveToChar(gTestDrive,gCh);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
-    TDriveInfo drv;
-    r = TheFs.Drive(drv, gTestDrive);
-    test(r == KErrNone);
+	TDriveInfo drv;
+	r = TheFs.Drive(drv, gTestDrive);
+	test_KErrNone(r);
 
-    if (Is_Win32(TheFs, gTestDrive))
-        {
-        test.Printf(_L("Skipping on emulator %C: drive\n"), gSessionPath[0]);
-        return;
-        }
 
-    // do not run this test on RAM drive
-    if (drv.iType == EMediaRam)
-        {
-        test.Printf(_L("Test can't run on RAM drive %C:\n"), gSessionPath[0]);
-        return;
-        }
+	//-- print drive information
+	PrintDrvInfo(TheFs, gTestDrive);
 
-    //-- print drive information
-    PrintDrvInfo(TheFs, gTestDrive);
 
-	Test1();	//General test for new APIs
-	Test2();	//Test to ensure drive and session reserve limits are not exceeded
+	// do not run the remainder of this test on RAM drive
+	if (drv.iType == EMediaRam)
+		{
+		TestRAMDriveNotification();	// Test drive space reservations trigger disk space notifications
+		test.Printf(_L("Main tests can't run on RAM drive %C:\n"), gSessionPath[0]);
+		return;
+		}
+
+	if (Is_Win32(TheFs, gTestDrive))
+		{
+		test.Printf(_L("Skipping on emulator %C: drive\n"), gSessionPath[0]);
+		return;
+		}
+
+    Test0();
+	Test1();	// General test for new APIs
+	Test2();	// Test to ensure drive and session reserve limits are not exceeded
 	Test3();
-	Test4();	//test filling the drive and that each checked API fails
+	Test4();	// test filling the drive and that each checked API fails
 	Test5();
 	Test6();
 	Test7();
 	TestForDEF142554();
-	Test2();	//run this test to check reserves are being cleared correctly
+	Test2();	// run this test to check reserves are being cleared correctly
 
 	TestFAT4G_Boundary();
     
-    TurnAllocFailureOff();
+	TurnAllocFailureOff();
 	}
-
-
-
-

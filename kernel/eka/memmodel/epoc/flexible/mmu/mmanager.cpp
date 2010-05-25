@@ -137,6 +137,7 @@ TInt DMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPageInfo,
 
 TInt DMemoryManager::MoveAndAllocPage(DMemoryObject*, SPageInfo*, TZonePageType)
 	{
+	__NK_ASSERT_DEBUG(0);	// This should only be invoked on managers that can move or discard pages.
 	return KErrNotSupported;
 	}
 
@@ -816,7 +817,8 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 	// If the page array entry (*movingPageArrayPtr) has been modified then a pinning 
 	// veto'd the preparation.
 	MmuLock::Lock();
-	if (aOldPageInfo->CheckModified(&pageIter) || oldPageEntry != *movingPageArrayPtr)
+	if (aOldPageInfo->CheckModified(&pageIter) ||
+		oldPageEntry != *movingPageArrayPtr)
 		{// Page is pinned or has been modified by another operation.
 		MmuLock::Unlock();
 		TheMmu.FreeRam(&newPage, 1, aMemory->iManager->PageType());
@@ -841,7 +843,8 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 #endif
 	
 	MmuLock::Lock();
-	if (!aOldPageInfo->CheckModified(&pageIter) && oldPageEntry == *movingPageArrayPtr &&
+	if (!aOldPageInfo->CheckModified(&pageIter) &&
+		oldPageEntry == *movingPageArrayPtr &&
 		!aMemory->MappingAddedFlag())
 		{
 		// The page has been copied without anyone modifying it so set the page 
@@ -1119,7 +1122,10 @@ TInt DDiscardableMemoryManager::StealPage(DMemoryObject* aMemory, SPageInfo* aPa
 
 			// attempt to clean the page if it is dirty...
 			if (aPageInfo->IsDirty())
+				{
+				//Kern::Printf("WDP: Cleaning single page in StealPage");
 				aMemory->iManager->CleanPages(1, &aPageInfo, EFalse);
+				}
 
 			if(aPageInfo)
 				{
@@ -1535,10 +1541,7 @@ TInt DPagedMemoryManager::RestrictPage(DMemoryObject* aMemory, SPageInfo* aPageI
 
 	page = *p;
 	if(aPageInfo->CheckModified(&pageList) || page!=originalPage/*page state changed*/)
-		{
-		// page state was changed by someone else...
 		r = KErrInUse;
-		}
 	else
 		{
 		// nobody else has modified page state, so restrictions successfully applied...
@@ -1677,6 +1680,8 @@ TInt DPagedMemoryManager::DoPin(DMemoryObject* aMemory, TUint aIndex, TUint aCou
 	TRACE(("DPagedMemoryManager::DoPin(0x%08x,0x%08x,0x%08x,0x%08x)",aMemory, aIndex, aCount, aMapping));
 	__ASSERT_CRITICAL;
 	__NK_ASSERT_DEBUG(aPinArgs.HaveSufficientPages(aCount));
+	__NK_ASSERT_DEBUG(aMapping->IsPinned());
+	__NK_ASSERT_DEBUG(!aMapping->PagesPinned());
 
 	// check and allocate page array entries...
 	RPageArray::TIter pageList;

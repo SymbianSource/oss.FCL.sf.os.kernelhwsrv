@@ -159,7 +159,6 @@ void TBufferMgr::FreeAll()
 #endif
 
 
-#ifndef DMA_APIV2
 static TInt FragmentCount(DDmaRequest* aRequest)
 	{
 	TInt count = 0;
@@ -167,7 +166,6 @@ static TInt FragmentCount(DDmaRequest* aRequest)
 		count++;
 	return count;
 	}
-#endif
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -390,11 +388,7 @@ TInt DDmaTestChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 		{
 		TInt reqIdx = (TInt)a1;
 		__ASSERT_DEBUG(0 <= reqIdx && reqIdx < KMaxRequests, Kern::PanicCurrentThread(KClientPanicCat, __LINE__));
-#ifdef DMA_APIV2
-		return iRequests[reqIdx]->FragmentCount();
-#else
 		return FragmentCount(iRequests[reqIdx]);
-#endif
 		}
 	case RTestDma::EMissInterrupts:
 		return iChannel->MissNextInterrupts((TInt)a1);

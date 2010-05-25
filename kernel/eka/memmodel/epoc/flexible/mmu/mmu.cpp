@@ -859,8 +859,14 @@ TInt Mmu::AllocRam(	TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags, TZon
 		}
 #endif
 	TInt missing = iRamPageAllocator->AllocRamPages(aPages, aCount, aZonePageType, aBlockZoneId, aBlockRest);
-	if(missing && !(aFlags&EAllocNoPagerReclaim) && ThePager.GetFreePages(missing))
-		missing = iRamPageAllocator->AllocRamPages(aPages, aCount, aZonePageType, aBlockZoneId, aBlockRest);
+	if(missing && !(aFlags&EAllocNoPagerReclaim))
+		{
+		// taking the page cleaning lock here prevents the pager releasing the ram alloc lock
+		PageCleaningLock::Lock();  
+		if (ThePager.GetFreePages(missing))
+			missing = iRamPageAllocator->AllocRamPages(aPages, aCount, aZonePageType, aBlockZoneId, aBlockRest);
+		PageCleaningLock::Unlock();  
+		}
 	TInt r = missing ? KErrNoMemory : KErrNone;
 	if(r!=KErrNone)
 		iRamAllocFailed = ETrue;

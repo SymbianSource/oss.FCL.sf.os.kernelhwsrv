@@ -1,3 +1,30 @@
+Version 2.00.2057
+=================
+(Made by vfebvre 07/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#372053 CFileMan malfunctioning in copying
+
+2.	dlyokhin
+	1.	ou1cimx1#372172 File server may request more free space on the volume than necessary
+
+
+Version 2.00.2056
+=================
+(Made by vfebvre 05/05/2010)
+
+1.	niccox
+	1.	ou1cimx1#371021 shostmassstorage capabilities are too high
+
+
+Version 2.00.2055
+=================
+(Made by vfebvre 30/04/2010)
+
+1.	frhofman
+	1.	ou1cimx1#360143 BC Drivers: Os/KernelHwSrv: 2 failures in Base API on Vasco
+
+
 Version 2.00.2054
 =================
 (Made by vfebvre 23/04/2010)

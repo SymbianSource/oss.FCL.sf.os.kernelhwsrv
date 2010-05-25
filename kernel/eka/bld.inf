@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -201,14 +201,7 @@ include/drivers/pccd_vcc.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/ethernet.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/ethernet.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/dma.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma_v1.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma_v1.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma_v2.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma_v2.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dmadefs.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma_compat.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma_hai.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
-include/drivers/dma_hai.inl						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/dma.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/iic_channel.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
