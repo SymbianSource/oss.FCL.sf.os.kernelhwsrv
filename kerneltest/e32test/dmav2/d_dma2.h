@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -30,11 +30,13 @@
 	#include <kernel.h>
 	#define TEST_FAULT FAULT();
 	#define PRINT(N) Kern::Printf("%s = 0x%08x (%d)", #N, (N), (N))
+	#define PRINTF(X) Kern::Printf X ;
 #else
 	#include <e32std.h>
 	#include <e32debug.h>
-	#define TEST_FAULT RDebug::Printf("Assertion failure in %s, %d", __FILE__, __LINE__); User::Invariant()
+	#define TEST_FAULT {RDebug::Printf("Assertion failure in %s, %d", __FILE__, __LINE__); User::Invariant();}
 	#define PRINT(N) RDebug::Printf("%s = 0x%08x (%d)", #N, (N), (N))
+	#define PRINTF(X) RDebug::Printf X ;
 #endif
 
 #define TEST_ASSERT(C) if(!(C)) {TEST_FAULT;}
@@ -44,8 +46,21 @@ const TUint KPhysAddrInvalidUser=0xFFFFFFFFu; // KPhysAddrInvalid is not defined
 //if this fails then KPhysAddrInvalidUser must be updated to match
 //KPhysAddrInvalid
 __ASSERT_COMPILE(KPhysAddrInvalidUser == KPhysAddrInvalid);
+#else
+const TUint KPhysAddrInvalid = KPhysAddrInvalidUser;
 #endif
 
+#ifdef __KERNEL_MODE__
+//Function to format the output.
+inline void DmaAppendFormat(TDes8& aBuf, const char* aFmt, ...)
+	{
+	if(!(&aBuf))
+		return;
+	VA_LIST list;
+	VA_START(list,aFmt);
+	Kern::AppendFormat(aBuf,aFmt,list);
+	}
+#endif
 
 _LIT(KTestDmaLddName, "TestDmaV2");
 
@@ -57,7 +72,7 @@ TInt Log2(TInt aNum);
 Indicates the number of each type of call back received
 and their context
 
-TODO as yet, it does not indicate the context of each callback, only
+@note It does not indicate the context of each callback, only
 the final one
 */
 const TInt KNumberOfCallbacks = 12;
@@ -157,6 +172,63 @@ struct TDmacTestCaps : public SDmacCaps
 	};
 
 
+/** SCreateInfo for opening DMA - Reused for testing */
+struct SCreateInfoTest
+		{
+		/** Default constructor. Initializes all fields with meaningful default
+			values.
+
+			Must be inline (for now) because exporting it would break existing
+			custom DMA libs as their clients would need the export which would
+			be missing from the custom .def files.
+		*/
+		SCreateInfoTest() : iPriority(KDmaPriorityNone), iDynChannel(EFalse) {};
+
+		/** Identifier used by PSL to select channel to open */
+		TUint32 iCookie;
+		/** Number of descriptors this channel can use.
+
+			This number is not used in the upgraded version of the DMA
+			framework and is kept there only for source compatibility. If the
+			client is certain that it will only ever use that version, then the
+			value passed here doesn't matter - the framework will ignore it.
+
+			@deprecated
+		 */
+		TInt iDesCount;
+		/** DFC queue used to service DMA interrupts.
+
+			The DFC thread priority must be higher than any client thread
+			priority to avoid a situation where a transfer completes while
+			being cancelled and another transfer is started before the DFC
+			thread gets a chance to run. This would lead to a stray DFC.
+		*/
+		//TDfcQue* iDfcQ;
+
+		TAny* iDfcQ;
+
+		/** DFC priority */
+		TUint8 iDfcPriority;
+		/** Used by PSL to configure a channel priority (if possible).
+
+			The default is KDmaPriorityNone (the don't care value).
+
+		    @see TDmaPriority
+		*/
+		TUint iPriority;
+		/** Request a dynamic DMA channel.
+
+			If this is set to ETrue then the Open call is for a 'dynamic' as
+			opposed to a static and solely owned DMA channel. A number of
+			properties of the opened TDmaChannel object will be different in
+			that case.
+
+			The default value is EFalse.
+		 */
+		TBool iDynChannel;
+		};
+
+
 class TDmaChannel;
 
 struct TAddrRange
@@ -169,6 +241,8 @@ struct TAddrRange
 	TBool Contains(TAddrRange aRange) const;
 
 	TBool Overlaps(const TAddrRange& aRange) const;
+	TBool IsFilled(TUint8 aValue) const;
+
 	static void SelfTest();
 
 private:
@@ -190,13 +264,21 @@ struct TAddressParms
 		{}
 
 	/**
-	If any src, dst, or transfer count are zero, substitute the values from
-	aTransferArgs in their place
+	If addresses have been left as KPhysAddrInvalid or the count as 0 (ie.
+	the default values used for IsrRedoRequest) then substitute the values from
+	aTransferArgs.
 	*/
 	void Substitute(const TDmaTransferArgs& aTransferArgs);
 
 	/**
-	When recieved by the test driver, src and dst
+	If addresses have been left as KPhysAddrInvalid or the count as 0 (ie.
+	the default values used for IsrRedoRequest) then substitute the values from
+	aTransferArgs.
+	*/
+	void Substitute(const TAddressParms& aTransferArgs);
+
+	/**
+	When received by the test driver, src and dst
 	addresses will be offsets from the dma test session's
 	chunk base. They must be converted to absolute, *physical* addresses
 	*/
@@ -215,6 +297,22 @@ struct TAddressParms
 	TBool Overlaps(const TAddressParms aParm) const;
 
 	TBool operator==(const TAddressParms& aOther) const;
+
+
+	/**
+	Produce a printable representation
+	*/
+	void AppendString(TDes& aBuf) const
+		{
+		_LIT(KOutput, "TAddressParms: src=0x%08x (%d) dst=0x%08x (%d) count=0x%08x (%d)\0");
+#ifdef __KERNEL_MODE__
+		DmaAppendFormat(aBuf, (const char*)KOutput().Ptr(), iSrcAddr, iSrcAddr, iDstAddr, iDstAddr, iTransferCount, iTransferCount);
+#else
+		aBuf.AppendFormat(KOutput, iSrcAddr, iSrcAddr, iDstAddr, iDstAddr, iTransferCount, iTransferCount);
+#endif
+		}
+
+	void MakePhysical();
 
 	static void SelfTest();
 
@@ -255,8 +353,7 @@ A collection of TIsrRequeArgs
 */
 struct TIsrRequeArgsSet
 	{
-
-	friend class CIsrRequeTest; //TODO see line 394 t_dma2.cpp
+	friend class CIsrRequeTest;
 	TIsrRequeArgsSet(TIsrRequeArgs* aRequeueArgs=NULL, TInt aCount =0)
 		:iCount(aCount), iIndex(0)
 		{
@@ -273,10 +370,26 @@ struct TIsrRequeArgsSet
 
 	TIsrRequeArgs GetArgs();
 
+	/**
+	If addresses have been left as KPhysAddrInvalid or the count as 0 (ie.
+	the default values used for IsrRedoRequest) then substitute the appropriate
+	value from the previous argument struct. aTransferArgs is used to
+	substitute values for the initial argument struct.
+	*/
 	void Substitute(const TDmaTransferArgs& aTransferArgs);
 	void Fixup(TLinAddr aChunkBase);
 	TBool CheckRange(TLinAddr aAddr, TUint aSize) const;
 
+	/**
+	Check that all re-queue parameters will remain within the region defined
+	by aAddr and aSize. This overload assumes that the requeue parameters have
+	not been substituted hence the data in aInitialParms is required.
+
+	@param aInitialParms The original transfer that the re-queues in this set are based on
+	*/
+	TBool CheckRange(TLinAddr aAddr, TUint aSize, const TDmaTransferArgs& aInitialParms) const;
+
+	static void SelfTest();
 private:
 	enum {MaxCount=6};
 	TInt iCount;
@@ -300,13 +413,6 @@ public:
 		return DoControl(EIsOpened, reinterpret_cast<TAny*>(aDriverCookie), &aChannelOpen);		
 		}
 
-	TInt ChannelIsrRedoRequest(TUint aDriverCookie,TUint32 aSrcAddr,TUint32 aDstAddr,TInt aTransferCount,TUint32 aPslRequestInfo,TBool aIsrCb)
-		{
-		TIsrRedoReqArgs args(aDriverCookie,aSrcAddr,aDstAddr,aTransferCount,aPslRequestInfo,aIsrCb);
-		TPckgC<TIsrRedoReqArgs> package(args);
-		return DoControl(EIsrRedoRequest,&package);
-		}
-
 	TInt ChannelCancelAll(TUint aDriverCookie)
 		{	
 		return DoControl(ECancelAllChannel, reinterpret_cast<TAny*>(aDriverCookie));
@@ -315,6 +421,12 @@ public:
 	TInt ChannelOpen(TUint aPslCookie,  TUint& aDriverCookie)
 		{
 		return DoControl(EOpenChannel, reinterpret_cast<TAny*>(aPslCookie), &aDriverCookie);
+		}
+
+	TInt ChannelOpen(TUint& aDriverCookie, SCreateInfoTest& aInfo)
+		{
+		TPckg<SCreateInfoTest> package(aInfo);
+		return DoControl(EOpenChannelExposed,&aDriverCookie, &package);
 		}
 
 	TInt ChannelClose(TUint aDriverCookie)
@@ -347,23 +459,18 @@ public:
 		}
 	
 	TInt Open()
-		{// TO DO: Add Info , this  class is just to test the opening of channels
-		//TPckgBuf<TOpenInfo> infoBuf;
-		//infoBuf().iWhat = TOpenInfo::EOpen;
-		//infoBuf().U.iOpen.iId = aId;
-		//infoBuf().U.iOpen.iDesCount = aDesCount;
-		//infoBuf().U.iOpen.iMaxTransferSize = aMaxTransferSize;
+		{
 		return DoCreate(KTestDmaLddName,TestDmaLddVersion(), 0, NULL, NULL, EOwnerThread);
 		}
 
-	//TODO rename this (append "old")
-	TInt RequestCreate(TUint aChannelCookie, TUint& aRequestCookie, TUint aMaxTransferSize=0)
+
+	TInt RequestCreateOld(TUint aChannelCookie, TUint& aRequestCookie, TUint aMaxTransferSize=0)
 		{	
 		return DoRequestCreate(aChannelCookie, EFalse, aMaxTransferSize, aRequestCookie);
 		}
 
-	//TODO rename this (get rid of "new"
-	TInt RequestCreateNew(TUint aChannelCookie, TUint& aRequestCookie, TUint aMaxTransferSize=0)
+
+	TInt RequestCreate(TUint aChannelCookie, TUint& aRequestCookie, TUint aMaxTransferSize=0)
 		{
 		return DoRequestCreate(aChannelCookie, ETrue, aMaxTransferSize, aRequestCookie);
 		}
@@ -407,6 +514,8 @@ public:
 		TCallbackRecord dummyRec;
 		TUint64 dummyTime=0;
 
+		aStatus = KRequestPending;
+
 		TQueueArgs args(aRequestCookie, &aStatus, aRecord ? aRecord : &dummyRec, aDurationMicroSecs ? aDurationMicroSecs : &dummyTime);
 		TPckgC<TQueueArgs> package(args);
 		return DoControl(EQueueRequest, &package);
@@ -438,6 +547,8 @@ public:
 		//indicate that an argument is unwanted)
 		TCallbackRecord dummyRec;
 		TUint64 dummyTime=0;
+
+		aStatus = KRequestPending;
 
 		TQueueArgsWithReque args(aRequeueArgs, aCount, aRequestCookie, &aStatus, aRecord ? aRecord : &dummyRec, aDurationMicroSecs ? aDurationMicroSecs : &dummyTime);
 		TPckgC<TQueueArgsWithReque> package(args);
@@ -518,19 +629,6 @@ private:
 		TUint64* iDurationMicroSecs;
 		};
 
-	struct TIsrRedoReqArgs 	
-		{
-		TIsrRedoReqArgs(TUint aDriverCookie=0,TUint32 aSrcAddr=0, TUint32 aDstAddr=0, TInt aTransferCount=0, TUint32 aPslRequestInfo=0,TBool aIsrCb=ETrue)
-			:iDriverCookie(aDriverCookie),iSrcAddr(aSrcAddr),iDstAddr(aDstAddr),iTransferCount(aTransferCount),iPslRequestInfo(aPslRequestInfo),iIsrCb(aIsrCb)
-			{}
-		TUint iDriverCookie;
-		TUint32 iSrcAddr;
-		TUint32 iDstAddr;
-		TInt iTransferCount;
-		TUint32 iPslRequestInfo;
-		TBool iIsrCb;
-		};
-
 	/**
 	This struct is used for queing and including a set of transfers
 	to be setup from ISR context callback
@@ -546,10 +644,10 @@ private:
 		TIsrRequeArgsSet iRequeSet;
 		};
 
-
 	enum TControl
 		{
 		EOpenChannel,
+		EOpenChannelExposed,
 		ECloseChannel,
 		EPauseChannel,
 		EResumeChannel,

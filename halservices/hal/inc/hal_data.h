@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -34,6 +34,11 @@ public:
     The enumerators are passed to HAL::Get() and HAL::Set().
     
     They are also used by the HAL accessor functions.
+    
+    Note: It is not recommended to use HAL attributes to pass handles from the  
+	kernel to user-side clients due to resource overhead's that will affect 
+	existing clients of HAL. HAL is designed to allow simply hardware parameters
+	to be shared with user-side clients without resource allocation overheads.
     
     @see HAL::Get()
     @see HAL::Set()
@@ -1080,6 +1085,9 @@ public:
 		
 		/**
 		A Handle to the display memory.
+		This attribute opens a chunk, the client is responsible for closing it.
+		Using HAL attribtues to open handles is not recommended and this 
+		attribute may be removed in the future. 
 
 		@prototype 9.5
 		*/

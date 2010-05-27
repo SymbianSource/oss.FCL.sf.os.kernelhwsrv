@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -16,6 +16,10 @@
 //
 //
 
+/** @file
+	@publishedPartner
+*/
+
 #ifndef __DMADEFS_H__
 #define __DMADEFS_H__
 
@@ -23,40 +27,81 @@
 #include <e32def.h>
 
 
-/** The client request callback type */
+/** The client request callback type.
+
+*/
 enum TDmaCallbackType
 	{
-	/** Transfer request completion callback */
+	/** Transfer request completion callback
+
+		@released
+	*/
 	EDmaCallbackRequestCompletion        = 0x01,
-	/** Transfer request completion callback - source side */
+	/** Transfer request completion callback - source side
+
+		@prototype
+	*/
 	EDmaCallbackRequestCompletion_Src    = 0x02,
-	/** Transfer request completion callback - destination side */
+	/** Transfer request completion callback - destination side
+
+		@prototype
+	*/
 	EDmaCallbackRequestCompletion_Dst    = 0x04,
 
-	/** Descriptor completion callback */
+	/** Descriptor completion callback
+
+		@prototype
+	*/
 	EDmaCallbackDescriptorCompletion     = 0x08,
-	/** Descriptor completion callback - source side */
+	/** Descriptor completion callback - source side
+
+		@prototype
+	*/
 	EDmaCallbackDescriptorCompletion_Src = 0x10,
-	/** Descriptor completion callback - destination side */
+	/** Descriptor completion callback - destination side
+
+		@prototype
+	*/
 	EDmaCallbackDescriptorCompletion_Dst = 0x20,
 
-	/** Frame completion callback */
+	/** Frame completion callback
+
+		@prototype
+	*/
 	EDmaCallbackFrameCompletion          = 0x40,
-	/** Frame completion callback - source side */
+	/** Frame completion callback - source side
+
+		@prototype
+	*/
 	EDmaCallbackFrameCompletion_Src      = 0x80,
-	/** Frame completion callback - destination side */
+	/** Frame completion callback - destination side
+
+		@prototype
+	*/
 	EDmaCallbackFrameCompletion_Dst      = 0x100,
 
-	/** H/W descriptor pause event callback */
+	/** H/W descriptor pause event callback
+
+		@prototype
+	*/
 	EDmaCallbackLinkedListPaused        = 0x200,
-	/** H/W descriptor pause event callback - source side */
+	/** H/W descriptor pause event callback - source side
+
+		@prototype
+	*/
 	EDmaCallbackLinkedListPaused_Src    = 0x400,
-	/** H/W descriptor pause event callback - destination side */
+	/** H/W descriptor pause event callback - destination side
+
+		@prototype
+	*/
 	EDmaCallbackLinkedListPaused_Dst    = 0x800
 	};
 
 
-/** The outcome of the transfer request */
+/** The outcome of the transfer request.
+
+	@released
+*/
 enum TDmaResult
 	{
 	/** Completed without error */
@@ -64,7 +109,6 @@ enum TDmaResult
 	/** There was an error */
 	EDmaResultError
 	};
-
 
 
 /** To be used with address mode field of the DMA transfer config struct.
@@ -75,24 +119,34 @@ enum TDmaAddrMode
 	{
 	/** Constant addressing. The address remains the same for consecutive
 		accesses.
+
+		@released
 	*/
 	KDmaAddrModeConstant,
 	/** Post-increment addressing. The address increases by the element size
 		after each access.
+
+		@released
 	*/
 	KDmaAddrModePostIncrement,
 	/** Post-decrement addressing. The address decreases by the element size
 		after each access.
+
+		@prototype
 	*/
 	KDmaAddrModePostDecrement,
 	/** 1D-index addressing. The address always increases by the element size
 		plus the element skip value after each access.
+
+		@prototype
 	*/
 	KDmaAddrMode1DIndex,
 	/** 2D-index addressing. The address increases by the element size plus the
 		element skip value - but only within a frame. Once a full frame has been
 		transferred, the address increases by the element size plus the element
 		skip value plus the frame skip value.
+
+		@prototype
 	*/
 	KDmaAddrMode2DIndex
 	};
@@ -102,6 +156,8 @@ enum TDmaAddrMode
 
 	@see SDmacCaps::iBurstTransactions
 	@see TDmaTransferConfig::iBurstSize
+
+	@prototype
 */
 enum TDmaBurstSize
 	{
@@ -132,18 +188,28 @@ enum TDmaTransferFlags
 	{
 	/** Location is address of a memory buffer (as opposed to a peripheral or a
 		register).
+
+		@released
 	*/
 	KDmaMemAddr                      = 0x01,
 	/** Address is a physical address (as opposed to a linear one).
+
 		If it is a memory address then KDmaMemIsContiguous will need to be set
 		as well.
+
+		@released
 	 */
 	KDmaPhysAddr                     = 0x02,
 	/** Target memory is known to be physically contiguous, hence there is
 		no need for the framework to check for memory fragmentation.
+
+		@released
 	*/
 	KDmaMemIsContiguous              = 0x04,
-	/** Don't use packed access (if possible) */
+	/** Don't use packed access (if possible)
+
+		@released
+	*/
 	KDmaDontUsePacked                = 0x08,
 	/** Location is big endian (little endian if not set).
 
@@ -151,6 +217,8 @@ enum TDmaTransferFlags
 		conversion.
 
 		@see SDmacCaps::iEndiannessConversion
+
+		@prototype
 	*/
 	KDmaBigEndian                    = 0x10,
 	/** Don't do endianness conversion even if applicable.
@@ -159,6 +227,8 @@ enum TDmaTransferFlags
 		conversion.
 
 		@see SDmacCaps::iEndiannessConversion
+
+		@prototype
 	*/
 	KDmaLockEndian                   = 0x20,
 	/** Execute client request callback after each subtransfer (streaming /
@@ -172,6 +242,8 @@ enum TDmaTransferFlags
 		destination are different), unless the flag
 		TDmaPILFlags::KDmaAsymCompletionCallback is set too, in which case what
 		is described there applies.
+
+		@prototype
 	*/
 	KDmaCallbackAfterEveryTransfer   = 0x40,
 	/** Execute client request callback after each completed hardware
@@ -183,6 +255,8 @@ enum TDmaTransferFlags
 
 		@see SDmacCaps::iDescriptorInterrupt
 		@see SDmacCaps::iAsymDescriptorInterrupt
+
+		@prototype
 	*/
 	KDmaCallbackAfterEveryDescriptor = 0x80,
 	/** Execute client request callback after each completed frame.
@@ -193,6 +267,8 @@ enum TDmaTransferFlags
 
 		@see SDmacCaps::iFrameInterrupt
 		@see SDmacCaps::iAsymFrameInterrupt
+
+		@prototype
 	*/
 	KDmaCallbackAfterEveryFrame      = 0x100
 	};
@@ -203,11 +279,13 @@ enum TDmaTransferFlags
 
 	@see SDmacCaps::iSynchronizationTypes
 	@see TDmaTransferConfig::iSyncFlags
+
+	@released
 */
 enum TDmaTransferSyncFlags
 	{
 	/** Leave the decision on whether the transfer is hardware synchronized at
-		this end (either source or destination) to the Framework. This is the
+		this end (either source or destination) to the framework. This is the
 		default.
 	*/
 	KDmaSyncAuto        = 0x00,
@@ -245,6 +323,8 @@ enum TDmaTransferSyncFlags
 /** To be used with the Graphics operation field of a DMA transfer request.
 
 	@see TDmaTransferArgs::iGraphicsOps
+
+	@prototype
 */
 enum TDmaGraphicsOps
 	{
@@ -265,20 +345,28 @@ enum TDmaPILFlags
 	{
 	/** Request a different max transfer size (for instance for test
 		purposes).
+
+		@released
 	*/
 	KDmaAltTransferLength         = 0x01,
 	/** Execute client request callback in ISR context instead of from a
 		DFC.
+
+		@released
 	*/
 	KDmaRequestCallbackFromIsr    = 0x02,
 	/** Execute descriptor completion callback in ISR context instead of
 		from a DFC. This option is to be used in conjunction with the
 		TDmaTransferFlags::KDmaCallbackAfterEveryDescriptor flag.
+
+		@prototype
 	*/
 	KDmaDescriptorCallbackFromIsr = 0x04,
 	/** Execute frame completion callback in ISR context instead of
 		from a DFC. This option is to be used in conjunction with the
 		TDmaTransferFlags::KDmaCallbackAfterEveryFrame flag.
+
+		@prototype
 	*/
 	KDmaFrameCallbackFromIsr      = 0x08,
 	/** Execute the client request callback separately for source and
@@ -292,6 +380,8 @@ enum TDmaPILFlags
 		Requires the DMAC to support this feature.
 
 		@see SDmacCaps::iAsymCompletionInterrupt
+
+		@prototype
 	*/
 	KDmaAsymCompletionCallback    = 0x10,
 	/** Execute the descriptor completion callback separately for source
@@ -307,6 +397,8 @@ enum TDmaPILFlags
 		Requires the DMAC to support this feature.
 
 		@see SDmacCaps::iAsymDescriptorInterrupt
+
+		@prototype
 	*/
 	KDmaAsymDescriptorCallback    = 0x20,
 	/** Execute the frame completion callback separately for source and
@@ -321,10 +413,14 @@ enum TDmaPILFlags
 		Requires the DMAC to support this feature.
 
 		@see SDmacCaps::iAsymFrameInterrupt
+
+		@prototype
 	*/
 	KDmaAsymFrameCallback         = 0x40,
 	/** This transfer (only) should use the channel priority indicated by
 		TDmaTransferArgs::iChannelPriority.
+
+		@prototype
 	*/
 	KDmaRequestChannelPriority    = 0x80
 	};
@@ -335,6 +431,8 @@ enum TDmaPILFlags
 
 	@see TDmaChannel::SCreateInfo::iPriority
 	@see TDmaTransferArgs::iChannelPriority
+
+	@prototype
 */
 enum TDmaPriority
 	{
@@ -369,21 +467,26 @@ enum TDmaPriority
 	@see SDmacCaps::iSrcDstAsymmetry
 	@see TDmaTransferArgs::iSrcConfig
 	@see TDmaTransferArgs::iDstConfig
+
+	@released
 */
 struct TDmaTransferConfig
 	{
 friend struct TDmaTransferArgs;
 
-	/** Default constructor. Initializes all fields with meaningful default
-		values.
+	/** Default constructor.
+
+		Initializes all fields with meaningful default values.
 	*/
 #ifdef DMA_APIV2
 	KIMPORT_C
 #endif
 	TDmaTransferConfig();
 
-	/**	Intended for general use ie. not 2D or 1D transfers
-	 */
+	/**	Alternate constructor.
+
+		Intended for general use ie. not 1D or 2D transfers
+	*/
 #ifdef DMA_APIV2
 	KIMPORT_C
 #endif
@@ -399,8 +502,10 @@ friend struct TDmaTransferArgs;
 		TInt aRepeatCount = 0
 		);
 
-	/**	Intended for 1D and 2D transfers
-	 */
+	/**	Alternate constructor.
+
+		Intended for 1D and 2D transfers.
+	*/
 #ifdef DMA_APIV2
 	KIMPORT_C
 #endif
@@ -441,7 +546,7 @@ friend struct TDmaTransferArgs;
 	TInt iBurstSize;
 	/** PIL src/dst config flags.
 		@see TDmaTransferFlags
-	 */
+	*/
 	TUint32 iFlags;
 	/** Transfer synchronization flags.
 		@see TDmaTransferSyncFlags
@@ -450,19 +555,28 @@ friend struct TDmaTransferArgs;
 	/** Information passed to the PSL */
 	TUint iPslTargetInfo;
 	/** How often to repeat this (sub-)transfer:
-		0     no repeat (the default)
-		1..n  once / n times
+		 0     no repeat (the default)
+		 1..n  once / n times
 		-1     endlessly.
+
+		@prototype
 	*/
 	TInt iRepeatCount;
-	/** Structure contents delta vector (usage tbd) */
+	/** Structure contents delta vector.
+
+		(usage tbd)
+
+		@prototype
+	 */
 	TUint32 iDelta;
 	/** Reserved for future use */
 	TUint32 iReserved;
 
 private:
-	/** Private constructor. Initializes fields with the values passed in by
-		the legacy version of the DDmaRequest::Fragment() call.
+	/** Private constructor.
+
+		Initializes fields with the values passed in by the legacy version of
+		the DDmaRequest::Fragment() call.
 	*/
 	TDmaTransferConfig(TUint32 aAddr, TUint aFlags, TBool aAddrInc);
 	};
@@ -475,6 +589,8 @@ private:
 	controller doesn't support hardware descriptors (scatter/gather LLI).
 
 	@see DDmaRequest::Fragment
+
+	@released
 */
 struct TDmaTransferArgs
 	{
@@ -483,17 +599,20 @@ struct TDmaTransferArgs
 	friend class TDmac;
 	friend class DmaChannelMgr;
 
-	/** Default constructor. Initializes all fields with meaningful default
-		values.
+	/** Default constructor.
+
+		Initializes all fields with meaningful default values.
 	*/
 #ifdef DMA_APIV2
 	KIMPORT_C
 #endif
 	TDmaTransferArgs();
 
-	/**	For transfers where src and dst TDmaTransferConfig structs share some
-		of the same options ie. iDmaTransferFlags, iAddrMode, iSyncFlags,
-		iBurstSize, and iElementSize.
+	/**	Alternate constructor.
+
+		Intended for transfers where src and dst TDmaTransferConfig structs
+		share some of the same options, i.e. iDmaTransferFlags, iAddrMode,
+		iSyncFlags, iBurstSize, and iElementSize.
 
 		@param aSrcAddr
 		@param aDstAddr
@@ -513,17 +632,25 @@ struct TDmaTransferArgs
 	KIMPORT_C
 #endif
 	TDmaTransferArgs (
-		TUint aSrcAddr, TUint aDstAddr, TUint aCount,
-		TUint aDmaTransferFlags, TUint aDmaSyncFlags = KDmaSyncAuto,
+		TUint aSrcAddr,
+		TUint aDstAddr,
+		TUint aCount,
+		TUint aDmaTransferFlags,
+		TUint aDmaSyncFlags = KDmaSyncAuto,
 		TUint aDmaPILFlags = 0,
-		TDmaAddrMode aMode = KDmaAddrModePostIncrement, TUint aElementSize = 0,
+		TDmaAddrMode aMode = KDmaAddrModePostIncrement,
+		TUint aElementSize = 0,
 		TUint aChannelPriority = KDmaPriorityNone,
-		TDmaBurstSize aBurstSize = KDmaBurstSizeAny, TUint aPslRequestInfo = 0,
-		TDmaGraphicsOps aGraphicOp = KDmaGraphicsOpNone, TUint32 aColour = 0
+		TDmaBurstSize aBurstSize = KDmaBurstSizeAny,
+		TUint aPslRequestInfo = 0,
+		TDmaGraphicsOps aGraphicOp = KDmaGraphicsOpNone,
+		TUint32 aColour = 0
 		);
 
-	/** For transfers needing specific options for source and destination
-		TDmaTransferConfig structs.
+	/** Alternate constructor.
+
+		Intended for transfers needing specific options for source and
+		destination TDmaTransferConfig structs.
 
 		@param aSrc Configuration values for the source
 		@param aDst Configuration values for the destination
@@ -531,7 +658,6 @@ struct TDmaTransferArgs
 		@param aChannelPriority Use for this request (only) the indicated
 		channel priority. Requires KDmaRequestChannelPriority to be set in
 		iFlags as well. @see TDmaPriority
-
 		@param aPslRequestInfo Info word passed to the PSL
 		@param aGraphicOp Graphics operation to be executed
 		@param aColour Colour value for graphics operation
@@ -545,7 +671,8 @@ struct TDmaTransferArgs
 		TUint32 aFlags = 0,
 		TUint aChannelPriority = KDmaPriorityNone,
 		TUint aPslRequestInfo = 0,
-		TDmaGraphicsOps aGraphicOp = KDmaGraphicsOpNone, TUint32 aColour = 0
+		TDmaGraphicsOps aGraphicOp = KDmaGraphicsOpNone,
+		TUint32 aColour = 0
 		);
 
 	/** Configuration values for the source */
@@ -580,25 +707,32 @@ struct TDmaTransferArgs
 	TUint iChannelPriority;
 	/** Info word passed to the PSL */
 	TUint iPslRequestInfo;
-
-	/** Structure contents delta vector (usage tbd) */
-	TUint32 iDelta;
-	/** Reserved for future use */
-	TUint32 iReserved1;
-
-private:
-	/** Private constructor. Initializes fields with the values passed in by
-		the legacy version of the DDmaRequest::Fragment() call.
-	*/
-	TDmaTransferArgs(TUint32 aSrcAddr, TUint32 aDstAddr, TInt aCount,
-					 TUint aFlags, TUint32 aPslInfo);
 	/** Stores the PSL cookie returned by TDmaChannel::PslId() at request
 		fragmentation time.
+
 		The value PslId() is often (but not necessarily) identical with the
 		client's TDmaChannel::SCreateInfo::iCookie, which gets passed by the
 		PIL into DmaChannelMgr::Open() as 'aOpenId'.
 	*/
 	TUint32 iChannelCookie;
+	/** Structure contents delta vector.
+
+		(usage tbd)
+
+		@prototype
+	 */
+	TUint32 iDelta;
+	/** Reserved for future use */
+	TUint32 iReserved1;
+
+private:
+	/** Private constructor.
+
+		Initializes fields with the values passed in by the legacy version of
+		the DDmaRequest::Fragment() call.
+	*/
+	TDmaTransferArgs(TUint32 aSrcAddr, TUint32 aDstAddr, TInt aCount,
+					 TUint aFlags, TUint32 aPslInfo);
 	/** Reserved for future use */
 	TUint32 iReserved2;
 	};
@@ -609,24 +743,31 @@ private:
 	Instances are to be filled in by the PSL and then linked to via TDmaChannel
 	objects after they have been opened.
 
-	The contents may vary even between channels on the same DMAC (but will
+	The contents may vary even between channels on the same DMAC (but should
 	remain constant for a given channel for the duration that it is open),
 	depending on static or dynamic factors which only the PSL knows about.
 
 	@see TDmaChannel::Open
 	@see TDmaChannel::DmacCaps
+
+	@released
 */
 struct SDmacCaps
 	{
-	/** DMAC supports n + 1 different channel priorities. */
+	/** DMAC supports n + 1 different channel priorities.
+	 */
 	TUint iChannelPriorities;
-	/** DMAC supports the pausing and resuming of channels. */
+	/** DMAC supports the pausing and resuming of channels.
+	 */
 	TBool iChannelPauseAndResume;
-	/** DMA addresses must be aligned on an element size boundary. */
+	/** DMA addresses must be aligned on an element size boundary.
+	 */
 	TBool iAddrAlignedToElementSize;
-	/** DMAC supports 1D (element) index addressing in hardware. */
+	/** DMAC supports 1D (element) index addressing in hardware.
+	 */
 	TBool i1DIndexAddressing;
-	/** DMAC supports 2D (frame) index addressing in hardware. */
+	/** DMAC supports 2D (frame) index addressing in hardware.
+	 */
 	TBool i2DIndexAddressing;
 	/** DMAC supports these transfer synchronization types (bitmap of values).
 
@@ -638,24 +779,31 @@ struct SDmacCaps
 		@see TDmaBurstSize
 	*/
 	TUint iBurstTransactions;
-	/** DMAC supports a 'h/w descriptor complete' interrupt. */
+	/** DMAC supports a 'h/w descriptor complete' interrupt.
+	 */
 	TBool iDescriptorInterrupt;
-	/** DMAC supports a 'frame transfer complete' interrupt. */
+	/** DMAC supports a 'frame transfer complete' interrupt.
+	 */
 	TBool iFrameInterrupt;
-	/** DMAC supports a 'linked-list pause event' interrupt. */
+	/** DMAC supports a 'linked-list pause event' interrupt.
+	 */
 	TBool iLinkedListPausedInterrupt;
-	/** DMAC supports endianness conversion. */
+	/** DMAC supports endianness conversion.
+	 */
 	TBool iEndiannessConversion;
 	/** DMAC supports these graphics operations (bitmap of values).
 
 		@see TDmaGraphicsOps
 	*/
 	TUint iGraphicsOps;
-	/** DMAC supports repeated transfers (loops). */
+	/** DMAC supports repeated transfers (loops).
+	 */
 	TBool iRepeatingTransfers;
-	/** DMAC supports logical channel linking (chaining). */
+	/** DMAC supports logical channel linking (chaining).
+	 */
 	TBool iChannelLinking;
-	/** DMAC supports scatter/gather mode (linked list items). */
+	/** DMAC supports scatter/gather mode (linked list items).
+	 */
 	TBool iHwDescriptors;
 	/** DMAC supports asymmetric source and destination transfer
 		parameters (such as element size).
@@ -712,10 +860,51 @@ struct SDmacCaps
 	};
 
 
+//////////////////////////////////////////////////////////////////////////////
+// INTERFACE WITH TEST HARNESS
+//////////////////////////////////////////////////////////////////////////////
+
+/** Set of information used by test harness.
+
+	@deprecated
+*/
+#ifdef DMA_APIV2
+struct TDmaTestInfo
+	{
+	/** Maximum transfer size in bytes for all channels (ie. the minimum of all
+		channels' maximum size)
+	*/
+	TUint iMaxTransferSize;
+	/** 3->Memory buffers must be 4-byte aligned, 7->8-byte aligned, ... */
+	TUint iMemAlignMask;
+	/** Cookie to pass to DDmaRequest::Fragment for memory-memory transfer */
+	TUint32 iMemMemPslInfo;
+	/** Number of test single-buffer channels */
+	TInt iMaxSbChannels;
+	/** Pointer to array containing single-buffer test channel ids */
+	TUint32* iSbChannels;
+	/** Number of test double-buffer channels */
+	TInt iMaxDbChannels;
+	/** Pointer to array containing double-buffer test channel ids */
+	TUint32* iDbChannels;
+	/** Number of test scatter-gather channels */
+	TInt iMaxSgChannels;
+	/** Pointer to array containing scatter-gather test channel ids */
+	TUint32* iSgChannels;
+	};
+#endif
+
+
+/** Set of information used by test harness.
+
+	@released
+*/
 struct TDmaV2TestInfo
 	{
 	enum {KMaxChannels=32};
-	/** Maximum transfer size in bytes for all channels (ie. the minimum of all channels' maximum size)*/
+	/** Maximum transfer size in bytes for all channels (ie. the minimum of all
+		channels' maximum size)
+	*/
 	TUint iMaxTransferSize;
 	/** 3->Memory buffers must be 4-byte aligned, 7->8-byte aligned, ... */
 	TUint iMemAlignMask;

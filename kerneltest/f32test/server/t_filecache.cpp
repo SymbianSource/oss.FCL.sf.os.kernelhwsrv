@@ -22,6 +22,7 @@
 #include "t_server.h"
 #include <e32twin.h>
 #include <e32rom.h>
+#include <u32hal.h>	//*test*
 
 
 //----------------------------------------------------------------------------------------------
@@ -250,6 +251,18 @@ void TestBuffer(TDes8& aBuffer, TInt aPos, TInt aLength)
 		}
 	}
 
+//*test**************************************************************************
+TInt FreeRam()
+	{
+	// wait for any async cleanup in the supervisor to finish first...
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+
+	TMemoryInfoV1Buf meminfo;
+	UserHal::MemoryInfo(meminfo);
+	return meminfo().iFreeRamInBytes;
+	}
+//*test**************************************************************************
+
 
 LOCAL_C void UnitTests()
 //
@@ -298,6 +311,68 @@ LOCAL_C void UnitTests()
 	TInt uncachedBytesRead;
 	TInt uncachedPacketsRead;
 #endif
+
+//*test**************************************************************************
+	{
+	TInt fileSize = 0;
+	
+	const TInt KWriteLen = 128*1024;
+	test.Next(_L("Test appending to a file with low memory"));
+	gBufPtr.SetLength(KBufSize);
+
+	r = f.Replace(TheFs, testFile, EFileWrite | EFileWriteBuffered);
+	test_KErrNone(r);
+
+	pos = 0;
+
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	r = f.Write(pos, writePtr);
+	test_KErrNone(r);
+	pos+= writePtr.Length();
+
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+
+
+	TInt freeRam = FreeRam();
+	test.Printf(_L("FreeRam = %d"), freeRam);
+	const TInt KPageSize=4096;
+
+	RChunk chunk;
+	TChunkCreateInfo chunkInfo;
+	chunkInfo.SetDisconnected(0, 0, freeRam);
+	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	test_KErrNone(chunk.Create(chunkInfo));
+
+	TUint commitEnd = 0;
+	TInt r;
+	while(KErrNone == (r = chunk.Commit(commitEnd,KPageSize)))
+		{
+		commitEnd += KPageSize;
+		}
+	test_Equal(KErrNoMemory, r);
+
+
+
+	pos-= KSegmentSize;
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	r = f.Write(pos, writePtr);
+	test_KErrNone(r);
+	pos+= writePtr.Length();
+
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+	f.Close();
+
+	chunk.Close();
+	}
+//*test**************************************************************************
 
 	// create an empty file, so that any writes overlapping segemt boundaries
 	// need a read first

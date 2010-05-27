@@ -26,28 +26,17 @@
 
 inline void TDmaChannel::Wait()
 	{
-	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Wait thread %O channel - %d",
-									&Kern::CurrentThread(), iPslId));
 	NKern::FMWait(&iLock);
-	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Wait thread %O channel - %d Acq",
-									&Kern::CurrentThread(), iPslId));
 	}
 
 inline void TDmaChannel::Signal()
 	{
-	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Signal thread %O channel - %d",
-									&Kern::CurrentThread(), iPslId));
 	NKern::FMSignal(&iLock);
 	}
 
 inline TBool TDmaChannel::Flash()
 	{
-	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Flash thread %O channel - %d",
-									&Kern::CurrentThread(), iPslId));
-	const TBool r = NKern::FMFlash(&iLock);
-	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Flash thread %O channel - %d Acq (%d)",
-									&Kern::CurrentThread(), iPslId, r));
-	return r;
+	return NKern::FMFlash(&iLock);
 	}
 
 inline TBool TDmaChannel::IsOpened() const

@@ -1054,6 +1054,37 @@ static void TestFAT4G_Boundary()
 		}
 	}
 
+void TestRAMDriveNotification()
+	{
+	test.Next(_L("Verifying RFs::ReserveDriveSpace() triggers RFs::NotifyDiskSpace() events"));
+
+	TInt64 freeSpace;
+	GetFreeDiskSpace(freeSpace);
+	test.Printf(_L("free space: 0x%Lx bytes\n"), freeSpace);
+
+	// set a notification on half the amount we plan to reserve
+	TInt reserve = 4096;
+	TInt64 trigger = freeSpace - 2048;
+	test.Printf(_L("setting notification for space to fall below: 0x%Lx bytes ... "), trigger);
+	TRequestStatus stat;
+	TheFs.NotifyDiskSpace(trigger, gTestDrive, stat);
+	test_Value(stat.Int(), stat == KRequestPending);
+	test.Printf(_L("ok\n"));
+
+	// reserve the space and validate that this triggers the notification
+	test.Printf(_L("reserving 0x%x bytes ..."), reserve);
+	TInt r = TheFs.ReserveDriveSpace(gTestDrive, reserve);
+	test_KErrNone(r);
+	test.Printf(_L("ok\n"));
+
+	test.Printf(_L("validating that the disk space notification triggered ... "));
+	User::After(2000000);	// 2 seconds should be enough to cause the trigger
+	test_Value(stat.Int(), stat == KErrNone);
+	test.Printf(_L("ok\n"));
+	}
+
+
+
 //-----------------------------------------------------------------------------
 
 GLDEF_C void CallTestsL()
@@ -1061,60 +1092,58 @@ GLDEF_C void CallTestsL()
 // Do tests relative to session path
 //
 	{
-    //-- set up console output 
-    Fat_Test_Utils::SetConsole(test.Console()); 
+	//-- set up console output 
+	Fat_Test_Utils::SetConsole(test.Console()); 
 	
-	if (UserSvr::DebugMask(2)&0x00000002) // TESTFAST mode set? (for automated test builds)
-		if(IsTestingLFFS())
-			{
-			// Don't run on LFFS (to increase speed of automated testing)
-			test.Printf(_L("TEST NOT RUN FOR THIS DRIVE"));
-			return;
-			}
+	// If TESTFAST mode (for automated test builds) is set, don't run LFFS tests.
+	if ((UserSvr::DebugMask(2) & 0x00000002) && IsTestingLFFS())
+		{
+		test.Printf(_L("TEST NOT RUN FOR LFFS DRIVE"));
+		return;
+		}
 
 	//get the number of the drive we are currently testing
 	TInt r=0;
 	r=RFs::CharToDrive(gSessionPath[0],gTestDrive);
-    test_KErrNone(r);
+	test_KErrNone(r);
 
 	r=RFs::DriveToChar(gTestDrive,gCh);
 	test_KErrNone(r);
 
-    TDriveInfo drv;
-    r = TheFs.Drive(drv, gTestDrive);
-    test_KErrNone(r);
+	TDriveInfo drv;
+	r = TheFs.Drive(drv, gTestDrive);
+	test_KErrNone(r);
 
-    if (Is_Win32(TheFs, gTestDrive))
-        {
-        test.Printf(_L("Skipping on emulator %C: drive\n"), gSessionPath[0]);
-        return;
-        }
 
-    // do not run this test on RAM drive
-    if (drv.iType == EMediaRam)
-        {
-        test.Printf(_L("Test can't run on RAM drive %C:\n"), gSessionPath[0]);
-        return;
-        }
+	//-- print drive information
+	PrintDrvInfo(TheFs, gTestDrive);
 
-    //-- print drive information
-    PrintDrvInfo(TheFs, gTestDrive);
 
-	Test1();	//General test for new APIs
-	Test2();	//Test to ensure drive and session reserve limits are not exceeded
+	// do not run the remainder of this test on RAM drive
+	if (drv.iType == EMediaRam)
+		{
+		TestRAMDriveNotification();	// Test drive space reservations trigger disk space notifications
+		test.Printf(_L("Main tests can't run on RAM drive %C:\n"), gSessionPath[0]);
+		return;
+		}
+
+	if (Is_Win32(TheFs, gTestDrive))
+		{
+		test.Printf(_L("Skipping on emulator %C: drive\n"), gSessionPath[0]);
+		return;
+		}
+
+	Test1();	// General test for new APIs
+	Test2();	// Test to ensure drive and session reserve limits are not exceeded
 	Test3();
-	Test4();	//test filling the drive and that each checked API fails
+	Test4();	// test filling the drive and that each checked API fails
 	Test5();
 	Test6();
 	Test7();
 	TestForDEF142554();
-	Test2();	//run this test to check reserves are being cleared correctly
+	Test2();	// run this test to check reserves are being cleared correctly
 
 	TestFAT4G_Boundary();
     
-    TurnAllocFailureOff();
+	TurnAllocFailureOff();
 	}
-
-
-
-

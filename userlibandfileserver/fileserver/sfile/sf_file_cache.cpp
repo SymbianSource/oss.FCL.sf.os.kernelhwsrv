@@ -1503,6 +1503,11 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 					// Need to reset currentOperation.iReadWriteArgs.iTotalLength here to make sure 
 					// TFsFileWrite::PostInitialise() doesn't think there's no data left to process
 					aMsgRequest.ReStart();
+					
+					//Need to preserve the current state otherwise if we are over the ram threshold 
+					//the request can end up in a livelock trying to repeatedly flush.
+					currentOperation->iState = EStWriteThrough;
+					
 					if (r == CFsRequest::EReqActionBusy || r != CFsRequest::EReqActionComplete)
 						return r;
 					}

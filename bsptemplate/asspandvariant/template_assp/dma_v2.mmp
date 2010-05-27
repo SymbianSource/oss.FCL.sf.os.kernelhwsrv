@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// template/template_assp/dma.mmp
+// template/template_assp/dma_v2.mmp
 //
 //
 
@@ -19,25 +19,28 @@
 #include		"kernel/kern_ext.mmh"
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
 SYMBIAN_BASE_SYSTEMINCLUDE(assp/template_assp)
 
-target			VariantTarget(dma,dll)
+target			VariantTarget(dma_v2,dll)
 targettype		kext
 linkas			dma.dll
 noexportlibrary
 
 sourcepath		../../../kernel/eka/drivers/dma
-source			dmapil.cpp
+source			dma2_pil.cpp dma2_shared.cpp
 
 sourcepath		.
-source			dmapsl.cpp
+source			dmapsl_v2.cpp
 
 library			VariantTarget(katemplate,lib)
 
-deffile			../../../kernel/eka/~/dma.def
+deffile			../../../kernel/eka/~/dma2.def
 
 epocallowdlldata
 
 capability		all
 
 VENDORID 0x70000001
+
+MACRO DMA_APIV2

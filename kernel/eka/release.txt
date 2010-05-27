@@ -1,3 +1,41 @@
+Version 2.00.3076
+=================
+(Made by vfebvre 30/04/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#352017 (MCL) Advisory notes related to cat x in TB92SF_1116 and MSF00398
+	2.	ou1cimx1#361803 (MCL) Adjust HAL::GetAll() to ignore DisplayMemoryHandle attribute
+
+2.	vfebvre
+	1.	ou1cimx1#357360 Some test binaries are targeted by several bld.inf files
+	2.	ou1cimx1#363918 Non-test binaries targeted by several bld.inf files
+
+
+Version 2.00.3075
+=================
+(Made by vfebvre 29/04/2010)
+
+1.	seolney
+	1.	REQ417-52838 Upgrade DMA API to support advanced addressing modes
+		PackageReleaseID=485812 FeaturePlanID=428985
+
+
+Version 2.00.3074
+=================
+(Made by vfebvre 28/04/2010)
+
+1.	necliffo
+	1.	ou1cimx1#357516 eMMC with DDR-mode support is not used in 4-bit mode
+
+
+Version 2.00.3073
+=================
+(Made by vfebvre 26/04/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#352019 [kernelmcl]Can't recieve USB data after Host call SetConfiguraion
+
+
 Version 2.00.3072
 =================
 (Made by vfebvre 22/04/2010)

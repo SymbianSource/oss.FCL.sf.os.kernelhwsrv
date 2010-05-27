@@ -1,3 +1,34 @@
+Version 2.00.3037
+=================
+(Made by vfebvre 30/04/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#357360 Some test binaries are targeted by several bld.inf files
+
+2.	frhofman
+	1.	ou1cimx1#367552 BC Drivers: Os/KernelHwSrv: 2 failures in Base API on Vasco
+
+3.	michcox
+	1.	ou1cimx1#357494 Maps 3.04: File mode EFileWrite (defined in f32file.h) corrupts memory of other processes under certain conditions on 5.0 devices
+	2.	ou1cimx1#367062 Update T_filecache for ou1cimx1#357494
+
+
+Version 2.00.3036
+=================
+(Made by vfebvre 27/04/2010)
+
+1.	erifung
+	1.	DEF144399 Frequent T_LDRCHECK failures on the H4
+
+
+Version 2.00.3035
+=================
+(Made by vfebvre 23/04/2010)
+
+1.	niccox
+	1.	ou1cimx1#357492 Disconnecting memory card reader/writer from phone causes phone crash
+
+
 Version 2.00.3034
 =================
 (Made by vfebvre 20/04/2010)

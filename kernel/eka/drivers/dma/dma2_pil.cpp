@@ -118,11 +118,12 @@ static inline TPhysAddr LinToPhys(TLinAddr aLin) {return Epoc::LinearToPhysical(
 // Return minimum of aMaxSize and size of largest physically contiguous block
 // starting at aLinAddr.
 //
-static TInt MaxPhysSize(TLinAddr aLinAddr, const TInt aMaxSize)
+static TUint MaxPhysSize(TLinAddr aLinAddr, const TUint aMaxSize)
 	{
 	const TPhysAddr physBase = LinToPhys(aLinAddr);
+	__DMA_ASSERTD(physBase != KPhysAddrInvalid);
 	TLinAddr lin = aLinAddr;
-	TInt size = 0;
+	TUint size = 0;
 	for (;;)
 		{
 		// Round up the linear address to the next MMU page boundary
@@ -152,6 +153,7 @@ TDmac::TDmac(const SCreateInfo& aInfo)
 	  iCapsHwDes(aInfo.iCapsHwDes),
 	  iFreeHdr(NULL)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmac::TDmac"));
 	__DMA_ASSERTD(iMaxDesCount > 0);
 	__DMA_ASSERTD(iDesSize > 0);
 	}
@@ -162,6 +164,7 @@ TDmac::TDmac(const SCreateInfo& aInfo)
 //
 TInt TDmac::Create(const SCreateInfo& aInfo)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmac::Create"));
 	iHdrPool = new SDmaDesHdr[iMaxDesCount];
 	if (iHdrPool == NULL)
 		{
@@ -187,6 +190,7 @@ TInt TDmac::Create(const SCreateInfo& aInfo)
 
 TDmac::~TDmac()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmac::~TDmac"));
 	__DMA_INVARIANT();
 
 	FreeDesPool();
@@ -229,6 +233,7 @@ TInt TDmac::ResumeTransfer(const TDmaChannel& /*aChannel*/)
 
 TInt TDmac::AllocDesPool(TUint aAttribs)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmac::AllocDesPool"));
 	// Calling thread must be in CS
 	__ASSERT_CRITICAL;
 	TInt r;
@@ -269,6 +274,7 @@ TInt TDmac::AllocDesPool(TUint aAttribs)
 
 void TDmac::FreeDesPool()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmac::FreeDesPool"));
 	// Calling thread must be in CS
 	__ASSERT_CRITICAL;
 	if (iCapsHwDes)
@@ -317,6 +323,7 @@ TInt TDmac::ReserveSetOfDes(TInt aCount)
 //
 void TDmac::ReleaseSetOfDes(TInt aCount)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmac::ReleaseSetOfDes count=%d", aCount));
 	__DMA_ASSERTD(aCount >= 0);
 	Wait();
 	iAvailDesCount += aCount;
@@ -385,6 +392,12 @@ void TDmac::HandleIsr(TDmaChannel& aChannel, TUint aEventMask, TBool aIsComplete
 			// request's ISR callback for the last time. We're going to
 			// complete the request via the DFC in the usual way.
 			}
+		}
+	else
+		{
+		// The PIL doesn't support yet any completion types other than
+		// EDmaCallbackRequestCompletion.
+		__DMA_CANT_HAPPEN();
 		}
 
 	// Now queue a DFC if necessary. The possible scenarios are:
@@ -607,7 +620,7 @@ void TDmac::Invariant()
 	{
 	Wait();
 	__DMA_ASSERTD(0 <= iAvailDesCount && iAvailDesCount <= iMaxDesCount);
-	__DMA_ASSERTD(! iFreeHdr || IsValidHdr(iFreeHdr));
+	__DMA_ASSERTD(!iFreeHdr || IsValidHdr(iFreeHdr));
 	for (TInt i = 0; i < iMaxDesCount; i++)
 		__DMA_ASSERTD(iHdrPool[i].iNext == NULL || IsValidHdr(iHdrPool[i].iNext));
 	Signal();
@@ -620,8 +633,6 @@ TBool TDmac::IsValidHdr(const SDmaDesHdr* aHdr)
 	}
 
 #endif
-
-
 
 
 //
@@ -644,8 +655,11 @@ TDmaTransferConfig::TDmaTransferConfig(TUint32 aAddr, TUint aFlags, TBool aAddrI
 	  iDelta(~0u),
 	  iReserved(0)
 	{
+	__KTRACE_OPT(KDMA,
+				 Kern::Printf("TDmaTransferConfig::TDmaTransferConfig "
+							  "aAddr=0x%08X aFlags=0x%08X aAddrInc=%d",
+							  aAddr, aFlags, aAddrInc));
 	}
-
 
 
 //
@@ -661,11 +675,16 @@ TDmaTransferArgs::TDmaTransferArgs(TUint32 aSrc, TUint32 aDest, TInt aCount,
 	  iFlags(0),
 	  iChannelPriority(KDmaPriorityNone),
 	  iPslRequestInfo(aPslInfo),
+	  iChannelCookie(0),
 	  iDelta(~0u),
 	  iReserved1(0),
-	  iChannelCookie(0),
 	  iReserved2(0)
 	{
+	__KTRACE_OPT(KDMA,
+				 Kern::Printf("TDmaTransferArgs::TDmaTransferArgs"));
+	__KTRACE_OPT(KDMA,
+				 Kern::Printf("  aSrc=0x%08X aDest=0x%08X aCount=%d aFlags=0x%08X aPslInfo=0x%08X",
+							  aSrc, aDest, aCount, aFlags, aPslInfo));
 	}
 
 
@@ -695,6 +714,7 @@ EXPORT_C DDmaRequest::DDmaRequest(TDmaChannel& aChannel, TCallback aCb,
 	  iTotalNumSrcElementsTransferred(0),
 	  iTotalNumDstElementsTransferred(0)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::DDmaRequest =0x%08X (old style)", this));
 	iChannel.iReqCount++;
 	__DMA_ASSERTD(0 <= aMaxTransferSize);
 	__DMA_INVARIANT();
@@ -727,6 +747,7 @@ EXPORT_C DDmaRequest::DDmaRequest(TDmaChannel& aChannel, TDmaCallback aDmaCb,
 	  iTotalNumSrcElementsTransferred(0),
 	  iTotalNumDstElementsTransferred(0)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::DDmaRequest =0x%08X (new style)", this));
 	__e32_atomic_add_ord32(&iChannel.iReqCount, 1);
 	__DMA_INVARIANT();
 	}
@@ -734,9 +755,18 @@ EXPORT_C DDmaRequest::DDmaRequest(TDmaChannel& aChannel, TDmaCallback aDmaCb,
 
 EXPORT_C DDmaRequest::~DDmaRequest()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::~DDmaRequest"));
 	__DMA_ASSERTD(!iQueued);
 	__DMA_INVARIANT();
-	FreeDesList();
+	if (iChannel.iDmacCaps->iAsymHwDescriptors)
+		{
+		FreeSrcDesList();
+		FreeDstDesList();
+		}
+	else
+		{
+		FreeDesList();
+		}
 	__e32_atomic_add_ord32(&iChannel.iReqCount, TUint32(-1));
 	}
 
@@ -744,9 +774,9 @@ EXPORT_C DDmaRequest::~DDmaRequest()
 EXPORT_C TInt DDmaRequest::Fragment(TUint32 aSrc, TUint32 aDest, TInt aCount,
 									TUint aFlags, TUint32 aPslInfo)
 	{
-	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::Fragment thread %O "
-									"src=0x%08X dest=0x%08X count=%d flags=0x%X psl=0x%08X",
-									&Kern::CurrentThread(), aSrc, aDest, aCount, aFlags, aPslInfo));
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::Fragment thread %O (old style)",
+									&Kern::CurrentThread()));
+
 	__DMA_ASSERTD(aCount > 0);
 
 	TDmaTransferArgs args(aSrc, aDest, aCount, aFlags, aPslInfo);
@@ -757,7 +787,8 @@ EXPORT_C TInt DDmaRequest::Fragment(TUint32 aSrc, TUint32 aDest, TInt aCount,
 
 EXPORT_C TInt DDmaRequest::Fragment(const TDmaTransferArgs& aTransferArgs)
 	{
-	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::Fragment thread %O", &Kern::CurrentThread()));
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::Fragment thread %O (new style)",
+									&Kern::CurrentThread()));
 
 	// Writable temporary working copy of the transfer arguments.
 	// We need this because we may have to modify some fields before passing it
@@ -769,10 +800,170 @@ EXPORT_C TInt DDmaRequest::Fragment(const TDmaTransferArgs& aTransferArgs)
 	}
 
 
-TUint DDmaRequest::GetTransferCount(const TDmaTransferArgs& aTransferArgs)
+TInt DDmaRequest::CheckTransferConfig(const TDmaTransferConfig& aTarget, TUint aCount) const
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::CheckTransferConfig"));
+
+	if (aTarget.iElementSize != 0)
+		{
+		if ((aCount % aTarget.iElementSize) != 0)
+			{
+			// 2, 7 (These strange numbers refer to some test cases documented
+			// elsewhere - they will be removed eventually.)
+			__KTRACE_OPT(KPANIC,
+						 Kern::Printf("Error: ((aCount %% iElementSize) != 0)"));
+			return KErrArgument;
+			}
+		if (aTarget.iElementsPerFrame != 0)
+			{
+			if ((aTarget.iElementSize * aTarget.iElementsPerFrame *
+				 aTarget.iFramesPerTransfer) != aCount)
+				{
+				// 3, 8
+				__KTRACE_OPT(KPANIC,
+							 Kern::Printf("Error: ((iElementSize * "
+										  "iElementsPerFrame * "
+										  "iFramesPerTransfer) != aCount)"));
+				return KErrArgument;
+				}
+			}
+		}
+	else
+		{
+		if (aTarget.iElementsPerFrame != 0)
+			{
+			// 4, 9
+			__KTRACE_OPT(KPANIC,
+						 Kern::Printf("Error: (iElementsPerFrame != 0)"));
+			return KErrArgument;
+			}
+		if (aTarget.iFramesPerTransfer != 0)
+			{
+			// 5, 10
+			__KTRACE_OPT(KPANIC,
+						 Kern::Printf("Error: (iFramesPerTransfer != 0)"));
+			return KErrArgument;
+			}
+		if (aTarget.iElementsPerPacket != 0)
+			{
+			// 6, 11
+			__KTRACE_OPT(KPANIC,
+						 Kern::Printf("Error: (iElementsPerPacket != 0)"));
+			return KErrArgument;
+			}
+		}
+	return KErrNone;
+	}
+
+
+TInt DDmaRequest::CheckMemFlags(const TDmaTransferConfig& aTarget, TUint aCount) const
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::CheckMemFlags"));
+
+	const TBool mem_target = (aTarget.iFlags & KDmaMemAddr);
+
+	if (mem_target && (aTarget.iFlags & KDmaPhysAddr) && !(aTarget.iFlags & KDmaMemIsContiguous))
+		{
+		// Physical memory address implies contiguous range
+		// 13, 15
+		__KTRACE_OPT(KPANIC, Kern::Printf("Error: mem_target && KDmaPhysAddr && !KDmaMemIsContiguous"));
+		return KErrArgument;
+		}
+	else if ((aTarget.iFlags & KDmaMemIsContiguous) && !mem_target)
+		{
+		// Contiguous range implies memory address
+		// 14, 16
+		__KTRACE_OPT(KPANIC, Kern::Printf("Error: KDmaMemIsContiguous && !mem_target"));
+		return KErrArgument;
+		}
+	return KErrNone;
+	}
+
+
+// Makes sure an element or frame never straddles two DMA subtransfer
+// fragments. This would be a fragmentation error by the PIL.
+//
+TInt DDmaRequest::AdjustFragmentSize(TUint& aFragSize, TUint aElementSize,
+									 TUint aFrameSize)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::AdjustFragmentSize FragSize=%d ES=%d FS=%d",
+									aFragSize, aElementSize, aFrameSize));
+
+	TUint rem = 0;
+	TInt r = KErrNone;
+
+	while (1)
+		{
+		// If an element size is defined, make sure the fragment size is
+		// greater or equal.
+		if (aElementSize)
+			{
+			if (aFragSize < aElementSize)
+				{
+				__KTRACE_OPT(KPANIC, Kern::Printf("Error: aFragSize < aElementSize"));
+				r = KErrArgument;
+				break;
+				}
+			}
+		// If a frame size is defined, make sure the fragment size is greater
+		// or equal.
+		if (aFrameSize)
+			{
+			if (aFragSize < aFrameSize)
+				{
+				__KTRACE_OPT(KPANIC, Kern::Printf("Error: aFragSize < aFrameSize"));
+				r = KErrArgument;
+				break;
+				}
+			}
+		// If a frame size is defined, make sure the fragment ends on a frame
+		// boundary.
+		if (aFrameSize)
+			{
+			rem = aFragSize % aFrameSize;
+			if (rem != 0)
+				{
+				aFragSize -= rem;
+				// 20, 22
+				__KTRACE_OPT(KDMA, Kern::Printf("aFragSize %% aFrameSize != 0 --> aFragSize = %d",
+												aFragSize));
+				// aFragSize has changed, so we have to do all the checks
+				// again.
+				continue;
+				}
+			}
+		// If an element size is defined, make sure the fragment ends on an
+		// element boundary.
+		if (aElementSize)
+			{
+			rem = aFragSize % aElementSize;
+			if (rem != 0)
+				{
+				aFragSize -= rem;
+				// 21, 23
+				__KTRACE_OPT(KDMA, Kern::Printf("aFragSize %% aElementSize != 0 --> aFragSize = %d",
+												aFragSize));
+				// aFragSize has changed, so we have to do all the checks
+				// again.
+				continue;
+				}
+			}
+		// Done - all checks passed. Let's get out.
+		break;
+		}
+
+	return r;
+	}
+
+
+TUint DDmaRequest::GetTransferCount(const TDmaTransferArgs& aTransferArgs) const
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::GetTransferCount"));
+
 	const TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
+#ifdef _DEBUG
 	const TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
+#endif	// #ifdef _DEBUG
 
 	TUint count = aTransferArgs.iTransferCount;
 	if (count == 0)
@@ -780,137 +971,117 @@ TUint DDmaRequest::GetTransferCount(const TDmaTransferArgs& aTransferArgs)
 		__KTRACE_OPT(KDMA, Kern::Printf("iTransferCount == 0"));
 		count = src.iElementSize * src.iElementsPerFrame *
 			src.iFramesPerTransfer;
+#ifdef _DEBUG
 		const TUint dst_cnt = dst.iElementSize * dst.iElementsPerFrame *
 			dst.iFramesPerTransfer;
 		if (count != dst_cnt)
 			{
+			// 1
 			__KTRACE_OPT(KPANIC, Kern::Printf("Error: (count != dst_cnt)"));
 			return 0;
 			}
+#endif	// #ifdef _DEBUG
 		}
 	else
 		{
 		__KTRACE_OPT(KDMA, Kern::Printf("iTransferCount == %d", count));
+#ifdef _DEBUG
 		// Client shouldn't specify contradictory or incomplete things
-		if (src.iElementSize != 0)
+		if (CheckTransferConfig(src, count) != KErrNone)
 			{
-			if ((count % src.iElementSize) != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: ((count %% src.iElementSize) != 0)"));
-				return 0;
-				}
-			if (src.iElementsPerFrame != 0)
-				{
-				if ((src.iElementSize * src.iElementsPerFrame * src.iFramesPerTransfer) != count)
-					{
-					__KTRACE_OPT(KPANIC,
-								 Kern::Printf("Error: ((src.iElementSize * "
-											  "src.iElementsPerFrame * "
-											  "src.iFramesPerTransfer) != count)"));
-					return 0;
-					}
-				}
+			__KTRACE_OPT(KPANIC, Kern::Printf("Error: CheckTransferConfig(src)"));
+			return 0;
 			}
-		else
+		if (CheckTransferConfig(dst, count) != KErrNone)
 			{
-			if (src.iElementsPerFrame != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: (src.iElementsPerFrame != 0)"));
-				return 0;
-				}
-			if (src.iFramesPerTransfer != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: (src.iFramesPerTransfer != 0)"));
-				return 0;
-				}
-			if (src.iElementsPerPacket != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: (src.iElementsPerPacket != 0)"));
-				return 0;
-				}
+			__KTRACE_OPT(KPANIC, Kern::Printf("Error: CheckTransferConfig(dst)"));
+			return 0;
 			}
-		if (dst.iElementSize != 0)
-			{
-			if ((count % dst.iElementSize) != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: ((count %% dst.iElementSize) != 0)"));
-				return 0;
-				}
-			if (dst.iElementsPerFrame != 0)
-				{
-				if ((dst.iElementSize * dst.iElementsPerFrame * dst.iFramesPerTransfer) != count)
-					{
-					__KTRACE_OPT(KPANIC,
-								 Kern::Printf("Error: ((dst.iElementSize * "
-											  "dst.iElementsPerFrame * "
-											  "dst.iFramesPerTransfer) != count)"));
-					return 0;
-					}
-				}
-			}
-		else
-			{
-			if (dst.iElementsPerFrame != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: (dst.iElementsPerFrame != 0)"));
-				return 0;
-				}
-			if (dst.iFramesPerTransfer != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: (dst.iFramesPerTransfer != 0)"));
-				return 0;
-				}
-			if (dst.iElementsPerPacket != 0)
-				{
-				__KTRACE_OPT(KPANIC,
-							 Kern::Printf("Error: (dst.iElementsPerPacket != 0)"));
-				return 0;
-				}
-			}
+#endif	// #ifdef _DEBUG
 		}
 	return count;
 	}
 
 
+TUint DDmaRequest::GetMaxTransferlength(const TDmaTransferArgs& aTransferArgs, TUint aCount) const
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::GetMaxTransferlength"));
+
+	const TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
+	const TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
+
+	// Ask the PSL what the maximum length is for a single transfer
+	TUint max_xfer_len = iChannel.MaxTransferLength(src.iFlags, dst.iFlags,
+													aTransferArgs.iPslRequestInfo);
+	if (iMaxTransferSize)
+		{
+		// (User has set a transfer size cap)
+		__KTRACE_OPT(KDMA, Kern::Printf("iMaxTransferSize: %d", iMaxTransferSize));
+		if ((max_xfer_len != 0) && (iMaxTransferSize > max_xfer_len))
+			{
+			// Not really an error, but still...
+			__KTRACE_OPT(KPANIC, Kern::Printf("Warning: iMaxTransferSize > max_xfer_len"));
+			}
+		max_xfer_len = iMaxTransferSize;
+		}
+	else
+		{
+		// (User doesn't care about max transfer size)
+		if (max_xfer_len == 0)
+			{
+			// '0' = no maximum imposed by controller
+			max_xfer_len = aCount;
+			}
+		}
+	__KTRACE_OPT(KDMA, Kern::Printf("max_xfer_len: %d", max_xfer_len));
+
+	// Some sanity checks
+#ifdef _DEBUG
+	if ((max_xfer_len < src.iElementSize) || (max_xfer_len < dst.iElementSize))
+		{
+		// 18
+		__KTRACE_OPT(KPANIC, Kern::Printf("Error: max_xfer_len < iElementSize"));
+		return 0;
+		}
+	if ((max_xfer_len < (src.iElementSize * src.iElementsPerFrame)) ||
+		(max_xfer_len < (dst.iElementSize * dst.iElementsPerFrame)))
+		{
+		// 19
+		__KTRACE_OPT(KPANIC,
+					 Kern::Printf("Error: max_xfer_len < (iElementSize * iElementsPerFrame)"));
+		return 0;
+		}
+#endif	// #ifdef _DEBUG
+
+	return max_xfer_len;
+	}
+
+
+// Unified internal fragmentation routine, called by both the old and new
+// exported Fragment() functions.
+//
+// Depending on whether the DMAC uses a single or two separate descriptor
+// chains, this function branches into either FragSym() or FragAsym(), and the
+// latter function further into either FragAsymSrc()/FragAsymDst() or
+// FragBalancedAsym().
+//
 TInt DDmaRequest::Frag(TDmaTransferArgs& aTransferArgs)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::Frag"));
 	__DMA_ASSERTD(!iQueued);
 
-	// Transfer count checks
+	// Transfer count + checks
 	const TUint count = GetTransferCount(aTransferArgs);
 	if (count == 0)
 		{
 		return KErrArgument;
 		}
 
-	const TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
-	const TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
-
-	// Ask the PSL what the maximum length possible for this transfer is
-	TUint max_xfer_len = iChannel.MaxTransferLength(src.iFlags, dst.iFlags,
-													aTransferArgs.iPslRequestInfo);
-	if (iMaxTransferSize)
+	// Max transfer length + checks
+	const TUint max_xfer_len = GetMaxTransferlength(aTransferArgs, count);
+	if (max_xfer_len == 0)
 		{
-		// User has set a size cap
-		__KTRACE_OPT(KDMA, Kern::Printf("iMaxTransferSize != 0"));
-		__DMA_ASSERTA((iMaxTransferSize <= max_xfer_len) || (max_xfer_len == 0));
-		max_xfer_len = iMaxTransferSize;
-		}
-	else
-		{
-		// User doesn't care about max size
-		if (max_xfer_len == 0)
-			{
-			// No maximum imposed by controller
-			max_xfer_len = count;
-			}
+		return KErrArgument;
 		}
 
 	// ISR callback requested?
@@ -920,6 +1091,8 @@ TInt DDmaRequest::Frag(TDmaTransferArgs& aTransferArgs)
 		// Requesting an ISR callback w/o supplying one?
 		if (!iDmaCb)
 			{
+			// 12
+			__KTRACE_OPT(KPANIC, Kern::Printf("Error: !iDmaCb"));
 			return KErrArgument;
 			}
 		}
@@ -927,8 +1100,21 @@ TInt DDmaRequest::Frag(TDmaTransferArgs& aTransferArgs)
 	// Set the channel cookie for the PSL
 	aTransferArgs.iChannelCookie = iChannel.PslId();
 
+	// Client shouldn't specify contradictory or invalid things
+	TInt r = CheckMemFlags(aTransferArgs.iSrcConfig, count);
+	if (r != KErrNone)
+		{
+		__KTRACE_OPT(KPANIC, Kern::Printf("Error: CheckMemFlags(src)"));
+		return r;
+		}
+	r =  CheckMemFlags(aTransferArgs.iDstConfig, count);
+	if (r != KErrNone)
+		{
+		__KTRACE_OPT(KPANIC, Kern::Printf("Error: CheckMemFlags(dst)"));
+		return r;
+		}
+
 	// Now the actual fragmentation
-	TInt r;
 	if (iChannel.iDmacCaps->iAsymHwDescriptors)
 		{
 		r = FragAsym(aTransferArgs, count, max_xfer_len);
@@ -951,64 +1137,193 @@ TInt DDmaRequest::Frag(TDmaTransferArgs& aTransferArgs)
 TInt DDmaRequest::FragSym(TDmaTransferArgs& aTransferArgs, TUint aCount,
 						  TUint aMaxTransferLen)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FragSym"));
+
 	TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
 	TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
-
 	const TBool mem_src = (src.iFlags & KDmaMemAddr);
 	const TBool mem_dst = (dst.iFlags & KDmaMemAddr);
 
 	const TUint align_mask_src = iChannel.AddressAlignMask(src.iFlags,
 														   src.iElementSize,
 														   aTransferArgs.iPslRequestInfo);
+	__KTRACE_OPT(KDMA, Kern::Printf("align_mask_src: 0x%x", align_mask_src));
 	const TUint align_mask_dst = iChannel.AddressAlignMask(dst.iFlags,
 														   dst.iElementSize,
 														   aTransferArgs.iPslRequestInfo);
+	__KTRACE_OPT(KDMA, Kern::Printf("align_mask_dst: 0x%x", align_mask_dst));
+
 	// Memory buffers must satisfy alignment constraint
 	__DMA_ASSERTD(!mem_src || ((src.iAddr & align_mask_src) == 0));
 	__DMA_ASSERTD(!mem_dst || ((dst.iAddr & align_mask_dst) == 0));
 
+	// Max aligned length is used to make sure the beginnings of subtransfers
+	// (i.e. fragments) are correctly aligned.
 	const TUint max_aligned_len = (aMaxTransferLen &
 								   ~(Max(align_mask_src, align_mask_dst)));
+	__KTRACE_OPT(KDMA, Kern::Printf("max_aligned_len: %d", max_aligned_len));
 	// Client and PSL sane?
 	__DMA_ASSERTD(max_aligned_len > 0);
 
-	FreeDesList();			   // revert any previous fragmentation attempt
+	if (mem_src && mem_dst &&
+		align_mask_src && align_mask_dst &&
+		(align_mask_src != align_mask_dst) &&
+		(!(src.iFlags & KDmaMemIsContiguous) || !(dst.iFlags & KDmaMemIsContiguous)))
+		{
+		// We don't support transfers which satisfy ALL of the following conditions:
+		// 1) from memory to memory,
+		// 2) both sides have address alignment requirements,
+		// 3) those alignment requirements are not the same,
+		// 4) the memory is non-contiguous on at least one end.
+		//
+		// [A 5th condition is that the channel doesn't support fully
+		// asymmetric h/w descriptor lists,
+		// i.e. TDmaChannel::DmacCaps::iAsymHwDescriptors is reported as EFalse
+		// or iBalancedAsymSegments as ETrue. Hence this check is done in
+		// FragSym() and FragBalancedAsym() but not in FragAsym().]
+		//
+		// The reason for this is that fragmentation could be impossible. The
+		// memory layout (page break) on the side with the less stringent
+		// alignment requirement can result in a misaligned target address on
+		// the other side.
+		//
+		// Here is an example:
+		//
+		// src.iAddr =  3964 (0x0F7C), non-contiguous,
+		// align_mask_src = 1 (alignment = 2 bytes)
+		// dst.iAddr = 16384 (0x4000), contiguous,
+		// align_mask_dst = 7 (alignment = 8 bytes)
+		// count = max_xfer_len = 135 bytes
+		// => max_aligned_len = 128 bytes
+		//
+		// Now, suppose MaxPhysSize() returns 132 bytes because src has 132
+		// contiguous bytes to the end of its current mem page.
+		// Trying to fragment this leads to:
+		//
+		// frag_1 = 128 bytes: src reads from 3964 (0x0F7C),
+		//                     dst writes to 16384 (0x4000).
+		// (Fragment 1 uses the max_aligned_len instead of 132 bytes because
+		// otherwise the next fragment would start for the destination at
+		// dst.iAddr + 132 = 16516 (0x4084), which is not 8-byte aligned.)
+		//
+		// frag_2 = 4 bytes: src reads from 4092 (0x0FFC),
+		//                   dst writes to 16512 (0x4080).
+		// (Fragment 2 uses just 4 bytes instead of the remaining 7 bytes
+		// because there is a memory page break on the source side after 4 bytes.)
+		//
+		// frag_3 = 3 bytes: src reads from 4096 (0x1000),
+		//                   dst writes to 16516 (0x4084).
+		//
+		// And there's the problem: the start address of frag_3 is going to be
+		// misaligned for the destination side - it's not 8-byte aligned!
+		//
+		// 17
+		__KTRACE_OPT(KPANIC, Kern::Printf("Error: Different alignments for src & dst"
+										  " + non-contiguous target(s)"));
+		return KErrArgument;
+		}
+
 	TInt r;
+	// Revert any previous fragmentation attempt
+	FreeDesList();
 	do
 		{
 		// Allocate fragment
 		r = ExpandDesList(/*1*/);
 		if (r != KErrNone)
 			{
-			FreeDesList();
 			break;
 			}
 		// Compute fragment size
 		TUint c = Min(aMaxTransferLen, aCount);
-		if (mem_src && !(src.iFlags & KDmaPhysAddr))
+		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+
+		// SRC
+		if (mem_src && !(src.iFlags & KDmaMemIsContiguous))
 			{
-			__KTRACE_OPT(KDMA, Kern::Printf("mem_src && !(src.iFlags & KDmaPhysAddr)"));
-			// @@@ Should also take into account (src.iFlags & KDmaMemIsContiguous)!
 			c = MaxPhysSize(src.iAddr, c);
+			__KTRACE_OPT(KDMA, Kern::Printf("c = MaxPhysSize(src.iAddr, c) = %d", c));
 			}
-		if (mem_dst && !(dst.iFlags & KDmaPhysAddr))
+
+		// DST
+		if (mem_dst && !(dst.iFlags & KDmaMemIsContiguous))
 			{
-			__KTRACE_OPT(KDMA, Kern::Printf("mem_dst && !(dst.iFlags & KDmaPhysAddr)"));
-			// @@@ Should also take into account (dst.iFlags & KDmaMemIsContiguous)!
 			c = MaxPhysSize(dst.iAddr, c);
+			__KTRACE_OPT(KDMA, Kern::Printf("c = MaxPhysSize(dst.iAddr, c) = %d", c));
 			}
+
+		// SRC & DST
 		if ((mem_src || mem_dst) && (c < aCount) && (c > max_aligned_len))
 			{
 			// This is not the last fragment of a transfer to/from memory.
 			// We must round down the fragment size so the next one is
 			// correctly aligned.
-			__KTRACE_OPT(KDMA, Kern::Printf("(mem_src || mem_dst) && (c < aCount) && (c > max_aligned_len)"));
 			c = max_aligned_len;
+			__KTRACE_OPT(KDMA, Kern::Printf("c = max_aligned_len = %d", c));
+			//
+			// But can this condition actually occur if src and dst are
+			// properly aligned to start with?
+			//
+			// If we disallow unequal alignment requirements in connection with
+			// non-contiguous memory buffers (see the long comment above in
+			// this function for why) and if both target addresses are
+			// correctly aligned at the beginning of the transfer then it
+			// doesn't seem possible to end up with a fragment which is not
+			// quite the total remaining size (c < aCount) but still larger
+			// than the greatest aligned length (c > max_aligned_len).
+			//
+			// That's because address alignment values are always a power of
+			// two (at least that's what we assume - otherwise
+			// AddressAlignMask() doesn't work), and memory page sizes are also
+			// always a power of two and hence a multiple of the alignment
+			// value (as long as the alignment is not greater than the page
+			// size, which seems a reasonable assumption regardless of the
+			// actual page size). So if we start properly aligned anywhere in a
+			// memory page then the number of bytes to the end of that page is
+			// always a multiple of the aligment value - there's no remainder.
+			//
+			// So let's see if we ever hit this assertion:
+			Kern::Printf("Unexpected: (mem_src || mem_dst) && (c < aCount) && (c > max_aligned_len)");
+			__DMA_ASSERTA(EFalse);
 			}
 
-		// TODO: Make sure an element or frame on neither src or dst side
-		// (which can be of different sizes) never straddles a DMA subtransfer.
-		// (This would be a fragmentation error by the PIL.)
+		// If this is not the last fragment...
+		if (c < aCount)
+			{
+			const TUint es_src = src.iElementSize;
+			const TUint es_dst = dst.iElementSize;
+			const TUint fs_src = es_src * src.iElementsPerFrame;
+			const TUint fs_dst = es_dst * dst.iElementsPerFrame;
+			TUint c_prev;
+			do
+				{
+				c_prev = c;
+				// If fs_src is !0 then es_src must be !0 as well (see
+				// CheckTransferConfig).
+				if (es_src)
+					{
+					r = AdjustFragmentSize(c, es_src, fs_src);
+					if (r != KErrNone)
+						{
+						break;							// while (c != c_prev);
+						}
+					}
+				// If fs_dst is !0 then es_dst must be !0 as well (see
+				// CheckTransferConfig).
+				if (es_dst)
+					{
+					r = AdjustFragmentSize(c, es_dst, fs_dst);
+					if (r != KErrNone)
+						{
+						break;							// while (c != c_prev);
+						}
+					}
+				} while (c != c_prev);
+			if (r != KErrNone)
+				{
+				break;									 // while (aCount > 0);
+				}
+			}
 
 		// Set transfer count for the PSL
 		aTransferArgs.iTransferCount = c;
@@ -1018,18 +1333,24 @@ TInt DDmaRequest::FragSym(TDmaTransferArgs& aTransferArgs, TUint aCount,
 		r = iChannel.iController->InitDes(*iLastHdr, aTransferArgs);
 		if (r != KErrNone)
 			{
-			FreeDesList();
 			break;
 			}
 		// Update for next iteration
 		aCount -= c;
 		if (mem_src)
+			{
 			src.iAddr += c;
+			}
 		if (mem_dst)
+			{
 			dst.iAddr += c;
-		}
-	while (aCount > 0);
+			}
+		} while (aCount > 0);
 
+	if (r != KErrNone)
+		{
+		FreeDesList();
+		}
 	return r;
 	}
 
@@ -1037,7 +1358,20 @@ TInt DDmaRequest::FragSym(TDmaTransferArgs& aTransferArgs, TUint aCount,
 TInt DDmaRequest::FragAsym(TDmaTransferArgs& aTransferArgs, TUint aCount,
 						   TUint aMaxTransferLen)
 	{
-	TInt r = FragAsymSrc(aTransferArgs, aCount, aMaxTransferLen);
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FragAsym"));
+
+	TInt r;
+	if (iChannel.iDmacCaps->iBalancedAsymSegments)
+		{
+		r = FragBalancedAsym(aTransferArgs, aCount, aMaxTransferLen);
+		if (r != KErrNone)
+			{
+			FreeSrcDesList();
+			FreeDstDesList();
+			}
+		return r;
+		}
+	r = FragAsymSrc(aTransferArgs, aCount, aMaxTransferLen);
 	if (r != KErrNone)
 		{
 		FreeSrcDesList();
@@ -1056,21 +1390,29 @@ TInt DDmaRequest::FragAsym(TDmaTransferArgs& aTransferArgs, TUint aCount,
 TInt DDmaRequest::FragAsymSrc(TDmaTransferArgs& aTransferArgs, TUint aCount,
 							  TUint aMaxTransferLen)
 	{
-	TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FragAsymSrc"));
 
+	TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
 	const TBool mem_src = (src.iFlags & KDmaMemAddr);
 
 	const TUint align_mask = iChannel.AddressAlignMask(src.iFlags,
 													   src.iElementSize,
 													   aTransferArgs.iPslRequestInfo);
+	__KTRACE_OPT(KDMA, Kern::Printf("align_mask: 0x%x", align_mask));
+
 	// Memory buffers must satisfy alignment constraint
 	__DMA_ASSERTD(!mem_src || ((src.iAddr & align_mask) == 0));
 
+	// Max aligned length is used to make sure the beginnings of subtransfers
+	// (i.e. fragments) are correctly aligned.
 	const TUint max_aligned_len = (aMaxTransferLen & ~align_mask);
-	__DMA_ASSERTD(max_aligned_len > 0);				  // bug in PSL if not true
+	__KTRACE_OPT(KDMA, Kern::Printf("max_aligned_len: %d", max_aligned_len));
+	// Client and PSL sane?
+	__DMA_ASSERTD(max_aligned_len > 0);
 
-	FreeSrcDesList();
 	TInt r;
+	// Revert any previous fragmentation attempt
+	FreeSrcDesList();
 	do
 		{
 		// Allocate fragment
@@ -1081,19 +1423,62 @@ TInt DDmaRequest::FragAsymSrc(TDmaTransferArgs& aTransferArgs, TUint aCount,
 			}
 		// Compute fragment size
 		TUint c = Min(aMaxTransferLen, aCount);
-		if (mem_src && !(src.iFlags & KDmaPhysAddr))
+		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+
+		if (mem_src && !(src.iFlags & KDmaMemIsContiguous))
 			{
-			__KTRACE_OPT(KDMA, Kern::Printf("mem_src && !(src.iFlags & KDmaPhysAddr)"));
 			c = MaxPhysSize(src.iAddr, c);
+			__KTRACE_OPT(KDMA, Kern::Printf("c = MaxPhysSize(src.iAddr, c) = %d", c));
 			}
+
 		if (mem_src && (c < aCount) && (c > max_aligned_len))
 			{
 			// This is not the last fragment of a transfer from memory.
 			// We must round down the fragment size so the next one is
 			// correctly aligned.
-			__KTRACE_OPT(KDMA, Kern::Printf("mem_src && (c < aCount) && (c > max_aligned_len)"));
-			c = max_aligned_len;
+			__KTRACE_OPT(KDMA, Kern::Printf("c = max_aligned_len = %d", c));
+			//
+			// But can this condition actually occur if src is properly aligned
+			// to start with?
+			//
+			// If the target address is correctly aligned at the beginning of
+			// the transfer then it doesn't seem possible to end up with a
+			// fragment which is not quite the total remaining size (c <
+			// aCount) but still larger than the greatest aligned length (c >
+			// max_aligned_len).
+			//
+			// That's because address alignment values are always a power of
+			// two (at least that's what we assume - otherwise
+			// AddressAlignMask() doesn't work), and memory page sizes are also
+			// always a power of two and hence a multiple of the alignment
+			// value (as long as the alignment is not greater than the page
+			// size, which seems a reasonable assumption regardless of the
+			// actual page size). So if we start properly aligned anywhere in a
+			// memory page then the number of bytes to the end of that page is
+			// always a multiple of the aligment value - there's no remainder.
+			//
+			// So let's see if we ever hit this assertion:
+			Kern::Printf("Unexpected: mem_src && (c < aCount) && (c > max_aligned_len)");
+			__DMA_ASSERTA(EFalse);
 			}
+
+		// If this is not the last fragment...
+		if (c < aCount)
+			{
+			const TUint es = src.iElementSize;
+			const TUint fs = es * src.iElementsPerFrame;
+			// If fs is !0 then es must be !0 as well (see
+			// CheckTransferConfig).
+			if (es)
+				{
+				r = AdjustFragmentSize(c, es, fs);
+				if (r != KErrNone)
+					{
+					break;								 // while (aCount > 0);
+					}
+				}
+			}
+
 		// Set transfer count for the PSL
 		aTransferArgs.iTransferCount = c;
 		__KTRACE_OPT(KDMA, Kern::Printf("this fragm.: %d (0x%x) total remain.: %d (0x%x)",
@@ -1107,9 +1492,10 @@ TInt DDmaRequest::FragAsymSrc(TDmaTransferArgs& aTransferArgs, TUint aCount,
 		// Update for next iteration
 		aCount -= c;
 		if (mem_src)
+			{
 			src.iAddr += c;
-		}
-	while (aCount > 0);
+			}
+		} while (aCount > 0);
 
 	return r;
 	}
@@ -1118,21 +1504,29 @@ TInt DDmaRequest::FragAsymSrc(TDmaTransferArgs& aTransferArgs, TUint aCount,
 TInt DDmaRequest::FragAsymDst(TDmaTransferArgs& aTransferArgs, TUint aCount,
 							  TUint aMaxTransferLen)
 	{
-	TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FragAsymDst"));
 
+	TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
 	const TBool mem_dst = (dst.iFlags & KDmaMemAddr);
 
 	const TUint align_mask = iChannel.AddressAlignMask(dst.iFlags,
 													   dst.iElementSize,
 													   aTransferArgs.iPslRequestInfo);
+	__KTRACE_OPT(KDMA, Kern::Printf("align_mask: 0x%x", align_mask));
+
 	// Memory buffers must satisfy alignment constraint
 	__DMA_ASSERTD(!mem_dst || ((dst.iAddr & align_mask) == 0));
 
+	// Max aligned length is used to make sure the beginnings of subtransfers
+	// (i.e. fragments) are correctly aligned.
 	const TUint max_aligned_len = (aMaxTransferLen & ~align_mask);
-	__DMA_ASSERTD(max_aligned_len > 0);				  // bug in PSL if not true
+	__KTRACE_OPT(KDMA, Kern::Printf("max_aligned_len: %d", max_aligned_len));
+	// Client and PSL sane?
+	__DMA_ASSERTD(max_aligned_len > 0);
 
-	FreeDstDesList();
 	TInt r;
+	// Revert any previous fragmentation attempt
+	FreeDstDesList();
 	do
 		{
 		// Allocate fragment
@@ -1143,19 +1537,62 @@ TInt DDmaRequest::FragAsymDst(TDmaTransferArgs& aTransferArgs, TUint aCount,
 			}
 		// Compute fragment size
 		TUint c = Min(aMaxTransferLen, aCount);
-		if (mem_dst && !(dst.iFlags & KDmaPhysAddr))
+		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+
+		if (mem_dst && !(dst.iFlags & KDmaMemIsContiguous))
 			{
-			__KTRACE_OPT(KDMA, Kern::Printf("mem_dst && !(dst.iFlags & KDmaPhysAddr)"));
 			c = MaxPhysSize(dst.iAddr, c);
+			__KTRACE_OPT(KDMA, Kern::Printf("c = MaxPhysSize(dst.iAddr, c) = %d", c));
 			}
+
 		if (mem_dst && (c < aCount) && (c > max_aligned_len))
 			{
 			// This is not the last fragment of a transfer to memory.
 			// We must round down the fragment size so the next one is
 			// correctly aligned.
-			__KTRACE_OPT(KDMA, Kern::Printf("mem_dst && (c < aCount) && (c > max_aligned_len)"));
-			c = max_aligned_len;
+			__KTRACE_OPT(KDMA, Kern::Printf("c = max_aligned_len = %d", c));
+			//
+			// But can this condition actually occur if dst is properly aligned
+			// to start with?
+			//
+			// If the target address is correctly aligned at the beginning of
+			// the transfer then it doesn't seem possible to end up with a
+			// fragment which is not quite the total remaining size (c <
+			// aCount) but still larger than the greatest aligned length (c >
+			// max_aligned_len).
+			//
+			// That's because address alignment values are always a power of
+			// two (at least that's what we assume - otherwise
+			// AddressAlignMask() doesn't work), and memory page sizes are also
+			// always a power of two and hence a multiple of the alignment
+			// value (as long as the alignment is not greater than the page
+			// size, which seems a reasonable assumption regardless of the
+			// actual page size). So if we start properly aligned anywhere in a
+			// memory page then the number of bytes to the end of that page is
+			// always a multiple of the aligment value - there's no remainder.
+			//
+			// So let's see if we ever hit this assertion:
+			Kern::Printf("Unexpected: mem_dst && (c < aCount) && (c > max_aligned_len)");
+			__DMA_ASSERTA(EFalse);
 			}
+
+		// If this is not the last fragment...
+		if (c < aCount)
+			{
+			const TUint es = dst.iElementSize;
+			const TUint fs = es * dst.iElementsPerFrame;
+			// If fs is !0 then es must be !0 as well (see
+			// CheckTransferConfig).
+			if (es)
+				{
+				r = AdjustFragmentSize(c, es, fs);
+				if (r != KErrNone)
+					{
+					break;								 // while (aCount > 0);
+					}
+				}
+			}
+
 		// Set transfer count for the PSL
 		aTransferArgs.iTransferCount = c;
 		__KTRACE_OPT(KDMA, Kern::Printf("this fragm.: %d (0x%x) total remain.: %d (0x%x)",
@@ -1169,7 +1606,238 @@ TInt DDmaRequest::FragAsymDst(TDmaTransferArgs& aTransferArgs, TUint aCount,
 		// Update for next iteration
 		aCount -= c;
 		if (mem_dst)
+			{
 			dst.iAddr += c;
+			}
+		}
+	while (aCount > 0);
+
+	return r;
+	}
+
+
+TInt DDmaRequest::FragBalancedAsym(TDmaTransferArgs& aTransferArgs, TUint aCount,
+								   TUint aMaxTransferLen)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FragBalancedAsym"));
+
+	TDmaTransferConfig& src = aTransferArgs.iSrcConfig;
+	TDmaTransferConfig& dst = aTransferArgs.iDstConfig;
+	const TBool mem_src = (src.iFlags & KDmaMemAddr);
+	const TBool mem_dst = (dst.iFlags & KDmaMemAddr);
+
+	const TUint align_mask_src = iChannel.AddressAlignMask(src.iFlags,
+														   src.iElementSize,
+														   aTransferArgs.iPslRequestInfo);
+	__KTRACE_OPT(KDMA, Kern::Printf("align_mask_src: 0x%x", align_mask_src));
+	const TUint align_mask_dst = iChannel.AddressAlignMask(dst.iFlags,
+														   dst.iElementSize,
+														   aTransferArgs.iPslRequestInfo);
+	__KTRACE_OPT(KDMA, Kern::Printf("align_mask_dst: 0x%x", align_mask_dst));
+
+	// Memory buffers must satisfy alignment constraint
+	__DMA_ASSERTD(!mem_src || ((src.iAddr & align_mask_src) == 0));
+	__DMA_ASSERTD(!mem_dst || ((dst.iAddr & align_mask_dst) == 0));
+
+	// Max aligned length is used to make sure the beginnings of subtransfers
+	// (i.e. fragments) are correctly aligned.
+	const TUint max_aligned_len = (aMaxTransferLen &
+								   ~(Max(align_mask_src, align_mask_dst)));
+	__KTRACE_OPT(KDMA, Kern::Printf("max_aligned_len: %d", max_aligned_len));
+	// Client and PSL sane?
+	__DMA_ASSERTD(max_aligned_len > 0);
+
+	if (mem_src && mem_dst &&
+		align_mask_src && align_mask_dst &&
+		(align_mask_src != align_mask_dst) &&
+		(!(src.iFlags & KDmaMemIsContiguous) || !(dst.iFlags & KDmaMemIsContiguous)))
+		{
+		// We don't support transfers which satisfy ALL of the following conditions:
+		// 1) from memory to memory,
+		// 2) both sides have address alignment requirements,
+		// 3) those alignment requirements are not the same,
+		// 4) the memory is non-contiguous on at least one end.
+		//
+		// [A 5th condition is that the channel doesn't support fully
+		// asymmetric h/w descriptor lists,
+		// i.e. TDmaChannel::DmacCaps::iAsymHwDescriptors is reported as EFalse
+		// or iBalancedAsymSegments as ETrue. Hence this check is done in
+		// FragSym() and FragBalancedAsym() but not in FragAsym().]
+		//
+		// The reason for this is that fragmentation could be impossible. The
+		// memory layout (page break) on the side with the less stringent
+		// alignment requirement can result in a misaligned target address on
+		// the other side.
+		//
+		// Here is an example:
+		//
+		// src.iAddr =  3964 (0x0F7C), non-contiguous,
+		// align_mask_src = 1 (alignment = 2 bytes)
+		// dst.iAddr = 16384 (0x4000), contiguous,
+		// align_mask_dst = 7 (alignment = 8 bytes)
+		// count = max_xfer_len = 135 bytes
+		// => max_aligned_len = 128 bytes
+		//
+		// Now, suppose MaxPhysSize() returns 132 bytes because src has 132
+		// contiguous bytes to the end of its current mem page.
+		// Trying to fragment this leads to:
+		//
+		// frag_1 = 128 bytes: src reads from 3964 (0x0F7C),
+		//                     dst writes to 16384 (0x4000).
+		// (Fragment 1 uses the max_aligned_len instead of 132 bytes because
+		// otherwise the next fragment would start for the destination at
+		// dst.iAddr + 132 = 16516 (0x4084), which is not 8-byte aligned.)
+		//
+		// frag_2 = 4 bytes: src reads from 4092 (0x0FFC),
+		//                   dst writes to 16512 (0x4080).
+		// (Fragment 2 uses just 4 bytes instead of the remaining 7 bytes
+		// because there is a memory page break on the source side after 4 bytes.)
+		//
+		// frag_3 = 3 bytes: src reads from 4096 (0x1000),
+		//                   dst writes to 16516 (0x4084).
+		//
+		// And there's the problem: the start address of frag_3 is going to be
+		// misaligned for the destination side - it's not 8-byte aligned!
+		//
+		__KTRACE_OPT(KPANIC, Kern::Printf("Error: Different alignments for src & dst"
+										  " + non-contiguous target(s)"));
+		return KErrArgument;
+		}
+
+	TInt r;
+	// Revert any previous fragmentation attempt
+	FreeSrcDesList();
+	FreeDstDesList();
+	do
+		{
+		// Allocate fragment
+		r = ExpandSrcDesList(/*1*/);
+		if (r != KErrNone)
+			{
+			break;
+			}
+		r = ExpandDstDesList(/*1*/);
+		if (r != KErrNone)
+			{
+			break;
+			}
+		// Compute fragment size
+		TUint c = Min(aMaxTransferLen, aCount);
+		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+
+		// SRC
+		if (mem_src && !(src.iFlags & KDmaMemIsContiguous))
+			{
+			c = MaxPhysSize(src.iAddr, c);
+			__KTRACE_OPT(KDMA, Kern::Printf("c = MaxPhysSize(src.iAddr, c) = %d", c));
+			}
+
+		// DST
+		if (mem_dst && !(dst.iFlags & KDmaMemIsContiguous))
+			{
+			c = MaxPhysSize(dst.iAddr, c);
+			__KTRACE_OPT(KDMA, Kern::Printf("c = MaxPhysSize(dst.iAddr, c) = %d", c));
+			}
+
+		// SRC & DST
+		if ((mem_src || mem_dst) && (c < aCount) && (c > max_aligned_len))
+			{
+			// This is not the last fragment of a transfer to/from memory.
+			// We must round down the fragment size so the next one is
+			// correctly aligned.
+			c = max_aligned_len;
+			__KTRACE_OPT(KDMA, Kern::Printf("c = max_aligned_len = %d", c));
+			//
+			// But can this condition actually occur if src and dst are
+			// properly aligned to start with?
+			//
+			// If we disallow unequal alignment requirements in connection with
+			// non-contiguous memory buffers (see the long comment above in
+			// this function for why) and if both target addresses are
+			// correctly aligned at the beginning of the transfer then it
+			// doesn't seem possible to end up with a fragment which is not
+			// quite the total remaining size (c < aCount) but still larger
+			// than the greatest aligned length (c > max_aligned_len).
+			//
+			// That's because address alignment values are always a power of
+			// two (at least that's what we assume - otherwise
+			// AddressAlignMask() doesn't work), and memory page sizes are also
+			// always a power of two and hence a multiple of the alignment
+			// value (as long as the alignment is not greater than the page
+			// size, which seems a reasonable assumption regardless of the
+			// actual page size). So if we start properly aligned anywhere in a
+			// memory page then the number of bytes to the end of that page is
+			// always a multiple of the aligment value - there's no remainder.
+			//
+			// So let's see if we ever hit this assertion:
+			Kern::Printf("Unexpected: (mem_src || mem_dst) && (c < aCount) && (c > max_aligned_len)");
+			__DMA_ASSERTA(EFalse);
+			}
+
+		// If this is not the last fragment...
+		if (c < aCount)
+			{
+			const TUint es_src = src.iElementSize;
+			const TUint es_dst = dst.iElementSize;
+			const TUint fs_src = es_src * src.iElementsPerFrame;
+			const TUint fs_dst = es_dst * dst.iElementsPerFrame;
+			TUint c_prev;
+			do
+				{
+				c_prev = c;
+				// If fs_src is !0 then es_src must be !0 as well (see
+				// CheckTransferConfig).
+				if (es_src)
+					{
+					r = AdjustFragmentSize(c, es_src, fs_src);
+					if (r != KErrNone)
+						{
+						break;							// while (c != c_prev);
+						}
+					}
+				// If fs_dst is !0 then es_dst must be !0 as well (see
+				// CheckTransferConfig).
+				if (es_dst)
+					{
+					r = AdjustFragmentSize(c, es_dst, fs_dst);
+					if (r != KErrNone)
+						{
+						break;							// while (c != c_prev);
+						}
+					}
+				} while (c != c_prev);
+			if (r != KErrNone)
+				{
+				break;									 // while (aCount > 0);
+				}
+			}
+
+		// Set transfer count for the PSL
+		aTransferArgs.iTransferCount = c;
+		__KTRACE_OPT(KDMA, Kern::Printf("this fragm.: %d (0x%x) total remain.: %d (0x%x)",
+										c, c, aCount, aCount));
+		// Initialise SRC fragment
+		r = iChannel.iController->InitSrcHwDes(*iSrcLastHdr, aTransferArgs);
+		if (r != KErrNone)
+			{
+			break;
+			}
+		// Initialise DST fragment
+		r = iChannel.iController->InitDstHwDes(*iDstLastHdr, aTransferArgs);
+		if (r != KErrNone)
+			{
+			break;
+			}
+		// Update for next iteration
+		aCount -= c;
+		if (mem_src)
+			{
+			src.iAddr += c;
+			}
+		if (mem_dst)
+			{
+			dst.iAddr += c;
+			}
 		}
 	while (aCount > 0);
 
@@ -1180,7 +1848,15 @@ TInt DDmaRequest::FragAsymDst(TDmaTransferArgs& aTransferArgs, TUint aCount,
 EXPORT_C TInt DDmaRequest::Queue()
 	{
 	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::Queue thread %O", &Kern::CurrentThread()));
-	__DMA_ASSERTD(iDesCount > 0);	// Not configured? Call Fragment() first!
+	// Not configured? Call Fragment() first!
+	if (iChannel.iDmacCaps->iAsymHwDescriptors)
+		{
+		__DMA_ASSERTD((iSrcDesCount < 0) && (iDstDesCount < 0));
+		}
+	else
+		{
+		__DMA_ASSERTD(iDesCount > 0);
+		}
 	__DMA_ASSERTD(!iQueued);
 
 	// Append request to queue and link new descriptor list to existing one.
@@ -1270,18 +1946,21 @@ EXPORT_C TInt DDmaRequest::Queue()
 
 EXPORT_C TInt DDmaRequest::ExpandDesList(TInt aCount)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::ExpandDesList aCount=%d", aCount));
 	return ExpandDesList(aCount, iDesCount, iFirstHdr, iLastHdr);
 	}
 
 
 EXPORT_C TInt DDmaRequest::ExpandSrcDesList(TInt aCount)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::ExpandSrcDesList"));
 	return ExpandDesList(aCount, iSrcDesCount, iSrcFirstHdr, iSrcLastHdr);
 	}
 
 
 EXPORT_C TInt DDmaRequest::ExpandDstDesList(TInt aCount)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::ExpandDstDesList"));
 	return ExpandDesList(aCount, iDstDesCount, iDstFirstHdr, iDstLastHdr);
 	}
 
@@ -1290,6 +1969,7 @@ TInt DDmaRequest::ExpandDesList(TInt aCount, TInt& aDesCount,
 								SDmaDesHdr*& aFirstHdr,
 								SDmaDesHdr*& aLastHdr)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::ExpandDesList"));
 	__DMA_ASSERTD(!iQueued);
 	__DMA_ASSERTD(aCount > 0);
 
@@ -1340,24 +2020,28 @@ TInt DDmaRequest::ExpandDesList(TInt aCount, TInt& aDesCount,
 
 EXPORT_C void DDmaRequest::FreeDesList()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FreeDesList"));
 	FreeDesList(iDesCount, iFirstHdr, iLastHdr);
 	}
 
 
 EXPORT_C void DDmaRequest::FreeSrcDesList()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FreeSrcDesList"));
 	FreeDesList(iSrcDesCount, iSrcFirstHdr, iSrcLastHdr);
 	}
 
 
 EXPORT_C void DDmaRequest::FreeDstDesList()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FreeDstDesList"));
 	FreeDesList(iDstDesCount, iDstFirstHdr, iDstLastHdr);
 	}
 
 
 void DDmaRequest::FreeDesList(TInt& aDesCount, SDmaDesHdr*& aFirstHdr, SDmaDesHdr*& aLastHdr)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FreeDesList count=%d", aDesCount));
 	__DMA_ASSERTD(!iQueued);
 
 	if (aDesCount > 0)
@@ -1367,13 +2051,20 @@ void DDmaRequest::FreeDesList(TInt& aDesCount, SDmaDesHdr*& aFirstHdr, SDmaDesHd
 		const SDmaDesHdr* hdr = aFirstHdr;
 		while (hdr)
 			{
+			__DMA_ASSERTD(c.IsValidHdr(hdr));
+
+			// This (potential) PSL call doesn't follow the "overhead
+			// principle", and something should be done about this.
 			c.ClearHwDes(*hdr);
 			hdr = hdr->iNext;
 			};
+
 		c.Wait();
+		__DMA_ASSERTD(c.IsValidHdr(c.iFreeHdr));
 		aLastHdr->iNext = c.iFreeHdr;
 		c.iFreeHdr = aFirstHdr;
 		c.Signal();
+
 		aFirstHdr = aLastHdr = NULL;
 		aDesCount = 0;
 		}
@@ -1382,6 +2073,8 @@ void DDmaRequest::FreeDesList(TInt& aDesCount, SDmaDesHdr*& aFirstHdr, SDmaDesHd
 
 EXPORT_C void DDmaRequest::EnableSrcElementCounting(TBool /*aResetElementCount*/)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::EnableSrcElementCounting"));
+
 	// Not yet implemented.
 	return;
 	}
@@ -1389,6 +2082,8 @@ EXPORT_C void DDmaRequest::EnableSrcElementCounting(TBool /*aResetElementCount*/
 
 EXPORT_C void DDmaRequest::EnableDstElementCounting(TBool /*aResetElementCount*/)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::EnableDstElementCounting"));
+
 	// Not yet implemented.
 	return;
 	}
@@ -1396,6 +2091,8 @@ EXPORT_C void DDmaRequest::EnableDstElementCounting(TBool /*aResetElementCount*/
 
 EXPORT_C void DDmaRequest::DisableSrcElementCounting()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::DisableSrcElementCounting"));
+
 	// Not yet implemented.
 	return;
 	}
@@ -1403,6 +2100,8 @@ EXPORT_C void DDmaRequest::DisableSrcElementCounting()
 
 EXPORT_C void DDmaRequest::DisableDstElementCounting()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::DisableDstElementCounting"));
+
 	// Not yet implemented.
 	return;
 	}
@@ -1410,6 +2109,8 @@ EXPORT_C void DDmaRequest::DisableDstElementCounting()
 
 EXPORT_C TUint32 DDmaRequest::TotalNumSrcElementsTransferred()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::TotalNumSrcElementsTransferred"));
+
 	// Not yet implemented.
 
 	// So far largely bogus code (just to touch some symbols)...
@@ -1432,6 +2133,8 @@ EXPORT_C TUint32 DDmaRequest::TotalNumSrcElementsTransferred()
 
 EXPORT_C TUint32 DDmaRequest::TotalNumDstElementsTransferred()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::TotalNumDstElementsTransferred"));
+
 	// Not yet implemented.
 	return iTotalNumDstElementsTransferred;
 	}
@@ -1439,24 +2142,28 @@ EXPORT_C TUint32 DDmaRequest::TotalNumDstElementsTransferred()
 
 EXPORT_C TInt DDmaRequest::FragmentCount()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FragmentCount"));
 	return FragmentCount(iFirstHdr);
 	}
 
 
 EXPORT_C TInt DDmaRequest::SrcFragmentCount()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::SrcFragmentCount"));
 	return FragmentCount(iSrcFirstHdr);
 	}
 
 
 EXPORT_C TInt DDmaRequest::DstFragmentCount()
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::DstFragmentCount"));
 	return FragmentCount(iDstFirstHdr);
 	}
 
 
 TInt DDmaRequest::FragmentCount(const SDmaDesHdr* aHdr)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::FragmentCount aHdr=0x%08x", aHdr));
 	TInt count = 0;
 	for (const SDmaDesHdr* pH = aHdr; pH != NULL; pH = pH->iNext)
 		{
@@ -1472,8 +2179,18 @@ TInt DDmaRequest::FragmentCount(const SDmaDesHdr* aHdr)
 inline void DDmaRequest::OnDeque()
 	{
 	iQueued = EFalse;
-	iLastHdr->iNext = NULL;
-	iChannel.DoUnlink(*iLastHdr);
+	if (iChannel.iDmacCaps->iAsymHwDescriptors)
+		{
+		iSrcLastHdr->iNext = NULL;
+		iDstLastHdr->iNext = NULL;
+		iChannel.DoUnlink(*iSrcLastHdr);
+		iChannel.DoUnlink(*iDstLastHdr);
+		}
+	else
+		{
+		iLastHdr->iNext = NULL;
+		iChannel.DoUnlink(*iLastHdr);
+		}
 	}
 
 
@@ -1507,6 +2224,10 @@ void DDmaRequest::Invariant()
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iSrcLastHdr));
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iDstFirstHdr));
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iDstLastHdr));
+			}
+		if (iChannel.iDmacCaps->iBalancedAsymSegments)
+			{
+			__DMA_ASSERTD(iSrcDesCount == iDstDesCount);
 			}
 		}
 	else
@@ -1554,7 +2275,7 @@ TDmaChannel::TDmaChannel()
 	  iRedoRequest(EFalse),
 	  iIsrCbRequest(EFalse)
 	{
-	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::TDmaChannel"));
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::TDmaChannel =0x%08X", this));
 	__DMA_INVARIANT();
 	}
 
@@ -1566,7 +2287,12 @@ EXPORT_C TInt TDmaChannel::Open(const SCreateInfo& aInfo, TDmaChannel*& aChannel
 	{
 	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Open thread %O", &Kern::CurrentThread()));
 
-	__DMA_ASSERTD(aInfo.iDesCount >= 1);
+	if (aInfo.iDesCount < 1)
+		{
+		__KTRACE_OPT(KPANIC, Kern::Printf("DMA channel failed to open: iDescount<1"));
+		return KErrArgument;
+		}
+
 	__DMA_ASSERTD(aInfo.iPriority <= KDmaPriority8);
 	__DMA_ASSERTD(aInfo.iDfcQ != NULL);
 	__DMA_ASSERTD(aInfo.iDfcPriority < KNumDfcPriorities);
@@ -1760,11 +2486,10 @@ EXPORT_C TInt TDmaChannel::IsrRedoRequest(TUint32 aSrcAddr, TUint32 aDstAddr,
 										  TUint32 aPslRequestInfo,
 										  TBool aIsrCb)
 	{
-	__KTRACE_OPT(KDMA,
-				 Kern::Printf("TDmaChannel::IsrRedoRequest src=0x%08x, "
-							  "dst=0x%08x, count=%d, pslInfo=0x%08x, isrCb=%d",
-							  aSrcAddr, aDstAddr, aTransferCount, aPslRequestInfo,
-							  aIsrCb));
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::IsrRedoRequest src=0x%08X, "
+									"dst=0x%08X, count=%d, pslInfo=0x%08X, isrCb=%d",
+									aSrcAddr, aDstAddr, aTransferCount, aPslRequestInfo,
+									aIsrCb));
 	// Function needs to be called in ISR context.
 	__DMA_ASSERTD(NKern::CurrentContext() == NKern::EInterrupt);
 
@@ -1775,7 +2500,7 @@ EXPORT_C TInt TDmaChannel::IsrRedoRequest(TUint32 aSrcAddr, TUint32 aDstAddr,
 	if ((aSrcAddr != KPhysAddrInvalid) && (aSrcAddr == aDstAddr))
 		{
 		__KTRACE_OPT(KPANIC,
-					 Kern::Printf("Error: Updating src & dst to same address: 0x%08x",
+					 Kern::Printf("Error: Updating src & dst to same address: 0x%08X",
 								  aSrcAddr));
 		return KErrArgument;
 		}
@@ -1791,8 +2516,12 @@ EXPORT_C TInt TDmaChannel::IsrRedoRequest(TUint32 aSrcAddr, TUint32 aDstAddr,
 
 	if (iDmacCaps->iAsymHwDescriptors)
 		{
-		// We don't allow multiple-descriptor chains to be updated here
+		// We don't allow multiple-descriptor chains to be updated here.
+		// That we just panic (instead of returning an error), and also only in
+		// the UDEB case (instead of always) is not ideal, but done here in the
+		// interest of performance.
 		__DMA_ASSERTD((pCurReq->iSrcDesCount == 1) && (pCurReq->iDstDesCount == 1));
+
 		// Adjust parameters if necessary (asymmetrical s/g variety)
 		const SDmaDesHdr* const pSrcFirstHdr = pCurReq->iSrcFirstHdr;
 		if ((aSrcAddr != KPhysAddrInvalid) || aTransferCount || aPslRequestInfo)
@@ -1821,8 +2550,12 @@ EXPORT_C TInt TDmaChannel::IsrRedoRequest(TUint32 aSrcAddr, TUint32 aDstAddr,
 		}
 	else
 		{
-		// We don't allow multiple-descriptor chains to be updated here
+		// We don't allow a multiple-descriptor chain to be updated here.
+		// That we just panic (instead of returning an error), and also only in
+		// the UDEB case (instead of always) is not ideal, but done here in the
+		// interest of performance.
 		__DMA_ASSERTD(pCurReq->iDesCount == 1);
+
 		// Adjust parameters if necessary (symmetrical s/g and non-s/g variety)
 		const SDmaDesHdr* const pFirstHdr = pCurReq->iFirstHdr;
 		if ((aSrcAddr != KPhysAddrInvalid) || (aDstAddr != KPhysAddrInvalid) ||
@@ -1853,18 +2586,21 @@ EXPORT_C TInt TDmaChannel::IsrRedoRequest(TUint32 aSrcAddr, TUint32 aDstAddr,
 
 EXPORT_C TInt TDmaChannel::FailNext(TInt /*aFragmentCount*/)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::FailNext"));
 	return iController->FailNext(*this);
 	}
 
 
 EXPORT_C TInt TDmaChannel::MissNextInterrupts(TInt aInterruptCount)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::MissNextInterrupts"));
 	return iController->MissNextInterrupts(*this, aInterruptCount);
 	}
 
 
 EXPORT_C TInt TDmaChannel::Extension(TInt aCmd, TAny* aArg)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::Extension"));
 	return iController->Extension(*this, aCmd, aArg);
 	}
 
@@ -1874,6 +2610,7 @@ EXPORT_C TInt TDmaChannel::Extension(TInt aCmd, TAny* aArg)
 //
 EXPORT_C TInt TDmaChannel::StaticExtension(TInt aCmd, TAny* aArg)
 	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TDmaChannel::StaticExtension"));
 	return DmaChannelMgr::StaticExtension(aCmd, aArg);
 	}
 
@@ -1932,7 +2669,7 @@ void TDmaChannel::DoDfc()
 		{
 		--count;
 
-		__DMA_ASSERTD(!iReqQ.IsEmpty());
+		__DMA_ASSERTA(!iReqQ.IsEmpty());
 
 		// If an error occurred it must have been reported on the last
 		// interrupt since transfers are suspended after an error.
@@ -1945,12 +2682,30 @@ void TDmaChannel::DoDfc()
 			{
 			// Update state machine, current fragment, completed fragment and
 			// tell the DMAC to transfer the next fragment if necessary.
-			SDmaDesHdr* pCompletedHdr = NULL;
-			DoDfc(const_cast<const DDmaRequest&>(*pCurReq), pCompletedHdr);
-
+			TBool complete;
+			if (iDmacCaps->iAsymHwDescriptors)
+				{
+				SDmaDesHdr* pCompletedSrcHdr = NULL;
+				SDmaDesHdr* pCompletedDstHdr = NULL;
+				DoDfc(const_cast<const DDmaRequest&>(*pCurReq),
+					  pCompletedSrcHdr, pCompletedDstHdr);
+				// We don't support asymmetrical ISR notifications and request
+				// completions yet, hence we can do the following assert test
+				// here; also 'complete' is determined equally by either the
+				// SRC or DST side.
+				__DMA_ASSERTD(!LOGICAL_XOR((pCompletedSrcHdr == pCurReq->iSrcLastHdr),
+										   (pCompletedDstHdr == pCurReq->iDstLastHdr)));
+				complete = (pCompletedDstHdr == pCurReq->iDstLastHdr);
+				}
+			else
+				{
+				SDmaDesHdr* pCompletedHdr = NULL;
+				DoDfc(const_cast<const DDmaRequest&>(*pCurReq), pCompletedHdr);
+				complete = (pCompletedHdr == pCurReq->iLastHdr);
+				}
 			// If just completed last fragment from current request, switch to
 			// next request (if any).
-			if (pCompletedHdr == pCurReq->iLastHdr)
+			if (complete)
 				{
 				pCompletedReq = pCurReq;
 				pCurReq->iLink.Deque();

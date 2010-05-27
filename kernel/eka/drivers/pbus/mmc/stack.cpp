@@ -3517,13 +3517,10 @@ TMMCErr DMMCStack::DetermineBusWidthAndClockSM()
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM3, "EStWritePowerClass" );
 	
 		// Check the card type is valid
-		// The only currently valid values for this field are 0x01 or 0x03
-		TUint cardType = cardP->iExtendedCSD.CardType();
-		if (cardType != (TExtendedCSD::EHighSpeedCard26Mhz) && 
-			cardType != (TExtendedCSD::EHighSpeedCard26Mhz | TExtendedCSD::EHighSpeedCard52Mhz))
-			{
-			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardType));
-			OstTrace1( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM4, "Unsupported card type=%u", cardType );
+		if (!(cardP->iExtendedCSD.IsSupportedCardType()))
+			{            
+			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardP->iExtendedCSD.CardType()));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM4, "Unsupported card type=%u", cardP->iExtendedCSD.CardType() );
 			
 			SMF_GOTOS(EStExit);
 			}
@@ -3618,13 +3615,10 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 		cardP->SetHighSpeedClock(0);
 
 		// Check the card type is valid
-		// The only currently valid values for this field are 0x01 or 0x03
-		TUint cardType = cardP->iExtendedCSD.CardType();
-		if (cardType != (TExtendedCSD::EHighSpeedCard26Mhz) && 
-			cardType != (TExtendedCSD::EHighSpeedCard26Mhz | TExtendedCSD::EHighSpeedCard52Mhz))
-			{
-			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardType));
-			OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM4, "Unsupported card type=%u", cardType );
+        if (!(cardP->iExtendedCSD.IsSupportedCardType()))
+            {            
+			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardP->iExtendedCSD.CardType()));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM4, "Unsupported card type=%u", cardP->iExtendedCSD.CardType() );
 			SMF_GOTOS(EStExit);
 			}
 
