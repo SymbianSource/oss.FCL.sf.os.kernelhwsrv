@@ -1,3 +1,45 @@
+Version 2.00.2127
+=================
+(Made by vfebvre 24/05/2010)
+
+1.	jcoppear
+	1.	ou1cimx1#389410 ENV E32TEST T_IPCCPY hangs on H4HRP.ARMV5.UREL.FMM.ONENANDPAGE
+
+
+Version 2.00.2126
+=================
+(Made by vfebvre 20/05/2010)
+
+1.	necliffo
+	1.	ou1cimx1#389444 NAND paging are in bootloop
+
+
+Version 2.00.2125
+=================
+(Made by vfebvre 19/05/2010)
+
+1.	hengrant
+	1.	ou1cimx1#377066 Trace outputs truncated data for length and position
+
+
+Version 2.00.2124
+=================
+(Made by vfebvre 14/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#380187 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+		Changed backslash to forward slash.
+
+
+Version 2.00.2123
+=================
+(Made by vfebvre 12/05/2010)
+
+1.	stmansfi
+	1.	RM 417-69728 KHS Digitiser HAL Changes 92
+		PackageReleaseID=488421
+
+
 Version 2.00.2122
 =================
 (Made by vfebvre 11/05/2010)

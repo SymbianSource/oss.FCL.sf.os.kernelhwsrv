@@ -383,7 +383,8 @@ t_tldd
 t_newldd
 t_lddpowerseqtest
 t_ldddigitisertest
-t_traweventdigitiser
+t_userdigitisertest
+t_userdigitisernocaps
 t_persistrestart	manual
 halsettings	support
 

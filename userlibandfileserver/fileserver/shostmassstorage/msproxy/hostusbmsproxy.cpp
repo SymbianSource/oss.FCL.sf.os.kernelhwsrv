@@ -604,7 +604,7 @@ TInt CUsbHostMsProxyDrive::Caps(TDes8& anInfo)
         }
 	else if (KErrGeneral == r)
         {
-        RDebug::Print(_L("<<< HOST Caps Unable to communicate with media"));
+        __HOSTPRINT(_L("<<< HOST Caps Unable to communicate with media"));
 		c.iType = EMediaUnknown;		
         }
 

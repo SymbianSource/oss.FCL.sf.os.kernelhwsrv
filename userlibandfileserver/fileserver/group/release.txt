@@ -1,3 +1,31 @@
+Version 2.00.2060
+=================
+(Made by vfebvre 25/05/2010)
+
+1.	migubarr
+	1.	ou1cimx1#393012 Crash when usb memory is dismounted during copy
+
+2.	michcox
+	1.	ou1cimx1#378895 TB92 Symbian.org Bug 2544 -  Possible deadlocks on f32 plugin chains
+
+
+Version 2.00.2059
+=================
+(Made by vfebvre 21/05/2010)
+
+1.	niccox
+	1.	ou1cimx1#391109 Incorrect update of progress bar with format of Usb Mass Storage
+
+
+Version 2.00.2058
+=================
+(Made by vfebvre 14/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#380187 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+		Changed backslash to forward slash.
+
+
 Version 2.00.2057
 =================
 (Made by vfebvre 07/05/2010)

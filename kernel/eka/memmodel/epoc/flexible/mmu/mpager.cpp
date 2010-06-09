@@ -498,56 +498,86 @@ void DPager::ReplacePage(SPageInfo& aOldPageInfo, SPageInfo& aNewPageInfo)
 	}
 
 
-TInt DPager::TryStealOldestPage(SPageInfo*& aPageInfoOut)
+SPageInfo* DPager::StealOrAllocPage(TBool aAllowAlloc, Mmu::TRamAllocFlags aAllocFlags)
 	{
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
-	
-	// The PageCleaningLock may or may not be held.  This method will release the RamAllocLock if it
-	// has to wait for the PageCleaningLock
+
+	// The PageCleaningLock may or may not be held to start with
 	TBool pageCleaningLockAcquired = EFalse;
 
-	// find oldest page in list...
 	SDblQueLink* link;
+	SPageInfo* pageInfo ;
+	
+restart:
+
+	// if there is a free page in the live list then use that (it will be at the end)...
 	if (iOldestCleanCount)
 		{
 		__NK_ASSERT_DEBUG(!iOldestCleanList.IsEmpty());
 		link = iOldestCleanList.Last();
+		pageInfo = SPageInfo::FromLink(link);
+		if(pageInfo->Type()==SPageInfo::EUnused)
+			goto try_steal_from_page_info;
 		}
-	else if (iOldestDirtyCount)
+	
+	// maybe try getting a free page from the system pool...
+	if (aAllowAlloc && !HaveMaximumPages())
+		{
+		MmuLock::Unlock();
+		pageInfo = GetPageFromSystem(aAllocFlags);
+		MmuLock::Lock();
+		if (pageInfo)
+			goto exit;
+		}
+	
+	// try stealing the oldest clean page on the  live list if there is one...
+	if (iOldestCleanCount)
+		{
+		__NK_ASSERT_DEBUG(!iOldestCleanList.IsEmpty());
+		link = iOldestCleanList.Last();
+		goto try_steal_from_link;
+		}
+
+	// no clean oldest pages, see if we can clean multiple dirty pages in one go...
+	if (iOldestDirtyCount > 1 && iPagesToClean > 1)
 		{
 		__NK_ASSERT_DEBUG(!iOldestDirtyList.IsEmpty());
 
-		// see if we can clean multiple dirty pages in one go...
-		if (iPagesToClean > 1 && iOldestDirtyCount > 1)
+		// check if we hold page cleaning lock
+		TBool needPageCleaningLock = !PageCleaningLock::IsHeld();
+		if (needPageCleaningLock)
 			{
-			if (!PageCleaningLock::IsHeld())
-				{
-				// temporarily release ram alloc mutex and acquire page cleaning mutex
-				MmuLock::Unlock();
-				RamAllocLock::Unlock();
-				PageCleaningLock::Lock();
-				MmuLock::Lock();
-				pageCleaningLockAcquired = ETrue;
-				}
-
-			// there may be clean pages now if we've waited on the page cleaning mutex, if so don't
-			// bother cleaning but just restart
-			if (iOldestCleanCount == 0 && iOldestDirtyCount >= 1)
-				CleanSomePages(EFalse);
-
-			if (pageCleaningLockAcquired)
-				{
-				// release page cleaning mutex and re-aquire ram alloc mutex
-				MmuLock::Unlock();
-				PageCleaningLock::Unlock();			
-				RamAllocLock::Lock();
-				MmuLock::Lock();
-				}
-			
-			return 1;  // tell caller to restart their operation
+			// temporarily release ram alloc mutex and acquire page cleaning mutex
+			MmuLock::Unlock();
+			RamAllocLock::Unlock();
+			PageCleaningLock::Lock();
+			MmuLock::Lock();
 			}
-		
+
+		// there may be clean pages now if we've waited on the page cleaning mutex, if so don't
+		// bother cleaning but just restart
+		if (iOldestCleanCount == 0 && iOldestDirtyCount >= 1)
+			CleanSomePages(EFalse);
+
+		if (needPageCleaningLock)
+			{
+			// release page cleaning mutex and re-aquire ram alloc mutex
+			MmuLock::Unlock();
+			PageCleaningLock::Unlock();			
+			RamAllocLock::Lock();
+			MmuLock::Lock();
+			}
+
+		// if there are now some clean pages we restart so as to take one of them
+		if (iOldestCleanCount > 0)
+			goto restart;
+		}
+
+	// otherwise just try to steal the oldest page...
+	if (iOldestDirtyCount)
+		{
+		__NK_ASSERT_DEBUG(!iOldestDirtyList.IsEmpty());
 		link = iOldestDirtyList.Last();
 		}
 	else if (iOldCount)
@@ -561,32 +591,44 @@ TInt DPager::TryStealOldestPage(SPageInfo*& aPageInfoOut)
 		__NK_ASSERT_ALWAYS(!iYoungList.IsEmpty());
 		link = iYoungList.Last();
 		}
-	SPageInfo* pageInfo = SPageInfo::FromLink(link);
 
-	if (pageInfo->IsDirty())
+try_steal_from_link:
+
+	// lookup page info
+	__NK_ASSERT_DEBUG(link);
+	pageInfo = SPageInfo::FromLink(link);
+	
+try_steal_from_page_info:
+	
+	// if the page is dirty and we don't hold the page cleaning mutex then we have to wait on it,
+	// and restart - we clean with the ram alloc mutex held in this case
+	if (pageInfo->IsDirty() && !PageCleaningLock::IsHeld())
 		{		
 		MmuLock::Unlock();
 		PageCleaningLock::Lock();
 		MmuLock::Lock();
 		pageCleaningLockAcquired = ETrue;
+		goto restart;
 		}
 	
 	// try to steal it from owning object...
-	TInt r = StealPage(pageInfo);	
-	if (r == KErrNone)
-		{
-		BalanceAges();
-		aPageInfoOut = pageInfo;
-		}
-
+	if (StealPage(pageInfo) != KErrNone)
+		goto restart;
+	
+	BalanceAges();
+	
+exit:
 	if (pageCleaningLockAcquired)
 		{		
 		MmuLock::Unlock();
 		PageCleaningLock::Unlock();
 		MmuLock::Lock();
 		}
+
+	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	
-	return r;
+	return pageInfo;
 	}
 
 
@@ -1050,20 +1092,20 @@ TBool DPager::TryReturnOldestPageToSystem()
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	__NK_ASSERT_DEBUG(iNumberOfFreePages>0);
 
-	SPageInfo* pageInfo = NULL;
-	if (TryStealOldestPage(pageInfo) == KErrNone)
+	SPageInfo* pageInfo = StealOrAllocPage(EFalse, (Mmu::TRamAllocFlags)0);
+	
+	// StealOrAllocPage may have released the MmuLock, so check there are still enough pages
+	// to remove one from the live list
+	if (iNumberOfFreePages>0)
 		{
-		// TryStealOldestPage may have released the MmuLock, so check there are still enough pages
-		// to remove one from the live list
-		if (iNumberOfFreePages>0)
-			{
-			ReturnPageToSystem(*pageInfo);
-			return ETrue;
-			}
-		else
-			AddAsFreePage(pageInfo);
+		ReturnPageToSystem(*pageInfo);
+		return ETrue;
 		}
-	return EFalse;
+	else
+		{
+		AddAsFreePage(pageInfo);
+		return EFalse;
+		}
 	}
 
 
@@ -1092,51 +1134,23 @@ void DPager::ReturnPageToSystem(SPageInfo& aPageInfo)
 
 SPageInfo* DPager::PageInAllocPage(Mmu::TRamAllocFlags aAllocFlags)
 	{
-	SPageInfo* pageInfo;
-	TPhysAddr pagePhys;
-	TInt r = KErrGeneral;
+	// ram alloc mutex may or may not be held
+	__NK_ASSERT_DEBUG(!MmuLock::IsHeld());
 	
 	RamAllocLock::Lock();
-	MmuLock::Lock();
-
-find_a_page:
-	// try getting a free page from our live list...
-	if (iOldestCleanCount)
-		{
-		pageInfo = SPageInfo::FromLink(iOldestCleanList.Last());
-		if(pageInfo->Type()==SPageInfo::EUnused)
-			goto try_steal_oldest_page;
-		}
-
-	// try getting a free page from the system pool...
-	if(!HaveMaximumPages())
-		{
-		MmuLock::Unlock();
-		pageInfo = GetPageFromSystem(aAllocFlags);
-		if(pageInfo)
-			goto done;
-		MmuLock::Lock();
-		}
-
-	// otherwise steal a page from the live list...
-try_steal_oldest_page:
-	__NK_ASSERT_ALWAYS(iOldestCleanCount|iOldestDirtyCount|iOldCount|iYoungCount);
-	r = TryStealOldestPage(pageInfo);
 	
-	// if this fails we restart whole process.
-	// failure can be either KErrInUse if the page was used while we were stealing, or 1 to indicate
-	// that some pages were cleaned and the operation should be restarted
-	if (r != KErrNone)
-		goto find_a_page;
-
-	// otherwise we're done!
+	MmuLock::Lock();	
+	SPageInfo* pageInfo = StealOrAllocPage(ETrue, aAllocFlags);
+	TBool wasAllocated = pageInfo->Type() == SPageInfo::EUnknown;
 	MmuLock::Unlock();
 
-	// make page state same as a freshly allocated page...
-	pagePhys = pageInfo->PhysAddr();
-	TheMmu.PagesAllocated(&pagePhys,1,aAllocFlags);
+	if (!wasAllocated)
+		{
+		// make page state same as a freshly allocated page...
+		TPhysAddr pagePhys = pageInfo->PhysAddr();
+		TheMmu.PagesAllocated(&pagePhys,1,aAllocFlags);
+		}
 
-done:
 	RamAllocLock::Unlock();
 
 	return pageInfo;
@@ -2046,9 +2060,9 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 	NKern::ThreadEnterCS();
 	RamAllocLock::Lock();
 
-	// We must hold this otherwise TryStealOldestPage will release the RamAllocLock while waiting
-	// for it.  Note this method is not used in producton, so it's ok to hold both locks for longer
-	// than would otherwise happen.
+	// We must hold this otherwise StealOrAllocPage will release the RamAllocLock while waiting for
+	// it.  Note this method is not used in producton, so it's ok to hold both locks for longer than
+	// would otherwise happen.
 	PageCleaningLock::Lock();  
 
 	MmuLock::Lock();

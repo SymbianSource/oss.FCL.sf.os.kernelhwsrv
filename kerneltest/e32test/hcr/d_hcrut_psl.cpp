@@ -127,7 +127,7 @@ TInt HCRVariant::GetOverrideRepositoryAddress( TAny* & aAddr)
 #if !defined(__WINS__) && !defined(__X86__)
     
     // Note to future implementor:
-	// #include <kernel\kernboot.h>
+	// #include <kernel/kernboot.h>
 	// First check to see if SMRIB was created during boot time. 
     // If SSuperPageBase::iSmrData == KSuperPageAddressFieldUndefined (i.e. -1) 
 	// it does not exist, return KErrNotSupported, SMR not support by base port

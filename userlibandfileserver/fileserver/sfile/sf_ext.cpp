@@ -188,7 +188,7 @@ Frees assigned Proxy drive before destruction of the object.
 EXPORT_C CLocDrvMountCB::~CLocDrvMountCB()
 	{
 	__PRINT1(_L("CLocDrvMountCB::~CLocDrvMountCB() 0x%x"),this);
-	if(iProxyDrive && !LocalDrives::IsProxyDrive(Drive().DriveNumber()) && LocalDrives::IsValidDriveMapping(Drive().DriveNumber()))
+	if(iProxyDrive && !LocalDrives::IsProxyDrive(Drive().DriveNumber()))
 		delete(iProxyDrive);
 	}
 
@@ -281,7 +281,6 @@ EXPORT_C void CLocDrvMountCB::DismountedLocalDrive()
 	{
 	__ASSERT_ALWAYS(iProxyDrive!=NULL,Fault(ELocDrvDismountedLocalDrive));
 	iProxyDrive->Dismounted();
-	iProxyDrive->SetMount(NULL);
 	}
 
 

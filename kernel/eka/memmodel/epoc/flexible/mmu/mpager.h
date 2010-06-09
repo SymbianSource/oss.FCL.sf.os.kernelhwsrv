@@ -432,19 +432,19 @@ private:
 	void RemovePage(SPageInfo* aPageInfo);
 
 	/**
-	Attempt to steal the oldest page on the live list.
+	Get a page, either by stealing one from the live list or allocating one from the system.
 
-	If the oldest page is an oldest dirty page, this attempts to clean multiple pages by calling
-	#CleanSomePages and then returns without stealing any page.  This allows the caller to restart
-	their operation after the lengthy cleaning process, which may no longer need to call this
-	function.
+	
+	
+	If the oldest page is an oldest dirty page, this may attempt to clean multiple pages by calling
+	#CleanSomePages.
 
 	If the oldest page is on any other list (i.e. is an old or young page) this will steal it,
 	aquiring the page cleaning mutex first if it is dirty.
 
-	Called from #PageInAllocPage.
+	Called from #PageInAllocPage and #TryReturnOldestPageToSystem.
 	
-	@param aPageInfoOut Set to the SPageInfo pointer for the stolen page if any.
+	@param aAllowAlloc Indicates whether the method should try to allocate a page from the system
 	
 	@return KErrNone on success, KErrInUse if stealing failed or 1 to indicate the the oldest page
 	was dirty and the PageCleaning mutex was not held.
@@ -452,7 +452,7 @@ private:
 	@pre MmuLock held
 	@post MmuLock left unchanged.
 	*/
-	TInt TryStealOldestPage(SPageInfo*& aPageInfoOut);
+	SPageInfo* StealOrAllocPage(TBool aAllowAlloc, Mmu::TRamAllocFlags aAllocFlags);
 
 	/**
 	Steal a page from the memory object (if any) which is using the page.

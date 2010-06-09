@@ -252,8 +252,11 @@ TInt TFsPluginName::DoRequestL(CFsRequest* aRequest)
 	CFsPlugin* plugin=NULL;
 	FsPluginManager::LockChain();
 	TInt err = FsPluginManager::Plugin(plugin, aRequest->Message().Int2());
-	if(err != KErrNone)
+	if(err != KErrNone) //should be ok but just in case
+	    {
+	    FsPluginManager::UnlockChain();
 		return err;
+	    }
 
 	TInt r = KErrNotFound;
 	if(plugin)

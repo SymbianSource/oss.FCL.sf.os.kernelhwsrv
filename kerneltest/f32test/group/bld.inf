@@ -273,3 +273,5 @@ t_surrogatepair
 t_cp932dll      support
 t_cp_plugin
 
+t_bitproxydrive    support
+t_proxydrive1

@@ -114,7 +114,7 @@ public:
 		@see HALData::TCPU
 		*/
 		ECPU,
-		
+		  
 		
 		/**
 		A revision number for the CPU architecture.
@@ -1097,19 +1097,24 @@ public:
 		Serial number of this board
 		*/
 		ESerialNumber,
-		
-		
+				
 		/**
 		Interrupt used by sampling profiler - applicable for SMP only. Each CPU_i is interrupted by interrupt number ECpuProfilingInterrupt + i
 		*/
 		ECpuProfilingDefaultInterruptBase,
-
 
 		/**
 		Number of processors present on the device. Returns 1 on unicore. This number is constant and does not take account of power management
 		*/
 		ENumCpus,
 
+		/**
+		The orientation of the Digitiser. Usually mirrors device orientation.
+		
+		@see TDigitiserOrientation for allowed values
+		@capability WriteDeviceData needed to Set this attribute
+		*/
+		EDigitiserOrientation,
 
 		/*
 		 * NOTE:
@@ -1326,6 +1331,29 @@ public:
 		EPowerBackupStatus_Replace,
 		EPowerBackupStatus_Low,
 		EPowerBackupStatus_Good,
+		};
+	
+	
+    /**
+    Describes the orientation of the screen digitiser, usually mirrors the
+    device orientation not necessarily the display rotation as this might be
+	limited to upright and left 90 only. The values in degrees measures 
+	the anti-clockwise angle from the left edge of the digitiser from the 
+	normal default position of the device. 
+	
+	User-side clients can use attribute to inform the digitiser driver of the
+	digitiser orientation. The driver may then use this information to adjust 
+	X.Y sampling depending on input pointer type.
+	
+    @see HALData::TAttribute
+    */
+	enum TDigitiserOrientation
+		{
+		EDigitiserOrientation_default,	///< Driver using build-in default
+		EDigitiserOrientation_000,		///< Device normal 'make-call' position
+		EDigitiserOrientation_090,		///< Device rotated left 90 degrees
+		EDigitiserOrientation_180,		///< Device rotated 180 degrees
+		EDigitiserOrientation_270		///< Device rotated right 90 degrees
 		};
 	
 	};

@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -1989,7 +1989,23 @@ enum TDigitiserHalFunction
     @see TPckgBuf
     @see TDigitiserInfoV02
     */
-	EDigitiserHal3DInfo
+	EDigitiserHal3DInfo,
+
+	/**
+	Get or sets the digitiser driver's current orientation property.
+	Requirements of the HAL function handler's 2nd, 3rd and 4th parameters:
+	
+	- TInt aFunction : This enum value.
+    - TAny* a1 : if Set, a TDigitiserOrientation value the driver should now use	
+			   : If Get, a pointer to a TDigitiserOrientation. The HAL function 
+			   : needs to set its value to the current value used in the driver.	
+	- TAny* a2 : Cast to a TInt. Should be assigned the value 
+			   : EFalse - Get property; ETrue - Set property 
+	
+	@see HALData::TDigitiserOrientation
+	@capability WriteDeviceData To set the property, None to read
+	*/
+	EDigitiserOrientation
 
 	};
 

@@ -386,7 +386,8 @@ void LocalDrives::ClearProxyDriveMapping(TInt aDrive)
 	__ASSERT_ALWAYS(aDrive>=0 && aDrive<KMaxDrives,Fault(EClearProxyDriveMapping1));
 	__ASSERT_DEBUG(iMapping[aDrive]>= KMaxLocalDrives && iProxyDriveMapping[iMapping[aDrive]-KMaxLocalDrives],Fault(EClearProxyDriveMapping2));
 	TInt idx = iMapping[aDrive]-KMaxLocalDrives;
-	delete iProxyDriveMapping[idx];
+	if (iProxyDriveMapping[idx]->Mount() == NULL)	// don't delete if it's still owned by its mount
+		delete iProxyDriveMapping[idx];
 	iProxyDriveMapping[idx] = NULL;
 	iMapping[aDrive] = KDriveInvalid;
 	}
