@@ -252,6 +252,11 @@ TInt CFsRequest::FsFunction()
 void CFsMessageRequest::SetMessage(RMessage2& aMessage) 
 	{iMessage=aMessage;}
 
+
+CFsMessageRequest* CFsMessageRequest::RequestFromMessage(const RMessagePtr2& aMessage)
+	{return _LOFF(&aMessage, CFsMessageRequest, iMessage);}
+
+
 TMsgOperation* CFsMessageRequest::CurrentOperationPtr()
 	{return iCurrentOperation;}
 

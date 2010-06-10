@@ -701,8 +701,18 @@ TInt TFsFileRead::DoRequestL(CFsRequest* aRequest)
 			// Current operation points to a local buffer
 			// The request originated from the file server (e.g. file cache) with a local message handle (KLocalMessageHandle)
 			TPtr8 dataDesc((TUint8*) currentOperation.iReadWriteArgs.iData + currentOperation.iReadWriteArgs.iOffset, len, len);
-			const RLocalMessage msg;
-			TRAP(r,file->ReadL(pos, len, &dataDesc, msg, 0));
+
+			// save the client's RMessage2
+			const RMessage2 msgClient = aRequest->Message();
+			
+			// overwrite RMessage2 in CFsMessageRequest with RLocalMessage 
+			const RLocalMessage msgLocal;					
+			const_cast<RMessage2&> (aRequest->Message()) = msgLocal;
+
+			TRAP(r,file->ReadL(pos, len, &dataDesc, aRequest->Message(), 0));
+							
+			// restore the client's RMessage2
+			const_cast<RMessage2&> (aRequest->Message()) = msgClient;
 			}
 		}
 
@@ -1099,8 +1109,18 @@ TInt TFsFileWrite::DoRequestL(CFsRequest* aRequest)
 		else
 			{
 			TPtr8 dataDesc((TUint8*) currentOperation.iReadWriteArgs.iData + currentOperation.iReadWriteArgs.iOffset, len, len);
-			const RLocalMessage msg;
-			TRAP(r,file->WriteL(pos, len, &dataDesc, msg, 0));
+
+			// save the client's RMessage2
+			const RMessage2 msgClient = aRequest->Message();
+			
+			// overwrite RMessage2 in CFsMessageRequest with RLocalMessage 
+			const RLocalMessage msgLocal;					
+			const_cast<RMessage2&> (aRequest->Message()) = msgLocal;
+
+			TRAP(r,file->WriteL(pos, len, &dataDesc, aRequest->Message(), 0));
+							
+			// restore the client's RMessage2
+			const_cast<RMessage2&> (aRequest->Message()) = msgClient;
 			}
 		}
 
@@ -3670,9 +3690,21 @@ TBool TFileShareLock::MatchByPos(TUint64 aPosLow, TUint64 aPosHigh) const
 
 
 
+EXPORT_C TBool CFileCB::DirectIOMode(const RMessagePtr2& aMessage)
+	{
+	CFsMessageRequest* msgRequest = CFsMessageRequest::RequestFromMessage(aMessage);
 
+	TInt func = msgRequest->Operation()->Function();
+	ASSERT(func == EFsFileRead || func == EFsFileWrite || func == EFsFileWriteDirty || func == EFsReadFileSection);
 
+	CFileShare* share;
+	CFileCB* file;
+	GetFileFromScratch(msgRequest, share, file);
+	if (share == NULL)		// no share indicates this is a request originating from the file cache
+		return EFalse;
 
+	return func == EFsFileRead ? share->iMode & EFileReadDirectIO : share->iMode & EFileWriteDirectIO; 
+	}
 
 
 

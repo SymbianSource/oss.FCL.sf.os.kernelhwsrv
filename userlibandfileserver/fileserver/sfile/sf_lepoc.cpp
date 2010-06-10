@@ -3248,30 +3248,6 @@ TInt E32Image::FixupDlls(RImageArray& aArray)
 	}
 
 
-/**
-This function is defined because RArray does not natively support
-sorting 64-bit integers.
-
-It is used by FixupDlls to order the import fixup locations in the image
-so they can be organized by page.
-
-@param	aLeft			64-bit unsigned integer to compare against aRight.
-@param	aRight			64-bit unsigned integer to compare against aLeft.
-@return					-1 if aLeft < aRight; 0 if aLeft == aRight; and
-						+1 if aLeft > aRight.  This conforms to the behavior
-						which is expected from a function used by TLinearOrder.
-*/
-static TInt Uint64LinearOrderFunc(const TUint64& aLeft, const TUint64& aRight)
-	{
-	if (aLeft < aRight)
-		return -1;
-	else if (aLeft > aRight)
-		return 1;
-	else
-		return 0;
-	}
-
-
 TUint64* E32Image::ExpandFixups(TInt aNumFixups)
 	{
 	__IF_DEBUG(Printf("ExpandFixups,%d+%d", iFixupCount,aNumFixups));
@@ -3315,8 +3291,10 @@ TInt E32Image::BuildImportFixupTable()
 
 	// sort the array in address order, to organize by page
 	RArray<TUint64> fixup64ToSort(sizeof(TUint64), iFixups, iFixupCount);
-	// SortUnsigned doesn't work on TUint64
-	fixup64ToSort.Sort(TLinearOrder<TUint64>(Uint64LinearOrderFunc));
+
+	// address is in high word of entry, offset 4
+	fixup64ToSort.SetKeyOffset(4);
+	fixup64ToSort.SortUnsigned();
 
 	// now have <address | new-value> pairs, organize into pages.
 	// Each page is stored as fXXX YYYY ZZZZ where YYYY ZZZZ is written

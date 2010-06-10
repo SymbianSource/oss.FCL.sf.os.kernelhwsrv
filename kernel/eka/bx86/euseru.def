@@ -48,8 +48,8 @@ EXPORTS
 	??0RBuf8@@QAE@PAVHBufC8@@@Z @ 47 NONAME ; public: __thiscall RBuf8::RBuf8(class HBufC8 *)
 	??0RBuf8@@QAE@XZ @ 48 NONAME ; public: __thiscall RBuf8::RBuf8(void)
 	??0RCriticalSection@@QAE@XZ @ 49 NONAME ; public: __thiscall RCriticalSection::RCriticalSection(void)
-	??0RHeap@@QAE@HHH@Z @ 50 NONAME ; public: __thiscall RHeap::RHeap(int,int,int)
-	??0RHeap@@QAE@HHHHHHH@Z @ 51 NONAME ; public: __thiscall RHeap::RHeap(int,int,int,int,int,int,int)
+	??0RHeap@@QAE@HHH@Z @ 50 NONAME ABSENT ; public: __thiscall RHeap::RHeap(int,int,int)
+	??0RHeap@@QAE@HHHHHHH@Z @ 51 NONAME ABSENT ; public: __thiscall RHeap::RHeap(int,int,int,int,int,int,int)
 	??0RMessage2@@QAE@ABVRMessagePtr2@@@Z @ 52 NONAME ; public: __thiscall RMessage2::RMessage2(class RMessagePtr2 const &)
 	??0RNotifier@@QAE@XZ @ 53 NONAME ; public: __thiscall RNotifier::RNotifier(void)
 	??0RPointerArrayBase@@IAE@H@Z @ 54 NONAME ; protected: __thiscall RPointerArrayBase::RPointerArrayBase(int)
@@ -216,7 +216,7 @@ EXPORTS
 	??1CSession2@@UAE@XZ @ 215 NONAME ; public: virtual __thiscall CSession2::~CSession2(void)
 	??1CTimer@@UAE@XZ @ 216 NONAME ; public: virtual __thiscall CTimer::~CTimer(void)
 	??1CTrapCleanup@@UAE@XZ @ 217 NONAME ; public: virtual __thiscall CTrapCleanup::~CTrapCleanup(void)
-	??2RHeap@@SAPAXIPAX@Z @ 218 NONAME ; public: static void * __cdecl RHeap::operator new(unsigned int,void *)
+	??2RHeap@@SAPAXIPAX@Z @ 218 NONAME ABSENT ; public: static void * __cdecl RHeap::operator new(unsigned int,void *)
 	??4HBufC16@@QAEAAV0@ABVTDesC16@@@Z @ 219 NONAME ; public: class HBufC16 & __thiscall HBufC16::operator=(class TDesC16 const &)
 	??4HBufC16@@QAEAAV0@PBG@Z @ 220 NONAME ; public: class HBufC16 & __thiscall HBufC16::operator=(unsigned short const *)
 	??4HBufC8@@QAEAAV0@ABVTDesC8@@@Z @ 221 NONAME ; public: class HBufC8 & __thiscall HBufC8::operator=(class TDesC8 const &)
@@ -943,7 +943,7 @@ EXPORTS
 	?Get@RProperty@@SAHVTUid@@IAAVTDes8@@@Z @ 942 NONAME ; public: static int __cdecl RProperty::Get(class TUid,unsigned int,class TDes8 &)
 	?Get@TLex16@@QAE?AVTChar@@XZ @ 943 NONAME ; public: class TChar  __thiscall TLex16::Get(void)
 	?Get@TLex8@@QAE?AVTChar@@XZ @ 944 NONAME ; public: class TChar  __thiscall TLex8::Get(void)
-	?GetAddress@RHeap@@IBEPAUSCell@1@PBX@Z @ 945 NONAME ; protected: struct RHeap::SCell * __thiscall RHeap::GetAddress(void const *)const 
+	?GetAddress@RHeap@@IBEPAUSCell@1@PBX@Z @ 945 NONAME ABSENT ; protected: struct RHeap::SCell * __thiscall RHeap::GetAddress(void const *)const 
 	?GetBdCategory@TChar@@QBE?AW4TBdCategory@1@XZ @ 946 NONAME ; public: enum TChar::TBdCategory  __thiscall TChar::GetBdCategory(void)const 
 	?GetCaps@RDevice@@QBEXAAVTDes8@@@Z @ 947 NONAME ; public: void __thiscall RDevice::GetCaps(class TDes8 &)const 
 	?GetCategory@TChar@@QBE?AW4TCategory@1@XZ @ 948 NONAME ; public: enum TChar::TCategory  __thiscall TChar::GetCategory(void)const 
@@ -2208,4 +2208,12 @@ EXPORTS
 	?LocateReverseF2@TDesC16@@QBEHVTChar@@@Z @ 2207 NONAME ; int TDesC16::LocateReverseF2(class TChar) const
 	?CopyCP2@TDes16@@QAEXABVTDesC16@@@Z @ 2208 NONAME ; void TDes16::CopyCP2(class TDesC16 const &)
 	?AgainHighRes@RTimer@@QAEXAAVTRequestStatus@@VTTimeIntervalMicroSeconds32@@@Z @ 2209 NONAME ; public: void __thiscall RTimer::AgainHighRes(class TRequestStatus &,class TTimeIntervalMicroSeconds32)
-
+	?Align@RAllocator@@QBEHH@Z @ 2210 NONAME ; public: int __thiscall RAllocator::Align(int)const 
+	?Align@RAllocator@@QBEPAXPAX@Z @ 2211 NONAME ; public: void * __thiscall RAllocator::Align(void *)const 
+	?Base@RAllocator@@QBEPAEXZ @ 2212 NONAME ; public: void * __thiscall RAllocator::Base(void)const 
+	?MaxLength@RAllocator@@QBEHXZ @ 2213 NONAME ; public: int __thiscall RAllocator::MaxLength(void)const 
+	?Size@RAllocator@@QBEHXZ @ 2214 NONAME ; public: int __thiscall RAllocator::Size(void)const 
+	?__DbgGetAllocFail@RAllocator@@QAE?AW4TAllocFail@1@XZ @ 2215 NONAME ; enum RAllocator::TAllocFail RAllocator::__DbgGetAllocFail(void)
+	?__DbgGetAllocFail@User@@SA?AW4TAllocFail@RAllocator@@H@Z @ 2216 NONAME ; enum RAllocator::TAllocFail User::__DbgGetAllocFail(int)
+	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 2217  NONAME ; void RArrayBase::SetKeyOffset(int)
+	

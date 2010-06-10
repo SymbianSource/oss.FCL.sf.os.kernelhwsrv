@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,20 +11,11 @@
 // Contributors:
 //
 // Description:
-// e32test/group/t_chunk.mmp
-// 
-//
 
-TARGET         t_chunk.exe        
-TARGETTYPE     EXE
-SOURCEPATH	../mmu
-SOURCE         t_chunk.cpp
-LIBRARY        euser.lib hal.lib
-OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-
-
-capability		all
-
-VENDORID 0x70000001
-
-SMPSAFE
+#ifndef __OSTTRACEDEFINITIONS_H__
+#define __OSTTRACEDEFINITIONS_H__
+// OST_TRACE_COMPILER_IN_USE flag has been added by Trace Compiler
+// REMOVE BEFORE CHECK-IN TO VERSION CONTROL
+//#define OST_TRACE_COMPILER_IN_USE
+#include <OpenSystemTrace.h>
+#endif

@@ -162,7 +162,7 @@ TInt FsPluginManager::MountPlugin(CFsPluginFactory& aPluginFactory, TInt aDrive,
 		return err;
 		}
 
-	err = InitPlugin(*pP);
+	err = InitPlugin(*pP, aPluginFactory.Library());
 	if(err != KErrNone)
 		{
 		return err;
@@ -624,13 +624,13 @@ CFsPluginConn* FsPluginManager::CreatePluginConnL(TInt aUniquePosition, TUint aC
 Create a plugin thread
 Should only by called from main file server thread with plugin thread unavailable
 */
-TInt FsPluginManager::InitPlugin(CFsPlugin& aPlugin)
+TInt FsPluginManager::InitPlugin(CFsPlugin& aPlugin, RLibrary aLibrary)
 	{
 	TInt err = KErrNone;
 
 	if(!aPlugin.iThreadP)
 		{
-		TRAP(err,aPlugin.iThreadP=CPluginThread::NewL(aPlugin));
+		TRAP(err,aPlugin.iThreadP=CPluginThread::NewL(aPlugin, aLibrary));
 		if(err!=KErrNone)
 			return err;
 		}
@@ -745,11 +745,12 @@ void FsPluginManager::CompleteSessionRequests(CSessionFs* aSession, TInt aValue,
 
 	FsPluginManager::LockChain();
 	TInt count = FsPluginManager::ChainCount();
+	TInt oldCount = count;
 	TInt i;
 	for(i=0; i<count; i++)
 	    {
 	    CFsPlugin* plugin = NULL;
-	    User::LeaveIfError(FsPluginManager::Plugin(plugin, i));
+	    (void) FsPluginManager::Plugin(plugin, i); // (void) as chain is locked.
 	    __ASSERT_DEBUG(plugin, User::Leave(KErrNotFound));
 	    aRequest->iCurrentPlugin = plugin;
 	    aRequest->Status() = KRequestPending;
@@ -761,6 +762,12 @@ void FsPluginManager::CompleteSessionRequests(CSessionFs* aSession, TInt aValue,
 	    FsPluginManager::LockChain();
 	    __ASSERT_ALWAYS(aRequest->Status().Int()==KErrNone||aRequest->Status().Int()==KErrCancel,Fault(ESessionDisconnectThread2));
 	    count = FsPluginManager::ChainCount();
+	    //If a plugin was removed whilst the chain was unlocked we need to make sure we don't skip any plugins
+	    if(count != oldCount)
+	        {
+	        i=0;
+	        oldCount = count;
+	        }
 	    }
 	FsPluginManager::UnlockChain();
 	

@@ -48,6 +48,14 @@ EXPORT_C void Cache::AtomicSyncMemory()
 	{
 	}
 
+EXPORT_C void Cache::CpuRetires()
+	{
+	}
+
+EXPORT_C void Cache::KernelRetires()
+	{
+	}
+
 EXPORT_C void Cache::SyncMemoryBeforeDmaWrite(TLinAddr, TUint, TUint32)
 	{
 	}

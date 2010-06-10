@@ -61,6 +61,14 @@
         <!-- owned and maintained by usb package. To be moved there as soon as technical limitations are resolved -->
         <unit bldFile="kernel/eka/drivers/usbc" mrp="kernel/eka/drivers/usbc/base_e32_drivers_usbcli.mrp"/>
       </component>
+      <component id="usbdescriptors" name="USB Descriptors" purpose="optional">
+        <!-- owned and maintained by usb package. To be moved there as soon as technical limitations are resolved -->
+        <unit bldFile="kernel/eka/drivers/usbho/usbdescriptors" mrp="kernel/eka/drivers/usbho/usbdescriptors/base_drivers_usbdescriptors.mrp"/>
+      </component>
+      <component id="usbdi_utils" name="USB DI Utils" purpose="optional">
+        <!-- owned and maintained by usb package. To be moved there as soon as technical limitations are resolved -->
+        <unit bldFile="kernel/eka/drivers/usbho/usbdi_utils" mrp="kernel/eka/drivers/usbho/usbdi_utils/base_drivers_usbdi_utils.mrp"/>
+      </component>
     </collection>
     <collection id="driversupport" name="Generic Driver Support" level="hw-if">
       <component id="mediadrivers" name="Media Drivers" purpose="optional">
@@ -132,6 +140,9 @@
     <collection id="kernelhwsrv_info" name="Kernel and Hardware Services Info" level="test">
       <component id="kernelhwsrv_metadata" name="Kernel and Hardware Services Metadata" class="config" introduced="^2" purpose="development" target="desktop">
         <unit mrp="kernelhwsrv_info/kernelhwsrv_metadata/kernelhwsrv_metadata.mrp"/>
+      </component>
+      <component id="kernelhwsrv_docpub" name="Kernel and Hardware Services Public Documentation" class="doc" introduced="^3" purpose="development">
+        <unit mrp="kernelhwsrv_info/doc_pub/kernelhwsrv_doc_pub.mrp"/>
       </component>
     </collection>
   </package>

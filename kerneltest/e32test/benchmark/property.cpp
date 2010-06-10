@@ -205,25 +205,36 @@ NotificationLatencyArgs::NotificationLatencyArgs(RProperty::TType aType, TInt aS
 
 void Property::NotificationLatencyParent(TBMResult* aResult, TBMUInt64 aIter, struct Measurement* aM)
 	{
+	TRequestStatus st1, st2;
+
 	RProperty time;
 	TInt r = time.Define(KPropBenchmarkCategory, 0, RProperty::EByteArray, KPassPolicy, KPassPolicy);
 	BM_ERROR(r, r == KErrNone);	
 	r = time.Attach(KPropBenchmarkCategory, 0);
 	BM_ERROR(r, r == KErrNone);	
+	time.Subscribe(st2);
 
 	RProperty prop;	
 	r = prop.Define(KPropBenchmarkCategory, 1, aM->iType, KPassPolicy, KPassPolicy);
 	BM_ERROR(r, r == KErrNone);	
 	r = prop.Attach(KPropBenchmarkCategory, 1);
 	BM_ERROR(r, r == KErrNone);	
+	prop.Subscribe(st1);
+
+	RSemaphore sync;
+	r = sync.CreateGlobal(_L("sync"), 0);
+	BM_ERROR(r, r == KErrNone);	
 
 	NotificationLatencyArgs sl(aM->iType, aM->iSize, aM->iRemote, aIter, aM->iSetGetType);
 	MBMChild* child = property.SpawnChild(&sl);
+
 	for (TBMUInt64 i = 0; i < aIter; ++i)
 		{
-		TRequestStatus st;
-		prop.Subscribe(st);
-		User::WaitForRequest(st);
+		sync.Signal();
+		User::WaitForRequest(st1);
+		BM_ERROR(st1.Int(), st1.Int() == KErrNone);
+		prop.Subscribe(st1);
+
 		switch(aM->iSetGetType)
 			{
 		case EOneArg:
@@ -258,12 +269,11 @@ void Property::NotificationLatencyParent(TBMResult* aResult, TBMUInt64 aIter, st
 
 		TBMTicks now;
 		::bmTimer.Stamp(&now);
-		BM_ERROR(st.Int(), st.Int() == KErrNone);
 
-		// subscribe for the time just before Set()
-		time.Subscribe(st);
-		User::WaitForRequest(st);
-		BM_ERROR(st.Int(), st.Int() == KErrNone);
+		User::WaitForRequest(st2);
+		BM_ERROR(st2.Int(), st2.Int() == KErrNone);
+		time.Subscribe(st2);
+
 		// get the time just before Set()
 		TBMTicks propSetTime;
 		TPtr8 ptr((TUint8*) &propSetTime, sizeof(propSetTime), sizeof(propSetTime));
@@ -272,9 +282,19 @@ void Property::NotificationLatencyParent(TBMResult* aResult, TBMUInt64 aIter, st
 
 		aResult->Cumulate(TBMTicksDelta(propSetTime, now));
 		}
+
+	prop.Cancel();
+	User::WaitForRequest(st1);
+	BM_ERROR(st1.Int(), st1.Int() == KErrCancel);
+	time.Cancel();
+	User::WaitForRequest(st2);
+	BM_ERROR(st2.Int(), st2.Int() == KErrCancel);
+
 	prop.Close();
 	time.Close();
+	sync.Close();
 	child->WaitChildExit();
+
 	r = prop.Delete(KPropBenchmarkCategory, 1);
 	BM_ERROR(r, r == KErrNone);	
 	r = time.Delete(KPropBenchmarkCategory, 0);
@@ -290,14 +310,25 @@ TInt Property::NotificationLatencyChild(TAny* cookie)
 		{
 		iOutBuf[j] = (TUint8)(j + 1);
 		}
+
 	RProperty time;
-	RProperty prop;
-	TInt r = prop.Attach(KPropBenchmarkCategory, 1);
+	TInt r = time.Attach(KPropBenchmarkCategory, 0);
 	BM_ERROR(r, r == KErrNone);	
+
+	RProperty prop;
+	r = prop.Attach(KPropBenchmarkCategory, 1);
+	BM_ERROR(r, r == KErrNone);
+
+	RSemaphore sync;
+	r = sync.OpenGlobal(_L("sync"));
+	BM_ERROR(r, r == KErrNone);	
+
 	for (TBMUInt64 i = 0; i < sl->iIterationCount; ++i)
 		{
+		sync.Wait();
 		TBMTicks propSetTime;
 		::bmTimer.Stamp(&propSetTime);
+
 		switch(sl->iSetGetType)
 			{
 		case EOneArg:
@@ -336,13 +367,16 @@ TInt Property::NotificationLatencyChild(TAny* cookie)
 			}
 			break;
 			}
+
 		// publish the time just before Set()
 		TPtr8 ptr((TUint8*) &propSetTime, sizeof(propSetTime), sizeof(propSetTime));
-		r = time.Set(KPropBenchmarkCategory, 0, ptr);
+		r = time.Set(ptr);
 		BM_ERROR(r, r == KErrNone);
 		}
+
 	prop.Close();
 	time.Close();
+	sync.Close();
 
 	BMProgram::SetAbsPriority(RThread(), prio);
 	return KErrNone;

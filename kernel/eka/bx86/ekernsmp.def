@@ -1012,4 +1012,7 @@ EXPORTS
 	?SetNumberOfActiveCpus@NKern@@SAXH@Z @ 1011 NONAME ; public: static void __cdecl NKern::SetNumberOfActiveCpus(int)
 	?FreeRamZone@Epoc@@SAHI@Z @ 1012 NONAME ; public: static int Epoc::FreeRamZone(unsigned int)
 	?SelectiveAlloc@TBitMapAllocator@@QAEIHH@Z @ 1013 NONAME ; public: unsigned int __thiscall TBitMapAllocator::SelectiveAlloc(int,int)
+	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 1014  NONAME ; void RArrayBase::SetKeyOffset(int)
+	?CpuRetires@Cache@@SAXXZ @ 1015 NONAME ; public: static void __cdecl Cache::CpuRetires(void)
+	?KernelRetires@Cache@@SAXXZ @ 1016 NONAME ; public: static void __cdecl Cache::KernelRetires(void)
 

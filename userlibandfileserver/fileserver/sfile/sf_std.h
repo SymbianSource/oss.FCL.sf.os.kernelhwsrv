@@ -114,6 +114,8 @@
 #define __PLUGIN_PRINT3(t,a,b,c)
 #endif
 
+#define _LOFF(p,T,f) ((T*)(((TUint8*)(p))-_FOFF(T,f)))
+
 const TInt KMaxTotalDriveReserved	=0x100000;
 const TInt KMaxSessionDriveReserved	=0x10000;
 
@@ -807,7 +809,7 @@ class CFsPlugin;
 NONSHARABLE_CLASS(CPluginThread) : public CRequestThread
 	{
 public:
-	CPluginThread(CFsPlugin& aPlugin);
+	CPluginThread(CFsPlugin& aPlugin, RLibrary aLibrary);
 	~CPluginThread();
 	
 	void CompleteSessionRequests(CSessionFs* aSession, TInt aValue);
@@ -819,7 +821,7 @@ public:
 	void OperationLockSignal();
 
 private:
-	static CPluginThread* NewL(CFsPlugin& aPlugin);
+	static CPluginThread* NewL(CFsPlugin& aPlugin, RLibrary aLibrary);
 	TUint StartL();
 	virtual TInt DoThreadInitialise();
 private:
@@ -828,6 +830,7 @@ private:
 	/** @prototype */
 	RSemaphore iOperationLock;
 
+	RLibrary iLib;	// contains a handle to the library	which created the plugin
 friend class FsPluginManager;
 	};
 
@@ -1311,6 +1314,7 @@ public:
 	inline void Init();
 	void ReStart();
 	TBool IsPluginRequest();
+	static inline CFsMessageRequest* RequestFromMessage(const RMessagePtr2& aMessage);
 	
    // UID of the process to touching the file. (To be used in notification framework).
    // TUid iUID;

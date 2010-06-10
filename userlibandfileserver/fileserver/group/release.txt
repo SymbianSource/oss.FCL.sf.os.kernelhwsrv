@@ -1,3 +1,29 @@
+Version 2.00.3044
+=================
+(Made by vfebvre 27/05/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#400806 Warnings reported by the Symbian Foundation license checker
+
+2.	h14jiang
+	1.	DEF145205 File server crash observed when running F32TEST T_PLUGIN_V2
+
+3.	michcox
+	1.	ou1cimx1#378866 MCL Symbian.org Bug 2544 -  Possible deadlocks on f32 plugin chains
+
+4.	vinjose
+	1.	ou1cimx1#394794 Raptor creates incorrect .iby files for f32test/loader
+
+
+Version 2.00.3043
+=================
+(Made by vfebvre 27/05/2010)
+
+1.	paconway
+	1.	REQ 417-56766 MBBMS over CMMB for TD-SCDMA Gen. 2 MobileTv
+		PackageReleaseID=497412 FeatureReleaseID=494378
+
+
 Version 2.00.3042
 =================
 (Made by vfebvre 14/05/2010)

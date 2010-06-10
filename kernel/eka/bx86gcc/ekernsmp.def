@@ -1100,4 +1100,8 @@ EXPORTS
 	_ZN5NKern21SetNumberOfActiveCpusEi @ 1099 NONAME
 	_ZN4Epoc11FreeRamZoneEj @ 1100 NONAME
 	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1101 NONAME
+	_ZN10RArrayBase12SetKeyOffsetEi @ 1102 NONAME
+	_ZN5Cache10CpuRetiresEv @ 1103 NONAME
+	_ZN5Cache13KernelRetiresEv @ 1104 NONAME
+
 

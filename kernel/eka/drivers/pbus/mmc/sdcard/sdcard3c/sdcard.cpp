@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -27,7 +27,7 @@
 // ======== TSDCard ========
 
 TSDCard::TSDCard()
-:	iProtectedAreaSize(0), iPARootDirEnd(KPARootDirEndUnknown)
+:	iProtectedAreaSize(0), iPARootDirEnd(KPARootDirEndUnknown), iClientCountSD(0)
 	{
 	// empty
 	}
@@ -481,6 +481,12 @@ EXPORT_C TMMCErr DSDStack::AcquireStackSM()
 		// Before issueing commands, see if there's actually a card present
 		if (!CardDetect(iCxCardCount))
 			SMF_GOTOS(EStMoreCardsCheck)
+		
+		// Card Previously Marked as Corrupt do not re-initialise	
+		if ((CardArray().CardP(iCxCardCount)->iFlags)& KSDCardIsCorrupt)
+		    {
+            SMF_GOTOS(EStMoreCardsCheck)
+		    }
 
 		m.SetTraps(KMMCErrResponseTimeOut);
 		SMF_INVOKES(InitialiseMemoryCardSMST, EStSendCIDIssued)
@@ -814,6 +820,7 @@ TMMCErr DSDStack::InitialiseMemoryCardSM()
 					{
 					__KTRACE_OPT2(KPBUS1, KPANIC, Kern::Printf("-sd:ocr busy timed out"));
 					OstTraceFunctionExitExt( DSDSTACK_INITIALISEMEMORYCARDSM_EXIT2, this, (TInt) KMMCErrBusTimeOut );
+					(CardArray().CardP(iCxCardCount)->iFlags)|=KSDCardIsCorrupt;
 					return KMMCErrBusTimeOut;
 					}
 					
