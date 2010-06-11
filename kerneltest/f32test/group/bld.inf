@@ -268,8 +268,6 @@ fhserver64bit       support
 #include "../plugins/version_2/file64bit/group/file64bit_plugin.inf"
 #endif
 
-t_ftrace
-
 t_surrogatepair
 
 // this test loads a actual codepage dll (cp932.dll),  should be the last test.

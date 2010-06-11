@@ -1188,4 +1188,5 @@ EXPORTS
 	_ZN5NKern21SetNumberOfActiveCpusEi @ 1187 NONAME
 	_ZN3Arm14SetIdleHandlerEPFvPvmPVvES0_ @ 1188 NONAME
 	_ZN4Epoc11FreeRamZoneEj @ 1189 NONAME
+	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1190 NONAME
 

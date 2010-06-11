@@ -124,7 +124,8 @@ EXPORT_C TInt Epoc::MovePhysicalPage(TPhysAddr aOld, TPhysAddr& aNew, TRamDefrag
 
 TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlockRest)
 	{
-	TInt r;
+	// Returns this when page is not paged or managed or free but is a real RAM page.
+	TInt r = KErrNotSupported;
 
 	// get memory object corresponding to the page...
 	DMemoryObject* memory = 0;
@@ -136,30 +137,76 @@ TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlo
 			{// The page is paged so let the pager handle it.
 			return ThePager.DiscardPage(pi, aBlockZoneId, aBlockRest);
 			}
-		if (pi->Type()==SPageInfo::EManaged)
-			memory = pi->Owner();
-		}
-	MmuLock::Unlock();
-
-	// Note, whilst we hold the RamAllocLock the page can't change it's use
-	// and we can safely assume that it still belongs to the memory object
-	// at a fixed page index.
-	// Also, as memory objects can't be destroyed whilst they still own pages
-	// we can safely access this object without taking an explicit referernce,
-	// i.e. we don't need to Open() the memory object.
-	if (!pi)
-		{// page info for aOld not found so aOld is not a RAM page...
-		r = KErrArgument;
-		}
-	else if(!memory)
-		{
-		// page does not have a memory manager, so we can't move it...
-		r = KErrNotSupported;
+		switch (pi->Type())
+			{
+			case SPageInfo::EManaged:
+				memory = pi->Owner();
+				// Note, whilst we hold the RamAllocLock the page can't change it's use
+				// and we can safely assume that it still belongs to the memory object
+				// at a fixed page index.
+				// Also, as memory objects can't be destroyed whilst they still own pages
+				// we can safely access this object without taking an explicit reference,
+				// i.e. we don't need to Open() the memory object.
+				MmuLock::Unlock();
+				// move page...
+				r = memory->iManager->MovePage(memory, pi, aNew, aBlockZoneId, aBlockRest);
+				break;
+			case SPageInfo::EUnused:
+				r = KErrNotFound;	// This page is free so nothing to do.
+				// Fall through..
+			default:
+				MmuLock::Unlock();
+			}
 		}
 	else
+		{// page info for aOld not found so aOld is not a RAM page...
+		MmuLock::Unlock();
+		r = KErrArgument;
+		}
+	return r;
+	}
+
+
+TInt M::MoveAndAllocPage(TPhysAddr aAddr, TZonePageType aPageType)
+	{
+	// Returns this when page is not paged or managed or free but is a real RAM page.
+	TInt r = KErrNotSupported;
+
+	// get memory object corresponding to the page...
+	DMemoryObject* memory = 0;
+	MmuLock::Lock();
+	SPageInfo* pi = SPageInfo::SafeFromPhysAddr(aAddr & ~KPageMask);
+	if(pi)
 		{
-		// move page...
-		r = memory->iManager->MovePage(memory, pi, aNew, aBlockZoneId, aBlockRest);
+		if (pi->PagedState() != SPageInfo::EUnpaged)
+			{// The page is paged so let the pager handle it.
+			return ThePager.DiscardAndAllocPage(pi, aPageType);
+			}
+		switch (pi->Type())
+			{
+			case SPageInfo::EManaged:
+				memory = pi->Owner();
+				// Note, whilst we hold the RamAllocLock the page can't change it's use
+				// and we can safely assume that it still belongs to the memory object
+				// at a fixed page index.
+				// Also, as memory objects can't be destroyed whilst they still own pages
+				// we can safely access this object without taking an explicit referernce,
+				// i.e. we don't need to Open() the memory object.
+				MmuLock::Unlock();
+				// move page...
+				r = memory->iManager->MoveAndAllocPage(memory, pi, aPageType);
+				break;
+			case SPageInfo::EUnused:
+				r = KErrNone;	// This page is free so nothing to do.
+				// Fall through..
+			default:
+				MmuLock::Unlock();
+			}
+		}
+	else
+		{// page info for aAddr not found so aAddr is not a RAM page...
+		MmuLock::Unlock();
+		r = KErrArgument;
 		}
 	return r;
 	}

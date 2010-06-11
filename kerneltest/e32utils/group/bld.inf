@@ -45,7 +45,6 @@ PRJ_EXPORTS
 ../demandpaging/dptestcons.oby 				/epoc32/rom/include/dptestcons.oby
 
 PRJ_TESTEXPORTS
-../trace/btracevw.pl /epoc32/tools/btracevw.pl
 
 PRJ_TESTMMPFILES
 #if defined(TOOLS2)

@@ -256,7 +256,7 @@ TInt ShellFunction::ChkDeps(TDes& aPath,TUint /*aSwitches*/)
 			aPath.Insert(0,TheShell->currentPath.Left(2));
 		}
 
-	RFile file;
+	RFile64 file;
 	r=file.Open(CShell::TheFs,aPath,EFileStream);
 	if (r!=KErrNone)	//		File could not be opened
 		{
@@ -1199,10 +1199,22 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
                 //-- print out cluster size that FS reported
                 TVolumeIOParamInfo volIoInfo;
                 nRes = aFs.VolumeIOParam(aDrvNum, volIoInfo);
-                if(nRes == KErrNone && volIoInfo.iClusterSize >= 512)
+                if(nRes == KErrNone)
                 {
-                    Buf.AppendFormat(_L(", Cluster Sz:%d"), volIoInfo.iClusterSize);
+                    if(volIoInfo.iBlockSize >= 0)
+                    {
+                        Buf.AppendFormat(_L(", BlkSz:%d"), volIoInfo.iBlockSize);
+                    }
+                    
+                    if(volIoInfo.iClusterSize >= 0)
+                    {
+                        Buf.AppendFormat(_L(", ClSz:%d"), volIoInfo.iClusterSize);
+                    }
+
+                    Buf.AppendFormat(_L(", CacheFlags:0x%x"), volInfo.iFileCacheFlags);
+                
                 }
+
 
                 if(Buf.Length())
                 {
@@ -1972,7 +1984,7 @@ TInt ShellFunction::Hexdump(TDes& aPath,TUint aSwitches)
 	ShellFunction::StripQuotes(aPath);
 
 	ParsePath(aPath);
-	RFile file;
+	RFile64 file;
 	TInt r=file.Open(TheShell->TheFs,aPath,EFileStream);
 	if (r!=KErrNone)
 		return(r);
@@ -3108,7 +3120,7 @@ _LIT(KLitPercentS, "%S");
 TInt ShellFunction::Type(TDes& aPath,TUint aSwitches)
 	{
 	ParsePath(aPath);
-	RFile file;
+	RFile64 file;
 	TInt r=file.Open(TheShell->TheFs,aPath,EFileStreamText|EFileShareReadersOnly);
 	if (r!=KErrNone)
 		return r;

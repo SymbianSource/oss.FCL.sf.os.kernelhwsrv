@@ -53,7 +53,7 @@ DSemaphore::~DSemaphore()
 // Enter and return with system unlocked.
 TInt DSemaphore::Create(DObject* aOwner, const TDesC* aName, TInt aInitialCount, TBool aVisible)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DSemaphore::Create owner %O, name %lS, init count=%d, visible=%d",aOwner,aName,aInitialCount,aVisible));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DSemaphore::Create owner %O, name %S, init count=%d, visible=%d",aOwner,aName,aInitialCount,aVisible));
 	if (aInitialCount<0)
 		return KErrArgument;
 	SetOwner(aOwner);
@@ -306,7 +306,7 @@ DMutex::~DMutex()
 // Enter and return with system unlocked.
 TInt DMutex::Create(DObject* aOwner, const TDesC* aName, TBool aVisible, TUint aOrder)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DMutex::Create owner %O, name %lS, visible=%d, order=%02x",aOwner,aName,aVisible,aOrder));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DMutex::Create owner %O, name %S, visible=%d, order=%02x",aOwner,aName,aVisible,aOrder));
 	iOrder = (TUint8)aOrder;
 	SetOwner(aOwner);
 	TInt r=KErrNone;
@@ -654,7 +654,7 @@ DCondVar::~DCondVar()
 // Enter and return with system unlocked.
 TInt DCondVar::Create(DObject* aOwner, const TDesC* aName, TBool aVisible)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DCondVar::Create owner %O, name %lS, visible=%d",aOwner,aName,aVisible));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("DCondVar::Create owner %O, name %S, visible=%d",aOwner,aName,aVisible));
 	SetOwner(aOwner);
 	TInt r=KErrNone;
 	if (aName && aName->Length())
@@ -1080,12 +1080,12 @@ TInt ExecHandler::CondVarCreate(const TDesC8* aName, TOwnerType aType)
 		{
 		Kern::KUDesGet(n,*aName);
 		pN=&n;
+		__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::CondVarCreate %S", pN));
 		}
 	else if (aType==EOwnerThread)
 		pO=TheCurrentThread;
 	else
 		pO=TheCurrentThread->iOwningProcess;
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::CondVarCreate %lS", aName));
 	NKern::ThreadEnterCS();
 	TInt r=KErrNoMemory;
 	DCondVar* pV = new DCondVar;

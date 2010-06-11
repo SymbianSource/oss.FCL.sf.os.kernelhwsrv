@@ -353,6 +353,15 @@ public:
 	*/
 	TInt DiscardPage(SPageInfo* aOldPageInfo, TUint aBlockZoneId, TBool aBlockRest);
 
+	/**
+	Attempt to discard the specified page and then allocate a page of type aPageType
+	in its place.
+	
+	@param aPageInfo	The page info of the page to discard.
+	@param aPageType 	The new page type to allocate into aPageInfo's physical address.
+	*/
+	TInt DiscardAndAllocPage(SPageInfo* aPageInfo, TZonePageType aPageType);
+
 
 	/**
 	Update any live list links to replace the old page with the new page.

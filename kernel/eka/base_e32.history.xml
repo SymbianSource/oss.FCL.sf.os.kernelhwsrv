@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<relnotes name="Kernel Architecture 2">
+  <purpose>
+  </purpose>
+
+  <minorchange revision="001">
+    MINOR CHANGE: Improved test code T_Match by adding more cases to test for INC092513 (SYSLIB-UNICODE-CT-3337)
+  </minorchange>
+</relnotes>

@@ -1,3 +1,50 @@
+Version 2.00.3042
+=================
+(Made by vfebvre 14/05/2010)
+
+1.	migubarr
+	1.	REQ 428-1297 Migrate File Server Tracing from UTF to OST
+		PackageReleaseID=495120
+
+
+Version 2.00.3041
+=================
+(Made by vfebvre 13/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#380321 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+
+
+Version 2.00.3040
+=================
+(Made by vfebvre 12/05/2010)
+
+1.	cnotton
+	1.	MINOR_CHANGE Corrected MRP comment text
+
+2.	hengrant
+	1.	ou1cimx1#370931 Memory card gets locked by itself MCL
+
+
+Version 2.00.3039
+=================
+(Made by vfebvre 06/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#372432 CFileMan malfunctioning in copying
+
+2.	dlyokhin
+	1.	ou1cimx1#372220 File server may request more free space on the volume than necessary
+
+
+Version 2.00.3038
+=================
+(Made by vfebvre 05/05/2010)
+
+1.	niccox
+	1.	ou1cimx1#371028 shostmassstorage capabilities are too high
+
+
 Version 2.00.3037
 =================
 (Made by vfebvre 30/04/2010)

@@ -2050,7 +2050,6 @@ void CDmTest7::Perform()
 	TInt r = manager.Connect(KDmHierarchyIdTest);
 	test (r == KErrNone);
 	manager.RequestDomainTransition(KDmIdRoot, EStartupCriticalStatic, ETraverseDefault, status);
-	test(status.Int() == KRequestPending);
 	User::WaitForRequest(status);
 	test(status.Int() == KErrNone);
 	manager.Close();

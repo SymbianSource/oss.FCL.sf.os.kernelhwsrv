@@ -699,7 +699,7 @@ void DThread::Exit()
 #ifdef KPANIC
 	if (iExitType==EExitPanic)
 		{
-		__KTRACE_OPT2(KPANIC,KSCHED,Kern::Printf("Thread %O Panic %lS %d",this,&iExitCategory,iExitReason));
+		__KTRACE_OPT2(KPANIC,KSCHED,Kern::Printf("Thread %O Panic %S %d",this,&iExitCategory,iExitReason));
 		}
 	else if (iExitType==EExitTerminate)
 		{
@@ -830,7 +830,7 @@ void DThread::DoExit1()
 void DThread::Die(TExitType aType, TInt aReason, const TDesC& aCategory)
 	{
 	CHECK_PRECONDITIONS(MASK_SYSTEM_LOCKED,"DThread::Die");				
-	__KTRACE_OPT(KTHREAD,Kern::Printf("Thread %O Die: %d,%d,%lS",this,aType,aReason,&aCategory));
+	__KTRACE_OPT(KTHREAD,Kern::Printf("Thread %O Die: %d,%d,%S",this,aType,aReason,&aCategory));
 	SetExitInfo(aType,aReason,aCategory);
 
 	// If necessary, decrement count of running user threads in this process.  We get here if the
@@ -923,7 +923,7 @@ void DThread::SetPaging(TUint& aCreateFlags)
 
 TInt DThread::Create(SThreadCreateInfo& aInfo)
 	{
-	__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Create %lS owner %O size %03x", &aInfo.iName,
+	__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Create %S owner %O size %03x", &aInfo.iName,
 																iOwningProcess, aInfo.iTotalSize));
 
 	if (aInfo.iTotalSize < (TInt)sizeof(SThreadCreateInfo))
@@ -1268,7 +1268,7 @@ TInt DThread::Rename(const TDesC& aName)
 	TInt r=K::Containers[EThread]->CheckUniqueFullName(this,aName);
 	if (r==KErrNone)
 		{
-		__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Rename %O to %lS",this,&aName));
+		__KTRACE_OPT(KTHREAD,Kern::Printf("DThread::Rename %O to %S",this,&aName));
 		r=SetName(&aName);
 #ifdef BTRACE_THREAD_IDENTIFICATION
 		Name(n);

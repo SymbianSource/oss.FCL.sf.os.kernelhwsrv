@@ -36,7 +36,7 @@ TInt ExecHandler::ObjectNext(TObjectType aType, TBuf8<KMaxFullName>& aName, TFin
 	TFindHandle h;
 	Kern::KUDesGet(match,aName);
 	kumemget32(&h,&aFindHandle,sizeof(h));
-	__KTRACE_OPT(KEXEC,Kern::Printf("ObjN: %lS %08x", &match, h.Handle()));
+	__KTRACE_OPT(KEXEC,Kern::Printf("ObjN: %S %08x", &match, h.Handle()));
 	NKern::ThreadEnterCS();
 	TInt r=pC->FindByFullName(h, match, fn);
 	NKern::ThreadLeaveCS();
@@ -812,7 +812,7 @@ TInt ExecHandler::ChunkCreate(TOwnerType aType, const TDesC8* aName, TChunkCreat
 	TKName n;
 	if (aName)
 		Kern::KUDesGet(n,*aName);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ChunkCreate %lS",&n));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ChunkCreate %S",&n));
 	TChunkCreate uinfo;
 	SChunkCreateInfo info;
 	kumemget32(&uinfo,&anInfo,sizeof(uinfo));
@@ -938,9 +938,9 @@ TBool ExecHandler::ProcessDefaultDataPaged(DProcess* aProcess)
 
 TInt ExecHandler::OpenObject(TObjectType aObjType, const TDesC8& aName, TOwnerType aType)
 	{
-	__KTRACE_OPT(KTHREAD,Kern::Printf("Exec::OpenObject %lS",&aName));
 	TFullName n;
 	Kern::KUDesGet(n,aName);
+	__KTRACE_OPT(KTHREAD,Kern::Printf("Exec::OpenObject %S",&n));
 	if (Kern::ValidateFullName(n)!=KErrNone)
 		K::PanicKernExec(EBadName);
 	if ((TUint)aObjType>=(TUint)ENumObjectTypes)
@@ -1012,12 +1012,12 @@ TInt ExecHandler::MutexCreate(const TDesC8* aName, TOwnerType aType)
 		{
 		Kern::KUDesGet(n,*aName);
 		pN=&n;
+		__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::MutexCreate %S",pN));
 		}
 	else if (aType==EOwnerThread)
 		pO=TheCurrentThread;
 	else
 		pO=TheCurrentThread->iOwningProcess;
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::MutexCreate %lS",aName));
 	NKern::ThreadEnterCS();
 	DMutex* pM;
 	TInt r=K::MutexCreate(pM, *pN, pO, ETrue, KMutexOrdUser);
@@ -1036,7 +1036,6 @@ TInt ExecHandler::MutexCreate(const TDesC8* aName, TOwnerType aType)
 
 TInt ExecHandler::SemaphoreCreate(const TDesC8* aName, TInt aCount, TOwnerType aType)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::SemaphoreCreate %lS",aName));
 	TKName n;
 	DObject* pO=NULL;
 	const TDesC* pN=NULL;
@@ -1044,6 +1043,7 @@ TInt ExecHandler::SemaphoreCreate(const TDesC8* aName, TInt aCount, TOwnerType a
 		{
 		Kern::KUDesGet(n,*aName);
 		pN=&n;
+		__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Exec::SemaphoreCreate %S",pN));
 		}
 	else if (aType==EOwnerThread)
 		pO=TheCurrentThread;
@@ -1230,7 +1230,7 @@ TInt ExecHandler::ThreadRename(TInt aHandle, const TDesC8& aName)
 	{
 	TKName n;
 	Kern::KUDesGet(n,aName);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ThreadRename %lS",&n));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ThreadRename %S",&n));
 	NKern::LockSystem();
 	DThread* pT=(DThread*)K::ThreadEnterCS(aHandle,EThread);
 	if (pT!=TheCurrentThread &&
@@ -1255,7 +1255,7 @@ TInt ExecHandler::ProcessRename(TInt aHandle, const TDesC8& aName)
 	{
 	TKName n;
 	Kern::KUDesGet(n,aName);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ProcessRename %lS",&n));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ProcessRename %S",&n));
 	NKern::LockSystem();
 	DProcess* pP=(DProcess*)K::ThreadEnterCS(aHandle,EProcess);
 	if (pP->iSecurityZone!=TheCurrentThread->iOwningProcess->iSecurityZone)
@@ -1907,7 +1907,7 @@ TInt ExecHandler::ThreadCreate(const TDesC8& aName, TOwnerType aType, SThreadCre
 	{
 	TKName n;
 	Kern::KUDesGet(n,aName);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ThreadCreate %lS",&n));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::ThreadCreate %S",&n));
 	TUint32 infoBuf[KMaxThreadCreateInfo/sizeof(TUint32)];
 	SThreadCreateInfo& info = *(SThreadCreateInfo*)infoBuf;
 	kumemget32(&info, &aInfo, sizeof(SThreadCreateInfo));
@@ -1942,7 +1942,7 @@ TInt ExecHandler::ThreadCreate(const TDesC8& aName, TOwnerType aType, SThreadCre
 
 TInt K::MutexCreate(DMutex*& aMutex, const TDesC& aName, DObject* anOwner, TBool aVisible, TUint aOrder)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("K::MutexCreate %lS owner %O visible=%d order=%02x",&aName,anOwner,aVisible,aOrder));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("K::MutexCreate %S owner %O visible=%d order=%02x",&aName,anOwner,aVisible,aOrder));
 	DMutex* pM=new DMutex;
 	TInt r=KErrNoMemory;
 	if (pM)
@@ -2009,7 +2009,7 @@ TInt K::MutexCreate(DMutex*& aMutex, const TDesC& aName, DObject* anOwner, TBool
 EXPORT_C TInt Kern::ThreadCreate(SThreadCreateInfo& aInfo)
 	{
 	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::ThreadCreate");		
-	__KTRACE_OPT(KEXEC,Kern::Printf("Kern::ThreadCreate %lS",&aInfo.iName));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Kern::ThreadCreate %S",&aInfo.iName));
 	aInfo.iHandle=NULL;
 	DThread* pT=NULL;
 	TBool svc = aInfo.iType!=EThreadUser;

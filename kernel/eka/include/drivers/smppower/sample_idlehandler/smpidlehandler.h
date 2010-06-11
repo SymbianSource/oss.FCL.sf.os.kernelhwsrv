@@ -1,22 +1,24 @@
 /*
 * Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
-* This component and the accompanying materials are made available
-* under the terms of "Eclipse Public License v1.0"
-* which accompanies this distribution, and is available
-* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+* This material, including documentation and any related computer
+* programs, is protected by copyright controlled by Nokia. All
+* rights are reserved. Copying, including reproducing, storing
+* adapting or translating, any or all of this material requires the
+* prior written consent of Nokia. This material also contains
+* confidential information which may not be disclosed to others
+* without the prior written consent of Nokia.
 *
 * Initial Contributors:
 * Nokia Corporation - initial contribution.
 *
 * Contributors:
 *
-* Description:  
+* Description: 
 * os/kernelhwsrv/kernel/eka/include/drivers/smppower/sample_idlehandler/smpidlehandler.h
 * Example of a generic idle handler layer
 *
 */
-
 
 
 #ifndef __SMPIDLEHANDLER_H__
@@ -41,6 +43,8 @@ public:
     
 
     DSMPIdleHandler();
+	virtual ~DSMPIdleHandler();
+
     /*
       called to init and bind the idle handler. After this call idle will be directed to idle handler
       @pre thread context, no locks no fast mutexes, interrupt on

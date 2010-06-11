@@ -26,9 +26,6 @@
 #endif
 #include "d32btrace.h"
 
-// define this macro to enable tracing very early on in the boot sequence
-//#define __ENABLE_TRACE__
-
 #ifdef __EPOC32__
 _LIT(KStartupExeSysBinName,"Z:\\Sys\\Bin\\ESTART.EXE");
 #else
@@ -286,35 +283,6 @@ TInt StartupThread(TAny*)
 	User::SetCritical(User::ESystemCritical);
 
 	TInt r;
-#ifdef SYMBIAN_FTRACE_ENABLE
-	r = User::LoadLogicalDevice(_L("D_FTRACE"));	
-	__PRINT1(_L("User::LoadLogicalDevice(D_FTRACE) returns %d"),r);
-	__ASSERT_ALWAYS(r==KErrNone || r==KErrAlreadyExists,Fault(ETraceLddLoadFailure));
-
-	r = TheFtrace.Open(EOwnerProcess);
-	__ASSERT_ALWAYS(r==KErrNone || r==KErrAlreadyExists,Fault(ETraceLddLoadFailure));
-#endif
-
-#if defined (__ENABLE_TRACE__)
-		{
-		RBTrace trace;
-		
-		trace.Open();
-		
-//		trace.SetMode(RBTrace::EEnable + RBTrace::EFreeRunning);
-		trace.SetFilter(BTrace::EThreadIdentification,1);
-
-		trace.SetFilter(UTF::EBorder,1);
-		trace.SetFilter(UTF::EError,1);
-
-		trace.SetFilter2(EF32TraceUidEfsrv,1);
-//		trace.SetFilter2(EF32TraceUidFileSys,1);
-//		trace.SetFilter2(EF32TraceUidProxyDrive,1);
-
-		trace.Close();	
-		}
-
-#endif
 
 //
 // Load the file system's device driver

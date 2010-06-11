@@ -22,7 +22,7 @@
 #include "t_server.h"
 #include <e32twin.h>
 #include <e32rom.h>
-#include <u32hal.h>	//*test*
+#include <u32hal.h>
 
 
 //----------------------------------------------------------------------------------------------
@@ -251,7 +251,6 @@ void TestBuffer(TDes8& aBuffer, TInt aPos, TInt aLength)
 		}
 	}
 
-//*test**************************************************************************
 TInt FreeRam()
 	{
 	// wait for any async cleanup in the supervisor to finish first...
@@ -261,7 +260,85 @@ TInt FreeRam()
 	UserHal::MemoryInfo(meminfo);
 	return meminfo().iFreeRamInBytes;
 	}
-//*test**************************************************************************
+
+void LowMemoryTest()
+	{
+	TInt fileSize = 0;
+	
+	const TInt KWriteLen = 128*1024;
+	test.Next(_L("Test appending to a file with low memory"));
+	gBufPtr.SetLength(KBufSize);
+
+	RFile f;
+	TFileName testFile   = _L("TEST.BIN");
+
+	TInt r = f.Replace(TheFs, testFile, EFileWrite | EFileWriteBuffered);
+	test_KErrNone(r);
+
+	TInt pos = 0;
+
+	TPtrC8 writePtr;
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	r = f.Write(pos, writePtr);
+	test_KErrNone(r);
+	pos+= writePtr.Length();
+
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+
+
+	TUint freeRam = FreeRam();
+	const TInt KPageSize=4096;
+	freeRam = (freeRam + KPageSize -1) & ~(KPageSize-1);
+	test.Printf(_L("FreeRam = %d"), freeRam);
+
+	RChunk chunk;
+	TChunkCreateInfo chunkInfo;
+	chunkInfo.SetDisconnected(0, 0, freeRam);
+	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	test_KErrNone(chunk.Create(chunkInfo));
+
+	test.Printf(_L("Gobbling all of memory..."));
+	
+	TUint commitEnd;
+	for (commitEnd = 0; commitEnd < freeRam; commitEnd += KPageSize) 
+		{
+		r = chunk.Commit(commitEnd,KPageSize);
+		if (r != KErrNone)
+			break;
+		
+		}
+	test.Printf(_L("commitEnd %d, r %d"), commitEnd, r);
+	test_Value(r, r == KErrNoMemory || r == KErrNone);
+
+	test.Printf(_L("FreeRam = %d"), FreeRam());
+
+	pos-= KSegmentSize;
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	test.Printf(_L("Writing to file..."));
+
+	r = f.Write(pos, writePtr);
+	test_KErrNone(r);
+	pos+= writePtr.Length();
+
+	test.Printf(_L("Setting size of file ..."));
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+	test.Printf(_L("Closing file ..."));
+	f.Close();
+
+	test.Printf(_L("Closing chunk ..."));
+	chunk.Close();
+
+	test.Printf(_L("FreeRam = %d"), FreeRam());
+	}
+
 
 
 LOCAL_C void UnitTests()
@@ -312,67 +389,7 @@ LOCAL_C void UnitTests()
 	TInt uncachedPacketsRead;
 #endif
 
-//*test**************************************************************************
-	{
-	TInt fileSize = 0;
-	
-	const TInt KWriteLen = 128*1024;
-	test.Next(_L("Test appending to a file with low memory"));
-	gBufPtr.SetLength(KBufSize);
-
-	r = f.Replace(TheFs, testFile, EFileWrite | EFileWriteBuffered);
-	test_KErrNone(r);
-
-	pos = 0;
-
-	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
-
-	r = f.Write(pos, writePtr);
-	test_KErrNone(r);
-	pos+= writePtr.Length();
-
-	r = f.Size(fileSize);
-	test_KErrNone(r);
-	test_Equal(fileSize,pos);
-
-
-
-	TInt freeRam = FreeRam();
-	test.Printf(_L("FreeRam = %d"), freeRam);
-	const TInt KPageSize=4096;
-
-	RChunk chunk;
-	TChunkCreateInfo chunkInfo;
-	chunkInfo.SetDisconnected(0, 0, freeRam);
-	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
-	test_KErrNone(chunk.Create(chunkInfo));
-
-	TUint commitEnd = 0;
-	TInt r;
-	while(KErrNone == (r = chunk.Commit(commitEnd,KPageSize)))
-		{
-		commitEnd += KPageSize;
-		}
-	test_Equal(KErrNoMemory, r);
-
-
-
-	pos-= KSegmentSize;
-	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
-
-	r = f.Write(pos, writePtr);
-	test_KErrNone(r);
-	pos+= writePtr.Length();
-
-	r = f.Size(fileSize);
-	test_KErrNone(r);
-	test_Equal(fileSize,pos);
-
-	f.Close();
-
-	chunk.Close();
-	}
-//*test**************************************************************************
+	LowMemoryTest();
 
 	// create an empty file, so that any writes overlapping segemt boundaries
 	// need a read first

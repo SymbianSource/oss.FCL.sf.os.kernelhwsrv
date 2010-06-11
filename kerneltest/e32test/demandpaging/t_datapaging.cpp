@@ -38,7 +38,7 @@
 #include <e32msgqueue.h>
 #include <e32atomics.h>
 #include <e32math.h>
-
+#include <f32file.h>
 #include "t_dpcmn.h"
 #include "../mmu/mmudetect.h"
 #include "../mmu/d_memorytest.h"
@@ -236,7 +236,7 @@ void TestKillThread(TThreadFunction aFunc, TInt aIterations)
 		CLOSE_AND_WAIT(thread);
 		}
 	CLOSE_AND_WAIT(gChunk);
-	User::After(1000000);
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
 	__KHEAP_MARKEND;
 	}
 
@@ -783,6 +783,9 @@ void TestDecommitAndStealInteraction(TInt aSeconds)
 	test_KErrNone(timeoutStatus.Int());
 	
 	CLOSE_AND_WAIT(gChunk);
+	
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+	
 	__KHEAP_MARKEND;
 	}
 
@@ -1198,6 +1201,17 @@ TInt E32Main()
 	
 	test.Title();
 	test_KErrNone(GetGlobalPolicies());
+
+	_LIT(KFileName,"Z:\\Test\\not_data_paged.txt");
+	RFs fs;
+	RFile file;
+	TInt error;
+	test(KErrNone == fs.Connect());
+	error = file.Open(fs, KFileName, EFileRead);
+	TBool isFilePresent = (error == KErrNone);
+	file.Close();
+	fs.Close();
+	test(gDataPagingSupported == !isFilePresent);
 
 	test.Start(_L("Test HAL APIs"));
 	TestHal();

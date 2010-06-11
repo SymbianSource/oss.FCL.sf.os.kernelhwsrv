@@ -134,6 +134,13 @@ TInt DMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPageInfo,
 	return KErrNotSupported;
 	}
 
+
+TInt DMemoryManager::MoveAndAllocPage(DMemoryObject*, SPageInfo*, TZonePageType)
+	{
+	return KErrNotSupported;
+	}
+
+
 TZonePageType DMemoryManager::PageType()
 	{// This should not be invoked on memory managers that do not use the methods
 	// AllocPages() and FreePages().
@@ -721,6 +728,7 @@ class DMovableMemoryManager : public DUnpagedMemoryManager
 public:
 	// from DMemoryManager...
 	virtual TInt MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInfo, TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest);
+	virtual TInt MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType);
 	virtual TInt HandleFault(	DMemoryObject* aMemory, TUint aIndex, DMemoryMapping* aMapping, 
 								TUint aMapInstanceCount, TUint aAccessPermissions);
 	virtual TZonePageType PageType();
@@ -883,6 +891,18 @@ remap:
 	RPageArray::MovePageEnd(*movingPageArrayPtr);
 	MmuLock::Unlock();
 
+	return r;
+	}
+
+
+TInt DMovableMemoryManager::MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType)
+	{
+	TPhysAddr newPage;
+	TInt r = MovePage(aMemory, aPageInfo, newPage, KRamZoneInvalidId, EFalse);
+	if (r == KErrNone)
+		{
+		TheMmu.MarkPageAllocated(aPageInfo->PhysAddr(), aPageType);
+		}
 	return r;
 	}
 

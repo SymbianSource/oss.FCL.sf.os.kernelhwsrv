@@ -70,7 +70,7 @@
 
 	Some peripherals may require a post-increment address mode.
 
-	@see DDmaRequest::Fragment
+	@see DDmaRequest::Fragment()
 
 	Note: This enum is only required for backwards compatibility with the old
 	DMA framework, it can be removed once this is no longer needed.
@@ -337,10 +337,11 @@ public:
 		Works like ExpandDesList except that it uses the iSrcFirstHdr and
 		iSrcLastHdr fields.
 
-		@see ExpandDesList
+		@see ExpandDesList()
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will just return KErrGeneral.
+		This function should only be used if SDmacCaps::iAsymHwDescriptors is
+		reported as true, as only then the framework will actually use the
+		allocated descriptors.
 
 		@param aCount Number of descriptors to append.
 
@@ -357,10 +358,11 @@ public:
 		Works like ExpandDesList except that it uses the iDstFirstHdr and
 		iDstLastHdr fields.
 
-		@see ExpandDesList
+		@see ExpandDesList()
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will just return KErrGeneral.
+		This function should only be used if SDmacCaps::iAsymHwDescriptors is
+		reported as true, as only then the framework will actually use the
+		allocated descriptors.
 
 		@param aCount Number of descriptors to append.
 
@@ -373,7 +375,9 @@ public:
 
 	/** Free resources associated with this request.
 
-		Assume the request is not being transferred or pending.
+		Assumes the request is not being transferred or pending.
+
+		@see ExpandDesList()
 
 		@released
 	*/
@@ -383,10 +387,9 @@ public:
 	/** Free resources associated with this request. This function variant
 		operates on the source port descriptor chain.
 
-		@see FreeDesList
+		Assumes the request is not being transferred or pending.
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will do nothing.
+		@see ExpandSrcDesList()
 
 		@prototype
 	*/
@@ -396,10 +399,9 @@ public:
 	/** Free resources associated with this request. This function variant
 		operates on the destination port descriptor chain.
 
-		@see FreeDesList
+		Assumes the request is not being transferred or pending.
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will do nothing.
+		@see ExpandDstDesList()
 
 		@prototype
 	*/
@@ -1197,13 +1199,52 @@ protected:
 		empty request queue, or immediately after the request count has become
 		zero because of request cancellation or completion.
 
-		Depending on the current value of iQueuedRequests, the PSL may power
-		down or power up the channel. Note that iQueuedRequests gets accessed
-		and changed by different threads, so the PSL needs to take the usual
-		precautions when evaluating the variable's value.
+		Depending on the current and previous observed values of
+		iQueuedRequests, the PSL may power down or power up the channel.
+
+		Note that iQueuedRequests gets accessed and changed by different
+		threads, so the PSL needs to take the usual precautions when evaluating
+		the variable's value. Also, due to the multithreaded framework
+		architecture, there is no guarantee that the function calls always
+		arrive at the PSL level in the strict chronological order of
+		iQueuedRequests being incremented/decremented in the PIL, i.e. it might
+		happen that the PSL finds iQueuedRequests to have the same value in two
+		or more consecutive calls (that's why the previous observed value needs
+		to be locally available and taken into account). It is however promised
+		that before any actual transfer commences the PSL will find the request
+		count to be greater than zero and that after the last request has
+		finished it will be found to be zero.
 
 		None of the internal DMA framework mutexes is being held by the PIL
 		when calling this function.
+
+		Here is an example implementation for a derived channel class:
+
+		@code
+
+		class TFooDmaChannel : public TDmaSgChannel
+			{
+			DMutex* iDmaMutex;
+			TInt iPrevQueuedRequests;
+			virtual void QueuedRequestCountChanged();
+			};
+
+		void TFooDmaChannel::QueuedRequestCountChanged()
+			{
+			Kern::MutexWait(*iDmaMutex);
+			if ((iQueuedRequests > 0) && (iPrevQueuedRequests == 0))
+				{
+				IncreasePowerCount(); // Base port specific
+				}
+			else if ((iQueuedRequests == 0) && (iPrevQueuedRequests > 0))
+				{
+				DecreasePowerCount(); // Base port specific
+				}
+			iPrevQueuedRequests = iQueuedRequests;
+			Kern::MutexSignal(*iDmaMutex);
+			}
+
+		@endcode
 
 		@see iQueuedRequests
 	*/

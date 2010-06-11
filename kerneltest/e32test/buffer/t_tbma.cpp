@@ -682,6 +682,62 @@ void TestSelectiveFree(TInt aSize)
 	delete pA;
 	}
 
+
+void TestSelectiveAlloc(TInt aSize)
+	{
+	test.Printf(_L("TestSelectiveAlloc %d\n"),aSize);
+	TBitMapAllocator* pA=TBitMapAllocator::New(aSize, ETrue);
+	test(pA!=NULL);
+	test(pA->Avail()==aSize);
+	// Allocate whole free bma
+	test_Equal(aSize, pA->SelectiveAlloc(0, aSize));
+	test_Equal(0,pA->Avail());
+	// Allocate whole full bma
+	test_Equal(0, pA->SelectiveAlloc(0, aSize));
+	test_Equal(0,pA->Avail());
+	TInt i;
+	TInt j;
+	TInt l;
+	for (i=2; i<8; ++i)
+		{
+		for (l=1; l<=aSize; ++l)
+			{
+			new (pA) TBitMapAllocator(aSize, ETrue);
+			for (j=0; j<aSize; j+=i)
+				pA->Alloc(j,1);
+			TInt orig=pA->Avail();
+			test_Equal(aSize-(aSize+i-1)/i, orig);
+			TUint newAllocs = pA->SelectiveAlloc(0,l);
+			TInt allocated = orig - pA->Avail();
+			test_Equal(allocated, newAllocs);
+			test_Equal(l - (l+i-1)/i, allocated);
+			Check(*pA);
+			}
+		}
+	for (i=0; i<=Min(32,aSize-1); ++i)
+		{
+		for (l=1; l<=aSize-i; ++l)
+			{
+			for (j=1; j<=aSize; ++j)
+				{
+				new (pA) TBitMapAllocator(aSize, ETrue);
+				pA->Alloc(i,l);
+				test_Equal(aSize-l, pA->Avail());
+				TUint newAllocs = pA->SelectiveAlloc(0,j);
+				TUint allocated = j - Max(0,Min(i+l,j)-i);
+				test_Equal(allocated, newAllocs);
+				test_Equal(pA->Avail(), aSize-l-allocated);
+				test(!pA->NotAllocated(0,j));
+				if (j>=i && j<i+l)
+					test(!pA->NotAllocated(0,j+1));
+				Check(*pA);
+				}
+			}
+		}
+	delete pA;
+	}
+
+
 TBitMapAllocator* DoSetupBMA(TInt aSize, VA_LIST aList)
 	{
 	TBitMapAllocator* pA=TBitMapAllocator::New(aSize, EFalse);
@@ -1245,6 +1301,11 @@ GLDEF_C TInt E32Main()
 	TestSelectiveFree(31);
 	TestSelectiveFree(128);
 	TestSelectiveFree(149);
+
+	TestSelectiveAlloc(3);
+	TestSelectiveAlloc(31);
+	TestSelectiveAlloc(128);
+	TestSelectiveAlloc(149);
 
 	TestAllocConsecutive();
 

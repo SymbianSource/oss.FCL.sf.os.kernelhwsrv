@@ -28,6 +28,10 @@ RAMTARGET 	    \sys\bin\	//
 capability		all
 vendorid		0x70000001
 
-
+#if defined ARMCC_4_0
+deffile		d_second_excp2_40.def
+#else
+deffile		d_second_excp2.def
+#endif
 
 SMPSAFE

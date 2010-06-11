@@ -2044,7 +2044,7 @@ void ExecHandler::MessageKill(TInt aHandle, TExitType aType, TInt aReason, const
 	TBuf<KMaxExitCategoryName> cat;
 	if (aType==EExitPanic && aCategory)
 		GetCategory(cat,*aCategory);
-	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::MessageKill %d,%d,%lS",aType,aReason,&cat));
+	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::MessageKill %d,%d,%S",aType,aReason,&cat));
 	K::CheckKernelUnlocked();
 	NKern::LockSystem();
 	RMessageK* pM = RMessageK::MessageK(aHandle);

@@ -87,6 +87,9 @@ const TInt KTicksPerMillisecond=1000;
 #elif defined(__NE1_TB__)
 const TInt KTickPeriodMs=1;
 const TInt KTicksPerMillisecond=66667;
+#elif defined(__MRAP__)
+const TInt KTickPeriodMs=1;
+const TInt KTicksPerMillisecond=1000;
 #endif
 
 #ifdef _DEBUG

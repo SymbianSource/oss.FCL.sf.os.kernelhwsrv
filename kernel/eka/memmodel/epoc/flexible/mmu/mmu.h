@@ -1962,6 +1962,7 @@ public:
 
 	TInt AllocRam(	TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags, TZonePageType aZonePageType, 
 					TUint aBlockZoneId=KRamZoneInvalidId, TBool aBlockRest=EFalse);
+	void MarkPageAllocated(TPhysAddr aPhysAddr, TZonePageType aZonePageType);
 	void FreeRam(TPhysAddr* aPages, TUint aCount, TZonePageType aZonePageType);
 	TInt AllocContiguousRam(TPhysAddr& aPhysAddr, TUint aCount, TUint aAlign, TRamAllocFlags aFlags);
 	void FreeContiguousRam(TPhysAddr aPhysAddr, TUint aCount);

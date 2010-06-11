@@ -32,6 +32,10 @@
 #include "sf_cache_client.h"
 #include "sf_file_cache_defs.h"
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_file_cacheTraces.h"
+#endif
+
 
 // disables flushing of stale cachelines before each write
 #define LAZY_WRITE
@@ -1996,11 +2000,11 @@ TInt CFileCache::HandleWriteDirtyError(TInt aError)
 			// However if the write error is to the bootsector remounting will always fail because the boot
 			// sector will have changed and hence the disk is useless.
 			// 
-			TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReMount, EF32TraceUidFileSys, DriveNumber());
+			OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREMOUNT2, "drive %d", DriveNumber());
 
 			TInt remountSuccess = iDrive->ReMount(*iMount);
 
-			TRACE1(UTF::EBorder, UTraceModuleFileSys::ECMountCBReMountRet, EF32TraceUidFileSys, remountSuccess);
+			OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBREMOUNT2RET, "success %d", remountSuccess);
 			if (!remountSuccess)
 				continue;
 			

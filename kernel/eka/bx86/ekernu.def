@@ -956,4 +956,5 @@ EXPORTS
 	?Retire@KernCoreStats@@SAHHH@Z @ 955 NONAME	;  public: static int KernCoreStats::Retire(int, int)
 	?Stats@KernCoreStats@@SAHPAX@Z @ 956 NONAME	;  public: static int KernCoreStats::Stats(void *)
 	?FreeRamZone@Epoc@@SAHI@Z @ 957 NONAME ; public: static int Epoc::FreeRamZone(unsigned int)
+	?SelectiveAlloc@TBitMapAllocator@@QAEIHH@Z @ 958 NONAME ; public: unsigned int __thiscall TBitMapAllocator::SelectiveAlloc(int,int)
 

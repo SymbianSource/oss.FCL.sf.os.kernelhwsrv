@@ -144,7 +144,7 @@ const TText* AttributeNames[]=
 	_S("ESerialNumber"),
 	_S("ECpuProfilingDefaultInterruptBase"),
 	_S("ENumCpus"),
-
+	_S("EDigitiserOrientation")
 	};
 
 TInt MatchAbbrev(const TDesC& anInput, const TText** aList, TInt aListLen)
@@ -159,7 +159,7 @@ TInt MatchAbbrev(const TDesC& anInput, const TText** aList, TInt aListLen)
 		if (r>=0)
 			{
 			// substring matches
-			if (r==0 && list_entry.Length()==anInput.Length())
+			if (r==0 && list_entry.Length()==anInput.Length()) 
 				{
 				// exact match
 				return i;

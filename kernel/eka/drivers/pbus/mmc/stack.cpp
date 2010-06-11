@@ -6408,6 +6408,9 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 			{
 			EStBegin=0,
 			EStNextIndex,
+			EStSendStatus,
+			EStGetStatus,
+			EStUnlock,
 			EStInitStackAfterUnlock,
 			EStIssuedLockUnlock,
 			EStDone,
@@ -6470,6 +6473,25 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 		//
 		// Upon completion, test the next card before performing further initialisation.
 		//
+		
+		SMF_STATE(EStSendStatus)
+		        
+		s.FillCommandDesc(ECmdSendStatus, 0);
+		                        
+		SMF_INVOKES(ExecCommandSMST,EStGetStatus)
+		                        
+		SMF_STATE(EStGetStatus)
+		                        
+		const TMMCStatus st = s.LastStatus();
+		if((st & KMMCStatCardIsLocked) == 0)
+			{
+		    SMF_RETURN(err)
+		    }
+		                        
+		SMF_STATE(EStUnlock)
+		                        
+		const TMapping *mp = NULL;
+		mp = iSocket->iPasswordStore->FindMappingInStore(iCardArray->CardP(iAutoUnlockIndex)->CID());
 
 		TMMCard &cd = *(iCardArray->CardP(iAutoUnlockIndex++));
 		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM4, "Attempting to unlock card %d", cd.Number() );

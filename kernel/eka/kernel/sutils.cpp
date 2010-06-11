@@ -1580,7 +1580,7 @@ TInt DThread::OpenFindHandle(TOwnerType aType, const TFindHandle& aFindHandle, T
 
 TInt DThread::OpenObject(TOwnerType aType, const TDesC& aName, TInt& aHandle, DObject*& anObj, TInt aObjType)
 	{
-	__KTRACE_OPT(KEXEC,Kern::Printf("DThread::OpenObject %lS",&aName));
+	__KTRACE_OPT(KEXEC,Kern::Printf("DThread::OpenObject %S",&aName));
 	anObj=NULL;
 	TInt r=Kern::ValidateFullName(aName);
 	if (r!=KErrNone)
@@ -2373,7 +2373,7 @@ Note that, on return, the semaphore is not visible, and has no owner.
 EXPORT_C TInt Kern::SemaphoreCreate(DSemaphore*& aSem, const TDesC& aName, TInt aInitialCount)
 	{
 	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Kern::SemaphoreCreate");				
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Kern::SemaphoreCreate %lS init %d", &aName, aInitialCount));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Kern::SemaphoreCreate %S init %d", &aName, aInitialCount));
 	TInt r = KErrNoMemory;
 	DSemaphore* pS = new DSemaphore;
 	if (pS)
