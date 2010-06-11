@@ -544,7 +544,7 @@ __NAKED__ void TThreadWaitList::Remove(DThread* aThread)
 	__JUMP(,lr);
 
 	asm("__FirstFree: ");
-	asm(".word %a0" : : "i" ((TInt)&FirstFree));
+	asm(".word %a0" : : "i" (&FirstFree));
 	}
 
 __NAKED__ void TThreadWaitList::ChangePriority(DThread* aThread, TInt aNewPriority)

@@ -58,9 +58,9 @@ __NAKED__ void InternalCache::DrainBuffers()
 	__JUMP(,lr);
 
 	asm("__DCacheInfo: ");
-	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoD]));
+	asm(".word %a0" : : "i" (&InternalCache::Info[KCacheInfoD]));
 	asm("__ICacheInfo: ");
-	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoI]));
+	asm(".word %a0" : : "i" (&InternalCache::Info[KCacheInfoI]));
 	asm("__TheScheduler: ");
 	asm(".word TheScheduler ");
 	}
@@ -340,7 +340,7 @@ __NAKED__ void ExternalCache::DrainBuffers()
 	__JUMP(,lr);
 	
 	asm("__ExternalCacheCtrlBase: ");
-	asm(".word %a0" : : "i" ((TInt)&Base));
+	asm(".word %a0" : : "i" (&Base));
 	asm("__KDummyUncachedAddr: ");
 	asm(".word %a0" : : "i" ((TInt)KDummyUncachedAddr));
 }
@@ -376,7 +376,7 @@ __NAKED__ void ExternalCache::DrainBuffers()
 	__POPRET("");
 	
 	asm("__ExternalCacheCtrlBase: ");
-	asm(".word %a0" : : "i" ((TInt)&Base));
+	asm(".word %a0" : : "i" (&Base));
 	asm("__KDummyUncachedAddr: ");
 	asm(".word %a0" : : "i" ((TInt)KDummyUncachedAddr));
 }
@@ -413,10 +413,10 @@ __NAKED__ void ExternalCache::DrainBuffers()
 	__POPRET("");
 	
 	asm("__ExternalCacheCtrlBase: ");
-	asm(".word %a0" : : "i" ((TInt)&Base));
+	asm(".word %a0" : : "i" (&Base));
 #if defined(__SMP__)
 	asm("__PL310SpinLock: ");
-	asm(".word %a0" : : "i" ((TInt)&iLock));
+	asm(".word %a0" : : "i" (&iLock));
 #endif	
 }
 #endif //(__ARM_L210_CACHE__) or (__ARM_L220_CACHE__) or (__ARM_PL310_CACHE__)

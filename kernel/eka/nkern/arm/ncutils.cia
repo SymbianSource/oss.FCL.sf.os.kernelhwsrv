@@ -303,7 +303,7 @@ __NAKED__ void NKern::NotifyCrash(const TAny* /*a0*/, TInt /*a1*/)
 	__ASM_CRASH();
 
 	asm("__CrashState: ");
-	asm(".word %a0" : : "i" ((TInt)&CrashState));
+	asm(".word %a0" : : "i" (&CrashState));
 	}
 
 

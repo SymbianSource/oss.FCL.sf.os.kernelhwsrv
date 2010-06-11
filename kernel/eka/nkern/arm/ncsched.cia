@@ -895,7 +895,7 @@ __NAKED__ EXPORT_C TBool TDfc::RawAdd()
 	__JUMP(,lr);
 
 	asm("__PendingDfcQueue: ");
-	asm(".word %a0" : : "i" ((TInt)&TheScheduler.iDfcs));
+	asm(".word %a0" : : "i" (&TheScheduler.iDfcs));
 	}
 
 
@@ -1850,7 +1850,7 @@ __NAKED__ void TScheduler::Reschedule()
 	asm("__TheScheduler: ");
 	asm(".word TheScheduler ");
 	asm("__SystemLock: ");
-	asm(".word %a0" : : "i" ((TInt)&TheScheduler.iLock));
+	asm(".word %a0" : : "i" (&TheScheduler.iLock));
 #ifdef BTRACE_CPU_USAGE
 	asm("context_switch_trace_header:");
 	asm(".word %a0" : : "i" ((TInt)(8<<BTrace::ESizeIndex) + (BTrace::EContextIdPresent<<BTrace::EFlagsIndex*8) + (BTrace::ECpuUsage<<BTrace::ECategoryIndex*8) + (BTrace::ENewThreadContext<<BTrace::ESubCategoryIndex*8)) );
@@ -2308,7 +2308,7 @@ EXPORT_C __NAKED__ TInt NKern::PreemptionPoint()
 	asm("ldr pc, [sp], #4 ");
 
 	asm("__RescheduleNeededFlag: ");
-	asm(".word %a0" : : "i" ((TInt)&TheScheduler.iRescheduleNeededFlag));
+	asm(".word %a0" : : "i" (&TheScheduler.iRescheduleNeededFlag));
 	}
 
 

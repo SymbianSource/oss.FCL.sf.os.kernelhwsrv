@@ -127,7 +127,7 @@ class DShBuf;
 #define FAST_EXEC_END
 
 #define DECLARE_WORD(n)				asm(".word %a0" : : "i" ((TInt)n));
-#define	DECLARE_FUNC(f)				asm(".word %a0" : : "i" ((TInt)&f));
+#define	DECLARE_FUNC(f)				asm(".word %a0" : : "i" (&f));
 #define	DECLARE_FAST_EXEC_INVALID	DECLARE_FUNC(InvalidFastExec)
 
 #define	SLOW_EXEC_BEGIN	\

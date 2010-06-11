@@ -81,7 +81,7 @@ EXPORT_C __NAKED__ void NKern::ThreadRequestSignal(NThread* /*aThread*/, NFastMu
 	asm("b  " CSM_ZN5NKern6UnlockEv);
 
 	asm("__SystemLock: ");
-	asm(".word %a0" : : "i" ((TInt)&TheScheduler.iLock));
+	asm(".word %a0" : : "i" (&TheScheduler.iLock));
 	asm("__TheScheduler: ");
 	asm(".word TheScheduler ");
 	}
