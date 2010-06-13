@@ -32,7 +32,9 @@ compsupp.iby                /epoc32/rom/include/
 
 PRJ_MMPFILES
 
-#if !defined GCCXML && !defined GCCE
+#if !defined GCCXML
+
+#if !defined GCCE
 
     symcpp/scppnwdl.mmp
     rvct/dfprvct-thunk.mmp
@@ -56,6 +58,8 @@ PRJ_MMPFILES
     #endif
 
     #endif
+
+#endif // !defined GCCE
 
 PRJ_EXTENSIONS
 
@@ -83,6 +87,16 @@ option  TODIR $(EPOCROOT)
 end
 #endif
 
-#endif // #if !defined GCCXML && !defined GCCE
+// Workaround for GCCE builds
+// Export the generic binaries which are currently only built with RVCT
+
+#if defined(GCCE)
+start extension tools/compsupp
+option  FILE  $(EXTENSION_ROOT)/rt_generic_export.zip
+option  TODIR $(EPOCROOT)
+end
+#endif
+
+#endif // #if !defined GCCXML
 
 
