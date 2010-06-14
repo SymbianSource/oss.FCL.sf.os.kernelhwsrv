@@ -29,6 +29,14 @@ symcpp/symcpp.h SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(symcpp.h)
 
 compsupp.iby                /epoc32/rom/include/
 
+#if defined(GCCE)
+// Workaround for GCCE builds
+// Export the generic binaries which are currently only built with RVCT
+
+:zip rt_generic_export.zip
+:zip rt_3_1_export.zip
+#endif
+
 
 PRJ_MMPFILES
 
@@ -83,16 +91,6 @@ end
 #if !defined(ARMCC_4_0)
 start extension tools/compsupp
 option  FILE  $(EXTENSION_ROOT)/rt_4_0_export.zip
-option  TODIR $(EPOCROOT)
-end
-#endif
-
-// Workaround for GCCE builds
-// Export the generic binaries which are currently only built with RVCT
-
-#if defined(GCCE)
-start extension tools/compsupp
-option  FILE  $(EXTENSION_ROOT)/rt_generic_export.zip
 option  TODIR $(EPOCROOT)
 end
 #endif
