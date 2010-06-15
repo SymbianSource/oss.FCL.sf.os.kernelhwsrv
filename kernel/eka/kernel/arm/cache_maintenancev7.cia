@@ -72,11 +72,11 @@ __NAKED__ void InternalCache::DrainBuffers()
 	__JUMP(,lr);
 
 	asm("__DCacheInfoPoU: ");
-	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoD_PoU]));
+	asm(".word %a0" : : "i" (&InternalCache::Info[KCacheInfoD_PoU]));
 	asm("__DCacheInfoPoC: ");
-	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoD]));
+	asm(".word %a0" : : "i" (&InternalCache::Info[KCacheInfoD]));
 	asm("__ICacheInfo: ");
-	asm(".word %a0" : : "i" ((TInt)&InternalCache::Info[KCacheInfoI]));
+	asm(".word %a0" : : "i" (&InternalCache::Info[KCacheInfoI]));
 	}
 
 __NAKED__ void InternalCache::IMB_CacheLine(TLinAddr /*aAddr*/)
