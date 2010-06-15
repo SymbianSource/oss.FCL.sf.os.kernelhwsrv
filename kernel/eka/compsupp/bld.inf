@@ -29,15 +29,6 @@ symcpp/symcpp.h SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(symcpp.h)
 
 compsupp.iby                /epoc32/rom/include/
 
-#if defined(GCCE)
-// Workaround for GCCE builds
-// Export the generic binaries which are currently only built with RVCT
-
-:zip rt_generic_export.zip
-:zip rt_3_1_export.zip
-#endif
-
-
 PRJ_MMPFILES
 
 #if !defined GCCXML
