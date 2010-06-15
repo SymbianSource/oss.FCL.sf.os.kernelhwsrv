@@ -168,9 +168,21 @@ typedef va_list __e32_va_list;
 // Support for throwing exceptions through embedded assembler
 // Should only be needed user side
 
-#define	__EH_FRAME_ADDRESS(reg,offset)	FRAME ADDRESS reg, offset
-#define __EH_FRAME_PUSH2(reg1,reg2) FRAME PUSH {reg1, reg2}
-#define __EH_FRAME_SAVE1(reg,offset) FRAME SAVE {reg}, offset
+#define __VSTR(x) #x
+#define __STR(x) __VSTR(x)
+#define __GAS_SAVE_REG(reg) ".save {" __STR(reg) " }"
+#define __ASM_GAS_SAVE_REG(reg) asm( __GAS_SAVE_REG(reg) );
+#define __GAS_SAVE_REGS2(reg1,reg2) ".save {" __STR(reg1) "," __STR(reg2) "}"
+#define __ASM_GAS_SAVE_REGS2(reg1,reg2) asm( __GAS_SAVE_REGS2(reg1,reg2) );
+#define __GAS_SETFP(reg,offset) ".setfp fp," __STR(reg) ",#" __STR(offset)
+#define __ASM_GAS_SETFP(reg,offset) asm( __GAS_SETFP(reg,offset) );
+
+#define	__EH_FRAME_ADDRESS(reg,offset)	\
+		__ASM_GAS_SETFP(reg,offset)
+#define __EH_FRAME_PUSH2(reg1,reg2) __ASM_GAS_SAVE_REGS2(reg1,reg2)
+#define __EH_FRAME_SAVE1(reg,offset) \
+	__EH_FRAME_ADDRESS(fp,offset) \
+	__ASM_GAS_SAVE_REG(reg)
 
 #endif
 
