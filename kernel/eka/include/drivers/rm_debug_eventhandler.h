@@ -27,12 +27,12 @@ class DRM_DebugEventHandler : public DKernelEventHandler
 		TInt Start();
 		TInt Stop();
 		
-		inline void DRM_DebugEventHandler::LockDataAccess()
+		inline void LockDataAccess()
 		    {
 		    Kern::SemaphoreWait(*iProtectionLock);
 		    }
 
-		inline void DRM_DebugEventHandler::ReleaseDataAccess()
+		inline void ReleaseDataAccess()
 		    {
 		    Kern::SemaphoreSignal(*iProtectionLock);
 		    }
