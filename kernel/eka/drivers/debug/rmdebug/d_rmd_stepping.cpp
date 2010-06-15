@@ -325,7 +325,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 	// determine the architecture
 	TUint32 cpuid;
-	asm("mrc p15, 0, cpuid, c0, c0, 0 ");
+	asm("mrc p15, 0, %[id], c0, c0, 0 " : [id] "=r" (cpuid));
 	LOG_MSG2("DRMDStepping::PCAfterInstructionExecutes() - cpuid = 0x%08x\n",cpuid);
 
 	cpuid >>= 8;
