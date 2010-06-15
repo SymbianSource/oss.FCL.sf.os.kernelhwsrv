@@ -191,4 +191,7 @@ IMPORT_C void operator delete[](void* aPtr, const std::nothrow_t& aNoThrow) __NO
 #define __EH_FRAME_PUSH2(reg1,reg2) FRAME PUSH {reg1, reg2}
 #define __EH_FRAME_SAVE1(reg,offset) FRAME SAVE {reg}, offset
 
+#define __EH_FNSTART
+#define __EH_FNEND
+
 #endif

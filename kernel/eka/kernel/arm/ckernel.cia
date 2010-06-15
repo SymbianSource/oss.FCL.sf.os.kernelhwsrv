@@ -271,7 +271,7 @@ EXPORT_C __NAKED__ TInt TExcTrap::Trap(TExcTrapHandler /*aHandler*/)
 	asm(".word TheScheduler ");
 #endif
 	asm("__IpcExcHandler: ");
-	asm(".word %a0" : : "i" ((TInt)DThread::IpcExcHandler));
+	asm(".word %a0" : : "i" (DThread::IpcExcHandler));
 	asm("__default_exc_trap_handler: ");
 	asm("mov r1, #%a0" : : "i" ((TInt)KErrBadDescriptor));	// r0 already contains pointer to TExcTrap
 	// fall through

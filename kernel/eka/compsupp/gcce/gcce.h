@@ -184,5 +184,8 @@ typedef va_list __e32_va_list;
 	__EH_FRAME_ADDRESS(fp,offset) \
 	__ASM_GAS_SAVE_REG(reg)
 
+#define __EH_FNSTART asm(".fnstart");
+#define __EH_FNEND asm(".fnend");
+
 #endif
 

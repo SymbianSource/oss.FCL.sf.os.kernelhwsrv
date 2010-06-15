@@ -325,7 +325,13 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 
 	// determine the architecture
 	TUint32 cpuid;
+#if defined(__ARMCC__)
+	asm("mrc p15, 0, cpuid, c0, c0, 0 ");
+#elif defined(__GCCE__)
 	asm("mrc p15, 0, %[id], c0, c0, 0 " : [id] "=r" (cpuid));
+#else
+#error What compiler?
+#endif
 	LOG_MSG2("DRMDStepping::PCAfterInstructionExecutes() - cpuid = 0x%08x\n",cpuid);
 
 	cpuid >>= 8;
