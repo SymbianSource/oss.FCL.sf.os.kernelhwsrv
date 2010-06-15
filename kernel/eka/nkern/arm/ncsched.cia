@@ -1760,11 +1760,11 @@ __NAKED__ void TScheduler::Reschedule()
 	SET_THUMB2EE_HNDLR_BASE(,r1);			
 #endif
 #ifdef __CPU_HAS_CP15_THREAD_ID_REG
-	SET_RWRW_TID(,r3)						// restore Thread ID from r3
+	SET_RWRW_TID(,r3);						// restore Thread ID from r3
 #endif 
 	asm("mov r3, r2 ");						// r3=TheCurrentThread
 #ifdef __CPU_HAS_COPROCESSOR_ACCESS_REG
-	SET_CAR(,r10)
+	SET_CAR(,r10);
 #endif
 #ifdef __CPU_ARM_USE_DOMAINS
 	asm("mcr p15, 0, r11, c3, c0, 0 ");

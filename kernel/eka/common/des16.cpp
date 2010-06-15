@@ -2013,7 +2013,7 @@ Data can, subsequently, be assigned into it using the assignment operators.
 */
 	{
 	__ASSERT_ALWAYS(aMaxLength>=0,Panic(ETDes16MaxLengthNegative));
-	return new(STD_CLASS::Alloc(_FOFF(HBufC16,iBuf[aMaxLength]))) HBufC16(0);
+	return new(STD_CLASS::Alloc(_FOFF_DYNAMIC(HBufC16,iBuf[aMaxLength]))) HBufC16(0);
 	}
 
 EXPORT_C HBufC16 *HBufC16::NewL(TInt aMaxLength)
@@ -2092,7 +2092,7 @@ Data can, subsequently, be assigned into it using the assignment operators.
 */
 	{
 	__ASSERT_ALWAYS(aMaxLength>=0,Panic(ETDes16MaxLengthNegative));
-	return new(STD_CLASS::Alloc(_FOFF(HBufC16,iBuf[aMaxLength]))) HBufC16(aMaxLength);
+	return new(STD_CLASS::Alloc(_FOFF_DYNAMIC(HBufC16,iBuf[aMaxLength]))) HBufC16(aMaxLength);
 	}
 
 EXPORT_C HBufC16 *HBufC16::NewMaxL(TInt aMaxLength)

@@ -32,7 +32,7 @@ _LIT(KLitTerminate,"Terminate");
 DProcess::DProcess()
 	: iPriority(EProcPriorityForeground),
 	  iExitType((TUint8)EExitPending), iGeneration(1), iFlags(KProcessFlagJustInTime),
-	  iDynamicCode(8, _FOFF(SCodeSegEntry, iSeg), 2*256)
+	  iDynamicCode(8, (TInt)_FOFF(SCodeSegEntry, iSeg), 2*256)
 	{
 	//reserve slot 0 for later use for the command line
 	iEnvironmentData[0] = EBinaryData;
