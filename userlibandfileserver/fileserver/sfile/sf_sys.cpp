@@ -18,7 +18,7 @@
 #include "sf_std.h"
 #include <e32uid.h>
 #include "sf_file_cache.h"
-#include <kernel\localise.h>
+#include <kernel/localise.h>
 #include <f32file.h>
 
 typedef CFileSystem*(*TFileSystemNew)();

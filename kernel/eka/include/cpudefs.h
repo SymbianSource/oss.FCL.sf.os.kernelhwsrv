@@ -247,7 +247,7 @@
 	#define __COBJECT_MACHINE_CODED__
 	#define __CACTIVESCHEDULER_MACHINE_CODED__
 	#define __CSERVER_MACHINE_CODED__
-	#define __ARRAY_MACHINE_CODED__
+//	#define __ARRAY_MACHINE_CODED__ IMK working around bug #2976
 	#define __HUFFMAN_MACHINE_CODED__
 #if defined(__MARM_ARM4__) || defined(__MARM_ARMI__) || defined(__MARM_THUMB__) || defined(__MARM_ARMV4__) || defined(__MARM_ARMV5__)
 	#define __DES16_MACHINE_CODED_HWORD__

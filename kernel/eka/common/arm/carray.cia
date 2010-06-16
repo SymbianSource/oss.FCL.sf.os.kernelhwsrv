@@ -950,7 +950,7 @@ EXPORT_C __NAKED__ TInt RArrayBase::FindIsq(const TAny* /*anEntry*/, TGeneralLin
 #ifndef __KERNEL_MODE__
 EXPORT_C __NAKED__ void RArrayBase::HeapSortSigned()
 	{
-	__EH_FNSTART
+//	__EH_FNSTART
 #ifdef __EABI__
 	// need sp aligned correctly
 	asm("stmfd sp!, {r3-r11,lr} ");
@@ -1039,12 +1039,12 @@ EXPORT_C __NAKED__ void RArrayBase::HeapSortSigned()
 	asm("bl wordmove ");				// entry[0]=[sp]
 	asm("add sp, sp, r10 ");			// free temporary stack space
 	__JUMP(,r7);
-	__EH_FNEND
+//	__EH_FNEND
 	}
 
 EXPORT_C __NAKED__ void RArrayBase::HeapSortUnsigned()
 	{
-	__EH_FNSTART
+//	__EH_FNSTART
 #ifdef __EABI__
 	// need sp aligned correctly
 	asm("stmfd sp!, {r3-r11,lr} ");
@@ -1133,12 +1133,12 @@ EXPORT_C __NAKED__ void RArrayBase::HeapSortUnsigned()
 	asm("bl wordmove ");				// entry[0]=[sp]
 	asm("add sp, sp, r10 ");			// free temporary stack space
 	__JUMP(,r7);
-	__EH_FNEND
+//	__EH_FNEND
 	}
 
 EXPORT_C __NAKED__ void RArrayBase::HeapSort(TGeneralLinearOrder anOrder)
 	{
-	__EH_FNSTART
+//	__EH_FNSTART
 #ifdef __EABI__
 	// need sp aligned correctly
 	asm("stmfd sp!, {r3-r11,lr} ");
@@ -1230,7 +1230,7 @@ EXPORT_C __NAKED__ void RArrayBase::HeapSort(TGeneralLinearOrder anOrder)
 	asm("bl wordmove ");				// entry[0]=[sp]
 	asm("ldr sp, [sp, r10] ");			// restore stack pointer, freeing temporary stack space
 	__POPRET("");
-	__EH_FNEND
+//	__EH_FNEND
 	}
 #endif	// __KERNEL_MODE__
 #endif	// __ARRAY_MACHINE_CODED__
