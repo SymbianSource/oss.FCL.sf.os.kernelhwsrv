@@ -85,9 +85,17 @@ class TTruncateOverflow8 : public TDes8Overflow
 
 #ifdef __MARM_ARMV5__
 	//armv5
-#define GET_PC(pc) \
-	TUint32 pc = 0; \
-	asm("mov pc, __return_address()")
+	#if defined(__GCCE__)
+	#define GET_PC(pc) \
+		TUint32 pc = 0; \
+		asm("mov %[res], %[val]" : [res] "=r" (pc) : [val] "r" (__builtin_return_address(0)))
+	#elif defined(__ARMCC__)
+	#define GET_PC(pc) \
+		TUint32 pc = 0; \
+		asm("mov pc, __return_address()")
+	#else
+	#error What compiler?
+	#endif
 #elif __MARM_ARM4__
 	//arm4 not implemented yet!
 #define GET_PC(pc) \
