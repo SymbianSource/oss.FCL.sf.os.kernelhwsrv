@@ -76,7 +76,7 @@ euser
 euser
 #endif
 
-#if defined(GENERIC_MARM) && !defined(ARMCC)
+#if defined(GENERIC_MARM) && !defined(EABI)
 #ifndef SMP
 epoc/arm/eka1_entry_stub
 #endif
