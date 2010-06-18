@@ -21,7 +21,7 @@
 #if defined(__GCC32__)
 extern "C" void __division_by_zero();
 #define DIV_BY_ZERO " __division_by_zero "
-#elif defined(__ARMCC__)
+#elif defined(__EABI__)
 extern "C" void __rt_div0 (void);
 #define DIV_BY_ZERO " __cpp(__rt_div0) "
 #endif
