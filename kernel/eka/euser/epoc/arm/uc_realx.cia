@@ -3548,7 +3548,7 @@ Frac(2.4)=0.4, Frac(2)=0, Frac(-1)=0, Frac(-1.4)=0.4.
 #endif
 
 #ifdef __REALS_MACHINE_CODED__
-#ifndef __ARMCC__
+#ifndef __EABI__
 extern "C" {
 
 extern "C" void __math_exception(TInt aErrType);
