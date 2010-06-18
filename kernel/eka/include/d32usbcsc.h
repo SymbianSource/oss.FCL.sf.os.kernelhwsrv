@@ -1336,7 +1336,9 @@ public:
 	This return value used by GetBuffer indicates that the item pointed to by 
 	aBuffer/aOffset represents a state change, instead of endpoint data.
 	*/
-	const static TInt KStateChange = 0x01;
+	enum {
+		KStateChange = 0x01
+	};
 
 public:
 	IMPORT_C TEndpointBuffer();
