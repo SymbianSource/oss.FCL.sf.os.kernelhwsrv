@@ -73,9 +73,14 @@ __NAKED__ TInt _E32Startup()
 	__EH_FRAME_SAVE1(r4-r11, -48)
 	// but the macro expansion gives rise to odd code so we do what follows
 #endif
-#ifdef __ARMCC__
+#if defined(__ARMCC__)
 	FRAME SAVE {r4-r11}, -48
+#elif defined(__GCCE__)
+	__EH_FRAME_SAVE1(r4-r11,-48)
+#else
+#error What compiler?	
 #endif
+
 
 	asm("bic sp, sp, #4 ");		// align stack to 8 byte boundary
 //  	asm("bl " CSM_ZN4User15HandleExceptionEPv );
