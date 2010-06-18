@@ -22,7 +22,7 @@ targettype		dll
 ALWAYS_BUILD_AS_ARM
 #endif
 
-#if defined(USE_VFP_MATH) && defined(ARMCC)
+#if defined(USE_VFP_MATH) && defined(EABI)
 macro __USE_VFP_MATH
 #endif
 
