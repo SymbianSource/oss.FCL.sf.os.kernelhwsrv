@@ -6977,7 +6977,7 @@ inline TSecureId::operator TUid() const
 inline const TSecureId* SSecureId::operator&() const
 	{ return (const TSecureId*)this; }
 inline SSecureId::operator const TSecureId&() const
-	{ /* coverity[return_local_addr] */ return (const TSecureId&)iId; }
+	{ return reinterpret_cast<const TSecureId&>(iId); }
 inline SSecureId::operator TUint32() const
 	{ return iId; }
 inline SSecureId::operator TUid() const
@@ -7017,7 +7017,7 @@ inline TVendorId::operator TUid() const
 inline const TVendorId* SVendorId::operator&() const
 	{ return (const TVendorId*)this; }
 inline SVendorId::operator const TVendorId&() const
-	{ /* coverity[return_local_addr] */ return (const TVendorId&)iId; }
+	{ return reinterpret_cast<const TVendorId&>(iId); }
 inline SVendorId::operator TUint32() const
 	{ return iId; }
 inline SVendorId::operator TUid() const
