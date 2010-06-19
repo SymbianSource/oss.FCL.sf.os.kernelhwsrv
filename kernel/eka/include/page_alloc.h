@@ -18,7 +18,7 @@
 #ifndef __KERNEL_MODE__ 
 
 const int MAXSMALLPAGEBITS = 68<<3;
-#define MINPAGEPOWER	PAGESHIFT+2
+#define MINPAGEPOWER	((PAGESHIFT)+2)
 
 struct paged_bitmap
 {

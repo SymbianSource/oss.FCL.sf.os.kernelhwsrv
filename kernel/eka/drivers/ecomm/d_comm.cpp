@@ -933,7 +933,7 @@ void DChannelComm::ReceiveIsr(TUint* aChar, TInt aCount, TInt aXonXoff)
 			{
 			// Replace bad character
 			if (iConfig.iParityError==KConfigParityErrorReplaceChar)
-				c = c & ~(0xff|KReceiveIsrParityError) | iConfig.iParityErrorChar;
+				c = (c & ~(0xff|KReceiveIsrParityError)) | iConfig.iParityErrorChar;
 			// Ignore parity error
 			if (iConfig.iParityError==KConfigParityErrorIgnore)
 				c = c & ~KReceiveIsrParityError;

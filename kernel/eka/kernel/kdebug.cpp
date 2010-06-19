@@ -563,7 +563,7 @@ TUint DEventHandler::EventHandler(TKernelEvent aType, TAny* a1, TAny* a2, TAny* 
 		DChunk* chunk = (DChunk*)a1;
 
 		//The chunk will not neccesarily have an owning process.
-		interested = hdrPresent && ( !chunk->iOwningProcess && hdr->iFlags & TFilterHeader::EGlobalEvents ||
+		interested = hdrPresent && ( (!chunk->iOwningProcess && hdr->iFlags & TFilterHeader::EGlobalEvents) ||
 				(chunk->iOwningProcess && DEventHandler::InterestedIn(aType, *(chunk->iOwningProcess->iName))));
 
 		Change() |= KDebuggerChangeChunk;

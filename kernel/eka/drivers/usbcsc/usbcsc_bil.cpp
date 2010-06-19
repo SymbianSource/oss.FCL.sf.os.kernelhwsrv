@@ -160,7 +160,7 @@ TInt RDevUsbcScClient::Peek(TUint aBufferOffset)
 	TUint localTail = endpointHdr->iBilTail;
 	TUsbcScTransferHeader* currentTransfer = (TUsbcScTransferHeader*) (base + localTail);
 
-	if ((localTail == (TUint)endpointHdr->iHead) || (currentTransfer->iAltSettingSeq != (iAltSettingSeq+1)&0xFFFF))
+	if ((localTail == (TUint)endpointHdr->iHead) || (currentTransfer->iAltSettingSeq != ((iAltSettingSeq+1)&0xFFFF)))
 		// if alternate setting has not changed
 		return KErrNotReady;
 	else

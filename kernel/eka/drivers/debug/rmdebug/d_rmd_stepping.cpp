@@ -872,7 +872,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				// 
 
 				// ARM ARM DDI0406A - section A8.6.26
-				if (inst32 & 0xFFF0FFFF == 0xE3C08F00)
+				if ((inst32 & 0xFFF0FFFF) == 0xE3C08F00)
 					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.26 - BXJ is not supported");
 
@@ -885,7 +885,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				// ARM ARM DDi046A - section B6.1.13 - SUBS PC,LR
 				//
 				// Encoding T1
-				if (inst32 & 0xFFFFFF00 == 0xF3DE8F00)
+				if ((inst32 & 0xFFFFFF00) == 0xF3DE8F00)
 					{
 					LOG_MSG("ARM ARM DDI0406A - section B6.1.13 - SUBS PC,LR Encoding T1");
 
@@ -911,7 +911,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				// ARM ARM DDI0406A - section A8.6.16 - B
 				//
 				// Branch Encoding T3
-				if (inst32 & 0xF800D000 == 0xF0008000)
+				if ((inst32 & 0xF800D000) == 0xF0008000)
 					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.16 - B Encoding T3");
 
@@ -936,7 +936,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				// ARM ARM DDI0406A - section A8.6.16 - B
 				//
 				// Branch Encoding T4
-				if (inst32 & 0xF800D000 == 0xF0009000)
+				if ((inst32 & 0xF800D000) == 0xF0009000)
 					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.16 - B");
 
@@ -965,7 +965,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				// ARM ARM DDI0406A - section A8.6.225 - TBB, TBH
 				//
 				// Table Branch Byte, Table Branch Halfword
-				if (inst32 & 0xFFF0FFE0 == 0xE8D0F000)
+				if ((inst32 & 0xFFF0FFE0) == 0xE8D0F000)
 						{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.225 TBB,TBH Encoding T1");
 
@@ -1006,7 +1006,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				// ARM ARM DDI0406A - section A8.6.55 - LDMDB, LDMEA
 				//
 				// LDMDB Encoding T1
-				if (inst32 & 0xFFD02000 == 0xE9100000)
+				if ((inst32 & 0xFFD02000) == 0xE9100000)
 					{
 					LOG_MSG("ARM ARM DDI0406 - section A8.6.55 LDMDB Encoding T1");
 
@@ -1052,7 +1052,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 				// ARM ARM DDI0406A - section A8.6.121 POP
 				//
 				// POP.W Encoding T2
-				if (inst32 & 0xFFFF2000 == 0xE8BD0000)
+				if ((inst32 & 0xFFFF2000) == 0xE8BD0000)
 					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.121 POP Encoding T2");
 
@@ -1088,7 +1088,7 @@ TUint32 DRMDStepping::PCAfterInstructionExecutes(DThread *aThread, TUint32 aCurr
 					}
 
 				// POP Encoding T3
-				if (inst32 & 0xFFFF0FFFF == 0xF85D0B04)
+				if ((inst32 & 0xFFFF0FFFF) == 0xF85D0B04)
 					{
 					LOG_MSG("ARM ARM DDI0406A - section A8.6.121 POP Encoding T3");
 

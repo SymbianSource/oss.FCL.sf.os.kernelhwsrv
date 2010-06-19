@@ -115,7 +115,7 @@ __ASSERT_COMPILE(ECapability_Limit<=32);  // Kernel's iCaps caps below assumes t
 TInt DProcess::SetPaging(const TProcessCreateInfo& aInfo)
 	{// Default implementation that only verifies flags, this virtual method 
 	// is overridden in memory models that support paging.
-	if (aInfo.iFlags & TProcessCreateInfo::EDataPagingMask == 
+	if ((aInfo.iFlags & TProcessCreateInfo::EDataPagingMask) == 
 		TProcessCreateInfo::EDataPagingMask)
 		{
 		return KErrCorrupt;	

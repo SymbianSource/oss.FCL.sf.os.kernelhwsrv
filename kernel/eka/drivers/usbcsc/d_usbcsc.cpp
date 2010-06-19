@@ -3523,7 +3523,7 @@ void TUsbcScEndpoint::AbortTransfer()
 		}
 
 	
-	if (iBuffer && (iBuffer->iStatusList.iState) || (!iRealEpNumber))
+	if ((iBuffer && (iBuffer->iStatusList.iState)) || (!iRealEpNumber))
 		{
 		if (iRequestCallbackInfo->iTransferDir==EControllerWrite)
 			iController->CancelWriteBuffer(iLdd, iRealEpNumber);

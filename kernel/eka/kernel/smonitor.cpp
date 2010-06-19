@@ -655,7 +655,7 @@ void Monitor::Init(TAny* aCategory, TInt aReason)
 	__KTRACE_OPT(KALWAYS,Kern::Printf("All monitors have completed.  Restarting..."));
 	//Ensure all characters make it to the serial port...
 	__KTRACE_OPT(KALWAYS,Kern::Printf("                                           "));
-	if(restartType&ESoftRestart == ESoftRestart)
+	if((restartType&ESoftRestart) == ESoftRestart)
 		Kern::Restart(0);
 	else //EHardRestart
 		Kern::Restart(0x80000000);

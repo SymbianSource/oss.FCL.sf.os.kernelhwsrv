@@ -213,7 +213,7 @@ TInt TBTraceBuffer::Data(TUint& aData, TUint& aTail)
 		if (--retries<0)
 			return KErrInUse;
 		// sleep every 8 tries to give the write a chance
-		if (retries&7==0)
+		if ((retries&7)==0)
 			User::AfterHighRes(1);
 		g0 = iGeneration;
 		__e32_memory_barrier();

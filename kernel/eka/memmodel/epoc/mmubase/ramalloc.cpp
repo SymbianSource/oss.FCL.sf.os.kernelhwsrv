@@ -396,9 +396,9 @@ void DRamAllocator::ZoneAllocPages(SZone* aZone, TUint32 aCount, TZonePageType a
 	aZone->iFlags &= ~KRamZoneFlagMark;	// clear the mark as this zone is active
 
 	// Check if power state of zone needs to be changed
-	if (iZonePowerFunc && !(iZonePwrState & (((TUint64)1) << aZone - iZones)))
+	if (iZonePowerFunc && !(iZonePwrState & (((TUint64)1) << (aZone - iZones))))
 		{//zone no longer empty so call variant to power RAM zone up if necessary
-		iZonePwrState |= (((TUint64)1) << aZone - iZones);
+		iZonePwrState |= (((TUint64)1) << (aZone - iZones));
 
 		if (iZoneCallbackInitSent)
 			{
@@ -541,7 +541,7 @@ void DRamAllocator::ZoneFreePages(SZone* aZone, TUint32 aCount, TZonePageType aT
 	if (iZonePowerFunc && !(aZone->iFlags & KRamZoneFlagClaiming) &&
 		aZone->iFreePages == aZone->iPhysPages)
 		{// Zone is empty so call variant to power down RAM zone if desirable.
-		TUint64 pwrMask = ~(((TUint64)1) << aZone - iZones);
+		TUint64 pwrMask = ~(((TUint64)1) << (aZone - iZones));
 		iZonePwrState &= pwrMask;
 
 		// Don't invoke callback until Init callback sent.
@@ -1009,7 +1009,7 @@ void DRamAllocator::Create(const SRamInfo& aInfo, const SRamZone* aZones, TRamZo
 		for (; zone2 < lastZone; zone2++)
 			{
 			if (zone->iPref > zone2->iPref ||
-				zone->iPref == zone2->iPref && zone->iFreePages > zone2->iFreePages)
+				(zone->iPref == zone2->iPref && zone->iFreePages > zone2->iFreePages))
 				{
 				lowerZones++;
 				}

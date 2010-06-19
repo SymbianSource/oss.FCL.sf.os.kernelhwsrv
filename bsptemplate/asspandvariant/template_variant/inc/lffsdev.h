@@ -47,18 +47,18 @@
 
 #if FLASH_BUS_WIDTH == 32
 	#define TFLASHWORD TUint32
-	#define FLASH_BYTES_TO_WORDS(aNumBytes) (aNumBytes >> 2)
-	#define FLASH_ADDRESS_IN_BYTES(aWordAddr) (aWordAddr << 2)
+	#define FLASH_BYTES_TO_WORDS(aNumBytes) ((aNumBytes) >> 2)
+	#define FLASH_ADDRESS_IN_BYTES(aWordAddr) ((aWordAddr) << 2)
 	#define FLASH_ERASE_WORD_VALUE 0xFFFFFFFF
 #elif FLASH_BUS_WIDTH == 16
 	#define TFLASHWORD TUint16
-	#define FLASH_BYTES_TO_WORDS(aNumBytes) (aNumBytes >> 1)
-	#define FLASH_ADDRESS_IN_BYTES(aWordAddr) (aWordAddr << 1)
+	#define FLASH_BYTES_TO_WORDS(aNumBytes) ((aNumBytes) >> 1)
+	#define FLASH_ADDRESS_IN_BYTES(aWordAddr) ((aWordAddr) << 1)
 	#define FLASH_ERASE_WORD_VALUE 0xFFFF
 #else	// FLASH_BUS_WIDTH == 8
 	#define TFLASHWORD TUint8
-	#define FLASH_BYTES_TO_WORDS(aNumBytes) aNumBytes
-	#define FLASH_ADDRESS_IN_BYTES(aWordAddr) aWordAddr
+	#define FLASH_BYTES_TO_WORDS(aNumBytes) (aNumBytes)
+	#define FLASH_ADDRESS_IN_BYTES(aWordAddr) (aWordAddr)
 	#define FLASH_ERASE_WORD_VALUE 0xFF
 #endif
 

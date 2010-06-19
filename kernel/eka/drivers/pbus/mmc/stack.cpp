@@ -2453,8 +2453,8 @@ void DMMCStack::DoSchedule()
 
 		DISABLEPREEMPTION
 
-		if( !iAbortReq &&
-			((iStackState & KMMCStackStateWaitingDFC) ||
+		if( ((!iAbortReq &&
+			((iStackState & KMMCStackStateWaitingDFC))) ||
 			 (iCompReq | iInitialise | iAttention)==0) ||
 			 ((iSessionP) && (iSessionP->iState & KMMCSessStateAllowDirectCommands)))
 			{

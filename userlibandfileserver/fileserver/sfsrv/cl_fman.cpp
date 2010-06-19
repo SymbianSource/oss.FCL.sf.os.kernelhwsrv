@@ -2480,7 +2480,7 @@ void CFileMan::CompleteOperationL()
 	TInt r=KErrNotFound;
 	if (iAction == EInternalRmDir ||
 	    (iAction == EInternalCopyForMove && ((iMatchEntry & KMovingFilesMask) != KMovingFilesMask) && !iMovingContents && !iSrcFile.IsRoot()) ||
-	    iAction == EInternalRenameForMove && !iMovingContents && iNumberOfFilesProcessed)
+	    (iAction == EInternalRenameForMove && !iMovingContents && iNumberOfFilesProcessed))
 		{
 		r=iFs.RmDir(iSrcFile.FullName());
 		if ((r!=KErrNone && r!=KErrNotFound && iAction!=EInternalRenameForMove && r!=KErrInUse) || (iAction == EInternalRmDir && r == KErrInUse))

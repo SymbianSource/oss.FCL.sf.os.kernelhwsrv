@@ -379,7 +379,7 @@ TBool FsThreadManager::IsDriveThread(TInt aDrvNumber,TBool aIsLock)
 	TUint id=RThread().Id();
 	if(aIsLock)
 		t.iFSLock.Wait();
-	TBool b = t.iIsAvailable && (!t.iIsSync && t.iId==id || t.iIsSync);
+	TBool b = t.iIsAvailable && ((!t.iIsSync && t.iId==id) || t.iIsSync);
 	if(aIsLock)
 		t.iFSLock.Signal();
 	return(b);

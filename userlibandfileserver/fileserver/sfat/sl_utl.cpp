@@ -203,7 +203,7 @@ TUint8 CalculateShortNameCheckSum(const TDesC8& aShortName)
     chkSum = (TUint8)(((chkSum<<7) | (chkSum>>1)) + ((w0 << 8)  >> 24));
     chkSum = (TUint8)(((chkSum<<7) | (chkSum>>1)) + ( w0 >> 24));
 
-    chkSum = (TUint8)(((chkSum<<7) | (chkSum>>1)) + (w1) & 0xFF);
+    chkSum = (TUint8)(((chkSum<<7) | (chkSum>>1)) + (w1 & 0xFF));
     chkSum = (TUint8)(((chkSum<<7) | (chkSum>>1)) + ((w1 << 16) >> 24));
     chkSum = (TUint8)(((chkSum<<7) | (chkSum>>1)) + ((w1 << 8)  >> 24));
     chkSum = (TUint8)(((chkSum<<7) | (chkSum>>1)) + ( w1 >> 24));

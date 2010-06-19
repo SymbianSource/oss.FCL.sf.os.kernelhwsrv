@@ -451,8 +451,8 @@ void TCtrlDigits::AppendDigit(TUint aKeyCode, TUint aModifiers)
 	iDigits+=ch.DigitValue();
 	iErrorFlag=(TBool)(iErrorFlag
 					  || !ch.IsDigitGivenRadix(iRadix)
-					  || (iTermination==ETerminationByCtrlUp)
-						  && ((aModifiers&EModifierCtrl)==0));
+					  || ((iTermination==ETerminationByCtrlUp)
+						  && ((aModifiers&EModifierCtrl)==0)));
 	}
 //
 TBool TCtrlDigits::Terminated(TInt aModifiers) const

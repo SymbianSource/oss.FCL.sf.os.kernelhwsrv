@@ -238,7 +238,7 @@ inline TUint32 DRMDStepping::arm_b_addr(const TUint32 aInst)
 {
 //#define ARM_B_ADDR(x)			((x & 0x00800000) ? ((TUint32)(x) & 0x00FFFFFF | 0xFF000000) : (TUint32)(x) & 0x00FFFFFF)
 
-	TUint32 aVal = ((aInst & 0x00800000) ? ((TUint32)(aInst) & 0x00FFFFFF | 0xFF000000) : (TUint32)(aInst) & 0x00FFFFFF);
+	TUint32 aVal = ((aInst & 0x00800000) ? (((TUint32)(aInst) & 0x00FFFFFF) | 0xFF000000) : (TUint32)(aInst) & 0x00FFFFFF);
 
 	return aVal;
 }
