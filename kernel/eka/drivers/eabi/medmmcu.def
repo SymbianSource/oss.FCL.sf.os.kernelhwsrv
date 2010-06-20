@@ -1,0 +1,10 @@
+EXPORTS
+	_Z20CreatePhysicalDevicev @ 1 NONAME
+	__aeabi_idiv @ 2 NONAME ABSENT
+	__aeabi_idivmod @ 3 NONAME ABSENT
+	__divsi3 @ 4 NONAME ABSENT
+	_ZTI20DMmcMediaDriverFlash @ 5 NONAME
+	_ZTI28DPhysicalDeviceMediaMmcFlash @ 6 NONAME
+	_ZTV20DMmcMediaDriverFlash @ 7 NONAME
+	_ZTV28DPhysicalDeviceMediaMmcFlash @ 8 NONAME
+

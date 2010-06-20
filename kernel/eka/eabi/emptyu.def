@@ -1,2 +1,5 @@
 EXPORTS
+	__aeabi_idiv @ 1 ABSENT
+	__aeabi_idivmod @ 2 ABSENT
+	__divsi3 @ 3 ABSENT
 

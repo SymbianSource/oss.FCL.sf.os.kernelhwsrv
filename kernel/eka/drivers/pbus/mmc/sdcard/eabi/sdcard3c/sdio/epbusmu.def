@@ -278,4 +278,15 @@ EXPORTS
 	_ZN8DSDIOPsu6Dummy2Ev @ 277 NONAME
 	_ZN8DSDIOPsu6Dummy3Ev @ 278 NONAME
 	_ZN8DSDIOPsu6Dummy4Ev @ 279 NONAME
+	_ZN15DMMCMediaChangeC1Ei @ 280 NONAME
+	_ZN16DMediaChangeBaseC1Ei @ 281 NONAME
+	_ZN7DMMCPsuC1Eii @ 282 NONAME
+	_ZN8DSDIOPsuC1Eii @ 283 NONAME
+	_ZN9DMMCStackC1EiP10DMMCSocket @ 284 NONAME
+	__aeabi_idiv @ 285 NONAME
+	__aeabi_idivmod @ 286 NONAME
+	__aeabi_uidiv @ 287 NONAME
+	__aeabi_uidivmod @ 288 NONAME
+	__divsi3 @ 289 NONAME
+	__udivsi3 @ 290 NONAME
 

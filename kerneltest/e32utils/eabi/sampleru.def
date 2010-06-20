@@ -1,0 +1,10 @@
+EXPORTS
+	_Z19CreateLogicalDevicev @ 1 NONAME
+	__aeabi_idiv @ 2 NONAME
+	__aeabi_idivmod @ 3 NONAME
+	__divsi3 @ 4 NONAME
+	_ZTI14DDeviceSampler @ 5 NONAME
+	_ZTI8DProfile @ 6 NONAME
+	_ZTV14DDeviceSampler @ 7 NONAME
+	_ZTV8DProfile @ 8 NONAME
+

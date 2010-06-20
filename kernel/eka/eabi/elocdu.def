@@ -83,4 +83,6 @@ EXPORTS
 	_ZN21DMediaDriverExtension10WritePagedEixmj @ 82 NONAME
 	_ZN21DMediaDriverExtension9ReadPagedEixmj @ 83 NONAME
 	_ZN11DLocalDrive4CapsEiR5TDes8 @ 84 NONAME
+	_ZN12DMediaDriverC1Ei @ 85 NONAME
+	_ZN21DMediaDriverExtensionC1Ei @ 86 NONAME
 

@@ -1,0 +1,9 @@
+EXPORTS
+	_Z20CreatePhysicalDevicev @ 1 NONAME
+	_ZTI17DMediaDriverFlash @ 2 NONAME
+	_ZTI25DMediaDriverFlashTemplate @ 3 NONAME
+	_ZTI25DPhysicalDeviceMediaFlash @ 4 NONAME
+	_ZTV17DMediaDriverFlash @ 5 NONAME
+	_ZTV25DMediaDriverFlashTemplate @ 6 NONAME
+	_ZTV25DPhysicalDeviceMediaFlash @ 7 NONAME
+

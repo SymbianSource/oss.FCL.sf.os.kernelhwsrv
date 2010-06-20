@@ -1,0 +1,7 @@
+EXPORTS
+	_Z19CreateLogicalDevicev @ 1 NONAME
+	_ZTI15DDeviceEthernet @ 2 NONAME
+	_ZTI16DChannelEthernet @ 3 NONAME
+	_ZTV15DDeviceEthernet @ 4 NONAME
+	_ZTV16DChannelEthernet @ 5 NONAME
+

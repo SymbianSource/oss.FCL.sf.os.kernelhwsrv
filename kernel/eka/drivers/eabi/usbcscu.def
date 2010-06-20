@@ -1,0 +1,7 @@
+EXPORTS
+	_Z19CreateLogicalDevicev @ 1 NONAME
+	_ZTI16DUsbcScLogDevice @ 2 NONAME
+	_ZTI17DLddUsbcScChannel @ 3 NONAME
+	_ZTV16DUsbcScLogDevice @ 4 NONAME
+	_ZTV17DLddUsbcScChannel @ 5 NONAME
+

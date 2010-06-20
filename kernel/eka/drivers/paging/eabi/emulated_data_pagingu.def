@@ -1,0 +1,7 @@
+EXPORTS
+	__aeabi_idiv @ 1 NONAME
+	__aeabi_idivmod @ 2 NONAME
+	__divsi3 @ 3 NONAME
+	_ZTI25DEmulatedDataPagingDevice @ 4 NONAME
+	_ZTV25DEmulatedDataPagingDevice @ 5 NONAME
+

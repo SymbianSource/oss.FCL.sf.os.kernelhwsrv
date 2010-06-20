@@ -143,5 +143,14 @@ EXPORTS
 	_ZTV12TSDCardArray @ 142 NONAME ; #<VT>#
 	_ZTV7TSDCard @ 143 NONAME ; #<VT>#
 	_ZTV8DSDStack @ 144 NONAME ; #<VT>#
+	_ZN15DMMCMediaChangeC1Ei @ 145 NONAME
+	_ZN16DMediaChangeBaseC1Ei @ 146 NONAME
+	_ZN7DMMCPsuC1Eii @ 147 NONAME
+	_ZN9DMMCStackC1EiP10DMMCSocket @ 148 NONAME
+	__aeabi_idiv @ 149 NONAME
+	__aeabi_idivmod @ 150 NONAME
+	__aeabi_uidiv @ 151 NONAME
+	__aeabi_uidivmod @ 152 NONAME
+	__divsi3 @ 153 NONAME
+	__udivsi3 @ 154 NONAME
 
- 

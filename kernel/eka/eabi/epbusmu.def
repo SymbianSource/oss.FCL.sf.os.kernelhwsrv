@@ -125,4 +125,14 @@ EXPORTS
 	_ZN9DMMCStack11MachineInfoER5TDes8 @ 124 NONAME
 	_ZN9DMMCStack11SetBusWidthEm @ 125 NONAME
 	_ZN11DPBusSocket9ControlIOEiPvS0_ @ 126 NONAME
+	_ZN15DMMCMediaChangeC1Ei @ 127 NONAME
+	_ZN16DMediaChangeBaseC1Ei @ 128 NONAME
+	_ZN7DMMCPsuC1Eii @ 129 NONAME
+	_ZN9DMMCStackC1EiP10DMMCSocket @ 130 NONAME
+	__aeabi_idiv @ 131 NONAME
+	__aeabi_idivmod @ 132 NONAME
+	__aeabi_uidiv @ 133 NONAME
+	__aeabi_uidivmod @ 134 NONAME
+	__divsi3 @ 135 NONAME
+	__udivsi3 @ 136 NONAME
 

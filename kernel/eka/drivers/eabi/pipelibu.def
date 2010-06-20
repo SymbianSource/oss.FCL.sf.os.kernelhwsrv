@@ -1,0 +1,9 @@
+EXPORTS
+	_Z19CreateLogicalDevicev @ 1 NONAME
+	_ZTI11DPipeDevice @ 2 NONAME
+	_ZTI12DPipeChannel @ 3 NONAME
+	_ZTI5DPipe @ 4 NONAME
+	_ZTV11DPipeDevice @ 5 NONAME
+	_ZTV12DPipeChannel @ 6 NONAME
+	_ZTV5DPipe @ 7 NONAME
+
