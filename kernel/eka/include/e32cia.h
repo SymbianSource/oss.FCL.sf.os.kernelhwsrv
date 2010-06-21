@@ -28,7 +28,7 @@
 
 // CIA symbols for USER side code
 // CIA symbol macros for Gcc98r2
-#if defined(__GCC32__)
+#if defined(__GCC32__) && !defined(__EABI__)
 #define CSM_ZN4Exec12PopTrapFrameEv " PopTrapFrame__4Exec"
 #define CSM_ZN4User7ReAllocEPvii " ReAlloc__4UserPvii"
 #define CSM_Z30PanicCObjectConIndexOutOfRangev " PanicCObjectConIndexOutOfRange__Fv"
@@ -131,7 +131,7 @@
 
 // CIA symbols for KERNEL side code
 // CIA symbol macros for Gcc98r2
-#if defined(__GCC32__)
+#if defined(__GCC32__) && !defined(__EABI__)
 #define CSM_ZN1K8MsgInfoE " _1K.MsgInfo"
 #define CSM_ZN14NFastSemaphore6SignalEv " Signal__14NFastSemaphore"
 #define CSM_ZN4Kern4ExitEi " Exit__4Kerni"
@@ -467,7 +467,7 @@
 
 // CIA symbols for COMMON code (used both USER and KERNEL side)
 // CIA symbol macros for Gcc98r2
-#if defined(__GCC32__)
+#if defined(__GCC32__) && !defined(__EABI__)
 #define CSM_CFUNC(f)	#f
 #define CSM_Z26Des16PanicLengthOutOfRangev " Des16PanicLengthOutOfRange__Fv"
 #define CSM_Z20Des8PanicDesOverflowv " Des8PanicDesOverflow__Fv"
