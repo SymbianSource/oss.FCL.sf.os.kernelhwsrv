@@ -372,6 +372,7 @@ TInt K::InitialiseMicrokernel()
 
 	pN->iFlags |= KThreadFlagSystemPermanent; // supervisor thread can't exit for any reason
 
+	K::SvThread=pN;
 	K::TheKernelThread=pN;
 	K::SvMsgQ->iThread=&pN->iNThread;
 	K::SvBarrierQ.SetDfcQ(K::SvMsgQ);

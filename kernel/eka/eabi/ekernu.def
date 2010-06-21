@@ -1181,4 +1181,5 @@ EXPORTS
 	_ZN3Arm14SetIdleHandlerEPFvPvmES0_ @ 1180 NONAME ABSENT
 	_ZN4Epoc11FreeRamZoneEj @ 1181 NONAME ABSENT
 	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1182 NONAME
+	_ZN10RArrayBase12SetKeyOffsetEi @ 1183 NONAME
 

@@ -78,8 +78,6 @@
 #include <e32svr.h>
 #include <u32hal.h>
 
-RTest test(_L("Benchmark Suite"));
-
 //
 // The default value of the time allocated for one benchmark program.  
 //
@@ -300,7 +298,7 @@ void CLocalChild::WaitChildExit()
 	User::WaitForRequest(iExitStatus);
 	CLOSE_AND_WAIT(iChild);
 	//
-	// Lower the parent thread prioirty and then restore the current one 
+	// Lower the parent thread priority and then restore the current one 
 	// to make sure that the kernel-side thread destruction DFC had a chance to complete.
 	//
 	TInt prio = BMProgram::SetAbsPriority(RThread(), iProg->iOrigAbsPriority);
@@ -362,7 +360,7 @@ void CRemoteChild::WaitChildExit()
 	User::WaitForRequest(iExitStatus);
 	CLOSE_AND_WAIT(iChild);
 	//
-	// Lower the parent thread prioirty and then restore the current one 
+	// Lower the parent thread priority and then restore the current one 
 	// to make sure that the kernel-side thread destruction DFC had a chance to complete.
 	//
 	TInt prio = BMProgram::SetAbsPriority(RThread(), iProg->iOrigAbsPriority);
@@ -418,15 +416,9 @@ MBMChild* BMProgram::SpawnChild(TBMSpawnArgs* args)
 //
 GLDEF_C TInt E32Main()
 	{
+	RTest test(_L("Benchmark Suite"));
 	test.Title();
 
-	TInt r = UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, 0, 0);
-	if (r != 1)
-		{
-		test.Printf(_L("%d CPUs detected ... test not run\n"), r);
-		return r;
-		}
-	
 	AddProperty();
 	AddThread();
 	AddIpc();
@@ -434,7 +426,7 @@ GLDEF_C TInt E32Main()
 	AddOverhead();
 	AddrtLatency();
 
-	r = User::LoadPhysicalDevice(KBMPddFileName);
+	TInt r = User::LoadPhysicalDevice(KBMPddFileName);
 	BM_ERROR(r, (r == KErrNone) || (r == KErrAlreadyExists));
 
 	r = User::LoadLogicalDevice(KBMLddFileName);
@@ -545,7 +537,7 @@ GLDEF_C TInt E32Main()
 		//
 		TBMResult* results = prog->Run(iter, &count);
 
-			// Restore the original prioirty
+			// Restore the original priority
 		BMProgram::SetAbsPriority(RThread(), prog->iOrigAbsPriority);
 
 		//
@@ -617,6 +609,9 @@ GLDEF_C TInt E32Main()
 
 void bm_assert_failed(char* aCond, char* aFile, TInt aLine)
 	{
+	RTest test(_L("Benchmark Suite Assert Failed"));
+	test.Title();
+
 	TPtrC8 fd((TUint8*)aFile);
 	TPtrC8 cd((TUint8*)aCond);
 
@@ -634,6 +629,9 @@ void bm_assert_failed(char* aCond, char* aFile, TInt aLine)
 
 void bm_error_detected(TInt aError, char* aCond, char* aFile, TInt aLine)
 	{
+	RTest test(_L("Benchmark Suite Error Detected"));
+	test.Title();
+
 	TPtrC8 fd((TUint8*)aFile);
 	TPtrC8 cd((TUint8*)aCond);
 

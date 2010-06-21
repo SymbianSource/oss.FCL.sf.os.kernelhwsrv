@@ -114,8 +114,23 @@ void DThread::Destruct()
 	iTls.Close();
 	if (iSyncMsgPtr)
 		{
-		__KTRACE_OPT(KSERVER,Kern::Printf("DThread::Destruct(%08X) freeing sync message at %08X", this, iSyncMsgPtr));
-		iSyncMsgPtr->ReleaseMessagePool(RMessageK::ESync, 1);
+		// The sync message might still be outstanding; in particular it may be
+		// on the kernel server's list of messages to be cleaned up on behalf of
+		// dead clients. So we only release it here if it's free; otherwise, we
+		// mutate the type, so that cleanup will return it to the Global pool.
+		NKern::LockSystem();
+		if (iSyncMsgPtr->IsFree())
+			{
+			NKern::UnlockSystem();
+			__KTRACE_OPT(KSERVER,Kern::Printf("DThread::Destruct(%08X) releasing sync message at %08X", this, iSyncMsgPtr));
+			iSyncMsgPtr->ReleaseMessagePool(RMessageK::ESync, 1);
+			}
+		else
+			{
+			__KTRACE_OPT(KSERVER,Kern::Printf("DThread::Destruct(%08X) mutating sync message at %08X", this, iSyncMsgPtr));
+			iSyncMsgPtr->iMsgType = RMessageK::EGlobal;
+			NKern::UnlockSystem();
+			}
 		iSyncMsgPtr = NULL;
 		}
 	FreeSupervisorStack();

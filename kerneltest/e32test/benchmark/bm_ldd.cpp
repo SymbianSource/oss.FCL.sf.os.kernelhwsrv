@@ -70,7 +70,7 @@ private:
 	TInt StartTimerStampOverhead();
 	TInt RequestTimerStampOverhead();			// iRequestInterrupt() implementation
 
-	TInt SetAbsPrioirty(TInt aThreadHandle, TInt aNewPrio, TInt* aOldPrio);
+	TInt SetAbsPriority(TInt aThreadHandle, TInt aNewPrio, TInt* aOldPrio);
 
 	DMutex*			iLock;	// Shall be acquired by anyone who access the object's writable state.
 
@@ -533,9 +533,9 @@ TInt DBMLChannel::RequestTimerStampOverhead()
 //
 
 //
-// The implmentation of RBMDriver::SetAbsPrioirty() call.
+// The implementation of RBMDriver::SetAbsPriority() call.
 //
-TInt DBMLChannel::SetAbsPrioirty(TInt aThreadHandle, TInt aNewPrio, TInt* aOldPrio)
+TInt DBMLChannel::SetAbsPriority(TInt aThreadHandle, TInt aNewPrio, TInt* aOldPrio)
 	{
 	NKern::LockSystem();
 	//
@@ -690,7 +690,7 @@ TInt DBMLChannel::Request(TInt aFunction, TAny* a1, TAny* a2)
 			TInt newPrio;
 			TInt oldPrio;
 			umemget(&newPrio, a2, sizeof(newPrio));
-			r = SetAbsPrioirty((TInt) a1, newPrio, &oldPrio);
+			r = SetAbsPriority((TInt) a1, newPrio, &oldPrio);
 			umemput(a2, &oldPrio, sizeof(oldPrio));
 			break;
 			}

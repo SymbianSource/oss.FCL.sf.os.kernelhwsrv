@@ -29,8 +29,6 @@ BASEDEFAULT
 PRJ_TESTEXPORTS
 
 hcr_tests.iby			/epoc32/rom/include/hcr_tests.iby
-tshell_hcrtest.oby		../../../kernel/eka/rombuild/tshell_hcrtest.oby
-nandloader_hcrtest.oby	../../../kernel/eka/rombuild/nandloader_hcrtest.oby
 
 hcrtest.auto.bat	/epoc32/rom/include/hcrtest.auto.bat
 hcr_autoexec.bat	/epoc32/rom/include/hcr_autoexec.bat

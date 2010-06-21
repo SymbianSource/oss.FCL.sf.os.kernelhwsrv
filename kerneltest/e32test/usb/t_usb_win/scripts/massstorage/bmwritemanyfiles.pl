@@ -300,8 +300,4 @@ card) onto the PC. Execute this script on the PC, and make sure the card has
 free space for the file that is going to be created. The default size is 400
 MB.
 
-=head1 COPYRIGHT
-
-Copyright (c) 2006-2008 Symbian Software Ltd. All rights reserved. All rights reserved.
-
 =cut

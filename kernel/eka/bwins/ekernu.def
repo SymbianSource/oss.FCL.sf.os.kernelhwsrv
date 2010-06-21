@@ -935,4 +935,5 @@ EXPORTS
 	?Retire@KernCoreStats@@SAHHH@Z @ 934 NONAME ABSENT ; public: static int KernCoreStats::Retire(int, int)
 	?Stats@KernCoreStats@@SAHPAX@Z @ 935 NONAME ABSENT ; public: static int KernCoreStats::Stats(void *)
 	?SelectiveAlloc@TBitMapAllocator@@QAEIHH@Z @ 936 NONAME ; public: unsigned int __thiscall TBitMapAllocator::SelectiveAlloc(int,int)
+	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 937  NONAME ; void RArrayBase::SetKeyOffset(int)
 

@@ -1144,7 +1144,7 @@ void DSession::Detach(TInt aReason)
 
 		if(m->IsDelivered() || m->IsAccepted())
 			{
-			if (!IsClosing())
+			if (!IsClosing() && t->iMState != DThread::EDead)
 				{
 				m->SetCompleting();
 				Kern::QueueRequestComplete(t, m, aReason);
@@ -1750,7 +1750,7 @@ void ExecHandler::MessageComplete(RMessageK* aMsg, TInt aReason)
 		s->iConnectMsgPtr = NULL;
 
 	__KTRACE_OPT(KIPC,Kern::Printf("MsgCo: M:%d r:%d %O->%O", m.iFunction, aReason, TheCurrentThread, m.iClient));
-	if (!s->IsClosing())
+	if (!s->IsClosing() && m.iClient->iMState != DThread::EDead)
 		{
 		m.SetCompleting();
 		Kern::QueueRequestComplete(m.iClient, &m, aReason);

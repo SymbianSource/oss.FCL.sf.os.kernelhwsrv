@@ -1040,4 +1040,5 @@ EXPORTS
 	_ZN13KernCoreStats9LeaveIdleEj @ 1039 NONAME ABSENT
 	_ZN4Epoc11FreeRamZoneEj @ 1040 NONAME ABSENT
 	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1041 NONAME
+	_ZN10RArrayBase12SetKeyOffsetEi @ 1042 NONAME
 

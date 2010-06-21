@@ -279,8 +279,4 @@ verify their contents.
  TestExpectedResults:  
 	Read data from files should match with written.
 
-=head1 COPYRIGHT
-
-Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies). All rights reserved.
-
 =cut

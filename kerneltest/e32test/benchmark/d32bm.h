@@ -227,7 +227,7 @@ public:
  * The operations are implmented as <code>KBMLdName</code> logical device by <code>KBMLddFileName</code>
  * logical device driver DLL.
  *
- * The API enables to change the absolute prioirty of a thread. 
+ * The API enables to change the absolute priority of a thread. 
  */
 class RBMDriver : public RBusLogicalChannel
 	{
@@ -243,7 +243,7 @@ public:
 		return DoCreate(KBMLdName, TVersion(1,0,1), KNullUnit, &KBMPdName, NULL);
 		}
 	/**
-	 * Change the absolute prioirty of a thread.
+	 * Change the absolute priority of a thread.
 	 *
 	 * @param aThread a handle to the target thread
 	 * @param aNewPrio a new absolute priority for the target thread

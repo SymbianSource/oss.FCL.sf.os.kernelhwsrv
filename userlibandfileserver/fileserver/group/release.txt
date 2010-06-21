@@ -1,3 +1,22 @@
+Version 2.00.2062
+=================
+(Made by vfebvre 07/06/2010)
+
+1.	davegord
+	1.	ou1cimx1#414834 TB92 Occasional Loader crashes observed during T_WSD_TST_* tests
+		Crash caused by interrupt occurring during handling of SWI called from
+		SVC mode -- which is not supported. Fix is for Loader not to call RDebug
+		methods while executing in supervisor mode.
+
+
+Version 2.00.2061
+=================
+(Made by vfebvre 27/05/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#400807 Warnings reported by the Symbian Foundation license checker
+
+
 Version 2.00.2060
 =================
 (Made by vfebvre 25/05/2010)

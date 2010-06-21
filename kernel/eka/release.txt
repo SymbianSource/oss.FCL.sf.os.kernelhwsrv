@@ -1,3 +1,91 @@
+Version 2.00.2137
+=================
+(Made by vfebvre 09/06/2010)
+
+1.	shubmurt
+	1.	ou1cimx1#387232 CodeAbort exception in CompleteQue method, kernel/sproperty.cpp
+		Changes in Publish & Subscribe
+
+2.	coliward
+	1.	ou1cimx1#424882 SDK specific: Unable to Install Midlet in the Emulator.
+
+
+Version 2.00.2136
+=================
+(Made by vfebvre 07/06/2010)
+
+1.	lanerobe
+	1.	ou1cimx1#393868 Use built-in uint32 sort function
+
+2.	martai
+	1.	ou1cimx1#414410 E32TEST T_RAMALL occasionally times out
+
+
+Version 2.00.2135
+=================
+(Made by vfebvre 04/06/2010)
+
+1.	kingzhan
+	1.	ou1cimx1#415058 92 Mutex ordering violation in USB driver
+
+2.	cnotton
+	1.	ou1cimx1#414553 Attempt to export missing file bootstrap_smrif.h
+
+
+Version 2.00.2134
+=================
+(Made by vfebvre 03/06/2010)
+
+1.	martai
+	1.	ou1cimx1#414435 WDP: The paging cache can increase beyond its maximum size temporarily
+
+
+Version 2.00.2133
+=================
+(Made by vfebvre 03/06/2010)
+
+1.	jimhofe
+	1.	MINOR_CHANGE Documentation formatting tweaks
+
+2.	gcochran
+	1.	ou1cimx1#400068 E32TEST RMessagePtr2::Kill is not exercised by t_message
+
+
+Version 2.00.2132
+=================
+(Made by vfebvre 02/06/2010)
+
+1.	davegord
+	1.	ou1cimx1#410777 Kernel Message Pool corrupted by delayed DeadClientCleanup
+
+
+Version 2.00.2130
+=================
+(Made by vfebvre 28/05/2010)
+
+1.	lanerobe
+	1.	ou1cimx1#399811 BM_SUITE does not run on NaviEngine
+
+
+Version 2.00.2129
+=================
+(Made by vfebvre 27/05/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#400807 Warnings reported by the Symbian Foundation license checker
+
+2.	lanerobe
+	1.	ou1cimx1#399627 Build HCR test roms in its own folder
+
+
+Version 2.00.2128
+=================
+(Made by vfebvre 26/05/2010)
+
+1.	elzou
+	1.	ou1cimx1#393925 Phone reset if connect/disconnect USB mouse few times fast
+
+
 Version 2.00.2127
 =================
 (Made by vfebvre 24/05/2010)

@@ -442,7 +442,8 @@ private:
 	If the oldest page is on any other list (i.e. is an old or young page) this will steal it,
 	aquiring the page cleaning mutex first if it is dirty.
 
-	Called from #PageInAllocPage and #TryReturnOldestPageToSystem.
+	Called from #PageInAllocPage, #TryReturnOldestPageToSystem, #AllowAddFreePage and 
+	#AllowAddFreePages.
 	
 	@param aAllowAlloc Indicates whether the method should try to allocate a page from the system
 	
@@ -502,6 +503,29 @@ private:
 	*/
 	TBool TryReturnOldestPageToSystem();
 
+	/**
+	Ensure adding a page to the paging cache will be within the maximum size.
+	
+	@param aPageInfo	On return this is set to the SPageInfo of a page that must be returned
+						to the system before a page can be added to the paging cache, or
+						NULL if no page must be returned to the system.
+	*/
+	void AllowAddFreePage(SPageInfo*& aPageInfo);
+
+	/**
+	Ensure adding aNumPages pages to the paging cache will be within the maximum size.
+	
+	@param aPageInfo	On return this is set to the SPageInfo of a page that must be returned
+						to the system before any more pages can be added to the paging cache, or
+						NULL if no page must be returned to the system.
+	@param aNumPages	The number of pages the caller wishes to add to the paging cache.
+	
+	@return If aPageInfo == NULL on return, this is the number of pages it is possible to
+			add to the paging cache or 1 if aPageInfo != NULL, i.e. a page will need 
+			to be returned to the system.
+	*/
+	TUint AllowAddFreePages(SPageInfo*& aPageInfo, TUint aNumPages);
+	
 	/**
 	Put a specific page back on the system's free pool.
 

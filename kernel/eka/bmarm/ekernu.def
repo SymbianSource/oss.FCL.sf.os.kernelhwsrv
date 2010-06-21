@@ -1052,4 +1052,4 @@ EXPORTS
 	SetIdleHandler__3ArmPFPvUl_vPv @ 1051 NONAME R3UNUSED ABSENT ; Arm::SetIdleHandler(void (*)(void *, unsigned long), void *)
 	FreeRamZone__4EpocUi @ 1052 NONAME R3UNUSED ABSENT ; Epoc::FreeRamZone(unsigned int)
 	SelectiveAlloc__16TBitMapAllocatorii @ 1053 NONAME R3UNUSED ; TBitMapAllocator::SelectiveAlloc(int, int)
-
+	SetKeyOffset__10RArrayBasei @ 1054  NONAME R3UNUSED ; RArrayBase::SetKeyOffset(int)

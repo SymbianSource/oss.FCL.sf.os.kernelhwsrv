@@ -78,7 +78,8 @@ protected:
 class CTestSession : public CSession2
 	{
 public:
-	enum {EStop,ETestInt,ETestPtr,ETestClient,ETestComplete,ETestPtrComplete,ETestCompletePanic,ETestOtherSession,ETestCompleteAfter,ETestMessageConstruction, ETestRMessagePtr2LeavingInterface};
+	enum {EStop,ETestInt,ETestPtr,ETestClient,ETestComplete,ETestPtrComplete,ETestCompletePanic,ETestOtherSession,ETestCompleteAfter,ETestMessageConstruction, 
+		ETestRMessagePtr2LeavingInterface, ETestKillCompletePanic};
 //Override pure virtual
 	IMPORT_C virtual void ServiceL(const RMessage2& aMessage);
 private:
@@ -323,6 +324,10 @@ void CTestSession::ServiceL(const RMessage2& aMessage)
 		case ETestRMessagePtr2LeavingInterface:
 			r=TestRMessagePtr2LeavingInterface(aMessage);
 			break;
+		case ETestKillCompletePanic:
+			aMessage.Complete(KErrNone);
+			aMessage.Panic(_L("Testing Panic"),0xFF); //This will panic the server!
+			break;
 		default:
 			r=KErrNotSupported;
 
@@ -480,7 +485,7 @@ TInt ServerThread(TAny*)
 
 
 	test.Next(_L("Start ActiveScheduler and signal to client"));
-	test.Printf(_L("        There might be something going on beneath this window"));
+	test.Printf(_L("        There might be something going on beneath this window\n"));
 	sem.Signal();
 	CActiveScheduler::Start();
 	test.Next(_L("Destroy ActiveScheduler"));
@@ -517,6 +522,23 @@ TInt CompletePanicClientThread (TAny*)
 	test(r==KErrNone);
 
 	r=session.PublicSendReceive(CTestSession::ETestCompletePanic, TIpcArgs());
+	test(r==KErrNone);
+
+	session.PublicSendReceive(CTestSession::EStop, TIpcArgs());//panic should occur before this is serviced 
+	return(KErrNone);
+	}
+	
+TInt KillCompletePanicClientThread (TAny*)
+//
+//  A client thread entry - signals to server to kill client after completing the message
+//
+	{
+	sem.Wait();
+	
+	TInt r=session.PublicCreateSession(_L("CTestServer"),1);
+	test(r==KErrNone);
+
+	r=session.PublicSendReceive(CTestSession::ETestKillCompletePanic, TIpcArgs());
 	test(r==KErrNone);
 
 	session.PublicSendReceive(CTestSession::EStop, TIpcArgs());//panic should occur before this is serviced 
@@ -575,7 +597,86 @@ void SimpleRMessagePtr()
 
 	test.End();
 	}
+	
+void TestServerCompleteTwicePanic(void)
+	{
+	TRequestStatus clientStat,serverStat;
+	
+	TBool justInTime=User::JustInTime();
+	
+ 	test.Next(_L("Check server panics if you try to complete a message twice"));
+	test.Start(_L("Create client and server threads"));
+	clientThread.Create(_L("Client Thread1"),CompletePanicClientThread,KDefaultStackSize,KHeapMinSize,KHeapMaxSize,NULL);
+	serverThread.Create(_L("Server Thread"),ServerThread,KDefaultStackSize,KHeapMinSize,KHeapMaxSize,NULL);
+	
+	test.Next(_L("Logon to the threads"));
+	clientThread.Logon(clientStat);
+	serverThread.Logon(serverStat);
 
+	test.Next(_L("Start the threads"));
+	sem.CreateLocal(0);
+	User::SetJustInTime(EFalse); 
+	clientThread.Resume();
+	serverThread.Resume();
+	
+	test.Next(_L("Wait for the threads to stop"));
+	User::WaitForRequest(clientStat); //
+	User::WaitForRequest(serverStat);
+	User::SetJustInTime(justInTime); 
+	test.Next(_L("Check the exit categories"));
+	test(clientThread.ExitType()==EExitKill);
+	test(clientThread.ExitCategory().Compare(_L("Kill"))==0);
+	test(clientThread.ExitReason()==KErrNone);
+		
+	test(serverThread.ExitType()==EExitPanic);
+	test(serverThread.ExitCategory().Compare(_L("USER"))==0);
+	test(serverThread.ExitReason()==ETMesCompletion);
+
+	test.Next(_L("Close the threads"));
+	CLOSE_AND_WAIT(serverThread);
+	CLOSE_AND_WAIT(clientThread);
+	test.End();	  
+	}
+	
+void TestServerKillCompletePanic(void)
+	{
+	TRequestStatus clientStat,serverStat;
+	
+	TBool justInTime=User::JustInTime();
+	
+	test.Next(_L("Check Server panics if you try to panic a client using a completed message"));
+	test.Start(_L("Create client and server threads"));
+	clientThread.Create(_L("Client Thread2"),KillCompletePanicClientThread,KDefaultStackSize,KHeapMinSize,KHeapMaxSize,NULL);
+	serverThread.Create(_L("Server Thread"),ServerThread,KDefaultStackSize,KHeapMinSize,KHeapMaxSize,NULL);
+	
+	test.Next(_L("Logon to the threads"));
+	clientThread.Logon(clientStat);
+	serverThread.Logon(serverStat);
+
+	test.Next(_L("Start the threads"));
+	sem.CreateLocal(0);
+	User::SetJustInTime(EFalse); 
+	clientThread.Resume();
+	serverThread.Resume();
+	
+	test.Next(_L("Wait for the threads to stop"));
+	User::WaitForRequest(clientStat); 
+	User::WaitForRequest(serverStat);
+	User::SetJustInTime(justInTime); 
+	test.Next(_L("Check the exit categories"));
+	test(clientThread.ExitType()==EExitKill);
+	test(clientThread.ExitCategory().Compare(_L("Kill"))==0);
+	test(clientThread.ExitReason()==KErrNone);
+		
+	test(serverThread.ExitType()==EExitPanic);
+	test(serverThread.ExitCategory().Compare(_L("KERN-EXEC"))==0);
+	test(serverThread.ExitReason()==EBadMessageHandle);
+	
+	test.Next(_L("Close the threads"));
+	CLOSE_AND_WAIT(serverThread);
+	CLOSE_AND_WAIT(clientThread);
+	test.End();	 
+	}	
 
 GLDEF_C TInt E32Main()
 	{
@@ -643,41 +744,10 @@ GLDEF_C TInt E32Main()
 	CLOSE_AND_WAIT(serverThread);
 	CLOSE_AND_WAIT(clientThread);
 	test.End();
-
-	TBool justInTime=User::JustInTime();
 	
- 	test.Next(_L("Check it Panics if you try to Complete a message twice"));
-	test.Start(_L("Create client and server threads"));
-	clientThread.Create(_L("Client Thread1"),CompletePanicClientThread,KDefaultStackSize,KHeapMinSize,KHeapMaxSize,NULL);
-	serverThread.Create(_L("Server Thread"),ServerThread,KDefaultStackSize,KHeapMinSize,KHeapMaxSize,NULL);
+	TestServerCompleteTwicePanic();
 	
-	test.Next(_L("Logon to the threads"));
-	clientThread.Logon(clientStat);
-	serverThread.Logon(serverStat);
-
-	test.Next(_L("Start the threads"));
-	sem.CreateLocal(0);
-	User::SetJustInTime(EFalse); 
-	clientThread.Resume();
-	serverThread.Resume();
-	
-	test.Next(_L("Wait for the threads to stop"));
-	User::WaitForRequest(clientStat); //
-	User::WaitForRequest(serverStat);
-	User::SetJustInTime(justInTime); 
-	test.Next(_L("Check the exit categories"));
-	test(clientThread.ExitType()==EExitKill);
-	test(clientThread.ExitCategory().Compare(_L("Kill"))==0);
-	test(clientThread.ExitReason()==KErrNone);
-		
-	test(serverThread.ExitType()==EExitPanic);
-	test(serverThread.ExitCategory().Compare(_L("USER"))==0);
-	test(serverThread.ExitReason()==ETMesCompletion);
-
-	test.Next(_L("Close the threads"));
-	CLOSE_AND_WAIT(serverThread);
-	CLOSE_AND_WAIT(clientThread);
-	test.End();	  
+	TestServerKillCompletePanic();
   	
 	test.End();
   

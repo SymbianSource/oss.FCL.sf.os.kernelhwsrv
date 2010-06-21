@@ -458,8 +458,7 @@ void DPager::ReplacePage(SPageInfo& aOldPageInfo, SPageInfo& aNewPageInfo)
 		case SPageInfo::EPagedOld:
 		case SPageInfo::EPagedOldestClean:
 		case SPageInfo::EPagedOldestDirty:
-			{// Update the list links point to the new page.
-			__NK_ASSERT_DEBUG(iYoungCount);
+			{// Update the list links to point to the new page.
 			SDblQueLink* prevLink = aOldPageInfo.iLink.iPrev;
 #ifdef _DEBUG
 			SDblQueLink* nextLink = aOldPageInfo.iLink.iNext;
@@ -635,7 +634,10 @@ exit:
 template <class T, TUint maxObjects> class TSequentialColourSelector
 	{
 public:
-	static const TUint KMaxSearchLength = _ALIGN_UP(maxObjects, KPageColourCount);
+	enum
+		{
+		KMaxSearchLength = _ALIGN_UP(maxObjects, KPageColourCount)
+		};
 	
 	FORCE_INLINE TSequentialColourSelector(TUint aTargetLength)
 		{
@@ -1109,6 +1111,41 @@ TBool DPager::TryReturnOldestPageToSystem()
 	}
 
 
+TUint DPager::AllowAddFreePages(SPageInfo*& aPageInfo, TUint aNumPages)
+	{
+	if (iMinimumPageCount + iNumberOfFreePages == iMaximumPageCount)
+		{// The paging cache is already at the maximum size so steal a page
+		// so it can be returned to the system if required.
+		aPageInfo = StealOrAllocPage(EFalse, (Mmu::TRamAllocFlags)0);
+		__NK_ASSERT_DEBUG(aPageInfo->PagedState() == SPageInfo::EUnpaged);
+		return 1;
+		}
+	// The paging cache is not at its maximum so determine how many can be added to
+	// the paging cache without it growing past its maximum.
+	aPageInfo = NULL;
+	__NK_ASSERT_DEBUG(iMinimumPageCount + iNumberOfFreePages < iMaximumPageCount);
+	if (iMinimumPageCount + iNumberOfFreePages + aNumPages > iMaximumPageCount)
+		{
+		return iMaximumPageCount - (iMinimumPageCount + iNumberOfFreePages);
+		}
+	else
+		return aNumPages;
+	}
+
+
+void DPager::AllowAddFreePage(SPageInfo*& aPageInfo)
+	{
+	if (iMinimumPageCount + iNumberOfFreePages == iMaximumPageCount)
+		{// The paging cache is already at the maximum size so steal a page
+		// so it can be returned to the system if required.
+		aPageInfo = StealOrAllocPage(EFalse, (Mmu::TRamAllocFlags)0);
+		__NK_ASSERT_DEBUG(aPageInfo->PagedState() == SPageInfo::EUnpaged);
+		return;
+		}
+	aPageInfo = NULL;
+	}
+
+
 void DPager::ReturnPageToSystem(SPageInfo& aPageInfo)
 	{
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
@@ -1186,9 +1223,18 @@ void DPager::DonatePages(TUint aCount, TPhysAddr* aPages)
 	TPhysAddr* end = aPages+aCount;
 	while(aPages<end)
 		{
+		// Steal a page from the paging cache in case we need to return one to the system.
+		// This may release the ram alloc lock.
+		SPageInfo* pageInfo;
+		AllowAddFreePage(pageInfo);
+
 		TPhysAddr pagePhys = *aPages++;
 		if(RPageArray::State(pagePhys)!=RPageArray::ECommitted)
+			{
+			if (pageInfo)
+				AddAsFreePage(pageInfo);
 			continue; // page is not present
+			}
 
 #ifdef _DEBUG
 		SPageInfo* pi = SPageInfo::SafeFromPhysAddr(pagePhys&~KPageMask);
@@ -1211,26 +1257,31 @@ void DPager::DonatePages(TUint aCount, TPhysAddr* aPages)
 		case SPageInfo::EPagedOld:
 		case SPageInfo::EPagedOldestDirty:
 		case SPageInfo::EPagedOldestClean:
+			if (pageInfo)
+				AddAsFreePage(pageInfo);
 			continue; // discard already been allowed
 
 		case SPageInfo::EPagedPinned:
 			__NK_ASSERT_DEBUG(0);
 		default:
 			__NK_ASSERT_DEBUG(0);
+			if (pageInfo)
+				AddAsFreePage(pageInfo);
 			continue;
 			}
 
-		// put page on live list...
+		// put page on live list and free the stolen page...
 		AddAsYoungestPage(pi);
 		++iNumberOfFreePages;
-
+		if (pageInfo)
+			ReturnPageToSystem(*pageInfo);
 		Event(EEventPageDonate,pi);
 
 		// re-balance live list...
-		RemoveExcessPages();
 		BalanceAges();
 		}
 
+	__NK_ASSERT_DEBUG((iMinimumPageCount + iNumberOfFreePages) <= iMaximumPageCount);
 	MmuLock::Unlock();
 	RamAllocLock::Unlock();
 	}
@@ -1282,7 +1333,7 @@ TInt DPager::ReclaimPages(TUint aCount, TPhysAddr* aPages)
 			}
 
 		// check paging list has enough pages before we remove one...
-		if(iNumberOfFreePages<1)
+		if(!iNumberOfFreePages)
 			{
 			// need more pages so get a page from the system...
 			if(!TryGrowLiveList())
@@ -1318,8 +1369,15 @@ TInt DPager::ReclaimPages(TUint aCount, TPhysAddr* aPages)
 
 	// we may have added a spare free page to the live list without removing one,
 	// this could cause us to have too many pages, so deal with this...
+
+	// If there are too many pages they should all be unused free pages otherwise 
+	// the ram alloc lock may be released by RemoveExcessPages().
+	__NK_ASSERT_DEBUG(	!HaveTooManyPages() ||
+						(iMinimumPageCount + iNumberOfFreePages - iMaximumPageCount
+						<= iOldestCleanCount));
 	RemoveExcessPages();
 
+	__NK_ASSERT_DEBUG((iMinimumPageCount + iNumberOfFreePages) <= iMaximumPageCount);
 	MmuLock::Unlock();
 	RamAllocLock::Unlock();
 	return r;
@@ -1883,6 +1941,17 @@ TBool DPager::AllocPinReplacementPages(TUint aNumPages)
 		}
 	while(TryGrowLiveList());
 
+	if (!ok)
+		{// Failed to allocate enough pages so free any excess..
+
+		// If there are too many pages they should all be unused free pages otherwise 
+		// the ram alloc lock may be released by RemoveExcessPages().
+		__NK_ASSERT_DEBUG(	!HaveTooManyPages() ||
+							(iMinimumPageCount + iNumberOfFreePages - iMaximumPageCount
+							<= iOldestCleanCount));
+		RemoveExcessPages();
+		}
+	__NK_ASSERT_DEBUG((iMinimumPageCount + iNumberOfFreePages) <= iMaximumPageCount);
 	MmuLock::Unlock();
 	RamAllocLock::Unlock();
 	return ok;
@@ -1897,9 +1966,19 @@ void DPager::FreePinReplacementPages(TUint aNumPages)
 	RamAllocLock::Lock();
 	MmuLock::Lock();
 
-	iNumberOfFreePages += aNumPages;
-	RemoveExcessPages();
+	while (aNumPages)
+		{
+		SPageInfo* pageInfo;
+		// This may release the ram alloc lock but it will flash the mmulock
+		// if not all pages could be added in one go, i.e. freePages != aNumPages.
+		TUint freePages = AllowAddFreePages(pageInfo, aNumPages);
+		iNumberOfFreePages += freePages;
+		aNumPages -= freePages;
+		if (pageInfo)
+			ReturnPageToSystem(*pageInfo);
+		}
 
+	__NK_ASSERT_DEBUG((iMinimumPageCount + iNumberOfFreePages) <= iMaximumPageCount);
 	MmuLock::Unlock();
 	RamAllocLock::Unlock();
 	}
@@ -2054,7 +2133,7 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 		aMaximumPageCount = KAbsoluteMaxPageCount;
 
 	// Min must not be greater than max...
-	if(aMinimumPageCount>aMaximumPageCount)
+	if(aMinimumPageCount > aMaximumPageCount)
 		return KErrArgument;
 	
 	NKern::ThreadEnterCS();
@@ -2072,12 +2151,12 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 	// Make sure aMinimumPageCount is not less than absolute minimum we can cope with...
 	iMinimumPageLimit = iMinYoungPages * (1 + iYoungOldRatio) / iYoungOldRatio
 						+ DPageReadRequest::ReservedPagesRequired();
-	if(iMinimumPageLimit<iAbsoluteMinPageCount)
+	if(iMinimumPageLimit < iAbsoluteMinPageCount)
 		iMinimumPageLimit = iAbsoluteMinPageCount;
-	if(aMinimumPageCount<iMinimumPageLimit+iReservePageCount)
-		aMinimumPageCount = iMinimumPageLimit+iReservePageCount;
-	if(aMaximumPageCount<aMinimumPageCount)
-		aMaximumPageCount=aMinimumPageCount;
+	if(aMinimumPageCount < iMinimumPageLimit + iReservePageCount)
+		aMinimumPageCount = iMinimumPageLimit + iReservePageCount;
+	if(aMaximumPageCount < aMinimumPageCount)
+		aMaximumPageCount = aMinimumPageCount;
 
 	// Increase iMaximumPageCount?
 	if(aMaximumPageCount > iMaximumPageCount)
@@ -2091,7 +2170,7 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 		}
 
 	// Increase iMinimumPageCount?
-	TInt r=KErrNone;
+	TInt r = KErrNone;
 	while(aMinimumPageCount > iMinimumPageCount)
 		{
 		TUint newMin = MinU(aMinimumPageCount, iMinimumPageCount + iNumberOfFreePages);
@@ -2101,7 +2180,7 @@ TInt DPager::ResizeLiveList(TUint aMinimumPageCount, TUint aMaximumPageCount)
 			// have to add pages before we can increase minimum page count
 			if(!TryGrowLiveList())
 				{
-				r=KErrNoMemory;
+				r = KErrNoMemory;
 				break;
 				}
 			}
