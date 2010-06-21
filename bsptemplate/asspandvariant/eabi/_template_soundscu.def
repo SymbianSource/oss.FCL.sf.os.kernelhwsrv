@@ -1,9 +1,0 @@
-EXPORTS
-	_Z20CreatePhysicalDevicev @ 1 NONAME
-	_ZTI21DTemplateSoundScRxPdd @ 2 NONAME
-	_ZTI21DTemplateSoundScTxPdd @ 3 NONAME
-	_ZTI26DTemplateSoundScPddFactory @ 4 NONAME
-	_ZTV21DTemplateSoundScRxPdd @ 5 NONAME
-	_ZTV21DTemplateSoundScTxPdd @ 6 NONAME
-	_ZTV26DTemplateSoundScPddFactory @ 7 NONAME
-

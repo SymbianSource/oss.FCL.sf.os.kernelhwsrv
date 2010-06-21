@@ -1,7 +1,0 @@
-EXPORTS
-	_Z20CreatePhysicalDevicev @ 1 NONAME
-	_ZTI16DMediaDriverIRam @ 2 NONAME
-	_ZTI24DPhysicalDeviceMediaIRam @ 3 NONAME
-	_ZTV16DMediaDriverIRam @ 4 NONAME
-	_ZTV24DPhysicalDeviceMediaIRam @ 5 NONAME
-

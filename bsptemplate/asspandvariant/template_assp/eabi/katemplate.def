@@ -33,5 +33,4 @@ EXPORTS
 	_ZN12AsspRegister8Modify16Emtt @ 32 NONAME
 	_ZN12AsspRegister8Modify32Emmm @ 33 NONAME
 	_ZN12AsspRegister8Modify64Emyy @ 34 NONAME
-	_ZN12TemplateAsspC1Ev @ 35 NONAME
 

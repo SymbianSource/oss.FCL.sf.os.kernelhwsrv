@@ -1,7 +1,0 @@
-EXPORTS
-	_Z19CreateLogicalDevicev @ 1 NONAME
-	_ZTI16DUBootldrChannel @ 2 NONAME
-	_ZTI16DUBootldrFactory @ 3 NONAME
-	_ZTV16DUBootldrChannel @ 4 NONAME
-	_ZTV16DUBootldrFactory @ 5 NONAME
-

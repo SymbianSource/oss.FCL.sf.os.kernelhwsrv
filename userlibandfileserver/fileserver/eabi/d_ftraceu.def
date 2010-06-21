@@ -1,7 +1,0 @@
-EXPORTS
-	_Z19CreateLogicalDevicev @ 1 NONAME
-	_ZTI10DLddFTrace @ 2 NONAME
-	_ZTI17DLddFactoryFTrace @ 3 NONAME
-	_ZTV10DLddFTrace @ 4 NONAME
-	_ZTV17DLddFactoryFTrace @ 5 NONAME
-

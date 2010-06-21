@@ -1,9 +1,0 @@
-EXPORTS
-	_Z19CreateLogicalDevicev @ 1 NONAME
-	_ZTI11DDeviceComm @ 2 NONAME
-	_ZTI12DChannelComm @ 3 NONAME
-	_ZTI17DCommPowerHandler @ 4 NONAME
-	_ZTV11DDeviceComm @ 5 NONAME
-	_ZTV12DChannelComm @ 6 NONAME
-	_ZTV17DCommPowerHandler @ 7 NONAME
-

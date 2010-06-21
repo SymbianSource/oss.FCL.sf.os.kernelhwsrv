@@ -54,6 +54,4 @@ EXPORTS
 	_ZTV16CDmDomainManager @ 53 NONAME ; #<VT>#
 	_ZTV18CHierarchyObserver @ 54 NONAME ; #<VT>#
 	_ZTV9CDmDomain @ 55 NONAME ; #<VT>#
-	_ZN16CDmDomainManagerC1Eh @ 56 NONAME
-	_ZN9CDmDomainC1Eht @ 57 NONAME
 

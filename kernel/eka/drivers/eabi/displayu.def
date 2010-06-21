@@ -1,7 +1,0 @@
-EXPORTS
-	_Z19CreateLogicalDevicev @ 1 NONAME
-	_ZTI11DDisplayLdd @ 2 NONAME
-	_ZTI18DDisplayLddFactory @ 3 NONAME
-	_ZTV11DDisplayLdd @ 4 NONAME
-	_ZTV18DDisplayLddFactory @ 5 NONAME
-

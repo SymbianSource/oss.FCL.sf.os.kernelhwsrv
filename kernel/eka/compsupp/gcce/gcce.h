@@ -33,15 +33,12 @@
 #define __NORETURN__ __declspec(noreturn)
 #define __NORETURN_TERMINATOR()
 
-// GGC 4 visibility 
+#define IMPORT_C __declspec(dllimport) 
+#define EXPORT_C __declspec(dllexport)
 
-#pragma GCC visibility push(hidden)
+#define IMPORT_D __declspec(dllimport) 
+#define EXPORT_D __declspec(dllexport)
 
-#define IMPORT_C __attribute__ ((visibility("default")))
-#define EXPORT_C
-
-#define IMPORT_D __attribute__ ((visibility("default")))
-#define EXPORT_D
 
 
 

@@ -1,7 +1,0 @@
-EXPORTS
-	_Z20CreatePhysicalDevicev @ 1 NONAME
-	_ZTI11DDriverComm @ 2 NONAME
-	_ZTI13DCommTemplate @ 3 NONAME
-	_ZTV11DDriverComm @ 4 NONAME
-	_ZTV13DCommTemplate @ 5 NONAME
-

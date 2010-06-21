@@ -1,9 +1,0 @@
-EXPORTS
-	_Z19CreateLogicalDevicev @ 1 NONAME
-	_ZTI11DKdaChannel @ 2 NONAME
-	_ZTI13DCrashHandler @ 3 NONAME
-	_ZTI9DCtDevice @ 4 NONAME
-	_ZTV11DKdaChannel @ 5 NONAME
-	_ZTV13DCrashHandler @ 6 NONAME
-	_ZTV9DCtDevice @ 7 NONAME
-

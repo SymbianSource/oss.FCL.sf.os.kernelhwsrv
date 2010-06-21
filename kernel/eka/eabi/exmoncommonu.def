@@ -37,6 +37,5 @@ EXPORTS
 	_Z9CrashTimev @ 36 NONAME
 	_ZN7Monitor18DisplayNThreadInfoEP7NThread @ 37 NONAME
 	_ZN7Monitor16GetStackPointersEP7NThreadRjS2_ @ 38 NONAME
-	_ZN7Monitor21MapAndLocateUserStackEP7DThread @ 39 NONAME
-	_ZN7MonitorC1Ev @ 40 NONAME
+	_ZN7Monitor21MapAndLocateUserStackEP7DThread @ 39 NONAME 
 
