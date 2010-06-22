@@ -441,12 +441,12 @@ __NAKED__ EXPORT_C TPtr8 TDes8::LeftTPtr(TInt /*aLength*/) const
 	// Return TPtr8 ([r0]=length/type,[r0,#4]=maxLength,[r0,#8]=Ptr)
 	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
 	asm("cmp r2, #0 ");						// check aLength>=0
-	asm("blt Des8PanicPosOutOfRange__Fv ");	// if not panic
+	asm("blt " CSM_Z27Des8PanicDesIndexOutOfRangev);	// if not panic
 	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
 	asm("cmp r2, r12 ");					// limit aLength to Length()
 	asm("movgt r2, r12 ");
 	asm("cmp r3, #0x50000000 ");			// check type() <= 4
-	asm("bcs Des8PanicBadDesType__Fv ");	// if not, panic
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);	// if not, panic
 	asm("eor r3, r3, r3, lsr #1 ");
 	asm("msr cpsr_flg, r3 ");
 	asm("addcs r1, r1, #4 ");
@@ -467,12 +467,12 @@ __NAKED__ EXPORT_C TPtr8 TDes8::RightTPtr(TInt /*aLength*/) const
 	// Return TPtr8 ([r0]=length/type,[r0,#4]=maxLength,[r0,#8]=Ptr)
 	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
 	asm("cmp r2, #0 ");						// check aLength>=0
-	asm("blt Des8PanicPosOutOfRange__Fv ");	// if not, panic
+	asm("blt " CSM_Z27Des8PanicDesIndexOutOfRangev);	// if not, panic
 	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
 	asm("cmp r2, r12 ");					// limit aLength to Length()
 	asm("movgt r2, r12 ");
 	asm("cmp r3, #0x50000000 ");			// check type() <= 4
-	asm("bcs Des8PanicBadDesType__Fv ");
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);
 	asm("eor r3, r3, r3, lsr #1 ");
 	asm("msr cpsr_flg, r3 ");
 	asm("addcs r1, r1, #4 ");
@@ -496,9 +496,9 @@ __NAKED__ EXPORT_C TPtr8 TDes8::MidTPtr(TInt /*aPos*/) const
 	asm("bic r12, r3, #0xF0000000 ");		// r12=this.Length()
 	asm("cmp r2, #0 ");						// check aPos>=0
 	asm("cmpge r12, r2 ");					// if so check Length()>=aPos
-	asm("blt Des8PanicPosOutOfRange__Fv ");
+	asm("blt " CSM_Z27Des8PanicDesIndexOutOfRangev);
 	asm("cmp r3, #0x50000000 ");			// check type() <= 4
-	asm("bcs Des8PanicBadDesType__Fv ");
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);
 	asm("eor r3, r3, r3, lsr #1 ");
 	asm("msr cpsr_flg, r3 ");
 	asm("addcs r1, r1, #4 ");
@@ -522,7 +522,7 @@ __NAKED__ EXPORT_C TPtr8 TDes8::MidTPtr(TInt /*aPos*/,TInt /*aLength*/) const
 	asm("ldr r12, [r1], #4 ");				// r12=this.length/type
 	asm("mov r4, r1 ");
 	asm("cmp r12, #0x50000000 ");			// check valid descriptor type
-	asm("bcs Des8PanicBadDesType__Fv ");
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);
 	asm("eor r12, r12, r12, lsr #1 ");
 	asm("msr cpsr_flg, r12 ");
 	asm("ldr r12, [r1, #-4] ");
@@ -539,7 +539,7 @@ __NAKED__ EXPORT_C TPtr8 TDes8::MidTPtr(TInt /*aPos*/,TInt /*aLength*/) const
 	asm("stmgeia r0, {r1-r3} ");
 	asm("ldrge r4, [sp], #4 ");
 	__JUMP(ge,lr);
-	asm("b Des8PanicPosOutOfRange__Fv ");
+	asm("b " CSM_Z27Des8PanicDesIndexOutOfRangev);
 	}
 #endif
 
@@ -630,7 +630,7 @@ __NAKED__ EXPORT_C TInt TDesC8::CompareF(const TDesC8& /*aDes*/) const
 	asm("ldr r12, 1f ");
 	asm("b comparebody ");
 	asm("1: ");
-	asm(".word  " CSM_ZN3Mem8CompareFEPKhiS0_i);
+	asm(".word  " CSM_ZN3Mem8CompareFEPKhiS1_i);
 	}
 
 __NAKED__ EXPORT_C TInt TDesC8::CompareC(const TDesC8& /*aDes*/) const
@@ -641,7 +641,7 @@ __NAKED__ EXPORT_C TInt TDesC8::CompareC(const TDesC8& /*aDes*/) const
 	asm("ldr r12, 1f ");
 	asm("b comparebody ");
 	asm("1: ");
-	asm(".word  " CSM_ZN3Mem8CompareCEPKhiS0_i);
+	asm(".word  " CSM_ZN3Mem8CompareCEPKhiS1_i);
 	}
 #endif
 
@@ -798,12 +798,12 @@ __NAKED__ EXPORT_C TPtrC8 TDesC8::Left(TInt /*aLength*/) const
 	// Return TPtrC8 ([r0]=length/type,[r0,#4]=Ptr)
 	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
 	asm("cmp r2, #0 ");					// check aLength>=0
-	asm("blt Des8PanicPosOutOfRange__Fv ");			// if not panic
+	asm("blt " CSM_Z27Des8PanicDesIndexOutOfRangev);			// if not panic
 	asm("bic r12, r3, #0xF0000000 ");			// r12=this.Length()
 	asm("cmp r2, r12 ");					// limit aLength to Length()
 	asm("movgt r2, r12 ");
 	asm("cmp r3, #0x50000000 ");				// check type() <= 4
-	asm("bcs Des8PanicBadDesType__Fv ");			// if not, panic
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);			// if not, panic
 	asm("eor r3, r3, r3, lsr #1 ");
 	asm("msr cpsr_flg, r3 ");
 	asm("addcs r1, r1, #4 ");
@@ -824,12 +824,12 @@ __NAKED__ EXPORT_C TPtrC8 TDesC8::Right(TInt /*aLength*/) const
 	// Return TPtrC8 ([r0]=length/type,[r0,#4]=Ptr)
 	asm("ldr r3, [r1], #4 ");				// r3=this.length/type
 	asm("cmp r2, #0 ");					// check aLength>=0
-	asm("blt Des8PanicPosOutOfRange__Fv ");			// if not, panic
+	asm("blt " CSM_Z27Des8PanicDesIndexOutOfRangev);			// if not, panic
 	asm("bic r12, r3, #0xF0000000 ");			// r12=this.Length()
 	asm("cmp r2, r12 ");					// limit aLength to Length()
 	asm("movgt r2, r12 ");
 	asm("cmp r3, #0x50000000 ");				// check type() <= 4
-	asm("bcs Des8PanicBadDesType__Fv ");
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);
 	asm("eor r3, r3, r3, lsr #1 ");
 	asm("msr cpsr_flg, r3 ");
 	asm("addcs r1, r1, #4 ");
@@ -853,9 +853,9 @@ __NAKED__ EXPORT_C TPtrC8 TDesC8::Mid(TInt /*aPos*/) const
 	asm("bic r12, r3, #0xF0000000 ");			// r12=this.Length()
 	asm("cmp r2, #0 ");					// check aPos>=0
 	asm("cmpge r12, r2 ");					// if so check Length()>=aPos
-	asm("blt Des8PanicPosOutOfRange__Fv ");
+	asm("blt " CSM_Z27Des8PanicDesIndexOutOfRangev);
 	asm("cmp r3, #0x50000000 ");				// check type() <= 4
-	asm("bcs Des8PanicBadDesType__Fv ");
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);
 	asm("eor r3, r3, r3, lsr #1 ");
 	asm("msr cpsr_flg, r3 ");
 	asm("addcs r1, r1, #4 ");
@@ -877,7 +877,7 @@ __NAKED__ EXPORT_C TPtrC8 TDesC8::Mid(TInt /*aPos*/,TInt /*aLength*/) const
 	// Return TPtrC8 ([r0]=length/type,[r0,#4]=Ptr)
 	asm("ldr r12, [r1], #4 ");				// r12=this.length/type
 	asm("cmp r12, #0x50000000 ");			// check valid descriptor type
-	asm("bcs Des8PanicBadDesType__Fv ");
+	asm("bcs " CSM_Z19Des8PanicBadDesTypev);
 	asm("eor r12, r12, r12, lsr #1 ");
 	asm("msr cpsr_flg, r12 ");
 	asm("ldr r12, [r1, #-4] ");
@@ -892,7 +892,7 @@ __NAKED__ EXPORT_C TPtrC8 TDesC8::Mid(TInt /*aPos*/,TInt /*aLength*/) const
 	asm("orrge r1, r3, #0x10000000 ");			// and r1=aLength + EPtrC
 	asm("stmgeia r0, {r1,r2} ");
 	__JUMP(ge,lr);
-	asm("b Des8PanicPosOutOfRange__Fv ");
+	asm("b " CSM_Z27Des8PanicDesIndexOutOfRangev);
 	}
 #endif
 
