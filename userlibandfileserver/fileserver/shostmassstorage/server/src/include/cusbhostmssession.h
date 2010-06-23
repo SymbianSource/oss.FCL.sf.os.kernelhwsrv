@@ -63,6 +63,7 @@ private:
 	CUsbHostMsDeviceThread* iDeviceThread;
 	RThread	iThread;
 
+	TBool iCleanupInProgress;
     TRequestStatus* iClientStatus;
 	};
 

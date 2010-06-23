@@ -79,6 +79,51 @@ LOCAL_C DWORD ConvertToNarrow(LPCWSTR aUnicode,LPSTR aNarrow,DWORD aLength)
 	return WideCharToMultiByte(Data.iCodePage,0,aUnicode,-1,aNarrow,aLength,"@",NULL);
 	}
 
+LOCAL_C TInt GetSectionsSize(const IMAGE_NT_HEADERS32* aBase)
+//
+// Iterates through the section headers at the start of an image and determines the minimum amount of the
+// PE file that must be read in in order to examine the sections themselves
+//
+	{
+    // List of sections are are interested in examining
+	const BYTE* sectionNames[] =
+			{
+			KWin32SectionName_Symbian, KWin32SectionName_Import, KWin32SectionName_EpocData, KWin32SectionName_EpocBss,
+			KWin32SectionName_Text, KWin32SectionName_RData, KWin32SectionName_NmdExpData
+			};
+
+	// Get a ptr to the first section header in preparation for examining all the section headers
+	DWORD maxOffset = 0;
+	const IMAGE_NT_HEADERS32* ntHead = aBase;
+	const IMAGE_SECTION_HEADER* imgHead = (const IMAGE_SECTION_HEADER*) ((TUint8*) &ntHead->OptionalHeader + ntHead->FileHeader.SizeOfOptionalHeader);
+	const IMAGE_SECTION_HEADER* end = imgHead + ntHead->FileHeader.NumberOfSections;
+
+	for (; imgHead < end; ++imgHead)
+		{
+		TBool SectionUsed = EFalse;
+
+		// Go through each of the sections that we need to examine and see if the current section is in the list
+		for (TInt index = 0; index < (sizeof(sectionNames) / sizeof(BYTE*)); ++index)
+			{
+			if (memcmp(imgHead->Name, sectionNames[index], IMAGE_SIZEOF_SHORT_NAME)==0)
+				SectionUsed = ETrue;
+			}
+
+		// If the current section is one we are interested in, calculate its offset in the raw file and add its size;
+		// this gives us the minimum amount of the file to be mapped in order to examine this section and all those
+		// preceding it
+		if (SectionUsed)
+			{
+			if ((imgHead->PointerToRawData + imgHead->SizeOfRawData) > maxOffset)
+				{
+				maxOffset = (imgHead->PointerToRawData + imgHead->SizeOfRawData);
+				}
+			}
+		}
+
+	return(maxOffset);
+	}
+
 template <TUint S>
 struct Buf8
 	{
@@ -810,7 +855,32 @@ EXPORT_C TInt Emulator::RImageFile::Open(LPCTSTR aImageFile)
 		if (!iMapping)
 			return LastError();
 
-		iBase = MapViewOfFile(iMapping, FILE_MAP_READ, 0, 0, 0);
+		// First we need to read in the PE file's image headers, which consist of a 4 byte signature, the file header
+		// containing general information and up to 96 section headers.  Map this amount of the file into memory so
+		// that we can examine it and calculate the minimum size of the sections themselves that need to be mapped into
+		// memory in order to examine the actual sections
+		SIZE_T headersSize = (sizeof(DWORD) + sizeof(IMAGE_FILE_HEADER) + (96 * sizeof(IMAGE_OPTIONAL_HEADER)));
+		iBase = MapViewOfFile(iMapping, FILE_MAP_READ, 0, 0, headersSize);
+
+		if (iBase)
+			{
+			// Scan through the section headers and determine the minimum amount of the file to be mapped into memory
+			// in order for us to safely examine the sections, and map the file into memory.  We do this rather than
+			// map the entire PE file into memory because with full debug information, DLLs can be anything up to 100 MB!!!
+			TInt sectionsSize = GetSectionsSize(NtHeader());
+
+			// Before remapping the file with its new size, unmap it.  While one would think that it is safe to
+			// increase the size of the file's mapping it is not, and doing so triggers behaviour in Windows that
+			// results in quickly using up all available virtual memory address space!
+			if (UnmapViewOfFile(iBase))
+				{
+				iBase = MapViewOfFile(iMapping, FILE_MAP_READ, 0, 0, sectionsSize);
+				}
+			else
+				{
+				iBase = NULL;
+				}
+			}
 
 		if (!iBase)
 			{

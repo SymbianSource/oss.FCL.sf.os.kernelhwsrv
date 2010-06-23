@@ -321,11 +321,24 @@ void LowMemoryTest()
 
 	test.Printf(_L("Writing to file..."));
 
-	r = f.Write(pos, writePtr);
-	test_KErrNone(r);
+	// now we have gobbled all or most of memory, the next write can fail
+	// if it does keep decommitting memory until it succeeds and then test that the file size is correct
+	commitEnd = 0;
+	do {
+
+		r = f.Write(pos, writePtr);
+		test_Value(r, r == KErrNoMemory || r == KErrNone);
+		if (r == KErrNoMemory)
+			{
+			chunk.Decommit(commitEnd,KPageSize);
+			commitEnd += KPageSize;
+			}
+		}
+	while (r == KErrNoMemory);
+
 	pos+= writePtr.Length();
 
-	test.Printf(_L("Setting size of file ..."));
+	test.Printf(_L("Gsetting size of file ..."));
 	r = f.Size(fileSize);
 	test_KErrNone(r);
 	test_Equal(fileSize,pos);
@@ -547,6 +560,9 @@ LOCAL_C void UnitTests()
 	test_KErrNone(r);
 
 	r = f.Replace(TheFs, testFile, EFileReadBuffered | EFileWrite | EFileWriteBuffered);
+	test_KErrNone(r);
+
+	r = f.SetSize(gFileCacheConfig.iCacheSize);
 	test_KErrNone(r);
 
 	RTimer timer;
@@ -1888,6 +1904,10 @@ GLDEF_C TInt E32Main()
 //TheFs.SetDebugRegister(KCACHE);
 			DoTests(gDrive);
 //TheFs.SetDebugRegister(0);
+
+		if ((gVolInfo.iDrive.iMediaAtt & KMediaAttFormattable))
+			Format(gDrive);
+
 			test.End();
 //			}
 		}

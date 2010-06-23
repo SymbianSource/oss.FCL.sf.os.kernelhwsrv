@@ -258,7 +258,7 @@ find_end:
 	}
 
 
-void RPageArray::TIter::Add(TUint aCount, TPhysAddr* aPages)
+void RPageArray::TIter::Add(TUint aCount, const TPhysAddr* aPages)
 	{
 	// MmuLock NOT required because...
 	// 1. AddStart has ensured all segments are allocated and locked (so they can't be deleted)
@@ -1158,6 +1158,7 @@ TPhysAddr* RPageArray::MovePageStart(TUint aIndex, TIter& aPageList)
 		return NULL;
 
 	*p = (page & ~EStateMask) | EMoving;
+	s->Lock();
 
 	aPageList.Set(iSegments, aIndex, aIndex+1);
 

@@ -1518,7 +1518,7 @@ TInt VerifyMovDisAlloc()
 				}
 			else
 				{
-				if ((allocMov || allocDis) && prevZoneNotFull)
+				if (verifySpread && (allocMov || allocDis) && prevZoneNotFull)
 					{// The previous least preferable RAM zones were not full so shouldn't
 					// be any movable or discardable pages in the RAM zones of this preference.
 					test.Printf(_L("Movable or discardable pages in more preferable RAM zones unnecessarily\n"));
@@ -3053,8 +3053,9 @@ TInt TestMovPgsDefrag()
 				break;
 				}
 			totMov -= gZoneUtilArray[zoneIndexCand].iAllocMovable;
-			if (gZoneUtilArray[zoneIndexCand].iFreePages != gZoneUtilArray[zoneIndexCand].iPhysPages &&
-				gZoneUtilArray[zoneIndexCand].iFreePages != 0)
+			if (gZoneUtilArray[zoneIndexCand].iFreePages &&
+				(gZoneUtilArray[zoneIndexCand].iAllocMovable || 
+				gZoneUtilArray[zoneIndexCand].iAllocDiscardable))
 				{
 				zoneNotEmptyOrFull = ETrue;
 				}

@@ -49,6 +49,7 @@ void TDriveInterface::Close()
 {	 
 	 if((iMount != NULL) && (iMount->LocalDrive() != NULL))
 		{
+		ASSERT(iMount->LocalDrive()->Mount() == NULL || iMount->LocalDrive()->Mount() == iMount);
 		iMount->LocalDrive()->SetMount(NULL);
 		}
      iMount = NULL;

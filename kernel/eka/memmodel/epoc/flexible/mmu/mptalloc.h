@@ -137,6 +137,17 @@ public:
 	TInt MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPageInfo, 
 						TUint aBlockZoneId, TBool aBlockRest);
 
+	/**
+	Attempts to discard a page of page tables using #MovePage.  If the discard was 
+	succesful it then allocates the page with type aPageType.
+	
+	@param aMemory		This should always be the page table info memory object.
+	@param aPageInfo	The page info of the page to discard.
+
+	@return KErrNone if the page could be successfully discarded and its RAM page allocated.
+	*/
+	TInt MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType);
+
 #ifdef _DEBUG
 	/**
 	Debug function for use by DPager::RemovePage() to allow it to remove

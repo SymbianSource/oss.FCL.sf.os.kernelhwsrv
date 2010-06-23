@@ -1,3 +1,46 @@
+Version 2.00.3097
+=================
+(Made by vfebvre 16/06/2010)
+
+1.	jcoppear
+	1.	ou1cimx1#444092 MCL ENV E32TEST T_THRASH test timeout on 92
+
+2.	shubmurt
+	1.	ou1cimx1#423695 MCL:Mobile Crash #25334: CodeAbort exception in CompleteQue method, kernel/sproperty.cpp
+
+
+Version 2.00.3095
+=================
+(Made by vfebvre 14/06/2010)
+
+1.	kingzhan
+	1.	ou1cimx1#425296 MCL Mutex ordering violation in USB driver
+
+2.	jcoppear
+	1.	ou1cimx1#432392 System reset during execution of T_SHBUF_CLIENT
+	2.	ou1cimx1#380623 WDP: Non aligned swap writes increase media wear
+
+3.	martai
+	1.	ou1cimx1#435628 Copy of WDP: Paged data can be corrupted randomly
+	2.	ou1cimx1#424896 E32TEST T_RAMALL occasionally times out
+	3.	ou1cimx1#412959 ENV X86GCC compilation warnings t_ramall.cpp
+	4.	ou1cimx1#384467 Contiguous memory allocations do not use multi-page write support
+
+4.	coliward
+	1.	ou1cimx1#428886 SDK specific: Unable to Install Midlet in the Emulator.
+
+
+Version 2.00.3094
+=================
+(Made by vfebvre 10/06/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#419221 Missing exported kernelhwsrv documentation causes build breaks
+
+2.	lanerobe
+	1.	ou1cimx1#427741 Reset timestamp before running test
+
+
 Version 2.00.3093
 =================
 (Made by vfebvre 09/06/2010)

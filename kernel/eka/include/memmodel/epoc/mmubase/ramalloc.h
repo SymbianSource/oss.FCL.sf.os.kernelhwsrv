@@ -144,10 +144,11 @@ public:
 	TInt ZoneAllocRamPages(TUint* aZoneIdList, TUint aZoneIdCount, TPhysAddr* aPageList, TInt aNumPages, TZonePageType aType);
 	TInt AllocContiguousRam(TUint aNumPages, TPhysAddr& aPhysAddr, TInt aAlign=0);
 #if !defined(__MEMMODEL_MULTIPLE__) && !defined(__MEMMODEL_MOVING__)
-	void BlockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages);
+	TUint BlockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages);
 	void UnblockSetAllocRuns(TUint& aOffset1, TUint& aOffset2, TUint aRunLength1, TUint aRunLength2, TUint& aAllocLength, TUint& aAllocStart);
 	void UnblockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages);
-	TBool ClearContiguousRegion(TPhysAddr aAddrBase, TPhysAddr aZoneBase, TUint aNumPages, TInt& aOffset);
+	TBool ClearContiguousRegion(TPhysAddr aAddrBase, TPhysAddr aZoneBase, TUint aNumPages, TInt& aOffsetm, TUint aUnreservedPages);
+	TUint CountPagesInRun(TPhysAddr aAddrBase, TPhysAddr aAddrEndPage, TZonePageType aType);
 #endif
 	TInt ZoneAllocContiguousRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign);
 #ifdef _DEBUG

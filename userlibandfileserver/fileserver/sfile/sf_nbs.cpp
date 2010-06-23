@@ -226,12 +226,6 @@ TInt TFsEntry::DoRequestL(CFsRequest* aRequest)
 	if (r!=KErrNone)
 		return(r);
 
-	// If the file is open, get the file size from the CFileCB object as there may be cached data
-	CFileCB* file;
-	aRequest->Drive()->IsFileOpen(filePath, file);
-	if (file)
-		t.SetFileSize(file->CachedSize64());
-
 	TPckgC<TEntry> p(t);
 	aRequest->WriteL(KMsgPtr1,p);
 	return(KErrNone);

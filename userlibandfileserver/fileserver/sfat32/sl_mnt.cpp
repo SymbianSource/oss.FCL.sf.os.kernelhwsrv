@@ -26,6 +26,7 @@
 #include "sl_dir_cache.h"
 #include "sl_scandrv.h"
 #include <hal.h>
+#include <f32dbg.h>
 
 TShortName DoGenerateShortNameL(const TDesC& aLongName,TInt& aNum,TBool aUseTildeSelectively);
 
@@ -1341,9 +1342,10 @@ void CFatMountCB::SetEntryL(const TDesC& aName,const TTime& aTime,TUint aSetAttM
     FindEntryStartL(RemoveTrailingDots(aName),KEntryAttMaskSupported,firstEntry,firstEntryPos);
     MoveToDosEntryL(firstEntryPos,firstEntry);
     TUint setAttMask=aSetAttMask&KEntryAttMaskSupported;
+	TInt oldAtt = firstEntry.Attributes();
+	TInt att = oldAtt;
     if (setAttMask|aClearAttMask)
         {
-        TInt att=firstEntry.Attributes();
         att|=setAttMask;
         att&=(~aClearAttMask);
         firstEntry.SetAttributes(att);
@@ -1352,6 +1354,8 @@ void CFatMountCB::SetEntryL(const TDesC& aName,const TTime& aTime,TUint aSetAttM
 		{
 		firstEntry.SetTime(aTime,TimeOffset());
 		}
+	else if (att == oldAtt)
+		return;					// no change - don't bother writing entry
     WriteDirEntryL(firstEntryPos,firstEntry);
     }
 
@@ -3623,23 +3627,36 @@ TInt CFatMountCB::ControlIO(const RMessagePtr2& aMessage,TInt aCommand,TAny* aPa
 		case EDisableFATDirCache:
 			{
 		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    TUint32 KEDisableFATDirCache = CDynamicDirCache::EDisableCache;
+		    TUint32 KEDisableFATDirCache = MWTCacheInterface::EDisableCache;
 		    pDirCache->Control(KEDisableFATDirCache, (TUint32) aParam1, NULL);
 			break;
 			}
 		case EDumpFATDirCache:
 			{
 		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    TUint32 KEDumpFATDirCache = CDynamicDirCache::EDumpCache;
-		    pDirCache->Control(KEDumpFATDirCache, 0, NULL);
+		    if (pDirCache)
+		        {
+	            TUint32 KEDumpFATDirCache = MWTCacheInterface::EDumpCache;
+	            pDirCache->Control(KEDumpFATDirCache, 0, NULL);
+		        }
 			break;
 			}
 		case EFATDirCacheInfo:
 			{
-		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    TUint32 KEFATDirCacheInfo = CDynamicDirCache::ECacheInfo;
-		    pDirCache->Control(KEFATDirCacheInfo, 0, NULL);
-			break;
+			MWTCacheInterface* pDCache = iRawDisk->DirCacheInterface();
+		    if (pDCache)
+		        {
+	            TUint32 KEFATDirCacheInfo = MWTCacheInterface::ECacheInfo;
+	            TDirCacheInfo aInfo;
+	            TInt r = pDCache->Control(KEFATDirCacheInfo, 0, static_cast<TAny*>(&aInfo));
+	            if (r == KErrNone)
+	                {
+	                TPckgBuf<TDirCacheInfo> pkgBuf(aInfo);
+	                r = aMessage.Write(2,pkgBuf);
+	                }
+                return r;
+		        }
+		    return KErrNotSupported;
 			}
 
 

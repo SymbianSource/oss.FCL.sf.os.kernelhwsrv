@@ -78,6 +78,7 @@ TInt Defrag::ClearMovableFromZone(SZone& aZone, TBool aBestEffort, TRamDefragReq
 	TUint offset = 0;
 	TPhysAddr newAddr;
 	TBool zoneActive = EFalse;
+	const TUint moveDisFlags = (aBestEffort)? 0 : M::EMoveDisBlockRest | M::EMoveDisMoveDirty;
 	TInt ret = iRamAllocator->NextAllocatedPage(&aZone, offset, EPageMovable);
 
 	// if not best effort mode keep moving pages unless someone allocates into 
@@ -101,7 +102,7 @@ TInt Defrag::ClearMovableFromZone(SZone& aZone, TBool aBestEffort, TRamDefragReq
 			__KTRACE_OPT(KMMU, Kern::Printf("ClearMovableFromZone: memory too low or zone active addr %x", addr));
 			return KErrNoMemory;
 			}
-		TInt moved = M::MovePage(addr, newAddr, aZone.iId, !aBestEffort);
+		TInt moved = M::MovePage(addr, newAddr, aZone.iId, moveDisFlags);
 		if (moved != KErrNone)
 			{// Couldn't move the page so stop as we can't clear the zone
 			if (!aBestEffort)
@@ -144,6 +145,7 @@ TInt Defrag::ClearDiscardableFromZone(SZone& aZone, TBool aBestEffort, TRamDefra
 	TUint offset = 0;
 	TBool zoneActive = EFalse;
 	TInt ret = iRamAllocator->NextAllocatedPage(&aZone, offset, EPageDiscard);
+	const TUint moveDisFlags = (aBestEffort)? 0 : M::EMoveDisBlockRest | M::EMoveDisMoveDirty;
 
 
 	while (	aZone.iAllocPages[EPageDiscard] != 0 && ret == KErrNone && 
@@ -169,7 +171,7 @@ TInt Defrag::ClearDiscardableFromZone(SZone& aZone, TBool aBestEffort, TRamDefra
 			return KErrNoMemory;
 			}
 
-		TInt discardRet = M::DiscardPage(addr, aZone.iId, !aBestEffort);
+		TInt discardRet = M::DiscardPage(addr, aZone.iId, moveDisFlags);
 		if (discardRet == KErrNone)
 			{// Page was discarded successfully.
 			if (aMaxDiscard)
@@ -405,7 +407,7 @@ TInt Defrag::ClaimRamZone(TRamDefragRequest* aRequest)
 		BTrace4(BTrace::ERamAllocator, BTrace::ERamAllocClaimZone, zone->iId);
 #endif
 
-#ifdef BTRACE_KERNEL_MEMORY
+#if defined(BTRACE_KERNEL_MEMORY) && !defined(__MEMMODEL_FLEXIBLE__)
 		TUint size = zone->iPhysPages << M::PageShift();
 		BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysAlloc, size, zone->iPhysBase);
 		Epoc::DriverAllocdPhysRam += size;

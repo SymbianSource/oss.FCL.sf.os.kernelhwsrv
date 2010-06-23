@@ -165,18 +165,6 @@ public:
 		}
 
 	/**
-	Page moving has ended so set the page back to committed if no other 
-	operation has occurred/is occurring.
-
-	@param aEntry		A reference to the entry to update.
-	*/
-	static FORCE_INLINE void MovePageEnd(TPhysAddr& aEntry)
-		{
-		if (State(aEntry) == EMoving)
-			aEntry = (aEntry & ~EStateMask) | ECommitted;
-		}
-
-	/**
 	Update the physical address in the array entry \a aEntry.
 	@param aEntry		A reference to the entry to update.
 	@param aPhysAddr	The new physical address.
@@ -416,6 +404,17 @@ public:
 	*/
 	TPhysAddr* MovePageStart(TUint aIndex, TIter& aPageList);
 
+
+	/**
+	Page moving has ended so set the page back to committed if no other 
+	operation has occurred/is occurring.
+
+	@param aEntry		A reference to the entry to update.
+	@param aIndex		The index of the page that was moved.
+	*/
+	void MovePageEnd(TPhysAddr& aEntry, TUint aIndex);
+
+
 	/**
 	Return the array entry for index \a aIndex.
 	*/
@@ -543,7 +542,7 @@ public:
 		@param aCount		The number of pages to add.
 		@param aPages		Pointer to list of \a aCount physical page addresses to add.
 		*/
-		void Add(TUint aCount, TPhysAddr* aPages);
+		void Add(TUint aCount, const TPhysAddr* aPages);
 
 		/**
 		Add contiguous pages to the array, setting each entry state as ECommitted.
@@ -859,6 +858,14 @@ FORCE_INLINE void RPageArray::RemovePageEnd(TUint aIndex, TInt aDelta)
 	MmuLock::Lock();
 	ReleasePage(aIndex,-aDelta);
 	MmuLock::Unlock();
+	}
+
+FORCE_INLINE void RPageArray::MovePageEnd(TPhysAddr& aEntry, TUint aIndex)
+	{
+	__NK_ASSERT_DEBUG(PageEntry(aIndex) == &aEntry);
+	if (State(aEntry) == EMoving)
+		aEntry = (aEntry & ~EStateMask) | ECommitted;
+	ReleasePage(aIndex, 0);
 	}
 
 #endif

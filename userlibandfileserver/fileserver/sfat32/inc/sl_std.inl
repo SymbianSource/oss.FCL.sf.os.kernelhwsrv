@@ -178,14 +178,14 @@ TUint32 CFatMountCB::NumberOfFats() const
     }
 
 
-/** @return refrence to the fat table owned by the mount */
+/** @return reference to the fat table owned by the mount */
 CFatTable& CFatMountCB::FAT() const
 	{
     return(*iFatTable);
     }
 
 /**
-    @return refrence to the file system object that has produced this CFatMountCB
+    @return reference to the file system object that has produced this CFatMountCB
 */
 CFatFileSystem& CFatMountCB::FatFileSystem() const
 	{
@@ -495,7 +495,7 @@ CFatMountCB& CFatFileCB::FatMount() const
 /**
 Returns the fat table used by the file system for this mount
 
-@return Refrence to the Fat table owned by the mount
+@return Reference to the Fat table owned by the mount
 */
 CFatTable& CFatFileCB::FAT()
 	{return(FatMount().FAT());}
@@ -523,9 +523,9 @@ TBool CFatFileCB::FileSizeModified() const
     }  
 
 void CFatFileCB::IndicateFileSizeModified(TBool aModified) 
-    {
-    iFileSizeModified = aModified;
-    }
+	{
+	iFileSizeModified = aModified;
+	}
 
 //-----------------------------------------------------------------------------
 /** @return ETrue if file attributes' 'Modified' flag is set*/

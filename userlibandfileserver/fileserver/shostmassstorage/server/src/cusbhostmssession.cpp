@@ -114,9 +114,13 @@ void CUsbHostMsSession::DispatchMessageL(const RMessage2& aMessage)
 			return;
 			}
 		break;
+	case EUsbHostMsUnRegisterInterface:
+		iCleanupInProgress = ETrue;
+		break;
 	/* If it is a cleanup then we need to delete the iDeviceThread */
 	case EUsbHostMsFinalCleanup:	
 		delete iDeviceThread;
+		iDeviceThread = NULL;
 		iThread.Kill(KErrNone);
 		aMessage.Complete(KErrNone);
 		return;
@@ -124,7 +128,12 @@ void CUsbHostMsSession::DispatchMessageL(const RMessage2& aMessage)
 		break;
 		}
 
-	__ASSERT_DEBUG(iDeviceThread != NULL, User::Panic(KUsbMsHostPanicCat, EDeviceThreadDoesNotExist));
+	if (iDeviceThread == NULL || iCleanupInProgress ) 
+		{
+		aMessage.Complete(KErrBadHandle);
+		return;
+		}
+
 
 	r = iDeviceThread->QueueMsg(aMessage);
 	if (r != KErrNone)

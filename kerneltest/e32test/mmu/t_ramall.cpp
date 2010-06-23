@@ -19,11 +19,13 @@
 
 #include <e32test.h>
 #include <e32uid.h>
+#include <hal.h>
 #include <e32hal.h>
 #include <dptest.h>
 #include "d_shadow.h"
 #include "mmudetect.h"
 #include "freeram.h"
+#include "d_gobble.h"
 
 LOCAL_D RTest test(_L("T_RAMALL"));
 
@@ -32,7 +34,7 @@ _LIT(KLddFileName,"D_SHADOW.LDD");
 TInt PageSize;
 TInt PageShift;
 RShadow Shadow;
-TInt InitFreeRam;
+TInt TotalRam;
 RChunk Chunk;
 TUint ChunkCommitEnd;
 RThread TouchThread;
@@ -45,6 +47,30 @@ TBool ManualTest;
 TBool CacheSizeAdjustable;
 TUint OrigMinCacheSize;
 TUint OrigMaxCacheSize;
+
+//
+// Random number generation
+//
+
+TUint32 RandomSeed;
+
+TUint32 Random()
+	{
+	RandomSeed = RandomSeed*69069+1;
+	return RandomSeed;
+	}
+
+TUint32 Random(TUint32 aRange)
+	{
+	return (TUint32)((TUint64(Random())*TUint64(aRange))>>32);
+	}
+
+void RandomInit(TUint32 aSeed)
+	{
+	RandomSeed = aSeed+(aSeed<<8)+(aSeed<<16)+(aSeed<<24);
+	Random();
+	Random();
+	}
 
 TInt AllocPhysicalRam(TUint32& aAddr, TInt aSize, TInt aAlign)
 	{
@@ -143,7 +169,7 @@ struct SPhysAllocData
 
 TInt FillPhysicalRam(TAny* aArgs)
 	{
-	SPhysAllocData& allocData = *((SPhysAllocData*)aArgs);
+	SPhysAllocData allocData = *((SPhysAllocData*)aArgs);
 	TUint maxAllocs = FreeRam() / allocData.iSize;
 	TUint32* physAddrs = new TUint32[maxAllocs + 1];
 	if (!physAddrs)
@@ -165,10 +191,11 @@ TInt FillPhysicalRam(TAny* aArgs)
 			RDebug::Printf("Error alignment phys addr 0x%08x", *(pa - 1));
 			break;
 			}
-		if (allocData.iCheckFreeRam && freeRam - allocData.iSize != (TUint)FreeRam())
+		TUint newFreeRam = FreeRam();
+		if (allocData.iCheckFreeRam && freeRam - allocData.iSize != newFreeRam)
 			{
 			r = KErrGeneral;
-			RDebug::Printf("Error in free ram 0x%08x orig 0x%08x", FreeRam(), freeRam);
+			RDebug::Printf("Error in free ram 0x%08x orig 0x%08x", newFreeRam, freeRam);
 			break;
 			}
 		}
@@ -187,10 +214,11 @@ TInt FillPhysicalRam(TAny* aArgs)
 		r = KErrOverflow;
 		RDebug::Printf("Error able to allocate too many pages");
 		}
-	if (allocData.iCheckFreeRam && initialFreeRam != (TUint)FreeRam())
+	TUint finalFreeRam = FreeRam();
+	if (allocData.iCheckFreeRam && initialFreeRam != finalFreeRam)
 		{
 		r = KErrGeneral;
-		RDebug::Printf("Error in free ram 0x%08x initial 0x%08x", FreeRam(), initialFreeRam);
+		RDebug::Printf("Error in free ram 0x%08x initial 0x%08x", finalFreeRam, initialFreeRam);
 		}
 	delete[] physAddrs;
 	if (r != KErrNone && r != KErrNoMemory)
@@ -219,16 +247,18 @@ void TestMultipleContiguousAllocations(TUint aNumThreads, TUint aSize, TUint aAl
 	TUint i = 0;
 	for (; i < aNumThreads; i++)
 		{// Need enough heap to store addr of every possible allocation + 1.
-		TUint requiredHeapMax = Max(PageSize, ((InitFreeRam / aSize) / sizeof(TUint32)) + sizeof(TUint32));
+		TUint requiredHeapMax = Max(PageSize, ((TotalRam / aSize) * sizeof(TUint32)) + sizeof(TUint32));
 		TInt r = threads[i].Create(KNullDesC, FillPhysicalRam, KDefaultStackSize, PageSize, requiredHeapMax, (TAny*)&allocData);
-		test_KErrNone(r);
+		if (r != KErrNone)
+			break;			
 		threads[i].Logon(status[i]);
 		}
-	for (i = 0; i < aNumThreads; i++)
+	TUint totalThreads = i;
+	for (i = 0; i < totalThreads; i++)
 		{
 		threads[i].Resume();
 		}
-	for (i = 0; i < aNumThreads; i++)
+	for (i = 0; i < totalThreads; i++)
 		{
 		User::WaitForRequest(status[i]);
 		test_Equal(EExitKill, threads[i].ExitType());
@@ -249,25 +279,33 @@ struct STouchData
 
 TInt TouchMemory(TAny*)
 	{
+	RThread::Rendezvous(KErrNone);	// Signal that this thread has started running.
+	RandomInit(TouchData.iSize);
 	while (!TouchDataStop)
 		{
 		TUint8* p = Chunk.Base();
 		TUint8* pEnd = p + ChunkCommitEnd;
 		TUint8* fragPEnd = p + TouchData.iFrequency;
-		for (TUint8* fragP = p + TouchData.iSize; fragPEnd < pEnd;)
+		for (TUint8* fragP = p + TouchData.iSize; fragPEnd < pEnd && !TouchDataStop;)
 			{
 			TUint8* data = fragP;
-			for (; data < fragPEnd; data += PageSize)
+			for (; data < fragPEnd && !TouchDataStop; data += PageSize)
 				{
 				*data = (TUint8)(data - fragP);
+				TUint random = Random();
+				if (random & 0x8484)
+					User::After(random & 0xFFFF);
 				}
-			for (data = fragP; data < fragPEnd; data += PageSize)
+			for (data = fragP; data < fragPEnd && !TouchDataStop; data += PageSize)
 				{
 				if (*data != (TUint8)(data - fragP))
 					{
 					RDebug::Printf("Error unexpected data 0x%x read from 0x%08x", *data, data);
 					return KErrGeneral;
 					}
+				TUint random = Random();
+				if (random & 0x8484)
+					User::After(random & 0xFFFF);
 				}
 			fragP = fragPEnd + TouchData.iSize;
 			fragPEnd += TouchData.iFrequency;
@@ -302,17 +340,14 @@ void FragmentMemoryFunc()
 		{
 		test_KErrNone(Chunk.Decommit(offset, FragData.iSize));
 		}
-	if (!FragData.iFragThread)
-		test_Equal(FreeRam(), freeBlocks * FragData.iSize);
 
 	if (FragData.iDiscard && CacheSizeAdjustable && !FragThreadStop)
 		{
 		TUint minCacheSize = FreeRam();
 		TUint maxCacheSize = minCacheSize;
-		TUint currentCacheSize;
-		test_KErrNone(DPTest::CacheSize(OrigMinCacheSize, OrigMaxCacheSize, currentCacheSize));
-		test_KErrNone(DPTest::SetCacheSize(minCacheSize, maxCacheSize));
-		test_KErrNone(DPTest::SetCacheSize(OrigMinCacheSize, maxCacheSize));
+		DPTest::SetCacheSize(minCacheSize, maxCacheSize);
+		if (OrigMinCacheSize <= maxCacheSize)
+			DPTest::SetCacheSize(OrigMinCacheSize, maxCacheSize);
 		}
 	}
 
@@ -320,13 +355,14 @@ void FragmentMemoryFunc()
 void UnfragmentMemoryFunc()
 	{
 	if (FragData.iDiscard && CacheSizeAdjustable)
-		test_KErrNone(DPTest::SetCacheSize(OrigMinCacheSize, OrigMaxCacheSize));
+		DPTest::SetCacheSize(OrigMinCacheSize, OrigMaxCacheSize);
 	Chunk.Decommit(0, Chunk.MaxSize());
 	}
 
 
 TInt FragmentMemoryThreadFunc(TAny*)
 	{
+	RThread::Rendezvous(KErrNone);	// Signal that this thread has started running.
 	while (!FragThreadStop)
 		{
 		FragmentMemoryFunc();
@@ -346,17 +382,22 @@ void FragmentMemory(TUint aSize, TUint aFrequency, TBool aDiscard, TBool aTouchM
 	FragData.iFragThread = aFragThread;
 
 	TChunkCreateInfo chunkInfo;
-	chunkInfo.SetDisconnected(0, 0, FreeRam());
+	chunkInfo.SetDisconnected(0, 0, TotalRam);
 	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	chunkInfo.SetClearByte(0x19);
 	test_KErrNone(Chunk.Create(chunkInfo));
 
 	if (aFragThread)
 		{
-		TInt r = FragThread.Create(KNullDesC, FragmentMemoryThreadFunc, KDefaultStackSize, PageSize, PageSize, NULL);
+		TInt r = FragThread.Create(_L("FragThread"), FragmentMemoryThreadFunc, KDefaultStackSize, PageSize, PageSize, NULL);
 		test_KErrNone(r);
 		FragThread.Logon(FragStatus);
 		FragThreadStop = EFalse;
+		TRequestStatus threadInitialised;
+		FragThread.Rendezvous(threadInitialised);
 		FragThread.Resume();
+		User::WaitForRequest(threadInitialised);
+		test_KErrNone(threadInitialised.Int());
 		}
 	else
 		{
@@ -366,11 +407,15 @@ void FragmentMemory(TUint aSize, TUint aFrequency, TBool aDiscard, TBool aTouchM
 		{
 		TouchData.iSize = aSize;
 		TouchData.iFrequency = aFrequency;
-		TInt r = TouchThread.Create(KNullDesC, TouchMemory, KDefaultStackSize, PageSize, PageSize, NULL);
+		TInt r = TouchThread.Create(_L("TouchThread"), TouchMemory, KDefaultStackSize, PageSize, PageSize, NULL);
 		test_KErrNone(r);
 		TouchThread.Logon(TouchStatus);
 		TouchDataStop = EFalse;
+		TRequestStatus threadInitialised;
+		TouchThread.Rendezvous(threadInitialised);
 		TouchThread.Resume();
+		User::WaitForRequest(threadInitialised);
+		test_KErrNone(threadInitialised.Int());
 		}
 	}
 
@@ -396,6 +441,8 @@ void UnfragmentMemory(TBool aDiscard, TBool aTouchMemory, TBool aFragThread)
 		}
 	else
 		UnfragmentMemoryFunc();
+	if (CacheSizeAdjustable)
+		test_KErrNone(DPTest::SetCacheSize(OrigMinCacheSize, OrigMaxCacheSize));
 	CLOSE_AND_WAIT(Chunk);
 	}
 
@@ -407,11 +454,12 @@ void TestFillPhysicalRam(TUint aFragSize, TUint aFragFreq, TUint aAllocSize, TUi
 	FragmentMemory(aFragSize, aFragFreq, aDiscard, aTouchMemory, EFalse);
 	SPhysAllocData allocData;
 	// Only check free all ram could be allocated in manual tests as fixed pages may be fragmented.
-	allocData.iCheckMaxAllocs = (ManualTest && !aTouchMemory && !aAllocAlign)? ETrue : EFalse;
+	allocData.iCheckMaxAllocs = (ManualTest && !aTouchMemory && !aAllocAlign);
 	allocData.iCheckFreeRam = ETrue;
 	allocData.iSize = aAllocSize;
 	allocData.iAlign = aAllocAlign;
-	FillPhysicalRam(&allocData);
+	TInt r = FillPhysicalRam(&allocData);
+	test_Value(r, r >= 0);
 	UnfragmentMemory(aDiscard, aTouchMemory, EFalse);
 	}
 
@@ -492,14 +540,17 @@ GLDEF_C TInt E32Main()
 		ManualTest = cmdLine.Find(KManual) != KErrNotFound;
 		}
 
-	// Turn off lazy dll unloading so the free ram checking isn't affected.
+	// Turn off lazy dll unloading and ensure any supervisor clean up has completed 
+	// so the free ram checking isn't affected.
 	RLoader l;
 	test(l.Connect()==KErrNone);
 	test(l.CancelLazyDllUnload()==KErrNone);
 	l.Close();
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
 
-	InitFreeRam=FreeRam();
-	test.Printf(_L("Free RAM=%08x, Page size=%x, Page shift=%d\n"),InitFreeRam,PageSize,PageShift);
+	test_KErrNone(HAL::Get(HAL::EMemoryRAM, TotalRam));
+
+	test.Printf(_L("Free RAM=%08x, Page size=%x, Page shift=%d\n"),FreeRam(),PageSize,PageShift);
 
 	test.Next(_L("Open test LDD"));
 	r=Shadow.Open();
@@ -513,6 +564,18 @@ GLDEF_C TInt E32Main()
 
 	if (memodel >= EMemModelTypeFlexible)
 		{
+		// To stop these tests taking too long leave only 8MB of RAM free.
+		const TUint KFreePages = 2048;
+		test.Next(_L("Load gobbler LDD"));
+		TInt r = User::LoadLogicalDevice(KGobblerLddFileName);
+		test_Value(r, r == KErrNone || r == KErrAlreadyExists);
+		RGobbler gobbler;
+		r = gobbler.Open();
+		test_KErrNone(r);
+		TUint32 taken = gobbler.GobbleRAM(KFreePages * PageSize);
+		test.Printf(_L("Gobbled: %dK\n"), taken/1024);
+		test.Printf(_L("Free RAM 0x%08X bytes\n"),FreeRam());
+
 		test.Next(_L("TestFragmentedAllocation"));
 		TestFragmentedAllocation();
 
@@ -555,9 +618,15 @@ GLDEF_C TInt E32Main()
 		FragmentMemory(PageSize * 32, PageSize * 64, ETrue, EFalse, ETrue);
 		TestMultipleContiguousAllocations(20, PageSize * 1024, PageShift + 10);
 		UnfragmentMemory(ETrue, EFalse, ETrue);
+
+		gobbler.Close();
+		r = User::FreeLogicalDevice(KGobblerLddFileName);
+		test_KErrNone(r);
 		}
 
 	Shadow.Close();
+	r = User::FreeLogicalDevice(KLddFileName);
+	test_KErrNone(r);
 	test.Printf(_L("Free RAM=%08x at end of test\n"),FreeRam());
 	test.End();
 	return(KErrNone);

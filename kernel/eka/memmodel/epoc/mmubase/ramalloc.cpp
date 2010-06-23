@@ -1330,26 +1330,37 @@ void DRamAllocator::ZoneClearPages(SZone& aZone, TUint aRequiredPages)
 		Kern::Printf("ZoneClearPages: ID 0x%x, req 0x%x", aZone.iId, aRequiredPages));
 	// Discard the required number of discardable pages.
 	TUint offset = 0;
-	TInt r = NextAllocatedPage(&aZone, offset, EPageDiscard);
-	while (r == KErrNone && aRequiredPages)
+	for (; aRequiredPages; offset++)
 		{
+		TInt r = NextAllocatedPage(&aZone, offset, EPageDiscard);
+		if (r != KErrNone)
+			break;
+		if (iContiguousReserved && aZone.iBma[EPageFixed]->NotFree(offset, 1))
+			{
+			offset++;
+			continue;
+			}
 		TPhysAddr physAddr = (offset << KPageShift) + aZone.iPhysBase;
-		TInt discarded = M::DiscardPage(physAddr, aZone.iId, EFalse);
+		TInt discarded = M::DiscardPage(physAddr, aZone.iId, M::EMoveDisMoveDirty);
 		if (discarded == KErrNone)
 			{// The page was successfully discarded.
 			aRequiredPages--;
 			}
-		offset++;
-		r = NextAllocatedPage(&aZone, offset, EPageDiscard);
 		}
 	// Move the required number of movable pages.
-	offset = 0;
-	r = NextAllocatedPage(&aZone, offset, EPageMovable);
-	while(r == KErrNone && aRequiredPages)
+	for (offset = 0; aRequiredPages; offset++)
 		{
+		TInt r = NextAllocatedPage(&aZone, offset, EPageMovable);
+		if (r != KErrNone)
+			break;
+		if (iContiguousReserved && aZone.iBma[EPageFixed]->NotFree(offset, 1))
+			{
+			offset++;
+			continue;
+			}
 		TPhysAddr physAddr = (offset << KPageShift) + aZone.iPhysBase;
 		TPhysAddr newAddr = KPhysAddrInvalid;
-		if (M::MovePage(physAddr, newAddr, aZone.iId, EFalse) == KErrNone)
+		if (M::MovePage(physAddr, newAddr, aZone.iId, 0) == KErrNone)
 			{// The page was successfully moved.
 #ifdef _DEBUG
 			TInt newOffset = 0;
@@ -1358,8 +1369,6 @@ void DRamAllocator::ZoneClearPages(SZone& aZone, TUint aRequiredPages)
 #endif
 			aRequiredPages--;
 			}
-		offset++;
-		r = NextAllocatedPage(&aZone, offset, EPageMovable);
 		}
 	}
 
@@ -1441,14 +1450,15 @@ TInt DRamAllocator::AllocRamPages(TPhysAddr* aPageList, TInt aNumPages, TZonePag
 	TPhysAddr* pageListBase = aPageList;
 	TUint32 numMissing = aNumPages;
 
+	if ((TUint)aNumPages > iTotalFreeRamPages)
+		{// Not enough free pages to fulfill this request so return the amount required
+		return aNumPages - iTotalFreeRamPages;
+		}
+
 	if (aType == EPageFixed)
 		{// Currently only a general defrag operation should set this and it won't
 		// allocate fixed pages.
 		__NK_ASSERT_DEBUG(!aBlockRest);
-		if ((TUint)aNumPages > iTotalFreeRamPages + M::NumberOfFreeDpPages())
-			{// Not enough free space and not enough freeable pages.
-			goto exit;
-			}
 
 		// Search through each zone in preference order until all pages allocated or
 		// have reached the end of the preference list
@@ -1484,11 +1494,6 @@ TInt DRamAllocator::AllocRamPages(TPhysAddr* aPageList, TInt aNumPages, TZonePag
 		}
 	else
 		{
-		if ((TUint)aNumPages > iTotalFreeRamPages)
-			{// Not enough free pages to fulfill this request so return amount required
-			return aNumPages - iTotalFreeRamPages;
-			}
-
 		// Determine if there are enough free pages in the RAM zones in use.
 		TUint totalFreeInUse = 0;
 		SDblQueLink* link = iZoneLeastMovDis;
@@ -1725,7 +1730,7 @@ exit:
 
 
 #if !defined(__MEMMODEL_MULTIPLE__) && !defined(__MEMMODEL_MOVING__)
-void DRamAllocator::BlockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages)
+TUint DRamAllocator::BlockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages)
 	{
 	// Shouldn't be asked to block zero pages, addrEndPage would be wrong if we did.
 	__NK_ASSERT_DEBUG(aNumPages);
@@ -1734,6 +1739,7 @@ void DRamAllocator::BlockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages)
 	TInt tmpOffset;
 	SZone* endZone = GetZoneAndOffset(addrEndPage, tmpOffset);
 	SZone* tmpZone;
+	TUint totalUnreserved = aNumPages;
 	do
 		{
 		tmpZone = GetZoneAndOffset(addr, tmpOffset);
@@ -1754,11 +1760,13 @@ void DRamAllocator::BlockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages)
 #endif
 			ZoneAllocPages(tmpZone, reserved, EPageFixed);
 			iTotalFreeRamPages -= reserved;
+			totalUnreserved -= reserved;
 			}
 		tmpZone->iBma[EPageFixed]->Alloc(tmpOffset, runLength);
 		addr = tmpZone->iPhysEnd + 1;
 		}
 	while (tmpZone != endZone);
+	return totalUnreserved;
 	}
 
 
@@ -1834,13 +1842,43 @@ void DRamAllocator::UnblockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages
 	}
 
 
-TBool DRamAllocator::ClearContiguousRegion(TPhysAddr aAddrBase, TPhysAddr aZoneBase, TUint aNumPages, TInt& aOffset)
+TUint DRamAllocator::CountPagesInRun(TPhysAddr aAddrBase, TPhysAddr aAddrEndPage, TZonePageType aType)
+	{
+	__NK_ASSERT_DEBUG(aAddrBase <= aAddrEndPage);
+	TUint totalAllocated = 0;
+	TPhysAddr addr = aAddrBase;
+	TUint tmpOffset;
+	SZone* endZone = GetZoneAndOffset(aAddrEndPage, (TInt&)tmpOffset);
+	SZone* tmpZone;
+	do
+		{
+		tmpZone = GetZoneAndOffset(addr, (TInt&)tmpOffset);
+		__NK_ASSERT_DEBUG(tmpZone != NULL);
+		TUint runLength = 	(aAddrEndPage < tmpZone->iPhysEnd)? 
+							((aAddrEndPage - addr) >> KPageShift) + 1: 
+							tmpZone->iPhysPages - tmpOffset;
+		TUint runEnd = tmpOffset + runLength - 1;
+		while (tmpOffset <= runEnd)
+			{
+			TUint run = NextAllocatedRun(tmpZone, tmpOffset, runEnd, aType);
+			totalAllocated += run;
+			tmpOffset += run;
+			}
+		addr = tmpZone->iPhysEnd + 1;
+		}
+	while (tmpZone != endZone);
+	return totalAllocated;
+	}
+
+
+TInt DRamAllocator::ClearContiguousRegion(TPhysAddr aAddrBase, TPhysAddr aZoneBase, TUint aNumPages, TInt& aOffset, TUint aUnreservedPages)
 	{
 	TPhysAddr addr = aAddrBase;
-	TPhysAddr addrEnd = aAddrBase + (aNumPages << KPageShift);
+	TPhysAddr addrEndPage = aAddrBase + ((aNumPages -1 )<< KPageShift);
 	TInt contigOffset = 0;
 	SZone* contigZone = GetZoneAndOffset(addr, contigOffset);
-	for (; addr != addrEnd; addr += KPageSize, contigOffset++)
+	TUint unreservedPages = aUnreservedPages;
+	for (; addr <= addrEndPage; addr += KPageSize, contigOffset++)
 		{
 		if (contigZone->iPhysEnd < addr)
 			{
@@ -1852,17 +1890,41 @@ TBool DRamAllocator::ClearContiguousRegion(TPhysAddr aAddrBase, TPhysAddr aZoneB
 		__NK_ASSERT_DEBUG(contigZone->iBma[EPageFixed]->NotFree(contigOffset, 1));
 		__NK_ASSERT_DEBUG(SPageInfo::SafeFromPhysAddr(addr) != NULL);
 
-		// WARNING - This may flash the ram alloc mutex.
-		TInt exRet = M::MoveAndAllocPage(addr, EPageFixed);
-		if (exRet != KErrNone)
+		if (unreservedPages > iTotalFreeRamPages)
+			{// May need to discard some pages so there is free space for the 
+			// pages in the contiguous run to be moved to.
+			TUint requiredPages = unreservedPages - iTotalFreeRamPages;
+			if (requiredPages)
+				{// Ask the pager to get free some pages.
+				M::GetFreePages(requiredPages);
+
+				// The ram alloc lock may have been flashed so ensure that we still have
+				// enough free ram to complete the allocation.
+				TUint remainingPages = ((addrEndPage - addr) >> KPageShift) + 1;
+				unreservedPages = remainingPages - CountPagesInRun(addr, addrEndPage, EPageFixed);
+				if (unreservedPages > iTotalFreeRamPages + M::NumberOfFreeDpPages())
+					{// Not enough free space and not enough freeable pages.
+					return KErrNoMemory;
+					}
+				}
+			}
+
+		TInt r = M::MoveAndAllocPage(addr, EPageFixed);
+		if (r != KErrNone)
 			{// This page couldn't be moved or discarded so 
 			// restart the search the page after this one.
-			__KTRACE_OPT(KMMU2, Kern::Printf("ContigMov fail contigOffset 0x%x exRet %d", contigOffset, exRet));
+			__KTRACE_OPT(KMMU2, Kern::Printf("ContigMov fail contigOffset 0x%x r %d", contigOffset, r));
 			aOffset = (addr < aZoneBase)? 0 : contigOffset + 1;
-			break;
+			return r;
 			}
+		__NK_ASSERT_DEBUG(contigZone->iBma[EPageFixed]->NotFree(contigOffset, 1));
+		__NK_ASSERT_DEBUG(contigZone->iBma[KBmaAllPages]->NotFree(contigOffset, 1));
+		__NK_ASSERT_DEBUG(contigZone->iBma[EPageDiscard]->NotAllocated(contigOffset, 1));
+		__NK_ASSERT_DEBUG(contigZone->iBma[EPageMovable]->NotAllocated(contigOffset, 1));
 		}
-	return addr == addrEnd;
+
+	// Successfully cleared the contiguous run
+	return KErrNone;
 	}
 
 
@@ -1888,6 +1950,13 @@ TInt DRamAllocator::AllocContiguousRam(TUint aNumPages, TPhysAddr& aPhysAddr, TI
 	if ((TUint)aNumPages > iTotalFreeRamPages + M::NumberOfFreeDpPages())
 		{// Not enough free space and not enough freeable pages.
 		return KErrNoMemory;
+		}
+	if (aNumPages > iTotalFreeRamPages)
+		{// Need to discard some pages so there is free space for the pages in 
+		// the contiguous run to be moved to.
+		TUint requiredPages = aNumPages - iTotalFreeRamPages;
+		if (!M::GetFreePages(requiredPages))
+			return KErrNoMemory;
 		}
 
 	TInt alignWrtPage = Max(aAlign - KPageShift, 0);
@@ -1950,8 +2019,9 @@ TInt DRamAllocator::AllocContiguousRam(TUint aNumPages, TPhysAddr& aPhysAddr, TI
 				
 				// Block the contiguous region from being allocated.
 				iContiguousReserved++;
-				BlockContiguousRegion(addrBase, aNumPages);
-				if (ClearContiguousRegion(addrBase, zone->iPhysBase, aNumPages, offset))
+				TUint unreservedPages = BlockContiguousRegion(addrBase, aNumPages);
+				TInt clearRet = ClearContiguousRegion(addrBase, zone->iPhysBase, aNumPages, offset, unreservedPages);
+				if (clearRet == KErrNone)
 					{// Cleared all the required pages.
 					// Return address of physical page at the start of the region.
 					iContiguousReserved--;
@@ -1977,6 +2047,11 @@ TInt DRamAllocator::AllocContiguousRam(TUint aNumPages, TPhysAddr& aPhysAddr, TI
 					carryImmov = 0;
 					carryAll = 0;
 					__KTRACE_OPT(KMMU2, Kern::Printf("<AllocContigfail run 0x%08x - 0x%08x 0x%x", addrBase, addrBase + (aNumPages << KPageShift), TheCurrentThread));
+					if (clearRet == KErrNoMemory)
+						{// There are no longer enough free or discardable pages to 
+						// be able to fulfill this allocation.
+						return KErrNoMemory;
+						}
 					}
 				}
 			}
@@ -2099,7 +2174,7 @@ TInt DRamAllocator::AllocContiguousRam(TUint aNumPages, TPhysAddr& aPhysAddr, TI
 						__NK_ASSERT_DEBUG(SPageInfo::SafeFromPhysAddr(addr) != NULL);
 
 						TPhysAddr newAddr;
-						TInt moveRet = M::MovePage(addr, newAddr, contigZone->iId, EFalse);
+						TInt moveRet = M::MovePage(addr, newAddr, contigZone->iId, 0);
 						if (moveRet != KErrNone && moveRet != KErrNotFound)
 							{// This page couldn't be moved or discarded so 
 							// restart the search the page after this one.
@@ -2462,8 +2537,7 @@ Get the next run of pages in this zone that are allocated after aOffset.
 				page in the zone should be found, on return it will be the offset 
 				of the next allocated page.
 @param aEndOffset The last offset within this RAM zone to check for allocated runs.
-@return The length of any run found, KErrNotFound if no more pages in
-the zone after aOffset are allocated, KErrArgument if aOffset is outside the zone.
+@return The length of any run found.
 */
 TInt DRamAllocator::NextAllocatedRun(SZone* aZone, TUint& aOffset, TUint aEndOffset, TZonePageType aType) const
 	{

@@ -187,6 +187,14 @@ const TInt KControlIoSimulateFileCacheWriteFailure=KMaxTInt-20;
 const TInt KControlIoSessionCount=KMaxTInt-21;
 const TInt KControlIoObjectCount=KMaxTInt-22;
 
+const TInt KControlIoIsFileSequential=KMaxTInt-23;
+const TInt KControlIoGlobalCacheConfig=KMaxTInt-24;
+const TInt KControlIoGlobalCacheInfo=KMaxTInt-25;
+const TInt KControlIoDirCacheConfig=KMaxTInt-26;
+const TInt KControlIoDirCacheInfo=KMaxTInt-27;
+const TInt KControlIoSimulateMemoryLow=KMaxTInt-28;
+const TInt KControlIoStopSimulateMemoryLow=KMaxTInt-29;
+
 const TInt KNCDebugNotifierValue=-500000;	// between 0 and 1 second
 
 GLREF_D TInt DebugNCNotifier;
@@ -253,6 +261,88 @@ struct TFsDebugCorruptLogRecord
 typedef TPckgBuf <TFsDebugCorruptLogRecord> TFsDebugCorruptLogRecordBuf;
 
 extern TBool EnableFatUtilityFunctions;
+
+class TGlobalCacheConfig
+    {
+public:
+    TInt32 iGlobalCacheSizeInBytes;      		// in bytes 
+    TInt32 iGlobalLowMemoryThreshold;         	// in percentage
+    };
+
+class TGlobalCacheInfo
+    {
+public:
+    TInt32 iGlobalCacheSizeInBytes;     		// in bytes 
+    TInt32 iGlobalLowMemoryThreshold;   		// in percentage
+    };
+
+class TDirCacheConfig
+    {
+public:
+    TInt iDrive;
+
+    TInt32 iLeafDirCacheSize;           // in number of most recently visited leaf directories
+    TInt32 iDirCacheSizeMin;            // in bytes
+    TInt32 iDirCacheSizeMax;            // in bytes
+    };
+
+class TDirCacheInfo
+    {
+public:
+    TInt iDrive;
+
+    /**
+    Segment size in bytes. A memory segment is the smallest memory unit that Kernel manages through RChunk.
+    */
+    TInt32 iMemorySegmentSize;
+
+    /**
+    Size of memory a page occupies, in bytes.
+    Note: following restrictions may result a difference between page size in memory & page size in data:
+        1. page size can not be smaller than segment size
+        2. one page can not contain data from two different clusters
+    */
+    TInt32 iPageSizeInMemory;
+
+    /**
+    Size of actual data a page contains, in bytes.
+    Note: following restrictions may result a difference between page size in memory & page size in data:
+        1. page size can not be smaller than segment size
+        2. one page can not contain data from two different clusters
+    */
+    TInt32 iPageSizeInData;
+    
+    /**
+    The minimum number of pages that the cache can contain, even under low memory conditions.
+    */
+    TInt32 iMinCacheSizeInPages;
+
+    /**
+    The maximum number of pages that the cache can contain, when there is enough free memory in the system.
+    */
+    TInt32 iMaxCacheSizeInPages;
+    
+    /**
+    The minimum cache size in memory. In bytes.
+    */
+    TInt32 iMinCacheSizeInMemory;
+
+    /**
+    The maximum cache size in memroy. In bytes.
+    */
+    TInt32 iMaxCacheSizeInMemory;
+    
+    /**
+    Current count of the locked pages.
+    */
+    TInt32 iLockedPageNumber;
+
+    /**
+    Current count of the unlocked pages.
+    */
+    TInt32 iUnlockedPageNumber;
+    
+    };
 
 #endif
 

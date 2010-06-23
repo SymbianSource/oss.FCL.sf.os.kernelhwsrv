@@ -635,6 +635,13 @@ TBool CCacheClient::TooManyLockedSegments()
 	return EFalse;
 	}
 
+// return true if more than half of the segments in this file are locked
+TBool CCacheClient::LockedSegmentsHalfUsed()
+	{
+	if (LockedBytes() > (iMaxBytesCached >> 1))
+		return ETrue;
+	return EFalse;
+	}
 
 TInt CCacheClient::CachedBytes()
 	{
