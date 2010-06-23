@@ -25,7 +25,7 @@ PRJ_EXPORTS
 // Export the generic binaries which are currently only built with RVCT
 
 :zip ..\rt_generic_export.zip
-:zip ..\rt_3_1_export.zip
+:zip ..\rt_4_0_export.zip
 
 PRJ_MMPFILES
 
