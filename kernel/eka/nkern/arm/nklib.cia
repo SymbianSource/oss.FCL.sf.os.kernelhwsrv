@@ -1,0 +1,194 @@
+// Copyright (c) 2010-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32\nkern\arm\nklib.cia
+// 
+//
+
+#include <e32atomics.h>
+#include <nklib.h>
+
+#ifdef __SRATIO_MACHINE_CODED__
+__NAKED__ void SRatio::Set(TUint32 /*aInt*/, TInt /*aDivisorExp*/)
+	{
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(		3,1);						// r3=31-MSB(r1), 32 if r1=0
+	asm("add	r2, r2, r3 ");				// r2=shift+aDivisorExp
+	asm("movs	r1, r1, lsl r3 ");			// shift r1 left so bit 31=1
+	asm("rsb	r2, r2, #0 ");				// r2 = -shift-aDivisorExp
+	asm("moveq	r2, #0 ");					// if aInt=0, r2=0
+	asm("bicne	r2, r2, #0xff000000 ");		// else clear iSpare fields
+	asm("bicne	r2, r2, #0x00ff0000 ");		//
+#else
+	asm("rsb	r2, r2, #0 ");				// r2 = -aDivisorExp
+	asm("cmp	r1, #0x00010000 ");			// if aInt top 16 bits clear ...
+	asm("movcc	r1, r1, lsl #16 ");			// ... shift 16 bits left ...
+	asm("subcc	r2, r2, #16 ");				// ... and subtract 16 from iX
+	asm("cmp	r1, #0x01000000 ");
+	asm("movcc	r1, r1, lsl #8 ");
+	asm("subcc	r2, r2, #8 ");
+	asm("cmp	r1, #0x10000000 ");
+	asm("movcc	r1, r1, lsl #4 ");
+	asm("subcc	r2, r2, #4 ");
+	asm("cmp	r1, #0x40000000 ");
+	asm("movcc	r1, r1, lsl #2 ");
+	asm("subcc	r2, r2, #2 ");
+	asm("cmp	r1, #0x80000000 ");
+	asm("subcc	r2, r2, #1 ");
+	asm("cmp	r1, #0 ");
+	asm("moveq	r2, #0 ");					// if aInt=0, r2=0
+	asm("bicne	r2, r2, #0xff000000 ");		// else clear iSpare fields
+	asm("bicne	r2, r2, #0x00ff0000 ");		//
+#endif
+	asm("stmia	r0, {r1,r2} ");				// iM in r1, iX in bottom 16 bits of r2
+	__JUMP(,	lr);
+	}
+
+__NAKED__ TInt SRatio::Reciprocal()
+	{
+	asm("ldr	r1, [r0] ");				// r1 = iM
+	asm("ldrsh	r12, [r0, #4] ");			// r12 = iX
+	asm("rsbs	r2, r1, #0 ");
+	asm("beq	0f ");						// divide by zero
+	asm("add	r12, r12, #63 ");
+	asm("rsb	r12, r12, #0 ");			// r12 = -63 - iX
+	asm("addvs	r12, r12, #1 ");			// if iM==0x80000000 r12 = -62 - iX (ratio = 2^(31+iX) so reciprocal = 2^(-31-iX) = 2^(31 + (-62-iX))
+	asm("bvs	1f ");						// iM=0x80000000
+
+	// 2^(32+iX) > r > 2^(31+iX)
+	// 2^(-32-iX) < 1/r < 2^(-31-iX)
+	// 2^(31+(-63-iX)) < 1/r < 2^(31+(-62-iX))
+	asm("mov	r2, #0 ");					// accumulates result
+	asm("mov	r3, #0x80000000 ");			// 33 bit accumulator in C:R3 initialised to 2^32
+	asm("2:		");
+	asm("adds	r3, r3, r3 ");
+	asm("cmpcc	r3, r1 ");
+	asm("subcs	r3, r3, r1 ");				// if C=1 or r3>=r1, r3-=r1
+	asm("adcs	r2, r2, r2 ");				// next result bit
+	asm("bcc	2b ");						// finished when we have 33 bits (when top bit shifted off)
+	asm("movs	r2, r2, lsr #1 ");			// rounding bit into C
+	asm("orr	r2, r2, #0x80000000 ");		// top bit back
+	asm("adcs	r2, r2, #0 ");				// add rounding bit
+	asm("movcs	r2, #0x80000000 ");			// if carry, increment exponent
+	asm("addcs	r12, r12, #1 ");
+
+	asm("1:		");
+	asm("cmp	r12, #-32768 ");
+	asm("blt	9f ");						// underflow
+	asm("cmp	r12, #32768 ");
+	asm("bge	8f ");						// overflow
+	asm("str	r2, [r0] ");				// iM
+	asm("strh	r12, [r0, #4] ");			// iX
+	asm("mov	r0, #0 ");
+	__JUMP(,	lr);
+
+	asm("0:		");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrDivideByZero));
+	__JUMP(,	lr);
+
+	asm("8:		");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrOverflow));
+	__JUMP(,	lr);
+
+	asm("9:		");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrUnderflow));
+	__JUMP(,	lr);
+	}
+
+__NAKED__ TInt SRatio::Mult(TUint32& /*aInt32*/)
+	{
+	asm("ldr	r3, [r0] ");				// r3 = iM
+	asm("mov	r12, r0 ");
+	asm("ldr	r0, [r1] ");				// r0 = aInt32
+	asm("cmp	r3, #0 ");
+	asm("cmpne	r0, #0 ");
+	asm("beq	0f ");						// result zero
+	asm("umull	r2, r3, r0, r3 ");			// r3:r2 = aInt32 * iM (lowest value 0x0000000080000000)
+	asm("ldrsh	r12, [r12, #4] ");			// r12 = iX
+#ifdef __CPU_ARM_HAS_CLZ
+	CLZ(		0, 3);						// r0 = number of leading zeros in r3:r2 (can't be >32)
+#else
+	asm("str	r12, [sp, #-4]! ");
+	asm("movs	r12, r3 ");
+	asm("mov	r0, #0 ");
+	asm("cmp	r12, #0x00010000 ");
+	asm("movcc	r12, r12, lsl #16 ");
+	asm("addcc	r0, r0, #16 ");
+	asm("cmp	r12, #0x01000000 ");
+	asm("movcc	r12, r12, lsl #8 ");
+	asm("addcc	r0, r0, #8 ");
+	asm("cmp	r12, #0x10000000 ");
+	asm("movcc	r12, r12, lsl #4 ");
+	asm("addcc	r0, r0, #4 ");
+	asm("cmp	r12, #0x40000000 ");
+	asm("movcc	r12, r12, lsl #2 ");
+	asm("addcc	r0, r0, #2 ");
+	asm("cmp	r12, #0 ");
+	asm("ldr	r12, [sp], #4 ");			// r12 = iX
+	asm("addgt	r0, r0, #1 ");
+	asm("moveq	r0, #32 ");					// r0 = number of leading zeros in r3:r2 (can't be >32)
+#endif
+	asm("rsb	r0, r0, #63 ");				// bit number of most significant bit
+	asm("add	r0, r0, r12 ");				// bit number of most significant bit after exponent shift
+	asm("cmp	r0, #32 ");
+	asm("bge	8f ");						// overflow
+	asm("cmp	r0, #-1 ");
+	asm("blt	9f ");						// underflow
+	asm("adds	r12, r12, #32 ");			// shift needed to get result into top 32 bits (>0 left, <0 right)
+	asm("beq	1f ");						// no shift
+	asm("blt	2f ");						// right shift
+	asm("rsb	r0, r12, #32 ");
+	asm("mov	r3, r3, lsl r12 ");
+	asm("orr	r3, r3, r2, lsr r0 ");
+	asm("mov	r2, r2, lsl r12 ");			// r3:r2 <<= r12
+	asm("b		1f ");
+	asm("2:		");
+	asm("rsb	r12, r12, #0 ");
+	asm("rsb	r0, r12, #32 ");
+	asm("mov	r2, r2, lsr r12 ");
+	asm("orr	r2, r2, r3, lsl r0 ");
+	asm("mov	r3, r3, lsr r12 ");			// r3:r2 >>= r12
+	asm("1:		");
+	asm("adds	r2, r2, r2 ");				// rounding
+	asm("adcs	r3, r3, #0 ");
+	asm("bcs	8f ");						// overflow
+	asm("beq	9f ");						// underflow
+	asm("mov	r0, #0 ");
+	asm("str	r3, [r1] ");
+	__JUMP(,	lr);
+
+	asm("0:		");
+	asm("mov	r0, #0 ");
+	asm("str	r0, [r1] ");
+	__JUMP(,	lr);
+
+	asm("8:		");
+	asm("mvn	r0, #0 ");
+	asm("str	r0, [r1] ");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrOverflow));
+	__JUMP(,	lr);
+
+	asm("9:		");
+	asm("mov	r0, #0 ");
+	asm("str	r0, [r1] ");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrUnderflow));
+	__JUMP(,	lr);
+	}
+
+//TInt SRatio::Mult(TUint64& aInt64)
+//	{
+//	}
+
+#endif
+
+

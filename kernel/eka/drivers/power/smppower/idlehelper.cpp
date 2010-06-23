@@ -70,7 +70,7 @@ TUint32 TIdleSupport::GetTimerCount()
 
 TBool TIdleSupport::IsIntPending()
 	{
-	return (IntPending()!=KNoInterruptsPending);
+	return ((TUint32)IntPending()!=KNoInterruptsPending);
 	}
 		
 /**
@@ -190,7 +190,8 @@ void TIdleSupport::ResetLogic()
 /**
    mark a core as retired
 
-   @pre called by idle handler
+   @pre called by idle handler as part of idle entry before 
+          any syncpoint or calls to SetLocalAndCheckSetGlobalIdle
 */	
 void TIdleSupport::MarkCoreRetired(TUint32 aCpuMask)
     {
@@ -200,7 +201,8 @@ void TIdleSupport::MarkCoreRetired(TUint32 aCpuMask)
 
 /**
    mark a core as enaged
-   @pre called outside idle handler
+   @pre called outside idle handler ( can be called in idle entry before 
+        any syncpoint or calls to SetLocalAndCheckSetGlobalIdle
  */	
 void TIdleSupport::MarkCoreEngaged(TUint32 aCpuMask)
     {

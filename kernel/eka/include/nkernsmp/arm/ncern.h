@@ -97,20 +97,6 @@ union UPerCpuUncached
 
 __ASSERT_COMPILE(sizeof(SPerCpuUncached) <= 8*sizeof(TUint64));
 
-/** Timer frequency specification
-
-Stores a frequency as a fraction of a (separately stored) maximum.
-The frequency must be at least 1/256 of the maximum.
-
-@internalTechnology
-@prototype
-*/
-struct STimerMult
-	{
-	TUint32		iFreq;						// frequency as a fraction of maximum possible, multiplied by 2^32
-	TUint32		iInverse;					// 2^24/(iFreq/2^32) = 2^56/iFreq
-	};
-
 /** Function to power up a CPU
 @publishedPartner
 @prototype
@@ -122,6 +108,12 @@ typedef void (*TCpuPowerUpFn)(TInt aCpu, SPerCpuUncached* aU);
 @prototype
 */
 typedef void (*TCpuPowerDownFn)(TInt aCpu, SPerCpuUncached* aU);
+
+/** Function to notify changes to system clock frequencies
+@publishedPartner
+@prototype
+*/
+typedef TInt (*TFrequencyChangeFn)();
 
 /** Variant interface block
 @internalTechnology
@@ -138,11 +130,13 @@ struct SVariantInterfaceBlock : public SInterfaceBlockBase
 	TLinAddr	iGicCpuIfcAddr;				// address of GIC CPU interface (must be same for all CPUs)
 	TLinAddr	iLocalTimerAddr;			// address of per-CPU timer (must be same for all CPUs)
 	TLinAddr	iGlobalTimerAddr;			// address of global timer if it exists
-	volatile STimerMult*	iTimerMult[KMaxCpus];	// timer[i] frequency / iMaxTimerClock * 2^32
-	volatile TUint32*		iCpuMult[KMaxCpus];		// CPU[i] frequency / iMaxCpuClock * 2^32
+	SRatio*		iTimerFreqR[KMaxCpus];		// timer[i] frequency as a fraction of iMaxTimerClock
+	SRatio*		iCpuFreqR[KMaxCpus];		// CPU[i] frequency as a fraction of iMaxCpuClock
 	UPerCpuUncached*		iUncached[KMaxCpus];	// Pointer to uncached memory for each CPU
 	TCpuPowerUpFn			iCpuPowerUpFn;			// function used to power up a retired CPU (NULL if core control not supported)
 	TCpuPowerDownFn			iCpuPowerDownFn;		// function used to power down a CPU (NULL if power down done within idle handler itself)
+	SRatio*		iGTimerFreqR;				// global timer frequency as a fraction of iMaxTimerClock
+	TFrequencyChangeFn		iFrqChgFn;		// function to notify frequency changes
 	};
 
 // End of file

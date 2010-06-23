@@ -2488,6 +2488,7 @@ public:
 	IMPORT_C TInt Open(TInt aArgumentIndex, TOwnerType aType=EOwnerProcess);
 	IMPORT_C void Wait();
 	IMPORT_C TInt Wait(TInt aTimeout);	// timeout in microseconds
+	IMPORT_C TInt Poll();		// acquire the semaphore if possible, but don't block
 	IMPORT_C void Signal();
 	IMPORT_C void Signal(TInt aCount);
 #endif
@@ -2511,6 +2512,8 @@ public:
 	inline RFastLock();
 	IMPORT_C TInt CreateLocal(TOwnerType aType=EOwnerProcess);
 	IMPORT_C void Wait();
+	IMPORT_C TInt Wait(TInt aTimeout);	// timeout in microseconds
+	IMPORT_C TInt Poll();		// acquire the lock if possible, but don't block
 	IMPORT_C void Signal();
 private:
 	TInt iCount;

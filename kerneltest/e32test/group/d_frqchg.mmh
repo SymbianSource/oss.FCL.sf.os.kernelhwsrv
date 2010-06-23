@@ -1,0 +1,48 @@
+// Copyright (c) 2010-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/group/d_frqchg.mmh
+// 
+//
+
+// NOTE : include your variant.mmh before this file
+
+#ifdef EPOC32
+target			VariantTarget(d_frqchg,ldd)
+#else
+target			d_frqchg.ldd
+#endif
+#include		"kernel/kern_ext.mmh"
+
+targettype		ldd
+romtarget		d_frqchg.ldd
+
+sourcepath		../power
+source			d_frqchg.cpp
+
+sourcepath		../../../kernel/eka/nkern
+source			nklib.cpp
+
+#ifdef MARM
+sourcepath		../../../kernel/eka/nkern/arm
+source			nklib.cia
+#endif
+
+
+epocallowdlldata
+
+vendorid		0x70000001
+capability		all
+
+macro CPU_AFFINITY_ANY
+smpsafe

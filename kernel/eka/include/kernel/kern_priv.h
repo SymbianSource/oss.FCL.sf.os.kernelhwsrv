@@ -745,7 +745,7 @@ public:
 	void ChangePendingThreadPriority(DThread* aThread, TInt aNewPriority);
 	void WakeUpNextThread();
 public:
-	TInt Wait();
+	TInt Wait(TInt aTimeout=0);	// 0 means wait forever, -1 means poll, n>0 means n nanokernel ticks
 	void Signal();
 	void Reset();
 public:

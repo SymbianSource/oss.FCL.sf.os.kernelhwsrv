@@ -36,20 +36,6 @@ struct SX86APBootInfo : public SAPBootInfo
 	{
 	};
 
-/** Timer frequency specification
-
-Stores a frequency as a fraction of a (separately stored) maximum.
-The frequency must be at least 1/256 of the maximum.
-
-@internalTechnology
-@prototype
-*/
-struct STimerMult
-	{
-	TUint32		iFreq;						// frequency as a fraction of maximum possible, multiplied by 2^32
-	TUint32		iInverse;					// 2^24/(iFreq/2^32) = 2^56/iFreq
-	};
-
 /** Variant interface block
 @internalTechnology
 @prototype
@@ -59,8 +45,9 @@ struct SVariantInterfaceBlock : public SInterfaceBlockBase
 	TUint64		iMaxCpuClock;				// maximum possible CPU clock frequency on this system
 	TUint32		iTimestampFreq;				// rate at which timestamp increments
 	TUint32		iMaxTimerClock;				// maximum possible local timer clock frequency
-	volatile STimerMult* iTimerMult[KMaxCpus];	// timer[i] frequency as a fraction of iMaxTimerClock
-	volatile TUint32* iCpuMult[KMaxCpus];	// CPU[i] frequency / iMaxCpuClock * 2^32
+	SRatio*		iTimerFreqR[KMaxCpus];		// timer[i] frequency as a fraction of iMaxTimerClock
+	SRatio*		iCpuFreqR[KMaxCpus];		// CPU[i] frequency as a fraction of iMaxCpuClock
+	SRatio*		iTimestampFreqR;			// timestamp counter frequency as a fraction of
 	};
 
 // End of file

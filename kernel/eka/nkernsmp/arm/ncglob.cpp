@@ -33,8 +33,6 @@ extern "C" {
 //TSubScheduler*	SubSchedulerLookupTable[256];
 TUint32 CrashStateOut;
 SFullArmRegSet DefaultRegSet;
-
-SVariantInterfaceBlock* VIB;
 }
 
 #ifdef __USE_BTRACE_LOCK__

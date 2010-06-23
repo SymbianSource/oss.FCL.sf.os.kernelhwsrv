@@ -2538,4 +2538,8 @@ EXPORTS
 	_ZN10RAllocator17__DbgGetAllocFailEv @ 2537 NONAME
 	_ZN4User17__DbgGetAllocFailEi @ 2538 NONAME
 	_ZN10RArrayBase12SetKeyOffsetEi @ 2539 NONAME
-
+	_ZN10RSemaphore4PollEv @ 2540 NONAME ; RSemaphore::Poll()
+	_ZN6RMutex4WaitEi @ 2541 NONAME ; RMutex::Wait(int)
+	_ZN6RMutex4PollEv @ 2542 NONAME ; RMutex::Poll()
+	_ZN9RFastLock4PollEv @ 2543 NONAME ; RFastLock::Poll()
+	_ZN9RFastLock4WaitEi @ 2544 NONAME ; RFastLock::Wait(int)

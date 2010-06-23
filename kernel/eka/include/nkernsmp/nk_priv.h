@@ -629,6 +629,7 @@ __ASSERT_COMPILE(sizeof(TSubSchedulerX)==256);
 __ASSERT_COMPILE(sizeof(TSubScheduler)==(1<<KSubSchedulerShift));	// make it a nice power of 2 size for easy indexing
 
 struct SCoreControlAction;
+struct SVariantInterfaceBlock;
 
 /**
 @internalComponent
@@ -669,6 +670,7 @@ public:
 	static TBool CoreControlSupported();
 	static void CCInitiatePowerUp(TUint32 aCores);
 	static void CCIndirectPowerDown(TAny*);
+	static void DoFrequencyChanged(TAny*);
 public:
 	TLinAddr		iMonitorExceptionHandler;
 	TLinAddr		iProcessHandler;
@@ -727,11 +729,13 @@ public:
 	TDfc			iCCRequestDfc;				// runs when a request is made to change the number of active cores
 	TDfc			iCCPowerDownDfc;			// runs when indirect power down of core(s) is required
 	TDfc			iCCIpiReactIDFC;			// runs when an IPI needs to wake up a core
+	TDfc			iFreqChgDfc;				// runs when frequency changes required
 
 	TSubScheduler*	iPoweringOff;				// CPU last to power off
 	TUint32			iDetachCount;				// detach count before power off
 
-	TUint32			i_Scheduler_Padding[54];
+	SVariantInterfaceBlock* iVIB;
+	TUint32			i_Scheduler_Padding[29];
 	};
 
 __ASSERT_COMPILE(!(_FOFF(TScheduler,iGenIPILock)&7));
@@ -739,7 +743,7 @@ __ASSERT_COMPILE(!(_FOFF(TScheduler,iIdleSpinLock)&7));
 __ASSERT_COMPILE(!(_FOFF(TScheduler,iIdleBalanceLock)&7));
 __ASSERT_COMPILE(!(_FOFF(TScheduler,iEnumerateLock)&7));
 __ASSERT_COMPILE(!(_FOFF(TScheduler,iBalanceListLock)&7));
-__ASSERT_COMPILE(sizeof(TSchedulerX)==16*4);
+__ASSERT_COMPILE(sizeof(TSchedulerX)==32*4);
 __ASSERT_COMPILE(sizeof(TScheduler)==1024);
 
 extern TScheduler TheScheduler;

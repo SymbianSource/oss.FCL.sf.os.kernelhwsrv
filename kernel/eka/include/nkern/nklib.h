@@ -85,6 +85,39 @@ union TUint64HL
 	};
 
 
+/**
+@internalComponent
+
+Ratio represented = iM*2^iX
+e.g. 1.0 has iM=0x80000000, iX=-31
+*/
+struct SRatio
+	{
+	void Set(TUint32 aInt, TInt aDivisorExp=0);		// set this ratio to aInt/2^aDivisorExp
+	TInt Reciprocal();								// this = 1/this
+	TInt Mult(TUint32& aInt32);						// Multiply aInt32 by this ratio
+//	TInt Mult(TUint64& aInt64);						// Multiply aInt64 by this ratio
+
+	TUint32		iM;		// mantissa, normalised so bit 31=1
+	TInt16		iX;		// -exponent.
+	TUint8		iSpare1;
+	TUint8		iSpare2;
+	};
+
+/**
+@internalComponent
+
+Ratio and inverse ratio
+*/
+struct SRatioInv
+	{
+	void Set(const SRatio* aR);
+
+	SRatio		iR;
+	SRatio		iI;
+	};
+
+
 #if defined(__VC32__) || defined(__CW32__)
 extern "C"
 /** @internalComponent */

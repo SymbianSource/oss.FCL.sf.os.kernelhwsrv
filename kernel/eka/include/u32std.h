@@ -401,7 +401,7 @@ enum TMemModelAttributes
 	};
 
 /** @test */
-enum TKernelHeapDebugFunction {EDbgMarkStart,EDbgMarkCheck,EDbgMarkEnd,EDbgSetAllocFail,EDbgSetBurstAllocFail,EDbgCheckFailure};
+enum TKernelHeapDebugFunction {EDbgMarkStart,EDbgMarkCheck,EDbgMarkEnd,EDbgSetAllocFail,EDbgSetBurstAllocFail,EDbgCheckFailure,EDbgGetAllocFail};
 
 /** @test */
 class TKernelHeapMarkCheckInfo
@@ -507,6 +507,8 @@ enum TKernelConfigFlags
 	EKernelConfigSMPUnsafeCompat = 1<<12,				// Enables compatibility mode for SMP-unsafe processes
 	EKernelConfigSMPUnsafeCPU0   = 1<<13,				// Slow compatibility mode: all SMP-unsafe processes run on CPU 0 only
 	EKernelConfigSMPCrazyInterrupts = 1<<14,			// Enables CPU target rotation for HW Interrupts.
+
+	EKernelConfigSMPLockKernelThreadsCore0 = 1<< 15,    // locks all kernel side threads to CPU 0
 
 	EKernelConfigDisableAPs = 1u<<30,
 

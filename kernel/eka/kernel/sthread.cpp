@@ -589,29 +589,28 @@ TInt DThread::DoCreate(SThreadCreateInfo& aInfo)
 	ni.iStackSize=iSupervisorStackSize;
 #ifdef __SMP__
 	TUint32 config = TheSuperPage().KernelConfigFlags();
+	ni.iGroup = 0;
+	ni.iCpuAffinity = KCpuAffinityAny;
 	if (iThreadType==EThreadUser)
 		{
 		// user thread
 		if ((config & EKernelConfigSMPUnsafeCPU0) && iOwningProcess->iSMPUnsafeCount)
 			{
 			ni.iCpuAffinity = 0; // compatibility mode
-			ni.iGroup = 0;
 			}
 		else
 			{
-			ni.iCpuAffinity = KCpuAffinityAny;
 			if ((config & EKernelConfigSMPUnsafeCompat) && iOwningProcess->iSMPUnsafeCount)
 				ni.iGroup = iOwningProcess->iSMPUnsafeGroup;
-			else
-				ni.iGroup = 0;
 			}
-		
 		}
 	else
 		{
-		// kernel thread
-		ni.iCpuAffinity = 0;
-		ni.iGroup = 0;
+		if (config & EKernelConfigSMPLockKernelThreadsCore0) 
+			{
+			// kernel thread
+			ni.iCpuAffinity = 0;
+			}
 		}
 #endif
 	if (iThreadType!=EThreadInitial)

@@ -66,35 +66,12 @@ struct TSubSchedulerX
 	TLinAddr			iUndStackTop;			// Top of UND stack for this CPU
 	TLinAddr			iFiqStackTop;			// Top of FIQ stack for this CPU
 	TLinAddr			iIrqStackTop;			// Top of IRQ stack for this CPU
-	volatile TUint32	iCpuFreqM;				// CPU frequency / Max CPU frequency (mantissa, bit 31=1) f/fmax=mantissa/2^shift
-	volatile TInt		iCpuFreqS;				// CPU frequency / Max CPU frequency (shift)
-	volatile TUint32	iCpuPeriodM;			// Max CPU frequency / CPU frequency (mantissa, bit 31=1) fmax/f=mantissa/2^shift
-	volatile TInt		iCpuPeriodS;			// Max CPU frequency / CPU frequency (shift)
-	volatile TUint32	iNTimerFreqM;			// Nominal Timer frequency / Max Timer frequency (mantissa, bit 31=1) f/fmax=mantissa/2^shift
-	volatile TInt		iNTimerFreqS;			// Nominal Timer frequency / Max Timer frequency (shift)
-	volatile TUint32	iNTimerPeriodM;			// Nominal Max Timer frequency / Timer frequency (mantissa, bit 31=1) fmax/f=mantissa/2^shift
-	volatile TInt		iNTimerPeriodS;			// Nominal Max Timer frequency / Timer frequency (shift)
-	volatile TUint32	iTimerFreqM;			// Timer frequency / Max Timer frequency (mantissa, bit 31=1) f/fmax=mantissa/2^shift
-	volatile TInt		iTimerFreqS;			// Timer frequency / Max Timer frequency (shift)
-	volatile TUint32	iTimerPeriodM;			// Max Timer frequency / Timer frequency (mantissa, bit 31=1) fmax/f=mantissa/2^shift
-	volatile TInt		iTimerPeriodS;			// Max Timer frequency / Timer frequency (shift)
-	volatile TUint64	iLastSyncTime;			// Timestamp at which last reference check occurred
-	volatile TUint32	iTicksSinceLastSync;	// Local timer ticks between last ref. check and next zero crossing
-	volatile TUint32	iLastTimerSet;			// Value last written to local timer counter
-	volatile TUint32	iGapEstimate;			// 2^16 * estimated gap in ticks whenever local timer counter is read then written
-	volatile TUint32	iGapCount;				// count of local timer counter RMW ops
-	volatile TUint32	iTotalTicks;			// programmed ticks since last sync
-	volatile TUint32	iDitherer;				// PRNG state for dither generation
-	volatile TInt		iFreqErrorEstimate;		// Current frequency offset between local timer and reference
-	volatile TInt		iFreqErrorLimit;		// Saturation level for frequency offset
-	volatile TInt64		iErrorIntegrator;		// Accumulator to integrate time error measurements
-	volatile TUint64	iRefAtLastCorrection;	// Value of reference timer at last correction
-	volatile TUint8		iM;						// Value controlling loop bandwidth (larger->lower loop bandwidth)
-	volatile TUint8		iN;						// Number of timer ticks between corrections = 2^iN
-	volatile TUint8		iD;						// Value controlling loop damping
-	volatile TUint8		iSSXP1;
+	SRatioInv* volatile	iNewCpuFreqRI;			// set when CPU frequency has been changed
+	SRatioInv* volatile	iNewTimerFreqRI;		// set when CPU local timer frequency has been changed
+	SRatioInv			iCpuFreqRI;				// Ratio of CPU frequency to maximum possible CPU frequency
+	SRatioInv			iTimerFreqRI;			// Ratio of CPU local timer frequency to maximum possible
 
-	TUint32				iSSXP2[19];
+	TUint32				iSSXP2[36];
 	TUint64				iSSXP3;					// one 64 bit value to guarantee alignment
 	};
 
@@ -108,7 +85,12 @@ struct TSchedulerX
 	GicDistributor*		iGicDistAddr;			// Address of GIC Distributor (also in TSubScheduler)
 	GicCpuIfc*			iGicCpuIfcAddr;			// Address of GIC CPU Interface (also in TSubScheduler)
 	ArmLocalTimer*		iLocalTimerAddr;		// Address of local timer registers (also in TSubScheduler)
-	TUint32				iSXP2[8];
+
+	SRatioInv			iGTimerFreqRI;			// ratio of global timer frequency to maximum possible
+	TUint64				iCount0;				// global timer count at last frequency change
+	TUint64				iTimestamp0;			// timestamp at last frequency change
+
+	TUint32				iSXP2[16];
 	};
 
 

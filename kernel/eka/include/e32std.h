@@ -3314,6 +3314,8 @@ public:
 	IMPORT_C TInt Open(RMessagePtr2 aMessage,TInt aParam,TOwnerType aType=EOwnerProcess);
 	IMPORT_C TInt Open(TInt aArgumentIndex, TOwnerType aType=EOwnerProcess);
 	IMPORT_C void Wait();
+	IMPORT_C TInt Poll();		// acquire the lock if possible, but don't block
+	IMPORT_C TInt Wait(TInt aTimeout);	// timeout in microseconds
 	IMPORT_C void Signal();
 	IMPORT_C TBool IsHeld();
 	};
@@ -4770,6 +4772,7 @@ public:
     IMPORT_C static void __DbgMarkCheck(TBool aKernel, TBool aCountAll, TInt aCount, const TUint8* aFileName, TInt aLineNum);
     IMPORT_C static TUint32 __DbgMarkEnd(TBool aKernel, TInt aCount);
     IMPORT_C static void __DbgSetAllocFail(TBool aKernel, RAllocator::TAllocFail aFail, TInt aRate);
+    IMPORT_C static RAllocator::TAllocFail __DbgGetAllocFail(TBool aKernel);
     IMPORT_C static void __DbgSetBurstAllocFail(TBool aKernel, RAllocator::TAllocFail aFail, TUint aRate, TUint aBurst);
 	IMPORT_C static TUint __DbgCheckFailure(TBool aKernel);
 	IMPORT_C static void PanicUnexpectedLeave(); /**< @internalComponent */

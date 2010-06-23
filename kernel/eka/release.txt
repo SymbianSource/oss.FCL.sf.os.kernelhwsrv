@@ -1,3 +1,12 @@
+Version 2.00.3098
+=================
+(Made by vfebvre 18/06/2010)
+
+1.	garciato
+	1.	RP520151
+		REQ:417-52765 - SMP: Product Quality SMP Kernel for Bridge
+
+
 Version 2.00.3097
 =================
 (Made by vfebvre 16/06/2010)

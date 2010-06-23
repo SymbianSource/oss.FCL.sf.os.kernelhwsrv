@@ -171,7 +171,7 @@ public:
 	static void ClearIdleIPI();
 	static void DoWFI();//puts current CPU in wait for interrupt state
 	static TBool IsIntPending();
-	static TUint32	IntPending();
+	static TInt	IntPending();
 	static TUint32 GetTimerCount();//HW timer can be used for tracing
 	//Atomic checks used to synchronise cores going idle
 	static TBool ClearLocalAndCheckGlobalIdle(TUint32);

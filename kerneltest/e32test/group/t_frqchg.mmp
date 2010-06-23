@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2010-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,22 +11,17 @@
 // Contributors:
 //
 // Description:
-// e32test/group/t_semutx.mmp
+// e32test\group\t_frqchg.mmp
 // 
 //
 
-TARGET         t_semutx.exe        
-TARGETTYPE     EXE
-SOURCEPATH	../prime
-SOURCE         t_semutx.cpp
-LIBRARY        euser.lib hal.lib
+target			t_frqchg.exe
+targettype		exe
+sourcepath		../power
+source			t_frqchg.cpp
+library			euser.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-
-
-capability		none
-
-VENDORID 0x70000001
-
-unpagedcode
-unpageddata
-SMPSAFE
+capability		all
+vendorid		0x70000001
+epocheapsize	0x00001000 0x00100000
+smpsafe

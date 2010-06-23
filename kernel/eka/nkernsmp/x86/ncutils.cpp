@@ -17,10 +17,6 @@
 
 #include <x86.h>
 
-extern "C" {
-extern SVariantInterfaceBlock* VIB;
-}
-
 //#define __DBG_MON_FAULT__
 //#define __RAM_LOADED_CODE__
 //#define __EARLY_DEBUG__
@@ -325,33 +321,25 @@ EXPORT_C SCpuIdleHandler* NKern::CpuIdleHandler()
 void NKern::Init0(TAny* a)
 	{
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("VIB=%08x", a));
-	VIB = (SVariantInterfaceBlock*)a;
-	__NK_ASSERT_ALWAYS(VIB && VIB->iVer==0 && VIB->iSize==sizeof(SVariantInterfaceBlock));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iVer=%d iSize=%d", VIB->iVer, VIB->iSize));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxCpuClock=%08x %08x", I64HIGH(VIB->iMaxCpuClock), I64LOW(VIB->iMaxCpuClock)));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iTimestampFreq=%u", VIB->iTimestampFreq));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxTimerClock=%u", VIB->iMaxTimerClock));
+	SVariantInterfaceBlock* v = (SVariantInterfaceBlock*)a;
+	TheScheduler.iVIB = v;
+	__NK_ASSERT_ALWAYS(v && v->iVer==0 && v->iSize==sizeof(SVariantInterfaceBlock));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iVer=%d iSize=%d", v->iVer, v->iSize));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxCpuClock=%08x %08x", I64HIGH(v->iMaxCpuClock), I64LOW(v->iMaxCpuClock)));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iTimestampFreq=%u", v->iTimestampFreq));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxTimerClock=%u", v->iMaxTimerClock));
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)
 		{
 		TSubScheduler& ss = TheSubSchedulers[i];
-		ss.iSSX.iCpuFreqM = KMaxTUint32;
-		ss.iSSX.iCpuFreqS = 0;
-		ss.iSSX.iCpuPeriodM = 0x80000000u;
-		ss.iSSX.iCpuPeriodS = 31;
-		ss.iSSX.iNTimerFreqM = KMaxTUint32;
-		ss.iSSX.iNTimerFreqS = 0;
-		ss.iSSX.iNTimerPeriodM = 0x80000000u;
-		ss.iSSX.iNTimerPeriodS = 31;
-		ss.iSSX.iTimerFreqM = KMaxTUint32;
-		ss.iSSX.iTimerFreqS = 0;
-		ss.iSSX.iTimerPeriodM = 0x80000000u;
-		ss.iSSX.iTimerPeriodS = 31;
+		ss.iSSX.iCpuFreqRI.Set(v->iCpuFreqR[i]);
+		ss.iSSX.iTimerFreqRI.Set(v->iTimerFreqR[i]);
+
 		ss.iSSX.iTimestampOffset.i64 = 0;
-		VIB->iTimerMult[i] = 0;
-		VIB->iCpuMult[i] = 0;
+		v->iCpuFreqR[i] = 0;
+		v->iTimerFreqR[i] = 0;
 		}
-	TheScheduler.iSX.iTimerMax = (VIB->iMaxTimerClock / 128);
+	TheScheduler.iSX.iTimerMax = (v->iMaxTimerClock / 128);
 	InitFpu();
 	InterruptInit0();
 	}
@@ -400,3 +388,6 @@ void TScheduler::CCIndirectPowerDown(TAny*)
 	{
 	}
 
+void TScheduler::DoFrequencyChanged(TAny*)
+	{
+	}
