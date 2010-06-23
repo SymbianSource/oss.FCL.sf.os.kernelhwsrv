@@ -138,11 +138,14 @@ class TMD5
 
 
 
-TBool Is_Lffs(RFs &aFs, TInt aDrive);   //-- returns ETrue if "lffs" FS is mounted on this drive 
-TBool Is_Win32(RFs &aFs, TInt aDrive);  //-- returns ETrue if "win32" FS is mounted on this drive (i.e this is emulator's drive c:)
-TBool Is_ExFat(RFs &aFs, TInt aDrive);  //-- returns ETrue if "exFAT" FS is mounted on this drive 
-TBool Is_Automounter(RFs &aFs, TInt aDrive);  //-- returns ETrue if "Automounter" FS is mounted on this drive 
+TBool Is_Lffs(RFs &aFs, TInt aDrive);	//-- returns ETrue if "lffs" FS is mounted on this drive 
+TBool Is_Win32(RFs &aFs, TInt aDrive);	//-- returns ETrue if "Win32" FS is mounted on this drive (i.e this is emulator's drive C:)										
+TBool Is_ExFat(RFs &aFs, TInt aDrive);	//-- returns ETrue if "exFAT" FS is mounted on this drive 
+TBool Is_Automounter(RFs &aFs, TInt aDrive);	//-- returns ETrue if "Automounter" FS is mounted on this drive 
 
+TBool Is_HVFS(RFs &aFs, TInt aDrive);			//-- returns ETrue if "HVFS" is mounted on this drive (i.e PlatSim's drive C:)
+TBool Is_SimulatedSystemDrive(RFs &aFs, TInt aDrive);	//-- returns ETrue if "HVFS" or "Win32" FS is mounted on this drive
+														//	 (i.e drive C: of PlatSim or the emulator)
 
 TBool Is_Fat(RFs &aFs, TInt aDrive);    //-- returns ETrue if "FAT" FS (FAT12/16/32) is mounted on this drive 
 

@@ -1,3 +1,30 @@
+Version 2.00.3093
+=================
+(Made by vfebvre 09/06/2010)
+
+1.	gcochran
+	1.	ou1cimx1#400079 MCL: E32TEST RMessagePtr2::Kill is not exercised by t_message
+
+2.	jimhofe
+	1.	ou1cimx1#411346 MCL wk22 build break in kernelhwsrv
+
+
+Version 2.00.3092
+=================
+(Made by vfebvre 04/06/2010)
+
+1.	cnotton
+	1.	ou1cimx1#413372 Attempt to export missing file bootstrap_smrif.h
+
+
+Version 2.00.3091
+=================
+(Made by vfebvre 04/06/2010)
+
+1.	mmoate
+	1.	MINOR_CHANGE Correct insource docs for aSingleThread parameter in UserHeap methods
+
+
 Version 2.00.3090
 =================
 (Made by vfebvre 03/06/2010)

@@ -21,6 +21,7 @@ sourcepath     ../server
 source	       t_notify.cpp
 source	       t_main.cpp
 SOURCEPATH     ../fileutils/src
+source         f32_test_utils.cpp
 source         t_chlffs.cpp
 
 library		euser.lib efsrv.lib hal.lib

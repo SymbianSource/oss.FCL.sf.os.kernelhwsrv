@@ -287,9 +287,22 @@ void InitExecuteInSupervisorMode()
 		}
 	}
 
-// A version that will work in user or supervisor mode
-void MyPrintf(const char* aFmt, ...)
+/**
+It would be nice to be able to print debug information from the various functions
+supervisor-mode functions below. Unfortunately, we can't call RDebug::Printf() or
+any of its relatives in supervisor mode, and of course we can't call the equivalent
+kernel functions even when we're already in supervisor mode, because the entry
+points aren't visible.
+
+So this function just wraps and guards the call to RDebug, so we won't call it
+in SVC mode. The outcome is that trace messages are only generated if using the
+flexible memory model, where the code doesn't actually run in SVC mode anyway.
+*/
+void svPrintf(const char* aFmt, ...)
 	{
+	if (gExecutesInSupervisorMode)
+		return;
+
 	VA_LIST list;
 	VA_START(list, aFmt);
 	TPtrC8 fmt((const TText8*)aFmt);
@@ -379,15 +392,15 @@ TInt svRelocateExports(TAny* aPtr)
 	E32Image& exporter = *(E32Image*)aPtr;
 
 	// Dump everything potentially useful that we know about the exporter ...
-	__LDRTRACE(MyPrintf("RelocateExports: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
+	__LDRTRACE(svPrintf("RelocateExports: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
 						exporter.iUseCodePaging, exporter.iRomImageHeader, exporter.iHeader));
-	__LDRTRACE(MyPrintf("  iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
+	__LDRTRACE(svPrintf("  iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
 						exporter.iCodeLoadAddress, exporter.iCodeRunAddress,
 						exporter.iCodeSize, exporter.iTextSize))
-	__LDRTRACE(MyPrintf("  iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
+	__LDRTRACE(svPrintf("  iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
 						exporter.iDataLoadAddress, exporter.iDataRunAddress,
 						exporter.iDataSize, exporter.iBssSize, exporter.iTotalDataSize));
-	__LDRTRACE(MyPrintf("  iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
+	__LDRTRACE(svPrintf("  iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
 						exporter.iCodeDelta, exporter.iDataDelta, exporter.iExportDirEntryDelta));
 
 	// It turns out that very little of the exporter info is useful! For
@@ -429,7 +442,7 @@ TInt svRelocateExports(TAny* aPtr)
 			newValue = relocAddr;					// unknown - just leave it alone
 		*destExport++ = newValue;
 
-		__LDRTRACE(MyPrintf("RelocateExports: export %d %08x => %08x %c",
+		__LDRTRACE(svPrintf("RelocateExports: export %d %08x => %08x %c",
 							exporter.iExportDirCount-i, relocAddr, newValue,
 							(relocAddr >= codeStart && relocAddr < codeFinish) ? 'C' :
 							(relocAddr >= dataStart && relocAddr < dataFinish) ? 'D' : 'X'));
@@ -471,39 +484,39 @@ TInt svFixupImportAddresses(TAny* aPtr)
 	E32Image& exporter = *info.iExporter;
 
 #ifdef _DEBUG
-	__LDRTRACE(MyPrintf(">svFixupImportAddresses %d imports, code@%08x, fixup@%08x exporter@%08x",
+	__LDRTRACE(svPrintf(">svFixupImportAddresses %d imports, code@%08x, fixup@%08x exporter@%08x",
 						info.iNumImports, info.iCodeLoadAddress, info.iFixup64, info.iExporter));
 
 	// Dump everything potentially useful that we know about the exporter ...
-	__LDRTRACE(MyPrintf("%S: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
+	__LDRTRACE(svPrintf("%S: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
 						&exporter.iFileName, exporter.iUseCodePaging,
 						exporter.iRomImageHeader, exporter.iHeader));
-	__LDRTRACE(MyPrintf("iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
+	__LDRTRACE(svPrintf("iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
 						exporter.iCodeLoadAddress, exporter.iCodeRunAddress,
 						exporter.iCodeSize, exporter.iTextSize))
-	__LDRTRACE(MyPrintf("iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
+	__LDRTRACE(svPrintf("iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
 						exporter.iDataLoadAddress, exporter.iDataRunAddress,
 						exporter.iDataSize, exporter.iBssSize, exporter.iTotalDataSize));
-	__LDRTRACE(MyPrintf("iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
+	__LDRTRACE(svPrintf("iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
 						exporter.iCodeDelta, exporter.iDataDelta, exporter.iExportDirEntryDelta));
 
 	if (exporter.iRomImageHeader)
 		{
 		const TRomImageHeader& rh = *exporter.iRomImageHeader;
-		__LDRTRACE(MyPrintf("ROM: iCodeAddress %08x, iCodeSize %x, iTextSize %x",
+		__LDRTRACE(svPrintf("ROM: iCodeAddress %08x, iCodeSize %x, iTextSize %x",
 							rh.iCodeAddress, rh.iCodeSize, rh.iTextSize));
-		__LDRTRACE(MyPrintf("ROM: iDataAddress %08x, iDataSize %x, iBssSize %x",
+		__LDRTRACE(svPrintf("ROM: iDataAddress %08x, iDataSize %x, iBssSize %x",
 							rh.iDataAddress, rh.iDataSize, rh.iBssSize));
-		__LDRTRACE(MyPrintf("ROM: iDataBssLinearBase %08x, iTotalDataSize %x",
+		__LDRTRACE(svPrintf("ROM: iDataBssLinearBase %08x, iTotalDataSize %x",
 							rh.iDataBssLinearBase, rh.iTotalDataSize));
 		}
 
 	if (exporter.iHeader)
 		{
 		const E32ImageHeader& ih = *exporter.iHeader;
-		__LDRTRACE(MyPrintf("HEAD: iCodeBase %08x, iCodeSize %x, iTextSize %x",
+		__LDRTRACE(svPrintf("HEAD: iCodeBase %08x, iCodeSize %x, iTextSize %x",
 							ih.iCodeBase, ih.iCodeSize, ih.iTextSize));
-		__LDRTRACE(MyPrintf("HEAD: iDataBase %08x, iDataSize %x, iBssSize %x",
+		__LDRTRACE(svPrintf("HEAD: iDataBase %08x, iDataSize %x, iBssSize %x",
 							ih.iDataBase, ih.iDataSize, ih.iBssSize));
 		}
 #endif // _DEBUG
@@ -538,7 +551,7 @@ TInt svFixupImportAddresses(TAny* aPtr)
 			newValue = expAddr;
 			}
 
-		__LDRTRACE(MyPrintf("svFixupImportAddresses: import[%d]@%08x is export[%d] == %08x",
+		__LDRTRACE(svPrintf("svFixupImportAddresses: import[%d]@%08x is export[%d] == %08x",
 							iat - info.iIat, iat, ordinal, newValue));
 
 		// In non-paged code, we can simply replace the ordinals in the IAT with the
@@ -573,39 +586,39 @@ TInt svElfDerivedFixupImportAddresses(TAny* aPtr)
 	E32Image& exporter = *info.iExporter;
 
 #ifdef _DEBUG
-	__LDRTRACE(MyPrintf(">svElfDerivedFixupImportAddresses %d imports, code@%08x, fixup@%08x exporter@%08x",
+	__LDRTRACE(svPrintf(">svElfDerivedFixupImportAddresses %d imports, code@%08x, fixup@%08x exporter@%08x",
 						info.iNumImports, info.iCodeLoadAddress, info.iFixup64, info.iExporter));
 
 	// Dump everything potentially useful that we know about the exporter ...
-	__LDRTRACE(MyPrintf("%S: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
+	__LDRTRACE(svPrintf("%S: paged? %d, iRomImageHeader@%08x, iHeader@%08x",
 						&exporter.iFileName, exporter.iUseCodePaging,
 						exporter.iRomImageHeader, exporter.iHeader));
-	__LDRTRACE(MyPrintf("iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
+	__LDRTRACE(svPrintf("iCodeLoadAddress %08x, iCodeRunAddress %08x, iCodeSize %x iTextSize %x",
 						exporter.iCodeLoadAddress, exporter.iCodeRunAddress,
 						exporter.iCodeSize, exporter.iTextSize))
-	__LDRTRACE(MyPrintf("iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
+	__LDRTRACE(svPrintf("iDataLoadAddress %08x, iDataRunAddress %08x, iDataSize %x iBssSize %x iTotalDataSize %x",
 						exporter.iDataLoadAddress, exporter.iDataRunAddress,
 						exporter.iDataSize, exporter.iBssSize, exporter.iTotalDataSize));
-	__LDRTRACE(MyPrintf("iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
+	__LDRTRACE(svPrintf("iCodeDelta, %x iDataDelta %x, iExportDirEntryDelta %x",
 						exporter.iCodeDelta, exporter.iDataDelta, exporter.iExportDirEntryDelta));
 
 	if (exporter.iRomImageHeader)
 		{
 		const TRomImageHeader& rh = *exporter.iRomImageHeader;
-		__LDRTRACE(MyPrintf("ROM: iCodeAddress %08x, iCodeSize %x, iTextSize %x",
+		__LDRTRACE(svPrintf("ROM: iCodeAddress %08x, iCodeSize %x, iTextSize %x",
 							rh.iCodeAddress, rh.iCodeSize, rh.iTextSize));
-		__LDRTRACE(MyPrintf("ROM: iDataAddress %08x, iDataSize %x, iBssSize %x",
+		__LDRTRACE(svPrintf("ROM: iDataAddress %08x, iDataSize %x, iBssSize %x",
 							rh.iDataAddress, rh.iDataSize, rh.iBssSize));
-		__LDRTRACE(MyPrintf("ROM: iDataBssLinearBase %08x, iTotalDataSize %x",
+		__LDRTRACE(svPrintf("ROM: iDataBssLinearBase %08x, iTotalDataSize %x",
 							rh.iDataBssLinearBase, rh.iTotalDataSize));
 		}
 
 	if (exporter.iHeader)
 		{
 		const E32ImageHeader& ih = *exporter.iHeader;
-		__LDRTRACE(MyPrintf("HEAD: iCodeBase %08x, iCodeSize %x, iTextSize %x",
+		__LDRTRACE(svPrintf("HEAD: iCodeBase %08x, iCodeSize %x, iTextSize %x",
 							ih.iCodeBase, ih.iCodeSize, ih.iTextSize));
-		__LDRTRACE(MyPrintf("HEAD: iDataBase %08x, iDataSize %x, iBssSize %x",
+		__LDRTRACE(svPrintf("HEAD: iDataBase %08x, iDataSize %x, iBssSize %x",
 							ih.iDataBase, ih.iDataSize, ih.iBssSize));
 		}
 #endif // _DEBUG
@@ -700,7 +713,7 @@ TInt svElfDerivedFixupImportAddresses(TAny* aPtr)
 			newValue = expAddr + sectionDelta + adjustment;
 			}
 
-		__LDRTRACE(MyPrintf("svElfDerivedFixupImportAddresses: import[%d] (%08x:%08x) is export[%d] %08x+%08x => %08x",
+		__LDRTRACE(svPrintf("svElfDerivedFixupImportAddresses: import[%d] (%08x:%08x) is export[%d] %08x+%08x => %08x",
 							iol - info.iImportOffsetList, codePtr, importInfo, ordinal, expAddr, adjustment, newValue));
 
 		// In non-paged code, we can simply replace the ordinals in the IAT with the

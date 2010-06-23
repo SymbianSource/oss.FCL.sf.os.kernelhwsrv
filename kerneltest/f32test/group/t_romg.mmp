@@ -22,6 +22,7 @@ SOURCE         T_ROMG.CPP
 SOURCEPATH     ../SERVER
 SOURCE         T_MAIN.CPP
 SOURCEPATH     ../fileutils/src
+SOURCE         f32_test_utils.cpp
 SOURCE         T_CHLFFS.CPP
 
 LIBRARY        EUSER.LIB EFSRV.LIB HAL.LIB

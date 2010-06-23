@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
@@ -46,98 +47,97 @@ void TestSecondaryExtensions()
 	test.Next(_L("TestSecondaryExtensions()"));
 	TInt drive;
 	TInt err=RFs::CharToDrive(gDriveToTest,drive);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	
 	TPckgBuf<TBool> drvSyncBuf;
 	err = TheFs.QueryVolumeInfoExt(drive, EIsDriveSync, drvSyncBuf);
-	test(err==KErrNone);
+	test_KErrNone(err);
 	const TBool bDrvSync = drvSyncBuf();
 			
 
 	TFullName fsName;
 	TInt r=TheFs.FileSystemName(fsName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("fsName=%S\n"),&fsName);
 
-#if defined(__WINS__)
-	if(drive==EDriveC)
+	if (Is_SimulatedSystemDrive(TheFs, drive))
 		{
-		// check that the extension cannot be mounted since not supported by the file system
+		// check that the extension cannot be mounted since it is not supported by the file system
+		test.Printf(_L("Test extension cannot be mounted"));
 		r=TheFs.AddExtension(KExtensionLog);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=TheFs.MountExtension(KExtensionLogName,drive);
-		test(r==KErrNotSupported);
+		test_Value(r, r == KErrNotSupported);
 		r=TheFs.RemoveExtension(KExtensionLogName);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		return;
 		}
-#endif
 
 	test.Next(_L("RFs::AddExtension()"));
 	r=TheFs.AddExtension(KExtensionLog);
 	RDebug::Print(_L("addext=%d"),r);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.AddExtension(KExtensionLog);
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=TheFs.AddExtension(KExtensionRubbish);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.AddExtension(KExtensionEmpty);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("RFs::MountExtension()"));
 #if !defined(__WINS__)
 	// check that the extension cannot be mounted on file system that does not support extensions
 	r=TheFs.MountExtension(KExtensionLogName,EDriveZ);
-	test(r==KErrNotSupported);
+	test_Value(r, r == KErrNotSupported);
 #endif
 	// test mounting on drive with no file system
 	r=TheFs.DismountFileSystem(fsName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MountExtension(KExtensionLogName,drive);
-	test(r==KErrNotReady);
+	test_Value(r, r == KErrNotReady);
 	r=TheFs.MountFileSystem(fsName,drive,bDrvSync);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	// test with a resource open
 	_LIT(KFileName,"testing.doc");
 	RFile file;
 	r=file.Replace(TheFs,KFileName,EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MountExtension(KExtensionLogName,drive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	file.Close();
 	r=TheFs.Delete(KFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	// test with a format open
 	TBuf<4> driveBuf=_L("?:\\");
 	driveBuf[0]=(TText)(drive+'A');
 	RFormat format;
 	TInt count;
 	r=format.Open(TheFs,driveBuf,EHighDensity,count);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MountExtension(KExtensionLogName,drive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	format.Close();
 	// get the extension name
 	TFullName extName;
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	// now load the extension
 	r=TheFs.MountExtension(KExtensionLogName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionLogName);
+	test_Value(r, r == KErrNone && extName==KExtensionLogName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	// try remounting the same extension
 	r=TheFs.MountExtension(KExtensionLogName,drive);
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	// mount a second extension
 	r=TheFs.MountExtension(KExtensionEmptyName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionLogName);
+	test_Value(r, r == KErrNone && extName==KExtensionLogName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNone && extName==KExtensionEmptyName);
+	test_Value(r, r == KErrNone && extName==KExtensionEmptyName);
 	
     // force a remount on a removable media and check that extensions both exist
     test.Printf(_L("Test forcing remount\n"));
@@ -153,7 +153,7 @@ void TestSecondaryExtensions()
 
         test.Printf(_L("Remounting the drive\n"), r);
         r = TheFs.RemountDrive(drive, NULL, (TUint) KMediaRemountForceMediaChange);
-        test(r == KErrNotReady || r == KErrNone);
+        test_Value(r, r == KErrNotReady || r == KErrNone);
         
         do
         {
@@ -181,7 +181,7 @@ void TestSecondaryExtensions()
     	RLocalDrive d;
 		TBool flag=EFalse;
 		r=d.Connect(1,flag);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		d.ForceMediaChange();
 		d.Close();
 //#if defined(__WINS__)
@@ -195,9 +195,9 @@ void TestSecondaryExtensions()
 
 
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionLogName);
+	test_Value(r, r == KErrNone && extName==KExtensionLogName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNone && extName==KExtensionEmptyName);
+	test_Value(r, r == KErrNone && extName==KExtensionEmptyName);
 
     test.Printf(_L("Accessing media...\n"));
 	// and now do some file system operations
@@ -207,64 +207,64 @@ void TestSecondaryExtensions()
     test.Printf(_L("res=%d\n"), r);
 
 
-	test(r==KErrNone||r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone||r==KErrAlreadyExists);
 	RFile file1;
 	r=file1.Replace(TheFs,file1Name,EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Write(toWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Read(0,readBuf);
 	test(readBuf==toWrite);
 	r=file1.SetSize(0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 	r=TheFs.Delete(file1Name);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(dir1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("RFs::DismountExtension()"));
 	// test with a resource open
 	r=file.Replace(TheFs,KFileName,EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.DismountExtension(KExtensionLogName,drive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	file.Close();
 	r=TheFs.Delete(KFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	// test with a format open
 	r=format.Open(TheFs,driveBuf,EHighDensity,count);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.DismountExtension(KExtensionLogName,drive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	format.Close();
 	// now dismount an extension
 	r=TheFs.DismountExtension(KExtensionLogName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionEmptyName);
+	test_Value(r, r == KErrNone && extName==KExtensionEmptyName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	// try to dismount an extension that is not mounted
 	r=TheFs.DismountExtension(KExtensionLogName,drive);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionEmptyName);
+	test_Value(r, r == KErrNone && extName==KExtensionEmptyName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	// dismount the remaining extension
 	r=TheFs.DismountExtension(KExtensionEmptyName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 
 	test.Next(_L("RFs::RemoveExtension()"));
 	r=TheFs.RemoveExtension(KExtensionLogName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RemoveExtension(KExtensionEmptyName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 void TestPrimaryExtensions()
@@ -276,16 +276,17 @@ void TestPrimaryExtensions()
 	test.Next(_L("TestPrimaryExtensions()"));
 	TInt drive;
 	TInt err=RFs::CharToDrive(gDriveToTest,drive);
-	test(err==KErrNone);
+	test_KErrNone(err);
 
-#if defined(__WINS__)
-	if(drive==EDriveC)
+	if(Is_SimulatedSystemDrive(TheFs, drive))
+	    {
+		test.Printf(_L("Skipping TestPrimaryExtensions on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
 		return;
-#endif
+	    }
 
 	TPckgBuf<TBool> drvSyncBuf;
 	err = TheFs.QueryVolumeInfoExt(drive, EIsDriveSync, drvSyncBuf);
-	test(err==KErrNone);
+	test_KErrNone(err);
     const TBool bDrvSync = drvSyncBuf();
 
 	// don't test on ram drive since accesses memory directly
@@ -296,142 +297,142 @@ void TestPrimaryExtensions()
 
 	TFullName fsName;
 	r=TheFs.FileSystemName(fsName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Printf(_L("fsName=%S\n"),&fsName);
 
 	test.Next(_L("RFs::AddExtension()"));
 	r=TheFs.AddExtension(KExtensionLog);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.AddExtension(KExtensionEmpty);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.AddExtension(KExtensionBit);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("RFs::MountFileSystem()"));
 	// test with file system that already exists
 	r=TheFs.MountFileSystem(fsName,KExtensionBitName,drive,bDrvSync);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	// unmount drive and mount primary extension along with file system
 	r=TheFs.DismountFileSystem(fsName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
     //-- !! N.B this extension mangles data read/written ftom/to the media, for some file systems it is OK and mounting succeeds
     //-- for others - this will result in KErrCorrupt
 	r=TheFs.MountFileSystem(fsName,KExtensionBitName,drive,bDrvSync);
-	test(r==KErrNone||r==KErrCorrupt);
+	test_Value(r, r == KErrNone||r==KErrCorrupt);
 	
     // and now format
 	Format(drive);
 	TFullName extName;
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionBitName);
+	test_Value(r, r == KErrNone && extName==KExtensionBitName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	
 	// and now do some file system operations
 	TBuf8<16> readBuf;
 	r=TheFs.MkDir(dir1);
-	test(r==KErrNone||r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone||r==KErrAlreadyExists);
 	RFile file1;
 	r=file1.Replace(TheFs,file1Name,EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Write(toWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Read(0,readBuf);
 	test(readBuf==toWrite);
 	r=file1.SetSize(0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 	r=TheFs.Delete(file1Name);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(dir1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// add a secondary extension
 	test.Printf(_L("RFs::MountExtension()"));
 	r=TheFs.MountExtension(KExtensionLogName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionBitName);
+	test_Value(r, r == KErrNone && extName==KExtensionBitName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNone && extName==KExtensionLogName);
+	test_Value(r, r == KErrNone && extName==KExtensionLogName);
 	// try to add the same extension
 	r=TheFs.MountExtension(KExtensionBitName,drive);
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionBitName);
+	test_Value(r, r == KErrNone && extName==KExtensionBitName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNone && extName==KExtensionLogName);
+	test_Value(r, r == KErrNone && extName==KExtensionLogName);
 	// try to add a third extension
 	r=TheFs.MountExtension(KExtensionEmptyName,drive);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionBitName);
+	test_Value(r, r == KErrNone && extName==KExtensionBitName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNone && extName==KExtensionLogName);
+	test_Value(r, r == KErrNone && extName==KExtensionLogName);
 
 	// and now do some file system operations
 	r=TheFs.MkDir(dir1);
-	test(r==KErrNone||r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone||r==KErrAlreadyExists);
 	r=file1.Replace(TheFs,file1Name,EFileShareExclusive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Write(toWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file1.Read(0,readBuf);
 	test(readBuf==toWrite);
 	r=file1.SetSize(0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file1.Close();
 	r=TheFs.Delete(file1Name);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(dir1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Printf(_L("RFs::DismountExtension()"));
 	// test that can't dismount a primary extension via this method
 	r=TheFs.DismountExtension(KExtensionLogName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionBitName);
+	test_Value(r, r == KErrNone && extName==KExtensionBitName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.DismountExtension(KExtensionBitName,drive);
-	test(r==KErrAccessDenied);
+	test_Value(r, r == KErrAccessDenied);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionBitName);
+	test_Value(r, r == KErrNone && extName==KExtensionBitName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	
 	test.Printf(_L("RFs::DismountFileSystem()"));
 	r=TheFs.MountExtension(KExtensionLogName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNone && extName==KExtensionBitName);
+	test_Value(r, r == KErrNone && extName==KExtensionBitName);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNone && extName==KExtensionLogName);
+	test_Value(r, r == KErrNone && extName==KExtensionLogName);
 	// and now dismount
 	r=TheFs.DismountFileSystem(fsName,drive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNotReady);
+	test_Value(r, r == KErrNotReady);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotReady);
+	test_Value(r, r == KErrNotReady);
 	// remount the file system
 	r=TheFs.MountFileSystem(fsName,drive,bDrvSync);
-	test(r==KErrNone||r==KErrCorrupt);
+	test_Value(r, r == KErrNone||r==KErrCorrupt);
 	r=TheFs.ExtensionName(extName,drive,0);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.ExtensionName(extName,drive,1);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	Format(drive);
 
 	test.Next(_L("RFs::RemoveExtension()"));
 	r=TheFs.RemoveExtension(KExtensionLogName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RemoveExtension(KExtensionEmptyName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RemoveExtension(KExtensionBitName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 
@@ -446,8 +447,21 @@ GLDEF_C void CallTestsL()
     TInt drive;
 	TInt err=RFs::CharToDrive(gDriveToTest,drive);
 	test.Start(_L("Starting Test - T_EXT1"));
-	test(err==KErrNone);
+	test_KErrNone(err);
 
+	// Check that the drive supports extensions.
+	TBool extensionsSupported = EFalse;
+	TPckg<TBool> dataBuf(extensionsSupported);
+	err = TheFs.QueryVolumeInfoExt(drive,EFSysExtensionsSupported,dataBuf);
+	test_KErrNone(err);
+	if(!extensionsSupported)
+	    {
+        test.Printf(_L("Drive %C: does not support file sys extensions. Skipping T_EXT1."), gSessionPath[0]);
+        test.End();
+        test.Close();
+        return;
+	    }
+	
     PrintDrvInfo(TheFs, drive);
 
 //Do not run this test on the NAND drive, as
@@ -461,6 +475,7 @@ GLDEF_C void CallTestsL()
 	TheFs.Drive(driveInfo,drive);
 	if (driveInfo.iType == EMediaNANDFlash)
 		{
+		test.Printf(_L("Skipping T_EXT1 as drive %C: is NAND\n"), gSessionPath[0]);
 		return;
 		}
 #endif

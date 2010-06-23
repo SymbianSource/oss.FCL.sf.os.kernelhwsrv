@@ -1,3 +1,22 @@
+Version 2.00.3046
+=================
+(Made by vfebvre 07/06/2010)
+
+1.	davegord
+	1.	ou1cimx1#414735 Occasional Loader crashes observed during T_WSD_TST_* tests
+		Crash caused by interrupt occurring during handling of SWI called from
+		SVC mode -- which is not supported. Fix is for Loader not to call RDebug
+		methods while executing in supervisor mode.
+
+
+Version 2.00.3045
+=================
+(Made by vfebvre 04/06/2010)
+
+1.	famustaf
+	1.	ou1cimx1#383105 Modify F32 Tests for Platsim's HVFS
+
+
 Version 2.00.3044
 =================
 (Made by vfebvre 27/05/2010)
