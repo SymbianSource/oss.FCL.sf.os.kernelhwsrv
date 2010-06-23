@@ -693,12 +693,12 @@ void CallTestsL()
     
     PrintDrvInfo(TheFs, gDriveNum);
 
-    //-- quick format the drive, if it isn't the emulator's C:  
-    if(!Is_Win32(TheFs, gDriveNum))
-    {
+    //-- quick format the drive, if it isn't drive C: of the emulator or PlatSim
+    if(!Is_SimulatedSystemDrive(TheFs, gDriveNum))
+    	{
         nRes = FormatDrive(TheFs, gDriveNum, ETrue); 
         test_KErrNone(nRes);
-    }
+    	}
 
     //-----------------------------------
 	TInt c;

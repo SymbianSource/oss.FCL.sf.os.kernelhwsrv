@@ -1682,10 +1682,8 @@ LOCAL_C void FillUpDisk()
 			break;
 		test_KErrNone(r);
 		count++;
-#if defined(__WINS__)
-		if (count==32 && sessionPath[0]=='C')
-			break;
-#endif
+		if (Is_SimulatedSystemDrive(TheFs,gDrive) && count==32)
+			break;	// Limit on disk size for emulator/PlatSim
 		}
 
 	r=TheFs.CheckDisk(fileName);

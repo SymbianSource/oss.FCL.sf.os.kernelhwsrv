@@ -242,4 +242,4 @@ EXPORTS
 	?GetDriveInfo@@YAXAAVTDriveInfo@@H@Z @ 241 NONAME ; void GetDriveInfo(class TDriveInfo &, int)
 	?Volume@RFsPlugin@@QBEHAAVTVolumeInfo@@H@Z @ 242 NONAME ; int RFsPlugin::Volume(class TVolumeInfo &, int) const
 	?IsSequentialMode@CFileCB@@QBEHXZ @ 243 NONAME ; int CFileCB::IsSequentialMode(void) const
-
+	?DirectIOMode@CFileCB@@QAEHABVRMessagePtr2@@@Z @ 244 NONAME ; int CFileCB::DirectIOMode(class RMessagePtr2 const &)

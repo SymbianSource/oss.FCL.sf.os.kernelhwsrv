@@ -2890,7 +2890,7 @@ heap anyway.  Moral of the story: Use a sensible value for aMaxLength!
                      byte alignment is guaranteed for all allocations 8 bytes or
                      more in size.  4 byte allocations will be aligned to a 4
                      byte boundary.  Best to pass in zero.
-@param aSingleThread ETrue if the heap is to be accessed from multiple threads.
+@param aSingleThread EFalse if the heap is to be accessed from multiple threads.
                      This will cause internal locks to be created, guaranteeing
                      thread safety.
 
@@ -3030,7 +3030,7 @@ Note that the size of the heap cannot be adjusted by more than aMaxLength.
                      byte alignment is guaranteed for all allocations 8 bytes or
                      more in size.  4 byte allocations will be aligned to a 4
                      byte boundary.  Best to pass in zero.
-@param aSingleThread ETrue if the heap is to be accessed from multiple threads.
+@param aSingleThread EFalse if the heap is to be accessed from multiple threads.
                      This will cause internal locks to be created, guaranteeing
                      thread safety.
 
@@ -3077,7 +3077,7 @@ be used to hold code fragments from a JIT compiler.
                      byte alignment is guaranteed for all allocations 8 bytes or
                      more in size.  4 byte allocations will be aligned to a 4
                      byte boundary.  Best to pass in zero.
-@param aSingleThread ETrue if the heap is to be accessed from multiple threads.
+@param aSingleThread EFalse if the heap is to be accessed from multiple threads.
                      This will cause internal locks to be created, guaranteeing
                      thread safety.
 @param aMode         Flags controlling the heap creation.  See RAllocator::TFlags.
@@ -3137,7 +3137,7 @@ chunk for best results!
                      byte alignment is guaranteed for all allocations 8 bytes or
                      more in size.  4 byte allocations will be aligned to a 4
                      byte boundary.  Best to pass in zero.
-@param aSingleThread ETrue if the heap is to be accessed from multiple threads.
+@param aSingleThread EFalse if the heap is to be accessed from multiple threads.
                      This will cause internal locks to be created, guaranteeing
                      thread safety.
 @param aMode         Flags controlling the heap creation.  See RAllocator::TFlags.

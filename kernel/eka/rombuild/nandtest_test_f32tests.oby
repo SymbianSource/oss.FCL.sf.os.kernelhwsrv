@@ -100,7 +100,7 @@ rofsname = tests.rofs
 #else
 rofsname = dir.rofs
 #endif	//MULTIPLEROFS
-rofssize = 0x520000
+rofssize = 0x5E0000
 
 #ifdef PAGED_ROM
 PAGINGOVERRIDE DEFAULTPAGED

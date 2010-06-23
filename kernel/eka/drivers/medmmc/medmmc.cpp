@@ -759,7 +759,7 @@ TInt DMmcMediaDriverFlash::DoRead()
 	TUint32 length(I64LOW(iCurrentReq->Length()));
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:dr:0x%lx,0x%x", pos, length));
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DO_READ, "Position=0x%lx; Length=0x%x", (TUint) pos, (TUint) length);
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DO_READ, "Position=%x:%x; Length=0x%x", (TUint) I64HIGH(pos), (TUint) I64LOW(pos), (TUint) length);
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(EDRInUse));
 	__ASSERT_DEBUG(pos < TotalSizeInBytes(), Panic(EDRStart));
 	__ASSERT_DEBUG(iCurrentReq->Length() >= 0, Panic(EDRNotPositive));
@@ -821,7 +821,7 @@ TInt DMmcMediaDriverFlash::LaunchRead(TInt64 aStart, TUint32 aLength)
 //
 	{
 	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_LAUNCHREAD_ENTRY, this );
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHREAD, "position=0x%lx; length=0x%x", (TUint) iCurrentReq->Pos(), (TUint) I64LOW(iCurrentReq->Length()));
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHREAD, "position=%x:%x; length=0x%x", (TUint) I64HIGH(iCurrentReq->Pos()), (TUint) I64LOW(iCurrentReq->Pos()) ,(TUint) I64LOW(iCurrentReq->Length()));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:lr:0x%lx,0x%x", aStart, aLength));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELRStart));
 	__ASSERT_DEBUG(aLength > 0, Panic(ELRNotPositive));
@@ -887,7 +887,7 @@ TInt DMmcMediaDriverFlash::LaunchDBRead()
 	{
 	OstTraceFunctionEntry1( DMMCMEDIADRIVERFLASH_LAUNCHDBREAD_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:ldbr:0x%lx,0x%x", iReqCur, I64LOW(iReqEnd - iReqCur)));
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHDBREAD, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHDBREAD, "position=%x:%x; length=0x%x", (TInt) I64HIGH(iReqCur), (TInt) I64LOW(iReqCur), (TInt) I64LOW(iReqEnd - iReqCur));
 	__ASSERT_DEBUG(TotalSizeInBytes() > iReqCur, Panic(ELRStart));
 	__ASSERT_DEBUG(I64LOW(iReqEnd - iReqCur) > 0, Panic(ELRNotPositive));
 	__ASSERT_DEBUG(TotalSizeInBytes() >= iReqEnd, Panic(ELREnd));
@@ -948,7 +948,7 @@ TInt DMmcMediaDriverFlash::LaunchPhysRead(TInt64 aStart, TUint32 aLength)
 //
 	{
 	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_LAUNCHPHYSREAD_ENTRY, this );
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHPHYSREAD, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHPHYSREAD, "position=%x:%x; length=0x%x", (TInt) I64HIGH(iReqCur), (TInt) I64LOW(iReqCur), (TInt) I64LOW(iReqEnd - iReqCur));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:physr:0x%lx,0x%x", aStart, aLength));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELRStart));
 	__ASSERT_DEBUG(aLength > 0, Panic(ELRNotPositive));
@@ -1040,7 +1040,7 @@ TInt DMmcMediaDriverFlash::DoWrite()
 	const TUint32 length = I64LOW(iCurrentReq->Length());
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:dw:0x%lx,0x%x", pos, length));
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOWRITE, "position=0x%lx; length=0x%x", (TUint) pos, (TUint) length);
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOWRITE, "position=%x:%x; length=0x%x", (TUint) I64HIGH(pos), (TUint) I64LOW(pos), (TUint) length);
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(EDWInUse));
 	__ASSERT_DEBUG(pos < TotalSizeInBytes(), Panic(EDWStart));
 	__ASSERT_DEBUG(length > 0, Panic(EDWNotPositive));
@@ -1075,7 +1075,7 @@ TInt DMmcMediaDriverFlash::DoFormat()
 	const TUint32 length = I64LOW(iCurrentReq->Length());
 
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:df:0x%lx,0x%x", pos, length));
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOFORMAT, "position=0x%lx; length=0x%x", (TUint) pos, (TUint) length);
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_DOFORMAT, "position=%x:%x; length=0x%x", (TUint) I64HIGH(pos), (TUint) I64LOW(pos), (TUint) length);
 	__ASSERT_DEBUG(CurrentRequest() == EMReqIdle, Panic(EDFInUse));
 	__ASSERT_DEBUG(pos < TotalSizeInBytes(), Panic(EDFStart));
 	__ASSERT_DEBUG(length > 0, Panic(EDFNotPositive));
@@ -1116,7 +1116,7 @@ TInt DMmcMediaDriverFlash::LaunchFormat(TInt64 aStart, TUint32 aLength)
 //
 	{
 	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_LAUNCHFORMAT_ENTRY, this );
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHFORMAT, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHFORMAT, "position=%x:%x; length=0x%x", (TInt) I64HIGH(iReqCur), (TInt) I64LOW(iReqCur), (TInt) I64LOW(iReqEnd - iReqCur));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:lf:0x%lx,0x%x", aStart, aLength));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELFStart));
 	__ASSERT_DEBUG((aStart & iBlkMsk) == 0, Panic(ELWFmtStAlign));
@@ -1132,8 +1132,8 @@ TInt DMmcMediaDriverFlash::LaunchFormat(TInt64 aStart, TUint32 aLength)
 		iPhysStart = aStart & ~iBlkMsk;
 
 		// formats are always block-aligned, and the buffer is initialized to 0xff
-		//  Check whether erase commands are supported by this card
-		if (iCard->CSD().CCC() & KMMCCmdClassErase)
+		//  Check whether erase commands are supported by this card		
+		if ( (iCard->CSD().CCC() & KMMCCmdClassErase) && iEraseInfo.iEraseFlags) 		       
 			{
 			// Determine the erase end point for the next command. We don't erase past the preferred erase unit
 			// size. Therefore, check which is lower, the preferred erase unit size or the end of the requested range.
@@ -1215,7 +1215,7 @@ TInt DMmcMediaDriverFlash::LaunchWrite(TInt64 aStart, TUint32 aLength, TMediaReq
 //
 	{
 	OstTraceExt4(TRACE_FLOW, DMMCMEDIADRIVERFLASH_LAUNCHWRITE_ENTRY, "DMmcMediaDriverFlash::LaunchWrite;aStart=%Ld;aLength=%x;aMedReq=%d;this=%x", aStart, (TUint) aLength, (TInt) aMedReq, (TUint) this);
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE, "position=0x%lx; length=0x%x", (TInt) iReqCur, (TInt) I64LOW(iReqEnd - iReqCur));
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_LAUNCHWRITE, "position=%x:%x; length=0x%x", (TInt) I64HIGH(iReqCur), (TInt) I64LOW(iReqCur),(TInt) I64LOW(iReqEnd - iReqCur));
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf("\n>mmd:lw:0x%lx,%d,%d", aStart, aLength, aMedReq));
 	__ASSERT_DEBUG(aMedReq == EMReqWrite || aMedReq == EMReqFormat, Panic(ELWRequest));
 	__ASSERT_DEBUG(TotalSizeInBytes() > aStart, Panic(ELWStart));
@@ -2887,9 +2887,9 @@ TInt DMmcMediaDriverFlash::ReadDataUntilCacheExhausted(TBool* aAllDone)
 	{
 	OstTraceFunctionEntryExt( DMMCMEDIADRIVERFLASH_READDATAUNTILCACHEEXHAUSTED_ENTRY, this );
 	__KTRACE_OPT(KPBUSDRV, Kern::Printf(">mmd:rdc:%x,%x", iReqCur, iReqEnd));
-	OstTraceExt2( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_READDATAUNTILCACHEEXHAUSTED, "iReqCur=0x%x; iReqEnd=0x%x", (TUint) iReqCur, (TUint) iReqEnd );
+	OstTraceExt3( TRACE_INTERNALS, DMMCMEDIADRIVERFLASH_READDATAUNTILCACHEEXHAUSTED, "iReqCur=%x:%x; iReqEnd=0x%x", (TUint) I64HIGH(iReqCur), (TUint) I64LOW(iReqCur), (TUint) iReqEnd );
 	
-	if ( iCurrentReq->IsPhysicalAddress()
+	if ( (iCurrentReq->DriverFlags() & RLocalDrive::ELocDrvDirectIO) || iCurrentReq->IsPhysicalAddress()
 #if defined(__DEMAND_PAGING__) && !defined(__WINS__)
 	     || DMediaPagingDevice::PageInRequest(*iCurrentReq)
 #endif //DEMAND_PAGING 

@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -82,12 +82,16 @@ public:
 	inline TUint32 PARootDirEnd() const;
 	inline void SetPARootDirEnd(TUint32 aPARootDirEnd);
 	virtual TUint MaxTranSpeedInKilohertz() const;
+	inline void RegisterClient();
+	inline void DeregisterClient();
+	inline TBool ClientsRegistered();
 private:
 	TUint32 iProtectedAreaSize;
 	TUint32 iPARootDirEnd;
 	TUint8	iAUSize;
 	TUint8 iPad[3];
-	TUint32 iSpare[4];
+	TUint32 iClientCountSD;
+	TUint32 iSpare[3];
 	};
 
 class TSDCardArray : public TMMCardArray

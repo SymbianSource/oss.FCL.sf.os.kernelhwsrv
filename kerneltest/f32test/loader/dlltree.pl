@@ -57,6 +57,16 @@ my $sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst;
 my $copy_end=$year+1900;
 
 my $argc=scalar(@ARGV);
+
+# check whether its raptor specific  
+my $is_raptor = 0;
+if ($ARGV[$argc-1] eq "raptor") # change "raptor" to something you want.
+{
+	pop(@ARGV);
+	$is_raptor = 1;
+	$argc--;
+}
+
 ($argc==1 or $argc==2 or $argc==3) or die "Usage: perl dlltree.pl <filename> <dir> [-allowbad]\n";
 my $infile=$ARGV[0];
 open IN, $infile or die "Cannot open input file $infile\n";
@@ -795,13 +805,20 @@ close OUT;
 open OUT, ">$dlltreename" or die "Could not open $dlltreename for output\n";
 print OUT @dlltree;
 close OUT;
-my $testbatch = "$ENV{EPOCROOT}epoc32\\build";
-$destpath =~ s/\//\\/go;
-$testbatch.="\\" unless ($destpath =~ /^\\/);
-$testbatch.=$destpath;
-$testbatch.="##MAIN##.auto.bat";
-if (!$allowbad) {
-	push @iby, "data=$testbatch\t\ttest\\loader.auto.bat\n";
+
+my $testbatch ='';
+if($is_raptor) {
+	$testbatch="$ENV{EPOCROOT}\\epoc32\\data\\z\\test\\gen\\##MAIN##.auto.bat";
+}
+else {
+	$testbatch = "$ENV{EPOCROOT}epoc32\\build";
+	$destpath =~ s/\//\\/go;
+	$testbatch.="\\" unless ($destpath =~ /^\\/);
+	$testbatch.=$destpath;
+	$testbatch.="##MAIN##.auto.bat";
+	}
+if (!$allowbad){
+	push @iby, "data=$testbatch\t\ttest\\loader.auto.bat\n";	
 }
 open OUT, ">$ibyname" or die "Could not open $ibyname for output\n";
 print OUT @iby;

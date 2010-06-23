@@ -248,6 +248,7 @@ _LIT(KFsName_LFFS,  "lffs");
 _LIT(KFsName_Win32, "Win32");
 _LIT(KFsName_ExFAT, "ExFat");
 _LIT(KFsName_AutoMonuter, "automounter");
+_LIT(KFsName_HVFS, "HVFS");
 
 /**  @return ETrue if "Automounter" FS is mounted on this drive */
 TBool F32_Test_Utils::Is_Automounter(RFs &aFs, TInt aDrive)
@@ -273,7 +274,7 @@ TBool F32_Test_Utils::Is_Lffs(RFs &aFs, TInt aDrive)
 
 }
    
-/** @return ETrue if "Win32" FS is mounted on this drive (i.e this is emulator's drive c:) */
+/** @return ETrue if "Win32" FS is mounted on this drive (i.e this is emulator's drive C:) */
 TBool F32_Test_Utils::Is_Win32(RFs &aFs, TInt aDrive)   
 {
 	ASSERT(aDrive >= EDriveA && aDrive <= EDriveZ);
@@ -282,6 +283,29 @@ TBool F32_Test_Utils::Is_Win32(RFs &aFs, TInt aDrive)
     __ASSERT_ALWAYS((r==KErrNone) && (f.Length()>0), User::Invariant());
 
     return (f.CompareF(KFsName_Win32) == 0 );
+}
+
+/** @return ETrue if "HVFS" is mounted on this drive (i.e PlatSim's drive C:) */
+TBool F32_Test_Utils::Is_HVFS(RFs &aFs, TInt aDrive)
+{
+	ASSERT(aDrive >= EDriveA && aDrive <= EDriveZ);
+    TFSName f;
+	TInt r = aFs.FileSystemName(f, aDrive);
+    __ASSERT_ALWAYS((r==KErrNone) && (f.Length()>0), User::Invariant());
+
+    return (f.CompareF(KFsName_HVFS) == 0);
+}
+
+/** @return ETrue if "HVFS" or "Win32" FS is mounted on this drive
+ * 			(i.e drive C: of PlatSim or the emulator) */
+TBool F32_Test_Utils::Is_SimulatedSystemDrive(RFs &aFs, TInt aDrive)
+{
+	ASSERT(aDrive >= EDriveA && aDrive <= EDriveZ);
+    TFSName f;
+	TInt r = aFs.FileSystemName(f, aDrive);
+    __ASSERT_ALWAYS((r==KErrNone) && (f.Length()>0), User::Invariant());
+
+    return (f.CompareF(KFsName_HVFS) == 0 || f.CompareF(KFsName_Win32) == 0);
 }
 
 /** @return ETrue if the filesystem if FAT (fat12/16/32) */

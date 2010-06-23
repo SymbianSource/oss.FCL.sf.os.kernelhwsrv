@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// os\kernelhwsrv\kernel\eka\drivers\power\smppower\sample_idlehandler\smpidlehandler.cpp
+// eka\drivers\power\smppower\sample_idlehandler\smpidlehandler.cpp
 // implements a basic smp idle handler generic layer that can be derived from 
 // to create platform specific SMP idle handlers
 

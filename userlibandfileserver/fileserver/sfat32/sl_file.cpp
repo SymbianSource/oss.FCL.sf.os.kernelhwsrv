@@ -245,8 +245,10 @@ void CFatFileCB::ReadL(TInt64 aPos,TInt& aLength, TDes8* aDes, const RMessagePtr
 	
 	if((startPos + length > curSize) || (startPos > startPos + length) )
 		aLength=curSize-startPos;
+		
+	TUint flag = DirectIOMode(aMessage) ? RLocalDrive::ELocDrvDirectIO : 0;
 	
-    FatMount().ReadFromClusterListL(iCurrentPos,aLength,aDes,aMessage,aOffset);
+    FatMount().ReadFromClusterListL(iCurrentPos,aLength,aDes,aMessage,aOffset, flag);
 	aLength=iCurrentPos.iPos-startPos;
 	}
 
@@ -295,7 +297,9 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
 	TUint badcluster=0;
 	TUint goodcluster=0;
    	
-	TRAPD(ret, FatMount().WriteToClusterListL(iCurrentPos,aLength,aSrc,aMessage,aOffset,badcluster, goodcluster));
+	TUint flag = DirectIOMode(aMessage) ? RLocalDrive::ELocDrvDirectIO : 0;
+	
+	TRAPD(ret, FatMount().WriteToClusterListL(iCurrentPos,aLength,aSrc,aMessage,aOffset,badcluster, goodcluster, flag));
    	
 	if (ret == KErrCorrupt || ret == KErrDied)
 		{

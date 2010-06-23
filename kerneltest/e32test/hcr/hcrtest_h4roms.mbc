@@ -17,57 +17,57 @@ SECTION_COMMANDS
 #ifndef BUILD_NO_UREL
 	// Multiple Memory Model
 	//
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL.IMG         --type=tshell_hcrtest
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR.IMG        --type=ubootldr
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR-FAT32.IMG  --type=ubootldr -D WITH_FAT32
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL.IMG         --type=tshell_hcrtest
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR.IMG        --type=ubootldr
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR-FAT32.IMG  --type=ubootldr -D WITH_FAT32
 	
 	// Small block NAND support
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-NAND2LDR.IMG        --type=nandloader -D _NAND2
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND2.IMG    --type=tshell_hcrtest -D _NAND2
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-NAND2LDR.IMG        --type=nandloader -D _NAND2
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND2.IMG    --type=tshell_hcrtest -D _NAND2
 	
 	// OneNAND support
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-NANDLDR.IMG        --type=nandloader -D _ONENAND
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND.IMG    --type=tshell_hcrtest -D _ONENAND
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-NANDLDR.IMG        --type=nandloader -D _ONENAND
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b urel -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND.IMG    --type=tshell_hcrtest -D _ONENAND
 	
 	
 	// Direct/Single Memory model - not supported I think
 	//
-	// oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v sh4hrp -b urel -i armv5 --zip --symbol --name=SH4_TBARMV5D-TSHELL.IMG   --type=tshell_hcrtest
+	// oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v sh4hrp -b urel -i armv5 --zip --symbol --name=SH4_TBARMV5D-TSHELL.IMG   --type=tshell_hcrtest
 	
 	// Flexible Memory model
 	//
-	oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b urel -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL.IMG   --type=tshell_hcrtest
+	oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v fh4hrp -b urel -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL.IMG   --type=tshell_hcrtest
 	
 #endif
 
 // Direct/Single Memory model - not supported I think
 //
-// oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v sh4hrp -b udeb -i armv5 --zip --symbol --name=SH4_TBARMV5D-TSHELL-D.IMG   --type=tshell_hcrtest
+// oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v sh4hrp -b udeb -i armv5 --zip --symbol --name=SH4_TBARMV5D-TSHELL-D.IMG   --type=tshell_hcrtest
 
 // Multiple Memory Model
 //
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL-D.IMG         --type=tshell_hcrtest
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR-D.IMG        --type=ubootldr
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR-FAT32-D.IMG  --type=ubootldr -D WITH_FAT32
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL-D.IMG         --type=tshell_hcrtest
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR-D.IMG        --type=ubootldr
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-BOOTLDR-FAT32-D.IMG  --type=ubootldr -D WITH_FAT32
 // Small block NAND support
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND2-D.IMG    --type=tshell_hcrtest -D _NAND2
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_PAGED_NAND2B-D.IMG  	--type=tshell_hcrtest -D USE_SDIO_SD_MMC,WITH_FAT32,_NAND2,PAGED_ROM,PAGED_CODE
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-NAND2LDR-D.IMG        --type=nandloader -D _NAND2
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND2-D.IMG    --type=tshell_hcrtest -D _NAND2
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_PAGED_NAND2B-D.IMG  	--type=tshell_hcrtest -D USE_SDIO_SD_MMC,WITH_FAT32,_NAND2,PAGED_ROM,PAGED_CODE
 // OneNAND support
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-NANDLDR-D.IMG        --type=nandloader -D _ONENAND
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND-D.IMG    --type=tshell_hcrtest -D _ONENAND
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-NANDLDR-D.IMG        --type=nandloader -D _ONENAND
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v h4hrp -b udeb -i armv5 --zip --symbol --name=H4_TBARMV5D-TSHELL_NAND-D.IMG    --type=tshell_hcrtest -D _ONENAND
 
 
 // Flexible Memory model
 //
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL-D.IMG   		--type=tshell_hcrtest
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL-D.IMG   		--type=tshell_hcrtest
 // Small block NAND support
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-NAND2LDR-D.IMG     	--type=nandloader -D _NAND2
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL_NAND2-D.IMG  	--type=tshell_hcrtest -D _NAND2
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL_PAGED_NAND2B-D.IMG  	--type=tshell_hcrtest -D USE_SDIO_SD_MMC,WITH_FAT32,_NAND2,PAGED_ROM,PAGED_CODE
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-NAND2LDR-D.IMG     	--type=nandloader -D _NAND2
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL_NAND2-D.IMG  	--type=tshell_hcrtest -D _NAND2
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL_PAGED_NAND2B-D.IMG  	--type=tshell_hcrtest -D USE_SDIO_SD_MMC,WITH_FAT32,_NAND2,PAGED_ROM,PAGED_CODE
 // OneNAND support
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-NANDLDR-D.IMG      	--type=nandloader -D _ONENAND
-oneoff \os\kernelhwsrv\kernel\eka\rombuild rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL_NAND-D.IMG   	--type=tshell_hcrtest -D _ONENAND
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-NANDLDR-D.IMG      	--type=nandloader -D _ONENAND
+oneoff . \os\kernelhwsrv\kernel\eka\rombuild\rom -v fh4hrp -b udeb -i armv5 --zip --symbol --name=FH4_TBARMV5D-TSHELL_NAND-D.IMG   	--type=tshell_hcrtest -D _ONENAND
 
 
 

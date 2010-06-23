@@ -1632,6 +1632,7 @@ public:
 	IMPORT_C TInt64 Size64() const;
 	IMPORT_C void SetSize64(TInt64 aSize, TBool aDriveLocked);
     IMPORT_C void SetMaxSupportedSize(TUint64 aMaxFileSize);
+	IMPORT_C TBool DirectIOMode(const RMessagePtr2& aMessage);
 
 
     TInt64 CachedSize64() const;

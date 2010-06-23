@@ -21,6 +21,7 @@ SOURCEPATH	../SERVER
 SOURCE         T_BIGFILE.CPP
 SOURCE         T_MAIN.CPP
 SOURCEPATH     ../fileutils/src
+SOURCE         f32_test_utils.cpp
 SOURCE         t_chlffs.cpp 
 LIBRARY        EUSER.LIB EFSRV.LIB HAL.LIB
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN

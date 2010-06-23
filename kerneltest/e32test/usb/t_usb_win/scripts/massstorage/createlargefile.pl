@@ -248,8 +248,4 @@ much as possible, and reads it back to verify its contents.
  with written.  Sum of file size and free space should be close to
  drive size.
 
-=head1 COPYRIGHT
-
-Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies). All rights reserved.
-
 =cut

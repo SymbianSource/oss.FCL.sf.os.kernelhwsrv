@@ -23,7 +23,8 @@ source			t_notify_perf.cpp t_notify_perf_impl.cpp t_notify_perf_util.cpp
 sourcepath		../server
 source			t_main.cpp
 sourcepath		../fileutils/src
-source          t_chlffs.cpp
+source			f32_test_utils.cpp
+source			t_chlffs.cpp
 
 library			euser.lib efsrv.lib hal.lib
 

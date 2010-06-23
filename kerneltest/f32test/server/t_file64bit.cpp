@@ -5961,9 +5961,11 @@ static TInt PrepareDisk(TInt aDrive)
         {
         KFileSizeMaxLargerThan4GBMinusOne = EFalse; //-- FAT doesn't support >= 4G files
         }
-    else if(Is_Win32(TheFs, aDrive))
-        {//-- this is the emulator's windows drive. The maximal file size depends on the Windows FS used for this drive.
-         //-- if it is NTFS, files >= 4G are supported.   
+    else if(Is_SimulatedSystemDrive(TheFs, aDrive))
+        {
+		 //-- This is the emulator's windows drive or PlatSim's HVFS.
+		 //-- The maximal file size depends on the Windows FS used for this drive.
+         //-- If it is NTFS, files >= 4G are supported.
         r = CreateEmptyFile(TheFs, _L("\\test_file"), K4GB);
         
         KFileSizeMaxLargerThan4GBMinusOne = (r == KErrNone);

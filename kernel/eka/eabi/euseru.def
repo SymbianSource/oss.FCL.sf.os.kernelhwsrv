@@ -2537,4 +2537,5 @@ EXPORTS
 	_ZNK10RAllocator9MaxLengthEv @ 2536 NONAME
 	_ZN10RAllocator17__DbgGetAllocFailEv @ 2537 NONAME
 	_ZN4User17__DbgGetAllocFailEi @ 2538 NONAME
+	_ZN10RArrayBase12SetKeyOffsetEi @ 2539 NONAME
 

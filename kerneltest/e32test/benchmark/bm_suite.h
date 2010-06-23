@@ -226,7 +226,7 @@ enum
 	KBMPriorityHigh = 60, // 60 is above all DFC 26 is below timer DFC
 	/**
 	 * Absolute priority to be used for middle-priority threads.
-	 * This is also the default prioirty - performance benchmarks are started at this prioirty.
+	 * This is also the default priority - performance benchmarks are started at this prioirty.
 	 */	
 	KBMPriorityMid = KBMPriorityHigh - 1,
 	/**
@@ -274,7 +274,7 @@ struct TBMSpawnArgs
 	 */
 	TThreadFunction iChildFunc;
 	/**
-	 * The child thread absolute prioirty.
+	 * The child thread absolute priority.
 	 * Intialized by constructor.
 	 */
 	TInt			iChildPrio;
@@ -293,7 +293,7 @@ struct TBMSpawnArgs
 	 * Construct a new <code>TBMSpawnArgs</code> object.
 	 *
 	 * @param aChildFunc the child entry point
-	 * @param aChildPrio the child thread absolute prioirty
+	 * @param aChildPrio the child thread absolute priority
 	 * @param aRemote if <code>ETrue</code> the child thread must be created in a separate process; 
 	 *		otherwise, the child thread must be created within the parent's process.
 	 */
@@ -343,7 +343,7 @@ public:
 	 * 
 	 * @param aThread a handle ro the target thread.
 	 * @param aNewPrio a new absolute priority for the target thread
-	 * @return the old absolute prioirty of the target thread 
+	 * @return the old absolute priority of the target thread 
 	 */
 	static TInt SetAbsPriority(RThread aThread, TInt aNewPrio);	
 	

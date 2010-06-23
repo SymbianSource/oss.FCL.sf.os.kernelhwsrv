@@ -957,4 +957,7 @@ EXPORTS
 	?Stats@KernCoreStats@@SAHPAX@Z @ 956 NONAME	;  public: static int KernCoreStats::Stats(void *)
 	?FreeRamZone@Epoc@@SAHI@Z @ 957 NONAME ; public: static int Epoc::FreeRamZone(unsigned int)
 	?SelectiveAlloc@TBitMapAllocator@@QAEIHH@Z @ 958 NONAME ; public: unsigned int __thiscall TBitMapAllocator::SelectiveAlloc(int,int)
+	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 959  NONAME ; void RArrayBase::SetKeyOffset(int)
+	?CpuRetires@Cache@@SAXXZ @ 960 NONAME ; public: static void __cdecl Cache::CpuRetires(void)
+	?KernelRetires@Cache@@SAXXZ @ 961 NONAME ; public: static void __cdecl Cache::KernelRetires(void)
 

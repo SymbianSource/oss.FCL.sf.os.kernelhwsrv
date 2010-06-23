@@ -30,8 +30,6 @@ BASEDEFAULT
 
 PRJ_EXPORTS
 
-../nandboot/coreldr/bootstrap_smrif.h 		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(bootstrap_smrif.h)
-
 ../profiler/profiler.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(profiler.h)
 
 ../analyse/profiler.rtf						/epoc32/engdoc/profiler/profiler.rtf

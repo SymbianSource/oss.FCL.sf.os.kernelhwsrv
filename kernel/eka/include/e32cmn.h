@@ -5398,6 +5398,7 @@ protected:
 	IMPORT_C RArrayBase(TInt anEntrySize, TInt aMinGrowBy, TInt aKeyOffset, TInt aFactor);
 	IMPORT_C RArrayBase(TInt aEntrySize,TAny* aEntries, TInt aCount);
 	IMPORT_C void Close();
+	IMPORT_C void SetKeyOffset(TInt aKeyOffset);
 	IMPORT_C TInt Count() const;
 	IMPORT_C TAny* At(TInt anIndex) const;
 	IMPORT_C TInt Append(const TAny* anEntry);
@@ -5496,6 +5497,7 @@ public:
 	inline RArray(TInt aMinGrowBy, TInt aKeyOffset, TInt aFactor);
 	inline RArray(TInt aEntrySize,T* aEntries, TInt aCount);
 	inline void Close();
+	inline void SetKeyOffset(TInt aKeyOffset);
 	inline TInt Count() const;
 	inline const T& operator[](TInt anIndex) const;
 	inline T& operator[](TInt anIndex);

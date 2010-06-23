@@ -2215,4 +2215,5 @@ EXPORTS
 	?Size@RAllocator@@QBEHXZ @ 2214 NONAME ; public: int __thiscall RAllocator::Size(void)const 
 	?__DbgGetAllocFail@RAllocator@@QAE?AW4TAllocFail@1@XZ @ 2215 NONAME ; enum RAllocator::TAllocFail RAllocator::__DbgGetAllocFail(void)
 	?__DbgGetAllocFail@User@@SA?AW4TAllocFail@RAllocator@@H@Z @ 2216 NONAME ; enum RAllocator::TAllocFail User::__DbgGetAllocFail(int)
+	?SetKeyOffset@RArrayBase@@IAEXH@Z @ 2217  NONAME ; void RArrayBase::SetKeyOffset(int)
 	

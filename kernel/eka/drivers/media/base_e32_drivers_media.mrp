@@ -10,6 +10,7 @@ source	\sf\os\kernelhwsrv\kernel\eka\drivers\medint
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\medlfs
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\medmmc
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\mednand
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\sdapc
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\pbusmedia.cpp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\spbus.cpp
 source	\sf\os\kernelhwsrv\kernel\eka\drivers\pbus\distribution.policy.s60

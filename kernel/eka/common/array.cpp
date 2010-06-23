@@ -663,6 +663,12 @@ EXPORT_C TInt RArrayBase::Count() const
 	return iCount;
 	}
 
+EXPORT_C void RArrayBase::SetKeyOffset(TInt aKeyOffset)
+	{
+	__ASSERT_ALWAYS(TUint(aKeyOffset)<TUint(iEntrySize) && (aKeyOffset&3)==0, Panic(EBadArrayKeyOffset));
+	iKeyOffset = aKeyOffset;
+	}
+
 #ifndef __ARRAY_MACHINE_CODED__
 EXPORT_C TAny* RArrayBase::At(TInt anIndex) const
 	{

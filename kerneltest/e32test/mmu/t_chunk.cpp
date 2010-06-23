@@ -51,6 +51,7 @@
 #include <e32test.h>
 #include <e32panic.h>
 #include <e32svr.h>
+#include <hal.h>
 #include "mmudetect.h"
 #include "d_gobble.h"
 #include "freeram.h"
@@ -820,29 +821,31 @@ void testNotifiers()
 	{
 	RGobbler gobbler;
 	TInt r = gobbler.Open();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TUint32 taken = gobbler.GobbleRAM(128*1024*1024);
 	test.Printf(_L("Gobbled: %dK\n"), taken/1024);
 	test.Printf(_L("Free RAM 0x%08X bytes\n"),FreeRam());
 
 	test.Next(_L("Create thread"));
 	r=NtfThrd.Create(KNotifierThreadName,NotifierThread,KDefaultStackSize,NULL,NULL);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	NtfThrd.SetPriority(EPriorityMore);
 	NtfThrd.Resume();
 	test.Next(_L("Check for initial notifier"));
 	CheckNotifierCount(1,1);
 	TInt free=FreeRam();
 	test.Printf(_L("Free RAM: %dK\n"),free/1024);
-	test(free>=1048576);
+	test_Value(free, free >= 1048576);
 	test.Next(_L("Set thresholds"));
 	r=UserSvr::SetMemoryThresholds(65536,524288);	// low=64K good=512K
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Next(_L("Create chunk"));
 	// Chunk must not be paged otherwise it will not effect the amount 
 	// of free ram reported plus on h4 swap size is less than the total ram.
+	TInt totalRam;
+	test_KErrNone(HAL::Get(HAL::EMemoryRAM, totalRam));
 	TChunkCreateInfo createInfo;
-	createInfo.SetNormal(0, free+2097152);
+	createInfo.SetNormal(0, totalRam);
 	createInfo.SetPaging(TChunkCreateInfo::EUnpaged);
 	RChunk c;
 	test_KErrNone(c.Create(createInfo));
@@ -858,31 +861,31 @@ void testNotifiers()
 	TInt free3=free-(KBufferSpace-free2);	// this accounts for space used by page tables
 	test.Next(_L("Leave 32K"));
 	r=c.Adjust(free3-32768);		// leave 32K
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckNotifierCount(2,1);		// should get notifier
 	test.Next(_L("Leave 28K"));
 	r=c.Adjust(free3-28672);		// leave 28K
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckNotifierCount(2,1);		// shouldn't get another notifier
 	test.Next(_L("Ask for too much"));
-	r=c.Adjust(free3+4096);			// try to get more than available
-	test(r==KErrNoMemory);
+	r=c.Adjust(totalRam);			// try to get more than available
+	test_Equal(KErrNoMemory, r);
 	CheckNotifierCount(2,2);		// should get another notifier
 	test.Next(_L("Leave 128K"));
 	r=c.Adjust(free3-131072);		// leave 128K
-	test(r==KErrNone);
+	test_KErrNone(r);;
 	CheckNotifierCount(2,2);		// shouldn't get another notifier
 	test.Next(_L("Leave 640K"));
 	r=c.Adjust(free3-655360);		// leave 640K
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckNotifierCount(3,2);		// should get another notifier
 	test.Next(_L("Leave 1M"));
 	r=c.Adjust(free3-1048576);		// leave 1M
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckNotifierCount(3,2);		// shouldn't get another notifier
 	test.Next(_L("Ask for too much"));
-	r=c.Adjust(free3+4096);			// try to get more than available
-	test(r==KErrNoMemory);
+	r=c.Adjust(totalRam);			// try to get more than available
+	test_Equal(KErrNoMemory, r);
 
 	TInt notifierCount = 3;
 	if(MemModel==EMemModelTypeFlexible)
@@ -897,7 +900,7 @@ void testNotifiers()
 	CheckNotifierCount(notifierCount,3);		// should get another notifier
 	test.Next(_L("Leave 1M"));
 	r=c.Adjust(free3-1048576);					// leave 1M
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CheckNotifierCount(notifierCount,3);		// shouldn't get another notifier
 
 	c.Close();

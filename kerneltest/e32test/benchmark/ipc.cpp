@@ -212,11 +212,11 @@ public :
 		BMProgram(
 			aRemote 
 				? ((aPriority == KBMPriorityHigh) 
-					? _L("Client-server Framework[Remote High Prioirty Server]")
-					: _L("Client-server Framework[Remote Low Prioirty Server]"))
+					? _L("Client-server Framework[Remote High Priority Server]")
+					: _L("Client-server Framework[Remote Low Priority Server]"))
 				: ((aPriority == KBMPriorityHigh) 
-					? _L("Client-server Framework[Local High Prioirty Server]")
-					: _L("Client-server Framework[Local Low Prioirty Server]")))
+					? _L("Client-server Framework[Local High Priority Server]")
+					: _L("Client-server Framework[Local Low Priority Server]")))
 		{
 		iPriority = aPriority;
 		iRemote = aRemote;
