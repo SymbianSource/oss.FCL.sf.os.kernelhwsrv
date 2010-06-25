@@ -150,6 +150,13 @@ option		SOURCES			template.s
 option		EXTRA_SRC_PATH		$(EXTENSION_ROOT)/bootstrap
 option		INCLUDES		$(EXTENSION_ROOT)/config.inc
 option		E32PATH			$(EXTENSION_ROOT)/../../../kernel/eka/../.
+#ifdef GCCE
+option		GCCE			GCCE
+option		EXTRA_INC_PATH	$(EPOCBLD)/$(NAME)
+#endif
+#ifdef ARMCC
+option		ARMCC			ARMCC
+#endif
 
 end
 
