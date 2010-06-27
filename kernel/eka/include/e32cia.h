@@ -354,7 +354,7 @@
 #define CSM_ZN9RMessageK8CloseRefEv "__cpp(RMessageK::CloseRef)"
 #else
 // CIA symbol macros for EABI assemblers
-#define CSM_ZN1K8MsgInfoE " _ZN1K9MsgInfoE"
+#define CSM_ZN1K8MsgInfoE " _ZN1K7MsgInfoE"
 #define CSM_ZN14NFastSemaphore6SignalEv " _ZN14NFastSemaphore6SignalEv"
 #define CSM_ZN4Kern4ExitEi " _ZN4Kern4ExitEi"
 #define CSM_ZN5NKern4ExitEv " _ZN5NKern4ExitEv"
