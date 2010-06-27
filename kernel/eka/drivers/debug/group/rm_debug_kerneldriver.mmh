@@ -52,4 +52,9 @@ EPOCALLOWDLLDATA
 
 capability			all
 
+#ifdef GCCE
+staticlibrary usrt3_1.lib
+library drtaeabi.dso
+#endif
+
 SMPSAFE
