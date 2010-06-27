@@ -38,6 +38,10 @@ firstlib		VariantTarget(kc_exe,lib)
 
 targettype				exexp
 
+#ifdef GCCE
+library drtaeabi.dso
+#endif
+
 #include "kern_int.mmh"
 
 // For emulator, specify newlib containing kernel-side definitions of new and delete operators
