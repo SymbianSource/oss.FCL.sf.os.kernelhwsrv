@@ -241,6 +241,9 @@
 #define CSM_ZN8DSession14PinDescriptorsEPiPA3_mPP17TVirtualPinObject "PinDescriptors__8DSessionPiPA2_UlPP17TVirtualPinObject"
 #define CSM_ZN14TClientRequest5ResetEv "Reset__14TClientRequest"
 #define CSM_ZN9RMessageK8CloseRefEv "CloseRef__9RMessageK"
+#define CSM_ZN14DBTraceFilter25CheckEm " Check__14DBTraceFilter2Ul"
+#define CSM_ZN19DKernelEventHandler8DispatchE12TKernelEventPvS1_ "Dispatch__19DKernelEventHandler12TKernelEventPvT2"
+
 #elif defined(__ARMCC__)
 // CIA symbol macros for RVCT
 #define CSM_ZN1K8MsgInfoE " __cpp(&K::MsgInfo)"
@@ -352,6 +355,8 @@
 #define CSM_ZN8DSession14PinDescriptorsEPiPA3_mPP17TVirtualPinObject " __cpp(DSession::PinDescriptors)"
 #define CSM_ZN14TClientRequest5ResetEv "__cpp(TClientRequest::Reset)"
 #define CSM_ZN9RMessageK8CloseRefEv "__cpp(RMessageK::CloseRef)"
+#define CSM_ZN14DBTraceFilter25CheckEm  " __cpp(DBTraceFilter2::Check)"
+#define CSM_ZN19DKernelEventHandler8DispatchE12TKernelEventPvS1_ "__cpp(DKernelEventHandler::Dispatch)"
 #else
 // CIA symbol macros for EABI assemblers
 #define CSM_ZN1K8MsgInfoE " _ZN1K7MsgInfoE"
@@ -463,6 +468,8 @@
 #define CSM_ZN8DSession14PinDescriptorsEPiPA3_mPP17TVirtualPinObject "_ZN8DSession14PinDescriptorsEPiPA3_mPP17TVirtualPinObject"
 #define CSM_ZN14TClientRequest5ResetEv "_ZN14TClientRequest5ResetEv"
 #define CSM_ZN9RMessageK8CloseRefEv "_ZN9RMessageK8CloseRefEv"
+#define CSM_ZN14DBTraceFilter25CheckEm  " _ZN14DBTraceFilter25CheckEm"
+#define CSM_ZN19DKernelEventHandler8DispatchE12TKernelEventPvS1_ " _ZN19DKernelEventHandler8DispatchE12TKernelEventPvS1_"
 #endif
 
 // CIA symbols for COMMON code (used both USER and KERNEL side)

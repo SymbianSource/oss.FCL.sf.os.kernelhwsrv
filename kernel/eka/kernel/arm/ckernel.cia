@@ -38,7 +38,7 @@ __NAKED__ void DThread::EpocThreadFunction(TAny*)
 #ifdef __DEBUGGER_SUPPORT__
 	asm("mov r0, #%a0" : : "i" ((TInt)EEventStartThread));
 	asm("mov r1, r4");
-	asm("bl	Dispatch__19DKernelEventHandler12TKernelEventPvT2");
+	asm("bl	" CSM_ZN19DKernelEventHandler8DispatchE12TKernelEventPvS1_);
 #endif
 #ifdef __EMI_SUPPORT__
 	asm("mov r0,r4");                                   // a1=DThread;

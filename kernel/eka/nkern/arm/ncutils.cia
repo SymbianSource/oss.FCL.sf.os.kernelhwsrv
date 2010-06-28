@@ -501,7 +501,7 @@ __NAKED__ TBool SBTraceData::CheckFilter2(TUint32 aUid)
 
 
 	asm("mov	r6, r0");
-	asm("bl		Check__14DBTraceFilter2Ul");
+	asm("bl	" CSM_ZN14DBTraceFilter25CheckEm);
 	// r0 = result
 
 
