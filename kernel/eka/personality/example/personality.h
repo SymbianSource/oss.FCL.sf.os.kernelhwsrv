@@ -41,6 +41,8 @@ typedef unsigned long size_t;
 typedef unsigned int size_t;
 #elif defined(__ARMCC__)
 typedef unsigned int size_t;
+#elif defined(__GCCE__)
+typedef unsigned int size_t;
 #endif
 
 #ifdef __cplusplus
