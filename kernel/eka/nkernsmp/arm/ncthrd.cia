@@ -576,15 +576,15 @@ EXPORT_C __NAKED__ void NFastSemaphore::Signal()
 	asm("mov	r4, r0 ");
 	asm("mov	r5, r1 ");
 	asm("mov	r0, r1 ");
-	asm("bl		AcqSLock__12NSchedulable ");
+	asm("bl		AcqSLock__12NSchedulable "); // CSM needed
 	asm("add	r0, r5, #%a0" : : "i" _FOFF(NThreadBase, iWaitState));
 	asm("mov	r1, #%a0" : : "i" ((TInt)NThreadBase::EWaitFastSemaphore));
 	asm("mov	r2, r4 ");
 	asm("mov	r3, #0 ");
-	asm("bl		UnBlockT__16NThreadWaitStateUiPvi ");
+	asm("bl		UnBlockT__16NThreadWaitStateUiPvi "); // CSM needed
 	asm("mov	r0, r5 ");
 	asm("ldmfd	sp!, {r4-r6,lr} ");
-	asm("b		RelSLock__12NSchedulable ");
+	asm("b		RelSLock__12NSchedulable "); // CSM needed
 	}
 
 
@@ -707,7 +707,7 @@ EXPORT_C __NAKED__ void NKern::FSSignal(NFastSemaphore* /*aSem*/)
 	__ASM_STI();
 	asm("bl		fs_signal_wake ");			// wake up the thread
 	asm("ldmfd	sp!, {r4,lr} ");
-	asm("b		Unlock__5NKern ");
+	asm("b " CSM_ZN5NKern6UnlockEv);
 	}
 
 
@@ -960,14 +960,14 @@ __NAKED__ TInt NThreadWaitState::UnBlockT(TUint /*aType*/, TAny* /*aWaitObj*/, T
 	asm("bne	1b ");						// no - retry
 	asm("mov	r6, r0 ");
 	asm("tst	r4, #%a0" : : "i" ((TInt)EWtStTimeout));
-	asm("blne	CancelTimerT__16NThreadWaitState ");
+	asm("blne	CancelTimerT__16NThreadWaitState "); // CSM needed
 	asm("tst	r4, #%a0" : : "i" ((TInt)EWtStWaitActive));
 	asm("beq	0f ");
 	asm("ldr	r1, [r6, #%a0]" : : "i" (_FOFF(NThreadBase,iPauseCount)-_FOFF(NThreadBase,iWaitState)));
 	asm("sub	r0, r6, #%a0" : : "i" _FOFF(NThreadBase,iWaitState));	// r0 = Thread()
 	asm("movs	r1, r1, lsl #16 ");				// check if iPauseCount=iSuspendCount=0
 	asm("andeq	r1, r4, #%a0" : : "i" ((TInt)EWtStObstructed));
-	asm("bleq	ReadyT__12NSchedulableUi ");	// if so, make thread ready
+	asm("bleq	ReadyT__12NSchedulableUi ");	// if so, make thread ready // CSM needed
 	asm("0:		");
 	asm("mov	r0, #0 ");
 	__POPRET("	r4-r6,");					// return KErrNone
@@ -1002,7 +1002,7 @@ __NAKED__ TUint32 NThreadWaitState::ReleaseT(TAny*& /*aWaitObj*/, TInt /*aReturn
 
 	asm("2:		");
 	asm("mov	r5, lr ");
-	asm("bl		CancelTimerT__16NThreadWaitState ");
+	asm("bl		CancelTimerT__16NThreadWaitState "); // CSM needed
 	asm("mov	r0, r4 ");
 	asm("mov	lr, r5 ");
 	asm("ldmfd	sp!, {r4-r5} ");
@@ -1039,7 +1039,7 @@ EXPORT_C __NAKED__ void NFastMutex::Signal()
 	asm("ldr	r0, btrace_hdr_fmsignal ");
 	asm("mov	r2, #0 ");
 	asm("mov	r3, #0 ");
-	asm("bl		OutX__6BTraceUlUlUlUl ");
+	asm("bl	" CSM_ZN6BTrace4OutXEmmmm);
 	asm("ldmfd	sp!, {r0,lr} ");
 #endif
 	GET_RWNO_TID(,r3);
@@ -1069,7 +1069,7 @@ EXPORT_C __NAKED__ void NFastMutex::Signal()
 	asm("orr	r12, r0, #1 ");
 	asm("str	r12, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
 	__ASM_STI();
-	asm("b		DoSignalL__10NFastMutex ");
+	asm("b		DoSignalL__10NFastMutex "); // CSM needed
 	}
 
 
@@ -1137,7 +1137,7 @@ EXPORT_C __NAKED__ void NKern::FMWait(NFastMutex* /*aMutex*/)
 	asm("ldr	r0, btrace_hdr_fmwait ");
 	asm("mov	r2, #0 ");
 	asm("mov	r3, #0 ");
-	asm("b		OutX__6BTraceUlUlUlUl ");
+	asm("b " CSM_ZN6BTrace4OutXEmmmm);
 #endif
 	__JUMP(,lr);					// mutex acquired without contention
 
@@ -1149,9 +1149,9 @@ EXPORT_C __NAKED__ void NKern::FMWait(NFastMutex* /*aMutex*/)
 	__ASM_STI();
 	__DATA_MEMORY_BARRIER_Z__(r12);
 	asm("stmfd	sp!, {r4,lr} ");
-	asm("bl		DoWaitL__10NFastMutex ");
+	asm("bl		DoWaitL__10NFastMutex "); // CSM needed
 	asm("ldmfd	sp!, {r4,lr} ");
-	asm("b		Unlock__5NKern ");
+	asm("b " CSM_ZN5NKern6UnlockEv);
 
 	asm("__SystemLock: ");
 	asm(".word	%a0" : : "i" ((TInt)&TheScheduler.iLock));
@@ -1195,7 +1195,7 @@ EXPORT_C __NAKED__ void NKern::FMSignal(NFastMutex* /*aMutex*/)
 	asm("ldr	r0, btrace_hdr_fmsignal ");
 	asm("mov	r2, #0 ");
 	asm("mov	r3, #0 ");
-	asm("bl		OutX__6BTraceUlUlUlUl ");
+	asm("bl	" CSM_ZN6BTrace4OutXEmmmm);
 	asm("ldmfd	sp!, {r0,lr} ");
 #endif
 	__ASM_CLI();
@@ -1223,9 +1223,9 @@ EXPORT_C __NAKED__ void NKern::FMSignal(NFastMutex* /*aMutex*/)
 	asm("str	r12, [r3, #%a0]" : : "i" _FOFF(TSubScheduler,iKernLockCount));
 	asm("str	r4, [r1, #%a0]" : : "i" _FOFF(NThreadBase,iHeldFastMutex));
 	__ASM_STI();
-	asm("bl		DoSignalL__10NFastMutex ");
+	asm("bl		DoSignalL__10NFastMutex "); // CSM needed
 	asm("ldmfd	sp!, {r4,lr} ");
-	asm("b		Unlock__5NKern ");
+	asm("b " CSM_ZN5NKern6UnlockEv);
 	}
 
 
@@ -1298,7 +1298,7 @@ EXPORT_C __NAKED__ TBool NKern::FMFlash(NFastMutex* /*aM*/)
 	asm("stmfd	sp!, {r4,lr} ");
 	asm("mov	r2, #0 ");
 	asm("mov	r3, #0 ");
-	asm("bl		OutX__6BTraceUlUlUlUl ");
+	asm("bl	" CSM_ZN6BTrace4OutXEmmmm);
 	asm("ldmfd	sp!, {r4,lr} ");
 #endif
 	asm("mov	r0, #0 ");
@@ -1315,11 +1315,11 @@ EXPORT_C __NAKED__ TBool NKern::FMFlash(NFastMutex* /*aM*/)
 	__ASM_STI();
 	asm("stmfd	sp!, {r4,lr} ");
 	asm("mov	r4, r0 ");
-	asm("bl		Signal__10NFastMutex ");
-	asm("bl		PreemptionPoint__5NKern ");
+	asm("bl	" CSM_ZN10NFastMutex6SignalEv);
+	asm("bl	" CSM_ZN5NKern15PreemptionPointEv);
 	asm("mov	r0, r4 ");
-	asm("bl		Wait__10NFastMutex ");
-	asm("bl		Unlock__5NKern ");
+	asm("bl	" CSM_ZN10NFastMutex4WaitEv);
+	asm("bl	" CSM_ZN5NKern6UnlockEv);
 	asm("ldmfd	sp!, {r4,lr} ");
 	asm("mov	r0, #1 ");
 	__JUMP(,lr);								// return TRUE

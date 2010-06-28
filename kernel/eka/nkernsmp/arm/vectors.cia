@@ -157,7 +157,7 @@ extern "C" __NAKED__ void __ArmVectorSwi()
 #ifndef __FAST_SEM_MACHINE_CODED__
 	asm("wait_for_any_request: ");
 	__ASM_STI();							// all interrupts on
-	asm("b		WaitForAnyRequest__5NKern ");
+	asm("b		WaitForAnyRequest__5NKern "); // CSM needed
 #else
 	asm(".global exec_wfar_wait ");
 	asm("exec_wfar_wait: ");
@@ -1005,7 +1005,7 @@ extern "C" __NAKED__ void DoRunUserModeCallbacks()
 	// CsFunction outstanding so do it
 	asm("5:		");
 	__ASM_STI();					// enable interrupts
-	asm("bl		ThreadLeaveCS__5NKern ");
+	asm("bl	" CSM_ZN5NKern13ThreadLeaveCSEv);
 	__ASM_CLI();					// turn off interrupts
 	__DATA_MEMORY_BARRIER__(r6);
 	asm("ldr	r1, [r8] ");

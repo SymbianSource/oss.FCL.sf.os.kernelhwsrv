@@ -838,7 +838,7 @@ __NAKED__ void PreprocessHandler()
 	asm("b  " CSM_ZN1K18PanicCurrentThreadEi);
 
 	asm("__KernMsgInfo: ");
-	asm(".word  " CSM_ZN1K8MsgInfoE);
+	asm(".word  " CSM_ZN1K7MsgInfoE);
 	}
 
 

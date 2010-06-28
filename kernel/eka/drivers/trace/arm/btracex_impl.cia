@@ -161,7 +161,7 @@
 
 #ifdef BTRACE_INCLUDE_TIMESTAMPS
 #ifdef __SMP__
-	asm("bl		Timestamp__5NKern ");
+	asm("bl	" CSM_ZN5NKern9TimestampEv);
 	asm("str	r0, [r5], #4 ");		// store timestamp low word
 #ifdef USE_TIMESTAMP2
 	asm("str	r1, [r5], #4 ");		// store timestamp high word

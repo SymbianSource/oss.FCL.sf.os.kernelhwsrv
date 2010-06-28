@@ -866,7 +866,7 @@ extern "C" __NAKED__ void send_accumulated_resched_ipis()
 	asm("stmfd	sp!, {r0,lr} ");
 	asm("mov	r0, r3 ");
 	asm("mov	r1, r12 ");
-	asm("bl		ReschedInactiveCpus__10TSchedulerUl ");
+	asm("bl		ReschedInactiveCpus__10TSchedulerUl ");	// CSM needed
 	asm("mov	r12, r0 ");
 	asm("ldmfd	sp!, {r0,lr} ");
 	asm("ldr	r2, [r0, #%a0]" : : "i" _FOFF(TSubScheduler, iSSX.iGicDistAddr));
@@ -1040,7 +1040,7 @@ __NAKED__ void TSubScheduler::UpdateThreadTimes(NThreadBase* /*aOld*/, NThreadBa
 	asm("ldr	r6, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iLastTimestamp.i32[0]));
 	asm("ldr	r7, [r0, #%a0]" : : "i" _FOFF(TSubScheduler,iLastTimestamp.i32[1]));
 	asm("stmfd	sp!, {r0-r2,lr} ");
-	asm("bl		Timestamp__5NKern ");		// R1:R0 = current time
+	asm("bl	" CSM_ZN5NKern9TimestampEv);		// R1:R0 = current time
 	asm("mov	r4, r0 ");
 	asm("mov	r5, r1 ");					// R5:R4 = current time
 	asm("ldmfd	sp!, {r0-r2,lr} ");

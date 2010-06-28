@@ -432,6 +432,6 @@ __NAKED__ RMessageK* RMessageK::MessageK(TInt /*aMsgHandle*/, DThread* /*aThread
 	asm(".word TheScheduler ");
 #endif
 	asm("__K_MsgInfo: ");
-	asm(".word  " CSM_ZN1K8MsgInfoE);
+	asm(".word  " CSM_ZN1K7MsgInfoE);
 	}
 #endif
