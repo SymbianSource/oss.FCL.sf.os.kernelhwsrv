@@ -311,6 +311,7 @@ die "ERROR EXECUTING CPP\n" if $ret;
 
 # Zap any ## marks REMS or blank lines
 
+print "Cleaning up rom2.tmp to make rom3.tmp\n" if $debug;
 cleanup("rom2.tmp", "rom3.tmp", $k);
 
 # scan tmp file and generate auxiliary files, if required
@@ -324,6 +325,7 @@ while ($line=<TMP>)
 		genfile("nonpaged");	}
 	}
 
+print "Parsing PatchData to make rom4.tmp\n" if $debug;
 parsePatchData("rom3.tmp", "rom4.tmp");
 
 # break down the oby file into rom, rofs, extensions and smr oby files
@@ -717,17 +719,28 @@ sub lookupSymbolInfo($$)
 	open TMP, $file or die "Can't read $file\n";
 
 	# ignore local symbols.
-	while (<TMP> !~ /Global Symbols/) { }
-
 	while (<TMP>)
 	{
-		if (/^\s*(\S+)\s+(\S+)\s+data\s+(\S+)/i)
+		last if /Global Symbols|Linker script and memory map/;
+	}
+
+  my @return_values = ();
+  my $line;
+	while ($line = <TMP>)
+	{
+		next if (index($line, $name) < 0);		
+		
+		# RVCT 2.2
+		# 
+		#     KHeapMinCellSize  0x0004e38c  Data 4  mem.o(.constdata)
+		#
+		if ($line =~ /^\s*(\S+)\s+(\S+)\s+data\s+(\S+)/i)
 		{
 			my ($symbol, $addr, $size) = ($1, $2, $3);
 			if ($symbol eq $name)
 			{
-				close TMP;
-				return ($addr, $size);
+				@return_values = ($addr, $size);
+				last;
 			}
 		}
 
@@ -736,18 +749,42 @@ sub lookupSymbolInfo($$)
 		#
 		# KHeapMinCellSize (EXPORTED) 0x0003d81c Data 4 mem.o(.constdata)
 		#
-		elsif (/^\s*(\S+)\s+\(exported\)\s+(\S+)\s+data\s+(\S+)/i)
+		elsif ($line =~ /^\s*(\S+)\s+\(exported\)\s+(\S+)\s+data\s+(\S+)/i)
 		{
 			my ($symbol, $addr, $size) = ($1, $2, $3);
 			if ($symbol eq $name)
 			{
-				close TMP;
-				return ($addr, $size);
+				@return_values = ($addr, $size);
+				last;
 			}
 		}
-	}
+		
+		# GCC 4.x map files
+		#                 0x00114c68                KHeapMinCellSize
+		#                 0x00114c6c                KHeapShrinkHysRatio
+		#  .rodata        0x00115130      0x968 M:/epoc32/build/kernel/c_99481fddbd6c6f58/_omap3530_ekern_exe/armv5/udeb/heap_hybrid.o
+		#
+		elsif ($line =~ /^.+\s+(0x\S+)\s+(\S+)/i)
+		{
+			my ($addr, $symbol) = ($1, $2);
+			if ($symbol eq $name)
+			{
+				my $next_line = <TMP>;
+				if ($next_line =~ /^.+\s+(0x\S+)\s+(\S+)/i)
+				{
+					my $addr2 = $1;
+					
+					@return_values = ($addr, hex($addr2) - hex($addr));
+					last;
+				}
+			}
+		}
 
-	die "patchdata: Can't find symbol $name\n";
+	}
+	close TMP;
+
+	die "patchdata: Can't find symbol $name\n" if (scalar @return_values == 0);
+	return @return_values;
 }
 
 sub parsePatchData($$)
@@ -767,6 +804,8 @@ sub parsePatchData($$)
 				die "Bad patchdata command: $line\n";
 			}
 
+			print "Handling $line\n" if $debug;
+
 			my ($file, $symbol, $value) = (lc $1, $2, $3);
 			my ($srcFile, $destFile) = lookupFileInfo($infile, $file);
 			my ($index, $elementSize) = (undef, undef);
@@ -778,6 +817,7 @@ sub parsePatchData($$)
 
 			if ($srcFile =~ /\\armv5(smp)?\\/i)
 			{
+				print "..looking up $symbol in $srcFile.map\n" if $debug;
 				my ($symbolAddr, $symbolSize) = lookupSymbolInfo("$srcFile.map", $symbol);
 
 				my $max;
@@ -819,6 +859,7 @@ sub parsePatchData($$)
 				$value = sprintf("0x%08x", $value);
 
 				$line = "patchdata $destFile addr $symbolAddr $symbolSize $value\n";
+				print ".. new line is $line\n" if $debug;
 			}
 			else
 			{
