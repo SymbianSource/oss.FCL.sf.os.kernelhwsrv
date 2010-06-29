@@ -696,17 +696,28 @@ sub lookupSymbolInfo($$)
 	open TMP, $file or die "Can't read $file\n";
 
 	# ignore local symbols.
-	while (<TMP> !~ /Global Symbols/) { }
-
 	while (<TMP>)
 	{
-		if (/^\s*(\S+)\s+(\S+)\s+data\s+(\S+)/i)
+		last if /Global Symbols|Linker script and memory map/;
+	}
+
+  my @return_values = ();
+  my $line;
+	while ($line = <TMP>)
+	{
+		next if (index($line, $name) < 0);		
+		
+		# RVCT 2.2
+		# 
+		#     KHeapMinCellSize  0x0004e38c  Data 4  mem.o(.constdata)
+		#
+		if ($line =~ /^\s*(\S+)\s+(\S+)\s+data\s+(\S+)/i)
 		{
 			my ($symbol, $addr, $size) = ($1, $2, $3);
 			if ($symbol eq $name)
 			{
-				close TMP;
-				return ($addr, $size);
+				@return_values = ($addr, $size);
+				last;
 			}
 		}
 
@@ -715,18 +726,42 @@ sub lookupSymbolInfo($$)
 		#
 		# KHeapMinCellSize (EXPORTED) 0x0003d81c Data 4 mem.o(.constdata)
 		#
-		elsif (/^\s*(\S+)\s+\(exported\)\s+(\S+)\s+data\s+(\S+)/i)
+		elsif ($line =~ /^\s*(\S+)\s+\(exported\)\s+(\S+)\s+data\s+(\S+)/i)
 		{
 			my ($symbol, $addr, $size) = ($1, $2, $3);
 			if ($symbol eq $name)
 			{
-				close TMP;
-				return ($addr, $size);
+				@return_values = ($addr, $size);
+				last;
 			}
 		}
-	}
+		
+		# GCC 4.x map files
+		#                 0x00114c68                KHeapMinCellSize
+		#                 0x00114c6c                KHeapShrinkHysRatio
+		#  .rodata        0x00115130      0x968 M:/epoc32/build/kernel/c_99481fddbd6c6f58/_omap3530_ekern_exe/armv5/udeb/heap_hybrid.o
+		#
+		elsif ($line =~ /^.+\s+(0x\S+)\s+(\S+)/i)
+		{
+			my ($addr, $symbol) = ($1, $2);
+			if ($symbol eq $name)
+			{
+				my $next_line = <TMP>;
+				if ($next_line =~ /^.+\s+(0x\S+)\s+(\S+)/i)
+				{
+					my $addr2 = $1;
+					
+					@return_values = ($addr, hex($addr2) - hex($addr));
+					last;
+				}
+			}
+		}
 
-	die "patchdata: Can't find symbol $name\n";
+	}
+	close TMP;
+
+	die "patchdata: Can't find symbol $name\n" if (scalar @return_values == 0);
+	return @return_values;
 }
 
 sub parsePatchData($$)
