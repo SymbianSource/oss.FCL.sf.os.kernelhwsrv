@@ -23,7 +23,6 @@ EXPORT_D extern const TInt KHeapShrinkHysRatio = RHeap::EShrinkRatioDflt;
 //NOTE - if these values are changed then the WINS test case value must be updated
 
 #ifndef __MEM_MACHINE_CODED__
-
 extern "C" {
 
 // See header file e32cmn.h for the in-source documentation.
@@ -161,7 +160,7 @@ EXPORT_C TInt memcompare(const TUint8* aLeft, TInt aLeftL, const TUint8* aRight,
 
 
 
-
+//IMK: Should this __GCC32__ should be __GCCE__ now?
 #if defined(__GCC32__) && !defined(__KERNEL_MODE__)
 /**
 Compares a block of data at one specified location with a block of data at 

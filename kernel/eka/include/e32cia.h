@@ -132,7 +132,7 @@
 // CIA symbols for KERNEL side code
 // CIA symbol macros for Gcc98r2
 #if defined(__GCC32__) && !defined(__EABI__)
-#define CSM_ZN1K8MsgInfoE " _1K.MsgInfo"
+#define CSM_ZN1K7MsgInfoE " _1K.MsgInfo"
 #define CSM_ZN14NFastSemaphore6SignalEv " Signal__14NFastSemaphore"
 #define CSM_ZN4Kern4ExitEi " Exit__4Kerni"
 #define CSM_ZN5NKern4ExitEv " Exit__5NKern"
@@ -246,7 +246,7 @@
 
 #elif defined(__ARMCC__)
 // CIA symbol macros for RVCT
-#define CSM_ZN1K8MsgInfoE " __cpp(&K::MsgInfo)"
+#define CSM_ZN1K7MsgInfoE " __cpp(&K::MsgInfo)"
 #define CSM_ZN14NFastSemaphore6SignalEv " __cpp(NFastSemaphore::Signal)"
 #define CSM_ZN4Kern4ExitEi " __cpp(Kern::Exit)"
 #define CSM_ZN5NKern4ExitEv " __cpp(NKern::Exit)"
@@ -359,7 +359,7 @@
 #define CSM_ZN19DKernelEventHandler8DispatchE12TKernelEventPvS1_ "__cpp(DKernelEventHandler::Dispatch)"
 #else
 // CIA symbol macros for EABI assemblers
-#define CSM_ZN1K8MsgInfoE " _ZN1K7MsgInfoE"
+#define CSM_ZN1K7MsgInfoE " _ZN1K7MsgInfoE"
 #define CSM_ZN14NFastSemaphore6SignalEv " _ZN14NFastSemaphore6SignalEv"
 #define CSM_ZN4Kern4ExitEi " _ZN4Kern4ExitEi"
 #define CSM_ZN5NKern4ExitEv " _ZN5NKern4ExitEv"
