@@ -83,7 +83,16 @@ void DoMemoryLeakTests(TUid aUid,TBool aCheckMNotifierManager)
 	User::WaitForRequest(stat);
 	n.CancelNotifier(aUid);
 	test(stat==heapCellCount);
-	test(heapInfo1==heapInfo2);
+	
+	TInt size1, size2;
+	TLex8 lex(heapInfo1);
+	r = lex.Val(size1);
+	test(r==KErrNone);
+	lex.Assign(heapInfo2);
+	r = lex.Val(size2);
+	test(r==KErrNone);
+	//allocated size after should not be greater than before BUT may be less with new allocator
+	test(size2 <= size1); 
 
 	test.Next(_L("Close connection to notifier server"));
 	n.Close();

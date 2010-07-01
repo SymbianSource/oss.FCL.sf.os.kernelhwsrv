@@ -1926,15 +1926,6 @@ TInt CFileMan::SetupMoveAcrossDrives(TUint aSwitches)
 	return(KErrNone);
 	}
 
-TInt CFileMan::RenameInvalidEntry(const TDesC& /*aName*/,const TDesC& /*aNewName*/,TUint /*aSwitches*/)
-//
-// Start rename operation
-//
-	{
-	return KErrNotSupported;
-	}
-
-
 
 
 EXPORT_C TInt CFileMan::Rename(const TDesC& aName,const TDesC& aNewName,TUint aSwitches,TRequestStatus& aStatus)

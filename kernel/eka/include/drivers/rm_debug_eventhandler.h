@@ -27,15 +27,8 @@ class DRM_DebugEventHandler : public DKernelEventHandler
 		TInt Start();
 		TInt Stop();
 		
-		inline void DRM_DebugEventHandler::LockDataAccess()
-		    {
-		    Kern::SemaphoreWait(*iProtectionLock);
-		    }
-
-		inline void DRM_DebugEventHandler::ReleaseDataAccess()
-		    {
-		    Kern::SemaphoreSignal(*iProtectionLock);
-		    }
+		inline void LockDataAccess();
+		inline void ReleaseDataAccess();
 		
 	private:
 		static TUint EventHandler(TKernelEvent aEvent, TAny* a1, TAny* a2, TAny* aThis);
@@ -56,5 +49,7 @@ class DRM_DebugEventHandler : public DKernelEventHandler
 		typedef TBool (DRM_DebugChannel::*eventHandler)(TAny* a1, TAny* a2);
 		eventHandler iEventHandlers[EEventLimit];
 };
+
+#include <rm_debug_eventhandler.inl>
 
 #endif //__RM_DEBUG_EVENTHANDLER_H__

@@ -105,6 +105,10 @@ TInt DArmPlatProcess::GetNewThread(DThread*& aThread, SThreadCreateInfo& aInfo)
 				{
 				*(TUint32*)(pT->iNThread.iExtraContext) = Arm::FpScr() & VFP_FPSCR_MODE_MASK;
 				}
+			else
+				{
+				*(TUint32*)(pT->iNThread.iExtraContext) = *(TUint32*)(Kern::CurrentThread().iNThread.iExtraContext);
+				}
 			}
 		}
 #endif

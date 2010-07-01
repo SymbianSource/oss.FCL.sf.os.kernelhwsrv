@@ -750,6 +750,7 @@ private:
     void    DoReMountL();
     void    SetFatType(TFatType aFatType);
 
+    TUint64 VolumeSizeInBytes() const;
 
 private:
 	
@@ -767,10 +768,10 @@ private:
     TBool iRamDrive         : 1;///< true if this is a RAM drive    
     TBool iMainBootSecValid : 1;///< true if the main boot sector is valid, if false, a backup boot sector may be in use. 
 
-    TFatMntState iState;        ///< this mounnt internal state
+    TFatMntState iState;            ///< this mounnt internal state
 
-    TFatType iFatType;          ///< FAT type, FAT12,16 or 32
-    TUint32  iFatEocCode;       ///< End Of Cluster Chain code, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
+    TFatType iFatType;              ///< FAT type, FAT12,16 or 32
+    TUint32  iFatEocCode;           ///< End Of Cluster Chain code, 0xff8 for FAT12, 0xfff8 for FAT16, and 0xffffff8 for FAT32 
 
     CLeafDirCache* iLeafDirCache;	///< A cache for most recently visited directories, only valid when limit is set bigger than 1
 
@@ -782,7 +783,7 @@ private:
     CFatTable* iFatTable;           ///< Pointer to the volume Fat 
 	CRawDisk*  iRawDisk;            ///< Pointer to the raw data interface class
 	
-    CAsyncNotifier* iNotifier;  ///< Async notifier for notifying user of Fat error conditions 
+    CAsyncNotifier* iNotifier;      ///< Async notifier for notifying user of Fat error conditions 
 
     XDriveInterface iDriverInterface; ///< the object representing interface to the drive, provides read/write access and notifiers
 	TFatConfig      iFatConfig;       ///< FAT parametrers from estart.txt

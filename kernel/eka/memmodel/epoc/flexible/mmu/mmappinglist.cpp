@@ -153,6 +153,7 @@ DMemoryMappingBase* TMappingListIter::Next(TMappingListBase* aPrev)
 			iPrev = prev;
 			// flash lock...
 			__SPIN_FLASH_IRQ(iSpinLock);
+			flash = 0;
 			// remove iterator again...
 			next = iNext;
 			prev = iPrev;

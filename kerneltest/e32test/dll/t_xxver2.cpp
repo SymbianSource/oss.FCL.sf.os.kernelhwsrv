@@ -578,8 +578,13 @@ void TestExeInfo(TInt aN)
 		test(((SSecurityInfo&)info.iSecurityInfo).iCaps[0]==0x0002aaab);
 		test(((SSecurityInfo&)info.iSecurityInfo).iCaps[1]==0);
 		if(formHeader)
+		{
+		#if defined(__ARMCC__) && __ARMCC_VERSION >= 400000
+			test(info.iHardwareFloatingPoint == EFpTypeVFPv2);
+		#else
 			test(info.iHardwareFloatingPoint == EFpTypeNone);
-
+		#endif
+		}
 		if(formHeader)
 			break;
 		formHeader = ETrue;

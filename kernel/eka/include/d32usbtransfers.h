@@ -54,7 +54,7 @@ friend class RUsbPipe;
 friend class RUsbTransferStrategy;
 
 public:
-	virtual void Close();
+	IMPORT_C virtual void Close();
 
 protected:
 	RUsbTransferDescriptor(TTransferType aType, TInt aMaxSize, TInt aMaxNumPackets);

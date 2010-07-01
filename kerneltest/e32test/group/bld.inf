@@ -302,6 +302,9 @@ t_kernasmbm manual
 t_userasmbm manual
 #endif
 
+// /E32TEST/TIMESTAMP test
+t_timestamp
+
 // /e32test/benchmark
 #ifndef X86
 bm_suite    MANUAL_ON_WINS
@@ -381,6 +384,9 @@ t_testearlyextension
 #endif
 #ifdef MARM_ARMV5
 t_usb_device	manual
+t_usb_tranhandleclient	support
+t_usb_transfersrvclient	support
+t_usb_transfersrv	manual
 t_usb_scdevice	manual
 #endif
 
@@ -713,8 +719,6 @@ t_domain_slave  support
 domainPolicyTest support
 t_switchoff
 t_frqchg
-// /E32TEST/TIMESTAMP test
-t_timestamp
 
 // /E32TEST/PRIME tests
 t_kern      support
@@ -1057,9 +1061,6 @@ t_destruct_dll2		support
 t_destruct_dll3		support
 
 #include "../examples/examples.inf"
-// Shared chunk camera driver tests.
-t_camera_api		manual
-t_camera_gen		manual
 d_mmcsc			support
 
 t_kerncorestats		support

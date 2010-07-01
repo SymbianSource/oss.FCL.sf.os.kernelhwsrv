@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -38,6 +38,31 @@ EXPORT_C TInt RDevUsbcScClient::FinalizeInterface()
 	return r;
 	}
 
+// empty a endpoint buffer, this is called when device state enter undefined
+TInt RDevUsbcScClient::Empty(TUint aBufferOffset)
+{
+	TUint8* base = iSharedChunk.Base();
+	SUsbcScBufferHeader* endpointHdr = (SUsbcScBufferHeader*) (aBufferOffset + base);
+	TUint localTail = endpointHdr->iBilTail;
+	TUsbcScTransferHeader* currentTransfer;
+	TInt err=KErrNone;
+
+	while (ETrue)
+		{
+		if (localTail == (TUint) endpointHdr->iHead)
+			{
+			err = KErrNone;			
+			break;
+			}
+		currentTransfer = (TUsbcScTransferHeader*) (base + localTail);
+		localTail = currentTransfer->iNext;
+		} // end while
+	endpointHdr->iBilTail = localTail;
+	endpointHdr->iTail = localTail;
+	return err;
+}
+
+
 
 EXPORT_C TInt RDevUsbcScClient::FinalizeInterface(RChunk*& aChunk)
 	{
@@ -46,6 +71,35 @@ EXPORT_C TInt RDevUsbcScClient::FinalizeInterface(RChunk*& aChunk)
 	iEndpointStatus = 0x00; //all endpoints are closed at the moment
 	iAlternateSetting = 0;
 	return aChunk->SetReturnedHandle(errorOrhandle);
+	}
+
+
+EXPORT_C void RDevUsbcScClient::ResetAltSetting()
+	{
+	if (iAlternateSetting == 0)
+		return;
+	TUsbcScChunkHeader chunkHeader(iSharedChunk);
+	
+	TInt ep;
+	TInt noEp;
+	TUint bufOff;
+	TUsbcScHdrEndpointRecord* endpointInf = NULL;
+
+	// check if alternate setting contains all IN endpoints
+	noEp = chunkHeader.GetNumberOfEndpoints(iAlternateSetting);
+
+	// for each used buffer. 
+	for (ep=1;ep<=noEp;ep++)
+		{
+		bufOff = chunkHeader.GetBuffer(iAlternateSetting,ep,endpointInf)->Offset();	
+	
+		if (endpointInf->Direction() & KUsbScHdrEpDirectionOut) 
+			{
+			Empty(bufOff); // we need to remove anythng in the way, and get it ready for reading.
+			}
+		}
+	
+	iAlternateSetting = 0;
 	}
 
 
@@ -118,12 +172,14 @@ EXPORT_C TInt RDevUsbcScClient::OpenEndpoint(TEndpointBuffer& aEpB, TInt aEpI)
  
 TInt RDevUsbcScClient::Drain(TUint aBufferOffset)
 {
+
 	TUint8* base = iSharedChunk.Base();
 	SUsbcScBufferHeader* endpointHdr = (SUsbcScBufferHeader*) (aBufferOffset+base);
 	TUint localTail = endpointHdr->iBilTail;
 	TUsbcScTransferHeader* currentTransfer;
 	TUint16 next = (iAltSettingSeq+1)&0xFFFF;
 	TInt err=KErrNone;
+	TBool aZLP;
 
 	while (ETrue)
 		{
@@ -135,8 +191,13 @@ TInt RDevUsbcScClient::Drain(TUint aBufferOffset)
 		currentTransfer = (TUsbcScTransferHeader*) (base + localTail);
 
 		if (currentTransfer->iAltSettingSeq == next)
-			{
+			{			
 			iNewAltSetting=currentTransfer->iAltSetting; // record new alt setting
+			aZLP = (currentTransfer->iFlags & KUsbcScShortPacket)!=EFalse;
+			if ((currentTransfer->iBytes==0) && (!aZLP)) // take empty packet which is for alternate setting change
+				{
+				localTail = currentTransfer->iNext;
+				}
 			break;
 			}
 		else
@@ -164,7 +225,7 @@ TInt RDevUsbcScClient::Peek(TUint aBufferOffset)
 		// if alternate setting has not changed
 		return KErrNotReady;
 	else
-		{
+		{		
 		iNewAltSetting=currentTransfer->iAltSetting;
 		return KErrNone;
 		}
@@ -405,6 +466,7 @@ EXPORT_C TInt TEndpointBuffer::GetBuffer(TAny*& aBuffer,TUint& aSize,TBool& aZLP
 
 	TUsbcScTransferHeader* currentTransfer;
 	TInt r;
+	TInt aBilTail;
 	do // until we have a transfer with data.
 		{
 		iEndpointHdr->iTail = iEndpointHdr->iBilTail; 
@@ -415,19 +477,22 @@ EXPORT_C TInt TEndpointBuffer::GetBuffer(TAny*& aBuffer,TUint& aSize,TBool& aZLP
 				return r;
 			}
 		currentTransfer = (TUsbcScTransferHeader*) (iBaseAddr + iEndpointHdr->iBilTail);
-
+		aBilTail = iEndpointHdr->iBilTail;
 		iEndpointHdr->iBilTail = currentTransfer->iNext;
 		aZLP = (currentTransfer->iFlags & KUsbcScShortPacket)!=EFalse;
 
 		if(currentTransfer->iAltSettingSeq != (iClient->iAltSettingSeq))  // if alternate setting has changed
 			{
 			if (currentTransfer->iAltSettingSeq == (iClient->iAltSettingSeq+1))	   //Note- KIS ATM, if multiple alternate setting changes happen
+				{
 				iClient->iNewAltSetting = currentTransfer->iAltSetting; //before StartNextOutAlternateSetting is called, 		   
-																	   //this variable will reflect the latest requested AlternateSetting
+																	   //this variable will reflect the latest requested AlternateSetting		
+				}													   
 
 
 			if (iEndpointNumber != KEp0Number)
 				{
+				iEndpointHdr->iBilTail = aBilTail;
 //				iOutState =  EEOF;	
 				return KErrEof;
 				}
@@ -450,8 +515,10 @@ EXPORT_C TInt TEndpointBuffer::TakeBuffer(TAny*& aBuffer,TUint& aSize,TBool& aZL
 	if (iOutState)
 		return iOutState;
 
+
 	TUsbcScTransferHeader* currentTransfer;
 	TInt r;
+	TInt aBilTail;
 	do // until we have a transfer with data.
 		{
 		if(iEndpointHdr->iBilTail == iEndpointHdr->iHead)  //If no new data, create request
@@ -464,6 +531,7 @@ EXPORT_C TInt TEndpointBuffer::TakeBuffer(TAny*& aBuffer,TUint& aSize,TBool& aZL
 			}
 
 		currentTransfer = (TUsbcScTransferHeader*) (iBaseAddr + iEndpointHdr->iBilTail);
+		aBilTail = iEndpointHdr->iBilTail;
 		iEndpointHdr->iBilTail = currentTransfer->iNext;
 		aZLP = (currentTransfer->iFlags & KUsbcScShortPacket)!=EFalse; // True if short packet else false 
 
@@ -472,16 +540,19 @@ EXPORT_C TInt TEndpointBuffer::TakeBuffer(TAny*& aBuffer,TUint& aSize,TBool& aZL
 			if (currentTransfer->iAltSettingSeq == (iClient->iAltSettingSeq+1))	   //Note- KIS ATM, if multiple alternate setting changes happen
 				iClient->iNewAltSetting = currentTransfer->iAltSetting; //before StartNextOutAlternateSetting is called, 		   
 																	   //this variable will reflect the latest requested AlternateSetting
-			Expire(currentTransfer->iData.i);
+			
 			if (iEndpointNumber != KEp0Number)
 				{
+				iEndpointHdr->iBilTail = aBilTail;
 //				iOutState = EEOF;
 				return KErrEof;
 				}
 			else if ((currentTransfer->iBytes==0) && (!aZLP)) 
 				{
+				Expire(currentTransfer->iData.i);
 				return KErrAlternateSettingChanged;
 				}
+			Expire(currentTransfer->iData.i);
 
 			}	
 
@@ -523,11 +594,12 @@ EXPORT_C TInt TEndpointBuffer::Expire(TAny* aAddress)
 
 	TInt prevTail = NULL;
 	TBool found = EFalse;
+	
 	while (currentTail != iEndpointHdr->iBilTail)
-		{
+		{			
 		TUsbcScTransferHeader* currentTransfer = (TUsbcScTransferHeader*) (iBaseAddr + currentTail);
 		if (currentTail == offsetToExpire)		// found which to expire
-			{
+			{			
 			found = ETrue;
 			// This offset is to be expired
 			if (prevTail == NULL)
@@ -547,7 +619,7 @@ EXPORT_C TInt TEndpointBuffer::Expire(TAny* aAddress)
 			}
 		prevTail = currentTail;
 		currentTail = currentTransfer->iNext;
-		}
+		}	
 	return found ? KErrNone : KErrNotFound;
 	}
 

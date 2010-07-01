@@ -1,3 +1,22 @@
+Version 2.00.3051
+=================
+(Made by vfebvre 21/06/2010)
+
+1.	michcox
+	1.	ou1cimx1#439295 [DEV] MCL Improve Code Coverage in MFS Code - Improve CFileMan observer
+
+
+Version 2.00.3050
+=================
+(Made by vfebvre 18/06/2010)
+
+1.	shubmurt
+	1.	ou1cimx1#428765 Case and Slash fix for Linux Build
+
+2.	dlyokhin
+	1.	ou1cimx1#423737 FAT FS can report incorrect volume size
+
+
 Version 2.00.3049
 =================
 (Made by vfebvre 15/06/2010)

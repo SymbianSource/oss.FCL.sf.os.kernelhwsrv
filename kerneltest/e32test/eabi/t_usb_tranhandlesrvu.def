@@ -1,0 +1,9 @@
+EXPORTS
+	_ZN14RTranHandleSrv14TransferHandleER11RHandleBaseS1_ @ 1 NONAME
+	_ZN14RTranHandleSrv7ConnectEv @ 2 NONAME
+	_ZN14RTranHandleSrvC1Ev @ 3 NONAME
+	_ZN14RTranHandleSrvC2Ev @ 4 NONAME
+	_ZN14RTranHandleSrvD1Ev @ 5 NONAME
+	_ZN14RTranHandleSrvD2Ev @ 6 NONAME
+	_ZNK14RTranHandleSrv7VersionEv @ 7 NONAME
+

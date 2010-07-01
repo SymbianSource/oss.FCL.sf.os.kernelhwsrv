@@ -41,3 +41,7 @@ TBool IsDataPagingSupported();
 void UpdatePaged(TBool& aPaged);
 TInt TestThreadExit(RThread& aThread, TExitType aExitType, TInt aExitReason);
 
+class TestHybridHeap : public RHeap
+	{
+public: TInt ChunkHandle() { return iChunkHandle; };
+	};

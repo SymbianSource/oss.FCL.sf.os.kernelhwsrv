@@ -290,7 +290,7 @@ GLDEF_C void CallTestsL()
 	ret=file.Open(TheFs,filename,EFileRead);
 	safe_test(ret,__LINE__,(TText*)Expand("t_encrypt.cpp"));
 	ret=file.Seek(ESeekCurrent,seekpos);
-	safe_test(ret,__LINE__,(TText*)Expand("t_encrypt.cpp"));
+	safe_test(ret,__LINE__,(TText*)Expand("t_encrypt.cpp"));
 	safe_check(seekpos,__LINE__,(TText*)Expand("t_encrypt.cpp"),(TInt)file_start);
 	file.Close();
 

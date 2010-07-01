@@ -21,6 +21,7 @@ targettype	  exe
 
 userinclude	 	../debug
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+userinclude		..\..\..\kernel\eka\include
 
 sourcepath	  	../debug
 source		  	t_heapcorruption.cpp

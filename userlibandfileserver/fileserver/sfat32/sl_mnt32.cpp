@@ -935,12 +935,7 @@ TInt CFatMountCB::MountControl(TInt aLevel, TInt aOption, TAny* aParam)
             case ESQ_MountedVolumeSize:
                 {
                 TUint64* pVal = (TUint64*)aParam; 
-		*pVal = iSize; //-- physical drive size
-
-                //-- take into account space occupied by FAT table, etc.
-                *pVal -= ClusterBasePosition(); 
-                *pVal=(*pVal >> ClusterSizeLog2()) << ClusterSizeLog2();  //-- round down to cluster size
-
+                *pVal = VolumeSizeInBytes();
                 __PRINT1(_L("MountControl() MountedVolumeSize:%LU"), *pVal);
                 return KErrNone;
                 }

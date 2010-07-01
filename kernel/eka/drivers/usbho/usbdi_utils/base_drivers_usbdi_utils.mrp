@@ -1,0 +1,12 @@
+# component name "USB DI Utils"
+
+component	base_drivers_usbdi_utils
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdi_utils
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdi_utils all
+
+notes_source	\component_defs\release.src
+
+ipr E
+

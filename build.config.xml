@@ -147,12 +147,13 @@
 		<module name="KHS_E32utils"> 
 			<unit name="e32utils" unitID="sos.e32utils" bldFile="\sf\os\kernelhwsrv\kerneltest\e32utils\group" mrp="\sf\os\kernelhwsrv\kerneltest\e32utils\group\base_e32utils.mrp"/>
 			<unit name="e32utils_restricted" unitID="sos.e32utils_restricted" bldFile="\sf\os\kernelhwsrv\kerneltest\e32utils\group\restricted" mrp="\sf\os\kernelhwsrv\kerneltest\e32utils\group\restricted\base_e32utils_restricted.mrp"/>
-		</module> 
-		<!--
+		</module>
+
 		<module name="BSP_Emulator"> 
 			<unit name="emulatorbsp" unitID="sos.emulatorbsp" bldFile="\sf\os\boardsupport\emulator\emulatorbsp" mrp="\sf\os\boardsupport\emulator\emulatorbsp\base_wins.mrp"/>
 			<unit name="unistore2emulatorsupport" unitID="sos.unistore2emulatorsupport" bldFile="\sf\os\boardsupport\emulator\unistore2emulatorsupport" mrp="\sf\os\boardsupport\emulator\unistore2emulatorsupport\base_wins_unistore2.mrp"/>
 		</module>
+		<!--
 		<module name="BSP_NaviEngine"> 
 			<unit name="navienginebootldr" unitID="sos.navienginebootldr" bldFile="\sf\os\boardsupport\naviengine\navienginebootldr" mrp="\sf\os\boardsupport\naviengine\navienginebootldr\base_wins.mrp"/>
 			<unit name="navienginebsp_ne1_tb" unitID="sos.navienginebsp_ne1_tb" bldFile="\sf\os\boardsupport\naviengine\navienginebsp\ne1_tb" mrp=""/>
@@ -163,6 +164,7 @@
 			<unit name="naviengineusbhcd" unitID="sos.naviengineusbhcd" bldFile="\sf\os\boardsupport\naviengine\naviengineusbhcd" mrp="\sf\os\boardsupport\naviengine\naviengineusbhcd\base_naviengine_usbhost.mrp"/>
 			<unit name="naviengineusbhcd_flexible" unitID="sos.naviengineusbhcd_flexible" bldFile="\sf\os\boardsupport\naviengine\naviengineusbhcd\flexible" mrp=""/>
 		</module>
+		-->
 		<module name="BSP_OMAP3Variants"> 
 			<unit name="34xx_sdp" unitID="sos.34xx_sdp" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp" mrp=""/>
 			<unit name="34xx_sdp_bootloader" unitID="sos.34xx_sdp_bootloader" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\34xx_sdp_bootloader" mrp=""/>
@@ -189,8 +191,9 @@
 			<unit name="omaph4minienvbootloader" unitID="sos.omaph4minienvbootloader" bldFile="\sf\os\boardsupport\omaph4\omaph4minienvbootloader" mrp="\sf\os\boardsupport\omaph4\omaph4minienvbootloader\base_omaph4hrp_mebootldr.mrp"/>
 			<unit name="omaph4sdio" unitID="sos.omaph4sdio" bldFile="\sf\os\boardsupport\omaph4\omaph4sdio" mrp="\sf\os\boardsupport\omaph4\omaph4sdio\base_omaph4hrp_sdio.mrp"/>
 			<unit name="omaph4unistore2" unitID="sos.omaph4unistore2" bldFile="\sf\os\boardsupport\omaph4\omaph4unistore2" mrp="\sf\os\boardsupport\omaph4\omaph4unistore2\base_omaph4hrp_unistore2.mrp"/>
-			<unit name="omapusbhotgdrivers" unitID="sos.omapusbhotgdrivers" bldFile="\sf\os\boardsupport\omaph4\omapusbhotgdrivers" mrp="\sf\os\boardsupport\omaph4\omapusbhotgdrivers\base_omaph4hrp_usbhostotg_usbware.mrp"/>
+			<!-- <unit name="omapusbhotgdrivers" unitID="sos.omapusbhotgdrivers" bldFile="\sf\os\boardsupport\omaph4\omapusbhotgdrivers" mrp="\sf\os\boardsupport\omaph4\omapusbhotgdrivers\base_omaph4hrp_usbhostotg_usbware.mrp"/> -->
 		</module>
+		<!-- 
 		<module name="BSP_STVariants"> 
 			<unit name="montblanc_test" unitID="sos.montblanc_test" bldFile="\sf\os\boardsupport\stvariants\montblanc\test" mrp=""/>
 			<unit name="nokia_smpower" unitID="sos.nokia_smpower" bldFile="\sf\os\boardsupport\emulator\unistore2emulatorsupport" mrp=""/>
@@ -223,7 +226,7 @@
 			<unit name="isaaccessdriver" unitID="sos.isaaccessdriver" bldFile="\ncp_sw\corecom\modemadaptation_ext\connectivitylayer_ext\isaaccessdriver\group" mrp=""/>
 			<unit name="ist" unitID="sos.ist" bldFile="\ncp_sw\corecom\modemadaptation_ext\connectivitylayer_ext\ist\group" mrp=""/>
 			<unit name="isimessage" unitID="sos.isimessage" bldFile="\ncp_sw\corecom\modemadaptation_ext\connectivitylayer_ext\isimessage\group" mrp=""/>
-			<unit name="TraceCore" unitID="sos.TraceCore" bldFile="\ncp_sw\corecom\SWATI_Symbian_Tools\Trace\TraceCore\group" mrp=""/>
+			<!-- <unit name="TraceCore" unitID="sos.TraceCore" bldFile="\ncp_sw\corecom\SWATI_Symbian_Tools\Trace\TraceCore\group" mrp=""/> -->
 			<unit name="rapu" unitID="sos.rapu" bldFile="\ncp_sw\core7.0\base_rapu\rapu" mrp=""/>
             <!-- RJC added -->
 			<unit name="rapu_flexible" unitID="sos.rapu.flexible" bldFile="\ncp_sw\core7.0\base_rapu\rapu\flexible" mrp=""/>
@@ -244,28 +247,32 @@
 			<unit name="e32test_usbdi" unitID="sos.e32test_usbdi" bldFile="\sf\os\kernelhwsrv\kerneltest\e32test\usbho\t_usbdi" mrp=""/>
 		</module> 
 
-		<!-- <module name="KHS_Test_F32test"> 
-			<unit name="f32test_automounter" unitID="sos.f32test_automounter" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\filesystem\automounter" mrp=""/>
+		<module name="KHS_Test_F32test"> 
 			<unit name="f32test" unitID="sos.f32test" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\group" mrp="\sf\os\kernelhwsrv\kerneltest\f32test\group\base_f32test.mrp"/>
 			<unit name="f32test_loader" unitID="sos.f32test_loader" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\loader" mrp="\sf\os\kernelhwsrv\kerneltest\f32test\loader\base_loader.mrp"/>
 			<unit name="f32test_rofs" unitID="sos.f32test_rofs" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\rofs" mrp=""/>
 			<unit name="f32test_shostmassstorage" unitID="sos.f32test_shostmassstorage" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\shostmassstorage" mrp=""/>
 			<unit name="f32test_tools" unitID="sos.f32test_tools" bldFile="\sf\os\kernelhwsrv\kerneltest\f32test\tools" mrp=""/>
-		</module> -->
+		</module>
 
+        <!--
 		<module name="KHS_Test_SDIOTest"> 
 			<unit name="sdiotest" unitID="sos.sdiotest" bldFile="\sf\os\kernelhwsrv\kerneltest\sdiotest" mrp="\sf\os\kernelhwsrv\kerneltest\sdiotest\base_sdiotests.mrp"/>
 			<unit name="sdiotest_restricted" unitID="sos.sdiotest_restricted" bldFile="\sf\os\kernelhwsrv\kerneltest\sdiotest_restricted" mrp="\sf\os\kernelhwsrv\kerneltest\sdiotest_restricted\base_sdiotests_restricted.mrp"/>
-			<unit name="sdiotest_restricted_btsdiodriver" unitID="sos.sdiotest_restricted_btsdiodriver" bldFile="\sf\os\kernelhwsrv\kerneltest\sdiotest_restricted\btsdiodriver\group" mrp=""/>
 		</module>
-		<!--
+		-->
+
 		<module name="BSP_Test_Emulator"> 
 			<unit name="emulatorbsp_test" unitID="sos.emulatorbsp_test" bldFile="\sf\os\boardsupport\emulator\emulatorbsp\test" mrp=""/>
 		</module>
+
+		<!--
 		<module name="BSP_Test_NaviEngine"> 
 			<unit name="navienginebsp_ne1_tb_test" unitID="sos.navienginebsp_ne1_tb_test" bldFile="\sf\os\boardsupport\naviengine\navienginebsp\ne1_tb\test" mrp=""/>
 			<unit name="navienginebspflexible_test" unitID="sos.navienginebspflexible_test" bldFile="\sf\os\boardsupport\naviengine\navienginebspflexible\test" mrp=""/>
 		</module>
+		-->
+
 		<module name="BSP_Test_OMAP3Variants"> 
 			<unit name="34xx_sdp_flexible_test" unitID="sos.34xx_sdp_flexible_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\flexible\test" mrp=""/>
 			<unit name="34xx_sdp_test" unitID="sos.34xx_sdp_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\test" mrp=""/>
@@ -278,7 +285,6 @@
 			<unit name="omaph4bsp_h4_test" unitID="sos.omaph4bsp_h4_test" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\test" mrp=""/>
 			<unit name="omaph4bsp_h4_flexible_test" unitID="sos.omaph4bsp_h4_flexible_test" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible\test" mrp=""/>
 		</module>
-		-->
 	</layer>
   </systemModel>
 </SystemDefinition>

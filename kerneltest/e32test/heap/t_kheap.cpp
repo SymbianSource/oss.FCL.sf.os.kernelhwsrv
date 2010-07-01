@@ -54,7 +54,7 @@
 #include <f32dbg.h>
 #include "d_kheap.h"
 
-RTest test(_L("T_KHeap"));
+RTest test(_L("T_KHEAP"));
 RLoader LoaderSession;
 
 #ifdef _DEBUG
@@ -181,6 +181,7 @@ TInt TestLogicalDevice(TInt aDevice)
 	{
 	const TDesC* fileName = NULL;
 	const TDesC* objName = &KTestLddName();
+	User::FreeLogicalDevice(*objName);
 	switch (aDevice)
 		{
 		case 0:

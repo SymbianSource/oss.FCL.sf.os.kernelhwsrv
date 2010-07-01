@@ -393,15 +393,16 @@ protected:
 		void TFooDmaChannel::QueuedRequestCountChanged()
 			{
 			Kern::MutexWait(*iDmaMutex);
-			if ((iQueuedRequests > 0) && (iPrevQueuedRequests == 0))
+			const TInt queued_now = __e32_atomic_load_acq32(&iQueuedRequests);
+			if ((queued_now > 0) && (iPrevQueuedRequests == 0))
 				{
 				IncreasePowerCount(); // Base port specific
 				}
-			else if ((iQueuedRequests == 0) && (iPrevQueuedRequests > 0))
+			else if ((queued_now == 0) && (iPrevQueuedRequests > 0))
 				{
 				DecreasePowerCount(); // Base port specific
 				}
-			iPrevQueuedRequests = iQueuedRequests;
+			iPrevQueuedRequests = queued_now;
 			Kern::MutexSignal(*iDmaMutex);
 			}
 

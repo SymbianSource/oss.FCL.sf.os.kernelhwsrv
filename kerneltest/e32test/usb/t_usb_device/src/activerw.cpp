@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -71,7 +71,6 @@ CActiveRW::CActiveRW(CConsoleBase* aConsole, RDEVCLIENT* aPort, RFs aFs, TUint16
 
 CActiveRW* CActiveRW::NewL(CConsoleBase* aConsole, RDEVCLIENT* aPort, RFs aFs, TUint16 aIndex, TBool aLastSetting)
 	{
-	TUSB_VERBOSE_APRINT("CActiveRW::NewL()");
 
 	CActiveRW* self = new (ELeave) CActiveRW(aConsole, aPort, aFs, aIndex, aLastSetting);
 	CleanupStack::PushL(self);

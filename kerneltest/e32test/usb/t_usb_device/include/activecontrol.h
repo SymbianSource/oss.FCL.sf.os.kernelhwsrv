@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,6 +20,8 @@
 
 #include "activestallnotifier.h"
 #include "activedevicestatenotifier.h"
+#include "transfersrv.h"
+#include "config.h"
 
 static const TInt KSetupPacketSize = 8;
 static const TInt KMaxControlBufferSize = 256;
@@ -51,6 +53,8 @@ enum PendingRequest
 
 class CActiveRW;
 
+class CTranHandleServer;
+
 class CActiveControl : public CActive
 	{
 public:
@@ -64,6 +68,9 @@ public:
 	void AllocateDoubleBuffering(RDEVCLIENT* aPort,TENDPOINTNUMBER aEndpoint);
 	void DeAllocateEndpointDMA(RDEVCLIENT* aPort,TENDPOINTNUMBER aEndpoint);
 	void DeAllocateDoubleBuffering(RDEVCLIENT* aPort,TENDPOINTNUMBER aEndpoint);
+#ifdef USB_SC	
+	void ConstructLOnSharedLdd(const RMessagePtr2& aMsg);
+#endif
 
 private:
 	CActiveControl(CConsoleBase* aConsole, TDes * aConfigFile, TDes * aScriptFile);
@@ -83,6 +90,9 @@ private:
 	
 	void FillEndpointsResourceAllocation(IFConfigPtr aIfCfg);
 	void PopulateInterfaceResourceAllocation(IFConfigPtr aFirstIfCfg, TInt aPortNumber);
+#ifdef USB_SC	
+	void SetupTransferedInterface(IFConfigPtr* aIfPtr, TInt aPortNumber);
+#endif
 	
 private:
 	CConsoleBase* iConsole;											// a console to read from
@@ -113,6 +123,9 @@ private:
 	RThread iIdleCounterThread;
 	RChunk iIdleCounterChunk;
 	struct TTestIdleCounter* iIdleCounter;
+#ifdef USB_SC	
+	CTranHandleServer*        iTranHandleServer;
+#endif
 	};
 
 #endif	// __ACTIVECONTROL_H__

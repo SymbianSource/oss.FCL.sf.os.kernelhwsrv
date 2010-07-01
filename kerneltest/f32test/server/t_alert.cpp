@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include <e32math.h>
@@ -163,7 +164,7 @@ LOCAL_C void StartThread0()
 	
 	RThread clientThread;
 	TInt r=clientThread.Create(_L("TALERT_Thread0"),FileAccess,0x4000,KHeapSize,KHeapSize,(TAny*)&gPathThread0,EOwnerThread);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	clientThread.Close();
 	}
@@ -176,7 +177,7 @@ LOCAL_C void StartThread1()
 	
 	RThread clientThread;
 	TInt r=clientThread.Create(_L("TALERT_Thread1"),FileAccess,0x4000,KHeapSize,KHeapSize,(TAny*)&gPathThread1,EOwnerThread);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	clientThread.Close();
 	}
@@ -189,7 +190,7 @@ LOCAL_C void StartThread2()
 	
 	RThread clientThread;
 	TInt r=clientThread.Create(_L("TALERT_Thread2"),FileAccess,0x4000,KHeapSize,KHeapSize,(TAny*)&gPathThread2,EOwnerThread);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	clientThread.Close();
 	}
@@ -247,7 +248,7 @@ LOCAL_C void StartThread3()
 	
 	RThread clientThread;
 	TInt r=clientThread.Create(_L("TALERT_Thread3"),NotifyAccess,0x4000,KHeapSize,KHeapSize,NULL,EOwnerThread);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.Resume();
 	clientThread.Close();
 	}
@@ -277,7 +278,7 @@ LOCAL_C void StartThread4()
 	
 	RThread clientThread;
 	TInt r=clientThread.Create(_L("TALERT_Thread4"),MediaChange,0x4000,KHeapSize,KHeapSize,NULL,EOwnerThread);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	clientThread.SetPriority(EPriorityMore);
 	clientThread.Resume();
 	clientThread.Close();
@@ -324,7 +325,7 @@ LOCAL_C void KillThreads()
 		t.Close();
 	}
 	else 
-		test(r==KErrNotFound);
+		test_Value(r, r == KErrNotFound);
 
 	r=t.Open(_L("TALERT_Thread1"),EOwnerThread);
 	if(r==KErrNone)
@@ -333,7 +334,7 @@ LOCAL_C void KillThreads()
 		t.Close();
 	}
 	else 
-		test(r==KErrNotFound);
+		test_Value(r, r == KErrNotFound);
 
 	r=t.Open(_L("TALERT_Thread2"),EOwnerThread);
 	if(r==KErrNone)
@@ -342,7 +343,7 @@ LOCAL_C void KillThreads()
 		t.Close();
 	}
 	else 
-		test(r==KErrNotFound);
+		test_Value(r, r == KErrNotFound);
 
 	r=t.Open(_L("TALERT_Thread3"),EOwnerThread);
 	if(r==KErrNone)
@@ -351,7 +352,7 @@ LOCAL_C void KillThreads()
 		t.Close();
 	}
 	else 
-		test(r==KErrNotFound);
+		test_Value(r, r == KErrNotFound);
 	
 	r=t.Open(_L("TALERT_Thread4"),EOwnerThread);
 	if(r==KErrNone)
@@ -360,7 +361,7 @@ LOCAL_C void KillThreads()
 		t.Close();
 	}
 	else 
-		test(r==KErrNotFound);
+		test_Value(r, r == KErrNotFound);
 	
 /*	TFindThread threadFinder(_L("TALERT_*"));
 	FOREVER
@@ -370,11 +371,11 @@ LOCAL_C void KillThreads()
 		test.Printf(_L("r=%d"),r);
 		if (r==KErrNotFound)
 			break;
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("Killing Thread %S\n"),&threadName);
 		RThread t;
 		r=t.Open(threadName,EOwnerThread);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		t.Kill(KErrCancel);
 		t.Close();
 		} */
@@ -388,9 +389,9 @@ LOCAL_C void Test1()
 	{
 	test.Next(_L("Create lots of threads and change notifiers"));
 	TInt r=TheFs.MkDirAll(gPathThread1);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=TheFs.MkDir(gPathThread2);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
 	StartThread0(); // Read and write to D:
 	StartThread1(); // Read and write to C:
@@ -437,12 +438,12 @@ LOCAL_C void Test2()
 
 	test.Next(_L("Create a hung server and kill the thread it is writing to"));
 	TInt r=TheFs.MkDir(gPathThread0);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	StartThread4(); // Generate media changes
 
 	RThread clientThread;
 	r=clientThread.Create(_L("TALERT_ThreadHangTest"),ThreadHangTest,0x4000,KHeapSize,KHeapSize,NULL,EOwnerThread);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TRequestStatus status;
 	clientThread.Logon(status);
 	clientThread.Resume();
@@ -476,7 +477,7 @@ LOCAL_C void Test2()
 	r=TheFs.MkDir(gPathThread0); // Check fileserver ok
 	if(r!=KErrNone && r!=KErrAlreadyExists)
 		test.Printf(_L("r=%d"),r);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	
 	}		
 
@@ -513,7 +514,7 @@ GLDEF_C void CallTestsL()
 	FileMan=CFileMan::NewL(TheFs);
 	TInt r=FileMan->RmDir(_L("\\F32-TST\\TALERT\\"));
 	test.Printf(_L("r=%d"),r);
-	test(r==KErrNone || r==KErrPathNotFound);
+	test_Value(r, r == KErrNone || r==KErrPathNotFound);
 	delete FileMan;
 */
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,9 @@
 #include "activecontrol.h"
 #include "apitests.h"
 #include "activerw.h"
+#ifdef USB_SC
+#include "tranhandleserver.h"
+#endif
 
 void StartMassStorage(RDEVCLIENT* aPort);
 void StopMassStorage(RDEVCLIENT* aPort);
@@ -42,6 +45,9 @@ enum Ep0Requests
 	};
 
 extern RTest test;
+#ifdef USB_SC	
+extern TBool gShareHandle;
+#endif
 extern TBool gVerbose;
 extern TBool gSkip;
 extern TBool gTempTest;
@@ -151,10 +157,25 @@ CActiveControl* CActiveControl::NewL(CConsoleBase* aConsole, TDes * aConfigFile,
 	return self;
 	}
 
-
 void CActiveControl::ConstructL()
 	{
 	CActiveScheduler::Add(this);
+#ifdef USB_SC	
+	if (gShareHandle)
+		{
+		iTranHandleServer = CTranHandleServer::NewL(*this);
+		RTransferSrv aSrv;
+		test.Next (_L("ConstructL"));
+		User::LeaveIfError(aSrv.Connect());
+		CleanupClosePushL(aSrv);	
+		test.Next (_L("ConstructL1"));
+		User::LeaveIfError(aSrv.SetConfigFileName(*iConfigFileName));
+		test.Next (_L("ConstructL2"));
+		CleanupStack::Pop();
+		aSrv.Close();
+		return;
+		}
+#endif
 	TInt r;
 	
 	User::LeaveIfError(iFs.Connect());
@@ -680,7 +701,10 @@ CActiveControl::~CActiveControl()
 		delete (*lddPtrPtr);
 		* lddPtrPtr = NULL;
 		}
-
+#ifdef USB_SC
+	delete iTranHandleServer;
+	TUSB_PRINT("CActiveControl::delete iTranHandleServer");
+#endif
 	iFs.Close();
 	}
 
@@ -918,6 +942,12 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 								}	
 							}
 						TUSB_VERBOSE_PRINT1 ("Closing USB channel number %d",portNumber);
+#ifdef USB_SC
+						RChunk* commChunk;
+						User::LeaveIfError(iPort[portNumber].GetDataTransferChunk(commChunk));
+						commChunk->Close(); 
+#endif
+						
 						iPort[portNumber].Close();											// close USB channel
 						}
 					TUSB_VERBOSE_PRINT("Closing Idle Counter Thread");
@@ -1209,6 +1239,12 @@ TInt CActiveControl::ProcessEp0ControlPacket()
 								}	
 							}
 						TUSB_VERBOSE_PRINT1 ("Closing USB channel number %d",portNumber);
+#ifdef USB_SC
+						RChunk* commChunk;
+						User::LeaveIfError(iPort[portNumber].GetDataTransferChunk(commChunk));
+						commChunk->Close();	
+						TUSB_PRINT("commChunk->Close");
+#endif
 						iPort[portNumber].Close();											// close USB channel
 						}
 		
@@ -1714,4 +1750,354 @@ TInt CActiveControl::ReEnumerate()
 	return KErrNone;
 	}
 
+
+#ifdef USB_SC	
+
+void CActiveControl::SetupTransferedInterface(IFConfigPtr* aIfPtr, TInt aPortNumber)
+	{
+	TInt r;
+	TUSB_VERBOSE_PRINT1("SetupTransferedInterface %d", aPortNumber);
+	test.Start (_L("Setup Transfered Interface "));
+
+	#ifdef USB_SC
+	TUsbcScInterfaceInfoBuf ifc = *((*aIfPtr)->iInfoPtr);
+	#else
+	TUsbcInterfaceInfoBuf ifc = *((*aIfPtr)->iInfoPtr);
+	#endif
+	
+	TBuf8<KUsbDescSize_Interface> ifDescriptor;
+	r = iPort[aPortNumber].GetInterfaceDescriptor(0, ifDescriptor);
+	test_KErrNone(r);
+
+	// Check the interface descriptor
+	test(ifDescriptor[KIfcDesc_SettingOffset] == 0 && ifDescriptor[KIfcDesc_NumEndpointsOffset] == (*aIfPtr)->iInfoPtr->iTotalEndpointsUsed &&
+	    ifDescriptor[KIfcDesc_ClassOffset] == (*aIfPtr)->iInfoPtr->iClass.iClassNum &&
+	    ifDescriptor[KIfcDesc_SubClassOffset] == (*aIfPtr)->iInfoPtr->iClass.iSubClassNum &&
+	    ifDescriptor[KIfcDesc_ProtocolOffset] == (*aIfPtr)->iInfoPtr->iClass.iProtocolNum);
+
+	if ((*aIfPtr)->iNumber != 0 && ifDescriptor[KIfcDesc_NumberOffset] != (*aIfPtr)->iNumber)
+		{
+		ifDescriptor[KIfcDesc_NumberOffset] = (*aIfPtr)->iNumber;
+		r = iPort[aPortNumber].SetInterfaceDescriptor(0, ifDescriptor);	
+		test_KErrNone(r);
+		}
+	else
+		{
+		(*aIfPtr)->iNumber = ifDescriptor[KIfcDesc_NumberOffset];	
+		}
+	TUint8 interfaceNumber = (*aIfPtr)->iNumber;
+	TUSB_PRINT1 ("Interface Number %d",interfaceNumber);
+		
+	// Check all endpoint descriptors
+	TBuf8<KUsbDescSize_AudioEndpoint> epDescriptor;
+	for (TUint i = 0; i < (*aIfPtr)->iInfoPtr->iTotalEndpointsUsed; i++)
+		{
+		if (!gSkip)
+			{
+			TestEndpointDescriptor (&iPort[aPortNumber],0,i+1,(*aIfPtr)->iInfoPtr->iEndpointData[i]);	
+
+			}
+
+		if (firstBulkOutEndpoint < 0 && ((*aIfPtr)->iInfoPtr->iEndpointData[i].iDir & KUsbEpDirOut) &&
+			(*aIfPtr)->iInfoPtr->iEndpointData[i].iType == KUsbEpTypeBulk)
+			{
+			firstBulkOutEndpoint = i+1;	
+			}
+		}
+
+	TUSB_PRINT1 ("Interface number is %d",interfaceNumber);
+	(*aIfPtr)->iPortNumber = aPortNumber;
+	gInterfaceConfig [interfaceNumber] [0] = *aIfPtr;
+
+	TInt alternateNumber = 1;
+	// check for any alternatate interfaces and set any that are found
+	* aIfPtr = (*aIfPtr)->iPtrNext;
+	if (* aIfPtr != NULL)
+		{
+		test(SupportsAlternateInterfaces());
+
+		IFConfigPtr ifPtr = *aIfPtr;
+		while (ifPtr != NULL)
+			{
+			if (ifPtr->iAlternateSetting)
+				{
+				ifc = *(ifPtr->iInfoPtr);
+					
+				r = iPort[aPortNumber].GetInterfaceDescriptor(alternateNumber, ifDescriptor);
+				test_KErrNone(r);
+
+				// Check the interface descriptor
+				test(ifDescriptor[KIfcDesc_SettingOffset] == alternateNumber && ifDescriptor[KIfcDesc_NumEndpointsOffset] == (*aIfPtr)->iInfoPtr->iTotalEndpointsUsed &&
+				    ifDescriptor[KIfcDesc_ClassOffset] == (*aIfPtr)->iInfoPtr->iClass.iClassNum &&
+				    ifDescriptor[KIfcDesc_SubClassOffset] == (*aIfPtr)->iInfoPtr->iClass.iSubClassNum &&
+				    ifDescriptor[KIfcDesc_ProtocolOffset] == (*aIfPtr)->iInfoPtr->iClass.iProtocolNum);
+
+				// Check all endpoint descriptors
+				for (TUint i = 0; i < ifPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+					{
+					TInt desc_size;
+					r = iPort[aPortNumber].GetEndpointDescriptorSize(alternateNumber, i+1, desc_size);
+					test_KErrNone(r);
+					test_Equal(KUsbDescSize_Endpoint + (*aIfPtr)->iInfoPtr->iEndpointData[i].iExtra,static_cast<TUint>(desc_size));
+
+					r = iPort[aPortNumber].GetEndpointDescriptor(alternateNumber, i+1, epDescriptor);
+					test_KErrNone(r);
+					
+					test((((*aIfPtr)->iInfoPtr->iEndpointData[i].iDir & KUsbEpDirIn) && (epDescriptor[KEpDesc_AddressOffset] & 0x80) ||
+						!((*aIfPtr)->iInfoPtr->iEndpointData[i].iDir & KUsbEpDirIn) && !(epDescriptor[KEpDesc_AddressOffset] & 0x80)) &&
+						EpTypeMask2Value((*aIfPtr)->iInfoPtr->iEndpointData[i].iType) == (TUint)(epDescriptor[KEpDesc_AttributesOffset] & 0x03) &&
+						(*aIfPtr)->iInfoPtr->iEndpointData[i].iInterval == epDescriptor[KEpDesc_IntervalOffset]);
+
+
+					if (!gSkip && (*aIfPtr)->iInfoPtr->iEndpointData[i].iExtra)
+						{
+						test.Next(_L("Extended Endpoint Descriptor Manipulation"));
+						TUint8 addr = 0x85;										// bogus address
+						if (epDescriptor[KEpDesc_SynchAddressOffset] == addr)
+							addr++;
+						epDescriptor[KEpDesc_SynchAddressOffset] = addr;
+						r = iPort[aPortNumber].SetEndpointDescriptor(alternateNumber, i+1, epDescriptor);
+						test_KErrNone(r);
+
+						TBuf8<KUsbDescSize_AudioEndpoint> descriptor2;
+						r = iPort[aPortNumber].GetEndpointDescriptor(alternateNumber, i+1, descriptor2);
+						test_KErrNone(r);
+
+						test.Next(_L("Compare endpoint descriptor with value set"));
+						r = descriptor2.Compare(epDescriptor);
+						test_KErrNone(r);						
+						}
+					}
+				
+					
+				// if no error move on to the next interface
+				ifPtr->iPortNumber = aPortNumber;
+				ifPtr->iNumber = interfaceNumber;
+				gInterfaceConfig [interfaceNumber] [alternateNumber] = ifPtr;
+
+				alternateNumber++;
+				ifPtr = ifPtr->iPtrNext;
+				* aIfPtr = ifPtr;
+				}
+			else
+				{
+				ifPtr = NULL;
+				}
+			}
+		}
+	iNumInterfaceSettings[aPortNumber] = alternateNumber;
+	if (!gSkip)
+		{
+		TestInvalidSetInterface (&iPort[aPortNumber],iNumInterfaceSettings[aPortNumber]);			
+		TestInvalidReleaseInterface (&iPort[aPortNumber],iNumInterfaceSettings[aPortNumber]);
+
+		//TestDescriptorManipulation(iLddPtr->iHighSpeed,&iPort[aPortNumber],alternateNumber);
+		TestOtgExtensions(&iPort[aPortNumber]);
+		TestEndpoint0MaxPacketSizes(&iPort[aPortNumber]);
+		}
+		
+	test.End();
+	}
+
+
+void CActiveControl::ConstructLOnSharedLdd(const RMessagePtr2& aMsg)
+	{
+// currently only support one interface with one alternate settings	
+	test.Start (_L("ConstructLOnSharedLdd Configuration"));
+
+	User::LeaveIfError(iPort[0].Open(aMsg, 0, EOwnerProcess));
+	CleanupClosePushL(iPort[0]);
+
+	RChunk* chunk;
+	//Get the Ldd's RChunk, but don't own it.
+	User::LeaveIfError(iPort[0].GetDataTransferChunk(chunk));
+	User::LeaveIfError(chunk->Open(aMsg, 1, FALSE, EOwnerProcess));
+	CleanupStack::Pop();
+	
+
+	TInt r;
+
+	User::LeaveIfError(iFs.Connect());
+
+	test_Compare(iConfigFileName->Length(),!=,0);
+		
+	iTimer.CreateLocal();
+	iPending = EPendingNone;
+	
+	test.Next (_L("Open configuration file"));
+	// set the session path to use the ROM if no drive specified
+	r=iFs.SetSessionPath(_L("Z:\\test\\"));
+	test_KErrNone(r);
+
+	r = iConfigFile.Open(iFs, * iConfigFileName, EFileShareReadersOnly | EFileStreamText | EFileRead);
+	test_KErrNone(r);
+	TUSB_VERBOSE_PRINT1("Configuration file %s Opened successfully", iConfigFileName->PtrZ());
+
+	test.Next (_L("Process configuration file"));
+	test(ProcessConfigFile (iConfigFile,iConsole,&iLddPtr));
+	
+	iConfigFile.Close();
+
+	test.Next (_L("LDD in configuration file"));
+	test_NotNull(iLddPtr);
+		
+	LDDConfigPtr lddPtr = iLddPtr;
+	TInt nextPort = 0;
+	while (lddPtr != NULL)
+		{
+		// Load logical driver (LDD)
+		// (There's no physical driver (PDD) with USB: it's a kernel extension DLL which
+		//  was already loaded at boot time.)
+		test.Next (_L("Loading USB LDD"));
+		TUSB_VERBOSE_PRINT1("Loading USB LDD ",lddPtr->iName.PtrZ());
+		r = User::LoadLogicalDevice(lddPtr->iName);
+		test(r == KErrNone || r == KErrAlreadyExists);
+	
+		IFConfigPtr ifPtr = lddPtr->iIFPtr;
+		
+		test.Next (_L("Opening Channels"));
+		TUSB_VERBOSE_PRINT1("Successfully opened USB port %d", lddPtr->iNumChannels);
+		for (TInt portNumber = nextPort; portNumber < nextPort+lddPtr->iNumChannels; portNumber++)
+			{
+			test_Compare(lddPtr->iNumChannels,>,0);
+
+			// Open USB channel
+			
+			TUSB_VERBOSE_PRINT("Successfully opened USB port");
+
+			// Query the USB device/Setup the USB interface
+			if (portNumber == nextPort)
+				{
+				// Change some descriptors to contain suitable values
+				SetupDescriptors(lddPtr, &iPort[portNumber]);
+				}
+				
+			if (portNumber == 0)
+				{
+				QueryUsbClientL(lddPtr, &iPort[portNumber]);
+				}
+
+			test_NotNull(ifPtr);
+			
+			if (iSupportResourceAllocationV2)
+				{
+				PopulateInterfaceResourceAllocation(ifPtr, portNumber);
+				}
+				
+			IFConfigPtr defaultIfPtr = ifPtr;
+			SetupTransferedInterface(&ifPtr,portNumber);
+					
+
+			if (!iSupportResourceAllocationV2)
+				{
+				// 	allocate endpoint DMA and double buffering for all endpoints on default interface when using resource allocation v1 api
+				for (TUint8 i = 1; i <= defaultIfPtr->iInfoPtr->iTotalEndpointsUsed; i++)
+					{
+					defaultIfPtr->iEpDMA[i-1] ? AllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateEndpointDMA(&iPort[portNumber],(TENDPOINTNUMBER)i);
+					#ifndef USB_SC
+					defaultIfPtr->iEpDoubleBuff[i-1] ? AllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i) : DeAllocateDoubleBuffering(&iPort[portNumber],(TENDPOINTNUMBER)i);
+					#endif
+					}				
+				}
+			}
+	
+		iTotalChannels += lddPtr->iNumChannels;
+		nextPort += lddPtr->iNumChannels;	
+		lddPtr = lddPtr->iPtrNext;	
+		}
+		
+	TUSB_VERBOSE_PRINT("All Interfaces and Alternate Settings successfully set up");
+	
+	test.Next (_L("Start Idle Counter Thread"));
+	r = iIdleCounterThread.Create(_L("IdleCounter"), IdleCounterThread, KDefaultStackSize, KMinHeapSize, KMinHeapSize, NULL);
+	test_KErrNone(r);
+	iIdleCounterThread.Resume();
+	// Allow some time for low-priority counter process
+	User::After(100000); // 0.1 second
+	r = iIdleCounterChunk.OpenGlobal(KTestIdleCounterChunkName, EFalse);
+	test_KErrNone(r);
+	iIdleCounter = (struct TTestIdleCounter*) iIdleCounterChunk.Base();
+	test_NotNull(iIdleCounter);
+	// Allow some time for low-priority counter process
+	User::After(100000); // 0.1 second
+	TInt64 val1 = iIdleCounter->iCounter;
+	User::After(1000000); // 1 second
+	TInt64 val2 = iIdleCounter->iCounter;
+	TUSB_PRINT1("Idle Counter when test inactive: %Ldinc/ms", (val2 - val1) / 1000);
+
+	test.Next (_L("Enumeration..."));
+	r = ReEnumerate();
+	test_KErrNone(r);
+		
+	TUSB_VERBOSE_PRINT("Device successfully re-enumerated\n");
+
+
+	if (iLddPtr->iHighSpeed && !gSkip)
+		{
+		test.Next (_L("High Speed"));
+		test(iHighSpeed);	
+		}
+			
+	test.Next (_L("Create Notifiers"));
+	for (TInt portNumber = 0; portNumber < iTotalChannels; portNumber++)
+		{
+
+		// Create device state active object
+		iDeviceStateNotifier[portNumber] = CActiveDeviceStateNotifier::NewL(iConsole, &iPort[portNumber], portNumber);
+		test_NotNull(iDeviceStateNotifier[portNumber]);
+		iDeviceStateNotifier[portNumber]->Activate();
+		TUSB_VERBOSE_PRINT("Created device state notifier");
+
+		// Create endpoint stall status active object
+		iStallNotifier[portNumber] = CActiveStallNotifier::NewL(iConsole, &iPort[portNumber]);
+		test_NotNull(iStallNotifier[portNumber]);
+		iStallNotifier[portNumber]->Activate();
+		TUSB_VERBOSE_PRINT("Created stall notifier");
+			
+		TestInvalidSetInterface (&iPort[portNumber],iNumInterfaceSettings[portNumber]);			
+		TestInvalidReleaseInterface (&iPort[portNumber],iNumInterfaceSettings[portNumber]);
+			
+		}
+		
+	test.Next (_L("Endpoint Zero Max Packet Sizes"));
+	TUint ep0Size = iPort[0].EndpointZeroMaxPacketSizes();
+	switch (ep0Size)
+		{
+		case KUsbEpSize8 :
+			iEp0PacketSize = 8;
+			break;
+					
+		case KUsbEpSize16 :
+			iEp0PacketSize = 16;
+			break;
+
+		case KUsbEpSize32 :
+			iEp0PacketSize = 32;
+			break;
+
+		case KUsbEpSize64 :
+			iEp0PacketSize = 64;
+			break;
+					
+		default:
+			iEp0PacketSize = 0;
+			break;		
+		}
+	test_Compare(iEp0PacketSize,>,0);
+
+	test.Next (_L("Set Device Control"));
+	r = iPort[0].SetDeviceControl();
+	test_KErrNone(r);
+
+	#ifdef USB_SC
+	r = iPort[0].OpenEndpoint(iEp0Buf,0);
+	test_KErrNone(r);
+	#endif
+	
+	test.End();
+	//iSrv.Close();
+	RequestEp0ControlPacket();
+	}
+
+#endif
 // -eof-

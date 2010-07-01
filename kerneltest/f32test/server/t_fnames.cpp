@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -45,7 +46,7 @@ LOCAL_C void DoTestName(const TDesC& aName,TInt anError)
 	TBuf<32> badName=_L("\\< > : \" / |");
 	TParse parser;
 	TInt r=parser.Set(aName,NULL,NULL);
-	test(r==KErrNone || r==anError);
+	test_Value(r, r == KErrNone || r==anError);
 	goodName.Insert(0,parser.Drive());
 	badName.Insert(0,parser.Drive());
 	
@@ -167,7 +168,7 @@ LOCAL_C void DoTestLongDirName1(void)
     //-- TParse shall work correctly
     TParse parse;
     TInt err = parse.Set(dirName,NULL,NULL);
-    test( err == KErrNone );
+    test_KErrNone(err);
     
     //-- try to access a directory with a long name. This just shall not panic.
     //-- The return code can be any, on the emulator it's very likely to be KErrBadname
@@ -191,7 +192,7 @@ LOCAL_C void DoTestLongDirName2(void)
     //-- create a dir c:\a
     _LIT(dirName, "C:\\a\\");
     TInt err = rfs.MkDir(dirName);
-    test(err == KErrNone || err == KErrAlreadyExists);
+    test_Value(err, err == KErrNone || err == KErrAlreadyExists);
     
     if(err == KErrAlreadyExists)
         bDirExisted = ETrue;
@@ -202,7 +203,7 @@ LOCAL_C void DoTestLongDirName2(void)
     
     //-- try to create a directory with a very long name, checking that it doesn't get truncated to the "c:\a"
     err = rfs.MkDir(longDirName);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 
     //-- clean up, remove created directory, otherwise some ill-designed tests can fail
     if(!bDirExisted)

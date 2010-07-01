@@ -1,0 +1,12 @@
+# component name "USB Descriptors"
+
+component	base_drivers_usbdescriptors
+
+source	\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdescriptors
+
+binary	\sf\os\kernelhwsrv\kernel\eka\drivers\usbho\usbdescriptors all
+
+notes_source	\component_defs\release.src
+
+ipr E
+

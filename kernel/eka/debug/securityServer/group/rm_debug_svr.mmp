@@ -46,3 +46,5 @@ macro SYMBIAN_TRACE_ENABLE
 
 //TCB is added for the RLocalDrive methods.
 CAPABILITY AllFiles TCB
+
+SMPSAFE

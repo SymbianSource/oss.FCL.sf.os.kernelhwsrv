@@ -20,6 +20,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <f32file.h>
 #include <hal.h>
@@ -56,7 +57,7 @@ GLDEF_C void CallTestsL()
 	test.Next(_L("Connecting to file server."));
 	TInt r;
 	r = TheFs.Connect();
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	if ( !gDriveToTest.IsLower() )
 		{
@@ -171,13 +172,13 @@ LOCAL_C TBool IsDiskValid(TInt aDrive)
 	TInt isFat, isValid;
     TInt machUid;
     r=HAL::Get(HAL::EMachineUid,machUid);
-    test(r==KErrNone);
+    test_KErrNone(r);
 //	test.Printf(_L("machUid = %08x.\n"), machUid);
 
 	TBuf<16> fsName;							// _?_ length
         
     r = TheFs.FileSystemName(fsName, aDrive);
-    test(r == KErrNone || r == KErrNotFound);
+    test_Value(r, r == KErrNone || r == KErrNotFound);
 	test.Printf(_L("fsName = \"%S\".\n"), &fsName);
 
 	if (machUid == HAL::EMachineUid_Brutus)

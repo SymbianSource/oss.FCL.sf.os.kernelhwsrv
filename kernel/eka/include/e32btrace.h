@@ -3913,21 +3913,6 @@ public:
 	/**
 	@internalComponent
 	*/
-	typedef TBool(*TBTrace1)(TUint32);
-
-	/**
-	@internalComponent
-	*/
-	typedef TBool(*TBTrace2)(TUint32,TUint32);
-
-	/**
-	@internalComponent
-	*/
-	typedef TBool(*TBTrace3)(TUint32,TUint32,TUint32);
-
-	/**
-	@internalComponent
-	*/
 	struct SExecExtension
 		{
 		TUint32 iA2;
@@ -4049,8 +4034,8 @@ The trace record data is 0 bytes in size.
 @released
 */
 #define BTrace0(aCategory,aSubCategory) \
-	((BTrace::TBTrace1)BTrace::Out) \
-		(BTRACE_HEADER(4,(aCategory),(aSubCategory)))
+	BTrace::Out \
+		(BTRACE_HEADER(4,(aCategory),(aSubCategory)),0,0,0)
 
 /**
 Output a trace record of the specified category.
@@ -4067,8 +4052,8 @@ The trace record data is 4 bytes in size.
 @released
 */
 #define BTrace4(aCategory,aSubCategory,a1) \
-	((BTrace::TBTrace2)BTrace::Out) \
-		(BTRACE_HEADER(8,(aCategory),(aSubCategory)),(TUint32)(a1))
+	BTrace::Out \
+		(BTRACE_HEADER(8,(aCategory),(aSubCategory)),(TUint32)(a1),0,0)
 
 /**
 Output a trace record of the specified category.
@@ -4086,8 +4071,8 @@ The trace record data is 8 bytes in size.
 @released
 */
 #define BTrace8(aCategory,aSubCategory,a1,a2) \
-	((BTrace::TBTrace3)BTrace::Out) \
-		(BTRACE_HEADER(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2))
+	BTrace::Out \
+		(BTRACE_HEADER(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2),0)
 
 /**
 Output a trace record of the specified category.
@@ -4169,8 +4154,8 @@ The trace record data is 0 bytes in size.
 @released
 */
 #define BTraceContext0(aCategory,aSubCategory) \
-	((BTrace::TBTrace1)BTrace::OutX) \
-		(BTRACE_HEADER_C(4,(aCategory),(aSubCategory)))
+	BTrace::OutX \
+		(BTRACE_HEADER_C(4,(aCategory),(aSubCategory)),0,0,0)
 
 /**
 Output a trace record of the specified category which also includes a Context ID.
@@ -4187,8 +4172,8 @@ The trace record data is 4 bytes in size.
 @released
 */
 #define BTraceContext4(aCategory,aSubCategory,a1) \
-	((BTrace::TBTrace2)BTrace::OutX) \
-		(BTRACE_HEADER_C(8,(aCategory),(aSubCategory)),(TUint32)(a1))
+	BTrace::OutX \
+		(BTRACE_HEADER_C(8,(aCategory),(aSubCategory)),(TUint32)(a1),0,0)
 
 /**
 Output a trace record of the specified category which also includes a Context ID.
@@ -4206,8 +4191,8 @@ The trace record data is 8 bytes in size.
 @released
 */
 #define BTraceContext8(aCategory,aSubCategory,a1,a2) \
-	((BTrace::TBTrace3)BTrace::OutX) \
-		(BTRACE_HEADER_C(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2))
+	BTrace::OutX \
+		(BTRACE_HEADER_C(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2),0)
 
 /**
 Output a trace record of the specified category which also includes a Context ID.
@@ -4289,8 +4274,8 @@ The trace record data is 0 bytes in size.
 @released
 */
 #define BTracePc0(aCategory,aSubCategory) \
-	((BTrace::TBTrace1)BTrace::Out) \
-		(BTRACE_HEADER_P(4,(aCategory),(aSubCategory)))
+	BTrace::Out \
+		(BTRACE_HEADER_P(4,(aCategory),(aSubCategory)),0,0,0)
 
 /**
 Output a trace record of the specified category which also includes a Program Counter value.
@@ -4307,8 +4292,8 @@ The trace record data is 4 bytes in size.
 @released
 */
 #define BTracePc4(aCategory,aSubCategory,a1)	\
-	((BTrace::TBTrace2)BTrace::Out) \
-		(BTRACE_HEADER_P(8,(aCategory),(aSubCategory)),(TUint32)(a1))
+	BTrace::Out \
+		(BTRACE_HEADER_P(8,(aCategory),(aSubCategory)),(TUint32)(a1),0,0)
 
 /**
 Output a trace record of the specified category which also includes a Program Counter value.
@@ -4326,8 +4311,8 @@ The trace record data is 8 bytes in size.
 @released
 */
 #define BTracePc8(aCategory,aSubCategory,a1,a2) \
-	((BTrace::TBTrace3)BTrace::Out) \
-		(BTRACE_HEADER_P(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2))
+	BTrace::Out \
+		(BTRACE_HEADER_P(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2),0)
 
 /**
 Output a trace record of the specified category which also includes a Program Counter value.
@@ -4411,8 +4396,8 @@ The trace record data is 0 bytes in size.
 @released
 */
 #define BTraceContextPc0(aCategory,aSubCategory)	\
-	((BTrace::TBTrace1)BTrace::OutX) \
-		(BTRACE_HEADER_CP(4,(aCategory),(aSubCategory)))
+	BTrace::OutX \
+		(BTRACE_HEADER_CP(4,(aCategory),(aSubCategory)),0,0,0)
 
 /**
 Output a trace record of the specified category which also includes
@@ -4430,8 +4415,8 @@ The trace record data is 4 bytes in size.
 @released
 */
 #define BTraceContextPc4(aCategory,aSubCategory,a1) \
-	((BTrace::TBTrace2)BTrace::OutX) \
-		(BTRACE_HEADER_CP(8,(aCategory),(aSubCategory)),(TUint32)(a1))
+	BTrace::OutX \
+		(BTRACE_HEADER_CP(8,(aCategory),(aSubCategory)),(TUint32)(a1),0,0)
 
 /**
 Output a trace record of the specified category which also includes
@@ -4450,8 +4435,8 @@ The trace record data is 8 bytes in size.
 @released
 */
 #define BTraceContextPc8(aCategory,aSubCategory,a1,a2) \
-	((BTrace::TBTrace3)BTrace::OutX) \
-		(BTRACE_HEADER_CP(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2))
+	BTrace::OutX \
+		(BTRACE_HEADER_CP(12,(aCategory),(aSubCategory)),(TUint32)(a1),(TUint32)(a2),0)
 
 /**
 Output a trace record of the specified category which also includes
@@ -4539,8 +4524,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFiltered4(aCategory,aSubCategory,aUid) \
-	((BTrace::TBTrace2)BTrace::OutFiltered) \
-		(BTRACE_HEADER(8,(aCategory),(aSubCategory)),(TUint32)(aUid))
+	BTrace::OutFiltered \
+		(BTRACE_HEADER(8,(aCategory),(aSubCategory)),(TUint32)(aUid),0,0)
 
 /**
 Output a trace record of the specified category.
@@ -4560,8 +4545,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFiltered8(aCategory,aSubCategory,aUid,a1) \
-	((BTrace::TBTrace3)BTrace::OutFiltered) \
-		(BTRACE_HEADER(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1))
+	BTrace::OutFiltered \
+		(BTRACE_HEADER(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1),0)
 
 /**
 Output a trace record of the specified category.
@@ -4652,8 +4637,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFilteredContext4(aCategory,aSubCategory,aUid) \
-	((BTrace::TBTrace2)BTrace::OutFilteredX) \
-		(BTRACE_HEADER_C(8,(aCategory),(aSubCategory)),(TUint32)(aUid))
+	BTrace::OutFilteredX \
+		(BTRACE_HEADER_C(8,(aCategory),(aSubCategory)),(TUint32)(aUid),0,0)
 
 /**
 Output a trace record of the specified category which also includes a Context ID.
@@ -4673,8 +4658,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFilteredContext8(aCategory,aSubCategory,aUid,a1) \
-	((BTrace::TBTrace3)BTrace::OutFilteredX) \
-		(BTRACE_HEADER_C(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1))
+	BTrace::OutFilteredX \
+		(BTRACE_HEADER_C(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1),0)
 
 /**
 Output a trace record of the specified category which also includes a Context ID.
@@ -4765,8 +4750,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFilteredPc4(aCategory,aSubCategory,aUid)	\
-	((BTrace::TBTrace2)BTrace::OutFiltered) \
-		(BTRACE_HEADER_P(8,(aCategory),(aSubCategory)),(TUint32)(aUid))
+	BTrace::OutFiltered \
+		(BTRACE_HEADER_P(8,(aCategory),(aSubCategory)),(TUint32)(aUid),0,0)
 
 /**
 Output a trace record of the specified category which also includes a Program Counter value.
@@ -4786,8 +4771,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFilteredPc8(aCategory,aSubCategory,aUid,a1) \
-	((BTrace::TBTrace3)BTrace::OutFiltered) \
-		(BTRACE_HEADER_P(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1))
+	BTrace::OutFiltered \
+		(BTRACE_HEADER_P(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1),0)
 
 /**
 Output a trace record of the specified category which also includes a Program Counter value.
@@ -4880,8 +4865,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFilteredContextPc4(aCategory,aSubCategory,aUid)	\
-	((BTrace::TBTrace2)BTrace::OutFilteredX) \
-		(BTRACE_HEADER_CP(8,(aCategory),(aSubCategory)),(TUint32)(aUid))
+	BTrace::OutFilteredX \
+		(BTRACE_HEADER_CP(8,(aCategory),(aSubCategory)),(TUint32)(aUid),0,0)
 
 /**
 Output a trace record of the specified category which also includes
@@ -4902,8 +4887,8 @@ If the value of \a aUid is not contained in the secondary filter then the trace 
 @released
 */
 #define BTraceFilteredContextPc8(aCategory,aSubCategory,aUid,a1) \
-	((BTrace::TBTrace3)BTrace::OutFilteredX) \
-		(BTRACE_HEADER_CP(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1))
+	BTrace::OutFilteredX \
+		(BTRACE_HEADER_CP(12,(aCategory),(aSubCategory)),(TUint32)(aUid),(TUint32)(a1),0)
 
 /**
 Output a trace record of the specified category which also includes

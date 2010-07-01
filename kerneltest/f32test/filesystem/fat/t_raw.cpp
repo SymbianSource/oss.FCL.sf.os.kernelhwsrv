@@ -39,12 +39,12 @@ LOCAL_C void Test1()
 	test.Start(_L("Test all methods"));
 	RRawDisk rd;
 	TInt r=rd.Open(TheFs,gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TBuf8<16> buf;
 	r=rd.Read(0,buf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rd.Write(0,buf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	rd.Close();
 	test.End();
 	}
@@ -60,49 +60,49 @@ LOCAL_C void Test2()
 
 	RFile f;
 	TInt r=f.Open(TheFs,_L("TRAW.TST"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	RRawDisk rd;
 	r=rd.Open(TheFs,gDrive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f.Close();
 	r=rd.Open(TheFs,gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	rd.Close();
 
 	TFileName fileName;
 	r=f.Temp(TheFs,_L(""),fileName,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rd.Open(TheFs,gDrive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f.Close();
 	r=rd.Open(TheFs,gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	rd.Close();
 
 	RDir d;
 	r=d.Open(TheFs,_L("TRAWTEST"),KEntryAttNormal);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rd.Open(TheFs,gDrive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	d.Close();
 	r=rd.Open(TheFs,gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	rd.Close();
 
     RFormat fmt;
     TInt count;
     r=fmt.Open(TheFs,gSessionPath,EQuickFormat,count);
-    test(r==KErrNone);
+    test_KErrNone(r);
     r=rd.Open(TheFs,gDrive); // Raw disk access ok during formatting
     test.Printf(_L("open rd when fmt opn r=%d"),r);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
     fmt.Close();
     r=rd.Open(TheFs,gDrive);
 	test.Printf(_L("open rd when fmt closed r=%d"),r);
-    test(r==KErrNone);
+    test_KErrNone(r);
 	RRawDisk rd2;
 	r=rd2.Open(TheFs,gDrive);	//should only have one Raw object open
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	rd2.Close();
     rd.Close();
 	}
@@ -118,34 +118,34 @@ LOCAL_C void Test3()
 
 	RRawDisk rd;
 	TInt r=rd.Open(TheFs,gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile f;
 	TFileName fileName;
 	r=f.Open(TheFs,_L("TRAW.TST"),EFileWrite);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	r=f.Temp(TheFs,_L(""),fileName,EFileWrite);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	RDir d;
 	r=d.Open(TheFs,_L("TRAW"),KEntryAttNormal);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	RFormat fmt;
 	TInt count;
 	r=fmt.Open(TheFs,gSessionPath,EQuickFormat,count);
     if (r != KErrInUse)
         test.Printf(_L("Error %d. Sess = %S"), r, &gSessionPath);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 	CDir* dir=(CDir*)0x05;
 	r=TheFs.GetDir(_L("\\F32-TST\\*.*"),KEntryAttNormal,ESortNone,dir);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	test(dir==NULL);
 
 	RRawDisk rd2;
 	r=rd2.Open(TheFs,gDrive);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 
 //	fmt.Close();
 	rd.Close();
@@ -163,7 +163,7 @@ LOCAL_C void Test4()
 
 	RRawDisk rd;
 	TInt r=rd.Open(TheFs,gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TBuf8<32> textBuf;
 	TInt64 pos=0;
@@ -190,14 +190,14 @@ LOCAL_C void Test4()
 
 	TBuf8<32> contents2=_L8("This File says MOO");
 	r=rd.Write(pos,contents2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	rd.Close();
 
 	RFile f;
 	r=f.Open(TheFs,_L("TRAW.TST"),EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Read(textBuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(textBuf==contents2);
 	f.Close();
 	}
@@ -260,7 +260,7 @@ LOCAL_C void Test5()
 
 	RThread thread;
 	TInt r=thread.Create(_L("MyThread"),MyThreadFunction,0x1000,0x1000,0x1000,(TAny*)EThreadForgetToCloseSession);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TRequestStatus reqStat;
 	thread.Logon(reqStat);
 	thread.Resume();
@@ -274,11 +274,11 @@ LOCAL_C void Test5()
 
 	RFile f;
 	r=f.Open(TheFs,_L("TEST.FILE"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 
 	r=thread.Create(_L("MyThread"),MyThreadFunction,0x1000,0x1000,0x1000,(TAny*)EThreadForgetToCloseRaw);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	thread.Logon(reqStat);
 	thread.Resume();
 	User::WaitForRequest(reqStat);
@@ -290,19 +290,19 @@ LOCAL_C void Test5()
 	FsBarrier();
 
 	r=f.Open(TheFs,_L("TEST.FILE"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 
 	r=gSemaphore.CreateGlobal(_L("MySemaphore"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=thread.Create(_L("MyThread"),MyThreadFunction,0x1000,0x1000,0x1000,(TAny*)EThreadHang);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	thread.Resume();
 	gSemaphore.Wait();
 	gSemaphore.Close();
 
 	r=f.Open(TheFs,_L("TEST.FILE"),EFileWrite);
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	TBool jit = User::JustInTime();
 	User::SetJustInTime(EFalse);
 	thread.Kill(KErrGeneral);
@@ -315,7 +315,7 @@ LOCAL_C void Test5()
 	FsBarrier();
 
 	r=f.Open(TheFs,_L("TEST.FILE"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	f.Close();
 	}
 
@@ -330,7 +330,7 @@ GLDEF_C void CallTestsL()
     Fat_Test_Utils::SetConsole(test.Console());
 
 	TInt r=TheFs.CharToDrive(gSessionPath[0],gDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
     PrintDrvInfo(TheFs, gDrive);
 

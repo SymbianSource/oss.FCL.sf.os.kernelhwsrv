@@ -613,10 +613,23 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
 */
 TBool CFatMountCB::VolCleanFlagSupported() const
     {
-        const TFatType fatType=FatType();
+    const TFatType fatType=FatType();
 
-        ASSERT(fatType == EFat12 || fatType == EFat16 || fatType == EFat32);
-        return (fatType != EFat12);
+    ASSERT(fatType == EFat12 || fatType == EFat16 || fatType == EFat32);
+    return (fatType != EFat12);
+    }
+
+
+//-----------------------------------------------------------------------------------------
+/**
+    @return Volume size in bytes according to the number of usable clusters.
+    This approach is not applicable to RAM drive, because its size isn't fixed and can be adjusted by the system.
+*/
+TUint64 CFatMountCB::VolumeSizeInBytes() const
+    {
+    ASSERT(ConsistentState());
+    ASSERT(!iRamDrive);
+    return ((TUint64)UsableClusters()) << ClusterSizeLog2();
     }
 
 //-----------------------------------------------------------------------------------------
@@ -681,16 +694,21 @@ void CFatMountCB::VolumeL(TVolumeInfo& aVolume) const
 
 
     const TUint32 freeClusters = FAT().NumberOfFreeClusters(bSyncOp);
-
+    aVolume.iFree = (TInt64)freeClusters << ClusterSizeLog2();
     __PRINT1(_L("CFatMountCB::VolumeL() free clusters:%d"), freeClusters);
 
-    aVolume.iFree = (TInt64)freeClusters << ClusterSizeLog2();
 
-    if (drvInfo.iType==EMediaRam)
+    if(drvInfo.iType==EMediaRam)
+        {//-- a special case. RAM drive size is variable and adjustable. It should be calculated from aVolume.iFree and CMountCB::iFree
+        ASSERT(iRamDrive);
         aVolume.iSize=aVolume.iFree+iSize;
-
-    aVolume.iSize-=ClusterBasePosition(); // Allow for bytes used by FAT etc
-    aVolume.iSize=(aVolume.iSize >> ClusterSizeLog2()) << ClusterSizeLog2();  //-- round down to cluster size
+        aVolume.iSize-=ClusterBasePosition(); // Allow for bytes used by FAT etc
+        aVolume.iSize=(aVolume.iSize >> ClusterSizeLog2()) << ClusterSizeLog2();  //-- round down to cluster size
+        }
+    else
+        {//-- normal case; the volume size is determined by amount of usable clusters
+        aVolume.iSize = VolumeSizeInBytes();
+        }
 
     }
 

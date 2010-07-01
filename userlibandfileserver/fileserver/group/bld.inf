@@ -43,7 +43,7 @@ PRJ_EXPORTS
 ../inc/rofs.h									SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rofs.h)
 ../inc/ftlcontrolio.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(ftlcontrolio.h)
 ../inc/f32pluginUtils.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32pluginutils.h)
-../inc/F32plugin.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.h)
+../inc/f32plugin.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.h)
 ../inc/f32plugin.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(f32plugin.inl)
 
 ../rom/f32.iby	 		/epoc32/rom/f32/f32.iby

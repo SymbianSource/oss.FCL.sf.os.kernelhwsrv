@@ -18,7 +18,7 @@
 #include "sf_std.h"
 #include <f32dbg.h>
 #include "f32image.h"
-#include <F32plugin.h>
+#include <f32plugin.h>
 #include <filesystem_fat.h>
 #include "sf_file_cache.h"
 #include "sf_memory_man.h"

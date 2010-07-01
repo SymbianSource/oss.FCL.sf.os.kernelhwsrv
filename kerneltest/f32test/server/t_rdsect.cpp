@@ -73,7 +73,7 @@ LOCAL_C void CreateTestFiles()
 
 	test.Next(_L("Create test files"));
 	TInt r=TheFs.MkDir(_L("\\F32-TST\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
 	RFile file;
 
@@ -208,7 +208,7 @@ LOCAL_C void Test1()
 //	First, test for non-existant file
 	TBuf<256> testDes;
 	TInt r=TheFs.ReadFileSection(_L("\\F32-tst\\NonExistantFile.txt"),0,testDes,52);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	test(testDes.Length()==0);
 
 //	Test with file closed
@@ -400,7 +400,7 @@ LOCAL_C void Test2()
 	TBuf8<256> testDesN;
 	test.Next(_L("Check for null file name"));
  	r=TheFs.ReadFileSection(_L(""),0,testDesN,26);
- 	test(r==KErrBadName);
+ 	test_Value(r, r == KErrBadName);
  	
 	// Check the lentgh of descriptor.	
  	TInt x = testDesN.Length();
@@ -409,7 +409,7 @@ LOCAL_C void Test2()
  	test.Next(_L("Check for non existing file"));
 	r=TheFs.ReadFileSection(_L("sdfsd.dfg"),0,testDesN,26);
  	test.Printf(_L("Return %d"),r);
- 	test((r==KErrNotFound) || (r == KErrPathNotFound));
+ 	test_Value(r, (r == KErrNotFound) || (r == KErrPathNotFound));
  	
 	// Check the lentgh of descriptor.	
  	x = testDesN.Length();
@@ -546,7 +546,7 @@ LOCAL_C void TestErrors()
 //	__ASSERT_ALWAYS(aDes.MaxLength()>=aLength,Panic(EBadLength));
 
 	r=TheFs.ReadFileSection(_L("\\F32-tst\\ReadFileSection1.txt"),2000,testDes,-20);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 
 //	Test that specifying a position and length which extends beyond the end of
 //	the	file returns a zero length descriptor and KErrNone
@@ -617,7 +617,7 @@ LOCAL_C void TestUnicode()
 	//	First, test for non-existant file
 	TBuf8<256> testDes;
 	TInt r=TheFs.ReadFileSection(_L("\\F32-tst\\NonExistantFile.txt"),0,testDes,52);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	test(testDes.Length()==0);
 	
 	//	Test with file closed
@@ -640,7 +640,7 @@ LOCAL_C void TestUnicode()
 	TBuf8<256> testDesN;
 	test.Next(_L("Check for null file name"));
  	r=TheFs.ReadFileSection(_L(""),0,testDesN,26);
- 	test(r==KErrBadName);
+ 	test_Value(r, r == KErrBadName);
  	
 	//  Check the lentgh of descriptor.	
  	TInt x = testDesN.Length();
@@ -649,7 +649,7 @@ LOCAL_C void TestUnicode()
  	test.Next(_L("Check for non existing file"));
 	r=TheFs.ReadFileSection(_L("sdfsd.dfg"),0,testDesN,26);
  	test.Printf(_L("Return %d"),r);
- 	test((r==KErrNotFound) || (r == KErrPathNotFound));
+ 	test_Value(r, (r == KErrNotFound) || (r == KErrPathNotFound));
  	
 	//  Check the lentgh of descriptor.	
  	x = testDesN.Length();
@@ -657,27 +657,27 @@ LOCAL_C void TestUnicode()
 
     //  Test for Empty directory  
     r=TheFs.ReadFileSection(_L("\\F32-tst\\"),0,testDesN,52);
-    test(r==KErrBadName);
+    test_Value(r, r == KErrBadName);
     test(testDesN.Length()==0);
 
     //  Test for File with wildcard name 
     r=TheFs.ReadFileSection(_L("\\F32-tst\\*.txt"),0,testDesN,52);
-    test(r==KErrBadName);
+    test_Value(r, r == KErrBadName);
     test(testDesN.Length()==0);
 
     //  Test for Folder with wildcard name 
     r=TheFs.ReadFileSection(_L("\\F32-tst*\\ReadFileSection1.txt"),0,testDesN,52);
-    test(r==KErrBadName);
+    test_Value(r, r == KErrBadName);
     test(testDesN.Length()==0);
       
     //  Test for Root directory
     r=TheFs.ReadFileSection(_L("\\"),0,testDesN,52);
-    test(r==KErrBadName);
+    test_Value(r, r == KErrBadName);
     test(testDesN.Length()==0);
 
     //  Test for no file being specified.
     r=TheFs.ReadFileSection(_L(""),0,testDesN,26);
-    test(r==KErrBadName);
+    test_Value(r, r == KErrBadName);
     test(testDesN.Length()==0); 
 
 
@@ -857,7 +857,7 @@ LOCAL_C void TestUnicode()
 
 
 	r=TheFs.ReadFileSection(_L("\\F32-tst\\ReadFileSection1.txt"),2000,testDes2,-20);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 
 //	Test that specifying a position and length which extends beyond the end of
 //	the	file returns a zero length descriptor and KErrNone

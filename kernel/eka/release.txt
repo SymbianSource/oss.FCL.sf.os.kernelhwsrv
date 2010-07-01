@@ -1,3 +1,77 @@
+Version 2.00.3102
+=================
+(Made by vfebvre 24/06/2010)
+
+1.	daniezho
+	1.	ou1cimx1#452612 [kernelhwsrvmcl] Not support NCM function in USB shared chunk LDD
+
+2.	cnotton
+	1.	ou1cimx1#435933 E32TEST T_TIMESTAMP test failure investigation (SMP, t_timestamp.cpp:194)
+
+
+Version 2.00.3101
+=================
+(Made by vfebvre 22/06/2010)
+
+1.	erifung
+	1.	ou1cimx1#436941 Category 20 (TResourceManagerUs) cannot be enabled in btrace
+
+2.	indrasin
+	1.	MINOR_CHANGE Included H2/H4/H6, emulator builds, excluded TraceCore from rapu for sirocco building
+	2.	MINOR_CHANGE Excluded TraceCore from rapu baseport for sirocco building
+
+
+Version 2.00.3100
+=================
+(Made by vfebvre 21/06/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#451185 DEV MCL Warnings in DRM_DebugEventHandler header for coverage builds
+
+2.	mipetzol
+	1.	ou1cimx1#457256 Changes done in DMA PIL DMA V2 framework to adapt to ST PSL
+
+3.	lanerobe
+	1.	ou1cimx1#447463 VFP Mode inheritance fix
+
+4.	kmetherm
+	1.	ou1cimx1#442009 DEV RVCT4.0 Compilation issues in  when building bsp
+
+
+Version 2.00.3099
+=================
+(Made by vfebvre 18/06/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#443337 Automouter is not referenced by the package_definition.xml file
+
+2.	mipetzol
+	1.	MINOR_CHANGE DMA header file in-source documentation update
+
+3.	tocosgro
+	1.	ou1cimx1#403437 RVCT 4.0: Definition of BTraceFiltered8 engenders undefined behaviour
+		RVCT4 with -O3 and -Otime creates incorrect object code when we cast a function
+		call in order to call a function that should have more parameters with fewer than it
+		needs.
+
+		This is done by various of the BTrace macros in e32btrace.h (Btrace0(), BTrace4(), etc, etc),
+		using internal typedefs TBTrace1, TBTrace2 and TBTrace 3.
+
+		The change is to remove the casts (and the typedefs to avoid this being done again
+		immediately) and add explicit 0 arguments to the calls in the macros.
+
+		The impact of this on the generated code is precisely to add the extra register load immediate
+		instructions (e.g. mov r3, #0).
+
+4.	shubmurt
+	1.	ou1cimx1#428765 Case and Slash fix for Linux Build
+
+5.	kmetherm
+	1.	ou1cimx1#419204 DEV-T_CrashMonitor_Lib test fails when built with RVCT4.0 compiler
+	2.	ou1cimx1#390590 DEV-T_KHEAP test fails when built with RVCT4.0 compiler
+	3.	ou1cimx1#423744 DEV-T_XXVer2 test fails/times out when built with RVCT4.0 compiler
+
+
 Version 2.00.3098
 =================
 (Made by vfebvre 18/06/2010)

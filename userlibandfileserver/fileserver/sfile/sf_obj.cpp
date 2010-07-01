@@ -129,7 +129,13 @@ void CFsObjectConIx::Remove(CFsObjectCon* aCon)
 			if (newAlloc!=iAllocated)
 				{
 				if (newAlloc)
+				    {
 					iContainers=(CFsObjectCon**)User::ReAlloc(iContainers,newAlloc*sizeof(CFsObjectCon*));
+					if(!iContainers)
+					    {
+					    Fault(EContainerHeapCorruptionOnRemove);
+					    }
+				    }
 				else
 					{
 					delete iContainers;
@@ -489,7 +495,13 @@ void CFsObjectIx::Remove(TInt aHandle,TBool aLock)
 		if (newAlloc!=iAllocated)
 			{
 			if (newAlloc)
+			    {
 				iObjects=(SFsObjectIxRec*)User::ReAlloc(iObjects,newAlloc*sizeof(SFsObjectIxRec));
+				if(!iObjects)
+				    {
+                    Fault(EContainerHeapCorruptionOnRemove);
+				    }
+			    }
 			else
 				{
 				delete iObjects;
@@ -679,7 +691,13 @@ void CFsObjectCon::Remove(CFsObject *anObj,TBool aLock)
 			if (newAlloc!=iAllocated)
 				{
 				if (newAlloc)
+				    {
 					iObjects=(CFsObject**)User::ReAlloc(iObjects,newAlloc*sizeof(CFsObject*));
+					if(!iObjects)
+					    {
+					    Fault(EContainerHeapCorruptionOnRemove);
+					    }
+				    }
 				else
 					{
 					delete iObjects;

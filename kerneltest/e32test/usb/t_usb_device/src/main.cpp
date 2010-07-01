@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,7 +20,7 @@
 #include "general.h"
 #include "config.h"
 #include "activecontrol.h"
-#include "activeRW.h"
+#include "activerw.h"
 
 // --- Global Top Level Variables
 
@@ -29,6 +29,10 @@ CActiveControl* gActiveControl;
 RTest test(_L("T_USB_SCDEVICE"));
 #else
 RTest test(_L("T_USB_DEVICE"));
+#endif
+
+#ifdef USB_SC	
+TBool gShareHandle = EFalse;
 #endif
 TBool gVerbose = EFalse;
 TBool gSkip = EFalse;
@@ -81,8 +85,12 @@ void RunAppL(TDes * aConfigFile, TDes * aScriptFile)
 
 	
 		// Call request function
+#ifdef USB_SC		
+		if (!gShareHandle)
+			gActiveControl->RequestEp0ControlPacket();
+#else
 		gActiveControl->RequestEp0ControlPacket();
-
+#endif
 		CActiveScheduler::Start();
 		
 		test.Printf (_L("Test Run Completed\n"));
@@ -147,6 +155,13 @@ void ParseCommandLine (TDes& aConfigFileName, TDes& aScriptFileName)
 				RDebug::Print(_L("Not Stopping on Test Fail\n"));
 				gStopOnFail = EFalse;
 				}
+#ifdef USB_SC	
+			else if (token == _L("/a"))
+				{				
+				RDebug::Print(_L("share handle test\n"));
+				gShareHandle = ETrue;
+				}
+#endif
 			else if (token.Left(5) == _L("/soak"))
 				{
 				TInt equalPos;
@@ -205,7 +220,6 @@ TInt E32Main()
 	__UHEAP_MARKEND;
 
 	RDebug::Print(_L("Program exit: done.\n"));
-
 	return 0;												// and return
 	}
 

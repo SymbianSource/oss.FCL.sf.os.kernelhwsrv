@@ -16,7 +16,7 @@
 #include "memmodel.h"
 #include "mm.h"
 #include "mmu.h"
-
+#include "mpager.h"
 #include "mrom.h"
 
 /**	Returns the amount of free RAM currently available.
@@ -510,6 +510,35 @@ EXPORT_C TInt Epoc::FreePhysicalRam(TInt aNumPages, TPhysAddr* aPageList)
 
 
 /**
+Free a RAM zone which was previously allocated by one of these methods:
+Epoc::AllocPhysicalRam(), Epoc::ZoneAllocPhysicalRam() or 
+TRamDefragRequest::ClaimRamZone().
+
+All of the pages in the RAM zone must be allocated and only via one of the methods 
+listed above, otherwise a system panic will occur.
+
+@param	aZoneId			The ID of the RAM zone to free.
+@return	KErrNone 		If the operation was successful.
+		KErrArgument 	If a RAM zone with ID aZoneId was not found.
+
+@pre Calling thread must be in a critical section.
+@pre Interrupts must be enabled.
+@pre Kernel must be unlocked.
+@pre No fast mutex can be held.
+@pre Call in a thread context.
+@pre Can be used in a device driver.
+*/
+EXPORT_C TInt Epoc::FreeRamZone(TUint aZoneId)
+	{
+	CHECK_PRECONDITIONS(MASK_THREAD_CRITICAL,"Epoc::FreeRamZone");
+	RamAllocLock::Lock();
+	TInt r = TheMmu.FreeRamZone(aZoneId);
+	RamAllocLock::Unlock();
+	return r;
+	}
+
+
+/**
 Allocate a specific block of physically contiguous RAM, specified by physical
 base address and size.
 If and when the RAM is no longer required it should be freed using
@@ -607,13 +636,29 @@ TInt M::PageSizeInBytes()
 	}
 
 
-#ifdef BTRACE_KERNEL_MEMORY
 void M::BTracePrime(TUint aCategory)
 	{
-	// TODO:
-	}
-#endif
+	(void)aCategory;
 
+#ifdef BTRACE_KERNEL_MEMORY
+	// Must check for -1 as that is the default value of aCategory for
+	// BTrace::Prime() which is intended to prime all categories that are 
+	// currently enabled via a single invocation of BTrace::Prime().
+	if(aCategory == BTrace::EKernelMemory || (TInt)aCategory == -1)
+		{
+		NKern::ThreadEnterCS();
+		RamAllocLock::Lock();
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryInitialFree, TheSuperPage().iTotalRamSize);
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryCurrentFree, Kern::FreeRamInBytes());
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryMiscAlloc, Epoc::KernelMiscPages << KPageShift);
+		BTrace4(BTrace::EKernelMemory, BTrace::EKernelMemoryDemandPagingCache, ThePager.MinimumPageCount() << KPageShift);
+		BTrace8(BTrace::EKernelMemory, BTrace::EKernelMemoryDrvPhysAlloc, Epoc::DriverAllocdPhysRam, -1);
+		RamAllocLock::Unlock();
+		NKern::ThreadLeaveCS();
+		}
+#endif
+	TheMmu.BTracePrime(aCategory);
+	}
 
 
 //

@@ -2942,7 +2942,6 @@ public:
 	IMPORT_C TInt Copy(const RFile& anOld,const TDesC& aNew,TUint aSwitches,TRequestStatus& aStatus);
 protected:
 	CFileMan(RFs& aFs);
-	TInt RenameInvalidEntry(const TDesC& anOld,const TDesC& aNew,TUint aSwitch=EOverWrite);
 private:
 	/**
 	This is an internal enumeration for CFileMan implementation. 

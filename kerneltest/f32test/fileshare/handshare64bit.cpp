@@ -18,7 +18,7 @@
 // 
 //
 
-
+#define __E32TEST_EXTENSION__
 #include <e32svr.h>
 #include <e32test.h>
 #include "handshare64bit.h"
@@ -162,7 +162,7 @@ void CFHSession64Bit::GetFileHandleLargeFile2(const RMessage2& aMsg)
 	if (r == KErrNone)
 	r = file1.Replace(fs,KServerFileName,EFileWrite);
 	r=file1.SetSize(K4GB-1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = file1.Write(K4GB-10,KTestData4());
 		
 	file1.Close();
@@ -178,17 +178,17 @@ void CFHSession64Bit::GetFileHandleLargeFile2(const RMessage2& aMsg)
 
 	// transfer the file to the client
 	r = file1.TransferToClient(aMsg, 0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	// test we can still use the file
 	TInt64 pos = 0;
 	r = file1.Seek(ESeekStart, pos);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	TBuf8<9> rbuf;
 	r=file1.Read(K4GB-10,rbuf);
-	test(r == KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData4());
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	file1.Close();
 	fs.Close();
@@ -209,19 +209,19 @@ void CFHSession64Bit::PassFileHandleLargeFile(const RMessage2& aMsg)
 	// Message slot 0 is a RFs handle
 	// Message slot 1 is a RFile Subsession handle (RFile::SubSessionHandle())
 	TInt r = file.AdoptFromClient(aMsg, 0, 1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TBuf8<9> rbuf;
 	r=file.Read(K4GB-10,rbuf);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData3());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(KTestData1());
-	test(r==KErrAccessDenied);
+	test_Value(r, r==KErrAccessDenied);
 	r=file.ChangeMode(EFileWrite);
-	test(r==KErrArgument);
+	test_Value(r, r==KErrArgument);
 	r=file.Rename(_L("\\newname.txt"));
-	test(r==KErrPermissionDenied || r==KErrAccessDenied);
+	test_Value(r, r==KErrPermissionDenied || r==KErrAccessDenied);
 	file.Close();
 
 	aMsg.Complete(KErrNone);
@@ -237,33 +237,33 @@ void CFHSession64Bit::PassFileHandleProcessLargeFile(const RMessage2& aMsg)
 
 	RFile64 file;
 	TInt r = file.AdoptFromCreator(1, 2);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	TBuf8<3> rbuf;
 	r=file.Read(K4GB-10,rbuf,3);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=rbuf.CompareF(KTestData2());
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("RFile::Rename()"));
 
 	// define a filename in our private path
 	RFs fs;
 	r=fs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TFileName sessionp;
 	fs.SessionPath(sessionp);
 	r = fs.MkDirAll(sessionp);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r==KErrNone || r==KErrAlreadyExists);
 
 	r=fs.ShareProtected();
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=fs.CreatePrivatePath(gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fs.SetSessionToPrivate(gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TPath newPath;
 	fs.PrivatePath(newPath);
@@ -273,14 +273,14 @@ void CFHSession64Bit::PassFileHandleProcessLargeFile(const RMessage2& aMsg)
 	
 	// delete the file before we try to rename anything to it
 	r = fs.Delete(newFileName);
-	test(r == KErrNone || r == KErrNotFound);
+	test_Value(r, r == KErrNone || r == KErrNotFound);
 
 	TFileName fileName;
 	r = file.FullName(fileName);
-	test (r == KErrNone);
+	test_KErrNone(r);
 	
 	r=file.Rename(newFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 
@@ -288,7 +288,7 @@ void CFHSession64Bit::PassFileHandleProcessLargeFile(const RMessage2& aMsg)
 	// have been moved to our private directory)
 	test.Next(_L("RFs::Delete()"));
 	r = fs.Delete(newFileName);
-	test(r == KErrNone);
+	test_KErrNone(r);
 
 	fs.Close();
 
@@ -376,11 +376,11 @@ TInt E32Main()
 
 	RFs cleanupfs;
 	TInt r = cleanupfs.Connect();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=cleanupfs.SetSessionToPrivate(gTestDrive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=cleanupfs.Delete(KSvrFileName);
-	test(r==KErrNone || r==KErrNotFound);
+	test_Value(r, r==KErrNone || r==KErrNotFound);
 	cleanupfs.Close();
 
 
@@ -393,9 +393,9 @@ TInt E32Main()
 	// Sanity check for open handles and pending requests
 	TInt end_thc, end_phc;
 	RThread().HandleCount(end_phc, end_thc);
-	test(start_thc == end_thc);
-	test(start_phc == end_phc);
-	test(RThread().RequestCount() == 0);
+	test_Value(start_thc, start_thc == end_thc);
+	test_Value(start_phc, start_phc == end_phc);
+	test_Value(RThread().RequestCount(), RThread().RequestCount() == 0);
 	
 	return 0;
 	}

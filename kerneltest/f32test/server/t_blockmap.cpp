@@ -33,6 +33,7 @@
 //! @SYMTestStatus          Implemented
 
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include <e32svr.h>
 #include <f32file.h>
@@ -80,12 +81,12 @@ LOCAL_C TInt TestBlockMapNandFATUserData(TInt64 aStartPos, TInt64 aEndPos)
 	r = fMan->Delete(name);
 
 	r = fMan->Copy(KTestFile, name);
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 	TInt localDriveNum = 0;
 	RFile testFile;
 	r = testFile.Open( TheFs, name, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
@@ -102,9 +103,9 @@ LOCAL_C TInt TestBlockMapNandFATUserData(TInt64 aStartPos, TInt64 aEndPos)
 			map.Close();
 			testFile.Close();
 			r = fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-			test( r == KErrNone );
+			test_KErrNone(r);
 			r = fMan->Delete(name);
-			test( r == KErrNone );
+			test_KErrNone(r);
 			delete fMan;
 			return bmErr;
 			}
@@ -117,7 +118,7 @@ LOCAL_C TInt TestBlockMapNandFATUserData(TInt64 aStartPos, TInt64 aEndPos)
 
 	TInt size;
 	r = testFile.Size(size);
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 	TBuf8<KReadBufferSize> buf1;
 	TBuf8<KReadBufferSize> buf2;
@@ -144,7 +145,7 @@ LOCAL_C TInt TestBlockMapNandFATUserData(TInt64 aStartPos, TInt64 aEndPos)
 
 	const TInt KTotalSegments = totalSegments;
 	r = localDrive.Connect( localDriveNum, changed );
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 //	For each SBlockMapInfo object in RArray map
 	for ( c = 0; c < map.Count(); c++ )
@@ -175,7 +176,7 @@ LOCAL_C TInt TestBlockMapNandFATUserData(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read( startPos + amountRead, buf1, KReadBufferSize );
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, KReadBufferSize, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					buf1.Zero();
 					buf2.Zero();
 					myCounter++;
@@ -188,7 +189,7 @@ LOCAL_C TInt TestBlockMapNandFATUserData(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read(startPos + amountRead, buf1, miniLength);
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, miniLength, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					amountRead += miniLength;
 					length -= miniLength;
 					miniLength = 0;
@@ -201,9 +202,9 @@ LOCAL_C TInt TestBlockMapNandFATUserData(TInt64 aStartPos, TInt64 aEndPos)
 
 	testFile.Close();
 	r=fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	r = fMan->Delete(name);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	delete fMan;
 	return bmErr;
 	}
@@ -216,7 +217,7 @@ LOCAL_C TInt TestBlockMapNandFAT(TInt64 aStartPos, TInt64 aEndPos)
 	TInt localDriveNum = 0;
 	RFile testFile;
 	TInt r = testFile.Open( TheFs, KTestFileFAT, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
@@ -243,7 +244,7 @@ LOCAL_C TInt TestBlockMapNandFAT(TInt64 aStartPos, TInt64 aEndPos)
 
 	TInt size;
 	r = testFile.Size(size);
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 	TBuf8<KReadBufferSize> buf1;
 	TBuf8<KReadBufferSize> buf2;
@@ -268,7 +269,7 @@ LOCAL_C TInt TestBlockMapNandFAT(TInt64 aStartPos, TInt64 aEndPos)
 
 	const TInt KTotalSegments = totalSegments;
 	r = localDrive.Connect( localDriveNum, changed );
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 //	For each SBlockMapInfo object in RArray map
 	for ( c = 0; c < map.Count(); c++ )
@@ -300,7 +301,7 @@ LOCAL_C TInt TestBlockMapNandFAT(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read( startPos + amountRead, buf1, KReadBufferSize );
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, KReadBufferSize, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					buf1.Zero();
 					buf2.Zero();
 					myCounter++;
@@ -313,7 +314,7 @@ LOCAL_C TInt TestBlockMapNandFAT(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read(startPos + amountRead, buf1, miniLength);
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, miniLength, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					amountRead += miniLength;
 					length -= miniLength;
 					miniLength = 0;
@@ -335,7 +336,7 @@ LOCAL_C TInt TestBlockMapNandROFS(TInt64 aStartPos, TInt64 aEndPos)
 	TInt localDriveNum = 0;
 	RFile testFile;
 	TInt r = testFile.Open( TheFs, KTestFile, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
@@ -362,7 +363,7 @@ LOCAL_C TInt TestBlockMapNandROFS(TInt64 aStartPos, TInt64 aEndPos)
 
 	TInt size;
 	r = testFile.Size(size);
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 	TBuf8<KReadBufferSize> buf1;
 	TBuf8<KReadBufferSize> buf2;
@@ -384,7 +385,7 @@ LOCAL_C TInt TestBlockMapNandROFS(TInt64 aStartPos, TInt64 aEndPos)
 		totalSegments += granularity;
 		}
 	r = localDrive.Connect( localDriveNum, changed );
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 //	For each SBlockMapInfo object in RArray map
 	for ( c = 0; c < map.Count(); c++ )
@@ -412,7 +413,7 @@ LOCAL_C TInt TestBlockMapNandROFS(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read( startPos + amountRead, buf1, KReadBufferSize );
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, KReadBufferSize, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					buf1.Zero();
 					buf2.Zero();
 					myCounter++;
@@ -425,7 +426,7 @@ LOCAL_C TInt TestBlockMapNandROFS(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read(startPos + amountRead, buf1, miniLength);
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, miniLength, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					amountRead += miniLength;
 					length -= miniLength;
 					miniLength = 0;
@@ -455,12 +456,12 @@ LOCAL_C TInt TestBlockMapRamFAT(TInt64 aStartPos, TInt64 aEndPos)
 	r = fMan->Delete(name);
 
 	r = fMan->Copy(KTestFile, name);
-	test( r == KErrNone  || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone  || r == KErrAlreadyExists);
 
 	TInt localDriveNum = 0;
 	RFile testFile;
 	r = testFile.Open( TheFs, name, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
@@ -477,9 +478,9 @@ LOCAL_C TInt TestBlockMapRamFAT(TInt64 aStartPos, TInt64 aEndPos)
 			map.Close();
 			testFile.Close();
 			r = fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-			test( r == KErrNone );
+			test_KErrNone(r);
 			r = fMan->Delete(name);
-			test( r == KErrNone );
+			test_KErrNone(r);
 			delete fMan;
 			return bmErr;
 			}
@@ -492,7 +493,7 @@ LOCAL_C TInt TestBlockMapRamFAT(TInt64 aStartPos, TInt64 aEndPos)
 
 	TInt size;
 	r = testFile.Size(size);
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 	TBuf8<KReadBufferSize> buf1;
 	TBuf8<KReadBufferSize> buf2;
@@ -520,7 +521,7 @@ LOCAL_C TInt TestBlockMapRamFAT(TInt64 aStartPos, TInt64 aEndPos)
 	const TInt KTotalSegments = totalSegments;
 
 	r = localDrive.Connect( localDriveNum, changed );
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 //	For each SBlockMapInfo object in RArray map
 	for ( c = 0; c < map.Count(); c++ )
@@ -552,7 +553,7 @@ LOCAL_C TInt TestBlockMapRamFAT(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read( startPos + amountRead, buf1, KReadBufferSize );
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, KReadBufferSize, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					buf1.Zero();
 					buf2.Zero();
 					myCounter++;
@@ -565,7 +566,7 @@ LOCAL_C TInt TestBlockMapRamFAT(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read(startPos + amountRead, buf1, miniLength);
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, miniLength, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					amountRead += miniLength;
 					length -= miniLength;
 					miniLength = 0;
@@ -578,9 +579,9 @@ LOCAL_C TInt TestBlockMapRamFAT(TInt64 aStartPos, TInt64 aEndPos)
 
 	testFile.Close();
 	r=fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	r = fMan->Delete(name);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	delete fMan;
 	return bmErr;
 	}
@@ -600,11 +601,11 @@ LOCAL_C TInt TestBlockMapRamFAT2(TInt64 aStartPos, TInt64 aEndPos)
 	r = fMan->Delete(name);
 
 	r = fMan->Copy(KTestFile, name);
-	test( r == KErrNone  || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone  || r == KErrAlreadyExists);
 
 	RFile testFile;
 	r = testFile.Open( TheFs, name, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
@@ -616,9 +617,9 @@ LOCAL_C TInt TestBlockMapRamFAT2(TInt64 aStartPos, TInt64 aEndPos)
 
 	testFile.Close();
 	r = fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	r = fMan->Delete(name);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	delete fMan;
 	return bmErr;
 	}
@@ -635,11 +636,11 @@ LOCAL_C TInt TestBlockMapRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 	name.Append( KTestFileName );
 
 	TInt r=fMan->Copy(KTestFile, name);
-	test( r == KErrNone  || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone  || r == KErrAlreadyExists);
 
 	RFile testFile;
 	r = testFile.Open( TheFs, name, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
@@ -648,9 +649,9 @@ LOCAL_C TInt TestBlockMapRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 
 	testFile.Close();
 	r=fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	r = fMan->Delete(name);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	delete fMan;
 	return bmErr;
 	}
@@ -667,12 +668,12 @@ LOCAL_C TInt TestBlockMapInternalRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 	name.Append( KTestFileName );
 
 	TInt r=fMan->Copy(KTestFile, name);
-	test( r == KErrNone  || r == KErrAlreadyExists);
+	test_Value(r, r == KErrNone  || r == KErrAlreadyExists);
 
 	TInt localDriveNum = 0;
 	RFile testFile;
 	r = testFile.Open( TheFs, name, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
@@ -689,9 +690,9 @@ LOCAL_C TInt TestBlockMapInternalRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 			map.Close();
 			testFile.Close();
 			r = fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-			test( r == KErrNone );
+			test_KErrNone(r);
 			r = fMan->Delete(name);
-			test( r == KErrNone );
+			test_KErrNone(r);
 			delete fMan;
 			return bmErr;
 			}
@@ -704,7 +705,7 @@ LOCAL_C TInt TestBlockMapInternalRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 
 	TInt size;
 	r = testFile.Size(size);
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 	TBuf8<KReadBufferSize> buf1;
 	TBuf8<KReadBufferSize> buf2;
@@ -732,7 +733,7 @@ LOCAL_C TInt TestBlockMapInternalRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 	const TInt KTotalSegments = totalSegments;
 
 	r = localDrive.Connect( localDriveNum, changed );
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 //	For each SBlockMapInfo object in RArray map
 	for ( c = 0; c < map.Count(); c++ )
@@ -764,7 +765,7 @@ LOCAL_C TInt TestBlockMapInternalRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read( startPos + amountRead, buf1, KReadBufferSize );
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, KReadBufferSize, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					buf1.Zero();
 					buf2.Zero();
 					myCounter++;
@@ -777,7 +778,7 @@ LOCAL_C TInt TestBlockMapInternalRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 					testFile.Read(startPos + amountRead, buf1, miniLength);
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, miniLength, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					amountRead += miniLength;
 					length -= miniLength;
 					miniLength = 0;
@@ -790,9 +791,9 @@ LOCAL_C TInt TestBlockMapInternalRemovableFAT(TInt64 aStartPos, TInt64 aEndPos)
 
 	testFile.Close();
 	r=fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	r = fMan->Delete(name);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	delete fMan;
 	return bmErr;
 	}
@@ -814,7 +815,7 @@ LOCAL_C TInt TestBlockMapFragmented(DriveType aDriveType, TInt64 aStartPos, TInt
 	TInt localDriveNum = 0;
 	RFile testFile;
 	TInt r = testFile.Open( TheFs, name, EFileRead );
-	test( r == KErrNone );
+	test_KErrNone(r);
 	RArray<SBlockMapInfo> map;	// From RArray<TBlockMapEntry> map; to RArray<SBlockMapInfo> map;
 	SBlockMapInfo info;
 	TInt counter = 0;
@@ -832,9 +833,9 @@ LOCAL_C TInt TestBlockMapFragmented(DriveType aDriveType, TInt64 aStartPos, TInt
 			if ( Finished )
 				{
 				r = fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-				test( r == KErrNone );
+				test_KErrNone(r);
 				r = fMan->Delete(name);
-				test( r == KErrNone );
+				test_KErrNone(r);
 				}
 			delete fMan;
 			return bmErr;
@@ -847,7 +848,7 @@ LOCAL_C TInt TestBlockMapFragmented(DriveType aDriveType, TInt64 aStartPos, TInt
 	TInt granularity;
 	TInt size;
 	r = testFile.Size(size);
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 	TBuf8<KReadBufferSize> buf1;
 	TBuf8<KReadBufferSize> buf2;
@@ -874,7 +875,7 @@ LOCAL_C TInt TestBlockMapFragmented(DriveType aDriveType, TInt64 aStartPos, TInt
 
 	const TInt KTotalSegments = totalSegments;
 	r = localDrive.Connect( localDriveNum, changed );
-	test( r == KErrNone );
+	test_KErrNone(r);
 
 //	For each SBlockMapInfo object in RArray map
 	for ( c = 0; c < map.Count(); c++ )
@@ -906,7 +907,7 @@ LOCAL_C TInt TestBlockMapFragmented(DriveType aDriveType, TInt64 aStartPos, TInt
 					testFile.Read( startPos + amountRead, buf1, KReadBufferSize );
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, KReadBufferSize, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					buf1.Zero();
 					buf2.Zero();
 					myCounter++;
@@ -919,7 +920,7 @@ LOCAL_C TInt TestBlockMapFragmented(DriveType aDriveType, TInt64 aStartPos, TInt
 					testFile.Read(startPos + amountRead, buf1, miniLength );
 					localDrive.Read( map[c].iStartBlockAddress + myBlockMapEntry->iStartBlock * map[c].iBlockGranularity + (c2 == 1?map[c].iBlockStartOffset:0) + myCounter*KReadBufferSize, miniLength, buf2);
 					r = buf1.Compare( buf2 );
-					test( r == 0 );
+					test_Value(r, r == 0 );
 					amountRead += miniLength;
 					length -= miniLength;
 					miniLength = 0;
@@ -934,9 +935,9 @@ LOCAL_C TInt TestBlockMapFragmented(DriveType aDriveType, TInt64 aStartPos, TInt
 	if ( Finished )
 		{
 		r=fMan->Attribs(name, 0, KEntryAttReadOnly, 0);
-		test( r == KErrNone );
+		test_KErrNone(r);
 		r = fMan->Delete(name);
-		test( r == KErrNone );
+		test_KErrNone(r);
 		}
 	delete fMan;
 	return bmErr;	
@@ -957,7 +958,7 @@ LOCAL_C void GenerateFragmentedFiles(DriveType aDriveType)
 	name1.Append( KFragmentedFileName1 );
 	RFile file1;
 	r = file1.Create(TheFs, name1, EFileWrite);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	file1.Close();
 
 	TFileName name2(KDriveBase);
@@ -972,7 +973,7 @@ LOCAL_C void GenerateFragmentedFiles(DriveType aDriveType)
 	name2.Append( KFragmentedFileName2 );
 	RFile file2;
 	r = file2.Create(TheFs, name2, EFileWrite);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	file2.Close();
 	TInt64 randomSeed;
 	TBuf8<KMaxFragmentSize> tempBuf;	
@@ -999,31 +1000,31 @@ LOCAL_C void GenerateFragmentedFiles(DriveType aDriveType)
 			*buf++ = (TUint8)('A' + (Math::Rand(randomSeed) % ('Z' - 'A')));
 			}
 		r = file1.Open( TheFs, name1, EFileWrite );
-		test( r == KErrNone );
+		test_KErrNone(r);
 		r = file1.Seek( ESeekEnd, pos1 );
-		test( r == KErrNone );
+		test_KErrNone(r);
 		r = file1.Write( pos1, tempBuf );
-		test( r == KErrNone );
+		test_KErrNone(r);
 		r = file1.Flush();
-		test( r == KErrNone );		
+		test_KErrNone(r);		
 		file1.Close();
 		if ( mycount++ < 6 )
 			{
 			r = file2.Open( TheFs, name2, EFileWrite );
-			test( r == KErrNone );
+			test_KErrNone(r);
 			r = file2.Seek( ESeekEnd, pos2 );
-			test( r == KErrNone );
+			test_KErrNone(r);
 			r = file2.Write( pos2, tempBuf );
-			test( r == KErrNone );
+			test_KErrNone(r);
 			r = file2.Flush();
-			test( r == KErrNone );
+			test_KErrNone(r);
 			file2.Close();
 			}
 		} while ( fileSize < KMaxFileSize );
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	test(fMan!=NULL);
 	r = fMan->Delete(name2);
-	test( r == KErrNone );
+	test_KErrNone(r);
 	delete fMan;
 	}
 
@@ -1037,7 +1038,7 @@ LOCAL_C void FindDrive(DriveType aDriveType)
 		TInt r = TheFs.Drive(info, i);
 		if ( r != KErrNone )
 			continue;
-		test( r == KErrNone );
+		test_KErrNone(r);
 		if ( aDriveType == EDriveNand )	
 			{
 			c++ == 0 ? test.Printf( _L("Searching for NAND drive.")) : test.Printf( _L("."));
@@ -1120,9 +1121,9 @@ GLDEF_C void CallTestsL(void)
 	TInt testFileSize = 0;
 	RFile testFile;
 	TInt r = testFile.Open(TheFs, KTestFile, EFileRead);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r = testFile.Size(testFileSize);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(testFileSize>16384);
 	testFile.Close();
 
@@ -1130,7 +1131,7 @@ GLDEF_C void CallTestsL(void)
 		{
 		TInt value;
 		r = HAL::Get( HAL::EMachineUid, value );
-		test( r == KErrNone );
+		test_KErrNone(r);
 		if ( value != HAL::EMachineUid_Lubbock )	// Lubbock cannot run FindDrive as it doesn't support the NAND API
 			{
 			test.Next(_L("Test BlockMap retrieval on NAND FAT."));
@@ -1138,184 +1139,184 @@ GLDEF_C void CallTestsL(void)
 			if ( NandDrive > -1 )	// not finding a NAND drive isn't an error as only NAND builds have one
 				{
 				r = TestBlockMapNandFATUserData(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(1024, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(1020, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(1024, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(1020, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(1025, 1200);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(0, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFATUserData(-5, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFATUserData(-5, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFATUserData(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFATUserData(testFileSize, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFATUserData(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(2000, 2001);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFATUserData(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFATUserData(2000, 2000);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFATUserData(2048, 2048);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				test.Printf(_L("Generating Fragmented File..."));
 				GenerateFragmentedFiles(EDriveNand);
 				test.Printf(_L("Done!\n"));
 				test.Next(_L("Test BlockMap retrieval on NAND FAT (User area) (fragmented)."));	
 				r = TestBlockMapFragmented(EDriveNand, 0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 1024, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 1020, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 1024, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 1020, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 1025, 1200);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 0, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveNand, -5, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveNand, -5, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveNand, 0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveNand, testFileSize, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveNand, 0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 2000, 2001);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveNand, 0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveNand, 2000, 2000);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				Finished = ETrue;
 				r = TestBlockMapFragmented(EDriveNand, 2048, 2048);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				test.Next(_L("Test BlockMap retrieval on NAND FAT."));	
 				r = TestBlockMapNandFAT(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(1024, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(1020, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(1024, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(1020, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(1025, 1200);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(0, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFAT(-5, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFAT(-5, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFAT(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFAT(testFileSize, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFAT(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(2000, 2001);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandFAT(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFAT(2000, 2000);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandFAT(2048, 2048);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				test.Next(_L("Test BlockMap retrieval on NAND ROFS."));
 				r = TestBlockMapNandROFS(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(1024, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(1020, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(1024, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(1020, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(1025, 1200);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(0, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandROFS(-5, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandROFS(-5, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandROFS(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandROFS(testFileSize, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandROFS(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(2000, 2001);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapNandROFS(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandROFS(2000, 2000);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapNandROFS(2048, 2048);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				test.Next(_L("Test BlockMap retrieval on RAM FAT."));
 				FindDrive(EDriveRam);
 				test( RamFatDrive > -1 );
 				r = TestBlockMapRamFAT(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(1024, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(1020, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(1024, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(1020, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(1025, 1200);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(0, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapRamFAT(-5, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapRamFAT(-5, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapRamFAT(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapRamFAT(testFileSize, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapRamFAT(0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(2000, 2001);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapRamFAT(0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapRamFAT(2000, 2000);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapRamFAT(2048, 2048);
-				test( r == KErrArgument ); 
+				test_Value(r, r == KErrArgument ); 
 				test.Next(_L("Test BlockMap retrieval on Ram FAT (2)."));
 				r = TestBlockMapRamFAT2(0, -1);
-				test( r == KErrNotSupported );
+				test_Value(r, r == KErrNotSupported );
 				FindDrive(EDriveRemovable);
 				if ( RemovableFatDrive > -1)
 					{
 					test.Next(_L("Test BlockMap retrieval on removable FAT."));
 					r = TestBlockMapRemovableFAT(0, -1);
-					Pageable?test( r == KErrNotSupported ):test( r == KErrCompletion );
+					test_Value(r, r == Pageable ? KErrNotSupported : KErrCompletion);
 					}
 				else
 					{
@@ -1323,37 +1324,37 @@ GLDEF_C void CallTestsL(void)
 					FindDrive(EDriveInternalRemovable);
 					test( InternalRemovableFatDrive > -1);
 					r = TestBlockMapInternalRemovableFAT(0, -1);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(1024, 4096);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(1020, 4100);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(1024, 4100);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(1020, 4096);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(1025, 1200);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(0, testFileSize+100);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					r = TestBlockMapInternalRemovableFAT(-5, -1);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					r = TestBlockMapInternalRemovableFAT(-5, testFileSize+100);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					r = TestBlockMapInternalRemovableFAT(0, 0);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					r = TestBlockMapInternalRemovableFAT(testFileSize, -1);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					r = TestBlockMapInternalRemovableFAT(0, -1);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(2000, 2001);
-					test( r == KErrCompletion );
+					test_Value(r, r == KErrCompletion );
 					r = TestBlockMapInternalRemovableFAT(0, 0);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					r = TestBlockMapInternalRemovableFAT(2000, 2000);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					r = TestBlockMapInternalRemovableFAT(2048, 2048);
-					test( r == KErrArgument );
+					test_Value(r, r == KErrArgument );
 					}
 				test.Next(_L("Test BlockMap retrieval on Ram FAT (fragmented)."));	
 				test.Printf(_L("Generating Fragmented File..."));
@@ -1361,38 +1362,38 @@ GLDEF_C void CallTestsL(void)
 				test.Printf(_L("Done!\n"));
 				Finished = EFalse;
 				r = TestBlockMapFragmented(EDriveRam, 0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 1020, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 2049, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 1024, 4100);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 1020, 4096);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 1025, 1200);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 0, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveRam, -5, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveRam, -5, testFileSize+100);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveRam, 0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveRam, testFileSize, -1);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveRam, 0, -1);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 2000, 2001);
-				test( r == KErrCompletion );
+				test_Value(r, r == KErrCompletion );
 				r = TestBlockMapFragmented(EDriveRam, 0, 0);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				r = TestBlockMapFragmented(EDriveRam, 2000, 2000);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				Finished = ETrue;
 				r = TestBlockMapFragmented(EDriveRam, 2048, 2048);
-				test( r == KErrArgument );
+				test_Value(r, r == KErrArgument );
 				}
 			else
 				{

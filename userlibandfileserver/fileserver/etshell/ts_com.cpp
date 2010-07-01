@@ -84,10 +84,9 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
 LOCAL_C TInt pswd_DrvNbr(TDes &aPath, TInt &aDN);
 LOCAL_C TInt pswd_Password(TDes &aPath, TInt aPWNbr, TMediaPassword &aPW);
 
-_LIT(KLitNewLine,"\n");
 void CShell::NewLine()
 	{
-	TheConsole->Printf(KLitNewLine());
+	Printf(KNl);
 	}
 
 //
@@ -371,7 +370,7 @@ TInt ShellFunction::ChkDsk(TDes& aPath,TUint aSwitches)
 	    switch(nRes)
 		    {
 	    case 0:
-		    CShell::TheConsole->Printf(_L("Complete - no errors\n"));
+		    CShell::TheConsole->Printf(_L("Completed - no errors found\n"));
 		    break;
 	    case 1:
 		    CShell::TheConsole->Printf(_L("Error - File cluster chain contains a bad value (<2 or >maxCluster)\n"));
@@ -1195,9 +1194,9 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, TUint aFlags = EAll)
                 if(nRes == KErrNone)
                 {
                     if(boolPckg() >0)
-                        Buf.Copy(_L("Volume: Finalised"));
+                        Buf.Copy(_L("Vol:Finalised "));
                     else
-                        Buf.Copy(_L("Volume: Not finalised"));
+                        Buf.Copy(_L("Vol:Not finalised "));
                 }
 
                 //-- print out cluster size that FS reported
@@ -1437,16 +1436,16 @@ TInt DoDismountFS(RFs& aFs, TInt aDrvNum, TBool aForceDismount)
     {//-- gaceful attempt to dismount the FS
     nRes = aFs.DismountFileSystem(fsName, aDrvNum);
     if(nRes != KErrNone)
-    {
+        {
         CShell::TheConsole->Printf(_L("Can't dismount FS!\n"));
         return nRes;
-    }
+        }
     else
-    {
-    CShell::TheConsole->Printf(_L("'%S' filesystem dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
-    return KErrNone;
+        {
+        CShell::TheConsole->Printf(_L("'%S' filesystem dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
+        return KErrNone;
+        }
     }
-}
     else
     {//-- dismount by force
         TRequestStatus rqStat;

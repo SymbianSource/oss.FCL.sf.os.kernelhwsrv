@@ -37,29 +37,29 @@ static void CreateTestFiles()
 	{
 	test.Next(_L("Create test files"));
 	TInt r=TheFs.MkDir(_L("\\F32-TST\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
 	RFile file;
 
 //	Create \\SessionPath\\testfile
 	r=file.Replace(TheFs,_L("\\F32-TST\\testfile"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 //	Create \\SessionPath\\rfsfile
 	r=file.Replace(TheFs,_L("\\F32-TST\\rfsfile"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Create \\SessionPath\\eikfile
 	r=file.Replace(TheFs,_L("\\F32-TST\\eikfile"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	}
@@ -73,7 +73,7 @@ static TInt CountFiles(TPtrC aDirectory, TPtrC aFileName)
     RDir dir;
 	TFileName sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TFileName path=_L("?:");
 	path[0]=sessionPath[0];
 	path+=aDirectory;
@@ -83,11 +83,11 @@ static TInt CountFiles(TPtrC aDirectory, TPtrC aFileName)
 		path.Append(_L("\\*"));
 		
 	r=dir.Open(TheFs,path,KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	CDir* anEntryList;
 	r=TheFs.GetDir(path,KEntryAttMaskSupported,ESortByName,anEntryList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	Sets the new length of path to the position of the last path delimiter +1
 	path.SetLength(path.LocateReverse(KPathDelimiter)+1);
@@ -117,19 +117,19 @@ static void TestRFileRename()
 	RFile file;
 	
 	r=file.Open(TheFs,_L("\\F32-TST\\testfile"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Rename(_L("\\F32-TST\\TESTFILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 
 	test.Next(_L("Write in some data"));
 	r=file.Open(TheFs,_L("\\F32-TST\\TESTFILE"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 	}
@@ -144,15 +144,15 @@ static void TestRFsRename()
 	TInt r;
 		
 	r=TheFs.Rename(_L("\\F32-TST\\rfsfile"),_L("\\F32-TST\\RFSFILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	RFile file;
 	test.Next(_L("Write in some data"));
 	r=file.Open(TheFs,_L("\\F32-TST\\RFSFILE"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 	}
@@ -168,19 +168,19 @@ static void TestEikonRename()
 	
 	test.Next(_L("Create a new file with DOS compatible equivalent name"));
 	r=file.Create(TheFs,_L("\\F32-TST\\EIKFILE"),EFileRead|EFileWrite);
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, r == KErrNone || r == KErrAlreadyExists);
 	file.Close();
 
 	test.Next(_L("Copy data from original file into new file"));
 	r=TheFs.Replace(_L("\\F32-TST\\eikfile"),_L("\\F32-TST\\EIKFILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("Open the new file and write into it"));
 	r=file.Open(TheFs,_L("\\F32-TST\\EIKFILE"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	file.Close();
 	}
@@ -198,17 +198,17 @@ static void TestReplaceAndRename()
 //	First test with a non DOS compatible name renamed to a DOS compatible name
 	test.Next(_L("Rename test to TEST and replace temp with TEST"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\test"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r=TheFs.Rename(_L("\\F32-TST\\test"),_L("\\F32-TST\\TEST"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Replace(TheFs,_L("\\F32-TST\\temp"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 //	Replace(oldName, newName)	
@@ -217,183 +217,183 @@ static void TestReplaceAndRename()
 //	then temp is deleted.  If it does exist, it must be closed
 //	The bug created a second file of the same name	
 	r=TheFs.Replace(_L("\\F32-TST\\temp"),_L("\\F32-TST\\TEST"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	Check that there's only one file named TEST
 	TInt fileCount=0;
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("TEST"));
 	test(fileCount==1);
 	r=TheFs.Delete(_L("\\F32-TST\\TEST"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("TEST"));
 	test(fileCount==0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 
 //*****************************************************
 //	The same test but with different source directories
 	test.Next(_L("Rename test to and replace \\SYSTEM\\temp with TEST"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\test"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r=TheFs.Rename(_L("\\F32-TST\\test"),_L("\\F32-TST\\TEST"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Replace(TheFs,_L("\\F32-TST\\SYSTEM\\temp"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 //	The bug created a second file of the same name	
 	r=TheFs.Replace(_L("\\F32-TST\\SYSTEM\\temp"),_L("\\F32-TST\\TEST"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	fileCount=0;
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("TEST"));
 	test(fileCount==1);
 	r=TheFs.Delete(_L("\\F32-TST\\TEST"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("TEST"));
 	test(fileCount==0);
 //	Test that system directory is now empty	
 	fileCount=0;
 	fileCount=CountFiles(_L("\\F32-TST\\SYSTEM\\"),_L("temp"));
 	test(fileCount==0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	*************************************************************************
 //	Test with a DOS compatible name renamed to a different DOS compatible name
 	test.Next(_L("Rename little to BIG and replace temp with BIG"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\little"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	// Test a long path (>250 chrs)
 	r=TheFs.Rename(_L("\\F32-TST\\little"),_L("\\F32-TST\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\0495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\PLATTEST\\FileStore\\TestData\\20495_Folder\\middle.gif"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 
 	r=TheFs.Rename(_L("\\F32-TST\\little"),_L("\\F32-TST\\BIG"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Replace(TheFs,_L("\\F32-TST\\temp"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 	r=TheFs.Replace(_L("\\F32-TST\\temp"),_L("\\F32-TST\\BIG"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	fileCount=0;
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("BIG"));
 	test(fileCount==1);
 	r=TheFs.Delete(_L("\\F32-TST\\BIG"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("BIG"));
 	test(fileCount==0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	***********************************	
 //	Test with a non-DOS compatible name
 	test.Next(_L("Rename veryLongFileName to VERYLONGFILENAME"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\veryLongFileName"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r=TheFs.Rename(_L("\\F32-TST\\veryLongFileName"),_L("\\F32-TST\\VERYLONGFILENAME"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Replace(TheFs,_L("\\F32-TST\\temp"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 	r=TheFs.Replace(_L("\\F32-TST\\temp"),_L("\\F32-TST\\VERYLONGFILENAME"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	fileCount=0;
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("VERYLONGFILENAME"));
 	test(fileCount==1);
 	r=TheFs.Delete(_L("\\F32-TST\\VERYLONGFILENAME"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("VERYLONGFILENAME"));
 	test(fileCount==0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	*******************************
 //	Test with a DOS compatible name
 	test.Next(_L("Rename FILE to FILE and replace temp with FILE"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\FILE"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r=TheFs.Rename(_L("\\F32-TST\\FILE"),_L("\\F32-TST\\FILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Replace(TheFs,_L("\\F32-TST\\temp"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 	r=TheFs.Replace(_L("\\F32-TST\\temp"),_L("\\F32-TST\\FILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	fileCount=0;
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("FILE"));
 	test(fileCount==1);
 	r=TheFs.Delete(_L("\\F32-TST\\FILE"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("FILE"));
 	test(fileCount==0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	**************************************************
 //	Test with a DOS compatible name which is kept open
 	test.Next(_L("Rename test1 to TEST1 and replace temp1 with TEST1 while it's open"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\test1"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(BeckPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 
 	r=TheFs.Rename(_L("\\F32-TST\\test1"),_L("\\F32-TST\\TEST1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 //	Try with the file open
 	RFile openFile;
 	r=openFile.Open(TheFs,_L("\\F32-TST\\TEST1"),EFileRead|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=file.Replace(TheFs,_L("\\F32-TST\\temp"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=file.Write(alphaPtr);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 	r=TheFs.Replace(_L("\\F32-TST\\temp"),_L("\\F32-TST\\TEST1"));
-	test(r==KErrInUse);	//	Fails as it should!  But not intuitive bearing in mind the other bug...
+	test_Value(r, r == KErrInUse);	//	Fails as it should!  But not intuitive bearing in mind the other bug...
 
 	openFile.Close();
 	
 	r=TheFs.Replace(_L("\\F32-TST\\temp"),_L("\\F32-TST\\TEST1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	fileCount=0;
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("TEST1"));
 	test(fileCount==1);
 	r=TheFs.Delete(_L("\\F32-TST\\TEST1"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fileCount=CountFiles(_L("\\F32-TST\\"),_L("TEST1"));
 	test(fileCount==0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	}
 
@@ -453,7 +453,7 @@ void TestRenameManyFilesInTheSameDir()
 
    fName.Format(_L("%c:"), gDriveNum+'A');
    nRes = TheFs.CheckDisk(fName);
-   test(nRes == KErrNone || nRes == KErrNotSupported);
+   test_Value(nRes, nRes == KErrNone || nRes == KErrNotSupported);
 
    //-- clean up
     for(i=0; i<KNumFiles; ++i)
@@ -465,11 +465,11 @@ void TestRenameManyFilesInTheSameDir()
 
    fName.Format(_L("%c:"), gDriveNum+'A');
    nRes = TheFs.CheckDisk(fName);
-   test(nRes == KErrNone || nRes == KErrNotSupported);
+   test_Value(nRes, nRes == KErrNone || nRes == KErrNotSupported);
 
 
    nRes = TheFs.RmDir(KDir);
-   test(nRes == KErrNone);
+   test_KErrNone(nRes);
 
 
 }
@@ -485,14 +485,14 @@ void CallTestsL(void)
     F32_Test_Utils::SetConsole(test.Console());
 
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
-    test(nRes==KErrNone);
+    test_KErrNone(nRes);
     
     PrintDrvInfo(TheFs, gDriveNum);
 
     if(!Is_Win32(TheFs, gDriveNum))
         {
         nRes = FormatDrive(TheFs, gDriveNum, ETrue);
-        test(nRes==KErrNone);
+        test_KErrNone(nRes);
         }
     
 
@@ -507,7 +507,7 @@ void CallTestsL(void)
     if(!Is_Win32(TheFs, gDriveNum))
         {
         nRes = FormatDrive(TheFs, gDriveNum, ETrue);
-        test(nRes==KErrNone);
+        test_KErrNone(nRes);
         }
 
 	test.End();

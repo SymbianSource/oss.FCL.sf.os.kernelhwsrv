@@ -32,7 +32,7 @@
 #include <e32const_private.h>
 #include "sf_plugin.h"
 #include "sf_func.h"
-#include <F32plugin.h>
+#include <f32plugin.h>
 #include "f32trace.h"
 
 #define __PRINT1TEMP_ALWAYS(t,a) {{TBuf<KMaxFileName>temp(a);RDebug::Print(t,&temp);}}

@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -98,7 +98,6 @@ void DfcChunkCleanup(TAny*);
 
 TUsbcScChunkInfo::TUsbcScChunkInfo(DLogicalDevice* aLdd)
 	: 	iChunk(NULL),
-		iCleanup((TDfcFn)&DfcChunkCleanup,this,Kern::SvMsgQue(),0),
 		iChunkMem(NULL),
 		iLdd(aLdd)
 	{
@@ -121,7 +120,7 @@ TInt TUsbcScChunkInfo::CreateChunk(TInt aTotalSize)
 		chunkInfo.iMaxSize = aTotalSize;
 		chunkInfo.iMapAttr = EMapAttrCachedMax;
 		chunkInfo.iOwnsMemory = EFalse;
-		chunkInfo.iDestroyedDfc = &iCleanup;
+		chunkInfo.iDestroyedDfc = NULL;
 
 		TLinAddr chunkMem;
 		r = Kern::ChunkCreate(chunkInfo, iChunk, chunkMem, iChunkMapAttr);
@@ -138,7 +137,14 @@ TInt TUsbcScChunkInfo::CreateChunk(TInt aTotalSize)
 // Note that nothing may happen immediately, as something else may have the chunk open.
 void TUsbcScChunkInfo::Close()
 {
-	Kern::ChunkClose(iChunk);	
+	__KTRACE_OPT(KUSB, Kern::Printf("TUsbcScChunkInfo::Close %d", iChunk->AccessCount()));
+
+	if (Kern::ChunkClose(iChunk))
+        {
+		__KTRACE_OPT(KUSB, Kern::Printf("TUsbcScChunkInfo::Close1"));
+         ChunkCleanup();    
+		__KTRACE_OPT(KUSB, Kern::Printf("TUsbcScChunkInfo::Close2"));
+        }
 }
 
 
@@ -341,6 +347,19 @@ void TUsbcScBuffer::CreateChunkBufferHeader()
 		// Dont need to round here, as we will round it up on endpoint change. (configuration)
 		}
 }
+
+
+TBool TUsbcScBuffer::IsRequestPending()
+	{
+		return iStatusList.IsRequestPending();
+	}
+
+TBool TUsbcScStatusList::IsRequestPending()
+	{
+		return (iLength != 0);
+	}
+
+
 
 /*
 TUsbcScBuffer::StartEndpoint
@@ -881,6 +900,13 @@ void TUsbcScStatusList::Complete()
 	iHead = ((iHead+1) & (iSize-1));
 	}
 
+
+void TUsbcScStatusList::SetClient(DThread& aThread)
+	{
+	iClient = &aThread;
+	}
+
+
 // End TUsbcScStatusList
 
 /*****************************************************************************\
@@ -1240,12 +1266,14 @@ DLddUsbcScChannel::~DLddUsbcScChannel()
 	if (iRealizeCalled)
 		{
 		// Close Chunk
+		__KTRACE_OPT(KUSB, Kern::Printf("iChunkInfo->Close()"));
 		iChunkInfo->Close();
 		// ChunkInfo will delete itself with DFC, but the pointer here is no longer needed.		
 		iChunkInfo=NULL;
 		}
 	__KTRACE_OPT(KUSB, Kern::Printf("about to SafeClose"));
 	Kern::SafeClose((DObject*&)iClient, NULL);
+	__KTRACE_OPT(KUSB, Kern::Printf("about to SafeClose1"));
 	}
 
 
@@ -1326,6 +1354,13 @@ void DLddUsbcScChannel::HandleMsg(TMessageBase* aMsg)
 		}
 
 	TInt r;
+
+	if (aMsg->Client() != iClient)
+		{
+		m.Complete(KErrAccessDenied, ETrue);
+		return;
+		}
+	
 	if (id < 0)
 		{
 		// DoRequest
@@ -2255,18 +2290,50 @@ TInt DLddUsbcScChannel::DoControl(TInt aFunction, TAny* a1, TAny* a2)
 TInt DLddUsbcScChannel::RequestUserHandle(DThread* aThread, TOwnerType /*aType*/)
 	{
 	__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcScChannel::RequestUserHandle"));
-	// The USB client LDD is not designed for a channel to be shared between
-	// threads. It saves a pointer to the current thread when it is opened, and
-	// uses this to complete any asynchronous requests.
-	// It is therefore not acceptable for the handle to be duplicated and used
-	// by another thread:
+	// The USB client LDD can share across process, but can't use simultanously. 
+	// This mean if transfer the handle to another process, can't access this channel
+	// in the origin process and any call to the channel will return with KErrAccessDenied.
+	// If there is async request scheduled, can't transfer channel handle to another process
+	// and return KErrAccessDenied. 
 	if (aThread == iClient)
 		{
 		return KErrNone;
 		}
 	else
 		{
-		return KErrAccessDenied;
+		//check if async request has been called
+		for (TInt i = 1; i < KUsbcMaxRequests; i++)
+			{
+			if (iRequestStatus[i] != NULL)
+				{
+				return KErrAccessDenied;
+				}
+			}
+
+		if (iBuffers)
+			{
+			for (TInt i=0; i<(iNumBuffers+2); i++) 
+				{
+				if (iBuffers[i].IsRequestPending())
+					{
+					return KErrAccessDenied;	
+					}
+				}
+			}
+		
+		
+		Kern::SafeClose((DObject*&)iClient, NULL);
+		iClient = aThread;
+		iClient->Open();
+		if (iBuffers)
+			{
+			for (TInt i=0; i<(iNumBuffers+2); i++) 
+				{
+				iBuffers[i].iStatusList.SetClient(*iClient);
+				}
+			}
+		__KTRACE_OPT(KUSB, Kern::Printf("DLddUsbcScChannel::handle %d", iChunkInfo->iChunk->AccessCount()));
+		return KErrNone;
 		}
 	}
 

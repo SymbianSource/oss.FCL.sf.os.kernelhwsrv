@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -47,18 +48,18 @@ Test the file info function
 	{
 	TEntry entry;
 	TInt r=TheFs.Entry(noDevice,entry);
-	test((r==KErrNotReady)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNotReady)||(r==KErrPathNotFound));
 	r=TheFs.Entry(noDirectory,entry);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Entry(noFile,entry);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Entry(existsFile,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iSize==KSizeExistsFile);
 	test(!entry.IsDir());
 	test(!(entry.iAtt&KEntryAttDir));
 	r=TheFs.Entry(existsFile2,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iSize==KSizeExistsFile2);
 	test(!entry.IsDir());
 	test(!(entry.iAtt&KEntryAttDir));
@@ -70,20 +71,20 @@ Test the delete
 */
 	{
 	TInt r=TheFs.Delete(noDevice);
-	test((r==KErrNotReady)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNotReady)||(r==KErrPathNotFound));
 	r=TheFs.Delete(noDirectory);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Delete(noFile);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Delete(existsFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(existsFile2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TEntry entry;
 	r=TheFs.Entry(existsFile,entry);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Entry(existsFile2,entry);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	}
 
 LOCAL_C void TestRename()
@@ -92,50 +93,50 @@ Test the rename
 */
 	{
 	TInt r=TheFs.Rename(noDevice,fileName);
-	test(r==KErrArgument);
+	test_Value(r, r == KErrArgument);
 	r=TheFs.Rename(noDirectory,fileName);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=TheFs.Rename(noFile,fileName);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Rename(existsFile,existsFile2);
-	test(r==KErrAlreadyExists);
+	test_Value(r, r == KErrAlreadyExists);
 	r=TheFs.Delete(existsFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Rename(existsFile,existsFile);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Rename(existsFile2,existsFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TEntry entry;
 	r=TheFs.Entry(existsFile2,entry);
-	test(r==KErrNotFound);
+	test_Value(r, r == KErrNotFound);
 	r=TheFs.Entry(existsFile,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(existsFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void TestMkDir()
 	{
 	TParse fparse;
 	TInt r=TheFs.MkDirAll(directoryFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TEntry entry;
 	r=TheFs.Entry(directoryFile.Left(directoryFile.Length()-1),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.IsDir());
 	test(entry.iAtt&KEntryAttDir);
 	r=TheFs.RmDir(directoryFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fparse.Set(directoryFile,NULL,NULL);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fparse.PopDir();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(fparse.DriveAndPath());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fparse.PopDir();
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(fparse.DriveAndPath());
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 
@@ -148,108 +149,108 @@ Test unique file name generator
 	RFile p2;
 
 	TInt r=p1.Open(TheFs,noDevice,EFileStreamText);
-	test((r==KErrNotReady)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNotReady)||(r==KErrPathNotFound));
 	r=p1.Open(TheFs,noDirectory,EFileStreamText);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	TFileName generated1;
 	r=p1.Temp(TheFs,noDevicePath,generated1,EFileStreamText);
-	test((r==KErrNotReady)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNotReady)||(r==KErrPathNotFound));
 	r=p1.Temp(TheFs,noDirectoryPath,generated1,EFileStreamText);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 
 	r=p1.Temp(TheFs,_L(""),generated1,EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TFileName generated2;
 	r=p2.Temp(TheFs,_L(""),generated2,EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(generated1!=generated2);
 	p1.Close();
 	TFileName generated3;
 	r=p1.Temp(TheFs,_L(""),generated3,EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(generated3!=generated2);
 	test(generated3!=generated1);
 	p2.Close();
 	p1.Close();
 
 	r=TheFs.Delete(generated1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(generated2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(generated3);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=p1.Temp(TheFs,_L(""),generated1,EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=p2.Temp(TheFs,_L(""),generated2,EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(generated1!=generated2);
 	p1.Close();
 	r=p1.Temp(TheFs,_L(""),generated3,EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(generated3!=generated2);
 	test(generated3!=generated1);
 	p2.Close();
 	p1.Close();
 
 	r=TheFs.Delete(generated1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(generated2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(generated3);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.MkDir(openUniqueDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=p1.Temp(TheFs,openUniqueDir,generated1,EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=p2.Temp(TheFs,openUniqueDir,generated2,EFileStreamText|EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=p1.Write(_L8("junk"),4);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt pos=0;
 	r=p1.Seek(ESeekCurrent,pos);//P_FSET
-	test(r==KErrNone);
+	test_KErrNone(r);
 	p1.Close();
 	p2.Close();
 	
 	r=TheFs.Delete(generated1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(generated2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=p1.Temp(TheFs,openUniqueDir,generated1,EFileStream);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=p2.Temp(TheFs,openUniqueDir,generated2,EFileStreamText);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	p1.Close();
 
 	pos=0;
 	r=p2.Seek(ESeekStart,pos);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	p2.Close();
 	r=TheFs.Delete(generated1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(generated2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(openUniqueDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 LOCAL_C void TestPaths()
 	{
 	TFileName path1;
 	TInt r=TheFs.SessionPath(path1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetSessionPath(path1);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TFileName path2;
 	r=TheFs.SessionPath(path2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(path1==path2);
 	RDir dir;
 	r=dir.Open(TheFs,path1,0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	dir.Close();
 	}
 
@@ -257,7 +258,7 @@ LOCAL_C void TestFileStatus()
 	{
 	TEntry blk;
 	TInt r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TEntry blk1=blk;
 
 /* Toggle the write attribute */
@@ -273,9 +274,9 @@ LOCAL_C void TestFileStatus()
 		set=KEntryAttReadOnly;
 		}
 	r=TheFs.SetEntry(existsFile,blk1.iModified,set,clear);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsReadOnly())
 		test(!blk.IsReadOnly());
 	else
@@ -283,9 +284,9 @@ LOCAL_C void TestFileStatus()
 
 /* set write attrib back */
 	r=TheFs.SetEntry(existsFile,blk1.iModified,clear,set);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsReadOnly())
 		test(blk.IsReadOnly());
 	else
@@ -303,18 +304,18 @@ LOCAL_C void TestFileStatus()
 		set=KEntryAttArchive;
 		}
 	r=TheFs.SetEntry(existsFile,blk1.iModified,set,clear);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsArchive())
 		test(!blk.IsArchive());
 	else
 		test(blk.IsArchive());
 /* set archive attrib back */
 	r=TheFs.SetEntry(existsFile,blk1.iModified,clear,set);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsArchive())
 		test(blk.IsArchive());
 	else
@@ -332,18 +333,18 @@ LOCAL_C void TestFileStatus()
 		set=KEntryAttHidden;
 		}
 	r=TheFs.SetEntry(existsFile,blk1.iModified,set,clear);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsHidden())
 		test(!blk.IsHidden());
 	else
 		test(blk.IsHidden());
 /* set hidden attrib back */
 	r=TheFs.SetEntry(existsFile,blk1.iModified,clear,set);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsHidden())
 		test(blk.IsHidden());
 	else
@@ -361,26 +362,26 @@ LOCAL_C void TestFileStatus()
 		set=KEntryAttSystem;
 		}
 	r=TheFs.SetEntry(existsFile,blk1.iModified,set,clear);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsSystem())
 		test(!blk.IsSystem());
 	else
 		test(blk.IsSystem());
 /* set system attrib back */
 	r=TheFs.SetEntry(existsFile,blk1.iModified,clear,set);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Entry(existsFile,blk);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	if (blk1.IsSystem())
 		test(blk.IsSystem());
 	else
 		test(!blk.IsSystem());
 	r=TheFs.Delete(existsFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(existsFile2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 
@@ -388,15 +389,15 @@ LOCAL_C void CreateTestFiles()
 	{
 	RFile fcb;
 	TInt r=fcb.Replace(TheFs,existsFile,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fcb.Write(_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),KSizeExistsFile);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fcb.Close();
 
 	r=fcb.Replace(TheFs,existsFile2,EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fcb.Write(_L8("bcdefghijklmnopqrstuvwxyz"),KSizeExistsFile2);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	fcb.Close();
 	}
 
@@ -409,7 +410,7 @@ GLDEF_C void CallTestsL(void)
 
 	TVolumeInfo di;
 	TInt r=TheFs.Volume(di);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test.Start(_L("Info()"));
 	CreateTestFiles();
 	TestInfo();

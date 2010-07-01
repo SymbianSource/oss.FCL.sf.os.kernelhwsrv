@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -41,20 +42,20 @@ static void Test1()
 	test.Next(_L("Create a directory with 55 entries"));
 	TFileName sessionPath;
 	TInt r=TheFs.SessionPath(sessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.MkDir(_L("\\F32-TST\\"));
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	r=TheFs.MkDir(_L("\\F32-TST\\TDIRS\\"));
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	
 	for (TInt i=0;i<maxEntry;i++)
 		{
 		TFileName baseName=_L("\\F32-TST\\TDIRS\\FILE");
 		baseName.AppendNum(i);
 		r=f.Replace(TheFs,baseName,EFileRead);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=f.Write(_L8("Hello World"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		f.Close();
 		}
 	test.Next(_L("Test all entries have been created successfully."));
@@ -65,12 +66,12 @@ static void Test1()
 		TInt r=f.Open(TheFs,baseName,EFileRead);
 		if (r!=KErrNone)
 			{
-			test(r==KErrNotFound && j==maxEntry);
+			test_Value(r, r == KErrNotFound && j==maxEntry);
 			return;
 			}
 		TBuf8<16> data;
 		r=f.Read(data);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(data==_L8("Hello World"));
 		f.Close();
 		}
@@ -115,10 +116,10 @@ static void TestZ()
 	RDir d;
 	
 	TInt r=d.Open(TheFs,PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("\\Sys\\Bin\\ESHELL.EXE\\*"):_L("\\System\\Bin\\ESHELL.EXE\\*"),KEntryAttMaskSupported);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	
 	r=d.Open(TheFs,PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("\\Sys\\Bin\\ESHELL.EXE"):_L("\\System\\Bin\\ESHELL.EXE"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	r=d.Read(entry);
 	if (r==KErrEof)
@@ -128,21 +129,21 @@ static void TestZ()
 		}
 	else
 		{
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test(entry.iName.FindF(_L("ESHELL.EXE"))>=0);
 		r=d.Read(entry);
-		test(r==KErrEof);
+		test_Value(r, r == KErrEof);
 		}
 	d.Close();
 
 	r=d.Open(TheFs,_L("\\*.XQP"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=d.Read(entry);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	d.Close();
 
 	r=d.Open(TheFs,PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("\\Sys\\Bin\\"):_L("\\System\\Bin\\"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=d.Read(entry);
 	
 	if (r==KErrEof)
@@ -152,19 +153,19 @@ static void TestZ()
 		}
 	else
 		{
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("First Entry = %S\n"),&entry.iName);
 		r=d.Read(entry);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("Second Entry = %S\n"),&entry.iName);
 		d.Close();
 		}
 
 	r=d.Open(TheFs,_L("\\*"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	d.Close();
 	r=d.Open(TheFs,PlatSec::ConfigSetting(PlatSec::EPlatSecEnforceSysBin)?_L("\\Sys\\Bin\\*"):_L("\\System\\Bin\\*"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	d.Close();
 	}
 
@@ -178,39 +179,39 @@ static void Test3()
 	TEntry entry;
 	RFile f;
 	TInt r=f.Replace(TheFs,_L("\\F32-TST\\TDIRS\\TESTFILEORISITA.DIR"),EFileWrite);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=f.Write(_L8("TESTDATATESTDATATESTDATATESTDATATESTDATATESTDATATESTDATATESTDATATESTDATATESTDATATESTDATATESTDATA"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.Delete(_L("\\F32-TST\\TDIRS\\TESTFILEORISITA.DIR"));
-	test(r==KErrInUse);
+	test_Value(r, r == KErrInUse);
 	f.Close();
 	RDir d;
 	r=d.Open(TheFs,_L("\\F32-TST\\TDIRS\\TESTFILEORISITA.DIR\\*"),KEntryAttMaskSupported);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=d.Open(TheFs,_L("\\F32-TST\\TDIRS\\*.XQP"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=d.Read(entry);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	d.Close();
 	r=d.Open(TheFs,_L("\\F32-TST\\TDIRS\\TESTFILEORISITA.DIR"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=d.Read(entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(entry.iName.FindF(_L("TESTFILEORISITA.DIR"))>=0);
 	r=d.Read(entry);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	d.Close();
 	r=d.Open(TheFs,_L("\\"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	d.Close();
 	r=d.Open(TheFs,_L("\\F32-TST\\"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	d.Close();
 	r=d.Open(TheFs,_L("\\*"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	d.Close();
 	r=d.Open(TheFs,_L("\\F32-TST\\*"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	d.Close();
 	
 	// create a small file on the root
@@ -226,20 +227,20 @@ static void Test3()
 	
 	
 	r=TheFs.MkDir(_L("\\F32-TST\\EMPTY\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	r=d.Open(TheFs,_L("\\F32-TST\\EMPTY\\*"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 //	r=TheFs.RmDir(_L("\\F32-TST\\EMPTY\\"));
 	r=d.Read(entry);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 //	r=TheFs.RmDir(_L("\\F32-TST\\EMPTY\\"));
-//	test(r==KErrInUse);
+//	test_Value(r, r == KErrInUse);
 	r=d.Read(entry);
 	r=d.Read(entry);
 	r=d.Read(entry);
 	d.Close();
 	r=TheFs.RmDir(_L("\\F32-TST\\EMPTY\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 
@@ -256,21 +257,21 @@ static void CreateSortNoneTestDirectoryStructure()
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	test(fMan!=NULL);
 	TInt r=fMan->RmDir(_L("\\F32-TST\\TDIRS\\SORT_NONE\\"));
-	test((r==KErrNone)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNone)||(r==KErrPathNotFound));
 	delete fMan;	
 
 	gTimeNow.HomeTime();	//	Set global TTime gTimeNow to time now - for later tests
 	r=TheFs.MkDirAll(_L("\\F32-TST\\TDIRS\\SORT_NONE\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	MakeFile(_L("\\f32-tst\\tdirs\\sort_none\\file1.txt"));
 	r=TheFs.MkDir(_L("\\F32-TST\\TDIRS\\SORT_NONE\\FILE_DIR1.APP\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	MakeFile(_L("\\f32-tst\\tdirs\\sort_none\\file1.app"));
 	r=TheFs.MkDir(_L("\\F32-TST\\TDIRS\\SORT_NONE\\FILE_DIR2.TXT\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	MakeFile(_L("\\f32-tst\\tdirs\\sort_none\\file2.txt"));
 	r=TheFs.MkDir(_L("\\F32-TST\\TDIRS\\SORT_NONE\\FILE_DIR3.APP\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	MakeFile(_L("\\f32-tst\\tdirs\\sort_none\\ZZZZ"));
 	MakeFile(_L("\\f32-tst\\tdirs\\sort_none\\AAAA"));
 	MakeFile(_L("\\f32-tst\\tdirs\\sort_none\\WWWW"));
@@ -299,33 +300,33 @@ static void Test4()
 	TheFs.SetAllocFailure(gAllocFailOff);
 
 	TInt r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*"),KEntryAttMaskSupported,ESortNone,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=dir->Count();
 	test(count==15);
 	r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*"),KEntryAttMaskSupported,ESortByName,dirSorted);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dirSorted->Count()==15);
 	delete dirSorted;
 	delete dir;
 
 	r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*.txt"),KEntryAttNormal,ESortNone,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dir->Count()==3);
 	delete dir;
 	r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*.app"),KEntryAttNormal,ESortNone,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dir->Count()==3);
 	delete dir;
 	r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*.app"),KEntryAttNormal|KEntryAttDir,ESortNone,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dir->Count()==5);
 	delete dir;
 	r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*.app"),KEntryAttNormal|KEntryAttDir,ESortNone|EDirsFirst,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dir->Count()==5);
 	delete dir;
 	r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*.app"),KEntryAttNormal|KEntryAttDir,ESortNone|EDirsLast,dir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	test(dir->Count()==5);
 	delete dir;
 
@@ -341,9 +342,9 @@ static void Test5()
 	test.Next(_L("Test return values"));
 	RDir dir;
 	TInt r=dir.Open(TheFs,_L("\\DoesNotExist\\*"),KEntryAttMaskSupported);
-	test(r==KErrPathNotFound);
+	test_Value(r, r == KErrPathNotFound);
 	r=dir.Open(TheFs,_L("\\"),KEntryAttMaskSupported);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	dir.Close();
 	}
 
@@ -357,7 +358,7 @@ static void Test6()
 	test.Next(_L("Test *.* matches all files"));
 	CDir* dirList;
 	TInt r=TheFs.GetDir(_L("\\f32-tst\\tdirs\\sort_none\\*.*"),KEntryAttNormal|KEntryAttDir,ESortByName|EDirsLast,dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=dirList->Count();
 	test(count==15);
 	TEntry entry=(*dirList)[0];
@@ -394,7 +395,7 @@ static void Test6()
 
 	RDir dir;
 	r=dir.Open(TheFs,_L("\\f32-tst\\tdirs\\sort_none\\*.*"),KEntryAttNormal|KEntryAttDir);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TTime time;
 	TInt64 difference;
@@ -405,14 +406,14 @@ static void Test6()
 	for (TInt i=0; i<15; i++)
 		{
 		r=dir.Read(entry);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		time=entry.iModified;
 		difference=time.Int64()-gTimeNow.Int64();
 		test(difference<maxOK);
 		}
 
 	r=dir.Read(entry);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	dir.Close();
 
 	TheFs.SetAllocFailure(gAllocFailOn);
@@ -433,7 +434,7 @@ static void Test7()
         }    
 
     TInt r = FormatDrive(TheFs, gDriveNum, ETrue);
-    test(r==KErrNone);
+    test_KErrNone(r);
 
 	TBuf<32> baseName=_L("\\RD");
 	TBuf<32> id;
@@ -453,7 +454,7 @@ static void Test7()
 			{
 			break;
 			}
-		test(r==KErrNone);
+		test_KErrNone(r);
 		f.Close();
 		count++;
 		if(count >= 1000)
@@ -471,7 +472,7 @@ static void Test7()
 		fileName+=baseName;
 		fileName+=id;
 		TInt r=TheFs.Delete(fileName);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test.Printf(_L("DeleteFile	:	%d	: %S\r"),count,&fileName);
 		--count;
 		}
@@ -485,34 +486,34 @@ static void Test7()
 	longFileName[0]='\\';
 	longFileName[253]='\\';
 	r=TheFs.MkDir(longFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	CDir* dirList=NULL;
 	r=TheFs.GetDir(longFileName,KEntryAttMaskSupported,ESortByName,dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dirList->Count();
 	test(count==0);
 	delete dirList;
 	TParse parse;
 	r=TheFs.Parse(longFileName,parse);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TEntry entry;
 	r=TheFs.Entry(longFileName,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.SetSessionPath(longFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.GetDir(longFileName,KEntryAttMaskSupported,ESortByName,dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dirList->Count();
 	test(count==0);
 	delete dirList;
 	r=TheFs.Parse(longFileName,_L("*"),parse);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=f.Open(TheFs,_L("asdf.asdf"),0);
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.Entry(longFileName,entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=TheFs.RmDir(longFileName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 static void Test8()
@@ -525,21 +526,21 @@ static void Test8()
 	MakeDir(_L("C:\\MOON\\"));
 	RDir dir;
 	TInt r=dir.Open(TheFs,_L("C:\\MOON\\"),0);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TFileName driveName;
 	r=TheFs.GetDriveName(11,driveName);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TEntryArray entryArray;
 	r=dir.Read(entryArray);
-	test(r==KErrEof);
+	test_Value(r, r == KErrEof);
 	test(entryArray.Count()==0);
 	dir.Close();
 	r=TheFs.RmDir(_L("C:\\MOON\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	test.Next(_L("MkDir all on nonexistent drive"));
 	r=TheFs.MkDirAll(_L("L:\\MOON"));
-	test((r==KErrNotReady)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNotReady)||(r==KErrPathNotFound));
 	}
 
 static void CleanupL()
@@ -551,9 +552,9 @@ static void CleanupL()
 	test.Next(_L("Delete test directory"));
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	TInt r=fMan->RmDir(gSessionPath);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	r=fMan->Delete(_L("\\Filluptherootdir*"));
-	test(r==KErrNone || r==KErrNotFound);
+	test_Value(r, r == KErrNone || r==KErrNotFound);
 	delete fMan;
 	}
 
@@ -566,15 +567,15 @@ static void Test9()
 	test.Next(_L("Testing directory names with trailing dots"));
 	TInt r;
 	r=TheFs.MkDir(_L("\\test9..\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r=TheFs.MkDir(_L("\\test9\\"));
-	test((r==KErrNone)||(r==KErrAlreadyExists));
+	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	r=TheFs.Rename(_L("\\test9\\"),_L("\\test9..\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	r= TheFs.RmDir(_L("\\test9\\"));
-	test((r==KErrNone));
+	test_KErrNone(r);
 	r=TheFs.MkDir(_L("\\t.\\"));
-	test(r==KErrBadName);
+	test_Value(r, r == KErrBadName);
 	}
 
 
@@ -605,7 +606,7 @@ static void DeleteTestDirectoryStructure(const TDesC& aPath)
 	CFileMan* fMan=CFileMan::NewL(TheFs);
 	test(fMan!=NULL);
 	TInt r=fMan->RmDir(aPath);
-	test((r==KErrNone)||(r==KErrPathNotFound));
+	test_Value(r, (r == KErrNone)||(r==KErrPathNotFound));
 	delete fMan;	
 	}
 
@@ -619,7 +620,7 @@ static void CreateTestDirectoryStructure(const TDesC& aPath, const TDesC** aFile
 
 	gTimeNow.HomeTime();	//	Set global TTime gTimeNow to time now - for later tests
 	TInt r=TheFs.MkDirAll(aPath);
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 
 	TBuf<128> fileName;
 	for (TInt i = 0; i < aNumFiles; i++)
@@ -645,7 +646,7 @@ static void TestSortByName()
 	TBuf<128> sortSpec(KSortByNamePath);
 	sortSpec.Append(KSortAll);
 	TInt r=TheFs.GetDir(sortSpec, KEntryAttNormal | KEntryAttDir, ESortByName | EDirsLast, dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=dirList->Count();
 	test(count==numFiles);
 
@@ -670,7 +671,7 @@ static void TestSortByName()
 
 
 	r=TheFs.GetDir(sortSpec, KEntryAttNormal | KEntryAttDir, ESortByName | EDirsLast | EDescending, dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dirList->Count();
 	test(count==numFiles);
 
@@ -737,7 +738,7 @@ static void TestSortByExt()
 	TBuf<128> sortSpec(KSortByExtPath);
 	sortSpec.Append(KSortAll);
 	TInt r=TheFs.GetDir(sortSpec, KEntryAttNormal | KEntryAttDir, ESortByExt | EDirsLast, dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	TInt count=dirList->Count();
 	test(count==numFiles);
 
@@ -773,7 +774,7 @@ static void TestSortByExt()
 	test.Next(_L("Test ESortByExt (descending)"));
 
 	r=TheFs.GetDir(sortSpec, KEntryAttNormal | KEntryAttDir, ESortByExt | EDirsLast | EDescending, dirList);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	count=dirList->Count();
 	test(count==numFiles);
 
@@ -857,55 +858,55 @@ void TestDirNameHandling()
 	dirTest6 = _L("\\F32-TST\\TDIRS\\test6. .\\");
 
     TInt err = TheFs.MkDir(dirTest1);
-    test(err == KErrNone);
+    test_KErrNone(err);
     err = TheFs.MkDir(dirTest2);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.MkDir(dirTest3);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.MkDir(dirTest4);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.MkDir(dirTest5);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.MkDir(dirTest6);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 
     RDir rdir;
     err = rdir.Open(TheFs, dirTest1, 0);
     rdir.Close();
-    test(err == KErrNone);
+    test_KErrNone(err);
 
     err = rdir.Open(TheFs, dirTest2, 0);
     rdir.Close();
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 
     err = rdir.Open(TheFs, dirTest3, 0);
     rdir.Close();
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 
     err = rdir.Open(TheFs, dirTest4, 0);
     rdir.Close();
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 
     err = rdir.Open(TheFs, dirTest5, 0);
     rdir.Close();
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 
     err = rdir.Open(TheFs, dirTest6, 0);
     rdir.Close();
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 
     err = TheFs.RmDir(dirTest1);
-    test(err == KErrNone);
+    test_KErrNone(err);
     err = TheFs.RmDir(dirTest2);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.RmDir(dirTest3);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.RmDir(dirTest4);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.RmDir(dirTest5);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
     err = TheFs.RmDir(dirTest6);
-    test(err == KErrBadName);
+    test_Value(err, err == KErrBadName);
 	}
 
 void CallTestsL()
@@ -918,7 +919,7 @@ void CallTestsL()
     F32_Test_Utils::SetConsole(test.Console()); 
     
     TInt nRes=TheFs.CharToDrive(gDriveToTest, gDriveNum);
-    test(nRes==KErrNone);
+    test_KErrNone(nRes);
     
     PrintDrvInfo(TheFs, gDriveNum);
 
@@ -928,11 +929,11 @@ void CallTestsL()
 	if (!gTestedZ)
 		{
 		TInt r=TheFs.SetSessionPath(_L("Z:\\"));
-		test(r==KErrNone);
+		test_KErrNone(r);
 		Test2();
 		TestZ();
 		r=TheFs.SetSessionPath(gSessionPath);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		test.Next(_L("Run all other tests from \\F32-TST\\TDIRS\\"));
 		gTestedZ=ETrue;
 		}

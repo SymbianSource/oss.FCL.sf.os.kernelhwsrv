@@ -692,7 +692,7 @@ TBool CFatTable::ClusterNumberValid(TUint32 aClusterNo) const
 CAtaFatTable::CAtaFatTable(CFatMountCB& aOwner)
              :CFatTable(aOwner), iDriveInteface(aOwner.DriveInterface())
     {
-        iState = ENotInitialised;
+    iState = ENotInitialised;
     }
 
 
@@ -1044,10 +1044,16 @@ void CAtaFatTable::MountL(const TMountParams& aMountParam)
             //-- create helper thread object and start the thread
             ipHelperThread = CFat32BitCachePopulator::NewL(*this);
 
-            ipHelperThread->Launch(); 
-            //-- background FAT bit cache populating thread is running now.
-            //-- the result of thread start up and completion isn't very interesting: If it fails to 
-            //-- properly populate the cache, nothing fatal will happen.
+            if(ipHelperThread->Launch() != KErrNone)
+                {//-- failed for some reason
+                DestroyHelperThread();
+                }
+                else
+                {
+                //-- background FAT bit cache populating thread is running now.
+                //-- the result of thread start up and completion isn't very interesting: If it fails to 
+                //-- properly populate the cache, nothing fatal will happen.
+                }
             }
 
         //-- CFat32BitCachePopulator doesn't affect FAT table state. 
@@ -1480,7 +1486,7 @@ void CAtaFatTable::CountFreeClustersL()
                 {//-- test property for this drive is defined
                     if(nMntDebugFlags & KMntDisable_FatBkGndScan)
                     {
-                    __PRINT(_L("#- FAT32 BkGnd scan is disabled is disabled by debug interface."));
+                    __PRINT(_L("#- FAT32 BkGnd scan is disabled by debug interface."));
                     bFat32BkGndScan = EFalse;
                     }
             
@@ -1544,7 +1550,8 @@ void CAtaFatTable::DoLaunchFat32FreeSpaceScanThreadL()
     
     SetState(EFreeClustersScan);
     
-    ipHelperThread->Launch(); 
+    User::LeaveIfError(ipHelperThread->Launch()); 
+    
     //-- background FAT scanning thread is running now
     }
 
@@ -1964,8 +1971,8 @@ TInt CFatHelperThreadBase::DoLaunchThread(TThreadFunction aFunction, TAny* aThre
         return nRes;
         }
 
-   //-- Helper FAT thread is running now
-   return KErrNone; 
+    //-- Helper FAT thread is running now
+    return KErrNone; 
     }
 
 
@@ -1983,7 +1990,8 @@ CFat32ScanThread::CFat32ScanThread(CAtaFatTable& aOwner)
 
 /**
     Launches the FAT32_ScanThread scaner thread.
-    @return  standard error code
+    @return  KErrNone if the thread launched OK
+             standard error code otherwise
 */
 TInt CFat32ScanThread::Launch()
     {

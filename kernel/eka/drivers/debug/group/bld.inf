@@ -34,8 +34,8 @@ PRJ_EXPORTS
 ../../../debug/crashMonitor/inc/crashlogwalker.h         SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(crashlogwalker.h)
 ../../../debug/crashMonitor/inc/scmconfig.h              SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfig.h)
 ../../../debug/crashMonitor/inc/scmconfigitem.h          SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmconfigitem.h)
-../../../debug/crashmonitor/inc/scmdatasave.h            SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatasave.h)
-../../../debug/crashmonitor/inc/scmtrace.h               SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmtrace.h)
+../../../debug/crashMonitor/inc/scmdatasave.h            SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmdatasave.h)
+../../../debug/crashMonitor/inc/scmtrace.h               SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(scmtrace.h)
 
 PRJ_MMPFILES
 

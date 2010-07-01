@@ -15,6 +15,7 @@
 // 
 //
 
+#define __E32TEST_EXTENSION__
 #include <f32file.h>
 #include <e32test.h>
 #include "t_server.h"
@@ -36,11 +37,11 @@ static void testRFsSetEntry(TDateTime* aDateTime, TTime* aTime, TBool validDate)
 	MakeFile(_L("Y2KTEST.tst"));
 	
 	TInt r=TheFs.SetEntry(_L("Y2KTEST.tst"),*aTime,KEntryAttHidden,KEntryAttArchive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TEntry entry;
 	r=TheFs.Entry(_L("Y2KTEST.tst"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	TDateTime checkDateTime=(entry.iModified).DateTime();
 	test(checkDateTime.Year()==aDateTime->Year());
@@ -59,14 +60,14 @@ static void testRFsSetEntry(TDateTime* aDateTime, TTime* aTime, TBool validDate)
 	test.Printf(_L("Valid date: %S\n"),&gDateBuf);
 		
 	r=TheFs.Delete(_L("Y2KTEST.tst"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeDir(_L("\\Y2KTEST\\"));
 	r=TheFs.SetEntry(_L("\\Y2KTEST\\"),*aTime,KEntryAttHidden,KEntryAttArchive);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.Entry(_L("\\Y2KTEST\\"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	checkDateTime=(entry.iModified).DateTime();
 	test(checkDateTime.Year()==aDateTime->Year());
@@ -85,7 +86,7 @@ static void testRFsSetEntry(TDateTime* aDateTime, TTime* aTime, TBool validDate)
 	test.Printf(_L("Valid date: %S\n"),&gDateBuf);
 
 	r=TheFs.RmDir(_L("\\Y2KTEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	}
 
@@ -98,11 +99,11 @@ static void testRFsSetModified(TDateTime* aDateTime, TTime* aTime, TBool validDa
 	MakeFile(_L("Y2KTEST.tst"));
 	
 	TInt r=TheFs.SetModified(_L("Y2KTEST.tst"),*aTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TTime check;
 	r=TheFs.Modified(_L("Y2KTEST.tst"),check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 		
 	TDateTime checkDateTime=check.DateTime();
 	
@@ -123,14 +124,14 @@ static void testRFsSetModified(TDateTime* aDateTime, TTime* aTime, TBool validDa
 	test.Printf(_L("Valid date: %S\n"),&gDateBuf);
 		
 	r=TheFs.Delete(_L("Y2KTEST.tst"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	MakeDir(_L("\\Y2KTEST\\"));
 	r=TheFs.SetModified(_L("\\Y2KTEST\\"),*aTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	r=TheFs.Modified(_L("\\Y2KTEST\\"),check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	checkDateTime=check.DateTime();
 	test(checkDateTime.Year()==aDateTime->Year());
@@ -149,7 +150,7 @@ static void testRFsSetModified(TDateTime* aDateTime, TTime* aTime, TBool validDa
 	test.Printf(_L("Valid date: %S\n"),&gDateBuf);
 
 	r=TheFs.RmDir(_L("\\Y2KTEST\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}
 
 	
@@ -160,16 +161,16 @@ static void testRFileSet(TDateTime* aDateTime, TTime* aTime, TBool validDate)
 	{
 	RFile file;
 	TInt r=file.Replace(TheFs,_L("Y2KTEST.tst"),0);
-	test(r==KErrNone || r==KErrPathNotFound);	
+	test_Value(r, r == KErrNone || r==KErrPathNotFound);	
 		
 	r=file.Set(*aTime,KEntryAttHidden,KEntryAttNormal);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 	TTime check;
 	file.Open(TheFs,_L("Y2KTEST.tst"),EFileWrite);
 	r=file.Modified(check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 		
 	test.Printf(_L("Date set to "));
@@ -223,16 +224,16 @@ static void testRFileSetModified(TDateTime* aDateTime, TTime* aTime, TBool valid
 	{
 	RFile file;
 	TInt r=file.Replace(TheFs,_L("Y2KTEST.tst"),0);
-	test(r==KErrNone || r==KErrPathNotFound);	
+	test_Value(r, r == KErrNone || r==KErrPathNotFound);	
 
 	r=file.SetModified(*aTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 	
 	TTime check;
 	file.Open(TheFs,_L("Y2KTEST.tst"),EFileWrite);
 	r=file.Modified(check);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	file.Close();
 		
 	TDateTime checkDateTime=check.DateTime();
@@ -266,11 +267,11 @@ static void testCFileManAttribsL(TDateTime* aDateTime, TTime* aTime, TBool valid
 	CFileMan* fileMan=CFileMan::NewL(TheFs);
 		
 	TInt r=fileMan->Attribs(_L("Y2KTEST.tst"),KEntryAttHidden,KEntryAttNormal,*aTime);
-	test(r==KErrNone);
+	test_KErrNone(r);
 		
 	TEntry entry;
 	r=TheFs.Entry(_L("Y2KTEST.tst"),entry);
-	test(r==KErrNone);
+	test_KErrNone(r);
 	
 	TTime check=entry.iModified;	
 	TDateTime checkDateTime=check.DateTime();
@@ -292,7 +293,7 @@ static void testCFileManAttribsL(TDateTime* aDateTime, TTime* aTime, TBool valid
 	test.Printf(_L("Valid date: %S\n"),&gDateBuf);
 
 	r=TheFs.Delete(_L("Y2KTEST.tst"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 
 	delete fileMan;
 	}
@@ -493,7 +494,7 @@ static void TestValidDates(TDateTime* aDateTime, TTime* aTime)
 	for (i=0;i<KMaxValidDateTimes;i++)
 		{
 		TRAPD(error,testCFileManAttribsL(tempDateTime, tempTime, ETrue));
-		test(error==KErrNone);
+		test_KErrNone(error);
 		tempDateTime++;
 		tempTime++;
 		}
@@ -566,7 +567,7 @@ static void TestInvalidDates(TDateTime* aDateTime, TTime* aTime)
 		{
 		test.Printf(_L("Invalid date: %S\n"),&invalidDates[i]);
 		TRAPD(error,testCFileManAttribsL(tempDateTime, tempTime, EFalse));	
-		test(error==KErrNone);
+		test_KErrNone(error);
 		tempDateTime++;
 		tempTime++;
 		}
@@ -590,13 +591,13 @@ static void CallTests()
 		{
 	//	Dummy time is used to initialise validDateTime[i] before calling SetX()
 		r=validDateTime[i].Set(1998,EJune,23,11,11,11,0);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=validDateTime[i].SetYear(testYearValid[i]);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=validDateTime[i].SetMonth(testMonthValid[i]);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=validDateTime[i].SetDay(testDayValid[i]);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		validTime[i]=validDateTime[i];
 		}
 
@@ -610,15 +611,15 @@ static void CallTests()
 		{
 	//	Dummy time is used to initialise validDateTime[i] before calling SetX()
 		r=invalidDateTime[i].Set(1998,EJune,22,11,11,11,0);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=invalidDateTime[i].SetYear(testYearInvalid[i]);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=invalidDateTime[i].SetMonth(testMonthInvalid[i]);
-		test(r==KErrNone);
+		test_KErrNone(r);
 		r=invalidDateTime[i].SetDay(testDayInvalid[i]);
-		test(r==KErrGeneral);		//	This will fail because it is an invalid date
+		test_Value(r, r == KErrGeneral);		//	This will fail because it is an invalid date
 		r=invalidDateTime[i].SetDay(testDayInvalid[i]-1);
-		test(r==KErrNone);			//	Set it one day less 
+		test_KErrNone(r);			//	Set it one day less 
 		invalidTime[i]=invalidDateTime[i];
 		invalidTime[i]+=extraDay;	//	Add on an extra day.  This should bump the
 		}							//	date onto the next month, NOT set the day
@@ -635,7 +636,7 @@ GLDEF_C void CallTestsL(void)
 	{
 
 	TInt r=TheFs.MkDirAll(_L("\\F32-TST\\YEAR 2000 TESTS\\"));
-	test(r==KErrNone || r==KErrAlreadyExists);
+	test_Value(r, r == KErrNone || r==KErrAlreadyExists);
 	TRAP(r,CallTests());
 	if (r==KErrNone)
 		TheFs.ResourceCountMarkEnd();
@@ -645,5 +646,5 @@ GLDEF_C void CallTestsL(void)
 		test(0);
 		}
 	r=TheFs.RmDir(_L("\\F32-TST\\YEAR 2000 TESTS\\"));
-	test(r==KErrNone);
+	test_KErrNone(r);
 	}

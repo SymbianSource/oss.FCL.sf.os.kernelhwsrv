@@ -400,28 +400,49 @@ void CRunModeAgent::TestGetThreadList()
 	test(KErrNone == iServSession.AttachExecutable(iFileName, EFalse));
 	test(KErrNone == iServSession.SuspendThread(iThreadID));
 
-	//test getting the global list, ETrue as should find the target debug thread
-	DoTestGetThreadList(ETrue, EScopeGlobal);
+	TBool found = EFalse;
+	
+	/* We need these loops because on some system the kernel run mode debugger does not 
+	 immediately present the thread in the thread list. 
+	 */
+	
+	for(TInt retryCount = 0; retryCount < 10 && !found; retryCount++ )
+		{
+		//test getting this process's thread list, ETrue as should find the target debug thread
+		User::After(50000);
+		found = DoTestGetThreadList(ETrue, EScopeProcessSpecific, RProcess().Id().Id());
+		}
+	test( found );
+	found = EFalse;
 
-	//test getting this thread's thread list, ETrue as should find the target debug thread
-	DoTestGetThreadList(ETrue, EScopeThreadSpecific, RThread().Id().Id());
+	for(TInt retryCount = 0; retryCount < 10 && !found; retryCount++ )
+		{
+		//test getting the global list, ETrue as should find the target debug thread
+		User::After(50000);
+		found = DoTestGetThreadList(ETrue, EScopeGlobal);
+		}
+	test( found );
 
-	//test getting this process's thread list, ETrue as should find the target debug thread
-	DoTestGetThreadList(ETrue, EScopeProcessSpecific, RProcess().Id().Id());
+	found = EFalse;
+	for(TInt retryCount = 0; retryCount < 10 && !found; retryCount++ )
+		{
+		//test getting this thread's thread list, ETrue as should find the target debug thread
+		User::After(50000);
+		found = DoTestGetThreadList(ETrue, EScopeThreadSpecific, RThread().Id().Id());
+		}
+	test( found );
 
 	test(KErrNone == iServSession.ResumeThread(iThreadID));
 	test(KErrNone == iServSession.DetachExecutable(iFileName));
 	}
-
-void CRunModeAgent::DoTestGetThreadList(const TBool aShouldPass, const TListScope aListScope, const TUint64 aTargetId)
+			
+TBool CRunModeAgent::DoTestGetThreadList(const TBool aShouldPass, const TListScope aListScope, const TUint64 aTargetId)
 	{
-	test.Next(_L("DoTestGetThreadList\n"));
-
 	//create data to pass
 	RBuf8 buffer;
 	TUint32 size = 0;
 
-	//perform the call to get the Code segs
+	//perform the call to get the thread list
 	DoGetList(EThreads, aListScope, buffer, size, aTargetId);
 
 	//initialise data about the target debug thread to compare the kernel's data against
@@ -438,22 +459,22 @@ void CRunModeAgent::DoTestGetThreadList(const TBool aShouldPass, const TListScop
 		{
 		TThreadListEntry* entry = (TThreadListEntry*)ptr;
 		TPtr entryName(&(entry->iName[0]), entry->iNameLength, entry->iNameLength);
+
 		if( (threadId == entry->iThreadId) && (processId == entry->iProcessId) && (0 == name.CompareF(entryName)) )
 			{
 			test(entry->iSupervisorStackBaseValid);
 			test(entry->iSupervisorStackSizeValid);
 			//if all match then we've found it
 			found = ETrue;
+			break;
 			}
 
 		ptr += Align4(entry->GetSize());
 		}
 
-	//check whether the expected result happened
-	test(found == aShouldPass);
-
 	//clean up
 	buffer.Close();
+	return found;
 
 	}
 
@@ -582,6 +603,12 @@ _LIT(KRMDebugDriverFileName,"Z:\\sys\bin\\rm_debug.ldd");
 
 	}
 
+
+/**
+ * Get a list from the run mode debug system. Most list calls will initially return KErrTooBig, 
+ * since the initial size of the buffer is 0. However it is sometimes valid for a list to be empty
+ * given its filtering and scope. These calls should return KErrNone.
+ */
 void CRunModeAgent::DoGetList(const TListId aListId, const TListScope aListScope, RBuf8& aBuffer, TUint32& aSize, const TUint64 aTargetId)
 	{
 	//close the buffer in case there's stuff allocated in it
@@ -589,25 +616,37 @@ void CRunModeAgent::DoGetList(const TListId aListId, const TListScope aListScope
 	//initialise it to be one byte big, which will guarantee data won't fit in it
 	test(KErrNone == aBuffer.Create(1));
 	aSize = 0;
-
+	
+	TInt ret = KErrNone;
 	//should pass this test (assuming we've passed in sensible arguments above...)
 	if(EScopeGlobal == aListScope)
 		{
-		test(KErrTooBig == iServSession.GetList(aListId, aBuffer, aSize));
+		ret = iServSession.GetList(aListId, aBuffer, aSize);
 		}
 	else if(EScopeThreadSpecific == aListScope)
 		{
-		test(KErrTooBig == iServSession.GetList((TThreadId)aTargetId, aListId, aBuffer, aSize));
+		ret = iServSession.GetList((TThreadId)aTargetId, aListId, aBuffer, aSize);
 		}
 	else if(EScopeProcessSpecific == aListScope)
 		{
-		test(KErrTooBig == iServSession.GetList((TProcessId)aTargetId, aListId, aBuffer, aSize));
+		ret = iServSession.GetList((TProcessId)aTargetId, aListId, aBuffer, aSize);
 		}
 	else
 		{
 		// unknown list scope
 		test(0);
 		}
+
+	if( KErrNone == ret )
+		{
+		/* In the case that there is no data, just return and let the caller check
+		the buffer. It is valid for a caller to not expect any data to be returned.
+		*/
+		return;
+		}
+	
+	// The only other allowed return is KErrTooBig
+	test( ret == KErrTooBig );
 
 	//keep allocating larger buffers, beginning with the aSize returned by the above call,
 	//and hopefully we'll eventually make a large enough one
@@ -2727,9 +2766,9 @@ void CRunModeAgent::TestEventsWithExtraThreads(TKernelEventAction aActionMain, T
 			/* Wait a little while and try again, just in case the process is still being removed.
 			This can happen on a very busy system or when a popup for the events is still active
 			*/
-			RDebug::Printf("CRunModeAgent::TestEventsWithExtraThreads. ProcessExists(id=%d), waiting for it to exit %d", 
+			RDebug::Printf("CRunModeAgent::TestEventsWithExtraThreads. ProcessExists(id=%d), waiting count exit=%d", 
 				I64LOW(processId), waitCount);
-			User::After(500);
+			User::After(50000);
 			}
 		test(!ProcessExists(processId));
 		}
@@ -2738,34 +2777,37 @@ void CRunModeAgent::TestEventsWithExtraThreads(TKernelEventAction aActionMain, T
 // helper function to check whether a thread with id aThreadId exists in the process with id aProcessId
 TBool CRunModeAgent::ThreadExistsForProcess(const TThreadId aThreadId, const TProcessId aProcessId)
 	{
-	TUint32 size;
-	RBuf8 buffer;
-	test(KErrNone == buffer.Create(1024));
-	TInt err = iServSession.GetList(aProcessId, EThreads, buffer, size);
-	while(KErrTooBig == err)
-		{
-		size*=2;
-		test(size<=16*1024);
-		test(KErrNone == buffer.ReAlloc(size));
-		err = iServSession.GetList(aProcessId, EThreads, buffer, size);
-		}
-	test(KErrNone == err);
+	RThread lThread;
+	TInt ret = lThread.Open( aThreadId.Id() );
 
-	//look through the buffer and check if the target debug thread is there
-	TUint8* ptr = (TUint8*)buffer.Ptr();
-	const TUint8* ptrEnd = ptr + size;
-	while(ptr < ptrEnd)
+	if( ret != KErrNone )
 		{
-		TThreadListEntry& entry = *(TThreadListEntry*)ptr;
-		if(aThreadId.Id() == entry.iThreadId)
-			{
-			buffer.Close();
-			return ETrue;
-			}
-		ptr += Align4(entry.GetSize());
+		RDebug::Printf("ThreadExistsForProcess: thread id=%d opening returned %d",
+			I64LOW( aThreadId.Id() ), ret );
+		lThread.Close();
+		return EFalse;
 		}
-	buffer.Close();
-	return EFalse;
+
+	RProcess lProcess;
+	ret = lThread.Process( lProcess );
+
+	lThread.Close();
+
+	if( ret != KErrNone )
+		{
+		RDebug::Printf("ThreadExistsForProcess: proc opening returned %d", ret );
+		ret = KErrNotFound;
+		}
+	else if( lProcess.Id() != aProcessId )
+		{
+		RDebug::Printf("ThreadExistsForProcess: lProcess.Id()(%d)!= aProcessId(%d)",
+				I64LOW(lProcess.Id().Id()), I64LOW(aProcessId.Id()));
+		ret = KErrNotFound;
+		}
+
+	lProcess.Close();
+	
+	return ( ret == KErrNone );
 	}
 
 // helper function to check whether a process with id aProcessId exists

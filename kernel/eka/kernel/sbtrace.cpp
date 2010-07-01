@@ -427,8 +427,13 @@ TBool BTrace::IsSupported(TUint aCategory)
 
 #endif
 
-	   case EIic:
-		   return ETrue;
+#ifdef BTRACE_RESMANUS
+    case EResourceManagerUs:
+       return ETrue;
+#endif
+
+    case EIic:
+       return ETrue;
 
 #ifdef BTRACE_TRAWEVENT
 	case ERawEvent:

@@ -1708,6 +1708,7 @@ TInt DDmaRequest::FragBalancedAsym(TDmaTransferArgs& aTransferArgs, TUint aCount
 	// Revert any previous fragmentation attempt
 	FreeSrcDesList();
 	FreeDstDesList();
+	__DMA_ASSERTD(iSrcDesCount == iDstDesCount);
 	do
 		{
 		// Allocate fragment
@@ -1721,6 +1722,7 @@ TInt DDmaRequest::FragBalancedAsym(TDmaTransferArgs& aTransferArgs, TUint aCount
 			{
 			break;
 			}
+		__DMA_ASSERTD(iSrcDesCount == iDstDesCount);
 		// Compute fragment size
 		TUint c = Min(aMaxTransferLen, aCount);
 		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
@@ -1851,7 +1853,7 @@ EXPORT_C TInt DDmaRequest::Queue()
 	// Not configured? Call Fragment() first!
 	if (iChannel.iDmacCaps->iAsymHwDescriptors)
 		{
-		__DMA_ASSERTD((iSrcDesCount < 0) && (iDstDesCount < 0));
+		__DMA_ASSERTD((iSrcDesCount > 0) && (iDstDesCount > 0));
 		}
 	else
 		{
@@ -2213,21 +2215,25 @@ void DDmaRequest::Invariant()
 					  (0 <= iDstDesCount) && (iDstDesCount <= iChannel.iMaxDesCount));
 		if (iSrcDesCount == 0)
 			{
+			// Not fragmented yet
 			__DMA_ASSERTD(iDstDesCount == 0);
 			__DMA_ASSERTD(!iQueued);
 			__DMA_ASSERTD(!iSrcFirstHdr && !iSrcLastHdr &&
 						  !iDstFirstHdr && !iDstLastHdr);
 			}
+		else if (iDstDesCount == 0)
+			{
+			// Src side only fragmented yet
+			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iSrcFirstHdr));
+			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iSrcLastHdr));
+			}
 		else
 			{
+			// Src & Dst sides fragmented
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iSrcFirstHdr));
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iSrcLastHdr));
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iDstFirstHdr));
 			__DMA_ASSERTD(iChannel.iController->IsValidHdr(iDstLastHdr));
-			}
-		if (iChannel.iDmacCaps->iBalancedAsymSegments)
-			{
-			__DMA_ASSERTD(iSrcDesCount == iDstDesCount);
 			}
 		}
 	else

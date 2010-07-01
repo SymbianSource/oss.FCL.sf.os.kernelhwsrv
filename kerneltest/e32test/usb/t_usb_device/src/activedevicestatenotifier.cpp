@@ -1,4 +1,4 @@
-// Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -85,6 +85,17 @@ void CActiveDeviceStateNotifier::RunL()
 		switch (iDeviceState)
 			{
 		case EUsbcDeviceStateUndefined:
+#ifdef	USB_SC
+			TUSB_PRINT("Device State notifier: Undefined0");
+			for (TUint16 i =0; i < KMaxConcurrentTests; i++)
+				{
+				if (gRW[i])
+					{
+					TUSB_VERBOSE_PRINT2("ResetAltSetting index %d, LDD %x",i, gRW[i]->Ldd());
+					gRW[i]->Ldd()->ResetAltSetting();						
+					}
+				}
+#endif
 			TUSB_PRINT("Device State notifier: Undefined");
 			break;
 		case EUsbcDeviceStateAttached:
