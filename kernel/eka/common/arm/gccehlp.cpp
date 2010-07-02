@@ -31,27 +31,6 @@ EXPORT_C long long __aeabi_ldiv0 (long long return_value)
       return return_value;
     }
 
-EXPORT_C __NAKED__ void __rt_exporter_dummy(void)
-{
-	asm(".comm _ZTVN10__cxxabiv117__class_type_infoE,4");
-	asm(".comm _ZTVN10__cxxabiv120__si_class_type_infoE,4");
-	asm(".comm _ZTVN10__cxxabiv121__vmi_class_type_infoE,4");
-	asm(".comm _ZTVN10__cxxabiv121__vmi_class_type_infoE,4");
-	asm(".comm __aeabi_lasr,4");
-	asm(".comm __aeabi_lcmp,4");
-	asm(".comm __aeabi_llsl,4");
-	asm(".comm __aeabi_llsr,4");
-	asm(".comm __aeabi_lmul,4");
-	asm(".comm __aeabi_ulcmp,4");
-	asm(".comm __aeabi_uread4,4");
-	asm(".comm __aeabi_uread8,4");
-	asm(".comm __aeabi_uwrite4,4");
-	asm(".comm __aeabi_uwrite8,4");
-	asm(".comm __cxa_guard_abort,4");
-	asm(".comm __cxa_guard_acquire,4");
-	asm(".comm __cxa_guard_release,4");
-}
-
 EXPORT_C int __cxa_pure_virtual()
 //
 // Gets called for any unreplaced pure virtual methods.
@@ -82,23 +61,4 @@ void __cxa_end_cleanup() {}
 
 #endif
 }
-
-#include "../common.h"
-#include <kernel/kernel.h>
-
-EXPORT_C TAny* operator new[](TUint aSize, const std::nothrow_t& aNoThrow) __NO_THROW
-	{
-	(void) aNoThrow;
-	return Kern::Alloc(aSize);
-	}
-
-EXPORT_C TAny* operator new(TUint aSize, const std::nothrow_t& aNoThrow) __NO_THROW
-//
-// The global new operator.
-//
-	{
-	(void) aNoThrow;
-	return Kern::Alloc(aSize);
-	}
-
 
