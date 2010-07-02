@@ -61,11 +61,15 @@ __NAKED__ TInt _E32Startup()
 
 	asm("mov r11, sp ");		// save stack pointer
 
+#if 0 /* IMK: Temorarily deleting these __EH_FRAME calls to discover if the suspect
+	GCCE definitions of them are behind a kernel panic. */
+
 	// The frame starts 84 bytes (up) from r11 i.e. CFA is r11 + 84
 	__EH_FRAME_ADDRESS(sp, 84) // Reg needs to be sp (=r11) here for gcce
 	// we can only restore callee-save values, but that's what we want if we 'leave'
 	// saved link is -8 bytes from CFA (= r11 + 0x24 + 0x20 + 0x8)
 	__EH_FRAME_SAVE1(lr, -8)
+#endif
 
 	// the other callee saves start at -48 from CFA (= r11 + 0x24)
 #if 0
@@ -76,7 +80,9 @@ __NAKED__ TInt _E32Startup()
 #if defined(__ARMCC__)
 	FRAME SAVE {r4-r11}, -48
 #elif defined(__GCCE__)
+#if 0 /* IMK: see above */
 	__EH_FRAME_SAVE1(r4-r11,-48)
+#endif
 #else
 #error What compiler?	
 #endif
