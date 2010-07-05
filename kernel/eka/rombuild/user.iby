@@ -29,7 +29,7 @@
 file=\Epoc32\Release\##EUSERDIR##\##BUILD##\##EUSER_DLL					\sys\bin\EUSER.DLL
 
 #ifdef RVCT
-#include <rom\include\compsupp.iby>
+#include <rom/include/compsupp.iby>
 #endif
 
 #ifndef SYMBIAN_EXCLUDE_KEYBOARD
