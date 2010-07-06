@@ -743,43 +743,79 @@ TInt DDmaHelper::GetPhysicalAddress(TLocDrvRequest& aReq, TPhysAddr& aAddr, TInt
 	{
 	OstTraceFunctionEntry0( DDMAHELPER_GETPHYSICALADDRESS_ENTRY );
 	__ASSERT_DEBUG( (aReq.Flags() & TLocDrvRequest::ETClientBuffer) == 0,  PHYSADDR_FAULT());
-	TLinAddr linAddr = (TLinAddr) aReq.RemoteDes();
-	TInt& offset = aReq.RemoteDesOffset();
-	TLinAddr currLinAddr = linAddr + offset;
+
 	TInt reqLen = I64LOW(aReq.Length());
-	__ASSERT_DEBUG(I64HIGH(aReq.Length()) == 0,  PHYSADDR_FAULT());
+    __ASSERT_DEBUG(I64HIGH(aReq.Length()) == 0,  PHYSADDR_FAULT());
+    
+    TInt& offset = aReq.RemoteDesOffset();    
+	if (aReq.Flags() & TLocDrvRequest::EPhysAddrOnly)
+        {        
+        __KTRACE_DMA(Kern::Printf("-Physical Address Only"));
+        __ASSERT_DEBUG(IsPageAligned((TLinAddr)reqLen), PHYSADDR_FAULT());
+        
+        TPhysAddr* physArray = (TPhysAddr*)aReq.RemoteDes();        
+        
+        // Adjust start to the next element to be issued                 
+        TUint pageNo = offset>>iPageSizeLog2;
+        TPhysAddr currPhysPageAddr = aAddr = physArray[pageNo];
+        __ASSERT_DEBUG(IsPageAligned((TLinAddr)currPhysPageAddr), PHYSADDR_FAULT());
+        offset+=iPageSize; 
+        aLen=iPageSize;
 
-	aAddr = Epoc::LinearToPhysical(currLinAddr);
+        //Determine how many pages are contiguous
+        TPhysAddr nextPhysPageAddr;        
+        while (offset < reqLen)
+            {
+            pageNo++;
+            nextPhysPageAddr = physArray[pageNo];            
+            __ASSERT_DEBUG(PageOffset((TLinAddr) nextPhysPageAddr) == 0,  PHYSADDR_FAULT());
 
-	// Set the initial length to be the length remaining in this page or the request length (whichever is shorter).
-	// If there are subsequent pages, we then need to determine whether they are contiguous
-	aLen = Min( (TInt) (PageAlign(currLinAddr+iPageSize) - currLinAddr), reqLen - offset);
+            if (nextPhysPageAddr != currPhysPageAddr + iPageSize)
+                break;
+            
+            currPhysPageAddr = nextPhysPageAddr;            
+            offset+= iPageSize;
+            aLen+= iPageSize;
+            }
+        
+        __KTRACE_DMA(Kern::Printf(">PHYSADDR:DP:GetPhysS(PhysAddrOnly), physAddr %08X, len %x reqLen %x", aAddr, aLen, reqLen));
+        }
+	else
+	    {	
+        TLinAddr linAddr = (TLinAddr) aReq.RemoteDes();
+        TLinAddr currLinAddr = linAddr + offset;	
+    
+        aAddr = Epoc::LinearToPhysical(currLinAddr);
+    
+        // Set the initial length to be the length remaining in this page or the request length (whichever is shorter).
+        // If there are subsequent pages, we then need to determine whether they are contiguous
+        aLen = Min( (TInt) (PageAlign(currLinAddr+iPageSize) - currLinAddr), reqLen - offset);
+    
+        __ASSERT_DEBUG(aLen > 0,  PHYSADDR_FAULT());
+        
+        TPhysAddr currPhysPageAddr = PageAlign((TLinAddr) aAddr);
+    
+        offset+= aLen;
+    
+        while (offset < reqLen)
+            {
+            TPhysAddr nextPhysPageAddr = Epoc::LinearToPhysical(linAddr + offset);
+            __ASSERT_DEBUG(PageOffset((TLinAddr) nextPhysPageAddr) == 0,  PHYSADDR_FAULT());
+    
+            if (nextPhysPageAddr != currPhysPageAddr + iPageSize)
+                break;
+            
+            currPhysPageAddr = nextPhysPageAddr;
+    
+            TInt len = Min(iPageSize, reqLen - offset);
+            offset+= len;
+            aLen+= len;
+            }
 
-	__ASSERT_DEBUG(aLen > 0,  PHYSADDR_FAULT());
+        __KTRACE_DMA(Kern::Printf(">PHYSADDR:DP:GetPhysS(), linAddr %08X, physAddr %08X, len %x reqLen %x", linAddr + offset, aAddr, aLen, reqLen));
+        OstTraceExt4(TRACE_DEMANDPAGING, DDMAHELPER_GETPHYSICALADDRESS_DP, "linAddr=0x%x; physAddr=0x%x; length=0x%x; reqLen=0x%x", linAddr + offset, aAddr, aLen, reqLen);
+	    }
 	
-	TPhysAddr currPhysPageAddr = PageAlign((TLinAddr) aAddr);
-
-	offset+= aLen;
-
-
-	while (offset < reqLen)
-		{
-		TPhysAddr nextPhysPageAddr = Epoc::LinearToPhysical(linAddr + offset);
-		__ASSERT_DEBUG(PageOffset((TLinAddr) nextPhysPageAddr) == 0,  PHYSADDR_FAULT());
-
-		if (nextPhysPageAddr != currPhysPageAddr + iPageSize)
-			break;
-		
-		currPhysPageAddr = nextPhysPageAddr;
-
-		TInt len = Min(iPageSize, reqLen - offset);
-		offset+= len;
-		aLen+= len;
-		}
-
-
-	__KTRACE_DMA(Kern::Printf(">PHYSADDR:DP:GetPhysS(), linAddr %08X, physAddr %08X, len %x reqLen %x", linAddr + offset, aAddr, aLen, reqLen));
-	OstTraceExt4(TRACE_DEMANDPAGING, DDMAHELPER_GETPHYSICALADDRESS_DP, "linAddr=0x%x; physAddr=0x%x; length=0x%x; reqLen=0x%x", linAddr + offset, aAddr, aLen, reqLen);
 	OstTraceFunctionExit0( DDMAHELPER_GETPHYSICALADDRESS_EXIT );
 	return KErrNone;
 	}

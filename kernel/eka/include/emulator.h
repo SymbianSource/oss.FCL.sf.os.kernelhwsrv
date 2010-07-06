@@ -33,6 +33,10 @@
 class TUidType;
 class TProcessCreateInfo;
 
+// Names of sections that we are interested in looking at.  These are used by the GetSectionsSize()
+// routine to determine the minimum number of bytes of a DLL to map into memory in order to examine
+// its sections.  If a new section is added here then it must also be added to the list of sections
+// held in the sectionNames array in GetSectionsSize()
 static const BYTE KWin32SectionName_Symbian[IMAGE_SIZEOF_SHORT_NAME]	= {'.','S','Y','M','B','I','A','N'};
 static const BYTE KWin32SectionName_Import[IMAGE_SIZEOF_SHORT_NAME]		= {'.','i','d','a','t','a','\0','\0'};
 static const BYTE KWin32SectionName_EpocData[IMAGE_SIZEOF_SHORT_NAME]	= {'.','d','a','t','a','\0','\0','\0'};

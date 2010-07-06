@@ -35,9 +35,8 @@ void DisplaySubSchedulerExt(Monitor& m, TSubScheduler& ss)
 	m.Printf("Extras[ 4] %08x Extras[ 5] %08x Extras[ 6] %08x Extras[ 7] %08x\r\n", x.iSSXP[4], x.iSSXP[5], x.iSSXP[6], x.iSSXP[7]);
 	m.Printf("Extras[ 8] %08x i_IrqCount %08x i_ExcInfo  %08x i_CrashSt  %08x\r\n", x.iSSXP[8], x.iIrqCount, x.iExcInfo, x.iCrashState);
 	m.Printf("i_APICID   %08x i_IrqNestC %08x i_IrqStkTp %08x i_Tss      %08x\r\n", x.iAPICID, x.iIrqNestCount, x.iIrqStackTop, x.iTss);
-	m.Printf("CpuFreqM   %08x CpuFreqS   %08x CpuPeriodM %08x CpuPeriodS %08x\r\n", x.iCpuFreqM, x.iCpuFreqS, x.iCpuPeriodM, x.iCpuPeriodS);
-	m.Printf("NTmrFreqM  %08x NTmrFreqS  %08x NTmPeriodM %08x NTmPeriodS %08x\r\n", x.iNTimerFreqM, x.iNTimerFreqS, x.iNTimerPeriodM, x.iNTimerPeriodS);
-	m.Printf("TmrFreqM   %08x TmrFreqS   %08x TmrPeriodM %08x TmrPeriodS %08x\r\n", x.iTimerFreqM, x.iTimerFreqS, x.iTimerPeriodM, x.iTimerPeriodS);
+	m.Printf("CpuFreqM   %08x CpuFreqS   %08x CpuPeriodM %08x CpuPeriodS %08x\r\n", x.iCpuFreqRI.iR.iM, x.iCpuFreqRI.iR.iX, x.iCpuFreqRI.iI.iM, x.iCpuFreqRI.iI.iX);
+	m.Printf("TmrFreqM   %08x TmrFreqS   %08x TmrPeriodM %08x TmrPeriodS %08x\r\n", x.iTimerFreqRI.iR.iM, x.iTimerFreqRI.iR.iX, x.iTimerFreqRI.iI.iM, x.iTimerFreqRI.iI.iX);
 	m.Printf("TmstampOff %08x %08x            iSSXP2[0]  %08x iSSXP2[1]  %08x\r\n", I64HIGH(x.iTimestampOffset.i64), I64LOW(x.iTimestampOffset.i64), x.iSSXP2[0], x.iSSXP2[1]);
 	}
 

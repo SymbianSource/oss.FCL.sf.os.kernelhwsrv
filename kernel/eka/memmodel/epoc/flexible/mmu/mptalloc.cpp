@@ -118,6 +118,8 @@ public:
 
 	virtual TInt MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPageInfo, 
 							TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest);
+
+	virtual TInt MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aType);
 public:
 	/**
 	Allocate a page of RAM for storing page tables in.
@@ -263,13 +265,22 @@ TInt DPageTableMemoryManager::Free(DMemoryObject* aMemory, TUint aIndex, TBool a
 	return r;
 	}
 
+
 TInt DPageTableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPageInfo, 
 										TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest)
-		{
-		// This could be a demand paged page table info which can be discarded 
-		// but let the PageTableAllocator handle that.
-		return ::PageTables.MovePage(aMemory, aOldPageInfo, aBlockZoneId, aBlockRest);
-		}
+	{
+	// This could be a demand paged page table info which can be discarded 
+	// but let the PageTableAllocator handle that.
+	return ::PageTables.MovePage(aMemory, aOldPageInfo, aBlockZoneId, aBlockRest);
+	}
+
+
+TInt DPageTableMemoryManager::MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType)
+	{
+	// This could be a demand paged page table info which can be discarded 
+	// but let the PageTableAllocator handle that.
+	return ::PageTables.MoveAndAllocPage(aMemory, aPageInfo, aPageType);
+	}
 
 
 //
@@ -1177,9 +1188,9 @@ TInt PageTableAllocator::StealPageTableInfo(SPageInfo* aPageInfo)
 TInt PageTableAllocator::MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInfo, 
 									TUint aBlockZoneId, TBool aBlockRest)
 	{
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	// We don't move page table or page table info pages, however, if this page 
 	// is demand paged then we may be able to discard it.
-	MmuLock::Lock();
 	if (aOldPageInfo->Owner() == iPageTableInfoMemory)
 		{
 		if (!(iPtPageAllocator.IsDemandPagedPtInfo(aOldPageInfo)))
@@ -1206,7 +1217,19 @@ TInt PageTableAllocator::MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInf
 	// Let the pager discard the page as it controls the size of the live list.
 	// If the size of the live list allows then eventually 
 	// PageTableAllocator::StealPage() will be invoked on this page.
-	return ThePager.DiscardPage(aOldPageInfo, aBlockZoneId, aBlockRest);
+	TUint moveDisFlags = (aBlockRest)? M::EMoveDisBlockRest : 0;
+	return ThePager.DiscardPage(aOldPageInfo, aBlockZoneId, moveDisFlags);
+	}
+
+
+TInt PageTableAllocator::MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType)
+	{
+	TInt r = MovePage(aMemory, aPageInfo, KRamZoneInvalidId, EFalse);
+	if (r == KErrNone)
+		{
+		TheMmu.MarkPageAllocated(aPageInfo->PhysAddr(), aPageType);
+		}
+	return r;
 	}
 
 

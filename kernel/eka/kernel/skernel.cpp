@@ -74,6 +74,9 @@ TInt DSemaphore::Create(DObject* aOwner, const TDesC* aName, TInt aInitialCount,
 
 // Wait for semaphore with timeout
 // Enter with system locked, return with system unlocked.
+// If aNTicks==0, wait forever
+// If aNTicks==-1, poll (don't block)
+// If aNTicks>0, timeout is aNTicks nanokernel ticks
 TInt DSemaphore::Wait(TInt aNTicks)
 	{
 	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Semaphore %O Wait %d Timeout %d",this,iCount,aNTicks));
@@ -84,14 +87,23 @@ TInt DSemaphore::Wait(TInt aNTicks)
 		r=KErrGeneral;
 	else if (--iCount<0)
 		{
-		DThread* pC=TheCurrentThread;
-		pC->iMState=DThread::EWaitSemaphore;
-		pC->iWaitObj=this;
-		iWaitQ.Add(pC);
-		BTRACE_KS(BTrace::ESemaphoreBlock, this);
-		r=NKern::Block(aNTicks,NKern::ERelease,SYSTEM_LOCK);
-		__ASSERT_DEBUG(pC->iMState==DThread::EReady,K::Fault(K::ESemWaitBadState));
-		COND_BTRACE_KS(r==KErrNone, BTrace::ESemaphoreAcquire, this);
+		if (aNTicks >= 0)
+			{
+			DThread* pC=TheCurrentThread;
+			pC->iMState=DThread::EWaitSemaphore;
+			pC->iWaitObj=this;
+			iWaitQ.Add(pC);
+			BTRACE_KS(BTrace::ESemaphoreBlock, this);
+			r=NKern::Block(aNTicks,NKern::ERelease,SYSTEM_LOCK);
+			__ASSERT_DEBUG(pC->iMState==DThread::EReady,K::Fault(K::ESemWaitBadState));
+			COND_BTRACE_KS(r==KErrNone, BTrace::ESemaphoreAcquire, this);
+			}
+		else
+			{
+			++iCount;
+			NKern::UnlockSystem();
+			r = KErrTimedOut;	// couldn't acquire semaphore immediately, so fail
+			}
 		return r;
 		}
 #ifdef BTRACE_SYMBIAN_KERNEL_SYNC
@@ -326,10 +338,14 @@ TInt DMutex::Create(DObject* aOwner, const TDesC* aName, TBool aVisible, TUint a
 extern const SNThreadHandlers EpocThreadHandlers;
 #endif
 
-// Enter and return with system locked.
-TInt DMutex::Wait()
+// Wait for mutex with timeout
+// Enter with system locked, return with system unlocked.
+// If aNTicks==0, wait forever
+// If aNTicks==-1, poll (don't block)
+// If aNTicks>0, timeout is aNTicks nanokernel ticks
+TInt DMutex::Wait(TInt aNTicks)
 	{
-	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Mutex %O Wait hold %O hldc=%d wtc=%d",this,iCleanup.iThread,iHoldCount,iWaitCount));
+	__KTRACE_OPT(KSEMAPHORE,Kern::Printf("Mutex %O Wait(%d) hold %O hldc=%d wtc=%d",this,aNTicks,iCleanup.iThread,iHoldCount,iWaitCount));
 	__ASSERT_SYSTEM_LOCK;
 	__ASSERT_DEBUG(NCurrentThread()->iHandlers==&EpocThreadHandlers, K::Fault(K::EMutexWaitNotDThread));
 	DThread* pC=TheCurrentThread;
@@ -353,6 +369,8 @@ TInt DMutex::Wait()
 			BTRACE_KS(BTrace::EMutexAcquire, this);
 			return KErrNone;
 			}
+		if (aNTicks<0)
+			return KErrTimedOut;	// poll mode - can't get mutex immediately so fail
 		K::PINestLevel=0;
 		pC->iMState=DThread::EWaitMutex;
 		pC->iWaitObj=this;
@@ -375,7 +393,7 @@ TInt DMutex::Wait()
 		// return value is set at the point where the thread is released from its wait
 		// condition). However we can still detect this situation since the thread will
 		// have been placed into the EReady state when the mutex was reset.
-		TInt r=NKern::Block(0, NKern::ERelease|NKern::EClaim|NKern::EObstruct, SYSTEM_LOCK);
+		TInt r=NKern::Block(aNTicks, NKern::ERelease|NKern::EClaim|NKern::EObstruct, SYSTEM_LOCK);
 		if (r==KErrNone && pC->iMState==DThread::EReady)
 			r = KErrGeneral;	// mutex has been reset
 		if (r!=KErrNone)		// if we get an error here...

@@ -20,9 +20,6 @@
 #include <arm_scu.h>
 #include <arm_tmr.h>
 
-extern "C" {
-extern SVariantInterfaceBlock* VIB;
-}
 
 struct SAPBootPage : public SFullArmRegSet
 	{
@@ -94,7 +91,7 @@ TInt NKern::BootAP(volatile SAPBootInfo* aInfo)
 
 	KickCpu(&bootPage.iAPBootPtr[a.iCpu], bp_phys);
 
-	TUint32 n = TUint32(VIB->iMaxCpuClock >> 3);
+	TUint32 n = TUint32(TheScheduler.iVIB->iMaxCpuClock >> 3);
 	n = -n;
 	TUint32 b = 0;
 	do	{

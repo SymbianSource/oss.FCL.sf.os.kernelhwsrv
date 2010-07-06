@@ -680,6 +680,8 @@ slow {
 
 slow {
 	name = MutexWait
+	return = TInt
+	arg2 = TInt
 	handle = mutex
 }
 

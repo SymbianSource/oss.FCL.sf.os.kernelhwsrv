@@ -99,11 +99,8 @@ void TSubScheduler::SaveTimesliceTimer(NThreadBase* aT)
 	{
 	if (aT->iTime>0 && !aT->i_NThread_Initial)
 		{
-		TUint32 remain32 = read_apic_reg(CURRCNT);
-		TUint64 x(remain32);
-		x *= TUint32(iSSX.iTimerPeriodM);
-		x += 1u<<(iSSX.iTimerPeriodS-1);
-		x >>= iSSX.iTimerPeriodS;
+		TUint32 x = read_apic_reg(CURRCNT);
+		iSSX.iTimerFreqRI.iI.Mult(x);
 		aT->iTime = (TInt)x;
 		}
 	write_apic_reg(INITCNT, 0);
@@ -128,13 +125,9 @@ void TSubScheduler::UpdateThreadTimes(NThreadBase* aOld, NThreadBase* aNew)
 		aNew = iInitialThread;
 	if (aNew->iTime>0)
 		{
-		TUint32 remain32 = (TUint32)aNew->iTime;
-		TUint64 x(remain32);
-		x *= TUint32(iSSX.iTimerFreqM);
-		x += TUint64(0x80000000u)<<iSSX.iTimerFreqS;
-		x >>= (32+iSSX.iTimerFreqS);
-		write_apic_reg(LVTTMR, TIMESLICE_VECTOR);
-		write_apic_reg(INITCNT, (TUint32)x);
+		TUint32 x = (TUint32)aNew->iTime;
+		iSSX.iTimerFreqRI.iR.Mult(x);
+		write_apic_reg(INITCNT, x);
 		}
 	if (aNew!=aOld)
 		{

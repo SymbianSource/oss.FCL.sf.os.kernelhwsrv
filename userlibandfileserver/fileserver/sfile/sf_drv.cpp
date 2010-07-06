@@ -85,7 +85,7 @@ TInt ValidateDriveDoSubst(TInt aDriveNumber,CFsRequest* aRequest)
 	return(KErrNone);
 	}
 
-void ValidateAtts(TUint /*anEntryAtts*/,TUint& aSetAttMask,TUint& aClearAttMask)
+void ValidateAtts(TUint& aSetAttMask,TUint& aClearAttMask)
 //
 // Do not allow the entry type to be changed
 //
@@ -1169,24 +1169,44 @@ void TDrive::DoEntryL(const TDesC& aName, TEntry& anEntry)
 // Get entry details
 //
 	{
-	FlushCachedFileInfoL();
 	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBENTRYL, "drive %d", DriveNumber());
 	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBENTRYL_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 	CurrentMount().EntryL(aName,anEntry);
+
+	// If the file is already open then read the file attributes directly from the file
+	TFileName foldedName;
+	TUint32 nameHash=0;
+	foldedName.CopyF(aName);
+	nameHash=CalcNameHash(foldedName);
+
+	__CHECK_DRIVETHREAD(iDriveNumber);
+	TDblQueIter<CFileCB> q(CurrentMount().iMountQ);
+	CMountCB* currentMount = &CurrentMount();
+	CFileCB* file;
+	while ((file=q++)!=NULL)
+		{
+		if ((&file->Drive()==this) && 
+			&file->Mount() == currentMount &&
+			nameHash == file->NameHash() && 
+			file->FileNameF().Match(foldedName)==KErrNone)
+			{
+			anEntry.iAtt = file->Att() & ~KEntryAttModified;
+			anEntry.SetFileSize(file->CachedSize64());
+			anEntry.iModified = file->Modified();
+			break;
+			}
+		}
+
+
 	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBENTRYLRET, "att %x modified %x:%x  size %x:%x", (TUint) anEntry.iAtt, (TUint) I64HIGH(anEntry.iModified.Int64()), (TUint) I64LOW(anEntry.iModified.Int64()), (TUint) I64HIGH(anEntry.FileSize()), (TUint) anEntry.FileSize());
 	}
 
-TInt TDrive::CheckAttributes(const TDesC& aName,TUint& aSetAttMask,TUint& aClearAttMask)
+TInt TDrive::CheckAttributes(TUint& aSetAttMask,TUint& aClearAttMask)
 //
 // Validate the changes against the current entry attributes
 //
 	{
-
-	TEntry entry;
-	TRAPD(r,DoEntryL(aName,entry));
-	if (r!=KErrNone)
-		return(r);
-	ValidateAtts(entry.iAtt,aSetAttMask,aClearAttMask);
+	ValidateAtts(aSetAttMask,aClearAttMask);
 	return(KErrNone);
 	}
 
@@ -1203,7 +1223,7 @@ TInt TDrive::SetEntry(const TDesC& aName,const TTime& aTime,TUint aSetAttMask,TU
 	CFileCB* pF=LocateFile(entryName);
 	if (pF!=NULL)
 		return(KErrInUse);
-	r=CheckAttributes(entryName,aSetAttMask,aClearAttMask);
+	r=CheckAttributes(aSetAttMask,aClearAttMask);
 	if (r!=KErrNone)
 		return(r);
 	if (IsWriteProtected())

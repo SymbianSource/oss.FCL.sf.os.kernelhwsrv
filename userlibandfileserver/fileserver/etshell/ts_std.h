@@ -146,6 +146,10 @@ public:
 	static TKeyCode OutputStringToConsole(TBool aPageSwitch,TRefByValue<const TDesC> aFmt,...);
 	static TKeyCode OutputStringToConsole(TBool aPageSwitch, const TDesC& aBuf);
 	static TKeyCode OutputStringToConsole(const TDesC& aNotification,TBool aPageSwitch,TRefByValue<const TDesC> aFmt,...);
+
+    static void Printf(TRefByValue<const TDesC16> aFmt, ...);
+    static void SetDbgConsoleEcho(TBool aOn) {iDbgPrint = aOn;}
+
 public:
 	static CConsoleBase* TheConsole;
 	static CFileMan* TheFileMan;
@@ -166,6 +170,7 @@ private:
 	static TInt RunBatch(TDes& aCommand);
 	static TInt RunExecutable(TDes& aCommand,TBool aWaitForCompletion);
 	static TKeyCode PageSwitchDisplay(const TDesC& aBuf);
+
 private:
 	static TBuf<KMaxFileName> currentPath;
 	static TBuf<KMaxFileName> drivePaths[KMaxDrives];
@@ -174,6 +179,9 @@ private:
 	static CLineEdit* TheEditor;
 	friend class ShellFunction;
 	friend class CDllChecker;
+	
+    static TBool iDbgPrint; ///< if ETrue, the output from CShell::Printf is copied to the debug port
+    
 	};
 
 

@@ -132,10 +132,32 @@ TInt NThread::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		{
 		NKern::EnableAllInterrupts();
 
+#if defined(__CPU_ARM_HAS_GLOBAL_TIMER_BLOCK) && defined(__NKERN_TIMESTAMP_USE_SCU_GLOBAL_TIMER__)
+
+		if (cpu == 0) 
+			{
+			// start global timer if necessary
+			ArmGlobalTimer& GT = GLOBAL_TIMER;
+			if (!(GT.iTimerCtrl & E_ArmGTmrCtrl_TmrEnb))
+				{
+				// timer not currently enabled
+				GT.iTimerCtrl = 0;
+				__e32_io_completion_barrier();
+				GT.iTimerStatus = E_ArmGTmrStatus_Event;
+				__e32_io_completion_barrier();
+				GT.iTimerCountLow = 0;
+				GT.iTimerCountHigh = 0;
+				__e32_io_completion_barrier();
+				GT.iTimerCtrl = E_ArmGTmrCtrl_TmrEnb;	// enable timer with prescale factor of 1
+				__e32_io_completion_barrier();
+				}
+			}
+		
+#endif
+
 		// start local timer
 		ArmLocalTimer& T = LOCAL_TIMER;
 		T.iTimerCtrl = E_ArmTmrCtrl_IntEn | E_ArmTmrCtrl_Reload | E_ArmTmrCtrl_Enable;
-
 		// Initialise timestamp
 		InitTimestamp(ss, aInfo);
 		}

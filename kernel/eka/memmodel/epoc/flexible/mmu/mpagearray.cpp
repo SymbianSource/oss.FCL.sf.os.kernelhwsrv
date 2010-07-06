@@ -1158,6 +1158,7 @@ TPhysAddr* RPageArray::MovePageStart(TUint aIndex, TIter& aPageList)
 		return NULL;
 
 	*p = (page & ~EStateMask) | EMoving;
+	s->Lock();
 
 	aPageList.Set(iSegments, aIndex, aIndex+1);
 

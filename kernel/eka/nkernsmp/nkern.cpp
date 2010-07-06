@@ -2846,28 +2846,62 @@ void TGenericIPI::WaitCompletion()
 
 /**	Stop all other CPUs
 
-	Call with kernel locked
+Call with kernel unlocked, returns with kernel locked.
+Returns mask of CPUs halted plus current CPU.
 */
-void TStopIPI::StopCPUs()
+TUint32 TStopIPI::StopCPUs()
 	{
+	CHECK_PRECONDITIONS(MASK_THREAD_STANDARD,"TStopIPI::StopCPUs()");
+	TScheduler& s = TheScheduler;
 	iFlag = 0;
+	NKern::ThreadEnterCS();
+
+	// Stop any cores powering up or down for now
+	// A core already on the way down will stop just before the transition to SHUTDOWN_FINAL
+	// A core already on the way up will carry on powering up
+	TInt irq = s.iGenIPILock.LockIrqSave();
+	++s.iCCDeferCount;	// stops bits in iIpiAcceptCpus being cleared, but doesn't stop them being set
+						// but iIpiAcceptCpus | s.iCpusComingUp is constant
+	TUint32 act2 = s.iIpiAcceptCpus;		// CPUs still accepting IPIs
+	TUint32 cu = s.iCpusComingUp;			// CPUs powering up
+	s.iGenIPILock.UnlockIrqRestore(irq);
+	TUint32 cores = act2 | cu;
+	if (cu)
+		{
+		// wait for CPUs coming up to start accepting IPIs
+		while (cores & ~s.iIpiAcceptCpus)
+			{
+			__snooze();	// snooze until cores have come up
+			}
+		}
+	NKern::Lock();
 	QueueAllOther(&Isr);	// send IPIs to all other CPUs
 	WaitEntry();			// wait for other CPUs to reach the ISR
+	return cores;
 	}
 
+
+/**	Release the stopped CPUs
+
+Call with kernel locked, returns with kernel unlocked.
+*/
 void TStopIPI::ReleaseCPUs()
 	{
-	iFlag = 1;				// allow other CPUs to proceed
+	__e32_atomic_store_rel32(&iFlag, 1);	// allow other CPUs to proceed
 	WaitCompletion();		// wait for them to finish with this IPI
+	NKern::Unlock();
+	TheScheduler.CCUnDefer();
+	NKern::ThreadLeaveCS();
 	}
 
 void TStopIPI::Isr(TGenericIPI* a)
 	{
 	TStopIPI* s = (TStopIPI*)a;
-	while (!s->iFlag)
+	while (!__e32_atomic_load_acq32(&s->iFlag))
 		{
 		__chill();
 		}
+	__e32_io_completion_barrier();
 	}
 
 

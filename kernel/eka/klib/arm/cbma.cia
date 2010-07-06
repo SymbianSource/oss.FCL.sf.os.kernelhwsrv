@@ -336,6 +336,81 @@ EXPORT_C __NAKED__ void TBitMapAllocator::SelectiveFree(TInt /*aStart*/, TInt /*
 	}
 
 
+/**	Allocates a specific range of bit positions.
+	
+	The specified range must lie within the total range for this allocator but it is
+	not necessary that all the positions are currently free.
+
+	@param	aStart	First position to allocate.
+	@param	aLength	Number of consecutive positions to allocate, must be >0.
+	@return The number of previously free positions that were allocated.
+ */
+EXPORT_C __NAKED__ TUint TBitMapAllocator::SelectiveAlloc(TInt /*aStart*/, TInt /*aLength*/)
+	{
+	asm("ldr r3, [r0, #%a0] " : : "i" _FOFF(TBitMapAllocator, iSize));	// r3->iSize
+	asm("stmfd sp!, {r4-r8,lr} ");
+	asm("adds r4, r1, r2 ");			// r4 = aStart + aLength
+	asm("bcs 0f ");						// if (aStart + aLength < aStart)
+	asm("cmp r4, r3 ");					// if (aStart + aLength > iSize)
+	asm("bhi 0f ");
+	asm("mov r7, r0 ");					// r7 = this
+	asm("mov r4, r1, lsr #5 ");			// r4 = wix = aStart >> 5
+	asm("and r1, r1, #0x1f ");			// r1 = sbit = aStart & 31
+	asm("ldr r6, [r7, #%a0] " : : "i" _FOFF(TBitMapAllocator, iAvail));	// r6 = iAvail
+	asm("add r4, r7, r4, lsl #2 ");	
+	asm("add r4, r4, #%a0 " : : "i" _FOFF(TBitMapAllocator, iMap));		// r4 = iMap + wix
+	asm("sub r6, r6, r2 ");				// r6 = iAvail -= aLength
+	asm("add r5, r2, r1 ");				// r5 = ebit =  sbit + aLength
+	asm("mvn r0, #0 ");
+	asm("mvn r0, r0, lsr r1 ");			// r0 = b = ~(0xffffffff >> sbit)
+	asm("cmp r5, #32 ");
+	asm("mov r8, r2");					// r8 = aLength
+	asm("bhi salloc_cross_bdry ");		// branch if (ebit >=32)
+
+	asm("mvn r5, #0 ");					// r5 = 0xffffffff
+	asm("mov r5, r5, lsr r8 ");			// r5 >> aLength
+	asm("mov r5, r5, lsr r1 ");			// r5 >> sbit
+	asm("orr r5, r5, r0 ");				// r5 = b = r0 | r5
+	asm("ldr r0, [r4] ");				// r0 = w = *pW
+	asm("and r1, r0, r5 ");				// r1 = w & b, clear the positions to be allocated
+	asm("str r1, [r4] ");				// *pW = r1, store new bit map word.
+	asm("mvn r0, r0");					// r0 = ~w
+	asm("mvn r5, r5");					// r5 = ~b
+	asm("and r0, r0, r5");				// r0 = ~w & ~b
+	asm("bl " CSM_CFUNC(__e32_bit_count_32));
+	asm("add r6, r6, r0 ");				// r6 = iAvail + allocated
+	asm("sub r0, r8, r0 ");				// return aLength - allocated
+	asm("str r6, [r7] ");				// iAvail += allocated, store free count
+	asm("ldmfd sp!, {r4-r8,pc} ");		// return
+	
+	asm("salloc_cross_bdry: ");			// r0 = b, r8 = aLength, r7 = this, r5 = ebit
+	asm("ldr r2, [r4] ");				// r2 = w = *pW
+	asm("and r1, r2, r0 ");				// r1 = w & b
+	asm("str r1, [r4], #4 ");			// *pW++ = r1, store new bit mask
+	asm("mvn r2, r2");					// r2 = ~w
+	asm("mvn r0, r0");					// r0 = ~b
+	asm("and r0, r0, r2");				// r0 = ~w & ~b
+	asm("bl " CSM_CFUNC(__e32_bit_count_32));
+	asm("add r6, r6, r0 ");				// r6 = iAvail += allocated
+	asm("sub r8, r8, r0 ");				// r8 = aLength -= allocated
+	asm("subs r5, r5, #32 ");			// r5 = ebit -= 32
+	asm("bls salloc_return ");			// ebit < 0 so return.
+	asm("cmp r5, #32 ");				// if (ebit < 32) {
+	asm("mvnlt r0, #0 ");
+	asm("movlt r0, r0, lsr r5 ");		// r0 = 0xffffffff >> ebit }
+	asm("movge r0, #0 ");				// if (ebit >= 32) r0 = b = 0
+	asm("b salloc_cross_bdry ");
+
+	asm("salloc_return: ");
+	asm("str r6, [r7] ");				// iAvail += allocated, store free count
+	asm("mov r0, r8 ");					// return aLength
+	asm("ldmfd sp!, {r4-r8,pc} ");		// return
+
+	asm("0: ");
+	ASM_FAULT();
+	}
+
+
 /**	Tests if a specific range of bit positions are all free
 	Specified range must lie within the total range for this allocator.
 

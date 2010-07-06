@@ -22,8 +22,6 @@
 #include <nk_irq.h>
 
 extern "C" {
-extern SVariantInterfaceBlock* VIB;
-
 extern TUint KernCoreStats_EnterIdle(TUint aCore);
 extern void KernCoreStats_LeaveIdle(TInt aCookie,TUint aCore);
 
@@ -31,6 +29,7 @@ extern void DetachComplete();
 extern void send_irq_ipi(TSubScheduler*, TInt);
 }
 
+TInt ClockFrequenciesChanged();
 
 
 /******************************************************************************
@@ -89,66 +88,47 @@ void FastMutexSignalError()
 void NKern::Init0(TAny* a)
 	{
 	__KTRACE_OPT(KBOOT,DEBUGPRINT("VIB=%08x", a));
-	VIB = (SVariantInterfaceBlock*)a;
-	__NK_ASSERT_ALWAYS(VIB && VIB->iVer==0 && VIB->iSize==sizeof(SVariantInterfaceBlock));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iVer=%d iSize=%d", VIB->iVer, VIB->iSize));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxCpuClock=%08x %08x", I64HIGH(VIB->iMaxCpuClock), I64LOW(VIB->iMaxCpuClock)));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxTimerClock=%u", VIB->iMaxTimerClock));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iScuAddr=%08x", VIB->iScuAddr));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGicDistAddr=%08x", VIB->iGicDistAddr));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGicCpuIfcAddr=%08x", VIB->iGicCpuIfcAddr));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iLocalTimerAddr=%08x", VIB->iLocalTimerAddr));
-	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGlobalTimerAddr=%08x", VIB->iGlobalTimerAddr));
+	SVariantInterfaceBlock* v = (SVariantInterfaceBlock*)a;
+	TheScheduler.iVIB = v;
+	__NK_ASSERT_ALWAYS(v && v->iVer==0 && v->iSize==sizeof(SVariantInterfaceBlock));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iVer=%d iSize=%d", v->iVer, v->iSize));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxCpuClock=%08x %08x", I64HIGH(v->iMaxCpuClock), I64LOW(v->iMaxCpuClock)));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iMaxTimerClock=%u", v->iMaxTimerClock));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iScuAddr=%08x", v->iScuAddr));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGicDistAddr=%08x", v->iGicDistAddr));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGicCpuIfcAddr=%08x", v->iGicCpuIfcAddr));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iLocalTimerAddr=%08x", v->iLocalTimerAddr));
+	__KTRACE_OPT(KBOOT,DEBUGPRINT("iGlobalTimerAddr=%08x", v->iGlobalTimerAddr));
 
 	TScheduler& s = TheScheduler;
-	s.iSX.iScuAddr = (ArmScu*)VIB->iScuAddr;
-	s.iSX.iGicDistAddr = (GicDistributor*)VIB->iGicDistAddr;
-	s.iSX.iGicCpuIfcAddr = (GicCpuIfc*)VIB->iGicCpuIfcAddr;
-	s.iSX.iLocalTimerAddr = (ArmLocalTimer*)VIB->iLocalTimerAddr;
-	s.iSX.iTimerMax = (VIB->iMaxTimerClock / 1);		// use prescaler value of 1
+	s.iSX.iScuAddr = (ArmScu*)v->iScuAddr;
+	s.iSX.iGicDistAddr = (GicDistributor*)v->iGicDistAddr;
+	s.iSX.iGicCpuIfcAddr = (GicCpuIfc*)v->iGicCpuIfcAddr;
+	s.iSX.iLocalTimerAddr = (ArmLocalTimer*)v->iLocalTimerAddr;
+	s.iSX.iTimerMax = (v->iMaxTimerClock / 1);		// use prescaler value of 1
 #ifdef	__CPU_ARM_HAS_GLOBAL_TIMER_BLOCK
-	s.iSX.iGlobalTimerAddr = (ArmGlobalTimer*)VIB->iGlobalTimerAddr;
+	s.iSX.iGlobalTimerAddr = (ArmGlobalTimer*)v->iGlobalTimerAddr;
+	s.iSX.iGTimerFreqRI.Set(v->iGTimerFreqR);
+	v->iGTimerFreqR = 0;
 #endif
 
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)
 		{
 		TSubScheduler& ss = TheSubSchedulers[i];
-		ss.iSSX.iCpuFreqM = KMaxTUint32;
-		ss.iSSX.iCpuFreqS = 0;
-		ss.iSSX.iCpuPeriodM = 0x80000000u;
-		ss.iSSX.iCpuPeriodS = 31;
-		ss.iSSX.iNTimerFreqM = KMaxTUint32;
-		ss.iSSX.iNTimerFreqS = 0;
-		ss.iSSX.iNTimerPeriodM = 0x80000000u;
-		ss.iSSX.iNTimerPeriodS = 31;
-		ss.iSSX.iTimerFreqM = KMaxTUint32;
-		ss.iSSX.iTimerFreqS = 0;
-		ss.iSSX.iTimerPeriodM = 0x80000000u;
-		ss.iSSX.iTimerPeriodS = 31;
-		ss.iSSX.iLastSyncTime = 0;
-		ss.iSSX.iTicksSinceLastSync = 0;
-		ss.iSSX.iLastTimerSet = 0;
-		ss.iSSX.iGapEstimate = 10<<16;
-		ss.iSSX.iGapCount = 0;
-		ss.iSSX.iTotalTicks = 0;
-		ss.iSSX.iDitherer = 1;
-		ss.iSSX.iFreqErrorEstimate = 0;
-		ss.iSSX.iFreqErrorLimit = 0x00100000;
-		ss.iSSX.iErrorIntegrator = 0;
-		ss.iSSX.iRefAtLastCorrection = 0;
-		ss.iSSX.iM = 4;
-		ss.iSSX.iN = 18;
-		ss.iSSX.iD = 3;
-		VIB->iTimerMult[i] = 0;
-		VIB->iCpuMult[i] = 0;
-		UPerCpuUncached* u = VIB->iUncached[i];
+		ss.iSSX.iCpuFreqRI.Set(v->iCpuFreqR[i]);
+		ss.iSSX.iTimerFreqRI.Set(v->iTimerFreqR[i]);
+
+		v->iCpuFreqR[i] = 0;
+		v->iTimerFreqR[i] = 0;
+		UPerCpuUncached* u = v->iUncached[i];
 		ss.iUncached = u;
 		u->iU.iDetachCount = 0;
 		u->iU.iAttachCount = 0;
 		u->iU.iPowerOffReq = FALSE;
 		u->iU.iDetachCompleteFn = &DetachComplete;
 		}
+	v->iFrqChgFn = &ClockFrequenciesChanged;
 	__e32_io_completion_barrier();
 	InterruptInit0();
 	}
@@ -374,15 +354,10 @@ void NKern::DoIdle()
 		s.AllCpusIdle();
 	s.iIdleSpinLock.UnlockOnly();
 
-	//TUint cookie = KernCoreStats::EnterIdle((TUint8)ss.iCpuNum);
 	TUint cookie = KernCoreStats_EnterIdle((TUint8)ss.iCpuNum);
 
 	arg |= retire;
 	NKIdle(arg);
-
-	//KernCoreStats::LeaveIdle(cookie, (TUint8)ss.iCpuNum);
-	KernCoreStats_LeaveIdle(cookie, (TUint8)ss.iCpuNum);
-
 
 	// interrupts have not been reenabled
 	s.iIdleSpinLock.LockOnly();
@@ -415,6 +390,8 @@ void NKern::DoIdle()
 	if (ci == 0)
 		s.FirstBackFromIdle();
 
+	KernCoreStats_LeaveIdle(cookie, (TUint8)ss.iCpuNum);
+
 	if (retire)
 		{
 		s.iCCReactivateDfc.RawAdd();	// kick load balancer to give us some work
@@ -432,12 +409,12 @@ TBool TSubScheduler::Detached()
 
 TBool TScheduler::CoreControlSupported()
 	{
-	return VIB->iCpuPowerUpFn != 0;
+	return TheScheduler.iVIB->iCpuPowerUpFn != 0;
 	}
 
 void TScheduler::CCInitiatePowerUp(TUint32 aCores)
 	{
-	TCpuPowerUpFn pUp = VIB->iCpuPowerUpFn;
+	TCpuPowerUpFn pUp = TheScheduler.iVIB->iCpuPowerUpFn;
 	if (pUp && aCores)
 		{
 		TInt i;
@@ -463,7 +440,7 @@ void TScheduler::CCInitiatePowerUp(TUint32 aCores)
 
 void TScheduler::CCIndirectPowerDown(TAny*)
 	{
-	TCpuPowerDownFn pDown = VIB->iCpuPowerDownFn;
+	TCpuPowerDownFn pDown = TheScheduler.iVIB->iCpuPowerDownFn;
 	if (pDown)
 		{
 		TInt i;
@@ -553,5 +530,169 @@ EXPORT_C TUint32 NKern::TimestampFrequency()
 #else
 #error No definition for NKern::TimestampFrequency()
 #endif
+	}
+
+/******************************************************************************
+ * Notify frequency changes
+ ******************************************************************************/
+
+struct SFrequencies
+	{
+	void Populate();
+	void Apply();
+	TBool AddToQueue();
+
+	SFrequencies*	iNext;
+	TUint32			iWhich;
+	SRatioInv		iNewCpuRI[KMaxCpus];
+	SRatioInv		iNewTimerRI[KMaxCpus];
+	SRatioInv		iNewGTimerRI;
+	NFastSemaphore*	iSem;
+
+	static SFrequencies* volatile Head;
+	};
+
+SFrequencies* volatile SFrequencies::Head;
+
+TBool SFrequencies::AddToQueue()
+	{
+	SFrequencies* h = Head;
+	do	{
+		iNext = h;
+		} while(!__e32_atomic_cas_rel_ptr(&Head, &h, this));
+	return !h;	// TRUE if list was empty
+	}
+
+
+void SFrequencies::Populate()
+	{
+	TScheduler& s = TheScheduler;
+	TInt cpu;
+	iWhich = 0;
+	SRatio* ri = (SRatio*)__e32_atomic_swp_ord_ptr(&s.iVIB->iGTimerFreqR, 0);
+	if (ri)
+		{
+		iNewGTimerRI.Set(ri);
+		iWhich |= 0x80000000u;
+		}
+	for (cpu=0; cpu<s.iNumCpus; ++cpu)
+		{
+		TSubScheduler& ss = *s.iSub[cpu];
+		ri = (SRatio*)__e32_atomic_swp_ord_ptr(&s.iVIB->iCpuFreqR[cpu], 0);
+		if (ri)
+			{
+			iNewCpuRI[cpu].Set(ri);
+			iWhich |= ss.iCpuMask;
+			}
+		ri = (SRatio*)__e32_atomic_swp_ord_ptr(&s.iVIB->iTimerFreqR[cpu], 0);
+		if (ri)
+			{
+			iNewTimerRI[cpu].Set(ri);
+			iWhich |= (ss.iCpuMask<<8);
+			}
+		}
+	}
+
+#if defined(__NKERN_TIMESTAMP_USE_SCU_GLOBAL_TIMER__)
+extern void ArmGlobalTimerFreqChg(const SRatioInv* /*aNewGTimerFreqRI*/);
+#endif
+
+void SFrequencies::Apply()
+	{
+	if (!iWhich)
+		return;
+	TScheduler& s = TheScheduler;
+	TStopIPI ipi;
+	TUint32 stopped = ipi.StopCPUs();
+	TInt cpu;
+	TUint32 wait = 0;
+	for (cpu=0; cpu<s.iNumCpus; ++cpu)
+		{
+		TSubScheduler& ss = *s.iSub[cpu];
+		TUint32 m = 1u<<cpu;
+		TUint32 m2 = m | (m<<8);
+		if (stopped & m)
+			{
+			// CPU is running so let it update
+			if (iWhich & m2)
+				{
+				if (iWhich & m)
+					ss.iSSX.iNewCpuFreqRI = &iNewCpuRI[cpu];
+				if (iWhich & (m<<8))
+					ss.iSSX.iNewTimerFreqRI = &iNewTimerRI[cpu];
+				ss.iRescheduleNeededFlag = 1;
+				wait |= m;
+				}
+			}
+		else
+			{
+			// CPU is not running so update directly
+			if (iWhich & m)
+				{
+				ss.iSSX.iCpuFreqRI = iNewCpuRI[cpu];
+				}
+			if (iWhich & (m<<8))
+				{
+				ss.iSSX.iTimerFreqRI = iNewTimerRI[cpu];
+				}
+			}
+		}
+#if defined(__NKERN_TIMESTAMP_USE_SCU_GLOBAL_TIMER__)
+	if (iWhich & 0x80000000u)
+		{
+		ArmGlobalTimerFreqChg(&iNewGTimerRI);
+		}
+#endif
+	ipi.ReleaseCPUs();	// this CPU handled here
+	while(wait)
+		{
+		cpu = __e32_find_ls1_32(wait);
+		TSubScheduler& ss = *s.iSub[cpu];
+		if (!ss.iSSX.iNewCpuFreqRI && !ss.iSSX.iNewTimerFreqRI)
+			wait &= ~ss.iCpuMask;
+		__chill();
+		}
+	}
+
+void TScheduler::DoFrequencyChanged(TAny*)
+	{
+	SFrequencies* list = (SFrequencies*)__e32_atomic_swp_ord_ptr(&SFrequencies::Head, 0);
+	if (!list)
+		return;
+	list->Populate();
+	list->Apply();
+	SFrequencies* rev = 0;
+	while (list)
+		{
+		SFrequencies* next = list->iNext;
+		list->iNext = rev;
+		rev = list;
+		list = next;
+		}
+	while (rev)
+		{
+		NFastSemaphore* s = rev->iSem;
+		rev = rev->iNext;
+		NKern::FSSignal(s);
+		}
+	}
+
+TInt ClockFrequenciesChanged()
+	{
+	TScheduler& s = TheScheduler;
+	NFastSemaphore sem(0);
+	SFrequencies f;
+	f.iSem = &sem;
+	NThread* ct = NKern::CurrentThread();
+	NThread* lbt = TScheduler::LBThread();
+	NKern::ThreadEnterCS();
+	TBool first = f.AddToQueue();
+	if (!lbt || lbt == ct)
+		TScheduler::DoFrequencyChanged(&s);
+	else if (first)
+		s.iFreqChgDfc.Enque();
+	NKern::FSWait(&sem);
+	NKern::ThreadLeaveCS();
+	return KErrNone;
 	}
 

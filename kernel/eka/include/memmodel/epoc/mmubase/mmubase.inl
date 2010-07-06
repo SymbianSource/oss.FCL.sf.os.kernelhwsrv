@@ -81,15 +81,17 @@ inline TUint M::NumberOfDirtyDpPages()
 	}
 
 
-inline TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlockRest)
+inline TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TUint aMoveDisFlags)
 	{
-	return Mmu::Get().MovePage(aOld, aNew, aBlockZoneId, aBlockRest);
+	return Mmu::Get().MovePage(	aOld, aNew, aBlockZoneId, 
+								(aMoveDisFlags & M::EMoveDisBlockRest)!=0);
 	}
 
 
-inline TInt M::DiscardPage(TPhysAddr aAddr, TUint aBlockZoneId, TBool aBlockRest)
+inline TInt M::DiscardPage(TPhysAddr aAddr, TUint aBlockZoneId, TUint aMoveDisFlags)
 	{
-	return Mmu::Get().DiscardPage(aAddr, aBlockZoneId, aBlockRest);
+	return Mmu::Get().DiscardPage(	aAddr, aBlockZoneId, 
+									(aMoveDisFlags & M::EMoveDisBlockRest)!=0);
 	}
 #endif
 

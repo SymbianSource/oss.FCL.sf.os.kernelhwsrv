@@ -83,6 +83,7 @@ PRJ_TESTMMPFILES
  positive check ( #ifdef SMP ), however these binaries will not be included in BTB 
  autotest images for SMP platforms. Refer to DTW-KHS BTB00055 for more details.
  ******************************************************************************/
+d_timestamp					support
 d_kerncorestats				support
 d_implicit					support
 d_emitest					support
@@ -711,6 +712,9 @@ t_domain
 t_domain_slave  support
 domainPolicyTest support
 t_switchoff
+t_frqchg
+// /E32TEST/TIMESTAMP test
+t_timestamp
 
 // /E32TEST/PRIME tests
 t_kern      support
@@ -1064,7 +1068,4 @@ t_kerncorestats		support
 
 //pci tests
 t_pci
-// timestamp or fastcounter test
-t_timestamp
-d_timestamp		support
 

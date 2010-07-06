@@ -42,6 +42,22 @@ EXPORT_C __NAKED__ void RFastLock::Wait()
 	THISCALL_EPILOG0()
 	}
 
+EXPORT_C __NAKED__ TInt RFastLock::Poll()
+	{
+	THISCALL_PROLOG0()
+	asm("xor eax, eax ");
+	asm("xor edx, edx ");
+	asm("dec edx ");
+
+	/* if ([ecx+4]==0) { [ecx+4]=-1; ZF=1;} else {eax=[ecx+4]; ZF=0;} */
+	asm("lock cmpxchg [ecx+4], edx ");
+	asm("jz short fastlock_poll_done ");
+	asm("mov eax, %0": : "i"(KErrTimedOut));
+
+	asm("fastlock_poll_done: ");
+	THISCALL_EPILOG0()
+	}
+
 EXPORT_C __NAKED__ void RFastLock::Signal()
 	{
 	THISCALL_PROLOG0()

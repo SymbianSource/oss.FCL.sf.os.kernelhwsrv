@@ -523,9 +523,9 @@ TBool CFatFileCB::FileSizeModified() const
     }  
 
 void CFatFileCB::IndicateFileSizeModified(TBool aModified) 
-    {
-    iFileSizeModified = aModified;
-    }
+	{
+	iFileSizeModified = aModified;
+	}
 
 //-----------------------------------------------------------------------------
 /** @return ETrue if file attributes' 'Modified' flag is set*/

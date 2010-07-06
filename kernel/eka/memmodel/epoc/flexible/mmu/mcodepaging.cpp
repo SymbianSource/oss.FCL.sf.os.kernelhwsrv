@@ -290,7 +290,7 @@ TInt DCodePagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 			__KTRACE_OPT(KPAGING,Kern::Printf("  uncompressed, file offset == %x, size == %d", dataOffset, dataSize));
 			}
 
-		TInt bufferStart = info.iBlockMap.Read(aRequest->iBuffer,
+		TInt bufferStart = info.iBlockMap.Read(aRequest->Buffer(),
 												dataOffset,
 												dataSize,
 												device.iReadUnitShift,
@@ -305,7 +305,7 @@ TInt DCodePagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 			break;
 			}
 
-		TLinAddr data = aRequest->iBuffer + bufferStart;
+		TLinAddr data = aRequest->Buffer() + bufferStart;
 		r = Decompress(info.iCompressionType, linAddr, decompressedSize, data, dataSize);
 		if(r>=0)
 			{

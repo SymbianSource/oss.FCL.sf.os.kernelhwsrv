@@ -95,7 +95,19 @@ public:
 
 private:
 	friend class TProperty;
-	DProcess*	iProcess;
+
+	/**
+    Defines the context of iProcess.
+    @internalComponent
+    */
+	enum {KScheduledForCompletion = 1, KProcessPtrMask = 0xfffffffe};
+
+    /**
+    The process that has required notification.
+    LSB is set if the request is scheduled for completition.
+    */
+    DProcess*   iProcess;
+
 	};
 
 

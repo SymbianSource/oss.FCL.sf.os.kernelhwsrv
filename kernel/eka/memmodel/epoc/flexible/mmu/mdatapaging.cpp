@@ -14,6 +14,7 @@
 //
 
 #include <plat_priv.h>
+#include <kernel/cache.h>
 #include "mm.h"
 #include "mmu.h"
 
@@ -22,6 +23,34 @@
 #include "mmapping.h"
 #include "mpager.h"
 #include "mswap.h"
+
+
+/**
+Log2 of minimum number of pages to attempt to write at a time.
+
+The value of 2 gives a minimum write size of 16KB.
+*/
+const TUint KMinPreferredWriteShift = 2;
+
+/**
+Log2 of maximum number of pages to attempt to write at a time.
+
+The value of 4 gives a maximum write size of 64KB.
+*/
+const TUint KMaxPreferredWriteShift = 4;
+
+__ASSERT_COMPILE((1 << KMaxPreferredWriteShift) <= KMaxPagesToClean);
+
+
+/**
+Whether the CPU has the page colouring restriction, where pages must be mapped in sequential colour
+order.
+*/
+#ifdef __CPU_CACHE_HAS_COLOUR	
+const TBool KPageColouringRestriction = ETrue;
+#else
+const TBool KPageColouringRestriction = EFalse;
+#endif
 
 
 /**
@@ -57,23 +86,24 @@ public:
 	TInt UnreserveSwap(DMemoryObject* aMemory, TUint aStartIndex, TUint aPageCount);
 	TBool IsReserved(DMemoryObject* aMemory, TUint aStartIndex, TUint aPageCount);
 
-	TInt ReadSwapPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TLinAddr aLinAddr, DPageReadRequest* aRequest, TPhysAddr* aPhysAddrs);
-	TInt WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TBool aBackground);
+	TInt ReadSwapPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TLinAddr aLinAddr, TPhysAddr* aPhysAddrs);
+	TInt WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TPhysAddr* aPhysAddrs, TBool aBackground);
 
 	void GetSwapInfo(SVMSwapInfo& aInfoOut);
 	TInt SetSwapThresholds(const SVMSwapThresholds& aThresholds);
+	void SetSwapAlign(TUint aSwapAlign);
 
 private:
 	inline TSwapState SwapState(TUint aSwapData);
 	inline TInt SwapIndex(TUint aSwapData);
 	inline TUint SwapData(TSwapState aSwapState, TInt aSwapIndex);
 	
-	TInt AllocSwapIndex(TInt aCount);
+	TInt AllocSwapIndex(TUint aCount);
 	void FreeSwapIndex(TInt aSwapIndex);
 	void CheckSwapThresholdsAndUnlock(TUint aInitial);
 	
 	void DoDeleteNotify(TUint aSwapIndex);
-	TInt DoWriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TInt aSwapIndex, TBool aBackground);
+	TInt DoWriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TInt aPageIndex, TPhysAddr* aPhysAddrs, TInt aSwapIndex, TBool aBackground);
 	
 private:
 	DPagingDevice* iDevice;			///< Paging device used to read and write swap pages
@@ -81,6 +111,7 @@ private:
 	NFastMutex iSwapLock;			///< Fast mutex protecting access to all members below
 	TUint iFreePageCount;			///< Number of swap pages that have not been reserved
 	TBitMapAllocator* iBitMap;		///< Bitmap of swap pages that have been allocated
+	TUint iSwapAlign;				///< Log2 number of pages to align swap writes to
 	TUint iAllocOffset;				///< Next offset to try when allocating a swap page
  	TUint iSwapThesholdLow;
  	TUint iSwapThesholdGood;
@@ -88,11 +119,11 @@ private:
 
 
 /**
-Manager for demand paged memory objects which contain writeable data.
-The contents of the memory are written to a backing store whenever its
-pages are 'paged out'.
+   Manager for demand paged memory objects which contain writeable data.
+   The contents of the memory are written to a backing store whenever its
+   pages are 'paged out'.
 
-@see DSwapManager
+   @see DSwapManager
 */
 class DDataPagedMemoryManager : public DPagedMemoryManager
 	{
@@ -114,6 +145,12 @@ private:
 public:
 	void GetSwapInfo(SVMSwapInfo& aInfoOut);
 	TInt SetSwapThresholds(const SVMSwapThresholds& aThresholds);
+	TBool PhysicalAccessSupported();
+	TBool UsePhysicalAccess();
+	void SetUsePhysicalAccess(TBool aUsePhysicalAccess);
+	TUint PreferredWriteSize();
+	TUint PreferredSwapAlignment();
+	TInt SetWriteSize(TUint aWriteShift);
 
 private:
 	TInt WritePages(DMemoryObject** aMemory, TUint* aIndex, TPhysAddr* aPages, TUint aCount, DPageWriteRequest *aRequest, TBool aAnyExecutable, TBool aBackground);
@@ -129,6 +166,13 @@ private:
 	The instance of #DSwapManager being used by this manager.
 	*/
 	DSwapManager* iSwapManager;
+
+	/**
+	Whether to read and write pages by physical address without mapping them first.
+
+	Set if the paging media driver supports it.
+	*/
+	TBool iUsePhysicalAccess;
 
 public:
 	/**
@@ -175,6 +219,15 @@ TInt DSwapManager::Create(DPagingDevice* aDevice)
 	}
 
 
+void DSwapManager::SetSwapAlign(TUint aSwapAlign)
+	{
+	TRACE(("WDP: Set swap alignment to %d (%d KB)", aSwapAlign, 4 << aSwapAlign));
+	NKern::FMWait(&iSwapLock);
+	iSwapAlign = aSwapAlign;
+	NKern::FMSignal(&iSwapLock);
+	}
+
+
 inline DSwapManager::TSwapState DSwapManager::SwapState(TUint aSwapData)
 	{
 	TSwapState state = (TSwapState)(aSwapData & ESwapStateMask);
@@ -204,34 +257,57 @@ The location is represented by a page-based index into the swap area.
 
 @return The swap index of the first location allocated.
 */
-TInt DSwapManager::AllocSwapIndex(TInt aCount)
+TInt DSwapManager::AllocSwapIndex(TUint aCount)
 	{
-	__NK_ASSERT_DEBUG(aCount > 0 && aCount <= KMaxPagesToClean);
+	TRACE2(("DSwapManager::AllocSwapIndex %d", aCount));
+		
+	__NK_ASSERT_DEBUG(aCount <= KMaxPagesToClean);
 	NKern::FMWait(&iSwapLock);
 
-	// search for run of aCount from iAllocOffset to end
-	TInt carry = 0;
+	TInt carry;
 	TInt l = KMaxTInt;
-	TInt swapIndex = iBitMap->AllocAligned(aCount, 0, 0, EFalse, carry, l, iAllocOffset);
+	TInt swapIndex = -1;
 
-	// if search failed, retry from beginning
+	// if size suitable for alignment, search for aligned run of aCount from iAllocOffset to end,
+	// then from beginning
+	// 
+	// note that this aligns writes that at least as large as the alignment size - an alternative
+	// policy might be to align writes that are an exact multiple of the alignment size
+	if (iSwapAlign && aCount >= (1u << iSwapAlign))
+		{
+		carry = 0;
+		swapIndex = iBitMap->AllocAligned(aCount, iSwapAlign, 0, EFalse, carry, l, iAllocOffset);
+		if (swapIndex < 0)
+			{
+			carry = 0;
+			swapIndex = iBitMap->AllocAligned(aCount, iSwapAlign, 0, EFalse, carry, l, 0);
+			}
+		}
+	
+	// if not doing aligned search, or aligned search failed, retry without alignment
 	if (swapIndex < 0)
 		{
-		iAllocOffset = 0;
 		carry = 0;
 		swapIndex = iBitMap->AllocAligned(aCount, 0, 0, EFalse, carry, l, iAllocOffset);
+		if (swapIndex < 0)
+			{
+			carry = 0;
+			swapIndex = iBitMap->AllocAligned(aCount, 0, 0, EFalse, carry, l, 0);
+			}
 		}
 
 	// if we found one then mark it as allocated and update iAllocOffset
 	if (swapIndex >= 0)
 		{
-		__NK_ASSERT_DEBUG(swapIndex <= (iBitMap->iSize - aCount));
+		__NK_ASSERT_DEBUG(swapIndex <= (TInt)(iBitMap->iSize - aCount));
 		iBitMap->Alloc(swapIndex, aCount);
 		iAllocOffset = (swapIndex + aCount) % iBitMap->iSize;
 		}
 	
 	NKern::FMSignal(&iSwapLock);
 	__NK_ASSERT_DEBUG(swapIndex >= 0 || aCount > 1); // can't fail to allocate single page
+
+	TRACE2(("DSwapManager::AllocSwapIndex returns %d", swapIndex));	
 	return swapIndex;
 	}
 
@@ -384,7 +460,7 @@ Read from the swap the specified pages associated with the memory object.
 @param aRequest	The request to use for the read.
 @param aPhysAddrs	An array of the physical addresses for each page to read in.
 */
-TInt DSwapManager::ReadSwapPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TLinAddr aLinAddr, DPageReadRequest* aRequest, TPhysAddr* aPhysAddrs)
+TInt DSwapManager::ReadSwapPages(DMemoryObject* aMemory, TUint aIndex, TUint aCount, TLinAddr aLinAddr, TPhysAddr* aPhysAddrs)
 	{
 	__ASSERT_CRITICAL;
 	
@@ -458,8 +534,10 @@ Write the specified memory object's pages from the RAM into the swap.
 
 @pre Called with page cleaning lock held
 */
-TInt DSwapManager::WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TBool aBackground)
+TInt DSwapManager::WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TPhysAddr* aPhysAddrs, TBool aBackground)
 	{
+	TRACE(("DSwapManager::WriteSwapPages %d pages", aCount));
+	
 	__ASSERT_CRITICAL;  // so we can pass the paging device a stack-allocated TThreadMessage
 	__NK_ASSERT_DEBUG(PageCleaningLock::IsHeld());
 
@@ -503,13 +581,13 @@ TInt DSwapManager::WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint 
 			if (startIndex != -1)
 				{
 				// write pages from startIndex to i exclusive
-				TInt count = i - startIndex;
+				TUint count = i - startIndex;
 				__NK_ASSERT_DEBUG(count > 0 && count <= KMaxPagesToClean);
 
 				// Get a new swap location for these pages, writing them all together if possible
 				TInt swapIndex = AllocSwapIndex(count);
 				if (swapIndex >= 0)
-					r = DoWriteSwapPages(&aMemory[startIndex], &aIndex[startIndex], count, aLinAddr + (startIndex << KPageShift), swapIndex, aBackground);
+					r = DoWriteSwapPages(&aMemory[startIndex], &aIndex[startIndex], count, aLinAddr, startIndex, aPhysAddrs, swapIndex, aBackground);
 				else
 					{
 					// Otherwise, write them individually
@@ -517,7 +595,7 @@ TInt DSwapManager::WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint 
 						{
 						swapIndex = AllocSwapIndex(1);
 						__NK_ASSERT_DEBUG(swapIndex >= 0);
-						r = DoWriteSwapPages(&aMemory[j], &aIndex[j], 1, aLinAddr + (j << KPageShift), swapIndex, aBackground);
+						r = DoWriteSwapPages(&aMemory[j], &aIndex[j], 1, aLinAddr, j, &aPhysAddrs[j], swapIndex, aBackground);
 						if (r != KErrNone)
 							break;
 						}
@@ -533,16 +611,22 @@ TInt DSwapManager::WriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint 
 	return r;
 	}
 
-TInt DSwapManager::DoWriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TInt aSwapIndex, TBool aBackground)
+TInt DSwapManager::DoWriteSwapPages(DMemoryObject** aMemory, TUint* aIndex, TUint aCount, TLinAddr aLinAddr, TInt aPageIndex, TPhysAddr* aPhysAddrs, TInt aSwapIndex, TBool aBackground)
 	{	
+	TRACE2(("DSwapManager::DoWriteSwapPages %d pages to %d", aCount, aSwapIndex));
 		
 	const TUint readUnitShift = iDevice->iReadUnitShift;
 	const TUint writeSize = aCount << (KPageShift - readUnitShift);
 	const TUint writeOffset = aSwapIndex << (KPageShift - readUnitShift);
-		
+
 	TThreadMessage msg;
 	START_PAGING_BENCHMARK;
-	TInt r = iDevice->Write(&msg, aLinAddr, writeOffset, writeSize, aBackground);
+	TInt r;
+	if (aLinAddr == 0)
+		r = iDevice->WritePhysical(&msg, aPhysAddrs, aCount, writeOffset, aBackground);
+	else
+		r = iDevice->Write(&msg, aLinAddr + (aPageIndex << KPageShift), writeOffset, writeSize, aBackground);
+		
 	if (r != KErrNone)
 		{
 		__KTRACE_OPT(KPANIC, Kern::Printf("DSwapManager::WriteSwapPages: error writing media from %08x to %08x + %x: %d", aLinAddr, writeOffset << readUnitShift, writeSize << readUnitShift, r));
@@ -643,6 +727,63 @@ TInt DSwapManager::SetSwapThresholds(const SVMSwapThresholds& aThresholds)
 	}
 
 
+TBool DDataPagedMemoryManager::PhysicalAccessSupported()
+	{
+	return (iDevice->iFlags & DPagingDevice::ESupportsPhysicalAccess) != 0;
+	}
+
+
+TBool DDataPagedMemoryManager::UsePhysicalAccess()
+	{
+	return iUsePhysicalAccess;
+	}
+
+
+void DDataPagedMemoryManager::SetUsePhysicalAccess(TBool aUsePhysicalAccess)
+	{
+	TRACE(("WDP: Use physical access set to %d", aUsePhysicalAccess));
+	NKern::ThreadEnterCS();
+	PageCleaningLock::Lock();
+	iUsePhysicalAccess = aUsePhysicalAccess;
+	ThePager.SetCleanInSequence(!iUsePhysicalAccess && KPageColouringRestriction);
+	PageCleaningLock::Unlock();
+	NKern::ThreadLeaveCS();
+	}
+
+
+TUint DDataPagedMemoryManager::PreferredWriteSize()
+	{
+	return MaxU(iDevice->iPreferredWriteShift, KMinPreferredWriteShift + KPageShift) - KPageShift;
+	}
+
+
+TUint DDataPagedMemoryManager::PreferredSwapAlignment()
+	{
+	return MaxU(iDevice->iPreferredWriteShift, KPageShift) - KPageShift;
+	}
+
+
+TInt DDataPagedMemoryManager::SetWriteSize(TUint aWriteShift)
+	{
+	TRACE(("WDP: Set write size to %d (%d KB)", aWriteShift, 4 << aWriteShift));
+	// Check value is sensible
+	if (aWriteShift > 31)
+		return KErrArgument;
+	if (aWriteShift > KMaxPreferredWriteShift)
+		{
+		aWriteShift = KMaxPreferredWriteShift;
+		TRACE(("WDP: Reduced write size to %d (%d KB)",
+			   aWriteShift, 4 << aWriteShift));
+
+		}
+	NKern::ThreadEnterCS();
+	PageCleaningLock::Lock();
+	ThePager.SetPagesToClean(1 << aWriteShift);
+	PageCleaningLock::Unlock();
+	NKern::ThreadLeaveCS();
+	return KErrNone;
+	}
+
 
 TInt DDataPagedMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 	{
@@ -673,9 +814,11 @@ TInt DDataPagedMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 
 	// Now we can determine the size of the swap, create the swap manager.
 	iSwapManager = new DSwapManager;
-	__NK_ASSERT_ALWAYS(iSwapManager);
+	if (!iSwapManager)
+		return KErrNoMemory;
 
-	TInt r = iSwapManager->Create(iDevice);
+	// Create swap manager object
+	TInt r = iSwapManager->Create(aDevice);
 	if (r != KErrNone)
 		{// Couldn't create the swap manager.
 		delete iSwapManager;
@@ -683,6 +826,25 @@ TInt DDataPagedMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 		NKern::SafeSwap(NULL, (TAny*&)iDevice);
 		return r;
 		}
+
+	// Enable physical access where supported
+	SetUsePhysicalAccess(PhysicalAccessSupported());
+	
+	// Determine swap alignment and number of pages to clean at once from device's preferred write
+	// size, if set
+	TRACE(("WDP: Preferred write shift is %d", iDevice->iPreferredWriteShift));
+	r = SetWriteSize(PreferredWriteSize());
+	if (r != KErrNone)
+		{
+		delete iSwapManager;
+		iSwapManager = NULL;
+		NKern::SafeSwap(NULL, (TAny*&)iDevice);
+		return r;
+		}
+
+	// Set swap alignment
+	iSwapManager->SetSwapAlign(PreferredSwapAlignment());
+	
  	NKern::LockedSetClear(K::MemModelAttributes, 0, EMemModelAttrDataPaging);
 
 	return r;
@@ -755,10 +917,15 @@ TInt DDataPagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 	{
 	__NK_ASSERT_DEBUG(aRequest->CheckUseContiguous(aMemory,aIndex,aCount));
 
+	// todo: Possible to read using physical addresses here, but not sure it's worth it because it's
+	// not much saving and we may need to map the page anyway if it's blank to clear it
+	// 
+	// todo: Could move clearing pages up to here maybe?
+
 	// Map pages temporarily so that we can copy into them.
 	const TLinAddr linAddr = aRequest->MapPages(aIndex, aCount, aPages);
 
-	TInt r = iSwapManager->ReadSwapPages(aMemory, aIndex, aCount, linAddr, aRequest, aPages);
+	TInt r = iSwapManager->ReadSwapPages(aMemory, aIndex, aCount, linAddr, aPages);
 
 	// The memory object allows executable mappings then need IMB.
 	aRequest->UnmapPages(aMemory->IsExecutable());
@@ -769,13 +936,28 @@ TInt DDataPagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 
 TInt DDataPagedMemoryManager::WritePages(DMemoryObject** aMemory, TUint* aIndex, TPhysAddr* aPages, TUint aCount, DPageWriteRequest* aRequest, TBool aAnyExecutable, TBool aBackground)
 	{
-	// Map pages temporarily so that we can copy into them.
-	const TLinAddr linAddr = aRequest->MapPages(aIndex[0], aCount, aPages);
+	// Note: this method used to do an IMB for executable pages (like ReadPages) but it was thought
+	// that this was uncessessary and so was removed
 
-	TInt r = iSwapManager->WriteSwapPages(aMemory, aIndex, aCount, linAddr, aBackground);
+	TLinAddr linAddr = 0;
 
-	// The memory object allows executable mappings then need IMB.
-	aRequest->UnmapPages(aAnyExecutable);
+	if (iUsePhysicalAccess)
+		{
+		// must maps pages to perform cache maintenance but can map each page individually
+		for (TUint i = 0 ; i < aCount ; ++i)
+			{
+			TLinAddr addr = aRequest->MapPages(aIndex[i], 1, &aPages[i]);
+			Cache::SyncMemoryBeforeDmaWrite(addr, KPageSize);
+			aRequest->UnmapPages(EFalse);
+			}
+		}
+	else
+		linAddr = aRequest->MapPages(aIndex[0], aCount, aPages);
+	
+	TInt r = iSwapManager->WriteSwapPages(aMemory, aIndex, aCount, linAddr, aPages, aBackground);
+
+	if (linAddr != 0)
+		aRequest->UnmapPages(EFalse);
 
 	return r;
 	}
@@ -783,6 +965,8 @@ TInt DDataPagedMemoryManager::WritePages(DMemoryObject** aMemory, TUint* aIndex,
 
 void DDataPagedMemoryManager::CleanPages(TUint aPageCount, SPageInfo** aPageInfos, TBool aBackground)
 	{
+	TRACE(("DDataPagedMemoryManager::CleanPages %d", aPageCount));
+	
 	__NK_ASSERT_DEBUG(PageCleaningLock::IsHeld());
 	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	__NK_ASSERT_DEBUG(aPageCount <= (TUint)KMaxPagesToClean);
@@ -792,7 +976,7 @@ void DDataPagedMemoryManager::CleanPages(TUint aPageCount, SPageInfo** aPageInfo
 	TUint index[KMaxPagesToClean];
 	TPhysAddr physAddr[KMaxPagesToClean];
 	TBool anyExecutable = EFalse;
-	
+
 	for (i = 0 ; i < aPageCount ; ++i)
 		{
 		SPageInfo* pi = aPageInfos[i];
@@ -828,7 +1012,8 @@ void DDataPagedMemoryManager::CleanPages(TUint aPageCount, SPageInfo** aPageInfo
 		{
 		SPageInfo* pi = aPageInfos[i];
 		// check if page is clean...
-		if(pi->CheckModified(&memory[0]) || pi->IsWritable())
+		if(pi->CheckModified(&memory[0]) ||
+		   pi->IsWritable())
 			{
 			// someone else modified the page, or it became writable, so mark as not cleaned
 			aPageInfos[i] = NULL;
@@ -875,4 +1060,34 @@ TInt SetSwapThresholds(const SVMSwapThresholds& aThresholds)
 	{
 	return ((DDataPagedMemoryManager*)TheDataPagedMemoryManager)->SetSwapThresholds(aThresholds);
 	}
-  
+
+
+TBool GetPhysicalAccessSupported()
+	{
+	return ((DDataPagedMemoryManager*)TheDataPagedMemoryManager)->PhysicalAccessSupported();
+	}
+
+
+TBool GetUsePhysicalAccess()
+	{
+	return ((DDataPagedMemoryManager*)TheDataPagedMemoryManager)->UsePhysicalAccess();
+	}
+
+
+void SetUsePhysicalAccess(TBool aUsePhysicalAccess)
+	{
+	((DDataPagedMemoryManager*)TheDataPagedMemoryManager)->SetUsePhysicalAccess(aUsePhysicalAccess);
+	}
+
+
+TUint GetPreferredDataWriteSize()
+	{
+	return ((DDataPagedMemoryManager*)TheDataPagedMemoryManager)->PreferredWriteSize();
+	}
+
+
+TInt SetDataWriteSize(TUint aWriteShift)
+	{
+	return	((DDataPagedMemoryManager*)TheDataPagedMemoryManager)->SetWriteSize(aWriteShift);
+	}
+

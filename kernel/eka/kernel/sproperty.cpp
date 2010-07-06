@@ -29,6 +29,14 @@ inline DProcess* CurProcess()
 	return TheCurrentThread->iOwningProcess;
 	}
 
+// Used by a thread to schedule cancelation of Subscribe request in Supervisor thread.
+class TCancelQ: public SDblQueLink
+{
+public:
+    TPropertySubsRequest* iPropSubRequest;//The request to be cancelled, can be NULL
+    NFastSemaphore iFSemaphore;//Semafore to be signalled by Supervisor thread after the request is cancelled.
+};
+
 class TProperty 
 	{
 public:
@@ -112,7 +120,10 @@ private:
 	static void CompleteRequest(TPropertySubsRequest*, TInt aReason);	
 	static void CompleteQue(SDblQue* aQue, TInt aReason);	
 	static void CompleteDfc(TAny* aQue);
-
+	static void CompleteDfcByKErrPermissionDenied(TAny* aQue);
+	static void CompleteDfcByKErrNotFound(TAny* aQue);
+	static void CompleteCancellationQDfc(TAny* aQue);
+	
 	static TUint Hash(TUint aCategory, TUint aKey);
 	static TProperty** Lookup(TUint aCategory, TUint aKey);
 	static TInt LookupOrCreate(TUint aCategory, TUint aKey, TProperty**);
@@ -186,10 +197,17 @@ private:
 
 #endif // !__REMOVE_PLATSEC_DIAGNOSTIC_STRINGS__
 
-	enum { KCompletionDfcPriority = 2 };
+	enum { KCancellationDfcPriority = 1, KCompletionDfcPriority = 2  };
 	static TDfc		CompletionDfc;
-	// subscriptions to be completed by the DFC
-	static SDblQue	CompletionQue;		// protected by the system lock
+	static TDfc		CompletionDfcPermissionDenied;
+	static TDfc		CompletionDfcNotFound;
+	static TDfc		CancellationDfc;
+	
+	// subscriptions to be completed by the DFCs, protected by system lock
+	static SDblQue	CompletionQue; // to be completed by KerrNone
+	static SDblQue	CompletionQuePermissionDenied;
+	static SDblQue	CompletionQueNotFound;
+	static SDblQue	CancellationQue;		
 
 	static DMutex*	FeatureLock;			///< Order KMutexOrdPubSub
 
@@ -266,8 +284,20 @@ private:
 	};
 
 
+// Completion/Cancelation DFCs and their corresponding queues.
+// All subscribe requests are completed in Supervisor thread.
 TDfc		TProperty::CompletionDfc(TProperty::CompleteDfc, &TProperty::CompletionQue, KCompletionDfcPriority);
 SDblQue		TProperty::CompletionQue;
+
+TDfc		TProperty::CompletionDfcPermissionDenied(TProperty::CompleteDfcByKErrPermissionDenied, &TProperty::CompletionQuePermissionDenied, KCompletionDfcPriority);
+SDblQue		TProperty::CompletionQuePermissionDenied;
+
+TDfc		TProperty::CompletionDfcNotFound(TProperty::CompleteDfcByKErrNotFound, &TProperty::CompletionQueNotFound, KCompletionDfcPriority);
+SDblQue		TProperty::CompletionQueNotFound;
+
+TDfc		TProperty::CancellationDfc(TProperty::CompleteCancellationQDfc, &TProperty::CancellationQue, KCancellationDfcPriority);
+SDblQue		TProperty::CancellationQue;
+
 DMutex*		TProperty::FeatureLock;	
 TProperty*	TProperty::Table[KHashTableLimit];
 
@@ -288,6 +318,9 @@ TInt TProperty::Init()
 	if (r != KErrNone)
 		return r;
 	CompletionDfc.SetDfcQ(K::SvMsgQ);
+	CompletionDfcPermissionDenied.SetDfcQ(K::SvMsgQ);
+	CompletionDfcNotFound.SetDfcQ(K::SvMsgQ);
+	CancellationDfc.SetDfcQ(K::SvMsgQ);
 	
 #ifdef __DEMAND_PAGING__	
 	r = Kern::MutexCreate(PagingLockMutex, KPubSubMutexName2, KMutexOrdPubSub2);
@@ -512,8 +545,9 @@ TInt TProperty::Define(const TPropertyInfo* aInfo, DProcess* aProcess)
 	// iteration; we get (move) always the first 'iPendingQue' entry until the 
 	// queue becomes empty.
 	//
-	SDblQue localPendingQue;	// protected by the system lock
-	SDblQue localCompletionQue;	// protected by the system lock
+
+	SDblQue localPendingQue;    // Will hold requests with sufficient capabilities. 
+	TInt accessDeniedCounter = 0;// Will count requests with no sufficient capabilities.
 	NKern::LockSystem();
 	while (!iPendingQue.IsEmpty())
 		{
@@ -522,7 +556,8 @@ TInt TProperty::Define(const TPropertyInfo* aInfo, DProcess* aProcess)
 		subs->iProcess = NULL;
 		if (process && !CheckGetRights(process, __PLATSEC_DIAGNOSTIC_STRING("Checked whilst trying to Subscribe to a Publish and Subscribe Property")))
 			{ // Check fails - will complete the subscription with an error
-			localCompletionQue.Add(subs);
+			CompletionQuePermissionDenied.Add(subs);
+			accessDeniedCounter++;
 			}
 		else
 			{ // Check OK - will leave in the pending queue 
@@ -536,8 +571,10 @@ TInt TProperty::Define(const TPropertyInfo* aInfo, DProcess* aProcess)
 	// Now the property can be accessed by other threads.
 	Use();
 	Unlock();
-	// Now we can complete requests.
-	CompleteQue(&localCompletionQue, KErrPermissionDenied);
+
+	// Schedule DFC to complete requests of those with insufficient capabilities.
+	if (accessDeniedCounter)
+		CompletionDfcPermissionDenied.Enque();
 	return KErrNone;
 	}
 
@@ -604,9 +641,10 @@ TInt TProperty::Delete(DProcess* aProcess)
 	SetNotDefined();
 	// Down from here nobody can access the property value
 
-	// We don't want to complete requests holding the feature lock. 
-	SDblQue localQue;
-	localQue.MoveFrom(&iPendingQue);
+	// Move all pending requests to completion queue (to be completed by KErrNotFound).
+	TBool pendingQueEmpty = iPendingQue.IsEmpty();
+	if(!pendingQueEmpty)
+		CompletionQueNotFound.MoveFrom(&iPendingQue);
 
 	NKern::UnlockSystem();
 
@@ -616,8 +654,10 @@ TInt TProperty::Delete(DProcess* aProcess)
 	Release();
 	// '*this' may do not exist any more
 	Unlock();
-	 // Now we can complete.
-	CompleteQue(&localQue, KErrNotFound);
+
+	 // Schedule Svc Dfc to complete all requests from CompletionQueNotFound.
+	if (!pendingQueEmpty)
+		CompletionDfcNotFound.Enque();
 	return KErrNone;
 	}
 
@@ -661,9 +701,8 @@ TInt TProperty::Subscribe(TPropertySubsRequest* aSubs, DProcess* aProcess)
 		aSubs->iProcess = NULL;	
 		if (aProcess && !CheckGetRights(aProcess,__PLATSEC_DIAGNOSTIC_STRING("Checked whilst trying to Subscribe to a Publish and Subscribe Property")))
 			{
-			NKern::ThreadEnterCS();
-			CompleteRequest(aSubs, KErrPermissionDenied);
-			NKern::ThreadLeaveCS();
+			CompletionQuePermissionDenied.Add(aSubs);
+			CompletionDfcPermissionDenied.Enque(SYSTEM_LOCK);
 			return KErrNone;
 			}
 		}	
@@ -681,36 +720,70 @@ TInt TProperty::Subscribe(TPropertySubsRequest* aSubs, DProcess* aProcess)
 void TProperty::Cancel(TPropertySubsRequest* aSubs)
 	{
 	__ASSERT_SYSTEM_LOCK;
-	if (!aSubs->iNext)
-		{ // not pending - silently return
-		NKern::UnlockSystem();	
+
+	// This is set if the request is about to be completed (in SVC thread). In that case, a 'dummy' CancelationDFC
+	// will be scheduled here. This will just ensure that we don't return from Cancel before ongoing completion has finished.  
+	TBool scheduledForCompletition = (TInt)(aSubs->iProcess) & TPropertySubsRequest::KScheduledForCompletion;
+
+	if (!aSubs->iNext && !scheduledForCompletition)
+		{ // Neither in any queue nor scheduled for completion.
+		  // The request is not active - silently return.
+		NKern::UnlockSystem();
 		return;
 		}
-	aSubs->Deque();
-	aSubs->iNext = NULL;
-	aSubs->iProcess = NULL;
-	NKern::ThreadEnterCS();
-	CompleteRequest(aSubs, KErrCancel);
-	NKern::ThreadLeaveCS();
+
+	if (aSubs->iNext)
+		{
+		// Take it out from the current queue. It is usually pending queue of a property but could
+		// also be one of the completion queues.
+		aSubs->Deque();
+		aSubs->iNext = NULL;
+		}
+	
+	// Set process to NULL (leave KScheduledForCompletion bit as it is)
+	aSubs->iProcess = (DProcess*)((TInt)aSubs->iProcess & ~TPropertySubsRequest::KProcessPtrMask);
+	
+	if (&Kern::CurrentThread() == K::SvThread)
+		{   // Complete the request immediatelly if already running in supervisor thread...
+		if (!scheduledForCompletition)
+			CompleteRequest(aSubs, KErrCancel); //This will also release system lock.
+		else
+			NKern::UnlockSystem();              // Nothing to be done here. Just release system lock.
+		}
+	else
+		{   //... or schedule DFC in supervisor thread to complete the request.
+		TCancelQ linkQ;
+		if (!scheduledForCompletition)
+			linkQ.iPropSubRequest = aSubs;      // CancelationDFC will complete this request with KErrCancel.
+		else
+			linkQ.iPropSubRequest = NULL;       // Schedule 'dummy' CancelationDFC (no request will be completed).
+		linkQ.iFSemaphore.iOwningThread = NKern::CurrentThread();
+		CancellationQue.Add(&linkQ);
+		CancellationDfc.Enque(SYSTEM_LOCK);     // This will also release system lock.
+
+		NKern::FSWait(&linkQ.iFSemaphore);      // Wait for CancellationDfc to finish.
+		}
 	}
 
 // Enter system locked.
 // Return system unlocked.
-// Called in CS or a DFC context
+// Executed in supervisor thread.
 void TProperty::CompleteRequest(TPropertySubsRequest* aSubs, TInt aResult)
 	{ // static
 	__ASSERT_SYSTEM_LOCK;
-	__ASSERT_CRITICAL;
+	__PS_ASSERT(&Kern::CurrentThread() == K::SvThread);
 	TPropertyCompleteFn	fn = aSubs->iCompleteFn;
 	TAny* ptr = aSubs->iPtr;
+	// Mark that this request is about to be completed.
+	aSubs->iProcess = (DProcess*)((TInt)aSubs->iProcess | TPropertySubsRequest::KScheduledForCompletion);
 	NKern::UnlockSystem();
 	(*fn)(ptr, aResult);
 	}
 
-// Called in CS or a DFC context
+// Executed in supervisor thread.
 void TProperty::CompleteQue(SDblQue* aQue, TInt aReason)
 	{ // static
-	__ASSERT_CRITICAL;
+	__PS_ASSERT(&Kern::CurrentThread() == K::SvThread);
 	NKern::LockSystem();
 	while (!aQue->IsEmpty())
 		{ 
@@ -723,10 +796,51 @@ void TProperty::CompleteQue(SDblQue* aQue, TInt aReason)
 	NKern::UnlockSystem();
 	}
 
-// Executed in DFC context
+// Executed in supervisor thread. Completes requests with KErrNone.
 void TProperty::CompleteDfc(TAny* aQue)
 	{ // static
 	CompleteQue((SDblQue*) aQue, KErrNone);
+	}
+
+// Executed in supervisor thread.
+void TProperty::CompleteDfcByKErrPermissionDenied(TAny* aQue)
+	{ // static
+	CompleteQue((SDblQue*) aQue, KErrPermissionDenied);
+	}
+
+// Executed in supervisor thread.
+void TProperty::CompleteDfcByKErrNotFound(TAny* aQue)
+	{ // static
+	CompleteQue((SDblQue*) aQue, KErrNotFound);
+	}
+
+// Executed in supervisor thread.
+void TProperty::CompleteCancellationQDfc(TAny* aAny)
+	{ // static
+	SDblQue* aQue = (SDblQue*)aAny;
+	NKern::LockSystem();
+	while (!aQue->IsEmpty() )
+		{
+        TCancelQ* first = static_cast<TCancelQ*>(aQue->First());
+        first->Deque();
+        first->iNext = NULL;
+
+        if( first->iPropSubRequest)
+        	{
+            CompleteRequest(first->iPropSubRequest, KErrCancel); // This will also release system lock.
+            NKern::LockSystem();
+        	}
+        else
+        	{
+        	// Do not complete the request.
+        	// It was already just about to be completed when Cancel request was issued.
+			// As all complitions (this method included) run is Svc thread, we can here be sure that
+			// the request is now completed.
+			NKern::FlashSystem();	// Preemption point
+        	}
+        NKern::FSSignal( &first->iFSemaphore ); // Issue the signal that the request is now completed.
+        }
+    NKern::UnlockSystem();
 	}
 
 // Enter system locked.
@@ -900,7 +1014,7 @@ TInt TProperty::SetI(TInt aValue, DProcess* aProcess)
 		return KErrArgument;
 		}
 	iValue = aValue;
-	CompleteByDfc();
+	CompleteByDfc(); //This will also release system lock.
 	return KErrNone;
 	}
 

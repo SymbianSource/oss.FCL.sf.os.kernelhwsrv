@@ -52,7 +52,7 @@ Frees resources before destruction of the object.
 */
 CProxyDrive::~CProxyDrive()
 	{
-	
+	delete iBody;
 	}
 
 
@@ -175,6 +175,32 @@ EXPORT_C TInt CProxyDrive::GetInterface(TInt /*aInterfaceId*/,TAny*& /*aInterfac
 	}	
 
 
+TInt CProxyDrive::SetAndOpenLibrary(RLibrary aLibrary)
+	{
+	TInt r = KErrNone;
+	if (iBody)
+		{
+		iBody->iLibrary = aLibrary;
+		r = iBody->iLibrary.Duplicate(RThread(), EOwnerProcess);
+		}
+	return r;
+	}
+
+/**
+Gets a copy of the Proxy Drive library (previously opened by OpenLibrary()) prior to deleting the proxy drive itself.
+After deleting the proxy drive, RLibrary::Close() should be called on the returned RLibrary object.
+*/
+RLibrary CProxyDrive::GetLibrary()
+	{
+	RLibrary lib;
+	if (iBody)
+		{
+		lib = iBody->iLibrary;
+		iBody->iLibrary.SetHandle(NULL);
+		}
+	return lib;
+	}
+
 /**
 Constructor.
 */
@@ -189,8 +215,12 @@ Frees assigned Proxy drive before destruction of the object.
 EXPORT_C CLocDrvMountCB::~CLocDrvMountCB()
 	{
 	__PRINT1(_L("CLocDrvMountCB::~CLocDrvMountCB() 0x%x"),this);
-	if(iProxyDrive && !LocalDrives::IsProxyDrive(Drive().DriveNumber()) && LocalDrives::IsValidDriveMapping(Drive().DriveNumber()))
-		delete(iProxyDrive);
+	if(iProxyDrive && !LocalDrives::IsProxyDrive(Drive().DriveNumber()))
+		{
+		RLibrary lib = iProxyDrive->GetLibrary();
+		delete iProxyDrive;
+		lib.Close();
+		}
 	}
 
 
@@ -282,7 +312,6 @@ EXPORT_C void CLocDrvMountCB::DismountedLocalDrive()
 	{
 	__ASSERT_ALWAYS(iProxyDrive!=NULL,Fault(ELocDrvDismountedLocalDrive));
 	iProxyDrive->Dismounted();
-	iProxyDrive->SetMount(NULL);
 	}
 
 

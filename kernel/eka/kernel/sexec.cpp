@@ -96,14 +96,26 @@ TInt ExecHandler::ChunkTop(DChunk* aChunk)
 	return aChunk->Top();
 	}
 
-void ExecHandler::MutexWait(DMutex* aMutex)
+TInt ExecHandler::MutexWait(DMutex* aMutex, TInt aTimeout)
 //
 // Wait for the mutex.
 //
 	{
-
-//	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::MutexWait"));
-	aMutex->Wait();
+	if (aTimeout)	// 0 means wait forever, -1 means poll
+		{
+		if (aTimeout<-1)
+			{
+			return KErrArgument;
+			}
+		if (aTimeout>0)
+			{
+			// Convert microseconds to NTimer ticks, rounding up
+			TInt ntp = NKern::TickPeriod();
+			aTimeout += ntp-1;
+			aTimeout /= ntp;
+			}
+		}
+	return aMutex->Wait(aTimeout);
 	}
 
 void ExecHandler::MutexSignal(DMutex* aMutex)
@@ -555,20 +567,21 @@ TInt ExecHandler::SemaphoreWait(DSemaphore* aSemaphore, TInt aTimeout)
 // Wait for a signal.
 //
 	{
-
 	__KTRACE_OPT(KEXEC,Kern::Printf("Exec::SemaphoreWait"));
-	if (aTimeout)
+	if (aTimeout)	// 0 means wait forever, -1 means poll
 		{
-		if (aTimeout<0)
+		if (aTimeout<-1)
 			{
 			NKern::UnlockSystem();
 			return KErrArgument;
 			}
-
-		// Convert microseconds to NTimer ticks, rounding up
-		TInt ntp = NKern::TickPeriod();
-		aTimeout += ntp-1;
-		aTimeout /= ntp;
+		if (aTimeout>0)
+			{
+			// Convert microseconds to NTimer ticks, rounding up
+			TInt ntp = NKern::TickPeriod();
+			aTimeout += ntp-1;
+			aTimeout /= ntp;
+			}
 		}
 	return aSemaphore->Wait(aTimeout);
 	}

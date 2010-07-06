@@ -508,6 +508,8 @@ enum TKernelConfigFlags
 	EKernelConfigSMPUnsafeCPU0   = 1<<13,				// Slow compatibility mode: all SMP-unsafe processes run on CPU 0 only
 	EKernelConfigSMPCrazyInterrupts = 1<<14,			// Enables CPU target rotation for HW Interrupts.
 
+	EKernelConfigSMPLockKernelThreadsCore0 = 1<< 15,    // locks all kernel side threads to CPU 0
+
 	EKernelConfigDisableAPs = 1u<<30,
 
 	EKernelConfigTest = 1u<<31,							// Only used by test code for __PLATSEC_UNLOCKED__

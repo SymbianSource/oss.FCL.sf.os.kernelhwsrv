@@ -2793,6 +2793,12 @@ public:
 		EDriveDataPaging = -2,	/**< Special drive number to indicate data paging. */
 		};
 
+	/** Additional flags. */
+	enum TFlags
+		{
+		ESupportsPhysicalAccess = 1<<0,  /**< Supports ReadPhysical and WritePhysical methods. */
+		};
+
 	/**
 	Called by the paging system to read data from the media represented by this
 	device.
@@ -2844,6 +2850,55 @@ public:
 	IMPORT_C NFastMutex* NotificationLock();
 	
 	/**
+	Called by the paging system to read data from the media represented by this device using
+	physical addresses, if the device supports it.
+	
+	This is intended to allow reading pages from swap without needing to map them first, and should
+	be implemented by media drivers that support DMA access.
+
+	If this method is implemented, the ESupportsPhysicalAccess flag in iFlags must be set as well.
+
+	The default implementation of this method just returns KErrNotSupported.
+
+	@param aPageArray   Pointer to array of physical address to write to.
+	@param aPageCount   Number of physical pages to read.
+	@param aOffset      The offset from the media start, in read units, from where data should be read.
+	
+	@param aDrvNumber The drive number for code paging or a member of TSpecialDrives for rom or data
+	paging.
+
+	@return KErrNone or standard error code.
+	*/
+	inline virtual TInt ReadPhysical(TThreadMessage* aReq, TPhysAddr* aPageArray, TUint aPageCount, TUint aOffset, TInt aDrvNumber);
+
+	/**
+	Called by the paging system to write data to the media represented by this device using physical
+	addresses, if the device supports it.
+
+	This is only used in the implementation of data paging to write to the swap partition.
+
+	This method takes a pointer to an array of physical addresses and the number of pages to write,
+	in contrast to #Write which takes a logical address and a number of read units.
+
+	This is intended to allow writing pages to swap without needing to map them first, and should be
+	implelemented by media drivers that support DMA access.
+
+	If this method is implemented, the ESupportsPhysicalAccess flag in iFlags must be set as well.
+
+	The default implementation of this method just returns KErrNotSupported.
+
+	@param aPageArray   Pointer to array of physical address to read from.
+	@param aPageCount   Number of physical pages to write.
+	@param aOffset      The offset from the media start, in read units, to where data should be
+		   			    written.
+	@param aBackground  If set, this indicates that the request should not count as making the 
+		   				device busy.
+
+	@return KErrNone or standard error code.
+	*/
+	inline virtual TInt WritePhysical(TThreadMessage* aReq, TPhysAddr* aPageArray, TUint aPageCount, TUint aOffset, TBool aBackground);
+	
+	/**
 	Called by the paging device to notify the kernel that the device has just become idle and is not
 	currently processing any requests.
 
@@ -2867,7 +2922,10 @@ public:
 	
 public:
 	/** The type of device this represents. */
-	TUint32 iType;
+	TUint16 iType;
+
+	/** Flags bitfield made up of members of TFlags. */
+	TUint16 iFlags;
 
 	/** The local drives supported for code paging.
 	    This is a bitmask containing one bit set for each local drive supported, where the bit set
@@ -2902,20 +2960,48 @@ public:
 	*/
 	DPagingRequestPool* iRequestPool;
 
+	/** Log2 of the media's preferred write size in bytes.
+
+		E.g. if the preferred write size is 16KB, this should be set 14.
+		
+		Some media may exhibit poor performance unless writes happen in multiples of the superpage
+		size.  In this case the media driver would set this field to indicate the write size, and
+		the kernel will attempt to:
+		
+		 - write in multiples of the preferred size
+		 - align writes to multiples of the preferred size
+
+		Note that this value cannot be less the size of a page (eg 12) and there may be a maximum
+		limit to what the kernel will write as well.
+	*/
+	TUint32 iPreferredWriteShift;
+
 	/** Reserved for future use.
 	*/
-	TInt iSpare[4];
+	TInt iSpare[3];
 	};
 
-inline TInt DPagingDevice::Write(TThreadMessage*,TLinAddr,TUint,TUint,TBool)
+inline TInt DPagingDevice::Write(TThreadMessage*, TLinAddr, TUint, TUint, TBool)
 	{
-	// Default implementation, may be overriden by dervied classes
+	// Default implementation, may be overriden by derived classes
+	return KErrNotSupported;
+	}
+
+inline TInt DPagingDevice::ReadPhysical(TThreadMessage*, TPhysAddr*, TUint, TUint, TInt)
+	{
+	// Default implementation, may be overriden by derived classes
+	return KErrNotSupported;
+	}
+	
+inline TInt DPagingDevice::WritePhysical(TThreadMessage*, TPhysAddr*, TUint, TUint, TBool)
+	{
+	// Default implementation, may be overriden by derived classes
 	return KErrNotSupported;
 	}
 
 inline TInt DPagingDevice::DeleteNotify(TThreadMessage*,TUint,TUint)
 	{
-	// Default implementation, may be overriden by dervied classes
+	// Default implementation, may be overriden by derived classes
 	return KErrNotSupported;
 	}
 

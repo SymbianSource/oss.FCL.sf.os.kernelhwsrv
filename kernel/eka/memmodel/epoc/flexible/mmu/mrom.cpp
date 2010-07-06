@@ -576,7 +576,7 @@ TInt DRomMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TUint aC
 				__NK_ASSERT_ALWAYS(romPageInfo->iPagingAttributes & SRomPageInfo::EPageable);
 
 				// Read data for page...
-				const TLinAddr buffer = aRequest->iBuffer;
+				const TLinAddr buffer = aRequest->Buffer();
 				const TUint readStart = dataOffset >> readUnitShift;
 				const TUint readSize = ((dataOffset + dataSize - 1) >> readUnitShift) - readStart + 1;
 				__NK_ASSERT_DEBUG((readSize << readUnitShift) <= (DPageReadRequest::EMaxPages << KPageShift));
@@ -958,7 +958,11 @@ TInt DShadowPage::Construct(DMemoryObject* aMemory, TUint aIndex, DMemoryMapping
 	RamAllocLock::Lock();
 
 	Mmu& m = TheMmu;
-	r = m.AllocRam(&iNewPage, 1, aMemory->RamAllocFlags(), EPageFixed);
+	// Allocate a page to shadow to allowing the allocation to steal pages from the paging cache.
+	r = m.AllocRam(	&iNewPage, 
+					1, 
+					(Mmu::TRamAllocFlags)(aMemory->RamAllocFlags() & ~Mmu::EAllocNoPagerReclaim), 
+					EPageFixed);
 	if(r==KErrNone)
 		{
 		TLinAddr dst = m.MapTemp(iNewPage,aIndex,0);

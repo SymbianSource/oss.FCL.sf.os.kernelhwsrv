@@ -85,12 +85,12 @@ __NAKED__ TBool TIdleSupport::SetLocalAndCheckSetGlobalIdle(TUint32 /*aCpuMask*/
 	LDREX(3,1);                                                       // r3 = iIdlingCpus
     asm("orr    r3,r0,r3");                                           // orr in mask for this CPU
     asm("cmp    r3,r2");                                              // compare to iAllEngagedCpusMask
-    asm("orreq  r3,r3,#%a0" : : "i" ((TUint32)TIdleSupport::KGlobalIdleFlag)); // if equal orr in KGlobalIdleFlag
+    asm("orreq  r3,r3,#%a0" : : "i" ((TInt)TIdleSupport::KGlobalIdleFlag)); // if equal orr in KGlobalIdleFlag
     STREX(12,3,1);
     asm("cmp    r12, #0 ");                                              // 
 	asm("bne    1b ");                                                   // write didn't succeed try again
     __DATA_MEMORY_BARRIER__(r12);
-    asm("and    r0,r3,#%a0" : : "i" ((TUint32)TIdleSupport::KGlobalIdleFlag));
+    asm("and    r0,r3,#%a0" : : "i" ((TInt)TIdleSupport::KGlobalIdleFlag));
 	__JUMP(,lr);
     asm("__iAllEngagedCpusMask:");
     asm(".word %a0" : : "i" ((TInt)&TIdleSupport::iAllEngagedCpusMask));//
@@ -149,7 +149,7 @@ __NAKED__ void TSyncPoint::DoSW(TUint32 /*aCpuMask*/)
 #endif		
     asm("2: ");
     asm("cmp r3,r5");                       // all (old stage does not equal new stage)
-    asm("bne 3f");                            // yup return
+    asm("ldmnefd sp!, {r4-r5,pc}");         // yup return
 #ifdef SYNCPOINT_WFE		
 	__DATA_MEMORY_BARRIER__(r12);        
 	ARM_WFE;
@@ -158,8 +158,6 @@ __NAKED__ void TSyncPoint::DoSW(TUint32 /*aCpuMask*/)
     __DATA_MEMORY_BARRIER__(r12);           // ensure read is observed
     asm("mov r3,r2,lsr #16");               // re-read new stage
     asm("b 2b");                            // loop back
-    asm("3: ");
-    asm("ldmfd sp!, {r4-r5,pc}");         // return
     }
 
 /** 
@@ -210,7 +208,7 @@ __NAKED__ void TBreakableSyncPoint::DoSW(TUint32 /*aCpuMask*/)
 #endif		
     asm("2: ");
     asm("ands r3,r2,#0x80000000");          // MSB set?	
-    asm("bne 4f");                          // yup return
+    asm("ldmnefd sp!, {r4,pc}");            // yup return
 #ifdef SYNCPOINT_WFE		
 	__DATA_MEMORY_BARRIER__(r12);
 	ARM_WFE;
@@ -224,8 +222,7 @@ __NAKED__ void TBreakableSyncPoint::DoSW(TUint32 /*aCpuMask*/)
     __DATA_MEMORY_BARRIER__(r12);           // ensure that's written
 	ARM_SEV;
 #endif	
-    asm("4:");
-    asm("ldmfd sp!, {r4,pc}");            // return
+    asm("ldmfd sp!, {r4,pc}");            // yup return
     }
 	
 	
@@ -295,7 +292,7 @@ TInt TIdleSupport::DoClearIdleIPI()
     }
 #endif
 
-__NAKED__  TUint32 TIdleSupport::IntPending()  
+__NAKED__  TInt TIdleSupport::IntPending()  
     {
 	asm("ldr    r1,__KCPUIFAddr");//r1 = address of iBaseIntIfAddress
 	asm("ldr	r1, [r1]");//r1 = address of Hw GIC CPU interrupt interface base address

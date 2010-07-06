@@ -5523,7 +5523,7 @@ EXPORT_C TInt Epoc::MovePhysicalPage(TPhysAddr aOld, TPhysAddr& aNew, TRamDefrag
 		}
 
 	MmuBase::Wait();
-	TInt r=M::MovePage(aOld,aNew,KRamZoneInvalidId,EFalse);
+	TInt r=M::MovePage(aOld,aNew,KRamZoneInvalidId,0);
 	if (r!=KErrNone)
 		aNew = KPhysAddrInvalid;
 	MmuBase::Signal();

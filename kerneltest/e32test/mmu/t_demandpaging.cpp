@@ -121,15 +121,18 @@ TUint8 ReadByte(volatile TUint8* aPtr)
 
 #define READ(a) ReadByte((volatile TUint8*)(a))
 
-void ThrashPaging(TUint aMaxBytes=KMaxTUint)
+void ThrashPaging(TUint aBytes)
 	{
 	TUint size = LargeBufferSize;
-	if(size>aMaxBytes)
-		size = aMaxBytes;
+	if(size > aBytes)
+		size = aBytes;
 
-	// read all ROM pages about 10 times each in a random order...
+	TUint readCount = 5 * size/PageSize;
+	
+	test.Printf(_L("ThrashPaging %u %u\n"), size, readCount);
+	
 	TUint32 random=1;
-	for(TInt i=size/(PageSize/10); i>0; --i)
+	for(TUint i = 0 ; i < readCount ; ++i)
 		{
 		READ(LargeBuffer+((TInt64(random)*TInt64(size))>>32));
 		random = random*69069+1;
@@ -207,8 +210,51 @@ void RomPagingBenchmark()
 	}
 
 
+TInt SetCacheSize(TUint aNewMin, TUint aNewMax)
+	{
+	// set cache size and test 'get' function returns expected values
+	TInt r = DPTest::SetCacheSize(aNewMin, aNewMax);
+	if (r == KErrNone)
+		{
+		TUint min, max, current;
+		test_KErrNone(DPTest::CacheSize(min,max,current));
+		test_Equal(aNewMin, min);
+		test_Equal(aNewMax, max);
+		test(current >= min && current <= max);
+		}
+	return r;
+	}
+
+void DoResizeCache(TUint min, TUint max, TInt result, TUint& sizeMin, TUint& sizeMax, TUint originalMin, TUint originalMax)
+	{
+	test.Printf(_L("DPTest::SetCacheSize min=%u, max=%u, expected result=%d\n"),min/PageSize,max/PageSize,result);
+	TInt r=SetCacheSize(min,max);
+	test_Equal(result, r);
+	if(r==KErrNone)
+		{
+		// we've successfully changed the cache size...
+		if(max)
+			{
+			sizeMin = min;
+			sizeMax = max;
+			}
+		else
+			{
+			sizeMin = originalMin;
+			sizeMax = originalMax;
+			}
+		}
+	else if(r==KErrNoMemory)
+		{
+		// cache size after OOM is unpredictable, so reset our values
+		test_KErrNone(SetCacheSize(sizeMin,sizeMax));
+		}
+	}
+
+
 void TestResizeVMCache()
 	{
+	test.Start(_L("Test resizing VM cache"));
 	TInt r = DPTest::SetCacheSize(0,0); // restore cache size to defaults
 	test(r==KErrNone);
 	TUint sizeMin = 0;
@@ -217,10 +263,42 @@ void TestResizeVMCache()
 	DPTest::CacheSize(sizeMin,sizeMax,currentSize);
 	TUint originalMin = sizeMin;
 	TUint originalMax = sizeMax;
-	test.Printf(_L("original min=%u, original max=%u, current=%u\n"),originalMin/PageSize,originalMax/PageSize,currentSize/PageSize);
+	test.Printf(_L("original min=%u, original max=%u, current=%u\n"),
+				originalMin/PageSize,originalMax/PageSize,currentSize/PageSize);
 
 	int K = currentSize/PageSize+4;
 
+	// Exercise the cache reszing code by testing all valid combinations of the relationships
+	// between the current min size, current max size, new min size and new max size.
+	//
+	// This can be done using four cache size values.  Every assignment of these four values to the
+	// four variables is generated, and invalid combinations rejected.  This repeats some
+	// relationships but is simpler than calculating the minimum set of combinations exactly.
+
+	const TUint combinations = 256;  // 4 ^ 4
+	const TUint sizes[] = { K, K + 4, K + 8, K + 12, K + 16 };
+	for (TUint perm = 0 ; perm < combinations ; ++perm)
+		{
+		TUint vars[4] = { sizes[ perm & 3 ],
+						  sizes[ (perm >> 2) & 3 ],
+						  sizes[ (perm >> 4) & 3 ],
+						  sizes[ (perm >> 6) & 3 ]};
+		if ((vars[0] == vars[2] && vars[1] == vars[3]) || // ensure current != new
+			vars[0] > vars[1] ||                          // ensure current min <= current max
+			vars[2] > vars[3])                            // ensure new min <= new max
+			continue;
+		
+		test.Printf(_L("Test changing cache sizes from %u, %u to %u %u\n"),
+					vars[0], vars[1], vars[2], vars[3]);
+		
+		test_KErrNone(SetCacheSize(PageSize * vars[0], PageSize * vars[1]));
+		ThrashPaging(PageSize * vars[1]);
+		test_KErrNone(SetCacheSize(PageSize * vars[2], PageSize * vars[3]));
+		}
+	test_KErrNone(SetCacheSize(originalMin, originalMax));
+
+	// Now test some more specific resizings
+	
 	struct
 		{
 		TUint iMinPages;
@@ -240,22 +318,20 @@ void TestResizeVMCache()
 			{	K,		K,		KErrNone},
 			{	K+1,	K,		KErrArgument},
 			{	K,		K-1,	KErrArgument},
+			{	K,		K,		KErrNone},
 			{	KMaxTInt,	KMaxTInt,	KErrNoMemory},
 			{	K,		K,		KErrNone},
 
-			{	0,		0,		KErrNone}, // restore defaults
 			{	0,		0,		KMaxTInt} // list end marker
 		};
 
 	for(TInt j=0; j<2; ++j)
 		{
 		if(!j)
-			{
-			test.Start(_L("Changing size of flushed VM cache"));
-			test.Printf(_L("Original cache size min == %u, max == %u\n"),originalMin/PageSize,originalMax/PageSize);
-			}
+			test.Next(_L("Changing size of empty VM cache"));
 		else
 			test.Next(_L("Changing size of full VM cache"));
+		
 		TInt i=0;
 		while(testArgs[i].iResult!=KMaxTInt)
 			{
@@ -263,53 +339,20 @@ void TestResizeVMCache()
 			TUint max=testArgs[i].iMaxPages*PageSize;
 			TInt result=testArgs[i].iResult;
 
-			ThrashPaging(max*2);
 			if(!j)
 				DPTest::FlushCache();
-
-			test.Printf(_L("DPTest::SetCacheSize min=%u, max=%u, expected result=%d\n"),min/PageSize,max/PageSize,result);
-			TInt r=DPTest::SetCacheSize(min,max);
-			if(r!=result)
-				{
-				test.Printf(_L("result=%d\n"),r);
-				test(0);
-				}
-			if(r==KErrNone)
-				{
-				// we've successfully changed the cache size...
-				if(max)
-					{
-					sizeMin = min;
-					sizeMax = max;
-					}
-				else
-					{
-					sizeMin = originalMin;
-					sizeMax = originalMax;
-					}
-				}
-			if(r==KErrNoMemory)
-				{
-				// cache size after OOM is unpredictable, so reset our values
-				DPTest::SetCacheSize(sizeMin,sizeMax);
-				}
 			else
-				{
-				// test 'get' function returns expected cache size
-				r=DPTest::CacheSize(min,max,currentSize);
-				test.Printf(_L("DPTest::CacheSize result=%d min=%u max=%u current=%u\n"),r,min/PageSize,max/PageSize,currentSize/PageSize);
-				if(r!=KErrNone || min!=sizeMin || max!=sizeMax)
-					test(0);
-				test(currentSize >= min && currentSize <= max);
-				}
+				ThrashPaging(max);
+
+			DoResizeCache(min, max, result, sizeMin, sizeMax, originalMin, originalMax);
+			
 			++i;
 			}
 		}
-
+	
+	test_KErrNone(SetCacheSize(originalMin, originalMax));
 	test.End();
 	}
-
-
 
 void TestResizeVMCache2()
 	{
@@ -1240,6 +1283,8 @@ TInt E32Main()
 	test.Title();
 	
 	test_KErrNone(UserSvr::HalFunction(EHalGroupKernel,EKernelHalPageSizeInBytes,&PageSize,0));
+
+	test.Start(_L("Initialisation"));
 	
 	if (DPTest::Attributes() & DPTest::ERomPaging)
 		test.Printf(_L("Rom paging supported\n"));
@@ -1258,9 +1303,6 @@ TInt E32Main()
 		test(DataPagedChunk.IsPaged()); // this is only ever called if data paging is supported
 		DataPagedBuffer = (TUint8*)DataPagedChunk.Base();
 		}
-		
-	test.Start(_L("Test HAL interface"));
-	TestHAL();
 
 	if (DPTest::Attributes() & DPTest::ERomPaging)
 		{
@@ -1302,6 +1344,9 @@ TInt E32Main()
 		test.End();
 		return 0;
 		}
+		
+	test.Next(_L("Test HAL interface"));
+	TestHAL();
 	
 	test(LargeBufferSize >= KMinBufferSize);
 	SmallBuffer = LargeBuffer;

@@ -242,8 +242,8 @@ TInt NThreadBase::Create(SNThreadCreateInfo& aInfo, TBool aInitial)
 		iCurrent = iReady;
 		iCpuAffinity = iLastCpu;
 		iEventState = (iLastCpu<<EEventCpuShift) | (iLastCpu<<EThreadCpuShift);
-		i_NThread_Initial = TRUE; // must set as initial before 
-		ss.SSAddEntry(this);      // adding to subsched list
+		i_NThread_Initial = TRUE;	// must set initial thread flag before adding to subscheduler
+		ss.SSAddEntry(this);		// in order to get correct ready thread count (i.e. not including the idle thread)
 		iACount = 1;
 		ss.iInitialThread = (NThread*)this;
 		NKern::Unlock();		// now that current thread is defined
@@ -538,6 +538,7 @@ TDfcQue* TScheduler::RebalanceDfcQ()
 
 NThread* TScheduler::LBThread()
 	{
-	return (NThread*)(TheScheduler.iRebalanceDfcQ->iThread);
+	TDfcQue* rbQ = TheScheduler.iRebalanceDfcQ;
+	return rbQ ? (NThread*)(rbQ->iThread) : 0;
 	}
 

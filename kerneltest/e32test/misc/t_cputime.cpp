@@ -262,6 +262,7 @@ void TestThreadCpuTime()
 	test(100*us >= 98*KShortWait); // left limit
 	test(us - KShortWait <= user_after_tolerance); // right limit
 
+	FailIfError(thread.GetCpuTime(time));
 	User::After(KLongWait);
 	FailIfError(thread.GetCpuTime(time2));
 	us = time2.Int64() - time.Int64();

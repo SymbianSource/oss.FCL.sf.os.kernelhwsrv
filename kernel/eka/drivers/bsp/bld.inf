@@ -51,13 +51,9 @@ PRJ_MMPFILES
 ../resmanus/resmanus
 ../resmanus/resmanusextended
 
+#if !defined(WINS)
 ../power/smppower/idlehelper_lib.mmp
 ../power/smppower/sample_idlehandler/smpidlehandler_lib.mmp
-
-#endif
-
-#if !defined(X86)
-#if !defined(WINS)
 ../iic/iic
 #endif
 #endif

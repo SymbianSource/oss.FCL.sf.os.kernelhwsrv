@@ -60,7 +60,8 @@ TScheduler::TScheduler()
 		iCCRequestLevel(1),		// only boot CPU for now
 		iCCRequestDfc(&CCRequestDfcFn, this, 2),
 		iCCPowerDownDfc(&CCIndirectPowerDown, this, 0),
-		iCCIpiReactIDFC(&CCIpiReactivateFn, this)
+		iCCIpiReactIDFC(&CCIpiReactivateFn, this),
+		iFreqChgDfc(&DoFrequencyChanged, this, 6)
 	{
 	TInt i;
 	for (i=0; i<KMaxCpus; ++i)
@@ -1359,5 +1360,4 @@ void NKern::Idle()
 		}
 	DoIdle();
 	}
-
 

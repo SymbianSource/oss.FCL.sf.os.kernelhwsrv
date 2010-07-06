@@ -42,21 +42,12 @@ struct TSubSchedulerX
 	volatile TInt		iIrqNestCount;			// IRQ nest count for this CPU (starts at -1)
 	TLinAddr			iIrqStackTop;			// Top of IRQ stack for this CPU
 	TX86Tss*			iTss;					// Address of TSS for this CPU
-	volatile TUint32	iCpuFreqM;				// CPU frequency / Max CPU frequency (mantissa, bit 31=1) f/fmax=M/2^(S+32) <=1
-	volatile TInt		iCpuFreqS;				// CPU frequency / Max CPU frequency (shift)
-	volatile TUint32	iCpuPeriodM;			// Max CPU frequency / CPU frequency (mantissa, bit 31=1) fmax/f=M/2^S >=1
-	volatile TInt		iCpuPeriodS;			// Max CPU frequency / CPU frequency (shift)
-	volatile TUint32	iNTimerFreqM;			// Nominal Timer frequency / Max Timer frequency (mantissa, bit 31=1) f/fmax=M/2^(S+32) <=1
-	volatile TInt		iNTimerFreqS;			// Nominal Timer frequency / Max Timer frequency (shift)
-	volatile TUint32	iNTimerPeriodM;			// Nominal Max Timer frequency / Timer frequency (mantissa, bit 31=1) fmax/f=M/2^S >=1
-	volatile TInt		iNTimerPeriodS;			// Nominal Max Timer frequency / Timer frequency (shift)
-	volatile TUint32	iTimerFreqM;			// Timer frequency / Max Timer frequency (mantissa, bit 31=1) f/fmax=M/2^(S+32) <=1
-	volatile TInt		iTimerFreqS;			// Timer frequency / Max Timer frequency (shift)
-	volatile TUint32	iTimerPeriodM;			// Max Timer frequency / Timer frequency (mantissa, bit 31=1) fmax/f=M/2^S >=1
-	volatile TInt		iTimerPeriodS;			// Max Timer frequency / Timer frequency (shift)
+	SRatioInv			iCpuFreqRI;				// Ratio of CPU frequency to maximum possible CPU frequency
+	SRatioInv			iTimerFreqRI;			// Ratio of CPU local timer frequency to maximum possible
+
 	volatile TUint64HL	iTimestampOffset;		// 64 bit value to add to CPU TSC to give NKern::Timestamp()
 
-	TUint32				iSSXP2[32];
+	TUint32				iSSXP2[36];
 	TUint64				iSSXP3;					// one 64 bit value to guarantee alignment
 	};
 
@@ -64,7 +55,7 @@ struct TSubSchedulerX
 struct TSchedulerX
 	{
 	TUint64				iTimerMax;				// Maximum per-CPU timer frequency (after prescaling)
-	TUint32				iSXP[14];
+	TUint32				iSXP[30];
 	};
 
 

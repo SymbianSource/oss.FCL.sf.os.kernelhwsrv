@@ -57,6 +57,7 @@ public:
 	TBool SegmentEmpty(TInt64 aPos);
 	TBool SegmentDirty(TInt64 aPos);
 	TBool TooManyLockedSegments();
+	TBool LockedSegmentsHalfUsed();
 
 	inline TInt CacheOffset(TInt64 aLinAddr) const \
 		{return(I64LOW(aLinAddr)& ((1 << iManager.SegmentSizeLog2())-1));}

@@ -163,26 +163,32 @@ extern "C" void __DebugMsgNKFMFlash(NFastMutex* a)
 #if !defined(__UTT_MACHINE_CODED__)
 void TSubScheduler::UpdateThreadTimes(NThreadBase* aOld, NThreadBase* aNew)
 	{
+	/* If necessary update local timer frequency (DVFS) */
+	SRatioInv* pNCF = iSSX.iNewCpuFreqRI;
+	if (pNCF)
+		{
+		iSSX.iCpuFreqRI = *pNCF;
+		__e32_atomic_store_rel_ptr(&iSSX.iNewCpuFreqRI, 0);
+		}
+	SRatioInv* pNTF = iSSX.iNewTimerFreqRI;
+	if (pNTF)
+		{
+		iSSX.iTimerFreqRI = *pNTF;
+		__e32_atomic_store_rel_ptr(&iSSX.iNewTimerFreqRI, 0);
+		}
 	if (!aOld)
 		aOld = iInitialThread;
 	if (!aNew)
 		aNew = iInitialThread;
-	if (aNew!=aOld || aNew->iTime<=0)
+	if (aNew!=aOld || aNew->iTime<=0 || pNTF)
 		{
 		TUint32 tmrval = 0x7fffffffu;
 		if (aNew->iTime > 0)
 			{
-			TUint64 x = TUint64(aNew->iTime) * TUint64(iSSX.iTimerFreqM);
-			tmrval = I64HIGH(x);
-			if (iSSX.iTimerFreqS)
-				{
-				tmrval += ((1u<<iSSX.iTimerFreqS)-1);
-				tmrval >>= iSSX.iTimerFreqS;
-				}
-			else if (I64LOW(x) & 0x80000000u)
-				++tmrval;
+			tmrval = aNew->iTime;	// this will have been computed based on the old timer frequency
+			iSSX.iTimerFreqRI.iR.Mult(tmrval);
 			}
-		iSSX.iLastTimerSet = tmrval;
+//		iSSX.iLastTimerSet = tmrval;
 		iSSX.iLocalTimerAddr->iTimerCount = tmrval;
 		}
 	if (aNew!=aOld)

@@ -745,7 +745,7 @@ public:
 	void ChangePendingThreadPriority(DThread* aThread, TInt aNewPriority);
 	void WakeUpNextThread();
 public:
-	TInt Wait();
+	TInt Wait(TInt aTimeout=0);	// 0 means wait forever, -1 means poll, n>0 means n nanokernel ticks
 	void Signal();
 	void Reset();
 public:
@@ -2740,6 +2740,22 @@ struct SZone;
 class M
 	{
 public:
+	/**
+	Flags to control the moving or discarding of a page via the methods M::DiscardPage(),
+	M::MovePage()and M::MoveAndAllocPage().
+	*/
+	enum TMoveDiscardFlags
+		{
+		/** Set this flag so dirty discardable page are moved rather than 
+			written to swap.
+		*/
+		EMoveDisMoveDirty = 0x1,
+		/** Set this so the attempt to allocate the location to move the page to 
+			will fail if the blocked RAM zone is reached.
+		*/
+		EMoveDisBlockRest = 0x2,
+		};
+
 	static void Init1();
 	static void Init2();
 #ifdef __SMP__
@@ -2786,9 +2802,10 @@ public:
 	static void RamAllocIsLocked();
 	static TUint NumberOfFreeDpPages();
 	static TUint NumberOfDirtyDpPages();
-	static TInt MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TBool aBlockRest);
+	static TInt MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TUint aMoveDisFlags);
 	static TInt MoveAndAllocPage(TPhysAddr aAddr, TZonePageType aPageType);
-	static TInt DiscardPage(TPhysAddr aAddr, TUint aBlockZoneId, TBool aBlockRest);
+	static TInt DiscardPage(TPhysAddr aAddr, TUint aBlockZoneId, TUint aMoveDisFlags);
+	static TBool GetFreePages(TUint aNumPages);
 	static void RamZoneClaimed(SZone* aZone);
 	static TInt RamDefragFault(TAny* aExceptionInfo);
 	};
