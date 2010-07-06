@@ -72,6 +72,32 @@ __NAKED__ TInt _E32Dll(TInt /*aReason*/)
 #endif
 
 #endif
+#elif defined(__GCCE__)
+#ifdef __SUPPORT_CPP_EXCEPTIONS__
+
+
+  /* It is possible no functions included in the image require
+   * a handler table. Therefore make only a weak reference to
+   * the handler table base symbol, which may be absent.
+   */
+  asm(".weak .ARM.extab$$Base");
+  asm(".global Symbian$$CPP$$Exception$$Descriptor");
+
+  /* Symbian$$CPP$$Exception$$Descriptor is referenced from the Image header.
+   * A pointer to this object can be cached by the unwinder in the UCB
+   * on the assumption that the EHT for the previous frame is likely to be right
+   * for the current frame
+   */
+
+  asm("Symbian$$CPP$$Exception$$Descriptor:");
+#ifdef __LEAVE_EQUALS_THROW__
+  asm(".word .ARM.exidx$$Base");   /* index table base */
+  asm(".word .ARM.exidx$$Limit");  /* index table limit */
+#endif
+  asm(".word Image$$ER_RO$$Base + 1"); /* RO segment base + mark as ehabi v2 */
+  asm(".word Image$$ER_RO$$Limit");    /* RO segment limit */
+  asm(".word 0");                      /* reserved for future use */
+#endif
 #endif
 	}
 }

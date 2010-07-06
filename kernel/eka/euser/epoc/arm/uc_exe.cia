@@ -61,15 +61,11 @@ __NAKED__ TInt _E32Startup()
 
 	asm("mov r11, sp ");		// save stack pointer
 
-#if 0 /* IMK: Temorarily deleting these __EH_FRAME calls to discover if the suspect
-	GCCE definitions of them are behind a kernel panic. */
-
 	// The frame starts 84 bytes (up) from r11 i.e. CFA is r11 + 84
 	__EH_FRAME_ADDRESS(sp, 84) // Reg needs to be sp (=r11) here for gcce
 	// we can only restore callee-save values, but that's what we want if we 'leave'
 	// saved link is -8 bytes from CFA (= r11 + 0x24 + 0x20 + 0x8)
 	__EH_FRAME_SAVE1(lr, -8)
-#endif
 
 	// the other callee saves start at -48 from CFA (= r11 + 0x24)
 #if 0
@@ -80,9 +76,7 @@ __NAKED__ TInt _E32Startup()
 #if defined(__ARMCC__)
 	FRAME SAVE {r4-r11}, -48
 #elif defined(__GCCE__)
-#if 0 /* IMK: see above */
 	__EH_FRAME_SAVE1(r4-r11,-48)
-#endif
 #else
 #error What compiler?	
 #endif
@@ -126,6 +120,32 @@ __NAKED__ TInt _E32Startup()
 |Symbian$$code_seg_limit| 	dcd |Image$$ER_RO$$Limit| ;/* RO segment limit */
 #endif
 
+#endif
+#elif defined(__GCCE__)
+#ifdef __SUPPORT_CPP_EXCEPTIONS__
+
+
+  /* It is possible no functions included in the image require
+   * a handler table. Therefore make only a weak reference to
+   * the handler table base symbol, which may be absent.
+   */
+  asm(".weak .ARM.extab$$Base");
+  asm(".global Symbian$$CPP$$Exception$$Descriptor");
+
+  /* Symbian$$CPP$$Exception$$Descriptor is referenced from the Image header.
+   * A pointer to this object can be cached by the unwinder in the UCB
+   * on the assumption that the EHT for the previous frame is likely to be right
+   * for the current frame
+   */
+
+  asm("Symbian$$CPP$$Exception$$Descriptor:");
+#ifdef __LEAVE_EQUALS_THROW__
+  asm(".word .ARM.exidx$$Base");   /* index table base */
+  asm(".word .ARM.exidx$$Limit");  /* index table limit */
+#endif
+  asm(".word Image$$ER_RO$$Base + 1"); /* RO segment base + mark as ehabi v2 */
+  asm(".word Image$$ER_RO$$Limit");    /* RO segment limit */
+  asm(".word 0");                      /* reserved for future use */
 #endif
 #endif
 
