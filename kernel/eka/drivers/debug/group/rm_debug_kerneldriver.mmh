@@ -53,7 +53,7 @@ EPOCALLOWDLLDATA
 capability			all
 
 #ifdef GCCE
-staticlibrary usrt3_1.lib
+staticlibrary usrt4_0.lib
 library drtaeabi.dso
 #endif
 
