@@ -218,8 +218,8 @@ Set or reset "VolumeClean" (ClnShutBitmask) flag.
 void CFatMountCB::SetVolumeCleanL(TBool aClean) 
     {
 
-	//-- The volume can't be set clean if there are objects opened on it. This precondition must be checked before calling this function
-    if(aClean && LockStatus()!=0)
+	//-- The volume can't be set clean if there are disk access objects opened on it. This precondition must be checked before calling this function
+    if(aClean && Locked())
         {
         __PRINT1(_L("#- CFatMountCB::SetVolumeCleanL drive:%d isn't free!"),DriveNumber());
         ASSERT(0);

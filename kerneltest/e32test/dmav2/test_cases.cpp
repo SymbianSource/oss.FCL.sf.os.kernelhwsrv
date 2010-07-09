@@ -119,7 +119,42 @@ namespace PauseResumeApiTest
 	CPauseResumeTest testPauseResume = CPauseResumeTest(_L("Pause and Resume Test"), 1, transferArgs, expectedResults); 
 	TTestCase testCasePauseResume(&testPauseResume, EFalse, capAboveV1,pauseRequired_skip);	
 	}
+//--------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2572
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test verifies the correct behavior of Pause and Resume API in the new DMA 
+//!					framework 
+//!
+//! TestActions     
+//!						1.	Open a DMA channel for a transfer.
+//!						2.  Pause and Resume DMA channel.
+//!						3.  Close DMA channel.
+//!					
+//! 
+//!	TestExpectedResults 1.  DMA channel opens and KErrNone returned.
+//!						2.  KErrNotSupported returned when Pause and Resume API are called.
+//!						3.	DMA channel closes and KErrNone returned.
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace PauseResumeApiNegTest
+	{
+	const TInt srcAddr		= 0;
+	const TInt desAddr		= 2 * KMega;	
+	const TInt transferSize = 1 * KMega;	
 
+	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize, KDmaMemAddr);	
+
+	TResultSet noTransferExpected = TResultSet().
+		RequestResult(TRequestResults().CreationResult(KErrUnknown).FragmentationResult(KErrUnknown).QueueResult(KErrUnknown)).
+		CallbackRecord(TCallbackRecord::Empty()).
+		PostTransferResult(KErrUnknown);
+
+	CPauseResumeNegTest testPauseResumeNeg = CPauseResumeNegTest(_L("Pause and Resume Negative Test"), 1, transferArgs, noTransferExpected); 
+	TTestCase testCasePauseResumeNeg(&testPauseResumeNeg , EFalse, capAboveV1,pauseNotWanted);	
+	}
 //--------------------------------------------------------------------------------------------
 //! TestCaseID      KBASE-DMA-2560
 //! TestType        CIT
@@ -1111,6 +1146,42 @@ namespace IsQueueEmptyTest
 	TTestCase testCase(&isQueueEmpty,EFalse,capAboveV1,pauseRequired_skip);
 	}
 
+//--------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2573
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test verifies the correct behavior of the DMA Channel Linking API 
+//!					in the new DMA framework 
+//!
+//! TestActions     
+//!						1.	Open a DMA channel for a transfer.
+//!						2.  Link and Unlink DMA channel.
+//!						3.  Close DMA channel.
+//!					
+//! 
+//!	TestExpectedResults 1.  DMA channel opens and KErrNone returned.
+//!						2.  KErrNotSupported returned when DMA Linking and Unlinking API are called.
+//!						3.	DMA channel closes and KErrNone returned.
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace ChannelLinkingTest
+	{
+	const TInt srcAddr		= 0;
+	const TInt desAddr		= 2 * KMega;	
+	const TInt transferSize = 1 * KMega;	
+
+	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize, KDmaMemAddr);	
+
+	TResultSet noTransferExpected = TResultSet().
+		RequestResult(TRequestResults().CreationResult(KErrUnknown).FragmentationResult(KErrUnknown).QueueResult(KErrUnknown)).
+		CallbackRecord(TCallbackRecord::Empty()).
+		PostTransferResult(KErrUnknown);
+
+	CLinkChannelTest testChannelLinking = CLinkChannelTest(_L("DMA Channel Linking and Unlinking Negative Test"), 1, transferArgs, noTransferExpected); 
+	TTestCase testCaseChannelLinking(&testChannelLinking , EFalse, capAboveV1,LinkingNotWanted);	
+	}
 
 static TTestCase* StaticSimpleTestArray[] = {
 	&Simple_1::testCase,
@@ -1198,6 +1269,7 @@ static TTestCase* StaticChannelTestArray[] = {
 
 static TTestCase* StaticSuspendTestArray[] = {
 	&PauseResumeApiTest::testCasePauseResume,  
+	&PauseResumeApiNegTest::testCasePauseResumeNeg,
 };
 
 static TTestCase* StaticQueueTestArray[] = {
@@ -1265,8 +1337,10 @@ static TTestCase* StaticTestArray[] = {
 	&CloseApiTest::testCaseCloseApi,
 	&OpenApiTest::testCaseOpenApi,
 	&PauseResumeApiTest::testCasePauseResume,  
+	&PauseResumeApiNegTest::testCasePauseResumeNeg,	
 	&CancelAllTest::testCase,
-	&IsQueueEmptyTest::testCase,	
+	&IsQueueEmptyTest::testCase,
+	&ChannelLinkingTest::testCaseChannelLinking,
 };
 
 RPointerArray<TTestCase> TestArray(StaticTestArray, ARRAY_LENGTH(StaticTestArray));

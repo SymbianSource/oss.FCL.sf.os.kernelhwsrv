@@ -131,6 +131,7 @@ void CDmaTest::OpenDmaSession()
 	if(iDmaSession.Handle() == KNullHandle)
 		{
 		TInt r = iDmaSession.Open();
+		RDebug::Printf("CDmaTest::OpenDmaSession = %d\n", r);
 		TEST_ASSERT(r == KErrNone);
 		r = iDmaSession.OpenSharedChunk(iChunk);
 		TEST_ASSERT(r == KErrNone);
@@ -697,6 +698,87 @@ TInt CPauseResumeTest::QueueAsyncRequest(TRequestStatus &aRequestState, TUint64 
 void CPauseResumeTest::PrintTestType() const
 	{
 	RDebug::RawPrint(_L("Pause and Resume API Test"));
+	}
+
+//////////////////////////////////////////////////////////////////////
+//	CPauseResumeNegTest
+//
+//	-Open DMA Channel
+//	-Pause and Resume DMA channel
+//	-Check that KErrNotSupported is returned
+//	-Close DMA Channel
+//////////////////////////////////////////////////////////////////////
+CPauseResumeNegTest::~CPauseResumeNegTest()
+	{
+	}
+
+void CPauseResumeNegTest::RunTest()
+	{
+	OpenDmaSession();
+
+	//Open a single DMA channel for a transfer
+	OpenChannel();
+
+	RDebug::Printf("Resume unpaused idle channel");
+	TInt r = iDmaSession.ChannelResume(iChannelSessionCookie);
+	TEST_ASSERT(KErrNotSupported == r);
+
+	RDebug::Printf("Pause idle channel");
+	r = iDmaSession.ChannelPause(iChannelSessionCookie);
+	TEST_ASSERT(KErrNotSupported == r);
+
+	RDebug::Printf("Pause paused idle Channel");
+	r = iDmaSession.ChannelPause(iChannelSessionCookie);
+	TEST_ASSERT(KErrNotSupported == r);
+
+	RDebug::Printf("Resume paused idle channel");
+	r = iDmaSession.ChannelResume(iChannelSessionCookie);
+	TEST_ASSERT(KErrNotSupported == r);
+
+	CloseChannel();
+	CloseDmaSession();
+	}
+
+void CPauseResumeNegTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("Pause and Resume API Test - Negative Test"));
+	}
+
+//////////////////////////////////////////////////////////////////////
+//	CLinkChannelTest
+//
+//	-Open DMA Channel
+//	-Link and Unlink DMA channel
+//	-Check that KErrNotSupported is returned
+//	-Close DMA Channel
+//
+//////////////////////////////////////////////////////////////////////
+CLinkChannelTest::~CLinkChannelTest()
+	{
+	}
+
+void CLinkChannelTest::RunTest()
+	{
+	OpenDmaSession();
+
+	//Open a single DMA channel for a transfer
+	OpenChannel();
+
+	RDebug::Printf("Linking DMA channels");
+	TInt r = iDmaSession.ChannelLinking(iChannelSessionCookie);
+	TEST_ASSERT(KErrNotSupported == r);
+
+	RDebug::Printf("Unlinking DMA channels");
+	r = iDmaSession.ChannelUnLinking(iChannelSessionCookie);
+	TEST_ASSERT(KErrNotSupported == r);
+
+	CloseChannel();
+	CloseDmaSession();
+	}
+
+void CLinkChannelTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("Channel Linking API Test - Negative Test"));
 	}
 
 //////////////////////////////////////////////////////////////////////
@@ -1999,8 +2081,8 @@ TBool TDmaCapability::RequirementSatisfied(const SDmacCaps& aChannelCaps) const
 	case EEndiannessConversion:
 	case EGraphicsOps:
 	case ERepeatingTransfers:
-	case EChannelLinking:
-		TEST_FAULT;
+	case EChannelLinking:	
+		return aChannelCaps.iChannelLinking == (TBool)iValue;
 	case EHwDescriptors:
 		return aChannelCaps.iHwDescriptors == (TBool)iValue;
 	case ESrcDstAsymmetry:
@@ -2502,9 +2584,77 @@ void RunDMATests()
 		testRunner.AddTestCases(TestArray);//Add all test cases
 	}
 
-	
 	test.Next(_L("call TTestRunner::RunTests()\n"));
 	testRunner.RunTests();
+
+	test.End();
+	}
+
+
+struct TSimTest
+	{
+	TUint iPslId;
+	TBool iFragment;
+	};
+
+const TSimTest KSimTests[] =
+	{
+		{0, EFalse},
+		{1, EFalse},
+		{2, ETrue},
+		{3, ETrue},
+	};
+
+const TInt KSimTestsCount = ARRAY_LENGTH(KSimTests);
+
+void RunSimDMATests()
+	{
+	test.Start(_L("Run simulated DMAC tests\n"));
+
+	test.Next(_L("Open session"));
+	RDmaSession session;
+	TInt r = session.OpenSim();
+	test_KErrNone(r);
+
+	for(TInt i=0; i<KSimTestsCount; i++)
+		{
+		TUint pslId = KSimTests[i].iPslId;
+		TBool doFrag = KSimTests[i].iFragment;
+
+		test.Start(_L("Open channel"));
+		TUint channelCookie=0;
+		r = session.ChannelOpen(pslId, channelCookie);
+		test.Printf(_L("Open channel %d, cookie recived = 0x%08x\n"), pslId, channelCookie);
+		test_KErrNone(r);
+
+		test.Next(_L("Create Dma request"));
+
+		TUint reqCookie=0;
+		r = session.RequestCreate(channelCookie, reqCookie);
+		test.Printf(_L("cookie recived = 0x%08x\n"), reqCookie );
+		test_KErrNone(r);
+
+		if(doFrag)
+			{
+			test.Next(_L("Fragment request"));
+			const TInt size = 128 * KKilo;
+			TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr);
+			r = session.FragmentRequest(reqCookie, transferArgs);
+			test_KErrNone(r);
+			}
+
+		test.Next(_L("Destroy Dma request"));
+		r = session.RequestDestroy(reqCookie);
+		test_KErrNone(r);
+
+		test.Next(_L("Channel close"));
+		r = session.ChannelClose(channelCookie);
+		test_KErrNone(r);
+		test.End();
+		}
+
+	test.Next(_L("Close session"));
+	RTest::CloseHandleAndWaitForDestruction(session);
 
 	test.End();
 	}
@@ -2531,7 +2681,7 @@ TInt E32Main()
 		{
 		User::Panic(_L("DMA test run memory failure"), KErrNoMemory);
 		}
-	
+
 	if (gHelpRequested)
 		{
 		PrintUsage();
@@ -2551,8 +2701,7 @@ TInt E32Main()
 
 	if (!(dma2Loaded || dma2CompatLoaded))
 		{
-		test.Printf(_L("DMA test driver not found - test skipped\n"));
-		return 0;
+		test.Printf(_L("Hardware DMA test driver not found - will run tests on simulated DMAC only\n"));
 		}
 	else if (dma2Loaded && !dma2CompatLoaded)
 		{
@@ -2567,6 +2716,23 @@ TInt E32Main()
 		test.Printf(_L("The ROM contains %S and %S - only one should be present\n"), &KDma, &KDma2Compat);
 		TEST_FAULT;
 		}
+
+	const TBool dmaHwPresent = (dma2Loaded || dma2CompatLoaded);
+
+	_LIT(KDma2Sim, "D_DMA2_SIM.LDD");
+
+	r = User::LoadLogicalDevice(KDma2Sim);
+	const TBool dma2SimLoaded = ((r == KErrNone) || (r == KErrAlreadyExists));
+	if (dma2SimLoaded)
+		{
+		test.Printf(_L("Loaded %S\n"), &KDma2Sim);
+		}
+	else
+		{
+		test.Printf(_L("Failed to load %S, r=%d\n"), &KDma2Sim, r);
+		test(EFalse);
+		}
+
 	// Turn off evil lazy dll unloading
 	RLoader l;
 	test(l.Connect()==KErrNone);
@@ -2576,11 +2742,15 @@ TInt E32Main()
 	__KHEAP_MARK;
 
 	if (gSelfTest) //Run self tests if specified on command line
-	{
-	SelfTests(); 	
-	}
+		{
+		SelfTests();
+		}
 
-	RunDMATests();
+	RunSimDMATests();
+	if (dmaHwPresent)
+		{
+		RunDMATests();
+		}
 
 	// Wait for the supervisor thread to run and perform asynchronous
 	// cleanup, so that kernel heap space will be freed
@@ -2588,8 +2758,14 @@ TInt E32Main()
 	test_KErrNone(r);
 	__KHEAP_MARKEND;
 
-	r = User::FreeLogicalDevice(KTestDmaLddName);
+	if(dmaHwPresent)
+		{
+		r = User::FreeLogicalDevice(KTestDmaLddNameHw);
+		test_KErrNone(r);
+		}
+	r = User::FreeLogicalDevice(KTestDmaLddNameSim);
 	test_KErrNone(r);
+
 	test.End();
 	test.Close();
 

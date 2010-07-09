@@ -1,3 +1,11 @@
+Version 2.00.3052
+=================
+(Made by famustaf 01/07/2010)
+
+1.	dlyokhin
+	1.	ou1cimx1#424702 FAT, exFAT should allow volume finalisation even if it has opened files or directories
+
+
 Version 2.00.3051
 =================
 (Made by vfebvre 21/06/2010)

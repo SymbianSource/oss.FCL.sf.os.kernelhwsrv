@@ -421,6 +421,7 @@ class TIicBusTransaction : public SOrdQueLink
         inline TIicBusTransaction();
     
         // the client interface for creating half duplex transactions
+		// The parameter aPriority is required to be at least zero and less than KNumTrancPriorities.
         inline TIicBusTransaction(TDes8* aHeader, TIicBusTransfer* aHdTrans, TInt aPriority=0);
         inline ~TIicBusTransaction();
         inline TInt SetHalfDuplexTrans(TDes8* aHeader, TIicBusTransfer* aHdTrans);

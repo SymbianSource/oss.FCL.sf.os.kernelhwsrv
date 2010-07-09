@@ -112,8 +112,13 @@ DIicClientChan::~DIicClientChan()
 
 
 #ifdef STANDALONE_CHANNEL
-_LIT(KLddRootName,"iic_client_ctrless");
+#ifdef IIC_STUBS
+_LIT(KLddRootName,"iic_client_stubs");
 #else
+_LIT(KLddRootName,"iic_client_ctrless");
+#endif/*IIC_STUBS*/
+
+#else/*STANDALONE_CHANNEL*/
 _LIT(KLddRootName,"iic_client");
 #endif
 _LIT(KIicClientThreadName,"IicClientLddThread");
@@ -403,6 +408,7 @@ class DChannelIicClient : public DLogicalChannel
 	TInt StaticExtension(TUint aId, TUint aFunction, TAny* aParam1, TAny* aParam2);
 	TInt CaptureChannel(TInt aBusId, TDes8* aConfigHdr, TIicBusSlaveCallback* aCallback, TInt& aChannelId, TBool aAsynch=NULL);
 	TInt ReleaseChannel(TInt aChannelId);
+	TInt Spare1(TInt aBusId);
 	public:
 	inline void Lock() {Kern::MutexWait(*iArrayMutex);}
 	inline void Unlock() {Kern::MutexSignal(*iArrayMutex);}
@@ -1324,6 +1330,56 @@ TInt DChannelIicClient::ReleaseChannel(TInt aChannelId)
     return r;
 	}
 
+//this function is added for improving the code coverage of IIC.
+//Spare1 is a placeholder for future expansion, and so returns KErrNotSupported.
+#ifdef STANDALONE_CHANNEL
+TInt DChannelIicClient::Spare1(TInt aBusId)
+    {
+    TInt r = KErrNone;
+
+    TInt chanIndex = 0;
+    DIicClientChan* chanPtr = NULL;
+    if(r == KErrNone)
+        {
+        r = GetChanPtr(aBusId, chanIndex, chanPtr);
+        if(r == KErrNone)
+            {
+            if(!chanPtr)
+                {
+                r = KErrArgument;
+                }
+            else
+                {
+                switch(chanPtr->GetChanType())
+                    {
+                    case DIicBusChannel::EMaster:
+                        {
+                        r = ((DIicBusChannelMaster*)(chanPtr->GetChannelPtr()))->Spare1(0,NULL,NULL);
+                        break;
+                        }
+                    case DIicBusChannel::EMasterSlave:
+                        {
+                        r = KErrNotSupported;
+                        break;
+                        }
+                    case DIicBusChannel::ESlave:
+                        {
+                        r = ((DIicBusChannelSlave*)(chanPtr->GetChannelPtr()))->Spare1(0,NULL,NULL);
+                        break;
+                        }
+                    default:
+                        {
+                        r = KErrArgument;
+                        }
+                    }
+                }
+            }
+        }
+    return r;
+    }
+#endif
+
+#ifndef IIC_STUBS
 void DChannelIicClient::DoCancel(TInt aMask)
 	{
 // Cancel an outstanding request.
@@ -1406,7 +1462,68 @@ void DChannelIicClient::DoCancel(TInt aMask)
 
 	return;
 	}
+#else/*IIC_STUBS*/
+//should only be called in IIC_STUBS mode
+//DoCancel is used to cancel an asynchronous request which is still waiting in the queue and
+//has not yet been handled by IIC.
+//In the stub test, QueueTransaction should always return a KErrNotSupported error code
+//So we pretend there is an request waiting in the queue that can be cancelled by calling DoCancel.
+void DChannelIicClient::DoCancel(TInt aMask)
+    {
+    // Cancel an outstanding request.
+    CLIENT_PRINT(("DChannelIicClient::DoCancel invoked with aMask=0x%x\n", aMask));
 
+    // inline void CancelAsyncOperation(TRequestStatus* aStatus, TInt aBusId)   {TInt* parms[2]; parms[0]=(TInt*)aStatus; parms[1]=(TInt*)aBusId;DoCancel((TInt)&parms[0]);}
+    // aMask has the address on TInt* parms[2]
+    // parms[0] = TRequestStatus pointer
+    // parms[1] = Bus Identifier
+    TInt* parms[2];
+    TInt r=Kern::ThreadRawRead(iClient,(TAny*)aMask,&(parms[0]),2*sizeof(TInt*));
+    if(r!=KErrNone)
+        {
+        CLIENT_PRINT(("DChannelIicClient::DoCancel ERROR - Can't read parms[]\n"));
+        return; // Can't proceed if can't access request parameters
+        }
+    CLIENT_PRINT(("DChannelIicClient::DoCancel - TRequestStatus 0x%x, BusID = 0x%x\n",parms[0],parms[1]));
+    TRequestStatus* status= (TRequestStatus*)(parms[0]);
+    
+    //A valid transaction object is required here in order to exercise the API
+    TInt busIdI2c = (TInt)(parms[1]);
+    TConfigI2cBufV01* i2cBuf=NULL;
+    SET_BUS_TYPE(busIdI2c,EI2c);
+    SET_CHAN_NUM(busIdI2c,10);
+    // aDeviceId=1 ... 100kHz ... aTimeoutPeriod=100 ... aTransactionWaitCycles=10 - arbitrary paarmeters.
+    r=CreateI2cBuf(i2cBuf, EI2cAddr7Bit, 36, ELittleEndian, 100);
+    if(r!=KErrNone)
+        {
+        CLIENT_PRINT(("DChannelIicClient::DoCancel ERROR - Can't allocate memory for I2c buffer\n"));
+        return; // Can't proceed if can't access request parameters
+        }
+
+    TIicBusTransfer* tfer = new TIicBusTransfer(TIicBusTransfer::EMasterWrite,8,i2cBuf);
+    if(tfer == NULL) 
+        {
+        CLIENT_PRINT(("DChannelIicClient::DoCancel ERROR - Can't allocate memory for the transfer\n"));
+        delete i2cBuf; 
+        return;
+        }
+
+    TIicBusTransaction* transac = new TIicBusTransaction((TDes8*)i2cBuf, tfer);
+    if(transac == NULL) 
+        {
+        CLIENT_PRINT(("DChannelIicClient::DoCancel ERROR - Can't allocate memory for the transaction\n"));
+        delete i2cBuf; 
+        delete tfer; 
+        return;
+        }
+
+    r = CancelTransaction(busIdI2c, transac);
+    Kern::RequestComplete(iClient, status, r);
+    delete i2cBuf;
+    delete tfer;
+    delete transac;
+    }
+#endif/*IIC_STUBS*/
 
 // Function to support preamble testing
 void PreambleCallbackFunc(TIicBusTransaction* /*aTrans*/, TAny* aParam)
@@ -2395,8 +2512,17 @@ TInt DChannelIicClient::DoControl(TInt aId, TAny* a1, TAny* a2)
             r = channelInterface.TestInterface();
             break;         
             }
+        case(RBusDevIicClient::ETestSpare1):
+            {
+            r = Spare1((TInt)a1);
+            break;
+            }
+        case(RBusDevIicClient::ETestStaticEx):
+            {
+            r = StaticExtension((TUint32)a1, (TUint)RBusDevIicClient::ECtlIoNone, NULL, NULL);
+            break;
+            }
 #endif
-        
         default:
 			{
 			CLIENT_PRINT(("DChannelIicClient::DoControl - unrecognised value for aId=0x%x\n",aId));

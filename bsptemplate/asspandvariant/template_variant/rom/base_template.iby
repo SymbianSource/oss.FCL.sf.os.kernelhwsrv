@@ -62,8 +62,6 @@ device[VARID]	=KERNEL_DIR\DEBUG_DIR\esoundsc.ldd						\sys\bin\esoundsc.ldd
 device[VARID]	=KERNEL_DIR\DEBUG_DIR\pipelib.ldd						\sys\bin\pipelib.ldd
 device[VARID]	=KERNEL_DIR\DEBUG_DIR\minkda.ldd						\sys\bin\minkda.ldd
 extension[VARID]=KERNEL_DIR\DEBUG_DIR\exstart.dll						\sys\bin\exstart.dll
-device[VARID]	=KERNEL_DIR\DEBUG_DIR\ecamerasc.ldd						\sys\bin\ecamerasc.ldd
-device[VARID]	=KERNEL_DIR\DEBUG_DIR\_template_camerasc.pdd					\sys\bin\camerasc.pdd
 
 // USB Drivers
 extension[VARID]=KERNEL_DIR\DEBUG_DIR\_template_usbcc.dll				\sys\bin\usbcc.dll

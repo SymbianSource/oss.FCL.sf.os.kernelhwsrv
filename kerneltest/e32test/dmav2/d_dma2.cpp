@@ -101,6 +101,8 @@ private:
 
 	TInt OpenDmaChannel(TUint aPslCookie, TUint& aDriverCookie);
 	TInt OpenDmaChannel(TUint& aDriverCookie, TDmaChannel::SCreateInfo& aInfo);
+	TInt LinkDmaChannelByCookie(TUint aDriverCookie);	
+	TInt UnlinkDmaChannelByCookie(TUint aDriverCookie);
 	TInt CloseDmaChannelByCookie(TUint aDriverCookie);
 	TInt PauseDmaChannelByCookie(TUint aDriverCookie);
 	TInt ResumeDmaChannelByCookie(TUint aDriverCookie);
@@ -112,6 +114,8 @@ private:
 	TInt ChannelIsOpenedByCookie(TUint aDriverCookie, TBool& aChannelOpen);		
 	void CloseDmaChannelByIndex(TInt aIndex);
 	void CancelAllByIndex(TInt aIndex);
+	TInt LinkDmaChannelByIndex(TInt aIndex);
+	TInt UnlinkDmaChannelByIndex(TInt aIndex);
 	TInt PauseDmaChannelByIndex(TInt aIndex);
 	TInt ResumeDmaChannelByIndex(TInt aIndex);		
 	TInt IsrRedoRequestByIndex(TInt aIndex,TUint32 aSrcAddr,TUint32 aDstAddr,TInt aTransferCount,TUint32 aPslRequestInfo,TBool aIsrCb);
@@ -151,7 +155,7 @@ private:
 	DThread* iClient;
 	TDynamicDfcQue* iDfcQ;
 	TDynamicDfcQue* iIsrCallbackDfcQ; // Will be used by requests which complete with an ISR callback
-	static const TInt KMaxChunkSize = 8 * KMega;
+	static const TInt KMaxChunkSize;
 	TLinAddr iChunkBase;
 	DChunk* iChunk;
 
@@ -377,7 +381,7 @@ void DClientDmaRequest::CallbackOldStyle(TResult aResult, TAny* aArg)
 The new style callback called by the DMA framework
 may be called in either thread or ISR context
 */
-void DClientDmaRequest::Callback(TUint aCallbackType, TDmaResult aResult, TAny* aArg, SDmaDesHdr* aHdr)
+void DClientDmaRequest::Callback(TUint aCallbackType, TDmaResult aResult, TAny* aArg, SDmaDesHdr* /*aHdr*/)
 	{
 	const TInt context = NKern::CurrentContext();
 	__KTRACE_OPT(KDMA, Kern::Printf(">DClientDmaRequest::CallBack: TDmaResult result = %d, NKern::TContext context = %d", aResult, context));
@@ -503,7 +507,7 @@ void DClientDmaRequest::CompleteCallback(TAny* aArg)
 	Kern::QueueRequestComplete(self.iClient, self.iClientDataRequest, KErrNone);
 	}
 
-const TInt DDmaTestSession::KMaxChunkSize;
+const TInt DDmaTestSession::KMaxChunkSize = 8 * KMega;
 
 TInt DDmaTestSession::RequestUserHandle(DThread* aThread, TOwnerType aType)
 	{
@@ -517,24 +521,31 @@ DDmaTestSession::DDmaTestSession()
 	{}
 
 // called in thread critical section
-TInt DDmaTestSession::DoCreate(TInt /*aUnit*/, const TDesC8* aInfo, const TVersion& /*aVer*/)
+TInt DDmaTestSession::DoCreate(TInt /*aUnit*/, const TDesC8* /*aInfo*/, const TVersion& /*aVer*/)
 	{
 	__NK_ASSERT_ALWAYS(iDfcQ == NULL);
 	__NK_ASSERT_ALWAYS(iIsrCallbackDfcQ == NULL);
 
 	TInt r = Kern::DynamicDfcQCreate(iDfcQ, KDFCThreadPriority, KDFCThreadName);
 	if (r != KErrNone)
+		{
+		Kern::Printf("DDmaTestSession::DoCreate D_DMA_DFC_THREAD returned (%d)\n", r);
 		return r;
+		}
 	NKern::ThreadSetCpuAffinity((NThread*)(iDfcQ->iThread), KCpuAffinityAny);
 
 	r = Kern::DynamicDfcQCreate(iIsrCallbackDfcQ, KDFCThreadPriority, KIsrCbDfcThreadName);
 	if (r != KErrNone)
+		{
+		Kern::Printf("DDmaTestSession::DoCreate D_DMA_IsrCb_thread returned (%d)\n", r);
 		return r;
+		}
 	NKern::ThreadSetCpuAffinity((NThread*)(iIsrCallbackDfcQ->iThread), KCpuAffinityAny);
 
 	iClient = &Kern::CurrentThread();
 
 	r = CreateSharedChunk();
+	Kern::Printf("DDmaTestSession::DoCreate CreateSharedChunk returned (%d)\n", r);
 	return r;
 	}
 
@@ -634,6 +645,18 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 			{
 			TUint driverCookie = reinterpret_cast<TUint>(a1);
 			TInt r = ResumeDmaChannelByCookie(driverCookie);
+			return r;
+			}
+	case RDmaSession::ELinkChannel:
+			{
+			TUint driverCookie = reinterpret_cast<TUint>(a1);
+			TInt r = LinkDmaChannelByCookie(driverCookie);
+			return r;
+			}
+	case RDmaSession::EUnlinkChannel:
+			{
+			TUint driverCookie = reinterpret_cast<TUint>(a1);
+			TInt r = UnlinkDmaChannelByCookie(driverCookie);
 			return r;
 			}
 	case RDmaSession::EFragmentCount:
@@ -915,6 +938,64 @@ void DDmaTestSession::CancelAllByIndex(TInt aIndex)
 	channel->CancelAll();
 	}
 
+TInt DDmaTestSession::LinkDmaChannelByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("LinkDmaChannelByIndex: %d", aIndex)); 
+	__NK_ASSERT_DEBUG(aIndex < iChannels.Count()); 
+
+#ifdef DMA_APIV2
+	TDmaChannel* channel = iChannels[aIndex];
+	return channel->LinkToChannel(channel);
+#else
+	return KErrNotSupported;
+#endif	
+	}
+
+TInt DDmaTestSession::LinkDmaChannelByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("LinkDmaChannelByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToChannelIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		TInt r = LinkDmaChannelByIndex(index);
+		return r;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
+TInt DDmaTestSession::UnlinkDmaChannelByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("UnlinkDmaChannelByIndex: %d", aIndex)); 
+	__NK_ASSERT_DEBUG(aIndex < iChannels.Count()); 
+
+#ifdef DMA_APIV2
+	TDmaChannel* channel = iChannels[aIndex];
+	return channel->LinkToChannel(NULL);
+#else
+	return KErrNotSupported;
+#endif	
+	}
+
+TInt DDmaTestSession::UnlinkDmaChannelByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("UnlinkDmaChannelByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToChannelIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		TInt r = UnlinkDmaChannelByIndex(index);
+		return r;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
 TInt DDmaTestSession::PauseDmaChannelByIndex(TInt aIndex)
 	{
 	__KTRACE_OPT(KDMA, Kern::Printf("PauseDmaChannelByIndex: %d", aIndex)); 
@@ -1152,7 +1233,10 @@ TInt DDmaTestSession::CreateSharedChunk()
     TChunkCreateInfo info;
     info.iType         = TChunkCreateInfo::ESharedKernelSingle;
     info.iMaxSize      = KMaxChunkSize;
+#ifndef __WINS__
     info.iMapAttr      = EMapAttrFullyBlocking | EMapAttrUserRw;
+#endif
+
     info.iOwnsMemory   = ETrue;
     info.iDestroyedDfc = NULL;
 
@@ -1299,16 +1383,28 @@ TDmaV2TestInfo DDmaTestSession::ConvertTestInfo(const TDmaTestInfo& aOldInfo) co
 	newInfo.iMemMemPslInfo = aOldInfo.iMemMemPslInfo;
 
 	newInfo.iMaxSbChannels = aOldInfo.iMaxSbChannels;
-	for(TInt i=0; i<aOldInfo.iMaxSbChannels; i++)
-		newInfo.iSbChannels[i] = aOldInfo.iSbChannels[i];
+		{
+		for(TInt i=0; i<aOldInfo.iMaxSbChannels; i++)
+			{
+			newInfo.iSbChannels[i] = aOldInfo.iSbChannels[i];
+			}
+		}
 
 	newInfo.iMaxDbChannels = aOldInfo.iMaxDbChannels;
-	for(TInt i=0; i<aOldInfo.iMaxDbChannels; i++)
-		newInfo.iDbChannels[i] = aOldInfo.iDbChannels[i];
+		{
+		for(TInt i=0; i<aOldInfo.iMaxDbChannels; i++)
+			{
+			newInfo.iDbChannels[i] = aOldInfo.iDbChannels[i];
+			}
+		}
 
 	newInfo.iMaxSgChannels = aOldInfo.iMaxSgChannels;
-	for(TInt i=0; i<aOldInfo.iMaxSgChannels; i++)
-		newInfo.iSgChannels[i] = aOldInfo.iSgChannels[i];
+		{
+		for(TInt i=0; i<aOldInfo.iMaxSgChannels; i++)
+			{
+			newInfo.iSgChannels[i] = aOldInfo.iSgChannels[i];
+			}
+		}
 
 	return newInfo;
 	}
@@ -1339,13 +1435,16 @@ DDmaTestFactory::DDmaTestFactory()
 TInt DDmaTestFactory::Create(DLogicalChannelBase*& aChannel)
     {
 	aChannel=new DDmaTestSession;
+	Kern::Printf("DDmaTestFactory::Create %d\n", aChannel?KErrNone : KErrNoMemory);
 	return aChannel ? KErrNone : KErrNoMemory;
     }
 
 
 TInt DDmaTestFactory::Install()
     {
-    return SetName(&KTestDmaLddName);
+    TInt r = SetName(&KTestDmaLddName);
+	Kern::Printf("DDmaTestFactory::Install %d\n",r);
+	return r;
     }
 
 

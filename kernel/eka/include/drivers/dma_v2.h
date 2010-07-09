@@ -49,6 +49,15 @@
 #define __DMA_INVARIANT()
 #endif
 
+#ifdef __DMASIM__
+#ifdef __PRETTY_FUNCTION__
+#define __DMA_UNREACHABLE_DEFAULT() DMA_PSL_TRACE1("Calling default virtual: %s", __PRETTY_FUNCTION__)
+#else
+#define __DMA_UNREACHABLE_DEFAULT() DMA_PSL_TRACE("Calling default virtual function")
+#endif
+#else
+#define __DMA_UNREACHABLE_DEFAULT() __DMA_CANT_HAPPEN()
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // INTERFACE EXPOSED TO DEVICE-DRIVERS
@@ -637,7 +646,7 @@ public:
 private:
 	inline void OnDeque();
 	TInt CheckTransferConfig(const TDmaTransferConfig& aTarget, TUint aCount) const;
-	TInt CheckMemFlags(const TDmaTransferConfig& aTarget, TUint aCount) const;
+	TInt CheckMemFlags(const TDmaTransferConfig& aTarget) const;
 	TInt AdjustFragmentSize(TUint& aFragSize, TUint aElementSize, TUint aFrameSize);
 	TUint GetTransferCount(const TDmaTransferArgs& aTransferArgs) const;
 	TUint GetMaxTransferlength(const TDmaTransferArgs& aTransferArgs, TUint aCount) const;

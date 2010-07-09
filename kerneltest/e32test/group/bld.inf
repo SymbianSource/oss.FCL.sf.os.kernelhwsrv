@@ -136,16 +136,19 @@ d_testearlyextension		support
 rescontrol_psl				support
 rescontrol_extended_psl		support
 d_rescontrolcli				support
+d_rescontrolclisync			support
 d_extendedrescontrolcli		support
 d_prmacctstsim				support
 ../resmanus/resourcecontrol	support
 ../resmanus/resourcecontrollerextended	support
+../resmanus/d_resmanusbtrace		support
 #endif
 
 // DMA kernel-side test harness for software-simulated DMA framework
 // software-simulated DMA framework
 d_dmasim					support
 dmasim						support
+d_dma2_sim					support
 
 // Examples for demand paging device driver migration
 d_pagingexample_1_pre  support
@@ -191,15 +194,20 @@ d_smpsoak					support
 
 #if !defined(X86)
 ../iic/iic_psl/iic_testpsl			support
-../iic/iic_psl/spi					support
-../iic/iic_psl/i2c					support
+../iic/iic_psl/spi				support
+../iic/iic_psl/i2c				support
 ../iic/iic_psl/d_iic_client			support
-../iic/iic_psl/d_iic_slaveclient	support
+../iic/iic_psl/d_iic_slaveclient		support
 
 ../iic/iic_psl/spi_ctrless			support
 ../iic/iic_psl/i2c_ctrless			support
 ../iic/iic_psl/d_iic_client_ctrless		support
 ../iic/iic_psl/d_iic_slaveclient_ctrless	support
+
+../iic/iic_psl/i2c_masterstubs_ctrless		support
+../iic/iic_psl/i2c_slavestubs_ctrless		support
+../iic/iic_psl/d_iic_client_stubs		support
+../iic/iic_psl/d_iic_slaveclient_stubs		support
 #endif
 
 #if !defined(WINS) && !defined(X86)
@@ -830,7 +838,8 @@ t_wsimp     support
 t_wwins     manual
 t_mmcpw     manual
 
-t_keys      support
+refkeymap   support //Reference template keyboard look-up tables for T_KEYS test 
+t_keys
 
 // /E32TEST/Y2K tests
 t_y2k
@@ -986,11 +995,13 @@ t_defragdll0	support
 ../resmanus/t_resmanus
 ../resmanus/t_resmanuskern
 ../resmanus/t_resmanusextended
+../resmanus/t_resmanusbtrace
 #endif
 
 // /E32TEST/RESOURCEMAN tests
 #if !defined X86 
 t_rescontrolcli
+t_rescontrolclisync
 t_extendedrescontrolcli
 t_prmacctstsim
 #endif

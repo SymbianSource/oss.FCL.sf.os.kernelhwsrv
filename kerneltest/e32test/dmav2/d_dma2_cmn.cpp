@@ -17,9 +17,19 @@
 */
 #ifdef __KERNEL_MODE__
 #include <platform.h>
+
+#ifdef __DMASIM__
+#ifdef __WINS__
+typedef TLinAddr TPhysAddr;
+#endif
+static inline TPhysAddr LinToPhys(TLinAddr aLin) {return aLin;}
+#else
+static inline TPhysAddr LinToPhys(TLinAddr aLin) {return Epoc::LinearToPhysical(aLin);}
+#endif
 #endif
 
 #include "d_dma2.h"
+
 
 TInt Log2(TInt aNum)
 	{
@@ -240,7 +250,7 @@ void TAddressParms::Fixup(TLinAddr aChunkBase)
 		iSrcAddr += aChunkBase;
 
 #ifdef __KERNEL_MODE__
-		iSrcAddr = Epoc::LinearToPhysical(iSrcAddr);
+		iSrcAddr = LinToPhys(iSrcAddr);
 		TEST_ASSERT(iSrcAddr != KPhysAddrInvalid);
 #endif
 		}
@@ -258,7 +268,7 @@ void TAddressParms::Fixup(TLinAddr aChunkBase)
 		iDstAddr += aChunkBase;
 
 #ifdef __KERNEL_MODE__
-		iDstAddr = Epoc::LinearToPhysical(iDstAddr);
+		iDstAddr = LinToPhys(iDstAddr);
 		TEST_ASSERT(iDstAddr != KPhysAddrInvalid);
 #endif
 		}
@@ -321,9 +331,9 @@ TAddrRange TAddressParms::DestRange() const
 void TAddressParms::MakePhysical()
 	{
 #ifdef __KERNEL_MODE__
-	iSrcAddr = Epoc::LinearToPhysical(iSrcAddr);
+	iSrcAddr = LinToPhys(iSrcAddr);
 	TEST_ASSERT(iSrcAddr != KPhysAddrInvalid);
-	iDstAddr = Epoc::LinearToPhysical(iDstAddr);
+	iDstAddr = LinToPhys(iDstAddr);
 	TEST_ASSERT(iDstAddr != KPhysAddrInvalid);
 #else
 	TEST_FAULT;
@@ -385,7 +395,7 @@ TBool TIsrRequeArgs::CheckRange(TLinAddr aStart, TUint aSize) const
 	{
 	TUint chunkStart = 0;
 #ifdef __KERNEL_MODE__
-	chunkStart = Epoc::LinearToPhysical(aStart);
+	chunkStart = LinToPhys(aStart);
 	TEST_ASSERT(chunkStart != KPhysAddrInvalid);
 #else
 	chunkStart = aStart;

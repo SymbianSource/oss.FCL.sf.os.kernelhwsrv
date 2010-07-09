@@ -127,4 +127,5 @@ const TDmaCapability capEqualV2Fatal(EPilVersion, EEqual, 2, ETrue);
 
 const TDmaCapability capAboveV1(EPilVersion, EGTE, 2, EFalse);
 const TDmaCapability capBelowV2(EPilVersion, ELTE, 1, EFalse);
+const TDmaCapability LinkingNotWanted(EChannelLinking, EEqual, EFalse, ETrue);
 #endif // #ifdef __CAP_REQS_H__

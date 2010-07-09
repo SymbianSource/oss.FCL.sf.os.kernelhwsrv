@@ -31,12 +31,23 @@
 
 static RTest test(_L("t_dma2 test framework tests"));
 
-void RDmaSession::SelfTest()
+void RDmaSession::SelfTest(TBool aSimulatedDmac)
 	{
 	test.Start(_L("Simple transfer test"));
-	test.Next(_L("Open session"));
+
 	RDmaSession session;
-	TInt r = session.Open();
+	TInt r = KErrUnknown;
+	if (aSimulatedDmac)
+		{
+		test.Next(_L("Open session (simulated DMA)"));
+		r = session.OpenSim();
+		}
+	else
+		{
+		test.Next(_L("Open session"));
+		r = session.Open();
+		}
+
 	test_KErrNone(r);
 
 	test.Next(_L("Get test info"));
@@ -134,16 +145,19 @@ void RDmaSession::SelfTest()
 		test.Printf(_L("cookie recived = 0x%08x\n"), reqCookieNewStyle );
 		test_KErrNone(r);
 
-		test.Next(_L("Fragment for ISR callback"));
-		const TInt size = 128 * KKilo;
-		TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr, KDmaSyncAuto, KDmaRequestCallbackFromIsr);
-		r = session.FragmentRequest(reqCookieNewStyle, transferArgs);
-		test_KErrNone(r);
+		if(!aSimulatedDmac)
+			{
+			test.Next(_L("Fragment for ISR callback"));
+			const TInt size = 128 * KKilo;
+			TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr, KDmaSyncAuto, KDmaRequestCallbackFromIsr);
+			r = session.FragmentRequest(reqCookieNewStyle, transferArgs);
+			test_KErrNone(r);
 
-		TIsrRequeArgs reque;
-		test.Next(_L("Queue ISR callback - with default re-queue"));
-		r = session.QueueRequestWithRequeue(reqCookieNewStyle, &reque, 1);
-		test_KErrNone(r);
+			TIsrRequeArgs reque;
+			test.Next(_L("Queue ISR callback - with default re-queue"));
+			r = session.QueueRequestWithRequeue(reqCookieNewStyle, &reque, 1);
+			test_KErrNone(r);
+			}
 
 		test.Next(_L("Destroy new-style Dma request"));
 		r = session.RequestDestroy(reqCookieNewStyle);
@@ -166,78 +180,81 @@ void RDmaSession::SelfTest()
 	test(chunk.IsWritable());
 	test(chunk.IsReadable());
 
-	test.Next(_L("Fragment(old style)"));
-	const TInt size = 128 * KKilo;
-	TInt i;
-	for(i = 0; i<10; i++)
+	if(!aSimulatedDmac)
 		{
-		TUint64 time = 0;
-		TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr);
-		r = session.FragmentRequestOld(reqCookie, transferArgs, &time);
-		test_KErrNone(r);
-		if(gVerboseOutput)
-			{
-			test.Printf(_L("%lu us\n"), time);
-			}
-	}
-
-	test.Next(_L("Queue"));
-	TRequestStatus status;
-
-	for(i = 0; i<10; i++)
-		{
-		TUint64 time = 0;
-		r = session.QueueRequest(reqCookie, status, 0, &time);
-		User::WaitForRequest(status);
-		test_KErrNone(r);
-		if(gVerboseOutput)
-			{
-			test.Printf(_L("%lu us\n"), time);
-			}
-		}
-
-	if(newPil)
-		{
-		test.Next(_L("Fragment(new style)"));
-		TDmaTransferArgs transferArgs;
-		transferArgs.iSrcConfig.iAddr = 0;
-		transferArgs.iDstConfig.iAddr = size;
-		transferArgs.iSrcConfig.iFlags = KDmaMemAddr;
-		transferArgs.iDstConfig.iFlags = KDmaMemAddr;
-		transferArgs.iTransferCount = size;
-
+		test.Next(_L("Fragment(old style)"));
+		const TInt size = 128 * KKilo;
+		TInt i;
 		for(i = 0; i<10; i++)
 			{
 			TUint64 time = 0;
-			r = session.FragmentRequest(reqCookie, transferArgs, &time);
+			TDmaTransferArgs transferArgs(0, size, size, KDmaMemAddr);
+			r = session.FragmentRequestOld(reqCookie, transferArgs, &time);
 			test_KErrNone(r);
 			if(gVerboseOutput)
 				{
 				test.Printf(_L("%lu us\n"), time);
 				}
 			}
-		}
 
-	test.Next(_L("Queue"));
-	TCallbackRecord record;
-	r = session.QueueRequest(reqCookie, &record);
-	test_KErrNone(r);
+		test.Next(_L("Queue"));
+		TRequestStatus status;
 
-	test.Next(_L("check TCallbackRecord record"));
-	if(gVerboseOutput)
-	{
-	record.Print();
-	}
-	const TCallbackRecord expected(TCallbackRecord::EThread, 1);
-	if(!(record == expected))
-		{
-		test.Printf(_L("TCallbackRecords did not match"));
-		if(gVerboseOutput)
+		for(i = 0; i<10; i++)
 			{
-			test.Printf(_L("expected:"));
-			expected.Print();
+			TUint64 time = 0;
+			r = session.QueueRequest(reqCookie, status, 0, &time);
+			User::WaitForRequest(status);
+			test_KErrNone(r);
+			if(gVerboseOutput)
+				{
+				test.Printf(_L("%lu us\n"), time);
+				}
 			}
-		TEST_FAULT;
+
+		if(newPil)
+			{
+			test.Next(_L("Fragment(new style)"));
+			TDmaTransferArgs transferArgs;
+			transferArgs.iSrcConfig.iAddr = 0;
+			transferArgs.iDstConfig.iAddr = size;
+			transferArgs.iSrcConfig.iFlags = KDmaMemAddr;
+			transferArgs.iDstConfig.iFlags = KDmaMemAddr;
+			transferArgs.iTransferCount = size;
+
+			for(i = 0; i<10; i++)
+				{
+				TUint64 time = 0;
+				r = session.FragmentRequest(reqCookie, transferArgs, &time);
+				test_KErrNone(r);
+				if(gVerboseOutput)
+					{
+					test.Printf(_L("%lu us\n"), time);
+					}
+				}
+			}
+
+		test.Next(_L("Queue"));
+		TCallbackRecord record;
+		r = session.QueueRequest(reqCookie, &record);
+		test_KErrNone(r);
+
+		test.Next(_L("check TCallbackRecord record"));
+		if(gVerboseOutput)
+		{
+		record.Print();
+		}
+		const TCallbackRecord expected(TCallbackRecord::EThread, 1);
+		if(!(record == expected))
+			{
+			test.Printf(_L("TCallbackRecords did not match"));
+			if(gVerboseOutput)
+				{
+				test.Printf(_L("expected:"));
+				expected.Print();
+				}
+			TEST_FAULT;
+			}
 		}
 
 	test.Next(_L("Destroy Dma request"));
@@ -259,7 +276,6 @@ void RDmaSession::SelfTest()
 	RTest::CloseHandleAndWaitForDestruction(session);
 
 	test.End();
-
 	}
 
 const SDmacCaps KTestCapSet =
@@ -815,7 +831,12 @@ void TPreTransferIncrBytes::SelfTest()
 void SelfTests()
 	{
 	test.Next(_L("Running framework unit tests"));
-	RDmaSession::SelfTest();
+#ifndef __WINS__
+	// Cannot connect real driver on Emulator - only
+	// simulator
+	RDmaSession::SelfTest(EFalse);
+#endif
+	RDmaSession::SelfTest(ETrue);
 	TDmaCapability::SelfTest();
 	TTestCase::SelfTest();
 	TTransferIter::SelfTest();

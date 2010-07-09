@@ -551,10 +551,8 @@ void CFatMountCB::FinaliseMountL(TInt aOperation, TAny* /*aParam1*/, TAny* /*aPa
         return;
         }
 
-    if(LockStatus() != 0)
-        {//-- can't finalise the volume if it has opened objects and not in the consistent state.
-         //-- Theoretically, we can finalise the mount if we have files opened only for read, but at present,
-         //-- it's impossible to detect such situation.
+    if(Locked())
+        {//-- can't finalise the volume if it has opened disk access objects, like Format or RawAccess
         User::Leave(KErrInUse);
         }
 
@@ -4295,7 +4293,7 @@ TInt CFatMountCB::ScanDrive()
     TInt nRes;
 
     if(LockStatus()!=0)
-        {
+        {//-- can't run if the volume has opened objects, like files, directories, formats etc.
 		__PRINT(_L("CFatMountCB::ScanDrive() locked!\n"));
         return KErrInUse;
         }

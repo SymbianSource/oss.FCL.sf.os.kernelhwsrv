@@ -1437,462 +1437,500 @@ public:
 		EPagingPageTableAlloc,
 		};
 
-	/**
-	Enumeration of sub-category values for trace category EResourceManager.
-	@see EResourceManager
-	@prototype 9.5
-	*/
-	enum TResourceManager
-		{
-		/**
-		Trace output for resource registration.
-
-		Trace data format:
-		- 4 bytes containing the Resource Id.
-		- 4 bytes containing the Resource address.
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing the Resource Minimum Level
-		- 4 bytes containing the Resource Maximum Level
-		- 4 bytes containing the Resource Default Level
-		*/
-		ERegisterResource = 0,
-
-		/**
-		Trace output for client registration
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing client address
-		- N bytes containing client name, where 0 < N < 32
-		*/
-		ERegisterClient,
-
-		/**
-		Trace output for client deregistration
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing client address
-		- N bytes containing client name, where 0 < N < 32
-		*/
-		EDeRegisterClient,
-
-		/**
-		Trace output for resource state change start operation
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing client name, where 0 < N < 32
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing the Resource state
-		*/
-		ESetResourceStateStart,
-
-		/**
-		Trace output for resource state change end operation
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing client name, where 0 < N < 32
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing return value.
-		- 4 bytes containing the Resource state.
-		*/
-		ESetResourceStateEnd,
-
-		/**
-		Trace output for registration for post notification
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- 4 bytest containing the callback address
-		- 4 bytes containing return value.
-		*/
-		EPostNotificationRegister,
-
-		/**
-		Trace output for deregistration for post notification
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- 4 bytes containing the callback address
-		- 4 bytes containing the return value.
-		*/
-		EPostNotificationDeRegister,
-
-		/**
-		Trace output for post notification sent.
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		*/
-		EPostNotificationSent,
-
-		/**
-		Trace output for Callback complete
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		*/
-		ECallbackComplete,
-
-		/**
-		Trace output for resource manager memory usage
-
-		Trace data format:
-		- 4 bytes containing memory allocated in bytes.
-		*/
-		EMemoryUsage,
-
-		/**
-		Trace output for get resource state start operation
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing client name, where 0 < N < 32
-		- N bytes containing the Resource name, where 0 < N < 32
-		*/
-		EGetResourceStateStart,
-
-		/**
-		Trace output for get resource state end operation
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing client name, where 0 < N < 32
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing the Resource state
-		- 4 bytes containing return value.
-		*/
-		EGetResourceStateEnd,
-
-		/**
-		Trace output for cancellation of long latency operation
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing client name, where 0 < N < 32
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing return value
-		*/
-		ECancelLongLatencyOperation,
-
-		/**
-		Trace output for booting of resource manager
-
-		Trace data format:
-		- 4 bytes containing entry point
-		*/
-		EBooting,
-
-		/**
-		Trace output for PSL resource state change operation
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing the Resource current state
-		- 4 bytes containing the resource requested state
-		*/
-		EPslChangeResourceStateStart,
-
-		/**
-		Trace output for PSL resource state change operation
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing the Resource current state
-		- 4 bytes containing the resource requested state
-		- 4 bytes containing return value
-		*/
-		EPslChangeResourceStateEnd,
-
-		/**
-		Trace output for get resource state start operation in PSL
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing the Resource name, where 0 < N < 32
-		*/
-		EPslGetResourceStateStart,
-
-		/**
-		Trace output for get resource state end operation in PSL
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id.
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing the Resource state
-		- 4 bytes containing return value.
-		*/
-		EPslGetResourceStateEnd,
-
-		/**
-		Trace output for resource creation
-
-		Trace data format:
-		- 4 bytes containing minimum value of resource
-		- 4 bytes containing maximum value of resource
-		- 4 bytes containing the default value of resource
-		- 4 bytes containing the properties of the resource
-		- N bytes containing the Resource name, where 0 < N < 32
-		*/
-		EPslResourceCreate,
-
-		/**
-		Trace output for static resource with dependency registration
-
-		Trace data format:
-		- 4 bytes containing the Resource Id
-		- 4 bytes containing the Resource address
-		- N bytes containing the Resource name, where 0 < N < 32
-		- 4 bytes containing the minimum value of resource
-		- 4 bytes containing the maximum value of resource
-		- 4 bytes containing the default value of resource
-		*/
-		ERegisterStaticResourceWithDependency,
-
-		/**
-		Trace output for dynamic resource registration
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id
-		- N bytes containing the client name, where 0 < N < 32
-		- N bytes containing the resource name, where 0 < N < 32
-		- 4 bytes containing the resouce address
-		*/
-		ERegisterDynamicResource,
-
-		/**
-		Trace output for dynamic resource deregistration
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id
-		- N bytes containing the client name, where 0 < N < 32
-		- N bytes containing the resource name, where 0 < N < 32
-		- 4 bytes containing the resource address
-		- 4 bytes containing the resource level.
-		*/
-		EDeRegisterDynamicResource,
-
-		/**
-		Trace output for resource dependency registration
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id of first dependent resource
-		- N bytes containing the client name, where 0 < N < 32
-		- N bytes containing the resource name of first dependent resource, where 0 < N < 32
-		- 4 bytes containing the Resource Id of second dependent resource
-		- N bytes containing the resource name of second dependent resource, where 0 < N < 32
-		- 4 bytes containing the address of first dependent resource
-		- 4 bytes containing the address of second dependent resource
-		*/
-		ERegisterResourceDependency,
-
-		/**
-		Trace output for resource dependency deregistration
-
-		Trace data format:
-		- 4 bytes containing clientId
-		- 4 bytes containing the Resource Id of first dependent resource
-		- N bytes containing the client name, where 0 < N < 32
-		- N bytes containing the resource name of first dependent resource, where 0 < N < 32
-		- 4 bytes containing the resource id of second dependent resource
-		- N bytes containing the resource name of second dependent resource, where 0 < N < 32
-		- 4 bytes containing the address of first dependent resource
-		- 4 bytes containing the address of second dependent resource
-		*/
-		EDeRegisterResourceDependency
-		};
-	/**
-	Enumeration of sub-category values for trace category EResourceManagerUs.
-	@see EResourceManagerUs
-	@prototype 9.5
-	*/
-	enum TResourceManagerUs
-		{
-		/**
-		Trace output for the start of opening a channel to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes unused (displays 0)
-		- 4 bytes containing the client thread identifier.
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		EOpenChannelUsStart = 0,
-		/**
-		Trace output for the end of opening a channel to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes unused (displays 0)
-		- 4 bytes containing the client identifier provided by the Resource Controller
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		EOpenChannelUsEnd,
-		/**
-		Trace output for the start of registering a client with the Resource Controller.
-
-		Trace data format:
-		- 4 bytes the number of concurrent change resource state operations to be supported
-		- 4 bytes the number of concurrent notification requests to be supported
-		- N bytes containing the client name, where 0 < N < 32
-		- 4 bytes the number of concurrent get resource state operations to be supported
-		*/
-		ERegisterClientUsStart,
-		/**
-		Trace output for the end of registering a client with the Resource Controller.
-
-		Trace data format:
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		- 4 bytes specifying the value returned from the call to Resource Controller's AllocReserve method
-		*/
-		ERegisterClientUsEnd,
-		/**
-		Trace output for the start of de-registering a client with the Resource Controller.
-
-		Trace data format:
-		- 4 bytes unused (displays 0)
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		EDeRegisterClientUsStart,
-		/**
-		Trace output for the end of registering a client with the Resource Controller.
-
-		Trace data format:
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		*/
-		EDeRegisterClientUsEnd,
-		/**
-		Trace output for the start of a GetResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		EGetResourceStateUsStart,
-		/**
-		Trace output for the end of a GetResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes specifying the resource level
-		- 4 bytes containing the client identifier
-		- 4 bytes specifying the success code returned by the Resource Controller.
-		*/
-		EGetResourceStateUsEnd,
-		/**
-		Trace output for the start of a ChangeResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes specifying the required state
-		- N bytes containing the client name, where 0 < N < 32
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		*/
-		ESetResourceStateUsStart,
-		/**
-		Trace output for the end of a ChangeResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes specifying the requested state
-		- 4 bytes containing the client identifier
-		- 4 bytes specifying the success code returned by the Resource Controller.
-		*/
-		ESetResourceStateUsEnd,
-		/**
-		Trace output for the start of a cancel GetResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		ECancelGetResourceStateUsStart,
-		/**
-		Trace output for the end of a cancel GetResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		ECancelGetResourceStateUsEnd,
-		/**
-		Trace output for the start of a cancel ChangeResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		ECancelSetResourceStateUsStart,
-		/**
-		Trace output for the end of a cancel ChangeResourceState request to the Resource Controller.
-
-		Trace data format:
-		- 4 bytes specifying the resource ID
-		- 4 bytes containing the client identifier provided by the Resource Controller.
-		- N bytes containing the client name, where 0 < N < 32
-		*/
-		ECancelSetResourceStateUsEnd
-		};
-
-	/**
-	Enumeration of sub-category values for trace category EThreadPriority.
-	@see EThreadPriority
-	@internalTechnology
-	@prototype 9.3
-	*/
-	enum TThreadPriority
-		{
-		/**
-		Trace output when a nanothread priority is changed.
-
-		Trace data format:
-		- 4 bytes containing the context id (an NThread*) for the thread whose priority is changing.
-		- 4 bytes containing the new absolute priority.
-		*/
-		ENThreadPriority=0,
-
-		/**
-		Trace output when a DThread's default priority is set.
-
-		Trace data format:
-		- 4 bytes containing the context id (an NThread*) for the thread whose priority is changing.
-		- 4 bytes containing the iThreadPriority member - a value from enum ::TThrdPriority.
-		- 4 bytes containing the new default absolute priority.
-		*/
-		EDThreadPriority=1,
-
-		/**
-		Trace output when a DProcess priority is changed.
-
-		Trace data format:
-		- 4 bytes containing trace id (a DProcess*) for process.
-		- 4 bytes containing the new process priority, a value from enum ::TProcPriority
-		*/
-		EProcessPriority=2
-		};
+    /**
+    Enumeration of sub-category values for trace category EResourceManager.
+    @see EResourceManager
+    @prototype 9.5
+    */
+    enum TResourceManager
+        {
+        /**
+        Trace output for resource registration.
+
+        Trace data format:
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the Resource address.
+        - 4 bytes containing the Resource Minimum Level
+        - 4 bytes containing the Resource Maximum Level
+        - 4 bytes containing the Resource Default Level
+        - 4 bytes containing the length of resource name
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        ERegisterResource = 0,
+
+        /**
+        Trace output for client registration
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing client address
+        - 4 bytes containing the length of client name
+        - N bytes containing client name, where 0 < N < 32
+        */
+        ERegisterClient,
+
+        /**
+        Trace output for client deregistration
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing client address
+        - 4 bytes containing the length of client name
+        - N bytes containing client name, where 0 < N < 32
+        */
+        EDeRegisterClient,
+
+        /**
+        Trace output for resource state change start operation
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the Resource state
+        - 4 bytes containing the length of client name
+        - N bytes containing client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        ESetResourceStateStart,
+
+        /**
+        Trace output for resource state change end operation
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing return value.
+        - 4 bytes containing the Resource state.
+        - 4 bytes containing the length of client name
+        - N bytes containing client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name        
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        ESetResourceStateEnd,
+
+        /**
+        Trace output for registration for post notification
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytest containing the callback address
+        - 4 bytes containing return value.
+        */
+        EPostNotificationRegister,
+
+        /**
+        Trace output for deregistration for post notification
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the callback address
+        - 4 bytes containing the return value.
+        */
+        EPostNotificationDeRegister,
+
+        /**
+        Trace output for post notification sent.
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        */
+        EPostNotificationSent,
+
+        /**
+        Trace output for Callback complete
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        */
+        ECallbackComplete,
+
+        /**
+        Trace output for resource manager memory usage
+
+        Trace data format:
+        - 4 bytes containing memory allocated in bytes.
+        */
+        EMemoryUsage,
+
+        /**
+        Trace output for get resource state start operation
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the length of client name.
+        - N bytes containing client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        EGetResourceStateStart,
+
+        /**
+        Trace output for get resource state end operation
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the Resource state
+        - 4 bytes containing return value.
+        - 4 bytes containing the length of client name.
+        - N bytes containing client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        EGetResourceStateEnd,
+
+        /**
+        Trace output for cancellation of long latency operation
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing return value
+        - 4 bytes containing the length of client name.
+        - N bytes containing client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        ECancelLongLatencyOperation,
+
+        /**
+        Trace output for booting of resource manager
+
+        Trace data format:
+        - 4 bytes containing entry point
+        */
+        EBooting,
+
+        /**
+        Trace output for PSL resource state change operation
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the Resource current state
+        - 4 bytes containing the resource requested state
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        EPslChangeResourceStateStart,
+
+        /**
+        Trace output for PSL resource state change operation
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the Resource current state
+        - 4 bytes containing the resource requested state
+        - 4 bytes containing return value
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        EPslChangeResourceStateEnd,
+
+        /**
+        Trace output for get resource state start operation in PSL
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        EPslGetResourceStateStart,
+
+        /**
+        Trace output for get resource state end operation in PSL
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id.
+        - 4 bytes containing the Resource state
+        - 4 bytes containing return value.
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        EPslGetResourceStateEnd,
+
+        /**
+        Trace output for resource creation
+
+        Trace data format:
+        - 4 bytes containing minimum value of resource
+        - 4 bytes containing maximum value of resource
+        - 4 bytes containing the default value of resource
+        - 4 bytes containing the properties of the resource
+        - 4 bytes containing the length of resource name.
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        EPslResourceCreate,
+
+        /**
+        Trace output for static resource with dependency registration
+
+        Trace data format:
+        - 4 bytes containing the Resource Id
+        - 4 bytes containing the Resource address
+        - 4 bytes containing the minimum value of resource
+        - 4 bytes containing the maximum value of resource
+        - 4 bytes containing the default value of resource
+        - 4 bytes containing the length of resource name
+        - N bytes containing the Resource name, where 0 < N < 32
+        */
+        ERegisterStaticResourceWithDependency,
+
+        /**
+        Trace output for dynamic resource registration
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id
+        - 4 bytes containing the resouce address
+        - 4 bytes containing the length of client name
+        - N bytes containing the client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name
+        - N bytes containing the resource name, where 0 < N < 32
+        */
+        ERegisterDynamicResource,
+
+        /**
+        Trace output for dynamic resource deregistration
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id
+        - 4 bytes containing the resource address
+        - 4 bytes containing the resource level.
+        - 4 bytes containing the length of client name
+        - N bytes containing the client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name
+        - N bytes containing the resource name, where 0 < N < 32
+        */
+        EDeRegisterDynamicResource,
+
+        /**
+        Trace output for resource dependency registration
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id of first dependent resource
+        - 4 bytes containing the Resource Id of second dependent resource
+        - 4 bytes containing the address of first dependent resource
+        - 4 bytes containing the address of second dependent resource
+        - 4 bytes containing the length of client name
+        - N bytes containing the client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name of first dependent resource
+        - N bytes containing the resource name of first dependent resource, where 0 < N < 32
+        - 4 bytes containing the length of resource name of second dependent resource
+        - N bytes containing the resource name of second dependent resource, where 0 < N < 32
+        */
+        ERegisterResourceDependency,
+
+        /**
+        Trace output for resource dependency deregistration
+
+        Trace data format:
+        - 4 bytes containing clientId
+        - 4 bytes containing the Resource Id of first dependent resource
+        - 4 bytes containing the resource id of second dependent resource
+        - 4 bytes containing the address of first dependent resource
+        - 4 bytes containing the address of second dependent resource
+        - 4 bytes containing the length of client name
+        - N bytes containing the client name, where 0 < N < 32
+        - 4 bytes containing the length of resource name of first dependent resource
+        - N bytes containing the resource name of first dependent resource, where 0 < N < 32
+        - 4 bytes containing the length of resource name of second dependent resource
+        - N bytes containing the resource name of second dependent resource, where 0 < N < 32
+        */
+        EDeRegisterResourceDependency
+        };
+    /**
+    Enumeration of sub-category values for trace category EResourceManagerUs.
+    @see EResourceManagerUs
+    @prototype 9.5
+    */
+    enum TResourceManagerUs
+        {
+        /**
+        Trace output for the start of opening a channel to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes containing the client thread identifier.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        EOpenChannelUsStart = 0,
+        /**
+        Trace output for the end of opening a channel to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes containing the client identifier provided by the Resource Controller
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        EOpenChannelUsEnd,
+        /**
+        Trace output for the start of registering a client with the Resource Controller.
+
+        Trace data format:
+        - 4 bytes containing the client identifier provided by the Resource Controller
+        - 1 bytes the number of concurrent change resource state operations to be supported
+        - 1 bytes the number of concurrent notification requests to be supported        
+        - 1 bytes the number of concurrent get resource state operations to be supported
+        - 1 bytes unused        
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        ERegisterClientUsStart,
+        /**
+        Trace output for the end of registering a client with the Resource Controller.
+
+        Trace data format:
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes specifying the value returned from the call to Resource Controller's AllocReserve method
+        */
+        ERegisterClientUsEnd,
+        /**
+        Trace output for the start of de-registering a client with the Resource Controller.
+
+        Trace data format:
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        EDeRegisterClientUsStart,
+        /**
+        Trace output for the end of registering a client with the Resource Controller.
+
+        Trace data format:
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        */
+        EDeRegisterClientUsEnd,
+        /**
+        Trace output for the start of a GetResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        EGetResourceStateUsStart,
+        /**
+        Trace output for the end of a GetResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes specifying the resource level
+        - 4 bytes containing the client identifier
+        - 4 bytes specifying the success code returned by the Resource Controller.
+        */
+        EGetResourceStateUsEnd,
+        /**
+        Trace output for the start of a ChangeResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes specifying the required state
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        ESetResourceStateUsStart,
+        /**
+        Trace output for the end of a ChangeResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes specifying the requested state
+        - 4 bytes containing the client identifier
+        - 4 bytes specifying the success code returned by the Resource Controller.
+        */
+        ESetResourceStateUsEnd,
+        /**
+        Trace output for the start of a cancel GetResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        ECancelGetResourceStateUsStart,
+        /**
+        Trace output for the end of a cancel GetResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        ECancelGetResourceStateUsEnd,
+        /**
+        Trace output for the start of a cancel ChangeResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        ECancelSetResourceStateUsStart,
+        /**
+        Trace output for the end of a cancel ChangeResourceState request to the Resource Controller.
+
+        Trace data format:
+        - 4 bytes specifying the resource ID
+        - 4 bytes containing the client identifier provided by the Resource Controller.
+        - 4 bytes containing the length of client name.
+        - N bytes containing the client name, where 0 < N < 32
+        */
+        ECancelSetResourceStateUsEnd
+        };
+
+    /**
+    Enumeration of sub-category values for trace category EThreadPriority.
+    @see EThreadPriority
+    @internalTechnology
+    @prototype 9.3
+    */
+    enum TThreadPriority
+        {
+        /**
+        Trace output when a nanothread priority is changed.
+
+        Trace data format:
+        - 4 bytes containing the context id (an NThread*) for the thread whose priority is changing.
+        - 4 bytes containing the new absolute priority.
+        */
+        ENThreadPriority=0,
+
+        /**
+        Trace output when a DThread's default priority is set.
+
+        Trace data format:
+        - 4 bytes containing the context id (an NThread*) for the thread whose priority is changing.
+        - 4 bytes containing the iThreadPriority member - a value from enum ::TThrdPriority.
+        - 4 bytes containing the new default absolute priority.
+        */
+        EDThreadPriority=1,
+
+        /**
+        Trace output when a DProcess priority is changed.
+
+        Trace data format:
+        - 4 bytes containing trace id (a DProcess*) for process.
+        - 4 bytes containing the new process priority, a value from enum ::TProcPriority
+        */
+        EProcessPriority=2
+        };
 
 	/**
 	Enumeration of sub-category values for trace category EPagingMedia.

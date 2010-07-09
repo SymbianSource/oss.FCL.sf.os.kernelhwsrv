@@ -597,6 +597,57 @@ protected:
 	};
 
 /**
+Used for testing Pause and Resume ( Negative Testing)
+
+Extends CSingle transfer by adding the capability to test
+Pause  & Resume() API. Expects that Pause and Resume is not supported
+*/
+class CPauseResumeNegTest : public CSingleTransferTest
+	{
+public:
+	 CPauseResumeNegTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs& aArgs, const TResultSet& aExpected)
+		:CSingleTransferTest(aName, aIterations, aArgs, aExpected)
+	 {}
+
+	~CPauseResumeNegTest();
+
+	virtual void RunTest();
+	virtual void PrintTestType() const;
+
+	virtual CTest* Clone() const {return new  CPauseResumeNegTest(*this);}
+
+	// The methods below is a setters ie. The Named Parameter Idiom
+	// @see http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.18
+	inline CPauseResumeNegTest& UseNewDmaApi(TBool aFlag) {CSingleTransferTest::UseNewDmaApi(aFlag); return *this;}
+	};
+
+/**
+Used for testing Linking of DMA Channels ( Negative Testing)
+
+Extends CSingle transfer by adding the capability to test DMA channel linking
+Expects that channel linking is not supported
+*/
+class CLinkChannelTest : public CSingleTransferTest
+	{
+public:
+	 CLinkChannelTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs& aArgs, const TResultSet& aExpected)
+		:CSingleTransferTest(aName, aIterations, aArgs, aExpected)
+	 {}
+
+	~CLinkChannelTest();
+
+	virtual void RunTest();
+	virtual void PrintTestType() const;
+
+	virtual CTest* Clone() const {return new  CLinkChannelTest(*this);}
+
+	// The methods below is a setters ie. The Named Parameter Idiom
+	// @see http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.18
+	inline CLinkChannelTest& UseNewDmaApi(TBool aFlag) {CSingleTransferTest::UseNewDmaApi(aFlag); return *this;}
+	};
+
+
+/**
 This class will be used for tests which benchmark certain DMA operations
 */
 class CDmaBenchmark : public CSingleTransferTest

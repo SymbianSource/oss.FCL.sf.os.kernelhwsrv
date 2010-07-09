@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -403,6 +403,9 @@ void DPowerResourceController::CompleteNotifications(TInt aClientId, DStaticPowe
 		//If dyanmic resource is deregistering, send notification to all clients requested for it
 		if((pN->iCallback.iResourceId & KIdMaskDynamic) && (aClientId == KDynamicResourceDeRegistering))
 			{
+			pN->iCallback.iResult=aReturnCode;			
+			pN->iCallback.iMutex = iResourceMutex;
+			pN->iCallback.iPendingRequestCount++;
 			pN->iCallback.iResult = aReturnCode;
 			pN->iCallback.iLevel = aState;
 			pN->iCallback.iClientId = aClientId;
@@ -418,14 +421,19 @@ void DPowerResourceController::CompleteNotifications(TInt aClientId, DStaticPowe
 				(pN->iDirection && ((pN->iPreviousLevel < pN->iThreshold) && (aState >= pN->iThreshold))) ||
 				(!pN->iDirection && ((pN->iPreviousLevel > pN->iThreshold) && (aState <= pN->iThreshold))))
 			{
-            pN->iCallback.iResult=aReturnCode;
-            pN->iCallback.iLevel=aState;
-            pN->iCallback.iClientId = aClientId;
+			pN->iCallback.iResult=aReturnCode;
+			pN->iCallback.iMutex = iResourceMutex;
+            pN->iCallback.iPendingRequestCount++;			
+			pN->iCallback.iLevel=aState;
+			pN->iCallback.iClientId = aClientId;
 			pN->iCallback.iLevelOwnerId = aLevelOwnerId;
+			
 			__KTRACE_OPT(KRESMANAGER, Kern::Printf("Notifications ClientId = 0x%x, ResourceId = %d, State = %d, Result = %d",
 										pN->iCallback.iClientId, pN->iCallback.iResourceId, aState, aReturnCode));
 			PRM_POSTNOTIFICATION_SENT_TRACE
-            pN->iCallback.Enque();
+
+			pN->iCallback.Enque();
+
 			}
 		pN->iPreviousLevel = aState; //Update the state
 		}
@@ -708,6 +716,8 @@ void DPowerResourceController::MsgQFunc(TAny* aPtr)
     TPowerResourceCb* pCb = aReq->ResourceCb();
     if(pCb)
 		{
+        pCb->iMutex = pRC->iResourceMutex;
+        pCb->iPendingRequestCount++;    
         pCb->iResult=aReq->ReturnCode();
         pCb->iLevel=aReq->Level();
         pCb->iResourceId=aReq->ResourceId();
@@ -781,6 +791,8 @@ void DPowerResourceController::MsgQDependencyFunc(TAny* aPtr)
     TPowerResourceCb* pCb = aReq->ResourceCb();
     if(pCb)
 		{
+        pCb->iMutex = pRC->iResourceMutex;
+        pCb->iPendingRequestCount++;       
         pCb->iResult=aReq->ReturnCode();
         pCb->iLevel=aReq->Level();
         pCb->iResourceId=aReq->ResourceId();
@@ -2475,8 +2487,29 @@ TInt DPowerResourceController::ChangeResourceState(TUint aClientId, TUint aResou
 #endif
 	//Return if the resource is already in that state and client is also the same.
 	if((aNewState == pR->iCachedLevel) && ((TInt)aClientId == pR->iLevelOwnerId))
-		UNLOCK_RETURN(KErrNone);
-
+		{
+		if(aCb)
+			{
+			//Invoke callback function
+            TUint ClientId = aClientId;
+            TUint ResourceId = aResourceId;
+            TInt Level = aNewState;
+            TInt LevelOwnerId = pR->iLevelOwnerId;
+            TInt Result = KErrNone;
+            TAny* Param = aCb->iParam;
+            aCb->iPendingRequestCount++;
+            UnLock();
+            // Call the client specified callback function
+            aCb->iCallback(ClientId, ResourceId, Level, LevelOwnerId, Result, Param);   
+            Lock();
+            aCb->iPendingRequestCount--;
+            if(aCb->iPendingRequestCount == 0)
+                {
+                aCb->iResult = KErrCompletion;
+                }
+			}
+        UNLOCK_RETURN(KErrNone);
+		}
 	
 	PRM_CLIENT_CHANGE_STATE_START_TRACE
 	//If long latency resource requested synchronously from DFC thread 0 Panic
@@ -2616,16 +2649,29 @@ TInt DPowerResourceController::ChangeResourceState(TUint aClientId, TUint aResou
 		    if(aResourceId & KIdMaskDynamic)
 				((DDynamicPowerResource*)pR)->UnLock();
 #endif
-			UnLock();
 			if(aCb)
 				{
-				//Invoke callback function
-				aCb->iCallback(req->ClientId(), aResourceId, req->Level(), pR->iLevelOwnerId, r, aCb->iParam);
-				//Mark the callback object to act properly during cancellation of this request.
-				aCb->iResult = KErrCompletion; 
-				}
+                //Invoke callback function
+                TUint ClientId = req->ClientId();
+                TUint ResourceId = aResourceId;
+                TInt Level = req->Level();
+                TInt LevelOwnerId = pR->iLevelOwnerId;
+                TInt Result = r;
+                TAny* Param = aCb->iParam;
+                aCb->iPendingRequestCount++;
+                UnLock();
+                // Call the client specified callback function
+                aCb->iCallback(ClientId, ResourceId, Level, LevelOwnerId, Result, Param);   
+                Lock();
+                aCb->iPendingRequestCount--;
+                if(aCb->iPendingRequestCount == 0)
+                    {
+                    aCb->iResult = KErrCompletion;
+                    }
+                }
+
 			PRM_CLIENT_CHANGE_STATE_END_TRACE
-			return(r);
+			UNLOCK_RETURN(r);
 			}
 		}
 	else if(pR->iLevelOwnerId == -1)
@@ -2684,16 +2730,29 @@ TInt DPowerResourceController::ChangeResourceState(TUint aClientId, TUint aResou
 	if(aResourceId & KIdMaskDynamic)
 		((DDynamicPowerResource*)pR)->UnLock();
 #endif
-	UnLock();
 	if(aCb)
 		{
-		//Invoke callback function
-		aCb->iCallback(req->ClientId(), aResourceId, req->Level(), pR->iLevelOwnerId, r, aCb->iParam);
-		aCb->iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
+        //Invoke callback function
+        TUint ClientId = req->ClientId();
+        TUint ResourceId = aResourceId;
+        TInt Level = req->Level();
+        TInt LevelOwnerId = pR->iLevelOwnerId;
+        TInt Result = r;
+        TAny* Param = aCb->iParam;
+        aCb->iPendingRequestCount++;
+        UnLock();
+        // Call the client specified callback function
+        aCb->iCallback(ClientId, ResourceId, Level, LevelOwnerId, Result, Param);   
+        Lock();
+        aCb->iPendingRequestCount--;
+        if(aCb->iPendingRequestCount == 0)
+            {
+            aCb->iResult = KErrCompletion;
+            }
 		}
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::ChangeResourceState, Level = %d", req->Level()));
     PRM_CLIENT_CHANGE_STATE_END_TRACE
-    return r;
+    UNLOCK_RETURN(r);
 	}
 
 /**
@@ -2915,14 +2974,28 @@ TInt DPowerResourceController::GetResourceState(TUint aClientId, TUint aResource
 	PRM_RESOURCE_GET_STATE_START_TRACE
 	if(aCached) //Call the callback directly
 		{
-		UnLock();
-		aCb.iCallback(aClientId, aResourceId, pR->iCachedLevel, pR->iLevelOwnerId, KErrNone, aCb.iParam);
-		aCb.iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
+        //Invoke callback function
+        TUint ClientId = aClientId;
+        TUint ResourceId = aResourceId;
+        TInt Level = pR->iCachedLevel;
+        TInt LevelOwnerId = pR->iLevelOwnerId;
+        TInt Result = KErrNone;
+        TAny* Param = aCb.iParam;
+        aCb.iPendingRequestCount++;
+        UnLock();
+        // Call the client specified callback function
+        aCb.iCallback(ClientId, ResourceId, Level, LevelOwnerId, Result, Param);   
+        Lock();
+        aCb.iPendingRequestCount--;
+        if(aCb.iPendingRequestCount == 0)
+            {
+            aCb.iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
+            }
 #ifdef PRM_INSTRUMENTATION_MACRO
 		TInt aState = pR->iCachedLevel;
         PRM_RESOURCE_GET_STATE_END_TRACE
 #endif
-		return(KErrNone);
+		UNLOCK_RETURN(KErrNone);
 		}
 	TPowerRequest* req=NULL;
 	if(pR->LatencyGet())
@@ -2987,10 +3060,25 @@ TInt DPowerResourceController::GetResourceState(TUint aClientId, TUint aResource
 		if(aResourceId & KIdMaskDynamic)
 			((DDynamicPowerResource*)pR)->UnLock();
 #endif
-		UnLock();
-		// Call the client callback function directly as it is already executing in the context of client thread.
-		aCb.iCallback(aClientId, aResourceId, req->Level(), pR->iLevelOwnerId, r, aCb.iParam);
-		aCb.iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
+
+        //Invoke callback function
+        TUint ClientId = aClientId;
+        TUint ResourceId = aResourceId;
+        TInt Level = req->Level();
+        TInt LevelOwnerId = pR->iLevelOwnerId;
+        TInt Result = r;
+        TAny* Param = aCb.iParam;
+        aCb.iPendingRequestCount++;
+        UnLock();
+        // Call the client specified callback function
+        aCb.iCallback(ClientId, ResourceId, Level, LevelOwnerId, Result, Param);   
+        Lock();
+        aCb.iPendingRequestCount--;
+        if(aCb.iPendingRequestCount == 0)
+            {
+            aCb.iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
+            }       
+        UnLock(); 
 		}
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::GetResourceState(asynchronous), Level = %d", req->Level()));
 	if(pR->LatencyGet())

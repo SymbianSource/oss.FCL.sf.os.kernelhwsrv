@@ -301,7 +301,9 @@ class RBusDevIicClient : public RBusLogicalChannel
 		EReleaseChan,						/**< ReleaseChannel												*/
 		ERegisterRxBuffer,					/**< Register a buffer for receiving data						*/
 		ERegisterTxBuffer,					/**< Register a buffer for transmitting data					*/
-		ESetNotifTrigger					/**< Set the notification triggers                               */									
+		ESetNotifTrigger,					/**< Set the notification triggers                               */
+		ETestSpare1,
+		ETestStaticEx
 		};
 
 	enum TStaticExt
@@ -405,7 +407,9 @@ class RBusDevIicClient : public RBusLogicalChannel
 	inline TInt SetNotifNoTrigger(TInt aChannelId, TInt aTrigger){return(DoControl(ECtrlIoNotifNoTrigger,(TAny*)aChannelId,(TAny*)aTrigger));};
 
 	inline void TestOverrunUnderrun(TInt aBusId, TInt aChannelId, TRequestStatus& aStatus) {DoRequest(ECtrlIoOvUndRunRxTx,aStatus,(TAny*)aBusId,(TAny*)aChannelId);}
-
+	
+	inline TInt TestSpare1(TInt aBusId) {return (DoControl(ETestSpare1, (TAny*)aBusId));}
+	inline TInt TestStaticExtension(TInt aBusId) {return (DoControl(ETestStaticEx, (TAny*)aBusId));}
 #endif
 	};
 

@@ -66,8 +66,6 @@ device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\ECOMM.LDD					\sys\bin\ecomm
 device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\PIPELIB.LDD					\sys\bin\pipelib.ldd
 device[VARID]= 		\Epoc32\Release\##KMAIN##\##BUILD##\ESOUNDSC.LDD				\sys\bin\esoundsc.ldd
 extension[VARID]=	\Epoc32\Release\##KMAIN##\##BUILD##\EXSTART.DLL					\sys\bin\exstart.dll
-device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\ECAMERASC.LDD			\sys\bin\ecamerasc.ldd
-device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\_##VARIANT##_CAMERASC.PDD		\sys\bin\camerasc.pdd
 
 // USB Client
 device[VARID]=		\Epoc32\Release\##KMAIN##\##BUILD##\USBC.LDD					\sys\bin\EUSBC.LDD

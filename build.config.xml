@@ -103,7 +103,6 @@
 			<unit name="eka" unitID="sos.eka" bldFile="\sf\os\kernelhwsrv\kernel\eka" mrp="\sf\os\kernelhwsrv\kernel\eka\base_e32.mrp"/>
 			<unit name="eka_compsupp" unitID="sos.eka_compsupp" bldFile="\sf\os\kernelhwsrv\kernel\eka\compsupp" mrp="\sf\os\kernelhwsrv\kernel\eka\compsupp\base_e32_compsupp.mrp"/>
 			<unit name="eka_drivers_bsp" unitID="sos.eka_drivers_bsp" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\bsp\" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\bsp\base_e32_drivers_bsp.mrp.mrp"/>
-			<unit name="eka_drivers_camerasc" unitID="sos.eka_drivers_camerasc" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\camerasc" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\camerasc\base_drivers_camerasc.mrp"/>
 			<unit name="eka_drivers_cf_unistore2" unitID="sos.eka_drivers_cf_unistore2" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\crashflash\unistore2" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\crashflash\unistore2\base_crashflash_unistore2.mrp"/>
 			<unit name="eka_drivers_debug" unitID="sos.eka_drivers_debug" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\debug\group" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\debug\group\base_e32_drivers_debug.mrp"/>
 			<unit name="eka_drivers_display" unitID="sos.eka_drivers_display" bldFile="\sf\os\kernelhwsrv\kernel\eka\drivers\display" mrp="\sf\os\kernelhwsrv\kernel\eka\drivers\display\base_e32_drivers_display.mrp"/>
@@ -187,7 +186,7 @@
 		<module name="BSP_OMAPH4"> 
 			<unit name="h4bootloader" unitID="sos.h4bootloader" bldFile="\sf\os\boardsupport\omaph4\h4bootloader" mrp="\sf\os\boardsupport\omaph4\h4bootloader\base_omaph4hrp_bootldr.mrp"/>
 			<unit name="omaph4bsp_h4" unitID="sos.omaph4bsp_h4" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4" mrp="\sf\os\boardsupport\omaph4\omaph4bsp\h4\base_omaph4hrp.mrp"/>
-			<unit name="omaph4bsp_h4_flexible" unitID="sos.omaph4bsp_h4_flexible" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible" mrp="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible\base_omaph4hrp_flexible.mrp"/>
+			<!--<unit name="omaph4bsp_h4_flexible" unitID="sos.omaph4bsp_h4_flexible" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible" mrp="\sf\os\boardsupport\omaph4\omaph4bsp\h4\flexible\base_omaph4hrp_flexible.mrp"/>-->
 			<unit name="omaph4minienvbootloader" unitID="sos.omaph4minienvbootloader" bldFile="\sf\os\boardsupport\omaph4\omaph4minienvbootloader" mrp="\sf\os\boardsupport\omaph4\omaph4minienvbootloader\base_omaph4hrp_mebootldr.mrp"/>
 			<unit name="omaph4sdio" unitID="sos.omaph4sdio" bldFile="\sf\os\boardsupport\omaph4\omaph4sdio" mrp="\sf\os\boardsupport\omaph4\omaph4sdio\base_omaph4hrp_sdio.mrp"/>
 			<unit name="omaph4unistore2" unitID="sos.omaph4unistore2" bldFile="\sf\os\boardsupport\omaph4\omaph4unistore2" mrp="\sf\os\boardsupport\omaph4\omaph4unistore2\base_omaph4hrp_unistore2.mrp"/>
@@ -260,16 +259,17 @@
 			<unit name="sdiotest" unitID="sos.sdiotest" bldFile="\sf\os\kernelhwsrv\kerneltest\sdiotest" mrp="\sf\os\kernelhwsrv\kerneltest\sdiotest\base_sdiotests.mrp"/>
 			<unit name="sdiotest_restricted" unitID="sos.sdiotest_restricted" bldFile="\sf\os\kernelhwsrv\kerneltest\sdiotest_restricted" mrp="\sf\os\kernelhwsrv\kerneltest\sdiotest_restricted\base_sdiotests_restricted.mrp"/>
 		</module>
-		-->
+
 
 		<module name="BSP_Test_Emulator"> 
 			<unit name="emulatorbsp_test" unitID="sos.emulatorbsp_test" bldFile="\sf\os\boardsupport\emulator\emulatorbsp\test" mrp=""/>
 		</module>
-
-		<!--
 		<module name="BSP_Test_NaviEngine"> 
 			<unit name="navienginebsp_ne1_tb_test" unitID="sos.navienginebsp_ne1_tb_test" bldFile="\sf\os\boardsupport\naviengine\navienginebsp\ne1_tb\test" mrp=""/>
 			<unit name="navienginebspflexible_test" unitID="sos.navienginebspflexible_test" bldFile="\sf\os\boardsupport\naviengine\navienginebspflexible\test" mrp=""/>
+		</module>
+		<module name="BSP_Test_OMAPH2"> 
+			<unit name="omaph2bsp_h2_test" unitID="sos.omaph2bsp_h2_test" bldFile="\sf\os\boardsupport\omaph2\omaph2bsp\h2\test" mrp=""/>
 		</module>
 		-->
 
@@ -277,9 +277,6 @@
 			<unit name="34xx_sdp_flexible_test" unitID="sos.34xx_sdp_flexible_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\flexible\test" mrp=""/>
 			<unit name="34xx_sdp_test" unitID="sos.34xx_sdp_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\34xx_sdp\test" mrp=""/>
 			<unit name="lab_test" unitID="sos.lab_test" bldFile="\sf\os\boardsupport\omap3variants\tiomap3bsp\variant\lab\test" mrp=""/>
-		</module>
-		<module name="BSP_Test_OMAPH2"> 
-			<unit name="omaph2bsp_h2_test" unitID="sos.omaph2bsp_h2_test" bldFile="\sf\os\boardsupport\omaph2\omaph2bsp\h2\test" mrp=""/>
 		</module>
 		<module name="BSP_Test_OMAPH4"> 
 			<unit name="omaph4bsp_h4_test" unitID="sos.omaph4bsp_h4_test" bldFile="\sf\os\boardsupport\omaph4\omaph4bsp\h4\test" mrp=""/>

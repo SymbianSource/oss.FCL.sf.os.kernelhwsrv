@@ -47,14 +47,15 @@ LOCAL_C TInt8 AssignChanNum()
 	}
 #endif/*STANDALONE_CHANNEL*/
 
-#ifdef SLAVE_MODE
+//Macros MASTER_MODE and SLAVE_MODE are intentionally omitted from this file
+//This is for master and slave stubs to exercise the channel class,
+//and we need these stubs for code coverage tests.
 LOCAL_C TInt16 AssignSlaveChanId()
 	{
 	static TInt16 iBaseSlaveChanId = KI2cSlaveChannelIdBase;
 	I2C_PRINT(("I2C AssignSlaveChanId - on entry, iBaseSlaveChanId = 0x%x\n",iBaseSlaveChanId));
 	return iBaseSlaveChanId++; // Arbitrary, for illustration
 	}
-#endif/*SLAVE_MODE*/
 
 NONSHARABLE_CLASS(DSimulatedI2cDevice) : public DPhysicalDevice
 	{
@@ -230,8 +231,6 @@ DECLARE_STANDARD_PDD()		// I2c test driver to be explicitly loaded as an LDD, no
 	return new DSimulatedI2cDevice;
 	}
 
-
-#ifdef MASTER_MODE
 #ifdef STANDALONE_CHANNEL
 EXPORT_C
 #endif
@@ -253,6 +252,8 @@ TInt DSimulatedIicBusChannelMasterI2c::DoCreate()
 	if(r == KErrNone)
 		SetDfcQ((TDfcQue*)iDynamicDfcQ);
 	DSimulatedIicBusChannelMasterI2c::SetRequestDelayed(this,EFalse);
+	//Call to base class DoCreate(not strictly necessary)
+	DIicBusChannelMaster::DoCreate();
 	return r;
 	}
 
@@ -423,7 +424,8 @@ TInt DSimulatedIicBusChannelMasterI2c::StaticExtension(TUint aFunction, TAny* aP
 		default:
 			{
 			Kern::Printf("aFunction %d is not recognised \n",aFunction);
-			r=KErrNotSupported;
+			//For default case call the base class method for consistent handling
+            r=DIicBusChannelMaster::StaticExtension(aFunction,NULL,NULL);
 			}
 		}
 		
@@ -432,11 +434,6 @@ TInt DSimulatedIicBusChannelMasterI2c::StaticExtension(TUint aFunction, TAny* aP
 #endif		
 	return r;
 	}
-
-//#ifdef MASTER_MODE
-#endif
-
-#ifdef SLAVE_MODE
 
 void DSimulatedIicBusChannelSlaveI2c::SlaveAsyncSimCallback(TAny* aPtr)
 	{
@@ -1042,7 +1039,8 @@ TInt DSimulatedIicBusChannelSlaveI2c::StaticExtension(TUint aFunction, TAny* aPa
 		default:
 			{
 			Kern::Printf("aFunction %d is not recognised \n",aFunction);
-			r=KErrNotSupported;
+			//For default case call the base class method for consistent handling
+            r=DIicBusChannelSlave::StaticExtension(aFunction,NULL,NULL);
 			}
 		}
 #ifdef IIC_INSTRUMENTATION_MACRO
@@ -1051,12 +1049,6 @@ TInt DSimulatedIicBusChannelSlaveI2c::StaticExtension(TUint aFunction, TAny* aPa
 	return r;
 	}
 
-
-
-//#ifdef MASTER_MODE
-#endif
-
-#if defined(MASTER_MODE) && defined(SLAVE_MODE)
 #ifdef STANDALONE_CHANNEL
 EXPORT_C
 #endif
@@ -1107,15 +1099,13 @@ TInt DSimulatedIicBusChannelMasterSlaveI2c::StaticExtension(TUint aFunction, TAn
 		default:
 			{
 			Kern::Printf("aFunction %d is not recognised \n",aFunction);
-			r=KErrNotSupported;
+			//For default case call the base class method for consistent handling
+			r=DIicBusChannelMasterSlave::StaticExtension(aFunction,NULL,NULL);
 			}
 		}
 	return r;
 	}
 
-
-//#if defined(MASTER_MODE) && defined(SLAVE_MODE)
-#endif
 
 
 

@@ -1,4 +1,4 @@
-// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -70,6 +70,12 @@ const TUint KRotationModifiers=EModifierRotateBy90|
 
 
 /**
+A contiguous range of logical scancodes of type, and ordering, as
+defined in TStdScanCode.
+Once aligned with an array of target keycodes, a pairwise
+association between each scancode and its translation will
+be defined.
+
 @publishedPartner
 @released
 */
@@ -80,6 +86,9 @@ struct SScanCodeBlock
 	};
 
 /**
+An array of SScanCodeBlock scancode ranges. This allows
+a discontiguous set of scancodes to be treated contiguously.
+
 @publishedPartner
 @released
 */
@@ -90,27 +99,37 @@ struct SScanCodeBlockList
 	};
 
 /**
+Associates an SScanCodeBlockList with
+a specific set of target keycodes. This defines a concrete
+translation for the scancodes in the scanCodes block list.
+
 @publishedPartner
 @released
 */
 struct SConvSubTable
 	{
-	const TUint16 *pkeyCode;
+	const TUint16 *pkeyCode; //<! An array of target keycodes
 	SScanCodeBlockList scanCodes;
 	};
 
 /**
+Associates a combination of modifier keys with the translation
+table to be used when the combination is active.
+
 @publishedPartner
 @released
 */
 struct SConvTableNode
 	{
-   TMaskedModifiers maskedModifiers;
+	TMaskedModifiers maskedModifiers;
 	TUint numSubTables;
 	const SConvSubTable * const *ppsubTables;
 	};
 
 /**
+The top level collection of all different translation
+tables.
+
 @publishedPartner
 @released
 */
@@ -131,6 +150,16 @@ struct SKeyCodeList
 	};
 
 /**
+Defines an action to perform when a given key press
+occurs.
+
+@note This struct should not be used in a keymap table.
+It is used within the key translator to represent an
+SFuncAndState for the modifier table (where the state
+member is not meaningful).
+
+@see SFuncAndState
+
 @publishedPartner
 @released
 */
@@ -142,28 +171,41 @@ struct SFunc
 	};
 
 /**
+Defines an action to perform and the next state transition
+when a given key press occurs.
+
 @publishedPartner
 @released
 */
 struct SFuncAndState
 	{
-	TUint8 state;
-	TUint8 func;
-	TInt32 funcParam;
+	TUint8 state; ///< The next TState to transition to
+	TUint8 func; ///< A TFuncGeneral action
+	TInt32 funcParam; ///< Parameter for func (key to translate to for EPassSpecialKeyThru)
 	};
 
 /**
+Associates a SFuncAndState, which defines an action, with a
+key press and modifier combination to trigger it.
+
 @publishedPartner
 @released
 */
 struct SFuncTableEntry
 	{
-	TMaskedModifiers maskedModifiers;
-	TKeyCodePattern keyCodePattern;
-	SFuncAndState funcAndNewState;
+	TMaskedModifiers maskedModifiers; ///< Required modifier combination
+	TKeyCodePattern keyCodePattern; ///< Required keypress
+	SFuncAndState funcAndNewState; ///< Action or translation
 	};
 
 /**
+A function table corresponds to a particular keyboard
+mode. When this mode is active this table's entries
+are used to perform actions or translations
+for certain keypresses.
+
+@see SFuncTableEntry
+
 @publishedPartner
 @released
 */
@@ -174,18 +216,46 @@ struct SFuncTable
 	};
 
 /**
+Collection of all keyboard mode function tables
+
 @publishedPartner
 @released
 */
 struct SFuncTables
 	{
+	/**
+	This table is searched for a match if a match has not been
+	found in the current state's table
+	*/
 	SFuncTable defaultTable;
+
+	/**
+	This table controls which keys change which modifiers;
+	the state field in this table is ignored
+	*/
 	SFuncTable modifierTable;
+
+	/**
+	Number of entries in array pgenFuncTables.
+	This must in fact, always be equal to 13.
+	*/
 	TUint numGenFuncTables;
+
+	/**
+	Array of pointers to general state control tables.
+
+	Indicies 1-12 are possible tables, index 0
+	should be unused.
+
+	If a state is not used its SFuncTable array size should be set to
+	zero and the pointer to NULL
+	*/
 	const SFuncTable *pgenFuncTables;
 	};
 
 /**
+Extends TChar with some extra utility functions
+
 @internalComponent
 @released
 */
@@ -202,6 +272,9 @@ public:
 	};
 
 /**
+Responsible for loading and performing lookups
+in a keyboard function table.
+
 @internalComponent
 @released
 */
@@ -230,16 +303,30 @@ struct SConvKeyData
 	};
 
 /**
+Used by a keymap to state what method is used to
+enter multi digit control codes for special characters.
+
 @publishedPartner
 @released
 */
 enum TCtrlDigitsTermination
 	{
+	/**
+	Keyboard will stay in code entry mode for a set number
+	of key presses.
+	*/
 	ETerminationByCount,
+
+	/**
+	Keyboard will stay in code entry mode while Ctrl is held
+	down.
+	*/
 	ETerminationByCtrlUp
 	};
 
 /**
+Responsible for loading and walking through a keymap conversion table.
+
 @internalComponent
 @released
 */
@@ -263,6 +350,9 @@ private:
 	};
 
 /**
+Responsible for aggregating a series of digits
+from separate keypresses into a single character.
+
 @internalComponent
 @released
 */
@@ -292,15 +382,42 @@ private:
 	};
 
 /**
+Definitions for keyboard states.
+The first 3 values identify special keyboard states and
+are used as an index to these states' tables. This is
+only a partial list of possible states, states 1-9
+are also valid, and should be used for translating
+isolated characters e.g. to apply diacritics to vowels.
+
+The next 3 do not specify particular states, but give
+information to the key translator so that it can
+decide the next state.
+
 @internalComponent
 @released
 */
 enum TState
 	{
-// values used as an index to a table
+	/**
+	Normal keyboard state, which defines keys
+	that transition	to the other states.
+	*/
 	EStateNormal						=0x0a,
+
+	/**
+	Allow characters to be specified
+	by a decimal code. The state will be transitioned
+	back to EStateNormal after a given count.
+	*/
 	EStateCtrlDigitsUntilCount			=0x0b,
+
+	/**
+	Allow characters to be specified
+	by a decimal code. The state will be transitioned
+	back to EStateNormal once Ctrl is released.
+	*/
 	EStateCtrlDigitsUntilCtrlUp			=0x0c,
+
 // values used as "rules" to be processed in a switch statement
 	EStateUnchanged						=0x40,
 	EStateDerivedFromDigitEntered,
@@ -308,19 +425,24 @@ enum TState
 	};
 
 /**
+Defines an action to be performed for a keypress.
+@see SFuncAndState::func
+
 @internalComponent
 @released
 */
 enum TFuncGeneral
 	{
 	EDoNothing							=0x00,
-	EPassKeyThru,
-	EPassSpecialKeyThru,
-	EPassCtrlDigitsThru,
-	EAddOnCtrlDigit,
+	EPassKeyThru, ///< Pass key through, unchanged
+	EPassSpecialKeyThru, ///< Translate to a new character
+	EPassCtrlDigitsThru, ///< End accumulation of character digits
+	EAddOnCtrlDigit, ///< Allow another control digit to be entered
 	};
 
 /**
+Concrete implementation of a CKeyTranslator.
+
 @internalComponent
 @released
 */

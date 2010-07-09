@@ -1,0 +1,62 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// e32test/iic/iic_psl/i2c_slave_stubs_ctrless.mmp
+//
+
+macro STANDALONE_CHANNEL
+#define STANDALONE_CHANNEL /*Only for iic_channel.mmh to pick up the needed source files*/
+
+#include "../../../../kernel/eka/drivers/iic/iic_channel.mmh"
+
+macro MASTER_MODE
+
+target          i2c_slavestubs_ctrless.pdd
+targettype      pdd
+
+sourcepath	../../../../kernel/eka/drivers/iic
+source		IIC_PIL_SOURCE
+
+sourcepath		.
+source          i2c.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+macro IIC_SIMULATED_PSL
+macro BUS_TYPE=(DIicBusChannel::EI2c)
+
+// un-comment the following if debug printing is required
+//macro LOG_I2C
+
+// un-comment the following if BTRACE output is required
+macro IIC_INSTRUMENTATION_MACRO
+
+deffile				../../~/i2c_slavestubs_ctrless.def
+
+uid			0x100039d0 0x10286b50
+VENDORID 0x70000001
+
+//library				ecust.lib
+#ifdef WINS
+library				emulator.lib
+#endif 
+
+start wins
+win32_library			kernel32.lib
+#if defined(VC32)
+win32_library			msvcrt.lib
+#endif
+end
+
+SMPSAFE
+

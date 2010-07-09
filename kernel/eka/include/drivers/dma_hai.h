@@ -172,11 +172,13 @@ class TDmac
 	{
 friend class DmaChannelMgr;
 
-// The following two friend declarations will become obsolete once that
-// functionality is owned and provided by the controller class instead of the
-// request class. (TDmac::iFreeHdr could then also be made private.)
-friend TInt DDmaRequest::ExpandDesList(TInt, TInt&, SDmaDesHdr*&, SDmaDesHdr*&);
-friend void DDmaRequest::FreeDesList(TInt&, SDmaDesHdr*&, SDmaDesHdr*&);
+// The following friend declaration will become obsolete once header
+// pool manipulation functionality is owned and provided by the controller
+// class instead of the request class.
+// (TDmac::iFreeHdr could then also be made private.)
+friend class DDmaRequest;
+
+friend class TSkelDmac;
 
 protected:
 	/** Data required for creating a new instance. */
@@ -848,7 +850,7 @@ private:
 	virtual void DoCancelAll();
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr);
 
-private:
+protected:
 	enum {EIdle = 0, ETransferring} iState;
 	};
 
@@ -864,7 +866,7 @@ private:
 	virtual void DoCancelAll();
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr);
 
-private:
+protected:
 	enum {EIdle = 0, ETransferring, ETransferringLast} iState;
 	};
 
@@ -881,7 +883,7 @@ private:
 	virtual void DoUnlink(SDmaDesHdr& aHdr);
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr);
 
-private:
+protected:
 	enum {EIdle = 0, ETransferring} iState;
 	};
 
@@ -901,7 +903,7 @@ private:
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aSrcCompletedHdr,
 					   SDmaDesHdr*& aDstCompletedHdr);
 
-private:
+protected:
 	SDmaDesHdr* iSrcCurHdr;	  // source fragment being transferred or NULL
 	SDmaDesHdr** iSrcNullPtr; // Pointer to NULL pointer following last source fragment
 	SDmaDesHdr* iDstCurHdr;	  // destination fragment being transferred or NULL

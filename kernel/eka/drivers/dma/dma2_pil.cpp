@@ -22,23 +22,21 @@
 #include <kernel/kern_priv.h>
 
 
-// Symbian Min() & Max() are broken, so we have to define them ourselves
-inline TUint Min(TUint aLeft, TUint aRight)
+// Symbian _Min() & _Max() are broken, so we have to define them ourselves
+inline TUint _Min(TUint aLeft, TUint aRight)
 	{return(aLeft < aRight ? aLeft : aRight);}
-inline TUint Max(TUint aLeft, TUint aRight)
+inline TUint _Max(TUint aLeft, TUint aRight)
 	{return(aLeft > aRight ? aLeft : aRight);}
 
 
-// Uncomment the following #define only when freezing the DMA2 export library.
-//#define __FREEZE_DMA2_LIB
-#ifdef __FREEZE_DMA2_LIB
+// The following section is used only when freezing the DMA2 export library
+/*
 TInt DmaChannelMgr::StaticExtension(TInt, TAny*) {return 0;}
 TDmaChannel* DmaChannelMgr::Open(TUint32, TBool, TUint) {return 0;}
 void DmaChannelMgr::Close(TDmaChannel*) {}
 EXPORT_C const TDmaTestInfo& DmaTestInfo() {static TDmaTestInfo a; return a;}
 EXPORT_C const TDmaV2TestInfo& DmaTestInfoV2() {static TDmaV2TestInfo a; return a;}
-#endif	// #ifdef __FREEZE_DMA2_LIB
-
+*/
 
 static const char KDmaPanicCat[] = "DMA " __FILE__;
 
@@ -202,7 +200,7 @@ void TDmac::Transfer(const TDmaChannel& /*aChannel*/, const SDmaDesHdr& /*aHdr*/
 	{
 	// TDmac needs to override this function if it has reported the channel
 	// type for which the PIL calls it.
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
@@ -211,7 +209,7 @@ void TDmac::Transfer(const TDmaChannel& /*aChannel*/, const SDmaDesHdr& /*aSrcHd
 	{
 	// TDmac needs to override this function if it has reported the channel
 	// type for which the PIL calls it.
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
@@ -265,7 +263,7 @@ TInt TDmac::AllocDesPool(TUint aAttribs)
 		}
 	else
 		{
-		iDesPool = new TDmaTransferArgs[iMaxDesCount];
+		iDesPool = Kern::Alloc(iMaxDesCount * sizeof(TDmaTransferArgs));
 		r = iDesPool ? KErrNone : KErrNoMemory;
 		}
 	return r;
@@ -450,7 +448,7 @@ TInt TDmac::InitDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aTransferArg
 TInt TDmac::InitHwDes(const SDmaDesHdr& /*aHdr*/, const TDmaTransferArgs& /*aTransferArgs*/)
 	{
 	// concrete controller must override if SDmacCaps::iHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return KErrGeneral;
 	}
 
@@ -458,7 +456,7 @@ TInt TDmac::InitHwDes(const SDmaDesHdr& /*aHdr*/, const TDmaTransferArgs& /*aTra
 TInt TDmac::InitSrcHwDes(const SDmaDesHdr& /*aHdr*/, const TDmaTransferArgs& /*aTransferArgs*/)
 	{
 	// concrete controller must override if SDmacCaps::iAsymHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return KErrGeneral;
 	}
 
@@ -466,7 +464,7 @@ TInt TDmac::InitSrcHwDes(const SDmaDesHdr& /*aHdr*/, const TDmaTransferArgs& /*a
 TInt TDmac::InitDstHwDes(const SDmaDesHdr& /*aHdr*/, const TDmaTransferArgs& /*aTransferArgs*/)
 	{
 	// concrete controller must override if SDmacCaps::iAsymHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return KErrGeneral;
 	}
 
@@ -502,7 +500,7 @@ TInt TDmac::UpdateHwDes(const SDmaDesHdr& /*aHdr*/, TUint32 /*aSrcAddr*/, TUint3
 						TUint /*aTransferCount*/, TUint32 /*aPslRequestInfo*/)
 	{
 	// concrete controller must override if SDmacCaps::iHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return KErrGeneral;
 	}
 
@@ -511,7 +509,7 @@ TInt TDmac::UpdateSrcHwDes(const SDmaDesHdr& /*aHdr*/, TUint32 /*aSrcAddr*/,
 						   TUint /*aTransferCount*/, TUint32 /*aPslRequestInfo*/)
 	{
 	// concrete controller must override if SDmacCaps::iAsymHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return KErrGeneral;
 	}
 
@@ -520,7 +518,7 @@ TInt TDmac::UpdateDstHwDes(const SDmaDesHdr& /*aHdr*/, TUint32 /*aDstAddr*/,
 						   TUint /*aTransferCount*/, TUint32 /*aPslRequestInfo*/)
 	{
 	// concrete controller must override if SDmacCaps::iAsymHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return KErrGeneral;
 	}
 
@@ -528,7 +526,7 @@ TInt TDmac::UpdateDstHwDes(const SDmaDesHdr& /*aHdr*/, TUint32 /*aDstAddr*/,
 void TDmac::ChainHwDes(const SDmaDesHdr& /*aHdr*/, const SDmaDesHdr& /*aNextHdr*/)
 	{
 	// concrete controller must override if SDmacCaps::iHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
@@ -536,7 +534,7 @@ void TDmac::AppendHwDes(const TDmaChannel& /*aChannel*/, const SDmaDesHdr& /*aLa
 						const SDmaDesHdr& /*aNewHdr*/)
 	{
  	// concrete controller must override if SDmacCaps::iHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
@@ -545,14 +543,14 @@ void TDmac::AppendHwDes(const TDmaChannel& /*aChannel*/,
 						const SDmaDesHdr& /*aDstLastHdr*/, const SDmaDesHdr& /*aDstNewHdr*/)
 	{
 	// concrete controller must override if SDmacCaps::iAsymHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
 void TDmac::UnlinkHwDes(const TDmaChannel& /*aChannel*/, SDmaDesHdr& /*aHdr*/)
 	{
  	// concrete controller must override if SDmacCaps::iHwDescriptors set
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
@@ -601,7 +599,7 @@ TInt TDmac::Extension(TDmaChannel& /*aChannel*/, TInt /*aCmd*/, TAny* /*aArg*/)
 TUint32 TDmac::HwDesNumDstElementsTransferred(const SDmaDesHdr& /*aHdr*/)
 	{
  	// Concrete controller must override if SDmacCaps::iHwDescriptors set.
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return 0;
 	}
 
@@ -609,7 +607,7 @@ TUint32 TDmac::HwDesNumDstElementsTransferred(const SDmaDesHdr& /*aHdr*/)
 TUint32 TDmac::HwDesNumSrcElementsTransferred(const SDmaDesHdr& /*aHdr*/)
 	{
  	// Concrete controller must override if SDmacCaps::iHwDescriptors set.
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	return 0;
 	}
 
@@ -856,7 +854,7 @@ TInt DDmaRequest::CheckTransferConfig(const TDmaTransferConfig& aTarget, TUint a
 	}
 
 
-TInt DDmaRequest::CheckMemFlags(const TDmaTransferConfig& aTarget, TUint aCount) const
+TInt DDmaRequest::CheckMemFlags(const TDmaTransferConfig& aTarget) const
 	{
 	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::CheckMemFlags"));
 
@@ -892,7 +890,7 @@ TInt DDmaRequest::AdjustFragmentSize(TUint& aFragSize, TUint aElementSize,
 	TUint rem = 0;
 	TInt r = KErrNone;
 
-	while (1)
+	FOREVER
 		{
 		// If an element size is defined, make sure the fragment size is
 		// greater or equal.
@@ -1101,13 +1099,13 @@ TInt DDmaRequest::Frag(TDmaTransferArgs& aTransferArgs)
 	aTransferArgs.iChannelCookie = iChannel.PslId();
 
 	// Client shouldn't specify contradictory or invalid things
-	TInt r = CheckMemFlags(aTransferArgs.iSrcConfig, count);
+	TInt r = CheckMemFlags(aTransferArgs.iSrcConfig);
 	if (r != KErrNone)
 		{
 		__KTRACE_OPT(KPANIC, Kern::Printf("Error: CheckMemFlags(src)"));
 		return r;
 		}
-	r =  CheckMemFlags(aTransferArgs.iDstConfig, count);
+	r =  CheckMemFlags(aTransferArgs.iDstConfig);
 	if (r != KErrNone)
 		{
 		__KTRACE_OPT(KPANIC, Kern::Printf("Error: CheckMemFlags(dst)"));
@@ -1160,7 +1158,7 @@ TInt DDmaRequest::FragSym(TDmaTransferArgs& aTransferArgs, TUint aCount,
 	// Max aligned length is used to make sure the beginnings of subtransfers
 	// (i.e. fragments) are correctly aligned.
 	const TUint max_aligned_len = (aMaxTransferLen &
-								   ~(Max(align_mask_src, align_mask_dst)));
+								   ~(_Max(align_mask_src, align_mask_dst)));
 	__KTRACE_OPT(KDMA, Kern::Printf("max_aligned_len: %d", max_aligned_len));
 	// Client and PSL sane?
 	__DMA_ASSERTD(max_aligned_len > 0);
@@ -1235,8 +1233,8 @@ TInt DDmaRequest::FragSym(TDmaTransferArgs& aTransferArgs, TUint aCount,
 			break;
 			}
 		// Compute fragment size
-		TUint c = Min(aMaxTransferLen, aCount);
-		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+		TUint c = _Min(aMaxTransferLen, aCount);
+		__KTRACE_OPT(KDMA, Kern::Printf("c = _Min(aMaxTransferLen, aCount) = %d", c));
 
 		// SRC
 		if (mem_src && !(src.iFlags & KDmaMemIsContiguous))
@@ -1422,8 +1420,8 @@ TInt DDmaRequest::FragAsymSrc(TDmaTransferArgs& aTransferArgs, TUint aCount,
 			break;
 			}
 		// Compute fragment size
-		TUint c = Min(aMaxTransferLen, aCount);
-		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+		TUint c = _Min(aMaxTransferLen, aCount);
+		__KTRACE_OPT(KDMA, Kern::Printf("c = _Min(aMaxTransferLen, aCount) = %d", c));
 
 		if (mem_src && !(src.iFlags & KDmaMemIsContiguous))
 			{
@@ -1536,8 +1534,8 @@ TInt DDmaRequest::FragAsymDst(TDmaTransferArgs& aTransferArgs, TUint aCount,
 			break;
 			}
 		// Compute fragment size
-		TUint c = Min(aMaxTransferLen, aCount);
-		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+		TUint c = _Min(aMaxTransferLen, aCount);
+		__KTRACE_OPT(KDMA, Kern::Printf("c = _Min(aMaxTransferLen, aCount) = %d", c));
 
 		if (mem_dst && !(dst.iFlags & KDmaMemIsContiguous))
 			{
@@ -1642,7 +1640,7 @@ TInt DDmaRequest::FragBalancedAsym(TDmaTransferArgs& aTransferArgs, TUint aCount
 	// Max aligned length is used to make sure the beginnings of subtransfers
 	// (i.e. fragments) are correctly aligned.
 	const TUint max_aligned_len = (aMaxTransferLen &
-								   ~(Max(align_mask_src, align_mask_dst)));
+								   ~(_Max(align_mask_src, align_mask_dst)));
 	__KTRACE_OPT(KDMA, Kern::Printf("max_aligned_len: %d", max_aligned_len));
 	// Client and PSL sane?
 	__DMA_ASSERTD(max_aligned_len > 0);
@@ -1724,8 +1722,8 @@ TInt DDmaRequest::FragBalancedAsym(TDmaTransferArgs& aTransferArgs, TUint aCount
 			}
 		__DMA_ASSERTD(iSrcDesCount == iDstDesCount);
 		// Compute fragment size
-		TUint c = Min(aMaxTransferLen, aCount);
-		__KTRACE_OPT(KDMA, Kern::Printf("c = Min(aMaxTransferLen, aCount) = %d", c));
+		TUint c = _Min(aMaxTransferLen, aCount);
+		__KTRACE_OPT(KDMA, Kern::Printf("c = _Min(aMaxTransferLen, aCount) = %d", c));
 
 		// SRC
 		if (mem_src && !(src.iFlags & KDmaMemIsContiguous))
@@ -2815,7 +2813,7 @@ void TDmaChannel::ResetStateMachine()
 void TDmaChannel::DoQueue(const DDmaRequest& /*aReq*/)
 	{
 	// Must be overridden
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
@@ -2834,7 +2832,7 @@ void TDmaChannel::DoDfc(const DDmaRequest& /*aCurReq*/, SDmaDesHdr*& /*aComplete
 	// To make sure this version of the function isn't called for channels for
 	// which it isn't appropriate (and which therefore don't override it) we
 	// put this check in here.
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 
@@ -2844,7 +2842,7 @@ void TDmaChannel::DoDfc(const DDmaRequest& /*aCurReq*/, SDmaDesHdr*& /*aSrcCompl
 	// To make sure this version of the function isn't called for channels for
 	// which it isn't appropriate (and which therefore don't override it) we
 	// put this check in here.
-	__DMA_CANT_HAPPEN();
+	__DMA_UNREACHABLE_DEFAULT();
 	}
 
 

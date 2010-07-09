@@ -62,7 +62,13 @@ inline void DmaAppendFormat(TDes8& aBuf, const char* aFmt, ...)
 	}
 #endif
 
-_LIT(KTestDmaLddName, "TestDmaV2");
+_LIT(KTestDmaLddNameSim, "TestDmaV2Sim");
+_LIT(KTestDmaLddNameHw, "TestDmaV2");
+#ifdef __DMASIM__
+const TPtrC KTestDmaLddName = KTestDmaLddNameSim();
+#else
+const TPtrC KTestDmaLddName = KTestDmaLddNameHw();
+#endif
 
 inline TVersion TestDmaLddVersion() { return TVersion(1, 0, 1); }
 
@@ -444,6 +450,16 @@ public:
 		return DoControl(EResumeChannel, reinterpret_cast<TAny*>(aDriverCookie));
 		}
 
+	TInt ChannelLinking(TUint aDriverCookie)
+		{	
+		return DoControl(ELinkChannel, reinterpret_cast<TAny*>(aDriverCookie));
+		}
+
+	TInt ChannelUnLinking(TUint aDriverCookie)
+		{	
+		return DoControl(EUnlinkChannel, reinterpret_cast<TAny*>(aDriverCookie));
+		}
+
 	TInt ChannelCaps(TUint aDriverCookie, SDmacCaps& aChannelCaps)
 		{
 		TDmacTestCaps caps;
@@ -460,9 +476,16 @@ public:
 	
 	TInt Open()
 		{
-		return DoCreate(KTestDmaLddName,TestDmaLddVersion(), 0, NULL, NULL, EOwnerThread);
+		TInt r = KErrNone;
+		r = DoCreate(KTestDmaLddNameHw,TestDmaLddVersion(), 0, NULL, NULL, EOwnerThread);
+		RDebug::Printf("RDmaSession::Open returned %d", r);
+		return r;
 		}
 
+	TInt OpenSim()
+		{
+		return DoCreate(KTestDmaLddNameSim,TestDmaLddVersion(), 0, NULL, NULL, EOwnerThread);
+		}
 
 	TInt RequestCreateOld(TUint aChannelCookie, TUint& aRequestCookie, TUint aMaxTransferSize=0)
 		{	
@@ -571,15 +594,15 @@ public:
 		TUint chunkHandle = DoControl(EOpenSharedChunk);
 		return aChunk.SetReturnedHandle(chunkHandle);
 		}
-	
+
 	TInt GetTestInfo(TDmaV2TestInfo& aInfo)
 		{
 		TPckg<TDmaV2TestInfo> package(aInfo);
 		return DoControl(EGetTestInfo, &package);
 		}
 
-	static void SelfTest();
-	
+	static void SelfTest(TBool aSimulatedDmac);
+
 	static void ApiTest();
 #endif // __KERNEL_MODE__
 
@@ -664,7 +687,9 @@ private:
 		EIsOpened,
 		EIsrRedoRequest,
 		ECancelAllChannel,
-		EQueueRequestWithReque
+		EQueueRequestWithReque,
+		ELinkChannel,
+		EUnlinkChannel,
 		};
 	};
 #endif // __D_DMA2_H__

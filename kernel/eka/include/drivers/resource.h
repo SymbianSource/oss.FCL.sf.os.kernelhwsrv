@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -168,12 +168,37 @@ private:
 	    __KTRACE_OPT(KRESMANAGER, Kern::Printf(">TPowerResourceCb::DfcFunc ClientId = 0x%x, ResourceId = %d, Level = %d, \
 			                    LevelOwnerId = %d, Result = %d", pCb->iClientId, pCb->iResourceId, pCb->iLevel, \
 								pCb->iLevelOwnerId, pCb->iResult));
-	    // Call the client specified callback function
-        pCb->iCallback(pCb->iClientId, pCb->iResourceId, pCb->iLevel, pCb->iLevelOwnerId, pCb->iResult, pCb->iParam);
-		pCb->iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
+
+        pCb->Lock();
+        TUint ClientId = pCb->iClientId;
+        TUint ResourceId = pCb->iResourceId;
+        TInt Level = pCb->iLevel;
+        TInt LevelOwnerId = pCb->iLevelOwnerId;
+        TInt Result = pCb->iResult;
+        TAny* Param = pCb->iParam;
+        pCb->UnLock();
+
+        // Call the client specified callback function
+        pCb->iCallback(ClientId, ResourceId, Level, LevelOwnerId, Result, Param);    
+
+        pCb->Lock();
+        pCb->iPendingRequestCount--;
+        if(pCb->iPendingRequestCount == 0)
+            pCb->iResult = KErrCompletion; //Mark the callback object to act properly during cancellation of this request.
+        pCb->UnLock();
         PRM_CALLBACK_COMPLETION_TRACE
         }
 private:
+    void Lock()
+        {
+        NKern::ThreadEnterCS();
+        Kern::MutexWait(*iMutex);
+        }
+    void UnLock()
+        {
+        Kern::MutexSignal(*iMutex);
+        NKern::ThreadLeaveCS();
+        }
     TAny* iParam; //Stores the aPtr argument passed in the constructor, to be passed as 5th argument to the callback function
     TInt iResult; //Used to store the result aswell as binary usage count for the callback
     TInt iLevel; // Level of the resource
@@ -181,6 +206,8 @@ private:
     TUint iResourceId; //Stores the ID of the resource whose state is changed/read asynchronously
     TUint iClientId; //Stores the ID of the client that requested the asynchronous operation
     TPowerResourceCbFn iCallback; //Callback function object
+	DMutex* iMutex;   
+    TInt iPendingRequestCount;
 #ifdef PRM_CONTROLLER
     friend class DPowerResourceController;
 #endif

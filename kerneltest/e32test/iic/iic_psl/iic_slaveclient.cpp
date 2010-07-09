@@ -93,7 +93,11 @@ const TInt KIicSlaveClientDfcPriority = 3; // 0 to 7, 7 is highest
 const TInt KMaxNumChannels = 2;	// 1 "true" slave, one "dummy"
 
 #ifdef STANDALONE_CHANNEL
+#ifdef IIC_STUBS
+_LIT(KLddRootName,"iic_slaveclient_stubs");
+#else
 _LIT(KLddRootName,"iic_slaveclient_ctrless");
+#endif/*IIC_STUBS*/
 #else
 _LIT(KLddRootName,"iic_slaveclient");
 #endif
@@ -164,6 +168,9 @@ class DChannelIicSlaveClient : public DLogicalChannel
 	TInt RegisterTxBuffer(TInt aChannelId, TPtr8 aTxBuffer, TInt8 aBufGranularity, TInt8 aNumWords, TInt8 aOffset);
 	TInt CaptureChannel(TInt aBusId, TDes8* aConfigHdr, TIicBusSlaveCallback* aCallback, TInt& aChannelId, TBool aAsynch=NULL);
 	TInt ReleaseChannel(TInt aChannelId);
+#ifdef STANDALONE_CHANNEL
+	TInt Spare1(TInt aBusId);
+#endif
 	private:
 	TDynamicDfcQue* iDfcQue;
 	TIicBusSlaveCallback* iNotif;
@@ -471,6 +478,13 @@ TInt DChannelIicSlaveClient::RegisterRxBuffer(TInt aChannelId, TPtr8 aRxBuffer, 
 	DIicSlaveClientChan* aChanPtr = NULL;
 	if(iCapturedChan.iChannelId == aChannelId)
 		aChanPtr = iCapturedChan.iChannel;
+#ifdef IIC_STUBS
+	//in the code coverage tests, a slave channel will not be captured before other slave
+	//operations get called, e.g. calling DIicBusChannelSlave::CaptureChannel in MASTER_MODE
+	//should return a KErrNotSupported. In controller-less mode, the client creates and manages its own channels.
+	//So in here, we pretend a slave channel has been captured and can be used for the current operation.
+	aChanPtr=iCapturedChan.iChannel;
+#endif/*IIC_STUBS*/
 	if(!aChanPtr)
 		return KErrArgument;
 	if(aChanPtr->GetChanType() == DIicBusChannel::EMasterSlave)
@@ -490,6 +504,13 @@ TInt DChannelIicSlaveClient::SetNotificationTrigger(TInt aChannelId, TInt aTrigg
 	DIicSlaveClientChan* aChanPtr = NULL;
 	if(iCapturedChan.iChannelId == aChannelId)
 		aChanPtr = iCapturedChan.iChannel;
+#ifdef IIC_STUBS
+    //in the code coverage tests, a slave channel will not be captured before other slave
+	//operations get called, e.g. calling DIicBusChannelSlave::CaptureChannel in MASTER_MODE
+	//should return a KErrNotSupported. In controller-less mode, the client creates and manages its own channels.
+	//So in here, we pretend a slave channel has been captured and can be used for the current operation.
+    aChanPtr=iCapturedChan.iChannel;
+#endif/*IIC_STUBS*/
 	if(!aChanPtr)
 		return KErrArgument;
 	if(aChanPtr->GetChanType() == DIicBusChannel::EMasterSlave)
@@ -529,6 +550,13 @@ TInt DChannelIicSlaveClient::RegisterTxBuffer(TInt aChannelId, TPtr8 aTxBuffer, 
 	DIicSlaveClientChan* aChanPtr = NULL;
 	if(iCapturedChan.iChannelId == aChannelId)
 		aChanPtr = iCapturedChan.iChannel;
+#ifdef IIC_STUBS
+    //in the code coverage tests, a slave channel will not be captured before other slave
+	//operations get called, e.g. calling DIicBusChannelSlave::CaptureChannel in MASTER_MODE
+	//should return a KErrNotSupported. In controller-less mode, the client creates and manages its own channels.
+	//So in here, we pretend a slave channel has been captured and can be used for the current operation.
+    aChanPtr=iCapturedChan.iChannel;
+#endif/*IIC_STUBS*/
 	if(!aChanPtr)
 		return KErrArgument;
 	if(aChanPtr->GetChanType() == DIicBusChannel::EMasterSlave)
@@ -589,6 +617,13 @@ TInt DChannelIicSlaveClient::CaptureChannel(TInt aBusId, TDes8* aConfigHdr, TIic
 						r = KErrArgument;
 						}
 					}
+#ifdef IIC_STUBS
+				//if we try to capture a slave channel in MASTER_MODE, the capture should fail with KErrNotSupported.
+				//However, we need a slave channel to be captured before running most of slave operation 
+				//tests,e.g. RegisterRxBuf. So in here, we pretend the channel is captured, and save
+				//the channel pointer in iCapturedChan, so it can be used for other slave operation tests. 
+				iCapturedChan.iChannel = chanPtr;
+#endif/*IIC_STUBS*/
 				// For synchronous capture, if successful then install the channel
 				if(r == KErrNone)
 					{
@@ -630,6 +665,54 @@ TInt DChannelIicSlaveClient::ReleaseChannel(TInt aChannelId)
 #endif
 	return r;
 	}
+
+//this function is added for improving the code coverage of IIC.
+//Spare1 is a placeholder for future expansion, so returns KErrNotSupported.
+#ifdef STANDALONE_CHANNEL
+TInt DChannelIicSlaveClient::Spare1(TInt aBusId)
+    {
+    TInt r = KErrNone;
+    DIicSlaveClientChan* chanPtr = NULL;
+    if(r == KErrNone)
+        {
+        r = GetChanPtr(aBusId, chanPtr);
+        if(r == KErrNone)
+            {
+            if(!chanPtr)
+                {
+                r = KErrArgument;
+                }
+            else
+                {
+                switch(chanPtr->GetChanType())
+                    {
+                    case DIicBusChannel::EMaster:
+                        {
+                        r = ((DIicBusChannelMaster*)(chanPtr->GetChannelPtr()))->Spare1(0,NULL,NULL);
+                        break;
+                        }
+                    case DIicBusChannel::EMasterSlave:
+                        {
+                        r = KErrNotSupported;
+                        break;
+                        }
+                    case DIicBusChannel::ESlave:
+                        {
+                        r = ((DIicBusChannelSlave*)(chanPtr->GetChannelPtr()))->Spare1(0,NULL,NULL);
+                        break;
+                        }
+                    default:
+                        {
+                        r = KErrArgument;
+                        }
+                    }
+                }
+            }
+        }
+    return r;
+    }
+#endif
+
 TInt DChannelIicSlaveClient::CbProcessOverUnderRunRxTx()
 	{
 	CLIENT_PRINT(("> DChannelIicSlaveClient::CbProcessOverUnderRunRxTx(), iTestOverUnderState=%d\n",iTestOverUnderState));
@@ -1335,7 +1418,13 @@ TInt DChannelIicSlaveClient::DoControl(TInt aId, TAny* a1, TAny* a2)
 				iFullDuplexReq |= (ERxAllBytes|ETxAllBytes);
 			r = SetNotificationTrigger(parms[0],parms[1]);
 			if(r == KErrTimedOut)
+			    {
+                //the TRequestStatus is being completed with the error code to indicate 
+                //that the timeout was detected, but KErrNone is returned because 
+                //the requested notification settings were accepted.
+                Kern::RequestComplete(iClient, iStatus, r);
 				r=KErrNone;	// KErrTimedOut is returned if the Client has not interacted with IIC for a while
+			    }			
 			break;
 			}
 
@@ -1532,7 +1621,23 @@ TInt DChannelIicSlaveClient::DoControl(TInt aId, TAny* a1, TAny* a2)
 			r = StaticExtension((TUint)a1, (TUint)ctrlIoVal, NULL, NULL);
 			break;
 			}
-
+#ifdef STANDALONE_CHANNEL
+		 case(RBusDevIicClient::ETestSpare1):
+            {
+            //a1 represents a BusId passed from the user.
+			//Spare1 is a placeholder for future expansion.
+            r = Spare1((TInt)a1);
+            break;
+            }
+		 case(RBusDevIicClient::ETestStaticEx):
+            {
+		    //Passing a1, which represents a BusId, and the value of a function to StaticExtension.
+			//Using ECtlIoNone here, so StaticExtension will be called to execute the default case,
+			// but since this is only called when using stubs KErrNotSupported will be expected.
+            r = StaticExtension((TUint32)a1, (TUint)RBusDevIicClient::ECtlIoNone, NULL, NULL);
+            break;
+            }
+#endif
 		default:
 			{
 			CLIENT_PRINT(("DChannelIicSlaveClient::DoControl - unrecognised value for aId=0x%x\n",aId));

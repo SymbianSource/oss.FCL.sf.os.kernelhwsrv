@@ -41,7 +41,6 @@ BASEDEFAULT
 #include "drivers/media/bld.inf"
 #include "drivers/trace/bld.inf"
 #include "drivers/usbc/bld.inf"
-#include "drivers/camerasc/bld.inf"
 #include "drivers/display/bld.inf"
 #include "euser/bld.inf"
 #include "ewsrv/bld.inf"
@@ -242,9 +241,6 @@ include/drivers/usbcdesc.h						drivers/						//
 include/drivers/usbdi_hub.h                     drivers/						//
 include/drivers/usbdi_channel.h                 drivers/						//
 
-include/drivers/camerasc.h						drivers/						//
-include/drivers/camerasc.inl					drivers/						//
-
 include/drivers/otgdi.h                         drivers/
 
 include/drivers/crashflash.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
@@ -365,8 +361,6 @@ include/d32usbdi_hubdriver.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi_
 include/d32usbdi_hubdriver.inl					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdi_hubdriver.inl)
 include/d32usbtransfers.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbtransfers.h)
 include/d32usbdescriptors.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32usbdescriptors.h)
-include/d32camerasc.h							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32camerasc.h)
-include/d32camerasc.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32camerasc.inl)
 include/d32otgdi.h								SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi.h)
 include/d32otgdi.inl							SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi.inl)
 include/d32otgdi_errors.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(d32otgdi_errors.h)

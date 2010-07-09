@@ -1,3 +1,53 @@
+Version 2.00.3106
+=================
+(Made by famustaf 01/07/2010)
+
+1.	jessiezh
+	1.	ou1cimx1#470771 Improve code coverage for IIC
+
+2.	niccox
+	1.	ou1cimx1#469034 ENV New usbcsc export not frozen
+
+3.	garciato
+	1.	MINOR_CHANGE Add more SMP documentation
+
+
+Version 2.00.3105
+=================
+(Made by vfebvre 28/06/2010)
+
+1.	seolney
+	1.	ou1cimx1#462430 DMA functions missing test code
+
+
+Version 2.00.3104
+=================
+(Made by vfebvre 25/06/2010)
+
+1.	snagappa
+	1.	ou1cimx1#460964 t_dma2 test failure investigation
+
+2.	indrasin
+	1.	MINOR_CHANGE Excluded H2, Emulator test code, H4 flexible memory build
+
+3.	cnotton
+	1.	ou1cimx1#440685 Multimedia headers in kernelhwsrv are including platform headers
+
+4.	erifung
+	1.	ou1cimx1#435148 Unsafe setting of DPowerResourceNotification data
+
+
+Version 2.00.3103
+=================
+(Made by vfebvre 24/06/2010)
+
+1.	snagappa
+	1.	ou1cimx1#432741 Ektran functions missing test cases
+
+2.	erifung
+	1.	ou1cimx1#436980 EResourceManager and TResourceManagerUs e32btrace.h formats cannot be correctly parsed by SymSEE TraceViewer
+
+
 Version 2.00.3102
 =================
 (Made by vfebvre 24/06/2010)
