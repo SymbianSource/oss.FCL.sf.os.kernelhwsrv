@@ -1,3 +1,11 @@
+Version 2.00.3107
+=================
+(Made by famustaf 07/07/2010)
+
+1.	necliffo
+	1.	REQ 428-72 Partition support for eMMC-only platforms
+
+
 Version 2.00.3106
 =================
 (Made by famustaf 01/07/2010)
