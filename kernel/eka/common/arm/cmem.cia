@@ -183,6 +183,45 @@ extern "C" EXPORT_C __NAKED__ TAny* memset(TAny* /*aTrg*/, TInt /*aValue*/, unsi
 
     }
 
+#ifdef __EABI__
+//mikek N.B. These __aeabi_mem functions are also defined in rvct/compsupp/aeabimem.cpp
+// and should be implemented in the compsupp library, not here, when we build one for gcce.  
+
+#define EXPORT_EABI_MEMSET_VENEER(name) \
+extern "C" EXPORT_C __NAKED__ TAny* (name)(TAny* /*aTrg*/, unsigned int /*aLength*/, TInt /*aValue*/ ) \
+{ \
+    asm("   and      r2, r2, #255"); \
+	asm("	b		 fill		 "); \
+}
+
+EXPORT_EABI_MEMSET_VENEER(__aeabi_memset8)
+EXPORT_EABI_MEMSET_VENEER(__aeabi_memset4)
+EXPORT_EABI_MEMSET_VENEER(__aeabi_memset)
+
+#define EXPORT_EABI_MEMCLR_ALIAS(alias) \
+extern "C" EXPORT_C __NAKED__ TAny* (alias)(TAny* /*aTrg*/, unsigned int /*aLength*/ ) \
+{ \
+	asm("   b  memclr  "); \
+}
+
+EXPORT_EABI_MEMCLR_ALIAS(__aeabi_memclr8)
+EXPORT_EABI_MEMCLR_ALIAS(__aeabi_memclr4)
+EXPORT_EABI_MEMCLR_ALIAS(__aeabi_memclr)
+
+#define EXPORT_EABI_MEMMOVE_ALIAS(alias,func) \
+extern "C" EXPORT_C __NAKED__ TAny* (alias)(TAny* /*aTrg*/, const TAny* /*aSrc*/, unsigned int /*aLength*/) \
+{ \
+	asm("   b " #func ); \
+}
+
+EXPORT_EABI_MEMMOVE_ALIAS(__aeabi_memcpy8,memcpy)
+EXPORT_EABI_MEMMOVE_ALIAS(__aeabi_memcpy4,memcpy)
+EXPORT_EABI_MEMMOVE_ALIAS(__aeabi_memcpy,memcpy)
+EXPORT_EABI_MEMMOVE_ALIAS(__aeabi_memmove8,memmove)
+EXPORT_EABI_MEMMOVE_ALIAS(__aeabi_memmove4,memmove)
+EXPORT_EABI_MEMMOVE_ALIAS(__aeabi_memmove,memmove)
+#endif // __EABI__
+
 #endif  // USE_REPLACEMENT_MEMSET
 
 #ifndef USE_REPLACEMENT_MEMCPY

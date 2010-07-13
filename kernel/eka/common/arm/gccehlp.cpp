@@ -59,6 +59,63 @@ void __aeabi_unwind_cpp_pr0() {}
 
 void __cxa_end_cleanup() {}
 
+EXPORT_C void __cxa_guard_abort() {}
+
+EXPORT_C void __cxa_guard_acquire() {}
+
+EXPORT_C void __cxa_guard_release() {}
+
 #endif
 }
+
+//
+// The global new operator.
+//
+#include <kernel/kernel.h>
+
+EXPORT_C TAny* operator new[](TUint aSize, const std::nothrow_t&) __NO_THROW
+	{
+	return Kern::Alloc(aSize);
+	}
+
+EXPORT_C TAny* operator new(TUint aSize, const std::nothrow_t&) __NO_THROW
+	{
+	return Kern::Alloc(aSize);
+	}
+
+
+
+__NAKED__ void __rt_exporter_dummy(void)
+	{
+// Ensure that "vtable for __cxxabiv1::__si_class_type_info" is available from ekern.exe
+// ** This is almost certainly just creating an instance of the symbol, without supplying the 
+// ** required functionality!
+
+#define COMM_SYMBOL(x)  asm(".comm " x ",4")
+
+COMM_SYMBOL("_ZTVN10__cxxabiv117__class_type_infoE");     // vtable for __cxxabiv1::__class_type_info
+COMM_SYMBOL("_ZTVN10__cxxabiv120__si_class_type_infoE");  // vtable for __cxxabiv1::__si_class_type_info
+COMM_SYMBOL("_ZTVN10__cxxabiv121__vmi_class_type_infoE"); // vtable for __cxxabiv1::__vmi_class_type_info
+
+// Implementations exist as globals in libgcc.a, we just need to pull them in
+#define IMPORT_GLOBAL(x)  asm(".global " x );
+
+IMPORT_GLOBAL("__aeabi_lasr");
+IMPORT_GLOBAL("__aeabi_lcmp");
+IMPORT_GLOBAL("__aeabi_llsl");
+IMPORT_GLOBAL("__aeabi_llsr");
+IMPORT_GLOBAL("__aeabi_lmul");
+IMPORT_GLOBAL("__aeabi_ulcmp");
+
+// Implementations exist as "hidden" in libgcc.a, so we need to pull them in and reveal them
+// ** This version will completely fail to do that, but creates junk to be exported
+#define IMPORT_HIDDEN(x)  asm(".comm " x ",4");
+
+// unaligned-funcs.c
+IMPORT_HIDDEN("__aeabi_uread4");
+IMPORT_HIDDEN("__aeabi_uread8");
+IMPORT_HIDDEN("__aeabi_uwrite4");
+IMPORT_HIDDEN("__aeabi_uwrite8");
+
+	}
 
