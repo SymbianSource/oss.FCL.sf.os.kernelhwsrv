@@ -41,7 +41,7 @@ GLDEF_C TInt _E32Dll_Body(TInt aReason)
 	return KernelModuleEntry(aReason);
 	}
 
-#elif defined(__ARMCC__)
+#elif defined(__EABI__)
 
 void __DLL_Export_Table__(void);
 void __cpp_initialize__aeabi_();
@@ -50,7 +50,7 @@ void __cpp_initialize__aeabi_();
 // needs destruction. But the kernel never will need this so, define it as a nop
 void __record_needed_destruction (void * d){}
 // 2.1 calls __aeabi_atexit passing __dso_handle. This can just be a label since its not used.
-__asm void __dso_handle(void){}
+__NAKED__ void __dso_handle(void){}
 void __aeabi_atexit(void *object, void (*dtor)(void *), void *handle){}
 
 GLDEF_C TInt _E32Dll_Body(TInt aReason)
