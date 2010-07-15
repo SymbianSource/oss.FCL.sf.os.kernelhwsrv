@@ -1,3 +1,30 @@
+Version 2.00.2065
+=================
+(Made by vfebvre 18/06/2010)
+
+1.	erifung
+	1.	ou1cimx1#435443 ENV F32TEST T_LDRCHECK test failure investigation (t_ldrcheck.cpp:714)
+
+
+Version 2.00.2064
+=================
+(Made by vfebvre 15/06/2010)
+
+1.	migubarr
+	1.	ou1cimx1#441149 File Server flushes FAT metadata too often
+
+2.	michcox
+	1.	ou1cimx1#418214 9.2 fix CDirStack array panic
+
+
+Version 2.00.2063
+=================
+(Made by vfebvre 11/06/2010)
+
+1.	migubarr
+	1.	ou1cimx1#424879 Phone resets sometimes when disconnecting OTG cable during playback
+
+
 Version 2.00.2062
 =================
 (Made by vfebvre 07/06/2010)

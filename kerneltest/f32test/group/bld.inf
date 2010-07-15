@@ -31,6 +31,9 @@ PRJ_TESTEXPORTS
 ../../../userlibandfileserver/fileserver/inc/runtests.h                         /epoc32/include/
 
 PRJ_TESTMMPFILES
+// this should ideally be run early on as it enables 'simulated lock failure mode' in the file cache for udeb builds
+t_filecache 
+
 // These tests must be run early on so they do not time out on LFFS disks.
 
 #ifdef WINS
@@ -174,8 +177,6 @@ t_corruptlog
 t_blockmap
 #endif
 
-t_filecache 
-
 t_fsched
 t_rcache
 t_wcache
@@ -259,6 +260,7 @@ t_swapfsys manual
 t_plugin_v2beta.mmp
 
 t_localtime 
+
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 t_file64bit manual
 fhserver64bit       support

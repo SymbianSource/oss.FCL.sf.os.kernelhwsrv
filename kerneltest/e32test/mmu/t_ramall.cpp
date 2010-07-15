@@ -602,8 +602,6 @@ GLDEF_C TInt E32Main()
 		TestMultipleContiguousAllocations(10, PageSize * 1024, PageShift + 10);
 		UnfragmentMemory(ETrue, ETrue, EFalse);
 
-		// Temporarily disable these tests until errors they cause are fixed.
-#if 0
 		test.Next(_L("TestMultipleContiguousAllocations with repeated movable and discardable allocations"));
 		FragmentMemory(PageSize, PageSize * 2, EFalse, EFalse, ETrue);
 		TestMultipleContiguousAllocations(20, PageSize * 2, PageShift);
@@ -620,7 +618,7 @@ GLDEF_C TInt E32Main()
 		FragmentMemory(PageSize * 32, PageSize * 64, ETrue, EFalse, ETrue);
 		TestMultipleContiguousAllocations(20, PageSize * 1024, PageShift + 10);
 		UnfragmentMemory(ETrue, EFalse, ETrue);
-#endif
+
 		gobbler.Close();
 		r = User::FreeLogicalDevice(KGobblerLddFileName);
 		test_KErrNone(r);

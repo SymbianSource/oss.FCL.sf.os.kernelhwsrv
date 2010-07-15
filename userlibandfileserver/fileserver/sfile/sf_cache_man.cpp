@@ -177,7 +177,7 @@ CCacheManager::CCacheManager(TUint aCacheSize)
 	iMaxLockedSegments = TGlobalFileCacheSettings::MaxLockedSize() >> KSegmentSizeLog2;
 
 #ifdef __SIMULATE_LOCK_FAILURES__
-	iSimulateLockFailureMode = ETrue;
+	iSimulateLockFailureMode = EFalse;	// off by default unless switched on by KControlIoSimulateLockFailureMode
 #endif
 	}
 

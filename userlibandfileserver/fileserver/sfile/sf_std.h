@@ -1750,7 +1750,7 @@ extern TBool CompFsSync;
 
  TInt  ValidateDrive(TInt aDriveNumber,CFsRequest* aRequest);
  TInt  ValidateDriveDoSubst(TInt aDriveNumber,CFsRequest* aRequest);
- void  ValidateAtts(TUint anEntryAtt,TUint& aSetAttMask,TUint& aClearAttMask);
+ void  ValidateAtts(TUint& aSetAttMask,TUint& aClearAttMask);
  TInt  ParseSubstPtr0(CFsRequest* aRequest,TParse& aParse, TBool aUseSessionPath = ETrue);
  TInt  ParseNoWildSubstPtr0(CFsRequest* aRequest,TParse& aParse, TBool aUseSessionPath = ETrue);
  TInt  ParseNoWildSubstPtr1(CFsRequest* aRequest,TParse& aParse);
@@ -1945,6 +1945,13 @@ private:
 	TBool iProxyDriveDismounted;
 	CFileSystem* iFSys;  ///< link to the FileSystem object that has produced the mount (iMountCB)
 friend class CMountCB;
+	};
+
+// extension to CProxyDrive
+class CProxyDriveBody : public CBase
+	{
+public:
+	RLibrary iLibrary;
 	};
 
 

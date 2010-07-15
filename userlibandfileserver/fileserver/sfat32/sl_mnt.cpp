@@ -1341,9 +1341,10 @@ void CFatMountCB::SetEntryL(const TDesC& aName,const TTime& aTime,TUint aSetAttM
     FindEntryStartL(RemoveTrailingDots(aName),KEntryAttMaskSupported,firstEntry,firstEntryPos);
     MoveToDosEntryL(firstEntryPos,firstEntry);
     TUint setAttMask=aSetAttMask&KEntryAttMaskSupported;
+	TInt oldAtt = firstEntry.Attributes();
+	TInt att = oldAtt;
     if (setAttMask|aClearAttMask)
         {
-        TInt att=firstEntry.Attributes();
         att|=setAttMask;
         att&=(~aClearAttMask);
         firstEntry.SetAttributes(att);
@@ -1352,6 +1353,8 @@ void CFatMountCB::SetEntryL(const TDesC& aName,const TTime& aTime,TUint aSetAttM
 		{
 		firstEntry.SetTime(aTime,TimeOffset());
 		}
+	else if (att == oldAtt)
+		return;					// no change - don't bother writing entry
     WriteDirEntryL(firstEntryPos,firstEntry);
     }
 

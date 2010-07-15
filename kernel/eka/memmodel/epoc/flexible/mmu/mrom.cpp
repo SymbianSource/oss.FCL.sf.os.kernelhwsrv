@@ -956,7 +956,11 @@ TInt DShadowPage::Construct(DMemoryObject* aMemory, TUint aIndex, DMemoryMapping
 	RamAllocLock::Lock();
 
 	Mmu& m = TheMmu;
-	r = m.AllocRam(&iNewPage, 1, aMemory->RamAllocFlags(), EPageFixed);
+	// Allocate a page to shadow to allowing the allocation to steal pages from the paging cache.
+	r = m.AllocRam(	&iNewPage, 
+					1, 
+					(Mmu::TRamAllocFlags)(aMemory->RamAllocFlags() & ~Mmu::EAllocNoPagerReclaim), 
+					EPageFixed);
 	if(r==KErrNone)
 		{
 		TLinAddr dst = m.MapTemp(iNewPage,aIndex,0);

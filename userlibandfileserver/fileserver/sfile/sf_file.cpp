@@ -1014,9 +1014,6 @@ void TFsFileWrite::CommonEnd(CFsMessageRequest* aMsgRequest, TInt aRetVal, TUint
 			{
 			file->SetNotifyAsyncReadersPending(ETrue);
 			}
-		
-        file->iAtt |= KEntryAttModified;
-
 		}
 	else if (aRetVal == KErrCorrupt)
 		file->SetFileCorrupt(ETrue);
@@ -1666,7 +1663,7 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
 	
     TUint setAttMask=(TUint)(aRequest->Message().Int0());
 	TUint clearAttMask=(TUint)aRequest->Message().Int1();
-	ValidateAtts(share->File().Att(),setAttMask,clearAttMask);
+	ValidateAtts(setAttMask,clearAttMask);
 
 	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
 	TRAP(r,share->File().SetEntryL(TTime(0),setAttMask,clearAttMask))
@@ -1780,7 +1777,7 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
 	aRequest->ReadL(KMsgPtr0,t);
 	TUint setAttMask=(TUint)(aRequest->Message().Int1()|KEntryAttModified);
 	TUint clearAttMask=(TUint)aRequest->Message().Int2();
-	ValidateAtts(share->File().Att(),setAttMask,clearAttMask);//	Validate attributes
+	ValidateAtts(setAttMask,clearAttMask);//	Validate attributes
 
 	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
 	TRAP(r,share->File().SetEntryL(time,setAttMask,clearAttMask))
@@ -3427,20 +3424,12 @@ inplace of CFileCB::SetSize() or CFileCB::iSize.
 the file size shall be modified after acquiring the iLock mutex and if it is ETrue, 
 the file size shall be modified without aquiring the iLock mutex.  
 */
-EXPORT_C void CFileCB::SetSize64(TInt64 aSize, TBool aDriveLocked)
+EXPORT_C void CFileCB::SetSize64(TInt64 aSize, TBool /*aDriveLocked*/)
 	{
-	if(aDriveLocked)
-		{
-		iSize = (TInt)I64LOW(aSize);
-		iBody->iSizeHigh = (TInt)I64HIGH(aSize);
-		}
-	else
-		{
-		Drive().Lock();
-		iSize = (TInt)I64LOW(aSize);
-		iBody->iSizeHigh = (TInt)I64HIGH(aSize);
-		Drive().UnLock();
-		}
+	// cuurently this should only be called from the drive thread
+	ASSERT(FsThreadManager::IsDriveThread(Drive().DriveNumber(),EFalse));
+	iSize = (TInt)I64LOW(aSize);
+	iBody->iSizeHigh = (TInt)I64HIGH(aSize);
 	}
 
 

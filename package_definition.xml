@@ -89,6 +89,9 @@
       <component id="fileserver" name="File Server" filter="gt" purpose="mandatory">
         <unit bldFile="userlibandfileserver/fileserver/group" mrp="userlibandfileserver/fileserver/group/base_f32.mrp"/>
       </component>
+      <component id="automounter" name="Automounter" filter="gt" purpose="mandatory">
+        <unit bldFile="userlibandfileserver/fileserver/automounter" mrp="userlibandfileserver/fileserver/automounter/base_f32_automounter.mrp"/>
+      </component>
       <component id="estart" name="Base Starter" filter="gt" purpose="optional">
         <unit bldFile="userlibandfileserver/fileserver/estart" mrp="userlibandfileserver/fileserver/estart/base_f32_estart.mrp"/>
       </component>

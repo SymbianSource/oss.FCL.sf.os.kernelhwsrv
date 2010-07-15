@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -11,20 +11,17 @@
 // Contributors:
 //
 // Description:
-// e32test/group/t_chunk.mmp
-// 
+// Event handler and container for all objects being tracked.
 //
 
-TARGET         t_chunk.exe        
-TARGETTYPE     EXE
-SOURCEPATH	../mmu
-SOURCE         t_chunk.cpp
-LIBRARY        euser.lib hal.lib
-OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+	
+inline void DRM_DebugEventHandler::LockDataAccess()
+    {
+    Kern::SemaphoreWait(*iProtectionLock);
+    }
 
-
-capability		all
-
-VENDORID 0x70000001
-
-SMPSAFE
+inline void DRM_DebugEventHandler::ReleaseDataAccess()
+    {
+    Kern::SemaphoreSignal(*iProtectionLock);
+    }
+		

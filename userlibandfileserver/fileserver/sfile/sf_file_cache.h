@@ -75,7 +75,8 @@ private:
 
 	TInt DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFsClientMessageRequest*& aNewRequest);
 	TInt DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessageRequest*& aNewRequest, TUint aMode);
-	TInt DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest* aOldRequest, TBool aFlushAll);
+	enum TFlushMode {EFlushSingle, EFlushAll};
+	TInt DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest* aOldRequest, TFlushMode aFlushMode);
 
 
 	inline TInt SegmentSize() const;

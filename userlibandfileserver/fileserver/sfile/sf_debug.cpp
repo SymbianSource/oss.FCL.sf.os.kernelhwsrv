@@ -28,6 +28,29 @@
 // ONLY INCLUDED IN DEBUG BUILDS
 //
 
+void PrintOpenFiles()
+	{
+	CCacheManager* manager = CCacheManagerFactory::CacheManager();
+	TInt allocatedSegmentCount = manager ? manager->Stats().iAllocatedSegmentCount : 0;
+	TInt lockedSegmentCount = manager ? manager->Stats().iLockedSegmentCount : 0;
+	TInt fileCount = manager ? manager->Stats().iFileCount : 0;
+	TInt filesOnClosedQueue = manager ? manager->Stats().iFilesOnClosedQueue : 0;
+
+	RDebug::Print(_L("TRACE: Open files %d allocatedSegmentCount %d lockedSegmentCount %d fileCount %d filesOnClosedQueue %d\n"), 
+		Files->Count(), allocatedSegmentCount, lockedSegmentCount, fileCount, filesOnClosedQueue);
+
+	Files->Lock();
+	TInt count=Files->Count();
+
+	for (TInt n=0; n<count; n++)
+		{
+		CFileCB* file=(CFileCB*)(*Files)[n];
+
+		RDebug::Print(_L("%3d: %C:%S fc %x sz %lx\n"), n, file->Drive().DriveNumber() + 'A', &file->FileNameF(), file->FileCache(), file->CachedSize64());
+		}
+	Files->Unlock();
+	}
+
 void PrintHeapSize(const TDesC& aMessage)
 //
 // Display the total memory available

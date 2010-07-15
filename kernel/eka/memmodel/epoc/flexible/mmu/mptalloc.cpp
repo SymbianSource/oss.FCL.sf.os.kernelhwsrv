@@ -184,6 +184,7 @@ TInt DPageTableMemoryManager::Alloc(DMemoryObject* aMemory, TUint aIndex, TBool 
 			}
 #endif
 		}
+	RamAllocLock::Unlock();
 
 	TUint usedNew = 0;
 	if(r==KErrNone)
@@ -198,15 +199,9 @@ TInt DPageTableMemoryManager::Alloc(DMemoryObject* aMemory, TUint aIndex, TBool 
 		MmuLock::Unlock();
 		usedNew = 1;
 
-		// Must hold the ram alloc lock until the page has been set as managed
-		// otherwise it will still be seen as free by the rest of the system.
-		RamAllocLock::Unlock();
-
 		// map page...
 		r = aMemory->MapPages(pageList);
 		}
-	else
-		RamAllocLock::Unlock();
 
 	// release page array entry...
 	aMemory->iPages.AddPageEnd(aIndex,usedNew);
@@ -1193,9 +1188,9 @@ TInt PageTableAllocator::StealPageTableInfo(SPageInfo* aPageInfo)
 TInt PageTableAllocator::MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInfo, 
 									TUint aBlockZoneId, TBool aBlockRest)
 	{
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
 	// We don't move page table or page table info pages, however, if this page 
 	// is demand paged then we may be able to discard it.
-	MmuLock::Lock();
 	if (aOldPageInfo->Owner() == iPageTableInfoMemory)
 		{
 		if (!(iPtPageAllocator.IsDemandPagedPtInfo(aOldPageInfo)))

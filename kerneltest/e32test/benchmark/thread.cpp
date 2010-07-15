@@ -165,8 +165,10 @@ void Thread::Killing(TBMResult* aResult, TBMUInt64 aIter)
 		BM_ERROR(r, r == KErrNone);
 		child.Logon(st);
 		BMProgram::SetAbsPriority(RThread(), KBMPriorityLow);
+		TRequestStatus threadRunning;
+		child.Rendezvous(threadRunning);
 		child.Resume();
-		User::After(1000); // Give the child thread a chance to run - killing it too earlier can leave the heap locked
+		User::WaitForRequest(threadRunning);	// Wait for the thread to run before killing it.
 		BMProgram::SetAbsPriority(RThread(), KBMPriorityHigh);
 		TBMTicks t1;
 		::bmTimer.Stamp(&t1);
@@ -183,6 +185,7 @@ void Thread::Killing(TBMResult* aResult, TBMUInt64 aIter)
 
 TInt Thread::KillingChild(TAny*)
 	{
+	RThread::Rendezvous(KErrNone);
 	User::WaitForAnyRequest();
 	return KErrNone;
 	}

@@ -929,16 +929,16 @@ TInt DPager::DiscardPage(SPageInfo* aOldPageInfo, TUint aBlockZoneId, TUint aMov
 
 	if (!DiscardCanStealPage(aOldPageInfo, moveDirty))
 		{
-		// The page is pinned or is dirty and this is a general defrag so move the page.
-		DMemoryObject* memory = aOldPageInfo->Owner();
 		// Page must be managed if it is pinned or dirty.
 		__NK_ASSERT_DEBUG(aOldPageInfo->Type()==SPageInfo::EManaged);
-		__NK_ASSERT_DEBUG(memory);
-		MmuLock::Unlock();
+		// The page is pinned or is dirty and this is a general defrag so move the page.
+		DMemoryObject* memory = aOldPageInfo->Owner();
+		memory->Open();
 		TPhysAddr newAddr;
 		TRACE2(("DPager::DiscardPage delegating pinned/dirty page to manager"));
 		TInt r = memory->iManager->MovePage(memory, aOldPageInfo, newAddr, aBlockZoneId, blockRest);
 		TRACE(("< DPager::DiscardPage %d", r));
+		memory->AsyncClose();
 		return r;
 		}
 
@@ -1035,17 +1035,15 @@ TInt DPager::DiscardPage(SPageInfo* aOldPageInfo, TUint aBlockZoneId, TUint aMov
 			AddAsFreePage(newPageInfo);
 		else
 			ReturnPageToSystem(*newPageInfo);   // temporarily releases MmuLock
-		}
+		}	
+	MmuLock::Unlock();
 
 	if (havePageCleaningLock)
 		{
 		// Release the page cleaning mutex
-		MmuLock::Unlock();
 		PageCleaningLock::Unlock();
-		MmuLock::Lock();
-		}	
-	
-	MmuLock::Unlock();
+		}
+
 	TRACE(("< DPager::DiscardPage returns %d", r));
 	return r;	
 	}

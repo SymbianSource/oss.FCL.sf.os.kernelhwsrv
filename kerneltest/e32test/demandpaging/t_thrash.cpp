@@ -270,10 +270,10 @@ void EnsureSystemIdle()
 		RThread thread;
 		test_KErrNone(thread.Create(_L("EnsureSystemIdleThread"), EnsureSystemIdleThread, 1024, NULL, NULL));		
 		thread.SetPriority(EPriorityLess);
-		thread.Resume();
-
 		TRequestStatus status;
 		thread.Rendezvous(status);
+		thread.Resume();
+
 		User::WaitForRequest(status);
 		test_KErrNone(status.Int());
 

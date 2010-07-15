@@ -320,8 +320,31 @@ TInt LocalDrives::InitProxyDrive(CFsRequest* aRequest)
 	// Create the actual proxy drive...
 	CProxyDrive* pD = NULL;
 	TInt r = pF->CreateProxyDrive(pD, NULL);
-	__ASSERT_ALWAYS(r == KErrNone, User::Panic(_L("CreateProxyDrive Error"), r));
-	__ASSERT_ALWAYS(pD != NULL, User::Panic(_L("CreateProxyDrive returned NULL"), -999));
+	if (r != KErrNone)
+		{
+		delete pD;
+		return r;
+		}
+	if (pD == NULL)
+		return KErrNoMemory;
+
+	// Create the proxy drive body... which is used to store the library handle
+	CProxyDriveBody* pBody = new CProxyDriveBody();
+	if (pBody == NULL)
+		{
+		delete pD;
+		return KErrNoMemory;
+		}
+	pD->iBody = pBody;
+
+	// Re-open the library so that it is safe to call RFs::RemoveProxyDrive() before the proxy drive has been deleted -
+	// which can happen if the file system is dismounted with open file handles
+	r = pD->SetAndOpenLibrary(pF->Library());
+	if (r != KErrNone)
+		{
+		delete pD;
+		return r;
+		}
 
 	iMapping[drive] = i+KMaxLocalDrives;
 
@@ -387,7 +410,11 @@ void LocalDrives::ClearProxyDriveMapping(TInt aDrive)
 	__ASSERT_DEBUG(iMapping[aDrive]>= KMaxLocalDrives && iProxyDriveMapping[iMapping[aDrive]-KMaxLocalDrives],Fault(EClearProxyDriveMapping2));
 	TInt idx = iMapping[aDrive]-KMaxLocalDrives;
 	if (iProxyDriveMapping[idx]->Mount() == NULL)	// don't delete if it's still owned by its mount
+		{
+		RLibrary lib = iProxyDriveMapping[idx]->GetLibrary();
 		delete iProxyDriveMapping[idx];
+		lib.Close();
+		}
 	iProxyDriveMapping[idx] = NULL;
 	iMapping[aDrive] = KDriveInvalid;
 	}

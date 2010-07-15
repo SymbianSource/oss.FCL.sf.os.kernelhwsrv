@@ -1796,6 +1796,10 @@ GLDEF_C TInt E32Main()
 //TheFs.SetDebugRegister(KCACHE);
 			DoTests(gDrive);
 //TheFs.SetDebugRegister(0);
+
+		if ((gVolInfo.iDrive.iMediaAtt & KMediaAttFormattable))
+			Format(gDrive);
+
 			test.End();
 //			}
 		}

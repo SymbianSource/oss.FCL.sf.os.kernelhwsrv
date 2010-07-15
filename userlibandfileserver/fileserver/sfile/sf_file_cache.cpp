@@ -36,6 +36,9 @@
 // disables flushing of stale cachelines before each write
 #define LAZY_WRITE
 
+// call SetSizeL() to pre-allocate FAT clusters before flushing dirty data
+#define SETSIZE_BEFORE_WRITE	
+
 enum TFileCacheFault
 	{
 	ECacheSettingsInitFailed,
@@ -63,6 +66,7 @@ enum TFileCacheFault
 	EUnexpectedReNewLFailure,
 	EDirtyDataOwnerNull,
 	EFlushingWithSessionNull,
+	EFlushingWithAllocatedRequest,
 	};
 
 
@@ -985,7 +989,7 @@ TInt CFileCache::DoReadBuffered(CFsMessageRequest& aMsgRequest, TUint aMode, CFs
 				// with any dirty data already in the file cache
 				if (aMode & EFileWriteBuffered)
 					{
-					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, ETrue);
+					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFlushAll);
 					if (r == CFsRequest::EReqActionBusy || r != CFsRequest::EReqActionComplete)
 						return r;
 					}
@@ -1165,7 +1169,7 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 				if ((aMode & EFileWriteBuffered) == 0 || 
 					(cachingWrites && totalLen > iCacheSize))
 					{
-					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, ETrue);
+					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFlushAll);
 					if (r == CFsRequest::EReqActionBusy || r != CFsRequest::EReqActionComplete)
 						return r;
 					}
@@ -1237,7 +1241,7 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 					// If there's nothing to flush then the dirty (locked) data
 					// must belong to another drive, so there's not much we can do
 					// but write through 
-					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFalse);
+					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFlushSingle);
 					if (r == CFsRequest::EReqActionBusy)
 						return CFsRequest::EReqActionBusy;
 					if (r != KErrInUse)
@@ -1262,7 +1266,7 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 					// or wait if already flushing
 					if (iFlushBusy)
 						return CFsRequest::EReqActionBusy;
-					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFalse);
+					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFlushSingle);
 					if (r != CFsRequest::EReqActionBusy && r != CFsRequest::EReqActionComplete)
 						lastError = r;
 					}
@@ -1495,7 +1499,7 @@ TInt CFileCache::DoWriteBuffered(CFsMessageRequest& aMsgRequest, CFsClientMessag
 
 				if (cachingWrites)
 					{
-					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, ETrue);
+					TInt r = DoFlushDirty(aNewRequest, &aMsgRequest, EFlushAll);
 #ifdef _DEBUG
 					if (r == CFsRequest::EReqActionBusy)
 						CCacheManagerFactory::CacheManager()->Stats().iWriteThroughWithDirtyDataCount++;
@@ -1573,7 +1577,7 @@ TInt CFileCache::FlushDirty(CFsRequest* aOldRequest)
 
 	CFsClientMessageRequest* newRequest = NULL;
 
-	TInt r = DoFlushDirty(newRequest, aOldRequest, ETrue);
+	TInt r = DoFlushDirty(newRequest, aOldRequest, EFlushAll);
 
 	iLock.Signal();
 
@@ -1615,7 +1619,7 @@ void CFileCache::PropagateFlushErrorToAllFileShares()
 /**
 CFileCache::DoFlushDirty()
 
-@param aFlushAll. If EFalse then only a single cacheline will be flushed
+@param aFlushMode. The flush mode which indicates how many cache-lines to flush. @See TFlushMode
 
 returns	CFsRequest::EReqActionBusy if a flush is in progress OR cacheline already in use
 		CFsRequest::EReqActionComplete if nothing to flush / flush completed 
@@ -1623,10 +1627,12 @@ returns	CFsRequest::EReqActionBusy if a flush is in progress OR cacheline alread
 		or one of the system wide error codes
 
  */
-TInt CFileCache::DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest* aOldRequest, TBool aFlushAll)
+TInt CFileCache::DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest* aOldRequest, TFlushMode aFlushMode)
 	{
 	TInt64  pos;
 	TUint8* addr;
+
+	__ASSERT_ALWAYS(aNewRequest == NULL, Fault(EFlushingWithAllocatedRequest));
 
 	if (iFlushBusy)
 		return CFsRequest::EReqActionBusy;
@@ -1681,10 +1687,8 @@ TInt CFileCache::DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest*
 		return r;
 		}
 
-	// set the number of segments to flush - either all dirty data or the equivalent of one full cacheline
-	aNewRequest->CurrentOperation().iScratchValue0 = 
-		(TAny*) (aFlushAll?KMaxTInt:iCacheClient->CacheLineSizeInSegments());
-
+	// set the flush mode
+	aNewRequest->CurrentOperation().iScratchValue0 = (TAny*) aFlushMode;
 
 	// issue flush request
 	r = FlushDirtySm(*aNewRequest);
@@ -1701,6 +1705,11 @@ TInt CFileCache::DoFlushDirty(CFsClientMessageRequest*& aNewRequest, CFsRequest*
 		}
 	else	// CFsRequest::EReqActionComplete
 		{
+		// Return any allocation failures etc to client
+		TInt lastError = aNewRequest->LastError();
+		if (lastError != KErrNone)
+			r = lastError;
+
 		aNewRequest->PopOperation();
 		aNewRequest->Free();
 		aNewRequest = NULL;
@@ -1778,9 +1787,6 @@ TInt CFileCache::FlushDirtySm(CFsMessageRequest& aMsgRequest)
 				TUint8* addr;
 				TInt segmentCount = iCacheClient->FindFirstDirtySegment(pos, addr);
 				
-				// keep track of how many segments we've written
-				currentOperation->iScratchValue0 = (TAny*) ((TInt) currentOperation->iScratchValue0 - segmentCount);
-
 				// if no more dirty segments of if a genuine error then finish
 				// NB if the request has been cancelled then we still need to proceed and mark all the
 				// segments as clean, otherwise they will never get freed !
@@ -1807,6 +1813,28 @@ TInt CFileCache::FlushDirtySm(CFsMessageRequest& aMsgRequest)
 					break;
 					}
 
+#ifdef SETSIZE_BEFORE_WRITE	
+				TInt64 physicalFileSize = iFileCB->Size64();
+				if ( (!iDrive->IsRugged()) && ((pos + (TInt64) len) > physicalFileSize))
+					{
+					// Need to switch to drive thread before calling CFileCB::SetSizeL()
+					if (!IsDriveThread())
+						{
+						aMsgRequest.SetState(CFsRequest::EReqStatePostInitialise);
+						return CFsRequest::EReqActionBusy;
+						}
+					__CACHE_PRINT2(_L("CACHEFILE: Increasing uncached size from %ld to %ld"), iFileCB->Size64(), iSize64);
+					TInt r;
+
+					r = CheckDiskSpace(iSize64 - physicalFileSize, &aMsgRequest);
+			        if(r == KErrNone)
+						TRAP(r, iFileCB->SetSizeL(iSize64))
+					if (r == KErrNone)
+						{
+ 						iFileCB->SetSize64(iSize64, ETrue);	// NB drive might be locked
+						}
+					}
+#endif
 				__CACHE_PRINT3(_L("CACHEFILE: FlushDirty first dirty pos %d, addr %08X count %d"), I64LOW(pos), addr, segmentCount);
 
 				TInt filledSegmentCount;
@@ -1900,12 +1928,18 @@ TInt CFileCache::FlushDirtySm(CFsMessageRequest& aMsgRequest)
 					}
 
 
-				if (TInt(currentOperation->iScratchValue0) > 0)
-					currentOperation->iState = EStWriteToDisk;
-				else
-					currentOperation->iState = EStEnd;
-
-
+				switch((TFlushMode) (TInt) currentOperation->iScratchValue0)
+					{
+					case EFlushSingle:
+						currentOperation->iState = EStEnd;
+						break;
+					case EFlushAll:
+						currentOperation->iState = EStWriteToDisk;
+						break;
+					default:
+						ASSERT(0);
+						break;
+					}
 				}
 				break;
 

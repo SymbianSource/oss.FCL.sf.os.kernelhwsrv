@@ -141,16 +141,11 @@ TInt M::MovePage(TPhysAddr aOld, TPhysAddr& aNew, TUint aBlockZoneId, TUint aMov
 			{
 			case SPageInfo::EManaged:
 				memory = pi->Owner();
-				// Note, whilst we hold the RamAllocLock the page can't change it's use
-				// and we can safely assume that it still belongs to the memory object
-				// at a fixed page index.
-				// Also, as memory objects can't be destroyed whilst they still own pages
-				// we can safely access this object without taking an explicit reference,
-				// i.e. we don't need to Open() the memory object.
-				MmuLock::Unlock();
-				// move page...
+				memory->Open();
+				// move page, this will release the mmu lock.
 				r = memory->iManager->MovePage(	memory, pi, aNew, aBlockZoneId, 
 												(aMoveDisFlags & M::EMoveDisBlockRest)!=0);
+				memory->AsyncClose();
 				break;
 			case SPageInfo::EUnused:
 				r = KErrNotFound;	// This page is free so nothing to do.
@@ -187,15 +182,10 @@ TInt M::MoveAndAllocPage(TPhysAddr aAddr, TZonePageType aPageType)
 			{
 			case SPageInfo::EManaged:
 				memory = pi->Owner();
-				// Note, whilst we hold the RamAllocLock the page can't change it's use
-				// and we can safely assume that it still belongs to the memory object
-				// at a fixed page index.
-				// Also, as memory objects can't be destroyed whilst they still own pages
-				// we can safely access this object without taking an explicit referernce,
-				// i.e. we don't need to Open() the memory object.
-				MmuLock::Unlock();
-				// move page...
+				memory->Open();
+				// move page, this will release the mmu lock.
 				r = memory->iManager->MoveAndAllocPage(memory, pi, aPageType);
+				memory->AsyncClose();
 				break;
 			case SPageInfo::EUnused:
 				r = KErrNone;	// This page is free so nothing to do.

@@ -150,7 +150,12 @@ GLDEF_C void CallTestsL()
 	r = TheFs.DismountProxyDrive(driveNumber);
 	test.Printf(_L("DismountProxyDrive(%d) r %d\n"), driveNumber, r);
 	test (r == KErrNone);
-	
+
+	test.Printf(_L("Calling RemoveProxyDrive()...\n"));
+	r = TheFs.RemoveProxyDrive(KBitProxyDrive);
+	test.Printf(_L("RemoveProxyDrive() r %d\n"), r);
+	test (r == KErrNone);
+	User::After(1000000);
 
 	test.Printf(_L("closing dir (%S)....\n"), &dirPath, r);
 	dir.Close();
@@ -158,8 +163,6 @@ GLDEF_C void CallTestsL()
 	test.Printf(_L("closing file session()....\n"));
 	fs.Close();
 
-	r = TheFs.RemoveProxyDrive(KBitProxyDrive);
-	test (r == KErrNone);
 
 	test.End();
 	test.Close();

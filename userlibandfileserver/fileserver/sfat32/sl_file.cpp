@@ -42,7 +42,7 @@ CFatFileCB::~CFatFileCB()
             {
             IndicateFileTimeModified(ETrue); //-- this will force writing file modification time to the media on Flush
             TRAP_IGNORE(FlushAllL());
-        }
+	        }
         }
 
     delete[] iSeekIndex;
@@ -637,6 +637,7 @@ void CFatFileCB::DoSetSizeL(TUint aSize, TBool aForceCachesFlush)
         return;
 
     IndicateFileSizeModified(ETrue);
+	IndicateFileAttModified(ETrue);		// ensure file size is flushed
 
 	TInt newIndexMult=CalcSeekIndexSize(aSize);
 	if (iSeekIndex!=NULL && newIndexMult!=iSeekIndexSize)
@@ -684,19 +685,23 @@ void CFatFileCB::SetEntryL(const TTime& aTime,TUint aSetAttMask,TUint aClearAttM
 
     //-- change file attributes
     const TUint setAttMask = (aSetAttMask & KEntryAttMaskSupported); //-- supported attributes to set
-    TUint newAtt = Att();
+	TUint oldAtt = Att();
+	TUint newAtt = oldAtt;
 
 	if (setAttMask|aClearAttMask)
 		{
         newAtt |= setAttMask;
         newAtt &= ~aClearAttMask;
-        SetAtt(newAtt);
-        IndicateFileAttModified(ETrue); //-- indicate that file attributes have changed
+		if (newAtt != oldAtt)
+			{
+	        SetAtt(newAtt);
+		    IndicateFileAttModified(ETrue); //-- indicate that file attributes have changed
+			}
 		}
     
     //-- set file entry modification time if required
 	if (aSetAttMask&KEntryAttModified)
-	{
+		{
         SetModified(aTime);        //-- set file modified time
         IndicateFileAttModified(ETrue); //-- indicate that file attributes have changed
         IndicateFileTimeModified(ETrue); //-- this will force writing file mod. time to the media on Flush
@@ -936,6 +941,21 @@ void CFatFileCB::WriteFileSizeL(TUint aSize)
 
     mount.ReadDirEntryL(iFileDosEntryPos, dirEntry); //-- read this file's dir. entry
     dirEntry.SetSize(aSize);                         //-- set new size
+
+	// As we're updating the directory entry anyway, we might as well update the attributes & time 
+	// if these have been modified to save having to update them later...
+	if (FileAttModified())
+		{
+		dirEntry.SetAttributes(Att() & KEntryAttMaskSupported);
+        IndicateFileAttModified(EFalse); 
+		IndicateFileTimeModified(ETrue);	//-- this mirrors the behaviour of CFatFileCB::~CFatFileCB()
+		}
+	if (FileTimeModified())
+		{
+		dirEntry.SetTime(iModified, FatMount().TimeOffset());
+        IndicateFileTimeModified(EFalse);
+		}
+
     mount.WriteDirEntryL(iFileDosEntryPos, dirEntry);//-- write the entry back
 
     IndicateFileSizeModified(EFalse);

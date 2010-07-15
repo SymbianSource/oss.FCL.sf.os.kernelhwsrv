@@ -1638,48 +1638,65 @@ void Mmu::RemapPage(TPte* const aPtePtr, TPhysAddr& aPage, TPte aBlankPte)
 
 	// get page to remap...
 	TPhysAddr pagePhys = aPage;
-	
+
 	// Only remap the page if it is committed or it is being moved and
 	// no other operation has been performed on the page.
 	if(!RPageArray::TargetStateIsCommitted(pagePhys))
 		return; // page no longer needs mapping
-	
+
 	// Only remap the page if it is currently mapped, i.e. doesn't have an unallocated pte.
 	// This will only be true if a new mapping is being added but it hasn't yet updated 
 	// all the ptes for the pages that it maps.
 	TPte pte = *aPtePtr;
 	if (pte == KPteUnallocatedEntry)
 		return;
-	
+
 	// clear type flags...
 	pagePhys &= ~KPageMask;
 
+	// Get the SPageInfo of the page to map.  Allow pages without SPageInfos to
+	// be mapped as when freeing a shadow page may need to remap an unpaged ROM 
+	// page which won't have an SPageInfo.
 	SPageInfo* pi = SPageInfo::SafeFromPhysAddr(pagePhys);
 	if (pi)
 		{
 		SPageInfo::TPagedState pagedState = pi->PagedState();
 		if (pagedState != SPageInfo::EUnpaged)
 			{
-			// The page is demand paged.  Only remap the page if it is pinned or is currently
-			// accessible but to the old physical page.
-			if (pagedState != SPageInfo::EPagedPinned &&
-				 (Mmu::IsPteInaccessible(pte) || (pte^pagePhys) < TPte(KPageSize)))
-				return;
-			if (!pi->IsDirty())
+			// For paged pages only update the pte if the pte points to the wrong physical
+			// address or the page is pinned.
+			if (pagedState != SPageInfo::EPagedPinned)
 				{
-				// Ensure that the page is mapped as read only to prevent pages being marked dirty
-				// by page moving despite not having been written to
-				Mmu::MakePteInaccessible(aBlankPte, EFalse);
+				if ((pte^pagePhys) < TPte(KPageSize))
+					return;
+				if (Mmu::IsPteInaccessible(pte))
+					{
+					// Updating this pte shouldn't be necessary but it stops random data 
+					// corruption in stressed cases???
+					Mmu::MakePteInaccessible(aBlankPte, EFalse);
+					}
+				else if (!pi->IsDirty())
+					{
+					// Ensure that the page is mapped as read only to prevent pages being writable 
+					// without having been marked dirty.
+					Mmu::MakePteInaccessible(aBlankPte, ETrue);
+					}
+				}
+			else if (!pi->IsDirty())
+				{
+				// Ensure that the page is mapped as read only to prevent pages being writable 
+				// without having been marked dirty.
+				Mmu::MakePteInaccessible(aBlankPte, ETrue);
 				}
 			}
 		}
-	
+
 	// Map the page in the page array entry as this is always the physical
 	// page that the memory object's page should be mapped to.
 	pte = pagePhys|aBlankPte;
 	TRACE2(("!PTE %x=%x",aPtePtr,pte));
 	*aPtePtr = pte;
-	
+
 	// clean cache...
 	CacheMaintenance::SinglePteUpdated((TLinAddr)aPtePtr);
 	}
@@ -1958,7 +1975,10 @@ TBool Mmu::PageInPages(TPte* const aPtePtr, const TUint aCount, TPhysAddr* aPage
 			}
 #endif
 		if(!Mmu::IsPteMoreAccessible(aBlankPte,pte))
+			{
+			__NK_ASSERT_DEBUG((pte^page) < (TUint)KPageSize); // Must be the same physical addr.
 			return true; // return true to keep page table (it already had at least page mapped)
+			}
 
 		// remap page with new increased permissions...
 		if(pte==KPteUnallocatedEntry)
@@ -2011,6 +2031,8 @@ TBool Mmu::PageInPages(TPte* const aPtePtr, const TUint aCount, TPhysAddr* aPage
 					TRACE2(("!PTE %x=%x",pPte-1,pte));
 					pPte[-1] = pte;
 					}
+				else
+					__NK_ASSERT_DEBUG((pte^page) < (TUint)KPageSize); // Must be the same physical addr.	
 				}
 			}
 		while(pPte!=pPteEnd);

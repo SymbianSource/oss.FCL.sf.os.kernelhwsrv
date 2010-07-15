@@ -1,3 +1,59 @@
+Version 2.00.2144
+=================
+(Made by vfebvre 21/06/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#451247 DEV 9.2 Warnings in DRM_DebugEventHandler header for coverage builds
+
+
+Version 2.00.2143
+=================
+(Made by vfebvre 18/06/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#443255 Automouter is not referenced by the package_definition.xml file
+
+
+Version 2.00.2142
+=================
+(Made by vfebvre 17/06/2010)
+
+1.	mipetzol
+	1.	MINOR_CHANGE DMA header file in-source documentation update
+
+
+Version 2.00.2141
+=================
+(Made by vfebvre 16/06/2010)
+
+1.	jcoppear
+	1.	ou1cimx1#443819 ENV E32TEST T_THRASH test timeout on 92
+
+
+Version 2.00.2140
+=================
+(Made by vfebvre 15/06/2010)
+
+1.	martai
+	1.	ou1cimx1#437377 E32TEST T_CHUNK test failure investigation (t_chunk.cpp:885)
+
+
+Version 2.00.2139
+=================
+(Made by vfebvre 14/06/2010)
+
+1.	martai
+	1.	ou1cimx1#435560 WDP: Paged data can be corrupted randomly
+
+
+Version 2.00.2138
+=================
+(Made by vfebvre 10/06/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#419218 Missing exported kernelhwsrv documentation causes build breaks
+
+
 Version 2.00.2137
 =================
 (Made by vfebvre 09/06/2010)
