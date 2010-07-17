@@ -2,19 +2,19 @@
 # Copyright (c) 2009 Symbian.  All rights reserved.
 #
 
+ifeq ($(OSTYPE),unix)
+	rombuilder := $(EPOCROOT)/epoc32/rom/tools/romnibus.pl
+else
+	rombuilder := $(EPOCROOT)/sf/os/kernelhwsrv/kernel/eka/rombuild/rom_sbs.pl 
+endif
+
 # macro for all the rules
 define rom
 
 FINAL::	
-ifeq ($(OSTYPE),unix)
 	$(call startrule,rom) \
-	echo "This is not supported currently"; \
+	$(PERL) $(rombuilder) --variant=$(REE_TARGET) --inst=$(PLATFORM) --build=$(CFG) --type=$(TYPE) --clean --name=$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img \
 	$(call endrule,rom)
-else
-	$(call startrule,rom) \
-	$(PERL) $(EPOCROOT)/sf/os/kernelhwsrv/kernel/eka/rombuild/rom_sbs.pl --variant=$(REE_TARGET) --inst=$(PLATFORM) --build=$(CFG) --type=$(TYPE) --clean --name=$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG).img \
-	$(call endrule,rom)
-endif
 
 FINAL::	
 	$(call startrule,copy) \
