@@ -92,6 +92,9 @@
       <component id="estart" name="Base Starter" filter="gt" purpose="optional">
         <unit bldFile="userlibandfileserver/fileserver/estart" mrp="userlibandfileserver/fileserver/estart/base_f32_estart.mrp"/>
       </component>
+      <component id="automounter" name="File Server Automounter" filter="gt" purpose="optional">
+        <unit bldFile="userlibandfileserver/fileserver/automounter" mrp="userlibandfileserver/fileserver/automounter/base_f32_automounter.mrp"/>
+      </component>
       <component id="domainmgr" name="Domain Manager" introduced="8.1b" purpose="mandatory">
         <unit bldFile="userlibandfileserver/domainmgr/group" mrp="userlibandfileserver/domainmgr/group/base_domain.mrp"/>
       </component>
