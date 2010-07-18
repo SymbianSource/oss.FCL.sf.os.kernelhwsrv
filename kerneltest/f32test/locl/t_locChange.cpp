@@ -41,7 +41,7 @@ class RTestSafeLocale : public RTest
         }
     
     //new version of End, which calls handler before exit..
-    IMPORT_C void End() 
+    EXPORT_C void End() 
         { 
         if (iFailHdnFunc) iFailHdnFunc(*this);
         RTest::End();
