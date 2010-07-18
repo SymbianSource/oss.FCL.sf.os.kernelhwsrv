@@ -19,10 +19,10 @@
 #define __E32TEST_EXTENSION__
 
 #include <e32test.h>
-#include <HAL.H>
+#include <hal.h>
 #include <f32fsys.h>
 #include <f32dbg.h>
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 #include "fat_utils.h"
 
 	

@@ -16,14 +16,14 @@
 */
 #define __E32TEST_EXTENSION__
 
-#include "T_Fatcharsetconv_aux.h"
+#include "t_fatcharsetconv_aux.h"
 #include <f32file.h>
 #include <e32test.h>
 #include <e32svr.h>
-#include <HAL.H>
+#include <hal.h>
 #include <f32fsys.h>
 #include <f32dbg.h>
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 
 //#include "fat_utils.h"
 

@@ -13,7 +13,7 @@
 // Description:
 //
 
-#include "Combinational2_plugin.h"
+#include "combinational2_plugin.h"
 #include "plugincommon.h"
 #include <f32pluginutils.h>
 

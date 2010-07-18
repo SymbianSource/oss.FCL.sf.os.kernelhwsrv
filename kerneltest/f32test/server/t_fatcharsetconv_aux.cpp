@@ -16,7 +16,7 @@
 //
 
 #include <f32dbg.h>
-#include "T_fatcharsetconv_Aux.h"
+#include "t_fatcharsetconv_aux.h"
 
 CFileMan* gFileMan = NULL;
 RPointerArray<RFile>* gFileHandles = NULL;

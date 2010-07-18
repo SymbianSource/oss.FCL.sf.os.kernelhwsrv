@@ -23,10 +23,10 @@ SOURCE         T_MAIN.CPP
 SOURCEPATH     ../FILEUTILS/SRC
 SOURCE         f32_test_utils.cpp
 SOURCE         t_chlffs.cpp
-LIBRARY        EUSER.LIB EFSRV.LIB HAL.LIB
+LIBRARY        euser.lib efsrv.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-USERINCLUDE    ../SERVER
-USERINCLUDE    ../FILEUTILS/INC
+USERINCLUDE    ../server
+USERINCLUDE    ../fileutils/inc
 
 CAPABILITY	   All -TCB NetworkControl
 

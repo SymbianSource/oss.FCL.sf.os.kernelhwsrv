@@ -19,7 +19,7 @@
 #ifndef T_FATCHARSETCONV_CASES_H
 #define T_FATCHARSETCONV_CASES_H
 
-#include "T_Fatcharsetconv_Aux.h"
+#include "t_fatcharsetconv_aux.h"
 
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 extern CFileMan* gFileman;

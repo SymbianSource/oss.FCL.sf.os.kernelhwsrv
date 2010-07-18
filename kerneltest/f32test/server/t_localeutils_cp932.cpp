@@ -19,11 +19,11 @@
 
 
 #include <e32test.h>
-#include <HAL.H>
+#include <hal.h>
 #include <f32fsys.h>
 #include <f32dbg.h>
 #include <e32svr.h>
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 #include "fat_utils.h"
 
 RTest test(_L("T_LOCALEUTILS_CP932"));

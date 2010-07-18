@@ -13,7 +13,7 @@
 // Description:
 //
 
-#include "AllSupportedDrives_plugin.h"
+#include "allsupporteddrives_plugin.h"
 #include <f32pluginutils.h>
 
 /**

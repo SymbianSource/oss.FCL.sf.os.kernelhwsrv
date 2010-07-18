@@ -29,7 +29,7 @@ SOURCEPATH      ../fileutils/src
 SOURCE          fat_utils.cpp f32_test_utils.cpp
 SOURCE          t_chlffs.cpp
 
-LIBRARY         EUSER.LIB EFSRV.LIB EKTRAN.LIB HAL.LIB
+LIBRARY         euser.lib efsrv.lib ektran.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 USERINCLUDE     ../server
 USERINCLUDE     ../fileutils/inc

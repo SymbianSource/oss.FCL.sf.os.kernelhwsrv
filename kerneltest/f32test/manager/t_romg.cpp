@@ -19,7 +19,7 @@
 #include <f32file.h>
 #include <e32test.h>
 #include <e32rom.h>
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 
 const TInt KBufSize=0x10000;
 const TInt KFillerSize=0x100;

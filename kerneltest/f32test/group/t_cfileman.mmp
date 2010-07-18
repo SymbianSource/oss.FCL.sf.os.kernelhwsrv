@@ -29,7 +29,7 @@ SOURCE         t_chlffs.cpp
 USERINCLUDE    ../server
 USERINCLUDE    ../fileutils/inc
 
-LIBRARY        EUSER.LIB EFSRV.LIB HAL.LIB
+LIBRARY        euser.lib efsrv.lib hal.lib
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 USERINCLUDE    ../server

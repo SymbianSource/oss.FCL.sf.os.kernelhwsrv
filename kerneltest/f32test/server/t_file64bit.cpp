@@ -31,7 +31,7 @@
 #include <e32svr.h>
 #include "t_server.h"
 #include "t_file64bit.h"
-#include "..\\fileshare\\handshare64bit.h"
+#include "../fileshare/handshare64bit.h"
 #include <f32pluginutils.h>
 #include <massstorage.h>
 #include <e32math.h>

@@ -13,7 +13,7 @@
 // Description:
 //
 
-#include "DriveZ_plugin.h"
+#include "drivez_plugin.h"
 #include <f32pluginutils.h>
 #include "plugincommon.h"
 

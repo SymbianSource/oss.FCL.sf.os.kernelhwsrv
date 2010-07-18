@@ -25,7 +25,7 @@
 #include "t_server.h"
 #include "t_chlffs.h"
 #include "fat_utils.h"
-#include "T_Fatcharsetconv_Cases.h"
+#include "t_fatcharsetconv_Cases.h"
 
 
 RTest test(_L("T_FatCharSetConv"));

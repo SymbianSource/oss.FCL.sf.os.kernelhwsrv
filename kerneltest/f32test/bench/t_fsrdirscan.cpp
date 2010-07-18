@@ -18,7 +18,7 @@
 #include <f32file.h>
 #include <e32test.h>
 #include "t_select.h"
-#include "..\server\t_server.h"
+#include "../server/t_server.h"
 #include "t_benchmain.h"
 
 GLDEF_D RTest test(_L("File Server Benchmarks, DirScan"));
