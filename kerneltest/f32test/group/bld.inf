@@ -54,6 +54,7 @@ t_fsrvbm    support
 t_fsysbm    support
 t_whet      support
 #ifdef ARMCC
+// ARMCC should become EABI if and when VFP is supported for GCCE builds.
 t_whetvfp   support
 #endif
 //T_WARM        manual

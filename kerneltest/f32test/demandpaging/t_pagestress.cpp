@@ -974,7 +974,7 @@ void PerformAutoTest()
 	TestPrioChange = EFalse;
 	TestMediaAccess = EFalse;
 
-#if defined __ARMCC__ || defined __X86__
+#if defined __EABI__ || defined __X86__
 	// Currently we only build aligned DLLs on ARMV5 and X86 builds.
 	TEST_NEXT((_L("Alignment Check.")));
 	RUNTEST1(CheckAlignments() == KErrNone);

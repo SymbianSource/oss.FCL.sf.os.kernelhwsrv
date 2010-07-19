@@ -32,7 +32,7 @@
 
 //#if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 
-#if defined __ARMCC__ || defined __X86__
+#if defined __EABI__ || defined __X86__
 
 #ifdef __X86__
 
@@ -68,7 +68,7 @@
 #define __NAKED__
 #endif 
 
-#if defined __ARMCC__
+#if defined __EABI__
 #define ASM_OP1   asm("movs		r2,r0");
 #define ASM_OP2   asm("adds		r0,r2,r1");
 #define ASM_OP3   asm("bx		lr");
@@ -1633,12 +1633,17 @@ __NAKED__ TInt DoLdmia(TInt *aAddress)
 
 __NAKED__ TInt TestAlignmentxXXx(TInt aParam1)
     {
-#ifdef __X86__
+#if defined(__X86__)
 	return 0;
-#else
+#elif defined(__ARMCC__)
     space    4096
     BX       lr
     ENDP
+#elif defined(__GCCE__)
+	asm(".fill 4096");
+	asm("bx lr");
+#else
+#error What compiler? 
 #endif
     }
 
@@ -1934,7 +1939,7 @@ TInt *CheckLdmiaInstr(void)
 	}
 
 
-#endif // __ARMCC__
+#endif // __EABI__
 
 TInt CallTestFunc(TInt aParam1, TInt aParam2, TInt aIndex)
 	{
