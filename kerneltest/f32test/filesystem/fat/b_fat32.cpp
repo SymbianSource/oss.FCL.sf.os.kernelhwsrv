@@ -305,7 +305,7 @@ static  TInt ClusterToByte(TInt aCluster)
 //
     {
     static TBuf<6> str(_L("------"));
-    static char*   atr = "RHSVDA";
+    static char const *   atr = "RHSVDA";
     for (TInt i = 0; i < 6; i++)
         if ((aAttrib >> i) & 1)
             str[i] = atr[i];

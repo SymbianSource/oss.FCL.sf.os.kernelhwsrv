@@ -475,7 +475,7 @@ GLDEF_C TDes* DirAttributes(TInt aAttrib)
 //
 	{
 	LOCAL_D TBuf<6> str(_L("------"));
-	LOCAL_D char*   atr = "RHSVDA";
+	LOCAL_D char const *   atr = "RHSVDA";
 	for (TInt i = 0; i < 6; i++)
 		if ((aAttrib >> i) & 1)
 			str[i] = atr[i];

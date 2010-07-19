@@ -578,7 +578,8 @@ void DoSymbianSpecificCases()
 	while(__FILE__[i]!='\0')
 		{
 		fileName.SetLength(i+1);
-		fileName[i] = __FILE__[i++];
+		fileName[i] = __FILE__[i];
+		++i;
 		}
 	gFileName = fileName;
 

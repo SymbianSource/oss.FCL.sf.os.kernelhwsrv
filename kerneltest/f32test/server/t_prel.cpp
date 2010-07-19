@@ -22,7 +22,7 @@ IMPORT_C void FurtiveD(TFileName &aInfo);
 EXPORT_C void FurtiveD(TFileName &aInfo)
 	{
 
-	char *dummy="Link unit for Preload test";
+	char const *dummy="Link unit for Preload test";
 	dummy=dummy;
 	TFileName name;
 	Dll::FileName(name);

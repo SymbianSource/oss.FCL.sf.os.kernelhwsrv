@@ -519,7 +519,7 @@ GLDEF_C TDes* DirAttributes(TInt aAttrib)
 //
     {
     LOCAL_D TBuf<6> str;
-    LOCAL_D char*   atr = "RHSVDA";
+    LOCAL_D char const *   atr = "RHSVDA";
     str.Fill(TText('-'), 6);
     for (TInt i = 0; i < 6; i++)
         if ((aAttrib >> i) & 1)
@@ -1987,7 +1987,7 @@ LOCAL_C void DoPartEntries()
         ReadFatDisk(fatBuf);
         }
 
-    // use first entry \scndrv\dir2\almostfull\ 
+    // use first entry \scndrv\dir2\almostfull
     test.Next(_L("Partial entry in middle of subdir"));
     last = GetStartCluster(gClusterDir2_AFull,7);
     TEntryInfo partial2(ClusterEntryToBytes(gClusterDir2_AFull,2),6);
@@ -1998,7 +1998,7 @@ LOCAL_C void DoPartEntries()
     res=TestPartialEntry(partial2);
     test(res);
 
-    // reduce size of \scndrv\dir2\full\ 
+    // reduce size of \scndrv\dir2\full 
     test.Next(_L("Test directory reclaim"));
     last = GetStartCluster(gClusterDir2_Full,gEntriesPerCluster-2);
     WriteEndOfDir(ClusterEntryToBytes(gClusterDir2_Full,gEntriesPerCluster-2));
@@ -2018,7 +2018,7 @@ LOCAL_C void DoPartEntries()
     res=IsSameAsDrive(fatBuf,dirBuf);
     test(res);
 
-    // use last entry of first cluster in \scndrv\dir2\full\ 
+    // use last entry of first cluster in \scndrv\dir2\full
     test.Next(_L("Partial entry at end of subdir"));
     r=temp.Create(TheFs,_L("\\scndrv\\dir2\\full\\temp"),EFileShareAny);
     test_KErrNone(r);
@@ -2030,7 +2030,7 @@ LOCAL_C void DoPartEntries()
     res=TestPartialEntry(partial3);
     test(res);
 
-    // use entry in \scndrv\dir2\almostfull\ 
+    // use entry in \scndrv\dir2\almostfull 
     test.Next(_L("Partial entry preceeding end-of-dir marker"));
     last = GetStartCluster(gClusterDir2_AFull,14);
     if (last > 0)
@@ -2052,7 +2052,7 @@ LOCAL_C void DoPartEntries()
 	//	as it is impossible for ScanDrive to judge if the illegal byte is part of a legal
 	//	DBCS charater.
 
-	// create entry in \scndrv\dir2\almostfull\ 
+	// create entry in \scndrv\dir2\almostfull 
 //	test.Next(_L("Partial entry with invalid dos name"));
 //	r=temp.Create(TheFs,_L("\\scndrv\\dir2\\almostfull\\Dodgy file name"),EFileShareAny);
 //	test_KErrNone(r);
@@ -2069,7 +2069,7 @@ LOCAL_C void DoPartEntries()
 
     if (BootSector.SectorsPerCluster() == 1)
         {
-        // use entry created in \scndrv\dir2\ 
+        // use entry created in \scndrv\dir2 
         test.Next(_L("Partial entry spanning more than two clusters"));
         last = GetStartCluster(gClusterDir2_Full,gEntriesPerCluster-1);
         WriteEndOfDir(ClusterEntryToBytes(gClusterDir2_Full,gEntriesPerCluster-2));
@@ -2121,7 +2121,7 @@ LOCAL_C void DoMatchingEntries()
     test(res);
 
     // matching entries between 2 subdirs, one which has a full cluster
-    // first entry in \scndrv\dir2\full\ + end of \scndrv\dir2\almostfull\ 
+    // first entry in \scndrv\dir2\full\ + end of \scndrv\dir2\almostfull
     test.Next(_L("matching entries between 2 subdirs"));
     TEntryInfo from2(ClusterEntryToBytes(gClusterDir2_Full,2),2);
     TEntryInfo to2(ClusterEntryToBytes(gClusterDir2_AFull,14),2);
@@ -2130,7 +2130,7 @@ LOCAL_C void DoMatchingEntries()
     test(res);
 
     // matching entries between two subdirs - one with end of dir marker next
-    // \scndrv\dir2\somedirwith3entries to \scndrv\ 
+    // \scndrv\dir2\somedirwith3entries to \scndrv 
     test.Next(_L("matching entries between two subdirs"));
     TEntryInfo from3(ClusterEntryToBytes(gClusterDir2,4),3);
     TEntryInfo to3(ClusterEntryToBytes(gClusterScnDrv,6),3);
@@ -2139,7 +2139,7 @@ LOCAL_C void DoMatchingEntries()
     test(res);
 
     // matching entries in same subdir, one in new cluster - irrelevant if matching names
-    // 1st and last entries in \scndrv\dir2\full\ 
+    // 1st and last entries in \scndrv\dir2\full 
     test.Next(_L("matching entries in same subdir"));
     // delete entries to allow contiguous clusters in \scndrv\dir2\full directory
     TInt r=TheFs.RmDir(_L("\\scndrv\\dir2\\somedirwith3entries\\"));
@@ -2161,7 +2161,7 @@ LOCAL_C void DoMatchingEntries()
     res=TestMatchingEntry(to4);
     test(res);
 
-    // \scndrv\dir1\very long name to \\scndrv\dir2\full\ 
+    // \scndrv\dir1\very long name to \\scndrv\dir2\full 
     test.Next(_L("matching entries in diff dirs + new cluster"));
     // delete last entry in directory
     r=TheFs.Delete(LastInFull);

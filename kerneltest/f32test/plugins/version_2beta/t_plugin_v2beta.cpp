@@ -24,7 +24,7 @@
 #include "encrypt.h"
 #include "hex.h"
 
-GLREF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char aFileName[]);
+GLREF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char const * aFileName);
 
 #define TEST_FOR_ERROR( r )	{ TInt _r = (r); if (_r < 0) HandleError(_r, __LINE__); }
 #define TEST_FOR_VALUE( r, expected ) TestIfEqual( r, expected, __LINE__, __FILE__)

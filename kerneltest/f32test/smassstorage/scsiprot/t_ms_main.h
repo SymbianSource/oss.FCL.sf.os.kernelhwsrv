@@ -34,7 +34,7 @@ GLREF_D RTest test;
 GLDEF_C void t_scsi_prot();
 
 
-GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char aFileName[]);
+GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char const * aFileName);
 #define TEST_FOR_VALUE( r, expected ) TestIfEqual( r, expected, __LINE__, __FILE__)
 
 #define TEST_SENSE_CODE( aSensePtr, aExpKey, aExtAddCode ) 		\

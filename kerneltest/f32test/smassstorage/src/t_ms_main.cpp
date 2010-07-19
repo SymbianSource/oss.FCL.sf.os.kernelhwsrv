@@ -38,7 +38,7 @@ LOCAL_C void DoTests()
 
 
 _LIT( KValueTestFailMsg, "ERROR Got %d expected %d" );
-GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char aFileName[])
+GLDEF_C void TestIfEqual( TInt aValue, TInt aExpected, TInt aLine, char const * aFileName)
 	{
 	if( aExpected != aValue )
 		{

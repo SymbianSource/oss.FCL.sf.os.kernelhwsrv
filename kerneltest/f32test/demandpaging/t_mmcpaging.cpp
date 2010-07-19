@@ -350,7 +350,7 @@ LOCAL_C TInt RepeatedPagingThread(TAny* aUseTb)
 		{
 		TInt r=UserSvr::HalFunction(EHalGroupVM,EVMHalFlushCache,0,0);
 		if (Random() & 1)
-			User::AfterHighRes(500+Random() & 2047);
+			User::AfterHighRes((500+Random()) & 2047);
 
 		if (r<0)
 			{
@@ -376,7 +376,7 @@ LOCAL_C TInt RepeatedPagingThread(TAny* aUseTb)
 					}
 				PagedTrashCount++;
 				if (RandomNo & 1)
-					User::AfterHighRes(500+Random() & 2047);
+					User::AfterHighRes((500+Random()) & 2047);
 				}
 			}
 	

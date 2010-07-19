@@ -297,7 +297,7 @@ LOCAL_C void testDriveInfo(TInt aDrive,TDriveInfo& anInfo)
         if (anInfo.iType==EMediaNotPresent)
             return;
 
-		test_Value(anInfo.iDriveAtt, anInfo.iDriveAtt&(KDriveAttLocal|KDriveAttInternal)==KDriveAttLocal|KDriveAttInternal);	// LFFS sets KDriveAttTransaction as well
+		test_Value(anInfo.iDriveAtt, (anInfo.iDriveAtt&(KDriveAttLocal|KDriveAttInternal))==(KDriveAttLocal|KDriveAttInternal));	// LFFS sets KDriveAttTransaction as well
         test_Value(anInfo.iType, anInfo.iType==EMediaFlash);
         test_Value(anInfo.iMediaAtt, anInfo.iMediaAtt==KMediaAttFormattable);
 		}

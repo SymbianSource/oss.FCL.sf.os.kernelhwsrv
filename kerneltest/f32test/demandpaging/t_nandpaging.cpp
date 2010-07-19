@@ -356,7 +356,7 @@ LOCAL_C TInt RepeatedPagingThread(TAny* aUseTb)
 		{
 		TInt r=UserSvr::HalFunction(EHalGroupVM,EVMHalFlushCache,0,0);
 		if (Random() & 1)
-			User::AfterHighRes(500+Random() & 2047);
+			User::AfterHighRes((500+Random()) & 2047);
 
 		if (r<0)
 			{
@@ -382,7 +382,7 @@ LOCAL_C TInt RepeatedPagingThread(TAny* aUseTb)
 					}
 				PagedTrashCount++;
 				if (RandomNo & 1)
-					User::AfterHighRes(500+Random() & 2047);
+					User::AfterHighRes((500+Random()) & 2047);
 				}
 			}
 	
@@ -671,7 +671,7 @@ void TestDefered()
 				TInt tries = 10;
 				do { // If we get zero hits, maybe the page hasnt hit yet.
 					tries--;
-					User::AfterHighRes(1000+Random() & 2047);  // Throw some uncertainly into things
+					User::AfterHighRes((1000+Random()) & 2047);  // Throw some uncertainly into things
 				
 					TPtr8 statsBuf((TUint8*) &stats, sizeof(stats));
 			 		r = Drive.ControlIO(KNandGetDeferStats,statsBuf,0);
