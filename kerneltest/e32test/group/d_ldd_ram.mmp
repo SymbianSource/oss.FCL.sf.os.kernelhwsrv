@@ -31,5 +31,10 @@ VENDORID 0x70000001
 romtarget
 RAMTARGET +
 
+#ifdef GCCE
+staticlibrary usrt4_0.lib
+library drtaeabi.dso
+#endif
+
 capability		all
 SMPSAFE

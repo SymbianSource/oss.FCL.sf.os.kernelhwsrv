@@ -29,5 +29,10 @@ EPOCALLOWDLLDATA
 romtarget
 ramtarget +
 
+#ifdef GCCE
+staticlibrary usrt4_0.lib
+library drtaeabi.dso
+#endif
+
 capability		all
 SMPSAFE

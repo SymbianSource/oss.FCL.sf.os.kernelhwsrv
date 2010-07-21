@@ -46,6 +46,11 @@ epocallowdlldata
 uid			0x100039d0 0x10285812
 capability 	all
 
+#ifdef GCCE
+staticlibrary usrt4_0.lib
+library drtaeabi.dso
+#endif
+
 start wins
 win32_headers
 end
