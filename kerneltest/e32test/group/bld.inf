@@ -1059,8 +1059,10 @@ t_kerncorestats		support
 
 #include "../hcr/hcr.inf"
 
+#ifndef GCCE
 //pci tests
 t_pci
+#endif
 // timestamp or fastcounter test
 t_timestamp
 d_timestamp		support

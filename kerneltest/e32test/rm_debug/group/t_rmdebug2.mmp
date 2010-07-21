@@ -18,6 +18,8 @@
 
 target         t_rmdebug2.exe
 
+USERINCLUDE ../../../../kernel/eka/debug/securityServer/inc
+
 sourcepath	   	../basic_tests
 source        	t_rmdebug2.cpp 
 source		r_low_memory_security_svr_session.cpp

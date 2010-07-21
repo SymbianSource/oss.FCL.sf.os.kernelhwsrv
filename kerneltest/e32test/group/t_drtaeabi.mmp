@@ -21,6 +21,8 @@ SOURCEPATH		../../../kernel/eka/compsupp/rvct
 
 SOURCE			aeabidiv0.cpp
 SOURCE			drtaeabi.cpp
+OS_LAYER_LIBC_SYSTEMINCLUDE
+OS_LAYER_STDCPP_SYSTEMINCLUDE
 SOURCE			type_info.cpp
 
 USERINCLUDE	../../../kernel/eka/include
