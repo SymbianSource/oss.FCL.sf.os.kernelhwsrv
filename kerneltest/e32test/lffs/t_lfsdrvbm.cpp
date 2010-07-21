@@ -19,7 +19,7 @@
 #include <e32svr.h>
 #include <e32hal.h>
 #include <e32uid.h>
-#include "..\misc\prbs.h"
+#include "../misc/prbs.h"
 
 
 LOCAL_D TBuf<16384> DataBuf;

@@ -42,9 +42,9 @@ SOURCE		apitests.cpp
 SOURCE		usbms.cpp
 
 
-LIBRARY     EUSER.LIB HAL.LIB
+LIBRARY     euser.lib hal.lib
 LIBRARY		usbcsc_bil.lib
-LIBRARY     EFSRV.LIB
+LIBRARY     efsrv.lib
 
 CAPABILITY    ALL
 

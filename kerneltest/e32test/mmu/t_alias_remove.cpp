@@ -30,7 +30,7 @@
 #include <e32test.h>
 #include <e32hal.h>
 #include <e32svr.h>
-#include "..\defrag\d_pagemove.h"
+#include "../defrag/d_pagemove.h"
 
 const TPtrC KAliasProcessName = _L("T_ALIAS_REMOVE");
 const TPtrC KAliasChunkName = _L("AliasChunk");

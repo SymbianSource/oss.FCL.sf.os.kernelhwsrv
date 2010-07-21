@@ -20,7 +20,7 @@
 #include "general.h"
 #include "activerw.h"									// CActiveRW
 #include "config.h"
-#include "activeControl.h"
+#include "activecontrol.h"
 #include "activedevicestatenotifier.h"
 
 extern CActiveControl* gActiveControl;

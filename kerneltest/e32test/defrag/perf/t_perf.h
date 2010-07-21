@@ -19,7 +19,7 @@
 #define _DEFRAG_PERF_T_PERF_H_
 
 #include "t_testdll.h"
-#include "..\d_pagemove.h"
+#include "../d_pagemove.h"
 
 typedef TUint32 DTime_t;
 //#define EXTRA_TRACE

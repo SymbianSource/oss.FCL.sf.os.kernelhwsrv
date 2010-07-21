@@ -22,7 +22,7 @@ SOURCEPATH    ../device
 SOURCE        t_usbcsc.cpp
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
-LIBRARY       EUSER.LIB HAL.LIB usbcsc_bil.lib
+LIBRARY       euser.lib hal.lib usbcsc_bil.lib
 
 CAPABILITY    all
 

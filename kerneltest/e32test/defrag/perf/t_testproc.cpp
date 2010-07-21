@@ -18,7 +18,7 @@
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
 
-#include "..\d_pagemove.h"
+#include "../d_pagemove.h"
 #include "t_perf.h"
 #include "t_testdll.h"
 

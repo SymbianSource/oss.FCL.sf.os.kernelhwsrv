@@ -58,7 +58,7 @@
 #include <e32math.h>
 #include <hal.h>
 
-#include "RPipe.h"
+#include "rpipe.h"
 
 LOCAL_D RTest test(_L("t_pipe"));
 

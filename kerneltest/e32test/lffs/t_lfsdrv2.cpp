@@ -22,7 +22,7 @@
 #include <e32uid.h>
 #include <hal.h>
 #include "u32std.h"
-#include "..\misc\prbs.h"
+#include "../misc/prbs.h"
 
 _LIT(KTestName,"T_LFSDRV");
 _LIT(KMediaDriverName,"MEDLFS");

@@ -40,7 +40,7 @@
 #include <e32hal.h>
 #include "d_shadow.h"
 #include "d_gobble.h"
-#include "..\defrag\d_pagemove.h"
+#include "../defrag/d_pagemove.h"
 #include "d_memorytest.h"
 #include <dptest.h>
 #include "mmudetect.h"

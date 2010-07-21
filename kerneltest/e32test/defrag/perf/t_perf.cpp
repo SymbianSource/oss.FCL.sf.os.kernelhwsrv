@@ -37,8 +37,8 @@
 #include <e32std.h>
 #include <e32std_private.h>
 
-#include "..\d_pagemove.h"
-#include "..\..\mmu\mmudetect.h"
+#include "../d_pagemove.h"
+#include "../../mmu/mmudetect.h"
 #include "t_perf.h"
 
 

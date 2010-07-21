@@ -22,7 +22,7 @@ TARGETTYPE    EXE
 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
-USERINCLUDE	  ../USB/T_USB_DEVICE/INCLUDE
+USERINCLUDE	  ../usb/t_usb_device/include
 
 // Source file paths
 
@@ -40,8 +40,8 @@ SOURCE		apitests.cpp
 SOURCE		usbms.cpp
 
 
-LIBRARY       EUSER.LIB HAL.LIB
-LIBRARY       EFSRV.LIB
+LIBRARY       euser.lib hal.lib
+LIBRARY       efsrv.lib
 
 CAPABILITY    ALL
 

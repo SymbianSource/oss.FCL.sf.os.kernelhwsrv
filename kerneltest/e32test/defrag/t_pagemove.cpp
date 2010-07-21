@@ -60,9 +60,9 @@
 #include "d_pagemove.h"
 #include "t_pagemove_dll.h"
 #include "t_pmwsd.h"
-#include "..\mmu\mmudetect.h"
-#include "..\debug\d_codemodifier.h"
-#include "..\mmu\d_memorytest.h"
+#include "../mmu/mmudetect.h"
+#include "../debug/d_codemodifier.h"
+#include "../mmu/d_memorytest.h"
 
 //#define _DEBUG_MSG
 #ifdef _DEBUG_MSG

@@ -17,7 +17,7 @@
 
 #include <e32test.h>
 #include <e32hal.h>
-#include "d_lddDigitisertest.h"
+#include "d_ldddigitisertest.h"
 #include <hal.h>
 
 _LIT(KLddFileName, "D_LDDDIGITISERTEST.LDD");

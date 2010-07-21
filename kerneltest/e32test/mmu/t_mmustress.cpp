@@ -29,7 +29,7 @@
 #include <e32def.h>
 #include <e32def_private.h>
 #include "d_memorytest.h"
-#include "..\defrag\d_pagemove.h"
+#include "../defrag/d_pagemove.h"
 
 TBool TRACE = 0;
 

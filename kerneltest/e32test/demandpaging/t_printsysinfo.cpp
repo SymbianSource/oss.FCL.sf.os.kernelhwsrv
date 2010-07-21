@@ -20,7 +20,7 @@
 #include <e32test.h>
 #include <e32cmn.h>
 #include <dptest.h>
-#include "..\mmu\mmudetect.h"
+#include "../mmu/mmudetect.h"
 
 
 RTest test(_L("T_PRINTSYSINFO"));

@@ -15,7 +15,7 @@
 // 
 //
 
-#include "d_TestKernCoreStats.h"
+#include "d_testkerncorestats.h"
 
 #include <kernel/kernel.h>
 #include <kernel/kerncorestats.h>

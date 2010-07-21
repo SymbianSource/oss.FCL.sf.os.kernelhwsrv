@@ -19,7 +19,7 @@ TARGET         t_defragtestperf.exe
 TARGETTYPE     EXE
 SOURCEPATH	../DEFRAG/PERF
 SOURCE         t_testproc.cpp T_PERFDLL.CPP t_timer.cpp
-LIBRARY        EUSER.LIB HAL.LIB 
+LIBRARY        euser.lib hal.lib 
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 ROMTARGET

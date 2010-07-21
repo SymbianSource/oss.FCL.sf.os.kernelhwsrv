@@ -33,7 +33,7 @@
 #define __E32TEST_EXTENSION__
 #include <e32test.h>
 #include "d_defrag_ref.h"
-#include "..\..\mmu\mmudetect.h"
+#include "../../mmu/mmudetect.h"
 
 LOCAL_D RTest test(_L("T_DEFRAG_REF"));
 

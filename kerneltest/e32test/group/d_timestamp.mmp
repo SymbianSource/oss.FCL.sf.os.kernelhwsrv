@@ -17,7 +17,7 @@
 
 
 
-#include "kernel\kern_ext.mmh"
+#include "kernel/kern_ext.mmh"
 
 TARGET		        D_TIMESTAMP.LDD
 TARGETTYPE		LDD
@@ -25,7 +25,7 @@ TARGETTYPE		LDD
 SOURCEPATH		../timestamp
 SOURCE			D_TIMESTAMP.CPP
 
-LIBRARY			EKERN.LIB
+LIBRARY			ekern.lib
 
 epocallowdlldata
 

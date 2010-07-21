@@ -111,5 +111,5 @@ public:
 	inline TInt setPointer3DPressureStep(TUint aPointer3DPressureStep);
 	};
 
-#include "d_lddDigitisertest.inl"
+#include "d_ldddigitisertest.inl"
 #endif   //__DLDDDIGITISERTEST_H__
