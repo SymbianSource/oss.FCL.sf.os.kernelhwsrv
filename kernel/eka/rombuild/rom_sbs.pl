@@ -120,7 +120,7 @@ BEGIN {
 	shift(@path);
 	$toroot = ('..\\') x @path;
 	$e32path = $fp0;
-	$e32path =~ s/\\kernelhwsrv\\kernel\\eka\\rombuild\\rom\.pl$//i;
+	$e32path =~ s/\\kernelhwsrv\\kernel\\eka\\rombuild\\.*$//i;
 	$e32path =~ s/^[A-Za-z]://;
 	$rombuildpath = $toroot."sf\\os\\kernelhwsrv\\kernel\\eka\\rombuild";
 	$Epoc32Path = $toroot;
