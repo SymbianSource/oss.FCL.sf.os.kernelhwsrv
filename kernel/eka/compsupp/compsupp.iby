@@ -25,9 +25,9 @@
 #   error "RVCT 2.1 is not supported."
 #endif
 
-// Set a default run-time version. In the future, 3.1 or 4.X should be the default.
+// Set a default run-time version. Default to 3.1 which is always available.
 #if !( defined(RVCT2_2) || defined(RVCT3_1) || defined(RVCT4_0) )
-#   define RVCT2_2
+#   define RVCT3_1
 #endif
 
 #if defined(VFPHELPERS) && !defined(NOVFPHELPERS)
