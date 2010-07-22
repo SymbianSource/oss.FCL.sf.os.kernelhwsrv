@@ -16,7 +16,6 @@ else
 	$(call endrule,rom)
 endif
 
-FINAL::	
 	$(call startrule,copy) \
 	mv rom.oby $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_rom.oby; \
 	mv ROMBUILD.LOG $(EPOCROOT)/epoc32/rom/$(REE_TARGET)/$(REE_TARGET)_$(TYPE)_$(PLATFORM)_$(CFG)_ROMBUILD.LOG; \
