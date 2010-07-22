@@ -324,7 +324,7 @@ TInt DProcess::Rename(const TDesC& aName)
 
 	iGeneration = NextGeneration(aName, iUids.iUid[2]);
 
-	__KTRACE_OPT(KTHREAD,Kern::Printf("DProcess::Rename %O to %lS",this,&aName));
+	__KTRACE_OPT(KTHREAD,Kern::Printf("DProcess::Rename %O to %S",this,&aName));
 	TInt r = SetName(&aName);
 #ifdef BTRACE_THREAD_IDENTIFICATION
 	Name(n);
@@ -530,7 +530,7 @@ void DProcess::Die(TExitType aType, TInt aReason, const TDesC &aCategory)
 // Kill a process. Enter and return with system unlocked and calling thread in critical section.
 //
 	{
-	__KTRACE_OPT(KPROC,Kern::Printf("Process %O Die: %d %d %lS",this,aType,aReason,&aCategory));
+	__KTRACE_OPT(KPROC,Kern::Printf("Process %O Die: %d %d %S",this,aType,aReason,&aCategory));
 
 	TInt r=WaitProcessLock();
 	if (r!=KErrNone)
@@ -612,7 +612,7 @@ void DProcess::AddThread(DThread &aThread)
 TInt DProcess::NewThread(DThread*& aThread, SThreadCreateInfo& anInfo, TInt* aHandle, TOwnerType aType)
 	{
 	__KTRACE_OPT(KTHREAD,Kern::Printf("NewThread proc %O, func %08x ptr %08x",this,anInfo.iFunction,anInfo.iPtr));
-	__KTRACE_OPT(KTHREAD,Kern::Printf("type %d name %lS pri %d",anInfo.iType,&anInfo.iName,anInfo.iInitialThreadPriority));
+	__KTRACE_OPT(KTHREAD,Kern::Printf("type %d name %S pri %d",anInfo.iType,&anInfo.iName,anInfo.iInitialThreadPriority));
 	if (aHandle)
 		*aHandle=0;
 	TInt r=GetNewThread(aThread,anInfo);

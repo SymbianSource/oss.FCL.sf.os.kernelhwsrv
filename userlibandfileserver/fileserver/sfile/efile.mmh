@@ -1,0 +1,109 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32\sfile\efile.mmp
+// efile.exe File Server
+// 
+//
+
+/**
+ @file
+*/
+
+
+SOURCEPATH		../sfsrv
+USERINCLUDE		../sfsrv
+
+USERINCLUDE		../ftrace
+USERINCLUDE		../sfile/traces
+
+SOURCE			 cl_file.cpp
+SOURCE			 cl_cli.cpp
+SOURCE			 cl_dir.cpp
+
+SOURCEPATH		../sfile
+USERINCLUDE		.
+SOURCE			 sf_amh.cpp sf_dat.cpp sf_debug.cpp sf_dir.cpp
+SOURCE			 sf_drv.cpp sf_file.cpp sf_fmt.cpp
+SOURCE			 sf_ldr.cpp sf_main.cpp sf_nbs.cpp sf_ses.cpp
+SOURCE			 sf_svr.cpp sf_sys.cpp sf_utl.cpp sf_mnt.cpp
+SOURCE			 sf_raw.cpp sf_prel.cpp sf_disk.cpp
+SOURCE			 sf_request.cpp sf_ops.cpp sf_notify.cpp
+SOURCE			 sf_thread.cpp sf_local.cpp sf_obj.cpp
+SOURCE			 sf_ext.cpp sf_hash.cpp
+SOURCE			 sf_plugin.cpp sf_plugin_ops.cpp sf_plugin_man.cpp
+SOURCE			 Sf_plugin_util.cpp
+SOURCE			 sf_cache_man.cpp sf_cache_client.cpp
+SOURCE			 sf_file_cache.cpp
+SOURCE			 sf_memory_man.cpp sf_memory_client.cpp
+SOURCE			 sf_plugin_shim.cpp
+SOURCE			 sf_notifier_handlers.cpp
+#ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
+SOURCE			 sf_pool.cpp sf_notifier.cpp
+#endif
+
+#ifdef WINS
+SOURCE			 sf_lwins.cpp
+
+library			emulator.lib
+#else
+SOURCE			 sf_lepoc.cpp  sf_inflate.cpp sf_cache.cpp sf_decomp.cpp
+SOURCE			 sf_pgcompr.cpp
+
+#ifdef MARM
+SOURCEPATH	../../../kernel/eka/kernel/arm
+SOURCE			 byte_pair.cia
+#else
+SOURCEPATH	../../../kernel/eka/kernel
+SOURCE			 byte_pair.cpp
+#endif
+
+
+SOURCEPATH	../srom
+SOURCE			 sr_rom.cpp
+#endif
+
+STRICTDEPEND
+
+SOURCEPATH	.
+DOCUMENT		 ../group/release.txt
+
+TARGETTYPE		exexp
+
+DEFFILE			efile.def
+
+USERINCLUDE	../inc ../sfsrv/traces
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+SYSTEMINCLUDE	../inc
+#endif
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+USERINCLUDE	../../../kernel/eka/include
+
+LIBRARY			 efsrv.lib euser.lib hal.lib
+
+EPOCSTACKSIZE	0x6000
+EPOCHEAPSIZE	0x00001000	0x800000
+
+START WINS
+BASEADDRESS		0x62000000
+WIN32_LIBRARY	kernel32.lib
+END
+UID		0x1000008c 0x100039e3
+VENDORID 0x70000001
+
+unpagedcode
+unpageddata
+
+SMPSAFE
+
+

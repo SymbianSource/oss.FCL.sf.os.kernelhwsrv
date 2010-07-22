@@ -695,9 +695,9 @@ void TestFormat_ForceDismount()
     test_KErrNone(nRes);
 
     //-- this will mark the current Mount as "Dismounted" and will instantiate another CMountCB for formatting
-    fmtMode = EQuickFormat | EForceFormat; 
+    fmtMode = EQuickFormat | EForceFormat;
 
-    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt); 
+    nRes = format.Open(TheFs, drivePath, fmtMode, fmtCnt);
     test_KErrNone(nRes);
     
     nRes = DoFormatSteps(format, fmtCnt);
@@ -877,8 +877,11 @@ void CallTestsL()
     
     PrintDrvInfo(TheFs, gDrive);
 
-    if(Is_Win32(TheFs, gDrive))
-        return; //-- emulator drive c:
+    if(Is_SimulatedSystemDrive(TheFs, gDrive))
+    	{
+		test.Printf(_L("Skipping T_FORMAT on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
+		return;
+    	}
 
 
 	SetSessionPath(_L("\\"));

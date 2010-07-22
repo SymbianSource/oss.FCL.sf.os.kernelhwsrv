@@ -15,7 +15,9 @@
 // 
 //
 
-#include            <../variant.mmh>
+#include		<variant_test.mmh>
+
+
 #include            "kernel/kern_ext.mmh"
 
 target              VariantTarget(d_cache,ldd)

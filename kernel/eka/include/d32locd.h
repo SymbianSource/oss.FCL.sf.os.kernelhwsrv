@@ -565,7 +565,8 @@ public:
 	enum TReadWriteFlags
 		{
 		ELocDrvMetaData					= 0x80000000,	/**< Set if read/write request is for metadata */
-		ELocDrvWholeMedia				= 0x40000000	/**< Set to access whole media, rather than partition */
+		ELocDrvWholeMedia				= 0x40000000,	/**< Set to access whole media, rather than partition */
+		ELocDrvDirectIO					= 0x20000000
 		};
 
 	// @see TBusLocalDrive::QueryDevice()

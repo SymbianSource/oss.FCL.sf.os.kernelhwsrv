@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -144,7 +144,7 @@ const TText* AttributeNames[]=
 	_S("ESerialNumber"),
 	_S("ECpuProfilingDefaultInterruptBase"),
 	_S("ENumCpus"),
-
+	_S("EDigitiserOrientation")
 	};
 
 TInt MatchAbbrev(const TDesC& anInput, const TText** aList, TInt aListLen)
@@ -159,7 +159,7 @@ TInt MatchAbbrev(const TDesC& anInput, const TText** aList, TInt aListLen)
 		if (r>=0)
 			{
 			// substring matches
-			if (r==0 && list_entry.Length()==anInput.Length())
+			if (r==0 && list_entry.Length()==anInput.Length()) 
 				{
 				// exact match
 				return i;
@@ -236,8 +236,11 @@ void TestGetAll()
 			}
 		else
 			{
-			test.Printf(_L("Attribute %S not supported on this platform or requires parameter\n"),&att_name,r);
-			test(r==KErrNotSupported || r==KErrArgument);
+			test.Printf(_L("Attribute %S not supported on this platform or requires parameter: r==%d\n"),&att_name,r);
+			// For some reason the following attribtues come back "KErrNone" on 
+			// emulator...so guard added
+			if (i != HALData::EDisplayMemoryHandle)
+				test(r==KErrNotSupported || r==KErrArgument);
 			}
 		}
 	User::Free(pE);

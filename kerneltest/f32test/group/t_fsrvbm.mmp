@@ -22,6 +22,7 @@ SOURCE         t_fsrvbm.cpp t_select.cpp
 SOURCEPATH     ../server
 SOURCE         t_main.cpp
 SOURCEPATH     ../fileutils/src
+SOURCE         f32_test_utils.cpp
 SOURCE         t_chlffs.cpp
 
 LIBRARY        euser.lib efsrv.lib hal.lib

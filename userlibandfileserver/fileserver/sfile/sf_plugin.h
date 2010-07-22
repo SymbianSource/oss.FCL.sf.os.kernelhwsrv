@@ -66,7 +66,7 @@ public:
 	static TInt IsInChain(TInt aUPos, TInt aPos,TInt aDrive, CFsPluginFactory* aPluginFactory);
 	static CFsPlugin* FindByUniquePosition(TInt aPos);
 
-	static TInt InitPlugin(CFsPlugin& aPlugin);
+	static TInt InitPlugin(CFsPlugin& aPlugin, RLibrary aLibrary);
 	static void TransferRequests(CPluginThread* aPluginThread);
 	static void CancelPlugin(CFsPlugin* aPlugin,CSessionFs* aSession);
 	static TInt ChainCount();

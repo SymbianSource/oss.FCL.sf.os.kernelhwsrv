@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -133,7 +133,9 @@ TCallbackRecord::TCbContext TCallbackRecord::CurrentContext() const
 		return EThread;
 	case NKern::EInterrupt:
 		return EIsr;
-	case NKern::EIDFC: //fall-through
+	//Fall-through: If context is IDFC or the EEscaped marker occur
+	//it is an error
+	case NKern::EIDFC:
 	case NKern::EEscaped:
 	default:
 		return EInvalid;
@@ -175,7 +177,6 @@ TDmacTestCaps::TDmacTestCaps(const SDmacCaps& aDmacCaps, TInt aVersion)
 TAddrRange::TAddrRange(TUint aStart, TUint aLength)
 	:iStart(aStart), iLength(aLength)
 	{
-	TEST_ASSERT(iLength > 0);
 	}
 
 TBool TAddrRange::Contains(TAddrRange aRange) const
@@ -188,21 +189,43 @@ TBool TAddrRange::Overlaps(const TAddrRange& aRange) const
 	return (aRange.Contains(iStart) || aRange.Contains(End()) ||
 			Contains(aRange.Start()) || Contains(aRange.End()));
 	}
+
+TBool TAddrRange::IsFilled(TUint8 aValue) const
+	{
+	TUint8* buffer = reinterpret_cast<TUint8*>(iStart);
+	for(TUint i = 0; i < iLength; i++)
+		{
+		if(buffer[i] != aValue)
+			return EFalse;
+		}
+	return ETrue;
+	}
+
 /**
-If addresses have been left as KPhysAddrInvalid or the count as 0
-(ie. the default values used for IsrRedoRequest)
-then substitute the values from aTransferArgs.
+If addresses have been left as KPhysAddrInvalid or the count as 0 (ie. the
+default values used for IsrRedoRequest) then substitute the values from
+aTransferArgs.
 */
 void TAddressParms::Substitute(const TDmaTransferArgs& aTransferArgs)
 	{
+	Substitute(GetAddrParms(aTransferArgs));
+	}
+
+/**
+If addresses have been left as KPhysAddrInvalid or the count as 0 (ie. the
+default values used for IsrRedoRequest) then substitute the values from
+aTransferArgs.
+*/
+void TAddressParms::Substitute(const TAddressParms& aAddrParams)
+	{
 	if(iSrcAddr == KPhysAddrInvalidUser)
-		iSrcAddr = aTransferArgs.iSrcConfig.iAddr;
+		iSrcAddr = aAddrParams.iSrcAddr;
 
 	if(iDstAddr == KPhysAddrInvalidUser)
-		iDstAddr = aTransferArgs.iDstConfig.iAddr;
+		iDstAddr = aAddrParams.iDstAddr;
 
 	if(iTransferCount == 0)
-		iTransferCount = aTransferArgs.iTransferCount;
+		iTransferCount = aAddrParams.iTransferCount;
 	}
 
 /**
@@ -295,6 +318,18 @@ TAddrRange TAddressParms::DestRange() const
 	return TAddrRange(iDstAddr, iTransferCount);
 	}
 
+void TAddressParms::MakePhysical()
+	{
+#ifdef __KERNEL_MODE__
+	iSrcAddr = Epoc::LinearToPhysical(iSrcAddr);
+	TEST_ASSERT(iSrcAddr != KPhysAddrInvalid);
+	iDstAddr = Epoc::LinearToPhysical(iDstAddr);
+	TEST_ASSERT(iDstAddr != KPhysAddrInvalid);
+#else
+	TEST_FAULT;
+#endif
+	}
+
 void SetAddrParms(TDmaTransferArgs& aTransferArgs, const TAddressParms& aAddrParams)
 	{
 	aTransferArgs.iSrcConfig.iAddr = aAddrParams.iSrcAddr;
@@ -311,14 +346,27 @@ TIsrRequeArgs TIsrRequeArgsSet::GetArgs()
 	return args;
 	}
 
-
 void TIsrRequeArgsSet::Substitute(const TDmaTransferArgs& aTransferArgs)
 	{
+	TAddressParms initial(aTransferArgs);
+
+	//if on user side it is assumed that aTransferArgs addresses will be offset
+	//based (from a virtual address). In kernel mode it is expected that address
+	//will be absolute virtual addresses, and must therefore be made physical
+#ifdef __KERNEL_MODE__
+	initial.MakePhysical();
+#endif
+
+	const TAddressParms* previous = &initial;
+
 	for(TInt i=0; i<iCount; i++)
 		{
-		iRequeArgs[i].Substitute(aTransferArgs);
+		TAddressParms& current = iRequeArgs[i];
+		current.Substitute(*previous);
+		previous = &current;
 		}
 	}
+
 void TIsrRequeArgsSet::Fixup(TLinAddr aChunkBase)
 	{
 	for(TInt i=0; i<iCount; i++)
@@ -326,3 +374,58 @@ void TIsrRequeArgsSet::Fixup(TLinAddr aChunkBase)
 		iRequeArgs[i].Fixup(aChunkBase);
 		}
 	}
+
+/** Check that both source and destination of ISR reque args will lie within the
+range specified by aStart and aSize.
+
+@param aStart The linear base address of the region
+@param aSize The size of the region
+*/
+TBool TIsrRequeArgs::CheckRange(TLinAddr aStart, TUint aSize) const
+	{
+	TUint chunkStart = 0;
+#ifdef __KERNEL_MODE__
+	chunkStart = Epoc::LinearToPhysical(aStart);
+	TEST_ASSERT(chunkStart != KPhysAddrInvalid);
+#else
+	chunkStart = aStart;
+#endif
+
+	// If an address is still KPhysAddrInvalid it means the arguments haven't
+	// yet been substituted
+	TAddrRange chunk(chunkStart, aSize);
+	TBool sourceOk = (iSrcAddr != KPhysAddrInvalid) && chunk.Contains(SourceRange());
+
+	TBool destOk = (iDstAddr != KPhysAddrInvalid) && chunk.Contains(DestRange());
+
+	TBool ok = sourceOk && destOk;
+	if(!ok)
+		{
+		PRINTF(("Error, re-queue args: "));
+		TBuf<128> buf;
+		AppendString(buf);
+		PRINTF(("%S", &buf));
+		PRINTF(("overflow buffer base=0x%08x, size=0x%08x", chunkStart, aSize));
+		}
+	return ok;
+	}
+
+TBool TIsrRequeArgsSet::CheckRange(TLinAddr aAddr, TUint aSize) const
+	{
+	for(TInt i=0; i<iCount; i++)
+		{
+		if(!iRequeArgs[i].CheckRange(aAddr, aSize))
+			return EFalse;
+		}
+	return ETrue;
+	}
+
+TBool TIsrRequeArgsSet::CheckRange(TLinAddr aAddr, TUint aSize, const TDmaTransferArgs& aInitialParms) const
+	{
+	// apply substitution, without modifying the original
+	TIsrRequeArgsSet copy(*this);
+	copy.Substitute(aInitialParms);
+
+	return copy.CheckRange(aAddr, aSize);
+	}
+

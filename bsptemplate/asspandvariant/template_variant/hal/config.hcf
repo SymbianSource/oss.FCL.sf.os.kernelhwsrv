@@ -99,3 +99,4 @@ EMaximumRestartStartupModes = GetMaximumRestartStartupModes
 ECustomResourceDrive : set = 0
 EDisplayNumberOfScreens=0
 ENumCpus=GetNumCpus
+EDigitiserOrientation : set = DigitiserOrientation

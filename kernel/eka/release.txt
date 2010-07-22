@@ -1,3 +1,296 @@
+Version 2.00.3098
+=================
+(Made by vfebvre 18/06/2010)
+
+1.	garciato
+	1.	RP520151
+		REQ:417-52765 - SMP: Product Quality SMP Kernel for Bridge
+
+
+Version 2.00.3097
+=================
+(Made by vfebvre 16/06/2010)
+
+1.	jcoppear
+	1.	ou1cimx1#444092 MCL ENV E32TEST T_THRASH test timeout on 92
+
+2.	shubmurt
+	1.	ou1cimx1#423695 MCL:Mobile Crash #25334: CodeAbort exception in CompleteQue method, kernel/sproperty.cpp
+
+
+Version 2.00.3095
+=================
+(Made by vfebvre 14/06/2010)
+
+1.	kingzhan
+	1.	ou1cimx1#425296 MCL Mutex ordering violation in USB driver
+
+2.	jcoppear
+	1.	ou1cimx1#432392 System reset during execution of T_SHBUF_CLIENT
+	2.	ou1cimx1#380623 WDP: Non aligned swap writes increase media wear
+
+3.	martai
+	1.	ou1cimx1#435628 Copy of WDP: Paged data can be corrupted randomly
+	2.	ou1cimx1#424896 E32TEST T_RAMALL occasionally times out
+	3.	ou1cimx1#412959 ENV X86GCC compilation warnings t_ramall.cpp
+	4.	ou1cimx1#384467 Contiguous memory allocations do not use multi-page write support
+
+4.	coliward
+	1.	ou1cimx1#428886 SDK specific: Unable to Install Midlet in the Emulator.
+
+
+Version 2.00.3094
+=================
+(Made by vfebvre 10/06/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#419221 Missing exported kernelhwsrv documentation causes build breaks
+
+2.	lanerobe
+	1.	ou1cimx1#427741 Reset timestamp before running test
+
+
+Version 2.00.3093
+=================
+(Made by vfebvre 09/06/2010)
+
+1.	gcochran
+	1.	ou1cimx1#400079 MCL: E32TEST RMessagePtr2::Kill is not exercised by t_message
+
+2.	jimhofe
+	1.	ou1cimx1#411346 MCL wk22 build break in kernelhwsrv
+
+
+Version 2.00.3092
+=================
+(Made by vfebvre 04/06/2010)
+
+1.	cnotton
+	1.	ou1cimx1#413372 Attempt to export missing file bootstrap_smrif.h
+
+
+Version 2.00.3091
+=================
+(Made by vfebvre 04/06/2010)
+
+1.	mmoate
+	1.	MINOR_CHANGE Correct insource docs for aSingleThread parameter in UserHeap methods
+
+
+Version 2.00.3090
+=================
+(Made by vfebvre 03/06/2010)
+
+1.	jimhofe
+	1.	MINOR_CHANGE Documentation formatting tweaks
+
+
+Version 2.00.3089
+=================
+(Made by vfebvre 01/06/2010)
+
+1.	lanerobe
+	1.	ou1cimx1#397118 Use build-in uint32 sort function
+
+
+Version 2.00.3088
+=================
+(Made by vfebvre 28/05/2010)
+
+1.	necliffo
+	1.	ou1cimx1#407499 modify medmmc to ensure format
+
+2.	lanerobe
+	1.	ou1cimx1#402843 Fix smppower .mmp files
+
+
+Version 2.00.3086
+=================
+(Made by vfebvre 27/05/2010)
+
+1.	atvamos
+	1.	ou1cimx1#376123 h2.arm4.udeb.f32test.page ROFSBUILD failed on dev-cedar build
+
+2.	vfebvre
+	1.	ou1cimx1#400806 Warnings reported by the Symbian Foundation license checker
+
+3.	garciato
+	1.	ou1cimx1#379971 Incorrect Copyright Headers in e32test\timestamp
+
+4.	djkovace
+	1.	ou1cimx1#367370 Bridge platform neither reboots nor runs crash debugger when crashed
+
+5.	martai
+	1.	ou1cimx1#399892 E32TEST T_CHUNK test failure investigation (t_chunk.cpp:885)
+
+6.	elzou
+	1.	ou1cimx1#393943 Phone reset if connect/disconnect USB mouse few times fast
+
+7.	lanerobe
+	1.	ou1cimx1#399642 Build HCR test roms in its own folder
+	2.	ou1cimx1#353110 BM_SUITE does not run on NaviEngine
+
+8.	hengrant
+	1.	ou1cimx1#377057 Trace outputs truncated data for length and position
+
+
+Version 2.00.3085
+=================
+(Made by vfebvre 18/05/2010)
+
+1.	gayarama
+	1.	ou1cimx1#382130 DEV HCR settings to be used by PRM and its clients
+
+2.	mipetzol
+	1.	MINOR_CHANGE Updated comments in dma_v2.h
+
+
+Version 2.00.3084
+=================
+(Made by vfebvre 17/05/2010)
+
+1.	indrasin
+	1.	MINOR_CHANGE: TITANIUM (SIROCCO MIGRATION): submitting build.config.xml for sirocco migration to identify components to be build
+
+2.	shubmurt
+	1.	DEF144569 t_datapaging passes when data paging is not enabled
+		t_datapaging should fail if data paging is not reported in a ROM that is meant to be be data paged
+	2.	ou1cimx1#361046 T_WSD* test set fails to compile / run when built with RVCT4.0 compiler
+
+
+Version 2.00.3083
+=================
+(Made by vfebvre 13/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#380321 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+
+2.	cnotton
+	1.	ou1cimx1#380725 Public headers in bt are including platform headers
+
+
+Version 2.00.3082
+=================
+(Made by vfebvre 12/05/2010)
+
+1.	mipetzol
+	1.	MINOR_CHANGE Update to DMAv2 Porting Guide
+
+2.	lanerobe
+	1.	ou1cimx1#378811 Change kernel use of %lS to %S
+	2.	ou1cimx1#378808 MCL Stop ExecHandler accessing user descriptors directly
+
+3.	migubarr
+	1.	ou1cimx1#377322 New T_FILECACHE test failures (t_filecache.cpp:356)
+
+4.	hengrant
+	1.	ou1cimx1#370931 Memory card gets locked by itself MCL
+
+
+Version 2.00.3081
+=================
+(Made by vfebvre 11/05/2010)
+
+1.	jimhofe
+	1.	ou1cimx1#367892 Changing MedSD3c PolicyId from 2 to 1461
+
+2.	martai
+	1.	PDEF145025 Support rapu variant specific e32tests 
+
+3.	kmetherm
+	1.	PR457093 RVCT 4 compatible software codebase (SSS)
+
+
+Version 2.00.3080
+=================
+(Made by vfebvre 10/05/2010)
+
+1.	necliffo
+	1.	ou1cimx1#378256 eMMC reliable Write can increase wear of eMMC devices
+
+2.	jessiezh
+	1.	MINOR_CHANGE Re-enable T_SOUND2 test
+	2.	ou1cimx1#367177 E32TEST T_DOMAIN test failure investigation
+
+3.	gcochran
+	1.	ou1cimx1#367939 MCL: Undefined Symbol error with the header "e32math.h"
+
+
+Version 2.00.3079
+=================
+(Made by vfebvre 07/05/2010)
+
+1.	mipetzol
+	1.	MINOR_CHANGE: Updated comment in dma_v1.h
+	2.	MINOR_CHANGE: Updated comment in dma_v2.h
+
+
+Version 2.00.3078
+=================
+(Made by vfebvre 05/05/2010)
+
+1.	cnotton
+	1.	ou1cimx1#345137 idlehelper_lib & Power DLL don't build for ARM4SMP (kernelhwsrv)
+
+2.	jimmzhou
+	1.	ou1cimx1#366912 [kernelmcl][[Internal]t_usbapi test is not ready to run on production phone environment Vasco/hw79
+
+3.	ricoles
+	1.	PDEF144020 SMP known test failures
+
+4.	y153liu
+	1.	ou1cimx1#355904 MCL_Music playback is not correct after resuming the playback from the USB headset AD-83 after long pause
+
+
+Version 2.00.3077
+=================
+(Made by vfebvre 04/05/2010)
+
+1.	martai
+	1.	ou1cimx1#337920 WDP:Potential system impact of flushing the entire page cache is unacceptable
+
+2.	shubmurt
+	1.	PDEF145383 E32TEST T_DATAPAGING occasionally reports KERN-EXEC 17 on SMPDATAPAGE configs
+
+
+Version 2.00.3076
+=================
+(Made by vfebvre 30/04/2010)
+
+1.	stmansfi
+	1.	ou1cimx1#352017 (MCL) Advisory notes related to cat x in TB92SF_1116 and MSF00398
+	2.	ou1cimx1#361803 (MCL) Adjust HAL::GetAll() to ignore DisplayMemoryHandle attribute
+
+2.	vfebvre
+	1.	ou1cimx1#357360 Some test binaries are targeted by several bld.inf files
+	2.	ou1cimx1#363918 Non-test binaries targeted by several bld.inf files
+
+
+Version 2.00.3075
+=================
+(Made by vfebvre 29/04/2010)
+
+1.	seolney
+	1.	REQ417-52838 Upgrade DMA API to support advanced addressing modes
+		PackageReleaseID=485812 FeaturePlanID=428985
+
+
+Version 2.00.3074
+=================
+(Made by vfebvre 28/04/2010)
+
+1.	necliffo
+	1.	ou1cimx1#357516 eMMC with DDR-mode support is not used in 4-bit mode
+
+
+Version 2.00.3073
+=================
+(Made by vfebvre 26/04/2010)
+
+1.	jimmzhou
+	1.	ou1cimx1#352019 [kernelmcl]Can't recieve USB data after Host call SetConfiguraion
+
+
 Version 2.00.3072
 =================
 (Made by vfebvre 22/04/2010)

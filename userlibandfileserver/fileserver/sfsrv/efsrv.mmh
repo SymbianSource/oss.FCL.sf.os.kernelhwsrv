@@ -1,0 +1,63 @@
+// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// f32\group\efsrv.mmp
+// efsrv.dll File Server client-side library
+// 
+//
+
+/**
+ @file
+*/
+
+
+
+USERINCLUDE		../ftrace
+
+USERINCLUDE		../sfsrv/traces
+
+SOURCEPATH		../sfsrv
+SOURCE			 cl_cdir.cpp cl_cli.cpp cl_debug.cpp cl_dir.cpp
+SOURCE			 cl_drive.cpp cl_entry.cpp cl_file.cpp cl_find.cpp
+SOURCE			 cl_fman.cpp cl_fmt.cpp cl_fraw.cpp cl_ftext.cpp
+SOURCE			 cl_main.cpp cl_parse.cpp cl_scan.cpp cl_insecure.cpp
+SOURCE			 cl_plugin.cpp cl_blockmap.cpp cl_clamp.cpp
+SOURCE			 cl_shim.cpp
+SOURCE			 cl_notification.cpp
+SOURCEPATH	../group
+DOCUMENT		 release.txt
+
+TARGETTYPE		dll
+
+DEFFILE			 efsrv.def
+
+USERINCLUDE	../inc
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+SYSTEMINCLUDE	../inc
+#endif
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY			 euser.lib hal.lib
+
+START WINS
+BASEADDRESS		0x66000000
+END
+
+UID		0x1000008d 0x100039e4
+VENDORID 0x70000001
+CAPABILITY	All
+
+unpagedcode
+
+SMPSAFE
+

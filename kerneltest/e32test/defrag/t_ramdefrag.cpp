@@ -33,6 +33,7 @@ RTest test(_L("T_RAMDEFRAG"));
 #include <e32math.h>
 #include <hal.h>
 #include "testdefs.h"
+#include "..\mmu\mmudetect.h"
 
 
 #include <dptest.h>
@@ -128,6 +129,7 @@ LOCAL_D RFile gFile[KNumFilesOrig];
 LOCAL_D TInt* gCandList1;											// Array of zones that have the same preference and the same
 LOCAL_D TInt* gCandList2;											// amount of free pages
 const TInt KInvalidCandIndex = -1;
+LOCAL_D TUint gMemModel;
 
 //
 // GetDrive
@@ -489,6 +491,8 @@ TInt TestSetup()
 									currentCacheSize >> gPageShift));
 		}
 
+	// Get the memory model of the kernel that this test is running on.
+	gMemModel = MemModelType();
 	return KErrNone;
 	}
 
@@ -1514,7 +1518,7 @@ TInt VerifyMovDisAlloc()
 				}
 			else
 				{
-				if ((allocMov || allocDis) && prevZoneNotFull)
+				if (verifySpread && (allocMov || allocDis) && prevZoneNotFull)
 					{// The previous least preferable RAM zones were not full so shouldn't
 					// be any movable or discardable pages in the RAM zones of this preference.
 					test.Printf(_L("Movable or discardable pages in more preferable RAM zones unnecessarily\n"));
@@ -1536,7 +1540,7 @@ TInt VerifyMovDisAlloc()
 		}
 
 	if (totalMorePrefInUse > requiredMovDis)
-		{// There enough allocatable pages in the RAM zones below the currently 
+		{// There are enough allocatable pages in the RAM zones below the currently 
 		// least preferable RAM in use.
 		test.Printf(_L("Memory is spread out totalMorePref 0x%x required 0x%x\n"), totalMorePrefInUse, requiredMovDis);
 		if (verifySpread)
@@ -3049,8 +3053,9 @@ TInt TestMovPgsDefrag()
 				break;
 				}
 			totMov -= gZoneUtilArray[zoneIndexCand].iAllocMovable;
-			if (gZoneUtilArray[zoneIndexCand].iFreePages != gZoneUtilArray[zoneIndexCand].iPhysPages &&
-				gZoneUtilArray[zoneIndexCand].iFreePages != 0)
+			if (gZoneUtilArray[zoneIndexCand].iFreePages &&
+				(gZoneUtilArray[zoneIndexCand].iAllocMovable || 
+				gZoneUtilArray[zoneIndexCand].iAllocDiscardable))
 				{
 				zoneNotEmptyOrFull = ETrue;
 				}
@@ -9439,6 +9444,14 @@ SkipTest4:
 
 	test.Next(_L("Test5: Filling the FS Cache and allocating more than 16 contiguous fixed pages"));	
 	TestStart();
+
+	if (gMemModel >= EMemModelTypeFlexible)
+		{// The flexible memory model won't flush the whole paging cache for 
+		// contiguous allocations >16 pages so skip the next test.
+		test.Printf(_L("This memory model won't flush the cache - Skipping...\n"));
+		goto SkipTest5;
+		}
+
 	// TestEnd() will have reduced any cache pages to minimum so just get current 
 	// count of discardable pages.
 	GetAllPageInfo();

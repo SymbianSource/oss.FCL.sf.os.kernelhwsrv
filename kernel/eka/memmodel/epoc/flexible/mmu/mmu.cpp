@@ -622,7 +622,7 @@ TInt Mmu::ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aByt
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ZoneAllocPhysicalRam(?,%d,%d,?,%d)", aZoneIdCount, aBytes, aPhysAddr, aAlign));
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
 
-	TInt r = iRamPageAllocator->ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aBytes, aPhysAddr, EPageFixed, aAlign);
+	TInt r = iRamPageAllocator->ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aBytes, aPhysAddr, aAlign);
 	if(r!=KErrNone)
 		iRamAllocFailed = ETrue;
 	else
@@ -859,8 +859,14 @@ TInt Mmu::AllocRam(	TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags, TZon
 		}
 #endif
 	TInt missing = iRamPageAllocator->AllocRamPages(aPages, aCount, aZonePageType, aBlockZoneId, aBlockRest);
-	if(missing && !(aFlags&EAllocNoPagerReclaim) && ThePager.GetFreePages(missing))
-		missing = iRamPageAllocator->AllocRamPages(aPages, aCount, aZonePageType, aBlockZoneId, aBlockRest);
+	if(missing && !(aFlags&EAllocNoPagerReclaim))
+		{
+		// taking the page cleaning lock here prevents the pager releasing the ram alloc lock
+		PageCleaningLock::Lock();  
+		if (ThePager.GetFreePages(missing))
+			missing = iRamPageAllocator->AllocRamPages(aPages, aCount, aZonePageType, aBlockZoneId, aBlockRest);
+		PageCleaningLock::Unlock();  
+		}
 	TInt r = missing ? KErrNoMemory : KErrNone;
 	if(r!=KErrNone)
 		iRamAllocFailed = ETrue;
@@ -868,6 +874,22 @@ TInt Mmu::AllocRam(	TPhysAddr* aPages, TUint aCount, TRamAllocFlags aFlags, TZon
 		PagesAllocated(aPages,aCount,aFlags);
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::AllocRam returns %d",r));
 	return r;
+	}
+
+
+/**
+Mark a page as being allocated to a particular page type.
+
+NOTE - This page should not be used until PagesAllocated() has been invoked on it.
+
+@param aPhysAddr		The physical address of the page to mark as allocated.
+@param aZonePageType	The type of the page to mark as allocated.
+*/
+void Mmu::MarkPageAllocated(TPhysAddr aPhysAddr, TZonePageType aZonePageType)
+	{
+	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::MarkPageAllocated(0x%x, %d)", aPhysAddr, aZonePageType));
+	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
+	iRamPageAllocator->MarkPageAllocated(aPhysAddr, aZonePageType);
 	}
 
 
@@ -890,20 +912,31 @@ void Mmu::FreeRam(TPhysAddr* aPages, TUint aCount, TZonePageType aZonePageType)
 		SPageInfo* pi = SPageInfo::FromPhysAddr(pagePhys);
 		PageFreed(pi);
 
-		// If this is an old page of a page being moved that was previously pinned
-		// then make sure it is freed as discardable otherwise despite DPager::DonatePages()
-		// having marked it as discardable it would be freed as movable.
-		__NK_ASSERT_DEBUG(pi->PagedState() != SPageInfo::EPagedPinnedMoved || aCount == 1);
-		if (pi->PagedState() == SPageInfo::EPagedPinnedMoved)
-			aZonePageType = EPageDiscard;
-
-		if(ThePager.PageFreed(pi)==KErrNone)
-			--aCount; // pager has dealt with this page, so one less for us
-		else
+		switch (ThePager.PageFreed(pi))
 			{
-			// All paged pages should have been dealt with by the pager above.
-			__NK_ASSERT_DEBUG(pi->PagedState() == SPageInfo::EUnpaged);
-			*pagesOut++ = pagePhys; // store page address for freeing later
+			case KErrNone: 
+				--aCount; // pager has dealt with this page, so one less for us
+				break;
+			case KErrCompletion:
+				// This was a pager controlled page but it is no longer required.
+				__NK_ASSERT_DEBUG(aZonePageType == EPageMovable || aZonePageType == EPageDiscard);
+				__NK_ASSERT_DEBUG(pi->PagedState() == SPageInfo::EUnpaged);
+				if (aZonePageType == EPageMovable)
+					{// This page was donated to the pager so have to free it here
+					// as aZonePageType is incorrect for this page but aPages may 
+					// contain a mixture of movable and discardable pages.
+					MmuLock::Unlock();
+					iRamPageAllocator->FreeRamPages(&pagePhys, 1, EPageDiscard);
+					aCount--; // We've freed this page here so one less to free later
+					flash = 0;	// reset flash count as we released the mmulock.
+					MmuLock::Lock();
+					break;
+					}
+				// fall through..
+			default:
+				// Free this page..
+				__NK_ASSERT_DEBUG(pi->PagedState() == SPageInfo::EUnpaged);
+				*pagesOut++ = pagePhys; // store page address for freeing later
 			}
 		}
 	MmuLock::Unlock();
@@ -922,21 +955,15 @@ TInt Mmu::AllocContiguousRam(TPhysAddr& aPhysAddr, TUint aCount, TUint aAlign, T
 		__KTRACE_OPT(KMMU,Kern::Printf("Mmu::AllocContiguousRam returns simulated OOM %d",KErrNoMemory));
 		return KErrNoMemory;
 		}
-	// Only the page sets EAllocNoPagerReclaim and it shouldn't allocate contiguous ram.
+	// Only the pager sets EAllocNoPagerReclaim and it shouldn't allocate contiguous ram.
 	__NK_ASSERT_DEBUG(!(aFlags&EAllocNoPagerReclaim));
 #endif
-	TInt r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, EPageFixed, aAlign+KPageShift);
-	if(r==KErrNoMemory && aCount > KMaxFreeableContiguousPages)
-		{
-		// flush paging cache and retry...
-		ThePager.FlushAll();
-		r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, EPageFixed, aAlign+KPageShift);
-		}
+	TInt r = iRamPageAllocator->AllocContiguousRam(aCount, aPhysAddr, aAlign+KPageShift);
 	if(r!=KErrNone)
 		iRamAllocFailed = ETrue;
 	else
 		PagesAllocated((TPhysAddr*)(aPhysAddr|1), aCount, aFlags);
-	__KTRACE_OPT(KMMU,Kern::Printf("AllocContiguouseRam returns %d and aPhysAddr=0x%08x",r,aPhysAddr));
+	__KTRACE_OPT(KMMU,Kern::Printf("AllocContiguousRam returns %d and aPhysAddr=0x%08x",r,aPhysAddr));
 	return r;
 	}
 
@@ -1623,48 +1650,65 @@ void Mmu::RemapPage(TPte* const aPtePtr, TPhysAddr& aPage, TPte aBlankPte)
 
 	// get page to remap...
 	TPhysAddr pagePhys = aPage;
-	
+
 	// Only remap the page if it is committed or it is being moved and
 	// no other operation has been performed on the page.
 	if(!RPageArray::TargetStateIsCommitted(pagePhys))
 		return; // page no longer needs mapping
-	
+
 	// Only remap the page if it is currently mapped, i.e. doesn't have an unallocated pte.
 	// This will only be true if a new mapping is being added but it hasn't yet updated 
 	// all the ptes for the pages that it maps.
 	TPte pte = *aPtePtr;
 	if (pte == KPteUnallocatedEntry)
 		return;
-	
+
 	// clear type flags...
 	pagePhys &= ~KPageMask;
 
+	// Get the SPageInfo of the page to map.  Allow pages without SPageInfos to
+	// be mapped as when freeing a shadow page may need to remap an unpaged ROM 
+	// page which won't have an SPageInfo.
 	SPageInfo* pi = SPageInfo::SafeFromPhysAddr(pagePhys);
 	if (pi)
 		{
 		SPageInfo::TPagedState pagedState = pi->PagedState();
 		if (pagedState != SPageInfo::EUnpaged)
 			{
-			// The page is demand paged.  Only remap the page if it is pinned or is currently
-			// accessible but to the old physical page.
-			if (pagedState != SPageInfo::EPagedPinned &&
-				 (Mmu::IsPteInaccessible(pte) || (pte^pagePhys) < TPte(KPageSize)))
-				return;
-			if (!pi->IsDirty())
+			// For paged pages only update the pte if the pte points to the wrong physical
+			// address or the page is pinned.
+			if (pagedState != SPageInfo::EPagedPinned)
 				{
-				// Ensure that the page is mapped as read only to prevent pages being marked dirty
-				// by page moving despite not having been written to
-				Mmu::MakePteInaccessible(aBlankPte, EFalse);
+				if ((pte^pagePhys) < TPte(KPageSize))
+					return;
+				if (Mmu::IsPteInaccessible(pte))
+					{
+					// Updating this pte shouldn't be necessary but it stops random data 
+					// corruption in stressed cases???
+					Mmu::MakePteInaccessible(aBlankPte, EFalse);
+					}
+				else if (!pi->IsDirty())
+					{
+					// Ensure that the page is mapped as read only to prevent pages being writable 
+					// without having been marked dirty.
+					Mmu::MakePteInaccessible(aBlankPte, ETrue);
+					}
+				}
+			else if (!pi->IsDirty())
+				{
+				// Ensure that the page is mapped as read only to prevent pages being writable 
+				// without having been marked dirty.
+				Mmu::MakePteInaccessible(aBlankPte, ETrue);
 				}
 			}
 		}
-	
+
 	// Map the page in the page array entry as this is always the physical
 	// page that the memory object's page should be mapped to.
 	pte = pagePhys|aBlankPte;
 	TRACE2(("!PTE %x=%x",aPtePtr,pte));
 	*aPtePtr = pte;
-	
+
 	// clean cache...
 	CacheMaintenance::SinglePteUpdated((TLinAddr)aPtePtr);
 	}
@@ -1943,7 +1987,10 @@ TBool Mmu::PageInPages(TPte* const aPtePtr, const TUint aCount, TPhysAddr* aPage
 			}
 #endif
 		if(!Mmu::IsPteMoreAccessible(aBlankPte,pte))
+			{
+			__NK_ASSERT_DEBUG((pte^page) < (TUint)KPageSize); // Must be the same physical addr.
 			return true; // return true to keep page table (it already had at least page mapped)
+			}
 
 		// remap page with new increased permissions...
 		if(pte==KPteUnallocatedEntry)
@@ -1996,6 +2043,8 @@ TBool Mmu::PageInPages(TPte* const aPtePtr, const TUint aCount, TPhysAddr* aPage
 					TRACE2(("!PTE %x=%x",pPte-1,pte));
 					pPte[-1] = pte;
 					}
+				else
+					__NK_ASSERT_DEBUG((pte^page) < (TUint)KPageSize); // Must be the same physical addr.	
 				}
 			}
 		while(pPte!=pPteEnd);

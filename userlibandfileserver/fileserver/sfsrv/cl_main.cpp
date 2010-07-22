@@ -17,12 +17,16 @@
 
 #include "cl_std.h"
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cl_mainTraces.h"
+#endif
+
 GLDEF_C void Panic(TClientPanic aPanic)
 //
 // Panic the current client with a file server client side panic.
 //
 	{
-	TRACE1(UTF::EPanic, UTraceModuleEfsrv::EPanic, MODULEUID, aPanic);
+	OstTrace1(TRACE_PANIC, EFSRV_EPANIC, "%d", aPanic);
 
 	User::Panic(_L("FSCLIENT panic"),aPanic);
 	}

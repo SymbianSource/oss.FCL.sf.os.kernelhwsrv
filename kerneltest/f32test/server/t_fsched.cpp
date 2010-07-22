@@ -29,6 +29,9 @@
 #include "t_server.h"
 #include <e32twin.h>
 #include <e32cmn.h>
+#include "f32_test_utils.h"
+
+using namespace F32_Test_Utils;
 
 //----------------------------------------------------------------------------------------------
 //! @SYMTestCaseID      PBASE-T_FSCHED-0191
@@ -930,9 +933,9 @@ void TestReadingWhileWriting()
 	test.Printf(_L("\nSync read done %d ms before the write ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
 	TReal time=I64LOW(timeTaken.Int64() / KuStomS); 
 	#if !defined(__WINS__)
-	// If this condition fails, means that writing the sync file while fairscheduling a small sync read takes too long
+		// If this condition fails, it means that writing the sync file while fairscheduling a small sync read takes too long
 		test.Printf(_L("time: %f\n"), time);
-//		test((time > 0) && (((gTotalTimeSync[0]-time)>0) || ((gTotalTimeSync[1]-time)>0)) );  
+		// test((time > 0) && (((gTotalTimeSync[0]-time)>0) || ((gTotalTimeSync[1]-time)>0)) );  
 		test(time > 0);
 	#endif 
 	
@@ -959,11 +962,14 @@ void TestReadingWhileWriting()
 	time = I64LOW(timeTaken.Int64() / KuStomS); 
 
 	#if !defined(__WINS__)
-	// If this condition fails, means that writing the async file while fairscheduling a small async read takes too long
+	if (!Is_HVFS(TheFs, gDrive))
+		{
+		// If this condition fails, it means that writing the async file while fairscheduling a small async read takes too long
 		test.Printf(_L("time: %f\n"), time);
 		test.Printf(_L("gTotalTimeAsync[0] = %d , gTotalTimeAsync[1] = %d\n"),gTotalTimeAsync[0],gTotalTimeAsync[1] );
-//		test((time > 0) && (((gTotalTimeAsync[0]-time)>0) || ((gTotalTimeAsync[1]-time)>0)) );
+		// test((time > 0) && (((gTotalTimeAsync[0]-time)>0) || ((gTotalTimeAsync[1]-time)>0)) );
 		test(time > 0);
+		}
 	#endif
 }
 
@@ -998,9 +1004,9 @@ void TestWritingWhileWriting()
 	test.Printf(_L("\nSync write done %d ms before the big write ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
 	TReal time=I64LOW(timeTaken.Int64() / KuStomS); 
 	#if !defined(__WINS__)
-	// If this condition fails, means that writing the sync file while fairscheduling a small sync write takes too long
+		// If this condition fails, it means that writing the sync file while fairscheduling a small sync write takes too long
 		test.Printf(_L("time: %f\n"), time);
-// 		test((time > 0) && (((gTotalTimeSync[0]-time)>0) || ((gTotalTimeSync[1]-time)>0)) ); 
+		// test((time > 0) && (((gTotalTimeSync[0]-time)>0) || ((gTotalTimeSync[1]-time)>0)) ); 
 		test(time > 0);
 	#endif 
 
@@ -1018,13 +1024,16 @@ void TestWritingWhileWriting()
 	
 	timeTaken = time2.MicroSecondsFrom(time1);
 	test.Printf(_L("\nAsync write done %d ms before the big write ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
-	time=I64LOW(timeTaken.Int64() / KuStomS); 
+	time=I64LOW(timeTaken.Int64() / KuStomS);
 	#if !defined(__WINS__)
-	// If this condition fails, means that writing the async file while fairscheduling a small async write takes too long
+	if (!Is_HVFS(TheFs, gDrive))
+		{
+		// If this condition fails, it means that writing the async file while fairscheduling a small async write takes too long
 		test.Printf(_L("time: %f\n"), time);
 		test.Printf(_L("gTotalTimeAsync[0] = %d , gTotalTimeAsync[1] = %d\n"),gTotalTimeAsync[0],gTotalTimeAsync[1] );
-//		test((time > 0) && (((gTotalTimeAsync[0]-time)>0) || ((gTotalTimeAsync[1]-time)>0)) ); 
+		// test((time > 0) && (((gTotalTimeAsync[0]-time)>0) || ((gTotalTimeAsync[1]-time)>0)) );
 		test(time > 0);
+		}
 	#endif
 	bigFile.Close();
 	smallFile.Close();	
@@ -1336,9 +1345,9 @@ void CallTestsL()
 	TestWriteOrder();
 	
 	// Format the drive to make sure no blocks are left to be erased in LFFS
-	#if !defined(__WINS__)
+	if (!Is_Win32(TheFs, gDrive))
 		Format(gDrive);	
-	#endif
+	
 	r = TheFs.MkDirAll(gSessionPath);
 	
 	TimeTakenToWriteBigFile(1);  
@@ -1505,10 +1514,9 @@ TInt E32Main()
 		test.Printf(_L("%c: Media corruption; previous test may have aborted; else, check hardware\n"), (TUint)gDrive + 'A');
 		}
 	TESTERROR(r);
-#if !defined(__WINS__)
-	if ((volInfo.iDrive.iMediaAtt & KMediaAttFormattable))
+	
+	if (!Is_Win32(TheFs, gDrive) && (volInfo.iDrive.iMediaAtt & KMediaAttFormattable))
 		Format(gDrive);
-#endif
 
 	if(CheckForDiskSize())
 		{

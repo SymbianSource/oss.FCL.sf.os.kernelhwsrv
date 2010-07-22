@@ -308,6 +308,9 @@ void CUsbHostMsDeviceThread::HandleMessage(const RMessage2& aMessage)
             }
 		return;
 	case EUsbHostMsUnRegisterInterface:
+		// Check whether all luns have got uninitialised. 
+		for(TInt i = 0, j = iUsbHostMsDevice->GetMaxLun(); i <= j; i++)
+			TRAP_IGNORE(iUsbHostMsDevice->RemoveLunL(i));
 		TRAP(ret, UnRegisterInterfaceL(aMessage));
 		break;
 	case EUsbHostMsRegisterLun:

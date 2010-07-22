@@ -892,6 +892,13 @@ TInt CFatMountCB::MountControl(TInt aLevel, TInt aOption, TAny* aParam)
     if(aLevel == EMountVolParamQuery)
         {
         ASSERT(ConsistentState()); //-- volume state shall be consistent, otherwise its parameters do not make sense
+
+		// Ram Drives calculate their total / free space based on querying HAL parameters
+		// in ::VolumeL(). To make all interfaces return consistent results, we need to force
+		// a fallback to that for RAM drives.
+		if (iRamDrive)
+			return (KErrNotSupported);
+
         switch(aOption)
             {
             //-- Request a certain amount of free space on the volume.
@@ -927,11 +934,8 @@ TInt CFatMountCB::MountControl(TInt aLevel, TInt aOption, TAny* aParam)
             //-- A request to obtain size of the mounted volume without blocking (CMountCB::VolumeL() can block).
             case ESQ_MountedVolumeSize:
                 {
-                if(iRamDrive)
-                    return KErrNotSupported; //-- it requires knowledge of free space on the volume
-    
                 TUint64* pVal = (TUint64*)aParam; 
-                *pVal = iSize; //-- physical drive size
+		*pVal = iSize; //-- physical drive size
 
                 //-- take into account space occupied by FAT table, etc.
                 *pVal -= ClusterBasePosition(); 
@@ -1069,7 +1073,7 @@ void CFatMountCB::ReadSection64L(const TDesC& aName, TInt64 aPos, TAny* aTrg, TI
 			TInt readLength = (TInt)Min((TInt64)(aLength-readTotal),(clusterListLen<<ClusterSizeLog2())-pos);
 			__ASSERT_DEBUG(readLength>0,Fault(EReadFileSectionFailed));
 			TInt64 dataAddress=(FAT().DataPositionInBytes(cluster))+pos;
-			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal);
+			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal, 0);
 			readTotal += readLength;
 
 			if (readTotal == aLength)

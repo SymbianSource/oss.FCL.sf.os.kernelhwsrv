@@ -92,12 +92,12 @@ public:
 
     //-- public interface to the local drive. Provides media driver's error handling (critical and non-critical user notifiers)
     //-- and thread-safety if required.
-	TInt ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const;
+	TInt ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const;
 	TInt ReadNonCritical(TInt64 aPos,TInt aLength,TDes8& aTrg) const;
 	TInt ReadCritical(TInt64 aPos,TInt aLength,TDes8& aTrg) const;
 	
     TInt WriteCritical(TInt64 aPos,const TDesC8& aSrc);
-    TInt WriteNonCritical(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset);
+    TInt WriteNonCritical(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag);
 	
     TInt GetLastErrorInfo(TDes8& aErrorInfo) const;
 
@@ -148,9 +148,9 @@ private:
         inline void LeaveCriticalSection() const {iLock.Signal();}
 
         //-- methods' wrappers that are used by TDriveInterface
-        TInt Read(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const;
+        TInt Read(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const;
         TInt Read(TInt64 aPos,TInt aLength,TDes8& aTrg) const;
-        TInt Write(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset);
+        TInt Write(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag);
         TInt Write(TInt64 aPos, const TDesC8& aSrc);
         TInt GetLastErrorInfo(TDes8& aErrorInfo) const;
         TInt Caps(TDes8& anInfo) const;
@@ -336,7 +336,7 @@ public:
 	@param aMessage	Refrence to server message from request
 	@param anOffset	Offset into read data to write
 	*/
-	virtual void ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const = 0;
+	virtual void ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const = 0;
 
 	/**
 	Disk write function
@@ -347,7 +347,7 @@ public:
 	@param aMessage	Refrence to server message from request, contains data
 	@param anOffset	Offset into write data to use in write
 	*/
-	virtual void WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset) = 0;
+	virtual void WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) = 0;
 
     
     virtual inline MWTCacheInterface* DirCacheInterface();
@@ -570,8 +570,8 @@ public:
     void DirReadL(const TEntryPos& aPos,TInt aLength,TDes8& aDes) const;
     void DirWriteL(const TEntryPos& aPos,const TDesC8& aDes);
 
-	void ReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset) const;
-    void WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint& aBadcluster, TUint& aGoodcluster);
+	void ReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset, TUint aFlag) const;
+    void WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint& aBadcluster, TUint& aGoodcluster, TUint aFlag);
 	
 	void MoveToNextEntryL(TEntryPos& aPos) const;
 	void MoveToDosEntryL(TEntryPos& aPos,TFatDirEntry& anEntry) const;
@@ -703,8 +703,8 @@ private:
 	void DoCheckFatForLoopsL(TUint32 aCluster, TUint32& aPreviousCluster, TUint32& aChangePreviousCluster, TUint32& aCount) const;
     void InitializeL(const TLocalDriveCaps& aLocDrvCaps, TBool aIgnoreFSInfo=EFalse);
 
-	void DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset) const;
-    void DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint aLastcluster, TUint& aBadcluster, TUint& aGoodcluster);
+	void DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset, TUint aFlag) const;
+    void DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint aLastcluster, TUint& aBadcluster, TUint& aGoodcluster, TUint aFlag);
 
 	TBool IsUniqueNameL(const TShortName& aName, TUint32 aDirCluster);
 	TBool FindShortNameL(const TShortName& aName,TEntryPos& anEntryPos);

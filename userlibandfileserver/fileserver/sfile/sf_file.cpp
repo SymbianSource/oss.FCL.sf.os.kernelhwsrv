@@ -16,7 +16,9 @@
 #include "sf_std.h"
 #include "sf_file_cache.h"
 #include "cl_std.h"
-
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_fileTraces.h"
+#endif
 #if defined(_DEBUG) || defined(_DEBUG_RELEASE)
 
 TInt OutputTraceInfo(CFsRequest* aRequest,TCorruptNameRec* aNameRec)
@@ -241,7 +243,7 @@ LOCAL_C TInt FsFileOpenL(CFsRequest* aRequest, TFileOpen anOpen)
     TUint32 mode=aRequest->Message().Int1();
 	if (anOpen==EFileCreate || anOpen==EFileReplace)
 		{
-		r = CheckDiskSpace(0, aRequest);
+		r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
 		if(r != KErrNone)
             return r;
         
@@ -601,7 +603,7 @@ TInt TFsFileTemp::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileTemp::DoRequestL(CFsRequest* aRequest)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 	
@@ -699,8 +701,18 @@ TInt TFsFileRead::DoRequestL(CFsRequest* aRequest)
 			// Current operation points to a local buffer
 			// The request originated from the file server (e.g. file cache) with a local message handle (KLocalMessageHandle)
 			TPtr8 dataDesc((TUint8*) currentOperation.iReadWriteArgs.iData + currentOperation.iReadWriteArgs.iOffset, len, len);
-			const RLocalMessage msg;
-			TRAP(r,file->ReadL(pos, len, &dataDesc, msg, 0));
+
+			// save the client's RMessage2
+			const RMessage2 msgClient = aRequest->Message();
+			
+			// overwrite RMessage2 in CFsMessageRequest with RLocalMessage 
+			const RLocalMessage msgLocal;					
+			const_cast<RMessage2&> (aRequest->Message()) = msgLocal;
+
+			TRAP(r,file->ReadL(pos, len, &dataDesc, aRequest->Message(), 0));
+							
+			// restore the client's RMessage2
+			const_cast<RMessage2&> (aRequest->Message()) = msgClient;
 			}
 		}
 
@@ -1014,9 +1026,6 @@ void TFsFileWrite::CommonEnd(CFsMessageRequest* aMsgRequest, TInt aRetVal, TUint
 			{
 			file->SetNotifyAsyncReadersPending(ETrue);
 			}
-		
-        file->iAtt |= KEntryAttModified;
-
 		}
 	else if (aRetVal == KErrCorrupt)
 		file->SetFileCorrupt(ETrue);
@@ -1097,8 +1106,18 @@ TInt TFsFileWrite::DoRequestL(CFsRequest* aRequest)
 		else
 			{
 			TPtr8 dataDesc((TUint8*) currentOperation.iReadWriteArgs.iData + currentOperation.iReadWriteArgs.iOffset, len, len);
-			const RLocalMessage msg;
-			TRAP(r,file->WriteL(pos, len, &dataDesc, msg, 0));
+
+			// save the client's RMessage2
+			const RMessage2 msgClient = aRequest->Message();
+			
+			// overwrite RMessage2 in CFsMessageRequest with RLocalMessage 
+			const RLocalMessage msgLocal;					
+			const_cast<RMessage2&> (aRequest->Message()) = msgLocal;
+
+			TRAP(r,file->WriteL(pos, len, &dataDesc, aRequest->Message(), 0));
+							
+			// restore the client's RMessage2
+			const_cast<RMessage2&> (aRequest->Message()) = msgClient;
 			}
 		}
 
@@ -1494,11 +1513,9 @@ TInt TFsFileFlush::DoRequestL(CFsRequest* aRequest)
 	r=share->CheckMount();
 	if (r!=KErrNone)
 		return(r);
-
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataL, EF32TraceUidFileSys, &share->File());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL1, "this %x", &share->File());
 	TRAP(r,share->File().FlushDataL());
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL1RET, "r %d", r);
 	return(r);
 	}
 
@@ -1652,7 +1669,7 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSetAtt::DoRequestL(CSessionFs* aSession)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1666,12 +1683,10 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
 	
     TUint setAttMask=(TUint)(aRequest->Message().Int0());
 	TUint clearAttMask=(TUint)aRequest->Message().Int1();
-	ValidateAtts(share->File().Att(),setAttMask,clearAttMask);
-
-	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
+	ValidateAtts(setAttMask,clearAttMask);
+	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL1, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) setAttMask, (TUint) clearAttMask);
 	TRAP(r,share->File().SetEntryL(TTime(0),setAttMask,clearAttMask))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL1RET, "r %d", r);
 	return(r);
 	}
 
@@ -1717,7 +1732,7 @@ TInt TFsFileSetModified::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSetModified::DoRequestL(CFsRequest* aRequest)"));
     
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1733,11 +1748,9 @@ TInt TFsFileSetModified::DoRequestL(CFsRequest* aRequest)
 	TTime time;
 	TPtr8 t((TUint8*)&time,sizeof(TTime));
 	aRequest->ReadL(KMsgPtr0,t);
-
-	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, KEntryAttModified,0);
+	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL2, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) KEntryAttModified, (TUint) 0);
 	TRAP(r,share->File().SetEntryL(time,KEntryAttModified,0))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL2RET, "r %d", r);
 	return(r);
 	}
 
@@ -1757,7 +1770,7 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileSet::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1780,12 +1793,11 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
 	aRequest->ReadL(KMsgPtr0,t);
 	TUint setAttMask=(TUint)(aRequest->Message().Int1()|KEntryAttModified);
 	TUint clearAttMask=(TUint)aRequest->Message().Int2();
-	ValidateAtts(share->File().Att(),setAttMask,clearAttMask);//	Validate attributes
+	ValidateAtts(setAttMask,clearAttMask);//	Validate attributes
 
-	TRACE5(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryL, EF32TraceUidFileSys, &share->File(), 0, 0, setAttMask,clearAttMask);
+	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL3, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) setAttMask, (TUint) clearAttMask);
 	TRAP(r,share->File().SetEntryL(time,setAttMask,clearAttMask))
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetEntryLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL3RET, "r %d", r);
 	return(r);
 	}
 
@@ -1869,7 +1881,7 @@ TInt TFsFileRename::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsFileRename::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -1887,12 +1899,10 @@ TInt TFsFileRename::DoRequestL(CFsRequest* aRequest)
 
 	TPtrC filePath = aRequest->Dest().FullName().Mid(2);
 	CFileCB& file = share->File();
-
-	TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECFileCBRenameL, EF32TraceUidFileSys, 
-		(TUint) &file, filePath);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBRENAMEL, "this %x", (TUint) &file);
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECFILECBRENAMELYS_EFILENAME, "FileName %S", filePath.Ptr(), filePath.Length()<<1);
 	TRAP(r,file.RenameL(filePath));
-	TRACERETMULT1(UTF::EBorder, UTraceModuleFileSys::ECFileCBRenameLRet, EF32TraceUidFileSys, r);
-
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBRENAMELRET, "r %d", r);
 	// Re-write the file's folded name & re-calculate the hash
 	if (r == KErrNone)
 		{
@@ -2337,10 +2347,11 @@ EXPORT_C CFileCB::~CFileCB()
 		FileCache()->Close();
 	if (iBody && iBody->iDeleteOnClose)
 		{
-		TRACEMULT2(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteL, EF32TraceUidFileSys, DriveNumber(), FileName());
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL2, "drive %d", DriveNumber());
+		OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL2_EFILENAME, "FileName %S", FileName().Ptr(), FileName().Length()<<1);
 		TInt r;
 		TRAP(r, iMount->DeleteL(FileName()));
-		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBDeleteLRet, EF32TraceUidFileSys, r);
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBDELETEL2RET, "r %d", r);
 		}
 
 	if(iMount)
@@ -2958,32 +2969,25 @@ TInt TFsFileReadCancel::DoRequestL(CFsRequest* aRequest)
 void CFileCB::ReadL(TInt64 aPos,TInt& aLength,TDes8* aDes,const RMessagePtr2& aMessage, TInt aOffset)
 	{
 	TRACETHREADID(aMessage);
-	TRACE7(UTF::EBorder, UTraceModuleFileSys::ECFileCBReadL, EF32TraceUidFileSys, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aDes, threadId, aOffset);
-
+	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECFILECBREADLA, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
 	iBody->iExtendedFileInterface->ReadL(aPos,aLength,aDes,aMessage,aOffset);
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBReadLRet, EF32TraceUidFileSys, KErrNone);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBREADLRET, "r %d", KErrNone);
 	}
 
 void CFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aDes,const RMessagePtr2& aMessage, TInt aOffset)
 	{
 	TRACETHREADID(aMessage);
-	TRACE7(UTF::EBorder, UTraceModuleFileSys::ECFileCBWriteL, EF32TraceUidFileSys, 
-		this, I64LOW(aPos), I64HIGH(aPos), aLength, aDes, threadId, aOffset);
-
+	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECFILECBWRITEL, "this %x clientThreadId %x aPos %x:%x aLength %d", (TUint) this, (TUint) threadId, (TUint) I64HIGH(aPos), (TUint) I64LOW(aPos), (TUint) aLength);
 	iBody->iExtendedFileInterface->WriteL(aPos,aLength,aDes,aMessage,aOffset);
-
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBWriteLRet, EF32TraceUidFileSys, KErrNone);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBWRITELRET, "r %d", KErrNone);
 	}
 
 void CFileCB::SetSizeL(TInt64 aSize)
 	{
-	TRACE3(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetSizeL, EF32TraceUidFileSys, this, I64LOW(aSize), I64HIGH(aSize));
-
+	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETSIZEL, "this %x aSize %x:%x", (TUint) this, (TUint) I64HIGH(aSize), (TUint) I64LOW(aSize));
 	iBody->iExtendedFileInterface->SetSizeL(aSize);
-
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBSetSizeLRet, EF32TraceUidFileSys, KErrNone);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETSIZELRET, "r %d", KErrNone);
 	}
 
 TBool CFileCB::ExtendedFileInterfaceSupported()
@@ -3029,12 +3033,9 @@ TBool CFileCB::DeleteOnClose() const
 
 TInt CFileCB::GetInterfaceTraced(TInt aInterfaceId, TAny*& aInterface, TAny* aInput)
 	{
-	TRACE2(UTF::EBorder, UTraceModuleFileSys::ECFileCBGetInterface, EF32TraceUidFileSys, aInterfaceId, aInput);
-
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILECBGETINTERFACE, "aInterfaceId %d aInput %x", (TUint) aInterfaceId, (TUint) aInput);
 	TInt r = GetInterface(aInterfaceId, aInterface, aInput);
-
-	TRACERET2(UTF::EBorder, UTraceModuleFileSys::ECFileCBGetInterfaceRet, EF32TraceUidFileSys, r, aInterface);
-
+	OstTraceExt2(TRACE_FILESYSTEM, FSYS_ECFILECBGETINTERFACERET, "r %d aInterface %x", (TUint) r, (TUint) aInterface);
 	return r;
 	}
 
@@ -3115,11 +3116,9 @@ TInt TFsFileClamp::DoRequestL(CFsRequest* aRequest)
 		r=share->CheckMount();
 		if (r!=KErrNone)
 			return(r);
-
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataL, EF32TraceUidFileSys, &share->File());
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL2, "this %x", &share->File());
 		TRAP(r,share->File().FlushDataL());
-		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileCBFlushDataLRet, EF32TraceUidFileSys, r);
-
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBFLUSHDATAL2RET, "r %d", r);
 		if(r!=KErrNone)
 			return(r);
 		}
@@ -3442,20 +3441,12 @@ inplace of CFileCB::SetSize() or CFileCB::iSize.
 the file size shall be modified after acquiring the iLock mutex and if it is ETrue, 
 the file size shall be modified without aquiring the iLock mutex.  
 */
-EXPORT_C void CFileCB::SetSize64(TInt64 aSize, TBool aDriveLocked)
+EXPORT_C void CFileCB::SetSize64(TInt64 aSize, TBool /*aDriveLocked*/)
 	{
-	if(aDriveLocked)
-		{
-		iSize = (TInt)I64LOW(aSize);
-		iBody->iSizeHigh = (TInt)I64HIGH(aSize);
-		}
-	else
-		{
-		Drive().Lock();
-		iSize = (TInt)I64LOW(aSize);
-		iBody->iSizeHigh = (TInt)I64HIGH(aSize);
-		Drive().UnLock();
-		}
+	// cuurently this should only be called from the drive thread
+	ASSERT(FsThreadManager::IsDriveThread(Drive().DriveNumber(),EFalse));
+	iSize = (TInt)I64LOW(aSize);
+	iBody->iSizeHigh = (TInt)I64HIGH(aSize);
 	}
 
 
@@ -3688,10 +3679,21 @@ TBool TFileShareLock::MatchByPos(TUint64 aPosLow, TUint64 aPosHigh) const
 
 
 
+EXPORT_C TBool CFileCB::DirectIOMode(const RMessagePtr2& aMessage)
+	{
+	CFsMessageRequest* msgRequest = CFsMessageRequest::RequestFromMessage(aMessage);
 
+	TInt func = msgRequest->Operation()->Function();
+	ASSERT(func == EFsFileRead || func == EFsFileWrite || func == EFsFileWriteDirty || func == EFsReadFileSection);
 
+	CFileShare* share;
+	CFileCB* file;
+	GetFileFromScratch(msgRequest, share, file);
+	if (share == NULL)		// no share indicates this is a request originating from the file cache
+		return EFalse;
 
-
+	return func == EFsFileRead ? share->iMode & EFileReadDirectIO : share->iMode & EFileWriteDirectIO; 
+	}
 
 
 

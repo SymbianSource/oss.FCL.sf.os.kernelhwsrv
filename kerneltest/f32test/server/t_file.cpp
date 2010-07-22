@@ -1175,12 +1175,8 @@ static void TestINC112803()
 	err = TheFs.GetShortName(KOrigFileName, shortName);
 	test_KErrNone(err);
 
-	// Validate the generated shorname against the original filename.
-	if (Is_Win32(TheFs, gDriveNum))
-		{
-		test(shortName==_L("2222~1.JAR"));
-		}
-	else if(!IsTestingLFFS())
+	// Validate the generated shortname against the original filename.
+	if(!IsTestingLFFS())
 		{
 		// LFFS short names not the same as VFAT ones
 		test(shortName==_L("2222~1.JAR"));
@@ -1777,11 +1773,11 @@ static void TestMaxLengthFilenames()
 // Test max length filenames can be created/deleted
 //
 	{
-
-#if defined(__WINS__)
-	if (gSessionPath[0]=='C')
+	if(Is_SimulatedSystemDrive(TheFs, gDriveNum))
+		{
+		test.Printf(_L("Skipping TestMaxLengthFilenames() on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
 		return;
-#endif
+		}
 
 	test.Next(_L("Test max length filenames"));
 	TFileName bigName;
@@ -3040,7 +3036,7 @@ void CallTestsL()
         gShortFileNamesSupported = ETrue;
     
     if(Is_Win32(TheFs, gDriveNum)) 
-    {//-- find out if this is NTFS and if it supports short names (this feature can be switched OFF)
+    	{//-- find out if this is NTFS and if it supports short names (this feature can be switched OFF)
         
         _LIT(KLongFN, "\\this is a long file name");
         nRes = CreateEmptyFile(TheFs, KLongFN, 10);   
@@ -3054,12 +3050,12 @@ void CallTestsL()
         test_KErrNone(nRes);
 
         DeleteTestDirectory();
-    }
+    	}
     else
-    {
+    	{
         nRes = FormatDrive(TheFs, gDriveNum, ETrue);
         test_KErrNone(nRes);
-    }
+    	}
 
 	CreateTestDirectory(_L("\\F32-TST\\TFILE\\"));
 

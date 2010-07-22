@@ -60,10 +60,10 @@ void TestSecondaryExtensions()
 	test_KErrNone(r);
 	test.Printf(_L("fsName=%S\n"),&fsName);
 
-#if defined(__WINS__)
-	if(drive==EDriveC)
+	if (Is_SimulatedSystemDrive(TheFs, drive))
 		{
-		// check that the extension cannot be mounted since not supported by the file system
+		// check that the extension cannot be mounted since it is not supported by the file system
+		test.Printf(_L("Test extension cannot be mounted"));
 		r=TheFs.AddExtension(KExtensionLog);
 		test_KErrNone(r);
 		r=TheFs.MountExtension(KExtensionLogName,drive);
@@ -72,7 +72,6 @@ void TestSecondaryExtensions()
 		test_KErrNone(r);
 		return;
 		}
-#endif
 
 	test.Next(_L("RFs::AddExtension()"));
 	r=TheFs.AddExtension(KExtensionLog);
@@ -279,10 +278,11 @@ void TestPrimaryExtensions()
 	TInt err=RFs::CharToDrive(gDriveToTest,drive);
 	test_KErrNone(err);
 
-#if defined(__WINS__)
-	if(drive==EDriveC)
+	if(Is_SimulatedSystemDrive(TheFs, drive))
+	    {
+		test.Printf(_L("Skipping TestPrimaryExtensions on PlatSim/Emulator drive %C:\n"), gSessionPath[0]);
 		return;
-#endif
+	    }
 
 	TPckgBuf<TBool> drvSyncBuf;
 	err = TheFs.QueryVolumeInfoExt(drive, EIsDriveSync, drvSyncBuf);
@@ -456,7 +456,7 @@ GLDEF_C void CallTestsL()
 	test_KErrNone(err);
 	if(!extensionsSupported)
 	    {
-        test.Printf(_L("Drive %d does not support file sys extensions. Skipping test."), drive);
+        test.Printf(_L("Drive %C: does not support file sys extensions. Skipping T_EXT1."), gSessionPath[0]);
         test.End();
         test.Close();
         return;
@@ -475,6 +475,7 @@ GLDEF_C void CallTestsL()
 	TheFs.Drive(driveInfo,drive);
 	if (driveInfo.iType == EMediaNANDFlash)
 		{
+		test.Printf(_L("Skipping T_EXT1 as drive %C: is NAND\n"), gSessionPath[0]);
 		return;
 		}
 #endif

@@ -3768,8 +3768,59 @@ of how many times the thread has acquired the mutex.
 */
 EXPORT_C void RMutex::Wait()
 	{
+	Exec::MutexWait(iHandle, 0);
+	}
 
-	Exec::MutexWait(iHandle);
+
+
+
+/**
+Acquire the mutex if it is currently free, but don't wait for it.
+
+This function checks if the mutex is currently held. If not the mutex is marked
+as held by the current thread and the call returns immediately indicating
+success. If the mutex is held by another thread the call returns immediately
+indicating failure. If the mutex is already held by the current thread a count
+is maintained of how many times the thread has acquired the mutex.
+
+@return	KErrNone if the mutex was acquired
+		KErrTimedOut if the mutex could not be acquired
+        KErrGeneral if the semaphore is being reset, i.e the semaphore
+        is about to  be deleted.
+*/
+EXPORT_C TInt RMutex::Poll()
+	{
+	return Exec::MutexWait(iHandle, -1);
+	}
+
+
+
+
+/**
+Acquire the mutex, if necessary waiting up to a specified maximum amount of time
+for it to become free.
+
+This function checks if the mutex is currently held. If not the mutex is marked
+as held by the current thread and the call returns immediately. If the mutex is
+held by another thread the current thread will suspend until the mutex becomes
+free or until the specified timeout period has elapsed. If the mutex is already
+held by the current thread a count is maintained of how many times the thread
+has acquired the mutex.
+
+@param aTimeout The timeout value in microseconds
+
+@return KErrNone if the mutex was acquired successfully.
+        KErrTimedOut if the timeout has expired.
+        KErrGeneral if the mutex is being reset, i.e the mutex
+        is about to  be deleted.
+        KErrArgument if aTimeout is negative;
+        otherwise one of the other system wide error codes.
+*/
+EXPORT_C TInt RMutex::Wait(TInt aTimeout)
+	{
+	if (aTimeout>=0)
+		return Exec::MutexWait(iHandle, aTimeout);
+	return KErrArgument;
 	}
 
 
@@ -4308,7 +4359,6 @@ object.
 
 
 
-EXPORT_C void RSemaphore::Wait()
 /**
 Waits for a signal on the semaphore.
 
@@ -4324,19 +4374,16 @@ waiting on a semaphore, they are released in priority order.
 
 If the semaphore is deleted, all threads waiting on that semaphore are released.
 */
+EXPORT_C void RSemaphore::Wait()
 	{
-
 	Exec::SemaphoreWait(iHandle, 0);
 	}
 
 
-
-
-EXPORT_C TInt RSemaphore::Wait(TInt aTimeout)
 /**
 Waits for a signal on the semaphore, or a timeout.
 
-@param aTimeout The timeout value in micoseconds
+@param aTimeout The timeout value in microseconds
 
 @return KErrNone if the wait has completed normally.
         KErrTimedOut if the timeout has expired.
@@ -4345,12 +4392,26 @@ Waits for a signal on the semaphore, or a timeout.
         KErrArgument if aTimeout is negative;
         otherwise one of the other system wide error codes.
 */
+EXPORT_C TInt RSemaphore::Wait(TInt aTimeout)
 	{
-
-	return Exec::SemaphoreWait(iHandle, aTimeout);
+	if (aTimeout>=0)
+		return Exec::SemaphoreWait(iHandle, aTimeout);
+	return KErrArgument;
 	}
 
 
+/**
+Acquires the semaphore if that is possible without waiting.
+
+@return KErrNone if the semaphore was acquired successfully
+        KErrTimedOut if the semaphore could not be acquired
+        KErrGeneral if the semaphore is being reset, i.e the semaphore
+        is about to  be deleted.
+*/
+EXPORT_C TInt RSemaphore::Poll()
+	{
+	return Exec::SemaphoreWait(iHandle, -1);
+	}
 
 
 EXPORT_C void RSemaphore::Signal()
@@ -4389,6 +4450,54 @@ for any other reason, is marked as ready to run.
 
 
 
+#ifndef __CPU_ARM
+/**
+Acquire the lock, if necessary waiting up to a specified maximum amount of time
+for it to become free.
+
+This function checks if the lock is currently held. If not the lock is marked
+as held by the current thread and the call returns immediately. If the lock is
+held by another thread the current thread will suspend until the lock becomes
+free or until the specified timeout period has elapsed.
+
+@param aTimeout The timeout value in microseconds
+
+@return KErrNone if the lock was acquired successfully.
+        KErrTimedOut if the timeout has expired.
+        KErrGeneral if the lock is being reset, i.e the lock
+        is about to  be deleted.
+        KErrArgument if aTimeout is negative;
+        otherwise one of the other system wide error codes.
+*/
+EXPORT_C TInt RFastLock::Wait(TInt aTimeout)
+	{
+	if (aTimeout<=0)
+		return KErrArgument;
+	TInt orig = __e32_atomic_add_acq32(&iCount, TUint32(-1));
+	if (orig == 0)
+		return KErrNone;
+	FOREVER
+		{
+		TInt r = Exec::SemaphoreWait(iHandle, aTimeout);
+		if (r != KErrTimedOut)	// got lock OK or lock deleted
+			return r;
+		// Before we can return KErrTimedOut we must increment iCount (since we
+		// previously decremented it in anticipation of acquiring the lock.
+		// However we must not increment iCount if it would become zero, since
+		// the semaphore will have been signalled (to counterbalance the Wait()
+		// which timed out and thus never happened). This would result in two
+		// threads being able to acquire the lock simultaneously - one by
+		// decrementing iCount from 0 to -1 without looking at the semaphore,
+		// and the other by decrementing iCount from -1 to -2 and then absorbing
+		// the spurious semaphore signal.
+		orig = __e32_atomic_tas_ord32(&iCount, -1, 0, 1);	// don't release lock completely
+		if (orig < -1)
+			return KErrTimedOut;	// count corrected - don't need to touch semaphore
+		// lock is actually free at this point, try again to claim it
+		aTimeout = 1;
+		}
+	}
+#endif
 
 EXPORT_C RCriticalSection::RCriticalSection()
 	: iBlocked(1)

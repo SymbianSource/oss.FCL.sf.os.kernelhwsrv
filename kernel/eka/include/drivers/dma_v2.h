@@ -18,6 +18,10 @@
 // generic header file <drivers/dma.h>.
 //
 
+/** @file
+	@publishedPartner
+*/
+
 #ifndef __DMA_H__
 #error "dma_v2.h must'n be included directly - use <drivers/dma.h> instead"
 #endif	// #ifndef __DMA_H__
@@ -66,15 +70,15 @@
 
 	Some peripherals may require a post-increment address mode.
 
-	@see DDmaRequest::Fragment
-	@publishedPartner
-	@released
+	@see DDmaRequest::Fragment()
+
+	Note: This enum is only required for backwards compatibility with the old
+	DMA framework, it can be removed once this is no longer needed.
+
+	@deprecated
 */
 enum TDmaRequestFlags
 	{
-	// Note: This enum is only required for backwards compatibility with the
-	// old DMA framework, it can be removed once this is no longer needed.
-
 	/** Source is address of memory buffer */
 	KDmaMemSrc       = 0x01,
 	/** Destination is address of memory buffer */
@@ -96,7 +100,6 @@ enum TDmaRequestFlags
 	are needed because hardware descriptors can not easily be extended to store
 	additional information.
 
-	@publishedPartner
 	@released
 */
 struct SDmaDesHdr
@@ -104,17 +107,22 @@ struct SDmaDesHdr
 	SDmaDesHdr* iNext;
 	};
 
+
 /** Pointer to signature of the new extended callback function.
 
-	TUint - bitmask of one or more TDmaCallbackType values
-	TDmaResult - just that
-	TAny* - was provided by client in DDmaRequest constructor
+	TUint       - bitmask of one or more TDmaCallbackType values
+	TDmaResult  - just that
+	TAny*       - was provided by client in DDmaRequest constructor
 	SDmaDesHdr* - points to header (and thus descriptor) which caused a
-	'descriptor completed' or 'descriptor paused' event.
+	'descriptor completed' or 'descriptor paused' event
+
+	@released
  */
 typedef void (*TDmaCallback)(TUint, TDmaResult, TAny*, SDmaDesHdr*);
 
+
 class TDmaChannel;
+
 
 /** A DMA request is a list of fragments small enough to be transferred in one go
 	by the DMAC.
@@ -132,10 +140,7 @@ class TDmaChannel;
 	Mutexes are used internally to protect data structures accessed both by the
 	client thread and the DFC thread. Therefore no fast mutex can be held when
 	calling a request function.
-
-	@publishedPartner
-	@released
- */
+*/
 class DDmaRequest : public DBase
 	{
 	friend class TDmaChannel;
@@ -143,14 +148,17 @@ class DDmaRequest : public DBase
 public:
 	/** The outcome of the transfer
 
-		@deprecated
 		@see TDmaResult
-	*/
-	enum TResult {EBadResult=0, EOk, EError};
-	/** The signature of the completion/failure callback function
 
 		@deprecated
+	*/
+	enum TResult {EBadResult=0, EOk, EError};
+
+	/** The signature of the completion/failure callback function
+
 		@see TDmaCallback
+
+		@deprecated
 	*/
 	typedef void (*TCallback)(TResult, TAny*);
 
@@ -183,15 +191,19 @@ public:
 		@param aMaxTransferSize Maximum fragment size. If not specified,
 		defaults to the maximum size supported by the DMA controller for the
 		type of transfer that is later scheduled.
+
+		@released
 	*/
-	IMPORT_C DDmaRequest(TDmaChannel& aChannel, TDmaCallback aDmaCb, TAny* aCbArg=NULL,
-						 TUint aMaxTransferSize=0);
+	IMPORT_C DDmaRequest(TDmaChannel& aChannel, TDmaCallback aDmaCb,
+						 TAny* aCbArg=NULL, TUint aMaxTransferSize=0);
 
 
 	/** Destructor.
 
 		Assume the request is not being transferred or pending.
-    */
+
+		@released
+	*/
 	IMPORT_C ~DDmaRequest();
 
 
@@ -211,6 +223,15 @@ public:
 		The request can be uninitialised or may have been fragmented
 		previously. The previous configuration if any is lost whether or not
 		the function succeeds.
+
+		The client must ensure that any memory buffers involved in the transfer
+		have been suitably prepared for DMA. For memory allocated on the kernel
+		side or in a shared chunk this amounts to ensuring cache consistency
+		before Queue() is called. However for memory that was allocated on the
+		user side the client must also ensure that the memory is protected from
+		both data paging and RAM defragmentation before Fragment() is called
+		@see Kern::MapAndPinMemory(). Note however, that this function is only
+		available if the flexible memory model (FMM) is in use.
 
 		@param aSrc Source memory buffer linear address or peripheral magic
 		cookie.
@@ -237,6 +258,38 @@ public:
 
 	/** New version of the DMA request fragment function, to be used with the
 		TDmaTransferArgs structure.
+
+		Split request into a list of fragments small enough to be fed to the
+		DMAC.
+
+		The size of each fragment is smaller than or equal to the maximum
+		transfer size supported by the DMAC. If the source and/or destination
+		is memory, each fragment points to memory which is physically
+		contiguous.
+
+		The request can be uninitialised or may have been fragmented
+		previously. Any previous configuration is lost whether or not the
+		function succeeds.
+
+		The client must ensure that any memory buffers involved in the transfer
+		have been suitably prepared for DMA. For memory allocated on the kernel
+		side or in a shared chunk this amounts to ensuring cache consistency
+		before Queue() is called. However for memory that was allocated on the
+		user side the client must also ensure that the memory is protected from
+		both data paging and RAM defragmentation before Fragment() is called
+		@see Kern::MapAndPinMemory(). Note however, that this function is only
+		available if the flexible memory model (FMM) is in use.
+
+		@param aTransferArgs Describes the transfer to be performed.
+
+		@return KErrNone if success. KErrArgument if certain arguments are
+		invalid. May also fail if running out of descriptors.
+
+		@pre The request is not being transferred or pending.
+		@pre The various parameters must be valid. The PIL or PSL will fault
+		the kernel if not.
+
+		@released
 	*/
 	IMPORT_C TInt Fragment(const TDmaTransferArgs& aTransferArgs);
 
@@ -250,11 +303,13 @@ public:
 		after the transfer if necessary.
 
 		@return KErrNone if success, KErrGeneral otherwise.
-    */
+
+		@released
+	*/
 	IMPORT_C TInt Queue();
 
 
-    /** Append new descriptor(s) to existing list.
+	/** Append new descriptor(s) to existing list.
 
 		Clients needing to build a custom descriptor list should call this
 		function to allocate the list and access the resulting list through
@@ -270,72 +325,86 @@ public:
 		@param aCount Number of descriptors to append.
 
 		@return KErrNone or standard error code.
-    */
+
+		@released
+	*/
 	IMPORT_C TInt ExpandDesList(TInt aCount=1);
 
 
-    /** Append new descriptor(s) to existing list. This function variant
+	/** Append new descriptor(s) to existing list. This function variant
 		operates on the source port descriptor chain.
 
 		Works like ExpandDesList except that it uses the iSrcFirstHdr and
 		iSrcLastHdr fields.
 
-		@see ExpandDesList
+		@see ExpandDesList()
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will just return KErrGeneral.
+		This function should only be used if SDmacCaps::iAsymHwDescriptors is
+		reported as true, as only then the framework will actually use the
+		allocated descriptors.
 
 		@param aCount Number of descriptors to append.
 
 		@return KErrNone or standard error code.
-    */
+
+		@prototype
+	*/
 	IMPORT_C TInt ExpandSrcDesList(TInt aCount=1);
 
 
-    /** Append new descriptor(s) to existing list. This function variant
+	/** Append new descriptor(s) to existing list. This function variant
 		operates on the destination port descriptor chain.
 
 		Works like ExpandDesList except that it uses the iDstFirstHdr and
 		iDstLastHdr fields.
 
-		@see ExpandDesList
+		@see ExpandDesList()
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will just return KErrGeneral.
+		This function should only be used if SDmacCaps::iAsymHwDescriptors is
+		reported as true, as only then the framework will actually use the
+		allocated descriptors.
 
 		@param aCount Number of descriptors to append.
 
 		@return KErrNone or standard error code.
-    */
+
+		@prototype
+	*/
 	IMPORT_C TInt ExpandDstDesList(TInt aCount=1);
 
 
 	/** Free resources associated with this request.
 
-		Assume the request is not being transferred or pending.
-    */
+		Assumes the request is not being transferred or pending.
+
+		@see ExpandDesList()
+
+		@released
+	*/
 	IMPORT_C void FreeDesList();
 
 
 	/** Free resources associated with this request. This function variant
 		operates on the source port descriptor chain.
 
-		@see FreeDesList
+		Assumes the request is not being transferred or pending.
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will do nothing.
-    */
+		@see ExpandSrcDesList()
+
+		@prototype
+	*/
 	IMPORT_C void FreeSrcDesList();
 
 
 	/** Free resources associated with this request. This function variant
 		operates on the destination port descriptor chain.
 
-		@see FreeDesList
+		Assumes the request is not being transferred or pending.
 
-		This function can only be used if SDmacCaps::iAsymHwDescriptors is
-		true, otherwise it will do nothing.
-    */
+		@see ExpandDstDesList()
+
+		@prototype
+	*/
 	IMPORT_C void FreeDstDesList();
 
 
@@ -367,6 +436,8 @@ public:
 
 		@see Queue()
 		@see TotalNumSrcElementsTransferred()
+
+		@prototype
 	*/
 	IMPORT_C void EnableSrcElementCounting(TBool aResetElementCount=ETrue);
 
@@ -399,6 +470,8 @@ public:
 
 		@see Queue()
 		@see TotalNumDstElementsTransferred()
+
+		@prototype
 	*/
 	IMPORT_C void EnableDstElementCounting(TBool aResetElementCount=ETrue);
 
@@ -427,6 +500,8 @@ public:
 
 		@see Queue()
 		@see TotalNumSrcElementsTransferred()
+
+		@prototype
 	*/
 	IMPORT_C void DisableSrcElementCounting();
 
@@ -455,6 +530,8 @@ public:
 
 		@see Queue()
 		@see TotalNumDstElementsTransferred()
+
+		@prototype
 	*/
 	IMPORT_C void DisableDstElementCounting();
 
@@ -475,6 +552,8 @@ public:
 
 		@return The number of elements that have been transferred by this
 		transfer request at the source port.
+
+		@prototype
 	*/
 	IMPORT_C TUint32 TotalNumSrcElementsTransferred();
 
@@ -495,6 +574,8 @@ public:
 
 		@return The number of elements that have been transferred by this
 		transfer request at the destination port.
+
+		@prototype
 	*/
 	IMPORT_C TUint32 TotalNumDstElementsTransferred();
 
@@ -512,8 +593,11 @@ public:
 
 		@return The number of fragments (descriptors / pseudo descriptors) that
 		this transfer request has been split into.
-	 */
+
+		@released
+	*/
 	IMPORT_C TInt FragmentCount();
+
 
 	/** Returns the number of source port fragments that this transfer request
 		has been split into.
@@ -527,7 +611,9 @@ public:
 
 		@return The number of source port fragments (descriptors) that this
 		transfer request has been split into.
-	 */
+
+		@prototype
+	*/
 	IMPORT_C TInt SrcFragmentCount();
 
 
@@ -543,17 +629,24 @@ public:
 
 		@return The number of destination port fragments (descriptors) that
 		this transfer request has been split into.
-	 */
+
+		@prototype
+	*/
 	IMPORT_C TInt DstFragmentCount();
 
 private:
 	inline void OnDeque();
-	TUint GetTransferCount(const TDmaTransferArgs& aTransferArgs);
+	TInt CheckTransferConfig(const TDmaTransferConfig& aTarget, TUint aCount) const;
+	TInt CheckMemFlags(const TDmaTransferConfig& aTarget, TUint aCount) const;
+	TInt AdjustFragmentSize(TUint& aFragSize, TUint aElementSize, TUint aFrameSize);
+	TUint GetTransferCount(const TDmaTransferArgs& aTransferArgs) const;
+	TUint GetMaxTransferlength(const TDmaTransferArgs& aTransferArgs, TUint aCount) const;
 	TInt Frag(TDmaTransferArgs& aTransferArgs);
 	TInt FragSym(TDmaTransferArgs& aTransferArgs, TUint aCount, TUint aMaxTransferLen);
 	TInt FragAsym(TDmaTransferArgs& aTransferArgs, TUint aCount, TUint aMaxTransferLen);
 	TInt FragAsymSrc(TDmaTransferArgs& aTransferArgs, TUint aCount, TUint aMaxTransferLen);
 	TInt FragAsymDst(TDmaTransferArgs& aTransferArgs, TUint aCount, TUint aMaxTransferLen);
+	TInt FragBalancedAsym(TDmaTransferArgs& aTransferArgs, TUint aCount, TUint aMaxTransferLen);
 	TInt ExpandDesList(TInt aCount, TInt& aDesCount, SDmaDesHdr*& aFirstHdr,
 					   SDmaDesHdr*& aLastHdr);
 	void FreeDesList(TInt& aDesCount, SDmaDesHdr*& aFirstHdr, SDmaDesHdr*& aLastHdr);
@@ -561,7 +654,7 @@ private:
 
 public:
 	// WARNING: The following attributes are accessed both in client and DFC
-	// context and so accesses must be protected with the channel lock.
+	// thread context, so accesses must be protected with the channel lock.
 	TDmaChannel& iChannel;		/**< The channel this request is bound to */
 	TCallback iCb;			 /**< Called on completion/failure (can be NULL) */
 	TAny* iCbArg;			 /**< Callback argument */
@@ -608,18 +701,15 @@ class TDmaCancelInfo;
 	Mutexes are used internally to protect data structures accessed both by the
 	client thread and the DFC one. Therefore no fast mutex can be held when
 	calling a channel function.
-
-	@publishedPartner
-	@released
- */
+*/
 class TDmaChannel
 	{
 	friend class DDmaRequest;
 	friend class TDmac;
 	friend class DmaChannelMgr;
-public:
 
-	/** Information passed by client when opening a channel */
+public:
+	/** Information passed by client when opening a channel. */
 	struct SCreateInfo
 		{
 		/** Default constructor. Initializes all fields with meaningful default
@@ -628,20 +718,23 @@ public:
 			Must be inline (for now) because exporting it would break existing
 			custom DMA libs as their clients would need the export which would
 			be missing from the custom .def files.
+
+			@released
 		*/
 		SCreateInfo() : iPriority(KDmaPriorityNone), iDynChannel(EFalse) {};
 
-		/** Identifier used by PSL to select channel to open */
+		/** Identifier used by PSL to select channel to open.
+
+			@released
+		*/
 		TUint32 iCookie;
-		/** Number of descriptors this channel can use.
+		/** Number of descriptors this channel can maximally use.
 
-			This number is not used in the upgraded version of the DMA
-			framework and is kept there only for source compatibility. If the
-			client is certain that it will only ever use that version, then the
-			value passed here doesn't matter - the framework will ignore it.
+			This value will not be used in the fully implemented new version of
+			the DMA framework. Until then it is still required.
 
-			@deprecated
-		 */
+			@released
+		*/
 		TInt iDesCount;
 		/** DFC queue used to service DMA interrupts.
 
@@ -649,15 +742,22 @@ public:
 			priority to avoid a situation where a transfer completes while
 			being cancelled and another transfer is started before the DFC
 			thread gets a chance to run. This would lead to a stray DFC.
+
+			@released
 		*/
 		TDfcQue* iDfcQ;
-		/** DFC priority */
+		/** DFC priority.
+
+			@released
+		*/
 		TUint8 iDfcPriority;
 		/** Used by PSL to configure a channel priority (if possible).
 
 			The default is KDmaPriorityNone (the don't care value).
 
-		    @see TDmaPriority
+			@see TDmaPriority
+
+			@prototype
 		*/
 		TUint iPriority;
 		/** Request a dynamic DMA channel.
@@ -668,12 +768,14 @@ public:
 			that case.
 
 			The default value is EFalse.
+
+			@prototype
 		 */
 		TBool iDynChannel;
 		};
 
 public:
-    /** Opens the DMA channel.
+	/** Opens the DMA channel.
 
 		Channel selection is done by the hardware-specific layer using a cookie
 		passed in via aInfo.
@@ -689,7 +791,9 @@ public:
 		otherwise.
 
 		@return KErrNone or standard error code.
- 	*/
+
+		@released
+	*/
 	IMPORT_C static TInt Open(const SCreateInfo& aInfo, TDmaChannel*& aChannel);
 
 
@@ -701,6 +805,8 @@ public:
 		released, and the pointer/reference to it mustn't therefore be accessed
 		any longer after the function has returned. The channel pointer should
 		be set to NULL by the client.
+
+		@released
  	*/
 	IMPORT_C void Close();
 
@@ -733,8 +839,11 @@ public:
 		support channel linking, KErrArgument if this channel was already
 		linked to a different channel, KErrGeneral if a general error occurred
 		preventing a successful outcome.
-	 */
+
+		@prototype
+	*/
 	IMPORT_C TInt LinkToChannel(TDmaChannel* aChannel);
+
 
 	/** Pauses an active transfer on this channel.
 
@@ -751,7 +860,9 @@ public:
 		KErrCompletion if a transfer was already paused, KErrNotSupported if
 		the DMAC doesn't support channel transfer pausing/resuming, KErrGeneral
 		if a general error occurred preventing a successful outcome.
-	 */
+
+		@released
+	*/
 	IMPORT_C TInt Pause();
 
 
@@ -767,17 +878,22 @@ public:
 		Function can only be used if the DMAC supports this functionality.
 
 		@see SDmacCaps::iChannelPauseAndResume
+		@see SDmacCaps::iLinkedListPausedInterrupt
 
 		@return KErrNone if a paused transfer has been resumed successfully,
 		KErrCompletion if there was no paused transfer, KErrNotSupported if the
 		DMAC doesn't support channel transfer pausing/resuming, KErrGeneral if
 		a general error occurred preventing a successful outcome.
-	 */
+
+		@released
+	*/
 	IMPORT_C TInt Resume();
 
 
 	/** Cancels the current request and all the pending ones.
-	 */
+
+		@released
+	*/
 	IMPORT_C void CancelAll();
 
 
@@ -795,6 +911,8 @@ public:
 
 		@return 0 if transfer length is not limited, the maximum transfer
 		length in bytes otherwise.
+
+		@released
  	*/
 	IMPORT_C TUint MaxTransferLength(TUint aSrcFlags, TUint aDstFlags, TUint32 aPslInfo);
 
@@ -819,7 +937,9 @@ public:
 
 		@return A value representing the alignment mask (e.g. 3 if buffer must
 		be 4-byte aligned)
-	 */
+
+		@released
+	*/
 	IMPORT_C TUint AddressAlignMask(TUint aTargetFlags, TUint aElementSize,
 									TUint32 aPslInfo);
 
@@ -829,7 +949,9 @@ public:
 
 		@return A reference to a structure containing the capabilities and
 		features of the DMA controller associated with this channel.
-	 */
+
+		@released
+	*/
 	IMPORT_C const SDmacCaps& DmacCaps();
 
 
@@ -876,7 +998,9 @@ public:
 		@see TDmaPILFlags::KDmaRequestCallbackFromIsr
 
 		@return KErrGeneral if there was an error, KErrNone otherwise.
-	 */
+
+		@released
+	*/
 	IMPORT_C TInt IsrRedoRequest(TUint32 aSrcAddr=KPhysAddrInvalid,
 								 TUint32 aDstAddr=KPhysAddrInvalid,
 								 TUint aTransferCount=0,
@@ -891,18 +1015,20 @@ public:
 		NB: This API should not be used any longer.
 
 		After calling TDmaChannel::Open() successfully the channel is
-		guaranteed to be open. Therefore there seems no good reason for this
-		API to exist.
+		guaranteed to be open, hence there seems no good reason for this API to
+		exist.
 
 		@deprecated
-	 */
+	*/
 	inline TBool IsOpened() const;
 
 
 	/** Tests whether the channel's request queue is currently empty.
 
 		@return ETrue if request queue is currently empty, EFalse otherwise.
-	 */
+
+		@released
+	*/
 	inline TBool IsQueueEmpty() const;
 
 
@@ -910,7 +1036,9 @@ public:
 		it is used for debug tracing by the PIL.
 
 		@return PSL-specific value which uniquely identifies this channel.
-	 */
+
+		@released
+	*/
 	inline TUint32 PslId() const;
 
 
@@ -918,7 +1046,9 @@ public:
 		transferred.
 
 		@param aFragmentCount The number of consecutive fragments to fail
-	 */
+
+		@released
+	*/
 	IMPORT_C TInt FailNext(TInt aFragmentCount);
 
 
@@ -926,53 +1056,65 @@ public:
 		more interrupts.
 
 		@param aInterruptCount The number of consecutive interrupts to miss
-	 */
+
+		@released
+	*/
 	IMPORT_C TInt MissNextInterrupts(TInt aInterruptCount);
 
 
 	/** Function allowing platform-specific layer to extend channel API with
 		new channel-specific operations.
 
-		@param aCmd Command identifier. Negative values are reserved for use by
-		Nokia.
+		@param aCmd Command identifier.
 		@param aArg PSL-specific argument
 
 		@return KErrNotSupported if aCmd is not supported. PSL-specific value
 		otherwise.
-	 */
+
+		@released
+	*/
 	IMPORT_C TInt Extension(TInt aCmd, TAny* aArg);
 
 
 	/** This is a function that allows the Platform Specific Layer (PSL) to
 		extend the DMA API with new channel-independent operations.
 
-		@param aCmd Command identifier. Negative values are reserved for
-		Symbian use.
+		@param aCmd Command identifier.
 		@param aArg PSL-specific.
 
 		@return KErrNotSupported if aCmd is not supported; a PSL specific value
 		otherwise.
+
+		@released
  	*/
 	IMPORT_C TInt StaticExtension(TInt aCmd, TAny* aArg);
 
 
-	/** @deprecated
-		@see DmacCaps()
-	 */
+	/** @see DmacCaps()
+
+		@deprecated
+	*/
 	inline const TDmac* Controller() const;
 
-	/** @deprecated
-		@see MaxTransferLength()
-	 */
+	/** @see MaxTransferLength()
+
+		@deprecated
+	*/
 	inline TInt MaxTransferSize(TUint aFlags, TUint32 aPslInfo);
 
-	/** @deprecated
-		@see AddressAlignMask()
-	 */
+	/** @see AddressAlignMask()
+
+		@deprecated
+	*/
 	inline TUint MemAlignMask(TUint aFlags, TUint32 aPslInfo);
 
 protected:
 	// Interface with state machines
+
+	/** Constructor.
+
+		@released
+	*/
 	TDmaChannel();
 
 	/** Called by the PIL when adding a new request to the channel's queue.
@@ -980,11 +1122,15 @@ protected:
 		and begin transfer of aReq if possible.
 
 		@param aReq The request which has been added to the queue
+
+		@released
 	*/
 	virtual void DoQueue(const DDmaRequest& aReq);
 
 	/** Called by the PIL in response to a CancelAll call. It should update
 		the channel state appropriately.
+
+		@released
 	*/
 	virtual void DoCancelAll() = 0;
 
@@ -999,6 +1145,8 @@ protected:
 
 		@param aHdr The header for a descriptor, which must be unlinked
 		from its next descriptor (if there is one)
+
+		@released
 	*/
 	virtual void DoUnlink(SDmaDesHdr& aHdr);
 
@@ -1012,6 +1160,8 @@ protected:
 		@param aCurReq The current request.
 		@param aCompletedHdr Must be set by the implementation to the header
 		of the last transfer to complete.
+
+		@released
 	*/
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr);
 
@@ -1032,6 +1182,8 @@ protected:
 
 		@param aDstCompletedHdr Must be set by the implementation to
 		the header of the last destination descriptor to complete.
+
+		@prototype
 	*/
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aSrcCompletedHdr,
 					   SDmaDesHdr*& aDstCompletedHdr);
@@ -1047,13 +1199,52 @@ protected:
 		empty request queue, or immediately after the request count has become
 		zero because of request cancellation or completion.
 
-		Depending on the current value of iQueuedRequests, the PSL may power
-		down or power up the channel. Note that iQueuedRequests gets accessed
-		and changed by different threads, so the PSL needs to take the usual
-		precautions when evaluating the variable's value.
+		Depending on the current and previous observed values of
+		iQueuedRequests, the PSL may power down or power up the channel.
+
+		Note that iQueuedRequests gets accessed and changed by different
+		threads, so the PSL needs to take the usual precautions when evaluating
+		the variable's value. Also, due to the multithreaded framework
+		architecture, there is no guarantee that the function calls always
+		arrive at the PSL level in the strict chronological order of
+		iQueuedRequests being incremented/decremented in the PIL, i.e. it might
+		happen that the PSL finds iQueuedRequests to have the same value in two
+		or more consecutive calls (that's why the previous observed value needs
+		to be locally available and taken into account). It is however promised
+		that before any actual transfer commences the PSL will find the request
+		count to be greater than zero and that after the last request has
+		finished it will be found to be zero.
 
 		None of the internal DMA framework mutexes is being held by the PIL
 		when calling this function.
+
+		Here is an example implementation for a derived channel class:
+
+		@code
+
+		class TFooDmaChannel : public TDmaSgChannel
+			{
+			DMutex* iDmaMutex;
+			TInt iPrevQueuedRequests;
+			virtual void QueuedRequestCountChanged();
+			};
+
+		void TFooDmaChannel::QueuedRequestCountChanged()
+			{
+			Kern::MutexWait(*iDmaMutex);
+			if ((iQueuedRequests > 0) && (iPrevQueuedRequests == 0))
+				{
+				IncreasePowerCount(); // Base port specific
+				}
+			else if ((iQueuedRequests == 0) && (iPrevQueuedRequests > 0))
+				{
+				DecreasePowerCount(); // Base port specific
+				}
+			iPrevQueuedRequests = iQueuedRequests;
+			Kern::MutexSignal(*iDmaMutex);
+			}
+
+		@endcode
 
 		@see iQueuedRequests
 	*/
@@ -1080,20 +1271,21 @@ protected:
 	NFastMutex iLock;		 // for data accessed in both client & DFC context
 	SDmaDesHdr* iCurHdr;	 // fragment being transferred or NULL
 	SDmaDesHdr** iNullPtr;	 // Pointer to NULL pointer following last fragment
-	TDfc iDfc;				  // transfer completion/failure DFC
-	TInt iMaxDesCount;		  // maximum number of allocable descriptors
-	TInt iAvailDesCount;	  // available number of descriptors
+	TDfc iDfc;				 // transfer completion/failure DFC
+	TInt iMaxDesCount;		 // maximum number of allocable descriptors
+	TInt iAvailDesCount;	 // available number of descriptors
 	volatile TUint32 iIsrDfc; // Interface between ISR and DFC:
 	enum {KErrorFlagMask = 0x80000000};	   // bit 31 - error flag
 	enum {KCancelFlagMask = 0x40000000};   // bit 30 - cancel flag
 	enum {KDfcCountMask = 0x3FFFFFFF};	   // bits 0-29 - number of queued DFCs
-	SDblQue iReqQ;				 // being/about to be transferred request queue
-	TInt iReqCount;				 // number of requests attached to this channel
-	TInt iQueuedRequests; // number of requests currently queued on this channel
+	SDblQue iReqQ;			// being/about to be transferred request queue
+	TInt iReqCount;			// number of requests attached to this channel
+	TInt iQueuedRequests; 	// number of requests currently queued on this channel
+
 private:
 	TDmaCancelInfo* iCancelInfo; // ...
-	TBool iRedoRequest;			 // client ISR callback wants a redo of request
-	TBool iIsrCbRequest;		 // request on queue using ISR callback
+	TBool iRedoRequest;		// client ISR callback wants a redo of request
+	TBool iIsrCbRequest;	// request on queue using ISR callback
 
 	__DMA_DECLARE_INVARIANT
 	};
@@ -1103,52 +1295,22 @@ private:
 // INTERFACE WITH TEST HARNESS
 //////////////////////////////////////////////////////////////////////////////
 
-/** Set of information used by test harness.
-
-	@publishedPartner
-	@released
-*/
-struct TDmaTestInfo
-	{
-	/** Maximum transfer size in bytes for all channels (ie. the minimum of all channels' maximum size)*/
-	TUint iMaxTransferSize;
-	/** 3->Memory buffers must be 4-byte aligned, 7->8-byte aligned, ... */
-	TUint iMemAlignMask;
-	/** Cookie to pass to DDmaRequest::Fragment for memory-memory transfer*/
-	TUint32 iMemMemPslInfo;
-	/** Number of test single-buffer channels */
-	TInt iMaxSbChannels;
-	/** Pointer to array containing single-buffer test channel ids */
-	TUint32* iSbChannels;
-	/** Number of test double-buffer channels */
-	TInt iMaxDbChannels;
-	/** Pointer to array containing double-buffer test channel ids */
-	TUint32* iDbChannels;
-	/** Number of test scatter-gather channels */
-	TInt iMaxSgChannels;
-	/** Pointer to array containing scatter-gather test channel ids */
-	TUint32* iSgChannels;
-	};
-
-
 /** Provides access to test information structure stored in the PSL.
 
-	Must be implemented by the PSL.
+	Must be implemented by the PSL (v1).
 
-	@publishedPartner
-	@released
+	@deprecated
 */
 IMPORT_C const TDmaTestInfo& DmaTestInfo();
 
+
 /** Provides access to test information structure stored in the PSL.
 
-	Must be implemented by the PSL.
+	Must be implemented by the PSL (v2).
 
-	@publishedPartner
 	@released
 */
 IMPORT_C const TDmaV2TestInfo& DmaTestInfoV2();
-
 
 
 //////////////////////////////////////////////////////////////////////////////

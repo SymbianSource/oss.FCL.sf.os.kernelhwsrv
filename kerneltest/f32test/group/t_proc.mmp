@@ -20,8 +20,9 @@ TARGETTYPE     EXE
 SOURCEPATH     ../server
 SOURCE         t_main.cpp
 SOURCEPATH     ../fileutils/src
+SOURCE         f32_test_utils.cpp
 SOURCE         t_chlffs.cpp
-SOURCEPATH	   ../manager
+SOURCEPATH     ../manager
 SOURCE         t_proc.cpp
 
 LIBRARY         euser.lib efsrv.lib hal.lib

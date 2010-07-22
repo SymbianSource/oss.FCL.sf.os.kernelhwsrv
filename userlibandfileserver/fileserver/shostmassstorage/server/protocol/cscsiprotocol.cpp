@@ -264,7 +264,8 @@ void CScsiProtocol::GetCapacityL(TCapsInfo& aCapsInfo)
 	__MSFNLOG
     if (!IsConnected())
         {
-        DoScsiReadyCheckEventL();
+        if (!DoScsiReadyCheckEventL())
+            return;
         }
 
     if (!iSbcInterface)
@@ -800,7 +801,7 @@ void CScsiProtocol::ResumeL()
 	}
 
 
-void CScsiProtocol::DoScsiReadyCheckEventL()
+TBool CScsiProtocol::DoScsiReadyCheckEventL()
 	{
     __MSFNLOG
 	TInt err = KErrNone;
@@ -833,6 +834,7 @@ void CScsiProtocol::DoScsiReadyCheckEventL()
             iMediaChangeNotifier.DoNotifyL();
 			}
         }
+    return err = KErrNone ? ETrue : EFalse;
 	}
 
 

@@ -17,6 +17,10 @@
 
 #include "cl_std.h"
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "cl_pluginTraces.h"
+#endif
+
  
 EXPORT_C TInt RFs::AddPlugin(const TDesC& aFileName) const
 /**
@@ -31,7 +35,8 @@ Loads a specified Plugin.
 @capability DiskAdmin
 */
 	{
-	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsAddPlugin, MODULEUID, Handle(), aFileName);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSADDPLUGIN, "sess %x", Handle());
+	OstTraceData(TRACE_BORDER, EFSRV_EFSADDPLUGIN_EFILENAME, "FileName %S", aFileName.Ptr(), aFileName.Length()<<1);
 
 	RLoader loader;
 	TInt r = loader.Connect();
@@ -41,7 +46,8 @@ Loads a specified Plugin.
 		loader.Close();
 		}
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsAddPluginReturn, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSADDPLUGINRETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -60,11 +66,13 @@ Removes the specified plugin.
 @capability DiskAdmin
 */
 	{
-	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsRemovePlugin, MODULEUID, Handle(), aPluginName);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOVEPLUGIN, "sess %x", Handle());
+	OstTraceData(TRACE_BORDER, EFSRV_EFSREMOVEPLUGIN_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
 
 	TInt r = SendReceive(EFsRemovePlugin,TIpcArgs(&aPluginName));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsRemovePluginReturn, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSREMOVEPLUGINRETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -95,11 +103,13 @@ at least one drive; otherwise KErrNotSupported.
 @capability DiskAdmin      
 */
 	{
-	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsMountPlugin1, MODULEUID, Handle(), aPluginName);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN1, "sess %x", Handle());
+	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN1_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
 
 	TInt r = SendReceive(EFsMountPlugin,TIpcArgs(&aPluginName,KPluginAutoAttach,KPluginAutoLocate));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountPlugin1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN1RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -131,11 +141,13 @@ Mounts a specified plugin specifying the drive plugin will support.
 @capability DiskAdmin      
 */
 	{
-	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsMountPlugin2, MODULEUID, Handle(), aPluginName, aDrive);
+	OstTraceExt2(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN2, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN2_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
 
 	TInt r = SendReceive(EFsMountPlugin,TIpcArgs(&aPluginName,aDrive,KPluginAutoLocate));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountPlugin2Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN2RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -175,11 +187,13 @@ Mounts a specified plugin using absolute position and a specific drive
 @capability DiskAdmin        
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsMountPlugin3, MODULEUID, Handle(), aPluginName, aDrive, aPos);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN3, "sess %x aDrive %d aPos %x", (TUint) Handle(), (TUint) aDrive, (TUint) aPos);
+	OstTraceData(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN3_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
 
 	TInt r = SendReceive(EFsMountPlugin,TIpcArgs(&aPluginName,aDrive,aPos));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsMountPlugin3Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSMOUNTPLUGIN3RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -200,11 +214,13 @@ Dismounts the specified plugin from all drives on which it is mounted.
 @capability DiskAdmin       
 */
 	{
-	TRACEMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsDismountPlugin1, MODULEUID, Handle(), aPluginName);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN1, "sess %x", Handle());
+	OstTraceData(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN1_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
 
 	TInt r = SendReceive(EFsDismountPlugin,TIpcArgs(&aPluginName,KPluginAutoAttach,KPluginAutoLocate));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDismountPlugin1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN1RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -233,11 +249,13 @@ Dismounts the specified plugin.
 @capability DiskAdmin       
 */
 	{
-	TRACEMULT3(UTF::EBorder, UTraceModuleEfsrv::EFsDismountPlugin2, MODULEUID, Handle(), aPluginName, aDrive);
+	OstTraceExt2(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN2, "sess %x aDrive %d", (TUint) Handle(), (TUint) aDrive);
+	OstTraceData(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN2_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
 
 	TInt r = SendReceive(EFsDismountPlugin,TIpcArgs(&aPluginName,aDrive,KPluginAutoLocate));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDismountPlugin2Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN2RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -269,11 +287,13 @@ Dismounts the specified plugin.
 @capability DiskAdmin      
 */
 	{
-	TRACEMULT4(UTF::EBorder, UTraceModuleEfsrv::EFsDismountPlugin3, MODULEUID, Handle(), aPluginName, aDrive, aPos);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN3, "sess %x aDrive %d aPos %x", (TUint) Handle(), (TUint) aDrive, (TUint) aPos);
+	OstTraceData(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN3_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
 
 	TInt r = SendReceive(EFsDismountPlugin,TIpcArgs(&aPluginName,aDrive,aPos));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EFsDismountPlugin3Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EFSDISMOUNTPLUGIN3RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -293,11 +313,14 @@ in the plugin hierarchy.
         KErrNotFound if the plugin name is not found;
 */
 	{
-	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EFsPluginName, MODULEUID, Handle(), aDrive, aPos);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EFSPLUGINNAME, "sess %x aDrive %d aPos %x", (TUint) Handle(), (TUint) aDrive, (TUint) aPos);
 
 	TInt r = SendReceive(EFsPluginName,TIpcArgs(&aPluginName,aDrive,aPos));
 
-	TRACERETMULT2(UTF::EBorder, UTraceModuleEfsrv::EFsPluginName, MODULEUID, r, aPluginName);
+	OstTraceData(TRACE_BORDER, EFSRV_EFSPLUGINNAME_EPLUGINNAME, "PluginName %S", aPluginName.Ptr(), aPluginName.Length()<<1);
+
+	OstTrace1(TRACE_BORDER, EFSRV_EFSPLUGINNAMERETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -313,11 +336,12 @@ Opens a plugin for userside engine conn
 
 */
 	{
-	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EPluginOpen, MODULEUID, aFs.Handle(), aPos);
+	OstTraceExt2(TRACE_BORDER, EFSRV_EPLUGINOPEN, "sess %x aPos %x", (TUint) aFs.Handle(), (TUint) aPos);
 
 	TInt r = CreateSubSession(aFs,EFsPluginOpen,TIpcArgs(aPos,0,0));
 
-	TRACERET2(UTF::EBorder, UTraceModuleEfsrv::EPluginOpenReturn, MODULEUID, r, SubSessionHandle());
+	OstTraceExt2(TRACE_BORDER, EFSRV_EPLUGINOPENRETURN, "r %d subs %x", (TUint) r, (TUint) SubSessionHandle());
+
 	return r;
 	}
 
@@ -328,11 +352,11 @@ EXPORT_C void RPlugin::Close()
 Closes a plugin 
 */
 	{
-	TRACE2(UTF::EBorder, UTraceModuleEfsrv::EPluginClose, MODULEUID, Session().Handle(), SubSessionHandle());
+	OstTraceExt2(TRACE_BORDER, EFSRV_EPLUGINCLOSE, "sess %x subs %x", (TUint) Session().Handle(), (TUint) SubSessionHandle());
 
 	CloseSubSession(EFsPluginSubClose);
 
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EPluginCloseReturn, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_EPLUGINCLOSERETURN, "");
 	}
 
 EXPORT_C void RPlugin::DoRequest(TInt aReqNo, TRequestStatus& aStatus) const
@@ -345,12 +369,12 @@ Client requests a asynchronous operation
 @param aStatus: status of the request
 */
 	{
-	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EPluginDoRequest1, MODULEUID, Session().Handle(), SubSessionHandle(), aReqNo, &aStatus);
+	OstTraceExt4(TRACE_BORDER, EFSRV_EPLUGINDOREQUEST1, "sess %x subs %x aReqNo %d status %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aReqNo, (TUint) &aStatus);
 
 	aStatus=KRequestPending;
 	SendReceive(EFsPluginDoRequest, TIpcArgs(aReqNo, NULL, NULL), aStatus);
 
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EPluginDoRequest1Return, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_EPLUGINDOREQUEST1RETURN, "");
 	}
 
 EXPORT_C void RPlugin::DoRequest(TInt aReqNo, TRequestStatus& aStatus, TDes8& a1) const
@@ -364,12 +388,12 @@ Client requests a asynchronous operation
 @param a1: returning value from plugin
 */
 	{
-	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EPluginDoRequest2, MODULEUID, Session().Handle(), SubSessionHandle(), aReqNo, &aStatus, &a1);
+	OstTraceExt5(TRACE_BORDER, EFSRV_EPLUGINDOREQUEST2, "sess %x subs %x aReqNo %d status %x a1 %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aReqNo, (TUint) &aStatus, (TUint) &a1);
 
 	aStatus=KRequestPending;
 	SendReceive(EFsPluginDoRequest, TIpcArgs(aReqNo, &a1, NULL), aStatus);
 
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EPluginDoRequest2Return, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_EPLUGINDOREQUEST2RETURN, "");
 	}
 
 EXPORT_C void RPlugin::DoRequest(TInt aReqNo, TRequestStatus& aStatus, TDes8& a1, TDes8& a2) const
@@ -382,12 +406,12 @@ EXPORT_C void RPlugin::DoRequest(TInt aReqNo, TRequestStatus& aStatus, TDes8& a1
 @param a2: 2nd returning value from plugin
 */
 	{
-	TRACE6(UTF::EBorder, UTraceModuleEfsrv::EPluginDoRequest3, MODULEUID, Session().Handle(), SubSessionHandle(), aReqNo, &aStatus, &a1, &a2);
+	OstTraceExt5(TRACE_BORDER, EFSRV_EPLUGINDOREQUEST3, "sess %x subs %x aReqNo %d a1 %x a2 %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aReqNo, (TUint) &a1, (TUint) &a2);
 
 	aStatus=KRequestPending;
 	SendReceive(EFsPluginDoRequest, TIpcArgs(aReqNo, &a1, &a2), aStatus);
 
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EPluginDoRequest3Return, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_EPLUGINDOREQUEST3RETURN, "");
 	}
 
 EXPORT_C TInt RPlugin::DoControl(TInt aFunction) const
@@ -399,11 +423,12 @@ Client requests a synchronous operation
 @param	aFunction: The operation to be handled
 */
 	{
-	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl1, MODULEUID, Session().Handle(), SubSessionHandle(), aFunction);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EPLUGINDOCONTROL1, "sess %x subs %x aFunction %d", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aFunction);
 
 	TInt r = SendReceive(EFsPluginDoControl,TIpcArgs(aFunction,0,0));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl1Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EPLUGINDOCONTROL1RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -417,11 +442,12 @@ Client requests a synchronous operation
 @param	a1: returned buffer from plugin on completion of the request
 */
 	{
-	TRACE4(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl2, MODULEUID, Session().Handle(), SubSessionHandle(), aFunction, &a1);
+	OstTraceExt4(TRACE_BORDER, EFSRV_EPLUGINDOCONTROL2, "sess %x subs %x aFunction %d a1 %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aFunction, (TUint) &a1);
 
 	TInt r = SendReceive(EFsPluginDoControl,TIpcArgs(aFunction,&a1,0));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl2Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EPLUGINDOCONTROL2RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -436,11 +462,12 @@ Client requests a synchronous operation
 @param  a2: 2nd returned buffer from plugin on completion of the request
 */
 	{
-	TRACE5(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl3, MODULEUID, Session().Handle(), SubSessionHandle(), aFunction, &a1, &a2);
+	OstTraceExt5(TRACE_BORDER, EFSRV_EPLUGINDOCONTROL3, "sess %x subs %x aFunction %d a1 %x a2 %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aFunction, (TUint) &a1, (TUint) &a2);
 
 	TInt r = SendReceive(EFsPluginDoControl,TIpcArgs(aFunction,&a1,&a2));
 
-	TRACERET1(UTF::EBorder, UTraceModuleEfsrv::EPluginDoControl3Return, MODULEUID, r);
+	OstTrace1(TRACE_BORDER, EFSRV_EPLUGINDOCONTROL3RETURN, "r %d", r);
+
 	return r;
 	}
 
@@ -453,10 +480,10 @@ Cancels a request
 @param	aReqMask: the bit mask for the operation to be cancelled
 */
 	{
-	TRACE3(UTF::EBorder, UTraceModuleEfsrv::EPluginDoCancel, MODULEUID, Session().Handle(), SubSessionHandle(), aReqMask);
+	OstTraceExt3(TRACE_BORDER, EFSRV_EPLUGINDOCANCEL, "sess %x subs %x aReqMask %x", (TUint) Session().Handle(), (TUint) SubSessionHandle(), (TUint) aReqMask);
 
 	SendReceive(EFsPluginDoCancel,TIpcArgs(KMaxTInt,aReqMask,0));
 
-	TRACE0(UTF::EBorder, UTraceModuleEfsrv::EPluginDoCancelReturn, MODULEUID);
+	OstTrace0(TRACE_BORDER, EFSRV_EPLUGINDOCANCELRETURN, "");
 	}
 

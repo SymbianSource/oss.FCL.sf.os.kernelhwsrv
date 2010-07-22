@@ -2488,6 +2488,7 @@ public:
 	IMPORT_C TInt Open(TInt aArgumentIndex, TOwnerType aType=EOwnerProcess);
 	IMPORT_C void Wait();
 	IMPORT_C TInt Wait(TInt aTimeout);	// timeout in microseconds
+	IMPORT_C TInt Poll();		// acquire the semaphore if possible, but don't block
 	IMPORT_C void Signal();
 	IMPORT_C void Signal(TInt aCount);
 #endif
@@ -2511,6 +2512,8 @@ public:
 	inline RFastLock();
 	IMPORT_C TInt CreateLocal(TOwnerType aType=EOwnerProcess);
 	IMPORT_C void Wait();
+	IMPORT_C TInt Wait(TInt aTimeout);	// timeout in microseconds
+	IMPORT_C TInt Poll();		// acquire the lock if possible, but don't block
 	IMPORT_C void Signal();
 private:
 	TInt iCount;
@@ -5398,6 +5401,7 @@ protected:
 	IMPORT_C RArrayBase(TInt anEntrySize, TInt aMinGrowBy, TInt aKeyOffset, TInt aFactor);
 	IMPORT_C RArrayBase(TInt aEntrySize,TAny* aEntries, TInt aCount);
 	IMPORT_C void Close();
+	IMPORT_C void SetKeyOffset(TInt aKeyOffset);
 	IMPORT_C TInt Count() const;
 	IMPORT_C TAny* At(TInt anIndex) const;
 	IMPORT_C TInt Append(const TAny* anEntry);
@@ -5496,6 +5500,7 @@ public:
 	inline RArray(TInt aMinGrowBy, TInt aKeyOffset, TInt aFactor);
 	inline RArray(TInt aEntrySize,T* aEntries, TInt aCount);
 	inline void Close();
+	inline void SetKeyOffset(TInt aKeyOffset);
 	inline TInt Count() const;
 	inline const T& operator[](TInt anIndex) const;
 	inline T& operator[](TInt anIndex);

@@ -22,7 +22,7 @@ TInt TFsMkDir::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsMkDir::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -143,7 +143,7 @@ TInt TFsRename::DoRequestL(CFsRequest* aRequest)
 //
 	{
 	__PRINT(_L("TFsRename::DoRequestL(CFsRequest* aRequest)"));
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 	
@@ -182,7 +182,7 @@ TInt TFsReplace::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsReplace::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -226,12 +226,6 @@ TInt TFsEntry::DoRequestL(CFsRequest* aRequest)
 	if (r!=KErrNone)
 		return(r);
 
-	// If the file is open, get the file size from the CFileCB object as there may be cached data
-	CFileCB* file;
-	aRequest->Drive()->IsFileOpen(filePath, file);
-	if (file)
-		t.SetFileSize(file->CachedSize64());
-
 	TPckgC<TEntry> p(t);
 	aRequest->WriteL(KMsgPtr1,p);
 	return(KErrNone);
@@ -261,7 +255,7 @@ TInt TFsSetEntry::DoRequestL(CFsRequest* aRequest)
 	{
 	__PRINT(_L("TFsSetEntry::DoRequestL(CFsRequest* aRequest)"));
 
-    TInt r = CheckDiskSpace(0, aRequest);
+    TInt r = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(r != KErrNone)
         return r;
 
@@ -892,7 +886,7 @@ TInt TFsCreatePrivatePath::DoRequestL(CFsRequest* aRequest)
 //	create the private path unless it already exists
 //
 	{
-    TInt ret = CheckDiskSpace(0, aRequest);
+    TInt ret = CheckDiskSpace(KMinFsCreateObjTreshold, aRequest);
     if(ret != KErrNone)
         return ret;
 

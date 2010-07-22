@@ -18,6 +18,10 @@
 #include "sf_std.h"
 #include "sf_file_cache.h"
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_rawTraces.h"
+#endif
+
 LOCAL_C CRawDiskCB* GetRawDiskFromHandle(TInt aHandle, CSessionFs* aSession)
 //
 // Get the rawdisk control block from aHandle
@@ -112,10 +116,11 @@ TInt TFsRawDiskRead::DoRequestL(CFsRequest* aRequest)
 	const TAny* pDes=aRequest->Message().Ptr0();
 
 	TRACETHREADID(aRequest->Message());
-	TRACE7(UTF::EBorder, UTraceModuleFileSys::ECMountCBRawReadL, EF32TraceUidFileSys, 
-		aRequest->DriveNumber(), I64LOW(pos), I64HIGH(pos), length, pDes, 0, I64LOW(threadId));
+	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRAWREADL, "drive %d clientThreadId %x aPos %x:%x aLength %d", (TUint) aRequest->DriveNumber(), (TUint) threadId, (TUint) I64HIGH(pos), (TUint) I64LOW(pos), (TUint) length);
+
 	TRAP(r,rawDisk->Mount().RawReadL(pos,length,pDes,0,aRequest->Message()));
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBRawReadLRet, EF32TraceUidFileSys, r);
+
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRAWREADLRET, "r %d", r);
 
 	return(r);
 	}
@@ -159,10 +164,11 @@ TInt TFsRawDiskWrite::DoRequestL(CFsRequest* aRequest)
 	const TAny* pDes=aRequest->Message().Ptr0();
 
 	TRACETHREADID(aRequest->Message());
-	TRACE7(UTF::EBorder, UTraceModuleFileSys::ECMountCBRawWriteL, EF32TraceUidFileSys, 
-		aRequest->DriveNumber(), I64LOW(pos), I64HIGH(pos), length, pDes, 0, I64LOW(threadId));
+	OstTraceExt5(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRAWWRITEL, "drive %d clientThreadId %x aPos %x:%x aLength %d", (TUint) aRequest->DriveNumber(), (TUint) threadId, (TUint) I64HIGH(pos), (TUint) I64LOW(pos), (TUint) length);
+
 	TRAP(r,rawDisk->Mount().RawWriteL(pos,length,pDes,0,aRequest->Message()));
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBRawWriteLRet, EF32TraceUidFileSys, r);
+
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBRAWWRITELRET, "r %d", r);
 
 	rawDisk->SetChanged();
 	return(r);

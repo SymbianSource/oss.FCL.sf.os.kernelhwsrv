@@ -102,9 +102,10 @@ extern "C" void NKCrashHandler(TInt aPhase, const TAny* a0, TInt a1)
 	{
 	if (aPhase==0)
 		{
-		Cache::AtomicSyncMemory();
+		Cache::CpuRetires();
 		return;
 		}
+	Cache::KernelRetires();
 #ifdef __SMP__
 	SFullX86RegSet* regs = &(((SCpuData*)SubScheduler().iSSX.iTss)->iRegs);
 #else

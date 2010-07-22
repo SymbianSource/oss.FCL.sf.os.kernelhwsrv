@@ -1,4 +1,4 @@
-// Copyright (c) 1996-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1996-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -31,9 +31,13 @@
 #include <nkern/nk_trace.h>
 #include "filesystem_fat.h"
 
-    TPtrC ptrFormatHelp=_L("Drive:[\\] [fat12|fat16|fat32] [spc:X] [rs:Y] [ft:Z] [/Q][/S][/E][/F]\nfat12 or fat16 or fat32 specifies explicit FAT type\nspc:X specifies \"X\" sectors per cluster\nrs:Y specifies \"Y\" reserved sectors\nft:Z specifies \"Z\" FAT tables (1 or 2)\n\n/q - QuickFormat, /s - SpecialFormat, /e - ForcedErase\n/f - force formatting (ignore volume being in use)");
-    TPtrC ptrMountHelp=_L("Drive:[\\]  <fsy:X> <fs:Y> [pext:Z] [/S][/U][/F][/R]\n'X' *.fsy module name, like elocal.fsy\n'Y' file system name, like 'FAT'\n'Z' optional primary extension module name\n/U - dismount FS from the drive e.g 'mount d: /u' \n/F - force mounting with dismounting existing FS \n/S - mount drive as synchronous\n/R - remount the file system ");
+_LIT(KCrNl, "\r\n");
+_LIT(KNl, "\n");
 
+    TPtrC ptrFormatHelp=_L("Drive:[\\] [fat12|fat16|fat32] [spc:X] [rs:Y] [ft:Z] [/Q][/S][/E][/F]\nfat12 or fat16 or fat32 specifies explicit FAT type\nspc:X specifies \"X\" sectors per cluster\nrs:Y specifies \"Y\" reserved sectors\nft:Z specifies \"Z\" FAT tables (1 or 2)\n\n/q - QuickFormat, /s - SpecialFormat, /e - ForcedErase\n/f - force formatting (ignore volume being in use)");
+TPtrC ptrMountHelp=_L("Drive:[\\]  <fsy:X> <fs:Y> [pext:Z] [/S][/U][/F][/R]\n'X' *.fsy module name, like elocal.fsy\n'Y' file system name, like 'FAT'\n'Z' optional primary extension module name\n/U - dismount FS from the drive e.g 'mount d: /u' \n/U /F force dismounting the FS even if there are opened files on it \n/F - force mounting with dismounting existing FS \n/S - mount drive as synchronous\n/R - remount the file system ");
+
+TBool CShell::iDbgPrint = EFalse;
 
 //	lint -e40,e30
 const TShellCommand CShell::iCommand[ENoShellCommands]=
@@ -71,7 +75,7 @@ const TShellCommand CShell::iCommand[ENoShellCommands]=
     TShellCommand(_L("DRVINFO"),_L("Print information about present drive(s) in the system"),_L("[DriveLetter:[\\]] [/p]\n/p - pause after each drive"),TShellCommand::EPSwitch,ShellFunction::DrvInfo),
 	TShellCommand(_L("SYSINFO"),_L("Print information about system features and status"),_L(""),0,ShellFunction::SysInfo),
     TShellCommand(_L("MOUNT"),_L("Mount / dismount file system on specified drive"),ptrMountHelp,TShellCommand::EUSwitch|TShellCommand::ESSwitch|TShellCommand::EFSwitch|TShellCommand::ERSwitch,ShellFunction::MountFileSystem),
-    TShellCommand(_L("ECHO"),_L("Print out the command line to the console and standard debug port."),_L("[line to print out]"),0,ShellFunction::ConsoleEcho),
+    TShellCommand(_L("ECHO"),_L("Print out the command line to the console and standard debug port."),_L("[line to print out] [/Y/N]\n /Y turn ON copying console output to debug port\n /N turn it OFF "),TShellCommand::EYSwitch|TShellCommand::ENSwitch,ShellFunction::ConsoleEcho),
 	TShellCommand(_L("RUNEXEC"),_L("Run a program in a loop"),_L("count filename[.exe] [/E/S/R]\n	/E - exit early on error\n	/S - count in seconds\n	     zero - run forever\n	/R - reset debug regs after each run"),TShellCommand::EESwitch|TShellCommand::ESSwitch|TShellCommand::ERSwitch,ShellFunction::RunExec),
 
     };
@@ -256,7 +260,7 @@ TInt ShellFunction::ChkDeps(TDes& aPath,TUint /*aSwitches*/)
 			aPath.Insert(0,TheShell->currentPath.Left(2));
 		}
 
-	RFile file;
+	RFile64 file;
 	r=file.Open(CShell::TheFs,aPath,EFileStream);
 	if (r!=KErrNone)	//		File could not be opened
 		{
@@ -363,6 +367,7 @@ TInt ShellFunction::ChkDsk(TDes& aPath,TUint aSwitches)
 	    if (nRes<0)
 		    return(nRes);
 
+	    //-- this is, actually, FAT FS specific error codes. Other file systems can report different values.
 	    switch(nRes)
 		    {
 	    case 0:
@@ -978,7 +983,11 @@ void FormatDrvMediaTypeInfo(const TDriveInfo& aDrvInfo, TDes& aPrintBuf)
         default:                    aPrintBuf.Append(_L("??? Unknown Type"));   break;
         };
 
-
+        if (aDrvInfo.iConnectionBusType)
+            {
+            aPrintBuf.Append(_L(" USB"));
+            }
+        
         aPrintBuf.Append(_L("\n"));
     }
 
@@ -1049,8 +1058,8 @@ void FormatMediaAttInfo(const TDriveInfo& aDrvInfo, TDes& aPrintBuf)
 */
 void FormatVolInfo(const TVolumeInfo& volInfo , TDes& aPrintBuf)
     {
-   	aPrintBuf.Format(_L("VolSz:%ld Free:%ld\n"),volInfo.iSize, volInfo.iFree);
-   	aPrintBuf.AppendFormat(_L("VolId:0x%x VolName:%S\n"),volInfo.iUniqueID, &volInfo.iName);
+   	aPrintBuf.Format(_L("VolSz:%ld Free:%ld"),volInfo.iSize, volInfo.iFree);
+   	aPrintBuf.AppendFormat(_L("\r\nVolId:0x%x VolName:%S\n"),volInfo.iUniqueID, &volInfo.iName);
     }
 
 //--------------------------------------------------------
@@ -1079,7 +1088,7 @@ enum TPrintDrvInfoFlags
 
     @return standard error code
 */
-TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags = EAll)
+TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, TUint aFlags = EAll)
     {
 	TInt        nRes;
 	TDriveInfo 	driveInfo;
@@ -1090,7 +1099,7 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 	nRes = aFs.Drive(driveInfo, aDrvNum);
 	if(nRes != KErrNone)
 		{
-		CShell::TheConsole->Printf(_L("Error: %d\n"), nRes);
+        CShell::Printf(_L("Error: %d\n"), nRes);
 		return nRes;   //-- can't get information about the drive
 		}
 
@@ -1099,10 +1108,10 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
     const TBool bVolumeOK  = (nRes == KErrNone);
 	if(!bVolumeOK)
 	{//-- can't get information about the volume. It might be just corrupt/unformatted
-		CShell::TheConsole->Printf(_L("Error getting volume info. code: %d\n"), nRes);
+        CShell::Printf(_L("Error getting volume info. code: %d\n"), nRes);
         if(nRes == KErrCorrupt)
         {
-            CShell::TheConsole->Printf(_L("The volume might be corrupted or not formatted.\n"));
+            CShell::Printf(_L("The volume might be corrupted or not formatted.\n"));
         }
 	}
 
@@ -1111,14 +1120,14 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 	if(aFlags & EFSInfo)
     {
         //-- print out drive properties
-        Buf.Format(_L("\nDrive %c: No:%d"), 'A'+aDrvNum, aDrvNum);
+        Buf.Format(_L("Drive %c: No:%d"), 'A'+aDrvNum, aDrvNum);
         
         //-- find out if the drive is synchronous / asynchronous
         TPckgBuf<TBool> drvSyncBuf;
         nRes = aFs.QueryVolumeInfoExt(aDrvNum, EIsDriveSync, drvSyncBuf);
         if(nRes == KErrNone)
         {
-            Buf.AppendFormat(_L(", Sync:%d"), drvSyncBuf() ? 1:0);        
+            Buf.AppendFormat(_L(" Sync:%d"), drvSyncBuf() ? 1:0);        
         }
 
         //-- find out if drive runs a rugged FS (debug mode only)
@@ -1128,12 +1137,12 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
         nRes=aFs.ControlIo(aDrvNum, KControlIoIsRugged, pRugged);
         if(nRes == KErrNone)
         {
-            Buf.AppendFormat(_L(", Rugged:%d"), ruggedFS ? 1:0);        
+            Buf.AppendFormat(_L(" Rugged:%d"), ruggedFS ? 1:0);        
         }
 
-        Buf.Append(_L("\n"));
-        apConsole->Printf(Buf);
-
+        CShell::Printf(KNl);
+        Buf.Append(KNl);
+        CShell::Printf(Buf);
 
 	    //-- print the FS name
 	    if(aFs.FileSystemName(Buf, aDrvNum) == KErrNone)
@@ -1153,8 +1162,7 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
                  Buf.AppendFormat(_L(" PExt:%S"), &fsName);
             }
 
-
-            apConsole->Printf(_L("Mounted FS:%S\n"), &Buf);
+            CShell::Printf(_L("Mounted FS:%S\n"), &Buf);
 
             //-- print out the list of supported file systems if there are more than 1
             nRes = aFs.SupportedFileSystemName(fsName, aDrvNum, 0+1); //-- try to get 2nd child name
@@ -1170,8 +1178,8 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
                     Buf.AppendFormat(_L("%S, "), &fsName);
                 }
             
-                Buf.Append(_L("\n"));
-                apConsole->Printf(Buf);
+                Buf.Append(KNl);
+                CShell::Printf(Buf);
             }
 
 
@@ -1195,15 +1203,27 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
                 //-- print out cluster size that FS reported
                 TVolumeIOParamInfo volIoInfo;
                 nRes = aFs.VolumeIOParam(aDrvNum, volIoInfo);
-                if(nRes == KErrNone && volIoInfo.iClusterSize >= 512)
+                if(nRes == KErrNone)
                 {
-                    Buf.AppendFormat(_L(", Cluster Sz:%d"), volIoInfo.iClusterSize);
+                    if(volIoInfo.iBlockSize >= 0)
+                    {
+                        Buf.AppendFormat(_L("BlkSz:%d "), volIoInfo.iBlockSize);
+                    }
+                    
+                    if(volIoInfo.iClusterSize >= 0)
+                    {
+                        Buf.AppendFormat(_L("ClSz:%d "), volIoInfo.iClusterSize);
+                    }
+
+                    Buf.AppendFormat(_L("CacheFlags:0x%x "), volInfo.iFileCacheFlags);
+                
                 }
+
 
                 if(Buf.Length())
                 {
-                    Buf.Append(_L("\n"));
-                    apConsole->Printf(Buf);    
+                    Buf.Append(KNl);
+                    CShell::Printf(Buf);
                 }
 
             }
@@ -1214,22 +1234,21 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 	if(aFlags & EMediaTypeInfo)
     {
         FormatDrvMediaTypeInfo(driveInfo, Buf);
-	    apConsole->Printf(Buf);
-
+        CShell::Printf(Buf);
 	}
     
     //-- print drive attributes
 	if(aFlags & EDrvAttInfo)
     {
         FormatDriveAttInfo(driveInfo, Buf);
-	    apConsole->Printf(Buf);
+        CShell::Printf(Buf);
     }
 
     //-- print media attributes
 	if(aFlags & EMediaAttInfo)
     {
 	    FormatMediaAttInfo(driveInfo, Buf);
-	    apConsole->Printf(Buf);
+        CShell::Printf(Buf);
     }
 
 
@@ -1237,7 +1256,7 @@ TInt PrintDrvInfo(RFs& aFs, TInt aDrvNum, CConsoleBase* apConsole, TUint aFlags 
 	if(bVolumeOK && (aFlags & EVolInfo))
     {
 	    FormatVolInfo(volInfo, Buf);
-	    apConsole->Printf(Buf);
+        CShell::Printf(Buf);
     }
 	
     return KErrNone;
@@ -1308,7 +1327,7 @@ TInt ShellFunction::DrvInfo(TDes& aArgs, TUint aSwitches)
 		nDrv = DoExtractDriveLetter(aArgs);
         if(nDrv < 0)
             {
-            CShell::TheConsole->Printf(_L("Invalid drive specifier!\n"));    
+            CShell::Printf(_L("Invalid drive specification\n"));    
             return KErrNone;
             }
 		}
@@ -1320,7 +1339,7 @@ TInt ShellFunction::DrvInfo(TDes& aArgs, TUint aSwitches)
 	nRes=TheShell->TheFs.DriveList(driveList);
 	if(nRes != KErrNone)
 		{
-		CShell::TheConsole->Printf(_L("\nError: %d"), nRes);
+        CShell::Printf(_L("\nError: %d"), nRes);
 		return nRes;
 		}
 
@@ -1328,11 +1347,11 @@ TInt ShellFunction::DrvInfo(TDes& aArgs, TUint aSwitches)
 		{//-- the drive is specified
 		if(!driveList[nDrv])
 			{
-			CShell::TheConsole->Printf(_L("Invalid drive specification\n"));
+            CShell::Printf(_L("Invalid drive specification\n"));
 			return KErrNone;
 			}
 
-		PrintDrvInfo(TheShell->TheFs, nDrv, CShell::TheConsole);
+		PrintDrvInfo(TheShell->TheFs, nDrv);
 		}
 	else
 		{//-- print information about all drives in the system
@@ -1341,11 +1360,11 @@ TInt ShellFunction::DrvInfo(TDes& aArgs, TUint aSwitches)
 			if(!driveList[nDrv])
 				continue;   //-- skip unexisting drive
 
-			PrintDrvInfo(TheShell->TheFs, nDrv, CShell::TheConsole);
+			PrintDrvInfo(TheShell->TheFs, nDrv);
 
 			if(aSwitches & TShellCommand::EPSwitch)
 				{//-- /p switch, pause after each drive
-				CShell::TheConsole->Printf(_L("\n--- press any key to continue or Esc to exit ---\n"));
+                CShell::Printf(_L("\n--- press any key to continue or Esc to exit ---\n"));
 
 				TKeyCode key = CShell::TheConsole->Getch();
 				if (key==EKeyEscape)
@@ -1353,7 +1372,9 @@ TInt ShellFunction::DrvInfo(TDes& aArgs, TUint aSwitches)
 				}
 			else
 				{
-				CShell::TheConsole->Printf(_L("\n----------\n"));
+				CShell::Printf(_L("\n----------\n"));
+                CShell::Printf(_L("\n--- press any key to continue or Esc to exit ---\n"));
+
 				}
 		}
 	}
@@ -1402,7 +1423,7 @@ static TBool DoFindToken(const TDesC& aSrc, const TDesC& aPattern, TPtrC& aToken
 
 
 //-----------------------------------------------------------------------------------------------------------------------
-TInt DoDismountFS(RFs& aFs, TInt aDrvNum)
+TInt DoDismountFS(RFs& aFs, TInt aDrvNum, TBool aForceDismount)
 {
     TInt        nRes;
     TBuf<40>    fsName;
@@ -1412,6 +1433,8 @@ TInt DoDismountFS(RFs& aFs, TInt aDrvNum)
     if(nRes != KErrNone)
         return KErrNotFound;//-- nothing to dismount
         
+    if(!aForceDismount)    
+    {//-- gaceful attempt to dismount the FS
     nRes = aFs.DismountFileSystem(fsName, aDrvNum);
     if(nRes != KErrNone)
     {
@@ -1422,6 +1445,17 @@ TInt DoDismountFS(RFs& aFs, TInt aDrvNum)
     {
     CShell::TheConsole->Printf(_L("'%S' filesystem dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
     return KErrNone;
+    }
+}
+    else
+    {//-- dismount by force
+        TRequestStatus rqStat;
+        aFs.NotifyDismount(aDrvNum, rqStat, EFsDismountForceDismount);  
+        User::WaitForRequest(rqStat);
+        
+        CShell::TheConsole->Printf(_L("'%S' filesystem Forcedly dismounted from drive %c:\n"), &fsName, 'A'+aDrvNum);
+
+        return rqStat.Int(); 
     }
 }
 
@@ -1467,7 +1501,7 @@ TInt DoRemountFS(RFs& aFs, TInt aDrvNum)
     }
 
     //-- 4. dismount the file system
-    nRes = DoDismountFS(aFs, aDrvNum);
+    nRes = DoDismountFS(aFs, aDrvNum, EFalse);
     if(nRes != KErrNone)
         return nRes;
 
@@ -1499,16 +1533,27 @@ TInt DoRemountFS(RFs& aFs, TInt aDrvNum)
 /**
     Mount or dismount the file system on the specified drive.
 
-    MOUNT <DriveLetter:[\]> <FSY:xxx> <FS:yyy> [PEXT:zzz] [/S] [/U]
+    MOUNT <DriveLetter:[\]> <FSY:xxx> <FS:yyy> [PEXT:zzz] [/S] [/U] [/F]
   
     xxx is the *.fsy file system plugin name, like "elocal.fsy" or "elocal"
     yyy is the file system name that the fsy module exports, like "FAT"
     zzz is the optional parameter that specifies primary extension name
 
     /u dismounts a filesystem on the specified drive; e.g. "mount d: /u"
-    /s for mounting FS specifies that the drive will be mounted as synchronous one.
-    /f for forcing mounting the FS; the previous one will be automatically dismounted
-    /r remount existing FS (dismount and mount it back)
+        additional switch /f in conjunction with /u will perform "forced unmounting" i.e. unmounting the FS 
+        even it has opened files and / or directories. E.g. "mount d: /u /f"
+
+    
+    /s for mounting FS specifies that the drive will be mounted as a synchronous one.
+        
+
+    /f for forcing mounting the FS; the previous one will be automatically dismounted. 
+        example: "mount d: /f fsy:exfat fs:exfat" this command will dismount whatever FS ic currently mounted and 
+        mount exFAT FS instead
+
+
+    
+    /r remount existing FS (dismount and mount it back); example: "mount d: /r"
 */
 TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
 {
@@ -1543,10 +1588,10 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
         return nRes;
     }
     
-    //-- check if we dismounting the FS (/U switch)
+    //-- check if we dismounting the FS (/U switch).
     if(aSwitches & TShellCommand::EUSwitch)
-    {
-        nRes = DoDismountFS(fs, drvNum);
+    {//-- also take nto account "/f" switch for forced dismounting
+        nRes = DoDismountFS(fs, drvNum, (aSwitches & TShellCommand::EFSwitch));
         
         if(nRes == KErrNotFound)
         {//-- nothing to dismount
@@ -1560,7 +1605,7 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
     //-- check if we need to forcedly dismount the existing FS (/F switch)
     if(aSwitches & TShellCommand::EFSwitch)
     {
-        nRes = DoDismountFS(fs, drvNum);
+        nRes = DoDismountFS(fs, drvNum, EFalse);
         
         if(nRes != KErrNotFound && nRes !=KErrNone)
             return nRes;
@@ -1646,7 +1691,7 @@ TInt ShellFunction::MountFileSystem(TDes& aArgs, TUint aSwitches)
     }
 
 
-    PrintDrvInfo(fs, drvNum, CShell::TheConsole, EFSInfo | EVolInfo);
+    PrintDrvInfo(fs, drvNum, EFSInfo | EVolInfo);
 
     return KErrNone;
 }
@@ -1968,7 +2013,7 @@ TInt ShellFunction::Hexdump(TDes& aPath,TUint aSwitches)
 	ShellFunction::StripQuotes(aPath);
 
 	ParsePath(aPath);
-	RFile file;
+	RFile64 file;
 	TInt r=file.Open(TheShell->TheFs,aPath,EFileStream);
 	if (r!=KErrNone)
 		return(r);
@@ -3104,7 +3149,7 @@ _LIT(KLitPercentS, "%S");
 TInt ShellFunction::Type(TDes& aPath,TUint aSwitches)
 	{
 	ParsePath(aPath);
-	RFile file;
+	RFile64 file;
 	TInt r=file.Open(TheShell->TheFs,aPath,EFileStreamText|EFileShareReadersOnly);
 	if (r!=KErrNone)
 		return r;
@@ -3588,7 +3633,34 @@ TInt ShellFunction::Plugin(TDes& aName,TUint aSwitches)
 	return err;
 	}
 
-_LIT(KCrNl, "\r\n");
+
+
+//----------------------------------------------------------------------
+void CShell::Printf(TRefByValue<const TDesC16> aFmt, ...)
+{
+	TBuf<256> buf;
+	VA_LIST list;					
+	VA_START(list, aFmt);
+	// coverity[uninit_use_in_call]
+	buf.FormatList(aFmt, list);			
+
+    if(!buf.Length())
+        return;
+
+    TheConsole->Printf(buf);
+
+    if(iDbgPrint)
+    {
+        const TInt bufLen = buf.Length();
+        if(buf[bufLen-1] == '\n')
+        {
+            buf.Insert(bufLen-1, _L("\r"));
+        }
+    
+        RDebug::RawPrint(buf);
+    }
+
+}
 
 void SIPrintf(TRefByValue<const TDesC16> aFmt, ...)
 	{
@@ -3763,9 +3835,29 @@ TInt ShellFunction::SysInfo(TDes& /*aArgs*/, TUint /*aSwitches*/)
 //-------------------------------------------------------------------------
 /**
     Print out the command line to the console and standard debug port.
+
+    echo [some text] [/y] [/n]
+
+		/Y : switches ON copying console output to the debug port
+		/N : switches OFF copying console output to the debug port
+
 */
-TInt ShellFunction::ConsoleEcho(TDes& aArgs, TUint /*aSwitches*/)
+TInt ShellFunction::ConsoleEcho(TDes& aArgs, TUint aSwitches)
 {
+    if(aSwitches & TShellCommand::EYSwitch)
+    {
+        CShell::SetDbgConsoleEcho(ETrue);
+    }
+    else
+    if(aSwitches & TShellCommand::ENSwitch)
+    {
+        CShell::SetDbgConsoleEcho(EFalse);
+    }
+
+    if(aArgs.Length())
     SIPrintf(aArgs);
+    
     return KErrNone;
 }
+
+

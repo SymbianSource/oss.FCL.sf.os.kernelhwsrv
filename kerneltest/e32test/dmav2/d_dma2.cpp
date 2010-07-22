@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -55,7 +55,7 @@ public:
 			}
 		return FastCountToMicroSecs(diff);
 #else
-		//TODO On SMP it is possible for the value returned from
+		//On SMP it is possible for the value returned from
 		//NKern::FastCounter to depend on the current CPU (ie.
 		//NaviEngine)
 		//
@@ -100,6 +100,7 @@ private:
 	TInt DoGetInfo(TAny* aInfo);
 
 	TInt OpenDmaChannel(TUint aPslCookie, TUint& aDriverCookie);
+	TInt OpenDmaChannel(TUint& aDriverCookie, TDmaChannel::SCreateInfo& aInfo);
 	TInt CloseDmaChannelByCookie(TUint aDriverCookie);
 	TInt PauseDmaChannelByCookie(TUint aDriverCookie);
 	TInt ResumeDmaChannelByCookie(TUint aDriverCookie);
@@ -127,9 +128,6 @@ private:
 	*/
 	TInt CreateDmaRequest(TUint aChannelCookie, TUint& aRequestCookie, TBool aNewCallback = EFalse, TInt aMaxFragmentSizeBytes=0);
 
-	//TODO what happens if a client closes a channel that
-	//it still has dma requests associated with?
-	
 	/**
 	Destroys a previously created dma request object
 	*/
@@ -141,7 +139,7 @@ private:
 	TInt CookieToChannelIndex(TUint aDriverCookie) const;
 	TInt CookieToRequestIndex(TUint aRequestCookie) const;
 
-	void FixupTransferArgs(TDmaTransferArgs& aTransferArgs) const;
+	void MakeAddressesAbsoulute(TDmaTransferArgs& aTransferArgs) const;
 	TInt FragmentRequest(TUint aRequestCookie, const TDmaTransferArgs& aTransferArgs, TBool aLegacy=ETrue);
 
 	TInt QueueRequest(TUint aRequestCookie, TRequestStatus* aStatus, TCallbackRecord* aRecord, TUint64* aDurationMicroSecs);
@@ -177,6 +175,19 @@ public:
 	TUint64 GetDuration()
 		{return iStopwatch.ReadMicroSecs();}
 
+	/**
+	Store a copy of the TDmaTransferArgs which was used for fragmentation
+	for argument checking
+	*/
+	void SetAddressParms(const TDmaTransferArgs& aAddressParms)
+		{iFragmentedTransfer = aAddressParms;}
+
+	/**
+	Retrieve stored TDmaTransferArgs
+	*/
+	const TDmaTransferArgs& GetAddressParms() const
+		{return iFragmentedTransfer;}
+
 protected:
 	TInt Create();
 	/** Construct with old style callback */
@@ -202,6 +213,13 @@ private:
 
 	TStopwatch iStopwatch;
 	TIsrRequeArgsSet iIsrRequeArgSet;
+
+	/**
+	This will be updated each time fragment is called.
+	It is required so that, at queue time, if ISR re-queue
+	arguments are added, they can be checked for sanity
+	*/
+	TDmaTransferArgs iFragmentedTransfer;
 	};
 
 DClientDmaRequest* DClientDmaRequest::Construct(DThread* aClient, TDfcQue* const aDfcQ, TDmaChannel& aChannel, TBool aNewStyle, TInt aMaxTransferSize)
@@ -341,38 +359,7 @@ TInt TIsrRequeArgs::Call(TDmaChannel& aChannel)
 #endif
 	}
 
-/**
-Check that both source and destination of ISR reque args will
-lie within the range specified by aStart and aSize.
-
-@param aStart The linear base address of the region
-@param aSize The size of the region
-*/
-TBool TIsrRequeArgs::CheckRange(TLinAddr aStart, TUint aSize) const
-	{
-	TUint physStart = Epoc::LinearToPhysical(aStart);
-	TEST_ASSERT(physStart != KPhysAddrInvalid);
-
-	TAddrRange chunk(physStart, aSize);
-	TBool sourceOk = (iSrcAddr == KPhysAddrInvalid) ? ETrue : chunk.Contains(SourceRange());
-
-	TBool destOk = (iDstAddr == KPhysAddrInvalid) ? ETrue : chunk.Contains(DestRange());
-
-	return sourceOk && destOk;
-	}
-
-TBool TIsrRequeArgsSet::CheckRange(TLinAddr aAddr, TUint aSize) const
-	{
-	for(TInt i=0; i<iCount; i++)
-		{
-		if(!iRequeArgs[i].CheckRange(aAddr, aSize))
-			return EFalse;
-		}
-	return ETrue;
-	}
-
-/**
-Translate an old style dma callback to a new-style one
+/** Translate an old style dma callback to a new-style one
 */
 void DClientDmaRequest::CallbackOldStyle(TResult aResult, TAny* aArg)
 	{
@@ -431,7 +418,9 @@ void DClientDmaRequest::Callback(TUint aCallbackType, TDmaResult aResult, TAny* 
 		self.iDfc.Add();
 		break;
 		}
-	case NKern::EIDFC: //fall-through
+	//Fall-through: If context is IDFC or the EEscaped marker occur
+	//it is an error
+	case NKern::EIDFC:
 	case NKern::EEscaped:
 	default:
 		TEST_FAULT;
@@ -593,8 +582,32 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 			{
 			TUint pslCookie = (TUint)a1;
 			TUint driverCookie = 0;
-			TInt r = OpenDmaChannel(pslCookie, driverCookie);	
+			TInt r = OpenDmaChannel(pslCookie, driverCookie);
 			umemput32(a2, &driverCookie, sizeof(TAny*));
+			return r;
+			}
+	case RDmaSession::EOpenChannelExposed:
+			{
+			TDmaChannel::SCreateInfo openInfo;
+			TUint driverCookie = 0;
+
+			TPckgBuf<SCreateInfoTest> openArgsBuf;
+			Kern::KUDesGet(openArgsBuf, *reinterpret_cast<TDes8*>(a2));
+
+			SCreateInfoTest& openTestInfo = openArgsBuf();
+			openInfo.iCookie = openTestInfo.iCookie;
+			openInfo.iDesCount = openTestInfo.iDesCount;
+			openInfo.iDfcQ = iDfcQ;
+			openInfo.iDfcPriority = openTestInfo.iDfcPriority;
+
+			#ifdef DMA_APIV2
+				openInfo.iPriority = openTestInfo.iPriority;
+				openInfo.iDynChannel = openTestInfo.iDynChannel;
+			#endif
+
+			TInt r = OpenDmaChannel(driverCookie, openInfo);
+			umemput32(a1, &driverCookie, sizeof(TAny*));
+			Kern::KUDesPut(*reinterpret_cast<TDes8*>(a2), openArgsBuf);
 			return r;
 			}
 	case RDmaSession::ECloseChannel:
@@ -660,11 +673,15 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 			TDmaTransferArgs& transferArgs = const_cast<TDmaTransferArgs&>(argsBuff().iTransferArgs);
 
 			//convert address offsets in to kernel virtual addresses
-			FixupTransferArgs(transferArgs);
-
-			TEST_ASSERT((TAddressParms(transferArgs).CheckRange(iChunkBase, iChunk->Size())));
+			MakeAddressesAbsoulute(transferArgs);
 
 			TInt r = KErrGeneral;
+			if (!TAddressParms(transferArgs).CheckRange(iChunkBase, iChunk->Size()))
+			{
+				// Return error code for invalid src and destination arguments used in tranferArgs
+				r=KErrArgument;
+				return r;
+			}
 
 			TStopwatch clock;
 			clock.Start();
@@ -708,7 +725,6 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 			}	
 	case RDmaSession::EQueueRequestWithReque:
 			{
-			//TODO can common code with EQueueRequest be extracted?
 			TPckgBuf<RDmaSession::TQueueArgsWithReque> argsBuff;
 			Kern::KUDesGet(argsBuff, *reinterpret_cast<TDes8*>(a1));
 
@@ -723,13 +739,11 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 			DClientDmaRequest* const request = RequestFromCookie(requestCookie);
 			if(request != NULL)
 				{
-				argsBuff().iRequeSet.Fixup(iChunkBase);
-				//TODO reque args must be substituted in order to
-				//check the range. The original transfer args are not
-				//available when queue is called, they could
-				//however be stored within DClientDmaRequest
-				//TEST_ASSERT((argsBuff().iRequeSet.CheckRange(iChunkBase, iChunk->Size())));
-				request->AddRequeArgs(argsBuff().iRequeSet);
+				TIsrRequeArgsSet& requeArgs = argsBuff().iRequeSet;
+				requeArgs.Fixup(iChunkBase);
+
+				TEST_ASSERT(requeArgs.CheckRange(iChunkBase, iChunk->Size(), request->GetAddressParms() ));
+				request->AddRequeArgs(requeArgs);
 
 				r = QueueRequest(requestCookie, requestStatus, callbackRec, duration);
 				}
@@ -738,21 +752,6 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 				{
 				Kern::RequestComplete(requestStatus, r);
 				}
-			return r;
-			}
-	case RDmaSession::EIsrRedoRequest:
-			{
-			TPckgBuf<RDmaSession::TIsrRedoReqArgs> argsBuff;
-			Kern::KUDesGet(argsBuff, *reinterpret_cast<TDes8*>(a1));
-
-			const TUint driverCookie = argsBuff().iDriverCookie;
-			const TUint32 srcAddr = argsBuff().iSrcAddr;
-			const TUint32 dstAddr = argsBuff().iDstAddr;
-			const TInt transferCount = argsBuff().iTransferCount;
-			const TUint32 pslRequestInfo = argsBuff().iPslRequestInfo;
-			const TBool isrCb = argsBuff().iIsrCb;
-
-			TInt r = IsrRedoRequestByCookie(driverCookie,srcAddr,dstAddr,transferCount,pslRequestInfo,isrCb);
 			return r;
 			}
 	case RDmaSession::EIsOpened:
@@ -797,29 +796,21 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 		}
 	}
 
-TInt DDmaTestSession::OpenDmaChannel(TUint aPslCookie, TUint& aDriverCookie )
+TInt DDmaTestSession::OpenDmaChannel(TUint& aDriverCookie, TDmaChannel::SCreateInfo& aInfo)
 	{
-	TDmaChannel::SCreateInfo info;
-	info.iCookie = aPslCookie;
-	info.iDfcQ = iDfcQ;
-	info.iDfcPriority = 3;
-	info.iDesCount = 128;
-
-	TDmaChannel* channel = NULL;
-
 	//cs so thread can't be killed between
 	//opening channel and adding to array
 	NKern::ThreadEnterCS();
-	TInt r = TDmaChannel::Open(info, channel);
+	TDmaChannel* channel = NULL;
+	TInt r = TDmaChannel::Open(aInfo, channel);
 	if(KErrNone == r)
 		{
 		__NK_ASSERT_ALWAYS(channel);
-		
-		__KTRACE_OPT(KDMA, Kern::Printf("OpenDmaChannel: channel@ 0x%08x", channel)); 
 
+		__KTRACE_OPT(KDMA, Kern::Printf("OpenDmaChannel: channel@ 0x%08x", channel));
 
-		TInt err = iChannels.Append(channel);
-		if(KErrNone == err)
+		r = iChannels.Append(channel);
+		if(KErrNone == r)
 			{
 			aDriverCookie = reinterpret_cast<TUint>(channel);
 			}
@@ -832,6 +823,20 @@ TInt DDmaTestSession::OpenDmaChannel(TUint aPslCookie, TUint& aDriverCookie )
 	NKern::ThreadLeaveCS();
 
 	return r;
+	}
+
+/**
+Open a DMA channel with arbitrary default parameters
+*/
+TInt DDmaTestSession::OpenDmaChannel(TUint aPslCookie, TUint& aDriverCookie )
+	{
+	TDmaChannel::SCreateInfo info;
+	info.iCookie = aPslCookie;
+	info.iDfcQ = iDfcQ;
+	info.iDfcPriority = 3;
+	info.iDesCount = 128;
+
+	return OpenDmaChannel(aDriverCookie, info);
 	}
 
 TInt DDmaTestSession::CookieToChannelIndex(TUint aDriverCookie) const
@@ -906,8 +911,7 @@ void DDmaTestSession::CancelAllByIndex(TInt aIndex)
 	__KTRACE_OPT(KDMA, Kern::Printf("CancelAllByIndex: %d", aIndex)); 
 	__NK_ASSERT_DEBUG(aIndex < iChannels.Count()); 
 	
-	TDmaChannel* channel = iChannels[aIndex];
-	iChannels.Remove(aIndex);
+	TDmaChannel* channel = iChannels[aIndex];	
 	channel->CancelAll();
 	}
 
@@ -1188,7 +1192,11 @@ TUint DDmaTestSession::OpenSharedChunkHandle()
 	return r;
 	}
 
-void DDmaTestSession::FixupTransferArgs(TDmaTransferArgs& aTransferArgs) const
+/**
+Replace addresses specified as an offset from the chunk base with absolute
+virtual addresses.
+*/
+void DDmaTestSession::MakeAddressesAbsoulute(TDmaTransferArgs& aTransferArgs) const
 	{
 	aTransferArgs.iSrcConfig.iAddr += iChunkBase;
 	aTransferArgs.iDstConfig.iAddr += iChunkBase;
@@ -1225,23 +1233,29 @@ TInt DDmaTestSession::FragmentRequest(TUint aRequestCookie, const TDmaTransferAr
 	if(requestIndex < 0)
 		return requestIndex;
 
+	DClientDmaRequest& request = *iClientDmaReqs[requestIndex];
+	request.SetAddressParms(aTransferArgs);
+
 	TInt r = KErrNotSupported;
+
+	if (aTransferArgs.iTransferCount < 1)
+		{
+		// Return error code for invalid transfer size used in tranferArgs
+		r=KErrArgument;
+		return r;
+		}
+
 	if(aLegacy)
 		{
-		// TODO we can extract the required info from the struct to
-		// set flags
 		TUint flags = KDmaMemSrc | KDmaIncSrc | KDmaMemDest | KDmaIncDest;
-
 		const TUint src = aTransferArgs.iSrcConfig.iAddr;
 		const TUint dst = aTransferArgs.iDstConfig.iAddr;
-		r = iClientDmaReqs[requestIndex]->Fragment(src, dst, aTransferArgs.iTransferCount, flags, NULL);
+		r = request.Fragment(src, dst, aTransferArgs.iTransferCount, flags, NULL);
 		}
 	else
 		{
 #ifdef DMA_APIV2
-		r = iClientDmaReqs[requestIndex]->Fragment(aTransferArgs);
-#else
-		r = KErrNotSupported;
+		r = request.Fragment(aTransferArgs);
 #endif
 		}
 	return r;
@@ -1296,9 +1310,6 @@ TDmaV2TestInfo DDmaTestSession::ConvertTestInfo(const TDmaTestInfo& aOldInfo) co
 	for(TInt i=0; i<aOldInfo.iMaxSgChannels; i++)
 		newInfo.iSgChannels[i] = aOldInfo.iSgChannels[i];
 
-	//TODO will want to add initialisation for Asym channels
-	//when these are available
-
 	return newInfo;
 	}
 //////////////////////////////////////////////////////////////////////////////
@@ -1321,8 +1332,7 @@ public:
 DDmaTestFactory::DDmaTestFactory()
     {
     iVersion = TestDmaLddVersion();
-    iParseMask = KDeviceAllowUnit;							// no info, no PDD
-    // iUnitsMask = 0;										// Only one thing
+    iParseMask = KDeviceAllowUnit;							// no info, no PDD    
     }
 
 

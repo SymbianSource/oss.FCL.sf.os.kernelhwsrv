@@ -142,8 +142,15 @@ public:
 	void FreeRamPages(TPhysAddr* aPageList, TInt aNumPages, TZonePageType aType);
 	TInt AllocRamPages(TPhysAddr* aPageList, TInt aNumPages, TZonePageType aType, TUint aBlockedZoneId=KRamZoneInvalidId, TBool aBlockRest=EFalse);
 	TInt ZoneAllocRamPages(TUint* aZoneIdList, TUint aZoneIdCount, TPhysAddr* aPageList, TInt aNumPages, TZonePageType aType);
-	TInt AllocContiguousRam(TUint aNumPages, TPhysAddr& aPhysAddr, TZonePageType aType, TInt aAlign=0, TUint aBlockZoneId=KRamZoneInvalidId, TBool aBlockRest=EFalse);
-	TInt ZoneAllocContiguousRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TZonePageType aType, TInt aAlign);
+	TInt AllocContiguousRam(TUint aNumPages, TPhysAddr& aPhysAddr, TInt aAlign=0);
+#if !defined(__MEMMODEL_MULTIPLE__) && !defined(__MEMMODEL_MOVING__)
+	TUint BlockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages);
+	void UnblockSetAllocRuns(TUint& aOffset1, TUint& aOffset2, TUint aRunLength1, TUint aRunLength2, TUint& aAllocLength, TUint& aAllocStart);
+	void UnblockContiguousRegion(TPhysAddr aAddrBase, TUint aNumPages);
+	TBool ClearContiguousRegion(TPhysAddr aAddrBase, TPhysAddr aZoneBase, TUint aNumPages, TInt& aOffsetm, TUint aUnreservedPages);
+	TUint CountPagesInRun(TPhysAddr aAddrBase, TPhysAddr aAddrEndPage, TZonePageType aType);
+#endif
+	TInt ZoneAllocContiguousRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign);
 #ifdef _DEBUG
 	void DebugDump();
 #endif
@@ -158,6 +165,7 @@ public:
 	TInt GetZoneAddress(TUint aZoneId, TPhysAddr& aPhysBase, TUint& aNumPages);
 	TInt HalFunction(TInt aFunction, TAny* a1, TAny* a2);
 	TInt NextAllocatedPage(SZone* aZone, TUint& aOffset, TZonePageType aType) const;
+	TInt NextAllocatedRun(SZone* aZone, TUint& aOffset, TUint aEndOffset, TZonePageType aType) const;
 	TUint GenDefragFreePages(TZonePageType aType) const;
 	SZone* GeneralDefragStart0(TGenDefragStage& aStage, TUint& aRequiredToBeDiscarded);
 	SZone* GeneralDefragNextZone0();
@@ -205,9 +213,7 @@ private:
 	SDblQueLink* iZoneGeneralPrefLink;	/**< Link to the current RAM zone being defragged*/
 	SDblQueLink* iZoneGeneralTmpLink;	/**< Link to the current RAM zone being defragged*/
 	TUint iZoneGeneralStage;			/**< The current stage of any general defrag operation*/
-#ifdef _DEBUG
-	TBool iAllowBmaVerify;
-#endif
+	TUint iContiguousReserved;			/**< The count of the number of separate contiguous allocations that have reserved pages*/
 	};
 
 #endif

@@ -272,10 +272,15 @@ void SemaphoreLatencyArgs::Close()
 
 void Sync::SemaphoreLatencyParent(TBMResult* aResult, TBMUInt64 aIter, TBool aRemote)
 	{
+	RSemaphore slSync;
+	TInt r = slSync.CreateGlobal(_L("slSync"), 0);
+	BM_ERROR(r, r == KErrNone);	
+
 	SemaphoreLatencyArgs sl(aRemote, aIter);
 	MBMChild* child = sync.SpawnChild(&sl);
 	for (TBMUInt64 i = 0; i < aIter; ++i)
 		{
+		slSync.Signal();
 		sl.iSem.Wait();
 		TBMTicks now;
 		::bmTimer.Stamp(&now);
@@ -283,20 +288,27 @@ void Sync::SemaphoreLatencyParent(TBMResult* aResult, TBMUInt64 aIter, TBool aRe
 		}
 	child->WaitChildExit();
 	sl.Close();
+	slSync.Close();
 	}
 
 TInt Sync::SemaphoreLatencyChild(TAny* ptr)
 	{
+	RSemaphore slSync;
+	TInt r = slSync.OpenGlobal(_L("slSync"));
+	BM_ERROR(r, r == KErrNone);	
+
 	SemaphoreLatencyArgs* sl = (SemaphoreLatencyArgs*) ptr;
 	sl->ChildOpen();
 	for (TBMUInt64 i = 0; i < sl->iIterationCount; ++i)
 		{
+		slSync.Wait();
 		TBMTicks sigTime;
 		::bmTimer.Stamp(&sigTime);		
 		sl->iSem.Signal();
 		sl->ChildSignalTime(sigTime);
 		}
 	sl->ChildClose();
+	slSync.Close();
 	return KErrNone;
 	}
 
@@ -368,11 +380,16 @@ void ThreadSemaphoreLatencyArgs::Close()
 
 void Sync::ThreadSemaphoreLatencyParent(TBMResult* aResult, TBMUInt64 aIter, TBool aRemote)
 	{
+	RSemaphore tslSync;
+	TInt r = tslSync.CreateGlobal(_L("tslSync"), 0);
+	BM_ERROR(r, r == KErrNone);	
+
 	ThreadSemaphoreLatencyArgs sl(aRemote, aIter);
 	MBMChild* child = sync.SpawnChild(&sl);
 	for (TBMUInt64 i = 0; i < aIter; ++i)
 		{
 		sl.iStatus = KRequestPending;
+		tslSync.Signal();
 		User::WaitForRequest(sl.iStatus);
 		BM_ASSERT(sl.iStatus == KErrNone);
 		TBMTicks now;
@@ -381,14 +398,20 @@ void Sync::ThreadSemaphoreLatencyParent(TBMResult* aResult, TBMUInt64 aIter, TBo
 		}
 	child->WaitChildExit();
 	sl.Close();
+	tslSync.Close();
 	}
 
 TInt Sync::ThreadSemaphoreLatencyChild(TAny* ptr)
 	{
+	RSemaphore tslSync;
+	TInt r = tslSync.OpenGlobal(_L("tslSync"));
+	BM_ERROR(r, r == KErrNone);	
+
 	ThreadSemaphoreLatencyArgs* sl = (ThreadSemaphoreLatencyArgs*) ptr;
 	sl->ChildOpen();
 	for (TBMUInt64 i = 0; i < sl->iIterationCount; ++i)
 		{
+		tslSync.Wait();
 		TRequestStatus* sptr = sl->iStatusPtr;
 		TBMTicks sigTime;
 		::bmTimer.Stamp(&sigTime);		
@@ -396,6 +419,7 @@ TInt Sync::ThreadSemaphoreLatencyChild(TAny* ptr)
 		sl->ChildSignalTime(sigTime);
 		}
 	sl->ChildClose();
+	tslSync.Close();
 	return KErrNone;
 	}
 

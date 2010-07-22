@@ -456,11 +456,6 @@ public:
 	IMPORT_C static TInt ATan(TReal &aTrg,const TReal &aSrc);
 	IMPORT_C static TInt ATan(TReal &aTrg,const TReal &aSrcY,const TReal &aSrcX);
 	IMPORT_C static TInt Cos(TReal &aTrg,const TReal &aSrc);
-	
-	/**
-	This function is not implemented by Symbian OS.
-	*/
-	IMPORT_C static TInt DtoR(TReal &aTrg,const TDesC &aSrc,TInt &aPos,const TChar aPoint);
 	IMPORT_C static TInt Exp(TReal &aTrg,const TReal &aSrc);
 	IMPORT_C static TInt Frac(TReal &aTrg,const TReal &aSrc);
 	IMPORT_C static TInt Int(TReal &aTrg,const TReal &aSrc);

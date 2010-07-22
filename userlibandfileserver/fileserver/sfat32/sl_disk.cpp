@@ -286,11 +286,11 @@ void CAtaDisk::WriteCachedL(TInt64 aPos, const TDesC8& aDes)
 
     @leave on error
 */
-void CAtaDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const
+void CAtaDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const
 	{
 
 	__PRINT4(_L("CAtaDisk::ReadL() pos:%u:%u, len:%u, offset:%u"), I64HIGH(aPos), I64LOW(aPos), aLength, anOffset);
-	User::LeaveIfError(iDrive.ReadNonCritical(aPos,aLength,aTrg,aMessage,anOffset));
+	User::LeaveIfError(iDrive.ReadNonCritical(aPos,aLength,aTrg,aMessage,anOffset, aFlag));
 	}
 
 //-------------------------------------------------------------------------------------
@@ -309,12 +309,12 @@ void CAtaDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr
 
     @leave on error
 */
-void CAtaDisk::WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset)
+void CAtaDisk::WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag)
 	{
     __PRINT4(_L("CAtaDisk::WriteL() pos:%u:%u, len:%u, offset:%u"), I64HIGH(aPos), I64LOW(aPos), aLength, anOffset);
 
 	//-- write data to the media directly
-    User::LeaveIfError(iDrive.WriteNonCritical(aPos,aLength,aSrc,aMessage,anOffset));
+    User::LeaveIfError(iDrive.WriteNonCritical(aPos,aLength,aSrc,aMessage,anOffset, aFlag));
 
     //-- we need to invalidate UID cache page that corresponds to aPos (if any). This is UID caching specific. UID is stored in the first few bytes of 
     //-- the executable module and therefore belongs to one cache page only.
@@ -444,7 +444,7 @@ void CRamDisk::WriteCachedL(TInt64 aPos,const TDesC8& aDes)
 //
 // Read from ramDrive into thread relative descriptor
 //
-void CRamDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* /*aTrg*/,const RMessagePtr2 &aMessage,TInt anOffset) const
+void CRamDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* /*aTrg*/,const RMessagePtr2 &aMessage,TInt anOffset, TUint /*aFlag*/) const
 	{
 	__PRINT2(_L("CRamDisk::ReadL TAny* Pos 0x%x, Len %d"),aPos,aLength);
 	__ASSERT_ALWAYS((aPos+aLength<=I64INT(iFatMount->Size())) && (aLength>=0),User::Leave(KErrCorrupt));
@@ -457,7 +457,7 @@ void CRamDisk::ReadL(TInt64 aPos,TInt aLength,const TAny* /*aTrg*/,const RMessag
 //
 // Write from thread relative descriptor into ramDrive
 //
-void CRamDisk::WriteL(TInt64 aPos,TInt aLength,const TAny* /*aSrc*/,const RMessagePtr2 &aMessage,TInt anOffset)
+void CRamDisk::WriteL(TInt64 aPos,TInt aLength,const TAny* /*aSrc*/,const RMessagePtr2 &aMessage,TInt anOffset, TUint /*aFlag*/)
 	{
 	__PRINT2(_L("CRamDisk::WriteL TAny* Pos 0x%x, Len %d"),aPos,aLength);
 	__ASSERT_ALWAYS(aPos+aLength<=I64INT(iFatMount->Size()),User::Leave(KErrCorrupt));

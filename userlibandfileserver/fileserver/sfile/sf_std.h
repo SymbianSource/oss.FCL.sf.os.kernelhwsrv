@@ -34,7 +34,6 @@
 #include "sf_func.h"
 #include <F32plugin.h>
 #include "f32trace.h"
-#include <utraceefile.h>
 
 #define __PRINT1TEMP_ALWAYS(t,a) {{TBuf<KMaxFileName>temp(a);RDebug::Print(t,&temp);}}
 #define __PRINT2TEMP_ALWAYS(t,a,b) {{TBuf<KMaxFileName>temp(b);RDebug::Print(t,a,&temp);}}
@@ -115,6 +114,8 @@
 #define __PLUGIN_PRINT3(t,a,b,c)
 #endif
 
+#define _LOFF(p,T,f) ((T*)(((TUint8*)(p))-_FOFF(T,f)))
+
 const TInt KMaxTotalDriveReserved	=0x100000;
 const TInt KMaxSessionDriveReserved	=0x10000;
 
@@ -143,6 +144,13 @@ const TUint64 KMaxLegacyFileSize    = 0x7fffffff;
 
 //-- absolute maximum file size that file server supports
 const TUint64 KMaxSupportedFileSize = KMaxTUint64;
+
+//-- this is a speculative value of a min. amount of free space on the volume necessary to create a file, directory etc.
+//-- it is used mostly in "reserve drive space" functionality, which is, actually, fundamentally flawed.
+//-- the problem is that the file server can't know exactly how much space is required to create some fs object on the volume, 
+//-- so, it has to guess. This is a default "sector size" value; the file system can round it up internally to its cluster size if any.
+const TInt KMinFsCreateObjTreshold = KDefaultVolumeBlockSize;
+
 
 //__DATA_CAGING__
 const TUint SHA1_LBLOCK=16;
@@ -801,7 +809,7 @@ class CFsPlugin;
 NONSHARABLE_CLASS(CPluginThread) : public CRequestThread
 	{
 public:
-	CPluginThread(CFsPlugin& aPlugin);
+	CPluginThread(CFsPlugin& aPlugin, RLibrary aLibrary);
 	~CPluginThread();
 	
 	void CompleteSessionRequests(CSessionFs* aSession, TInt aValue);
@@ -813,7 +821,7 @@ public:
 	void OperationLockSignal();
 
 private:
-	static CPluginThread* NewL(CFsPlugin& aPlugin);
+	static CPluginThread* NewL(CFsPlugin& aPlugin, RLibrary aLibrary);
 	TUint StartL();
 	virtual TInt DoThreadInitialise();
 private:
@@ -822,6 +830,7 @@ private:
 	/** @prototype */
 	RSemaphore iOperationLock;
 
+	RLibrary iLib;	// contains a handle to the library	which created the plugin
 friend class FsPluginManager;
 	};
 
@@ -1305,6 +1314,7 @@ public:
 	inline void Init();
 	void ReStart();
 	TBool IsPluginRequest();
+	static inline CFsMessageRequest* RequestFromMessage(const RMessagePtr2& aMessage);
 	
    // UID of the process to touching the file. (To be used in notification framework).
    // TUid iUID;
@@ -1705,7 +1715,6 @@ extern CServerFs* TheFileServer;
 extern HBufC* TheDriveNames[];
 extern TDrive TheDrives[KMaxDrives];
 extern TFileName TheDefaultPath;
-extern RFTrace TheFtrace;
 
 extern SCapabilitySet AllCapabilities;
 extern SCapabilitySet DisabledCapabilities;
@@ -1743,7 +1752,7 @@ extern TBool CompFsSync;
 
  TInt  ValidateDrive(TInt aDriveNumber,CFsRequest* aRequest);
  TInt  ValidateDriveDoSubst(TInt aDriveNumber,CFsRequest* aRequest);
- void  ValidateAtts(TUint anEntryAtt,TUint& aSetAttMask,TUint& aClearAttMask);
+ void  ValidateAtts(TUint& aSetAttMask,TUint& aClearAttMask);
  TInt  ParseSubstPtr0(CFsRequest* aRequest,TParse& aParse, TBool aUseSessionPath = ETrue);
  TInt  ParseNoWildSubstPtr0(CFsRequest* aRequest,TParse& aParse, TBool aUseSessionPath = ETrue);
  TInt  ParseNoWildSubstPtr1(CFsRequest* aRequest,TParse& aParse);
@@ -1838,10 +1847,6 @@ extern HBufC* gCorruptFileNamesListFile;
 #endif
 
 typedef TPckgBuf<TMediaPswdReplyNotifyInfoV1> TMediaPswdReplyNotifyInfoV1Buf;
-
-#if defined(__WINS__)
- TInt MapWindowsFileName(TDes& aBuffer,const TDesC& aFileName);
-#endif
 
 enum TDllFindMethod {EFindInPath, EFindInSystemLibs, EFindInSystemBin, EFindExhausted};
 
@@ -1948,6 +1953,12 @@ private:
 friend class CMountCB;
 	};
 
+// extension to CProxyDrive
+class CProxyDriveBody : public CBase
+	{
+public:
+	RLibrary iLibrary;
+	};
 
 #include "sf_ops.h"
 #include "sf_std.inl"

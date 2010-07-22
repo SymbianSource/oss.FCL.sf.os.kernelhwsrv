@@ -2,7 +2,7 @@
 # Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
 # All rights reserved.
 # This component and the accompanying materials are made available
-# under the terms of "Eclipse Public License v1.0"
+# under the terms of the License "Eclipse Public License v1.0"
 # which accompanies this distribution, and is available
 # at the URL "http://www.eclipse.org/legal/epl-v10.html".
 #
@@ -299,9 +299,5 @@ cable. Execute usbmsapp.exe on the device to map the mass storage unit (MMC/SD
 card) onto the PC. Execute this script on the PC, and make sure the card has
 free space for the file that is going to be created. The default size is 400
 MB.
-
-=head1 COPYRIGHT
-
-Copyright (c) 2006-2008 Symbian Software Ltd. All rights reserved. All rights reserved.
 
 =cut

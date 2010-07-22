@@ -79,7 +79,10 @@ DMemoryObject::DMemoryObject(DMemoryManager* aManager, TUint aFlags, TUint aSize
 		}
 
 	if(aCreateFlags&EMemoryCreateDemandPaged)
+		{
 		iFlags |= EDemandPaged;
+		iRamAllocFlags |= Mmu::EAllocNoPagerReclaim;
+		}
 	if(aCreateFlags&EMemoryCreateReserveAllResources)
 		iFlags |= EReserveResources;
 	if(aCreateFlags&EMemoryCreateDisallowPinning)

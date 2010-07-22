@@ -2379,10 +2379,6 @@ TInt E32Main()
 	Test.Title();
 
 	Test.Start(_L("Load"));
-	// --- TEMPORARILY DISABLING T_SOUND2
-	Test.Printf(_L("T_SOUND2 DISABLED UNTIL DEF144934 IS FIXED\n"));
-	CHECK(0);
-	// --- TEMPORARILY DISABLING T_SOUND2
 	if (Load()==KErrNotFound)
 		{
 		Test.Printf(_L("Shared chunk sound driver not supported - test skipped\r\n"));

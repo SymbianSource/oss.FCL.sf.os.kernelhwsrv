@@ -241,4 +241,4 @@ EXPORTS
 	GetDriveInfo__FR10TDriveInfoi @ 240 NONAME R3UNUSED ; GetDriveInfo(TDriveInfo &, int)
 	Volume__C9RFsPluginR11TVolumeInfoi @ 241 NONAME R3UNUSED ; RFsPlugin::Volume(TVolumeInfo &, int) const
 	IsSequentialMode__C7CFileCB @ 242 NONAME R3UNUSED ; CFileCB::IsSequentialMode(void) const
-
+	DirectIOMode__7CFileCBRC12RMessagePtr2 @ 243 NONAME R3UNUSED ; CFileCB::DirectIOMode(RMessagePtr2 const &)

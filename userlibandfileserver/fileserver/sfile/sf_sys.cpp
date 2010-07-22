@@ -21,6 +21,10 @@
 #include <kernel/localise.h>
 #include <f32file.h>
 
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "sf_sysTraces.h"
+#endif
+
 typedef CFileSystem*(*TFileSystemNew)();
 extern CProxyDriveFactory* GetExtension(const TDesC& aName);
 
@@ -39,8 +43,8 @@ Default constructor.
 */
 EXPORT_C CFileSystem::CFileSystem()
 	{
-	TRACE0(UTF::EBorder, UTraceModuleFileSys::ECFileSystemConstructor, EF32TraceUidFileSys);
-	TRACE0(UTF::EBorder, UTraceModuleFileSys::ECFileSystemConstructorReturn, EF32TraceUidFileSys);
+	OstTrace0(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMCONSTRUCTOR, "");
+	OstTrace0(TRACE_FILESYSTEM,FILESYS_ECFILESYSTEMCONSTRUCTORRETURN, "");
 	}
 
 /**
@@ -48,8 +52,8 @@ Destructor.
 */
 EXPORT_C CFileSystem::~CFileSystem()
 	{
-	TRACE0(UTF::EBorder, UTraceModuleFileSys::ECFileSystemDestructor, EF32TraceUidFileSys);
-	TRACE0(UTF::EBorder, UTraceModuleFileSys::ECFileSystemDestructorReturn, EF32TraceUidFileSys);
+	OstTrace0(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMDESTRUCTOR, "");
+	OstTrace0(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMDESTRUCTORRETURN, "");
 	}
 
 /**
@@ -266,22 +270,25 @@ TInt InstallFileSystem(CFileSystem* aSys,RLibrary aLib)
 //
 	{
 
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemInstall, EF32TraceUidFileSys, aSys);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMINSTALL, "this %x", aSys);
+
 	TInt r=aSys->Install();
-	TRACERETMULT2(UTF::EBorder, UTraceModuleFileSys::ECFileSystemInstallRet, EF32TraceUidFileSys, r, aSys->Name());
+
+	OstTraceData(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMINSTALLYS_EFILESYSTEMNAME, "FileSystemName %S", aSys->Name().Ptr(), aSys->Name().Length()<<1);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMINSTALLRET, "r %d", r);
 
 	__PRINT1TEMP(_L("InstallFileSystem %S"),aSys->Name());
 	if (r==KErrNone)
 		{TRAP(r,FileSystems->AddL(aSys,ETrue))}
 	if (r!=KErrNone)
 		{
-		TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemRemove, EF32TraceUidFileSys, aSys);
-#ifdef SYMBIAN_FTRACE_ENABLE
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMREMOVE1, "this %x", aSys);
+#ifdef OST_TRACE_COMPILER_IN_USE
 		TInt r = 
 #endif
 			aSys->Remove();
 		
-		TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemRemoveRet, EF32TraceUidFileSys, r);
+		OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMREMOVE1RET, "r %d", r);
 		}
 	if (r==KErrNone)
 		aSys->SetLibrary(aLib);
@@ -320,9 +327,9 @@ TInt TFsAddFileSystem::DoRequestL(CFsRequest* aRequest)
 	if (!f)
 		return KErrCorrupt;
 	
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNew, EF32TraceUidFileSys, lib.Handle());
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEW, "handle %x", lib.Handle());
 	CFileSystem* pS=(*f)();
-	TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemNewRet, EF32TraceUidFileSys, pS);
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMNEWRET, "fileSystem %x", pS);
 	if (!pS)
 		return KErrNoMemory;
 	TInt r=InstallFileSystem(pS,lib);
@@ -374,9 +381,12 @@ TInt TFsRemoveFileSystem::DoRequestL(CFsRequest* aRequest)
 			return KErrInUse;
 		}
 	
-    TRACE1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemRemove, EF32TraceUidFileSys, pF);
+    OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMREMOVE2, "this %x", pF);
+
 	TInt r=pF->Remove();
-	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECFileSystemRemoveRet, EF32TraceUidFileSys, r);
+
+	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILESYSTEMREMOVE2RET, "r %d", r);
+
 	if (r!=KErrNone)
 		return(r);
 	

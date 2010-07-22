@@ -87,8 +87,9 @@
 #include "d_gobble.h"
 #include <dptest.h>
 #include "freeram.h"
+#include "..\demandpaging\t_dpcmn.h"
 
-LOCAL_D RTest test(_L("T_CACHECHUNK"));
+RTest test(_L("T_CACHECHUNK"));
 
 RMemoryTestLdd MemoryTest;
 
@@ -98,7 +99,7 @@ TInt CommitEnd;
 TInt PageSize;
 TInt NoFreeRam;
 RTimer Timer;
-
+TBool gFmm;
 
 
 void FillPage(TUint aOffset)
@@ -308,18 +309,44 @@ void Tests(TInt aOffset)
 	test_KErrNone(r);
 
 	test.Next(_L("Check Decommit on unlocked pages"));
+	// Get orignal page cache size
+	TUint minCache = 0;
+	TUint maxCache = 0;
+	TUint oldCache = 0;
+	TUint newCache = 0;
+	if (gFmm)
+		{
+		r = DPTest::CacheSize(minCache, maxCache, oldCache);
+		test_KErrNone(r);
+		}
 	r = TestChunk.Unlock(aOffset,PageSize*4);
 	test_KErrNone(r);
+
+	TUint spareCache = maxCache - oldCache;
+	if (gFmm && spareCache)
+		{// Cache wasn't at maximum so should have grown when unlocked pages were added.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		TUint extraCache = (spareCache > (TUint)PageSize*4)? PageSize*4 : spareCache;
+		test_Equal(oldCache + extraCache, newCache);
+		}
 	test(FreeRam() >= NoFreeRam+PageSize*4);
 	r=TestChunk.Decommit(aOffset, PageSize*4);
 	test_KErrNone(r);
 	freeRam = FreeRam();
 	test_Compare(freeRam, >=, NoFreeRam+PageSize*4);
 	test_Equal(origChunkSize - PageSize*4, TestChunk.Size());
+
+	if (gFmm)
+		{// Cache should have shrunk after pages were decommited.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		test_Equal(oldCache, newCache);
+		}
 	// Restore chunk back to original state
 	r = TestChunk.Commit(aOffset, PageSize*4);
 	test_KErrNone(r);
-	test(FreeRam() == NoFreeRam);
+	test_Equal(NoFreeRam, FreeRam());
 
 	test.Next(_L("Check Decommit on unlocked and reclaimed pages"));
 	r = TestChunk.Unlock(aOffset,PageSize*4);
@@ -350,6 +377,44 @@ void Tests(TInt aOffset)
 	freeRam = FreeRam();
 	test(freeRam==NoFreeRam);
 	test_Equal(origChunkSize, TestChunk.Size());
+
+	test.Next(_L("Check Decommit on a mixture of locked and unlocked pages"));
+	// Get orignal page cache size
+	if (gFmm)
+		{
+		r = DPTest::CacheSize(minCache, maxCache, oldCache);
+		test_KErrNone(r);
+		}
+	r = TestChunk.Unlock(aOffset,PageSize);
+	test_KErrNone(r);
+	r = TestChunk.Unlock(aOffset + PageSize*2, PageSize);
+	test_KErrNone(r);
+
+	spareCache = maxCache - oldCache;
+	if (gFmm && spareCache)
+		{// Cache wasn't at maximum so should have grown when unlocked pages were added.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		TUint extraCache = (spareCache > (TUint)PageSize*2)? PageSize*2 : spareCache;
+		test_Equal(oldCache + extraCache, newCache);
+		}
+	test(FreeRam() >= NoFreeRam+PageSize*2);
+	r=TestChunk.Decommit(aOffset, PageSize*4);
+	test_KErrNone(r);
+	freeRam = FreeRam();
+	test_Compare(freeRam, >=, NoFreeRam+PageSize*4);
+	test_Equal(origChunkSize - PageSize*4, TestChunk.Size());
+
+	if (gFmm)
+		{// Cache should have shrunk after pages were decommited.
+		r = DPTest::CacheSize(minCache, maxCache, newCache);
+		test_KErrNone(r);
+		test_Equal(oldCache, newCache);
+		}
+	// Restore chunk back to original state
+	r = TestChunk.Commit(aOffset, PageSize*4);
+	test_KErrNone(r);
+	test_Equal(NoFreeRam, FreeRam());
 
 	test.End();
 	}
@@ -440,6 +505,175 @@ void TestUnlockOld()
 	}
 
 
+TBool StopCacheThreads;
+
+TInt CacheThreadFunc(TAny* aMax)
+	{
+	RThread::Rendezvous(KErrNone);
+	while (!StopCacheThreads)
+		{
+		TInt maxSize = (TInt)aMax;
+		TInt minSize;
+		TInt r = KErrNone;
+		for (minSize = PageSize << 4; r == KErrNone && !StopCacheThreads; minSize += PageSize)
+			{
+			r = UserSvr::HalFunction(EHalGroupVM,EVMHalSetCacheSize,(TAny*)minSize,(TAny*)maxSize);
+			User::After(minSize/PageSize);
+			}
+		for (minSize -= PageSize; 
+			minSize > PageSize << 4 && r == KErrNone  && !StopCacheThreads;
+			minSize -= PageSize)
+			{
+			r = UserSvr::HalFunction(EHalGroupVM,EVMHalSetCacheSize,(TAny*)minSize,(TAny*)maxSize);
+			User::After(minSize/PageSize);
+			}
+		}
+	return KErrNone;
+	}
+
+
+TInt DonateThreadFunc(TAny*)
+	{
+	TChunkCreateInfo createInfo;
+	createInfo.SetCache(100 * PageSize);
+	RChunk chunk;
+	TInt r = chunk.Create(createInfo);
+	if (r != KErrNone)
+		{
+		RDebug::Printf("DonateThreadFunc: Failed to create cache chunk %d", r);
+		return r;
+		}
+	TUint chunkEnd = 0;
+	while (chunk.Commit(chunkEnd, PageSize) == KErrNone)
+		chunkEnd += PageSize;
+
+	RThread::Rendezvous(KErrNone);
+	while (!StopCacheThreads)
+		{
+		for (TUint i = PageSize; i <= chunkEnd && !StopCacheThreads; i += PageSize)
+			{
+			chunk.Unlock(0, i);
+			if (chunk.Lock(0, i) != KErrNone)
+				{// Recommit as many pages as possible.
+				while (chunk.Commit(0, chunkEnd) != KErrNone && !StopCacheThreads)
+					chunkEnd -= PageSize;
+				i = 0;
+				}
+			User::After(i/PageSize);
+			}
+		}
+	CLOSE_AND_WAIT(chunk);
+	return KErrNone;
+	}
+
+
+TInt DirtyThreadFunc(TAny*)
+	{
+	RThread::Rendezvous(KErrNone);
+
+	RChunk chunk;
+	TChunkCreateInfo createInfo;
+	createInfo.SetNormal(PageSize * 100, PageSize *100);
+	createInfo.SetPaging(TChunkCreateInfo::EPaged);
+	TInt r = chunk.Create(createInfo);
+	if (r != KErrNone)
+		{
+		RDebug::Printf("Failed to create a cache chunk %d", r);
+		return r;
+		}
+	TUint8* base = chunk.Base();
+	// Dirty each page in the chunk so that there are dirty pages in the live 
+	// list while it is being resized and pages are being unlocked.
+	while (!StopCacheThreads)
+		{
+		TUint8* p = base;
+		TUint8* pEnd = base + chunk.Size();
+		for (; p < pEnd && !StopCacheThreads; p += PageSize)
+			{
+			*p = (TUint8)(pEnd - p);
+			User::After((TUint8)(pEnd - p));
+			}
+		}
+	CLOSE_AND_WAIT(chunk);
+	return KErrNone;
+	}
+
+
+void TestResizeExcess()
+	{
+	test.Printf(_L("Commit all of memory again leaving 100 free pages\n"));
+	CommitEnd = 0;
+	TInt r;
+	while(KErrNone==(r=TestChunk.Commit(CommitEnd,PageSize)))
+		{
+		CommitEnd += PageSize;
+		}
+	test(r==KErrNoMemory);
+	test_KErrNone(TestChunk.Unlock(0, 100 * PageSize));
+
+	SVMCacheInfo info;
+	test_KErrNone(UserSvr::HalFunction(EHalGroupVM, EVMHalGetCacheSize, &info, 0));
+
+	StopCacheThreads = EFalse;
+	RThread cacheThread;
+	r = cacheThread.Create(	KNullDesC, CacheThreadFunc, KDefaultStackSize, PageSize,
+							PageSize, (TAny*)info.iMaxSize);
+	test_KErrNone(r);
+	TRequestStatus threadStarted;
+	cacheThread.Rendezvous(threadStarted);
+	TRequestStatus cacheStatus;
+	cacheThread.Logon(cacheStatus);
+	cacheThread.Resume();
+	User::WaitForRequest(threadStarted);
+	test_KErrNone(threadStarted.Int());
+
+	// Create the dirty thread before the donate thread as the donate thread may
+	// consume all the free ram periodically.
+	RThread dirtyThread;
+	r = dirtyThread.Create(KNullDesC, DirtyThreadFunc, KDefaultStackSize, PageSize, PageSize, NULL);
+	test_KErrNone(r);
+	dirtyThread.Rendezvous(threadStarted);
+	TRequestStatus dirtyStatus;
+	dirtyThread.Logon(dirtyStatus);
+	dirtyThread.Resume();
+	User::WaitForRequest(threadStarted);
+	test_KErrNone(threadStarted.Int());
+
+	RThread donateThread;
+	r = donateThread.Create(KNullDesC, DonateThreadFunc, KDefaultStackSize, PageSize, PageSize, NULL);
+	test_KErrNone(r);
+	donateThread.Rendezvous(threadStarted);
+	TRequestStatus donateStatus;
+	donateThread.Logon(donateStatus);
+	donateThread.Resume();
+	User::WaitForRequest(threadStarted);
+	test_KErrNone(threadStarted.Int());
+
+	// Run test for 10 secs.
+	User::After(10000000);
+
+	// End the test.
+	StopCacheThreads = ETrue;
+	User::WaitForRequest(donateStatus);
+	test_Equal(EExitKill, donateThread.ExitType());
+	test_KErrNone(donateThread.ExitReason());
+	User::WaitForRequest(dirtyStatus);
+	test_Equal(EExitKill, dirtyThread.ExitType());
+	test_KErrNone(dirtyThread.ExitReason());
+	User::WaitForRequest(cacheStatus);
+	test_Equal(EExitKill, cacheThread.ExitType());
+	test_KErrNone(cacheThread.ExitReason());
+
+	CLOSE_AND_WAIT(donateThread);
+	CLOSE_AND_WAIT(cacheThread);
+	CLOSE_AND_WAIT(dirtyThread);
+
+	test_KErrNone(UserSvr::HalFunction(	EHalGroupVM,
+										EVMHalSetCacheSize,
+										(TAny*)info.iMinSize,
+										(TAny*)info.iMaxSize));
+	}
+
 
 TInt E32Main()
 	{
@@ -450,6 +684,10 @@ TInt E32Main()
 		test.Printf(_L("This test requires an MMU\n"));
 		return KErrNone;
 		}
+	// See if were running on the Flexible Memory Model or newer.
+  	TUint32 memModelAttrib = (TUint32)UserSvr::HalFunction(EHalGroupKernel, EKernelHalMemModelInfo, NULL, NULL);	
+	gFmm = (memModelAttrib & EMemModelTypeMask) >= EMemModelTypeFlexible;
+
 	test.Start(_L("Initialise test"));
 	test.Next(_L("Load gobbler LDD"));
 	TInt r = User::LoadLogicalDevice(KGobblerLddFileName);
@@ -567,6 +805,16 @@ TInt E32Main()
 	// Restore original settings for live list size
 	if (resizeCache)
 		test_KErrNone(DPTest::SetCacheSize(originalMin, originalMax));
+
+	test_KErrNone(GetGlobalPolicies());
+	if (gDataPagingSupported)
+		{
+		test.Next(_L("Test interactions of chunk unlocking and page cache resizing"));
+		// Do this after the live list limit is restored.
+		test_KErrNone(TestChunk.Create(createInfo));
+		TestResizeExcess();
+		TestChunk.Close();
+		}
 
 	// end...
 	test.End();

@@ -85,7 +85,7 @@ public:
     // unit testing
     void CreateSbcInterfaceL(TUint32 aBlockLen, TUint32 aLastLba);
 
-	void DoScsiReadyCheckEventL();
+	TBool DoScsiReadyCheckEventL();
 
 	void NotifyChange(const RMessage2& aMessage);
     void ForceCompleteNotifyChangeL();

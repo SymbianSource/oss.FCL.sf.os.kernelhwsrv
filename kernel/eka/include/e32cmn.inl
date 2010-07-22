@@ -4866,6 +4866,21 @@ The function must be called before this array object is destroyed.
 
 
 template <class T>
+inline void RArray<T>::SetKeyOffset(TInt aOffset)
+/**
+Sets the offset of the ordering key within each array entry.
+
+@param aKeyOffset   The key offset.
+
+@panic USER 128, if aKeyOffset is not positive, or is not less than the 
+       size of class T, or is not a multiple of 4.
+*/
+	{RArrayBase::SetKeyOffset(aOffset);}
+
+
+
+
+template <class T>
 inline TInt RArray<T>::Count() const
 /**
 Gets the number of objects in the array.

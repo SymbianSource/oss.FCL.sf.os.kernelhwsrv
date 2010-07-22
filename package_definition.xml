@@ -144,7 +144,7 @@
       <component id="kernelhwsrv_metadata" name="Kernel and Hardware Services Metadata" class="config" introduced="^2" purpose="development" target="desktop">
         <unit mrp="kernelhwsrv_info/kernelhwsrv_metadata/kernelhwsrv_metadata.mrp"/>
       </component>
-      <component id="kernelhwsrv_metadata" name="Kernel and Hardware Services Public Documentation" class="doc" introduced="^3" purpose="development">
+      <component id="kernelhwsrv_docpub" name="Kernel and Hardware Services Public Documentation" class="doc" introduced="^3" purpose="development">
         <unit mrp="kernelhwsrv_info/doc_pub/kernelhwsrv_doc_pub.mrp"/>
       </component>
     </collection>

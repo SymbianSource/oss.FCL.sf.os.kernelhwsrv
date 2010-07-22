@@ -1180,4 +1180,8 @@ EXPORTS
 	_ZN13KernCoreStats9LeaveIdleEj @ 1179 NONAME
 	_ZN3Arm14SetIdleHandlerEPFvPvmES0_ @ 1180 NONAME
 	_ZN4Epoc11FreeRamZoneEj @ 1181 NONAME
+	_ZN16TBitMapAllocator14SelectiveAllocEii @ 1182 NONAME
+	_ZN10RArrayBase12SetKeyOffsetEi @ 1183 NONAME
+	_ZN5Cache10CpuRetiresEv @ 1184 NONAME
+	_ZN5Cache13KernelRetiresEv @ 1185 NONAME
 

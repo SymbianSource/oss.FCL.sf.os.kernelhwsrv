@@ -1321,6 +1321,42 @@ EXPORT_C __NAKED__ void RFastLock::Wait()
 #endif
 	}
 
+EXPORT_C __NAKED__ TInt RFastLock::Poll()
+	{
+	asm("1: ");
+	asm("add	r0, r0, #4 ");					// point to iCount
+
+#ifdef __CPU_ARM_HAS_LDREX_STREX
+	asm("2:		");
+	LDREX(		2, 0);							// read
+	asm("subs	r1, r2, #1 ");					// decrement
+	asm("bcs	3f ");							// if no borrow, lock cannot be obtained so bail out
+	STREX(		3, 1, 0);						// write
+	asm("teq	r3, #0 ");						// success?
+	asm("bne	2b ");							// no!
+	asm("mov	r0, #0 ");						// lock acquired so return KErrNone
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER__(r3);				// need acquire barrier
+#endif
+	__JUMP(,	lr);
+
+	asm("3:		");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrTimedOut));	// else can't get it immediately so return KErrTimedOut
+	__JUMP(,	lr);
+#else	// no LDREX/STREX - ARM arch 5 CPU
+	asm("mov	r1, #1 ");						// 'looking' value
+	asm("swp	r1, r1, [r0] ");				// write looking value, read original
+	asm("subs	r2, r1, #1 ");					// decrement count
+	asm("strcc	r2, [r0] ");					// if borrow, was originally zero so write back -1 and return KErrNone
+	asm("movcc	r0, #0 ");						// got lock - return KErrNone
+ 	__JUMP(cc,	lr);
+
+	asm("strlt	r1, [r0] ");					// else if result<0 (i.e. wasn't looking value) write back original
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrTimedOut));	// else can't get it immediately so return KErrTimedOut
+ 	__JUMP(,	lr);
+#endif
+	}
+
 EXPORT_C __NAKED__ void RFastLock::Signal()
 	{
 	asm("1: ");
@@ -1353,6 +1389,122 @@ EXPORT_C __NAKED__ void RFastLock::Signal()
 	asm("ldmfd	sp!, {r0,lr} ");
 	asm("b		1b ");
 #endif
+	}
+
+
+/**
+Acquire the lock, if necessary waiting up to a specified maximum amount of time
+for it to become free.
+
+This function checks if the lock is currently held. If not the lock is marked
+as held by the current thread and the call returns immediately. If the lock is
+held by another thread the current thread will suspend until the lock becomes
+free or until the specified timeout period has elapsed.
+
+@param aTimeout The timeout value in microseconds
+
+@return KErrNone if the lock was acquired successfully.
+        KErrTimedOut if the timeout has expired.
+        KErrGeneral if the lock is being reset, i.e the lock
+        is about to  be deleted.
+        KErrArgument if aTimeout is negative;
+        otherwise one of the other system wide error codes.
+*/
+EXPORT_C __NAKED__ TInt RFastLock::Wait(TInt /*aTimeout*/)
+	{
+	asm("stmfd	sp!, {r4-r6,lr} ");
+	asm("add	r4, r0, #4 ");					// r4->iCount
+	asm("subs	r5, r1, #0 ");					// r5=aTimeout
+	asm("mov	r6, #1000 ");
+	asm("movle	r0, #%a0" : : "i" ((TInt)KErrArgument));	
+	__CPOPRET(le, "r4-r6,");					// if aTimeout<=0 return KErrArgument
+	asm("1:		");
+
+#ifdef __CPU_ARM_HAS_LDREX_STREX
+	asm("2:		");
+	LDREX(		2, 4);							// read
+	asm("subs	r12, r2, #1 ");					// decrement
+	STREX(		3, 12, 4);						// write
+	asm("teq	r3, #0 ");						// success?
+	asm("bne	2b ");							// no!
+	asm("bcs	8f ");							// if no borrow from decrement, need to wait
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER__(r3);				// no need to wait, but still need acquire barrier
+#endif
+#else	// no LDREX/STREX - ARM arch 5 CPU
+	asm("mov	r2, #1 ");						// 'looking' value
+	asm("swp	r2, r2, [r4] ");				// write looking value, read original
+	asm("subs	r12, r2, #1 ");					// decrement count
+	asm("strlt	r12, [r4] ");					// if it becomes negative, no-one was looking
+	asm("bcs	8f ");							// if no borrow, we have to wait
+#endif
+	asm("mov	r0, #0 ");						// return KErrNone
+	__POPRET("r4-r6,");
+
+// We need to wait
+	asm("8:		");
+#ifndef __CPU_ARM_HAS_LDREX_STREX
+// no LDREX/STREX - ARM arch 5 CPU
+	asm("blt	3f ");							// if it wasn't 'looking' value, branch
+
+	// it was the 'looking' value, so wait a little bit
+	asm("cmp	r5, #0 ");
+	asm("ble	9f ");							// waited too long already, return KErrTimedOut
+	asm("sub	r5, r5, r6 ");
+	asm("mov	r6, #2000 ");
+	asm("mov	r0, #1000 ");					// wait 1ms
+	asm("cmp	r5, r0 ");
+	asm("movlt	r5, r0 ");						// remaining time at least 1ms
+	asm("bl "	CSM_ZN4User12AfterHighResE27TTimeIntervalMicroSeconds32);
+	asm("b		1b ");							// try again
+#endif
+	asm("3:		");
+	asm("sub	r0, r4, #4 ");					// r0=this
+	asm("mov	r1, r5 ");						// r1=aTimeout
+	asm("bl "	CSM_ZN10RSemaphore4WaitEi);	// try to acquire semaphore
+	asm("cmp	r0, #%a0" : : "i" ((TInt)KErrTimedOut));
+	__CPOPRET(ne, "r4-r6,");					// if wait didn't time out, return
+	asm("mov	r5, #1 ");						// any further timed waits will be for minimum period
+	
+	// Before we can return KErrTimedOut we must increment iCount (since we
+	// previously decremented it in anticipation of acquiring the lock.
+	// However we must not increment iCount if it would become zero, since
+	// the semaphore will have been signalled (to counterbalance the Wait()
+	// which timed out and thus never happened). This would result in two
+	// threads being able to acquire the lock simultaneously - one by
+	// decrementing iCount from 0 to -1 without looking at the semaphore,
+	// and the other by decrementing iCount from -1 to -2 and then absorbing
+	// the spurious semaphore signal.
+	//	orig = __e32_atomic_tas_ord32(&iCount, -1, 0, 1);	// don't release lock completely
+	//	if (orig < -1)
+	//		return KErrTimedOut;	// count corrected - don't need to touch semaphore
+	// lock is actually free at this point, try again to claim it
+	//	aTimeout = 1;
+#ifdef __CPU_ARM_HAS_LDREX_STREX
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER_Z__(r3);
+#endif
+	asm("4:		");
+	LDREX(		2, 4);							// read
+	asm("adds	r2, r2, #1 ");					// increment
+	asm("bge	3b ");							// if increment would make result >=0, wait again
+	STREX(		3, 2, 4);						// write
+	asm("teq	r3, #0 ");						// success?
+	asm("bne	4b ");							// no!
+#ifdef __SMP__
+	__DATA_MEMORY_BARRIER__(r3);
+#endif
+#else	// no LDREX/STREX - ARM arch 5 CPU
+	asm("mov	r2, #1 ");						// 'looking' value
+	asm("swp	r2, r2, [r4] ");				// write looking value, read original
+	asm("adds	r12, r2, #1 ");					// increment count
+	asm("strlt	r12, [r4] ");					// if still negative, count now fixed, so return KErrTimedOut
+	asm("streq	r2, [r4] ");					// else if not 'looking' value, write back original
+	asm("bge	3b ");							// if 'looking' value or -1, wait again
+#endif
+	asm("9:		");
+	asm("mov	r0, #%a0" : : "i" ((TInt)KErrTimedOut));	// return KErrTimedOut
+	__POPRET("r4-r6,");
 	}
 
 

@@ -131,8 +131,17 @@ TInt DMemoryManager::HandleFault(	DMemoryObject* aMemory, TUint aIndex, DMemoryM
 TInt DMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPageInfo, 
 								TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest)
 	{
+	MmuLock::Unlock();
 	return KErrNotSupported;
 	}
+
+
+TInt DMemoryManager::MoveAndAllocPage(DMemoryObject*, SPageInfo*, TZonePageType)
+	{
+	__NK_ASSERT_DEBUG(0);	// This should only be invoked on managers that can move or discard pages.
+	return KErrNotSupported;
+	}
+
 
 TZonePageType DMemoryManager::PageType()
 	{// This should not be invoked on memory managers that do not use the methods
@@ -721,6 +730,7 @@ class DMovableMemoryManager : public DUnpagedMemoryManager
 public:
 	// from DMemoryManager...
 	virtual TInt MovePage(DMemoryObject* aMemory, SPageInfo* aOldPageInfo, TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest);
+	virtual TInt MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType);
 	virtual TInt HandleFault(	DMemoryObject* aMemory, TUint aIndex, DMemoryMapping* aMapping, 
 								TUint aMapInstanceCount, TUint aAccessPermissions);
 	virtual TZonePageType PageType();
@@ -740,20 +750,8 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 										TPhysAddr& aNewPage, TUint aBlockZoneId, TBool aBlockRest)
 	{
 	__NK_ASSERT_DEBUG(RamAllocLock::IsHeld());
-
-	// Allocate the new page to move to, ensuring that we use the page type of the
-	// manager assigned to this page.
-	TPhysAddr newPage;
-	Mmu& m = TheMmu;
-	TInt r = m.AllocRam(&newPage, 1, aMemory->RamAllocFlags(), aMemory->iManager->PageType(), 
-						aBlockZoneId, aBlockRest);
-	if (r != KErrNone)
-		{// Failed to allocate a new page to move the page to so can't continue.
-		return r;
-		}
-	
-	r = KErrInUse;
-	MmuLock::Lock();
+	__NK_ASSERT_DEBUG(MmuLock::IsHeld());
+	TInt r = KErrInUse;
 
 	TUint index = aOldPageInfo->Index();
 	TRACE(	("DMovableMemoryManager::MovePage(0x%08x,0x%08x,?,0x%08x,%d) index=0x%x",
@@ -766,7 +764,6 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 	if (!movingPageArrayPtr)
 		{// Can't move the page another operation is being performed on it.
 		MmuLock::Unlock();
-		TheMmu.FreeRam(&newPage, 1, aMemory->iManager->PageType());
 		return r;
 		}
 	__NK_ASSERT_DEBUG(RPageArray::IsPresent(*movingPageArrayPtr));
@@ -779,13 +776,41 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 		__NK_ASSERT_DEBUG(SPageInfo::FromPhysAddr(oldPage)->Type() == SPageInfo::EShadow);
 		}
 #endif
-	__NK_ASSERT_DEBUG((newPage & KPageMask) == 0);
-	__NK_ASSERT_DEBUG(newPage != oldPage);
-
 	// Set the modifier so we can detect if the page state is updated.
 	aOldPageInfo->SetModifier(&pageIter);
 
-	// Restrict the page ready for moving.
+	MmuLock::Unlock();
+
+	// Allocate the new page to move to, ensuring that we use the page type of the
+	// manager assigned to this page.
+	TPhysAddr newPage;
+	Mmu& m = TheMmu;
+	TInt allocRet = m.AllocRam(&newPage, 1, aMemory->RamAllocFlags(), aMemory->iManager->PageType(), 
+						aBlockZoneId, aBlockRest);
+	if (allocRet != KErrNone)
+		{
+		MmuLock::Lock();
+		aMemory->iPages.MovePageEnd(*movingPageArrayPtr, index);
+		MmuLock::Unlock();
+		return allocRet;
+		}
+
+	__NK_ASSERT_DEBUG((newPage & KPageMask) == 0);
+	__NK_ASSERT_DEBUG(newPage != oldPage);
+
+	MmuLock::Lock();
+	if (aOldPageInfo->CheckModified(&pageIter) ||
+		oldPageEntry != *movingPageArrayPtr)
+		{// The page was modified or freed.
+		aMemory->iPages.MovePageEnd(*movingPageArrayPtr, index);
+		MmuLock::Unlock();
+		m.FreeRam(&newPage, 1, aMemory->iManager->PageType());
+		return r;
+		}
+	MmuLock::Unlock();
+
+	// This page's contents may be changed so restrict the page to no access 
+	// so we can detect any access to it while we are moving it.
 	// Read only memory objects don't need to be restricted but we still need
 	// to discover any physically pinned mappings.
 	TBool pageRestrictedNA = !aMemory->IsReadOnly();
@@ -793,9 +818,6 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 										ERestrictPagesNoAccessForMoving :
 										ERestrictPagesForMovingFlag;
 
-	// This page's contents may be changed so restrict the page to no access 
-	// so we can detect any access to it while we are moving it.
-	MmuLock::Unlock();
 	// This will clear the memory objects mapping added flag so we can detect any new mappings.
 	aMemory->RestrictPages(pageIter, restrictType);
 
@@ -808,7 +830,8 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 	// If the page array entry (*movingPageArrayPtr) has been modified then a pinning 
 	// veto'd the preparation.
 	MmuLock::Lock();
-	if (aOldPageInfo->CheckModified(&pageIter) || oldPageEntry != *movingPageArrayPtr)
+	if (aOldPageInfo->CheckModified(&pageIter) ||
+		oldPageEntry != *movingPageArrayPtr)
 		{// Page is pinned or has been modified by another operation.
 		MmuLock::Unlock();
 		TheMmu.FreeRam(&newPage, 1, aMemory->iManager->PageType());
@@ -833,7 +856,8 @@ TInt DMovableMemoryManager::MovePage(	DMemoryObject* aMemory, SPageInfo* aOldPag
 #endif
 	
 	MmuLock::Lock();
-	if (!aOldPageInfo->CheckModified(&pageIter) && oldPageEntry == *movingPageArrayPtr &&
+	if (!aOldPageInfo->CheckModified(&pageIter) &&
+		oldPageEntry == *movingPageArrayPtr &&
 		!aMemory->MappingAddedFlag())
 		{
 		// The page has been copied without anyone modifying it so set the page 
@@ -880,9 +904,21 @@ remap:
 #endif
 	// indicate we've stopped moving memory now...
 	MmuLock::Lock();
-	RPageArray::MovePageEnd(*movingPageArrayPtr);
+	aMemory->iPages.MovePageEnd(*movingPageArrayPtr, index);
 	MmuLock::Unlock();
 
+	return r;
+	}
+
+
+TInt DMovableMemoryManager::MoveAndAllocPage(DMemoryObject* aMemory, SPageInfo* aPageInfo, TZonePageType aPageType)
+	{
+	TPhysAddr newPage;
+	TInt r = MovePage(aMemory, aPageInfo, newPage, KRamZoneInvalidId, EFalse);
+	if (r == KErrNone)
+		{
+		TheMmu.MarkPageAllocated(aPageInfo->PhysAddr(), aPageType);
+		}
 	return r;
 	}
 
@@ -1099,7 +1135,10 @@ TInt DDiscardableMemoryManager::StealPage(DMemoryObject* aMemory, SPageInfo* aPa
 
 			// attempt to clean the page if it is dirty...
 			if (aPageInfo->IsDirty())
+				{
+				//Kern::Printf("WDP: Cleaning single page in StealPage");
 				aMemory->iManager->CleanPages(1, &aPageInfo, EFalse);
+				}
 
 			if(aPageInfo)
 				{
@@ -1515,10 +1554,7 @@ TInt DPagedMemoryManager::RestrictPage(DMemoryObject* aMemory, SPageInfo* aPageI
 
 	page = *p;
 	if(aPageInfo->CheckModified(&pageList) || page!=originalPage/*page state changed*/)
-		{
-		// page state was changed by someone else...
 		r = KErrInUse;
-		}
 	else
 		{
 		// nobody else has modified page state, so restrictions successfully applied...
@@ -1657,6 +1693,8 @@ TInt DPagedMemoryManager::DoPin(DMemoryObject* aMemory, TUint aIndex, TUint aCou
 	TRACE(("DPagedMemoryManager::DoPin(0x%08x,0x%08x,0x%08x,0x%08x)",aMemory, aIndex, aCount, aMapping));
 	__ASSERT_CRITICAL;
 	__NK_ASSERT_DEBUG(aPinArgs.HaveSufficientPages(aCount));
+	__NK_ASSERT_DEBUG(aMapping->IsPinned());
+	__NK_ASSERT_DEBUG(!aMapping->PagesPinned());
 
 	// check and allocate page array entries...
 	RPageArray::TIter pageList;

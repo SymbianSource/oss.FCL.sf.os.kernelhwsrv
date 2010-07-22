@@ -1,3 +1,157 @@
+Version 2.00.3049
+=================
+(Made by vfebvre 15/06/2010)
+
+1.	migubarr
+	1.	ou1cimx1#393016 Crash when usb memory is dismounted during copy
+
+2.	michcox
+	1.	ou1cimx1#419149 MCL fix CDirStack array panic
+
+
+Version 2.00.3048
+=================
+(Made by vfebvre 14/06/2010)
+
+1.	migubarr
+	1.	ou1cimx1#420772 File Server flushes FAT metadata too often
+
+
+Version 2.00.3047
+=================
+(Made by vfebvre 11/06/2010)
+
+1.	dlyokhin
+	1.	ou1cimx1#423683 IT__BITO_SSS - 92_201019_hw79- \sf\os\kernelhwsrv\- Bad usage of RXXX::Connect() derived from RSessionBase
+
+2.	paconway
+	1.	DEF144802 CDynamicDirCache tests should be automated
+	2.	DEF144801 CDynamicDirCache leaks cache pages occasionally
+
+
+Version 2.00.3046
+=================
+(Made by vfebvre 07/06/2010)
+
+1.	davegord
+	1.	ou1cimx1#414735 Occasional Loader crashes observed during T_WSD_TST_* tests
+		Crash caused by interrupt occurring during handling of SWI called from
+		SVC mode -- which is not supported. Fix is for Loader not to call RDebug
+		methods while executing in supervisor mode.
+
+
+Version 2.00.3045
+=================
+(Made by vfebvre 04/06/2010)
+
+1.	famustaf
+	1.	ou1cimx1#383105 Modify F32 Tests for Platsim's HVFS
+
+
+Version 2.00.3044
+=================
+(Made by vfebvre 27/05/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#400806 Warnings reported by the Symbian Foundation license checker
+
+2.	h14jiang
+	1.	DEF145205 File server crash observed when running F32TEST T_PLUGIN_V2
+
+3.	michcox
+	1.	ou1cimx1#378866 MCL Symbian.org Bug 2544 -  Possible deadlocks on f32 plugin chains
+
+4.	vinjose
+	1.	ou1cimx1#394794 Raptor creates incorrect .iby files for f32test/loader
+
+
+Version 2.00.3043
+=================
+(Made by vfebvre 27/05/2010)
+
+1.	paconway
+	1.	REQ 417-56766 MBBMS over CMMB for TD-SCDMA Gen. 2 MobileTv
+		PackageReleaseID=497412 FeatureReleaseID=494378
+
+
+Version 2.00.3042
+=================
+(Made by vfebvre 14/05/2010)
+
+1.	migubarr
+	1.	REQ 428-1297 Migrate File Server Tracing from UTF to OST
+		PackageReleaseID=495120
+
+
+Version 2.00.3041
+=================
+(Made by vfebvre 13/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#380321 Build on Linux - Incorrect slash in #include in sf_sys.cpp
+
+
+Version 2.00.3040
+=================
+(Made by vfebvre 12/05/2010)
+
+1.	cnotton
+	1.	MINOR_CHANGE Corrected MRP comment text
+
+2.	hengrant
+	1.	ou1cimx1#370931 Memory card gets locked by itself MCL
+
+
+Version 2.00.3039
+=================
+(Made by vfebvre 06/05/2010)
+
+1.	famustaf
+	1.	ou1cimx1#372432 CFileMan malfunctioning in copying
+
+2.	dlyokhin
+	1.	ou1cimx1#372220 File server may request more free space on the volume than necessary
+
+
+Version 2.00.3038
+=================
+(Made by vfebvre 05/05/2010)
+
+1.	niccox
+	1.	ou1cimx1#371028 shostmassstorage capabilities are too high
+
+
+Version 2.00.3037
+=================
+(Made by vfebvre 30/04/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#357360 Some test binaries are targeted by several bld.inf files
+
+2.	frhofman
+	1.	ou1cimx1#367552 BC Drivers: Os/KernelHwSrv: 2 failures in Base API on Vasco
+
+3.	michcox
+	1.	ou1cimx1#357494 Maps 3.04: File mode EFileWrite (defined in f32file.h) corrupts memory of other processes under certain conditions on 5.0 devices
+	2.	ou1cimx1#367062 Update T_filecache for ou1cimx1#357494
+
+
+Version 2.00.3036
+=================
+(Made by vfebvre 27/04/2010)
+
+1.	erifung
+	1.	DEF144399 Frequent T_LDRCHECK failures on the H4
+
+
+Version 2.00.3035
+=================
+(Made by vfebvre 23/04/2010)
+
+1.	niccox
+	1.	ou1cimx1#357492 Disconnecting memory card reader/writer from phone causes phone crash
+
+
 Version 2.00.3034
 =================
 (Made by vfebvre 20/04/2010)

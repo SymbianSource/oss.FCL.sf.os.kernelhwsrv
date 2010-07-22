@@ -483,7 +483,7 @@ void MmuBase::FreePageTable(TInt aId)
 TInt MmuBase::AllocPhysicalRam(TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::AllocPhysicalRam() size=%x align=%d",aSize,aAlign));
-	TInt r=AllocContiguousRam(aSize, aPhysAddr, EPageFixed, aAlign);
+	TInt r=AllocContiguousRam(aSize, aPhysAddr, aAlign);
 	if (r!=KErrNone)
 		{
 		iAllocFailed=ETrue;
@@ -516,7 +516,7 @@ size of the RAM zone or KErrNoMemory when the RAM zone is too full.
 TInt MmuBase::ZoneAllocPhysicalRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign)
 	{
 	__KTRACE_OPT(KMMU,Kern::Printf("Mmu::ZoneAllocPhysicalRam() size=0x%x align=%d", aSize, aAlign));
-	TInt r = ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aSize, aPhysAddr, EPageFixed, aAlign);
+	TInt r = ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aSize, aPhysAddr, aAlign);
 	if (r!=KErrNone)
 		{
 		iAllocFailed=ETrue;
@@ -725,20 +725,19 @@ TInt MmuBase::AllocRamPages(TPhysAddr* aPageList, TInt aNumPages, TZonePageType 
 	}
 
 
-TInt MmuBase::AllocContiguousRam(TInt aSize, TPhysAddr& aPhysAddr, TZonePageType aPageType, TInt aAlign, TUint aBlockedZoneId, TBool aBlockRest)
+TInt MmuBase::AllocContiguousRam(TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign)
 	{
 #ifdef _DEBUG
 	if(K::CheckForSimulatedAllocFail())
 		return KErrNoMemory;
 #endif
-	__NK_ASSERT_DEBUG(aPageType == EPageFixed);
 	TUint contigPages = (aSize + KPageSize - 1) >> KPageShift;
-	TInt r = iRamPageAllocator->AllocContiguousRam(contigPages, aPhysAddr, aPageType, aAlign, aBlockedZoneId, aBlockRest);
+	TInt r = iRamPageAllocator->AllocContiguousRam(contigPages, aPhysAddr, aAlign);
 	if (r == KErrNoMemory && contigPages > KMaxFreeableContiguousPages)
 		{// Allocation failed but as this is a large allocation flush the RAM cache 
 		// and reattempt the allocation as large allocation wouldn't discard pages.
 		iRamCache->FlushAll();
-		r = iRamPageAllocator->AllocContiguousRam(contigPages, aPhysAddr, aPageType, aAlign, aBlockedZoneId, aBlockRest);
+		r = iRamPageAllocator->AllocContiguousRam(contigPages, aPhysAddr, aAlign);
 		}
 	return r;
 	}
@@ -750,16 +749,15 @@ Allocate contiguous RAM from the specified RAM zones.
 @param aZoneIdCount	The number of IDs listed in aZoneIdList
 @param aSize		The number of bytes to allocate
 @param aPhysAddr 	Will receive the physical base address of the allocated RAM
-@param aPageType 	The type of the pages being allocated
 @param aAlign 		The log base 2 alginment required
 */
-TInt MmuBase::ZoneAllocContiguousRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TZonePageType aPageType, TInt aAlign)
+TInt MmuBase::ZoneAllocContiguousRam(TUint* aZoneIdList, TUint aZoneIdCount, TInt aSize, TPhysAddr& aPhysAddr, TInt aAlign)
 	{
 #ifdef _DEBUG
 	if(K::CheckForSimulatedAllocFail())
 		return KErrNoMemory;
 #endif
-	return iRamPageAllocator->ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aSize, aPhysAddr, aPageType, aAlign);
+	return iRamPageAllocator->ZoneAllocContiguousRam(aZoneIdList, aZoneIdCount, aSize, aPhysAddr, aAlign);
 	}
 
 SPageInfo* SPageInfo::SafeFromPhysAddr(TPhysAddr aAddress)
@@ -5525,7 +5523,7 @@ EXPORT_C TInt Epoc::MovePhysicalPage(TPhysAddr aOld, TPhysAddr& aNew, TRamDefrag
 		}
 
 	MmuBase::Wait();
-	TInt r=M::MovePage(aOld,aNew,KRamZoneInvalidId,EFalse);
+	TInt r=M::MovePage(aOld,aNew,KRamZoneInvalidId,0);
 	if (r!=KErrNone)
 		aNew = KPhysAddrInvalid;
 	MmuBase::Signal();

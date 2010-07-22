@@ -2267,4 +2267,10 @@ EXPORTS
 	Size__C10RAllocator @ 2266 NONAME R3UNUSED ; RAllocator::Size(void) const
 	__DbgGetAllocFail__10RAllocator @ 2267 NONAME R3UNUSED ; RAllocator::__DbgGetAllocFail(void)
 	__DbgGetAllocFail__4Useri @ 2268 NONAME R3UNUSED ; User::__DbgGetAllocFail(int)
+	SetKeyOffset__10RArrayBasei @ 2269  NONAME R3UNUSED ; RArrayBase::SetKeyOffset(int)
+	Poll__10RSemaphore @ 2270 NONAME R3UNUSED ; RSemaphore::Poll(void)
+	Wait__6RMutexi @ 2271 NONAME R3UNUSED ; RMutex::Wait(int)
+	Poll__6RMutex @ 2272 NONAME R3UNUSED ; RMutex::Poll(void)
+	Poll__9RFastLock @ 2273 NONAME R3UNUSED ; RFastLock::Poll(void)
+	Wait__9RFastLocki @ 2274 NONAME R3UNUSED ; RFastLock::Wait(int)
 	

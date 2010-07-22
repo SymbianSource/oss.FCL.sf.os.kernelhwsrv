@@ -135,6 +135,7 @@ void TScheduler::InitLB()
 	s.iCCReactivateDfc.SetDfcQ(rbQ);
 	s.iCCRequestDfc.SetDfcQ(rbQ);
 	s.iCCPowerDownDfc.SetDfcQ(rbQ);
+	s.iFreqChgDfc.SetDfcQ(rbQ);
 	NThreadBase* lbt = rbQ->iThread;
 	lbt->iRebalanceAttr = 1;
 	TUint32 f = NKern::CpuTimeMeasFreq();

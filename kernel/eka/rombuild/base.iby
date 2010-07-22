@@ -92,7 +92,6 @@ file=ABI_DIR\DEBUG_DIR\KEYMAP_FILE.dll                      \sys\bin\EKData.dll
 
 secondary=ABI_DIR\DEBUG_DIR\efile.exe                       \sys\bin\efile.exe  FIXED HEAPMAX(0x40000)
 file=ABI_DIR\DEBUG_DIR\efsrv.dll                            \sys\bin\EFSrv.dll
-device[VARID]=KERNEL_DIR\DEBUG_DIR\d_ftrace.ldd             \sys\bin\d_ftrace.ldd
 
 #ifdef WITH_EXFAT
 file=ABI_DIR\DEBUG_DIR\exfat.fsy                            sys\bin\exfat.fsy

@@ -33,6 +33,9 @@ PRJ_TESTEXPORTS
 PRJ_TESTMMPFILES
 ../../e32test/mediaext/t_nfe
 
+// this should ideally be run early on as it enables 'simulated lock failure mode' in the file cache for udeb builds
+t_filecache 
+
 // These tests must be run early on so they do not time out on LFFS disks.
 
 #ifdef WINS
@@ -177,8 +180,6 @@ t_corruptlog
 t_blockmap
 #endif
 
-t_filecache 
-
 t_fsched
 t_rcache
 t_wcache
@@ -252,7 +253,7 @@ t_rawext support
 
 t_swapfsys manual
 #include "../filesystem/fat/group/fatfs.inf"
-#include "../filesystem/automounter/bld.inf"
+#include "../filesystem/automounter/automounter.inf"
 
 
 #include "perf_test.inf"
@@ -263,13 +264,13 @@ t_plugin_v2beta.mmp
 
 t_localtime 
 
+t_dircache
+
 #ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 t_file64bit manual
 fhserver64bit       support
 #include "../plugins/version_2/file64bit/group/file64bit_plugin.inf"
 #endif
-
-t_ftrace
 
 t_surrogatepair
 
@@ -277,3 +278,5 @@ t_surrogatepair
 t_cp932dll      support
 t_cp_plugin
 
+t_bitproxydrive    support
+t_proxydrive1

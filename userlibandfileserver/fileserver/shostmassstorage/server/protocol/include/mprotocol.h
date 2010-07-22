@@ -1,4 +1,4 @@
-// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -66,7 +66,7 @@ public:
     /** unit testing */
     virtual void CreateSbcInterfaceL(TUint32 aBlockLen, TUint32 aLastLba) = 0;
 
-	virtual void DoScsiReadyCheckEventL() = 0;
+	virtual TBool DoScsiReadyCheckEventL() = 0;
 
     /**
     Media change notification

@@ -24,6 +24,7 @@
 #include <f32dbg.h>
 #include "t_server.h"
 #include "t_chlffs.h"
+#include "f32_test_utils.h"
 
 GLDEF_D	RFs TheFs;
 GLDEF_D TFileName gSessionPath;
@@ -157,14 +158,11 @@ StartAgain:
 
 		while(illegalChar)
 			{
-#if defined(__WINS__)
-			if (gSessionPath[0]=='C')
+			if (F32_Test_Utils::Is_SimulatedSystemDrive(TheFs, CurrentDrive()))
 				letter=(TChar)('A'+Math::Rand(aSeed)%26);
 			else
 				letter=(TChar)Math::Rand(aSeed)%256;
-#else
-			letter=(TChar)Math::Rand(aSeed)%256;
-#endif
+
 			TBool space=letter.IsSpace();
 			if (space && spaceChar==-1)
 				spaceChar=i;

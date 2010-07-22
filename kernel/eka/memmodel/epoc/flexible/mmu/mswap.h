@@ -23,5 +23,10 @@
 
 extern void GetSwapInfo(SVMSwapInfo& aInfoOut);
 extern TInt SetSwapThresholds(const SVMSwapThresholds& aThresholds);
+extern TBool GetPhysicalAccessSupported();
+extern TBool GetUsePhysicalAccess();
+extern void SetUsePhysicalAccess(TBool aUsePhysicalAccess);
+extern TUint GetPreferredDataWriteSize();
+extern TInt SetDataWriteSize(TUint aWriteShift);
 
 #endif

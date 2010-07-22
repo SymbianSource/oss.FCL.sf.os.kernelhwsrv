@@ -624,12 +624,14 @@ void AllocateUserMax(RShPool& aPool)
 		{
 		RShBuf buf;
 		r = buf.Alloc(aPool);
+		RDebug::Printf("alloc buf %d returned %d", bufarray.Count(), r);
 		if (r==KErrNoMemory && KTestPoolSizeInBufs>bufarray.Count())
 			{
 			// try again after a delay, to allow for background resource allocation
 			
 			User::After(1000000);
 			r = buf.Alloc(aPool);
+			RDebug::Printf("re-alloc buf %d returned %d", bufarray.Count(), r);
 			}
 		if (!r)
 			{
@@ -647,6 +649,7 @@ void AllocateUserMax(RShPool& aPool)
 		{
 		bufarray[--n].Close();
 		}
+	RDebug::Printf("closed bufs");
 
 	User::After(500000);
 
@@ -655,11 +658,13 @@ void AllocateUserMax(RShPool& aPool)
 	while (n<bufarray.Count())
 		{
 		r = bufarray[n].Alloc(aPool);
+		RDebug::Printf("alloc buf %d returned %d", n, r);
 		if (r==KErrNoMemory)
 			{
 			// try again after a delay, to allow for background resource allocation
 			User::After(1000000);
 			r = bufarray[n].Alloc(aPool);
+			RDebug::Printf("re-alloc buf %d returned %d", n, r);
 			}
 		test_Assert(r == KErrNone, test.Printf(_L("n=%d r=%d\n"), n, r));
 		if(aligned)
@@ -669,12 +674,14 @@ void AllocateUserMax(RShPool& aPool)
 
 	RShBuf extrabuf;
 	r = extrabuf.Alloc(aPool);
+	RDebug::Printf("alloc extra buf returned %d", r);
 	test_Equal(KErrNoMemory, r);
 
 	while (n)
 		{
 		bufarray[--n].Close();
 		}
+	RDebug::Printf("closed bufs");
 
 	bufarray.Close();
 	}

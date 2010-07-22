@@ -1904,7 +1904,7 @@ TInt TTemplateAsspUsbcc::UsbClientConnectorCallback(TAny* aPtr)
 #ifdef _DEBUG
 	_LIT(KIns, "inserted");
 	_LIT(KRem, "removed");
-	__KTRACE_OPT(KUSB, Kern::Printf(" > USB cable now %lS", ptr->iCableConnected ? &KIns : &KRem));
+	__KTRACE_OPT(KUSB, Kern::Printf(" > USB cable now %S", ptr->iCableConnected ? &KIns : &KRem));
 #endif
 	if (ptr->iCableConnected)
 		{

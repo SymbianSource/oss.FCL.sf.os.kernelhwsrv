@@ -669,6 +669,7 @@ void testExtendedLocale()
     eloclus.Append(TPtrC(KDLLExtension));
     r = locale.GetLocaleDllName(ELocaleLanguageSettings, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test.Printf(_L("dllName looking for %s (%s)\n"), dllName.Ptr(), eloclus.Ptr());
     test(dllName.Find(eloclus) != KErrNotFound);
     
@@ -676,18 +677,21 @@ void testExtendedLocale()
 
     r = locale.GetLocaleDllName(ELocaleCollateSetting, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleLocaleSettings, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleTimeDateSettings, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
@@ -720,24 +724,28 @@ void testExtendedLocale()
     eloclge.Append(KDLLExtension);
     r = locale.GetLocaleDllName(ELocaleLanguageSettings, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleCollateSetting, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test(dllName.Find(eloclus) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleLocaleSettings, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test(dllName.Find(eloclge) != KErrNotFound);
     
     dllName.FillZ();
 
     r = locale.GetLocaleDllName(ELocaleTimeDateSettings, dllName);
     test_KErrNone(r);
+	dllName.UpperCase();
     test(dllName.Find(eloclge) != KErrNotFound);
     
     dllName.FillZ();

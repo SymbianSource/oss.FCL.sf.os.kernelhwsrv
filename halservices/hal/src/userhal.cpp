@@ -1,4 +1,4 @@
-// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1999-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -41,7 +41,8 @@ enum THalUserHalPanic
 	EInvalidAttribKeybd=13,
 	EInvalidAttribPen=14,
 	EInvalidAttribMouse=15,
-	EInvalidAttrib3DPointer=16
+	EInvalidAttrib3DPointer=16,
+	EInvalidAttribDigitiserOrientation=17
 	};
 
 void Panic(THalUserHalPanic aPanic)
@@ -928,4 +929,28 @@ TInt GetNumCpus(TInt /*aDeviceNumber*/, TInt /*aAttrib*/, TBool aSet, TAny* aInO
 	*(TInt*)aInOut=UserSvr::HalFunction(EHalGroupKernel, EKernelHalNumLogicalCpus, NULL, NULL);
 	return KErrNone;
 	}
+
+// EDigitiserOrientation
+#if defined(_DEBUG)
+TInt DigitiserOrientation(TInt aDeviceNumber, TInt aAttrib, TBool aSet, TAny* aInOut)
+#else
+TInt DigitiserOrientation(TInt aDeviceNumber, TInt /*aAttrib*/, TBool aSet, TAny* aInOut)
+#endif
+	{
+	__ASSERT_DEBUG(aAttrib == HALData::EDigitiserOrientation, Panic(EInvalidAttribDigitiserOrientation));
+	__ASSERT_DEBUG(aDeviceNumber >= 0, Panic(EInvalidAttribDigitiserOrientation));	
+	
+	if (aSet)
+		{
+		//Set
+		if ( ((TInt)aInOut) < 0 || ((TInt)aInOut) > HALData::EDigitiserOrientation_270) 
+			return KErrArgument;
+		return UserSvr::HalFunction(EHalGroupDigitiser, EDigitiserOrientation, aInOut, (TAny*)ETrue, aDeviceNumber);
+		}
+		
+	//Get
+	__ASSERT_DEBUG(aInOut != 0, Panic(EInvalidAttribDigitiserOrientation));
+	return UserSvr::HalFunction(EHalGroupDigitiser, EDigitiserOrientation, aInOut, (TAny*)EFalse, aDeviceNumber);
+	}
+
 

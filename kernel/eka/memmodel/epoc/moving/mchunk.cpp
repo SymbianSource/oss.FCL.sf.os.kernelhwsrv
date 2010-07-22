@@ -467,7 +467,8 @@ TInt DMemModelChunk::DoCommit(TInt aOffset, TInt aSize, TCommitType aCommitType,
 		{
 		// Allocate a block of contiguous RAM from the free pool
 		TInt numPages=(endOffset-offset)>>m.iPageShift;
-		r=m.AllocContiguousRam(numPages<<m.iPageShift, nextPage, GetPageType(), 0);
+		__NK_ASSERT_DEBUG(EPageFixed == GetPageType());
+		r=m.AllocContiguousRam(numPages<<m.iPageShift, nextPage, 0);
 		if (r!=KErrNone)
 			return r;
 		if(clearRam)

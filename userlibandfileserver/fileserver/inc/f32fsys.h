@@ -508,7 +508,7 @@ private:
 	void DoEntryL(const TDesC& aName,TEntry& anEntry);
 	void ReadSectionL(const TDesC& aName,TInt64 aPos,TAny* aTrg,TInt aLength,const RMessagePtr2& aMessage);
 	TInt ValidateShare(CFileCB& aFile,TShare aReqShare);
-	TInt CheckAttributes(const TDesC& aName,TUint& aSetAttMask,TUint& aClearAttMask);
+	TInt CheckAttributes(TUint& aSetAttMask,TUint& aClearAttMask);
 	TBool IsExtensionMounted(CProxyDriveFactory* aFactory);
 	CFileCB* LocateFile(const TDesC& aName);
 	CFileCache* LocateClosedFile(const TDesC& aName, TBool aResurrect = ETrue);
@@ -1632,6 +1632,7 @@ public:
 	IMPORT_C TInt64 Size64() const;
 	IMPORT_C void SetSize64(TInt64 aSize, TBool aDriveLocked);
     IMPORT_C void SetMaxSupportedSize(TUint64 aMaxFileSize);
+	IMPORT_C TBool DirectIOMode(const RMessagePtr2& aMessage);
 
 
     TInt64 CachedSize64() const;
@@ -2491,6 +2492,7 @@ friend class TDrive;
 
 
 
+class CProxyDriveBody;	// fwd ref
 /**
 @publishedPartner
 @released
@@ -2516,6 +2518,10 @@ public:
 	IMPORT_C virtual TInt GetLastErrorInfo(TDes8& aErrorInfo);
 
 	inline TInt LocalBufferSupport();
+
+	TInt SetAndOpenLibrary(RLibrary aLibrary);
+	RLibrary GetLibrary();
+
 	
 // pure virtual
 
@@ -2759,7 +2765,9 @@ protected:
 		
 private:
 	CMountCB* iMount;
-	TUint32 iReserved;				// Reserved for future expansion
+	CProxyDriveBody* iBody;
+
+friend class LocalDrives;
 	};
 
 

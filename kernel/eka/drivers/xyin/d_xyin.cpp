@@ -1,4 +1,4 @@
-// Copyright (c) 1998-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -19,6 +19,7 @@
 
 #include <drivers/xyin.h>
 #include <kernel/kern_priv.h>
+#include <hal_data.h>
 
 _LIT(KLitDigitiser,"Digitiser");
 
@@ -50,7 +51,8 @@ DDigitiser::DDigitiser()
 	:	DPowerHandler(KLitDigitiser),
 		iMsgQ(rxMsg,this,NULL,1),
 		iSampleDfc(sampleDfc,this,5),
-		iPenUpDfc(penUpDfc,this,5)
+		iPenUpDfc(penUpDfc,this,5),
+		iOrientation(HALData::EDigitiserOrientation_default)
 	{
 //	iBufferIndex=0;
 //	iLastPos=TPoint(0,0);
@@ -358,6 +360,26 @@ __KTRACE_OPT(KEXTENSION,Kern::Printf("HalFunction %d", aFunction));
 		case EDigitiserHalXYState:
 			kumemput32(a1, (TBool*)&iPointerOn, sizeof(TBool));
 			break;
+			
+		// a2 = TBool aSet (ETrue for setting, EFalse for retrieval) 
+		// a1 = TDigitizerOrientation (set)
+		// a1 = &TDigitizerOrientation (get)
+		case EDigitiserOrientation:	
+			if ((TBool)a2)
+				{
+				// Set the orientation attribute
+				// In case user thread, check it has WDD capability
+				if(!Kern::CurrentThreadHasCapability(ECapabilityWriteDeviceData,__PLATSEC_DIAGNOSTIC_STRING("Checked by Hal function EDigitiserOrientation")))
+					return KErrPermissionDenied;
+				iOrientation = (TInt)a1;
+				}
+			else
+				{
+				// Get the orientation attribute, safe copy it into user memory
+				kumemput32(a1, &iOrientation, sizeof(TInt));	
+				}
+			break; 
+			
 		default:
 			r=KErrNotSupported;
 			break;

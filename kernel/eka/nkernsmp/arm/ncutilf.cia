@@ -20,9 +20,6 @@
 #include <arm_gic.h>
 #include <arm_tmr.h>
 
-extern "C" {
-extern SVariantInterfaceBlock* VIB;
-}
 
 __NAKED__ void Arm::GetUserSpAndLr(TAny*) 
 	{
@@ -304,11 +301,10 @@ EXPORT_C __NAKED__ TUint64 NKern::Timestamp()
 	asm("ldr	r3, __TheScheduler ");
 	asm("mrs	r12, cpsr ");				// r12 = saved interrupt mask
 	asm("stmfd	sp!, {r4-r7} ");
-	asm("ldr	r5, [r3, #%a0]" : : "i" _FOFF(TScheduler,iSub[0]));						// r5->subscheduler for CPU0
 	asm("ldr	r4, [r3, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGlobalTimerAddr));		// r4 points to global timer
 	__ASM_CLI();							// disable all interrupts
-	asm("ldr	r6, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iTicksSinceLastSync));	// r6 = count value of last frequency change (low)
-	asm("ldr	r7, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iLastTimerSet));		// r7 = count value of last frequency change (high)
+	asm("ldr	r6, [r3, #%a0]" : : "i" _FOFF(TScheduler,iSX.iCount0));					// r6 = count value of last frequency change (low)
+	asm("ldr	r7, [r3, #%a0]" : : "i" (_FOFF(TScheduler,iSX.iCount0)+4));				// r7 = count value of last frequency change (high)
 	asm("ldr	r2, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountHigh));			// r2 = current timer counter high word
 
 	// To read 64 bit timer value, read high, low, high
@@ -317,21 +313,23 @@ EXPORT_C __NAKED__ TUint64 NKern::Timestamp()
 	asm("mov	r1, r2 ");					// r1 = previous value of timer counter high word
 	asm("ldr	r0, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountLow));			// r0 = current timer counter low word
 	asm("ldr	r2, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountHigh));			// r2 = current timer counter high word
+	asm("mov	r5, r3 ");					// r5 = &TheScheduler
 	asm("cmp	r1, r2 ");					// high word changed?
 	asm("bne	1b ");						// if so, retry
 
 	// Now have R1:R0 = 64 bit global timer count
-	asm("ldr	r3, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iNTimerPeriodM));		// r3 = period multiplier
-	asm("ldr	r4, [r5, #%a0]" : : "i" _FOFF(TSubScheduler,iSSX.iNTimerPeriodS));		// r4 = period multiplier shift
+	asm("ldr	r3, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iI.iM));		// r3 = period multiplier
+	asm("ldrsh	r4, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iI.iX));		// r4 = period multiplier shift
 	asm("subs	r6, r0, r6 ");				// r7:r6 = ticks from last frequency change
 	asm("sbcs	r7, r1, r7 ");
 	asm("umull	r0, r1, r6, r3 ");
 	asm("mov	r2, #0 ");
 	asm("umlal	r1, r2, r7, r3 ");			// r2:r1:r0 = delta * period multiplier
-	asm("rsb	r3, r4, #32 ");
-	asm("ldr	r6, [r5, #%a0]!" : : "i" _FOFF(TSubScheduler,iSSX.iLastSyncTime));		// r6 = timestamp at last freq change (low)
+	asm("ldr	r6, [r5, #%a0]!" : : "i" _FOFF(TScheduler,iSX.iTimestamp0));			// r6 = timestamp at last freq change (low)
 	asm("ldr	r7, [r5, #4] ");														// r7 = timestamp at last freq change (high)
 	asm("msr	cpsr, r12 ");				// restore interrupts
+	asm("rsb	r4, r4, #0 ");
+	asm("rsb	r3, r4, #32 ");
 	asm("movs	r0, r0, lsr r4 ");			// rounding bit into C
 	asm("orr	r0, r0, r1, lsl r3 ");
 	asm("mov	r1, r1, lsr r4 ");
@@ -343,6 +341,58 @@ EXPORT_C __NAKED__ TUint64 NKern::Timestamp()
 
 	asm("__TheScheduler: ");
 	asm(".word	%a0" : : "i" ((TInt)&TheScheduler));
+	}
+
+// Compensate for a change of frequency of the clocking driving the ARM Global Timer
+// Call with interrupts disabled
+__NAKED__ void ArmGlobalTimerFreqChg(const SRatioInv* /*aNewGTimerFreqRI*/)
+	{
+	asm("ldr	r3, __TheScheduler ");
+	asm("stmfd	sp!, {r4-r7} ");
+	asm("ldr	r4, [r3, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGlobalTimerAddr));		// r4 points to global timer
+	asm("ldr	r6, [r3, #%a0]" : : "i" _FOFF(TScheduler,iSX.iCount0));					// r6 = count value of last frequency change (low)
+	asm("ldr	r7, [r3, #%a0]" : : "i" (_FOFF(TScheduler,iSX.iCount0)+4));				// r7 = count value of last frequency change (high)
+	asm("ldr	r12, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountHigh));		// r12 = current timer counter high word
+	asm("mov	r5, r3 ");					// r5 = &TheScheduler
+
+	// To read 64 bit timer value, read high, low, high
+	// If two high values match -> OK, else repeat
+	asm("1:		");
+	asm("mov	r3, r12 ");					// r3 = previous value of timer counter high word
+	asm("ldr	r2, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountLow));			// r0 = current timer counter low word
+	asm("ldr	r12, [r4, #%a0]" : : "i" _FOFF(ArmGlobalTimer,iTimerCountHigh));		// r12 = current timer counter high word
+	asm("cmp	r3, r12 ");					// high word changed?
+	asm("bne	1b ");						// if so, retry
+
+	// Now have R3:R2 = 64 bit global timer count
+	asm("str	r2, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iCount0));					// update count value at last frequency change
+	asm("str	r3, [r5, #%a0]" : : "i" (_FOFF(TScheduler,iSX.iCount0)+4));				// to be equal to current count value
+	asm("subs	r6, r2, r6 ");				// r7:r6 = ticks (at old frequency) from last frequency change
+	asm("sbcs	r7, r3, r7 ");
+	asm("ldr	r3, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iI.iM));		// r3 = old period multiplier
+	asm("ldrsh	r4, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iI.iX));		// r4 = old period multiplier shift
+	asm("ldmia	r0, {r0,r1,r2,r12} ");		// r1:r0=new frequency multiplier, r12:r2=new period multiplier
+	asm("str	r0, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iR.iM));		// update frequency multiplier
+	asm("str	r1, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iR.iX));		// update frequency multiplier
+	asm("str	r2, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iI.iM));		// update period multiplier
+	asm("str	r12, [r5, #%a0]" : : "i" _FOFF(TScheduler,iSX.iGTimerFreqRI.iI.iX));	// update period multiplier
+	asm("umull	r0, r1, r6, r3 ");
+	asm("mov	r2, #0 ");
+	asm("umlal	r1, r2, r7, r3 ");			// r2:r1:r0 = delta * old period multiplier
+	asm("ldr	r6, [r5, #%a0]!" : : "i" _FOFF(TScheduler,iSX.iTimestamp0));			// r6 = timestamp at last freq change (low)
+	asm("ldr	r7, [r5, #4] ");														// r7 = timestamp at last freq change (high)
+	asm("rsb	r4, r4, #0 ");
+	asm("rsb	r3, r4, #32 ");
+	asm("movs	r0, r0, lsr r4 ");			// rounding bit into C
+	asm("orr	r0, r0, r1, lsl r3 ");
+	asm("mov	r1, r1, lsr r4 ");
+	asm("orr	r1, r1, r2, lsl r3 ");		// r1:r0 = (delta * old period multiplier) >> old period multiplier shift
+	asm("adcs	r0, r0, r6 ");				// scaled delta + timestamp at last freq change
+	asm("adcs	r1, r1, r7 ");
+	asm("stmia	r5, {r0,r1} ");				// timestamp at last freq change = now
+	__DATA_MEMORY_BARRIER_Z__(r12);			/* Ensure all updates visible */
+	asm("ldmfd	sp!, {r4-r7} ");
+	__JUMP(,lr);
 	}
 
 #elif defined(__NKERN_TIMESTAMP_USE_INLINE_BSP_CODE__)

@@ -1,0 +1,44 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Digitiser Driver Tests
+// Convienence INF file to build just Digitiser tests "bldmake -f digitiser.inf bldfiles"
+// Test MMPs also part of the offical ../group/bld.inf e32test component.
+//
+
+/**
+@file
+
+@SYMPurpose Kernel and User library test code
+*/
+
+PRJ_PLATFORMS
+
+BASEDEFAULT
+
+PRJ_TESTEXPORTS
+
+digitiser_tests.iby			/epoc32/rom/include/digitiser_tests.iby
+tshell_digitisertests.oby	../../../kernel/eka/rombuild/tshell_digitisertests.oby
+
+digi.auto.bat				/epoc32/rom/include/digi.auto.bat
+
+PRJ_TESTMMPFILES
+
+..\group\d_ldddigitisertest			support
+
+#ifndef SMP
+..\group\t_userdigitisertest
+..\group\t_userdigitisernocaps
+..\group\t_ldddigitisertest
+#endif

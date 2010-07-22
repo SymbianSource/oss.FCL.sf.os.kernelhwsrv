@@ -16,6 +16,11 @@
 //
 //
 
+/** @file
+	@publishedPartner
+	@released
+*/
+
 #ifndef __DMA_HAI_H__
 #define __DMA_HAI_H__
 
@@ -29,12 +34,10 @@
 /** Interface used by PIL to open and close DMA channels.
 
 	Must be implemented by the PSL.
-
-	@publishedPartner
-	@released
 */
 class DmaChannelMgr
 	{
+
 public:
 	/** Opens a channel using a client-provided identifier.
 
@@ -94,6 +97,7 @@ public:
 	*/
 	static TDmaChannel* Open(TUint32 aOpenId, TBool aDynChannel, TUint aPriority);
 
+
 	/** Performs platform-specific operations when a channel is closed.
 
 		If aChannel was opened as a dynamic channel then this call is a sign
@@ -110,6 +114,7 @@ public:
 	*/
 	static void Close(TDmaChannel* aChannel);
 
+
 	/** Function allowing PSL to extend DMA API with new channel-independent
 		operations.
 
@@ -122,13 +127,15 @@ public:
 
 		@return KErrNotSupported if aCmd is not supported. PSL-specific value
 		otherwise.
-	 */
+	*/
 	static TInt StaticExtension(TInt aCmd, TAny* aArg);
+
 
 	/** Acquires the channel manager lock. Called by the PIL before opening and
 		closing a channel.
 	*/
 	static void Wait();
+
 
 	/** Releases the channel manager lock. Called by the PIL after opening and
 		closing a channel.
@@ -139,7 +146,7 @@ private:
 	/** Declared, defined, and called by PSL's DECLARE_STANDARD_EXTENSION(). */
 	friend TInt InitExtension();
 
-	/** Must be called in the DMA DLL entry point. */
+	/** Must be called in the PSL's DECLARE_STANDARD_EXTENSION(). */
 	static TInt Initialise();
 
 	static NFastMutex Lock;
@@ -160,22 +167,26 @@ private:
 
 	These functions are the main interfaces between the PIL
 	(platform-independent layer) and PSL.
-
-	@publishedPartner
-	@released
 */
 class TDmac
 	{
-	friend class DmaChannelMgr;
+friend class DmaChannelMgr;
+
+// The following two friend declarations will become obsolete once that
+// functionality is owned and provided by the controller class instead of the
+// request class. (TDmac::iFreeHdr could then also be made private.)
+friend TInt DDmaRequest::ExpandDesList(TInt, TInt&, SDmaDesHdr*&, SDmaDesHdr*&);
+friend void DDmaRequest::FreeDesList(TInt&, SDmaDesHdr*&, SDmaDesHdr*&);
 
 protected:
-	/** Data required for creating a new instance */
+	/** Data required for creating a new instance. */
 	struct SCreateInfo
 		{
 		/** True if DMAC uses hardware descriptors (i.e. supports
 			scatter/gather mode).
 		*/
 		TBool iCapsHwDes;
+
 		/** Initial maximum number of descriptors and headers (shared by all
 			channels) to be allocated by the PIL. If at run time more
 			descriptors are needed then they will be dynamically allocated and
@@ -186,14 +197,22 @@ protected:
 			the maximum transfer size per descriptor and also likely usage
 			scenarios for the platform or device (number of drivers using DMA,
 			their traffic patterns, simultaneity of operations, etc.).
+
+			(NB: Dynamic growing of the descriptor pool is not yet implemented
+			in the PIL, so this value is currently also the final maximum
+			number of descriptors.)
 		*/
 		TInt iDesCount;
-		/** Size of individual descriptors. Use sizeof(TDmaTransferArgs) for
-		 	single-buffer and double-buffer (i.e. non-s/g) controllers.
+
+		/** Size of an individual descriptor.
+
+			Use sizeof(TDmaTransferArgs) for single-buffer and double-buffer
+		 	(i.e. non-s/g) controllers.
 		*/
 		TInt iDesSize;
+
 		/** Bitmask used when creating the memory chunk storing the descriptor
-			pool. Used only for hardware descriptors.
+			pool in the PIL. Used only for hardware descriptors.
 
 			The access part must be EMapAttrSupRw. If the chunk is cached
 			and/or buffered, the PSL must flush the data cache and/or drain the
@@ -207,15 +226,19 @@ protected:
 		TUint iDesChunkAttribs;
 		};
 
-	/** Base class constructor. */
+	/** Base class constructor.
+	 */
 	TDmac(const SCreateInfo& aInfo);
 
-	/** Base class 2nd-phase constructor. */
+	/** Base class 2nd-phase constructor.
+	 */
 	TInt Create(const SCreateInfo& aInfo);
 
 public:
-	/** Base class virtual destructor. */
+	/** Base class virtual destructor.
+	 */
 	virtual ~TDmac();
+
 
 	/** Allocates a number of headers (and hence also descriptors) from the
 		header/descriptor pools. Called by the PIL but may also be used by the
@@ -223,16 +246,19 @@ public:
 	*/
 	TInt ReserveSetOfDes(TInt aCount);
 
+
 	/** Returns previously allocated headers (and hence also descriptors) to
 		the header/descriptor pools. Called by the PIL but may also be used by
 		the PSL.
 	*/
 	void ReleaseSetOfDes(TInt aCount);
 
+
 	/** Called by the PIL during request fragmentation to fill a descriptor or
 		pseudo descriptor with transfer arguments.
 	*/
 	TInt InitDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aTransferArgs);
+
 
 	/** Called by the PIL in TDmaChannel::IsrRedoRequest() if any of the
 		latter's arguments is non-zero.
@@ -240,32 +266,25 @@ public:
 	TInt UpdateDes(const SDmaDesHdr& aHdr, TUint32 aSrcAddr, TUint32 aDstAddr,
 				   TUint aTransferCount, TUint32 aPslRequestInfo);
 
+
 	/** Returns a reference to the associated pseudo descriptor for a given
 		descriptor header. For use by PIL and PSL.
 	*/
 	inline TDmaTransferArgs& HdrToDes(const SDmaDesHdr& aHdr) const;
+
 
 	/** Returns a reference to the associated hardware descriptor for a given
 		descriptor header. For use by PIL and PSL.
 	*/
 	inline TAny* HdrToHwDes(const SDmaDesHdr& aHdr) const;
 
+
 	/** Returns the physical address of the hardware descriptor
 		pointed to by aDes. For use by PIL and PSL.
 	*/
 	inline TUint32 HwDesLinToPhys(TAny* aDes) const;
 
-	/** Called by the PIL to acquire the controller lock which protects the
-		header and descriptor pools.
-	*/
-	inline void Wait();
 
-	/** Called by the PIL to release the controller lock which protects the
-		header and descriptor pools.
-	*/
-	inline void Signal();
-
-public:
 	/** Called by PIL when one fragment (single-buffer and double-buffer DMACs)
 		or list of fragments (scatter/gather DMAC) is to be transferred.
 
@@ -282,6 +301,7 @@ public:
 		@param aHdr Header associated with fragment to transfer.
 	*/
 	virtual void Transfer(const TDmaChannel& aChannel, const SDmaDesHdr& aHdr);
+
 
 	/** Called by PIL when two lists of fragments (scatter/gather DMAC with
 		asymmetrical linked-list capability) are to be transferred.
@@ -302,6 +322,7 @@ public:
 	virtual void Transfer(const TDmaChannel& aChannel, const SDmaDesHdr& aSrcHdr,
 						  const SDmaDesHdr& aDstHdr);
 
+
 	/** Called by PIL to stop a transfer on a given channel.
 
 		The stopping must occur synchronously as the PIL assumes the channel
@@ -315,6 +336,7 @@ public:
 		request is queued.
 	*/
 	virtual void StopTransfer(const TDmaChannel& aChannel) = 0;
+
 
 	/** Called by PIL to pause (suspend) a transfer on a given channel.
 
@@ -330,8 +352,9 @@ public:
 
 		@post No interrupt will occur from this channel until it is
 		resumed.
-	 */
+	*/
 	virtual TInt PauseTransfer(const TDmaChannel& aChannel);
+
 
 	/** Called by PIL to resume a paused (suspended) transfer on a given
 		channel.
@@ -341,13 +364,15 @@ public:
 		Pause bit in a H/W descriptor.
 
 		The function must be implemented by the PSL if
-		SDmacCaps::iChannelPauseAndResume is reported as true.
+		SDmacCaps::iChannelPauseAndResume or
+		SDmacCaps::iLinkedListPausedInterrupt is reported as true.
 
 		@return KErrNone if the transfer has been resumed successfully,
 		KErrCompletion if there was no paused transfer, KErrGeneral
 		if a general error occurred preventing a successful outcome.
-	 */
+	*/
 	virtual TInt ResumeTransfer(const TDmaChannel& aChannel);
+
 
 	/** Called by PIL to check whether a DMA channel is idle.
 
@@ -362,6 +387,7 @@ public:
 		@return ETrue if channel idle, EFalse if transferring.
 	*/
 	virtual TBool IsIdle(const TDmaChannel& aChannel) = 0;
+
 
 	/** Called by PIL to retrieve from the PSL the maximum transfer length
 		based on the parameters passed.
@@ -379,6 +405,7 @@ public:
 	*/
 	virtual TUint MaxTransferLength(TDmaChannel& aChannel, TUint aSrcFlags,
 									TUint aDstFlags, TUint32 aPslInfo) = 0;
+
 
 	/** Called by PIL to retrieve from the PSL the memory alignment mask based
 		on the parameters passed. Some DMA controllers impose alignment
@@ -412,6 +439,7 @@ public:
 	virtual TUint AddressAlignMask(TDmaChannel& aChannel, TUint aTargetFlags,
 								   TUint aElementSize, TUint32 aPslInfo) = 0;
 
+
 	/** Called by PIL during fragmentation to initialise a hardware descriptor.
 
 		The PSL must assume the descriptor is the last in the chain and so set
@@ -433,6 +461,7 @@ public:
 	*/
 	virtual TInt InitHwDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aTransferArgs);
 
+
 	/** Called by PIL during fragmentation to initialise a hardware descriptor
 		on the source side of an asymmetric linked list.
 
@@ -452,6 +481,7 @@ public:
 	*/
 	virtual TInt InitSrcHwDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aTransferArgs);
 
+
 	/** Called by PIL during fragmentation to initialise a hardware descriptor
 		on the destination side of an asymmetric linked list.
 
@@ -470,6 +500,7 @@ public:
 		successful outcome.
 	*/
 	virtual TInt InitDstHwDes(const SDmaDesHdr& aHdr, const TDmaTransferArgs& aTransferArgs);
+
 
 	/** Called by the PIL in ISR context to change specific fields in a
 		hardware descriptor.
@@ -497,6 +528,7 @@ public:
 	virtual TInt UpdateHwDes(const SDmaDesHdr& aHdr, TUint32 aSrcAddr, TUint32 aDstAddr,
 							 TUint aTransferCount, TUint32 aPslRequestInfo);
 
+
 	/** Called by the PIL in ISR context to change specific fields in a
 		hardware descriptor.
 
@@ -520,6 +552,7 @@ public:
 	*/
 	virtual TInt UpdateSrcHwDes(const SDmaDesHdr& aHdr, TUint32 aSrcAddr,
 								TUint aTransferCount, TUint32 aPslRequestInfo);
+
 
 	/** Called by the PIL in ISR context to change specific fields in a
 		hardware descriptor.
@@ -545,6 +578,7 @@ public:
 	virtual TInt UpdateDstHwDes(const SDmaDesHdr& aHdr, TUint32 aDstAddr,
 								TUint aTransferCount, TUint32 aPslRequestInfo);
 
+
 	/** Called by PIL, when fragmenting a request, to append a new hardware
 		descriptor to an existing descriptor chain. May also be called by
 		clients who wish to create their own descriptor chains.
@@ -558,6 +592,7 @@ public:
 		@param aNextHdr Header associated with fragment to append
 	*/
 	virtual void ChainHwDes(const SDmaDesHdr& aHdr, const SDmaDesHdr& aNextHdr);
+
 
 	/** Called by PIL when queuing a new request while the channel is running.
 
@@ -575,6 +610,7 @@ public:
 	*/
 	virtual void AppendHwDes(const TDmaChannel& aChannel, const SDmaDesHdr& aLastHdr,
 							 const SDmaDesHdr& aNewHdr);
+
 
 	/** Called by PIL when queuing a new request while the channel is running.
 
@@ -598,6 +634,7 @@ public:
 							 const SDmaDesHdr& aSrcLastHdr, const SDmaDesHdr& aSrcNewHdr,
 							 const SDmaDesHdr& aDstLastHdr, const SDmaDesHdr& aDstNewHdr);
 
+
 	/** Called by PIL when completing or cancelling a request to cause the PSL
 		to unlink the last item in the h/w descriptor chain from a subsequent
 		chain that it was possibly linked to.
@@ -612,6 +649,7 @@ public:
 	*/
 	virtual void UnlinkHwDes(const TDmaChannel& aChannel, SDmaDesHdr& aHdr);
 
+
 	/** Called by PIL when freeing descriptors back to the shared pool in
 		FreeDesList(). The PSL inside ClearHwDes() can clear the contents of
 		the h/w descriptor.
@@ -624,8 +662,9 @@ public:
 		hardware descriptors.
 
 		@param aHdr Header associated with the h/w descriptor being freed.
-	 */
+	*/
 	virtual void ClearHwDes(const SDmaDesHdr& aHdr);
+
 
 	/** Called by PIL to logically link two physical channels.
 
@@ -642,8 +681,9 @@ public:
 		KErrArgument if a1stChannel was already linked to a different channel,
 		KErrGeneral if a general error occurred preventing a successful
 		outcome. The default PIL implementation returns KErrNotSupported.
-	 */
+	*/
 	virtual TInt LinkChannels(TDmaChannel& a1stChannel, TDmaChannel& a2ndChannel);
+
 
 	/** Called by PIL to logically unlink a physical channel from its linked-to
 		successor.
@@ -659,8 +699,9 @@ public:
 		KErrCompletion if the channel was not linked to another channel,
 		KErrGeneral if a general error occurred preventing a successful
 		outcome. The default PIL implementation returns KErrNotSupported.
-	 */
+	*/
 	virtual TInt UnlinkChannel(TDmaChannel& aChannel);
+
 
 	/** Called by a test harness to force an error when the next fragment is
 		transferred.
@@ -674,6 +715,7 @@ public:
 	*/
 	virtual TInt FailNext(const TDmaChannel& aChannel);
 
+
 	/** Called by a test harness to force the DMA controller to miss one or
 		more interrupts.
 
@@ -686,6 +728,7 @@ public:
 		returns KErrNotSupported.
 	*/
 	virtual TInt MissNextInterrupts(const TDmaChannel& aChannel, TInt aInterruptCount);
+
 
 	/** Function allowing platform-specific layer to extend channel API with
 		new channel-specific operations.
@@ -701,6 +744,7 @@ public:
 		otherwise.
 	*/
 	virtual TInt Extension(TDmaChannel& aChannel, TInt aCmd, TAny* aArg);
+
 
 	/** Called by the PIL to query the number of elements that have so far been
 		transferred by the hardware descriptor associated with aHdr at the
@@ -720,6 +764,7 @@ public:
 		hardware descriptor associated with aHdr at the source port
 	*/
 	virtual TUint32 HwDesNumSrcElementsTransferred(const SDmaDesHdr& aHdr);
+
 
 	/** Called by the PIL to query the number of elements that have so far been
 		transferred by the hardware descriptor associated with aHdr at the
@@ -746,7 +791,7 @@ protected:
 		@param aChannel The channel the ISR relates to
 		@param aEventMask Bitmask of one or more TDmaCallbackType values
 		@param aIsComplete Set to ETrue if no error was encountered
-	 */
+	*/
 	static void HandleIsr(TDmaChannel& aChannel, TUint aEventMask, TBool aIsComplete);
 
 private:
@@ -755,6 +800,16 @@ private:
 
 	/** Called in ~TDmac() */
 	void FreeDesPool();
+
+	/** Called by the PIL to acquire the controller lock which protects the
+		header and descriptor pools.
+	*/
+	inline void Wait();
+
+	/** Called by the PIL to release the controller lock which protects the
+		header and descriptor pools.
+	*/
+	inline void Signal();
 
 private:
 	NFastMutex iLock;			 // protect descriptor reservation and allocation
@@ -785,9 +840,6 @@ public:
 /** Single-buffer DMA channel.
 
 	Can be instantiated or further derived by the PSL.
-
-	@publishedPartner
-	@released
 */
 class TDmaSbChannel : public TDmaChannel
 	{
@@ -795,6 +847,7 @@ private:
 	virtual void DoQueue(const DDmaRequest& aReq);
 	virtual void DoCancelAll();
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr);
+
 private:
 	enum {EIdle = 0, ETransferring} iState;
 	};
@@ -803,9 +856,6 @@ private:
 /** Double-buffer DMA channel.
 
 	Can be instantiated or further derived by the PSL.
-
-	@publishedPartner
-	@released
 */
 class TDmaDbChannel : public TDmaChannel
 	{
@@ -813,6 +863,7 @@ private:
 	virtual void DoQueue(const DDmaRequest& aReq);
 	virtual void DoCancelAll();
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr);
+
 private:
 	enum {EIdle = 0, ETransferring, ETransferringLast} iState;
 	};
@@ -821,9 +872,6 @@ private:
 /** Scatter-gather DMA channel.
 
 	Can be instantiated or further derived by the PSL.
-
-	@publishedPartner
-	@released
 */
 class TDmaSgChannel : public TDmaChannel
 	{
@@ -832,6 +880,7 @@ private:
 	virtual void DoCancelAll();
 	virtual void DoUnlink(SDmaDesHdr& aHdr);
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr);
+
 private:
 	enum {EIdle = 0, ETransferring} iState;
 	};
@@ -841,8 +890,7 @@ private:
 
 	Can be instantiated or further derived by the PSL.
 
-	@publishedPartner
-	@released
+	@prototype
 */
 class TDmaAsymSgChannel : public TDmaChannel
 	{
@@ -852,8 +900,9 @@ private:
 	virtual void DoUnlink(SDmaDesHdr& aHdr);
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aSrcCompletedHdr,
 					   SDmaDesHdr*& aDstCompletedHdr);
+
 private:
-	SDmaDesHdr* iSrcCurHdr;		   // source fragment being transferred or NULL
+	SDmaDesHdr* iSrcCurHdr;	  // source fragment being transferred or NULL
 	SDmaDesHdr** iSrcNullPtr; // Pointer to NULL pointer following last source fragment
 	SDmaDesHdr* iDstCurHdr;	  // destination fragment being transferred or NULL
 	SDmaDesHdr** iDstNullPtr; // Pointer to NULL pointer following last destination fragment

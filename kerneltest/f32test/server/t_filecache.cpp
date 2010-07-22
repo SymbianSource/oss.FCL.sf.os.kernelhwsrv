@@ -22,6 +22,7 @@
 #include "t_server.h"
 #include <e32twin.h>
 #include <e32rom.h>
+#include <u32hal.h>
 
 
 //----------------------------------------------------------------------------------------------
@@ -250,6 +251,108 @@ void TestBuffer(TDes8& aBuffer, TInt aPos, TInt aLength)
 		}
 	}
 
+TInt FreeRam()
+	{
+	// wait for any async cleanup in the supervisor to finish first...
+	UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+
+	TMemoryInfoV1Buf meminfo;
+	UserHal::MemoryInfo(meminfo);
+	return meminfo().iFreeRamInBytes;
+	}
+
+void LowMemoryTest()
+	{
+	TInt fileSize = 0;
+	
+	const TInt KWriteLen = 128*1024;
+	test.Next(_L("Test appending to a file with low memory"));
+	gBufPtr.SetLength(KBufSize);
+
+	RFile f;
+	TFileName testFile   = _L("TEST.BIN");
+
+	TInt r = f.Replace(TheFs, testFile, EFileWrite | EFileWriteBuffered);
+	test_KErrNone(r);
+
+	TInt pos = 0;
+
+	TPtrC8 writePtr;
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	r = f.Write(pos, writePtr);
+	test_KErrNone(r);
+	pos+= writePtr.Length();
+
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+
+
+	TUint freeRam = FreeRam();
+	const TInt KPageSize=4096;
+	freeRam = (freeRam + KPageSize -1) & ~(KPageSize-1);
+	test.Printf(_L("FreeRam = %d"), freeRam);
+
+	RChunk chunk;
+	TChunkCreateInfo chunkInfo;
+	chunkInfo.SetDisconnected(0, 0, freeRam);
+	chunkInfo.SetPaging(TChunkCreateInfo::EUnpaged);
+	test_KErrNone(chunk.Create(chunkInfo));
+
+	test.Printf(_L("Gobbling all of memory..."));
+	
+	TUint commitEnd;
+	for (commitEnd = 0; commitEnd < freeRam; commitEnd += KPageSize) 
+		{
+		r = chunk.Commit(commitEnd,KPageSize);
+		if (r != KErrNone)
+			break;
+		
+		}
+	test.Printf(_L("commitEnd %d, r %d"), commitEnd, r);
+	test_Value(r, r == KErrNoMemory || r == KErrNone);
+
+	test.Printf(_L("FreeRam = %d"), FreeRam());
+
+	pos-= KSegmentSize;
+	writePtr.Set(gBufPtr.MidTPtr(pos, KWriteLen));
+
+	test.Printf(_L("Writing to file..."));
+
+	// now we have gobbled all or most of memory, the next write can fail
+	// if it does keep decommitting memory until it succeeds and then test that the file size is correct
+	commitEnd = 0;
+	do {
+
+		r = f.Write(pos, writePtr);
+		test_Value(r, r == KErrNoMemory || r == KErrNone);
+		if (r == KErrNoMemory)
+			{
+			chunk.Decommit(commitEnd,KPageSize);
+			commitEnd += KPageSize;
+			}
+		}
+	while (r == KErrNoMemory);
+
+	pos+= writePtr.Length();
+
+	test.Printf(_L("Gsetting size of file ..."));
+	r = f.Size(fileSize);
+	test_KErrNone(r);
+	test_Equal(fileSize,pos);
+
+	test.Printf(_L("Closing file ..."));
+	f.Close();
+
+	test.Printf(_L("Closing chunk ..."));
+	chunk.Close();
+
+	test.Printf(_L("FreeRam = %d"), FreeRam());
+	}
+
+
 
 LOCAL_C void UnitTests()
 //
@@ -298,6 +401,8 @@ LOCAL_C void UnitTests()
 	TInt uncachedBytesRead;
 	TInt uncachedPacketsRead;
 #endif
+
+	LowMemoryTest();
 
 	// create an empty file, so that any writes overlapping segemt boundaries
 	// need a read first
@@ -455,6 +560,9 @@ LOCAL_C void UnitTests()
 	test_KErrNone(r);
 
 	r = f.Replace(TheFs, testFile, EFileReadBuffered | EFileWrite | EFileWriteBuffered);
+	test_KErrNone(r);
+
+	r = f.SetSize(gFileCacheConfig.iCacheSize);
 	test_KErrNone(r);
 
 	RTimer timer;
@@ -1796,6 +1904,10 @@ GLDEF_C TInt E32Main()
 //TheFs.SetDebugRegister(KCACHE);
 			DoTests(gDrive);
 //TheFs.SetDebugRegister(0);
+
+		if ((gVolInfo.iDrive.iMediaAtt & KMediaAttFormattable))
+			Format(gDrive);
+
 			test.End();
 //			}
 		}

@@ -262,6 +262,8 @@ include/drivers/resource.h						SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/resourcecontrol_trace.h			SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/resource_category.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/resource_extend.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourcecontrol_settings.h		SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
+include/drivers/resourcecontrol_clientsettings.h	SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
 // Power Resource Manager User-Side API
 include/drivers/resmanus_trace.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)

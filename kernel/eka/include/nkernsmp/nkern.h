@@ -1243,7 +1243,7 @@ public:
 class TStopIPI : public TGenericIPI
 	{
 public:
-	void StopCPUs();
+	TUint32 StopCPUs();
 	void ReleaseCPUs();
 	static void Isr(TGenericIPI*);
 public:

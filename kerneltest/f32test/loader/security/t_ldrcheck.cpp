@@ -588,7 +588,7 @@ static TInt CorruptFile(const TDesC& aFileName)
     RFile corrFile;
     CleanupClosePushL(corrFile);	
 
-    TInt r=corrFile.Open(TheFs, aFileName, EFileWrite);
+    TInt r=corrFile.Open(TheFs, aFileName, EFileWrite|EFileWriteDirectIO);
 	if(r != KErrNone)
         return r;
 	

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of "Eclipse Public License v1.0"
@@ -11,7 +11,7 @@
 // Contributors:
 //
 // Description:
-// e32test\dma\t_dma.cpp
+// e32test\dmav2\t_dma2.cpp
 
 #include "d_dma2.h"
 #include "u32std.h"
@@ -26,18 +26,67 @@
 
 // DMA test framework command  parameter options
 
-// SelfTest Option
+// SelfTest option
 _LIT(KArgSelfTest, "/SELFTEST");  
 _LIT(KArgSelfTest2, "/S");		  
 
-//Verbose Option
+//Verbose option
 _LIT(KArgVerboseOutput, "/VERBOSE"); 
 _LIT(KArgVerboseOutput2, "/V");	     
   
+//Simple transfer test option
+_LIT(KArgSimpleTest, "/simple"); 
+
+//Callback test option
+_LIT(KArgCallBackTest, "/callback");
+
+//Suspend test option
+_LIT(KArgSuspendTest, "/suspend");
+
+//Multipart transfer tests
+_LIT(KArgMultiPartTest, "/multi");
+
+//Isr and dfc test option
+_LIT(KArgIsrDfcTest, "/isrdfc");
+
+//Isr reque  test option
+_LIT(KArgIsrequeTest, "/isreque");
+
+//Benchmark test option
+_LIT(KArgBenchmarkTest, "/bench");
+
+//Graphics test option
+_LIT(KArgGraphicTest, "/graphic");
+
+//DMA channel (opening and closing)  test option
+_LIT(KArgChannelTest, "/channel");
+
+//Queue test option
+_LIT(KArgQueueTest, "/queue");
+
+//Fragment test option
+_LIT(KArgFragmentTest, "/fragment");
+
+//Request test option
+_LIT(KArgRequestTest, "/request");
+
+
 
 TBool gHelpRequested;   // print usage 
 TBool gVerboseOutput;   // enable verbose output 
 TBool gSelfTest;        // run SelfTest 
+TBool gSimpleTest;		// run only Simple transfer test
+TBool gCallBack;		// run only Callback test
+TBool gSuspend;			// run only Pause and resume tests
+TBool gIsrReque;		// run only IsrReque tests
+TBool gMultiPart;		// run only Multipart tests
+TBool gIsrAndDfc;		// run only IsrAndDfc tests
+TBool gBenchmark;		// run only Benchmark tests
+TBool gGraphic;			// run only Graphic tests
+TBool gFragment;		// run only Fragment related tests
+TBool gChannel;			// run only Channel(open/close)tests
+TBool gQueue;			// run only Queue related tests
+TBool gRequest;			// run only Request related tests
 
 /**
 This function prints out the PSL test Information
@@ -77,8 +126,25 @@ void CDmaTest::PrintTestInfo() const
 
 void CDmaTest::OpenDmaSession()
 	{
-	TInt r = iDmaSession.Open();
+	// Only open a new session if one
+	// was not already supplied
+	if(iDmaSession.Handle() == KNullHandle)
+		{
+		TInt r = iDmaSession.Open();
+		TEST_ASSERT(r == KErrNone);
+		r = iDmaSession.OpenSharedChunk(iChunk);
+		TEST_ASSERT(r == KErrNone);
+		}
+	}
+
+// Open another handle to the test driver
+void CDmaTest::OpenDmaSession(const RDmaSession& aSession)
+	{
+	iDmaSession = aSession;
+	TInt r = iDmaSession.Duplicate(RThread(), EOwnerThread);
 	TEST_ASSERT(r == KErrNone);
+
+	// open another handle to the test driver chunk
 	r = iDmaSession.OpenSharedChunk(iChunk);
 	TEST_ASSERT(r == KErrNone);
 	}
@@ -89,6 +155,26 @@ void CDmaTest::CloseDmaSession()
 	iDmaSession.Close();
 	}
 
+void CDmaTest::PreTransferSetup()
+	{
+	}
+
+TInt CDmaTest::DoPostTransferCheck()
+	{
+	return KErrNotSupported;
+	}
+
+void CDmaTest::ChannelPause(TUint aChannelSessionCookie)
+{
+	TInt r = iDmaSession.ChannelPause(aChannelSessionCookie);
+	TEST_ASSERT(r == KErrNone);
+}
+
+void CDmaTest::ChannelResume(TUint aChannelSessionCookie)
+{
+	TInt r = iDmaSession.ChannelResume(aChannelSessionCookie);
+	TEST_ASSERT(r == KErrNone);
+}
 //////////////////////////////////////////////////////////////////////
 // CSingleTransferTest
 //////////////////////////////////////////////////////////////////////
@@ -123,7 +209,7 @@ void CSingleTransferTest::CreateDmaRequest()
 			RDebug::Printf("Calling New Request API\n");
 			}
 		iActual.iRequestResult.iCreate =
-			iDmaSession.RequestCreateNew(iChannelSessionCookie, iRequestSessionCookie, iMaxFragmentSize);
+			iDmaSession.RequestCreate(iChannelSessionCookie, iRequestSessionCookie, iMaxFragmentSize);
 		}
 	else
 		{
@@ -132,7 +218,7 @@ void CSingleTransferTest::CreateDmaRequest()
 			RDebug::Printf("Calling Old Request API\n");
 			}
 		iActual.iRequestResult.iCreate =
-			iDmaSession.RequestCreate(iChannelSessionCookie, iRequestSessionCookie, iMaxFragmentSize);
+			iDmaSession.RequestCreateOld(iChannelSessionCookie, iRequestSessionCookie, iMaxFragmentSize);
 		}
 	}
 
@@ -158,7 +244,6 @@ void CSingleTransferTest::Fragment()
 			}
 		iActual.iRequestResult.iFragmentationResult =
 			iDmaSession.FragmentRequestOld(iRequestSessionCookie, iTransferArgs);
-
 		}
 
 	const TInt fragmentCount = iDmaSession.RequestFragmentCount(iRequestSessionCookie);
@@ -211,6 +296,22 @@ void CSingleTransferTest::PrintTestType() const
 	RDebug::RawPrint(_L("Single transfer"));
 	}
 
+void CSingleTransferTest::PrintTestInfo() const
+	{
+	CDmaTest::PrintTestInfo();
+
+	// State which API versions are being used
+	if(iUseNewFragment)
+		RDebug::RawPrint(_L(", Fragment v2,"));
+	else
+		RDebug::RawPrint(_L(", Fragment v1,"));
+
+	if(iUseNewRequest)
+		RDebug::RawPrint(_L(" DDmaRequest v2"));
+	else
+		RDebug::RawPrint(_L(" DDmaRequest v1"));
+	}
+
 void CSingleTransferTest::PreTransferSetup()
 	{
 	if(iPreTransfer)
@@ -239,16 +340,164 @@ TBool CSingleTransferTest::Result()
 	return result;
 	}
 
+//////////////////////////////////////////////////////////////////////
+// CDmaTestDecorator
+//////////////////////////////////////////////////////////////////////
 
+CDmaTestDecorator::CDmaTestDecorator(CDmaTest* aDecoratedTest)
+	: CDmaTest(_L("Decorated Test"), 1, NULL, NULL), iDecoratedTest(aDecoratedTest)
+	{}
+
+CDmaTestDecorator::CDmaTestDecorator(const CDmaTestDecorator& aOther)
+	: CDmaTest(aOther), iDecoratedTest( static_cast<CDmaTest*>( aOther.iDecoratedTest->Clone() ) )
+	// Need cast because Clone does not have a covariant return type,
+	// as not all compillers allow it
+	{}
+
+//////////////////////////////////////////////////////////////////////
+// CMultiVersionTest
+//////////////////////////////////////////////////////////////////////
+
+CMultiVersionTest::CMultiVersionTest(CSingleTransferTest* aDmaTest)
+	: CDmaTestDecorator(aDmaTest), iNewVersionTest(NULL)
+	{
+	}
+
+CMultiVersionTest::CMultiVersionTest(const CMultiVersionTest& aOther)
+	: CDmaTestDecorator(aOther), iNewVersionTest( aOther.iNewVersionTest ? static_cast<CSingleTransferTest*>(aOther.iNewVersionTest->Clone()) : NULL)
+	{
+	}
+
+CMultiVersionTest::~CMultiVersionTest()
+	{
+	delete iDecoratedTest;
+	delete iNewVersionTest;
+	}
+
+void CMultiVersionTest::SetupL()
+	{
+	// Open a tempory dma session to find out the
+	// capabilities of the dma channel.
+	OpenDmaSession();
+	Configure();
+	CloseDmaSession();
+	}
+
+void CMultiVersionTest::Announce() const
+	{
+	CTest::Announce();
+
+	iDecoratedTest->Announce();
+
+	if(iNewVersionTest)
+		iNewVersionTest->Announce();
+	}
+
+void CMultiVersionTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("Multi version test wrapper"));
+	}
+
+void CMultiVersionTest::PrintTestInfo() const
+	{
+		if(iNewVersionTest)
+			{ 		
+			RDebug::RawPrint(_L("Running tests using Version 2 PIL"));
+			}
+		else
+			{
+			RDebug::RawPrint(_L("Running tests using Version 1 PIL"));		
+			}
+	}
+
+void CMultiVersionTest::RunTest()
+	{
+	OpenDmaSession();
+
+	// iDecoratedTest is the test, in the old configuration
+	// iNewVersionTest is the same test, configured
+	// to use the new APIs
+	//
+	// 2 objects are needed since they can each store
+	// their own results
+
+	iDecoratedTest->OpenDmaSession(iDmaSession);
+	(*iDecoratedTest)();
+
+	if(iNewVersionTest)
+		{
+		iNewVersionTest->OpenDmaSession(iDmaSession);
+		(*iNewVersionTest)();
+		}
+
+	CloseDmaSession();
+	}
+
+/**
+Maybe create another test object to run with new API
+
+Pass on the cookie for the channel they must test
+*/
+void CMultiVersionTest::Configure()
+	{
+	static_cast<CSingleTransferTest*>(iDecoratedTest)->UseNewDmaApi(EFalse);
+	iDecoratedTest->SetChannelCookie(iChannelCookie);
+
+	if(Version2PILAvailable())
+		{
+		iNewVersionTest = static_cast<CSingleTransferTest*>(iDecoratedTest->Clone());
+		TEST_ASSERT(iNewVersionTest != NULL);
+
+		iNewVersionTest->UseNewDmaApi(ETrue);
+		iNewVersionTest->SetChannelCookie(iChannelCookie);
+		}
+	}
+
+/**
+Discover from DMA channel what PIL versions are available.
+In practice V1 APIs will always be available, V2 may be.
+*/
+TBool CMultiVersionTest::Version2PILAvailable()
+	{
+	TUint channelSessionCookie;
+	TInt r = iDmaSession.ChannelOpen(iChannelCookie, channelSessionCookie);
+	TEST_ASSERT(r == KErrNone);
+
+	TDmacTestCaps channelCaps;
+	r = iDmaSession.ChannelCaps(channelSessionCookie, channelCaps);
+	TEST_ASSERT(r == KErrNone);
+
+	r = iDmaSession.ChannelClose(channelSessionCookie);
+	TEST_ASSERT(r == KErrNone);
+
+	return channelCaps.iPILVersion >= 2;
+	}
+
+TBool CMultiVersionTest::Result()
+	{
+	TBool v1Result = iDecoratedTest->Result();
+	if(gVerboseOutput || !v1Result)
+		RDebug::Printf("V1 API result: %s", v1Result ? "success" : "failure");
+
+	TBool v2Result = iNewVersionTest ? iNewVersionTest->Result() : ETrue;
+	if(gVerboseOutput || !v1Result)
+		RDebug::Printf("V2 API result: %s", v2Result ? "success" : "failure");
+	return v1Result && v2Result;
+	}
 
 //////////////////////////////////////////////////////////////////////
 // CDmaBenchmark
 //////////////////////////////////////////////////////////////////////
-
 CDmaBenchmark::CDmaBenchmark(const TDesC& aName, TInt aIterations, const TResultSet& aExpectedResults, const TDmaTransferArgs& aTransferArgs, TUint aMaxFragmentSize)
 	:CSingleTransferTest(aName, aIterations, aTransferArgs, aExpectedResults, aMaxFragmentSize, NULL, NULL)
 	{
 	UseNewDmaApi(EFalse);
+	}
+
+CDmaBenchmark::CDmaBenchmark(const CDmaBenchmark& aOriginal)
+	:CSingleTransferTest(aOriginal)
+	{
+	CopyL(aOriginal.iResultArray, iResultArray);
 	}
 
 CDmaBenchmark::~CDmaBenchmark()
@@ -288,17 +537,12 @@ TBool CDmaBenchmark::Result()
 		RDebug::Printf("  Mean time: %lu us", MeanResult());
 		}
 
-	//TODO this will be handled by the ctor later
-	iResultArray.Close();
-
 	return result;
 	}
-
 
 //////////////////////////////////////////////////////////////////////
 // CDmaBmFragmentation
 //////////////////////////////////////////////////////////////////////
-
 CDmaBmFragmentation::CDmaBmFragmentation(const TDesC& aName, TInt aIterations, const TDmaTransferArgs& aTransferArgs, TUint aMaxFragmentSize)
 	:CDmaBenchmark(aName, aIterations, ExpectedResults, aTransferArgs, aMaxFragmentSize)
 	{}
@@ -331,20 +575,333 @@ void CDmaBmFragmentation::RunTest()
 	Fragment();
 	FreeRequest();
 	CloseChannel();
-
 	CloseDmaSession();
 	}
 
 //////////////////////////////////////////////////////////////////////
+//	CPauseResumeTest
+//
+//	-Time how long a given transfer takes
+//	-Pause the channel
+//	-repeat the transfer (queued asynchronously)
+//	-wait for some time (say, 3 times the time measured)
+//	-read the value of the TRequestStatus object, to check it is still pending
+//	-resume the channel
+//	-Wait on the request
+//	-Confirm that the request completed
+//////////////////////////////////////////////////////////////////////
+CPauseResumeTest::~CPauseResumeTest()
+	{
+	}
+
+void CPauseResumeTest::RunTest()
+	{
+	OpenDmaSession();
+
+	//Open a single DMA channel for a transfer
+	OpenChannel();
+
+	RDebug::Printf("Resume unpaused idle channel");
+	TInt r = iDmaSession.ChannelResume(iChannelSessionCookie);
+	TEST_ASSERT(KErrCompletion == r);
+
+	RDebug::Printf("Pause idle channel");
+	r = iDmaSession.ChannelPause(iChannelSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	RDebug::Printf("Pause paused idle Channel");
+	r = iDmaSession.ChannelPause(iChannelSessionCookie);
+	TEST_ASSERT(KErrCompletion == r);
+
+	RDebug::Printf("Resume paused idle channel");
+	r = iDmaSession.ChannelResume(iChannelSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	//Setup a DMA request and Fragment the request.
+	CreateDmaRequest();
+	Fragment();
+
+	//Queue the DMA request and time how long a transfer takes
+	TUint64 queueTime;
+	DoCalibrationTransfer(queueTime);
+
+	RDebug::Printf("Calibration transfer completed in %Lu us",queueTime);
+	TUint32 waitQueueReqTime = I64LOW(queueTime*3); //3 times the time measured in DoCalibrationTransfer
+	TEST_ASSERT(I64HIGH(queueTime*3) == 0); // If transfer takes over an hour, something has gone wrong anyway
+
+	// Initialise buffers, after calibration transfer
+	PreTransferSetup();
+
+	RDebug::Printf("Resume unpaused channel");
+	r = iDmaSession.ChannelResume(iChannelSessionCookie);
+	TEST_ASSERT(KErrCompletion == r);
+
+	//Pause DMA Transfer
+	RDebug::Printf("Pausing DMA Channel");
+	r = iDmaSession.ChannelPause(iChannelSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	RDebug::Printf("Pause paused Channel");
+	r = iDmaSession.ChannelPause(iChannelSessionCookie);
+	TEST_ASSERT(KErrCompletion == r);
+
+	//Repeat the transfer (queued asynchronously)
+	TRequestStatus queueRequestStatus;
+	iActual.iRequestResult.iQueueResult = QueueAsyncRequest(queueRequestStatus,queueTime);
+	RDebug::Printf("Queue a DMA Request and wait for %u us ", waitQueueReqTime);
+
+	User::After(waitQueueReqTime);
+	RDebug::Printf("Finished waiting");
+	TEST_ASSERT(queueRequestStatus.Int() == KRequestPending);
+
+	TBool queueEmpty = ETrue;
+	r = iDmaSession.ChannelIsQueueEmpty(iChannelSessionCookie,queueEmpty);
+	TEST_ASSERT(r == KErrNone);
+	TEST_ASSERT(!queueEmpty);
+
+	//Resume DMA channel
+	RDebug::Printf("Resuming paused DMA Channel");
+	r = iDmaSession.ChannelResume(iChannelSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	//Wait for transfer to complete
+	User::WaitForRequest(queueRequestStatus);
+	if (queueRequestStatus.Int() == KErrNone)
+		{
+		RDebug::Printf("DMA QueueAsyncRequest completed");
+		}
+
+	FreeRequest();
+	CloseChannel();
+
+	PostTransferCheck();
+	CloseDmaSession();
+	}
+
+/**
+Time how long transfer takes, with no pausing
+*/
+void CPauseResumeTest::DoCalibrationTransfer(TUint64 &atime)
+	{
+	//Queue the DMA request.
+	TCallbackRecord pCallbackRecord;
+	TInt r = iDmaSession.QueueRequest(iRequestSessionCookie,&pCallbackRecord,&atime);
+	TEST_ASSERT(r == KErrNone);
+	}
+
+TInt CPauseResumeTest::QueueAsyncRequest(TRequestStatus &aRequestState, TUint64 &atime)
+	{
+	return iDmaSession.QueueRequest(iRequestSessionCookie,aRequestState, &iActual.iCallbackRecord, &atime);
+	}
+
+void CPauseResumeTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("Pause and Resume API Test"));
+	}
+
+//////////////////////////////////////////////////////////////////////
+// COpenCloseTest
+//////////////////////////////////////////////////////////////////////
+COpenCloseTest::~COpenCloseTest()
+	{
+	}
+
+TBool COpenCloseTest::DoRunClose()
+	{
+	// For storing cookie during neagtive test i,e open channel twice
+	TUint testChannelSessionCookie = 0; 
+
+	// Open a single DMA channel
+	TInt r = iDmaSession.ChannelOpen(iChannelCookie, iChannelSessionCookie);
+	if (r == KErrNone)//Check that DMA channel opened with no errors
+		{
+		RDebug::Printf("DMA channel opened");					
+		}
+	else
+		{
+		RDebug::Printf("Open DMA channel failed");			
+		return EFalse;
+		}
+
+	// Open DMA channel again and check that opening DMA channel again fails		
+	r = iDmaSession.ChannelOpen(iChannelCookie, testChannelSessionCookie);
+	if (r == KErrInUse)
+		{
+		RDebug::Printf("Opening DMA channel again fails as expected");	
+		}
+	else
+		{
+		RDebug::Printf("Open DMA channel again failed");
+		return EFalse;
+		}
+
+	// Close the DMA channel and check that DMA channel closes with no errors
+	r =iDmaSession.ChannelClose(iChannelSessionCookie);	 
+	if (r == KErrNone) 
+		{
+		RDebug::Printf("DMA channel closes with no errors");				
+		}
+	else
+		{
+		RDebug::Printf("Close the DMA channel failed");
+		return EFalse;
+		}
+	
+	// Verify that the DMA channel was actually closed by opening DMA channel
+	r = iDmaSession.ChannelOpen(iChannelCookie, iChannelSessionCookie);
+	if (r == KErrNone)
+		{
+		RDebug::Printf("DMA channel opened after a previous close operation");
+		return ETrue;
+		}
+	else
+		{
+		RDebug::Printf("Open DMA channel to verify that the DMA channel closed failed");
+		return EFalse;
+		}	
+	}
+
+TBool COpenCloseTest::DoRunOpen()
+	{
+	// Open a single DMA channel
+	TInt r = iDmaSession.ChannelOpen(iChannelCookie, iChannelSessionCookie);
+	if (r == KErrNone)//Check that DMA channel opened with no errors
+		{			
+		RDebug::Printf("DoRunOpen:DMA channel opened");			
+		}
+	else
+		{
+		RDebug::Printf("DoRunOpenDMA channel failed to open");				
+		return EFalse;
+		}	
+
+	// Verify that channel is really open by closing DMA channel
+	// and checking that DMA channel closes with no errors
+	r = iDmaSession.ChannelClose(iChannelSessionCookie);
+	if (r == KErrNone)
+		{
+		RDebug::Printf("DoRunOpen:DMA channel closes with no errors");			
+		return ETrue;
+		}
+	else
+		{
+		RDebug::Printf("DoRunOpen:DMA channel failed to close");		
+		return EFalse;
+		}
+	}
+
+TBool COpenCloseTest::DoRunOpenExposed()
+	{
+	SCreateInfoTest TOpenInfo;
+	TOpenInfo.iCookie =iChannelCookie;
+	TOpenInfo.iDfcPriority = 3;
+	
+	const TInt desCount[3] = {0,1,128}; 
+	const TBool dynChannel[3] =	{EFalse,EFalse,ETrue};  
+	const TInt expectedResults[3] = {KErrArgument,KErrNone,KErrInUse};  
+	TInt actualResults[3] = {1, 1, 1};
+
+	for (TInt i =0; i<3; i++)
+		{	
+		TOpenInfo.iDesCount = desCount[i];
+		TOpenInfo.iDynChannel = dynChannel[i];		
+
+		// Open a single DMA channel
+		RDebug::Printf("DoRunOpenExposed:Trying to open DMA channel using iDesCount(%d) and iDynChannel(%d)  ", TOpenInfo.iDesCount,TOpenInfo.iDynChannel);
+		actualResults[i] = iDmaSession.ChannelOpen(iChannelSessionCookie, TOpenInfo);
+		if (actualResults[i] == KErrNone)// Verify that channel is really open by closing DMA channel	
+			{
+			TInt err = iDmaSession.ChannelClose(iChannelSessionCookie);
+			TEST_ASSERT(err == KErrNone)//Check that DMA channel closed with no errors
+			}
+		}
+
+	// This case should fail if idesCount  =  0.
+	// PIL has been changed to return KErrArgument instead of using an assertion check
+	if (expectedResults[0] == actualResults[0])
+		{
+		RDebug::Printf("DoRunOpenExposed:DMA channel failed to open as expected as for iDesCount = 0 ");			
+		}
+	else
+		{
+		RDebug::Printf("DoRunOpenExposed:Error code returned (%d), expected KErrArgument as iDesCount= 0) ", actualResults[0]);	
+		return EFalse;
+		}
+
+	// For this case( idesCount  =  1), DMA channel should open with no issues	
+	if (expectedResults[1] == actualResults[1])
+		{		
+		RDebug::Printf("DoRunOpenExposed:DMA channel closes with no errors as expected for iDesCount = 1 ");
+		}
+	else
+		{
+		RDebug::Printf("DoRunOpenExposed:Failed to open DMA channel with error code (%d)", actualResults[1]);	
+		return EFalse;
+		}
+
+	// For this case(dynaChannel=ETrue), DMA channel now returns KErrInUse. dynaChannel is not supported in the PSL.
+	// PSL now returns a NULL pointer when dynaChannel is requested. The PIL interprets a NULL 
+	// pointer being returned from opening a DMA channel as a channel in use. Hence, KErrInUse is returned.
+	if (expectedResults[2] == actualResults[2])
+		{
+		RDebug::Printf("DoRunOpenExposed:DMA channel failed to open as expected as dynamic channel is not supported");		
+		}
+	else
+		{
+		RDebug::Printf("DoRunOpenExposed:Error code returned (%d), expected KErrInUse as as dynamic channel is not supported", actualResults[2]);			
+		return EFalse;
+		}
+
+	return ETrue;
+	}
+
+void COpenCloseTest::RunTest()
+	{
+	OpenDmaSession(); 
+
+	if (iRunOpen) 
+	{	// Run Open() API test
+		iOpenCloseResult = DoRunOpenExposed();
+		if(iOpenCloseResult)
+			iOpenCloseResult = DoRunOpen();
+	}
+	else
+	{
+		// Run Close() API test	
+		iOpenCloseResult = DoRunClose();
+	}
+
+	CloseDmaSession();
+	}
+
+void COpenCloseTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("Close/Open API Test"));
+
+	}
+
+TBool COpenCloseTest::Result()
+	{
+	if(gVerboseOutput)
+		{
+		RDebug::Printf("Results for Close/Open API Test");
+		}
+
+	if(!iOpenCloseResult)
+		{
+		RDebug::Printf("Open/Close test sequence failed"); 
+		}
+			
+	return iOpenCloseResult;
+	}
+//////////////////////////////////////////////////////////////////////
 // CDmaBmTransfer
 //////////////////////////////////////////////////////////////////////
-
 CDmaBmTransfer::CDmaBmTransfer(const TDesC& aName, TInt aIterations, const TDmaTransferArgs& aTransferArgs, TUint aMaxFragmentSize)
 	:CDmaBenchmark(aName, aIterations,
 		TResultSet(KErrNone, TRequestResults(),	KErrUnknown, TCallbackRecord(TCallbackRecord::EThread,1)),
 		aTransferArgs, aMaxFragmentSize)
 	{}
-
 
 void CDmaBmTransfer::PrintTestType() const
 	{
@@ -375,13 +932,247 @@ void CDmaBmTransfer::Queue()
 		}
 	}
 
+/*
+1.	Open a DMA channel for a transfer.
+2.	Queue multiple request on the DMA channel.
+3.	Call CancelAll () on the DMA channel.
+4.	Verify that all transfers have been cancelled.
+5.	Open a DMA channel for a transfer. This channel should support pause and resume.
+6.	Call Pause () on the channel.
+7.	Queue multiple request on the DMA channel.
+8.	Call CancelAll () on the channel.
+9.	Verify that all transfers have been cancelled.
+
+   Note: This check does not add results to TResultSet like some
+   other tests as its operation is different. The test checks for 
+   the the cancelllation of all transfers queued on a channel by
+   calling iDmaSession.ChannelIsQueueEmpty(); 
+*/
+
+//////////////////////////////////////////////////////////////////////
+// CCancelAllTest
+//////////////////////////////////////////////////////////////////////
+
+
+CCancelAllTest::CCancelAllTest(const TDesC& aName, TInt aIterations,
+		const TDmaTransferArgs* aTransferArgs, const TResultSet* aResultSets,
+		TInt aCount)
+	:CMultiTransferTest(aName, aIterations, aTransferArgs, aResultSets, aCount)
+	{}
+
+void CCancelAllTest::RunTest()
+	{
+	OpenDmaSession();
+	PreTransferSetup();
+
+	// Open a DMA channel for a transfer.This channel should support pause and resume.
+	OpenChannel();
+
+	//Call Pause () on the channel
+	RDebug::Printf("Pausing DMA Channel");
+	ChannelPause(iChannelSessionCookie);
+	
+	// Queue multiple request on the DMA channel.
+	CreateDmaRequests();
+	Fragment();
+
+	QueueRequestsAsync();
+
+	// Call CancelAll () on the DMA channel and Verify that all transfers have been cancelled.
+	TInt r = CancelAllRequests();
+	TEST_ASSERT(r == KErrNone);
+
+	//Call Resume () on the channel.
+	RDebug::Printf("Cancel should clear Pause state: resuming channel should fail");
+	ChannelResume(iChannelSessionCookie);		
+	//TEST_ASSERT(r == KErrCompletion);
+
+	r = DoPostTransferCheck();
+	TEST_ASSERT(r == KErrNone);
+	//Destroy request
+    for(TInt i=0; i<2; i++)
+		{
+		r = iDmaSession.RequestDestroy(iRequestCookies[i]);
+		TEST_ASSERT(r == KErrNone);
+		}
+
+	//Close DMA channel
+	CloseChannel();
+
+	CloseDmaSession();
+	}
+
+TInt CCancelAllTest::CancelAllRequests()
+	{
+	if(gVerboseOutput)
+		{
+		RDebug::Printf("CCancelAllTest::CancelAllRequests()");
+		}
+	TInt r = KErrGeneral;
+	r  = iDmaSession.ChannelCancelAll(iChannelSessionCookie);
+	if (r != KErrNone)
+		return r;
+
+	TBool queueEmpty;
+	r = iDmaSession.ChannelIsQueueEmpty(iChannelSessionCookie,queueEmpty);
+	if (r != KErrNone)
+		return r;
+
+	if(!queueEmpty)
+		return KErrGeneral;
+
+	if(gVerboseOutput)
+		{
+		RDebug::Printf("Both current and pending requests cancelled");
+		}
+	return KErrNone;
+	}
+
+void CCancelAllTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("CCancelAllTest"));
+	}
+
+void CCancelAllTest::QueueRequestsAsync()
+	{
+	if(iPauseWhileQueuing)
+		{
+		TInt r = iDmaSession.ChannelPause(iChannelSessionCookie);
+		TEST_ASSERT(r == KErrNone);
+		}
+
+	// Queue all the DMA requests asynchronously
+	TEST_ASSERT(iActualResults.Count() == iTransferArgsCount);
+	for(TInt i=0; i<iTransferArgsCount; i++)
+		{
+		TResultSet& resultSet = iActualResults[i];
+		if(resultSet.iRequestResult.iFragmentationResult != KErrNone)
+			continue;
+
+		TInt r = iDmaSession.QueueRequest(iRequestCookies[i], iDummyRequestStatus, &resultSet.iCallbackRecord, NULL);
+		resultSet.iRequestResult.iQueueResult = r;
+		}
+
+	if(iPauseWhileQueuing)
+		{
+		TInt r = iDmaSession.ChannelResume(iChannelSessionCookie);
+		TEST_ASSERT(r == KErrNone);
+		}
+	}
+
+//////////////////////////////////////////////////////////////////////
+// CIsQueueEmptyTest
+//////////////////////////////////////////////////////////////////////
+CIsQueueEmptyTest::CIsQueueEmptyTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs* aTransferArgs,
+		const TResultSet* aResultSets, TInt aCount)
+	:CMultiTransferTest(aName, aIterations, aTransferArgs, aResultSets, aCount)
+	{}
+
+CIsQueueEmptyTest::CIsQueueEmptyTest(const CIsQueueEmptyTest& aOther)
+	:CMultiTransferTest(aOther)
+	{}
+
+CIsQueueEmptyTest::~CIsQueueEmptyTest()
+	{
+	}
+
+void CIsQueueEmptyTest::RunTest()
+	{
+	OpenDmaSession();
+	PreTransferSetup();
+	
+	OpenChannel();
+
+	CreateDmaRequests();
+	Fragment();
+	QueueRequests();
+
+	TInt r = DoPostTransferCheck();
+	TEST_ASSERT(r == KErrNone);
+
+	CloseDmaSession();
+	}
+
+void CIsQueueEmptyTest::DoIsQueueEmpty()
+	{
+	TBool queueEmpty;
+	TInt r = iDmaSession.ChannelIsQueueEmpty(iChannelSessionCookie,queueEmpty);
+	TEST_ASSERT(r == KErrNone);
+
+	if(queueEmpty)
+		{
+		RDebug::Printf("Verified that calling IsQueueEmpty() returns ETrue before calling Queue()");
+		}
+	else
+		{
+		RDebug::Printf("IsQueueEmpty() fails to return ETrue before calling Queue()");
+		TEST_ASSERT(queueEmpty);	
+		}
+	}
+
+void CIsQueueEmptyTest::DoQueueNotEmpty()
+	{
+	TBool queueEmpty;
+	TInt r = iDmaSession.ChannelIsQueueEmpty(iChannelSessionCookie,queueEmpty);
+	TEST_ASSERT(r == KErrNone);
+
+	if (!queueEmpty)
+		{
+		RDebug::Printf("Verified that calling IsQueueEmpty() returns EFalse after calling Queue()");
+		}
+	else
+		{
+		RDebug::Printf("IsQueueEmpty() fails to return EFalse after calling Queue()");
+		TEST_ASSERT(!queueEmpty);
+		}
+	}
+
+void CIsQueueEmptyTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("IsQueue Empty Test using Multi Transfer"));
+	}
+
+void CIsQueueEmptyTest::QueueRequests()
+	{
+	// Queue all the DMA requests asynchronously
+	TInt i;
+	RArray<TRequestStatus> requestStates;
+	
+	ChannelPause(iChannelSessionCookie);
+	DoIsQueueEmpty();
+
+	TEST_ASSERT(iActualResults.Count() == iTransferArgsCount);
+	for(i=0; i<iTransferArgsCount; i++)
+		{
+		TResultSet& resultSet = iActualResults[i];
+		if(resultSet.iRequestResult.iFragmentationResult != KErrNone)
+			continue;
+
+		TInt r = requestStates.Append(TRequestStatus());
+		TEST_ASSERT(r == KErrNone);
+
+		r = iDmaSession.QueueRequest(iRequestCookies[i], requestStates[i], &resultSet.iCallbackRecord, NULL);
+		resultSet.iRequestResult.iQueueResult = r;
+
+		DoQueueNotEmpty();
+		}
+	
+	ChannelResume(iChannelSessionCookie);
+
+	// wait for all transfers to complete
+	const TInt count = requestStates.Count();
+
+	for(i=0; i<count; i++)
+		{
+		User::WaitForRequest(requestStates[i]);
+		}
+
+	requestStates.Close();
+	}
 
 //////////////////////////////////////////////////////////////////////
 // CMultiTransferTest
 //////////////////////////////////////////////////////////////////////
-
-//TODO
-// Add pre and post transfer for CMultiTransferTest
 CMultiTransferTest::CMultiTransferTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs* aTransferArgs,
 		const TResultSet* aResultSets, TInt aCount)
 	: CDmaTest(aName, aIterations, NULL, NULL), iTransferArgs(aTransferArgs), iTransferArgsCount(aCount), iNewDmaApi(ETrue),
@@ -392,10 +1183,8 @@ CMultiTransferTest::CMultiTransferTest(const CMultiTransferTest& aOther)
 	: CDmaTest(aOther), iTransferArgs(aOther.iTransferArgs), iTransferArgsCount(aOther.iTransferArgsCount),
 	iNewDmaApi(aOther.iNewDmaApi),
 	iExpectedArray(aOther.iExpectedArray), iPauseWhileQueuing(aOther.iPauseWhileQueuing)
-	//const cast is required because their isn't a ctor taking const
-	//array values
-	//TODO iRequestCookies(const_cast<TUint*>(&aOther.iRequestCookies[0]), aOther.iRequestCookies.Count())
 	{
+	CopyL(aOther.iRequestCookies, iRequestCookies);
 	}
 
 CMultiTransferTest::~CMultiTransferTest()
@@ -497,10 +1286,13 @@ void CMultiTransferTest::OpenChannel()
 	TEST_ASSERT(iActualResults.Count() == iTransferArgsCount);
 	for(TInt i=0; i<iTransferArgsCount; i++)
 		{
-		// Since all transfers will use the same channel,
-		// they all get the same result
-		// Arguably, iChannelOpenResult doesn't
-		// belong TResultSet
+		// In a multi transfer test a series of requests are created and queued.
+		// They all use the same channel, is opened here at the beginning of the test
+		//
+		// Each transfer has a TResultSet which holds a result for the channel opening,
+		// which we store here. Although in this case it is redundant,
+		// in future it might be that different transfers open
+		// different channels.
 		iActualResults[i].iChannelOpenResult = r;
 		}
 	}
@@ -528,11 +1320,11 @@ void CMultiTransferTest::CreateDmaRequests()
 
 		if(iNewDmaApi)
 			{
-			r = iDmaSession.RequestCreateNew(iChannelSessionCookie, cookie);
+			r = iDmaSession.RequestCreate(iChannelSessionCookie, cookie);
 			}
 		else
 			{
-			r = iDmaSession.RequestCreate(iChannelSessionCookie, cookie);
+			r = iDmaSession.RequestCreateOld(iChannelSessionCookie, cookie);
 			}
 		iActualResults[i].iRequestResult.iCreate = r;
 
@@ -611,9 +1403,9 @@ void CMultiTransferTest::QueueRequests()
 	requestStates.Close();
 	}
 
-//TODO support test setup for CMultiTransferTest
 void CMultiTransferTest::PreTransferSetup()
 	{
+	// TODO this is the wrong place to do this!
 	for(TInt i=0; i<iTransferArgsCount; i++)
 		{
 		//pre-fill actual results with error values
@@ -634,8 +1426,6 @@ TInt CMultiTransferTest::DoPostTransferCheck()
 //////////////////////////////////////////////////////////////////////
 // CIsrRequeTest
 //////////////////////////////////////////////////////////////////////
-
-
 CIsrRequeTest::CIsrRequeTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs& aArgs,
 			TIsrRequeArgs* aRequeueArgs, TInt aCount,
 			const TResultSet& aExpected,const MPreTransfer* aPreTfer,const MPostTransferCheck* aPostTferChk, TUint aMaxFragmentSize)
@@ -655,14 +1445,6 @@ void CIsrRequeTest::PrintTestType() const
 	RDebug::RawPrint(_L("ISR Requeue"));
 	}
 
-/*
-//TODO will need to support buffer checking of the trasnfers
-TBool CIsrRequeTest::Result()
-	{
-	return CSingleTransferTest::Result();
-	}
-*/
-
 void CIsrRequeTest::PreTransferSetup()
 	{
 	if(iPreTransfer)
@@ -677,7 +1459,6 @@ TInt CIsrRequeTest::DoPostTransferCheck()
 //////////////////////////////////////////////////////////////////////
 // TResultSet
 //////////////////////////////////////////////////////////////////////
-
 void TResultSet::Print() const
 	{
 	PRINT(iChannelOpenResult);
@@ -696,7 +1477,6 @@ TBool TResultSet::operator == (const TResultSet& aOther) const
 //////////////////////////////////////////////////////////////////////
 // MPostTransferCheck classes
 //////////////////////////////////////////////////////////////////////
-
 TInt TCompareSrcDst::Check(const CSingleTransferTest& aTest) const
 	{
 	if(gVerboseOutput)
@@ -706,9 +1486,14 @@ TInt TCompareSrcDst::Check(const CSingleTransferTest& aTest) const
 	return Check(aTest.TransferArgs(), aTest.Chunk().Base());
 	}
 
-//TODO
-//this check will not deal correctly transfers were subsequent
-//requeues overlap
+// Note: this check will not deal correctly with transfers were subsequent
+// requeues overlap previous sources or destinations
+// or where the source of transfer depends on a previous transfer.
+// This is because it simply compares the source and destination
+// pairwise for each transfer
+//
+// If TPreTransferIncrBytes is used for the pre-test then the transfers
+// will be checked however.
 TInt TCompareSrcDst::Check(const CIsrRequeTest& aTest) const
 	{
 	if(gVerboseOutput)
@@ -729,8 +1514,7 @@ TInt TCompareSrcDst::Check(const CIsrRequeTest& aTest) const
 	}
 
 TInt TCompareSrcDst::Check(const TDmaTransferArgs& aTransferArgs, TUint8* aChunkBase) const
-	{
-	//TODO could make use of Fixup() method
+	{	
 	const TUint32 srcOffset = aTransferArgs.iSrcConfig.iAddr;
 	const TUint32 dstOffset = aTransferArgs.iDstConfig.iAddr;
 	const TInt size = aTransferArgs.iTransferCount;
@@ -780,6 +1564,14 @@ TInt TCompareSrcDst::Check(const TIsrRequeArgs& aRequeueArgs) const
 	return memcompare(src, size, dst, size);
 	}
 
+// Note: this check will not deal correctly with transfers were subsequent
+// requeues overlap previous sources or destinations
+// or where the source of trasnfer depends on a previous trasnfer.
+// This is because it simply compares the source and destination
+// pairwise for each transfer
+//
+// If TCompareSrcDst is used for the pre-test then the transfers
+// will be checked however.
 TInt TCompareSrcDst::Check(CMultiTransferTest& aTest) const
 	{
 	if(gVerboseOutput)
@@ -833,10 +1625,57 @@ TInt TCompare2D::Check(CMultiTransferTest&) const
 	{
 	return KErrNotSupported;
 	}
+
+
+TInt TCheckNoTransfer::Check(const CSingleTransferTest&) const
+	{
+	return KErrNotSupported;
+	}
+
+TInt TCheckNoTransfer::Check(const CIsrRequeTest&) const
+	{
+	return KErrNotSupported;
+	}
+
+TInt TCheckNoTransfer::Check(CMultiTransferTest& aTest) const
+	{
+	if(gVerboseOutput)
+		{
+		RDebug::Printf("TCheckNoTransfer Comparing CMultiTransferTest buffers");
+		}
+
+	const TInt transferCount = aTest.TransferCount();
+	TUint8* const chunkBase = aTest.Chunk().Base();
+
+	// check buffers for each transfer
+	for(TInt i=0; i<transferCount; i++)
+		{
+		TInt r = KErrCorrupt;
+		if(IsZeroed(aTest.TransferArgs(i), chunkBase))
+			{
+			r = KErrNone;
+			}
+
+		aTest.SetPostTransferResult(i, r);
+		}
+	// CMultiTransferTest is handled differently to the others.
+	// Whereas CSingleTransferTest logs just the return value
+	// of the check, here, we write back a result for each transfer
+	// so the return value from this function is not important
+	return KErrNone;
+	}
+
+TBool TCheckNoTransfer::IsZeroed(const TDmaTransferArgs& aTransferArgs, TUint8* aChunkBase) const
+	{
+	TAddressParms parms = GetAddrParms(aTransferArgs);
+	parms.Fixup(reinterpret_cast<TLinAddr>(aChunkBase));
+	const TAddrRange destination = parms.DestRange();
+
+	return destination.IsFilled(0);
+	}
 //////////////////////////////////////////////////////////////////////
 // MPreTransfer classes
 //////////////////////////////////////////////////////////////////////
-
 void TPreTransferIncrBytes::Setup(const CSingleTransferTest& aTest) const
 	{
 	if(gVerboseOutput)
@@ -904,7 +1743,12 @@ void TPreTransferIncrBytes::Setup(const CMultiTransferTest& aTest) const
 		{
 		RDebug::Printf("TPreTransferIncrBytes(CMultiTransferTest)");
 		}
-	//TODO check for overlap
+
+	if(!CheckBuffers(aTest))
+		{
+		RDebug::Printf("Successive transfer destinations may not overlap previous src or dst buffers");
+		TEST_FAULT;
+		}
 
 	TUint8* const chunkBase = aTest.Chunk().Base();
 	const TInt transferCount = aTest.TransferCount();
@@ -943,26 +1787,85 @@ TBool TPreTransferIncrBytes::CheckBuffers(const CIsrRequeTest& aTest) const
 	}
 
 /**
+A CMultiTransferTest will wait for all transfers to complete
+before comapairing source and destination buffers. For this to be successful
+each transfer must be independent ie. no destination or source may be
+overwritten by another transfer and source buffers may not depend on an
+earlier transfer
+*/
+TBool TPreTransferIncrBytes::CheckBuffers(const CMultiTransferTest& aTest) const
+	{
+	TUint8* const chunkBase = aTest.Chunk().Base();
+	const TInt transferCount = aTest.TransferCount();
+
+	// assemble an array of TAddressParams from aTest, that
+	// can then be passed to CheckBuffers(RArray<TAddressParms>)
+	RArray<const TAddressParms> array;
+
+	for(TInt i=0; i<transferCount; i++)
+		{
+		TAddressParms params = GetAddrParms(aTest.TransferArgs(i));
+		params.Fixup((TLinAddr)chunkBase);
+
+		array.AppendL(params);
+		}
+
+	 // 2nd arg EFalse as there is no need to permit exact repeats
+	const TBool r = CheckBuffers(array, EFalse);
+
+	array.Close();
+	return r;
+	}
+
+/**
 Check that the destination of each TAddressParms does not overlap with
 any previous source or destination or that if it does the whole transfer
 matches.
 This is so that successive transfers do not overwrite the destinations or
 sources of preceeding ones.
-Exactly matching transfers are allowed to test the case that a repeat
-transfer is required - though it can't then be determined just from
-looking at the buffers that the repeat was successful
+
+If aAllowExactRepeat is true then exactly matching transfers are allowed
+to test the case where a repeat transfer is required - though it can't
+then be determined just from looking at the buffers that the repeat was
+successful
 */
-TBool TPreTransferIncrBytes::CheckBuffers(const RArray<const TAddressParms> aTransferParams) const
+TBool TPreTransferIncrBytes::CheckBuffers(const RArray<const TAddressParms>& aTransferParams, TBool aAllowExactRepeat) const
 	{
+
 	const TInt count = aTransferParams.Count();
 
+	if(gVerboseOutput)
+		{
+		RDebug::Printf("CheckBuffers, %d transfers", count);
+		}
+
+	TBuf<128> buf;
 	for(TInt i=1; i<count; i++)
 		{
 		const TAddressParms& current = aTransferParams[i];
+
+		if(gVerboseOutput)
+			{
+			buf.Zero();
+			current.AppendString(buf);
+			RDebug::Print(_L("Check current: %S, against:"), &buf);
+			}
+
 		for(TInt j=0; j<i; j++)
 			{
 			const TAddressParms& previous = aTransferParams[j];
-			const TBool ok = !previous.Overlaps(current.DestRange()) || current == previous;
+			if(gVerboseOutput)
+				{
+				buf.Zero();
+				previous.AppendString(buf);
+				RDebug::Print(_L("Previous: %S"), &buf);
+				}
+
+			const TBool curDstOverlapsPrevTfer = previous.Overlaps(current.DestRange());
+			const TBool curSrcDependsOnPrevDest = current.SourceRange().Overlaps(previous.DestRange());
+			const TBool permitExactRepeat = aAllowExactRepeat && (current == previous);
+
+			const TBool ok = !(curDstOverlapsPrevTfer || curSrcDependsOnPrevDest) || permitExactRepeat;
 			if(!ok)
 				return EFalse;
 			}
@@ -972,7 +1875,6 @@ TBool TPreTransferIncrBytes::CheckBuffers(const RArray<const TAddressParms> aTra
 //////////////////////////////////////////////////////////////////////
 // TTransferIter class
 //////////////////////////////////////////////////////////////////////
-
 void TTransferIter::operator++ ()
 	{
 	iPtr++; //the standard post increment
@@ -1007,7 +1909,7 @@ void TTransferIter::Invariant() const
 	{
 	const TInt elemSize = iCfg->iElementSize;
 	RTest test(_L("TTransferIter invariant"));
-	const TInt bytesTransfered = (
+	const TUint bytesTransfered = (
 			elemSize * (iFrame * iCfg->iElementsPerFrame + iElem)
 			+ ((TUint)iPtr % (elemSize))
 			);
@@ -1237,9 +2139,6 @@ void TTestRunner::RunTests()
 		//Here, we must create a test thread for each channel
 		RPointerArray<CTest> concurrentTests;
 
-		if(testCase.iConcurrentTest)
-			RDebug::Printf("== Begin concurrent test run ==");
-
 		const TInt chanRecCount = iChannelRecords.Count();
 		for(TInt j=0; j < chanRecCount; j++)
 			{
@@ -1256,7 +2155,7 @@ void TTestRunner::RunTests()
 				TEST_ASSERT(dmaTest != NULL);
 
 				dmaTest->SetChannelCookie(record.iCookie);
-				dmaTest->Announce();
+				dmaTest->SetupL();
 				if(testCase.iConcurrentTest)
 					{
 					//Add test to array to be run concurrently
@@ -1265,9 +2164,9 @@ void TTestRunner::RunTests()
 					}
 				else
 					{
+					dmaTest->Announce();
 					//Run test in this thread
 					(*dmaTest)();
-					//TTestThread(
 					TBool result = dmaTest->Result();
 					TEST_ASSERT(result);
 
@@ -1297,11 +2196,20 @@ void TTestRunner::RunTests()
 			//if the test case has been run on all channels it will then  wait for all threads to complete.
 			}
 
+		// Run the tests which should happen concurrently
 		const TInt count = concurrentTests.Count();
 		if(count>0)
 			{
+			RDebug::Printf("== Begin concurrent test run ==");
+
+			TInt i;											// VC++
+			for(i=0; i<count; i++)
+				{
+				concurrentTests[i]->Announce();
+				}
+
 			MultipleTestRun(concurrentTests);
-			for(TInt i=0; i<count; i++)
+			for(i=0; i<count; i++)
 				{
 				TBool result = static_cast<CDmaTest*>(concurrentTests[i])->Result();
 				TEST_ASSERT(result);
@@ -1374,8 +2282,20 @@ void PrintUsage()
 	{
 	test.Printf(_L("*** DMA TEST FRAMEWORK ***\n"));
 	test.Printf(_L("Usage : t_dma2.exe [/option]\n"));
-	test.Printf(_L("  /V  or /VERBOSE    = Control test output\n"));
-	test.Printf(_L("  /S  or /SELFTEST   = Run DMA self test\n"));
+	test.Printf(_L("  /V or /VERBOSE  = Control test output\n"));
+	test.Printf(_L("  /S or /SELFTEST = Run DMA self tests\n"));
+	test.Printf(_L("  /simple = Run only simple transfer tests\n"));
+	test.Printf(_L("  /callback = Run only callback tests\n"));
+	test.Printf(_L("  /multi = Run only multipart transfer tests\n"));
+	test.Printf(_L("  /isrdfc = Run only isr and dfc tests\n"));
+	test.Printf(_L("  /isreque = Run only isr reque tests\n"));
+	test.Printf(_L("  /bench = Run only benchmark tests\n"));
+	test.Printf(_L("  /suspend = Run only pause and resume tests\n"));
+	test.Printf(_L("  /graphic = Run only graphic tests\n"));
+	test.Printf(_L("  /channel = Run only DMA channel (opening and closing) tests\n"));
+	test.Printf(_L("  /queue = Run only queue tests\n"));
+	test.Printf(_L("  /fragment = Run only fragmentation related tests\n"));
+	test.Printf(_L("  /request = Run only requests tests related tests\n"));
 	test.Printf(_L("\n"));
 	}
 
@@ -1424,6 +2344,90 @@ void ProcessCommandLineL()
 			tokenParsed = ETrue;			
 			}
 
+		// '/suspend' option
+		if ((0== tc->FindF(KArgSuspendTest)))
+			{
+			gSuspend = ETrue;
+			tokenParsed = ETrue;
+			}	
+		
+		// '/simple' option
+		if ((0== tc->FindF(KArgSimpleTest)))
+			{
+			gSimpleTest = ETrue;
+			tokenParsed = ETrue;
+			}	
+		
+		// '/multi' option
+		if ((0== tc->FindF(KArgMultiPartTest)))
+			{
+			gMultiPart = ETrue;
+			tokenParsed = ETrue;
+			}	
+	
+		// '/callback' option
+		if ((0== tc->FindF(KArgCallBackTest)))
+			{
+			gCallBack = ETrue;
+			tokenParsed = ETrue;
+			}	
+		
+		// '/IsrAndDfc' option
+		if ((0== tc->FindF(KArgIsrDfcTest)))
+			{
+			gIsrAndDfc  = ETrue;
+			tokenParsed = ETrue;
+			}	
+		
+		// '/IsrReque' option
+		if ((0== tc->FindF(KArgIsrequeTest)))
+			{
+			gIsrReque = ETrue;
+			tokenParsed = ETrue;
+			}	
+
+		// '/Benchmark' option
+		if ((0== tc->FindF(KArgBenchmarkTest)))
+			{
+			gBenchmark = ETrue;
+			tokenParsed = ETrue;
+			}	
+
+		// '/Queue' option
+		if ((0== tc->FindF(KArgQueueTest)))
+			{
+			gQueue = ETrue;
+			tokenParsed = ETrue;
+			}	
+
+		// '/Fragment' option
+		if ((0== tc->FindF(KArgFragmentTest)))
+			{
+			gFragment = ETrue;
+			tokenParsed = ETrue;
+			}	
+		
+		// '/Channel' option
+		if ((0== tc->FindF(KArgChannelTest)))
+			{
+			gChannel = ETrue;
+			tokenParsed = ETrue;
+			}	
+		
+		// '/Graphic' option
+		if ((0== tc->FindF(KArgGraphicTest)))
+			{
+			gGraphic = ETrue;
+			tokenParsed = ETrue;
+			}	
+
+		// '/Request' option
+		if ((0== tc->FindF(KArgRequestTest)))
+			{
+			gRequest = ETrue;
+			tokenParsed = ETrue;
+			}	
+	
 		if (!tokenParsed)
 			{
 			// warn about unparsed parameter
@@ -1444,8 +2448,61 @@ void RunDMATests()
 	TTestRunner testRunner;
 
 	test.Next(_L("Add global test cases to test runner\n"));
-	testRunner.AddTestCases(TestArray);
 
+	if (gSimpleTest) //Add only simple tranfer test cases
+	{
+		testRunner.AddTestCases(TestArraySimple);
+	}
+	else if (gCallBack)  //Add only callback test cases
+	{
+		testRunner.AddTestCases(TestArrayCallback);
+	}
+	else if (gIsrReque)  //Add only ISR Reque test cases
+	{
+		testRunner.AddTestCases(TestArrayIsrReque);
+	}
+	else if (gMultiPart)  //Add only Multipart test cases
+	{
+		testRunner.AddTestCases(TestArrayMultiPart);
+	}
+	else if (gIsrAndDfc)  //Add only IsrAndDfc test cases
+	{
+		testRunner.AddTestCases(TestArrayIsrAndDfc);
+	}
+	else if (gBenchmark)  //Add only Benchmark test cases
+	{
+		testRunner.AddTestCases(TestArrayBenchmark);
+	}
+	else if (gGraphic)  //Add only 2D test cases
+	{
+		testRunner.AddTestCases(TestArray2DTest);
+	}
+	else if (gFragment)  //Add only Fragment test cases
+	{
+		testRunner.AddTestCases(TestArrayFragment);
+	}
+	else if (gChannel)  //Add only Channel test cases
+	{
+		testRunner.AddTestCases(TestArrayChannel);
+	}
+	else if (gSuspend)  //Add only Suspend test cases
+	{
+		testRunner.AddTestCases(TestArraySuspend);
+	}
+	else if (gQueue)  //Add only queue test cases
+	{
+		testRunner.AddTestCases(TestArrayQueue);
+	}
+	else if (gRequest)  //Add only request test cases
+	{
+		testRunner.AddTestCases(TestArrayRequest);
+	}
+	else
+	{
+		testRunner.AddTestCases(TestArray);//Add all test cases
+	}
+
+	
 	test.Next(_L("call TTestRunner::RunTests()\n"));
 	testRunner.RunTests();
 
@@ -1455,7 +2512,6 @@ void RunDMATests()
 TInt E32Main()
 	{
 	__UHEAP_MARK;
-	//__KHEAP_MARK;
 	test.Title();
 
 	gHelpRequested = EFalse;
@@ -1495,10 +2551,7 @@ TInt E32Main()
 
 	if (!(dma2Loaded || dma2CompatLoaded))
 		{
-		//TODO how can we distinguish this case from a platform where
-		//dma is supposed to be supported but the dma test ldd is
-		//missing?
-		test.Printf(_L("DMA not supported - test skipped\n"));
+		test.Printf(_L("DMA test driver not found - test skipped\n"));
 		return 0;
 		}
 	else if (dma2Loaded && !dma2CompatLoaded)
@@ -1527,10 +2580,12 @@ TInt E32Main()
 	SelfTests(); 	
 	}
 
-	ApiTests();
-
 	RunDMATests();
 
+	// Wait for the supervisor thread to run and perform asynchronous
+	// cleanup, so that kernel heap space will be freed
+	r = UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, (TAny*)5000, 0);
+	test_KErrNone(r);
 	__KHEAP_MARKEND;
 
 	r = User::FreeLogicalDevice(KTestDmaLddName);
@@ -1540,7 +2595,6 @@ TInt E32Main()
 
 	delete cleanup;
 
-	//__KHEAP_MARKEND;
 	__UHEAP_MARKEND;
 	return 0;
 	}

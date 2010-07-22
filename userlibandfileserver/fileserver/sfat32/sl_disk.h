@@ -49,8 +49,8 @@ public:
     virtual void InvalidateUidCachePage(TUint64 aPos);
 
 	
-    void ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const;
-	void WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset);
+    void ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const;
+	void WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag);
 	virtual TInt GetLastErrorInfo(TDes8& aErrorInfo) const;
 
     MWTCacheInterface* DirCacheInterface();
@@ -80,11 +80,9 @@ public:
 public:
 	void ReadCachedL(TInt64 aPos,TInt aLength,TDes8& aDes) const;
 	void WriteCachedL(TInt64 aPos,const TDesC8& aDes);
-	void ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const;
-	void WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset);
-
-    
-
+	void ReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const;
+	void WriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag);
+	
 private:
 	inline TUint8 *RamDiskBase() const;
 

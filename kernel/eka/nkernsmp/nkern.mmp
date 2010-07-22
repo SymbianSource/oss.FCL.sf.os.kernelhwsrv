@@ -17,6 +17,8 @@
 
 sourcepath				../nkernsmp
 source					nkern.cpp nkerns.cpp sched.cpp dfcs.cpp nk_timer.cpp nk_irq.cpp nk_bal.cpp
+sourcepath				../nkern
+source					nklib.cpp
 
 #ifdef MARM
 sourcepath				../common/arm
@@ -24,6 +26,8 @@ source					atomics.cia
 sourcepath				../nkernsmp/arm
 source					vectors.cia ncsched.cpp ncsched.cia nctimer.cia ncutilf.cia ncirq.cpp ncirq.cia ncthrd.cia
 source					ncutils.cia ncutils.cpp ncthrd.cpp ncglob.cpp nccpu.cpp nccpu.cia
+sourcepath				../nkern/arm
+source					nklib.cia
 
 
 #elif defined(X86)

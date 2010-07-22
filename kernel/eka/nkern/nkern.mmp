@@ -16,12 +16,13 @@
 //
 
 sourcepath				../nkern
-source					nkern.cpp
+source					nkern.cpp nklib.cpp
 #ifdef MARM
 sourcepath				../common/arm
 source					atomics.cia
 sourcepath				../nkern/arm
 source					vectors.cia ncsched.cpp ncsched.cia nctimer.cia ncutilf.cia
+source					nklib.cia
 
 // X86
 #elif defined(X86)

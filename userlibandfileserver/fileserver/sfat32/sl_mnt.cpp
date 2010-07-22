@@ -26,6 +26,7 @@
 #include "sl_dir_cache.h"
 #include "sl_scandrv.h"
 #include <hal.h>
+#include <f32dbg.h>
 
 TShortName DoGenerateShortNameL(const TDesC& aLongName,TInt& aNum,TBool aUseTildeSelectively);
 
@@ -1341,9 +1342,10 @@ void CFatMountCB::SetEntryL(const TDesC& aName,const TTime& aTime,TUint aSetAttM
     FindEntryStartL(RemoveTrailingDots(aName),KEntryAttMaskSupported,firstEntry,firstEntryPos);
     MoveToDosEntryL(firstEntryPos,firstEntry);
     TUint setAttMask=aSetAttMask&KEntryAttMaskSupported;
+	TInt oldAtt = firstEntry.Attributes();
+	TInt att = oldAtt;
     if (setAttMask|aClearAttMask)
         {
-        TInt att=firstEntry.Attributes();
         att|=setAttMask;
         att&=(~aClearAttMask);
         firstEntry.SetAttributes(att);
@@ -1352,6 +1354,8 @@ void CFatMountCB::SetEntryL(const TDesC& aName,const TTime& aTime,TUint aSetAttM
 		{
 		firstEntry.SetTime(aTime,TimeOffset());
 		}
+	else if (att == oldAtt)
+		return;					// no change - don't bother writing entry
     WriteDirEntryL(firstEntryPos,firstEntry);
     }
 
@@ -1607,7 +1611,7 @@ LoopEnd:
 /**
     Overwrite as many contiguous file clusters as possible.
 */
-void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint aLastcluster, TUint& aBadcluster, TUint& aGoodcluster)
+void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint aLastcluster, TUint& aBadcluster, TUint& aGoodcluster, TUint aFlag)
     {
 
     __PRINT(_L("CFatMountCB::DoWriteToClusterListL"));
@@ -1621,7 +1625,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
     const TInt writeLength=Min(aLength,(clusterListLen<<ClusterSizeLog2())-clusterRelativePos);
     TInt64 dataStart=FAT().DataPositionInBytes(aPos.iCluster)+clusterRelativePos;
 
-    TRAPD(r, iRawDisk->WriteL(dataStart,writeLength,aSrc,aMessage,anOffset));
+    TRAPD(r, iRawDisk->WriteL(dataStart,writeLength,aSrc,aMessage,anOffset, aFlag));
 
     if(r == KErrNone) // Write succeded
         {
@@ -1736,7 +1740,7 @@ void CFatMountCB::DoWriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny*
 
 //-----------------------------------------------------------------------------------------
 
-void CFatMountCB::WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint& aBadcluster, TUint& aGoodcluster)
+void CFatMountCB::WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2& aMessage,TInt anOffset, TUint& aBadcluster, TUint& aGoodcluster, TUint aFlag)
 //
 // Overwrite cluster list.
 //
@@ -1758,7 +1762,7 @@ void CFatMountCB::WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* a
     TInt previouscluster=0;
     FOREVER
         {
-        DoWriteToClusterListL(aPos,length-offset,aSrc,aMessage,anOffset+offset, previouscluster, aBadcluster, aGoodcluster);
+        DoWriteToClusterListL(aPos,length-offset,aSrc,aMessage,anOffset+offset, previouscluster, aBadcluster, aGoodcluster, aFlag);
         if (offset == (aPos.iPos-startPos))
             continue;
         offset=aPos.iPos-startPos;
@@ -1773,7 +1777,7 @@ void CFatMountCB::WriteToClusterListL(TEntryPos& aPos,TInt aLength,const TAny* a
 
 //-----------------------------------------------------------------------------------------
 
-void CFatMountCB::DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset) const
+void CFatMountCB::DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset, TUint aFlag) const
 //
 // Read from as many contiguous file clusters as possible
 //
@@ -1789,7 +1793,7 @@ void CFatMountCB::DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny
     const TInt readLength=Min(aLength,(clusterListLen<<ClusterSizeLog2())-clusterRelativePos);
     const TInt64 dataStart=FAT().DataPositionInBytes(aPos.iCluster)+clusterRelativePos;
 
-    TRAPD(r, iRawDisk->ReadL(dataStart,readLength,aTrg,aMessage,anOffset));
+    TRAPD(r, iRawDisk->ReadL(dataStart,readLength,aTrg,aMessage,anOffset, aFlag));
 
     if(r == KErrNone) // Read succeded
         {
@@ -1814,7 +1818,7 @@ void CFatMountCB::DoReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny
 
 //-----------------------------------------------------------------------------------------
 
-void CFatMountCB::ReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset) const
+void CFatMountCB::ReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2& aMessage,TInt anOffset, TUint aFlag) const
 //
 // Read from cluster list
 //
@@ -1834,7 +1838,7 @@ void CFatMountCB::ReadFromClusterListL(TEntryPos& aPos,TInt aLength,const TAny* 
     TInt offset=0;
     FOREVER
         {
-        DoReadFromClusterListL(aPos,aLength-offset,aTrg,aMessage,anOffset+offset);
+        DoReadFromClusterListL(aPos,aLength-offset,aTrg,aMessage,anOffset+offset, aFlag);
         offset=aPos.iPos-startPos;
         if ((offset<aLength))
             {
@@ -3228,7 +3232,7 @@ void CFatMountCB::ReadSectionL(const TDesC& aName,TInt aPos,TAny* aTrg,TInt aLen
 			TInt readLength = Min(aLength-readTotal,(clusterListLen<<ClusterSizeLog2())-pos);
 			__ASSERT_DEBUG(readLength>0,Fault(EReadFileSectionFailed));
 			TInt64 dataAddress=(FAT().DataPositionInBytes(cluster))+pos;
-			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal);
+			iRawDisk->ReadL(dataAddress,readLength,aTrg,aMessage,readTotal, 0);
 			readTotal += readLength;
 
 			if (readTotal == aLength)
@@ -3256,7 +3260,7 @@ void CFatMountCB::RawReadL(TInt64 aPos,TInt aLength,const TAny* aTrg,TInt anOffs
 // Read aLength of data from disk directly to thread relative descriptor
 //
     {
-    iRawDisk->ReadL(aPos,aLength,aTrg,aMessage,anOffset);
+    iRawDisk->ReadL(aPos,aLength,aTrg,aMessage,anOffset, 0);
     }
 
 //-----------------------------------------------------------------------------------------
@@ -3271,7 +3275,7 @@ void CFatMountCB::RawWriteL(TInt64 aPos,TInt aLength,const TAny* aSrc,TInt anOff
 	//-- check if we are trying to write to the FAT directly and wait until FAT scan thread finishes in this case.
     FAT().RequestRawWriteAccess(aPos, aLength);
 
-    iRawDisk->WriteL(aPos,aLength,aSrc,aMessage,anOffset);
+    iRawDisk->WriteL(aPos,aLength,aSrc,aMessage,anOffset, 0);
     //-- Note: FAT directory cache will be invalidated in MountL()
     }
 
@@ -3623,23 +3627,36 @@ TInt CFatMountCB::ControlIO(const RMessagePtr2& aMessage,TInt aCommand,TAny* aPa
 		case EDisableFATDirCache:
 			{
 		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    TUint32 KEDisableFATDirCache = CDynamicDirCache::EDisableCache;
+		    TUint32 KEDisableFATDirCache = MWTCacheInterface::EDisableCache;
 		    pDirCache->Control(KEDisableFATDirCache, (TUint32) aParam1, NULL);
 			break;
 			}
 		case EDumpFATDirCache:
 			{
 		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    TUint32 KEDumpFATDirCache = CDynamicDirCache::EDumpCache;
-		    pDirCache->Control(KEDumpFATDirCache, 0, NULL);
+		    if (pDirCache)
+		        {
+	            TUint32 KEDumpFATDirCache = MWTCacheInterface::EDumpCache;
+	            pDirCache->Control(KEDumpFATDirCache, 0, NULL);
+		        }
 			break;
 			}
 		case EFATDirCacheInfo:
 			{
-		    MWTCacheInterface* pDirCache = iRawDisk->DirCacheInterface();
-		    TUint32 KEFATDirCacheInfo = CDynamicDirCache::ECacheInfo;
-		    pDirCache->Control(KEFATDirCacheInfo, 0, NULL);
-			break;
+			MWTCacheInterface* pDCache = iRawDisk->DirCacheInterface();
+		    if (pDCache)
+		        {
+	            TUint32 KEFATDirCacheInfo = MWTCacheInterface::ECacheInfo;
+	            TDirCacheInfo aInfo;
+	            TInt r = pDCache->Control(KEFATDirCacheInfo, 0, static_cast<TAny*>(&aInfo));
+	            if (r == KErrNone)
+	                {
+	                TPckgBuf<TDirCacheInfo> pkgBuf(aInfo);
+	                r = aMessage.Write(2,pkgBuf);
+	                }
+                return r;
+		        }
+		    return KErrNotSupported;
 			}
 
 

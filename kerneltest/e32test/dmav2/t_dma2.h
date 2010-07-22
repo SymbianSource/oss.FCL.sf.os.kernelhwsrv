@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -22,14 +22,24 @@
 #include "d_dma2.h"
 #include <e32std.h>
 
-
 class TTestCase;
 // Global array of test cases
 extern RPointerArray<TTestCase> TestArray;
-
+extern RPointerArray<TTestCase> TestArrayCallback;
+extern RPointerArray<TTestCase> TestArrayIsrReque;
+extern RPointerArray<TTestCase> TestArrayMultiPart;
+extern RPointerArray<TTestCase> TestArrayIsrAndDfc;
+extern RPointerArray<TTestCase> TestArrayBenchmark;
+extern RPointerArray<TTestCase> TestArray2DTest;
+extern RPointerArray<TTestCase> TestArrayIsrAndDfc;
+extern RPointerArray<TTestCase> TestArrayChannel;
+extern RPointerArray<TTestCase> TestArraySuspend;
+extern RPointerArray<TTestCase> TestArrayQueue;
+extern RPointerArray<TTestCase>	TestArraySimple;
+extern RPointerArray<TTestCase>	TestArrayRequest;
+extern RPointerArray<TTestCase>	TestArrayFragment;
 
 extern TBool gVerboseOutput;   // Verbose output control
-
 
 const TInt KParameterTextLenMax = 80;	// command-line param length
 
@@ -43,18 +53,13 @@ Runs all framework self tests
 */
 void SelfTests();
 
-void ApiTests();
-
 class CSingleTransferTest;
 class CIsrRequeTest;
 class CMultiTransferTest;
 
-
 /**
 An interface to a classs that sets up the buffers before a test
 */
-//TODO both pre and post transfer checks should perhaps derive from an
-//abstract visitor base
 class MPreTransfer
 	{
 public:
@@ -134,6 +139,25 @@ protected:
 	};
 
 /**
+Check whether destination buffers are zero filled
+
+Used to check that a transfer hasn't taken place.
+*/
+class TCheckNoTransfer : public MPostTransferCheck
+	{
+public:
+	TCheckNoTransfer()
+		{}
+
+	virtual TInt Check(const CSingleTransferTest& aTest) const;
+	virtual TInt Check(const CIsrRequeTest& aTest) const;
+	virtual TInt Check(CMultiTransferTest& aTest) const;
+
+protected:
+	TBool IsZeroed(const TDmaTransferArgs& aTransferArgs, TUint8* aChunkBase) const;
+	};
+
+/**
 Base class for all DMA tests
 */
 class CDmaTest : public CTest
@@ -144,8 +168,11 @@ public:
 		{}
 
 	void OpenDmaSession();
+	/* Duplicate aSession */
+	void OpenDmaSession(const RDmaSession& aSession);
 	void CloseDmaSession();
-
+	void ChannelPause(const TUint aChannelSessionCookie);
+	void ChannelResume(const TUint aChannelSessionCookie);
 	virtual void PrintTestInfo() const;
 	virtual TBool Result() = 0;
 
@@ -158,8 +185,8 @@ public:
 	void SetChannelCookie(TUint32 aCookie)
 		{iChannelCookie = aCookie;}
 
-	virtual void PreTransferSetup() =0;
-	virtual TInt DoPostTransferCheck() =0;
+	virtual void PreTransferSetup();
+	virtual TInt DoPostTransferCheck();
 protected:
 	RDmaSession iDmaSession;
 	RChunk iChunk;
@@ -171,6 +198,49 @@ protected:
 	const MPreTransfer* iPreTransfer;
 
 	const MPostTransferCheck* iPostTransferCheck; //!< Some check to be run after the transfer
+	};
+
+/**
+The Decorator Pattern is used allowing test classes to be optionally extended
+using wrapper/decorator classes.
+This is the base class for test decorators
+*/
+class CDmaTestDecorator : public CDmaTest
+	{
+public:
+
+protected:
+	CDmaTestDecorator(CDmaTest* aDecoratedTest);
+	CDmaTestDecorator(const CDmaTestDecorator& aOther);
+
+	CDmaTest* iDecoratedTest;
+	};
+
+/**
+Will run the wrapped test against both versions of the DMA
+API if available, otherwise just the old version.
+*/
+class CMultiVersionTest : public CDmaTestDecorator
+	{
+public:
+	CMultiVersionTest(CSingleTransferTest* aDmaTest); 
+	CMultiVersionTest(const CMultiVersionTest& aOther);
+	~CMultiVersionTest();
+
+	virtual void Announce() const;
+	virtual void PrintTestType() const;
+	virtual void PrintTestInfo() const; 
+
+	virtual CTest* Clone() const {return new CMultiVersionTest(*this);}
+	virtual void SetupL();
+
+	virtual void RunTest();
+	virtual TBool Result();
+
+protected:
+	void Configure();
+	TBool Version2PILAvailable();
+	CSingleTransferTest* iNewVersionTest;
 	};
 
 /**
@@ -186,14 +256,20 @@ struct TRequestResults
 		TInt aFragmentationResult = KErrNone,
 		TInt aQueueResult = KErrNone
 		)
-		:iCreate(aCreate), iFragmentCount(aFragmentCount), iFragmentationResult(aFragmentationResult), iQueueResult(aQueueResult)
+		:iCreate(aCreate), 
+		 iFragmentCount(aFragmentCount), 
+		 iFragmentationResult(aFragmentationResult), 
+		 iQueueResult(aQueueResult)
 		{}
 
 	/**
 	Constructs with error results
 	*/
 	TRequestResults(TFalse)
-		:iCreate(KErrUnknown), iFragmentCount(0), iFragmentationResult(KErrUnknown), iQueueResult(KErrUnknown)
+		:iCreate(KErrUnknown), 
+		 iFragmentCount(0), 
+		 iFragmentationResult(KErrUnknown), 
+		 iQueueResult(KErrUnknown)
 		{}
 
 	inline TRequestResults& CreationResult(TInt aErrorCode) {iCreate = aErrorCode; return *this;}
@@ -273,15 +349,24 @@ public:
 	virtual void Setup(const CSingleTransferTest& aTest) const;
 	virtual void Setup(const CIsrRequeTest& aTest) const;
 	virtual void Setup(const CMultiTransferTest& aTest) const;
+
+	static void SelfTest();
 protected:
 	virtual void Setup(const TAddressParms& aParams) const;
+
 	TBool CheckBuffers(const CIsrRequeTest& aTest) const;
-	TBool CheckBuffers(const RArray<const TAddressParms> aTransferParams) const;
+	TBool CheckBuffers(const CMultiTransferTest& aTest) const;
+
+	TBool CheckBuffers(const RArray<const TAddressParms>& aTransferParams, TBool aAllowExactRepeat=ETrue) const;
+
+	// This function is part of the unit test
+	friend TBool DoTferParmTestL(const TAddressParms* aParms, TInt aCount, TBool aAllowRepeat, TBool aPositive);
 	};
 
 const TPreTransferIncrBytes KPreTransferIncrBytes;
 const TCompareSrcDst KCompareSrcDst;
 const TCompare2D KCompare2D;
+const TCheckNoTransfer KCheckNoTransfer;
 
 
 /**
@@ -328,7 +413,7 @@ private:
 
 	TUint8* iPtr; //<! Pointer to the current byte
 
-	TInt iBytes; //!< The number of bytes traversed
+	TUint iBytes; //!< The number of bytes traversed
 	};
 
 /**
@@ -360,6 +445,7 @@ public:
 	*/
 	virtual void RunTest();
 	virtual void PrintTestType() const;
+	virtual void PrintTestInfo() const;
 
 	virtual CTest* Clone() const {return new CSingleTransferTest(*this);}
 
@@ -422,12 +508,102 @@ protected:
 	};
 
 /**
+This class will be used for testing DMA Close() and Open() API
+
+Extends CDmaTest by implemeting a RunTest() with a sequence of operations 
+to test Close() and Open() API 
+*/
+class COpenCloseTest : public CDmaTest 
+	{
+public:
+	COpenCloseTest(
+			const TDesC& aName, TInt aIterations,	
+			const MPostTransferCheck* aPostTferChk = NULL,
+			const MPreTransfer* aPreTfer = NULL
+			)
+		: CDmaTest(aName, aIterations, aPreTfer, aPostTferChk), iOpenCloseResult(EFalse) , iRunOpen(EFalse)
+		{}
+
+	~COpenCloseTest();
+
+	virtual void RunTest();
+	virtual void PrintTestType() const;
+
+	virtual CTest* Clone() const {return new COpenCloseTest(*this);}
+	
+	/**
+	Checks the results of the sequeunce of  sequence of operations 
+	to test Close() and Open() API, return ETrue for a pass, EFalse for a fail
+	 */
+	virtual TBool Result();
+
+	// The methods below is a setters ie. The Named Parameter Idiom
+	// @see http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.18
+	inline COpenCloseTest& RunOpenApiTest(TBool aFlag) {iRunOpen=aFlag; return *this;}
+
+protected:	
+	TBool DoRunClose();
+	TBool DoRunOpen();
+	TBool DoRunOpenExposed();
+
+protected:
+	/**
+	A handle to kernel side TDmaChannel object received after a channel is opened.
+	*/
+	TUint iChannelSessionCookie;
+	/**
+	A handle to kernel side DDmaRequest object.
+	*/
+	TUint iRequestSessionCookie;
+
+	/**
+	If true then Close/Open  API test passed
+	*/
+	TBool iOpenCloseResult;
+	
+	/**
+	 If true then run Open API test otherwise run Close API test
+	*/
+	TBool iRunOpen;
+	};
+
+/**
+Used for testing Pause and Resume
+
+Extends CSingle transfer by adding the capability to test
+Pause  & Resume() API.
+*/
+class CPauseResumeTest : public CSingleTransferTest
+	{
+public:
+	 CPauseResumeTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs& aArgs, const TResultSet& aExpected)
+		:CSingleTransferTest(aName, aIterations, aArgs, aExpected)
+	 {}
+
+	~CPauseResumeTest();
+
+	virtual void RunTest();
+	virtual void PrintTestType() const;
+
+	virtual CTest* Clone() const {return new  CPauseResumeTest(*this);}
+
+	// The methods below is a setters ie. The Named Parameter Idiom
+	// @see http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.18
+	inline CPauseResumeTest& UseNewDmaApi(TBool aFlag) {CSingleTransferTest::UseNewDmaApi(aFlag); return *this;}
+
+protected:
+	void DoCalibrationTransfer(TUint64 &atime);
+	TInt QueueAsyncRequest(TRequestStatus &aRequestState,TUint64 &atime);
+	};
+
+/**
 This class will be used for tests which benchmark certain DMA operations
 */
 class CDmaBenchmark : public CSingleTransferTest
 	{
 public:
 	CDmaBenchmark(const TDesC& aName, TInt aIterations, const TResultSet& aExpectedResults, const TDmaTransferArgs& aTransferArgs, TUint aMaxFragmentSize);
+	CDmaBenchmark(const CDmaBenchmark& aOriginal);
 	~CDmaBenchmark();
 
 	virtual TBool Result();
@@ -440,15 +616,11 @@ protected:
 	*/
 	TUint64 MeanResult();
 
-	//TODO must be included within copy ctor or all instances will
-	//share on result set!
 	RArray<TUint64> iResultArray;
-
 	};
 
 /**
 Fragments requests (only) and records duration
-TODO make sure we are using old style DDmaRequest
 */
 class CDmaBmFragmentation : public CDmaBenchmark
 	{
@@ -550,6 +722,68 @@ protected:
 	};
 
 /**
+Used for testing TDmaChannel::IsQueueEmpty
+Extends CMultiTransferTest by adding the capability to test IsQueueEmpty() API. 
+*/
+class CIsQueueEmptyTest : public  CMultiTransferTest 
+	{
+public:
+	CIsQueueEmptyTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs* aTransferArgs, const TResultSet* aResultSets, TInt aCount);
+	CIsQueueEmptyTest(const CIsQueueEmptyTest& aOther);
+	~CIsQueueEmptyTest();
+
+	inline CIsQueueEmptyTest& SetPreTransferTest(const MPreTransfer* aPreTfer) {iPreTransfer = aPreTfer; return *this;}
+	inline CIsQueueEmptyTest& SetPostTransferTest(const MPostTransferCheck* aPostTfer) {iPostTransferCheck = aPostTfer; return *this;}
+
+	virtual CTest* Clone() const {return new CIsQueueEmptyTest(*this);}
+	virtual void RunTest();
+	virtual void PrintTestType() const;
+
+protected:
+	void DoQueueNotEmpty();	
+	void DoIsQueueEmpty();
+	void QueueRequests();
+	};
+
+/**
+Used for testing CancelAll, Will create and queue multiple requests
+Extends CSingle transfer by adding the capability to test CancelAll API
+*/
+class CCancelAllTest : public CMultiTransferTest
+	{
+public:
+	CCancelAllTest(const TDesC& aName, TInt aIterations,
+		const TDmaTransferArgs* aTransferArgs, const TResultSet* aResultSets,
+		TInt aCount
+		);
+	//CCancelAllTest(const CCacheNotifyDirCh
+
+	virtual void RunTest();
+	virtual void PrintTestType() const;
+	virtual CTest* Clone() const {return new CCancelAllTest(*this);}
+
+	inline CCancelAllTest& PauseWhileQueuing()
+		{iPauseWhileQueuing = ETrue; return *this;}
+	inline CCancelAllTest& SetPreTransferTest(const MPreTransfer* aPreTfer)
+		{iPreTransfer = aPreTfer; return *this;}
+	inline CCancelAllTest& SetPostTransferTest(const MPostTransferCheck* aPostTfer)
+		{iPostTransferCheck = aPostTfer; return *this;}
+
+protected:
+	void QueueRequestsAsync();
+	TInt CancelAllRequests();
+	void PauseChannel();
+	void ResumeChannel();
+
+	/**
+	A single request status that we use for all
+	asynchronously queued requests (we do not intend
+	to wait for them)
+	*/
+	TRequestStatus iDummyRequestStatus;
+	};
+
+/**
 Used for testing TDmaChannel::IsrRedoRequest
 
 Extends CSingle transfer by adding the capability to queue with
@@ -567,15 +801,6 @@ public:
 	virtual void PrintTestType() const;
 
 	virtual void Queue();
-
-	/**
-	Compares the actual vs the exepected results and reports
-	of the test passed
-	@return ETrue for a pass, EFalse for a fail
-	 */
-	//virtual TBool Result();
-
-
 	virtual CTest* Clone() const {return new CIsrRequeTest(*this);}
 
 	const TIsrRequeArgsSet& GetRequeueArgs() const
@@ -617,8 +842,6 @@ and other information about how the test should be run.
 class TTestCase
 	{
 public:
-	//TODO it might be better to group sets of TDmaCapability
-	//into their own class eg. TDmaCapSet.
 	TTestCase(CDmaTest* aTest,
            TBool aConcurrent = EFalse,
 		   const TDmaCapability = TDmaCapability(),
@@ -661,11 +884,10 @@ public:
 	~TTestRunner();
 
 	/**
-	This function will populate TTestRunner with an array of test cases which 
-	would be a collection of DMA test,its hardware prerequisites,and other 
-	information about how the test	
+	This function will populate TTestRunner with an array of test cases
+	to be run
 
-	@aTTestCases on return, this contains an the DMA test cases 
+	@param aTTestCases Array of test cases
 	*/
 	void AddTestCases(RPointerArray<TTestCase>& aTTestCases);
 
@@ -714,6 +936,26 @@ private:
 	*/
 	RArray<TUint> iPslCookies;
 };
+
+/**
+Copy an RArray
+*/
+template <typename T>
+void CopyL(const RArray<T>& aOriginal, RArray<T>& aNew)
+	{
+	const TInt count = aOriginal.Count();
+	for(TInt i=0; i<count; ++i)
+		{
+		aNew.AppendL(aOriginal[i]);
+		}
+	}
+
+template <typename T, typename Iterator>
+void ArrayAppendL(RArray<T>& aArray, Iterator aBegin, Iterator aEnd)
+	{
+	for(Iterator begin = aBegin; begin != aEnd; ++begin)
+		aArray.AppendL(*begin);
+	}
 
 
 #endif // #ifndef __T_DMA2_H__

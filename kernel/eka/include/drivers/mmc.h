@@ -1540,7 +1540,8 @@ public:
 	enum TCardTypes
 		{
 		EHighSpeedCard26Mhz = 0x01,
-		EHighSpeedCard52Mhz = 0x02
+		EHighSpeedCard52Mhz = 0x02,
+		ECardTypeMsk        = 0x03 
 		};
 	
 	/**
@@ -1714,6 +1715,9 @@ public:
 	
 	/** returns the contents of the S_A_TIMEOUT field */
 	inline TUint SleepAwakeTimeout() const;
+	
+	/** returns True if the CARD_TYPE field conatains a valid value **/
+	inline TBool IsSupportedCardType() const;
 
 private:
 	/** 

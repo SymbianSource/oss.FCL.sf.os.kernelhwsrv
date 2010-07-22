@@ -21,6 +21,9 @@
 #include <e32svr.h>
 #include <hal.h>
 #include "t_server.h"
+#include "f32_test_utils.h"
+
+using namespace F32_Test_Utils;
 
 const TInt KHeapSize=0x200;
 
@@ -139,7 +142,7 @@ static TInt ThreadEntryPoint(TAny* aTestCode)
 		{
 		TRequestStatus s;
 		fs.NotifyChange(ENotifyAll,s);
-		test(s==KRequestPending);
+		test_Value(s.Int(), s==KRequestPending);
 		gSleepThread.Signal();
 		User::After(100000000);
 		}
@@ -216,7 +219,7 @@ static TInt ThreadEntryPoint(TAny* aTestCode)
 		TRequestStatus s;
 		TFileName path=_L("\\F32-TST\\NOTIFY\\");
 		fs.NotifyChange(ENotifyAll,s,path);
-		test(s==KRequestPending);
+		test_Value(s.Int(), s==KRequestPending);
 		gSleepThread.Signal();
 		User::After(100000000);
 		}
@@ -293,21 +296,21 @@ static void Test1()
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	thread.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	RFile file;
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileWrite|EFileShareExclusive);
 	test_KErrNone(r);
 	file.Write(_L8("Somewhere over the rainbow..."),reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	TBuf8<256> buf;
 	file.Read(0, buf,reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileShareExclusive);
@@ -319,28 +322,28 @@ static void Test1()
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileShareAny);
 	test_KErrNone(r);
 	file.Read(0, buf, 100, reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileShareAny);
 	test_KErrNone(r);
 	file.Read(0, buf, 100, reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.ReadCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	file.Close();
 
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileWrite|EFileShareAny);
 	test_KErrNone(r);
 	file.Read(0, buf, 100, reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.SetSize(100);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
-	test(buf.Length() == 100);
+	test_KErrNone(reqStat.Int());
+	test_Equal(100, buf.Length());
 	file.Close();
 
 	test.Next(_L("Repeat Test notification of an entry change"));
@@ -349,15 +352,10 @@ static void Test1()
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	thread.Close();
 	User::WaitForRequest(reqStat);
-	if (reqStat!=KErrNone)
-		{
-		test.Printf(_L("ReqStat=%d\n"),reqStat.Int());
-		//test.Getch();
-		}
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	test.Next(_L("Test Notify cancel"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat);
@@ -370,10 +368,10 @@ static void Test1()
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	thread.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	}
 
 static void Test2()
@@ -396,14 +394,14 @@ static void Test2()
 	test_KErrNone(r);
 	fs2.NotifyChange(ENotifyEntry,reqStat2);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\NEWFILE.TXT"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat1);
 	User::WaitForRequest(reqStat2);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KErrNone);
+	test_KErrNone(reqStat1.Int());
+	test_KErrNone(reqStat2.Int());
 	}
 
 static void Test3()
@@ -428,25 +426,25 @@ static void Test3()
 	fs1.NotifyChange(ENotifyAll,status3);
 	fs1.NotifyChange(ENotifyAll,status4);
 	fs1.NotifyChange(ENotifyAll,status5);
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
-	test(status5==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
+	test_Value(status5.Int(), status5==KRequestPending);
 
 	test.Next(_L("RFs::NotifyCancel()"));
 //	Test that one call to RFs::NotifyCancel() cancels all outstanding requests
 	fs1.NotifyChangeCancel();
 	User::WaitForRequest(status1);
-	test(status1==KErrCancel);
+	test_Value(status1.Int(), status1==KErrCancel);
 	User::WaitForRequest(status2);
-	test(status2==KErrCancel);
+	test_Value(status2.Int(), status2==KErrCancel);
 	User::WaitForRequest(status3);
-	test(status3==KErrCancel);
+	test_Value(status3.Int(), status3==KErrCancel);
 	User::WaitForRequest(status4);
-	test(status4==KErrCancel);
+	test_Value(status4.Int(), status4==KErrCancel);
 	User::WaitForRequest(status5);
-	test(status5==KErrCancel);
+	test_Value(status5.Int(), status5==KErrCancel);
 //	Call the cancel function again to check no further action
 	fs1.NotifyChangeCancel();
 
@@ -457,49 +455,49 @@ static void Test3()
 	fs1.NotifyChange(ENotifyAll,status3);
 	fs1.NotifyChange(ENotifyAll,status4);
 	fs1.NotifyChange(ENotifyAll,status5);
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
-	test(status5==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
+	test_Value(status5.Int(), status5==KRequestPending);
 
 //	Cancel the outstanding request with status5
 	test.Next(_L("RFs::NotifyCancel()"));
 	fs1.NotifyChangeCancel(status5);
 	User::WaitForRequest(status5);
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
-	test(status5==KErrCancel);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
+	test_Value(status5.Int(), status5==KErrCancel);
 
 	fs1.NotifyChangeCancel(status2);
 	User::WaitForRequest(status2);
 
-	test(status1==KRequestPending);
-	test(status2==KErrCancel);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KErrCancel);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
 
 	fs1.NotifyChangeCancel(status4);
 	User::WaitForRequest(status4);
-	test(status1==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KErrCancel);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KErrCancel);
 
-	fs1.NotifyChangeCancel(status4);	//	Test no side effects on trying to cancel a request
-	test(status4==KErrCancel);			//	that has already been cancelled
+	fs1.NotifyChangeCancel(status4);				//	Test no side effects on trying to cancel a request
+	test_Value(status4.Int(), status4==KErrCancel);	//	that has already been cancelled
 
 	fs1.NotifyChangeCancel(status1);
 	User::WaitForRequest(status1);
-	test(status1==KErrCancel);
-	test(status3==KRequestPending);
+	test_Value(status1.Int(), status1==KErrCancel);
+	test_Value(status3.Int(), status3==KRequestPending);
 	fs1.NotifyChangeCancel(status1);	//	Test no side effects on trying to cancel a request
-	test(status1==KErrCancel);			//	that has already been cancelled
+	test_Value(status1.Int(), status1==KErrCancel);			//	that has already been cancelled
 
 	fs1.NotifyChangeCancel(status3);
 	User::WaitForRequest(status3);
-	test(status3==KErrCancel);
+	test_Value(status3.Int(), status3==KErrCancel);
 
 	fs1.Close();
 	}
@@ -560,7 +558,7 @@ static void Test5()
 
 	TRequestStatus reqStat=0;
 	TheFs.NotifyChange(ENotifyEntry,reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=gSleepThread.CreateLocal(0);
 	test_KErrNone(r);
@@ -569,12 +567,12 @@ static void Test5()
 	test_KErrNone(r);
 	clientThread.Resume();
 	gSleepThread.Wait();
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\kangaroo.txt"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\koala.txt"));
 	test_KErrNone(r);
@@ -605,7 +603,7 @@ static void Test6()
         TRequestStatus reqStat=0;
         TInt r;
         TheFs.NotifyChange(ENotifyEntry,reqStat);
-        test(reqStat==KRequestPending);
+        test_Value(reqStat.Int(), reqStat==KRequestPending);
         r=gSleepThread.CreateLocal(0);
         test_KErrNone(r);
         RThread clientThread;
@@ -614,7 +612,7 @@ static void Test6()
         clientThread.Resume();
         gSleepThread.Wait();
         TInt reqInt=reqStat.Int();
-        test(reqInt==KErrNone);
+        test_KErrNone(reqInt);
         User::WaitForRequest(reqStat);
         WaitForMediaChange();
         gSleepThread.Close();
@@ -641,7 +639,7 @@ static void Test7()
 	MakeFile(_L("NewFile.TXT"));
 	TInt r;
 	TheFs.NotifyChange(ENotifyEntry,reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=gSleepThread.CreateLocal(0);
 	test_KErrNone(r);
@@ -650,7 +648,7 @@ static void Test7()
 	test_KErrNone(r);
 	clientThread.Resume();
 	gSleepThread.Wait();
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=TheFs.Delete(_L("Newfile.txt"));
 	test_KErrNone(r);
@@ -679,7 +677,7 @@ static void MediaChangeExtendedNotification()
 		TFileName path = _L("\\F32-tst\\NOTIFY\\");
 		TInt r;
 		TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=gSleepThread.CreateLocal(0);
 		test_KErrNone(r);
 		RThread clientThread;
@@ -689,7 +687,7 @@ static void MediaChangeExtendedNotification()
 		clientThread.Resume();
 		gSleepThread.Wait();
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		WaitForMediaChange();
 		gSleepThread.Close();
 		clientThread.Close();
@@ -701,7 +699,7 @@ static void MediaChangeExtendedNotification()
 
 
 		TheFs.NotifyChange(ENotifyDisk,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=gSleepThread.CreateLocal(0);
 		test_KErrNone(r);
 		r=clientThread.Create(_L("Test6Thread2"),ThreadEntryPoint,0x4000,KHeapSize,KHeapSize,(TAny*)ETest6);
@@ -709,7 +707,7 @@ static void MediaChangeExtendedNotification()
 		clientThread.Resume();
 		gSleepThread.Wait();
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		WaitForMediaChange();
 		gSleepThread.Close();
 		clientThread.Close();
@@ -720,7 +718,7 @@ static void MediaChangeExtendedNotification()
 	    test_KErrNone(r);
 
 		TheFs.NotifyChange(ENotifyWrite,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=gSleepThread.CreateLocal(0);
 		test_KErrNone(r);
 		r=clientThread.Create(_L("Test6Thread3"),ThreadEntryPoint,0x4000,KHeapSize,KHeapSize,(TAny*)ETest6);
@@ -728,7 +726,7 @@ static void MediaChangeExtendedNotification()
 		clientThread.Resume();
 		gSleepThread.Wait();
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		WaitForMediaChange();
 		gSleepThread.Close();
 		clientThread.Close();
@@ -756,17 +754,17 @@ static void TestRequestAhead()
 	TFileName path=_L("\\F32-TST\\NOTIFY\\BehindTheCurtain\\");
 	TRequestStatus reqStat(KRequestPending);
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\BehindTheCurtain\\"));
 	test_KErrNone(r);
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	path=_L("\\F32-TST\\NOTIFY\\BehindTheCurtain\\PayNoAttention.man");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	RFile file;
 	r=file.Replace(TheFs,path,EFileStream);
@@ -774,130 +772,130 @@ static void TestRequestAhead()
 	file.Close();
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	r=TheFs.Delete(path);
 	test_KErrNone(r);
 
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 //	Now cancel the outstanding request
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Repeat with a ENotifyFile request
 	TheFs.NotifyChange(ENotifyFile,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=file.Replace(TheFs,path,EFileStream);
 	test_KErrNone(r);
 	file.Close();
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	r=TheFs.Delete(path);
 	test_KErrNone(r);
 
 	TheFs.NotifyChange(ENotifyFile,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 //	Now cancel the outstanding request
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Repeat with an ENotifyAttributes request
 	TheFs.NotifyChange(ENotifyAttributes,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=file.Replace(TheFs,path,EFileStream);
 	test_KErrNone(r);
 	file.Close();
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);	//	Monitoring attributes but informed anyway
+	test_KErrNone(reqStat.Int());	//	Monitoring attributes but informed anyway
 
 	r=TheFs.Delete(path);
 	test_KErrNone(r);
 
 	TheFs.NotifyChange(ENotifyAttributes,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 //	Now cancel the outstanding request
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Repeat with an ENotifyWrite request
 	TheFs.NotifyChange(ENotifyWrite,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=file.Replace(TheFs,path,EFileStream);
 	test_KErrNone(r);
 	file.Close();
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);	//	Monitoring file writing but informed anyway
+	test_KErrNone(reqStat.Int());	//	Monitoring file writing but informed anyway
 
 	r=TheFs.Delete(path);
 	test_KErrNone(r);
 
 	TheFs.NotifyChange(ENotifyWrite,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 //	Now cancel the outstanding request
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Repeat with an ENotifyDisk request
 	TheFs.NotifyChange(ENotifyDisk,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=file.Replace(TheFs,path,EFileStream);
 	test_KErrNone(r);
 	file.Close();
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);	//	Monitoring disk activity but informed anyway
+	test_KErrNone(reqStat.Int());	//	Monitoring disk activity but informed anyway
 
 	r=TheFs.Delete(path);
 	test_KErrNone(r);
 
 	TheFs.NotifyChange(ENotifyAttributes,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 //	Now cancel the outstanding request
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Now do much the same with directory monitoring
 	path=_L("\\F32-TST\\NOTIFY\\BehindTheCurtain\\");
 	TheFs.RmDir(path);
 
 	TheFs.NotifyChange(ENotifyDir,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	TheFs.MkDir(path);
 	test_KErrNone(r);
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	TheFs.RmDir(path);
 	test_KErrNone(r);
 
 	TheFs.NotifyChange(ENotifyDir,reqStat,path);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	Now cancel the outstanding request
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 	TheFs.NotifyChange(ENotifyDir,reqStat,path);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	Get a separate thread to create the directory
 	RThread thread;
@@ -908,9 +906,9 @@ static void TestRequestAhead()
 	thread.Close();
 
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	TheFs.RmDir(path);
 	test_KErrNone(r);
@@ -920,7 +918,7 @@ static void TestRequestAhead()
 	path=_L("\\F32-TST\\NOTIFY\\BehindTheCurtain\\PayNoAttention.man");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	thread.Create(_L("RequestAheadThread"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest10);
 	thread.Logon(thrdStat);
@@ -928,31 +926,31 @@ static void TestRequestAhead()
 	thread.Close();
 
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
-	test(reqStat==KRequestPending);
+	test_KErrNone(thrdStat.Int());
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	Now get a thread to create the file
 	thread.Create(_L("RequestAhead"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest11);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	thread.Close();
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	TheFs.Delete(path);
 	test_KErrNone(r);
 
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	Now cancel the outstanding request
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 	path=_L("\\F32-TST\\NOTIFY\\BehindTheCurtain\\");
 	TheFs.RmDir(path);
@@ -972,52 +970,52 @@ static void Test8()
 	TFileName path=(_L("\\F32-TST\\"));
 
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	RThread thread;
 	TInt r=thread.Create(_L("MyThread"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest1);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	thread.Close();
 
 //	Repeat the test
 	test.Next(_L("Repeat Test notification of an entry change"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread2"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest1);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	thread.Close();
 
 //	Test it can be cancelled
 	test.Next(_L("Test Notify cancel"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TheFs.NotifyChangeCancel();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Test it can be notified again
 	test.Next(_L("Test notification still works"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread3"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest1);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	thread.Close();
 
 //	Test notification doesn't occur when a change occurs above the directory monitored
@@ -1028,53 +1026,53 @@ static void Test8()
 	test_Value(r, (r == KErrNone)||(r==KErrAlreadyExists));
 	path=_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread4"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest1);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::After(500000);
 	thread.Close();
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TheFs.NotifyChangeCancel();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Test notification occurs when a change is made to the subdirectory monitored
 	test.Next(_L("Create a file in monitored subdirectory"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread5"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest2);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	thread.Close();
 
 	test.Next(_L("Create a directory in monitored subdirectory"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread6"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest3);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	thread.Close();
 
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\SCARECROW\\TINMAN\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\SCARECROW\\TINMAN\\"));
@@ -1089,28 +1087,28 @@ static void Test8()
 	path=_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\");
 
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread7"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest1);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::After(500000);
 	thread.Close();
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TheFs.NotifyChangeCancel();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Test notification occurs when a change is made to the subdirectory monitored
 	test.Next(_L("Delete a file in monitored subdirectory"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	RFile file;
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\WickedWitch.msg"),EFileStream);
@@ -1121,104 +1119,104 @@ static void Test8()
 	test.Next(_L("Monitor changes to a specific file"));
 	path+=_L("WickedWitch.msg");
 	TheFs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread8"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest8);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	thread.Close();
 
 //	Test notification does not occur if a change is made above the file
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	thread.Create(_L("MyThread9"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest2);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::After(500000);
 	thread.Close();
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TheFs.NotifyChangeCancel();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	Test notification occurs when a change is made to the file
 	test.Next(_L("Delete monitored file"));
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\WickedWitch.Msg"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	Test notification request is now submitted on the non existent path successfully
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TheFs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 	path=_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.Doc");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.Doc"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	path=_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	Submit a request for a path which does not yet exist
 	path=_L("\\F32-TST\\NOTIFY\\GOOD_WITCH\\");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 //	Now create the directory we are waiting on
 	r=TheFs.MkDir(path);
 	test_KErrNone(r);
 //	Make sure the notification has now been received
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	Submit a request for a file which does not yet exist
 	path=_L("\\F32-TST\\NOTIFY\\GOOD_WITCH\\Red-Shoes.red");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 //	Now create the file we are waiting on
 	r=file.Replace(TheFs,path,EFileStream);
 	test_KErrNone(r);
 	file.Close();
 //	Make sure the notification has now been received
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 //	Submit another notification request and delete the file
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(path);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	path=_L("\\F32-TST\\NOTIFY\\GOOD_WITCH\\");
 	TheFs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.RmDir(path);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	// test passing in an empty string
 	TheFs.NotifyChange(ENotifyEntry,reqStat,_L(""));
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrArgument);
+	test_Value(reqStat.Int(), reqStat==KErrArgument);
 	}
 
 static void Test9()
@@ -1296,12 +1294,12 @@ static void Test9()
 	test_KErrNone(r);
 	fs6.NotifyChange(ENotifyEntry,reqStat6,path6);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
 
 //	Make a change a the top level and check that only the session monitoring
 //	that level is notified
@@ -1310,13 +1308,13 @@ static void Test9()
 	test_KErrNone(r);
 	file.Close();
 	User::WaitForRequest(reqStat1);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
+	test_KErrNone(reqStat1.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
 	User::WaitForRequest(reqStat6);
-	test(reqStat6==KErrNone);
+	test_KErrNone(reqStat6.Int());
 
 	r=TheFs.Delete(_L("\\F32-TST\\NewFile.txt"));
 	test_KErrNone(r);
@@ -1324,8 +1322,8 @@ static void Test9()
 //	Renew the notify request at the top level and make a change one step lower
 	fs1.NotifyChange(ENotifyEntry,reqStat1,path1);
 	fs6.NotifyChange(ENotifyEntry,reqStat6,path6);
-	test(reqStat1==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
 
 	test.Next(_L("Test clients monitoring levels 1 and 2 are notified"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileStream);
@@ -1334,13 +1332,13 @@ static void Test9()
 
 	User::WaitForRequest(reqStat1);
 	User::WaitForRequest(reqStat2);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
+	test_KErrNone(reqStat1.Int());
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
 	User::WaitForRequest(reqStat6);
-	test(reqStat6==KErrNone);
+	test_KErrNone(reqStat6.Int());
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\NewFile.txt"));
 	test_KErrNone(r);
@@ -1350,9 +1348,9 @@ static void Test9()
 	fs1.NotifyChange(ENotifyEntry,reqStat1,path1);
 	fs2.NotifyChange(ENotifyEntry,reqStat2,path2);
 	fs6.NotifyChange(ENotifyEntry,reqStat6,path6);
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
 
 	test.Next(_L("Test clients monitoring levels 1,2 and 3 are notified"));
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\ANIMAL\\NewFile.txt"),EFileStream);
@@ -1362,13 +1360,13 @@ static void Test9()
 	User::WaitForRequest(reqStat1);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
+	test_KErrNone(reqStat1.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
 	User::WaitForRequest(reqStat6);
-	test(reqStat6==KErrNone);
+	test_KErrNone(reqStat6.Int());
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\ANIMAL\\NewFile.txt"));
 	test_KErrNone(r);
@@ -1379,10 +1377,10 @@ static void Test9()
 	fs2.NotifyChange(ENotifyEntry,reqStat2,path2);
 	fs3.NotifyChange(ENotifyEntry,reqStat3,path3);
 	fs6.NotifyChange(ENotifyEntry,reqStat6,path6);
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat6==KRequestPending);
 
 	test.Next(_L("Test clients monitoring levels 1 - 4 are notified"));
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\ANIMAL\\cat.txt"));
@@ -1391,13 +1389,13 @@ static void Test9()
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
 	User::WaitForRequest(reqStat4);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KErrNone);
-	test(reqStat5==KRequestPending);
+	test_KErrNone(reqStat1.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_KErrNone(reqStat4.Int());
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
 	User::WaitForRequest(reqStat6);
-	test(reqStat6==KErrNone);
+	test_KErrNone(reqStat6.Int());
 
 //	Renew the notify request at the top, second and third levels and on the file deleted above
 //	which will be successful, but will not complete (for obvious reasons)
@@ -1408,11 +1406,11 @@ static void Test9()
 	fs3.NotifyChange(ENotifyEntry,reqStat3,path3);
 	fs6.NotifyChange(ENotifyEntry,reqStat6,path6);
 	fs4.NotifyChange(ENotifyEntry,reqStat4,path4);
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
 
 	test.Next(_L("Test clients monitoring levels 1 - 3 and 5 are notified"));
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\ANIMAL\\dog.txt"));
@@ -1423,16 +1421,16 @@ static void Test9()
 //	Don't wait for reqStat4
 	User::WaitForRequest(reqStat5);
 	User::WaitForRequest(reqStat6);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);	//	File does not exist
-	test(reqStat5==KErrNone);
-	test(reqStat6==KErrNone);
+	test_KErrNone(reqStat1.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);	//	File does not exist
+	test_KErrNone(reqStat5.Int());
+	test_KErrNone(reqStat6.Int());
 
 	fs4.NotifyChangeCancel(reqStat4);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 //	Renew the notify request at the top, second and third levels and attempt to renew
 //	the request on the files deleted above (which will fail).
 
@@ -1443,25 +1441,25 @@ static void Test9()
 	fs4.NotifyChange(ENotifyEntry,reqStat4,path4);
 	fs6.NotifyChange(ENotifyEntry,reqStat6,path6);
 	fs5.NotifyChange(ENotifyEntry,reqStat5,path5);
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
 
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\ANIMAL\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat1);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
+	test_KErrNone(reqStat1.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
 	User::WaitForRequest(reqStat6);
-	test(reqStat6==KErrNone);
+	test_KErrNone(reqStat6.Int());
 
 //	Renew the notify request at the top and second levels on the third level
 //	which was removed - it'll succeed but won't complete.
@@ -1473,12 +1471,12 @@ static void Test9()
 	fs3.NotifyChange(ENotifyEntry,reqStat3,path3);
 	fs6.NotifyChange(ENotifyEntry,reqStat6,path6);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
 
 	fs1.NotifyChangeCancel();
 	fs2.NotifyChangeCancel();
@@ -1525,25 +1523,25 @@ static void Test10()
 	fs1.NotifyChange(ENotifyAll,status3,path);
 	fs1.NotifyChange(ENotifyAll,status4,path);
 	fs1.NotifyChange(ENotifyAll,status5,path);
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
-	test(status5==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
+	test_Value(status5.Int(), status5==KRequestPending);
 
 	test.Next(_L("RFs::NotifyCancel()"));
 //	Test that one call to RFs::NotifyCancel() cancels all outstanding requests
 	fs1.NotifyChangeCancel();
 	User::WaitForRequest(status1);
-	test(status1==KErrCancel);
+	test_Value(status1.Int(), status1==KErrCancel);
 	User::WaitForRequest(status2);
-	test(status2==KErrCancel);
+	test_Value(status2.Int(), status2==KErrCancel);
 	User::WaitForRequest(status3);
-	test(status3==KErrCancel);
+	test_Value(status3.Int(), status3==KErrCancel);
 	User::WaitForRequest(status4);
-	test(status4==KErrCancel);
+	test_Value(status4.Int(), status4==KErrCancel);
 	User::WaitForRequest(status5);
-	test(status5==KErrCancel);
+	test_Value(status5.Int(), status5==KErrCancel);
 //	Call the cancel function again to check no further action
 	fs1.NotifyChangeCancel();
 
@@ -1554,62 +1552,62 @@ static void Test10()
 	fs1.NotifyChange(ENotifyAll,status3,path);
 	fs1.NotifyChange(ENotifyAll,status4,path);
 	fs1.NotifyChange(ENotifyAll,status5,path);
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
-	test(status5==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
+	test_Value(status5.Int(), status5==KRequestPending);
 
 //	Cancel the outstanding request with status5
 	test.Next(_L("RFs::NotifyCancel()"));
 	fs1.NotifyChangeCancel(status5);
 	User::WaitForRequest(status5);
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
-	test(status5==KErrCancel);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
+	test_Value(status5.Int(), status5==KErrCancel);
 
 	r=TheFs.MkDir(_L("\\F32-TST\\TROPICANA\\"));
 	test_KErrNone(r);
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
 
 	fs1.NotifyChangeCancel(status2);
 	User::WaitForRequest(status2);
 
-	test(status1==KRequestPending);
-	test(status2==KErrCancel);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KErrCancel);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
 
 	r=TheFs.RmDir(_L("\\F32-TST\\TROPICANA\\"));
 	test_KErrNone(r);
-	test(status1==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
 
 	fs1.NotifyChangeCancel(status4);
 	User::WaitForRequest(status4);
-	test(status1==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KErrCancel);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KErrCancel);
 
 	fs1.NotifyChangeCancel(status4);	//	Test no side effects on trying to cancel a request
-	test(status4==KErrCancel);			//	that has already been cancelled
+	test_Value(status4.Int(), status4==KErrCancel);			//	that has already been cancelled
 
 	fs1.NotifyChangeCancel(status1);
 	User::WaitForRequest(status1);
-	test(status1==KErrCancel);
-	test(status3==KRequestPending);
+	test_Value(status1.Int(), status1==KErrCancel);
+	test_Value(status3.Int(), status3==KRequestPending);
 	fs1.NotifyChangeCancel(status1);	//	Test no side effects on trying to cancel a request
-	test(status1==KErrCancel);			//	that has already been cancelled
+	test_Value(status1.Int(), status1==KErrCancel);			//	that has already been cancelled
 
 	fs1.NotifyChangeCancel(status3);
 	User::WaitForRequest(status3);
-	test(status3==KErrCancel);
+	test_Value(status3.Int(), status3==KErrCancel);
 
 	fs1.Close();
 	}
@@ -1693,9 +1691,9 @@ static void Test12()
 	test_KErrNone(r);
 	fs3.NotifyChange(ENotifyEntry,reqStat3,path);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=gSleepThread.CreateLocal(0);
 	test_KErrNone(r);
@@ -1705,18 +1703,18 @@ static void Test12()
 	thread1.Resume();
 	gSleepThread.Wait();
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\kangaroo.txt"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat1);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat1==KErrNone);	//	All three notifications occur because they
-	test(reqStat2==KErrNone);	//	are all monitoring the top level directory
-	test(reqStat3==KErrNone);	//	Later, we'll test monitoring individual files...
+	test_KErrNone(reqStat1.Int());	//	All three notifications occur because they
+	test_KErrNone(reqStat2.Int());	//	are all monitoring the top level directory
+	test_KErrNone(reqStat3.Int());	//	Later, we'll test monitoring individual files...
 
 	gSleepThread.Close();
 	thread1.Close();
@@ -1730,9 +1728,9 @@ static void Test12()
 	fs2.NotifyChange(ENotifyAll,reqStat2,path);
 	fs3.NotifyChange(ENotifyAll,reqStat3,path);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=gSleepThread.CreateLocal(0);
 	test_KErrNone(r);
@@ -1745,9 +1743,9 @@ static void Test12()
 	User::WaitForRequest(reqStat1);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
+	test_KErrNone(reqStat1.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
 
 	gSleepThread.Close();
 	thread2.Close();
@@ -1764,9 +1762,9 @@ static void Test12()
 	fs2.NotifyChange(ENotifyEntry,reqStat2,path2);
 	fs3.NotifyChange(ENotifyAll,reqStat3,path3);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=gSleepThread.CreateLocal(0);
 	test_KErrNone(r);
@@ -1777,15 +1775,15 @@ static void Test12()
 	gSleepThread.Wait();
 
 	User::WaitForRequest(reqStat1);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KRequestPending);	//	Monitoring with ENotifyEntry
+	test_KErrNone(reqStat1.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);	//	Monitoring with ENotifyEntry
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrNone);
+	test_KErrNone(reqStat3.Int());
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\koala.txt"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrNone);
+	test_KErrNone(reqStat2.Int());
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\kangaroo.txt"));
 	test_KErrNone(r);
@@ -1826,40 +1824,40 @@ static void Test13()
 	TRequestStatus reqStat(KRequestPending);
 	TRequestStatus thrdStat(KRequestPending);
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	RThread thread;
 	r=thread.Create(_L("MyThread7"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest8);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	thread.Close();
 //	Test notification does not occur if a change is made above the file
 	fs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=thread.Create(_L("MyThread8"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest1);
 	test_KErrNone(r);
 	thread.Logon(thrdStat);
 	thread.Resume();
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	User::After(500000);
 	thread.Close();
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\NEWFILE.TXT"));
 	test_KErrNone(r);
 
 //	Test notification does not occur if a change is made to another file
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Lion.log"),EFileStream);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.Close();
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Lion.log"));
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 
 //	Test notification occurs when a change is made to the file
@@ -1867,7 +1865,7 @@ static void Test13()
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\WickedWitch.Msg"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	fs.Close();
 	}
@@ -1893,178 +1891,178 @@ static void Test14()
 	RFile file;
 
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Write(0,_L8("Pay no attention to the man behind the curtain"));
 	test_KErrNone(r);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Read() a file within the monitored directory - no notification for reads
 	path=_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\");
 	TBuf8<100> temp;
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Read(0,temp,100);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	RFile::SetAtt() of a file within the monitored directory
 	test.Next(_L("RFile::SetAtt()"));
 	r=file.SetAtt(KEntryAttSystem,KEntryAttNormal);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	RFile::SetSize() of a file within the monitored directory
 	test.Next(_L("RFile::SetSize()"));
 	r=file.SetSize(256);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFile::Temp() to create a temp file within the monitored directory
 	test.Next(_L("RFile::Temp()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TFileName fileName;
 	r=file.Temp(TheFs,path,fileName,EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFile::SetModified() to change modification time of a file within monitored dir
 	test.Next(_L("RFile::SetModified()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TTime now;
 	now.HomeTime();
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.SetModified(now);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::SetEntry() to change a directory entry within the monitored directory
 	test.Next(_L("RFs::SetEntry()"));
 	TEntry entry;
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	r=TheFs.Entry(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),entry);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=TheFs.SetEntry(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),now,KEntryAttHidden,KEntryAttNormal);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Set() to change file's modification time and attributes
 	test.Next(_L("RFile::Set()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=file.Set(now,KEntryAttNormal,KEntryAttHidden);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::SetDriveName()
 	test.Next(_L("RFs::SetDriveName()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("DRIVETEST"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	fs.NotifyChange(ENotifyEntry,reqStat,path);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("TEST"));
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	fs.NotifyChange(ENotifyDisk,reqStat,path);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("DRIVE"));
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 
 //	RFs::MkDir()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	test.Next(_L("RFs::MkDir()"));
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::RmDir()
 	test.Next(_L("RFs::RmDir()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Create()
 	test.Next(_L("RFile::Create()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Create(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFs::Delete()
 	test.Next(_L("RFs::Delete()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Replace()
 	test.Next(_L("RFile::Replace()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFs::Delete()
 	test.Next(_L("RFs::Delete()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::SetVolumeLabel() - should only be notification when monitoring relevant TNotifyTypes
 	test.Next(_L("RFs::SetVolumeLabel"));
@@ -2076,24 +2074,24 @@ static void Test14()
 
 	r=TheFs.Volume(volInfo,driveNum);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	currentVolName=volInfo.iName;
 
 	r=TheFs.SetVolumeLabel(_L("VOL"),driveNum);
 	if (r==KErrNone)
 		{
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 		test(volInfo.iName==_L("VOL"));
 	//	Test notification occurs under ENotifyDisk
 		fs.NotifyChange(ENotifyDisk,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.SetVolumeLabel(_L("ABCDEFGHIJK"),driveNum);
 		test_KErrNone(r);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 
@@ -2103,7 +2101,7 @@ static void Test14()
 		fs.NotifyChange(ENotifyAttributes,reqStat,path);
 		r=TheFs.SetVolumeLabel(_L("TROPICANA"),driveNum);
 		test_KErrNone(r);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 
@@ -2111,14 +2109,14 @@ static void Test14()
 
 		fs.NotifyChangeCancel(reqStat);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrCancel);
+		test_Value(reqStat.Int(), reqStat==KErrCancel);
 	//	Test notification occurs under ENotifyEntry
 		fs.NotifyChange(ENotifyEntry,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.SetVolumeLabel(currentVolName,driveNum);
 		test_KErrNone(r);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 		test(volInfo.iName==currentVolName);
@@ -2136,19 +2134,17 @@ static void Test14()
 
 	test.Next(_L("RFs::Rename()"));
 	fs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Toto.doc"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Toto.doc"),_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"));
 	test_KErrNone(r);
 
-#if defined(__WINS__)
-	if(gSessionPath[0]=='Y'||gSessionPath[0]=='X')
-#endif
-		{
+	if(!Is_SimulatedSystemDrive(TheFs,driveNum))
+		{// Skip emulator/PlatSim drive C:
 		test.Next(_L("RFs::Rename() with max path length"));
 		TFileName longName=_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\");
 		while(longName.Length()<(KMaxFileName-2))
@@ -2156,11 +2152,11 @@ static void Test14()
 		r=TheFs.Rename(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),longName);
 		test_KErrNone(r);
 		fs.NotifyChange(ENotifyEntry,reqStat,longName);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.Rename(longName,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"));
 		test_KErrNone(r);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		}
 
 	fs.Close();
@@ -2189,47 +2185,47 @@ static void Test15()
 	RFile file;
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Write(0,_L8("Pay no attention to the man behind the curtain"));
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Read() a file within the monitored directory - no notification for reads
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	TBuf8<100> temp;
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Read(0,temp,100);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	RFile::SetAtt() of a file within the monitored directory
 	test.Next(_L("RFile::SetAtt()"));
 	r=file.SetAtt(KEntryAttNormal,KEntryAttHidden);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::SetSize() of a file within the monitored directory
 	test.Next(_L("RFile::SetSize()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.SetSize(256);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFile::Temp() to create a temp file in the subtree
 	test.Next(_L("RFile::Temp()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	TFileName fileName;
 	r=file.Temp(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\"),fileName,EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFile::SetModified() to change modification time of a file within monitored dir
@@ -2239,117 +2235,117 @@ static void Test15()
 	now.HomeTime();
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.SetModified(now);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::Entry() to change a directory entry within the monitored directory
 	test.Next(_L("RFs::Entry()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	TEntry entry;
 	r=TheFs.Entry(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),entry);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=TheFs.SetEntry(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),now,KEntryAttHidden,KEntryAttNormal);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Set() to change file's modification time and attributes
 	test.Next(_L("RFile::Set()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=file.Set(now,KEntryAttNormal,KEntryAttHidden);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::SetDriveName()
 	test.Next(_L("RFs::SetDriveName()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("DRIVETEST"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	fs.NotifyChange(ENotifyEntry,reqStat,path);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("TEST"));
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	User::After(KNotifyChangeAfter);
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	fs.NotifyChange(ENotifyDisk,reqStat,path);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("DRIVE"));
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 //	RFs::MkDir()
 	test.Next(_L("RFs::MkDir()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::RmDir()
 	test.Next(_L("RFs::RmDir()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Create()
 	test.Next(_L("RFile::Create()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Create(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFs::Delete()
 	test.Next(_L("RFs::Delete()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Replace()
 	test.Next(_L("RFile::Replace()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFs::Delete()
 	test.Next(_L("RFs::Delete()"));
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::SetVolumeLabel() - should be notification under relevant TNotifyType monitoring
 //	The operation is non-path specific so all outstanding interested requests are notified
@@ -2362,24 +2358,24 @@ static void Test15()
 	TFileName currentVolName;
 	r=TheFs.Volume(volInfo,driveNum);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	currentVolName=volInfo.iName;
 
 	r=TheFs.SetVolumeLabel(_L("VOL"),driveNum);
 	if (r==KErrNone)
 		{
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 		test(volInfo.iName==_L("VOL"));
 	//	Test notification occurs under ENotifyDisk
 		fs.NotifyChange(ENotifyDisk,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.SetVolumeLabel(_L("ABCDEFGHIJK"),driveNum);
 		test_KErrNone(r);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 
@@ -2389,7 +2385,7 @@ static void Test15()
 		fs.NotifyChange(ENotifyAttributes,reqStat,path);
 		r=TheFs.SetVolumeLabel(_L("TROPICANA"),driveNum);
 		test_KErrNone(r);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 
@@ -2397,14 +2393,14 @@ static void Test15()
 
 		fs.NotifyChangeCancel(reqStat);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrCancel);
+		test_Value(reqStat.Int(), reqStat==KErrCancel);
 	//	Test notification occurs under ENotifyEntry
 		fs.NotifyChange(ENotifyEntry,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.SetVolumeLabel(currentVolName,driveNum);
 		test_KErrNone(r);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 		test(volInfo.iName==currentVolName);
@@ -2421,18 +2417,18 @@ static void Test15()
 
 //	Test that notification is made when change is made to monitored directory
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	fs.Close();
 	}
 
@@ -2458,34 +2454,34 @@ static void Test16()
 	RFile file;
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Write(0,_L8("Pay no attention to the man behind the curtain"));
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Read() a file within the monitored directory - no notification for reads
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	TBuf8<100> temp;
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Read(0,temp,100);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 //	RFile::SetAtt() of a file within the monitored directory
 	r=file.SetAtt(KEntryAttNormal,KEntryAttHidden);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::SetSize() of a file within the monitored directory
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.SetSize(256);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 
@@ -2495,108 +2491,108 @@ static void Test16()
 	now.HomeTime();
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.SetModified(now);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::Entry() to change a directory entry within the monitored directory
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	TEntry entry;
 	r=TheFs.Entry(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),entry);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=TheFs.SetEntry(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),now,KEntryAttHidden,KEntryAttNormal);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Set() to change file's modification time and attributes
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=file.Set(now,KEntryAttNormal,KEntryAttHidden);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::SetDriveName() - should be no notification ever with extended notification
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("DRIVETEST"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	fs.NotifyChange(ENotifyEntry,reqStat,path);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("TEST"));
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
 	fs.NotifyChange(ENotifyDisk,reqStat,path);
 	User::After(KNotifyChangeAfter);
 	r=TheFs.SetDriveName(KDefaultDrive,_L("DRIVE"));
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 
 
 //	RFs::MkDir()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::RmDir()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Create()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Create(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFs::Delete()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFile::Replace()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	file.Close();
 
 //	RFs::Delete()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	RFs::SetVolumeLabel()
 //	Not path specific, so all outstanding requests of correct TNotifyType are notified
@@ -2606,24 +2602,24 @@ static void Test16()
 	TFileName currentVolName;
 	r=TheFs.Volume(volInfo,driveNum);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	currentVolName=volInfo.iName;
 
 	r=TheFs.SetVolumeLabel(_L("VOL"),driveNum);
 	if (r==KErrNone)
 		{
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 		test(volInfo.iName==_L("VOL"));
 	//	Test notification occurs under ENotifyDisk
 		fs.NotifyChange(ENotifyDisk,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.SetVolumeLabel(_L("ABCDEFGHIJK"),driveNum);
 		test_KErrNone(r);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 
@@ -2633,7 +2629,7 @@ static void Test16()
 		fs.NotifyChange(ENotifyAttributes,reqStat,path);
 		r=TheFs.SetVolumeLabel(_L("TROPICANA"),driveNum);
 		test_KErrNone(r);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 
@@ -2641,14 +2637,14 @@ static void Test16()
 
 		fs.NotifyChangeCancel(reqStat);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrCancel);
+		test_Value(reqStat.Int(), reqStat==KErrCancel);
 	//	Test notification occurs under ENotifyEntry
 		fs.NotifyChange(ENotifyEntry,reqStat,path);
-		test(reqStat==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
 		r=TheFs.SetVolumeLabel(currentVolName,driveNum);
 		test_KErrNone(r);
 		User::WaitForRequest(reqStat);
-		test(reqStat==KErrNone);
+		test_KErrNone(reqStat.Int());
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
 		test(volInfo.iName==currentVolName);
@@ -2663,26 +2659,26 @@ static void Test16()
 
 //	RFs::Rename()
 	fs.NotifyChange(ENotifyEntry,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Dorothy.doc"),_L("\\F32-TST\\NOTIFY\\MUNCHKINS\\Toto.doc"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 //	Test that notification is made when change is made to monitored directory
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 	fs.Close();
 	}
 
@@ -2767,59 +2763,59 @@ static void Test17()
 	thread1.Resume();
 	gSleepThread.Wait();
 
-	test(status1==KRequestPending);
-	test(status2==KRequestPending);
-	test(status3==KRequestPending);
-	test(status4==KRequestPending);
-	test(status5==KRequestPending);
-	test(status6==KRequestPending);
+	test_Value(status1.Int(), status1==KRequestPending);
+	test_Value(status2.Int(), status2==KRequestPending);
+	test_Value(status3.Int(), status3==KRequestPending);
+	test_Value(status4.Int(), status4==KRequestPending);
+	test_Value(status5.Int(), status5==KRequestPending);
+	test_Value(status6.Int(), status6==KRequestPending);
 
-	test(statusExtended1==KRequestPending);
-	test(statusExtended2==KRequestPending);
-	test(statusExtended3==KRequestPending);
-	test(statusExtended4==KRequestPending);
-	test(statusExtended5==KRequestPending);
-	test(statusExtended6==KRequestPending);
+	test_Value(statusExtended1.Int(), statusExtended1==KRequestPending);
+	test_Value(statusExtended2.Int(), statusExtended2==KRequestPending);
+	test_Value(statusExtended3.Int(), statusExtended3==KRequestPending);
+	test_Value(statusExtended4.Int(), statusExtended4==KRequestPending);
+	test_Value(statusExtended5.Int(), statusExtended5==KRequestPending);
+	test_Value(statusExtended6.Int(), statusExtended6==KRequestPending);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\kangaroo.txt"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat1);
-	test(reqStat1==KErrNone);
+	test_KErrNone(reqStat1.Int());
 	User::WaitForRequest(status1);
-	test(status1==KErrNone);
+	test_KErrNone(status1.Int());
 	User::WaitForRequest(status2);
-	test(status2==KErrNone);
+	test_KErrNone(status2.Int());
 	User::WaitForRequest(status3);
-	test(status3==KErrNone);
+	test_KErrNone(status3.Int());
 	User::WaitForRequest(status4);
-	test(status4==KErrNone);
+	test_KErrNone(status4.Int());
 	User::WaitForRequest(status5);
-	test(status5==KErrNone);
+	test_KErrNone(status5.Int());
 	User::WaitForRequest(status6);
-	test(status6==KErrNone);
+	test_KErrNone(status6.Int());
 
 	User::WaitForRequest(statusExtended1);
-	test(statusExtended1==KErrNone);
+	test_KErrNone(statusExtended1.Int());
 	User::WaitForRequest(statusExtended2);
-	test(statusExtended2==KErrNone);
+	test_KErrNone(statusExtended2.Int());
 	User::WaitForRequest(statusExtended3);
-	test(statusExtended3==KErrNone);
+	test_KErrNone(statusExtended3.Int());
 	User::WaitForRequest(statusExtended4);
-	test(statusExtended4==KErrNone);
+	test_KErrNone(statusExtended4.Int());
 	User::WaitForRequest(statusExtended5);
-	test(statusExtended5==KErrNone);
+	test_KErrNone(statusExtended5.Int());
 	User::WaitForRequest(statusExtended6);
-	test(statusExtended6==KErrNone);
+	test_KErrNone(statusExtended6.Int());
 
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	fs.NotifyChangeCancel();	//	Cancels both remaining notification requests
 
 	User::WaitForRequest(reqStat3);
@@ -2837,10 +2833,10 @@ static void Test17()
 	fs.NotifyChange(ENotifyEntry,reqStat2,path2);
 	fs.NotifyChange(ENotifyAll,reqStat3,path3);
 	fs.NotifyChange(ENotifyEntry,reqStat4,path4);
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=gSleepThread.CreateLocal(0);
 	test_KErrNone(r);
@@ -2851,11 +2847,11 @@ static void Test17()
 	gSleepThread.Wait();
 
 	User::WaitForRequest(reqStat1);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KRequestPending);
+	test_KErrNone(reqStat1.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	gSleepThread.Close();
 	thread2.Close();
@@ -2863,10 +2859,10 @@ static void Test17()
 	fs.NotifyChange(ENotifyAll,reqStat1,path1);
 	fs.NotifyChange(ENotifyAll,reqStat3,path3);
 
-	test(reqStat1==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat1.Int(), reqStat1==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=gSleepThread.CreateLocal(0);
 	test_KErrNone(r);
@@ -2877,11 +2873,11 @@ static void Test17()
 	gSleepThread.Wait();
 
 	User::WaitForRequest(reqStat1);
-	test(reqStat1==KErrNone);
-	test(reqStat2==KRequestPending);	//	Monitoring with ENotifyEntry
+	test_KErrNone(reqStat1.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);	//	Monitoring with ENotifyEntry
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);	//	Monitoring with ENotifyEntry
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);	//	Monitoring with ENotifyEntry
 
 	RFs fs2;
 	r=fs2.Connect();
@@ -2891,27 +2887,27 @@ static void Test17()
 
 	TRequestStatus reqStat(KRequestPending);
 	fs2.NotifyChange(ENotifyEntry,reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\kangaroo.txt"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
+	test_KErrNone(reqStat.Int());
 
 	fs2.NotifyChange(ENotifyAll,reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\koala.txt"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\dingo.txt"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrNone);
+	test_KErrNone(reqStat4.Int());
 
 	gSleepThread.Close();
 	thread3.Close();
@@ -2958,40 +2954,40 @@ static void Test18()
 	fs.NotifyChange(ENotifyDisk,reqStat7,path);
 
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrArgument); //	Cannot monitor a file with ENotifyDir
-	test(reqStat5==KRequestPending);
-	test(reqStat6==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument); //	Cannot monitor a file with ENotifyDir
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
 	fs.NotifyChange(ENotifyEntry,reqStat4,path);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Write(0,_L8("Pay no attention to the man behind the curtain"));
 	file.Close();
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);	//	Monitoring with ENotifyFile
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);	//	Monitoring with ENotifyFile
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);	//	Monitoring with ENotifyEntry
-	test(reqStat5==KRequestPending);
-	test(reqStat6==KRequestPending);
-	test(reqStat7==KRequestPending);
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);	//	Monitoring with ENotifyEntry
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
+	test_Value(reqStat7.Int(), reqStat7==KRequestPending);
 	fs.NotifyChangeCancel();			//	Cancels all outstanding notification requests
 
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 	User::WaitForRequest(reqStat5);
-	test(reqStat5==KErrCancel);
+	test_Value(reqStat5.Int(), reqStat5==KErrCancel);
 	User::WaitForRequest(reqStat6);
-	test(reqStat6==KErrCancel);
+	test_Value(reqStat6.Int(), reqStat6==KErrCancel);
 	User::WaitForRequest(reqStat7);
-	test(reqStat7==KErrCancel);
+	test_Value(reqStat7.Int(), reqStat7==KErrCancel);
 
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileWrite);
 	test_KErrNone(r);
@@ -3005,57 +3001,57 @@ static void Test18()
 	fs.NotifyChange(ENotifyWrite,reqStat6,path);
 	fs.NotifyChange(ENotifyDisk,reqStat7,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	User::WaitForRequest(reqStat5);
-	test(reqStat5==KErrArgument);
-	test(reqStat6==KRequestPending);
-	test(reqStat7==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KErrArgument);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
+	test_Value(reqStat7.Int(), reqStat7==KRequestPending);
 
 	test.Next(_L("RFile::SetAtt()"));
 	r=file.SetAtt(KEntryAttSystem,KEntryAttNormal);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);	//	Monitoring with ENotifyFile
-	test(reqStat3==KRequestPending);	//	Monitoring with ENotifyEntry
-	test(reqStat4==KErrNone);				//	Monitoring a file - can't use ENotifyDir
-	test(reqStat6==KRequestPending);
-	test(reqStat7==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);	//	Monitoring with ENotifyFile
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);	//	Monitoring with ENotifyEntry
+	test_KErrNone(reqStat4.Int());				//	Monitoring a file - can't use ENotifyDir
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
+	test_Value(reqStat7.Int(), reqStat7==KRequestPending);
 
 	fs.NotifyChange(ENotifyWrite,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrArgument);
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 	r=file.SetAtt(KEntryAttNormal,KEntryAttSystem);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);		//	Monitoring with ENotifyWrite
+	test_Value(reqStat.Int(), reqStat==KRequestPending);		//	Monitoring with ENotifyWrite
 	fs.NotifyChangeCancel();	//	Cancel outstanding notification request
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 	User::WaitForRequest(reqStat6);
-	test(reqStat6==KErrCancel);
+	test_Value(reqStat6.Int(), reqStat6==KErrCancel);
 	User::WaitForRequest(reqStat7);
-	test(reqStat7==KErrCancel);
+	test_Value(reqStat7.Int(), reqStat7==KErrCancel);
 
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	fs.NotifyChange(ENotifyFile,reqStat2,path);
 	fs.NotifyChange(ENotifyEntry,reqStat3,path);
 	fs.NotifyChange(ENotifyAttributes,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 //	RFile::SetSize() of a file within the monitored directory
 	test.Next(_L("RFile::SetSize()"));
@@ -3063,30 +3059,30 @@ static void Test18()
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);	//	Monitoring with ENotifyFile
-	test(reqStat3==KRequestPending);	//	Monitoring with ENotifyEntry
-	test(reqStat4==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);	//	Monitoring with ENotifyFile
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);	//	Monitoring with ENotifyEntry
+	test_KErrNone(reqStat4.Int());
 
 	fs.NotifyChange(ENotifyWrite,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrArgument);
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 	r=file.SetSize(200);
 	test_KErrNone(r);
 	User::After(1000000);
-	test(reqStat==KRequestPending);		//	Monitoring with ENotifyWrite
+	test_Value(reqStat.Int(), reqStat==KRequestPending);		//	Monitoring with ENotifyWrite
 
 	file.Close();
 	fs.NotifyChangeCancel();			//	Cancels all outstanding notification requests
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 
 //	RFile::Temp() to create a temp file within the monitored directory
 	test.Next(_L("RFile::Temp()"));
@@ -3097,47 +3093,47 @@ static void Test18()
 	fs.NotifyChange(ENotifyEntry,reqStat3,path);
 	fs.NotifyChange(ENotifyAttributes,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	TFileName fileName;
 	r=file.Temp(TheFs,path,fileName,EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);	//	Monitoring ENotifyEntry
-	test(reqStat4==KRequestPending);	//	Monitoring ENotifyAttributes
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);	//	Monitoring ENotifyEntry
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);	//	Monitoring ENotifyAttributes
 	file.Close();
 	fs.NotifyChangeCancel();
 
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 	fs.NotifyChange(ENotifyFile,reqStat,path);
 	fs.NotifyChange(ENotifyDisk,reqStat2,path);
 	fs.NotifyChange(ENotifyWrite,reqStat3,path);
 	r=file.Temp(TheFs,path,fileName,EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);		//	Monitoring ENotifyFile
-	test(reqStat2==KRequestPending);	//	Monitoring ENotifyDisk
-	test(reqStat3==KRequestPending);	//	Monitoring ENotifyWrite
+	test_Value(reqStat.Int(), reqStat==KRequestPending);	//	Monitoring ENotifyFile
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);	//	Monitoring ENotifyDisk
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);	//	Monitoring ENotifyWrite
 	file.Close();
 
 	fs.NotifyChangeCancel();	//	Cancels all outstanding notification requests
 
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 
 //	RFile::SetModified() to change modification time of a file within monitored dir
 	test.Next(_L("RFile::SetModified()"));
@@ -3147,30 +3143,30 @@ static void Test18()
 	fs.NotifyChange(ENotifyAttributes,reqStat3,path);
 	fs.NotifyChange(ENotifyFile,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	TTime now;
 	now.HomeTime();
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.SetModified(now);
 	file.Close();
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	fs.NotifyChangeCancel();
 
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFs::SetEntry() to change a directory entry within the monitored directory
 	test.Next(_L("RFs::SetEntry()"));
@@ -3180,28 +3176,28 @@ static void Test18()
 	fs.NotifyChange(ENotifyAttributes,reqStat3,path);
 	fs.NotifyChange(ENotifyDisk,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Entry(_L("\\F32-TST\\NOTIFY\\NewFile.txt"),entry);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=TheFs.SetEntry(_L("\\F32-TST\\NOTIFY\\NewFile.txt"),now,KEntryAttHidden,KEntryAttNormal);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	fs.NotifyChangeCancel();
 
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFile::Set() to change file's modification time and attributes
 	test.Next(_L("RFile::Set()"));
@@ -3210,29 +3206,29 @@ static void Test18()
 	fs.NotifyChange(ENotifyAttributes,reqStat3,path);
 	fs.NotifyChange(ENotifyWrite,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	now.HomeTime();
 	r=file.Set(now,KEntryAttNormal,KEntryAttHidden);
 	file.Close();
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	fs.NotifyChangeCancel();
 
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFs::SetDriveName()
 
@@ -3242,27 +3238,27 @@ static void Test18()
 	fs.NotifyChange(ENotifyDisk,reqStat3,path);
 	fs.NotifyChange(ENotifyAttributes,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	User::After(KNotifyChangeAfter);
 
 	r=TheFs.SetDriveName(KDefaultDrive,_L("DRIVETEST"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	fs.NotifyChangeCancel();
 
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFs::MkDir()
 	test.Next(_L("RFs::MkDir()"));
@@ -3273,20 +3269,20 @@ static void Test18()
 	fs.NotifyChange(ENotifyDir,reqStat3,path);
 	fs.NotifyChange(ENotifyFile,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.MkDir(_L("\\F32-TST\\NOTIFY\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 //	RFs::RmDir()
 	test.Next(_L("RFs::RmDir()"));
@@ -3294,24 +3290,24 @@ static void Test18()
 	fs.NotifyChange(ENotifyDir,reqStat2,path);
 	fs.NotifyChange(ENotifyWrite,reqStat3,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=TheFs.RmDir(_L("\\F32-TST\\NOTIFY\\EMERALD_CITY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	fs.NotifyChangeCancel();
 
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFile::Create()
 	test.Next(_L("RFile::Create()"));
@@ -3320,20 +3316,20 @@ static void Test18()
 	fs.NotifyChange(ENotifyDir,reqStat3,path);
 	fs.NotifyChange(ENotifyFile,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Create(TheFs,_L("\\F32-TST\\NOTIFY\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);	//	Monitoring ENotifyDir
-	test(reqStat4==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);	//	Monitoring ENotifyDir
+	test_KErrNone(reqStat4.Int());
 	file.Close();
 	fs.NotifyChangeCancel(reqStat3);
 	User::WaitForRequest(reqStat3);
@@ -3343,26 +3339,26 @@ static void Test18()
 	fs.NotifyChange(ENotifyDisk,reqStat3,path);
 	fs.NotifyChange(ENotifyWrite,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Create(TheFs,_L("\\F32-TST\\NOTIFY\\Bad_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	file.Close();
 	fs.NotifyChangeCancel();
 
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFs::Delete()
 	test.Next(_L("RFs::Delete()"));
@@ -3371,46 +3367,46 @@ static void Test18()
 	fs.NotifyChange(ENotifyDir,reqStat3,path);
 	fs.NotifyChange(ENotifyFile,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);	//	Monitoring ENotifyDir
-	test(reqStat4==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);	//	Monitoring ENotifyDir
+	test_KErrNone(reqStat4.Int());
 	fs.NotifyChangeCancel(reqStat3);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	fs.NotifyChange(ENotifyEntry,reqStat2,path);
 	fs.NotifyChange(ENotifyAttributes,reqStat3,path);
 	fs.NotifyChange(ENotifyAll,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\Bad_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_KErrNone(reqStat4.Int());
 	fs.NotifyChangeCancel(reqStat3);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 
 //	RFile::Replace()
 	test.Next(_L("RFile::Replace()"));
@@ -3419,28 +3415,28 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Replace(TheFs,_L("\\F32-TST\\NOTIFY\\Good_Witch.bat"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	file.Close();
 	fs.NotifyChangeCancel();
 
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFs::Delete()
 	test.Next(_L("RFs::Delete()"));
@@ -3450,21 +3446,21 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrArgument);
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\Good_Witch.bat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KErrArgument);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 
 //	RFs::SetVolumeLabel()
 	test.Next(_L("RFs::SetVolumeLabel()"));
@@ -3477,20 +3473,20 @@ static void Test18()
 	fs.NotifyChange(ENotifyAttributes,reqStat6,path);
 	fs.NotifyChange(ENotifyDisk,reqStat7,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
-	test(reqStat5==KRequestPending);
-	test(reqStat6==KRequestPending);
-	test(reqStat7==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+	test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+	test_Value(reqStat6.Int(), reqStat6==KRequestPending);
+	test_Value(reqStat7.Int(), reqStat7==KRequestPending);
 
 	TInt driveNum=CurrentDrive();
 	TVolumeInfo volInfo;
 	TFileName currentVolName;
 	r=TheFs.Volume(volInfo,driveNum);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	currentVolName=volInfo.iName;
 
 	r=TheFs.SetVolumeLabel(_L("VOL"),driveNum);
@@ -3500,21 +3496,21 @@ static void Test18()
 		User::WaitForRequest(reqStat2);
 		User::WaitForRequest(reqStat7);
 
-		test(reqStat==KErrNone);
-		test(reqStat2==KErrNone);
-		test(reqStat3==KRequestPending);
-		test(reqStat4==KRequestPending);
-		test(reqStat5==KRequestPending);
-		test(reqStat6==KRequestPending);
-		test(reqStat7==KErrNone);
+		test_KErrNone(reqStat.Int());
+		test_KErrNone(reqStat2.Int());
+		test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+		test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+		test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+		test_Value(reqStat6.Int(), reqStat6==KRequestPending);
+		test_KErrNone(reqStat7.Int());
 
 		fs.NotifyChange(ENotifyAll,reqStat,path);
 		fs.NotifyChange(ENotifyEntry,reqStat2,path);
 		fs.NotifyChange(ENotifyDisk,reqStat7,path);
 
-		test(reqStat==KRequestPending);
-		test(reqStat2==KRequestPending);
-		test(reqStat7==KRequestPending);
+		test_Value(reqStat.Int(), reqStat==KRequestPending);
+		test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+		test_Value(reqStat7.Int(), reqStat7==KRequestPending);
 
 		r=TheFs.SetVolumeLabel(currentVolName,driveNum);
 		test_KErrNone(r);
@@ -3523,13 +3519,13 @@ static void Test18()
 		User::WaitForRequest(reqStat2);
 		User::WaitForRequest(reqStat7);
 
-		test(reqStat==KErrNone);
-		test(reqStat2==KErrNone);
-		test(reqStat3==KRequestPending);
-		test(reqStat4==KRequestPending);
-		test(reqStat5==KRequestPending);
-		test(reqStat6==KRequestPending);
-		test(reqStat7==KErrNone);
+		test_KErrNone(reqStat.Int());
+		test_KErrNone(reqStat2.Int());
+		test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+		test_Value(reqStat4.Int(), reqStat4==KRequestPending);
+		test_Value(reqStat5.Int(), reqStat5==KRequestPending);
+		test_Value(reqStat6.Int(), reqStat6==KRequestPending);
+		test_KErrNone(reqStat7.Int());
 
 		r=TheFs.Volume(volInfo,driveNum);
 		test_KErrNone(r);
@@ -3538,13 +3534,13 @@ static void Test18()
 		fs.NotifyChangeCancel();
 
 		User::WaitForRequest(reqStat3);
-		test(reqStat3==KErrCancel);
+		test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 		User::WaitForRequest(reqStat4);
-		test(reqStat4==KErrCancel);
+		test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 		User::WaitForRequest(reqStat5);
-		test(reqStat5==KErrCancel);
+		test_Value(reqStat5.Int(), reqStat5==KErrCancel);
 		User::WaitForRequest(reqStat6);
-		test(reqStat6==KErrCancel);
+		test_Value(reqStat6.Int(), reqStat6==KErrCancel);
 		}
 
 	else	//	RFs::SetVolumeLabel() doesn't work on subst drives
@@ -3571,24 +3567,24 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Rename(_L("\\F32-TST\\NOTIFY\\OldFile.abc"));
 	test_Value(r, r == KErrNone||r==KErrAlreadyExists);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);	//	Monitoring ENotifyDir
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);	//	Monitoring ENotifyDir
 	file.Close();
 	fs.NotifyChangeCancel();
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 	path=_L("\\F32-TST\\NOTIFY\\OldFile.abc");
 
@@ -3599,21 +3595,21 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrArgument);
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 
 	r=file.Rename(_L("\\F32-TST\\NOTIFY\\NewFile.xyz"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KErrArgument);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 	file.Close();
 
 //	RFs::Rename()
@@ -3624,27 +3620,27 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY\\NewFile.xyz"),_L("\\F32-TST\\NOTIFY\\NewerFile.cat"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);	//	Changed a file not a directory entry
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);	//	Changed a file not a directory entry
 	fs.NotifyChangeCancel();
 
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 	path=_L("\\F32-TST\\NOTIFY\\NewerFile.cat");
 	fs.NotifyChange(ENotifyAll,reqStat,path);
@@ -3652,20 +3648,20 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrArgument);
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY\\NewerFile.cat"),_L("\\F32-TST\\NOTIFY\\Original.dog"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
 
 	path=_L("\\F32-TST\\NOTIFY\\");
 	fs.NotifyChange(ENotifyAll,reqStat,path);
@@ -3673,10 +3669,10 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY\\"),_L("\\F32-TST\\NOTIFY_TEMP\\"));
 	test_KErrNone(r);
@@ -3684,11 +3680,11 @@ static void Test18()
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);	//	Changed a directory entry but notified anyway despite
-	test(reqStat4==KErrNone);	//	requesting file notification only because the path we
-								//	were monitoring has changed
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());	//	Changed a directory entry but notified anyway despite
+	test_KErrNone(reqStat4.Int());	//	requesting file notification only because the path we
+									//	were monitoring has changed
 
 	path=_L("\\F32-TST\\NOTIFY_TEMP\\Original.dog");
 	fs.NotifyChange(ENotifyAll,reqStat,path);
@@ -3696,102 +3692,102 @@ static void Test18()
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	fs.NotifyChange(ENotifyDir,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrArgument);
+	test_Value(reqStat4.Int(), reqStat4==KErrArgument);
 
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY_TEMP\\"),_L("\\F32-TST\\NOTIFY\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);			//	Modified a directory above the level at which we
-	test(reqStat2==KErrNone);			//	are monitoring for changes - we must be notified
-	test(reqStat3==KErrNone);			//	anyway because the path has changed
+	test_KErrNone(reqStat.Int());			//	Modified a directory above the level at which we
+	test_KErrNone(reqStat2.Int());			//	are monitoring for changes - we must be notified
+	test_KErrNone(reqStat3.Int());			//	anyway because the path has changed
 
 	fs.NotifyChange(ENotifyAll,reqStat,path);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChange(ENotifyEntry,reqStat2,path);
-	test(reqStat2==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	fs.NotifyChangeCancel(reqStat2);
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	fs.NotifyChangeCancel(reqStat3);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 
 	path=_L("\\F32-TST\\NOTIFY\\Original.dog");
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	fs.NotifyChange(ENotifyEntry,reqStat2,path);
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\Original.dog"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
 
 	path=_L("\\F32-TST\\NOTIFY\\");
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	fs.NotifyChange(ENotifyEntry,reqStat2,path);
 	fs.NotifyChange(ENotifyDir,reqStat3,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=TheFs.Rename(_L("\\F32-TST\\"),_L("\\F32-TEST\\"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);			//	Modified a directory above the level at which we
-	test(reqStat2==KErrNone);			//	are monitoring for changes but we receive notification
-	test(reqStat3==KErrNone);			//	because the notification path has been changed
+	test_KErrNone(reqStat.Int());			//	Modified a directory above the level at which we
+	test_KErrNone(reqStat2.Int());			//	are monitoring for changes but we receive notification
+	test_KErrNone(reqStat3.Int());			//	because the notification path has been changed
 
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	//	Notification request is submitted, despite the subject's disappearance
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	fs.NotifyChange(ENotifyEntry,reqStat2,path);
 	//	Notification request is submitted, despite the subject's disappearance
-	test(reqStat2==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
 	fs.NotifyChange(ENotifyFile,reqStat3,path);
 	//	Notification request is submitted, despite the subject's disappearance
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	fs.NotifyChangeCancel(reqStat);
 	User::WaitForRequest(reqStat);
-	test(reqStat==KErrCancel);
+	test_Value(reqStat.Int(), reqStat==KErrCancel);
 	fs.NotifyChangeCancel(reqStat2);
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 	fs.NotifyChangeCancel(reqStat3);
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 
 	path=_L("\\F32-TEST\\NOTIFY\\");
 	fs.NotifyChange(ENotifyAll,reqStat,path);
 	fs.NotifyChange(ENotifyEntry,reqStat2,path);
 	fs.NotifyChange(ENotifyDir,reqStat3,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
 
 	r=TheFs.Rename(_L("\\F32-TEST\\NOTIFY\\"),_L("\\F32-TEST\\NOTIFY_CHANGED\\"));
 	test_KErrNone(r);
@@ -3800,9 +3796,9 @@ static void Test18()
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
 
-	test(reqStat==KErrNone);			//	Rename the directory we were monitoring
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
+	test_KErrNone(reqStat.Int());			//	Rename the directory we were monitoring
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
 
 //	Tidy up the test directory before continuing (while testing notifications of renaming to the monitored directory)
 
@@ -3812,10 +3808,10 @@ static void Test18()
 	fs.NotifyChange(ENotifyDir,reqStat3,path);
 	fs.NotifyChange(ENotifyFile,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Rename(_L("\\F32-TEST\\"),_L("\\F32-TST\\"));
 	test_KErrNone(r);
@@ -3824,14 +3820,14 @@ static void Test18()
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
 
-	test(reqStat==KErrNone);			//	Renaming to (under) the directory we were monitoring
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());			//	Renaming to (under) the directory we were monitoring
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	fs.NotifyChangeCancel(reqStat4);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 	path=_L("\\F32-TST\\NOTIFY\\");
 	fs.NotifyChange(ENotifyAll,reqStat,path);
@@ -3839,10 +3835,10 @@ static void Test18()
 	fs.NotifyChange(ENotifyDir,reqStat3,path);
 	fs.NotifyChange(ENotifyFile,reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Rename(_L("\\F32-TST\\NOTIFY_CHANGED\\"),_L("\\F32-TST\\NOTIFY\\"));
 	test_KErrNone(r);
@@ -3851,14 +3847,14 @@ static void Test18()
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
 
-	test(reqStat==KErrNone);			//	Renaming to the directory we were monitoring
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());			//	Renaming to the directory we were monitoring
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	fs.NotifyChangeCancel(reqStat4);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	Test combinations of notify types
 	test.Next(_L("Test combinations of notify types"));
@@ -3869,24 +3865,24 @@ static void Test18()
 	fs.NotifyChange((TNotifyType)(ENotifyDir|ENotifyFile),reqStat3,path);
 	fs.NotifyChange((TNotifyType)(ENotifyDisk|ENotifyAttributes),reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Create(TheFs,_L("\\F32-TST\\NOTIFY\\Munchkin.msg"),EFileRead|EFileWrite);
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);	//	Monitoring ENotifyAttributes|ENotifyDisk
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);	//	Monitoring ENotifyAttributes|ENotifyDisk
 	file.Close();
 	fs.NotifyChangeCancel(reqStat4);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 //	RFile::SetModified()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
@@ -3894,28 +3890,28 @@ static void Test18()
 	fs.NotifyChange((TNotifyType)(ENotifyDir|ENotifyFile),reqStat3,path);
 	fs.NotifyChange((TNotifyType)(ENotifyDisk|ENotifyAttributes),reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	TTime nowTime;
 	nowTime.HomeTime();
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\Munchkin.msg"),EFileRead|EFileWrite);
 	test_KErrNone(r);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	file.SetModified(now);
 	file.Close();
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_KErrNone(reqStat4.Int());
 	fs.NotifyChangeCancel();
 	User::WaitForRequest(reqStat3);
-	test(reqStat3==KErrCancel);
+	test_Value(reqStat3.Int(), reqStat3==KErrCancel);
 
 //	RFile::Write()
 	fs.NotifyChange(ENotifyAll,reqStat,path);
@@ -3923,10 +3919,10 @@ static void Test18()
 	fs.NotifyChange((TNotifyType)(ENotifyFile|ENotifyWrite),reqStat3,path);
 	fs.NotifyChange((TNotifyType)(ENotifyDir|ENotifyWrite),reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=file.Open(TheFs,_L("\\F32-TST\\NOTIFY\\Munchkin.msg"),EFileRead|EFileWrite);
 	test_KErrNone(r);
@@ -3935,13 +3931,13 @@ static void Test18()
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat3);
 	User::WaitForRequest(reqStat4);
-	test(reqStat==KErrNone);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KErrNone);
+	test_KErrNone(reqStat.Int());
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_KErrNone(reqStat3.Int());
+	test_KErrNone(reqStat4.Int());
 	fs.NotifyChangeCancel(reqStat2);	//	Cancels all outstanding notification requests
 	User::WaitForRequest(reqStat2);
-	test(reqStat2==KErrCancel);
+	test_Value(reqStat2.Int(), reqStat2==KErrCancel);
 
 //	RFs::Delete()
 	test.Next(_L("RFs::Delete()"));
@@ -3950,23 +3946,23 @@ static void Test18()
 	fs.NotifyChange((TNotifyType)(ENotifyFile|ENotifyWrite),reqStat3,path);
 	fs.NotifyChange((TNotifyType)(ENotifyDir|ENotifyWrite),reqStat4,path);
 
-	test(reqStat==KRequestPending);
-	test(reqStat2==KRequestPending);
-	test(reqStat3==KRequestPending);
-	test(reqStat4==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
+	test_Value(reqStat2.Int(), reqStat2==KRequestPending);
+	test_Value(reqStat3.Int(), reqStat3==KRequestPending);
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 
 	r=TheFs.Delete(_L("\\F32-TST\\NOTIFY\\Munchkin.msg"));
 	test_KErrNone(r);
 	User::WaitForRequest(reqStat);
 	User::WaitForRequest(reqStat2);
 	User::WaitForRequest(reqStat3);
-	test(reqStat==KErrNone);
-	test(reqStat2==KErrNone);
-	test(reqStat3==KErrNone);
-	test(reqStat4==KRequestPending);
+	test_KErrNone(reqStat.Int());
+	test_KErrNone(reqStat2.Int());
+	test_KErrNone(reqStat3.Int());
+	test_Value(reqStat4.Int(), reqStat4==KRequestPending);
 	fs.NotifyChangeCancel(reqStat4);
 	User::WaitForRequest(reqStat4);
-	test(reqStat4==KErrCancel);
+	test_Value(reqStat4.Int(), reqStat4==KErrCancel);
 
 	fs.Close();
 	}
@@ -3998,12 +3994,12 @@ static void Test99()
 
 	// ask the user to eject the media
 	TheFs.NotifyChange(ENotifyEntry,reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	test.Printf(_L("Please eject media on drive %C...\n"), 'A' + driveNum);
 	User::WaitForRequest(reqStat);
 	test.Printf(_L("Done.\n"));
 	TInt reqInt=reqStat.Int();
-	test(reqInt==KErrNone);
+	test_KErrNone(reqInt);
 	User::WaitForRequest(reqStat);
 
 	// verify TDriveInfo.iType == EMediaNotPresent
@@ -4015,12 +4011,12 @@ static void Test99()
 
 	// ask the user to re-insert the media
 	TheFs.NotifyChange(ENotifyEntry,reqStat);
-	test(reqStat==KRequestPending);
+	test_Value(reqStat.Int(), reqStat==KRequestPending);
 	test.Printf(_L("Please re-insert media...\n"));
 	User::WaitForRequest(reqStat);
 	test.Printf(_L("Done.\n"));
 	reqInt = reqStat.Int();
-	test(reqInt==KErrNone);
+	test_KErrNone(reqInt);
 	User::WaitForRequest(reqStat);
 
 	// verify TDriveInfo.iType == EMediaHardDisk
@@ -4063,8 +4059,8 @@ static void TestAsyncReader()
 	TBuf8<596> readBuf;
 	reader.Read(0, readBuf, 100, readStat1);
 	User::WaitForRequest(readStat1);
-	test(readStat1==KErrNone);
-	test(readBuf.Length()==0);
+	test_KErrNone(readStat1.Int());
+	test_Equal(0, readBuf.Length());
 	reader.Close();
 
 	test.Next(_L("Test asynchronous read fails in EFileShareExclusive mode"));
@@ -4079,19 +4075,19 @@ static void TestAsyncReader()
 	r=reader.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileShareAny);
 	test_KErrNone(r);
 	reader.Read(0, readBuf, 100, readStat1);
-	test(readStat1==KRequestPending);
+	test_Value(readStat1.Int(), readStat1==KRequestPending);
 	reader.Close();
 	User::WaitForRequest(readStat1);
-	test(readStat1==KErrCancel);
+	test_Value(readStat1.Int(), readStat1==KErrCancel);
 
 	test.Next(_L("Test asynchronous read can be cancelled"));
 	r=reader.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileShareAny);
 	test_KErrNone(r);
 	reader.Read(0, readBuf, 100, readStat1);
-	test(readStat1==KRequestPending);
+	test_Value(readStat1.Int(), readStat1==KRequestPending);
 	reader.ReadCancel(readStat1);
 	User::WaitForRequest(readStat1);
-	test(readStat1==KErrCancel);
+	test_Value(readStat1.Int(), readStat1==KErrCancel);
 	reader.Close();
 
 	// DEF105438: File server thread safety issues
@@ -4103,11 +4099,11 @@ static void TestAsyncReader()
 	RThread	thisThread;
 	thisThread.SetPriority(EPriorityRealTime);
 	reader.Read(0, readBuf, 100, readStat1);
-	test(readStat1==KRequestPending);
+	test_Value(readStat1.Int(), readStat1==KRequestPending);
 	reader.ReadCancel(readStat1);
 	test.Printf(_L("readStat1 %d"), readStat1.Int());
 	User::WaitForRequest(readStat1);
-	test(readStat1==KErrCancel);
+	test_Value(readStat1.Int(), readStat1==KErrCancel);
 	reader.Close();
 	thisThread.SetPriority(EPriorityNormal);
 
@@ -4115,12 +4111,12 @@ static void TestAsyncReader()
 	r=reader.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileWrite|EFileShareAny);
 	test_KErrNone(r);
 	reader.Read(0, readBuf, 100, readStat1);
-	test(readStat1==KRequestPending);
+	test_Value(readStat1.Int(), readStat1==KRequestPending);
 	r = reader.SetSize(100);
 	test_KErrNone(r);
 	User::WaitForRequest(readStat1);
-	test(readStat1==KErrNone);
-	test(readBuf.Length() == 100);
+	test_KErrNone(readStat1.Int());
+	test_Equal(100, readBuf.Length());
 	r=reader.SetSize(0);
 	test_KErrNone(r);
 	reader.Close();
@@ -4129,13 +4125,13 @@ static void TestAsyncReader()
 	r=reader.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileRead|EFileReadAsyncAll|EFileWrite|EFileShareAny);
 	test_KErrNone(r);
 	reader.Read(0, readBuf, 26, readStat1);
-	test(readStat1==KRequestPending);
+	test_Value(readStat1.Int(), readStat1==KRequestPending);
 	RFile writer;
 	r=writer.Open(TheFs,_L("\\F32-TST\\NOTIFY\\NewFile.txt"),EFileWrite|EFileShareAny);
 	writer.Write(_L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
 	User::WaitForRequest(readStat1);
-	test(readStat1==KErrNone);
-	test(readBuf.Length() == 26);
+	test_KErrNone(readStat1.Int());
+	test_Equal(26, readBuf.Length());
 	reader.Close();
 	writer.Close();
 
@@ -4150,8 +4146,8 @@ static void TestAsyncReader()
 	TBuf8<596> readBuf2;
 	test.Printf(_L(">Read%d[%d]\n"), 1, KReadLen);
 	reader.Read(KReadLen, readBuf2, KReadLen, readStat2);
-	test(readStat1==KRequestPending);
-	test(readStat2==KRequestPending);
+	test_Value(readStat1.Int(), readStat1==KRequestPending);
+	test_Value(readStat2.Int(), readStat2==KRequestPending);
 
 	RThread thread;
 	r=thread.Create(_L("MyThread"),ThreadEntryPoint,KDefaultStackSize,KHeapSize,KHeapSize,(TAny*)ETest12);
@@ -4164,7 +4160,7 @@ static void TestAsyncReader()
 	TRequestStatus timerStat(KRequestPending);
 	timer.CreateLocal();
 	timer.After(timerStat, 30000000);	// 30 seconds timeout (the following async test should take 10 seconds)
-	test(timerStat==KRequestPending);
+	test_Value(timerStat.Int(), timerStat==KRequestPending);
 
 	#define ODDPASS  (pass&0x01)
 	#define REQSTAT  (ODDPASS ? readStat2 : readStat1)
@@ -4178,13 +4174,13 @@ static void TestAsyncReader()
 	FOREVER
 		{
         User::WaitForRequest(REQSTAT, timerStat);
-		test(REQSTAT==KErrNone);
-		test(timerStat==KRequestPending);
-		test(READBUF.Length() == COMPLEN);
+		test_KErrNone(REQSTAT.Int());
+		test_Value(timerStat.Int(), timerStat==KRequestPending);
+		test_Equal(COMPLEN, READBUF.Length());
 		test(READBUF.Right(KReadLen) == _L8("ABCDEFGHIJKLMNOPQRSTUVWXYZ"));
 		test.Printf(_L(">Read%d[%d]\n"), pass&0x01, READLEN);
 		reader.Read(READPOS, READBUF, READLEN, REQSTAT);
-		test(REQSTAT==KRequestPending);
+		test_Value(REQSTAT.Int(), REQSTAT==KRequestPending);
 		if(++pass==10)
 			break;
 		}
@@ -4194,12 +4190,12 @@ static void TestAsyncReader()
 	User::WaitForRequest(timerStat);
 	reader.Close();
 	User::WaitForRequest(readStat1);
-	test(readStat1==KErrCancel);
+	test_Value(readStat1.Int(), readStat1==KErrCancel);
 	User::WaitForRequest(readStat2);
-	test(readStat2==KErrCancel);
+	test_Value(readStat2.Int(), readStat2==KErrCancel);
 
 	User::WaitForRequest(thrdStat);
-	test(thrdStat==KErrNone);
+	test_KErrNone(thrdStat.Int());
 	}
 
 
@@ -4219,7 +4215,7 @@ void TestRootDirNotifyChange()
 
     //-- set up notifier
     TheFs.NotifyChange(ENotifyAll, reqStatNotify1, KTestPath);
-    test(reqStatNotify1.Int() == KRequestPending);
+    test_Value(reqStatNotify1.Int(), reqStatNotify1 == KRequestPending);
 
     //-- create a file in the root dir
     RFile       file;
@@ -4233,7 +4229,7 @@ void TestRootDirNotifyChange()
 
     //-- check that the notifier worked
     User::WaitForRequest(reqStatNotify1);
-    test(reqStatNotify1.Int() == KErrNone);
+    test_KErrNone(reqStatNotify1.Int());
 
 }
 
@@ -4324,7 +4320,7 @@ GLDEF_C void CallTestsL()
 
 //	Test RFs::NotifyChange() extended notification
 	TInt uid;
-	test(HAL::Get(HAL::EMachineUid,uid)==KErrNone);
+	test_KErrNone(HAL::Get(HAL::EMachineUid,uid));
 	if(uid!=HAL::EMachineUid_Cogent && uid!=HAL::EMachineUid_IQ80310 &&
 				uid != HAL::EMachineUid_Integrator && uid!=HAL::EMachineUid_X86PC)
 		MediaChangeExtendedNotification();

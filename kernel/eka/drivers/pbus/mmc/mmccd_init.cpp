@@ -278,6 +278,16 @@ By default, All MMC derivatives register at least an MMC driver
 			break;
 
 #if !defined(__WINS__)
+        if ((mi.iFlags & TMMCMachineInfo::ESupportsDMA) == TMMCMachineInfo::ESupportsDMA)
+            {
+            err = LocDrv::RegisterDmaDevice(pMedia,
+                                            KMMCardHighCapBlockSize, 
+                                            pS->MaxDataTransferLength(), 
+                                            pS->DmaAlignment());
+            if (err != KErrNone)
+                break;
+            }		
+		
 		if (demandPagingSupported && demandPagingInfo.iSlotNumber == i)
 			{
 			err = LocDrv::RegisterPagingDevice(
@@ -292,16 +302,6 @@ By default, All MMC derivatives register at least an MMC driver
 			if (err == KErrNotSupported)
 				err = KErrNone;
 
-			if (err != KErrNone)
-				break;
-			}
-
-		if ((mi.iFlags & TMMCMachineInfo::ESupportsDMA) == TMMCMachineInfo::ESupportsDMA)
-			{
-			err = LocDrv::RegisterDmaDevice(pMedia,
-											KMMCardHighCapBlockSize, 
-											pS->MaxDataTransferLength(), 
-											pS->DmaAlignment());
 			if (err != KErrNone)
 				break;
 			}

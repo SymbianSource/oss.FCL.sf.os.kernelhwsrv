@@ -688,6 +688,8 @@ extern "C" void __arm_sev();
 #error SMP not allowed without thread ID registers
 #endif
 
+#define	__SRATIO_MACHINE_CODED__
+
 #endif	//	end of __CPU_ARM
 
 #if defined(__CPU_X86) && defined(__EPOC32__)

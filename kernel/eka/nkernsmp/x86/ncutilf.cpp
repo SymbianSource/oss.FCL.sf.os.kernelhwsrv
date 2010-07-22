@@ -15,11 +15,8 @@
 // 
 //
 
-#include <nkern.h>
+#include <nk_priv.h>
 
-extern "C" {
-extern SVariantInterfaceBlock* VIB;
-}
 
 /******************************************************************************
  * Spin lock
@@ -65,6 +62,6 @@ EXPORT_C TRWSpinLock::TRWSpinLock(TUint aOrder)
 */
 EXPORT_C TUint32 NKern::TimestampFrequency()
 	{
-	return VIB->iTimestampFreq;
+	return TheScheduler.iVIB->iTimestampFreq;
 	}
 

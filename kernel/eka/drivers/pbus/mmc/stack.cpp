@@ -3517,13 +3517,10 @@ TMMCErr DMMCStack::DetermineBusWidthAndClockSM()
 		OstTrace0( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM3, "EStWritePowerClass" );
 	
 		// Check the card type is valid
-		// The only currently valid values for this field are 0x01 or 0x03
-		TUint cardType = cardP->iExtendedCSD.CardType();
-		if (cardType != (TExtendedCSD::EHighSpeedCard26Mhz) && 
-			cardType != (TExtendedCSD::EHighSpeedCard26Mhz | TExtendedCSD::EHighSpeedCard52Mhz))
-			{
-			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardType));
-			OstTrace1( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM4, "Unsupported card type=%u", cardType );
+		if (!(cardP->iExtendedCSD.IsSupportedCardType()))
+			{            
+			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardP->iExtendedCSD.CardType()));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_DETERMINEBUSWIDTHANDCLOCKSM4, "Unsupported card type=%u", cardP->iExtendedCSD.CardType() );
 			
 			SMF_GOTOS(EStExit);
 			}
@@ -3618,13 +3615,10 @@ TMMCErr DMMCStack::ConfigureHighSpeedSM()
 		cardP->SetHighSpeedClock(0);
 
 		// Check the card type is valid
-		// The only currently valid values for this field are 0x01 or 0x03
-		TUint cardType = cardP->iExtendedCSD.CardType();
-		if (cardType != (TExtendedCSD::EHighSpeedCard26Mhz) && 
-			cardType != (TExtendedCSD::EHighSpeedCard26Mhz | TExtendedCSD::EHighSpeedCard52Mhz))
-			{
-			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardType));
-			OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM4, "Unsupported card type=%u", cardType );
+        if (!(cardP->iExtendedCSD.IsSupportedCardType()))
+            {            
+			__KTRACE_OPT(KPBUS1, Kern::Printf("Unsupported card type %u", cardP->iExtendedCSD.CardType()));
+			OstTrace1( TRACE_INTERNALS, DMMCSTACK_CONFIGUREHIGHSPEEDSM4, "Unsupported card type=%u", cardP->iExtendedCSD.CardType() );
 			SMF_GOTOS(EStExit);
 			}
 
@@ -6414,6 +6408,9 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 			{
 			EStBegin=0,
 			EStNextIndex,
+			EStSendStatus,
+			EStGetStatus,
+			EStUnlock,
 			EStInitStackAfterUnlock,
 			EStIssuedLockUnlock,
 			EStDone,
@@ -6476,6 +6473,25 @@ inline TMMCErr DMMCStack::CIMAutoUnlockSM()
 		//
 		// Upon completion, test the next card before performing further initialisation.
 		//
+		
+		SMF_STATE(EStSendStatus)
+		        
+		s.FillCommandDesc(ECmdSendStatus, 0);
+		                        
+		SMF_INVOKES(ExecCommandSMST,EStGetStatus)
+		                        
+		SMF_STATE(EStGetStatus)
+		                        
+		const TMMCStatus st = s.LastStatus();
+		if((st & KMMCStatCardIsLocked) == 0)
+			{
+		    SMF_RETURN(err)
+		    }
+		                        
+		SMF_STATE(EStUnlock)
+		                        
+		const TMapping *mp = NULL;
+		mp = iSocket->iPasswordStore->FindMappingInStore(iCardArray->CardP(iAutoUnlockIndex)->CID());
 
 		TMMCard &cd = *(iCardArray->CardP(iAutoUnlockIndex++));
 		OstTrace1( TRACE_INTERNALS, DMMCSTACK_CIMAUTOUNLOCKSM4, "Attempting to unlock card %d", cd.Number() );

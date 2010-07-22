@@ -43,22 +43,20 @@ void DisplaySubSchedulerExt(Monitor& m, TSubScheduler& ss)
 	m.Printf("i_ScuAddr  %08x i_GicDist  %08x i_GicCpuIf %08x i_LocTmrA  %08x\r\n", x.iScuAddr, x.iGicDistAddr, x.iGicCpuIfcAddr, x.iLocalTimerAddr);
 	m.Printf("i_IrqCount %08x i_IrqNest  %08x i_ExcInfo  %08x i_CrashSt  %08x\r\n", x.iIrqCount, x.iIrqNestCount, x.iExcInfo, x.iCrashState);
 	m.Printf("i_AbtStkTp %08x i_UndSktTp %08x i_FiqStkTp %08x i_IrqStkTp %08x\r\n", x.iAbtStackTop, x.iUndStackTop, x.iFiqStackTop, x.iIrqStackTop);
-	m.Printf("CpuFreqM   %08x CpuFreqS   %08x CpuPeriodM %08x CpuPeriodS %08x\r\n", x.iCpuFreqM, x.iCpuFreqS, x.iCpuPeriodM, x.iCpuPeriodS);
-	m.Printf("NTmrFreqM  %08x NTmrFreqS  %08x NTmPeriodM %08x NTmPeriodS %08x\r\n", x.iNTimerFreqM, x.iNTimerFreqS, x.iNTimerPeriodM, x.iNTimerPeriodS);
-	m.Printf("TmrFreqM   %08x TmrFreqS   %08x TmrPeriodM %08x TmrPeriodS %08x\r\n", x.iTimerFreqM, x.iTimerFreqS, x.iTimerPeriodM, x.iTimerPeriodS);
-	m.Printf("iLastSyncT %08x %08x            TicksSince %08x LastTmrSet %08x\r\n", I64HIGH(x.iLastSyncTime), I64LOW(x.iLastSyncTime), x.iTicksSinceLastSync, x.iLastTimerSet);
-	m.Printf("GapEstimat %08x GapCount   %08x TotalTicks %08x Ditherer   %08x\r\n", x.iGapEstimate, x.iGapCount, x.iTotalTicks, x.iDitherer);
-	m.Printf("FreqErrEst %08x FreqErrLim %08x ErrorInteg %08x %08x\r\n", x.iFreqErrorEstimate, x.iFreqErrorLimit, I64HIGH(x.iErrorIntegrator), I64LOW(x.iErrorIntegrator));
-	m.Printf("RefAtLastC %08x %08x            M=%02x N=%02x D=%02x\r\n", I64HIGH(x.iRefAtLastCorrection), I64LOW(x.iRefAtLastCorrection), x.iM, x.iN, x.iD);
+	m.Printf("CpuFreqM   %08x CpuFreqS   %08x CpuPeriodM %08x CpuPeriodS %08x\r\n", x.iCpuFreqRI.iR.iM, x.iCpuFreqRI.iR.iX, x.iCpuFreqRI.iI.iM, x.iCpuFreqRI.iI.iX);
+	m.Printf("TmrFreqM   %08x TmrFreqS   %08x TmrPeriodM %08x TmrPeriodS %08x\r\n", x.iTimerFreqRI.iR.iM, x.iTimerFreqRI.iR.iX, x.iTimerFreqRI.iI.iM, x.iTimerFreqRI.iI.iX);
 	}
 
 void DisplaySchedulerExt(Monitor& m, TScheduler& s)
 	{
-	volatile TUint32* sx = (volatile TUint32*)&s.iSX;
-	m.Printf("Extras  0: %08x  1: %08x  2: %08x  3: %08x\r\n",sx[0],sx[1],sx[2],sx[3]);
-	m.Printf("Extras  4: %08x  5: %08x  6: %08x  7: %08x\r\n",sx[4],sx[5],sx[6],sx[7]);
-	m.Printf("Extras  8: %08x  9: %08x  A: %08x  B: %08x\r\n",sx[8],sx[9],sx[10],sx[11]);
-	m.Printf("Extras  C: %08x  D: %08x  E: %08x  F: %08x\r\n",sx[12],sx[13],sx[14],sx[15]);
+	TSchedulerX& sx = s.iSX;
+	m.Printf("iTimerMax  %08x %08x\r\n", I64HIGH(sx.iTimerMax), I64LOW(sx.iTimerMax));
+	m.Printf("iGTmrA     %08x  iScuAddr %08x  iGicDistA %08x  iGicCpuIfcA %08x  iLocTmrA %08x\r\n",
+		sx.iGlobalTimerAddr, sx.iScuAddr, sx.iGicDistAddr, sx.iGicCpuIfcAddr, sx.iLocalTimerAddr);
+	m.Printf("iGTFreqM   %08x iGTFreqS   %08x iGTPeriodM %08x iGTPeriodS %08x\r\n",
+		sx.iGTimerFreqRI.iR.iM, sx.iGTimerFreqRI.iR.iX, sx.iGTimerFreqRI.iI.iM, sx.iGTimerFreqRI.iI.iX);
+	m.Printf("iCount0    %08x %08x   iTimestamp0 %08x %08x\r\n",
+		I64HIGH(sx.iCount0), I64LOW(sx.iCount0), I64HIGH(sx.iTimestamp0), I64LOW(sx.iTimestamp0));
 	}
 
 void DumpRegisters(Monitor& m, SFullArmRegSet& a)

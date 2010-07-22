@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -34,6 +34,11 @@ public:
     The enumerators are passed to HAL::Get() and HAL::Set().
     
     They are also used by the HAL accessor functions.
+    
+    Note: It is not recommended to use HAL attributes to pass handles from the  
+	kernel to user-side clients due to resource overhead's that will affect 
+	existing clients of HAL. HAL is designed to allow simply hardware parameters
+	to be shared with user-side clients without resource allocation overheads.
     
     @see HAL::Get()
     @see HAL::Set()
@@ -1080,6 +1085,9 @@ public:
 		
 		/**
 		A Handle to the display memory.
+		This attribute opens a chunk, the client is responsible for closing it.
+		Using HAL attribtues to open handles is not recommended and this 
+		attribute may be removed in the future. 
 
 		@prototype 9.5
 		*/
@@ -1102,6 +1110,13 @@ public:
 		*/
 		ENumCpus,
 
+		/**
+		The orientation of the Digitiser. Usually mirrors device orientation.
+		
+		@see TDigitiserOrientation for allowed values
+		@capability WriteDeviceData needed to Set this attribute
+		*/
+		EDigitiserOrientation,
 
 		/*
 		 * NOTE:
@@ -1318,6 +1333,29 @@ public:
 		EPowerBackupStatus_Replace,
 		EPowerBackupStatus_Low,
 		EPowerBackupStatus_Good,
+		};
+	
+	
+    /**
+    Describes the orientation of the screen digitiser, usually mirrors the
+    device orientation not necessarily the display rotation as this might be
+	limited to upright and left 90 only. The values in degrees measures 
+	the anti-clockwise angle from the left edge of the digitiser from the 
+	normal default position of the device. 
+	
+	User-side clients can use attribute to inform the digitiser driver of the
+	digitiser orientation. The driver may then use this information to adjust 
+	X.Y sampling depending on input pointer type.
+	
+    @see HALData::TAttribute
+    */
+	enum TDigitiserOrientation
+		{
+		EDigitiserOrientation_default,	///< Driver using build-in default
+		EDigitiserOrientation_000,		///< Device normal 'make-call' position
+		EDigitiserOrientation_090,		///< Device rotated left 90 degrees
+		EDigitiserOrientation_180,		///< Device rotated 180 degrees
+		EDigitiserOrientation_270		///< Device rotated right 90 degrees
 		};
 	
 	};
