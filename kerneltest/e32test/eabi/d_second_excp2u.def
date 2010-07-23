@@ -7,5 +7,5 @@ EXPORTS
 	_ZN14UncaughtTesterC2ERi @ 6 NONAME
 	_ZN14UncaughtTesterD1Ev @ 7 NONAME
 	_ZN14UncaughtTesterD2Ev @ 8 NONAME
-	_ZTT17MyFourthException @ 9 NONAME
+	_ZTT17MyFourthException @ 9 ABSENT
 
