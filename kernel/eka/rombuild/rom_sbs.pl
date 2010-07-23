@@ -49,7 +49,7 @@ my $result = GetOptions (\%opts, "assp=s",
 						 "rombuilder=s",
 						 "define=s@",
 						 "rofsbuilder=s",
-						 "compress",
+						 "compress"
 						 );
 
 my (@assps, @builds, %variants, @templates, %flags, %insts, %zip, %builder);
@@ -128,7 +128,8 @@ BEGIN {
 	$Epoc32Path .= $EpocRoot . "epoc32";
 	$toolpath = "$Epoc32Path\\tools\\";
 	push @INC, $toolpath;
-	$BasePath = $toroot . $e32path;
+	$BasePath = $toroot;
+	$BasePath =~ s/\\$/$e32path\\/;
 }
 
 use E32Plat;
@@ -320,6 +321,7 @@ die "ERROR EXECUTING CPP\n" if $ret;
 
 # Zap any ## marks REMS or blank lines
 
+print "Cleaning up rom2.tmp to make rom3.tmp\n" if $debug;
 cleanup("rom2.tmp", "rom3.tmp", $k);
 
 # scan tmp file and generate auxiliary files, if required
@@ -333,6 +335,7 @@ while ($line=<TMP>)
 		genfile("nonpaged");	}
 	}
 
+print "Parsing PatchData to make rom4.tmp\n" if $debug;
 parsePatchData("rom3.tmp", "rom4.tmp");
 
 # break down the oby file into rom, rofs and extensions oby files
@@ -340,8 +343,10 @@ parsePatchData("rom3.tmp", "rom4.tmp");
 my $oby_index =0;
 my $dumpfile="rom.oby";
 my $rofs=0;
+my $smr=0;
 my $extension=0;
 my $corerofsname="";
+my $smrname="";
 open DUMPFILE, ">$dumpfile" or die("Can't create $dumpfile\n");
 my $line;
 open TMP, "rom4.tmp" or die("Can't open rom4.tmp\n");
@@ -357,6 +362,18 @@ while ($line=<TMP>)
 		unlink $corerofsname || print "unable to delete $corerofsname";
 		my $dumpfile="rofs".$rofs.".oby";
 		$rofs++;
+		open DUMPFILE, ">$dumpfile" or (close TMP and die("Can't create $dumpfile\n"));
+		}
+
+	if ($line=~/^\s*imagename/i)
+		{
+		close DUMPFILE;							# close rom.oby or previous rofs#/extension#.oby
+		$smrname=$line;
+		$smrname =~ s/imagename\s*=\s*//i;		# save smr name
+		$smrname =~ s/\s*$//g; 			# remove trailing \n
+		unlink $smrname || print "unable to delete $smrname";
+		my $dumpfile="smr".$smr.".oby";
+		$smr++;
 		open DUMPFILE, ">$dumpfile" or (close TMP and die("Can't create $dumpfile\n"));
 		}
 
@@ -492,6 +509,22 @@ if ($rofs and $extension) {
 			$rerrors++;
 			}
 		rename "rofsbuild.log", "extension$i.log"
+		}
+}
+
+if ($smr) {
+	$rofsbuilder = $opts{'rofsbuilder'};
+	$rofsbuilder = "rofsbuild" unless ($rofsbuilder);
+	for(my $i=0;$i<$smr;++$i) {
+		print "Executing $rofsbuilder on smr partition\n" if !$quiet;
+		my $image="smr".$i.".oby";
+		system("$rofsbuilder -smr=$image");
+		if ($? != 0)
+			{
+			print "$rofsbuilder -smr=$image returned $?\n";
+			$rerrors++;
+			}
+		rename "rofsbuild.log", "smr$i.log"
 		}
 }
 
@@ -781,6 +814,8 @@ sub parsePatchData($$)
 				die "Bad patchdata command: $line\n";
 			}
 
+			print "Handling $line\n" if $debug;
+
 			my ($file, $symbol, $value) = (lc $1, $2, $3);
 			my ($srcFile, $destFile) = lookupFileInfo($infile, $file);
 			my ($index, $elementSize) = (undef, undef);
@@ -792,6 +827,7 @@ sub parsePatchData($$)
 
 			if ($srcFile =~ /\\armv5(smp)?\\/i)
 			{
+				print "..looking up $symbol in $srcFile.map\n" if $debug;
 				my ($symbolAddr, $symbolSize) = lookupSymbolInfo("$srcFile.map", $symbol);
 
 				my $max;
@@ -833,6 +869,7 @@ sub parsePatchData($$)
 				$value = sprintf("0x%08x", $value);
 
 				$line = "patchdata $destFile addr $symbolAddr $symbolSize $value\n";
+				print ".. new line is $line\n" if $debug;
 			}
 			else
 			{
