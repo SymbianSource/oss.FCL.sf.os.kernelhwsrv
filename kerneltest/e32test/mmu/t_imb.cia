@@ -169,14 +169,14 @@ __NAKED__ TInt Sqrt(TReal& /*aDest*/, const TReal& /*aSrc*/)
 	asm("bic r3, r3, #0x00080000 ");	// else convert SNaN to QNaN
 	asm("b fastsqrtxa ");				// and return KErrArgument
 
-	asm("Sqrt__FRdRCd_end: ");
+	asm("_Z4SqrtRdRKd_end: ");
 
 	}
 
 __NAKED__ TUint Sqrt_Length()
 	{
-	asm("adr r0, Sqrt__FRdRCd_end ");
-	asm("adr r1, Sqrt__FRdRCd ");
+	asm("adr r0, _Z4SqrtRdRKd_end ");
+	asm("adr r1, _Z4SqrtRdRKd ");
 	asm("sub r0, r0, r1 ");
 	__JUMP(,lr);
 	}
@@ -436,13 +436,13 @@ __NAKED__ TInt Divide(TRealX& /*aDividend*/, const TRealX& /*aDivisor*/)
 	asm("__RealIndefiniteExponent: ");
 	asm(".word 0xFFFF0001 ");
 
-	asm("Divide__FR6TRealXRC6TRealX_end: ");
+	asm("_Z6DivideR6TRealXRKS__end: ");
 	}
 
 __NAKED__ TUint Divide_Length()
 	{
-	asm("adr r0, Divide__FR6TRealXRC6TRealX_end ");
-	asm("adr r1, Divide__FR6TRealXRC6TRealX ");
+	asm("adr r0, _Z6DivideR6TRealXRKS__end ");
+	asm("adr r1, _Z6DivideR6TRealXRKS_ ");
 	asm("sub r0, r0, r1 ");
 	__JUMP(,lr);
 	}
@@ -450,13 +450,13 @@ __NAKED__ TUint Divide_Length()
 __NAKED__ TInt SDummy(TInt)
 	{
 	__JUMP(,lr);
-	asm("SDummy__Fi_end: ");
+	asm("_Z6SDummyi_end: ");
 	}
 
 __NAKED__ TUint SDummy_Length()
 	{
-	asm("adr r0, SDummy__Fi_end ");
-	asm("adr r1, SDummy__Fi ");
+	asm("adr r0, _Z6SDummyi_end ");
+	asm("adr r1, _Z6SDummyi ");
 	asm("sub r0, r0, r1 ");
 	__JUMP(,lr);
 	}
@@ -465,13 +465,13 @@ __NAKED__ TInt Increment(TInt)
 	{
 	asm("add r0, r0, #1 ");
 	__JUMP(,lr);
-	asm("Increment__Fi_end: ");
+	asm("_Z9Incrementi_end: ");
 	}
 
 __NAKED__ TUint Increment_Length()
 	{
-	asm("adr r0, Increment__Fi_end ");
-	asm("adr r1, Increment__Fi ");
+	asm("adr r0, _Z9Incrementi_end ");
+	asm("adr r1, _Z9Incrementi ");
 	asm("sub r0, r0, r1 ");
 	__JUMP(,lr);
 	}

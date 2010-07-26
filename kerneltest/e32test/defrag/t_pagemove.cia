@@ -46,13 +46,13 @@ __NAKED__ TInt Increment(TInt)
 	{
 	asm("add r0, r0, #1 ");
 	__JUMP(,lr);
-	asm("Increment__Fi_end: ");
+	asm("_Z9Incrementi_end: ");
 	}
 
 __NAKED__ TUint Increment_Length()
 	{
-	asm("adr r0, Increment__Fi_end ");
-	asm("adr r1, Increment__Fi ");
+	asm("adr r0, _Z9Incrementi_end ");
+	asm("adr r1, _Z9Incrementi ");
 	asm("sub r0, r0, r1 ");
 	__JUMP(,lr);
 	}
@@ -61,13 +61,13 @@ __NAKED__ TInt Decrement(TInt)
 	{
 	asm("sub r0, r0, #1 ");
 	__JUMP(,lr);
-	asm("Decrement__Fi_end: ");
+	asm("_Z9Decrementi_end: ");
 	}
 
 __NAKED__ TUint Decrement_Length()
 	{
-	asm("adr r0, Decrement__Fi_end ");
-	asm("adr r1, Decrement__Fi ");
+	asm("adr r0, _Z9Decrementi_end ");
+	asm("adr r1, _Z9Decrementi ");
 	asm("sub r0, r0, r1 ");
 	__JUMP(,lr);
 	}
