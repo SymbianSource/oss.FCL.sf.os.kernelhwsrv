@@ -144,6 +144,7 @@ class TDmaChannel;
 class DDmaRequest : public DBase
 	{
 	friend class TDmaChannel;
+	friend class TDmac;
 
 public:
 	/** The outcome of the transfer
