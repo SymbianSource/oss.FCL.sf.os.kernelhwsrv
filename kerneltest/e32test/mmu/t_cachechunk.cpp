@@ -87,7 +87,7 @@
 #include "d_gobble.h"
 #include <dptest.h>
 #include "freeram.h"
-#include "..\demandpaging\t_dpcmn.h"
+#include "../demandpaging/t_dpcmn.h"
 
 RTest test(_L("T_CACHECHUNK"));
 

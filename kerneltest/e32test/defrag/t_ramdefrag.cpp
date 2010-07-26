@@ -33,7 +33,7 @@ RTest test(_L("T_RAMDEFRAG"));
 #include <e32math.h>
 #include <hal.h>
 #include "testdefs.h"
-#include "..\mmu\mmudetect.h"
+#include "../mmu/mmudetect.h"
 
 
 #include <dptest.h>
