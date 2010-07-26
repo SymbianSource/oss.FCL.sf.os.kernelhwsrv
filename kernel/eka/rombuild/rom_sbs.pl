@@ -128,8 +128,8 @@ BEGIN {
 	$Epoc32Path .= $EpocRoot . "epoc32";
 	$toolpath = "$Epoc32Path\\tools\\";
 	push @INC, $toolpath;
-	$BasePath = $toroot;
-	$BasePath =~ s/\\$/$e32path\\/;
+	$BasePath = "$toroot$e32path\\";    # Note: toroot may be empty!
+	$BasePath =~ s/\\\\/\\/g;	# clean up path seaprators
 }
 
 use E32Plat;
