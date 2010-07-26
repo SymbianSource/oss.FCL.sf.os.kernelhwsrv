@@ -20,6 +20,7 @@
 #include <hal.h>
 #include <e32test.h>
 #include <e32def.h>
+#include <e32svr.h>
 
 #include "t_rmdebug_app.h"
 #include "t_multi_agent.h"

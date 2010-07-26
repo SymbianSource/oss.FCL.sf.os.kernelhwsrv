@@ -18,6 +18,9 @@
 #include <e32test.h>
 #include "t_server.h"
 #include "t_chlffs.h"
+#include "f32_test_utils.h"
+
+using namespace F32_Test_Utils;
 
 GLDEF_D RTest test(_L("T_NMBS"));
 
@@ -225,13 +228,17 @@ LOCAL_C void testRename()
 	}
 LOCAL_C void TestLongFileName()
 	{
-	#ifndef __EPOC32__ //emulator
-	if (gDriveToTest.GetLowerCase()=='c')
-		return;//don't perform this test for c: in emulator as emulator uses windows system calls
-		//windows doesn't create a directory with length more than 244 characters
-	#endif 
+	if (Is_SimulatedSystemDrive(TheFs, CurrentDrive()))
+		{
+		// Do not perform this test for the system drive of the emulator or PlatSim
+		// as they use Windows system calls.
+		// Windows does not create a directory with length more than 244 characters
+		// (247 including <drive>:\)
+		test.Printf(_L("TestLongFileName() skipped on simulated system drive.\n"));
+		return;
+		}
 	
-	 test.Next(_L("Test renaming 257 characters directories"));
+	test.Next(_L("Test renaming 257 characters directories"));
 	_LIT(KLongFileName256, "256dir_IncludingBackslash_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 	_LIT(KLongFileName257, "257dir_IncludingBackslash_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 	TBuf<260> Path;
@@ -884,7 +891,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Att(atts);
 	test_KErrNone(r);
 	file.Close();
-	test(atts&KEntryAttSystem);
+	test_Value((TInt)atts, atts&KEntryAttSystem);
 
 //	Change attributes to normal
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
@@ -897,7 +904,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Att(atts);
 	test_KErrNone(r);
 	file.Close();
-	test(atts==KEntryAttNormal);
+	test_Value((TInt)atts, atts==KEntryAttNormal);
 
 //	Attempt to change attributes from normal file to directory	
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
@@ -910,7 +917,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Att(atts);
 	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttDir)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttDir)==KErrNone);
 
 //	Change the attributes from normal file to hidden file
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
@@ -923,7 +930,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Att(atts);
 	test_KErrNone(r);
 	file.Close();
-	test(atts&KEntryAttHidden);
+	test_Value((TInt)atts, atts&KEntryAttHidden);
 
 //	Try to change the attributes from hidden file to volume	
 	file.Open(TheFs,_L("TEMPFILE.TMP"),EFileWrite);
@@ -936,7 +943,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Att(atts);
 	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttVolume)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttVolume)==KErrNone);
 
 //	Test RFile::Set() function	
 	
@@ -947,7 +954,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Att(atts);
 	test_KErrNone(r);
 	file.Close();
-	test(atts==KEntryAttNormal);
+	test_Value((TInt)atts, atts==KEntryAttNormal);
 
 //	Change attributes from hidden to system	- and change modification time
 	TDateTime dateTime(1998,EMay,25,18,23,0,0);
@@ -965,7 +972,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Modified(retTime);
 	test_KErrNone(r);
 	file.Close();
-	test(atts&KEntryAttSystem);
+	test_Value((TInt)atts, atts&KEntryAttSystem);
 	test(retTime==modTime1);
 
 //	Change attributes to normal - and change modification time
@@ -983,7 +990,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Modified(retTime);
 	test_KErrNone(r);
 	file.Close();
-	test(atts==KEntryAttNormal);
+	test_Value((TInt)atts, atts==KEntryAttNormal);
 	test(retTime==modTime2);
 
 //	Attempt to change attributes from normal file to directory	
@@ -999,7 +1006,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Modified(retTime);
 	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttDir)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttDir)==KErrNone);
 	test(retTime==modTime1);//	Modification time should have been set successfully
 
 //	Change the attributes from normal file to hidden file - and change modification time
@@ -1014,7 +1021,7 @@ LOCAL_C void testSetFileAttributes()
 	test_KErrNone(r);
 	r=file.Modified(retTime);
 	file.Close();
-	test(atts&KEntryAttHidden);
+	test_Value((TInt)atts, atts&KEntryAttHidden);
 	test(retTime==modTime1);
 
 //	Try to change the attributes from hidden file to volume	
@@ -1030,7 +1037,7 @@ LOCAL_C void testSetFileAttributes()
 	r=file.Modified(retTime);
 	test_KErrNone(r);
 	file.Close();
-	test((TInt)(atts&KEntryAttVolume)==KErrNone);
+	test_Value((TInt)atts, (TInt)(atts&KEntryAttVolume)==KErrNone);
 	test(retTime==modTime2);	//	Modification time should have been set successfully
 	
 	r=TheFs.Delete(_L("TEMPFILE.TMP"));

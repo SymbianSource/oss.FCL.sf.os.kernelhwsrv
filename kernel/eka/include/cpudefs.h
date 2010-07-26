@@ -198,8 +198,9 @@
 
 #if defined(__WINS__)
 #define __NAKED__ __declspec( naked )
-#ifndef __MINIMUM_MACHINE_CODE__
-//#define __MEM_MACHINE_CODED__
+#if !defined(__MINIMUM_MACHINE_CODE__) && defined(__KERNEL_MODE__)
+// Assembly language memmove() and memcpy() are used for WINS but only in the kernel, not euser
+#define __MEMMOVE_MACHINE_CODED__
 #endif
 #define __CPU_X86
 #endif

@@ -135,6 +135,10 @@ source					 cglobals.cpp cexec.cpp cinit.cpp
 source					 ckernel.cpp csched.cpp
 source					 cutils.cpp cache.cpp
 
+sourcepath				../common/win32
+userinclude				../common
+source					cmem.cpp
+
 library					emulator.lib
 #endif
 

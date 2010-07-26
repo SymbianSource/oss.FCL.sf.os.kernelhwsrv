@@ -21,7 +21,7 @@
 #include <e32property.h> 
 #include <u32hal.h>
 #include <f32file.h>
-
+#include <e32svr.h>
 
 
 #include "t_rmdebug_app.h"

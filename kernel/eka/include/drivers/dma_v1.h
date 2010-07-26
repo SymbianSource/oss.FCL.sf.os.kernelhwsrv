@@ -279,13 +279,7 @@ public:
 		TUint32 iCookie;
 		/** Number of descriptors this channel can use */
 		TInt iDesCount;
-		/** DFC queue used to service DMA interrupts.  The DFC thread
-			priority must be higher than any client thread priority to
-			avoid a situation where a transfer completes while being
-			cancelled and another transfer is started before the DFC
-			thread gets a chance to run.  This would lead to a stray
-			DFC.
-		*/
+		/** DFC queue used to service DMA interrupts */
 		TDfcQue* iDfcQ;
 		/** DFC priority */
 		TUint8 iDfcPriority;
@@ -437,6 +431,7 @@ protected:
 	SDblQue iReqQ;											// being/about to be transferred request queue
 	TInt iReqCount;											// number of requests attached to this channel
 	TInt iQueuedRequests; 									// number of requests currently queued on this channel
+	TBool iCallQueuedRequestFn;								// call QueuedRequestCountChanged? (default: true)
 private:
 	TDmaCancelInfo* iCancelInfo;
 	__DMA_DECLARE_INVARIANT

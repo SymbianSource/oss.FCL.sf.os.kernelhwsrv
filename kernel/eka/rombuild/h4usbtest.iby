@@ -30,6 +30,7 @@ file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_usbapi.exe				sys\bin\t_usbap
 file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_usb_device.exe			sys\bin\t_usb_device.exe
 file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_usb_scdevice.exe			sys\bin\t_usb_scdevice.exe
 file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_usbcsc.exe				sys\bin\t_usbcsc.exe
+file=EPOCROOT##epoc32\release\##MAIN##\##BUILD##\t_usb_transfersrv.dll		sys\bin\t_usb_transfersrv.dll
 
 REM t_usb_device xml configuration files
 

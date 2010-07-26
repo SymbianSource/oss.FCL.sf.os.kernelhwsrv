@@ -39,6 +39,8 @@
 // - Test that the Cleanup stack can go re-entrant.
 // - Ensure that the stack is properly balanced with and without
 // leaving.
+// - Test creating cleanup with CCleanup::NewL in normal
+// memory conditions and condition where heap is full (panic)
 // Platforms/Drives/Compatibility:
 // All.
 // Assumptions/Requirement/Pre-requisites:
@@ -62,8 +64,10 @@
 
 const TInt KLeaveValue=0x12345678;
 const TInt KMaxAlloc=6;	
+const TInt KTableSize = 1000;
 
 static const TInt KHeapSize = 0x2000;
+
 
 enum TWhat {EPop,EPopAndDestroy,EMulti,ENull};
 
@@ -1538,6 +1542,70 @@ void testTrapIgnore()
 	test.End();
 	}
 
+void testCCleanupNewL()
+	{
+	// don't want just in time debugging as we trap panics
+	TBool justInTime=User::JustInTime(); 
+	User::SetJustInTime(EFalse); 
+
+	// no need to test otherwise, since this calls only
+	// CCleanup::New and that has been tested.
+	test.Start(_L("Create cleanup NewL"));
+	CCleanup* pC=CCleanup::NewL();
+	test(pC!=NULL);
+	delete pC;
+
+	TAny* ptrTable[KTableSize];
+	TInt allocSize=sizeof(CCleanup);
+	TAny* ptr=0;
+
+	__UHEAP_MARK;
+
+	TInt i=0;
+	// first alloc 4Kb bits
+	do
+		{
+		ptr=User::Alloc(0x1000);
+		if(ptr!=NULL)
+			{
+			ptrTable[i]=ptr;
+			i++;
+			}
+		}
+		while (ptr!=NULL && i<KTableSize);
+
+	// then eat memory with size of CCleanup object granurality
+	do
+		{
+		ptr=User::Alloc(allocSize);
+		if(ptr!=NULL)
+			{
+			ptrTable[i]=ptr;
+			i++;
+			}
+		}
+		while (ptr!=NULL && i<KTableSize);
+	
+	i--; // last one failed, so lets adjust this to last successfull entry
+
+	TInt r=KErrNone;
+	test.Next(_L("Create cleanup NewL while no room in heap"));
+	TRAP(r,pC=CCleanup::NewL());
+	test_Equal(KErrNoMemory,r);
+
+	for (;i>=0;i--)
+		{
+		User::Free(ptrTable[i]);
+		}
+	
+	__UHEAP_MARKEND;
+
+	//restore settings
+	User::SetJustInTime(justInTime); 
+
+	test.End();
+	}
+
 GLDEF_C TInt E32Main()
     {
 	test.Title();
@@ -1596,6 +1664,11 @@ GLDEF_C TInt E32Main()
 
 	test.Next(_L("Test TRAP_IGNORE"));
 	testTrapIgnore();
+
+	test.Next(_L("Test CCleanup::NewL"));
+	testCCleanupNewL();
+
+	delete pT;
 
 	test.End();
 	return(0);

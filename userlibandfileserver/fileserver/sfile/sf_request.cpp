@@ -1116,7 +1116,9 @@ void CFsMessageRequest::ProcessDriveOperation()
 		}
 
 	SetError(err);
-
+	
+    if (IsExpectedResult(err) && !IsPluginSpecific() && !IsNotifierSpecific())
+        DoNotifyDiskSpace(KErrNone);
 
 	// Start issuing the post-operation requests starting from the bottom of the chain
 	iCurrentPlugin = NULL;
@@ -1142,16 +1144,6 @@ void CFsMessageRequest::Complete(TInt aError)
 	{
 	__THRD_PRINT2(_L("----- CFsMessageRequest::Complete() req %08x with %d"), this, aError);
 
-	if (aError==KErrNoMemory)
-		{
-		if (iDrive)	// Not all message requests are associated with a drive!
-			{
-			TDriveInfo di;
-			iDrive->DriveInfo(di);
-			if (di.iType == EMediaRam)
-				aError = KErrNoMemory;
-			}
-		}
 	if(aError!=KErrNone)
 		{
 		if(iOperation->IsOpenSubSess())
@@ -1298,9 +1290,7 @@ void CFsMessageRequest::DoNotify(TInt aError)
 	if(aError==KErrNone)
 		{
 		if(!(FsNotify::IsChangeQueEmpty(driveNumber)))
-			FsNotify::HandleChange(this,driveNumber);	
-		if ((driveNumber != KDriveInvalid) && !(FsNotify::IsDiskSpaceQueEmpty(driveNumber)))
-			FsNotify::HandleDiskSpace(this, DriveNumber());
+			FsNotify::HandleChange(this,driveNumber);
 	
 #ifdef SYMBIAN_F32_ENHANCED_CHANGE_NOTIFICATION
 		if 	(iOperation->iFunction == EFsFileWrite)
@@ -1337,6 +1327,16 @@ void CFsMessageRequest::DoNotify(TInt aError)
 		}
 	}
 
+void CFsMessageRequest::DoNotifyDiskSpace(TInt aError)
+    {
+    __PRINT1(_L("----- CFsMessageRequest::DoNotifyDiskSpace() with %d"),aError);
+    if(aError != KErrNone)
+        return;
+
+    TInt driveNumber = DriveNumber();
+    if ((driveNumber != KDriveInvalid) && !(FsNotify::IsDiskSpaceQueEmpty(driveNumber)))
+        FsNotify::HandleDiskSpace(this, driveNumber);
+    }
 
 void CFsMessageRequest::Free()
 //

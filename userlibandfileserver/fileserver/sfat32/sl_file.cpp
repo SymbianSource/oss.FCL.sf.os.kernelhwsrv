@@ -103,18 +103,6 @@ void CFatFileCB::SetSeekIndexValueL(TUint aRelCluster, TUint aStoredCluster)
     iSeekIndex[seekPos] = aStoredCluster;
     }
 
-TBool CFatFileCB::IsSeekBackwards(TUint aPos)
-//
-// Return true if aPos<currentPos
-//
-    {
-    
-    TUint cluster=iCurrentPos.iCluster<<ClusterSizeLog2();
-    TInt offset=ClusterRelativePos(iCurrentPos.iPos);
-    TUint currentPos=cluster+offset;
-    return(aPos<currentPos);
-    }
-
 void CFatFileCB::CheckPosL(TUint aPos)
 //
 // Check that the file is positioned correctly.
@@ -126,9 +114,6 @@ void CFatFileCB::CheckPosL(TUint aPos)
         return;
     __ASSERT_DEBUG(aPos <= FCB_FileSize(), Fault(EFatFilePosBeyondEnd));
 
-    if (FileSizeModified() && IsSeekBackwards(aPos))
-        FlushDataL(); 
-    
     TUint newRelCluster=aPos>>ClusterSizeLog2();
     if ( aPos && (aPos==(newRelCluster<<ClusterSizeLog2())) )
         newRelCluster--;

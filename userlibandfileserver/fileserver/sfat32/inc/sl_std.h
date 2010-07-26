@@ -863,7 +863,6 @@ private:
 	void SetSeekIndexValueL(TUint aFileCluster,TUint aStoredCluster);
 	void ResizeIndex(TInt aNewMult,TUint aNewSize);
 	TInt CalcSeekIndexSize(TUint aSize);
-	TBool IsSeekBackwards(TUint aPos);
 	void ClearIndex(TUint aNewSize);
 	void DoSetSizeL(TUint aSize, TBool aForceCachesFlush);
 	void WriteFileSizeL(TUint aSize);

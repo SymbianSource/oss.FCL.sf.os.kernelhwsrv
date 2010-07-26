@@ -1,3 +1,44 @@
+Version 2.00.3108
+=================
+(Made by fadhliM 19/07/2010)
+
+1.	mipetzol
+	1.	ou1cimx1#467351 DMA PIL doesn't check client thread priorities
+	2.	ou1cimx1#467653 DMA PIL: Unnecessary calls to empty virtual function
+
+2.	mmoate
+	1.	ou1cimx1#422063 MCL Test Code Coverage Improvement Phase 1
+
+3.	garciato
+	1.	MINOR_CHANGE Corrections to document and diagram and corrected file name
+
+4.	jcoppear
+	1.	ou1cimx1#460995 ENV E32TEST T_PAGETABLE_LIMIT test failure investigation (t_pagetable_limit.cpp:276)
+
+5.	fagortz
+	1.	ou1cimx1#479558 t_medch does not find suitable drive for test if pagingMediaCheck is false
+
+6.	ferporta
+	1.	ou1cimx1#480991 10.1 Component build failures with f32file.h platform header removal changes
+
+
+Version 2.00.3108
+=================
+(Made by famustaf 12/07/2010)
+
+1.	coliward
+	1.	ou1cimx1#457854 Kernel's memmove() routine needs optimising for Win32 UDEB builds
+
+2.	stmansfi
+	1.	ou1cimx1#468733 ENV Remove unnecessary test exports
+
+3.	jimhofe
+	1.	MINOR_CHANGE Adding pkgdefs file for mounting the filesystem from the synergy package
+
+4.	niccox
+	1.	ou1cimx1#474990 h4usbtest.iby is missing t_usb_transfersrv.dll
+
+
 Version 2.00.3107
 =================
 (Made by famustaf 07/07/2010)

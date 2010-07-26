@@ -1,3 +1,25 @@
+Version 2.00.3054
+=================
+(Made by fadhliM 19/07/2010)
+
+1.	migubarr
+	1.	ou1cimx1#476545 Inefficiencies in RFile::SetSize() & RFile::Write()
+
+
+Version 2.00.3053
+=================
+(Made by famustaf 12/07/2010)
+
+1.	h14jiang
+	1.	ou1cimx1#428840 Not getting any Notification from RFs::NotifyDiskSpace() for E and F drive when when tested multiple time.
+
+2.	famustaf
+	1.	ou1cimx1#466351 Modify t_nmbs for Platsim's HVFS
+
+3.	migubarr
+	1.	ou1cimx1#437919 File Server flushes FAT metadata too often
+
+
 Version 2.00.3052
 =================
 (Made by famustaf 01/07/2010)

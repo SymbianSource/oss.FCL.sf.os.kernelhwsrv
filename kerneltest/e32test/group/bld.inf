@@ -121,6 +121,7 @@ d_shbuf_client				support
 d_shbuf_own					support
 d_asid						support
 d_entropysources			support
+d_khal						support
 
 #ifdef GENERIC_MARM
 d_schedhook					support
@@ -512,13 +513,11 @@ t_wsd_tst_cu
 ../ethernet/pump/etherpump  manual
 ../ethernet/macset/macset   manual
 
-// /E32TEST/HEAP tests
-t_fail
-
+// /e32test/heap tests
 #ifdef EPOC32
-t_hcomp     support
+t_hcomp			support
 #endif
-
+t_fail
 t_heap
 t_heap2
 t_heapdb
@@ -635,7 +634,7 @@ t_pcreat    support
 t_loadsim	support
 
 #if !defined(WINS)
-t_zip       manual
+t_zip       
 #endif
 
 #ifdef EPOC32
@@ -756,16 +755,18 @@ t_write     support
 
 // /E32TEST/SYSTEM tests
 t_atomic
+t_atomicu
 t_chnot     
 t_cobj      
 t_ctrap     
 t_exc       
-t_inf       manual
+t_inf
 t_multin    
 t_prot
 t_prot2     support
 t_prot2a    support
 t_reason    support 
+t_reason2
 t_ref       
 t_reg       
 t_trap
@@ -791,6 +792,7 @@ t_debug     support
 //  T_REGRAM    support
 t_panic     support
 #endif
+t_khal
 
 // /E32TEST/THREAD tests
 t_killer    support // because it takes several minutes to run

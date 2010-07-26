@@ -1697,6 +1697,102 @@ void TestChangeNotification()
 
 	}
 
+//-------------------------------------------------------------------------------------------------
+// Test the fix for:
+// ou1cimx#410349 Not getting any Notification from RFs::NotifyDiskSpace() for E and F drive when when tested multiple
+// 
+// Action: Enable a plugin to intercept RFs::Delete, and test RFs::Delet can still trigger disk space
+// notification
+//-------------------------------------------------------------------------------------------------
+
+_LIT(KPreModifierPluginFileName,"premodifier_plugin");
+_LIT(KPreModifierPluginName,"PreModifierPlugin");
+const TUint KTestFileSize = KKilo * 100;
+
+#define SAFETEST_KErrNone(a)        if(a != KErrNone)\
+                                        {\
+                                        TheFs.DismountPlugin(KPreModifierPluginName);\
+                                        TheFs.RemovePlugin(KPreModifierPluginName);\
+                                        test_KErrNone(a);\
+                                        }
+
+TInt PluginTestThreadFunction(TAny*)
+    {
+    RTest test(_L("PluginTestThreadFunction"));
+    RFs fs;
+    fs.Connect();
+    
+    TInt r = fs.SetSessionPath(gSessionPath);
+    test_KErrNone(r);
+    
+    RFile file;
+    r = file.Create(fs, KTestFile1, EFileShareAny|EFileWrite);
+    test_KErrNone(r);
+    r = file.SetSize(KTestFileSize);
+    test_KErrNone(r);
+    file.Close();
+      
+    User::After(5000000); // wait for 5 seconds, to ensure first notification received.
+    
+    r = fs.Delete(KTestFile1);
+    test_KErrNone(r);
+    
+    fs.Close();
+    return KErrNone;
+    }
+
+void TestDiskSpaceNotifyWithPlugin()
+    {
+    test.Next(_L("Test Disk Space Notify With Plugin"));
+      
+    TInt drive;
+    TInt r = RFs::CharToDrive(gSessionPath[0],drive);
+    SAFETEST_KErrNone(r);
+    Format(drive);
+    
+    r = TheFs.MkDirAll(gSessionPath);
+    SAFETEST_KErrNone(r);
+     
+    r = TheFs.AddPlugin(KPreModifierPluginFileName);
+    SAFETEST_KErrNone(r);
+
+    r = TheFs.MountPlugin(KPreModifierPluginName);
+    SAFETEST_KErrNone(r);
+    
+    TInt64 free = FreeDiskSpace(drive);
+    TInt64 threshold = free - KTestFileSize + 1;
+    
+    TRequestStatus status;
+    TRequestStatus statusDeath;
+    
+    TheFs.NotifyDiskSpace(threshold, drive, status);
+    
+    RThread thread;
+    r = thread.Create(_L("PluginTestThread"), PluginTestThreadFunction, KStackSize, KHeapSize, KHeapSize, NULL);
+    SAFETEST_KErrNone(r);
+    thread.Logon(statusDeath);
+    thread.Resume();
+    
+    User::WaitForRequest(status);
+    SAFETEST_KErrNone(status.Int());
+    
+    TheFs.NotifyDiskSpace(threshold, drive, status);
+    User::WaitForRequest(status);
+    SAFETEST_KErrNone(status.Int());
+    
+    User::WaitForRequest(statusDeath);
+    SAFETEST_KErrNone(statusDeath.Int());
+    thread.Close();
+    
+    r = TheFs.DismountPlugin(KPreModifierPluginName);
+    SAFETEST_KErrNone(r);
+
+    r = TheFs.RemovePlugin(KPreModifierPluginName);
+    SAFETEST_KErrNone(r);
+
+    Format(drive);
+    }
+
 GLDEF_C void CallTestsL()
 //
 // Do all tests
@@ -1753,6 +1849,7 @@ GLDEF_C void CallTestsL()
 		}
 
 	TestChangeNotification();
+	TestDiskSpaceNotifyWithPlugin();
 
 	if( LffsDrive )
 		{

@@ -220,6 +220,10 @@ LOCAL_C TBool SetupDrivesForPlatform(TInt& aDrive, TInt& aSocket)
 					break;
 					}
 				}
+			else
+				{
+				break;
+				}
 			}
 		}
 

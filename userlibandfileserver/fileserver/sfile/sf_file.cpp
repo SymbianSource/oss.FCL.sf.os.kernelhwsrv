@@ -970,10 +970,6 @@ TInt TFsFileWrite::CommonInit(CFileShare* aShare, CFileCB* aFile, TInt64& aPos, 
         {//-- this call is originated from explicit file write operation. Set 'Archive' attribute and new file time.
         aFile->SetArchiveAttribute(); //-- it will also set KEntryAttModified
         }
-    else
-        {//-- don't touch data and attributes if it is cache flushing dirty data
-        aFile->iAtt |= KEntryAttModified;
-        }
 
 
 	return KErrNone;
@@ -1587,13 +1583,11 @@ TInt TFsFileSetSize::DoRequestL(CFsRequest* aRequest)
 	
 	CFileCB& file=share->File();
 
-	// flush the write cache
-	CFileCache* fileCache = share->File().FileCache();
-	if (fileCache && (r = fileCache->FlushDirty(aRequest)) != CFsRequest::EReqActionComplete)
-		return r;
-	
 	if (size==file.Size64())
+		{
+		file.SetCachedSize64(size);	// Ensure the cache size doesn't exceeed the physical size
 		return(KErrNone);
+		}
 	
 	TBool fileHasGrown = size > file.Size64();
 	if (fileHasGrown)
