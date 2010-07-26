@@ -162,8 +162,15 @@ extern "C" {
 #define NORETURNDECL __declspec(noreturn)
 /* Inlining when compiling C */
 #define INLINE __inline
+#if defined(__ARMCC__)
 /* Stronger encouragement to inline */
 #define FORCEINLINE __forceinline
+#elif defined(__GCCE__)
+#define FORCEINLINE __inline __attribute__ ((always_inline))
+#else
+#error What compiler?
+#endif
+
 
 /* ---------------------------------------------------------------------- */
 

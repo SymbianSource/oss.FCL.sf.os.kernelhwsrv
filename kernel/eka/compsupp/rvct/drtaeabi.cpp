@@ -48,6 +48,7 @@ EXPORT_C void* __ARM_get_typeid(void* p)
 
 extern const char * const  $Sub$$_ZTSv = "v";
 
+#if defined(__ARMCC__)
 __asm void __rt_exporter_dummy()
 	{
 	IMPORT _ZTVN10__cxxabiv123__fundamental_type_infoE [DYNAMIC]
@@ -64,6 +65,20 @@ __asm void __rt_exporter_dummy()
 	DCD _ZTVN10__cxxabiv123__fundamental_type_infoE
 	DCD _ZTSv
 	}
+#elif defined(__GCCE__)
+__NAKED__ void __rt_exporter_dummy()
+	{
+	asm(".weak ZTVN10__cxxabiv123__fundamental_type_infoE");
+	asm(".extern _ZTSv");
+	asm(".global $Sub$$_ZTIv");
+	asm("$Sub$$_ZTIv");
+	asm(".word _ZTVN10__cxxabiv123__fundamental_type_infoE");
+	asm(".word _ZTSv");
+	}
+
+#else
+#error What compiler?
+#endif
 
 #if __ARMCC_VERSION > 400000
 asm void __symbian_prevent_export()
