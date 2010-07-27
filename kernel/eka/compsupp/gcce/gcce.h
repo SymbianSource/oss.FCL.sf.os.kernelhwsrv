@@ -165,6 +165,9 @@ typedef va_list __e32_va_list;
 #endif
 
 #ifdef __cplusplus
+
+// To compile rtti support
+#define __EDG_RUNTIME_USES_NAMESPACES
 // Support for throwing exceptions through embedded assembler
 // Should only be needed user side
 

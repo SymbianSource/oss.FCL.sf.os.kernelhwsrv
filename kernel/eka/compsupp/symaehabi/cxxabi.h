@@ -78,36 +78,37 @@ namespace std
 
 #ifdef __EDG_RUNTIME_USES_NAMESPACES
 namespace __cxxabiv1 {
+  using namespace std;
 #endif /* ifdef __EDG_RUNTIME_USES_NAMESPACES */
 
   /* type_info implementation classes */
 
 #pragma define_type_info
-  class __fundamental_type_info : public std::type_info {
+  class __fundamental_type_info : public type_info {
   public:
     virtual ~__fundamental_type_info();
   };
 
 #pragma define_type_info
-  class __array_type_info : public std::type_info {
+  class __array_type_info : public type_info {
   public:
     virtual ~__array_type_info();
   };
 
 #pragma define_type_info
-  class __function_type_info : public std::type_info {
+  class __function_type_info : public type_info {
   public:
     virtual ~__function_type_info();
   };
 
 #pragma define_type_info
-  class __enum_type_info : public std::type_info {
+  class __enum_type_info : public type_info {
   public:
     virtual ~__enum_type_info();
   };
 
 #pragma define_type_info
-  class __class_type_info : public std::type_info {
+  class __class_type_info : public type_info {
   public:
     virtual ~__class_type_info();
   };
@@ -145,7 +146,7 @@ namespace __cxxabiv1 {
   };
 
 #pragma define_type_info
-  class __pbase_type_info : public std::type_info {
+  class __pbase_type_info : public type_info {
   public:
     virtual ~__pbase_type_info();
     unsigned int __flags;

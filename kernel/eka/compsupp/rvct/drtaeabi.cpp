@@ -71,7 +71,7 @@ __NAKED__ void __rt_exporter_dummy()
 	asm(".weak ZTVN10__cxxabiv123__fundamental_type_infoE");
 	asm(".extern _ZTSv");
 	asm(".global $Sub$$_ZTIv");
-	asm("$Sub$$_ZTIv");
+	asm("$Sub$$_ZTIv:");
 	asm(".word _ZTVN10__cxxabiv123__fundamental_type_infoE");
 	asm(".word _ZTSv");
 	}
