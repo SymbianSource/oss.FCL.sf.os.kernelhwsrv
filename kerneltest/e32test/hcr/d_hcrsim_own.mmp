@@ -32,11 +32,6 @@ source			d_hcrsim_psl_config.cpp
 epocallowdlldata
 smpsafe
 
-#ifdef GCCE
-staticlibrary usrt4_0.lib
-library drtaeabi.dso
-#endif
-
 start wins
 win32_headers
 end

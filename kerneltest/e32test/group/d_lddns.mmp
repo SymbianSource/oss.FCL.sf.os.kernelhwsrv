@@ -30,10 +30,5 @@ UID		0x01111111 0
 VENDORID 0x70000001
 RAMTARGET D_LDDNS_ram.LDD
 
-#ifdef GCCE
-staticlibrary usrt4_0.lib
-library drtaeabi.dso
-#endif
-
 capability		all
 SMPSAFE

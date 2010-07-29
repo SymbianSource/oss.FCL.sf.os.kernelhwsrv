@@ -18,7 +18,6 @@ PRJ_PLATFORMS
 
 ARMV5
 
-
 PRJ_EXPORTS
 
 // Workaround for GCCE builds
@@ -29,5 +28,5 @@ PRJ_EXPORTS
 
 PRJ_MMPFILES
 
-// none - (yet)
-
+ksrt_gcce
+// usrt_gcce   // not yet working
