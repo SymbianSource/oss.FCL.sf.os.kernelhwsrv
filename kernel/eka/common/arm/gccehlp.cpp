@@ -97,15 +97,6 @@ COMM_SYMBOL("_ZTVN10__cxxabiv117__class_type_infoE");     // vtable for __cxxabi
 COMM_SYMBOL("_ZTVN10__cxxabiv120__si_class_type_infoE");  // vtable for __cxxabiv1::__si_class_type_info
 COMM_SYMBOL("_ZTVN10__cxxabiv121__vmi_class_type_infoE"); // vtable for __cxxabiv1::__vmi_class_type_info
 
-// Implementations exist as globals in libgcc.a, we just need to pull them in
-#define IMPORT_GLOBAL(x)  asm(".global " x );
-
-IMPORT_GLOBAL("__aeabi_lasr");
-IMPORT_GLOBAL("__aeabi_lcmp");
-IMPORT_GLOBAL("__aeabi_llsl");
-IMPORT_GLOBAL("__aeabi_llsr");
-IMPORT_GLOBAL("__aeabi_lmul");
-IMPORT_GLOBAL("__aeabi_ulcmp");
 
 // Implementations exist as "hidden" in libgcc.a, so we need to pull them in and reveal them
 // ** This version will completely fail to do that, but creates junk to be exported
