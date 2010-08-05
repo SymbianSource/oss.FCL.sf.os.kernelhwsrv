@@ -36,6 +36,7 @@ source			up_dll_tls.cpp up_dll_file.cpp
 
 #if defined(MARM)
 option ARMCC	--no_exceptions --no_exceptions_unwind
+option GCCE 	-fno-exceptions
 
 sourcepath		epoc/arm
 source			uc_dll.cpp uc_dll.cia
