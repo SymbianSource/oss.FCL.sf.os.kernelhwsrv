@@ -1183,6 +1183,40 @@ namespace ChannelLinkingTest
 	TTestCase testCaseChannelLinking(&testChannelLinking , EFalse, capAboveV1,LinkingNotWanted);	
 	}
 
+//--------------------------------------------------------------------------------------------
+//! TestCaseID      KBASE-DMA-2574
+//! TestType        CIT
+//! PREQ            REQ
+//! TestCaseDesc    This test verifies that the DMA Element Counting APIs can be called. The calls 
+//!					to these functions are meant to be used to meet a code coverage requirement.These APIs
+//!					are not yet supported so the functionality of the APIs are not currently tested.
+//!
+//! TestActions     
+//!						1.	Open a DMA channel for a transfer.
+//!						2.  Make calls to Element Counting APIs
+//!						3.  Close DMA channel.
+//!					
+//! 
+//!	TestExpectedResults 1.  DMA channel opens and KErrNone returned.
+//!						2.  Element Counting APIs are called without crashing the framework
+//!						3.	DMA channel closes and KErrNone returned.
+//!
+//! TestPriority        High
+//! TestStatus          Implemented
+//----------------------------------------------------------------------------------------------
+namespace ElementCountingTest
+	{
+	const TInt srcAddr		= 0;
+	const TInt desAddr		= 2 * KMega;	
+	const TInt transferSize = 1 * KMega;	
+
+	TDmaTransferArgs transferArgs(srcAddr, desAddr, transferSize, KDmaMemAddr);	
+
+	const TResultSet expectedResults(threadCallback);
+	CElementCountingTest testElementCounting(_L("DMA Element Counting Test"), 1, transferArgs, expectedResults);
+	TTestCase testCaseElementCounting(&testElementCounting, EFalse, capAboveV1);
+	}
+
 static TTestCase* StaticSimpleTestArray[] = {
 	&Simple_1::testCase,
 	&Simple_1::testCaseConcurrent,
@@ -1341,6 +1375,7 @@ static TTestCase* StaticTestArray[] = {
 	&CancelAllTest::testCase,
 	&IsQueueEmptyTest::testCase,
 	&ChannelLinkingTest::testCaseChannelLinking,
+	&ElementCountingTest::testCaseElementCounting,
 };
 
 RPointerArray<TTestCase> TestArray(StaticTestArray, ARRAY_LENGTH(StaticTestArray));

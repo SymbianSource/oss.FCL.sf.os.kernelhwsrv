@@ -260,6 +260,19 @@ TInt DDmaTestChannel::DoCreate(TInt /*aUnit*/, const TDesC8* aInfo, const TVersi
 		r = TDmaChannel::Open(info, iChannel);
 		if (r!= KErrNone)
 			return r;
+
+		// ---> Code coverage of rarely called functions
+		const TDmac* const c = iChannel->Controller();
+		if (!c)
+			return KErrGeneral;
+		const TInt mts = iChannel->MaxTransferSize(0, iCookie);
+		if (mts == 0)
+			return KErrGeneral;
+		const TUint mam = iChannel->MemAlignMask(0, iCookie);
+		if (~mam == 0)
+			return KErrGeneral;
+		// <--- Code coverage of rarely called functions
+
 		iClient = &Kern::CurrentThread();
 		for (TInt i=0; i<KMaxRequests; ++i)
 			{

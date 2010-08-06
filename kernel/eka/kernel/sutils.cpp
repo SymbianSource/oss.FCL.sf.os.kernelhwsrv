@@ -3548,10 +3548,19 @@ TBool TClientRequest::StartComplete(DThread* aThread, TInt aReason)
 
 void TClientRequest::EndComplete(DThread* aThread)
 	{
+	// NB: if the callback is successfully queued, the target thread may run and
+	// process it before we get back from the call to QueueUserModeCallback().
+	// In that case, 'iStatus' will be changed; and in general it is not safe to
+	// look at any element of 'this' once the callback is queued, as it may change
+	// asynchronously.  Therefore, we must cache the value of 'iStatus' beforehand
+	// and later use this saved copy to decide whether to signal the target thread.
+	T_UintPtr status = iStatus;
 	TInt r = NKern::QueueUserModeCallback(&aThread->iNThread, this);
+
 	if (r == KErrNone)
 		{
-		if (iStatus != (KClientRequestNullStatus | KClientRequestFlagInUse))
+		__NK_ASSERT_DEBUG(status & KClientRequestFlagInUse);
+		if ((status & ~KClientRequestFlagInUse) != KClientRequestNullStatus)
 			NKern::ThreadRequestSignal(&aThread->iNThread);
 		}
 	else

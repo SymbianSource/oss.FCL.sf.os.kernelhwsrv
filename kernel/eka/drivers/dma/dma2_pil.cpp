@@ -1932,9 +1932,7 @@ EXPORT_C TInt DDmaRequest::Queue()
 		{
 		iQueued = ETrue;
 		iChannel.iReqQ.Add(&iLink);
-		// iChannel.iNullPtr points to iChannel.iCurHdr for an empty queue
-		*iChannel.iNullPtr = iFirstHdr;
-		iChannel.iNullPtr = &(iLastHdr->iNext);
+		iChannel.SetNullPtr(*this);
 		if (iIsrCb)
 			{
 			// Since we've made sure that there is no other request in the
@@ -1946,7 +1944,7 @@ EXPORT_C TInt DDmaRequest::Queue()
 			// possible.
 			__e32_atomic_store_rel32(&iChannel.iIsrCbRequest, ETrue);
 			}
-		iChannel.DoQueue(const_cast<const DDmaRequest&>(*this));
+		iChannel.DoQueue(*this);
 		r = KErrNone;
 		__DMA_INVARIANT();
 		iChannel.Signal();
@@ -2124,21 +2122,6 @@ EXPORT_C TUint32 DDmaRequest::TotalNumSrcElementsTransferred()
 	__KTRACE_OPT(KDMA, Kern::Printf("DDmaRequest::TotalNumSrcElementsTransferred"));
 
 	// Not yet implemented.
-
-	// So far largely bogus code (just to touch some symbols)...
-	iTotalNumSrcElementsTransferred = 0;
-	TDmac& c = *(iChannel.iController);
-	if (c.iCapsHwDes)
-		{
-		for (const SDmaDesHdr* pH = iFirstHdr; pH != NULL; pH = pH->iNext)
-			{
-			iTotalNumSrcElementsTransferred += c.HwDesNumDstElementsTransferred(*pH);
-			}
-		}
-	else
-		{
-		// Do something different for pseudo descriptors...
-		}
 	return iTotalNumSrcElementsTransferred;
 	}
 
@@ -2433,7 +2416,8 @@ EXPORT_C void TDmaChannel::CancelAll()
 		// ISR should not happen after this function returns.
 		iController->StopTransfer(*this);
 
-		ResetStateMachine();
+		DoCancelAll();
+		ResetNullPtr();
 
 		// Clean-up the request queue.
 		SDblQueLink* pL;
@@ -2707,8 +2691,7 @@ void TDmaChannel::DoDfc()
 				{
 				SDmaDesHdr* pCompletedSrcHdr = NULL;
 				SDmaDesHdr* pCompletedDstHdr = NULL;
-				DoDfc(const_cast<const DDmaRequest&>(*pCurReq),
-					  pCompletedSrcHdr, pCompletedDstHdr);
+				DoDfc(*pCurReq, pCompletedSrcHdr, pCompletedDstHdr);
 				// We don't support asymmetrical ISR notifications and request
 				// completions yet, hence we can do the following assert test
 				// here; also 'complete' is determined equally by either the
@@ -2720,7 +2703,7 @@ void TDmaChannel::DoDfc()
 			else
 				{
 				SDmaDesHdr* pCompletedHdr = NULL;
-				DoDfc(const_cast<const DDmaRequest&>(*pCurReq), pCompletedHdr);
+				DoDfc(*pCurReq, pCompletedHdr);
 				complete = (pCompletedHdr == pCurReq->iLastHdr);
 				}
 			// If just completed last fragment from current request, switch to
@@ -2731,7 +2714,7 @@ void TDmaChannel::DoDfc()
 				pCurReq->iLink.Deque();
 				iQueuedRequests--;
 				if (iReqQ.IsEmpty())
-					iNullPtr = &iCurHdr;
+					ResetNullPtr();
 				pCompletedReq->OnDeque();
 				}
 			}
@@ -2818,17 +2801,6 @@ void TDmaChannel::DoDfc()
 	}
 
 
-//
-// Reset state machine only, request queue is unchanged */
-//
-void TDmaChannel::ResetStateMachine()
-	{
-	DoCancelAll();
-	iCurHdr = NULL;
-	iNullPtr = &iCurHdr;
-	}
-
-
 void TDmaChannel::DoQueue(const DDmaRequest& /*aReq*/)
 	{
 	// Must be overridden
@@ -2862,6 +2834,21 @@ void TDmaChannel::DoDfc(const DDmaRequest& /*aCurReq*/, SDmaDesHdr*& /*aSrcCompl
 	// which it isn't appropriate (and which therefore don't override it) we
 	// put this check in here.
 	__DMA_UNREACHABLE_DEFAULT();
+	}
+
+
+void TDmaChannel::SetNullPtr(const DDmaRequest& aReq)
+	{
+	// iNullPtr points to iCurHdr for an empty queue
+	*iNullPtr = aReq.iFirstHdr;
+	iNullPtr = &(aReq.iLastHdr->iNext);
+	}
+
+
+void TDmaChannel::ResetNullPtr()
+	{
+	iCurHdr = NULL;
+	iNullPtr = &iCurHdr;
 	}
 
 
@@ -3038,6 +3025,35 @@ void TDmaSgChannel::DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aCompletedHdr
 //////////////////////////////////////////////////////////////////////////////
 // TDmaAsymSgChannel
 
+TDmaAsymSgChannel::TDmaAsymSgChannel()
+	: iSrcCurHdr(NULL),
+	  iSrcNullPtr(&iSrcCurHdr),
+	  iDstCurHdr(NULL),
+	  iDstNullPtr(&iDstCurHdr)
+	{
+	__DMA_INVARIANT();
+	}
+
+
+void TDmaAsymSgChannel::SetNullPtr(const DDmaRequest& aReq)
+	{
+	// i{Src|Dst}NullPtr points to i{Src|Dst}CurHdr for an empty queue
+	*iSrcNullPtr = aReq.iSrcFirstHdr;
+	*iDstNullPtr = aReq.iDstFirstHdr;
+	iSrcNullPtr = &(aReq.iSrcLastHdr->iNext);
+	iDstNullPtr = &(aReq.iDstLastHdr->iNext);
+	}
+
+
+void TDmaAsymSgChannel::ResetNullPtr()
+	{
+	iSrcCurHdr = NULL;
+	iSrcNullPtr = &iSrcCurHdr;
+	iDstCurHdr = NULL;
+	iDstNullPtr = &iDstCurHdr;
+	}
+
+
 void TDmaAsymSgChannel::DoQueue(const DDmaRequest& aReq)
 	{
 	if (iState == ETransferring)
@@ -3082,3 +3098,34 @@ void TDmaAsymSgChannel::DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aSrcCompl
 	iState = (iSrcCurHdr != NULL) ? ETransferring : EIdle;
 	}
 
+
+#ifdef _DEBUG
+void TDmaAsymSgChannel::Invariant()
+	{
+	Wait();
+
+	__DMA_ASSERTD(iReqCount >= 0);
+
+	__DMA_ASSERTD(iSrcCurHdr == NULL || iController->IsValidHdr(iSrcCurHdr));
+	__DMA_ASSERTD(iDstCurHdr == NULL || iController->IsValidHdr(iDstCurHdr));
+
+	// should always point to NULL pointer ending fragment queue
+	__DMA_ASSERTD(*iSrcNullPtr == NULL);
+	__DMA_ASSERTD(*iDstNullPtr == NULL);
+
+	__DMA_ASSERTD((0 <= iAvailDesCount) && (iAvailDesCount <= iMaxDesCount));
+
+	__DMA_ASSERTD((iSrcCurHdr && iDstCurHdr && !IsQueueEmpty()) ||
+				  (!iSrcCurHdr && !iDstCurHdr && IsQueueEmpty()));
+	if (iSrcCurHdr == NULL)
+		{
+		__DMA_ASSERTD(iSrcNullPtr == &iSrcCurHdr);
+		}
+	if (iDstCurHdr == NULL)
+		{
+		__DMA_ASSERTD(iDstNullPtr == &iDstCurHdr);
+		}
+
+	Signal();
+	}
+#endif

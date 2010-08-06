@@ -31,6 +31,12 @@ static const TInt KMaxTransferLen = 0x1000;	// max transfer length for this DMAC
 static const TInt KMemAlignMask = 0; // memory addresses passed to DMAC must be multiple of 8
 static const TInt KDesCount = 160;				// Initial DMA descriptor count
 
+#define TEST_RETURN(X) if (!(X))\
+	{\
+	__KTRACE_OPT(KPANIC, Kern::Printf("Simulated Dma test failure: " __FILE__ " line %d", __LINE__));\
+	return KErrAbort;\
+	}
+
 class TDmaDesc
 //
 // Hardware DMA descriptor
@@ -101,10 +107,14 @@ EXPORT_C const TDmaV2TestInfo& DmaTestInfoV2()
 // Simulated channel
 //////////////////////////////////////////////////////////////////////////////
 
+/**
+An interface class to add simulation specific functionallity to any DMA channel
+*/
 class MSimChannel
 	{
 public:
-	virtual void PreOpen() {}
+	virtual TInt PreOpen() =0;
+	virtual TDmaChannel& Channel() =0;
 	};
 
 //////////////////////////////////////////////////////////////////////////////
@@ -168,9 +178,11 @@ public:
 	void DoCancelAll();
 
 	void CallDefaultVirtuals();
+	TInt CheckExtensionStubs();
 
 	// From MSimChannel
-	void PreOpen();
+	TInt PreOpen();
+	TDmaChannel& Channel() {return *this;}
 	};
 
 void TEmptyChannel::DoCancelAll()
@@ -192,9 +204,23 @@ void TEmptyChannel::CallDefaultVirtuals()
 	QueuedRequestCountChanged();
 	}
 
-void TEmptyChannel::PreOpen()
+TInt TEmptyChannel::CheckExtensionStubs()
+	{
+	DMA_PSL_TRACE("Calling extension stubs");
+
+	TInt r = Extension(0, NULL);
+	TEST_RETURN(r == KErrNotSupported)
+
+	r = StaticExtension(0, NULL);
+	TEST_RETURN(r == KErrNotSupported)
+
+	return KErrNone;
+	}
+
+TInt TEmptyChannel::PreOpen()
 	{
 	CallDefaultVirtuals();
+	return CheckExtensionStubs();
 	}
 
 //////////////////////////////////////////////////////////////////////////////
@@ -258,8 +284,6 @@ TSkelDmac::TSkelDmac(const SCreateInfo& aInfo)
 //
 	: TDmac(aInfo)
 	{
-	// TODO remove this once DMAC can be created and destroyed from test LDD entry
-	// point
 	TInt r = Create(aInfo);
 	__NK_ASSERT_ALWAYS(r == KErrNone);
 
@@ -554,8 +578,6 @@ TAsymmDmac::TAsymmDmac()
 //
 	: TDmac(KInfo)
 	{
-	// TODO remove this once DMAC can be created and destroyed from test LDD entry
-	// point
 	TInt r = Create();
 	__NK_ASSERT_ALWAYS(r == KErrNone);
 	}
@@ -654,15 +676,15 @@ void TAsymmDmac::UnlinkHwDes(const TDmaChannel& /*aChannel*/, SDmaDesHdr& /*aHdr
 
 struct TChanEntry
 	{
-	TChanEntry(TDmac& aController, TDmaChannel& aChannel, const SDmacCaps& aCaps)
+	TChanEntry(TDmac& aController, MSimChannel& aChannel, const SDmacCaps& aCaps)
 		:
 			iController(aController),
-			iChannel(aChannel),
+			iSimChannel(aChannel),
 			iCaps(aCaps)
 	{}
 
 	TDmac& iController;
-	TDmaChannel& iChannel;
+	MSimChannel& iSimChannel;
 	const SDmacCaps& iCaps;
 	};
 
@@ -686,7 +708,7 @@ TDmaChannel* DmaChannelMgr::Open(TUint32 aOpenId, TBool /*aDynChannel*/, TUint /
 	__DMA_ASSERTA(aOpenId < static_cast<TUint32>(KChannelCount));
 
 	const TChanEntry& entry = ChannelTable[aOpenId];
-	TDmaChannel* pC = &entry.iChannel;
+	TDmaChannel* pC = &entry.iSimChannel.Channel();
 	if (pC->IsOpened())
 		{
 		pC = NULL;
@@ -702,9 +724,19 @@ TDmaChannel* DmaChannelMgr::Open(TUint32 aOpenId, TBool /*aDynChannel*/, TUint /
 		// as taken
 		Signal();
 
-		static_cast<TEmptyChannel*>(pC)->PreOpen();
+		TInt r = entry.iSimChannel.PreOpen();
 
 		Wait();
+
+		// If there was an error
+		// Close channel after retaking mutex
+		if(r != KErrNone)
+			{
+			pC->iController = NULL;
+			pC = NULL;
+			}
+
+
 		}
 	return pC;
 	}

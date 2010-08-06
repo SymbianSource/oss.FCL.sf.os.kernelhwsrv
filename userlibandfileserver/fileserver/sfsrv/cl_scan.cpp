@@ -411,7 +411,7 @@ void CDirScan::ScanDownTreeL(CDir*& aDirEntries)
 	TInt r;
 	aDirEntries=NULL;
 	
-	if(iStack && iStack->IsEmpty())
+	if(iStack->IsEmpty())
 	    return;
 	
 	CDirList* list=iStack->Peek();

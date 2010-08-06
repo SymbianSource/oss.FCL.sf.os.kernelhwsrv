@@ -207,7 +207,7 @@ TInt MasterProcess(TInt aProcessId)
 		if ((fillValue & 0xf) == 1)
 			test.Printf(_L("."));
 
-		PRINTF(T_PRINTF(_L("Process ID %d start slave fill value %d\n"), aProcessId, fillValue));
+		test.Printf(_L("Process ID %d start slave fill value %d\n"), aProcessId, fillValue);
 		RServer2 masterServer;
 		r = masterServer.CreateGlobal(MasterServerName);
 		test_KErrNone(r);
@@ -269,7 +269,7 @@ TInt MasterProcess(TInt aProcessId)
 				}
 			}
 		
-		PRINTF(T_PRINTF(_L("Process ID %d Wait for alias to complete\n"), aProcessId));
+		test.Printf(_L("Process ID %d Wait for alias to complete\n"), aProcessId);
 		masterMessage.Complete(KErrNone);
 		User::WaitForRequest(threadStatus);
 		TInt statusInt = threadStatus.Int();
@@ -280,7 +280,7 @@ TInt MasterProcess(TInt aProcessId)
 		test_Equal(EExitKill, readThread.ExitType());
 		readThread.Close();
 
-		PRINTF(T_PRINTF(_L("Process ID %d Wait for slave to complete\n"), aProcessId));
+		test.Printf(_L("Process ID %d Wait for slave to complete\n"), aProcessId);
 		User::WaitForRequest(slaveStatus);
 		test_Equal(EExitKill, slaveProcess.ExitType());
 		test_Equal(KErrNone, slaveProcess.ExitReason());

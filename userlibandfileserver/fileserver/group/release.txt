@@ -1,3 +1,15 @@
+Version 2.00.3055
+=================
+(Made by fadhliM 23/07/2010)
+
+1.	michcox
+	1.	ou1cimx1#488769 Race condition in file server plugins
+	2.	ou1cimx1#502970 [ENV] Fileserver Coverity Defects
+
+2.	niccox
+	1.	ou1cimx1#486762 ENV T_FSCHED.EXE failure: line 936, after "Sync read done 0 ms before the write ended"
+
+
 Version 2.00.3054
 =================
 (Made by fadhliM 19/07/2010)

@@ -543,7 +543,20 @@ void TestStart()
 	Ldd.ResetDriver();
 	
 	Ldd.CallDefrag(DEFRAG_TYPE_GEN, DEFRAG_VER_SYNC);
-	if (VerifyMovDisAlloc() != KErrNone)
+	TInt r;
+	r = VerifyMovDisAlloc();
+	if (r == KErrGeneral)
+		{
+		// A rare set of circumstances may cause some of the movable pages to be in
+		// use during the defrag and thus not be moved to the correct RAM zone. Run
+		// the defrag once more to give it a chance to move these pages. We ensure
+		// that there is no pending asynchronous clean up operation before doing so.
+		UserSvr::HalFunction(EHalGroupKernel, EKernelHalSupervisorBarrier, 0, 0);
+		Ldd.CallDefrag(DEFRAG_TYPE_GEN, DEFRAG_VER_SYNC);
+		r = VerifyMovDisAlloc();
+		}
+
+	if (r != KErrNone)
 		{
 		CLEANUP(;);
 		TEST_FAIL;

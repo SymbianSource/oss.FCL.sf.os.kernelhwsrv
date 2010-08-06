@@ -153,7 +153,7 @@ TInt TFsDismountPlugin::Initialise(CFsRequest* aRequest)
 	if(pF->IsDriveSupported(drive) == EFalse)
 		return KErrNotSupported;
 
-	FsPluginManager::LockChain();
+	FsPluginManager::ReadLockChain();
 	err = FsPluginManager::IsInChain(pF->UniquePosition(),aRequest->Message().Int2(),aRequest->Message().Int1(), pF);
 
 	// plugin might have been mounted in different pos and drive. Find the right one
@@ -209,7 +209,7 @@ TInt TFsDismountPlugin::DoRequestL(CFsRequest* aRequest)
 
 	TInt drive = aRequest->Message().Int1();
 
-	FsPluginManager::LockChain();
+	FsPluginManager::WriteLockChain();
 
 	TInt err = FsPluginManager::IsInChain(pF->UniquePosition(),aRequest->Message().Int2(),drive, pF);
 	if(err >= 0)
@@ -219,11 +219,8 @@ TInt TFsDismountPlugin::DoRequestL(CFsRequest* aRequest)
 		err = FsPluginManager::Plugin(plugin, pos);
 		if(err == KErrNone)
 			{
-			if(aRequest->iCurrentPlugin == plugin)
-				{
-				FsPluginManager::DismountPlugin(*pF,pos);
-				aRequest->SetScratchValue(0);
-				}
+			FsPluginManager::DismountPlugin(*pF,pos);
+			aRequest->SetScratchValue(0);
 			}
 		}
 	FsPluginManager::UnlockChain();
@@ -250,7 +247,7 @@ Return the name of a plugin for a given drive and plugin chain position
 TInt TFsPluginName::DoRequestL(CFsRequest* aRequest)
 	{
 	CFsPlugin* plugin=NULL;
-	FsPluginManager::LockChain();
+	FsPluginManager::ReadLockChain();
 	TInt err = FsPluginManager::Plugin(plugin, aRequest->Message().Int2());
 	if(err != KErrNone) //should be ok but just in case
 	    {

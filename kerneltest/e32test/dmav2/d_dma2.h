@@ -508,6 +508,36 @@ public:
 		return DoControl(EFragmentCount, reinterpret_cast<TAny*>(aRequestCookie));
 		}
 
+	TInt RequestEnableDstElementCounting(TUint aRequestCookie)
+		{					
+		return DoControl(EEnableDstElementCounting, reinterpret_cast<TAny*>(aRequestCookie));		
+		}
+
+	TInt RequestEnableSrcElementCounting(TUint aRequestCookie)
+		{		
+		return DoControl(EEnableSrcElementCounting, reinterpret_cast<TAny*>(aRequestCookie));
+		}
+
+	TInt RequestDisableDstElementCounting(TUint aRequestCookie)
+		{	
+		return DoControl(EDisableDstElementCounting, reinterpret_cast<TAny*>(aRequestCookie));
+		}
+
+	TInt RequestDisableSrcElementCounting(TUint aRequestCookie)
+		{	
+		return DoControl(EDisableSrcElementCounting, reinterpret_cast<TAny*>(aRequestCookie));
+		}
+
+	TInt RequestTotalNumDstElementsTransferred(TUint aRequestCookie)
+		{	
+		return DoControl(ETotalNumDstElementsTransferred, reinterpret_cast<TAny*>(aRequestCookie));
+		}
+
+	TInt RequestTotalNumSrcElementsTransferred(TUint aRequestCookie)
+		{	
+		return DoControl(ETotalNumSrcElementsTransferred, reinterpret_cast<TAny*>(aRequestCookie));
+		}
+
 	/**
 	Will fragment a DMA request using the legacy API
 	*/
@@ -614,8 +644,7 @@ private:
 		TPckgC<TRequestCreateArgs> package(args);
 		return DoControl(ERequestOpen, &package, &aRequestCookie);
 		}
-
-
+	
 	struct TRequestCreateArgs
 		{
 		TRequestCreateArgs(TUint aChannelCookie, TBool aNewStyle, TUint aMaxFragmentSize)
@@ -690,6 +719,12 @@ private:
 		EQueueRequestWithReque,
 		ELinkChannel,
 		EUnlinkChannel,
+		EEnableDstElementCounting,
+		EEnableSrcElementCounting,
+		EDisableDstElementCounting,
+		EDisableSrcElementCounting,
+		ETotalNumDstElementsTransferred,
+		ETotalNumSrcElementsTransferred,
 		};
 	};
 #endif // __D_DMA2_H__

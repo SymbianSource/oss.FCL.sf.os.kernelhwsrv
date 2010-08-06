@@ -896,12 +896,17 @@ protected:
 */
 class TDmaAsymSgChannel : public TDmaChannel
 	{
+public:
+	TDmaAsymSgChannel();
+
 private:
 	virtual void DoQueue(const DDmaRequest& aReq);
 	virtual void DoCancelAll();
 	virtual void DoUnlink(SDmaDesHdr& aHdr);
 	virtual void DoDfc(const DDmaRequest& aCurReq, SDmaDesHdr*& aSrcCompletedHdr,
 					   SDmaDesHdr*& aDstCompletedHdr);
+	virtual void SetNullPtr(const DDmaRequest& aReq);
+	virtual void ResetNullPtr();
 
 protected:
 	SDmaDesHdr* iSrcCurHdr;	  // source fragment being transferred or NULL
@@ -909,6 +914,8 @@ protected:
 	SDmaDesHdr* iDstCurHdr;	  // destination fragment being transferred or NULL
 	SDmaDesHdr** iDstNullPtr; // Pointer to NULL pointer following last destination fragment
 	enum {EIdle = 0, ETransferring} iState;
+
+	__DMA_DECLARE_VIRTUAL_INVARIANT
 	};
 
 

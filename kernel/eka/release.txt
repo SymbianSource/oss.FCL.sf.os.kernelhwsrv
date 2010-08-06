@@ -1,4 +1,27 @@
-Version 2.00.3108
+Version 2.00.3110
+=================
+(Made by fadhliM 22/07/2010)
+
+1.	davegord
+	1.	ou1cimx1#488456 (MCL) Kernel signals MTP server unexpectedly and cause it panic
+
+2.	dogunjom
+	1.	ou1cimx1#413278 MCL:Domain Manager - Correct the usage of RArray::Append()
+
+3.	jcoppear
+	1.	ou1cimx1#479322 ENV E32TEST T_RAMDEFRAG test failure investigation (t_ramdefrag.cpp:549)
+
+4.	vfebvre
+	1.	ou1cimx1#460995 ENV E32TEST T_PAGETABLE_LIMIT test failure investigation (t_pagetable_limit.cpp:276)
+
+5.	seolney
+	1.	ou1cimx1#486893 DEV DMA functions missing test code (pt. 2)
+
+6.	mipetzol
+	1.	ou1cimx1#479623 DMA V2 framework PIL enhancement required for management of AsymmmetricSgChannel class descriptors
+
+
+Version 2.00.3109
 =================
 (Made by fadhliM 19/07/2010)
 

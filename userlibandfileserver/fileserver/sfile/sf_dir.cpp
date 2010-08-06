@@ -116,7 +116,8 @@ TInt TFsDirOpen::DoRequestL(CFsRequest* aRequest)
 	CFsPlugin* plugin = NULL;
 	//Get the next plugin which is mounted on this drive (IsMounted called in NextPlugin)
 	//Do not check whether we're registered for current operation (in case not registered for EFsDirOpen)
-	while(FsPluginManager::NextPlugin(plugin,(CFsMessageRequest*)aRequest,(TBool)ETrue,(TBool)EFalse)==KErrNone && plugin)
+	FsPluginManager::ReadLockChain();                                      //!Check operation
+	while(FsPluginManager::NextPlugin(plugin,(CFsMessageRequest*)aRequest,(TBool)EFalse)==KErrNone && plugin)
 		{
 		if(plugin->IsRegistered(EFsDirReadOne) ||
 			plugin->IsRegistered(EFsDirReadPacked) ||
@@ -129,6 +130,7 @@ TInt TFsDirOpen::DoRequestL(CFsRequest* aRequest)
 			break;
 			}
 		}
+	FsPluginManager::UnlockChain();
 	
 	TPtrC8 pH((TUint8*)&h,sizeof(TInt));
 	TRAP(r,aRequest->WriteL(KMsgPtr3,pH))

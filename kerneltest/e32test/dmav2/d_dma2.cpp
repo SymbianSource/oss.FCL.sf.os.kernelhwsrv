@@ -111,7 +111,13 @@ private:
 	TInt CancelAllByCookie(TUint aDriverCookie);
 	TInt IsrRedoRequestByCookie(TUint aDriverCookie,TUint32 aSrcAddr,TUint32 aDstAddr,TInt aTransferCount,TUint32 aPslRequestInfo,TBool aIsrCb);
 	TInt IsQueueEmptyByCookie(TUint aDriverCookie, TBool& aQueueEmpty);		
-	TInt ChannelIsOpenedByCookie(TUint aDriverCookie, TBool& aChannelOpen);		
+	TInt ChannelIsOpenedByCookie(TUint aDriverCookie, TBool& aChannelOpen);	
+	TInt EnableDstElementCountingByCookie(TUint aDriverCookie);
+	TInt EnableSrcElementCountingByCookie(TUint aDriverCookie);
+	TInt DisableDstElementCountingByCookie(TUint aDriverCookie);
+	TInt DisableSrcElementCountingByCookie(TUint aDriverCookie);
+	TInt TotalNumDstElementsTransferredByCookie(TUint aDriverCookie);
+	TInt TotalNumSrcElementsTransferredByCookie(TUint aDriverCookie);
 	void CloseDmaChannelByIndex(TInt aIndex);
 	void CancelAllByIndex(TInt aIndex);
 	TInt LinkDmaChannelByIndex(TInt aIndex);
@@ -119,6 +125,12 @@ private:
 	TInt PauseDmaChannelByIndex(TInt aIndex);
 	TInt ResumeDmaChannelByIndex(TInt aIndex);		
 	TInt IsrRedoRequestByIndex(TInt aIndex,TUint32 aSrcAddr,TUint32 aDstAddr,TInt aTransferCount,TUint32 aPslRequestInfo,TBool aIsrCb);
+	void EnableDstElementCountingByIndex(TInt aIndex);
+	void EnableSrcElementCountingByIndex(TInt aIndex);
+	void DisableDstElementCountingByIndex(TInt aIndex);
+	void DisableSrcElementCountingByIndex(TInt aIndex);
+	TInt TotalNumDstElementsTransferredByIndex(TInt aIndex);
+	TInt TotalNumSrcElementsTransferredByIndex(TInt aIndex);
 	TInt CreateSharedChunk();
 	TUint OpenSharedChunkHandle();
 
@@ -149,7 +161,6 @@ private:
 	TInt QueueRequest(TUint aRequestCookie, TRequestStatus* aStatus, TCallbackRecord* aRecord, TUint64* aDurationMicroSecs);
 	DClientDmaRequest* RequestFromCookie(TUint aRequestCookie) const;
 	TInt RequestFragmentCount(TUint aRequestCookie);
-
 	TDmaV2TestInfo ConvertTestInfo(const TDmaTestInfo& aOldInfo) const;
 private:
 	DThread* iClient;
@@ -665,6 +676,42 @@ TInt DDmaTestSession::Request(TInt aFunction, TAny* a1, TAny* a2)
 			TInt r = RequestFragmentCount(requestCookie);
 			return r;
 			}
+	case RDmaSession::EEnableDstElementCounting:
+			{		
+			TUint requestCookie = reinterpret_cast<TUint>(a1);
+			TInt r = EnableDstElementCountingByCookie(requestCookie);
+			return r;
+			}
+	case RDmaSession::EEnableSrcElementCounting:
+			{
+			TUint requestCookie = reinterpret_cast<TUint>(a1);		
+			TInt r = EnableSrcElementCountingByCookie(requestCookie);
+			return r;
+			}
+	case RDmaSession::EDisableDstElementCounting:
+			{
+			TUint requestCookie = reinterpret_cast<TUint>(a1);
+			TInt r = DisableDstElementCountingByCookie(requestCookie);
+			return r;
+			}
+	case RDmaSession::EDisableSrcElementCounting:
+			{
+			TUint requestCookie = reinterpret_cast<TUint>(a1);
+			TInt r = DisableSrcElementCountingByCookie(requestCookie);
+			return r;
+			}
+	case RDmaSession::ETotalNumDstElementsTransferred:
+			{
+			TUint requestCookie = reinterpret_cast<TUint>(a1);
+			TInt r = TotalNumDstElementsTransferredByCookie(requestCookie);
+			return r;
+			}
+	case RDmaSession::ETotalNumSrcElementsTransferred:
+			{
+			TUint requestCookie = reinterpret_cast<TUint>(a1);
+			TInt r = TotalNumSrcElementsTransferredByCookie(requestCookie);
+			return r;
+			}
 	case RDmaSession::ERequestOpen:
 			{
 			RDmaSession::TRequestCreateArgs createArgs(0, EFalse, 0);
@@ -1054,6 +1101,164 @@ TInt DDmaTestSession::ResumeDmaChannelByCookie(TUint aDriverCookie)
 		}
 	}
 
+TInt DDmaTestSession::EnableDstElementCountingByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("EnableDstElementCountingByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToRequestIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		EnableDstElementCountingByIndex(index);
+		return KErrNone;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
+void DDmaTestSession::EnableDstElementCountingByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("EnableDstElementCountingByIndex: %d", aIndex)); 		
+	__NK_ASSERT_DEBUG(aIndex < iClientDmaReqs.Count()); 
+#ifdef DMA_APIV2	
+	iClientDmaReqs[aIndex]->EnableDstElementCounting();
+#endif
+	}
+
+TInt DDmaTestSession::EnableSrcElementCountingByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("EnableSrcElementCountingByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToRequestIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		EnableSrcElementCountingByIndex(index);
+		return KErrNone;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
+void DDmaTestSession::EnableSrcElementCountingByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("EnableSrcElementCountingByIndex: %d", aIndex)); 		
+	__NK_ASSERT_DEBUG(aIndex < iClientDmaReqs.Count()); 
+	
+#ifdef DMA_APIV2
+	iClientDmaReqs[aIndex]->EnableSrcElementCounting();
+#endif
+	}
+
+TInt DDmaTestSession::DisableDstElementCountingByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DisableDstElementCountingByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToRequestIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		DisableDstElementCountingByIndex(index);
+		return KErrNone;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
+void DDmaTestSession::DisableDstElementCountingByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DisableDstElementCountingByIndex: %d", aIndex)); 		
+	__NK_ASSERT_DEBUG(aIndex < iClientDmaReqs.Count()); 
+#ifdef DMA_APIV2
+	iClientDmaReqs[aIndex]->DisableDstElementCounting();
+#endif
+	}
+
+TInt DDmaTestSession::DisableSrcElementCountingByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DisableSrcElementCountingByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToRequestIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		DisableSrcElementCountingByIndex(index);
+		return KErrNone;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
+void DDmaTestSession::DisableSrcElementCountingByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("DisableSrcElementCountingByIndex: %d", aIndex)); 		
+	__NK_ASSERT_DEBUG(aIndex < iClientDmaReqs.Count()); 
+#ifdef DMA_APIV2
+	iClientDmaReqs[aIndex]->DisableSrcElementCounting();
+#endif
+	}
+
+TInt DDmaTestSession::TotalNumDstElementsTransferredByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TotalNumDstElementsTransferredByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToRequestIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		TInt r = TotalNumDstElementsTransferredByIndex(index);
+		return r;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
+TInt DDmaTestSession::TotalNumDstElementsTransferredByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TotalNumDstElementsTransferredByIndex: %d", aIndex)); 		
+	__NK_ASSERT_DEBUG(aIndex < iClientDmaReqs.Count()); 
+	
+#ifdef DMA_APIV2
+	TInt r = iClientDmaReqs[aIndex]->TotalNumDstElementsTransferred();
+	return r;
+#else
+	return KErrNotSupported;
+#endif
+	}
+
+TInt DDmaTestSession::TotalNumSrcElementsTransferredByCookie(TUint aDriverCookie)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TotalNumSrcElementsTransferredByCookie: 0x%08x", aDriverCookie)); 
+	const TInt index = CookieToRequestIndex(aDriverCookie);
+	
+	if(index >= 0)
+		{
+		TInt r = TotalNumSrcElementsTransferredByIndex(index);
+		return r;
+		}
+	else
+		{
+		return KErrNotFound;
+		}
+	}
+
+TInt DDmaTestSession::TotalNumSrcElementsTransferredByIndex(TInt aIndex)
+	{
+	__KTRACE_OPT(KDMA, Kern::Printf("TotalNumSrcElementsTransferredByIndex: %d", aIndex)); 		
+	__NK_ASSERT_DEBUG(aIndex < iClientDmaReqs.Count()); 
+	
+#ifdef DMA_APIV2
+	TInt r = iClientDmaReqs[aIndex]->TotalNumSrcElementsTransferred();
+	return r;
+#else
+	return KErrNotSupported;
+#endif
+	}
 TInt DDmaTestSession::IsrRedoRequestByCookie(TUint aDriverCookie,TUint32 aSrcAddr,TUint32 aDstAddr,TInt aTransferCount,TUint32 aPslRequestInfo,TBool aIsrCb)
 {
 	__KTRACE_OPT(KDMA, Kern::Printf("IsrRedoRequestByCookie: 0x%08x", aDriverCookie)); 

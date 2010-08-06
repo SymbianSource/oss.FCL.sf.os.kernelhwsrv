@@ -42,10 +42,12 @@
 #ifdef _DEBUG
 #define __DMA_CANT_HAPPEN() Kern::Fault(KDmaPanicCat, __LINE__)
 #define __DMA_DECLARE_INVARIANT public: void Invariant();
+#define __DMA_DECLARE_VIRTUAL_INVARIANT public: virtual void Invariant();
 #define __DMA_INVARIANT() Invariant()
 #else
 #define __DMA_CANT_HAPPEN()
 #define __DMA_DECLARE_INVARIANT
+#define __DMA_DECLARE_VIRTUAL_INVARIANT
 #define __DMA_INVARIANT()
 #endif
 
@@ -1255,17 +1257,18 @@ protected:
 	*/
 	virtual void QueuedRequestCountChanged();
 
-#if defined(__CPU_ARM) && !defined(__EABI__)
-	inline virtual ~TDmaChannel() {}	// kill really annoying warning
-#endif
+	virtual void SetNullPtr(const DDmaRequest& aReq);
+	virtual void ResetNullPtr();
+
+	inline virtual ~TDmaChannel() {}
+
+	inline void Wait();
+	inline void Signal();
+	inline TBool Flash();
 
 private:
 	static void Dfc(TAny*);
 	void DoDfc();
-	inline void Wait();
-	inline void Signal();
-	inline TBool Flash();
-	void ResetStateMachine();
 
 protected:
 	TDmac* iController;		 // DMAC this channel belongs to (NULL when closed)
@@ -1293,7 +1296,7 @@ private:
 	TBool iRedoRequest;		// client ISR callback wants a redo of request
 	TBool iIsrCbRequest;	// request on queue using ISR callback
 
-	__DMA_DECLARE_INVARIANT
+	__DMA_DECLARE_VIRTUAL_INVARIANT
 	};
 
 

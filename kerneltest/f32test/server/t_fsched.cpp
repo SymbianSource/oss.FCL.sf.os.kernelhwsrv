@@ -29,9 +29,11 @@
 #include "t_server.h"
 #include <e32twin.h>
 #include <e32cmn.h>
+#include <hal.h>
+#include "tf32testtimer.h"
 #include "f32_test_utils.h"
-
 using namespace F32_Test_Utils;
+
 
 //----------------------------------------------------------------------------------------------
 //! @SYMTestCaseID      PBASE-T_FSCHED-0191
@@ -117,7 +119,6 @@ TPtr8 gBufReadPtr(NULL, 0);
 HBufC8* gBufSec = NULL;
 TPtr8 gBufWritePtr(NULL, 0);	
 
-const TInt KuStomS = 1000;
 const TInt KOneK = 1024;
 const TInt KOneMeg = KOneK * 1024;
 const TInt KBigBlockSize = KOneMeg ; 
@@ -134,8 +135,8 @@ TTimeIntervalMicroSeconds32 gTimeTakenBigFile(0);
 TTimeIntervalMicroSeconds32 gTimeTakenBigBlock(0);
 TBuf16<45> gSmallFile, gBigFile;
 TInt gNextFile=0;
-TTime gTime1;
-TTime gTime2;
+
+TF32TestTimer gTestTimer;
 
 RSemaphore gSync;
 
@@ -153,6 +154,9 @@ enum TTestState
 	EThreadSignal,
 	ENoThreads	
 	};
+
+
+
 
 /** Generates a file name of the form FFFFF*<aPos>.TXT (aLong.3)
 
@@ -613,32 +617,30 @@ void WriteOrderTest(RFs& aFs, TInt aSize, TInt aBlockSize)
 	}
 
 
-
 /** Measure the time taken for a big block to be written synchronously
 */
 void TimeTakenToWriteBigBlock() 
 {
-	TTime startTime;
-	TTime endTime;
 	RFile fileWrite;
 	
 	TInt r = fileWrite.Replace(TheFs,gBigFile,EFileShareAny|EFileWrite|EFileWriteDirectIO);
 	TESTERROR(r);
 
 	// Calculate how long it takes to write a big block to be able to issue at the right time the concurrent writes
-	startTime.HomeTime();
+    TF32TestTimer timer;
+	timer.Start();
 	
 	r = fileWrite.Write(gBufWritePtr, KBigBlockSize); 
-	
-	endTime.HomeTime();
-	
+
+    timer.Stop();
+
 	fileWrite.Close();
 
 	TESTERROR(r);
 	
-	gTimeTakenBigBlock = I64LOW(endTime.MicroSecondsFrom(startTime).Int64()/3);
-
-	test.Printf(_L("\nTime spent to write the big block in isolation: %d ms\n"), gTimeTakenBigBlock.Int() / KuStomS);
+	gTimeTakenBigBlock = timer.TimeInMicroSeconds()/3;
+        
+	test.Printf(_L("\nTime spent to write the big block in isolation: %d ms\n"), TF32TestTimer::TimeInMilliSeconds(gTimeTakenBigBlock));
 }
 	
 
@@ -646,51 +648,44 @@ void TimeTakenToWriteBigBlock()
 */
 void TimeTakenToWriteBigFile(TInt aPos) 
 {
-	TTime startTime;
-	TTime endTime;
-	
 	test((aPos >= 0) && (aPos <= 1));
-	startTime.HomeTime();
-	
+    TF32TestTimer timer;
+    timer.Start();
+
 	WriteFile(TheFs,gBigFile, gBigFileSize, KBigBlockSize, ENoThreads);
 	
-	endTime.HomeTime();
+	timer.Stop();
 
-	gTimeTakenBigFile = I64LOW(endTime.MicroSecondsFrom(startTime).Int64());
+	gTimeTakenBigFile = timer.Time32();
+		
+	test.Printf(_L("\nTime spent to write the big file in isolation: %d ms\n"), TF32TestTimer::TimeInMilliSeconds(gTimeTakenBigFile));
 	
-	
-	test.Printf(_L("\nTime spent to write the big file in isolation: %d ms\n"), gTimeTakenBigFile.Int() / KuStomS);
-	
-	gTotalTimeSync[aPos] = Max((gTimeTakenBigFile.Int()/KuStomS), gTotalTimeSync[aPos]) ;
+	gTotalTimeSync[aPos] = Max(TF32TestTimer::TimeInMilliSeconds(gTimeTakenBigFile), gTotalTimeSync[aPos]) ;
 }
 
 /** Measure the time taken for this file to be written asynchronously
 */
 void TimeTakenToWriteBigFileAsync(TInt aPos) 
 {
-	TTime startTime;
-	TTime endTime;
-	TTime endTime2;
 	TRequestStatus status[KWaitRequestsTableSize];
 	RFile bigFile;
 	
 	test((aPos >= 0) && (aPos <= 1));
-	
-	startTime.HomeTime();
-	WriteFileAsync(TheFs, bigFile, gBigFile, gBigFileSize,KBigBlockSize,status); 
-	endTime.HomeTime();
 
+    TF32TestTimer2 timer;
+	timer.Start();
+	WriteFileAsync(TheFs, bigFile, gBigFile, gBigFileSize,KBigBlockSize,status); 
+	timer.Stop();
 	
 	WaitForAll(status, gBigFileSize, KBigBlockSize);	
+	timer.Stop2();
 	
-	endTime2.HomeTime();
-	
-	gTimeTakenBigFile=I64LOW(endTime.MicroSecondsFrom(startTime).Int64());
+	gTimeTakenBigFile = timer.Time32();        
 	bigFile.Close();
-	test.Printf(_L("\nTime to queue the blocks in isolation asynchronously: %d ms, "), gTimeTakenBigFile.Int() / KuStomS);
-	gTimeTakenBigFile=I64LOW(endTime2.MicroSecondsFrom(startTime).Int64());
-	test.Printf(_L("to actually write it: %d ms\n"),gTimeTakenBigFile.Int() / KuStomS);
-	gTotalTimeAsync[aPos] = Max((gTimeTakenBigFile.Int() / KuStomS), gTotalTimeAsync[aPos]) ; 
+	test.Printf(_L("\nTime to queue the blocks in isolation asynchronously: %d ms, "), timer.TimeInMilliSeconds());
+	gTimeTakenBigFile = timer.Time2();
+	test.Printf(_L("to actually write it: %d ms\n"), TF32TestTimer::TimeInMilliSeconds(gTimeTakenBigFile));
+	gTotalTimeAsync[aPos] = Max(TF32TestTimer::TimeInMilliSeconds(gTimeTakenBigFile), gTotalTimeAsync[aPos]) ; 
 }
 
 /**  Delete content of directory
@@ -728,7 +723,7 @@ TInt ReadSmallFile(TAny* )
 	TESTERROR(r);
 	
 	ReadFile(fs,gSmallFile,KBlockSize, EThreadWait);
-	gTime2.HomeTime();
+	gTestTimer.Start();
 	
 	client.Signal();
 	
@@ -753,7 +748,7 @@ TInt ReadBigFile(TAny* )
 	TESTERROR(r);
 	
 	ReadFile(fs,gBigFile,KBlockSize, EThreadWait);
-	gTime2.HomeTime();
+	gTestTimer.Stop();
 	
 	client.Signal();
 		
@@ -778,7 +773,7 @@ TInt WriteSmallFile(TAny* )
 	TESTERROR(r);
 	
 	WriteFile(fs,gSmallFile,gSmallFileSize, KBlockSize, EThreadWait);
-	gTime2.HomeTime();
+	gTestTimer.Start();
 	
 	client.Signal();
 	
@@ -803,7 +798,7 @@ TInt WriteBigFile(TAny* )
 	TESTERROR(r);
 	
 	WriteFile(fs, gBigFile, gBigFileSize, KBigBlockSize, EThreadSignal); 
-	gTime1.HomeTime();
+	gTestTimer.Stop();
 	
 	client.Signal();
 	
@@ -828,7 +823,7 @@ TInt WriteBigFile2(TAny* )
 	TESTERROR(r);
 	
 	WriteFile(fs, gSmallFile, gBigFileSize, KBigBlockSize, EThreadWait); 
-	gTime2.HomeTime();
+	gTestTimer.Stop();
 	
 	client.Signal();
 	
@@ -900,19 +895,13 @@ TInt DeleteBigFile(TAny* )
 
 */
 void TestReadingWhileWriting() 
-{
-	TInt r = 0;
-	TTime time1;
-	TTime time2;
-
-	time1.HomeTime();
-	
+{	
 	// Write the small file and take the appropriate measures
 	WriteFile(TheFs,gSmallFile,KBlockSize, KBlockSize, ENoThreads);
 
 	// Sync test
 	TBuf<20> buf=_L("Big Write");
-	r = gBig.Create(buf, WriteBigFile, KDefaultStackSize, KHeapSize, KMaxHeapSize, NULL);
+	TInt r = gBig.Create(buf, WriteBigFile, KDefaultStackSize, KHeapSize, KMaxHeapSize, NULL);
 	TEST(r == KErrNone);
 
 	buf = _L("Small Read");
@@ -928,15 +917,13 @@ void TestReadingWhileWriting()
 	gBig.Close();
 	gSmall.Close();
 	
-	
-	TTimeIntervalMicroSeconds timeTaken = gTime1.MicroSecondsFrom(gTime2);
-	test.Printf(_L("\nSync read done %d ms before the write ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
-	TReal time=I64LOW(timeTaken.Int64() / KuStomS); 
+	TTimeIntervalMicroSeconds timeTaken = gTestTimer.Time();
+	test.Printf(_L("\nSync read done %d ms before the write ended\n"), TF32TestTimer::TimeInMilliSeconds(timeTaken));
 	#if !defined(__WINS__)
-		// If this condition fails, it means that writing the sync file while fairscheduling a small sync read takes too long
-		test.Printf(_L("time: %f\n"), time);
-		// test((time > 0) && (((gTotalTimeSync[0]-time)>0) || ((gTotalTimeSync[1]-time)>0)) );  
-		test(time > 0);
+		// If this condition fails, it means that writing the sync file while 
+        // fairscheduling a small sync read takes too long. Reading small file
+        // should complete first.
+		test(timeTaken > 0);
 	#endif 
 	
 	// Async test 
@@ -948,27 +935,26 @@ void TestReadingWhileWriting()
 	ReadFileAsync(TheFs, smallFile, gSmallFile, KBlockSize, status2 );
 
 	WaitForAll(status2,KBlockSize , KBlockSize );
-	time1.HomeTime(); 
+
+    TF32TestTimer timer;
+	timer.Start();
 
 	WaitForAll(status,gBigFileSize, KBigBlockSize);
 
-	time2.HomeTime();
+	timer.Stop();
 	bigFile.Close();
 	smallFile.Close();
 	
-	timeTaken = time2.MicroSecondsFrom(time1);
+	timeTaken = timer.Time();
 	
-	test.Printf(_L("\nAsync read done %d ms before the write ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
-	time = I64LOW(timeTaken.Int64() / KuStomS); 
+	test.Printf(_L("\nAsync read done %d ms before the write ended\n"), timer.TimeInMilliSeconds());
 
 	#if !defined(__WINS__)
 	if (!Is_HVFS(TheFs, gDrive))
 		{
 		// If this condition fails, it means that writing the async file while fairscheduling a small async read takes too long
-		test.Printf(_L("time: %f\n"), time);
 		test.Printf(_L("gTotalTimeAsync[0] = %d , gTotalTimeAsync[1] = %d\n"),gTotalTimeAsync[0],gTotalTimeAsync[1] );
-		// test((time > 0) && (((gTotalTimeAsync[0]-time)>0) || ((gTotalTimeAsync[1]-time)>0)) );
-		test(time > 0);
+		test(timeTaken > 0);
 		}
 	#endif
 }
@@ -979,8 +965,6 @@ void TestReadingWhileWriting()
 void TestWritingWhileWriting() 
 {
 	TInt r = 0;
-	TTime time1;
-	TTime time2;
 
 	// Sync test
 	TBuf<20> buf = _L("Big Write II");
@@ -1000,14 +984,12 @@ void TestWritingWhileWriting()
 	gBig.Close();
 	gSmall.Close();
 	
-	TTimeIntervalMicroSeconds timeTaken = gTime1.MicroSecondsFrom(gTime2);
-	test.Printf(_L("\nSync write done %d ms before the big write ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
-	TReal time=I64LOW(timeTaken.Int64() / KuStomS); 
+	TTimeIntervalMicroSeconds timeTaken = gTestTimer.Time();
+	test.Printf(_L("\nSync write done %d ms before the big write ended\n"), gTestTimer.TimeInMilliSeconds());
 	#if !defined(__WINS__)
-		// If this condition fails, it means that writing the sync file while fairscheduling a small sync write takes too long
-		test.Printf(_L("time: %f\n"), time);
-		// test((time > 0) && (((gTotalTimeSync[0]-time)>0) || ((gTotalTimeSync[1]-time)>0)) ); 
-		test(time > 0);
+		// If this condition fails, it means that writing the sync file while 
+        // fairscheduling a small sync write takes too long		
+		test(timeTaken > 0);
 	#endif 
 
 	// Async test 
@@ -1018,21 +1000,19 @@ void TestWritingWhileWriting()
 	WriteFileAsync(TheFs, bigFile, gBigFile, gBigFileSize, KBigBlockSize, status); 
 	WriteFileAsync(TheFs,smallFile, gSmallFile,gSmallFileSize,KBlockSize,status2);
 	WaitForAll(status2,gSmallFileSize, KBlockSize);
-	time1.HomeTime();
+    TF32TestTimer timer;
+	timer.Start();
 	WaitForAll(status, gBigFileSize, KBigBlockSize);
-	time2.HomeTime();
+	timer.Stop();
 	
-	timeTaken = time2.MicroSecondsFrom(time1);
-	test.Printf(_L("\nAsync write done %d ms before the big write ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
-	time=I64LOW(timeTaken.Int64() / KuStomS);
+	timeTaken = timer.Time();
+	test.Printf(_L("\nAsync write done %d ms before the big write ended\n"),timer.TimeInMilliSeconds());
 	#if !defined(__WINS__)
 	if (!Is_HVFS(TheFs, gDrive))
 		{
 		// If this condition fails, it means that writing the async file while fairscheduling a small async write takes too long
-		test.Printf(_L("time: %f\n"), time);
 		test.Printf(_L("gTotalTimeAsync[0] = %d , gTotalTimeAsync[1] = %d\n"),gTotalTimeAsync[0],gTotalTimeAsync[1] );
-		// test((time > 0) && (((gTotalTimeAsync[0]-time)>0) || ((gTotalTimeAsync[1]-time)>0)) );
-		test(time > 0);
+		test(timeTaken > 0);
 		}
 	#endif
 	bigFile.Close();
@@ -1045,8 +1025,6 @@ void TestWritingWhileWriting()
 void TestTwoBigOnes()
 {
 	TInt r = 0;
-	TTime time1;
-	TTime time2;
 
 	// Sync test
 	TBuf<20> buf = _L("Big Write IIII");
@@ -1066,8 +1044,8 @@ void TestTwoBigOnes()
 	gBig.Close();
 	gSmall.Close();
 	
-	TTimeIntervalMicroSeconds timeTaken = gTime2.MicroSecondsFrom(gTime1);
-	test.Printf(_L("\nSync first write ended %d ms before the second write ended (same file size)\n"),I64LOW(timeTaken.Int64() / KuStomS));
+	TTimeIntervalMicroSeconds timeTaken = gTestTimer.Time();
+	test.Printf(_L("\nSync first write ended %d ms before the second write ended (same file size)\n"),TF32TestTimer::TimeInMilliSeconds(timeTaken));
 
 	// Async test 
 	TRequestStatus status[KWaitRequestsTableSize];
@@ -1077,12 +1055,13 @@ void TestTwoBigOnes()
 	WriteFileAsync(TheFs, bigFile, gBigFile, gBigFileSize, KBigBlockSize, status); 
 	WriteFileAsync(TheFs, bigFile2, gSmallFile, gBigFileSize, KBigBlockSize, status2);
 	WaitForAll(status, gBigFileSize, KBigBlockSize);
-	time1.HomeTime();
+    TF32TestTimer timer;
+	timer.Start();
 	WaitForAll(status2, gBigFileSize, KBigBlockSize);
-	time2.HomeTime();
+	timer.Stop();
 	
-	timeTaken = time2.MicroSecondsFrom(time1);
-	test.Printf(_L("\nAsync first write ended %d ms before the second write ended (same file size)\n"),I64LOW(timeTaken.Int64() / KuStomS));
+	timeTaken = timer.Time();
+	test.Printf(_L("\nAsync first write ended %d ms before the second write ended (same file size)\n"),TF32TestTimer::TimeInMilliSeconds(timeTaken));
 	bigFile.Close();
 	bigFile2.Close();	
 }
@@ -1093,9 +1072,9 @@ void TestTwoBigOnes()
 void TestReadingWhileWritingSameFile() 
 {
 	TInt r = 0;
-	TTime time1;
+	TF32TestTimer timer;
 	
-	time1.HomeTime();
+	timer.Start();
 	
 	// Sync test
 	TBuf<20> buf = _L("Big Write IV");
@@ -1115,8 +1094,8 @@ void TestReadingWhileWritingSameFile()
 	CLOSE_AND_WAIT(gBig);
 	CLOSE_AND_WAIT(gSmall);
 	
-	TTimeIntervalMicroSeconds timeTaken = gTime2.MicroSecondsFrom(gTime1);
-	test.Printf(_L("\nSync write finished %d ms before the read ended\n"),I64LOW(timeTaken.Int64() / KuStomS));
+	TTimeIntervalMicroSeconds timeTaken = gTestTimer.Time();
+	test.Printf(_L("\nSync write finished %d ms before the read ended\n"),TF32TestTimer::TimeInMilliSeconds(timeTaken));
 	
 }
 

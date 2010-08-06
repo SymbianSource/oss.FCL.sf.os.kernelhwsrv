@@ -131,7 +131,10 @@ void CDmaTest::OpenDmaSession()
 	if(iDmaSession.Handle() == KNullHandle)
 		{
 		TInt r = iDmaSession.Open();
-		RDebug::Printf("CDmaTest::OpenDmaSession = %d\n", r);
+		if(KErrNone != r)
+			{
+			RDebug::Printf("CDmaTest::OpenDmaSession = %d\n", r);
+			}
 		TEST_ASSERT(r == KErrNone);
 		r = iDmaSession.OpenSharedChunk(iChunk);
 		TEST_ASSERT(r == KErrNone);
@@ -779,6 +782,78 @@ void CLinkChannelTest::RunTest()
 void CLinkChannelTest::PrintTestType() const
 	{
 	RDebug::RawPrint(_L("Channel Linking API Test - Negative Test"));
+	}
+
+//////////////////////////////////////////////////////////////////////
+//	CElementCountingTest
+//
+//	-Open DMA Channel
+//	-Create Request
+//	-Fragment and Make calls to Element Counting APIs
+//  -Check that TotalNumDstElementsTransferred() and TotalNumSrcElementsTransferred()
+//	 return non zero values
+//  -Check that KErrNone(from test driver) returned for other API calls
+//	-Queue Request 
+//	-Close DMA Channel
+//////////////////////////////////////////////////////////////////////
+CElementCountingTest::~CElementCountingTest()
+	{
+	}
+
+void CElementCountingTest::RunTest()
+	{
+	OpenDmaSession();
+	PreTransferSetup();
+
+	//Open a single DMA channel for a transfer
+	OpenChannel();
+	
+	//Setup a DMA request and Fragment the request.
+	RDebug::Printf("Create and Fragment DMA Request");
+	CreateDmaRequest();
+	Fragment();
+
+	//Enable src/dst counting
+	RDebug::Printf("Enable DstElementCounting");
+	TInt r = iDmaSession.RequestEnableDstElementCounting(iRequestSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	RDebug::Printf("Enable SrcElementCounting");
+	r = iDmaSession.RequestEnableSrcElementCounting(iRequestSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	//Queue request
+	RDebug::Printf("Queue DMA Request");
+	Queue();
+
+	//Disable src/dst counting
+	RDebug::Printf("Disable DstElementCounting");
+	r = iDmaSession.RequestDisableDstElementCounting(iRequestSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	RDebug::Printf("Disable SrcElementCounting");
+	r = iDmaSession.RequestDisableSrcElementCounting(iRequestSessionCookie);
+	TEST_ASSERT(KErrNone == r);
+
+	//check total src/dst elements transferred
+	RDebug::Printf("Get Total Number of DstElementsTransferred");
+	r = iDmaSession.RequestTotalNumDstElementsTransferred(iRequestSessionCookie);
+	TEST_ASSERT(r >= 0);
+
+	RDebug::Printf("Get Total Number of SrcElementsTransferred");
+	r = iDmaSession.RequestTotalNumSrcElementsTransferred(iRequestSessionCookie);
+	TEST_ASSERT(r >= 0);
+
+	FreeRequest();
+	CloseChannel();
+
+	PostTransferCheck();
+	CloseDmaSession();
+	}
+
+void CElementCountingTest::PrintTestType() const
+	{
+	RDebug::RawPrint(_L("Element Counting Tests"));
 	}
 
 //////////////////////////////////////////////////////////////////////

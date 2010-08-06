@@ -621,6 +621,33 @@ public:
 	inline CPauseResumeNegTest& UseNewDmaApi(TBool aFlag) {CSingleTransferTest::UseNewDmaApi(aFlag); return *this;}
 	};
 
+
+/**
+Used for testing element counting 
+
+Extends CSingle transfer by adding the capability to test
+Element Counting APIs
+*/
+class CElementCountingTest : public CSingleTransferTest
+	{
+public:
+	 CElementCountingTest(const TDesC& aName, TInt aIterations, const TDmaTransferArgs& aArgs, const TResultSet& aExpected)
+		:CSingleTransferTest(aName, aIterations, aArgs, aExpected)
+	 {}
+
+	~CElementCountingTest();
+
+	virtual void RunTest();
+	virtual void PrintTestType() const;
+
+	virtual CTest* Clone() const {return new CElementCountingTest(*this);}
+
+	// The methods below is a setters ie. The Named Parameter Idiom
+	// @see http://www.parashift.com/c++-faq-lite/ctors.html#faq-10.18
+	inline CElementCountingTest& UseNewDmaApi(TBool aFlag) {CSingleTransferTest::UseNewDmaApi(aFlag); return *this;}
+	};
+
+
 /**
 Used for testing Linking of DMA Channels ( Negative Testing)
 
