@@ -601,7 +601,7 @@ LOCAL_C void TestCopy()
 	test_KErrNone(r);
 	test(entry.iName.MatchF(_L("T_FSRV.CPP"))!=KErrNotFound);
 #if defined (__WINS__)
-	test_Equal(KEntryAttArchive, entry.iAtt);
+	test_Equal(KEntryAttArchive | KEntryAttReadOnly, entry.iAtt);
 #else
 	if (!IsTestingLFFS())
 		{
@@ -4415,9 +4415,9 @@ void TestGetMoreErrorInfo()
          if(r!=KErrNone) //correct behaviour
              {
              TFileManError error = gFileMan->GetMoreInfoAboutError();
-             test_Equal(error,(TFileManError)ENoFilesProcessed);
+             test_Equal((TFileManError)ENoFilesProcessed,error);
              }
-         else { test_Equal(r,!KErrNone); }
+         else { test_Equal(!KErrNone,r); }
          }
      else
          {
@@ -4425,9 +4425,9 @@ void TestGetMoreErrorInfo()
          if(r!=KErrNone) //correct behaviour
              {
              TFileManError error = gFileMan->GetMoreInfoAboutError();
-             test_Equal(error,(TFileManError)ENoFilesProcessed);
+             test_Equal((TFileManError)ENoFilesProcessed,error);
              }
-         else { test_Equal(r,!KErrNone); }
+         else { test_Equal(!KErrNone,r); }
          }
     CleanupStack::PopAndDestroy();
     }

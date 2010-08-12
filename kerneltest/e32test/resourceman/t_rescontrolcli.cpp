@@ -4321,10 +4321,6 @@ GLDEF_C TInt E32Main()
 	test.Start(_L("Testing Resource Manager...\n"));
 	test.Printf(_L("Testing HCR client setting Macro's for Resource Manager \n"));
 	TestClientHCRSettingMacros();
-	//
-	test.Printf(_L("TEST SKIPPED UNTIL FIX FOR DEF145087 IS AVAILABLE TO PREVENT CRASHING\n"));
-	test(0);
-	//
 	test.Next(_L("Load Physical device"));
 #ifndef PRM_ENABLE_EXTENDED_VERSION
 	r = User::LoadPhysicalDevice(KPddFileName);
@@ -4340,8 +4336,22 @@ GLDEF_C TInt E32Main()
 	r=User::LoadLogicalDevice(KExtLddFileName);
 	test(r==KErrNone || r==KErrAlreadyExists);
 #endif
+
+	RDevice d;
+	TPckgBuf<RTestResMan::TCaps> caps;
+	r = d.Open(KLddName);
+	test(r == KErrNone);
+	d.GetCaps(caps);
+	d.Close();
+
+	TVersion ver = caps().iVersion;
+	test(ver.iMajor == 1);
+	test(ver.iMinor == 0);
+	test(ver.iBuild == KE32BuildVersionNumber);
+
 	r = lddChan.Open();
 	test(r==KErrNone || r==KErrAlreadyExists);
+
 	//Check whether the notifications recieved as a result of postboot level setting is as expected.
 	r = lddChan.CheckPostBootLevelNotifications();
 	test(r == KErrNone);

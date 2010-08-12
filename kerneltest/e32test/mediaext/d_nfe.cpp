@@ -1051,6 +1051,9 @@ TInt DMediaDriverNFE::HandleRead(TLocDrvRequest& aReq)
 
 //	__KTRACE_PRINT(Kern::Printf("NFE%d: HandleRead pos %lx len %lx status %d", iInstance, currentPos, remainingLength, di->Status()));
 
+	if (di->iEntry.iPartitionLen == 0)
+		return KErrNotReady;
+
 
 	di->iReadRequestCount++;
 
@@ -1212,40 +1215,30 @@ TInt DMediaDriverNFE::HandleWrite(TLocDrvRequest& aReq)
 
 TInt DMediaDriverNFE::HandleFormat(TLocDrvRequest& aReq)
 	{
-	TInt r = KErrNone;
 	TInt64 currentPos =  aReq.Pos();
-	TInt64 remainingLength = aReq.Length();
 	TNfeDriveInfo* di = &iInfo.iDrives[DriveIndex(aReq.Drive()->iDriveNumber)];
 
-//	__KTRACE_PRINT(Kern::Printf("NFE%d: HandleFormat pos %lx len %lx status %d", iInstance, currentPos, remainingLength, di->Status()));
+	__KTRACE_PRINT(Kern::Printf("NFE%d: HandleFormat pos %lx len %lx status %d", iInstance, currentPos, aReq.Length(), di->Status()));
 
-
-	// just forward the request if the drive is not encrypted
-	if (di->Status() == ENfeDecrypted)
-		return ForwardRequest(aReq);
-
-	// otherwise create a buffer containing NULLs, encrypt it and write that to the attached drive
-	while(remainingLength && r == KErrNone)
+	if (di->Status() == ENfeEncrypting)
 		{
-		TInt64 currentLength = (remainingLength <= KBufSize ? remainingLength : KBufSize);
-
-		TBool encryptBuffer = AdjustRequest(di, currentPos, currentLength);
-
-		memclr(iBuffer, KBufSize);
-		TPtr8 des(iBuffer,KBufSize,KBufSize);
-
-		if (encryptBuffer)
-			EncryptBuffer(des);
-		
-		r = Write(di->iLocalDriveNum, currentPos, (TLinAddr) iBuffer, I64LOW(currentLength));
-		if(r != KErrNone)
-			break;
-
-		remainingLength-= currentLength;
-		currentPos+= currentLength;
+		di->iEncryptEndPos = di->iEntry.iPartitionBaseAddr + di->iEntry.iPartitionLen;
+		SetStatus(*di,  ENfeEncrypted);
+		__KTRACE_PRINT(Kern::Printf("NFE%d: HandleFormat() , Setting status to %s", iInstance, DriveStatus(di->Status())));
 		}
 
-	return r == KErrNone ? KErrCompletion : r;
+	if (currentPos >= di->iEntry.iPartitionBaseAddr && 
+		currentPos < di->iEntry.iPartitionBaseAddr + KSectorSize && 
+		di->IsUDADrive() &&
+		di->Status() == ENfeEncrypted)
+		{
+		__KTRACE_PRINT(Kern::Printf("NFE%d: Write to sector #0 detected", iInstance));
+		di->iUniqueID = 0;	// undefined
+		__KTRACE_PRINT(Kern::Printf("NFE%d: Setting Volume ID to %08X", iInstance, di->iUniqueID ));
+		}
+
+
+	return ForwardRequest(aReq);
 	}
 
 
@@ -1362,9 +1355,13 @@ void DMediaDriverNFE::TimerDfcFunction(TAny* aMediaDriver)
 TBool DMediaDriverNFE::ValidBootSector(TUint8* aBuffer)
 	{
 	if (aBuffer[0] == 0xEB || aBuffer[0] == 0xE9)
+		{
 		return ETrue;
+		}
 	else
+		{
 		return EFalse;
+		}
 	}
 
 
@@ -1409,7 +1406,7 @@ void DMediaDriverNFE::CheckBootSector(TNfeDriveInfo &aDi)
 
 	// Find out whether the volume has changed
 	TUint32 uniqueID = VolumeId(iBuffer);   
-	TBool volumeChanged = uniqueID != aDi.iUniqueID;
+	TBool volumeChanged = (aDi.iUniqueID != 0) && (uniqueID != aDi.iUniqueID);
 	__KTRACE_PRINT(Kern::Printf("NFE%d: Old Volume ID %08X", iInstance, aDi.iUniqueID));
 	__KTRACE_PRINT(Kern::Printf("NFE%d: New Volume ID %08X", iInstance, uniqueID));
 	__KTRACE_PRINT(Kern::Printf("NFE%d: volumeChanged %d", iInstance, volumeChanged));
@@ -1537,9 +1534,6 @@ TInt DMediaDriverNFE::HandleDiskContent()
 		return KErrNone;
 		}
 
-//	TInt KBackgroundPriority = 7;						//*test*
-//	Kern::SetThreadPriority(KBackgroundPriority);		//*test*
-
 	TInt r = KErrNone;
 	for (;;)
 		{
@@ -1626,8 +1620,6 @@ TInt DMediaDriverNFE::HandleDiskContent()
 	if (r != KErrCompletion)
 		iIdleTimer.OneShot(NKern::TimerTicks(KNotBusyInterval));
 
-//	Kern::SetThreadPriority(KNfeThreadPriority);	//*test*
-	
 	return r;
 	}
 

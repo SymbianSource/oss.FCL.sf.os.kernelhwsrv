@@ -4213,7 +4213,7 @@ TInt CFatMountCB::CheckDisk()
     if(bProblemsFound && chkDskRes == CScanDrive::ENoErrors)
         {//-- ScanDrive in this mode can leave unexpectedly without setting an error code that is returned by ProblemsDiscovered();
          //-- leave itself means a problem
-        chkDskRes = CScanDrive::EUnknownError;
+        chkDskRes = nScnDrvRes == KErrNone ? CScanDrive::EUnknownError : (CScanDrive::TGenericError) nScnDrvRes;
         }
 
     delete pScnDrv;

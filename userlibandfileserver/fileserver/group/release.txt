@@ -1,3 +1,27 @@
+Version 2.00.3056
+=================
+(Made by fadhliM 26/07/2010)
+
+1.	dlyokhin
+	1.	ou1cimx1#481268 ENV: F32TEST T_FILE Fails during testMultipleReadFile()
+
+2.	necliffo
+	1.	ou1cimx1#456106 [DEV] Improve MedMMC and PBus Coverage
+
+3.	martai
+	1.	ou1cimx1#493927 ENV : E32TEST T_SHADOW Fails during testMultipleReadFile()
+
+4.	migubarr
+	1.	ou1cimx1#469293 t_pwstr failures
+	2.	ou1cimx1#488785 SD stack: formatting a card on a multiple-card stack can fail with KErrNotReady
+	3.	ou1cimx1#485015 Internal file server attribute (KEntryAttModified) can be returned to the client
+	4.	ou1cimx1#459805 Querying the attributes of an open file on the emulator's Z: drive returns incorrect attributes
+
+5.	michcox
+	1.	ou1cimx1#455757 MINOR_CHANGE - t_fman test fail error code print out
+	2.	MINOR_CHANGE MCL change includes from <F32Plugin.h> to <f32plugin.h> (i.e. case correction)
+
+
 Version 2.00.3055
 =================
 (Made by fadhliM 23/07/2010)

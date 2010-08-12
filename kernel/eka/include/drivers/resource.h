@@ -12,7 +12,7 @@
 //
 // Description:
 // e32\include\drivers\resource.h
-// 
+//
 // WARNING: This file contains some APIs which are internal and are subject
 //          to change without notice. Such APIs should therefore not be used
 //          outside the Kernel and Hardware Services package.
@@ -26,18 +26,18 @@
 #include <drivers/resource_category.h>
 
 //Definition for resource flag setting. Used by PSL.
-static const TUint KTypeMask= 0x3;
-static const TUint KUsageOffset=0x1F;
-static const TUint KLongLatencySetOffset=0x1E;
-static const TUint KLongLatencyGetOffset=0x1D;
-static const TUint KClassOffset=0x1C;
-static const TUint KSenseOffset=0x1A;
-static const TUint KShared=0x1U<<KUsageOffset;
-static const TUint KLongLatencySet=0x1<<KLongLatencySetOffset;
-static const TUint KLongLatencyGet=0x1<<KLongLatencyGetOffset;
-static const TUint KLogical=0x1<<KClassOffset;
-static const TUint KSenseNegative=0x01<<KSenseOffset;
-static const TUint KSenseCustom=0x2<<KSenseOffset;
+const TUint KTypeMask             = 0x3;
+const TUint KUsageOffset          = 0x1F;
+const TUint KLongLatencySetOffset = 0x1E;
+const TUint KLongLatencyGetOffset = 0x1D;
+const TUint KClassOffset          = 0x1C;
+const TUint KSenseOffset          = 0x1A;
+const TUint KShared               = 0x1u << KUsageOffset;
+const TUint KLongLatencySet       = 0x1u << KLongLatencySetOffset;
+const TUint KLongLatencyGet       = 0x1u << KLongLatencyGetOffset;
+const TUint KLogical              = 0x1u << KClassOffset;
+const TUint KSenseNegative        = 0x1u << KSenseOffset;
+const TUint KSenseCustom          = 0x2u << KSenseOffset;
 
 struct TPowerRequest;
 struct SIdleResourceInfo;
@@ -149,7 +149,7 @@ typedef void (*TPowerResourceCbFn)(TUint /*aClientId*/,
 /**
 @publishedPartner
 @prototype 9.5
-An object of this type prepresents a customised Dfc
+An object of this type represents a customized Dfc
 used to signal completion of the resource manager's asynchronous APIs
 and completion of notifications
 @see TPowerResourceManager
@@ -191,16 +191,18 @@ private:
 private:
     void Lock()
         {
+		__ASSERT_DEBUG(iMutex, Kern::Fault("TPowerResourceCb::Lock", __LINE__));
         NKern::ThreadEnterCS();
         Kern::MutexWait(*iMutex);
         }
     void UnLock()
         {
+		__ASSERT_DEBUG(iMutex, Kern::Fault("TPowerResourceCb::UnLock", __LINE__));
         Kern::MutexSignal(*iMutex);
         NKern::ThreadLeaveCS();
         }
     TAny* iParam; //Stores the aPtr argument passed in the constructor, to be passed as 5th argument to the callback function
-    TInt iResult; //Used to store the result aswell as binary usage count for the callback
+    TInt iResult; //Used to store the result as well as binary usage count for the callback
     TInt iLevel; // Level of the resource
 	TInt iLevelOwnerId; // Stores owner of the resource for asynchronous get operation
     TUint iResourceId; //Stores the ID of the resource whose state is changed/read asynchronously

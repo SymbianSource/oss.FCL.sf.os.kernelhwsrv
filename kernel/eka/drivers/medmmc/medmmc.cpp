@@ -2726,6 +2726,9 @@ TInt DMmcMediaDriverFlash::EngageAndSetRequest(DMmcMediaDriverFlash::TMediaReque
 	iMedReq = aRequest;
 	SetCurrentConsumption(aCurrent);
 
+	// Reset the card pointer just in case the stack has changed it.
+	iSession->SetCard(iCard);
+
 	TInt r = InCritical();
 	if (r == KErrNone)
 		{

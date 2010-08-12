@@ -59,6 +59,13 @@ TInt  RemountFS(RFs& aFs, TInt aDrive, TTime* apTimeMountStart=NULL);
 
 TInt FormatDrive(RFs &aFs, TInt aDrive, TBool aQuickFormat); 
 
+//-----------------------------------------------------------------------------
+
+TBool CompareBuffers(const TDesC8& aBuf1, const TDesC8& aBuf2);
+TBool CompareBuffers(const TAny* apBuf1, TUint aBuf1Len, const TAny* apBuf2, TUint aBuf2Len);
+
+void  HexDump(const TDesC8& aBuf);
+void  HexDump(const TAny* apBuf, TUint aBufLen);
 
 //-----------------------------------------------------------------------------
 /** 
@@ -152,6 +159,8 @@ TBool Is_Fat(RFs &aFs, TInt aDrive);    //-- returns ETrue if "FAT" FS (FAT12/16
 TBool Is_Fat32(RFs &aFs, TInt aDrive);  //-- returns ETrue if "FAT" FS is mounted on this drive and it is FAT32 type
 TBool Is_Fat16(RFs &aFs, TInt aDrive);  //-- returns ETrue if "FAT" FS is mounted on this drive and it is FAT16 type    
 TBool Is_Fat12(RFs &aFs, TInt aDrive);  //-- returns ETrue if "FAT" FS is mounted on this drive and it is FAT12 type
+
+
 
 
 

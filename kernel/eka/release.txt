@@ -1,3 +1,29 @@
+Version 2.00.3111
+=================
+(Made by fadhliM 26/07/2010)
+
+1.	lforynsk
+	1.	ou1cimx1#500491 Resource Manager PIL reallocates an array that it doesn't create or delete (kernelhwsrv)
+	2.	ou1cimx1#500836 Resource manager does not response to an asynchronous request if the resource level owner send a request with the same level
+
+2.	gayarama
+	1.	ou1cimx1#473162 DEV Registration of resources for idle is not complete
+	2.	ou1cimx1#493520 DEV Allow simulated resource controller to register with power controller
+
+3.	cnotton
+	1.	ou1cimx1#493455 Test bld.inf files are exporting headers without proper macro
+	2.	MINOR_CHANGE Moved T_TIMESTAMP up above T_LAT2.
+
+4.	erifung
+	1.	ou1cimx1#493519 t_rescontrolcli.exe crash
+
+5.	vfebvre
+	1.	ou1cimx1#483102 H6 baseport bld.inf changes
+
+6.	jcoppear
+	1.	ou1cimx1#428875 MCL NaviEngine baseport bld.inf changes
+
+
 Version 2.00.3110
 =================
 (Made by fadhliM 22/07/2010)

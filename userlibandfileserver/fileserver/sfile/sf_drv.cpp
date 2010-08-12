@@ -90,17 +90,13 @@ void ValidateAtts(TUint& aSetAttMask,TUint& aClearAttMask)
 // Do not allow the entry type to be changed
 //
 	{
-	const TUint KReadOnlySetAtts = KEntryAttVolume | 
-								   KEntryAttDir    | 
-								   KEntryAttRemote;
+	const TUint KReadOnlyAtts = KEntryAttVolume	| 
+								KEntryAttDir	| 
+								KEntryAttRemote	|
+								KEntryAttModified;
 
-	const TUint KReadOnlyClrAtts = KEntryAttVolume | 
-								   KEntryAttDir    | 
-								   KEntryAttRemote | 
-								   KEntryAttModified;
-
-	aSetAttMask   &= ~KReadOnlySetAtts;
-	aClearAttMask &= ~KReadOnlyClrAtts;
+	aSetAttMask   &= ~KReadOnlyAtts;
+	aClearAttMask &= ~KReadOnlyAtts;
 	}
 
 void CheckForLeaveAfterOpenL(TInt leaveError, CFsRequest* aRequest, TInt aHandle)
@@ -1235,6 +1231,33 @@ TInt TDrive::SetEntry(const TDesC& aName,const TTime& aTime,TUint aSetAttMask,TU
 	OstTraceData(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSETENTRYL_EFILEPATH, "FilePath %S", aName.Ptr(), aName.Length()<<1);
 	TRAP(r,CurrentMount().SetEntryL(entryName,aTime,aSetAttMask,aClearAttMask))
 	OstTrace1(TRACE_FILESYSTEM, FSYS_ECMOUNTCBSETENTRYLRET, "r %d", r);
+
+	// If the file is already open then write the file attributes directly to the file
+	TFileName foldedName;
+	TUint32 nameHash=0;
+	foldedName.CopyF(aName);
+	nameHash=CalcNameHash(foldedName);
+
+	__CHECK_DRIVETHREAD(iDriveNumber);
+	TDblQueIter<CFileCB> q(CurrentMount().iMountQ);
+	CMountCB* currentMount = &CurrentMount();
+	CFileCB* file;
+	while ((file=q++)!=NULL)
+		{
+		if ((&file->Drive()==this) && 
+			&file->Mount() == currentMount &&
+			nameHash == file->NameHash() && 
+			file->FileNameF().Match(foldedName)==KErrNone)
+			{
+			TUint att = file->Att();
+			att |= aSetAttMask;
+			att &= ~aClearAttMask;
+			file->SetAtt(att | KEntryAttModified);
+			file->SetModified(aTime);
+			break;
+			}
+		}
+
 	return(r);
 	}
 

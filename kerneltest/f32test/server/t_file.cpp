@@ -190,25 +190,40 @@ static void testReadFile()
 
 	test.Start(_L("Test read file"));
 	RFile f,ZFile;
-	TInt r=f.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText);
+	
+    TInt r=f.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText);
 	test_KErrNone(r);
-	TFileName fn = _L("Z:\\TEST\\T_FILE.CPP");
+	
+    TFileName fn = _L("Z:\\TEST\\T_FILE.CPP");
 	fn[0] = gExeFileName[0];
-	r=ZFile.Open(TheFs,fn,EFileStreamText);
+	
+    r=ZFile.Open(TheFs,fn,EFileStreamText);
 	test_KErrNone(r);
+
+	// check the file on the Z: drive his read-only
+	TEntry fileAtt;
+	r=TheFs.Entry(fn,fileAtt);
+	test_KErrNone(r);
+	test((fileAtt.iAtt & KEntryAttReadOnly) == KEntryAttReadOnly);
+
 
 	test.Next(_L("Read file"));
 	TBuf8<0x100> a,b;
-	FOREVER
+	
+    for(;;)
 		{
 		r=f.Read(b);
 		test_KErrNone(r);
-		r=ZFile.Read(a);
+		
+        r=ZFile.Read(a);
 		test_KErrNone(r);
-		test(a==b);
-		if (b.Length()<b.MaxLength())
+		
+        test(CompareBuffers(a, b));
+		
+        if (b.Length()<b.MaxLength())
 			break;
 		}
+
 	b.SetLength(10);
 	r=f.Read(b);
 	test_KErrNone(r);
@@ -240,23 +255,30 @@ static void testMultipleReadFile()
 	{
 
 	test.Start(_L("Test multiple read file"));
-	RFile f1;
+	
+    RFile f1;
 	TInt r=f1.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
 	test_KErrNone(r);
-	RFile f2;
+	
+    RFile f2;
 	r=f2.Open(TheFs,_L("T_FILE.CPP"),EFileStreamText|EFileShareReadersOnly);
 	test_KErrNone(r);
 
 	test.Next(_L("Read file"));
-	FOREVER
+	
+    TBuf8<0x100> b1;
+    TBuf8<0x100> b2;
+    
+    for(;;)
 		{
-		TBuf8<0x100> b1;
-		r=f1.Read(b1);
+        r=f1.Read(b1);
 		test_KErrNone(r);
-		TBuf8<0x100> b2;
+        
 		r=f2.Read(b2);
 		test_KErrNone(r);
-		test(b1==b2);
+		
+        test(CompareBuffers(b1, b2));
+
 		if (b1.Length()<b1.MaxLength())
 			break;
 		}
@@ -952,6 +974,44 @@ static void testFileAttributes()
 	r=f.Write(_L8("Hello World"));
 	test_KErrNone(r);
 	f.Close();
+
+
+	test.Next(_L("Internal attribute can't be read"));
+
+	r=TheFs.SetAtt(fname,0,KEntryAttReadOnly);
+	test_KErrNone(r);
+
+	r=f.Open(TheFs,fname,EFileWrite);
+	test_KErrNone(r);
+
+	r=f.SetAtt(KEntryAttReadOnly, 0);	// this will set internal attribut KEntryAttModified
+	test_KErrNone(r);
+
+	// copied \sf\os\kernelhwsrv\userlibandfileserver\fileserver\inc\common.h
+	const TUint KEntryAttModified=0x20000000;	
+
+	TUint att;
+	r = f.Att(att);
+	test_KErrNone(r);
+    test.Printf(_L("att %x"), att);
+	test_Value(att & KEntryAttModified, (att & KEntryAttModified) == 0);
+
+	r=f.SetAtt(att | KEntryAttModified, 0);
+	test_KErrNone(r);
+
+	r = f.Att(att);
+	test_KErrNone(r);
+    test.Printf(_L("att %x"), att);
+	test_Value(att & KEntryAttModified, (att & KEntryAttModified) == 0);
+
+	test.Next(_L("file time is set"));
+	r = f.Modified(time);
+	test(time.Int64() != 0);
+
+    r = f.Flush(); //-- this will flush attributes to the media
+    test_KErrNone(r);
+	f.Close();
+
 
 	// Tidy up
 	r=TheFs.SetAtt(fname,0,KEntryAttReadOnly);
@@ -2888,8 +2948,6 @@ void TestMaxFileSize()
 {
     test.Next(_L("test maximal file size on FAT32\n"));
 
-#ifdef SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
-
     if(!Is_Fat32(TheFs, gDriveNum))
     {
         test.Printf(_L("This test requires FAT32! skipping.\n"));
@@ -3009,11 +3067,8 @@ void TestMaxFileSize()
     nRes = TheFs.Delete(KFileName);
     test_KErrNone(nRes);
 
-#else
-
     test.Printf(_L("RFile64 is not supported! Skipping.\n"));
 
-#endif //SYMBIAN_ENABLE_64_BIT_FILE_SERVER_API
 
 }
 

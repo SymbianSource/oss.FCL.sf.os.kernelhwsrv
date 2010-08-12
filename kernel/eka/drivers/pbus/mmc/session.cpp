@@ -464,6 +464,10 @@ EXPORT_C TInt DMMCSession::Engage()
 		return KErrNotReady;
 	    }
 
+	// Save the callers card pointer as some state machines 
+	// (e.g. ECIMLockUnlock, ECIMInitStackAfterUnlock) can change it
+	SaveCard();
+
 	SetupCIMControl(iSessionID);
 
 	iStackP->Add(this);

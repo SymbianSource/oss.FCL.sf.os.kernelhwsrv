@@ -283,12 +283,6 @@ DTestResManLddFactory::~DTestResManLddFactory()
 	{
 	if(iDfcQ)
 	  iDfcQ->Destroy();
-	if(iStaticRes)
-		delete iStaticRes;
-	if(iStaticResArray[0])
-		delete iStaticResArray[0];
-	if(iStaticResArray[2])
-		delete iStaticResArray[2];
 	}
 
 /** Entry point for this driver */
@@ -319,7 +313,7 @@ DECLARE_STANDARD_LDD()
 		return NULL;
 		}
 	//Allocating memory earlier so that during failure conditions can cleanup easily
-	p->iStaticRes = new DLaterRegisterStaticResource();
+	p->iStaticRes = new DLaterRegisterStaticResource(); // it will be registered, and later destroyed by the ResourceManager
 	if(!p->iStaticRes)
 		{
 		delete p->iClient.pName;
@@ -327,7 +321,7 @@ DECLARE_STANDARD_LDD()
 		p->AsyncDelete();
 		return NULL;
 		}
-	p->iStaticResArray[0] = new DLaterRegisterStaticResource1();
+	p->iStaticResArray[0] = new DLaterRegisterStaticResource1(); // it will be registered, and later destroyed by the ResourceManager
 	if(!p->iStaticResArray[0])
 		{
 		delete p->iStaticRes;
@@ -1337,7 +1331,7 @@ void DTestResManLddFactory::PostBootNotificationFunc(TUint /*aClientId*/, TUint 
 	TInt r = PowerResourceManager::CancelNotification(iClient.iClientId, aResId, *ptr);
 	if(r == KErrCancel)
 		{
-		delete ptr;
+		ptr->AsyncDelete();
 		if(iPostBootNotiCount == EXPECTED_POST_NOTI_COUNT)
 			{
 			r = PowerResourceManager::DeRegisterClient(DTestResManLddFactory::iClient.iClientId);

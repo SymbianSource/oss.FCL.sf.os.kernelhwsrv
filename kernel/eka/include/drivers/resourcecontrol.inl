@@ -30,7 +30,7 @@ inline TVersion DResConPddFactory::VersionRequired()
 /** Second stage constructor
  Allocates the specified size in kernel heap and creates a virtual link */
 template <class T>
-inline TInt DResourceCon<T>::Initialise(TUint16 aInitialSize)
+inline TInt DResourceCon<T>::Initialise(TInt aInitialSize)
 	{
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DResourceCon<T>::Initialise"));
     __KTRACE_OPT(KRESMANAGER, Kern::Printf("aInitialSize %d", aInitialSize));
@@ -47,8 +47,8 @@ inline TInt DResourceCon<T>::Initialise(TUint16 aInitialSize)
 		for(TInt c = 0; c < aInitialSize; c++)
 			iArray[c] = (T*)(c+1);
 		}
-    iAllocated = aInitialSize;
-    iGrowBy = aInitialSize < 2 ? aInitialSize : TUint16(aInitialSize/2);
+    iAllocated = (TUint16)aInitialSize;
+    iGrowBy = (TUint16) (aInitialSize < 2 ? aInitialSize : aInitialSize/2);
     iCount = 0;
     iInstanceCount = 0;
     iFreeLoc = 0;
@@ -65,7 +65,7 @@ inline TInt DResourceCon<T>::Initialise(TUint16 aInitialSize)
 
 /** Resize the array */
 template <class T>
-inline TInt DResourceCon<T>::ReSize(TUint16 aGrowBy)
+inline TInt DResourceCon<T>::ReSize(TInt aGrowBy)
 	{
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DResourceCon<T>::ReSize"));
     __KTRACE_OPT(KRESMANAGER, Kern::Printf("aGrowBy %d\n", aGrowBy));
@@ -73,7 +73,7 @@ inline TInt DResourceCon<T>::ReSize(TUint16 aGrowBy)
 	TInt r = Kern::SafeReAlloc((TAny*&)iArray, iAllocated * sizeof(T*), (iAllocated+aGrowBy)*sizeof(T*));
 	if(r != KErrNone)
 		return r;
-    TUint16 c = iAllocated;
+    TInt c = iAllocated;
     //Virtually link the free ones
     while(c<(iAllocated+aGrowBy))
 		{
@@ -94,11 +94,12 @@ template <class T>
 inline void DResourceCon<T>::Delete()
 	{
     delete []iArray;
+    iArray = NULL;
 	}
 
 /** Find the object at the specified location */
 template <class T>
-inline T* DResourceCon<T>::operator[](TUint16 anIndex)
+inline T* DResourceCon<T>::operator[](TInt anIndex)
 	{
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DResourceCon<T>::operator[], anIndex = %d", anIndex));
 	// Check if passed index is inside allocated range and is not free.
@@ -109,17 +110,17 @@ inline T* DResourceCon<T>::operator[](TUint16 anIndex)
 
 /** Remove the specified object from the container */
 template <class T>
-inline TInt DResourceCon<T>::Remove(T* /*aObj */, TUint16 aIndex)
+inline TInt DResourceCon<T>::Remove(T* /*aObj */, TInt aIndex)
 	{
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DResourceCon<T>::Remove"));
-    if(aIndex>=iAllocated)
+    if(aIndex>=(TInt)iAllocated)
 		{
 		__KTRACE_OPT(KRESMANAGER, Kern::Printf("Object not found, iAllocated = %d, index = %d", iAllocated, aIndex));
 		DPowerResourceController::Panic(DPowerResourceController::EObjectNotFoundInList);
 		}
 	// Add the entry to the free location
 	iArray[aIndex] = (T*)iFreeLoc;
-	iFreeLoc = aIndex;
+	iFreeLoc = (TUint16)aIndex;
     iCount--; //Decrement valid client count
 	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DResourceCon<T>::Remove"));
     return KErrNone;
@@ -136,9 +137,9 @@ inline TInt DResourceCon<T>::Add(T* aObj, TUint &aId)
     //Update in the array in the free location
 	aId = ((++iInstanceCount & INSTANCE_COUNT_BIT_MASK) << INSTANCE_COUNT_POS); //Instance count
 	aId |= (iFreeLoc & ID_INDEX_BIT_MASK); //Array index
-    TUint16 nextFreeLoc = (TUint16)(TUint)iArray[iFreeLoc];
+    TUint nextFreeLoc = (TUint)iArray[iFreeLoc];
     iArray[iFreeLoc] = aObj;
-    iFreeLoc = nextFreeLoc;
+    iFreeLoc = (TUint16)nextFreeLoc;
     __KTRACE_OPT(KRESMANAGER, Kern::Printf("iFreeLoc %d", iFreeLoc));
     iCount++;  //Increment the valid client count
     return KErrNone;
@@ -151,7 +152,7 @@ inline TInt DResourceCon<T>::Find(T*& anEntry, TDesC8& aName)
     __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DResourceCon<T>::Find, aName %S", &aName));
     anEntry = NULL;
     T* pC=anEntry;
-    for(TUint count = 0; count<iAllocated; count++)
+    for(TInt count = 0; count < (TInt)iAllocated; count++)
 		{
         /* Check whether the location is free */
         if(((TUint)iArray[count]) <= iAllocated)

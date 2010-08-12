@@ -31,21 +31,21 @@ PRJ_EXPORTS
 
 PRJ_TESTEXPORTS
 
-../../../kernel/eka/include/kernel/dobject.h						/epoc32/include/kernel/			
+../../../kernel/eka/include/kernel/dobject.h						OS_LAYER_PLATFORM_EXPORT_PATH(kernel/dobject.h)			
 
-../../../userlibandfileserver/domainmgr/inc/domainobserver.h				/epoc32/include/
+../../../userlibandfileserver/domainmgr/inc/domainobserver.h				OS_LAYER_PLATFORM_EXPORT_PATH(domainobserver.h)
 
-../dll/d_ldrtst.h					/epoc32/include/
+../dll/d_ldrtst.h					OS_LAYER_PLATFORM_EXPORT_PATH(d_ldrtst.h)
 
-../nkernsa/interrupts.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/interrupts.h)	//
-../nkernsa/nkutils.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/nkutils.h)	//
-../nkernsa/utils.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/utils.h)	//
-../nkernsa/diag.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(nktest/diag.h)	//
+../nkernsa/interrupts.h				OS_LAYER_PLATFORM_EXPORT_PATH(nktest/interrupts.h)	//
+../nkernsa/nkutils.h				OS_LAYER_PLATFORM_EXPORT_PATH(nktest/nkutils.h)	//
+../nkernsa/utils.h					OS_LAYER_PLATFORM_EXPORT_PATH(nktest/utils.h)	//
+../nkernsa/diag.h					OS_LAYER_PLATFORM_EXPORT_PATH(nktest/diag.h)	//
 
-../../../kernel/eka/include/e32huffman.h				/epoc32/include/
+../../../kernel/eka/include/e32huffman.h				OS_LAYER_PLATFORM_EXPORT_PATH(e32huffman.h)
 
 platsec.settings        /epoc32/data/defaulttest.ini
-../mmu/d_memorytest.h   /epoc32/include/e32test/d_memorytest.h
+../mmu/d_memorytest.h   OS_LAYER_PLATFORM_EXPORT_PATH(e32test/d_memorytest.h)
 
 ../buffer/UnicodeData.txt    /epoc32/data/z/test/unicodedata.txt
 ../buffer/UnicodeData.txt    /epoc32/release/wins/udeb/z/test/unicodedata.txt
@@ -68,11 +68,11 @@ platsec.settings        /epoc32/data/defaulttest.ini
 ../dll/oe/eabi/urel/t_oeexport.exe      /epoc32/release/armv5/urel/t_oeexport.exe
 ../dll/oe/eabi/urel/t_oeexport1.exe     /epoc32/release/armv5/urel/t_oeexport1.exe
 
-../demandpaging/d_pagestress.h		/epoc32/include/
-../pci/t_pci.h						/epoc32/include/e32test/t_pci.h
+../demandpaging/d_pagestress.h		OS_LAYER_PLATFORM_EXPORT_PATH(d_pagestress.h)
+../pci/t_pci.h						OS_LAYER_PLATFORM_EXPORT_PATH(e32test/t_pci.h)
 
-../iic/iic_psl/i2c.h			/epoc32/include/e32test/
-../iic/iic_psl/spi.h			/epoc32/include/e32test/
+../iic/iic_psl/i2c.h			OS_LAYER_PLATFORM_EXPORT_PATH(e32test/i2c.h)
+../iic/iic_psl/spi.h			OS_LAYER_PLATFORM_EXPORT_PATH(e32test/spi.h)
 
 PRJ_TESTMMPFILES
 
@@ -257,6 +257,9 @@ t_emi
 t_ramdefrag
 #endif
 
+// /E32TEST/TIMESTAMP test must also come before t_lat2 as it goes into Low Power Mode.
+t_timestamp
+
 #ifdef EPOC32
 // Start the latency measurement
 t_lat2
@@ -310,9 +313,6 @@ t_prof      support
 t_kernasmbm manual
 t_userasmbm manual
 #endif
-
-// /E32TEST/TIMESTAMP test
-t_timestamp
 
 // /e32test/benchmark
 #ifndef X86

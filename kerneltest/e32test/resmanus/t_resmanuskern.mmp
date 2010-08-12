@@ -17,7 +17,8 @@ target  T_ResManUsKern.exe
 targettype      exe
 
 // Need simulated PSL to support this test
-macro RESOURCE_MANAGER_SIMULATED_PSL 
+macro RESOURCE_MANAGER_SIMULATED_PSL
+macro _DUMP_TRACKERS
 macro PRM_ENABLE_EXTENDED_VERSION
 macro RESMANUS_KERN
 

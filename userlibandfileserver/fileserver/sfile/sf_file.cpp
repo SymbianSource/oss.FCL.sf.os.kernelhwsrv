@@ -1641,6 +1641,7 @@ TInt TFsFileAtt::DoRequestL(CFsRequest* aRequest)
 	CFileShare* share=(CFileShare*)aRequest->ScratchValue();
 //	TInt att=(TInt)aRequest->FileShare()->File().Att()&KEntryAttMaskSupported;
 	TInt att=(TInt)share->File().Att();	// DRM: let ROM XIP attribute through
+	att&= ~KEntryAttModified;	// this is an internal attribute and should not be returned to the client
 	TPtrC8 pA((TUint8*)&att,sizeof(TInt));
 	aRequest->WriteL(KMsgPtr0,pA);
 	
@@ -1679,7 +1680,7 @@ TInt TFsFileSetAtt::DoRequestL(CFsRequest* aRequest)
 	TUint clearAttMask=(TUint)aRequest->Message().Int1();
 	ValidateAtts(setAttMask,clearAttMask);
 	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL1, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) setAttMask, (TUint) clearAttMask);
-	TRAP(r,share->File().SetEntryL(TTime(0),setAttMask,clearAttMask))
+	TRAP(r,share->File().SetEntryL(share->File().Modified(),setAttMask,clearAttMask))
 	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL1RET, "r %d", r);
 	return(r);
 	}
@@ -1785,12 +1786,12 @@ TInt TFsFileSet::DoRequestL(CFsRequest* aRequest)
     TTime time;
 	TPtr8 t((TUint8*)&time,sizeof(TTime));
 	aRequest->ReadL(KMsgPtr0,t);
-	TUint setAttMask=(TUint)(aRequest->Message().Int1()|KEntryAttModified);
+	TUint setAttMask=(TUint)(aRequest->Message().Int1());
 	TUint clearAttMask=(TUint)aRequest->Message().Int2();
 	ValidateAtts(setAttMask,clearAttMask);//	Validate attributes
 
 	OstTraceExt3(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL3, "this %x aSetAttMask %x aClearAttMask %x", (TUint) &share->File(), (TUint) setAttMask, (TUint) clearAttMask);
-	TRAP(r,share->File().SetEntryL(time,setAttMask,clearAttMask))
+	TRAP(r,share->File().SetEntryL(time,setAttMask|KEntryAttModified,clearAttMask))
 	OstTrace1(TRACE_FILESYSTEM, FSYS_ECFILECBSETENTRYL3RET, "r %d", r);
 	return(r);
 	}

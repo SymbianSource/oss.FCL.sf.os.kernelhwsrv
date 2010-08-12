@@ -344,6 +344,14 @@ GLDEF_C TInt E32Main()
 
 		test.End();
 
+	// All files on the emulator's Z: drive have the KEntryAttReadOnly flag set
+	// This flag will have been copied to the C: drive, so we need to remove this before calling CFileMan::RmDir()
+#ifdef __WINS__
+	r = TheFs.SetAtt(KDllCInCTest, 0, KEntryAttReadOnly);
+	test_KErrNone(r);
+#endif
+
+
 	_LIT(KCTestPath,"c:\\sysbin_test\\");
 	r = TheFileMan->RmDir(KCTestPath);
 	test_KErrNone(r);
@@ -380,6 +388,14 @@ GLDEF_C TInt E32Main()
 		TestDllD(KDllD,_L("c:\\dummy1;c:\\sys\\bin\\test2;c:\\sys\\bin\\test\\"));
 
 		test.End();
+
+	// All files on the emulator's Z: drive have the KEntryAttReadOnly flag set
+	// This flag will have been copied to the C: drive, so we need to remove this before calling CFileMan::RmDir()
+#ifdef __WINS__
+	r = TheFs.SetAtt(KDllDInCSysBinTest, 0, KEntryAttReadOnly);
+	test_KErrNone(r);
+#endif
+
 
 	_LIT(KCTestPath2,"c:\\sys\\bin\\test\\");
 	r = TheFileMan->RmDir(KCTestPath2);
