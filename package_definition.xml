@@ -44,7 +44,7 @@
         <!-- these are LDDs for storage media-->
         <unit bldFile="kernel/eka/drivers/locmedia" mrp="kernel/eka/drivers/locmedia/base_e32_drivers_locmedia.mrp"/>
       </component>
-      <component id="runmodedebugger" name="Run Mode Debugger" purpose="mandatory">
+      <component id="stopmodedebugdriver" name="Stop Mode Debug Driver" purpose="mandatory">
 		<unit bldFile="kernel/eka/drivers/debug/group" mrp="kernel/eka/drivers/debug/group/base_e32_drivers_debug.mrp"/>	    
       </component>
       <component id="btrace" name="Kernel Trace Tool" purpose="mandatory">

@@ -2843,6 +2843,22 @@ enum TVMHalFunction
 	enabled.
 	*/
 	EVMHalSetDataWriteSize,
+
+	/**
+	@internalTechnology
+	@test
+
+	Simulates a paging error in a specified context.
+	
+	For testing purposes, this causes the paging system to report an error the next time an
+	operation occurs that could generate an error with the specified context.
+
+	The first argument (a1) contains one of the contexts described by TPagingErrorContext.
+
+	@return KErrArgument if the value is out of range, or KErrNotSupported on memory models that do
+	not support this.
+	*/
+	EVMHalDebugSetFail,
 	};
 
 
@@ -3272,6 +3288,25 @@ struct SVMSwapThresholds
 	// do not add new members to this struct, this is a compatability break
 	};
 
+
+/**
+@internalComponent
+@test
+
+Error context information for use by #DPager::EmbedErrorContext and #DPager::ExtractErrorContext.
+*/
+enum TPagingErrorContext
+	{
+	EPagingErrorContextNone = 0,
+	EPagingErrorContextRomRead,
+	EPagingErrorContextRomDecompress,
+	EPagingErrorContextCodeRead,
+	EPagingErrorContextCodeDecompress,
+	EPagingErrorContextDataRead,
+	EPagingErrorContextDataWrite,
+
+	EMaxPagingErrorContext
+	};
 
 
 /**

@@ -2044,9 +2044,8 @@ void DPager::UnreservePages(TUint& aCount)
 	}
 
 
-TInt DPager::CheckRealtimeThreadFault(DThread* aThread, TAny* aExceptionInfo)
+DThread* DPager::ResponsibleThread(DThread* aThread, TAny* aExceptionInfo)
 	{
-	// realtime threads shouldn't take paging faults...
 	DThread* client = aThread->iIpcClient;
 
 	// If iIpcClient is set then we are accessing the address space of a remote thread.  If we are
@@ -2055,29 +2054,81 @@ TInt DPager::CheckRealtimeThreadFault(DThread* aThread, TAny* aExceptionInfo)
 	TIpcExcTrap* ipcTrap = (TIpcExcTrap*)aThread->iExcTrap;
 	if (ipcTrap && !ipcTrap->IsTIpcExcTrap())
 		ipcTrap = 0;
-	if (client && (!ipcTrap || ipcTrap->ExcLocation(aThread, aExceptionInfo) == TIpcExcTrap::EExcRemote))
+	if (client &&
+		(!ipcTrap || ipcTrap->ExcLocation(aThread, aExceptionInfo) == TIpcExcTrap::EExcRemote))
+		return client;
+	else
+		return NULL;
+	}
+
+
+TInt DPager::CheckRealtimeThreadFault(DThread* aThread, TAny* aExceptionInfo)
+	{
+	// realtime threads shouldn't take paging faults...
+	DThread* thread = ResponsibleThread(aThread, aExceptionInfo);
+
+	const char* message = thread ?
+		"Access to Paged Memory (by other thread)" : "Access to Paged Memory";
+
+	// kill respsonsible thread...
+	if(K::IllegalFunctionForRealtimeThread(thread, message))
 		{
-		// kill client thread...
-		if(K::IllegalFunctionForRealtimeThread(client,"Access to Paged Memory (by other thread)"))
-			{
-			// treat memory access as bad...
-			return KErrAbort;
-			}
-		// else thread is in 'warning only' state so allow paging...
+		// if we are killing the current thread and we are in a critical section, then the above
+		// kill will be deferred and we will continue executing. We will handle this by returning an
+		// error which means that the thread will take an exception (which hopefully is XTRAPed!)
+
+		// treat memory access as bad...
+		return KErrAbort;
 		}
 	else
 		{
-		// kill current thread...
-		if(K::IllegalFunctionForRealtimeThread(NULL,"Access to Paged Memory"))
-			{
-			// if current thread is in critical section, then the above kill will be deferred
-			// and we will continue executing. We will handle this by returning an error
-			// which means that the thread will take an exception (which hopefully is XTRAPed!)
-			return KErrAbort;
-			}
-		// else thread is in 'warning only' state so allow paging...
+		// thread is in 'warning only' state so allow paging...
+		return KErrNone;
 		}
-	return KErrNone;
+	}
+
+
+void DPager::KillResponsibleThread(TPagingErrorContext aContext, TInt aErrorCode,
+								   TAny* aExceptionInfo)
+	{
+	const char* message = NULL;
+	switch (aContext)
+		{
+		case EPagingErrorContextRomRead:
+			message = "PAGED-ROM-READ";
+			break;
+		case EPagingErrorContextRomDecompress:
+			message = "PAGED-ROM-COMP";
+			break;
+		case EPagingErrorContextCodeRead:
+			message = "PAGED-CODE-READ";
+			break;
+		case EPagingErrorContextCodeDecompress:
+			message = "PAGED-CODE-COMP";
+			break;
+		case EPagingErrorContextDataRead:
+			message = "PAGED-DATA-READ";
+			break;
+		case EPagingErrorContextDataWrite:
+			message = "PAGED-DATA-WRITE";
+			break;
+		default:
+			message = "PAGED-UNKNOWN";
+			break;
+		}
+
+	TPtrC8 category((const unsigned char*)message);
+	DThread* thread = ResponsibleThread(TheCurrentThread, aExceptionInfo);
+	if (thread)
+		{
+		NKern::LockSystem();
+		thread->Die(EExitPanic, aErrorCode,  category);
+		}
+	else
+		{
+		TheCurrentThread->SetExitInfo(EExitPanic, aErrorCode, category);
+		NKern::DeferredExit();
+		}
 	}
 
 
@@ -2103,6 +2154,16 @@ TInt DPager::HandlePageFault(	TLinAddr aPc, TLinAddr aFaultAddress, TUint aFault
 		r = manager->HandleFault(aMemory, aFaultIndex, aMapping, aMapInstanceCount, aAccessPermissions);
 
 		TheThrashMonitor.NotifyEndPaging();
+
+		// If the paging system encountered an error paging in the memory (as opposed to a thread
+		// accessing non-existent memory), then panic the appropriate thread.  Unfortunately this
+		// situation does occur as media such as eMMC wears out towards the end of its life. 
+		if (r != KErrNone)
+			{
+			TPagingErrorContext context = ExtractErrorContext(r);
+			if (context != EPagingErrorContextNone)
+				KillResponsibleThread(context, ExtractErrorCode(r), aExceptionInfo);
+			}
 		}
 	return r;
 	}
@@ -2644,7 +2705,18 @@ TInt VMHalFunction(TAny*, TInt aFunction, TAny* a1, TAny* a2)
 		if ((K::MemModelAttributes & EMemModelAttrDataPaging) == 0)
 			return KErrNotSupported;
 		return SetDataWriteSize((TUint)a1);
-	
+
+#ifdef _DEBUG
+	case EVMHalDebugSetFail:
+		{
+		TUint context = (TUint)a1;
+		if (context >= EMaxPagingErrorContext)
+			return KErrArgument;
+		__e32_atomic_store_ord32(&(ThePager.iDebugFailContext), context);
+		return KErrNone;
+		}
+#endif
+
 	default:
 		return KErrNotSupported;
 		}

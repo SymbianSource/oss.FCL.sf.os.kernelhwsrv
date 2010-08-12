@@ -93,6 +93,9 @@ d_ldd2						support
 d_ldd2_ram					support
 d_lddns						support
 d_lddpowerseqtest			support
+#if !defined(X86) && !defined(WINS)
+../power/d_powermisctest					support
+#endif
 d_ldddigitisertest			support
 d_lddturnaroundtimertest	support
 d_newldd					support
@@ -402,6 +405,9 @@ t_usb_scdevice	manual
 t_tldd
 t_newldd
 t_lddpowerseqtest
+#if !defined(X86) && !defined(WINS)
+../power/t_powermisctest 
+#endif
 t_ldddigitisertest
 t_userdigitisertest
 t_userdigitisernocaps
@@ -721,9 +727,6 @@ t_medch
 // /E32TEST/POWER tests
 t_power
 t_power_slave   support
-t_domain
-t_domain_slave  support
-domainPolicyTest support
 t_switchoff
 t_frqchg
 
@@ -1022,37 +1025,7 @@ t_oeexport2
 #endif
 
 #if defined(MARM_ARMV5)
-../rm_debug/group/t_rmdebug_dll support
-../rm_debug/group/t_rmdebug_security0 support
-../rm_debug/group/t_rmdebug_security1 support
-../rm_debug/group/t_rmdebug_security2 support
-../rm_debug/group/t_rmdebug_security3 support
-../rm_debug/group/t_rmdebug_app support
-../rm_debug/group/t_rmdebug2
-../rm_debug/group/t_rmdebug2_oem
-../rm_debug/group/t_rmdebug2_oemtoken support
-../rm_debug/group/t_rmdebug2_oem2
-../rm_debug/group/t_rmdebug2_oemtoken2 support
 ../rm_debug/group/t_crashmonitor_lib
-
-../rm_debug/group/t_rmdebug_app1 support
-../rm_debug/group/t_rmdebug_app2 support
-../rm_debug/group/t_rmdebug_app3 support
-../rm_debug/group/t_rmdebug_app4 support
-../rm_debug/group/t_rmdebug_app5 support
-../rm_debug/group/t_rmdebug_app6 support
-../rm_debug/group/t_rmdebug_app7 support
-../rm_debug/group/t_rmdebug_app8 support
-../rm_debug/group/t_rmdebug_app9 support
-../rm_debug/group/t_rmdebug_app10 support
-
-../rm_debug/group/t_rmdebug_target_launcher support
-../rm_debug/group/t_rmdebug_multi_target
-
-../rm_debug/group/t_rmdebug_multi_agent support
-../rm_debug/group/t_multi_agent_launcher
-
-
 #endif
 
 t_stacksize
@@ -1079,6 +1052,8 @@ d_mmcsc			support
 t_kerncorestats		support
 
 #include "../hcr/hcr.inf"
+
+#include "../domainmgr/test.inf"
 
 //pci tests
 t_pci

@@ -1,3 +1,51 @@
+Version 2.00.3113
+=================
+(Made by fadhliM 02/08/2010)
+
+
+1.	sakhghos
+	1.	ou1cimx1#504256 MCL removal of Run-Mode Debug Driver components from KHS package
+
+2.	h14jiang
+	1.	ou1cimx1#504400 [MCL] Disk full notification pops up
+
+3.	lanerobe
+	1.	ou1cimx1#499080 TExtended::LoadLocale() failed, but may affect the OS locale setting.
+	2.	ou1cimx1#499031 TExtendedLocale::Locale(const TDesC& aLocaleDllName) fail.
+
+4.	martai
+	1.	ou1cimx1#508646 ENV : E32TEST T_SHADOW Fails during testMultipleReadFile()
+
+
+Version 2.00.3112
+=================
+(Made by fadhliM 27/07/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#492020 System-critical thread being reported in MC when another permanent thread in same process faults
+
+2.	josezhou
+	1.	ou1cimx1#482087 If the usb device doesn't support HNP, the call to usbd_set_otg_support returns USBD_STALLED 
+
+3.	gcochran
+	1.	ou1cimx1#498830 [mcl] ENV t_svrpinning, _P,_UP test fails with unexpected thread exit type on Vasco/TB9.2  
+
+4.	stmansfi
+	1.	ou1cimx1#496968 Fix domain manager test structure
+
+5.	jcoppear
+	1.	ou1cimx1#500393 Demand paging loses error information when a fatal error occurs
+
+6.	x120li
+	1.	ou1cimx1#493275 TdesC16::LocateReverseF2() function can't stop running.
+
+7.	erifung
+	1.	ou1cimx1#460764 Improve code coverage for kernel power component
+
+8.	davegord
+	1.	ou1cimx1#497240 [mcl] Problem with ExecHandler::FsRegisterThread()
+
+
 Version 2.00.3111
 =================
 (Made by fadhliM 26/07/2010)

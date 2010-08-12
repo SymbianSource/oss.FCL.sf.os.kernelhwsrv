@@ -1,0 +1,32 @@
+/*
+* Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#ifndef __SM_DEBUG_IBY__
+#define __SM_DEBUG_IBY__
+
+
+#ifndef KMAIN
+
+// Stop Mode Debugger
+#ifdef STOP_MODE_DEBUGGING_V2
+extension[VARID]=KERNEL_DIR\DEBUG_DIR\sm_debug.dll		\sys\bin\sm_debug.dll
+#endif
+
+
+#endif
+
+
+#endif	// __SM_DEBUG_IBY__

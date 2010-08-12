@@ -1,3 +1,24 @@
+Version 2.00.3058
+=================
+(Made by fadhliM 30/07/2010)
+
+1.	niccox
+	1.	ou1cimx1#393936 Incorrect update of progress bar with format of Usb Mass Storage 
+	2.	ou1cimx1#500789 ENV : F32Test T_WCACHE - Incorrect Check for Disk Size
+
+
+Version 2.00.3057
+=================
+(Made by fadhliM 27/07/2010)
+
+1.	niccox
+	1.	ou1cimx1#393936 Incorrect update of progress bar with format of Usb Mass Storage 
+	2.	ou1cimx1#493805 USB Host MS does not recognise NTFS partition info
+
+2.	h14jiang
+	1.	ou1cimx1#495683 FileServer - Bad usage of RArray::Append() and RPointerArray::Append()
+
+
 Version 2.00.3056
 =================
 (Made by fadhliM 26/07/2010)

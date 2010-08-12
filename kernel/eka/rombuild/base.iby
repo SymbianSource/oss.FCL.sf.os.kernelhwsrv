@@ -62,8 +62,8 @@ WARNING This implementation of symmetric multiprocessing is a prototype, not lic
 file=ABI_DIR\DEBUG_DIR\eka1_entry_stub.dll              \sys\bin\Eka1_Entry_Stub.dll
 #endif
 
-// Run-mode debug sub-system
-#include <rm_debug_svr.iby>
+// Stop-mode debug sub-system
+#include <sm_debug.iby>
 
 #if !defined(EUSER_DLL)
 #error EUSER_DLL not defined

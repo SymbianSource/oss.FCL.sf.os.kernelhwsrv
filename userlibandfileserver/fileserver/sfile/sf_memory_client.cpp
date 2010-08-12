@@ -144,7 +144,11 @@ EXPORT_C void CCacheMemoryClient::Reset()
 
 	iTouchedRegionFlag = 0;
 	iReusablePagePool.Close();
-	iReusablePagePool.Reserve(iReservedRegionMarkInSegs);
+	r = iReusablePagePool.Reserve(iReservedRegionMarkInSegs);
+    if (r != KErrNone)
+        {
+        ASSERT(0);
+        }
 	}
 
 /**
@@ -229,7 +233,9 @@ EXPORT_C TInt CCacheMemoryClient::DecommitSegments(TUint8* aStartRamAddr, TUint3
 	ASSERT(err == KErrNone);
 	if (err != KErrNone)
 		return err;
-	iReusablePagePool.Append(aStartRamAddr);
+	err = iReusablePagePool.Append(aStartRamAddr);
+    if (err != KErrNone)
+        return err;
 	return KErrNone;
 	}
 

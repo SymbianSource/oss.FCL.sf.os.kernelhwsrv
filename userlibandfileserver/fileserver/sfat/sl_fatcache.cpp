@@ -358,7 +358,7 @@ void CFat16FixedCache::InitialiseL(CFatMountCB* aOwner, TUint32 aFatSize, TUint3
 
     //-- prepare pointer array for pages. NULL entry in the array means that the page at this index isn't allocated.
     for(TUint i=0; i<numPages; ++i)
-        iPages.Append(NULL);
+        iPages.AppendL(NULL);
     
     }
 

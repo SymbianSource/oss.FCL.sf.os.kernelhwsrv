@@ -24,7 +24,6 @@
 #define DEBUG_UTILS_H
 
 #include <kernel/kern_priv.h>
-#include <rm_debug_api.h>
 
 class DebugUtils
 	{

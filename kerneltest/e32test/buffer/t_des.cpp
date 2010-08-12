@@ -1399,6 +1399,30 @@ LOCAL_C void testSurrogateAwareInterfaces()
 	_LIT(KCorruptString1,		"ab\xD840\xDDAD e\xDDAD\xD840");
 	TBuf16<128> s04(KCorruptString1);
 	test(s04.FindCorruptSurrogate() == 6);
+	
+	// string 5: fill
+	_LIT(KOddString5,           "0123456");
+	TBuf16<128> s05(KOddString5);
+	s05.Fill2(0x21000);
+    test(s05 == _L("\xD844\xDC00\xD844\xDC00\xD844\xDC00\xD844"));
+    s05.Fill2(' ');
+    test(s05 == _L("       "));
+	s05.AppendFill2(0x22222, 2);
+	s05.AppendFill2(0x22222, 3);
+	test(s05 == _L("       \xD848\xDE22\xD848\xDE22\xD848"));
+	
+	// string 6: locate
+	// from Unicode 5.0, CaseFolding.txt
+	// 10400; C; 10428; # DESERET CAPITAL LETTER LONG I
+	// 0x10400's fold is 0x10428
+	TCharF f06(0x10400);
+	test(f06 == 0x10428);  // just to ensure the property is correct
+	// 0x10400: D801, DC00
+	// 0x10428: D801, DC28
+	_LIT(KMixedString6,         "ab\xD801\xDC00 e\xD801\xDC27");
+	TBuf16<128> s06(KMixedString6);
+	TInt pos6 = s06.LocateReverseF2(0x10428);
+	test(pos6 == 2);
 	}
 
 

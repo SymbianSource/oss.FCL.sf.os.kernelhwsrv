@@ -1,0 +1,7 @@
+EXPORTS
+	_ZN5Debug13StopModeDebug7GetListEPKNS_9TListItemEi @ 1 NONAME
+	_ZN5Debug13StopModeDebug7TestAPIEPKNS_9TListItemE @ 2 NONAME
+	_ZN5Debug13StopModeDebug9ExitPointEi @ 3 NONAME
+	_ZTI14DBufferManager @ 4 NONAME
+	_ZTV14DBufferManager @ 5 NONAME
+

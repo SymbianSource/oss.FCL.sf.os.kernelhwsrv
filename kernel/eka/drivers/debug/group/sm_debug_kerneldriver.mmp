@@ -1,0 +1,57 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the License "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+#include "../../../kernel/kern_ext.mmh"
+
+UID             0x100000AF 0x101F7157
+
+userinclude		../common
+userinclude		../smdebug
+
+SOURCEPATH      ../common
+SOURCE          debug_utils.cpp
+SOURCE          d_debug_functionality.cpp
+
+SOURCEPATH		../smdebug
+SOURCE          sm_debug_kerneldriver.cpp
+SOURCE			d_buffer_manager.cpp
+SOURCE			d_sm_codeseg.cpp
+SOURCE			d_sm_process.cpp
+SOURCE          d_sm_staticinfo.cpp 
+SOURCE 			d_stopmode.cpp
+
+
+TARGET			sm_debug.dll
+
+TARGETTYPE KEXT
+
+systeminclude     ../../../include/drivers
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+SYMBIAN_BASE_SYSTEMINCLUDE(memmodel/epoc/mmubase)
+SYMBIAN_BASE_SYSTEMINCLUDE(drivers)
+#endif
+
+
+deffile ../../../~/sm_debug.def
+
+VENDORID 0x70000001
+
+//Specified to allow global data
+EPOCALLOWDLLDATA
+
+capability			all
+
+SMPSAFE

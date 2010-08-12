@@ -2887,13 +2887,18 @@ the locale information in the DLL, you can call TExtendedLocale::SaveSystemSetti
 after calling this function.
 
 @param aLocaleDllName The name of the locale DLL to be loaded
-@return KErrNone if successful, system wide error if not
+@return KErrNone if successful, KErrNotSupported if the DLL name matches the pattern
+of a new-style locale library, system wide error otherwise
 
 @see TExtendedLocale::SaveSystemSettings 
 */
 EXPORT_C TInt TExtendedLocale::LoadLocale(const TDesC& aLocaleDllName)
 	{
 #ifdef SYMBIAN_DISTINCT_LOCALE_MODEL
+	if (aLocaleDllName.Find(KFindLan) != KErrNotFound || aLocaleDllName.Find(KFindReg) != KErrNotFound || aLocaleDllName.Find(KFindCol) != KErrNotFound)
+		{
+		return KErrNotSupported; // Only try to load old-style locale libraries
+		}
 	TLibraryFunction data[KNumLocaleExports];
 	TInt r = DoLoadLocale(aLocaleDllName, &data[0]);
 	if(r == KErrNone)
@@ -2993,6 +2998,9 @@ stored in this TExtendedLocale. If you want to set the system wide settings with
 the locale information in the DLL, you can call TExtendedLocale::SaveSystemSettings
 after calling this function.
 
+If the function fails then it will call LoadSystemSettings() to return its members
+to a known, good state.
+
 @param aLanguageLocaleDllName The name of the language locale DLL to be loaded
 @param aRegionLocaleDllName The name of the region locale DLL to be loaded
 @param aCollationLocaleDllName The name of the collation locale DLL to be loaded
@@ -3006,18 +3014,16 @@ EXPORT_C TInt TExtendedLocale::LoadLocale(const TDesC& aLanguageLocaleDllName,
 		const TDesC& aRegionLocaleDllName, 
 		const TDesC& aCollationLocaleDllName)
 	{
-
 	TInt err = LoadLocaleAspect(aLanguageLocaleDllName);
+
+	if(err == KErrNone)
+		err = LoadLocaleAspect(aRegionLocaleDllName);
+
+	if(err == KErrNone)
+		err = LoadLocaleAspect(aCollationLocaleDllName);
+
 	if(err != KErrNone)
-		return err;
-	
-	err = LoadLocaleAspect(aRegionLocaleDllName);
-	if(err != KErrNone)
-		return err;
-	
-	err = LoadLocaleAspect(aCollationLocaleDllName);
-	if(err != KErrNone)
-		return err;	
+		LoadSystemSettings();	
 
 	return err;	
 	}

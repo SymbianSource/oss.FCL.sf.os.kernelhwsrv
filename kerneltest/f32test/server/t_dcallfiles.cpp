@@ -89,9 +89,6 @@ TRequestStatus aStat2;
 TRequestStatus aStat3;
 TRequestStatus aStat4;
 
-TVolumeInfo aVolInfo;
-//	TDriveInfo adriveInfo;
-
 TBuf<40> systestfile;
 TBuf<40> pritestfile;
 TBuf<40> restestfile;

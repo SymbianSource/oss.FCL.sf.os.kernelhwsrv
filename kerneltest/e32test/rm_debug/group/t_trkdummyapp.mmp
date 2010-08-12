@@ -27,7 +27,6 @@ source        	t_trkdummyapp.cpp
 library		euser.lib
 library         hal.lib
 library         efsrv.lib
-library         t_rmdebug_dll.lib
 
 SYMBIAN_BASE_SYSTEMINCLUDE(nkern)
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN

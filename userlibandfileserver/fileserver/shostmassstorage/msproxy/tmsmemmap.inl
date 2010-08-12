@@ -42,11 +42,11 @@ inline void TMsDataMemMap::InitDataArea(TUint32 aFirstDataSector, TUint32 aNumSe
 	iSectorSize = aSectorSize;
 
 	iFormatSectorShift = 0;
-	while(aSectorSize)
-		{
-		++iFormatSectorShift;
-		aSectorSize >>= 1;
-		}
+
+    while(aSectorSize >>= 1)
+        {
+        ++iFormatSectorShift;
+        }
 
 	iDataOffset = static_cast<TInt64>(aFirstDataSector) * iSectorSize;
 	iSize = static_cast<TInt64>(aNumSectors) * iSectorSize;

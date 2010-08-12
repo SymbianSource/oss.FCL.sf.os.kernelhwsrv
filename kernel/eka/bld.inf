@@ -247,7 +247,6 @@ include/drivers/crashflash.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/crashflashnor.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 include/drivers/crashflashnand.h				SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
 
-include/rm_debug_api.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(rm_debug_api.h)
 include/sm_debug_api.h SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(sm_debug_api.h)
 
 include/drivers/resourceman.h					SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(drivers/)
@@ -395,7 +394,7 @@ rombuild/PlatSecEnforcement.oby					/epoc32/rom/include/
 rombuild/PlatSecDiagnostics.oby					/epoc32/rom/include/
 rombuild/btrace.iby								/epoc32/rom/include/
 rombuild/kernel.hby								/epoc32/rom/include/
-rombuild/rm_debug_svr.iby						/epoc32/rom/include/			// Run mode debug driver
+rombuild/sm_debug.iby						    /epoc32/rom/include/			
 rombuild/utrace.iby								/epoc32/rom/include/
 rombuild/ost.iby								/epoc32/rom/include/
 

@@ -1355,10 +1355,8 @@ TBool CheckForDiskSize()
 	TVolumeInfo volInfo;
 	TInt r = gTheFs.Volume(volInfo, gDrive);
 	test_KErrNone(r);
-	gMediaSize = volInfo.iSize;
-	
-	test.Printf(_L("\nMedia size: %d MB\n"), gMediaSize/KOneMeg  );
-	
+	gMediaSize = volInfo.iFree;	
+	test.Printf(_L("\nMedia free space: %d MB\n"), gMediaSize/KOneMeg);
 	return ETrue;
 	}
 

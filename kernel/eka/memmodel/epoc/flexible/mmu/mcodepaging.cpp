@@ -298,31 +298,17 @@ TInt DCodePagedMemoryManager::ReadPages(DMemoryObject* aMemory, TUint aIndex, TU
 												(TAny*)info.iCodeLocalDrive,
 												(TAny*)&message);
 
-		if(bufferStart<0)
-			{
-			r = bufferStart; // return error
-			__NK_ASSERT_DEBUG(0);
+		r = ThePager.EmbedErrorContext(EPagingErrorContextCodeRead, bufferStart); 
+		if(r<0)
 			break;
-			}
 
 		TLinAddr data = aRequest->Buffer() + bufferStart;
 		r = Decompress(info.iCompressionType, linAddr, decompressedSize, data, dataSize);
-		if(r>=0)
-			{
-			if(r!=decompressedSize)
-				{
-				__KTRACE_OPT(KPANIC, Kern::Printf("DCodePagedMemoryManager::ReadPage: error decompressing page at %08x + %x: %d", dataOffset, dataSize, r));
-				__NK_ASSERT_DEBUG(0);
-				r = KErrCorrupt;
-				}
-			else
-				r = KErrNone;
-			}
-		else
-			{
-			__NK_ASSERT_DEBUG(0);
-			}
-
+		if (r >= 0)
+			r = (r == decompressedSize) ? KErrNone : KErrCorrupt;
+		if(r != KErrNone)
+			__KTRACE_OPT(KPANIC, Kern::Printf("DCodePagedMemoryManager::ReadPage: error decompressing page at %08x + %x: %d", dataOffset, dataSize, r));
+		r = ThePager.EmbedErrorContext(EPagingErrorContextCodeDecompress, r); 			
 		if(r!=KErrNone)
 			break;
 

@@ -51,10 +51,7 @@ PRJ_MMPFILES
 
 #if defined(MARM_ARMV5) || defined(MARM_ARMV4)
 
-
-rm_debug_kerneldriver
-rm_debug_kerneldriver_ext
-../../../debug/securityServer/group/rm_debug_svr
+sm_debug_kerneldriver
 
 #if defined(GENERIC_MARM) 
 ../../../debug/crashMonitor/group/scmusr_lib

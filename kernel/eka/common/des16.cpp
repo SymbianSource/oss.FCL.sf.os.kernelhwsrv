@@ -1691,20 +1691,19 @@ appropriate, and should not be used for searching strings in natural language.
 	{
 	TInt strLength = Length();
 	const TText16* start = Ptr();
-	const TText16* end = Ptr() + strLength;
 	TText16* newEnd;
 	TUint currentChar;
-	TInt int16Index = 0;
+	TInt int16Index = strLength;
 	TInt status = KErrNone;
 	FOREVER
 		{
-		status = ::RecedeOneCharacter(start, end, newEnd, currentChar);
-        if (status != KErrNone)
-            return status;
+		status = ::RecedeOneCharacter(start, start+int16Index, newEnd, currentChar);
+		if (status != KErrNone)
+		    return status;
+		int16Index = (newEnd - start);
 		TCharF c(currentChar);
 		if (c == aChar)
-			return int16Index;
-		int16Index = (newEnd - start);
+		    return int16Index;
 		}
 	}
 
@@ -3990,8 +3989,8 @@ existing data.
 The descriptor is filled from the beginning up to its current length. The 
 descriptor's length does not change. It is not filled to its maximum length.
 If aChar is supplementary character, and available space to fill is odd in
-16-bit unit, then the last 16-bit unit will be left unchanged, and the length
-will keep unchanged.
+16-bit unit, then the last 16-bit unit will be filled with high surrogate, 
+and the length will keep unchanged.
 
 @param aChar The fill character. Can be inside or outside BMP.
 
@@ -4012,6 +4011,9 @@ will keep unchanged.
 			*pB++ = TChar::GetHighSurrogate(aChar);
 			*pB++ = TChar::GetLowSurrogate(aChar);
 			}
+		// fill the last 16-bit unit
+		if (pB < pE)
+		    *pB++ = TChar::GetHighSurrogate(aChar);
 		}
 	}
 
@@ -4056,7 +4058,7 @@ The descriptor is appended with the specified number of characters, and its
 length is changed to reflect this.
 
 If aChar is supplementary character, and available space to fill is odd in 
-16-bit unit, then the last 16-bit unit will be left unchanged.
+16-bit unit, then the last 16-bit unit will be filled with high surrogate.
 
 @param aChar   The fill character. Can be inside or outside BMP.
 @param aLength The length of additional space to append into.
@@ -4088,6 +4090,9 @@ If aChar is supplementary character, and available space to fill is odd in
 			*pB++ = TChar::GetHighSurrogate(aChar);
 			*pB++ = TChar::GetLowSurrogate(aChar);
 			}
+        // fill the last 16-bit unit
+        if (pB < pE)
+            *pB++ = TChar::GetHighSurrogate(aChar);
 		}
 	}
 

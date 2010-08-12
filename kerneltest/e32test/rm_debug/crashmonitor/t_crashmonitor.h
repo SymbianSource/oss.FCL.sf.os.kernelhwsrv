@@ -28,7 +28,6 @@
 #include <e32cons.h>
 #include <e32test.h>
 #include <e32cmn.h>
-#include <rm_debug_api.h>
 #include <scmdatatypes.h>
 #include <scmbytestreamutil.h>
 #include <hal.h>

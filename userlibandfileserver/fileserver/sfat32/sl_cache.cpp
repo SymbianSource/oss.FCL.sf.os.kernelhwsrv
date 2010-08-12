@@ -119,7 +119,7 @@ void CMediaWTCache::InitialiseL(TUint32 aNumPages, TUint32 aPageSizeLog2, TUint3
     for(TUint cnt=0; cnt<aNumPages; ++cnt)
         {
         CWTCachePage* pPage = CWTCachePage::NewL(aPageSizeLog2);
-        iPages.Append(pPage);
+        iPages.AppendL(pPage);
         }
 
     InvalidateCache();  
