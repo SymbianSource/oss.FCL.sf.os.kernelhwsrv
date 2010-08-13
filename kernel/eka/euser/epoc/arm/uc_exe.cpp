@@ -74,13 +74,11 @@ void RunThread(TBool aNotFirst, SThreadCreateInfo& aInfo)
 
 TInt CallThrdProcEntry(TInt (*aFn)(void*), void* aPtr, TInt aNotFirst);
 
-__WEAK__ void run_static_dtors(void);
+void run_static_dtors(void);
 
 void globalDestructorFunc()
 	{
-	int call_static_dtors = (int)run_static_dtors;
-	if (call_static_dtors)
-		run_static_dtors();
+	run_static_dtors();
 	}
 
 void RunThread(TBool aNotFirst, SThreadCreateInfo& aInfo)
