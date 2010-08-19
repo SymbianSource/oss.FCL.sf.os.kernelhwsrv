@@ -89,17 +89,13 @@ void ValidateAtts(TUint& aSetAttMask,TUint& aClearAttMask)
 // Do not allow the entry type to be changed
 //
 	{
-	const TUint KReadOnlySetAtts = KEntryAttVolume | 
-								   KEntryAttDir    | 
-								   KEntryAttRemote;
+	const TUint KReadOnlyAtts = KEntryAttVolume	| 
+								KEntryAttDir	| 
+								KEntryAttRemote	|
+								KEntryAttModified;
 
-	const TUint KReadOnlyClrAtts = KEntryAttVolume | 
-								   KEntryAttDir    | 
-								   KEntryAttRemote | 
-								   KEntryAttModified;
-
-	aSetAttMask   &= ~KReadOnlySetAtts;
-	aClearAttMask &= ~KReadOnlyClrAtts;
+	aSetAttMask   &= ~KReadOnlyAtts;
+	aClearAttMask &= ~KReadOnlyAtts;
 	}
 
 void CheckForLeaveAfterOpenL(TInt leaveError, CFsRequest* aRequest, TInt aHandle)
@@ -547,6 +543,19 @@ TInt TDrive::FinaliseMount(TInt aOperation, TAny* aParam1/*=NULL*/, TAny* aParam
 	TRAP(r,CurrentMount().FinaliseMountL(aOperation, aParam1, aParam2));
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBFinaliseMount2Ret, EF32TraceUidFileSys, r);
 	
+	// Pass FinaliseDrive notification down to media driver
+	TInt driveNumber = DriveNumber();
+	if (LocalDrives::IsValidDriveMapping(driveNumber) && !LocalDrives::IsProxyDrive(driveNumber))
+		{
+		TBusLocalDrive& drv = LocalDrives::GetLocalDrive(driveNumber);
+
+		TLocalDriveFinaliseInfoBuf finaliseBuf;
+		finaliseBuf().iMode = aOperation;
+
+		// notify local drive, ignore the error
+		drv.QueryDevice(RLocalDrive::EQueryFinaliseDrive, finaliseBuf);	
+		}
+
     return r;
 	}
 
@@ -1235,6 +1244,31 @@ TInt TDrive::SetEntry(const TDesC& aName,const TTime& aTime,TUint aSetAttMask,TU
 		DriveNumber(), aName, I64LOW(aTime.Int64()), I64HIGH(aTime.Int64()), aSetAttMask, aClearAttMask);
 	TRAP(r,CurrentMount().SetEntryL(entryName,aTime,aSetAttMask,aClearAttMask))
 	TRACERET1(UTF::EBorder, UTraceModuleFileSys::ECMountCBSetEntryLRet, EF32TraceUidFileSys, r);
+	// If the file is already open then write the file attributes directly to the file
+	TFileName foldedName;
+	TUint32 nameHash=0;
+	foldedName.CopyF(aName);
+	nameHash=CalcNameHash(foldedName);
+
+	__CHECK_DRIVETHREAD(iDriveNumber);
+	TDblQueIter<CFileCB> q(CurrentMount().iMountQ);
+	CMountCB* currentMount = &CurrentMount();
+	CFileCB* file;
+	while ((file=q++)!=NULL)
+		{
+		if ((&file->Drive()==this) && 
+			&file->Mount() == currentMount &&
+			nameHash == file->NameHash() && 
+			file->FileNameF().Match(foldedName)==KErrNone)
+			{
+			TUint att = file->Att();
+			att |= aSetAttMask;
+			att &= ~aClearAttMask;
+			file->SetAtt(att | KEntryAttModified);
+			file->SetModified(aTime);
+			break;
+			}
+		}
 
 	return(r);
 	}

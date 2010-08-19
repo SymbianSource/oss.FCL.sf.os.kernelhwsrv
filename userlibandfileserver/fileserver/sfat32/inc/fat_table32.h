@@ -50,7 +50,7 @@ public:
     void WriteL(TUint32 aFatIndex, TUint32 aValue);
     void MountL(const TMountParams& aMountParam);
 
-    TInt64 DataPositionInBytes(TUint32 aCluster) const;
+    TInt64 DataPositionInBytesL(TUint32 aCluster) const;
 
     void InitializeL();
     void Dismount(TBool aDiscardDirtyData);
@@ -157,7 +157,7 @@ public:
 
     TUint32 ReadL(TUint32 aFatIndex) const;
     void WriteL(TUint32 aFatIndex, TUint32 aValue);
-    TInt64 DataPositionInBytes(TUint32 aCluster) const;
+    TInt64 DataPositionInBytesL(TUint32 aCluster) const;
     void FreeClusterListL(TUint32 aCluster);
     TUint32 AllocateSingleClusterL(TUint32 aNearestCluster);
     void ExtendClusterListL(TUint32 aNumber, TUint32& aCluster);
@@ -176,7 +176,7 @@ private:
     inline void WriteIndirectionTable(TInt aFatIndex,TInt aValue);
     inline TUint8* MemCopy(TAny* aTrg,const TAny* aSrc,TInt aLength);
     inline TUint8* MemCopyFillZ(TAny* aTrg, TAny* aSrc, TInt aLength);
-    inline void ZeroFillCluster(TInt aCluster);
+    inline void ZeroFillClusterL(TInt aCluster);
     
     void UpdateIndirectionTable(TUint32 aStartCluster,TUint32 anEndCluster,TInt aNum);
 

@@ -1,3 +1,57 @@
+Version 2.00.2655
+=================
+(Made by fadhliM 27/07/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#488886 System-critical thread being reported in MC when another permanent thread in same process fault
+
+2.	dogunjum
+	1.	ou1cimx1#479596 92: Domain Manager - Correct the usage of RArray::Append()
+
+
+Version 2.00.2654
+=================
+(Made by fadhliM 19/07/2010)
+
+1.	gcochran
+	1.	DEF144551 t_svrpinning, _P,_UP test fails with unexpected thread exit type on Vasco/TB9.2
+
+2.	martai
+	1.	ou1cimx1#494023 E32TEST T_SHADOW Fails during testMultipleReadFile()
+
+
+Version 2.00.2653
+=================
+(Made by famustaf 14/07/2010)
+
+1.	davegord
+	1.	ou1cimx1#485331 Kernel signals MTP server unexpectedly and cause it panic
+
+
+Version 2.00.2652
+=================
+(Made by famustaf 12/07/2010)
+
+1.	jcoppear
+	1.	ou1cimx1#479552 ENV E32TEST T_ALIAS_REMOVE timeout
+	
+
+Version 2.00.2651
+=================
+(Made by famustaf 12/07/2010)
+
+1.	paconway
+	1.	MINOR_CHANGE Correct EPL header for sdapctest.mmp
+
+
+Version 2.00.2650
+=================
+(Made by famustaf 07/07/2010)
+
+1.	paconway
+	1.	REQ 417-56766 MBBMS over CMMB for TD-SCDMA Gen. 2 MobileTv
+
+
 Version 2.00.2144
 =================
 (Made by vfebvre 21/06/2010)

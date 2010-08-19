@@ -144,8 +144,16 @@ public:
 	void SetDrivePath(const TDesC& aDes);
 	static void NewLine();
 	static TKeyCode OutputStringToConsole(TBool aPageSwitch,TRefByValue<const TDesC> aFmt,...);
-	static TKeyCode OutputStringToConsole(TBool aPageSwitch, const TDesC& aBuf);
 	static TKeyCode OutputStringToConsole(const TDesC& aNotification,TBool aPageSwitch,TRefByValue<const TDesC> aFmt,...);
+
+    static TKeyCode WriteBufToConsole(TBool aPageSwitch, const TDesC& aBuf);
+    static TKeyCode WriteBufToConsole(TBool aPageSwitch, const TDesC& aBuf, const TDesC& aNotification);
+
+
+    static void Printf(TRefByValue<const TDesC16> aFmt, ...);
+    static void Print(const TDesC16& aBuf);
+    static void SetDbgConsoleEcho(TBool aOn) {iDbgPrint = aOn;}
+
 public:
 	static CConsoleBase* TheConsole;
 	static CFileMan* TheFileMan;
@@ -166,6 +174,7 @@ private:
 	static TInt RunBatch(TDes& aCommand);
 	static TInt RunExecutable(TDes& aCommand,TBool aWaitForCompletion);
 	static TKeyCode PageSwitchDisplay(const TDesC& aBuf);
+
 private:
 	static TBuf<KMaxFileName> currentPath;
 	static TBuf<KMaxFileName> drivePaths[KMaxDrives];
@@ -174,6 +183,9 @@ private:
 	static CLineEdit* TheEditor;
 	friend class ShellFunction;
 	friend class CDllChecker;
+	
+    static TBool iDbgPrint; ///< if ETrue, the output from CShell::Printf is copied to the debug port
+    
 	};
 
 
@@ -266,7 +278,7 @@ public:
 private:		
 	static TInt ShowDirectoryTree(TDes& aPath,TUint aSwitches,TDes& aTreeGraph);
 	static TBool Certain();	
-	static void OutputContentsToConsole(RPointerArray<HBufC>& aText,TUint aSwitches);
+	static TBool OutputContentsToConsole(RPointerArray<HBufC>& aText,TUint aSwitches);
 	static void OutputDirContentL(CDir* aDirList,RPointerArray<HBufC>& aText,TUint aSwitches);	
 	};
 

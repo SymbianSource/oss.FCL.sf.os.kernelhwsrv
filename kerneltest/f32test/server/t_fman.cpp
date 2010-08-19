@@ -600,7 +600,7 @@ LOCAL_C void TestCopy()
 	test_KErrNone(r);
 	test(entry.iName.MatchF(_L("T_FSRV.CPP"))!=KErrNotFound);
 #if defined (__WINS__)
-	test_Equal(KEntryAttArchive, entry.iAtt);
+	test_Equal(KEntryAttArchive | KEntryAttReadOnly, entry.iAtt);
 #else
 	if (!IsTestingLFFS())
 		{

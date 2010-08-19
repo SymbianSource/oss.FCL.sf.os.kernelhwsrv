@@ -750,8 +750,8 @@ TInt CLeafDirTree::MakeMostRecentlyUsed(CLeafDirTreeNode* aNodeUsed)
 			else
 				{
 				iLruList.Remove(i);
-				iLruList.Insert(aNodeUsed, 0);
-				return KErrNone;
+				TInt r = iLruList.Insert(aNodeUsed, 0);
+				return r;
 				}
 			}
 		}

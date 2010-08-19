@@ -197,6 +197,13 @@ static void testReadFile()
 	r=ZFile.Open(TheFs,fn,EFileStreamText);
 	test(r==KErrNone);
 
+	// check the file on the Z: drive his read-only
+	TEntry fileAtt;
+	r=TheFs.Entry(fn,fileAtt);
+	test_KErrNone(r);
+	test((fileAtt.iAtt & KEntryAttReadOnly) == KEntryAttReadOnly);
+
+
 	test.Next(_L("Read file"));
 	TBuf8<0x100> a,b;
 	FOREVER
@@ -952,6 +959,44 @@ static void testFileAttributes()
 	r=f.Write(_L8("Hello World"));
 	test(r==KErrNone);
 	f.Close();
+
+
+	test.Next(_L("Internal attribute can't be read"));
+
+	r=TheFs.SetAtt(fname,0,KEntryAttReadOnly);
+	test_KErrNone(r);
+
+	r=f.Open(TheFs,fname,EFileWrite);
+	test_KErrNone(r);
+
+	r=f.SetAtt(KEntryAttReadOnly, 0);	// this will set internal attribut KEntryAttModified
+	test_KErrNone(r);
+
+	// copied \sf\os\kernelhwsrv\userlibandfileserver\fileserver\inc\common.h
+	const TUint KEntryAttModified=0x20000000;	
+
+	TUint att;
+	r = f.Att(att);
+	test_KErrNone(r);
+    test.Printf(_L("att %x"), att);
+	test_Value(att & KEntryAttModified, (att & KEntryAttModified) == 0);
+
+	r=f.SetAtt(att | KEntryAttModified, 0);
+	test_KErrNone(r);
+
+	r = f.Att(att);
+	test_KErrNone(r);
+    test.Printf(_L("att %x"), att);
+	test_Value(att & KEntryAttModified, (att & KEntryAttModified) == 0);
+
+	test.Next(_L("file time is set"));
+	r = f.Modified(time);
+	test(time.Int64() != 0);
+
+    r = f.Flush(); //-- this will flush attributes to the media
+    test_KErrNone(r);
+	f.Close();
+
 
 	// Tidy up
 	r=TheFs.SetAtt(fname,0,KEntryAttReadOnly);

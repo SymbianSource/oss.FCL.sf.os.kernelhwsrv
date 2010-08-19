@@ -19,12 +19,19 @@
 #include <e32test.h>
 #include "t_server.h"
 
+// If there is an NFE media driver present, then because of the way EDeleteNotify requests work,
+// the data retrieved from a deleted file will not be a buffer full of zero's, but instead a buffer
+// full of decrypted zero's
+#define __NFE_MEDIA_DRIVER_PRESENT__
+
 #ifdef __VC32__
     // Solve compilation problem caused by non-English locale
     #pragma setlocale("english")
 #endif
 
 GLDEF_D RTest test(_L("T_MISC"));
+
+const TUint KBufLength = 0x100;
 
 LOCAL_C void Test1()
 //
@@ -722,7 +729,9 @@ void    DoTest14(TInt aDrvNum);
 TInt    CreateStuffedFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize);
 TInt    CreateEmptyFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize);
 TBool   CheckFileContents(RFs& aFs, const TDesC& aFileName);
+#ifndef __NFE_MEDIA_DRIVER_PRESENT__
 TBool   CheckBufferContents(const TDesC8& aBuffer, TUint aPrintBaseAddr=0);
+#endif
 
 /**
 Testing unallocated data initialization vulnerability in RFile
@@ -828,9 +837,11 @@ void DoTest14(TInt aDrvNum)
     nRes = CreateEmptyFile(TheFs, fileName, KFileSize);
     test(nRes == KErrNone);
 
+#ifndef __NFE_MEDIA_DRIVER_PRESENT__	// can't easily check for illegitimate information if drive is encrypted
     //-- 1.1  check that this file doesn't contain illegitimate information.
     nRes = CheckFileContents(TheFs, fileName);
     test(nRes == KErrNone);
+#endif
 
     //-- 1.2 delete the empty file
     nRes = TheFs.Delete(fileName);
@@ -1238,7 +1249,6 @@ TInt CreateStuffedFile(RFs& aFs, const TDesC& aFileName, TUint aFileSize)
     RFile   file;
 
 	//-- create a buffer with some data
-	const TUint KBufLength = 0x100;
 	TBuf8<KBufLength> buffer;
 	buffer.SetLength(KBufLength);
 
@@ -1289,7 +1299,6 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
 	TInt    nRes = KErrNone;
     RFile   file;
 
-	const TInt KBufLength = 0x100;
 	TBuf8<KBufLength> buffer;
     buffer.SetLength(0);
 
@@ -1311,6 +1320,18 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
             break; //EOF
         }
 
+#ifdef __NFE_MEDIA_DRIVER_PRESENT__
+		// check the buffer doesn't contain the same pattern written to it by CreateStuffedFile()
+		TUint i;
+		for(i = 0; i < KBufLength; i++)
+			if (buffer[i] != static_cast<TUint8> (i))
+				break;
+		if (i == KBufLength)
+			{
+            nRes = KErrCorrupt; //-- indicate that the read buffer contains illegitimate information
+            break; //-- comment this out if you need a full dump of the file
+			}
+#else
         //-- check if the buffer contains only allowed data (RAM page initialisation data, etc. e.g. 0x00, 0xff, 0x03, 0xcc)
         if(!CheckBufferContents(buffer, nFilePos))
         {
@@ -1318,6 +1339,7 @@ TInt   CheckFileContents(RFs& aFs, const TDesC& aFileName)
             nRes = KErrCorrupt; //-- indicate that the read buffer contains illegitimate information
             break; //-- comment this out if you need a full dump of the file
         }
+#endif
 
         nFilePos+=buffer.Length();
     }

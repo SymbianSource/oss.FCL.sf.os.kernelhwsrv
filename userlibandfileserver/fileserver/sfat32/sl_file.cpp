@@ -103,18 +103,6 @@ void CFatFileCB::SetSeekIndexValueL(TUint aRelCluster, TUint aStoredCluster)
 	iSeekIndex[seekPos] = aStoredCluster;
 	}
 
-TBool CFatFileCB::IsSeekBackwards(TUint aPos)
-//
-// Return true if aPos<currentPos
-//
-	{
-	
-	TUint cluster=iCurrentPos.iCluster<<ClusterSizeLog2();
-	TInt offset=ClusterRelativePos(iCurrentPos.iPos);
-	TUint currentPos=cluster+offset;
-	return(aPos<currentPos);
-	}
-
 void CFatFileCB::CheckPosL(TUint aPos)
 //
 // Check that the file is positioned correctly.
@@ -126,9 +114,6 @@ void CFatFileCB::CheckPosL(TUint aPos)
 		return;
     __ASSERT_DEBUG(aPos <= FCB_FileSize(), Fault(EFatFilePosBeyondEnd));
 
-	if (FileSizeModified() && IsSeekBackwards(aPos))
-		FlushDataL(); 
-	
 	TUint newRelCluster=aPos>>ClusterSizeLog2();
 	if ( aPos && (aPos==(newRelCluster<<ClusterSizeLog2())) )
 		newRelCluster--;
@@ -245,8 +230,10 @@ void CFatFileCB::ReadL(TInt64 aPos,TInt& aLength, TDes8* aDes, const RMessagePtr
 	
 	if((startPos + length > curSize) || (startPos > startPos + length) )
 		aLength=curSize-startPos;
+		
+	TUint flag = DirectIOMode(aMessage) ? RLocalDrive::ELocDrvDirectIO : 0;
 	
-    FatMount().ReadFromClusterListL(iCurrentPos,aLength,aDes,aMessage,aOffset);
+    FatMount().ReadFromClusterListL(iCurrentPos,aLength,aDes,aMessage,aOffset, flag);
 	aLength=iCurrentPos.iPos-startPos;
 	}
 
@@ -295,7 +282,9 @@ void CFatFileCB::WriteL(TInt64 aPos,TInt& aLength,const TDesC8* aSrc,const RMess
 	TUint badcluster=0;
 	TUint goodcluster=0;
    	
-	TRAPD(ret, FatMount().WriteToClusterListL(iCurrentPos,aLength,aSrc,aMessage,aOffset,badcluster, goodcluster));
+	TUint flag = DirectIOMode(aMessage) ? RLocalDrive::ELocDrvDirectIO : 0;
+	
+	TRAPD(ret, FatMount().WriteToClusterListL(iCurrentPos,aLength,aSrc,aMessage,aOffset,badcluster, goodcluster, flag));
    	
 	if (ret == KErrCorrupt || ret == KErrDied)
 		{
@@ -864,10 +853,15 @@ TInt CFatFileCB::BlockMap(SBlockMapInfo& aInfo, TInt64& aStartPos, TInt64 aEndPo
 	else
 		return KErrNotSupported;
 
-	// Fetch the address of cluster 0
-	aInfo.iStartBlockAddress = fatMount.FAT().DataPositionInBytes(KFirstClusterNum);
+    TInt r;
+	
+    // Fetch the address of cluster 0
+	TRAP(r, aInfo.iStartBlockAddress = fatMount.FAT().DataPositionInBytesL(KFirstClusterNum));
+	if (r != KErrNone)
+		return r;
 
-	TRAPD(r, CheckPosL(startPos));
+
+	TRAP(r, CheckPosL(startPos));
 	if (r != KErrNone)
 		return r;
 

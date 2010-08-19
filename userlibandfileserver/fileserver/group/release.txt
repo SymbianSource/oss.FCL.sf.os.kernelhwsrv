@@ -1,3 +1,58 @@
+Version 2.00.2505
+=================
+(Made by fadhliM 26/07/2010)
+
+1.	h14jiang
+	1.	ou1cimx1#495678 FileServer - Bad usage of RArray::Append() and RPointerArray::Append()
+
+2.	michcox
+	1.	MINOR_CHANGE 9.2 change includes from <F32Plugin.h> to <f32plugin.h> (i.e. case correction)
+
+
+Version 2.00.2504
+=================
+(Made by fadhliM 21/07/2010)
+
+1.	dlyokhin
+	1.	ou1cimx1#491761 ENV 92 : CAtaFatTable::DataPositionInBytes() Should Fail 'Gracefully' if Cluster is Invalid (Corrupted Media)
+
+
+Version 2.00.2503
+=================
+(Made by fadhliM 19/07/2010)
+
+1.	migubarr
+	1.	ou1cimx1#485027 Internal file server attribute (KEntryAttModified) can be returned to the client
+	2.	ou1cimx1#493751 Querying the attributes of an open file on the emulator's Z: drive returns incorrect attributes
+
+
+Version 2.00.2502
+=================
+(Made by famustaf 14/07/2010)
+
+1.	frhofman
+	1.	ou1cimx1#489934 ENV F32TEST T_RCACHE test failure investigation (t_rcache.cpp:1556)
+
+2.	migubarr
+	1.	ou1cimx1#476545 Inefficiencies in RFile::SetSize() & RFile::Write()
+
+
+Version 2.00.2501
+=================
+(Made by famustaf 07/07/2010)
+
+1.	migubarr
+	1.	REQ 415-7212 NFE drive encryption on Demand Paging-enabled device
+
+
+Version 2.00.2500
+=================
+(Made by vfebvre 29/06/2010)
+
+1.	h14jiang
+	1.	ou1cimx1#428824 Not getting any Notification from RFs::NotifyDiskSpace() for E and F drive when when tested multiple time.
+
+
 Version 2.00.2065
 =================
 (Made by vfebvre 18/06/2010)

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -806,7 +806,9 @@ public:
 	void Perform();
 	void Release();
 	TInt TransitionNotification(MDmDomainMember& aDomainMember);
-	void TransitionRequestComplete();
+	void TransitionRequestComplete();	
+	void RunTestOnGetTransitionFailures(RArray<const TTransitionFailure>& aTransitionFailure);
+	
 	CDmTest5(TDmDomainId aPowerId, TDmDomainId aTestId, TDmDomainState aPowerState, TDmDomainState aTestState) : 
 		CActive(CActive::EPriorityStandard), 
 		iPowerDomainId(aPowerId), iTestDomainId(aTestId), iPowerState(aPowerState), iTestState(aTestState) {}
@@ -846,7 +848,28 @@ public:
 	TInt				iTransitionsExpected;
 	};
 
-
+void CDmTest5::RunTestOnGetTransitionFailures(RArray<const TTransitionFailure>& aTransitionFailure)
+	{
+	//*************************************************
+	// Test - OOM Testing on GetTransitionFailures()
+	// Simulates heap failure in GetTransitionFailures()
+	//*************************************************
+	TInt error = 0;
+	TInt count = 0;	
+	do
+		{		
+		__UHEAP_SETFAIL(RHeap::EFailNext, ++count);
+		error = iTestDomainManager.GetTransitionFailures(aTransitionFailure);						
+		test.Printf( _L( "CDmTest5::RunTestOnGetTransitionFailures, simulating heap failure on GetTransitionFailures(), Error=%d, Run=%d\n" ), error, count );
+		}while(error == KErrNoMemory);		
+		
+	__UHEAP_RESET;
+	
+	//Actual count of heap failure as the final iteration which terminates the loop would not return KErrNoMemory 
+	--count;
+	test(count > 0);
+	test.Printf( _L( "Out of memory tests on GetTransitionFailures() succeeded at heap failure rate of %i\n" ), count );
+	}
 
 //! @SYMTestCaseID PBASE-T_DOMAIN-5
 //! @SYMTestType CT
@@ -1106,6 +1129,18 @@ void CDmTest5::Perform()
 	testFailureCount = iTestDomainManager.GetTransitionFailureCount();
 	test (testFailureCount == 1);
 
+#ifdef _DEBUG
+	//***************************************************************
+	// OOM Testing: Simulates heap failure in GetTransitionFailures()
+	//***************************************************************
+	__UHEAP_MARK;
+	RArray<const TTransitionFailure> oomTestFailures;
+	RunTestOnGetTransitionFailures(oomTestFailures);
+	test(oomTestFailures.Count()==1);
+	oomTestFailures.Close();
+	__UHEAP_MARKEND;
+#endif 
+	
 	r = iTestDomainManager.GetTransitionFailures(testFailures);
 	test(r == KErrNone);
 	test(testFailureCount == testFailures.Count());
@@ -2211,7 +2246,6 @@ GLDEF_C TInt E32Main()
 		{
 		MDmTest* tests[] = 
 			{
-
 			new CDmTest1(KDmIdRoot, EPwStandby),
 			new CDmTest1(KDmIdRoot, EPwOff),
 			new CDmTest1(KDmIdRoot, EPwActive),

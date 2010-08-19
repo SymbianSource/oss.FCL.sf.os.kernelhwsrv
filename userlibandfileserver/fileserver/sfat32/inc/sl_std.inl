@@ -645,13 +645,23 @@ inline TBool CFatTable::IsEndOfClusterCh(TUint32 aCluster) const
     }
 
 
+//-----------------------------------------------------------------------------
+/**
+    @return ETrue if the cluster number aClusterNo is valid, i.e. belongs to the FAT table
+*/
+inline TBool CFatTable::ClusterNumberValid(TUint32 aClusterNo) const 
+    {
+    return (aClusterNo >= KFatFirstSearchCluster) && (aClusterNo < iMaxEntries); 
+    }
+
+
 /**
 @return Maximal number of addresable FAT entries. This value is taken from the owning mount
 */
 inline TUint32 CFatTable::MaxEntries() const
     {
-        ASSERT(iMaxEntries > 0);
-        return iMaxEntries;
+    ASSERT(iMaxEntries > 0);
+    return iMaxEntries;
     }
 
 

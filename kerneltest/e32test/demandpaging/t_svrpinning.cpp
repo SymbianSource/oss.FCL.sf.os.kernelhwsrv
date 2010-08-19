@@ -72,15 +72,13 @@ public:
 	enum TTestMode
 		{
 		EStop,
-		ETestPinAll,
-		ETestPinEven,
-		ETestPinOdd,
-		ETestPin3,
-		ETestPin2,
-		ETestPin1,
-		ETestPin0,
-		ETestPinWritable,
-		ETestUnpinWritable,
+		ETestRdPinAll,
+		ETestRdUnpin3,
+		ETestRdUnpin2,
+		ETestRdUnpin1,
+		ETestRdUnpin0,
+		ETestWrPinAll,
+		ETestWrPinNone,
 		ETestPinOOM,
 		ETestPinDefault,
 		ETestDeadServer,
@@ -156,11 +154,22 @@ RSemaphore gSem1;
 
 TInt CTestSession::CheckDesPresent(const RMessage2& aMessage, TUint aArgIndex, TBool aExpected, TBool aWrite)
 	{
+	TRequestStatus clientStat;
+	
 	if (aExpected)
+		{
 		RDebug::Printf("  Checking message argument at %d is present", aArgIndex);
+		}
 	else
+		{
 		RDebug::Printf("  Checking message argument at %d is not present", aArgIndex);
-
+		// Start watching for client thread death
+		RThread clientThread;
+		aMessage.Client(clientThread);
+		clientThread.Logon(clientStat);
+		clientThread.Close();
+		}
+		
 	// Get the length of the descriptor and verify it is as expected.
 	TInt length = aMessage.GetDesLength(aArgIndex);
 	if (length < KErrNone)
@@ -177,14 +186,9 @@ TInt CTestSession::CheckDesPresent(const RMessage2& aMessage, TUint aArgIndex, T
 		{// Now read the descriptor and verify that it is present or not.
 		TBuf8<5> des;
 		TInt r = aMessage.Read(aArgIndex, des);
-		TBool pass;
-		if (iClientDied)
-			pass = r == KErrDied || r == KErrBadDescriptor;
-		else
-			pass = r == (aExpected ? KErrNone : KErrBadDescriptor);
-		if (!pass)
+		if (r != (aExpected ? KErrNone : KErrBadDescriptor))
 			{
-			RDebug::Printf("  Error reading descriptor data r %d", r);
+			RDebug::Printf("  Unexpected value returned from aMessage.Read:%d", r);
 			return KErrGeneral;
 			}
 		if (r==KErrNone && (des[0] != 'a' || des[1] != 'r' || des[2] != 'g'))
@@ -207,23 +211,19 @@ TInt CTestSession::CheckDesPresent(const RMessage2& aMessage, TUint aArgIndex, T
 		for (TInt i = 0; i < max; i++)
 			argPtr[i] = (TUint8)aArgIndex;
 		TInt r = aMessage.Write(aArgIndex, argPtr);
-		TBool pass;
-		if (iClientDied)
-			pass = r == KErrDied || r == KErrBadDescriptor;
-		else
-			pass = r == (aExpected ? KErrNone : KErrBadDescriptor);
-		if (!pass)
+		if (r != (aExpected ? KErrNone : KErrBadDescriptor))
 			{
-			RDebug::Printf("  Error writing to the descriptor data r %d", r);
+			RDebug::Printf("  Unexpected value returned from aMessage.Write:%d", r);
 			return KErrGeneral;
 			}
 		}
 
 	if (!aExpected)
 		{// The client should have been killed as the data wasn't present.
-		if(!iClientDied)
-			User::After(500000); // allow time for client to die before next test
+		RDebug::Printf("  CheckDesPresent: Waiting for client to die");
+		User::WaitForRequest(clientStat);
 		iClientDied = ETrue;
+		RDebug::Printf("  CheckDesPresent: Client dead");
 		}
 	return KErrNone;
 	}
@@ -243,16 +243,16 @@ TInt CTestSession::CheckArgsPresent(const RMessage2& aMessage, TBool arg0Present
 	TInt r = User::SetRealtimeState(User::ERealtimeStateOn);
 	if (r != KErrNone)
 		{
-		RDebug::Printf("Error setting realtime state r = %d", r);
+		RDebug::Printf("CheckArgsPresent: Error setting realtime state r = %d", r);
 		return r;
 		}
 
 	r = CheckDesPresent(aMessage, 0, arg0Present, aWrite);
-	if (r == KErrNone)
+	if ((r == KErrNone) && !iClientDied)
 		r = CheckDesPresent(aMessage, 1, arg1Present, aWrite);
-	if (r == KErrNone)
+	if ((r == KErrNone) && !iClientDied)
 		r = CheckDesPresent(aMessage, 2, arg2Present, aWrite);
-	if (r == KErrNone)
+	if ((r == KErrNone) && !iClientDied)
 		r = CheckDesPresent(aMessage, 3, arg3Present, aWrite);
 
 	User::SetRealtimeState(User::ERealtimeStateOff);
@@ -260,7 +260,7 @@ TInt CTestSession::CheckArgsPresent(const RMessage2& aMessage, TBool arg0Present
 	return r;
 	}
 
-void CTestSession::ServiceL(const RMessage2& aMessage)
+EXPORT_C void CTestSession::ServiceL(const RMessage2& aMessage)
 //
 // Virtual message-handler
 //
@@ -272,35 +272,32 @@ void CTestSession::ServiceL(const RMessage2& aMessage)
 		case EStop:
 			CActiveScheduler::Stop();
 			break;
-		case ETestPinAll:
+		case ETestRdPinAll:
 			r = CheckArgsPresent(aMessage, ETrue, ETrue, ETrue, ETrue);
 			break;
-		case ETestPinOdd:
-			r = CheckArgsPresent(aMessage, EFalse, ETrue, EFalse, ETrue);
-			break;
-		case ETestPinEven:
-			r = CheckArgsPresent(aMessage, ETrue, EFalse, ETrue, EFalse);
-			break;
-		case ETestPin3:
+		case ETestRdUnpin3:
 			r = CheckArgsPresent(aMessage, ETrue, ETrue, ETrue, EFalse);
 			break;
-		case ETestPin2:
-			r = CheckArgsPresent(aMessage, ETrue, ETrue, EFalse, EFalse);
+		case ETestRdUnpin2:
+			r = CheckArgsPresent(aMessage, ETrue, ETrue, EFalse, ETrue);
 			break;
-		case ETestPin1:
-			r = CheckArgsPresent(aMessage, ETrue, EFalse, EFalse, EFalse);
+		case ETestRdUnpin1:
+			r = CheckArgsPresent(aMessage, ETrue,  EFalse,  ETrue, ETrue);
 			break;
-		case ETestPin0:
+		case ETestRdUnpin0:
+			r = CheckArgsPresent(aMessage, EFalse, ETrue, ETrue, ETrue);
+			break;
 		case ETestPinDefault:
 			r = CheckArgsPresent(aMessage, EFalse, EFalse, EFalse, EFalse);
 			break;
-		case ETestPinWritable:
+		case ETestWrPinAll:
 			r = CheckArgsPresent(aMessage, ETrue, ETrue, ETrue, ETrue, ETrue);
 			break;
-		case ETestUnpinWritable:
+		case ETestWrPinNone:
 			r = CheckArgsPresent(aMessage, EFalse, EFalse, EFalse, EFalse, ETrue);
 			break;
 		default:
+			RDebug::Printf("CTestSession::ServiceL Unsupported Function: %d", aMessage.Function());
 			r = KErrNotSupported;
 
 		}
@@ -447,39 +444,29 @@ TInt ClientThread(TAny* aTestMode)
 
 	switch((TInt)aTestMode)
 		{
-		case CTestSession::ETestPinAll:
+		case CTestSession::ETestRdPinAll:
 			test.Printf(_L("Test pinning all args\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPinAll, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs());
+			r = session.PublicSendReceive(CTestSession::ETestRdPinAll, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs());
 			break;
 
-		case CTestSession::ETestPinOdd:
-			test.Printf(_L("Test pinning odd args\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPinOdd, TIpcArgs(&arg0, &argTmpBuf, &arg2, &arg3).PinArgs(EFalse, ETrue, EFalse, ETrue));
+		case CTestSession::ETestRdUnpin3:
+			test.Printf(_L("Read Arg3 unpinned\n"));
+			r = session.PublicSendReceive(CTestSession::ETestRdUnpin3, TIpcArgs(&arg0, argTmp, &argTmpBuf, &arg3).PinArgs(ETrue, ETrue, ETrue, EFalse));
 			break;
 
-		case CTestSession::ETestPinEven:
-			test.Printf(_L("Test pinning even args\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPinEven, TIpcArgs(&arg0, &arg1, argTmp, &arg3).PinArgs(ETrue, EFalse, ETrue, EFalse));
+		case CTestSession::ETestRdUnpin2:
+			test.Printf(_L("Read Arg2 unpinned\n"));
+			r = session.PublicSendReceive(CTestSession::ETestRdUnpin2, TIpcArgs(argTmp, &arg1, &arg2, &arg3).PinArgs(ETrue, ETrue, EFalse,  ETrue));
 			break;
 
-		case CTestSession::ETestPin3:
-			test.Printf(_L("Test pinning 3 args\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPin3, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs(ETrue, ETrue, ETrue, EFalse));
+		case CTestSession::ETestRdUnpin1:
+			test.Printf(_L("Read Arg1 unpinned\n"));
+			r = session.PublicSendReceive(CTestSession::ETestRdUnpin1, TIpcArgs(&argTmpBuf, &arg1, &arg2, &arg3).PinArgs(ETrue, EFalse,  ETrue,  ETrue));
 			break;
 
-		case CTestSession::ETestPin2:
-			test.Printf(_L("Test pinning 2 args\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPin2, TIpcArgs(argTmp, &arg1, &arg2, &arg3).PinArgs(ETrue, ETrue, EFalse, EFalse));
-			break;
-
-		case CTestSession::ETestPin1:
-			test.Printf(_L("Test pinning 1 args\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPin1, TIpcArgs(&argTmpBuf, &arg1, &arg2, &arg3).PinArgs(ETrue, EFalse, EFalse, EFalse));
-			break;
-
-		case CTestSession::ETestPin0:
-			test.Printf(_L("Test pinning 0 args\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPin0, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs(EFalse, EFalse, EFalse, EFalse));
+		case CTestSession::ETestRdUnpin0:
+			test.Printf(_L("Read Arg0 unpinned\n"));
+			r = session.PublicSendReceive(CTestSession::ETestRdUnpin0, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs(EFalse, ETrue, ETrue, ETrue));
 			break;
 
 		case CTestSession::ETestPinDefault:
@@ -487,9 +474,9 @@ TInt ClientThread(TAny* aTestMode)
 			r = session.PublicSendReceive(CTestSession::ETestPinDefault, TIpcArgs(&arg0, &arg1, &arg2, argTmp));
 			break;
 
-		case CTestSession::ETestPinWritable:
+		case CTestSession::ETestWrPinAll:
 			test.Printf(_L("Test writing to pinned descriptors\n"));
-			r = session.PublicSendReceive(CTestSession::ETestPinWritable, TIpcArgs(&arg0, &arg3, &arg4, &arg5).PinArgs(ETrue, ETrue, ETrue, ETrue));
+			r = session.PublicSendReceive(CTestSession::ETestWrPinAll, TIpcArgs(&arg0, &arg3, &arg4, &arg5).PinArgs(ETrue, ETrue, ETrue, ETrue));
 			// Verify the index of each argument has been written to each descriptor.
 			{
 			TUint maxLength = arg0.MaxLength();
@@ -512,9 +499,9 @@ TInt ClientThread(TAny* aTestMode)
 			}
 			break;
 
-		case CTestSession::ETestUnpinWritable:
+		case CTestSession::ETestWrPinNone:
 			test.Printf(_L("Test writing to unpinned descriptors\n"));
-			r = session.PublicSendReceive(CTestSession::ETestUnpinWritable, TIpcArgs(&arg0, &arg3, &arg4, &arg5).PinArgs(EFalse, EFalse, EFalse, EFalse));
+			r = session.PublicSendReceive(CTestSession::ETestWrPinNone, TIpcArgs(&arg0, &arg3, &arg4, &arg5).PinArgs(EFalse, EFalse, EFalse, EFalse));
 			// Verify the index of each argument has been written to each descriptor.
 			// Unless this is a pinnning server than the thread will be panicked before we reach there.
 			{
@@ -542,7 +529,7 @@ TInt ClientThread(TAny* aTestMode)
 			test.Printf(_L("Test pinning to dead server\n"));
 			gSem.Signal();
 			gSem1.Wait();
-			r = session.PublicSendReceive(CTestSession::ETestPinAll, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs());
+			r = session.PublicSendReceive(CTestSession::ETestRdPinAll, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs());
 			break;
 
 		case CTestSession::ETestPinOOM:
@@ -554,7 +541,7 @@ TInt ClientThread(TAny* aTestMode)
 			for (i = 0; i < KMaxKernelAllocations && r == KErrNoMemory; i++)
 				{
 				__KHEAP_FAILNEXT(i);
-				r = session.PublicSendReceive(CTestSession::ETestPinAll, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs());
+				r = session.PublicSendReceive(CTestSession::ETestRdPinAll, TIpcArgs(&arg0, &arg1, &arg2, &arg3).PinArgs());
 				__KHEAP_RESET;
 				}
 			test.Printf(_L("SendReceive took %d tries\n"),i);
@@ -634,7 +621,7 @@ GLDEF_C TInt E32Main()
 		RSession session;
 		test_KErrNone(session.PublicCreateSession(_L("CTestServer"),5));
 		
-		for (	TUint clientTest = CTestSession::ETestPinAll; 
+		for (	TUint clientTest = CTestSession::ETestRdPinAll; 
 				clientTest <= CTestSession::ETestPinDefault && !exitFailure;
 				clientTest++)
 			{
@@ -654,8 +641,8 @@ GLDEF_C TInt E32Main()
 
 			// If all the descriptor arguments were not pinned then the client 
 			// thread should have been panicked.
-			TBool expectPanic = (clientTest == CTestSession::ETestPinAll || 
-								clientTest == CTestSession::ETestPinWritable ||
+			TBool expectPanic = (clientTest == CTestSession::ETestRdPinAll || 
+								clientTest == CTestSession::ETestWrPinAll ||
 								clientTest == CTestSession::ETestPinOOM )? 0 : 1;
 			expectPanic = !UpdateExpected(!expectPanic);
 
@@ -666,17 +653,20 @@ GLDEF_C TInt E32Main()
 				if (exitType != EExitPanic || 
 					exitReason != EIllegalFunctionForRealtimeThread ||
 					clientThread.ExitCategory() != _L("KERN-EXEC"))
-					{// Thread didn't panic as expected.
+					{
+					test.Printf(_L("Thread didn't panic as expected\n"));
 					exitFailure = ETrue;
 					}
 				}
 			else
 				{
 				if (exitType != EExitKill || exitReason != KErrNone)
-					{// Thread didn't exit gracefully as expected.
+					{
+					test.Printf(_L("Thread didn't exit gracefully as expected\n"));
 					exitFailure = ETrue;
 					}
 				}
+			test(!exitFailure);
 			CLOSE_AND_WAIT(clientThread);
 			}
 
@@ -697,7 +687,7 @@ GLDEF_C TInt E32Main()
 		User::WaitForRequest(serverStat);
 		if (serverThread.ExitType() != EExitKill)
 			{
-			test.Printf(_L("!!Server thread did something bizarre %d"), serverThread.ExitReason());
+			test.Printf(_L("!!Server thread did something bizarre %d\n"), serverThread.ExitReason());
 			}
 
 		gSem1.Signal();
@@ -710,7 +700,6 @@ GLDEF_C TInt E32Main()
 		CLOSE_AND_WAIT(gSem);
 		CLOSE_AND_WAIT(gSem1);
 		}
-	test(!exitFailure);
 
 	test.Next(_L("Test server setting pinning policy after server started"));
 	RThread serverThread;

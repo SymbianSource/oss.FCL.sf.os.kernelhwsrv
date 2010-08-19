@@ -31,6 +31,8 @@ PRJ_TESTEXPORTS
 ../../../userlibandfileserver/fileserver/inc/runtests.h                         /epoc32/include/
 
 PRJ_TESTMMPFILES
+../../e32test/mediaext/t_nfe
+
 // this should ideally be run early on as it enables 'simulated lock failure mode' in the file cache for udeb builds
 t_filecache 
 

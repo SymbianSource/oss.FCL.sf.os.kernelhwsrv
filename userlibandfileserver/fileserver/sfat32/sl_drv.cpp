@@ -119,7 +119,7 @@ TInt TDriveInterface::ReadNonCritical(TInt64 aPos, TInt aLength, TDes8& aTrg) co
     @return KErrBadPower - failure due to low power
 
 */
-TInt TDriveInterface::ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const
+TInt TDriveInterface::ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const
 {
     //__PRINT2(_L("#=+++ Read_nc2: pos:%LU, len:%u"), aPos, aLength);
 
@@ -128,7 +128,7 @@ TInt TDriveInterface::ReadNonCritical(TInt64 aPos,TInt aLength,const TAny* aTrg,
 
     for(;;)
     {
-        nRes = iProxyDrive.Read(aPos, aLength, aTrg, aMessage, anOffset);
+        nRes = iProxyDrive.Read(aPos, aLength, aTrg, aMessage, anOffset, aFlag);
         if (nRes==KErrNone)
             break;
 
@@ -202,7 +202,7 @@ TInt TDriveInterface::ReadCritical(TInt64 aPos,TInt aLength,TDes8& aTrg) const
     @return KErrCorrupt - an illegal write is detected
     @return KErrAccessDenied - write to protected media
 */
-TInt TDriveInterface::WriteNonCritical(TInt64 aPos, TInt aLength, const TAny* aSrc, const RMessagePtr2 &aMessage, TInt anOffset)
+TInt TDriveInterface::WriteNonCritical(TInt64 aPos, TInt aLength, const TAny* aSrc, const RMessagePtr2 &aMessage, TInt anOffset, TUint aFlag)
 {
     //__PRINT2(_L("#=+++ Write_NC: pos:%LU, len:%u"), aPos, aLength);
 
@@ -213,7 +213,7 @@ TInt TDriveInterface::WriteNonCritical(TInt64 aPos, TInt aLength, const TAny* aS
     for(;;)
     {
         iMount->OpenMountForWrite(); //-- make a callback to CFatMountCB to perform some actions on 1st write.
-        nRes = iProxyDrive.Write(aPos, aLength, aSrc, aMessage, anOffset);
+        nRes = iProxyDrive.Write(aPos, aLength, aSrc, aMessage, anOffset, aFlag);
         if (nRes==KErrNone)
             break;
 
@@ -544,14 +544,14 @@ TBool TDriveInterface::XProxyDriveWrapper::Init(CProxyDrive* aProxyDrive)
 
 //-- see original TDriveInterface methods
 
-TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset) const
+TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,const TAny* aTrg,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag) const
 {
     EnterCriticalSection();
-    TInt nRes = iLocalDrive->Read(aPos, aLength, aTrg, aMessage.Handle(), anOffset);
+    TInt nRes = iLocalDrive->Read(aPos, aLength, aTrg, aMessage.Handle(), anOffset, aFlag);
     LeaveCriticalSection();
     return nRes;
 }
-       
+
 TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,TDes8& aTrg) const
 {
     EnterCriticalSection();
@@ -560,10 +560,10 @@ TInt TDriveInterface::XProxyDriveWrapper::Read(TInt64 aPos,TInt aLength,TDes8& a
     return nRes;
 }
 
-TInt TDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset)
+TInt TDriveInterface::XProxyDriveWrapper::Write(TInt64 aPos,TInt aLength,const TAny* aSrc,const RMessagePtr2 &aMessage,TInt anOffset, TUint aFlag)
 {
     EnterCriticalSection();
-    TInt nRes = iLocalDrive->Write(aPos, aLength, aSrc, aMessage.Handle(), anOffset);
+    TInt nRes = iLocalDrive->Write(aPos, aLength, aSrc, aMessage.Handle(), anOffset, aFlag);
     LeaveCriticalSection();
     return nRes;
 }

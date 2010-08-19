@@ -797,6 +797,15 @@ TInt DDataPagedMemoryManager::InstallPagingDevice(DPagingDevice* aDevice)
 		}
 
 	// Store the device, blocking any other devices from installing.
+	// unless the device is a media extension device
+	if(aDevice->iType & DPagingDevice::EMediaExtension)
+		{
+		delete iSwapManager;
+		iSwapManager = NULL;
+		TAny* null = 0;
+		__e32_atomic_store_ord_ptr(&iDevice, null);
+		}
+
 	if (!NKern::CompareAndSwap((TAny*&)iDevice, (TAny*)NULL, (TAny*)aDevice))
 		{// Data paging device already installed.
 		__KTRACE_OPT2(KPAGING,KBOOT,Kern::Printf("**** Attempt to install more than one data paging device !!!!!!!! ****"));

@@ -240,4 +240,5 @@ EXPORTS
 	DriveInfo__C11CFileSystemR10TDriveInfoi @ 239 NONAME R3UNUSED ; CFileSystem::DriveInfo(TDriveInfo &, int) const
 	GetDriveInfo__FR10TDriveInfoi @ 240 NONAME R3UNUSED ; GetDriveInfo(TDriveInfo &, int)
 	Volume__C9RFsPluginR11TVolumeInfoi @ 241 NONAME R3UNUSED ; RFsPlugin::Volume(TVolumeInfo &, int) const
+	DirectIOMode__7CFileCBRC12RMessagePtr2 @ 242 NONAME R3UNUSED ; CFileCB::DirectIOMode(RMessagePtr2 const &)
 

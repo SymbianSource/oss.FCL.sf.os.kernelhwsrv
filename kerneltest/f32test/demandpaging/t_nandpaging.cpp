@@ -28,6 +28,7 @@
 //! @SYMTestPriority        High
 //! @SYMTestStatus          Implemented
 
+#define __E32TEST_EXTENSION__
 #include <e32test.h>
 RTest test(_L("T_NANDPAGING"));
 
@@ -38,6 +39,7 @@ RTest test(_L("T_NANDPAGING"));
 #include <f32dbg.h>
 #include "testdefs.h"
 #include <hal.h>
+#include "nfe.h"
 
 
 TInt DriveNumber=-1;   // Parameter - Which drive?  -1 = autodetect.
@@ -509,15 +511,14 @@ LOCAL_C TInt CausePage(TAny*)
 	TUint8* start = (TUint8*)romHeader+romHeader->iPageableRomStart;
 	TUint size = romHeader->iPageableRomSize;
 	TUint8* addr=NULL;
-	TBool flush;
 	while (Testing)
 		{
 			PageSemaphore.Wait(); // wait for main thread to want paging.
-			flush = (PagesBeingPaged==0);
 			addr=start+((TInt64(Random())*TInt64(size))>>32);	
-			PageDoneSemaphore.Signal(); // Acknolage request.
+			PageDoneSemaphore.Signal(); // Acknowledge request.
 
 			PageMutex.Wait();
+			TBool flush = (PagesBeingPaged==0);	// Ensure only one thread is flushing the cache at a time.
 			PagesBeingPaged++;
 			PageMutex.Signal();
 
@@ -544,9 +545,53 @@ void TestDefered()
 		return;
 		}
 		
+	// If the NFE test media driver extension is present, ALL the drive is encrypted;
+	// this means that there will be very few free blocks in the free block reservoir: this effectively 
+	// disables background garbage collection and all block erasing needs to happen on the fly...
+	TNfeDeviceInfo nfeDeviceinfo;
+	TPtr8 nfeDeviceInfoBuf((TUint8*) &nfeDeviceinfo, sizeof(nfeDeviceinfo));
+	nfeDeviceInfoBuf.FillZ();
+	TInt r = Drive.QueryDevice((RLocalDrive::TQueryDevice) EQueryNfeDeviceInfo, nfeDeviceInfoBuf);
+/*
+	if (r == KErrNone)
+		{
+		test.Printf(_L("NFE device detected, aborting garbage collection test for now\n"));
+		return;
+		}
+*/
+	// Create some free blocks by creating a huge file and then deleting it....
+	if (r == KErrNone)
+		{
+		test.Printf(_L("NFE device detected\n"));
+		RFile file;
+
+		TBuf<256> tempFileName = _L("?:\\f32-tst\\");
+		tempFileName[0] = 'A'+DriveNumber;
+
+		r = TheFs.MkDirAll(tempFileName);
+		test(r==KErrNone || r== KErrAlreadyExists);
+
+		tempFileName+= _L("TEMP.TXT");
+
+		r = file.Replace(TheFs, tempFileName, EFileWrite);
+		test_KErrNone(r);
+		
+		for (TInt fileSize = KMaxTInt; fileSize > 0; fileSize >>= 1)
+			{
+			r = file.SetSize(fileSize);
+			test.Printf(_L("Setting file size to %d, r %d\n"), fileSize, r);
+			if (r == KErrNone)
+				break;
+			}
+		file.Close();
+		r = TheFs.Delete(tempFileName);
+		test_KErrNone(r);
+		}
+
+
+
 	TInt timeout;
 	TInt writesNeeded=100;
-	TInt r = KErrNone;
 	RFile tempFile;
 	TInt i;
 	TInt ii;
@@ -593,6 +638,7 @@ void TestDefered()
 	 	
 	for (ii=0; ii<MaxDeferLoops; ii++)  // Repeat the test, 'MaxDeferLoops' number of times.  This can be set on cammand line.
 		{
+		writesNeeded=100;
 		timeout=20;
 		do  // while ((pageGarbageCount==0) && (timeout>0));
 			// ie, while garbage collection hasn't happened, or timed out

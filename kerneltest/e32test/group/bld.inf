@@ -1048,3 +1048,5 @@ d_mmcsc			support
 
 //pci tests
 t_pci
+
+sdapctest
