@@ -44,11 +44,11 @@ GLDEF_C TInt _E32Dll_Body(TInt aReason)
 	return 0;
 	}
 
-#elif defined(__ARMCC__)
+#elif defined(__EABI__)
 
 void __DLL_Export_Table__(void);
 void __cpp_initialize__aeabi_(void);
-__weak void run_static_dtors(void);
+__WEAK__ void run_static_dtors(void);
 
 GLDEF_C TInt _E32Dll_Body(TInt aReason)
 	{

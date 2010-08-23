@@ -32,47 +32,62 @@ compsupp.iby                /epoc32/rom/include/
 
 PRJ_MMPFILES
 
-#if !defined GCCXML && !defined GCCE
+#if !defined(GCCXML) && !defined(GCCE)
 
     symcpp/scppnwdl.mmp
     rvct/dfprvct-thunk.mmp
     rvct/usrt.mmp
     rvct/ksrt.mmp
 
-    #ifndef SMP // Only static libraries build for SMP.
+    #ifndef SMP // Don't build dynamic libraries for SMP.
 
-    rvct/drtaeabi.mmp
+        rvct/drtaeabi.mmp
 
-    rvct/dfpaeabi.mmp
-    rvct/dfpaeabi_vfpv2.mmp
+        rvct/dfpaeabi.mmp
+        rvct/dfpaeabi_vfpv2.mmp
 
-    #if defined(ARMCC_2_2) || defined(ARMCC_3_1)
+        #if defined(ARMCC_2_2) || defined(ARMCC_3_1)
 
-        rvct/drtrvct.mmp
-        rvct/drtrvct_vfpv2.mmp
+            rvct/drtrvct.mmp
+            rvct/drtrvct_vfpv2.mmp
 
-        rvct/dfprvct.mmp
-        rvct/dfprvct_vfpv2.mmp
-    #endif
+            rvct/dfprvct.mmp
+            rvct/dfprvct_vfpv2.mmp
 
-    #endif
+        #endif
+
+    #endif // #ifndef SMP
+
+#endif // #if !defined(GCCXML) && !defined(GCCE)
+
 
 PRJ_EXTENSIONS
 
-// Unzip RVCT3.1 runtime if being built with RVCT2.2 or RVCT4.0
+#if !defined(GCCXML) && !defined(GCCE)
 
-start extension tools/compsupp
+    // We need the runtime libraries for all versions of the compiler.
+    // The version we're running with will build its own runtime library;
+    // we need to extract the other versions from archives.
 
-#if defined(ARMCC_2_2) || defined(ARMCC_4_0)
-option  FILE  $(EXTENSION_ROOT)/rt_3_1.zip
-#elif defined(ARMCC_3_1)
-option  FILE  $(EXTENSION_ROOT)/rt_2_2.zip
-#endif
+    #ifndef ARMCC_2_2
+        start extension tools/compsupp
+        option FILE  $(EXTENSION_ROOT)/rt_2_2.zip
+        option TODIR $(EPOCROOT)epoc32/release
+        end
+    #endif
 
-option  TODIR $(EPOCROOT)epoc32/release
+    #ifndef ARMCC_3_1
+        start extension tools/compsupp
+        option FILE  $(EXTENSION_ROOT)/rt_3_1.zip
+        option TODIR $(EPOCROOT)epoc32/release
+        end
+    #endif
 
-end
+    #ifndef ARMCC_4_0
+        start extension tools/compsupp
+        option FILE  $(EXTENSION_ROOT)/rt_4_0.zip
+        option TODIR $(EPOCROOT)epoc32/release
+        end
+    #endif
 
-#endif // #if !defined GCCXML && !defined GCCE
-
-
+#endif // #if !defined(GCCXML) && !defined(GCCE)
