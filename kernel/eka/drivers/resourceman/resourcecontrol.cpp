@@ -734,7 +734,15 @@ void DPowerResourceController::MsgQDependencyFunc(TAny* aPtr)
 			pDRes = pRC->iDynamicResDependencyList[(aReq->ClientId() & ID_INDEX_BIT_MASK)];	
 		else
 			pDRes = (DDynamicPowerResourceD*)pRC->iStaticResDependencyArray[(aReq->ClientId() & ID_INDEX_BIT_MASK) - 1];
-		pC->iName = pDRes->iName;
+		
+		if (pDRes != NULL)
+		    {
+            pC->iName = pDRes->iName;
+		    }
+		else
+		    {
+            pC->iName = &KNullDesC;
+		    }
 		}
 	else if((aReq->ClientId() == -1) || (aReq->ClientId() == KDynamicResourceDeRegistering))
 		{
@@ -1384,9 +1392,9 @@ TInt DPowerResourceController::RegisterClient(TUint& aClientId, const TDesC8& aN
 			}
 		pC->iName = &aName;
 		aClientId = pC->iClientId;
+	    PRM_CLIENT_REGISTER_TRACE
+	    __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::RegisterClient, clientId = 0x%x", aClientId));
 		}
-    PRM_CLIENT_REGISTER_TRACE
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::RegisterClient, clientId = 0x%x", aClientId));
 	return(req->ReturnCode());
 	}
 
@@ -1567,10 +1575,10 @@ void DPowerResourceController::ResourceStateChangeOfClientLevels(SPowerResourceC
 		pR = iStaticResourceArray[pCL->iResourceId - 1];
 #endif
 #ifdef PRM_ENABLE_EXTENDED_VERSION
-		if(((pR->Sense() == DStaticPowerResource::ECustom) || ((TInt)pCL->iClientId == pR->iLevelOwnerId)) && (!(pCL->iResourceId & KIdMaskDynamic) ||
-			         ((pCL->iResourceId & KIdMaskDynamic) && (((DDynamicPowerResource*)pR)->LockCount() != 0))))
+		if(pR  &&  (((pR->Sense() == DStaticPowerResource::ECustom) || ((TInt)pCL->iClientId == pR->iLevelOwnerId)) && (!(pCL->iResourceId & KIdMaskDynamic) ||
+			         ((pCL->iResourceId & KIdMaskDynamic) && (((DDynamicPowerResource*)pR)->LockCount() != 0)))))
 #else
-		if((pR->Sense() == DStaticPowerResource::ECustom) || ((TInt)pCL->iClientId == pR->iLevelOwnerId)) 
+		if(pR  &&  ((pR->Sense() == DStaticPowerResource::ECustom) || ((TInt)pCL->iClientId == pR->iLevelOwnerId))) 
 #endif
 		    {
             pReq->ReqType() = TPowerRequest::ESetDefaultLevel;
@@ -3686,9 +3694,9 @@ TInt DPowerResourceController::RegisterProxyClient(TUint& aClientId, const TDesC
 		//Store the current thread Id;
 		pC->iThreadId = t.iId;
 		aClientId = pC->iClientId;
+	    __KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::RegisterProxyClient, clientId = 0x%x", aClientId));
+	    PRM_CLIENT_REGISTER_TRACE
 		}
-	__KTRACE_OPT(KRESMANAGER, Kern::Printf(">DPowerResourceController::RegisterProxyClient, clientId = 0x%x", aClientId));
-    PRM_CLIENT_REGISTER_TRACE
 	LOCK_AND_CRITICAL_SECTION_COUNT_CHECK
 	return KErrNone;
 	}
@@ -3831,7 +3839,6 @@ TInt DPowerResourceController::RegisterResourcesForIdle(TInt aPowerControllerId,
 		pS++;
 		}
 	iListForIdle=(SIdleResourceInfo*)aBuf->Ptr();
-	pS = (SIdleResourceInfo*)aBuf->Ptr();
 	UnLock();
 	LOCK_AND_CRITICAL_SECTION_COUNT_CHECK
 	return KErrNone;

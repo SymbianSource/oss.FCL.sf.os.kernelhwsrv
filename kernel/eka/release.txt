@@ -1,3 +1,26 @@
+Version 2.00.3114
+=================
+(Made by fadhliM 06/08/2010)
+
+1.	vfebvre
+	1.	ou1cimx1#502965 ENV : E32Test T_HEAPDL Fails TestRHeap::Test3()
+
+2.	jimhofe
+	1.	MINOR_CHANGE Adding f32test\rofs and f32test\loader to package_definition.xml
+	2.	MINOR_CHANGE Adding rofs_tests.mrp
+	3.	MINOR_CHANGE Removing author names from documentation
+
+3.	lanerobe
+	1.	ou1cimx1#506647 T_SMPSOAK debug output is not standard
+
+4.	cnotton
+	1.	ou1cimx1#500725 Coverity defects - Resource Manager and ResManUS
+
+5.	jukwak
+	1.	ou1cimx1#413512 DEV - GPIO SHAI is missing the inclusion of static extension function handlers
+	2.	ou1cimx1#468979 t_pci has dependency on naviengine
+
+
 Version 2.00.3113
 =================
 (Made by fadhliM 02/08/2010)

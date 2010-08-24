@@ -28,6 +28,8 @@
 #include "page_alloc.h"
 #include "heap_hybrid.h"
 
+const TUint KTestIterations = 100;
+
 const TInt KHeadSize = (TInt)RHeap::EAllocCellSize;
 
 class TestHybridHeap
@@ -319,7 +321,7 @@ void TestRHeap::Test3(void)
   //
   // Allocation of approximate sized cells from 'small cell' lists (smallbin)
   //
-  TInt ArraySize=32;
+  const TInt ArraySize=32;
   TInt cellSize=0;
   TAny** ArrayOfCells;
   ArrayOfCells= new TAny*[ArraySize];
@@ -328,17 +330,13 @@ void TestRHeap::Test3(void)
     
   // Allocate small approximate sized cells and put
   //them to the array. They are allocated from TOP chunk
-  TUint8 randomSize;
+  TUint8 randomSize[ArraySize];
   for(ArrayIndex=0; ArrayIndex<ArraySize;ArrayIndex++)
     {
     TestHybridHeap::TopSize(topSizeBefore,iHybridHeap);
-    do
-      {
-      randomSize= (TUint8)Math::Random();
-      }
-    while (randomSize>240);
-       
-  	cellSize=randomSize;
+    // Ensure that the size of the cell does not exceed 256 bytes on debug builds
+    randomSize[ArrayIndex] = (TUint8) (Math::Random() % (MAX_SMALL_REQUEST + 1 - RHeap::EDebugHdrSize));
+  	cellSize=randomSize[ArrayIndex];
   	ArrayOfCells[ArrayIndex]=iHeap->Alloc(cellSize);
   	TestHybridHeap::TopSize(topSizeAfter,iHybridHeap);
   	test(topSizeBefore > topSizeAfter);
@@ -358,20 +356,21 @@ void TestRHeap::Test3(void)
   iHeap->Check();
   
   // Allocate approximate sized cells from smallbin
-  TInt ArraySize2=6;
-  TInt cellSize2=0;    
+  const TInt ArraySize2=6;
+  TInt cellSize2=0;
   TAny** ArrayOfCells2;
   ArrayOfCells2= new TAny*[ArraySize2];
   TInt ArrayIndex2;
   TestHybridHeap::SmallMap(smallMap,iHybridHeap);
+  TUint8 randomSize2[ArraySize2];
   for(ArrayIndex2=0; ArrayIndex2<ArraySize2;ArrayIndex2++)
     {
-    TUint8 randomSize2 = (TUint8)Math::Random();
-    cellSize2=(randomSize2);
+    randomSize2[ArrayIndex2]=randomSize[2+ArrayIndex2*5];
+    cellSize2=randomSize2[ArrayIndex2];
     ArrayOfCells2[ArrayIndex2]=iHeap->Alloc(cellSize2);
     }
   TestHybridHeap::SmallMap(smallMap2,iHybridHeap);
-  test(smallMap>=smallMap2);              
+  test(smallMap>=smallMap2);
   iHeap->Check();
   
   // Freeing of approximate sized cells back to smallbin
@@ -396,7 +395,7 @@ void TestRHeap::Test4(void)
   // Allocation of approximate sized cells from digital trees (treebin) and splitting
   // Freeing of approximate sized cells back to digital trees (treebin)
   //
-  TInt ArraySize=32;
+  const TInt ArraySize=32;
   TInt cellSize=0;
   TAny** ArrayOfCells;
   ArrayOfCells= new TAny*[ArraySize];
@@ -404,15 +403,16 @@ void TestRHeap::Test4(void)
         
   // Allocate approximate sized cells bigger than 256
   // and put them to the array. They are allocated from TOP chunk
+  TUint8 randomSize[ArraySize];
   for(ArrayIndex=0; ArrayIndex<ArraySize;ArrayIndex++)
     {
-    TUint8 randomSize = (TUint8)Math::Random();
-    cellSize=(randomSize+256);
+    randomSize[ArrayIndex] = (TUint8)Math::Random();
+    cellSize=(randomSize[ArrayIndex]+MAX_SMALL_REQUEST+1);
     ArrayOfCells[ArrayIndex]=iHeap->Alloc(cellSize);
     }
   iHeap->Check();
   
-  TUint treeMap,treeMap2;    
+  TUint treeMap,treeMap2;
   // Free some of allocated cells from the array. So they are inserted
   // to the treebin
   for(ArrayIndex=2; ArrayIndex<ArraySize-1; ArrayIndex+=5)
@@ -425,16 +425,17 @@ void TestRHeap::Test4(void)
   iHeap->Check();
   
   // Allocate approximate sized cells from treebin
-  TInt ArraySize2=16;
+  const TInt ArraySize2=16;
   TInt cellSize2=0;    
   TAny** ArrayOfCells2;
   ArrayOfCells2= new TAny*[ArraySize2];
   TInt ArrayIndex2;
+  TUint8 randomSize2[ArraySize2];
   for(ArrayIndex2=0; ArrayIndex2<ArraySize2;ArrayIndex2++)
     {
     TestHybridHeap::TreeMap(treeMap,iHybridHeap);
-    TUint8 randomSize2 = (TUint8)Math::Random();
-    cellSize2=(randomSize2+256);
+    randomSize2[ArrayIndex2] = (TUint8)Math::Random();
+    cellSize2=(randomSize2[ArrayIndex2]+MAX_SMALL_REQUEST+1);
     ArrayOfCells2[ArrayIndex2]=iHeap->Alloc(cellSize2);
     TestHybridHeap::TreeMap(treeMap2,iHybridHeap);
     test(treeMap >= treeMap2);
@@ -474,16 +475,29 @@ GLDEF_C TInt E32Main(void)
   __KHEAP_MARK;
 
   TestRHeap T;
+  TUint i;
   test.Start(_L("Init DL allocator tests"));
   T.InitTests();
   test.Next(_L("Test DL allocator 1"));
-  T.Test1();
+  for(i = 0; i < KTestIterations; i++)
+    {
+    T.Test1();
+    }
   test.Next(_L("Test DL allocator 2"));
-  T.Test2();
+  for(i = 0; i < KTestIterations; i++)
+    {
+    T.Test2();
+    }
   test.Next(_L("Test DL allocator 3"));
-  T.Test3();
+  for(i = 0; i < KTestIterations; i++)
+    {
+    T.Test3();
+    }
   test.Next(_L("Test DL allocator 4"));
-  T.Test4();
+  for(i = 0; i < KTestIterations; i++)
+    {
+    T.Test4();
+    }
   test.Next(_L("Close DL allocator tests"));
   T.CloseTests();
 	

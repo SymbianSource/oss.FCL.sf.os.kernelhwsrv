@@ -136,13 +136,19 @@ _LIT8(KParentResource, "ParentResource");
 	TInt growBy = (list).GrowBy();										\
 	if(!growBy)																\
 		(list).Initialise(PRM_DYNAMIC_RESOURCE_INITIAL_SIZE);		\
-	if((list).Add(res, resId) == KErrNoMemory)								\
+    TInt r = (list).Add(res, resId);                                        \
+	if(r == KErrNoMemory)								                    \
 		{																	\
-		TInt r = (list).ReSize(growBy);										\
-		if(r != KErrNone)													\
-			return r;														\
-		(list).Add(res, resId);												\
+		r = (list).ReSize(growBy);										    \
+        if(r == KErrNone)                                                   \
+            {                                                               \
+            r = (list).Add(res, resId);										\
+            }                                                               \
 		}																	\
+    if(r != KErrNone)                                                       \
+        {                                                                   \
+        return r;                                                           \
+        }                                                                   \
 	res->iResourceId |= resId;												\
 	resId = res->iResourceId;												\
 	resIdCount++;															\

@@ -18,6 +18,14 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
+#include <dfcs.h>
+
+#ifdef __USE_GPIO_STATIC_EXTENSION__
+// test standard extension handler number. *DO NOT USE*
+#define KTestStaticExtension 0x80000000
+#include <staticextension.h>
+#endif
+
 class TGpioCallback;	//forward declaration
 
 /**
@@ -232,7 +240,6 @@ public:
 
     /**
     Reads the pin idle configuration and state.
-    
     @param aId    The pin Id.
     @param aConf  On return contains the idle configuration and state previoulsy
 				  set on the pin.
@@ -274,7 +281,6 @@ public:
             KErrGeneral, if there is no ISR bound to this interrupt.
     */
 	IMPORT_C static TInt UnbindInterrupt(TInt aId);
-
     /**
     Enables the interrupt on specified pin.
     
@@ -286,7 +292,6 @@ public:
             KErrGeneral, if there is no ISR bound to this interrupt.
     */
 	IMPORT_C static TInt EnableInterrupt(TInt aId);
-
     /**
     Disables the interrupt on specified pin.
     

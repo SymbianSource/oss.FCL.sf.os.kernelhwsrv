@@ -69,7 +69,6 @@ platsec.settings        /epoc32/data/defaulttest.ini
 ../dll/oe/eabi/urel/t_oeexport1.exe     /epoc32/release/armv5/urel/t_oeexport1.exe
 
 ../demandpaging/d_pagestress.h		OS_LAYER_PLATFORM_EXPORT_PATH(d_pagestress.h)
-../pci/t_pci.h						OS_LAYER_PLATFORM_EXPORT_PATH(e32test/t_pci.h)
 
 ../iic/iic_psl/i2c.h			OS_LAYER_PLATFORM_EXPORT_PATH(e32test/i2c.h)
 ../iic/iic_psl/spi.h			OS_LAYER_PLATFORM_EXPORT_PATH(e32test/spi.h)
@@ -1054,7 +1053,4 @@ t_kerncorestats		support
 #include "../hcr/hcr.inf"
 
 #include "../domainmgr/test.inf"
-
-//pci tests
-t_pci
 

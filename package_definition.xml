@@ -26,6 +26,12 @@
       <component id="f32test" name="File Server Tests" purpose="development">
         <unit bldFile="kerneltest/f32test/group" mrp="kerneltest/f32test/group/base_f32test.mrp"/>
       </component>
+      <component id="rofstests" name="Read Only File System Tests" purpose="development">
+        <unit bldFile="kerneltest/f32test/rofs" mrp="kerneltest/f32test/rofs/rofs_tests.mrp"/>
+      </component>
+      <component id="loadertest" name="Loader Tests" purpose="development">
+        <unit bldFile="kerneltest/f32test/loader" mrp="kerneltest/f32test/loader/base_loader.mrp"/>
+      </component>
     </collection>
     <collection id="ldds" name="Logical Device Drivers" level="adaptation">
       <component id="ethernetldd" name="Ethernet Drivers" purpose="optional">

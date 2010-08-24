@@ -1,4 +1,4 @@
-// Copyright (c) 1995-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 1995-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -2161,13 +2161,11 @@ void DChannelResManUs::RemoveTrackingControl(TTrackingControl*& aTracker)
     __KTRACE_OPT(KRESMANAGER, Kern::Printf("DChannelResManUs::RemoveTrackingControl()"));
 
 	// Free the resource-tracking links and their respective queues
-	TAny* buf;
 	if(aTracker->iFreeQue!=NULL)
 		{
 		while(!aTracker->iFreeQue->IsEmpty())
 			{
-			buf = (TAny*)(aTracker->iFreeQue->GetFirst()); // Dequeues the element
-			delete buf;
+			delete aTracker->iFreeQue->GetFirst(); // Dequeues the element;
 			}
 		delete aTracker->iFreeQue;
 		}
@@ -2176,8 +2174,7 @@ void DChannelResManUs::RemoveTrackingControl(TTrackingControl*& aTracker)
 		{
 		while(!aTracker->iBusyQue->IsEmpty())
 			{
-			buf = (TAny*)(aTracker->iBusyQue->GetFirst()); // Dequeues the element
-			delete buf;
+			delete aTracker->iBusyQue->GetFirst(); // Dequeues the element;
 			}
 		delete aTracker->iBusyQue;
 		}
