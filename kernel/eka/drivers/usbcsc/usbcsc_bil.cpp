@@ -19,7 +19,10 @@
 #include <e32std_private.h>
 #include <d32usbcsc.h>
 #include <e32debug.h>
-
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "usbcsc_bilTraces.h"
+#endif
 /** @file usbcsc_bil.cpp
 
 	Buffer Interface Layer for USB Client Device driver stack, using shared chunks.
@@ -160,7 +163,7 @@ EXPORT_C TInt RDevUsbcScClient::OpenEndpoint(TEndpointBuffer& aEpB, TInt aEpI)
 
 #ifdef _DEBUG
 	aEpB.Dump();
-	RDebug::Printf("iEndpointStatus: %x \n",iEndpointStatus);
+	OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, RDEVUSBCSCCLIENT_OPENENDPOINT, "iEndpointStatus: %x \n",iEndpointStatus );
 #endif
 	return KErrNone;
 	}
@@ -699,7 +702,9 @@ EXPORT_C TUsbcScBufferRecord* TUsbcScChunkHeader::GetBuffer(TInt aAltSetting, TI
 
 EXPORT_C void TEndpointBuffer::Dump()
 	{
-	RDebug::Printf("TEndpointBuffer::Dump iBufferStart: 0x%x, iSize: 0x%x, iEndpointNumber: 0x%x, iBufferNum: %d, iInState: 0x%x iOutState: 0x%x\n",
-							iBufferStartAddr,iSize,iEndpointNumber,iBufferNum,iInState,iOutState);
+	OstTraceDefExt5(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TENDPOINTBUFFER_DUMP, "TEndpointBuffer::Dump iBufferStart: 0x%x, iSize: 0x%x, iEndpointNumber: 0x%x, iBufferNum: %d, iInState: 0x%x",
+            (TUint)iBufferStartAddr,iSize,iEndpointNumber,iBufferNum, (TUint)iInState);
+
+    OstTraceDef1(OST_TRACE_CATEGORY_RND, TRACE_NORMAL, TENDPOINTBUFFER_DUMP_DUP1, " iOutState: 0x%x\n", iOutState);
 	}
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -27,7 +27,8 @@ UID				0 0x10282b48 // Uid2 ignored
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 
-USERINCLUDE		../inc 
+USERINCLUDE		../inc
+USERINCLUDE		../traces_t_usbdi
 
 // Source file paths
 
@@ -39,31 +40,31 @@ SOURCE			main.cpp
 
 // Engine and controller
 
-SOURCE			testengine.cpp
-SOURCE			testcasecontroller.cpp
-SOURCE			testpolicy.cpp
-SOURCE			usbdescriptoroffsets.cpp
-SOURCE			fdfactor.cpp
+SOURCE			TestEngine.cpp
+SOURCE			TestCaseController.cpp
+SOURCE			TestPolicy.cpp
+SOURCE			UsbDescriptorOffsets.cpp
+SOURCE			FDFActor.cpp
 
 // Test factory
 
-SOURCE			testcasefactory.cpp
+SOURCE			TestCaseFactory.cpp
 
 // Timers/Watchers
 
-SOURCE			usbclientstatewatcher.cpp
-SOURCE			basicwatcher.cpp
-SOURCE			softwareconnecttimer.cpp
+SOURCE			UsbClientStateWatcher.cpp
+SOURCE			BasicWatcher.cpp
+SOURCE			SoftwareConnectTimer.cpp
 SOURCE			wakeuptimer.cpp
 
 // Modelled test devices
 
-SOURCE			testdevicebase.cpp
-SOURCE			testinterfacebase.cpp
+SOURCE			TestDeviceBase.cpp
+SOURCE			TestInterfaceBase.cpp
 SOURCE			testinterfacesettingbase.cpp
 SOURCE			vendordevice.cpp
 SOURCE			testdeviceA.cpp
-SOURCE			testdeviceB.cpp
+SOURCE			testdeviceb.cpp
 SOURCE			testdeviceC.cpp
 SOURCE			testdeviceD.cpp
 SOURCE			endpointreader.cpp

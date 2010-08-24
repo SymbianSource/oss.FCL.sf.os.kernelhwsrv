@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,10 @@
 #include "testcaseroot.h"
 #include "testcasewd.h"
 #include "testcase0465.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcase0465Traces.h"
+#endif
 
 
 
@@ -35,7 +39,10 @@ const TTestCaseFactoryReceipt<CTestCase0465> CTestCase0465::iFactoryReceipt(KTes
 
 CTestCase0465* CTestCase0465::NewL(TBool aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0465_NEWL);
+	    }
 	CTestCase0465* self = new (ELeave) CTestCase0465(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -47,7 +54,10 @@ CTestCase0465* CTestCase0465::NewL(TBool aHost)
 CTestCase0465::CTestCase0465(TBool aHost)
 :	CTestCaseRoot(KTestCaseId, aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0465_CTESTCASE0465);
+	    }
 		
 	} 
 
@@ -57,7 +67,10 @@ CTestCase0465::CTestCase0465(TBool aHost)
 */
 void CTestCase0465::ConstructL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0465_CONSTRUCTL);
+	    }
 	iWDTimer = CTestCaseWatchdog::NewL();
 	
 	BaseConstructL();
@@ -66,7 +79,10 @@ void CTestCase0465::ConstructL()
 
 CTestCase0465::~CTestCase0465()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0465_DCTESTCASE0465);
+	    }
 
 	Cancel();
 	delete iWDTimer;
@@ -76,7 +92,10 @@ CTestCase0465::~CTestCase0465()
 
 void CTestCase0465::ExecuteTestCaseL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0465_EXECUTETESTCASEL);
+	    }
 	iCaseStep = EPreconditions;
 	
 	iRepeats = KOperationRetriesMax;	// VBus event rise retries
@@ -89,7 +108,10 @@ void CTestCase0465::ExecuteTestCaseL()
 	
 void CTestCase0465::DoCancel()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0465_DOCANCEL);
+	    }
 
 	// cancel our timer
 	iTimer.Cancel();
@@ -118,21 +140,33 @@ void CTestCase0465::CancelDrive(CTestCaseRoot *pThis)
 void CTestCase0465::DescribePreconditions()
 	{
 	test.Printf(_L("BEFORE running this test\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS, "BEFORE running this test\n");
 	test.Printf(_L("\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP01, "\n");
 	test.Printf(_L("Insert 'A' connector\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP02, "Insert 'A' connector\n");
 	test.Printf(_L("\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP03, "\n");
 	test.Printf(_L("Confirm passing tests\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP04, "Confirm passing tests\n");
 	test.Printf(_L("\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP05, "\n");
 	test.Printf(_L("ID_PIN detection\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP06, "ID_PIN detection\n");
 	test.Printf(_L("VBus Driving\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP07, "VBus Driving\n");
 	test.Printf(_L("\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0465_DESCRIBEPRECONDITIONS_DUP08, "\n");
 	}
 		
 
 // handle event completion	
 void CTestCase0465::RunStepL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0465_RUNSTEPL);
+	    }
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
 	TBuf<MAX_DSTRLEN> aDescription;
@@ -150,10 +184,15 @@ void CTestCase0465::RunStepL()
 				}
 			// prompt to insert connector
 			test.Printf(_L("\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP01, "\n");
 			test.Printf(KInsertAConnectorPrompt);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP02, KInsertAConnectorPrompt);
 			test.Printf(_L("\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP03, "\n");
 			test.Printf(KPressAnyKeyToContinue);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP04, KPressAnyKeyToContinue);
 			test.Printf(_L("\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP05, "\n");
 			RequestCharacter();			
 			break;
 			
@@ -191,6 +230,7 @@ void CTestCase0465::RunStepL()
 			iCaseStep = EUnloadLdd;
 			OtgEventString(iOTGEvent, aDescription);
 			test.Printf(_L("Received event %d '%S' status(%d)\n"), iOTGEvent, &aDescription, completionCode);
+			OstTraceExt3(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP06, "Received event %d '%S' status(%d)\n", iOTGEvent, aDescription, completionCode);
 			
 			if (iOTGEvent != RUsbOtgDriver::EEventVbusRaised)
 				{
@@ -206,6 +246,7 @@ void CTestCase0465::RunStepL()
 				break;	
 				}
 			test.Printf(_L("VBus seen OK.\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP07, "VBus seen OK.\n");
 			
 			SelfComplete();
 			break;
@@ -221,12 +262,19 @@ void CTestCase0465::RunStepL()
 			User::After(100000);
 			
 			test.Printf(_L("Use meter or oscilloscope\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP08, "Use meter or oscilloscope\n");
 			test.Printf(_L("to measure VBUS, which should\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP09, "to measure VBUS, which should\n");
 			test.Printf(_L("have dropped\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP10, "have dropped\n");
 			test.Printf(_L("\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP11, "\n");
 			test.Printf(_L("Is it below 0.2 volts?\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP12, "Is it below 0.2 volts?\n");
 			test.Printf(_L("\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP13, "\n");
 			test.Printf(_L("Select Y or N to continue\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP14, "Select Y or N to continue\n");
 			RequestCharacter();
 			iWDTimer->IssueRequest(KDelayDurationForUserActivityMS, this, &CancelKB);
 			iCaseStep = EVerifyBusGone;
@@ -243,6 +291,7 @@ void CTestCase0465::RunStepL()
 			if (('y' == iKeyCodeInput) ||('Y' == iKeyCodeInput))
 				{
 				test.Printf(_L("VBUS 'drop' seen\n"));
+				OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP15, "VBUS 'drop' seen\n");
 				SelfComplete();
 				}
 			else
@@ -258,6 +307,7 @@ void CTestCase0465::RunStepL()
 			
 		default:
 			test.Printf(_L("<Error> unknown test step\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0465_RUNSTEPL_DUP16, "<Error> unknown test step\n");
 			Cancel();
 			return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));
 		}

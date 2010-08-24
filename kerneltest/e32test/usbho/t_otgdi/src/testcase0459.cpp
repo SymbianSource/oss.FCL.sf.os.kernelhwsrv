@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -25,6 +25,10 @@
 #include "testcaseroot.h"
 #include "testcasefactory.h"
 #include "testcase0459.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcase0459Traces.h"
+#endif
 
 
 
@@ -35,7 +39,10 @@ const TTestCaseFactoryReceipt<CTestCase0459> CTestCase0459::iFactoryReceipt(KTes
 
 CTestCase0459* CTestCase0459::NewL(TBool aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0459_NEWL);
+	    }
 	CTestCase0459* self = new (ELeave) CTestCase0459(aHost);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -47,7 +54,10 @@ CTestCase0459* CTestCase0459::NewL(TBool aHost)
 CTestCase0459::CTestCase0459(TBool aHost)
 :	CTestCaseRoot(KTestCaseId, aHost)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0459_CTESTCASE0459);
+	    }
 		
 	} 
 
@@ -57,7 +67,10 @@ CTestCase0459::CTestCase0459(TBool aHost)
 */
 void CTestCase0459::ConstructL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0459_CONSTRUCTL);
+	    }
 	
 	BaseConstructL();
 	}
@@ -65,7 +78,10 @@ void CTestCase0459::ConstructL()
 
 CTestCase0459::~CTestCase0459()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0459_DCTESTCASE0459);
+	    }
 
 	Cancel();
 	}
@@ -73,7 +89,10 @@ CTestCase0459::~CTestCase0459()
 
 void CTestCase0459::ExecuteTestCaseL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0459_EXECUTETESTCASEL);
+	    }
 	iCaseStep = EPreconditions;
 	
 	CActiveScheduler::Add(this);
@@ -85,12 +104,16 @@ void CTestCase0459::ExecuteTestCaseL()
 void CTestCase0459::DescribePreconditions()
 	{
 	test.Printf(_L("Remove 'A' connector beforehand.\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0459_DESCRIBEPRECONDITIONS, "Remove 'A' connector beforehand.\n");
 	}
 
 	
 void CTestCase0459::DoCancel()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0459_DOCANCEL);
+	    }
 
 	// cancel our timer
 	iTimer.Cancel();
@@ -100,7 +123,10 @@ void CTestCase0459::DoCancel()
 // handle event completion	
 void CTestCase0459::RunStepL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0459_RUNSTEPL);
+	    }
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
 	TBuf<MAX_DSTRLEN> aDescription;
@@ -117,7 +143,9 @@ void CTestCase0459::RunStepL()
 				}
 			// prompt to remove connector
 			test.Printf(KRemoveAConnectorPrompt);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0459_RUNSTEPL_DUP01, KRemoveAConnectorPrompt);
 			test.Printf(KPressAnyKeyToContinue);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0459_RUNSTEPL_DUP02, KPressAnyKeyToContinue);
 			RequestCharacter();			
 			break;
 			
@@ -140,8 +168,10 @@ void CTestCase0459::RunStepL()
 				}
 
 			test.Printf(KInsertAConnectorPrompt);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0459_RUNSTEPL_DUP03, KInsertAConnectorPrompt);
 			iCaseStep = ETestStateA;
 			test.Printf(_L("Waiting for OTG Event\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0459_RUNSTEPL_DUP04, "Waiting for OTG Event\n");
 
 			otgQueueOtgEventRequest( iOTGEvent, iStatus);
 
@@ -166,6 +196,7 @@ void CTestCase0459::RunStepL()
 			TTimeIntervalMicroSeconds ivlMicro(iIDcheckEnd.MicroSecondsFrom(iIDcheckStart));
 			aMillisec = (TInt)(ivlMicro.Int64())/1000;	// USB times are in uSec, but in ms for the user layer
 			test.Printf(_L("Received event %d '%S' status(%d) in %d ms"), iOTGEvent, &aDescription, completionCode, aMillisec);
+			OstTraceExt4(TRACE_NORMAL, CTESTCASE0459_RUNSTEPL_DUP05, "Received event %d '%S' status(%d) in %d ms", iOTGEvent, aDescription, completionCode, aMillisec);
 			
 			// check the parameters gathered
 			if (RUsbOtgDriver::EEventAPlugInserted == iOTGEvent)
@@ -176,6 +207,7 @@ void CTestCase0459::RunStepL()
 					{
 					// 'A' was in the receptacle when we started the stack, so it fires immediately, consume it and wait for another.
 					test.Printf(_L("Please first remove and then replace the A connector.\n"));
+					OstTrace0(TRACE_NORMAL, CTESTCASE0459_RUNSTEPL_DUP06, "Please first remove and then replace the A connector.\n");
 					// wrong event in the Q already, keep at it
 					iCaseStep = ERegisterForEvents;	
 					}
@@ -199,6 +231,7 @@ void CTestCase0459::RunStepL()
 
 		default:
 			test.Printf(_L("<Error> unknown test step"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0459_RUNSTEPL_DUP07, "<Error> unknown test step");
 			Cancel();
 			return (TestFailed(KErrCorrupt, _L("<Error> unknown test step")));
 

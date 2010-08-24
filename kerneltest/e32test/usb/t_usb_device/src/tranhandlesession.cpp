@@ -24,6 +24,10 @@
 
 #include "tranhandleserverconsts.h"
 #include "tranhandlesession.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tranhandlesessionTraces.h"
+#endif
 #include "activecontrol.h"
 
 
@@ -41,12 +45,12 @@ CTranHandleSession::CTranHandleSession(CActiveControl& aControl)
 
 CTranHandleSession::~CTranHandleSession()
     {
-    RDebug::Printf("CTranHandleSession::~CTranHandleSession");
+    OstTrace0(TRACE_NORMAL, CTRANHANDLESESSION_DCTRANHANDLESESSION, "CTranHandleSession::~CTranHandleSession");
     }
 
 void CTranHandleSession::ServiceL(const RMessage2& aMessage)
     {
-	RDebug::Printf("CTranHandleSession::ServiceL");
+	OstTrace0(TRACE_NORMAL, CTRANHANDLESESSION_SERVICEL, "CTranHandleSession::ServiceL");
 	TInt r;
     switch ( aMessage.Function() )
         {

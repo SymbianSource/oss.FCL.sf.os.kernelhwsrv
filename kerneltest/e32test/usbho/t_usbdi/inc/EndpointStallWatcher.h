@@ -61,8 +61,6 @@ protected:
 	*/
 	void DoCancel()
 		{
-		LOG_FUNC
-		
 		iClientDriver.EndpointStatusNotifyCancel();
 		}
 		
@@ -75,8 +73,6 @@ protected:
 	of an endpoint.
 	*/
 		{
-		LOG_FUNC
-		
 		TUint epMask = iEpMask;
 
 		if(iStatus.Int() != KErrNone)
@@ -121,8 +117,6 @@ protected:
 	*/
 	TInt RunError(TInt aError)
 		{
-		LOG_FUNC
-		
 		return KErrNone;
 		}
 

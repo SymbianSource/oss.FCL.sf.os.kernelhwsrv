@@ -24,6 +24,10 @@
 #include <e32test.h>
 #include <usb.h>
 #include "transfersrv.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "transfersrvTraces.h"
+#endif
 
 _LIT(KUsbmanImg, "z:\\system\\programs\\t_usb_transfersrv.exe");
 
@@ -34,17 +38,17 @@ static TInt StartServer()
 //
 	{
 	const TUidType serverUid(KNullUid, KNullUid, KTransferSvrUid);
-	RDebug::Printf("StartServer1");
+	OstTrace0(TRACE_NORMAL, STARTSERVER_STARTSERVER, "StartServer1");
 
 	RProcess server;
 	TInt err = server.Create(KUsbmanImg, KNullDesC, serverUid);
-	RDebug::Printf("StartServer2 %d", err);
+	OstTrace1(TRACE_NORMAL, STARTSERVER_STARTSERVER_DUP01, "StartServer2 %d", err);
 	
 	if (err != KErrNone)
 		{
 		return err;
 		}
-	RDebug::Printf("StartServer3");
+	OstTrace0(TRACE_NORMAL, STARTSERVER_STARTSERVER_DUP02, "StartServer3");
 
 	TRequestStatus stat;
 	server.Rendezvous(stat);
@@ -53,7 +57,7 @@ static TInt StartServer()
 		server.Kill(0);		// abort startup
 	else
 		server.Resume();	// logon OK - start the server
-	RDebug::Printf("StartServer4");
+	OstTrace0(TRACE_NORMAL, STARTSERVER_STARTSERVER_DUP03, "StartServer4");
 
 	User::WaitForRequest(stat);		// wait for start or death
 
@@ -61,11 +65,11 @@ static TInt StartServer()
 	// is the panic 'reason' and may be '0' which cannot be distinguished
 	// from KErrNone
 	err = (server.ExitType() == EExitPanic) ? KErrServerTerminated : stat.Int();
-	RDebug::Printf("StartServer5");
+	OstTrace0(TRACE_NORMAL, STARTSERVER_STARTSERVER_DUP04, "StartServer5");
 
 	//server.Close();
 	
-	RDebug::Printf("transfer server started successfully: \n");
+	OstTrace0(TRACE_NORMAL, STARTSERVER_STARTSERVER_DUP05, "transfer server started successfully: \n");
 
 	return err;
 	}
@@ -94,23 +98,23 @@ EXPORT_C TInt RTransferSrv::Connect()
     {
 	TInt retry = 2;
 	
-	RDebug::Printf("Connect1");
+	OstTrace0(TRACE_NORMAL, RTRANSFERSRV_CONNECT, "Connect1");
 	FOREVER
 		{
 		TInt err = CreateSession(KTransferServerName, Version(), 10);
-		RDebug::Printf("Connect2");
+		OstTrace0(TRACE_NORMAL, RTRANSFERSRV_CONNECT_DUP01, "Connect2");
 
 		if ((err != KErrNotFound) && (err != KErrServerTerminated))
 			{
 			return err;
 			}
-		RDebug::Printf("Connect3");
+		OstTrace0(TRACE_NORMAL, RTRANSFERSRV_CONNECT_DUP02, "Connect3");
 
 		if (--retry == 0)
 			{
 			return err;
 			}
-		RDebug::Printf("Connect4");
+		OstTrace0(TRACE_NORMAL, RTRANSFERSRV_CONNECT_DUP03, "Connect4");
 
 		err = StartServer();
 
@@ -119,14 +123,14 @@ EXPORT_C TInt RTransferSrv::Connect()
 			return err;
 			}
 		
-		RDebug::Printf("Connect5");
+		OstTrace0(TRACE_NORMAL, RTRANSFERSRV_CONNECT_DUP04, "Connect5");
 		}
     }
 
 EXPORT_C TInt RTransferSrv::SetConfigFileName(TDes& aString)
 	{
 	
-	RDebug::Printf("SetConfigFileName");
+	OstTrace0(TRACE_NORMAL, RTRANSFERSRV_SETCONFIGFILENAME, "SetConfigFileName");
 	return SendReceive(ESetConfigFileName, TIpcArgs(&aString));
 	}
 

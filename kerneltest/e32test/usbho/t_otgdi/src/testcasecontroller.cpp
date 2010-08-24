@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -29,6 +29,10 @@
 #include "testcaseroot.h"
 #include "testcasecontroller.h"
 #include "testengine.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcasecontrollerTraces.h"
+#endif
 
 
 
@@ -93,10 +97,12 @@ void CTestCaseController::RunL()
 	if (err != KErrNone)
 		{
 		test.Printf(_L("<Error> Test case %lS failed\n"),&iTestCaseId);
+		OstTraceExt1(TRACE_NORMAL, CTESTCASECONTROLLER_RUNL, "<Error> Test case %lS failed\n",iTestCaseId);
 		}
 	else
 		{
 		test.Printf(_L("Test case %lS passed\n"),&iTestCaseId);
+		OstTraceExt1(TRACE_NORMAL, CTESTCASECONTROLLER_RUNL_DUP01, "Test case %lS passed\n",iTestCaseId);
 		}
 		
 	// Find next test to run	
@@ -104,7 +110,9 @@ void CTestCaseController::RunL()
 	if (err == KErrNone)
 		{
 		test.Printf(_L("\n"));	// ensures blank line between tests
+		OstTrace0(TRACE_NORMAL, CTESTCASECONTROLLER_RUNL_DUP02, "\n");	// ensures blank line between tests
 		test.Printf(_L("\n"));
+		OstTrace0(TRACE_NORMAL, CTESTCASECONTROLLER_RUNL_DUP03, "\n");
 		test.Next(iTestCaseId);
 		
 		// run the next test here
@@ -113,12 +121,12 @@ void CTestCaseController::RunL()
 		}
 	else if (err == KErrNotFound)
 		{
-		RDebug::Printf("All specified test cases performed");
+		OstTrace0(TRACE_NORMAL, CTESTCASECONTROLLER_RUNL_DUP04, "All specified test cases performed");
 		CActiveScheduler::Stop();
 		}
 	else
 		{
-		RDebug::Printf("<Error %d> Unknown error from CTestEngine::NextTestCaseId",err);
+		OstTrace1(TRACE_NORMAL, CTESTCASECONTROLLER_RUNL_DUP05, "<Error %d> Unknown error from CTestEngine::NextTestCaseId",err);
 		User::Leave(err);
 		}
 	}
@@ -126,7 +134,10 @@ void CTestCaseController::RunL()
 	
 TInt CTestCaseController::RunError(TInt aError)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASECONTROLLER_RUNERROR);
+	    }
 	switch (aError)
 		{
 		case KErrNoMemory:

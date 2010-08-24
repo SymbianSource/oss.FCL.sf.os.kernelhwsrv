@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -26,6 +26,10 @@
 #include <e32def_private.h>
 #include "TestCaseFactory.h"
 #include "debugmacros.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcasefactoryTraces.h"
+#endif
 
 
 	
@@ -49,25 +53,24 @@ RTestFactory::RTestFactory()
 	
 void RTestFactory::RegisterTestCase(const TDesC& aTestCaseId,TCreationMethod aCreationMethod)
 	{
-	//LOG_FUNC
 	TStringIdentity key(aTestCaseId);
 	TInt err(Instance().iTestCases.Insert(key,aCreationMethod));
 	if (err != KErrNone)
 		{
 		// Log that a test case could not be registered due to err
-		RDebug::Print(_L("Test case '%S' could not be registered with test case factory"),&aTestCaseId);
+		OstTraceExt1(TRACE_NORMAL, RTESTFACTORY_REGISTERTESTCASE_DUP01, "Test case '%S' could not be registered with test case factory",aTestCaseId);
 		}
 	else
 		{
 		RTestFactory::TCreationMethod* creatorFunction = Instance().iTestCases.Find(key);
 		if (creatorFunction == NULL)
 			{
-			RDebug::Print(_L("<Error> Test case '%S' did not register"),&aTestCaseId);
+			OstTraceExt1(TRACE_NORMAL, RTESTFACTORY_REGISTERTESTCASE_DUP02, "<Error> Test case '%S' did not register",aTestCaseId);
 			ListRegisteredTestCases();
 			}
 		else
 			{
-			RDebug::Print(_L("Test case '%S' registered in factory"),&aTestCaseId);
+			OstTraceExt1(TRACE_NORMAL, RTESTFACTORY_REGISTERTESTCASE_DUP03, "Test case '%S' registered in factory",aTestCaseId);
 			}
 		}
 	}
@@ -87,7 +90,10 @@ TBool RTestFactory::TestCaseExists(const TDesC& aTestCaseId)
  */
 void RTestFactory::GetTestID(TInt aIndex, TBuf<KTestCaseIdLength> &aTestID)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(RTESTFACTORY_GETTESTID);
+	    }
 
 	RFactoryMap::TIter it(Instance().iTestCases);
 	
@@ -127,12 +133,16 @@ TInt TestIDValue(const TDesC & aTestID)
  */	
 void RTestFactory::ListRegisteredTestCases(RPointerArray<HBufC> & aTestCaseNameArr)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(RTESTFACTORY_LISTREGISTEREDTESTCASES);
+	    }
 	RFactoryMap::TIter it(Instance().iTestCases);
 	TInt count(0);
 	TInt cases(Instance().iTestCases.Count());
 	
 	test.Printf(_L("------ F A C T O R Y -------\n"));
+	OstTrace0(TRACE_NORMAL, RTESTFACTORY_LISTREGISTEREDTESTCASES_DUP01, "------ F A C T O R Y -------\n");
 	
 	it.Reset();
 	for (count=0; count<Instance().iTestCases.Count(); count++)
@@ -176,15 +186,20 @@ void RTestFactory::ListRegisteredTestCases(RPointerArray<HBufC> & aTestCaseNameA
 	for (count=0; count<aTestCaseNameArr.Count(); count++)
 		{
 		test.Printf(_L("% 2d: %S\n"), count, aTestCaseNameArr[count]);
+		OstTraceExt2(TRACE_NORMAL, RTESTFACTORY_LISTREGISTEREDTESTCASES_DUP02, "% 2d: %S\n", count, *aTestCaseNameArr[count]);
 		}
 	
 	test.Printf(_L("----------------------------\n"));
+	OstTrace0(TRACE_NORMAL, RTESTFACTORY_LISTREGISTEREDTESTCASES_DUP03, "----------------------------\n");
 	}
 
 
 CTestCaseRoot* RTestFactory::CreateTestCaseL(const TDesC& aTestCaseId)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(RTESTFACTORY_CREATETESTCASEL);
+	    }
 	RTestFactory::TCreationMethod creatorFunction = NULL;
 	TInt err(KErrNone);
 	TStringIdentity key(aTestCaseId);
@@ -193,12 +208,12 @@ CTestCaseRoot* RTestFactory::CreateTestCaseL(const TDesC& aTestCaseId)
 	if (err != KErrNone)
 		{
 		// Test case is not present in the factory therefore test cannot support specified test case
-		RDebug::Print(_L("<Error %d> Test case '%S' not supported"),err,&aTestCaseId);
+		OstTraceExt2(TRACE_NORMAL, RTESTFACTORY_CREATETESTCASEL_DUP01, "<Error %d> Test case '%S' not supported",err,aTestCaseId);
 		ListRegisteredTestCases();
 		User::Leave(err);
 		}
 
-	RDebug::Print(_L("Creating test case '%S'"),&aTestCaseId);
+	OstTraceExt1(TRACE_NORMAL, RTESTFACTORY_CREATETESTCASEL_DUP02, "Creating test case '%S'",aTestCaseId);
 		
 	// Call the creator function to create the test case object
 	return creatorFunction(gSemiAutomated);

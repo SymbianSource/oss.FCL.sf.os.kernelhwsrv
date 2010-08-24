@@ -1,3 +1,13 @@
+Version 2.00.3115
+=================
+(Made by fadhliM 16/08/2010)
+
+1.	daniezho
+	1.	RP527391
+		REQ		417-56902 Instrumentation of USB
+		SUB/SCO	417-72923 Instrumentation of USB - USB package
+
+
 Version 2.00.3114
 =================
 (Made by fadhliM 06/08/2010)

@@ -1,4 +1,4 @@
-// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2002-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -18,11 +18,15 @@
 //
 
 #include "t_usb.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "t_usbTraces.h"
+#endif
 
 
 void RunAppL(TBool aVerboseOutput)
 	{
-	RDebug::Print(_L("RunAppL()"));
+	OstTrace0(TRACE_NORMAL, RUNAPPL_RUNAPPL, "RunAppL()");
 	// Construct the active scheduler
 	CActiveScheduler* myScheduler = new (ELeave) CActiveScheduler();
 
@@ -56,7 +60,7 @@ void RunAppL(TBool aVerboseOutput)
 
 TInt E32Main()
 	{
-	RDebug::Print(_L("E32Main()"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN, "E32Main()");
 
 	CTrapCleanup* cleanup = CTrapCleanup::New();			// get clean-up stack
 
@@ -68,7 +72,7 @@ TInt E32Main()
 	TBool verbose = EFalse;
 	if (c.CompareF(KArg) == 0)
 		{
-		RDebug::Print(_L("(Verbose output enabled.)\n"));
+		OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP01, "(Verbose output enabled.)\n");
 		verbose = ETrue;
 		}
 
@@ -80,7 +84,7 @@ TInt E32Main()
 
 	delete cleanup;											// destroy clean-up stack
 
-	RDebug::Print(_L("Program exit: done.\n"));
+	OstTrace0(TRACE_NORMAL, E32MAIN_E32MAIN_DUP02, "Program exit: done.\n");
 
 	return 0;												// and return
 	}

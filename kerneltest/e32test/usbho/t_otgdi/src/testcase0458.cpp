@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -24,6 +24,10 @@
 #include <e32Test.h>	// RTest headder
 #include "testcaseroot.h"
 #include "testcase0458.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "testcase0458Traces.h"
+#endif
 
 
 
@@ -55,7 +59,10 @@ CTestCase0458::CTestCase0458(TBool aHost)
 */
 void CTestCase0458::ConstructL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0458_CONSTRUCTL);
+	    }
 	iRepeats = OPEN_REPEATS;
 	
 	BaseConstructL();
@@ -64,7 +71,10 @@ void CTestCase0458::ConstructL()
 
 CTestCase0458::~CTestCase0458()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0458_DCTESTCASE0458);
+	    }
 
 	Cancel();
 	}
@@ -72,7 +82,10 @@ CTestCase0458::~CTestCase0458()
 
 void CTestCase0458::ExecuteTestCaseL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0458_EXECUTETESTCASEL);
+	    }
 	iCaseStep = EPreconditions;
 	
 	CActiveScheduler::Add(this);
@@ -83,13 +96,18 @@ void CTestCase0458::ExecuteTestCaseL()
 void CTestCase0458::DescribePreconditions()
 	{
 	test.Printf(_L("Insert 'B' connector from cable\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0458_DESCRIBEPRECONDITIONS, "Insert 'B' connector from cable\n");
 	test.Printf(_L("attached to powered host beforehand.\n"));
+	OstTrace0(TRACE_NORMAL, CTESTCASE0458_DESCRIBEPRECONDITIONS_DUP01, "attached to powered host beforehand.\n");
 	}
 
 	
 void CTestCase0458::DoCancel()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0458_DOCANCEL);
+	    }
 
 	// cancel our timer
 	iTimer.Cancel();
@@ -99,7 +117,10 @@ void CTestCase0458::DoCancel()
 // handle event completion	
 void CTestCase0458::RunStepL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CTESTCASE0458_RUNSTEPL);
+	    }
 
 	// Obtain the completion code for this CActive obj.
 	TInt completionCode(iStatus.Int()); 
@@ -109,6 +130,7 @@ void CTestCase0458::RunStepL()
 		case EPreconditions:
 			{
 			test.Printf(KPressAnyKeyToStart);
+			OstTrace0(TRACE_NORMAL, CTESTCASE0458_RUNSTEPL_DUP01, KPressAnyKeyToStart);
 			iCaseStep = ELoadLdd;
 			RequestCharacter();			
 			break;			
@@ -116,6 +138,7 @@ void CTestCase0458::RunStepL()
 
 		case ELoadLdd:
 			test.Printf(_L("Load the LDD iteration %d/%d\n"), OPEN_REPEATS-iRepeats+1, OPEN_REPEATS);
+			OstTraceExt2(TRACE_NORMAL, CTESTCASE0458_RUNSTEPL_DUP02, "Load the LDD iteration %d/%d\n", OPEN_REPEATS-iRepeats+1, OPEN_REPEATS);
 			if (!StepLoadLDD())
 				{
 				break;
@@ -134,6 +157,7 @@ void CTestCase0458::RunStepL()
 						
 		case ELoopDecrement:
 			test.Printf(_L("Repeat test\n"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0458_RUNSTEPL_DUP03, "Repeat test\n");
 
 			if (--iRepeats)
 				{
@@ -154,6 +178,7 @@ void CTestCase0458::RunStepL()
 			
 		default:
 			test.Printf(_L("<Error> unknown test step"));
+			OstTrace0(TRACE_NORMAL, CTESTCASE0458_RUNSTEPL_DUP04, "<Error> unknown test step");
 			Cancel();
 			TestPolicy().SignalTestComplete(KErrCorrupt);
 			break;

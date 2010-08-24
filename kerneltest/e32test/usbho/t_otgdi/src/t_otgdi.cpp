@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -30,6 +30,10 @@
 #include "testengine.h"
 #include "testcaseroot.h"
 #include "b2bwatchers.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "t_otgdiTraces.h"
+#endif
 
 
 
@@ -102,44 +106,38 @@ void ProtoTypeCode()
 		if ( (err != KErrNone) && (err != KErrAlreadyExists) )
 			{
 			test.Printf(_L("<Error %d> Unable to load driver: %S"), err, &KOTGDeviceInterfaceDriverName);
+			OstTraceExt2(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE, "<Error %d> Unable to load driver: %S", err, KOTGDeviceInterfaceDriverName);
 			}
 		err = oUsbOtgDriver.Open();
 		if (err != KErrNone)
+		    {
 			test.Printf(_L("<Error %d> Unable to OPEN driver: %S"), err, &KOTGDeviceInterfaceDriverName);
-		else	
+			OstTraceExt2(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP01, "<Error %d> Unable to OPEN driver: %S", err, KOTGDeviceInterfaceDriverName);
+			}
+		else
+			{	
 			test.Printf(_L("OPEN driver: %S OK!"), &KOTGDeviceInterfaceDriverName);
+			OstTraceExt1(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP02, "OPEN driver: %S OK!", KOTGDeviceInterfaceDriverName);
+			}
 		
 		oUsbOtgDriver.StartStacks();
 		test.Printf(_L("Stack started\n"));
+		OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP03, "Stack started\n");
 		
-/*
-		for (TInt loop=0; loop <6; loop++)
-			// TEST Events
-			do		
-				{
-				test.Printf(_L("Waiting for OTG...\n"));
-				status1 = KRequestPending; // reset the status object
-				oUsbOtgDriver.QueueOtgEventRequest( event, status1 );
-				
-				// wait			
-				User::WaitForRequest(status1);
-				TInt completionCode(status1.Int());
-				CTestCaseRoot::OtgEventString(event, aDescription);
-				test.Printf(_L("Received event %d '%S' status(%d) \n"), event, &aDescription, completionCode);
-				}
-			while (event != RUsbOtgDriver::EEventAPlugInserted); // 'A' plug found
 
-*/
 		test.Printf(_L("API QueueOtgIdPinNotification test:\n"));
+		OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP06, "API QueueOtgIdPinNotification test:\n");
 
 		for (TInt loop=0; loop <6; loop++)
 			// TEST Events
 			do		
 				{
 				test.Printf(_L("Waiting for OTG...\n"));
+				OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP07, "Waiting for OTG...\n");
 				status1 = KRequestPending; // reset the status object
 				oUsbOtgDriver.QueueOtgIdPinNotification( OTGIdPin, status1 );
 				test.Printf(_L("Current pin %d  \n"), OTGIdPin);
+				OstTrace1(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP08, "Current pin %d  \n", OTGIdPin);
 				
 				// wait			
 				User::WaitForRequest(status1);
@@ -157,28 +155,35 @@ void ProtoTypeCode()
 						break;
 					}
 				test.Printf(_L("Received pin %d '%S' status(%d) \n"), OTGIdPin, &aDescription, completionCode);
+				OstTraceExt3(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP09, "Received pin %d '%S' status(%d) \n", OTGIdPin, aDescription, completionCode);
 				}
 			while (OTGIdPin != RUsbOtgDriver::EIdPinAPlug); // 'A' plug found
 
 		test.Printf(_L("Press any key.\n"));
+		OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP10, "Press any key.\n");
 		test.Getch();
 
 		test.Printf(_L("Shutting down stack.\n"));
+		OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP11, "Shutting down stack.\n");
 		oUsbOtgDriver.StopStacks();
 
 		oUsbOtgDriver.Close();
 
 		test.Printf(_L("Free the LDD.\n"));
+		OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP12, "Free the LDD.\n");
 		err = User::FreeLogicalDevice( RUsbOtgDriver::Name() );			
 		if (err != KErrNone)
 			{
 			test.Printf(_L("<Error %d> Unable to UN-load driver: %S"), err, &KOTGDeviceInterfaceDriverName);
+			OstTraceExt2(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP13, "<Error %d> Unable to UN-load driver: %S", err, KOTGDeviceInterfaceDriverName);
 			}		
 		test.Printf(_L("#############\nPress any key.\n"));
+		OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP14, "#############\nPress any key.\n");
 		}
 		test.Getch();
 
 		test.Printf(_L("Free the LDD.\n"));
+		OstTrace0(TRACE_NORMAL, PROTOTYPECODE_PROTOTYPECODE_DUP15, "Free the LDD.\n");
 		// end this process, if we do not want to run a test now as well
 		RProcess process;
 		process.Open(RProcess().Id());
@@ -190,7 +195,10 @@ void ProtoTypeCode()
 
 static void MainL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(MAINL_MAINL);
+	    }
 	// Leave the hooks in for platform security
 #ifdef __DATA_CAGING__
 	RProcess().DataCaging(RProcess::EDataCagingOn);
@@ -246,9 +254,15 @@ static void MainL()
 	else
 		{
 		if (-2 == err)
+		    {
 			test.Printf(_L("Warning, no tests were selected!: %d\n"), err);
+			OstTrace1(TRACE_NORMAL, MAINL_MAINL_DUP01, "Warning, no tests were selected!: %d\n", err);
+			}
 		else
+		    {
 			test.Printf(_L("Unable to create the test engine: %d\n"), err);
+			OstTrace1(TRACE_NORMAL, MAINL_MAINL_DUP02, "Unable to create the test engine: %d\n", err);
+			}
 		}
 
 	// test DONE, if we are running manual, have a delay
@@ -256,18 +270,21 @@ static void MainL()
 		{
 		// Get the engine to hang around so we can look at the screen output
 		test.Printf(KPressAnyKeyToEnd);
+		OstTrace0(TRACE_NORMAL, MAINL_MAINL_DUP03, KPressAnyKeyToEnd);
 		test.Getch();
 		}
 
 	__UHEAP_MARKEND;
 #ifdef _DEBUG
 	test.Printf(_L("Test heap leaks #1 OK\n"));
+	OstTrace0(TRACE_NORMAL, MAINL_MAINL_DUP04, "Test heap leaks #1 OK\n");
 #endif
 
 	CleanupStack::PopAndDestroy(sched);
 	__UHEAP_MARKEND;
 #ifdef _DEBUG
 	test.Printf(_L("Test heap leaks #2 OK\n"));
+	OstTrace0(TRACE_NORMAL, MAINL_MAINL_DUP05, "Test heap leaks #2 OK\n");
 #endif
 	
 	// Finish test and release resources - this ends up closing the console (our application window)
@@ -279,7 +296,10 @@ static void MainL()
 
 TInt E32Main()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(E32MAIN_E32MAIN);
+	    }
 	// Create the new trap-cleanup mechanism
 	CTrapCleanup* cleanup = CTrapCleanup::New();
 	
@@ -293,6 +313,7 @@ TInt E32Main()
 	if (err != KErrNone)
 		{
 		test.Printf(_L("MainL error: %d\n"),err);		
+		OstTrace1(TRACE_NORMAL, E32MAIN_E32MAIN_DUP01, "MainL error: %d\n",err);		
 		}
 	
 	delete cleanup;

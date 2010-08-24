@@ -110,7 +110,6 @@ protected: // From CActive
 	*/
 	void DoCancel()
 		{
-		LOG_FUNC
 		iUsbInterface.CancelPermitSuspend();
 		}
 
@@ -119,7 +118,6 @@ protected: // From CActive
 	*/
 	void RunL()
 		{
-		LOG_FUNC
 		iCompletionCode = iStatus.Int();
 		User::LeaveIfError(iResumeCallBack.CallBack());
 		}
@@ -128,8 +126,6 @@ protected: // From CActive
 	*/
 	TInt RunError()
 		{
-		LOG_FUNC
-
 		return KErrNone;
 		}
 

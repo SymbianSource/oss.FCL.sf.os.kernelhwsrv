@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -20,6 +20,12 @@
 #include "descriptorsRawData.h"
 #include <d32usbdescriptors.h>
 #include "testpolicy.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "PBASE-T_USBDI-0475Traces.h"
+#endif
+
+
 
 namespace NUnitTesting_USBDI
 	{
@@ -29,10 +35,12 @@ const TFunctorTestCase<CUT_PBASE_T_USBDI_0475,TBool> CUT_PBASE_T_USBDI_0475::iFu
 
 CUT_PBASE_T_USBDI_0475* CUT_PBASE_T_USBDI_0475::NewL(TBool aHostRole)
 	{
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_NEWL_ENTRY, aHostRole );
 	CUT_PBASE_T_USBDI_0475* self = new (ELeave) CUT_PBASE_T_USBDI_0475(aHostRole);
 	CleanupStack::PushL(self);
 	self->ConstructL();
 	CleanupStack::Pop(self);
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_NEWL_EXIT, ( TUint )( self ) );
 	return self;
 	}
 	
@@ -41,26 +49,30 @@ CUT_PBASE_T_USBDI_0475::CUT_PBASE_T_USBDI_0475(TBool aHostRole)
 :	CBaseTestCase(KTestCaseId,aHostRole,ETrue),
 	iCaseStep(EInProgress)
 	{
+	OstTraceFunctionEntryExt( CUT_PBASE_T_USBDI_0475_CUT_PBASE_T_USBDI_0475_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_CUT_PBASE_T_USBDI_0475_EXIT, this );
 	} 
 
 
 void CUT_PBASE_T_USBDI_0475::ConstructL()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_CONSTRUCTL_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_CONSTRUCTL_EXIT, this );
 	}
 
 
 CUT_PBASE_T_USBDI_0475::~CUT_PBASE_T_USBDI_0475()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_CUT_PBASE_T_USBDI_0475_ENTRY_DUP01, this );
 	
 	Cancel();
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_CUT_PBASE_T_USBDI_0475_EXIT_DUP01, this );
 	}
 	
 	
 void CUT_PBASE_T_USBDI_0475::ExecuteHostTestCaseL()	
 	{	
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_EXECUTEHOSTTESTCASEL_ENTRY, this );
 	TInt err(KErrNone);
 	
 	TUsbGenericDescriptor* parsed = NULL;
@@ -92,34 +104,41 @@ void CUT_PBASE_T_USBDI_0475::ExecuteHostTestCaseL()
 	CHECK(ParseConfigDescriptorAndCheckTree(devDesc, KConfigurationDescriptorUnexpectedLengthTestCase3, 3) == KErrNone);
 
 	TestPassed();	
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_EXECUTEHOSTTESTCASEL_EXIT, this );
 	}   
 	
 void CUT_PBASE_T_USBDI_0475::HostDoCancel()
 	{
-	LOG_FUNC	
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_HOSTDOCANCEL_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_HOSTDOCANCEL_EXIT, this );
 	}
 	
 	
 void CUT_PBASE_T_USBDI_0475::ExecuteDeviceTestCaseL()	
 	{	
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_EXECUTEDEVICETESTCASEL_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_EXECUTEDEVICETESTCASEL_EXIT, this );
 	}	
 	
 void CUT_PBASE_T_USBDI_0475::DeviceDoCancel()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_DEVICEDOCANCEL_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_DEVICEDOCANCEL_EXIT, this );
 	}	
 
 
 
 void CUT_PBASE_T_USBDI_0475::HostRunL()
 	{
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_HOSTRUNL_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_HOSTRUNL_EXIT, this );
 	}
 
 
 void CUT_PBASE_T_USBDI_0475::DeviceRunL()
 	{	
-	LOG_FUNC
+	OstTraceFunctionEntry1( CUT_PBASE_T_USBDI_0475_DEVICERUNL_ENTRY, this );
+	OstTraceFunctionExit1( CUT_PBASE_T_USBDI_0475_DEVICERUNL_EXIT, this );
 	}
 
 	

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 1997-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -25,6 +25,10 @@
 #include "transferserversecuritypolicy.h"
 #include "transferhandle.h"
 #include "tranhandlesrv.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "transferserverTraces.h"
+#endif
 
 
 
@@ -34,7 +38,7 @@ extern RTest test;
 
 CTransferServer* CTransferServer::NewLC()
 	{
-	RDebug::Printf("CTransferServer::NewLC");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_NEWLC, "CTransferServer::NewLC");
 	CTransferServer* self = new(ELeave) CTransferServer;
 	CleanupStack::PushL(self);
 	self->StartL(KTransferServerName);
@@ -44,7 +48,7 @@ CTransferServer* CTransferServer::NewLC()
 
 CTransferServer::~CTransferServer()
 	{
-	RDebug::Printf("CTransferServer::~CTransferServer");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_DCTRANSFERSERVER, "CTransferServer::~CTransferServer");
 	while (iLddPtr->iIFPtr)
 	{
 	IFConfigPtr* ifPtrPtr = & iLddPtr->iIFPtr;
@@ -74,7 +78,7 @@ CTransferServer::~CTransferServer()
 
 	delete iShutdownTimer;	
 	delete iTransferHandle;	
-	RDebug::Printf("<<<CTransferServer::~CTransferServer");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_DCTRANSFERSERVER_DUP01, "<<<CTransferServer::~CTransferServer");
 	}
 
 
@@ -89,7 +93,7 @@ void CTransferServer::ConstructL()
 	iShutdownTimer->ConstructL(); 
 	
 	iTransferHandle = CTransferHandle::NewL(*this);
-	RDebug::Printf("CTransferServer::ConstructL");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_CONSTRUCTL, "CTransferServer::ConstructL");
 	}
 
 
@@ -108,14 +112,14 @@ CSession2* CTransferServer::NewSessionL(const TVersion &aVersion, const RMessage
 
 void CTransferServer::Error(TInt aError)
 	{
-	RDebug::Printf("CTransferServer::Error");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_ERROR, "CTransferServer::Error");
 	Message().Complete(aError);
 	ReStart();
 	}
 
 void CTransferServer::IncrementSessionCount()
 	{
-	RDebug::Printf("CTransferServer::IncrementSessionCount");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_INCREMENTSESSIONCOUNT, "CTransferServer::IncrementSessionCount");
 	
 	++iSessionCount;
 	iShutdownTimer->Cancel();
@@ -125,11 +129,11 @@ void CTransferServer::IncrementSessionCount()
 void CTransferServer::DecrementSessionCount()
 	{
 	--iSessionCount;	
-	RDebug::Printf("CTransferServer::DecrementSessionCount");	
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_DECREMENTSESSIONCOUNT, "CTransferServer::DecrementSessionCount");
 	if (iSessionCount == 0)
 		{
 		iShutdownTimer->After(KShutdownDelay);
-		RDebug::Printf("CTransferServer::DecrementSessionCount1");
+		OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_DECREMENTSESSIONCOUNT_DUP01, "CTransferServer::DecrementSessionCount1");
 		}
 	}
 
@@ -148,14 +152,14 @@ CTransferServer::CShutdownTimer::CShutdownTimer()
 
 void CTransferServer::CShutdownTimer::ConstructL()
 	{
-	RDebug::Printf("CTransferServer::CShutdownTimer::ConstructL");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_LAUNCHSHUTDOWNTIMERIFNOSESSIONS, "CTransferServer::CShutdownTimer::ConstructL");
 	CTimer::ConstructL();
 	}
 
 
 void CTransferServer::CShutdownTimer::RunL()
 	{
-	RDebug::Printf("CShutdownTimer::RunL");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_LAUNCHSHUTDOWNTIMERIFNOSESSIONS_DUP01, "CShutdownTimer::RunL");
 	CActiveScheduler::Stop();
 	}
 
@@ -231,6 +235,7 @@ void CTransferServer::SetupInterface(IFConfigPtr* aIfPtr, TInt aPortNumber)
 	
 	// first of all set the default interface	
 	TUSB_PRINT2 ("Set Default Interface with %d endpoints bandwidth 0x%x",(*aIfPtr)->iInfoPtr->iTotalEndpointsUsed,(*aIfPtr)->iBandwidthIn | (*aIfPtr)->iBandwidthOut);
+	OstTraceExt2 (TRACE_NORMAL, CTRANSFERSERVER_SETUPINTERFACE, "Set Default Interface with %d endpoints bandwidth 0x%x",(*aIfPtr)->iInfoPtr->iTotalEndpointsUsed,(*aIfPtr)->iBandwidthIn | (*aIfPtr)->iBandwidthOut);
 #ifdef USB_SC
 	TUsbcScInterfaceInfoBuf ifc = *((*aIfPtr)->iInfoPtr);
 	TInt r = iPort[aPortNumber].SetInterface(0, ifc);
@@ -262,6 +267,7 @@ void CTransferServer::SetupInterface(IFConfigPtr* aIfPtr, TInt aPortNumber)
 		}
 	TUint8 interfaceNumber = (*aIfPtr)->iNumber;
 	TUSB_PRINT1 ("Interface Number %d",interfaceNumber);
+	OstTrace1 (TRACE_NORMAL, CTRANSFERSERVER_SETUPINTERFACE_DUP01, "Interface Number %d",interfaceNumber);
 	test.End();
 	}
 
@@ -271,24 +277,24 @@ TInt CTransferServer::SetupLdds(TDes& aFileName)
 	TInt r;
 	User::LeaveIfError(iFs.Connect());
 
-	RDebug::Printf ("Configuration");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS, "Configuration");
 	
-	RDebug::Printf ("Open configuration file");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP01, "Open configuration file");
 	// set the session path to use the ROM if no drive specified
 	r=iFs.SetSessionPath(_L("Z:\\test\\"));
 	test_KErrNone(r);
 
 	r = iConfigFile.Open(iFs, aFileName, EFileShareReadersOnly | EFileStreamText | EFileRead);
 	test_KErrNone(r);
-	RDebug::Printf("Configuration file %s Opened successfully", aFileName.PtrZ());
+	OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP02, "Configuration file %S Opened successfully", aFileName);
 
-	RDebug::Printf ("Process configuration file");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP03, "Process configuration file");
 	test(ProcessConfigFile (iConfigFile,NULL,&iLddPtr));
 	
 	iConfigFile.Close();
 	iFs.Close();
 
-	RDebug::Printf ("LDD in configuration file");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP04, "LDD in configuration file");
 	test_NotNull(iLddPtr);
 		
 	LDDConfigPtr lddPtr = iLddPtr;
@@ -298,14 +304,15 @@ TInt CTransferServer::SetupLdds(TDes& aFileName)
 		// Load logical driver (LDD)
 		// (There's no physical driver (PDD) with USB: it's a kernel extension DLL which
 		//	was already loaded at boot time.)
-		RDebug::Printf ("Loading USB LDD");
+		OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP05, "Loading USB LDD");
 		TUSB_PRINT1("Loading USB LDD ",lddPtr->iName.PtrZ());
+		OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP06, "Loading USB LDD %s",lddPtr->iName);
 		r = User::LoadLogicalDevice(lddPtr->iName);
 		test(r == KErrNone || r == KErrAlreadyExists);
 	
 		IFConfigPtr ifPtr = lddPtr->iIFPtr;
 		
-		RDebug::Printf ("Opening Channels");
+		OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP07, "Opening Channels");
 		for (TInt portNumber = nextPort; portNumber < nextPort+lddPtr->iNumChannels; portNumber++)
 			{
 			test_Compare(lddPtr->iNumChannels,>,0);
@@ -315,6 +322,7 @@ TInt CTransferServer::SetupLdds(TDes& aFileName)
 			r = iPort[portNumber].Open(0);
 			test_KErrNone(r);
 			TUSB_PRINT("Successfully opened USB port");
+			OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP08, "Successfully opened USB port");
 
 			// Query the USB device/Setup the USB interface
 			if (portNumber == nextPort)
@@ -346,6 +354,7 @@ TInt CTransferServer::SetupLdds(TDes& aFileName)
 		}
 		
 	TUSB_PRINT("All Interfaces and Alternate Settings successfully set up");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_SETUPLDDS_DUP09, "All Interfaces and Alternate Settings successfully set up");
 	
 	iTransferHandle->StartTimer();
 
@@ -364,22 +373,37 @@ void CTransferServer::QueryUsbClientL(LDDConfigPtr aLddPtr, RDEVCLIENT* aPort)
 	const TInt n = d_caps().iTotalEndpoints;
 
 	TUSB_PRINT("###  USB device capabilities:");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL, "###  USB device capabilities:");
 	TUSB_PRINT1("Number of endpoints:				 %d", n);
+	OstTrace1(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP01, "Number of endpoints:     %d", n);
 	TUSB_PRINT1("Supports Software-Connect: 		 %s",
 				d_caps().iConnect ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP02, "Supports Software-Connect:     %s",
+				d_caps().iConnect ? _L("yes") : _L("no"));
 	TUSB_PRINT1("Device is Self-Powered:			 %s",
-				d_caps().iSelfPowered ? _S("yes") : _S("no"));
+				d_caps().iConnect ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP03, "Device is Self-Powered:    %s",
+				d_caps().iSelfPowered ? _L("yes") : _L("no"));
 	TUSB_PRINT1("Supports Remote-Wakeup:			 %s",
-				d_caps().iRemoteWakeup ? _S("yes") : _S("no"));
+				d_caps().iConnect ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP04, "Supports Remote-Wakeup:    %s",
+				d_caps().iRemoteWakeup ? _L("yes") : _L("no"));
 	TUSB_PRINT1("Supports High-speed:				 %s",
-				d_caps().iHighSpeed ? _S("yes") : _S("no"));
+				d_caps().iConnect ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP05, "Supports High-speed:       %s",
+				d_caps().iHighSpeed ? _L("yes") : _L("no"));
 	TUSB_PRINT1("Supports unpowered cable detection: %s\n",
+				d_caps().iConnect ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP06, "Supports unpowered cable detection: %s\n",
 				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_CableDetectWithoutPower) ?
-				_S("yes") : _S("no"));
+				_L("yes") : _L("no"));
 	TUSB_PRINT1("Supports endpoint resource allocation v2 scheme: %s\n",
+				d_caps().iConnect ? _S("yes") : _S("no"));
+	OstTraceExt1(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP07, "Supports endpoint resource allocation v2 scheme: %s\n",
 				(d_caps().iFeatureWord1 & KUsbDevCapsFeatureWord1_EndpointResourceAllocV2) ?
-				_S("yes") : _S("no"));					
+				_L("yes") : _L("no"));					
 	TUSB_PRINT("");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP08, "");
 
 	iSoftwareConnect = d_caps().iConnect;					// we need to remember this
 	test_Equal(aLddPtr->iSoftConnect,iSoftwareConnect);
@@ -415,6 +439,7 @@ void CTransferServer::QueryUsbClientL(LDDConfigPtr aLddPtr, RDEVCLIENT* aPort)
 	test_KErrNone(r);
 
 	TUSB_PRINT("### USB device endpoint capabilities:");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP09, "### USB device endpoint capabilities:");
 	for (TInt i = 0; i < n; i++)
 		{
 		const TUsbcEndpointCaps* caps = &data[i].iCaps;
@@ -476,9 +501,12 @@ void CTransferServer::QueryUsbClientL(LDDConfigPtr aLddPtr, RDEVCLIENT* aPort)
 			directionStr = _S("Both");
 				
 		TUSB_PRINT4("Endpoint:%d Sizes =%s Type = %s - %s",
-					i+1,sizeStr.PtrZ(), typeStr.PtrZ(), directionStr.PtrZ());
+			i+1,sizeStr.PtrZ(), typeStr.PtrZ(), directionStr.PtrZ());
+		OstTraceExt4(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP10, "Endpoint:%d Sizes =%S Type = %S - %S",
+					i+1,sizeStr, typeStr, directionStr);
 		}
 	TUSB_PRINT("");
+	OstTrace0(TRACE_NORMAL, CTRANSFERSERVER_QUERYUSBCLIENTL_DUP11, "");
 
 	test.End();
 			

@@ -1,4 +1,4 @@
-// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -30,6 +30,10 @@
 #include <d32usbc.h>		// USBCC header
 #include "testcaseroot.h"
 #include "b2bwatchers.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "b2bwatchersTraces.h"
+#endif
 
 
 
@@ -45,7 +49,10 @@ void CNotifyWatcherBase::RunL()
 
 CNotifyCollector::CNotifyCollector(TRequestStatus &aStatus)  : iStatusStep(aStatus) 
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CNOTIFYCOLLECTOR_CNOTIFYCOLLECTOR);
+	    }
 	TTimeIntervalDays oneday(1);
 	iTimeStarted.HomeTime();
 	iTimeStarted += (oneday); // force all durations to produce a negative (invalid) value
@@ -57,7 +64,10 @@ CNotifyCollector::CNotifyCollector(TRequestStatus &aStatus)  : iStatusStep(aStat
  */ 
 CNotifyCollector::~CNotifyCollector()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CNOTIFYCOLLECTOR_DCNOTIFYCOLLECTOR);
+	    }
 	
 	ClearAllEvents(); // free event arrays
 
@@ -74,7 +84,6 @@ CNotifyCollector::~CNotifyCollector()
  */
 void CNotifyCollector::ClearAllEvents(TBool aClearRecieved/*=ETrue*/, TBool aClearRequired /*=ETrue*/)
 	{
-	//LOG_FUNC
 	if (aClearRequired)
 		{
 		iRequiredEvents.Reset();
@@ -92,7 +101,10 @@ void CNotifyCollector::ClearAllEvents(TBool aClearRecieved/*=ETrue*/, TBool aCle
  */
 void CNotifyCollector::CreateObserversL(COtgRoot &aOtgDriver)
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CNOTIFYCOLLECTOR_CREATEOBSERVERSL);
+	    }
 	TInt watchType;
 	ASSERT(aOtgDriver.LddLoaded());
 	
@@ -125,7 +137,7 @@ void CNotifyCollector::CreateObserversL(COtgRoot &aOtgDriver)
 		
 		// add it to our list so we can kill them after the test.
 		iNotifyObjects.Append(pWatcher);
-		//LOG_VERBOSE3(_L("Added watcher type %d, TRequest= %08X.\n"), iType, (TInt)(&pWatcher->iStatus));	
+
 		
 		// start all watchers, except for the watchdog
 		if (watchType != EWatcherTimeouts)
@@ -134,6 +146,7 @@ void CNotifyCollector::CreateObserversL(COtgRoot &aOtgDriver)
 			}
 		}
 	test.Printf(_L("\n"));
+	OstTrace0(TRACE_NORMAL, CNOTIFYCOLLECTOR_CREATEOBSERVERSL_DUP02, "\n");
 	}
 
 
@@ -141,12 +154,19 @@ void CNotifyCollector::CreateObserversL(COtgRoot &aOtgDriver)
  */
 void CNotifyCollector::DestroyObservers()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CNOTIFYCOLLECTOR_DESTROYOBSERVERS);
+	    }
 	
 	// Free the Watchers
 	for (TInt idx=0; idx < iNotifyObjects.Count(); idx++)
 		{
 		LOG_VERBOSE2(_L(".. %d .."), idx);		
+		if(gVerboseOutput)
+		    {
+		    OstTrace1(TRACE_VERBOSE, CNOTIFYCOLLECTOR_DESTROYOBSERVERS_DUP01, ".. %d ..", idx);		
+		    }
 		delete iNotifyObjects[idx];	// they will call their own Cancel() methods
 		}
 	iNotifyObjects.Close();	
@@ -182,22 +202,42 @@ void CNotifyCollector::AddRequiredOrFailureNotification(TWatcherNotifyType aType
 		case EWatcherState:
 			COtgRoot::OtgStateString(static_cast<RUsbOtgDriver::TOtgState>(aValue), aDescription);
 			LOG_VERBOSE3(_L("AddRequiredNotification() State %d '%S' wanted\n"), aValue, &aDescription);
+			if(gVerboseOutput)
+			    {
+			    OstTraceExt2(TRACE_VERBOSE, CNOTIFYCOLLECTOR_ADDREQUIREDORFAILURENOTIFICATION, "AddRequiredNotification() State %d '%S' wanted\n", aValue, aDescription);
+			    }
 			break;
 		case EWatcherEvent:
 			COtgRoot::OtgEventString(static_cast<RUsbOtgDriver::TOtgEvent>(aValue), aDescription);
 			LOG_VERBOSE3(_L("AddRequiredNotification() Event %d '%S' wanted\n"), aValue, &aDescription);
+			if(gVerboseOutput)
+			    {
+			    OstTraceExt2(TRACE_VERBOSE, CNOTIFYCOLLECTOR_ADDREQUIREDORFAILURENOTIFICATION_DUP01, "AddRequiredNotification() Event %d '%S' wanted\n", aValue, aDescription);
+			    }
 			break;
 		case EWatcherMessage:
 			COtgRoot::OtgMessageString(static_cast<RUsbOtgDriver::TOtgMessage>(aValue), aDescription);
 			LOG_VERBOSE3(_L("AddRequiredNotification() Message %d '%S' wanted\n"), aValue, &aDescription);
+			if(gVerboseOutput)
+			    {
+			    OstTraceExt2(TRACE_VERBOSE, CNOTIFYCOLLECTOR_ADDREQUIREDORFAILURENOTIFICATION_DUP02, "AddRequiredNotification() Message %d '%S' wanted\n", aValue, aDescription);
+			    }
 			break;
 		case EWatcherPeripheralState:
 			COtgRoot::PeripheralStateString(static_cast<TUint>(aValue), aDescription);
 			LOG_VERBOSE3(_L("AddRequiredNotification() Peripheral State %d '%S' wanted\n"), aValue, &aDescription);
+			if(gVerboseOutput)
+			    {
+			    OstTraceExt2(TRACE_VERBOSE, CNOTIFYCOLLECTOR_ADDREQUIREDORFAILURENOTIFICATION_DUP03, "AddRequiredNotification() Peripheral State %d '%S' wanted\n", aValue, aDescription);
+			    }
 			break;
 		case EWatcherAConnectionIdle:
 			COtgRoot::AConnectionIdleString(static_cast<RUsbOtgDriver::TOtgConnection>(aValue), aDescription);
 			LOG_VERBOSE3(_L("AddRequiredNotification() AConnectionIdle %d '%S' wanted\n"), aValue, &aDescription);
+			if(gVerboseOutput)
+			    {
+			    OstTraceExt2(TRACE_VERBOSE, CNOTIFYCOLLECTOR_ADDREQUIREDORFAILURENOTIFICATION_DUP04, "AddRequiredNotification() AConnectionIdle %d '%S' wanted\n", aValue, aDescription);
+			    }
 			break;
 
 		}
@@ -311,6 +351,7 @@ void CNotifyCollector::HandleEvent(TWatcherNotifyType aType, TInt aValue)
 	if (aType == EWatcherTimeouts)
 		{
 		test.Printf(_L("Step timed out..(%dms).\n\n"), GetWatcher(aType)->GetEventValue());
+		OstTrace1(TRACE_NORMAL, CNOTIFYCOLLECTOR_HANDLEEVENT, "Step timed out..(%dms).\n\n", GetWatcher(aType)->GetEventValue());
 		CompleteStep(KTestCaseWatchdogTO);
 		return;
 		}
@@ -323,6 +364,7 @@ void CNotifyCollector::HandleEvent(TWatcherNotifyType aType, TInt aValue)
 	if (IsFailureEvent(evt))
 		{
 		test.Printf(_L("This event denotes failure for this test\n"));
+		OstTrace0(TRACE_NORMAL, CNOTIFYCOLLECTOR_HANDLEEVENT_DUP01, "This event denotes failure for this test\n");
 		CompleteStep(KTestCaseFailureEventReceived);
 		return;
 		}
@@ -332,8 +374,6 @@ void CNotifyCollector::HandleEvent(TWatcherNotifyType aType, TInt aValue)
 		// itterate all required events, search for each one in the incomming events list
 		while (start< iRequiredEvents.Count())
 			{
-				//LOG_VERBOSE3(_L("Search for=[%d,%d] :"), 
-				//					iRequiredEvents[start].GetType(), iRequiredEvents[start].GetValue());
 				
 				if (!EventReceivedAlready(iRequiredEvents[start]))
 					return;	// missing still, continue
@@ -341,11 +381,16 @@ void CNotifyCollector::HandleEvent(TWatcherNotifyType aType, TInt aValue)
 			}
 		// found all the required events
 		LOG_VERBOSE1(_L("Found all.\n"));
+		if(gVerboseOutput)
+		    {
+		    OstTrace0(TRACE_VERBOSE, CNOTIFYCOLLECTOR_HANDLEEVENT_DUP03, "Found all.\n");
+		    }
 		CompleteStep(KErrNone);
 		}
 	else
 		{
 		test.Printf(_L("Warning : No required events!\n"));
+		OstTrace0(TRACE_NORMAL, CNOTIFYCOLLECTOR_HANDLEEVENT_DUP04, "Warning : No required events!\n");
 		}	
 	}
 
@@ -357,6 +402,7 @@ void CNotifyCollector::CompleteStep(TInt aCompletionCode)
 	if(iStatusStep.Int() != KRequestPending)
 		{
 		test.Printf(_L("Can't complete step - not KRequestPending!\n"));
+		OstTrace0(TRACE_NORMAL, CNOTIFYCOLLECTOR_COMPLETESTEP, "Can't complete step - not KRequestPending!\n");
 		}
 	else
 		{
@@ -372,7 +418,10 @@ COtgWatchdogWatcher *COtgWatchdogWatcher::NewL(MOtgNotificationHandler &wdHandle
 												const TWatcherNotifyType aWatchType, 
 												COtgRoot &aOtgRoot)
 	{
-	LOG_FUNC 
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(CNOTIFYCOLLECTOR_COMPLETESTEP_DUP01);
+	    }
 	COtgWatchdogWatcher* self = new (ELeave) COtgWatchdogWatcher(wdHandler, aWatchType, aOtgRoot);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -383,7 +432,10 @@ COtgWatchdogWatcher *COtgWatchdogWatcher::NewL(MOtgNotificationHandler &wdHandle
 
 void COtgWatchdogWatcher::ConstructL()
 	{
-	LOG_FUNC
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGWATCHDOGWATCHER_CONSTRUCTL);
+	    }
 	
 	iTimer.CreateLocal();
 	iIntervalMs = -1;
@@ -392,21 +444,26 @@ void COtgWatchdogWatcher::ConstructL()
 
 void COtgWatchdogWatcher::StepExpired(TInt aInterval) 
 	{
-	LOG_FUNC ; 
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGWATCHDOGWATCHER_STEPEXPIRED);
+	    }
 	iHandler.HandleEvent(EWatcherTimeouts, aInterval) ; 
 	}
 
 
 void COtgWatchdogWatcher::RunL()
 	{ 
-	//LOG_FUNC 
 	StepExpired(iIntervalMs); 
 	}
 
 
 void COtgWatchdogWatcher::StartTimer(TInt aIntervalMs)
 	{
-	LOG_FUNC ;
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGWATCHDOGWATCHER_STARTTIMER);
+	    }
 
 	iIntervalMs = aIntervalMs;	// save value for printing latter 
 	if (IsActive()) //cancel the last timer we set, this is easier than cancelling it in each test-step
@@ -421,6 +478,10 @@ void COtgWatchdogWatcher::StartTimer(TInt aIntervalMs)
 		SetActive();
 		}
 	LOG_VERBOSE2(_L("wd Timer %dms\n"), aIntervalMs)
+	if(gVerboseOutput)
+	    {
+	    OstTrace1(TRACE_VERBOSE, COTGWATCHDOGWATCHER_STARTTIMER_DUP01, "wd Timer %dms\n", aIntervalMs);
+	    }
 	}	
 
 
@@ -431,7 +492,10 @@ COtgMessageWatcher* COtgMessageWatcher::NewL(MOtgNotificationHandler &wdHandler,
 										const TWatcherNotifyType aWatchType, 
 										COtgRoot &aOtgRoot)
 	{
-	LOG_FUNC 
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGMESSAGEWATCHER_NEWL);
+	    }
 	COtgMessageWatcher* self = new (ELeave) COtgMessageWatcher(wdHandler, aWatchType, aOtgRoot);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -445,6 +509,7 @@ void COtgMessageWatcher::DisplayEvent()
 	TBuf<MAX_DSTRLEN> aDescription;	
 	iOtgRoot.OtgMessageString(iMessage, aDescription);
 	test.Printf(_L("Received Message %d '%S'\n"), iMessage, &aDescription);
+	OstTraceExt2(TRACE_NORMAL, COTGMESSAGEWATCHER_DISPLAYEVENT, "Received Message %d '%S'\n", iMessage, aDescription);
 	}
 
 
@@ -452,7 +517,10 @@ COtgStateWatcher* COtgStateWatcher::NewL(MOtgNotificationHandler &wdHandler,
 										const TWatcherNotifyType aWatchType, 
 										COtgRoot &aOtgRoot)
 	{
-	LOG_FUNC 
+	if(gVerboseOutput)
+	    {
+	    OstTraceFunctionEntry0(COTGSTATEWATCHER_NEWL);
+	    }
 	COtgStateWatcher* self = new (ELeave) COtgStateWatcher(wdHandler, aWatchType, aOtgRoot);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -463,10 +531,10 @@ COtgStateWatcher* COtgStateWatcher::NewL(MOtgNotificationHandler &wdHandler,
 
 void COtgStateWatcher::DisplayEvent() 
 	{
-	//LOG_FUNC
 	TBuf<MAX_DSTRLEN> aDescription;	
 	iOtgRoot.OtgStateString(iState, aDescription);
 	test.Printf(_L("Received State %d '%S'\n"), iState, &aDescription);
+	OstTraceExt2(TRACE_NORMAL, COTGSTATEWATCHER_DISPLAYEVENT_DUP01, "Received State %d '%S'\n", iState, aDescription);
 	}
 
 
@@ -474,7 +542,6 @@ COtgEventWatcher* COtgEventWatcher::NewL(MOtgNotificationHandler &wdHandler,
 										const TWatcherNotifyType aWatchType, 
 										COtgRoot &aOtgRoot)
 	{
-	//LOG_FUNC 
 	COtgEventWatcher* self = new (ELeave) COtgEventWatcher(wdHandler, aWatchType, aOtgRoot);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -487,13 +554,13 @@ void COtgEventWatcher::DisplayEvent()
 	TBuf<MAX_DSTRLEN> aDescription;	
 	iOtgRoot.OtgEventString(iEvent, aDescription);
 	test.Printf(_L("Received Event %d '%S'\n"), iEvent, &aDescription);
+	OstTraceExt2(TRACE_NORMAL, COTGEVENTWATCHER_DISPLAYEVENT, "Received Event %d '%S'\n", iEvent, aDescription);
 	}
 
 CPeripheralStateWatcher* CPeripheralStateWatcher::NewL(MOtgNotificationHandler &wdHandler, 
 														const TWatcherNotifyType aWatchType, 
 														COtgRoot &aOtgRoot)
 	{
-	//LOG_FUNC 
 	CPeripheralStateWatcher* self = new (ELeave) CPeripheralStateWatcher(wdHandler, aWatchType, aOtgRoot);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -506,13 +573,13 @@ void CPeripheralStateWatcher::DisplayEvent()
 	TBuf<MAX_DSTRLEN> aDescription;	
 	iOtgRoot.PeripheralStateString(iPeripheralState, aDescription);
 	test.Printf(_L("Peripheral State %d '%S'\n"), iPeripheralState, &aDescription);
+	OstTraceExt2(TRACE_NORMAL, CPERIPHERALSTATEWATCHER_DISPLAYEVENT, "Peripheral State %u '%S'\n", iPeripheralState, aDescription);
 	}
 
 CAConnectionIdleWatcher* CAConnectionIdleWatcher::NewL(MOtgNotificationHandler &wdHandler, 
 														const TWatcherNotifyType aWatchType, 
 														COtgRoot &aOtgRoot)
 	{
-	//LOG_FUNC 
 	CAConnectionIdleWatcher* self = new (ELeave) CAConnectionIdleWatcher(wdHandler, aWatchType, aOtgRoot);
 	CleanupStack::PushL(self);
 	self->ConstructL();
@@ -550,4 +617,5 @@ void CAConnectionIdleWatcher::DisplayEvent()
 	TBuf<MAX_DSTRLEN> aDescription;	
 	iOtgRoot.AConnectionIdleString(iAConnectionIdle, aDescription);
 	test.Printf(_L("AConnectionIdle %d '%S'\n"), iAConnectionIdle, &aDescription);
+	OstTraceExt2(TRACE_NORMAL, CACONNECTIONIDLEWATCHER_DISPLAYEVENT, "AConnectionIdle %d '%S'\n", iAConnectionIdle, aDescription);
 	}

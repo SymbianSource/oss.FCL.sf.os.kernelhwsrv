@@ -24,6 +24,10 @@
 
 #include "transferhandle.h"
 #include "transferserver.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "transferhandleTraces.h"
+#endif
 
 CTransferHandle* CTransferHandle::NewL(CTransferServer& aServer)
     {
@@ -41,14 +45,14 @@ CTransferHandle::CTransferHandle(CTransferServer& aServer)
 
 CTransferHandle::~CTransferHandle()
     {
-    RDebug::Printf("CTransferHandle::~CTransferHandle");
+    OstTrace0(TRACE_NORMAL, CTRANSFERHANDLE_DCTRANSFERHANDLE, "CTransferHandle::~CTransferHandle");
     Cancel();
     iTimer.Close();
     }
 
 void CTransferHandle::DoCancel()
     {
-    RDebug::Printf("CTransferHandle::DoCancel");
+    OstTrace0(TRACE_NORMAL, CTRANSFERHANDLE_DOCANCEL, "CTransferHandle::DoCancel");
     iTimer.Cancel();
     }
 
@@ -66,7 +70,7 @@ void CTransferHandle::RunL()
 	{
 	if(iStatus.Int() != KErrNone)
 		{		
-		RDebug::Printf("CTransferHandle::RunL");
+		OstTrace0(TRACE_FATAL, CTRANSFERHANDLE_RUNL, "CTransferHandle::RunL");
 		User::Panic(KPanic, KTimerError);
 		return;
 		}

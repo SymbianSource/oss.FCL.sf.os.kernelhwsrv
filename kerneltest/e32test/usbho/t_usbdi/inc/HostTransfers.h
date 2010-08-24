@@ -108,8 +108,6 @@ protected:
 	*/
 	void RunL()
 		{
-		LOG_FUNC
-		
 		TInt completionCode(iStatus.Int());
 		RDebug::Printf("Transfer err=%d",completionCode);
 		
@@ -121,8 +119,6 @@ protected:
 	*/
 	void DoCancel()
 		{
-		LOG_FUNC
-		
 		// Will cancel all transfers on this pipe
 		
 		Pipe().CancelAllTransfers();

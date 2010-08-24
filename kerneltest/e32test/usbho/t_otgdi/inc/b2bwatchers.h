@@ -208,9 +208,9 @@ private:
 class CNotifyWatcherBase : public CActive
 	{
 public:
-	virtual ~CNotifyWatcherBase() {LOG_FUNC  };
+	virtual ~CNotifyWatcherBase() {  };
 	
-	virtual void StartWatching(TInt aInterval) {LOG_FUNC  TInt n(aInterval); IssueAgain(); SetActive(); };
+	virtual void StartWatching(TInt aInterval) {  TInt n(aInterval); IssueAgain(); SetActive(); };
 	// getter
 	TWatcherNotifyType GetType() {return(iWatchType);};		
 	
@@ -248,16 +248,16 @@ class COtgWatchdogWatcher : public CNotifyWatcherBase
 										const TWatcherNotifyType aWatchType, 
 										COtgRoot &aOtgRoot);
 		void ConstructL();
-		virtual ~COtgWatchdogWatcher() {LOG_FUNC ;Cancel();};
+		virtual ~COtgWatchdogWatcher() {Cancel();};
 		
 		void StartTimer(TInt aIntervalMs);
 		void StartWatching(TInt aIntervalMs) {StartTimer(aIntervalMs); };
 		
  
 		
-		TInt IssueAgain() { LOG_FUNC ASSERT(0); return(0);};
-		void DoCancel() {LOG_FUNC ;iTimer.Cancel();};
-		void DisplayEvent() {LOG_FUNC ASSERT(0); }; // should never fire this
+		TInt IssueAgain() { ASSERT(0); return(0);};
+		void DoCancel() {iTimer.Cancel();};
+		void DisplayEvent() {ASSERT(0); }; // should never fire this
 	TInt GetEventValue() {return(iIntervalMs);};
 	void StepExpired(TInt aInterval);		
 	
@@ -285,14 +285,14 @@ public:
 	static COtgStateWatcher* NewL(MOtgNotificationHandler &wdHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot);
 	void ConstructL() {};
 	
-	virtual ~COtgStateWatcher() {LOG_FUNC Cancel(); };
+	virtual ~COtgStateWatcher() { Cancel(); };
 	
 	TInt IssueAgain() { iOtgRoot.otgQueueOtgStateRequest(iState , iStatus); return(ETrue);};
 	void DisplayEvent(); 
 
 	TInt GetEventValue() {return(iState);};
 	
-	void DoCancel() {LOG_FUNC iOtgRoot.otgCancelOtgStateRequest();};
+	void DoCancel() { iOtgRoot.otgCancelOtgStateRequest();};
 
 protected:
 	COtgStateWatcher(MOtgNotificationHandler &aHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot) :
@@ -310,12 +310,12 @@ class COtgEventWatcher : public CNotifyWatcherBase
 public:
 	static COtgEventWatcher* NewL(MOtgNotificationHandler &wdHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot);
 	void ConstructL() {};
-	virtual ~COtgEventWatcher() {LOG_FUNC Cancel(); };		
+	virtual ~COtgEventWatcher() { Cancel(); };		
 	
 	TInt IssueAgain() { iOtgRoot.otgQueueOtgEventRequest(iEvent , iStatus); return(ETrue);};
 	void DisplayEvent(); 
 	TInt GetEventValue() {return(iEvent);};
-	void DoCancel() { LOG_FUNC iOtgRoot.otgCancelOtgEventRequest();};
+	void DoCancel() {  iOtgRoot.otgCancelOtgEventRequest();};
 
 protected:
 	COtgEventWatcher(MOtgNotificationHandler &aHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot) : 
@@ -333,12 +333,12 @@ class COtgMessageWatcher : public CNotifyWatcherBase
 public:
 	static COtgMessageWatcher* NewL(MOtgNotificationHandler &wdHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot);
 	void ConstructL() {};
-	virtual ~COtgMessageWatcher() {LOG_FUNC Cancel(); };	
+	virtual ~COtgMessageWatcher() { Cancel(); };	
 	
 	TInt IssueAgain() { iOtgRoot.otgQueueOtgMessageRequest(iMessage, iStatus); return(ETrue);};
 	void DisplayEvent();
 	TInt GetEventValue() {return(iMessage);};
-	void DoCancel() {LOG_FUNC iOtgRoot.otgCancelOtgMessageRequest();};
+	void DoCancel() { iOtgRoot.otgCancelOtgMessageRequest();};
 
 protected:
 	COtgMessageWatcher(MOtgNotificationHandler &aHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot) : 
@@ -354,12 +354,12 @@ class CPeripheralStateWatcher : public CNotifyWatcherBase
 public:
 	static CPeripheralStateWatcher* NewL(MOtgNotificationHandler &wdHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot);
 	void ConstructL() {};
-	virtual ~CPeripheralStateWatcher() {LOG_FUNC Cancel(); };	
+	virtual ~CPeripheralStateWatcher() { Cancel(); };	
 	
 	TInt IssueAgain() { iOtgRoot.otgQueuePeripheralStateRequest(iPeripheralState, iStatus); return(ETrue);};
 	void DisplayEvent();
 	TInt GetEventValue() {return(iPeripheralState);};
-	void DoCancel() {LOG_FUNC iOtgRoot.otgCancelPeripheralStateRequest();};
+	void DoCancel() { iOtgRoot.otgCancelPeripheralStateRequest();};
 
 protected:
 	CPeripheralStateWatcher(MOtgNotificationHandler &aHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot) : 
@@ -375,12 +375,12 @@ class CAConnectionIdleWatcher : public CNotifyWatcherBase
 public:
 	static CAConnectionIdleWatcher* NewL(MOtgNotificationHandler &wdHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot);
 	void ConstructL() {};
-	virtual ~CAConnectionIdleWatcher() {LOG_FUNC Cancel(); };	
+	virtual ~CAConnectionIdleWatcher() { Cancel(); };	
 	
 	TInt IssueAgain() { iOtgRoot.otgQueueAConnectionIdleRequest(iAConnectionIdle, iStatus); return(ETrue);};
 	void DisplayEvent();
 	TInt GetEventValue() {return(iAConnectionIdle);};
-	void DoCancel() {LOG_FUNC iOtgRoot.otgCancelAConnectionIdleRequest();};
+	void DoCancel() { iOtgRoot.otgCancelAConnectionIdleRequest();};
 
 protected:
 	CAConnectionIdleWatcher(MOtgNotificationHandler &aHandler, const TWatcherNotifyType aWatchType, COtgRoot &aOtgRoot) : 

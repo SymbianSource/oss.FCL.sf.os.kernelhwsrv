@@ -25,13 +25,17 @@
 #include "tranhandlesession.h"
 #include "tranhandleserversecuritypolicy.h"
 #include "tranhandleserverconsts.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "tranhandleserverTraces.h"
+#endif
 #include "general.h"
 
 
 
 CTranHandleServer* CTranHandleServer::NewL(CActiveControl& aControl)
     {
-    RDebug::Printf("CTranHandleServer::NewL");
+    OstTrace0(TRACE_NORMAL, CTRANHANDLESERVER_NEWL, "CTranHandleServer::NewL");
     CTranHandleServer* self = new(ELeave) CTranHandleServer(aControl);
     CleanupStack::PushL(self);
     TInt err = self->Start(KTranHandleServerName);
@@ -46,7 +50,7 @@ CTranHandleServer* CTranHandleServer::NewL(CActiveControl& aControl)
 
 CTranHandleServer::~CTranHandleServer()
     {
-    RDebug::Printf("CTranHandleServer::~CTranHandleServer");
+    OstTrace0(TRACE_NORMAL, CTRANHANDLESERVER_DCTRANHANDLESERVER, "CTranHandleServer::~CTranHandleServer");
     }
 
 CTranHandleServer::CTranHandleServer(CActiveControl& aControl)
@@ -58,7 +62,7 @@ CTranHandleServer::CTranHandleServer(CActiveControl& aControl)
 CSession2* CTranHandleServer::NewSessionL(const TVersion& aVersion, const RMessage2& aMessage) const
     {
     //Validate session as coming from UsbSvr
-	RDebug::Printf("CTranHandleServer::NewSessionL");
+	OstTrace0(TRACE_NORMAL, CTRANHANDLESERVER_NEWSESSIONL, "CTranHandleServer::NewSessionL");
     CTranHandleSession* sess = CTranHandleSession::NewL(iActiveControl);
     return sess;
     }

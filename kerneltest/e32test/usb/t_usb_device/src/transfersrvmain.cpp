@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2003-2010 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -18,6 +18,10 @@
 #include <e32base.h>
 #include <e32test.h>
 #include "transfersrv.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "transfersrvmainTraces.h"
+#endif
 #include "transferserver.h"
 
 static void RunServerL();
@@ -68,17 +72,17 @@ static void RunServerL()
 
 	//
 	// Ready to run
-	RDebug::Printf(">>>CActiveScheduler::Start");
+	OstTrace0(TRACE_NORMAL, RUNSERVERL_RUNSERVERL, ">>>CActiveScheduler::Start");
 	CActiveScheduler::Start();
-	RDebug::Printf("<<<CActiveScheduler::Start");
+	OstTrace0(TRACE_NORMAL, RUNSERVERL_RUNSERVERL_DUP01, "<<<CActiveScheduler::Start");
 	test.End();
 	test.Close();
 
 	//
 	// Cleanup the server and scheduler
-	RDebug::Printf("tranfermain exit 1");
+	OstTrace0(TRACE_NORMAL, RUNSERVERL_RUNSERVERL_DUP02, "tranfermain exit 1");
 	CleanupStack::PopAndDestroy(2, scheduler);
-	RDebug::Printf("tranfermain exit 2");
+	OstTrace0(TRACE_NORMAL, RUNSERVERL_RUNSERVERL_DUP03, "tranfermain exit 2");
 	}
 
 //

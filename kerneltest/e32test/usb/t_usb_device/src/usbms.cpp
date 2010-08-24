@@ -1,4 +1,4 @@
-// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
 // All rights reserved.
 // This component and the accompanying materials are made available
 // under the terms of the License "Eclipse Public License v1.0"
@@ -12,7 +12,7 @@
 //
 // Description:
 // USB Mass Storage Application
-// 
+//
 //
 
 /**
@@ -27,6 +27,11 @@
 #include <massstorage.h>
 
 #include "usbms.h"
+#include "OstTraceDefinitions.h"
+#ifdef OST_TRACE_COMPILER_IN_USE
+#include "usbmsTraces.h"
+#endif
+
 
 extern CActiveControl* gActiveControl;
 extern RTest test;
@@ -75,10 +80,10 @@ CFileSystemDescriptor* CFileSystemDescriptor::NewL(const TDesC& aFsName, const T
     CFileSystemDescriptor* pSelf = new (ELeave) CFileSystemDescriptor;
 
     CleanupStack::PushL(pSelf);
-    
+
     pSelf->iFsName.CreateMaxL(aFsName.Length());
     pSelf->iFsName.Copy(aFsName);
-    
+
     pSelf->iPrimaryExtName.CreateMaxL(aPrimaryExtName.Length());
     pSelf->iPrimaryExtName.Copy(aPrimaryExtName);
 
@@ -91,7 +96,7 @@ CFileSystemDescriptor* CFileSystemDescriptor::NewL(const TDesC& aFsName, const T
 
 //-----------------------------------------------------------------------------
 /**
-    Dismounts the originally mounted FS and optional primary extension from the drive and stores 
+    Dismounts the originally mounted FS and optional primary extension from the drive and stores
     this information in the FS descriptor
 
     @return on success returns a pointer to the instantinated FS descriptor
@@ -104,6 +109,7 @@ LOCAL_C CFileSystemDescriptor* DoDismountOrginalFS(RFs& aFs, TInt aDrive)
     TBool       bDrvSync = EFalse;
 
     test.Printf(_L("DoDismountOrginalFS drv:%d\n"), aDrive);
+    OstTrace1(TRACE_NORMAL, CFILESYSTEMDESCRIPTOR_NEWL, "DoDismountOrginalFS drv:%d\n", aDrive);
 
     //-- 1. get file system name
     nRes = aFs.FileSystemName(fsName, aDrive);
@@ -124,23 +130,25 @@ LOCAL_C CFileSystemDescriptor* DoDismountOrginalFS(RFs& aFs, TInt aDrive)
     //-- other extensions (non-primary) are not supported yet
     nRes = aFs.ExtensionName(primaryExtName, aDrive, 0);
     if(nRes != KErrNone)
-        {   
+        {
         primaryExtName.SetLength(0);
         }
 
     //-- 3.1 check if the drive has non-primary extensions, fail in this case, because this FS can't be mounted back normally
     nRes = aFs.ExtensionName(primaryExtName, aDrive, 1);
     if(nRes == KErrNone)
-        {   
+        {
         test.Printf(_L("DoDismountOrginalFS Non-primary extensions are not supported!\n"));
+        OstTrace0(TRACE_NORMAL, CFILESYSTEMDESCRIPTOR_NEWL_DUP01, "DoDismountOrginalFS Non-primary extensions are not supported!\n");
         return NULL;
         }
 
     test.Printf(_L("DoDismountOrginalFS FS:%S, Prim ext:%S, synch:%d\n"), &fsName, &primaryExtName, bDrvSync);
+    OstTraceExt3(TRACE_NORMAL, CFILESYSTEMDESCRIPTOR_NEWL_DUP02, "DoDismountOrginalFS FS:%S, Prim ext:%S, synch:%d\n", fsName, primaryExtName, bDrvSync);
 
     //-- create FS descriptor and dismount the FS
-    CFileSystemDescriptor* pFsDesc = NULL; 
-    
+    CFileSystemDescriptor* pFsDesc = NULL;
+
     TRAP(nRes, pFsDesc = CFileSystemDescriptor::NewL(fsName, primaryExtName, bDrvSync));
     if(nRes != KErrNone)
         return NULL; //-- OOM ?
@@ -151,8 +159,9 @@ LOCAL_C CFileSystemDescriptor* DoDismountOrginalFS(RFs& aFs, TInt aDrive)
         delete pFsDesc;
         pFsDesc = NULL;
         test.Printf(_L("DoDismountOrginalFS Dismounting Err:%d\n"), nRes);
+        OstTrace1(TRACE_NORMAL, CFILESYSTEMDESCRIPTOR_NEWL_DUP03, "DoDismountOrginalFS Dismounting Err:%d\n", nRes);
         }
-    
+
     return pFsDesc;
 }
 
@@ -166,6 +175,7 @@ LOCAL_C TInt DoRestoreFS(RFs& aFs, TInt aDrive, CFileSystemDescriptor* apFsDesc)
     TInt nRes;
 
     test.Printf(_L("DoRestoreFS drv:%d\n"), aDrive);
+    OstTrace1(TRACE_NORMAL, DORESTOREFS_DORESTOREFS, "DoRestoreFS drv:%d\n", aDrive);
 
     //-- 1. check that there is no FS installed
     TBuf<128>   fsName;
@@ -173,12 +183,14 @@ LOCAL_C TInt DoRestoreFS(RFs& aFs, TInt aDrive, CFileSystemDescriptor* apFsDesc)
     if(nRes == KErrNone)
         {//-- there is a file system already installed
 		test.Printf(_L("DoRestoreFS This drive already has FS intalled:%S \n"), &fsName);
+		OstTraceExt1(TRACE_NORMAL, DORESTOREFS_DORESTOREFS_DUP01, "DoRestoreFS This drive already has FS intalled:%S \n", fsName);
         return KErrAlreadyExists;
         }
- 
+
     TPtrC ptrN  (apFsDesc->FsName());
     TPtrC ptrExt(apFsDesc->PrimaryExtName());
     test.Printf(_L("DoRestoreFS Mounting FS:%S, Prim ext:%S, synch:%d\n"), &ptrN, &ptrExt, apFsDesc->DriveIsSynch());
+    OstTraceExt3(TRACE_NORMAL, DORESTOREFS_DORESTOREFS_DUP02, "DoRestoreFS Mounting FS:%S, Prim ext:%S, synch:%d\n", ptrN, ptrExt, apFsDesc->DriveIsSynch());
 
     if(ptrExt.Length() >0)
         {//-- there is a primary extension to be mounted
@@ -197,7 +209,8 @@ LOCAL_C TInt DoRestoreFS(RFs& aFs, TInt aDrive, CFileSystemDescriptor* apFsDesc)
 
     if(nRes != KErrNone)
         {
-        test.Printf(_L("DoRestoreFS Mount failed! code:%d\n"),nRes);    
+        test.Printf(_L("DoRestoreFS Mount failed! code:%d\n"),nRes);
+        OstTrace1(TRACE_NORMAL, DORESTOREFS_DORESTOREFS_DUP03, "DoRestoreFS Mount failed! code:%d\n",nRes);
         }
 
     return nRes;
@@ -210,7 +223,8 @@ LOCAL_C TInt DoRestoreFS(RFs& aFs, TInt aDrive, CFileSystemDescriptor* apFsDesc)
 */
 LOCAL_C void MountMsFs(TInt driveNumber)
 	{
-	test.Printf(_L("MountMsFs driveNumber=%d\n"), driveNumber); 
+	test.Printf(_L("MountMsFs driveNumber=%d\n"), driveNumber);
+	OstTrace1(TRACE_NORMAL, MOUNTMSFS_MOUNTMSFS, "MountMsFs driveNumber=%d\n", driveNumber);
 
     //-- 1. try dismounting the original FS
     CFileSystemDescriptor* fsDesc = DoDismountOrginalFS(fs, driveNumber);
@@ -220,16 +234,19 @@ LOCAL_C void MountMsFs(TInt driveNumber)
         {
         TPtrC ptrN(fsDesc->FsName());
         test.Printf(_L("drv:%d FS:%S Dismounted OK\n"),driveNumber, &ptrN);
+        OstTraceExt2(TRACE_NORMAL, MOUNTMSFS_MOUNTMSFS_DUP01, "drv:%d FS:%S Dismounted OK\n",driveNumber, ptrN);
         }
     else
         {
         test.Printf(_L("drv:%d Dismount FS Failed!\n"),driveNumber);
+        OstTrace1(TRACE_NORMAL, MOUNTMSFS_MOUNTMSFS_DUP02, "drv:%d Dismount FS Failed!\n",driveNumber);
         }
 
     //-- 2. try to mount the "MSFS"
     TInt error;
     error = fs.MountFileSystem(KMsFs, driveNumber);
 	test.Printf(_L("MSFS Mount:   %S (%d)\n"), (error?&KError:&KOk), error);
+	OstTraceExt2(TRACE_NORMAL, MOUNTMSFS_MOUNTMSFS_DUP03, "MSFS Mount:   %S (%d)\n", (error?KError():KOk()), error);
 	if (!error)
 		msfsMountedList[driveNumber] = ETrue;
 
@@ -237,7 +254,7 @@ LOCAL_C void MountMsFs(TInt driveNumber)
 
 //-----------------------------------------------------------------------------
 /**
-    Dismount MsFS and mount the original FS 
+    Dismount MsFS and mount the original FS
 */
 LOCAL_C TInt RestoreMount(TInt driveNumber)
 	{
@@ -248,6 +265,7 @@ LOCAL_C TInt RestoreMount(TInt driveNumber)
 		{
 		err = fs.DismountFileSystem(KMsFs, driveNumber);
 		test.Printf(_L("MSFS Dismount:%S (%d)\n"), (err?&KError:&KOk), err);
+		OstTraceExt2(TRACE_NORMAL, RESTOREMOUNT_RESTOREMOUNT, "MSFS Dismount:%S (%d)\n", (err?KError():KOk()), err);
 		if (err)
 			return err;
 
@@ -262,7 +280,7 @@ LOCAL_C TInt RestoreMount(TInt driveNumber)
 
         TPtrC ptrN(fsDesc->FsName());
         test.Printf(_L("%S Mount:    %S (%d)\n"), &ptrN, (err?&KError:&KOk), err);
-        
+        OstTraceExt3(TRACE_NORMAL, RESTOREMOUNT_RESTOREMOUNT_DUP01, "%S Mount:    %S (%d)\n", ptrN, (err?KError():KOk()), err);
         delete fsDesc;
         unmountedFsList[driveNumber] = NULL;
         }
@@ -334,8 +352,8 @@ CUsbWatch* CUsbWatch::NewLC(RUsb& aUsb)
 	}
 
 CUsbWatch::CUsbWatch(RUsb& aUsb)
-	: 
-	CActive(0), 
+	:
+	CActive(0),
 	iUsb(aUsb),
 	iUsbDeviceState(EUsbcDeviceStateUndefined),
 	iWasConfigured(EFalse)
@@ -370,7 +388,7 @@ static TChar DriveNumberToLetter(TInt driveNumber)
 	fs.DriveToChar(driveNumber, driveLetter);
 	return driveLetter;
 	}
-	
+
 static TBool IsDriveInMountList(TUint driveLetter)
 	{
 	TUint16 driveLetter16 = static_cast<TUint16>(driveLetter);
@@ -386,36 +404,44 @@ void CUsbWatch::RunL()
 			{
 			case EUsbcDeviceStateUndefined : 					// 0
 				test.Printf(_L(">> CUSBWatch:Undefined %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL, ">> CUSBWatch:Undefined %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-			
+
 			case EUsbcDeviceStateAttached :						// 1
 				test.Printf(_L(">> CUSBWatch:Attached %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL_DUP01, ">> CUSBWatch:Attached %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-			
+
 			case EUsbcDeviceStatePowered :						// 2
 				test.Printf(_L(">> CUSBWatch:Powered %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL_DUP02, ">> CUSBWatch:Powered %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-	
+
 			case EUsbcDeviceStateDefault :						// 3
 				test.Printf(_L(">> CUSBWatch:Default %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL_DUP03, ">> CUSBWatch:Default %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-			
+
 			case EUsbcDeviceStateAddress :						// 4
 				test.Printf(_L(">> CUSBWatch:Address %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL_DUP04, ">> CUSBWatch:Address %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-			
+
 			case EUsbcDeviceStateConfigured :					// 5
 				test.Printf(_L(">> CUSBWatch:Configured %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL_DUP05, ">> CUSBWatch:Configured %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-			
+
 			case EUsbcDeviceStateSuspended : 					// 6
 				test.Printf(_L(">> CUSBWatch:Suspended %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL_DUP06, ">> CUSBWatch:Suspended %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-			
+
 			default :
 				test.Printf(_L(">> CUSBWatch:UNKNOWN %S\n"), iWasConfigured ? &KConfigured : &KNotConfigured);
+				OstTraceExt1(TRACE_NORMAL, CUSBWATCH_RUNL_DUP07, ">> CUSBWatch:UNKNOWN %S\n", iWasConfigured ? KConfigured() : KNotConfigured());
 				break;
-		
+
 			}
 		}
 	iUsb.AlternateDeviceStatusNotify(iStatus, iUsbDeviceState);
@@ -428,7 +454,7 @@ void CUsbWatch::RunL()
 			{
 			if(IsDriveConnected(i))
 				{
-				RDebug::Print(_L("CUsbWatch calling RestoreMount"));
+				OstTrace0(TRACE_NORMAL, CUSBWATCH_RUNL_DUP08, "CUsbWatch calling RestoreMount");
 				RestoreMount(PropertyHandlers::allDrivesStatus[2*i]);
 				}
 			}
@@ -438,7 +464,7 @@ void CUsbWatch::RunL()
 
 	// If cable is connected, mount all drives in the auto-mount list.
 	// This is done for performance, since if this is not done here,
-	// mounting will happen later after each drive enters the 
+	// mounting will happen later after each drive enters the
 	// Connecting state.
 	if(iUsbDeviceState == EUsbcDeviceStateConfigured)
 		{
@@ -447,7 +473,7 @@ void CUsbWatch::RunL()
 			TInt driveNumber = PropertyHandlers::allDrivesStatus[2*i];
 			if(!IsDriveConnected(i) && IsDriveInMountList(DriveNumberToLetter(driveNumber)))
 				{
-				RDebug::Print(_L("CUsbWatch calling MountMsFs"));
+				OstTrace0(TRACE_NORMAL, CUSBWATCH_RUNL_DUP09, "CUsbWatch calling MountMsFs");
 				MountMsFs(driveNumber);
 				}
 			}
@@ -486,7 +512,9 @@ void PropertyHandlers::Transferred(RProperty& aProperty, TUsbMsBytesTransferred&
 			{
 			if (gVerbose)
 				{
-				test.Printf(KBytesTransferredFmt, 
+				test.Printf(KBytesTransferredFmt,
+						(char)DriveNumberToLetter(allDrivesStatus[2*i]), iKBytesRead[i], iKBytesWritten[i]);
+				OstTraceExt3(TRACE_NORMAL, PROPERTYHANDLERS_TRANSFERRED, "%c:%d/%d \n",
 						(char)DriveNumberToLetter(allDrivesStatus[2*i]), iKBytesRead[i], iKBytesWritten[i]);
 				}
 			}
@@ -494,14 +522,16 @@ void PropertyHandlers::Transferred(RProperty& aProperty, TUsbMsBytesTransferred&
 	else
 		{
 		test.Printf(KErrFmt, err);
+		OstTrace1(TRACE_NORMAL, PROPERTYHANDLERS_TRANSFERRED_DUP01, "Error: %d\r", err);
 		}
 	}
-	
+
 void PropertyHandlers::DriveStatus(RProperty& aProperty)
 	{
 	if (gVerbose)
 		{
 		test.Printf(_L(">> PropertyHandlers::DriveStatus"));
+		OstTrace0(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS, ">> PropertyHandlers::DriveStatus");
 		}
 	TInt err = aProperty.Get(allDrivesStatus);
 	if(err == KErrNone)
@@ -509,6 +539,7 @@ void PropertyHandlers::DriveStatus(RProperty& aProperty)
 		if (gVerbose)
 			{
 			test.Printf(_L(" Status:  "));
+			OstTrace0(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP01, " Status:  ");
 			}
 		for(TInt i = 0; i < allDrivesStatus.Length()/2; i++)
 			{
@@ -523,51 +554,61 @@ void PropertyHandlers::DriveStatus(RProperty& aProperty)
 					case EUsbMsDriveState_Disconnected:
 						{
 						test.Printf(_L("%c:%d:Disconnected\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP02, "%c:%d:Disconnected\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_Connecting:
 						{
 						test.Printf(_L("%c:%d:Connecting\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP03, "%c:%d:Connecting\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_Connected:
 						{
 						test.Printf(_L("%c:%d:Connected\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP04, "%c:%d:Connected\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_Disconnecting:
 						{
 						test.Printf(_L("%c:%d:Disconnecting\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP05, "%c:%d:Disconnecting\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_Active:
 						{
 						test.Printf(_L("%c:%d:Active\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP06, "%c:%d:Active\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_Locked:
 						{
 						test.Printf(_L("%c:%d:Locked\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP07, "%c:%d:Locked\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_MediaNotPresent:
 						{
 						test.Printf(_L("%c:%d:Not Present\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP08, "%c:%d:Not Present\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_Removed:
 						{
 						test.Printf(_L("%c:%d:Removed\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP09, "%c:%d:Removed\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					case EUsbMsDriveState_Error:
 						{
 						test.Printf(_L("%c:%d:Error\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP10, "%c:%d:Error\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					default :
 						{
 						test.Printf(_L("%c:%d:Unknown\n"), (char)driveLetter, driveStatus);
+						OstTraceExt2(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP11, "%c:%d:Unknown\n", (char)driveLetter, driveStatus);
 						break;
 						}
 					}
@@ -575,11 +616,11 @@ void PropertyHandlers::DriveStatus(RProperty& aProperty)
 
 			if (driveStatus == EUsbMsDriveState_Connected)
 				{
-				gActiveControl->SetMSFinished(EFalse);				
+				gActiveControl->SetMSFinished(EFalse);
 				}
 			if (driveStatus == EUsbMsDriveState_Disconnected)
 				{
-				gActiveControl->SetMSFinished(ETrue);				
+				gActiveControl->SetMSFinished(ETrue);
 				}
 			if(IsDriveInMountList(driveLetter))
 				{
@@ -591,20 +632,13 @@ void PropertyHandlers::DriveStatus(RProperty& aProperty)
 					{
 					RestoreMount(driveNumber);
 					}
-				else
-					{
-					//RDebug::Print(_L("PropertyHandlers::DriveStatus: nothing to do"));
-					}
-				}
-			else
-				{
-				//RDebug::Print(_L("PropertyHandlers::DriveStatus: %c: is not in mountList\n"), driveLetter);
-				}
+    			}
 			}
 		}
 	else
 		{
 		test.Printf(KErrFmt, err);
+		OstTrace1(TRACE_NORMAL, PROPERTYHANDLERS_DRIVESTATUS_DUP14, "Error: %d\r", err);
 		}
 
 	}
@@ -618,6 +652,7 @@ void PropertyHandlers::MediaError(RProperty& aProperty)
 		}
 
 	test.Printf(_L("Media Error %x\n"), iMediaError);
+	OstTrace1(TRACE_NORMAL, PROPERTYHANDLERS_MEDIAERROR, "Media Error %x\n", iMediaError);
 	if (iMediaError > 0)
 		{
 		gActiveControl->SetMSFinished(ETrue);
@@ -669,11 +704,11 @@ void StartMassStorage(RDEVCLIENT* aPort)
 
 	test.End();
 	}
-	
+
 void StopMassStorage(RDEVCLIENT* aPort)
 	{
     TInt r = KErrUnknown;
-	
+
 	test.Start (_L("Stop Mass Storage"));
 
 	r = UsbMs.Stop();
@@ -695,15 +730,15 @@ void StopMassStorage(RDEVCLIENT* aPort)
 	test_KErrNone (r);
 
 	fs.Close();
-	
+
 	delete usbWatch;
 	for (TUint i =0; i < KNumPropWatch; i++)
 		{
 		delete propWatch[i];
 		}
-	
+
 	aPort->Close();
-		
+
 	test.End();
 	}
 

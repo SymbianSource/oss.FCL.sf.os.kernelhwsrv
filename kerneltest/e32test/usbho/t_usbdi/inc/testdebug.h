@@ -28,14 +28,6 @@
 #include <d32usbdi.h>
 #include <f32file.h>
 
-/**
-Debug macro for serial port logging of function names and signatures
-*/
-#define LOG_CFUNC TFunctionLog funcLog(__PRETTY_FUNCTION__, NULL);
-#define LOG_FUNC TFunctionLog funcLog(__PRETTY_FUNCTION__,this);
-
-#define LOG_POINT(x) RDebug::Printf(">> Debug point: " #x);
-
 //#define LOG_INFO(x) RDebug::Print x;
 
 #define LOG_INFO(x) 

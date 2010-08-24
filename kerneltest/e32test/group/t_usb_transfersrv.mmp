@@ -17,7 +17,8 @@
 
 TARGET        t_usb_transfersrv.exe
 TARGETTYPE    EXE
-uid 0x0 0x101fe1db
+
+uid 0x0    0x20031632
 
 MACRO		USB_SC
 
@@ -26,6 +27,7 @@ MACRO		USB_SC
 OS_LAYER_SYSTEMINCLUDE_SYMBIAN
 
 USERINCLUDE	  ../usb/t_usb_device/include
+USERINCLUDE     ../traces_t_usb_transfersrv
 
 // Source file paths
 
